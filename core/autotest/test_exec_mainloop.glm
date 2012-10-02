@@ -23,5 +23,5 @@ script export clock;
 #ifdef WINDOWS
 script on_term if %clock: =_% == 2000-01-02_00:00:00_UTC ( exit 0 ) else ( exit 1 );
 #else
-script on_term if [ \"$clock\" == '2000-01-02 00:00:00 UTC' ]\; then exit 0\; else exit 1\; fi;
+script on_term "if [ \"$clock\" == '2000-01-02 00:00:00 UTC' ]\; then exit 0\; else exit 1\; fi";
 #endif
