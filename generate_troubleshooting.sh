@@ -4,7 +4,7 @@ export DOCS=`pwd`/../documents/troubleshooting
 
 if [ ! -e $DOCS ]
 then
-	mkdir $DOCS
+	mkdir -p $DOCS
 fi
 
 cp utilities/troubleshooting.css $DOCS
