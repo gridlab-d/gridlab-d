@@ -62,7 +62,7 @@ int pw_recorder::init(OBJECT *parent){
 		} else {
 			// isa parent pw_model?
 			if(!gl_object_isa(model, "pw_model")){
-				gl_error("");
+				gl_error("pw_recorder::init(): parent of '%s' is not a pw_model", gl_name(model, objname, 63) );
 				return 0;
 			}
 		}
@@ -74,26 +74,26 @@ int pw_recorder::init(OBJECT *parent){
 	// check if model is initialized
 	//	* if not, defer
 	if((model->flags & OF_INIT) != OF_INIT){
-		gl_verbose("pw_recorder::init(): deferring initialization on %s", gl_name(model, objname, 63));
+		gl_verbose("pw_recorder::init(): deferring initialization on '%s'", gl_name(model, objname, 63));
 		return 2; // defer
 	}
 	
 
 	// assert key_strings not null
 	if(0 == key_strings[0]){
-		gl_error("pw_recorder::init(): key_strings not defined for %s", gl_name(model, objname, 63));
+		gl_error("pw_recorder::init(): key_strings not defined for '%s'", gl_name(model, objname, 63));
 		return 0;
 	}
 
 	// assert key_values not null
 	if(0 == key_values[0]){
-		gl_error("pw_recorder::init(): key_values not defined for %s", gl_name(model, objname, 63));
+		gl_error("pw_recorder::init(): key_values not defined for '%s'", gl_name(model, objname, 63));
 		return 0;
 	}
 
 	// assert properties not null
 	if(0 == properties[0]){
-		gl_error("pw_recorder::init(): properties not defined for %s", gl_name(model, objname, 63));
+		gl_error("pw_recorder::init(): properties not defined for '%s'", gl_name(model, objname, 63));
 		return 0;
 	}
 
@@ -117,7 +117,7 @@ int pw_recorder::init(OBJECT *parent){
 
 	// assert positive interval
 	if(interval < 1){
-		gl_error("");
+		gl_error("pw_recorder::init(): negative interval in '%s'", gl_name(model, objname, 63));
 		return 0;
 	}
 
@@ -130,15 +130,15 @@ int pw_recorder::init(OBJECT *parent){
 	// check if outfile defined
 	//	* if not, auto-generate
 	if(0 == outfile_name[0]){
-		gl_verbose("pw_recorder::init(): ");
 		sprintf(outfile_name, "%s-%u.csv", gl_name(my(), objname, 63), my()->id);
+		gl_verbose("pw_recorder::init(): '%s' does not define a filename, auto-generating '%s'");
 	}
 	
 	// open outfile
 	//	* if unable, abort
 	outfile = fopen(outfile_name, "w");
 	if(0 == outfile){
-		gl_error("pw_recorder::init(): ");
+		gl_error("pw_recorder::init(): unable to open outfile '%s' for writing", outfile_name);
 		return 0;
 	} else {
 		if(!write_header()){
@@ -322,7 +322,7 @@ int pw_recorder::build_keys(){
 		return 0; // failure
 	}
 	catch(...){
-		std::cout << "Unknown excetpion in pw_recorder::build_keys()!";
+		gl_error("Unknown excetpion in pw_recorder::build_keys()!");
 		return 0;
 	}
 
@@ -356,7 +356,7 @@ int pw_recorder::build_keys(){
 		return 0; // failure
 	}
 	catch(...){
-		std::cout << "Unknown exception in pw_recorder::build_keys()!";
+		gl_error("Unknown exception in pw_recorder::build_keys()!");
 		return 0;
 	}
 

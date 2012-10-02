@@ -98,6 +98,8 @@ pw_load::pw_load(MODULE *module)
 			PT_complex, "last_load_impedance[MVA]", get_last_load_impedance_offset(),PT_DESCRIPTION, "constant impedance draw on the load",
 			PT_complex, "last_load_current[MVA]", get_last_load_current_offset(),PT_DESCRIPTION, "constant current draw on the load",
 			PT_complex, "load_voltage[V]", get_load_voltage_offset(),PT_DESCRIPTION, "transmission system voltage on this load",
+			PT_double, "bus_nom_volt[V]", get_bus_nom_volt_offset(),
+			PT_double, "bus_volt_angle", get_bus_volt_angle_offset(),
 //			PT_complex, "next_load_power", get_next_load_power_offset(),
 			PT_complex, "pw_load_mw", get_pw_load_mw_offset(),
 			PT_double, "pw_load_mva", get_pw_load_mva_offset(),
@@ -115,6 +117,217 @@ pw_load::pw_load(MODULE *module)
 
 int pw_load::create(){
 	return 1;
+}
+
+int pw_load::get_powerworld_busangle(){
+// source strongly borrowed from PowerWorld
+	_variant_t HUGEP *presults, *pvariant;
+	HRESULT hr;
+	SAFEARRAYBOUND bounds[1];
+	pw_model *cModel;
+	_variant_t fields, values, results;
+	char *tempstr = 0;
+	BSTR tempbstr = 0;
+
+	double load_angle = 0.0;
+
+	cModel = OBJECTDATA(model, pw_model);
+
+//	gl_output("get_powerworld_nomvolt(): before 1 mw = %f, mva = (%f, %f)", this->pw_load_mw, this->pw_load_mva.Re(), this->pw_load_mva.Im());
+
+	try {
+		ISimulatorAutoPtr SimAuto(cModel->A);
+			
+		bounds[0].cElements = 2;
+		bounds[0].lLbound = 0;
+
+		fields.vt = VT_ARRAY | VT_VARIANT;
+		fields.parray = SafeArrayCreate(VT_VARIANT, 1, bounds);
+		if (!fields.parray){
+			throw _com_error(E_OUTOFMEMORY);
+		}
+		values.vt = VT_ARRAY | VT_VARIANT;
+		values.parray = SafeArrayCreate(VT_VARIANT, 1, bounds);
+		if (!values.parray){
+			throw _com_error(E_OUTOFMEMORY);
+		}
+		
+		hr = SafeArrayAccessData(fields.parray, (void HUGEP **)&pvariant);
+		if (FAILED(hr)){
+			throw _com_error(hr);
+		}
+		pvariant[0] = "BusNum";
+		pvariant[1] = "BusAngle";
+		SafeArrayUnaccessData(fields.parray);
+
+		hr = SafeArrayAccessData(values.parray, (void HUGEP **)&pvariant);
+		if (FAILED(hr)){
+			throw _com_error(hr);
+		}
+		char pbn_str[32];
+		sprintf(pbn_str, "%i", powerworld_bus_num);
+		//pvariant[0] = this->powerworld_bus_num;
+		pvariant[0] = _com_util::ConvertStringToBSTR(pbn_str);
+		pvariant[1] = _variant_t();
+
+		SysFreeString(tempbstr);
+		SafeArrayUnaccessData(values.parray);
+
+		results = SimAuto->GetParametersSingleElement(L"Bus", fields, values);
+
+		hr = SafeArrayAccessData(results.parray, (void HUGEP **)&presults);
+		if (FAILED(hr)){
+			throw _com_error(hr);
+		}
+		if (((_bstr_t)(_variant_t)presults[0]).length()){
+			tempstr = _com_util::ConvertBSTRToString((_bstr_t)(_variant_t)presults[0]);
+			gl_error("Error from GetParametersSingleElement(): %s", tempstr);
+			/* TROUBLESHOOTING 
+				The call to GetParametersSingleElement failed.  Please review the error message and respond accordingly.
+				Addition COM-related error handling may be found on the MSDN website.
+			 */
+			delete [] tempstr;
+			tempstr = 0;
+			SafeArrayDestroy(fields.parray);
+			SafeArrayDestroy(values.parray);
+			return 0;
+		} else {
+			double load_pi, load_pr;
+			
+			hr = SafeArrayAccessData(presults[1].parray, (void HUGEP **)&pvariant);
+			if (FAILED(hr)){
+				throw _com_error(hr);
+			}
+			load_angle = wcstod(pvariant[1].bstrVal, 0);
+
+			SafeArrayUnaccessData(presults[1].parray);
+
+//			printf("get_powerworld_nomvolt(): power = %f + %f\n", load_pr, load_pi);
+		}
+		SafeArrayUnaccessData(results.parray);
+		bus_volt_angle = load_angle;
+
+//		gl_output("get_powerworld_nomvolt(): after 2 mw = %f, mva = (%f, %f)", this->pw_load_mw, this->pw_load_mva.Re(), this->pw_load_mva.Im());
+		
+		SafeArrayDestroy(fields.parray);
+		SafeArrayDestroy(values.parray);
+	}
+	catch (_com_error err) {
+		// @TODO this needs to be a gl_error, but err.ErrorMessage returns a TCHAR*
+		std::cout << "!!! " << err.ErrorMessage() << "\n";
+		return 1; // failure
+	}
+	catch(...){
+		gl_error("Unknown excetpion in get_powerworld_busangle!");
+		return 1;
+	}
+	return 0; // success
+}
+
+int pw_load::get_powerworld_nomvolt(){
+// source strongly borrowed from PowerWorld
+	_variant_t HUGEP *presults, *pvariant;
+	HRESULT hr;
+	SAFEARRAYBOUND bounds[1];
+	pw_model *cModel;
+	_variant_t fields, values, results;
+	char *tempstr = 0;
+	BSTR tempbstr = 0;
+
+	double load_bnv = 0.0;
+
+	cModel = OBJECTDATA(model, pw_model);
+
+//	gl_output("get_powerworld_nomvolt(): before 1 mw = %f, mva = (%f, %f)", this->pw_load_mw, this->pw_load_mva.Re(), this->pw_load_mva.Im());
+
+	try {
+		ISimulatorAutoPtr SimAuto(cModel->A);
+			
+		bounds[0].cElements = 2;
+		bounds[0].lLbound = 0;
+
+		fields.vt = VT_ARRAY | VT_VARIANT;
+		fields.parray = SafeArrayCreate(VT_VARIANT, 1, bounds);
+		if (!fields.parray){
+			throw _com_error(E_OUTOFMEMORY);
+		}
+		values.vt = VT_ARRAY | VT_VARIANT;
+		values.parray = SafeArrayCreate(VT_VARIANT, 1, bounds);
+		if (!values.parray){
+			throw _com_error(E_OUTOFMEMORY);
+		}
+		
+		hr = SafeArrayAccessData(fields.parray, (void HUGEP **)&pvariant);
+		if (FAILED(hr)){
+			throw _com_error(hr);
+		}
+		pvariant[0] = "BusNum";
+		pvariant[1] = "BusNomVolt";
+		SafeArrayUnaccessData(fields.parray);
+
+		hr = SafeArrayAccessData(values.parray, (void HUGEP **)&pvariant);
+		if (FAILED(hr)){
+			throw _com_error(hr);
+		}
+		char pbn_str[32];
+		sprintf(pbn_str, "%i", powerworld_bus_num);
+		//pvariant[0] = this->powerworld_bus_num;
+		pvariant[0] = _com_util::ConvertStringToBSTR(pbn_str);
+		pvariant[1] = _variant_t();
+
+		SysFreeString(tempbstr);
+		SafeArrayUnaccessData(values.parray);
+
+		results = SimAuto->GetParametersSingleElement(L"Bus", fields, values);
+
+		hr = SafeArrayAccessData(results.parray, (void HUGEP **)&presults);
+		if (FAILED(hr)){
+			throw _com_error(hr);
+		}
+		if (((_bstr_t)(_variant_t)presults[0]).length()){
+			tempstr = _com_util::ConvertBSTRToString((_bstr_t)(_variant_t)presults[0]);
+			gl_error("Error from GetParametersSingleElement(): %s", tempstr);
+			/* TROUBLESHOOTING 
+				The call to GetParametersSingleElement failed.  Please review the error message and respond accordingly.
+				Addition COM-related error handling may be found on the MSDN website.
+			 */
+			delete [] tempstr;
+			tempstr = 0;
+			SafeArrayDestroy(fields.parray);
+			SafeArrayDestroy(values.parray);
+			return 0;
+		} else {
+			double load_pi, load_pr;
+			
+			hr = SafeArrayAccessData(presults[1].parray, (void HUGEP **)&pvariant);
+			if (FAILED(hr)){
+				throw _com_error(hr);
+			}
+			load_bnv = wcstod(pvariant[1].bstrVal, 0);
+
+			SafeArrayUnaccessData(presults[1].parray);
+
+//			printf("get_powerworld_nomvolt(): power = %f + %f\n", load_pr, load_pi);
+		}
+		SafeArrayUnaccessData(results.parray);
+
+		bus_nom_volt = load_bnv * 1000.0; // kV -> V
+
+//		gl_output("get_powerworld_nomvolt(): after 2 mw = %f, mva = (%f, %f)", this->pw_load_mw, this->pw_load_mva.Re(), this->pw_load_mva.Im());
+		
+		SafeArrayDestroy(fields.parray);
+		SafeArrayDestroy(values.parray);
+	}
+	catch (_com_error err) {
+		// @TODO this needs to be a gl_error, but err.ErrorMessage returns a TCHAR*
+		std::cout << "!!! " << err.ErrorMessage() << "\n";
+		return 1; // failure
+	}
+	catch(...){
+		gl_error("Unknown excetpion in get_powerworld_nomvolt!");
+		return 1;
+	}
+	return 0; // success
 }
 
 // it would be faster to cache some of these in the object rather than re-allocating them each iteration. -mh
@@ -226,7 +439,7 @@ int pw_load::get_powerworld_voltage(){
 //			printf("get_voltage(): power = %f + %f\n", load_pr, load_pi);
 		}
 		SafeArrayUnaccessData(results.parray);
-		load_voltage = complex(load_voltage_d * 1000.0, 0.0, I);
+		load_voltage_mag = load_voltage_d * 1000.0;
 		pw_load_mw = load_mva;
 		pw_load_mva = complex(load_mw, load_mvr, I);
 
@@ -241,7 +454,8 @@ int pw_load::get_powerworld_voltage(){
 		return 1; // failure
 	}
 	catch(...){
-		std::cout << "Unknown excetpion in get_pwd_voltage!";
+		gl_error("Unknown excetpion in get_pwd_voltage!");
+		return 1;
 	}
 	return 0; // success
 }
@@ -395,15 +609,38 @@ int pw_load::init(OBJECT *parent){
 		return 0;
 	}
 
-	if(0 != get_powerworld_voltage()){
+	if(0 != get_powerworld_nomvolt()){
 		char objname[256];
-		gl_error("pw_load::init(): unable to get PowerWorld bus voltage from Bus #%i, Load ID %s, for the pw_load \'%s\'", powerworld_bus_num, powerworld_load_id, gl_name(OBJECTHDR(this), objname, 255));
+		gl_error("pw_load::init(): unable to get PowerWorld nominal voltage from Bus #%i, for the pw_load \'%s\'", powerworld_bus_num, gl_name(OBJECTHDR(this), objname, 255));
 		/* TROUBLESHOOT
-			An error occured while calling the function that retrieves data from PowerWorld.  The Bus/Load pair may be incorrect, there may have
+			An error occured while calling a function that retrieves data from PowerWorld.  The Bus/Load pair may be incorrect, there may have
 			been a COM error with SimAuto, or other unexpected results may have occured.
 		 */
 		return 0;
 	}
+
+	if(0 != get_powerworld_busangle()){
+		char objname[256];
+		gl_error("pw_load::init(): unable to get PowerWorld bus voltage from Bus #%i, Load ID %s, for the pw_load \'%s\'", powerworld_bus_num, powerworld_load_id, gl_name(OBJECTHDR(this), objname, 255));
+		/* TROUBLESHOOT
+			An error occured while calling a function that retrieves data from PowerWorld.  The Bus/Load pair may be incorrect, there may have
+			been a COM error with SimAuto, or other unexpected results may have occured.
+		 */
+		return 0;
+	}
+
+	if(0 != get_powerworld_voltage()){
+		char objname[256];
+		gl_error("pw_load::init(): unable to get PowerWorld bus voltage from Bus #%i, Load ID %s, for the pw_load \'%s\'", powerworld_bus_num, powerworld_load_id, gl_name(OBJECTHDR(this), objname, 255));
+		/* TROUBLESHOOT
+			An error occured while calling a function that retrieves data from PowerWorld.  The Bus/Load pair may be incorrect, there may have
+			been a COM error with SimAuto, or other unexpected results may have occured.
+		 */
+		return 0;
+	}
+
+	// got angle & magnitude, calculate complex voltage
+	load_voltage.SetPolar(load_voltage_mag, (bus_volt_angle/180.0*PI),A);
 
 	// power_threshold must be positive, else default
 	if(power_threshold < 0.0){
@@ -426,12 +663,20 @@ TIMESTAMP pw_load::presync(TIMESTAMP t1){
 	if(!cModel->get_valid_flag()){
 		gl_verbose("not fetching voltage due to invalid model state");
 	} else {
+		if(0 != get_powerworld_busangle()){
+			gl_error("pw_load::presync(): get_powerworld_busangle failed");
+			/*	TROUBLESHOOT
+			 */
+			return TS_INVALID;
+		}
 		if(0 != get_powerworld_voltage()){
 			gl_error("pw_load::presync(): get_powerworld_voltage failed");
 			/*	TROUBLESHOOT
 			 */
 			return TS_INVALID;
 		}
+		// SetPolar takes radians, regardless of flag.
+		load_voltage.SetPolar(load_voltage_mag, (bus_volt_angle/180.0*PI),A);
 	}
 	// substation will perform conversion on load_voltage for powerflow module
 

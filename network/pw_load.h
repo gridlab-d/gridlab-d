@@ -43,12 +43,17 @@ public:
 	GL_ATOMIC(complex, last_load_current);
 //	GL_ATOMIC(complex, next_load_power);
 	//	outputs
+	GL_ATOMIC(double, load_voltage_mag);
 	GL_ATOMIC(complex, load_voltage);
 	GL_ATOMIC(double, pw_load_mw);
 	GL_ATOMIC(complex, pw_load_mva);
+	GL_ATOMIC(double, bus_nom_volt);
+	GL_ATOMIC(double, bus_volt_angle);
 private:
 	pw_model *cModel; // internal use
 
+	int get_powerworld_nomvolt();
+	int get_powerworld_busangle();
 	int get_powerworld_voltage();
 	int post_powerworld_current();
 };

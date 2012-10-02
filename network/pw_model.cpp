@@ -364,9 +364,22 @@ int pw_model::isa(char *classname){
 	@return 1
  **/
 int pw_model::finalize(){
-//	hr = A->Release();
-	A->CloseCase();
-	gl_output("pw_model::finalize(): case closed.");
+	_variant_t output;
+
+	output = A->CloseCase();
+	if(0 == check_COM_output(output)){
+		gl_error("CloseCase() failed");
+		return 0;
+	}
+
+	output = A->Release();
+	if(0 == check_COM_output(output)){
+		gl_error("Release() failed");
+		return 0;
+	}
+	
+	gl_verbose("pw_model::finalize(): case closed.");
+
 	return 1;
 }
 
