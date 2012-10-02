@@ -55,13 +55,14 @@ substation::substation(MODULE *mod) : node(mod)
 			PT_complex, "positive_sequence_voltage[V]", PADDR(seq_mat[1]), PT_DESCRIPTION, "The positive sequence representation of the voltage for the substation object.",
 			PT_complex, "negative_sequence_voltage[V]", PADDR(seq_mat[2]), PT_DESCRIPTION, "The negative sequence representation of the voltage for the substation object.",
 			PT_double, "base_power[VA]", PADDR(base_power), PT_DESCRIPTION, "The 3 phase VA power rating of the substation.",
+			PT_double, "power_convergence_value[VA]", PADDR(power_convergence_value), PT_DESCRIPTION, "Default convergence criterion before power is posted to pw_load objects if connected, otherwise ignored",
 			PT_enumeration, "reference_phase", PADDR(reference_phase), PT_DESCRIPTION, "The reference phase for the positive sequence voltage.",
 				PT_KEYWORD, "PHASE_A", R_PHASE_A,
 				PT_KEYWORD, "PHASE_B", R_PHASE_B,
 				PT_KEYWORD, "PHASE_C", R_PHASE_C,
-			PT_complex, "average_transmission_power_load[VA]", PADDR(average_transmission_power_load), PT_DESCRIPTION, "the average constant power load to be posted directly to the pw_load object.",
-			PT_complex, "average_transmission_current_load[A]", PADDR(average_transmission_current_load), PT_DESCRIPTION, "the average constant current load to be posted directly to the pw_load object.",
-			PT_complex, "average_transmission_impedance_load[Ohm]", PADDR(average_transmission_impedance_load), PT_DESCRIPTION, "the average constant impedance load to be posted directly to the pw_load object.",
+			PT_complex, "transmission_level_constant_power_load[VA]", PADDR(average_transmission_power_load), PT_DESCRIPTION, "the average constant power load to be posted directly to the pw_load object.",
+			PT_complex, "transmission_level_constant_current_load[A]", PADDR(average_transmission_current_load), PT_DESCRIPTION, "the average constant current load at nominal voltage to be posted directly to the pw_load object.",
+			PT_complex, "transmission_level_constant_impedance_load[Ohm]", PADDR(average_transmission_impedance_load), PT_DESCRIPTION, "the average constant impedance load at nominal voltage to be posted directly to the pw_load object.",
 			PT_complex, "average_distribution_load[VA]", PADDR(average_distribution_load), PT_DESCRIPTION, "The average of the loads on all three phases at the substation object.",
 			PT_complex, "distribution_power_A[VA]", PADDR(distribution_power_A),
 			PT_complex, "distribution_power_B[VA]", PADDR(distribution_power_B),
@@ -99,6 +100,8 @@ int substation::create()
 	volt_B = 0;
 	volt_C = 0;
 	base_power = 0;
+	power_convergence_value = 0.0;
+	pTransNominalVoltage = NULL;
 	return result;
 }
 
@@ -118,71 +121,184 @@ void substation::fetch_complex(complex **prop, char *name, OBJECT *parent){
 	}
 }
 
+void substation::fetch_double(double **prop, char *name, OBJECT *parent){
+	OBJECT *hdr = OBJECTHDR(this);
+	*prop = gl_get_double_by_name(parent, name);
+	if(*prop == NULL){
+		char tname[32];
+		char *namestr = (hdr->name ? hdr->name : tname);
+		char msg[256];
+		sprintf(tname, "substation:%i", hdr->id);
+		if(*name == NULL)
+			sprintf(msg, "%s: substation unable to find property: name is NULL", namestr);
+		else
+			sprintf(msg, "%s: substation unable to find %s", namestr, name);
+		throw(msg);
+	}
+}
+
 // Initialize a distribution meter, return 1 on success
 int substation::init(OBJECT *parent)
 {
 	OBJECT *hdr = OBJECTHDR(this);
 	int i,n;
-	
-	//make sure the substation is the swing bus if it's parent is a pw_load object
-	if(parent != NULL && gl_object_isa(parent,"pw_load")){
-		if(bustype != SWING){
-			gl_error("Substation connected to pw_load must be the swing bus.");
-			return 0;
-		}
-		
-		has_parent = 1;
 
-		//create the pointers to the needed properties in pw_load
-		fetch_complex(&pPositiveSequenceVoltage,"load_voltage",parent);
-		fetch_complex(&pConstantPowerLoad,"load_power",parent);
-		fetch_complex(&pConstantCurrentLoad,"load_current",parent);
-		fetch_complex(&pConstantImpedanceLoad,"load_impedance",parent);
-	} else if(parent != NULL && (seq_mat[0] != 0 || seq_mat[1] != 0 || seq_mat[2] != 0)){
-		gl_warning("substation:%i is not the swing bus. Ignoring sequence voltage inputs.", hdr->id); 
-	} else if(parent != NULL){
-		has_parent = 2;
-	} else {
-		if(bustype != SWING){
-			gl_error("Substation connected to pw_load must be the swing bus.");
-			return 0;
-		}
-	}
+	//Base check higher so can be used below
 	if(base_power <= 0){
 		gl_warning("substation:%i is using the default base power of 100 VA. This could cause instability on your system.", hdr->id);
 		base_power = 100;//default gives a max power error of 1 VA.
 	}
-	//set the reference phase number to shift the phase voltages appropriatly with the positive sequence voltage
-	if(reference_phase == R_PHASE_A){
-		reference_number.SetPolar(1,0);
-	} else if(reference_phase == R_PHASE_B){
-		reference_number.SetPolar(1,2*PI/3);
-	} else if(reference_phase == R_PHASE_C){
-		reference_number.SetPolar(1,-2*PI/3);
-	}
 
-	//create the sequence to phase transformation matrix
-	for(i=0; i<3; i++){
-		for(n=0; n<3; n++){
-			if((i==1 && n==1) || (i==2 && n==2)){
-				transformation_matrix[i][n].SetPolar(1,-2*PI/3);
-			} else if((i==2 && n==1) || (i==1 && n==2)){
-				transformation_matrix[i][n].SetPolar(1,2*PI/3);
-			} else {
-				transformation_matrix[i][n].SetPolar(1,0);
+	//Check to see if it has a parent (no sense to ISAs if it is empty)
+	if (parent != NULL)
+	{
+		if (gl_object_isa(parent,"pw_load","network"))
+		{
+			//Make sure it is done, otherwise defer
+			if((parent->flags & OF_INIT) != OF_INIT){
+				char objname[256];
+				gl_verbose("substation::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+
+				return 2; // defer
+			}
+
+			//Map up the appropriate variables- error checks mostly inside
+			fetch_complex(&pPositiveSequenceVoltage,"load_voltage",parent);
+			fetch_complex(&pConstantPowerLoad,"load_power",parent);
+			fetch_complex(&pConstantCurrentLoad,"load_current",parent);
+			fetch_complex(&pConstantImpedanceLoad,"load_impedance",parent);
+			fetch_double(&pTransNominalVoltage,"bus_nom_volt",parent);
+
+			//Do a general check for nominal voltages - make sure they match
+			if (fabs(*pTransNominalVoltage-nominal_voltage)>0.001)
+			{
+				gl_error("Nominal voltages of tranmission node (%.1f V) and substation (%.1f) do not match!",*pTransNominalVoltage,nominal_voltage);
+				/*  TROUBLESHOOT
+				The nominal voltage of the transmission node in PowerWorld does not match
+				that of the value inside GridLAB-D's substation's nominal_voltage.  This could
+				cause information mismatch and is therefore not allowed.  Please set the
+				substation to the same nominal voltage as the transmission node.  Use transformers
+				to step the voltage down to an appropriate distribution or sub-transmission level.
+				*/
+				return 0;	//Fail
+			}
+
+			//Check our bustype - otherwise we may get overridden (NR-esque check)
+			if (bustype != SWING)
+			{
+				gl_warning("substation attached to pw_load and not a SWING bus - forcing to SWING");
+				/*  TROUBLESHOOT
+				When a substation object is connected to PowerWorld via a pw_load object, the
+				substation must be designated as a SWING bus.  This designation will now be forced upon
+				the bus.
+				*/
+				bustype = SWING;
+			}//End bus check
+
+			//Flag us as pw_load connected
+			has_parent = 1;
+
+			//Check convergence-posting criterion
+			if (power_convergence_value<=0.0)
+			{
+				gl_warning("power_convergence_value not set - defaulting to 0.01 base_power");
+				/*  TROUBLESHOOT
+				A value was not specified for the convergence criterion required before posting an 
+				answer up to pw_load.  This value has defaulted to 1% of base_power.  If a different threshold
+				is desired, set it explicitly.
+				*/
+
+				power_convergence_value = 0.01*base_power;
+			}//End convergence value check
+		}
+		else	//Parent isn't a pw_load, so we just become a normal node - let it handle things
+		{
+			has_parent = 2;	//Flag as "normal" - let node checks sort out if we are really valid or not
+		}
+	}//End parent
+	else	//Parent is null, see what mode we're in
+	{
+		//Check for sequence voltages - if not set, we're normal (let node checks handle if we're valid)
+		if ((seq_mat[0] != 0.0) || (seq_mat[1] != 0.0) || (seq_mat[2] != 0.0))
+		{
+			//See if we're a swing, if not, this is meaningless
+			if (bustype != SWING)
+			{
+				gl_warning("substation is not a SWING bus, so answers may be unexpected");
+				/*  TROUBLESHOOT
+				A substation object appears set to accept sequence voltage values, but it is not a SWING bus.  This
+				may end up causing the voltages to be converted from sequence, but then overridden by the distribution
+				powerflow solver.
+				*/
+			}
+
+			//Explicitly set
+			has_parent = 0;
+		}	
+		else	//Else, nothing set, we're a normal old node
+		{
+			has_parent = 2;	//Normal node
+
+			//Warn that nothing was found
+			gl_warning("substation:%s is set up as a normal node, no sequence values will be calculated",hdr->name);
+			/*  TROUBLESHOOT
+			A substation is currently behaving just like a normal powerflow node.  If it was desired that it convert a 
+			schedule or player of sequence values, please initialize those values to non-zero along with the player attachment.
+			*/
+		}
+	}//End no parent
+
+	//Set up reference items if they are needed
+	if (has_parent != 2)	//Not a normal node
+	{
+		//set the reference phase number to shift the phase voltages appropriatly with the positive sequence voltage
+		if(reference_phase == R_PHASE_A){
+			reference_number.SetPolar(1,0);
+		} else if(reference_phase == R_PHASE_B){
+			reference_number.SetPolar(1,2*PI/3);
+		} else if(reference_phase == R_PHASE_C){
+			reference_number.SetPolar(1,-2*PI/3);
+		}
+
+		//create the sequence to phase transformation matrix
+		for(i=0; i<3; i++){
+			for(n=0; n<3; n++){
+				if((i==1 && n==1) || (i==2 && n==2)){
+					transformation_matrix[i][n].SetPolar(1,-2*PI/3);
+				} else if((i==2 && n==1) || (i==1 && n==2)){
+					transformation_matrix[i][n].SetPolar(1,2*PI/3);
+				} else {
+					transformation_matrix[i][n].SetPolar(1,0);
+				}
 			}
 		}
-	}
 
-	if(has_phase(PHASE_A)){
-		volt_A.SetPolar(nominal_voltage,0);
-	}
-	if(has_phase(PHASE_B)){
-		volt_B.SetPolar(nominal_voltage,-PI*2/3);
-	}
-	if(has_phase(PHASE_C)){
-		volt_C.SetPolar(nominal_voltage,PI*2/3);
-	}
+		//New requirement to maintain positive sequence ability - three phases must be had, unless
+		//we're just a normal node.  Then, we don't care.
+		if (!has_phase(PHASE_A|PHASE_B|PHASE_C))
+		{
+			gl_error("substation needs have all three phases!");
+			/*  TROUBLESHOOT
+			To meet the requirements for sequence voltage conversions, the substation node must have all three
+			phases at the connection point.  If only a single phase or subset of full three phase is needed, those
+			must be set in the distribution network, typically after a delta-ground wye transformer.
+			*/
+			return 0;
+		}
+
+		//TODO: Implement a check to make sure nominals match!
+
+		//Not sure if the below is needed or not anymore
+		if(has_phase(PHASE_A)){
+			volt_A.SetPolar(nominal_voltage,0);
+		}
+		if(has_phase(PHASE_B)){
+			volt_B.SetPolar(nominal_voltage,-PI*2/3);
+		}
+		if(has_phase(PHASE_C)){
+			volt_C.SetPolar(nominal_voltage,PI*2/3);
+		}
+	}//End not a normal node
 	
 	return node::init(parent);
 }
@@ -210,23 +326,16 @@ TIMESTAMP substation::sync(TIMESTAMP t0, TIMESTAMP t1)
 	if((solver_method == SM_NR && NR_cycle == false) || solver_method == SM_FBS){
 		if(has_parent == 1){//has a pw_load as a parent
 			seq_mat[1] = *pPositiveSequenceVoltage;
-			if(has_phase(PHASE_A)){
-				voltageA = seq_mat[1] * reference_number;
-			}
-			if(has_phase(PHASE_B)){
-				voltageB = (transformation_matrix[1][1] * seq_mat[1]) * reference_number;
-			}
-			if(has_phase(PHASE_C)){
-				voltageC = (transformation_matrix[2][1] * seq_mat[1]) *reference_number;
-			}
-		} else {
-			if(has_parent == 0){
-				if(seq_mat[0] != 0 || seq_mat[1] != 0 || seq_mat[2] != 0){
-					voltageA = (seq_mat[0] + seq_mat[1] + seq_mat[2]) * reference_number;
-					voltageB = (seq_mat[0] + transformation_matrix[1][1] * seq_mat[1] + transformation_matrix[1][2] * seq_mat[2]) * reference_number;
-					voltageC = (seq_mat[0] + transformation_matrix[2][1] * seq_mat[1] + transformation_matrix[2][2] * seq_mat[2]) * reference_number;
-				}
-			}
+			seq_mat[0] = 0.0;	//Force the other two to zero for now - just to make sure
+			seq_mat[2] = 0.0;
+		}
+
+		//Check to see if a sequence conversion needs to be done
+		if (has_parent != 2)
+		{
+			voltageA = (seq_mat[0] + seq_mat[1] + seq_mat[2]) * reference_number;
+			voltageB = (seq_mat[0] + transformation_matrix[1][1] * seq_mat[1] + transformation_matrix[1][2] * seq_mat[2]) * reference_number;
+			voltageC = (seq_mat[0] + transformation_matrix[2][1] * seq_mat[1] + transformation_matrix[2][2] * seq_mat[2]) * reference_number;
 		}
 	}
 	t2 = node::sync(t1);
@@ -240,18 +349,23 @@ TIMESTAMP substation::sync(TIMESTAMP t0, TIMESTAMP t1)
 		last_power_A = distribution_power_A;
 		last_power_B = distribution_power_B;
 		last_power_C = distribution_power_C;
-		if((abs(dist_power_A_diff) + abs(dist_power_B_diff) + abs(dist_power_C_diff)) <= (base_power*0.01)){
-			if(has_parent == 1){
-				*pConstantCurrentLoad = ((volt_A + volt_B + volt_C) * (~average_transmission_current_load)) / (3 * 1000000);
+
+		//Convergence check - only if pw_load connected
+		if (has_parent == 1)
+		{
+			if((fabs(dist_power_A_diff) + fabs(dist_power_B_diff) + fabs(dist_power_C_diff)) <= power_convergence_value)
+			{
+				//Built on three-phase assumption, otherwise sequence components method falls apart - convert these to all use nominal!
+				*pConstantCurrentLoad = ((~average_transmission_current_load) * (*pTransNominalVoltage)) / 1000000;
 				if(average_transmission_impedance_load.Mag() > 0){
-					*pConstantImpedanceLoad = (((volt_A * volt_A) + (volt_B * volt_B) + (volt_C * volt_C)) / (average_transmission_impedance_load)) / ( 3 * 1000000);
+					*pConstantImpedanceLoad = (complex((*pTransNominalVoltage * (*pTransNominalVoltage))) / (~average_transmission_impedance_load) / 1000000);
 				} else {
 					*pConstantImpedanceLoad = 0;
 				}
 				*pConstantPowerLoad = (average_transmission_power_load + ((distribution_power_A + distribution_power_B + distribution_power_C) / 3)) / 1000000;
 			}
-		}
-	}
+		}//End is pw_load connected
+	}//End powerflow cycling check
 	return t2;
 }
 //////////////////////////////////////////////////////////////////////////

@@ -29,7 +29,8 @@ public:
 	complex seq_mat[3];								///<The matrix containing the sequence voltages
 	double distribution_real_energy;
 	double base_power;
-	int has_parent;
+	double power_convergence_value;					///Threshold where convergence is assumed achieved for pw_load-connected items
+	int has_parent;									///0 = sequence conversion, 1 = pw_load connected, 2 = normal node
 private:
 	complex reference_number;						///<The angle to shift the sequence voltages by to shift the matrix by
 	complex transformation_matrix[3][3];			///<the transformation matrix that converts sequence voltages to phase voltages
@@ -43,6 +44,7 @@ private:
 	complex *pConstantPowerLoad;
 	complex *pConstantCurrentLoad;
 	complex *pConstantImpedanceLoad;
+	double *pTransNominalVoltage;					/// Transmission nominal voltage
 public:
 	static CLASS *oclass;
 	static CLASS *pclass;
@@ -54,6 +56,7 @@ public:
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 	void fetch_complex(complex **prop, char *name, OBJECT *parent);
+	void fetch_double(double **prop, char *name, OBJECT *parent);
 	int isa(char *classname);
 };
 
