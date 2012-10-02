@@ -365,6 +365,7 @@ int pw_model::isa(char *classname){
  **/
 int pw_model::finalize(){
 	_variant_t output;
+	HRESULT result;
 
 	output = A->CloseCase();
 	if(0 == check_COM_output(output)){
@@ -372,8 +373,8 @@ int pw_model::finalize(){
 		return 0;
 	}
 
-	output = A->Release();
-	if(0 == check_COM_output(output)){
+	result = A->Release();
+	if(S_OK != result){
 		gl_error("Release() failed");
 		return 0;
 	}
