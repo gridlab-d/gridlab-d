@@ -30,7 +30,6 @@ public:
 
 public:
 	//	inputs
-	GL_ATOMIC(OBJECT *, model);
 	GL_ATOMIC(int32, powerworld_bus_num);
 	GL_STRING(char1024, powerworld_load_id);
 	GL_ATOMIC(double, power_threshold);

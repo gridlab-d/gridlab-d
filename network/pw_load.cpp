@@ -86,7 +86,6 @@ pw_load::pw_load(MODULE *module)
 
 		defaults = this;
 		if (gl_publish_variable(oclass,
-			PT_object, "model", get_model_offset(),PT_DESCRIPTION, "pw_model object for the PowerWorld model this load is in",
 			PT_int32, "powerworld_bus_num", get_powerworld_bus_num_offset(),PT_DESCRIPTION, "bus_num key field of the load",
 			PT_char1024, "powerworld_load_id", get_powerworld_load_id_offset(),PT_DESCRIPTION, "load_id key field of the load",
 			PT_double, "power_threshold[MVA]", get_power_threshold_offset(),PT_DESCRIPTION, "power threshold for this object to trigger a model update",
@@ -124,14 +123,11 @@ int pw_load::get_powerworld_busangle(){
 	_variant_t HUGEP *presults, *pvariant;
 	HRESULT hr;
 	SAFEARRAYBOUND bounds[1];
-	pw_model *cModel;
 	_variant_t fields, values, results;
 	char *tempstr = 0;
 	BSTR tempbstr = 0;
 
 	double load_angle = 0.0;
-
-	cModel = OBJECTDATA(model, pw_model);
 
 //	gl_output("get_powerworld_nomvolt(): before 1 mw = %f, mva = (%f, %f)", this->pw_load_mw, this->pw_load_mva.Re(), this->pw_load_mva.Im());
 
@@ -229,14 +225,11 @@ int pw_load::get_powerworld_nomvolt(){
 	_variant_t HUGEP *presults, *pvariant;
 	HRESULT hr;
 	SAFEARRAYBOUND bounds[1];
-	pw_model *cModel;
 	_variant_t fields, values, results;
 	char *tempstr = 0;
 	BSTR tempbstr = 0;
 
 	double load_bnv = 0.0;
-
-	cModel = OBJECTDATA(model, pw_model);
 
 //	gl_output("get_powerworld_nomvolt(): before 1 mw = %f, mva = (%f, %f)", this->pw_load_mw, this->pw_load_mva.Re(), this->pw_load_mva.Im());
 
@@ -341,15 +334,12 @@ int pw_load::get_powerworld_voltage(){
 	_variant_t HUGEP *presults, *pvariant;
 	HRESULT hr;
 	SAFEARRAYBOUND bounds[1];
-	pw_model *cModel;
 	_variant_t fields, values, results;
 	char *tempstr = 0;
 	BSTR tempbstr = 0;
 
 	double load_voltage_d = 0.0;
 	double load_mva = 0.0, load_mvr = 0.0, load_mw = 0.0;
-
-	cModel = OBJECTDATA(model, pw_model);
 
 //	gl_output("get_voltage(): before 1 mw = %f, mva = (%f, %f)", this->pw_load_mw, this->pw_load_mva.Re(), this->pw_load_mva.Im());
 
@@ -470,11 +460,8 @@ int pw_load::post_powerworld_current(){
 	_variant_t HUGEP *presults, *pvariant;
 	HRESULT hr;
 	SAFEARRAYBOUND bounds[1];
-	pw_model *cModel;
 	_variant_t fields, values, results;
 	BSTR tempbstr;
-
-	cModel = OBJECTDATA(model, pw_model);
 
 	try {
 		ISimulatorAutoPtr SimAuto(cModel->A);
@@ -565,32 +552,32 @@ int pw_load::init(OBJECT *parent){
 //	VARIANT *plistNameArray, *vlistNameArray; // slightly inaccurate nomenclature but aiming for consistency
 
 	// defer on model object
-	if(0 == model){
+	if(0 == parent){
 		char objname[256];
-		gl_error("pw_load::init(): object \'%s\' does not specify a model object", gl_name(model, objname, 255));
+		gl_error("pw_load::init(): object \'%s\' does not specify a parent model object", gl_name(parent, objname, 255));
 		/* TROUBLESHOOT
-			pw_load objects require that a model object is specified, refering to a pw_model object.
+			pw_load objects require that a parent object is specified, refering to a pw_model object.
 		 */
 		return 0;
 	}
 
-	if(!gl_object_isa(model, "pw_model")){
+	if(!gl_object_isa(parent, "pw_model")){
 		char objname[256], modelname[256];
-		gl_error("pw_load::init(): object \'%s\' specifies a model object \'%s\' that is not a pw_model object", gl_name(model, objname, 255), gl_name(model, modelname, 255));
+		gl_error("pw_load::init(): object \'%s\' specifies a parent object \'%s\' that is not a pw_model object", gl_name(parent, objname, 255), gl_name(parent, modelname, 255));
 		/* TROUBLESHOOT
-			pw_load objects require that the specified model object refers to a pw_model object.  Other types are not supported.
+			pw_load objects require that the specified parent object refers to a pw_model object.  Other types are not supported.
 		 */
 		return 0;
 	}
 
-	if((model->flags & OF_INIT) != OF_INIT){
+	if((parent->flags & OF_INIT) != OF_INIT){
 		char objname[256];
-		gl_verbose("pw_load::init(): deferring initialization on %s", gl_name(model, objname, 255));
+		gl_verbose("pw_load::init(): deferring initialization on %s", gl_name(parent, objname, 255));
 		return 2; // defer
 	}
 
 	// capture the model class pointer, we'll need it for later
-	cModel = OBJECTDATA(model, pw_model);
+	cModel = OBJECTDATA(parent, pw_model);
 
 	// must have bus_num and load_id
 	if(powerworld_bus_num < 0){
@@ -699,7 +686,8 @@ TIMESTAMP pw_load::sync(TIMESTAMP t1){
 	power_diff = fabs(z_diff) + fabs(i_diff) + fabs(p_diff);
 	// @TODO once we hook the substation up, need to verify that the flag isn't set for adequately small changes
 	if(power_diff > power_threshold){
-		cModel->set_update_flag(true, gld_wlock(model));
+		OBJECT *obj = OBJECTHDR(this);
+		cModel->set_update_flag(true, gld_wlock(obj->parent));
 
 	}
 	return TS_NEVER;
