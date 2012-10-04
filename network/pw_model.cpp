@@ -346,7 +346,7 @@ TIMESTAMP pw_model::presync(TIMESTAMP t1){
 TIMESTAMP pw_model::sync(TIMESTAMP t1){
 	OBJECT *hdr = OBJECTHDR(this);
 	if(update_flag){
-		return hdr->clock;
+		return t1;
 	}
 	return TS_NEVER;
 }
