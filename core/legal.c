@@ -53,7 +53,7 @@
 	Eldorado		Version 2.1 originated at PNNL September 2009
 	Four Corners	Version 2.2 originated at PNNL November 2010
 	Grizzly			Version 2.3 originated at PNNL November 2011
-	Hassyampa		Version 3.0 originated at PNNL November 2011
+	Hassayampa		Version 3.0 originated at PNNL November 2011
 	Hatwai
 	Jojoba
 	Keeler
