@@ -250,7 +250,7 @@ MTI *mti_init(const char *name, MTIFUNCTIONS *fn, size_t minitems)
 
 int mti_run(MTIDATA result, MTI *mti, MTIDATA input)
 {
-	clock_t t0 = clock();
+	clock_t t0 = exec_clock();
 	mti->fn->set(result,NULL);
 
 	/* no update required */
@@ -303,6 +303,6 @@ int mti_run(MTIDATA result, MTI *mti, MTIDATA input)
 		mti->fn->gather(result,mti->output);
 		mti_debug(mti,"%d iterators completed", mti->n_processes);
 	}
-	mti->runtime += clock() - t0;
+	mti->runtime += exec_clock() - t0;
 	return 1;
 }

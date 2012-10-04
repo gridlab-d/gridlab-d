@@ -928,7 +928,7 @@ TIMESTAMP loadshape_syncall(TIMESTAMP t1)
 	static unsigned int n_threads_ls=0;
 	static LOADSHAPESYNCDATA *thread_ls = NULL;
 	TIMESTAMP t2 = TS_NEVER;
-	clock_t ts = clock();
+	clock_t ts = exec_clock();
 
 	// skip loadshape_syncall if there's no loadshape in the glm
 	if (n_shapes == 0)
@@ -1045,7 +1045,7 @@ TIMESTAMP loadshape_syncall(TIMESTAMP t1)
 		if (next_t2_ls<t2) t2=next_t2_ls;
 	}
 
-	loadshape_synctime += clock() - ts;
+	loadshape_synctime += exec_clock() - ts;
 	return t2;
 }
 

@@ -1669,7 +1669,7 @@ STATUS exec_start(void)
 		return SUCCESS;
 
 	//sjin: GetMachineCycleCount
-	cstart = clock();
+	cstart = exec_clock();
 
 	/* main loop exception handler */
 	TRY {
@@ -2000,7 +2000,7 @@ STATUS exec_start(void)
 	}
 
 	//sjin: GetMachineCycleCount
-	cend = clock();
+	cend = exec_clock();
 
 	fnl_rv = finalize_all();
 	if(FAILED == fnl_rv){

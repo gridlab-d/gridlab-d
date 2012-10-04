@@ -243,7 +243,7 @@ TIMESTAMP enduse_syncall(TIMESTAMP t1)
 	static unsigned int n_threads_ed=0;
 	static ENDUSESYNCDATA *thread_ed = NULL;
 	TIMESTAMP t2 = TS_NEVER;
-	clock_t ts = clock();
+	clock_t ts = exec_clock();
 	
 	// skip enduse_syncall if there's no enduse in the glm
 	if (n_enduses == 0)
@@ -353,18 +353,18 @@ TIMESTAMP enduse_syncall(TIMESTAMP t1)
 		if (next_t2_ed<t2) t2=next_t2_ed;
 	}
 
-	enduse_synctime += clock() - ts;
+	enduse_synctime += exec_clock() - ts;
 	return t2;
 
 	/*enduse *e;
 	TIMESTAMP t2 = TS_NEVER;
-	clock_t start = clock();
+	clock_t start = exec_clock();
 	for (e=enduse_list; e!=NULL; e=e->next)
 	{
 		TIMESTAMP t3 = enduse_sync(e,PC_PRETOPDOWN,t1);
 		if (t3<t2) t2 = t3;
 	}
-	enduse_synctime += clock() - start;
+	enduse_synctime += exec_clock() - start;
 	return t2;*/
 }
 

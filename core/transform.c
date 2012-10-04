@@ -208,7 +208,7 @@ clock_t transform_synctime = 0;
 TIMESTAMP transform_syncall(TIMESTAMP t1, TRANSFORMSOURCE restrict)
 {
 	TRANSFORM *xform;
-	clock_t start = clock();
+	clock_t start = exec_clock();
 	TIMESTAMP t2 = TS_NEVER;
 
 	/* process the schedule transformations */
@@ -234,6 +234,6 @@ TIMESTAMP transform_syncall(TIMESTAMP t1, TRANSFORMSOURCE restrict)
 			}
 		}
 	}
-	transform_synctime += clock() - start;
+	transform_synctime += exec_clock() - start;
 	return t2;
 }

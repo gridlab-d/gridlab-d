@@ -26,6 +26,7 @@
 #include "enduse.h"
 #include "instance.h"
 #include "test.h"
+#include "exec.h"
 
 clock_t loader_time = 0;
 
@@ -1323,11 +1324,11 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 					   in normal more or leaving off the model file name.
 					 */
 				else {
-					clock_t start = clock();
+					clock_t start = exec_clock();
 
 					if (!loadall(*argv))
 						status = FAILED;
-					loader_time += clock() - start;
+					loader_time += exec_clock() - start;
 
 					/* preserve name of first model only */
 					if (strcmp(global_modelname,"")==0)

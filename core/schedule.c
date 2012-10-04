@@ -1067,7 +1067,7 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 	static unsigned int n_threads_sch=0;
 	static SCHEDULESYNCDATA *thread_sch = NULL;
 	TIMESTAMP t2 = TS_NEVER;
-	clock_t ts = clock();
+	clock_t ts = exec_clock();
 
 	// skip schedule_syncall if there's no schedule in the glm
 	if (n_schedules == 0)
@@ -1181,7 +1181,7 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 		if (next_t2_sch<t2) t2=next_t2_sch;
 	}
 
-	schedule_synctime += clock() - ts;
+	schedule_synctime += exec_clock() - ts;
 	return t2;
 }
 

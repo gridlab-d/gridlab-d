@@ -1264,7 +1264,7 @@ void object_profile(OBJECT *obj, OBJECTPROFILEITEM pass, clock_t t)
 {
 	if ( global_profiler==1 )
 	{
-		clock_t dt = clock()-t;
+		clock_t dt = exec_clock()-t;
 		obj->synctime[pass] += dt;
 		wlock(&obj->oclass->profiler.lock);
 		obj->oclass->profiler.count++;
@@ -1361,7 +1361,7 @@ TIMESTAMP object_sync(OBJECT *obj, /**< the object to synchronize */
 					  TIMESTAMP ts, /**< the desire clock to sync to */
 					  PASSCONFIG pass) /**< the pass configuration */
 {
-	clock_t t=clock();
+	clock_t t=exec_clock();
 	TIMESTAMP t2=TS_NEVER;
 	//TIMESTAMP t_start = ts;
 	//TIMESTAMP abs_t2 = ts;
@@ -1426,7 +1426,7 @@ TIMESTAMP object_sync(OBJECT *obj, /**< the object to synchronize */
 
 TIMESTAMP object_heartbeat(OBJECT *obj)
 {
-	clock_t t=clock();
+	clock_t t=exec_clock();
 	TIMESTAMP t1 = obj->oclass->heartbeat ? obj->oclass->heartbeat(obj) : TS_NEVER;
 	object_profile(obj,OPI_HEARTBEAT,t);
 	return t1;
@@ -1439,7 +1439,7 @@ TIMESTAMP object_heartbeat(OBJECT *obj)
  **/
 int object_init(OBJECT *obj) /**< the object to initialize */
 {
-	clock_t t=clock();
+	clock_t t=exec_clock();
 	int rv = 1;
 	obj->clock = global_starttime;
 	if(obj->oclass->init != NULL)
@@ -1459,7 +1459,7 @@ int object_init(OBJECT *obj) /**< the object to initialize */
  **/
 STATUS object_precommit(OBJECT *obj, TIMESTAMP t1)
 {
-	clock_t t=clock();
+	clock_t t=exec_clock();
 	STATUS rv = SUCCESS;
 	if(obj->oclass->precommit != NULL){
 		rv = (STATUS)(*(obj->oclass->precommit))(obj, t1);
@@ -1473,7 +1473,7 @@ STATUS object_precommit(OBJECT *obj, TIMESTAMP t1)
 
 TIMESTAMP object_commit(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
-	clock_t t=clock();
+	clock_t t=exec_clock();
 	TIMESTAMP rv = 1;
 	if(obj->oclass->commit != NULL){
 		rv = (TIMESTAMP)(*(obj->oclass->commit))(obj, t1, t2);
@@ -1493,7 +1493,7 @@ TIMESTAMP object_commit(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
  **/
 STATUS object_finalize(OBJECT *obj)
 {
-	clock_t t=clock();
+	clock_t t=exec_clock();
 	STATUS rv = SUCCESS;
 	if(obj->oclass->finalize != NULL){
 		rv = (STATUS)(*(obj->oclass->finalize))(obj);

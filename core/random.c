@@ -1248,13 +1248,13 @@ TIMESTAMP randomvar_syncall(TIMESTAMP t1)
 	{
 		randomvar *var;
 		TIMESTAMP t2 = TS_NEVER;
-		clock_t ts = clock();
+		clock_t ts = exec_clock();
 		for (var=randomvar_list; var!=NULL; var=var->next)
 		{
 			TIMESTAMP t3 = randomvar_sync(var,t1);
 			if ( absolute_timestamp(t3)<absolute_timestamp(t2) ) t2 = t3;
 		}
-		randomvar_synctime += clock() - ts;
+		randomvar_synctime += exec_clock() - ts;
 		return t2!=TS_NEVER ? -absolute_timestamp(t2) : TS_NEVER;
 	}
 	else
