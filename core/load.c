@@ -6418,7 +6418,7 @@ TECHNOLOGYREADINESSLEVEL calculate_trl(void)
  **/
 STATUS loadall(char *file){
 	char *buffer = NULL, *p = NULL;
-	char *ext = strrchr(file,'.');
+	char *ext = file?strrchr(file,'.'):NULL;
 	unsigned int old_obj_count = object_get_count();
 	unsigned int new_obj_count = 0;
 //	unsigned int i;
@@ -6467,6 +6467,10 @@ STATUS loadall(char *file){
 				return FAILED;
 		}
 	}
+
+	/* if nothing requested only config files are loaded */
+	if ( file==NULL )
+		return SUCCESS;
 
 	/* handle default extension */
 	strcpy(filename,file);
