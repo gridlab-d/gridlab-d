@@ -58,7 +58,9 @@ gridlabd_bin_SOURCES = \
 	property.c property.h \
 	random.c random.h \
 	realtime.c realtime.h \
+	sanitize.cpp sanitize.h \
 	save.c save.h \
+	setup.cpp setup.h \
 	schedule.c schedule.h \
 	server.c server.h \
 	stream.c stream.h \

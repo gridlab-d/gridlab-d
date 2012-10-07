@@ -8,6 +8,8 @@
 #ifndef _CONSOLE_H
 #define _CONSOLE_H
 
+#define KEY_ESC 27
+
 /* simulate needed curses functions in Windows */
 #ifdef WIN32
 HANDLE console = NULL;
@@ -21,7 +23,6 @@ HANDLE keyboard = NULL;
 #define KEY_RIGHT VK_RIGHT
 #define KEY_ENTER 13
 #define KEY_TAB 9
-#define KEY_ESC 27
 #define KEY_DEL 892
 int attr = 0;
 void initscr(void)
@@ -172,19 +173,20 @@ long getheight(void)
 		return -1;
 }
 #else
+#include <sys/ioctl.h>
 long getwidth(void)
 {
-	struct winsize ws;
+	struct ttysize ws;
 	if ( ioctl(1,TIOCGWINSZ,&ws)!=-1 )
-		return ws.ws_col;
+		return ws.ts_cols;
 	else
 		return -1;
 }
 long getheight(void)
 {
-	struct winsize ws;
+	struct ttysize ws;
 	if ( ioctl(1,TIOCGWINSZ,&ws)!=-1 )
-		return ws.ws_row;
+		return ws.ts_lines;
 	else
 		return -1;
 }
