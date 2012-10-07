@@ -2,8 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="mysql"
-	ProjectGUID="{C82B6F34-018E-4FAD-BDF6-7BAAD4E31E0D}"
+	Name="debug"
+	ProjectGUID="{FDCB0E8B-550C-449E-A810-5346F94B19F2}"
 	RootNamespace="gridlabd"
 	Keyword="Win32Proj"
 	>
@@ -44,8 +44,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\core;&quot;C:\Program Files\MySQL\MySQL Connector C\include&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE;_TESTING;HAVE_MYSQL"
+				AdditionalIncludeDirectories="..\core;"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE;_TESTING"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -66,9 +66,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libmysql.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;&quot;$(SolutionDir)$(PlatformName)\$(ConfigurationName)&quot;;&quot;c:\Program Files\MySQL\MySQL Connector C\lib\opt&quot;"
+				AdditionalLibraryDirectories="$(OutDir)"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -125,8 +124,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\core;c:\Program Files\MySQL\MySQL Connector C\include"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE;_TESTING;HAVE_MYSQL"
+				AdditionalIncludeDirectories="..\core;"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE;_TESTING"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -147,9 +146,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libmysql.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;&quot;$(SolutionDir)$(PlatformName)\$(ConfigurationName)&quot;;&quot;C:\Program Files\MySQL\MySQL Connector C\lib\opt&quot;"
+				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;&quot;$(SolutionDir)$(PlatformName)\$(ConfigurationName)&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="17"
@@ -206,8 +204,8 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\core;&quot;C:\Program Files\MySQL\MySQL Connector C\include&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE;_NO_CPPUNIT;HAVE_MYSQL"
+				AdditionalIncludeDirectories="..\core;"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE;_NO_CPPUNIT"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -226,9 +224,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libmysql.lib"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;&quot;$(SolutionDir)$(PlatformName)\$(ConfigurationName)&quot;;&quot;c:\Program Files\MySQL\MySQL Connector C\lib\opt&quot;"
+				AdditionalLibraryDirectories="$(OutDir)"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -288,8 +285,8 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\core;&quot;C:\Program Files\MySQL\MySQL Connector C\include&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE;_NO_CPPUNIT;HAVE_MYSQL"
+				AdditionalIncludeDirectories="..\core;"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE;_NO_CPPUNIT"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -308,9 +305,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libmysql.lib"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;&quot;$(SolutionDir)$(PlatformName)\$(ConfigurationName)&quot;;&quot;c:\Program Files\MySQL\MySQL Connector C\lib\opt&quot;"
+				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;&quot;$(SolutionDir)$(PlatformName)\$(ConfigurationName)&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -426,7 +422,6 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories=""
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -476,11 +471,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\collector.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\database.cpp"
+				RelativePath=".\debug.cpp"
 				>
 			</File>
 			<File
@@ -491,14 +482,6 @@
 				RelativePath=".\main.cpp"
 				>
 			</File>
-			<File
-				RelativePath=".\player.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\recorder.cpp"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -506,19 +489,7 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\collector.h"
-				>
-			</File>
-			<File
-				RelativePath=".\database.h"
-				>
-			</File>
-			<File
-				RelativePath=".\player.h"
-				>
-			</File>
-			<File
-				RelativePath=".\recorder.h"
+				RelativePath=".\debug.h"
 				>
 			</File>
 		</Filter>
@@ -526,33 +497,13 @@
 			Name="Test files"
 			>
 			<File
-				RelativePath=".\autotest\test_mysql_collector.glm"
+				RelativePath=".\test\test_debug.glm"
 				>
 			</File>
-			<File
-				RelativePath=".\autotest\test_mysql_player.glm"
+			<Filter
+				Name="Autotest"
 				>
-			</File>
-			<File
-				RelativePath=".\autotest\test_mysql_player_init.sql"
-				>
-			</File>
-			<File
-				RelativePath=".\autotest\test_mysql_recorder.glm"
-				>
-			</File>
-			<File
-				RelativePath=".\autotest\test_mysql_recorder_init.sql"
-				>
-			</File>
-			<File
-				RelativePath=".\autotest\test_mysql_recorder_sync.sql"
-				>
-			</File>
-			<File
-				RelativePath=".\autotest\test_mysql_recorder_term.sql"
-				>
-			</File>
+			</Filter>
 		</Filter>
 		<File
 			RelativePath=".\Makefile.am"

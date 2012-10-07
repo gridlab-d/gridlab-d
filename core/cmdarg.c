@@ -26,6 +26,8 @@
 #include "enduse.h"
 #include "instance.h"
 #include "test.h"
+#include "setup.h"
+#include "sanitize.h"
 #include "exec.h"
 
 clock_t loader_time = 0;
@@ -1110,6 +1112,7 @@ static int workdir(int argc, char *argv[])
 	return 1;
 }
 
+#include "job.h"
 #include "validate.h"
 
 /*********************************************/
@@ -1144,6 +1147,7 @@ static CMDARG main[] = {
 	{"copyright",	NULL,	copyright,		NULL, "Displays copyright" },
 	{"license",		NULL,	license,		NULL, "Displays the license agreement" },
 	{"version",		"V",	version,		NULL, "Displays the version information" },
+	{"setup",		NULL,	setup,			NULL, "Open simulation setup screen" },
 
 	{NULL,NULL,NULL,NULL, "Test processes"},
 	{"dsttest",		NULL,	dsttest,		NULL, "Perform daylight savings rule test" },
@@ -1157,11 +1161,12 @@ static CMDARG main[] = {
 	{"test",		NULL,	test,			"<module>", "Perform unit test of module (deprecated)" },
 	{"testall",		NULL,	testall,		"=<filename>", "Perform tests of modules listed in file" },
 	{"unitstest",	NULL,	unitstest,		NULL, "Perform unit conversion system test" },
-	{"validate",	NULL,	validate,		NULL, "Perform model validation check" },
+	{"validate",	NULL,	validate,		"...", "Perform model validation check" },
 
 	{NULL,NULL,NULL,NULL, "File and I/O Formatting"},
 	{"kml",			NULL,	kml,			"[=<filename>]", "Output to KML (Google Earth) file of model (only supported by some modules)" },
 	{"stream",		NULL,	stream,			NULL, "Toggles streaming I/O" },
+	{"sanitize",	NULL,	sanitize,		"<options> <indexfile> <outputfile>", "Output a sanitized version of the GLM model"},
 	{"xmlencoding",	NULL,	xmlencoding,	"8|16|32", "Set the XML encoding system" },
 	{"xmlstrict",	NULL,	xmlstrict,		NULL, "Toggle strict XML formatting (default is enabled)" },
 	{"xsd",			NULL,	xsd,			"[module[:class]]", "Prints the XSD of a module or class" },
@@ -1176,6 +1181,7 @@ static CMDARG main[] = {
 	{NULL,NULL,NULL,NULL, "Process control"},
 	{"pidfile",		NULL,	pidfile,		"[=<filename>]", "Set the process ID file (default is gridlabd.pid)" },
 	{"threadcount", "T",	threadcount,	"<n>", "Set the maximum number of threads allowed" },
+	{"job",			NULL,	job,			"...", "Start a job"},
 
 	{NULL,NULL,NULL,NULL, "System options"},
 	{"avlbalance",	NULL,	avlbalance,		NULL, "Toggles automatic balancing of object index" },
@@ -1324,11 +1330,11 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 					   in normal more or leaving off the model file name.
 					 */
 				else {
-					clock_t start = exec_clock();
+					clock_t start = clock();
 
 					if (!loadall(*argv))
 						status = FAILED;
-					loader_time += exec_clock() - start;
+					loader_time += clock() - start;
 
 					/* preserve name of first model only */
 					if (strcmp(global_modelname,"")==0)

@@ -35,6 +35,7 @@ gridlabd_bin_SOURCES = \
 	instance_cnx.c instance_cnx.h \
 	instance_slave.c instance_slave.h \
 	interpolate.c interpolate.h \
+	job.cpp job.h \
 	kill.c kill.h \
 	kml.c kml.h \
 	legal.c legal.h \

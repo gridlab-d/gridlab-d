@@ -625,6 +625,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\job.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\kill.c"
 				>
 			</File>
@@ -709,6 +713,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\sanitize.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\save.c"
 				>
 			</File>
@@ -718,6 +726,10 @@
 			</File>
 			<File
 				RelativePath=".\server.c"
+				>
+			</File>
+			<File
+				RelativePath=".\setup.cpp"
 				>
 			</File>
 			<File
@@ -742,6 +754,10 @@
 			</File>
 			<File
 				RelativePath=".\transform.c"
+				>
+			</File>
+			<File
+				RelativePath=".\ufile.c"
 				>
 			</File>
 			<File
@@ -780,6 +796,10 @@
 			</File>
 			<File
 				RelativePath=".\config.h"
+				>
+			</File>
+			<File
+				RelativePath=".\console.h"
 				>
 			</File>
 			<File
@@ -848,6 +868,10 @@
 			</File>
 			<File
 				RelativePath=".\interpolate.h"
+				>
+			</File>
+			<File
+				RelativePath=".\job.h"
 				>
 			</File>
 			<File
@@ -935,6 +959,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\sanitize.h"
+				>
+			</File>
+			<File
 				RelativePath=".\save.h"
 				>
 			</File>
@@ -944,6 +972,10 @@
 			</File>
 			<File
 				RelativePath=".\server.h"
+				>
+			</File>
+			<File
+				RelativePath=".\setup.h"
 				>
 			</File>
 			<File
@@ -975,6 +1007,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ufile.h"
+				>
+			</File>
+			<File
 				RelativePath=".\unit.h"
 				>
 			</File>
@@ -999,15 +1035,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\asm\x86\cmpxchg.h"
-				>
-			</File>
-			<File
 				RelativePath=".\asm\x86_64\cmpxchg.h"
 				>
 			</File>
 			<File
 				RelativePath=".\asm\cmpxchg.h"
+				>
+			</File>
+			<File
+				RelativePath=".\asm\x86\cmpxchg.h"
 				>
 			</File>
 			<File
@@ -1034,11 +1070,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\makefile.win"
+					RelativePath=".\makefile.win"
 					>
 				</File>
 				<File
-					RelativePath=".\makefile.win"
+					RelativePath="..\makefile.win"
 					>
 				</File>
 			</Filter>
@@ -1314,6 +1350,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\autotest\test_locale.glm"
+					>
+				</File>
+				<File
 					RelativePath=".\autotest\test_opt_alternate_syntax.glm"
 					>
 				</File>
@@ -1343,6 +1383,18 @@
 				</File>
 				<File
 					RelativePath=".\autotest\test_schedule_xform_external.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_script.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_script_err.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_script_event.glm"
 					>
 				</File>
 				<File

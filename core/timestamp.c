@@ -168,6 +168,9 @@ int local_datetime(TIMESTAMP ts, DATETIME *dt)
 	static DATETIME old_dt;
 #endif
 
+	if( ts == TS_NEVER || ts==TS_ZERO )
+		return 0;
+
 	if( dt==NULL || ts<TS_ZERO || ts>TS_MAX ) /* no buffer or timestamp out of range */
 	{
 		output_error("local_datetime(ts=%lli,...): invalid local_datetime request",ts);
@@ -197,10 +200,6 @@ int local_datetime(TIMESTAMP ts, DATETIME *dt)
 		output_error("local_datetime(ts=%lli,...): invalid local_datetime request",ts);
 		return 0;
 	}
-
-
-	if(ts == TS_NEVER)
-		return 0;
 
 	/* ts is valid */
 	dt->timestamp = ts;

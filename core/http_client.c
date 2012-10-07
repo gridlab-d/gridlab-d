@@ -3,30 +3,12 @@
 
 #include <stdio.h>
 
-#ifdef WIN32
-	#include <winsock2.h>
-#else
-	#include <sys/types.h>
-	#include <sys/socket.h>
-	#include <netinet/in.h>
-	#include <arpa/inet.h>
-	#include <unistd.h>
-	#include <sys/errno.h>
-	#include <netdb.h>
-	#define SOCKET int
-	#define INVALID_SOCKET (-1)
-#endif
 
 #include "output.h"
 #include "http_client.h"
 #include "server.h"
 
-typedef struct s_http {
-	SOCKET sd;
-	size_t len;
-	size_t pos;
-	char *buf;
-} HTTP;
+
 HTTP* hopen(char *url, int maxlen)
 {
 	struct sockaddr_in serv_addr;

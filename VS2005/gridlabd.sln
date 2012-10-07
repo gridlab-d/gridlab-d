@@ -107,9 +107,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "control", "..\control\contr
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glxmatlab", "..\core\link\matlab\matlab.vcproj", "{48DEDABB-85C9-4417-9A60-F74C30991D4D}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "solvers", "..\core\solvers\solvers.vcproj", "{9FC21883-FA66-495E-B72D-BBEE5AF1FF54}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glsolvers", "..\core\solvers\solvers.vcproj", "{9FC21883-FA66-495E-B72D-BBEE5AF1FF54}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mysql", "..\mysql\mysql.vcproj", "{C82B6F34-018E-4FAD-BDF6-7BAAD4E31E0D}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "debug", "..\debug\debug.vcproj", "{FDCB0E8B-550C-449E-A810-5346F94B19F2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -563,6 +565,22 @@ Global
 		{C82B6F34-018E-4FAD-BDF6-7BAAD4E31E0D}.Release|Win32.Build.0 = Release|Win32
 		{C82B6F34-018E-4FAD-BDF6-7BAAD4E31E0D}.Release|x64.ActiveCfg = Release|x64
 		{C82B6F34-018E-4FAD-BDF6-7BAAD4E31E0D}.Release|x64.Build.0 = Release|x64
+		{FDCB0E8B-550C-449E-A810-5346F94B19F2}.Debug|Win32.ActiveCfg = Debug|Win32
+		{FDCB0E8B-550C-449E-A810-5346F94B19F2}.Debug|Win32.Build.0 = Debug|Win32
+		{FDCB0E8B-550C-449E-A810-5346F94B19F2}.Debug|x64.ActiveCfg = Debug|x64
+		{FDCB0E8B-550C-449E-A810-5346F94B19F2}.Debug|x64.Build.0 = Debug|x64
+		{FDCB0E8B-550C-449E-A810-5346F94B19F2}.MatlabDebug|Win32.ActiveCfg = Debug|Win32
+		{FDCB0E8B-550C-449E-A810-5346F94B19F2}.MatlabDebug|Win32.Build.0 = Debug|Win32
+		{FDCB0E8B-550C-449E-A810-5346F94B19F2}.MatlabDebug|x64.ActiveCfg = Debug|x64
+		{FDCB0E8B-550C-449E-A810-5346F94B19F2}.MatlabDebug|x64.Build.0 = Debug|x64
+		{FDCB0E8B-550C-449E-A810-5346F94B19F2}.QuickDebug|Win32.ActiveCfg = QuickDebug|Win32
+		{FDCB0E8B-550C-449E-A810-5346F94B19F2}.QuickDebug|Win32.Build.0 = QuickDebug|Win32
+		{FDCB0E8B-550C-449E-A810-5346F94B19F2}.QuickDebug|x64.ActiveCfg = QuickDebug|x64
+		{FDCB0E8B-550C-449E-A810-5346F94B19F2}.QuickDebug|x64.Build.0 = QuickDebug|x64
+		{FDCB0E8B-550C-449E-A810-5346F94B19F2}.Release|Win32.ActiveCfg = Release|Win32
+		{FDCB0E8B-550C-449E-A810-5346F94B19F2}.Release|Win32.Build.0 = Release|Win32
+		{FDCB0E8B-550C-449E-A810-5346F94B19F2}.Release|x64.ActiveCfg = Release|x64
+		{FDCB0E8B-550C-449E-A810-5346F94B19F2}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

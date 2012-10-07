@@ -1208,8 +1208,9 @@ public: // status accessors
 	inline bool is_valid(void) { return buf!=NULL; };
 	inline bool is_null(void) { return is_valid() && buf->str==NULL; };
 public: // read accessors
-	inline const char* get_string(void) { return buf ? buf->str : NULL; };
-	inline size_t get_length(void) { return buf ? buf->len : -1; };
+	inline const char* get_buffer(void) { return buf ? buf->str : NULL; };
+	inline size_t get_size(void) { return buf ? buf->len : -1; };
+	inline size_t get_length(void) { return buf && buf->str ? strlen(buf->str) : -1; };
 public: // write accessors
 	inline void set_string(const char *s) { copy(s); };
 	inline void set_size(size_t n) { fit(n); };
@@ -1247,7 +1248,7 @@ private: // data
 	DATETIME dt;
 public: // constructors
 	gld_clock(void) { callback->time.local_datetime(*(callback->global_clock),&dt); }; 
-	gld_clock(TIMESTAMP ts) { callback->time.local_datetime(ts,&dt); };
+	gld_clock(TIMESTAMP ts) { if ( !callback->time.local_datetime(ts,&dt)) memset(&dt,0,sizeof(dt)); };
 	gld_clock(char *str) { from_string(str); };
 	gld_clock(unsigned short y, unsigned short m=0, unsigned short d=0, unsigned short H=0, unsigned short M=0, unsigned short S=0, unsigned short int ms=0, char *tz=NULL, int dst=-1)
 	{
@@ -1299,6 +1300,17 @@ public: // special functions
 	inline double to_minutes(TIMESTAMP ts=0) { return (dt.timestamp-ts)/60.0 + dt.microsecond*1e-6; };
 	inline double to_seconds(TIMESTAMP ts=0) { return dt.timestamp-ts + dt.microsecond*1e-6; };
 	inline double to_microseconds(TIMESTAMP ts=0) { return (dt.timestamp-ts)*1e6 + dt.microsecond; };
+	inline gld_string get_string(void) 
+	{
+		gld_string res;
+		char *buf = (char*)malloc(64);
+		if ( to_string(buf,64)>=0 )
+		{
+			res = buf;
+			free(buf);
+		}
+		return res;
+	};
 };
 
 class gld_rlock {
@@ -1352,6 +1364,7 @@ public: // read accessors
 	inline gld_class* get_parent(void) { return (gld_class*)core.parent; };
 	inline gld_module* get_module(void) { return (gld_module*)core.module; };
 	inline gld_property* get_first_property(void) { return (gld_property*)core.pmap; };
+	inline gld_property* get_next_property(PROPERTY*p) { PROPERTY *prop=(PROPERTY*)p->next; return ( prop && prop->oclass==&core ) ? (gld_property*)prop : NULL; };
 	inline gld_function* get_first_function(void) { return (gld_function*)core.fmap; };
 	inline TECHNOLOGYREADINESSLEVEL get_trl(void) { return core.trl; };
 
@@ -1523,7 +1536,7 @@ inline bool hasbits(unsigned long flags, unsigned int bits) { return (flags&bits
 
 class gld_object {
 public:
-	inline OBJECT *my() { return (((OBJECT*)this)-1); }
+	inline OBJECT *my() { return this?(((OBJECT*)this)-1):NULL; }
 public:
 	inline gld_object &operator=(gld_object&o) { exception("copy constructor is forbidden on gld_object"); };
 
@@ -1573,6 +1586,8 @@ protected: // locking (others)
 	inline void wunlock(OBJECT *obj) { ::wunlock(&obj->lock); };
 
 protected: // special functions
+	inline bool operator == (gld_object *o) { return o!=NULL && my()==o->my(); };
+	inline bool operator == (OBJECT *o) { return o!=NULL && my()==o; };
 
 public: // member lookup functions
 	inline PROPERTY* get_property(char *name, PROPERTYSTRUCT *pstruct=NULL) { return callback->properties.get_property(my(),name,pstruct); };
@@ -1640,6 +1655,7 @@ public: // constructors/casts
 			pstruct.prop= (v?v->prop:NULL);
 		} 
 	};
+	inline gld_property(OBJECT *o) : obj(o), pstruct(nullpstruct) { pstruct.prop=o->oclass->pmap; };
 	inline gld_property(OBJECT *o, PROPERTY *p) : obj(o), pstruct(nullpstruct) { pstruct.prop=p; };
 	inline gld_property(GLOBALVAR *v) : obj(NULL), pstruct(nullpstruct) { pstruct.prop=v->prop; };
 	inline gld_property(char *n) : obj(NULL), pstruct(nullpstruct) 
@@ -1738,8 +1754,8 @@ public: // special operations
 	};
 
 public: // iterators
-	inline bool is_last(void) { return pstruct.prop==NULL || pstruct.prop->next==NULL; };
-	inline PROPERTY* get_next(void) { return pstruct.prop->next; };
+	inline bool is_last(void) { return pstruct.prop==NULL || pstruct.prop->next==NULL || pstruct.prop->oclass!=pstruct.prop->next->oclass; };
+	inline PROPERTY* get_next(void) { return is_last() ? NULL : pstruct.prop->next; };
 
 public: // comparators
 	inline bool operator == (char* a) { return compare(TCOP_EQ,a,NULL); };
@@ -1772,6 +1788,7 @@ public: // constructors
 	inline gld_global(void) : var(NULL) {};
 	inline gld_global(GLOBALVAR *v) : var(v) {};
 	inline gld_global(char *n) { var=callback->global.find(n); };
+	inline gld_global(char *n, PROPERTYTYPE t, void *p) { var=callback->global.create(n,t,p,NULL); };
 
 public: // read accessors
 	inline operator GLOBALVAR*(void) { return var; };
@@ -1800,6 +1817,8 @@ public: // read accessors
 
 public: // write accessors
 	inline size_t from_string(char *bp) { if (!var) return -1; gld_property p(var); return p.from_string(bp); };
+	inline bool get(char *n) { var=callback->global.find(n); return var!=NULL; };
+	inline bool create(char *n, PROPERTYTYPE t, void *p) { var=callback->global.create(n,t,p,NULL); return var!=NULL; };
 
 public: // external accessors
 	// TODO
@@ -1881,6 +1900,12 @@ CDECL int dllkill() __attribute__((destructor));
 CDECL int dllinit() { return 0; }
 CDECL int dllkill() { do_kill(NULL); }
 #endif // !WIN32
+#elif defined CONSOLE
+#ifdef WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
+#include "console.h"
 #endif // DLMAIN
 
 #define EXPORT_CREATE_C(X,C) EXPORT int create_##X(OBJECT **obj, OBJECT *parent) \

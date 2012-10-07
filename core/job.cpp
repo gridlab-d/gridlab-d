@@ -225,40 +225,22 @@ static bool run_job(char *file, double *elapsed_time=NULL)
 		output_error("run_job(char *file='%s'): file is not a GLM", file);
 		return false;
 	}
-	*ext = '\0'; // remove extension from dir
-	char cwd[1024];
-	getcwd(cwd,sizeof(cwd));	
-	if ( clean && !destroy_dir(dir) )
-	{
-		output_error("run_job(char *file='%s'): unable to destroy test folder", dir);
-		return false;
-	}
-#ifdef WIN32
-	if ( !mkdir(dir) && clean )
-#else
-	if ( !mkdir(dir,0750) && clean )
-#endif
-	{
-		output_error("run_job(char *file='%s'): unable to create test folder", dir);
-		return false;
-	}
 	else
-		output_debug("created test folder '%s'", dir);
-	char out[1024];
-	sprintf(out,"%s/%s.glm",dir,name);
-	if ( !copyfile(file,out) )
 	{
-		output_error("run_job(char *file='%s'): unable to copy to test folder %s", file, dir);
-		return false;
+		static size_t len = 0;
+		char blank[1024];
+		memset(blank,32,len);
+		blank[len]='\0';
+		len = output_raw("%s\rProcessing %s...\r",blank,name)-len; 
 	}
 	int64 dt = exec_clock();
-	unsigned int code = vsystem("%s -W %s %s %s.glm ", 
+	unsigned int code = vsystem("%s %s %s ", 
 #ifdef WIN32
 		_pgmptr,
 #else
 		"gridlabd",
 #endif
-		dir,job_cmdargs, name);
+		job_cmdargs, name);
 	dt = exec_clock() - dt;
 	double t = (double)dt/(double)CLOCKS_PER_SEC;
 	if ( elapsed_time!=NULL ) *elapsed_time = t;
@@ -272,30 +254,30 @@ static bool run_job(char *file, double *elapsed_time=NULL)
 }
 
 /* simple stack to handle directories that need to be processed */
-typedef struct s_dirstack {
+typedef struct s_jobstack {
 	char name[1024];
-	struct s_dirstack *next;
-} DIRLIST;
-static DIRLIST *dirstack = NULL;
-static unsigned int dirlock = 0;
-static void pushdir(char *dir)
+	struct s_jobstack *next;
+} JOBLIST;
+static JOBLIST *jobstack = NULL;
+static unsigned int joblock = 0;
+static void pushjob(char *dir)
 {
-	output_debug("adding %s to process stack", dir);
-	DIRLIST *item = (DIRLIST*)malloc(sizeof(DIRLIST));
+	output_debug("adding %s to job list", dir);
+	JOBLIST *item = (JOBLIST*)malloc(sizeof(JOBLIST));
 	strncpy(item->name,dir,sizeof(item->name)-1);
-	wlock(&dirlock);
-	item->next = dirstack;
-	dirstack = item;
-	wunlock(&dirlock);
+	wlock(&joblock);
+	item->next = jobstack;
+	jobstack = item;
+	wunlock(&joblock);
 }
 /* popped item must be freed after no longer needed */
-static DIRLIST *popdir(void)
+static JOBLIST *popjob(void)
 {
-	rlock(&dirlock);
-	DIRLIST *item = dirstack;
-	if ( dirstack ) dirstack = dirstack->next;
-	runlock(&dirlock);
-	output_debug("pulling %s from process stack", item->name);
+	rlock(&joblock);
+	JOBLIST *item = jobstack;
+	if ( jobstack ) jobstack = jobstack->next;
+	runlock(&joblock);
+	output_debug("pulling %s from job list", item->name);
 	return item;
 }
 
@@ -304,9 +286,9 @@ void *(run_job_proc)(void *arg)
 {
 	size_t id = (size_t)arg;
 	output_debug("starting run_test_proc id %d", id);
-	DIRLIST *item;
+	JOBLIST *item;
 	bool passed = true;
-	while ( (item=popdir())!=NULL )
+	while ( (item=popjob())!=NULL )
 	{
 		output_debug("process %d picked up '%s'", id, item->name);
 		double dt;
@@ -317,10 +299,10 @@ void *(run_job_proc)(void *arg)
 }
 
 /** routine to process a directory for autotests */
-static size_t process_dir(const char *path, bool runglms=false)
+static size_t process_dir(const char *path)
 {
 	size_t count = 0;
-	output_debug("processing directory '%s' with run of GLMs %s", path, runglms?"enabled":"disabled");
+	output_debug("processing job directory '%s'", path);
 	struct dirent *dp;
 	DIR *dirp = opendir(path);
 	if ( dirp==NULL ) return 0; // nothing to do
@@ -328,11 +310,11 @@ static size_t process_dir(const char *path, bool runglms=false)
 	{
 		char item[1024];
 		size_t len = sprintf(item,"%s/%s",path,dp->d_name);
-		char *ext = strrchr(item,'.');
+		char *ext = strrchr(dp->d_name,'.');
 		if ( dp->d_name[0]=='.' ) continue; // ignore anything that starts with a dot
-		if ( runglms==true && strcmp(ext,".glm")==0 )
+		if ( ext && strcmp(ext,".glm")==0 )
 		{
-			pushdir(item);
+			pushjob(item);
 			count++;
 		}
 	}
@@ -355,7 +337,7 @@ extern "C" int job(int argc, char *argv[])
 	if ( !redirect_found )
 		strcat(job_cmdargs," --redirect all");
 	global_suppress_repeat_messages = 0;
-	output_message("Starting validation test in directory '%s'", global_workdir);
+	output_message("Starting job in directory '%s'", global_workdir);
 	char var[64];
 	if ( global_getvar("clean",var,sizeof(var))!=NULL && atoi(var)!=0 ) clean = true;
 
@@ -364,16 +346,21 @@ extern "C" int job(int argc, char *argv[])
 	global_getvar("mailto",mailto,sizeof(mailto));
 	
 	unsigned int count = process_dir(global_workdir);
+	if ( count==0 )
+	{
+		output_warning("no models found to process job in workdir '%s'", global_workdir);
+		exit(XC_RUNERR);
+	}
 	
 	int n_procs = global_threadcount;
 	if ( n_procs==0 ) n_procs = processor_count();
 	pthread_t *pid = new pthread_t[n_procs];
-	output_debug("starting validation with cmdargs '%s' using %d threads", job_cmdargs, n_procs);
+	output_debug("starting job with cmdargs '%s' using %d threads", job_cmdargs, n_procs);
 	for ( i=0 ; i<min(count,n_procs) ; i++ )
 		pthread_create(&pid[i],NULL,run_job_proc,(void*)i);
 	void *rc;
 	output_debug("begin waiting process");
-	for ( i=0 ; i<n_procs ; i++ )
+	for ( i=0 ; i<min(count,n_procs) ; i++ )
 	{
 		pthread_join(pid[i],&rc);
 		output_debug("process %d done", i);
@@ -385,7 +372,7 @@ extern "C" int job(int argc, char *argv[])
 	if ( final_result==0 )
 		exec_setexitcode(XC_SUCCESS);
 	else
-		exec_setexitcode(XC_TSTERR);
+		exec_setexitcode(XC_RUNERR);
 
 #ifndef WIN32
 #ifdef __APPLE__
@@ -393,12 +380,13 @@ extern "C" int job(int argc, char *argv[])
 #else
 #define MAILER "/bin/mail"
 #endif
-	if ( global_getvar("mailto",mailto,sizeof(mailto))!=NULL 
-		&& vsystem(MAILER " -s 'GridLAB-D Validation Report (%d errors)' %s <%s", 
-			final.get_nerrors(), mailto, report_file)==0 )
-		output_verbose("Mail message send to %s",mailto);
-	else
-		output_error("Error sending notification to %s", mailto);
+// TODO
+//	if ( global_getvar("mailto",mailto,sizeof(mailto))!=NULL 
+//		&& vsystem(MAILER " -s 'GridLAB-D Job Report' %s <%s", 
+//			count, mailto, report_file)==0 )
+//		output_verbose("Mail message send to %s",mailto);
+//	else
+//		output_error("Error sending notification to %s", mailto);
 #endif
 
 	exit(final_result==0 ? XC_SUCCESS : XC_TSTERR);

@@ -66,8 +66,9 @@ typedef enum {
 } OBJECTPROFILEITEM;
 typedef struct s_object_list {
 	OBJECTNUM id; /**< object id number; globally unique */
-	char32 groupid;
 	CLASS *oclass; /**< object class; determine structure of object data */
+	OBJECTNAME name;
+	char32 groupid;
 	struct s_object_list *next; /**< next object in list */
 	struct s_object_list *parent; /**< object's parent; determines rank */
 	OBJECTRANK rank; /**< object's rank */
@@ -78,7 +79,6 @@ typedef struct s_object_list {
 	double latitude, longitude; /**< object's geo-coordinates */
 	TIMESTAMP in_svc, /**< time at which object begin's operating */
 		out_svc; /**< time at which object ceases operating */
-	OBJECTNAME name;
 	clock_t synctime[_OPI_NUMITEMS]; /**< total time used by this object */
 	NAMESPACE *space; /**< namespace of object */
 	unsigned int lock; /**< object lock */
@@ -278,6 +278,12 @@ typedef struct s_callbacks {
 		struct s_object_list *(*get)(struct s_objlist *list,size_t n);
 		int (*apply)(struct s_objlist *list, void *arg, int (*function)(struct s_object_list *,void *,int pos));
 	} objlist;
+	struct {
+		struct {
+			int (*to_string)(double v, char *buffer, size_t size);
+			double (*from_string)(char *buffer);
+		} latitude, longitude;
+	} geography;
 } CALLBACKS; /**< core callback function table */
 
 #ifdef __cplusplus

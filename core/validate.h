@@ -28,7 +28,7 @@ typedef enum {
 	VO_RPTGLM	=0x0200,	///< report includes individual run results
 	VO_RPTALL	=0x0300,	///< report includes everything
 
-	VA_DEFAULT	=VO_TSTALL|VO_RPTALL,
+	VO_DEFAULT	=VO_TSTALL|VO_RPTALL,
 
 } VALIDATEOPTIONS;
 
