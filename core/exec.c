@@ -105,6 +105,29 @@ int exec_getexitcode(void)
 	return exit_code;
 }
 
+const char *exec_getexitcodestr(EXITCODE xc)
+{
+	switch (xc) {
+	case XC_SUCCESS: /* per system(3) */ return "ok";
+	case XC_EXFAILED: /* exec/wait failure - per system(3) */ return "exec/wait failed";
+	case XC_ARGERR: /* error processing command line arguments */ return "bad command";
+	case XC_ENVERR: /* bad environment startup */ return "environment startup failed";
+	case XC_TSTERR: /* test failed */ return "test failed";
+	case XC_USRERR: /* user reject terms of use */ return "user rejected license terms";
+	case XC_RUNERR: /* simulation did not complete as desired */ return "simulation failed";
+	case XC_INIERR: /* initialization failed */ return "initialization failed";
+	case XC_PRCERR: /* process control error */ return "process control error";
+	case XC_SVRKLL: /* server killed */ return "server killed";
+	case XC_IOERR: /* I/O error */ return "I/O error";
+	case XC_SHFAILED: /* shell failure - per system(3) */ return "shell failed";
+	case XC_SIGNAL: /* signal caught - must be or'd with SIG value if known */ return "signal caught";
+	case XC_SIGINT: /* SIGINT caught */ return "interrupt received";
+	case XC_EXCEPTION: /* exception caught */ return "exception caught";
+	default: return "unknown exception";
+	}
+}
+
+
 /** Elapsed wallclock **/
 int64 exec_clock(void)
 {

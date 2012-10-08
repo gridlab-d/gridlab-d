@@ -92,8 +92,8 @@ public:
 	};
 	void inc_access(const char *name) { output_debug("%s folder access failure", name); wlock(); n_access++; wunlock(); };
 	void inc_success(const char *name, int code, double t) { output_error("%s success unexpected, code %d in %.1f seconds",name, code, t); wlock(); n_success++; wunlock(); };
-	void inc_failed(const char *name, int code, double t) { output_error("%s error unexpected, code %d in %.1f seconds",name, code, t); wlock(); n_failed++; wunlock(); };
-	void inc_exceptions(const char *name, int code, double t) { output_error("%s exception unexpected, code %d in %.1f seconds",name, code, t); wlock(); n_exceptions++; wunlock(); };
+	void inc_failed(const char *name, int code, double t) { output_error("%s error unexpected, code %d (%s) in %.1f seconds",name, code, exec_getexitcodestr(code), t); wlock(); n_failed++; wunlock(); };
+	void inc_exceptions(const char *name, int code, double t) { output_error("%s exception unexpected, code %d (%s) in %.1f seconds",name, code, exec_getexitcodestr(code), t); wlock(); n_exceptions++; wunlock(); };
 	void print(void) 
 	{
 		rlock();
