@@ -629,6 +629,17 @@ char *global_true(char *buffer, int size)
 	}
 }
 
+int global_isdefined(char *name)
+{
+	int i;
+	if ( getenv(name)!=NULL ) return 1;
+	for ( i=0 ; i<sizeof(map)/sizeof(map[0]) ; i++ )
+	{
+		if ( strcmp(name,map[i].name)==0 )
+			return 1;
+	}
+	return 0;
+}
 /** Get the value of a global variable in a safer fashion
 	@return a \e char * pointer to the buffer holding the buffer where we wrote the data,
 		\p NULL if insufficient buffer space or if the \p name was not found.

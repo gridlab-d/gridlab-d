@@ -16,6 +16,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <signal.h>
+#include <io.h>
 
 #include "globals.h"
 #include "output.h"
@@ -98,7 +99,7 @@ public:
 	{
 		rlock();
 		unsigned int n_ok = n_files-n_success-n_failed-n_exceptions;
-		output_message("Validation report:");
+		output_message("\nValidation report:");
 		if ( n_access ) output_message("%d directory access failures", n_access);
 		output_message("%d models tested",n_files);
 		if ( n_success ) output_message("%d unexpected successes",n_success); 
@@ -159,6 +160,7 @@ static int report_title(const char *fmt,...)
 		va_start(ptr,fmt);
 		len = +vfprintf(report_fp,fmt,ptr);
 		va_end(ptr);
+		fflush(report_fp);
 		wunlock(&report_lock);
 	}
 	return len;
@@ -187,8 +189,9 @@ static int report_newrow(void)
 		wlock(&report_lock);
 		report_cols=0;
 		report_rows++;
-		wunlock(&report_lock);
 		len = fprintf(report_fp,"%s",report_eol);
+		fflush(report_fp);
+		wunlock(&report_lock);
 	}
 	return len;
 }
@@ -202,6 +205,7 @@ static int report_newtable(const char *table)
 		if ( report_cols>0 ) len += fprintf(report_fp,"%s",report_eol);
 		report_cols=0;
 		len = fprintf(report_fp,"%s%s%s",report_eot,table,report_eol);
+		fflush(report_fp);
 		wunlock(&report_lock);
 	}
 	return len;
@@ -561,7 +565,7 @@ void *(run_test_proc)(void *arg)
 			if ( result.get_nsuccess() ) flag="S";
 			if ( result.get_nexceptions() ) flag="X";
 			report_data("%s",flag);
-			report_data("%.1f",dt);
+			report_data("%6.1f",dt);
 			report_data("%s",item->name);
 			report_newrow();
 		}
@@ -574,6 +578,15 @@ void *(run_test_proc)(void *arg)
 /** routine to process a directory for autotests */
 static size_t process_dir(const char *path, bool runglms=false)
 {
+	// check for block file
+	char blockfile[1024];
+	sprintf(blockfile,"%s/validate.no",path);
+	if ( access(blockfile,00)==0 && !global_isdefined("force_validate") )
+	{
+		output_debug("processing directory '%s' blocked by presence of 'validate.no' file", path);
+		return 0;
+	}
+
 	size_t count = 0;
 	output_debug("processing directory '%s' with run of GLMs %s", path, runglms?"enabled":"disabled");
 	counters result;

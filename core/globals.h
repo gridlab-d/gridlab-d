@@ -44,6 +44,7 @@ GLOBALVAR *global_find(char *name);
 GLOBALVAR *global_create(char *name, ...);
 STATUS global_setvar(char *def,...);
 char *global_getvar(char *name, char *buffer, int size);
+int global_isdefined(char *name);
 void global_dump(void);
 
 /* MAJOR and MINOR version */
