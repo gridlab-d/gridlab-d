@@ -19,9 +19,12 @@
 #ifdef WIN32
 
 /*** WINDOWS ***/
-#if 0 /* not cooperating yet, needed for GLPATH expansion in exec_init() -mh*/
-#include <Windows.h>
+#if defined _M_X64 || defined _M_IA64
+#define __WORDSIZE__ 64
+#else
+#define __WORDSIZE__ 32
 #endif
+
 #define int64 __int64 /**< Win32 version of 64-bit integers */
 #define FMT_INT64 "I64" /**< Win32 version of 64-bit integer printf format string */
 //#define FMT_INT64 "ll" /**< standard version of 64-bit integer printf format string */

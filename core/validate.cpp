@@ -674,7 +674,13 @@ int validate(int argc, char *argv[])
 	
 	report_data();
 	report_data("Platform");
-	report_data("%s",global_platform);
+	report_data("%d-bit %s %s", __WORDSIZE__, global_platform,
+#ifdef _DEBUG
+		"DEBUG"
+#else
+		"RELEASE"
+#endif
+		);
 	report_newrow();
 	
 	report_data();

@@ -360,25 +360,16 @@ static int server_portnum(int argc, char *argv[])
 }
 static int version(int argc, char *argv[])
 {
-#ifdef PACKAGE_STRING
-	output_message("%s %s",PACKAGE_STRING, BRANCH);
-#else
-#ifdef I64
-#define ARCH "WIN64"
-#else
-#define ARCH "WIN32" 
-#endif
+	output_message("GridLAB-D %d.%d.%d-%d (%s) %d-bit %s %s", 
+		global_version_major, global_version_minor, global_version_patch, 
+		global_version_build, global_version_branch, __WORDSIZE__, global_platform,
 #ifdef _DEBUG
-#define REL "DEBUG"
+	"DEBUG"
 #else
-#define REL "RELEASE"
+	"RELEASE"
 #endif
-	int buildnum;
-	if (sscanf(BUILD,"$%*[^:]: %d",&buildnum)==1 && buildnum>0)
-		output_message("GridLAB-D %d.%d.%d.%d %s",REV_MAJOR,REV_MINOR,REV_PATCH,buildnum,BRANCH);
-	else	
-		output_message("GridLAB-D %d.%d.%d.%s-%s %s",REV_MAJOR,REV_MINOR,REV_PATCH,ARCH,REL,BRANCH);
-#endif
+	);
+
 	return 0;
 }
 static int dsttest(int argc, char *argv[])
