@@ -13,7 +13,7 @@ clock {
 	timezone EST+5EDT;
 }
 
-#set threadcount=1
+//#set threadcount=1
 #set savefile=savefile.xml
 module tape;
 

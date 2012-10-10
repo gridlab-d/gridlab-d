@@ -24,7 +24,7 @@
 
 #set debugger=0		// 1 to enable model debugger
 #set skipsafe=0		// number of ticks to allow objects to safely skip on sync (0 disables skipsafe)
-#set threadcount=1	// 0 uses all available processors
+//#set threadcount=1	// 0 uses all available processors
 #set debug=0		// 1 enables debug output
 #set verbose=0		// 1 enables verbose output
 
