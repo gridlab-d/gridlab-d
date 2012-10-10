@@ -5,6 +5,7 @@
 #ifdef WIN32
 #include <windows.h>
 #include <direct.h>
+#include <io.h>
 #else
 #include <unistd.h>
 #include <dirent.h>
@@ -16,7 +17,6 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <signal.h>
-#include <io.h>
 
 #include "globals.h"
 #include "output.h"
@@ -711,16 +711,16 @@ int validate(int argc, char *argv[])
 	report_data("%d",global_threadcount);
 	report_newrow();
 	
-	char options[1024];
+	char options[1024]="";
 	report_data();
 	report_data("Options");
 	report_data("%s",global_getvar("validate",options,sizeof(options))?options:"(NA)");
 	report_newrow();
 
-	char mailto[1024];
+	char mailto[1024]="";
 	report_data();
 	report_data("Mailto");
-	report_data("%s",global_getvar("mailto",mailto,sizeof(mailto))?mailto:"(NA)");
+	report_data("%s",global_getvar("mailto",mailto,sizeof(mailto))!=NULL?mailto:"(NA)");
 	report_newrow();
 	
 	if ( global_validateoptions&VO_RPTDIR ) 
@@ -844,12 +844,14 @@ int validate(int argc, char *argv[])
 #else
 #define MAILER "/bin/mail"
 #endif
-	if ( global_getvar("mailto",mailto,sizeof(mailto))!=NULL 
-		&& vsystem(MAILER " -s 'GridLAB-D Validation Report (%d errors)' %s <%s", 
-			final.get_nerrors(), mailto, report_file)==0 )
-		output_verbose("Mail message send to %s",mailto);
-	else
-		output_error("Error sending notification to %s", mailto);
+	if ( strcmp(mailto,"")!=0 )
+	{
+		if ( vsystem(MAILER " -s 'GridLAB-D Validation Report (%d errors)' %s <%s", 
+				final.get_nerrors(), mailto, report_file)==0 )
+			output_verbose("Mail message send to %s",mailto);
+		else
+			output_error("Error sending notification to %s", mailto);
+	}
 #endif
 
 	exit(final.get_nerrors()==0 ? XC_SUCCESS : XC_TSTERR);

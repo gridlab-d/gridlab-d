@@ -56,6 +56,7 @@ typedef int pid_t;
 /*** UNIX/LINUX ***/
 #ifdef __APPLE__ /* although not advised, seems reliable enough */
 #define MACOSX
+#define __WORDSIZE__ 64
 #endif
 
 #include <sys/unistd.h>
