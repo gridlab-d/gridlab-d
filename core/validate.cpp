@@ -660,13 +660,21 @@ int validate(int argc, char *argv[])
 	report_data("%s",strftime(tbuf,sizeof(tbuf),"%Y-%m-%d %H:%M:%S %z",ts)?tbuf:"???");
 	report_newrow();
 	
-	char *user=getenv("USER"); if ( !user ) user=getenv("USERNAME");
+#ifdef WIN32
+	char *user=getenv("USERNAME"); 
+#else
+	char *user=getenv("USER"); 
+#endif
 	report_data();
 	report_data("User");
 	report_data("%s",user?user:"(NA)");
 	report_newrow();
 
-	char *host=getenv("HOST"); if ( !host ) host=getenv("HOSTNAME");
+#ifdef WIN32
+	char *host=getenv("COMPUTERNAME");
+#else
+	char *host=getenv("HOSTNAME");
+#endif
 	report_data();
 	report_data("Host");
 	report_data("%s",host?host:"(NA)");
