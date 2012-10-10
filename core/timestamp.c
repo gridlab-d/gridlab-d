@@ -101,11 +101,11 @@ int timestamp_year(TIMESTAMP ts, TIMESTAMP *remainder)
 		}
 	}
 
-	while(year > 0 && ts < tszero[year]){
+	while(year > 0 && ts <= tszero[year]){
 		year--;
 	}
 
-	while(year < MAXYEAR-YEAR0-1 && ts > tszero[year+1]){
+	while(year < MAXYEAR-YEAR0-1 && ts >= tszero[year+1]){
 		year++;
 	}
 
