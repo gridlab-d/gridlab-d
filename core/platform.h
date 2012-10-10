@@ -70,6 +70,7 @@ typedef int pid_t;
 #define atoi64 atoll	/**< standard version of 64-bit atoi */
 #define stricmp strcasecmp	/**< deprecated stricmp */
 #define strnicmp strncasecmp /**< deprecated strnicmp */
+#define strtok_s strtok_r
 #define min(A,B) ((A)<(B)?(A):(B)) /**< min macro */
 #define max(A,B) ((A)>(B)?(A):(B)) /**< max macro */
 #ifndef isfinite

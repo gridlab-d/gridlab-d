@@ -1075,6 +1075,7 @@ int convert_to_randomvar(char *string, void *data, PROPERTY *prop)
 	randomvar *var = (randomvar*)data;
 	char buffer[1024];
 	char *token = NULL;
+	char *last = NULL;
 
 	/* clean memory */
 	randomvar *next = var->next;
@@ -1090,7 +1091,7 @@ int convert_to_randomvar(char *string, void *data, PROPERTY *prop)
 	strcpy(buffer,string);
 
 	/* parse tuples separate by semicolon*/
-	while ((token=strtok(token==NULL?buffer:NULL,";"))!=NULL)
+	while ((token=strtok_s(token==NULL?buffer:NULL,";",&last))!=NULL)
 	{
 		/* colon separate tuple parts */
 		char *param = token;
