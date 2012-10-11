@@ -17,6 +17,7 @@ class test {
 	random x;
 }
 object test {
+	name test1;
 	x "type:normal(0,1); refresh:1h";
 }
 	

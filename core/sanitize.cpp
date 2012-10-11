@@ -6,16 +6,105 @@
 #include "gridlabd.h"
 #include "output.h"
 #include "sanitize.h"
+#include "globals.h"
+
+typedef struct s_safename {
+	char name[64];
+	char *old;
+	struct s_safename *next;
+} SAFENAME;
+static SAFENAME *safename_list = NULL;
+static char *sanitize_name(char *name)
+{
+	SAFENAME *safe = (SAFENAME*)malloc(sizeof(SAFENAME));
+	if ( !safe ) return NULL;
+	safe->old = name;
+	sprintf(safe->name,"%s%llX",global_sanitizeprefix,(unsigned int64)safe);
+	safe->next = safename_list;
+	safename_list = safe;
+	return safe->name;
+}
 
 extern "C" int sanitize(int argc, char *argv[])
 {
 	OBJECT *obj;
-	char buffer[65536];
+	FILE *fp;
+	double delta_latitude, delta_longitude;
+
+	// lat/lon change
+	delta_latitude = random_uniform(NULL,-5,+5);
+	delta_longitude = random_uniform(NULL,-180,+180);
+
+	// sanitize object names
 	for ( obj=object_get_first() ; obj!=NULL ; obj=object_get_next(obj) )
 	{
-		if ( object_save(buffer,sizeof(buffer),obj)>0 )
-			output_raw("%s\n", buffer);
-
+		if ( obj->name!=NULL && (global_sanitizeoptions&SO_NAMES)==SO_NAMES )
+			obj->name = sanitize_name(obj->name);
+		if ( isfinite(obj->latitude) && (global_sanitizeoptions&SO_GEOCOORDS)==SO_GEOCOORDS )
+		{
+			obj->latitude += delta_latitude;
+			if ( obj->latitude<-90 ) obj->latitude = -90;
+			if ( obj->latitude>+90 ) obj->latitude = +90;
+		}
+		if ( isfinite(obj->longitude) && (global_sanitizeoptions&SO_GEOCOORDS)==SO_GEOCOORDS )
+			obj->longitude = fmod(obj->longitude+delta_longitude,360);
 	}
+
+	// dump object name index
+	if ( strcmp(global_sanitizeindex,".xml")==0 )
+	{
+		strcpy(global_sanitizeindex,global_modelname);
+		char *ext = strrchr(global_sanitizeindex,'.');
+		if ( ext && strcmp(ext,".glm")==0 ) strcpy(ext,"-index.xml");
+		else strcat(global_sanitizeindex,"-index.xml");
+	}
+	else if ( strcmp(global_sanitizeindex,".txt")==0 )
+	{
+		strcpy(global_sanitizeindex,global_modelname);
+		char *ext = strrchr(global_sanitizeindex,'.');
+		if ( ext && strcmp(ext,".glm")==0 ) strcpy(ext,"-index.txt");
+		else strcat(global_sanitizeindex,"-index.txt");
+	}
+	else if ( global_sanitizeindex[0]=='.' )
+	{
+		output_error("sanitization index file spec '%s' is not recognized", global_sanitizeindex);
+		return -2;
+	}
+	if ( strcmp(global_sanitizeindex,"")!=0 )
+	{
+		char *ext = strrchr(global_sanitizeindex,'.');
+		bool use_xml = (ext && strcmp(ext,".xml")==0) ;
+		fp = fopen(global_sanitizeindex,"w");
+		if ( fp )
+		{
+			SAFENAME *item;
+			if ( use_xml )
+			{
+				fprintf(fp,"<data>\n");
+				fprintf(fp,"\t<modelname>%s</modelname>\n",global_modelname);
+				fprintf(fp,"\t<geographic_offsets>\n");
+				fprintf(fp,"\t\t<latitude>%.6f</latitude>\n",delta_latitude);
+				fprintf(fp,"\t\t<longitude>%.6f</longitude>\n",delta_longitude);
+				fprintf(fp,"\t</geographic_offsets>\n");
+				fprintf(fp,"\t<safename_list>\n");
+				for ( item=safename_list ; item!=NULL ; item=item->next )
+					fprintf(fp,"\t\t<name>\n\t\t\t<safe>%s</safe>\n\t\t\t<unsafe>%s</unsafe>\n\t\t</name>\n", item->name, item->old);
+				fprintf(fp,"\t</safename_list>\n");
+				fprintf(fp,"</data>\n");
+			}
+			else
+			{
+				fprintf(fp,"modelname\t= %s\n", global_modelname);
+				fprintf(fp,"\n[POSITIONS]\n");
+				fprintf(fp,"latitude\t= %.6f\n",delta_latitude);
+				fprintf(fp,"longitude\t= %.6f\n",delta_longitude);
+				fprintf(fp,"\n[NAMES]\n");
+				for ( item=safename_list ; item!=NULL ; item=item->next )
+					fprintf(fp,"%s\t= %s\n", item->name, item->old);
+			}
+			fclose(fp);
+		}
+	}
+
 	return 0;
 }

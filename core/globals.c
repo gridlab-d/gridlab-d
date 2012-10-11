@@ -94,6 +94,10 @@ static KEYWORD vo_keys[] = {
 	{"RDIR", VO_RPTDIR, vo_keys+9},
 	{"RGLM", VO_RPTGLM, NULL},
 };
+static KEYWORD so_keys[] = {
+	{"NAMES", SO_NAMES, so_keys+1},
+	{"POSITIONS", SO_GEOCOORDS, NULL},
+};
 
 static struct s_varmap {
 	char *name;
@@ -198,6 +202,9 @@ static struct s_varmap {
 	{"mt_analysis", PT_bool, &global_mt_analysis, PA_PUBLIC, "perform multithread profile optimization analysis"},
 	{"inline_block_size", PT_int32, &global_inline_block_size, PA_PUBLIC, "inline code block size"},
 	{"validate", PT_set, &global_validateoptions, PA_PUBLIC, "validation test options",vo_keys},
+	{"sanitize", PT_set, &global_sanitizeoptions, PA_PUBLIC, "sanitize process options",so_keys},
+	{"sanitize_prefix", PT_char8, &global_sanitizeprefix, PA_PUBLIC, "sanitized name prefix"},
+	{"sanitize_index", PT_char1024, &global_sanitizeindex, PA_PUBLIC, "sanitization index file spec"},
 	/* add new global variables here */
 };
 
