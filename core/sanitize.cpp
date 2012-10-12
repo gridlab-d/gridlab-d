@@ -9,17 +9,19 @@
 #include "globals.h"
 
 typedef struct s_safename {
-	char name[64];
+	char *name;
 	char *old;
 	struct s_safename *next;
 } SAFENAME;
 static SAFENAME *safename_list = NULL;
-static char *sanitize_name(char *name)
+static char *sanitize_name(OBJECT *obj)
 {
 	SAFENAME *safe = (SAFENAME*)malloc(sizeof(SAFENAME));
 	if ( !safe ) return NULL;
-	safe->old = name;
-	sprintf(safe->name,"%s%llX",global_sanitizeprefix,(unsigned int64)safe);
+	safe->old = obj->name;
+	char buffer[1024];
+	sprintf(buffer,"%s%llX",global_sanitizeprefix,(unsigned int64)safe);
+	safe->name = object_set_name(obj,buffer);
 	safe->next = safename_list;
 	safename_list = safe;
 	return safe->name;
@@ -39,7 +41,7 @@ extern "C" int sanitize(int argc, char *argv[])
 	for ( obj=object_get_first() ; obj!=NULL ; obj=object_get_next(obj) )
 	{
 		if ( obj->name!=NULL && (global_sanitizeoptions&SO_NAMES)==SO_NAMES )
-			obj->name = sanitize_name(obj->name);
+			sanitize_name(obj);
 		if ( isfinite(obj->latitude) && (global_sanitizeoptions&SO_GEOCOORDS)==SO_GEOCOORDS )
 		{
 			obj->latitude += delta_latitude;
