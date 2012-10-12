@@ -45,6 +45,8 @@ extern "C" int sanitize(int argc, char *argv[])
 		delta_latitude = random_uniform(NULL,-5,+5);
 		delta_longitude = random_uniform(NULL,-180,+180);
 	}
+	else if ( strcmp(global_sanitizeoffset,"destroy")==0 )
+		delta_latitude = delta_longitude = QNAN;
 	else if ( sscanf(global_sanitizeoffset,"%lf%*[,/]%lf",&delta_latitude,&delta_longitude)!=2 )
 	{
 		output_error("sanitize_offset lat/lon '%s' is not valid", global_sanitizeoffset);
