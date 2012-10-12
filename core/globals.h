@@ -262,6 +262,7 @@ GLOBAL set global_validateoptions INIT(VO_TSTSTD|VO_RPTALL); /**< validation opt
 GLOBAL set global_sanitizeoptions INIT(SO_NAMES|SO_GEOCOORDS); /**< sanitizing options */
 GLOBAL char8 global_sanitizeprefix INIT("GLD_"); /**< sanitized name prefix */
 GLOBAL char1024 global_sanitizeindex INIT(".txt"); /**< sanitize index file spec */
+GLOBAL char32 global_sanitizeoffset INIT(""); /**< sanitize lat/lon offset */
 
 #ifdef __cplusplus
 }

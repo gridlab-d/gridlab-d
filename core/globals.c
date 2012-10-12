@@ -205,6 +205,7 @@ static struct s_varmap {
 	{"sanitize", PT_set, &global_sanitizeoptions, PA_PUBLIC, "sanitize process options",so_keys},
 	{"sanitize_prefix", PT_char8, &global_sanitizeprefix, PA_PUBLIC, "sanitized name prefix"},
 	{"sanitize_index", PT_char1024, &global_sanitizeindex, PA_PUBLIC, "sanitization index file spec"},
+	{"sanitize_offset", PT_char32, &global_sanitizeoffset, PA_PUBLIC, "sanitization lat/lon offset"},
 	/* add new global variables here */
 };
 

@@ -27,6 +27,12 @@ static char *sanitize_name(OBJECT *obj)
 	return safe->name;
 }
 
+/** sanitize
+
+	Sanitizes a gridlabd model by clear names and position from object headers
+
+    @returns 0 on success, -2 on error
+ **/
 extern "C" int sanitize(int argc, char *argv[])
 {
 	OBJECT *obj;
@@ -34,8 +40,16 @@ extern "C" int sanitize(int argc, char *argv[])
 	double delta_latitude, delta_longitude;
 
 	// lat/lon change
-	delta_latitude = random_uniform(NULL,-5,+5);
-	delta_longitude = random_uniform(NULL,-180,+180);
+	if ( strcmp(global_sanitizeoffset,"")==0 )
+	{
+		delta_latitude = random_uniform(NULL,-5,+5);
+		delta_longitude = random_uniform(NULL,-180,+180);
+	}
+	else if ( sscanf(global_sanitizeoffset,"%lf%*[,/]%lf",&delta_latitude,&delta_longitude)!=2 )
+	{
+		output_error("sanitize_offset lat/lon '%s' is not valid", global_sanitizeoffset);
+		return -2;
+	}
 
 	// sanitize object names
 	for ( obj=object_get_first() ; obj!=NULL ; obj=object_get_next(obj) )
