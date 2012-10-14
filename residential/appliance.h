@@ -15,6 +15,7 @@ private:
 	GL_STRUCT(complex_array,current);
 	GL_STRUCT(double_array,duration);
 	GL_STRUCT(double_array,transition);
+	GL_STRUCT(double_array,heatgain);
 private:
 	TIMESTAMP next_t;
 	unsigned int n_states;

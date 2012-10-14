@@ -29,6 +29,7 @@ appliance::appliance(MODULE *module) : residential_enduse(module)
 			PT_complex_array, "currents",get_current_offset(),
 			PT_double_array, "duration",get_duration_offset(),
 			PT_double_array, "transition",get_transition_offset(),
+			PT_double_array, "heatgains", get_heatgain_offset(),
 			NULL)<1 )
 			GL_THROW("unable to publish properties in %s",__FILE__);
 	}
@@ -46,22 +47,21 @@ int appliance::create()
 
 int appliance::init(OBJECT *parent)
 {
+	// check that duration is a vector
 	if ( duration.get_rows()!=1 )
 		exception("duration must have 1 rows (it has %d)", n_states, duration.get_rows());
 
-	n_states = duration.get_cols();
+	// number of states if length of duration vector
+	n_states = (unsigned int)duration.get_cols();
 	if ( state<0 || state>=n_states )
 		exception("initial state must be between 0 and %d, inclusive", n_states-1);
 	gl_debug("n_states = %d (initial state is %d)", n_states, state);
 
-	if ( power.is_empty() )
-	{
-		power.grow_to(0,n_states-1);
-		power = complex(0);
-	}
-	if ( power.get_rows()!=1 || power.get_cols()!=n_states )
-		exception("power must 1r x %dc (it is %dr x %dc)", n_states, power.get_rows(), power.get_cols());
+	// transition must be either 1xN or NxN
+	if ( ( transition.get_rows()!=1 && transition.get_rows()!=n_states ) || transition.get_cols()!=n_states )
+		exception("transition must have either 1r x %dc or %dr x %dc (it is %dr c %dc)", n_states, n_states, n_states, transition.get_rows(), transition.get_cols());
 
+	// default impedance is zero
 	if ( impedance.is_empty() )
 	{
 		impedance.grow_to(0,n_states-1);
@@ -70,6 +70,7 @@ int appliance::init(OBJECT *parent)
 	if ( impedance.get_rows()!=1 || impedance.get_cols()!=n_states )
 		exception("impedance must 1r x %dc (it is %dr x %dc)", n_states, impedance.get_rows(), impedance.get_cols());
 
+	// default current is zero
 	if ( current.is_empty() )
 	{
 		current.grow_to(0,n_states-1);
@@ -78,11 +79,26 @@ int appliance::init(OBJECT *parent)
 	if ( current.get_rows()!=1 || current.get_cols()!=n_states )
 		exception("current must 1r x %dc (it is %dr x %dc)", n_states, current.get_rows(), current.get_cols());
 
-	if ( ( transition.get_rows()!=1 && transition.get_rows()!=n_states ) || transition.get_cols()!=n_states )
-		exception("transition must have either 1r x %dc or %dr x %dc (it is %dr c %dc)", n_states, n_states, n_states, transition.get_rows(), transition.get_cols());
+	// default power is zero
+	if ( power.is_empty() )
+	{
+		power.grow_to(0,n_states-1);
+		power = complex(0);
+	}
+	if ( power.get_rows()!=1 || power.get_cols()!=n_states )
+		exception("power must 1r x %dc (it is %dr x %dc)", n_states, power.get_rows(), power.get_cols());
 
+	// default heatgain is zero
+	if ( heatgain.is_empty() )
+	{
+		heatgain.grow_to(0,n_states-1);
+		heatgain = 0;
+	}
+	if ( heatgain.get_rows()!=1 || heatgain.get_cols()!=n_states )
+		exception("current must 1r x %dc (it is %dr x %dc)", n_states, heatgain.get_rows(), heatgain.get_cols());
+
+	// ready to start
 	update_next_t();
-
 	return residential_enduse::init(parent);
 }
 
@@ -92,21 +108,25 @@ void appliance::update_next_t(void)
 	if ( transition_probability==0 )
 
 		// transition is certain to occur
-		next_t = gl_globalclock + duration.get_at(0,state);
+		next_t = gl_globalclock + (TIMESTAMP)duration.get_at(0,state);
 
 	else if ( gl_random_uniform(&my()->rng_state,0,1)<transition_probability )
 
 		// transition is uncertain
-		next_t = gl_globalclock + gl_random_uniform(&my()->rng_state,1,duration.get_at(0,state));
+		next_t = gl_globalclock + (TIMESTAMP)gl_random_uniform(&my()->rng_state,1,duration.get_at(0,state));
 	else
 
 		// transition does not occur so check in again later
-		next_t = -(gl_globalclock + duration.get_at(0,state));
+		next_t = -(gl_globalclock + (TIMESTAMP)duration.get_at(0,state));
 	update_power();
 }
 void appliance::update_power(void)
 {
+	complex Z = impedance.get_at(0,state);
+	load.admittance = Z.Mag()==0  ? complex(0) : complex(1)/Z;
+	load.current = current.get_at(0,state);
 	load.power = power.get_at(0,state);
+	load.heatgain = heatgain.get_at(0,state);
 }
 
 int appliance::precommit(TIMESTAMP t1)
