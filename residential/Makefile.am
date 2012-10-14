@@ -1,5 +1,6 @@
 pkglib_LTLIBRARIES = residential.la
 residential_la_SOURCES =                            \
+	appliance.cpp          appliance.h          \
 	clotheswasher.cpp      clotheswasher.h      \
 	dishwasher.cpp         dishwasher.h         \
 	dryer.cpp              dryer.h              \

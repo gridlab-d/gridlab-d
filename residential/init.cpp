@@ -12,7 +12,8 @@
 #include <math.h>
 #include "residential.h"
 
-#include "house_a.h"
+// obsolete as of 3.0: #include "house_a.h"
+#include "appliance.h"
 #include "clotheswasher.h"
 #include "dishwasher.h"
 #include "lights.h"
@@ -57,7 +58,8 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	gl_global_create("residential::default_etp_iterations",PT_int64,&default_etp_iterations,PT_DESCRIPTION,"number of iterations ETP solver will run",NULL);
 
 	new residential_enduse(module);
-	new house(module);
+	new appliance(module);
+	// obsolete as of 3.0: new house(module);
 	new house_e(module);
 	new waterheater(module);
 	new lights(module);

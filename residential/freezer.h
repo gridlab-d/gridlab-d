@@ -12,6 +12,7 @@
 
 #include "residential.h"
 #include "residential_enduse.h"
+#include "house_e.h"
 
 class freezer : public residential_enduse
 {
@@ -22,7 +23,7 @@ public:
 	} MOTORSTATE;
 
 private:
-	house *pHouse;			// reference to the parent house
+	house_e *pHouse;			// reference to the parent house
 	PROPERTY *pTempProp;
 
 public:

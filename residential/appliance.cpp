@@ -1,0 +1,146 @@
+/** $Id$
+	Copyright (C) 2012 Battelle Northwest
+ **/
+
+#include "appliance.h"
+
+EXPORT_CREATE(appliance);
+EXPORT_INIT(appliance);
+EXPORT_PRECOMMIT(appliance);
+EXPORT_SYNC(appliance);
+EXPORT_NOTIFY(appliance);
+
+CLASS *appliance::oclass = NULL;
+CLASS *appliance::pclass = NULL;
+appliance *appliance::defaults = NULL;
+
+appliance::appliance(MODULE *module) : residential_enduse(module)
+{
+	if ( oclass==NULL )
+	{
+		pclass = residential_enduse::oclass;
+		oclass = gl_register_class(module,"appliance",sizeof(appliance),PC_PRETOPDOWN|PC_AUTOLOCK);
+		if ( oclass==NULL )
+			GL_THROW("unable to register object class implemented by %s",__FILE__);
+		if ( gl_publish_variable(oclass,
+			PT_INHERIT,"residential_enduse",
+			PT_complex_array, "powers",get_power_offset(),
+			PT_complex_array, "impedances",get_impedance_offset(),
+			PT_complex_array, "currents",get_current_offset(),
+			PT_double_array, "duration",get_duration_offset(),
+			PT_double_array, "transition",get_transition_offset(),
+			NULL)<1 )
+			GL_THROW("unable to publish properties in %s",__FILE__);
+	}
+}  
+
+appliance::~appliance()
+{
+}
+
+int appliance::create()
+{
+	int res = residential_enduse::create();
+	return res;
+}
+
+int appliance::init(OBJECT *parent)
+{
+	if ( duration.get_rows()!=1 )
+		exception("duration must have 1 rows (it has %d)", n_states, duration.get_rows());
+
+	n_states = duration.get_cols();
+	if ( state<0 || state>=n_states )
+		exception("initial state must be between 0 and %d, inclusive", n_states-1);
+	gl_debug("n_states = %d (initial state is %d)", n_states, state);
+
+	if ( power.is_empty() )
+	{
+		power.grow_to(0,n_states-1);
+		power = complex(0);
+	}
+	if ( power.get_rows()!=1 || power.get_cols()!=n_states )
+		exception("power must 1r x %dc (it is %dr x %dc)", n_states, power.get_rows(), power.get_cols());
+
+	if ( impedance.is_empty() )
+	{
+		impedance.grow_to(0,n_states-1);
+		impedance = complex(0);
+	}
+	if ( impedance.get_rows()!=1 || impedance.get_cols()!=n_states )
+		exception("impedance must 1r x %dc (it is %dr x %dc)", n_states, impedance.get_rows(), impedance.get_cols());
+
+	if ( current.is_empty() )
+	{
+		current.grow_to(0,n_states-1);
+		current = complex(0);
+	}
+	if ( current.get_rows()!=1 || current.get_cols()!=n_states )
+		exception("current must 1r x %dc (it is %dr x %dc)", n_states, current.get_rows(), current.get_cols());
+
+	if ( ( transition.get_rows()!=1 && transition.get_rows()!=n_states ) || transition.get_cols()!=n_states )
+		exception("transition must have either 1r x %dc or %dr x %dc (it is %dr c %dc)", n_states, n_states, n_states, transition.get_rows(), transition.get_cols());
+
+	update_next_t();
+
+	return residential_enduse::init(parent);
+}
+
+void appliance::update_next_t(void)
+{
+	double transition_probability = transition.get_at(0,state);
+	if ( transition_probability==0 )
+
+		// transition is certain to occur
+		next_t = gl_globalclock + duration.get_at(0,state);
+
+	else if ( gl_random_uniform(&my()->rng_state,0,1)<transition_probability )
+
+		// transition is uncertain
+		next_t = gl_globalclock + gl_random_uniform(&my()->rng_state,1,duration.get_at(0,state));
+	else
+
+		// transition does not occur so check in again later
+		next_t = -(gl_globalclock + duration.get_at(0,state));
+	update_power();
+}
+void appliance::update_power(void)
+{
+	load.power = power.get_at(0,state);
+}
+
+int appliance::precommit(TIMESTAMP t1)
+{
+	gld_clock now;
+
+	// next transition does not occur now--just checking in
+	if ( next_t < 0)
+	{
+		if ( -next_t <= now )
+			update_next_t();
+	}
+
+	// next transition was missed somehow (this should never occur)
+	else if ( next_t < now )
+		exception("appliance::presync(TIMESTAMP t1=%lld): transition at %lld was missed", now, next_t);
+
+	// transition occurs now
+	else if ( next_t == now )
+	{
+		state = (state+1)%n_states;
+		gl_debug("appliance::presync(TIMESTAMP t1=%lld): transitions now to state %d", now, state);
+		update_next_t();
+	}
+	return 1;
+}
+
+TIMESTAMP appliance::presync(TIMESTAMP t1)
+{
+	return next_t;
+}
+
+int appliance::postnotify(PROPERTY *prop, char *value)
+{
+	// TODO reset state when duration or transition changes
+	return 1;
+}

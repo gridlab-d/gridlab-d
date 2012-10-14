@@ -1,0 +1,12 @@
+#set debug=1
+#set suppress_repeat_messages=0
+
+global double daily_run_probability 0.25;
+
+module residential;
+object appliance {
+	// daily run, fill, agitate, empty, spin
+	duration "86400 60 300 60 300";
+	transition "daily_run_probability 0.0 0.0 0.0 0.0";
+	powers "0 1+0.1j 1+0.2j 1+0.1j 2+0.2j";
+};

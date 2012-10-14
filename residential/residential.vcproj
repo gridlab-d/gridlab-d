@@ -501,6 +501,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\appliance.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\residential\clotheswasher.cpp"
 				>
 			</File>
@@ -586,6 +590,10 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath=".\appliance.h"
+				>
+			</File>
 			<File
 				RelativePath="..\residential\clotheswasher.h"
 				>
@@ -800,6 +808,10 @@
 				</File>
 				<File
 					RelativePath=".\autotest\setpoint_schedule.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_appliance.glm"
 					>
 				</File>
 				<File
@@ -1416,6 +1428,10 @@
 				</File>
 			</Filter>
 		</Filter>
+		<File
+			RelativePath=".\Makefile.am"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>
