@@ -235,8 +235,6 @@ public:
 };
 #endif
 
-#include "complex.h"
-
 #ifndef __cplusplus
 typedef struct s_complexarray {
 #else
@@ -329,7 +327,7 @@ public:
 		x[r][c]=NULL; 
 	};
 	inline complex *get_addr(size_t r, size_t c=0) { return x[r][c]; };
-	inline complex get_at(size_t r, size_t c=0) { return is_nan(r,c) ? QNAN : *(x[r][c]) ; };
+	inline complex &get_at(size_t r, size_t c=0) { return *(x[r][c]) ; };
 	inline void set_at(size_t r, size_t c, complex &v) 
 	{ 
 		check_valid(r,c);
@@ -353,11 +351,12 @@ public:
 	};
 	inline void set_ident(void)
 	{
+		complex one(1), zero(0);
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
-				set_at(r,c,(r==c)?complex(1):complex(0));
+				set_at(r,c,(r==c)?one:zero);
 		}
 	};
 	inline void operator= (complex &x)
@@ -384,7 +383,10 @@ public:
 		for ( r=0 ; r<get_rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
-				set_at(r,c,get_at(r,c) + x.get_at(r,c));
+			{
+				complex y = get_at(r,c) + x.get_at(r,c);
+				set_at(r,c,y);
+			}
 		}
 	};
 	inline void operator-= (complex_array &x)
@@ -393,7 +395,10 @@ public:
 		for ( r=0 ; r<get_rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
-				set_at(r,c,get_at(r,c) - x.get_at(r,c));
+			{
+				complex y = get_at(r,c) - x.get_at(r,c);
+				set_at(r,c,y);
+			}
 		}
 	};
 	inline void operator *= (complex &x)
@@ -402,7 +407,10 @@ public:
 		for ( r=0 ; r<get_rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
-				set_at(r,c,get_at(r,c)*x);
+			{
+				complex y = get_at(r,c)*x;
+				set_at(r,c,y);
+			}
 		}
 	};
 	inline void operator /= (complex &x)
@@ -411,7 +419,10 @@ public:
 		for ( r=0 ; r<get_rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
-				set_at(r,c,get_at(r,c)/x);
+			{
+				complex y = get_at(r,c)/x;
+				set_at(r,c,y);
+			}
 		}
 	};
 };
@@ -616,7 +627,7 @@ double double_array_get_part(void *x, char *name);
 /* complex array */
 int complex_array_create(complex_array*a);
 complex *get_complex_array_value(complex_array*,unsigned int n, unsigned int m);
-void set_complex_array_value(complex_array*,unsigned int n, unsigned int m, complex x);
+void set_complex_array_value(complex_array*,unsigned int n, unsigned int m, complex *x);
 complex *get_complex_array_ref(complex_array*,unsigned int n, unsigned int m);
 double complex_array_get_part(void *x, char *name);
 

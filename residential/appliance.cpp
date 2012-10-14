@@ -27,8 +27,8 @@ appliance::appliance(MODULE *module) : residential_enduse(module)
 			PT_complex_array, "powers",get_power_offset(),
 			PT_complex_array, "impedances",get_impedance_offset(),
 			PT_complex_array, "currents",get_current_offset(),
-			PT_double_array, "duration",get_duration_offset(),
-			PT_double_array, "transition",get_transition_offset(),
+			PT_double_array, "durations",get_duration_offset(),
+			PT_double_array, "transitions",get_transition_offset(),
 			PT_double_array, "heatgains", get_heatgain_offset(),
 			NULL)<1 )
 			GL_THROW("unable to publish properties in %s",__FILE__);
@@ -65,7 +65,8 @@ int appliance::init(OBJECT *parent)
 	if ( impedance.is_empty() )
 	{
 		impedance.grow_to(0,n_states-1);
-		impedance = complex(0);
+		complex zero(0);
+		impedance = zero;
 	}
 	if ( impedance.get_rows()!=1 || impedance.get_cols()!=n_states )
 		exception("impedance must 1r x %dc (it is %dr x %dc)", n_states, impedance.get_rows(), impedance.get_cols());
@@ -74,7 +75,8 @@ int appliance::init(OBJECT *parent)
 	if ( current.is_empty() )
 	{
 		current.grow_to(0,n_states-1);
-		current = complex(0);
+		complex zero(0);
+		current = zero;
 	}
 	if ( current.get_rows()!=1 || current.get_cols()!=n_states )
 		exception("current must 1r x %dc (it is %dr x %dc)", n_states, current.get_rows(), current.get_cols());
@@ -83,7 +85,8 @@ int appliance::init(OBJECT *parent)
 	if ( power.is_empty() )
 	{
 		power.grow_to(0,n_states-1);
-		power = complex(0);
+		complex zero(0);
+		power = zero;
 	}
 	if ( power.get_rows()!=1 || power.get_cols()!=n_states )
 		exception("power must 1r x %dc (it is %dr x %dc)", n_states, power.get_rows(), power.get_cols());

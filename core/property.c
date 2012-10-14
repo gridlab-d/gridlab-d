@@ -296,7 +296,7 @@ double double_array_get_part(void *x, char *name)
 /*********************************************************
  * COMPLEX ARRAYS
  *********************************************************/
-int complex_array_create(double_array*a)
+int complex_array_create(complex_array *a)
 {
 	int n;
 	a->n = a->m = 0;
