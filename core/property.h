@@ -116,7 +116,7 @@ public:
 	inline void grow_to(size_t r, size_t c=0) 
 	{ 
 		size_t s = max;
-		if ( c>=s || r>=s ) s*=2; 
+		while ( c>=s || r>=s ) s*=2; 
 		if ( s>max )set_max(s);
 
 		// add rows
@@ -138,6 +138,7 @@ public:
 		check_valid(r,c);
 		return ! ( x[r][c]!=NULL && isfinite(*(x[r][c])) ); 
 	};
+	inline bool is_empty(void) { return n==0 && m==0; };
 	inline void clr_at(size_t r, size_t c=0) 
 	{ 
 		check_valid(r,c);
@@ -297,7 +298,7 @@ public:
 	inline void grow_to(size_t r, size_t c=0) 
 	{ 
 		size_t s = max;
-		if ( c>=s || r>=s ) s*=2; 
+		while ( c>=s || r>=s ) s*=2; 
 		if ( s>max )set_max(s);
 
 		// add rows
@@ -319,6 +320,7 @@ public:
 		check_valid(r,c);
 		return ! ( x[r][c]!=NULL && isfinite(x[r][c]->Re()) && isfinite(x[r][c]->Im()) ); 
 	};
+	inline bool is_empty(void) { return n==0 && m==0; };
 	inline void clr_at(size_t r, size_t c=0) 
 	{ 
 		check_valid(r,c);
@@ -328,7 +330,7 @@ public:
 	};
 	inline complex *get_addr(size_t r, size_t c=0) { return x[r][c]; };
 	inline complex get_at(size_t r, size_t c=0) { return is_nan(r,c) ? QNAN : *(x[r][c]) ; };
-	inline void set_at(size_t r, size_t c, complex v) 
+	inline void set_at(size_t r, size_t c, complex &v) 
 	{ 
 		check_valid(r,c);
 		if ( x[r][c]==NULL ) 
@@ -355,10 +357,10 @@ public:
 		for ( r=0 ; r<get_rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
-				set_at(r,c,(r==c)?1:0);
+				set_at(r,c,(r==c)?complex(1):complex(0));
 		}
 	};
-	inline void operator= (complex x)
+	inline void operator= (complex &x)
 	{
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
@@ -367,7 +369,7 @@ public:
 				set_at(r,c,x);
 		}
 	};
-	inline void operator= (double_array &x)
+	inline void operator= (complex_array &x)
 	{
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
@@ -376,7 +378,7 @@ public:
 				set_at(r,c,x.get_at(r,c));
 		}
 	};
-	inline void operator+= (double_array &x)
+	inline void operator+= (complex_array &x)
 	{
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
@@ -385,7 +387,7 @@ public:
 				set_at(r,c,get_at(r,c) + x.get_at(r,c));
 		}
 	};
-	inline void operator-= (double_array &x)
+	inline void operator-= (complex_array &x)
 	{
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
@@ -394,7 +396,7 @@ public:
 				set_at(r,c,get_at(r,c) - x.get_at(r,c));
 		}
 	};
-	inline void operator *= (complex x)
+	inline void operator *= (complex &x)
 	{
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
@@ -403,7 +405,7 @@ public:
 				set_at(r,c,get_at(r,c)*x);
 		}
 	};
-	inline void operator /= (complex x)
+	inline void operator /= (complex &x)
 	{
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
