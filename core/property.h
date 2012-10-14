@@ -52,24 +52,36 @@ typedef struct s_object_list* object; /* GridLAB objects */
 typedef double triplet[3];
 typedef complex triplex[3];
 
-#ifdef __cplusplus
+#define BYREF 0x01
 #include <math.h>
 
+#ifndef __cplusplus
+typedef struct s_doublearray {
+#else
 class double_array {
 private:
-	unsigned int n, m; /** n rows, m cols */
-	unsigned int max; /** current allocation size max x max */
+#endif
+	size_t n, m; /** n rows, m cols */
+	size_t max; /** current allocation size max x max */
 	double ***x; /** pointer to 2D array of pointers to double values */
-	inline void set_n(unsigned int i) { n=i; };
-	inline void set_m(unsigned int i) { m=i; };
+	unsigned char *f; /** pointer to array of flags: bit0=byref, */
+#ifndef __cplusplus
+} double_array;
+#else
+private:
+	inline void set_rows(size_t i) { n=i; };
+	inline void set_cols(size_t i) { m=i; };
+	inline void set_flag(size_t r, size_t c, unsigned char b) {f[r*m+c]|=b;};
+	inline void clr_flag(size_t r, size_t c, unsigned char b) {f[r*m+c]&=~b;};
+	inline bool tst_flag(size_t r, size_t c, unsigned char b) {return (f[r*m+c]&b)==b;};
 public:
-	inline unsigned int get_n(void) { return n; };
-	inline unsigned int get_m(void) { return m; };
-	inline unsigned int get_max(void) { return max; };
-	inline void set_max(unsigned int size) 
+	inline size_t get_rows(void) { return n; };
+	inline size_t get_cols(void) { return m; };
+	inline size_t get_max(void) { return max; };
+	inline void set_max(size_t size) 
 	{
 		if ( size<=max ) throw "cannot shrink double_array";
-		unsigned int r;
+		size_t r;
 		double ***z = (double***)malloc(sizeof(double**)*size);
 		// create new rows
 		for ( r=0 ; r<max ; r++ )
@@ -89,11 +101,24 @@ public:
 		memset(z+max,0,sizeof(double**)*(size-max));
 		free(x);
 		x = z;
-		max=size; /* TODO resize */ 
+		unsigned char *nf = (unsigned char*)malloc(sizeof(unsigned char)*size);
+		if ( f!=NULL )
+		{
+			memcpy(nf,f,max);
+			memset(nf+max,0,size-max);
+			free(f);
+		}
+		else
+			memset(nf,0,size);
+		f = nf;
+		max=size; 
 	};
-	inline void grow_to(unsigned int c, unsigned int r) 
+	inline void grow_to(size_t r, size_t c=0) 
 	{ 
-		if ( c>=max || r>=max ) set_max(max*2);
+		size_t s = max;
+		if ( c>=s || r>=s ) s*=2; 
+		if ( s>max )set_max(s);
+
 		// add rows
 		while ( n<=r ) 
 		{
@@ -106,63 +131,288 @@ public:
 		}
 		if (m<=c) m=c+1; 
 	};
-	inline bool is_valid(unsigned int c, unsigned int r) { return r<n && c<m; };
-	inline bool is_nan(unsigned int c, unsigned int r) { return ! ( is_valid(c,r) && x[r][c]!=NULL && isfinite(*(x[r][c])) ); };
-	inline void clr_at(unsigned int c, unsigned int r) 
-	{ 
-		if ( is_valid(c,r) ) 
-		{ 
-			free(x[r][c]); x[r][c]=NULL; 
-		} 
+	inline void check_valid(size_t r, size_t c=0) { if ( !is_valid(r,c) ) throw "double_array col/row spec is invalid"; };
+	inline bool is_valid(size_t r, size_t c=0) { return r<n && c<m; };
+	inline bool is_nan(size_t r, size_t c=0) 
+	{
+		check_valid(r,c);
+		return ! ( x[r][c]!=NULL && isfinite(*(x[r][c])) ); 
 	};
-	inline double get_at(unsigned int c, unsigned int r) { return is_nan(c,r) ? QNAN : *(x[r][c]) ; };
-	inline void set_at(unsigned int c, unsigned int r, double v) 
+	inline void clr_at(size_t r, size_t c=0) 
 	{ 
-		if ( is_valid(c,r) ) 
-		{ 
-			if ( x[r][c]==NULL ) 
-				x[r][c]=(double*)malloc(sizeof(double)); 
-			else 
-				*(x[r][c]) = v; 
-		} 
+		check_valid(r,c);
+		if ( tst_flag(r,c,BYREF) )
+			free(x[r][c]); 
+		x[r][c]=NULL; 
 	};
-	inline void set_at(unsigned int c, unsigned int r, double *v) 
+	inline double *get_addr(size_t r, size_t c=0) { return x[r][c]; };
+	inline double get_at(size_t r, size_t c=0) { return is_nan(r,c) ? QNAN : *(x[r][c]) ; };
+	inline void set_at(size_t r, size_t c, double v) 
 	{ 
-		if ( is_valid(c,r) ) 
-		{ 
-			if ( v==NULL ) 
-			{
-				if ( x[r][c]!=NULL ) 
-					clr_at(c,r);
-			}
-			else 
-			{
-				if ( x[r][c]==NULL ) 
-					x[r][c]=(double*)malloc(sizeof(double)); 
-				*(x[r][c]) = *v; 
-			}
-		} 
-	} ;
+		check_valid(r,c);
+		if ( x[r][c]==NULL ) 
+			x[r][c]=(double*)malloc(sizeof(double)); 
+		*(x[r][c]) = v; 
+	};
+	inline void set_at(size_t r, size_t c, double *v) 
+	{ 
+		check_valid(r,c);
+		if ( v==NULL ) 
+		{
+			if ( x[r][c]!=NULL ) 
+				clr_at(r,c);
+		}
+		else 
+		{
+			set_flag(r,c,BYREF);
+			x[r][c] = v; 
+		}
+	};
+	inline void set_ident(void)
+	{
+		size_t r,c;
+		for ( r=0 ; r<get_rows() ; r++ )
+		{
+			for ( c=0 ; c<get_cols() ; c++ )
+				set_at(r,c,(r==c)?1:0);
+		}
+	};
+	inline void operator= (double x)
+	{
+		size_t r,c;
+		for ( r=0 ; r<get_rows() ; r++ )
+		{
+			for ( c=0 ; c<get_cols() ; c++ )
+				set_at(r,c,x);
+		}
+	};
+	inline void operator= (double_array &x)
+	{
+		size_t r,c;
+		for ( r=0 ; r<get_rows() ; r++ )
+		{
+			for ( c=0 ; c<get_cols() ; c++ )
+				set_at(r,c,x.get_at(r,c));
+		}
+	};
+	inline void operator+= (double_array &x)
+	{
+		size_t r,c;
+		for ( r=0 ; r<get_rows() ; r++ )
+		{
+			for ( c=0 ; c<get_cols() ; c++ )
+				set_at(r,c,get_at(r,c) + x.get_at(r,c));
+		}
+	};
+	inline void operator-= (double_array &x)
+	{
+		size_t r,c;
+		for ( r=0 ; r<get_rows() ; r++ )
+		{
+			for ( c=0 ; c<get_cols() ; c++ )
+				set_at(r,c,get_at(r,c) - x.get_at(r,c));
+		}
+	};
+	inline void operator *= (double x)
+	{
+		size_t r,c;
+		for ( r=0 ; r<get_rows() ; r++ )
+		{
+			for ( c=0 ; c<get_cols() ; c++ )
+				set_at(r,c,get_at(r,c)*x);
+		}
+	};
+	inline void operator /= (double x)
+	{
+		size_t r,c;
+		for ( r=0 ; r<get_rows() ; r++ )
+		{
+			for ( c=0 ; c<get_cols() ; c++ )
+				set_at(r,c,get_at(r,c)/x);
+		}
+	};
 };
-class complex_array {
-public:
-	unsigned int n, m;
-	unsigned int max; /** current allocation size max x max */
-	complex ***x; /** pointer to 2D array of pointers to complex values */
-};
+#endif
+
+#include "complex.h"
+
+#ifndef __cplusplus
+typedef struct s_complexarray {
 #else
-typedef struct {
-	/* KEEP THIS CONSISTENT WITH "class double_array" */
-	unsigned int n, m; /** n rows, m cols */
-	unsigned int max; /** current allocation size max x max */
-	double ***x; /** pointer to 2D array of pointers to double values */
-} double_array;
-typedef struct {
-	/* KEEP THIS CONSISTENT WITH "class complex_array" */
-	unsigned int n, m;
-	unsigned int max; /** current allocation size max x max */
+class complex_array {
+private:
+#endif
+	size_t n, m;
+	size_t max; /** current allocation size max x max */
 	complex ***x; /** pointer to 2D array of pointers to complex values */
+	unsigned char *f; /** pointer to array of flags: bit0=byref, */
+#ifndef __cplusplus
 } complex_array;
+#else
+private:
+	inline void set_rows(size_t i) { n=i; };
+	inline void set_cols(size_t i) { m=i; };
+	inline void set_flag(size_t r, size_t c, unsigned char b) {f[r*m+c]|=b;};
+	inline void clr_flag(size_t r, size_t c, unsigned char b) {f[r*m+c]&=~b;};
+	inline bool tst_flag(size_t r, size_t c, unsigned char b) {return (f[r*m+c]&b)==b;};
+public:
+	inline size_t get_rows(void) { return n; };
+	inline size_t get_cols(void) { return m; };
+	inline size_t get_max(void) { return max; };
+	inline void set_max(size_t size) 
+	{
+		if ( size<=max ) throw "cannot shrink double_array";
+		size_t r;
+		complex ***z = (complex***)malloc(sizeof(complex**)*size);
+		// create new rows
+		for ( r=0 ; r<max ; r++ )
+		{
+			if ( x[r]!=NULL )
+			{
+				complex **y = (complex**)malloc(sizeof(complex*)*size);
+				if ( y==NULL ) throw "unable to expand double_array";
+				memcpy(y,x[r],sizeof(complex*)*max);
+				memset(y+max,0,sizeof(complex*)*(size-max));
+				free(x[r]);
+				z[r] = y;
+			}
+			else
+				z[r] = NULL;
+		}
+		memset(z+max,0,sizeof(complex**)*(size-max));
+		free(x);
+		x = z;
+		unsigned char *nf = (unsigned char*)malloc(sizeof(unsigned char)*size);
+		if ( f!=NULL )
+		{
+			memcpy(nf,f,max);
+			memset(nf+max,0,size-max);
+			free(f);
+		}
+		else
+			memset(nf,0,size);
+		f = nf;
+		max=size; 
+	};
+	inline void grow_to(size_t r, size_t c=0) 
+	{ 
+		size_t s = max;
+		if ( c>=s || r>=s ) s*=2; 
+		if ( s>max )set_max(s);
+
+		// add rows
+		while ( n<=r ) 
+		{
+			if ( x[n]==NULL ) 
+			{
+				x[n] = (complex**)malloc(sizeof(complex*)*max);
+				memset(x[n],0,sizeof(complex*)*max);
+			}
+			n++;
+		}
+		if (m<=c) m=c+1; 
+	};
+	inline void check_valid(size_t r, size_t c=0) { if ( !is_valid(r,c) ) throw "double_array col/row spec is invalid"; };
+	inline bool is_valid(size_t r, size_t c=0) { return r<n && c<m; };
+	inline bool is_nan(size_t r, size_t c=0) 
+	{
+		check_valid(r,c);
+		return ! ( x[r][c]!=NULL && isfinite(x[r][c]->Re()) && isfinite(x[r][c]->Im()) ); 
+	};
+	inline void clr_at(size_t r, size_t c=0) 
+	{ 
+		check_valid(r,c);
+		if ( tst_flag(r,c,BYREF) )
+			free(x[r][c]); 
+		x[r][c]=NULL; 
+	};
+	inline complex *get_addr(size_t r, size_t c=0) { return x[r][c]; };
+	inline complex get_at(size_t r, size_t c=0) { return is_nan(r,c) ? QNAN : *(x[r][c]) ; };
+	inline void set_at(size_t r, size_t c, complex v) 
+	{ 
+		check_valid(r,c);
+		if ( x[r][c]==NULL ) 
+			x[r][c]=(complex*)malloc(sizeof(complex)); 
+		*(x[r][c]) = v; 
+	};
+	inline void set_at(size_t r, size_t c, complex *v) 
+	{ 
+		check_valid(r,c);
+		if ( v==NULL ) 
+		{
+			if ( x[r][c]!=NULL ) 
+				clr_at(r,c);
+		}
+		else 
+		{
+			set_flag(r,c,BYREF);
+			x[r][c] = v; 
+		}
+	};
+	inline void set_ident(void)
+	{
+		size_t r,c;
+		for ( r=0 ; r<get_rows() ; r++ )
+		{
+			for ( c=0 ; c<get_cols() ; c++ )
+				set_at(r,c,(r==c)?1:0);
+		}
+	};
+	inline void operator= (complex x)
+	{
+		size_t r,c;
+		for ( r=0 ; r<get_rows() ; r++ )
+		{
+			for ( c=0 ; c<get_cols() ; c++ )
+				set_at(r,c,x);
+		}
+	};
+	inline void operator= (double_array &x)
+	{
+		size_t r,c;
+		for ( r=0 ; r<get_rows() ; r++ )
+		{
+			for ( c=0 ; c<get_cols() ; c++ )
+				set_at(r,c,x.get_at(r,c));
+		}
+	};
+	inline void operator+= (double_array &x)
+	{
+		size_t r,c;
+		for ( r=0 ; r<get_rows() ; r++ )
+		{
+			for ( c=0 ; c<get_cols() ; c++ )
+				set_at(r,c,get_at(r,c) + x.get_at(r,c));
+		}
+	};
+	inline void operator-= (double_array &x)
+	{
+		size_t r,c;
+		for ( r=0 ; r<get_rows() ; r++ )
+		{
+			for ( c=0 ; c<get_cols() ; c++ )
+				set_at(r,c,get_at(r,c) - x.get_at(r,c));
+		}
+	};
+	inline void operator *= (complex x)
+	{
+		size_t r,c;
+		for ( r=0 ; r<get_rows() ; r++ )
+		{
+			for ( c=0 ; c<get_cols() ; c++ )
+				set_at(r,c,get_at(r,c)*x);
+		}
+	};
+	inline void operator /= (complex x)
+	{
+		size_t r,c;
+		for ( r=0 ; r<get_rows() ; r++ )
+		{
+			for ( c=0 ; c<get_cols() ; c++ )
+				set_at(r,c,get_at(r,c)/x);
+		}
+	};
+};
 #endif
 
 /* ADD NEW CORE TYPES HERE */
@@ -361,6 +611,12 @@ void set_double_array_value(double_array*,unsigned int n, unsigned int m, double
 double *get_double_array_ref(double_array*,unsigned int n, unsigned int m);
 double double_array_get_part(void *x, char *name);
 
+/* complex array */
+int complex_array_create(complex_array*a);
+complex *get_complex_array_value(complex_array*,unsigned int n, unsigned int m);
+void set_complex_array_value(complex_array*,unsigned int n, unsigned int m, complex x);
+complex *get_complex_array_ref(complex_array*,unsigned int n, unsigned int m);
+double complex_array_get_part(void *x, char *name);
 
 #ifdef __cplusplus
 }

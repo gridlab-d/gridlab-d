@@ -907,17 +907,17 @@ int convert_from_double_array(char *buffer, int size, void *data, PROPERTY *prop
 	double_array *a = (double_array*)data;
 	unsigned int n,m;
 	unsigned int p = 0;
-	for ( m=0 ; m<a->get_m() ; m++ )
+	for ( n=0 ; n<a->get_rows() ; n++ )
 	{
-		for ( n=0 ; n<a->get_n() ; n++ )
+		for ( m=0 ; m<a->get_cols() ; m++ )
 		{
 			if ( a->is_nan(n,m) )
 				p += sprintf(buffer+p,"%s","NAN");
 			else
-				p += sprintf(buffer+p,global_double_format,a->get_at(n,m));
-			if ( n<a->get_n()-1 ) strcpy(buffer+p++," ");
+				p += convert_from_double(buffer+p,size,(void*)a->get_addr(n,m),prop);
+			if ( m<a->get_cols()-1 ) strcpy(buffer+p++," ");
 		}
-		if ( m<a->get_m()-1 ) strcpy(buffer+p++,";");
+		if ( n<a->get_rows()-1 ) strcpy(buffer+p++,";");
 	}
 	return p;
 }
@@ -929,7 +929,7 @@ int convert_from_double_array(char *buffer, int size, void *data, PROPERTY *prop
 int convert_to_double_array(char *buffer, void *data, PROPERTY *prop)
 {
 	double_array *a=(double_array*)data;
-	unsigned n=0, m=0;
+	unsigned row=0, col=0;
 	char *p = buffer;
 	
 	/* new array */
@@ -944,22 +944,22 @@ int convert_to_double_array(char *buffer, void *data, PROPERTY *prop)
 
 			if ( *p==';' ) /* end row */
 			{
-				m++;
-				n=0;
+				row++;
+				col=0;
 				p++;
 				continue;
 			}
 			else if ( strnicmp(p,"NAN",3)==0 ) /* NULL value */
 			{
-				a->grow_to(n,m);
-				a->clr_at(n,m);
-				n++;
+				a->grow_to(row,col);
+				a->clr_at(row,col);
+				col++;
 			}
 			else if ( isdigit(*p) || *p=='.' || *p=='-' || *p=='+' ) /* probably real value */
 			{
-				a->grow_to(n,m);
-				a->set_at(n,m,atof(p));
-				n++;
+				a->grow_to(row,col);
+				a->set_at(row,col,atof(p));
+				col++;
 			}
 			else if ( sscanf(value,"%[^.].%[^; \t]",objectname,propertyname)==2 ) /* object property */
 			{
@@ -967,30 +967,46 @@ int convert_to_double_array(char *buffer, void *data, PROPERTY *prop)
 				PROPERTY *prop;
 				if ( obj==NULL )
 				{
-					output_error("convert_to_double_array(char *buffer='%10s...',...): entry n=%d,m=%d object '%s' not found", buffer,n,m,objectname);
+					output_error("convert_to_double_array(char *buffer='%10s...',...): entry at row %d, col %d - object '%s' not found", buffer,row,col,objectname);
 					return 0;
 				}
 				prop = object_get_property(obj,propertyname,NULL);
 				if ( prop==NULL )
 				{
-					output_error("convert_to_double_array(char *buffer='%10s...',...): entry n=%d,m=%d property '%s' not found in object '%s'", buffer,n,m,propertyname,objectname);
+					output_error("convert_to_double_array(char *buffer='%10s...',...): entry at row %d, col %d - property '%s' not found in object '%s'", buffer,row,col,propertyname,objectname);
 					return 0;
 				}
-				a->grow_to(n,m);
-				a->set_at(n,m,object_get_double(obj,prop));
-				if ( a->is_nan(n,m) )
+				a->grow_to(row,col);
+				a->set_at(row,col,object_get_double(obj,prop));
+				if ( a->is_nan(row,col) )
 				{
-					output_error("convert_to_double_array(char *buffer='%10s...',...): entry n=%d,m=%d property '%s' in object '%s' is not accessible", buffer,n,m,propertyname,objectname);
+					output_error("convert_to_double_array(char *buffer='%10s...',...): entry at row %d, col %d property '%s' in object '%s' is not accessible", buffer,row,col,propertyname,objectname);
 					return 0;
 				}
-				n++;
+				col++;
+			}
+			else if ( sscanf(value,"%[^; \t]",propertyname)==1 ) /* object property */
+			{
+				GLOBALVAR *var = global_find(propertyname);
+				if ( var==NULL )
+				{
+					output_error("convert_to_double_array(char *buffer='%10s...',...): entry at row %d, col %d global '%s' not found", buffer,row,col,propertyname);
+					return 0;
+				}
+				a->grow_to(row,col);
+				a->set_at(row,col,(double*)var->prop->addr);
+				if ( a->is_nan(row,col) )
+				{
+					output_error("convert_to_double_array(char *buffer='%10s...',...): entry at row %d, col %d property '%s' in object '%s' is not accessible", buffer,row,col,propertyname,objectname);
+					return 0;
+				}
+				col++;
 			}
 			else /* not a valid entry */
 			{
-				output_error("convert_to_double_array(char *buffer='%10s...',...): entry n=%d,m=%d is not valid (value='%10s')", buffer,n,m,p);
+				output_error("convert_to_double_array(char *buffer='%10s...',...): entry at row %d, col %d is not valid (value='%10s')", buffer,row,col,p);
 				return 0;
 			}
-			a->grow_to(n,m);
 			while ( *p!='\0' && !isspace(*p) && *p!=';' ) p++; /* skip characters just parsed */
 		}
 	}
@@ -1001,17 +1017,116 @@ int convert_to_double_array(char *buffer, void *data, PROPERTY *prop)
 	Converts a \e complex_array data type reference to a string.  
 	@return the number of character written to the string
  **/
-int convert_from_complex_array(char *buffer, int size, void *data, PROPERTY *prop){
-	return 0;
+int convert_from_complex_array(char *buffer, int size, void *data, PROPERTY *prop)
+{
+	complex_array *a = (complex_array*)data;
+	unsigned int n,m;
+	unsigned int p = 0;
+	for ( n=0 ; n<a->get_rows() ; n++ )
+	{
+		for ( m=0 ; m<a->get_cols() ; m++ )
+		{
+			if ( a->is_nan(n,m) )
+				p += sprintf(buffer+p,"%s","NAN");
+			else
+				p += convert_from_complex(buffer+p,size,(void*)a->get_addr(n,m),prop);
+			if ( m<a->get_cols()-1 ) strcpy(buffer+p++," ");
+		}
+		if ( n<a->get_rows()-1 ) strcpy(buffer+p++,";");
+	}
+	return p;
 }
 
 /** Convert to a \e complex_array data type
 	Converts a string to a \e complex_array data type property.  
 	@return 1 on success, 0 on failure, -1 if conversion was incomplete
  **/
-int convert_to_complex_array(char *buffer, void *data, PROPERTY *prop){
-	return 0;
-}
+int convert_to_complex_array(char *buffer, void *data, PROPERTY *prop)
+{
+	complex_array *a=(complex_array*)data;
+	unsigned row=0, col=0;
+	char *p = buffer;
+	
+	/* new array */
+	/* parse input */
+	for ( p=buffer ; *p!='\0' ; )
+	{
+		char value[256];
+		char objectname[64], propertyname[64];
+		complex c;
+		while ( *p!='\0' && isspace(*p) ) p++; /* skip spaces */
+		if ( *p!='\0' && sscanf(p,"%s",value)==1 )
+		{
+
+			if ( *p==';' ) /* end row */
+			{
+				row++;
+				col=0;
+				p++;
+				continue;
+			}
+			else if ( strnicmp(p,"NAN",3)==0 ) /* NULL value */
+			{
+				a->grow_to(row,col);
+				a->clr_at(row,col);
+				col++;
+			}
+			else if ( convert_to_complex(value,(void*)&c,prop) ) /* probably real value */
+			{
+				a->grow_to(row,col);
+				a->set_at(row,col,c);
+				col++;
+			}
+			else if ( sscanf(value,"%[^.].%[^; \t]",objectname,propertyname)==2 ) /* object property */
+			{
+				OBJECT *obj = object_find_name(objectname);
+				PROPERTY *prop;
+				if ( obj==NULL )
+				{
+					output_error("convert_to_double_array(char *buffer='%10s...',...): entry at row %d, col %d - object '%s' not found", buffer,row,col,objectname);
+					return 0;
+				}
+				prop = object_get_property(obj,propertyname,NULL);
+				if ( prop==NULL )
+				{
+					output_error("convert_to_double_array(char *buffer='%10s...',...): entry at row %d, col %d - property '%s' not found in object '%s'", buffer,row,col,propertyname,objectname);
+					return 0;
+				}
+				a->grow_to(row,col);
+				a->set_at(row,col,object_get_complex(obj,prop));
+				if ( a->is_nan(row,col) )
+				{
+					output_error("convert_to_double_array(char *buffer='%10s...',...): entry at row %d, col %d property '%s' in object '%s' is not accessible", buffer,row,col,propertyname,objectname);
+					return 0;
+				}
+				col++;
+			}
+			else if ( sscanf(value,"%[^; \t]",propertyname)==1 ) /* object property */
+			{
+				GLOBALVAR *var = global_find(propertyname);
+				if ( var==NULL )
+				{
+					output_error("convert_to_double_array(char *buffer='%10s...',...): entry at row %d, col %d global '%s' not found", buffer,row,col,propertyname);
+					return 0;
+				}
+				a->grow_to(row,col);
+				a->set_at(row,col,(complex*)var->prop->addr);
+				if ( a->is_nan(row,col) )
+				{
+					output_error("convert_to_double_array(char *buffer='%10s...',...): entry at row %d, col %d property '%s' in object '%s' is not accessible", buffer,row,col,propertyname,objectname);
+					return 0;
+				}
+				col++;
+			}
+			else /* not a valid entry */
+			{
+				output_error("convert_to_double_array(char *buffer='%10s...',...): entry at row %d, col %d is not valid (value='%10s')", buffer,row,col,p);
+				return 0;
+			}
+			while ( *p!='\0' && !isspace(*p) && *p!=';' ) p++; /* skip characters just parsed */
+		}
+	}
+	return 1;}
 
 /** Convert a string to a double with a given unit
    @return 1 on success, 0 on failure

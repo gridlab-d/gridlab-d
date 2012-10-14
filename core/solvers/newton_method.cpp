@@ -72,7 +72,7 @@ EXPORT int newton_method_get(char *param, ...)
 			data->m = (unsigned int*)malloc(sizeof(unsigned int)*dimensions);
 			data->p = (double*)malloc(sizeof(double)*dimensions);
 			data->s = (unsigned char*)malloc(sizeof(unsigned int)*dimensions);
-			int i;
+			size_t i;
 			for ( i=0 ; i<dimensions ; i++ )
 			{
 				data->x[i] = 0;
@@ -96,7 +96,7 @@ EXPORT int newton_method_get(char *param, ...)
 
 EXPORT int newton_method_solve(NMDATA *data)
 {
-	int n, s=1;
+	unsigned int n, s=1;
 	for ( n=0 ; n<data->n ; n++ )
 	{
 		double &p = data->p[n];

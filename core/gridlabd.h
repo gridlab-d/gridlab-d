@@ -1300,15 +1300,13 @@ public: // special functions
 	inline double to_minutes(TIMESTAMP ts=0) { return (dt.timestamp-ts)/60.0 + dt.microsecond*1e-6; };
 	inline double to_seconds(TIMESTAMP ts=0) { return dt.timestamp-ts + dt.microsecond*1e-6; };
 	inline double to_microseconds(TIMESTAMP ts=0) { return (dt.timestamp-ts)*1e6 + dt.microsecond; };
-	inline gld_string get_string(void) 
+	inline gld_string get_string(const size_t sz=1024) 
 	{
 		gld_string res;
-		char *buf = (char*)malloc(64);
-		if ( to_string(buf,64)>=0 )
-		{
+		char buf[1024];
+		if ( sizeof(buf)<sz ) throw "get_string() over size limit";
+		if ( to_string(buf,(int)sz)>=0 )
 			res = buf;
-			free(buf);
-		}
 		return res;
 	};
 };
@@ -1687,15 +1685,13 @@ public: // read accessors
 	inline char* get_description(void) { return pstruct.prop->description; };
 	inline PROPERTYFLAGS get_flags(void) { return pstruct.prop->flags; };
 	inline int to_string(char *buffer, int size) { return callback->convert.property_to_string(pstruct.prop,get_addr(),buffer,size); };
-	inline gld_string get_string(const int sz=1024)
+	inline gld_string get_string(const size_t sz=1024)
 	{
 		gld_string res;
-		char *buf = (char*)malloc(sz);
-		if ( to_string(buf,sz)>=0 )
-		{
+		char buf[1024];
+		if ( sizeof(buf)<sz ) throw "get_string() over size limit";
+		if ( to_string(buf,(int)sz)>=0 )
 			res = buf;
-			free(buf);
-		}
 		return res;
 	};
 	inline int from_string(char *string) { return callback->convert.string_to_property(pstruct.prop,get_addr(),string); };
@@ -1796,15 +1792,13 @@ public: // read accessors
 	inline PROPERTY* get_property(void) { if (!var) return NULL; return var->prop; };
 	inline unsigned long get_flags(void) { if (!var) return -1; return var->flags; };
 	inline size_t to_string(char *bp, size_t sz) { if (!var) return -1; gld_property p(var); return p.to_string(bp,(int)sz); };
-	inline gld_string get_string(const int sz=1024)
+	inline gld_string get_string(const size_t sz=1024)
 	{
 		gld_string res;
-		char *buf = (char*)malloc(sz);
-		if ( to_string(buf,sz)>=0 )
-		{
+		char buf[1024];
+		if ( sizeof(buf)<sz ) throw "get_string() over size limit";
+		if ( to_string(buf,(int)sz)>=0 )
 			res = buf;
-			free(buf);
-		}
 		return res;
 	};
 	inline bool get_bool(void) { return *(bool*)(var->prop->addr); };

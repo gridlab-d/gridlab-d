@@ -108,14 +108,14 @@ static mxArray* matlab_create_value(gld_property *prop)
 	case PT_double_array:
 		{
 			double_array *data = (double_array*)prop->get_addr();
-			int m=data->get_m(), n=data->get_n();
+			size_t n=data->get_rows(), m=data->get_cols();
 			value = mxCreateDoubleMatrix(0,0,mxREAL);
 			double *copy = (double*)mxMalloc(m*n);
 			for ( int c=0 ; c<m ; c++ )
 			{
 				for ( int r=0 ; r<n ; r++ )
 				{
-					copy[c*m+r] = data->get_at(c,r);
+					copy[c*m+r] = data->get_at(r,c);
 				}
 			}
 			mxSetPr(value,copy);
@@ -433,7 +433,7 @@ EXPORT bool glx_init(glxlink *mod)
 	if ( strcmp(matlab->workdir,"")!=0 )
 	{
 #ifdef WIN32
-		mkdir(matlab->workdir);
+		_mkdir(matlab->workdir);
 #else
 		mkdir(matlab->workdir,0750);
 #endif

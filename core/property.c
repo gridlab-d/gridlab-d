@@ -44,7 +44,7 @@ PROPERTYSPEC property_type[_PT_LAST] = {
 	{"bool", "string", sizeof(unsigned int), 6, convert_from_boolean, convert_to_boolean,NULL,NULL,NULL,{TCOPB(bool)},},
 	{"timestamp", "string", sizeof(int64), 24, convert_from_timestamp_stub, convert_to_timestamp_stub,NULL,NULL,NULL,{TCOPS(uint64)},timestamp_get_part},
 	{"double_array", "string", sizeof(double), 0, convert_from_double_array, convert_to_double_array,double_array_create,NULL,NULL,{TCNONE},double_array_get_part},
-	{"complex_array", "string", sizeof(complex), 0, convert_from_complex_array, convert_to_complex_array},
+	{"complex_array", "string", sizeof(complex), 0, convert_from_complex_array, convert_to_complex_array,complex_array_create,NULL,NULL,{TCNONE},complex_array_get_part},
 	{"real", "string", sizeof(real), 24, convert_from_real, convert_to_real},
 	{"float", "string", sizeof(float), 24, convert_from_float, convert_to_float},
 	{"loadshape", "string", sizeof(loadshape), 0, convert_from_loadshape, convert_to_loadshape, loadshape_create,NULL,NULL,{TCOPS(double)},},
@@ -253,9 +253,11 @@ int double_array_create(double_array*a)
 	a->n = a->m = 0;
 	a->max = 1;
 	a->x = (double***)malloc(sizeof(double**)*a->max);
-	if ( a->x==NULL )
+	a->f = (unsigned char*)malloc(sizeof(unsigned char)*a->max);
+	if ( a->x==NULL || a->f==NULL )
 		return 0;
 	memset(a->x,0,sizeof(double**)*a->max);
+	memset(a->f,0,sizeof(unsigned char)*a->max);
 	return 1;
 }
 double get_double_array_value(double_array*a,unsigned int n, unsigned int m)
@@ -290,6 +292,61 @@ double double_array_get_part(void *x, char *name)
 	}
 	return QNAN;
 }
+
+/*********************************************************
+ * COMPLEX ARRAYS
+ *********************************************************/
+int complex_array_create(double_array*a)
+{
+	int n;
+	a->n = a->m = 0;
+	a->max = 1;
+	a->x = (complex***)malloc(sizeof(complex**)*a->max);
+	a->f = (unsigned char*)malloc(sizeof(unsigned char)*a->max);
+	if ( a->x==NULL || a->f==NULL )
+		return 0;
+	memset(a->x,0,sizeof(complex**)*a->max);
+	memset(a->f,0,sizeof(unsigned char)*a->max);
+	return 1;
+}
+complex *get_complex_array_value(complex_array *a,unsigned int n, unsigned int m)
+{
+	if ( a->n>n && a->m>m )
+		return a->x[n][m];
+	else
+		throw_exception("get_complex_array_value(complex_array*a='n=%d,m=%d,...',unsigned int n=%d,unsigned int m=%d): array index out of range",a->n,a->m,n,m);
+}
+void set_complex_array_value(complex_array *a,unsigned int n, unsigned int m, complex *x)
+{
+	if ( a->n>n && a->m>m )
+		*(a->x[n][m]) = *x;
+	else
+		throw_exception("get_complex_array_value(complex_array*a='n=%d,m=%d,...',unsigned int n=%d,unsigned int m=%d): array index out of range",a->n,a->m,n,m);
+}
+complex *get_complex_array_ref(complex_array *a,unsigned int n, unsigned int m)
+{
+	if ( a->n>n && a->m>m )
+		return a->x[n][m];
+	else
+		throw_exception("get_complex_array_value(complex_array*a='n=%d,m=%d,...',unsigned int n=%d,unsigned int m=%d): array index out of range",a->n,a->m,n,m);
+}
+double complex_array_get_part(void *x, char *name)
+{
+	int n,m;
+	char subpart[32];
+	if (sscanf(name,"%d.%d.%31s",&n,&m,subpart)==2)
+	{
+		complex_array *a = (complex_array*)x;
+		if ( n<a->n && m<a->m && a->x[n][m]!=NULL )
+		{
+			if ( strcmp(subpart,"real")==0 ) return a->x[n][m]->r;
+			else if ( strcmp(subpart,"imag")==0 ) return a->x[n][m]->i;
+			else return QNAN;
+		}
+	}
+	return QNAN;
+}
+
 
 
 // EOF
