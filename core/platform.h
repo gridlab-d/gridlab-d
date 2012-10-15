@@ -57,10 +57,11 @@ typedef int pid_t;
 #ifdef __APPLE__ /* although not advised, seems reliable enough */
 #define MACOSX
 #define __WORDSIZE__ 64
+#else
+#define __WORDSIZE__ __WORDSIZE
 #endif
 
 #include <sys/unistd.h>
-#define __WORDSIZE__ __WORDSIZE
 #if __WORDSIZE__ == 64
 #define int64 long /**< standard 64-bit integers on 64-bit machines */
 #else
