@@ -4,9 +4,21 @@
 global double daily_run_probability 0.25;
 
 module residential;
+
+// washer test uses linear state model
 object appliance {
-	// daily run, fill, agitate, empty, spin
+	name "washer";
+	// daily start, fill, agitate, empty, spin
 	durations "86400 60 300 60 300";
 	transitions "daily_run_probability 0.0 0.0 0.0 0.0";
 	powers "0 1+0.1j 1+0.2j 1+0.1j 2+0.2j";
-};
+}
+
+// dryer test uses markov state model
+object appliance {
+	name "dryer";
+	// daily start, tumble, heat
+	durations "86400 240 120";
+	transitions "0.0 daily_run_probability 0.0 ; 0 0 0.5 ; 0.5 0.5 0";
+	powers "0 1+0.1j 1+0.2j";
+}

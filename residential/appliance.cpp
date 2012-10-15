@@ -100,6 +100,10 @@ int appliance::init(OBJECT *parent)
 	if ( heatgain.get_rows()!=1 || heatgain.get_cols()!=n_states )
 		exception("current must 1r x %dc (it is %dr x %dc)", n_states, heatgain.get_rows(), heatgain.get_cols());
 
+	// allocated space of transition matrix row
+	if ( transition.get_rows()>1 )
+		transition_probabilities = new double[n_states];
+
 	// ready to start
 	update_next_t();
 	return residential_enduse::init(parent);
@@ -131,6 +135,36 @@ void appliance::update_power(void)
 	load.power = power.get_at(0,state);
 	load.heatgain = heatgain.get_at(0,state);
 }
+void appliance::update_state(void)
+{
+	if ( transition_probabilities==NULL )
+	{
+		// linear transition array
+		state = (state+1)%n_states;
+		gl_debug("%s: transitions now to state %d", get_name(), state);
+	}
+	else
+	{
+		// transition matrix
+		transition.extract_row(transition_probabilities,state);
+
+		// generate a random uniform number
+		double rn = gl_random_uniform(&my()->rng_state,0,1);
+
+		// find the state that correspond to that cumulative probabilities
+		int n;
+		for ( n=0 ; n<n_states ; n++ )
+		{
+			rn -= transition_probabilities[n];
+			if ( rn<0 )
+			{
+				state = n;
+				gl_debug("%s: transitions now to state %d", get_name(), state);
+				break;
+			}
+		}
+	}
+}
 
 int appliance::precommit(TIMESTAMP t1)
 {
@@ -145,13 +179,12 @@ int appliance::precommit(TIMESTAMP t1)
 
 	// next transition was missed somehow (this should never occur)
 	else if ( next_t < now )
-		exception("appliance::presync(TIMESTAMP t1=%lld): transition at %lld was missed", now, next_t);
+		exception("%s: transition at %lld was missed", get_name(), next_t);
 
 	// transition occurs now
 	else if ( next_t == now )
 	{
-		state = (state+1)%n_states;
-		gl_debug("appliance::presync(TIMESTAMP t1=%lld): transitions now to state %d", now, state);
+		update_state();
 		update_next_t();
 	}
 	return 1;

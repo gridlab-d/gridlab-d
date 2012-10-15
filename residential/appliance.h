@@ -20,9 +20,11 @@ private:
 	TIMESTAMP next_t;
 	unsigned int n_states;
 	unsigned int state;
+	double *transition_probabilities;
 private:
 	void update_next_t(void);
 	void update_power(void);
+	void update_state(void);
 public:
 	appliance(MODULE *module);
 	~appliance();

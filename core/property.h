@@ -178,60 +178,72 @@ public:
 				set_at(r,c,(r==c)?1:0);
 		}
 	};
-	inline void operator= (double x)
+	inline void operator= (double y)
 	{
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
-				set_at(r,c,x);
+				set_at(r,c,y);
 		}
 	};
-	inline void operator= (double_array &x)
+	inline void operator= (double_array &y)
 	{
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
-				set_at(r,c,x.get_at(r,c));
+				set_at(r,c,y.get_at(r,c));
 		}
 	};
-	inline void operator+= (double_array &x)
+	inline void operator+= (double_array &y)
 	{
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
-				set_at(r,c,get_at(r,c) + x.get_at(r,c));
+				set_at(r,c,get_at(r,c) + y.get_at(r,c));
 		}
 	};
-	inline void operator-= (double_array &x)
+	inline void operator-= (double_array &y)
 	{
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
-				set_at(r,c,get_at(r,c) - x.get_at(r,c));
+				set_at(r,c,get_at(r,c) - y.get_at(r,c));
 		}
 	};
-	inline void operator *= (double x)
+	inline void operator *= (double y)
 	{
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
-				set_at(r,c,get_at(r,c)*x);
+				set_at(r,c,get_at(r,c)*y);
 		}
 	};
-	inline void operator /= (double x)
+	inline void operator /= (double y)
 	{
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
-				set_at(r,c,get_at(r,c)/x);
+				set_at(r,c,get_at(r,c)/y);
 		}
 	};
+	inline void extract_row(double*y,size_t r)
+	{
+		size_t c;
+		for ( c=0 ; c<m ; c++ )
+			y[c] = get_at(r,c);
+	}
+	inline void extract_col(double*y,size_t c)
+	{
+		size_t r;
+		for ( r=0 ; r<n ; r++ )
+			y[r] = get_at(r,c);
+	}
 };
 #endif
 
@@ -359,72 +371,84 @@ public:
 				set_at(r,c,(r==c)?one:zero);
 		}
 	};
-	inline void operator= (complex &x)
+	inline void operator= (complex &y)
 	{
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
-				set_at(r,c,x);
+				set_at(r,c,y);
 		}
 	};
-	inline void operator= (complex_array &x)
+	inline void operator= (complex_array &y)
 	{
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
-				set_at(r,c,x.get_at(r,c));
+				set_at(r,c,y.get_at(r,c));
 		}
 	};
-	inline void operator+= (complex_array &x)
+	inline void operator+= (complex_array &y)
 	{
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
 			{
-				complex y = get_at(r,c) + x.get_at(r,c);
-				set_at(r,c,y);
+				complex z = get_at(r,c) + y.get_at(r,c);
+				set_at(r,c,z);
 			}
 		}
 	};
-	inline void operator-= (complex_array &x)
+	inline void operator-= (complex_array &y)
 	{
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
 			{
-				complex y = get_at(r,c) - x.get_at(r,c);
-				set_at(r,c,y);
+				complex z = get_at(r,c) - y.get_at(r,c);
+				set_at(r,c,z);
 			}
 		}
 	};
-	inline void operator *= (complex &x)
+	inline void operator *= (complex &y)
 	{
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
 			{
-				complex y = get_at(r,c)*x;
-				set_at(r,c,y);
+				complex z = get_at(r,c)*y;
+				set_at(r,c,z);
 			}
 		}
 	};
-	inline void operator /= (complex &x)
+	inline void operator /= (complex &y)
 	{
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
 			{
-				complex y = get_at(r,c)/x;
-				set_at(r,c,y);
+				complex z = get_at(r,c)/y;
+				set_at(r,c,z);
 			}
 		}
 	};
+	inline void extract_row(complex*y,size_t r)
+	{
+		size_t c;
+		for ( c=0 ; c<m ; c++ )
+			y[c] = get_at(r,c);
+	}
+	inline void extract_col(complex*y,size_t c)
+	{
+		size_t r;
+		for ( r=0 ; r<n ; r++ )
+			y[r] = get_at(r,c);
+	}
 };
 #endif
 
