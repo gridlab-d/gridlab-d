@@ -60,7 +60,7 @@ typedef int pid_t;
 #endif
 
 #include <sys/unistd.h>
-
+#define __WORDSIZE__ __WORDSIZE
 #if __WORDSIZE__ == 64
 #define int64 long /**< standard 64-bit integers on 64-bit machines */
 #else

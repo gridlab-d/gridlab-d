@@ -174,6 +174,11 @@ long getheight(void)
 }
 #else
 #include <sys/ioctl.h>
+#ifndef ttysize
+#define ttysize winsize
+#define ts_cols ws_col
+#define ts_lines ws_row
+#endif
 long getwidth(void)
 {
 	struct ttysize ws;
