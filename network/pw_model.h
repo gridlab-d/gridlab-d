@@ -14,9 +14,9 @@
 #ifdef int64
 #undef int64
 #endif
-// @TODO hardcoded strings are bad, should use a 'powerworld_executable_path' for this, if PW is located in a nonstandard location.
-#import "C:\Program Files (x86)\PowerWorld\Simulator16\pwrworld.exe"
-//#import "libid:C99F1760-277E-11D5-A106-00C04F469176"
+// kinda-TODO hardcoded strings are bad, should use a 'powerworld_executable_path' for this, if PW is located in a nonstandard location.  Assuming we even can, being a #import
+//#import "C:\Program Files (x86)\PowerWorld\Simulator16\pwrworld.exe"
+#import "libid:C99F1760-277E-11D5-A106-00C04F469176"
 #ifndef int64
 #define int64 __int64
 #endif

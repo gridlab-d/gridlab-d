@@ -61,14 +61,18 @@ int pw_recorder::init(OBJECT *parent){
 			return 0;
 		} else {
 			// isa parent pw_model?
-			if(!gl_object_isa(model, "pw_model")){
+			if(!gl_object_isa(parent, "pw_model")){
 				gl_error("pw_recorder::init(): parent of '%s' is not a pw_model", gl_name(model, objname, 63) );
 				return 0;
 			}
+			model = parent;
 		}
 	} else {
 		// isa model pw_model?
-		;
+		if(!gl_object_isa(model, "pw_model")){
+			gl_error("pw_recorder::init(): parent of '%s' is not a pw_model", gl_name(model, objname, 63) );
+			return 0;
+		}
 	}
 
 	// check if model is initialized
@@ -412,7 +416,23 @@ int pw_recorder::GPSE(){
 	@return		zero failure, nonzero success
  **/
 int pw_recorder::write_header(){
-	fprintf(outfile, "# obligatory header output\n");
+	char namebuf[64];
+	time_t now = time(NULL);
+
+	fprintf(outfile, "# file...... %s\n", outfile_name);
+	fprintf(outfile, "# date...... %s", asctime(localtime(&now))); // adds its own newline
+#ifdef WIN32
+	fprintf(outfile, "# user...... %s\n", getenv("USERNAME"));
+	fprintf(outfile, "# host...... %s\n", getenv("MACHINENAME"));
+#else
+	fprintf(outfile, "# user...... %s\n", getenv("USER"));
+	fprintf(outfile, "# host...... %s\n", getenv("HOST"));
+#endif
+	fprintf(outfile, "# model..... %s\n", gl_name(model, namebuf, 63));
+	fprintf(outfile, "# interval.. %d\n", interval);
+	fprintf(outfile, "# limit..... %d\n", limit);
+	fprintf(outfile, "# key_str... %s\n", key_strings);
+	fprintf(outfile, "# key_val... %s\n", key_values);
 	fprintf(outfile, "# timestamp,%s\n", properties);
 	return 1;
 }
