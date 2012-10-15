@@ -1819,6 +1819,12 @@ STATUS exec_start(void)
 							for (ptr = ranks[pass]->ordinal[i]->first; ptr != NULL; ptr=ptr->next) {
 								OBJECT *obj = ptr->data;
 								ss_do_object_sync(0, ptr->data);					
+								
+								if (obj->valid_to == TS_INVALID)
+								{
+									//Get us out of the loop so others don't exec on bad status
+									break;
+								}
 								///printf("%d %s %d\n", obj->id, obj->name, obj->rank);
 							}
 							//printf("\n");
