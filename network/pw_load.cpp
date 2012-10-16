@@ -89,7 +89,7 @@ pw_load::pw_load(MODULE *module)
 			PT_int32, "powerworld_bus_num", get_powerworld_bus_num_offset(),PT_DESCRIPTION, "bus_num key field of the load",
 			PT_char1024, "powerworld_load_id", get_powerworld_load_id_offset(),PT_DESCRIPTION, "load_id key field of the load",
 			PT_double, "power_threshold[MVA]", get_power_threshold_offset(),PT_DESCRIPTION, "power threshold for this object to trigger a model update",
-			PT_double, "power_diff[MVA]", get_power_diff_offset(),PT_DESCRIPTION, "power threshold for this object to trigger a model update",
+			PT_double, "power_diff[MVA]", get_power_diff_offset(),PT_DESCRIPTION, "current power difference posted to this object",
 			PT_complex, "load_power[MVA]", get_load_power_offset(),PT_DESCRIPTION, "constant power draw on the load",
 			PT_complex, "load_impedance[MVA]", get_load_impedance_offset(),PT_DESCRIPTION, "constant impedance draw on the load",
 			PT_complex, "load_current[MVA]", get_load_current_offset(),PT_DESCRIPTION, "constant current draw on the load",
@@ -631,8 +631,34 @@ int pw_load::init(OBJECT *parent){
 
 	// power_threshold must be positive, else default
 	if(power_threshold < 0.0){
-		gl_warning("pw_load::init(): power_threshold is negative, reseting to 0 VA");
-		power_threshold = 0.0;
+		gl_warning("pw_load::init(): power_threshold is negative, making positive");
+		power_threshold = -power_threshold;
+	}
+
+	//Zero check
+	if (power_threshold == 0.0)
+	{
+		//Grab load level - 0.1% of current load level - load is in MVA
+		power_threshold = 0.1*pw_load_mva.Mag();
+
+		if (power_threshold == 0.0)	//Check it again
+		{
+			gl_warning("pw_load::init(): power_threshold is zero, convergence may not occur!");
+			/*  TROUBLESHOOT
+			pw_load has a zero value for power_threshold.  It attempted to guess a value using the
+			connected load inside PowerWorld, but that was 0 as well.  This results in an extremely
+			tight convergence criterion and may fail.  Specify a manual value to ensure convergence.
+			*/
+		}
+		else	//Warn we set it
+		{
+			gl_warning("pw_load::init(): power_threshold was zero, set to 0.1%% of load - %.0f MVA",power_threshold);
+			/*  TROUBLESHOOT
+			pw_load had a zero value for power_threshold.  The solver pulled the current value from the
+			connected PowerWorld load and will use 0.1% of its VA value as the convergence criterion.  If
+			this is too loose or otherwise unacceptable, specify a manual convergence value.
+			*/
+		}
 	}
 
 	return 1;
