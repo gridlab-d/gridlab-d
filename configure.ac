@@ -220,6 +220,7 @@ AC_FUNC_REALLOC
 AC_FUNC_STRFTIME
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([isfinite atexit getcwd memset pow putenv sqrt strchr strerror strrchr tzset getch])
+AC_CHECK_LIB(curses, tgetent)
 ACX_PTHREAD
 GLD_GET_NPROCS
 #GCC_CT_FEATURES
