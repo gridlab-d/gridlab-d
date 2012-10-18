@@ -257,10 +257,10 @@ STATUS server_join(void)
 }
 
 /********************************************************
- HTTP routines
+ HTTPCNX routines
  */
 
-typedef struct s_http {
+typedef struct s_httpcnx {
 	char query[1024];
 	char *buffer;
 	size_t len;
@@ -268,27 +268,27 @@ typedef struct s_http {
 	char *status;
 	char *type;
 	SOCKET s;
-} HTTP;
+} HTTPCNX;
 
-/** Create an HTTP connection handle
-    @returns HTTP connection handle pointer on success, NULL on failure
+/** Create an HTTPCNX connection handle
+    @returns HTTPCNX connection handle pointer on success, NULL on failure
  **/
-static HTTP *http_create(SOCKET s)
+static HTTPCNX *http_create(SOCKET s)
 {
-	HTTP *http = (HTTP*)malloc(sizeof(HTTP));
-	memset(http,0,sizeof(HTTP));
+	HTTPCNX *http = (HTTPCNX*)malloc(sizeof(HTTPCNX));
+	memset(http,0,sizeof(HTTPCNX));
 	http->s = s;
 	http->max = 4096;
 	http->buffer = malloc(http->max);
 	return http;
 }
 
-/** Reset an HTTP connection handle
+/** Reset an HTTPCNX connection handle
 
-	This function clears the contents of HTTP connection block so that it can be reused to handle a new message.
+	This function clears the contents of HTTPCNX connection block so that it can be reused to handle a new message.
     @returns Nothing
  **/
-static void http_reset(HTTP *http)
+static void http_reset(HTTPCNX *http)
 {
 	http->status = NULL;
 	http->type = NULL;
@@ -336,24 +336,24 @@ static void http_reset(HTTP *http)
 #define HTTP_BADGATEWAY "502 Bad Gateway"
 #define HTTP_SERVICEUNAVAILABLE "503 Service Unavailable"
 #define HTTP_GATEWAYTIMEOUT "504 Gateway Time-out"
-#define HTTP_VERSIONNOTSUPPORTED "505 HTTP Version not supported"
+#define HTTP_VERSIONNOTSUPPORTED "505 HTTPCNX Version not supported"
 
-/** Set the HTTP response status code **/
-static void http_status(HTTP *http, char *status)
+/** Set the HTTPCNX response status code **/
+static void http_status(HTTPCNX *http, char *status)
 {
 	http->status = status;
 }
-/** Set the HTTP response message type **/
-static void http_type(HTTP *http, char *type)
+/** Set the HTTPCNX response message type **/
+static void http_type(HTTPCNX *http, char *type)
 {
 	http->type = type;
 }
-/** Send the HTTP response **/
-static void http_send(HTTP *http)
+/** Send the HTTPCNX response **/
+static void http_send(HTTPCNX *http)
 {
 	char header[4096];
 	int len=0;
-	len += sprintf(header+len, "HTTP/1.1 %s", http->status?http->status:HTTP_INTERNALSERVERERROR);
+	len += sprintf(header+len, "HTTPCNX/1.1 %s", http->status?http->status:HTTP_INTERNALSERVERERROR);
 	output_verbose("%s (len=%d, mime=%s)",header,http->len,http->type?http->type:"none");
 	len += sprintf(header+len, "\nContent-Length: %d\n", http->len);
 	if (http->type && http->type[0]!='\0')
@@ -367,8 +367,8 @@ static void http_send(HTTP *http)
 		send_data(http->s,http->buffer,http->len);
 	http->len = 0;
 }
-/** Write the contents of the HTTP message buffer **/
-static void http_write(HTTP *http, char *data, size_t len)
+/** Write the contents of the HTTPCNX message buffer **/
+static void http_write(HTTPCNX *http, char *data, size_t len)
 {
 	if (http->len+len>=http->max)
 	{
@@ -382,8 +382,8 @@ static void http_write(HTTP *http, char *data, size_t len)
 	memcpy(http->buffer+http->len,data,len);
 	http->len += len;
 }
-/** Close the HTTP connection after sending content **/
-static void http_close(HTTP *http)
+/** Close the HTTPCNX connection after sending content **/
+static void http_close(HTTPCNX *http)
 {
 	if (http->len>0)
 		http_send(http);
@@ -394,7 +394,7 @@ static void http_close(HTTP *http)
 #endif
 }
 /** Set the response MIME type **/
-static void http_mime(HTTP *http, char *path)
+static void http_mime(HTTPCNX *http, char *path)
 {
 	size_t len = strlen(path);
 	static struct s_map {
@@ -418,8 +418,8 @@ static void http_mime(HTTP *http, char *path)
 	return;
 }
 
-/** Format HTTP message content **/
-static int http_format(HTTP *http, char *format, ...)
+/** Format HTTPCNX message content **/
+static int http_format(HTTPCNX *http, char *format, ...)
 {
 	int len;
 	char data[65536];
@@ -501,7 +501,7 @@ void http_decode(char *buffer)
 /** Process an incoming XML data request
 	@returns non-zero on success, 0 on failure (errno set)
  **/
-int http_xml_request(HTTP *http,char *uri)
+int http_xml_request(HTTPCNX *http,char *uri)
 {
 	char arg1[1024]="", arg2[1024]="";
 	int nargs = sscanf(uri,"%1023[^/=\r\n]/%1023[^\r\n=]",arg1,arg2);
@@ -589,7 +589,7 @@ int http_xml_request(HTTP *http,char *uri)
 /** Process an incoming GUI request
 	@returns non-zero on success, 0 on failure (errno set)
  **/
-int http_gui_request(HTTP *http,char *uri)
+int http_gui_request(HTTPCNX *http,char *uri)
 {
 	gui_set_html_stream((void*)http,http_format);
 	if (gui_html_output_page(uri)>=0)
@@ -618,7 +618,7 @@ int filelength(int fd)
 /** Copy the content of a file to the client
 	@returns the number of bytes sent
  **/
-int http_copy(HTTP *http, char *context, char *source)
+int http_copy(HTTPCNX *http, char *context, char *source)
 {
 	char *buffer;
 	size_t len;
@@ -666,7 +666,7 @@ int http_copy(HTTP *http, char *context, char *source)
 	@returns non-zero on success, 0 on failure (errno set)
  **/
  
-int http_output_request(HTTP *http,char *uri)
+int http_output_request(HTTPCNX *http,char *uri)
 {
 	char fullpath[1024];
 	strcpy(fullpath,global_workdir);
@@ -679,7 +679,7 @@ int http_output_request(HTTP *http,char *uri)
 /** Process an incoming Java request
 	@returns non-zero on success, 0 on failure (errno set)
  **/
-int http_run_java(HTTP *http,char *uri)
+int http_run_java(HTTPCNX *http,char *uri)
 {
 	char script[1024];
 	char command[1024];
@@ -737,7 +737,7 @@ int http_run_java(HTTP *http,char *uri)
 	@returns non-zero on success, 0 on failure (errno set)
  **/
 
-int http_run_perl(HTTP *http,char *uri)
+int http_run_perl(HTTPCNX *http,char *uri)
 {
 	char script[1024];
 	char command[1024];
@@ -794,7 +794,7 @@ int http_run_perl(HTTP *http,char *uri)
 /** Process an incoming Python data request
 	@returns non-zero on success, 0 on failure (errno set)
  **/
-int http_run_python(HTTP *http,char *uri)
+int http_run_python(HTTPCNX *http,char *uri)
 {
 	char script[1024];
 	char command[1024];
@@ -851,7 +851,7 @@ int http_run_python(HTTP *http,char *uri)
 /** Process an incoming R data request
 	@returns non-zero on success, 0 on failure (errno set)
  **/
-int http_run_r(HTTP *http,char *uri)
+int http_run_r(HTTPCNX *http,char *uri)
 {
 	char script[1024];
 	char command[1024];
@@ -912,7 +912,7 @@ int http_run_r(HTTP *http,char *uri)
 /** Process an incoming Scilab data request
 	@returns non-zero on success, 0 on failure (errno set)
  **/
-int http_run_scilab(HTTP *http,char *uri)
+int http_run_scilab(HTTPCNX *http,char *uri)
 {
 	char script[1024];
 	char command[1024];
@@ -969,7 +969,7 @@ int http_run_scilab(HTTP *http,char *uri)
 /** Process an incoming Octave data request
 	@returns non-zero on success, 0 on failure (errno set)
  **/
-int http_run_octave(HTTP *http,char *uri)
+int http_run_octave(HTTPCNX *http,char *uri)
 {
 	char script[1024];
 	char command[1024];
@@ -1026,7 +1026,7 @@ int http_run_octave(HTTP *http,char *uri)
 /** Process an incoming Gnuplot data request
 	@returns non-zero on success, 0 on failure (errno set)
  **/
-int http_run_gnuplot(HTTP *http,char *uri)
+int http_run_gnuplot(HTTPCNX *http,char *uri)
 {
 	char script[1024];
 	char command[1024];
@@ -1086,7 +1086,7 @@ int http_run_gnuplot(HTTP *http,char *uri)
 /** Process an incoming runtime file request
 	@returns non-zero on success, 0 on failure (errno set)
  **/
-int http_get_rt(HTTP *http,char *uri)
+int http_get_rt(HTTPCNX *http,char *uri)
 {
 	char fullpath[1024];
 	if (!find_file(uri,NULL,R_OK,fullpath,sizeof(fullpath)))
@@ -1100,7 +1100,7 @@ int http_get_rt(HTTP *http,char *uri)
 /** Process an incoming action request
 	@returns non-zero on success, 0 on failure (errno set)
  **/
-int http_action_request(HTTP *http,char *action)
+int http_action_request(HTTPCNX *http,char *action)
 {
 	if (gui_post_action(action)==-1)
 	{
@@ -1119,7 +1119,7 @@ int http_action_request(HTTP *http,char *action)
 /** Process an incoming main loop control request
     @returns non-zero on success, 0 on failure (errno set)
  **/
-int http_control_request(HTTP *http, char *action)
+int http_control_request(HTTPCNX *http, char *action)
 {
 	char buffer[1024];
 
@@ -1155,7 +1155,7 @@ int http_control_request(HTTP *http, char *action)
 /** Process an incoming main loop control request
     @returns non-zero on success, 0 on failure (errno set)
  **/
-int http_open_request(HTTP *http, char *action)
+int http_open_request(HTTPCNX *http, char *action)
 {
 	if ( loadall(action) )
 		return 1;
@@ -1165,7 +1165,7 @@ int http_open_request(HTTP *http, char *action)
 /** Process an incoming favicon request
 	@returns non-zero on success, 0 on failure (errno set)
  **/
-int http_favicon(HTTP *http)
+int http_favicon(HTTPCNX *http)
 {
 	char fullpath[1024];
 	if ( find_file("favicon.ico",NULL,R_OK,fullpath,sizeof(fullpath))==NULL )
@@ -1182,7 +1182,7 @@ int http_favicon(HTTP *http)
 void *http_response(void *ptr)
 {
 	SOCKET fd = (SOCKET)ptr;
-	HTTP *http = http_create(fd);
+	HTTPCNX *http = http_create(fd);
 	size_t len;
 	int content_length = 0;
 	char *user_agent = NULL;
@@ -1266,7 +1266,7 @@ void *http_response(void *ptr)
 		else {
 			static struct s_map {
 				char *path;
-				int (*request)(HTTP*,char*);
+				int (*request)(HTTPCNX*,char*);
 				char *success;
 				char *failure;
 			} map[] = {

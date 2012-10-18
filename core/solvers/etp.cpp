@@ -163,7 +163,7 @@ EXPORT int etp_solve(ETPDATA *etp)
 	// solve using Newton's method
 	unsigned int iter = max_iterations;
 	if (t!=0) // initial t changed to inflexion point
-		double f = EVAL(t,a,n,b,m,c);
+		f = EVAL(t,a,n,b,m,c);
 	double dfdt = EVAL(t,a*n,n,b*m,m,0); 
 	while ( fabs(f)>p && isfinite(t) && iter-->0)
 	{

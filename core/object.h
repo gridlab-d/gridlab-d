@@ -284,6 +284,10 @@ typedef struct s_callbacks {
 			double (*from_string)(char *buffer);
 		} latitude, longitude;
 	} geography;
+	struct {
+		void* (*read)(char *url, int maxlen);
+		void (*free)(void *result);
+	} http;
 } CALLBACKS; /**< core callback function table */
 
 #ifdef __cplusplus

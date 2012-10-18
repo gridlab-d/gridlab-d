@@ -178,13 +178,13 @@ void http_delete_result(HTTPRESULT *result)
 	free(result);
 }
 
-HTTPRESULT *http_read(char *url)
+HTTPRESULT *http_read(char *url, int maxlen)
 {
 	HTTPRESULT *result = http_new_result();
 	
 	if ( strncmp(url,"http://",7)==0 )
 	{
-		HTTP *fp = hopen(url,0x1000);
+		HTTP *fp = hopen(url,maxlen);
 		if ( fp==NULL )
 		{
 			output_error("http_read('%s'): unable to access url", url);
@@ -212,17 +212,17 @@ HTTPRESULT *http_read(char *url)
 					*data++ = '\0';
 					result->body.size = len - hlen - 1;
 					while ( isspace(*data) ) { data++; result->body.size--; }
-					if ( sscanf(data,"%x",&dlen)==1 )
-					{
-						data = strchr(data,'\n');
-						while ( isspace(*data) ) {data++;}
-						result->body.size = dlen;
-						result->body.data = malloc(dlen+1);
-					}
-					else
-					{
+//					if ( sscanf(data,"%x",&dlen)==1 )
+//					{
+//						data = strchr(data,'\n');
+//						while ( isspace(*data) ) {data++;}
+//						result->body.size = dlen;
+//						result->body.data = malloc(dlen+1);
+//					}
+//					else
+//					{
 						result->body.data = malloc(result->body.size+1);
-					}
+//					}
 					memcpy(result->body.data,data,result->body.size);
 					result->body.data[result->body.size] = '\0';
 				}

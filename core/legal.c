@@ -193,7 +193,7 @@ void *check_version_proc(void *ptr)
 {
 	int patch, build;
 	char *url = "http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/versions.txt";
-	HTTPRESULT *result = http_read(url);
+	HTTPRESULT *result = http_read(url,0x1000);
 	char target[32];
 	char *pv = NULL, *nv = NULL;
 	int rc = 0;

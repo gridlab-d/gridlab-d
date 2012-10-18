@@ -42,8 +42,16 @@ typedef struct s_http_result
 	int status;
 } HTTPRESULT;
 
-HTTPRESULT *http_read(char *url); 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+HTTPRESULT *http_read(char *url, int maxlen); 
 void http_delete_result(HTTPRESULT *result);
 HTTPRESULT *http_new_result(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

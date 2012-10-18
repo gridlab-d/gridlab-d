@@ -30,6 +30,8 @@
 #include "config.h"
 #endif
 
+#include "http_client.h"
+
 #if defined WIN32 && ! defined MINGW
 	#define _WIN32_WINNT 0x0400
 	#include <windows.h>
@@ -210,6 +212,7 @@ static CALLBACKS callbacks = {
 	{object_remote_read, object_remote_write, global_remote_read, global_remote_write},
 	{objlist_create,objlist_search,objlist_destroy,objlist_add,objlist_del,objlist_size,objlist_get,objlist_apply},
 	{{convert_from_latitude, convert_to_latitude},{convert_from_longitude,convert_to_longitude}},
+	{http_read,http_delete_result},
 };
 CALLBACKS *module_callbacks(void) { return &callbacks; }
 

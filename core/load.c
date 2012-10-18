@@ -5860,7 +5860,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			int len=0;
 			char *p;
 			FILE *fp;
-			HTTPRESULT *http = http_read(value);
+			HTTPRESULT *http = http_read(value,0x40000);
 			char tmpname[1024];
 			if ( http==NULL )
 			{

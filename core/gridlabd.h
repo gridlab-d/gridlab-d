@@ -1874,6 +1874,29 @@ public:
 	inline void exception(char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf,msg,ptr); va_end(ptr); throw (const char*)buf;};
 };
 
+class gld_webdata {
+private:
+	struct s_http {
+		struct {
+			char *data;
+			int size;
+		} header, body; // keep consistent with struct s_http_result in core/http_client.h
+		int status;
+	} *result;
+public:
+	inline gld_webdata(void) {result=NULL;};
+	inline gld_webdata(char *url, size_t maxlen=4096) {open(url,maxlen);};
+	inline ~gld_webdata(void) {};
+public:
+	inline bool open(char *url, size_t maxlen=4096) { result = (struct s_http*)callback->http.read(url,(int)maxlen); return is_valid();};
+	inline void close(void) { callback->http.free((void*)result);};
+	inline bool is_valid(void) { return result!=NULL; };
+	inline char *get_header(void) { return result->header.data;};
+	inline size_t get_header_size(void) { return result->header.size; };
+	inline char *get_body(void) { return result->body.data; };
+	inline size_t get_body_size(void) { return result->body.size; };
+	inline int get_status(void) { return result->status; };
+};
 ////////////////////////////////////////////////////////////////////////////////////
 // Module-Core Linkage Export Macros
 ////////////////////////////////////////////////////////////////////////////////////
