@@ -51,22 +51,22 @@ double enduse_get_part(void *x, char *name)
 	DO_DOUBLE(heatgain);
 	DO_DOUBLE(heatgain_fraction);
 #define DO_MOTOR(X) \
-	DO_COMPLEX(motor[EUMT_MOTOR_##X].power,"motor"#X".power"); \
-	DO_COMPLEX(motor[EUMT_MOTOR_##X].impedance,"motor"#X".impedance"); \
-	DO_DOUBLE(motor[EUMT_MOTOR_##X].inertia,"motor"#X".inertia"); \
-	DO_DOUBLE(motor[EUMT_MOTOR_##X].v_stall,"motor"#X".v_stall"); \
-	DO_DOUBLE(motor[EUMT_MOTOR_##X].v_start,"motor"#X".v_start"); \
-	DO_DOUBLE(motor[EUMT_MOTOR_##X].v_trip,"motor"#X".v_trip"); \
-	DO_DOUBLE(motor[EUMT_MOTOR_##X].t_trip,"motor"#X".t_trip");
+	_DO_COMPLEX(motor[EUMT_MOTOR_##X].power,"motor"#X".power"); \
+	_DO_COMPLEX(motor[EUMT_MOTOR_##X].impedance,"motor"#X".impedance"); \
+	_DO_DOUBLE(motor[EUMT_MOTOR_##X].inertia,"motor"#X".inertia"); \
+	_DO_DOUBLE(motor[EUMT_MOTOR_##X].v_stall,"motor"#X".v_stall"); \
+	_DO_DOUBLE(motor[EUMT_MOTOR_##X].v_start,"motor"#X".v_start"); \
+	_DO_DOUBLE(motor[EUMT_MOTOR_##X].v_trip,"motor"#X".v_trip"); \
+	_DO_DOUBLE(motor[EUMT_MOTOR_##X].t_trip,"motor"#X".t_trip");
 	DO_MOTOR(A);
 	DO_MOTOR(B);
 	DO_MOTOR(C);
 	DO_MOTOR(D);
 #define DO_ELECTRONIC(X) \
-	DO_COMPLEX(electronic[EUMT_MOTOR_##X].power,"electronic"#X".power"); \
-	DO_DOUBLE(electronic[EUMT_MOTOR_##X].inertia,"electronic"#X".inertia"); \
-	DO_DOUBLE(electronic[EUMT_MOTOR_##X].v_trip,"electronic"#X".v_trip"); \
-	DO_DOUBLE(electronic[EUMT_MOTOR_##X].v_start,"electronic"#X".v_start");
+	_DO_COMPLEX(electronic[EUMT_MOTOR_##X].power,"electronic"#X".power"); \
+	_DO_DOUBLE(electronic[EUMT_MOTOR_##X].inertia,"electronic"#X".inertia"); \
+	_DO_DOUBLE(electronic[EUMT_MOTOR_##X].v_trip,"electronic"#X".v_trip"); \
+	_DO_DOUBLE(electronic[EUMT_MOTOR_##X].v_start,"electronic"#X".v_start");
 	DO_ELECTRONIC(A);
 	DO_ELECTRONIC(B);
 	return QNAN;
