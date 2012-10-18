@@ -27,13 +27,15 @@ static unsigned int n_enduses = 0;
 double enduse_get_part(void *x, char *name)
 {
 	enduse *e = (enduse*)x;
-#define DO_DOUBLE(X) if ( strcmp(name,#X)==0) return e->X;
-#define DO_COMPLEX(X) \
-	if ( strcmp(name,#X".real")==0) return e->X.r; \
-	if ( strcmp(name,#X".imag")==0) return e->X.i; \
-	if ( strcmp(name,#X".mag")==0) return complex_get_mag(e->X); \
-	if ( strcmp(name,#X".arg")==0) return complex_get_arg(e->X); \
-	if ( strcmp(name,#X".ang")==0) return complex_get_arg(e->X)*180/PI;  
+#define _DO_DOUBLE(X,Y) if ( strcmp(name,Y)==0) return e->X;
+#define _DO_COMPLEX(X,Y) \
+	if ( strcmp(name,Y".real")==0) return e->X.r; \
+	if ( strcmp(name,Y".imag")==0) return e->X.i; \
+	if ( strcmp(name,Y".mag")==0) return complex_get_mag(e->X); \
+	if ( strcmp(name,Y".arg")==0) return complex_get_arg(e->X); \
+	if ( strcmp(name,Y".ang")==0) return complex_get_arg(e->X)*180/PI; 
+#define DO_DOUBLE(X) _DO_DOUBLE(X,#X)
+#define DO_COMPLEX(X) _DO_COMPLEX(X,#X)
 	DO_COMPLEX(total);
 	DO_COMPLEX(energy);
 	DO_COMPLEX(demand);
@@ -48,6 +50,25 @@ double enduse_get_part(void *x, char *name)
 	DO_DOUBLE(voltage_factor);
 	DO_DOUBLE(heatgain);
 	DO_DOUBLE(heatgain_fraction);
+#define DO_MOTOR(X) \
+	DO_COMPLEX(motor[EUMT_MOTOR_##X].power,"motor"#X".power"); \
+	DO_COMPLEX(motor[EUMT_MOTOR_##X].impedance,"motor"#X".impedance"); \
+	DO_DOUBLE(motor[EUMT_MOTOR_##X].inertia,"motor"#X".inertia"); \
+	DO_DOUBLE(motor[EUMT_MOTOR_##X].v_stall,"motor"#X".v_stall"); \
+	DO_DOUBLE(motor[EUMT_MOTOR_##X].v_start,"motor"#X".v_start"); \
+	DO_DOUBLE(motor[EUMT_MOTOR_##X].v_trip,"motor"#X".v_trip"); \
+	DO_DOUBLE(motor[EUMT_MOTOR_##X].t_trip,"motor"#X".t_trip");
+	DO_MOTOR(A);
+	DO_MOTOR(B);
+	DO_MOTOR(C);
+	DO_MOTOR(D);
+#define DO_ELECTRONIC(X) \
+	DO_COMPLEX(electronic[EUMT_MOTOR_##X].power,"electronic"#X".power"); \
+	DO_DOUBLE(electronic[EUMT_MOTOR_##X].inertia,"electronic"#X".inertia"); \
+	DO_DOUBLE(electronic[EUMT_MOTOR_##X].v_trip,"electronic"#X".v_trip"); \
+	DO_DOUBLE(electronic[EUMT_MOTOR_##X].v_start,"electronic"#X".v_start");
+	DO_ELECTRONIC(A);
+	DO_ELECTRONIC(B);
 	return QNAN;
 }
 

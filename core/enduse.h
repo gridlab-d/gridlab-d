@@ -10,6 +10,36 @@
 #define EUC_IS220 0x0001 ///< enduse flag to indicate that the voltage is line-to-line, not line-to-neutral
 #define EUC_HEATLOAD 0x0002 ///< enduse flag to indicate that the load drives the heatgain instead of the total power
 
+typedef enum {
+	EUMT_MOTOR_A, /**< 3ph induction motors driving constant torque loads */
+	EUMT_MOTOR_B, /**< induction motors driving high inertia speed-squares torque loads */
+	EUMT_MOTOR_C, /**< induction motors driving low inertia loads speed-squared torque loads */
+	EUMT_MOTOR_D, /**< 1ph induction motors driving constant torque loads */
+	_EUMT_COUNT, /* must be last */
+} EUMOTORTYPE;
+typedef enum {
+	EUET_ELECTRONIC_A, /**< simple power electronics (no backfeed) */
+	EUET_ELECTRONIC_B, /**< advanced power electronics (w/ backfeed) */
+	_EUET_COUNT, /* must be last */
+} EUELECTRONICTYPE;
+
+typedef struct s_motor {
+	complex power;		/**< motor power when running */
+	complex impedance;	/**< motor impedance when stalled */
+	double inertia;		/**< motor inertia in seconds */
+	double v_stall;		/**< motor stall voltage (pu) */
+	double v_start;		/**< motor start voltage (pu) */
+	double v_trip;		/**< motor trip voltage (pu) */
+	double t_trip;		/**< motor thermal trip time in seconds */
+	/* TODO add slip data (0 for synchronous motors) */
+} EUMOTOR;
+typedef struct s_electronic {
+	complex power;		/**< load power when running */
+	double inertia;		/**< load "inertia" */
+	double v_trip;		/**< load "trip" voltage (pu) */
+	double v_start;		/**< load "start" voltage (pu) */
+} EUELECTRONIC;
+
 typedef struct s_enduse {
 	/* the output value must be first for transform to stream */
 	/* meter values */
@@ -25,6 +55,10 @@ typedef struct s_enduse {
 	complex admittance;			/* constant impedance oprtion of load in kW */
 	complex current;			/* constant current portion of load in kW */
 	complex power;				/* constant power portion of load in kW */
+
+	/* composite load data */
+	EUMOTOR motor[_EUMT_COUNT];				/* motor loads (A-D) */
+	EUELECTRONIC electronic[_EUET_COUNT];	/* electronic loads (S/D) */
 
 	/* loading */
 	double impedance_fraction;	/* constant impedance fraction (pu load) */
