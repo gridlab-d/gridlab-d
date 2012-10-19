@@ -75,7 +75,7 @@ int g_assert::init(OBJECT *parent)
 {
 	gld_property target(get_parent(),get_target());
 	if ( !target.is_valid() )
-		exception("target %s property %s does not", get_parent()?get_parent()->get_name():"global",get_target());
+		exception("target '%s' property '%s' does not exist", get_parent()?get_parent()->get_name():"global",get_target());
 
 	set_status(AS_TRUE);
 	return 1;
