@@ -388,7 +388,23 @@ int pw_recorder::GPSE(){
 	try{
 		ISimulatorAutoPtr SimAuto(cModel->A);
 		results = SimAuto->GetParametersSingleElement(type_bstr, fields, values);
+
 		hr = SafeArrayAccessData(results.parray, (void HUGEP **)&pResults);
+
+		if (((_bstr_t)(_variant_t)pResults[0]).length()){
+			tempstr = _com_util::ConvertBSTRToString((_bstr_t)(_variant_t)pResults[0]);
+			gl_error("Error from GetParametersSingleElement(): %s", tempstr);
+			/* TROUBLESHOOTING 
+				The call to GetParametersSingleElement failed.  Please review the error message and respond accordingly.
+				Addition COM-related error handling may be found on the MSDN website.
+			 */
+			delete [] tempstr;
+			tempstr = 0;
+			SafeArrayDestroy(fields.parray);
+			SafeArrayDestroy(values.parray);
+			return 0;
+		}
+
 		hr = SafeArrayAccessData(pResults[1].parray, (void HUGEP **)&pData);
 		first = true;
 		for(i = key_count; i < prop_count + key_count; ++i){
