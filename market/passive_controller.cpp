@@ -225,7 +225,7 @@ int passive_controller::init(OBJECT *parent){
 			output_state_prop = gl_get_property(parent, output_state_propname);
 			if(output_state_prop == NULL){
 				GL_THROW("passive_controller parent \"%s\" does not contain property \"%s\"", 
-					(parent->name ? parent->name : "anon"), output_state_propname);
+					(parent->name ? parent->name : "anon"), output_state_propname.get_string());
 			}
 			output_state_addr = (void *)((unsigned int64)parent + sizeof(OBJECT) + (unsigned int64)output_state_prop->addr);
 		}
@@ -240,7 +240,7 @@ int passive_controller::init(OBJECT *parent){
 				output_setpoint_property = gl_get_property(parent, output_setpoint_propname);
 				if(output_setpoint_property == NULL){
 					GL_THROW("passive_controller parent \"%s\" does not contain property \"%s\"", 
-						(parent->name ? parent->name : "anon"), output_setpoint_propname);
+						(parent->name ? parent->name : "anon"), output_setpoint_propname.get_string());
 				}
 				output_setpoint_addr = (void *)((unsigned int64)parent + sizeof(OBJECT) + (unsigned int64)output_setpoint_property->addr);
 			}

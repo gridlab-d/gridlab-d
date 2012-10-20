@@ -174,11 +174,11 @@ int g_debug::init(OBJECT *parent)
 		target_property.set_property(target);
 		if ( !target_property.is_valid() )
 		{
-			gl_error("%s: target '%s' of parent '%s' is not valid", get_name(), target, pname);
+			gl_error("%s: target '%s' of parent '%s' is not valid", get_name(), target.get_string(), pname);
 			return FAILED;
 		}
-		gl_verbose("%s: target '%s.%s' is ok", get_name(), pname, target);
-		message("initial value of '%s.%s' is '%s'", pname, target, (const char*)target_property.get_string());
+		gl_verbose("%s: target '%s.%s' is ok", get_name(), pname, target.get_string());
+		message("initial value of '%s.%s' is '%s'", pname, target.get_string(), (const char*)target_property.get_string());
 		message("initial debug type is '%s'", (const char*)gld_property(my(),"type").get_string());
 	}
 	else

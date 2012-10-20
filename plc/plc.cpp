@@ -83,11 +83,11 @@ int plc::create()
 int plc::init(OBJECT *parent)
 {
 	if (strcmp(source,"")==0 && parent!=NULL) /* default source */
-		sprintf(source,"%s.plc",parent->oclass->name);
+		sprintf(source.get_string(),"%s.plc",parent->oclass->name);
 	if (controller->compile(source)<0)
-		GL_THROW("%s: PLC compile failed", source);
+		GL_THROW("%s: PLC compile failed", source.get_string());
 	if (controller->init(parent)<0)
-		GL_THROW("%s: PLC init failed", source);
+		GL_THROW("%s: PLC init failed", source.get_string());
 	parent->flags |= OF_HASPLC; /* enable external PLC flag */
 	
 	if (network)

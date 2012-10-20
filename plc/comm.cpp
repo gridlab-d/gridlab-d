@@ -168,17 +168,17 @@ int comm::create()
 /** Initialize the new object */
 int comm::init(OBJECT *parent)
 {
-	char32 rt;
-	if (sscanf(latency,"%31[^(](%lf,%lf)",rt,&a,&b)==3)
+	char rt[33];
+	if (sscanf(latency.get_string(),"%32[^(](%lf,%lf)",rt,&a,&b)==3)
 		rtype = gl_randomtype(rt);
-	else if (sscanf(latency,"%31[^(](%f)",rt,&a)==2)
+	else if (sscanf(latency.get_string(),"%32[^(](%f)",rt,&a)==2)
 	{
 		b=0;
 		rtype = gl_randomtype(rt);
 	}
 	else
 	{
-		gl_error("latency distribution '%s' is not valid", latency);
+		gl_error("latency distribution '%s' is not valid", latency.get_string());
 		return 0;
 	}
 	

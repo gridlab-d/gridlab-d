@@ -272,7 +272,7 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 	OBJECT *obj = OBJECTHDR(this);
 	TIMESTAMP temp_time;
 	unsigned char work_phases, work_phases_pre, work_phases_post, work_phases_closed;
-	char8 fault_val;
+	char fault_val[9];
 	int result_val, impl_fault;
 	bool fault_mode;
 

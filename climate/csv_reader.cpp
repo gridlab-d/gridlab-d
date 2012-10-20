@@ -328,8 +328,8 @@ int csv_reader::read_line(char *line, int linenum){
 			return 0;
 		}
 	} else {
-		if(sscanf(token, timefmt, &sample->month, &sample->day, &sample->hour, &sample->minute, &sample->second) < 1){
-			gl_error("csv_reader::read_line ~ unable to read time string \'%s\' with format \'%s\'", token, timefmt);
+		if(sscanf(token, timefmt.get_string(), &sample->month, &sample->day, &sample->hour, &sample->minute, &sample->second) < 1){
+			gl_error("csv_reader::read_line ~ unable to read time string \'%s\' with format \'%s\'", token, timefmt.get_string());
 			/* TROUBLESHOOT
 				The input timestamp could not be parsed using the specified time format.  Please
 				review the specified file's time format and input time strings.

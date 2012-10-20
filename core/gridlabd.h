@@ -1493,10 +1493,10 @@ public: // iterators
 	inline void set_##X(T p, gld_wlock&) { X=p; }; 
 #define GL_STRING(T,X) 	protected: T X; public: \
 	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
-	inline char* get_##X(void) { gld_rlock _lock(my()); return X; }; \
+	inline char* get_##X(void) { gld_rlock _lock(my()); return X.get_string(); }; \
 	inline gld_property get_##X##_property(void) { return gld_property(my(),#X); }; \
-	inline char* get_##X(gld_rlock&) { return X; }; \
-	inline char* get_##X(gld_wlock&) { return X; }; \
+	inline char* get_##X(gld_rlock&) { return X.get_string(); }; \
+	inline char* get_##X(gld_wlock&) { return X.get_string(); }; \
 	inline char get_##X(size_t n) { gld_rlock _lock(my()); return X[n]; }; \
 	inline char get_##X(size_t n, gld_rlock&) { return X[n]; }; \
 	inline char get_##X(size_t n, gld_wlock&) { return X[n]; }; \
@@ -1543,7 +1543,7 @@ public: // constructors
 
 public: // header read accessors (no locking)
 	inline OBJECTNUM get_id(void) { return my()->id; };
-	inline char* get_groupid(void) { return my()->groupid; };
+	inline char* get_groupid(void) { return my()->groupid.get_string(); };
 	inline gld_class* get_oclass(void) { return (gld_class*)my()->oclass; };
 	inline gld_object* get_parent(void) { return my()->parent?OBJECTDATA(my()->parent,gld_object):NULL; };
 	inline OBJECTRANK get_rank(void) { return my()->rank; };

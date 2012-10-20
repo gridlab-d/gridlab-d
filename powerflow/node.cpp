@@ -194,7 +194,7 @@ int node::init(OBJECT *parent)
 	if (solver_method==SM_NR)
 	{
 		OBJECT *obj = OBJECTHDR(this);
-		char1024 ext_lib_file_name;
+		char ext_lib_file_name[1025];
 		char extpath[1024];
 		CALLBACKS **cbackval = NULL;
 		bool ExtLinkFailure;

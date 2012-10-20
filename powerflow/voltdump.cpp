@@ -49,7 +49,7 @@ voltdump::voltdump(MODULE *mod)
 
 int voltdump::create(void)
 {
-	memset(group, 0, sizeof(char32));
+	group.erase();
 	runtime = TS_NEVER;
 	runcount = 0;
 	mode = VDM_RECT;
@@ -79,7 +79,7 @@ void voltdump::dump(TIMESTAMP t){
 	if(group[0] == 0){
 		nodes = gl_find_objects(FL_NEW,FT_MODULE,SAME,"powerflow",FT_END);
 	} else {
-		nodes = gl_find_objects(FL_NEW,FT_MODULE,SAME,"powerflow",AND,FT_GROUPID,SAME,group,FT_END);
+		nodes = gl_find_objects(FL_NEW,FT_MODULE,SAME,"powerflow",AND,FT_GROUPID,SAME,group.get_string(),FT_END);
 	}
 
 	if(nodes == NULL){
@@ -89,7 +89,7 @@ void voltdump::dump(TIMESTAMP t){
 
 	outfile = fopen(filename, "w");
 	if(outfile == NULL){
-		gl_error("voltdump unable to open %s for output", filename);
+		gl_error("voltdump unable to open %s for output", filename.get_string());
 		return;
 	}
 
@@ -104,7 +104,7 @@ void voltdump::dump(TIMESTAMP t){
 	}
 	/* print column names */
 	gl_printtime(t, timestr, 64);
-	fprintf(outfile,"# %s run at %s on %i nodes\n", filename, timestr, node_count);
+	fprintf(outfile,"# %s run at %s on %i nodes\n", filename.get_string(), timestr, node_count);
 	if (mode == VDM_RECT)
 		fprintf(outfile,"node_name,voltA_real,voltA_imag,voltB_real,voltB_imag,voltC_real,voltC_imag\n");
 	else if (mode == VDM_POLAR)

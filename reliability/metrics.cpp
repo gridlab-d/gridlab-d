@@ -83,10 +83,10 @@ int metrics::init(OBJECT *parent)
 {
 	OBJECT *hdr = OBJECTHDR(this);
 	int index, indexa, indexb, returnval;
-	char1024 work_metrics;
+	char work_metrics[1025];
 	char *startVal, *endVal, *workVal;
-	char1024 workbuffer;
-	char256 metricbuffer;
+	char workbuffer[1025];
+	char metricbuffer[257];
 	FILE *FPVal;
 	FINDLIST *CandidateObjs;
 	OBJECT *temp_obj;
@@ -193,7 +193,7 @@ int metrics::init(OBJECT *parent)
 	}
 
 	//Populate it up - copy it first so we don't destroy the original
-	memcpy(work_metrics,metrics_oi,1024*sizeof(char));
+	metrics_oi.copy_to(work_metrics);
 
 	//Set initial pointers
 	startVal = work_metrics;
@@ -364,10 +364,10 @@ int metrics::init(OBJECT *parent)
 	fprintf(FPVal,"Reliability report for %s\n", gl_global_getvar("modelname",workbuffer,(1025*sizeof(char))));
 
 	//Find our lucky candidate objects
-	CandidateObjs = gl_find_objects(FL_GROUP,customer_group);
+	CandidateObjs = gl_find_objects(FL_GROUP,customer_group.get_string());
 	if (CandidateObjs==NULL)
 	{
-		GL_THROW("Failure to find devices for %s specified as: %s",hdr->name,customer_group);
+		GL_THROW("Failure to find devices for %s specified as: %s",hdr->name,customer_group.get_string());
 		/*  TROUBLESHOOT
 		While attempting to populate the list of devices to check for reliability metrics, the metrics
 		object failed to find any desired objects.  Please make sure the objects exist and try again.
@@ -378,7 +378,7 @@ int metrics::init(OBJECT *parent)
 	//Do a zero-find check as well
 	if (CandidateObjs->hit_count == 0)
 	{
-		GL_THROW("Failure to find devices for %s specified as: %s",hdr->name,customer_group);
+		GL_THROW("Failure to find devices for %s specified as: %s",hdr->name,customer_group.get_string());
 		//Defined above
 	}
 

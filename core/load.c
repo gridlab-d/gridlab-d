@@ -3614,7 +3614,7 @@ static int class_block(PARSER)
 	DONE;
 }
 
-int set_flags(OBJECT *obj, char1024 propval)
+int set_flags(OBJECT *obj, char *propval)
 {
 	extern KEYWORD oflags[];
 	if (convert_to_set(propval,&(obj->flags),object_flag_property())<=0)

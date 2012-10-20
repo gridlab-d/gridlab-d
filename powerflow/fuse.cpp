@@ -282,7 +282,7 @@ TIMESTAMP fuse::sync(TIMESTAMP t0)
 	TIMESTAMP replacement_time;
 	TIMESTAMP replacement_duration;
 	TIMESTAMP t2;
-	char8 fault_val;
+	char fault_val[9];
 	int result_val;
 
 	//Try to map the event_schedule function address, if we haven't tried yet

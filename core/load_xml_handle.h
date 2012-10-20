@@ -24,16 +24,14 @@
 #include <wchar.h>
 #include <vector>
 
-extern "C" {
-	#include "class.h"
-	#include "load.h"
-	#include "globals.h"
-	#include "module.h"
-	#include "convert.h"
-	#include "random.h"
-	#include "output.h"
-	#include "unit.h"
-}
+#include "class.h"
+#include "load.h"
+#include "globals.h"
+#include "module.h"
+#include "convert.h"
+#include "random.h"
+#include "output.h"
+#include "unit.h"
 #include "gridlabd.h"
 
 XERCES_CPP_NAMESPACE_USE

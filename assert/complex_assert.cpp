@@ -110,9 +110,9 @@ TIMESTAMP complex_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 	}
 
 	// get the target property
-	gld_property target_prop(get_parent(),target);
+	gld_property target_prop(get_parent(),get_target());
 	if ( !target_prop.is_valid() || target_prop.get_type()!=PT_complex ) {
-		gl_error("Specified target %s for %s is not valid.",target,get_parent()->get_name());
+		gl_error("Specified target %s for %s is not valid.",get_target(),get_parent()->get_name());
 		/*  TROUBLESHOOT
 		Check to make sure the target you are specifying is a published variable for the object
 		that you are pointing to.  Refer to the documentation of the command flag --modhelp, or 
@@ -136,7 +136,7 @@ TIMESTAMP complex_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 				)
 			{
 				gl_error("Assert failed on %s: real part of %s %g not within %f of given value %g", 
-					get_parent()->get_name(), target, x.Re(), within, value.Re());
+					get_parent()->get_name(), get_target(), x.Re(), within, value.Re());
 				return 0;
 			}
 			if ( ( _isnan(imag_error) || fabs(imag_error)>within ) 
@@ -144,7 +144,7 @@ TIMESTAMP complex_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 				)
 			{
 				gl_error("Assert failed on %s: imaginary part of %s %+gi not within %f of given value %+gi", 
-					get_parent()->get_name(), target, x.Im(), within, value.Im());
+					get_parent()->get_name(), get_target(), x.Im(), within, value.Im());
 				return 0;
 			}
 		}
@@ -154,7 +154,7 @@ TIMESTAMP complex_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 			if ( _isnan(magnitude_error) || fabs(magnitude_error)>within )
 			{
 				gl_error("Assert failed on %s: Magnitude of %s (%g) not within %f of given value %g", 
-					get_parent()->get_name(), target, x.Mag(), within, value.Mag());
+					get_parent()->get_name(), get_target(), x.Mag(), within, value.Mag());
 				return 0;
 			}
 		}
@@ -164,7 +164,7 @@ TIMESTAMP complex_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 			if ( _isnan(angle_error) || fabs(angle_error)>within )
 			{
 				gl_error("Assert failed on %s: Angle of %s (%g) not within %f of given value %g", 
-					get_parent()->get_name(), target, x.Arg(), within, value.Arg());
+					get_parent()->get_name(), get_target(), x.Arg(), within, value.Arg());
 				return 0;
 			}
 		}
@@ -181,11 +181,11 @@ TIMESTAMP complex_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 			if ( _isnan(real_error) || fabs(real_error)<within ) 
 			{
 				gl_error("Assert failed on %s: real part of %s %g is within %f of %g", 
-					get_parent()->get_name(), target, x.Re(), within, value.Re());
+					get_parent()->get_name(), get_target(), x.Re(), within, value.Re());
 			}
 			if ( _isnan(imag_error) || fabs(imag_error)<within ) {
 				gl_error("Assert failed on %s: imaginary part of %s %+gi is within %f of %gi", 
-					get_parent()->get_name(), target, x.Im(), within, value.Im());
+					get_parent()->get_name(), get_target(), x.Im(), within, value.Im());
 			}
 			return 0;
 		}

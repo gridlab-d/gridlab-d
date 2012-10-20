@@ -52,7 +52,10 @@ typedef struct s_unresolved_static {
 	struct s_unresolved_static *next;
 } UNR_STATIC;
 
-/* I need these in gld_loadHndl. -MH */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 STATUS load_set_index(OBJECT *obj, OBJECTNUM id);
 OBJECT *load_get_index(OBJECTNUM id);
 double load_latitude(char *buffer);
@@ -60,9 +63,12 @@ double load_longitude(char *buffer);
 int time_value(char *, TIMESTAMP *t);
 int time_value_datetime(char *c, TIMESTAMP *t);
 int time_value_datetimezone(char *c, TIMESTAMP *t);
-int set_flags(OBJECT *obj, char1024 propval);
+int set_flags(OBJECT *obj, char *propval);
 UNRESOLVED *add_unresolved(OBJECT *by, PROPERTYTYPE ptype, void *ref, CLASS *oclass, char *id, char *file, unsigned int line, int flags);
 int load_resolve_all();
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

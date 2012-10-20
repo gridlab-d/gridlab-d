@@ -386,10 +386,10 @@ int eventgen::init(OBJECT *parent)
 	else	//Random mode, proceed with that assumption
 	{
 
-		ObjListVals = gl_find_objects(FL_GROUP,target_group);
+		ObjListVals = gl_find_objects(FL_GROUP,target_group.get_string());
 		if (ObjListVals==NULL)
 		{
-			GL_THROW("Failure to find devices for %s specified as: %s",hdr->name,target_group);
+			GL_THROW("Failure to find devices for %s specified as: %s",hdr->name,target_group.get_string());
 			/*  TROUBLESHOOT
 			While attempting to populate the list of devices to test reliability on, the event_gen
 			object failed to find any desired objects.  Please make sure the objects exist and try again.
@@ -400,7 +400,7 @@ int eventgen::init(OBJECT *parent)
 		//Do a zero-find check as well
 		if (ObjListVals->hit_count == 0)
 		{
-			GL_THROW("Failure to find devices for %s specified as: %s",hdr->name,target_group);
+			GL_THROW("Failure to find devices for %s specified as: %s",hdr->name,target_group.get_string());
 			//Defined above
 		}
 
@@ -517,7 +517,7 @@ TIMESTAMP eventgen::presync(TIMESTAMP t0, TIMESTAMP t1)
 	TIMESTAMP mean_repair_time;
 	FUNCTIONADDR funadd = NULL;
 	int returnval;
-	char256 impl_fault;
+	char impl_fault[257];
 	RELEVANTSTRUCT *temp_struct, *temp_struct_b;
 
 	//All passes start out assuming they don't need a new count update and nothing is interrupted
@@ -650,7 +650,7 @@ TIMESTAMP eventgen::presync(TIMESTAMP t0, TIMESTAMP t1)
 						*/
 					}
 					
-					returnval = ((int (*)(OBJECT *, OBJECT **, char *, int *, TIMESTAMP *, void *))(*funadd))(UnreliableObjs[index].obj_of_int,&UnreliableObjs[index].obj_made_int,fault_type,&UnreliableObjs[index].implemented_fault,&mean_repair_time,metrics_obj->Extra_Data);
+					returnval = ((int (*)(OBJECT *, OBJECT **, char *, int *, TIMESTAMP *, void *))(*funadd))(UnreliableObjs[index].obj_of_int,&UnreliableObjs[index].obj_made_int,fault_type.get_string(),&UnreliableObjs[index].implemented_fault,&mean_repair_time,metrics_obj->Extra_Data);
 
 					if (returnval == 0)	//Failed :(
 					{
@@ -750,11 +750,11 @@ TIMESTAMP eventgen::presync(TIMESTAMP t0, TIMESTAMP t1)
 				//Call the event updater - call relevant version
 				if (*secondary_interruption_cnt == true)
 				{
-					metrics_obj->event_ended_sec(hdr,UnreliableObjs[index].obj_of_int,UnreliableObjs[index].obj_made_int,UnreliableObjs[index].fail_time,UnreliableObjs[index].rest_time,fault_type,impl_fault,UnreliableObjs[index].customers_affected,UnreliableObjs[index].customers_affected_sec);
+					metrics_obj->event_ended_sec(hdr,UnreliableObjs[index].obj_of_int,UnreliableObjs[index].obj_made_int,UnreliableObjs[index].fail_time,UnreliableObjs[index].rest_time,fault_type.get_string(),impl_fault,UnreliableObjs[index].customers_affected,UnreliableObjs[index].customers_affected_sec);
 				}
 				else	//no secondaries
 				{
-					metrics_obj->event_ended(hdr,UnreliableObjs[index].obj_of_int,UnreliableObjs[index].obj_made_int,UnreliableObjs[index].fail_time,UnreliableObjs[index].rest_time,fault_type,impl_fault,UnreliableObjs[index].customers_affected);
+					metrics_obj->event_ended(hdr,UnreliableObjs[index].obj_of_int,UnreliableObjs[index].obj_made_int,UnreliableObjs[index].fail_time,UnreliableObjs[index].rest_time,fault_type.get_string(),impl_fault,UnreliableObjs[index].customers_affected);
 				}
 
 				//All done, unlock it

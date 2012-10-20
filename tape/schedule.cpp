@@ -412,7 +412,7 @@ TIMESTAMP schedule::sync(TIMESTAMP t0, TIMESTAMP t1){
 	@return 1 for success, 0 for failure
  */
 int schedule::parse_schedule(){
-	char1024 sched_buf;
+	char sched_buf[1025];
 	char *sched_ptr[128], *temp = 0;
 	size_t i = 0, token_ct = 1;
 	schedule_list *first = 0, *push = 0, *next = 0;

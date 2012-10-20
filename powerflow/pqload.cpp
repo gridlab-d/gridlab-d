@@ -148,8 +148,8 @@ int pqload::build_sched(char *instr = NULL, SCHED_LIST *end = NULL){
 	if(sc_end == NULL){
 		gl_error("schedule token \"%s\" not semicolon terminated", start);
 	}
-	char256 moh_v, moh_w, hod_v, hod_w, dom_v, dom_w, moy_v, moy_w, dow_v, lpu, sc;
-	scanct = sscanf(start, "%[-0-9*]%[ \t]%[-0-9*]%[ \t]%[-0-9*]%[ \t]%[-0-9*]%[ \t]%[-0-9*]:%[0-9\\.]%[;]",
+	char moh_v[257], moh_w[257], hod_v[257], hod_w[257], dom_v[257], dom_w[257], moy_v[257], moy_w[257], dow_v[257], lpu[257], sc[257];
+	scanct = sscanf(start, "%256[-0-9*]%256[ \t]%256[-0-9*]%256[ \t]%256[-0-9*]%256[ \t]%256[-0-9*]%256[ \t]%256[-0-9*]:%256[0-9\\.]%[;]",
 		moh_v, moh_w, hod_v, hod_w, dom_v, dom_w, moy_v, moy_w, dow_v, lpu, sc);
 
 	/* parse the individual fields */

@@ -46,7 +46,7 @@ currdump::currdump(MODULE *mod)
 
 int currdump::create(void)
 {
-	memset(group, 0, sizeof(char32));
+	group.erase();
 	runtime = TS_NEVER;
 	runcount = 0;
 	mode = CDM_RECT;
@@ -76,7 +76,7 @@ void currdump::dump(TIMESTAMP t){
 	if(group[0] == 0){
 		links = gl_find_objects(FL_NEW,FT_MODULE,SAME,"powerflow",FT_END);
 	} else {
-		links = gl_find_objects(FL_NEW,FT_MODULE,SAME,"powerflow",AND,FT_GROUPID,SAME,group,FT_END);
+		links = gl_find_objects(FL_NEW,FT_MODULE,SAME,"powerflow",AND,FT_GROUPID,SAME,group.get_string(),FT_END);
 	}
 
 	if(links == NULL){
@@ -86,7 +86,7 @@ void currdump::dump(TIMESTAMP t){
 
 	outfile = fopen(filename, "w");
 	if(outfile == NULL){
-		gl_error("currdump unable to open %s for output", filename);
+		gl_error("currdump unable to open %s for output", filename.get_string());
 		return;
 	}
 
@@ -101,7 +101,7 @@ void currdump::dump(TIMESTAMP t){
 	}
 	/* print column names */
 	gl_printtime(t, timestr, 64);
-	fprintf(outfile,"# %s run at %s on %i links\n", filename, timestr, link_count);
+	fprintf(outfile,"# %s run at %s on %i links\n", filename.get_string(), timestr, link_count);
 	if(mode == CDM_RECT){
 		fprintf(outfile,"link_name,currA_real,currA_imag,currB_real,currB_imag,currC_real,currC_imag\n");
 	}

@@ -18,7 +18,7 @@ EXPORT int open_recorder(struct recorder *my, char *fname, char *flags);
 EXPORT int write_recorder(struct recorder *my, char *timestamp, char *value);
 EXPORT void close_recorder(struct recorder *my);
 EXPORT void write_default_plot_commands_rec(struct recorder *my, char32 extension);
-EXPORT void splitString(char1024 propertyStr, char *columns[]);
+EXPORT void splitString(char *propertyStr, char *columns[]);
 EXPORT void set_recorder(struct recorder *my);
 EXPORT void close_recorder_wrapper(void);
 

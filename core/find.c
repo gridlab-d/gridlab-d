@@ -1467,7 +1467,7 @@ size_t objlist_add(OBJLIST *list, PROPERTY *match, char *match_part, char *match
 		{
 			if ( list->size==list->asize )
 			{	// grow the list
-				OBJECT **larger = (OBJECT*)malloc(sizeof(OBJECT*)*list->asize*2);
+				OBJECT **larger = (OBJECT**)malloc(sizeof(OBJECT*)*list->asize*2);
 				memcpy(larger,list->objlist,sizeof(OBJECT*)*list->asize);
 				memset(larger+list->asize,0,sizeof(OBJECT*)*list->asize);
 				list->asize*=2;

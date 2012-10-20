@@ -50,7 +50,7 @@ billdump::billdump(MODULE *mod)
 
 int billdump::create(void)
 {
-	memset(group, 0, sizeof(char32));
+	group.erase();
 	runtime = TS_NEVER;
 	runcount = 0;
 	meter_type = METER_TP;
@@ -85,7 +85,7 @@ void billdump::dump(TIMESTAMP t){
 		if(group[0] == 0){
 			nodes = gl_find_objects(FL_NEW,FT_CLASS,SAME,"triplex_meter",FT_END);
 		} else {
-			nodes = gl_find_objects(FL_NEW,FT_CLASS,SAME,"triplex_meter",AND,FT_GROUPID,SAME,group,FT_END);
+			nodes = gl_find_objects(FL_NEW,FT_CLASS,SAME,"triplex_meter",AND,FT_GROUPID,SAME,group.get_string(),FT_END);
 		}
 	}
 	else
@@ -93,7 +93,7 @@ void billdump::dump(TIMESTAMP t){
 		if(group[0] == 0){
 			nodes = gl_find_objects(FL_NEW,FT_CLASS,SAME,"meter",FT_END);
 		} else {
-			nodes = gl_find_objects(FL_NEW,FT_CLASS,SAME,"meter",AND,FT_GROUPID,SAME,group,FT_END);
+			nodes = gl_find_objects(FL_NEW,FT_CLASS,SAME,"meter",AND,FT_GROUPID,SAME,group.get_string(),FT_END);
 		}
 	}
 
@@ -104,7 +104,7 @@ void billdump::dump(TIMESTAMP t){
 
 	outfile = fopen(filename, "w");
 	if(outfile == NULL){
-		gl_error("billdump unable to open %s for output", filename);
+		gl_error("billdump unable to open %s for output", filename.get_string());
 		return;
 	}
 
@@ -115,7 +115,7 @@ void billdump::dump(TIMESTAMP t){
 	{
 		/* print column names */
 		gl_printtime(t, timestr, 64);
-		fprintf(outfile,"# %s run at %s on %i triplex meters\n", filename, timestr, nodes->hit_count);
+		fprintf(outfile,"# %s run at %s on %i triplex meters\n", filename.get_string(), timestr, nodes->hit_count);
 		fprintf(outfile,"meter_name,previous_monthly_bill,previous_monthly_energy\n");
 		while (obj=gl_find_next(nodes,obj)){
 			if(gl_object_isa(obj, "triplex_meter", "powerflow")){
@@ -131,7 +131,7 @@ void billdump::dump(TIMESTAMP t){
 	{
 		/* print column names */
 		gl_printtime(t, timestr, 64);
-		fprintf(outfile,"# %s run at %s on %i meters\n", filename, timestr, nodes->hit_count);
+		fprintf(outfile,"# %s run at %s on %i meters\n", filename.get_string(), timestr, nodes->hit_count);
 		fprintf(outfile,"meter_name,previous_monthly_bill,previous_monthly_energy\n");
 		while (obj=gl_find_next(nodes,obj)){
 			if(gl_object_isa(obj, "meter", "powerflow")){

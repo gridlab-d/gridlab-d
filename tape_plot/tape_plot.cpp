@@ -270,10 +270,72 @@ EXPORT void close_shaper(struct shaper *my)
 /*******************************************************************
  * recorders 
  */
+
+EXPORT void write_default_plot_commands_rec(struct recorder *my, char32 extension)
+{
+	char fname[sizeof(char32)];
+	char type[sizeof(char32)];
+	char ext[sizeof(char32)];
+	char buf[sizeof(char1024)];
+	char plotcommands[sizeof(char1024)];
+	char *item;
+	char list[sizeof(char1024)];
+
+	int i, j, k;	
+	i = j = k = 0;
+	sscanf(my->file,"%32[^:]:%32[^.].[^\n;:]",type,fname,ext);
+
+	/////////////////////////////////////////////////////////////////////////////
+	// Default behavior for directive plotcommands
+	/////////////////////////////////////////////////////////////////////////////
+	if (my->plotcommands[0]=='\0' || strcmp(my->plotcommands,"")==0) {
+		j= strlen(my->columns)>0 ? 0: fprintf(my->fp, "set xdata time;\n");
+		fprintf(my->fp, "set datafile separator \",\";\n");
+		if(my->output != SCREEN){
+			fprintf(my->fp, "set output \"%s.%s\"; \n", fname,extension.get_string());
+		}
+		fprintf(my->fp, "show output; \n");
+		fprintf(my->fp, "set timefmt \"%%Y-%%m-%%d %%H:%%M:%%S\";\n");
+		fprintf(my->fp, "set datafile missing 'NaN'\n");
+		//j = strlen(my->columns)>0  ? 0: fprintf(my->fp, "plot \'-\' using 1:2 title '%s' with lines;\n", my->property);
+		if(strlen(my->columns) > 0){
+			j = 0;
+		} else {
+			strcpy(list,my->property); /* avoid destroying orginal list */
+			k = 2;
+			for (item=strtok(list,","); item!=NULL; item=strtok(NULL,",")){
+				if(k == 2){
+					fprintf(my->fp, "plot \'-\' using 1:%i title \'%s\' with lines", k, item);
+					/* only handles one column properly as-is, will be fixed with the tape module update -MH */
+					fprintf(my->fp, "\n");
+					break;
+				}// else {
+				//	fprintf(my->fp, ", \\\n\t\'-\' using 1:%i title \'%s\' with lines", k, item);
+				//}
+				++k;
+			}
+			fprintf(my->fp, "\n");
+		}
+
+		return;
+	}
+	strcpy(plotcommands,  my->plotcommands);
+
+	while ( plotcommands[i] != '\0' )
+	{
+		while (plotcommands[i] != '|')
+			buf[j++] = plotcommands[i++];
+		buf[j] = '\0';
+		fprintf(my->fp, "%s;\n", buf);
+		j = 0;
+		i++;
+	}
+}
+
 EXPORT int open_recorder(struct recorder *my, char *fname, char *flags)
 {
-	char32 extension;
-	char1024 columnlist;
+	char extension[33];
+	char columnlist[1025];
 	char **columns;
 	time_t now=time(NULL);
 	OBJECT *obj=OBJECTHDR(my);
@@ -322,7 +384,7 @@ EXPORT int open_recorder(struct recorder *my, char *fname, char *flags)
 	fprintf(my->fp,"# timestamp,%s\n", my->property);
 
 	/* Split the property list into items */
-  splitString(my->property, columns);
+  splitString(my->property.get_string(), columns);
 	/* Array 'columns' contains the separated items from the property list
 	for (int i=0;i<MAXCOLUMNS;i++){
 		if (strlen(columns[i])>0)
@@ -382,7 +444,7 @@ EXPORT int open_recorder(struct recorder *my, char *fname, char *flags)
 	return 1;
 }
 
-void splitString(char1024 propertyStr, char *columns[])
+void splitString(char *propertyStr, char *columns[])
 {
 	unsigned int i=0,j=0,k=0;
 	char buf[32];
@@ -399,66 +461,6 @@ void splitString(char1024 propertyStr, char *columns[])
 }
 		    
 
-EXPORT void write_default_plot_commands_rec(struct recorder *my, char32 extension)
-{
-	char32   fname;
-	char32   type;
-	char32   ext;
-	char1024 buf;
-	char1024 plotcommands;
-	char *item;
-	char1024 list;
-
-	int i, j, k;	
-	i = j = k = 0;
-	sscanf(my->file,"%32[^:]:%32[^.].[^\n;:]",type,fname,ext);
-
-	/////////////////////////////////////////////////////////////////////////////
-	// Default behavior for directive plotcommands
-	/////////////////////////////////////////////////////////////////////////////
-	if (my->plotcommands[0]=='\0' || strcmp(my->plotcommands,"")==0) {
-		j= strlen(my->columns)>0 ? 0: fprintf(my->fp, "set xdata time;\n");
-		fprintf(my->fp, "set datafile separator \",\";\n");
-		if(my->output != SCREEN){
-			fprintf(my->fp, "set output \"%s.%s\"; \n", fname,extension);
-		}
-		fprintf(my->fp, "show output; \n");
-		fprintf(my->fp, "set timefmt \"%%Y-%%m-%%d %%H:%%M:%%S\";\n");
-		fprintf(my->fp, "set datafile missing 'NaN'\n");
-		//j = strlen(my->columns)>0  ? 0: fprintf(my->fp, "plot \'-\' using 1:2 title '%s' with lines;\n", my->property);
-		if(strlen(my->columns) > 0){
-			j = 0;
-		} else {
-			strcpy(list,my->property); /* avoid destroying orginal list */
-			k = 2;
-			for (item=strtok(list,","); item!=NULL; item=strtok(NULL,",")){
-				if(k == 2){
-					fprintf(my->fp, "plot \'-\' using 1:%i title \'%s\' with lines", k, item);
-					/* only handles one column properly as-is, will be fixed with the tape module update -MH */
-					fprintf(my->fp, "\n");
-					break;
-				}// else {
-				//	fprintf(my->fp, ", \\\n\t\'-\' using 1:%i title \'%s\' with lines", k, item);
-				//}
-				++k;
-			}
-			fprintf(my->fp, "\n");
-		}
-
-		return;
-	}
-	strcpy(plotcommands,  my->plotcommands);
-
-	while ( plotcommands[i] != '\0' )
-	{
-		while (plotcommands[i] != '|')
-			buf[j++] = plotcommands[i++];
-		buf[j] = '\0';
-		fprintf(my->fp, "%s;\n", buf);
-		j = 0;
-		i++;
-	}
-}
 
 
 EXPORT int write_recorder(struct recorder *my, char *timestamp, char *value)
@@ -490,9 +492,9 @@ EXPORT void close_recorder(struct recorder *my)
 		sprintf(gnuplot,"%s -persist", plotcmd);
 	else
 		strcpy(gnuplot,plotcmd);
-	char32   fname;
-	char32   type;
-	char1024 command;
+	char fname[sizeof(char32)];
+	char type[sizeof(char32)];
+	char command[sizeof(char1024)];
 
 	my->status = TS_DONE;
 
@@ -513,13 +515,48 @@ EXPORT void close_recorder(struct recorder *my)
 /*******************************************************************
  * collectors 
  */
+
+EXPORT void write_default_plot_commands_col(struct collector *my, char32 extension)
+{
+	char fname[sizeof(char32)];
+	char type[sizeof(char32)];
+	char buf[sizeof(char1024)];
+	char plotcommands[sizeof(char1024)];
+	int i, j;	
+	i = j = 0;
+	sscanf(my->file,"%32[^:]:%32[^:]",type,fname);
+
+	/////////////////////////////////////////////////////////////////////////////
+	// Default behavior for directive plotcommands
+	/////////////////////////////////////////////////////////////////////////////
+	if (my->plotcommands[0]=='\0' || strcmp(my->plotcommands,"")==0) {
+		j= strlen(my->columns)>0 ? 0: fprintf(my->fp, "set xdata time;\n");
+		fprintf(my->fp, "set datafile separator \",\";\n");
+		fprintf(my->fp, "set output \"%s.%s\"; \n", fname,extension.get_string());
+		fprintf(my->fp, "show output; \n");
+		fprintf(my->fp, "set timefmt \"%%Y-%%m-%%d %%H:%%M:%%S\";\n");
+		j = strlen(my->columns)>0  ? 0: fprintf(my->fp, "plot \'-\' using 1:2 with lines;\n");
+		return;
+	}
+	strcpy(plotcommands,  my->plotcommands);
+
+	while ( plotcommands[i] != '\0' )
+	{
+		while (plotcommands[i] != '|')
+			buf[j++] = plotcommands[i++];
+		buf[j] = '\0';
+		fprintf(my->fp, "%s;\n", buf);
+		j = 0;
+		i++;
+	}
+}
 EXPORT int open_collector(struct collector *my, char *fname, char *flags)
 {
 	unsigned int count=0;
 	time_t now=time(NULL);
 
-	char32 extension;
-	char1024 columnlist;
+	char extension[sizeof(char32)];
+	char columnlist[sizeof(char1024)];
 	char **columns;
 	OBJECT *obj=OBJECTHDR(my);
 
@@ -558,7 +595,7 @@ EXPORT int open_collector(struct collector *my, char *fname, char *flags)
 	count += fprintf(my->fp,"# limit..... %d\n", my->limit);
 	count += fprintf(my->fp,"# property.. timestamp,%s\n", my->property);
 
-  splitString(my->property, columns);
+  splitString(my->property.get_string(), columns);
 
 	/* Put gnuplot commands in the header portion */
 	fprintf(my->fp,"# GNUplot commands below:     \n");
@@ -620,15 +657,15 @@ EXPORT int write_collector(struct collector *my, char *timestamp, char *value)
 EXPORT void close_collector(struct collector *my)
 {
 #ifdef WIN32
-	char32 gnuplot;
+	char gnuplot[sizeof(char32)];
 	strcpy(gnuplot,"wgnuplot ");
 	_putenv("PATH=%PATH%;C:\\wgnuplot");
 #else
 	char *gnuplot = "gnuplot ";
 #endif
-	char32   fname;
-	char32   type;
-	char1024 command;
+	char fname[sizeof(char32)];
+	char type[sizeof(char32)];
+	char command[sizeof(char1024)];
 
 	my->status = TS_DONE;
 
@@ -644,40 +681,5 @@ EXPORT void close_collector(struct collector *my)
 		system( command );
 	}
  	my->fp = NULL;
-}
-
-EXPORT void write_default_plot_commands_col(struct collector *my, char32 extension)
-{
-	char32   fname;
-	char32   type;
-	char1024 buf;
-	char1024 plotcommands;
-	int i, j;	
-	i = j = 0;
-	sscanf(my->file,"%32[^:]:%32[^:]",type,fname);
-
-	/////////////////////////////////////////////////////////////////////////////
-	// Default behavior for directive plotcommands
-	/////////////////////////////////////////////////////////////////////////////
-	if (my->plotcommands[0]=='\0' || strcmp(my->plotcommands,"")==0) {
-		j= strlen(my->columns)>0 ? 0: fprintf(my->fp, "set xdata time;\n");
-		fprintf(my->fp, "set datafile separator \",\";\n");
-		fprintf(my->fp, "set output \"%s.%s\"; \n", fname,extension);
-		fprintf(my->fp, "show output; \n");
-		fprintf(my->fp, "set timefmt \"%%Y-%%m-%%d %%H:%%M:%%S\";\n");
-		j = strlen(my->columns)>0  ? 0: fprintf(my->fp, "plot \'-\' using 1:2 with lines;\n");
-		return;
-	}
-	strcpy(plotcommands,  my->plotcommands);
-
-	while ( plotcommands[i] != '\0' )
-	{
-		while (plotcommands[i] != '|')
-			buf[j++] = plotcommands[i++];
-		buf[j] = '\0';
-		fprintf(my->fp, "%s;\n", buf);
-		j = 0;
-		i++;
-	}
 }
 /**@}*/

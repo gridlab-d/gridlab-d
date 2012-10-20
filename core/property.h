@@ -42,10 +42,43 @@ typedef unsigned int64 uint64;
 #endif /* HAVE_STDINT_H */
 
 /* Valid GridLAB data types */
+#ifdef __cplusplus
+template<size_t size> class charbuf {
+private:
+	char buffer[size];
+public:
+	inline charbuf<size>(void) { erase(); };
+	inline charbuf<size>(const char *s) { copy_from(s); };
+	inline ~charbuf<size>(void) {};
+	inline size_t get_size(void) { return size; };
+	inline size_t get_length(void) { return strlen(buffer); };
+	inline char *get_string(void) { return buffer; };
+	inline char* erase(void) { return (char*)memset(buffer,0,size); };
+	inline char* copy_to(char *s) { return s?strncpy(s,buffer,size):NULL; };
+	inline char* copy_from(const char *s) { return s?strncpy(buffer,s,size):NULL; }
+	inline operator char*(void) { return buffer; };
+	inline bool operator ==(const char *s) { return strcmp(buffer,s)==0; };
+	inline bool operator <(const char *s) { return strcmp(buffer,s)==-1; };
+	inline bool operator >(const char *s) { return strcmp(buffer,s)==1; };
+	inline bool operator <=(const char *s) { return strcmp(buffer,s)<=0; };
+	inline bool operator >=(const char *s) { return strcmp(buffer,s)>=0; };
+	inline char *find(const char c) { return strchr(s,c); };
+	inline char *find(const char *s) { return strstr(s,s); };
+	inline char *findrev(const char c) { return strrchr(s,c); };
+	inline char *token(char *from, const char *delim, char **context) { strtok_s(from,delim,context); }
+	inline size_t format(char *fmt, ...) { va_list ptr; va_start(ptr,fmt); size_t len=vsnprintf(buffer,size,fmt,ptr); va_end(ptr); return len; };
+	inline size_t vformat(char *fmt, va_list ptr) { return vsnprintf(buffer,size,fmt,ptr); };
+};
+typedef charbuf<1025> char1024;
+typedef charbuf<257> char256;
+typedef charbuf<33> char32;
+typedef charbuf<9> char8;
+#else
 typedef char char1024[1025]; /**< strings up to 1024 characters */
 typedef char char256[257]; /**< strings up to 256 characters */
 typedef char char32[33]; /**< strings up to 32 characters */
 typedef char char8[9]; /** string up to 8 characters */
+#endif
 typedef uint64 set;      /* sets (each of up to 64 values may be defined) */
 typedef uint32 enumeration; /* enumerations (any one of a list of values) */
 typedef struct s_object_list* object; /* GridLAB objects */

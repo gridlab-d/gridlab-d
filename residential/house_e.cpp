@@ -812,7 +812,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 int house_e::create() 
 {
 	int result=SUCCESS;
-	char1024 active_enduses;
+	char active_enduses[1025];
 	gl_global_getvar("residential::implicit_enduses",active_enduses,sizeof(active_enduses));
 	char *token = NULL;
 

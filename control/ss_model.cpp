@@ -245,7 +245,7 @@ int ss_model::init(OBJECT *parent)
 				len += sprintf(H+len,"%+.3f",tf.U[i]);
 	}
 	len += sprintf(H+len,"%s",")");
-	gl_debug("%s: H(s) = %s", get_name(), H);
+	gl_debug("%s: H(s) = %s", get_name(), (char*)H);
 
 	// update A,B,C,D string (descriptive)
 	A[0]='['; B[0]='['; C[0]='['; D[0]='[';
@@ -268,10 +268,10 @@ int ss_model::init(OBJECT *parent)
 	}
 	strcat(C," ]");
 	sprintf(D+1," %.2f ]",ss.D[0]);
-	gl_debug("%s: A = %s", get_name(), A);
-	gl_debug("%s: B = %s", get_name(), B);
-	gl_debug("%s: C = %s", get_name(), C);
-	gl_debug("%s: D = %s", get_name(), D);
+	gl_debug("%s: A = %s", get_name(), (char*)A);
+	gl_debug("%s: B = %s", get_name(), (char*)B);
+	gl_debug("%s: C = %s", get_name(), (char*)C);
+	gl_debug("%s: D = %s", get_name(), (char*)D);
 
 	return 1;
 }

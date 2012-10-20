@@ -249,11 +249,11 @@ int auction::init(OBJECT *parent)
 		time_t now = time(NULL);
 		trans_file = fopen(trans_log, "w");
 		if(trans_file == 0){
-			gl_error("%s (auction:%d) unable to open '%s' as a transaction log output file", obj->name?obj->name:"anonymous", obj->id, trans_log);
+			gl_error("%s (auction:%d) unable to open '%s' as a transaction log output file", obj->name?obj->name:"anonymous", obj->id, trans_log.get_string());
 			return 0;
 		}
 		// else write transaction file header, a la recorder file headers
-		fprintf(trans_file, "# %s\n", trans_log);
+		fprintf(trans_file, "# %s\n", trans_log.get_string());
 		fprintf(trans_file, "# %s", asctime(localtime(&now))); // return char already included in asctime
 		fprintf(trans_file, "# %s\n", obj->name?obj->name:"anonymous");
 		fprintf(trans_file, "# market_id,timestamp,bidder_name,bid_price,bid_quantity,bid_state\n");
@@ -265,10 +265,10 @@ int auction::init(OBJECT *parent)
 		time_t now = time(NULL);
 		curve_file = fopen(curve_log, "w");
 		if(curve_file == 0){
-			gl_error("%s (auction:%d) unable to open '%s' as an aurction curve log output file", obj->name?obj->name:"anonymous", obj->id, trans_log);
+			gl_error("%s (auction:%d) unable to open '%s' as an aurction curve log output file", obj->name?obj->name:"anonymous", obj->id, trans_log.get_string());
 			return 0;
 		}
-		fprintf(curve_file, "# %s\n", curve_log);
+		fprintf(curve_file, "# %s\n", curve_log.get_string());
 		fprintf(curve_file, "# %s", asctime(localtime(&now))); // return char already included in asctime
 		fprintf(curve_file, "# %s\n", obj->name?obj->name:"anonymous");
 		fprintf(curve_file, "# market_id,timestamp,sort_index,bidder_name,bid_quantity,bid_price\n");
@@ -321,9 +321,9 @@ int auction::init(OBJECT *parent)
 	/* reference object & property */	
 	if(capacity_reference_object != NULL){
 		if(capacity_reference_propname[0] != 0){
-			capacity_reference_property = gl_get_property(capacity_reference_object, capacity_reference_propname);
+			capacity_reference_property = gl_get_property(capacity_reference_object, capacity_reference_propname.get_string());
 			if(capacity_reference_property == NULL){
-				gl_error("%s (auction:%d) capacity_reference_object of type '%s' does not contain specified reference property '%s'", obj->name?obj->name:"anonymous", obj->id, capacity_reference_object->oclass->name, capacity_reference_propname);
+				gl_error("%s (auction:%d) capacity_reference_object of type '%s' does not contain specified reference property '%s'", obj->name?obj->name:"anonymous", obj->id, capacity_reference_object->oclass->name, capacity_reference_propname.get_string());
 				/* TROUBLESHOOT
 					capacity_reference_object must contain a property named by capacity_reference_property.  Review the published properties of the object specified
 					in capacity_reference_object.
@@ -331,7 +331,7 @@ int auction::init(OBJECT *parent)
 				return 0;
 			}
 			if(capacity_reference_property->ptype != PT_double){
-				gl_warning("%s (auction:%d) capacity_reference_property '%s' is not a double type property", obj->name?obj->name:"anonymous", obj->id, capacity_reference_propname);
+				gl_warning("%s (auction:%d) capacity_reference_property '%s' is not a double type property", obj->name?obj->name:"anonymous", obj->id, capacity_reference_propname.get_string());
 				/* TROUBLESHOOT
 					capacity_reference_property must specify a double property to work properly, and may behave unpredictably should it be pointed at
 					non-double properties.
@@ -813,7 +813,7 @@ void auction::record_curve(double bu, double su){
 				sprintf(tstr, "failure");
 				break;
 		}
-		fprintf(curve_file, "# marginal quantity of %f %s (%f %%)\n", cleared_frame.marginal_quantity, this->unit, cleared_frame.marginal_frac);
+		fprintf(curve_file, "# marginal quantity of %f %s (%f %%)\n", cleared_frame.marginal_quantity, this->unit.get_string(), cleared_frame.marginal_frac);
 		fprintf(curve_file, "# curve cleared %f at $%f with %s type\n", cleared_frame.clearing_quantity, cleared_frame.clearing_price, tstr);
 	}
 
@@ -858,15 +858,15 @@ void auction::clear_market(void)
 
 		if(strcmp(unit, "") != 0){
 			if(capacity_reference_property->unit != 0){
-				if(gl_convert(capacity_reference_property->unit->name,unit,&refload) == 0){
+				if(gl_convert(capacity_reference_property->unit->name,unit.get_string(),&refload) == 0){
 					char msg[256];
-					sprintf(msg, "capacity_reference_property %s uses units of %s and is incompatible with auction units (%s)", gl_name(linkref,name,sizeof(name)), capacity_reference_property->unit->name, unit);
+					sprintf(msg, "capacity_reference_property %s uses units of %s and is incompatible with auction units (%s)", gl_name(linkref,name,sizeof(name)), capacity_reference_property->unit->name, unit.get_string());
 					throw msg;
 					/* TROUBLESHOOT
 						If capacity_reference_property has units specified, the units must be convertable to the units used by its auction object.
 						*/
 				} else if (verbose){
-					gl_output("capacity_reference_property converted %.3f %s to %.3f %s", *pRefload, capacity_reference_property->unit->name, refload, unit);
+					gl_output("capacity_reference_property converted %.3f %s to %.3f %s", *pRefload, capacity_reference_property->unit->name, refload, unit.get_string());
 				}
 			} // else assume same units
 		}
@@ -903,9 +903,9 @@ void auction::clear_market(void)
 		caprefq = *pCaprefq;
 		if(strcmp(unit, "") != 0) {
 			if (capacity_reference_property->unit != 0) {
-				if(gl_convert(capacity_reference_property->unit->name,unit,&caprefq) == 0) {
+				if(gl_convert(capacity_reference_property->unit->name,unit.get_string(),&caprefq) == 0) {
 					char msg[256];
-					sprintf(msg, "capacity_reference_property %s uses units of %s and is incompatible with auction units (%s)", capacity_reference_property->name, capacity_reference_property->unit->name, unit);
+					sprintf(msg, "capacity_reference_property %s uses units of %s and is incompatible with auction units (%s)", capacity_reference_property->name, capacity_reference_property->unit->name, unit.get_string());
 					throw msg;
 				} else {
 					submit_nolock(OBJECTHDR(this), max_capacity_reference_bid_quantity, capacity_reference_bid_price, -1, BS_ON);
@@ -927,7 +927,7 @@ void auction::clear_market(void)
 			}
 			for (unsigned int i=0; i<offers.getcount(); i++){
 				if (verbose){
-					gl_output("   ...  %4d: %s offers %.3f %s at %.2f $/%s",i,gl_name(offers.getbid(i)->from,name,sizeof(name)), offers.getbid(i)->quantity,unit,offers.getbid(i)->price,unit);
+					gl_output("   ...  %4d: %s offers %.3f %s at %.2f $/%s",i,gl_name(offers.getbid(i)->from,name,sizeof(name)), offers.getbid(i)->quantity,unit.get_string(),offers.getbid(i)->price,unit.get_string());
 				}
 			}
 			if(fixed_price * fixed_quantity != 0.0){
@@ -975,7 +975,7 @@ void auction::clear_market(void)
 			}
 			for (unsigned int i=0; i<asks.getcount(); i++){
 				if (verbose){
-					gl_output("   ...  %4d: %s asks %.3f %s at %.2f $/%s",i,gl_name(asks.getbid(i)->from,name,sizeof(name)), asks.getbid(i)->quantity,unit,asks.getbid(i)->price,unit);
+					gl_output("   ...  %4d: %s asks %.3f %s at %.2f $/%s",i,gl_name(asks.getbid(i)->from,name,sizeof(name)), asks.getbid(i)->quantity,unit.get_string(),asks.getbid(i)->price,unit.get_string());
 				}
 			}
 			if(fixed_price * fixed_quantity != 0.0){
@@ -1046,7 +1046,7 @@ void auction::clear_market(void)
 		gl_localtime(submit_time,&dt);
 		if (verbose){
 			gl_output("   ...  %s clears %.2f %s at $%.2f/%s at %s", gl_name(OBJECTHDR(this),name,sizeof(name)),
-				next.quantity, unit, next.price, unit, gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
+				next.quantity, unit.get_string(), next.price, unit.get_string(), gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
 		}
 	} else if ((asks.getcount()>0) && offers.getcount()>0)
 	{
@@ -1075,7 +1075,7 @@ void auction::clear_market(void)
 			}
 			for (i=0; i<offers.getcount(); i++){
 				if (verbose){
-					gl_output("   ...  %4d: %s offers %.3f %s at %.2f $/%s",i,gl_name(offers.getbid(i)->from,name,sizeof(name)), offers.getbid(i)->quantity,unit,offers.getbid(i)->price,unit);
+					gl_output("   ...  %4d: %s offers %.3f %s at %.2f $/%s",i,gl_name(offers.getbid(i)->from,name,sizeof(name)), offers.getbid(i)->quantity,unit.get_string(),offers.getbid(i)->price,unit.get_string());
 				}
 				if(offers.getbid(i)->price == -pricecap){
 					unresponsive_sell += offers.getbid(i)->quantity;
@@ -1089,7 +1089,7 @@ void auction::clear_market(void)
 			}
 			for (i=0; i<asks.getcount(); i++){
 				if (verbose){
-					gl_output("   ...  %4d: %s asks %.3f %s at %.2f $/%s",i,gl_name(asks.getbid(i)->from,name,sizeof(name)), asks.getbid(i)->quantity,unit,asks.getbid(i)->price,unit);
+					gl_output("   ...  %4d: %s asks %.3f %s at %.2f $/%s",i,gl_name(asks.getbid(i)->from,name,sizeof(name)), asks.getbid(i)->quantity,unit.get_string(),asks.getbid(i)->price,unit.get_string());
 				}
 				if(asks.getbid(i)->price == pricecap){
 					unresponsive_buy += asks.getbid(i)->quantity;
@@ -1251,7 +1251,7 @@ void auction::clear_market(void)
 	
 		/* post the price */
 		char name[64];
-		if (verbose) gl_output("   ...  %s clears %.2f %s at $%.2f/%s at %s", gl_name(OBJECTHDR(this),name,sizeof(name)), clear.quantity, unit, clear.price, unit, gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
+		if (verbose) gl_output("   ...  %s clears %.2f %s at $%.2f/%s at %s", gl_name(OBJECTHDR(this),name,sizeof(name)), clear.quantity, unit.get_string(), clear.price, unit.get_string(), gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
 		next.price = clear.price;
 		next.quantity = clear.quantity;
 	}
@@ -1484,7 +1484,7 @@ KEY auction::submit_nolock(OBJECT *from, double quantity, double real_price, KEY
 		if (verbose){
 			gl_output("   ...  %s resubmits %s from object %s for %.2f %s at $%.2f/%s at %s", 
 				gl_name(OBJECTHDR(this),myname,sizeof(myname)), quantity<0?"ask":"offer", gl_name(from,biddername,sizeof(biddername)), 
-				fabs(quantity), unit, price, unit, gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
+				fabs(quantity), unit.get_string(), price, unit.get_string(), gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
 		}
 		BID bid = {from,fabs(quantity),price,state};
 		if (biddef.bid_type == BID_BUY){
@@ -1504,7 +1504,7 @@ KEY auction::submit_nolock(OBJECT *from, double quantity, double real_price, KEY
 		if (verbose){
 			gl_output("   ...  %s receives %s from object %s for %.2f %s at $%.2f/%s at %s", 
 				gl_name(OBJECTHDR(this),myname,sizeof(myname)), quantity<0?"ask":"offer", gl_name(from,biddername,sizeof(biddername)), 
-				fabs(quantity), unit, price, unit, gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
+				fabs(quantity), unit.get_string(), price, unit.get_string(), gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
 		}
 		BID bid = {from,fabs(quantity),price,state};
 		if (quantity<0){

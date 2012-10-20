@@ -106,10 +106,10 @@ TIMESTAMP double_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 	}
 		
 	// get the target property
-	gld_property target_prop(get_parent(),target);
+	gld_property target_prop(get_parent(),get_target());
 	if ( !target_prop.is_valid() || target_prop.get_type()!=PT_double ) 
 	{
-		gl_error("Specified target %s for %s is not valid.",target,get_parent()->get_name());
+		gl_error("Specified target %s for %s is not valid.",get_target(),get_parent()->get_name());
 		/*  TROUBLESHOOT
 		Check to make sure the target you are specifying is a published variable for the object
 		that you are pointing to.  Refer to the documentation of the command flag --modhelp, or 
@@ -142,7 +142,7 @@ TIMESTAMP double_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 		if ( _isnan(m) || m>range )
 		{				
 			gl_error("Assert failed on %s: %s %g not within %f of given value %g", 
-				get_parent()->get_name(), target, x, range, value);
+				get_parent()->get_name(), get_target(), x, range, value);
 			return 0;
 		}
 		gl_verbose("Assert passed on %s", get_parent()->get_name());
@@ -154,7 +154,7 @@ TIMESTAMP double_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 		if ( _isnan(m) || m<range )
 		{				
 			gl_error("Assert failed on %s: %s %g is within %f of given value %g", 
-				get_parent()->get_name(), target, x, range, value);
+				get_parent()->get_name(), get_target(), x, range, value);
 			return 0;
 		}
 		gl_verbose("Assert passed on %s", get_parent()->get_name());

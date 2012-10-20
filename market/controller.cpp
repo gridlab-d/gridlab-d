@@ -110,8 +110,8 @@ controller::controller(MODULE *module){
 
 int controller::create(){
 	memset(this, 0, sizeof(controller));
-	sprintf(avg_target, "avg24");
-	sprintf(std_target, "std24");
+	sprintf(avg_target.get_string(), "avg24");
+	sprintf(std_target.get_string(), "std24");
 	slider_setting_heat = 0.0;
 	slider_setting_cool = 0.0;
 	slider_setting = 0.0;
@@ -199,15 +199,15 @@ void controller::cheat(){
 			break;
 		case SM_DOUBLE_RAMP:
 			sprintf(target, "air_temperature");
-			sprintf(heating_setpoint, "heating_setpoint");
-			sprintf(heating_demand, "heating_demand");
-			sprintf(heating_total, "total_load");		// using total instead of heating_total
-			sprintf(heating_load, "hvac_load");			// using load instead of heating_load
-			sprintf(cooling_setpoint, "cooling_setpoint");
-			sprintf(cooling_demand, "cooling_demand");
-			sprintf(cooling_total, "total_load");		// using total instead of cooling_total
-			sprintf(cooling_load, "hvac_load");			// using load instead of cooling_load
-			sprintf(deadband, "thermostat_deadband");
+			sprintf(heating_setpoint.get_string(), "heating_setpoint");
+			sprintf(heating_demand.get_string(), "heating_demand");
+			sprintf(heating_total.get_string(), "total_load");		// using total instead of heating_total
+			sprintf(heating_load.get_string(), "hvac_load");			// using load instead of heating_load
+			sprintf(cooling_setpoint.get_string(), "cooling_setpoint");
+			sprintf(cooling_demand.get_string(), "cooling_demand");
+			sprintf(cooling_total.get_string(), "total_load");		// using total instead of cooling_total
+			sprintf(cooling_load.get_string(), "hvac_load");			// using load instead of cooling_load
+			sprintf(deadband.get_string(), "thermostat_deadband");
 			sprintf(load, "hvac_load");
 			sprintf(total, "total_load");
 			heat_ramp_low = -2;
@@ -331,21 +331,21 @@ int controller::init(OBJECT *parent){
 		sprintf(aux_state, "is_AUX_on");
 		sprintf(heat_state, "is_HEAT_on");
 		sprintf(cool_state, "is_COOL_on");
-		fetch(&pHeatingSetpoint, heating_setpoint, parent);
-		fetch(&pHeatingDemand, heating_demand, parent);
+		fetch(&pHeatingSetpoint, heating_setpoint.get_string(), parent);
+		fetch(&pHeatingDemand, heating_demand.get_string(), parent);
 		fetch(&pHeatingTotal, total, parent);
 		fetch(&pHeatingLoad, total, parent);
-		fetch(&pCoolingSetpoint, cooling_setpoint, parent);
-		fetch(&pCoolingDemand, cooling_demand, parent);
+		fetch(&pCoolingSetpoint, cooling_setpoint.get_string(), parent);
+		fetch(&pCoolingDemand, cooling_demand.get_string(), parent);
 		fetch(&pCoolingTotal, total, parent);
 		fetch(&pCoolingLoad, load, parent);
-		fetch(&pDeadband, deadband, parent);
-		fetch(&pAuxState, aux_state, parent);
-		fetch(&pHeatState, heat_state, parent);
-		fetch(&pCoolState, cool_state, parent);
+		fetch(&pDeadband, deadband.get_string(), parent);
+		fetch(&pAuxState, aux_state.get_string(), parent);
+		fetch(&pHeatState, heat_state.get_string(), parent);
+		fetch(&pCoolState, cool_state.get_string(), parent);
 	}
-	fetch(&pAvg, avg_target, pMarket);
-	fetch(&pStd, std_target, pMarket);
+	fetch(&pAvg, avg_target.get_string(), pMarket);
+	fetch(&pStd, std_target.get_string(), pMarket);
 
 
 	if(dir == 0){

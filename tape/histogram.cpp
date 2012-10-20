@@ -191,14 +191,14 @@ int parse_bin_enum(char *cptr, BIN *bin, PROPERTY *prop){
  *	@param tpart a pointer to the buffer for the property complex type
  */
 void histogram::test_for_complex(char *tprop, char *tpart){
-	if(sscanf(property, "%[^.\0\t\n].%s", tprop, tpart) == 2){
+	if(sscanf(property.get_string(), "%[^.\0\t\n].%s", tprop, tpart) == 2){
 		if(0 == memcmp(tpart, "real", 4)){comp_part = REAL;}
 		else if(0 == memcmp(tpart, "imag", 3)){comp_part = IMAG;}
 		else if(0 == memcmp(tpart, "mag", 3)){comp_part = MAG;}
 		else if(0 == memcmp(tpart, "ang", 3)){comp_part = ANG;}
 		else {
 			comp_part = NONE;
-			throw("Unable to resolve complex part for \'%s\'", property);
+			throw("Unable to resolve complex part for \'%s\'", property.get_string());
 			return;
 		}
 		strtok(property, "."); /* "quickly" replaces the dot with a space */
@@ -229,7 +229,7 @@ int histogram::init(OBJECT *parent)
 			throw("Histogram has no parent and no group");
 			return 0;
 		}
-		group_list = gl_find_objects(FL_GROUP,group);
+		group_list = gl_find_objects(FL_GROUP,group.get_string());
 		if(group_list == NULL){
 			throw("Histogram group could not be parsed");
 			return 0;
@@ -244,9 +244,9 @@ int histogram::init(OBJECT *parent)
 		test_for_complex(tprop, tpart);
 		
 		while(group_obj = gl_find_next(group_list, group_obj)){
-			prop = gl_find_property(group_obj->oclass, property);
+			prop = gl_find_property(group_obj->oclass, property.get_string());
 			if(prop == NULL){
-				throw("Histogram group is unable to find prop '%s' in class '%d' for group '%s'", property, group_obj->oclass->name, group);
+				throw("Histogram group is unable to find prop '%s' in class '%d' for group '%s'", property.get_string(), group_obj->oclass->name, group.get_string());
 				return 0;
 			}
 			/* check to see if all the group objects are in the same class, allowing us to cache the target property */
@@ -262,10 +262,10 @@ int histogram::init(OBJECT *parent)
 	} else { /* if we have a parent, we only focus on that one object */
 		test_for_complex(tprop, tpart);
 		
-		prop = gl_find_property(parent->oclass, property);
+		prop = gl_find_property(parent->oclass, property.get_string());
 		
 		if(prop == NULL){
-			throw("Histogram parent '%s' of class '%s' does not contain property '%s'", parent->name ? parent->name : "(anon)", parent->oclass->name, property);
+			throw("Histogram parent '%s' of class '%s' does not contain property '%s'", parent->name ? parent->name : "(anon)", parent->oclass->name, property.get_string());
 			return 0;
 		} else {
 			prop_ptr = prop; /* saved for later */
@@ -303,7 +303,7 @@ int histogram::init(OBJECT *parent)
 	 */
 	{
 		char *cptr = bins;
-		char1024 bincpy;
+		char bincpy[1025];
 		int i = 0;
 		bin_count = 1; /* assume at least one */
 		/* would be better to count the number of times strtok succeeds, but this should work -mh */
@@ -361,7 +361,7 @@ int histogram::init(OBJECT *parent)
 	if (strcmp(fname,"")==0)
 
 		/* use object name-id as default file name */
-		sprintf(fname,"%s-%d.%s",obj->parent->oclass->name,obj->parent->id, ftype);
+		sprintf(fname,"%s-%d.%s",obj->parent->oclass->name,obj->parent->id, ftype.get_string());
 
 	/* if type is file or file is stdin */
 	tf = get_ftable(mode);
@@ -402,7 +402,7 @@ int histogram::feed_bins(OBJECT *obj){
 			/* fall through */
 		case PT_double:
 			if(ival == 0) 
-				value = (prop_ptr ? *gl_get_double(obj, prop_ptr) : *gl_get_double_by_name(obj, property) );
+				value = (prop_ptr ? *gl_get_double(obj, prop_ptr) : *gl_get_double_by_name(obj, property.get_string()) );
 			for(i = 0; i < bin_count; ++i){
 				if(value > bin_list[i].low_val && value < bin_list[i].high_val){
 					++binctr[i];
@@ -414,26 +414,26 @@ int histogram::feed_bins(OBJECT *obj){
 			}
 			break;
 		case PT_int16:
-			ival = (prop_ptr ? *gl_get_int16(obj, prop_ptr) : *gl_get_int16_by_name(obj, property) );
+			ival = (prop_ptr ? *gl_get_int16(obj, prop_ptr) : *gl_get_int16_by_name(obj, property.get_string()) );
 			value = 1.0;
 		case PT_int32:
 			if(value == 0.0){
-				ival = (prop_ptr ? *gl_get_int32(obj, prop_ptr) : *gl_get_int32_by_name(obj, property) );
+				ival = (prop_ptr ? *gl_get_int32(obj, prop_ptr) : *gl_get_int32_by_name(obj, property.get_string()) );
 				value = 1.0;
 			}
 		case PT_int64:
 			if(value == 0.0){
-				ival = (prop_ptr ? *gl_get_int64(obj, prop_ptr) : *gl_get_int64_by_name(obj, property) );
+				ival = (prop_ptr ? *gl_get_int64(obj, prop_ptr) : *gl_get_int64_by_name(obj, property.get_string()) );
 				value = 1.0;
 			}
 		case PT_enumeration:
 			if(value == 0.0){
-				ival = (prop_ptr ? *gl_get_int64(obj, prop_ptr) : *gl_get_int64_by_name(obj, property) );
+				ival = (prop_ptr ? *gl_get_int64(obj, prop_ptr) : *gl_get_int64_by_name(obj, property.get_string()) );
 				value = 1.0;
 			}
 		case PT_set:
 			if(value == 0.0){
-				ival = (prop_ptr ? *gl_get_int64(obj, prop_ptr) : *gl_get_int64_by_name(obj, property) );
+				ival = (prop_ptr ? *gl_get_int64(obj, prop_ptr) : *gl_get_int64_by_name(obj, property.get_string()) );
 				value = 1.0;
 			}
 			
@@ -483,7 +483,7 @@ TIMESTAMP histogram::sync(TIMESTAMP t0, TIMESTAMP t1)
 		counting_interval == 0.0 ||
 		(counting_interval > 0.0 && t1 >= next_count))
 	{
-		char1024 line;
+		char line[1025];
 		char ts[64];
 		int off=0, i=0;
 		DATETIME dt;

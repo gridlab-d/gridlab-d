@@ -346,7 +346,7 @@ int volt_var_control::init(OBJECT *parent)
 
 	if (num_regs==1)	//Only 1 column, make sure something is actually in there
 	{
-		temp_obj = gl_get_object((char *)regulator_list);
+		temp_obj = gl_get_object(regulator_list);
 
 		if (temp_obj == NULL)	//Not really an object, must be no controllable capacitors
 			num_regs = 0;
@@ -839,7 +839,7 @@ int volt_var_control::init(OBJECT *parent)
 
 	if (num_caps==1)	//Only 1 column, make sure something is actually in there
 	{
-		temp_obj = gl_get_object((char *)capacitor_list);
+		temp_obj = gl_get_object(capacitor_list);
 
 		if (temp_obj == NULL)	//Not really an object, must be no controllable capacitors
 			num_caps = 0;

@@ -87,9 +87,9 @@ int simple::init(OBJECT *parent)
 		bool (**op)(double,double);
 		double *value;
 	} map[] = {
-		{"objective",	objective,	&pObjective},
-		{"variable",	variable,	&pVariable},
-		{"constraint",	constraint,	&pConstraint, &(constrain.op), &(constrain.value)},
+		{"objective",	objective.get_string(),	&pObjective},
+		{"variable",	variable.get_string(),	&pVariable},
+		{"constraint",	constraint.get_string(),	&pConstraint, &(constrain.op), &(constrain.value)},
 	};
 	int n;
 	for ( n=0 ; n<sizeof(map)/sizeof(map[0]) ; n++ )
@@ -135,14 +135,14 @@ int simple::init(OBJECT *parent)
 		if ( map[n].op!=NULL )
 		{
 			char varname[256], op[32], value[64];
-			switch (sscanf(constraint, "%[^ \t<=>!]%[<=>!]%s", varname, op, value)) {
+			switch (sscanf(constraint.get_string(), "%[^ \t<=>!]%[<=>!]%s", varname, op, value)) {
 			case 0:
 				break;
 			case 1:
-				gl_error("constraint '%s' in object '%s' is missing a valid comparison operator", constraint, oname);
+				gl_error("constraint '%s' in object '%s' is missing a valid comparison operator", constraint.get_string(), oname);
 				return 0;
 			case 2:
-				gl_error("constraint '%s' in object '%s' is missing a valid comparison value", constraint, oname);
+				gl_error("constraint '%s' in object '%s' is missing a valid comparison value", constraint.get_string(), oname);
 				return 0;
 			case 3:
 				{	if (strcmp(op,"<")==0) *(map[n].op) = lt; else
@@ -152,14 +152,14 @@ int simple::init(OBJECT *parent)
 					if (strcmp(op,">")==0) *(map[n].op) = gt; else
 					if (strcmp(op,"!=")==0) *(map[n].op) = ne; else
 					{
-						gl_error("constraint '%s' in object '%s' operator '%s' is invalid", constraint, oname, op);
+						gl_error("constraint '%s' in object '%s' operator '%s' is invalid", constraint.get_string(), oname, op);
 						return 0;
 					}
 				}
 				*(map[n].value) = atof(value);
 				break;
 			default:
-				gl_error("constraint '%s' in object '%s' parsing resulted in an internal error", constraint, oname);
+				gl_error("constraint '%s' in object '%s' parsing resulted in an internal error", constraint.get_string(), oname);
 				return 0;
 			}
 		}
@@ -201,10 +201,10 @@ int simple::init(OBJECT *parent)
 	}
 
 	gl_verbose("optimization for %s:", gl_name(my,buffer,sizeof(buffer)));
-	gl_verbose("  %s(%s)", goal==OG_MINIMUM?"minimum":(goal==OG_MAXIMUM?"maximum":"extremum"),objective);
-	gl_verbose("    given %s", variable);
+	gl_verbose("  %s(%s)", goal==OG_MINIMUM?"minimum":(goal==OG_MAXIMUM?"maximum":"extremum"),objective.get_string());
+	gl_verbose("    given %s", variable.get_string());
 	if (pConstraint)
-		gl_verbose("    subject to %s",constraint);
+		gl_verbose("    subject to %s",constraint.get_string());
 
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -250,7 +250,7 @@ TIMESTAMP simple::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 	if ( isnan(*pObjective) || !isfinite(*pObjective) ) 
 	{
-		gl_error("The objective '%s' in simple optimizer object '%s' is infinite or indeterminate", objective, gl_name(my,buffer,sizeof(buffer))?buffer:"???");
+		gl_error("The objective '%s' in simple optimizer object '%s' is infinite or indeterminate", objective.get_string(), gl_name(my,buffer,sizeof(buffer))?buffer:"???");
 		return TS_INVALID; /* stop */
 	}
 
@@ -278,17 +278,17 @@ TIMESTAMP simple::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		{
 			if ( ddy==0 )
 			{
-				gl_error("The objective '%s' in simple optimizer object '%s' does not appear to have a non-zero second derivative near '%s=%g', which cannot lead to an extremum", objective, gl_name(my,buffer,sizeof(buffer))?buffer:"???", variable, last_x);
+				gl_error("The objective '%s' in simple optimizer object '%s' does not appear to have a non-zero second derivative near '%s=%g', which cannot lead to an extremum", objective.get_string(), gl_name(my,buffer,sizeof(buffer))?buffer:"???", variable.get_string(), last_x);
 				return TS_INVALID;
 			}
 			else if ( ddy<0 && goal==OG_MINIMUM )
 			{
-				gl_error("The minimum objective '%s' in '%s' cannot be found from '%s=%g'", objective, gl_name(my,buffer,sizeof(buffer))?buffer:"???", variable, last_x);
+				gl_error("The minimum objective '%s' in '%s' cannot be found from '%s=%g'", objective.get_string(), gl_name(my,buffer,sizeof(buffer))?buffer:"???", variable.get_string(), last_x);
 				return TS_INVALID;
 			}
 			else if ( ddy>0 && goal==OG_MAXIMUM )
 			{
-				gl_error("The maximum objective '%s' in '%s' cannot be found from '%s=%g'", objective, gl_name(my,buffer,sizeof(buffer))?buffer:"???", variable, last_x);
+				gl_error("The maximum objective '%s' in '%s' cannot be found from '%s=%g'", objective.get_string(), gl_name(my,buffer,sizeof(buffer))?buffer:"???", variable.get_string(), last_x);
 				return TS_INVALID;
 			}
 			next_x = last_x - dy/ddy;
@@ -309,13 +309,13 @@ TIMESTAMP simple::postsync(TIMESTAMP t0, TIMESTAMP t1)
 					{
 						// no brainer--we're done
 						*pVariable = constrain.value;
-						gl_verbose("%s constrained to %g", variable, constrain.value);
+						gl_verbose("%s constrained to %g", variable.get_string(), constrain.value);
 						pass = 3;
 					}
 				}
 				else if ( violation ) // out of bounds
 				{
-					gl_verbose("constraint %s violated", constraint);
+					gl_verbose("constraint %s violated", constraint.get_string());
 					if ( search_step!=0 ) // was constrained
 					{
 						// not far enough

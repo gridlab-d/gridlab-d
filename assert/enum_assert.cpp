@@ -68,10 +68,10 @@ int enum_assert::init(OBJECT *parent)
 TIMESTAMP enum_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 {
 
-	gld_property target_prop(get_parent(),target);
+	gld_property target_prop(get_parent(),get_target());
 	if ( !target_prop.is_valid() || target_prop.get_type()!=PT_enumeration ) 
 	{
-		gl_error("Specified target %s for %s is not valid.",target,get_parent()->get_name());
+		gl_error("Specified target %s for %s is not valid.",get_target(),get_parent()->get_name());
 		/*  TROUBLESHOOT
 		Check to make sure the target you are specifying is a published variable for the object
 		that you are pointing to.  Refer to the documentation of the command flag --modhelp, or 
@@ -87,7 +87,7 @@ TIMESTAMP enum_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 		if (value != x) 
 		{
 			gl_error("Assert failed on %s: %s=%g did not match %g", 
-				get_parent()->get_name(), target, x, value);
+				get_parent()->get_name(), get_target(), x, value);
 			return 0;
 		}
 		else
@@ -101,7 +101,7 @@ TIMESTAMP enum_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 		if (value == x)
 		{
 			gl_error("Assert failed on %s: %s=%g did match %g", 
-				get_parent()->get_name(), target, x, value);
+				get_parent()->get_name(), get_target(), x, value);
 			return 0;
 		}
 		else

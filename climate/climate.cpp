@@ -394,13 +394,14 @@ int climate::init(OBJECT *parent)
 
 	// open access to the TMY file
 	char found_file[1024];
-	if (gl_findfile(tmyfile,NULL,R_OK,found_file,sizeof(found_file))==NULL) // TODO: get proper values for solar
+	if (gl_findfile(tmyfile.get_string(),NULL,R_OK,found_file,sizeof(found_file))==NULL) // TODO: get proper values for solar
 	{
-		gl_error("weather file '%s' access failed", tmyfile);
+		gl_error("weather file '%s' access failed", tmyfile.get_string());
 		return 0;
 	}
 
-	
+//	gld_webdata tmy3("http://rredc.nrel.gov/solar/old_data/nsrdb/1991-2005/data/tmy3/690150TY.csv",10000000);
+
 	//dot = strchr(tmyfile, '.');
 	//while(strchr(dot+1, '.')){ /* init time, doesn't have to be fast -MH */
 	//	dot = strchr(dot, '.');
@@ -532,7 +533,7 @@ int climate::init(OBJECT *parent)
 
 		}
 		else
-			gl_error("%s(%d): day %d, hour %d is out of allowed range 0-8759 hours", tmyfile,line,day,hour);
+			gl_error("%s(%d): day %d, hour %d is out of allowed range 0-8759 hours", tmyfile.get_string(),line,day,hour);
 
 		line++;
 	}
@@ -544,7 +545,7 @@ int climate::init(OBJECT *parent)
 	/* enable forecasting if specified */
 	if ( strcmp(forecast_spec,"")!=0 && gl_forecast_create(my(),forecast_spec)==NULL )
 	{
-		gl_error("%s: forecast '%s' is not valid", get_name(), forecast_spec);
+		gl_error("%s: forecast '%s' is not valid", get_name(), forecast_spec.get_string());
 		return 0;
 	}
 	else if (get_forecast()!=NULL)
