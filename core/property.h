@@ -55,7 +55,7 @@ public:
 	inline char *get_string(void) { return buffer; };
 	inline char* erase(void) { return (char*)memset(buffer,0,size); };
 	inline char* copy_to(char *s) { return s?strncpy(s,buffer,size):NULL; };
-	inline char* copy_from(const char *s) { return s?strncpy(buffer,s,size):NULL; }
+	inline char* copy_from(const char *s) { return s?strncpy(buffer,s,size):NULL; };
 	inline operator char*(void) { return buffer; };
 	inline bool operator ==(const char *s) { return strcmp(buffer,s)==0; };
 	inline bool operator <(const char *s) { return strcmp(buffer,s)==-1; };
@@ -65,7 +65,7 @@ public:
 	inline char *find(const char c) { return strchr(buffer,c); };
 	inline char *find(const char *s) { return strstr(buffer,s); };
 	inline char *findrev(const char c) { return strrchr(buffer,c); };
-	inline char *token(char *from, const char *delim, char **context) { strtok_s(from,delim,context); }
+	inline char *token(char *from, const char *delim, char **context) { strtok_s(from,delim,context); };
 	inline size_t format(char *fmt, ...) { va_list ptr; va_start(ptr,fmt); size_t len=vsnprintf(buffer,size,fmt,ptr); va_end(ptr); return len; };
 	inline size_t vformat(char *fmt, va_list ptr) { return vsnprintf(buffer,size,fmt,ptr); };
 };
