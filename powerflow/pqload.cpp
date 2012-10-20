@@ -122,7 +122,7 @@ pqload::pqload(MODULE *mod) : load(mod)
 
 int pqload::build_sched(char *instr = NULL, SCHED_LIST *end = NULL){
 	char *sc_end = 0;
-	char *start = instr ? instr : schedule; /* doesn't copy but doesn't use strtok */
+	char *start = instr ? instr : schedule.get_string(); /* doesn't copy but doesn't use strtok */
 	int rv = 0, scanct = 0;
 	SCHED_LIST *endptr = NULL;
 
