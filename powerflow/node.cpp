@@ -510,9 +510,9 @@ int node::init(OBJECT *parent)
 				LUSolverFcns.ext_destroy = NULL;
 
 #ifdef WIN32
-				snprintf(ext_lib_file_name, 1024, "solver_%s" DLEXT,LUSolverName);
+				snprintf(ext_lib_file_name, 1024, "solver_%s" DLEXT,LUSolverName.get_string());
 #else
-				snprintf(ext_lib_file_name, 1024, "lib_solver_%s" DLEXT,LUSolverName);
+				snprintf(ext_lib_file_name, 1024, "lib_solver_%s" DLEXT,LUSolverName.get_string());
 #endif
 
 				if (gl_findfile(ext_lib_file_name, NULL, 0|4, extpath,sizeof(extpath))!=NULL)	//Link up
@@ -523,7 +523,7 @@ int node::init(OBJECT *parent)
 					//Make sure it worked
 					if (LUSolverFcns.dllLink==NULL)
 					{
-						gl_warning("Failure to load solver_%s as a library, defaulting to superLU",LUSolverName);
+						gl_warning("Failure to load solver_%s as a library, defaulting to superLU",LUSolverName.get_string());
 						/*  TROUBLESHOOT
 						While attempting to load the DLL for an external LU solver, the file did not appear to meet
 						the libary specifications.  superLU is being used instead.  Please check the library file and
@@ -551,7 +551,7 @@ int node::init(OBJECT *parent)
 						//Make sure it worked
 						if (LUSolverFcns.ext_init == NULL)
 						{
-							gl_warning("LU_init of external solver solver_%s not found, defaulting to superLU",LUSolverName);
+							gl_warning("LU_init of external solver solver_%s not found, defaulting to superLU",LUSolverName.get_string());
 							/*  TROUBLESHOOT
 							While attempting to link the LU_init routine of an external LU matrix solver library, the routine
 							failed to be found.  Check the external library and try again.  At this failure, powerflow will revert
@@ -568,7 +568,7 @@ int node::init(OBJECT *parent)
 						//Make sure it worked
 						if (LUSolverFcns.ext_init == NULL)
 						{
-							gl_warning("LU_init of external solver solver_%s not found, defaulting to superLU",LUSolverName);
+							gl_warning("LU_init of external solver solver_%s not found, defaulting to superLU",LUSolverName.get_string());
 							/*  TROUBLESHOOT
 							While attempting to link the LU_init routine of an external LU matrix solver library, the routine
 							failed to be found.  Check the external library and try again.  At this failure, powerflow will revert
@@ -585,7 +585,7 @@ int node::init(OBJECT *parent)
 						//Make sure it worked
 						if (LUSolverFcns.ext_init == NULL)
 						{
-							gl_warning("LU_init of external solver solver_%s not found, defaulting to superLU",LUSolverName);
+							gl_warning("LU_init of external solver solver_%s not found, defaulting to superLU",LUSolverName.get_string());
 							/*  TROUBLESHOOT
 							While attempting to link the LU_init routine of an external LU matrix solver library, the routine
 							failed to be found.  Check the external library and try again.  At this failure, powerflow will revert
@@ -602,7 +602,7 @@ int node::init(OBJECT *parent)
 						//Make sure it worked
 						if (LUSolverFcns.ext_init == NULL)
 						{
-							gl_warning("LU_init of external solver solver_%s not found, defaulting to superLU",LUSolverName);
+							gl_warning("LU_init of external solver solver_%s not found, defaulting to superLU",LUSolverName.get_string());
 							/*  TROUBLESHOOT
 							While attempting to link the LU_init routine of an external LU matrix solver library, the routine
 							failed to be found.  Check the external library and try again.  At this failure, powerflow will revert
@@ -622,7 +622,7 @@ int node::init(OBJECT *parent)
 						}
 						else
 						{
-							gl_verbose("External solver solver_%s found, utilizing for NR",LUSolverName);
+							gl_verbose("External solver solver_%s found, utilizing for NR",LUSolverName.get_string());
 							/*  TROUBLESHOOT
 							An external LU matrix solver library was specified and found, so NR will be calculated
 							using that instead of superLU.
@@ -635,7 +635,7 @@ int node::init(OBJECT *parent)
 				}//end found external and linked
 				else	//Not found, just default to superLU
 				{
-					gl_warning("The external solver solver_%s could not be found, defaulting to superLU",LUSolverName);
+					gl_warning("The external solver solver_%s could not be found, defaulting to superLU",LUSolverName.get_string());
 					/*  TROUBLESHOOT
 					While attempting to link an external LU matrix solver library, the file could not be found.  Ensure it is
 					in the proper GridLAB-D folder and is named correctly.  If the error persists, please submit your code and

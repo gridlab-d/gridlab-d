@@ -400,7 +400,7 @@ int controller::init(OBJECT *parent){
 		// grab state pointer
 		pHeatingState = gl_get_enum_by_name(parent, heating_state);
 		if(pHeatingState == 0){
-			gl_error("heating_state property name \'%s\' is not published by parent class", heating_state);
+			gl_error("heating_state property name \'%s\' is not published by parent class", heating_state.get_string());
 			return 0;
 		}
 	}
@@ -409,7 +409,7 @@ int controller::init(OBJECT *parent){
 		// grab state pointer
 		pCoolingState = gl_get_enum_by_name(parent, cooling_state);
 		if(pCoolingState == 0){
-			gl_error("cooling_state property name \'%s\' is not published by parent class", cooling_state);
+			gl_error("cooling_state property name \'%s\' is not published by parent class", cooling_state.get_string());
 			return 0;
 		}
 	}
@@ -661,7 +661,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			last_q = *pDemand;
 			if(0 != strcmp(market->unit, "")){
 				if(0 == gl_convert("kW", market->unit, &(last_q))){
-					gl_error("unable to convert bid units from 'kW' to '%s'", market->unit);
+					gl_error("unable to convert bid units from 'kW' to '%s'", market->unit.get_string());
 					return TS_INVALID;
 				}
 			}
@@ -859,7 +859,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				last_p = -market->pricecap;
 		if(0 != strcmp(market->unit, "")){
 			if(0 == gl_convert("kW", market->unit, &(last_q))){
-				gl_error("unable to convert bid units from 'kW' to '%s'", market->unit);
+				gl_error("unable to convert bid units from 'kW' to '%s'", market->unit.get_string());
 				return TS_INVALID;
 			}
 		}

@@ -240,7 +240,7 @@ int metrics::init(OBJECT *parent)
 		//Make sure it worked
 		if (CalcIndices[index].MetricLoc == NULL)
 		{
-			GL_THROW("Unable to find metric %s in object %s for metric:%s",CalcIndices[index].MetricName,module_metrics_obj->name,hdr->name);
+			GL_THROW("Unable to find metric %s in object %s for metric:%s",CalcIndices[index].MetricName.get_string(),module_metrics_obj->name,hdr->name);
 			/*  TROUBLESHOOT
 			While attempting to map out a reliability metric, the desired metric was not found.  Please check the variable
 			name and ensure the metric is being published in the module metrics object and try again.  If the error persists,
@@ -870,12 +870,12 @@ void metrics::write_metrics(void)
 		if (index==0)
 		{
 			//Print metric name and value
-			fprintf(FPVAL,"%s = %f",CalcIndices[index].MetricName,*CalcIndices[index].MetricLoc);
+			fprintf(FPVAL,"%s = %f",CalcIndices[index].MetricName.get_string(),*CalcIndices[index].MetricLoc);
 		}
 		else
 		{
 			//Print metric name and value
-			fprintf(FPVAL,", %s = %f",CalcIndices[index].MetricName,*CalcIndices[index].MetricLoc);
+			fprintf(FPVAL,", %s = %f",CalcIndices[index].MetricName.get_string(),*CalcIndices[index].MetricLoc);
 		}
 	}
 
@@ -893,13 +893,13 @@ void metrics::write_metrics(void)
 				if (first_written == false)
 				{
 					//Print metric name and value
-					fprintf(FPVAL,"Interval values: %s = %f",CalcIndices[index].MetricName,*CalcIndices[index].MetricLocInterval);
+					fprintf(FPVAL,"Interval values: %s = %f",CalcIndices[index].MetricName.get_string(),*CalcIndices[index].MetricLocInterval);
 					first_written = true;
 				}
 				else
 				{
 					//Print metric name and value
-					fprintf(FPVAL,", %s = %f",CalcIndices[index].MetricName,*CalcIndices[index].MetricLocInterval);
+					fprintf(FPVAL,", %s = %f",CalcIndices[index].MetricName.get_string(),*CalcIndices[index].MetricLocInterval);
 				}
 			}
 		}

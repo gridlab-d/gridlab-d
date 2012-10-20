@@ -161,11 +161,11 @@ int double_controller::init(OBJECT *parent){
 	pStd =		gl_get_double_by_name(pMarket, std_target);
 
 	if(pAvg == 0){
-		gl_error("%s: double_controller market has no %s average property", namestr, avg_target);
+		gl_error("%s: double_controller market has no %s average property", namestr, avg_target.get_string());
 		return 0;
 	}
 	if(pStd == 0){
-		gl_error("%s: double_controller market has no %s standard deviation property", namestr, std_target);
+		gl_error("%s: double_controller market has no %s standard deviation property", namestr, std_target.get_string());
 		return 0;
 	}if(pPeriod == 0){
 		gl_error("%s: double_controller market has no period (and is not a market)", namestr);

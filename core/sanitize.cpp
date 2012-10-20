@@ -20,7 +20,7 @@ static char *sanitize_name(OBJECT *obj)
 	if ( !safe ) return NULL;
 	safe->old = obj->name;
 	char buffer[1024];
-	sprintf(buffer,"%s%llX",global_sanitizeprefix,(unsigned int64)safe);
+	sprintf(buffer,"%s%llX",global_sanitizeprefix.get_string(),(unsigned int64)safe);
 	safe->name = object_set_name(obj,buffer);
 	safe->next = safename_list;
 	safename_list = safe;
@@ -45,11 +45,11 @@ extern "C" int sanitize(int argc, char *argv[])
 		delta_latitude = random_uniform(NULL,-5,+5);
 		delta_longitude = random_uniform(NULL,-180,+180);
 	}
-	else if ( strcmp(global_sanitizeoffset,"destroy")==0 )
+	else if ( global_sanitizeoffset=="destroy" )
 		delta_latitude = delta_longitude = QNAN;
-	else if ( sscanf(global_sanitizeoffset,"%lf%*[,/]%lf",&delta_latitude,&delta_longitude)!=2 )
+	else if ( sscanf(global_sanitizeoffset.get_string(),"%lf%*[,/]%lf",&delta_latitude,&delta_longitude)!=2 )
 	{
-		output_error("sanitize_offset lat/lon '%s' is not valid", global_sanitizeoffset);
+		output_error("sanitize_offset lat/lon '%s' is not valid", global_sanitizeoffset.get_string());
 		return -2;
 	}
 
@@ -85,7 +85,7 @@ extern "C" int sanitize(int argc, char *argv[])
 	}
 	else if ( global_sanitizeindex[0]=='.' )
 	{
-		output_error("sanitization index file spec '%s' is not recognized", global_sanitizeindex);
+		output_error("sanitization index file spec '%s' is not recognized", global_sanitizeindex.get_string());
 		return -2;
 	}
 	if ( strcmp(global_sanitizeindex,"")!=0 )
