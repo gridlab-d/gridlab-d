@@ -113,20 +113,23 @@ void appliance::update_next_t(void)
 {
 	double transition_probability = transition.get_at(0,state);
 	if ( !isfinite(transition_probability) )
-
+	{
 		// transition occurs exactly at the next scheduled time
 		next_t = gl_globalclock + (TIMESTAMP)duration.get_at(0,state);
-
-	else if ( transition_probability<=0 )
-
-		// transition does not occur so check in again later
-		next_t = -(gl_globalclock + (TIMESTAMP)duration.get_at(0,state));
-
+		gl_debug("%s: non-probabilistic transition scheduled at %lld", get_name(), next_t);
+	}
 	else if ( gl_random_uniform(&my()->rng_state,0,1)<transition_probability )
-
+	{
 		// transition is uncertain
 		next_t = gl_globalclock + (TIMESTAMP)gl_random_uniform(&my()->rng_state,1,duration.get_at(0,state));
-	update_power();
+		gl_debug("%s: transition scheduled at %lld", get_name(), next_t);
+	}
+	else
+	{
+		// transition does not occur so check in again later
+		next_t = -(gl_globalclock + (TIMESTAMP)duration.get_at(0,state));
+		gl_debug("%s: no transition scheduled prior to %lld", get_name(), next_t);
+	}
 }
 void appliance::update_power(void)
 {
@@ -142,7 +145,7 @@ void appliance::update_state(void)
 	{
 		// linear transition array
 		state = (state+1)%n_states;
-		gl_debug("%s: transitions now to state %d", get_name(), state);
+		gl_debug("%s: now in state %d", get_name(), state);
 	}
 	else
 	{
@@ -160,35 +163,46 @@ void appliance::update_state(void)
 			if ( rn<0 )
 			{
 				state = n;
-				gl_debug("%s: transitions now to state %d", get_name(), state);
+				gl_debug("%s: now in state %d", get_name(), state);
 				break;
 			}
 		}
 	}
+	update_power();
 }
 
 int appliance::precommit(TIMESTAMP t1)
 {
 	gld_clock now;
 
-	// next transition does not occur now--just checking in
-	if ( next_t < 0)
-	{
-		if ( -next_t <= now )
-			update_next_t();
-	}
-
-	// next transition was missed somehow (this should never occur)
-	else if ( next_t < now )
-		exception("%s: transition at %lld was missed", get_name(), next_t);
-
 	// transition occurs now
-	else if ( next_t == now )
+	if ( now==(next_t<0?-next_t:next_t) )
 	{
 		update_state();
 		update_next_t();
+		return 1;
 	}
-	return 1;
+
+	// next transition cannot be scheduled yet--just checking in
+	else if ( next_t<0 )
+	{
+		if ( now>-next_t )
+			update_next_t();
+		return 1;
+	}
+
+	// next transition was missed somehow (this should never occur)
+	else if ( now>next_t )
+	{	
+		gl_error("%s: transition at %lld missed", get_name(), next_t); 
+		return 0;
+	}
+
+	// transition has yet to occur
+	else
+	{
+		return 1;
+	}
 }
 
 TIMESTAMP appliance::presync(TIMESTAMP t1)
