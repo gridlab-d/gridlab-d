@@ -846,7 +846,7 @@ int convert_from_timestamp(TIMESTAMP ts, char *buffer, int size)
 
 /** Convert from a string to a timestamp
  **/
-TIMESTAMP convert_to_timestamp(char *value)
+TIMESTAMP convert_to_timestamp(const char *value)
 {
 	/* try date-time format */
 	int Y=0,m=0,d=0,H=0,M=0,S=0;

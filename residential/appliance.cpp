@@ -112,19 +112,20 @@ int appliance::init(OBJECT *parent)
 void appliance::update_next_t(void)
 {
 	double transition_probability = transition.get_at(0,state);
-	if ( transition_probability==0 )
+	if ( !isfinite(transition_probability) )
 
-		// transition is certain to occur
+		// transition occurs exactly at the next scheduled time
 		next_t = gl_globalclock + (TIMESTAMP)duration.get_at(0,state);
+
+	else if ( transition_probability<=0 )
+
+		// transition does not occur so check in again later
+		next_t = -(gl_globalclock + (TIMESTAMP)duration.get_at(0,state));
 
 	else if ( gl_random_uniform(&my()->rng_state,0,1)<transition_probability )
 
 		// transition is uncertain
 		next_t = gl_globalclock + (TIMESTAMP)gl_random_uniform(&my()->rng_state,1,duration.get_at(0,state));
-	else
-
-		// transition does not occur so check in again later
-		next_t = -(gl_globalclock + (TIMESTAMP)duration.get_at(0,state));
 	update_power();
 }
 void appliance::update_power(void)

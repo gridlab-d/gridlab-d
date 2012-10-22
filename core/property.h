@@ -508,7 +508,7 @@ typedef struct s_delegatedtype
 {
 	char32 type; /**< the name of the delegated type */
 	CLASS *oclass; /**< the class implementing the delegated type */
-	int (*from_string)(void *addr, char *value); /**< the function that converts from a string to the data */
+	int (*from_string)(void *addr, const char *value); /**< the function that converts from a string to the data */
 	int (*to_string)(void *addr, char *value, int size); /**< the function that converts from the data to a string */
 } DELEGATEDTYPE; /**< type delegation specification */
 typedef struct s_delegatedvalue
@@ -645,7 +645,7 @@ typedef struct s_property_specs { /**<	the property type conversion specificatio
 	unsigned int size; /**< the size of 1 instance */
 	unsigned int csize; /**< the minimum size of a converted instance (not including '\0' or unit, 0 means a call to property_minimum_buffersize() is necessary) */ 
 	int (*data_to_string)(char *,int,void*,PROPERTY*); /**< the function to convert from data to a string */
-	int (*string_to_data)(char *,void*,PROPERTY*); /**< the function to convert from a string to data */
+	int (*string_to_data)(const char *,void*,PROPERTY*); /**< the function to convert from a string to data */
 	int (*create)(void*); /**< the function used to create the property, if any */
 	int (*stream_in)(FILE*,void*,PROPERTY*); /**< the function to read data from a stream */
 	int (*stream_out)(FILE*,void*,PROPERTY*); /**< the function to write data to a stream */
@@ -658,12 +658,12 @@ typedef struct s_property_specs { /**<	the property type conversion specificatio
 	double (*get_part)(void*,char *name); /**< the function to get a part of a property */
 	// @todo for greater generality this should be implemented as a linked list
 } PROPERTYSPEC;
-PROPERTYSPEC *property_getspec(PROPERTYTYPE ptype);
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+PROPERTYSPEC *property_getspec(PROPERTYTYPE ptype);
 PROPERTY *property_malloc(PROPERTYTYPE, CLASS *, char *, void *, DELEGATEDTYPE *);
 uint32 property_size(PROPERTY *);
 uint32 property_size_by_type(PROPERTYTYPE);

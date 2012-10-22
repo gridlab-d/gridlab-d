@@ -1388,6 +1388,23 @@ static int delim_value(PARSER, char *result, int size, char *delims)
 	result[_n]='\0';
 	return (int)(_p - start);
 }
+static int structured_value(PARSER, char *result, int size)
+{
+	int depth=0;
+	char *start=_p;
+	START;
+	if (*_p!='{') return 0;
+	while (size>1 && *_p!='\0' && !(*_p=='}'&&depth==1) ) 
+	{
+		if ( _p[0]=='\\' && _p[1]!='\0' ) _p++; 
+		else if ( *_p=='{' ) depth++; 
+		else if ( *_p=='}' ) depth--;
+		COPY(result);
+	}
+	COPY(result);
+	result[_n]='\0';
+	return (int)(_p - start);
+}
 static int value(PARSER, char *result, int size)
 {
 	/* everything to a semicolon */
@@ -1395,6 +1412,8 @@ static int value(PARSER, char *result, int size)
 	char *start=_p;
 	int quote=0;
 	START;
+	if ( *_p=='{' ) 
+		return structured_value(_p,result,size);
 	while (size>1 && *_p!='\0' && !(*_p==delim && quote == 0) && *_p!='\n') 
 	{
 		if ( _p[0]=='\\' && _p[1]!='\0' )

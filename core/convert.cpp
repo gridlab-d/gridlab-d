@@ -28,9 +28,9 @@ typedef unsigned int uint32;
 
 // we're not really using these yet... -MH
 int convert_from_real(char *a, int b, void *c, PROPERTY *d){return 0;}
-int convert_to_real(char *a, void *b, PROPERTY *c){return 0;}
+int convert_to_real(const char *a, void *b, PROPERTY *c){return 0;}
 int convert_from_float(char *a, int b, void *c, PROPERTY *d){return 0;}
-int convert_to_float(char *a, void *b, PROPERTY *c){return 0;}
+int convert_to_float(const char *a, void *b, PROPERTY *c){return 0;}
 
 /** Convert from a \e void
 	This conversion does not change the data
@@ -50,7 +50,7 @@ int convert_from_void(char *buffer, /**< a pointer to the string buffer */
 	This conversion ignores the data
 	@return always 1, indicated data was successfully ignored
  **/
-int convert_to_void(char *buffer, /**< a pointer to the string buffer that is ignored */
+int convert_to_void(const char *buffer, /**< a pointer to the string buffer that is ignored */
 					  void *data, /**< a pointer to the data that is not changed */
 					  PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
@@ -105,7 +105,7 @@ int convert_from_double(char *buffer, /**< pointer to the string buffer */
 	variable \p global_double_format to perform the conversion.
 	@return 1 on success, 0 on failure, -1 is conversion was incomplete
  **/
-int convert_to_double(char *buffer, /**< a pointer to the string buffer */
+int convert_to_double(const char *buffer, /**< a pointer to the string buffer */
 					  void *data, /**< a pointer to the data */
 					  PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
@@ -116,7 +116,7 @@ int convert_to_double(char *buffer, /**< a pointer to the string buffer */
 		UNIT *from = unit_find(unit);
 		if ( from != prop->unit && unit_convert_ex(from,prop->unit,(double*)data)==0)
 		{
-			output_error("convert_to_double(char *buffer='%s', void *data=0x%*p, PROPERTY *prop={name='%s',...}): unit conversion failed", buffer, sizeof(void*), data, prop->name);
+			output_error("convert_to_double(const char *buffer='%s', void *data=0x%*p, PROPERTY *prop={name='%s',...}): unit conversion failed", buffer, sizeof(void*), data, prop->name);
 			/* TROUBLESHOOT 
 			   This error is caused by an attempt to convert a value from a unit that is
 			   incompatible with the unit of the target property.  Check your units and
@@ -193,7 +193,7 @@ int convert_from_complex(char *buffer, /**< pointer to the string buffer */
 	variable \p global_complex_format to perform the conversion.
 	@return 1 when only real is read, 2 imaginary part is also read, 3 when notation is also read, 0 on failure, -1 is conversion was incomplete
  **/
-int convert_to_complex(char *buffer, /**< a pointer to the string buffer */
+int convert_to_complex(const char *buffer, /**< a pointer to the string buffer */
 					   void *data, /**< a pointer to the data */
 					   PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
@@ -235,7 +235,7 @@ int convert_to_complex(char *buffer, /**< a pointer to the string buffer */
 		double scale=1.0;
 		if ( from != prop->unit && unit_convert_ex(from,prop->unit,&scale)==0)
 		{
-			output_error("convert_to_double(char *buffer='%s', void *data=0x%*p, PROPERTY *prop={name='%s',...}): unit conversion failed", buffer, sizeof(void*), data, prop->name);
+			output_error("convert_to_double(const char *buffer='%s', void *data=0x%*p, PROPERTY *prop={name='%s',...}): unit conversion failed", buffer, sizeof(void*), data, prop->name);
 			/* TROUBLESHOOT 
 			   This error is caused by an attempt to convert a value from a unit that is
 			   incompatible with the unit of the target property.  Check your units and
@@ -292,7 +292,7 @@ int convert_from_enumeration(char *buffer, /**< pointer to the string buffer */
 	Converts a string to an \e enumeration property.  
 	@return 1 on success, 0 on failure, -1 if conversion was incomplete
  **/
-int convert_to_enumeration(char *buffer, /**< a pointer to the string buffer */
+int convert_to_enumeration(const char *buffer, /**< a pointer to the string buffer */
 					       void *data, /**< a pointer to the data */
 					       PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
@@ -390,12 +390,13 @@ int convert_from_set(char *buffer, /**< pointer to the string buffer */
 	Converts a string to a \e set property.  
 	@return number of values read on success, 0 on failure, -1 if conversion was incomplete
  **/
-int convert_to_set(char *buffer, /**< a pointer to the string buffer */
+int convert_to_set(const char *buffer, /**< a pointer to the string buffer */
 					    void *data, /**< a pointer to the data */
 					    PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
 	KEYWORD *keys=prop->keywords;
-	char temp[4096], *ptr;
+	char temp[4096];
+	const char *ptr;
 	uint32 value=0;
 	int count=0;
 
@@ -490,7 +491,7 @@ int convert_from_int16(char *buffer, /**< pointer to the string buffer */
 	Converts a string to an \e int16 property.  
 	@return 1 on success, 0 on failure, -1 if conversion was incomplete
  **/
-int convert_to_int16(char *buffer, /**< a pointer to the string buffer */
+int convert_to_int16(const char *buffer, /**< a pointer to the string buffer */
 					    void *data, /**< a pointer to the data */
 					    PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
@@ -521,7 +522,7 @@ int convert_from_int32(char *buffer, /**< pointer to the string buffer */
 	Converts a string to an \e int32 property.  
 	@return 1 on success, 0 on failure, -1 if conversion was incomplete
  **/
-int convert_to_int32(char *buffer, /**< a pointer to the string buffer */
+int convert_to_int32(const char *buffer, /**< a pointer to the string buffer */
 					    void *data, /**< a pointer to the data */
 					    PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
@@ -552,7 +553,7 @@ int convert_from_int64(char *buffer, /**< pointer to the string buffer */
 	Converts a string to an \e int64 property.  
 	@return 1 on success, 0 on failure, -1 if conversion was incomplete
  **/
-int convert_to_int64(char *buffer, /**< a pointer to the string buffer */
+int convert_to_int64(const char *buffer, /**< a pointer to the string buffer */
 					    void *data, /**< a pointer to the data */
 					    PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
@@ -587,7 +588,7 @@ int convert_from_char8(char *buffer, /**< pointer to the string buffer */
 	Converts a string to a \e char8 property.  
 	@return 1 on success, 0 on failure, -1 if conversion was incomplete
  **/
-int convert_to_char8(char *buffer, /**< a pointer to the string buffer */
+int convert_to_char8(const char *buffer, /**< a pointer to the string buffer */
 					    void *data, /**< a pointer to the data */
 					    PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
@@ -630,7 +631,7 @@ int convert_from_char32(char *buffer, /**< pointer to the string buffer */
 	Converts a string to a \e char32 property.  
 	@return 1 on success, 0 on failure, -1 if conversion was incomplete
  **/
-int convert_to_char32(char *buffer, /**< a pointer to the string buffer */
+int convert_to_char32(const char *buffer, /**< a pointer to the string buffer */
 					    void *data, /**< a pointer to the data */
 					    PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
@@ -673,7 +674,7 @@ int convert_from_char256(char *buffer, /**< pointer to the string buffer */
 	Converts a string to a \e char256 property.  
 	@return 1 on success, 0 on failure, -1 if conversion was incomplete
  **/
-int convert_to_char256(char *buffer, /**< a pointer to the string buffer */
+int convert_to_char256(const char *buffer, /**< a pointer to the string buffer */
 					    void *data, /**< a pointer to the data */
 					    PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
@@ -717,7 +718,7 @@ int convert_from_char1024(char *buffer, /**< pointer to the string buffer */
 	Converts a string to a \e char1024 property.  
 	@return 1 on success, 0 on failure, -1 if conversion was incomplete
  **/
-int convert_to_char1024(char *buffer, /**< a pointer to the string buffer */
+int convert_to_char1024(const char *buffer, /**< a pointer to the string buffer */
 					    void *data, /**< a pointer to the data */
 					    PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
@@ -778,7 +779,7 @@ int convert_from_object(char *buffer, /**< pointer to the string buffer */
 	Converts a string to an \e object property.  
 	@return 1 on success, 0 on failure, -1 if conversion was incomplete
  **/
-int convert_to_object(char *buffer, /**< a pointer to the string buffer */
+int convert_to_object(const char *buffer, /**< a pointer to the string buffer */
 					    void *data, /**< a pointer to the data */
 					    PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
@@ -830,7 +831,7 @@ int convert_from_delegated(char *buffer, /**< pointer to the string buffer */
 	Converts a string to a \e delegated data type property.  
 	@return 1 on success, 0 on failure, -1 if conversion was incomplete
  **/
-int convert_to_delegated(char *buffer, /**< a pointer to the string buffer */
+int convert_to_delegated(const char *buffer, /**< a pointer to the string buffer */
 					    void *data, /**< a pointer to the data */
 					    PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
@@ -864,7 +865,7 @@ int convert_from_boolean(char *buffer, int size, void *data, PROPERTY *prop){
 	@return 1 on success, 0 on failure, -1 if conversion was incomplete
  **/
 /* booleans are handled internally as 1-byte uchar's. -MH */
-int convert_to_boolean(char *buffer, void *data, PROPERTY *prop){
+int convert_to_boolean(const char *buffer, void *data, PROPERTY *prop){
 	char str[32];
 	int i = 0;
 	if(buffer == NULL || data == NULL || prop == NULL)
@@ -892,7 +893,8 @@ int convert_from_timestamp_stub(char *buffer, int size, void *data, PROPERTY *pr
 	//return 0;
 }
 
-int convert_to_timestamp_stub(char *buffer, void *data, PROPERTY *prop){
+int convert_to_timestamp_stub(const char *buffer, void *data, PROPERTY *prop)
+{
 	TIMESTAMP ts = convert_to_timestamp(buffer);
 	*(int64 *)data = ts;
 	return 1;
@@ -926,11 +928,11 @@ int convert_from_double_array(char *buffer, int size, void *data, PROPERTY *prop
 	Converts a string to a \e double_array data type property.  
 	@return 1 on success, 0 on failure, -1 if conversion was incomplete
  **/
-int convert_to_double_array(char *buffer, void *data, PROPERTY *prop)
+int convert_to_double_array(const char *buffer, void *data, PROPERTY *prop)
 {
 	double_array *a=(double_array*)data;
 	unsigned row=0, col=0;
-	char *p = buffer;
+	const char *p = buffer;
 	
 	/* new array */
 	/* parse input */
@@ -967,20 +969,20 @@ int convert_to_double_array(char *buffer, void *data, PROPERTY *prop)
 				PROPERTY *prop;
 				if ( obj==NULL )
 				{
-					output_error("convert_to_double_array(char *buffer='%10s...',...): entry at row %d, col %d - object '%s' not found", buffer,row,col,objectname);
+					output_error("convert_to_double_array(const char *buffer='%10s...',...): entry at row %d, col %d - object '%s' not found", buffer,row,col,objectname);
 					return 0;
 				}
 				prop = object_get_property(obj,propertyname,NULL);
 				if ( prop==NULL )
 				{
-					output_error("convert_to_double_array(char *buffer='%10s...',...): entry at row %d, col %d - property '%s' not found in object '%s'", buffer,row,col,propertyname,objectname);
+					output_error("convert_to_double_array(const char *buffer='%10s...',...): entry at row %d, col %d - property '%s' not found in object '%s'", buffer,row,col,propertyname,objectname);
 					return 0;
 				}
 				a->grow_to(row,col);
 				a->set_at(row,col,object_get_double(obj,prop));
 				if ( a->is_nan(row,col) )
 				{
-					output_error("convert_to_double_array(char *buffer='%10s...',...): entry at row %d, col %d property '%s' in object '%s' is not accessible", buffer,row,col,propertyname,objectname);
+					output_error("convert_to_double_array(const char *buffer='%10s...',...): entry at row %d, col %d property '%s' in object '%s' is not accessible", buffer,row,col,propertyname,objectname);
 					return 0;
 				}
 				col++;
@@ -990,21 +992,21 @@ int convert_to_double_array(char *buffer, void *data, PROPERTY *prop)
 				GLOBALVAR *var = global_find(propertyname);
 				if ( var==NULL )
 				{
-					output_error("convert_to_double_array(char *buffer='%10s...',...): entry at row %d, col %d global '%s' not found", buffer,row,col,propertyname);
+					output_error("convert_to_double_array(const char *buffer='%10s...',...): entry at row %d, col %d global '%s' not found", buffer,row,col,propertyname);
 					return 0;
 				}
 				a->grow_to(row,col);
 				a->set_at(row,col,(double*)var->prop->addr);
 				if ( a->is_nan(row,col) )
 				{
-					output_error("convert_to_double_array(char *buffer='%10s...',...): entry at row %d, col %d property '%s' in object '%s' is not accessible", buffer,row,col,propertyname,objectname);
+					output_error("convert_to_double_array(const char *buffer='%10s...',...): entry at row %d, col %d property '%s' in object '%s' is not accessible", buffer,row,col,propertyname,objectname);
 					return 0;
 				}
 				col++;
 			}
 			else /* not a valid entry */
 			{
-				output_error("convert_to_double_array(char *buffer='%10s...',...): entry at row %d, col %d is not valid (value='%10s')", buffer,row,col,p);
+				output_error("convert_to_double_array(const char *buffer='%10s...',...): entry at row %d, col %d is not valid (value='%10s')", buffer,row,col,p);
 				return 0;
 			}
 			while ( *p!='\0' && !isspace(*p) && *p!=';' ) p++; /* skip characters just parsed */
@@ -1041,11 +1043,11 @@ int convert_from_complex_array(char *buffer, int size, void *data, PROPERTY *pro
 	Converts a string to a \e complex_array data type property.  
 	@return 1 on success, 0 on failure, -1 if conversion was incomplete
  **/
-int convert_to_complex_array(char *buffer, void *data, PROPERTY *prop)
+int convert_to_complex_array(const char *buffer, void *data, PROPERTY *prop)
 {
 	complex_array *a=(complex_array*)data;
 	unsigned row=0, col=0;
-	char *p = buffer;
+	const char *p = buffer;
 	
 	/* new array */
 	/* parse input */
@@ -1083,20 +1085,20 @@ int convert_to_complex_array(char *buffer, void *data, PROPERTY *prop)
 				PROPERTY *prop;
 				if ( obj==NULL )
 				{
-					output_error("convert_to_double_array(char *buffer='%10s...',...): entry at row %d, col %d - object '%s' not found", buffer,row,col,objectname);
+					output_error("convert_to_double_array(const char *buffer='%10s...',...): entry at row %d, col %d - object '%s' not found", buffer,row,col,objectname);
 					return 0;
 				}
 				prop = object_get_property(obj,propertyname,NULL);
 				if ( prop==NULL )
 				{
-					output_error("convert_to_double_array(char *buffer='%10s...',...): entry at row %d, col %d - property '%s' not found in object '%s'", buffer,row,col,propertyname,objectname);
+					output_error("convert_to_double_array(const char *buffer='%10s...',...): entry at row %d, col %d - property '%s' not found in object '%s'", buffer,row,col,propertyname,objectname);
 					return 0;
 				}
 				a->grow_to(row,col);
 				a->set_at(row,col,object_get_complex(obj,prop));
 				if ( a->is_nan(row,col) )
 				{
-					output_error("convert_to_double_array(char *buffer='%10s...',...): entry at row %d, col %d property '%s' in object '%s' is not accessible", buffer,row,col,propertyname,objectname);
+					output_error("convert_to_double_array(const char *buffer='%10s...',...): entry at row %d, col %d property '%s' in object '%s' is not accessible", buffer,row,col,propertyname,objectname);
 					return 0;
 				}
 				col++;
@@ -1106,27 +1108,28 @@ int convert_to_complex_array(char *buffer, void *data, PROPERTY *prop)
 				GLOBALVAR *var = global_find(propertyname);
 				if ( var==NULL )
 				{
-					output_error("convert_to_double_array(char *buffer='%10s...',...): entry at row %d, col %d global '%s' not found", buffer,row,col,propertyname);
+					output_error("convert_to_double_array(const char *buffer='%10s...',...): entry at row %d, col %d global '%s' not found", buffer,row,col,propertyname);
 					return 0;
 				}
 				a->grow_to(row,col);
 				a->set_at(row,col,(complex*)var->prop->addr);
 				if ( a->is_nan(row,col) )
 				{
-					output_error("convert_to_double_array(char *buffer='%10s...',...): entry at row %d, col %d property '%s' in object '%s' is not accessible", buffer,row,col,propertyname,objectname);
+					output_error("convert_to_double_array(const char *buffer='%10s...',...): entry at row %d, col %d property '%s' in object '%s' is not accessible", buffer,row,col,propertyname,objectname);
 					return 0;
 				}
 				col++;
 			}
 			else /* not a valid entry */
 			{
-				output_error("convert_to_double_array(char *buffer='%10s...',...): entry at row %d, col %d is not valid (value='%10s')", buffer,row,col,p);
+				output_error("convert_to_double_array(const char *buffer='%10s...',...): entry at row %d, col %d is not valid (value='%10s')", buffer,row,col,p);
 				return 0;
 			}
 			while ( *p!='\0' && !isspace(*p) && *p!=';' ) p++; /* skip characters just parsed */
 		}
 	}
-	return 1;}
+	return 1;
+}
 
 /** Convert a string to a double with a given unit
    @return 1 on success, 0 on failure
@@ -1143,6 +1146,61 @@ extern "C" int convert_unit_double(char *buffer,char *unit, double *data)
 	while (isspace(*from)) from++;
 
 	return unit_convert(from,unit,data);
+}
+
+/** Convert a struct object to a string
+	The structure is defined as a linked list of PROPERTY entities
+	@return length of string on success, 0 for empty, <0 for failure
+ **/
+int convert_from_struct(char *buffer, size_t len, void *data, PROPERTY *prop)
+{
+	size_t pos = sprintf(buffer,"%s","{ ");
+	while ( prop!=NULL )
+	{
+		void *addr = (char*)data + (size_t)prop->addr;
+		PROPERTYSPEC *spec = property_getspec(prop->ptype);
+		char temp[1025];
+		size_t n = spec->data_to_string(temp,sizeof(temp),addr,prop);
+		if ( pos+n >= len-2 )
+			return -pos;
+		pos += sprintf(buffer+pos,"%s %s; ",prop->name,temp);
+		prop = prop->next;
+	}
+	strcpy(buffer+pos,"}");
+	return pos+1;
+}
+/** Convert a string to a struct object
+	The structure is defined as a linked list of PROPERTY entities
+	@return length of string on success, 0 for empty, -1 for failure
+ **/int convert_to_struct(const char *buffer, void *data, PROPERTY *structure)
+{
+	size_t len = 0;
+	char temp[1025];
+	if ( buffer[0]!='{' ) return -1;
+	strncpy(temp,buffer+1,sizeof(temp));
+	char *item = NULL;
+	char *last = NULL;
+	while ( (item=strtok_s(item?NULL:temp,";",&last))!=NULL )
+	{
+		char name[64], value[1024];
+		while ( isspace(*item) ) item++;
+		if ( *item=='}' ) return len;
+		if ( sscanf(item,"%s %[^\n]",name,value)!=2 )
+			return -len;
+		PROPERTY *prop;
+		for ( prop=structure ; prop!=NULL ; prop=prop->next )
+		{
+			if ( strcmp(prop->name,name)==0 )
+			{
+				void *addr = (char*)data + (size_t)prop->addr;
+				PROPERTYSPEC *spec = property_getspec(prop->ptype);
+				len += spec->string_to_data(value,addr,prop);
+				break;
+			}
+		}
+		if ( prop==NULL ) return -len;
+	}
+	return -len;
 }
 
 /**@}**/

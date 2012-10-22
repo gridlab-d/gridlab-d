@@ -1,9 +1,10 @@
-#set debug=1
-#set suppress_repeat_messages=0
+//#set debug=1
+//#set suppress_repeat_messages=0
 
 global double daily_run_probability 0.25;
 
 module residential;
+module tape;
 
 // washer test uses linear state model
 object appliance {
@@ -12,6 +13,9 @@ object appliance {
 	durations "86400 60 300 60 300";
 	transitions "daily_run_probability 0.0 0.0 0.0 0.0";
 	powers "0 1+0.1j 1+0.2j 1+0.1j 2+0.2j";
+	load {
+		total 1+0.1j;
+	};
 }
 
 // dryer test uses markov state model
@@ -21,4 +25,9 @@ object appliance {
 	durations "86400 240 120";
 	transitions "0.0 daily_run_probability 0.0 ; 0 0 0.5 ; 0.5 0.5 0";
 	powers "0 1+0.1j 1+0.2j";
+	object recorder {
+		property load.demand;
+		file test_appliance.csv;
+		interval -1;
+	};
 }

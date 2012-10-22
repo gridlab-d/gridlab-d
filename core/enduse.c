@@ -540,6 +540,17 @@ int convert_to_enduse(char *string, void *data, PROPERTY *prop)
 	char buffer[1024];
 	char *token = NULL;
 
+	/* use structure conversion if opens with { */
+	if ( string[0]=='{')
+	{
+		PROPERTY eus[] = {
+			{NULL,"total",PT_complex,0,0,PA_PUBLIC,"kVA",(char*)(&e->total)-(char*)e,NULL,NULL,NULL,eus+1},
+			{NULL,"energy",PT_complex,0,0,PA_PUBLIC,"kVA",(char*)(&e->total)-(char*)e,NULL,NULL,NULL,eus+2},
+			{NULL,"demand",PT_complex,0,0,PA_PUBLIC,"kVA",(char*)(&e->total)-(char*)e,NULL,NULL,NULL,NULL},
+		};
+		return convert_to_struct(string,data,&eus);
+	}
+
 	/* check string length before copying to buffer */
 	if (strlen(string)>sizeof(buffer)-1)
 	{

@@ -71,7 +71,7 @@ double timestamp_to_days(TIMESTAMP t);
 double timestamp_to_hours(TIMESTAMP t);
 double timestamp_to_minutes(TIMESTAMP t);
 double timestamp_to_seconds(TIMESTAMP t);
-TIMESTAMP convert_to_timestamp(char *value);
+TIMESTAMP convert_to_timestamp(const char *value);
 int local_datetime(TIMESTAMP ts, DATETIME *dt);
 
 int timestamp_test(void);
