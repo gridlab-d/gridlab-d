@@ -1198,6 +1198,20 @@ static CMDARG main[] = {
 	{"id",			NULL,	slave_id,		"<idnum>", "Sets the ID number for the slave to inform its using to the master"},
 };
 
+int cmdarg_runoption(const char *value)
+{
+	int i, n;
+	char option[64], params[1024]="";
+	if ( (n=sscanf(value,"%63s %1023[^\n]", option,params))>0 )
+	{
+		for ( i=0 ; i<sizeof(main)/sizeof(main[0]) ; i++ )
+		{
+			if ( main[i].lopt!=NULL && strcmp(main[i].lopt,option)==0 )
+				return main[i].call(n,&params);
+		}
+	}
+}
+
 static int help(int argc, char *argv[])
 {
 	int i;

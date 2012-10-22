@@ -172,6 +172,7 @@ typedef struct stat STAT;
 #define FSTAT fstat
 #endif
 
+#include "cmdarg.h"
 #include "complex.h"
 #include "object.h"
 #include "load.h"
@@ -6219,6 +6220,20 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		}
 		else
 			return TRUE;
+	}
+	else if ( strncmp(line,MACRO "option",7)==0 )
+	{
+		char *term = strchr(line+7,' ');
+		char value[1024];
+		if (term==NULL)
+		{
+			output_error_raw("%s(%d): %soption missing command option name",filename,linenum,MACRO);
+			strcpy(line,"\n");
+			return FALSE;
+		}
+		strcpy(value, strip_right_white(term+1));
+		strcpy(line,"\n");
+		return cmdarg_runoption(value)>=0;
 	}
 	else
 	{
