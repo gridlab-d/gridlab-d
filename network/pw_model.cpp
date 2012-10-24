@@ -184,7 +184,7 @@ int pw_model::init(OBJECT *parent){
 		hr = A.CreateInstance(clsid, NULL, CLSCTX_SERVER);
 
 		//	* if !connect(model_name), fail!
-		output = A->OpenCase(model_name); // must catch RV in a _variant_t!
+		output = A->OpenCase(model_name.get_string()); // must catch RV in a _variant_t!
 		if(0 == check_COM_output(output)){
 			gl_error("OpenCase() failed");
 			return 0;
