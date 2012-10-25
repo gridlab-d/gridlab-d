@@ -102,11 +102,14 @@ public:
 		output_message("\nValidation report:");
 		if ( n_access ) output_message("%d directory access failures", n_access);
 		output_message("%d models tested",n_files);
-		if ( n_success ) output_message("%d unexpected successes",n_success); 
-		if ( n_failed ) output_message("%d unexpected errors",n_failed); 
-		if ( n_exceptions ) output_message("%d unexpected exceptions",n_exceptions); 
-		output_message("%d tests succeeded",n_ok);
-		output_message("%.0f%% success rate", 100.0*n_ok/n_files);
+		if ( n_files!=0 )
+		{
+			if ( n_success ) output_message("%d unexpected successes",n_success); 
+			if ( n_failed ) output_message("%d unexpected errors",n_failed); 
+			if ( n_exceptions ) output_message("%d unexpected exceptions",n_exceptions); 
+			output_message("%d tests succeeded",n_ok);
+				output_message("%.0f%% success rate", 100.0*n_ok/n_files);
+		}
 		runlock();
 	};
 	unsigned int get_nerrors(void) { return n_success+n_failed+n_exceptions+n_access; };
@@ -731,9 +734,10 @@ int validate(int argc, char *argv[])
 		report_newtable("FILE TEST RESULTS");
 	int n_procs = global_threadcount;
 	if ( n_procs==0 ) n_procs = processor_count();
+	n_procs = min(final.get_tested(),n_procs);
 	pthread_t *pid = new pthread_t[n_procs];
 	output_debug("starting validation with cmdargs '%s' using %d threads", validate_cmdargs, n_procs);
-	for ( i=0 ; i<min(final.get_tested(),n_procs) ; i++ )
+	for ( i=0 ; i<n_procs ; i++ )
 		pthread_create(&pid[i],NULL,run_test_proc,(void*)i);
 	void *rc;
 	output_debug("begin waiting process");
