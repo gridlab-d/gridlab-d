@@ -18,112 +18,170 @@
 #define STREAM_VERSION 1
 
 /* stream format - binary is normal, undefine BINARY to debug the stream visually */
-#define BINARY
-#ifndef _DEBUG
-#ifndef BINARY
-#error Binary must be defined for release versions of stream.c
-#endif
-#endif
+bool use_cleartext = true;
 
 /* output macros */
 static unsigned char b,t;
-static unsigned char c;
-static unsigned short s;
-static uint32 l;
-static unsigned int64 q;
-static unsigned short n;
-static unsigned int64 nn;
+static unsigned short _n;
 
-#ifdef BINARY
-#define COMPRESS(S,L) {if ((nn=stream_compress(fp,(S),(L)))<=0) return -1; else count+=nn;} 
-#define PUTD(S,L) {n=(L);if(fwrite(&n,sizeof(n),1,fp)!=1 || fwrite((S),1,L,fp)!=L) return -1; else count+=n+2;}
-#define PUTC(C) {c=(unsigned char)(C);PUTD(&c,sizeof(c))}
-#define PUTS(S) {s=(unsigned short)(S);PUTD(&s,sizeof(s))}
-#define PUTL(L) {l=(uint32)(L);PUTD(&l,sizeof(l))}
-#define PUTQ(Q) {q=(unsigned int64)(Q);PUTD(&q,sizeof(q))}
-#define PUTX(T,X) {if ((n=stream_out_##T(fp,(X)))<0) return -1; else count+=n;}
-#define PUTT(B,T) {unsigned short w=0; b=SB_##B; t=ST_##T; if (fwrite(&w,2,1,fp)!=1 || fwrite(&b,1,1,fp)!=1 || fwrite(&t,1,1,fp)!=1) return -1; else count+=4;}
-#else
-static char indent[256]="";
+int _put(void *v, size_t s, FILE *fp, char *fmt=NULL, ...)
+{
+	unsigned short n = 0;
+	if ( use_cleartext )
+	{
+		fprintf(fp,"%lld:", (int64)s);
+		int i;
+		for ( i=0 ; i<s ; i++ )
+			fprintf(fp,"%02x", (unsigned char)((char*)v)[i]);
+		if ( fmt!=NULL )
+		{
+			fprintf(fp," # ");
+			va_list ptr;
+			va_start(ptr,fmt);
+			vfprintf(fp,fmt,ptr);
+			va_end(ptr);
+		}
+		fprintf(fp,"\n");
+	}
+	else
+	{
+		if ( fwrite(&n,sizeof(n),1,fp)!=1 ) return -1;
+		if ( fwrite(&s,sizeof(s),1,fp)!=1 ) return -1;
+		if ( fwrite(&v,sizeof(v),1,fp)!=1 ) return -1;
+	}
+	return sizeof(n)+sizeof(s)+s;
+}
+
+#ifdef TEXT
+
+static char indent[256];
 void indent_more() { if (strlen(indent)<sizeof(indent)/sizeof(indent[0])) strcat(indent," ");}
 void indent_less() { if (indent[0]!='\0') indent[strlen(indent)-1] = '\0';}
-#define PUTD(S,L) {n=(L);if(fprintf(fp,"%sD%d/%s:%s\n",indent,L,#S,S)<=0) return -1; else count+=n+2;}
-#define PUTC(C) {c=(C);if(fprintf(fp,"%sC/%s:%d\n",indent,#C,C)<=0) return -1; else count+=3;}
-#define PUTS(S) {s=(S);if(fprintf(fp,"%sS/%s:%d\n",indent,#S,S)<=0) return -1; else count+=4;}
-#define PUTL(L) {l=(L);if(fprintf(fp,"%sL/%s:%d\n",indent,#L,L)<=0) return -1; else count+=6;}
-#define PUTQ(Q) {q=(Q);if(fprintf(fp,"%sQ/%s:%d\n",indent,#Q,Q)<=0) return -1; else count+=10;}
-#define PUTX(T,X) {if ((n=stream_out_##T(fp,(X)))<0) return -1; else count+=n;}
-#define PUTT(B,T) {if (SB_##B==SB_BEGIN || ST_##T==ST_BEGIN) indent_more(); if(fprintf(fp,"%s[%s %s]\n",indent,#B,#T)<=0) return -1; else count+=2; if (SB_##B==SB_END || ST_##T==ST_END) indent_less();}
+#define PUTD(S,L) {unsigned short _n=(unsigned short)(L);size_t _z=fprintf(fp,"%sD[%d] %s[%s]\n",indent,L,#S,S); if (_z<0) return -1; else count+=_z;}
+#define PUTC(C) {unsigned char _c=(unsigned char)(C);size_t _z=fprintf(fp,"%sC[1] %s[%lld]\n",indent,#C,_c); if (_z<0) return -1; else count+=_z;}
+#define PUTS(S) {unsigned short _s=(unsigned short)(S);size_t _z=fprintf(fp,"%sS[2] %s[%lld]\n",indent,#S,_s); if (_z<0) return -1; else count+=_z;}
+#define PUTL(L) {unsigned long _l=(unsigned long)(L);size_t _z=fprintf(fp,"%sL[4] %s[%lld]\n",indent,#L,_l); if (_z<0) return -1; else count+=_z;}
+#define PUTQ(Q) {unsigned int64 _q=(unsigned int64)(Q);size_t _z=fprintf(fp,"%sQ[8] %s[%lld]\n",indent,#Q,_q); if (_z<0) return -1; else count+=_z;}
+#define PUTP(P) {void *_p=(void*)(P);size_t _z=fprintf(fp,"%sP[%d] %s[%p]\n",indent,sizeof(void*),#P,_p); if (_z<0) return -1; else count+=_z;}
+#define PUTR(R) {double _r=(double)(R);size_t _z=fprintf(fp,"%sR[%d] %s[%g]\n",indent,sizeof(double),#R,_r); if (_z<0) return -1; else count+=_z;}
+#define PUTX(T,X) {unsigned short _n; if ((_n=stream_out_##T(fp,(X)))<0); if (_n<0) return -1; else count+=_n;}
+#define PUTT(B,T) {if (SB_##B==SB_BEGIN || ST_##T==ST_BEGIN) indent_more(); b=SB_##B; t=ST_##T; size_t _z=fprintf(fp,"%sB[1] %s[%d] T[1] %s[%d]\n",indent,#B,SB_##B,#T,ST_##T); if (_z<=0) return -1; else count+=_z; if (SB_##B==SB_END || ST_##T==ST_END) indent_less();}
+
+#else
+
+#ifdef BINARY
+#define COMPRESS(S,L) {unsigned int64 _nn; if ((_nn=stream_compress(fp,(S),(L)))<=0) return -1; else count+=_nn;} 
+#define PUTD(S,L) {unsigned short _n=(L);if(fwrite(&_n,sizeof(_n),1,fp)!=1 || fwrite((S),1,L,fp)!=L) return -1; else count+=_n+2;}
+#else
+#define PUTD(S,L) {size_t _n = _put(S,L,fp,"%s",#S); if ( _n<0 ) return -1; else count+=_n; }
 #endif
 
-#define DECOMPRESS(S,L) {if ((nn=stream_decompress(fp,(S),(L)))<=0) return -1; else count+=nn;}
-#define GETD(S,L) {if(fread(&n,sizeof(n),1,fp)!=1 || n>(L) || fread((S),n,1,fp)!=1) return -1; else count+=n+2;}
-#define GETC(C) GETD(&(C),sizeof(c))
-#define GETS(S) GETD(&(S),sizeof(s))
-#define GETL(L) GETD(&(L),sizeof(l))
-#define GETQ(Q) GETD(&(Q),sizeof(q))
-static int ok=1;
-#define GETBT (ok?(ok=0,fread(&n,sizeof(n),1,fp)==1 && n==0 && fread(&b,1,1,fp)==1 && fread(&t,1,1,fp)==1):1)
-#define OK (ok=1)
+#define PUTC(C) {unsigned char _c=(unsigned char)(C);PUTD(&_c,sizeof(_c))}
+#define PUTS(S) {unsigned short _s=(unsigned short)(S);PUTD(&_s,sizeof(_s))}
+#define PUTL(L) {unsigned long _l=(uint32)(L);PUTD(&_l,sizeof(_l))}
+#define PUTQ(Q) {unsigned int64 _q=(unsigned int64)(Q);PUTD(&_q,sizeof(_q))}
+#define PUTP(P) {void *_p=(void*)(P);PUTD(&_p,sizeof(_p))}
+#define PUTR(R) {double _r=(double)(R); PUTD(&_r,sizeof(_r))}
+#define PUTX(T,X) {if ((_n=stream_out_##T(fp,(X)))<0) return -1; else count+=_n;}
+//#define PUTT(B,T) {unsigned short w=0; b=SB_##B; t=ST_##T; if (fwrite(&w,2,1,fp)!=1 || fwrite(&b,1,1,fp)!=1 || fwrite(&t,1,1,fp)!=1) return -1; else count+=4;}
+#define PUTT(B,T) { struct { unsigned char b,t;} BT = {SB_##B,ST_##T}; PUTD(&BT,sizeof(BT)); }
+
+#endif
+
+#define DECOMPRESS(S,L) {unsigned int64 _nn; if ((_nn=stream_decompress(fp,(S),(L)))<=0) return -1; else count+=_nn;}
+//#define GETD(S,L) {unsigned short _n; if(fread(&_n,sizeof(_n),1,fp)!=2 || _n!=(L) || fread((S),_n,1,fp)!=_n) return -1; else count+=_n+2;}
+int _get(void *S, size_t L, FILE*fp)
+{
+	unsigned short _n;
+	size_t _nn;
+	if ( fread(&_n,sizeof(_n),1,fp)!=1 )
+		return -1;
+	if ( _n>L )
+		return -1;
+	if ( _n==0 )
+	{
+		if ( fread(&_nn,sizeof(_nn),1,fp)!=1 )
+			return -1;
+		if ( fread(S,_nn,1,fp)!=1 )
+			return -1;
+	}
+	else
+	{
+		if ( fread(S,_n,1,fp)!=1 )
+			return -1;
+	}
+	return _n+2;
+}
+#define GETD(S,L) {unsigned short _n = _get(S,L,fp); if ( _n<0 ) return -1; else count+=_n;}
+#define GETC(C) GETD(&(C),sizeof(unsigned char))
+#define GETS(S) GETD(&(S),sizeof(unsigned short))
+#define GETL(L) GETD(&(L),sizeof(unsigned long))
+#define GETQ(Q) GETD(&(Q),sizeof(unsigned int64))
+#define GETP(P) GETD(&(P),sizeof(void*))
+#define GETR(R) GETD(&(R),sizeof(double))
+static int _ok=1;
+#define GETBT (_ok?(_ok=0,fread(&_n,sizeof(_n),1,fp)==1 && _n==0 && fread(&b,1,1,fp)==1 && fread(&t,1,1,fp)==1):1)
+#define OK (_ok=1)
+#define ISOK _ok
 #define B(X) (b==SB_##X)
 #define T(X) (t==ST_##X)
 
 /* stream block tokens */
 enum {
-	SB_BEGIN=0x00,
+	SB_BEGIN		= 0,
 
-	SB_MODULE,
-	SB_GLOBAL,
-	SB_CLASS,
-	SB_OBJECT,
-	SB_UNIT,
-	SB_KEYWORD,
-	SB_PROPERTY,
-	SB_SCHEDULE,
-	SB_TRANSFORM,
+	SB_MODULE		= 1,
+	SB_GLOBAL		= 2,
+	SB_CLASS		= 3,
+	SB_OBJECT		= 4,
+	SB_UNIT			= 5,
+	SB_KEYWORD		= 6,
+	SB_PROPERTY		= 7,
+	SB_SCHEDULE		= 8,
+	SB_TRANSFORM	= 9,
 
-	SB_END=0xff,
+	SB_END			= 255,
 };
 
 /* stream type tokens */
 enum {
-	ST_BEGIN=0x00,
+	ST_BEGIN		= 0,
 
 	/* these should match stream block tokens */
-	ST_MODULE,
-	ST_GLOBAL,
-	ST_CLASS,
-	ST_OBJECT,
-	ST_UNIT,
-	ST_KEYWORD,
-	ST_PROPERTY,
-	ST_SCHEDULE,
-	ST_TRANSFORM,
+	ST_MODULE		= 1,
+	ST_GLOBAL		= 2,
+	ST_CLASS		= 3,
+	ST_OBJECT		= 4,
+	ST_UNIT			= 5,
+	ST_KEYWORD		= 6,
+	ST_PROPERTY		= 7,
+	ST_SCHEDULE		= 8,
+	ST_TRANSFORM	= 9,
 
 	/* these do not have corresponding stream block tokens */
-	ST_VERSION,
-	ST_ID,
-	ST_NAME,
-	ST_GROUP,
-	ST_PARENT,
-	ST_RANK,
-	ST_CLOCK,
-	ST_VALIDTO,
-	ST_LATITUDE,
-	ST_LONGITUDE,
-	ST_INSVC,
-	ST_OUTSVC,
-	ST_FLAGS,
-	ST_TYPE,
-	ST_SIZE,
-	ST_ACCESS,
-	ST_VALUE,
-	ST_DEFINITION,
-	ST_BIAS,
-	ST_SCALE,
-	ST_DATA,
+	ST_VERSION		=10,
+	ST_ID			=11,
+	ST_NAME			=12,
+	ST_GROUP		=13,
+	ST_PARENT		=14,
+	ST_RANK			=15,
+	ST_CLOCK		=16,
+	ST_VALIDTO		=17,
+	ST_LATITUDE		=18,
+	ST_LONGITUDE	=19,
+	ST_INSVC		=20,
+	ST_OUTSVC		=21,
+	ST_FLAGS		=22,
+	ST_TYPE			=23,
+	ST_SIZE			=24,
+	ST_ACCESS		=25,
+	ST_VALUE		=26,
+	ST_DEFINITION	=27,
+	ST_BIAS			=28,
+	ST_SCALE		=29,
+	ST_DATA			=30,
 
-	ST_END=0xff,
+	ST_END			=255,
 };
 
 char *stream_context()
@@ -691,10 +749,10 @@ int64 stream_out_object(FILE *fp, OBJECT *obj)
 	PUTQ(obj->valid_to);
 
 	PUTT(OBJECT,LATITUDE);
-	PUTD(&(obj->latitude),sizeof(obj->latitude));
+	PUTR(obj->latitude);
 
 	PUTT(OBJECT,LONGITUDE);
-	PUTD(&(obj->longitude),sizeof(obj->longitude));
+	PUTR(obj->longitude);
 
 	PUTT(OBJECT,INSVC);
 	PUTQ(obj->in_svc);
@@ -714,7 +772,7 @@ int64 stream_out_object(FILE *fp, OBJECT *obj)
 			void *addr = (void*)((char*)(obj+1)+(unsigned int64)p->addr);
 			PUTT(OBJECT,PROPERTY);
 			PUTL(p->ptype);
-			PUTS(p->addr);
+			PUTP(p->addr);
 			if (p->ptype==PT_object)
 			{
 				OBJECT *ref = *(OBJECT**)addr;
@@ -768,8 +826,7 @@ int64 stream_in_object(FILE *fp)
 			else if T(NAME)
 			{
 				GETD(buffer,sizeof(buffer));
-				obj->name = (char*)malloc(strlen(buffer)+1);
-				strcpy(obj->name,buffer);
+				object_set_name(obj,buffer);
 			}
 			else if T(GROUP)
 			{
@@ -778,11 +835,13 @@ int64 stream_in_object(FILE *fp)
 			else if T(PARENT)
 			{
 				GETL(obj->parent);
-				// this gets fixed after all objects are loaded
+				// stored as id, this gets fixed after all objects are loaded
 			}
 			else if T(RANK)
 			{
-				GETL(obj->rank);
+				OBJECTRANK rank;
+				GETL(rank);
+				object_set_rank(obj,rank);
 			}
 			else if T(CLOCK)
 			{
@@ -794,11 +853,11 @@ int64 stream_in_object(FILE *fp)
 			}
 			else if T(LATITUDE)
 			{
-				GETD(&(obj->latitude),sizeof(obj->latitude));
+				GETR(obj->latitude);
 			}
 			else if T(LONGITUDE)
 			{
-				GETD(&(obj->longitude),sizeof(obj->longitude));
+				GETR(obj->longitude);
 			}
 			else if T(INSVC)
 			{
@@ -824,8 +883,6 @@ int64 stream_in_object(FILE *fp)
 				stream_warning("ignoring token %d in object stream", t);
 		}
 		OK;
-
-		// TODO indexing, see load.c:load_set_index()
 		obj = NULL;
 	}
 	return count;
@@ -920,7 +977,7 @@ int64 stream_out_transform(FILE *fp, TRANSFORM *xform)
 		return -1;
 	}
 	PUTL(xform->target_obj->id);
-	PUTL(xform->target_prop->addr);
+	PUTP(xform->target_prop->addr);
 
 	PUTT(TRANSFORM,SCALE);
 	PUTQ(xform->scale);
@@ -1091,12 +1148,12 @@ extern "C" int64 stream_in(FILE *fp, int flags)
 		c += stream_in_class(fp);
 		c += stream_in_transform(fp);
 		if (c==0)
-			return stream_error("stream_in(): unable to continue");
+			return stream_error("stream_in(): stopping on unreadable item");
 		else
 			count += c;
 	}
 
-	if (!feof(fp) || !ok)
+	if (!feof(fp) || !ISOK)
 		return stream_error("stream_in(): unhandled block/token at position %d", count);
 	else if (ferror(fp))
 		return stream_error("stream_in(): %s", strerror(errno));

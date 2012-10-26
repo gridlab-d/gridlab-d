@@ -25,7 +25,9 @@
 #define __WORDSIZE__ 32
 #endif
 
+#ifndef int64
 #define int64 __int64 /**< Win32 version of 64-bit integers */
+#endif
 #define FMT_INT64 "I64" /**< Win32 version of 64-bit integer printf format string */
 //#define FMT_INT64 "ll" /**< standard version of 64-bit integer printf format string */
 #define atoi64 _atoi64 /**< Win32 version of 64-bit atoi */

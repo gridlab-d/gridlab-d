@@ -373,7 +373,7 @@ void do_checkpoint(void)
 				output_error("unable to open checkpoint file '%s' for writing");
 			else
 			{
-				if ( !stream_out(fp,SF_ALL) )
+				if ( stream_out(fp,SF_ALL)<=0 )
 					output_error("checkpoint failure (stream context is %s)",stream_context());
 				fclose(fp);
 				last_checkpoint = now;
