@@ -38,7 +38,7 @@ bool add_notification(OBJECT *target, PROPERTY *prop, OBJECT *recipient, int (*c
 	item->call = call;
 	item->next = first_notice;
 	first_notice = item;
-	
+	return true;
 }
 EXPORT int notify_debug(OBJECT *obj, int type, PROPERTY *prop, char *value)
 {
@@ -375,7 +375,7 @@ bool g_debug::get_command(void)
 		// process commands
 		if ( sscanf(buffer,"%s %[^\n]",cmd,args)>0 )
 		{
-			int len = strlen(cmd);
+			size_t len = strlen(cmd);
 
 			// process commands
 			if ( strnicmp(cmd,"print",len)==0 )
@@ -658,7 +658,10 @@ bool g_debug::cmd_print(char *args)
 			return true;
 		}
 		else
+		{
 			message("'%s' is not a valid global", args);
+			return false;
+		}
 	}
 	else if ( strcmp(args,"")==0 )
 	{
@@ -848,14 +851,14 @@ int g_debug::console_message(const char *fmt, ...)
 	debugwnd.msgs.buffer.next = (debugwnd.msgs.buffer.next+1)%debugwnd.nmsg;
 
 	// adjust first message position only if within panel height of next
-	if ( (debugwnd.msgs.buffer.next-debugwnd.msgs.buffer.first)%debugwnd.nmsg==-debugwnd.hpos )
+	if ( -(debugwnd.msgs.buffer.next-debugwnd.msgs.buffer.first)%debugwnd.nmsg==debugwnd.hpos )
 		debugwnd.msgs.buffer.first = (debugwnd.msgs.buffer.first+1)%debugwnd.nmsg;
 	return pos;
 }
 
 void g_debug::console_show_objlist(gld_object *parent, int level)
 {
-	int i;
+	unsigned int i;
 	gld_object *obj=NULL;
 	OBJECT *parent_object = parent?parent->my():NULL;
 	for ( i=0,obj=gld_object::get_first(); i<debugwnd.height+debugwnd.hpos-2 && obj!=NULL ; i++,obj=obj->get_next() )
@@ -879,7 +882,7 @@ bool g_debug::show_line(int row, const char *label, const char *fmt, ...)
 		last_header_row=row;
 
 	// ignore lines outside pane
-	if ( row<2 || row>debugwnd.height+debugwnd.hpos-1 ) return false;
+	if ( row<2 || row>(int)(debugwnd.height+debugwnd.hpos-1) ) return false;
 
 	// determine whether selected (i.e., bold)
 	bool is_selected = (row-2==selected_item && debugwnd.pane==1 );
@@ -911,7 +914,7 @@ bool g_debug::show_line(int row, const char *label, const char *fmt, ...)
 void g_debug::console_show_object(void)
 {
 	OBJECT *obj = my();
-	int row=2, col=debugwnd.vpos+1, tab=48;
+	unsigned int row=2, col=debugwnd.vpos+1, tab=48;
 	char buffer[1024];
 	sprintf(buffer,"Header %s",get_oclass()->get_name()); 
 	show_line(row,buffer);
@@ -946,7 +949,7 @@ void g_debug::console_show_object(void)
 void g_debug::console_show_messages(void)
 {
 	int msg;
-	int row=debugwnd.height+debugwnd.hpos+1;
+	unsigned int row=debugwnd.height+debugwnd.hpos+1;
 	char blank[1024];
 	memset(blank,' ',sizeof(blank));
 	blank[debugwnd.width]='\0';
@@ -1009,7 +1012,7 @@ bool g_debug::console_get_command(void)
 			// horizontal bars
 			char sbar[1024];
 			char dbar[1024];
-			int i;
+			unsigned int i;
 			for ( i=0 ; i<debugwnd.width ; i++ ) 
 			{
 				sbar[i]='-';
@@ -1034,7 +1037,7 @@ bool g_debug::console_get_command(void)
 			mvprintw(0,0,"GridLAB-D Debug Console - Version %d.%d.%d-%d (%s)",
 				major.get_int32(), minor.get_int32(), patch.get_int32(), build.get_int32(), 
 				b.get_buffer());
-			mvprintw(0,debugwnd.width/2-m.get_length()/2-2," [%s] ",m.get_buffer());
+			mvprintw(0,(int)(debugwnd.width/2-m.get_length()/2-2)," [%s] ",m.get_buffer());
 
 			// header bar split
 			mvprintw(1,0,dbar);
@@ -1045,7 +1048,7 @@ bool g_debug::console_get_command(void)
 		{
 			gld_clock now;
 			gld_string n = now.get_string();
-			mvprintw(0,debugwnd.width-n.get_length()-1," %s",n.get_buffer());
+			mvprintw(0,(int)(debugwnd.width-n.get_length()-1)," %s",n.get_buffer());
 		}
 
 		// entries in navigation panel
@@ -1100,7 +1103,7 @@ bool g_debug::console_get_command(void)
 		case KEY_DOWN:
 			if ( debugwnd.highlight==WH_PANE )
 			{
-				if ( selected_item<debugwnd.height+debugwnd.hpos-3 ) selected_item++;
+				if ( selected_item<(int)(debugwnd.height+debugwnd.hpos-3) ) selected_item++;
 				refresh_flags = R_OBJECT;
 			}
 			else if ( debugwnd.highlight==WH_HBAR )
@@ -1115,7 +1118,7 @@ bool g_debug::console_get_command(void)
 		case KEY_UP:
 			if ( debugwnd.highlight==WH_PANE )
 			{
-				if ( selected_item<debugwnd.height+debugwnd.hpos-3 ) selected_item--;
+				if ( selected_item<(int)(debugwnd.height+debugwnd.hpos-3) ) selected_item--;
 				refresh_flags = R_OBJECT;
 			}
 			else if ( debugwnd.highlight==WH_HBAR )
@@ -1222,7 +1225,7 @@ static const char *helpdata[] = {
 
 void g_debug::console_help(unsigned int page, unsigned int row)
 {
-	int n_pages = sizeof(helpdata)/sizeof(helpdata[0]);
+	unsigned int n_pages = sizeof(helpdata)/sizeof(helpdata[0]);
 Again:
 	clear();
 	mvprintw(0,0,helpdata[page]);
