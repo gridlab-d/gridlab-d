@@ -47,7 +47,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\third_party\cppunit-1.12.0\include;..\third_party\xerces-c-src_2_8_0\src;..\pthreads;"
+				AdditionalIncludeDirectories="..\third_party\xerces-c-src_2_8_0\src;..\pthreads;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;PAUSE_AT_EXIT;_CRT_SECURE_NO_DEPRECATE"
 				MinimalRebuild="false"
 				BasicRuntimeChecks="3"
