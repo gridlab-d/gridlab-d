@@ -594,7 +594,7 @@ typedef struct s_keyword {
 typedef uint32 PROPERTYFLAGS;
 #define PF_RECALC	0x0001 /**< property has a recalc trigger (only works if recalc_<class> is exported) */
 #define PF_CHARSET	0x0002 /**< set supports single character keywords (avoids use of |) */
-#define PT_EXTENDED 0x0004 /**< indicates that the property was added at runtime */
+#define PF_EXTENDED 0x0004 /**< indicates that the property was added at runtime */
 #define PF_DEPRECATED 0x8000 /**< set this flag to indicate that the property is deprecated (warning will be displayed anytime it is used */
 #define PF_DEPRECATED_NONOTICE 0x04000 /**< set this flag to indicate that the property is deprecated but no reference warning is desired */
 
@@ -647,8 +647,7 @@ typedef struct s_property_specs { /**<	the property type conversion specificatio
 	int (*data_to_string)(char *,int,void*,PROPERTY*); /**< the function to convert from data to a string */
 	int (*string_to_data)(const char *,void*,PROPERTY*); /**< the function to convert from a string to data */
 	int (*create)(void*); /**< the function used to create the property, if any */
-	int (*stream_in)(FILE*,void*,PROPERTY*); /**< the function to read data from a stream */
-	int (*stream_out)(FILE*,void*,PROPERTY*); /**< the function to write data to a stream */
+	size_t (*stream)(FILE*,int,void*,PROPERTY*); /**< the function to read data from a stream */
 	struct {
 		PROPERTYCOMPAREOP op;
 		char str[16];

@@ -351,6 +351,23 @@ typedef union {
 	unsigned int index;
 } SCHEDULEINDEX;
 
+typedef enum {
+	RT_INVALID=-1,	/**< used to flag bad random types */
+	RT_DEGENERATE,	/**< degenerate distribution (Dirac delta function); double only_value */
+	RT_UNIFORM,		/**< uniform distribution; double minimum_value, double maximum_value */
+	RT_NORMAL,		/**< normal distribution; double arithmetic_mean, double arithmetic_stdev */
+	RT_LOGNORMAL,	/**< log-normal distribution; double geometric_mean, double geometric_stdev */
+	RT_BERNOULLI,	/**< Bernoulli distribution; double probability_of_observing_1 */
+	RT_PARETO,		/**< Pareto distribution; double minimum_value, double gamma_scale */
+	RT_EXPONENTIAL, /**< exponential distribution; double coefficient, double k_scale */
+	RT_SAMPLED,		/**< sampled distribution; unsigned number_of_samples, double samples[n_samples] */
+	RT_RAYLEIGH,	/**< Rayleigh distribution; double sigma */
+	RT_WEIBULL,		/**< Weibull distribution; double lambda, double k */
+	RT_GAMMA,		/**< Gamma distribution; double alpha, double beta */
+	RT_BETA,		/**< Beta distribution; double alpha, double beta */
+	RT_TRIANGLE,	/**< Triangle distribution; double a, double b */
+} RANDOMTYPE;
+
 typedef char char1024[1025]; /**< strings up to 1024 characters */
 typedef char char256[257]; /**< strings up to 256 characters */
 typedef char char32[33]; /**< strings up to 32 characters */
@@ -365,6 +382,17 @@ typedef struct s_object_list* object; /* GridLAB objects */
 typedef unsigned int64 set; /* sets (each of up to 64 values may be defined) */
 typedef double triplet[3];
 typedef complex triplex[3];
+typedef struct s_randomvar {
+	double value;				/**< current value */
+	unsigned int state;			/**< RNG state */
+	RANDOMTYPE type;			/**< RNG distribution */
+	double a, b;				/**< RNG distribution parameters */
+	double low, high;			/**< RNG truncations limits */
+	unsigned int update_rate;	/**< RNG refresh rate in seconds */
+	unsigned int flags;			/**< RNG flags */
+	/* internal parameters */
+	struct s_randomvar *next;
+} random;
 
 /* int64 is already defined in platform.h */
 typedef enum {_PT_FIRST=-1,
@@ -541,6 +569,7 @@ struct s_keyword {
 };
 struct s_module_list {
 	void *hLib;
+	unsigned int id;
 	char name[1024];
 	CLASS *oclass;
 	unsigned short major;
@@ -556,6 +585,7 @@ struct s_module_list {
 	MODULE *(*subload)(char *, MODULE **, CLASS **, int, char **);
 	PROPERTY *globals;
 	void (*term)(void);
+	size_t (*stream)(FILE *fp, int flags);
 	MODULE *next;
 };
 
@@ -601,6 +631,8 @@ struct s_class_list {
 		int32 count;
 	} profiler;
 	TECHNOLOGYREADINESSLEVEL trl; // technology readiness level (1-9, 0=unknown)
+	bool has_runtime;	///< flag indicating that a runtime dll, so, or dylib is in use
+	char runtime[1024]; ///< name of file containing runtime dll, so, or dylib
 	CLASS *next;
 };
 
@@ -775,20 +807,6 @@ struct s_enduse {
 
 	enduse *next;
 };
-
-typedef enum {
-	RT_INVALID=-1,	/**< used to flag bad random types */
-	RT_DEGENERATE,	/**< degenerate distribution (Dirac delta function); double only_value */
-	RT_UNIFORM,		/**< uniform distribution; double minimum_value, double maximum_value */
-	RT_NORMAL,		/**< normal distribution; double arithmetic_mean, double arithmetic_stdev */
-	RT_LOGNORMAL,	/**< log-normal distribution; double geometric_mean, double geometric_stdev */
-	RT_BERNOULLI,	/**< Bernoulli distribution; double probability_of_observing_1 */
-	RT_PARETO,		/**< Pareto distribution; double minimum_value, double gamma_scale */
-	RT_EXPONENTIAL, /**< exponential distribution; double coefficient, double k_scale */
-	RT_SAMPLED,		/**< sampled distribution; unsigned number_of_samples, double samples[n_samples] */
-	RT_RAYLEIGH,	/**< Rayleigh distribution; double sigma */
-	RT_WEIBULL,		/**< Weibull distribution; double lambda, double k */
-} RANDOMTYPE; ///< The random distribution types
 
 /* object flags */
 #define OF_NONE		0x0000 /**< Object flag; none set */

@@ -47,6 +47,7 @@ STATUS global_setvar(char *def,...);
 char *global_getvar(char *name, char *buffer, int size);
 int global_isdefined(char *name);
 void global_dump(void);
+size_t global_getcount(void);
 
 /* MAJOR and MINOR version */
 GLOBAL unsigned global_version_major INIT(REV_MAJOR); /**< The software's major version */

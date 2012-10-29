@@ -15,6 +15,7 @@
 
 struct s_module_list {
 	void *hLib;
+	unsigned int id;
 	char name[1024];
 	CLASS *oclass;
 	unsigned short major;
@@ -30,6 +31,7 @@ struct s_module_list {
 	MODULE *(*subload)(char *, MODULE **, CLASS **, int, char **);
 	PROPERTY *globals;
 	void (*term)(void);
+	size_t (*stream)(FILE *fp, int flags);
 	struct s_module_list *next;
 }; /* MODULE */
 
@@ -47,6 +49,7 @@ extern "C" {
 	int module_get_path(char *buf, int len, MODULE *mod);
 	MODULE *module_find(char *module_name);
 	MODULE *module_load(const char *file, int argc, char *argv[]);
+	size_t module_getcount(void);
 	void* module_getvar(MODULE *mod, const char *varname, char *value, unsigned int size);
 	double *module_getvar_addr(MODULE *mod, const char *varname);
 	int module_depends(const char *name, unsigned char major, unsigned char minor, unsigned short build);

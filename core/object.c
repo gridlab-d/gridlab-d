@@ -412,6 +412,21 @@ OBJECT *object_create_foreign(OBJECT *obj) /**< a pointer to the OBJECT data str
 	return obj;
 }
 
+/** Stream fixup object
+ **/
+void object_stream_fixup(OBJECT *obj, char *classname, char *objname)
+{
+	obj->oclass = class_get_class_from_classname(classname);
+	obj->name = (char*)malloc(strlen(objname)+1);
+	strcpy(obj->name,objname);
+	obj->next = NULL;
+	if ( first_object==NULL )
+		first_object = obj;
+	else
+		last_object->next = obj;
+	last_object = obj;
+}
+
 /** Create multiple objects.
 	
 	@return Same as create_single, but returns the first object created.

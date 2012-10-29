@@ -139,6 +139,7 @@
 				AdditionalIncludeDirectories="..\third_party\cppunit-1.12.0\include;..\third_party\xerces-c-src_2_8_0\src;..\pthreads;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;PAUSE_AT_EXIT;_CRT_SECURE_NO_DEPRECATE"
 				MinimalRebuild="false"
+				ExceptionHandling="1"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
@@ -983,6 +984,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\stream_type.h"
+				>
+			</File>
+			<File
 				RelativePath=".\test.h"
 				>
 			</File>
@@ -1035,15 +1040,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\asm\x86_64\cmpxchg.h"
-				>
-			</File>
-			<File
 				RelativePath=".\asm\cmpxchg.h"
 				>
 			</File>
 			<File
 				RelativePath=".\asm\x86\cmpxchg.h"
+				>
+			</File>
+			<File
+				RelativePath=".\asm\x86_64\cmpxchg.h"
 				>
 			</File>
 			<File
@@ -1070,11 +1075,11 @@
 					>
 				</File>
 				<File
-					RelativePath=".\makefile.win"
+					RelativePath="..\makefile.win"
 					>
 				</File>
 				<File
-					RelativePath="..\makefile.win"
+					RelativePath=".\makefile.win"
 					>
 				</File>
 			</Filter>
@@ -1399,6 +1404,10 @@
 				</File>
 				<File
 					RelativePath=".\autotest\test_simple_schedule.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_stream_out.glm"
 					>
 				</File>
 			</Filter>

@@ -160,7 +160,7 @@ static struct s_varmap {
 	{"init_sequence", PT_enumeration, &global_init_sequence, PA_PUBLIC, "initialization sequence control flag", isc_keys},
 	{"minimum_timestep", PT_int32, &global_minimum_timestep, PA_PUBLIC, "minimum timestep"},
 	{"platform",PT_char8, global_platform, PA_REFERENCE, "operating platform"},
-	{"suppress_repeat_messages",PT_int32, &global_suppress_repeat_messages, PA_PUBLIC, "suppress repeated messages enable flag"},
+	{"suppress_repeat_messages",PT_bool, &global_suppress_repeat_messages, PA_PUBLIC, "suppress repeated messages enable flag"},
 	{"maximum_synctime",PT_int32, &global_maximum_synctime, PA_PUBLIC, "maximum sync time for deltamode"},
 	{"run_realtime",PT_bool, &global_run_realtime, PA_PUBLIC, "realtime enable flag"},
 	{"no_deprecate",PT_bool, &global_suppress_deprecated_messages, PA_PUBLIC, "suppress deprecated usage message enable flag"},
@@ -703,6 +703,15 @@ char *global_getvar(char *name, char *buffer, int size)
 		return buffer; /* wrote buffer, return ptr for printf funcs */
 	}
 	return NULL; /* NULL if insufficient buffer space */
+}
+
+size_t global_getcount(void)
+{
+	size_t count = 0;
+	GLOBALVAR *var = NULL;
+	while ( (var=global_getnext(var))!=NULL )
+		count++;
+	return count;
 }
 
 void global_dump(void)

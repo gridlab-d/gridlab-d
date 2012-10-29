@@ -108,6 +108,8 @@ struct s_class_list {
 		int32 count;
 	} profiler;
 	TECHNOLOGYREADINESSLEVEL trl; // technology readiness level (1-9, 0=unknown)
+	bool has_runtime;	///< flag indicating that a runtime dll, so, or dylib is in use
+	char runtime[1024]; ///< name of file containing runtime dll, so, or dylib
 	struct s_class_list *next;
 }; /* CLASS */
 
@@ -136,6 +138,10 @@ int class_saveall_xml(FILE *fp);
 unsigned int class_get_count(void);
 void class_profiles(void);
 int class_get_xsd(CLASS *oclass, char *buffer, size_t len);
+size_t class_get_runtimecount(void);
+CLASS *class_get_first_runtime(void);
+CLASS *class_get_next_runtime(CLASS *oclass);
+size_t class_get_extendedcount(CLASS *oclass);
 
 CLASS *class_register(MODULE *module,CLASSNAME classname,unsigned int datasize,PASSCONFIG passconfig);
 int class_define_map(CLASS *oclass, ...);

@@ -10,56 +10,31 @@
 #include "class.h"
 #include "object.h"
 
-/* block flags */
-#define SF_MODULES 0x0100
-#define SF_GLOBALS 0x0200
-#define SF_CLASSES 0x0300
-#define SF_OBJECTS 0x0400
-#define SF_ALL     0x0f00
+/* stream flags */
+#define SF_IN		0x0001
+#define SF_OUT		0x0002
+#define SF_STR		0x0004
 
-typedef enum {STREAM_NONE=0, STREAM_READ=1, STREAM_WRITE=2} STREAMDIR;
+typedef size_t (*STREAMCALL)(FILE *fp,unsigned int flags);
+typedef const char *TOKEN;
+typedef unsigned int uint;
+typedef unsigned char uchar;
 
 #ifdef __cplusplus
-class Stream {
-private:
-	const FILE *fp;
-	const int flags;
-	STREAMDIR dir;
-public:
-	Stream(FILE *fp, int flags);
-	~Stream(void);
-public:
-	bool write(); ///< write the current model state to the stream
-	bool read();  ///< read the current model state from the stream
-	void write(void *buffer, int len);
-	void write(char *string);
-	void read(void *buffer, int len);
-	void read(char *string);
-	const char *error(); ///< get the last error reported
-private:
-	void exception(char *fmt, ...); ///< stream exception generator
-	void sync(); ///< stream synchronization functions
-	void sync_objects();
-};
-
-class Object {
-private:
-	const OBJECT *obj;
-public:
-	inline Object(OBJECT *p) : obj(p) {};
-public:
-	void sync(Stream *s);
-};
-
 extern "C" {
 #endif
-int64 stream_out(FILE *fp, int flags);
-int64 stream_in(FILE *fp, int flags);
+
+void stream_register(STREAMCALL);
+size_t stream(FILE *fp, int flags);
 char* stream_context();
-int stream_in_double(FILE*,void*,PROPERTY*);
-int stream_out_double(FILE*,void*,PROPERTY*);
+
+#define stream_type(T) size_t stream_##T(void*,size_t,PROPERTY*p)
+#include "stream_type.h"
+#undef stream_type
+
 #ifdef __cplusplus
 }
+
 #endif
 
 

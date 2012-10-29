@@ -358,6 +358,7 @@ int object_dump(char *buffer, int size, OBJECT *obj);
 int object_save(char *buffer, int size, OBJECT *obj);
 int object_saveall(FILE *fp);
 int object_saveall_xml(FILE *fp);
+void object_stream_fixup(OBJECT *obj, char *classname, char *objname);
 
 char *object_name(OBJECT *obj, char *, int);
 int convert_from_latitude(double,void*,int);

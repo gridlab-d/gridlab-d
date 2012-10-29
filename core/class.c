@@ -306,7 +306,7 @@ PROPERTY *class_add_extended_property(CLASS *oclass, char *name, PROPERTYTYPE pt
 	prop->addr = (void*)(int64)oclass->size;
 	prop->size = 0;
 	prop->delegation = NULL;
-	prop->flags = PT_EXTENDED;
+	prop->flags = PF_EXTENDED;
 	prop->keywords = NULL;
 	prop->description = NULL;
 	prop->unit = pUnit;
@@ -531,80 +531,49 @@ CLASS *class_get_class_from_classname_in_module(char *name, MODULE *mod){
 	return NULL;
 }
 
-#if 0
-PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, char *name, void *addr, DELEGATEDTYPE *delegation)
+size_t class_get_runtimecount(void)
 {
-	char unitspec[1024];
-	PROPERTY *prop = (PROPERTY*)malloc(sizeof(PROPERTY));
-
-	if (prop==NULL)
+	CLASS *oclass;
+	size_t count = 0;
+	for ( oclass=first_class ; oclass!=NULL ; oclass=oclass->next )
 	{
-		output_error("property_malloc(oclass='%s',...): memory allocation failed", oclass->name, name);
-		/*	TROUBLESHOOT
-			This means that the system has run out of memory while trying to define a class.  Trying freeing
-			up some memory by unloading applications or configuring your system so it has more memory.
-		 */
-		errno = ENOMEM;
-		goto Error;
+		if ( oclass->has_runtime )
+			count++;
 	}
-	memset(prop, 0, sizeof(PROPERTY));
-	prop->ptype = proptype;
-	prop->size = 0;
-	prop->width = property_type[proptype].size;
-	prop->access = PA_PUBLIC;
-	prop->oclass = oclass;
-	prop->flags = 0;
-	prop->keywords = NULL;
-	prop->description = NULL;
-	prop->unit = NULL;
-	if (sscanf(name,"%[^[][%[%%A-Za-z0-9*/^]]",prop->name,unitspec)==2)
+	return count;
+}
+CLASS *class_get_first_runtime(void)
+{
+	CLASS *oclass;
+	for ( oclass=first_class ; oclass!=NULL ; oclass=oclass->next )
 	{
-		/* detect when a unit is associated with non-double/complex property */
-		if (prop->ptype!=PT_double && prop->ptype!=PT_complex)
-			output_error("property_malloc(oclass='%s',...): property %s cannot have unit '%s' because it is not a double or complex value",oclass->name, prop->name,unitspec);
-			/*	TROUBLESHOOT
-				Only <b>double</b> and <b>complex</b> properties can have units.
-				Either change the type of the property or remove the unit specification from the property's declaration.
-			 */
-
-		/* verify that the requested unit exists or can be derived */
-		else
-		{
-			TRY {
-				if ((prop->unit = unit_find(unitspec))==NULL)
-					output_error("property_malloc(oclass='%s',...): property %s unit '%s' is not recognized",oclass->name, prop->name,unitspec);
-					/*	TROUBLESHOOT
-						A class is attempting to publish a variable using a unit that is not defined.
-						This is caused by an incorrect unit specification in a variable publication (in C++) or declaration (in GLM).
-						Units are defined in the unit file located in the GridLAB-D <b>etc</b> folder.
-					 */
-			} CATCH (char *msg) {
-					output_error("property_malloc(oclass='%s',...): property %s unit '%s' is not recognized",oclass->name, prop->name,unitspec);
-					/*	TROUBLESHOOT
-						A class is attempting to publish a variable using a unit that is not defined.
-						This is caused by an incorrect unit specification in a variable publication (in C++) or declaration (in GLM).
-						Units are defined in the unit file located in the GridLAB-D <b>etc</b> folder.
-					 */
-			} ENDCATCH;
-		}
+		if ( oclass->has_runtime )
+			return oclass;
 	}
-	prop->addr = addr;
-	prop->delegation = delegation;
-	prop->next = NULL;
-
-	/* check for already existing property by same name */
-	if (oclass!=NULL && class_find_property(oclass,prop->name))
-		output_warning("property_malloc(oclass='%s',...): property name '%s' is defined more than once", oclass->name, prop->name);
-		/*	TROUBLESHOOT
-			A class is attempting to publish a variable more than once.
-			This is caused by an repeated specification for a variable publication (in C++) or declaration (in GLM).
-		 */
-	return prop;
-Error:
-	free(prop);
 	return NULL;
 }
-#endif
+CLASS *class_get_next_runtime(CLASS *oclass)
+{
+	oclass=oclass->next;
+	while ( oclass!=NULL )
+	{
+		if ( oclass->has_runtime )
+			return oclass;
+		oclass=oclass->next;
+	}
+	return NULL;
+}
+/** get count of extended properties */
+size_t class_get_extendedcount(CLASS *oclass)
+{
+	PROPERTY *prop;
+	size_t count = 0;
+	for ( prop=oclass->pmap ; prop!=NULL ; prop=prop->next )
+	{
+		if ( prop->flags&PF_EXTENDED ) count++;
+	}
+	return count;
+}
 
 /** Get the class from the class name.
 	@return a pointer to the class having that \p name,

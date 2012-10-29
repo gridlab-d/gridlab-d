@@ -11,183 +11,38 @@
 #include "class.h"
 #include "object.h"
 
+struct s_stream {
+	STREAMCALL *call;
+	struct s_stream *next;
+} *stream_list = NULL;
+
+/** Register a stream 
+ **/
+void stream_register ( STREAMCALL *call )
+{
+	struct s_stream *stream = (struct s_stream*)malloc(sizeof(struct s_stream));
+	if ( stream==NULL ) throw "stream_register(): malloc failed";
+	stream->call = call;
+	stream->next = stream_list;
+	stream_list = stream;
+}
+
 /* stream name - this should never be changed */
 #define STREAM_NAME "GRIDLABD"
 
 /* stream version - change this when the structure of the stream changes */
-#define STREAM_VERSION 1
+#define STREAM_VERSION 2
 
-/* stream format - binary is normal, undefine BINARY to debug the stream visually */
-bool use_cleartext = true;
+/* stream handle */
+static FILE *fp = NULL;
 
-/* output macros */
-static unsigned char b,t;
-static unsigned short _n;
-
-int _put(void *v, size_t s, FILE *fp, char *fmt=NULL, ...)
-{
-	unsigned short n = 0;
-	if ( use_cleartext )
-	{
-		fprintf(fp,"%lld:", (int64)s);
-		int i;
-		for ( i=0 ; i<s ; i++ )
-			fprintf(fp,"%02x", (unsigned char)((char*)v)[i]);
-		if ( fmt!=NULL )
-		{
-			fprintf(fp," # ");
-			va_list ptr;
-			va_start(ptr,fmt);
-			vfprintf(fp,fmt,ptr);
-			va_end(ptr);
-		}
-		fprintf(fp,"\n");
-	}
-	else
-	{
-		if ( fwrite(&n,sizeof(n),1,fp)!=1 ) return -1;
-		if ( fwrite(&s,sizeof(s),1,fp)!=1 ) return -1;
-		if ( fwrite(&v,sizeof(v),1,fp)!=1 ) return -1;
-	}
-	return sizeof(n)+sizeof(s)+s;
-}
-
-#ifdef TEXT
-
-static char indent[256];
-void indent_more() { if (strlen(indent)<sizeof(indent)/sizeof(indent[0])) strcat(indent," ");}
-void indent_less() { if (indent[0]!='\0') indent[strlen(indent)-1] = '\0';}
-#define PUTD(S,L) {unsigned short _n=(unsigned short)(L);size_t _z=fprintf(fp,"%sD[%d] %s[%s]\n",indent,L,#S,S); if (_z<0) return -1; else count+=_z;}
-#define PUTC(C) {unsigned char _c=(unsigned char)(C);size_t _z=fprintf(fp,"%sC[1] %s[%lld]\n",indent,#C,_c); if (_z<0) return -1; else count+=_z;}
-#define PUTS(S) {unsigned short _s=(unsigned short)(S);size_t _z=fprintf(fp,"%sS[2] %s[%lld]\n",indent,#S,_s); if (_z<0) return -1; else count+=_z;}
-#define PUTL(L) {unsigned long _l=(unsigned long)(L);size_t _z=fprintf(fp,"%sL[4] %s[%lld]\n",indent,#L,_l); if (_z<0) return -1; else count+=_z;}
-#define PUTQ(Q) {unsigned int64 _q=(unsigned int64)(Q);size_t _z=fprintf(fp,"%sQ[8] %s[%lld]\n",indent,#Q,_q); if (_z<0) return -1; else count+=_z;}
-#define PUTP(P) {void *_p=(void*)(P);size_t _z=fprintf(fp,"%sP[%d] %s[%p]\n",indent,sizeof(void*),#P,_p); if (_z<0) return -1; else count+=_z;}
-#define PUTR(R) {double _r=(double)(R);size_t _z=fprintf(fp,"%sR[%d] %s[%g]\n",indent,sizeof(double),#R,_r); if (_z<0) return -1; else count+=_z;}
-#define PUTX(T,X) {unsigned short _n; if ((_n=stream_out_##T(fp,(X)))<0); if (_n<0) return -1; else count+=_n;}
-#define PUTT(B,T) {if (SB_##B==SB_BEGIN || ST_##T==ST_BEGIN) indent_more(); b=SB_##B; t=ST_##T; size_t _z=fprintf(fp,"%sB[1] %s[%d] T[1] %s[%d]\n",indent,#B,SB_##B,#T,ST_##T); if (_z<=0) return -1; else count+=_z; if (SB_##B==SB_END || ST_##T==ST_END) indent_less();}
-
-#else
-
-#ifdef BINARY
-#define COMPRESS(S,L) {unsigned int64 _nn; if ((_nn=stream_compress(fp,(S),(L)))<=0) return -1; else count+=_nn;} 
-#define PUTD(S,L) {unsigned short _n=(L);if(fwrite(&_n,sizeof(_n),1,fp)!=1 || fwrite((S),1,L,fp)!=L) return -1; else count+=_n+2;}
-#else
-#define PUTD(S,L) {size_t _n = _put(S,L,fp,"%s",#S); if ( _n<0 ) return -1; else count+=_n; }
-#endif
-
-#define PUTC(C) {unsigned char _c=(unsigned char)(C);PUTD(&_c,sizeof(_c))}
-#define PUTS(S) {unsigned short _s=(unsigned short)(S);PUTD(&_s,sizeof(_s))}
-#define PUTL(L) {unsigned long _l=(uint32)(L);PUTD(&_l,sizeof(_l))}
-#define PUTQ(Q) {unsigned int64 _q=(unsigned int64)(Q);PUTD(&_q,sizeof(_q))}
-#define PUTP(P) {void *_p=(void*)(P);PUTD(&_p,sizeof(_p))}
-#define PUTR(R) {double _r=(double)(R); PUTD(&_r,sizeof(_r))}
-#define PUTX(T,X) {if ((_n=stream_out_##T(fp,(X)))<0) return -1; else count+=_n;}
-//#define PUTT(B,T) {unsigned short w=0; b=SB_##B; t=ST_##T; if (fwrite(&w,2,1,fp)!=1 || fwrite(&b,1,1,fp)!=1 || fwrite(&t,1,1,fp)!=1) return -1; else count+=4;}
-#define PUTT(B,T) { struct { unsigned char b,t;} BT = {SB_##B,ST_##T}; PUTD(&BT,sizeof(BT)); }
-
-#endif
-
-#define DECOMPRESS(S,L) {unsigned int64 _nn; if ((_nn=stream_decompress(fp,(S),(L)))<=0) return -1; else count+=_nn;}
-//#define GETD(S,L) {unsigned short _n; if(fread(&_n,sizeof(_n),1,fp)!=2 || _n!=(L) || fread((S),_n,1,fp)!=_n) return -1; else count+=_n+2;}
-int _get(void *S, size_t L, FILE*fp)
-{
-	unsigned short _n;
-	size_t _nn;
-	if ( fread(&_n,sizeof(_n),1,fp)!=1 )
-		return -1;
-	if ( _n>L )
-		return -1;
-	if ( _n==0 )
-	{
-		if ( fread(&_nn,sizeof(_nn),1,fp)!=1 )
-			return -1;
-		if ( fread(S,_nn,1,fp)!=1 )
-			return -1;
-	}
-	else
-	{
-		if ( fread(S,_n,1,fp)!=1 )
-			return -1;
-	}
-	return _n+2;
-}
-#define GETD(S,L) {unsigned short _n = _get(S,L,fp); if ( _n<0 ) return -1; else count+=_n;}
-#define GETC(C) GETD(&(C),sizeof(unsigned char))
-#define GETS(S) GETD(&(S),sizeof(unsigned short))
-#define GETL(L) GETD(&(L),sizeof(unsigned long))
-#define GETQ(Q) GETD(&(Q),sizeof(unsigned int64))
-#define GETP(P) GETD(&(P),sizeof(void*))
-#define GETR(R) GETD(&(R),sizeof(double))
-static int _ok=1;
-#define GETBT (_ok?(_ok=0,fread(&_n,sizeof(_n),1,fp)==1 && _n==0 && fread(&b,1,1,fp)==1 && fread(&t,1,1,fp)==1):1)
-#define OK (_ok=1)
-#define ISOK _ok
-#define B(X) (b==SB_##X)
-#define T(X) (t==ST_##X)
-
-/* stream block tokens */
-enum {
-	SB_BEGIN		= 0,
-
-	SB_MODULE		= 1,
-	SB_GLOBAL		= 2,
-	SB_CLASS		= 3,
-	SB_OBJECT		= 4,
-	SB_UNIT			= 5,
-	SB_KEYWORD		= 6,
-	SB_PROPERTY		= 7,
-	SB_SCHEDULE		= 8,
-	SB_TRANSFORM	= 9,
-
-	SB_END			= 255,
-};
-
-/* stream type tokens */
-enum {
-	ST_BEGIN		= 0,
-
-	/* these should match stream block tokens */
-	ST_MODULE		= 1,
-	ST_GLOBAL		= 2,
-	ST_CLASS		= 3,
-	ST_OBJECT		= 4,
-	ST_UNIT			= 5,
-	ST_KEYWORD		= 6,
-	ST_PROPERTY		= 7,
-	ST_SCHEDULE		= 8,
-	ST_TRANSFORM	= 9,
-
-	/* these do not have corresponding stream block tokens */
-	ST_VERSION		=10,
-	ST_ID			=11,
-	ST_NAME			=12,
-	ST_GROUP		=13,
-	ST_PARENT		=14,
-	ST_RANK			=15,
-	ST_CLOCK		=16,
-	ST_VALIDTO		=17,
-	ST_LATITUDE		=18,
-	ST_LONGITUDE	=19,
-	ST_INSVC		=20,
-	ST_OUTSVC		=21,
-	ST_FLAGS		=22,
-	ST_TYPE			=23,
-	ST_SIZE			=24,
-	ST_ACCESS		=25,
-	ST_VALUE		=26,
-	ST_DEFINITION	=27,
-	ST_BIAS			=28,
-	ST_SCALE		=29,
-	ST_DATA			=30,
-
-	ST_END			=255,
-};
+/* stream size */
+static size_t count=0;
 
 char *stream_context()
 {
 	static char buffer[64];
-	sprintf(buffer,"block %d, token %d",b,t);
+	//sprintf(buffer,"block %d, token %d",b,t);
 	return buffer;
 }
 int stream_error(char *format, ...)
@@ -197,7 +52,7 @@ int stream_error(char *format, ...)
 	va_start(ptr,format);
 	vsprintf(buffer,format,ptr);
 	va_end(ptr);
-	output_error("- stream(%d:%d) - %s", b,t,buffer);
+	//output_error("- stream(%d:%d) - %s", b,t,buffer);
 	return -1;
 }
 
@@ -208,7 +63,7 @@ int stream_warning(char *format, ...)
 	va_start(ptr,format);
 	vsprintf(buffer,format,ptr);
 	va_end(ptr);
-	output_warning("- stream(%d:%d) - %s", b,t,buffer);
+	//output_warning("- stream(%d:%d) - %s", b,t,buffer);
 	return -1;
 }
 
@@ -226,7 +81,7 @@ int stream_warning(char *format, ...)
 	[SC/value] initial value
 
  **/
-size_t stream_compress(FILE *fp, char *buf, size_t len)
+size_t stream_compress(char *buf, size_t len)
 {
 	size_t count = 0, original = len;
 	char *p = buf; // current position in input buffer
@@ -354,10 +209,11 @@ size_t stream_compress(FILE *fp, char *buf, size_t len)
 	[SC/value] initial value
 
  **/
-size_t stream_decompress(FILE *fp, char *buf, const size_t len)
+size_t stream_decompress(char *buf, const size_t len)
 {
+	size_t count = 0;
 	char *ptr = buf;
-	size_t count=0, buflen=0;
+	size_t buflen=0;
 	size_t confirm=0;
 	struct {
 		unsigned int runlen:15;
@@ -421,860 +277,266 @@ size_t stream_decompress(FILE *fp, char *buf, const size_t len)
 		return stream_error("stream_decompress(): stream confirmation code mismatched--probable invalid stream");
 }
 
-/*******************************************************
- * MODULES 
- */
-int64 stream_out_module(FILE *fp, MODULE *m)
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+static char stream_name[] = STREAM_NAME;
+static unsigned int stream_version = STREAM_VERSION;
+static unsigned int stream_wordsize = __WORDSIZE__;
+static size_t stream_pos = 0;
+static int flags = 0x00;
+
+/** Stream data
+    @returns Bytes read/written to/from stream
+ **/
+size_t stream(void *ptr, ///< pointer to buffer
+			  size_t len, ///< length of data (maximum when reading)
+			  bool is_str=false, ///< flag variable length
+			  void *match=NULL) ///< optional match when reading (mismatch causes an const char* exception)
 {
-	int64 count=0;
-
-	PUTT(MODULE,BEGIN);
-
-	PUTT(MODULE,NAME);
-	PUTD(m->name,strlen(m->name));
-
-	PUTT(MODULE,VERSION);
-	PUTS(m->major);
-	PUTS(m->minor);
-
-	PUTT(MODULE,END);
-
-	return count;
-}
-int64 stream_in_module(FILE *fp)
-{
-	int64 count=0;
-	MODULE *m;
-
-	while (GETBT && B(MODULE) && T(BEGIN))
+	if ( flags&SF_OUT )
 	{
-		char name[1024]; 
-		memset(name,0,sizeof(name));
-		OK;
-		while (GETBT && B(MODULE) && !T(END))
+#ifdef _DEBUG
+		if ( is_str ) len = strlen((char*)ptr);
+		unsigned int a = fprintf(fp,"%d ",len);
+		if ( a<0 ) throw;
+		unsigned int i;
+		for ( i=0 ; i<len ; i++ )
 		{
-			OK;
-			if T(NAME) 
-			{
-				GETD(name,sizeof(name));
-				m = module_load(name,0,NULL);
-				if (m==NULL)
-					return stream_error("module %s version is not found", name);
-			}
-			else if T(VERSION) 
-			{
-				unsigned short major, minor;
-				GETS(major);
-				GETS(minor);
-				if (m->major!=major || m->minor!=minor)
-					return stream_error("module %s version %d.%02d specified does not match version %d.%02d found", name, major, minor, m->major, m->minor);
-			}
-			else
-				stream_warning("ignoring token %d in module stream", t);
+			int c = ((unsigned char*)ptr)[i];
+			size_t b=1;
+			if ( !is_str || c<32 || c>126 || c=='\\' )
+				b = fprintf(fp,"\\%02x",c);
+			else if ( fputc(c,fp)==EOF ) b=-1;
+			if ( b==-1 ) throw;
+			a+=b;
 		}
-		OK;
-	}
-	return count;
-}
-
-/*******************************************************
- * UNIT
- */
-int64 stream_out_unit(FILE *fp, UNIT *u)
-{
-	int64 count=0;
-	PUTT(UNIT,BEGIN);
-
-	PUTT(UNIT,NAME);
-	PUTD(u->name,strlen(u->name));
-
-	PUTT(UNIT,END);
-	return count;
-}
-
-/*******************************************************
- * KEYWORD
- */
-int64 stream_out_keyword(FILE *fp, KEYWORD *k)
-{
-	int64 count=0;
-	PUTT(KEYWORD,BEGIN);
-
-	PUTT(KEYWORD,NAME);
-	PUTD(k->name,strlen(k->name));
-
-	PUTT(KEYWORD,VALUE);
-	PUTQ(k->value);
-
-	PUTT(KEYWORD,END);
-	return count;
-}
-
-/*******************************************************
- * PROPERTIES 
- */
-int64 stream_out_property(FILE *fp, PROPERTY *p)
-{
-	int64 count=0;
-	KEYWORD *key=NULL;
-	PUTT(PROPERTY,BEGIN);
-
-	if (strlen(p->name)>0)
-	{
-		PUTT(PROPERTY,NAME);
-		PUTD(p->name,strlen(p->name));
-	}
-
-	PUTT(PROPERTY,TYPE);
-	PUTL(p->ptype);
-
-	PUTT(PROPERTY,ACCESS);
-	PUTL(p->access);
-
-	PUTT(PROPERTY,SIZE);
-	PUTL(p->size);
-
-	if (p->unit)
-	{
-		PUTT(PROPERTY,UNIT);
-		PUTX(unit,p->unit);
-	}
-
-	PUTT(BEGIN,KEYWORD);
-	for (key=p->keywords;key!=NULL;key=key->next)
-		PUTX(keyword,key);
-	PUTT(END,KEYWORD);
-
-	PUTT(PROPERTY,END);
-	return count;
-}
-int64 stream_in_property(FILE *fp, PROPERTY *p)
-{
-	return 0;
-}
-
-/*******************************************************
- * GLOBALS 
- */
-int64 stream_out_global(FILE *fp, GLOBALVAR *v)
-{
-	int64 count=0;
-	char value[4096];
-
-	if (global_getvar(v->prop->name,value,sizeof(value))==NULL)
-		return -1;
-
-	PUTT(GLOBAL,BEGIN);
-	
-	PUTT(GLOBAL,NAME);
-	PUTD(v->prop->name,strlen(v->prop->name));
-
-	PUTT(GLOBAL,VALUE);
-	PUTD(value,strlen(value));
-
-	PUTT(GLOBAL,END);
-	return count;
-}
-int64 stream_in_global(FILE *fp)
-{
-	int64 count=0;
-	GLOBALVAR *v;
-
-	while (GETBT && B(GLOBAL) && T(BEGIN))
-	{
-		char name[1024]; 
-		char value[1024]; 
-		memset(name,0,sizeof(name));
-		memset(value,0,sizeof(value));
-		OK;
-		while (GETBT && B(GLOBAL) && !T(END))
-		{
-			OK;
-			if T(NAME) 
-			{
-				GETD(name,sizeof(name));
-				v = global_find(name);
-			}
-			else if T(VALUE) 
-			{
-				GETD(value,sizeof(value));
-				if (v->prop->access==PA_PUBLIC && strcmp(value,"")!=0 && strcmp(value,"\"\"")!=0) /* only public variables are loaded */
-					global_setvar(name,value,NULL);
-			}
-			else
-				stream_warning("ignoring token %d in global stream", t);
-		}
-		OK;
-	}
-	return count;
-}
-
-/*******************************************************
- * CLASS
- */
-int64 stream_out_class(FILE *fp, CLASS *oclass)
-{
-	int64 count=0;
-	PROPERTY *prop=NULL;
-	int extended=FALSE;
-
-	for (prop=oclass->pmap; prop!=NULL; prop=prop->next)
-	{
-		if ((prop->flags&PT_EXTENDED)==PT_EXTENDED)
-		{
-			/* open the class if needed */
-			if (!extended)
-			{
-				PUTT(CLASS,BEGIN);
-				PUTT(CLASS,NAME);
-				PUTD(oclass->name,strlen(oclass->name));
-
-				extended = TRUE;
-			}
-
-			PUTT(CLASS,PROPERTY);
-			PUTD(prop->name,strlen(prop->name));
-
-			PUTT(CLASS,TYPE);
-			PUTL(prop->ptype);
-
-			if (prop->unit)
-			{
-				PUTT(CLASS,UNIT);
-				PUTD(prop->unit->name,strlen(prop->unit->name));
-			}
-
-			/* TODO */
-			//PUTT(CLASS,CODE);
-			//PUTD(code,sizeof(code));
-		}
-	}
-
-	/* close class if extended */
-	if (extended)
-	{
-		PUTT(CLASS,END);
-	}
-	return count;
-}
-int stream_in_class(FILE *fp)
-{
-	int64 count=0;
-	CLASS *c;
-
-	while (GETBT && B(CLASS) && T(BEGIN))
-	{
-		char cname[1024]; 
-		char pname[1024]; 
-		char ptype[1024];
-		char punit[1024];
-		char code[65536];
-		memset(cname,0,sizeof(cname));
-		memset(pname,0,sizeof(pname));
-		memset(ptype,0,sizeof(ptype));
-		memset(punit,0,sizeof(punit));
-		memset(code,0,sizeof(code));
-		OK;
-		while (GETBT && B(CLASS) && !T(END))
-		{
-			OK;
-			if T(NAME) 
-			{
-				GETD(cname,sizeof(cname));
-			}
-			else if T(PROPERTY) 
-			{
-				GETD(pname,sizeof(pname));
-			}
-			else if T(TYPE)
-			{
-				GETD(ptype,sizeof(ptype));
-			}
-			else if T(UNIT)
-			{
-				GETD(punit,sizeof(punit));
-			}
-			// TODO
-			//else if T(CODE)
-			//{
-			//	GETD(code,sizeof(code));
-			//}
-			else
-				stream_warning("ignoring token %d in class stream", t);
-		}
-		OK;
-	}
-	return count;
-}
-
-/*******************************************************
- * OBJECT
- */
-int64 stream_out_object(FILE *fp, OBJECT *obj)
-{
-	int64 count=0;
-	PUTT(OBJECT,BEGIN);
-
-	PUTT(OBJECT,CLASS);
-	PUTD(obj->oclass->name,strlen(obj->oclass->name));
-
-	PUTT(OBJECT,ID);
-	PUTL(obj->id);
-
-	if (obj->name)
-	{
-		PUTT(OBJECT,NAME);
-		PUTD(obj->name,strlen(obj->name));
-	}
-
-	if (strlen(obj->groupid)>0)
-	{
-		PUTT(OBJECT,GROUP);
-		PUTD(obj->groupid,strlen(obj->groupid));
-	}
-
-	if (obj->parent)
-	{
-		PUTT(OBJECT,PARENT);
-		PUTL(obj->parent->id);
-	}
-
-	PUTT(OBJECT,RANK);
-	PUTL(obj->rank);
-
-	PUTT(OBJECT,CLOCK);
-	PUTQ(obj->clock);
-
-	PUTT(OBJECT,VALIDTO);
-	PUTQ(obj->valid_to);
-
-	PUTT(OBJECT,LATITUDE);
-	PUTR(obj->latitude);
-
-	PUTT(OBJECT,LONGITUDE);
-	PUTR(obj->longitude);
-
-	PUTT(OBJECT,INSVC);
-	PUTQ(obj->in_svc);
-
-	PUTT(OBJECT,OUTSVC);
-	PUTQ(obj->out_svc);
-
-	PUTT(OBJECT,FLAGS);
-	PUTL(obj->flags);
-
-	if (obj->oclass->pmap)
-	{
-		PROPERTY *p;
-		for (p=obj->oclass->pmap; p!=NULL; p=p->next)
-		{
-			char value[4096]="";
-			void *addr = (void*)((char*)(obj+1)+(unsigned int64)p->addr);
-			PUTT(OBJECT,PROPERTY);
-			PUTL(p->ptype);
-			PUTP(p->addr);
-			if (p->ptype==PT_object)
-			{
-				OBJECT *ref = *(OBJECT**)addr;
-				uint32 id = ref==NULL ? -1 : ref->id;
-				PUTL(id);
-			}
-			else
-			{
-				PUTD(addr,property_size(p));
-			}
-		}
-	}
-
-	PUTT(OBJECT,END);
-	return count;
-}
-int64 stream_in_object(FILE *fp)
-{
-	int64 count=0;
-	OBJECT *obj = NULL;
-	char name[65536];
-	memset(name,0,sizeof(name));
-
-	while (GETBT && B(OBJECT) && T(BEGIN))
-	{
-		OK;
-		while (GETBT && B(OBJECT) && !T(END))
-		{
-			char buffer[1024];
-			memset(buffer,0,sizeof(buffer));
-			OK;
-			if T(CLASS)
-			{
-				CLASS *oclass;
-				GETD(buffer,sizeof(buffer));
-				oclass = class_get_class_from_classname(buffer);
-				if (oclass==NULL)
-					return stream_error("class '%s' not found", buffer);
-				if (oclass->create==NULL)
-					return stream_error("class '%s' does not implement object creation", buffer);
-				if (oclass->create(&obj,NULL)==0)
-					return stream_error("failed to create object of class '%s'", buffer);
-			}
-			else if T(ID)
-			{
-				uint32 id;
-				GETL(id);
-				if (id!=obj->id)
-					return stream_error("object id %d mismatched--object sequence is not valid", id);
-			}
-			else if T(NAME)
-			{
-				GETD(buffer,sizeof(buffer));
-				object_set_name(obj,buffer);
-			}
-			else if T(GROUP)
-			{
-				GETD(obj->groupid,sizeof(obj->groupid));
-			}
-			else if T(PARENT)
-			{
-				GETL(obj->parent);
-				// stored as id, this gets fixed after all objects are loaded
-			}
-			else if T(RANK)
-			{
-				OBJECTRANK rank;
-				GETL(rank);
-				object_set_rank(obj,rank);
-			}
-			else if T(CLOCK)
-			{
-				GETQ(obj->clock);
-			}
-			else if T(VALIDTO)
-			{
-				GETQ(obj->valid_to);
-			}
-			else if T(LATITUDE)
-			{
-				GETR(obj->latitude);
-			}
-			else if T(LONGITUDE)
-			{
-				GETR(obj->longitude);
-			}
-			else if T(INSVC)
-			{
-				GETQ(obj->in_svc);
-			}
-			else if T(OUTSVC)
-			{
-				GETQ(obj->out_svc);
-			}
-			else if T(FLAGS)
-			{
-				GETL(obj->flags);
-			}
-			else if T(PROPERTY)
-			{
-				unsigned short addr;
-				PROPERTYTYPE ptype;
-				GETL(ptype);
-				GETS(addr);
-				GETD((char*)(obj+1)+addr,property_size_by_type(ptype));
-			}
-			else
-				stream_warning("ignoring token %d in object stream", t);
-		}
-		OK;
-		obj = NULL;
-	}
-	return count;
-}
-
-/*******************************************************
- * SCHEDULE
- */
-int64 stream_out_schedule(FILE *fp, SCHEDULE *sch)
-{
-	int64 count=0;
-
-	PUTT(SCHEDULE,BEGIN);
-
-#ifdef COMPRESS
-	PUTT(SCHEDULE,DATA);
-	COMPRESS((char*)sch,sizeof(SCHEDULE));
+		unsigned int b = fprintf(fp,"\n");
+		if ( b<0 ) throw;
+		a+=b;
+		stream_pos += a;
+		return a;
 #else
-	PUTT(SCHEDULE,NAME);
-	PUTD(sch->name,strlen(sch->name));
-
-	PUTT(SCHEDULE,DEFINITION);
-	PUTD(sch->definition,strlen(sch->definition));
+		if ( is_str ) len = strlen((char*)ptr);
+		size_t a = fwrite((void*)&len,1,sizeof(len),fp);
+		if ( a!=sizeof(len) ) throw;
+		size_t b = fwrite((void*)ptr,1,len,fp);
+		if ( b!=len ) throw;
+		a+=b;
+		stream_pos += a;
+		return a;
 #endif
-
-	PUTT(SCHEDULE,END);
-
-	return count;
-}
-int64 stream_in_schedule(FILE *fp)
-{
-	int64 count=0;
-
-	while (GETBT && B(SCHEDULE) && T(BEGIN))
-	{
-		OK;
-		while (GETBT && B(SCHEDULE) && !T(END))
-		{
-			OK;
-			if T(DATA) 
-			{
-				SCHEDULE *sch = schedule_new();
-				DECOMPRESS((char*)sch,sizeof(SCHEDULE));
-				schedule_add(sch);
-			}
-			// TODO other terms
-			else
-				stream_warning("ignoring token %d in schedule stream", t);
-		}
-		OK;
 	}
-	return count;
+	if ( flags&SF_IN ) 
+	{
+#ifdef _DEBUG
+		unsigned int a;
+		if ( fscanf(fp,"%d",&a)<1 ) throw -1;
+		if ( a>len ) throw;
+		if ( fgetc(fp)!=' ') throw "FMT";
+		memset(ptr,0,len);
+		unsigned int i;
+		for ( i=0; i<a ; i++ )
+		{
+			int b = fgetc(fp);
+			if ( b=='\\' && fscanf(fp,"%02x",&b)<1 ) throw -1;
+			((char*)ptr)[i] = (char)b;
+		}
+		while ( fgetc(fp)!='\n' ) {}
+		if ( match!=NULL && memcmp(ptr,match,a)!=0 ) throw 0;
+		unsigned int b = (log((double)a)+2)+a*3;
+		stream_pos += b;
+		return b;
+#else
+		size_t a, b = fread(&a,1,sizeof(size_t),fp);
+		if ( b<sizeof(size_t) ) throw -1;
+		if ( a>len ) throw;
+		size_t c = fread((void*)ptr,1,a,fp);
+		if ( a!=c ) throw;
+		if ( match!=NULL && memcmp(ptr,match,a)!=0 ) throw 0;
+		b+=c;
+		stream_pos += b;
+		return b;
+#endif
+	}
+	throw;
+}
+void stream(const char *s,size_t max=0) { char t[1024]; strncpy(t,s,sizeof(t)); stream((void*)t,max?max:strlen(s),true,(void*)s); }
+void stream(char *s,size_t max=0) { stream((void*)s,max?max:strlen(s),true); }
+template<class T> void stream(T &v) { stream(&v,sizeof(T)); }
+
+// module stream
+void stream(MODULE *mod)
+{
+	stream("MOD");
+
+	size_t count = module_getcount();
+	stream(count);
+	size_t n;
+	for ( n=0 ; n<count ; n++ )
+	{
+		char name[1024]; if (mod) strcpy(name,mod->name);
+		stream(name,sizeof(name));
+
+		if ( flags&SF_OUT ) mod = mod->next;
+		if ( flags&SF_IN ) module_load(name,0,NULL);
+	}
+	stream("/MOD");
 }
 
-/*******************************************************
- * TRANSFORM
- */
-int64 stream_out_transform(FILE *fp, TRANSFORM *xform)
+// property stream
+void stream(CLASS *oclass, PROPERTY *prop)
 {
-	int64 count=0;
-	OBJECT *obj = NULL;
-	PROPERTY *prop = NULL;
+	stream("RTC");
 
-	PUTT(TRANSFORM,BEGIN);
+	size_t count = class_get_extendedcount(oclass);
+	stream(count);
+	size_t n;
+	for ( n=0 ; n<count ; n++ )
+	{
+		PROPERTYNAME name; if ( prop ) strcpy(name,prop->name);
+		stream(name,sizeof(name));
 
-	PUTT(TRANSFORM,TYPE);
-	PUTL(xform->source_type);
+		PROPERTYTYPE ptype; if ( prop ) ptype = prop->ptype;
+		stream(ptype);
 
-	switch (xform->source_type) {
-	case XS_SCHEDULE:
-		PUTT(TRANSFORM,SCHEDULE);
-		PUTD(((SCHEDULE*)(xform->source_addr))->name,strlen(((SCHEDULE*)(xform->source_addr))->name));
-		break;
-	case XS_DOUBLE:
-	case XS_COMPLEX:
-	case XS_LOADSHAPE:
-	case XS_ENDUSE:
-		if (object_locate_property(xform->source,&obj,&prop))
+		char unit[64]; if ( prop ) strcpy(unit,prop->unit?prop->unit->name:"");
+		stream(unit,sizeof(unit));
+
+		uint32 width; if ( prop ) width = prop->width;
+		stream(width);
+
+		if ( flags&SF_OUT ) prop = prop->next;
+		if ( flags&SF_IN ) class_add_extended_property(oclass,name,ptype,unit);
+	}
+	stream("/RTC");
+}
+
+// class stream
+void stream(CLASS *oclass)
+{
+	stream("RTC");
+
+	size_t count = class_get_runtimecount();
+	stream(count);
+	size_t n;
+	for ( n=0 ; n<count ; n++ )
+	{
+		CLASSNAME name; if ( oclass ) strcpy(name,oclass->name);
+		stream(name,sizeof(name));
+
+		unsigned int size; if ( oclass ) size = oclass->size;
+		stream(size);
+
+		PASSCONFIG passconfig; if ( oclass ) passconfig = oclass->passconfig;
+		stream(passconfig);
+
+		if ( flags&SF_IN ) oclass = class_register(NULL,name,size,passconfig);
+
+		// TODO parent
+
+		stream(oclass,oclass->pmap);
+
+		if ( flags&SF_OUT ) oclass = class_get_next_runtime(oclass);
+		if ( flags&SF_IN ) module_load(oclass->name,0,NULL);
+	}
+	stream("/RTC");
+}
+
+// object stream
+void stream(OBJECT *obj)
+{
+	stream("OBJ");
+	size_t count = object_get_count();
+	stream(count);
+	size_t n;
+	for ( n=0 ; n<count ; n++)
+	{
+		char cname[64]; if ( obj ) strcpy(cname,obj->oclass->name);
+		stream(cname,sizeof(cname));
+
+		unsigned int size; if ( obj) size = sizeof(OBJECT)+obj->oclass->size;
+		stream(&size,sizeof(size));
+
+		char oname[64]; if ( obj ) strcpy(oname,obj->name?obj->name:"");
+		stream(oname,sizeof(oname));
+
+		OBJECT *data=(OBJECT*)malloc(size); if ( obj ) memcpy(data,obj,size);
+		stream(data,size);
+
+		// TODO forecast and namespace
+
+		if ( flags&SF_OUT ) 
 		{
-			PUTT(TRANSFORM,OBJECT);
-			PUTL(obj->id);
-			PUTL((uint32)(prop->addr));
+			obj = obj->next;
+			free(data);
 		}
-		else
-		{
-			stream_error("transform is unable to source for value at %x", xform->source);
-			return -1;
-		}
-		break;
-	default:
-		stream_error("transform uses undefined source type (%d)", xform->source_type);
+		else if ( flags&SF_IN ) 
+			object_stream_fixup(data,cname,oname);
+	}
+	stream("/OBJ");
+}
+
+// globals stream
+void stream(GLOBALVAR *var)
+{
+	stream("VAR");
+
+	size_t count = global_getcount();
+	stream(count);
+	size_t n;
+	for ( n=0 ; n<count ; n++ )
+	{
+		PROPERTYNAME name; if ( var ) strcpy(name,var->prop->name);
+		stream(name,sizeof(name));
+
+		char value[1024]; if ( var ) global_getvar(name,value,sizeof(value));
+		stream(value,sizeof(value));
+
+		if ( flags&SF_OUT ) var = var->next;
+		if ( flags&SF_IN ) global_setvar(name,value);
+	}
+
+	stream("/VAR");
+}
+
+size_t stream(FILE *fileptr,int opts)
+{
+	stream_pos = 0;
+	fp = fileptr;
+	flags = opts;
+	output_debug("starting stream on file %d with options %x", fileno(fp), flags);
+	try {
+
+		// header
+		stream("GLD30");
+
+		// runtime classes
+		try { stream(class_get_first_runtime()); } catch (int) {};
+
+		// modules
+		try { stream(module_get_first()); } catch (int) {}
+
+		// objects
+		try { stream(object_get_first()); } catch (int) {};
+
+		// globals
+		try { stream(global_getnext(NULL)); } catch (int) {};
+
+		output_debug("done processing stream on file %d with options %x", fileno(fp), flags);
+		return stream_pos;
+	}
+	catch (const char *msg)
+	{
+		output_error("stream() unexpected %s at offset %lld", msg, (int64)stream_pos);
 		return -1;
 	}
-	PUTL(xform->target_obj->id);
-	PUTP(xform->target_prop->addr);
-
-	PUTT(TRANSFORM,SCALE);
-	PUTQ(xform->scale);
-
-	PUTT(TRANSFORM,BIAS);
-	PUTQ(xform->bias);
-
-	PUTT(TRANSFORM,END);
-	return count;
-}
-int64 stream_in_transform(FILE *fp)
-{
-	int64 count=0;
-
-	while (GETBT && B(TRANSFORM) && T(BEGIN))
+	catch (...)
 	{
-		TRANSFORM *xform = (TRANSFORM*)malloc(sizeof(TRANSFORM));
-		OK;
-		while (GETBT && B(TRANSFORM) && !T(END))
-		{
-			OK;
-			if T(TYPE) 
-			{
-				GETL(xform->source_type);
-			}
-			else if T(SCHEDULE)
-			{
-				SCHEDULE *sch;
-				char schedule_name[64];
-				memset(schedule_name,0,sizeof(schedule_name));
-				if (xform->source_type!=XS_SCHEDULE)
-					return stream_error("stream_in_transform(): schedule not expected");
-				GETD(schedule_name,sizeof(schedule_name));
-				sch = schedule_find_byname(schedule_name);
-				if (sch==NULL)
-					return stream_error("stream_in_transform(): schedule '%s' not found", schedule_name);
-				else
-					xform->source_addr = sch;
-
-				// target
-				GETL(xform->target_obj);
-				// id will get fixed up later
-				GETL(xform->target_prop);
-				// addr will get fixed up later
-			}
-			else if T(OBJECT)
-			{
-				uint32 object_id;
-				uint32 prop_addr;
-				if (xform->source_type!=XS_DOUBLE && xform->source_type!=XS_COMPLEX && xform->source_type!=XS_LOADSHAPE && xform->source_type!=XS_ENDUSE)
-					return stream_error("stream_in_transform(): property not expected");
-
-				// source
-				GETL(object_id);
-				GETL(prop_addr);
-				xform->source = (double*)((object_find_by_id(object_id)+1)+prop_addr);
-				if (xform->source==NULL)
-					return stream_error("stream_in_transform(): source object id=%d not found", object_id);
-
-				// target
-				GETL(object_id);
-				xform->target_obj = object_find_by_id(object_id);
-				if (xform->target_obj == NULL)
-					return stream_error("stream_in_transform(): target object id=%d not found", object_id);
-				GETL(prop_addr);
-				for (xform->target_prop = class_get_first_property(xform->target_obj->oclass); xform->target_prop!=NULL; xform->target_prop = class_get_next_property(xform->target_prop))
-				{
-					if (xform->target_prop->addr == (void*)prop_addr)
-						break;
-				}
-				if (xform->target_prop==NULL)
-					return stream_error("stream_in_transform(): target property at addr %d not found", prop_addr);
-			}
-			else if T(SCALE)
-			{
-				GETQ(xform->scale);
-			}
-			else if T(BIAS)
-			{
-				GETQ(xform->bias);
-			}
-			else
-				stream_warning("ignoring token %d in object stream", t);
-		}
-		OK;
-	}
-	return count;
-}
-
-
-/*******************************************************
- * OUTPUT STREAM
- */
-extern "C" int64 stream_out(FILE *fp, int flags)
-{
-	int64 count = 0;
-	MODULE *mod=NULL;
-	GLOBALVAR *gvar=NULL;
-	CLASS *oclass=NULL;
-	OBJECT *obj=NULL;
-	SCHEDULE *sch=NULL;
-	TRANSFORM *xform=NULL;
-
-	/* stream header */
-	PUTD(STREAM_NAME,strlen(STREAM_NAME));
-
-	/* stream level 1 */
-	PUTS(STREAM_VERSION);
-
-	/* higher stream level data goes here... */
-
-	/* schedules */
-	while ((sch=schedule_getnext(sch))!=NULL)
-		PUTX(schedule,sch);
-
-	/* modules (not optional) */
-	for (mod=module_get_first(); (flags&SF_MODULES) && mod!=NULL; mod=mod->next)
-		PUTX(module,mod);
-
-	/* globals */
-	while ((flags&SF_GLOBALS) && (gvar=global_getnext(gvar))!=NULL)
-		PUTX(global,gvar);
-
-	/* classes */
-	for (oclass=class_get_first_class(); (flags&SF_CLASSES) && oclass!=NULL; oclass=oclass->next)
-		PUTX(class,oclass);
-
-	/* objects */
-	for (obj=object_get_first(); (flags&SF_OBJECTS) && obj!=NULL; obj=obj->next)
-		PUTX(object,obj);
-
-	/* transforms */
-	while ((xform=transform_getnext(xform))!=NULL)
-		PUTX(transform,xform);
-
-	PUTT(END,END);
-	output_verbose("stream_out() sent %"FMT_INT64"d bytes", count);
-	return count;
-}
-
-extern "C" int64 stream_in(FILE *fp, int flags)
-{
-	int64 count = 0;
-	OBJECT *obj;
-	TRANSFORM *xform=NULL;
-	
-	{	char stream_name[] = STREAM_NAME;
-		GETD(stream_name,sizeof(stream_name));
-		if (strcmp(stream_name,STREAM_NAME)!=0)
-			return stream_error("stream_in(): stream name '%s' mismatch", stream_name);
-	}
-
-	{	unsigned short stream_version = STREAM_VERSION;
-		GETS(stream_version);
-		if (stream_version!=STREAM_VERSION)
-			return stream_error("stream_in(): stream version %d mismatch", stream_version);
-	}
-
-	while (!feof(fp) && !ferror(fp))
-	{
-		int c=0;
-		if (GETBT && B(END) && T(END))
-			goto Done;
-		c += stream_in_object(fp);
-		c += stream_in_global(fp);
-		c += stream_in_schedule(fp);
-		c += stream_in_module(fp);
-		c += stream_in_class(fp);
-		c += stream_in_transform(fp);
-		if (c==0)
-			return stream_error("stream_in(): stopping on unreadable item");
-		else
-			count += c;
-	}
-
-	if (!feof(fp) || !ISOK)
-		return stream_error("stream_in(): unhandled block/token at position %d", count);
-	else if (ferror(fp))
-		return stream_error("stream_in(): %s", strerror(errno));
-
-Done:
-	// fixup object parents and object properties
-	for (obj=object_get_first(); obj!=NULL; obj=obj->next)
-	{
-		PROPERTY *p;
-		obj->parent = object_find_by_id((OBJECTNUM)obj->parent);
-		for (p=class_get_first_property(obj->oclass); p!=NULL; p=class_get_next_property(p))
-		{
-			if (p->ptype==PT_object)
-			{
-				OBJECT **ref = (OBJECT**)((char*)(obj+1)+(unsigned short)p->addr);
-				*ref = object_find_by_id((uint32)(*ref));
-			}
-		}
-	}
-
-	// fixup transform targets
-	while ((xform=transform_getnext(xform))!=NULL)
-	{
-		PROPERTY *p;
-		xform->target_obj = object_find_by_id((OBJECTNUM)xform->target_obj);
-		for (p=class_get_first_property(xform->target_obj->oclass); p!=NULL; p=class_get_next_property(p))
-		{
-			if (p->addr == xform->target_prop)
-			{
-				xform->target_prop = p;
-				xform->target = (double*)((char*)(xform->target_obj+1)+(uint32)p->addr);
-			}
-		}
-	}
-
-	output_verbose("stream_in() received %"FMT_INT64"d bytes", count);
-	return count;
-}
-
-
-/*******************************************************
- * OUTPUT PROPERTIES
- */
-
-int stream_out_double(FILE *fp,void *ptr,PROPERTY *prop)
-{
-	int count=0;
-	PUTQ(*(double*)ptr);
-	return count;
-}
-int stream_in_double(FILE *fp,void *ptr,PROPERTY *prop)
-{
-	int count=0;
-	GETQ(*(double*)ptr);
-	return count;
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Stream class implementation
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-
-Stream::Stream(FILE *file, int opts)
-: fp(file), flags(opts)
-{
-	dir = STREAM_NONE;
-}
-
-Stream::~Stream(void)
-{
-}
-
-bool Stream::write(void)
-{
-	try {
-		dir = STREAM_WRITE;
-		sync();
-		return true;
-	}
-	catch (const char *msg)
-	{
-		output_error("stream write error: %s", msg);
-		return false;
+		output_error("stream() failed as offset %lld", (int64)stream_pos);
+		return -1;
 	}
 }
 
-bool Stream::read(void)
-{
-	try {
-		dir = STREAM_READ;
-		sync();
-		return true;
-	}
-	catch (const char *msg)
-	{
-		output_error("stream read error: %s", msg);
-		return false;
-	}
-}
-
-void Stream::sync()
-{
-	sync_objects();
-	return;
-}
-
-void Stream::sync_objects()
-{
-	if ( dir==STREAM_WRITE )
-	{
-		OBJECT *ptr;
-		for ( ptr=object_get_first(); ptr!=NULL ; ptr=object_get_next(ptr) )
-		{
-			Object obj(ptr);
-			obj.sync(this);
-		}
-	}
-	else if ( dir==STREAM_READ )
-	{
-	}
-}
-
-void Object::sync(Stream *s)
-{
-}
+#define stream_type(T) extern "C" size_t stream_##T(void *ptr, size_t len, PROPERTY *prop) { return stream((T*)ptr,len); }
+#include "stream_type.h"
+#undef stream_type

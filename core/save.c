@@ -56,7 +56,7 @@ int saveall(char *filename)
 	/* internal streaming used */
 	if (global_streaming_io_enabled)
 	{
-		int res = stream_out(fp,SF_ALL)>0 ? SUCCESS : FAILED;
+		int res = stream(fp,SF_OUT)>0 ? SUCCESS : FAILED;
 		if (res==FAILED)
 			output_error("stream context is %s",stream_context());
 		return res;

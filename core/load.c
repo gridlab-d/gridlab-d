@@ -465,7 +465,7 @@ static STATUS exec(char *format,...)
 	va_start(ptr,format);
 	vsprintf(cmd,format,ptr);
 	va_end(ptr);
-	output_debug("Running '%s'", cmd);
+	output_debug("Running '%s' in '%s'", cmd, getcwd(NULL,0));
 	return system(cmd)==0?SUCCESS:FAILED;
 }
 
@@ -670,7 +670,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 		if (strlen(tmp)>0 && tmp[strlen(tmp)-1]!='/' && tmp[strlen(tmp)-1]!='\\')
 			strcat(tmp,"/");
 		sprintf(cfile,"%s%s.cpp", (use_msvc||global_gdb||global_gdb_window)?"":tmp,oclass->name);
-		sprintf(ofile,"%s%s.o", (use_msvc||global_gdb||global_gdb_window)?"":tmp,oclass->name);
+		sprintf(ofile,"%s%s.%s", (use_msvc||global_gdb||global_gdb_window)?"":tmp,oclass->name, use_msvc?"obj":"o");
 		sprintf(file,"%s%s", (use_msvc||global_gdb||global_gdb_window)?"":tmp, oclass->name);
 		sprintf(afile, "%s" DLEXT , oclass->name);
 
@@ -678,7 +678,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 		fp = fopen(afile,"r");
 		if (fp!=NULL && FSTAT(fileno(fp),&stat)==0)
 		{
-			if (global_gdb || global_gdb_window )
+			if (global_debug_mode || use_msvc || global_gdb || global_gdb_window )
 			{
 				output_verbose("%s is being used for debugging", afile);
 			}
@@ -740,6 +740,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 					"{\n"
 					"\tcallback=fntable;\n"
 					"\tmyclass=(CLASS*)((*(callback->class_getname))(\"%s\"));\n"
+					"\tif (!myclass) return NULL;\n"
 					"\tif (!setup_class(myclass)) return NULL;\n"
 					"\treturn myclass;"
 					"}\n",oclass->name)<0
@@ -825,37 +826,35 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 				if (functions&FN_COMMIT) sprintf(exports+strlen(exports),"/EXPORT:commit_%s ",oclass->name);
 				if (functions&FN_FINALIZE) sprintf(exports+strlen(exports),"/EXPORT:finalize_%s ",oclass->name);
 
-				// /Od /I "..\core" /I "..\third_party\cppunit-1.12.0\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_USRDLL" /D "_CRT_SECURE_NO_DEPRECATE" 
-				// /D "_TESTING" /D "_WINDLL" /D "_MBCS" /Gm /EHsc /RTC1 /MDd /Fo"Win32\Debug\powerflow\\" 
-				// /Fd"Win32\Debug\powerflow\vc80.pdb" /W3 /nologo /c /Wp64 /ZI /TP /wd4996 /errorReport:prompt
-				output_message("exec cd");
-				exec("cd");
-				output_message("exec dir /b");
-				exec("dir /b");
-				output_message("cl /Od /DWIN32 /D_DEBUG /D_WINDOWS /D_USRDLL /D_CRT_SECURE_NO_DEPRECATE /D_WINDLL /D_MBCS /Gm /EHsc /RTC1 "
-					"/MDd /nologo /W3 /Zi /TP /wd4996 /errorReport:prompt /c %s  %s%s%s /Fo %s"
-					"", cfile, strlen(global_include)>0?"/I \"":"", global_include, strlen(global_include)>0?"\"":"", file);
-				
 				if (exec("cl /Od /DWIN32 /D_DEBUG /D_WINDOWS /D_USRDLL /D_CRT_SECURE_NO_DEPRECATE /D_WINDLL /D_MBCS /Gm /EHsc /RTC1 "
-					"/MDd /nologo /W3 /Zi /TP /wd4996 /errorReport:prompt /c %s  %s%s%s /Fo %s"
-					"", cfile, strlen(global_include)>0?"/I \"":"", global_include, strlen(global_include)>0?"\"":"", file)==FAILED)
+#if __WORDSIZE__==64
+					"/Wp64 "
+#endif
+					"/MDd /nologo /W3 /Zi /TP /wd4996 /errorReport:none /c %s  %s%s%s /Fo%s"
+					"", cfile, strlen(global_include)>0?"/I \"":"", global_include, strlen(global_include)>0?"\"":"", ofile)==FAILED)
 				{
-					output_message("cl /c %s", cfile);
-					exec("cl /c %s", cfile);
+					output_error("MSVC compile failed for '%s'", cfile);
 					return FAILED;
 				}
 
-				// /OUT:"Win32\Debug\powerflow.dll" /INCREMENTAL /NOLOGO /LIBPATH:"Win32\Debug" /DLL /MANIFEST 
-				// /MANIFESTFILE:"Win32\Debug\powerflow\powerflow.dll.intermediate.manifest" /DEBUG 
-				// /PDB:"c:\Projects\GridLAB-D\trunk\source\VS2005\Win32\Debug\powerflow.pdb" /SUBSYSTEM:WINDOWS 
-				// /MACHINE:X86 /ERRORREPORT:PROMPT cppunitd.lib  kernel32.lib user32.lib gdi32.lib winspool.lib 
-				// comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib
-				if (exec("link %s /OUT:%s /NOLOGO /LIBPATH:. /DLL /MANIFEST /MANIFESTFILE:%s.manifest "
-					"/DEBUG /SUBSYSTEM:WINDOWS /MACHINE:X86 /ERRORREPORT:PROMPT "
+				if (exec("link %s /OUT:%s /NOLOGO /DLL /MANIFEST /MANIFESTFILE:%s.manifest "
+					"/SUBSYSTEM:WINDOWS "
+#ifdef _DEBUG
+					"/DEBUG "
+#endif
+#if __WORDSIZE__==64
+					"/MACHINE:X64 "
+#else
+					"/MACHINE:X86 "
+#endif
+					"/ERRORREPORT:NONE "
 					"%s "
 					"kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib "
 					"uuid.lib odbc32.lib odbccp32.lib", file,afile,oclass->name,exports)==FAILED)
+				{
+					output_error("MSVC link failed for '%s'", cfile);
 					return FAILED;
+				}
 			}
 
 		}
@@ -888,7 +887,11 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 		else
 			output_debug("class %s running in process %d", oclass->name, getpid());
 
+		oclass->has_runtime = true;
+		strcpy(oclass->runtime,afile);
 	}
+	else
+		oclass->has_runtime = false;
 	return SUCCESS;
 }
 
@@ -6515,10 +6518,10 @@ STATUS loadall(char *file){
 	}
 
 	/* load the appropriate type of file */
-	if (global_streaming_io_enabled)
+	if (global_streaming_io_enabled || (ext!=NULL && isdigit(ext[1])) )
 	{
 		FILE *fp = fopen(file,"rb");
-		if (fp==NULL || stream_in(fp,SF_ALL)<0)
+		if (fp==NULL || stream(fp,SF_IN)<0)
 		{
 			output_error("%s: unable to read stream", file);
 			return FAILED;

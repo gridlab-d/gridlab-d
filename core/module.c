@@ -216,8 +216,10 @@ static CALLBACKS callbacks = {
 };
 CALLBACKS *module_callbacks(void) { return &callbacks; }
 
-MODULE *first_module = NULL;
-MODULE *last_module = NULL;
+static MODULE *first_module = NULL;
+static MODULE *last_module = NULL;
+static size_t module_count = 0;
+size_t module_getcount(void) { return module_count; }
 
 /** Load a runtime module
 	@return a pointer to the MODULE structure
@@ -423,6 +425,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	mod->kmldump = (int(*)(FILE*,OBJECT*))DLSYM(hLib,"kmldump");
 	mod->subload = (MODULE *(*)(char *, MODULE **, CLASS **, int, char **))DLSYM(hLib, "subload");
 	mod->test = (void(*)(int,char*[]))DLSYM(hLib,"test");
+	mod->stream = (size_t(*)(FILE*,int))DLSYM(hLib,"stream");
 	mod->globals = NULL;
 	mod->term = (void(*)(void))DLSYM(hLib,"term");
 	strcpy(mod->name,file);
@@ -474,10 +477,17 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 
 	/* attach to list of known modules */
 	if (first_module==NULL)
+	{
+		mod->id = 0;
 		first_module = mod;
+	}
 	else
+	{
 		last_module->next = mod;
+		mod->id = last_module->id + 1;
+	}
 	last_module = mod;
+	module_count++;
 	return last_module;
 }
 
@@ -808,6 +818,7 @@ void module_libinfo(const char *module_name)
 		if (mod->export_file!=NULL) output_raw("export_file ");
 		if (mod->check!=NULL) output_raw("check ");
 		if (mod->kmldump!=NULL) output_raw("kmldump ");
+		if (mod->stream!=NULL) output_raw("stream ");
 		output_raw("\nGlobals........... ");
 		for (p=mod->globals; p!=NULL; p=p->next)
 			output_raw("%s ", p->name);
