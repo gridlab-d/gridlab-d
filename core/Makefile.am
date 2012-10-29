@@ -63,7 +63,7 @@ gridlabd_bin_SOURCES = \
 	setup.cpp setup.h \
 	schedule.c schedule.h \
 	server.c server.h \
-	stream.c stream.h \
+	stream.cpp stream.h stream_type.h \
 	test.c test.h \
 	test_callbacks.h \
 	test_framework.cpp test_framework.h \
