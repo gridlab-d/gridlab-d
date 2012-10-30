@@ -580,7 +580,6 @@ static int init_by_deferral_retry(OBJECT **def_array, int def_ct){
 		// initialize each object in def_array
 		for(i = 0; i < def_ct; ++i){
 			obj = def_array[i];
-			wlock(&obj->lock);
 			obj_rv = object_init(obj);
 			switch(obj_rv){
 				case 0:
@@ -589,8 +588,10 @@ static int init_by_deferral_retry(OBJECT **def_array, int def_ct){
 					output_error("init_by_deferral_retry(): object %s initialization failed", object_name(obj, b, 63));
 					break;
 				case 1:
+					wlock(&obj->lock);
 					obj->flags |= OF_INIT;
 					obj->flags -= OF_DEFERRED;
+					wunlock(&obj->lock);
 					break;
 				case 2:
 					next_arr[ct] = obj;
@@ -598,7 +599,6 @@ static int init_by_deferral_retry(OBJECT **def_array, int def_ct){
 					break;
 				// no default
 			}
-			wunlock(&obj->lock);
 			if(rv == FAILED){
 				free(next_arr);
 				return rv;
@@ -636,7 +636,6 @@ static int init_by_deferral(){
 	def_array = (OBJECT **)malloc(sizeof(OBJECT *) * object_get_count());
 	obj = object_get_first();
 	while(obj != 0){
-		wlock(&obj->lock);
 		obj_rv = object_init(obj);
 		switch (obj_rv){
 			case 0:
@@ -645,16 +644,19 @@ static int init_by_deferral(){
 				output_error("init_by_deferral(): object %s initialization failed", object_name(obj, b, 63));
 				break;
 			case 1:
+				wlock(&obj->lock);
 				obj->flags |= OF_INIT;
+				wunlock(&obj->lock);
 				break;
 			case 2:
 				def_array[def_ct] = obj;
 				++def_ct;
+				wlock(&obj->lock);
 				obj->flags |= OF_DEFERRED;
+				wunlock(&obj->lock);
 				break;
 			// no default
 		}
-		wunlock(&obj->lock);
 
 		if(rv == FAILED){
 			free(def_array);

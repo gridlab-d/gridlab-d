@@ -192,7 +192,7 @@ TIMESTAMP pw_recorder::commit(TIMESTAMP t1, TIMESTAMP t2){
 		char256 time_output;
 		gl_localtime(t1, &dt);
 		gl_strtime(&dt, time_output, sizeof(time_output));
-		fprintf(outfile, "%s,%s\n",time_output, line_output);
+		fprintf(outfile, "%s,%s\n",(const char *)time_output, (const char*)line_output);
 		fflush(outfile);
 	}
 	return TS_NEVER;
@@ -435,7 +435,7 @@ int pw_recorder::write_header(){
 	char namebuf[64];
 	time_t now = time(NULL);
 
-	fprintf(outfile, "# file...... %s\n", outfile_name);
+	fprintf(outfile, "# file...... %s\n", (const char*)outfile_name);
 	fprintf(outfile, "# date...... %s", asctime(localtime(&now))); // adds its own newline
 #ifdef WIN32
 	fprintf(outfile, "# user...... %s\n", getenv("USERNAME"));
@@ -447,9 +447,9 @@ int pw_recorder::write_header(){
 	fprintf(outfile, "# model..... %s\n", gl_name(model, namebuf, 63));
 	fprintf(outfile, "# interval.. %d\n", interval);
 	fprintf(outfile, "# limit..... %d\n", limit);
-	fprintf(outfile, "# key_str... %s\n", key_strings);
-	fprintf(outfile, "# key_val... %s\n", key_values);
-	fprintf(outfile, "# timestamp,%s\n", properties);
+	fprintf(outfile, "# key_str... %s\n", (const char*)key_strings);
+	fprintf(outfile, "# key_val... %s\n", (const char*)key_values);
+	fprintf(outfile, "# timestamp,%s\n", (const char*)properties);
 	return 1;
 }
 

@@ -100,8 +100,8 @@ pw_load::pw_load(MODULE *module)
 			PT_double, "bus_nom_volt[V]", get_bus_nom_volt_offset(),
 			PT_double, "bus_volt_angle[deg]", get_bus_volt_angle_offset(),
 //			PT_complex, "next_load_power", get_next_load_power_offset(),
-			PT_complex, "pw_load_mw", get_pw_load_mw_offset(),
-			PT_double, "pw_load_mva", get_pw_load_mva_offset(),
+			PT_double, "pw_load_mw", get_pw_load_mw_offset(),
+			PT_complex, "pw_load_mva", get_pw_load_mva_offset(),
 			NULL)<1){
 				char msg[256];
 				sprintf(msg, "unable to publish properties in %s",__FILE__);
@@ -430,7 +430,7 @@ int pw_load::get_powerworld_voltage(){
 		}
 		SafeArrayUnaccessData(results.parray);
 		load_voltage_mag = load_voltage_d * 1000.0;
-		pw_load_mw = load_mva;
+		pw_load_mw = load_mw;
 		pw_load_mva = complex(load_mw, load_mvr, I);
 
 //		gl_output("get_voltage(): after 2 mw = %f, mva = (%f, %f)", this->pw_load_mw, this->pw_load_mva.Re(), this->pw_load_mva.Im());
