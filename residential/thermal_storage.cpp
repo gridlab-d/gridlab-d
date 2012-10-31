@@ -193,7 +193,7 @@ int thermal_storage::init(OBJECT *parent)
 	} else if (state_of_charge >= 0 && stored_capacity >= 0)
 	{
 		stored_capacity = (state_of_charge / 100) * total_capacity;
-		gl_warning("can not define both total capacity and SOC for thermal storage, SOC being assumed");
+		gl_warning("can not define both stored capacity and SOC for thermal storage, SOC being assumed");
 	}
 
 	if (recharge_power == 0)			recharge_power = (3.360 * discharge_rate) / (5 * 12000); //kW
