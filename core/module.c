@@ -76,6 +76,7 @@
 #endif
 #include "schedule.h"
 #include "exec.h"
+#include "stream.h"
 
 #include "console.h"
 
@@ -488,6 +489,11 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	}
 	last_module = mod;
 	module_count++;
+
+	/* register the module stream, if any */
+	if ( mod->stream!=NULL )
+		stream_register(mod->stream);
+
 	return last_module;
 }
 

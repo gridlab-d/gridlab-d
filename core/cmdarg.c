@@ -897,7 +897,7 @@ static int xsl(int argc, char *argv[])
 		return CMDERR;
 	}
 }
-static int stream(int argc, char *argv[])
+static int _stream(int argc, char *argv[])
 {
 	global_streaming_io_enabled = !global_streaming_io_enabled;
 	return 0;
@@ -1156,7 +1156,7 @@ static CMDARG main[] = {
 
 	{NULL,NULL,NULL,NULL, "File and I/O Formatting"},
 	{"kml",			NULL,	kml,			"[=<filename>]", "Output to KML (Google Earth) file of model (only supported by some modules)" },
-	{"stream",		NULL,	stream,			NULL, "Toggles streaming I/O" },
+	{"stream",		NULL,	_stream,		NULL, "Toggles streaming I/O" },
 	{"sanitize",	NULL,	sanitize,		"<options> <indexfile> <outputfile>", "Output a sanitized version of the GLM model"},
 	{"xmlencoding",	NULL,	xmlencoding,	"8|16|32", "Set the XML encoding system" },
 	{"xmlstrict",	NULL,	xmlstrict,		NULL, "Toggle strict XML formatting (default is enabled)" },

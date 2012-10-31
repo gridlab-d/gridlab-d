@@ -11,20 +11,31 @@
 #include "class.h"
 #include "object.h"
 
-struct s_stream {
-	STREAMCALL *call;
-	struct s_stream *next;
-} *stream_list = NULL;
+extern "C" {
+	struct s_stream {
+		STREAMCALL call;
+		struct s_stream *next;
+	} *stream_list = NULL;
 
-/** Register a stream 
- **/
-void stream_register ( STREAMCALL *call )
-{
-	struct s_stream *stream = (struct s_stream*)malloc(sizeof(struct s_stream));
-	if ( stream==NULL ) throw "stream_register(): malloc failed";
-	stream->call = call;
-	stream->next = stream_list;
-	stream_list = stream;
+	/** Register a stream 
+	 **/
+	void stream_register ( STREAMCALL call )
+	{
+		struct s_stream *stream = (struct s_stream*)malloc(sizeof(struct s_stream));
+		if ( stream==NULL ) throw "stream_register(): malloc failed";
+		stream->call = call;
+		stream->next = stream_list;
+		stream_list = stream;
+	}
+	/** Stream function used by modules
+	 **/
+	size_t stream_callback(void *ptr, size_t len, int is_str, void *match)
+	{
+		try {
+			return stream(ptr,len,is_str,match);
+		}
+		catch (...) { return -1; }
+	}
 }
 
 /* stream name - this should never be changed */
@@ -290,8 +301,8 @@ static int flags = 0x00;
  **/
 size_t stream(void *ptr, ///< pointer to buffer
 			  size_t len, ///< length of data (maximum when reading)
-			  bool is_str=false, ///< flag variable length
-			  void *match=NULL) ///< optional match when reading (mismatch causes an const char* exception)
+			  bool is_str, ///< flag variable length
+			  void *match) ///< optional match when reading (mismatch causes an const char* exception)
 {
 	if ( flags&SF_OUT )
 	{
@@ -522,6 +533,12 @@ size_t stream(FILE *fileptr,int opts)
 		// globals
 		try { stream(global_getnext(NULL)); } catch (int) {};
 
+		// module data
+		struct s_stream *s;
+		for ( s=stream_list ; s!=NULL ; s=s->next )
+		{	
+			s->call((int)flags,(STREAMCALLBACK)stream_callback);
+		}
 		output_debug("done processing stream on file %d with options %x", fileno(fp), flags);
 		return stream_pos;
 	}

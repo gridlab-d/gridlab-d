@@ -10,7 +10,7 @@
 #include "object.h"
 #include "gui.h"
 #include "transform.h"
-
+#include "stream.h"
 #include "test_callbacks.h"
 
 struct s_module_list {
@@ -31,7 +31,7 @@ struct s_module_list {
 	MODULE *(*subload)(char *, MODULE **, CLASS **, int, char **);
 	PROPERTY *globals;
 	void (*term)(void);
-	size_t (*stream)(FILE *fp, int flags);
+	STREAMCALLBACK stream;
 	struct s_module_list *next;
 }; /* MODULE */
 

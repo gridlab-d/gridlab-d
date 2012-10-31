@@ -90,6 +90,8 @@
 #include "object.h"
 #include "find.h"
 #include "random.h"
+#define STREAM_MODULE
+#include "stream.h"
 
 #ifdef DLMAIN
 #define EXTERN
