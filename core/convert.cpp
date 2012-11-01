@@ -865,25 +865,31 @@ int convert_from_boolean(char *buffer, int size, void *data, PROPERTY *prop){
 	@return 1 on success, 0 on failure, -1 if conversion was incomplete
  **/
 /* booleans are handled internally as 1-byte uchar's. -MH */
-int convert_to_boolean(const char *buffer, void *data, PROPERTY *prop){
+int convert_to_boolean(const char *buffer, void *data, PROPERTY *prop)
+{
 	char str[32];
-	int i = 0;
-	if(buffer == NULL || data == NULL || prop == NULL)
+	if ( sscanf(buffer,"%31[A-Za-z]",str)==1 )
+	{
+		if ( stricmp(str, "TRUE")==0 )
+		{
+			*(bool *)data = 1;
+			return 1;
+		}
+		if ( stricmp(str, "FALSE")==0 )
+		{
+			*(bool *)data = 0;
+			return 1;
+		}
 		return 0;
-	memcpy(str, buffer, 31);
-	for(i = 0; i < 31; ++i){
-		if(str[i] == 0)
-			break;
-		str[i] = toupper(str[i]);
 	}
-	if(0 == strcmp(str, "TRUE") || atoi(str)==1){
-		*(bool *)data = 1;
+
+	int v;
+	if ( sscanf(buffer,"%d",&v)==1 )
+	{
+		*(bool*)data = (v!=0);
 		return 1;
 	}
-	if(0 == strcmp(str, "FALSE") || strcmp(str,"0")==0 ){
-		*(bool *)data = 0;
-		return 1;
-	}
+
 	return 0;
 }
 
