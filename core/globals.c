@@ -637,6 +637,52 @@ char *global_true(char *buffer, int size)
 	}
 }
 
+char *global_seq(char *buffer, int size, char *name)
+{
+	char seq[64], opt[64]="";
+	if ( sscanf(name,"%63[^:]:%63s",seq,opt)==2 )
+	{
+		if ( strcmp(opt,"INIT")==0 )
+		{
+			if ( global_find(seq)!=NULL )
+			{
+				output_warning("global_seq(char *name='%s'): sequence is already initialized", seq);
+			}
+			else
+			{
+				int32 *addr = (int32*)malloc(sizeof(int32));
+				GLOBALVAR *var = global_create(seq,PT_int32,addr,PT_ACCESS,PA_PUBLIC,NULL);
+				*addr = 0;
+				return global_getvar(seq,buffer,size);
+			}
+		}
+		else if ( strcmp(opt,"INC")==0 )
+		{
+			GLOBALVAR *var = global_find(seq);
+			int32 *addr;
+			if ( var==NULL || var->prop->ptype!=PT_int32 )
+			{
+				output_error("global_seq(char *name='%s'): sequence name is missing or not an int32 variable",name);
+				return NULL;
+			}
+			addr = (int32*)var->prop->addr;
+			(*addr)++;
+			output_debug("updating global sequence '%s' to value '%d'", seq, *addr); 
+			return global_getvar(seq,buffer,size);
+		}
+		else
+		{
+			output_error("global_seq(..., char *name='%s'): sequence spec '%s' is invalid",name,opt);
+			return NULL;
+		}
+	}
+	else
+	{
+		output_error("global_seq(..., char *name='%s'): sequence spec is invalid",name);
+		return NULL;
+	}
+}
+
 int global_isdefined(char *name)
 {
 	int i;
@@ -694,6 +740,11 @@ char *global_getvar(char *name, char *buffer, int size)
 		if ( strcmp(name,map[i].name)==0 )
 			return map[i].call(buffer,size);
 	}
+
+	/* sequences */
+	if ( strncmp(name,"SEQ_",4)==0 && strchr(name,':')!=NULL )
+		return global_seq(buffer,size,name);
+
 	var = global_find(name);
 	if(var == NULL)
 		return NULL;
