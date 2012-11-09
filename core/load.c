@@ -2441,7 +2441,7 @@ static int expanded_value(char *text, char *result, int size, char *delims)
 				char path[1024], name[1024], ext[1024];
 				filename_parts(filename,path,name,ext);
 
-				if (sscanf(text+n+1,"%255[a-zA-Z0-9_]",varname)==0)
+				if (sscanf(text+n+1,"%255[a-zA-Z0-9_:]",varname)==0)
 				{
 					output_error_raw("%s(%d): expanded string variable syntax error", filename, linenum);
 					return 0;
@@ -2491,7 +2491,15 @@ static int expanded_value(char *text, char *result, int size, char *delims)
 					else
 						strcpy(value,"");
 				}
-				else if (!object_get_value_by_name(current_object,varname,value,sizeof(value)))
+				else if ( object_get_value_by_name(current_object,varname,value,sizeof(value)))
+				{
+					/* value is ok */
+				}
+				else if ( global_getvar(varname,value,sizeof(value)) )
+				{
+					/* value is ok */
+				}
+				else
 				{
 					output_error_raw("%s(%d): variable '%s' not found in this context", filename, linenum, varname);
 					return 0;

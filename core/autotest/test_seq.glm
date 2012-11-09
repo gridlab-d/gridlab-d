@@ -1,0 +1,6 @@
+module residential;
+global int32 SEQ_A 0;
+object house:..10 {
+	name `House_{SEQ_A:INC}`;
+}
+#print ${SEQ_A} houses created.
