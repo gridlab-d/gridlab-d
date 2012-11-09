@@ -6233,7 +6233,10 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			return FALSE;
 		}
 		else
+		{
+			strcpy(line,"\n");
 			return TRUE;
+		}
 	}
 	else if ( strncmp(line,MACRO "option",7)==0 )
 	{
