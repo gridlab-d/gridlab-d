@@ -1,30 +1,79 @@
 #set suppress_repeat_messages=false
 
 // use default parameter
+#print Testing var1...
 #print var1 ${var1:-ok}
 #define var1=ok
 #print var1 ${var1:-failed}
 
 // assign default parameter
+#print Testing var2...
 #print var2 ${var2:=ok}
 #print var2 ${var2:-failed}
 
 // use alternate parameter
+#print Testing var3...
 #define var3=failed
 #print var3 ${var3:+ok}
 
 // substring
+#print Testing var4...
 #define var4=failedok
 #print var4 ${var4:6}
+#print Testing var5...
 #define var5=failedokfailed
 #print var5 ${var5:6:2}
 
 // substitution
+#print Testing var6...
 #define var6=okfailed
 #print var6 ${var6/failed/}
+#print Testing var7...
 #define var7=failedok
 #print var7 ${var7/failed/}
+#print Testing var8...
 #define var8=ofailedk
 #print var8 ${var8/failed/}
+#print Testing var9...
 #define var9=failedofailedkfailed
 #print var9 ${var9//failed/}
+
+// operations
+#print Initializing int1...
+#print int1=${int1=1}
+#print Preincrementing int1... 
+#print int1=${++int1}
+#print Predecrementing int1... 
+#print int1=${--int1}
+#print Postincrementing int1=${int1++}...
+#print int1=${int1}
+#print Postdecrementing int1=${int1--}...
+#print int1=${int1}
+
+#print Boolean int1==0: ${int1==0?failed:ok}
+#print Boolean int1==1: ${int1==1?ok:failed}
+#print Boolean int1==2: ${int1==2?failed:ok}
+
+#print Boolean int1!=0: ${int1!=0?ok:failed}
+#print Boolean int1!=1: ${int1!=1?failed:ok}
+#print Boolean int1!=2: ${int1!=2?ok:failed}
+
+#print Boolean int1<>0: ${int1<>0?ok:failed}
+#print Boolean int1<>1: ${int1<>1?failed:ok}
+#print Boolean int1<>2: ${int1<>2?ok:failed}
+
+#print Boolean int1<0: ${int1<0?failed:ok}
+#print Boolean int1<1: ${int1<1?failed:ok}
+#print Boolean int1<2: ${int1<2?ok:failed}
+
+#print Boolean int1>0: ${int1>0?ok:failed}
+#print Boolean int1>1: ${int1>1?failed:ok}
+#print Boolean int1>2: ${int1>2?failed:ok}
+
+#print Boolean int1<=0: ${int1<=0?failed:ok}
+#print Boolean int1<=1: ${int1<=1?ok:failed}
+#print Boolean int1<=2: ${int1<=2?ok:failed}
+
+#print Boolean int1>=0: ${int1>=0?ok:failed}
+#print Boolean int1>=1: ${int1>=1?ok:failed}
+#print Boolean int1>=2: ${int1>=2?failed:ok}
