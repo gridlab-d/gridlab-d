@@ -768,7 +768,7 @@ int parameter_expansion(char *buffer, int size, char *spec)
 			start = ptr - temp;
 			strncpy(buffer,temp,size);
 			strncpy(buffer+start,string,size-start);
-			strcpy(buffer+start+strlen(string),temp+start+strlen(pattern),size-start-strlen(string));
+			strncpy(buffer+start+strlen(string),temp+start+strlen(pattern),size-start-strlen(string));
 		}
 		return 1;
 	}
@@ -789,7 +789,7 @@ int parameter_expansion(char *buffer, int size, char *spec)
 			start = ptr - temp;
 			strncpy(buffer,temp,size);
 			strncpy(buffer+start,string,size-start);
-			strcpy(buffer+start+strlen(string),temp+start+strlen(pattern),size-start-strlen(string));
+			strncpy(buffer+start+strlen(string),temp+start+strlen(pattern),size-start-strlen(string));
 			strncpy(temp,buffer,sizeof(temp));
 		}
 		return 1;
