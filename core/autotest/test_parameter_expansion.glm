@@ -1,0 +1,30 @@
+#set suppress_repeat_messages=false
+
+// use default parameter
+#print var1 ${var1:-ok}
+#define var1=ok
+#print var1 ${var1:-failed}
+
+// assign default parameter
+#print var2 ${var2:=ok}
+#print var2 ${var2:-failed}
+
+// use alternate parameter
+#define var3=failed
+#print var3 ${var3:+ok}
+
+// substring
+#define var4=failedok
+#print var4 ${var4:6}
+#define var5=failedokfailed
+#print var5 ${var5:6:2}
+
+// substitution
+#define var6=okfailed
+#print var6 ${var6/failed/}
+#define var7=failedok
+#print var7 ${var7/failed/}
+#define var8=ofailedk
+#print var8 ${var8/failed/}
+#define var9=failedofailedkfailed
+#print var9 ${var9//failed/}

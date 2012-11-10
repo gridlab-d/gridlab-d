@@ -1,0 +1,15 @@
+module tape;
+module residential;
+
+object house {
+	load {
+		total 7;
+		demand 12;
+		energy 24;
+	};
+	object recorder {
+		property load.power;
+		interval 0;
+		file test_struct.csv;
+	};
+}

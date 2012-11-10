@@ -260,7 +260,7 @@ STATUS global_init(void)
 
 	for (i = 0; i < sizeof(map) / sizeof(map[0]); i++){
 		struct s_varmap *p = &(map[i]);
-		GLOBALVAR *var = global_create(p->name, p->type, p->addr, PT_ACCESS, p->access, p->description?PT_DESCRIPTION:NULL, p->description, NULL);
+		GLOBALVAR *var = global_create(p->name, p->type, p->addr, PT_ACCESS, p->access, p->description?PT_DESCRIPTION:0, p->description, NULL);
 		if(var == NULL){
 			output_error("global_init(): global variable '%s' registration failed", p->name);
 			/* TROUBLESHOOT
@@ -647,6 +647,7 @@ char *global_seq(char *buffer, int size, char *name)
 			if ( global_find(seq)!=NULL )
 			{
 				output_warning("global_seq(char *name='%s'): sequence is already initialized", seq);
+				return NULL;
 			}
 			else
 			{
@@ -685,15 +686,114 @@ char *global_seq(char *buffer, int size, char *name)
 
 int global_isdefined(char *name)
 {
-	int i;
-	if ( getenv(name)!=NULL ) return 1;
-	for ( i=0 ; i<sizeof(map)/sizeof(map[0]) ; i++ )
-	{
-		if ( strcmp(name,map[i].name)==0 )
-			return 1;
+	return global_find(name)!=NULL;
+}
+
+int parameter_expansion(char *buffer, int size, char *spec)
+{
+	char name[64], value[64], pattern[64], string[64]="";
+	int offset, length;
+	int32 number;
+
+	/* ${name:-value} */
+	if ( sscanf(spec,"%63[^:]:-%63s",name,value)==2 )
+	{	
+		if ( global_getvar(name,buffer,size)==NULL )
+			strncpy(buffer,value,size);
+		return 1;
 	}
+
+	/* ${name:=value} */
+	if ( sscanf(spec,"%63[^:]:=%63s",name,value)==2 )
+	{
+		if ( !global_isdefined(name) )
+		{
+			int old = global_strictnames;
+			global_strictnames = 0;
+			global_setvar(name,value);
+			global_strictnames = old;
+		}
+		global_getvar(name,buffer,size);
+		return 1;
+	}
+
+	/* ${name:+value} */
+	if ( sscanf(spec,"%63[^:]:+%63s",name,value)==2 )
+	{
+		if ( !global_isdefined(name) )
+			strcpy(buffer,"");
+		else
+			strncpy(buffer,value,size);
+		return 1;
+	}
+
+	/* ${name:offset:length} */
+	if ( sscanf(spec,"%63[^:]:%d:%d",name,&offset,&length)==3 )
+	{
+		char temp[1024];
+		if ( global_getvar(name,temp,sizeof(temp)-1) )
+		{
+			strncpy(buffer,temp+offset,size);
+			buffer[length]='\0';
+			return 1;
+		}
+		else
+			return 0;
+	}
+
+	/* ${name:offset} */
+	if ( sscanf(spec,"%63[^:]:%d",name,&offset)==2 )
+	{
+		char temp[1024];
+		if ( global_getvar(name,temp,sizeof(temp)-1) )
+		{
+			strncpy(buffer,temp+offset,size);
+			return 1;
+		}
+		else
+			return 0;
+	}
+
+	/* ${name/offset/length} */
+	if ( sscanf(spec,"%63[^/]/%63[^/]/%63s",name,pattern,string)>=2 )
+	{
+		char temp[1024], *ptr;
+		size_t start;
+		if ( global_getvar(name,temp,sizeof(temp)-1)==NULL )
+			return 0;
+		ptr = strstr(temp,pattern);
+		if ( ptr!=NULL )
+		{
+			start = ptr - temp;
+			strncpy(buffer,temp,size);
+			strncpy(buffer+start,string,size-start);
+			strcpy(buffer+start+strlen(string),temp+start+strlen(pattern),size-start-strlen(string));
+		}
+		return 1;
+	}
+
+	/* ${name//offset/length} */
+	if ( sscanf(spec,"%63[^/]//%63[^/]/%63s",name,pattern,string)==2 )
+	{
+		char temp[1024], *ptr=NULL;
+		size_t start;
+		if ( global_getvar(name,temp,sizeof(temp)-1)==NULL )
+			return 0;
+		while ( (ptr=strstr(ptr?(ptr+strlen(pattern)):temp,pattern))!=NULL )
+		{
+			start = ptr - temp;
+			strncpy(buffer,temp,size);
+			strncpy(buffer+start,string,size-start);
+			strcpy(buffer+start+strlen(string),temp+start+strlen(pattern),size-start-strlen(string));
+		}
+		return 1;
+	}
+
+	/* TODO special operations for int32 */
+
 	return 0;
 }
+
 /** Get the value of a global variable in a safer fashion
 	@return a \e char * pointer to the buffer holding the buffer where we wrote the data,
 		\p NULL if insufficient buffer space or if the \p name was not found.
@@ -744,6 +844,10 @@ char *global_getvar(char *name, char *buffer, int size)
 	/* sequences */
 	if ( strncmp(name,"SEQ_",4)==0 && strchr(name,':')!=NULL )
 		return global_seq(buffer,size,name);
+
+	/* expansions */
+	if ( parameter_expansion(buffer,size,name) )
+		return buffer;
 
 	var = global_find(name);
 	if(var == NULL)
