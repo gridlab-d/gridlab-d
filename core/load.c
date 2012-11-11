@@ -6002,7 +6002,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 				int oldstrict = global_strictnames;
 				global_strictnames = TRUE;
 				result = global_setvar(value);
-				global_strictnames = oldstrict;
+				global_strictnames = strncmp(value,"strictnames=",12)==0 ? global_strictnames : oldstrict;
 				if (result==FAILED)
 					output_error_raw("%s(%d): %sset term not found",filename,linenum,MACRO);
 				strcpy(line,"\n");

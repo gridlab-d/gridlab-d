@@ -707,12 +707,7 @@ int parameter_expansion(char *buffer, int size, char *spec)
 	if ( sscanf(spec,"%63[^:]:=%63s",name,value)==2 )
 	{
 		if ( !global_isdefined(name) )
-		{
-			int old = global_strictnames;
-			global_strictnames = 0;
 			global_setvar(name,value);
-			global_strictnames = old;
-		}
 		global_getvar(name,buffer,size);
 		return 1;
 	}
@@ -795,23 +790,6 @@ int parameter_expansion(char *buffer, int size, char *spec)
 		return 1;
 	}
 
-	/* ${name=number} */
-	if ( sscanf(spec,"%63[^!<>=]=%d",name,&number)==2 )
-	{
-		GLOBALVAR *var = global_find(name);
-		int32 *addr;
-		if ( var==NULL )
-		{
-				addr = (int32*)malloc(sizeof(int32));
-				var = global_create(name,PT_int32,addr,PT_ACCESS,PA_PUBLIC,NULL);
-		}
-		else
-			addr = var->prop->addr;
-		*addr = number;
-		sprintf(buffer,"%d",number);
-		return 1;
-	}
-
 	/* ${++name} */
 	if ( sscanf(spec,"++%63s",name)==1 )
 	{
@@ -837,7 +815,7 @@ int parameter_expansion(char *buffer, int size, char *spec)
 	}
 
 	/* ${++name} */
-	if ( sscanf(spec,"%63[^+-]%63[+-]",name,op)==2 )
+	if ( sscanf(spec,"%63[^-+]%63[-+]",name,op)==2 )
 	{
 		GLOBALVAR *var = global_find(name);
 		int32 *addr;
@@ -845,27 +823,72 @@ int parameter_expansion(char *buffer, int size, char *spec)
 			return 0;
 		addr = var->prop->addr;
 		sprintf(buffer,"%d",(*addr));
-		if ( strcmp(op,"++")==0 ) (*addr)++;
-		else if ( strcmp(op,"--")==0 ) (*addr)--;
-		else return 0;
-		return 1;
+		if ( strcmp(op,"++")==0 ) { (*addr)++; return 1; }
+		else if ( strcmp(op,"--")==0 ) { (*addr)--; return 1; }
 	}
 
 	/* ${name op value} */
-	if ( sscanf(spec,"%63[^!<>=]%63[!<>=]%d?%1023[^:]:%1023s",name,op,&number,yes,no)>=3 )
+	if ( sscanf(spec,"%63[^!<>=&|~]%63[!<>=&|~]%d?%1023[^:]:%1023s",name,op,&number,yes,no)>=3 )
+	{
+		GLOBALVAR *var = global_find(name);
+		if ( var!=NULL && var->prop->ptype==PT_int32 )
+		{
+			int32 *addr = var->prop->addr;
+			if ( strcmp(op,"==")==0 ) { strcpy(buffer,(*addr==number)?yes:no); return 1; }
+			else if ( strcmp(op,"!=")==0 || strcmp(op,"<>")==0 ) { strcpy(buffer,(*addr!=number)?yes:no); return 1; }
+			else if ( strcmp(op,"<=")==0 ) { strcpy(buffer,(*addr<=number)?yes:no); return 1; }
+			else if ( strcmp(op,"<")==0 ) { strcpy(buffer,(*addr<number)?yes:no); return 1; }
+			else if ( strcmp(op,">=")==0 ) { strcpy(buffer,(*addr>=number)?yes:no); return 1; }
+			else if ( strcmp(op,">")==0 ) { strcpy(buffer,(*addr>number)?yes:no); return 1; }
+			else if ( strcmp(op,"&")==0 ) { strcpy(buffer,((*addr)&number)?yes:no); return 1; }
+			else if ( strcmp(op,"|~")==0 ) { strcpy(buffer,((*addr)|~number)?yes:no); return 1; }
+		}
+	}
+
+	/* ${name op= value} */
+	if ( sscanf(spec,"%63[^-+/*%&^|~=]%63[-+/*%&^|~=]%d",name,op,&number)==3 )
+	{
+		GLOBALVAR *var = global_find(name);
+		if ( var!=NULL && var->prop->ptype==PT_int32 )
+		{
+			int32 *addr = var->prop->addr;
+			sprintf(buffer,"%d",(*addr));
+			if ( strcmp(op,"+=")==0 ) { sprintf(buffer,"%d",(*addr)+=number); return 1; }
+			if ( strcmp(op,"-=")==0 ) { sprintf(buffer,"%d",(*addr)-=number); return 1; }
+			if ( strcmp(op,"*=")==0 ) { sprintf(buffer,"%d",(*addr)*=number); return 1; }
+			if ( strcmp(op,"/=")==0 ) { sprintf(buffer,"%d",(*addr)/=number); return 1; }
+			if ( strcmp(op,"%=")==0 ) { sprintf(buffer,"%d",(*addr)%=number); return 1; }
+			if ( strcmp(op,"&=")==0 ) { sprintf(buffer,"%d",(*addr)&=number); return 1; }
+			if ( strcmp(op,"|=")==0 ) { sprintf(buffer,"%d",(*addr)|=number); return 1; }
+			if ( strcmp(op,"^=")==0 ) { sprintf(buffer,"%d",(*addr)^=number); return 1; }
+			if ( strcmp(op,"&=~")==0 ) { sprintf(buffer,"%d",(*addr)&=~number); return 1; }
+			if ( strcmp(op,"|=~")==0 ) { sprintf(buffer,"%d",(*addr)|=~number); return 1; }
+			if ( strcmp(op,"^=~")==0 ) { sprintf(buffer,"%d",(*addr)^=~number); return 1; }
+		}
+	}
+
+	/* ${name=number} */
+	if ( sscanf(spec,"%63[A-Za-z0-9_:.]=%d",name,&number)==2 )
 	{
 		GLOBALVAR *var = global_find(name);
 		int32 *addr;
-		if ( var==NULL || var->prop->ptype!=PT_int32 )
-			return 0;
-		addr = var->prop->addr;
-		if ( strcmp(op,"==")==0 ) strcpy(buffer,(*addr==number)?yes:no);
-		else if ( strcmp(op,"!=")==0 || strcmp(op,"<>")==0 ) strcpy(buffer,(*addr!=number)?yes:no);
-		else if ( strcmp(op,"<=")==0 ) strcpy(buffer,(*addr<=number)?yes:no);
-		else if ( strcmp(op,"<")==0 ) strcpy(buffer,(*addr<number)?yes:no);
-		else if ( strcmp(op,">=")==0 ) strcpy(buffer,(*addr>=number)?yes:no);
-		else if ( strcmp(op,">")==0 ) strcpy(buffer,(*addr>number)?yes:no);
-		else return 0;
+		if ( var==NULL )
+		{
+				addr = (int32*)malloc(sizeof(int32));
+				var = global_create(name,PT_int32,addr,PT_ACCESS,PA_PUBLIC,NULL);
+		}
+		else
+			addr = var->prop->addr;
+		*addr = number;
+		sprintf(buffer,"%d",number);
+		return 1;
+	}
+
+	/* ${name=string} */
+	if ( sscanf(spec,"%63[A-Za-z0-9_:.]=%s",name,string)==2 )
+	{
+		global_setvar(name,string);
+		strncpy(buffer,string,size);
 		return 1;
 	}
 

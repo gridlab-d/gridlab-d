@@ -1,4 +1,5 @@
 #set suppress_repeat_messages=false
+#set strictnames=0
 
 // use default parameter
 #print Testing var1...
@@ -77,3 +78,7 @@
 #print Boolean int1>=0: ${int1>=0?ok:failed}
 #print Boolean int1>=1: ${int1>=1?ok:failed}
 #print Boolean int1>=2: ${int1>=2?failed:ok}
+
+#print Bitwise int1|=2=${int1|=2}: ${int1&3?ok:failed}
+#print Bitwise int1&=5=${int1&=5}: ${int1|~4?ok:failed}
+#print Bitwise int1^=2=${int1^=2}: ${int1==3?ok:failed}
