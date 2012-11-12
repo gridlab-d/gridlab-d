@@ -1,6 +1,11 @@
 module tape;
 module residential;
 
+clock {
+	starttime '2000-01-01 00:00:00';
+	stoptime '2000-01-02 00:00:00';
+}
+
 object house {
 	load {
 		total 7;
