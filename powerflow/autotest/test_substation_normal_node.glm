@@ -1,3 +1,5 @@
+// test of substation object as a normal node
+
 #set minimum_timestep=1;
 
 module tape;

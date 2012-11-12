@@ -1,3 +1,5 @@
+// test of substation object driven by player file to positive sequence voltage, verifies the distribution voltages are calculated correctly
+
 #set minimum_timestep=1;
 
 module tape;
