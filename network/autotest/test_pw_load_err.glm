@@ -1,3 +1,5 @@
+// tests for an error when pw_load is given an invalid field
+
 #set relax_naming_rules=1
 #set minimum_timestep=1;
 #set init_sequence=DEFERRED

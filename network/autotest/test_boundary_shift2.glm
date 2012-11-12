@@ -1,4 +1,5 @@
-// tests PW interface with a small feeder in GLD, nodes 1 and 2 moved to the PW model
+// tests PW interface with a small feeder in GLD, nodes 1 and 2 moved to the PW model, verifies solution is the same
+// as when all of the GLD nodes are kept inside of GLD
 
 #set relax_naming_rules=1
 #set minimum_timestep=1;

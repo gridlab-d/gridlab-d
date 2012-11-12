@@ -1,3 +1,5 @@
+// test of the PW objects alone. Checks if interface to PW opens correctly and grabs information from PW correctly
+
 #set relax_naming_rules=1
 #set init_sequence=DEFERRED
 #set suppress_repeat_messages=FALSE

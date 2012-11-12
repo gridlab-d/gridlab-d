@@ -1,4 +1,4 @@
-// replace 3 PW loads with 37 Node feeders with 40 houses each
+// tests PW interface when multiple loads in PW model are replaced with feeders in GLD
 
 #set relax_naming_rules=1
 #set minimum_timestep=1;

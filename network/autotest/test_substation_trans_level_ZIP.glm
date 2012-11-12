@@ -1,4 +1,4 @@
-// specify time varying transmission level loads in substation object
+// test with time varying transmission level loads in substation object, verifies PW is recieveing the correct load information
 
 #set relax_naming_rules=1
 #set minimum_timestep=1;

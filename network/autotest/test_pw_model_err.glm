@@ -1,3 +1,5 @@
+// tests for an error when an invalid model name is given to pw_model
+
 #set relax_naming_rules=1
 #set minimum_timestep=1;
 #set init_sequence=DEFERRED
@@ -33,7 +35,7 @@ clock{
 
 object pw_model {
 	name MyPwModel;
-	model_name `${workdir}\TS10Bus.PWB`    // not a PW model
+	model_name `${workdir}\TS10Bus.PWB`;    // not a PW model
 }
 
 object pw_load {
