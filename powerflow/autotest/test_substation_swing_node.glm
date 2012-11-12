@@ -1,0 +1,72 @@
+#set minimum_timestep=1;
+
+module tape;
+module assert;
+module powerflow {
+	solver_method FBS;
+}	
+
+clock{
+	timezone PST+8PDT;
+	starttime '2001-07-25 01:00:00';
+	stoptime '2001-07-25 01:05:00';
+}
+
+object substation {
+	bustype SWING;
+	phases "ABCN";
+	nominal_voltage 2400;
+	base_power 100 MVA;
+	reference_phase PHASE_A;
+		object load {
+			phases "ABCN";
+			constant_impedance_A 1000+2000j;
+			constant_impedance_B 1000+1000j;
+			constant_impedance_C 1200+800j;
+			nominal_voltage 2400;
+		};
+		object complex_assert {
+			target distribution_voltage_A;
+			within .01;
+			value 2400+0d;
+		};
+		object complex_assert {
+			target distribution_voltage_B;
+			within .01;
+			value 2400-120d;
+		};
+		object complex_assert {
+			target distribution_voltage_C;
+			within .01;
+			value 2400+120d;
+		};
+}	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
