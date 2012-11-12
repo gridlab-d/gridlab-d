@@ -140,7 +140,7 @@ int transform_add_external(	OBJECT *target_obj,		/* pointer to the target object
 }
 int transform_add_linear(	TRANSFORMSOURCE stype,	/* specifies the type of source */
 							double *source,		/* pointer to the source value */
-							double *target,		/* pointer to the target value */
+							void *target,		/* pointer to the target value */
 							double scale,		/* transform scalar */
 							double bias,			/* transform offset */
 							OBJECT *obj,			/* object containing target value */
@@ -169,6 +169,28 @@ int transform_add_linear(	TRANSFORMSOURCE stype,	/* specifies the type of source
 	return 1;
 }
 
+void cast_from_double(PROPERTYTYPE ptype, void *addr, double value)
+{
+	switch ( ptype ) {
+	case PT_void: break;
+	case PT_double: *(double*)addr = value; break;
+	case PT_complex: ((complex*)addr)->r = value; ((complex*)addr)->i = 0; break;
+	case PT_bool: *(int32*)addr = (value!=0); 
+	case PT_int16: *(int16*)addr = (int16)value; break;
+	case PT_int32: *(int32*)addr = (int32)value; break;
+	case PT_int64: *(int64*)addr = (int64)value; break;
+	case PT_enumeration: *(enumeration*)addr = (enumeration)value; break;
+	case PT_set: *(set*)addr = (set)value; break;
+	case PT_object: break;
+	case PT_timestamp: *(int64*)addr = (int64)value; break;
+	case PT_float: *(float*)addr = (float)value; break;
+	case PT_loadshape: ((loadshape*)addr)->load = value; break;
+	case PT_enduse: ((enduse*)addr)->total.r = value; break;
+	default: break;
+	}
+}
+
+
 /** apply the transform, source is optional and xform.source is used when source is NULL 
     @return timestamp for next update, TS_NEVER for none, TS_ZERO for error
 **/
@@ -181,7 +203,7 @@ int64 apply_transform(TIMESTAMP t1, TRANSFORM *xform, double *source)
 #ifdef _DEBUG
 		output_debug("running linear transform for %s:%s", object_name(xform->target_obj,buffer,sizeof(buffer)), xform->target_prop->name);
 #endif
-		*(xform->target) = (source?(*source):(*(xform->source))) * xform->scale + xform->bias;
+		cast_from_double(xform->target_prop->ptype, xform->target, (source?(*source):(*(xform->source))) * xform->scale + xform->bias);
 		t2 = TS_NEVER;
 		break;
 	case XT_EXTERNAL:

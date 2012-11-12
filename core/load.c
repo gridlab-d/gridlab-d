@@ -3982,9 +3982,11 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 #endif
 			} /* end unit_convert_ex else */
 		}
-		else if (prop!=NULL && prop->ptype==PT_double && TERM(linear_transform(HERE, &xstype, &source,&scale,&bias,obj)))
+		else if (prop!=NULL 
+			&& ( ( prop->ptype>=PT_double && prop->ptype<=PT_int64 ) || ( prop->ptype>=PT_bool && prop->ptype<=PT_timestamp ) || ( prop->ptype>=PT_float && prop->ptype<=PT_enduse ) )
+			&& TERM(linear_transform(HERE, &xstype, &source,&scale,&bias,obj)))
 		{
-			double *target = (double*)((char*)(obj+1) + (int64)prop->addr);
+			void *target = (void*)((char*)(obj+1) + (int64)prop->addr);
 
 			/* add the transform list */
 			if (!transform_add_linear(xstype,source,target,scale,bias,obj,prop,(xstype == XS_SCHEDULE ? source : 0)))

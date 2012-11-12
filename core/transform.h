@@ -64,7 +64,7 @@ extern "C" {
 #endif
 
 int transform_add_external(struct s_object_list *target_obj, struct s_property_map *target_prop, char *function, struct s_object_list *source_obj, struct s_property_map *source_prop);
-int transform_add_linear(TRANSFORMSOURCE stype, double *source, double *target, double scale, double bias, struct s_object_list *obj, struct s_property_map *prop, SCHEDULE *s);
+int transform_add_linear(TRANSFORMSOURCE stype, void *source, double *target, double scale, double bias, struct s_object_list *obj, struct s_property_map *prop, SCHEDULE *s);
 TRANSFORM *transform_getnext(TRANSFORM *xform);
 TIMESTAMP transform_syncall(TIMESTAMP t, TRANSFORMSOURCE restrict);
 
