@@ -69,7 +69,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="xerces-c_2D.lib user32.lib pthreadVC2.lib ws2_32.lib"
+				AdditionalDependencies="user32.lib pthreadVC2.lib ws2_32.lib"
 				OutputFile="$(OutDir)\gridlabd.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="$(OutDir);..\pthreads"
@@ -159,7 +159,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="xerces-c_2D.lib pthreadVC2.lib ws2_32.lib"
+				AdditionalDependencies="pthreadVC2.lib ws2_32.lib"
 				OutputFile="$(OutDir)\$(SolutionName).exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="$(OutDir);..\pthreads"
@@ -242,7 +242,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="xerces-c_2.lib pthreadVC2.lib ws2_32.lib"
+				AdditionalDependencies="pthreadVC2.lib ws2_32.lib"
 				OutputFile="$(OutDir)\$(SolutionName).exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="$(OutDir);..\pthreads"
@@ -331,7 +331,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="xerces-c_2.lib pthreadVC2.lib ws2_32.lib"
+				AdditionalDependencies="pthreadVC2.lib ws2_32.lib"
 				OutputFile="$(OutDir)\$(SolutionName).exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;..\pthreads"
@@ -1040,15 +1040,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\asm\cmpxchg.h"
-				>
-			</File>
-			<File
 				RelativePath=".\asm\x86\cmpxchg.h"
 				>
 			</File>
 			<File
 				RelativePath=".\asm\x86_64\cmpxchg.h"
+				>
+			</File>
+			<File
+				RelativePath=".\asm\cmpxchg.h"
 				>
 			</File>
 			<File
@@ -1075,11 +1075,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\makefile.win"
+					RelativePath=".\makefile.win"
 					>
 				</File>
 				<File
-					RelativePath=".\makefile.win"
+					RelativePath="..\makefile.win"
 					>
 				</File>
 			</Filter>

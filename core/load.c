@@ -6547,8 +6547,10 @@ STATUS loadall(char *file){
 	}
 	else if (ext==NULL || strcmp(ext, ".glm")==0)
 		load_status = loadall_glm_roll(filename);
+#ifdef HAVE_XERCES
 	else if(strcmp(ext, ".xml")==0)
 		load_status = loadall_xml(filename);
+#endif
 	else
 		output_error("%s: unable to load unknown file type", filename, ext);
 

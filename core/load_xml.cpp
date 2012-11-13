@@ -12,6 +12,8 @@
  *
  **/
 
+#ifdef HAVE_XERCES
+
 #include "load_xml.h"
 
 /* included in here to avoid the dubious joys of C/C++ mixes -mh */
@@ -84,5 +86,14 @@ int loadall_xml(char *filename){
 	delete defaultHandler;
 	return 1;
 }
+
+#else
+#include "output.h"
+int loadall_xml(char *file)
+{
+	output_error("Xerces XML parser not built into this version");
+	return 0;
+}
+#endif
 
 /* EOF */
