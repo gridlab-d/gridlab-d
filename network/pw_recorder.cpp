@@ -120,9 +120,14 @@ int pw_recorder::init(OBJECT *parent){
 	}
 
 	// assert positive interval
-	if(interval < 1){
-		gl_error("pw_recorder::init(): negative interval in '%s'", gl_name(model, objname, 63));
+	if(interval < -1){
+		gl_error("pw_recorder::init(): invalid interval in '%s'", gl_name(model, objname, 63));
 		return 0;
+	}
+
+	// prime the interval
+	if(interval > 0){
+		last_write = gl_globalclock - interval;
 	}
 
 	// check non-positive limit
@@ -130,6 +135,7 @@ int pw_recorder::init(OBJECT *parent){
 		gl_verbose("pw_recorder::init(): '%s' will perform unlimited writes", gl_name(my(), objname, 63));
 		limit = -1;
 	}
+	
 
 	// check if outfile defined
 	//	* if not, auto-generate
@@ -177,23 +183,43 @@ TIMESTAMP pw_recorder::presync(TIMESTAMP t1){
 }
 
 TIMESTAMP pw_recorder::sync(TIMESTAMP t1){
-
-	return TS_NEVER;
+	TIMESTAMP rt;
+	if(interval > 0){
+		if(t1 >= (last_write + interval) ){
+			interval_write = true;
+			rt = last_write + interval + interval; // last_write is updated in commit()
+		} else {
+			interval_write = false;
+			rt = last_write + interval;
+		}
+	} else {
+		rt = TS_NEVER;
+	}
+	return rt;
 }
 
 TIMESTAMP pw_recorder::postsync(TIMESTAMP t1){
-	
+	if(0 == interval){
+		write_line(t1);
+	}
 	return TS_NEVER;
 }
 
 TIMESTAMP pw_recorder::commit(TIMESTAMP t1, TIMESTAMP t2){
 	if(outfile && is_ready){
-		DATETIME dt;
-		char256 time_output;
-		gl_localtime(t1, &dt);
-		gl_strtime(&dt, time_output, sizeof(time_output));
-		fprintf(outfile, "%s,%s\n",(const char *)time_output, (const char*)line_output);
-		fflush(outfile);
+		if(interval > 0 && interval_write){
+			write_line(t1);
+			interval_write = false;
+		}
+		if(interval == -1){
+			if(strcmp(line_output, last_line_output) != 0){
+				write_line(t1);
+			}
+		}
+		if(limit > 0 && write_ct >= limit){
+			is_ready = false;
+		}
+//		return last_write+interval;	// now handled by sync(), for the most part
 	}
 	return TS_NEVER;
 }
@@ -211,14 +237,13 @@ int pw_recorder::isa(char *classname){
 int pw_recorder::build_keys(){
 	char objname[256];
 	int key_str_ct = 1, key_val_ct = 1, prop_str_ct = 1, i = 0;
-	size_t index = 0, len = 0;
+	int index = 0, len = 0;
 	char **string_ptrs = 0, **value_ptrs = 0, **prop_ptrs = 0, *context = 0;
 	_variant_t HUGEP *field_data, HUGEP *value_data;
 	HRESULT hr;
-	BSTR temp_bstr;
 
 	// count key_strings
-	len = strlen(key_strings);
+	len = (int)strlen(key_strings);
 	for(index = 0; index < len; ++index){
 		if(',' == key_strings[index]){
 			++key_str_ct;
@@ -226,7 +251,7 @@ int pw_recorder::build_keys(){
 	}
 	
 	// count key_values
-	len = strlen(key_values);
+	len = (int)strlen(key_values);
 	for(index = 0; index < len; ++index){
 		if(',' == key_values[index]){
 			++key_val_ct;
@@ -270,7 +295,7 @@ int pw_recorder::build_keys(){
 	key_count = key_str_ct;
 
 	// count properties
-	len = strlen(properties);
+	len = (int)strlen(properties);
 	for(index = 0; index < len; ++index){
 		if(',' == properties[index]){
 			++prop_str_ct;
@@ -450,6 +475,21 @@ int pw_recorder::write_header(){
 	fprintf(outfile, "# key_str... %s\n", (const char*)key_strings);
 	fprintf(outfile, "# key_val... %s\n", (const char*)key_values);
 	fprintf(outfile, "# timestamp,%s\n", (const char*)properties);
+	return 1;
+}
+
+int pw_recorder::write_line(TIMESTAMP t1){
+	DATETIME dt;
+	char256 time_output;
+
+	gl_localtime(t1, &dt);
+	gl_strtime(&dt, time_output, sizeof(time_output));
+	fprintf(outfile, "%s,%s\n",(const char *)time_output, (const char*)line_output);
+	fflush(outfile);
+	last_line_output.copy_from(line_output);
+
+	++write_ct;
+	last_write = t1;
 	return 1;
 }
 

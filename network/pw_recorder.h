@@ -47,7 +47,8 @@ public:
 	int get_pw_values();
 	int GPSE();
 	int write_header();
-	
+	int write_line(TIMESTAMP t1);
+
 public:
 	GL_ATOMIC(OBJECT *, model);
 	GL_STRING(char1024, outfile_name);
@@ -59,6 +60,11 @@ public:
 	GL_ATOMIC(int64, interval);
 	GL_ATOMIC(int64, limit);
 private:
+	
+	char1024 last_line_output;
+	int64 last_write;
+	int write_ct;
+	bool interval_write;
 	pw_model *cModel;
 	FILE *outfile;
 	int key_count;
