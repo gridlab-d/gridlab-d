@@ -7,7 +7,6 @@
 
 module tape;
 module assert;
-module network;
 module powerflow {
 	solver_method FBS;
 }
@@ -33,6 +32,8 @@ clock{
 #endif
 
 #ifdef powerworld
+
+module network;
 
 //Copy the model into the specific autotest folder
 #system copy /y ..\TS9Bus.PWB .\TS9Bus.PWB
@@ -209,5 +210,5 @@ object load:4 {
 }
 
 #else
-#print No PowerWorld
+#warning No PowerWorld
 #endif

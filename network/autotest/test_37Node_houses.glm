@@ -7,7 +7,6 @@
 
 module tape;
 module assert;
-module network;
 module powerflow {
 	solver_method FBS;
 }
@@ -49,6 +48,8 @@ object climate {
 #endif
 
 #ifdef powerworld
+
+module network;
 
 //Copy the model into the specific autotest folder
 #system copy /y ..\TS9Bus.PWB .\TS9Bus.PWB
@@ -5692,5 +5693,5 @@ object regulator {
 }
 
 #else
-#print No PowerWorld
+#warning No PowerWorld
 #endif
