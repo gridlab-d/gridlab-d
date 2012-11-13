@@ -175,7 +175,11 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 	}
 
 	/* globals for the tape module*/
+#ifdef WIN32
 	sprintf(tape_gnuplot_path, "c:/Program Files/GnuPlot/bin/wgnuplot.exe");
+#else
+	sprintf(tape_gnuplot_path,"/usr/bin/gnuplot");
+#endif
 	gl_global_create("tape::gnuplot_path",PT_char1024,&tape_gnuplot_path,NULL);
 	gl_global_create("tape::flush_interval",PT_int32,&flush_interval,NULL);
 	gl_global_create("tape::csv_data_only",PT_int32,&csv_data_only,NULL);
@@ -288,6 +292,8 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 	/* new histogram() */
 	new_histogram(module);
 
+	/* new group_recorder() */
+	new_group_recorder(module);
 #if 0
 	new_loadshape(module);
 #endif // zero

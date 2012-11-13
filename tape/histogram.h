@@ -18,14 +18,6 @@ typedef struct s_histogram_bin {
 	int high_inc;
 } BIN;
 
-typedef enum e_complex_part {
-	NONE = 0,
-	REAL,
-	IMAG,
-	MAG,
-	ANG
-} CPLPT;
-
 class histogram
 {
 protected:

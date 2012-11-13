@@ -17,6 +17,7 @@ typedef enum {VT_INTEGER, VT_DOUBLE, VT_STRING} VARIABLETYPE;
 typedef enum {TS_INIT, TS_OPEN, TS_DONE, TS_ERROR} TAPESTATUS;
 typedef enum {FT_FILE, FT_ODBC, FT_MEMORY} FILETYPE;
 typedef enum {SCREEN, EPS, GIF, JPG, PDF, PNG, SVG} PLOTFILE;
+typedef enum e_complex_part {NONE = 0, REAL, IMAG, MAG, ANG, ANG_RAD} CPLPT;
 
 /* recorder-specific enums */
 typedef enum {HU_DEFAULT, HU_ALL, HU_NONE} HEADERUNITS;
@@ -79,6 +80,7 @@ struct player {
 	int32 loopnum;
 	struct {
 		TIMESTAMP ts;
+		TIMESTAMP ns;
 		char32 value;
 	} next;
 	PROPERTY *target;

@@ -515,6 +515,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\group_recorder.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\histogram.cpp"
 				>
 			</File>
@@ -562,6 +566,10 @@
 			>
 			<File
 				RelativePath="..\tape\file.h"
+				>
+			</File>
+			<File
+				RelativePath=".\group_recorder.h"
 				>
 			</File>
 			<File
