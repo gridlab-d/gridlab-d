@@ -43,7 +43,6 @@ pw_recorder::pw_recorder(MODULE *module)
 				throw msg;
 		}
 		memset(this,0,sizeof(pw_recorder));
-
 	}
 }
 
@@ -184,7 +183,7 @@ TIMESTAMP pw_recorder::presync(TIMESTAMP t1){
 
 TIMESTAMP pw_recorder::sync(TIMESTAMP t1){
 	TIMESTAMP rt;
-	if(interval > 0){
+	if ((interval > 0) && is_ready && outfile){
 		if(t1 >= (last_write + interval) ){
 			interval_write = true;
 			rt = last_write + interval + interval; // last_write is updated in commit()
