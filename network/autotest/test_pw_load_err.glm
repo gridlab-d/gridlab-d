@@ -35,7 +35,7 @@ clock{
 
 object pw_model {
 	name MyPwModel;
-	model_name `${workdir}\TS9Bus.PWB`
+	model_name `${workdir}\TS9Bus.PWB`;
 }
 
 object pw_load {
