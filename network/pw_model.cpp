@@ -59,7 +59,7 @@ pw_model::pw_model(MODULE *module)
 		if (gl_publish_variable(oclass,
 		//if ((*callback->define_map)(0,
 			PT_char1024, "model_name", PADDR(model_name),PT_DESCRIPTION, "the file path for the PowerWorld model to run",
-			PT_char1024, "load_list_file", PADDR(load_list_file), PT_DESCRIPTION, "the optional file to write a list of loads into.  if present, GLD will exit after writing loads.",
+//			PT_char1024, "load_list_file", PADDR(load_list_file), PT_DESCRIPTION, "the optional file to write a list of loads into.  if present, GLD will exit after writing loads.",
 //			PT_char1024, "out_file", PADDR(out_file), PT_DESCRIPTION, "the file to write the list of objects into",
 //			PT_char32, "out_file_type", PADDR(out_file_type),PT_DESCRIPTION,"the type of object to list in out_file",
 //			PT_char1024, "field_file", PADDR(field_file),PT_DESCRIPTION,"the file to write the list of fields of a type of object into",
@@ -279,16 +279,16 @@ int pw_model::init(OBJECT *parent){
 
 	// not published.
 	// if load_list_file not null,
-	if(load_list_file[0] != 0){
-		FILE *pair_file;
+//	if(load_list_file[0] != 0){
+//		FILE *pair_file;
 		//	* parse file for BusNum/LoadID pairs
 		//	* connect to model
 		//	* check BusNum/LoadID pairs in model file
 		//	* close connection
 		//	* print big pass/fail message
 		//	* return 0;
-		return 0;
-	}
+//		return 0;
+//	}
 
 	if(trouble){
 		gl_error("pw_model::init(): no PowerWorld model file specified");
