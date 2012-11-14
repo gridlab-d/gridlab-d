@@ -29,13 +29,13 @@
 /* IMPORTANT: this list must match PROPERTYTYPE enum in property.h */
 PROPERTYSPEC property_type[_PT_LAST] = {
 	{"void", "string", 0, 0, convert_from_void,convert_to_void},
-	{"double", "double", sizeof(double), 24, convert_from_double,convert_to_double,NULL,stream_double,{TCOPS(double)},},
+	{"double", "decimal", sizeof(double), 24, convert_from_double,convert_to_double,NULL,stream_double,{TCOPS(double)},},
 	{"complex", "string", sizeof(complex), 48, convert_from_complex,convert_to_complex,NULL,NULL,{TCOPS(double)},complex_get_part},
 	{"enumeration", "string", sizeof(int32), 32, convert_from_enumeration,convert_to_enumeration,NULL,NULL,{TCOPS(uint64)},},
 	{"set", "string", sizeof(int64), 32, convert_from_set,convert_to_set,NULL,NULL,{TCOPS(uint64)},},
-	{"int16", "short", sizeof(int16), 6, convert_from_int16,convert_to_int16,NULL,NULL,{TCOPS(uint16)},},
-	{"int32", "int", sizeof(int32), 12, convert_from_int32,convert_to_int32,NULL,NULL,{TCOPS(uint32)},},
-	{"int64", "long", sizeof(int64), 24, convert_from_int64,convert_to_int64,NULL,NULL,{TCOPS(uint64)},},
+	{"int16", "integer", sizeof(int16), 6, convert_from_int16,convert_to_int16,NULL,NULL,{TCOPS(uint16)},},
+	{"int32", "integer", sizeof(int32), 12, convert_from_int32,convert_to_int32,NULL,NULL,{TCOPS(uint32)},},
+	{"int64", "integer", sizeof(int64), 24, convert_from_int64,convert_to_int64,NULL,NULL,{TCOPS(uint64)},},
 	{"char8", "string", sizeof(char8), 8, convert_from_char8,convert_to_char8,NULL,NULL,{TCOPS(string)},},
 	{"char32", "string", sizeof(char32), 32, convert_from_char32,convert_to_char32,NULL,NULL,{TCOPS(string)},},
 	{"char256", "string", sizeof(char256), 256, convert_from_char256,convert_to_char256,NULL,NULL,{TCOPS(string)},},

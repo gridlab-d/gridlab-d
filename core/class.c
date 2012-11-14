@@ -1293,13 +1293,13 @@ int class_get_xsd(CLASS *oclass, /**< a pointer to the class to convert to XSD *
 		char *type;
 		KEYWORD *keys;
 	} attribute[]={
-		{"id", "long",NULL},
+		{"id", "integer",NULL},
 		{"parent", "string",NULL},
-		{"rank", "int",NULL},
+		{"rank", "integer",NULL},
 		{"clock", "string",NULL},
 		{"valid_to", "string",NULL},
-		{"latitude", "double",NULL},
-		{"longitude", "double",NULL},
+		{"latitude", "string",NULL},
+		{"longitude", "string",NULL},
 		{"in_svc", "string",NULL},
 		{"out_svc", "string",NULL},
 		{"flags", "string",oflags},
