@@ -335,9 +335,7 @@ int group_recorder::write_header(){
 	}
 
 	// write model file name
-	fprintf(rec_file, "# %s\n", filename.get_string());
-
-	if(0 > fprintf(rec_file,"# file...... %s\n", filename.get_string())){ return 0; }
+	if(0 > fprintf(rec_file,"# file...... %s\n", filename)){ return 0; }
 	if(0 > fprintf(rec_file,"# date...... %s", asctime(localtime(&now)))){ return 0; }
 #ifdef WIN32
 	if(0 > fprintf(rec_file,"# user...... %s\n", getenv("USERNAME"))){ return 0; }
@@ -346,14 +344,10 @@ int group_recorder::write_header(){
 	if(0 > fprintf(rec_file,"# user...... %s\n", getenv("USER"))){ return 0; }
 	if(0 > fprintf(rec_file,"# host...... %s\n", getenv("HOST"))){ return 0; }
 #endif
-	if(0 > fprintf(rec_file,"# group..... %s\n", group_def.get_string())){ return 0; }
-	if(0 > fprintf(rec_file,"# property.. %s\n", property_name.get_string())){ return 0; }
+	if(0 > fprintf(rec_file,"# group..... %s\n", group_def)){ return 0; }
+	if(0 > fprintf(rec_file,"# property.. %s\n", property_name)){ return 0; }
 	if(0 > fprintf(rec_file,"# limit..... %d\n", limit)){ return 0; }
-	if(0 > fprintf(rec_file,"# write_interval.. %d\n", write_interval)){ return 0; }
-	if(0 > fprintf(rec_file,"# flush_interval.. %d\n", flush_interval)){ return 0; }
-	 // these next two may be seen as superfluous.
-	if(0 > fprintf(rec_file,"# strict.... %s\n", (strict ? "TRUE" : "FALSE"))){ return 0; }
-	if(0 > fprintf(rec_file,"# print_units..... %s\n", (print_units ? "TRUE" : "FALSE"))){ return 0; }
+	if(0 > fprintf(rec_file,"# interval.. %d\n", write_interval)){ return 0; }
 
 	// write list of properties
 	if(0 > fprintf(rec_file, "# timestamp")){ return 0; }
