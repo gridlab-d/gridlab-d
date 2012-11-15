@@ -2342,7 +2342,8 @@ static int clock_properties(PARSER)
 	{
 		if (TERM(time_value(HERE,&tsval)))
 		{
-			global_clock = tsval;
+			//global_clock = tsval;
+			global_starttime = tsval; // used to affect start time, before with 
 			ACCEPT;
 			goto Next;
 		}
@@ -2353,7 +2354,7 @@ static int clock_properties(PARSER)
 	{
 		if (TERM(time_value(HERE,&tsval)))
 		{
-			global_clock = tsval; // note: this is correct - internally starttime refers to the real starttime, but in sim world it refers to global_clock
+			global_starttime = tsval;
 			ACCEPT;
 			goto Next;
 		}
