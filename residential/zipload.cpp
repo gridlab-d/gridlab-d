@@ -54,6 +54,7 @@ ZIPload::ZIPload(MODULE *module) : residential_enduse(module)
 			PT_double,"breaker_val[A]",PADDR(breaker_val), PT_DESCRIPTION, "Amperage of connected breaker",
 			PT_complex,"actual_power[kVA]",PADDR(actual_power),PT_DESCRIPTION,"variable to pull actual load as function of voltage",
 			PT_double,"multiplier",PADDR(multiplier),PT_DESCRIPTION,"this variable is used to modify the base power as a function of multiplier x base_power",
+			PT_bool,"heatgain_only",PADDR(heatgain_only),PT_DESCRIPTION,"allows the zipload to generate heat only (no kW), not activated by default",
 
 			// Variables for demand response mode
 			PT_bool,"demand_response_mode",PADDR(demand_response_mode), PT_DESCRIPTION, "Activates equilibrium dynamic representation of demand response",
@@ -105,6 +106,7 @@ int ZIPload::create()
 	load.config = 0x0;	//110 by default
 	breaker_val = 1000.0;	//Obscene value so it never trips
 	multiplier = 1;
+	heatgain_only = false;
 
 	demand_response_mode = false;
 	ron = roff = -1;
@@ -296,6 +298,11 @@ int ZIPload::init(OBJECT *parent)
 		}
 	}
 
+	if (heatgain_only == true)
+	{
+		load.config = EUC_HEATLOAD;
+		load.power_fraction = load.current_fraction = load.impedance_fraction = 0.0;
+	}
 	if (is_240)	//See if the 220/240 flag needs to be set
 	{
 		load.config |= EUC_IS220;
@@ -409,6 +416,7 @@ TIMESTAMP ZIPload::sync(TIMESTAMP t0, TIMESTAMP t1)
 					next_time = t1 + (period * 3600) * (1 - phase) + 1;
 				}
 			}
+			last_duty_cycle = duty_cycle;
 		}
 		else if (this->re_override == OV_OFF) // After release or recovery time
 		{
@@ -448,7 +456,7 @@ TIMESTAMP ZIPload::sync(TIMESTAMP t0, TIMESTAMP t1)
 					next_time = t1 + (period * 3600) * (1 - fmod(phase,1)) + 1;
 				}
 			}
-
+			last_duty_cycle = duty_cycle;
 
 		}
 		else // override is ON, so no power
@@ -456,15 +464,23 @@ TIMESTAMP ZIPload::sync(TIMESTAMP t0, TIMESTAMP t1)
 			if (multiplier == 1 && duty_cycle > phase)
 			{
 				// do nothing
+				last_duty_cycle = duty_cycle;
 			}
 			else
 			{
 				multiplier = 0;
 				next_time = TS_NEVER;
+				if (recovery_duty_cycle > 0) // in TOU/CPP mode
+					last_duty_cycle = duty_cycle;
+				else // DLC mode
+				{
+					if (phase >= 1)
+						phase -= 1;
+					last_duty_cycle = 0;
+				}
 			}
 		}
-
-		last_duty_cycle = duty_cycle;
+		// last_duty_cycle = duty_cycle;
 	}
 
 	if (pCircuit!=NULL){
@@ -488,52 +504,61 @@ TIMESTAMP ZIPload::sync(TIMESTAMP t0, TIMESTAMP t1)
 		if (demand_response_mode == true)
 			demand_power = nominal_power;
 
-		//Calculate power portion
-		real_power = demand_power * load.power_fraction;
-
-		imag_power = (power_pf == 0.0) ? 0.0 : real_power * sqrt(1.0/(power_pf * power_pf) - 1.0);
-
-		if (power_pf < 0)
+		if (heatgain_only == false)
 		{
-			imag_power *= -1.0;	//Adjust imaginary portion for negative PF
+			//Calculate power portion
+			real_power = demand_power * load.power_fraction;
+
+			imag_power = (power_pf == 0.0) ? 0.0 : real_power * sqrt(1.0/(power_pf * power_pf) - 1.0);
+
+			if (power_pf < 0)
+			{
+				imag_power *= -1.0;	//Adjust imaginary portion for negative PF
+			}
+
+			load.power.SetRect(real_power,imag_power);
+
+			//Calculate current portion
+			real_power = demand_power * load.current_fraction;
+
+			imag_power = (current_pf == 0.0) ? 0.0 : real_power * sqrt(1.0/(current_pf * current_pf) - 1.0);
+
+			if (current_pf < 0)
+			{
+				imag_power *= -1.0;	//Adjust imaginary portion for negative PF
+			}
+
+			load.current.SetRect(real_power,imag_power);
+
+			//Calculate impedance portion
+			real_power = demand_power * load.impedance_fraction;
+
+			imag_power = (impedance_pf == 0.0) ? 0.0 : real_power * sqrt(1.0/(impedance_pf * impedance_pf) - 1.0);
+
+			if (impedance_pf < 0)
+			{
+				imag_power *= -1.0;	//Adjust imaginary portion for negative PF
+			}
+
+			load.admittance.SetRect(real_power,imag_power);	//Put impedance in admittance.  From a power point of view, they are the same
+
+			//Compute total power - not sure if needed, but will use below
+			load.total = load.power + load.current + load.admittance;
+			actual_power = load.power + load.current * load.voltage_factor + load.admittance * load.voltage_factor * load.voltage_factor;
+
+			//Update power factor, just in case
+			angleval = load.total.Arg();
+			load.power_factor = (angleval < 0) ? -1.0 * cos(angleval) : cos(angleval);
+
+			//Determine the heat contributions - percentage of real power
+			load.heatgain = load.total.Re() * load.heatgain_fraction * BTUPHPKW;
 		}
-
-		load.power.SetRect(real_power,imag_power);
-
-		//Calculate current portion
-		real_power = demand_power * load.current_fraction;
-
-		imag_power = (current_pf == 0.0) ? 0.0 : real_power * sqrt(1.0/(current_pf * current_pf) - 1.0);
-
-		if (current_pf < 0)
+		else
 		{
-			imag_power *= -1.0;	//Adjust imaginary portion for negative PF
+			load.power = load.current = load.admittance = actual_power = load.total = 0.0;
+			load.heatgain = demand_power * BTUPHPKW;
+			return TS_NEVER;
 		}
-
-		load.current.SetRect(real_power,imag_power);
-
-		//Calculate impedance portion
-		real_power = demand_power * load.impedance_fraction;
-
-		imag_power = (impedance_pf == 0.0) ? 0.0 : real_power * sqrt(1.0/(impedance_pf * impedance_pf) - 1.0);
-
-		if (impedance_pf < 0)
-		{
-			imag_power *= -1.0;	//Adjust imaginary portion for negative PF
-		}
-
-		load.admittance.SetRect(real_power,imag_power);	//Put impedance in admittance.  From a power point of view, they are the same
-
-		//Compute total power - not sure if needed, but will use below
-		load.total = load.power + load.current + load.admittance;
-		actual_power = load.power + load.current * load.voltage_factor + load.admittance * load.voltage_factor * load.voltage_factor;
-
-		//Update power factor, just in case
-		angleval = load.total.Arg();
-		load.power_factor = (angleval < 0) ? -1.0 * cos(angleval) : cos(angleval);
-
-		//Determine the heat contributions - percentage of real power
-		load.heatgain = load.total.Re() * load.heatgain_fraction * BTUPHPKW;
 	}
 	else	//Breaker's open - nothing happens
 	{
