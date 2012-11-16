@@ -89,6 +89,9 @@ public:
 	double mass_solar_gain_fraction;			///< fraction of solar gains that goes to the mass
 	double mass_internal_gain_fraction;		///< fraction of the internal gains that goes to the mass
 	double number_of_stories;
+	bool use_latent_heat;
+	bool include_fan_heatgain;
+	double fan_heatgain_fraction;
 
 	// window variables
 	double glazing_shgc;						///< glazing SHGC
@@ -150,6 +153,7 @@ public:
 	// building HVAC effects
 	double airchange_per_hour;		///< house_e air changes per hour (ach)
 	double airchange_UA;			///< additional UA due to air changes per hour
+	double UA;						///< the total UA of the house
 	double latent_load_fraction;	///< fractional increase in cooling load due to latent heat
 	
 	// current hvac properties
@@ -348,6 +352,7 @@ private:
 	// internal variables used to track state of house */
 	double dTair;
 	double a,b,c,d,c1,c2,A3,A4,k1,k2,r1,r2,Teq,Tevent,Qi,Qa,Qm,adj_cooling_cap,adj_heating_cap,adj_cooling_cop,adj_heating_cop;
+	double Qlatent;
 	static bool warn_control;
 	static double warn_low_temp;
 	static double warn_high_temp;

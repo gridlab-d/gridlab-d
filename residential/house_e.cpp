@@ -569,6 +569,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"solar_heatgain_factor",PADDR(solar_heatgain_factor),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"product of the window area, window transmitivity, and the window exterior transmission coefficient",
 			PT_double,"airchange_per_hour",PADDR(airchange_per_hour),PT_DESCRIPTION,"number of air-changes per hour",
 			PT_double,"airchange_UA[Btu/degF.h]",PADDR(airchange_UA),PT_DESCRIPTION,"additional UA due to air infiltration",
+			PT_double,"UA",PADDR(UA),PT_DESCRIPTION,"the total UA",
 			PT_double,"internal_gain[Btu/h]",PADDR(total.heatgain),PT_DESCRIPTION,"internal heat gains",
 			PT_double,"solar_gain[Btu/h]",PADDR(solar_load),PT_DESCRIPTION,"solar heat gains",
 			PT_double,"incident_solar_radiation[Btu/h.sf]",PADDR(incident_solar_radiation),PT_DESCRIPTION,"average incident solar radiation hitting the house",
@@ -921,6 +922,8 @@ int house_e::create()
 	}
 	total.name = "panel";
 	load.name = "system";
+	UA = -1;
+	airchange_per_hour = -1;
 
 	return result;
 }
@@ -1011,7 +1014,7 @@ void house_e::set_thermal_integrity(){
 			if(Rfloor <= 0.0) Rfloor = 4;
 			if(Rdoors <= 0.0) Rdoors = 3;
 			if(Rwindows <= 0.0) Rwindows = 1/1.27;
-			if(airchange_per_hour <= 0.0) airchange_per_hour = 1.5;
+			if(airchange_per_hour < 0.0) airchange_per_hour = 1.5;
 			break;
 		case TI_LITTLE:
 			if(Rroof <= 0.0) Rroof = 19;
@@ -1019,7 +1022,7 @@ void house_e::set_thermal_integrity(){
 			if(Rfloor <= 0.0) Rfloor = 4;
 			if(Rdoors <= 0.0) Rdoors = 3;
 			if(Rwindows <= 0.0) Rwindows = 1/0.81;
-			if(airchange_per_hour <= 0.0) airchange_per_hour = 1.5;
+			if(airchange_per_hour < 0.0) airchange_per_hour = 1.5;
 			break;
 		case TI_BELOW_NORMAL:
 			if(Rroof <= 0.0) Rroof = 19;
@@ -1027,7 +1030,7 @@ void house_e::set_thermal_integrity(){
 			if(Rfloor <= 0.0) Rfloor = 11;
 			if(Rdoors <= 0.0) Rdoors = 3;
 			if(Rwindows <= 0.0) Rwindows = 1/0.81;
-			if(airchange_per_hour <= 0.0) airchange_per_hour = 1.0;
+			if(airchange_per_hour < 0.0) airchange_per_hour = 1.0;
 			break;
 		case TI_NORMAL:
 			if(Rroof <= 0.0) Rroof = 30;
@@ -1035,7 +1038,7 @@ void house_e::set_thermal_integrity(){
 			if(Rfloor <= 0.0) Rfloor = 19;
 			if(Rdoors <= 0.0) Rdoors = 3;
 			if(Rwindows <= 0.0) Rwindows = 1/0.6;
-			if(airchange_per_hour <= 0.0) airchange_per_hour = 1.0;
+			if(airchange_per_hour < 0.0) airchange_per_hour = 1.0;
 			break;
 		case TI_ABOVE_NORMAL:
 			if(Rroof <= 0.0) Rroof = 30;
@@ -1043,7 +1046,7 @@ void house_e::set_thermal_integrity(){
 			if(Rfloor <= 0.0) Rfloor = 11;
 			if(Rdoors <= 0.0) Rdoors = 3;
 			if(Rwindows <= 0.0) Rwindows = 1/0.6;
-			if(airchange_per_hour <= 0.0) airchange_per_hour = 1.0;
+			if(airchange_per_hour < 0.0) airchange_per_hour = 1.0;
 			break;
 		case TI_GOOD:
 			if(Rroof <= 0.0) Rroof = 30;
@@ -1051,7 +1054,7 @@ void house_e::set_thermal_integrity(){
 			if(Rfloor <= 0.0) Rfloor = 22;
 			if(Rdoors <= 0.0) Rdoors = 5;
 			if(Rwindows <= 0.0) Rwindows = 1/0.47;
-			if(airchange_per_hour <= 0.0) airchange_per_hour = 0.5;
+			if(airchange_per_hour < 0.0) airchange_per_hour = 0.5;
 			break;
 		case TI_VERY_GOOD:
 			if(Rroof <= 0.0) Rroof = 48;
@@ -1059,7 +1062,7 @@ void house_e::set_thermal_integrity(){
 			if(Rfloor <= 0.0) Rfloor = 30;
 			if(Rdoors <= 0.0) Rdoors = 11;
 			if(Rwindows <= 0.0) Rwindows = 1/0.31;
-			if(airchange_per_hour <= 0.0) airchange_per_hour = 0.5;
+			if(airchange_per_hour < 0.0) airchange_per_hour = 0.5;
 			break;
 		case TI_UNKNOWN:
 			// do nothing - use all of the built-in defaults or user-specified values as thermal integrity wasn't used
@@ -1560,7 +1563,7 @@ int house_e::init(OBJECT *parent)
 	if (total_thermal_mass_per_floor_area <= 0.0) total_thermal_mass_per_floor_area = 2.0;
 	if (interior_surface_heat_transfer_coeff <= 0.0) interior_surface_heat_transfer_coeff = 1.46;
 
-	if (airchange_per_hour<=0)	airchange_per_hour = 0.5;//gl_random_triangle(0.5,1);
+	if (airchange_per_hour<0)	airchange_per_hour = 0.5;//gl_random_triangle(0.5,1);
 	if (airchange_UA <= 0) airchange_UA = airchange_per_hour * volume * air_density * air_heat_capacity;
 
 	double door_area = number_of_doors * 3.0 * 78.0 / 12.0; // 3' wide by 78" tall
@@ -1570,7 +1573,9 @@ int house_e::init(OBJECT *parent)
 	double exterior_floor_area = floor_area * exterior_floor_fraction / number_of_stories;
 
 	if (envelope_UA==0)	envelope_UA = exterior_ceiling_area/Rroof + exterior_floor_area/Rfloor + net_exterior_wall_area/Rwall + window_area/Rwindows + door_area/Rdoors;
-
+	if(UA < 0){
+		UA = envelope_UA + airchange_UA;
+	}
 	solar_heatgain_factor = window_area * glazing_shgc * window_exterior_transmission_coefficient;
 
 	// initalize/set system model parameters
@@ -1599,7 +1604,7 @@ int house_e::init(OBJECT *parent)
 	if (design_cooling_capacity<=0.0 && cooling_system_type != CT_NONE)	// calculate basic load then round to nearest standard HVAC sizing
 	{	
 		round_value = 0.0;
-		design_cooling_capacity = (1.0 + over_sizing_factor) * (1.0 + latent_load_fraction) * ((envelope_UA + airchange_UA) * (cooling_design_temperature - design_cooling_setpoint) + design_internal_gains + (design_peak_solar * solar_heatgain_factor));
+		design_cooling_capacity = (1.0 + over_sizing_factor) * (1.0 + latent_load_fraction) * ((UA) * (cooling_design_temperature - design_cooling_setpoint) + design_internal_gains + (design_peak_solar * solar_heatgain_factor));
 		round_value = (design_cooling_capacity) / 6000.0;
 		design_cooling_capacity = ceil(round_value) * 6000.0;//design_cooling_capacity is rounded up to the next 6000 btu/hr
 	}
@@ -1621,7 +1626,7 @@ int house_e::init(OBJECT *parent)
 		if(heating_system_type == HT_HEAT_PUMP){
 			design_heating_capacity = design_cooling_capacity; /* primary is to reverse the heat pump */
 		} else {
-			design_heating_capacity = (1.0 + over_sizing_factor) * (envelope_UA + airchange_UA) * (design_heating_setpoint - heating_design_temperature);
+			design_heating_capacity = (1.0 + over_sizing_factor) * (UA) * (design_heating_setpoint - heating_design_temperature);
 			round_value = (design_heating_capacity) / 10000.0;
 			design_heating_capacity = ceil(round_value) * 10000.0;//design_heating_capacity is rounded up to the next 10,000 btu/hr
 		}
@@ -1634,7 +1639,7 @@ int house_e::init(OBJECT *parent)
 	if (aux_heat_capacity<=0.0 && auxiliary_system_type != AT_NONE)
 	{
 		double round_value = 0.0;
-		aux_heat_capacity = (1.0 + over_sizing_factor) * (envelope_UA + airchange_UA) * (design_heating_setpoint - heating_design_temperature);
+		aux_heat_capacity = (1.0 + over_sizing_factor) * (UA) * (design_heating_setpoint - heating_design_temperature);
 		round_value = (aux_heat_capacity) / 10000.0;
 		aux_heat_capacity = ceil(round_value) * 10000.0;//aux_heat_capacity is rounded up to the next 10,000 btu/hr
 	}
@@ -1655,7 +1660,7 @@ int house_e::init(OBJECT *parent)
 		fan_design_airflow = gtr_cfm;
 	}
 
-	if (fan_design_power<=0.0){
+	if (fan_design_power<0.0){
 		double roundval;
 		//	
 		roundval = ceil((0.117 * duct_pressure_drop * fan_design_airflow / 0.42 / 745.7)*8);
@@ -1720,8 +1725,8 @@ int house_e::init(OBJECT *parent)
 	// calculate thermal constants
 #define Ca (air_thermal_mass)
 #define Tout (outside_temperature)
-#define Ua (envelope_UA)
 #define Cm (house_content_thermal_mass)
+#define Ua (UA)
 #define Hm (house_content_heat_transfer_coeff)
 #define Qs (solar_load)
 #define Qh (load.heatgain)
@@ -1730,21 +1735,25 @@ int house_e::init(OBJECT *parent)
 #define Tm (Tmaterials)
 
 	if (Ca<=0)
-		throw "Ca must be positive";
+		throw "air_thermal_mass must be positive";
 	if (Cm<=0)
-		throw "Cm must be positive";
+		throw "house_content_thermal_mass must be positive";
+	if(Hm <= 0)
+		throw "house_content_heat_transfer_coeff must be positive";
+	if(Ua < 0)
+		throw "UA must be positive";
 
 	a = Cm*Ca/Hm;
-	b = Cm*(Ua+airchange_UA+Hm)/Hm+Ca;
-	c = Ua + airchange_UA;
-	c1 = -(Ua+airchange_UA + Hm)/Ca;
+	b = Cm*(Ua+Hm)/Hm+Ca;
+	c = Ua;
+	c1 = -(Ua + Hm)/Ca;
 	c2 = Hm/Ca;
 	double rr = sqrt(b*b-4*a*c)/(2*a);
 	double r = -b/(2*a);
 	r1 = r+rr;
 	r2 = r-rr;
-	A3 = Ca/Hm * r1 + (Ua+airchange_UA+Hm)/Hm;
-	A4 = Ca/Hm * r2 + (Ua+airchange_UA+Hm)/Hm;
+	A3 = Ca/Hm * r1 + (Ua+Hm)/Hm;
+	A4 = air_thermal_mass/Hm * r2 + (Ua+Hm)/Hm;
 
 	// outside temperature init
 	extern double default_outdoor_temperature;
@@ -1873,7 +1882,7 @@ void house_e::update_model(double dt)
 	Qa = Qh + (1-mass_internal_gain_fraction)*Qi + (1-mass_solar_gain_fraction)*Qs;
 	Qm = mass_internal_gain_fraction*Qi + mass_solar_gain_fraction*Qs;
 
-	d = Qa + Qm + (Ua+airchange_UA)*Tout;
+	d = Qa + Qm + (Ua)*Tout;
 	Teq = d/c;
 
 	/* compute next initial condition */
@@ -1984,17 +1993,17 @@ void house_e::update_system(double dt)
 				break;
 			case HT_RESISTANCE:
 				//heating_demand = design_heating_capacity*KWPBTUPH;
-				system_rated_capacity = design_heating_capacity*voltage_adj_resistive + fan_power*BTUPHPKW;
+					system_rated_capacity = design_heating_capacity*voltage_adj_resistive + fan_power*BTUPHPKW*fan_heatgain_fraction;
 				system_rated_power = heating_demand;
 				break;
 			case HT_HEAT_PUMP:
 				//heating_demand = heating_capacity_adj / heating_cop_adj * KWPBTUPH;
-				system_rated_capacity = heating_capacity_adj*voltage_adj + fan_power*BTUPHPKW;
+					system_rated_capacity = heating_capacity_adj*voltage_adj + fan_power*BTUPHPKW*fan_heatgain_fraction;
 				system_rated_power = heating_demand;
 				break;
 			case HT_GAS:
 				heating_demand = 0.0;
-				system_rated_capacity = design_heating_capacity + fan_power*BTUPHPKW;
+					system_rated_capacity = design_heating_capacity + fan_power*BTUPHPKW*fan_heatgain_fraction;
 				system_rated_power = heating_demand;
 				break;
 		}
@@ -2017,7 +2026,7 @@ void house_e::update_system(double dt)
 				break;
 			case AT_ELECTRIC:
 				//heating_demand = aux_heat_capacity*KWPBTUPH;
-				system_rated_capacity = aux_heat_capacity*voltage_adj_resistive + fan_power*BTUPHPKW;
+					system_rated_capacity = aux_heat_capacity*voltage_adj_resistive + fan_power*BTUPHPKW*fan_heatgain_fraction;
 				system_rated_power = heating_demand;
 				break;
 		}
@@ -2050,7 +2059,7 @@ void house_e::update_system(double dt)
 				}
 				else	//Thermal storage is present and online
 				{
-					system_rated_capacity = fan_power*BTUPHPKW;	//Only the fan is going right now, so it is the only power and the only heat gain into the system
+						system_rated_capacity = fan_power*BTUPHPKW*fan_heatgain_fraction;	//Only the fan is going right now, so it is the only power and the only heat gain into the system
 					system_rated_power = cooling_demand;	//Should be 0.0 from above - basically handled inside the energy storage device
 					thermal_storage_inuse = 1;	//Flag that thermal energy storage being utilized
 				}
@@ -2064,14 +2073,18 @@ void house_e::update_system(double dt)
 		} else {
 			fan_power = 0.0;
 		}
-		system_rated_capacity =  fan_power*BTUPHPKW;	// total heat gain of system
+			system_rated_capacity =  fan_power*BTUPHPKW*fan_heatgain_fraction;	// total heat gain of system
 		system_rated_power = 0.0;					// total power drawn by system
 		thermal_storage_inuse = 0;					//If the system is off, it isn't using thermal storage
 		
 	}
 
 	/* calculate the power consumption */
-	load.total = system_rated_power + fan_power;
+		if(include_fan_heatgain == TRUE){
+			load.total = system_rated_power + fan_power;
+		} else {
+			load.total = system_rated_power;
+		}
 	load.heatgain = system_rated_capacity;
 
 	if(	(cooling_system_type == CT_ELECTRIC		&& system_mode == SM_COOL) ||
@@ -2156,7 +2169,7 @@ TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1)
 			const double e1 = k1*exp(r1*dt);
 			const double e2 = k2*exp(r2*dt);
 			Tair = e1 + e2 + Teq;
-			Tmaterials = A3*e1 + A4*e2 + Qm/Hm + (Qm+Qa)/(Ua+airchange_UA) + Tout;
+			Tmaterials = A3*e1 + A4*e2 + Qm/Hm + (Qm+Qa)/(Ua) + Tout;
 		}
 	}
 
@@ -2388,7 +2401,7 @@ void house_e::update_Tevent()
 TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 {
 	double terr = dTair/3600; // this is the time-error of 1 second uncertainty
-	bool turned_on, turned_off;
+	bool turned_on = false, turned_off = false;
 
 	// only update the T<mode>{On,Off} is the thermostat is full
 	if (thermostat_control==TC_FULL)
