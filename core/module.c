@@ -1660,10 +1660,10 @@ MYPROCINFO *sched_allocate_procs(unsigned int n_threads, pid_t pid)
 			output_warning("unable to set thread policy: %s", strerror(errno));
 	}
 #elif DYN_PROC_AFFINITY
-	if ( sched_setaffinity(pid,CPU_ALLOC_SIZE(n_procs),cpuset)==0 )
+	if (! sched_setaffinity(pid,CPU_ALLOC_SIZE(n_procs),cpuset) )
 		output_warning("unable to set current process affinity mask: %s", strerror(errno));
 #else
-	if ( sched_setaffinity(pid,sizeof(cpu_set_t),cpuset)==0 )
+	if (! sched_setaffinity(pid,sizeof(cpu_set_t),cpuset) )
 		output_warning("unable to set current process affinity mask: %s", strerror(errno));
 #endif
 	return my_proc;
