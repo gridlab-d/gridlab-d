@@ -9,6 +9,7 @@ tape_la_SOURCES =            \
 	odbc.c        odbc.h      \
 	player.c                  \
 	recorder.c                \
+	group_recorder.cpp        \
 	multi_recorder.c          \
 	shaper.c                  \
 	tape.c        tape.h
