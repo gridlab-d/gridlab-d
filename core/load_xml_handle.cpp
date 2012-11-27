@@ -15,8 +15,8 @@
  *
  */
 
+#include "platform.h"
 #ifdef HAVE_XERCES
-
 #include <xercesc/util/XMLUniDefs.hpp>
 #include <xercesc/sax2/Attributes.hpp>
 #include "load_xml_handle.h"
@@ -964,5 +964,5 @@ char *gld_loadHndl::build_object_vect(int start, int end){
 
 #undef _CRT_SECURE_NO_DEPRECATE
 
-#endif // HAVE_XERCES
+#endif HAVE_XERCES
 /* EOF */

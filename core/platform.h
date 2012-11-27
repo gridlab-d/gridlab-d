@@ -14,9 +14,16 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
+#else
+/*************************************
+ CONTROL WHAT IS PART OF WINDOWS BUILD 
+ *************************************/
+//#define HAVE_MATLAB
+//#define HAVE_XERCES
 #endif
 
 #ifdef WIN32
+
 
 /*** WINDOWS ***/
 #if defined _M_X64 || defined _M_IA64

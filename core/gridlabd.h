@@ -54,6 +54,10 @@
 #ifndef _GRIDLABD_H
 #define _GRIDLABD_H
 
+/* version info */
+#define MAJOR 3
+#define MINOR 0
+
 /* permanently disable use of CPPUNIT */
 #ifndef _NO_CPPUNIT
 #define _NO_CPPUNIT
@@ -1902,9 +1906,6 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////
 // Module-Core Linkage Export Macros
 ////////////////////////////////////////////////////////////////////////////////////
-
-#define MAJOR 3
-#define MINOR 0
 
 #ifdef DLMAIN
 EXPORT int do_kill(void*);

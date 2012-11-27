@@ -47,7 +47,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\third_party\cppunit-1.12.0\include;..\third_party\xerces-c-3.1.1\src;..\pthreads;"
+				AdditionalIncludeDirectories="&quot;..\third_party\cppunit-1.12.0\include&quot;;&quot;..\third_party\xerces-c-3.1.1\src&quot;;..\pthreads"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;PAUSE_AT_EXIT;_CRT_SECURE_NO_DEPRECATE"
 				MinimalRebuild="false"
 				BasicRuntimeChecks="3"
@@ -222,7 +222,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\third_party\cppunit-1.12.0\include;..\third_party\xerces-c-3.1.1\src;..\pthreads;"
+				AdditionalIncludeDirectories="&quot;..\third_party\cppunit-1.12.0\include&quot;;&quot;..\third_party\xerces-c-3.1.1\src&quot;;..\pthreads"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_DEPRECATE;_NO_CPPUNIT"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
@@ -311,7 +311,7 @@
 				Optimization="0"
 				InlineFunctionExpansion="2"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="..\third_party\cppunit-1.12.0\include;..\third_party\xerces-c-3.1.1\src;..\pthreads;"
+				AdditionalIncludeDirectories="&quot;..\third_party\cppunit-1.12.0\include&quot;;&quot;..\third_party\xerces-c-3.1.1\src&quot;;..\pthreads"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_DEPRECATE;_NO_CPPUNIT"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
@@ -796,10 +796,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\config.h"
-				>
-			</File>
-			<File
 				RelativePath=".\console.h"
 				>
 			</File>
@@ -1075,11 +1071,11 @@
 					>
 				</File>
 				<File
-					RelativePath=".\makefile.win"
+					RelativePath="..\makefile.win"
 					>
 				</File>
 				<File
-					RelativePath="..\makefile.win"
+					RelativePath=".\makefile.win"
 					>
 				</File>
 			</Filter>
