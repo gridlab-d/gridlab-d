@@ -353,7 +353,7 @@ static void http_send(HTTPCNX *http)
 {
 	char header[4096];
 	int len=0;
-	len += sprintf(header+len, "HTTPCNX/1.1 %s", http->status?http->status:HTTP_INTERNALSERVERERROR);
+	len += sprintf(header+len, "HTTP/1.1 %s", http->status?http->status:HTTP_INTERNALSERVERERROR);
 	output_verbose("%s (len=%d, mime=%s)",header,http->len,http->type?http->type:"none");
 	len += sprintf(header+len, "\nContent-Length: %d\n", http->len);
 	if (http->type && http->type[0]!='\0')
