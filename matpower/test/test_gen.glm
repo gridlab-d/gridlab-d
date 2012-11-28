@@ -1,0 +1,415 @@
+//Input feeder information for IEEE 13 node with different cases.
+//Started on 10/21/09. This version created 15-Oct-2010 14:08:40.
+
+clock {
+     timezone PST+8PDT;
+     starttime '2000-01-01 00:00:00';
+     stoptime '2000-01-02 00:00:00';
+}
+
+
+module wholesale {
+};
+
+object bus{
+	name "Palo Alto";
+	BUS_I       1;
+        BUS_TYPE    3;
+        PD          0MW;
+        QD          0MVAr;
+        GS          0MW;
+        BS          0MVAr;
+        BUS_AREA    1;
+        VM          1;
+        VA          0;
+        BASE_KV     345kV;
+        ZONE        1;
+        VMAX        1.1;
+        VMIN        0.9;
+};
+
+
+object bus{
+	name "Stanford";
+	BUS_I       2;
+        BUS_TYPE    2;
+        PD          0MW;
+        QD          0MVAr;
+        GS          0MW;
+        BS          0MVAr;
+        BUS_AREA    1;
+        VM          1;
+        VA          0;
+        BASE_KV     345kV;
+        ZONE        1;
+        VMAX        1.1;
+        VMIN        0.9;
+};
+
+object bus{
+	name "Mountain View";
+	BUS_I       3;
+        BUS_TYPE    2;
+        PD          0MW;
+        QD          0MVAr;
+        GS          0MW;
+        BS          0MVAr;
+        BUS_AREA    1;
+        VM          1;
+        VA          0;
+        BASE_KV     345kV;
+        ZONE        1;
+        VMAX        1.1;
+        VMIN        0.9;
+};
+
+object bus{
+	BUS_I       4;
+        BUS_TYPE    1;
+        PD          0MW;
+        QD          0MVAr;
+        GS          0MW;
+        BS          0MVAr;
+        BUS_AREA    1;
+        VM          1;
+        VA          0;
+        BASE_KV     345kV;
+        ZONE        1;
+        VMAX        1.1;
+        VMIN        0.9;
+};
+
+object bus{
+	BUS_I       5;
+        BUS_TYPE    1;
+        PD          90MW;
+        QD          30MVAr;
+        GS          0MW;
+        BS          0MVAr;
+        BUS_AREA    1;
+        VM          1;
+        VA          0;
+        BASE_KV     345kV;
+        ZONE        1;
+        VMAX        1.1;
+        VMIN        0.9;
+};
+
+object bus{
+	BUS_I       6;
+        BUS_TYPE    1;
+        PD          0MW;
+        QD          0MVAr;
+        GS          0MW;
+        BS          0MVAr;
+        BUS_AREA    1;
+        VM          1;
+        VA          0;
+        BASE_KV     345kV;
+        ZONE        1;
+        VMAX        1.1;
+        VMIN        0.9;
+};
+
+object bus{
+	BUS_I       7;
+        BUS_TYPE    1;
+        PD          100MW;
+        QD          35MVAr;
+        GS          0MW;
+        BS          0MVAr;
+        BUS_AREA    1;
+        VM          1;
+        VA          0;
+        BASE_KV     345kV;
+        ZONE        1;
+        VMAX        1.1;
+        VMIN        0.9;
+};
+
+object bus{
+	BUS_I       8;
+        BUS_TYPE    1;
+        PD          0MW;
+        QD          0MVAr;
+        GS          0MW;
+        BS          0MVAr;
+        BUS_AREA    1;
+        VM          1;
+        VA          0;
+        BASE_KV     345kV;
+        ZONE        1;
+        VMAX        1.1;
+        VMIN        0.9;
+};
+
+object bus{
+	BUS_I       9;
+        BUS_TYPE    1;
+        PD          125MW;
+        QD          50MVAr;
+        GS          0MW;
+        BS          0MVAr;
+        BUS_AREA    1;
+        VM          1;
+        VA          0;
+        BASE_KV     345kV;
+        ZONE        1;
+        VMAX        1.1;
+        VMIN        0.9;
+};
+
+object gen{
+        //GEN_BUS     1;
+	name "Generator 1";
+	parent "Palo Alto";
+        PG          0MW;
+        QG          0MVAr;
+        QMAX        300MVAr;
+        QMIN        -300MVAr;
+        VG          1;
+        MBASE       100;
+        GEN_STATUS  1;
+        PMAX        250MW;
+        PMIN        10MW;
+        PC1         0MVAr;
+        PC2         0MVAr;
+        QC1MIN      0MVAr;
+        QC1MAX      0MVAr;
+        QC2MIN      0MVAr;
+        QC2MAX      0MVAr;
+        RAMP_AGC    0;
+        RAMP_10     0MW;
+        RAMP_30     0MW;
+        RAMP_Q      0;
+        APF         0;
+};
+
+object gen{
+        //GEN_BUS     2;
+	name "Generator 2";
+	parent "Stanford";
+        PG          163MW;
+        QG          0MVAr;
+        QMAX        300MVAr;
+        QMIN        -300MVAr;
+        VG          1;
+        MBASE       100;
+        GEN_STATUS  1;
+        PMAX        300MW;
+        PMIN        10MW;
+        PC1         0MVAr;
+        PC2         0MVAr;
+        QC1MIN      0MVAr;
+        QC1MAX      0MVAr;
+        QC2MIN      0MVAr;
+        QC2MAX      0MVAr;
+        RAMP_AGC    0;
+        RAMP_10     0MW;
+        RAMP_30     0MW;
+        RAMP_Q      0;
+        APF         0;
+};
+
+object gen{
+        //GEN_BUS     3;
+	name "Generator 3";
+	parent "Mountain View";
+        PG          85MW;
+        QG          0MVAr;
+        QMAX        300MVAr;
+        QMIN        -300MVAr;
+        VG          1;
+        MBASE       100;
+        GEN_STATUS  1;
+        PMAX        270MW;
+        PMIN        10MW;
+        PC1         0MVAr;
+        PC2         0MVAr;
+        QC1MIN      0MVAr;
+        QC1MAX      0MVAr;
+        QC2MIN      0MVAr;
+        QC2MAX      0MVAr;
+        RAMP_AGC    0;
+        RAMP_10     0MW;
+        RAMP_30     0MW;
+        RAMP_Q      0;
+        APF         0;
+}
+
+object branch{
+	F_BUS       1;
+        T_BUS       4;
+        BR_R        0;
+        BR_X        0.0576;
+        BR_B        0;
+        RATE_A      250;
+        RATE_B      250;
+        RATE_C      250;
+        TAP         0;
+        SHIFT       0;
+        BR_STATUS   1;
+        ANGMIN      -360;
+        ANGMAX      360;
+};
+
+object branch{
+	F_BUS       4;
+        T_BUS       5;
+        BR_R        0.017;
+        BR_X        0.092;
+        BR_B        0.158;
+        RATE_A      250;
+        RATE_B      250;
+        RATE_C      250;
+        TAP         0;
+        SHIFT       0;
+        BR_STATUS   1;
+        ANGMIN      -360;
+        ANGMAX      360;
+};
+
+object branch{
+	F_BUS       5;
+        T_BUS       6;
+        BR_R        0.039;
+        BR_X        0.17;
+        BR_B        0.358;
+        RATE_A      150;
+        RATE_B      150;
+        RATE_C      150;
+        TAP         0;
+        SHIFT       0;
+        BR_STATUS   1;
+        ANGMIN      -360;
+        ANGMAX      360;
+};
+
+object branch{
+	F_BUS       3;
+        T_BUS       6;
+        BR_R        0;
+        BR_X        0.0586;
+        BR_B        0;
+        RATE_A      300;
+        RATE_B      300;
+        RATE_C      300;
+        TAP         0;
+        SHIFT       0;
+        BR_STATUS   1;
+        ANGMIN      -360;
+        ANGMAX      360;
+}
+
+object branch{
+	F_BUS       6;
+        T_BUS       7;
+        BR_R        0.0119;
+        BR_X        0.1008;
+        BR_B        0.209;
+        RATE_A      150;
+        RATE_B      150;
+        RATE_C      150;
+        TAP         0;
+        SHIFT       0;
+        BR_STATUS   1;
+        ANGMIN      -360;
+        ANGMAX      360;
+};
+
+object branch{
+	F_BUS       7;
+        T_BUS       8;
+        BR_R        0.0085;
+        BR_X        0.072;
+        BR_B        0.149;
+        RATE_A      250;
+        RATE_B      250;
+        RATE_C      250;
+        TAP         0;
+        SHIFT       0;
+        BR_STATUS   1;
+        ANGMIN      -360;
+        ANGMAX      360;
+};
+
+object branch{
+	F_BUS       8;
+        T_BUS       2;
+        BR_R        0;
+        BR_X        0.0625;
+        BR_B        0;
+        RATE_A      250;
+        RATE_B      250;
+        RATE_C      250;
+        TAP         0;
+        SHIFT       0;
+        BR_STATUS   1;
+        ANGMIN      -360;
+        ANGMAX      360;
+};
+
+object branch{
+	F_BUS       8;
+        T_BUS       9;
+        BR_R        0.032;
+        BR_X        0.161;
+        BR_B        0.306;
+        RATE_A      250;
+        RATE_B      250;
+        RATE_C      250;
+        TAP         0;
+        SHIFT       0;
+        BR_STATUS   1;
+        ANGMIN      -360;
+        ANGMAX      360;
+};
+
+object branch{
+	F_BUS       9;
+        T_BUS       4;
+        BR_R        0.01;
+        BR_X        0.085;
+        BR_B        0.176;
+        RATE_A      250;
+        RATE_B      250;
+        RATE_C      250;
+        TAP         0;
+        SHIFT       0;
+        BR_STATUS   1;
+        ANGMIN      -360;
+        ANGMAX      360;
+};
+
+object gen_cost{
+        MODEL       2;
+        STARTUP     1500;
+        SHUTDOWN    0;
+        NCOST       3;
+        COST        0.11,5,150;
+};
+
+object gen_cost{
+        MODEL       2;
+        STARTUP     2000;
+        SHUTDOWN    0;
+        NCOST       3;
+        COST        0.085,1.2,600;
+};
+
+object gen_cost{
+        MODEL       2;
+        STARTUP     1500;
+        SHUTDOWN    0;
+        NCOST       3;
+        COST        0.1225,1,335;
+};
+
+object baseMVA{
+	BASEMVA	    100;
+};
+
+object areas{
+	AREA	     1;
+	REFBUS	     5;
+}

@@ -1,0 +1,79 @@
+// $Id$
+// Copyright (C) 2008 Battelle Memorial Institute
+// Created by DP Chassin 
+// Created on 2008-09-18
+//
+// Olympic Peninsula Project Library
+//
+// This file contains a the library of object configurations
+// used by the GridWise Olympic Peninsula Demonstration Testbed
+// performed from April 2006 through March 2007.
+//
+// For more information on the Olypen project, see
+// http://gridwise.pnl.gov/docs/op_project_final_report_pnnl17167.pdf
+//
+
+///////////////////////////////////////////////////////////////////////////////
+// load the boundary condition and data collection module
+module tape;
+
+// load the powerflow module
+module powerflow {
+	major 2;	// version 2 required
+	
+	// set powerflow module global parameters here (if any)
+}
+
+// load the residential module
+module residential;
+
+///////////////////////////////////////////////////////////////////////////////
+// extension to house
+class house {
+	double price[$/MWh];
+	enumeration {FIXED=1, TOU=2, RTP=3} contract;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// transformer library
+object transformer_configuration {
+	name Feeder_2000kVA;
+	impedance 0.001+0.01j;
+	powerA_rating 2000 kVA;
+	powerB_rating 2000 kVA;
+	powerC_rating 2000 kVA;
+	primary_voltage 37500;
+	secondary_voltage 7200;
+	connect_type WYE_WYE;
+	install_type PADMOUNT;
+}
+
+object transformer_configuration {
+	name Poletop_40kVA_A;
+	impedance 0.005+0.05j;
+	powerA_rating 40 kVA;
+	primary_voltage 7200;
+	secondary_voltage 120;
+	connect_type SINGLE_PHASE_CENTER_TAPPED; // may be DELTA_DELTA, DELTA_WYE, etc.
+	install_type POLETOP;
+}
+
+object transformer_configuration {
+	name Poletop_40kVA_B;
+	impedance 0.005+0.05j;
+	powerB_rating 40 kVA;
+	primary_voltage 7200;
+	secondary_voltage 120;
+	connect_type SINGLE_PHASE_CENTER_TAPPED; // may be DELTA_DELTA, DELTA_WYE, etc.
+	install_type POLETOP;
+}
+
+object transformer_configuration {
+	name Poletop_40kVA_C;
+	impedance 0.005+0.05j;
+	powerC_rating 40 kVA;
+	primary_voltage 7200;
+	secondary_voltage 120;
+	connect_type SINGLE_PHASE_CENTER_TAPPED; // may be DELTA_DELTA, DELTA_WYE, etc.
+	install_type POLETOP;
+}

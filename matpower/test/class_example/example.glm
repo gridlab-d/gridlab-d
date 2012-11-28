@@ -1,0 +1,658 @@
+//Input feeder information for IEEE 9 node with different cases.
+//Started on 10/21/09. This version created 15-Oct-2010 14:08:40.
+
+
+// setup GridLAB-D for a standard run
+#define MAXDATA=1000
+#define INTERVAL=900
+
+#set debugger=0		// 1 to enable model debugger
+#set skipsafe=0		// number of ticks to allow objects to safely skip on sync (0 disables skipsafe)
+#set threadcount=1	// 0 uses all available processors
+#set debug=0		// 1 enables debug output
+#set verbose=0		// 1 enables verbose output
+
+
+clock {
+     timezone PST+8PDT;
+     starttime '2000-01-01 00:00:00';
+     stoptime '2000-01-01 04:00:00';
+}
+
+
+module wholesale {
+};
+
+object bus{
+	name "Palo Alto Generator";
+	//BUS_I       1;
+        BUS_TYPE    "REF";//3;
+        PD          0MW;
+        QD          0MVAr;
+        GS          0MW;
+        BS          0MVAr;
+        BUS_AREA    1;
+        VM          1;
+        VA          0;
+        BASE_KV     345kV;
+        ZONE        1;
+        VMAX        1.1;
+        VMIN        0.9;
+};
+
+
+object bus{
+	name "Stanford Generator";
+	//BUS_I       2;
+        BUS_TYPE    "PV";//2;
+        PD          0MW;
+        QD          0MVAr;
+        GS          0MW;
+        BS          0MVAr;
+        BUS_AREA    1;
+        VM          1;
+        VA          0;
+        BASE_KV     345kV;
+        ZONE        1;
+        VMAX        1.1;
+        VMIN        0.9;
+};
+
+object bus{
+	name "Mountain View Generator";
+	//BUS_I       3;
+        BUS_TYPE    "PV";//2;
+        PD          0MW;
+        QD          0MVAr;
+        GS          0MW;
+        BS          0MVAr;
+        BUS_AREA    1;
+        VM          1;
+        VA          0;
+        BASE_KV     345kV;
+        ZONE        1;
+        VMAX        1.1;
+        VMIN        0.9;
+};
+
+object bus{
+	name "Packard Building";
+	//BUS_I       4;
+        BUS_TYPE    "PQ";//1;
+        PD          0MW;
+        QD          0MVAr;
+        GS          0MW;
+        BS          0MVAr;
+        BUS_AREA    1;
+        VM          1;
+        VA          0;
+        BASE_KV     345kV;
+        ZONE        1;
+        VMAX        1.1;
+        VMIN        0.9;
+};
+
+object bus{
+	name "Gates Building";
+	//BUS_I       5;
+        BUS_TYPE    "PQ";//1;
+        PD          90MW;
+        QD          30MVAr;
+        GS          0MW;
+        BS          0MVAr;
+        BUS_AREA    1;
+        VM          1;
+        VA          0;
+        BASE_KV     345kV;
+        ZONE        1;
+        VMAX        1.1;
+        VMIN        0.9;
+};
+
+object bus{
+	name "Hewlett Building";
+	//BUS_I       6;
+        BUS_TYPE    "PQ";//1;
+        PD          0MW;
+        QD          0MVAr;
+        GS          0MW;
+        BS          0MVAr;
+        BUS_AREA    1;
+        VM          1;
+        VA          0;
+        BASE_KV     345kV;
+        ZONE        1;
+        VMAX        1.1;
+        VMIN        0.9;
+};
+
+object bus{
+	name "Huang Building";
+	//BUS_I       7;
+        BUS_TYPE    "PQ";//1;
+        PD          100MW;
+        QD          35MVAr;
+        GS          0MW;
+        BS          0MVAr;
+        BUS_AREA    1;
+        VM          1;
+        VA          0;
+        BASE_KV     345kV;
+        ZONE        1;
+        VMAX        1.1;
+        VMIN        0.9;
+};
+
+object bus{
+	name "Nano Building";
+	//BUS_I       8;
+        BUS_TYPE    "PQ";//1;
+        PD          0MW;
+        QD          0MVAr;
+        GS          0MW;
+        BS          0MVAr;
+        BUS_AREA    1;
+        VM          1;
+        VA          0;
+        BASE_KV     345kV;
+        ZONE        1;
+        VMAX        1.1;
+        VMIN        0.9;
+};
+
+object bus{
+	name "Y2E2 Building";
+	//BUS_I       9;
+        BUS_TYPE    "PQ";//1;
+        PD          125MW;
+        QD          50MVAr;
+        GS          0MW;
+        BS          0MVAr;
+        BUS_AREA    1;
+        VM          1;
+        VA          0;
+        BASE_KV     345kV;
+        ZONE        1;
+        VMAX        1.1;
+        VMIN        0.9;
+};
+
+object gen{
+        //GEN_BUS     1;
+	name "Generator 1";
+	parent "Palo Alto Generator";
+        PG          0MW;
+        QG          0MVAr;
+        QMAX        300MVAr;
+        QMIN        -300MVAr;
+        VG          1;
+        MBASE       100;
+        GEN_STATUS  1;
+        PMAX        250MW;
+        PMIN        10MW;
+        PC1         0MVAr;
+        PC2         0MVAr;
+        QC1MIN      0MVAr;
+        QC1MAX      0MVAr;
+        QC2MIN      0MVAr;
+        QC2MAX      0MVAr;
+        RAMP_AGC    0;
+        RAMP_10     0MW;
+        RAMP_30     0MW;
+        RAMP_Q      0;
+        APF         0;
+        MODEL       2;
+        STARTUP     1500;
+        SHUTDOWN    0;
+        NCOST       3;
+        COST        0.11,5,150;
+};
+
+object gen{
+        //GEN_BUS     2;
+	name "Generator 2";
+	parent "Stanford Generator";
+        PG          163MW;
+        QG          0MVAr;
+        QMAX        300MVAr;
+        QMIN        -300MVAr;
+        VG          1;
+        MBASE       100;
+        GEN_STATUS  1;
+        PMAX        300MW;
+        PMIN        10MW;
+        PC1         0MVAr;
+        PC2         0MVAr;
+        QC1MIN      0MVAr;
+        QC1MAX      0MVAr;
+        QC2MIN      0MVAr;
+        QC2MAX      0MVAr;
+        RAMP_AGC    0;
+        RAMP_10     0MW;
+        RAMP_30     0MW;
+        RAMP_Q      0;
+        APF         0;
+        MODEL       2;
+        STARTUP     2000;
+        SHUTDOWN    0;
+        NCOST       3;
+        COST        0.085,1.2,600;
+};
+
+object gen{
+        //GEN_BUS     3;
+	name "Generator 3";
+	parent "Mountain View Generator";
+        PG          85MW;
+        QG          0MVAr;
+        QMAX        300MVAr;
+        QMIN        -300MVAr;
+        VG          1;
+        MBASE       100;
+        GEN_STATUS  1;
+        PMAX        270MW;
+        PMIN        10MW;
+        PC1         0MVAr;
+        PC2         0MVAr;
+        QC1MIN      0MVAr;
+        QC1MAX      0MVAr;
+        QC2MIN      0MVAr;
+        QC2MAX      0MVAr;
+        RAMP_AGC    0;
+        RAMP_10     0MW;
+        RAMP_30     0MW;
+        RAMP_Q      0;
+        APF         0;
+        MODEL       2;
+        STARTUP     1500;
+        SHUTDOWN    0;
+        NCOST       3;
+        COST        0.1225,1,335;
+}
+
+object branch{
+	//F_BUS       1;
+        //T_BUS       4;
+	F_BUS_NAME	"Palo Alto Generator";
+	T_BUS_NAME	"Packard Building";
+        BR_R        0;
+        BR_X        0.0576;
+        BR_B        0;
+        RATE_A      250;
+        RATE_B      250;
+        RATE_C      250;
+        TAP         0;
+        SHIFT       0;
+        BR_STATUS   1;
+        ANGMIN      -360;
+        ANGMAX      360;
+};
+
+object branch{
+	//F_BUS       4;
+        //T_BUS       5;
+	F_BUS_NAME	"Packard Building";
+	T_BUS_NAME	"Gates Building";
+        BR_R        0.017;
+        BR_X        0.092;
+        BR_B        0.158;
+        RATE_A      250;
+        RATE_B      250;
+        RATE_C      250;
+        TAP         0;
+        SHIFT       0;
+        BR_STATUS   1;
+        ANGMIN      -360;
+        ANGMAX      360;
+};
+
+object branch{
+	//F_BUS       5;
+        //T_BUS       6;
+	F_BUS_NAME	"Gates Building";
+	T_BUS_NAME	"Hewlett Building";
+        BR_R        0.039;
+        BR_X        0.17;
+        BR_B        0.358;
+        RATE_A      150;
+        RATE_B      150;
+        RATE_C      150;
+        TAP         0;
+        SHIFT       0;
+        BR_STATUS   1;
+        ANGMIN      -360;
+        ANGMAX      360;
+};
+
+object branch{
+	//F_BUS       3;
+        //T_BUS       6;
+	F_BUS_NAME	"Mountain View Generator";
+	T_BUS_NAME	"Hewlett Building";
+        BR_R        0;
+        BR_X        0.0586;
+        BR_B        0;
+        RATE_A      300;
+        RATE_B      300;
+        RATE_C      300;
+        TAP         0;
+        SHIFT       0;
+        BR_STATUS   1;
+        ANGMIN      -360;
+        ANGMAX      360;
+}
+
+object branch{
+	//F_BUS       6;
+        //T_BUS       7;
+	F_BUS_NAME	"Hewlett Building";
+	T_BUS_NAME	"Huang Building";
+        BR_R        0.0119;
+        BR_X        0.1008;
+        BR_B        0.209;
+        RATE_A      150;
+        RATE_B      150;
+        RATE_C      150;
+        TAP         0;
+        SHIFT       0;
+        BR_STATUS   1;
+        ANGMIN      -360;
+        ANGMAX      360;
+};
+
+object branch{
+	//F_BUS       7;
+        //T_BUS       8;
+	F_BUS_NAME	"Huang Building";
+	T_BUS_NAME	"Nano Building";
+        BR_R        0.0085;
+        BR_X        0.072;
+        BR_B        0.149;
+        RATE_A      250;
+        RATE_B      250;
+        RATE_C      250;
+        TAP         0;
+        SHIFT       0;
+        BR_STATUS   1;
+        ANGMIN      -360;
+        ANGMAX      360;
+};
+
+object branch{
+	//F_BUS       8;
+        //T_BUS       2;
+	F_BUS_NAME	"Nano Building";
+	T_BUS_NAME	"Stanford Generator";
+        BR_R        0;
+        BR_X        0.0625;
+        BR_B        0;
+        RATE_A      250;
+        RATE_B      250;
+        RATE_C      250;
+        TAP         0;
+        SHIFT       0;
+        BR_STATUS   1;
+        ANGMIN      -360;
+        ANGMAX      360;
+};
+
+object branch{
+	//F_BUS       8;
+        //T_BUS       9;
+	F_BUS_NAME	"Nano Building";
+	T_BUS_NAME	"Y2E2 Building";
+        BR_R        0.032;
+        BR_X        0.161;
+        BR_B        0.306;
+        RATE_A      250;
+        RATE_B      250;
+        RATE_C      250;
+        TAP         0;
+        SHIFT       0;
+        BR_STATUS   1;
+        ANGMIN      -360;
+        ANGMAX      360;
+};
+
+object branch{
+	//F_BUS       9;
+        //T_BUS       4;
+	F_BUS_NAME	"Y2E2 Building";
+	T_BUS_NAME	"Packard Building";
+        BR_R        0.01;
+        BR_X        0.085;
+        BR_B        0.176;
+        RATE_A      250;
+        RATE_B      250;
+        RATE_C      250;
+        TAP         0;
+        SHIFT       0;
+        BR_STATUS   1;
+        ANGMIN      -360;
+        ANGMAX      360;
+};
+
+//
+//object gen_cost{
+  //      MODEL       2;
+  //     STARTUP     1500;
+  //      SHUTDOWN    0;
+  //      NCOST       3;
+  //      COST        0.11,5,150;
+//};
+
+//object gen_cost{
+   //     MODEL       2;
+   //    STARTUP     2000;
+   //     SHUTDOWN    0;
+   //     NCOST       3;
+   //     COST        0.085,1.2,600;
+//};
+
+//object gen_cost{
+     //   MODEL       2;
+     //   STARTUP     1500;
+     //   SHUTDOWN    0;
+     //   NCOST       3;
+     //   COST        0.1225,1,335;
+//};
+
+object baseMVA{
+	BASEMVA	    100;
+};
+
+object areas{
+	AREA	     1;
+	REFBUS	     5;
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// data collection
+module tape{
+};
+
+object recorder{
+	file "Packard_Voltage.out";
+	parent "Packard Building";
+	property "VM,VA";
+	interval ${INTERVAL};
+	limit	${MAXDATA};
+};
+
+object recorder{
+	file "Gates_Voltage.out";
+	parent "Gates Building";
+	property "VM,VA";
+	interval ${INTERVAL};
+	limit	${MAXDATA};
+};
+
+
+object recorder{
+	file "Hewlett_Voltage.out";
+	parent "Hewlett Building";
+	property "VM,VA";
+	interval ${INTERVAL};
+	limit	${MAXDATA};
+};
+
+object recorder{
+	file "Huang_Voltage.out";
+	parent "Huang Building";
+	property "VM,VA";
+	interval ${INTERVAL};
+	limit	${MAXDATA};
+};
+
+object recorder{
+	file "Nano_Voltage.out";
+	parent "Nano Building";
+	property "VM,VA";
+	interval ${INTERVAL};
+	limit	${MAXDATA};
+};
+
+object recorder{
+	file "Y2E2_Voltage.out";
+	parent "Y2E2 Building";
+	property "VM,VA";
+	interval ${INTERVAL};
+	limit	${MAXDATA};
+};
+
+object recorder{
+	file "PaloAlto_Power.out";
+	parent "Generator 1";
+	property "PG,QG";
+	interval ${INTERVAL};
+	limit	${MAXDATA};
+}
+
+object recorder{
+	file "Stanford_Power.out";
+	parent "Generator 2";
+	property "PG,QG";
+	interval ${INTERVAL};
+	limit	${MAXDATA};
+}
+
+object recorder{
+	file "MountainView_Power.out";
+	parent "Generator 3";
+	property "PG,QG";
+	interval ${INTERVAL};
+	limit	${MAXDATA};
+}
+
+object recorder{
+	file "PaloAlto_Voltage.out";
+	parent "Palo Alto Generator";
+	property "VM,VA";
+	interval ${INTERVAL};
+	limit	${MAXDATA};
+}
+
+object recorder{
+	file "Stanford_Power.out";
+	parent "Stanford Generator";
+	property "VM,VA";
+	interval ${INTERVAL};
+	limit	${MAXDATA};
+}
+
+object recorder{
+	file "MountainView_Power.out";
+	parent "Mountain View Generator";
+	property "VM,VA";
+	interval ${INTERVAL};
+	limit	${MAXDATA};
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// data player
+object player{
+	parent "Packard Building";
+	file "Packard_Power_PD.in";
+	property "PD";
+
+};
+
+object player{
+	parent "Packard Building";
+	file "Packard_Power_QD.in";
+	property "QD";
+
+};
+
+object player{
+	parent "Gates Building";
+	file "Gates_Power_PD.in";
+	property "PD";
+
+};
+
+object player{
+	parent "Gates Building";
+	file "Gates_Power_QD.in";
+	property "QD";
+
+};
+
+object player{
+	parent "Hewlett Building";
+	file "Hewlett_Power_PD.in";
+	property "PD";
+
+};
+
+object player{
+	parent "Hewlett Building";
+	file "Hewlett_Power_QD.in";
+	property "QD";
+
+};
+
+object player{
+	parent "Huang Building";
+	file "Huang_Power_PD.in";
+	property "PD";
+
+};
+
+object player{
+	parent "Huang Building";
+	file "Huang_Power_QD.in";
+	property "QD";
+
+};
+
+object player{
+	parent "Nano Building";
+	file "Nano_Power_PD.in";
+	property "PD";
+
+};
+
+object player{
+	parent "Nano Building";
+	file "Nano_Power_QD.in";
+	property "QD";
+
+};
+
+object player{
+	parent "Y2E2 Building";
+	file "Y2E2_Power_PD.in";
+	property "PD";
+
+};
+
+object player{
+	parent "Y2E2 Building";
+	file "Y2E2_Power_QD.in";
+	property "QD";
+
+};
+
