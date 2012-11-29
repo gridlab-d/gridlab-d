@@ -26,15 +26,15 @@ MODULE:wholesale
 #define DLMAIN
 
 /* TODO: set the major and minor numbers (0 is ignored) */
-#define MAJOR 0
-#define MINOR 0
+//#define MAJOR 0
+//#define MINOR 0
 
 #include <stdlib.h>
 #include "gridlabd.h"
 
 EXPORT int do_kill(void*);
 
-EXPORT int major=MAJOR, minor=MINOR;
+//EXPORT int major=MAJOR, minor=MINOR;
 
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
@@ -60,7 +60,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
 #else // !WIN32
 
-CDECL int dllinit() __attribute__((constructor));
+/*CDECL int dllinit() __attribute__((constructor));
 CDECL int dllkill() __attribute__((destructor));
 
 CDECL int dllinit()
@@ -70,7 +70,7 @@ CDECL int dllinit()
 
 CDECL int dllkill() {
 	do_kill(NULL);
-}
+	}*/
 
 #endif // !WIN32
 /**@}*/

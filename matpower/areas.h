@@ -2,6 +2,7 @@
 	@file areas.h
 	@addtogroup areas
 	@ingroup MODULENAME
+	author: Kyle Anderson, kyle.anderson@stanford.edu	
 
  @{
  **/

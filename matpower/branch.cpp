@@ -10,6 +10,9 @@
 	</verbatim>
 
 	You must be in the module directory to do this.
+	author: Kyle Anderson (GridSpice Project),  kyle.anderson@stanford.edu
+	Released in Open Source to Gridlab-D Project
+
 
  **/
 

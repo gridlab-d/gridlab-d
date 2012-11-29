@@ -11,6 +11,9 @@
 
 	You must be in the module directory to do this.
 
+	author: Kyle Anderson (GridSpice Project),  kyle.anderson@stanford.edu
+	Released in Open Source to Gridlab-D Project
+
  **/
 
 #include <stdlib.h>
@@ -23,8 +26,8 @@
 #include "baseMVA.h"
 #include "areas.h"
 //#include "gen_cost.h"
-#include "wholesale.h"
-#include "lock.h"
+#include "matpower.h"
+//#include "lock.h"
 #include <map>
 #include <iostream>
 #include <string>
@@ -252,7 +255,7 @@ int bus::init(OBJECT *parent)
 			find_res = bus_map.find(F_bus_name);
 			if (find_res == bus_map.end())
 			{
-				gl_error("Cannot find from bus %s in branch", F_bus_name);
+			  //gl_error("Cannot find from bus %s in branch", F_bus_name);
 				exit(1);
 			}
 			//setObjectValue_Double(obj_branch,"F_BUS",(*find_res).second);
@@ -262,7 +265,7 @@ int bus::init(OBJECT *parent)
 			find_res = bus_map.find(T_bus_name);
 			if (find_res == bus_map.end())
 			{
-				gl_error("Cannot find to bus %s in branch", T_bus_name);
+			  //gl_error("Cannot find to bus %s in branch", T_bus_name);
 				exit(1);
 			}
 			//setObjectValue_Double(obj_branch,"T_BUS",(*find_res).second);
@@ -294,7 +297,7 @@ int bus::init(OBJECT *parent)
 			find_gen = bus_map.find(Gen_parent_name);
 			if (find_gen == bus_map.end())
 			{
-				gl_error("Cannot find bus %s at generator %s",Gen_parent_name,obj_gen->name);
+			  //gl_error("Cannot find bus %s at generator %s",Gen_parent_name,obj_gen->name);
 				exit(1);
 			}
 			gen_GEN_BUS.push_back((*find_gen).second);

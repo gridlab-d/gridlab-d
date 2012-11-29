@@ -2,6 +2,9 @@
 	@file bus.h
 	@addtogroup bus
 	@ingroup MODULENAME
+	author: Kyle Anderson (GridSpice Project),  kyle.anderson@stanford.edu
+	Released in Open Source to Gridlab-D Project
+
 
  @{
  **/
@@ -11,7 +14,7 @@
 
 #include <stdarg.h>
 #include "gridlabd.h"
-#include "wholesale.h"
+#include "matpower.h"
 
 #define MAXSIZE 10000
 

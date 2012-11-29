@@ -19,7 +19,7 @@
 
 #include "gen.h"
 #include "bus.h"
-#include "wholesale.h"
+#include "matpower.h"
 
 CLASS *gen::oclass = NULL;
 gen *gen::defaults = NULL;

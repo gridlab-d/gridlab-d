@@ -2,6 +2,9 @@
 	@file branch.h
 	@addtogroup branch
 	@ingroup MODULENAME
+	author: Kyle Anderson (GridSpice Project),  kyle.anderson@stanford.edu
+	Released in Open Source to Gridlab-D Project
+
 
  @{
  **/

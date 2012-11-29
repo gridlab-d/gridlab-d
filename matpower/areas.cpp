@@ -10,6 +10,9 @@
 	</verbatim>
 
 	You must be in the module directory to do this.
+	author: Kyle Anderson, kyle.anderson@stanford.edu
+
+
 
  **/
 

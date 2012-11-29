@@ -6,7 +6,7 @@
 #include <math.h>
 #include "gridlabd.h"
 
-#include "wholesale.h"
+#include "matpower.h"
 #include "bus.h"
 //#include "line.h"
 //#include "solver_matpower.h"
