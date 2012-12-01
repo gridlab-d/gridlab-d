@@ -113,6 +113,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mysql", "..\mysql\mysql.vcp
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "debug", "..\debug\debug.vcproj", "{FDCB0E8B-550C-449E-A810-5346F94B19F2}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "network", "..\network\network.vcproj", "{543A6584-4A21-464D-ACF3-1B378AF7D373}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -582,6 +584,22 @@ Global
 		{FDCB0E8B-550C-449E-A810-5346F94B19F2}.Release|Win32.Build.0 = Release|Win32
 		{FDCB0E8B-550C-449E-A810-5346F94B19F2}.Release|x64.ActiveCfg = Release|x64
 		{FDCB0E8B-550C-449E-A810-5346F94B19F2}.Release|x64.Build.0 = Release|x64
+		{543A6584-4A21-464D-ACF3-1B378AF7D373}.Debug|Win32.ActiveCfg = Debug|Win32
+		{543A6584-4A21-464D-ACF3-1B378AF7D373}.Debug|Win32.Build.0 = Debug|Win32
+		{543A6584-4A21-464D-ACF3-1B378AF7D373}.Debug|x64.ActiveCfg = Debug|x64
+		{543A6584-4A21-464D-ACF3-1B378AF7D373}.Debug|x64.Build.0 = Debug|x64
+		{543A6584-4A21-464D-ACF3-1B378AF7D373}.MatlabDebug|Win32.ActiveCfg = Debug|Win32
+		{543A6584-4A21-464D-ACF3-1B378AF7D373}.MatlabDebug|Win32.Build.0 = Debug|Win32
+		{543A6584-4A21-464D-ACF3-1B378AF7D373}.MatlabDebug|x64.ActiveCfg = Debug|x64
+		{543A6584-4A21-464D-ACF3-1B378AF7D373}.MatlabDebug|x64.Build.0 = Debug|x64
+		{543A6584-4A21-464D-ACF3-1B378AF7D373}.QuickDebug|Win32.ActiveCfg = QuickDebug|Win32
+		{543A6584-4A21-464D-ACF3-1B378AF7D373}.QuickDebug|Win32.Build.0 = QuickDebug|Win32
+		{543A6584-4A21-464D-ACF3-1B378AF7D373}.QuickDebug|x64.ActiveCfg = QuickDebug|x64
+		{543A6584-4A21-464D-ACF3-1B378AF7D373}.QuickDebug|x64.Build.0 = QuickDebug|x64
+		{543A6584-4A21-464D-ACF3-1B378AF7D373}.Release|Win32.ActiveCfg = Release|Win32
+		{543A6584-4A21-464D-ACF3-1B378AF7D373}.Release|Win32.Build.0 = Release|Win32
+		{543A6584-4A21-464D-ACF3-1B378AF7D373}.Release|x64.ActiveCfg = Release|x64
+		{543A6584-4A21-464D-ACF3-1B378AF7D373}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
