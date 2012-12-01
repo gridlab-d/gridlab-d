@@ -10,7 +10,8 @@
 
 #include "pw_load.h"
 
-// let's see if this *doesn't* confuse the compiler.  Fingers crossed.
+#ifdef HAVE_POWERWORLD
+
 /**
  	Scans the argument to validate its VARIANT type, and to perform basic
  	  error checking.
@@ -28,7 +29,10 @@ int check_COM_output_load(_variant_t output){
 
 	if(output.vt != (VT_VARIANT | VT_ARRAY)){
 		gl_error("check_COM_output_load: COM call did not return an array of variants");
-		/* TROUBLESHOOTING */
+		/* TROUBLESHOOTING
+		An error was encountered in pw_load while trying to return a required array.  Please try again.
+		If the error persists, please submit your code and a bug report via the trac website
+		*/
 		return 0;
 	}
 	output_array = output.parray;
@@ -38,17 +42,27 @@ int check_COM_output_load(_variant_t output){
 			break; //okay
 		case DISP_E_BADINDEX: // bad entry in indices
 			gl_error("check_COM_output_load: bad index in SafeArrayGetElement");
-			/* TROUBLESHOOTING */
+			/* TROUBLESHOOTING
+			A bad index value was encountered while parsing the COM output to PowerWorld.  Please ensure
+			all values are correct and try again.
+			*/
 			return 0;
 			break; 
 		case E_INVALIDARG: 
 			gl_error("check_COM_output_load: invalid arguement in SafeArrayGetElement");
-			/* TROUBLESHOOTING */
+			/* TROUBLESHOOTING
+			An invalid argument was encountered while parsing the COM output to PowerWorld.  Please ensure
+			all values are correct and try again.
+			*/
 			return 0;
 			break; // one of the args was invalid (?)
 		case E_OUTOFMEMORY: 
 			gl_error("check_COM_output_load: ran out of memory during SafeArrayGetElement");
-			/* TROUBLESHOOTING */
+			/* TROUBLESHOOTING
+			Memory ran out while parsing the COM output to PowerWorld.  Please ensure
+			all values are correct and try again.  If the error persists, please submit a bug
+			report via the trac website.
+			*/
 			return 0;
 			break; // ran out of memory
 	}
@@ -56,7 +70,10 @@ int check_COM_output_load(_variant_t output){
 	ptr = _com_util::ConvertBSTRToString(bHolder);
 	if(strlen(ptr) > 0){
 		gl_error("check_COM_output_load: %s", ptr);
-		/* TROUBLESHOOTING */
+		/* TROUBLESHOOTING
+		A generic COM error was encountered while interfacing with PowerWorld.  Please check
+		MSDN and other resources for what this may mean.
+		*/
 		return 0;
 	}
 	return 1; // "good"
@@ -186,9 +203,8 @@ int pw_load::get_powerworld_busangle(){
 			tempstr = 0;
 			SafeArrayDestroy(fields.parray);
 			SafeArrayDestroy(values.parray);
-			return 0;
+			return 1;	//Zero is apparently a succes, so return a non-zero
 		} else {
-			double load_pi, load_pr;
 			
 			hr = SafeArrayAccessData(presults[1].parray, (void HUGEP **)&pvariant);
 			if (FAILED(hr)){
@@ -288,9 +304,9 @@ int pw_load::get_powerworld_nomvolt(){
 			tempstr = 0;
 			SafeArrayDestroy(fields.parray);
 			SafeArrayDestroy(values.parray);
-			return 0;
+
+			return 1;	//Zero is apparently a succes, so return a non-zero
 		} else {
-			double load_pi, load_pr;
 			
 			hr = SafeArrayAccessData(presults[1].parray, (void HUGEP **)&pvariant);
 			if (FAILED(hr)){
@@ -410,7 +426,7 @@ int pw_load::get_powerworld_voltage(){
 			tempstr = 0;
 			SafeArrayDestroy(fields.parray);
 			SafeArrayDestroy(values.parray);
-			return 0;
+			return 1;	//Zero is apparently a succes, so return a non-zero
 		} else {
 			double load_pi, load_pr;
 			
@@ -632,6 +648,10 @@ int pw_load::init(OBJECT *parent){
 	// power_threshold must be positive, else default
 	if(power_threshold < 0.0){
 		gl_warning("pw_load::init(): power_threshold is negative, making positive");
+		/*  TROUBLESHOOT
+		The power_threshold specified for pw_load is a negative value.  It has been automatically made
+		positive.
+		*/
 		power_threshold = -power_threshold;
 	}
 
@@ -671,6 +691,10 @@ int pw_load::init(OBJECT *parent){
 TIMESTAMP pw_load::presync(TIMESTAMP t1){
 	if(0 == cModel){
 		gl_error("pw_load::presync(): cModel is null (is deferred initialization enabled?)");
+		/*  TROUBLESHOOT
+		The pw_load object must be parented to a pw_model object and must be ran in deferred initilization mode.
+		Please make sure both of these conditions are true and try again.
+		*/
 		return TS_INVALID;
 	}
 	if(!cModel->get_valid_flag()){
@@ -679,13 +703,17 @@ TIMESTAMP pw_load::presync(TIMESTAMP t1){
 		if(0 != get_powerworld_busangle()){
 			gl_error("pw_load::presync(): get_powerworld_busangle failed");
 			/*	TROUBLESHOOT
-			 */
+			pw_load failed to retrieve the bus angles for the connection point.  Please ensure all
+			connection values are correct and try again.
+			*/
 			return TS_INVALID;
 		}
 		if(0 != get_powerworld_voltage()){
 			gl_error("pw_load::presync(): get_powerworld_voltage failed");
 			/*	TROUBLESHOOT
-			 */
+			pw_load failed to retrieve the bus voltages for the connection point.  Please ensure all
+			connection values are correct and try again.
+			*/
 			return TS_INVALID;
 		}
 		// SetPolar takes radians, regardless of flag.
@@ -743,5 +771,5 @@ int pw_load::isa(char *classname){
 	return (0 == strcmp(classname, oclass->name));
 }
 
-
+#endif //HAVE_POWERWORLD
 // EOF

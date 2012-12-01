@@ -7,15 +7,14 @@
 #ifndef _PW_MODEL_H_
 #define _PW_MODEL_H_
 
-
 #include "network.h"
+
+#ifdef HAVE_POWERWORLD
 
 // something in the import'ed stuff includes wtypes.h, which uses int64 as a member name
 #ifdef int64
 #undef int64
 #endif
-// kinda-TODO hardcoded strings are bad, should use a 'powerworld_executable_path' for this, if PW is located in a nonstandard location.  Assuming we even can, being a #import
-//#import "C:\Program Files (x86)\PowerWorld\Simulator16\pwrworld.exe"
 #import "libid:C99F1760-277E-11D5-A106-00C04F469176"
 #ifndef int64
 #define int64 __int64
@@ -36,6 +35,7 @@ public:
 	TIMESTAMP postsync(TIMESTAMP t1);
 	int isa(char *classname);
 	int finalize();
+	void pw_close_COM(void);
 public:
 	GL_STRING(char1024, model_name);
 	GL_STRING(char1024, load_list_file);
@@ -51,11 +51,10 @@ public:
 	ISimulatorAutoPtr A;
 	CLSID clsid;
 	HRESULT hr;
-	// do we need a 'state of the model connection' enum for friendly use?
-
 
 };
 
+#endif // HAVE_POWERWORLD
 #endif // _PW_MODEL_H_
 
 // EOF

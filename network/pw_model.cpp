@@ -10,6 +10,9 @@
  **/
 
 #include "pw_model.h"
+
+#ifdef HAVE_POWERWORLD
+
 #include "comutil.h"
 #include "atlbase.h"
 #pragma comment(lib, "comsuppw.lib")
@@ -104,8 +107,10 @@ int check_COM_output(_variant_t output){
 
 	if(output.vt != (VT_VARIANT | VT_ARRAY)){
 		gl_error("check_COM_output: COM call did not return an array of variants");
-		/*	TROUBLESHOOT
-		 */
+		/* TROUBLESHOOTING
+		An error was encountered in pw_load while trying to return a required array.  Please try again.
+		If the error persists, please submit your code and a bug report via the trac website
+		*/
 		return 0;
 	}
 	output_array = output.parray;
@@ -115,14 +120,27 @@ int check_COM_output(_variant_t output){
 			break; //okay
 		case DISP_E_BADINDEX: // bad entry in indices
 			gl_error("check_COM_output: bad index in SafeArrayGetElement");
+			/* TROUBLESHOOTING
+			A bad index value was encountered while parsing the COM output to PowerWorld.  Please ensure
+			all values are correct and try again.
+			*/
 			return 0;
 			break; 
 		case E_INVALIDARG: 
 			gl_error("check_COM_output: invalid arguement in SafeArrayGetElement");
+			/* TROUBLESHOOTING
+			An invalid argument was encountered while parsing the COM output to PowerWorld.  Please ensure
+			all values are correct and try again.
+			*/
 			return 0;
 			break; // one of the args was invalid (?)
 		case E_OUTOFMEMORY: 
 			gl_error("check_COM_output: ran out of memory during SafeArrayGetElement");
+			/* TROUBLESHOOTING
+			Memory ran out while parsing the COM output to PowerWorld.  Please ensure
+			all values are correct and try again.  If the error persists, please submit a bug
+			report via the trac website.
+			*/
 			return 0;
 			break; // ran out of memory
 	}
@@ -130,6 +148,10 @@ int check_COM_output(_variant_t output){
 	ptr = _com_util::ConvertBSTRToString(bHolder);
 	if(strlen(ptr) > 0){
 		gl_error("check_COM_output: %s", ptr);
+		/* TROUBLESHOOTING
+		A generic COM error was encountered while interfacing with PowerWorld.  Please check
+		MSDN and other resources for what this may mean.
+		*/
 		rv = 0;
 	} else {
 		rv = 1;
@@ -154,6 +176,11 @@ int pw_model::init(OBJECT *parent){
 		
 	//	* initialize COM
 		rv = ::CoInitialize(NULL);
+
+		//Set flag to true to uninitialize us upon closing
+		startedCOM=true;
+		initiatorCOM=OBJECTHDR(this);
+
 	//	* check syntax
 	//	* start SIMAuto if not running
 		hr = CLSIDFromProgID(clsid_str, &clsid);
@@ -163,10 +190,19 @@ int pw_model::init(OBJECT *parent){
 				break;
 			case CO_E_CLASSSTRING:
 				gl_error("unable to find clsid \"pwerworld.SimulatorAuto\" at init()");
+				/*  TROUBLESHOOT
+				GridLAB-D was unable to find the clsid value for PowerWorld SimAuto inside the
+				registry.  Please ensure PowerWorld and SimAuto are installed and registered correctly
+				and try again.
+				*/
 				return 0;
 				break;
 			case REGDB_E_WRITEREGDB:
-				gl_error("An error occured writing the CLSID to the registry.");
+				gl_error("An error occured writing the CLSID to the registry.");	//I would imagine this should never happen - why are we writing to the registry?
+				/*  TROUBLESHOOT
+				An error occurred while writing the CLSID value to the registry.  Please submit your
+				code and a bug report via the trac website.
+				*/
 				return 0;
 				break;
 			default:
@@ -179,14 +215,22 @@ int pw_model::init(OBJECT *parent){
 		A = new ISimulatorAutoPtr(__uuidof(SimulatorAuto));
 		if(0 == A){
 			gl_error("unable to allocate ISimulatorAutoPtr in init()");
+			/*  TROUBLESHOOT
+			GridLAB-D was unable to allocate one of the necessary variables for the SimAuto interface.
+			Please try again.  If the error persists, please submit your code and a bug report via the
+			trac website.
+			*/
 			return 0;
 		}
 		hr = A.CreateInstance(clsid, NULL, CLSCTX_SERVER);
-
 		//	* if !connect(model_name), fail!
 		output = A->OpenCase(model_name.get_string()); // must catch RV in a _variant_t!
 		if(0 == check_COM_output(output)){
 			gl_error("OpenCase() failed");
+			/*  TROUBLESHOOT
+			PowerWorld failed to open the case specified.  Please ensure the case exists, is a valid PowerWorld file,
+			and that it is located in the proper folder and try again.
+			*/
 			return 0;
 		}
 		//gl_output("OpenCase succeeded");
@@ -197,7 +241,9 @@ int pw_model::init(OBJECT *parent){
 		if(0 == check_COM_output(output)){
 			gl_error("RunScriptCommand(EnterMode(RUN);) failed");
 			/*	TROUBLESHOOT
-			 */
+			PowerWorld failed to enter the RUN mode.  Please ensure there are no model errors
+			and that PowerWorld is functioning correctly and try again.
+			*/
 			return 0;
 		}
 		//gl_output("RunScriptCommand(EnterMode(RUN)) succeeded");
@@ -222,12 +268,13 @@ int pw_model::init(OBJECT *parent){
 		trouble = true;
 	}
 
+	/*  IFDEFing out unpublished code for now */
+#ifdef PW_THIS_IS_PUBLISHED
 	// not published
 	if(out_file[0] != 0){
 		FILE *outfile;
 		BSTR objtypebstr, filterbstr;
-		SAFEARRAY header, *values;
-		int index;
+
 		if(out_file_type == 0){
 			gl_error("out_file '%s' did not define an object type");
 			return 0;
@@ -289,6 +336,7 @@ int pw_model::init(OBJECT *parent){
 		//	* return 0;
 //		return 0;
 //	}
+#endif
 
 	if(trouble){
 		gl_error("pw_model::init(): no PowerWorld model file specified");
@@ -322,9 +370,12 @@ TIMESTAMP pw_model::presync(TIMESTAMP t1){
 		output = A->RunScriptCommand("SolvePowerFlow;");
 		if(0 == check_COM_output(output)){
 			gl_error("RunScriptCommand(SolvePowerFlow;) failed");
+			/*  TROUBLESHOOT
+			PowerWorld failed to solve the powerflow correctly.  Please ensure the model is correct and
+			the system condition is valid and try again.
+			*/
 			return TS_INVALID;
 		}
-		//gl_output("RunScriptCommand(SolvePowerFlow) succeeded");
 		gl_verbose("RunScriptCommand(SolvePowerFlow) succeeded");
 
 		// @TODO determine how to detect if the simulation is in an invalid state
@@ -365,23 +416,29 @@ int pw_model::isa(char *classname){
  **/
 int pw_model::finalize(){
 	_variant_t output;
-	HRESULT result;
 
 	output = A->CloseCase();
 	if(0 == check_COM_output(output)){
 		gl_error("CloseCase() failed");
+		/*  TROUBLESHOOT
+		PowerWorld encountered an error while trying to close the open case.  Please check
+		to ensure your model is correct.
+		*/
 		return 0;
 	}
 
-	result = A->Release();
-	if(S_OK != result){
-		gl_error("Release() failed");
-		return 0;
-	}
-	
 	gl_verbose("pw_model::finalize(): case closed.");
 
 	return 1;
 }
 
+//Functionalized version of COM shutdown items
+//Mainly so network::term can call it
+void pw_model::pw_close_COM(void)
+{
+	//Clean up COM stuff
+	CoUninitialize();
+}
+
+#endif //HAVE_POWERWORLD
 // EOF

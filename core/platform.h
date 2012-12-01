@@ -20,6 +20,7 @@
  *************************************/
 //#define HAVE_MATLAB
 //#define HAVE_XERCES
+//#define HAVE_POWERWORLD
 #endif
 
 #ifdef WIN32

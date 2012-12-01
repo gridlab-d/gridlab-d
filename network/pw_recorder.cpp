@@ -1,5 +1,7 @@
 #include "pw_recorder.h"
 
+#ifdef HAVE_POWERWORLD
+
 #include <iostream>
 
 EXPORT_CREATE(pw_recorder);
@@ -57,11 +59,19 @@ int pw_recorder::init(OBJECT *parent){
 	if(0 == model){
 		if(0 == parent){
 			gl_error("pw_recorder::init(): object \'%s\' does not specify a model object", gl_name(model, objname, 63));
+			/*  TROUBLESHOOT
+			A model object was not explicitly specified or connected as a parent to the pw_recorder object.  Please make
+			this connection and try again.
+			*/
 			return 0;
 		} else {
 			// isa parent pw_model?
 			if(!gl_object_isa(parent, "pw_model")){
 				gl_error("pw_recorder::init(): parent of '%s' is not a pw_model", gl_name(model, objname, 63) );
+				/*  TROUBLESHOOT
+				The pw_recorder object does not have the model field specified and is not parented to a pw_model
+				object.  Please specify a pw_model object in the model field or parent the pw_recorder to one and try again.
+				*/
 				return 0;
 			}
 			model = parent;
@@ -69,7 +79,10 @@ int pw_recorder::init(OBJECT *parent){
 	} else {
 		// isa model pw_model?
 		if(!gl_object_isa(model, "pw_model")){
-			gl_error("pw_recorder::init(): parent of '%s' is not a pw_model", gl_name(model, objname, 63) );
+			gl_error("pw_recorder::init(): model of '%s' is not a pw_model", gl_name(model, objname, 63) );
+			/*  TROUBLESHOOT
+			The object specified in the model field of the pw_recorder is not a pw_model object.
+			*/
 			return 0;
 		}
 	}
@@ -85,18 +98,27 @@ int pw_recorder::init(OBJECT *parent){
 	// assert key_strings not null
 	if(0 == key_strings[0]){
 		gl_error("pw_recorder::init(): key_strings not defined for '%s'", gl_name(model, objname, 63));
+		/*  TROUBLESHOOT
+		The key strings required for the pw_recorder are not specified.  Please specify these values and try again.
+		*/
 		return 0;
 	}
 
 	// assert key_values not null
 	if(0 == key_values[0]){
 		gl_error("pw_recorder::init(): key_values not defined for '%s'", gl_name(model, objname, 63));
+		/*  TROUBLESHOOT
+		The key value field required for the pw_recorder is not specified.  Please specify these values and try again.
+		*/
 		return 0;
 	}
 
 	// assert properties not null
 	if(0 == properties[0]){
 		gl_error("pw_recorder::init(): properties not defined for '%s'", gl_name(model, objname, 63));
+		/*  TROUBLESHOOT
+		The recording properties list is not defined for the pw_recorder object.  Please specify these properties and try again.
+		*/
 		return 0;
 	}
 
@@ -104,6 +126,10 @@ int pw_recorder::init(OBJECT *parent){
 	// populate GPSE key values
 	if(0 == build_keys()){
 		gl_error("pw_recorder::init(): error when building keys for '%s'", gl_name(model, objname, 63));
+		/*  TROUBLESHOOT
+		An error occurred while building the keys for the pw_recorder.  Ensure your property values, key strings, and
+		key values are correct and try again.
+		*/
 		return 0;
 	}
 
@@ -115,12 +141,19 @@ int pw_recorder::init(OBJECT *parent){
 	//	* if GPSE failed, mark 'ERROR' and return success ~ nonfatal error
 	if(0 == GPSE()){
 		gl_error("pw_recorder::init(): error when calling GetParameterSingleElement wrapper function for %s", gl_name(model, objname, 63));
+		/*  TROUBLESHOOT
+		An error occurred while trying to extract a value from PowerWorld.  Please check that your key string, key values, and property
+		values are correct and try again.
+		*/
 		return 0;
 	}
 
 	// assert positive interval
 	if(interval < -1){
 		gl_error("pw_recorder::init(): invalid interval in '%s'", gl_name(model, objname, 63));
+		/*  TROUBLESHOOT
+		An invalid interval was specified in the pw_recorder.  Please specify a value in seconds, 0 (all iterations), or -1 (on change).
+		*/
 		return 0;
 	}
 
@@ -148,10 +181,18 @@ int pw_recorder::init(OBJECT *parent){
 	outfile = fopen(outfile_name, "w");
 	if(0 == outfile){
 		gl_error("pw_recorder::init(): unable to open outfile '%s' for writing", outfile_name);
+		/*  TROUBLESHOOT
+		pw_recorder was unable to open the output file.  Please ensure it isn't open in another program
+		and try again.
+		*/
 		return 0;
 	} else {
 		if(!write_header()){
 			gl_error("pw_recorder::init(): unable to write header for '%s'", gl_name(my(), objname, 63));
+			/*  TROUBLESHOOT
+			pw_recorder was unable to write the header in the output file.  Please ensure the file isn't
+			open in another program and try again.
+			*/
 			return 0;
 		}
 		is_ready = true;
@@ -172,6 +213,9 @@ TIMESTAMP pw_recorder::presync(TIMESTAMP t1){
 		if(0 == GPSE()){
 			gl_error("pw_load::presync(): GPSE failed");
 			/*	TROUBLESHOOT
+			pw_recorder encountered an error when attempting to retrieve a parameter from PowerWorld.
+			Please try again.  If the error persists, please submit your code an an error report via the
+			trac website.
 			 */
 			return TS_INVALID;
 		}
@@ -260,14 +304,23 @@ int pw_recorder::build_keys(){
 	// compare counts
 	if(0 == key_str_ct){
 		gl_error("pw_recorder::build_keys(): '%s' did not parse any key strings", gl_name(my(), objname, 255));
+		/*  TROUBLESHOOT
+		pw_recorder was unable to parse the key strings specified.  Please ensure they are correct and try again.
+		*/
 		return 0;
 	}
 	if(0 == key_val_ct){
 		gl_error("pw_recorder::build_keys(): '%s' did not parse any key values", gl_name(my(), objname, 255));
+		/*  TROUBLESHOOT
+		pw_recorder was unable to parse the key values specified.  Please ensure they are correct and try again.
+		*/
 		return 0;
 	}
 	if(key_str_ct != key_val_ct){
 		gl_error("pw_recorder::build_keys(): '%s' has %i key properties and %i key values listed", gl_name(my(), objname, 255), key_str_ct, key_val_ct);
+		/*  TROUBLESHOOT
+		pw_recorder was unable to parse the key properties specified.  Please ensure they are correct and try again.
+		*/
 		return 0;
 	}
 
@@ -350,7 +403,11 @@ int pw_recorder::build_keys(){
 		return 0; // failure
 	}
 	catch(...){
-		gl_error("Unknown excetpion in pw_recorder::build_keys()!");
+		gl_error("Unknown exception in pw_recorder::build_keys()!");
+		/*  TROUBLESHOOT
+		An unknown exception was encountered by the pw_recorder object.  Please try again.
+		If the error persists, please submit your code and a bug report via the trac website.
+		*/
 		return 0;
 	}
 
@@ -385,6 +442,10 @@ int pw_recorder::build_keys(){
 	}
 	catch(...){
 		gl_error("Unknown exception in pw_recorder::build_keys()!");
+		/*  TROUBLESHOOT
+		An unknown exception was encountered by the pw_recorder object.  Please try again.
+		If the error persists, please submit your code and a bug report via the trac website.
+		*/
 		return 0;
 	}
 
@@ -492,4 +553,5 @@ int pw_recorder::write_line(TIMESTAMP t1){
 	return 1;
 }
 
+#endif //HAVE_POWERWORLD
 // EOF

@@ -11,6 +11,8 @@
 #include "gridlabd.h"
 #include "network.h"
 
+#ifdef HAVE_POWERWORLD
+
 #include <iostream>
 
 class pw_model;
@@ -56,7 +58,7 @@ private:
 	int get_powerworld_voltage();
 	int post_powerworld_current();
 };
-
+#endif // HAVE_POWERWORLD
 #endif // _PW_LOAD_H_
 
 // EOF

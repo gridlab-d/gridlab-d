@@ -7,11 +7,11 @@
 #ifndef _PW_RECORDER_H_
 #define _PW_RECORDER_H_
 
-
 #include "gridlabd.h"
 #include "network.h"
 #include "pw_model.h"
 
+#ifdef HAVE_POWERWORLD
 
 #ifdef int64
 #undef int64
@@ -76,5 +76,5 @@ private:
 	char **out_values; // char [prop_ct][64] in practice
 	bool is_ready;
 };
-
+#endif //HAVE_POWERWORLD
 #endif // _PW_RECORDER_H_
