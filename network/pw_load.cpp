@@ -114,11 +114,11 @@ pw_load::pw_load(MODULE *module)
 			PT_complex, "last_load_impedance[MVA]", get_last_load_impedance_offset(),PT_DESCRIPTION, "constant impedance draw on the load",
 			PT_complex, "last_load_current[MVA]", get_last_load_current_offset(),PT_DESCRIPTION, "constant current draw on the load",
 			PT_complex, "load_voltage[V]", get_load_voltage_offset(),PT_DESCRIPTION, "transmission system voltage on this load",
-			PT_double, "bus_nom_volt[V]", get_bus_nom_volt_offset(),
-			PT_double, "bus_volt_angle[deg]", get_bus_volt_angle_offset(),
+			PT_double, "bus_nom_volt[V]", get_bus_nom_volt_offset(), PT_DESCRIPTION, "Nominal voltage of PowerWorld load",
+			PT_double, "bus_volt_angle[deg]", get_bus_volt_angle_offset(),PT_DESCRIPTION,"Current voltage angle of the PowerWorld load",
 //			PT_complex, "next_load_power", get_next_load_power_offset(),
-			PT_double, "pw_load_mw", get_pw_load_mw_offset(),
-			PT_complex, "pw_load_mva", get_pw_load_mva_offset(),
+			PT_double, "pw_load_mw", get_pw_load_mw_offset(),PT_DESCRIPTION,"Real power portion of total power of the PowerWorld load",
+			PT_complex, "pw_load_mva", get_pw_load_mva_offset(),PT_DESCRIPTION,"Complex value of total power of the PowerWorld load",
 			NULL)<1){
 				char msg[256];
 				sprintf(msg, "unable to publish properties in %s",__FILE__);

@@ -32,13 +32,13 @@ pw_recorder::pw_recorder(MODULE *module)
 		defaults = this;
 		if (gl_publish_variable(oclass,
 			PT_object, "model", get_model_offset(), PT_DESCRIPTION, "pw_model object for the PowerWorld model this recorder is monitoring",
-			PT_char1024, "outfile", get_outfile_name_offset(), PT_DESCRIPTION, "stuff",
-			PT_char256, "obj_class", get_obj_classname_offset(),
-			PT_char1024, "key_strings", get_key_strings_offset(),
-			PT_char1024, "key_values", get_key_values_offset(),
-			PT_char1024, "properties", get_properties_offset(),
-			PT_int64, "interval", get_interval_offset(),
-			PT_int64, "limit", get_limit_offset(),
+			PT_char1024, "outfile", get_outfile_name_offset(), PT_DESCRIPTION, "Output file name",
+			PT_char256, "obj_class", get_obj_classname_offset(), PT_DESCRIPTION, "PowerWorld object class of object to record",
+			PT_char1024, "key_strings", get_key_strings_offset(), PT_DESCRIPTION, "Key string values for PowerWorld object to record",
+			PT_char1024, "key_values", get_key_values_offset(), PT_DESCRIPTION, "Key values for PowerWorld object to record",
+			PT_char1024, "properties", get_properties_offset(), PT_DESCRIPTION, "Properties desired to record from PowerWorld object",
+			PT_int64, "interval", get_interval_offset(), PT_DESCRIPTION, "Interval of output for pw_recorder object",
+			PT_int64, "limit", get_limit_offset(),PT_DESCRIPTION, "Number of data points to write before stopping",
 			NULL)<1){
 				char msg[256];
 				sprintf(msg, "unable to publish properties in %s",__FILE__);
