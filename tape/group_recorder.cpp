@@ -162,6 +162,14 @@ int group_recorder::init(OBJECT *obj){
 		}
 	}
 
+	// check if we should expunge the units from our copied PROP structs
+	if(!print_units){
+		quickobjlist *itr = obj_list;
+		for(; itr != 0; itr = itr->next){
+			itr->prop.unit = NULL;
+		}
+	}
+
 	tape_status = TS_OPEN;
 	if(0 == write_header()){
 		gl_error("group_recorder::init(): an error occured when writing the file header");
@@ -413,13 +421,13 @@ int group_recorder::read_line(){
 	memset(line_buffer, 0, line_size);
 	for(curr = obj_list; curr != 0; curr = curr->next){
 		// GETADDR is a macro defined in object.h
-		if(curr->prop->ptype == PT_complex && complex_part != NONE){
+		if(curr->prop.ptype == PT_complex && complex_part != NONE){
 			double part_value = 0.0;
 			complex *cptr = 0;
 			// get value as a complex
-			cptr = gl_get_complex(curr->obj, curr->prop);
+			cptr = gl_get_complex(curr->obj, &(curr->prop));
 			if(0 == cptr){
-				gl_error("group_recorder::read_line(): unable to get complex property '%s' from object '%s'", curr->prop->name, gl_name(curr->obj, objname, 127));
+				gl_error("group_recorder::read_line(): unable to get complex property '%s' from object '%s'", curr->prop.name, gl_name(curr->obj, objname, 127));
 				/* TROUBLESHOOT
 					Could not read a complex property as a complex value.
 				 */
@@ -450,9 +458,9 @@ int group_recorder::read_line(){
 			sprintf(buffer, "%f", part_value);
 			offset = strlen(buffer);
 		} else {
-			offset = gl_get_value(curr->obj, GETADDR(curr->obj, curr->prop), buffer, 127, prop_ptr);
+			offset = gl_get_value(curr->obj, GETADDR(curr->obj, &(curr->prop)), buffer, 127, &(curr->prop));
 			if(0 == offset){
-				gl_error("group_recorder::read_line(): unable to get value for '%s' in object '%s'", curr->prop->name, curr->obj->name);
+				gl_error("group_recorder::read_line(): unable to get value for '%s' in object '%s'", curr->prop.name, curr->obj->name);
 				/* TROUBLESHOOTING
 					An error occured while reading the specified property in one of the objects.
 				 */
@@ -460,8 +468,7 @@ int group_recorder::read_line(){
 			}
 		}
 		// check line_buffer space
-		unit_len = ((print_units && 0 != curr->prop && 0 != curr->prop->unit) ? 1 + strlen(curr->prop->unit->name) : 0);
-		if( unit_len + (index + offset + 1) > line_size ){
+		if( (index + offset + 1) > line_size ){
 			gl_error("group_recorder::read_line(): potential buffer overflow from a too-short automatically sized output value buffer");
 			/* TROUBLESHOOT
 				A potential buffer overflow was caught, most likely due to incorrect property
@@ -471,12 +478,8 @@ int group_recorder::read_line(){
 		}
 		// write to line_buffer
 		// * lead with a comma on all entries, assume leading timestamp will NOT print a comma
-		if(print_units && 0 != curr->prop && 0 != curr->prop->unit){
-			if(0 >= sprintf(line_buffer+index, ",%s %s", buffer, curr->prop->unit->name)){return 0;}
-		} else {
-			if(0 >= sprintf(line_buffer+index, ",%s", buffer)){return 0;}
-		}
-		index += (offset + 1) + unit_len; // add the comma
+		if(0 >= sprintf(line_buffer+index, ",%s", buffer)){return 0;}
+		index += (offset + 1); // add the comma
 	}
 	// assume write_line will add newline character
 

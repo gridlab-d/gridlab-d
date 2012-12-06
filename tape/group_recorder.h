@@ -11,12 +11,12 @@ EXPORT void new_group_recorder(MODULE *);
 
 class quickobjlist{
 public:
-	quickobjlist(){obj = 0; next = 0; prop = 0;}
-	quickobjlist(OBJECT *o, PROPERTY *p){obj = o; next = 0; prop = p;}
+	quickobjlist(){obj = 0; next = 0; memset(&prop, 0, sizeof(PROPERTY));}
+	quickobjlist(OBJECT *o, PROPERTY *p){obj = o; next = 0; memcpy(&prop, p, sizeof(PROPERTY));}
 	~quickobjlist(){if(next != 0) delete next;}
 	void tack(OBJECT *o, PROPERTY *p){if(next){next->tack(o, p);} else {next = new quickobjlist(o, p);}}
 	OBJECT *obj;
-	PROPERTY *prop;
+	PROPERTY prop;
 	quickobjlist *next;
 };
 
