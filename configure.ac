@@ -234,7 +234,6 @@ AC_CONFIG_FILES([./Makefile \
 	core/link/matlab/Makefile \
 	assert/Makefile \
 	climate/Makefile \
-	climate/tmy/Makefile \
 	comm/Makefile \
 	commercial/Makefile \
 	powerflow/Makefile \
