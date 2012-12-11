@@ -1,4 +1,3 @@
-SUBDIRS=tmy
 pkglib_LTLIBRARIES = climate.la
 climate_la_SOURCES =                   \
 	climate.cpp        climate.h        \
