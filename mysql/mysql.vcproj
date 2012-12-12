@@ -66,9 +66,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libmysql.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;&quot;$(SolutionDir)$(PlatformName)\$(ConfigurationName)&quot;;&quot;c:\Program Files\MySQL\MySQL Connector C\lib\opt&quot;"
+				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;&quot;$(SolutionDir)$(PlatformName)\$(ConfigurationName)&quot;;&quot;C:\Program Files\MySQL\MySQL Connector C\lib\debug&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -149,7 +148,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="libmysql.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;&quot;$(SolutionDir)$(PlatformName)\$(ConfigurationName)&quot;;&quot;C:\Program Files\MySQL\MySQL Connector C\lib\opt&quot;"
+				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;&quot;$(SolutionDir)$(PlatformName)\$(ConfigurationName)&quot;;&quot;C:\Program Files\MySQL\MySQL Connector C\lib\debug&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="17"
