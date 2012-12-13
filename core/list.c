@@ -66,11 +66,13 @@ GLLIST *list_create(void)
  **/
 void list_destroy(GLLIST *list) /**< a pointer to the LIST structure to destroy */
 {
-	LISTITEM *item;
-	for (item=list->first; item!=NULL; item=item->next)
+	LISTITEM *item = list->first;
+	while ( item!=NULL )
 	{
-		destroy_item(item);
+		LISTITEM *target = item;
+		item = item->next;
 		list->size--;
+		destroy_item(target);
 	}
 	/* list size should be zero here */
 }
