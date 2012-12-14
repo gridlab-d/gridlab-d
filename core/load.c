@@ -4262,6 +4262,8 @@ static int object_block(PARSER, OBJECT *parent, OBJECT **subobj)
 	int64 id=-1, id2=-1;
 	START;
 
+	// @TODO push context here
+
 	if WHITE ACCEPT;
 	if (LITERAL("namespace") && (WHITE,TERM(name(HERE,space,sizeof(space)))) && (WHITE,LITERAL("{")))
 	{
@@ -4402,6 +4404,9 @@ static int object_block(PARSER, OBJECT *parent, OBJECT **subobj)
 		REJECT;
 	}
 	if (subobj) *subobj = obj;
+	
+	// @TODO pop context here
+
 	DONE;
 }
 
@@ -5496,8 +5501,8 @@ static int buffer_read_alt(FILE *fp, char *buffer, char *filename, int size)
 			} else {
 				++hassc;
 			}
-			strcat(buffer,line);
-			//strcpy(buffer,line);
+			//strcat(buffer,line);
+			strcpy(buffer,line);
 			len = (int)strlen(buffer); // include anything else in the buffer, then advance
 			buffer += len;
 			size -= len;
@@ -5519,8 +5524,10 @@ static int buffer_read_alt(FILE *fp, char *buffer, char *filename, int size)
 					} else if(subst[i] == '{'){
 						++bnest;
 						++hassc;
+						// @TODO push context
 					} else if(subst[i] == '}'){
 						--bnest;
+						// @TODO pop context
 					} else if(subst[i] == ';'){
 						++hassc;
 					}
@@ -5718,21 +5725,29 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 	{
 		if (nesting>0)
 		{
+			// @TODO pop 'if' context
 			nesting--;
 			suppress &= ~(1<<nesting);
 		}
-		else
+		else{
 			output_error_raw("%s(%d): %sendif is mismatched", filename, linenum,MACRO);
+		}
 		strcpy(line,"\n");
+
 		return TRUE;
 	}
 	else if (strncmp(line,MACRO "else",5)==0)
 	{
 		char *term;
-		if ( (suppress&(1<<(nesting-1))) == (1<<(nesting-1)) )
+
+		// @TODO pop 'if' context (old context)
+		// @TODO push 'if' context (else context)
+
+		if ( (suppress&(1<<(nesting-1))) == (1<<(nesting-1)) ){
 			suppress &= ~(1<<(nesting-1));
-		else
+		} else {
 			suppress |= (1<<(nesting-1));
+		}
 		term = line+5;
 		strip_right_white(term);
 		if(strlen(term)!=0)
@@ -5754,10 +5769,13 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		}
 		//if (sscanf(term+1,"%[^\n\r]",value)==1 && global_getvar(value, buffer, 63)==NULL && getenv(value)==NULL)
 		strcpy(value, strip_right_white(term+1));
-		if ( !is_autodef(value) && global_getvar(value, buffer, 63)==NULL && getenv(value)==NULL)
+		if ( !is_autodef(value) && global_getvar(value, buffer, 63)==NULL && getenv(value)==NULL){
 			suppress |= (1<<nesting);
+		}
 		macro_line[nesting] = linenum;
 		nesting++;
+		// @TODO push 'if' context
+
 		strcpy(line,"\n");
 		return TRUE;
 	}
@@ -5784,6 +5802,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			suppress |= (1<<nesting);
 		macro_line[nesting] = linenum;
 		nesting++;
+		// @TODO push 'file' context
 		strcpy(line,"\n");
 		return TRUE;
 	}
@@ -5798,10 +5817,12 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		}
 		//if (sscanf(term+1,"%[^\n\r]",value)==1 && global_getvar(value, buffer, 63)!=NULL || getenv(value)!=NULL))
 		strcpy(value, strip_right_white(term+1));
-		if(global_getvar(value, buffer, 63)!=NULL || getenv(value)!=NULL)
+		if(global_getvar(value, buffer, 63)!=NULL || getenv(value)!=NULL){
 			suppress |= (1<<nesting);
+		}
 		macro_line[nesting] = linenum;
 		nesting++;
+		// @TODO push 'if' context
 		strcpy(line,"\n");
 		return TRUE;
 	}
@@ -5836,6 +5857,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		}
 		macro_line[nesting] = linenum;
 		nesting++;
+		// @TODO push 'if' context
 		strcpy(line,"\n");
 		return TRUE;
 	}
