@@ -54,7 +54,7 @@ AC_ARG_ENABLE([optimization],
 				  	 *) AC_MSG_ERROR([bad value ${enableval} for --enable-optimization]) ;;
 				  	esac], [optimization=0])
 
-GLFLAGS="$GLFLAGS -I`pwd`/core -lcurses"
+GLFLAGS="$GLFLAGS -I`pwd`/core"
 if [[ "$debug" = "true" ]]; then
 	GLFLAGS="$GLFLAGS -g"
 fi
@@ -202,6 +202,16 @@ if test x"$HAVE_CPPUNIT" = xyes; then
 fi
 test x"$HAVE_CPPUNIT" = xyes || CPPFLAGS="$CPPFLAGS -D_NO_CPPUNIT"
 
+# Check for curses
+if test -f /usr/include/curses.h ; then
+	HAVE_CURSES=yes
+	AC_MSG_RESULT([curses header found])
+	LIBS="$LIBS -lcurses"
+	CFLAGS="$CFLAGS -DHAVE_CURSES"
+	CPPFLAGS="$CPPFLAGS -DHAVE_CURSES"
+else
+	HAVE_CURSES=no
+fi
 
 # Checks for header files.
 AC_HEADER_STDC
@@ -220,7 +230,6 @@ AC_FUNC_REALLOC
 AC_FUNC_STRFTIME
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([isfinite atexit getcwd memset pow putenv sqrt strchr strerror strrchr tzset getch])
-AC_CHECK_LIB(curses, tgetent)
 AC_CHECK_FUNC(CPU_ALLOC,AC_DEFINE([DYN_PROC_AFFINITY],[1],["Check for existence of dynamic proc functions"]))
 ACX_PTHREAD
 GLD_GET_NPROCS
@@ -279,6 +288,7 @@ AC_MSG_RESULT([
     libxerces-c: ................ $HAVE_XERCES
     matlab: ..................... $HAVE_MATLAB
     mysql-connector-c: .......... $HAVE_MYSQL
+    curses: ..................... $HAVE_CURSES
 
   Atomic Builtins:
 

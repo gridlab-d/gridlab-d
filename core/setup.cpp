@@ -5,6 +5,7 @@
 #include "load.h"
 #include "convert.h"
 
+#ifdef HAVE_CURSES
 int height=0, width=0;
 char status[1024] = "Ready";
 char blank[1024];
@@ -179,9 +180,11 @@ SETUPGROUP group[] = {
 	{"Macros",edit_macros},
 	{"Config",edit_config},
 };
+#endif
 
 extern "C" int setup(int argc, char *argv[])
 {
+#ifdef HAVE_CURSES
 	if ( !loadall(NULL) )
 		sprintf(status,"ERROR: %s","unable to load configuration files");
 
@@ -248,5 +251,8 @@ extern "C" int setup(int argc, char *argv[])
 			break;
 		}
 	}
+#else
+	output_error("unable to display setup screen without curses library");
+#endif
 	return 0;
 }

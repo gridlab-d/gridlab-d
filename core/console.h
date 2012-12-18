@@ -144,7 +144,9 @@ void attroff(int n)
 	SetConsoleTextAttribute(console,info.wAttributes);
 }
 #else
+#ifdef HAVE_CURSES
 #include <curses.h>
+#endif
 #endif
 
 #ifdef WIN32
@@ -173,6 +175,7 @@ long getheight(void)
 		return -1;
 }
 #else
+#ifdef HAVE_CURSES
 #include <sys/ioctl.h>
 #ifndef ttysize
 #define ttysize winsize
@@ -195,6 +198,8 @@ long getheight(void)
 	else
 		return -1;
 }
+#endif
+
 #endif
 
 #endif

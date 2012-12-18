@@ -1959,6 +1959,7 @@ void sched_signal(int sig)
 
 void sched_continuous(void)
 {
+#ifdef HAVE_CURSES
 	char message[1024]="Ready.";
 	int sel=0;
 	unsigned int refresh_mod=10;
@@ -2038,6 +2039,9 @@ void sched_continuous(void)
 		}
 	}
 	endwin();
+#else
+	output_error("unable to show screen without curses library");
+#endif
 }
 
 void sched_controller(void)

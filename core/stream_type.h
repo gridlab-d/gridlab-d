@@ -26,3 +26,4 @@ stream_type(uchar);
 stream_type(uint16);
 stream_type(uint32);
 stream_type(uint64);
+
