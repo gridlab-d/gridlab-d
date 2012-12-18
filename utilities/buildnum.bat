@@ -1,6 +1,25 @@
 @echo off
-for /f "delims=" %%a in ('svn info . ^| findstr /b "Revision: "') do set new=%%a 
-REM echo Last build %new:Revision: =%
-for /f "delims=" %%a in ('type build.h') do @set old=%%a
-REM echo This build %old:#define BUILDNUM =%
-if not %old:#define BUILDNUM =% == %new:Revision: =% echo #define BUILDNUM %new:Revision: =% >build.h
+
+set dir=%1
+if '%dir%' == '' set dir=..
+set file=.\build.h
+
+for /f "delims=" %%a in ('svn info %dir% ^| findstr /b "Revision: "') do set new=%%a 
+set newrev=%new:Revision: =%
+REM echo Last build is %newrev%
+
+if not exist %file% goto update
+
+for /f "delims=" %%a in ('type %file%') do set old=%%a
+if "%old%" == "" goto update
+set oldrev=%old:#define BUILDNUM =% 
+
+REM echo This build is %oldrev%
+if %oldrev% == %newrev% goto done
+
+:update
+echo %file% updated
+echo #define BUILDNUM %newrev% >%file%
+
+:done
+echo Current build is %newrev%

@@ -28,6 +28,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				CommandLine="..\utilities\buildnum .."
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -116,6 +117,8 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				Description=""
+				CommandLine="..\utilities\buildnum .."
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -204,6 +207,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				CommandLine="..\utilities\buildnum .."
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -289,8 +293,8 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				Description="Updating build.h"
-				CommandLine="../utilities/buildnum.bat"
+				Description=""
+				CommandLine="..\utilities\buildnum .."
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -1038,15 +1042,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\asm\x86_64\cmpxchg.h"
-				>
-			</File>
-			<File
 				RelativePath=".\asm\cmpxchg.h"
 				>
 			</File>
 			<File
 				RelativePath=".\asm\x86\cmpxchg.h"
+				>
+			</File>
+			<File
+				RelativePath=".\asm\x86_64\cmpxchg.h"
 				>
 			</File>
 			<File
@@ -1073,11 +1077,11 @@
 					>
 				</File>
 				<File
-					RelativePath=".\makefile.win"
+					RelativePath="..\makefile.win"
 					>
 				</File>
 				<File
-					RelativePath="..\makefile.win"
+					RelativePath=".\makefile.win"
 					>
 				</File>
 			</Filter>
