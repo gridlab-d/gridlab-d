@@ -9,3 +9,4 @@ object house:..10 {
 	name `House_{SEQ_A:INC}`;
 }
 #print ${SEQ_A} houses created.
+#print This is line 12.

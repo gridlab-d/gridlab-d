@@ -85,16 +85,8 @@ pkginclude_HEADERS = \
 build.h: buildnum
 
 buildnum:
-	if test -f ../utilities/build_number; then \
-		if test -f build.h; then \
-			. ../utilities/build_number -b .. > buildnum.h; \
-			test "`cat buildnum.h`" = "`cat build.h`" || mv -f buildnum.h build.h; \
-			test -f buildnum.h && rm buildnum.h || true; \
-		else \
-			. ../utilities/build_number -b .. > build.h; \
-		fi; \
-	elif test ! -f build.h; then \
-		echo '#define "$$Revision: 0"' > build.h; \
+	if test -f ../utilities/buildnum.sh; then \
+		. ../utilities/buildnum.sh; \
 	fi
 
 .PHONY: buildnum

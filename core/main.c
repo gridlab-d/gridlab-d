@@ -58,7 +58,6 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	int i, pos=0;
 	
 	char *browser = getenv("GLBROWSER");
-	char *buildinfo = strstr(BUILD,":");
 
 	/* set the default timezone */
 	timestamp_set_tz(NULL);
@@ -66,9 +65,7 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	exec_clock(); /* initialize the wall clock */
 	realtime_starttime(); /* mark start */
 	
-	/* set the version info */
-	global_version_build = buildinfo ? atoi(strstr(BUILD,":")+1) : 0;
-	strcpy(global_version_branch,BRANCH);
+	/* set the process info */
 	global_process_id = getpid();
 
 	/* specify the default browser */
