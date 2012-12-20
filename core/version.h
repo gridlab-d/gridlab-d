@@ -7,8 +7,16 @@
 #define REV_MAJOR 3
 #define REV_MINOR 0
 #define REV_PATCH 0
-#include "build.h"
 #define BRANCH "Hassayampa" 
+
+#include "build.h"
+#ifndef BUILDNUM
+#pragma message("core/build.h was not updated properly - try deleting this file and rebuilding again")
+#ifdef BUILD
+#undef BUILD
+#endif
+#define BUILDNUM 0
+#endif
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
