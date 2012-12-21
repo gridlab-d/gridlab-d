@@ -1,4 +1,4 @@
-rem @echo off
+@echo off
 
 rem
 rem - Check the PATH to ensure SVN.EXE is available on this system
