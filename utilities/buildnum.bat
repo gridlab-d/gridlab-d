@@ -1,4 +1,4 @@
-@echo off
+rem @echo off
 
 rem
 rem - Check the PATH to ensure SVN.EXE is available on this system
@@ -33,7 +33,7 @@ set oldrev=%old:#define BUILDNUM =%
 rem
 rem - If the numbers are the same exit
 rem
-if %oldrev: =% == %newrev: =% goto done
+if "%oldrev: =%" == "%newrev: =%" goto done
 
 rem
 rem - Update build.h
