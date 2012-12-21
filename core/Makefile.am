@@ -86,7 +86,7 @@ build.h: buildnum
 
 buildnum:
 	if test -f ../utilities/buildnum.sh; then \
-		. ../utilities/buildnum.sh; \
+		. ../utilities/buildnum.sh ..; \
 	fi
 
 .PHONY: buildnum
