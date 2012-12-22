@@ -1,0 +1,34 @@
+#!/bin/bash
+
+SVN=https://gridlab-d.svn.sourceforge.net/svnroot/gridlab-d/
+
+# tag list - tags must be named /tags/gridlabd-<major>.<minor>[_RC<num>]
+#echo Processing $SVN/tags
+SVNTAGS=$(svn list $SVN/tags | grep -v "RC" )
+#echo svnlist $SVNTAGS
+for TAG in $SVNTAGS; do
+	ID=$(echo $TAG | cut -f2 -d-)
+	MAJOR=$(echo $ID | cut -f1 -d.)
+	MINOR=$(echo $ID | cut -f2 -d. | sed -e 's/\/$//' )
+	PATCH=$(echo $ID | cut -f3 -d. | sed -e 's/\/$//' )
+	REV=$(svn info $SVN/tags/$TAG | grep 'Last Changed Rev: ' | cut -f2 -d: | sed -e 's/[^0-9]//g')
+	VAR=$(echo v${MAJOR}_${MINOR}_${PATCH:-0})
+	VAL=$(eval echo \$${VAR:-})
+	if [ "$VAL" == "" ]; then
+		VARLIST="$VARLIST $VAR"
+		VAL=0
+	fi
+	if [ $REV -gt $VAL ]; then
+		export $VAR=$REV
+		
+#echo tag $TAG $REV
+	fi
+done
+#echo taglist $VARLIST
+for VAR in $VARLIST; do
+	ID=$(echo $VAR | sed -e 's/[^0-9_]//g')
+	MAJOR=$(echo $ID | cut -f1 -d_)
+	MINOR=$(echo $ID | cut -f2 -d_)
+	PATCH=$(echo $ID | cut -f3 -d_)
+	eval echo $MAJOR.$MINOR.$PATCH:\$$VAR
+done
