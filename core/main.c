@@ -122,7 +122,7 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	}
 
 	/* stitch clock */
-	global_clock = global_starttime + local_tzoffset(global_starttime);
+	global_clock = global_starttime;
 
 	/* initialize scheduler */
 	sched_init(0);
