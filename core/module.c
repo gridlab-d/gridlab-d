@@ -433,8 +433,9 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	mod->next = NULL;
 
 	/* call the initialization function */
+	errno = 0;
 	mod->oclass = (*init)(&callbacks,(void*)mod,argc,argv);
-	if (mod->oclass==NULL)
+	if ( mod->oclass==NULL && errno!=0 )
 		return NULL;
 
 	/* connect intrinsic functions */
