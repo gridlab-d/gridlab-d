@@ -524,9 +524,12 @@ static counters run_test(char *file, double *elapsed_time=NULL)
 /* simple stack to handle directories that need to be processed */
 typedef struct s_dirstack {
 	char name[1024];
+	unsigned short id;
 	struct s_dirstack *next;
 } DIRLIST;
 static DIRLIST *dirstack = NULL;
+static unsigned short next_id = 0;
+static char *result_code = NULL;
 static unsigned int dirlock = 0;
 static void pushdir(char *dir)
 {
@@ -535,9 +538,35 @@ static void pushdir(char *dir)
 	strncpy(item->name,dir,sizeof(item->name)-1);
 	wlock(&dirlock);
 	item->next = dirstack;
+	item->id = next_id++;
 	dirstack = item;
 	wunlock(&dirlock);
 }
+static void sortlist(void)
+{
+	bool done = false;
+	while ( !done )
+	{
+		DIRLIST *item, *prev=NULL;
+		done = true;
+		for ( item=dirstack ; item!=NULL && item->next!=NULL ; prev=item,item=item->next )
+		{
+			DIRLIST *first = item;
+			DIRLIST *second = item->next;
+			if ( strcmp(first->name,second->name)>0 )
+			{
+				if ( prev!=NULL )
+					prev->next = second;
+				else
+					dirstack = second;
+				first->next = second->next;
+				second->next = first;
+				done = false;
+			}
+		}
+	}
+}
+
 /* popped item must be freed after no longer needed */
 static DIRLIST *popdir(void)
 {
@@ -563,11 +592,13 @@ void *(run_test_proc)(void *arg)
 		if ( result.get_nerrors()>0 ) passed=false;
 		if ( global_validateoptions&VO_RPTGLM )
 		{
-			char *flag = "";
-			if ( result.get_nerrors() ) flag="E";
-			if ( result.get_nsuccess() ) flag="S";
-			if ( result.get_nexceptions() ) flag="X";
-			report_data("%s",flag);
+			char *flags[] = {"","E","S","X"};
+			char code = 0;
+			if ( result.get_nerrors() ) code=1;
+			if ( result.get_nsuccess() ) code=2;
+			if ( result.get_nexceptions() ) code=3;
+			result_code[item->id] = code;
+			report_data("%s",flags[code]);
 			report_data("%6.1f",dt);
 			report_data("%s",item->name);
 			report_newrow();
@@ -624,7 +655,29 @@ static size_t process_dir(const char *path, bool runglms=false)
 		}
 	}
 	closedir(dirp);
+	result_code = (char *)malloc(next_id);
 	return count;
+}
+
+char *encode_result(char *data,size_t sz)
+{
+	size_t len = (sz+1)/2+1;
+	char *code = (char*)malloc(len);
+	memset(code,0,len);
+	size_t i;
+	for ( i=0 ; i<sz ; i++ )
+	{
+		size_t ndx = i/2;
+		size_t shft = (i%2)*2;
+		code[ndx] |= (data[i]<<shft);
+	}
+	for ( i=0 ; i<len ; i++ )
+	{
+		static char t[] = "0123456789ABCDEF";
+		code[i] = t[code[i]];
+	}
+	code[len]='\0';
+	return code;
 }
 
 /** main validation routine */
@@ -729,6 +782,7 @@ int validate(int argc, char *argv[])
 	if ( global_validateoptions&VO_RPTDIR ) 
 		report_newtable("DIRECTORY SCAN RESULTS");
 	process_dir(global_workdir);
+	sortlist();
 	
 	if ( global_validateoptions&VO_RPTGLM )
 		report_newtable("FILE TEST RESULTS");
@@ -837,8 +891,14 @@ int validate(int argc, char *argv[])
 	report_data("%.1f s", dt);
 	report_newrow();
 
+	report_data();
+	report_data("Result code");
+	report_data("%s",encode_result(result_code,next_id));
+	report_newrow();
+
 	report_newrow();
 	report_title("END TEST REPORT");
+	report_newrow();
 
 	fclose(report_fp);
 
