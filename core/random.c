@@ -32,15 +32,21 @@
 
 #ifdef WIN32
 #define finite _finite
+#define getpid _getpid
 #endif
 
 static unsigned int *ur_state = NULL;
+
+unsigned entropy_source(void)
+{
+	return (unsigned)(getpid()*time(NULL));
+}
 
 int random_init(void)
 {
 	/* randomizes the random number generator start value */
 	if (global_randomseed==0)
-		global_randomseed = (unsigned int)time(NULL);
+		global_randomseed = entropy_source();
 
 	srand(1);
 	ur_state = &global_randomseed;

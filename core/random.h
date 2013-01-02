@@ -86,6 +86,7 @@ int convert_to_randomvar(char *string, void *data, PROPERTY *prop);
 int convert_from_randomvar(char *string,int size,void *data, PROPERTY *prop);
 unsigned int64 random_id(void);
 double random_get_part(void *x, char *name);
+unsigned entropy_source(void);
 
 #endif
 

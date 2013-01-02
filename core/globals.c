@@ -575,7 +575,7 @@ char *global_guid(char *buffer, int size)
 	{
 		if ( guid_first )
 		{
-			srand((unsigned int)time(NULL));
+			srand(entropy_source());
 			guid_first = 0;
 		}
 		sprintf(buffer,"%04x%04x-%04x-4%03x-%04x-%04x%04x%04x",
