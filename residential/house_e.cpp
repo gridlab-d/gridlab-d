@@ -577,6 +577,8 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 
 			PT_double,"thermostat_deadband[degF]",PADDR(thermostat_deadband),PT_DESCRIPTION,"deadband of thermostat control",
 			PT_int16,"thermostat_cycle_time",PADDR(thermostat_cycle_time),PT_DESCRIPTION,"minimum time in seconds between thermostat updates",
+			PT_int16,"thermostat_off_cycle_time",PADDR(thermostat_off_cycle_time),PT_DESCRIPTION,"the minimum amount of time the thermostat cycle must stay in the off state",
+			PT_int16,"thermostat_on_cycle_time",PADDR(thermostat_on_cycle_time),PT_DESCRIPTION,"the minimum amount of time the thermostat cycle must stay in the on state",
 			PT_timestamp,"thermostat_last_cycle_time",PADDR(thermostat_last_cycle_time),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"last time the thermostat changed state",
 			PT_double,"heating_setpoint[degF]",PADDR(heating_setpoint),PT_DESCRIPTION,"thermostat heating setpoint",
 			PT_double,"cooling_setpoint[degF]",PADDR(cooling_setpoint),PT_DESCRIPTION,"thermostat cooling setpoint",
@@ -924,6 +926,8 @@ int house_e::create()
 	load.name = "system";
 	UA = -1;
 	airchange_per_hour = -1;
+	thermostat_off_cycle_time = -1;
+	thermostat_on_cycle_time = -1;
 
 	return result;
 }
@@ -2246,11 +2250,37 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 		/* dt2 is for the next thermal event ... avoid calculating the next time to a given
 			temperature until the cycle time has elapse.
 		 */
-		// this is always false if thermostat_cycle_time == 0
-		if(t < thermostat_last_cycle_time + thermostat_cycle_time){
-			dt2 = (double)(thermostat_last_cycle_time + thermostat_cycle_time);
+		
+		if(thermostat_off_cycle_time == -1 && thermostat_on_cycle_time == -1){
+			// this is always false if thermostat_cycle_time == 0
+			if(t < thermostat_last_cycle_time + thermostat_cycle_time){
+				dt2 = (double)(thermostat_last_cycle_time + thermostat_cycle_time);
+			} else {
+				dt2 = e2solve(k1,r1,k2,r2,Teq-Tevent)*3600;
+			}
+		} else if(thermostat_off_cycle_time >= 0 && thermostat_on_cycle_time >= 0){
+			if(thermostat_last_off_cycle_time > thermostat_last_on_cycle_time){
+				if(t < thermostat_last_off_cycle_time + thermostat_off_cycle_time){
+					dt2 = (double)(thermostat_last_off_cycle_time + thermostat_off_cycle_time);
+				} else {
+					dt2 = e2solve(k1,r1,k2,r2,Teq-Tevent)*3600;
+				}
+			} else if(thermostat_last_off_cycle_time < thermostat_last_on_cycle_time){
+				if(t < thermostat_last_on_cycle_time + thermostat_on_cycle_time){
+					dt2 = (double)(thermostat_last_on_cycle_time + thermostat_on_cycle_time);
+				} else {
+					dt2 = e2solve(k1,r1,k2,r2,Teq-Tevent)*3600;
+				}
+			} else {
+				if(t < thermostat_last_cycle_time + thermostat_cycle_time){
+					dt2 = (double)(thermostat_last_cycle_time + thermostat_cycle_time);
+				} else {
+					dt2 = e2solve(k1,r1,k2,r2,Teq-Tevent)*3600;
+				}
+			}
 		} else {
-			dt2 = e2solve(k1,r1,k2,r2,Teq-Tevent)*3600;
+			gl_error("Both the thermostat_off_cycle_time and the thermostat_on_cycle_time must be greater than zero.");
+			return TS_INVALID;
 		}
 
 		// if no solution is found or it has already occurred
@@ -2415,8 +2445,24 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 	// check for thermostat cycle lockout
-	if(t1 < thermostat_last_cycle_time + thermostat_cycle_time){
-		return (thermostat_last_cycle_time + thermostat_cycle_time); // next time will be calculated in sync_model
+	if(thermostat_off_cycle_time == -1 && thermostat_on_cycle_time == -1){
+		if(t1 < thermostat_last_cycle_time + thermostat_cycle_time){
+			return (thermostat_last_cycle_time + thermostat_cycle_time); // next time will be calculated in sync_model
+		}
+	} else if(thermostat_off_cycle_time >=0 && thermostat_on_cycle_time >=0){
+		if(thermostat_last_off_cycle_time > thermostat_last_on_cycle_time){
+			if(t1 < thermostat_last_off_cycle_time + thermostat_off_cycle_time){
+				return (thermostat_last_off_cycle_time + thermostat_off_cycle_time); // next time will be calculated in sync_model
+			}
+		} else if(thermostat_last_off_cycle_time < thermostat_last_on_cycle_time){
+			if(t1 < thermostat_last_on_cycle_time + thermostat_on_cycle_time){
+				return (thermostat_last_on_cycle_time + thermostat_on_cycle_time); // next time will be calculated in sync_model
+			}
+		} else {
+			if(t1 < thermostat_last_cycle_time + thermostat_cycle_time){
+				return (thermostat_last_cycle_time + thermostat_cycle_time); // next time will be calculated in sync_model
+			}
+		}
 	}
 
 	// skip the historisis and turn on or off, if the HVAC is in a state where it _could_ be on or off.
@@ -2498,6 +2544,7 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 				system_mode = SM_OFF;
 				power_state = PS_OFF;
 				thermostat_last_cycle_time = t1;
+				thermostat_last_off_cycle_time = t1;
 				turned_off = true;
 			}
 			break;
@@ -2506,6 +2553,7 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 				system_mode = SM_OFF;
 				power_state = PS_OFF;
 				thermostat_last_cycle_time = t1;
+				thermostat_last_off_cycle_time = t1;
 				turned_off = true;
 			}
 			break;
@@ -2514,6 +2562,7 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 				system_mode = SM_OFF;
 				power_state = PS_OFF;
 				thermostat_last_cycle_time = t1;
+				thermostat_last_off_cycle_time = t1;
 				turned_off = true;
 			}
 			break;
@@ -2525,6 +2574,7 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 				last_system_mode = system_mode = SM_COOL;
 				power_state = PS_ON;
 				thermostat_last_cycle_time = t1;
+				thermostat_last_on_cycle_time = t1;
 				turned_on = true;
 			}
 			else if(Tair < TheatOn - terr/2)
@@ -2538,6 +2588,7 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 					last_system_mode = system_mode = SM_AUX;
 					power_state = PS_ON;
 					thermostat_last_cycle_time = t1;
+					thermostat_last_on_cycle_time = t1;
 					turned_on = true;
 				}
 				else
@@ -2545,6 +2596,7 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 					last_system_mode = system_mode = SM_HEAT;
 					power_state = PS_ON;
 					thermostat_last_cycle_time = t1;
+					thermostat_last_off_cycle_time = t1;
 					turned_on = true;
 				}
 			}

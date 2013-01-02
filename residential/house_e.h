@@ -105,7 +105,11 @@ public:
 	// thermostat
 	double thermostat_deadband;		///< thermostat deadband (degF)
 	int16 thermostat_cycle_time;	///< thermostat minimum cycle time (seconds)
+	int16 thermostat_off_cycle_time; ///< the minimum amount of time the thermostat cycle must stay in the off state
+	int16 thermostat_on_cycle_time; ///< the minimum amount of time the thermostat cycle must stay in the on state
 	TIMESTAMP thermostat_last_cycle_time;
+	TIMESTAMP thermostat_last_off_cycle_time;
+	TIMESTAMP thermostat_last_on_cycle_time;
 	double heating_setpoint;		///< heating setpoint (degF)
 	double cooling_setpoint;		///< cooling setpoint (degF)
 
