@@ -1,0 +1,6 @@
+#define VALUE=${GUID}
+#if VALUE==${GUID}
+#error GUID is not unique
+#else
+#print ${VALUE}
+#endif

@@ -1,0 +1,6 @@
+#define VALUE=${RUN}
+#if VALUE==${RUN}
+#print ${RUN}
+#else
+#error ${RUN} is not unique
+#endif

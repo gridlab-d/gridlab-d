@@ -578,9 +578,8 @@ char *global_guid(char *buffer, int size)
 			srand((unsigned int)time(NULL));
 			guid_first = 0;
 		}
-		// TODO this is a pseudo-GUID - implement a proper GUID
-		sprintf(buffer,"%04x%04x-%04x-%04x-%04x-%04x%04x%04x",
-			rand()&0xffff,rand()&0xffff,rand()&0xffff,rand()&0xffff,rand()&0xffff,rand()&0xffff,rand()&0xffff,rand()&0xffff);
+		sprintf(buffer,"%04x%04x-%04x-4%03x-%04x-%04x%04x%04x",
+			rand()&0xffff,rand()&0xffff,rand()&0xffff,rand()&0x0fff,rand()&0xffff,rand()&0xffff,rand()&0xffff,rand()&0xffff);
 		return buffer;
 	}
 	else
@@ -593,16 +592,7 @@ char *global_run(char *buffer, int size)
 {
 	static char value[37]="";
 	if ( value[0]=='\0' )
-	{
-		if ( guid_first )
-		{
-			srand((unsigned int)time(NULL));
-			guid_first = 0;
-		}
-		// TODO this is a pseudo-GUID - implement a proper GUID
-		sprintf(value,"%04x%04x-%04x-%04x-%04x-%04x%04x%04x",
-			rand()&0xffff,rand()&0xffff,rand()&0xffff,rand()&0xffff,rand()&0xffff,rand()&0xffff,rand()&0xffff,rand()&0xffff);
-	}
+		global_guid(value,sizeof(value));
 	if ( size>36 )
 	{
 		strcpy(buffer,value);
