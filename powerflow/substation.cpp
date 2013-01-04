@@ -362,7 +362,7 @@ TIMESTAMP substation::sync(TIMESTAMP t0, TIMESTAMP t1)
 				} else {
 					*pConstantImpedanceLoad = 0;
 				}
-				*pConstantPowerLoad = (average_transmission_power_load + ((distribution_power_A + distribution_power_B + distribution_power_C) / 3)) / 1000000;
+				*pConstantPowerLoad = (average_transmission_power_load + (distribution_power_A + distribution_power_B + distribution_power_C)) / 1000000;
 			}
 		}//End is pw_load connected
 	}//End powerflow cycling check
