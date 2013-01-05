@@ -1,0 +1,18 @@
+// test schedule characteristics
+
+schedule test_nonzero {
+	nonzero;
+	0-29 * * * * 1;
+	30-59 * * * * 2;
+}
+schedule test_positive {
+	positive;
+	0-29 * * * * 0;
+	30-59 * * * * 1;
+}
+schedule test_boolean {
+	boolean;
+	0-29 * * * * 0;
+	30-59 * * * * 1;
+}
+
