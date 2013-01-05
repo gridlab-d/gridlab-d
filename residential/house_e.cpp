@@ -569,7 +569,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"solar_heatgain_factor",PADDR(solar_heatgain_factor),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"product of the window area, window transmitivity, and the window exterior transmission coefficient",
 			PT_double,"airchange_per_hour",PADDR(airchange_per_hour),PT_DESCRIPTION,"number of air-changes per hour",
 			PT_double,"airchange_UA[Btu/degF.h]",PADDR(airchange_UA),PT_DESCRIPTION,"additional UA due to air infiltration",
-			PT_double,"UA",PADDR(UA),PT_DESCRIPTION,"the total UA",
+			PT_double,"UA[Btu/degF.h]",PADDR(UA),PT_DESCRIPTION,"the total UA",
 			PT_double,"internal_gain[Btu/h]",PADDR(total.heatgain),PT_DESCRIPTION,"internal heat gains",
 			PT_double,"solar_gain[Btu/h]",PADDR(solar_load),PT_DESCRIPTION,"solar heat gains",
 			PT_double,"incident_solar_radiation[Btu/h.sf]",PADDR(incident_solar_radiation),PT_DESCRIPTION,"average incident solar radiation hitting the house",
