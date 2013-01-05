@@ -15,4 +15,3 @@ schedule test_boolean {
 	0-29 * * * * 0;
 	30-59 * * * * 1;
 }
-

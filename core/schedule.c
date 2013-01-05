@@ -212,7 +212,19 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 		while (isspace(*token)) token++;
 		if (strcmp(token,"")==0)
 			continue;
-		if (sscanf(token,"%s%*[ \t]%s%*[ \t]%s%*[ \t]%s%*[ \t]%s%*[ \t]%lf",matcher[0].pattern,matcher[1].pattern,matcher[2].pattern,matcher[3].pattern,matcher[4].pattern,&value)<5) /* value can be missing -> defaults to 1.0 */
+		if ( strcmp(token,"nonzero")==0 )
+			sch->flags |= SN_NONZERO;
+		else if ( strcmp(token,"positive")==0 )
+			sch->flags |= SN_POSITIVE;
+		else if ( strcmp(token,"boolean")==0 )
+			sch->flags |= SN_BOOLEAN;
+		else if ( strcmp(token,"normal")==0 )
+			sch->flags |= SN_NORMAL;
+		else if ( strcmp(token,"weighted")==0 )
+			sch->flags |= SN_NORMAL|SN_WEIGHTED;
+		else if ( strcmp(token,"absolute")==0 )
+			sch->flags |= SN_NORMAL|SN_ABSOLUTE;
+		else if (sscanf(token,"%s%*[ \t]%s%*[ \t]%s%*[ \t]%s%*[ \t]%s%*[ \t]%lf",matcher[0].pattern,matcher[1].pattern,matcher[2].pattern,matcher[3].pattern,matcher[4].pattern,&value)<5) /* value can be missing -> defaults to 1.0 */
 		{
 			output_error("schedule_compile(SCHEDULE *sch='{name=%s, ...}') ignored an invalid definition '%s'", sch->name, token);
 			/* TROUBLESHOOT
@@ -776,23 +788,23 @@ int schedule_validate(SCHEDULE *sch, int flags)
 		{
 			double value = sch->data[b*MAXVALUES+i];
 			int weight = sch->weight[b*MAXVALUES+i];
-			int unit =  (weight>0 && value==1.0);
-			int zero = (weight>0 && value==0.0);
+			int nonzero = (weight>0 && value!=0.0);
+			int boolean = (weight>0 && (value==0.0 || value==1.0));
 			int positive = (weight>0 && value>0.0);
-			int negative = (weight>0 && value<0.0);
+			if ( weight==0 ) continue;
 			if(value != 0.0)
 				nzct += weight;
-			if ((flags&SN_BOOLEAN) && !(unit || zero))
+			if ((flags&SN_BOOLEAN) && !boolean)
 			{
 				output_error("schedule %s fails 'boolean' validation in block %s at schedule index %d", sch->name, sch->blockname[b], i);
 				failed = 1;
 			}
-			else if ((flags&SN_POSITIVE) && negative)
+			else if ((flags&SN_POSITIVE) && !positive)
 			{
 				output_error("schedule %s fails 'positive' validation in block %s at schedule index %d", sch->name, sch->blockname[b], i);
 				failed = 1;
 			}
-			else if ((flags&SN_NONZERO) && zero)
+			else if ((flags&SN_NONZERO) && !nonzero)
 			{
 				output_error("schedule %s fails 'nonzero' validation in block %s at schedule index %d", sch->name, sch->blockname[b], i);
 				failed = 1;
