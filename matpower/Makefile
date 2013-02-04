@@ -273,7 +273,6 @@ matpower_la_SOURCES = init.cpp main.cpp matpower.h \
 	baseMVA.cpp baseMVA.h \
 	branch.cpp branch.h 
 
-
 # NEWCLASS 
 # DO NOT EDIT THE PREVIOUS LINE
 
@@ -282,7 +281,7 @@ matpower_la_SOURCES = init.cpp main.cpp matpower.h \
 
 # TODO set the version info as desired
 #matpower_la_LDFLAGS = -L/mnt/yizheng/gridspice.simulator/matpower -lopf -lmwmclmcrrt -lmwmclmcrrt -L/mnt/matlab/runtime/glnx86 -module -no-undefined -avoid-version -version-info 0:0:0
-matpower_la_LDFLAGS = -L$(pkglibdir)/matpower64 -lopf -module -lmwmclmcrrt -no-undefined -avoid-version -version-info 0:0:0
+matpower_la_LDFLAGS = -L$(srcdir)/mcc64 -lopf -module -lmwmclmcrrt -no-undefined -avoid-version -version-info 0:0:0
 all: all-am
 
 .SUFFIXES:

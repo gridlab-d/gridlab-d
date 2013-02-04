@@ -8,7 +8,7 @@ clock {
 }
 
 
-module wholesale {
+module matpower {
 };
 
 object bus{
