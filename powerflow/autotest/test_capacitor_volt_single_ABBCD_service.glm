@@ -7,8 +7,9 @@
 
 
 clock {
-	timestamp '2000-01-01 0:00:00';
 	timezone EST+5EDT;
+	starttime '2000-01-01 0:00:00';
+	stoptime '2000-01-01 0:00:01';
 }
 #set relax_naming_rules=1
 #define stylesheet=C:\Documents and Settings\d3x289\My Documents\GLD_Analysis_2011\Gridlabd\branch\2.2\VS2005\gridlabd-2_0

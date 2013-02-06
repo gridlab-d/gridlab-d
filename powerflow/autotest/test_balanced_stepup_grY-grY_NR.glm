@@ -8,8 +8,9 @@
 ///////////////////////////////////////////
 
 clock {
-	timestamp '2000-01-01 0:00:00';
 	timezone EST+5EDT;
+	starttime '2000-01-01 0:00:00';
+	stoptime '2000-01-01 0:00:01';
 }
 
 //#define stylesheet="C:\Users\Jason\Documents\GridLAB-D\trunk\VS2005\gridlabd-2_0";

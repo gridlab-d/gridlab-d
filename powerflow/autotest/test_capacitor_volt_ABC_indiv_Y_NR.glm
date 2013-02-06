@@ -6,7 +6,7 @@
 // Individual CAP voltage control - delta on a Wye
 clock {
 	timezone EST+5EDT;
-	timestamp '2000-01-01 3:00:00';
+	starttime '2000-01-01 3:00:00';
 	stoptime '2000-01-01 3:00:58';
 }
 

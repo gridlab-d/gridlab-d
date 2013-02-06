@@ -15,7 +15,8 @@
 
 clock {
      timezone CST+6CDT;
-     timestamp '2006-01-01 00:00:00 CST';
+     starttime '2006-01-01 00:00:00 CST';
+	 stoptime '2006-01-01 00:00:01 CST';
 }
 
 module powerflow {

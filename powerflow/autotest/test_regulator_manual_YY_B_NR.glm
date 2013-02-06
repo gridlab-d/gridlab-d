@@ -9,7 +9,9 @@
 
 clock {
 	timezone EST+5EDT;
-	timestamp '2000-01-01 3:00:00';
+	timezone EST+5EDT;
+	starttime '2000-01-01 3:00:00';
+	stoptime '2000-01-02 12:00:00';
 }
 
 module powerflow {
