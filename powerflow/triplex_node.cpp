@@ -91,6 +91,9 @@ triplex_node::triplex_node(MODULE *mod) : node(mod)
 			PT_double, "impedance_12_reac[Ohm]", PADDR(impedance[2].Im()),
 			PT_bool, "house_present", PADDR(house_present),
 			PT_bool, "NR_mode", PADDR(NR_mode),
+			PT_enumeration, "service_status", PADDR(service_status),PT_DESCRIPTION,"In and out of service flag",
+				PT_KEYWORD, "IN_SERVICE", ND_IN_SERVICE,
+				PT_KEYWORD, "OUT_OF_SERVICE", ND_OUT_OF_SERVICE,
          	NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
 }
@@ -108,6 +111,7 @@ int triplex_node::create(void)
 	shunt1 = complex(0,0);
 	shunt2 = complex(0,0);
 	shunt12 = complex(0,0);
+	service_status = ND_IN_SERVICE;
 	return result;
 }
 

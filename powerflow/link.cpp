@@ -158,6 +158,8 @@ link_object::link_object(MODULE *mod) : powerflow_object(mod)
 				PT_KEYWORD, "CR", (set)FD_C_REVERSE,
 				PT_KEYWORD, "CN", (set)FD_C_NONE,
 			PT_double, "mean_repair_time[s]",PADDR(mean_repair_time), PT_DESCRIPTION, "Time after a fault clears for the object to be back in service",
+			PT_double, "continuous_rating[A]", PADDR(link_rating[0]), PT_DESCRIPTION, "Continuous rating for this link object (set individual line segments",
+			PT_double, "emergency_rating[A]", PADDR(link_rating[1]), PT_DESCRIPTION, "Emergency rating for this link object (set individual line segments",
 			NULL) < 1 && errno) GL_THROW("unable to publish link properties in %s",__FILE__);
 	}
 }
@@ -196,6 +198,13 @@ int link_object::create(void)
 	protect_locations[0] = protect_locations[1] = protect_locations[2] = 0;
 
 	current_in[0] = current_in[1] = current_in[2] = complex(0,0);
+
+	link_limits[0] = link_limits[1] = NULL;
+	
+	link_rating[0] = 1000;	//Replicates current defaults of line objects
+	link_rating[1] = 2000;
+
+	check_link_limits = false;
 
 	mean_repair_time = 0.0;
 
@@ -277,9 +286,36 @@ int link_object::init(OBJECT *parent)
 				//Defined above
 		}
 		else
-			/* promote this object if necessary */
-			gl_set_rank(obj,to->rank+1);
-
+		{
+			if (gl_object_isa(to->parent,"link","powerflow"))
+			{
+				gl_warning("%s (id:%d) already has a link parented - this could give invalid answers in FBS!",to->name,to->id);
+				/*  TROUBLESHOOT
+				While connecting the different objects, a link's 'to' end already has another link as a parent.  This is
+				indicative of a loop or other 'non-radial' condition on the system.  The exception to this is if an open
+				switch is connected at that node.  If it is not an open switch, Forward Backward-Sweep (FBS) will not
+				give a proper solution in this condition.  Even if it is an open switch, be aware that FBS could still
+				give an invalid answer, depending on topological conditions.  If it is an open switch, consider removing
+				the open switch from your GLM to ensure proper answers.  If it is another type of link or you do not wish
+				to remove the open switch, consider using the Newton-Raphson (NR) solver instead.
+				*/
+			}
+			else if (gl_object_isa(to->parent,"node","powerflow"))
+			{
+				gl_warning("%s (id:%d) is parented to a node, but has a link running into it!",to->name,to->id);
+				/*  TROUBLESHOOT
+				While connecting the different objects, a link's 'to' end already has a parent of another node.  This may
+				cause invalid answers on the system an an inaccurate powerflow.  Please check the node's connection and
+				adjust your system, if necessary.  You may also consider using the Newton-Raphson solver (NR), which will not
+				this issue.
+				*/
+			}
+			else	//Business as normal
+			{
+				/* promote this object if necessary */
+				gl_set_rank(obj,to->rank+1);
+			}
+		}
 		break;
 	case SM_GS: /* Gauss-Seidel */
 		{
@@ -351,12 +387,14 @@ int link_object::init(OBJECT *parent)
 		{
 			phase_f_test &= ~(PHASE_S);	//Pull off the single phase portion of from node
 
-			if ((phase_f_test != (phases_test & ~(PHASE_S))) || (phase_t_test != phases_test))	//Phase mismatch on the line
-				GL_THROW("line:%d - %s has a phase mismatch at one or both ends",obj->id,obj->name);
+			if ((phase_f_test != (phases_test & ~(PHASE_S))) || (phase_t_test != phases_test) || ((phase_t_test & PHASE_S) != PHASE_S))	//Phase mismatch on the line
+				GL_THROW("transformer:%d (split phase) - %s has a phase mismatch at one or both ends",obj->id,obj->name);
 				/*  TROUBLESHOOT
 				A line has been configured to carry a certain set of phases.  Either the input node or output
 				node is not providing a source/sink for these different conductors.  The To and From nodes must
-				have at least the phases of the line connecting them.
+				have at least the phases of the line connecting them. Center-tap transformers specifically require
+				at least a single phase (A, B, or C) on the primary side, and the same phase and phase S on the
+				secondary side.
 				*/
 		}
 		else if (SpecialLnk==DELTAGWYE)	//D-Gwye then
@@ -365,7 +403,7 @@ int link_object::init(OBJECT *parent)
 			phase_f_test &= ~(PHASE_N | PHASE_D);	//Pull off the neutral and Delta phase portion of to node
 
 			if ((phase_f_test != (phases & ~(PHASE_N | PHASE_D))) || (phase_t_test != (phases & ~(PHASE_N | PHASE_D))))	//Phase mismatch on the line
-				GL_THROW("line:%d - %s has a phase mismatch at one or both ends",obj->id,obj->name);
+				GL_THROW("transformer:%d (delta-grounded wye) - %s has a phase mismatch at one or both ends",obj->id,obj->name);
 				//Defined above
 		}
 		else	//Must be a switch then
@@ -408,6 +446,50 @@ int link_object::init(OBJECT *parent)
 	/* record this link on the nodes' incidence counts */
 	OBJECTDATA(from,node)->k++;
 	OBJECTDATA(to,node)->k++;
+
+	//See if limits are enabled - if so, populate them
+	if (use_link_limits==TRUE)
+	{
+		//See what kind of link we are - if not in this list, ignore it
+		if (gl_object_isa(obj,"transformer","powerflow") || gl_object_isa(obj,"underground_line","powerflow") || gl_object_isa(obj,"overhead_line","powerflow") || gl_object_isa(obj,"triplex_line","powerflow"))	//Default line or xformer
+		{
+			//link us to local property (individual object populate)
+			link_limits[0] = &link_rating[0];
+			link_limits[1] = &link_rating[1];
+
+			//Set flag to check
+			check_link_limits = true;
+
+			//See if the limits are zero and toss some warnings
+			if (*link_limits[0] == 0.0)
+			{
+				gl_warning("continuous_rating for link:%s is zero - this may lead to odd warning messages about line limits with nonsense values",obj->name);
+				/*  TROUBLESHOOT
+				The value for continuous_rating is set to zero for the particular link object.  This may cause warnings related to line ratings
+				that have nonsense values like '1.#J%'.  To resolve these warnings, please put a valid number in for continuous_rating.  Load order
+				may also contribute to this problem.  Ensure all configurations are first in the GLM files.
+				*/
+			}
+
+			if (*link_limits[1] == 0.0)
+			{
+				gl_warning("emergency_rating for link:%s is zero - this may lead to odd warning messages about line limits with nonsense values",obj->name);
+				/*  TROUBLESHOOT
+				The value for emergency_rating is set to zero for the particular link object.  This may cause warnings related to line ratings
+				that have nonsense values like '1.#J%'.  To resolve these warnings, please put a valid number in for emergency_rating.
+				Load order may also contribute to this problem.  Ensure all configurations are first in the GLM files.
+				*/
+			}
+		}
+		else
+		{
+			//Defaulted else - don't check - (switch, fuse, regulator, sectionalizer, recloser)
+
+			//Set flag, just to be safe
+			check_link_limits = false;
+		}
+	}
+
 	return 1;
 }
 
@@ -1221,6 +1303,7 @@ TIMESTAMP link_object::sync(TIMESTAMP t0)
 TIMESTAMP link_object::postsync(TIMESTAMP t0)
 {
 	TIMESTAMP TRET=TS_NEVER;
+	double temp_power_check;
 
 	if ((solver_method==SM_FBS))
 	{
@@ -1331,7 +1414,99 @@ TIMESTAMP link_object::postsync(TIMESTAMP t0)
 			calculate_power_splitphase();
 		else
 			calculate_power();
-	}
+
+		//Check to see if limits need to be checked
+		if ((use_link_limits==true) && (check_link_limits==true))
+		{
+			//See what we are - if we're a transformer, we're looking at power
+			if (voltage_ratio != 1.0)	//Presumes we're a transformer - if we were not, VR should be 1.0
+			{
+				//Check power - rating is in kVA - just use power_out (tends to be a little more accurate
+				temp_power_check = power_out.Mag() / 1000.0;
+
+				if (temp_power_check > *link_limits[0])
+				{
+					//Exceeded rating - no emergency ratings for transformers, at this time
+					gl_warning("transformer:%s is at %.2f%% its rated power value",OBJECTHDR(this)->name,(temp_power_check/(*link_limits[0])*100.0));
+					/*  TROUBLESHOOT
+					The total power passing through a transformer is above its kVA rating.
+					*/
+				}
+			}//End transformers
+			else	//Must be a line - that's the only other option right now
+			{
+				//Check individual currents (line ratings in Amps)
+				if (has_phase(PHASE_A))
+				{
+					if (read_I_out[0].Mag() > *link_limits[0])
+					{
+						//Exceeded continuous - check emergency
+						if (read_I_out[0].Mag() > *link_limits[1])
+						{
+							//Exceeded emergency
+							gl_warning("Line:%s is at %.2f%% its emergency rating on phase A!",OBJECTHDR(this)->name,(read_I_out[0].Mag()/(*link_limits[1])*100.0));
+							/*  TROUBLESHOOT
+							Phase A on the line has exceeded the emergency rating associated with it.
+							*/
+						}
+						else	//Just continuous exceed
+						{
+							gl_warning("Line:%s is at %.2f%% its continuous rating on phase A!",OBJECTHDR(this)->name,(read_I_out[0].Mag()/(*link_limits[0])*100.0));
+							/*  TROUBLESHOOT
+							Phase A on the line has exceeded the continuous rating associated with it.
+							*/
+						}
+					}//End Phase A check
+				}//End has Phase A
+
+				if (has_phase(PHASE_B))
+				{
+					if (read_I_out[1].Mag() > *link_limits[0])
+					{
+						//Exceeded continuous - check emergency
+						if (read_I_out[1].Mag() > *link_limits[1])
+						{
+							//Exceeded emergency
+							gl_warning("Line:%s is at %.2f%% its emergency rating on phase B!",OBJECTHDR(this)->name,(read_I_out[1].Mag()/(*link_limits[1])*100.0));
+							/*  TROUBLESHOOT
+							Phase B on the line has exceeded the emergency rating associated with it.
+							*/
+						}
+						else	//Just continuous exceed
+						{
+							gl_warning("Line:%s is at %.2f%% its continuous rating on phase B!",OBJECTHDR(this)->name,(read_I_out[1].Mag()/(*link_limits[0])*100.0));
+							/*  TROUBLESHOOT
+							Phase B on the line has exceeded the continuous rating associated with it.
+							*/
+						}
+					}//End Phase B check
+				}//End has Phase B
+
+				if (has_phase(PHASE_C))
+				{
+					if (read_I_out[2].Mag() > *link_limits[0])
+					{
+						//Exceeded continuous - check emergency
+						if (read_I_out[2].Mag() > *link_limits[1])
+						{
+							//Exceeded emergency
+							gl_warning("Line:%s is at %.2f%% its emergency rating on phase C!",OBJECTHDR(this)->name,(read_I_out[2].Mag()/(*link_limits[1])*100.0));
+							/*  TROUBLESHOOT
+							Phase C on the line has exceeded the emergency rating associated with it.
+							*/
+						}
+						else	//Just continuous exceed
+						{
+							gl_warning("Line:%s is at %.2f%% its continuous rating on phase C!",OBJECTHDR(this)->name,(read_I_out[2].Mag()/(*link_limits[0])*100.0));
+							/*  TROUBLESHOOT
+							Phase C on the line has exceeded the continuous rating associated with it.
+							*/
+						}
+					}//End Phase C check
+				}//End has Phase C
+			}//End must be a line check
+		}//End Limit checks
+	}//End power updates and checks
 
 	return TRET;
 }
@@ -2442,6 +2617,13 @@ void link_object::calculate_power()
 {
 		node *f = OBJECTDATA(from, node);
 		node *t = OBJECTDATA(to, node);
+
+		//Extra catch here, in case something calls the wrong one
+		if (has_phase(PHASE_S))
+		{
+			calculate_power_splitphase();
+			return;
+		}
 
 		if (solver_method == SM_NR)
 		{

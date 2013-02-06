@@ -27,8 +27,20 @@ public:
 	complex W_mat[3][3];
 	complex curr[3];
 	OBJECT *RemoteNode;		 //Remote node for sensing voltage values in REMOTE_NODE Control method
+	double tap_A_change_count; //Counter for the number of times tap_A changes.
+	double tap_B_change_count; //Counter for the number of times tap_B changes.
+	double tap_C_change_count; //Counter for the number of times tap_C changes.
+	int16 initial_tap_A;
+	int16 initial_tap_B;
+	int16 initial_tap_C;
+	int16 tap_A_changed;
+	int16 tap_B_changed;
+	int16 tap_C_changed;
 
-	
+	TIMESTAMP prev_time;
+	int16 prev_tap_A;
+	int16 prev_tap_B;
+	int16 prev_tap_C;
 
 protected:
 	int64 mech_t_next[3];	 //next time step after tap change

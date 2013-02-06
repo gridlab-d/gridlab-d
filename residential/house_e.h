@@ -48,6 +48,14 @@ typedef enum {
 	IEU_ALL				= 0x03170303, ///< all (needed to filter)
 } IMPLICITENDUSEFLAGS;
 
+//Solar quadrant definitions
+#define NO_SOLAR	0x0000
+#define HORIZONTAL	0x0001
+#define NORTH		0x0002
+#define EAST		0x0004
+#define SOUTH		0x0008
+#define WEST		0x0010
+
 class house_e : public residential_enduse { /*inherits due to HVAC being a load */
 public:
 	object weather; ///< reference to the climate
@@ -61,6 +69,7 @@ public:
 	complex *pShunt;						///< pointer to shunt value on triplex parent
 	complex *pPower;						///< pointer to power value on triplex parent
 	bool *pHouseConn;						///< Pointer to house_present variable on triplex parent
+	int *pMeterStatus;						///< Pointer to service_status variable on triplex parent
 	IMPLICITENDUSE *implicit_enduse_list;	///< implicit enduses
 	static set implicit_enduses_active;		///< implicit enduses that are to be activated
 public:
@@ -89,9 +98,25 @@ public:
 	double mass_solar_gain_fraction;			///< fraction of solar gains that goes to the mass
 	double mass_internal_gain_fraction;		///< fraction of the internal gains that goes to the mass
 	double number_of_stories;
+	
+	// additional reverse etp parameters
+	set include_solar_quadrant;
+	enum {HC_DEFAULT=0, HC_FLAT=1, HC_LINEAR=2, HC_CURVED=3} heating_cop_curve;
+	enum {HP_DEFAULT=0, HP_FLAT=1, HP_LINEAR=2, HP_CURVED=3} heating_cap_curve;
+	enum {CC_DEFAULT=0, CC_FLAT=1, CC_LINEAR=2, CC_CURVED=3} cooling_cop_curve;
+	enum {CP_DEFAULT=0, CP_FLAT=1, CP_LINEAR=2, CP_CURVED=3} cooling_cap_curve;
 	bool use_latent_heat;
 	bool include_fan_heatgain;
 	double fan_heatgain_fraction;
+	double horizontal_diffuse_solar_radiation;
+	double north_incident_solar_radiation;
+	double north_west_incident_solar_radiation;
+	double west_incident_solar_radiation;
+	double south_west_incident_solar_radiation;
+	double south_incident_solar_radiation;
+	double south_east_incident_solar_radiation;
+	double east_incident_solar_radiation;
+	double north_east_incident_solar_radiation;
 
 	// window variables
 	double glazing_shgc;						///< glazing SHGC
@@ -112,6 +137,7 @@ public:
 	TIMESTAMP thermostat_last_on_cycle_time;
 	double heating_setpoint;		///< heating setpoint (degF)
 	double cooling_setpoint;		///< cooling setpoint (degF)
+	double dlc_offset;
 
 	// hvac control variable
 	enum {TC_FULL=0, TC_BAND=1, TC_NONE=2} thermostat_control;	///< method of HVAC control
@@ -350,6 +376,7 @@ public:
 	double is_AUX_on,is_HEAT_on,is_COOL_on;	// A logic statement so that the population dynamics of the AC can be observed with collectors.
 
 private:
+	TIMESTAMP simulation_beginning_time;
 	void set_thermal_integrity();
 	void set_window_shgc();
 	void set_window_Rvalue();
@@ -369,6 +396,7 @@ private:
 	complex load_values[3][3];	//Power, Current, and impedance (admittance) load accumulators for NR solving method
 
 public:
+	int error_flag;
 	static CLASS *oclass, *pclass;
 	house_e( MODULE *module);
 	~house_e();
@@ -401,6 +429,7 @@ public:
 
 	complex *get_complex(OBJECT *obj, char *name);
 	bool *get_bool(OBJECT *obj, char *name);
+	int *get_enum(OBJECT *obj, char *name);
 };
 
 inline double sgn(double x) 

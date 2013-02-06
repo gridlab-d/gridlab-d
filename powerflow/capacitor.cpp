@@ -67,6 +67,9 @@ capacitor::capacitor(MODULE *mod):node(mod)
 				PT_KEYWORD, "VOLT", VOLT,
 				PT_KEYWORD, "VARVOLT", VARVOLT,
 				PT_KEYWORD, "CURRENT", CURRENT,
+			PT_double, "cap_A_switch_count", PADDR(cap_switchA_count),PT_DESCRIPTION,"number of switch operations on Phase A",
+			PT_double, "cap_B_switch_count", PADDR(cap_switchB_count),PT_DESCRIPTION,"number of switch operations on Phase B",
+			PT_double, "cap_C_switch_count", PADDR(cap_switchC_count),PT_DESCRIPTION,"number of switch operations on Phase C",
 			PT_double, "voltage_set_high[V]", PADDR(voltage_set_high), // Turn off if voltage is above this set point
 			PT_double, "voltage_set_low[V]", PADDR(voltage_set_low), // Turns on if voltage is below this set point
 			PT_double, "VAr_set_high[VAr]", PADDR(VAr_set_high),
@@ -97,6 +100,9 @@ int capacitor::create()
 	switchA_state = OPEN;
 	switchB_state = OPEN;
 	switchC_state = OPEN;
+	cap_switchA_count = -1;
+	cap_switchB_count = -1;
+	cap_switchC_count = -1;
 	switchA_state_Next = OPEN;
 	switchB_state_Next = OPEN;
 	switchC_state_Next = OPEN;
@@ -352,6 +358,22 @@ int capacitor::init(OBJECT *parent)
 		capacitor are compatible.
 		*/
 	}
+	if(cap_switchA_count < 0)
+		cap_switchA_count = 0;
+	if(cap_switchB_count < 0)
+		cap_switchB_count = 0;
+	if(cap_switchC_count < 0)
+		cap_switchC_count = 0;
+	
+	prev_time = gl_globalclock;
+	
+	prev_switchA_state = init_switchA_state = (CAPSWITCH)switchA_state;
+	prev_switchB_state = init_switchB_state = (CAPSWITCH)switchB_state;
+	prev_switchC_state = init_switchC_state = (CAPSWITCH)switchC_state;
+	
+	switchA_changed = switchB_changed = switchC_changed = 2;
+
+	//last_time = gl_globalclock;
 
 	return result;
 }
@@ -926,7 +948,104 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 TIMESTAMP capacitor::postsync(TIMESTAMP t0)
 {
 	TIMESTAMP result;
-	
+
+	if((solver_method==SM_NR && NR_cycle==true) || solver_method==SM_FBS){
+		if(prev_time < t0){
+			prev_time = t0;
+			init_switchA_state = prev_switchA_state;
+			init_switchB_state = prev_switchB_state;
+			init_switchC_state = prev_switchC_state;
+			switchA_changed = 0;
+			switchB_changed = 0;
+			switchC_changed = 0;
+			if(prev_switchA_state != switchA_state){
+				prev_switchA_state = switchA_state;
+				cap_switchA_count++;
+				switchA_changed = 1;
+			}
+			if(prev_switchB_state != switchB_state){
+				prev_switchB_state = switchB_state;
+				cap_switchB_count++;
+				switchB_changed = 1;
+			}
+			if(prev_switchC_state != switchC_state){
+				prev_switchC_state = switchC_state;
+				cap_switchC_count++;
+				switchC_changed = 1;
+			}
+		}
+		if(prev_time == t0){
+			if(switchA_changed == 0){
+				if(prev_switchA_state != switchA_state){
+					prev_switchA_state = switchA_state;
+					cap_switchA_count++;
+					switchA_changed = 1;
+				}
+			}
+			if(switchA_changed == 1){
+				if(init_switchA_state == switchA_state){
+					prev_switchA_state = switchA_state;
+					cap_switchA_count--;
+					if(cap_switchA_count < 0){
+						gl_error("Unusual control of the capacitor has resulted in a negative switch change count on phase A.");
+						return TS_INVALID;
+					}
+					switchA_changed = 0;
+				} else if(prev_switchA_state != switchA_state){
+					prev_switchA_state = switchA_state;
+				}
+			}
+			if(switchA_changed == 2){
+				prev_switchA_state = switchA_state;
+			}
+			if(switchB_changed == 0){
+				if(prev_switchB_state != switchB_state){
+					prev_switchB_state = switchB_state;
+					cap_switchB_count++;
+					switchB_changed = 1;
+				}
+			}
+			if(switchB_changed == 1){
+				if(init_switchB_state == switchB_state){
+					prev_switchB_state =switchB_state;
+					cap_switchB_count--;
+					if(cap_switchB_count < 0){
+						gl_error("Unusual control of the capacitor has resulted in a negative switch change count on phase B.");
+						return TS_INVALID;
+					}
+					switchB_changed = 0;
+				} else if(prev_switchB_state != switchB_state){
+					prev_switchB_state = switchB_state;
+				}
+			}
+			if(switchB_changed == 2){
+				prev_switchB_state = switchB_state;
+			}
+			if(switchC_changed == 0){
+				if(prev_switchC_state != switchC_state){
+					prev_switchC_state = switchC_state;
+					cap_switchC_count++;
+					switchC_changed = 1;
+				}
+			}
+			if(switchC_changed == 1){
+				if(init_switchC_state == switchC_state){
+					prev_switchC_state = switchC_state;
+					cap_switchC_count--;
+					if(cap_switchC_count < 0){
+						gl_error("Unusual control of the capacitor has resulted in a negative switch change count on phase C.");
+						return TS_INVALID;
+					}
+					switchC_changed = 0;
+				} else if(prev_switchC_state != switchC_state){
+					prev_switchC_state = switchC_state;
+				}
+			}
+			if(switchC_changed == 2){
+				prev_switchC_state = switchC_state;
+			}
+		}
+	}
 	if ((solver_method==SM_NR) && (NR_cycle==true))
 	{
 		Iteration_Toggle = !Iteration_Toggle;

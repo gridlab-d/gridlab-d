@@ -36,7 +36,9 @@ complex default_line_voltage[3] = {complex(240,0,A),complex(120,0,A),complex(120
 complex default_line_current[3] = {complex(0,0,J),complex(0,0,J),complex(0,0,J)};
 complex default_line_shunt[3] = {complex(0,0,J),complex(0,0,J),complex(0,0,J)};
 complex default_line_power[3] = {complex(0,0,J),complex(0,0,J),complex(0,0,J)};
+int default_meter_status = 1;	//In service
 bool default_NR_mode = false;
+bool ANSI_voltage_check = true;	//Flag to enable/disable ANSI voltage violation checks
 double default_outdoor_temperature = 74.0;
 double default_humidity = 75.0;
 double default_solar[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
@@ -56,6 +58,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	gl_global_create("residential::default_humidity",PT_double,&default_humidity,PT_UNITS,"%",PT_DESCRIPTION,"humidity when no climate data is found",NULL);
 	gl_global_create("residential::default_solar",PT_double,&default_solar,PT_SIZE,9,PT_UNITS,"Btu/sf",PT_DESCRIPTION,"solar gains when no climate data is found",NULL);
 	gl_global_create("residential::default_etp_iterations",PT_int64,&default_etp_iterations,PT_DESCRIPTION,"number of iterations ETP solver will run",NULL);
+	gl_global_create("residential::ANSI_voltage_check",PT_bool,&ANSI_voltage_check,PT_DESCRIPTION,"enable or disable messages about ANSI voltage limit violations in the house",NULL);
 
 	new residential_enduse(module);
 	new appliance(module);

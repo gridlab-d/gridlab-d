@@ -31,6 +31,19 @@ public:
 	CAPSWITCH switchA_state;	// capacitor A switch open or close
 	CAPSWITCH switchB_state;	// capacitor B switch open or close
 	CAPSWITCH switchC_state;	// capacitor C switch open or close
+	CAPSWITCH prev_switchA_state;
+	CAPSWITCH prev_switchB_state;
+	CAPSWITCH prev_switchC_state;
+	CAPSWITCH init_switchA_state;
+	CAPSWITCH init_switchB_state;
+	CAPSWITCH init_switchC_state;
+	int16 switchA_changed;
+	int16 switchB_changed;
+	int16 switchC_changed;
+	TIMESTAMP prev_time;
+	double cap_switchA_count;
+	double cap_switchB_count;
+	double cap_switchC_count;
 	OBJECT *RemoteSensor;		// Remote object for sensing values used for control schemes
 	OBJECT *SecondaryRemote;	// Secondary Remote object for sensing values used for control schemes (VARVOLT uses two)
 	double time_delay;          // control time delay

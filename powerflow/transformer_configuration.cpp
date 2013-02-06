@@ -59,7 +59,7 @@ transformer_configuration::transformer_configuration(MODULE *mod) : powerflow_li
 				PT_KEYWORD,"POLETOP",POLETOP,
 				PT_KEYWORD,"PADMOUNT",PADMOUNT,
 				PT_KEYWORD,"VAULT",VAULT,
-			PT_enumeration,"coolant_type", PADDR(coolent_type),
+			PT_enumeration,"coolant_type", PADDR(coolant_type),
 				PT_KEYWORD,"UNKNOWN", UNKNOWN,
 				PT_KEYWORD,"MINERAL_OIL", MINERAL_OIL,
 				PT_KEYWORD,"DRY",DRY,

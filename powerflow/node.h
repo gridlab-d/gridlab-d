@@ -98,6 +98,7 @@ public:
 		ND_OUT_OF_SERVICE = 0, ///< out of service flag for nodes
 		ND_IN_SERVICE = 1,     ///< in service flag for nodes - default
 	} service_status;
+	double service_status_dbl;	///< double value for service - overrides the enumeration if set
 		   
 	SUBNODETYPE SubNode;
 	set busflags;			///< node flags (see NF_*)

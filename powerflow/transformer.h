@@ -43,6 +43,7 @@ public:
 	double sumF_AAdt;
 	double inst_ins_life;		// the installed insulation life of the transformer.
 	double life_loss;			// the percent loss of life.
+	double transformer_replacements;
 	TIMESTAMP time_before;		// the previous timestamp.
 	double aging_step;			// maximum timestep before updating thermal and aging model in seconds.
 	TIMESTAMP return_at;
@@ -63,7 +64,8 @@ public:
 	inline transformer(CLASS *cl=oclass):link_object(cl){};
 
 private:
+	TIMESTAMP simulation_start_time;
 	void fetch_double(double **prop, char *name, OBJECT *parent);
 };
-
+EXPORT void power_calculation(OBJECT *thisobj);
 #endif // _TRANSFORMER_H

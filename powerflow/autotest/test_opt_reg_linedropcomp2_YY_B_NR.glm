@@ -8,16 +8,18 @@
 // Somewhat contrived test, as a 200000 ft overhead line is used
 // to artificially lower the voltage at the regulator, but tests
 // the regulator function.
-
+// this test is given a wider error than the FBS test because of known differences of how NR approaches the solution in combination with regulator tap positions
+// the assert allows the NR solution to be one tap off from the FBS solution.
 
 
 clock {
-	timestamp '2000-01-01 0:00:00';
 	timezone EST+5EDT;
+	starttime '2000-01-01 0:00:00';
+	stoptime '2000-01-01 1:00:00';
 }
 
 module powerflow {
-	solver_method FBS;
+	solver_method NR;
 };
 module assert;
 module tape;
@@ -160,12 +162,12 @@ object load {
 		operation MAGNITUDE;
 		value 7200;
 		target voltage_B;
-		within 45;
+		within 90;
 	};
 	object complex_assert {
 		operation MAGNITUDE;
 		value 7200;
 		target voltage_C;
-		within 45;
+		within 90;
 	};
 }

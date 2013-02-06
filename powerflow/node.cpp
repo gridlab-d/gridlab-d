@@ -126,6 +126,7 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			PT_enumeration, "service_status", PADDR(service_status),
 				PT_KEYWORD, "IN_SERVICE", ND_IN_SERVICE,
 				PT_KEYWORD, "OUT_OF_SERVICE", ND_OUT_OF_SERVICE,
+			PT_double, "service_status_double", PADDR(service_status_dbl),PT_DESCRIPTION,"In and out of service flag - type double - will indiscriminately override service_status - useful for schedules",
 
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 	}
@@ -174,6 +175,7 @@ int node::create(void)
 
 	// Only used in capacitors, at this time, but put into node for future functionality (maybe with reliability?)
 	service_status = ND_IN_SERVICE;
+	service_status_dbl = -1.0;	//Initial flag is to ignore it.  As soon as this changes, it overrides service_status
 
 	memset(voltage,0,sizeof(voltage));
 	memset(voltaged,0,sizeof(voltaged));
@@ -877,6 +879,28 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	TIMESTAMP t1 = powerflow_object::presync(t0); 
+	//Determine the flag state - see if a schedule is overriding us
+	if (service_status_dbl>-1.0)
+	{
+		if (service_status_dbl == 0.0)
+		{
+			service_status = ND_OUT_OF_SERVICE;
+		}
+		else if (service_status_dbl == 1.0)
+		{
+			service_status = ND_IN_SERVICE;
+		}
+		else	//Unknown, toss an error to stop meddling kids
+		{
+			GL_THROW("Invalid value for service_status_double");
+			/*  TROUBLESHOOT
+			service_status_double was set to a value other than 0 or 1.  This variable
+			is meant as a convenience for schedules to drive the service_status variable, so
+			IN_SERVICE=1 and OUT_OF_SERVICE=0 are the only valid states.  Please fix the value
+			put into this variable.
+			*/
+		}
+	}
 
 	//Initial phase check - moved so all methods check now
 	if (prev_NTime==0)	//Should only be the very first run

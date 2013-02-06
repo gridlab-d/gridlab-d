@@ -60,6 +60,9 @@ public:
 	DRMODEL drm;
 	DRMODEL previous_drm;			///< structures to save drm population and previous population
 
+private:
+	int first_pass;
+
 public:
 	static CLASS *oclass, *pclass;
 	static ZIPload *defaults;

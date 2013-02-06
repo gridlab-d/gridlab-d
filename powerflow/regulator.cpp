@@ -38,11 +38,14 @@ regulator::regulator(MODULE *mod) : link_object(mod)
 		// publish the class properties
 		if (gl_publish_variable(oclass,
 			PT_INHERIT, "link",
-			PT_object,"configuration",PADDR(configuration),
-			PT_int16, "tap_A",PADDR(tap_A),
-			PT_int16, "tap_B",PADDR(tap_B),
-			PT_int16, "tap_C",PADDR(tap_C),
-			PT_object,"sense_node",PADDR(RemoteNode),
+			PT_object,"configuration",PADDR(configuration),PT_DESCRIPTION,"reference to the regulator_configuration object used to determine regulator properties",
+			PT_int16, "tap_A",PADDR(tap_A),PT_DESCRIPTION,"current tap position of tap A",
+			PT_int16, "tap_B",PADDR(tap_B),PT_DESCRIPTION,"current tap position of tap B",
+			PT_int16, "tap_C",PADDR(tap_C),PT_DESCRIPTION,"current tap position of tap C",
+			PT_double, "tap_A_change_count",PADDR(tap_A_change_count),PT_DESCRIPTION,"count of all physical tap changes on phase A since beginning of simulation (plus initial value)",
+			PT_double, "tap_B_change_count",PADDR(tap_B_change_count),PT_DESCRIPTION,"count of all physical tap changes on phase B since beginning of simulation (plus initial value)",
+			PT_double, "tap_C_change_count",PADDR(tap_C_change_count),PT_DESCRIPTION,"count of all physical tap changes on phase C since beginning of simulation (plus initial value)",
+			PT_object,"sense_node",PADDR(RemoteNode),PT_DESCRIPTION,"Node to be monitored for voltage control in remote sense mode",
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 	}
 }
@@ -58,6 +61,9 @@ int regulator::create()
 	configuration = NULL;
 	tap_A = tap_B = tap_C = -999;
 	offnominal_time = false;
+	tap_A_change_count = -1;
+	tap_B_change_count = -1;
+	tap_C_change_count = -1;
 	return result;
 }
 
@@ -275,6 +281,18 @@ int regulator::init(OBJECT *parent)
 		if (glob_min_timestep > 1)					//Now check us and set the flag if true
 			offnominal_time=true;
 
+		prev_tap_A = initial_tap_A = tap[0];
+		prev_tap_B = initial_tap_B = tap[1];
+		prev_tap_C = initial_tap_C = tap[2];
+		if(tap_A_change_count < 0)
+			tap_A_change_count = 0;
+		if(tap_B_change_count < 0)
+			tap_B_change_count = 0;
+		if(tap_C_change_count < 0)
+			tap_C_change_count = 0;
+
+		tap_A_changed = tap_B_changed = tap_C_changed = 2;
+		prev_time = gl_globalclock;
 	return result;
 }
 
@@ -752,6 +770,102 @@ TIMESTAMP regulator::postsync(TIMESTAMP t0)
 	
 	if ((solver_method == SM_NR && NR_cycle==true) || solver_method == SM_FBS)
 	{		
+		if(prev_time < t0){
+			prev_time = t0;
+			initial_tap_A = prev_tap_A;
+			initial_tap_B = prev_tap_B;
+			initial_tap_C = prev_tap_C;
+			tap_A_changed = 0;
+			tap_B_changed = 0;
+			tap_C_changed = 0;
+			if(prev_tap_A != tap[0]){
+				prev_tap_A = tap[0];
+				tap_A_change_count++;
+				tap_A_changed = 1;
+			}
+			if(prev_tap_B != tap[1]){
+				prev_tap_B = tap[1];
+				tap_B_change_count++;
+				tap_B_changed = 1;
+			}
+			if(prev_tap_C != tap[2]){
+				prev_tap_C = tap[2];
+				tap_C_change_count++;
+				tap_C_changed = 1;
+			}
+		}
+		if(prev_time == t0){
+			if(tap_A_changed == 0){
+				if(prev_tap_A != tap[0]){
+					prev_tap_A = tap[0];
+					tap_A_change_count++;
+					tap_A_changed = 1;
+				}
+			}
+			if(tap_A_changed == 1){
+				if(initial_tap_A == tap[0]){
+					prev_tap_A = tap[0];
+					tap_A_change_count--;
+					if(tap_A_change_count < 0){
+						gl_error("Unusual control of the regulator has resulted in a negative tap change count on phase A.");
+						return TS_INVALID;
+					}
+					tap_A_changed = 0;
+				} else if(prev_tap_A != tap[0]){
+					prev_tap_A = tap[0];
+				}
+			}
+			if(tap_A_changed == 2){
+				prev_tap_A = tap[0];
+			}
+			if(tap_B_changed == 0){
+				if(prev_tap_B != tap[1]){
+					prev_tap_B = tap[1];
+					tap_B_change_count++;
+					tap_B_changed = 1;
+				}
+			}
+			if(tap_B_changed == 1){
+				if(initial_tap_B == tap[1]){
+					prev_tap_B = tap[1];
+					tap_B_change_count--;
+					if(tap_B_change_count < 0){
+						gl_error("Unusual control of the regulator has resulted in a negative tap change count on phase B.");
+						return TS_INVALID;
+					}
+					tap_B_changed = 0;
+				}else if(prev_tap_B != tap[1]){
+					prev_tap_B = tap[1];
+				}
+			}
+			if(tap_B_changed == 2){
+				prev_tap_B = tap[1];
+			}
+			if(tap_C_changed == 0){
+				if(prev_tap_C != tap[2]){
+					prev_tap_C = tap[2];
+					tap_C_change_count++;
+					tap_C_changed = 1;
+				}
+			}
+			if(tap_C_changed == 1){
+				if(initial_tap_C == tap[2]){
+					prev_tap_C = tap[2];
+					tap_C_change_count--;
+					if(tap_C_change_count < 0){
+						gl_error("Unusual control of the regulator has resulted in a negative tap change count on phase C.");
+						return TS_INVALID;
+					}
+					tap_C_changed = 0;
+				}else if(prev_tap_C != tap[2]){
+					prev_tap_C = tap[2];
+				}
+			}
+			if(tap_C_changed == 2){
+				prev_tap_C = tap[2];
+			}
+		}
+
 		if (pConfig->Control != pConfig->MANUAL) 
 		{
 			for (int i = 0; i < 3; i++) {

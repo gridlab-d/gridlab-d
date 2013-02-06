@@ -30,7 +30,7 @@ public:
 	double full_load_loss;			//  -- both are defined as unit values
 	double RX;						// the reactance to resistance ratio
 	// thermal model input
-	enum {MINERAL_OIL=1, DRY=2} coolent_type;
+	enum {MINERAL_OIL=1, DRY=2} coolant_type;
 	enum {OA=1, FA=2, NDFOA=3, NDFOW=4, DFOA=5, DFOW=6} cooling_type;
 	double core_coil_weight;		// The weight of the core and coil assembly in pounds.
 	double tank_fittings_weight;	// The weight of the tank and fittings in pounds.

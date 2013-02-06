@@ -6,9 +6,9 @@
 // BANK CAP manual control - delta on a delta
 // B phase will be switched, others should follow
 clock {
+	timezone EST+5EDT;
 	timestamp '2000-01-01 0:00:00';
 	stoptime '2000-01-01 0:00:59';
-	timezone EST+5EDT;
 }
 #set relax_naming_rules=1
 

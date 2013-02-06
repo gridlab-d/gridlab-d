@@ -61,12 +61,14 @@ public: /// @todo make this private and create interfaces to control values
 	int link_fault_on(OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time, void *Extra_Data);		//Function to create fault on line
 	int link_fault_off(int *implemented_fault, char *imp_fault_name, void *Extra_Data);	//Function to remove fault from line
 	double mean_repair_time;
+	double *link_limits[2];		/**< pointers for line limits (emergency vs. continuous) for link objects - pointered for variation */
+	double link_rating[2];		/**< Values for current line rating - gives individual segments the ability to set */
 	double *get_double(OBJECT *obj, char *name);	/**< Gets address of double - mainly for mean_repair_time */
 public:
 	bool status;	///< link status (open disconnect nodes)
 	bool prev_status;	///< Previous link status (used for recalculation detection)
 	bool current_accumulated;	///< Flag to indicate if NR current has been "handled" yet
-
+	bool check_link_limits;	///< Flag to see if this particular link needs limits checked
 	OBJECT *from;			///< from_node - source node
 	OBJECT *to;				///< to_node - load node
 	complex current_in[3];		///< current flow to link (w.r.t from node)
@@ -117,7 +119,6 @@ public:
 	bool is_voltage_nominal();
 
 	int kmldump(FILE *fp);
-
 	//Current injection calculation function - so it can be called remotely
 	int CurrentCalculation(int nodecall);
 

@@ -121,6 +121,8 @@ int ZIPload::create()
 	power_pf = current_pf = impedance_pf = 1.0;
 
 	load.voltage_factor = 1.0; // assume 'even' voltage, initially
+
+	first_pass = 1;
 	return res;
 }
 
@@ -388,13 +390,14 @@ TIMESTAMP ZIPload::sync(TIMESTAMP t0, TIMESTAMP t1)
 	{
 		double phase_shift = 0;
 
-		if (t0 != 0) // after first time step
+		if (first_pass == 0) // after first time step
 		{
 			phase_shift = (t1 - last_time) / (period * 3600);
 			phase = phase + phase_shift;
 			last_time = t1;
 		}
 		else
+			first_pass = 0;
 			last_time = t1;
 
 		if (this->re_override == OV_NORMAL) // Normal operation
