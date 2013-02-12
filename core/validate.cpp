@@ -598,9 +598,9 @@ void *(run_test_proc)(void *arg)
 			if ( result.get_nsuccess() ) code=2;
 			if ( result.get_nexceptions() ) code=3;
 			result_code[item->id] = code;
-			report_data("%s",flags[code]);
-			report_data("%6.1f",dt);
-			report_data("%s",item->name);
+			char buffer[1024];
+			sprintf(buffer,"%s%s%6.1f%s%s",flags[code],report_col,dt,report_col,item->name);
+			report_data("%s",buffer);
 			report_newrow();
 		}
 		final += result;
