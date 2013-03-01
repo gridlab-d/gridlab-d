@@ -145,7 +145,7 @@ void underground_line::recalc(void)
 		double dia_od1, dia_od2, dia_od3;
 		int16 strands_4, strands_5, strands_6;
 		double rad_14, rad_25, rad_36;
-		double dia[7], res[7], gmr[7], gmrcn[3], rcn[3];
+		double dia[7], res[7], gmr[7], gmrcn[3], rcn[3], gmrs[3], ress[3];
 		double d[6][6];
 		double perm_A, perm_B, perm_C, c_an, c_bn, c_cn, temp_denom;
 		complex cap_freq_coeff;
@@ -163,6 +163,8 @@ void underground_line::recalc(void)
 
 		#define DIA(i) (dia[i - 1])
 		#define RES(i) (res[i - 1])
+		#define RES_S(i) (ress[i - 4])
+		#define GMR_S(i) (gmrs[i - 4])
 		#define GMR(i) (gmr[i - 1])
 		#define GMRCN(i) (gmrcn[i - 4])
 		#define RCN(i) (rcn[i - 4])
@@ -190,19 +192,26 @@ void underground_line::recalc(void)
 		GMR(4) = UG_GET(A, neutral_gmr);
 		GMR(5) = UG_GET(B, neutral_gmr);
 		GMR(6) = UG_GET(C, neutral_gmr);
+		GMR_S(4) = UG_GET(A, shield_gmr);
+		GMR_S(5) = UG_GET(B, shield_gmr);
+		GMR_S(6) = UG_GET(C, shield_gmr);
 		DIA(4) = UG_GET(A, neutral_diameter);
 		DIA(5) = UG_GET(B, neutral_diameter);
 		DIA(6) = UG_GET(C, neutral_diameter);
 		RES(4) = UG_GET(A, neutral_resistance);
 		RES(5) = UG_GET(B, neutral_resistance);
 		RES(6) = UG_GET(C, neutral_resistance);
+		RES_S(4) = UG_GET(A, shield_resistance);
+		RES_S(5) = UG_GET(B, shield_resistance);
+		RES_S(6) = UG_GET(C, shield_resistance);
 		strands_4 = UG_GET(A, neutral_strands);
 		strands_5 = UG_GET(B, neutral_strands);
 		strands_6 = UG_GET(C, neutral_strands);
-		rad_14 = (dia_od1 - DIA(4)) / 24.0;
-		rad_25 = (dia_od2 - DIA(5)) / 24.0;
-		rad_36 = (dia_od3 - DIA(6)) / 24.0;
-
+		if(GMR_S(4) == 0 && GMR_S(5) == 0 && GMR_S(6) == 0){
+			rad_14 = (dia_od1 - DIA(4)) / 24.0;
+			rad_25 = (dia_od2 - DIA(5)) / 24.0;
+			rad_36 = (dia_od3 - DIA(6)) / 24.0;
+		}
 		RCN(4) = has_phase(PHASE_A) && strands_4 > 0 ? RES(4) / strands_4 : 0.0;
 		RCN(5) = has_phase(PHASE_B) && strands_5 > 0 ? RES(5) / strands_5 : 0.0;
 		RCN(6) = has_phase(PHASE_C) && strands_6 > 0 ? RES(6) / strands_6 : 0.0;
@@ -210,7 +219,7 @@ void underground_line::recalc(void)
 		//Concentric neutral code
 		GMRCN(4) = !(has_phase(PHASE_A) && strands_4 > 0) ? 0.0 :
 			pow(GMR(4) * strands_4 * pow(rad_14, (strands_4 - 1)), (1.0 / strands_4));
-		GMRCN(5) = !(has_phase(PHASE_B) && strands_5 > 0) ? 0.0 :
+		GMRCN(5) = !(has_phase(PHASE_B) && strands_5 > 0) ? GMR_S(5) :
 			pow(GMR(5) * strands_5 * pow(rad_25, (strands_5 - 1)), (1.0 / strands_5));
 		GMRCN(6) = !(has_phase(PHASE_C) && strands_6 > 0) ? 0.0 :
 			pow(GMR(6) * strands_6 * pow(rad_36, (strands_6 - 1)), (1.0 / strands_6));
@@ -238,18 +247,24 @@ void underground_line::recalc(void)
 		D(1, 2) = DIST(A, B);
 		D(1, 3) = DIST(A, C);
 		D(1, 4) = rad_14;
+		if(GMR_S(4) > 0)
+			D(1, 4) = GMR_S(4);
 		D(1, 5) = D(1, 2);
 		D(1, 6) = D(1, 3);
 		D(2, 1) = D(1, 2);
 		D(2, 3) = DIST(B, C);
 		D(2, 4) = D(2, 1);
 		D(2, 5) = rad_25;
+		if(GMR_S(5) > 0)
+			D(2, 5) = GMR_S(5);
 		D(2, 6) = D(2, 3);
 		D(3, 1) = D(1, 3);
 		D(3, 2) = D(2, 3);
 		D(3, 4) = D(3, 1);
 		D(3, 5) = D(3, 2);
 		D(3, 6) = rad_36;
+		if(GMR_S(6) > 0)
+			D(3, 6) = GMR_S(6);
 		D(4, 1) = D(1, 4);
 		D(4, 2) = D(2, 4);
 		D(4, 3) = D(3, 4);
@@ -272,6 +287,7 @@ void underground_line::recalc(void)
 
 		#define Z_GMR(i) (GMR(i) == 0.0 ? complex(0.0) : complex(freq_coeff_real + RES(i), freq_coeff_imag * (log(1.0 / GMR(i)) + freq_additive_term)))
 		#define Z_GMRCN(i) (GMRCN(i) == 0.0 ? complex(0.0) : complex(freq_coeff_real + RCN(i), freq_coeff_imag * (log(1.0 / GMRCN(i)) + freq_additive_term)))
+		#define Z_GMR_S(i) (GMR_S(i) == 0.0 ? complex(0.0) : complex(freq_coeff_real + RES_S(i), freq_coeff_imag*(log(1.0/GMR_S(i)) + freq_additive_term)))
 		#define Z_DIST(i, j) (D(i, j) == 0.0 ? complex(0.0) : complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / D(i, j)) + freq_additive_term)))
 
 		for (int i = 1; i < 7; i++) {
@@ -279,6 +295,8 @@ void underground_line::recalc(void)
 				if (i == j) {
 					if (i > 3){
 						Z(i, j) = Z_GMRCN(i);
+						if(Z_GMR_S(i) > 0 && Z(i, j) == 0)
+							Z(i, j) = Z_GMR_S(i);
 						test=Z_GMRCN(i);
 					}
 					else

@@ -1,0 +1,181 @@
+// Verify solar model algorithms are correct by validating power output for solar objects with different axis tilts (90,20 degrees)
+// GridLab-D output has been validated against SAM output. See "Incorporation of NREL Solar Advisor Model Photovoltaic Capabilities with GridLAB-D" (Tuffner et al. 2012).
+
+#set profiler=1;
+
+clock {
+     //timezone PST+8PDT;
+	 timezone PST8;
+     starttime '2009-01-01 00:00:00';
+     stoptime '2010-01-01 00:00:00';
+}
+
+module tape;
+module climate;
+module generators;
+module assert;
+
+module powerflow {
+     solver_method NR;
+     NR_iteration_limit 50;
+};
+
+object climate {
+     name "WA-Yakima";
+     tmyfile "../WA-Yakima.tmy2";
+	 interpolate NONE;
+};
+
+object triplex_meter {
+	name trip_swing;
+	bustype SWING;
+	phases AS;
+	nominal_voltage 120.0;
+}
+
+object triplex_meter {
+	name trip_fixed_meter;
+	parent trip_swing;
+	phases AS;
+	nominal_voltage 120.0;
+}
+
+object inverter {
+	name trip_shad_inv;
+	phases AS;
+	parent trip_fixed_meter;
+	rated_power 25000;
+	//generator_mode CONSTANT_PF; //DEFAULT
+	//generator_status ONLINE; //DEFAULT
+	//inverter_type PWM; //DEFAULT
+	// object recorder {
+		// property "VA_In.real, VA_Out.real";
+		// file "inverter_VA_in_VA_out.csv";
+		// interval 3600;
+	// };
+}
+
+// solar panels use the following defaults:
+//    control mode SUPPLY_DRIVEN
+//    status ONLINE
+//    panel type SINGLE_CRYSTAL_SILICON
+
+object solar {
+	name trip_shad_solar90;
+	phases AS;
+	parent trip_shad_inv;
+	weather "WA-Yakima";
+	Rated_kVA 4.0 kVA;
+	area 29.6296 m^2;
+	tilt_angle 90.0;
+	efficiency 0.135;
+	orientation_azimuth 180; //equator-facing (South)
+	orientation FIXED_AXIS;
+	SOLAR_TILT_MODEL SOLPOS;
+	SOLAR_POWER_MODEL FLATPLATE;
+	object double_assert {
+		target Insolation;
+		object player {
+			property value;
+			file "../fixed_90_S_Insolation.player";
+		};
+		within 0.01;
+	};
+	object complex_assert {
+		operation REAL;
+		object player {
+			property value;
+			file "../fixed_90_S_VA_out.player"; 
+		};
+		target VA_Out;
+		within 0.01; 
+	};
+}
+
+object solar {
+	name trip_shad_solar20;
+	phases AS;
+	parent trip_shad_inv;
+	weather "WA-Yakima";
+	Rated_kVA 4.0 kVA;
+	area 29.6296 m^2;
+	tilt_angle 20.0;
+	efficiency 0.135;
+	orientation_azimuth 180; //South
+	orientation FIXED_AXIS;
+	SOLAR_TILT_MODEL SOLPOS;
+	SOLAR_POWER_MODEL FLATPLATE;
+	object complex_assert {
+		operation REAL; 
+		object player {
+			property value;
+			file "../fixed_20_S_VA_out.player"; 
+		};
+		target VA_Out;
+		within 0.01; 
+	};
+}
+
+//Misc objects - prevent rank issue
+object triplex_line_conductor {     
+      name triplex_4/0 AA;    
+      resistance 0.48;     
+      geometric_mean_radius 0.0158;     
+}       
+
+object triplex_line_configuration {     
+      name triplex_line_configuration_1;     
+      conductor_1 triplex_4/0 AA;    
+      conductor_2 triplex_4/0 AA;    
+      conductor_N triplex_4/0 AA;    
+      insulation_thickness 0.08;     
+      diameter 0.522;     
+}       
+
+object underground_line_conductor {     
+      name underground_line_conductor_2;     
+      //name 1000 AAC (Conc);   
+      rating.summer.continuous 488.0;     
+      outer_diameter 2.15;     
+      conductor_gmr 0.0371 ft;    
+      conductor_diameter 1.152;     
+      conductor_resistance 0.091872;     
+      neutral_gmr 0.0842565914341201 ft;    
+      neutral_resistance 5.3856;     
+      neutral_diameter 0.1019;     
+      neutral_strands 20.0;     
+      shield_gmr 0.00;     
+      shield_resistance 0.00;     
+}       
+
+object underground_line_conductor {     
+      name underground_line_conductor_3;     
+      //name 2 AL (Conc);   
+      rating.summer.continuous 112.0;     
+      outer_diameter 1.09;     
+      conductor_gmr 0.0088 ft;    
+      conductor_diameter 0.292;     
+      conductor_resistance 1.38336;     
+      neutral_gmr 0.0348162687755351 ft;    
+      neutral_resistance 13.5696;     
+      neutral_diameter 0.0641;     
+      neutral_strands 6.0;     
+      shield_gmr 0.00;     
+      shield_resistance 0.00;     
+}       
+
+object underground_line_conductor {     
+      name underground_line_conductor_4;     
+      //name 1000 AAC (Tape);   
+      rating.summer.continuous 775.0;     
+      outer_diameter 1.87;     
+      conductor_gmr 0.0371 ft;    
+      conductor_diameter 1.15;     
+      conductor_resistance 0.0222;     
+      neutral_gmr 0.0732739718442675 ft;    
+      neutral_resistance 0.05;     
+      neutral_diameter 0.102;     
+      neutral_strands 20.0;     
+      shield_gmr 0.00;     
+      shield_resistance 0.00;     
+}       

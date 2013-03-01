@@ -60,29 +60,29 @@ meter::meter(MODULE *mod) : node(mod)
 		// publish the class properties
 		if (gl_publish_variable(oclass,
 			PT_INHERIT, "node",
-			PT_double, "measured_real_energy[Wh]", PADDR(measured_real_energy),
-			PT_double, "measured_reactive_energy[VAh]",PADDR(measured_reactive_energy),
-			PT_complex, "measured_power[VA]", PADDR(measured_power),
-			PT_complex, "measured_power_A[VA]", PADDR(indiv_measured_power[0]),
-			PT_complex, "measured_power_B[VA]", PADDR(indiv_measured_power[1]),
-			PT_complex, "measured_power_C[VA]", PADDR(indiv_measured_power[2]),
-			PT_double, "measured_demand[W]", PADDR(measured_demand),
-			PT_double, "measured_real_power[W]", PADDR(measured_real_power),
-			PT_double, "measured_reactive_power[VAr]", PADDR(measured_reactive_power),
-			PT_complex, "meter_power_consumption[VA]", PADDR(meter_power_consumption),
+			PT_double, "measured_real_energy[Wh]", PADDR(measured_real_energy),PT_DESCRIPTION,"metered real energy consumption, cummalitive",
+			PT_double, "measured_reactive_energy[VAh]",PADDR(measured_reactive_energy),PT_DESCRIPTION,"metered reactive energy consumption, cummalitive",
+			PT_complex, "measured_power[VA]", PADDR(measured_power),PT_DESCRIPTION,"metered real power",
+			PT_complex, "measured_power_A[VA]", PADDR(indiv_measured_power[0]),PT_DESCRIPTION,"metered complex power on phase A",
+			PT_complex, "measured_power_B[VA]", PADDR(indiv_measured_power[1]),PT_DESCRIPTION,"metered complex power on phase B",
+			PT_complex, "measured_power_C[VA]", PADDR(indiv_measured_power[2]),PT_DESCRIPTION,"metered complex power on phase C",
+			PT_double, "measured_demand[W]", PADDR(measured_demand),PT_DESCRIPTION,"greatest metered real power during simulation",
+			PT_double, "measured_real_power[W]", PADDR(measured_real_power),PT_DESCRIPTION,"metered real power",
+			PT_double, "measured_reactive_power[VAr]", PADDR(measured_reactive_power),PT_DESCRIPTION,"metered reactive power",
+			PT_complex, "meter_power_consumption[VA]", PADDR(meter_power_consumption),PT_DESCRIPTION,"metered power used for operating the meter; standby and communication losses",
 			
 			// added to record last voltage/current
-			PT_complex, "measured_voltage_A[V]", PADDR(measured_voltage[0]),
-			PT_complex, "measured_voltage_B[V]", PADDR(measured_voltage[1]),
-			PT_complex, "measured_voltage_C[V]", PADDR(measured_voltage[2]),
-			PT_complex, "measured_voltage_AB[V]", PADDR(measured_voltageD[0]),
-			PT_complex, "measured_voltage_BC[V]", PADDR(measured_voltageD[1]),
-			PT_complex, "measured_voltage_CA[V]", PADDR(measured_voltageD[2]),
-			PT_complex, "measured_current_A[A]", PADDR(measured_current[0]),
-			PT_complex, "measured_current_B[A]", PADDR(measured_current[1]),
-			PT_complex, "measured_current_C[A]", PADDR(measured_current[2]),
-			PT_bool, "customer_interrupted", PADDR(meter_interrupted),
-			PT_bool, "customer_interrupted_secondary", PADDR(meter_interrupted_secondary),
+			PT_complex, "measured_voltage_A[V]", PADDR(measured_voltage[0]),PT_DESCRIPTION,"measured line-to-neutral voltage on phase A",
+			PT_complex, "measured_voltage_B[V]", PADDR(measured_voltage[1]),PT_DESCRIPTION,"measured line-to-neutral voltage on phase B",
+			PT_complex, "measured_voltage_C[V]", PADDR(measured_voltage[2]),PT_DESCRIPTION,"measured line-to-neutral voltage on phase C",
+			PT_complex, "measured_voltage_AB[V]", PADDR(measured_voltageD[0]),PT_DESCRIPTION,"measured line-to-line voltage on phase AB",
+			PT_complex, "measured_voltage_BC[V]", PADDR(measured_voltageD[1]),PT_DESCRIPTION,"measured line-to-line voltage on phase BC",
+			PT_complex, "measured_voltage_CA[V]", PADDR(measured_voltageD[2]),PT_DESCRIPTION,"measured line-to-line voltage on phase CA",
+			PT_complex, "measured_current_A[A]", PADDR(measured_current[0]),PT_DESCRIPTION,"measured current on phase A",
+			PT_complex, "measured_current_B[A]", PADDR(measured_current[1]),PT_DESCRIPTION,"measured current on phase B",
+			PT_complex, "measured_current_C[A]", PADDR(measured_current[2]),PT_DESCRIPTION,"measured current on phase C",
+			PT_bool, "customer_interrupted", PADDR(meter_interrupted),PT_DESCRIPTION,"Reliability flag - goes active if the customer is in an 'interrupted' state",
+			PT_bool, "customer_interrupted_secondary", PADDR(meter_interrupted_secondary),PT_DESCRIPTION,"Reliability flag - goes active if the customer is in an 'secondary interrupted' state - i.e., momentary",
 #ifdef SUPPORT_OUTAGES
 			PT_int16, "sustained_count", PADDR(sustained_count),	//reliability sustained event counter
 			PT_int16, "momentary_count", PADDR(momentary_count),	//reliability momentary event counter
@@ -91,27 +91,27 @@ meter::meter(MODULE *mod) : node(mod)
 			PT_int16, "t_flag", PADDR(t_flag),
 			PT_complex, "pre_load", PADDR(pre_load),
 #endif
-			PT_double, "monthly_bill[$]", PADDR(monthly_bill),
-			PT_double, "previous_monthly_bill[$]", PADDR(previous_monthly_bill),
-			PT_double, "previous_monthly_energy[kWh]", PADDR(previous_monthly_energy),
-			PT_double, "monthly_fee[$]", PADDR(monthly_fee),
-			PT_double, "monthly_energy[kWh]", PADDR(monthly_energy),
-			PT_enumeration, "bill_mode", PADDR(bill_mode),
+			PT_double, "monthly_bill[$]", PADDR(monthly_bill),PT_DESCRIPTION,"Accumulator for the current month's bill",
+			PT_double, "previous_monthly_bill[$]", PADDR(previous_monthly_bill),PT_DESCRIPTION,"Total monthly bill for the previous month",
+			PT_double, "previous_monthly_energy[kWh]", PADDR(previous_monthly_energy),PT_DESCRIPTION,"Total monthly energy for the previous month",
+			PT_double, "monthly_fee[$]", PADDR(monthly_fee),PT_DESCRIPTION,"Once a month flat fee for customer hook-up",
+			PT_double, "monthly_energy[kWh]", PADDR(monthly_energy),PT_DESCRIPTION,"Accumulator for the current month's energy consumption",
+			PT_enumeration, "bill_mode", PADDR(bill_mode),PT_DESCRIPTION,"Billing structure desired",
 				PT_KEYWORD,"NONE",BM_NONE,
 				PT_KEYWORD,"UNIFORM",BM_UNIFORM,
 				PT_KEYWORD,"TIERED",BM_TIERED,
 				PT_KEYWORD,"HOURLY",BM_HOURLY,
 				PT_KEYWORD,"TIERED_RTP",BM_TIERED_RTP,
-			PT_object, "power_market", PADDR(power_market),
-			PT_int32, "bill_day", PADDR(bill_day),
-			PT_double, "price[$/kWh]", PADDR(price),
+			PT_object, "power_market", PADDR(power_market),PT_DESCRIPTION,"Market (auction object) where the price is being received from",
+			PT_int32, "bill_day", PADDR(bill_day),PT_DESCRIPTION,"day of month bill is to be processed (currently limited to days 1-28)",
+			PT_double, "price[$/kWh]", PADDR(price),PT_DESCRIPTION,"current price of electricity",
 			PT_double, "price_base[$/kWh]", PADDR(price_base), PT_DESCRIPTION, "Used only in TIERED_RTP mode to describe the price before the first tier",
-			PT_double, "first_tier_price[$/kWh]", PADDR(tier_price[0]),
-			PT_double, "first_tier_energy[kWh]", PADDR(tier_energy[0]),
-			PT_double, "second_tier_price[$/kWh]", PADDR(tier_price[1]),
-			PT_double, "second_tier_energy[kWh]", PADDR(tier_energy[1]),
-			PT_double, "third_tier_price[$/kWh]", PADDR(tier_price[2]),
-			PT_double, "third_tier_energy[kWh]", PADDR(tier_energy[2]),
+			PT_double, "first_tier_price[$/kWh]", PADDR(tier_price[0]),PT_DESCRIPTION,"price of electricity between first tier and second tier energy usage",
+			PT_double, "first_tier_energy[kWh]", PADDR(tier_energy[0]),PT_DESCRIPTION,"switching point between base price and first tier price",
+			PT_double, "second_tier_price[$/kWh]", PADDR(tier_price[1]),PT_DESCRIPTION,"price of electricity between second tier and third tier energy usage",
+			PT_double, "second_tier_energy[kWh]", PADDR(tier_energy[1]),PT_DESCRIPTION,"switching point between first tier price and second tier price",
+			PT_double, "third_tier_price[$/kWh]", PADDR(tier_price[2]),PT_DESCRIPTION,"price of electricity when energy usage exceeds third tier energy usage",
+			PT_double, "third_tier_energy[kWh]", PADDR(tier_energy[2]),PT_DESCRIPTION,"switching point between second tier price and third tier price",
 
 			//PT_double, "measured_reactive[kVar]", PADDR(measured_reactive), has not implemented yet
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
@@ -283,11 +283,6 @@ TIMESTAMP meter::presync(TIMESTAMP t0)
 {
 	if (meter_power_consumption != complex(0,0))
 		power[0] = power[1] = power[2] = 0.0;
-
-	if (solver_method == SM_NR)
-		NR_mode = NR_cycle;		//Copy NR_cycle into NR_mode for generators
-	else
-		NR_mode = false;		//Just put as false for other methods
 
 	return node::presync(t0);
 }

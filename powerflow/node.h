@@ -99,7 +99,10 @@ public:
 		ND_IN_SERVICE = 1,     ///< in service flag for nodes - default
 	} service_status;
 	double service_status_dbl;	///< double value for service - overrides the enumeration if set
-		   
+	TIMESTAMP last_disconnect;	///< Tracking variable for out of service times
+	double previous_uptime;		///< Variable for storing last total uptime
+	double current_uptime;		///< Variable for storing current uptime
+
 	SUBNODETYPE SubNode;
 	set busflags;			///< node flags (see NF_*)
 	set busphasesIn;		///< phase check flags for "reconvergent" lines (input)
@@ -120,6 +123,7 @@ public:
 	unsigned int NR_connected_links[2];	/// Counter for number of connected links in the system
 	unsigned int NR_number_child_nodes[2];	/// Counter for number of childed nodes we have (for later NR linking)
 	node **NR_child_nodes;	/// Pointer to childed nodes list
+	int *NR_link_table;		/// Pointer to link list table
 	
 	double mean_repair_time;	/// Node's mean repair time - mainly for swing at this point
 
@@ -148,6 +152,7 @@ public:
 	int NR_populate(void);
 	OBJECT *SubNodeParent;	/// Child node's original parent or child of parent
 	int NR_current_update(bool postpass, bool parentcall);
+	object TopologicalParent;	/// Child node's original parent as per the topological configuration in the GLM file
 
 	friend class link_object;
 	friend class meter;	// needs access to current_inj

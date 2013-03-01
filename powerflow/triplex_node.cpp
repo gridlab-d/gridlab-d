@@ -94,6 +94,9 @@ triplex_node::triplex_node(MODULE *mod) : node(mod)
 			PT_enumeration, "service_status", PADDR(service_status),PT_DESCRIPTION,"In and out of service flag",
 				PT_KEYWORD, "IN_SERVICE", ND_IN_SERVICE,
 				PT_KEYWORD, "OUT_OF_SERVICE", ND_OUT_OF_SERVICE,
+			PT_double, "service_status_double", PADDR(service_status_dbl),PT_DESCRIPTION,"In and out of service flag - type double - will indiscriminately override service_status - useful for schedules",
+			PT_double, "previous_uptime[min]", PADDR(previous_uptime),PT_DESCRIPTION,"Previous time between disconnects of node in minutes",
+			PT_double, "current_uptime[min]", PADDR(current_uptime),PT_DESCRIPTION,"Current time since last disconnect of node in minutes",
          	NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
 }
@@ -131,11 +134,6 @@ int triplex_node::init(OBJECT *parent)
 
 TIMESTAMP triplex_node::presync(TIMESTAMP t0)
 {
-	if (solver_method == SM_NR)
-		NR_mode = NR_cycle;		//COpy NR_cycle into NR_mode for houses
-	else
-		NR_mode = false;		//Just put as false for other methods
-
 	//Clear the shunt values
 	shunt[0] = shunt[1] = shunt[2] = 0.0;
 

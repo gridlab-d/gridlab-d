@@ -5,9 +5,9 @@
 // triplex_meter objects
 // created by: alek332
 clock{
+	timezone EST+8EDT;
 	timestamp '2000-01-01 0:00:00';
 	stoptime '2000-01-01 0:30:00';
-	timezone EST+8EDT;
 }
 
 #set profiler=1
@@ -17,7 +17,8 @@ clock{
 module tape;
 module powerflow{
 	solver_method FBS;
-	default_maximum_voltage_error 1e-9;
+	default_maximum_voltage_error 1e-6;
+	line_limits FALSE;
 };
 module assert;
 //*********************************************

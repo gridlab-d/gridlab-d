@@ -41,18 +41,18 @@ schedule fixed_prices {
 schedule controller_bids {
 	0-14 14 * * * 100;
 	15-29 14 * * * 55;
-	30-44 14 * * * 19.2619;
-	45-59 14 * * * 115.4469;
-	0-14 15 * * * 100.0263;
+	30-44 14 * * * 19.2211;
+	45-59 14 * * * 115.501;
+	0-14 15 * * * 99.7825;
 	15-29 15 * * * 0;
-	30-44 15 * * * 50.23522;
-	45-59 15 * * * 76.45274;
-	* 16 * * * 82.1669;
+	30-44 15 * * * 50.2355;
+	45-59 15 * * * 76.5139;
+	* 16 * * * 82.1781;
 }
 
 schedule clearing_quantities {
 	0-14 14 * * * 0;
-	15-29 14 * * * 0.00289964;
+	15-29 14 * * * 0.0043699;
 	30-44 14 * * * 0.0043699;
 	45-59 14 * * * 0;
 	0-14 15 * * * 0.0043699;
@@ -161,7 +161,7 @@ object triplex_meter {
 			demand cooling_demand;
 			total total_load;
 			load hvac_load;
-			slider_setting 0; //set to 0 or ramps will be overwritten
+			//slider_setting 0; //set to 0 or ramps will be overwritten
 			ramp_low 2;
 			ramp_high 2;
 			range_low 0;

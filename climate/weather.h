@@ -28,6 +28,7 @@ public:
 	double wind_speed;
 	double rainfall;
 	double snowdepth;
+	double pressure;
 	int16 month, day, hour, minute, second;
 	weather *next;
 };

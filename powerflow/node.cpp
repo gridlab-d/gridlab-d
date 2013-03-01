@@ -96,38 +96,41 @@ node::node(MODULE *mod) : powerflow_object(mod)
 
 		if(gl_publish_variable(oclass,
 			PT_INHERIT, "powerflow_object",
-			PT_enumeration, "bustype", PADDR(bustype),
+			PT_enumeration, "bustype", PADDR(bustype),PT_DESCRIPTION,"defines whether the node is a PQ, PV, or SWING node",
 				PT_KEYWORD, "PQ", PQ,
 				PT_KEYWORD, "PV", PV,
 				PT_KEYWORD, "SWING", SWING,
-			PT_set, "busflags", PADDR(busflags),
+			PT_set, "busflags", PADDR(busflags),PT_DESCRIPTION,"flag indicates node has a source for voltage, i.e. connects to the swing node",
 				PT_KEYWORD, "HASSOURCE", (set)NF_HASSOURCE,
-			PT_object, "reference_bus", PADDR(reference_bus),
-			PT_double,"maximum_voltage_error[V]",PADDR(maximum_voltage_error),
+			PT_object, "reference_bus", PADDR(reference_bus),PT_DESCRIPTION,"reference bus from which frequency is defined",
+			PT_double,"maximum_voltage_error[V]",PADDR(maximum_voltage_error),PT_DESCRIPTION,"convergence voltage limit or convergence criteria",
 
-			PT_complex, "voltage_A[V]", PADDR(voltageA),
-			PT_complex, "voltage_B[V]", PADDR(voltageB),
-			PT_complex, "voltage_C[V]", PADDR(voltageC),
-			PT_complex, "voltage_AB[V]", PADDR(voltageAB),
-			PT_complex, "voltage_BC[V]", PADDR(voltageBC),
-			PT_complex, "voltage_CA[V]", PADDR(voltageCA),
-			PT_complex, "current_A[A]", PADDR(currentA),
-			PT_complex, "current_B[A]", PADDR(currentB),
-			PT_complex, "current_C[A]", PADDR(currentC),
-			PT_complex, "power_A[VA]", PADDR(powerA),
-			PT_complex, "power_B[VA]", PADDR(powerB),
-			PT_complex, "power_C[VA]", PADDR(powerC),
-			PT_complex, "shunt_A[S]", PADDR(shuntA),
-			PT_complex, "shunt_B[S]", PADDR(shuntB),
-			PT_complex, "shunt_C[S]", PADDR(shuntC),
-			PT_bool, "NR_mode", PADDR(NR_mode),
+			PT_complex, "voltage_A[V]", PADDR(voltageA),PT_DESCRIPTION,"bus voltage, Phase A to ground",
+			PT_complex, "voltage_B[V]", PADDR(voltageB),PT_DESCRIPTION,"bus voltage, Phase B to ground",
+			PT_complex, "voltage_C[V]", PADDR(voltageC),PT_DESCRIPTION,"bus voltage, Phase C to ground",
+			PT_complex, "voltage_AB[V]", PADDR(voltageAB),PT_DESCRIPTION,"line voltages, Phase AB",
+			PT_complex, "voltage_BC[V]", PADDR(voltageBC),PT_DESCRIPTION,"line voltages, Phase BC",
+			PT_complex, "voltage_CA[V]", PADDR(voltageCA),PT_DESCRIPTION,"line voltages, Phase CA",
+			PT_complex, "current_A[A]", PADDR(currentA),PT_DESCRIPTION,"bus current injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "current_B[A]", PADDR(currentB),PT_DESCRIPTION,"bus current injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "current_C[A]", PADDR(currentC),PT_DESCRIPTION,"bus current injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "power_A[VA]", PADDR(powerA),PT_DESCRIPTION,"bus power injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "power_B[VA]", PADDR(powerB),PT_DESCRIPTION,"bus power injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "power_C[VA]", PADDR(powerC),PT_DESCRIPTION,"bus power injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "shunt_A[S]", PADDR(shuntA),PT_DESCRIPTION,"bus shunt admittance, this an accumulator only, not a output or input variable",
+			PT_complex, "shunt_B[S]", PADDR(shuntB),PT_DESCRIPTION,"bus shunt admittance, this an accumulator only, not a output or input variable",
+			PT_complex, "shunt_C[S]", PADDR(shuntC),PT_DESCRIPTION,"bus shunt admittance, this an accumulator only, not a output or input variable",
+			PT_bool, "NR_mode", PADDR(NR_mode),PT_DESCRIPTION,"boolean for solution methodology, not a input or output object",
 			PT_double, "mean_repair_time[s]",PADDR(mean_repair_time), PT_DESCRIPTION, "Time after a fault clears for the object to be back in service",
 
-			PT_enumeration, "service_status", PADDR(service_status),
+			PT_enumeration, "service_status", PADDR(service_status),PT_DESCRIPTION,"In and out of service flag",
 				PT_KEYWORD, "IN_SERVICE", ND_IN_SERVICE,
 				PT_KEYWORD, "OUT_OF_SERVICE", ND_OUT_OF_SERVICE,
 			PT_double, "service_status_double", PADDR(service_status_dbl),PT_DESCRIPTION,"In and out of service flag - type double - will indiscriminately override service_status - useful for schedules",
+			PT_double, "previous_uptime[min]", PADDR(previous_uptime),PT_DESCRIPTION,"Previous time between disconnects of node in minutes",
+			PT_double, "current_uptime[min]", PADDR(current_uptime),PT_DESCRIPTION,"Current time since last disconnect of node in minutes",
 
+			PT_object, "topological_parent", PADDR(TopologicalParent),PT_DESCRIPTION,"topological parent as per GLM configuration",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 	}
 }
@@ -159,8 +162,10 @@ int node::create(void)
 	prev_NTime = 0;
 	SubNode = NONE;
 	SubNodeParent = NULL;
+	TopologicalParent = NULL;
 	NR_subnode_reference = NULL;
 	Extra_Data=NULL;
+	NR_link_table = NULL;
 	NR_connected_links[0] = NR_connected_links[1] = 0;
 	NR_number_child_nodes[0] = NR_number_child_nodes[1] = 0;
 	NR_child_nodes = NULL;
@@ -176,6 +181,9 @@ int node::create(void)
 	// Only used in capacitors, at this time, but put into node for future functionality (maybe with reliability?)
 	service_status = ND_IN_SERVICE;
 	service_status_dbl = -1.0;	//Initial flag is to ignore it.  As soon as this changes, it overrides service_status
+	last_disconnect = 0;		//Will get set in init
+	previous_uptime = -1.0;		///< Flags as not initialized
+	current_uptime = -1.0;		///< Flags as not initialized
 
 	memset(voltage,0,sizeof(voltage));
 	memset(voltaged,0,sizeof(voltaged));
@@ -200,6 +208,9 @@ int node::init(OBJECT *parent)
 		char extpath[1024];
 		CALLBACKS **cbackval = NULL;
 		bool ExtLinkFailure;
+
+		// Store the topological parent before anyone overwrites it
+		TopologicalParent = obj->parent;
 
 		//Check for a swing bus if we haven't found one already
 		if (NR_swing_bus == NULL)
@@ -324,16 +335,12 @@ int node::init(OBJECT *parent)
 		if (obj->parent!=NULL) 	//Has a parent, let's see if it is a node and link it up 
 		{						//(this will break anything intentionally done this way - e.g. switch between two nodes)
 			//See if it is a node/load/meter
-			//NOTE: Unsure if this is fully needed (meter/load) - triplex_node and triplex_meter aren't explicitly listed, yet do not fail
-			//if (!(gl_object_isa(obj->parent,"load","powerflow") | gl_object_isa(obj->parent,"node","powerflow") | gl_object_isa(obj->parent,"meter","powerflow")))
-			if (!gl_object_isa(obj->parent,"node","powerflow"))	//Narrow to what "we really mean"
-			{
+			if (!(gl_object_isa(obj->parent,"load","powerflow") | gl_object_isa(obj->parent,"node","powerflow") | gl_object_isa(obj->parent,"meter","powerflow")))
 				GL_THROW("NR: Parent is not a node, load or meter!");
 				/*  TROUBLESHOOT
 				A Newton-Raphson parent-child connection was attempted on a non-node.  The parent object must be a node, load, or meter object in the 
 				powerflow module for this connection to be successful.
 				*/
-			}
 
 			node *parNode = OBJECTDATA(obj->parent,node);
 
@@ -382,30 +389,56 @@ int node::init(OBJECT *parent)
 					}
 					else	//Our parent is unchilded (or has the swing bus as a parent)
 					{
-						//Set appropriate flags (store parent name and flag self & parent)
-						SubNode = DIFF_CHILD;
-						SubNodeParent = obj->parent;
-						
-						parNode->SubNode = DIFF_PARENT;
-						parNode->SubNodeParent = obj;	//This may get overwritten if we have multiple children, so try not to use it anywhere mission critical.
-						parNode->NR_number_child_nodes[0]++;	//Increment the counter of child nodes - we'll alloc and link them later
-	
-						//Update the pointer to our parent's NR pointer (so links can go there appropriately)
-						NR_subnode_reference = &(parNode->NR_node_reference);
-
-						//Allocate and point our properties up to the parent node
-						if (parNode->Extra_Data == NULL)	//Make sure someone else hasn't allocated it for us
+						//Check and see if the parent or child is a delta - if so, proceed as normal
+						if (((phases & PHASE_D) == PHASE_D) || ((parNode->phases & PHASE_D) == PHASE_D))
 						{
-							parNode->Extra_Data = (complex *)gl_malloc(9*sizeof(complex));
-							if (parNode->Extra_Data == NULL)
+							//Set appropriate flags (store parent name and flag self & parent)
+							SubNode = DIFF_CHILD;
+							SubNodeParent = obj->parent;
+							
+							parNode->SubNode = DIFF_PARENT;
+							parNode->SubNodeParent = obj;	//This may get overwritten if we have multiple children, so try not to use it anywhere mission critical.
+						parNode->NR_number_child_nodes[0]++;	//Increment the counter of child nodes - we'll alloc and link them later
+
+							//Update the pointer to our parent's NR pointer (so links can go there appropriately)
+							NR_subnode_reference = &(parNode->NR_node_reference);
+
+							//Allocate and point our properties up to the parent node
+							if (parNode->Extra_Data == NULL)	//Make sure someone else hasn't allocated it for us
 							{
-								GL_THROW("NR: Memory allocation failure for differently connected load.");
-								/*  TROUBLESHOOT
-								This is a bug.  Newton-Raphson tried to allocate memory for other necessary
-								information to handle a parent-child relationship with differently connected loads.
-								Please submit your code and a bug report using the trac website.
-								*/
+								parNode->Extra_Data = (complex *)gl_malloc(9*sizeof(complex));
+								if (parNode->Extra_Data == NULL)
+								{
+									GL_THROW("NR: Memory allocation failure for differently connected load.");
+									/*  TROUBLESHOOT
+									This is a bug.  Newton-Raphson tried to allocate memory for other necessary
+									information to handle a parent-child relationship with differently connected loads.
+									Please submit your code and a bug report using the trac website.
+									*/
+								}
 							}
+						}
+						else	//None are delta, so handle partial phasing a little better
+						{
+							//Replicate "normal phasing" code below
+
+							//Parent node check occurred above as part of this logic chain, so forgot from copy below
+							
+							//Set appropriate flags (store parent name and flag self & parent)
+							SubNode = CHILD;
+							SubNodeParent = obj->parent;
+							
+							parNode->SubNode = PARENT;
+							parNode->SubNodeParent = obj;	//This may get overwritten if we have multiple children, so try not to use it anywhere mission critical.
+
+							//Update the pointer to our parent's NR pointer (so links can go there appropriately)
+							NR_subnode_reference = &(parNode->NR_node_reference);
+
+							//Zero out last child power vector (used for updates)
+							last_child_power[0][0] = last_child_power[0][1] = last_child_power[0][2] = complex(0,0);
+							last_child_power[1][0] = last_child_power[1][1] = last_child_power[1][2] = complex(0,0);
+							last_child_power[2][0] = last_child_power[2][1] = last_child_power[2][2] = complex(0,0);
+							last_child_current12 = 0.0;
 						}
 					}
 
@@ -568,7 +601,7 @@ int node::init(OBJECT *parent)
 						LUSolverFcns.ext_alloc = DLSYM(LUSolverFcns.dllLink,"LU_alloc");
 
 						//Make sure it worked
-						if (LUSolverFcns.ext_init == NULL)
+						if (LUSolverFcns.ext_alloc == NULL)
 						{
 							gl_warning("LU_init of external solver solver_%s not found, defaulting to superLU",LUSolverName.get_string());
 							/*  TROUBLESHOOT
@@ -585,7 +618,7 @@ int node::init(OBJECT *parent)
 						LUSolverFcns.ext_solve = DLSYM(LUSolverFcns.dllLink,"LU_solve");
 
 						//Make sure it worked
-						if (LUSolverFcns.ext_init == NULL)
+						if (LUSolverFcns.ext_solve == NULL)
 						{
 							gl_warning("LU_init of external solver solver_%s not found, defaulting to superLU",LUSolverName.get_string());
 							/*  TROUBLESHOOT
@@ -602,7 +635,7 @@ int node::init(OBJECT *parent)
 						LUSolverFcns.ext_destroy = DLSYM(LUSolverFcns.dllLink,"LU_destroy");
 
 						//Make sure it worked
-						if (LUSolverFcns.ext_init == NULL)
+						if (LUSolverFcns.ext_destroy == NULL)
 						{
 							gl_warning("LU_init of external solver solver_%s not found, defaulting to superLU",LUSolverName.get_string());
 							/*  TROUBLESHOOT
@@ -674,6 +707,9 @@ int node::init(OBJECT *parent)
 	else if (solver_method == SM_FBS)	//Forward back sweep
 	{
 		OBJECT *obj = OBJECTHDR(this);
+
+		// Store the topological parent before anyone overwrites it
+		TopologicalParent = obj->parent;
 
 		if (obj->parent != NULL)
 		{
@@ -872,6 +908,9 @@ int node::init(OBJECT *parent)
 		last_voltage[2] = voltage[2];
 	}
 
+	//Initialize uptime variables
+	last_disconnect = gl_globalclock;	//Set to current clock
+
 	return result;
 }
 
@@ -879,6 +918,8 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	TIMESTAMP t1 = powerflow_object::presync(t0); 
+	TIMESTAMP temp_time_value;
+
 	//Determine the flag state - see if a schedule is overriding us
 	if (service_status_dbl>-1.0)
 	{
@@ -902,6 +943,35 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 		}
 	}
 
+	//Handle disconnect items - only do at new times
+	if (prev_NTime!=t0)
+	{
+		if (service_status == ND_IN_SERVICE)
+		{
+			//See when the last update was
+			if ((last_disconnect == prev_NTime) && (current_uptime == -1.0))	//Just reconnected
+			{
+				//Store one more
+				last_disconnect = t0;
+			}
+
+			//Update uptime value
+			temp_time_value = t0 - last_disconnect;
+			current_uptime = ((double)(temp_time_value))/60.0;	//Put into minutes
+		}
+		else //Must be out of service
+		{
+			if (last_disconnect != prev_NTime)	//Just disconnected
+			{
+				temp_time_value = t0 - last_disconnect;
+				previous_uptime = ((double)(temp_time_value))/60.0;	//Put into minutes - automatically shift into prev
+			}
+			//Default else - already out of service
+			current_uptime = -1.0;	//Flag current
+			last_disconnect = t0;	//Update tracking variable
+		}//End out of service
+	}//End disconnect uptime counter
+
 	//Initial phase check - moved so all methods check now
 	if (prev_NTime==0)	//Should only be the very first run
 	{
@@ -916,7 +986,10 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			A node has more phases present than it has sources coming in.  Under the Forward-Back sweep algorithm,
 			the system should be strictly radial.  This scenario implies either a meshed system or unconnected
 			phases between the from and to nodes of a connected line.  Please adjust the phases appropriately.  Also
-			be sure no open switches are the sole connection for a phase, else this will fail as well.
+			be sure no open switches are the sole connection for a phase, else this will fail as well.  In a few NR
+			circumstances, this can also be seen if the "from" and "to" nodes are in reverse order - the "from" node 
+			of a link object should be nearest the SWING node, or the node with the most phases - this error check
+			will be updated in future versions.
 			*/
 		}
 
@@ -1080,7 +1153,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 				a bug report via the trac website.
 				*/
 			}
-		}
+		}//End busdata and branchdata null (first in)
 
 		if ((SubNode==DIFF_PARENT) && (NR_cycle==false))	//Differently connected parent - zero our accumulators
 		{
@@ -1097,7 +1170,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 		{
 			nom_res_curr[0] = nom_res_curr[1] = nom_res_curr[2] = 0.0;
 		}
-	}
+	}//end solver_NR call
 	else if (solver_method==SM_FBS)
 	{
 #ifdef SUPPORT_OUTAGES
@@ -1122,6 +1195,13 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			frequency = pRef->frequency;
 		}
 	}
+
+	//Update NR_mode flag, as necessary (used to be only in triplex devices)
+	//Put at bottom so SWING update is seen (otherwise SWING is out of step)
+	if (solver_method == SM_NR)
+		NR_mode = NR_cycle;		//COpy NR_cycle into NR_mode for houses
+	else
+		NR_mode = false;		//Just put as false for other methods
 	
 	return t1;
 }
@@ -2120,6 +2200,15 @@ int node::NR_populate(void)
 		//Bus type
 		NR_busdata[NR_node_reference].type = (int)bustype;
 
+		//Interim check to make sure it isn't a PV bus, since those aren't supported yet - this will get removed when that functionality is put in place
+		if (NR_busdata[NR_node_reference].type==1)
+		{
+			GL_THROW("NR: bus:%s is a PV bus - these are not yet supported.",me->name);
+			/*  TROUBLESHOOT
+			The Newton-Raphson solver implemented does not currently support the PV bus type.
+			*/
+		}
+
 		//Populate phases
 		NR_busdata[NR_node_reference].phases = 128*has_phase(PHASE_S) + 8*has_phase(PHASE_D) + 4*has_phase(PHASE_A) + 2*has_phase(PHASE_B) + has_phase(PHASE_C);
 
@@ -2459,6 +2548,11 @@ int node::NR_current_update(bool postpass, bool parentcall)
 				ParLoadObj->current_inj[1] += temp_current_inj[1];
 				ParLoadObj->current_inj[2] += temp_current_inj[2];
 			}
+
+			//Update our accumulator as well, otherwise things break
+			current_inj[0] += temp_current_inj[0];
+			current_inj[1] += temp_current_inj[1];
+			current_inj[2] += temp_current_inj[2];
 		}
 		else	//Not a child, just put this in our accumulator - we're already locked, so no need to separately lock
 		{

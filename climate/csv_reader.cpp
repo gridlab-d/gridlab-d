@@ -56,6 +56,7 @@ csv_reader::csv_reader(MODULE *module){
 				PT_KEYWORD,"ERROR",CR_ERROR,
 			PT_char32,"timefmt",PADDR(timefmt),
 			PT_char32,"timezone",PADDR(timezone),
+			PT_double,"timezone_offset",PADDR(tz_numval),
 			PT_char256,"columns",PADDR(columns_str),
 			PT_char256,"filename",PADDR(filename),
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
@@ -217,7 +218,7 @@ int csv_reader::read_prop(char *line){ // already pulled the '$' off the front
 //		strncpy((char *)addr, valstr, 256);
 	} else {
 		gl_error("csv_reader::read_prop ~ unable to convert property \'%s\' due to type restrictions", propstr);
-		/* TROUBLESHOOTING
+		/* TROUBLESHOOT
 			This is a programming problem.  The property parser within the csv_reader is only able to
 			properly handle char32 and double properties.  Please contact matthew.hauer@pnl.gov for
 			technical support.
@@ -318,7 +319,19 @@ int csv_reader::read_line(char *line, int linenum){
 	sample = new weather();
 
 	if(timefmt[0] == 0){
-		if(sscanf(token, "%d:%d:%d:%d:%d", &sample->month, &sample->day, &sample->hour, &sample->minute, &sample->second) < 1){
+		TIMESTAMP ts = callback->time.convert_to_timestamp(token);
+		DATETIME dt;
+		if ( ts!=TS_INVALID && callback->time.local_datetime(ts,&dt) )
+		{
+			 sample->month = dt.month;
+			 sample->day = dt.day;
+			 sample->hour = dt.hour;
+			 sample->minute = dt.minute;
+			 sample->second = dt.second;
+			 // IMPORTANT NOTE: if DST is not handled properly by sample, don't try to fix
+			 // the problem here.  The weather class may need to be fixed so it uses UTC internally.
+		}
+		else if(sscanf(token, "%d:%d:%d:%d:%d", &sample->month, &sample->day, &sample->hour, &sample->minute, &sample->second) < 1){
 			gl_error("csv_reader::read_line ~ unable to read time string \'%s\' with default format", token);
 			/* TROUBLESHOOT
 				The input timestamp could not be parsed.  Verify that all time strings are formatted
@@ -383,7 +396,7 @@ int csv_reader::read_line(char *line, int linenum){
 	return 1;
 }
 
-TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double *direct, double *diffuse, double *global, double *wind, double *rain, double *snow){
+TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double *direct, double *diffuse, double *global, double *wind, double *rain, double *snow, double *pressure){
 	DATETIME now, then;
 //	TIMESTAMP until;
 	int next_year = 0;
@@ -436,6 +449,10 @@ TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double
 			guess_dt.second = samples[i]->second;
 			strcpy(guess_dt.tz, now.tz);
 //			strcpy(guess_dt.tz, "GMT");
+			if(guess_dt.month == 2 && guess_dt.day == 29){
+				if(!ISLEAPYEAR(now.year))
+					continue; // skip leap days on non-leap years
+			}
 			guess_ts = (TIMESTAMP)gl_mktime(&guess_dt);
 
 			if(guess_ts >= t0){
@@ -455,6 +472,7 @@ TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double
 			*wind = samples[index]->wind_speed;
 			*rain = samples[index]->rainfall;
 			*snow = samples[index]->snowdepth;
+			*pressure = samples[index]->pressure;
 		} else { // somewhere between the last and the first element
 			*temp = samples[sample_ct - 1]->temperature;
 			*humid = samples[sample_ct - 1]->humidity;
@@ -464,6 +482,7 @@ TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double
 			*wind = samples[sample_ct - 1]->wind_speed;
 			*rain = samples[sample_ct - 1]->rainfall;
 			*snow = samples[sample_ct - 1]->snowdepth;
+			*pressure = samples[sample_ct - 1]->pressure;
 		}
 
 		then.year = now.year + (index+1 == sample_ct ? 1 : 0);
@@ -505,6 +524,10 @@ TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double
 		then.hour = samples[(index+1)%sample_ct]->hour;
 		then.minute = samples[(index+1)%sample_ct]->minute;
 		then.second = samples[(index+1)%sample_ct]->second;
+		if(then.month == 2 && then.day == 29){
+				if(!ISLEAPYEAR(then.year))
+					continue; // skip leap days on non-leap years
+			}
 		strcpy(then.tz, now.tz);
 
 		// next_ts is the time the current sample is overwritten by another sample.
@@ -519,6 +542,7 @@ TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double
 	*wind = samples[index]->wind_speed;
 	*rain = samples[index]->rainfall;
 	*snow = samples[index]->snowdepth;
+	*pressure = samples[index]->pressure;
 
 	// having found the index, update the data
 	if(index == start){

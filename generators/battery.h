@@ -10,8 +10,6 @@
 #define _battery_H
 
 #include <stdarg.h>
-#include "../powerflow/powerflow_object.h"
-//#include "../powerflow/node.h"
 
 #include "gridlabd.h"
 #include "energy_storage.h"
@@ -20,13 +18,18 @@
 class battery : public energy_storage
 {
 private:
-	double number_of_phases_out;
 	TIMESTAMP prev_time;
 	int first_time_step;
-	
+	int number_of_phases_out;
 	int prev_state; //1 is charging, 0 is nothing, -1 is discharging
 
 	/* TODO: put private variables here */
+	double n_series; //the number of cells in series
+	double internal_battery_load; //the power out of the battery on the source side of the internal resistance
+	double r_in; // the internal resistance of the battery as a function of soc
+	double v_oc; // the open circuit voltage as a function of soc
+	double v_t; // the terminal voltage as a function of soc and battery load.
+	double p_br;
 	//complex AMx[3][3];//generator impedance matrix
 
 protected:
@@ -45,6 +48,7 @@ public:
 		GM_VOLTAGE_CONTROLLED, 
 		GM_POWER_VOLTAGE_HYBRID
 	} gen_mode_v;  //operating mode of the generator 
+
 
 	//note battery panel will always operate under the SUPPLY_DRIVEN generator mode
 	enum GENERATOR_STATUS {
@@ -111,6 +115,28 @@ public:
 	double check_power_low;
 	double B_scheduled_power;
 
+	//Internal battery model parameters
+	bool use_internal_battery_model;
+	enum BATTERY_TYPE {
+		LI_ION = 1,
+		LEAD_ACID = 2,
+	} battery_type;
+	double soc; //state of charge of the battery
+	double bat_load; //current load of the battery
+	double *pSoc;
+	double *pBatteryLoad;
+	double last_bat_load;
+	double b_soc_reserve;
+	double *pSocReserve;
+	TIMESTAMP state_change_time;
+
+	//battery module parameters
+	double v_max; //the maximum DC voltage of the battery in V
+	double p_max; // the rated DC power the battery can supply or draw in W
+	double *pRatedPower;
+	double e_max; // the battery's internal capacity in Wh
+	double eta_rt; // the roundtrip efficiency of the battery at rated power.
+
 public:
 	/* required implementations */
 	battery(MODULE *module);
@@ -126,6 +152,7 @@ public:
 	double calculate_efficiency(complex voltage, complex current);
 	complex *get_complex(OBJECT *obj, char *name);
 	complex calculate_v_terminal(complex v, complex i);
+	void fetch_double(double **prop, char *name, OBJECT *parent);
 
 public:
 	static CLASS *oclass;

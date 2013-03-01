@@ -7,11 +7,11 @@
 // also validates power_in,power_out and power losses at selected
 // underground lines
 // written by alek332
-clock{ 
-     timestamp '2000-01-01 0:00:00'; 
-     stoptime '2000-01-01 1:00:00'; 
-     timezone EST+8EDT; 
-} 
+clock{
+	timezone EST+8EDT;
+	timestamp '2000-01-01 0:00:00';
+	stoptime '2000-01-01 1:00:00';
+}
 
 #set profiler=1 
 //********************************************* 

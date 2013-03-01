@@ -7,7 +7,7 @@ module tape;
 //#endif
 
 #include "../WA-Yakima.glm"
-#set tmp="../test_solar"
+#set tmp="../test_solar_opt"
 #setenv GRIDLABD=../../../core
 #set force_compile=1
 

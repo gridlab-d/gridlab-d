@@ -86,6 +86,7 @@ public:
 	int may_run;
 
 	// new stuff
+	double clear_price;
 	double ramp_low, ramp_high;
 	double dPeriod;
 	int64 period;
@@ -121,8 +122,15 @@ public:
 	double sliding_time_delay;
 	int bid_delay;
 
+	bool use_predictive_bidding;
+	double last_setpoint;
+	double last_heating_setpoint;
+	double last_cooling_setpoint;
+
+
 private:
 	TIMESTAMP next_run;
+	TIMESTAMP init_time;
 	double *pMonitor;
 	double *pSetpoint;
 	double *pDemand;
@@ -134,7 +142,7 @@ private:
 	enumeration last_pState;
 	void cheat();
 	void fetch(double **prop, char *name, OBJECT *parent);
-	int dir;
+	int dir, direction;
 	double min, max;
 	double T_lim, k_T;
 	double heat_min, heat_max;

@@ -43,18 +43,18 @@ schedule fixed_prices {
 schedule controller_bids {
 	0 4 * * * 100;
 	1 4 * * * 55;
-	2 4 * * * 27.4903;
-	3 4 * * * 123.71716;
-	4 4 * * * 118.74375;
-	5 4 * * * 49.825488;
-	6 4 * * * 50.226064;
-	7 4 * * * 78.2864;
-	8 4 * * * 82.165;
+	2 4 * * * 27.4777;
+	3 4 * * * 123.6530;
+	4 4 * * * 118.7040;
+	5 4 * * * 49.8253;
+	6 4 * * * 50.2259;
+	7 4 * * * 78.2742;
+	8 4 * * * 82.1630;
 }
 
 schedule clearing_quantities {
 	0 4 * * * 0;
-	1 4 * * * 8.1394;
+	1 4 * * * 9.05248;
 	2 4 * * * 9.05248;
 	3 4 * * * 0;
 	4 4 * * * 23.4466;
@@ -131,7 +131,7 @@ object triplex_meter {
 			demand heating_demand;
 			total total_load;
 			load hvac_load;
-			slider_setting 0; //set to 0 or ramps will be overwritten
+			//slider_setting 0; //set to 0 or ramps will be overwritten
 			ramp_low -2;
 			ramp_high -2;
 			range_low -5;
@@ -167,7 +167,7 @@ object triplex_meter {
 			demand heating_demand;
 			total total_load;
 			load hvac_load;
-			slider_setting 0; //set to 0 or ramps will be overwritten
+			//slider_setting 0; //set to 0 or ramps will be overwritten
 			ramp_low -2;
 			ramp_high -2;
 			range_low -5;

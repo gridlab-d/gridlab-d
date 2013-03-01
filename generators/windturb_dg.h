@@ -11,9 +11,8 @@
 
 
 #include <stdarg.h>
-#include "../powerflow/powerflow_object.h"   
-#include "../powerflow/node.h"
 #include "gridlabd.h"
+#include "generators.h"
 
 /*
 #ifdef _WINDTURB_DG_CPP
@@ -39,6 +38,7 @@ private:
 	complex Iapu;
 	complex	Ibpu;
 	complex	Icpu;
+	double air_dens;
 	double Ridealgas;
 	double Molar;
 	double std_air_dens;
@@ -46,6 +46,7 @@ private:
 	double std_air_press;
 	complex *pCircuit_V;		//< pointer to the three voltages on three lines
 	complex *pLine_I;			//< pointer to the three current on three lines
+	bool last_NR_mode;		//Toggle to keep track of last NR mode - needed to differentiate between FBS and NR
 	
 protected:
 	/* TODO: put unpublished but inherited variables */
@@ -55,15 +56,16 @@ public:
 	set phases;	/**< device phases (see PHASE codes) */
 
 	enum {OFFLINE=1, ONLINE} Gen_status;
-	enum {INDUCTION=1, SYNCHRONOUS} Gen_type;
+	enum {INDUCTION=1, SYNCHRONOUS, USER_TYPE} Gen_type;
 	enum {CONSTANTE=1, CONSTANTP, CONSTANTPQ} Gen_mode;
-	enum {GENERIC_SYNCH=1, GENERIC_IND, VESTAS_V82, GE_25MW} Turbine_Model;
-	enum {GENERAL=1, MANUF_TABLE} CP_Data;
+	enum {GENERIC_SYNCH_SMALL, GENERIC_SYNCH_MID,GENERIC_SYNCH_LARGE, GENERIC_IND_SMALL, GENERIC_IND_MID, GENERIC_IND_LARGE, USER_DEFINED, VESTAS_V82, GE_25MW} Turbine_Model;
+	enum {GENERAL_LARGE, GENERAL_MID,GENERAL_SMALL,MANUF_TABLE, CALCULATED, USER_SPECIFY} CP_Data;
 
 	double blade_diam;
 	double turbine_height;
 	double roughness_l;
 	double ref_height;
+	double Cp;
 
 	int64 time_advance;
 
@@ -92,6 +94,7 @@ public:
 	complex current_A;			//terminal current
 	complex current_B;
 	complex current_C;
+	double store_last_current;  // Store the last solved current to see if the solution is converged
 
 	double TotalRealPow;		//Real power supplied by generator - used for testing
 	double TotalReacPow;		//Reactive power supplied - used for testing
@@ -133,11 +136,12 @@ public:
 	double Max_Vrotor;			// maximum induced voltage in p.u., e.g. 1.2
     double Min_Vrotor;			// minimum induced voltage in p.u., e.g. 0.8
 
-
-
+	bool *NR_mode;			//Toggle for NR solving cycle.  If not NR, just goes to false
+	bool default_NR_mode;
 
 public:
 	/* required implementations */
+	bool *get_bool(OBJECT *obj, char *name);
 	windturb_dg(MODULE *module);
 	int create(void);
 	int init(OBJECT *parent);
@@ -152,5 +156,5 @@ public:
 	static windturb_dg *defaults;
 	complex *get_complex(OBJECT *obj, char *name);
 
-#endif
 };
+#endif

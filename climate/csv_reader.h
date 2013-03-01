@@ -52,6 +52,7 @@ public:
 	double lat_min;
 	double long_deg;
 	double long_min;
+	double tz_numval;
 	double low_temp;
 	int32 elevation;
 	double high_temp;
@@ -67,7 +68,7 @@ public:
 	CSVSTATUS status;
 
 	int open(const char *file);
-	TIMESTAMP get_data(TIMESTAMP t0, double *temp, double *humid, double *direct, double *diffuse, double *global, double *wind, double *rain, double *snow);
+	TIMESTAMP get_data(TIMESTAMP t0, double *temp, double *humid, double *direct, double *diffuse, double *global, double *wind, double *rain, double *snow, double *pressure);
 };
 #endif
 

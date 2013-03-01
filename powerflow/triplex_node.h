@@ -21,8 +21,8 @@ public:
 
 public:
 
-	complex impedance[3];
-	complex pub_shunt[3];
+	complex impedance[3];	///< impedance load value
+	complex pub_shunt[3];	///< shunt impedance load value
 	int create(void);
 	int init(OBJECT *parent=NULL);
 	TIMESTAMP presync(TIMESTAMP t0);

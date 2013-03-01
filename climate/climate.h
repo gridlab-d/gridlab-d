@@ -45,6 +45,8 @@ typedef struct s_tmy {
 	double ghr;
 	double solar[CP_LAST]; // W/sf
 	double solar_raw;
+	double direct_normal_extra;
+	double pressure;
 	double windspeed;
 	double rainfall; // in/h
 	double snowdepth; // in
@@ -55,6 +57,10 @@ typedef struct s_tmy {
 /* published functions */
 EXPORT int64 calculate_solar_radiation_degrees(OBJECT *obj, double tilt, double orientation, double *value);
 EXPORT int64 calculate_solar_radiation_radians(OBJECT *obj, double tilt, double orientation, double *value);
+EXPORT int64 calculate_solar_radiation_shading_degrees(OBJECT *obj, double tilt, double orientation, double shading_value, double *value);
+EXPORT int64 calculate_solar_radiation_shading_radians(OBJECT *obj, double tilt, double orientation, double shading_value, double *value);
+EXPORT int64 calc_solar_solpos_shading_deg(OBJECT *obj, double tilt, double orientation, double shading_value, double *value);
+EXPORT int64 calc_solar_solpos_shading_rad(OBJECT *obj, double tilt, double orientation, double shading_value, double *value);
 //sjin: add solar elevation and azimuth published funcions
 EXPORT int64 calculate_solar_elevation(OBJECT *obj, double latitude, double *value);
 EXPORT int64 calculate_solar_azimuth(OBJECT *obj, double latitude, double *value);
@@ -131,8 +137,11 @@ public:
 	 * @param day - Day of the observation
 	 * @param hour - hour of the observation
 	 * @param wind Wind speed (optional)
+	 *
+	 * @param pressure - atmospheric pressure
+	 * @param extra_terr_dni - Extra terrestrial direct normal irradiance (top of atmosphere)
 	 */
-	int read_data(double *dnr, double *dhr, double *ghr, double *tdb, double *rh, int* month, int* day, int* hour, double *wind=0,double *precip=0, double *snowDepth=0);
+	int read_data(double *dnr, double *dhr, double *ghr, double *tdb, double *rh, int* month, int* day, int* hour, double *wind=0,double *precip=0, double *snowDepth=0, double *pressure = 0, double *extra_terr_dni = 0);
 
 	/** obtain records **/
 
@@ -180,6 +189,9 @@ class climate : public gld_object {
 	GL_ATOMIC(CLIMATE_INTERPOLATE,interpolate);
 	GL_ATOMIC(double,solar_elevation);
 	GL_ATOMIC(double,solar_azimuth);
+	GL_ATOMIC(double,direct_normal_extra);
+	GL_ATOMIC(double,pressure);
+	GL_ATOMIC(double,tz_offset_val);
 
 	// data not shared with classes in this module (no locks needed)
 private:

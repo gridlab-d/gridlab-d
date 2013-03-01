@@ -92,8 +92,8 @@ def run_tests(argv):
 		for arg in args:
 			there_dir = arg
 			break    
-#	except getopt.GetoptError as err: # to run with Python 3.x, replace the following line with this line 	
-	except getopt.GetoptError, err:
+	except getopt.GetoptError as err: # to run with Python 3.x, replace the following line with this line 	
+#	except getopt.GetoptError, err:
 		print(err.msg)
 		do_help()
 		return 2

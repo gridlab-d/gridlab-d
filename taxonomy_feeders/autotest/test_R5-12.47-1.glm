@@ -6,9 +6,9 @@
 //
 // written by alek332
 clock{
+	timezone EST+8EDT;
 	timestamp '2000-01-01 0:00:00';
 	stoptime '2000-01-01 1:00:00';
-	timezone EST+8EDT;
 }
 
 #set profiler=1
@@ -18,7 +18,8 @@ module assert;
 module tape;
 module powerflow{
 	solver_method FBS;
-	default_maximum_voltage_error 1e-9;
+	default_maximum_voltage_error 1e-6;
+	line_limits FALSE;
 };
 //*********************************************
 
@@ -6052,13 +6053,13 @@ object switch:1719 {
 	status CLOSED;
 }
 
-object switch:1720 {
-	name R5-12-47-1_switch_8;
-	phases CN;
-	from R5-12-47-1_node_128;
-	to R5-12-47-1_node_118;
-	status CLOSED;
-}
+// object switch:1720 {
+	// name R5-12-47-1_switch_8;
+	// phases CN;
+	// from R5-12-47-1_node_128;
+	// to R5-12-47-1_node_118;
+	// status CLOSED;
+// }
 
 object switch:1721 {
 	name R5-12-47-1_switch_9;

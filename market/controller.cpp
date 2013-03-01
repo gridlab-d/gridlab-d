@@ -52,6 +52,7 @@ controller::controller(MODULE *module){
 			PT_double, "set_temp[degF]", PADDR(set_temp), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "the reset value",
 			PT_double, "base_setpoint[degF]", PADDR(setpoint0),
 			// new stuff
+			PT_double, "market_price", PADDR(clear_price), PT_DESCRIPTION, "the current market clearing price seen by the controller.",
 			PT_double, "period[s]", PADDR(dPeriod), PT_DESCRIPTION, "interval of time between market clearings",
 			PT_enumeration, "control_mode", PADDR(control_mode),
 				PT_KEYWORD, "RAMP", CN_RAMP,
@@ -80,6 +81,7 @@ controller::controller(MODULE *module){
 			PT_char32, "cooling_setpoint", PADDR(cooling_setpoint),
 			PT_char32, "cooling_demand", PADDR(cooling_demand),
 			PT_double, "sliding_time_delay[s]", PADDR(sliding_time_delay), PT_DESCRIPTION, "time interval desired for the sliding resolve mode to change from cooling or heating to off",
+			PT_bool, "use_predictive_bidding", PADDR(use_predictive_bidding),
 			// redefinitions
 			PT_char32, "average_target", PADDR(avg_target),
 			PT_char32, "standard_deviation_target", PADDR(std_target),
@@ -112,9 +114,9 @@ int controller::create(){
 	memset(this, 0, sizeof(controller));
 	sprintf(avg_target.get_string(), "avg24");
 	sprintf(std_target.get_string(), "std24");
-	slider_setting_heat = 0.0;
-	slider_setting_cool = 0.0;
-	slider_setting = 0.0;
+	slider_setting_heat = -0.001;
+	slider_setting_cool = -0.001;
+	slider_setting = -0.001;
 	sliding_time_delay = -1;
 	lastbid_id = -1;
 	heat_range_low = -5;
@@ -123,6 +125,7 @@ int controller::create(){
 	cool_range_high = 5;
 	use_override = OU_OFF;
 	period = 0;
+	use_predictive_bidding = FALSE;
 	return 1;
 }
 
@@ -296,6 +299,9 @@ int controller::init(OBJECT *parent){
 	if(demand[0] == 0 && control_mode == CN_RAMP){
 		GL_THROW("controller: %i, demand property not specified", hdr->id);
 	}
+	if(deadband[0] == 0 && use_predictive_bidding == TRUE && control_mode == CN_RAMP){
+		GL_THROW("controller: %i, deadband property not specified", hdr->id);
+	}
 	if(total[0] == 0){
 		GL_THROW("controller: %i, total property not specified", hdr->id);
 	}
@@ -327,6 +333,9 @@ int controller::init(OBJECT *parent){
 		fetch(&pDemand, demand, parent);
 		fetch(&pTotal, total, parent);
 		fetch(&pLoad, load, parent);
+		if(use_predictive_bidding == TRUE){
+			fetch(&pDeadband, deadband.get_string(), parent);
+		}
 	} else if(control_mode == CN_DOUBLE_RAMP){
 		sprintf(aux_state, "is_AUX_on");
 		sprintf(heat_state, "is_HEAT_on");
@@ -357,6 +366,11 @@ int controller::init(OBJECT *parent){
 			dir = -1;
 		} else if((high == low) && (fabs(ramp_high) > 0.001 || fabs(ramp_low) > 0.001)){
 			dir = 0;
+			if(ramp_high > 0){
+				direction = 1;
+			} else {
+				direction = -1;
+			}
 			gl_warning("%s: controller has no price ramp", namestr);
 			/* occurs given no price variation, or no control width (use a normal thermostat?) */
 		}
@@ -380,6 +394,7 @@ int controller::init(OBJECT *parent){
 //	double period = market->period;
 //	next_run = gl_globalclock + (TIMESTAMP)(period - fmod(gl_globalclock+period,period));
 	next_run = gl_globalclock;// + (market->period - gl_globalclock%market->period);
+	init_time = gl_globalclock;
 	time_off = TS_NEVER;
 	if(sliding_time_delay < 0 )
 		dtime_delay = 21600; // default sliding_time_delay of 6 hours
@@ -423,7 +438,7 @@ int controller::init(OBJECT *parent){
 	}
 
 	if(control_mode == CN_RAMP){
-		if(slider_setting < 0.0){
+		if(slider_setting < -0.001){
 			gl_warning("slider_setting is negative, reseting to 0.0");
 			slider_setting = 0.0;
 		}
@@ -433,11 +448,11 @@ int controller::init(OBJECT *parent){
 		}
 	}
 	if(control_mode == CN_DOUBLE_RAMP){
-		if(slider_setting_heat < 0.0){
+		if(slider_setting_heat < -0.001){
 			gl_warning("slider_setting_heat is negative, reseting to 0.0");
 			slider_setting_heat = 0.0;
 		}
-		if(slider_setting_cool < 0.0){
+		if(slider_setting_cool < -0.001){
 			gl_warning("slider_setting_cool is negative, reseting to 0.0");
 			slider_setting_cool = 0.0;
 		}
@@ -463,11 +478,11 @@ int controller::isa(char *classname)
 
 
 TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1){
-	if(slider_setting < 0.0)
+	if(slider_setting < -0.001)
 		slider_setting = 0.0;
-	if(slider_setting_heat < 0.0)
+	if(slider_setting_heat < -0.001)
 		slider_setting_heat = 0.0;
-	if(slider_setting_cool < 0.0)
+	if(slider_setting_cool < -0.001)
 		slider_setting_cool = 0.0;
 	if(slider_setting > 1.0)
 		slider_setting = 1.0;
@@ -483,65 +498,74 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 	if(control_mode == CN_DOUBLE_RAMP && cooling_setpoint0 == -1)
 		cooling_setpoint0 = *pCoolingSetpoint;
 
-	if(t1 == next_run || t0 == 0){
-		if(control_mode == CN_RAMP){
-			if(slider_setting != 0) {
-				min = setpoint0 + range_low * slider_setting;
-				max = setpoint0 + range_high * slider_setting;
-				if(range_low != 0)
-					ramp_low = -2 - (1 - slider_setting);
-				else
-					ramp_low = 0;
-				if(range_high != 0)
-					ramp_high = 2 + (1 - slider_setting);
-				else
-					ramp_high = 0;
-			} else {
-				min = setpoint0 + range_low;
-				max = setpoint0 + range_high;
-			}
-		} else if(control_mode == CN_DOUBLE_RAMP){
-			if (slider_setting_cool != 0.0) {
-				cool_min = cooling_setpoint0 + cool_range_low * slider_setting_cool;
-				cool_max = cooling_setpoint0 + cool_range_high * slider_setting_cool;
-				if (cool_range_low != 0.0)
-					cool_ramp_low = -2 - (1 - slider_setting_cool);
-				else
-					cool_ramp_low = 0;
-				if (cool_range_high != 0.0)
-					cool_ramp_high = 2 + (1 - slider_setting_cool);
-				else
-					cool_ramp_high = 0;
-			} else {
-				cool_min = cooling_setpoint0 + cool_range_low;
-				cool_max = cooling_setpoint0 + cool_range_high;
-			}
-			if (slider_setting_heat != 0.0) {
-				heat_min = heating_setpoint0 + heat_range_low * slider_setting_heat;
-				heat_max = heating_setpoint0 + heat_range_high * slider_setting_heat;
-				if (heat_range_low != 0.0)
-					heat_ramp_low = 2 + (1 - slider_setting_heat);
-				else
-					heat_ramp_low = 0;
-				if (heat_range_high != 0)
-					heat_ramp_high = -2 - (1 - slider_setting_heat);
-				else
-					heat_ramp_high = 0;
-			} else {
-				heat_min = heating_setpoint0 + heat_range_low;
-				heat_max = heating_setpoint0 + heat_range_high;
-			}
-		}
-		if((thermostat_mode != TM_INVALID && thermostat_mode != TM_OFF) || t1 >= time_off)
-			last_mode = thermostat_mode;
-		else if(thermostat_mode == TM_INVALID)
-			last_mode = TM_OFF;// this initializes last mode to off
 
-		if(thermostat_mode != TM_INVALID)
-			previous_mode = thermostat_mode;
-		else
-			previous_mode = TM_OFF;
+	if(control_mode == CN_RAMP){
+		if (slider_setting == -0.001){
+			min = setpoint0 + range_low;
+			max = setpoint0 + range_high;
+		} else if(slider_setting > 0){
+			min = setpoint0 + range_low * slider_setting;
+			max = setpoint0 + range_high * slider_setting;
+			if(range_low != 0)
+				ramp_low = -2 - (1 - slider_setting);
+			else
+				ramp_low = 0;
+			if(range_high != 0)
+				ramp_high = 2 + (1 - slider_setting);
+			else
+				ramp_high = 0;
+		} else {
+			min = setpoint0;
+			max = setpoint0;
+		}
+	} else if(control_mode == CN_DOUBLE_RAMP){
+		if (slider_setting_cool == -0.001){
+			cool_min = cooling_setpoint0 + cool_range_low;
+			cool_max = cooling_setpoint0 + cool_range_high;
+		} else if(slider_setting_cool > 0.0){
+			cool_min = cooling_setpoint0 + cool_range_low * slider_setting_cool;
+			cool_max = cooling_setpoint0 + cool_range_high * slider_setting_cool;
+			if (cool_range_low != 0.0)
+				cool_ramp_low = -2 - (1 - slider_setting_cool);
+			else
+				cool_ramp_low = 0;
+			if (cool_range_high != 0.0)
+				cool_ramp_high = 2 + (1 - slider_setting_cool);
+			else
+				cool_ramp_high = 0;
+		} else {
+			cool_min = cooling_setpoint0;
+			cool_max = cooling_setpoint0;
+		}
+		if (slider_setting_heat == -0.001){
+			heat_min = heating_setpoint0 + heat_range_low;
+			heat_max = heating_setpoint0 + heat_range_high;
+		} else if (slider_setting_heat > 0.0){
+			heat_min = heating_setpoint0 + heat_range_low * slider_setting_heat;
+			heat_max = heating_setpoint0 + heat_range_high * slider_setting_heat;
+			if (heat_range_low != 0.0)
+				heat_ramp_low = 2 + (1 - slider_setting_heat);
+			else
+				heat_ramp_low = 0;
+			if (heat_range_high != 0)
+				heat_ramp_high = -2 - (1 - slider_setting_heat);
+			else
+				heat_ramp_high = 0;
+		} else {
+			heat_min = heating_setpoint0;
+			heat_max = heating_setpoint0;
+		}
 	}
+	if((thermostat_mode != TM_INVALID && thermostat_mode != TM_OFF) || t1 >= time_off)
+		last_mode = thermostat_mode;
+	else if(thermostat_mode == TM_INVALID)
+		last_mode = TM_OFF;// this initializes last mode to off
+
+	if(thermostat_mode != TM_INVALID)
+		previous_mode = thermostat_mode;
+	else
+		previous_mode = TM_OFF;
+
 	return TS_NEVER;
 }
 
@@ -551,40 +575,64 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 	double demand = 0.0;
 	double rampify = 0.0;
 	extern double bid_offset;
+	double deadband_shift = 0.0;
+	double shift_direction = 0.0;
+	double shift_setpoint = 0.0;
+	double prediction_ramp = 0.0;
+	double prediction_range = 0.0;
+	double midpoint = 0.0;
 	OBJECT *hdr = OBJECTHDR(this);
 
 
 
 	/* short circuit if the state variable doesn't change during the specified interval */
 	if((t1 < next_run) && (market->market_id == lastmkt_id)){
-		if(t1 == next_run - bid_delay){
-			; // continue
+		if(t1 <= next_run - bid_delay){
+			if(use_predictive_bidding == TRUE && ((control_mode == CN_RAMP && last_setpoint != setpoint0) || (control_mode == CN_DOUBLE_RAMP && (last_heating_setpoint != heating_setpoint0 || last_cooling_setpoint != cooling_setpoint0)))) {
+				;
+			} else {// check to see if we have changed states
+				if(pState == 0){
+					return next_run;
+				} else if(*pState == last_pState){
+					return next_run;
+				}
+			}
 		} else {
-			if (pState == 0)
-				return next_run;
-			else if (*pState == last_pState)
-				return next_run;
+			return next_run;
 		}
+	}
+	
+	if(use_predictive_bidding == TRUE){
+		deadband_shift = *pDeadband * 0.5;
 	}
 
 	if(control_mode == CN_RAMP){
 		// if market has updated, continue onwards
 		if(market->market_id != lastmkt_id){// && (*pAvg == 0.0 || *pStd == 0.0 || setpoint0 == 0.0)){
-			double clear_price;
 			lastmkt_id = market->market_id;
 			lastbid_id = -1; // clear last bid id, refers to an old market
 			// update using last price
 			// T_set,a = T_set + (P_clear - P_avg) * | T_lim - T_set | / (k_T * stdev24)
 
 			clear_price = market->current_frame.clearing_price;
+
+			if(use_predictive_bidding == TRUE){
+				if((dir > 0 && clear_price < last_p) || (dir < 0 && clear_price > last_p)){
+					shift_direction = -1;
+				} else if((dir > 0 && clear_price >= last_p) || (dir < 0 && clear_price <= last_p)){
+					shift_direction = 1;
+				} else {
+					shift_direction = 0;
+				}
+			}
 			if(fabs(*pStd) < bid_offset){
 				set_temp = setpoint0;
 			} else if(clear_price < *pAvg && range_low != 0){
-				set_temp = setpoint0 + (clear_price - *pAvg) * fabs(range_low) / (ramp_low * *pStd);
+				set_temp = setpoint0 + (clear_price - *pAvg) * fabs(range_low) / (ramp_low * *pStd) + deadband_shift*shift_direction;
 			} else if(clear_price > *pAvg && range_high != 0){
-				set_temp = setpoint0 + (clear_price - *pAvg) * fabs(range_high) / (ramp_high * *pStd);
+				set_temp = setpoint0 + (clear_price - *pAvg) * fabs(range_high) / (ramp_high * *pStd) + deadband_shift*shift_direction;
 			} else {
-				set_temp = setpoint0;
+				set_temp = setpoint0 + deadband_shift*shift_direction;
 			}
 
 			if((use_override == OU_ON) && (pOverride != 0)){
@@ -606,29 +654,70 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			*pSetpoint = set_temp;
 			//gl_verbose("controller::postsync(): temp %f given p %f vs avg %f",set_temp, market->next.price, market->avg24);
 		}
-
+		
 		if(dir > 0){
-			if(*pMonitor > max){
-				bid = 9999.0;
-			} else if (*pMonitor < min){
-				bid = 0.0;
-				no_bid = 1;
+			if(use_predictive_bidding == TRUE){
+				if(*pState == 0 && *pMonitor > (max - deadband_shift)){
+					bid = market->pricecap;
+				} else if(*pState != 0 && *pMonitor < (min + deadband_shift)){
+					bid = 0.0;
+					no_bid = 1;
+				} else if(*pState != 0 && *pMonitor > max){
+					bid = market->pricecap;
+				} else if(*pState == 0 && *pMonitor < min){
+					bid = 0.0;
+					no_bid = 1;
+				}
+			} else {
+				if(*pMonitor > max){
+					bid = market->pricecap;
+				} else if (*pMonitor < min){
+					bid = 0.0;
+					no_bid = 1;
+				}
 			}
 		} else if(dir < 0){
-			if(*pMonitor < min){
-				bid = 9999.0;
-			} else if(*pMonitor > max){
-				bid = 0.0;
-				no_bid = 1;
+			if(use_predictive_bidding == TRUE){
+				if(*pState == 0 && *pMonitor < (min + deadband_shift)){
+					bid = market->pricecap;
+				} else if(*pState != 0 && *pMonitor > (max - deadband_shift)){
+					bid = 0.0;
+					no_bid = 1;
+				} else if(*pState != 0 && *pMonitor < min){
+					bid = market->pricecap;
+				} else if(*pState == 0 && *pMonitor > max){
+					bid = 0.0;
+					no_bid = 1;
+				}
+			} else {
+				if(*pMonitor < min){
+					bid = market->pricecap;
+				} else if (*pMonitor > max){
+					bid = 0.0;
+					no_bid = 1;
+				}
 			}
 		} else if(dir == 0){
-			if(*pMonitor < min){
-				bid = 9999.0;
-			} else if(*pMonitor > max){
-				bid = 0.0;
-				no_bid = 1;
+			if(use_predictive_bidding == TRUE){
+				if(direction == 0.0) {
+					gl_error("the variable direction did not get set correctly.");
+				} else if((*pMonitor > max + deadband_shift || (*pState != 0 && *pMonitor > min - deadband_shift)) && direction > 0){
+					bid = market->pricecap;
+				} else if((*pMonitor < min - deadband_shift || (*pState != 0 && *pMonitor < max + deadband_shift)) && direction < 0){
+					bid = market->pricecap;
+				} else {
+					bid = 0.0;
+					no_bid = 1;
+				}
 			} else {
-				bid = *pAvg; // override due to lack of "real" curve
+				if(*pMonitor < min){
+					bid = market->pricecap;
+				} else if(*pMonitor > max){
+					bid = 0.0;
+					no_bid = 1;
+				} else {
+					bid = *pAvg;
+				}
 			}
 		}
 
@@ -643,7 +732,8 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			k_T = 0.0;
 			T_lim = 0.0;
 		}
-
+		
+		
 		if(bid < 0.0 && *pMonitor != setpoint0) {
 			bid = *pAvg + ( (fabs(*pStd) < bid_offset) ? 0.0 : (*pMonitor - setpoint0) * (k_T * *pStd) / fabs(T_lim) );
 		} else if(*pMonitor == setpoint0) {
@@ -735,7 +825,6 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			lastmkt_id = market->market_id;
 			lastbid_id = -1;
 			// retrieve cleared price
-			double clear_price;
 			clear_price = market->current_frame.clearing_price;
 			if(clear_price == last_p){
 				// determine what to do at the marginal price
@@ -751,6 +840,15 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 						break;
 				}
 			}
+			if(use_predictive_bidding == TRUE){
+				if((thermostat_mode == TM_COOL && clear_price < last_p) || (thermostat_mode == TM_HEAT && clear_price > last_p)){
+					shift_direction = -1;
+				} else if((thermostat_mode == TM_COOL && clear_price >= last_p) || (thermostat_mode == TM_HEAT && clear_price <= last_p)){
+					shift_direction = 1;
+				} else {
+					shift_direction = 0;
+				}
+			}
 			may_run = 1;
 			// calculate setpoints
 			if(fabs(*pStd) < bid_offset){
@@ -758,16 +856,16 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				*pHeatingSetpoint = heating_setpoint0;
 			} else {
 				if(clear_price > *pAvg){
-					*pCoolingSetpoint = cooling_setpoint0 + (clear_price - *pAvg) * fabs(cool_range_high) / (cool_ramp_high * *pStd);
+					*pCoolingSetpoint = cooling_setpoint0 + (clear_price - *pAvg) * fabs(cool_range_high) / (cool_ramp_high * *pStd) + deadband_shift*shift_direction;
 					//*pHeatingSetpoint = heating_setpoint0 + (clear_price - *pAvg) * fabs(heat_range_high) / (heat_ramp_high * *pStd);
-					*pHeatingSetpoint = heating_setpoint0 + (clear_price - *pAvg) * fabs(heat_range_low) / (heat_ramp_low * *pStd);
+					*pHeatingSetpoint = heating_setpoint0 + (clear_price - *pAvg) * fabs(heat_range_low) / (heat_ramp_low * *pStd) + deadband_shift*shift_direction;
 				} else if(clear_price < *pAvg){
-					*pCoolingSetpoint = cooling_setpoint0 + (clear_price - *pAvg) * fabs(cool_range_low) / (cool_ramp_low * *pStd);
+					*pCoolingSetpoint = cooling_setpoint0 + (clear_price - *pAvg) * fabs(cool_range_low) / (cool_ramp_low * *pStd) + deadband_shift*shift_direction;
 					//*pHeatingSetpoint = heating_setpoint0 + (clear_price - *pAvg) * fabs(heat_range_low) / (heat_ramp_low * *pStd);
-					*pHeatingSetpoint = heating_setpoint0 + (clear_price - *pAvg) * fabs(heat_range_high) / (heat_ramp_high * *pStd);
+					*pHeatingSetpoint = heating_setpoint0 + (clear_price - *pAvg) * fabs(heat_range_high) / (heat_ramp_high * *pStd) + deadband_shift*shift_direction;
 				} else {
-					*pCoolingSetpoint = cooling_setpoint0;
-					*pHeatingSetpoint = heating_setpoint0;
+					*pCoolingSetpoint = cooling_setpoint0 + deadband_shift*shift_direction;
+					*pHeatingSetpoint = heating_setpoint0 + deadband_shift*shift_direction;
 				}
 			}
 
@@ -814,6 +912,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		double previous_q = last_q; //store the last value, in case we need it
 		last_p = 0.0;
 		last_q = 0.0;
+		
 		// We have to cool
 		if(*pMonitor > cool_max){
 			last_p = market->pricecap;
@@ -853,10 +952,11 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			}
 			last_q = *pCoolingDemand;
 		}
-			if(last_p > market->pricecap)
-				last_p = market->pricecap;
-			if(last_p < -market->pricecap)
-				last_p = -market->pricecap;
+
+		if(last_p > market->pricecap)
+			last_p = market->pricecap;
+		if(last_p < -market->pricecap)
+			last_p = -market->pricecap;
 		if(0 != strcmp(market->unit, "")){
 			if(0 == gl_convert("kW", market->unit, &(last_q))){
 				gl_error("unable to convert bid units from 'kW' to '%s'", market->unit.get_string());
@@ -899,9 +999,19 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 
 TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 	TIMESTAMP rv = next_run - bid_delay;
+	if(last_setpoint != setpoint0 && control_mode == CN_RAMP){
+		last_setpoint = setpoint0;
+	}
+	if(last_heating_setpoint != heating_setpoint0 && control_mode == CN_DOUBLE_RAMP){
+		last_heating_setpoint = heating_setpoint0;
+	}
+	if(last_cooling_setpoint != cooling_setpoint0 && control_mode == CN_DOUBLE_RAMP){
+		last_cooling_setpoint = cooling_setpoint0;
+	}
+
 	// Determine the system_mode the HVAC is in
 	if(t1 < next_run-bid_delay){
-		return rv;
+		return next_run-bid_delay;
 	}
 
 	if(resolve_mode == RM_SLIDING){

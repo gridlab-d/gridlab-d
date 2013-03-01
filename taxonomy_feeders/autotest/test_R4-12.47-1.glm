@@ -9,9 +9,9 @@
 // off by more than 1 at certain nodes; node 50 logs values for 
 // voltage_A/C when the should be 0; search for @off
 clock{
+	timezone EST+8EDT;
 	timestamp '2000-01-01 0:00:00';
 	stoptime '2000-01-01 1:00:00';
-	timezone EST+8EDT;
 }
 
 #set profiler=1
@@ -22,7 +22,8 @@ module assert;
 module tape;
 module powerflow{
 	solver_method FBS;
-	default_maximum_voltage_error 1e-9;
+	default_maximum_voltage_error 1e-6;
+	line_limits FALSE;
 };
 //*********************************************
 
@@ -11496,13 +11497,13 @@ object switch:3874 {
 	status CLOSED;
 }
 
-object switch:3875 {
-	name R4-12-47-1_switch_2;
-	phases CN;
-	from R4-12-47-1_node_61;
-	to R4-12-47-1_node_53;
-	status CLOSED;
-}
+// object switch:3875 {
+	// name R4-12-47-1_switch_2;
+	// phases CN;
+	// from R4-12-47-1_node_61;
+	// to R4-12-47-1_node_53;
+	// status CLOSED;
+// }
 
 object switch:3876 {
 	name R4-12-47-1_switch_3;
@@ -35179,8 +35180,8 @@ object underground_line:3353 {
 object underground_line:3358 {
 	name R4-12-47-1_ul_2;
 	phases CN;
-	from R4-12-47-1_node_53;
-	to R4-12-47-1_node_68;
+	to R4-12-47-1_node_53;
+	from R4-12-47-1_node_68;
 	length 920.000;
 	configuration line_configuration:36;
 }

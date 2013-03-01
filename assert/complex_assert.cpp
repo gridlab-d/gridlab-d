@@ -98,7 +98,7 @@ TIMESTAMP complex_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 	} 
 	else if ( once==ONCE_DONE)
 	{
-		if ( once_value==value )
+		if ( once_value.Re()==value.Re() && once_value.Im()==value.Im() )
 		{
 			gl_verbose("Assert skipped with ONCE logic");
 			return TS_NEVER;

@@ -11,7 +11,9 @@ module powerflow {
 	solver_method FBS;
 }
 module climate;
-module residential;
+module residential {
+	implicit_enduses NONE;
+};
 
 
 clock{
@@ -157,6 +159,12 @@ object line_configuration {
 	 conductor_C ug_lc_7240;
 	 spacing spacing_515;
 }
+
+object triplex_line_conductor {
+	name TLC;
+	resistance 0.97;
+	geometric_mean_radius 0.01111;
+}
  
 //Transformer config
 object transformer_configuration {
@@ -170,20 +178,55 @@ object transformer_configuration {
 	reactance 1.81;
 }
 
+object transformer_configuration {
+	name SPCT_4800A;
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type POLETOP;
+	shunt_impedance 10000+10000j;
+	primary_voltage 4800;
+	secondary_voltage 120;
+	powerA_rating 110 kVA;
+	impedance 0.00033+0.0022j;
+}
+
+object transformer_configuration {
+	name SPCT_4800B;
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type POLETOP;
+	shunt_impedance 10000+10000j;
+	primary_voltage 4800;
+	secondary_voltage 120;
+	powerB_rating 110 kVA;
+	impedance 0.00033+0.0022j;
+}
+
+object transformer_configuration {
+	name SPCT_4800C;
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type POLETOP;
+	shunt_impedance 10000+10000j;
+	primary_voltage 4800;
+	secondary_voltage 120;
+	powerC_rating 110 kVA;
+	impedance 0.00033+0.0022j;
+}
+
+object transformer_configuration {
+	name SPCT_480B;
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type POLETOP;
+	shunt_impedance 10000+10000j;
+	primary_voltage 480;
+	secondary_voltage 120;
+	powerB_rating 110 kVA;
+	impedance 0.00033+0.0022j;
+}
+
 object triplex_line_configuration {
       name trip_line_config;
-      conductor_1 object triplex_line_conductor {
-            resistance 0.97;
-            geometric_mean_radius 0.01111;
-            };
-      conductor_2 object triplex_line_conductor {
-            resistance 0.97;
-            geometric_mean_radius 0.01111;
-            };
-      conductor_N object triplex_line_conductor {
-            resistance 0.97;
-            geometric_mean_radius 0.01111;
-            };
+      conductor_1 TLC;
+      conductor_2 TLC;
+      conductor_N TLC;
       insulation_thickness 0.08;
       diameter 0.368;
 }
@@ -338,15 +381,7 @@ object transformer {
        phases AS;
        from U0008;
        to tn_A_U0008;
-       configuration object transformer_configuration {
-            connect_type SINGLE_PHASE_CENTER_TAPPED;
-            install_type POLETOP;
-            shunt_impedance 10000+10000j;
-            primary_voltage 4800;
-            secondary_voltage 120;
-            powerA_rating 110 kVA;
-            impedance 0.00033+0.0022j;
-       };
+       configuration SPCT_4800A;
 }
 
 object triplex_meter {
@@ -636,15 +671,7 @@ object transformer {
        phases BS;
        from U0018;
        to tn_B_U0018;
-       configuration object transformer_configuration {
-            connect_type SINGLE_PHASE_CENTER_TAPPED;
-            install_type POLETOP;
-            shunt_impedance 10000+10000j;
-            primary_voltage 4800;
-            secondary_voltage 120;
-            powerB_rating 110 kVA;
-            impedance 0.00033+0.0022j;
-       };
+       configuration SPCT_4800B;
 }
 
 object triplex_meter {
@@ -959,15 +986,7 @@ object transformer {
        phases AS;
        from U0030;
        to tn_A_U0030;
-       configuration object transformer_configuration {
-            connect_type SINGLE_PHASE_CENTER_TAPPED;
-            install_type POLETOP;
-            shunt_impedance 10000+10000j;
-            primary_voltage 4800;
-            secondary_voltage 120;
-            powerA_rating 110 kVA;
-            impedance 0.00033+0.0022j;
-       };
+       configuration SPCT_4800A;
 }
 
 object triplex_meter {
@@ -1248,15 +1267,7 @@ object transformer {
        phases CS;
        from U0036;
        to tn_C_U0036;
-       configuration object transformer_configuration {
-            connect_type SINGLE_PHASE_CENTER_TAPPED;
-            install_type POLETOP;
-            shunt_impedance 10000+10000j;
-            primary_voltage 4800;
-            secondary_voltage 120;
-            powerC_rating 110 kVA;
-            impedance 0.00033+0.0022j;
-       };
+       configuration SPCT_4800C;
 }
 
 object triplex_meter {
@@ -1543,15 +1554,7 @@ object transformer {
        phases BS;
        from U0075;
        to tn_B_U0075;
-       configuration object transformer_configuration {
-            connect_type SINGLE_PHASE_CENTER_TAPPED;
-            install_type POLETOP;
-            shunt_impedance 10000+10000j;
-            primary_voltage 480;
-            secondary_voltage 120;
-            powerB_rating 110 kVA;
-            impedance 0.00033+0.0022j;
-       };
+       configuration SPCT_480B;
 }
 
 object triplex_meter {
@@ -2208,15 +2211,7 @@ object transformer {
        phases AS;
        from A02;
        to tn_A_A02;
-       configuration object transformer_configuration {
-            connect_type SINGLE_PHASE_CENTER_TAPPED;
-            install_type POLETOP;
-            shunt_impedance 10000+10000j;
-            primary_voltage 4800;
-            secondary_voltage 120;
-            powerA_rating 110 kVA;
-            impedance 0.00033+0.0022j;
-       };
+       configuration SPCT_4800A;
 }
 
 object triplex_meter {
@@ -2514,15 +2509,7 @@ object transformer {
        phases AS;
        from A11;
        to tn_A_A11;
-       configuration object transformer_configuration {
-            connect_type SINGLE_PHASE_CENTER_TAPPED;
-            install_type POLETOP;
-            shunt_impedance 10000+10000j;
-            primary_voltage 4800;
-            secondary_voltage 120;
-            powerA_rating 110 kVA;
-            impedance 0.00033+0.0022j;
-       };
+       configuration SPCT_4800A;
 }
 
 object triplex_meter {
@@ -2846,15 +2833,7 @@ object transformer {
        phases BS;
        from A28;
        to tn_B_A28;
-       configuration object transformer_configuration {
-            connect_type SINGLE_PHASE_CENTER_TAPPED;
-            install_type POLETOP;
-            shunt_impedance 10000+10000j;
-            primary_voltage 4800;
-            secondary_voltage 120;
-            powerB_rating 110 kVA;
-            impedance 0.00033+0.0022j;
-       };
+       configuration SPCT_4800B;
 }
 
 object triplex_meter {
@@ -3208,15 +3187,7 @@ object transformer {
        phases CS;
        from A42;
        to tn_C_A42;
-       configuration object transformer_configuration {
-            connect_type SINGLE_PHASE_CENTER_TAPPED;
-            install_type POLETOP;
-            shunt_impedance 10000+10000j;
-            primary_voltage 4800;
-            secondary_voltage 120;
-            powerC_rating 110 kVA;
-            impedance 0.00033+0.0022j;
-       };
+       configuration SPCT_4800C;
 }
 
 object triplex_meter {
@@ -3462,15 +3433,7 @@ object transformer {
        phases AS;
        from A81;
        to tn_A_A81;
-       configuration object transformer_configuration {
-            connect_type SINGLE_PHASE_CENTER_TAPPED;
-            install_type POLETOP;
-            shunt_impedance 10000+10000j;
-            primary_voltage 4800;
-            secondary_voltage 120;
-            powerA_rating 110 kVA;
-            impedance 0.00033+0.0022j;
-       };
+       configuration SPCT_4800A;
 }
 
 object triplex_meter {
@@ -4109,15 +4072,7 @@ object transformer {
        phases AS;
        from B03;
        to tn_A_B03;
-       configuration object transformer_configuration {
-            connect_type SINGLE_PHASE_CENTER_TAPPED;
-            install_type POLETOP;
-            shunt_impedance 10000+10000j;
-            primary_voltage 4800;
-            secondary_voltage 120;
-            powerA_rating 110 kVA;
-            impedance 0.00033+0.0022j;
-       };
+       configuration SPCT_4800A;
 }
 
 object triplex_meter {
@@ -4374,15 +4329,7 @@ object transformer {
        phases CS;
        from B07;
        to tn_C_B07;
-       configuration object transformer_configuration {
-            connect_type SINGLE_PHASE_CENTER_TAPPED;
-            install_type POLETOP;
-            shunt_impedance 10000+10000j;
-            primary_voltage 4800;
-            secondary_voltage 120;
-            powerC_rating 110 kVA;
-            impedance 0.00033+0.0022j;
-       };
+       configuration SPCT_4800C;
 }
 
 object triplex_meter {
@@ -4692,15 +4639,7 @@ object transformer {
        phases CS;
        from B18;
        to tn_C_B18;
-       configuration object transformer_configuration {
-            connect_type SINGLE_PHASE_CENTER_TAPPED;
-            install_type POLETOP;
-            shunt_impedance 10000+10000j;
-            primary_voltage 4800;
-            secondary_voltage 120;
-            powerC_rating 110 kVA;
-            impedance 0.00033+0.0022j;
-       };
+       configuration SPCT_4800C;
 }
 
 object triplex_meter {
@@ -5084,15 +5023,7 @@ object transformer {
        phases AS;
        from B38;
        to tn_A_B38;
-       configuration object transformer_configuration {
-            connect_type SINGLE_PHASE_CENTER_TAPPED;
-            install_type POLETOP;
-            shunt_impedance 10000+10000j;
-            primary_voltage 4800;
-            secondary_voltage 120;
-            powerA_rating 110 kVA;
-            impedance 0.00033+0.0022j;
-       };
+       configuration SPCT_4800A;
 }
 
 object triplex_meter {
@@ -5342,15 +5273,7 @@ object transformer {
        phases BS;
        from B42;
        to tn_B_B42;
-       configuration object transformer_configuration {
-            connect_type SINGLE_PHASE_CENTER_TAPPED;
-            install_type POLETOP;
-            shunt_impedance 10000+10000j;
-            primary_voltage 4800;
-            secondary_voltage 120;
-            powerB_rating 110 kVA;
-            impedance 0.00033+0.0022j;
-       };
+       configuration SPCT_4800B;
 }
 
 object triplex_meter {
