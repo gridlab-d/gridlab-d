@@ -55,6 +55,10 @@ public:
 	/* TODO: put published variables here */
 	set phases;	/**< device phases (see PHASE codes) */
 
+	complex power_A;//power
+	complex power_B;
+	complex power_C;
+
 	enum {OFFLINE=1, ONLINE} Gen_status;
 	enum {INDUCTION=1, SYNCHRONOUS, USER_TYPE} Gen_type;
 	enum {CONSTANTE=1, CONSTANTP, CONSTANTPQ} Gen_mode;

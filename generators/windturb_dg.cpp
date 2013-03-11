@@ -76,6 +76,10 @@ windturb_dg::windturb_dg(MODULE *module)
 			PT_double, "TotalReacPow[VA]", PADDR(TotalReacPow), PT_DESCRIPTION, "Total reactive power output",
 			PT_double, "total_reactive_power[VA]", PADDR(TotalReacPow), PT_DESCRIPTION, "Total reactive power output",
 
+			PT_complex, "power_A[VA]", PADDR(power_A), PT_DESCRIPTION, "Total complex power injected on phase A",
+			PT_complex, "power_B[VA]", PADDR(power_B), PT_DESCRIPTION, "Total complex power injected on phase B",
+			PT_complex, "power_C[VA]", PADDR(power_C), PT_DESCRIPTION, "Total complex power injected on phase C",
+
 			PT_double, "WSadj[m/s]", PADDR(WSadj), PT_DESCRIPTION, "Speed of wind at hub height",
 			PT_double, "wind_speed_adjusted[m/s]", PADDR(WSadj), PT_DESCRIPTION, "Speed of wind at hub height",
 			PT_double, "Wind_Speed[m/s]", PADDR(Wind_Speed),  PT_DESCRIPTION, "Wind speed at 5-15m level (typical measurement height)",
@@ -985,7 +989,7 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 					GL_THROW("Unknown generator mode");
 			}
 			
-			//test functions
+			//sum up and finalize everything for output
 			double PowerA, PowerB, PowerC, QA, QB, QC;
 
 			PowerA = -voltage_A.Mag()*current_A.Mag()*cos(voltage_A.Arg() - current_A.Arg());
@@ -996,6 +1000,9 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 			QB = -voltage_B.Mag()*current_B.Mag()*sin(voltage_B.Arg() - current_B.Arg());
 			QC = -voltage_C.Mag()*current_C.Mag()*sin(voltage_C.Arg() - current_C.Arg());
 
+			power_A = complex(PowerA,QA);
+			power_B = complex(PowerB,QB);
+			power_C = complex(PowerC,QC);
 
 			TotalRealPow = PowerA + PowerB + PowerC;
 			TotalReacPow = QA + QB + QC;
@@ -1014,6 +1021,10 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 			current_A = 0;
 			current_B = 0;
 			current_C = 0;
+
+			power_A = complex(0,0);
+			power_B = complex(0,0);
+			power_C = complex(0,0);
 		}
 	}
 	
