@@ -1303,11 +1303,13 @@ struct thread_affinity_policy policy;
 static unsigned char procs[65536]; /* processor map */
 static unsigned char n_procs=0; /* number of processors in map */
 
-#define MAPNAME "gridlabd-pmap-2" /* TODO: change the pmap number each time the structure changes */
+#define MAPNAME "gridlabd-pmap-3" /* TODO: change the pmap number each time the structure changes */
 typedef struct s_gldprocinfo {
 	unsigned int lock;		/* field lock */
 	pid_t pid;			/* process id */
 	TIMESTAMP progress;		/* current simtime */
+	TIMESTAMP starttime;		/* sim starttime */
+	TIMESTAMP stoptime;		/* sim stoptime */
 	enumeration status;		/* current status */
 	char1024 model;			/* model name */
 	time_t start;			/* wall time of start */
@@ -1320,6 +1322,8 @@ typedef struct {
 } MYPROCINFO;
 static MYPROCINFO *my_proc=NULL; /* processors assigned to this process */
 #define PROCERR ((unsigned short)-1)
+
+static unsigned int show_progress = 1; /* flag to toggle progress/runtime display */
 
 unsigned short sched_get_cpuid(unsigned short n)
 {
@@ -1361,6 +1365,8 @@ void sched_update(TIMESTAMP clock, enumeration status)
 		sched_lock(n);
 		process_map[n].status = status;
 		process_map[n].progress = clock;
+		process_map[n].starttime = global_starttime;
+		process_map[n].stoptime = global_stoptime;
 		sched_unlock(n);
 	}
 }
@@ -1414,7 +1420,8 @@ void sched_pkill(pid_t pid)
 	}
 }
 
-static char HEADING[] = "PROC PID   RUNTIME    STATE   CLOCK                   MODEL" ;
+static char HEADING_R[] = "PROC PID   RUNTIME    STATE   CLOCK                   MODEL" ;
+static char HEADING_P[] = "PROC PID   PROGRESS   STATE   CLOCK                   MODEL" ;
 int sched_getinfo(int n,char *buf, size_t sz)
 {
 	char *status;
@@ -1423,6 +1430,8 @@ int sched_getinfo(int n,char *buf, size_t sz)
 	time_t ptime;
 	int width = 80, namesize;
 	static char *name=NULL;
+	char *HEADING = show_progress ? HEADING_P : HEADING_R;
+	size_t HEADING_SZ = strlen(HEADING);
 #ifdef WIN32
 	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
 	if ( console )
@@ -1451,7 +1460,7 @@ int sched_getinfo(int n,char *buf, size_t sz)
 	{
 		for ( n=0 ; n<width ; n++ )
 		{
-			if ( n>0 && n<sizeof(HEADING)-1 && HEADING[n]==' ' && HEADING[n+1]!=' ' )
+			if ( n>0 && n<HEADING_SZ-1 && HEADING[n]==' ' && HEADING[n+1]!=' ' )
 				buf[n] = ' ';
 			else
 				buf[n]='-';
@@ -1484,19 +1493,30 @@ int sched_getinfo(int n,char *buf, size_t sz)
 	{
 		char *modelname = process_map[n].model;
 		int len;
-		char t[64]="(na)";
-		if ( process_map[n].start>0 )
+		char t[64]=" - ";
+		int is_defunct = 0;
+		sched_unlock(n);
+		is_defunct = sched_isdefunct(process_map[n].pid);
+		sched_lock(n);
+		if ( process_map[n].start>0 && process_map[n].status!=MLS_DONE && !is_defunct )
 		{
-			time_t s = (time(NULL)-process_map[n].start);
-			int h = 0;
-			int m = 0;
-
-			/* compute elapsed time */
-			h = s/3600; s=s%3600;
-			m = s/60; s=s%60;
-			if ( h>0 ) sprintf(t,"%4d:%02d:%02d",h,m,(int)s);
-			else if ( m>0 ) sprintf(t,"     %2d:%02d",m,(int)s);
-			else sprintf(t,"       %2ds", (int)s);
+			if ( !show_progress )
+			{
+				time_t s = (time(NULL)-process_map[n].start);
+				int h = 0;
+				int m = 0;
+	
+				/* compute elapsed time */
+				h = s/3600; s=s%3600;
+				m = s/60; s=s%60;
+				if ( h>0 ) sprintf(t,"%4d:%02d:%02d",h,m,(int)s);
+				else if ( m>0 ) sprintf(t,"     %2d:%02d",m,(int)s);
+				else sprintf(t,"       %2ds", (int)s);
+			}
+			else if ( process_map[n].stoptime!=TS_NEVER )
+			{
+				sprintf(t,"%.0f%%",100.0*(process_map[n].progress - process_map[n].starttime)/(process_map[n].stoptime-process_map[n].starttime));
+			}
 		}
 
 		/* check for defunct process */
@@ -1540,6 +1560,7 @@ void sched_print(int flags) /* flag=0 for single listing, flag=1 for continuous 
 	char line[1024];
 	int width = 80, namesize;
 	static char *name=NULL;
+	char *HEADING = show_progress ? HEADING_P : HEADING_R;
 #ifdef WIN32
 	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
 	if ( console )
@@ -2005,7 +2026,7 @@ void sched_continuous(void)
 			tb = localtime(&now);
 			strftime(ts,sizeof(ts),"%Y/%m/%d %H:%M:%S",tb);
 			mvprintw(n_procs+7,0,"%s: %s",ts,message);
-			mvprintw(n_procs+8,0,"C to clear defunct, Up/Down to select, K to kill, Q to quit: ");
+			mvprintw(n_procs+8,0,"C to clear defunct, Up/Down to select, R/P to display runtime/progress, K to kill, Q to quit: ");
 		}
 		c = wgetch(stdscr);
 		switch (c) {
@@ -2034,6 +2055,18 @@ void sched_continuous(void)
 			sched_clear();
 			sprintf(message,"Defunct processes cleared ok");
 			refresh_count=0;
+			break;
+		case 'r':
+		case 'R':
+			show_progress = 0;
+			sprintf(message,"Runtime display selected");
+			refresh_count = 0;
+			break;
+		case 'p':
+		case 'P':
+			show_progress = 1;
+			sprintf(message,"Progress display selected");
+			refresh_count = 0;
 			break;
 		default:
 			break;

@@ -637,7 +637,6 @@ char *global_seq(char *buffer, int size, char *name)
 			if ( global_find(seq)!=NULL )
 			{
 				output_warning("global_seq(char *name='%s'): sequence is already initialized", seq);
-				return NULL;
 			}
 			else
 			{
@@ -935,10 +934,6 @@ char *global_getvar(char *name, char *buffer, int size)
 	/* sequences */
 	if ( strncmp(name,"SEQ_",4)==0 && strchr(name,':')!=NULL )
 		return global_seq(buffer,size,name);
-
-	/* expansions */
-	if ( parameter_expansion(buffer,size,name) )
-		return buffer;
 
 	var = global_find(name);
 	if(var == NULL)

@@ -2121,6 +2121,8 @@ STATUS exec_start(void)
 		output_profile("\n");
 	}
 
+	sched_update(global_clock,MLS_DONE);
+
 	/* terminate links */
 	return sync_d.status;
 }

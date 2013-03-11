@@ -3,45 +3,6 @@
 	@file class.c
 	@addtogroup class Classes of objects
 	@ingroup core
-
-	GridLAB-D modules implement classes of objects,
-	which are supported by the functions in this module
-
-	Object classes are defined by runtime modules.  Each class
-	implements a type of object and links the runtime modules
-	implementation to the core.  Key behaviors of classes include
-	- General class administration for the core
-		- class_get_class_from_classname()
-		- class_get_class_from_classname_in_module()
-		- class_get_class_from_objecttype()
-		- class_get_classname_from_objecttype()
-		- class_get_classtype_from_classname()
-		- class_get_count()
-		- class_get_first_class()
-	- General property administration for the core
-		- class_get_first_property()
-		- class_get_next_property()
-		- class_get_property_typename()
-		- class_get_propertype_from_typename()
-	- Registering new classes so that the core know how to access their
-	  functionalities
-		- class_register()
-	- Registering class properties so that other modules can access
-	  values stored and modified by the module implementation of the class.
-		- class_define_map()
-		- class_register_type()
-    - Converting certain class properties to and from strings as needed:
-		- class_property_to_string()
-		- class_string_to_property()
-		- class_define_enumeration_member()
-		- class_define_set_member()
-	- Finding properties
-		- class_find_property()
-	- Saving and reading class information in XML or other formats.
-		- class_get_xsd()
-		- class_saveall()
-		- class_saveall_xml()
- @{
  **/
 
 #include "exec.h"
@@ -84,6 +45,7 @@
 
 static unsigned int class_count = 0;
 
+/* defined in property.c */
 extern struct s_property_specs property_type[_PT_LAST];
 
 /* object class list */
@@ -153,42 +115,12 @@ PROPERTY *class_prop_in_class(CLASS *oclass, PROPERTY *prop)
 	}
 }
 
-#if 0
-/** Get the size of a single instance of a property
-	@return the size in bytes of the a property
- **/
-uint32 property_size(PROPERTY *prop)
-{
-	if (prop && prop->ptype>_PT_FIRST && prop->ptype<_PT_LAST)
-		return property_type[prop->ptype].size;
-	else
-		return 0;
-}
-
-uint32 property_size_by_type(PROPERTYTYPE type)
-{
-	return property_type[type].size;
-}
-
-int property_create(PROPERTY *prop, void *addr)
-{
-	if (prop && prop->ptype>_PT_FIRST && prop->ptype<_PT_LAST)
-	{
-		if (property_type[prop->ptype].create)
-			return property_type[prop->ptype].create(addr);
-		//memset(addr,0,(prop->size==0?1:prop->size)*property_type[prop->ptype].size);
-		memset(addr,0,property_type[prop->ptype].size);
-		return 1;
-	}
-	else
-		return 0;
-}
-#endif
-
 /* though improbable, this is to prevent more complicated, specifically crafted
 	inheritence loops.  these should be impossible if a class_register call is
 	immediately followed by a class_define_map call. -d3p988 */
-PROPERTY *class_find_property_rec(CLASS *oclass, PROPERTYNAME name, CLASS *pclass)
+PROPERTY *class_find_property_rec(CLASS *oclass, 
+                                  PROPERTYNAME name, 
+                                  CLASS *pclass)
 {
 	PROPERTY *prop;
 	for (prop=oclass->pmap; prop!=NULL && prop->oclass==oclass; prop=prop->next)
@@ -212,17 +144,20 @@ PROPERTY *class_find_property_rec(CLASS *oclass, PROPERTYNAME name, CLASS *pclas
 
 }
 
-static PROPERTY *find_header_property(CLASS *oclass, PROPERTYNAME name)
+static PROPERTY *find_header_property(CLASS *oclass, 
+                                      PROPERTYNAME name)
 {
+	/* @todo */
 	PROPERTY *prop = NULL;
 	return prop;
 }
+
 /** Find the named property in the class
 
 	@return a pointer to the PROPERTY, or \p NULL if the property is not found.
  **/
-PROPERTY *class_find_property(CLASS *oclass,		/**< the object class */
-							  PROPERTYNAME name)	/**< the property name */
+PROPERTY *class_find_property(CLASS *oclass,     /**< the object class */
+                              PROPERTYNAME name) /**< the property name */
 {
 	PROPERTY *prop = find_header_property(oclass,name);
 	if ( prop ) return prop;
@@ -262,7 +197,10 @@ PROPERTY *class_find_property(CLASS *oclass,		/**< the object class */
 		return NULL;
 }
 
-void class_add_property(CLASS *oclass, PROPERTY *prop)
+/** Add a property to a class
+ **/
+void class_add_property(CLASS *oclass,  /**< the class to which the property is to be added */
+                        PROPERTY *prop) /**< the property to be added */
 {
 	PROPERTY *last = oclass->pmap;
 	while (last!=NULL && last->next!=NULL)
@@ -273,7 +211,13 @@ void class_add_property(CLASS *oclass, PROPERTY *prop)
 		last->next = prop;
 }
 
-PROPERTY *class_add_extended_property(CLASS *oclass, char *name, PROPERTYTYPE ptype, char *unit)
+/** Add an extended property to a class 
+    @return the property pointer
+ **/
+PROPERTY *class_add_extended_property(CLASS *oclass,      /**< the class to which the property is to be added */
+                                      char *name,         /**< the name of the property */
+                                      PROPERTYTYPE ptype, /**< the type of the property */
+                                      char *unit)         /**< the unit of the property */
 {
 	PROPERTY *prop = malloc(sizeof(PROPERTY));
 	UNIT *pUnit = NULL;
@@ -375,7 +319,12 @@ PROPERTYTYPE class_get_propertytype_from_typename(char *name) /**< a string cont
 	return PT_void;
 }
 
-int class_string_to_propertytype(PROPERTYTYPE type, void *addr, char *value)
+/** Convert a string to a property of the given type
+    @return non-zero on success, 0 on failure
+ **/
+int class_string_to_propertytype(PROPERTYTYPE type, 
+                                 void *addr, 
+                                 char *value)
 {
 	if (type > _PT_FIRST && type < _PT_LAST)
 		return (*property_type[type].string_to_data)(value,addr,NULL);
@@ -387,8 +336,8 @@ int class_string_to_propertytype(PROPERTYTYPE type, void *addr, char *value)
 	@return the number of value read from the \p value string; 0 on failure
  **/
 int class_string_to_property(PROPERTY *prop, /**< the type of the property at the \p addr */
-							 void *addr,		/**< the address of the property's data */
-							 char *value)		/**< the string from which the data is read */
+                             void *addr,     /**< the address of the property's data */
+                             char *value)    /**< the string from which the data is read */
 {
 	if (prop->ptype > _PT_FIRST && prop->ptype < _PT_LAST)
 		return (*property_type[prop->ptype].string_to_data)(value,addr,prop);
@@ -401,9 +350,9 @@ int class_string_to_property(PROPERTY *prop, /**< the type of the property at th
 	@return the number character written to \p value
  **/
 int class_property_to_string(PROPERTY *prop, /**< the property type */
-							 void *addr,		/**< the address of the property's data */
-							 char *value,		/**< the value buffer to which the string is to be written */
-							 int size)			/**< the maximum number of characters that can be written to the \p value buffer*/
+                             void *addr,     /**< the address of the property's data */
+                             char *value,    /**< the value buffer to which the string is to be written */
+                             int size)       /**< the maximum number of characters that can be written to the \p value buffer*/
 {
 	int rv = 0;
 	if (prop->ptype==PT_delegated)
@@ -439,10 +388,10 @@ int class_property_to_string(PROPERTY *prop, /**< the property type */
 	- \p ENOMEM: memory allocation failed
 
  **/
-CLASS *class_register(MODULE *module,			/**< the module that implements the class */
-					  CLASSNAME name,			/**< the class name */
-					  unsigned int size,		/**< the size of the data block */
-					  PASSCONFIG passconfig)	/**< the passes for which \p sync should be called */
+CLASS *class_register(MODULE *module,        /**< the module that implements the class */
+                      CLASSNAME name,        /**< the class name */
+                      unsigned int size,     /**< the size of the data block */
+                      PASSCONFIG passconfig) /**< the passes for which \p sync should be called */
 {
 	CLASS *oclass = class_get_class_from_classname(name);
 
@@ -531,6 +480,9 @@ CLASS *class_get_class_from_classname_in_module(char *name, MODULE *mod){
 	return NULL;
 }
 
+/** Get the number of runtime classes defined
+    @return the number of runtime classes defined
+ **/
 size_t class_get_runtimecount(void)
 {
 	CLASS *oclass;
@@ -542,6 +494,10 @@ size_t class_get_runtimecount(void)
 	}
 	return count;
 }
+
+/** Get the first runtime class defined
+    @return the pointer to the first runtime class
+ **/
 CLASS *class_get_first_runtime(void)
 {
 	CLASS *oclass;
@@ -552,7 +508,11 @@ CLASS *class_get_first_runtime(void)
 	}
 	return NULL;
 }
-CLASS *class_get_next_runtime(CLASS *oclass)
+
+/** Get the next runtime class defined
+    @return the point to the next runtime class
+ **/
+CLASS *class_get_next_runtime(CLASS *oclass) /**< the class to search from */
 {
 	oclass=oclass->next;
 	while ( oclass!=NULL )
@@ -647,7 +607,7 @@ CLASS *class_get_class_from_classname(char *name) /**< a pointer to a \p NULL -t
 	- \p EINVAL: keyword is invalid
  **/
 int class_define_map(CLASS *oclass, /**< the object class */
-					 ...) /**< definition arguments (see remarks) */
+                     ...) /**< definition arguments (see remarks) */
 {
 	va_list arg;
 	PROPERTYTYPE proptype;
@@ -996,9 +956,9 @@ Error:
 	@return 0 on failure, 1 on success
  **/
 int class_define_enumeration_member(CLASS *oclass, /**< pointer to the class which implements the enumeration */
-									char *property_name, /**< property name of the enumeration */
-									char *member, /**< member name to define */
-									enumeration value) /**< enum value to associate with the name */
+                                    char *property_name, /**< property name of the enumeration */
+                                    char *member, /**< member name to define */
+                                    enumeration value) /**< enum value to associate with the name */
 {
 	PROPERTY *prop = class_find_property(oclass,property_name);
 	KEYWORD *key = (KEYWORD*)malloc(sizeof(KEYWORD));
@@ -1013,9 +973,9 @@ int class_define_enumeration_member(CLASS *oclass, /**< pointer to the class whi
 /** Define a set member
  **/
 int class_define_set_member(CLASS *oclass, /**< pointer to the class which implements the set */
-							char *property_name, /**< property name of the set */
-							char *member, /**< member name to define */
-							unsigned int64 value) /**< set value to associate with the name */
+                            char *property_name, /**< property name of the set */
+                            char *member, /**< member name to define */
+                            unsigned int64 value) /**< set value to associate with the name */
 {
 	PROPERTY *prop = class_find_property(oclass,property_name);
 	KEYWORD *key = (KEYWORD*)malloc(sizeof(KEYWORD));
@@ -1214,9 +1174,9 @@ void class_profiles(void)
 	data type to be implemented, including enumerations, sets, and special objects.
  **/
 DELEGATEDTYPE *class_register_type(CLASS *oclass, /**< the object class */
-								   char *type, /**< the property type */
-								   int (*from_string)(void*,char*), /**< the converter from string to data */
-								   int (*to_string)(void*,char*,int)) /**< the converter from data to string */
+                                   char *type, /**< the property type */
+                                   int (*from_string)(void*,char*), /**< the converter from string to data */
+                                   int (*to_string)(void*,char*,int)) /**< the converter from data to string */
 {
 	DELEGATEDTYPE *dt = (DELEGATEDTYPE*)malloc(sizeof(DELEGATEDTYPE));
 	if (dt!=NULL)
@@ -1251,7 +1211,11 @@ static int check = 0;  /* there must be a better way to do this, but this works.
 /**	Writes a formatted string into a temporary buffer prior and verifies that enough space exists prior to writing to the destination.
 	@return the number of characters written to the buffer
  **/
-static int buffer_write(char *buffer, size_t len, char *format, ...){
+static int buffer_write(char *buffer, /**< buffer into which string is written */
+                        size_t len,   /**< size of the buffer into which the string is written */
+                        char *format, /**< format of string to write into buffer, followed by the variable arguments */
+                        ...)
+{
 	char temp[1025];
 	unsigned int count = 0;
 	va_list ptr;
@@ -1366,5 +1330,3 @@ int class_get_xsd(CLASS *oclass, /**< a pointer to the class to convert to XSD *
 	return (int)n;
 }
 
-
-/**@}**/

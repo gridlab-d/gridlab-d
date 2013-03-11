@@ -12,6 +12,7 @@
 
 /* simulate needed curses functions in Windows */
 #ifdef WIN32
+#define HAVE_CURSES
 HANDLE console = NULL;
 HANDLE keyboard = NULL;
 #define stdscr console
