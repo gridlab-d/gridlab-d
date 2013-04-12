@@ -23,6 +23,51 @@
 	no further state changes are expected.  This is the equilibrium condition
 	and the simulation consequently ends.
 
+	\section exec_sync Sync Event API
+
+	 Sync handling is done using an API implemented in #core_exec
+	 There are several types of sync events that are handled.
+	 - Hard sync is a sync time that should always be considered
+	 - Soft sync is a sync time should only be considered when
+	   the hard sync is not TS_NEVER
+	 - Status is SUCCESS if the sync time is valid
+
+	 Sync logic table:
+@verbatim
+ hard t
+ 
+  sync_to    | t==INVALID  | t<sync_to   | t==sync_to  | sync_to<t<NEVER | t==NEVER
+  ---------- | ----------- | ----------- | ----------- | --------------- | ----------
+  INVALID    | INVALID     | INVALID     | INVALID     | INVALID         | INVALID
+  soft       | INVALID     | t           | t           | sync_to         | sync_to
+  hard       | INVALID     | t           | sync_to     | sync_to         | sync_to
+  NEVER      | INVALID     | t           | sync_to     | sync_to         | NEVER
+@endverbatim
+
+@verbatim
+ soft t
+ 
+  sync_to    | t==INVALID  | t<sync_to   | t==sync_to  | sync_to<t<NEVER | t==NEVER
+  ---------- | ----------- | ----------- | ----------- | --------------- | ----------
+  INVALID    | INVALID     | INVALID     | INVALID     | INVALID         | INVALID
+  soft       | INVALID     | t           | t           | sync_to         | sync_to
+  hard       | INVALID     | t*          | t*          | sync_to         | sync_to
+  NEVER      | INVALID     | t           | sync_to     | sync_to         | NEVER
+ 
+ * indicates soft event is made hard
+@endverbatim
+
+    The Sync Event API functions are as follows:
+	- #exec_sync_reset is used to reset a sync event to initial steady state sync (NEVER)
+	- #exec_sync_merge is used to update an existing sync event with a new sync event
+	- #exec_sync_set is used to set a sync event
+	- #exec_sync_get is used to get a sync event
+	- #exec_sync_getevents is used to get the number of hard events in a sync event
+	- #exec_sync_getstatus is used to get the status of a sync event
+	- #exec_sync_ishard is used to determine whether a sync event is a hard event
+	- #exec_sync_isinvalid is used to determine whether a sync event is valid
+	- #exec_sync_isnever is used to determine whether a sync event is pending
+
 	@future [Chassin Oct'07]
 
 	There is some value in exploring whether it is necessary to update all
@@ -1187,21 +1232,13 @@ static void *obj_syncproc(void *ptr)
 	unsigned int n;
 	int i = data->i;
 
-	/*OBJECT *obj = data->ls->data;
-	printf("%d %s %d\n", obj->id, obj->name, obj->rank);
-	for (s=data->ls, n=0; s!=NULL, n<data->nObj; s=s->next,n++) {
-		OBJECT *obj = s->data;
-		//printf("thread %d, obj: %d %s %d\n", data->n, obj->id, obj->name, obj->rank);
-		ss_do_object_sync(data->n, s->data);
-	}*/
-	
 	// begin processing loop
 	while (data->ok)
 	{
 		// lock access to start condition
 		pthread_mutex_lock(&startlock[i]);
+
 		// wait for thread start condition)
-		///printf("old data->t0= %d ,next_t1[%d]= %d \n", data->t0, i, next_t1[i]);
 		while (data->t0 == next_t1[i]) 
 			pthread_cond_wait(&start[i], &startlock[i]);
 		// unlock access to start count
@@ -1210,42 +1247,24 @@ static void *obj_syncproc(void *ptr)
 		// process the list for this thread
 		for (s=data->ls, n=0; s!=NULL, n<data->nObj; s=s->next,n++) {
 			OBJECT *obj = s->data;
-			//printf("thread %d, obj: %d %s %d\n", data->n, obj->id, obj->name, obj->rank);
 			ss_do_object_sync(data->n, s->data);
 		}
 
 		// signal completed condition
 		data->t0 = next_t1[i];
-		///printf("new data->t0= %d ,next_t1[%d]= %d \n", data->t0, i, next_t1[i]);
 
 		// lock access to done condition
 		pthread_mutex_lock(&donelock[i]);
+
 		// signal thread is done for now
 		donecount[i] --; 
-		///printf("donecount[%d]-- = %d from thread %d \n", i, donecount[i], data->n);
+
 		// signal change in done condition
 		pthread_cond_broadcast(&done[i]);
+
 		//unlock access to done count
 		pthread_mutex_unlock(&donelock[i]);
 	}
-
-	/*LISTITEM *ptr;
-	int iPtr;
-
-	struct arg_data *mydata = (struct arg_data *) threadarg;
-	int thread = mydata->thread;
-	void *item = mydata->item;
-	int incr = mydata->incr;
-
-	iPtr = 0;
-	for (ptr = item; ptr != NULL; ptr=ptr->next) {
-		if (iPtr < incr) {
-			ss_do_object_sync(thread, ptr->data);
-			iPtr++;
-		}
-	}
-	return NULL;*/
-
 	pthread_exit((void*)0);
 	return (void*)0;
 }
@@ -1351,41 +1370,19 @@ void exec_mls_done(void)
 }
 
 /******************************************************************
- Synchronization time handling functions
-
- * Hard sync is a sync time that should always be considered
-
- * Soft sync is a sync time should only be considered when
-   the hard sync is not TS_NEVER
-
- * Status is SUCCESS if the sync time is valid
-
- Sync logic table:
-
- hard t
- ======
- sync_to	t==INVALID	t<sync_to	t==sync_to	sync_to<t<NEVER	t==NEVER
- ----------	-----------	-----------	-----------	---------------	----------
- INVALID	INVALID		INVALID		INVALID		INVALID			INVALID
- soft 		INVALID		t			t			sync_to			sync_to
- hard 		INVALID		t			sync_to		sync_to			sync_to
- NEVER		INVALID		t			sync_to		sync_to			NEVER
-
- soft t
- ======
- sync_to	t==INVALID	t<sync_to	t==sync_to	sync_to<t<NEVER	t==NEVER
- ----------	-----------	-----------	-----------	---------------	----------
- INVALID	INVALID		INVALID		INVALID		INVALID			INVALID
- soft 		INVALID		t			t			sync_to			sync_to
- hard 		INVALID		t+			t+			sync_to			sync_to
- NEVER		INVALID		t			sync_to		sync_to			NEVER
-
- + indicates soft event is made hard
-
+ SYNC HANDLING API
  *******************************************************************/
 struct sync_data sync_d = {TS_NEVER,0,SUCCESS};
 
-/** Reset the sync time data structure **/
+/** Reset the sync time data structure 
+
+	This call clears the sync data structure
+	and prepares it for a new interation pass.
+	If not sync event are posted, the result of
+	the pass will be a successful soft NEVER,
+	which usually means the simulation stops at
+	steady state.
+ **/
 void exec_sync_reset(struct sync_data *d) /**< sync data to reset (NULL to reset main)  **/
 {
 	if ( d==NULL ) d=&sync_d;
@@ -1393,7 +1390,20 @@ void exec_sync_reset(struct sync_data *d) /**< sync data to reset (NULL to reset
 	d->hard_event = 0;
 	d->status = SUCCESS;
 }
-/** Merge the sync data structure **/
+/** Merge the sync data structure 
+
+    This call posts a new sync event \p to into
+	an existing sync data structure \p from.
+	If \p to is \p NULL, then the main exec sync
+	event is updated.  If the status of \p from
+	is \p FAILED, then the \p to sync time is 
+	set to \p TS_INVALID.  If the time of \p from
+	is \p TS_NEVER, then \p to is not updated.  In
+	all other cases, the \p to sync time is updated
+	with #exec_sync_set.
+
+	@see #exec_sync_set
+ **/
 void exec_sync_merge(struct sync_data *to, /**< sync data to merge to (NULL to update main)  **/
 					struct sync_data *from) /**< sync data to merge from */
 {
@@ -1405,7 +1415,19 @@ void exec_sync_merge(struct sync_data *to, /**< sync data to merge to (NULL to u
 	else 
 		exec_sync_set(to,exec_sync_get(from));
 }
-/** Update the sync data structure **/
+/** Update the sync data structure 
+
+	This call posts a new time to a sync event.
+	If the event is \p NULL, then the main sync event is updated.
+	If the new time is \p TS_NEVER, then the event is not updated.
+	If the new time is \p TS_INVALID, then the event status is changed to FAILED.
+	If the new time is not between -TS_MAX and TS_MAX, then an exception is thrown.
+	If the event time is TS_NEVER, then if the time is positive a hard event is posted,
+	if the time is negative a soft event is posted, otherwise the event status is changed to FAILED.
+	Otherwise, if the event is hard, then the hard event count is increment and if the time is earlier it is posted.
+	Otherwise, if the event is soft, then if the time is earlier it is posted.
+	Otherwise, the event status is changed to FAILED.
+ **/
 void exec_sync_set(struct sync_data *d, /**< sync data to update (NULL to update main) */
 				  TIMESTAMP t)/**< timestamp to update with (negative time means soft event, 0 means failure) */
 {
@@ -1439,7 +1461,6 @@ void exec_sync_set(struct sync_data *d, /**< sync data to update (NULL to update
 	{
 		/* only record it if it's more recent than a hard event */
 		if ( d->step_to>t )
-//			d->step_to = t;
 			d->step_to = -t;
 	}
 	else // t==0 -> invalid
@@ -1447,7 +1468,9 @@ void exec_sync_set(struct sync_data *d, /**< sync data to update (NULL to update
 		d->status = FAILED;
 	}
 }
-/** Get the current sync time **/
+/** Get the current sync time
+	@return the proper (positive) event sync time, TS_NEVER, or TS_INVALID.
+ **/
 TIMESTAMP exec_sync_get(struct sync_data *d) /**< Sync data to get sync time from (NULL to read main)  */
 {
 	if ( d==NULL ) d=&sync_d;
@@ -1455,31 +1478,41 @@ TIMESTAMP exec_sync_get(struct sync_data *d) /**< Sync data to get sync time fro
 	if ( exec_sync_isinvalid(d) ) return TS_INVALID;
 	return absolute_timestamp(d->step_to);
 }
-/** Get the current hard event count **/
+/** Get the current hard event count 
+	@return the number of hard events associated with this sync event.
+ **/
 unsigned int exec_sync_getevents(struct sync_data *d) /**< Sync data to get sync events from (NULL to read main)  */
 {
 	if ( d==NULL ) d=&sync_d;
 	return d->hard_event;
 }
-/** Determine whether the current sync data is a hard sync **/
+/** Determine whether the current sync data is a hard sync
+	@return non-zero if the event is a hard event, 0 if the event is a soft event
+ **/
 int exec_sync_ishard(struct sync_data *d) /**< Sync data to read hard sync status from (NULL to read main)  */
 {
 	if ( d==NULL ) d=&sync_d;
 	return d->hard_event>0;
 }
-/** Determine whether the current sync data time is never **/
+/** Determine whether the current sync data time is never 
+	@return non-zero if the event is NEVER, 0 otherwise
+ **/
 int exec_sync_isnever(struct sync_data *d) /**< Sync data to read never sync status from (NULL to read main)  */
 {
 	if ( d==NULL ) d=&sync_d;
 	return d->step_to==TS_NEVER;
 }
-/** Determine whether the currenet sync time is invalid (NULL to read main)  **/
+/** Determine whether the currenet sync time is invalid (NULL to read main)
+    @return non-zero if the status if FAILED, 0 otherwise
+ **/
 int exec_sync_isinvalid(struct sync_data *d) /**< Sync data to read invalid sync status from */
 {
 	if ( d==NULL ) d=&sync_d;
 	return exec_sync_getstatus(d)==FAILED;
 }
-/** Determine the current sync status */
+/** Determine the current sync status
+	@return the event status (SUCCESS or FAILED)
+ **/
 STATUS exec_sync_getstatus(struct sync_data *d) /**< Sync data to read sync status from (NULL to read main)  */
 {
 	if ( d==NULL ) d=&sync_d;
