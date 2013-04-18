@@ -2,8 +2,8 @@
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file gridlabd.h
 	@author David P. Chassin
-	@addtogroup module_api Runtime module API
-	@brief The GridLAB-D external module header file
+	@addtogroup module_api C/C++ Module API
+	@brief The GridLAB-D external C module header file
 
 	The runtime module API links the GridLAB-D core to modules that are created to
 	perform various modeling tasks.  The core interacts with each module according
@@ -46,8 +46,6 @@
 	 - object search,
 	 - random number generators, and
 	 - time management.
-
-	@todo Many of the module API macros would be better implemented as inline functions (ticket #9)
  @{
  **/
 
@@ -875,11 +873,18 @@ inline int gl_gethour(TIMESTAMP t)
 	@see global_find()
  **/
 #define gl_global_find (*callback->global.find)
-/**@}*/
 
 #define gl_get_oflags (*callback->get_oflags)
+/**@}*/
 
 #ifdef __cplusplus
+/******************************************************************************
+ * Utilities
+ */
+/** @defgroup gridlabd_h_utility Utility functions
+ @{
+ **/
+
 /** Clip a value \p x if outside the range (\p a, \p b)
 	@return the clipped value of x
 	@note \f clip() is only supported in C++
@@ -920,6 +925,9 @@ inline char bitof(unsigned int64 x,/**< bit pattern to scan */
 	}
 	return n;
 }
+/** Construct a proper object object
+    @return a pointer to the struct buffer or NULL if failed
+ **/
 inline char* gl_name(OBJECT *my, char *buffer, size_t size)
 {
 	char temp[256];
@@ -934,41 +942,50 @@ inline char* gl_name(OBJECT *my, char *buffer, size_t size)
 	return buffer;
 }
 
+/** Find a schedule 
+ **/
 inline SCHEDULE *gl_schedule_find(char *name)
 {
 	return callback->schedule.find(name);
 }
-
+/** Create a schedule
+ **/
 inline SCHEDULE *gl_schedule_create(char *name, char *definition)
 {
 	return callback->schedule.create(name,definition);
 }
-
+/** Find the time index in a schedule
+ **/
 inline SCHEDULEINDEX gl_schedule_index(SCHEDULE *sch, TIMESTAMP ts)
 {
 	return callback->schedule.index(sch,ts);
 }
-
+/** Find the value at a time index in a schedule
+ **/
 inline double gl_schedule_value(SCHEDULE *sch, SCHEDULEINDEX index)
 {
 	return callback->schedule.value(sch,index);
 }
-
+/** Find the elapsed time until the value at an index changes
+ **/
 inline int32 gl_schedule_dtnext(SCHEDULE *sch, SCHEDULEINDEX index)
 {
 	return callback->schedule.dtnext(sch,index);
 }
-
+/** Create an enduse
+ **/
 inline int gl_enduse_create(enduse *e)
 {
 	return callback->enduse.create(e);
 }
-
+/** Synchronize an enduse
+ **/
 inline TIMESTAMP gl_enduse_sync(enduse *e, TIMESTAMP t1)
 {
 	return callback->enduse.sync(e,PC_BOTTOMUP,t1);
 }
-
+/** Create a loadshape 
+ **/
 inline loadshape *gl_loadshape_create(SCHEDULE *s)
 {
 	loadshape *ls = (loadshape*)malloc(sizeof(loadshape));
@@ -979,7 +996,8 @@ inline loadshape *gl_loadshape_create(SCHEDULE *s)
 	ls->schedule = s;
 	return ls;
 }
-
+/** Get the current value of a loadshape
+ **/
 inline double gl_get_loadshape_value(loadshape *shape)
 {
 	if (shape)
@@ -987,8 +1005,11 @@ inline double gl_get_loadshape_value(loadshape *shape)
 	else
 		return 0;
 }
-
+/** Format a DATETIME into a string buffer
+ **/
 inline char *gl_strftime(DATETIME *dt, char *buffer, int size) { return callback->time.strdatetime(dt,buffer,size)?buffer:NULL;};
+/** Format a TIMESTAMP into a string buffer
+ **/
 inline char *gl_strftime(TIMESTAMP ts, char *buffer, int size)
 {
 	//static char buffer[64];
@@ -1008,10 +1029,25 @@ inline char *gl_strftime(TIMESTAMP ts, char *buffer, int size)
 	}
 	return buffer;
 }
+/** Calculate the next power of 2 greater than a number
+ **/
+inline size_t nextpow2(register size_t x)
+{
+	if (x<0) return 0;
+	x--;
+	x|=x>>1;
+	x|=x>>2;
+	x|=x>>4;
+	x|=x>>8;
+	x|=x>>16;
+	// won't work for anything over 2^30
+	return x+1;
+}
+
+/**@}*/
 #endif //__cplusplus
 
 
-/**@}*/
 /******************************************************************************
  * Interpolation routines
  */
@@ -1061,11 +1097,21 @@ inline char *gl_strftime(TIMESTAMP ts, char *buffer, int size)
 /** @defgroup gridlabd_h_catchall Init/Sync/Create catchall macros
  @{
  **/
+///
+/// Catchall for sync
+///
 #define SYNC_CATCHALL(C) catch (char *msg) { gl_error("sync_" #C "(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg); return TS_INVALID; } catch (const char *msg) { gl_error("sync_" #C "(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg); return TS_INVALID; } catch (...) { gl_error("sync_" #C "(obj=%d;%s): unhandled exception", obj->id, obj->name?obj->name:"unnamed"); return TS_INVALID; }
+///
+/// Catchall for init
+///
 #define INIT_CATCHALL(C) catch (char *msg) { gl_error("init_" #C "(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg); return 0; } catch (const char *msg) { gl_error("init_" #C "(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg); return 0; } catch (...) { gl_error("init_" #C "(obj=%d;%s): unhandled exception", obj->id, obj->name?obj->name:"unnamed"); return 0; }
+///
+/// Catchall for create
+///
 #define CREATE_CATCHALL(C) catch (char *msg) { gl_error("create_" #C ": %s", msg); return 0; } catch (const char *msg) { gl_error("create_" #C ": %s", msg); return 0; } catch (...) { gl_error("create_" #C ": unhandled exception"); return 0; }
 #define I_CATCHALL(T,C) catch (char *msg) { gl_error(#T "_" #C ": %s", msg); return 0; } catch (const char *msg) { gl_error(#T "_" #C ": %s", msg); return 0; } catch (...) { gl_error(#T "_" #C ": unhandled exception"); return 0; }
 #define T_CATCHALL(T,C) catch (char *msg) { gl_error(#T "_" #C "(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg); return TS_INVALID; } catch (const char *msg) { gl_error(#T "_" #C "(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg); return TS_INVALID; } catch (...) { gl_error(#T "_" #C "(obj=%d;%s): unhandled exception", obj->id, obj->name?obj->name:"unnamed"); return TS_INVALID; }
+/**@}*/
 
 /******************************************************************************
  * Remote data access
@@ -1105,6 +1151,7 @@ inline void gl_write(void *local, /** local memory for data */
 	return callback->remote.writevar(local,var);
 }
 #endif
+/**@}*/
 
 // locking functions 
 #ifdef __cplusplus
@@ -1141,21 +1188,10 @@ static unsigned long _nan[] = { 0xffffffff, 0x7fffffff, };
 
 #ifdef __cplusplus
 
-inline size_t nextpow2(register size_t x)
-{
-	if (x<0) return 0;
-	x--;
-	x|=x>>1;
-	x|=x>>2;
-	x|=x>>4;
-	x|=x>>8;
-	x|=x>>16;
-	// won't work for anything over 2^30
-	return x+1;
-}
-
 /**************************************************************************************
  * GRIDLABD BASE CLASSES (Version 3.0 and later)
+ * @defgroup gridlabd_h_classes Module API Classes
+ * @{
  **************************************************************************************/
 
 #include <ctype.h>
@@ -1163,6 +1199,7 @@ inline size_t nextpow2(register size_t x)
 #include "class.h"
 #include "property.h"
 
+/// General string encapsulation
 class gld_string {
 private: // data
 	typedef struct strbuf {
@@ -1173,17 +1210,27 @@ private: // data
 	} STRBUF;
 	STRBUF *buf;
 public: // construction/destructor
+	/// construct an empty string
 	inline gld_string(void) : buf(NULL) { init(); };
+	/// construct a linked string
 	inline gld_string(gld_string&s) : buf(NULL) { init(); link(s); };
+	/// construct a new string
 	inline gld_string(const char *s) : buf(NULL) { init(); copy(s); };
+	/// construct a new string of a particular length
 	inline gld_string(const char *s, size_t n) : buf(NULL) { init(); copy(s,n); };
+	/// destroy a string (or unlink from one)
 	inline ~gld_string(void) { unlink(); };
 public: // copy
-	inline gld_string &operator=(const char *s) { copy(s); return *this; }; 
+	/// copy a string
+	inline gld_string &operator=(const char *s) { copy(s); return *this; };
+	/// link to a string
 	inline gld_string &operator=(gld_string&s) { link(s); return *this; };
 public: // casts
+	/// cast to a pointer to the string buffer
 	inline operator const char*(void) { return buf->str; };
+	/// cast to the size of the string
 	inline operator size_t(void) { return buf->len; };
+	/// cast to a pointer to the string data
 	inline operator STRBUF *(void) { return buf; };
 private: // internals
 	inline void init(void) { buf=(STRBUF*)malloc(sizeof(STRBUF)); memset(buf,0,sizeof(STRBUF)); }; 
@@ -1211,51 +1258,79 @@ private: // internals
 	inline void link(gld_string&s) { unlink(); buf=(STRBUF*)s; buf->nrefs++;};
 	inline void unlink() { if ( buf->nrefs<=1 ) {free(buf->str); free(buf);} else buf->nrefs--; };
 public: // status accessors
+	/// determine whether a string is valid
 	inline bool is_valid(void) { return buf!=NULL; };
+	/// determine whether a string is null
 	inline bool is_null(void) { return is_valid() && buf->str==NULL; };
 public: // read accessors
+	/// get a pointer to the string buffer
 	inline const char* get_buffer(void) { return buf ? buf->str : NULL; };
+	/// get the size of the string buffer (as allocated)
 	inline size_t get_size(void) { return buf ? buf->len : -1; };
+	/// get the length of the string (up to the null termination)
 	inline size_t get_length(void) { return buf && buf->str ? strlen(buf->str) : -1; };
 public: // write accessors
+	/// set the string
 	inline void set_string(const char *s) { copy(s); };
+	/// set the string buffer size
 	inline void set_size(size_t n) { fit(n); };
+	/// format the string (a la printf)
 	inline size_t format(const char *fmt,...) { va_list ptr; va_start(ptr,fmt); int len=vsnprintf(buf->str,buf->len,fmt,ptr); va_end(ptr); return len;};
+	/// format the string with a specific buffer size
 	inline size_t format(size_t len,const char *fmt,...) { fit(len); va_list ptr; va_start(ptr,fmt); int rv=vsnprintf(buf->str,buf->len,fmt,ptr); va_end(ptr); return rv;};
 public: // compare ops
+	/// alphabetic before comparison
 	inline bool operator<(const char*s) { return strcmp(buf->str,s)<0; };
+	/// alphabetic before or same comparison
 	inline bool operator<=(const char*s) { return strcmp(buf->str,s)<=0; };
+	/// alphabetic same comparison
 	inline bool operator==(const char*s) { return strcmp(buf->str,s)==0; };
+	/// alphabetic after or same comparison
 	inline bool operator>=(const char*s) { return strcmp(buf->str,s)>=0; };
+	/// alphabetic after comparison
 	inline bool operator>(const char*s) { return strcmp(buf->str,s)>0; };
+	/// alphabetic differs comparison
 	inline bool operator!=(const char*s) { return strcmp(buf->str,s)!=0; };
 public: // manipulation
-	// TODO trim left/right
+	/// trim left whitespace
 	inline void trimleft(void) { if ( is_null() ) return; size_t n=0; while (buf->str[n]!='\0'&&isspace(*buf->str)) n++; strcpy(buf->str,buf->str+n); };
+	/// trim right whitespace
 	inline void trimright(void) { if ( is_null() ) return; size_t n=strlen(buf->str); while (n>0&&isspace(buf->str[n-1])) buf->str[--n]='\0'; };
+	/// extract left string
 	inline gld_string left(size_t n) { if ( is_null() ) return gld_string(); return gld_string(buf->str,n); };
+	/// extract right string
 	inline gld_string right(size_t n) { if ( is_null() ) return gld_string(); return gld_string(buf->str+buf->len-n); };
+	/// extract mid string
 	inline gld_string mid(size_t n, size_t m) { if ( is_null() ) return gld_string(); return gld_string(buf->str+buf->len-n,m); };
+	/// locate substring
 	inline size_t findstr(const char *s) { if ( is_null() ) return -1; char *p=strstr(buf->str,s); return p==NULL ? -1 : (p-buf->str); };
+	/// find character
 	inline size_t findchr(char c) { if ( is_null() ) return -1; char *p=strchr(buf->str,c); return p==NULL ? -1 : (p-buf->str); };
 	inline size_t split(gld_string *&list, const char *delim=" ") 
 	{
+		// TODO
 		if ( is_null() ) return 0;
 		return 0;
 	}
 	inline gld_string merge(gld_string *&list, size_t n, const char *delim=" ")
 	{
+		// TODO
 		return gld_string();
 	}
 };
 
+/// Date/time encapsulation
 class gld_clock {
 private: // data
 	DATETIME dt;
 public: // constructors
+	/// Clock constructor for current global clock
 	gld_clock(void) { callback->time.local_datetime(*(callback->global_clock),&dt); }; 
+	/// Clock constructor for an arbitrary TIMESTAMP
 	gld_clock(TIMESTAMP ts) { if ( !callback->time.local_datetime(ts,&dt)) memset(&dt,0,sizeof(dt)); };
+	/// Clock constructor for a time string
 	gld_clock(char *str) { from_string(str); };
+	/// Clock constructor for year, month, day, hour, minute, second, microsecond values
 	gld_clock(unsigned short y, unsigned short m=0, unsigned short d=0, unsigned short H=0, unsigned short M=0, unsigned short S=0, unsigned short int ms=0, char *tz=NULL, int dst=-1)
 	{
 		dt.year = y; dt.month=m; dt.day=d; dt.hour=H; dt.minute=M; dt.second=S; dt.microsecond=ms;
@@ -1263,49 +1338,97 @@ public: // constructors
 		if ( tz!=NULL ) set_tz(tz); else callback->time.mkdatetime(&dt);
 	}
 public: // cast operators
+	/// Cast to TIMESTAMP
 	inline operator TIMESTAMP (void) { return dt.timestamp; };
 public: // comparison operators
+	/// Compare after TIMESTAMP
 	inline bool operator > (TIMESTAMP t) { return dt.timestamp>t; };
+	/// Compare after or same TIMESTAMP
 	inline bool operator >= (TIMESTAMP t) { return dt.timestamp>=t; };
+	/// Compare before TIMESTAMP
 	inline bool operator < (TIMESTAMP t) { return dt.timestamp<t; };
+	/// Compare before or same TIMESTAMP
 	inline bool operator <= (TIMESTAMP t) { return dt.timestamp<=t; };
+	/// Compare same TIMESTAMP
 	inline bool operator == (TIMESTAMP t) { return dt.timestamp==t; };
+	/// Compare different TIMESTAMP
 	inline bool operator != (TIMESTAMP t) { return dt.timestamp!=t; };
+	/// Check if valid TIMESTAMP
 	inline bool is_valid(void) { return dt.timestamp>0; };
+	/// Check if NEVER
 	inline bool is_never(void) { return dt.timestamp==TS_NEVER; };
 public: // read accessors
+	/// Get the year
 	inline unsigned short get_year(void) { return dt.year; };
+	/// Get the month (0-11)
 	inline unsigned short get_month(void) { return dt.month; };
+	/// Get the day (1-31)
 	inline unsigned short get_day(void) { return dt.day; };
+	/// Get the hour (0-23)
 	inline unsigned short get_hour(void) { return dt.hour; };
+	/// Get the minute (0-59)
 	inline unsigned short get_minute(void) { return dt.minute; };
+	/// Get the second (0-59)
 	inline unsigned short get_second(void) { return dt.second; };
+	/// Get the microseconds (0-999999)
 	inline unsigned int get_microsecond(void) { return dt.microsecond; };
+	/// Get the timezone spec
 	inline char* get_tz(void) { return dt.tz; };
+	/// Get the summer/daylight time flag
 	inline bool get_is_dst(void) { return dt.is_dst?true:false; };
+	/// Get the weekday (Sunday=0)
 	inline unsigned short get_weekday(void) { return dt.weekday; };
+	/// Get the day of the year (Jan 1=0)
 	inline unsigned short get_yearday(void) { return dt.yearday; };
+	/// Get the timezone offer (in seconds)
 	inline int get_tzoffset(void) { return dt.tzoffset; };
+	/// Get the TIMESTAMP value (UTC)
 	inline TIMESTAMP get_timestamp(void) { return dt.timestamp; };
+	/// Get the local TIMESTAMP value (ignoring DST)
 	inline TIMESTAMP get_localtimestamp(void) { return dt.timestamp - dt.tzoffset; };
+	/// Get the local TIMESTAMP value (including DST)
+	inline TIMESTAMP get_localtimestamp_dst(bool force_dst=false) { return dt.timestamp - dt.tzoffset + (dt.is_dst||force_dst?3600:0); };
 public: // write accessors
+	/// Set the date
+	inline TIMESTAMP set_date(unsigned short y, unsigned short m, unsigned short d) { dt.year=y; dt.month=m; dt.day=d; return callback->time.mkdatetime(&dt); };
+	/// Set the time
+	inline TIMESTAMP set_time(unsigned short H, unsigned short M, unsigned short S, unsigned long u=0, char *t=NULL, bool force_dst=false) { dt.hour=H; dt.minute=M; dt.second=S; dt.microsecond=u; strncpy(dt.tz,t,sizeof(dt.tz)); if (force_dst) dt.is_dst=true; return callback->time.mkdatetime(&dt); };
+	/// Set the date and time
+	inline TIMESTAMP set_datetime(unsigned short y, unsigned short m, unsigned short d, unsigned short H, unsigned short M, unsigned short S, unsigned long u=0, char *t=NULL, bool force_dst=false) { dt.year=y; dt.month=m; dt.day=d; dt.hour=H; dt.minute=M; dt.second=S; dt.microsecond=u; strncpy(dt.tz,t,sizeof(dt.tz)); if (force_dst) dt.is_dst=true; return callback->time.mkdatetime(&dt); };
+	/// Set the year
 	inline TIMESTAMP set_year(unsigned short y) { dt.year=y; return callback->time.mkdatetime(&dt); };
+	/// Set the month (Jan=0)
 	inline TIMESTAMP set_month(unsigned short m) { dt.month=m; return callback->time.mkdatetime(&dt); };
+	/// Set the day (1-31)
 	inline TIMESTAMP set_day(unsigned short d) { dt.day=d; return callback->time.mkdatetime(&dt); };
+	/// Set the hour (0-23)
 	inline TIMESTAMP set_hour(unsigned short h) { dt.hour=h; return callback->time.mkdatetime(&dt); };
+	/// Set the minute (0-59)
 	inline TIMESTAMP set_minute(unsigned short m) { dt.minute=m; return callback->time.mkdatetime(&dt); };
+	/// Set the second (0-59)
 	inline TIMESTAMP set_second(unsigned short s) { dt.second=s; return callback->time.mkdatetime(&dt); };
+	/// Set the microsecond (0-999999)
 	inline TIMESTAMP set_microsecond(unsigned int u) { dt.microsecond=u; return callback->time.mkdatetime(&dt); };
+	/// Set the timezone (see tzinfo.txt)
 	inline TIMESTAMP set_tz(char* t) { strncpy(dt.tz,t,sizeof(dt.tz)); return callback->time.mkdatetime(&dt); };
+	/// Set the DST flag
 	inline TIMESTAMP set_is_dst(bool i) { dt.is_dst=i; return callback->time.mkdatetime(&dt); };
 public: // special functions
+	/// Convert from string
 	inline bool from_string(char *str) { return callback->time.local_datetime(callback->time.convert_to_timestamp(str),&dt)?true:false; };
+	/// Convert to string
 	inline unsigned int to_string(char *str, int size) {return callback->time.convert_from_timestamp(dt.timestamp,str,size); };
+	/// Extract the total number of days since 1/1/1970 0:00:00 UTC
 	inline double to_days(TIMESTAMP ts=0) { return (dt.timestamp-ts)/86400.0 + dt.microsecond*1e-6; };
+	/// Extract the total number of hours since 1/1/1970 0:00:00 UTC
 	inline double to_hours(TIMESTAMP ts=0) { return (dt.timestamp-ts)/3600.0 + dt.microsecond*1e-6; };
+	/// Extract the total number of minutes since 1/1/1970 0:00:00 UTC
 	inline double to_minutes(TIMESTAMP ts=0) { return (dt.timestamp-ts)/60.0 + dt.microsecond*1e-6; };
+	/// Extract the total number of seconds since 1/1/1970 0:00:00 UTC
 	inline double to_seconds(TIMESTAMP ts=0) { return dt.timestamp-ts + dt.microsecond*1e-6; };
+	/// Extract the total number of microseconds since 1/1/1970 0:00:00 UTC
 	inline double to_microseconds(TIMESTAMP ts=0) { return (dt.timestamp-ts)*1e6 + dt.microsecond; };
+	/// Get the timestamp as a string
 	inline gld_string get_string(const size_t sz=1024) 
 	{
 		gld_string res;
@@ -1317,100 +1440,145 @@ public: // special functions
 	};
 };
 
+/// Read lock container
 class gld_rlock {
 private: OBJECT *my;
+	/// Constructor
 public: gld_rlock(OBJECT *obj) : my(obj) {::rlock(&obj->lock);}; 
+	/// Destructor
 public: ~gld_rlock(void) {::runlock(&my->lock);};
 };
+/// Write lock container
 class gld_wlock {
 private: OBJECT *my;
+		 /// Constructor
 public: gld_wlock(OBJECT *obj) : my(obj) {::wlock(&obj->lock);}; 
+		/// Destructor
 public: ~gld_wlock(void) {::wunlock(&my->lock);};
 };
 
 class gld_class;
+/// Module container
 class gld_module {
 
 private: // data
 	MODULE core;
 
 public: // constructors/casts
+	/// Constructor
 	inline gld_module(void) { MODULE *m = callback->module.getfirst(); if (m) core=*m; else throw "no modules loaded";};
+	/// Cast to MODULE
 	inline operator MODULE*(void) { return &core; };
 
 public: // read accessors
+	/// Get module name
 	inline char* get_name(void) { return core.name; };
+	/// Get module major version number
 	inline unsigned short get_major(void) { return core.major; };
+	/// Get module minor version number
 	inline unsigned short get_minor(void) { return core.minor; };
+	/// Get first class in module
 	inline gld_class* get_first_class(void) { return (gld_class*)core.oclass; };
 
 public: // write accessors
 
 public: // iterators
+	/// Check if last module loaded
 	inline bool is_last(void) { return core.next==NULL; };
+	/// Get next module loaded
 	inline void get_next(void) { core = *(core.next); };
 };
 
 class gld_property;
 class gld_function;
+/// Class container
 class gld_class {
 
 private: // data
 	CLASS core;
 
 public: // constructors
+	/// Constructor (blocker implementation)
 	inline gld_class(void) { throw "gld_class constructor not permitted"; };
+	/// Cast to CLASS
 	inline operator CLASS*(void) { return &core; };
 
 public: // read accessors
+	/// Get class name
 	inline char* get_name(void) { return core.name; };
+	/// Get class size
 	inline size_t get_size(void) { return core.size; };
+	/// Get class parent
 	inline gld_class* get_parent(void) { return (gld_class*)core.parent; };
+	/// Get module that implements the class
 	inline gld_module* get_module(void) { return (gld_module*)core.module; };
+	/// Get the first property in the class
 	inline gld_property* get_first_property(void) { return (gld_property*)core.pmap; };
+	/// Get the next property in the class
 	inline gld_property* get_next_property(PROPERTY*p) { PROPERTY *prop=(PROPERTY*)p->next; return ( prop && prop->oclass==&core ) ? (gld_property*)prop : NULL; };
+	/// Get the first function in the class
 	inline gld_function* get_first_function(void) { return (gld_function*)core.fmap; };
+	/// Get the next function in the class
+	inline gld_function* get_next_function(FUNCTION*f) { return (gld_function*)f->next; };
+	/// Get TRL 
 	inline TECHNOLOGYREADINESSLEVEL get_trl(void) { return core.trl; };
 
 public: // write accessors
+	/// Set TRL
 	inline void set_trl(TECHNOLOGYREADINESSLEVEL t) { core.trl=t; };
 
 public: // special functions
+	/// Register a class	
 	static inline CLASS *create(MODULE *m, char *n, size_t s, unsigned int f) { return callback->register_class(m,n,(unsigned int)s,f); };
 	
 public: // iterators
+	/// Check if last class registered
 	inline bool is_last(void) { return core.next==NULL; };
+	/// Check if last class defined by this class' module
+	inline bool is_module_last(void) { return core.next==NULL || core.module!=core.next->module; };
+	/// Get the next class
 	inline gld_class* get_next(void) { return (gld_class*)core.next; };
 };
 
+/// Function container
 class gld_function {
 
 private: // data
 	FUNCTION core;
 
 public: // constructors
+	/// Construct a function (blocker implementation)
 	inline gld_function(void) { throw "gld_function constructor not permitted"; };
+	/// Cast to a FUNCTION pointer
 	inline operator FUNCTION*(void) { return &core; };
 
 public: // read accessors
+	/// Get function name
 	inline char *get_name(void) { return core.name; };
+	/// Get function class
 	inline gld_class* get_class(void) { return (gld_class*)core.oclass; };
+	/// Get function address
 	inline FUNCTIONADDR get_addr(void) { return core.addr; };
 
 public: // write accessors
 
 public: // iterators
+	/// Check whether this is the last function defined
 	inline bool is_last(void) { return core.next==NULL; };
+	/// Get the next function in the list
 	inline gld_function* get_next(void) { return (gld_function*)core.next; };
 };
 
+/// Built-in type container
 class gld_type {
 
 private: // data
 	PROPERTYTYPE type;
 
 public: // constructors/casts
+	/// Constructor
 	inline gld_type(PROPERTYTYPE t) : type(t) {};
+	/// Cast to PROPERTYTYPE
 	inline operator PROPERTYTYPE(void) { return type; };
 
 public: // read accessors
@@ -1419,68 +1587,99 @@ public: // read accessors
 public: // write accessors
 
 public: // iterators
+	/// Get the first property type
 	static inline PROPERTYTYPE get_first(void) { return PT_double; };
+	/// Get the next property type
 	inline PROPERTYTYPE get_next(void) { return (PROPERTYTYPE)(((int)type)+1); };
+	/// Check whether this is the last property type
 	inline bool is_last(void) { return (PROPERTYTYPE)(((int)type)+1)==_PT_LAST; }; 
 };
 
+/// Unit container
 class gld_unit {
 
 private: // data
 	UNIT core;
 
 public: // constructors/casts
+	/// Construct empty unit container
 	inline gld_unit(void) { memset(&core,0,sizeof(core)); };
+	/// Construct a container for a named or derived unit
 	inline gld_unit(char *name) { UNIT *unit=callback->unit_find(name); if (unit) memcpy(&core,unit,sizeof(UNIT)); else memset(&core,0,sizeof(UNIT)); };
+	/// Cast to a UNIT structure
 	inline operator UNIT*(void) { return &core; };
 
 public: // read accessors
+	/// Get the name or derivation of the unit
 	inline char* get_name(void) { return core.name; };
+	/// Get the C exponent
 	inline double get_c(void) { return core.c; };
+	/// Get the E exponent
 	inline double get_e(void) { return core.e; };
+	/// Get the H exponent
 	inline double get_h(void) { return core.h; };
+	/// Get the K exponent
 	inline double get_k(void) { return core.k; };
+	/// Get the M exponent
 	inline double get_m(void) { return core.m; };
+	/// Get the S exponent
 	inline double get_s(void) { return core.s; };
+	/// Get the A constant
 	inline double get_a(void) { return core.a; };
+	/// Get the B constant
 	inline double get_b(void) { return core.b; };
+	/// Get the unit precision
 	inline int get_prec(void) { return core.prec; };
+	/// Check whether the unit is valid
 	inline bool is_valid(void) { return core.name[0]!='\0'; };
 
 public: // write accessors
+	/// Change the unit
 	inline bool set_unit(char *name){ UNIT *unit=callback->unit_find(name); if (unit) {memcpy(&core,unit,sizeof(UNIT));return true;} else {memset(&core,0,sizeof(UNIT));return false;} };
 
 public: // special functions
+	/// Convert a value to another named or derived unit
 	inline bool convert(char *name, double &value) { UNIT *unit=callback->unit_find(name); return unit&&(callback->unit_convert_ex(&core,unit,&value))?true:false; }
+	/// Convert a value to another UNIT
 	inline bool convert(UNIT *unit, double &value) { return callback->unit_convert_ex(&core,unit,&value)?true:false; }
+	/// Convert a value to another gld_unit
 	inline bool convert(gld_unit &unit, double &value) { return callback->unit_convert_ex(&core,(UNIT*)unit,&value)?true:false; }
 
 public: // iterators
+	/// Check whether this is the last defined unit
 	inline bool is_last(void) { return core.next==NULL?true:false; };
+	/// Get the next unit
 	inline gld_unit* get_next(void) { return (gld_unit*)core.next; };
 };
 
+/// Keyword container
 class gld_keyword {
 
 private: // data
 	KEYWORD core;
 
 public: // constructors/casts
+	/// Construct a key word
 	inline gld_keyword(void) { throw "gld_keyword constructor not permitted"; };
+	/// Cast to a keyword pointer
 	inline operator KEYWORD* (void) { return &core; };
 
 public: // read accessors
+	/// Get the name of a keyword
 	inline char* get_name(void) { return core.name; };
+	/// Get the bit pattern for the keyword
 	inline unsigned int64 get_value(void) { return core.value; };
 
 public: // write accessors
 
 public: // iterators
+	/// Get the next keyword (NULL if last)
 	inline gld_keyword* get_next(void) { return (gld_keyword*)core.next; };
 };
 
 
 // object data declaration/accessors
+/// Define an atomic property
 #define GL_ATOMIC(T,X) protected: T X; public: \
 	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
 	inline T get_##X(void) { return X; }; \
@@ -1489,6 +1688,7 @@ public: // iterators
 	inline T get_##X(gld_wlock&) { return X; }; \
 	inline void set_##X(T p) { X=p; }; \
 	inline void set_##X(T p, gld_wlock&) { X=p; }; 
+/// Define a structured property
 #define GL_STRUCT(T,X) protected: T X; public: \
 	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
 	inline T get_##X(void) { gld_rlock _lock(my()); return X; }; \
@@ -1497,6 +1697,7 @@ public: // iterators
 	inline T get_##X(gld_wlock&) { return X; }; \
 	inline void set_##X(T p) { gld_wlock _lock(my()); X=p; }; \
 	inline void set_##X(T p, gld_wlock&) { X=p; }; 
+/// Define a string property
 #define GL_STRING(T,X) 	protected: T X; public: \
 	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
 	inline char* get_##X(void) { gld_rlock _lock(my()); return X.get_string(); }; \
@@ -1510,6 +1711,7 @@ public: // iterators
 	inline void set_##X(char *p, gld_wlock&) { strncpy(X,p,sizeof(X)); }; \
 	inline void set_##X(size_t n, char c) { gld_wlock _lock(my()); X[n]=c; }; \
 	inline void set_##X(size_t n, char c, gld_wlock&) { X[n]=c; }; 
+/// Define an array property
 #define GL_ARRAY(T,X,S) protected: T X[S]; public: \
 	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
 	inline gld_property get_##X##_property(void) { return gld_property(my(),#X); }; \
@@ -1523,6 +1725,7 @@ public: // iterators
 	inline void set_##X(T* p, gld_wlock&) { memcpy(X,p,sizeof(X)); }; \
 	inline void set_##X(size_t n, T m) { gld_wlock _lock(my()); X[n]=m; }; \
 	inline void set_##X(size_t n, T m, gld_wlock&) { X[n]=m; }; 
+/// Define a bitflag property
 #define GL_BITFLAGS(T,X) protected: T X; public: \
 	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
 	inline T get_##X(T mask=-1) { return X&mask; }; \
@@ -1534,10 +1737,14 @@ public: // iterators
 	inline void clr_##X##_bits(T p) { gld_rlock _lock(my()); (X)&=~(p); }; \
 	inline void set_##X(T p, gld_wlock&) { X=p; }; 
 
+/// Set bits of a bitflag property
 inline void setbits(unsigned long &flags, unsigned int bits) { flags|=bits; }; 
+/// Clear bits of a bitflag property
 inline void clearbits(unsigned long &flags, unsigned int bits) { flags&=~bits; }; 
+/// Test bits of a bitflag property
 inline bool hasbits(unsigned long flags, unsigned int bits) { return (flags&bits) ? true : false; };
 
+/// Object container
 class gld_object {
 public:
 	inline OBJECT *my() { return this?(((OBJECT*)this)-1):NULL; }
@@ -1619,11 +1826,12 @@ public: // iterators
 public: // exceptions
 	inline void exception(char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); throw (const char*)buf;};
 };
-//operator gld_object*(OBJECT*x) { return (gld_object*)(x+1); };
+/// Create a gld_object from an OBJECT
 static inline gld_object* get_object(OBJECT*obj)
 {
 	return obj ? (gld_object*)(obj+1) : NULL;
 }
+/// Find a gld_object from an object name
 static inline gld_object* get_object(char *n)
 {
 	OBJECT *obj = callback->get_object(n);
@@ -1631,6 +1839,7 @@ static inline gld_object* get_object(char *n)
 }
 
 static PROPERTYSTRUCT nullpstruct;
+/// Property container
 class gld_property {
 
 private: // data
@@ -1781,6 +1990,7 @@ private: // exceptions
 	};
 };
 
+/// Global variable container
 class gld_global {
 
 private: // data
@@ -1828,6 +2038,7 @@ public: // iterators
 	inline GLOBALVAR* get_next(void) { if (!var) return NULL; else return var->next; };
 };
 
+/// Aggregation container
 class gld_aggregate {
 private:
 	AGGREGATION *aggr;
@@ -1840,6 +2051,7 @@ public:
 	inline double get_value(void) { if (!aggr) throw "null aggregate"; return callback->aggregate.refresh(aggr); };
 };
 
+/// Object list container
 class gld_objlist {
 private:
 	struct s_objlist *list;
@@ -1880,6 +2092,7 @@ public:
 	inline void exception(char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf,msg,ptr); va_end(ptr); throw (const char*)buf;};
 };
 
+/// Web data container
 class gld_webdata {
 private:
 	struct s_http {
@@ -1933,16 +2146,19 @@ CDECL int dllkill() { do_kill(NULL); }
 	if ( *obj != NULL ) { C *my = OBJECTDATA(*obj,C); \
 		gl_set_parent(*obj,parent); return my->create(); \
 	} else return 0; } CREATE_CATCHALL(X); }
+/// Implement class create export
 #define EXPORT_CREATE(X) EXPORT_CREATE_C(X,X)
 
 #define EXPORT_INIT_C(X,C) EXPORT int init_##X(OBJECT *obj, OBJECT *parent) \
 {	try { if (obj!=NULL) return OBJECTDATA(obj,C)->init(parent); else return 0; } \
 	INIT_CATCHALL(X); }
+/// Implement class init export
 #define EXPORT_INIT(X) EXPORT_INIT_C(X,X)
 
 #define EXPORT_COMMIT_C(X,C) EXPORT TIMESTAMP commit_##X(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2) \
 {	C *my = OBJECTDATA(obj,C); try { return obj!=NULL ? my->commit(t1,t2) : TS_NEVER; } \
 	T_CATCHALL(C,commit); }
+/// Implement class commit export
 #define EXPORT_COMMIT(X) EXPORT_COMMIT_C(X,X)
 
 #define EXPORT_NOTIFY_C(X,C) EXPORT int notify_##X(OBJECT *obj, int notice, PROPERTY *prop, char *value) \
@@ -1952,6 +2168,7 @@ CDECL int dllkill() { do_kill(NULL); }
 	case NM_PREUPDATE: return my->prenotify(prop,value); \
 	default: return 0; } } else return 0; } \
 	T_CATCHALL(X,commit); return 1; }
+/// Implement class notify export
 #define EXPORT_NOTIFY(X) EXPORT_NOTIFY_C(X,X)
 
 #define EXPORT_SYNC_C(X,C) EXPORT TIMESTAMP sync_##X(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) { \
@@ -1964,26 +2181,31 @@ CDECL int dllkill() { do_kill(NULL); }
 	if ( (obj->oclass->passconfig&(PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN)&(~pass)) <= pass ) obj->clock = t0; \
 	return t1; } \
 	SYNC_CATCHALL(X); }
+/// Implement class sync export
 #define EXPORT_SYNC(X) EXPORT_SYNC_C(X,X)
 
 #define EXPORT_ISA_C(X,C) EXPORT int isa_##X(OBJECT *obj, char *name) { \
 	return ( obj!=0 && name!=0 ) ? OBJECTDATA(obj,C)->isa(name) : 0; }
+/// Implement class isa export
 #define EXPORT_ISA(X) EXPORT_ISA_C(X,X)
 
 #define EXPORT_PLC_C(X,C) EXPORT TIMESTAMP plc_##X(OBJECT *obj, TIMESTAMP t1) { \
 	try { return OBJECTDATA(obj,C)->plc(t1); } \
 	T_CATCHALL(plc,X); }
+/// Implement class plc export
 #define EXPORT_PLC(X) EXPORT_PLC_C(X,X)
 
 // TODO add other linkages as needed
 #define EXPORT_PRECOMMIT_C(X,C) EXPORT int precommit_##X(OBJECT *obj, TIMESTAMP t1) \
 {	C *my = OBJECTDATA(obj,C); try { return obj!=NULL ? my->precommit(t1) : 0; } \
 	T_CATCHALL(C,precommit); }
+/// Implement class precommit export
 #define EXPORT_PRECOMMIT(X) EXPORT_PRECOMMIT_C(X,X)
 
 #define EXPORT_FINALIZE_C(X,C) EXPORT int finalize_##X(OBJECT *obj) \
 {	C *my = OBJECTDATA(obj,C); try { return obj!=NULL ? my->finalize() : 0; } \
 	T_CATCHALL(C,finalize); }
+/// Implement class finalize export
 #define EXPORT_FINALIZE(X) EXPORT_FINALIZE_C(X,X)
 
 #define EXPORT_NOTIFY_C_P(X,C,P) EXPORT int notify_##X_##P(OBJECT *obj, char *value) \
@@ -1991,6 +2213,7 @@ CDECL int dllkill() { do_kill(NULL); }
 	return my->notify_##P(value); \
 	} else return 0; } \
 	T_CATCHALL(X,notify_##P); return 1; }
+/// Implement property notify export
 #define EXPORT_NOTIFY_PROP(X,P) EXPORT_NOTIFY_C_P(X,X,P)
 
 #endif

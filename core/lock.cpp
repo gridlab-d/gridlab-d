@@ -8,22 +8,7 @@
 	Any time more than one object can concurrently write to the same
 	region of memory, it is necessary to implement locking to prevent
 	one object from overwriting the changes made by another.  
-	For example, more than one link can simultaneously update the 
-	admittance and current injection accumulators in nodes.  Thus
-	the following code is required to prevent two objects from simultaneously
-	reading the same accumulator and posting their modifications without
-	considering the other's contribution.  
-	
-	@code
-	complex I = to->V * Y;
-	LOCK_OBJECT(from);
-	from->Ys += Y;
-	from->YVs -= I;
-	UNLOCK_OBJECT(from);
-	@endcode
-
-	Without locking, only the second one's contribution would be counted
-	and the first one's would be lost.
+ @{	  
  **/
 
 #include "lock.h"
@@ -33,6 +18,8 @@
 //#define LOCKTRACE // enable this to trace locking events back to variables
 #define MAXSPIN 1000000000
 
+/** Determine locking method 
+ **/
 #define METHOD0 /* locking method as of 3.0 */
 
 #ifdef HAVE_CONFIG_H
@@ -75,6 +62,8 @@
 	#error "Locking is not supported on this system"
 #endif
 
+/** Enable lock trace 
+ **/
 #ifdef LOCKTRACE // this code should only be used in care is mystery lock timeouts
 typedef struct s_locklist {
 	const char *name;
@@ -83,6 +72,8 @@ typedef struct s_locklist {
 	struct s_locklist *next;
 } LOCKLIST;
 LOCKLIST *locklist = NULL;
+/** Register a lock trave
+ **/
 void register_lock(const char *name, unsigned int *lock)
 {
 	LOCKLIST *item = (LOCKLIST*)malloc(sizeof(LOCKLIST));
@@ -94,6 +85,8 @@ void register_lock(const char *name, unsigned int *lock)
 	item->next = locklist;
 	locklist = item;
 }
+/** Check a lock trace
+ **/
 void check_lock(unsigned int *lock, bool write, bool unlock)
 {
 	LOCKLIST *item;
@@ -156,6 +149,8 @@ void register_lock(unsigned int *lock)
    (3) if the CAS operation fails, the lock process starts over at (1)
    (4) to unlock the lock value is incremented (which clears the low bit and increments the lock count).
  */
+/** Read lock
+ **/
 extern "C" void rlock(unsigned int *lock)
 {
 	unsigned int timeout = MAXSPIN;
@@ -170,6 +165,8 @@ extern "C" void rlock(unsigned int *lock)
 			throw_exception("read lock timeout");
 	} while ((value&1) || !atomic_compare_and_swap(lock, value, value + 1));
 }
+/** Write lock 
+ **/
 extern "C" void wlock(unsigned int *lock)
 {
 	unsigned int timeout = MAXSPIN;
@@ -184,12 +181,16 @@ extern "C" void wlock(unsigned int *lock)
 			throw_exception("write lock timeout");
 	} while ((value&1) || !atomic_compare_and_swap(lock, value, value + 1));
 }
+/** Read unlock
+ **/
 extern "C" void runlock(unsigned int *lock)
 {
 	unsigned int value = *lock;
 	check_lock(lock,false,true);
 	atomic_increment(lock);
 }
+/** Write unlock
+ **/
 extern "C" void wunlock(unsigned int *lock)
 {
 	unsigned int value = *lock;
@@ -322,5 +323,5 @@ static inline void wunlock(unsigned int *lock)
 	} while (!atomic_compare_and_swap(lock, test, test + 1));
 }
 
-
+/** @} **/
 #endif

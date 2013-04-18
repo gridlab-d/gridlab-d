@@ -80,7 +80,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="..\VS2005\$(ProjectDir)$(ProjectName)"
+			OutputDirectory="$(SolutionDir)\docs"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="0"
 			>

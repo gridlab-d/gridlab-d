@@ -2235,7 +2235,7 @@ STATUS exec_start(void)
 			}
 			
 			/* handle delta mode operation */
-			if ( global_simulation_mode==SM_DELTA && sync_d.step_to>=global_clock )
+			if ( global_simulation_mode==SM_DELTA && exec_sync_get(NULL)>=global_clock )
 			{
 				DT deltatime = delta_update();
 				if ( deltatime==DT_INVALID )
@@ -2249,7 +2249,7 @@ STATUS exec_start(void)
 					global_simulation_mode = SM_ERROR;
 					break;
 				}
-				sync_d.step_to = global_clock + deltatime;
+				exec_sync_set(NULL,global_clock + deltatime);
 				global_simulation_mode = SM_EVENT;
 			}
 		} // end of while loop
