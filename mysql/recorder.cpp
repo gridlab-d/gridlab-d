@@ -19,7 +19,7 @@ recorder::recorder(MODULE *module)
 	if (oclass==NULL)
 	{
 		// register to receive notice for first top down. bottom up, and second top down synchronizations
-		oclass = gld_class::create(module,"recorder",sizeof(recorder),PC_AUTOLOCK);
+		oclass = gld_class::create(module,"recorder",sizeof(recorder),PC_AUTOLOCK|PC_OBSERVER);
 		if (oclass==NULL)
 			throw "unable to register class recorder";
 		else

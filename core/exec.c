@@ -897,33 +897,44 @@ static STATUS precommit_all(TIMESTAMP t0)
 /**************************************************************************
  ** COMMIT ITERATOR
  **************************************************************************/
-static SIMPLELINKLIST *commit_list = NULL;
+static SIMPLELINKLIST *commit_list[2] = {NULL, NULL};
 /* initialize commit_list - must be called only once */
 static int commit_init(void)
 {
 	int n_commits = 0;
 	OBJECT *obj;
 	SIMPLELINKLIST *item;
+
+	/* build commit list */
 	for ( obj=object_get_first() ; obj!=NULL ; obj=object_get_next(obj) )
 	{
 		if ( obj->oclass->commit!=NULL )
 		{
+			/* separate observers */
+			unsigned int pc = ((obj->oclass->passconfig&PC_OBSERVER)==PC_OBSERVER)?1:0;
 			item = (SIMPLELINKLIST*)malloc(sizeof(SIMPLELINKLIST));
 			if ( item==NULL ) 
 				throw_exception("commit_init memory allocation failure");
 			item->data = (void*)obj;
-			item->next = commit_list;
-			commit_list = item;
+			item->next = commit_list[pc];
+			commit_list[pc] = item;
 			n_commits++;
 		}
 	}
 	return n_commits;
 }
 /* commit_list iterator */
-static MTIITEM commit_get(MTIITEM item)
+static MTIITEM commit_get0(MTIITEM item)
 {
 	if ( item==NULL )
-		return (MTIITEM)commit_list;
+		return (MTIITEM)commit_list[0];
+	else
+		return (MTIITEM)(((SIMPLELINKLIST*)item)->next);
+}
+static MTIITEM commit_get1(MTIITEM item)
+{
+	if ( item==NULL )
+		return (MTIITEM)commit_list[1];
 	else
 		return (MTIITEM)(((SIMPLELINKLIST*)item)->next);
 }
@@ -982,22 +993,26 @@ static TIMESTAMP commit_all_st(TIMESTAMP t0, TIMESTAMP t2)
 {
 	TIMESTAMP result = TS_NEVER;
 	SIMPLELINKLIST *item;
-	for ( item=commit_list ; item!=NULL ; item=item->next )
+	unsigned int pc;
+	for ( pc=0 ; pc<2 ; pc ++ )
 	{
-		OBJECT *obj = (OBJECT*)item->data;
-		if ( obj->in_svc<=t0 && obj->out_svc>=t0 )
+		for ( item=commit_list[pc] ; item!=NULL ; item=item->next )
 		{
-			TIMESTAMP next = object_commit(obj,t0,t2);
-			if ( next==TS_INVALID )
+			OBJECT *obj = (OBJECT*)item->data;
+			if ( obj->in_svc<=t0 && obj->out_svc>=t0 )
 			{
-				char name[64];
-				throw_exception("object %s commit failed", object_name(obj,name,sizeof(name)-1));
-				/* TROUBLESHOOT
-					The commit function of the named object has failed.  Make sure that the object's
-					requirements for committing are satisfied and try again.  (likely internal state aberations)
-				 */
+				TIMESTAMP next = object_commit(obj,t0,t2);
+				if ( next==TS_INVALID )
+				{
+					char name[64];
+					throw_exception("object %s commit failed", object_name(obj,name,sizeof(name)-1));
+					/* TROUBLESHOOT
+						The commit function of the named object has failed.  Make sure that the object's
+						requirements for committing are satisfied and try again.  (likely internal state aberations)
+					 */
+				}
+				if ( next<result ) result = next;
 			}
-			if ( next<result ) result = next;
 		}
 	}
 	return result;
@@ -1006,13 +1021,15 @@ static TIMESTAMP commit_all_st(TIMESTAMP t0, TIMESTAMP t2)
 static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2)
 {
 	static int n_commits = -1;
-	static MTI *mti = NULL;
+	static MTI *mti[] = {NULL,NULL};
 	static int init_tried = FALSE;
 	MTIDATA input = (MTIDATA)&t0;
 	MTIDATA output = (MTIDATA)&t2;
 	TIMESTAMP result = TS_NEVER;
 
 	TRY {
+		unsigned int pc;
+
 		/* build commit list */
 		if ( n_commits==-1 ) n_commits = commit_init();
 
@@ -1020,27 +1037,32 @@ static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2)
 		if ( n_commits==0 ) return TS_NEVER;
 		
 		/* initialize MTI */
-		if ( mti==NULL && global_threadcount!=1 && !init_tried )
+		for ( pc=0 ; pc<2 ; pc++ )
 		{
-			/* build mti */
-			static MTIFUNCTIONS fns = {
-				commit_get, commit_call, commit_set,
-				commit_compare, commit_gather, commit_reject,
-			};
-			mti = mti_init("commit",&fns,8);
-			if ( mti==NULL )
+			if ( mti[pc]==NULL && global_threadcount!=1 && !init_tried )
 			{
-				output_warning("commit_all multi-threaded iterator initialization failed - using single-threaded iterator as fallback");
-				init_tried = TRUE;
+				/* build mti */
+				static MTIFUNCTIONS fns[] = {
+					{commit_get0, commit_call, commit_set,commit_compare, commit_gather, commit_reject},
+					{commit_get1, commit_call, commit_set,commit_compare, commit_gather, commit_reject},
+				};
+				mti[pc] = mti_init("commit",&fns[pc],8);
+				if ( mti[pc]==NULL )
+				{
+					output_warning("commit_all multi-threaded iterator initialization failed - using single-threaded iterator as fallback");
+					init_tried = TRUE;
+				}
 			}
+
+			/* attempt to run multithreaded iterator */
+			if ( mti[pc]!=NULL && mti_run(output,mti[pc],input) )
+				result = *(TIMESTAMP*)output;
+
+			/* resort to single threaded iterator (which handles both passes) */
+			else if ( pc==0 )
+				result = commit_all_st(t0,t2);
 		}
 
-		/* attempt to run multithreaded iterator */
-		if ( mti!=NULL && mti_run(output,mti,input) )
-			result = *(TIMESTAMP*)output;
-
-		/* resort to single threaded iterator */
-		result = commit_all_st(t0,t2);
 	}
 	CATCH(const char *msg)
 	{

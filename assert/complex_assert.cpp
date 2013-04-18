@@ -27,7 +27,7 @@ complex_assert::complex_assert(MODULE *module)
 	if (oclass==NULL)
 	{
 		// register to receive notice for first top down. bottom up, and second top down synchronizations
-		oclass = gl_register_class(module,"complex_assert",sizeof(complex_assert),PC_AUTOLOCK);
+		oclass = gl_register_class(module,"complex_assert",sizeof(complex_assert),PC_AUTOLOCK|PC_OBSERVER);
 		if (oclass==NULL)
 			throw "unable to register class complex_assert";
 		else

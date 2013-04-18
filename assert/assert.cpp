@@ -25,7 +25,7 @@ g_assert::g_assert(MODULE *module)
 	if (oclass==NULL)
 	{
 		// register to receive notice for first top down. bottom up, and second top down synchronizations
-		oclass = gld_class::create(module,"assert",sizeof(g_assert),PC_AUTOLOCK);
+		oclass = gld_class::create(module,"assert",sizeof(g_assert),PC_AUTOLOCK|PC_OBSERVER);
 		if (oclass==NULL)
 			throw "unable to register class assert";
 		else

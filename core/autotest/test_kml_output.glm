@@ -1,0 +1,24 @@
+#set profiler=1 
+#set threadcount=1; 
+#set randomseed=1; 
+#set relax_naming_rules=1; 
+
+clock { 
+	timezone EST+5EDT; 
+	starttime '2000-06-02 0:00:00'; 
+	stoptime '2000-06-04 0:00:00'; 
+} 
+
+module powerflow;
+
+object node {
+	name node1; 
+	bustype SWING; 
+	phases ABCN; 
+	voltage_A +7199.558+0.000j; 
+	voltage_B -3599.779-6235.000j; 
+	voltage_C -3599.779+6235.000j; 
+	nominal_voltage 7200; 
+	latitude 12N34.00056; 
+	longitude 12W34.00056; 
+} 
