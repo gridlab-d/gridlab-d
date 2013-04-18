@@ -34,7 +34,6 @@
 #include "exec.h"
 
 clock_t instance_synctime = 0;
-extern struct sync_data sync_d;
 
 // only used for passing control between slaveproc and main threads
 pthread_mutex_t mls_inst_lock;
@@ -782,7 +781,6 @@ TIMESTAMP instance_syncall(TIMESTAMP t1)
 			if ( t3 < t2 ){
 				t2 = t3;
 			}
-			sync_d.hard_event += inst->cache->hard_event;
 		}
 	
 		output_debug("instance sync time is %"FMT_INT64"d", t2);

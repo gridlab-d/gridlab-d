@@ -567,13 +567,15 @@ static void *ss_do_object_sync_list(void *threadarg)
 	return NULL;
 }
 
-static STATUS init_by_creation(){
+static STATUS init_by_creation()
+{
 	OBJECT *obj;
 	STATUS rv = SUCCESS;
 	TRY {
 		for (obj=object_get_first(); obj!=NULL; obj=object_get_next(obj))
 		{
-			if (object_init(obj)==FAILED){
+			if (object_init(obj)==FAILED)
+			{
 				char *b = (char *)malloc(64);
 				memset(b, 0, 64);
 				output_error("init_all(): object %s initialization failed", object_name(obj, b, 63));
@@ -584,8 +586,10 @@ static STATUS init_by_creation(){
 				rv = FAILED;
 				break;
 			}
-			if((obj->oclass->passconfig & PC_FORCE_NAME) == PC_FORCE_NAME){
-				if(0 == strcmp(obj->name, "")){
+			if ((obj->oclass->passconfig & PC_FORCE_NAME) == PC_FORCE_NAME)
+			{
+				if (0 == strcmp(obj->name, ""))
+				{
 					output_warning("init: object %s:%d should have a name, but doesn't", obj->oclass->name, obj->id);
 					/* TROUBLESHOOT
 					   The object indicated has been flagged by the module which implements its class as one which must be named
@@ -606,7 +610,8 @@ static STATUS init_by_creation(){
 	return rv;
 }
 
-static int init_by_deferral_retry(OBJECT **def_array, int def_ct){
+static int init_by_deferral_retry(OBJECT **def_array, int def_ct)
+{
 	OBJECT *obj;
 	int ct = 0, i = 0, obj_rv = 0;
 	OBJECT **next_arr = (OBJECT **)malloc(def_ct * sizeof(OBJECT *)), **tarray = 0;
@@ -614,21 +619,26 @@ static int init_by_deferral_retry(OBJECT **def_array, int def_ct){
 	char b[64];
 	int retry = 1, tries = 0;
 
-	if(global_init_max_defer < 1){
+	if (global_init_max_defer < 1)
+	{
 		output_warning("init_max_defer is less than 1, disabling deferred initialization");
 	}
-	while(retry){
-		if(global_init_max_defer <= tries){
+	while (retry)
+	{
+		if (global_init_max_defer <= tries)
+		{
 			output_error("init_by_deferral_retry(): exhausted initialization attempts");
 			rv = FAILED;
 			break;
 		}
 		memset(next_arr, 0, def_ct * sizeof(OBJECT *));
 		// initialize each object in def_array
-		for(i = 0; i < def_ct; ++i){
+		for (i = 0; i < def_ct; ++i)
+		{
 			obj = def_array[i];
 			obj_rv = object_init(obj);
-			switch(obj_rv){
+			switch (obj_rv)
+			{
 				case 0:
 					rv = FAILED;
 					memset(b, 0, 64);
@@ -646,17 +656,20 @@ static int init_by_deferral_retry(OBJECT **def_array, int def_ct){
 					break;
 				// no default
 			}
-			if(rv == FAILED){
+			if (rv == FAILED)
+			{
 				free(next_arr);
 				return rv;
 			}
 		}
 
-		if(ct == def_ct){
+		if (ct == def_ct)
+		{
 			output_error("init_by_deferral_retry(): all uninitialized objects deferred, model is unable to initialize");
 			rv = FAILED;
 			retry = 0;
-		} else if (0 == ct){
+		} else if (0 == ct)
+		{
 			rv = SUCCESS;
 			retry = 0;
 		} else {
@@ -674,7 +687,8 @@ static int init_by_deferral_retry(OBJECT **def_array, int def_ct){
 	return rv;
 }
 
-static int init_by_deferral(){
+static int init_by_deferral()
+{
 	OBJECT **def_array = 0;
 	int i = 0, obj_rv = 0, def_ct = 0;
 	OBJECT *obj = 0;
@@ -682,9 +696,11 @@ static int init_by_deferral(){
 	char b[64];
 	def_array = (OBJECT **)malloc(sizeof(OBJECT *) * object_get_count());
 	obj = object_get_first();
-	while(obj != 0){
+	while (obj != 0)
+	{
 		obj_rv = object_init(obj);
-		switch (obj_rv){
+		switch (obj_rv)
+		{
 			case 0:
 				rv = FAILED;
 				memset(b, 0, 64);
@@ -705,7 +721,8 @@ static int init_by_deferral(){
 			// no default
 		}
 
-		if(rv == FAILED){
+		if (rv == FAILED)
+		{
 			free(def_array);
 			return rv;
 		}
@@ -714,9 +731,11 @@ static int init_by_deferral(){
 	}
 
 	// recursecursecursive
-	if(def_ct > 0){
+	if (def_ct > 0)
+	{
 		rv = init_by_deferral_retry(def_array, def_ct);
-		if(rv == FAILED){ // got hung up retrying
+		if (rv == FAILED) // got hung up retrying
+		{ 
 				free(def_array);
 				return FAILED;
 		}
@@ -724,9 +743,12 @@ static int init_by_deferral(){
 	free(def_array);
 
 	obj = object_get_first();
-	while (obj != 0){
-		if((obj->oclass->passconfig & PC_FORCE_NAME) == PC_FORCE_NAME){
-			if(0 == strcmp(obj->name, "")){
+	while (obj != 0)
+	{
+		if ((obj->oclass->passconfig & PC_FORCE_NAME) == PC_FORCE_NAME)
+		{
+			if (0 == strcmp(obj->name, ""))
+			{
 				output_warning("init: object %s:%d should have a name, but doesn't", obj->oclass->name, obj->id);
 				/* TROUBLESHOOT
 				   The object indicated has been flagged by the module which implements its class as one which must be named
@@ -757,7 +779,8 @@ static STATUS init_all(void)
 	if (loadshape_initall()==FAILED || enduse_initall()==FAILED)
 		return FAILED;
 
-	switch(global_init_sequence){
+	switch (global_init_sequence)
+	{
 		case IS_CREATION:
 			rv = init_by_creation();
 			break;
@@ -882,7 +905,8 @@ static STATUS precommit_all(TIMESTAMP t0)
 			}
 		}
 	} 
-	CATCH(const char *msg){
+	CATCH(const char *msg)
+	{
 		output_error("precommit_all() failure: %s", msg);
 		/* TROUBLESHOOT
 			The precommit'ing procedure failed.  This is usually preceded 
@@ -944,7 +968,9 @@ static void commit_call(MTIDATA output, MTIITEM item, MTIDATA input)
 	OBJECT *obj = (OBJECT*)(((SIMPLELINKLIST*)item)->data);
 	TIMESTAMP *t2 = (TIMESTAMP*)output;
 	TIMESTAMP *t0 = (TIMESTAMP*)input;
-	if ( obj->in_svc<=*t0 && obj->out_svc>=*t0 )
+	if ( *t0<obj->in_svc )
+		*t2 = obj->in_svc;
+	else if ( obj->out_svc>=*t0 )
 		*t2 = obj->oclass->commit(obj,*t0);
 	else
 		*t2 = TS_NEVER;
@@ -999,7 +1025,11 @@ static TIMESTAMP commit_all_st(TIMESTAMP t0, TIMESTAMP t2)
 		for ( item=commit_list[pc] ; item!=NULL ; item=item->next )
 		{
 			OBJECT *obj = (OBJECT*)item->data;
-			if ( obj->in_svc<=t0 && obj->out_svc>=t0 )
+			if ( t0<obj->in_svc )
+			{
+				if ( obj->in_svc<result ) result = obj->in_svc;
+			}
+			else if ( obj->out_svc>=t0 )
 			{
 				TIMESTAMP next = object_commit(obj,t0,t2);
 				if ( next==TS_INVALID )
@@ -1131,7 +1161,8 @@ static STATUS finalize_all()
 			}
 		}
 	} 
-	CATCH(const char *msg){
+	CATCH(const char *msg)
+	{
 		output_error("finalize_all() failure: %s", msg);
 		/* TROUBLESHOOT
 			The finalizing procedure failed.  This is usually preceded 
@@ -1145,7 +1176,8 @@ static STATUS finalize_all()
 
 STATUS exec_test(struct sync_data *data, int pass, OBJECT *obj);
  
-STATUS t_setup_ranks(void){
+STATUS t_setup_ranks(void)
+{
 	return setup_ranks();
 }
 STATUS t_sync_all(PASSCONFIG pass)
@@ -1203,21 +1235,27 @@ TIMESTAMP sync_heartbeats(void)
 /* this function synchronizes all internal behaviors */
 TIMESTAMP syncall_internals(TIMESTAMP t1)
 {
-	TIMESTAMP ci, rv, sc, ls, st, eu, t2, tx;
+	TIMESTAMP h1, h2, s1, s2, s3, s4, s5, s6, se;
 
 	/* external link must be first */
-	tx = link_syncall(t1);
+	h1 = link_syncall(t1);
 
 	/* @todo add other internal syncs here */
-	ci = instance_syncall(t1);	
-	rv = randomvar_syncall(t1);
-	sc = schedule_syncall(t1);
-	ls = loadshape_syncall(t1);
-	st = transform_syncall(t1,XS_SCHEDULE|XS_LOADSHAPE);
-	eu = enduse_syncall(t1);
+	h2 = instance_syncall(t1);	
+	s1 = randomvar_syncall(t1);
+	s2 = schedule_syncall(t1);
+	s3 = loadshape_syncall(t1);
+	s4 = transform_syncall(t1,XS_SCHEDULE|XS_LOADSHAPE);
+	s5 = enduse_syncall(t1);
 
-	t2 = sync_heartbeats();
-	return earliest_timestamp(ci,rv,sc,ls,st,eu,t2,tx,TS_ZERO);
+	/* heartbeats go last */
+	s6 = sync_heartbeats();
+
+	/* earliest soft event */
+	se = absolute_timestamp(earliest_timestamp(s1,s2,s3,s4,s5,s6,TS_ZERO));
+
+	/* final event */
+	return earliest_timestamp(h1,h2,se!=TS_NEVER?-se:TS_NEVER,TS_ZERO);
 }
 
 void exec_sleep(unsigned int usec)
@@ -1299,25 +1337,29 @@ static void *obj_syncproc(void *ptr)
 /*static*/ pthread_cond_t mls_svr_signal;
 int mls_created = 0;
 
-void exec_mls_create(void){
+void exec_mls_create(void)
+{
 	int rv = 0;
 
 	mls_created = 1;
 
 	output_debug("exec_mls_create()");
 	rv = pthread_mutex_init(&mls_svr_lock,NULL);
-	if(rv != 0){
+	if (rv != 0)
+	{
 		output_error("error with pthread_mutex_init() in exec_mls_init()");
 	}
 	rv = pthread_cond_init(&mls_svr_signal,NULL);
-	if(rv != 0){
+	if (rv != 0)
+	{
 		output_error("error with pthread_cond_init() in exec_mls_init()");
 	}
 }
 
 void exec_mls_init(void)
 {
-	if(mls_created == 0){
+	if (mls_created == 0)
+	{
 		exec_mls_create();
 	}
 	if (global_mainloopstate==MLS_PAUSED)
@@ -1335,19 +1377,21 @@ void exec_mls_suspend(void)
 		output_warning("suspending simulation with no server/multirun active to control mainloop state");
 	output_debug("lock_ (%x->%x)", &mls_svr_lock, mls_svr_lock);
 	rv = pthread_mutex_lock(&mls_svr_lock);
-	if(0 != rv){
+	if (0 != rv)
+	{
 		output_error("error with pthread_mutex_lock() in exec_mls_suspend()");
-		;
 	}
 	output_debug("sched update_");
 	sched_update(global_clock,global_mainloopstate=MLS_PAUSED);
 	output_debug("wait loop_");
 	while ( global_clock==TS_ZERO || (global_clock>=global_mainlooppauseat && global_mainlooppauseat<TS_NEVER) ) {
-		if(loopctr > 0){
+		if (loopctr > 0)
+		{
 			output_debug(" * tick (%i)", --loopctr);
 		}
 		rv = pthread_cond_wait(&mls_svr_signal, &mls_svr_lock);
-		if(rv != 0){
+		if (rv != 0)
+		{
 			output_error("error with pthread_cond_wait() in exec_mls_suspend()");
 		}
 	}
@@ -1355,7 +1399,8 @@ void exec_mls_suspend(void)
 	sched_update(global_clock,global_mainloopstate=MLS_RUNNING);
 	output_debug("unlock_");
 	rv = pthread_mutex_unlock(&mls_svr_lock);
-	if(rv != 0){
+	if (rv != 0)
+	{
 		output_error("error with pthread_mutex_unlock() in exec_mls_suspend()");
 	}
 }
@@ -1364,16 +1409,19 @@ void exec_mls_resume(TIMESTAMP ts)
 {
 	int rv = 0;
 	rv = pthread_mutex_lock(&mls_svr_lock);
-	if(rv != 0){
+	if (rv != 0)
+	{
 		output_error("error in pthread_mutex_lock() in exec_mls_resume() (error %i)", rv);
 	}
 	global_mainlooppauseat = ts;
 	rv = pthread_mutex_unlock(&mls_svr_lock);
-	if(rv != 0){
+	if (rv != 0)
+	{
 		output_error("error in pthread_mutex_unlock() in exec_mls_resume()");
 	}
 	rv = pthread_cond_broadcast(&mls_svr_signal);
-	if(rv != 0){
+	if (rv != 0)
+	{
 		output_error("error in pthread_cond_broadcast() in exec_mls_resume()");
 	}
 }
@@ -1396,7 +1444,7 @@ void exec_mls_done(void)
 /******************************************************************
  SYNC HANDLING API
  *******************************************************************/
-struct sync_data sync_d = {TS_NEVER,0,SUCCESS};
+static struct sync_data main_sync = {TS_NEVER,0,SUCCESS};
 
 /** Reset the sync time data structure 
 
@@ -1409,7 +1457,7 @@ struct sync_data sync_d = {TS_NEVER,0,SUCCESS};
  **/
 void exec_sync_reset(struct sync_data *d) /**< sync data to reset (NULL to reset main)  **/
 {
-	if ( d==NULL ) d=&sync_d;
+	if ( d==NULL ) d=&main_sync;
 	d->step_to = TS_NEVER;
 	d->hard_event = 0;
 	d->status = SUCCESS;
@@ -1431,13 +1479,17 @@ void exec_sync_reset(struct sync_data *d) /**< sync data to reset (NULL to reset
 void exec_sync_merge(struct sync_data *to, /**< sync data to merge to (NULL to update main)  **/
 					struct sync_data *from) /**< sync data to merge from */
 {
-	if ( to==NULL ) to = &sync_d;
-	if ( exec_sync_getstatus(to)==FAILED ) 
-		exec_sync_set(to,0);
+	if ( to==NULL ) to = &main_sync;
+	if ( from==NULL ) from = &main_sync;
+	if ( from==to ) return;
+	if ( exec_sync_isinvalid(from) ) 
+		exec_sync_set(to,TS_INVALID);
 	else if ( exec_sync_isnever(from) ) 
 		{} /* do nothing */	
-	else 
+	else if ( exec_sync_ishard(from) )
 		exec_sync_set(to,exec_sync_get(from));
+	else
+		exec_sync_set(to,-exec_sync_get(from));
 }
 /** Update the sync data structure 
 
@@ -1455,14 +1507,15 @@ void exec_sync_merge(struct sync_data *to, /**< sync data to merge to (NULL to u
 void exec_sync_set(struct sync_data *d, /**< sync data to update (NULL to update main) */
 				  TIMESTAMP t)/**< timestamp to update with (negative time means soft event, 0 means failure) */
 {
-	if ( d==NULL ) d=&sync_d;
+	if ( d==NULL ) d=&main_sync;
 	if ( t==TS_NEVER ) return; /* nothing to do */
 	if ( t==TS_INVALID )
 	{
 		d->status = FAILED;
 		return;
 	}
-	if ( t<=-TS_MAX || t>TS_MAX ) throw_exception("set_synctime(struct sync_data *d={TIMESTAMP step_to=%lli,int32 hard_event=%d, STATUS=%s}, TIMESTAMP t=%lli): timestamp is not valid", d->step_to, d->hard_event, d->status==SUCCESS?"SUCCESS":"FAILED", t);
+	if ( t<=-TS_MAX || t>TS_MAX ) 
+		throw_exception("set_synctime(struct sync_data *d={TIMESTAMP step_to=%lli,int32 hard_event=%d, STATUS=%s}, TIMESTAMP t=%lli): timestamp is not valid", d->step_to, d->hard_event, d->status==SUCCESS?"SUCCESS":"FAILED", t);
 	if ( d->step_to==TS_NEVER )
 	{
 		if ( t<TS_NEVER && t>0 )
@@ -1478,13 +1531,12 @@ void exec_sync_set(struct sync_data *d, /**< sync data to update (NULL to update
 	else if ( t>0 ) /* hard event */
 	{
 		d->hard_event++;
-		if ( d->step_to > t )
+		if ( d->step_to>t )
 			d->step_to = t;
 	}
 	else if ( t<0 ) /* soft event */
 	{
-		/* only record it if it's more recent than a hard event */
-		if ( d->step_to>t )
+		if ( d->step_to>-t )
 			d->step_to = -t;
 	}
 	else // t==0 -> invalid
@@ -1497,7 +1549,7 @@ void exec_sync_set(struct sync_data *d, /**< sync data to update (NULL to update
  **/
 TIMESTAMP exec_sync_get(struct sync_data *d) /**< Sync data to get sync time from (NULL to read main)  */
 {
-	if ( d==NULL ) d=&sync_d;
+	if ( d==NULL ) d=&main_sync;
 	if ( exec_sync_isnever(d) ) return TS_NEVER;
 	if ( exec_sync_isinvalid(d) ) return TS_INVALID;
 	return absolute_timestamp(d->step_to);
@@ -1507,7 +1559,7 @@ TIMESTAMP exec_sync_get(struct sync_data *d) /**< Sync data to get sync time fro
  **/
 unsigned int exec_sync_getevents(struct sync_data *d) /**< Sync data to get sync events from (NULL to read main)  */
 {
-	if ( d==NULL ) d=&sync_d;
+	if ( d==NULL ) d=&main_sync;
 	return d->hard_event;
 }
 /** Determine whether the current sync data is a hard sync
@@ -1515,7 +1567,7 @@ unsigned int exec_sync_getevents(struct sync_data *d) /**< Sync data to get sync
  **/
 int exec_sync_ishard(struct sync_data *d) /**< Sync data to read hard sync status from (NULL to read main)  */
 {
-	if ( d==NULL ) d=&sync_d;
+	if ( d==NULL ) d=&main_sync;
 	return d->hard_event>0;
 }
 /** Determine whether the current sync data time is never 
@@ -1523,7 +1575,7 @@ int exec_sync_ishard(struct sync_data *d) /**< Sync data to read hard sync statu
  **/
 int exec_sync_isnever(struct sync_data *d) /**< Sync data to read never sync status from (NULL to read main)  */
 {
-	if ( d==NULL ) d=&sync_d;
+	if ( d==NULL ) d=&main_sync;
 	return d->step_to==TS_NEVER;
 }
 /** Determine whether the currenet sync time is invalid (NULL to read main)
@@ -1531,7 +1583,7 @@ int exec_sync_isnever(struct sync_data *d) /**< Sync data to read never sync sta
  **/
 int exec_sync_isinvalid(struct sync_data *d) /**< Sync data to read invalid sync status from */
 {
-	if ( d==NULL ) d=&sync_d;
+	if ( d==NULL ) d=&main_sync;
 	return exec_sync_getstatus(d)==FAILED;
 }
 /** Determine the current sync status
@@ -1539,7 +1591,7 @@ int exec_sync_isinvalid(struct sync_data *d) /**< Sync data to read invalid sync
  **/
 STATUS exec_sync_getstatus(struct sync_data *d) /**< Sync data to read sync status from (NULL to read main)  */
 {
-	if ( d==NULL ) d=&sync_d;
+	if ( d==NULL ) d=&main_sync;
 	return d->status;
 }
 
@@ -1621,7 +1673,8 @@ STATUS exec_start(void)
 	if (!global_debug_mode)
 	{
 		/* schedule progress report event */
-		if(global_show_progress){
+		if (global_show_progress)
+		{
 			realtime_schedule_event(realtime_now()+1,show_progress);
 		}
 
@@ -1678,21 +1731,24 @@ STATUS exec_start(void)
 	}
 
 	/*** GET FIRST SIGNAL FROM MASTER HERE ****/
-	if(global_multirun_mode == MRM_SLAVE){
+	if (global_multirun_mode == MRM_SLAVE)
+	{
 		pthread_cond_broadcast(&mls_inst_signal); // tell slaveproc() it's time to get rolling
 		output_debug("exec_start(), slave waiting for first time signal");
 		pthread_mutex_lock(&mls_inst_lock);
 		pthread_cond_wait(&mls_inst_signal, &mls_inst_lock);
 		pthread_mutex_unlock(&mls_inst_lock);
 		// will have copied data down and updated step_to with slave_cache
-//		global_clock = sync_d.step_to; // copy time signal to gc
+		//global_clock = exec_sync_get(NULL); // copy time signal to gc
 		output_debug("exec_start(), slave received first time signal of %lli", global_clock);
 	}
 	// maybe that's all we need...
 	iteration_counter = global_iteration_limit;
-	//sync_d.step_to = global_clock;
-	//sync_d.hard_event = 1;
+
+	/* reset sync event */
+	exec_sync_reset(NULL);
 	exec_sync_set(NULL,global_clock);
+	exec_sync_set(NULL,global_stoptime); // only sets if stoptime is not never
 
 	/* signal handler */
 	signal(SIGABRT, exec_sighandler);
@@ -1768,13 +1824,13 @@ STATUS exec_start(void)
 
 		/* main loop runs for iteration limit, or when nothing futher occurs (ignoring soft events) */
 		int running; /* split into two tests to make it easier to tell what's going on */
-
-//		output_debug("starting with stepto=%lli, stop=%lli, events=%i, stop=%i", sync_d.step_to, global_stoptime, sync_d.hard_event, exec_getexitcode());
-//		while ( running = ( absolute_timestamp(sync_d.step_to) <= global_stoptime && sync_d.step_to<TS_NEVER && sync_d.hard_event>0),
 		output_debug("starting with stepto=%lli, stop=%lli, events=%i, stop=%i", exec_sync_get(NULL), global_stoptime, exec_sync_getevents(NULL), exec_getexitcode());
-		while ( running = ( exec_sync_get(NULL)<=global_stoptime && !exec_sync_isnever(NULL) && exec_sync_ishard(NULL) ),
+		while ( running = ( exec_sync_get(NULL)<=global_stoptime && 
+				!exec_sync_isnever(NULL) && exec_sync_ishard(NULL) ),
 			iteration_counter>0 && ( running || global_run_realtime>0) && exec_getexitcode()==XC_SUCCESS ) 
 		{
+			TIMESTAMP internal_synctime;
+
 			/* update the process table info */
 			sched_update(global_clock,MLS_RUNNING);
 
@@ -1784,14 +1840,7 @@ STATUS exec_start(void)
 
 			do_checkpoint();
 
-			/* set time context */
-			output_set_time_context(global_clock);
-
-			sync_d.hard_event = (global_stoptime == TS_NEVER ? 0 : 1);
-			//exec_sync_reset(NULL);
-			//exec_sync_set(NULL,global_stoptime);
-
-			/* realtime support */
+			/* realtime control of global clock */
 			if (global_run_realtime>0)
 			{
 #ifdef WIN32
@@ -1815,8 +1864,9 @@ STATUS exec_start(void)
 #endif
 				output_verbose("realtime clock advancing to %d", (int)global_clock);
 			}
+
+			/* internal control of global clock */
 			else
-				//global_clock = absolute_timestamp(sync_d.step_to);
 				global_clock = exec_sync_get(NULL);
 
 			/* operate delta mode if necessary (but only when event mode is active, e.g., not right after init) */
@@ -1865,9 +1915,10 @@ STATUS exec_start(void)
 					output_error("a simulation mode error has occurred");
 					break; /* terminate main loop immediately */
 				}
-				sync_d.step_to = t;
-				if ( !((flags&DMF_SOFTEVENT)||(global_simulation_mode!=SM_DELTA)) )
-					sync_d.hard_event = 1;
+				//sync_d.step_to = t;
+				//if ( !((flags&DMF_SOFTEVENT)||(global_simulation_mode!=SM_DELTA)) )
+				//	sync_d.hard_event = 1;
+				exec_sync_set(NULL,t);
 			}
 			else
 				global_simulation_mode = SM_EVENT;
@@ -1878,9 +1929,19 @@ STATUS exec_start(void)
 			else
 				output_debug("global_clock=%d\n",global_clock);
 
-			sync_d.step_to = syncall_internals(global_clock);
-			// exec_sync_set(NULL,syncall_internals(global_clock));
-			if( sync_d.step_to!=TS_NEVER && absolute_timestamp(sync_d.step_to)<global_clock )
+			/* set time context */
+			output_set_time_context(global_clock);
+
+			/* reset for a new sync event */
+			exec_sync_reset(NULL);
+
+			/* account for stoptime only if global clock is not already at stoptime */
+			if ( global_clock<global_stoptime )
+				exec_sync_set(NULL,global_stoptime);
+
+			/* synchronize all internal schedules */
+			internal_synctime = syncall_internals(global_clock);
+			if( internal_synctime!=TS_NEVER && absolute_timestamp(internal_synctime)<global_clock )
 			{
 				// must be able to force reiterations for m/s mode.
 				THROW("internal property sync failure");
@@ -1890,7 +1951,9 @@ STATUS exec_start(void)
 					Follow the troubleshooting recommendations for that message and try again.
 				 */
 			}
+			exec_sync_set(NULL,internal_synctime);
 
+			/* prepare multithreading */
 			if (!global_debug_mode)
 			{
 				for (j = 0; j < thread_data->count; j++) {
@@ -1903,14 +1966,18 @@ STATUS exec_start(void)
 				throw_exception("running clock detected");
 #endif
 
-			if(iteration_counter == global_iteration_limit){
+			/* run precommit only on first iteration */
+			if (iteration_counter == global_iteration_limit)
+			{
 				pc_rv = precommit_all(global_clock);
-				if(SUCCESS != pc_rv){
+				if(SUCCESS != pc_rv)
+				{
 					THROW("precommit failure");
 				}
 			}
 			iObjRankList = -1;
-			/* scan the ranks of objects */
+
+			/* scan the ranks of objects for each pass */
 			for (pass = 0; ranks[pass] != NULL; pass++)
 			{
 				int i;
@@ -1930,14 +1997,18 @@ STATUS exec_start(void)
 						for (item=ranks[pass]->ordinal[i]->first; item!=NULL; item=item->next)
 						{
 							OBJECT *obj = item->data;
-							if (exec_debug(&sync_d,pass,i,obj)==FAILED)
+							// @todo change debug so it uses sync API
+							if (exec_debug(&main_sync,pass,i,obj)==FAILED)
+							{
 								THROW("debugger quit");
+							}
 						}
 					}
 					else
 					{
 						//sjin: if global_threadcount == 1, no pthread multhreading
-						if (global_threadcount == 1) {
+						if (global_threadcount == 1) 
+						{
 							for (ptr = ranks[pass]->ordinal[i]->first; ptr != NULL; ptr=ptr->next) {
 								OBJECT *obj = ptr->data;
 								ss_do_object_sync(0, ptr->data);					
@@ -1950,7 +2021,9 @@ STATUS exec_start(void)
 								///printf("%d %s %d\n", obj->id, obj->name, obj->rank);
 							}
 							//printf("\n");
-						} else { //sjin: implement pthreads
+						} 
+						else 
+						{ //sjin: implement pthreads
 							unsigned int n_items,objn=0,n;
 							unsigned int n_obj = ranks[pass]->ordinal[i]->size;
 
@@ -2025,7 +2098,7 @@ STATUS exec_start(void)
 
 						for (j = 0; j < thread_data->count; j++) {
 							if (thread_data->data[j].status == FAILED) {
-								sync_d.status = FAILED;
+								exec_sync_set(NULL,TS_INVALID);
 								THROW("synchronization failed");
 							}
 						}
@@ -2036,18 +2109,16 @@ STATUS exec_start(void)
 				/* run all non-schedule transforms */
 				{
 					TIMESTAMP st = transform_syncall(global_clock,XS_DOUBLE|XS_COMPLEX|XS_ENDUSE);// if (abs(t)<t2) t2=t;
-					if ( absolute_timestamp(st)<absolute_timestamp(sync_d.step_to) )
-						sync_d.step_to = st;
+					exec_sync_set(NULL,st);
 				}
 			}
 			setTP = false;
 
 			if (!global_debug_mode)
 			{
-				for (j = 0; j < thread_data->count; j++) {
-					sync_d.hard_event += thread_data->data[j].hard_event;
-					if ( absolute_timestamp(thread_data->data[j].step_to) < absolute_timestamp(sync_d.step_to) )
-						sync_d.step_to = thread_data->data[j].step_to;
+				for (j = 0; j < thread_data->count; j++) 
+				{
+					exec_sync_merge(NULL,&thread_data->data[j]);
 				}
 
 				/* report progress */
@@ -2058,8 +2129,9 @@ STATUS exec_start(void)
 			passes++;
 
 			/**** LOOPED SLAVE PAUSE HERE ****/
-			if(global_multirun_mode == MRM_SLAVE){
-				output_debug("step_to = %lli", sync_d.step_to);
+			if(global_multirun_mode == MRM_SLAVE)
+			{
+				output_debug("step_to = %lli", exec_sync_get(NULL));
 				output_debug("exec_start(), slave waiting for looped time signal");
 
 				pthread_cond_broadcast(&mls_inst_signal);
@@ -2068,14 +2140,14 @@ STATUS exec_start(void)
 				pthread_cond_wait(&mls_inst_signal, &mls_inst_lock);
 				pthread_mutex_unlock(&mls_inst_lock);
 
-				output_debug("exec_start(), slave received looped time signal (%lli)", sync_d.step_to);
+				output_debug("exec_start(), slave received looped time signal (%lli)", exec_sync_get(NULL));
 			}
 
-			/* check for clock advance */
-			if ( absolute_timestamp(sync_d.step_to) != global_clock)
+			/* check for clock advance (indicating last pass) */
+			if ( exec_sync_get(NULL) != global_clock)
 			{
 				TIMESTAMP commit_time = TS_NEVER;
-				commit_time = commit_all(global_clock, absolute_timestamp(sync_d.step_to));
+				commit_time = commit_all(global_clock, exec_sync_get(NULL));
 				if ( absolute_timestamp(commit_time) <= global_clock)
 				{
 					// commit cannot force reiterations, and any event where the time is less than the global clock
@@ -2087,8 +2159,9 @@ STATUS exec_start(void)
 						the guidance for that message and try again.
 					 */
 					return FAILED;
-				} else if( absolute_timestamp(commit_time) < absolute_timestamp(sync_d.step_to) ){
-					sync_d.step_to = commit_time;
+				} else if( absolute_timestamp(commit_time) < exec_sync_get(NULL) )
+				{
+					exec_sync_set(NULL,commit_time);
 				}
 				/* reset iteration count */
 				iteration_counter = global_iteration_limit;
@@ -2107,7 +2180,7 @@ STATUS exec_start(void)
 					the object that is causing the convergence problem and contact
 					the developer of the module that implements that object's class.
 				 */
-				sync_d.status = FAILED;
+				exec_sync_set(NULL,TS_INVALID);
 				THROW("convergence failure");
 			}
 
@@ -2117,8 +2190,37 @@ STATUS exec_start(void)
 				output_error("sync script(s) failed");
 				return FAILED;
 			}
-
-
+			if (global_run_realtime>0 && tsteps == 1 && global_dumpfile[0]!='\0')
+			{
+				if (!saveall(global_dumpfile))
+					output_error("dump to '%s' failed", global_dumpfile);
+					/* TROUBLESHOOT
+						An attempt to create a dump file failed.  This message should be
+						preceded by a more detailed message explaining why if failed.
+						Follow the guidance for that message and try again.
+					 */
+				else
+					output_message("initial model dump to '%s' complete", global_dumpfile);
+			}
+			
+			/* handle delta mode operation */
+			if ( global_simulation_mode==SM_DELTA && exec_sync_get(NULL)>=global_clock )
+			{
+				DT deltatime = delta_update();
+				if ( deltatime==DT_INVALID )
+				{
+					output_error("delta_update() failed, deltamode operation cannot continue");
+					/*  TROUBLESHOOT
+					An error was encountered while trying to perform a deltamode update.  Look for
+					other relevant deltamode messages for indications as to why this may have occurred.
+					If the error persists, please submit your code and a bug report via the trac website.
+					*/
+					global_simulation_mode = SM_ERROR;
+					break;
+				}
+				exec_sync_set(NULL, global_clock+deltatime);
+				global_simulation_mode = SM_EVENT;
+			}
 			if (global_run_realtime>0 && tsteps == 1 && global_dumpfile[0]!='\0')
 			{
 				if (!saveall(global_dumpfile))
@@ -2156,7 +2258,7 @@ STATUS exec_start(void)
 		signal(SIGINT,NULL);
 
 		/* check end state */
-		if (sync_d.step_to==TS_NEVER)
+		if ( exec_sync_isnever(NULL) )
 		{
 			char buffer[64];
 			output_verbose("simulation at steady state at %s", convert_from_timestamp(global_clock,buffer,sizeof(buffer))?buffer:"invalid time");
@@ -2168,7 +2270,7 @@ STATUS exec_start(void)
 	CATCH(char *msg)
 	{
 		output_error("exec halted: %s", msg);
-		sync_d.status = FAILED;
+		exec_sync_set(NULL,TS_INVALID);
 		/* TROUBLESHOOT
 			This indicates that the core's solver shut down.  This message
 			is usually preceded by more detailed messages.  Follow the guidance
@@ -2177,7 +2279,8 @@ STATUS exec_start(void)
 	}
 	ENDCATCH
 	output_debug("done");
-	if(global_multirun_mode == MRM_MASTER){
+	if(global_multirun_mode == MRM_MASTER)
+	{
 		instance_master_done(TS_NEVER); // tell everyone to pack up and go home
 	}
 
@@ -2185,7 +2288,8 @@ STATUS exec_start(void)
 	cend = exec_clock();
 
 	fnl_rv = finalize_all();
-	if(FAILED == fnl_rv){
+	if(FAILED == fnl_rv)
+	{
 		output_error("finalize_all() failed");
 		output_verbose("not that it's going to stop us");
 	}
@@ -2219,7 +2323,7 @@ STATUS exec_start(void)
 	}
 
 	/* report performance */
-	if (global_profiler && sync_d.status==SUCCESS)
+	if (global_profiler && !exec_sync_isinvalid(NULL) )
 	{
 		double elapsed_sim = timestamp_to_hours(global_clock)-timestamp_to_hours(global_starttime);
 		double elapsed_wall = (double)(realtime_now()-started_at+1);
@@ -2301,7 +2405,7 @@ STATUS exec_start(void)
 	sched_update(global_clock,MLS_DONE);
 
 	/* terminate links */
-	return sync_d.status;
+	return exec_sync_getstatus(NULL);
 }
 
 /** Starts the executive test loop 
@@ -2309,7 +2413,8 @@ STATUS exec_start(void)
  **/
 STATUS exec_test(struct sync_data *data, /**< the synchronization state data */
 				 int pass, /**< the pass number */
-				 OBJECT *obj){ /**< the current object */
+				 OBJECT *obj)  /**< the current object */
+{
 	TIMESTAMP this_t;
 	/* check in and out-of-service dates */
 	if (global_clock<obj->in_svc)
@@ -2394,24 +2499,29 @@ void *slave_node_proc(void *args)
 	SOCKET sockfd = *sockfd_ptr;
 
 	// input checks
-	if(0 == sockfd_ptr){
+	if(0 == sockfd_ptr)
+	{
 		output_error("slave_node_proc(): no pointer to listener socket");
 		return 0;
 	}
-	if(0 == done_ptr){
+	if(0 == done_ptr)
+	{
 		output_error("slave_node_proc(): no pointer to stop condition");
 		return 0;
 	}
-	if(0 > masterfd){
+	if(0 > masterfd)
+	{
 		output_error("slave_node_proc(): no accepted socket");
 		return 0;
 	}
-	if(0 == addrin){
+	if(0 == addrin)
+	{
 		output_error("slave_node_proc(): no address struct");
 		return 0;
 	}
 	// sanity checks
-	if(0 != *done_ptr){
+	if(0 != *done_ptr)
+	{
 		// something else errored while the thread was starting
 		output_error("slave_node_proc(): slavenode finished while thread started");
 		closesocket(masterfd);
@@ -2422,18 +2532,21 @@ void *slave_node_proc(void *args)
 
 	// read handshake
 	rv = recv(masterfd, buffer, 1023, 0);
-	if(rv < 0){
+	if (rv < 0)
+	{
 		output_error("slave_node_proc(): error receiving handshake");
 		closesocket(masterfd);
 		free(addrin);
 		return 0;
-	} else if(rv == 0){
+	} else if (rv == 0)
+	{
 		output_error("slave_node_proc(): socket closed before receiving handshake");
 		closesocket(masterfd);
 		free(addrin);
 		return 0;
 	}
-	if(0 != strcmp(buffer, HS_SYN)){
+	if (0 != strcmp(buffer, HS_SYN))
+	{
 		output_error("slave_node_proc(): received handshake mismatch (\"%s\")", buffer);
 		closesocket(masterfd);
 		free(addrin);
@@ -2444,12 +2557,15 @@ void *slave_node_proc(void *args)
 	// send response
 	//	* see above
 	rv = send(masterfd, response, (int)strlen(response), 0);
-	if(rv < 0){
+	if (rv < 0)
+	{
 		output_error("slave_node_proc(): error sending handshake response");
 		closesocket(masterfd);
 		free(addrin);
 		return 0;
-	} else if(rv == 0){
+	} 
+	else if (rv == 0)
+	{
 		output_error("slave_node_proc(): socket closed before sending handshake response");
 		closesocket(masterfd);
 		free(addrin);
@@ -2458,12 +2574,15 @@ void *slave_node_proc(void *args)
 
 	// receive command
 	rv = recv(masterfd, buffer, 1023, 0);
-	if(0 > rv){
+	if (0 > rv)
+	{
 		output_error("slave_node_proc(): error receiving command instruction");
 		closesocket(masterfd);
 		free(addrin);
 		return 0;
-	} else if(0 == rv){
+	} 
+	else if(0 == rv)
+	{
 		output_error("slave_node_proc(): socket closed before receiving command instruction");
 		closesocket(masterfd);
 		free(addrin);
@@ -2477,7 +2596,8 @@ void *slave_node_proc(void *args)
 	//	ex: [HS_CMD]dir="C:\mytemp\mls\slave\" file="model.glm" port="6762" id="1234567890" --profile --relax --quiet
 	output_debug("cmd: \'%s\'", buffer);
 	// HS_CMD
-	if(0 != memcmp(token[0], buffer, token_len[0])){
+	if ( memcmp(token[0],buffer,token_len[0])!=0 )
+	{
 		output_error("slave_node_proc(): bad command instruction token");
 		closesocket(masterfd);
 		free(addrin);
@@ -2485,7 +2605,8 @@ void *slave_node_proc(void *args)
 	}
 	offset += token_len[0];
 	// dir="%s"
-	if(0 != memcmp(token[1], buffer+offset, token_len[1])){
+	if ( memcmp(token[1], buffer+offset, token_len[1])!=0 )
+	{
 		output_error("slave_node_proc(): error in command instruction dir token");
 		output_debug("t=\"%5s\" vs c=\"%5s\"", token[1], buffer+offset);
 		closesocket(masterfd);
@@ -2498,11 +2619,13 @@ void *slave_node_proc(void *args)
 	//tok_len = tok_to - (buffer+offset+1) - 1; // -1 to fudge the last "
 	// strchr doesn't like when you start with a ", it seems
 	tok_len = 0;
-	while(buffer[offset+tok_len] != '"' && buffer[offset+tok_len] != 0){
+	while ( buffer[offset+tok_len]!='"' && buffer[offset+tok_len]!=0 )
+	{
 		++tok_len;
 	}
 	output_debug("tok_len = %d", tok_len);
-	if(tok_len > 0){
+	if (tok_len > 0)
+	{
 		char temp[256];
 		sprintf(temp, "%%d offset and %%d len for \'%%%ds\'", tok_len);
 		output_debug(temp, offset, tok_len, buffer+offset);
@@ -2513,7 +2636,8 @@ void *slave_node_proc(void *args)
 	offset += 1 + tok_len; // one for "
 	// zero-len dir is allowable
 	// file=""
-	if(0 != memcmp(token[2], buffer+offset, token_len[2])){
+	if ( memcmp(token[2],buffer+offset,token_len[2])!=0 )
+	{
 		output_error("slave_node_proc(): error in command instruction file token");
 		output_debug("(%d)t=\"%7s\" vs c=\"%7s\"", offset, token[2], buffer+offset);
 		closesocket(masterfd);
@@ -2522,18 +2646,22 @@ void *slave_node_proc(void *args)
 	}
 	offset += token_len[2];
 	tok_len = strcspn(buffer+offset, "\"\n\r\t\0"); // whitespace in filename allowable
-	if(tok_len > 0){
+	if (tok_len > 0)
+	{
 		char temp[256];
 		memcpy(filename, buffer+offset, (tok_len > sizeof(filename) ? sizeof(filename) : tok_len));
 		filename[tok_len]=0;
 		sprintf(temp, "%%d offset and %%d len for \'%%%ds\'", tok_len);
 		output_debug(temp, offset, tok_len, buffer+offset);
-	} else {
+	} 
+	else 
+	{
 		filename[0] = 0;
 	}
 	offset += 1 + tok_len;
 	// port=
-	if(0 != memcmp(token[3], buffer+offset, token_len[3])){
+	if (0 != memcmp(token[3], buffer+offset, token_len[3]))
+	{
 		output_error("slave_node_proc(): error in command instruction port token");
 		closesocket(masterfd);
 		free(addrin);
@@ -2541,17 +2669,21 @@ void *slave_node_proc(void *args)
 	}
 	offset += token_len[3];
 	mtr_port = strtol(buffer+offset, &token_to, 10);
-	if(mtr_port < 0){
+	if (mtr_port < 0)
+	{
 		output_error("slave_node_proc(): bad return port specified in command instruction");
 		closesocket(masterfd);
 		free(addrin);
 		return 0;
-	} else if(mtr_port < 1024){
+	} 
+	else if (mtr_port < 1024)
+	{
 		output_warning("slave_node_proc(): return port %d specified, may cause system conflicts", mtr_port);
 	}
 
 	// id=
-	if(0 != memcmp(token_to, token[4], token_len[4])){
+	if (0 != memcmp(token_to, token[4], token_len[4]))
+	{
 		output_error("slave_node_proc(): error in command instruction id token");
 		closesocket(masterfd);
 		free(addrin);
@@ -2560,12 +2692,15 @@ void *slave_node_proc(void *args)
 	offset = token_len[4]; // not += since we updated our zero point
 	output_debug("%12s -> ???", token_to);
 	id = strtoll(token_to+offset, &token_to, 10);
-	if(id < 0){
+	if (id < 0)
+	{
 		output_error("slave_node_proc(): id %"FMT_INT64" specified, may cause system conflicts", id);
 		closesocket(masterfd);
 		free(addrin);
 		return 0;
-	} else {
+	} 
+	else 
+	{
 		output_debug("id = %llu", id);
 	}
 	// then zero or more CL args
@@ -2580,12 +2715,15 @@ void *slave_node_proc(void *args)
 	// run command
 //	rsp_port = ntohs(addrin->sin_port);
 	paddrstr = inet_ntoa(addrin->sin_addr);
-	if(0 == paddrstr){
+	if (0 == paddrstr)
+	{
 		output_error("slave_node_proc(): unable to write address to a string");
 		closesocket(masterfd);
 		free(addrin);
 		return 0;
-	} else {
+	} 
+	else 
+	{
 		memcpy(addrstr, paddrstr, sizeof(addrstr));
 		output_debug("snp(): connect to %s:%d", addrstr, mtr_port);
 	}
@@ -2616,7 +2754,8 @@ void *slave_node_proc(void *args)
 	server that will spawn new instances of GridLAB-D as requested to run as
 	remote slave nodes (see cmdarg.c:slave() )
  **/
-void exec_slave_node(){
+void exec_slave_node()
+{
 	static bool node_done = FALSE;
 	static SOCKET sockfd = -1;
 	SOCKET *args[4];
@@ -2644,7 +2783,8 @@ void exec_slave_node(){
 
 	// init listener socket
 	sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if(INVALID_SOCKET == sockfd){
+	if (INVALID_SOCKET == sockfd)
+	{
 		output_fatal("exec_slave_node(): unable to open IPv4 TCP socket");
 		return;
 	}
@@ -2655,7 +2795,8 @@ void exec_slave_node(){
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	server_addr.sin_port = htons(global_slave_port);
-	if(0 != bind(sockfd, (struct sockaddr *)&server_addr, inaddrsz)){
+	if (0 != bind(sockfd, (struct sockaddr *)&server_addr, inaddrsz))
+	{
 		output_fatal("exec_slave_node(): unable to bind socket to port %d", global_slave_port);
 		perror("bind()");
 		closesocket(sockfd);
@@ -2663,7 +2804,8 @@ void exec_slave_node(){
 	}
 
 	// listen
-	if( 0 != listen(sockfd, 5)){
+	if ( 0 != listen(sockfd, 5))
+	{
 		output_fatal("exec_slave_node(): unable to listen to socket");
 		closesocket(sockfd);
 		return;
@@ -2678,26 +2820,33 @@ void exec_slave_node(){
 	args[1] = (SOCKET *)&sockfd;
 
 	output_debug("esn(): starting loop");
-	while(!node_done){
+	while (!node_done)
+	{
 		reader_fdset = master_fdset;
 		timer.tv_sec = 3; // check for kaputness every three (not five) seconds
 		timer.tv_usec = 0;
 		// wait for connection
 		rct = select(1 + (int)sockfd, &reader_fdset, 0, 0, &timer);
-		if(rct < 0){
+		if (rct < 0)
+		{
 			output_error("slavenode select() error");
 			return;
-		} else if (rct == 0){
+		} 
+		else if (rct == 0)
+		{
 			// Waited three seconds without any input.  Play it again, Sam.
 			//output_debug("esn(): select ");
-		} else if (rct > 0){
+		} 
+		else if (rct > 0)
+		{
 			inaddr = malloc(inaddrsz);
 			args[3] = (SOCKET *)inaddr;
 			//output_debug("esn(): got client");
 			memset(inaddr, 0, inaddrsz);
 			args[2] = (SOCKET *)accept(sockfd, (struct sockaddr *)inaddr, &inaddrsz);
 			output_debug("esn(): accepted client");
-			if(-1 == (int64)(args[2])){
+			if (-1 == (int64)(args[2]))
+			{
 				output_error("unable to accept connection");
 				perror("accept()");
 				node_done = TRUE;
@@ -2711,7 +2860,8 @@ void exec_slave_node(){
 			//	* detatch, since we don't care about it after we start it
 			//	! I have no idea if the reuse of slave_thread will fly. Change
 			//	!  this if strange things start to happen.
-			if(pthread_create(&slave_thread, NULL, slave_node_proc, (void *)args)){
+			if ( pthread_create(&slave_thread, NULL, slave_node_proc, (void *)args) )
+			{
 				output_error("slavenode unable to thread off connection");
 				node_done = TRUE;
 				closesocket(sockfd);
@@ -2719,7 +2869,8 @@ void exec_slave_node(){
 				return;
 			}
 			//output_debug("esn(): thread created");
-			if(pthread_detach(slave_thread)){
+			if ( pthread_detach(slave_thread) )
+			{
 				output_error("slavenode unable to detach connection thread");
 				node_done = TRUE;
 				closesocket(sockfd);

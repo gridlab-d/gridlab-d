@@ -11,9 +11,9 @@ module assert;
 module powerflow;
 
 clock{
-	timezone PST+0PDT;
+	timezone PST+8PDT;
 	starttime '2001-01-01 00:00:00';
-	stoptime '2001-01-02 02:00:00';
+	stoptime '2001-01-02 00:00:00';
 }
 
 object triplex_meter{
