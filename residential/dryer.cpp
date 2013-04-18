@@ -63,12 +63,12 @@ dryer::dryer(MODULE *module) : residential_enduse(module)
 			PT_double,"total_power[W]",PADDR(total_power),
 
 			PT_enumeration,"state", PADDR(state),
-				PT_KEYWORD,"STOPPED",DRYER_STOPPED,
-				PT_KEYWORD,"STALLED",DRYER_STALLED,
-				PT_KEYWORD,"TRIPPED",DRYER_TRIPPED,
-				PT_KEYWORD,"MOTOR_ONLY",DRYER_MOTOR_ONLY,
-				PT_KEYWORD,"MOTOR_COIL_ONLY",DRYER_MOTOR_COIL_ONLY,
-				PT_KEYWORD,"CONTROL_ONLY",DRYER_CONTROL_ONLY,
+				PT_KEYWORD,"STOPPED",(enumeration)DRYER_STOPPED,
+				PT_KEYWORD,"STALLED",(enumeration)DRYER_STALLED,
+				PT_KEYWORD,"TRIPPED",(enumeration)DRYER_TRIPPED,
+				PT_KEYWORD,"MOTOR_ONLY",(enumeration)DRYER_MOTOR_ONLY,
+				PT_KEYWORD,"MOTOR_COIL_ONLY",(enumeration)DRYER_MOTOR_COIL_ONLY,
+				PT_KEYWORD,"CONTROL_ONLY",(enumeration)DRYER_CONTROL_ONLY,
 
 			
 			PT_double,"energy_baseline[kWh]",PADDR(energy_baseline),			

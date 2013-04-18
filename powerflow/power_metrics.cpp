@@ -57,17 +57,17 @@ power_metrics::power_metrics(MODULE *mod) : powerflow_library(mod)
 			oclass->trl = TRL_QUALIFIED;
 
 		if(gl_publish_variable(oclass,
-			PT_double, "SAIFI", PADDR(SAIFI),
-			PT_double, "SAIFI_int", PADDR(SAIFI_int),
-			PT_double, "SAIDI", PADDR(SAIDI),
-			PT_double, "SAIDI_int", PADDR(SAIDI_int),
-			PT_double, "CAIDI", PADDR(CAIDI),
-			PT_double, "CAIDI_int", PADDR(CAIDI_int),
-			PT_double, "ASAI", PADDR(ASAI),
-			PT_double, "ASAI_int", PADDR(ASAI_int),
-			PT_double, "MAIFI", PADDR(MAIFI),
-			PT_double, "MAIFI_int", PADDR(MAIFI_int),
-			PT_double, "base_time_value[s]", PADDR(stat_base_time_value),
+			PT_double, "SAIFI", PADDR(SAIFI),PT_DESCRIPTION, "Displays annual SAIFI values as per IEEE 1366-2003",
+			PT_double, "SAIFI_int", PADDR(SAIFI_int),PT_DESCRIPTION, "Displays SAIFI values over the period specified by base_time_value as per IEEE 1366-2003",
+			PT_double, "SAIDI", PADDR(SAIDI),PT_DESCRIPTION, "Displays annual SAIDI values as per IEEE 1366-2003",
+			PT_double, "SAIDI_int", PADDR(SAIDI_int),PT_DESCRIPTION, "Displays SAIDI values over the period specified by base_time_value as per IEEE 1366-2003",
+			PT_double, "CAIDI", PADDR(CAIDI),PT_DESCRIPTION, "Displays annual CAIDI values as per IEEE 1366-2003",
+			PT_double, "CAIDI_int", PADDR(CAIDI_int),PT_DESCRIPTION, "Displays SAIDI values over the period specified by base_time_value as per IEEE 1366-2003",
+			PT_double, "ASAI", PADDR(ASAI),PT_DESCRIPTION, "Displays annual AISI values as per IEEE 1366-2003",
+			PT_double, "ASAI_int", PADDR(ASAI_int),PT_DESCRIPTION, "Displays AISI values over the period specified by base_time_value as per IEEE 1366-2003",
+			PT_double, "MAIFI", PADDR(MAIFI),PT_DESCRIPTION, "Displays annual MAIFI values as per IEEE 1366-2003",
+			PT_double, "MAIFI_int", PADDR(MAIFI_int),PT_DESCRIPTION, "Displays MAIFI values over the period specified by base_time_value as per IEEE 1366-2003",
+			PT_double, "base_time_value[s]", PADDR(stat_base_time_value), PT_DESCRIPTION,"time period over which _int values are claculated",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 			if (gl_publish_function(oclass, "calc_metrics", (FUNCTIONADDR)calc_pfmetrics)==NULL)
 				GL_THROW("Unable to publish metrics calculation function");

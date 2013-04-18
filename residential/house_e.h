@@ -101,10 +101,14 @@ public:
 	
 	// additional reverse etp parameters
 	set include_solar_quadrant;
-	enum {HC_DEFAULT=0, HC_FLAT=1, HC_LINEAR=2, HC_CURVED=3} heating_cop_curve;
-	enum {HP_DEFAULT=0, HP_FLAT=1, HP_LINEAR=2, HP_CURVED=3} heating_cap_curve;
-	enum {CC_DEFAULT=0, CC_FLAT=1, CC_LINEAR=2, CC_CURVED=3} cooling_cop_curve;
-	enum {CP_DEFAULT=0, CP_FLAT=1, CP_LINEAR=2, CP_CURVED=3} cooling_cap_curve;
+	typedef enum {HC_DEFAULT=0, HC_FLAT=1, HC_LINEAR=2, HC_CURVED=3};
+	enumeration heating_cop_curve;
+	typedef enum {HP_DEFAULT=0, HP_FLAT=1, HP_LINEAR=2, HP_CURVED=3};
+	enumeration heating_cap_curve;
+	typedef enum {CC_DEFAULT=0, CC_FLAT=1, CC_LINEAR=2, CC_CURVED=3};
+	enumeration cooling_cop_curve;
+	typedef enum {CP_DEFAULT=0, CP_FLAT=1, CP_LINEAR=2, CP_CURVED=3};
+	enumeration cooling_cap_curve;
 	bool use_latent_heat;
 	bool include_fan_heatgain;
 	double fan_heatgain_fraction;
@@ -140,7 +144,8 @@ public:
 	double dlc_offset;
 
 	// hvac control variable
-	enum {TC_FULL=0, TC_BAND=1, TC_NONE=2} thermostat_control;	///< method of HVAC control
+	typedef enum {TC_FULL=0, TC_BAND=1, TC_NONE=2};
+	enumeration thermostat_control;	///< method of HVAC control
 	double TcoolOn;		///< temperature above which cooling turns on
 	double TcoolOff;	///< temperature below which cooling turns off
 	double TheatOn;		///< temperature below which heating turns on
@@ -237,7 +242,7 @@ public:
 		AT_NONE = 1,
 		AT_ELECTRIC = 2,
 	} AUXILIARYSYSTEMTYPE;
-	AUXILIARYSYSTEMTYPE auxiliary_system_type;
+	enumeration auxiliary_system_type;
 
 	typedef enum{
 		HT_UNKNOWN = 0,
@@ -246,14 +251,14 @@ public:
 		HT_HEAT_PUMP = 3,
 		HT_RESISTANCE = 4,
 	} HEATSYSTEMTYPE;
-	HEATSYSTEMTYPE heating_system_type;
+	enumeration heating_system_type;
 
 	typedef enum {
 		CT_UNKNOWN = 0,
 		CT_NONE = 1,
 		CT_ELECTRIC = 2,
 	} COOLSYSTEMTYPE;
-	COOLSYSTEMTYPE cooling_system_type;
+	enumeration cooling_system_type;
 
 	typedef enum {
 		FT_UNKNOWN = 0,
@@ -261,14 +266,14 @@ public:
 		FT_ONE_SPEED = 2,
 		FT_TWO_SPEED = 3,
 	} FANTYPE;
-	FANTYPE fan_type;
+	enumeration fan_type;
 
 	typedef enum {
 		GM_OTHER = 0,
 		GM_GLASS = 1,
 		GM_LOW_E_GLASS = 2,
 	} GLASSTYPE;
-	GLASSTYPE glass_type;
+	enumeration glass_type;
 
 	typedef enum {
 		WF_NONE = 0,
@@ -277,7 +282,7 @@ public:
 		WF_WOOD = 3,
 		WF_INSULATED = 4,
 	} WINDOWFRAME;
-	WINDOWFRAME window_frame;
+	enumeration window_frame;
 
 	typedef enum {
 		GT_OTHER = 0,
@@ -287,7 +292,7 @@ public:
 		GT_LOW_S = 4,
 		GT_HIGH_S = 5,
 	} GLAZINGTREATMENT;
-	GLAZINGTREATMENT glazing_treatment;
+	enumeration glazing_treatment;
 
 	typedef enum {
 		GL_ONE=1,
@@ -295,7 +300,7 @@ public:
 		GL_THREE=3,
 		GL_OTHER,
 	} GLAZINGLAYERS;
-	GLAZINGLAYERS glazing_layers;
+	enumeration glazing_layers;
 
 	typedef enum {				///< Thermal integrity level is an "easy" to use
 		TI_VERY_LITTLE  =0,		///< parameter, which gives reasonable defaults
@@ -307,14 +312,14 @@ public:
 		TI_VERY_GOOD	=6,
 		TI_UNKNOWN		=7
 	} THERMAL_INTEGRITY;
-	THERMAL_INTEGRITY thermal_integrity_level;
+	enumeration thermal_integrity_level;
 
 	typedef enum {
 		MM_NONE		= 0,		///< Motor model describes the level of detail to be assigned
 		MM_BASIC	= 1,		///< in calculating the efficiency of the hvac motor.  NONE will
 		MM_FULL		= 2			///< indicate that the electrical motor is 100% electrically efficient.
 	} MOTORMODEL;				///< BASIC incorporates shunt losses, while FULL also includes series losses.
-	MOTORMODEL motor_model;
+	enumeration motor_model;
 
 	// Motor variables and enumerations
 	double hvac_motor_efficiency;	///< Actual percent electrical efficiency of hvac motor
@@ -328,7 +333,7 @@ public:
 		ME_GOOD			= 3,
 		ME_VERY_GOOD	= 4,
 	} MOTOREFFICIENCY;
-	MOTOREFFICIENCY motor_efficiency;
+	enumeration motor_efficiency;
 
 	typedef enum {	
 		SM_UNKNOWN	=0,				///< unknown mode
@@ -337,7 +342,7 @@ public:
 		SM_AUX		=3,				///< supplemental heating
 		SM_COOL		=4,				///< cooling mode
 	} SYSTEMMODE;					///< system mode
-	SYSTEMMODE system_mode,			///< system mode at t1
+	enumeration system_mode,			///< system mode at t1
 		last_system_mode;
 	int64 last_mode_timer;
 

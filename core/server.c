@@ -374,10 +374,18 @@ static void http_write(HTTPCNX *http, char *data, size_t len)
 	{
 		/* extend buffer */
 		void *old = http->buffer;
-		http->max = (http->len+len);
+		if (http->len+len < http->max*2)
+		{
+			http->max *= 2;
+		}
+		else
+		{
+			http->max = http->len+len+1;
+		}
 		http->buffer = malloc(http->max);
 		memcpy(http->buffer,old,http->len);
 		free(old);
+		old = NULL;
 	}
 	memcpy(http->buffer+http->len,data,len);
 	http->len += len;

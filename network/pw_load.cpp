@@ -248,7 +248,6 @@ int pw_load::get_powerworld_nomvolt(){
 	double load_bnv = 0.0;
 
 //	gl_output("get_powerworld_nomvolt(): before 1 mw = %f, mva = (%f, %f)", this->pw_load_mw, this->pw_load_mva.Re(), this->pw_load_mva.Im());
-
 	try {
 		ISimulatorAutoPtr SimAuto(cModel->A);
 			
@@ -330,8 +329,10 @@ int pw_load::get_powerworld_nomvolt(){
 	catch (_com_error err) {
 		// @TODO this needs to be a gl_error, but err.ErrorMessage returns a TCHAR*
 		std::cout << "!!! " << err.ErrorMessage() << "\n";
+		gl_verbose("PW_load:get_powerworld_nomvolt.");
 		return 1; // failure
 	}
+	
 	catch(...){
 		gl_error("Unknown excetpion in get_powerworld_nomvolt!");
 		return 1;
@@ -566,7 +567,9 @@ int pw_load::init(OBJECT *parent){
 //	_variant_t plistNames, vlistNames;
 //	LPSAFEARRAY plistArray, vlistArray;
 //	VARIANT *plistNameArray, *vlistNameArray; // slightly inaccurate nomenclature but aiming for consistency
-
+	int nomvolt_value = 0;
+	int busangle_value = 0;
+	int voltage_value = 0;
 	// defer on model object
 	if(0 == parent){
 		char objname[256];
@@ -576,7 +579,6 @@ int pw_load::init(OBJECT *parent){
 		 */
 		return 0;
 	}
-
 	if(!gl_object_isa(parent, "pw_model")){
 		char objname[256], modelname[256];
 		gl_error("pw_load::init(): object \'%s\' specifies a parent object \'%s\' that is not a pw_model object", gl_name(parent, objname, 255), gl_name(parent, modelname, 255));
@@ -585,7 +587,6 @@ int pw_load::init(OBJECT *parent){
 		 */
 		return 0;
 	}
-
 	if((parent->flags & OF_INIT) != OF_INIT){
 		char objname[256];
 		gl_verbose("pw_load::init(): deferring initialization on %s", gl_name(parent, objname, 255));
@@ -603,7 +604,6 @@ int pw_load::init(OBJECT *parent){
 		 */
 		return 0;
 	}
-	
 	if(powerworld_load_id[0] == 0){
 		gl_error("powerworld_load_id must be set");
 		/* TROUBLESHOOT
@@ -611,8 +611,12 @@ int pw_load::init(OBJECT *parent){
 		 */
 		return 0;
 	}
+	nomvolt_value = get_powerworld_nomvolt();
+	printf("PW_load:INIT. get_powerworld_nomvolt() was successful.");
+	busangle_value = get_powerworld_busangle();
+	voltage_value = get_powerworld_voltage();
 
-	if(0 != get_powerworld_nomvolt()){
+	if(nomvolt_value != 0){
 		char objname[256];
 		gl_error("pw_load::init(): unable to get PowerWorld nominal voltage from Bus #%i, for the pw_load \'%s\'", powerworld_bus_num, gl_name(OBJECTHDR(this), objname, 255));
 		/* TROUBLESHOOT
@@ -622,7 +626,7 @@ int pw_load::init(OBJECT *parent){
 		return 0;
 	}
 
-	if(0 != get_powerworld_busangle()){
+	if(busangle_value != 0){
 		char objname[256];
 		gl_error("pw_load::init(): unable to get PowerWorld bus voltage from Bus #%i, Load ID %s, for the pw_load \'%s\'", powerworld_bus_num, powerworld_load_id, gl_name(OBJECTHDR(this), objname, 255));
 		/* TROUBLESHOOT
@@ -631,8 +635,7 @@ int pw_load::init(OBJECT *parent){
 		 */
 		return 0;
 	}
-
-	if(0 != get_powerworld_voltage()){
+	if(voltage_value != 0){
 		char objname[256];
 		gl_error("pw_load::init(): unable to get PowerWorld bus voltage from Bus #%i, Load ID %s, for the pw_load \'%s\'", powerworld_bus_num, powerworld_load_id, gl_name(OBJECTHDR(this), objname, 255));
 		/* TROUBLESHOOT
@@ -641,7 +644,6 @@ int pw_load::init(OBJECT *parent){
 		 */
 		return 0;
 	}
-
 	// got angle & magnitude, calculate complex voltage
 	load_voltage.SetPolar(load_voltage_mag, (bus_volt_angle/180.0*PI),A);
 
@@ -680,7 +682,7 @@ int pw_load::init(OBJECT *parent){
 			*/
 		}
 	}
-
+	gl_verbose("Reached end of pw_load init successfully.");
 	return 1;
 }
 

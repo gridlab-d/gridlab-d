@@ -115,6 +115,38 @@ PROPERTY *class_prop_in_class(CLASS *oclass, PROPERTY *prop)
 	}
 }
 
+#if 0
+/** Get the size of a single instance of a property
+	@return the size in bytes of the a property
+ **/
+uint32 property_size(PROPERTY *prop)
+{
+	if (prop && prop->ptype>_PT_FIRST && prop->ptype<_PT_LAST)
+		return property_type[prop->ptype].size;
+	else
+		return 0;
+}
+
+uint32 property_size_by_type(PROPERTYTYPE type)
+{
+	return property_type[type].size;
+}
+
+int property_create(PROPERTY *prop, void *addr)
+{
+	if (prop && prop->ptype>_PT_FIRST && prop->ptype<_PT_LAST)
+	{
+		if (property_type[prop->ptype].create)
+			return property_type[prop->ptype].create(addr);
+		//memset(addr,0,(prop->size==0?1:prop->size)*property_type[prop->ptype].size);
+		memset(addr,0,property_type[prop->ptype].size);
+		return 1;
+	}
+	else
+		return 0;
+}
+#endif
+
 /* though improbable, this is to prevent more complicated, specifically crafted
 	inheritence loops.  these should be impossible if a class_register call is
 	immediately followed by a class_define_map call. -d3p988 */
@@ -147,7 +179,6 @@ PROPERTY *class_find_property_rec(CLASS *oclass,
 static PROPERTY *find_header_property(CLASS *oclass, 
                                       PROPERTYNAME name)
 {
-	/* @todo */
 	PROPERTY *prop = NULL;
 	return prop;
 }
@@ -1128,7 +1159,14 @@ void class_profiles(void)
 		total+=cl->profiler.clocks;
 		count++;
 	}
+	if(0 == count){
+		return;	// short-circuit
+	}
 	index = (CLASS**)malloc(sizeof(CLASS*)*count);
+	if(0 == index){
+		// error
+		return;
+	}
 	for (cl=first_class; cl!=NULL; cl=cl->next)
 		index[i++]=cl;
 	hits=-1;
@@ -1160,6 +1198,7 @@ void class_profiles(void)
 			break;
 	}
 	free(index);
+	index = NULL;
 	output_profile("================ ======== ======== ========");
 	output_profile("%-16.16s %7.3f %8.1f%% %8.1f\n",
 		"Total", (double)total/CLOCKS_PER_SEC,100.0,1000*(double)total/CLOCKS_PER_SEC/object_get_count());
@@ -1330,3 +1369,5 @@ int class_get_xsd(CLASS *oclass, /**< a pointer to the class to convert to XSD *
 	return (int)n;
 }
 
+
+/**@}**/

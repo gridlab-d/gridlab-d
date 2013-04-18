@@ -30,12 +30,12 @@ triplex_line_conductor::triplex_line_conductor(MODULE *mod) : powerflow_library(
 			oclass->trl = TRL_PROVEN;
 
         if(gl_publish_variable(oclass,
-			PT_double, "resistance[Ohm/mile]",PADDR(resistance),
-			PT_double, "geometric_mean_radius[ft]", PADDR(geometric_mean_radius),
- 			PT_double, "rating.summer.continuous[A]", PADDR(summer.continuous),
-			PT_double, "rating.summer.emergency[A]", PADDR(summer.emergency),
-			PT_double, "rating.winter.continuous[A]", PADDR(winter.continuous),
-			PT_double, "rating.winter.emergency[A]", PADDR(winter.emergency),
+			PT_double, "resistance[Ohm/mile]",PADDR(resistance),PT_DESCRIPTION,"resistance of cable in ohm/mile",
+			PT_double, "geometric_mean_radius[ft]", PADDR(geometric_mean_radius),PT_DESCRIPTION,"geometric mean radius of the cable",
+ 			PT_double, "rating.summer.continuous[A]", PADDR(summer.continuous),PT_DESCRIPTION,"amp ratings for the cable during continuous operation in summer",
+			PT_double, "rating.summer.emergency[A]", PADDR(summer.emergency),PT_DESCRIPTION,"amp ratings for the cable during short term operation in summer",
+			PT_double, "rating.winter.continuous[A]", PADDR(winter.continuous),PT_DESCRIPTION,"amp ratings for the cable during continuous operation in winter",
+			PT_double, "rating.winter.emergency[A]", PADDR(winter.emergency),PT_DESCRIPTION,"amp ratings for the cable during short term operation in winter",
 			NULL) < 1) GL_THROW("unable to publish triplex_line_conductor properties in %s",__FILE__);
 	}   
 }

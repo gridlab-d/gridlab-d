@@ -47,24 +47,28 @@ public:
 		GM_POWER_DRIVEN, 
 		GM_VOLTAGE_CONTROLLED, 
 		GM_POWER_VOLTAGE_HYBRID
-	} gen_mode_v;  //operating mode of the generator 
+	};
+	enumeration gen_mode_v;  //operating mode of the generator
 
 
 	//note battery panel will always operate under the SUPPLY_DRIVEN generator mode
 	enum GENERATOR_STATUS {
 		OFFLINE=1, 
 		ONLINE=2
-	} gen_status_v;
+	};
+	enumeration gen_status_v;
 
 	enum ADDITIONAL_CONTROLS {
 		AC_NONE=0,
 		AC_LINEAR_TEMPERATURE=1
-	} additional_controls;
+	};
+	enumeration additional_controls;
 
 	enum POWER_TYPE {
 		DC=1, 
 		AC=2
-	} power_type_v;
+	};
+	enumeration power_type_v;
 
 	enum RFB_SIZE {
 		SMALL=1, 
@@ -72,7 +76,8 @@ public:
 		MED_HIGH_ENERGY, 
 		LARGE, 
 		HOUSEHOLD
-	} rfb_size_v;
+	};
+	enumeration rfb_size_v;
 
 	enum BATTERY_STATE {
 		BS_WAITING = 0,
@@ -81,7 +86,8 @@ public:
 		BS_FULL = 3,
 		BS_EMPTY = 4,
 		BS_CONFLICTED = 5,
-	} battery_state;
+	};
+	enumeration battery_state;
 
 		
 	complex *pCircuit_V;		//< pointer to the three voltages on three lines
@@ -117,10 +123,8 @@ public:
 
 	//Internal battery model parameters
 	bool use_internal_battery_model;
-	enum BATTERY_TYPE {
-		LI_ION = 1,
-		LEAD_ACID = 2,
-	} battery_type;
+	enum {LI_ION=1, LEAD_ACID};
+	enumeration battery_type;
 	double soc; //state of charge of the battery
 	double bat_load; //current load of the battery
 	double *pSoc;

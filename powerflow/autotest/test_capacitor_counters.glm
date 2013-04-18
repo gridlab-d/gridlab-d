@@ -1,0 +1,198 @@
+// $id$
+//	Copyright (C) 2008 Battelle Memorial Institute
+
+// 4 Node Feeder: Balanced step-up delta-grY
+// Capacitor attached to end load
+// Individual CAP VAR control - delta on a delta
+clock {
+	timezone EST+5EDT;
+	timestamp '2000-01-01 0:00:00';
+	stoptime '2000-01-01 0:00:58';
+}
+#set relax_naming_rules=1
+
+module powerflow {
+	solver_method FBS;
+};
+module tape;
+module assert;
+
+object overhead_line_conductor {
+	name cond100;
+	geometric_mean_radius 0.0244;
+	resistance 0.306;
+}
+
+object overhead_line_conductor {
+	name cond101;
+	geometric_mean_radius 0.00814;
+	resistance 0.592;
+}
+
+object line_spacing {
+	name line_spac200;
+	distance_AB 2.5;
+	distance_BC 4.5;
+	distance_AC 7.0;
+	distance_AN 5.656854;
+	distance_BN 4.272002;
+	distance_CN 5.0;
+}
+
+object line_configuration {
+	name line_conf_300;
+	conductor_A cond100;
+	conductor_B cond100;
+	conductor_C cond100;
+	conductor_N cond101;
+	spacing line_spac200;
+}
+
+object transformer_configuration {
+	name trans_conf400;
+	connect_type DELTA_GWYE;
+	install_type VAULT;
+	power_rating 6000;
+	primary_voltage 12470;
+	secondary_voltage 24900;
+	resistance 0.05;
+	reactance 0.06;
+}
+
+object node {
+	name node1;
+	bustype SWING;
+	phases "ABCD";
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7200;
+}
+
+object overhead_line {
+	phases "ABCD";
+	from node1;
+	to node2;
+	length 2000;
+	configuration line_conf_300;
+}
+
+object node {
+	name node2;
+	phases "ABCD";
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7200;
+}
+
+object transformer {
+	name xformer;
+	phases "ABC";
+	from node2;
+	to node3;
+	configuration trans_conf400;
+}
+
+object node {
+	name node3;
+	phases "ABCN";
+	voltage_A +12450.764+7188.452j;
+	voltage_B +0.000-14376.904j;
+	voltage_C -12450.765+7188.452j;
+	nominal_voltage 14377;	
+}
+
+object overhead_line {
+	name link34;
+	phases "ABCN";
+	from node3;
+	to load4;
+	length 2500;
+	configuration line_conf_300;
+}
+
+object load {
+	phases "ABCN";
+	name load4;
+	voltage_A +12450.764+7188.452j;
+	voltage_B +0.000-14376.904j;
+	voltage_C -12450.765+7188.452j;
+	constant_power_A +0.000+0.0j;
+	constant_power_B +0.000+0.0j;
+	constant_power_C +0.000+0.0j;
+	maximum_voltage_error 0.001;
+	nominal_voltage 14377;
+	object player {
+		parent load4;
+		property constant_power_A;
+		file ../loader_fastA.player;
+	};
+	object player {
+		parent load4;
+		property constant_power_B;
+		file ../loader_fastB.player;
+	};
+	object player {
+		parent load4;
+		property constant_power_C;
+		file ../loader_fastC.player;
+	};
+}
+
+object capacitor {
+	phases ABC;				
+	name CAP2;
+	pt_phase ABC;				
+	parent load4;
+	remote_sense link34;
+	phases_connected ABC;		
+	control VARVOLT;
+	VAr_set_high 60000.0;
+	VAr_set_low 50000.0;
+	voltage_set_low 14260.0;
+	voltage_set_high 14270.0;
+	capacitor_A 10.0 kVAr;
+	capacitor_B 10.0 kVAr;
+	capacitor_C 10.0 kVAr;
+	control_level INDIVIDUAL;
+	switchA OPEN;
+	switchB OPEN;
+	switchC OPEN;
+	time_delay 2.0;
+	lockout_time 3.0;
+	cap_nominal_voltage 14000;
+	nominal_voltage 14377;
+	// object recorder {
+		// property switchA,cap_A_switch_count,switchB,cap_B_switch_count,switchC,cap_C_switch_count;
+		// file "test_powerflow_cap_counters.csv";
+		// interval 1;
+		// limit 129600; 
+	// };	
+	object double_assert {
+		in '2000-01-01 00:00:58';
+		target cap_A_switch_count;
+		status ASSERT_TRUE;
+		once ONCE_TRUE;
+		value 1;
+		within 0.1;
+	};
+	object double_assert {
+		in '2000-01-01 00:00:58';
+		target cap_B_switch_count;
+		status ASSERT_TRUE;
+		once ONCE_TRUE;
+		value 6;
+		within 0.1;
+	};
+	object double_assert {
+		in '2000-01-01 00:00:58';
+		target cap_C_switch_count;
+		status ASSERT_TRUE;
+		once ONCE_TRUE;
+		value 20;
+		within 0.1;
+	};
+}
+
+

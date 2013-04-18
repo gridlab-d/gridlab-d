@@ -24,22 +24,33 @@
 
 #include "kml.h"
 
+FILE *kml = NULL;
+int kml_write(const char *fmt,...)
+{
+	int len;
+	va_list ptr;
+	va_start(ptr,fmt);
+	len = vfprintf(kml,fmt,ptr);
+	va_end(ptr);
+	return len;
+}
+
 int kml_document(FILE *fp)
 {
 	CLASS *oclass, *openclass=NULL;
 	MODULE *mod;
 	char buffer[1024];
 	time_t now = time(NULL);
-	fprintf(fp,"  <Document>\n");
-	fprintf(fp,"    <name>%s</name>\n", global_modelname);
-	fprintf(fp,"    <description>GridLAB-D results for %s</description>\n",
+	kml_write("%s","  <Document>\n");
+	kml_write("    <name>%s</name>\n", global_modelname);
+	kml_write("    <description>GridLAB-D results for %s</description>\n",
 		convert_from_timestamp(global_clock,buffer,sizeof(buffer))?buffer:"unknown date/time");
 
 	/* for each module */
 	for (mod=module_get_first(); mod!=NULL; mod=mod->next)
 	{
 		if (mod->kmldump)
-			mod->kmldump(fp,NULL); /* dump styles */
+			mod->kmldump(kml_write,NULL); /* dump styles */
 	}
 
 	/* scan each class in the model */
@@ -60,65 +71,66 @@ int kml_document(FILE *fp)
 			/* first instance of this class needs folder */
 			else if (openclass==NULL)
 			{
-				fprintf(fp,"  <Folder><name>Class %s</name>\n", oclass->name);
-				fprintf(fp,"    <description>Module %s",oclass->module->name);
+				kml_write("  <Folder><name>Class %s</name>\n", oclass->name);
+				kml_write("    <description>Module %s",oclass->module->name);
 				if (oclass->module->minor!=0 || oclass->module->major!=0)
-					fprintf(fp," (V%d.%02d)",oclass->module->major,oclass->module->minor);
-				fprintf(fp,"</description>\n",oclass->module->name);
+					kml_write(" (V%d.%02d)",oclass->module->major,oclass->module->minor);
+				kml_write("</description>\n",oclass->module->name);
 				openclass=oclass;
 			}			
 
 			/* module overrides KML output */
 			mod = (MODULE*)(obj->oclass->module);
 			if (mod->kmldump!=NULL)
-				(*(mod->kmldump))(fp,obj);
+				(*(mod->kmldump))(kml_write,obj);
 			else if (has_location)
 			{
 				/* basic KML output of published variables */
 				PROPERTY *prop;
-				fprintf(fp,"    <Placemark>\n");
+				kml_write("    <Placemark>\n");
 				if (obj->name)
-					fprintf(fp,"      <name>%s</name>\n", obj->name);
+					kml_write("      <name>%s</name>\n", obj->name);
 				else
-					fprintf(fp,"      <name>%s %d</name>\n", obj->oclass->name, obj->id);
-				fprintf(fp,"      <description>\n");
-				fprintf(fp,"        <![CDATA[\n");
-				fprintf(fp,"          <TABLE><TR>\n");
+					kml_write("      <name>%s %d</name>\n", obj->oclass->name, obj->id);
+				kml_write("      <description>\n");
+				kml_write("        <![CDATA[\n");
+				kml_write("          <TABLE><TR>\n");
 				for (prop=oclass->pmap;prop!=NULL && prop->oclass==oclass; prop=prop->next)
 				{
 					char *value = object_property_to_string(obj,prop->name, buffer, 1023);
 					if (value!=NULL)
-						fprintf(fp,"<TR><TH ALIGN=LEFT>%s</TH><TD ALIGN=RIGHT>%s</TD></TR>",
+						kml_write("<TR><TH ALIGN=LEFT>%s</TH><TD ALIGN=RIGHT>%s</TD></TR>",
 							prop->name, value);
 				}
-				fprintf(fp,"          </TR></TABLE>\n");
-				fprintf(fp,"        ]]>\n");
-				fprintf(fp,"      </description>\n");
-				fprintf(fp,"      <Point>\n");
-				fprintf(fp,"        <coordinates>%f,%f</coordinates>\n",obj->longitude,obj->latitude);
-				fprintf(fp,"      </Point>\n");
-				fprintf(fp,"    </Placemark>\n");
+				kml_write("          </TR></TABLE>\n");
+				kml_write("        ]]>\n");
+				kml_write("      </description>\n");
+				kml_write("      <Point>\n");
+				kml_write("        <coordinates>%f,%f</coordinates>\n",obj->longitude,obj->latitude);
+				kml_write("      </Point>\n");
+				kml_write("    </Placemark>\n");
 			}
 		}
 
 		/* close folder if any */
 		if (openclass!=NULL)
 		{
-			fprintf(fp,"  </Folder>\n");
+			kml_write("  </Folder>\n");
 			openclass=NULL;
 		}
 	}
 
-	fprintf(fp,"  </Document>\n");
+	kml_write("  </Document>\n");
 	return 0;
 }
 
 int kml_output(FILE *fp)
 {
-	fprintf(fp,"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-	fprintf(fp,"<kml xmlns=\"http://earth.google.com/kml/2.2\">\n");
+	kml = fp;
+	kml_write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+	kml_write("<kml xmlns=\"http://earth.google.com/kml/2.2\">\n");
 	kml_document(fp);
-	fprintf(fp,"</kml>\n");
+	kml_write("</kml>\n");
 	return 0;
 }
 

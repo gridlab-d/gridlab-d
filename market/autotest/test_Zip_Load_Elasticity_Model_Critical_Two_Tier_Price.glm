@@ -10,6 +10,7 @@
 #set relax_naming_rules=1;
 #set minimum_timestep=30;
 #include "../appliance_schedules.glm";
+#include "../TOU_Pricing_2Tier_OnlyCritical.glm";
 
 module market;
 module tape;
@@ -45,6 +46,7 @@ object stubauction {
 	
     object player {
         property next.P;
+		rank 8; 
         file ../TOU_Pricing_2Tier_OnlyCritical.player;
         loop 1;
     };        
@@ -143,7 +145,7 @@ object house {
 				  critical_day 1;
 				  two_tier_cpp true;
 				  
-				  daily_elasticity 0.00;
+				  daily_elasticity -0.042;
 				  sub_elasticity_first_third -0.111;
 				  
 				  linearize_elasticity true;
@@ -170,7 +172,7 @@ object house {
 				  object player{
 				rank 3; 
 					property value;
-					file ../Elasticity_Multiplier_Two_Tier_Price.player;
+				file ../Elasticity_Multiplier_Critical_With_Two_TierCPP.player;
 		   
 				 };
 			};

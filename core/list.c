@@ -41,6 +41,7 @@ static void destroy_item(LISTITEM *item) /**< a pointer to the LISTITEM structur
 	if (item->next!=NULL) 
 		item->next->prev = item->prev;
 	free(item);
+	item = NULL;
 }
 
 /** Create a new list

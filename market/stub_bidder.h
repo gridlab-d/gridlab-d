@@ -23,7 +23,7 @@ public:
 		BUYER=0, 
 		SELLER=1,
 	} ROLE;
-	ROLE role;
+	enumeration role;
 	double price;
 	double quantity;
 	int64 *thismkt_id;

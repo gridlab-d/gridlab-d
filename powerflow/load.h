@@ -31,10 +31,13 @@ public:
 	double current_fraction[3];
 	bool three_phase_protect;
 
-	enum {LC_UNKNOWN=0, LC_RESIDENTIAL, LC_COMMERCIAL, LC_INDUSTRIAL, LC_AGRICULTURAL} load_class;
+	enum {LC_UNKNOWN=0, LC_RESIDENTIAL, LC_COMMERCIAL, LC_INDUSTRIAL, LC_AGRICULTURAL};
+	enumeration load_class;
 
 	int create(void);
 	int init(OBJECT *parent);
+	
+	void load_update_fxn(bool fault_mode);
 
 	load(MODULE *mod);
 	TIMESTAMP sync(TIMESTAMP t0);

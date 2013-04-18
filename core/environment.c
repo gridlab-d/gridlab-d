@@ -25,8 +25,6 @@
 #include "xcore.h"
 #include "gui.h"
 
-#include "server.h"
-
 /** Starts the environment selected by the global_environment variable
  **/
 STATUS environment_start(int argc, /**< the number of arguments to pass to the environment */

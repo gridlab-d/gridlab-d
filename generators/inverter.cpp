@@ -39,30 +39,30 @@ inverter::inverter(MODULE *module)
 		if (gl_publish_variable(oclass,
 
 			PT_enumeration,"inverter_type",PADDR(inverter_type_v),
-				PT_KEYWORD,"TWO_PULSE",TWO_PULSE,
-				PT_KEYWORD,"SIX_PULSE",SIX_PULSE,
-				PT_KEYWORD,"TWELVE_PULSE",TWELVE_PULSE,
-				PT_KEYWORD,"PWM",PWM,
-				PT_KEYWORD,"FOUR_QUADRANT",FOUR_QUADRANT,
+				PT_KEYWORD,"TWO_PULSE",(enumeration)TWO_PULSE,
+				PT_KEYWORD,"SIX_PULSE",(enumeration)SIX_PULSE,
+				PT_KEYWORD,"TWELVE_PULSE",(enumeration)TWELVE_PULSE,
+				PT_KEYWORD,"PWM",(enumeration)PWM,
+				PT_KEYWORD,"FOUR_QUADRANT",(enumeration)FOUR_QUADRANT,
 
 			PT_enumeration,"four_quadrant_control_mode",PADDR(four_quadrant_control_mode),
-				PT_KEYWORD,"NONE",FQM_NONE,
-				PT_KEYWORD,"CONSTANT_PQ",FQM_CONSTANT_PQ,
-				PT_KEYWORD,"CONSTANT_PF",FQM_CONSTANT_PF,
+				PT_KEYWORD,"NONE",(enumeration)FQM_NONE,
+				PT_KEYWORD,"CONSTANT_PQ",(enumeration)FQM_CONSTANT_PQ,
+				PT_KEYWORD,"CONSTANT_PF",(enumeration)FQM_CONSTANT_PF,
 				//PT_KEYWORD,"CONSTANT_V",FQM_CONSTANT_V,	//Not implemented yet
 				//PT_KEYWORD,"VOLT_VAR",FQM_VOLT_VAR,
-				PT_KEYWORD,"LOAD_FOLLOWING",FQM_LOAD_FOLLOWING,
+				PT_KEYWORD,"LOAD_FOLLOWING",(enumeration)FQM_LOAD_FOLLOWING,
 
 			PT_enumeration,"generator_status",PADDR(gen_status_v),
-				PT_KEYWORD,"OFFLINE",OFFLINE,
-				PT_KEYWORD,"ONLINE",ONLINE,	
+				PT_KEYWORD,"OFFLINE",(enumeration)OFFLINE,
+				PT_KEYWORD,"ONLINE",(enumeration)ONLINE,	
 
 			PT_enumeration,"generator_mode",PADDR(gen_mode_v),
 				PT_KEYWORD,"UNKNOWN",UNKNOWN,
-				PT_KEYWORD,"CONSTANT_V",CONSTANT_V,
-				PT_KEYWORD,"CONSTANT_PQ",CONSTANT_PQ,
-				PT_KEYWORD,"CONSTANT_PF",CONSTANT_PF,
-				PT_KEYWORD,"SUPPLY_DRIVEN",SUPPLY_DRIVEN,
+				PT_KEYWORD,"CONSTANT_V",(enumeration)CONSTANT_V,
+				PT_KEYWORD,"CONSTANT_PQ",(enumeration)CONSTANT_PQ,
+				PT_KEYWORD,"CONSTANT_PF",(enumeration)CONSTANT_PF,
+				PT_KEYWORD,"SUPPLY_DRIVEN",(enumeration)SUPPLY_DRIVEN,
 
 			PT_complex, "V_In[V]",PADDR(V_In),
 			PT_complex, "I_In[A]",PADDR(I_In),
@@ -179,8 +179,8 @@ int inverter::create(void)
 	last_power[0] = last_power[1] = last_power[2] = last_power[3] = 0.0;
 
 	switch_type_choice = IDEAL_SWITCH;
-	filter_type_v = BAND_PASS;
-	filter_imp_v = IDEAL_FILTER;
+	filter_type_v = (enumeration)BAND_PASS;
+	filter_imp_v = (enumeration)IDEAL_FILTER;
 	power_in = DC;
 	power_out = AC;
 
@@ -420,17 +420,17 @@ int inverter::init(OBJECT *parent)
 	if (gen_mode_v == UNKNOWN)
 	{
 		gl_warning("Inverter control mode is not specified! Using default: CONSTANT_PF");
-		gen_mode_v = CONSTANT_PF;
+		gen_mode_v = (enumeration)CONSTANT_PF;
 	}
 	if (gen_status_v == UNKNOWN)
 	{
 		gl_warning("Inverter status is unknown! Using default: ONLINE");
-		gen_status_v = ONLINE;
+		gen_status_v = (enumeration)ONLINE;
 	}
 	if (inverter_type_v == UNKNOWN)
 	{
 		gl_warning("Inverter type is unknown! Using default: PWM");
-		inverter_type_v = PWM;
+		inverter_type_v = (enumeration)PWM;
 	}
 			
 			//need to check for parameters SWITCH_TYPE, FILTER_TYPE, FILTER_IMPLEMENTATION, GENERATOR_MODE

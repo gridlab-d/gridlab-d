@@ -97,11 +97,11 @@ meter::meter(MODULE *mod) : node(mod)
 			PT_double, "monthly_fee[$]", PADDR(monthly_fee),PT_DESCRIPTION,"Once a month flat fee for customer hook-up",
 			PT_double, "monthly_energy[kWh]", PADDR(monthly_energy),PT_DESCRIPTION,"Accumulator for the current month's energy consumption",
 			PT_enumeration, "bill_mode", PADDR(bill_mode),PT_DESCRIPTION,"Billing structure desired",
-				PT_KEYWORD,"NONE",BM_NONE,
-				PT_KEYWORD,"UNIFORM",BM_UNIFORM,
-				PT_KEYWORD,"TIERED",BM_TIERED,
-				PT_KEYWORD,"HOURLY",BM_HOURLY,
-				PT_KEYWORD,"TIERED_RTP",BM_TIERED_RTP,
+				PT_KEYWORD,"NONE",(enumeration)BM_NONE,
+				PT_KEYWORD,"UNIFORM",(enumeration)BM_UNIFORM,
+				PT_KEYWORD,"TIERED",(enumeration)BM_TIERED,
+				PT_KEYWORD,"HOURLY",(enumeration)BM_HOURLY,
+				PT_KEYWORD,"TIERED_RTP",(enumeration)BM_TIERED_RTP,
 			PT_object, "power_market", PADDR(power_market),PT_DESCRIPTION,"Market (auction object) where the price is being received from",
 			PT_int32, "bill_day", PADDR(bill_day),PT_DESCRIPTION,"day of month bill is to be processed (currently limited to days 1-28)",
 			PT_double, "price[$/kWh]", PADDR(price),PT_DESCRIPTION,"current price of electricity",
@@ -119,6 +119,14 @@ meter::meter(MODULE *mod) : node(mod)
 		// publish meter reset function
 		if (gl_publish_function(oclass,"reset",(FUNCTIONADDR)meter_reset)==NULL)
 			GL_THROW("unable to publish meter_reset function in %s",__FILE__);
+
+		//Publish deltamode functions
+		if (gl_publish_function(oclass,	"delta_linkage_node", (FUNCTIONADDR)delta_linkage)==NULL)
+			GL_THROW("Unable to publish meter delta_linkage function");
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_node)==NULL)
+			GL_THROW("Unable to publish meter deltamode function");
+		if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
+			GL_THROW("Unable to publish meter deltamode function");
 		}
 }
 
@@ -171,6 +179,9 @@ int meter::create()
 	last_tier_price[2] = 0;
 	last_price_base = 0;
 	meter_power_consumption = complex(0,0);
+
+	//Flag us as a meter
+	node_type = METER_NODE;
 
 	meter_NR_servered = false;	//Assume we are just a normal meter at first
 

@@ -37,11 +37,11 @@ relay::relay(MODULE *mod) : link_object(mod)
 
         if(gl_publish_variable(oclass,
 			PT_INHERIT, "link",
-			PT_double, "time_to_change[s]", PADDR(time_to_change),
-			PT_double, "recloser_delay[s]", PADDR(recloser_delay),
-			PT_int16, "recloser_tries", PADDR(recloser_tries),
-			PT_int16, "recloser_limit", PADDR(recloser_limit),
-			PT_bool, "recloser_event", PADDR(recloser_event),
+			PT_double, "time_to_change[s]", PADDR(time_to_change),PT_DESCRIPTION,"time for state to change",
+			PT_double, "recloser_delay[s]", PADDR(recloser_delay),PT_DESCRIPTION,"time delay before reclose (s)",
+			PT_int16, "recloser_tries", PADDR(recloser_tries),PT_DESCRIPTION,"number of times recloser has tried",
+			PT_int16, "recloser_limit", PADDR(recloser_limit),PT_DESCRIPTION,"maximum number of recloser tries",
+			PT_bool, "recloser_event", PADDR(recloser_event),PT_DESCRIPTION,"Flag for if we are in a reliabilty relay event or not",
             NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
 }

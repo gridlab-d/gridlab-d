@@ -190,6 +190,13 @@ TryAgain:
 	return u;
 
 }
+double randunit_pos(unsigned int *state)
+{
+	double ur = 0.0;
+	while (ur<=0)
+		ur = randunit(state);
+	return ur;
+}
 
 /** Generate the same number always.  This is the Dirac delta function:
 
@@ -486,7 +493,7 @@ double random_gamma(unsigned int *state, /**< the rng state */
 		unsigned int i;
 		double prod = 1;
 		for (i=0; i<na; i++)
-			prod *= randunit(state);
+			prod *= randunit_pos(state);
 		return -beta * log(prod);
 	}
 	else if (na<1) /* a is small */
@@ -495,7 +502,7 @@ double random_gamma(unsigned int *state, /**< the rng state */
 		p = E/(alpha+E);
 		do {
 			u = randunit(state);
-			v = randunit(state);
+			v = randunit_pos(state);
 			if (u<p)
 			{
 				x = exp((1/alpha)*log(v));
@@ -914,6 +921,7 @@ int random_test(void)
 	errorcount+=report(NULL,0,0,0.01);
 	errorcount+=report("Mean",mean(sample,count),exp(a+b*b/2),0.01);
 	errorcount+=report("Stdev",stdev(sample,count),sqrt((exp(b*b)-1)*exp(2*a+b*b)),0.1);
+	errorcount+=report("Min",min(sample,count),0,0.1);
 	if (preverrors==errorcount)	ok++; else failed++;
 	preverrors=errorcount;
 

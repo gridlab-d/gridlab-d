@@ -118,12 +118,12 @@ controller2::controller2(MODULE *mod){
 			PT_double,"output_setpoint",PADDR(output_setpoint),
 			// enums
 			PT_enumeration,"control_mode",PADDR(control_mode),PT_DESCRIPTION,"the control mode to use for determining controller action",
-				PT_KEYWORD,"NONE",CM_NONE,
-				PT_KEYWORD,"RAMP",CM_RAMP,
-				PT_KEYWORD,"CND",CM_CND,
-				PT_KEYWORD,"DUTYCYCLE",CM_DUTYCYCLE,
-				PT_KEYWORD,"THIRD",CM_THIRD,
-				PT_KEYWORD,"PROBOFF",CM_PROBOFF,
+				PT_KEYWORD,"NONE",(enumeration)CM_NONE,
+				PT_KEYWORD,"RAMP",(enumeration)CM_RAMP,
+				PT_KEYWORD,"CND",(enumeration)CM_CND,
+				PT_KEYWORD,"DUTYCYCLE",(enumeration)CM_DUTYCYCLE,
+				PT_KEYWORD,"THIRD",(enumeration)CM_THIRD,
+				PT_KEYWORD,"PROBOFF",(enumeration)CM_PROBOFF,
 			NULL) < 1)
 		{
 				GL_THROW("unable to publish properties in %s",__FILE__);

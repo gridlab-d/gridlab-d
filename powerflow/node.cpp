@@ -97,9 +97,9 @@ node::node(MODULE *mod) : powerflow_object(mod)
 		if(gl_publish_variable(oclass,
 			PT_INHERIT, "powerflow_object",
 			PT_enumeration, "bustype", PADDR(bustype),PT_DESCRIPTION,"defines whether the node is a PQ, PV, or SWING node",
-				PT_KEYWORD, "PQ", PQ,
-				PT_KEYWORD, "PV", PV,
-				PT_KEYWORD, "SWING", SWING,
+				PT_KEYWORD, "PQ", (enumeration)PQ,
+				PT_KEYWORD, "PV", (enumeration)PV,
+				PT_KEYWORD, "SWING", (enumeration)SWING,
 			PT_set, "busflags", PADDR(busflags),PT_DESCRIPTION,"flag indicates node has a source for voltage, i.e. connects to the swing node",
 				PT_KEYWORD, "HASSOURCE", (set)NF_HASSOURCE,
 			PT_object, "reference_bus", PADDR(reference_bus),PT_DESCRIPTION,"reference bus from which frequency is defined",
@@ -124,14 +124,22 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			PT_double, "mean_repair_time[s]",PADDR(mean_repair_time), PT_DESCRIPTION, "Time after a fault clears for the object to be back in service",
 
 			PT_enumeration, "service_status", PADDR(service_status),PT_DESCRIPTION,"In and out of service flag",
-				PT_KEYWORD, "IN_SERVICE", ND_IN_SERVICE,
-				PT_KEYWORD, "OUT_OF_SERVICE", ND_OUT_OF_SERVICE,
+				PT_KEYWORD, "IN_SERVICE", (enumeration)ND_IN_SERVICE,
+				PT_KEYWORD, "OUT_OF_SERVICE", (enumeration)ND_OUT_OF_SERVICE,
 			PT_double, "service_status_double", PADDR(service_status_dbl),PT_DESCRIPTION,"In and out of service flag - type double - will indiscriminately override service_status - useful for schedules",
 			PT_double, "previous_uptime[min]", PADDR(previous_uptime),PT_DESCRIPTION,"Previous time between disconnects of node in minutes",
 			PT_double, "current_uptime[min]", PADDR(current_uptime),PT_DESCRIPTION,"Current time since last disconnect of node in minutes",
 
 			PT_object, "topological_parent", PADDR(TopologicalParent),PT_DESCRIPTION,"topological parent as per GLM configuration",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+
+			if (gl_publish_function(oclass,	"delta_linkage_node", (FUNCTIONADDR)delta_linkage)==NULL)
+				GL_THROW("Unable to publish node delta_linkage function");
+			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_node)==NULL)
+				GL_THROW("Unable to publish node deltamode function");
+			if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
+				GL_THROW("Unable to publish node deltamode function");
+    
 	}
 }
 
@@ -185,6 +193,10 @@ int node::create(void)
 	previous_uptime = -1.0;		///< Flags as not initialized
 	current_uptime = -1.0;		///< Flags as not initialized
 
+	full_Y = NULL;		//Not used by default
+	full_Y_all = NULL;	//Not used by default
+	DynVariable = NULL;	//Not used by default
+
 	memset(voltage,0,sizeof(voltage));
 	memset(voltaged,0,sizeof(voltaged));
 	memset(current,0,sizeof(current));
@@ -193,7 +205,7 @@ int node::create(void)
 
 	prev_voltage_value = NULL;	//NULL the pointer, just for the sake of doing so
 	prev_power_value = NULL;	//NULL the pointer, again just for the sake of doing so
-
+	node_type = NORMAL_NODE;	//Assume we're nothing special by default
 	current_accumulated = false;
 
 	return result;
@@ -398,7 +410,7 @@ int node::init(OBJECT *parent)
 							
 							parNode->SubNode = DIFF_PARENT;
 							parNode->SubNodeParent = obj;	//This may get overwritten if we have multiple children, so try not to use it anywhere mission critical.
-						parNode->NR_number_child_nodes[0]++;	//Increment the counter of child nodes - we'll alloc and link them later
+							parNode->NR_number_child_nodes[0]++;	//Increment the counter of child nodes - we'll alloc and link them later
 
 							//Update the pointer to our parent's NR pointer (so links can go there appropriately)
 							NR_subnode_reference = &(parNode->NR_node_reference);
@@ -740,7 +752,6 @@ int node::init(OBJECT *parent)
 		GL_THROW("unsupported solver method");
 		/*Defined below*/
 
-
 	/* initialize the powerflow base object */
 	int result = powerflow_object::init(parent);
 
@@ -911,6 +922,20 @@ int node::init(OBJECT *parent)
 	//Initialize uptime variables
 	last_disconnect = gl_globalclock;	//Set to current clock
 
+	//Deltamode checks - init, so no locking yet
+	if (deltamode_inclusive)
+	{
+		//Increment the counter for allocation
+		pwr_object_count++;
+
+		//If we're SWING, map the variable for the extra function as well
+		if (bustype == SWING)
+		{
+			//Assign the function variable for deltamode
+			deltamode_extra_function = (int64)(&(delta_extra_function));
+		}
+	}
+
 	return result;
 }
 
@@ -991,6 +1016,19 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			of a link object should be nearest the SWING node, or the node with the most phases - this error check
 			will be updated in future versions.
 			*/
+		}
+
+		//Deltamode check - let every object do it, for giggles
+		if (enable_subsecond_models == true)
+		{
+			if (solver_method != SM_NR)
+			{
+				GL_THROW("deltamode simulations only support powerflow in Newton-Raphson (NR) mode at this time");
+				/*  TROUBLESHOOT
+				deltamode and dynamics simulations will only work with the powerflow module in Newton-Raphson mode.
+				Please swap to that solver and try again.
+				*/
+			}
 		}
 
 		//Special FBS code
@@ -1128,6 +1166,67 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			}
 			NR_curr_branch = 0;	//Pull pointer off flag so other objects know it's built
 
+			//Allocate deltamode stuff as well
+			if (enable_subsecond_models==true)	//If enabled in powerflow, swing bus rules them all
+			{
+				//Make sure no one else has done it yet
+				if ((pwr_object_current == -1) || (delta_objects==NULL))
+				{
+					//Allocate the deltamode object array
+					delta_objects = (OBJECT**)gl_malloc(pwr_object_count*sizeof(OBJECT*));
+
+					//Make sure it worked
+					if (delta_objects == NULL)
+					{
+						GL_THROW("Failed to allocate deltamode objects array for powerflow module!");
+						/*  TROUBLESHOOT
+						While attempting to create a reference array for powerflow module deltamode-enabled
+						objects, an error was encountered.  Please try again.  If the error persists, please
+						submit your code and a bug report via the trac website.
+						*/
+					}
+
+					//Allocate the function reference list as well
+					delta_functions = (FUNCTIONADDR*)gl_malloc(pwr_object_count*sizeof(FUNCTIONADDR));
+
+					//Make sure it worked
+					if (delta_functions == NULL)
+					{
+						GL_THROW("Failed to allocate deltamode objects function array for powerflow module!");
+						/*  TROUBLESHOOT
+						While attempting to create a reference array for powerflow module deltamode-enabled
+						objects, an error was encountered.  Please try again.  If the error persists, please
+						submit your code and a bug report via the trac website.
+						*/
+					}
+
+					//Allocate "frequency" function references
+					delta_freq_functions = (FUNCTIONADDR*)gl_malloc(pwr_object_count*sizeof(FUNCTIONADDR));
+
+					//Make sure it worked
+					if (delta_freq_functions == NULL)
+					{
+						GL_THROW("Failed to allocate deltamode objects function array for powerflow module!");
+						//Defined above
+					}
+
+					//Initialize index
+					pwr_object_current = 0;
+				}
+
+				//See if we are the swing bus AND our flag is enabled, otherwise warn
+				if ((bustype==SWING) && (deltamode_inclusive == false))
+				{
+					gl_warning("SWING bus:%s is not flagged for deltamode",obj->name);
+					/*  TROUBLESHOOT
+					Deltamode is enabled for the overall powerflow module, but not for the SWING node
+					of the powerflow.  This means the overall powerflow is not being calculated or included
+					in any deltamode calculations.  If this is not a desired run method, please enable the
+					deltamode_inclusive flag on the SWING node.
+					*/
+				}
+			}
+
 			//Unlock the swing bus
 			if ( NR_swing_bus!=obj) WRITEUNLOCK_OBJECT(NR_swing_bus);
 
@@ -1169,6 +1268,62 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 		if ((SubNode==PARENT) && (house_present==true))
 		{
 			nom_res_curr[0] = nom_res_curr[1] = nom_res_curr[2] = 0.0;
+		}
+
+		//Populate individual object references into deltamode, if needed
+		if ((deltamode_inclusive==true) && (enable_subsecond_models == true) && (prev_NTime==0))
+		{
+			int temp_pwr_object_current;
+
+			//Check limits first
+			if (pwr_object_current>=pwr_object_count)
+			{
+				GL_THROW("Too many objects tried to populate deltamode objects array in the powerflow module!");
+				/*  TROUBLESHOOT
+				While attempting to populate a reference array of deltamode-enabled objects for the powerflow
+				module, an attempt was made to write beyond the allocated array space.  Please try again.  If the
+				error persists, please submit a bug report and your code via the trac website.
+				*/
+			}
+
+			//Lock the SWING bus and get us a value
+			if ( NR_swing_bus!=obj) WRITELOCK_OBJECT(NR_swing_bus);	//Lock Swing for flag
+
+				//Get the value
+				temp_pwr_object_current = pwr_object_current;
+
+				//Increment
+				pwr_object_current++;
+
+			//Unlock
+			if ( NR_swing_bus!=obj) WRITEUNLOCK_OBJECT(NR_swing_bus);	//Lock Swing for flag
+
+			//Add us into the list
+			delta_objects[temp_pwr_object_current] = obj;
+
+			//Map up the function
+			delta_functions[temp_pwr_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"interupdate_pwr_object"));
+
+			//Make sure it worked
+			if (delta_functions[temp_pwr_object_current] == NULL)
+			{
+				GL_THROW("Failure to map deltamode function for device:%s",obj->name);
+				/*  TROUBLESHOOT
+				Attempts to map up the interupdate function of a specific device failed.  Please try again and ensure
+				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
+				trac website.
+				*/
+			}
+
+			//Map up the frequency function
+			delta_freq_functions[temp_pwr_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"delta_freq_pwr_object"));
+
+			//Make sure it worked
+			if (delta_freq_functions[temp_pwr_object_current] == NULL)
+			{
+				GL_THROW("Failure to map deltamode function for devices:%s",obj->name);
+				//Defined above
+			}
 		}
 	}//end solver_NR call
 	else if (solver_method==SM_FBS)
@@ -1674,8 +1829,27 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 				if (NR_cycle==false)	//Solving pass
 				{
 					bool bad_computation=false;
+					NRSOLVERMODE powerflow_type;
+					
+					//Depending on operation mode, call solver appropriately
+					if (deltamode_inclusive)	//Dynamics mode, solve the static in a way that generators are handled right
+					{
+						if (NR_dyn_first_run==true)	//If it is the first run, perform the initialization powerflow
+						{
+							powerflow_type = PF_DYNINIT;
+							NR_dyn_first_run = false;	//Deflag us for future powerflow solutions
+						}
+						else	//After first run - call the "dynamic" version of the powerflow solver (SWING bus different)
+						{
+							powerflow_type = PF_DYNCALC;
+						}
+					}//End deltamode
+					else	//Normal mode
+					{
+						powerflow_type = PF_NORMAL;
+					}
 
-					int64 result = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &bad_computation);
+					int64 result = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &NR_powerflow, powerflow_type, &bad_computation);
 
 					//De-flag the change - no contention should occur
 					NR_admit_change = false;
@@ -1733,7 +1907,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		GL_THROW("unsupported solver method");
 		/*	TROUBLESHOOT
 		An invalid powerflow solver was specified.  Currently acceptable values are FBS for forward-back
-		sweep (Kersting's method), GS for Gauss-Seidel, and NR for Newton-Raphson.
+		sweep (Kersting's method) and NR for Newton-Raphson.
 		*/
 		break;
 	}
@@ -1891,39 +2065,39 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 	return RetValue;
 }
 
-int node::kmldump(FILE *fp)
+int node::kmldump(int (*stream)(const char*,...))
 {
 	OBJECT *obj = OBJECTHDR(this);
 	if (isnan(obj->latitude) || isnan(obj->longitude))
 		return 0;
-	fprintf(fp,"<Placemark>\n");
+	stream("<Placemark>\n");
 	if (obj->name)
-		fprintf(fp,"<name>%s</name>\n", obj->name, obj->oclass->name, obj->id);
+		stream("<name>%s</name>\n", obj->name, obj->oclass->name, obj->id);
 	else
-		fprintf(fp,"<name>%s %d</name>\n", obj->oclass->name, obj->id);
-	fprintf(fp,"<description>\n");
-	fprintf(fp,"<![CDATA[\n");
-	fprintf(fp,"<TABLE>\n");
-	fprintf(fp,"<TR><TD WIDTH=\"25%\">%s&nbsp;%d<HR></TD><TH WIDTH=\"25%\" ALIGN=CENTER>Phase A<HR></TH><TH WIDTH=\"25%\" ALIGN=CENTER>Phase B<HR></TH><TH WIDTH=\"25%\" ALIGN=CENTER>Phase C<HR></TH></TR>\n", obj->oclass->name, obj->id);
+		stream("<name>%s %d</name>\n", obj->oclass->name, obj->id);
+	stream("<description>\n");
+	stream("<![CDATA[\n");
+	stream("<TABLE>\n");
+	stream("<TR><TD WIDTH=\"25%\">%s&nbsp;%d<HR></TD><TH WIDTH=\"25%\" ALIGN=CENTER>Phase A<HR></TH><TH WIDTH=\"25%\" ALIGN=CENTER>Phase B<HR></TH><TH WIDTH=\"25%\" ALIGN=CENTER>Phase C<HR></TH></TR>\n", obj->oclass->name, obj->id);
 
 	// voltages
-	fprintf(fp,"<TR><TH ALIGN=LEFT>Voltage</TH>");
+	stream("<TR><TH ALIGN=LEFT>Voltage</TH>");
 	double vscale = primary_voltage_ratio*sqrt((double) 3.0)/(double) 1000.0;
 	if (has_phase(PHASE_A))
-		fprintf(fp,"<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">%.3f&nbsp;kV&nbsp;&nbsp;<BR>%.3f&nbsp;deg&nbsp;</TD>",
+		stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">%.3f&nbsp;kV&nbsp;&nbsp;<BR>%.3f&nbsp;deg&nbsp;</TD>",
 			voltageA.Mag()*vscale,voltageA.Arg()*180/3.1416);
 	else
-		fprintf(fp,"<TD></TD>");
+		stream("<TD></TD>");
 	if (has_phase(PHASE_B))
-		fprintf(fp,"<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">%.3f&nbsp;kV&nbsp;&nbsp;<BR>%.3f&nbsp;deg&nbsp;</TD>",
+		stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">%.3f&nbsp;kV&nbsp;&nbsp;<BR>%.3f&nbsp;deg&nbsp;</TD>",
 			voltageB.Mag()*vscale,voltageB.Arg()*180/3.1416);
 	else
-		fprintf(fp,"<TD></TD>");
+		stream("<TD></TD>");
 	if (has_phase(PHASE_C))
-		fprintf(fp,"<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">%.3f&nbsp;kV&nbsp;&nbsp;<BR>%.3f&nbsp;deg&nbsp;</TD>",
+		stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">%.3f&nbsp;kV&nbsp;&nbsp;<BR>%.3f&nbsp;deg&nbsp;</TD>",
 			voltageC.Mag()*vscale,voltageC.Arg()*180/3.1416);
 	else
-		fprintf(fp,"<TD></TD>");
+		stream("<TD></TD>");
 
 	// supply
 	/// @todo complete KML implement of supply (ticket #133)
@@ -1932,40 +2106,40 @@ int node::kmldump(FILE *fp)
 	if (gl_object_isa(obj,"load"))
 	{
 		load *pLoad = OBJECTDATA(obj,load);
-		fprintf(fp,"<TR><TH ALIGN=LEFT>Load</TH>");
+		stream("<TR><TH ALIGN=LEFT>Load</TH>");
 		if (has_phase(PHASE_A))
 		{
 			complex load_A = ~voltageA*pLoad->constant_current[0] + pLoad->powerA;
-			fprintf(fp,"<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">%.3f&nbsp;kW&nbsp;&nbsp;<BR>%.3f&nbsp;kVAR</TD>",
+			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">%.3f&nbsp;kW&nbsp;&nbsp;<BR>%.3f&nbsp;kVAR</TD>",
 				load_A.Re(),load_A.Im());
 		}
 		else
-			fprintf(fp,"<TD></TD>");
+			stream("<TD></TD>");
 		if (has_phase(PHASE_B))
 		{
 			complex load_B = ~voltageB*pLoad->constant_current[1] + pLoad->powerB;
-			fprintf(fp,"<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">%.3f&nbsp;kW&nbsp;&nbsp;<BR>%.3f&nbsp;kVAR</TD>",
+			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">%.3f&nbsp;kW&nbsp;&nbsp;<BR>%.3f&nbsp;kVAR</TD>",
 				load_B.Re(),load_B.Im());
 		}
 		else
-			fprintf(fp,"<TD></TD>");
+			stream("<TD></TD>");
 		if (has_phase(PHASE_C))
 		{
 			complex load_C = ~voltageC*pLoad->constant_current[2] + pLoad->powerC;
-			fprintf(fp,"<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">%.3f&nbsp;kW&nbsp;&nbsp;<BR>%.3f&nbsp;kVAR</TD>",
+			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">%.3f&nbsp;kW&nbsp;&nbsp;<BR>%.3f&nbsp;kVAR</TD>",
 				load_C.Re(),load_C.Im());
 		}
 		else
-			fprintf(fp,"<TD></TD>");
+			stream("<TD></TD>");
 	}
-	fprintf(fp,"</TR>\n");
-	fprintf(fp,"</TABLE>\n");
-	fprintf(fp,"]]>\n");
-	fprintf(fp,"</description>\n");
-	fprintf(fp,"<Point>\n");
-	fprintf(fp,"<coordinates>%f,%f</coordinates>\n",obj->longitude,obj->latitude);
-	fprintf(fp,"</Point>\n");
-	fprintf(fp,"</Placemark>\n");
+	stream("</TR>\n");
+	stream("</TABLE>\n");
+	stream("]]>\n");
+	stream("</description>\n");
+	stream("<Point>\n");
+	stream("<coordinates>%f,%f</coordinates>\n",obj->longitude,obj->latitude);
+	stream("</Point>\n");
+	stream("</Placemark>\n");
 	return 0;
 }
 
@@ -2176,158 +2350,235 @@ EXPORT TIMESTAMP sync_node(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 */
 int node::NR_populate(void)
 {
-		//Object header for names
-		OBJECT *me = OBJECTHDR(this);
+	//Object header for names
+	OBJECT *me = OBJECTHDR(this);
 
-		//Lock the SWING for global operations
-		if ( NR_swing_bus!=me ) LOCK_OBJECT(NR_swing_bus);
+	//Lock the SWING for global operations
+	if ( NR_swing_bus!=me ) LOCK_OBJECT(NR_swing_bus);
 
-		NR_node_reference = NR_curr_bus;	//Grab the current location and keep it as our own
-		NR_curr_bus++;					//Increment the current bus pointer for next variable
-		if ( NR_swing_bus!=me ) UNLOCK_OBJECT(NR_swing_bus);	//All done playing with globals, unlock the swing so others can proceed
+	NR_node_reference = NR_curr_bus;	//Grab the current location and keep it as our own
+	NR_curr_bus++;					//Increment the current bus pointer for next variable
+	if ( NR_swing_bus!=me ) UNLOCK_OBJECT(NR_swing_bus);	//All done playing with globals, unlock the swing so others can proceed
 
-		//Quick check to see if there problems
-		if (NR_node_reference == -1)
+	//Quick check to see if there problems
+	if (NR_node_reference == -1)
+	{
+		GL_THROW("NR: bus:%s failed to grab a unique bus index value!",me->name);
+		/*  TROUBLESHOOT
+		While attempting to gain a unique bus id for the Newton-Raphson solver, an error
+		was encountered.  This may be related to a parallelization effort.  Please try again.
+		If the error persists, please submit your code and a bug report via the trac website.
+		*/
+	}
+
+	//Bus type
+	NR_busdata[NR_node_reference].type = (int)bustype;
+
+	//Interim check to make sure it isn't a PV bus, since those aren't supported yet - this will get removed when that functionality is put in place
+	if (NR_busdata[NR_node_reference].type==1)
+	{
+		GL_THROW("NR: bus:%s is a PV bus - these are not yet supported.",me->name);
+		/*  TROUBLESHOOT
+		The Newton-Raphson solver implemented does not currently support the PV bus type.
+		*/
+	}
+
+	//Populate phases
+	NR_busdata[NR_node_reference].phases = 128*has_phase(PHASE_S) + 8*has_phase(PHASE_D) + 4*has_phase(PHASE_A) + 2*has_phase(PHASE_B) + has_phase(PHASE_C);
+
+	//Link our name in
+	NR_busdata[NR_node_reference].name = me->name;
+
+	//Link us in as well
+	NR_busdata[NR_node_reference].obj = me;
+
+	//Link our maximum error vlaue
+	NR_busdata[NR_node_reference].max_volt_error = maximum_voltage_error;
+
+	//Populate voltage
+	NR_busdata[NR_node_reference].V = &voltage[0];
+	
+	//Populate power
+	NR_busdata[NR_node_reference].S = &power[0];
+
+	//Populate admittance
+	NR_busdata[NR_node_reference].Y = &shunt[0];
+
+	//Populate current
+	NR_busdata[NR_node_reference].I = &current[0];
+
+	//Allocate our link list
+	NR_busdata[NR_node_reference].Link_Table = (int *)gl_malloc(NR_connected_links[0]*sizeof(int));
+	
+	if (NR_busdata[NR_node_reference].Link_Table == NULL)
+	{
+		GL_THROW("NR: Failed to allocate link table for node:%d",me->id);
+		/*  TROUBLESHOOT
+		While attempting to allocate memory for the linking table for NR, memory failed to be
+		allocated.  Make sure you have enough memory and try again.  If this problem happens a second
+		time, submit your code and a bug report using the trac website.
+		*/
+	}
+
+	//If a restoration object is present, create space for an equivalent table
+	if (restoration_object != NULL)
+	{
+		if (NR_connected_links[0] != 1)	//Make sure we aren't an only child
 		{
-			GL_THROW("NR: bus:%s failed to grab a unique bus index value!",me->name);
-			/*  TROUBLESHOOT
-			While attempting to gain a unique bus id for the Newton-Raphson solver, an error
-			was encountered.  This may be related to a parallelization effort.  Please try again.
-			If the error persists, please submit your code and a bug report via the trac website.
-			*/
-		}
+			NR_busdata[NR_node_reference].Child_Nodes = (int *)gl_malloc((NR_connected_links[0]-1)*sizeof(int));
 
-		//Bus type
-		NR_busdata[NR_node_reference].type = (int)bustype;
-
-		//Interim check to make sure it isn't a PV bus, since those aren't supported yet - this will get removed when that functionality is put in place
-		if (NR_busdata[NR_node_reference].type==1)
-		{
-			GL_THROW("NR: bus:%s is a PV bus - these are not yet supported.",me->name);
-			/*  TROUBLESHOOT
-			The Newton-Raphson solver implemented does not currently support the PV bus type.
-			*/
-		}
-
-		//Populate phases
-		NR_busdata[NR_node_reference].phases = 128*has_phase(PHASE_S) + 8*has_phase(PHASE_D) + 4*has_phase(PHASE_A) + 2*has_phase(PHASE_B) + has_phase(PHASE_C);
-
-		//Link our name in
-		NR_busdata[NR_node_reference].name = me->name;
-
-		//Link us in as well
-		NR_busdata[NR_node_reference].obj = me;
-
-		//Link our maximum error vlaue
-		NR_busdata[NR_node_reference].max_volt_error = maximum_voltage_error;
-
-		//Populate voltage
-		NR_busdata[NR_node_reference].V = &voltage[0];
-		
-		//Populate power
-		NR_busdata[NR_node_reference].S = &power[0];
-
-		//Populate admittance
-		NR_busdata[NR_node_reference].Y = &shunt[0];
-
-		//Populate current
-		NR_busdata[NR_node_reference].I = &current[0];
-
-		//Allocate our link list
-		NR_busdata[NR_node_reference].Link_Table = (int *)gl_malloc(NR_connected_links[0]*sizeof(int));
-		
-		if (NR_busdata[NR_node_reference].Link_Table == NULL)
-		{
-			GL_THROW("NR: Failed to allocate link table for node:%d",me->id);
-			/*  TROUBLESHOOT
-			While attempting to allocate memory for the linking table for NR, memory failed to be
-			allocated.  Make sure you have enough memory and try again.  If this problem happens a second
-			time, submit your code and a bug report using the trac website.
-			*/
-		}
-
-		//If a restoration object is present, create space for an equivalent table
-		if (restoration_object != NULL)
-		{
-			if (NR_connected_links[0] != 1)	//Make sure we aren't an only child
+			if (NR_busdata[NR_node_reference].Child_Nodes == NULL)
 			{
-				NR_busdata[NR_node_reference].Child_Nodes = (int *)gl_malloc((NR_connected_links[0]-1)*sizeof(int));
+				GL_THROW("NR: Failed to allocate child node table for node:%d - %s",me->id,me->name);
+				/*  TROUBLESHOOT
+				While attempting to allocate memory for a tree table for the restoration module, memory failed to be allocated.
+				Make sure you ahve enough memory and try again.  If the problem persists, please submit your code and a bug report
+				to the trac website.
+				*/
+			}
+
+			//Initialize the children and the parent
+			NR_busdata[NR_node_reference].Parent_Node = -1;
+
+			for (unsigned int index=0; index<(NR_connected_links[0]-1); index++)
+				NR_busdata[NR_node_reference].Child_Nodes[index] = -1;
+
+			NR_busdata[NR_node_reference].Child_Node_idx = 0;	//Initialize the population index
+		}
+		else	//Only child, ensure we set it as zero
+		{
+			if (bustype == SWING)	//Swing bus isn't an only child, it's a single parent
+			{
+				NR_busdata[NR_node_reference].Child_Nodes = (int *)gl_malloc(sizeof(int));	//Just allocate one spot in this case
 
 				if (NR_busdata[NR_node_reference].Child_Nodes == NULL)
 				{
 					GL_THROW("NR: Failed to allocate child node table for node:%d - %s",me->id,me->name);
-					/*  TROUBLESHOOT
-					While attempting to allocate memory for a tree table for the restoration module, memory failed to be allocated.
-					Make sure you ahve enough memory and try again.  If the problem persists, please submit your code and a bug report
-					to the trac website.
-					*/
+					//Defined above
 				}
 
-				//Initialize the children and the parent
-				NR_busdata[NR_node_reference].Parent_Node = -1;
+				NR_busdata[NR_node_reference].Child_Nodes[0] = -1;	//Initialize it to -1 - flags as unpopulated
 
-				for (unsigned int index=0; index<(NR_connected_links[0]-1); index++)
-					NR_busdata[NR_node_reference].Child_Nodes[index] = -1;
-
-				NR_busdata[NR_node_reference].Child_Node_idx = 0;	//Initialize the population index
+				NR_busdata[NR_node_reference].Parent_Node = 0;	//We're our own parent (the implications are astounding)
 			}
-			else	//Only child, ensure we set it as zero
+			else	//Normal only child
 			{
-				if (bustype == SWING)	//Swing bus isn't an only child, it's a single parent
-				{
-					NR_busdata[NR_node_reference].Child_Nodes = (int *)gl_malloc(sizeof(int));	//Just allocate one spot in this case
-
-					if (NR_busdata[NR_node_reference].Child_Nodes == NULL)
-					{
-						GL_THROW("NR: Failed to allocate child node table for node:%d - %s",me->id,me->name);
-						//Defined above
-					}
-
-					NR_busdata[NR_node_reference].Child_Nodes[0] = -1;	//Initialize it to -1 - flags as unpopulated
-
-					NR_busdata[NR_node_reference].Parent_Node = 0;	//We're our own parent (the implications are astounding)
-				}
-				else	//Normal only child
-				{
-					NR_busdata[NR_node_reference].Child_Nodes = 0;
-				}
+				NR_busdata[NR_node_reference].Child_Nodes = 0;
 			}
 		}
+	}
 
-		//Populate our size
-		NR_busdata[NR_node_reference].Link_Table_Size = NR_connected_links[0];
+	//Populate our size
+	NR_busdata[NR_node_reference].Link_Table_Size = NR_connected_links[0];
 
-		//See if we're a triplex
-		if (has_phase(PHASE_S))
+	//See if we're a triplex
+	if (has_phase(PHASE_S))
+	{
+		if (house_present)	//We're a proud parent of a house!
 		{
-			if (house_present)	//We're a proud parent of a house!
-			{
-				NR_busdata[NR_node_reference].house_var = &nom_res_curr[0];	//Separate storage area for nominal house currents
-				NR_busdata[NR_node_reference].phases |= 0x40;					//Flag that we are a house-attached node
-			}
-
-			NR_busdata[NR_node_reference].extra_var = &current12;	//Stored in a separate variable and this is the easiest way for me to get it
-		}
-		else if (SubNode==DIFF_PARENT)	//Differently connected load/node (only can't be S)
-		{
-			NR_busdata[NR_node_reference].extra_var = Extra_Data;
-			NR_busdata[NR_node_reference].phases |= 0x10;			//Special flag for a phase mismatch being present
+			NR_busdata[NR_node_reference].house_var = &nom_res_curr[0];	//Separate storage area for nominal house currents
+			NR_busdata[NR_node_reference].phases |= 0x40;					//Flag that we are a house-attached node
 		}
 
-		//Per unit values
-		NR_busdata[NR_node_reference].kv_base = -1.0;
-		NR_busdata[NR_node_reference].mva_base = -1.0;
+		NR_busdata[NR_node_reference].extra_var = &current12;	//Stored in a separate variable and this is the easiest way for me to get it
+	}
+	else if (SubNode==DIFF_PARENT)	//Differently connected load/node (only can't be S)
+	{
+		NR_busdata[NR_node_reference].extra_var = Extra_Data;
+		NR_busdata[NR_node_reference].phases |= 0x10;			//Special flag for a phase mismatch being present
+	}
 
-		//Set the matrix value to -1 to know it hasn't been set (probably not necessary)
-		NR_busdata[NR_node_reference].Matrix_Loc = -1;
+	//Per unit values
+	NR_busdata[NR_node_reference].kv_base = -1.0;
+	NR_busdata[NR_node_reference].mva_base = -1.0;
 
-		//Populate original phases
-		NR_busdata[NR_node_reference].origphases = NR_busdata[NR_node_reference].phases;
+	//Set the matrix value to -1 to know it hasn't been set (probably not necessary)
+	NR_busdata[NR_node_reference].Matrix_Loc = -1;
 
-		//Populate our tracking variable
-		prev_phases = NR_busdata[NR_node_reference].phases;
+	//Populate original phases
+	NR_busdata[NR_node_reference].origphases = NR_busdata[NR_node_reference].phases;
 
-		return 0;
+	//Populate our tracking variable
+	prev_phases = NR_busdata[NR_node_reference].phases;
+
+	//Populate dynamic mode flag address
+	NR_busdata[NR_node_reference].dynamics_enabled = &deltamode_inclusive;
+
+	//Allocate full admittance matrix, if desired (for now, not)
+	if (deltamode_inclusive)
+	{
+		//Allocate it
+		full_Y = (complex *)gl_malloc(9*sizeof(complex));
+
+		//Check it
+		if (full_Y==NULL)
+		{
+			GL_THROW("Node:%s failed to allocate space for the a deltamode variable",me->name);
+			/*  TROUBLESHOOT
+			While attempting to allocate memory for a dynamics-required (deltamode) variable, an error
+			occurred. Please try again.  If the error persists, please submit your code and a bug
+			report via the trac website.
+			*/
+		}
+
+		//Zero it, just to be safe (gens will accumulate into it)
+		full_Y[0] = full_Y[1] = full_Y[2] = complex(0.0,0.0);
+		full_Y[3] = full_Y[4] = full_Y[5] = complex(0.0,0.0);
+		full_Y[6] = full_Y[7] = full_Y[8] = complex(0.0,0.0);
+
+		//Map it
+		NR_busdata[NR_node_reference].full_Y = full_Y;
+
+		//Allocate another matrix for admittance - this will have the full value
+		full_Y_all = (complex *)gl_malloc(9*sizeof(complex));
+
+		//Check it
+		if (full_Y_all==NULL)
+		{
+			GL_THROW("Node:%s failed to allocate space for the a deltamode variable",me->name);
+			//Defined above
+		}
+
+		//Zero it, just to be safe (gens will accumulate into it)
+		full_Y_all[0] = full_Y_all[1] = full_Y_all[2] = complex(0.0,0.0);
+		full_Y_all[3] = full_Y_all[4] = full_Y_all[5] = complex(0.0,0.0);
+		full_Y_all[6] = full_Y_all[7] = full_Y_all[8] = complex(0.0,0.0);
+
+		//Map it
+		NR_busdata[NR_node_reference].full_Y_all = full_Y_all;
+
+		//Do the same for a dynamics contribution (just 4x1 for now for normal nodes)
+		//0-2 represent ABC current,3 represents overall power, 4 represents power frequency weighting,
+		//5 represents overall output power
+
+		DynVariable = (complex *)gl_malloc(6*sizeof(complex));
+
+		//Check it
+		if (DynVariable==NULL)
+		{
+			GL_THROW("Node:%s failed to allocate space for the a deltamode variable",me->name);
+			//Defined above
+		}
+
+		//Zero them, for consistency
+		DynVariable[0] = DynVariable[1] = DynVariable[2] = complex(0.0,0.0);
+		DynVariable[3] = complex(0.0,0.0);
+		DynVariable[4] = complex(0.0,0.0);
+		DynVariable[5] = complex(0.0,0.0);
+
+		//Now map it to the structure
+		NR_busdata[NR_node_reference].DynCurrent = DynVariable;
+		NR_busdata[NR_node_reference].PGenTotal = &DynVariable[3];
+	}
+	else	//Ensure it is empty
+	{
+		NR_busdata[NR_node_reference].full_Y = NULL;
+		NR_busdata[NR_node_reference].full_Y_all = NULL;
+		NR_busdata[NR_node_reference].DynCurrent = NULL;
+		NR_busdata[NR_node_reference].PGenTotal = NULL;
+	}
+
+	return 0;
 }
 
 //Computes "load" portions of current injection
@@ -2608,7 +2859,76 @@ int node::NR_current_update(bool postpass, bool parentcall)
 	return 1;	//Always successful
 }
 
+//////////////////////////////////////////////////////////////////////////
+// IMPLEMENTATION OF DELTA MODE
+//////////////////////////////////////////////////////////////////////////
+//Module-level call
+//TODO: Is this where P/C passing would make sense?
+SIMULATIONMODE node::inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
+{
+	unsigned char pass_mod;
+	OBJECT *hdr = OBJECTHDR(this);
+	load *temp_load;
 
+	if (interupdate_pos == false)	//Before powerflow call
+	{
+		//Call appropriate updates for "prepowerflow" changes - namely so players can hit loads
+		if (node_type == LOAD_NODE)	//We're a load, call the "separate update"
+		{
+			//Zero our base values, otherwise the load may just keep accumulating
+			power[0] = 0.0;
+			power[1] = 0.0;
+			power[2] = 0.0;
+			shunt[0] = 0.0;
+			shunt[1] = 0.0;
+			shunt[2] = 0.0;
+			current[0] = 0.0;
+			current[1] = 0.0;
+			current[2] = 0.0;
+
+			//Map us
+			temp_load = OBJECTDATA(hdr,load);
+
+			//Call the load update - at this time, we are "unreliable", no matter what
+			temp_load->load_update_fxn(false);
+		}
+		//Default else - not a load (maybe other stuff in here eventually)
+
+		return SM_DELTA;	//Just return something other than SM_ERROR for this call
+	}
+	else	//After the call
+	{
+		if (bustype==SWING)	//We're the SWING bus, control our destiny (which is really controlled elsewhere)
+		{
+			//See what we're on
+			pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
+
+			//Check pass
+			if (pass_mod==0)	//Predictor pass
+			{
+				return SM_DELTA_ITER;	//Reiterate - to get us to predictor pass
+			}
+			else	//Corrector pass
+			{
+				//As of right now, we're always ready to leave
+				//Other objects will dictate if we stay (powerflow is indifferent)
+				return SM_EVENT;
+			}//End corrector pass
+		}//End SWING bus handling
+		else	//Normal bus
+		{
+			return SM_EVENT;	//Normal nodes want event mode all the time here - SWING bus will
+								//control the reiteration process for pred/corr steps
+		}
+	}
+}
+
+//Object-level call - if needed
+//int node::deltaupdate(unsigned int64 dt, unsigned int iteration_count_val)	//Returns success/fail - interrupdate handles EVENT/DELTA
+
+//////////////////////////////////////////////////////////////////////////
+// IMPLEMENTATION OF OTHER EXPORT FUNCTIONS
+//////////////////////////////////////////////////////////////////////////
 EXPORT int isa_node(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
@@ -2626,4 +2946,82 @@ EXPORT int notify_node(OBJECT *obj, int update_mode, PROPERTY *prop, char *value
 	
 	return rv;
 }
+
+//Deltamode export
+EXPORT SIMULATIONMODE interupdate_node(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
+{
+	node *my = OBJECTDATA(obj,node);
+	SIMULATIONMODE status = SM_ERROR;
+	try
+	{
+		status = my->inter_deltaupdate(delta_time,dt,iteration_count_val,interupdate_pos);
+		return status;
+	}
+	catch (char *msg)
+	{
+		gl_error("interupdate_node(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
+		return status;
+	}
+}
+
+//Function to easily access complex bus deltamode values
+//0 = full_Y - exposed bus admittance model
+//1 - PGenTotal - total amount of generation on that bus (for current gen)
+//2 - DeltaCurrents - currents calculated from updated powerflow solution
+//3 - full_Y_all - exposed Ybus self admittance area
+//4 - FreqPower - Frequeny-power weighting, for "nominal" update at end
+//5 - TotalPower - Accumulated power, but not powerflow derived (differs from PGenTotal above)
+EXPORT complex *delta_linkage(OBJECT *obj, unsigned char mapvar)
+{
+	complex *testval;
+	node *my = OBJECTDATA(obj,node);
+
+	if (mapvar==0)	//Bus admittance - full_Y
+	{
+		testval = my->full_Y;
+	}
+	else if (mapvar==1)	//Generation total - PGenTotal
+	{
+		testval = &(my->DynVariable[3]);
+	}
+	else if (mapvar==2)	//Dynamic current values - DeltaCurrents
+	{
+		testval = &(my->DynVariable[0]);
+	}
+	else if (mapvar==3)	//Self admittance, but fully Y-bus form
+	{
+		testval = my->full_Y_all;
+	}
+	else if (mapvar==4)	//Frequency-power variable
+	{
+		testval = &(my->DynVariable[4]);
+	}
+	else if (mapvar==5)	//Total power variable
+	{
+		testval = &(my->DynVariable[5]);
+	}
+	else	//Unknown - fail out
+	{
+		testval = NULL;
+	}
+
+	return testval;
+}
+
+//Function to extract and post the accumulated power and "frequency power" for
+//updating "system frequency" when transiting back to standard mode
+//Return SUCCESS/FAILED
+EXPORT STATUS delta_frequency_node(OBJECT *obj, complex *powerval, complex *freqpowerval)
+{
+	//Map us
+	node *my = OBJECTDATA(obj,node);
+
+	//Accumulate values
+	*powerval += my->DynVariable[5];
+	*freqpowerval += my->DynVariable[4];
+
+	//Always succeed, for now
+	return SUCCESS;
+}
+
 /**@}*/

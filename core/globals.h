@@ -212,6 +212,30 @@ GLOBAL char global_hostaddr[32] INIT("127.0.0.1"); /**< machine ip addr */
 
 GLOBAL int global_autostartgui INIT(1); /**< autostart GUI when no command args are given */
 
+/* delta mode support */
+typedef enum {
+	SM_INIT			= 0x00, /**< initial state of simulation */
+	SM_EVENT		= 0x01, /**< event driven simulation mode */
+	SM_DELTA		= 0x02, /**< finite difference simulation mode */
+	SM_DELTA_ITER	= 0x03, /**< Iteration of finite difference simulation mode */
+	SM_ERROR		= 0xff, /**< simulation mode error */
+} SIMULATIONMODE; /**< simulation mode values */
+typedef enum {
+	DMF_NONE		= 0x00,	/**< no flags */
+	DMF_SOFTEVENT	= 0x01,/**< event is soft */
+} DELTAMODEFLAGS; /**< delta mode flags */
+GLOBAL SIMULATIONMODE global_simulation_mode INIT(SM_INIT); /**< simulation mode */
+typedef unsigned int64 DELTAT; /**< stores cumulative delta time values in ns */
+typedef unsigned long DT; /**< stores incremental delta time values in ns */
+#define DT_INFINITY (0xfffffffe)
+#define DT_INVALID  (0xffffffff)
+#define DT_SECOND 1000000000
+GLOBAL DT global_deltamode_timestep INIT(10000000); /**< delta mode time step in ns (default is 10ms) */
+GLOBAL DELTAT global_deltamode_maximumtime INIT(3600000000000); /**< the maximum time (in ns) delta mode is allowed to run without an event (default is 1 hour) */
+GLOBAL DELTAT global_deltaclock INIT(0); /**< the cumulative delta runtime with respect to the global clock */
+GLOBAL char global_deltamode_updateorder[1025] INIT(""); /**< the order in which modules are updated */
+GLOBAL unsigned int global_deltamode_iteration_limit INIT(10);	/**< Global iteration limit for each delta timestep (object and interupdate calls) */
+
 /* master/slave */
 GLOBAL char global_master[1024] INIT(""); /**< master hostname */
 GLOBAL unsigned int64 global_master_port INIT(0);	/**< master port/mmap/shmem info */

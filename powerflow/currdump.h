@@ -19,7 +19,7 @@ public:
 	char32 group;
 	char256 filename;
 	int32 runcount;
-	CDMODE mode;
+	enumeration mode;
 public:
 	static CLASS *oclass;
 public:

@@ -733,6 +733,7 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 		{
 			/* error message should be given by schedule_compile */
 			free(sch);
+			sch = NULL;
 			return NULL;
 		}
 	}
@@ -1300,9 +1301,9 @@ void schedule_dump(SCHEDULE *sch, char *file, char *mode)
 		int daysinmonth[] = {31,((calendar&1)?29:28),31,30,31,30,31,31,30,31,30,31};
 		char *monthname[] = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
 		fprintf(fp,"\nYears:");
-		for (y=1970; y<2030; y++)
+		for (y=1970; y<2039; y++)
 		{
-			DATETIME dt = {y,1,1,0,0,0};
+			DATETIME dt = {y,0,1,0,0,0};
 			TIMESTAMP ts = mkdatetime(&dt);
 			SCHEDULEINDEX ndx = schedule_index(sch,ts);
 			if (GET_CALENDAR(ndx)==calendar)
@@ -1326,10 +1327,10 @@ void schedule_dump(SCHEDULE *sch, char *file, char *mode)
 			{
 				int hour;
 				char wd[] = "SMTWTFSH";
-				DATETIME dt = {year,month+1,1,0,0,0,0,0,""};
+				DATETIME dt = {year,month,day,0,0,0,0,0,""};
 				TIMESTAMP ts = mkdatetime(&dt);
 				local_datetime(ts,&dt);
-				fprintf(fp,"     %c %2d ",wd[(dt.weekday+day)%7],day+1);
+				fprintf(fp,"      %c %2d",wd[dt.weekday],day+1);
 				for (hour=0; hour<24; hour++)
 				{
 					int minute=0;

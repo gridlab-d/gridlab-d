@@ -98,6 +98,13 @@ static KEYWORD so_keys[] = {
 	{"NAMES", SO_NAMES, so_keys+1},
 	{"POSITIONS", SO_GEOCOORDS, NULL},
 };
+static KEYWORD sm_keys[] = {
+	{"INIT", SM_INIT, sm_keys+1},
+	{"EVENT", SM_EVENT, sm_keys+2},
+	{"DELTA", SM_DELTA, sm_keys+3},
+	{"DELTA_ITER", SM_DELTA_ITER, sm_keys+4},
+	{"ERROR", SM_ERROR, NULL},
+};
 
 static struct s_varmap {
 	char *name;
@@ -206,6 +213,12 @@ static struct s_varmap {
 	{"sanitize_prefix", PT_char8, &global_sanitizeprefix, PA_PUBLIC, "sanitized name prefix"},
 	{"sanitize_index", PT_char1024, &global_sanitizeindex, PA_PUBLIC, "sanitization index file spec"},
 	{"sanitize_offset", PT_char32, &global_sanitizeoffset, PA_PUBLIC, "sanitization lat/lon offset"},
+	{"simulation_mode",PT_enumeration,&global_simulation_mode,PA_PUBLIC, "current time simulation type",sm_keys},
+	{"deltamode_timestep",PT_int32,&global_deltamode_timestep,PA_PUBLIC, "uniform step size for deltamode simulations"},
+	{"deltamode_maximumtime", PT_int64,&global_deltamode_maximumtime,PA_PUBLIC, "maximum time (ns) deltamode can run"},
+	{"deltaclock", PT_int64, &global_deltaclock, PA_PUBLIC, "cumulative delta runtime with respect to the global clock"},
+	{"deltamode_updateorder", PT_char1024, &global_deltamode_updateorder, PA_REFERENCE, "order in which modules are update in deltamode"},
+	{"deltamode_iteration_limit", PT_int32, &global_deltamode_iteration_limit, PA_PUBLIC, "iteration limit for each delta timestep (object and interupdate)"},
 	/* add new global variables here */
 };
 
@@ -637,6 +650,7 @@ char *global_seq(char *buffer, int size, char *name)
 			if ( global_find(seq)!=NULL )
 			{
 				output_warning("global_seq(char *name='%s'): sequence is already initialized", seq);
+				return NULL;
 			}
 			else
 			{
@@ -934,6 +948,10 @@ char *global_getvar(char *name, char *buffer, int size)
 	/* sequences */
 	if ( strncmp(name,"SEQ_",4)==0 && strchr(name,':')!=NULL )
 		return global_seq(buffer,size,name);
+
+	/* expansions */
+	if ( parameter_expansion(buffer,size,name) )
+		return buffer;
 
 	var = global_find(name);
 	if(var == NULL)

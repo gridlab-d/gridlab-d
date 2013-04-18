@@ -26,7 +26,8 @@ private:
 protected:
 	/* TODO: put unpublished but inherited variables */
 public:
-	enum DC_DC_CONVERTER_TYPE {BUCK=0, BOOST=1, BUCK_BOOST=2}dc_dc_converter_type_v;
+	enum DC_DC_CONVERTER_TYPE {BUCK=0, BOOST=1, BUCK_BOOST=2};
+	enumeration dc_dc_converter_type_v;
 	//DC_DC_CONVERTER_TYPE dc_dc_converter_type_choice;
 	complex V_In; // V_in (DC)
 	complex I_In; // I_in (DC)

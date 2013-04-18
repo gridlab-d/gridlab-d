@@ -34,8 +34,8 @@ volt_var_control::volt_var_control(MODULE *mod) : powerflow_object(mod)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 		if(gl_publish_variable(oclass,
 			PT_enumeration, "control_method", PADDR(control_method),PT_DESCRIPTION,"IVVC activated or in standby",
-				PT_KEYWORD, "ACTIVE", ACTIVE,
-				PT_KEYWORD, "STANDBY", STANDBY,
+				PT_KEYWORD, "ACTIVE", (enumeration)ACTIVE,
+				PT_KEYWORD, "STANDBY", (enumeration)STANDBY,
 			PT_double, "capacitor_delay[s]", PADDR(cap_time_delay),PT_DESCRIPTION,"Default capacitor time delay - overridden by local defintions",
 			PT_double, "regulator_delay[s]", PADDR(reg_time_delay),PT_DESCRIPTION,"Default regulator time delay - overriden by local definitions",
 			PT_double, "desired_pf", PADDR(desired_pf),PT_DESCRIPTION,"Desired power-factor magnitude at the substation transformer or regulator",
@@ -346,7 +346,7 @@ int volt_var_control::init(OBJECT *parent)
 
 	if (num_regs==1)	//Only 1 column, make sure something is actually in there
 	{
-		temp_obj = gl_get_object(regulator_list);
+		temp_obj = gl_get_object((char *)regulator_list);
 
 		if (temp_obj == NULL)	//Not really an object, must be no controllable capacitors
 			num_regs = 0;
@@ -839,7 +839,7 @@ int volt_var_control::init(OBJECT *parent)
 
 	if (num_caps==1)	//Only 1 column, make sure something is actually in there
 	{
-		temp_obj = gl_get_object(capacitor_list);
+		temp_obj = gl_get_object((char *)capacitor_list);
 
 		if (temp_obj == NULL)	//Not really an object, must be no controllable capacitors
 			num_caps = 0;
@@ -1612,7 +1612,7 @@ TIMESTAMP volt_var_control::presync(TIMESTAMP t0)
 			for (indexer=0; indexer < num_regs; indexer++)
 			{
 				//Store the state of the regulator
-				PrevRegState[indexer] = pRegulator_configs[indexer]->Control;
+				PrevRegState[indexer] =(regulator_configuration::Control_enum)pRegulator_configs[indexer]->Control;
 
 				//Now force it into manual mode
 				pRegulator_configs[indexer]->Control = regulator_configuration::MANUAL;
@@ -1621,7 +1621,7 @@ TIMESTAMP volt_var_control::presync(TIMESTAMP t0)
 			//Now let's do the same for capacitors
 			for (indexer=0; indexer < num_caps; indexer++)
 			{
-				PrevCapState[indexer] = pCapacitor_list[indexer]->control;	//Store the old
+				PrevCapState[indexer] = (capacitor::CAPCONTROL)pCapacitor_list[indexer]->control;	//Store the old
 				pCapacitor_list[indexer]->control = capacitor::MANUAL;		//Put it into manual mode
 			}
 		}
@@ -1646,7 +1646,7 @@ TIMESTAMP volt_var_control::presync(TIMESTAMP t0)
 		}
 
 		TUpdateStatus = true;		//Flag the update
-		prev_mode = control_method;	//Update the tracker
+		prev_mode = (VOLTVARSTATE)control_method;	//Update the tracker
 	}
 
 	if ((((solver_method == SM_NR) && (NR_cycle == false)) || (solver_method != SM_NR)) && (control_method == ACTIVE))	//Solution pass and are turned on
@@ -2473,11 +2473,11 @@ TIMESTAMP volt_var_control::postsync(TIMESTAMP t0)
 			{
 				//Find the phases being watched, check their switch
 				if ((pCapacitor_list[index]->pt_phase & PHASE_A) == PHASE_A)
-					bank_status = pCapacitor_list[index]->switchA_state;
+					bank_status = (capacitor::CAPSWITCH)pCapacitor_list[index]->switchA_state;
 				else if ((pCapacitor_list[index]->pt_phase & PHASE_B) == PHASE_B)
-					bank_status = pCapacitor_list[index]->switchB_state;
+					bank_status = (capacitor::CAPSWITCH)pCapacitor_list[index]->switchB_state;
 				else	//Must be C, right?
-					bank_status = pCapacitor_list[index]->switchC_state;
+					bank_status = (capacitor::CAPSWITCH)pCapacitor_list[index]->switchC_state;
 
 				if (pf_signed==true)	//Consider the sign in switching operations
 				{
@@ -2545,11 +2545,11 @@ TIMESTAMP volt_var_control::postsync(TIMESTAMP t0)
 					{
 						//Find the phases being watched, check their switch
 						if ((pCapacitor_list[index]->pt_phase & PHASE_A) == PHASE_A)
-							bank_status = pCapacitor_list[index]->switchA_state;
+							bank_status = (capacitor::CAPSWITCH)pCapacitor_list[index]->switchA_state;
 						else if ((pCapacitor_list[index]->pt_phase & PHASE_B) == PHASE_B)
-							bank_status = pCapacitor_list[index]->switchB_state;
+							bank_status =(capacitor::CAPSWITCH) pCapacitor_list[index]->switchB_state;
 						else	//Must be C, right?
-							bank_status = pCapacitor_list[index]->switchC_state;
+							bank_status =(capacitor::CAPSWITCH) pCapacitor_list[index]->switchC_state;
 
 						//Now perform logic based on where it is - if anything is found to "fit" the criterion, just enact it
 						if ((bank_status == capacitor::CLOSED) && (pf_add_capacitor==false))	//We are on and need to remove someone

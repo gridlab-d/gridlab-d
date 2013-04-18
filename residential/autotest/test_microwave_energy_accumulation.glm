@@ -5,7 +5,8 @@
 
 clock {
 	timezone PST+8PDT;
-	timestamp '2000-01-01 0:00:00';
+	starttime '2000-01-01 0:00:00';
+	stoptime '2000-01-01 0:00:10';
 }
 
 module tape;

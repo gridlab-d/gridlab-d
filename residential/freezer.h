@@ -44,7 +44,7 @@ public:
 
 	double power_factor;
 
-	MOTORSTATE motor_state;
+	enumeration motor_state;
 	TIMESTAMP last_time, next_time;
 
 public:

@@ -521,6 +521,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\evcharger_det.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\residential\freezer.cpp"
 				>
 			</File>
@@ -608,6 +612,10 @@
 			</File>
 			<File
 				RelativePath=".\evcharger.h"
+				>
+			</File>
+			<File
+				RelativePath=".\evcharger_det.h"
 				>
 			</File>
 			<File
@@ -916,6 +924,18 @@
 				</File>
 				<File
 					RelativePath=".\autotest\test_dryer_implicit.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_evcharger_det_m1.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_evcharger_det_m1_default.glm"
+					>
+				</File>
+				<File
+					RelativePath=".\autotest\test_evcharger_det_m1_minTS.glm"
 					>
 				</File>
 				<File

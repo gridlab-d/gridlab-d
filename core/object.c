@@ -56,7 +56,8 @@ KEYWORD oflags[] = {
 	{"HASPLC", OF_HASPLC, oflags + 2},
 	{"LOCKED", OF_LOCKED, oflags + 3},
 	{"RERANKED", OF_RERANK, oflags + 4},
-	{"RECALC", OF_RECALC, NULL},
+	{"RECALC", OF_RECALC, oflags + 5},
+	{"DELTAMODE", OF_DELTAMODE, NULL},
 };
 
 /* WARNING: untested. -d3p988 30 Jan 08 */
@@ -168,6 +169,7 @@ int object_build_object_array(){
 	
 	if(object_array != NULL){
 		free(object_array);
+		object_array = NULL;
 	}
 	
 	object_array = malloc(sizeof(OBJECT *) * tcount);
@@ -472,6 +474,7 @@ OBJECT *object_remove_by_id(OBJECTNUM id){
 		prev->next = next;
 		target->oclass->profiler.numobjs--;
 		free(target);
+		target = NULL;
 		deleted_object_count++;
 	}
 	
@@ -687,6 +690,10 @@ static PROPERTY *get_property_at_addr(OBJECT *obj, void *addr)
 {
 	PROPERTY *prop = NULL;
 	int64 offset = (int)((char*)addr - (char*)(obj+1));
+
+	/* reuse last result if possible */
+	if(prop!=NULL && object_prop_in_class(obj, prop) && (int64)(prop->addr) == offset && prop->access != PA_PRIVATE)  /* warning: cast from pointer to integer of different size */
+		return prop;
 
 	/* scan through properties of this class and stop when no more properties or class changes */
 	for (prop=obj->oclass->pmap; prop!=NULL; prop=(prop->next->oclass==prop->oclass?prop->next:NULL))
@@ -1881,7 +1888,7 @@ int convert_from_longitude(double v, void *buffer, int bufsize){
 		return 0;
 	}
 
-	return sprintf(buffer, "%.0f%c%.0f:%.2f", d, ns, m, s);
+	return sprintf(buffer, "%.0f%c%.0f'%.2f\"", d, ns, m, s);
 }
 
 double convert_to_latitude(char *buffer){
@@ -1889,7 +1896,7 @@ double convert_to_latitude(char *buffer){
 	double s = 0;
 	char ns;
 	
-	if(sscanf(buffer, "%d%c%d:%lf", &d, &ns, &m, &s) > 1){	
+	if(sscanf(buffer, "%d%c%d'%lf\"", &d, &ns, &m, &s) > 1){	
 		double v = (double)d + (double)m / 60.0 + s / 3600.0;
 		if(v >= 0.0 || v <= 90.0){
 			if(ns == 'S'){
@@ -1908,7 +1915,7 @@ double convert_to_longitude(char *buffer){
 	double s = 0;
 	char ns;
 
-	if(sscanf(buffer, "%d%c%d:%lf", &d, &ns, &m, &s) > 1){	
+	if(sscanf(buffer, "%d%c%d'%lf\"", &d, &ns, &m, &s) > 1){	
 		double v = (double)d + (double)m / 60.0 + s / 3600.0;
 		if(v >= 0.0 || v <= 90.0){
 			if(ns == 'W'){

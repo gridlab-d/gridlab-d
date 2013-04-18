@@ -20,7 +20,7 @@ public:
 		METER_TP,		
 		METER_3P,		
 	} METERTYPE;
-	METERTYPE meter_type;
+	enumeration meter_type;
 public:
 	static CLASS *oclass;
 public:

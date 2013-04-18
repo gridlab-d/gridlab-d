@@ -24,8 +24,10 @@ private:
 protected:
 	/* TODO: put unpublished but inherited variables */
 public:
-	enum INVERTER_TYPE {TWO_PULSE=0, SIX_PULSE=1, TWELVE_PULSE=2, PWM=3, FOUR_QUADRANT = 4} inverter_type_v;
-	enum GENERATOR_STATUS {OFFLINE=1, ONLINE=2} gen_status_v;
+	enum INVERTER_TYPE {TWO_PULSE=0, SIX_PULSE=1, TWELVE_PULSE=2, PWM=3, FOUR_QUADRANT = 4};
+	enumeration inverter_type_v;
+	enum GENERATOR_STATUS {OFFLINE=1, ONLINE=2};
+	enumeration gen_status_v;
 	//INVERTER_TYPE inverter_type_choice;
 	complex V_In; // V_in (DC)
 	complex I_In; // I_in (DC)
@@ -102,10 +104,12 @@ public:
 	double C1;
 	double C2;
 	double C3;
-	enum INVERTER_MANUFACTURER {NONE=0,FRONIUS=1,SMA=2,XANTREX=3} inverter_manufacturer;//known manufacturer to set some presets else use variables themselves for custom inverter.
+	enum INVERTER_MANUFACTURER {NONE=0,FRONIUS=1,SMA=2,XANTREX=3};
+	enumeration inverter_manufacturer; //known manufacturer to set some presets else use variables themselves for custom inverter.
 
 	//properties for four quadrant control modes
-	enum FOUR_QUADRANT_CONTROL_MODE {FQM_NONE=0,FQM_CONSTANT_PQ=1,FQM_CONSTANT_PF=2,FQM_CONSTANT_V=3,FQM_VOLT_VAR=4,FQM_LOAD_FOLLOWING=5} four_quadrant_control_mode;
+	enum FOUR_QUADRANT_CONTROL_MODE {FQM_NONE=0,FQM_CONSTANT_PQ=1,FQM_CONSTANT_PF=2,FQM_CONSTANT_V=3,FQM_VOLT_VAR=4,FQM_LOAD_FOLLOWING=5};
+	enumeration four_quadrant_control_mode;
 
 	double excess_input_power;		//Variable tracking excess power on the input that is not placed to the output
 

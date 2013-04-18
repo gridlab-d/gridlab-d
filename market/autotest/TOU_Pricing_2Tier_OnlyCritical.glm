@@ -1,0 +1,5 @@
+schedule PRICE {
+     //critical price changes at noon
+	 * 0-19 * * * 1.0,
+	  * 20-23 * * * 10.0,
+}

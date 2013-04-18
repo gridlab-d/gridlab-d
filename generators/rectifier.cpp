@@ -39,18 +39,18 @@ rectifier::rectifier(MODULE *module)
 		if (gl_publish_variable(oclass,
 
 			PT_enumeration,"rectifier_type",PADDR(rectifier_type_v),
-				PT_KEYWORD,"ONE_PULSE",ONE_PULSE,
-				PT_KEYWORD,"TWO_PULSE",TWO_PULSE,
-				PT_KEYWORD,"THREE_PULSE",THREE_PULSE,
-				PT_KEYWORD,"SIX_PULSE",SIX_PULSE,
-				PT_KEYWORD,"TWELVE_PULSE",TWELVE_PULSE,
+				PT_KEYWORD,"ONE_PULSE",(enumeration)ONE_PULSE,
+				PT_KEYWORD,"TWO_PULSE",(enumeration)TWO_PULSE,
+				PT_KEYWORD,"THREE_PULSE",(enumeration)THREE_PULSE,
+				PT_KEYWORD,"SIX_PULSE",(enumeration)SIX_PULSE,
+				PT_KEYWORD,"TWELVE_PULSE",(enumeration)TWELVE_PULSE,
 
 			PT_enumeration,"generator_mode",PADDR(gen_mode_v),
-				PT_KEYWORD,"UNKNOWN",UNKNOWN,
-				PT_KEYWORD,"CONSTANT_V",CONSTANT_V,
-				PT_KEYWORD,"CONSTANT_PQ",CONSTANT_PQ,
-				PT_KEYWORD,"CONSTANT_PF",CONSTANT_PF,
-				PT_KEYWORD,"SUPPLY_DRIVEN",SUPPLY_DRIVEN,
+				PT_KEYWORD,"UNKNOWN",(enumeration)UNKNOWN,
+				PT_KEYWORD,"CONSTANT_V",(enumeration)CONSTANT_V,
+				PT_KEYWORD,"CONSTANT_PQ",(enumeration)CONSTANT_PQ,
+				PT_KEYWORD,"CONSTANT_PF",(enumeration)CONSTANT_PF,
+				PT_KEYWORD,"SUPPLY_DRIVEN",(enumeration)SUPPLY_DRIVEN,
 
 			PT_complex, "V_Out[V]",PADDR(V_Out),
 			PT_complex, "I_Out[A]",PADDR(I_Out),
@@ -340,7 +340,8 @@ int rectifier::init(OBJECT *parent)
 			}
 
 			internal_switch_resistance(switch_type_choice);
-			filter_circuit_impact(filter_type_v, filter_imp_v);
+			filter_circuit_impact((power_electronics::FILTER_TYPE)filter_type_v, 
+				(power_electronics::FILTER_IMPLEMENTATION)filter_imp_v);
 
 		}
 	gl_verbose("rectifier init: about to exit");

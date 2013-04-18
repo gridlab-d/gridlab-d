@@ -152,7 +152,7 @@ UNIT *unit_find_underived(char *unit)
 	p = unit_find_raw(unit+s->len);
 	if(p == NULL){
 		output_error("compound unit '%s' could not be correctly identified", unit);
-		/*	TROUBLESHOOTING
+		/*	TROUBLESHOOT
 			The given unit had a recognized scalar prefix, but the underlying base unit was not identified.   This
 			will cascade a null pointer to the calling method.
 		*/

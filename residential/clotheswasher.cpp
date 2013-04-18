@@ -112,26 +112,25 @@ clotheswasher::clotheswasher(MODULE *module) : residential_enduse(module)
 			
 
 			PT_enumeration,"state", PADDR(state),
-				PT_KEYWORD,"STOPPED",STOPPED,
-				PT_KEYWORD,"PREWASH",PREWASH,
-				PT_KEYWORD,"WASH",WASH,
-				PT_KEYWORD,"SPIN1",SPIN1,
-				PT_KEYWORD,"SPIN2",SPIN2,
-				PT_KEYWORD,"SPIN3",SPIN3,
-				PT_KEYWORD,"SMALLWASH",SMALLWASH,
-				PT_KEYWORD,"SPIN4",SPIN4,		
+				PT_KEYWORD,"STOPPED",(enumeration)STOPPED,
+				PT_KEYWORD,"PREWASH",(enumeration)PREWASH,
+				PT_KEYWORD,"WASH",(enumeration)WASH,
+				PT_KEYWORD,"SPIN1",(enumeration)SPIN1,
+				PT_KEYWORD,"SPIN2",(enumeration)SPIN2,
+				PT_KEYWORD,"SPIN3",(enumeration)SPIN3,
+				PT_KEYWORD,"SPIN4",(enumeration)SPIN4,		
 
 			PT_enumeration,"spin_mode", PADDR(spin_mode),
-				PT_KEYWORD,"SPIN_LOW",SPIN_LOW,
-				PT_KEYWORD,"SPIN_MEDIUM",SPIN_MEDIUM,
-				PT_KEYWORD,"SPIN_HIGH",SPIN_HIGH,
-				PT_KEYWORD,"SPIN_WASH",SPIN_WASH,
-				PT_KEYWORD,"SMALLWASH",SMALLWASH,
+				PT_KEYWORD,"SPIN_LOW",(enumeration)SPIN_LOW,
+				PT_KEYWORD,"SPIN_MEDIUM",(enumeration)SPIN_MEDIUM,
+				PT_KEYWORD,"SPIN_HIGH",(enumeration)SPIN_HIGH,
+				PT_KEYWORD,"SPIN_WASH",(enumeration)SPIN_WASH,
+				PT_KEYWORD,"SMALLWASH",(enumeration)SMALLWASH,
 
 			PT_enumeration,"wash_mode", PADDR(wash_mode),
-				PT_KEYWORD,"NORMAL",NORMAL,
-				PT_KEYWORD,"PERM_PRESS",PERM_PRESS,
-				PT_KEYWORD,"GENTLE",GENTLE,		
+				PT_KEYWORD,"NORMAL",(enumeration)NORMAL,
+				PT_KEYWORD,"PERM_PRESS",(enumeration)PERM_PRESS,
+				PT_KEYWORD,"GENTLE",(enumeration)GENTLE,		
 
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);

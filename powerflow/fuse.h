@@ -20,7 +20,7 @@ public:
 	typedef enum {BLOWN=0, GOOD=1} FUSESTATE;
 	typedef enum {NONE=0, EXPONENTIAL=1} MTTRDIST;
 
-	MTTRDIST restore_dist_type;
+	enumeration restore_dist_type;
 	unsigned char prev_full_status;	///Fully resolved status (ABC) - used for reliability and recalculation detection
 
 	int create(void);
@@ -44,9 +44,9 @@ public:
 
 	unsigned char phased_fuse_status;	//Used to track individual phase fuse status - mainly for reliability - use LSB - x0_XABC
 	unsigned char faulted_fuse_phases;	//Used for phase faulting tracking - mainly for reliabiilty - replicated NR functionality so FBS can use it later
-	FUSESTATE phase_A_state;
-	FUSESTATE phase_B_state;
-	FUSESTATE phase_C_state;
+	enumeration phase_A_state;
+	enumeration phase_B_state;
+	enumeration phase_C_state;
 	double mean_replacement_time;
 	TIMESTAMP fix_time[3];
 	double current_current_values[3];

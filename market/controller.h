@@ -33,25 +33,25 @@ public:
 		SM_WATERHEATER,
 		SM_DOUBLE_RAMP,
 	} SIMPLE_MODE;
-	SIMPLE_MODE simplemode;
+	enumeration simplemode;
 	
 	typedef enum {
 		BM_OFF,
 		BM_ON,
 	} BIDMODE;
-	BIDMODE bidmode;
+	enumeration bidmode;
 
 	typedef enum {
 		CN_RAMP,
 		CN_DOUBLE_RAMP,
 	} CONTROLMODE;
-	CONTROLMODE control_mode;
+	enumeration control_mode;
 	
 	typedef enum {
 		RM_DEADBAND,
 		RM_SLIDING,
 	} RESOLVEMODE;
-	RESOLVEMODE resolve_mode;
+	enumeration resolve_mode;
 
 	typedef enum{
 		TM_INVALID=0,
@@ -59,13 +59,13 @@ public:
 		TM_HEAT=2,
 		TM_COOL=3,
 	} THERMOSTATMODE;
-	THERMOSTATMODE thermostat_mode, last_mode, previous_mode;
+	enumeration thermostat_mode, last_mode, previous_mode;
 
 	typedef enum {
 		OU_OFF=0,
 		OU_ON=1
 	} OVERRIDE_USE;
-	OVERRIDE_USE use_override;
+	enumeration use_override;
 
 	double kT_L, kT_H;
 	char target[33];

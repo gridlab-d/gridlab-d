@@ -12,7 +12,8 @@ public:
 	enum { 
 		ND_OUT_OF_SERVICE = 0, ///< out of service flag for nodes
 		ND_IN_SERVICE = 1,     ///< in service flag for nodes - default
-	} service_status;
+	};
+	enumeration service_status;
 	static CLASS *pclass;
 	static CLASS *oclass;
 	

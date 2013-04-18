@@ -30,17 +30,14 @@ overhead_line_conductor::overhead_line_conductor(MODULE *mod) : powerflow_librar
 			oclass->trl = TRL_PROVEN;
 
         if(gl_publish_variable(oclass,
-           PT_double, "geometric_mean_radius[ft]",PADDR(geometric_mean_radius),
-           PT_double, "resistance[Ohm/mile]",PADDR(resistance),
+           PT_double, "geometric_mean_radius[ft]",PADDR(geometric_mean_radius),PT_DESCRIPTION, "radius of the conductor",
+           PT_double, "resistance[Ohm/mile]",PADDR(resistance),PT_DESCRIPTION, "resistance in Ohms/mile of the conductor",
 		   PT_double, "diameter[in]",PADDR(cable_diameter), PT_DESCRIPTION, "Diameter of line for capacitance calculations",
- 		   PT_double, "rating.summer.continuous[A]", PADDR(summer.continuous),
-		   PT_double, "rating.summer.emergency[A]", PADDR(summer.emergency),
-		   PT_double, "rating.winter.continuous[A]", PADDR(winter.continuous),
-		   PT_double, "rating.winter.emergency[A]", PADDR(winter.emergency),
+		   PT_double, "rating.summer.continuous[A]", PADDR(summer.continuous),PT_DESCRIPTION, "Continuous summer amp rating",
+		   PT_double, "rating.summer.emergency[A]", PADDR(summer.emergency),PT_DESCRIPTION, "Emergency summer amp rating",
+		   PT_double, "rating.winter.continuous[A]", PADDR(winter.continuous),PT_DESCRIPTION, "Continuous winter amp rating",
+		   PT_double, "rating.winter.emergency[A]", PADDR(winter.emergency),PT_DESCRIPTION, "Emergency winter amp rating",
             NULL) < 1) GL_THROW("unable to publish overhead_line_conductor properties in %s",__FILE__);
-		geometric_mean_radius = resistance = 0.0;
-		summer.continuous = winter.continuous = 1000;
-		summer.emergency = winter.emergency = 2000;
     }
 }
 
@@ -49,9 +46,9 @@ int overhead_line_conductor::create(void)
 	int result = powerflow_library::create();
 	
 	cable_diameter = 0.0;
-	//geometric_mean_radius = resistance = 0.0;
-	//summer.continuous = winter.continuous = 1000;
-	//summer.emergency = winter.emergency = 2000;
+	geometric_mean_radius = resistance = 0.0;
+	summer.continuous = winter.continuous = 1000;
+	summer.emergency = winter.emergency = 2000;
 
 	return result;
 }

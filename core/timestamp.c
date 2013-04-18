@@ -128,9 +128,60 @@ int timestamp_year(TIMESTAMP ts, TIMESTAMP *remainder)
  **/
 int isdst(TIMESTAMP t)
 {
+	int DSTstart_year, DSTend_year;
 	int year = timestamp_year(t + tzoffset, NULL) - YEAR0;
 
-	return dststart>=0 && dststart[year] <= t && t < dstend[year];
+	//Preliminary check to make sure something exists
+	if (dststart[year]>=0)	//If it's -1, no sense going forth
+	{
+		DSTstart_year = timestamp_year(dststart[year],NULL);
+		DSTend_year = timestamp_year(dstend[year],NULL);
+
+		//Southern hemisphere DST-oriented check
+		if (DSTstart_year != DSTend_year)
+		{
+			//See if we're in the "late-year" DST region
+			if (dststart[year] <= t)
+			{
+				return (t < dstend[year]);	//We are, do a normal check
+			}
+			else	//In "early-year" DST region - see if we can do some different checks 
+			{
+				//Make sure we won't underrun the array
+				if (year>0)
+				{
+					//Make sure it is valid (maybe it is before DST is implemented)
+					if ((dststart[year-1] > 0) || (dstend[year-1] > 0))
+					{
+						if (dstend[year-1] < t)	//See if we're above "last year's" ending date
+						{
+							return 0;	//We're greater than last year's, but less than this year's - clearly not in DST
+						}
+						else //We're still in last year's region, check us against that
+						{
+							return ((dststart[year-1] <= t) && (t < dstend[year-1]));
+						}
+					}
+					else
+					{
+						return 0;	//Invalid DST (pre-DST?), so obviously not DST
+					}
+				}
+				else	//First year of array, probably not wise to go -1 on it, just go like normal
+				{
+					return (t < dstend[year]);	//See if we're in a normal region
+				}
+			}
+		}
+		else	//Northern hemisphere/"sequenced" DST - see if we're in the region
+		{
+			return ((dststart[year] <= t) && (t < dstend[year]));
+		}
+	}
+	else	//Not even a valid entry, so just return no DST
+	{
+		return 0;
+	}
 }
 
 /** Calculate the current TZ offset in seconds
@@ -198,6 +249,14 @@ int local_datetime(TIMESTAMP ts, DATETIME *dt)
 			invalid UTC clock time being converted to local time.
 		*/
 		output_error("local_datetime(ts=%lli,...): invalid local_datetime request",ts);
+		return 0;
+	}
+
+	if(ts < TS_ZERO && ts > TS_MAX){ /* timestamp out of range */
+		return 0;
+	}
+	
+	if(ts == TS_NEVER){
 		return 0;
 	}
 
@@ -470,11 +529,13 @@ int tz_info(char *tzspec, char *tzname, char *std, char *dst, time_t *offset){
 		return 0;
 	}
 
-	if(std){
+	if ( std!=NULL )
+	{
 		strcpy(std, buf1);
 	}
-
-	if(dst){
+	
+	if ( rv>2 && dst!=NULL )
+	{
 		strcpy(dst, buf2);
 	}
 
@@ -489,11 +550,13 @@ int tz_info(char *tzspec, char *tzname, char *std, char *dst, time_t *offset){
 
 		return 1;
 	} else {
-		if(tzname){
+		if ( tzname!=NULL )
+		{
 			sprintf(tzname, "%s%d:%02d%s", buf1, hours, minutes, buf2);
 		}
-
-		if(offset){
+		
+		if ( offset!=NULL )
+		{
 			*offset = hours * 3600 + minutes * 60;
 		}
 
@@ -620,8 +683,17 @@ void set_tzspec(int year, char *tzname, SPEC *pStart, SPEC *pEnd){
 	{
 		if (pStart!=NULL && pEnd!=NULL) // no DST events (cf. ticket:372)
 		{
-			dststart[y] = compute_dstevent(y + YEAR0, pStart, tzoffset);
-			dstend[y] = compute_dstevent(y + YEAR0, pEnd, tzoffset);
+			//Look for southern hemisphere items (or reversed DST, in general)
+			if (pStart->month > pEnd->month)
+			{
+				dststart[y] = compute_dstevent(y + YEAR0, pStart, tzoffset);
+				dstend[y] = compute_dstevent(y + YEAR0 + 1, pEnd, tzoffset);
+			}
+			else	//"Standard" northern hemisphere rules
+			{
+				dststart[y] = compute_dstevent(y + YEAR0, pStart, tzoffset);
+				dstend[y] = compute_dstevent(y + YEAR0, pEnd, tzoffset);
+			}
 		}
 		else
 			dststart[y] = dstend[y] = -1;

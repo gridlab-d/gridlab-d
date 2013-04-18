@@ -29,7 +29,7 @@ typedef enum {
 	BETA=9,			/**< Beta distribution; double alpha, double beta */
 	TRIANGLE=10,	/**< Triangle distribution; double a, double b */
 	NONE=11,		/**< No distribution - flag for manual mode */
-		} DISTTYPE;
+} DISTTYPE;
 
 typedef struct s_objevtdetails {
 	OBJECT *obj_of_int;		/// Object that will be made unreliable in some manner
@@ -55,8 +55,8 @@ class eventgen : public gld_object {
 private:
 	double curr_fail_dist_params[2];	/**< Current parameters of failure_dist - used to track changes */
 	double curr_rest_dist_params[2];	/**< Current parameters of restore_dist - used to track changes */
-	DISTTYPE curr_fail_dist;			/**< Current failure distribution type - used to track changes */
-	DISTTYPE curr_rest_dist;			/**< Current restoration distribution type - used to track changes */
+	enumeration curr_fail_dist;			/**< Current failure distribution type - used to track changes */
+	enumeration curr_rest_dist;			/**< Current restoration distribution type - used to track changes */
 	TIMESTAMP max_outage_length;		/**< Maximum length an outage may be */
 	TIMESTAMP next_event_time;			/**< Time next event (outage or restoration) will occur */
 	metrics *metrics_obj;				/**< Link to metrics object we need to report "restoration" statii to */
@@ -72,8 +72,8 @@ private:
 	bool off_nominal_time;				/**< Flag to indicate a minimum timestep is present */
 public:
 	RELEVANTSTRUCT Unhandled_Events;	/**< unhandled event linked list */
-	DISTTYPE failure_dist;		/**< failure distribution */
-	DISTTYPE restore_dist;		/**< restoration distribution */
+	enumeration failure_dist;		/**< failure distribution */
+	enumeration restore_dist;		/**< restoration distribution */
 	char1024 target_group;		/**< object group aggregation */
 	char256 fault_type;			/**< type of fault to induce */
 	double fail_dist_params[2];	/**< Parameters for failure_dist */
@@ -84,7 +84,7 @@ public:
 	int max_simult_faults;		/**< Number of simultaneous faults this event_gen object can induce */
 	int faults_in_prog;			/**< Number of faults currently induced by this event_gen object */
 	char1024 manual_fault_list;	/**< List for manual faulting */
-	TIMESTAMP gen_random_time(DISTTYPE rand_dist_type, double param_1, double param_2);	//Random time function - easier to call this way
+	TIMESTAMP gen_random_time(enumeration rand_dist_type, double param_1, double param_2);	//Random time function - easier to call this way
 	int add_unhandled_event(OBJECT *obj_to_fault, char *event_type, TIMESTAMP fail_time, TIMESTAMP rest_length, int implemented_fault, bool fault_state);	/**< Function to add unhandled event into the structure */
 	double *get_double(OBJECT *obj, char *name);	/**< Gets address of double - mainly for mean_repair_time */
 public:

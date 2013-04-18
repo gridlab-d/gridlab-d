@@ -16,7 +16,7 @@
 class dishwasher : public residential_enduse
 {
 public:
-	typedef enum e_state {	dishwasher_STOPPED=0,		///< motor is stopped
+	typedef enum {	dishwasher_STOPPED=0,		///< motor is stopped
 			dishwasher_STALLED=1,						///< motor is stalled
 			dishwasher_TRIPPED=2,						///< motor is tripped
 			dishwasher_COIL_ONLY=3,				//<only the coil and motor are operating
@@ -24,7 +24,8 @@ public:
 			dishwasher_MOTOR_ONLY=5,						///< only the motor is running (air fluff)
 			dishwasher_CONTROL_ONLY=6,
 			dishwasher_HEATEDDRY_ONLY=7
-	} STATE;										///< control state
+	};										///< control state
+	enumeration state;
 
 
 
@@ -128,8 +129,6 @@ public:
 	TIMESTAMP time_state;				///< time in current state
 
 	TIMESTAMP return_time;
-
-	STATE state;
 
 public:
 	static CLASS *oclass, *pclass;

@@ -18,8 +18,6 @@ EXPORT_SYNC(climate)
 EXPORT_ISA(climate)
 
 #define RAD(x) (x*PI)/180
-                         //ET,CT,MT ,PT ,AT, HT
-double std_meridians[] = {75,90,105,120,135,150};
 
 double surface_angles[] = {
 	360,	// H
@@ -54,8 +52,8 @@ EXPORT int64 calculate_solar_elevation(OBJECT *obj, double latitude, double *val
 	}
 	
 	gl_localtime(obj->clock, &dt);
-	std_time = (double)(dt.hour) + ((double)dt.minute)/60.0;
-	solar_time = sa.solar_time(std_time, doy, cli->get_tz_meridian(), obj->longitude);
+	std_time = (double)(dt.hour) + ((double)dt.minute)/60.0 + (dt.is_dst ? -1:0);
+	solar_time = sa.solar_time(std_time, doy, RAD(cli->get_tz_meridian()), RAD(obj->longitude));
 
 	double hr_ang = -(15.0 * PI_OVER_180)*(solar_time-12.0); // morning +, afternoon -
 
@@ -87,8 +85,8 @@ EXPORT int64 calculate_solar_azimuth(OBJECT *obj, double latitude, double *value
 	}
 
 	gl_localtime(obj->clock, &dt);
-	std_time = (double)(dt.hour) + ((double)dt.minute)/60.0;
-	solar_time = sa.solar_time(std_time, doy, cli->get_tz_meridian(), obj->longitude);
+	std_time = (double)(dt.hour) + ((double)dt.minute)/60.0 + (dt.is_dst ? -1:0);
+	solar_time = sa.solar_time(std_time, doy, RAD(cli->get_tz_meridian()), RAD(obj->longitude));
 
 	double hr_ang = -(15.0 * PI_OVER_180)*(solar_time-12.0); // morning +, afternoon -
 
@@ -103,7 +101,7 @@ EXPORT int64 calculate_solar_azimuth(OBJECT *obj, double latitude, double *value
 
 EXPORT int64 calculate_solar_radiation_degrees(OBJECT *obj, double tilt, double orientation, double *value)
 {
-	return calculate_solar_radiation_radians(obj, RAD(tilt), RAD(orientation), value);
+	return calculate_solar_radiation_shading_radians(obj, RAD(tilt), RAD(orientation), 1.0, value);
 }
 
 EXPORT int64 calculate_solar_radiation_radians(OBJECT *obj, double tilt, double orientation, double *value){
@@ -138,8 +136,11 @@ EXPORT int64 calculate_solar_radiation_shading_radians(OBJECT *obj, double tilt,
 	dnr = shading_value * cli->get_solar_direct();
 
 	gl_localtime(obj->clock, &dt);
-	std_time = (double)(dt.hour) + ((double)dt.minute)/60.0;
+
+	std_time = (double)(dt.hour) + ((double)dt.minute)/60.0  + (dt.is_dst ? -1.0:0.0);
+
 	doy=sa.day_of_yr(dt.month,dt.day);
+
 	solar_time = sa.solar_time(std_time, doy, RAD(cli->get_tz_meridian()), RAD(obj->longitude));
 	cos_incident = sa.cos_incident(RAD(obj->latitude), tilt, orientation, solar_time, doy);
 
@@ -176,8 +177,16 @@ EXPORT int64 calc_solar_solpos_shading_rad(OBJECT *obj, double tilt, double orie
 	dhr = cli->get_solar_diffuse();
 	dnr = cli->get_solar_direct();
 
-	//Adjust time by half an hour - adjusts per TMY "reading" intervals - what they really represent
-	offsetclock = obj->clock + 1800;
+	if (cli->reader_type==1)//check if reader_type is TMY2.
+	{
+		//Adjust time by half an hour - adjusts per TMY "reading" intervals - what they really represent
+		offsetclock = obj->clock + 1800;
+	}
+	else	//Just pass it in
+	{
+		offsetclock = obj->clock;
+	}
+	
 	gl_localtime(offsetclock, &dt);
 
 	//Convert temperature back to centrigrade - since we seem to like imperial units
@@ -187,9 +196,16 @@ EXPORT int64 calc_solar_solpos_shading_rad(OBJECT *obj, double tilt, double orie
 	sa.S_init(&sa.solpos_vals);
 
 	//Assign in values
-	sa.solpos_vals.longitude = -obj->longitude;
+	sa.solpos_vals.longitude = obj->longitude;
 	sa.solpos_vals.latitude = RAD(obj->latitude);
-	sa.solpos_vals.timezone = cli->get_tz_offset_val();
+	if (dt.is_dst == 1)
+	{
+		sa.solpos_vals.timezone = cli->get_tz_offset_val()-1.0;
+	}
+	else
+	{
+		sa.solpos_vals.timezone = cli->get_tz_offset_val();
+	}
 	sa.solpos_vals.year = dt.year;
 	sa.solpos_vals.daynum = (dt.yearday+1);
 	sa.solpos_vals.hour = dt.hour;
@@ -234,8 +250,11 @@ EXPORT int64 calc_solar_solpos_shading_rad(OBJECT *obj, double tilt, double orie
 	http://rredc.nrel.gov/solar/pubs/tmy2/tab3-2.html
  @{
  **/
-int tmy2_reader::open(const char *file)
-{
+int tmy2_reader::open(const char *file){
+	char temp_lat_hem[2];
+	char temp_long_hem[2];
+	int sscan_rv;
+
 	fp = fopen(file, "r");
 
 	if(fp == NULL){
@@ -245,7 +264,26 @@ int tmy2_reader::open(const char *file)
 
 	// read in the header (use the c code given in the manual)
 	if(fgets(buf,500,fp)){
-		return sscanf(buf,"%*s %75s %3s %d %*s %d %d %*s %d %d %d",data_city,data_state,&tz_offset,&lat_degrees,&lat_minutes,&long_degrees,&long_minutes,&elevation);
+
+		//Initialize variables - so comparison functions work better
+		temp_lat_hem[0] = temp_lat_hem[1] = '\0';
+		temp_long_hem[0] = temp_long_hem[1] = '\0';
+
+		sscan_rv = sscanf(buf,"%*s %75s %3s %d %c %d %d %c %d %d %d",data_city,data_state,&tz_offset,temp_lat_hem,&lat_degrees,&lat_minutes,temp_long_hem,&long_degrees,&long_minutes,&elevation);
+
+		//See if latitude needs negation
+		if ((strcmp(temp_lat_hem,"S")==0) || (strcmp(temp_lat_hem,"s")==0))
+		{
+			lat_degrees=-lat_degrees;
+		}
+
+		//Check longitude as well
+		if ((strcmp(temp_long_hem,"W")==0) || (strcmp(temp_long_hem,"w")==0))
+		{
+			long_degrees=-long_degrees;
+		}
+
+		return sscan_rv;
 	} else {
 		gl_error("tmy2_reader::open() -- first fgets read nothing");
 		return 0; /* fgets didn't read anything */
@@ -414,9 +452,9 @@ climate::climate(MODULE *module)
 			PT_double,"rainfall[in/h]",PADDR(rainfall),
 			PT_double,"snowdepth[in]",PADDR(snowdepth),
 			PT_enumeration,"interpolate",PADDR(interpolate),PT_DESCRIPTION,"the interpolation mode used on the climate data",
-				PT_KEYWORD,"NONE",CI_NONE,
-				PT_KEYWORD,"LINEAR",CI_LINEAR,
-				PT_KEYWORD,"QUADRATIC",CI_QUADRATIC,
+				PT_KEYWORD,"NONE",(enumeration)CI_NONE,
+				PT_KEYWORD,"LINEAR",(enumeration)CI_LINEAR,
+				PT_KEYWORD,"QUADRATIC",(enumeration)CI_QUADRATIC,
 			PT_double,"solar_horiz",PADDR(solar_flux[CP_H]),
 			PT_double,"solar_north",PADDR(solar_flux[CP_N]),
 			PT_double,"solar_northeast",PADDR(solar_flux[CP_NE]),
@@ -436,7 +474,7 @@ climate::climate(MODULE *module)
 		strcpy(tmyfile,"");
 		temperature = 59.0;
 		temperature_raw = 15.0;
-		humidity = 0.75;
+		humidity = 75.0;
 		rainfall = 0.0;
 		snowdepth = 0.0;
 		ground_reflectivity = 0.3;
@@ -527,13 +565,42 @@ int climate::init(OBJECT *parent)
 //			my->get_data(t0, &temperature, &humidity, &solar_direct, &solar_diffuse, &wind_speed, &rainfall, &snowdepth);
 			//Pull timezone information
 			tz_num_offset = my->tz_numval;
+			tz_offset_val = tz_num_offset;
 
 			//Copy latitude and longitude information from CSV reader
 			obj->latitude = reader->latitude;
 			obj->longitude = reader->longitude;
 
+			//CSV Reader validity check
+			if (fabs(obj->latitude) > 90)
+			{
+				gl_error("climate:%s - Latitude is outside +/-90!",obj->name);
+				//Defined below
+				return 0;
+			}
+
+			if (fabs(obj->longitude) > 180)
+			{
+				gl_error("climate:%s - Longitude is outside +/-180!",obj->name);
+				//Defined below
+				return 0;
+			}
+
+			//Generic warning about southern hemisphere and Duffie-Beckman usage
+			if (obj->latitude<0)
+			{
+				gl_warning("climate:%s - Southern hemisphere solar position model may have issues",obj->name);
+				/*  TROUBLESHOOT
+				The default solar position model was built around a northern hemisphere assumption.  As such,
+				it doesn't always produce completely accurate results for southern hemisphere locations.  Calculated
+				insolation values are approximately correct, but may show discrepancies against measured data.  If
+				this climate is associated with a solar object, use the SOLAR_TILT_MODEL SOLPOS to ensure proper
+				results (this warning will still pop up).
+				*/
+			}
+
 			//Set the timezone offset - stolen from TMY code below
-			tz_meridian =  15 * abs(tz_num_offset);//std_meridians[-file.tz_offset-5];
+			tz_meridian =  15 * tz_num_offset;//std_meridians[-file.tz_offset-5];
 		}
 
 		return rv;
@@ -562,14 +629,56 @@ int climate::init(OBJECT *parent)
 	/* The city/state data isn't used anywhere.  -mhauer */
 	//file.header_info(cty,st,&lat_deg,&lat_min,&long_deg,&long_min);
 	file.header_info(NULL,NULL,&lat_deg,&lat_min,&long_deg,&long_min);
-	set_latitude((double)lat_deg + ((double)lat_min) / 60);
-	set_longitude((double)long_deg + ((double)long_min) / 60);
+
+	//Handle hemispheres
+	if (lat_deg<0)
+		set_latitude((double)lat_deg - (((double)lat_min) / 60));
+	else
+		set_latitude((double)lat_deg + (((double)lat_min) / 60));
+
+	if (long_deg<0)
+		set_longitude((double)long_deg - (((double)long_min) / 60));
+	else
+		set_longitude((double)long_deg + (((double)long_min) / 60));
+
+	//Generic check for TMY files
+	if (fabs(obj->latitude) > 90)
+	{
+		gl_error("climate:%s - Latitude is outside +/-90!",obj->name);
+		/*  TROUBLESHOOT
+		The value read from the weather data indicates a latitude of greater
+		than 90 or less than -90 degrees.  This is not a valid value.  Please specify
+		the latitude in this range, with positive values representing the northern hemisphere
+		and negative values representing the southern hemisphere.
+		*/
+		return 0;
+	}
+
+	if (fabs(obj->longitude) > 180)
+	{
+		gl_error("climate:%s - Longitude is outside +/-180!",obj->name);
+		/*  TROUBLESHOOT
+		The value read from the weather data indicates a longitude of greater
+		than 180 or less than -180 degrees.  This is not a valid value.  Please specify
+		the longitude in this range, with positive values representing the eastern hemisphere
+		and negative values representing the western hemisphere.
+		*/
+		return 0;
+	}
+
+	//Generic warning about southern hemisphere and Duffie-Beckman usage
+	if (obj->latitude<0)
+	{
+		gl_warning("climate:%s - Southern hemisphere solar position model may have issues",obj->name);
+		//Defined above
+	}
+
 	if(0 == gl_convert("m", "ft", &meter_to_feet)){
 		gl_error("climate::init unable to gl_convert() 'm' to 'ft'!");
 		return 0;
 	}
 	file.elevation = (int)(file.elevation * meter_to_feet);
-	tz_meridian = (15 * abs(file.tz_offset)); // std_meridians[-file.tz_offset-5];
+	tz_meridian =  15 * file.tz_offset;//std_meridians[-file.tz_offset-5];
 	tz_offset_val = file.tz_offset;
 	while (line<8760 && file.next())
 	{
@@ -623,8 +732,8 @@ int climate::init(OBJECT *parent)
 			double sol_time = sa->solar_time((double)hour,doy,RAD(tz_meridian),RAD(get_longitude()));
 			double sol_rad = 0.0;
 
-			tmy[hoy].solar_elevation = sa->altitude(doy, get_latitude(), sol_time);
-			tmy[hoy].solar_azimuth = sa->azimuth(doy, get_latitude(), sol_time);
+			tmy[hoy].solar_elevation = sa->altitude(doy, RAD(obj->latitude), sol_time);
+			tmy[hoy].solar_azimuth = sa->azimuth(doy, RAD(obj->latitude), sol_time);
 
 			for(COMPASS_PTS c_point = CP_H; c_point < CP_LAST;c_point=COMPASS_PTS(c_point+1)){
 				if(c_point == CP_H)
@@ -735,7 +844,7 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 		csv_reader *cr = OBJECTDATA(reader,csv_reader);
 		rv = cr->get_data(t0, &temperature, &humidity, &solar_direct, &solar_diffuse, &solar_global, &wind_speed, &rainfall, &snowdepth, &pressure);
 		// calculate the solar radiation
-		double sol_time = sa->solar_time((double)now.get_hour()+now.get_minute()/60.0+now.get_second()/3600.0,now.get_yearday(),RAD(tz_meridian),RAD(reader->longitude));
+		double sol_time = sa->solar_time((double)now.get_hour()+now.get_minute()/60.0+now.get_second()/3600.0 + (now.get_is_dst() ? -1:0),now.get_yearday(),RAD(tz_meridian),RAD(reader->longitude));
 		double sol_rad = 0.0;
 
 		for(COMPASS_PTS c_point = CP_H; c_point < CP_LAST;c_point=COMPASS_PTS(c_point+1)){

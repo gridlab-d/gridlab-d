@@ -19,7 +19,7 @@ public:
 	static CLASS *oclass;
 	static CLASS *pclass;
 public:
-	VOLTVARSTATE control_method;		//Control method for IVVC controller (On or off)
+	enumeration control_method;		///< Control method for IVVC controller (On or off)
 	double cap_time_delay;				//Default delay for capacitors
 	double reg_time_delay;				//Default delay for regulator
 	double desired_pf;					//Desired power factor for the system

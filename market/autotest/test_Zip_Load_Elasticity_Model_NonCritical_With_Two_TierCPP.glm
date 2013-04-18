@@ -45,6 +45,7 @@ object stubauction {
 	
     object player {
         property next.P;
+		rank 8;
         file ../TOU_Pricing_2Tier_OnlyHigh.player;
         loop 1;
     };        
@@ -164,7 +165,7 @@ object house {
 			};
 			
 			 object recorder {
-				  property multiplier, actual_power.real, base_power;
+				  property multiplier;
 				  limit 100000000;
 				  interval 300;
 				  file results.csv;
@@ -174,7 +175,7 @@ object house {
 				  target "multiplier";	
 				  within 0.01;
 				  object player{
-				  
+					rank 4;				  
 				  
 					property value;
 					file ../Elasticity_Multiplier_NonCritical_With_Two_TierCPP.player;

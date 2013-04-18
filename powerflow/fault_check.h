@@ -22,7 +22,7 @@ public:
 	int **Supported_Nodes;		//Nodes with source support (connected to swing somehow)
 	char *Alteration_Nodes;		//Similar to Supported_Nodes, but used to track alteration progression (namely, has the side been handled)
 
-	FCSTATE fcheck_state;		//Mode variable
+	enumeration fcheck_state;		//Mode variable
 	char1024 output_filename;	//File name to output unconnected bus values
 	bool reliability_mode;		//Flag for reliability implementation
 	OBJECT *rel_eventgen;		//Eventgen object in reliability - allows "unscheduled" faults

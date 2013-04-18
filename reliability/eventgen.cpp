@@ -46,29 +46,29 @@ eventgen::eventgen(MODULE *module)
 			PT_char1024, "target_group", PADDR(target_group),
 			PT_char256, "fault_type", PADDR(fault_type),
 			PT_enumeration, "failure_dist", PADDR(failure_dist),
-				PT_KEYWORD, "UNIFORM", UNIFORM,
-				PT_KEYWORD, "NORMAL", NORMAL,
-				PT_KEYWORD, "LOGNORMAL", LOGNORMAL,
-				PT_KEYWORD, "BERNOULLI", BERNOULLI,
-				PT_KEYWORD, "PARETO", PARETO,
-				PT_KEYWORD, "EXPONENTIAL", EXPONENTIAL,
-				PT_KEYWORD, "RAYLEIGH", RAYLEIGH,
-				PT_KEYWORD, "WEIBULL", WEIBULL,
-				PT_KEYWORD, "GAMMA", GAMMA,
-				PT_KEYWORD, "BETA", BETA,
-				PT_KEYWORD, "TRIANGLE", TRIANGLE,
+				PT_KEYWORD, "UNIFORM", (enumeration)UNIFORM,
+				PT_KEYWORD, "NORMAL", (enumeration)NORMAL,
+				PT_KEYWORD, "LOGNORMAL", (enumeration)LOGNORMAL,
+				PT_KEYWORD, "BERNOULLI", (enumeration)BERNOULLI,
+				PT_KEYWORD, "PARETO", (enumeration)PARETO,
+				PT_KEYWORD, "EXPONENTIAL", (enumeration)EXPONENTIAL,
+				PT_KEYWORD, "RAYLEIGH", (enumeration)RAYLEIGH,
+				PT_KEYWORD, "WEIBULL", (enumeration)WEIBULL,
+				PT_KEYWORD, "GAMMA", (enumeration)GAMMA,
+				PT_KEYWORD, "BETA", (enumeration)BETA,
+				PT_KEYWORD, "TRIANGLE", (enumeration)TRIANGLE,
 			PT_enumeration, "restoration_dist", PADDR(restore_dist),
-				PT_KEYWORD, "UNIFORM", UNIFORM,
-				PT_KEYWORD, "NORMAL", NORMAL,
-				PT_KEYWORD, "LOGNORMAL", LOGNORMAL,
-				PT_KEYWORD, "BERNOULLI", BERNOULLI,
-				PT_KEYWORD, "PARETO", PARETO,
-				PT_KEYWORD, "EXPONENTIAL", EXPONENTIAL,
-				PT_KEYWORD, "RAYLEIGH", RAYLEIGH,
-				PT_KEYWORD, "WEIBULL", WEIBULL,
-				PT_KEYWORD, "GAMMA", GAMMA,
-				PT_KEYWORD, "BETA", BETA,
-				PT_KEYWORD, "TRIANGLE", TRIANGLE,
+				PT_KEYWORD, "UNIFORM", (enumeration)UNIFORM,
+				PT_KEYWORD, "NORMAL", (enumeration)NORMAL,
+				PT_KEYWORD, "LOGNORMAL", (enumeration)LOGNORMAL,
+				PT_KEYWORD, "BERNOULLI", (enumeration)BERNOULLI,
+				PT_KEYWORD, "PARETO", (enumeration)PARETO,
+				PT_KEYWORD, "EXPONENTIAL", (enumeration)EXPONENTIAL,
+				PT_KEYWORD, "RAYLEIGH", (enumeration)RAYLEIGH,
+				PT_KEYWORD, "WEIBULL", (enumeration)WEIBULL,
+				PT_KEYWORD, "GAMMA", (enumeration)GAMMA,
+				PT_KEYWORD, "BETA", (enumeration)BETA,
+				PT_KEYWORD, "TRIANGLE", (enumeration)TRIANGLE,
 			PT_double, "failure_dist_param_1", PADDR(fail_dist_params[0]),
 			PT_double, "failure_dist_param_2", PADDR(fail_dist_params[1]),
 			PT_double, "restoration_dist_param_1", PADDR(rest_dist_params[0]),
@@ -137,7 +137,7 @@ int eventgen::init(OBJECT *parent)
 {
 	OBJECT *hdr = OBJECTHDR(this);
 	int index, comma_count;
-	TIMESTAMP tempTime;
+	TIMESTAMP tempTime, globStartTimeVal;
 	FINDLIST *ObjListVals;
 	OBJECT *temp_obj;
 	double temp_double, temp_val;
@@ -172,6 +172,11 @@ int eventgen::init(OBJECT *parent)
 		to be at least 1 minimum timestep long.  This may alter your results, so please plan appropriately.
 		*/
 	}
+	//Extract starting time - for comparision
+	gl_global_getvar("clock",temp_buff,sizeof(temp_buff));
+
+	//Convert it
+	globStartTimeVal = gl_parsetime(temp_buff);
 
 	//If a minimum timestep is present, make sure things are set appropriately
 	if (off_nominal_time == true)
@@ -323,8 +328,20 @@ int eventgen::init(OBJECT *parent)
 			//Ensure the link to the protective device is NULLed
 			UnreliableObjs[index].obj_made_int = NULL;
 
-			//Store failure time
-			UnreliableObjs[index].fail_time = temp_time_A;
+			//Check to make sure failures start AFTER the simulation has started
+			if (temp_time_A > globStartTimeVal)
+			{
+				//Store failure time
+				UnreliableObjs[index].fail_time = temp_time_A;
+			}
+			else	//Nope, give an error
+			{
+				GL_THROW("Manual event time in %s must be AFTER the simulation start time",hdr->name);
+				/*  TROUBLESHOOT
+				A manual event specified into eventgen has a start time before the simulation has actually started.
+				Please fix this and try again.
+				*/
+			}
 
 			//Store restoration time
 			UnreliableObjs[index].rest_time = temp_time_B;
@@ -356,6 +373,13 @@ int eventgen::init(OBJECT *parent)
 
 				//Update the restoration time appropriately
 				UnreliableObjs[index].rest_time = UnreliableObjs[index].fail_time + tempTime;
+
+				//Toss a warning, for giggles
+				gl_warning("Outage length for object:%s is less than the minimum timestep of %.0f seconds, rounded to minimum timestep",temp_obj->name,glob_min_timestep);
+				/*  TROUBLESHOOT
+				The selected outage length is less than the mininum timestep set.  It has been forced to be at least one
+				minimum timestep long.
+				*/
 			}
 
 			//Store the value - just for the sake of doing so
@@ -1136,7 +1160,7 @@ TIMESTAMP eventgen::postsync(TIMESTAMP t0, TIMESTAMP t1)
 }
 
 //Function to do random time generation - functionalized for ease
-TIMESTAMP eventgen::gen_random_time(DISTTYPE rand_dist_type, double param_1, double param_2)
+TIMESTAMP eventgen::gen_random_time(enumeration rand_dist_type, double param_1, double param_2)
 {
 	TIMESTAMP random_time = 0;
 	double dbl_random_time = 0.0;
@@ -1214,6 +1238,10 @@ TIMESTAMP eventgen::gen_random_time(DISTTYPE rand_dist_type, double param_1, dou
 	if ((off_nominal_time == true) && (dbl_random_time < glob_min_timestep)) 
 	{
 		dbl_random_time = glob_min_timestep;	//Make it at least 1
+
+		//Toss a warning, for giggles
+		gl_warning("Outage length is less than the minimum timestep of %.0f seconds, rounded to minimum timestep",glob_min_timestep);
+		//Defined above
 	}
 
 	//Cast it
@@ -1339,6 +1367,10 @@ int eventgen::add_unhandled_event(OBJECT *obj_to_fault, char *event_type, TIMEST
 	if ((off_nominal_time == true) && (((double)(rest_length)) < glob_min_timestep))
 	{
 		rest_length = (TIMESTAMP)(glob_min_timestep);	//Force to one
+
+		//Warning
+		gl_warning("Outage length for object:%s is less than the minimum timestep of %.0f seconds, rounded to minimum timestep",obj_to_fault->name,glob_min_timestep);
+		//Defined above
 	}
 
 	//Update restoration time appropriately

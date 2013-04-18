@@ -79,8 +79,8 @@ public:
 	double Tsolar;
 	double Tmaterials;
 
-	HCMODE heat_cool_mode;			///< heating cooling mode at t1
-	HEATMODE heat_mode;				///< method of heating the water (gas or electric) [enum]
+	enumeration heat_cool_mode;			///< heating cooling mode at t1
+	enumeration heat_mode;				///< method of heating the water (gas or electric) [enum]
 	double hvac_rated_power;
 	double hvac_rated_capacity;
 	double rated_heating_capacity;

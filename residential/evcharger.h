@@ -54,9 +54,10 @@ private:
 
 public:
 	double heat_fraction;			///< fraction of the evcharger that is transferred as heat (default = 0.90)
-	CHARGERTYPE charger_type;		///< EV charger power
-	VEHICLETYPE vehicle_type;		///< vehicle type
-	VEHICLESTATE vehicle_state;		///< current state of EV
+	enumeration charger_type;		///< EV charger power
+	enumeration vehicle_type;		///< vehicle type
+	enumeration vehicle_state;		///< current state of EV
+	double charging_efficiency;		///< Efficiency of input power to battery power
 	struct {
 		double home;				///< probability of coming home
 		double work;				///< probability of leaving at work
@@ -76,6 +77,7 @@ public:
 	double mileage;				///< vehicle mileage (miles/kW)
 	double power_factor;		///< charge power factor
 	double charge_throttle;		///< charge throttle (0-1)
+	double mileage_classification;	///< Mileage classification of PHEV - e.g. 33 for a PHEV33 (33 miles on electric)
 	char1024 demand_profile;	///< filename of demand profile
 
 public:

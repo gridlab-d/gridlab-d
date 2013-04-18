@@ -301,6 +301,7 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 {
 	regulator_configuration *pConfig = OBJECTDATA(configuration, regulator_configuration);
 	node *pTo = OBJECTDATA(to, node);
+	char phaseWarn;
 
 	if (pConfig->Control == pConfig->MANUAL) {
 		for (int i = 0; i < 3; i++) {
@@ -751,6 +752,60 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 		}
 	}
 
+	//General warnings for if we're at a railed tap limit
+	if (tap[0] == pConfig->raise_taps)
+	{
+		phaseWarn='A';	//Just so troubleshoot is generic
+
+		gl_warning("Regulator %s has phase %c at the maximum tap value",OBJECTHDR(this)->name,phaseWarn);
+		/*  TROUBLESHOOT
+		The regulator has set its taps such that it is at the maximum setting.  This may indicate
+		a problem with settings, or your system.
+		*/
+	}
+
+	if (tap[1] == pConfig->raise_taps)
+	{
+		phaseWarn='B';	//Just so troubleshoot is generic
+
+		gl_warning("Regulator %s has phase %c at the maximum tap value",OBJECTHDR(this)->name,phaseWarn);
+		//Defined above
+	}
+
+	if (tap[2] == pConfig->raise_taps)
+	{
+		phaseWarn='C';	//Just so troubleshoot is generic
+
+		gl_warning("Regulator %s has phase %c at the maximum tap value",OBJECTHDR(this)->name,phaseWarn);
+		//Defined above
+	}
+
+	if (tap[0] == -pConfig->lower_taps)
+	{
+		phaseWarn='A';	//Just so troubleshoot is generic
+
+		gl_warning("Regulator %s has phase %c at the minimum tap value",OBJECTHDR(this)->name,phaseWarn);
+		/*  TROUBLESHOOT
+		The regulator has set its taps such that it is at the minimum setting.  This may indicate
+		a problem with settings, or your system.
+		*/
+	}
+
+	if (tap[1] == -pConfig->lower_taps)
+	{
+		phaseWarn='B';	//Just so troubleshoot is generic
+
+		gl_warning("Regulator %s has phase %c at the minimum tap value",OBJECTHDR(this)->name,phaseWarn);
+		//Defined above
+	}
+
+	if (tap[2] == -pConfig->lower_taps)
+	{
+		phaseWarn='C';	//Just so troubleshoot is generic
+
+		gl_warning("Regulator %s has phase %c at the minimum tap value",OBJECTHDR(this)->name,phaseWarn);
+		//Defined above
+	}
 	if (offnominal_time && (t0 > next_time))
 	{
 		next_time = t0;

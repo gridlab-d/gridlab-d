@@ -56,6 +56,7 @@ INDEX *index_create(int first_ordinal, /**< the first ordinal */
 	return index;
 Undo:
 	free(index);
+	index = NULL;
 	return NULL;
 }
 

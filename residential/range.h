@@ -58,8 +58,8 @@ public:
 	// Basic characteristics defined at creation...
 	double Tset_curtail;			///< lower limit before we cancel curtailment [F]
 	double Tinlet;					///< default will be set to 60 degF
-	WHLOCATION location;			///< location of oven (inside or garage) [enum]
-	HEATMODE heat_mode;				///< method of heating the food (gas or electric) [enum]
+	enumeration location;			///< location of oven (inside or garage) [enum]
+	enumeration heat_mode;				///< method of heating the food (gas or electric) [enum]
 
 	// Characteristics calculated from basics at creation...
 	double area;					///< oven cross-sectional area [ft^2]
@@ -111,7 +111,7 @@ public:
 	bool oven_check;
 	bool remainon;
 
-	STATE state_cooktop;
+	enumeration state_cooktop;
 
 	double TSTAT_PRECISION;
 
@@ -169,12 +169,12 @@ public:
 
 
 public:
-	WHMODEL current_model;				///< Discerns which range model we need to use
-	WHQFLOW load_state;					///
+	enumeration current_model;				///< Discerns which range model we need to use
+	enumeration load_state;					///
 
-	WHQSTATE range_state(void);				// Are we full, partial, or empty?
+	enumeration range_state(void);				// Are we full, partial, or empty?
 	void set_time_to_transition(void);					//< Sets timeToTransition...
-	WHQFLOW set_current_model_and_load_state(void);	// set the model and state for each cycle
+	enumeration set_current_model_and_load_state(void);	// set the model and state for each cycle
 	void update_T_and_or_h(double);				// Reset Tw and or h...
 	double update_state(double,TIMESTAMP);
 
@@ -183,9 +183,9 @@ public:
 	double new_time_1node(double T0, double T1);		// Calcs time to transition...
 	double new_temp_1node(double T0, double delta_t);	// Calcs temp after transition...
 	
-	double get_Tambient(WHLOCATION water_heater_location);		// ambient T [F] -- either an indoor house temperature or a garage temperature, probably...
+	double get_Tambient(enumeration water_heater_location);		// ambient T [F] -- either an indoor house temperature or a garage temperature, probably...
 	typedef enum {MODEL_NOT_1ZONE=0, MODEL_NOT_2ZONE=1} WRONGMODEL;
-	void wrong_model(WRONGMODEL msg);
+	void wrong_model(enumeration msg);
 };
 
 #endif

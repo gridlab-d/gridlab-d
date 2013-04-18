@@ -40,17 +40,17 @@ fuse::fuse(MODULE *mod) : link_object(mod)
         if(gl_publish_variable(oclass,
 			PT_INHERIT, "link",
 			PT_enumeration, "phase_A_status", PADDR(phase_A_state),
-				PT_KEYWORD, "BLOWN", BLOWN,
-				PT_KEYWORD, "GOOD", GOOD,
+				PT_KEYWORD, "BLOWN", (enumeration)BLOWN,
+				PT_KEYWORD, "GOOD", (enumeration)GOOD,
 			PT_enumeration, "phase_B_status", PADDR(phase_B_state),
-				PT_KEYWORD, "BLOWN", BLOWN,
-				PT_KEYWORD, "GOOD", GOOD,
+				PT_KEYWORD, "BLOWN", (enumeration)BLOWN,
+				PT_KEYWORD, "GOOD", (enumeration)GOOD,
 			PT_enumeration, "phase_C_status", PADDR(phase_C_state),
-				PT_KEYWORD, "BLOWN", BLOWN,
-				PT_KEYWORD, "GOOD", GOOD,
+				PT_KEYWORD, "BLOWN", (enumeration)BLOWN,
+				PT_KEYWORD, "GOOD", (enumeration)GOOD,
 			PT_enumeration, "repair_dist_type", PADDR(restore_dist_type),
-				PT_KEYWORD, "NONE", NONE,
-				PT_KEYWORD, "EXPONENTIAL", EXPONENTIAL,
+				PT_KEYWORD, "NONE", (enumeration)NONE,
+				PT_KEYWORD, "EXPONENTIAL", (enumeration)EXPONENTIAL,
 			PT_double, "current_limit[A]", PADDR(current_limit),
 			PT_double, "mean_replacement_time[s]",PADDR(mean_replacement_time),	//Retains compatibility with older files
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
@@ -964,21 +964,21 @@ void fuse::fuse_check(set phase_to_check, complex *fcurr)
 	if (phase_to_check == PHASE_A)
 	{
 		indexval = 0;
-		valstate = &phase_A_state;
+		valstate = (FUSESTATE*)&phase_A_state;
 		phase_verbose='A';
 		fixtime = &fix_time[0];
 	}
 	else if (phase_to_check == PHASE_B)
 	{
 		indexval = 1;
-		valstate = &phase_B_state;
+		valstate = (FUSESTATE*)&phase_B_state;
 		phase_verbose='B';
 		fixtime = &fix_time[1];
 	}
 	else if (phase_to_check == PHASE_C)
 	{
 		indexval = 2;
-		valstate = &phase_C_state;
+		valstate = (FUSESTATE*)&phase_C_state;
 		phase_verbose='C';
 		fixtime = &fix_time[2];
 	}

@@ -26,10 +26,13 @@ protected:
 public:
 	/* TODO: put published variables here */
 	set phases;	/**< device phases (see PHASE codes) */
-	enum GENERATOR_MODE {CONSTANT_V=1, CONSTANT_PQ=2, CONSTANT_PF=4, SUPPLY_DRIVEN=5} gen_mode_v;  //operating mode of the generator 
+	enum GENERATOR_MODE {CONSTANT_V=1, CONSTANT_PQ=2, CONSTANT_PF=4, SUPPLY_DRIVEN=5};
+	enumeration gen_mode_v;  //operating mode of the generator 
 	//note microturbine panel will always operate under the SUPPLY_DRIVEN generator mode
-	enum GENERATOR_STATUS {OFFLINE=1, ONLINE=2} gen_status_v;
-	enum POWER_TYPE{DC=1, AC=2} power_type_v;
+	enum GENERATOR_STATUS {OFFLINE=1, ONLINE=2};
+	enumeration gen_status_v;
+	enum POWER_TYPE{DC=1, AC=2};
+	enumeration power_type_v;
 	
 
 

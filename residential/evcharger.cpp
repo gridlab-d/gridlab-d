@@ -274,16 +274,16 @@ evcharger::evcharger(MODULE *module) : residential_enduse(module)
 		if (gl_publish_variable(oclass,
 			PT_INHERIT, "residential_enduse",
 			PT_enumeration,"charger_type",PADDR(charger_type),
-				PT_KEYWORD,"LOW",CT_LOW,
-				PT_KEYWORD,"MEDIUM",CT_MEDIUM,
-				PT_KEYWORD,"HIGH",CT_HIGH,
+				PT_KEYWORD,"LOW",(enumeration)CT_LOW,
+				PT_KEYWORD,"MEDIUM",(enumeration)CT_MEDIUM,
+				PT_KEYWORD,"HIGH",(enumeration)CT_HIGH,
 			PT_enumeration,"vehicle_type",PADDR(vehicle_type),
-				PT_KEYWORD,"ELECTRIC",VT_ELECTRIC,
-				PT_KEYWORD,"HYBRID",VT_HYBRID,
+				PT_KEYWORD,"ELECTRIC",(enumeration)VT_ELECTRIC,
+				PT_KEYWORD,"HYBRID",(enumeration)VT_HYBRID,
 			PT_enumeration,"state",PADDR(vehicle_state),
-				PT_KEYWORD,"UNKNOWN",VS_UNKNOWN,
-				PT_KEYWORD,"HOME",VS_HOME,
-				PT_KEYWORD,"WORK",VS_WORK,
+				PT_KEYWORD,"UNKNOWN",(enumeration)VS_UNKNOWN,
+				PT_KEYWORD,"HOME",(enumeration)VS_HOME,
+				PT_KEYWORD,"WORK",(enumeration)VS_WORK,
 			// these are not yet supported
 			//	PT_KEYWORD,"SHORTTRIP",SHORTTRIP,
 			//	PT_KEYWORD,"LONGTRIP",LONGTRIP,
@@ -300,6 +300,9 @@ evcharger::evcharger(MODULE *module) : residential_enduse(module)
 			PT_double,"charge[unit]",PADDR(charge),
 			PT_bool,"charge_at_work",PADDR(charge_at_work),
 			PT_double,"charge_throttle[unit]", PADDR(charge_throttle),
+			PT_double,"charger_efficiency[unit]", PADDR(charging_efficiency),PT_DESCRIPTION, "Efficiency of the charger in terms of energy in to battery stored",
+			PT_double,"power_train_efficiency[mile/kWh]", PADDR(mileage), PT_DESCRIPTION, "Miles per kWh of battery charge",
+			PT_double,"mileage_classification[mile]", PADDR(mileage_classification), PT_DESCRIPTION, "Miles expected range on battery only",
 			PT_char1024,"demand_profile", PADDR(demand_profile),
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
@@ -319,6 +322,10 @@ int evcharger::create()
 	load.power = load.admittance = load.current = load.total = complex(0,0,J);
 	vehicle_type = VT_HYBRID;
 
+	charging_efficiency = 1.0;	//Assumed 100% Efficient charging at first
+	mileage_classification = 0.0;
+	mileage = 0.0;
+
 	return res;
 }
 
@@ -330,6 +337,15 @@ static bool hiV[] = {false,true,true};
 int evcharger::init(OBJECT *parent)
 {
 	static double sizes[] = {20,30,30,40,40,40,50,50,50,50,60,60,60,70,70,80};
+
+	if (mileage==0) mileage = gl_random_uniform(RNGSTATE,0.8,1.2);
+	
+	//See if mileage classification and mileage are defined
+	if ((mileage_classification > 0.0) && (mileage > 0.0))
+	{
+		capacity=mileage_classification/mileage;	//capacity = miles expected * kWh/mile
+	}
+	
 	if (capacity==0) capacity = gl_random_sampled(RNGSTATE,sizeof(sizes)/sizeof(sizes[0]),sizes); 
 	if (power_factor==0) power_factor = 0.95;
 	if (charge==0) charge = gl_random_uniform(RNGSTATE,0.25,1.0);
@@ -342,6 +358,16 @@ int evcharger::init(OBJECT *parent)
 
 	OBJECT *hdr = OBJECTHDR(this);
 	hdr->flags |= OF_SKIPSAFE;
+
+	//Make sure the efficiency is valid
+	if ((charging_efficiency > 1.0) || (charging_efficiency < 0.0))
+	{
+		GL_THROW("Please specify a charging efficiency between 0.0 and 1.0!");
+		/*  TROUBLESHOOT
+		A charger_efficiency value outside of the possible values was specified.  Please try again with a proper
+		value.
+		*/
+	}
 
 	// load demand profile
 	if (strcmp(demand_profile,"")!=0)
@@ -451,7 +477,7 @@ double evcharger::update_state(double dt /* seconds */)
 			}
 
 			// compute the amount of energy added for this dt
-			double d_charge_kWh = charge_kw*dt/3600;
+			double d_charge_kWh = charge_kw*dt/3600*charging_efficiency;
 
 			// compute the charge added to the battery
 			charge += d_charge_kWh/capacity;

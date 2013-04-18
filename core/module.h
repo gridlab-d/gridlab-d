@@ -25,8 +25,13 @@ struct s_module_list {
 	int (*import_file)(const char *file);
 	int (*export_file)(const char *file);
 	int (*check)();
+	/* deltamode */
+	unsigned long (*deltadesired)(DELTAMODEFLAGS*);
+	unsigned long (*preupdate)(void*,int64,unsigned int64);
+	SIMULATIONMODE (*interupdate)(void*,int64,unsigned int64,unsigned long,unsigned int);
+	STATUS (*postupdate)(void*,int64,unsigned int64);
 	int (*cmdargs)(int,char**);
-	int (*kmldump)(FILE*fp,OBJECT*);
+	int (*kmldump)(int(*)(const char*,...),OBJECT*);
 	void (*test)(int argc, char *argv[]);	
 	MODULE *(*subload)(char *, MODULE **, CLASS **, int, char **);
 	PROPERTY *globals;
@@ -89,6 +94,7 @@ extern "C" {
 	void module_profiles(void);
 	CALLBACKS *module_callbacks(void);
 	void module_termall(void);
+	MODULE *module_get_next(MODULE*);
 
 #ifdef __cplusplus
 }

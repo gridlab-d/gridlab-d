@@ -48,8 +48,8 @@ stubauction::stubauction(MODULE *module)
 			PT_int64, "market_id", PADDR(market_id), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "unique identifier of market clearing",
 			PT_bool, "verbose", PADDR(verbose), PT_DESCRIPTION, "enable verbose stubauction operations",
 			PT_enumeration,"control_mode",PADDR(control_mode),PT_DESCRIPTION,"the control mode to use for determining average and deviation calculations",
-				PT_KEYWORD,"NORMAL",CON_NORMAL,
-				PT_KEYWORD,"DISABLED",CON_DISABLED,
+				PT_KEYWORD,"NORMAL",(enumeration)CON_NORMAL,
+				PT_KEYWORD,"DISABLED",(enumeration)CON_DISABLED,
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		defaults = this;
 		memset(this,0,sizeof(stubauction));

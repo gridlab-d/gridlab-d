@@ -307,6 +307,13 @@ static int recorder_open(OBJECT *obj)
 		}
 	}
 
+	/* set up the delta_mode recorder if enabled */
+	if ( (obj->flags)&OF_DELTAMODE )
+	{
+		extern void delta_add_recorder(OBJECT *);
+		delta_add_recorder(obj);
+	}
+
 	return my->ops->open(my, fname, flags);
 }
 

@@ -47,39 +47,39 @@ solar::solar(MODULE *module)
 
 		if (gl_publish_variable(oclass,
 			PT_enumeration,"generator_mode",PADDR(gen_mode_v),
-				PT_KEYWORD,"UNKNOWN",UNKNOWN,
-				PT_KEYWORD,"CONSTANT_V",CONSTANT_V,
-				PT_KEYWORD,"CONSTANT_PQ",CONSTANT_PQ,
-				PT_KEYWORD,"CONSTANT_PF",CONSTANT_PF,
-				PT_KEYWORD,"SUPPLY_DRIVEN",SUPPLY_DRIVEN, //PV must operate in this mode
+				PT_KEYWORD,"UNKNOWN",(enumeration)UNKNOWN,
+				PT_KEYWORD,"CONSTANT_V",(enumeration)CONSTANT_V,
+				PT_KEYWORD,"CONSTANT_PQ",(enumeration)CONSTANT_PQ,
+				PT_KEYWORD,"CONSTANT_PF",(enumeration)CONSTANT_PF,
+				PT_KEYWORD,"SUPPLY_DRIVEN",(enumeration)SUPPLY_DRIVEN, //PV must operate in this mode
 
 			PT_enumeration,"generator_status",PADDR(gen_status_v),
-				PT_KEYWORD,"OFFLINE",OFFLINE,
-				PT_KEYWORD,"ONLINE",ONLINE,	
+				PT_KEYWORD,"OFFLINE",(enumeration)OFFLINE,
+				PT_KEYWORD,"ONLINE",(enumeration)ONLINE,	
 
 			PT_enumeration,"panel_type", PADDR(panel_type_v),
-				PT_KEYWORD, "SINGLE_CRYSTAL_SILICON", SINGLE_CRYSTAL_SILICON, //Mono-crystalline in production and the most efficient, efficiency 0.15-0.17
-				PT_KEYWORD, "MULTI_CRYSTAL_SILICON", MULTI_CRYSTAL_SILICON,
-				PT_KEYWORD, "AMORPHOUS_SILICON", AMORPHOUS_SILICON,
-				PT_KEYWORD, "THIN_FILM_GA_AS", THIN_FILM_GA_AS,
-				PT_KEYWORD, "CONCENTRATOR", CONCENTRATOR,
+				PT_KEYWORD, "SINGLE_CRYSTAL_SILICON", (enumeration)SINGLE_CRYSTAL_SILICON, //Mono-crystalline in production and the most efficient, efficiency 0.15-0.17
+				PT_KEYWORD, "MULTI_CRYSTAL_SILICON", (enumeration)MULTI_CRYSTAL_SILICON,
+				PT_KEYWORD, "AMORPHOUS_SILICON", (enumeration)AMORPHOUS_SILICON,
+				PT_KEYWORD, "THIN_FILM_GA_AS", (enumeration)THIN_FILM_GA_AS,
+				PT_KEYWORD, "CONCENTRATOR", (enumeration)CONCENTRATOR,
 
 			PT_enumeration,"power_type",PADDR(power_type_v),
-				PT_KEYWORD,"AC",AC,
-				PT_KEYWORD,"DC",DC,
+				PT_KEYWORD,"AC",(enumeration)AC,
+				PT_KEYWORD,"DC",(enumeration)DC,
 
 			PT_enumeration, "INSTALLATION_TYPE", PADDR(installation_type_v),
-			   PT_KEYWORD, "ROOF_MOUNTED", ROOF_MOUNTED,
-               PT_KEYWORD, "GROUND_MOUNTED",GROUND_MOUNTED,
+			   PT_KEYWORD, "ROOF_MOUNTED", (enumeration)ROOF_MOUNTED,
+               PT_KEYWORD, "GROUND_MOUNTED",(enumeration)GROUND_MOUNTED,
 
 			PT_enumeration, "SOLAR_TILT_MODEL", PADDR(solar_model_tilt), PT_DESCRIPTION, "solar tilt model used to compute insolation values",
-				PT_KEYWORD, "DEFAULT", LIUJORDAN,
-				PT_KEYWORD, "SOLPOS", SOLPOS,
-				PT_KEYWORD, "PLAYERVALUE", PLAYERVAL,
+				PT_KEYWORD, "DEFAULT", (enumeration)LIUJORDAN,
+				PT_KEYWORD, "SOLPOS", (enumeration)SOLPOS,
+				PT_KEYWORD, "PLAYERVALUE", (enumeration)PLAYERVAL,
 
 			PT_enumeration, "SOLAR_POWER_MODEL", PADDR(solar_power_model),
-				PT_KEYWORD, "DEFAULT", BASEEFFICIENT,
-				PT_KEYWORD, "FLATPLATE", FLATPLATE,
+				PT_KEYWORD, "DEFAULT", (enumeration)BASEEFFICIENT,
+				PT_KEYWORD, "FLATPLATE", (enumeration)FLATPLATE,
 
 			PT_double, "a_coeff", PADDR(module_acoeff), PT_DESCRIPTION, "a coefficient for module temperature correction formula",
 			PT_double, "b_coeff[s/m]", PADDR(module_bcoeff), PT_DESCRIPTION, "b coefficient for module temperature correction formula",
@@ -118,8 +118,8 @@ solar::solar(MODULE *module)
 			PT_bool, "latitude_angle_fix", PADDR(fix_angle_lat), PT_DESCRIPTION, "Fix tilt angle to installation latitude value",
 
 			PT_enumeration, "orientation", PADDR(orientation_type),
-				PT_KEYWORD, "DEFAULT", DEFAULT,
-				PT_KEYWORD, "FIXED_AXIS", FIXED_AXIS,
+				PT_KEYWORD, "DEFAULT", (enumeration)DEFAULT,
+				PT_KEYWORD, "FIXED_AXIS", (enumeration)FIXED_AXIS,
 				//PT_KEYWORD, "ONE_AXIS", ONE_AXIS,			//To be implemented later
 				//PT_KEYWORD, "TWO_AXIS", TWO_AXIS,			//To be implemented later
 				//PT_KEYWORD, "AZIMUTH_AXIS", AZIMUTH_AXIS,	//To be implemented later
@@ -453,6 +453,14 @@ int solar::init_climate()
 					}
 					else if (obj->latitude<0.0) //South - "north" is equatorial facing
 					{
+						gl_warning("solar:%s - Default solar position model is not recommended for southern hemisphere!",hdr->name);
+						/*  TROUBLESHOOT
+						The Liu-Jordan (default) solar position and tilt model was built around the northern
+						hemisphere.  As such, operating in the southern hemisphere does not provide completely accurate
+						results.  They are close, but tilted surfaces are not properly accounted for.  It is recommended
+						that the SOLAR_TILT_MODEL SOLPOS be used for southern hemisphere operations.
+						*/
+
 						if ((orientation_azimuth >= 0.0) && (orientation_azimuth <= 180.0))
 						{
 							orientation_azimuth_corrected =  orientation_azimuth;	//East positive

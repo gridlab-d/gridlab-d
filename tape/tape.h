@@ -83,6 +83,11 @@ struct player {
 		TIMESTAMP ns;
 		char32 value;
 	} next;
+	struct {
+		TIMESTAMP ts;
+		TIMESTAMP ns;
+		char256 value;
+	} delta_track;	/* Added for deltamode fixes */
 	PROPERTY *target;
 	TAPEOPS *ops;
 	char lasterr[1024];
@@ -210,7 +215,8 @@ struct collector {
 	int32 samples;
 	AGGREGATION *aggr;
 };
-/** @} */
+
+void enable_deltamode(TIMESTAMP t1); /* indicate when deltamode is needed */
 
 void set_csv_options(void);
 

@@ -51,7 +51,13 @@ int triplex_line::isa(char *classname)
 
 int triplex_line::init(OBJECT *parent)
 {
+	double *temp_rating_value = NULL;
+	double temp_rating_continuous = 10000.0;
+	double temp_rating_emergency = 20000.0;
+	char index;
+	OBJECT *temp_obj;
 	OBJECT *obj = OBJECTHDR(this);
+	triplex_line_configuration *temp_config = NULL;
 	
 	int result = line::init(parent);
 
@@ -63,6 +69,87 @@ int triplex_line::init(OBJECT *parent)
 		*/
 
 	recalc();
+
+	//Map the line configuration
+	temp_config = OBJECTDATA(configuration,triplex_line_configuration);
+
+	//Values are populated now - populate link ratings parameter
+	for (index=0; index<3; index++)
+	{
+		if (index==0)
+		{
+			temp_obj = temp_config->phaseA_conductor;
+		}
+		else if (index==1)
+		{
+			temp_obj = temp_config->phaseB_conductor;
+		}
+		else //Must be 2
+		{
+			temp_obj = temp_config->phaseC_conductor;
+		}
+		//PHASE_N shouldn't be used
+
+		//See if Phase exists
+		if (temp_obj != NULL)
+		{
+			//Get continuous - summer
+			temp_rating_value = get_double(temp_obj,"rating.summer.continuous");
+
+			//Check if NULL
+			if (temp_rating_value != NULL)
+			{
+				//Update - if necessary
+				if (temp_rating_continuous > *temp_rating_value)
+				{
+					temp_rating_continuous = *temp_rating_value;
+				}
+			}
+
+			//Get continuous - winter
+			temp_rating_value = get_double(temp_obj,"rating.winter.continuous");
+
+			//Check if NULL
+			if (temp_rating_value != NULL)
+			{
+				//Update - if necessary
+				if (temp_rating_continuous > *temp_rating_value)
+				{
+					temp_rating_continuous = *temp_rating_value;
+				}
+			}
+
+			//Now get emergency - summer
+			temp_rating_value = get_double(temp_obj,"rating.summer.emergency");
+
+			//Check if NULL
+			if (temp_rating_value != NULL)
+			{
+				//Update - if necessary
+				if (temp_rating_emergency > *temp_rating_value)
+				{
+					temp_rating_emergency = *temp_rating_value;
+				}
+			}
+
+			//Now get emergency - winter
+			temp_rating_value = get_double(temp_obj,"rating.winter.emergency");
+
+			//Check if NULL
+			if (temp_rating_value != NULL)
+			{
+				//Update - if necessary
+				if (temp_rating_emergency > *temp_rating_value)
+				{
+					temp_rating_emergency = *temp_rating_value;
+				}
+			}
+		}//End Phase valid
+	}//End FOR
+
+	//Populate link array
+	link_rating[0] = temp_rating_continuous;
+	link_rating[1] = temp_rating_emergency;
 
 	return result;
 }
@@ -157,6 +244,17 @@ void triplex_line::recalc(void)
 		D12 = (dcond + 2 * ins_thick)/12;
 		D13 = (dcond + ins_thick)/12;
 		D23 = D13;
+
+		if (D12 <= 0.0 || D13 <= 0.0)
+		{
+			GL_THROW("triplex_line_configuration diameter and/or insulation_thickness are incorrectly set. Please set both of these values to a positive value.");
+			/* TROUBLESHOOT
+			The triplex line configuration requires that the spacing between conductors (diameter + 2*insulation_thickness) &
+			(diameter + insulation_thickness) must be positive values.  Please look at your triplex_line_configuration to verify
+			that one or both of these variables are set to positive values.  A good resource for the geometrical configuration is
+			William H. Kersting, "Distribution System Modeling and Analysis, 3rd Ed.", Chapter 11.
+			*/
+		}
 
 		zp11 = complex(r1,0) + freq_coeff_real + complex(0.0,freq_coeff_imag) * (log(1/gmr1) + freq_additive_term);
 		zp22 = complex(r2,0) + freq_coeff_real + complex(0.0,freq_coeff_imag) * (log(1/gmr2) + freq_additive_term);

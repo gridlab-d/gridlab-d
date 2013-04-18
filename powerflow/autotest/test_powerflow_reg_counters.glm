@@ -1,0 +1,180 @@
+//test_powerflow_reg_counters.glm tests the tap counter variables for the three phase taps of a regulaator.
+
+clock {
+	timezone PST+8PDT;
+	starttime '2000-01-01 00:00:00';
+	stoptime '2000-01-01 0:00:04'; //36 hours
+}
+
+#set relax_naming_rules=1;
+// #set profiler=1
+//#set pauseatexit=1
+
+module powerflow {
+	solver_method NR;
+};
+module assert;
+module tape;
+module generators;
+
+// 556.5 ACSR
+object overhead_line_conductor:6010 {
+	geometric_mean_radius 0.031300;
+	resistance 0.185900;
+}
+
+// #4/0 ACSR
+object overhead_line_conductor:6020 {
+	geometric_mean_radius 0.00814;
+	resistance 0.592000;
+}
+
+// #1/0 ACSR
+object overhead_line_conductor:6030 {
+	geometric_mean_radius 0.004460;
+	resistance 1.120000;
+}
+
+object node {
+     name 630;
+    phases ABCN;
+     voltage_A 2401.7771+0j;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+
+
+//NAS Battery
+object meter {
+	bustype SWING;
+      name 650;
+      phases ABCN;
+      voltage_A 2401.7771;
+      voltage_B -1200.8886-2080.000j;
+      voltage_C -1200.8886+2080.000j;
+      nominal_voltage 2401.7771;
+} 
+
+
+ 
+// Regulator
+object regulator_configuration:6506321 {
+	connect_type 1;
+	band_center 2401;
+	band_width 40;
+	time_delay 30.0;
+	raise_taps 16;
+	lower_taps 16;
+	current_transducer_ratio 700;
+	power_transducer_ratio 20;
+	compensator_r_setting_A 3.0;
+	compensator_r_setting_B 3.0;
+	compensator_r_setting_C 3.0;
+	compensator_x_setting_A 9.0;
+	compensator_x_setting_B 9.0;
+	compensator_x_setting_C 9.0;
+	CT_phase ABC;
+	PT_phase ABC;
+	regulation 0.10;
+	Control MANUAL;
+	Type A;
+	tap_pos_A 1;
+	tap_pos_B 1;
+	tap_pos_C 1;
+}
+  
+object regulator:650632 {
+     name Reg1;
+	 phases ABC;
+	 from 650;
+	 to 630;
+	 configuration regulator_configuration:6506321;
+	object player {
+		property tap_A;
+		file ../test_reg.player;
+		loop 0;
+	};
+	object player {
+		property tap_B;
+		file ../test_reg.player;
+		loop 0;
+	};
+	object player {
+		property tap_C;
+		file ../test_reg.player;
+		loop 0;
+	};
+	object double_assert {
+		in '2000-01-01 00:00:04';
+		target tap_A_change_count;
+		status ASSERT_TRUE;
+		once ONCE_TRUE;
+		value 4;
+		within 0.1;
+	};
+	object double_assert {
+		in '2000-01-01 00:00:04';
+		target tap_B_change_count;
+		status ASSERT_TRUE;
+		once ONCE_TRUE;
+		value 4;
+		within 0.1;
+	};
+	object double_assert {
+		in '2000-01-01 00:00:04';
+		target tap_B_change_count;
+		status ASSERT_TRUE;
+		once ONCE_TRUE;
+		value 4;
+		within 0.1;
+	};
+}
+
+object capacitor {
+	phases ABCN;
+	name CAP1;
+	pt_phase ABCN;
+	parent 630;
+	phases_connected ABCN;
+	control MANUAL;
+	voltage_set_high 2700.0;
+	voltage_set_low 2250.0;
+	capacitor_A 0.10 MVAr;
+	capacitor_B 0.10 MVAr;
+	capacitor_C 0.10 MVAr;
+	control_level INDIVIDUAL;
+    time_delay 300.0;	
+	dwell_time 0.0;
+	switchA CLOSED;				
+	switchB CLOSED;
+	switchC CLOSED;
+	nominal_voltage 2401.7771;
+}
+object capacitor {
+	phases ABCN;
+	name CAP2;
+	pt_phase ABCN;
+	parent 630;
+	phases_connected ABCN;
+	control MANUAL;
+	voltage_set_high 2600.0;
+	voltage_set_low 2150.0;
+	capacitor_A 0.05 MVAr;
+    capacitor_B 0.05 MVAr;
+	capacitor_C 0.05 MVAr;
+	control_level INDIVIDUAL;
+	time_delay 300.0;	
+	dwell_time 0.0;
+	nominal_voltage 2401.7771;
+	switchA CLOSED;
+	switchB CLOSED;
+	switchC CLOSED;
+}
+	
+// object multi_recorder {
+	// property Reg1:tap_A,Reg1:tap_A_change_count;
+	// file "test_powerflow_reg_counters.csv";
+	// interval 1;
+	// limit 129600; 
+// };	

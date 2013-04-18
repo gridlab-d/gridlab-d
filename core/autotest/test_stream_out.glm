@@ -2,7 +2,7 @@
 #set suppress_repeat_messages=FALSE
 #set checkpoint_type=SIM
 #set checkpoint_interval=86400
-#setenv GRIDLABD=../../core
+#setenv GRIDLABD=../../../core
 
 #if debug==TRUE
 #define use_msvc=1

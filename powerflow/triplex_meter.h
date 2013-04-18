@@ -49,7 +49,7 @@ public:
 		BM_HOURLY,
 		BM_TIERED_RTP
 	} BILLMODE;						///< Designates the bill mode to be used
-	BILLMODE bill_mode;
+	enumeration bill_mode;				///< Designates the bill mode to be used
 	OBJECT *power_market;			///< Designates the auction object where prices are read from for bill mode
 	PROPERTY *price_prop;			///< Designates what property to observe in the auction object for price
 	int32 bill_day;					///< Day bill is to be processed (assumed to occur at midnight of that day)

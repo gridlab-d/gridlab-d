@@ -30,21 +30,21 @@ underground_line_conductor::underground_line_conductor(MODULE *mod) : powerflow_
 			oclass->trl = TRL_PROVEN;
 
         if(gl_publish_variable(oclass,
-			PT_double, "outer_diameter[in]",PADDR(outer_diameter),
-			PT_double, "conductor_gmr[ft]", PADDR(conductor_gmr),
-			PT_double, "conductor_diameter[in]",PADDR(conductor_diameter),
-			PT_double, "conductor_resistance[Ohm/mile]",PADDR(conductor_resistance),
-			PT_double, "neutral_gmr[ft]",PADDR(neutral_gmr),
-			PT_double, "neutral_diameter[in]",PADDR(neutral_diameter),
-			PT_double, "neutral_resistance[Ohm/mile]",PADDR(neutral_resistance),
-			PT_int16,  "neutral_strands",PADDR(neutral_strands),
+			PT_double, "outer_diameter[in]",PADDR(outer_diameter),PT_DESCRIPTION,"Outer diameter of conductor and sheath",
+			PT_double, "conductor_gmr[ft]", PADDR(conductor_gmr),PT_DESCRIPTION,"Geometric mean radius of the conductor",
+			PT_double, "conductor_diameter[in]",PADDR(conductor_diameter),PT_DESCRIPTION,"Diameter of conductor",
+			PT_double, "conductor_resistance[Ohm/mile]",PADDR(conductor_resistance),PT_DESCRIPTION,"Resistance of conductor in ohm/mile",
+			PT_double, "neutral_gmr[ft]",PADDR(neutral_gmr),PT_DESCRIPTION,"Geometric mean radius of the neutral conductor",
+			PT_double, "neutral_diameter[in]",PADDR(neutral_diameter),PT_DESCRIPTION,"Diameter of the neutral conductor",
+			PT_double, "neutral_resistance[Ohm/mile]",PADDR(neutral_resistance),PT_DESCRIPTION,"Resistance of netural conductor in ohm/mile",
+			PT_int16,  "neutral_strands",PADDR(neutral_strands),PT_DESCRIPTION,"Number of cable strands in neutral conductor",
 			PT_double, "insulation_relative_permitivitty[unit]", PADDR(insulation_rel_permitivitty), PT_DESCRIPTION, "Permitivitty of insulation, relative to air",
-			PT_double, "shield_gmr[ft]",PADDR(shield_gmr),
-			PT_double, "shield_resistance[Ohm/mile]",PADDR(shield_resistance),
-			PT_double, "rating.summer.continuous[A]", PADDR(summer.continuous),
-			PT_double, "rating.summer.emergency[A]", PADDR(summer.emergency),
-			PT_double, "rating.winter.continuous[A]", PADDR(winter.continuous),
-			PT_double, "rating.winter.emergency[A]", PADDR(winter.emergency),
+			PT_double, "shield_gmr[ft]",PADDR(shield_gmr),PT_DESCRIPTION,"Geometric mean radius of shielding sheath",
+			PT_double, "shield_resistance[Ohm/mile]",PADDR(shield_resistance),PT_DESCRIPTION,"Resistance of shielding sheath in ohms/mile",
+			PT_double, "rating.summer.continuous[A]", PADDR(summer.continuous),PT_DESCRIPTION,"amp rating in summer, continuous",
+			PT_double, "rating.summer.emergency[A]", PADDR(summer.emergency),PT_DESCRIPTION,"amp rating in summer, short term",
+			PT_double, "rating.winter.continuous[A]", PADDR(winter.continuous),PT_DESCRIPTION,"amp rating in winter, continuous",
+			PT_double, "rating.winter.emergency[A]", PADDR(winter.emergency),PT_DESCRIPTION,"amp rating in winter, short term",
             NULL) < 1) GL_THROW("unable to publish underground_line_conductor properties in %s",__FILE__);
     }
 }
@@ -60,6 +60,27 @@ int underground_line_conductor::create(void)
 	summer.continuous = winter.continuous = 1000;
 	summer.emergency = winter.emergency = 2000;
 	return result;
+}
+
+int underground_line_conductor::init(OBJECT *parent)
+{
+	if (outer_diameter <= conductor_diameter)
+	{
+		GL_THROW("outer_diameter was specified as less than or equal to the conductor_diameter");
+		/* TROUBLESHOOT
+		The outer diameter is the diameter of the entire cable, and therefore should be the largest value. Please check your values
+		and refer to Fig. 4.11 of "Distribution System Modeling and Analysis, Third Edition" by William H. Kersting for a diagram.
+		*/
+	}
+	if (outer_diameter <= neutral_diameter)
+	{
+		GL_THROW("outer_diameter was specified as less than or equal to the neutral_diameter");
+		/* TROUBLESHOOT
+		The outer diameter is the diameter of the entire cable, and therefore should be the largest value. Please check your values
+		and refer to Fig. 4.11 of "Distribution System Modeling and Analysis, Third Edition" by William H. Kersting for a diagram.
+		*/
+	}
+	return 1;
 }
 
 int underground_line_conductor::isa(char *classname)

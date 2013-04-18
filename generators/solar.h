@@ -21,14 +21,21 @@ protected:
 public:
 	/* TODO: put published variables here */
 	set phases;	/**< device phases (see PHASE codes) */
-	enum GENERATOR_MODE {CONSTANT_V=1, CONSTANT_PQ=2, CONSTANT_PF=4, SUPPLY_DRIVEN=5} gen_mode_v;  //operating mode of the generator 
+	enum GENERATOR_MODE {CONSTANT_V=1, CONSTANT_PQ=2, CONSTANT_PF=4, SUPPLY_DRIVEN=5};
+	enumeration gen_mode_v;  //operating mode of the generator 
 	//note solar panel will always operate under the SUPPLY_DRIVEN generator mode
-	enum GENERATOR_STATUS {OFFLINE=1, ONLINE=2} gen_status_v;
-	enum POWER_TYPE{DC=1, AC=2} power_type_v;
-	enum PANEL_TYPE{SINGLE_CRYSTAL_SILICON=1, MULTI_CRYSTAL_SILICON=2, AMORPHOUS_SILICON=3, THIN_FILM_GA_AS=4, CONCENTRATOR=5} panel_type_v;
-    enum INSTALLATION_TYPE {ROOF_MOUNTED=1, GROUND_MOUNTED=2} installation_type_v;
-	enum SOLAR_TILT_MODEL {LIUJORDAN=0, SOLPOS=1, PLAYERVAL=2} solar_model_tilt;
-	enum SOLAR_POWER_MODEL {BASEEFFICIENT=0, FLATPLATE=1} solar_power_model;
+	enum GENERATOR_STATUS {OFFLINE=1, ONLINE=2};
+	enumeration gen_status_v;
+	enum POWER_TYPE{DC=1, AC=2};
+	enumeration power_type_v;
+	enum PANEL_TYPE{SINGLE_CRYSTAL_SILICON=1, MULTI_CRYSTAL_SILICON=2, AMORPHOUS_SILICON=3, THIN_FILM_GA_AS=4, CONCENTRATOR=5};
+	enumeration panel_type_v;
+    enum INSTALLATION_TYPE {ROOF_MOUNTED=1, GROUND_MOUNTED=2};
+	enumeration installation_type_v;
+	enum SOLAR_TILT_MODEL {LIUJORDAN=0, SOLPOS=1, PLAYERVAL=2};
+	enumeration solar_model_tilt;
+	enum SOLAR_POWER_MODEL {BASEEFFICIENT=0, FLATPLATE=1};
+	enumeration solar_power_model;
 
 	double NOCT;
 	double Tcell;
@@ -67,7 +74,8 @@ public:
 	double soiling_factor;			//Soiling factor to be applied - makes user specifiable
 	double derating_factor;			//Inverter derating factor - makes user specifiable
 
-	enum ORIENTATION {DEFAULT=0, FIXED_AXIS=1, ONE_AXIS=2, TWO_AXIS=3, AZIMUTH_AXIS=4} orientation_type;//Describes orientation features of PV
+	enum ORIENTATION {DEFAULT=0, FIXED_AXIS=1, ONE_AXIS=2, TWO_AXIS=3, AZIMUTH_AXIS=4};
+	enumeration orientation_type;	//Describes orientation features of PV
 
 	FUNCTIONADDR calc_solar_radiation;	//Function pointer to climate's calculate solar radiation in degrees
 		

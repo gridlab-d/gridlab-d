@@ -30,7 +30,7 @@ typedef struct s_market_frame{
 	int64 market_id;
 	TIMESTAMP start_time;
 	TIMESTAMP end_time;
-	CLEARINGTYPE clearing_type;
+	enumeration clearing_type;
 	double clearing_price;
 	double clearing_quantity;
 	double marginal_quantity;
@@ -57,10 +57,10 @@ public:
 	bool use_future_mean_price;
 	typedef enum {ST_ON=0, ST_OFF=1} STATISTICMODE;
 	typedef enum {IP_FALSE=0, IP_TRUE=1} IGNOREPRICECAP;
-	IGNOREPRICECAP ignore_pricecap;
+	enumeration ignore_pricecap;
 	typedef enum {CO_NORMAL=0, CO_EXTRA=1} CURVEOUTPUT;
-	CURVEOUTPUT curve_log_info;
-	MARGINMODE margin_mode;
+	enumeration curve_log_info;
+	enumeration margin_mode;
 private:
 	// functions
 	int init_statistics();
@@ -94,9 +94,9 @@ public:
 	OBJECT *linkref;	/**< reference link object that contains the total load (used to determine unresponsive load when not all load bid) */
 
 	// new stuff
-	SPECIALMODE special_mode;
-	CLEARINGTYPE clearing_type;
-	STATISTICMODE statistic_mode;
+	enumeration special_mode;
+	enumeration clearing_type;
+	enumeration statistic_mode;
 	double fixed_price;
 	double fixed_quantity;
 	double future_mean_price; // right now the future mean price will be fed with a player

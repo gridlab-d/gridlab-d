@@ -9,6 +9,11 @@
 
 #include "powerflow.h"
 
+//Deltamode funcitons
+EXPORT complex *delta_linkage(OBJECT *obj, unsigned char mapvar);
+EXPORT STATUS delta_frequency_node(OBJECT *obj, complex *powerval, complex *freqpowerval);
+EXPORT SIMULATIONMODE interupdate_node(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
+
 #define I_INJ(V, S, Z, I) (I_S(S, V) + ((Z.IsFinite()) ? I_Z(Z, V) : complex(0.0)) + I_I(I))
 #define I_S(S, V) (~((S) / (V)))  // Current injection - constant power load
 #define I_Z(Z, V) ((V) / (Z))     // Current injection - constant impedance load
@@ -68,6 +73,12 @@ typedef enum {
 		DIFF_PARENT=5	///< defines a parent, but has a different phase-connection than our child
 		} SUBNODETYPE;
 
+typedef enum {
+	NORMAL_NODE=0,		///< We're a plain-old-ugly node
+	LOAD_NODE=1,		///< We're a load
+	METER_NODE=2		///< We're a meter
+} DYN_NODE_TYPE;		/// Defition for deltamode calls
+
 class node : public powerflow_object
 {
 private:
@@ -89,15 +100,18 @@ public:
 		PQ=0,		/**< defines an uncontrolled bus */
 		PV=1,		/**< defines a constrained voltage controlled bus */
 		SWING=2		/**< defines an unconstrained voltage controlled bus */
-	} bustype;
+	};
+	enumeration bustype;
 	enum {	NOMINAL=1,		///< bus voltage is nominal
 			UNDERVOLT,		///< bus voltage is too low
 			OVERVOLT,		///< bus voltage is too high
-	} status;
+	};
+	enumeration status;
 	enum { 
 		ND_OUT_OF_SERVICE = 0, ///< out of service flag for nodes
 		ND_IN_SERVICE = 1,     ///< in service flag for nodes - default
-	} service_status;
+	};
+	enumeration service_status;
 	double service_status_dbl;	///< double value for service - overrides the enumeration if set
 	TIMESTAMP last_disconnect;	///< Tracking variable for out of service times
 	double previous_uptime;		///< Variable for storing last total uptime
@@ -115,6 +129,10 @@ public:
 	complex current[3];		/// bus current injection (positive = in)
 	complex power[3];		/// bus power injection (positive = in)
 	complex shunt[3];		/// bus shunt admittance 
+	complex *full_Y;		/// full 3x3 bus shunt admittance - populate as necessary
+	complex *full_Y_all;	/// Full 3x3 bus admittance with "other" contributions (self of full admittance) - populate as necessary
+	complex *DynVariable;	/// Dynamics extra variable (current and power for gens, typically)
+	DYN_NODE_TYPE node_type;/// Variable to indicate what we are - prevents needing a gl_object_isa EVERY...SINGLE...TIME in an already slow dynamic simulation
 	complex current12;		/// Used for phase 1-2 current injections in triplex
 	complex nom_res_curr[3];/// Used for the inclusion of nominal residential currents (for angle adjustments)
 	bool house_present;		/// Indicator flag for a house being attached (NR primarily)
@@ -145,6 +163,7 @@ public:
 	TIMESTAMP postsync(TIMESTAMP t0);
 	int isa(char *classname);
 	int notify(int update_mode, PROPERTY *prop, char *value);
+	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
 	bool NR_mode;
 	bool current_accumulated;
@@ -161,7 +180,7 @@ public:
 	friend class fuse;			// needs access to current_inj
 	friend class frequency_gen;	// needs access to current_inj
 
-	int kmldump(FILE *fp);
+	int kmldump(int (*stream)(const char*,...));
 };
 
 #include "load.h"

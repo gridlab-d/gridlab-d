@@ -51,6 +51,12 @@ int underground_line::create(void)
 
 int underground_line::init(OBJECT *parent)
 {
+	double *temp_rating_value = NULL;
+	double temp_rating_continuous = 10000.0;
+	double temp_rating_emergency = 20000.0;
+	char index;
+	OBJECT *temp_obj;
+
 	int result = line::init(parent);
 
 	if (!configuration)
@@ -83,6 +89,87 @@ int underground_line::init(OBJECT *parent)
 		*/
 
 	recalc();
+
+	//Values are populated now - populate link ratings parameter
+	for (index=0; index<4; index++)
+	{
+		if (index==0)
+		{
+			temp_obj = config->phaseA_conductor;
+		}
+		else if (index==1)
+		{
+			temp_obj = config->phaseB_conductor;
+		}
+		else if (index==2)
+		{
+			temp_obj = config->phaseC_conductor;
+		}
+		else	//Must be 3
+		{
+			temp_obj = config->phaseN_conductor;
+		}
+
+		//See if Phase exists
+		if (temp_obj != NULL)
+		{
+			//Get continuous - summer
+			temp_rating_value = get_double(temp_obj,"rating.summer.continuous");
+
+			//Check if NULL
+			if (temp_rating_value != NULL)
+			{
+				//Update - if necessary
+				if (temp_rating_continuous > *temp_rating_value)
+				{
+					temp_rating_continuous = *temp_rating_value;
+				}
+			}
+
+			//Get continuous - winter
+			temp_rating_value = get_double(temp_obj,"rating.winter.continuous");
+
+			//Check if NULL
+			if (temp_rating_value != NULL)
+			{
+				//Update - if necessary
+				if (temp_rating_continuous > *temp_rating_value)
+				{
+					temp_rating_continuous = *temp_rating_value;
+				}
+			}
+
+			//Now get emergency - summer
+			temp_rating_value = get_double(temp_obj,"rating.summer.emergency");
+
+			//Check if NULL
+			if (temp_rating_value != NULL)
+			{
+				//Update - if necessary
+				if (temp_rating_emergency > *temp_rating_value)
+				{
+					temp_rating_emergency = *temp_rating_value;
+				}
+			}
+
+			//Now get emergency - winter
+			temp_rating_value = get_double(temp_obj,"rating.winter.emergency");
+
+			//Check if NULL
+			if (temp_rating_value != NULL)
+			{
+				//Update - if necessary
+				if (temp_rating_emergency > *temp_rating_value)
+				{
+					temp_rating_emergency = *temp_rating_value;
+				}
+			}
+		}//End Phase valid
+	}//End FOR
+
+	//Populate link array
+	link_rating[0] = temp_rating_continuous;
+	link_rating[1] = temp_rating_emergency;
 
 	return result;
 }

@@ -46,36 +46,36 @@ void print_matrix(complex mat[3][3])
 	gl_testmsg("\n");
 }
 
-EXPORT int kmldump(FILE *fp, OBJECT *obj)
+EXPORT int kmldump(int (*stream)(const char*,...), OBJECT *obj)
 {
 
 	if (obj==NULL) /* dump document styles */
 	{
 		/* line styles */
-		fprintf(fp,	"<Style id=\"overhead_line\">\n"
-					" <LineStyle>\n"
-					"  <color>7f00ffff</color>\n"
-					"  <width>4</width>\n"
-					" </LineStyle>\n"
-					" <PolyStyle>\n"
-					"  <color>7f00ff00</color>\n"
-					" </PolyStyle>\n"
-					"</Style>\n");
-		fprintf(fp,	"<Style id=\"underground_line\">\n"
-					" <LineStyle>\n"
-					"  <color>3f00ffff</color>\n"
-					"  <width>4</width>\n"
-					" </LineStyle>\n"
-					" <PolyStyle>\n"
-					"  <color>3f00ff00</color>\n"
-					" </PolyStyle>\n"
-					"</Style>\n");
+		stream("<Style id=\"overhead_line\">\n"
+			" <LineStyle>\n"
+			"  <color>7f00ffff</color>\n"
+			"  <width>4</width>\n"
+			" </LineStyle>\n"
+			" <PolyStyle>\n"
+			"  <color>7f00ff00</color>\n"
+			" </PolyStyle>\n"
+			"</Style>\n");
+		stream("<Style id=\"underground_line\">\n"
+			" <LineStyle>\n"
+			"  <color>3f00ffff</color>\n"
+			"  <width>4</width>\n"
+			" </LineStyle>\n"
+			" <PolyStyle>\n"
+			"  <color>3f00ff00</color>\n"
+			" </PolyStyle>\n"
+			"</Style>\n");
 		return 0;
 	}
 	else if (gl_object_isa(obj,"node"))
-		return OBJECTDATA(obj,node)->kmldump(fp);
+		return OBJECTDATA(obj,node)->kmldump(stream);
 	else if (gl_object_isa(obj,"link"))
-		return OBJECTDATA(obj,link_object)->kmldump(fp);
+		return OBJECTDATA(obj,link_object)->kmldump(stream);
 	else
 		return 0; 
 }

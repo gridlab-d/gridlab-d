@@ -31,15 +31,19 @@ public:
 	double heat_fraction;				///< internal gain fraction of installed power
 	TIMESTAMP time_state;				///< time in current state
 	bool starttime;
-	
-	enum {	STOPPED=0,						///< motor is stopped
-			PREWASH=1,
-			WASH=2,
-			SPIN1=3,
-			SPIN2=4,
-			SPIN3=5,
-			SPIN4=6,			
-	} state;							///< control state
+	typedef enum {
+		STOPPED=0,						///< motor is stopped
+		RUNNING=1,						///< motor is running
+		STALLED=2,						///< motor is stalled
+		TRIPPED=3,						///< motor is tripped
+		PREWASH=4,
+		WASH=5,
+		SPIN1=6,
+		SPIN2=7,
+		SPIN3=8,
+		SPIN4=9
+	};
+	enumeration state;							///< control state
 
 public:
 	static CLASS *oclass, *pclass;
@@ -105,12 +109,14 @@ public:
 			SPIN_HIGH=2,					///< high power spin
 			SPIN_WASH=3,							///< wash mode
 			SMALLWASH=4,					///< small wash modes in between
-	} spin_mode;
+	};
+	enumeration spin_mode;
 
 	enum {  NORMAL=0,						///< Normal wash
 			PERM_PRESS=1,					///< Permenant press wash
 			GENTLE=2,						///< Gentle wash
-	} wash_mode;
+	};
+	enumeration wash_mode;
 
 	clotheswasher(MODULE *module);
 	~clotheswasher();

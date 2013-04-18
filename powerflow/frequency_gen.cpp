@@ -31,8 +31,8 @@ frequency_gen::frequency_gen(MODULE *mod) : powerflow_object(mod)
 
 		if(gl_publish_variable(oclass,
 			PT_enumeration,"Frequency_Mode",PADDR(FreqObjectMode),PT_DESCRIPTION,"Frequency object operations mode",
-				PT_KEYWORD,"OFF", OFF,
-				PT_KEYWORD,"AUTO", AUTO,
+				PT_KEYWORD,"OFF", (enumeration)OFF,
+				PT_KEYWORD,"AUTO", (enumeration)AUTO,
 			PT_double,"Frequency[Hz]",PADDR(FrequencyValue),PT_DESCRIPTION,"Instantaneous frequency value",
 			PT_double,"FreqChange[Hz/s]",PADDR(FrequencyChange),PT_DESCRIPTION,"Frequency change from last timestep",
 			PT_double,"Deadband[Hz]",PADDR(Freq_Histr),PT_DESCRIPTION,"Frequency deadband of the governor",

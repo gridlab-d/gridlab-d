@@ -15,7 +15,7 @@
 typedef enum {
 		INTERNAL=0,		//Use internal schedule
 		EXTERNAL=1		//Use published variables for schedule
-		} THERMAL_SCHEDULE_TYPE;
+} THERMAL_SCHEDULE_TYPE;
 
 class thermal_storage : public residential_enduse {
 public:
@@ -44,8 +44,8 @@ public:
 	SCHEDULE *recharge_schedule_vals;
 	SCHEDULE *discharge_schedule_vals;
 
-	THERMAL_SCHEDULE_TYPE recharge_schedule_type;		///< Determines if charging should occur via internal schedule, or an external property
-	THERMAL_SCHEDULE_TYPE discharge_schedule_type;	///< Determines if discharging should occur via internal schedule, or an external property
+	enumeration recharge_schedule_type;		///< Determines if charging should occur via internal schedule, or an external property
+	enumeration discharge_schedule_type;	///< Determines if discharging should occur via internal schedule, or an external property
 
 private:
 	double *recharge_time_ptr;

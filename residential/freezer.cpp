@@ -90,8 +90,8 @@ freezer::freezer(MODULE *module) : residential_enduse(module)
 			PT_double,"event_temp",PADDR(Tevent),
 			PT_double,"UA[Btu.h/degF]",PADDR(UA),
 			PT_enumeration,"state",PADDR(motor_state),
-				PT_KEYWORD,"OFF",S_OFF,
-				PT_KEYWORD,"ON",S_ON,
+				PT_KEYWORD,"OFF",(enumeration)S_OFF,
+				PT_KEYWORD,"ON",(enumeration)S_ON,
 			NULL) < 1)
 			GL_THROW("unable to publish properties in %s", __FILE__);
 	}

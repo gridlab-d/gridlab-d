@@ -3,7 +3,8 @@
 #set relax_naming_rules=1
 #set minimum_timestep=1;
 #set init_sequence=DEFERRED
-#set suppress_repeat_messages=FALSE
+#set suppress_repeat_messages=TRUE
+#set pauseatexit=TRUE
 
 module tape;
 module assert;
@@ -13,6 +14,7 @@ module powerflow {
 module climate;
 module residential {
 	implicit_enduses NONE;
+	ANSI_voltage_check FALSE;
 };
 
 

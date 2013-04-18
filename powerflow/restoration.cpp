@@ -35,9 +35,9 @@ restoration::restoration(MODULE *mod) : powerflow_library(mod)
 			oclass->trl = TRL_PROTOTYPE;
 
 		if(gl_publish_variable(oclass,
-			PT_int32,"reconfig_attempts",PADDR(reconfig_attempts),
-			PT_int32,"reconfig_iteration_limit",PADDR(reconfig_iter_limit),
-			PT_bool,"populate_tree",PADDR(populate_tree),
+			PT_int32,"reconfig_attempts",PADDR(reconfig_attempts),PT_DESCRIPTION,"Number of reconfigurations/timestep to try before giving up",
+			PT_int32,"reconfig_iteration_limit",PADDR(reconfig_iter_limit),PT_DESCRIPTION,"Number of iterations to let PF go before flagging this as a bad reconfiguration",
+			PT_bool,"populate_tree",PADDR(populate_tree),PT_DESCRIPTION,"Flag to populate Parent/Child tree structure",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
 }
@@ -413,6 +413,7 @@ void restoration::Perform_Reconfiguration(OBJECT *faultobj, TIMESTAMP t0)
 	VECTARRAY candidate_switch_operation;
     VECTARRAY temp_switch;
 	int array_expected_size;
+	NRSOLVERMODE powerflow_type = PF_NORMAL;
   
 	if (t0 != prev_time)	//Perform new timestep updates
 	{
@@ -854,13 +855,12 @@ void restoration::Perform_Reconfiguration(OBJECT *faultobj, TIMESTAMP t0)
 					node_id_minV[indexx] = 0;
 				}
 
-
 				pf_bad_computations = false;	//Reset singularity checker
 
 
 
 				//Perform NR solver
-				pf_result = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &pf_bad_computations);
+				pf_result = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &NR_powerflow, powerflow_type, &pf_bad_computations);
 				//De-flag any admittance changes (so other iterations don't take longer
 				LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
 				NR_admit_change = false;

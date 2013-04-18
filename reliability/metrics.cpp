@@ -561,11 +561,11 @@ TIMESTAMP metrics::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			//Determine which header to write
 			if (secondary_interruptions_count == true)
 			{
-				fprintf(FPVal,"Annual Event #,Metric Interval Event #,Starting DateTime (YYYY-MM-DD hh:mm:ss),Ending DateTime (YYYY-MM-DD hh:mm:ss),Object type,Object Name,Inducing Object,Desired Fault type,\"Protective\" Device,Implemented Fault Type,Number customers affected,Secondary number of customers affected\n");
+				fprintf(FPVal,"Annual Event #,Metric Interval Event #,Starting DateTime (YYYY-MM-DD hh:mm:ss),Ending DateTime (YYYY-MM-DD hh:mm:ss),Object type,Object Name,Inducing Object,\"Protective\" Device,Desired Fault type,Implemented Fault Type,Number customers affected,Secondary number of customers affected\n");
 			}
 			else //Nope
 			{
-				fprintf(FPVal,"Annual Event #,Metric Interval Event #,Starting DateTime (YYYY-MM-DD hh:mm:ss),Ending DateTime (YYYY-MM-DD hh:mm:ss),Object type,Object Name,Inducing Object,Desired Fault type,\"Protective\" Device,Implemented Fault Type,Number customers affected\n");
+				fprintf(FPVal,"Annual Event #,Metric Interval Event #,Starting DateTime (YYYY-MM-DD hh:mm:ss),Ending DateTime (YYYY-MM-DD hh:mm:ss),Object type,Object Name,Inducing Object,\"Protective\" Device,Desired Fault type,Implemented Fault Type,Number customers affected\n");
 			}
 
 			//Close the file handle

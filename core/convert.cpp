@@ -152,7 +152,7 @@ int convert_from_complex(char *buffer, /**< pointer to the string buffer */
 		if(prop->unit != ptmp->unit){
 			if(0 == unit_convert_ex(ptmp->unit, prop->unit, &scale)){
 				output_error("convert_from_complex(): unable to convert unit '%s' to '%s' for property '%s' (tape experiment error)", ptmp->unit->name, prop->unit->name, prop->name);
-				/*	TROUBLESHOOTING
+				/*	TROUBLESHOOT
 					This is an error with the conversion of units from the complex property's units to the requested units.
 					Please double check the units of the property and compare them to the units defined in the
 					offending tape object.

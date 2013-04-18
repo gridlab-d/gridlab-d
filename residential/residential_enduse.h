@@ -29,8 +29,8 @@ public:
 	CIRCUIT *pCircuit;	// pointer to circuit data
 	enduse load;	// load data
 	loadshape shape;
-	OVERRIDE re_override;
-	POWERSTATE power_state;
+	enumeration re_override;
+	enumeration power_state;
 public:
 	static CLASS *oclass;
 	residential_enduse(MODULE *mod);

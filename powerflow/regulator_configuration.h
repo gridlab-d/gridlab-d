@@ -38,10 +38,10 @@ public:
 
 
 	//Split out for access in other objects, fixes some odd enum issues
-	Control_enum Control;
-	control_level_enum control_level;
-	Type_enum Type;
-	connect_type_enum connect_type;
+	enumeration Control;
+	enumeration control_level;
+	enumeration Type;
+	enumeration connect_type;
 
 	/* get_name acquires the name of an object or 'unnamed' if non set */
 	inline const char *get_name(void) const { static char tmp[64]; OBJECT *obj=OBJECTHDR(this); return obj->name?obj->name:(sprintf(tmp,"%s:%d",obj->oclass->name,obj->id)>0?tmp:"(unknown)");};

@@ -50,11 +50,11 @@ range::range(MODULE *module) : residential_enduse(module){
 			PT_double,"heating_element_capacity[kW]",PADDR(heating_element_capacity), PT_DESCRIPTION,  "the power of the heating element",
 			PT_double,"inlet_food_temperature[degF]",PADDR(Tinlet), PT_DESCRIPTION,  "the inlet temperature of the food",
 			PT_enumeration,"heat_mode",PADDR(heat_mode), PT_DESCRIPTION, "the energy source for heating the oven",
-			PT_KEYWORD,"ELECTRIC",ELECTRIC,
-			PT_KEYWORD,"GASHEAT",GASHEAT,
+			PT_KEYWORD,"ELECTRIC",(enumeration)ELECTRIC,
+			PT_KEYWORD,"GASHEAT",(enumeration)GASHEAT,
 			PT_enumeration,"location",PADDR(location), PT_DESCRIPTION, "whether the range is inside or outside",
-			PT_KEYWORD,"INSIDE",INSIDE,
-			PT_KEYWORD,"GARAGE",GARAGE,
+			PT_KEYWORD,"INSIDE",(enumeration)INSIDE,
+			PT_KEYWORD,"GARAGE",(enumeration)GARAGE,
 			PT_double,"oven_setpoint[degF]",PADDR(oven_setpoint), PT_DESCRIPTION, "the temperature around which the oven will heat its contents",
 			PT_double,"thermostat_deadband[degF]",PADDR(thermostat_deadband), PT_DESCRIPTION, "the degree to heat the food in the oven, when needed",
 			PT_double,"temperature[degF]",PADDR(Tw), PT_DESCRIPTION, "the outlet temperature of the oven",
@@ -903,7 +903,7 @@ int range::commit(){
 
 /** Oven state determined based on the height of the column of hot food
  **/
-range::WHQSTATE range::range_state(void)
+enumeration range::range_state(void)
 {
 	if ( h >= height-HEIGHT_PRECISION )
 		return FULL;
@@ -940,7 +940,7 @@ void range::set_time_to_transition(void)
 	temperature differential along the height of the food column when it is full, 
 	emplty or partial at the current height.
  **/
-range::WHQFLOW range::set_current_model_and_load_state(void)
+enumeration range::set_current_model_and_load_state(void)
 {
 	double dhdt_now = dhdt(h);
 	double dhdt_full = dhdt(height);
@@ -948,7 +948,7 @@ range::WHQFLOW range::set_current_model_and_load_state(void)
 	current_model = NONE;		// by default set it to onenode
 	load_state = STABLE;		// by default
 
-	WHQSTATE oven_status = range_state();
+	enumeration oven_status = range_state();
 
 	switch(oven_status) 
 	{
@@ -1185,7 +1185,7 @@ inline double range::new_temp_1node(double T0, double delta_t)
 }
 
 
-double range::get_Tambient(WHLOCATION loc)
+double range::get_Tambient(enumeration loc)
 {
 	double ratio;
 	OBJECT *parent = OBJECTHDR(this)->parent;
@@ -1206,7 +1206,7 @@ double range::get_Tambient(WHLOCATION loc)
 	return *pTair * ratio + *pTout *(1-ratio);
 }
 
-void range::wrong_model(WRONGMODEL msg)
+void range::wrong_model(enumeration msg)
 {
 	char *errtxt[] = {"model is not one-zone","model is not two-zone"};
 	OBJECT *obj = OBJECTHDR(this);

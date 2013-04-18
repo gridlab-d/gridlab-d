@@ -34,73 +34,81 @@ load::load(MODULE *mod) : node(mod)
 
 		if(gl_publish_variable(oclass,
 			PT_INHERIT, "node",
-			PT_enumeration, "load_class", PADDR(load_class),
-				PT_KEYWORD, "U", LC_UNKNOWN,
-				PT_KEYWORD, "R", LC_RESIDENTIAL,
-				PT_KEYWORD, "C", LC_COMMERCIAL,
-				PT_KEYWORD, "I", LC_INDUSTRIAL,
-				PT_KEYWORD, "A", LC_AGRICULTURAL,
-			PT_complex, "constant_power_A[VA]", PADDR(constant_power[0]),
-			PT_complex, "constant_power_B[VA]", PADDR(constant_power[1]),
-			PT_complex, "constant_power_C[VA]", PADDR(constant_power[2]),
-			PT_double, "constant_power_A_real[W]", PADDR(constant_power[0].Re()),
-			PT_double, "constant_power_B_real[W]", PADDR(constant_power[1].Re()),
-			PT_double, "constant_power_C_real[W]", PADDR(constant_power[2].Re()),
-			PT_double, "constant_power_A_reac[VAr]", PADDR(constant_power[0].Im()),
-			PT_double, "constant_power_B_reac[VAr]", PADDR(constant_power[1].Im()),
-			PT_double, "constant_power_C_reac[VAr]", PADDR(constant_power[2].Im()),
-			PT_complex, "constant_current_A[A]", PADDR(constant_current[0]),
-			PT_complex, "constant_current_B[A]", PADDR(constant_current[1]),
-			PT_complex, "constant_current_C[A]", PADDR(constant_current[2]),
-			PT_double, "constant_current_A_real[A]", PADDR(constant_current[0].Re()),
-			PT_double, "constant_current_B_real[A]", PADDR(constant_current[1].Re()),
-			PT_double, "constant_current_C_real[A]", PADDR(constant_current[2].Re()),
-			PT_double, "constant_current_A_reac[A]", PADDR(constant_current[0].Im()),
-			PT_double, "constant_current_B_reac[A]", PADDR(constant_current[1].Im()),
-			PT_double, "constant_current_C_reac[A]", PADDR(constant_current[2].Im()),
-			PT_complex, "constant_impedance_A[Ohm]", PADDR(constant_impedance[0]),
-			PT_complex, "constant_impedance_B[Ohm]", PADDR(constant_impedance[1]),
-			PT_complex, "constant_impedance_C[Ohm]", PADDR(constant_impedance[2]),
-			PT_double, "constant_impedance_A_real[Ohm]", PADDR(constant_impedance[0].Re()),
-			PT_double, "constant_impedance_B_real[Ohm]", PADDR(constant_impedance[1].Re()),
-			PT_double, "constant_impedance_C_real[Ohm]", PADDR(constant_impedance[2].Re()),
-			PT_double, "constant_impedance_A_reac[Ohm]", PADDR(constant_impedance[0].Im()),
-			PT_double, "constant_impedance_B_reac[Ohm]", PADDR(constant_impedance[1].Im()),
-			PT_double, "constant_impedance_C_reac[Ohm]", PADDR(constant_impedance[2].Im()),
-			PT_complex,	"measured_voltage_A",PADDR(measured_voltage_A),
-			PT_complex,	"measured_voltage_B",PADDR(measured_voltage_B),
-			PT_complex,	"measured_voltage_C",PADDR(measured_voltage_C),
-			PT_complex,	"measured_voltage_AB",PADDR(measured_voltage_AB),
-			PT_complex,	"measured_voltage_BC",PADDR(measured_voltage_BC),
-			PT_complex,	"measured_voltage_CA",PADDR(measured_voltage_CA),
+			PT_enumeration, "load_class", PADDR(load_class),PT_DESCRIPTION,"Flag to track load type, not currently used for anything except sorting",
+				PT_KEYWORD, "U", (enumeration)LC_UNKNOWN,
+				PT_KEYWORD, "R", (enumeration)LC_RESIDENTIAL,
+				PT_KEYWORD, "C", (enumeration)LC_COMMERCIAL,
+				PT_KEYWORD, "I", (enumeration)LC_INDUSTRIAL,
+				PT_KEYWORD, "A", (enumeration)LC_AGRICULTURAL,
+			PT_complex, "constant_power_A[VA]", PADDR(constant_power[0]),PT_DESCRIPTION,"constant power load on phase A, specified as VA",
+			PT_complex, "constant_power_B[VA]", PADDR(constant_power[1]),PT_DESCRIPTION,"constant power load on phase B, specified as VA",
+			PT_complex, "constant_power_C[VA]", PADDR(constant_power[2]),PT_DESCRIPTION,"constant power load on phase C, specified as VA",
+			PT_double, "constant_power_A_real[W]", PADDR(constant_power[0].Re()),PT_DESCRIPTION,"constant power load on phase A, real only, specified as W",
+			PT_double, "constant_power_B_real[W]", PADDR(constant_power[1].Re()),PT_DESCRIPTION,"constant power load on phase B, real only, specified as W",
+			PT_double, "constant_power_C_real[W]", PADDR(constant_power[2].Re()),PT_DESCRIPTION,"constant power load on phase C, real only, specified as W",
+			PT_double, "constant_power_A_reac[VAr]", PADDR(constant_power[0].Im()),PT_DESCRIPTION,"constant power load on phase A, imaginary only, specified as VAr",
+			PT_double, "constant_power_B_reac[VAr]", PADDR(constant_power[1].Im()),PT_DESCRIPTION,"constant power load on phase B, imaginary only, specified as VAr",
+			PT_double, "constant_power_C_reac[VAr]", PADDR(constant_power[2].Im()),PT_DESCRIPTION,"constant power load on phase C, imaginary only, specified as VAr",
+			PT_complex, "constant_current_A[A]", PADDR(constant_current[0]),PT_DESCRIPTION,"constant current load on phase A, specified as Amps",
+			PT_complex, "constant_current_B[A]", PADDR(constant_current[1]),PT_DESCRIPTION,"constant current load on phase B, specified as Amps",
+			PT_complex, "constant_current_C[A]", PADDR(constant_current[2]),PT_DESCRIPTION,"constant current load on phase C, specified as Amps",
+			PT_double, "constant_current_A_real[A]", PADDR(constant_current[0].Re()),PT_DESCRIPTION,"constant current load on phase A, real only, specified as Amps",
+			PT_double, "constant_current_B_real[A]", PADDR(constant_current[1].Re()),PT_DESCRIPTION,"constant current load on phase B, real only, specified as Amps",
+			PT_double, "constant_current_C_real[A]", PADDR(constant_current[2].Re()),PT_DESCRIPTION,"constant current load on phase C, real only, specified as Amps",
+			PT_double, "constant_current_A_reac[A]", PADDR(constant_current[0].Im()),PT_DESCRIPTION,"constant current load on phase A, imaginary only, specified as Amps",
+			PT_double, "constant_current_B_reac[A]", PADDR(constant_current[1].Im()),PT_DESCRIPTION,"constant current load on phase B, imaginary only, specified as Amps",
+			PT_double, "constant_current_C_reac[A]", PADDR(constant_current[2].Im()),PT_DESCRIPTION,"constant current load on phase C, imaginary only, specified as Amps",
+			PT_complex, "constant_impedance_A[Ohm]", PADDR(constant_impedance[0]),PT_DESCRIPTION,"constant impedance load on phase A, specified as Ohms",
+			PT_complex, "constant_impedance_B[Ohm]", PADDR(constant_impedance[1]),PT_DESCRIPTION,"constant impedance load on phase B, specified as Ohms",
+			PT_complex, "constant_impedance_C[Ohm]", PADDR(constant_impedance[2]),PT_DESCRIPTION,"constant impedance load on phase C, specified as Ohms",
+			PT_double, "constant_impedance_A_real[Ohm]", PADDR(constant_impedance[0].Re()),PT_DESCRIPTION,"constant impedance load on phase A, real only, specified as Ohms",
+			PT_double, "constant_impedance_B_real[Ohm]", PADDR(constant_impedance[1].Re()),PT_DESCRIPTION,"constant impedance load on phase B, real only, specified as Ohms",
+			PT_double, "constant_impedance_C_real[Ohm]", PADDR(constant_impedance[2].Re()),PT_DESCRIPTION,"constant impedance load on phase C, real only, specified as Ohms",
+			PT_double, "constant_impedance_A_reac[Ohm]", PADDR(constant_impedance[0].Im()),PT_DESCRIPTION,"constant impedance load on phase A, imaginary only, specified as Ohms",
+			PT_double, "constant_impedance_B_reac[Ohm]", PADDR(constant_impedance[1].Im()),PT_DESCRIPTION,"constant impedance load on phase B, imaginary only, specified as Ohms",
+			PT_double, "constant_impedance_C_reac[Ohm]", PADDR(constant_impedance[2].Im()),PT_DESCRIPTION,"constant impedance load on phase C, imaginary only, specified as Ohms",
+			PT_complex,	"measured_voltage_A",PADDR(measured_voltage_A),PT_DESCRIPTION,"current measured voltage on phase A",
+			PT_complex,	"measured_voltage_B",PADDR(measured_voltage_B),PT_DESCRIPTION,"current measured voltage on phase B",
+			PT_complex,	"measured_voltage_C",PADDR(measured_voltage_C),PT_DESCRIPTION,"current measured voltage on phase C",
+			PT_complex,	"measured_voltage_AB",PADDR(measured_voltage_AB),PT_DESCRIPTION,"current measured voltage on phases AB",
+			PT_complex,	"measured_voltage_BC",PADDR(measured_voltage_BC),PT_DESCRIPTION,"current measured voltage on phases BC",
+			PT_complex,	"measured_voltage_CA",PADDR(measured_voltage_CA),PT_DESCRIPTION,"current measured voltage on phases CA",
 			PT_bool, "phase_loss_protection", PADDR(three_phase_protect), PT_DESCRIPTION, "Trip all three phases of the load if a fault occurs",
 
 			// This allows the user to set a base power on each phase, and specify the power as a function
 			// of ZIP and pf for each phase (similar to zipload).  This will override the constant values
 			// above if specified, otherwise, constant values work as stated
-			PT_double, "base_power_A[VA]",PADDR(base_power[0]),
-			PT_double, "base_power_B[VA]",PADDR(base_power[1]),
-			PT_double, "base_power_C[VA]",PADDR(base_power[2]),
-			PT_double, "power_pf_A[pu]",PADDR(power_pf[0]),
-			PT_double, "current_pf_A[pu]",PADDR(current_pf[0]),
-			PT_double, "impedance_pf_A[pu]",PADDR(impedance_pf[0]),
-			PT_double, "power_pf_B[pu]",PADDR(power_pf[1]),
-			PT_double, "current_pf_B[pu]",PADDR(current_pf[1]),
-			PT_double, "impedance_pf_B[pu]",PADDR(impedance_pf[1]),
-			PT_double, "power_pf_C[pu]",PADDR(power_pf[2]),
-			PT_double, "current_pf_C[pu]",PADDR(current_pf[2]),
-			PT_double, "impedance_pf_C[pu]",PADDR(impedance_pf[2]),
-			PT_double, "power_fraction_A[pu]",PADDR(power_fraction[0]),
-			PT_double, "current_fraction_A[pu]",PADDR(current_fraction[0]),
-			PT_double, "impedance_fraction_A[pu]",PADDR(impedance_fraction[0]),
-			PT_double, "power_fraction_B[pu]",PADDR(power_fraction[1]),
-			PT_double, "current_fraction_B[pu]",PADDR(current_fraction[1]),
-			PT_double, "impedance_fraction_B[pu]",PADDR(impedance_fraction[1]),
-			PT_double, "power_fraction_C[pu]",PADDR(power_fraction[2]),
-			PT_double, "current_fraction_C[pu]",PADDR(current_fraction[2]),
-			PT_double, "impedance_fraction_C[pu]",PADDR(impedance_fraction[2]),
+			PT_double, "base_power_A[VA]",PADDR(base_power[0]),PT_DESCRIPTION,"in similar format as ZIPload, this represents the nominal power on phase A before applying ZIP fractions",
+			PT_double, "base_power_B[VA]",PADDR(base_power[1]),PT_DESCRIPTION,"in similar format as ZIPload, this represents the nominal power on phase B before applying ZIP fractions",
+			PT_double, "base_power_C[VA]",PADDR(base_power[2]),PT_DESCRIPTION,"in similar format as ZIPload, this represents the nominal power on phase C before applying ZIP fractions",
+			PT_double, "power_pf_A[pu]",PADDR(power_pf[0]),PT_DESCRIPTION,"in similar format as ZIPload, this is the power factor of the phase A constant power portion of load",
+			PT_double, "current_pf_A[pu]",PADDR(current_pf[0]),PT_DESCRIPTION,"in similar format as ZIPload, this is the power factor of the phase A constant current portion of load",
+			PT_double, "impedance_pf_A[pu]",PADDR(impedance_pf[0]),PT_DESCRIPTION,"in similar format as ZIPload, this is the power factor of the phase A constant impedance portion of load",
+			PT_double, "power_pf_B[pu]",PADDR(power_pf[1]),PT_DESCRIPTION,"in similar format as ZIPload, this is the power factor of the phase B constant power portion of load",
+			PT_double, "current_pf_B[pu]",PADDR(current_pf[1]),PT_DESCRIPTION,"in similar format as ZIPload, this is the power factor of the phase B constant current portion of load",
+			PT_double, "impedance_pf_B[pu]",PADDR(impedance_pf[1]),PT_DESCRIPTION,"in similar format as ZIPload, this is the power factor of the phase B constant impedance portion of load",
+			PT_double, "power_pf_C[pu]",PADDR(power_pf[2]),PT_DESCRIPTION,"in similar format as ZIPload, this is the power factor of the phase C constant power portion of load",
+			PT_double, "current_pf_C[pu]",PADDR(current_pf[2]),PT_DESCRIPTION,"in similar format as ZIPload, this is the power factor of the phase C constant current portion of load",
+			PT_double, "impedance_pf_C[pu]",PADDR(impedance_pf[2]),PT_DESCRIPTION,"in similar format as ZIPload, this is the power factor of the phase C constant impedance portion of load",
+			PT_double, "power_fraction_A[pu]",PADDR(power_fraction[0]),PT_DESCRIPTION,"this is the constant power fraction of base power on phase A",
+			PT_double, "current_fraction_A[pu]",PADDR(current_fraction[0]),PT_DESCRIPTION,"this is the constant current fraction of base power on phase A",
+			PT_double, "impedance_fraction_A[pu]",PADDR(impedance_fraction[0]),PT_DESCRIPTION,"this is the constant impedance fraction of base power on phase A",
+			PT_double, "power_fraction_B[pu]",PADDR(power_fraction[1]),PT_DESCRIPTION,"this is the constant power fraction of base power on phase B",
+			PT_double, "current_fraction_B[pu]",PADDR(current_fraction[1]),PT_DESCRIPTION,"this is the constant current fraction of base power on phase B",
+			PT_double, "impedance_fraction_B[pu]",PADDR(impedance_fraction[1]),PT_DESCRIPTION,"this is the constant impedance fraction of base power on phase B",
+			PT_double, "power_fraction_C[pu]",PADDR(power_fraction[2]),PT_DESCRIPTION,"this is the constant power fraction of base power on phase C",
+			PT_double, "current_fraction_C[pu]",PADDR(current_fraction[2]),PT_DESCRIPTION,"this is the constant current fraction of base power on phase C",
+			PT_double, "impedance_fraction_C[pu]",PADDR(impedance_fraction[2]),PT_DESCRIPTION,"this is the constant impedance fraction of base power on phase C",
 
          	NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+
+			//Publish deltamode functions
+			if (gl_publish_function(oclass,	"delta_linkage_node", (FUNCTIONADDR)delta_linkage)==NULL)
+				GL_THROW("Unable to publish load delta_linkage function");
+			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_node)==NULL)
+				GL_THROW("Unable to publish load deltamode function");
+			if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
+				GL_THROW("Unable to publish load deltamode function");
     }
 }
 
@@ -123,6 +131,9 @@ int load::create(void)
 	impedance_pf[0] = impedance_pf[1] = impedance_pf[2] = 1;
 	load_class = LC_UNKNOWN;
 	three_phase_protect = false;	//By default, let all three phases go
+
+	//Flag us as a load
+	node_type = LOAD_NODE;
 
     return res;
 }
@@ -191,6 +202,44 @@ TIMESTAMP load::presync(TIMESTAMP t0)
 }
 
 TIMESTAMP load::sync(TIMESTAMP t0)
+{
+	//bool all_three_phases;
+	bool fault_mode;
+
+	//See if we're reliability-enabled
+	if (fault_check_object == NULL)
+		fault_mode = false;
+	else
+		fault_mode = true;
+
+	//Functionalized so deltamode can parttake
+	load_update_fxn(fault_mode);
+
+	//Must be at the bottom, or the new values will be calculated after the fact
+	TIMESTAMP result = node::sync(t0);
+
+	return result;
+}
+
+TIMESTAMP load::postsync(TIMESTAMP t0)
+{
+	//Call node postsync first, otherwise the properties below end up 1 time out of sync (for PCed loads anyways)
+	TIMESTAMP t1 = node::postsync(t0);
+
+	//Moved from sync.  Hopefully it doesn't mess anything up, but these properties are 99% stupid and useless anyways, so meh
+	measured_voltage_A.SetPolar(voltageA.Mag(),voltageA.Arg());  //Used for testing and xml output
+	measured_voltage_B.SetPolar(voltageB.Mag(),voltageB.Arg());
+	measured_voltage_C.SetPolar(voltageC.Mag(),voltageC.Arg());
+	measured_voltage_AB = measured_voltage_A-measured_voltage_B;
+	measured_voltage_BC = measured_voltage_B-measured_voltage_C;
+	measured_voltage_CA = measured_voltage_C-measured_voltage_A;
+
+	return t1;
+}
+
+//Functional call to sync-level load updates
+//Here primarily so deltamode players can actually influence things
+void load::load_update_fxn(bool fault_mode)
 {
 	bool all_three_phases;
 
@@ -290,7 +339,7 @@ TIMESTAMP load::sync(TIMESTAMP t0)
 		}
 	}
 
-	if (fault_check_object == NULL)	//Not reliability mode - normal mode
+	if (fault_mode == false)	//Not reliability mode - normal mode
 	{
 		if ((solver_method!=SM_FBS) && (SubNode==PARENT))	//Need to do something slightly different with GS/NR and parented load
 		{													//associated with change due to player methods
@@ -335,7 +384,7 @@ TIMESTAMP load::sync(TIMESTAMP t0)
 			current[1] = constant_current[1];
 			current[2] = constant_current[2];
 		}
-	}
+	}//End normal mode
 	else	//Reliability mode
 	{
 		all_three_phases = true;	//By default, handle all the phases
@@ -420,28 +469,8 @@ TIMESTAMP load::sync(TIMESTAMP t0)
 			current[0] = 0.0;
 			current[1] = 0.0;
 			current[2] = 0.0;
-		}
-	}
-
-	//Must be at the bottom, or the new values will be calculated after the fact
-	TIMESTAMP result = node::sync(t0);
-
-	return result;
-}
-TIMESTAMP load::postsync(TIMESTAMP t0)
-{
-	//Call node postsync first, otherwise the properties below end up 1 time out of sync (for PCed loads anyways)
-	TIMESTAMP t1 = node::postsync(t0);
-
-	//Moved from sync.  Hopefully it doesn't mess anything up, but these properties are 99% stupid and useless anyways, so meh
-	measured_voltage_A.SetPolar(voltageA.Mag(),voltageA.Arg());  //Used for testing and xml output
-	measured_voltage_B.SetPolar(voltageB.Mag(),voltageB.Arg());
-	measured_voltage_C.SetPolar(voltageC.Mag(),voltageC.Arg());
-	measured_voltage_AB = measured_voltage_A-measured_voltage_B;
-	measured_voltage_BC = measured_voltage_B-measured_voltage_C;
-	measured_voltage_CA = measured_voltage_C-measured_voltage_A;
-
-	return t1;
+		}//End zero
+	}//End reliability mode
 }
 
 //Notify function

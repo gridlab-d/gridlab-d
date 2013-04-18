@@ -10,9 +10,48 @@
 #define _diesel_dg_H
 
 #include <stdarg.h>
-#include "../powerflow/powerflow_object.h"
-#include "../powerflow/node.h"
 #include "gridlabd.h"
+#include "generators.h"
+#include "power_electronics.h"
+
+EXPORT SIMULATIONMODE interupdate_diesel_dg(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
+EXPORT STATUS postupdate_diesel_dg(OBJECT *obj, complex *useful_value, unsigned int mode_pass);
+
+//AVR state variable structure
+typedef struct {
+	double vset;			//p.u. voltage set point
+	double bias;			//Bias term of avr
+	double xe;				//State variable
+	double xb;				//State variable for transient gain reduction
+} AVR_VARS;
+
+//GOV state variable structure
+typedef struct {
+	double wref;			//Current reference frequency (p.u.)
+	double x1;				//Electric box state variable
+	double x2;				//Electric box state variable
+	double x4;				//Actuator state variable
+	double x5;				//Actuator state variable
+	double x6;				//Actuator state variable
+	double throttle;		//governor actuator output
+} GOV_VARS;
+
+//Machine state variable structure
+typedef struct {
+	double rotor_angle;		//Rotor angle of machine
+	double omega;			//Current speed of machine
+	double Vfd;				//Field voltage of machine
+	double Flux1d;			//Transient flux on d-axis
+	double Flux2q;			//Sub-transient flux on q-axis
+	complex EpRotated;		//d-q rotated E' internal voltage
+	complex VintRotated;	//d-q rotated Vint voltage
+	complex EintVal[3];		//Unrotated, un-sequenced internal voltage
+	complex Irotated;		//d-q rotated current value
+	complex pwr_electric;	//Total electric power output of generator
+	double pwr_mech;		//Mechanical power output of generator
+	GOV_VARS gov;			//Governor state variables
+	AVR_VARS avr;			//Automatic Voltage Regulator state variables
+} MAC_STATES;
 
 class diesel_dg : public gld_object
 {
@@ -22,26 +61,58 @@ private:
 	complex *pCircuit_V; ///< pointer to the three voltages on three lines
 	complex *pLine_I; ///< pointer to the three current on three lines
 
+	bool first_run;		///< Flag for first run of the diesel_dg object - eliminates t0==0 dependence
+	bool first_run_after_delta;	///< Flag for first run after deltamode - namely because powerflow is in true pass
+
+	//Internal synchronous machine variables
+	complex *bus_admittance_mat;		//Link to bus raw self-admittance value - grants 3x3 access instead of diagonal
+	complex *full_bus_admittance_mat;	//Link to bus full self-admittance of Ybus form
+	complex *PGenerated;				//Link to bus PGenerated field - mainly used for SWING generator
+	complex *IGenerated;				//Link to direct current injections to powerflow at bus-level
+	bool *NR_mode;						//Flag to NR_mode pass flag inside node - used to determine super-second stuff
+	complex *FreqPower;					//Link to bus "frequency-power weighted" accumulation
+	complex *TotalPower;				//Link to bus "accumulated power" - used for nominal frequency calculation
+	complex generator_admittance[3][3];	//Generator admittance matrix converted from sequence values
+	double power_base;					//Per-phase basis (divide by 3)
+	double voltage_base;				//Voltage p.u. base for analysis (converted from delta)
+	double current_base;				//Current p.u. base for analysis
+	double impedance_base;				//Impedance p.u. base for analysis
+	complex YS0;						//Zero sequence admittance - scaled (not p.u.)
+	complex YS1;						//Positive sequence admittance - scaled (not p.u.)
+	complex YS2;						//Negative sequence admittance - scaled (not p.u.)
+	complex YS1_Full;					//Positive sequence admittance - full Ybus value
+	double Rr;							//Rotor resistance term - derived
+	double *torque_delay;				//Buffer of delayed governor torques
+	unsigned int torque_delay_len;		//Length of the torque delay buffer
+	unsigned int torque_delay_write_pos;//Indexing variable for writing the torque_delay_buffer
+	unsigned int torque_delay_read_pos;	//Indexing variable for reading torque_delay_buffer
+	double prev_rotor_speed_val;		//Previous value of rotor speed - used for delta-exiting convergence check
+	complex last_power_output[3];		//Tracking variable for previous power output - used to do super-second frequency adjustments
+	TIMESTAMP prev_time;				//Tracking variable for previous "new time" run
+
+	MAC_STATES curr_state;		//Current state of all vari
+	MAC_STATES next_state;
+	MAC_STATES predictor_vals;	//Predictor pass values of variables
+	MAC_STATES corrector_vals;	//Corrector pass values of variables
+
 protected:
 	/* TODO: put unpublished but inherited variables */
 public:
 	/* TODO: put published variables here */
-	set phases;	/**< device phases (see PHASE codes) */
+	enum {OFFLINE=1, ONLINE};
+	enumeration Gen_status;
+	enum {INDUCTION=1, SYNCHRONOUS, DYNAMIC};
+	enumeration Gen_type;
+	enum {CONSTANTE=1, CONSTANTP, CONSTANTPQ};
+	enumeration Gen_mode;
 
-	enum {OFFLINE=1, ONLINE} Gen_status;
-	enum {INDUCTION=1, SYNCHRONOUS} Gen_type;
-	enum {CONSTANTE=1, CONSTANTP, CONSTANTPQ} Gen_mode;
-
-   // enum {CONSTANTE=1, CONSTANTPQ} Gen_mode;  //< meter type 
-	//enum {OFFLINE=0, ONLINE=1} Gen_status;
-//	double Rated_kW; //< nominal power in kW
-//	double Rated_pf; //< power factor, P/(P^2+Q^2)^0.5
-//	double Fuel_coefficient1;//< coefficient to calculate fuel cost
-//	double Fuel_coefficient2;//< coefficient to calculate fuel cost
-//	double Fuel_coefficient3;//< coefficient to calculate fuel cost
+	//Dynamics synchronous generator capabilities
+	enum {NO_EXC=1, SEXS};
+	enumeration Exciter_type;
+	enum {NO_GOV=1, DEGOV1};
+	enumeration Governor_type;
 
 	//Diesel engine inputs
-
 	complex AMx[3][3];			//Impedance matrix for Synchronous Generator
 	complex invAMx[3][3];		//Inverse of SG impedance matrix
 
@@ -84,33 +155,14 @@ public:
 	
 	//Synchronous gen inputs
 	
-	double f;//system frquency
-	double poles;//Number of poles in the synchronous generator
-	double wm;//angular velocity in rad/sec
 	double Pconv;//Converted power = Mechanical input - (F & W loasses + Stray losses + Core losses)
-	double Tind;//Induced torque
-	double EA;//Internal generated voltage produced in one phase of the synchronous generator
-	double Vo;//Terminal voltage of the synchronous generator
-	double Rs1;//per phase resistance of the synchronous generator
-	double Xs1;//per phase synchronous reactance of the synchronous generator
-	double delta;//delta is the angle between EA and Vo. It is called torque angle
-	double IA;//Armature current
-    double Ploss;//Copper losses
-	double Pout;//The real electric output power of the synchronous generator
-	double effe;//electrical efficiency
-	double effo;//Overall efficiency
 
 	double pf;
 
 	double GenElecEff;
-	double TotalRealPow;
-	double TotalReacPow;
-
-	int64 time_advance;
-
+	complex TotalPowerOutput;
 
 	//end of synchronous generator inputs
-
 	double Rs;//< internal transient resistance in p.u.
 	double Xs;//< internal transient impedance in p.u.
     double Rg;//< grounding resistance in p.u.
@@ -129,26 +181,58 @@ public:
 	complex current_A;      // current
 	complex current_B;
 	complex current_C;
+	complex power_val[3];	//Present power output of the generator
 	complex EfA;// induced voltage on phase A in Volt
 	complex EfB;
 	complex EfC;
-	complex power_A;//power
-	complex power_B;
-	complex power_C;
-	complex power_A_sch; // scheduled power
-	complex power_B_sch;
-	complex power_C_sch;    
-	complex EfA_sch;// scheduled electric potential
-	complex EfB_sch;
-	complex EfC_sch;
-	int SlackBus; //indicate whether slack bus
 
+	//Convergence criteria (ion right now)
+	double rotor_speed_convergence_criterion;
 
-/*	double Real_Rs;
-	double Real_Xs;
-	double Real_Rg;
-	double Real_Xg;
-*/
+	//Dynamics-capable synchronous generator inputs
+	double omega_ref;		//Nominal frequency
+	double inertia;			//Inertial constant (H) of generator
+	double damping;			//Damping constant (D) of generator
+	double number_poles;	//Number of poles in the generator
+	double Ra;				//Stator resistance (p.u.)
+	double Xd;				//d-axis reactance (p.u.)
+	double Xq;				//q-axis reactance (p.u.)
+	double Xdp;				//d-axis transient reactance (p.u.)
+	double Xqp;				//q-axis transient reactance (p.u.)
+	double Xdpp;			//d-axis subtransient reactance (p.u.)
+	double Xqpp;			//q-axis subtransient reactance (p.u.)
+	double Xl;				//Leakage reactance (p.u.)
+	double Tdp;				//d-axis short circuit time constant (s)
+	double Tdop;			//d-axis open circuit time constant (s)
+	double Tqop;			//q-axis open circuit time constant (s)
+	double Tdopp;			//d-axis open circuit subtransient time constant (s)
+	double Tqopp;			//q-axis open circuit subtransient time constant (s)
+	double Ta;				//Armature short-circuit time constant (s)
+	complex X0;				//Zero sequence impedance (p.u.)
+	complex X2;				//Negative sequence impedance (p.u.)
+
+	//AVR properties (Simplified Exciter System (SEXS) - Industry acronym, I swear)
+	double exc_KA;				//Exciter gain (p.u.)
+	double exc_TA;				//Exciter time constant (seconds)
+	double exc_TB;				//Exciter transient gain reduction time constant (seconds)
+	double exc_TC;				//Exciter transient gain reduction time constant (seconds)
+	double exc_EMAX;			//Exciter upper limit (p.u.)
+	double exc_EMIN;			//Exciter lower limit (p.u.)
+	
+	//Governor properties (DEGOV1)
+	double gov_R;				//Governor droop constant (p.u.)
+	double gov_T1;				//Governor electric control box time constant (s)
+	double gov_T2;				//Governor electric control box time constant (s)
+	double gov_T3;				//Governor electric control box time constant (s)
+	double gov_T4;				//Governor actuator time constant (s)
+	double gov_T5;				//Governor actuator time constant (s)
+	double gov_T6;				//Governor actuator time constant (s)
+	double gov_K;				//Governor actuator gain
+	double gov_TMAX;			//Governor actuator upper limit (p.u.)
+	double gov_TMIN;			//Governor actuator lower limit (p.u.)
+	double gov_TD;				//Governor combustion delay (s)
+
+	set phases;	/**< device phases (see PHASE codes) */
 
 public:
 	/* required implementations */
@@ -158,52 +242,23 @@ public:
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
+	//STATUS deltaupdate(unsigned int64 dt, unsigned int iteration_count_val);
+	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
+	STATUS post_deltaupdate(complex *useful_value, unsigned int mode_pass);
+	bool deltamode_inclusive;
 public:
 	static CLASS *oclass;
 	static diesel_dg *defaults;
 	complex *get_complex(OBJECT *obj, char *name);
+	double *get_double(OBJECT *obj, char *name);
+	bool *get_bool(OBJECT *obj, char *name);
+	void convert_Ypn0_to_Yabc(complex Y0, complex Y1, complex Y2, complex *Yabcmat);
+	void convert_pn0_to_abc(complex *Xpn0, complex *Xabc);
+	void convert_abc_to_pn0(complex *Xabc, complex *Xpn0);
+	STATUS apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta);
+	STATUS init_dynamics(MAC_STATES *curr_time);
+	complex complex_exp(double angle);
 
-#ifdef OPTIONAL
-	static CLASS *pclass; /**< defines the parent class */
-	TIMESTAMP plc(TIMESTAMP t0, TIMESTAMP t1); /**< defines the default PLC code */
-#endif
-};
-
-#endif
-
-/**@}*/
-/** $Id: diesel_dg.h,v 1.2 2008/02/12 00:28:08 d3g637 Exp $
-	@file diesel_dg.h
-	@addtogroup diesel_dg
-	@ingroup MODULENAME
-
- @{  
- **/
-
-#ifndef _diesel_dg_H
-#define _diesel_dg_H
-
-#include <stdarg.h>
-#include "gridlabd.h"
-
-class diesel_dg {
-private:
-	/* TODO: put private variables here */
-protected:
-	/* TODO: put unpublished but inherited variables */
-public:
-	/* TODO: put published variables here */
-public:
-	/* required implementations */
-	diesel_dg(MODULE *module);
-	int create(void);
-	int init(OBJECT *parent);
-	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
-	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
-	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
-public:
-	static CLASS *oclass;
-	static diesel_dg *defaults;
 #ifdef OPTIONAL
 	static CLASS *pclass; /**< defines the parent class */
 	TIMESTAMPP plc(TIMESTAMP t0, TIMESTAMP t1); /**< defines the default PLC code */

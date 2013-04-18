@@ -596,6 +596,7 @@ static int mkdirs(char *path)
 			if (errno != ENOENT) {
 				output_error("cannot access directory '%s': %s", tmp, strerror(errno));
 				free(tmp);
+				tmp = NULL;
 				return -1;
 			}
 		}
@@ -606,11 +607,13 @@ static int mkdirs(char *path)
 				if ((rc = mkdir(tmp, 0775)) && errno != EEXIST) {
 					output_error("cannot create directory '%s': %s", tmp, strerror(errno));
 					free(tmp);
+					tmp = NULL;
 					return -1;
 				}
 			}
 		}
 		free(tmp);
+		tmp = NULL;
 		return 0;
 	} else if (rc)
 		output_error("cannot access directory '%s': %s", path, strerror(errno));
@@ -956,7 +959,13 @@ static void free_index(void)
 static UNRESOLVED *first_unresolved = NULL;
 /*static*/ UNRESOLVED *add_unresolved(OBJECT *by, PROPERTYTYPE ptype, void *ref, CLASS *oclass, char *id, char *file, unsigned int line, int flags)
 {
-	UNRESOLVED *item = malloc(sizeof(UNRESOLVED));
+	UNRESOLVED *item;
+	if ( strlen(id)>=sizeof(item->id))
+	{
+		output_error("add_unresolved(...): id '%s' is too long to resolve", id);
+		return NULL;
+	}
+	item = malloc(sizeof(UNRESOLVED));
 	if (item==NULL) { errno = ENOMEM; return NULL; }
 	item->by = by;
 	item->ptype = ptype;
@@ -1155,8 +1164,10 @@ static int resolve_list(UNRESOLVED *item)
 		if (item->file!=NULL)
 		{
 			// free last context file name
-			if (filename!=NULL)
+			if (filename!=NULL){
 				free(filename); // last one - not used again
+				filename = NULL;
+			}
 
 			// get next context file name
 			filename = item->file;
@@ -2232,7 +2243,7 @@ int time_value_datetimezone(PARSER, TIMESTAMP *t)
 		&& TERM(integer16(HERE,&dt.hour)) && LITERAL(":")
 		&& TERM(integer16(HERE,&dt.minute)) && LITERAL(":")
 		&& TERM(integer16(HERE,&dt.second)) && LITERAL(" ")
-		&& TERM(name(HERE,dt.tz,sizeof(dt.tz))))
+		&& TERM(name(HERE,dt.tz,sizeof(dt.tz))) && (LITERAL("'")||LITERAL("\"")))
 	{
 		dt.microsecond = 0;
 		dt.weekday = -1;
@@ -2247,7 +2258,6 @@ int time_value_datetimezone(PARSER, TIMESTAMP *t)
 	}
 	else
 		REJECT;
-	if (LITERAL("'")||LITERAL("\"")) ACCEPT;
 	DONE;
 }
 
@@ -3206,6 +3216,11 @@ static int class_explicit_declaration(PARSER, char *type, int size)//, bool *is_
 	else if LITERAL("public")
 	{
 		strcpy(type,"public");
+		ACCEPT;
+	}
+	else if LITERAL("static")
+	{
+		strcpy(type,"static");
 		ACCEPT;
 	}
 	else 
@@ -6364,6 +6379,7 @@ Failed:
 	}
 Done:
 	free(buffer);
+	buffer = NULL;
 	free_index();
 	linenum=1; // parser starts at 1
 	return status;

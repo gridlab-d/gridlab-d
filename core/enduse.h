@@ -69,6 +69,7 @@ typedef struct s_enduse {
 
 	/* heat */
 	double heatgain;			/* internal heat from load (Btu/h) */
+	double cumulative_heatgain;  /* internal cumulative heat gain from load (Btu) */ 
 	double heatgain_fraction;	/* fraction of power that goes to internal heat (pu Btu/h) */
 
 	/* misc info */

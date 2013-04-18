@@ -33,9 +33,9 @@ fault_check::fault_check(MODULE *mod) : powerflow_object(mod)
 		
 		if(gl_publish_variable(oclass,
 			PT_enumeration, "check_mode", PADDR(fcheck_state),PT_DESCRIPTION,"Frequency of fault checks",
-				PT_KEYWORD, "SINGLE", SINGLE,
-				PT_KEYWORD, "ONCHANGE", ONCHANGE,
-				PT_KEYWORD, "ALL", ALLT,
+				PT_KEYWORD, "SINGLE", (enumeration)SINGLE,
+				PT_KEYWORD, "ONCHANGE", (enumeration)ONCHANGE,
+				PT_KEYWORD, "ALL", (enumeration)ALLT,
 			PT_char1024,"output_filename",PADDR(output_filename),
 			PT_bool,"reliability_mode",PADDR(reliability_mode),
 			PT_object,"eventgen_object",PADDR(rel_eventgen),

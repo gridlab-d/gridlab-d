@@ -5,6 +5,7 @@ residential_la_SOURCES =                            \
 	dishwasher.cpp         dishwasher.h         \
 	dryer.cpp              dryer.h              \
 	evcharger.cpp          evcharger.h          \
+	evcharger_det.cpp      evcharger_det.h      \
 	freezer.cpp            freezer.h            \
 	house_a.cpp            house_a.h            \
 	house_e.cpp            house_e.h            \

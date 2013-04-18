@@ -201,7 +201,7 @@ struct s_implicit_enduse_list {
 
 	{   "CLOTHESWASHER", 
 		{20, false, {0.0,0.0,1.0}, 0.9, 1.0},
-		"type:analog; schedule: residential-clotheswasher-default; energy: 0.75 kWh; power: 1 kW",
+		"type:analog; schedule: residential-clotheswasher-default; power: 1 kW", //energy: 0.75 kWh; 
 		"residential-clotheswasher-default", 
 		"positive; nonzero; weekday-summer {"
 		"*  0 * 4-9 1-5 0.0029; *  1 * 4-9 1-5 0.0019; *  2 * 4-9 1-5 0.0014; *  3 * 4-9 1-5 0.0013;"
@@ -239,7 +239,7 @@ struct s_implicit_enduse_list {
 
 	{   "WATERHEATER", 
 		{30, true, {0.0,0.0,1.0}, 1.0, 0.5},
-		"type:analog; schedule: residential-waterheater-default; energy: 1 kWh; power: 5 kW",
+		"type:analog; schedule: residential-waterheater-default; power: 5 kW", //energy: 1 kWh; 
 		"residential-waterheater-default", 
 		"positive; nonzero; weekday-summer {"
 		"*  0 * 4-9 1-5 0.21; *  1 * 4-9 1-5 0.16; *  2 * 4-9 1-5 0.13; *  3 * 4-9 1-5 0.12;"
@@ -277,7 +277,7 @@ struct s_implicit_enduse_list {
 
 	{   "REFRIGERATOR", 
 		{20, false, {0.1,0.0,0.9}, 0.9, 1.0},
-		"type:analog; schedule: residential-refrigerator-default; energy: 1 kWh; power: 750 W",
+		"type:analog; schedule: residential-refrigerator-default; power: 750 W", //energy: 1 kWh; 
 		"residential-refrigerator-default", 
 		"positive; nonzero; weekday-summer {"
 		"*  0 * 4-9 1-5 0.187; *  1 * 4-9 1-5 0.182; *  2 * 4-9 1-5 0.176; *  3 * 4-9 1-5 0.170;"
@@ -315,7 +315,7 @@ struct s_implicit_enduse_list {
 
 	{   "DRYER", 
 		{30, true, {0.9,0.0,0.1}, 0.99, 0.15},
-		"type:analog; schedule: residential-dryer-default; energy: 2.5 kWh; power: 5 kW",
+		"type:analog; schedule: residential-dryer-default; power: 5 kW", //energy: 2.5 kWh; 
 		"residential-dryer-default", 
 		"positive; nonzero; weekday-summer {"
 		"*  0 * 4-9 1-5 0.036; *  1 * 4-9 1-5 0.013; *  2 * 4-9 1-5 0.007; *  3 * 4-9 1-5 0.005;"
@@ -353,7 +353,7 @@ struct s_implicit_enduse_list {
 
 	{   "FREEZER", 
 		{20, false, {0.1,0.0,0.9}, 0.9, 1.0},
-		"type:analog; schedule: residential-freezer-default; energy: 750 Wh; power: 500 W",
+		"type:analog; schedule: residential-freezer-default; power: 500 W", //energy: 750 Wh; 
 		"residential-freezer-default", 
 		"positive; nonzero; weekday-summer {"
 		"*  0 * 4-9 1-5 0.210; *  1 * 4-9 1-5 0.213; *  2 * 4-9 1-5 0.208; *  3 * 4-9 1-5 0.202;"
@@ -388,12 +388,11 @@ struct s_implicit_enduse_list {
 		"* 20 * 10-3 6-0 0.171; * 21 * 10-3 6-0 0.168; * 22 * 10-3 6-0 0.160; * 23 * 10-3 6-0 0.151"
 		"}"		
 		},
-
 	{   "DISHWASHER", 
 		{20, false, {0.8,0,0.2}, 0.98, 1.0},
-		"type:analog; schedule: residential-dishwasher-default; energy: 1.0 kWh; power: 1.0 kW",
+		"type:analog; schedule: residential-dishwasher-default; power: 1.0 kW", //energy: 1.0 kWh;
 		"residential-dishwasher-default", 
-		"positive; nonzero; weekday-summer {"
+		"normal; positive; nonzero; weekday-summer {"
 		"*  0 * 4-9 1-5 0.0068; *  1 * 4-9 1-5 0.0029; *  2 * 4-9 1-5 0.0016; *  3 * 4-9 1-5 0.0013;"
 		"*  4 * 4-9 1-5 0.0012; *  5 * 4-9 1-5 0.0037; *  6 * 4-9 1-5 0.0075; *  7 * 4-9 1-5 0.0129;"
 		"*  8 * 4-9 1-5 0.0180; *  9 * 4-9 1-5 0.0177; * 10 * 4-9 1-5 0.0144; * 11 * 4-9 1-5 0.0113;"
@@ -428,7 +427,7 @@ struct s_implicit_enduse_list {
 	},
 	{   "RANGE", 
 		{40, true, {1,0,0}, 0.85, 0.8},
-		"type:analog; schedule: residential-range-default; energy: 1.0 kWh; power: 0.5 kW",
+		"type:analog; schedule: residential-range-default; power: 0.5 kW", //energy: 1.0 kWh; 
 		"residential-range-default", 
 		"positive; nonzero; weekday-summer {"
 		"*  0 * 4-9 1-5 0.009; *  1 * 4-9 1-5 0.008; *  2 * 4-9 1-5 0.007; *  3 * 4-9 1-5 0.007;"
@@ -465,7 +464,7 @@ struct s_implicit_enduse_list {
 	},
 	{   "MICROWAVE", 
 		{40, false, {0,0,1}, 0.7, 0.8},
-		"type:analog; schedule: residential-microwave-default; energy: 1.0 kWh; power: 0.2 kW",
+		"type:analog; schedule: residential-microwave-default; power: 0.2 kW", //energy: 1.0 kWh; 
 		"residential-microwave-default", 
 		"positive; nonzero; weekday-summer {"
 		"*  0 * 4-9 1-5 0.009; *  1 * 4-9 1-5 0.008; *  2 * 4-9 1-5 0.007; *  3 * 4-9 1-5 0.007;"
@@ -592,25 +591,25 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"east_incident_solar_radiation[Btu/h.sf]",PADDR(east_incident_solar_radiation),PT_DESCRIPTION,"incident solar radiation hitting the east side of the house",
 			PT_double,"northeast_incident_solar_radiation[Btu/h.sf]",PADDR(north_east_incident_solar_radiation),PT_DESCRIPTION,"incident solar radiation hitting the northeast side of the house",
 			PT_enumeration,"heating_cop_curve",PADDR(heating_cop_curve),PT_DESCRIPTION,"Defines the function type to use for the adjusted heating COP as a function of outside air temperature.",
-				PT_KEYWORD,"DEFAULT",HC_DEFAULT,
-				PT_KEYWORD,"FLAT",HC_FLAT,
-				PT_KEYWORD,"LINEAR",HC_LINEAR,
-				PT_KEYWORD,"CURVED",HC_CURVED,
+				PT_KEYWORD,"DEFAULT",(enumeration)HC_DEFAULT,
+				PT_KEYWORD,"FLAT",(enumeration)HC_FLAT,
+				PT_KEYWORD,"LINEAR",(enumeration)HC_LINEAR,
+				PT_KEYWORD,"CURVED",(enumeration)HC_CURVED,
 			PT_enumeration,"heating_cap_curve",PADDR(heating_cap_curve),PT_DESCRIPTION,"Defines the function type to use for the adjusted heating capacity as a function of outside air temperature.",
-				PT_KEYWORD,"DEFAULT",HP_DEFAULT,
-				PT_KEYWORD,"FLAT",HP_FLAT,
-				PT_KEYWORD,"LINEAR",HP_LINEAR,
-				PT_KEYWORD,"CURVED",HP_CURVED,
+				PT_KEYWORD,"DEFAULT",(enumeration)HP_DEFAULT,
+				PT_KEYWORD,"FLAT",(enumeration)HP_FLAT,
+				PT_KEYWORD,"LINEAR",(enumeration)HP_LINEAR,
+				PT_KEYWORD,"CURVED",(enumeration)HP_CURVED,
 			PT_enumeration,"cooling_cop_curve",PADDR(cooling_cop_curve),PT_DESCRIPTION,"Defines the function type to use for the adjusted cooling COP as a function of outside air temperature.",
-				PT_KEYWORD,"DEFAULT",CC_DEFAULT,
-				PT_KEYWORD,"FLAT",CC_FLAT,
-				PT_KEYWORD,"LINEAR",CC_LINEAR,
-				PT_KEYWORD,"CURVED",CC_CURVED,
+				PT_KEYWORD,"DEFAULT",(enumeration)CC_DEFAULT,
+				PT_KEYWORD,"FLAT",(enumeration)CC_FLAT,
+				PT_KEYWORD,"LINEAR",(enumeration)CC_LINEAR,
+				PT_KEYWORD,"CURVED",(enumeration)CC_CURVED,
 			PT_enumeration,"cooling_cap_curve",PADDR(cooling_cap_curve),PT_DESCRIPTION,"Defines the function type to use for the adjusted cooling capacity as a function of outside air temperature.",
-				PT_KEYWORD,"DEFAULT",CP_DEFAULT,
-				PT_KEYWORD,"FLAT",CP_FLAT,
-				PT_KEYWORD,"LINEAR",CP_LINEAR,
-				PT_KEYWORD,"CURVED",CP_CURVED,
+				PT_KEYWORD,"DEFAULT",(enumeration)CP_DEFAULT,
+				PT_KEYWORD,"FLAT",(enumeration)CP_FLAT,
+				PT_KEYWORD,"LINEAR",(enumeration)CP_LINEAR,
+				PT_KEYWORD,"CURVED",(enumeration)CP_CURVED,
 			PT_bool,"use_latent_heat",PADDR(use_latent_heat),PT_DESCRIPTION,"Boolean for using the heat latency of the air to the humidity when cooling.",
 			PT_bool,"include_fan_heatgain",PADDR(include_fan_heatgain),PT_DESCRIPTION,"Boolean to choose whether to include the heat generated by the fan in the ETP model.",
 
@@ -691,75 +690,75 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 				PT_KEYWORD, "TIMER", (set)AX_TIMER,
 				PT_KEYWORD, "LOCKOUT", (set)AX_LOCKOUT,
 			PT_enumeration,"system_mode",PADDR(system_mode),PT_DESCRIPTION,"heating/cooling system operation state",
-				PT_KEYWORD,"UNKNOWN",SM_UNKNOWN,
-				PT_KEYWORD,"HEAT",SM_HEAT,
-				PT_KEYWORD,"OFF",SM_OFF,
-				PT_KEYWORD,"COOL",SM_COOL,
-				PT_KEYWORD,"AUX",SM_AUX,
+				PT_KEYWORD,"UNKNOWN",(enumeration)SM_UNKNOWN,
+				PT_KEYWORD,"HEAT",(enumeration)SM_HEAT,
+				PT_KEYWORD,"OFF",(enumeration)SM_OFF,
+				PT_KEYWORD,"COOL",(enumeration)SM_COOL,
+				PT_KEYWORD,"AUX",(enumeration)SM_AUX,
 			PT_enumeration,"last_system_mode",PADDR(last_system_mode),PT_DESCRIPTION,"heating/cooling system operation state",
-				PT_KEYWORD,"UNKNOWN",SM_UNKNOWN,
-				PT_KEYWORD,"HEAT",SM_HEAT,
-				PT_KEYWORD,"OFF",SM_OFF,
-				PT_KEYWORD,"COOL",SM_COOL,
-				PT_KEYWORD,"AUX",SM_AUX,
+				PT_KEYWORD,"UNKNOWN",(enumeration)SM_UNKNOWN,
+				PT_KEYWORD,"HEAT",(enumeration)SM_HEAT,
+				PT_KEYWORD,"OFF",(enumeration)SM_OFF,
+				PT_KEYWORD,"COOL",(enumeration)SM_COOL,
+				PT_KEYWORD,"AUX",(enumeration)SM_AUX,
 			PT_enumeration,"heating_system_type",PADDR(heating_system_type),
-				PT_KEYWORD,"NONE",HT_NONE,
-				PT_KEYWORD,"GAS",HT_GAS,
-				PT_KEYWORD,"HEAT_PUMP",HT_HEAT_PUMP,
-				PT_KEYWORD,"RESISTANCE",HT_RESISTANCE,
+				PT_KEYWORD,"NONE",(enumeration)HT_NONE,
+				PT_KEYWORD,"GAS",(enumeration)HT_GAS,
+				PT_KEYWORD,"HEAT_PUMP",(enumeration)HT_HEAT_PUMP,
+				PT_KEYWORD,"RESISTANCE",(enumeration)HT_RESISTANCE,
 			PT_enumeration,"cooling_system_type",PADDR(cooling_system_type),
-				PT_KEYWORD,"NONE",CT_NONE,
-				PT_KEYWORD,"ELECTRIC",CT_ELECTRIC,
-				PT_KEYWORD,"HEAT_PUMP",CT_ELECTRIC,
+				PT_KEYWORD,"NONE",(enumeration)CT_NONE,
+				PT_KEYWORD,"ELECTRIC",(enumeration)CT_ELECTRIC,
+				PT_KEYWORD,"HEAT_PUMP",(enumeration)CT_ELECTRIC,
 			PT_enumeration,"auxiliary_system_type",PADDR(auxiliary_system_type),
-				PT_KEYWORD,"NONE",AT_NONE,
-				PT_KEYWORD,"ELECTRIC",AT_ELECTRIC,
+				PT_KEYWORD,"NONE",(enumeration)AT_NONE,
+				PT_KEYWORD,"ELECTRIC",(enumeration)AT_ELECTRIC,
 			PT_enumeration,"fan_type",PADDR(fan_type),
-				PT_KEYWORD,"NONE",FT_NONE,
-				PT_KEYWORD,"ONE_SPEED",FT_ONE_SPEED,
-				PT_KEYWORD,"TWO_SPEED",FT_TWO_SPEED,
+				PT_KEYWORD,"NONE",(enumeration)FT_NONE,
+				PT_KEYWORD,"ONE_SPEED",(enumeration)FT_ONE_SPEED,
+				PT_KEYWORD,"TWO_SPEED",(enumeration)FT_TWO_SPEED,
 			PT_enumeration,"thermal_integrity_level",PADDR(thermal_integrity_level),PT_DESCRIPTION,"default envelope UA settings",
-				PT_KEYWORD,"VERY_LITTLE",TI_VERY_LITTLE,
-				PT_KEYWORD,"LITTLE",TI_LITTLE,
-				PT_KEYWORD,"BELOW_NORMAL",TI_BELOW_NORMAL,
-				PT_KEYWORD,"NORMAL",TI_NORMAL,
-				PT_KEYWORD,"ABOVE_NORMAL",TI_ABOVE_NORMAL,
-				PT_KEYWORD,"GOOD",TI_GOOD,
-				PT_KEYWORD,"VERY_GOOD",TI_VERY_GOOD,
-				PT_KEYWORD,"UNKNOWN",TI_UNKNOWN,
+				PT_KEYWORD,"VERY_LITTLE",(enumeration)TI_VERY_LITTLE,
+				PT_KEYWORD,"LITTLE",(enumeration)TI_LITTLE,
+				PT_KEYWORD,"BELOW_NORMAL",(enumeration)TI_BELOW_NORMAL,
+				PT_KEYWORD,"NORMAL",(enumeration)TI_NORMAL,
+				PT_KEYWORD,"ABOVE_NORMAL",(enumeration)TI_ABOVE_NORMAL,
+				PT_KEYWORD,"GOOD",(enumeration)TI_GOOD,
+				PT_KEYWORD,"VERY_GOOD",(enumeration)TI_VERY_GOOD,
+				PT_KEYWORD,"UNKNOWN",(enumeration)TI_UNKNOWN,
 			PT_enumeration, "glass_type", PADDR(glass_type), PT_DESCRIPTION, "glass used in the windows",
-				PT_KEYWORD,"OTHER",GM_OTHER,
-				PT_KEYWORD,"GLASS",GM_GLASS,
-				PT_KEYWORD,"LOW_E_GLASS",GM_LOW_E_GLASS,
+				PT_KEYWORD,"OTHER",(enumeration)GM_OTHER,
+				PT_KEYWORD,"GLASS",(enumeration)GM_GLASS,
+				PT_KEYWORD,"LOW_E_GLASS",(enumeration)GM_LOW_E_GLASS,
 			PT_enumeration, "window_frame", PADDR(window_frame), PT_DESCRIPTION, "type of window frame",
-				PT_KEYWORD, "NONE", WF_NONE,
-				PT_KEYWORD, "ALUMINUM", WF_ALUMINUM,
-				PT_KEYWORD, "ALUMINIUM", WF_ALUMINUM, // non-American spelling
-				PT_KEYWORD, "THERMAL_BREAK", WF_THERMAL_BREAK,
-				PT_KEYWORD, "WOOD", WF_WOOD,
-				PT_KEYWORD, "INSULATED", WF_INSULATED,
+				PT_KEYWORD, "NONE", (enumeration)WF_NONE,
+				PT_KEYWORD, "ALUMINUM", (enumeration)WF_ALUMINUM,
+				PT_KEYWORD, "ALUMINIUM", (enumeration)WF_ALUMINUM, // non-American spelling
+				PT_KEYWORD, "THERMAL_BREAK", (enumeration)WF_THERMAL_BREAK,
+				PT_KEYWORD, "WOOD", (enumeration)WF_WOOD,
+				PT_KEYWORD, "INSULATED", (enumeration)WF_INSULATED,
 			PT_enumeration, "glazing_treatment", PADDR(glazing_treatment), PT_DESCRIPTION, "the treatment to increase the reflectivity of the exterior windows",
-				PT_KEYWORD, "OTHER", GT_OTHER,
-				PT_KEYWORD, "CLEAR", GT_CLEAR,
-				PT_KEYWORD, "ABS", GT_ABS,
-				PT_KEYWORD, "REFL", GT_REFL,
-				PT_KEYWORD, "LOW_S", GT_LOW_S,
-				PT_KEYWORD, "HIGH_S", GT_HIGH_S,
+				PT_KEYWORD, "OTHER", (enumeration)GT_OTHER,
+				PT_KEYWORD, "CLEAR", (enumeration)GT_CLEAR,
+				PT_KEYWORD, "ABS", (enumeration)GT_ABS,
+				PT_KEYWORD, "REFL", (enumeration)GT_REFL,
+				PT_KEYWORD, "LOW_S", (enumeration)GT_LOW_S,
+				PT_KEYWORD, "HIGH_S", (enumeration)GT_HIGH_S,
 			PT_enumeration, "glazing_layers", PADDR(glazing_layers), PT_DESCRIPTION, "number of layers of glass in each window",
-				PT_KEYWORD, "ONE", GL_ONE,
-				PT_KEYWORD, "TWO", GL_TWO,
-				PT_KEYWORD, "THREE", GL_THREE,
-				PT_KEYWORD, "OTHER", GL_OTHER,
+				PT_KEYWORD, "ONE", (enumeration)GL_ONE,
+				PT_KEYWORD, "TWO", (enumeration)GL_TWO,
+				PT_KEYWORD, "THREE", (enumeration)GL_THREE,
+				PT_KEYWORD, "OTHER",(enumeration) GL_OTHER,
 			PT_enumeration, "motor_model", PADDR(motor_model), PT_DESCRIPTION, "indicates the level of detail used in modelling the hvac motor parameters",
-				PT_KEYWORD, "NONE", MM_NONE,
-				PT_KEYWORD, "BASIC", MM_BASIC,
-				PT_KEYWORD, "FULL", MM_FULL,
+				PT_KEYWORD, "NONE", (enumeration)MM_NONE,
+				PT_KEYWORD, "BASIC", (enumeration)MM_BASIC,
+				PT_KEYWORD, "FULL", (enumeration)MM_FULL,
 			PT_enumeration, "motor_efficiency", PADDR(motor_efficiency), PT_DESCRIPTION, "when using motor model, describes the efficiency of the motor",
-				PT_KEYWORD, "VERY_POOR", ME_VERY_POOR,
-				PT_KEYWORD, "POOR", ME_POOR,
-				PT_KEYWORD, "AVERAGE", ME_AVERAGE,
-				PT_KEYWORD, "GOOD", ME_GOOD,
-				PT_KEYWORD, "VERY_GOOD", ME_VERY_GOOD,
+				PT_KEYWORD, "VERY_POOR", (enumeration)ME_VERY_POOR,
+				PT_KEYWORD, "POOR", (enumeration)ME_POOR,
+				PT_KEYWORD, "AVERAGE", (enumeration)ME_AVERAGE,
+				PT_KEYWORD, "GOOD", (enumeration)ME_GOOD,
+				PT_KEYWORD, "VERY_GOOD", (enumeration)ME_VERY_GOOD,
 			PT_int64, "last_mode_timer", PADDR(last_mode_timer),
 			PT_double, "hvac_motor_efficiency[unit]", PADDR(hvac_motor_efficiency), PT_DESCRIPTION, "when using motor model, percent efficiency of hvac motor",
 			PT_double, "hvac_motor_loss_power_factor[unit]", PADDR(hvac_motor_loss_power_factor), PT_DESCRIPTION, "when using motor model, power factor of motor losses",
@@ -812,9 +811,9 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"adj_heating_cop",PADDR(adj_heating_cop),PT_ACCESS,PA_HIDDEN,
 
 			PT_enumeration,"thermostat_control", PADDR(thermostat_control), PT_DESCRIPTION, "determine level of internal thermostatic control",
-				PT_KEYWORD, "FULL", TC_FULL, // setpoint/deadband controls HVAC
-				PT_KEYWORD, "BAND", TC_BAND, // T<mode>{On,Off} control HVAC (setpoints/deadband are ignored)
-				PT_KEYWORD, "NONE", TC_NONE, // system_mode controls HVAC (setpoints/deadband and T<mode>{On,Off} are ignored)
+				PT_KEYWORD, "FULL", (enumeration)TC_FULL, // setpoint/deadband controls HVAC
+				PT_KEYWORD, "BAND", (enumeration)TC_BAND, // T<mode>{On,Off} control HVAC (setpoints/deadband are ignored)
+				PT_KEYWORD, "NONE", (enumeration)TC_NONE, // system_mode controls HVAC (setpoints/deadband and T<mode>{On,Off} are ignored)
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);			
 
@@ -2543,7 +2542,7 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 			if(t < thermostat_last_cycle_time + thermostat_cycle_time){
 				dt2 = (double)(thermostat_last_cycle_time + thermostat_cycle_time);
 			} else {
-				dt2 = e2solve(k1,r1,k2,r2,Teq-Tevent)*3600;
+				dt2 = e2solve(k1,r1,k2,r2,Teq-Tevent)*3600.0;
 			}
 		} else if(thermostat_off_cycle_time >= 0 && thermostat_on_cycle_time >= 0){
 			if(thermostat_last_off_cycle_time > thermostat_last_on_cycle_time){

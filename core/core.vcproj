@@ -578,6 +578,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\deltamode.c"
+				>
+			</File>
+			<File
 				RelativePath=".\enduse.c"
 				>
 			</File>

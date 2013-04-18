@@ -16,13 +16,13 @@
 class dryer : public residential_enduse
 {
 public:
-	typedef enum e_state {	DRYER_STOPPED=0,		///< motor is stopped
+	typedef enum {	DRYER_STOPPED=0,		///< motor is stopped
 			DRYER_STALLED=1,						///< motor is stalled
 			DRYER_TRIPPED=2,						///< motor is tripped
 			DRYER_MOTOR_COIL_ONLY=3,				///<only the coil and motor are operating
 			DRYER_MOTOR_ONLY=4,						///< only the motor is running (air fluff)
 			DRYER_CONTROL_ONLY=5					///< only the controls are running
-	} STATE;										///< control state
+	};										///< control state
 
 
 
@@ -95,7 +95,7 @@ public:
 
 	TIMESTAMP return_time;
 
-	STATE state;
+	enumeration state;
 
 public:
 	static CLASS *oclass, *pclass;

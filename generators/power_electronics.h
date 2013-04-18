@@ -32,15 +32,23 @@ protected:
 public:
 	/* TODO: put published variables here */
 	set phases;	/**< device phases (see PHASE codes) */
-    enum GENERATOR_MODE {CONSTANT_V=1, CONSTANT_PQ=2, CONSTANT_PF=4, SUPPLY_DRIVEN=5} gen_mode_v;  //operating mode of the generator 
-	enum GENERATOR_STATUS {OFFLINE=1, ONLINE=2} gen_status_v;
-	enum CONVERTER_TYPE{VOLTAGE_SOURCED=1, CURRENT_SOURCED=2} converter_type_v; //current sourced not implemented
-	enum SWITCH_TYPE {IDEAL_SWITCH=1, BJT=2, MOSFET=3, SCR=4, JFET=5, IBJT=6, DARLINGTON=7}switch_type_v;
-	enum FILTER_TYPE {LOW_PASS=1, HIGH_PASS=2, BAND_STOP=3, BAND_PASS=4} filter_type_v; //only band_pass implemented
-	enum FILTER_IMPLEMENTATION {IDEAL_FILTER=1, CAPACITIVE=2, INDUCTIVE=3, SERIES_RESONANT=4, PARALLEL_RESONANT=5} filter_imp_v;
+    enum GENERATOR_MODE {CONSTANT_V=1, CONSTANT_PQ=2, CONSTANT_PF=4, SUPPLY_DRIVEN=5};
+    enumeration gen_mode_v;  //operating mode of the generator 
+	enum GENERATOR_STATUS {OFFLINE=1, ONLINE=2};
+    enumeration gen_status_v;
+	enum CONVERTER_TYPE{VOLTAGE_SOURCED=1, CURRENT_SOURCED=2};
+    enumeration converter_type_v; //current sourced not implemented
+	enum SWITCH_TYPE {IDEAL_SWITCH=1, BJT=2, MOSFET=3, SCR=4, JFET=5, IBJT=6, DARLINGTON=7};
+    enumeration switch_type_v;
+	enum FILTER_TYPE {LOW_PASS=1, HIGH_PASS=2, BAND_STOP=3, BAND_PASS=4};
+    enumeration filter_type_v; //only band_pass implemented
+	enum FILTER_IMPLEMENTATION {IDEAL_FILTER=1, CAPACITIVE=2, INDUCTIVE=3, SERIES_RESONANT=4, PARALLEL_RESONANT=5};
+    enumeration filter_imp_v;
 	
-	enum FILTER_FREQUENCY{F120HZ=1, F180HZ=2, F240HZ=3} filter_freq_v;
-	enum POWER_TYPE{DC=1, AC=2} power_type_v;
+	enum FILTER_FREQUENCY{F120HZ=1, F180HZ=2, F240HZ=3};
+    enumeration filter_freq_v;
+	enum POWER_TYPE{DC=1, AC=2};
+	enumeration power_type_v;
 	
 	double set_terminal_voltage;
 	double max_current_step_size;

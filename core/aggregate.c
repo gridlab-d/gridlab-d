@@ -57,9 +57,9 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 	UNIT *from_unit = NULL, *to_unit = NULL;
 	double scale = 1.0;
 
-	if (sscanf(aggregator,"%8[A-Za-z0-9_](%256[][A-Za-z0-9_.])",aggrop,aggrval)!=2 &&
+	if (sscanf(aggregator,"%8[A-Za-z0-9_](%256[][A-Za-z0-9_.^])",aggrop,aggrval)!=2 &&
 		(flags|=AF_ABS,
-		sscanf(aggregator,"%8[A-Za-z0-9_]|%256[][A-Za-z0-9_.]|",aggrop,aggrval)!=2 
+		sscanf(aggregator,"%8[A-Za-z0-9_]|%256[][A-Za-z0-9_.^]|",aggrop,aggrval)!=2 
 		))
 	{
 		output_error("aggregate group '%s' is not valid", aggregator);
@@ -97,7 +97,7 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 	}
 	//Change ends here
 
-	if(sscanf(aggrval, "%32[A-Za-z0-9_][%[A-Za-z0-9_]]", aggrprop, aggrunit) == 2){
+	if(sscanf(aggrval, "%32[A-Za-z0-9_][%[A-Za-z0-9_^]]", aggrprop, aggrunit) == 2){
 		to_unit = unit_find(aggrunit);
 		if(to_unit == NULL){
 			output_error("aggregate group '%s' has invalid units (%s)", aggrval, aggrunit);
@@ -163,6 +163,7 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 				 */
 				errno = EINVAL;
 				free(pgm);
+				pgm = NULL;
 				return NULL;
 			}
 			else
@@ -175,6 +176,7 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 						Check that all your groups are correctly defined.
 					 */
 					free(pgm);
+					pgm = NULL;
 					errno=EINVAL;
 					return NULL;
 				}
@@ -187,7 +189,9 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 						Check that all your groups are correctly defined.
 					 */
 					free(pgm);
+					pgm = NULL;
 					free(list);
+					list = NULL;
 					errno=EINVAL;
 					return NULL;
 				}
@@ -201,7 +205,9 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 					 */
 					errno = EINVAL;
 					free(pgm);
+					pgm = NULL;
 					free(list);
+					list = NULL;
 					return NULL;
 				}
 				else if (pinfo->ptype==PT_double || pinfo->ptype==PT_random || pinfo->ptype==PT_loadshape )
@@ -215,7 +221,9 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 						 */
 						errno = EINVAL;
 						free(pgm);
+						pgm = NULL;
 						free(list);
+						list = NULL;
 						return NULL;
 					}
 					part = AP_NONE;
@@ -241,7 +249,9 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 						 */
 						errno = EINVAL;
 						free(pgm);
+						pgm = NULL;
 						free(list);
+						list = NULL;
 						return NULL;
 					}
 				}
@@ -254,7 +264,9 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 					 */
 					errno = EINVAL;
 					free(pgm);
+					pgm = NULL;
 					free(list);
+					list = NULL;
 					return NULL;
 				}
 				from_unit = pinfo->unit;
@@ -266,7 +278,9 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 					 */
 					errno = EINVAL;
 					free(pgm);
+					pgm = NULL;
 					free(list);
+					list = NULL;
 					return NULL;
 				}
 				if (from_unit != NULL && to_unit != NULL && unit_convert_ex(from_unit, to_unit, &scale) == 0){
@@ -278,7 +292,9 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 					 */
 					errno = EINVAL;
 					free(pgm);
+					pgm = NULL;
 					free(list);
+					list = NULL;
 					return NULL;
 				}
 			}
@@ -302,7 +318,9 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 		{
 			errno=ENOMEM;
 			free(pgm);
+			pgm = NULL;
 			free(list);
+			list = NULL;
 			return NULL;
 		}
 	}
@@ -362,8 +380,15 @@ double aggregate_value(AGGREGATION *aggr) /**< the aggregation to perform */
 		case PT_loadshape:
 		case PT_random:
 			pdouble = object_get_double(obj,aggr->pinfo);
-			if (pdouble!=NULL)
+			if (pdouble!=NULL){
 				value = *pdouble;
+				if(aggr->pinfo->unit != 0 && aggr->punit != 0){
+					int rv = unit_convert_ex(aggr->pinfo->unit, aggr->punit, &value);
+					if(rv == 0){ // error
+						;
+					}
+				} // else don't worry
+			}
 			break;
 		default:
 			break;
@@ -431,7 +456,7 @@ double aggregate_value(AGGREGATION *aggr) /**< the aggregation to perform */
 	case AGGR_GAMMA:
 		return 1 + numerator/(denominator-numerator*log(secondary));
 	case AGGR_STD:
-		return sqrt(numerator/(denominator-1)) * scale;
+		return sqrt(numerator/(denominator-1));// * scale;
 	case AGGR_MBE:
 		return numerator/denominator - secondary;
 	case AGGR_SKEW:
@@ -449,7 +474,7 @@ double aggregate_value(AGGREGATION *aggr) /**< the aggregation to perform */
 			Remove or replace the reference to the
 		 */
 	default:
-		return numerator/denominator * scale;
+		return numerator/denominator;// * scale;
 	}
 }
 

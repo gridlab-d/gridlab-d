@@ -712,7 +712,21 @@ int output_progress()
 {
 	char buffer[64];
 	int res = 0;
-	char *ts = convert_from_timestamp(global_clock,buffer,sizeof(buffer))>0?buffer:"(invalid)";
+	char *ts; 
+
+	/* handle delta mode highres time */
+	if ( global_simulation_mode==SM_DELTA )
+	{
+		DATETIME t;
+		unsigned int64 secs = global_deltaclock/1000000000;
+		local_datetime(global_clock+secs,&t);
+		t.microsecond = (unsigned int)(global_deltaclock-secs*1000000000)/1000;
+		strdatetime(&t,buffer,sizeof(buffer));
+		ts = buffer;
+	}
+	else
+		ts = convert_from_timestamp(global_clock,buffer,sizeof(buffer))>0?buffer:"(invalid)";
+
 	if (redirect.progress)
 	{
 		res = fprintf(redirect.progress,"%s\n",ts);

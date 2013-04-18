@@ -106,22 +106,24 @@ public:
 	
 	double Tevent;	///< Temperature we will switch the motor on or off.  Available for SmartGrid PLC code to nudge.
 
-	enum {  DM_UNKNOWN=0,						///< mode is unknown
+	typedef enum {  DM_UNKNOWN=0,						///< mode is unknown
 			DM_LOW=1,							///< low signal
 			DM_NORMAL=2,						///< normal signal
 			DM_HIGH=3,							///< high demand response signal
 			DM_CRITICAL=4,						///< critical demand response signal 
-	} dr_mode;
+	};
+	enumeration dr_mode;
 
-	enum {  
+	typedef enum {  
 			DC_TIMED=1,						///< For the timed option
 			DC_DOOR_OPENINGS=2,				///< For the door openings option
 			DC_COMPRESSOR_TIME=3,				///< For the compressor time option		
-	} defrost_criterion;
+	};
+	enumeration defrost_criterion;
 
 	double dr_mode_double; ///temporary variable for testing
 
-	REFRIGERATOR_STATE state;
+	enumeration state;
 	TIMESTAMP last_time, next_time;
 	double* ice_making_time; 
 

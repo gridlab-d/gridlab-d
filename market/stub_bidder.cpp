@@ -15,8 +15,8 @@ stub_bidder::stub_bidder(MODULE *module)
 				PT_int16, "count", PADDR(count),
 				PT_object, "market", PADDR(market),
 				PT_enumeration, "role", PADDR(role),
-					PT_KEYWORD, "BUYER", BUYER,
-					PT_KEYWORD, "SELLER", SELLER,
+					PT_KEYWORD, "BUYER", (enumeration)BUYER,
+					PT_KEYWORD, "SELLER", (enumeration)SELLER,
 				PT_double, "price", PADDR(price),
 				PT_double, "quantity", PADDR(quantity),
 				NULL)<1) 

@@ -354,7 +354,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	/* locate the module */
 	snprintf(pathname, sizeof(pathname), "%s" DLEXT, file);
 
-	if(find_file(pathname, NULL, X_OK, tpath,sizeof(tpath)) == NULL)
+	if(find_file(pathname, NULL, X_OK|R_OK, tpath,sizeof(tpath)) == NULL)
 	{
 		output_verbose("unable to locate %s in GLPATH, using library loader instead", pathname);
 		strncpy(tpath,pathname,sizeof(tpath));
@@ -385,7 +385,21 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	if (hLib==NULL)
 	{
 #if defined WIN32 && ! defined MINGW
-		output_error("%s(%d): module '%s' load failed - %s (error code %d)", __FILE__, __LINE__, file, strerror(errno), GetLastError());
+		if ( GetLastError()==193 ) /* invalid exe format -- happens when wrong version of MinGW is used */
+		{
+			output_error("module '%s' load failed - invalid DLL format",file);
+			/* TROUBLESHOOT
+			   GridLAB-D and MinGW are not compatible.  Most likely the 32-bit version of 
+			   MinGW is installed on a 64-bit machine running the 64-bit version of GridLAB-D.
+			   Try installing MinGW64 instead.
+			 */
+			errno = ENOEXEC;
+		}
+		else
+		{
+			output_error("%s(%d): module '%s' load failed - %s (error code %d)", __FILE__, __LINE__, file, strerror(errno), GetLastError());
+			errno = ENOENT;
+		}
 #else
 		output_error("%s(%d): module '%s' load failed - %s", __FILE__, __LINE__, file, dlerror());
 		output_debug("%s(%d): path to module is '%s'", __FILE__, __LINE__, tpath);
@@ -393,10 +407,13 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 		dlload_error(pathname);
 		errno = ENOENT;
 		free(mod);
+		mod = NULL;
 		return NULL;
 	}
 	else
+	{
 		output_verbose("%s(%d): module '%s' loaded ok", __FILE__, __LINE__, file);
+	}
 
 	/* get the initialization function */
 	init = (LIBINIT)DLSYM(hLib,"init");
@@ -406,10 +423,13 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 		dlload_error(pathname);
 		errno = ENOEXEC;
 		free(mod);
+		mod = NULL;
 		return NULL;
 	}
 	else
+	{
 		output_verbose("%s(%d): module '%s' exports init()", __FILE__, __LINE__, file);
+	}
 
 	/* connect the module's exported data & functions */
 	mod->hLib = (void*)hLib;
@@ -422,6 +442,11 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	mod->setvar = (int(*)(const char*,char*))DLSYM(hLib,"setvar");
 	mod->getvar = (void*(*)(const char*,char*,unsigned int))DLSYM(hLib,"getvar");
 	mod->check = (int(*)())DLSYM(hLib,"check");
+	/* deltamode */
+	mod->deltadesired = (unsigned long(*)(DELTAMODEFLAGS*))DLSYM(hLib,"deltamode_desired");
+	mod->preupdate = (unsigned long(*)(void*,int64,unsigned int64))DLSYM(hLib,"preupdate");
+	mod->interupdate = (SIMULATIONMODE(*)(void*,int64,unsigned int64,unsigned long, unsigned int))DLSYM(hLib,"interupdate");
+	mod->postupdate = (STATUS(*)(void*,int64,unsigned int64))DLSYM(hLib,"postupdate");
 	mod->cmdargs = (int(*)(int,char**))DLSYM(hLib,"cmdargs");
 	mod->kmldump = (int(*)(FILE*,OBJECT*))DLSYM(hLib,"kmldump");
 	mod->subload = (MODULE *(*)(char *, MODULE **, CLASS **, int, char **))DLSYM(hLib, "subload");
@@ -456,6 +481,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 			{&c->isa,"isa",TRUE},
 			{&c->plc,"plc",TRUE},
 			{&c->recalc,"recalc",TRUE},
+			{&c->update,"update",TRUE},
 			{&c->heartbeat,"heartbeat",TRUE},
 		};
 		int i;
@@ -866,6 +892,11 @@ int module_depends(const char *name, unsigned char major, unsigned char minor, u
 					return 1;
 	}
 	return 0;
+}
+
+MODULE *module_get_next(MODULE*module)
+{
+	return module->next;
 }
 
 void module_termall(void)

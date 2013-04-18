@@ -14,8 +14,10 @@ public:
 	static CLASS *oclass;
 	static CLASS *pclass;
 public:
-	enum {WYE_WYE=1, DELTA_DELTA, DELTA_GWYE, SINGLE_PHASE, SINGLE_PHASE_CENTER_TAPPED} connect_type;   // connect type enum: Wye-Wye, single-phase, etc.
-	enum {POLETOP=1, PADMOUNT, VAULT} install_type;
+	enum {WYE_WYE=1, DELTA_DELTA, DELTA_GWYE, SINGLE_PHASE, SINGLE_PHASE_CENTER_TAPPED};
+	enumeration connect_type;   ///< connect type enum: Wye-Wye, single-phase, etc.
+	enum {POLETOP=1, PADMOUNT, VAULT};
+	enumeration install_type; ///< Defines location of the transformer installation
 	double V_primary;     // primary voltage level in L-L value kV
 	double V_secondary;   // secondary voltage level kV
 	double kVA_rating;     // kVA rating of transformer  @todo remove when everything is implemented for separate phase ratings.
@@ -30,8 +32,10 @@ public:
 	double full_load_loss;			//  -- both are defined as unit values
 	double RX;						// the reactance to resistance ratio
 	// thermal model input
-	enum {MINERAL_OIL=1, DRY=2} coolant_type;
-	enum {OA=1, FA=2, NDFOA=3, NDFOW=4, DFOA=5, DFOW=6} cooling_type;
+	enum {MINERAL_OIL=1, DRY=2};
+	enumeration coolant_type; ///< coolant type, used in life time model
+	enum {OA=1, FA=2, NDFOA=3, NDFOW=4, DFOA=5, DFOW=6};
+	enumeration cooling_type; ///< type of coolant used in life time model
 	double core_coil_weight;		// The weight of the core and coil assembly in pounds.
 	double tank_fittings_weight;	// The weight of the tank and fittings in pounds.
 	double oil_vol;					// The number of gallons of oil in the transformer.

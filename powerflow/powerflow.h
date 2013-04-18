@@ -50,11 +50,12 @@ GLOBAL unsigned int NR_bus_count INIT(0);			/**< Newton-Raphson bus count - used
 GLOBAL unsigned int NR_branch_count INIT(0);		/**< Newton-Raphson branch count - used for determining size of branch vector */
 GLOBAL BUSDATA *NR_busdata INIT(NULL);				/**< Newton-Raphson bus data pointer array */
 GLOBAL BRANCHDATA *NR_branchdata INIT(NULL);		/**< Newton-Raphson branch data pointer array */
-GLOBAL double *deltaI_NR INIT(NULL);				/**< Newton-Raphson current differences pointer array */
+GLOBAL NR_SOLVER_STRUCT NR_powerflow;				/**< Newton-Raphson solver working variables - "steady-state" powerflow version */
 GLOBAL int NR_curr_bus INIT(-1);					/**< Newton-Raphson current bus indicator - used to populate NR_busdata */
 GLOBAL int NR_curr_branch INIT(-1);					/**< Newton-Raphson current branch indicator - used to populate NR_branchdata */
 GLOBAL int64 NR_iteration_limit INIT(500);			/**< Newton-Raphson iteration limit (per GridLAB-D iteration) */
 GLOBAL bool NR_cycle INIT(true);					/**< Newton-Raphson pass indicator - false = solution pass, true = metering/accumulation pass */
+GLOBAL bool NR_dyn_first_run INIT(true);			/**< Newton-Raphson first run indicator - used by deltamode functionality for initialization powerflow */
 GLOBAL bool NR_admit_change INIT(true);				/**< Newton-Raphson admittance matrix change detector - used to prevent complete recalculation of admittance at every timestep */
 GLOBAL int NR_superLU_procs INIT(1);				/**< Newton-Raphson related - superLU MT processor count to request - separate from thread_count */
 GLOBAL TIMESTAMP NR_retval INIT(TS_NEVER);			/**< Newton-Raphson current return value - if t0 objects know we aren't going anywhere */
@@ -76,6 +77,21 @@ GLOBAL double default_maximum_voltage_error INIT(1e-6);	/**< default sync voltag
 GLOBAL double default_maximum_power_error INIT(0.0001);	/**< default power convergence limit for multirun */
 GLOBAL OBJECT *restoration_object INIT(NULL);		/**< restoration object of the system */
 GLOBAL OBJECT *fault_check_object INIT(NULL);		/**< fault_check object of the system */
+
+GLOBAL bool enable_subsecond_models INIT(false);		/* normally not operating in delta mode */
+GLOBAL unsigned long deltamode_timestep INIT(10000000); /* 10 ms timestep, at first */
+GLOBAL OBJECT **delta_objects INIT(NULL);				/* Array pointer objects that need deltamode interupdate calls */
+GLOBAL FUNCTIONADDR *delta_functions INIT(NULL);	/* Array pointer functions for objects that need deltamode interupdate calls */
+GLOBAL FUNCTIONADDR *delta_freq_functions INIT(NULL);	/* Array pointer functions for objects that have "frequency" updates at end of deltamode */
+GLOBAL int pwr_object_count INIT(0);				/* deltamode object count */
+GLOBAL int pwr_object_current INIT(-1);				/* Index of current deltamode object */
+GLOBAL TIMESTAMP deltamode_starttime INIT(TS_NEVER);	/* Tracking variable for next desired instance of deltamode */
+GLOBAL double current_frequency INIT(60.0);			/**< Current operating frequency of the system - used by deltamode stuff */
+GLOBAL int64 deltamode_extra_function INIT(0);		/**< Kludge pointer to module-level function, so generators can call it */
+
+// Deltamode stuff
+void schedule_deltamode_start(TIMESTAMP tstart);	/* Anticipated time for a deltamode start, even if it is now */
+int delta_extra_function(unsigned int mode);
 
 /* used by many powerflow enums */
 #define UNKNOWN 0

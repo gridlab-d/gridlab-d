@@ -41,7 +41,7 @@ public:
 		CON_NORMAL=0,
 		CON_DISABLED=1,
 	} AVGCONTROL;
-	AVGCONTROL control_mode;
+	enumeration control_mode;
 	int retry;
 public:
 	TIMESTAMP nextclear() const;

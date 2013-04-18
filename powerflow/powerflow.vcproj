@@ -568,6 +568,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\load_tracker.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\main.cpp"
 				>
 			</File>
@@ -755,6 +759,10 @@
 			</File>
 			<File
 				RelativePath=".\load.h"
+				>
+			</File>
+			<File
+				RelativePath=".\load_tracker.h"
 				>
 			</File>
 			<File

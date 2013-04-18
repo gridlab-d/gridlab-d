@@ -26,7 +26,8 @@ private:
 protected:
 	/* TODO: put unpublished but inherited variables */
 public:
-	enum RECTIFIER_TYPE {ONE_PULSE=0, TWO_PULSE=1, THREE_PULSE=2, SIX_PULSE=3, TWELVE_PULSE=4}rectifier_type_v;
+	enum RECTIFIER_TYPE {ONE_PULSE=0, TWO_PULSE=1, THREE_PULSE=2, SIX_PULSE=3, TWELVE_PULSE=4};
+	enumeration rectifier_type_v;
 	//RECTIFIER_TYPE rectifier_type_choice;
 	//complex V_In; // V_in (DC)
 	//complex I_In; // I_in (DC)

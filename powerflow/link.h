@@ -79,10 +79,10 @@ public:
 	complex If_out[3];		///< fault current flowing out
 	complex power_in;		///< power flow in (w.r.t from node)
 	complex power_out;		///< power flow out (w.r.t to node)
-	complex power_loss;		///< power loss in transformer
+	complex power_loss;		///< power losses 
 	complex indiv_power_in[3];	///< power flow in (w.r.t. from node) - individual quantities
 	complex indiv_power_out[3];	///< power flow out (w.r.t. to node) - individual quantities
-	complex indiv_power_loss[3];///< power losses in the transformer - individual quantities
+	complex indiv_power_loss[3];///< power losses - individual quantities
 	int protect_locations[3];	///< Links to protection object for different phase faults - part of reliability
 
 	int create(void);
@@ -118,7 +118,7 @@ public:
 	bool is_frequency_nominal();
 	bool is_voltage_nominal();
 
-	int kmldump(FILE *fp);
+	int kmldump(int (*stream)(const char*,...));
 	//Current injection calculation function - so it can be called remotely
 	int CurrentCalculation(int nodecall);
 

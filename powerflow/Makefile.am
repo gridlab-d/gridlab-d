@@ -14,6 +14,7 @@ powerflow_la_SOURCES =                                              \
 	line_spacing.cpp               line_spacing.h               \
 	link.cpp                       link.h                       \
 	load.cpp                       load.h                       \
+	load_tracker.cpp               load_tracker.h               \
 	main.cpp                                                    \
 	meter.cpp                      meter.h                      \
 	meter_test.h                                                \

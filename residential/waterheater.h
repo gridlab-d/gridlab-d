@@ -47,8 +47,8 @@ public:
 	// Basic characteristics defined at creation...
 	double Tset_curtail;			///< lower limit before we cancel curtailment [F]
 	double Tinlet;					///< default will be set to 60 degF
-	WHLOCATION location;			///< location of tank (inside or garage) [enum]
-	HEATMODE heat_mode;				///< method of heating the water (gas or electric) [enum]
+	enumeration location;			///< location of tank (inside or garage) [enum]
+	enumeration heat_mode;				///< method of heating the water (gas or electric) [enum]
 
 	// Characteristics calculated from basics at creation...
 	double area;					///< tank cross-sectional area [ft^2]
@@ -82,6 +82,9 @@ public:
 	double *pTair;
 	double *pTout;
 
+	double gas_fan_power;		///< fan power draw when a gas waterheater is burning fuel
+	double gas_standby_power;	///< standby power draw when a gas waterheater is NOT burning fuel
+
 	double actual_load;
 	double prev_load;
 	complex waterheater_actual_power;	///< the actual power draw of the object after accounting for voltage
@@ -104,12 +107,12 @@ public:
 
 
 public:
-	WHMODEL current_model;				///< Discerns which water heater model we need to use
-	WHQFLOW load_state;					///< Are we filling or draining the tank [enum]
+	enumeration current_model;				///< Discerns which water heater model we need to use
+	enumeration load_state;					///< Are we filling or draining the tank [enum]
 
-	WHQSTATE tank_state(void);				// Are we full, partial, or empty?
+	enumeration tank_state(void);				// Are we full, partial, or empty?
 	void set_time_to_transition(void);					//< Sets timeToTransition...
-	WHQFLOW set_current_model_and_load_state(void);	// set the model and state for each cycle
+	enumeration set_current_model_and_load_state(void);	// set the model and state for each cycle
 	void update_T_and_or_h(double);						// Reset Tw and or h...
 
 	double dhdt(double h);								// Calculates dh/dt...
@@ -119,7 +122,7 @@ public:
 	double new_time_2zone(double h0, double h1);		// Calcs time to transition...
 	double new_h_2zone(double h0, double delta_t);      // Calcs h after transition...
 
-	double get_Tambient(WHLOCATION water_heater_location);		// ambient T [F] -- either an indoor house temperature or a garage temperature, probably...
+	double get_Tambient(enumeration water_heater_location);		// ambient T [F] -- either an indoor house temperature or a garage temperature, probably...
 	typedef enum {MODEL_NOT_1ZONE=0, MODEL_NOT_2ZONE=1} WRONGMODEL;
 	void wrong_model(WRONGMODEL msg);
 };

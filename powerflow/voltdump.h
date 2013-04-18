@@ -19,7 +19,7 @@ public:
 	char32 group;
 	char256 filename;
 	int32 runcount;
-	VDMODE mode;
+	enumeration mode;		///< dumps the voltages in either polar or rectangular notation
 public:
 	static CLASS *oclass;
 public:

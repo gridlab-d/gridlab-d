@@ -116,37 +116,37 @@ link_object::link_object(MODULE *mod) : powerflow_object(mod)
 		
 		if(gl_publish_variable(oclass,
 			PT_INHERIT, "powerflow_object",
-			PT_enumeration, "status", PADDR(status),
-				PT_KEYWORD, "CLOSED", LS_CLOSED,
-				PT_KEYWORD, "OPEN", LS_OPEN,
-			PT_object, "from",PADDR(from),
-			PT_object, "to", PADDR(to),
-			PT_complex, "power_in[VA]", PADDR(power_in),
-			PT_complex, "power_out[VA]", PADDR(power_out),
-			PT_double, "power_out_real[W]", PADDR(power_out.Re()),
-			PT_complex, "power_losses[VA]", PADDR(power_loss),
-			PT_complex, "power_in_A[VA]", PADDR(indiv_power_in[0]),
-			PT_complex, "power_in_B[VA]", PADDR(indiv_power_in[1]),
-			PT_complex, "power_in_C[VA]", PADDR(indiv_power_in[2]),
-			PT_complex, "power_out_A[VA]", PADDR(indiv_power_out[0]),
-			PT_complex, "power_out_B[VA]", PADDR(indiv_power_out[1]),
-			PT_complex, "power_out_C[VA]", PADDR(indiv_power_out[2]),
-			PT_complex, "power_losses_A[VA]", PADDR(indiv_power_loss[0]),
-			PT_complex, "power_losses_B[VA]", PADDR(indiv_power_loss[1]),
-			PT_complex, "power_losses_C[VA]", PADDR(indiv_power_loss[2]),
-			PT_complex, "current_out_A[A]", PADDR(read_I_out[0]),
-			PT_complex, "current_out_B[A]", PADDR(read_I_out[1]),
-			PT_complex, "current_out_C[A]", PADDR(read_I_out[2]),
-			PT_complex, "current_in_A[A]", PADDR(read_I_in[0]),
-			PT_complex, "current_in_B[A]", PADDR(read_I_in[1]),
-			PT_complex, "current_in_C[A]", PADDR(read_I_in[2]),
-			PT_complex, "fault_current_in_A[A]", PADDR(If_in[0]),
-			PT_complex, "fault_current_in_B[A]", PADDR(If_in[1]),
-			PT_complex, "fault_current_in_C[A]", PADDR(If_in[2]),
-			PT_complex, "fault_current_out_A[A]", PADDR(If_out[0]),
-			PT_complex, "fault_current_out_B[A]", PADDR(If_out[1]),
-			PT_complex, "fault_current_out_C[A]", PADDR(If_out[2]),
-			PT_set, "flow_direction", PADDR(flow_direction),
+			PT_enumeration, "status", PADDR(status),PT_DESCRIPTION,"",
+				PT_KEYWORD, "CLOSED", (enumeration)LS_CLOSED,
+				PT_KEYWORD, "OPEN", (enumeration)LS_OPEN,
+			PT_object, "from",PADDR(from),PT_DESCRIPTION,"from_node - source node",
+			PT_object, "to", PADDR(to),PT_DESCRIPTION,"to_node - load node",
+			PT_complex, "power_in[VA]", PADDR(power_in),PT_DESCRIPTION,"power flow in (w.r.t from node)",
+			PT_complex, "power_out[VA]", PADDR(power_out),PT_DESCRIPTION,"power flow out (w.r.t to node)",
+			PT_double, "power_out_real[W]", PADDR(power_out.Re()),PT_DESCRIPTION,"power flow out (w.r.t to node), real",
+			PT_complex, "power_losses[VA]", PADDR(power_loss),PT_DESCRIPTION,"power losses",
+			PT_complex, "power_in_A[VA]", PADDR(indiv_power_in[0]),PT_DESCRIPTION,"power flow in (w.r.t from node), phase A",
+			PT_complex, "power_in_B[VA]", PADDR(indiv_power_in[1]),PT_DESCRIPTION,"power flow in (w.r.t from node), phase B",
+			PT_complex, "power_in_C[VA]", PADDR(indiv_power_in[2]),PT_DESCRIPTION,"power flow in (w.r.t from node), phase C",
+			PT_complex, "power_out_A[VA]", PADDR(indiv_power_out[0]),PT_DESCRIPTION,"power flow out (w.r.t to node), phase A",
+			PT_complex, "power_out_B[VA]", PADDR(indiv_power_out[1]),PT_DESCRIPTION,"power flow out (w.r.t to node), phase B",
+			PT_complex, "power_out_C[VA]", PADDR(indiv_power_out[2]),PT_DESCRIPTION,"power flow out (w.r.t to node), phase C",
+			PT_complex, "power_losses_A[VA]", PADDR(indiv_power_loss[0]),PT_DESCRIPTION,"power losses, phase A",
+			PT_complex, "power_losses_B[VA]", PADDR(indiv_power_loss[1]),PT_DESCRIPTION,"power losses, phase B",
+			PT_complex, "power_losses_C[VA]", PADDR(indiv_power_loss[2]),PT_DESCRIPTION,"power losses, phase C",
+			PT_complex, "current_out_A[A]", PADDR(read_I_out[0]),PT_DESCRIPTION,"current flow out of link (w.r.t. to node), phase A",
+			PT_complex, "current_out_B[A]", PADDR(read_I_out[1]),PT_DESCRIPTION,"current flow out of link (w.r.t. to node), phase B",
+			PT_complex, "current_out_C[A]", PADDR(read_I_out[2]),PT_DESCRIPTION,"current flow out of link (w.r.t. to node), phase C",
+			PT_complex, "current_in_A[A]", PADDR(read_I_in[0]),PT_DESCRIPTION,"current flow to link (w.r.t from node), phase A",
+			PT_complex, "current_in_B[A]", PADDR(read_I_in[1]),PT_DESCRIPTION,"current flow to link (w.r.t from node), phase B",
+			PT_complex, "current_in_C[A]", PADDR(read_I_in[2]),PT_DESCRIPTION,"current flow to link (w.r.t from node), phase C",
+			PT_complex, "fault_current_in_A[A]", PADDR(If_in[0]),PT_DESCRIPTION,"fault current flowing in, phase A",
+			PT_complex, "fault_current_in_B[A]", PADDR(If_in[1]),PT_DESCRIPTION,"fault current flowing in, phase B",
+			PT_complex, "fault_current_in_C[A]", PADDR(If_in[2]),PT_DESCRIPTION,"fault current flowing in, phase C",
+			PT_complex, "fault_current_out_A[A]", PADDR(If_out[0]),PT_DESCRIPTION,"fault current flowing out, phase A",
+			PT_complex, "fault_current_out_B[A]", PADDR(If_out[1]),PT_DESCRIPTION,"fault current flowing out, phase B",
+			PT_complex, "fault_current_out_C[A]", PADDR(If_out[2]),PT_DESCRIPTION,"fault current flowing out, phase C",
+			PT_set, "flow_direction", PADDR(flow_direction),PT_DESCRIPTION,"flag used for describing direction of the flow of power",
 				PT_KEYWORD, "UNKNOWN", (set)FD_UNKNOWN,
 				PT_KEYWORD, "AF", (set)FD_A_NORMAL,
 				PT_KEYWORD, "AR", (set)FD_A_REVERSE,
@@ -1389,6 +1389,20 @@ TIMESTAMP link_object::postsync(TIMESTAMP t0)
 		}
 #else
 		}
+		/* Zeroing code - TODO: Figure out how to make this work properly
+		else //Assumes open here
+		{
+			//Zero all output voltages - radial assumption
+			LOCKED(to,t->voltage[0] = 0.0);
+			LOCKED(to,t->voltage[1] = 0.0);
+			LOCKED(to,t->voltage[2] = 0.0);
+
+			//Zero output current too, since t->current_inj isn't valid to us no matter what
+			read_I_out[0] = 0.0;
+			read_I_out[1] = 0.0;
+			read_I_out[2] = 0.0;
+		}
+		*/
 #endif
 
 	}//End FBS
@@ -1511,20 +1525,20 @@ TIMESTAMP link_object::postsync(TIMESTAMP t0)
 	return TRET;
 }
 
-int link_object::kmldump(FILE *fp)
+int link_object::kmldump(int (*stream)(const char*,...))
 {
 	OBJECT *obj = OBJECTHDR(this);
 	if (isnan(from->latitude) || isnan(to->latitude) || isnan(from->longitude) || isnan(to->longitude))
 		return 0;
-	fprintf(fp,"    <Placemark>\n");
+	stream("    <Placemark>\n");
 	if (obj->name)
-		fprintf(fp,"      <name>%s</name>\n", obj->name);
+		stream("      <name>%s</name>\n", obj->name);
 	else
-		fprintf(fp,"      <name>%s ==> %s</name>\n", from->name?from->name:"unnamed", to->name?to->name:"unnamed");
-	fprintf(fp,"      <description>\n");
-	fprintf(fp,"        <![CDATA[\n");
-	fprintf(fp,"          <TABLE><TR>\n");
-	fprintf(fp,"<TR><TD WIDTH=\"25%\">%s&nbsp;%d<HR></TD><TH WIDTH=\"25%\" ALIGN=CENTER>Phase A<HR></TH><TH WIDTH=\"25%\" ALIGN=CENTER>Phase B<HR></TH><TH WIDTH=\"25%\" ALIGN=CENTER>Phase C<HR></TH></TR>\n", obj->oclass->name, obj->id);
+		stream("      <name>%s ==> %s</name>\n", from->name?from->name:"unnamed", to->name?to->name:"unnamed");
+	stream("      <description>\n");
+	stream("        <![CDATA[\n");
+	stream("          <TABLE><TR>\n");
+	stream("<TR><TD WIDTH=\"25%\">%s&nbsp;%d<HR></TD><TH WIDTH=\"25%\" ALIGN=CENTER>Phase A<HR></TH><TH WIDTH=\"25%\" ALIGN=CENTER>Phase B<HR></TH><TH WIDTH=\"25%\" ALIGN=CENTER>Phase C<HR></TH></TR>\n", obj->oclass->name, obj->id);
 
 	// values
 	node *pFrom = OBJECTDATA(from,node);
@@ -1559,54 +1573,54 @@ int link_object::kmldump(FILE *fp)
 	}
 
 	// flow
-	fprintf(fp,"<TR><TH ALIGN=LEFT>Flow</TH>");
+	stream("<TR><TH ALIGN=LEFT>Flow</TH>");
 	for (i=0; i<3; i++)
 	{
 		if (phase[i])
-			fprintf(fp,"<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">%.3f&nbsp;&nbsp;kW&nbsp;&nbsp;<BR>%.3f&nbsp;&nbsp;kVAR</TD>\n",
+			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">%.3f&nbsp;&nbsp;kW&nbsp;&nbsp;<BR>%.3f&nbsp;&nbsp;kVAR</TD>\n",
 				flow[i].Re(), flow[i].Im());
 		else
-			fprintf(fp,"<TD></TD>\n");
+			stream("<TD></TD>\n");
 	}
-	fprintf(fp,"</TR>");
+	stream("</TR>");
 
 	// current
-	fprintf(fp,"<TR><TH ALIGN=LEFT>Current</TH>");
+	stream("<TR><TH ALIGN=LEFT>Current</TH>");
 	for (i=0; i<3; i++)
 	{
 		if (phase[i])
-			fprintf(fp,"<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">%.3f&nbsp;&nbsp;Amps</TD>\n",
+			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">%.3f&nbsp;&nbsp;Amps</TD>\n",
 				current[i].Mag());
 		else
-			fprintf(fp,"<TD></TD>\n");
+			stream("<TD></TD>\n");
 	}
-	fprintf(fp,"</TR>");
+	stream("</TR>");
 
 	// loss
-	fprintf(fp,"<TR><TH ALIGN=LEFT>Loss</TH>");
+	stream("<TR><TH ALIGN=LEFT>Loss</TH>");
 	for (i=0; i<3; i++)
 	{
 		if (phase[i])
-			fprintf(fp,"<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">%.2f&nbsp;&nbsp;&nbsp;%%P&nbsp;&nbsp;<BR>%.2f&nbsp;&nbsp;&nbsp;%%Q&nbsp;&nbsp;</TD>\n",
+			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">%.2f&nbsp;&nbsp;&nbsp;%%P&nbsp;&nbsp;<BR>%.2f&nbsp;&nbsp;&nbsp;%%Q&nbsp;&nbsp;</TD>\n",
 				loss[i].Re()/flow[i].Re()*100,loss[i].Im()/flow[i].Im()*100);
 		else
-			fprintf(fp,"<TD></TD>\n");
+			stream("<TD></TD>\n");
 	}
-	fprintf(fp,"</TR>");
-	fprintf(fp,"</TABLE>\n");
-	fprintf(fp,"        ]]>\n");
-	fprintf(fp,"      </description>\n");
-	fprintf(fp,"      <styleUrl>#%s</styleUrl>>\n",obj->oclass->name);
-	fprintf(fp,"      <coordinates>%f,%f</coordinates>\n",
+	stream("</TR>");
+	stream("</TABLE>\n");
+	stream("        ]]>\n");
+	stream("      </description>\n");
+	stream("      <styleUrl>#%s</styleUrl>>\n",obj->oclass->name);
+	stream("      <coordinates>%f,%f</coordinates>\n",
 		(from->longitude+to->longitude)/2,(from->latitude+to->latitude)/2);
-	fprintf(fp,"      <LineString>\n");			
-	fprintf(fp,"        <extrude>0</extrude>\n");
-	fprintf(fp,"        <tessellate>0</tessellate>\n");
-	fprintf(fp,"        <altitudeMode>relative</altitudeMode>\n");
-	fprintf(fp,"        <coordinates>%f,%f,50 %f,%f,50</coordinates>\n",
+	stream("      <LineString>\n");			
+	stream("        <extrude>0</extrude>\n");
+	stream("        <tessellate>0</tessellate>\n");
+	stream("        <altitudeMode>relative</altitudeMode>\n");
+	stream("        <coordinates>%f,%f,50 %f,%f,50</coordinates>\n",
 		from->longitude,from->latitude,to->longitude,to->latitude);
-	fprintf(fp,"      </LineString>\n");			
-	fprintf(fp,"    </Placemark>\n");
+	stream("      </LineString>\n");			
+	stream("    </Placemark>\n");
 	return 0;
 }
 

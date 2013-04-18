@@ -40,8 +40,8 @@ billdump::billdump(MODULE *mod)
 			PT_char256,"filename",PADDR(filename),PT_DESCRIPTION,"the file to dump the voltage data into",
 			PT_int32,"runcount",PADDR(runcount),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the number of times the file has been written to",
 			PT_enumeration,"meter_type",PADDR(meter_type), PT_DESCRIPTION, "describes whether to collect from 3-phase or S-phase meters",
-				PT_KEYWORD,"TRIPLEX_METER",METER_TP,
-				PT_KEYWORD,"METER",METER_3P,
+				PT_KEYWORD,"TRIPLEX_METER",(enumeration)METER_TP,
+				PT_KEYWORD,"METER",(enumeration)METER_3P,
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		
 	}

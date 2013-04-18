@@ -91,6 +91,7 @@ void delete_exception_handler(EXCEPTIONHANDLER *ptr) /**< a pointer to the excep
 		ptr = handlers;
 		handlers=ptr->next;
 		free(ptr);
+		ptr = NULL;
 		/* if(handlers == NULL) break; */
 	}
 }

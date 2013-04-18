@@ -44,19 +44,19 @@ energy_storage::energy_storage(MODULE *module)
 
 		if (gl_publish_variable(oclass,
 			PT_enumeration,"generator_mode",PADDR(gen_mode_v),
-				PT_KEYWORD,"UNKNOWN",UNKNOWN,
-				PT_KEYWORD,"CONSTANT_V",CONSTANT_V,
-				PT_KEYWORD,"CONSTANT_PQ",CONSTANT_PQ,
-				PT_KEYWORD,"CONSTANT_PF",CONSTANT_PF,
-				PT_KEYWORD,"SUPPLY_DRIVEN",SUPPLY_DRIVEN, //PV must operate in this mode
+				PT_KEYWORD,"UNKNOWN",(enumeration)UNKNOWN,
+				PT_KEYWORD,"CONSTANT_V",(enumeration)CONSTANT_V,
+				PT_KEYWORD,"CONSTANT_PQ",(enumeration)CONSTANT_PQ,
+				PT_KEYWORD,"CONSTANT_PF",(enumeration)CONSTANT_PF,
+				PT_KEYWORD,"SUPPLY_DRIVEN",(enumeration)SUPPLY_DRIVEN, //PV must operate in this mode
 
 			PT_enumeration,"generator_status",PADDR(gen_status_v),
-				PT_KEYWORD,"OFFLINE",OFFLINE,
-				PT_KEYWORD,"ONLINE",ONLINE,	
+				PT_KEYWORD,"OFFLINE",(enumeration)OFFLINE,
+				PT_KEYWORD,"ONLINE",(enumeration)ONLINE,	
 
 			PT_enumeration,"power_type",PADDR(power_type_v),
-				PT_KEYWORD,"AC",AC,
-				PT_KEYWORD,"DC",DC,
+				PT_KEYWORD,"AC",(enumeration)AC,
+				PT_KEYWORD,"DC",(enumeration)DC,
 
 
 			PT_double, "Rinternal", PADDR(Rinternal),

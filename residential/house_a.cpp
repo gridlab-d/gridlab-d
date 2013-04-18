@@ -185,12 +185,12 @@ house::house(MODULE *mod) : residential_enduse(mod)
 			PT_double,"outdoor_temperature[degF]",PADDR(outside_temp), PT_DESCRIPTION, "",
 			PT_double,"house_thermal_mass[Btu/degF]",PADDR(house_content_thermal_mass), PT_DESCRIPTION, "thermal mass of the house's contained mass",
 			PT_enumeration,"heat_mode",PADDR(heat_mode), PT_DESCRIPTION, "",
-				PT_KEYWORD,"ELECTRIC",ELECTRIC,
-				PT_KEYWORD,"GASHEAT",GASHEAT,
+				PT_KEYWORD,"ELECTRIC",(enumeration)ELECTRIC,
+				PT_KEYWORD,"GASHEAT",(enumeration)GASHEAT,
 			PT_enumeration,"hc_mode",PADDR(heat_cool_mode), PT_DESCRIPTION, "",
-				PT_KEYWORD,"OFF",OFF,
-				PT_KEYWORD,"HEAT",HEAT,
-				PT_KEYWORD,"COOL",COOL,
+				PT_KEYWORD,"OFF",(enumeration)OFF,
+				PT_KEYWORD,"HEAT",(enumeration)HEAT,
+				PT_KEYWORD,"COOL",(enumeration)COOL,
 			PT_enduse,"houseload",PADDR(tload), PT_DESCRIPTION, "",
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);

@@ -130,6 +130,7 @@ TIMESTAMP enduse_sync(enduse *e, PASSCONFIG pass, TIMESTAMP t1)
 			double dt = (double)(t1-e->t_last)/(double)3600;
 			e->energy.r += e->total.r * dt;
 			e->energy.i += e->total.i * dt;
+			e->cumulative_heatgain += e->heatgain * dt;
 			if(dt > 0.0)
 				e->heatgain = 0; /* heat is a dt thing, so dt=0 -> Q*dt = 0 */
 		}
@@ -430,6 +431,7 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 		{PT_complex, "power[kVA]", (char *)PADDR(total), "the total power consumption of the load"},
 		{PT_complex, "peak_demand[kVA]", (char *)PADDR(demand), "the peak power consumption since the last meter reading"},
 		{PT_double, "heatgain[Btu/h]", (char *)PADDR(heatgain), "the heat transferred from the enduse to the parent"},
+		{PT_double, "cumulative_heatgain[Btu]", (char *)PADDR(cumulative_heatgain), "the cumulative heatgain from the enduse to the parent"},
 		{PT_double, "heatgain_fraction[pu]", (char *)PADDR(heatgain_fraction), "the fraction of the heat that goes to the parent"},
 		{PT_double, "current_fraction[pu]", (char *)PADDR(current_fraction),"the fraction of total power that is constant current"},
 		{PT_double, "impedance_fraction[pu]", (char *)PADDR(impedance_fraction), "the fraction of total power that is constant impedance"},

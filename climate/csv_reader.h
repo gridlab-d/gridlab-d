@@ -65,7 +65,7 @@ public:
 		CR_OPEN,
 		CR_ERROR,
 	} CSVSTATUS;
-	CSVSTATUS status;
+	enumeration status;
 
 	int open(const char *file);
 	TIMESTAMP get_data(TIMESTAMP t0, double *temp, double *humid, double *direct, double *diffuse, double *global, double *wind, double *rain, double *snow, double *pressure);

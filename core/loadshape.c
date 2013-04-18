@@ -567,6 +567,10 @@ int loadshape_init(loadshape *ls) /**< load shape */
 			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) analog power must be a positive number",ls->schedule->name);
 			return 1;
 		}
+		if(ls->params.analog.power > 0.0 && ls->params.analog.energy > 0.0){
+			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) analog schedules cannot set both power and energy",ls->schedule->name);
+			return 1;
+		}
 		break;
 	case MT_PULSED:
 		if (ls->params.pulsed.energy<=0)
@@ -791,6 +795,11 @@ TIMESTAMP loadshape_sync(loadshape *ls, TIMESTAMP t1)
 
 			/* time to next event */
 			ls->t2 = ls->r!=0 ? t1 + (TIMESTAMP)(( ls->d[ls->s] - ls->q) / ls->r * 3600) : TS_NEVER;
+			/* This was to address a reported bug - every once in awhile, when ls->q was very
+			   near 1.0 but slighly less, it would lead to t2=t1 and fail simulation; this is a
+			   litte bump to get it out of the rut and try one more time before failing out */
+			if (ls->t2 == t1)
+				ls->t2 = t1+(TIMESTAMP)1;
 #ifdef _DEBUG
 			{
 				char buf[64];

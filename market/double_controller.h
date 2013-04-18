@@ -30,7 +30,7 @@ public:
 		ST_HOUSE=1,
 		//ST_OFFICE=2,
 	} SETUPMODE;
-	SETUPMODE setup_mode;
+	enumeration setup_mode;
 
 	typedef enum{
 		TM_INVALID=0,
@@ -38,20 +38,20 @@ public:
 		TM_HEAT=2,
 		TM_COOL=3,
 	} THERMOSTATMODE;
-	THERMOSTATMODE thermostat_mode, last_mode;
+	enumeration thermostat_mode, last_mode;
 
 	typedef enum{
 		RM_NONE=0,
 		RM_DEADBAND=1,
 		RM_STICKY=2,
 	} RESOLVEMODE;
-	RESOLVEMODE resolve_mode;
+	enumeration resolve_mode;
 
 	typedef enum{
 		BM_OFF=0,
 		BM_ON=1,
 	} BIDMODE;
-	BIDMODE bid_mode;
+	enumeration bid_mode;
 
 	int64 last_mode_timer;
 	double cool_ramp_low,	heat_ramp_low;

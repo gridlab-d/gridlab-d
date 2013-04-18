@@ -40,54 +40,54 @@ capacitor::capacitor(MODULE *mod):node(mod)
 
 		if(gl_publish_variable(oclass,
 			PT_INHERIT, "node",
-			PT_set, "pt_phase", PADDR(pt_phase),
+			PT_set, "pt_phase", PADDR(pt_phase),PT_DESCRIPTION,"Phase(s) that the PT is on, used as measurement points for control",
 				PT_KEYWORD, "A",(set)PHASE_A,
 				PT_KEYWORD, "B",(set)PHASE_B,
 				PT_KEYWORD, "C",(set)PHASE_C,
 				PT_KEYWORD, "D",(set)PHASE_D,
 				PT_KEYWORD, "N",(set)PHASE_N,
-			PT_set, "phases_connected", PADDR(phases_connected),
+			PT_set, "phases_connected", PADDR(phases_connected),PT_DESCRIPTION,"phases capacitors connected to",
 				PT_KEYWORD, "A",(set)PHASE_A,
 				PT_KEYWORD, "B",(set)PHASE_B,
 				PT_KEYWORD, "C",(set)PHASE_C,
 				PT_KEYWORD, "D",(set)PHASE_D,
 				PT_KEYWORD, "N",(set)PHASE_N,
-			PT_enumeration, "switchA", PADDR(switchA_state),
-				PT_KEYWORD, "OPEN", OPEN,
-				PT_KEYWORD, "CLOSED", CLOSED,
-				PT_enumeration, "switchB", PADDR(switchB_state),
-				PT_KEYWORD, "OPEN", OPEN,
-				PT_KEYWORD, "CLOSED", CLOSED,
-				PT_enumeration, "switchC", PADDR(switchC_state),
-				PT_KEYWORD, "OPEN", OPEN,
-				PT_KEYWORD, "CLOSED", CLOSED,
-			PT_enumeration, "control", PADDR(control),
-				PT_KEYWORD, "MANUAL", MANUAL,
-				PT_KEYWORD, "VAR", VAR,
-				PT_KEYWORD, "VOLT", VOLT,
-				PT_KEYWORD, "VARVOLT", VARVOLT,
-				PT_KEYWORD, "CURRENT", CURRENT,
+			PT_enumeration, "switchA", PADDR(switchA_state),PT_DESCRIPTION,"capacitor A switch open or close",
+				PT_KEYWORD, "OPEN", (enumeration)OPEN,
+				PT_KEYWORD, "CLOSED", (enumeration)CLOSED,
+				PT_enumeration, "switchB", PADDR(switchB_state),PT_DESCRIPTION,"capacitor B switch open or close",
+				PT_KEYWORD, "OPEN", (enumeration)OPEN,
+				PT_KEYWORD, "CLOSED", (enumeration)CLOSED,
+				PT_enumeration, "switchC", PADDR(switchC_state),PT_DESCRIPTION,"capacitor C switch open or close",
+				PT_KEYWORD, "OPEN", (enumeration)OPEN,
+				PT_KEYWORD, "CLOSED", (enumeration)CLOSED,
+			PT_enumeration, "control", PADDR(control),PT_DESCRIPTION,"control operation strategy",
+				PT_KEYWORD, "MANUAL", (enumeration)MANUAL,
+				PT_KEYWORD, "VAR", (enumeration)VAR,
+				PT_KEYWORD, "VOLT", (enumeration)VOLT,
+				PT_KEYWORD, "VARVOLT", (enumeration)VARVOLT,
+				PT_KEYWORD, "CURRENT", (enumeration)CURRENT,
 			PT_double, "cap_A_switch_count", PADDR(cap_switchA_count),PT_DESCRIPTION,"number of switch operations on Phase A",
 			PT_double, "cap_B_switch_count", PADDR(cap_switchB_count),PT_DESCRIPTION,"number of switch operations on Phase B",
 			PT_double, "cap_C_switch_count", PADDR(cap_switchC_count),PT_DESCRIPTION,"number of switch operations on Phase C",
-			PT_double, "voltage_set_high[V]", PADDR(voltage_set_high), // Turn off if voltage is above this set point
-			PT_double, "voltage_set_low[V]", PADDR(voltage_set_low), // Turns on if voltage is below this set point
-			PT_double, "VAr_set_high[VAr]", PADDR(VAr_set_high),
-			PT_double, "VAr_set_low[VAr]", PADDR(VAr_set_low),
-			PT_double, "current_set_low[A]", PADDR(current_set_low),
-			PT_double, "current_set_high[A]", PADDR(current_set_high),
-			PT_double, "capacitor_A[VAr]", PADDR(capacitor_A),
-			PT_double, "capacitor_B[VAr]", PADDR(capacitor_B),
-			PT_double, "capacitor_C[VAr]", PADDR(capacitor_C),
-			PT_double, "cap_nominal_voltage[V]", PADDR(cap_nominal_voltage),
-			PT_double, "time_delay[s]", PADDR(time_delay),
-			PT_double, "dwell_time[s]", PADDR(dwell_time),
-			PT_double, "lockout_time[s]", PADDR(lockout_time),
-			PT_object, "remote_sense",PADDR(RemoteSensor),
-			PT_object, "remote_sense_B", PADDR(SecondaryRemote),
-			PT_enumeration, "control_level", PADDR(control_level),
-				PT_KEYWORD, "BANK", BANK,
-				PT_KEYWORD, "INDIVIDUAL", INDIVIDUAL, 
+			PT_double, "voltage_set_high[V]", PADDR(voltage_set_high), PT_DESCRIPTION,"Turn off if voltage is above this set point",
+			PT_double, "voltage_set_low[V]", PADDR(voltage_set_low), PT_DESCRIPTION,"Turns on if voltage is below this set point",
+			PT_double, "VAr_set_high[VAr]", PADDR(VAr_set_high),PT_DESCRIPTION,"high VAR set point for VAR control (turn off)",
+			PT_double, "VAr_set_low[VAr]", PADDR(VAr_set_low),PT_DESCRIPTION,"low VAR set point for VAR control (turn on)",
+			PT_double, "current_set_low[A]", PADDR(current_set_low),PT_DESCRIPTION,"high current set point for current control mode (turn on)",
+			PT_double, "current_set_high[A]", PADDR(current_set_high),PT_DESCRIPTION,"low current set point for current control mode (turn off)",
+			PT_double, "capacitor_A[VAr]", PADDR(capacitor_A),PT_DESCRIPTION,"Capacitance value for phase A or phase AB",
+			PT_double, "capacitor_B[VAr]", PADDR(capacitor_B),PT_DESCRIPTION,"Capacitance value for phase B or phase BC",
+			PT_double, "capacitor_C[VAr]", PADDR(capacitor_C),PT_DESCRIPTION,"Capacitance value for phase C or phase CA",
+			PT_double, "cap_nominal_voltage[V]", PADDR(cap_nominal_voltage),PT_DESCRIPTION,"Nominal voltage for the capacitor. Used for calculation of capacitance value",
+			PT_double, "time_delay[s]", PADDR(time_delay),PT_DESCRIPTION,"control time delay",
+			PT_double, "dwell_time[s]", PADDR(dwell_time),PT_DESCRIPTION,"Time for system to remain constant before a state change will be passed",
+			PT_double, "lockout_time[s]", PADDR(lockout_time),PT_DESCRIPTION,"Time for capacitor to remain locked out from further switching operations (VARVOLT control)",
+			PT_object, "remote_sense",PADDR(RemoteSensor),PT_DESCRIPTION,"Remote object for sensing values used for control schemes",
+			PT_object, "remote_sense_B", PADDR(SecondaryRemote),PT_DESCRIPTION,"Secondary Remote object for sensing values used for control schemes (VARVOLT uses two)",
+			PT_enumeration, "control_level", PADDR(control_level),PT_DESCRIPTION,"define bank or individual control",
+				PT_KEYWORD, "BANK", (enumeration)BANK,
+				PT_KEYWORD, "INDIVIDUAL", (enumeration)INDIVIDUAL, 
          	NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
 }
@@ -326,9 +326,9 @@ int capacitor::init(OBJECT *parent)
 	}
 
 	//Set transition variables to beginning value initially
-	switchA_state_Req_Next = switchA_state_Prev = switchA_state_Next = switchA_state;
-	switchB_state_Req_Next = switchB_state_Prev = switchB_state_Next = switchB_state;
-	switchC_state_Req_Next = switchC_state_Prev = switchC_state_Next = switchC_state;
+	switchA_state_Req_Next = switchA_state_Prev = switchA_state_Next = (CAPSWITCH)switchA_state;
+	switchB_state_Req_Next = switchB_state_Prev = switchB_state_Next = (CAPSWITCH)switchB_state;
+	switchC_state_Req_Next = switchC_state_Prev = switchC_state_Next = (CAPSWITCH)switchC_state;
 
 	//Perform phase checks - make sure what we want to look at actually exists
 	if (((control!=MANUAL) && (control!=VOLT)) && ((RLink->phases & pt_phase) != pt_phase))	//VAR, VOLTVAR, CURRENT
@@ -421,7 +421,7 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 					}
 					else
 					{
-						switchA_state_Next = switchA_state;
+						switchA_state_Next =(CAPSWITCH) switchA_state;
 						switchA_state = switchA_state_Prev;
 					}
 					time_to_change=(int64)time_delay;	//Change detected on anything, so reset time delay
@@ -435,7 +435,7 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 					}
 					else
 					{
-						switchB_state_Next = switchB_state;
+						switchB_state_Next = (CAPSWITCH)switchB_state;
 						switchB_state = switchB_state_Prev;
 					}
 					time_to_change=(int64)time_delay;	//Change detected on anything, so reset time delay
@@ -449,7 +449,7 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 					}
 					else
 					{
-						switchC_state_Next = switchC_state;
+						switchC_state_Next = (CAPSWITCH)switchC_state;
 						switchC_state = switchC_state_Prev;
 					}
 					time_to_change=(int64)time_delay;	//Change detected on anything, so reset time delay
@@ -952,24 +952,24 @@ TIMESTAMP capacitor::postsync(TIMESTAMP t0)
 	if((solver_method==SM_NR && NR_cycle==true) || solver_method==SM_FBS){
 		if(prev_time < t0){
 			prev_time = t0;
-			init_switchA_state = prev_switchA_state;
-			init_switchB_state = prev_switchB_state;
-			init_switchC_state = prev_switchC_state;
+			init_switchA_state =(CAPSWITCH) prev_switchA_state;
+			init_switchB_state =(CAPSWITCH) prev_switchB_state;
+			init_switchC_state =(CAPSWITCH) prev_switchC_state;
 			switchA_changed = 0;
 			switchB_changed = 0;
 			switchC_changed = 0;
 			if(prev_switchA_state != switchA_state){
-				prev_switchA_state = switchA_state;
+				prev_switchA_state = (CAPSWITCH)switchA_state;
 				cap_switchA_count++;
 				switchA_changed = 1;
 			}
 			if(prev_switchB_state != switchB_state){
-				prev_switchB_state = switchB_state;
+				prev_switchB_state = (CAPSWITCH)switchB_state;
 				cap_switchB_count++;
 				switchB_changed = 1;
 			}
 			if(prev_switchC_state != switchC_state){
-				prev_switchC_state = switchC_state;
+				prev_switchC_state = (CAPSWITCH)switchC_state;
 				cap_switchC_count++;
 				switchC_changed = 1;
 			}
@@ -977,14 +977,14 @@ TIMESTAMP capacitor::postsync(TIMESTAMP t0)
 		if(prev_time == t0){
 			if(switchA_changed == 0){
 				if(prev_switchA_state != switchA_state){
-					prev_switchA_state = switchA_state;
+					prev_switchA_state = (CAPSWITCH)switchA_state;
 					cap_switchA_count++;
 					switchA_changed = 1;
 				}
 			}
 			if(switchA_changed == 1){
 				if(init_switchA_state == switchA_state){
-					prev_switchA_state = switchA_state;
+					prev_switchA_state = (CAPSWITCH)switchA_state;
 					cap_switchA_count--;
 					if(cap_switchA_count < 0){
 						gl_error("Unusual control of the capacitor has resulted in a negative switch change count on phase A.");
@@ -992,22 +992,22 @@ TIMESTAMP capacitor::postsync(TIMESTAMP t0)
 					}
 					switchA_changed = 0;
 				} else if(prev_switchA_state != switchA_state){
-					prev_switchA_state = switchA_state;
+					prev_switchA_state = (CAPSWITCH)switchA_state;
 				}
 			}
 			if(switchA_changed == 2){
-				prev_switchA_state = switchA_state;
+				prev_switchA_state = (CAPSWITCH)switchA_state;
 			}
 			if(switchB_changed == 0){
 				if(prev_switchB_state != switchB_state){
-					prev_switchB_state = switchB_state;
+					prev_switchB_state = (CAPSWITCH)switchB_state;
 					cap_switchB_count++;
 					switchB_changed = 1;
 				}
 			}
 			if(switchB_changed == 1){
 				if(init_switchB_state == switchB_state){
-					prev_switchB_state =switchB_state;
+					prev_switchB_state =(CAPSWITCH)switchB_state;
 					cap_switchB_count--;
 					if(cap_switchB_count < 0){
 						gl_error("Unusual control of the capacitor has resulted in a negative switch change count on phase B.");
@@ -1015,22 +1015,22 @@ TIMESTAMP capacitor::postsync(TIMESTAMP t0)
 					}
 					switchB_changed = 0;
 				} else if(prev_switchB_state != switchB_state){
-					prev_switchB_state = switchB_state;
+					prev_switchB_state = (CAPSWITCH)switchB_state;
 				}
 			}
 			if(switchB_changed == 2){
-				prev_switchB_state = switchB_state;
+				prev_switchB_state = (CAPSWITCH)switchB_state;
 			}
 			if(switchC_changed == 0){
 				if(prev_switchC_state != switchC_state){
-					prev_switchC_state = switchC_state;
+					prev_switchC_state = (CAPSWITCH)switchC_state;
 					cap_switchC_count++;
 					switchC_changed = 1;
 				}
 			}
 			if(switchC_changed == 1){
 				if(init_switchC_state == switchC_state){
-					prev_switchC_state = switchC_state;
+					prev_switchC_state = (CAPSWITCH)switchC_state;
 					cap_switchC_count--;
 					if(cap_switchC_count < 0){
 						gl_error("Unusual control of the capacitor has resulted in a negative switch change count on phase C.");
@@ -1038,11 +1038,11 @@ TIMESTAMP capacitor::postsync(TIMESTAMP t0)
 					}
 					switchC_changed = 0;
 				} else if(prev_switchC_state != switchC_state){
-					prev_switchC_state = switchC_state;
+					prev_switchC_state = (CAPSWITCH)switchC_state;
 				}
 			}
 			if(switchC_changed == 2){
-				prev_switchC_state = switchC_state;
+				prev_switchC_state = (CAPSWITCH)switchC_state;
 			}
 		}
 	}

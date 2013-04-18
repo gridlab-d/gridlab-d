@@ -34,7 +34,7 @@ public:
 		CM_DUTYCYCLE=4,
 		CM_PROBOFF=5,	// probabilistic shut-off
 	} CONTROLMODE;
-	CONTROLMODE control_mode;
+	enumeration control_mode;
 	// sensitivity
 	double sensitivity;					///<
 	int64 period;

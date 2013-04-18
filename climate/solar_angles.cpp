@@ -37,15 +37,16 @@ double SolarAngles::eq_time(short day_of_yr)
 //          meridian, and local longitude.
 // RETURNS: Local solar time in hours (military time)
 // SOURCE:  Duffie & Beckman.
+// Corrected for West negative longitudes
 //
 double SolarAngles::solar_time(
     double std_time,    // Local standard time in decimal hours (e.g., 7:30 is 7.5)
     short day_of_yr,    // Day of year from Jan 1
     double std_meridian,    // Standard meridian (longitude) of local time zone (radians---e.g., Pacific timezone is 120 degrees times pi/180)
-    double longitude    // Local longitude (radians west)
+    double longitude    // Local longitude (radians east)
 )
 {
-    return std_time + eq_time(day_of_yr) + HR_PER_RADIAN * (std_meridian-longitude);
+	return std_time + eq_time(day_of_yr) + HR_PER_RADIAN * (longitude-std_meridian);
 }
 
 
@@ -61,10 +62,12 @@ double SolarAngles::local_time(
     double sol_time,    // Local solar time (decimal hours--7:30 is 7.5)
     short day_of_yr,    // Day of year from Jan 1
     double std_meridian,    // Standard meridian (longitude) of local time zone (radians---e.g., Pacific timezone is 120 times pi/180)
-    double longitude    // Local longitude (radians west)
+    double longitude    // Local longitude (radians east)
 )
 {
-    return sol_time - eq_time(day_of_yr) - HR_PER_RADIAN * (std_meridian-longitude);
+	//std_meridian and longitude swapped to account for negative west convention (see solar_time above)
+	//Unchecked since nothing uses local_time
+    return sol_time - eq_time(day_of_yr) - HR_PER_RADIAN * (longitude-std_meridian);
 }
 
 

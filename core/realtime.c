@@ -62,6 +62,7 @@ STATUS realtime_run_schedule(void)
 			else
 				last->next = event->next;
 			free(event);
+			event = NULL;
 
 			/* callback */
 			if ((*call)()==FAILED)

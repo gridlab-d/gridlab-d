@@ -70,23 +70,23 @@ thermal_storage::thermal_storage(MODULE *mod)
 		// publish the class properties
 		if (gl_publish_variable(oclass,
 			PT_INHERIT, "residential_enduse",
-			PT_double, "total_capacity", PADDR(total_capacity), PT_DESCRIPTION, "total storage capacity of unit",
-			PT_double, "stored_capacity", PADDR(stored_capacity), PT_DESCRIPTION, "amount of capacity that is stored",
+			PT_double, "total_capacity[Btu]", PADDR(total_capacity), PT_DESCRIPTION, "total storage capacity of unit",
+			PT_double, "stored_capacity[Btu]", PADDR(stored_capacity), PT_DESCRIPTION, "amount of capacity that is stored",
 			PT_double,"recharge_power[kW]",PADDR(recharge_power), PT_DESCRIPTION, "installed compressor power usage",
 			PT_double,"discharge_power[kW]",PADDR(discharge_power), PT_DESCRIPTION, "installed pump power usage",
-			PT_double,"recharge_pf",PADDR(recharge_power_factor), PT_DESCRIPTION, "installed pump power factor",
-			PT_double,"discharge_pf",PADDR(discharge_power_factor), PT_DESCRIPTION, "installed compressor power factor",
+			PT_double,"recharge_pf",PADDR(recharge_power_factor), PT_DESCRIPTION, "installed compressor power factor",
+			PT_double,"discharge_pf",PADDR(discharge_power_factor), PT_DESCRIPTION, "installed pump power factor",
 			PT_enumeration, "discharge_schedule_type", PADDR(discharge_schedule_type),PT_DESCRIPTION,"Scheduling method for discharging",
-				PT_KEYWORD, "INTERNAL", INTERNAL,
-				PT_KEYWORD, "EXTERNAL", EXTERNAL,
+				PT_KEYWORD, "INTERNAL", (enumeration)INTERNAL,
+				PT_KEYWORD, "EXTERNAL", (enumeration)EXTERNAL,
 			PT_enumeration, "recharge_schedule_type", PADDR(recharge_schedule_type),PT_DESCRIPTION,"Scheduling method for charging",
-				PT_KEYWORD, "INTERNAL", INTERNAL,
-				PT_KEYWORD, "EXTERNAL", EXTERNAL,
-			PT_double, "recharge_time", PADDR(recharge_time), PT_DESCRIPTION, "start time of charge cycle",		//schedule?
-			PT_double, "discharge_time", PADDR(discharge_time), PT_DESCRIPTION, "end time of charge cycle",			//schedule?
-			PT_double, "discharge_rate", PADDR(discharge_rate), PT_DESCRIPTION, "rating of discharge or cooling",
-			PT_double, "SOC", PADDR(state_of_charge), PT_DESCRIPTION, "state of charge as percentage of total capacity",		//storage/stored capacity
-			PT_double, "k", PADDR(k), PT_DESCRIPTION, "coefficient of thermal conductivity (W/m/K)",
+				PT_KEYWORD, "INTERNAL", (enumeration)INTERNAL,
+				PT_KEYWORD, "EXTERNAL", (enumeration)EXTERNAL,
+			PT_double, "recharge_time", PADDR(recharge_time), PT_DESCRIPTION, "Flag indicating if recharging is available at the current time (1 or 0)",		//schedule?
+			PT_double, "discharge_time", PADDR(discharge_time), PT_DESCRIPTION, "Flag indicating if discharging is available at the current time (1 or 0)",			//schedule?
+			PT_double, "discharge_rate[Btu/h]", PADDR(discharge_rate), PT_DESCRIPTION, "rating of discharge or cooling",
+			PT_double, "SOC[%]", PADDR(state_of_charge), PT_DESCRIPTION, "state of charge as percentage of total capacity",		//storage/stored capacity
+			PT_double, "k[W/m/K]", PADDR(k), PT_DESCRIPTION, "coefficient of thermal conductivity (W/m/K)",
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 			/* TROUBLESHOOT
 				The file that implements the specified class cannot publish the variables in the class.
@@ -193,7 +193,12 @@ int thermal_storage::init(OBJECT *parent)
 	} else if (state_of_charge >= 0 && stored_capacity >= 0)
 	{
 		stored_capacity = (state_of_charge / 100) * total_capacity;
-		gl_warning("can not define both stored capacity and SOC for thermal storage, SOC being assumed");
+		gl_warning("stored_capacity and SOC are both defined, SOC being used for initial energy state");
+		/*  TROUBLESHOOT
+		During the initialization of the system, a value was specified for both the stored_capacity and SOC (state of charge).
+		The thermal energy storage object gives precedence to the SOC variable, so the initial stored_capacity will be the SOC
+		percentage of the total_capacity.
+		*/
 	}
 
 	if (recharge_power == 0)			recharge_power = (3.360 * discharge_rate) / (5 * 12000); //kW
@@ -301,6 +306,11 @@ TIMESTAMP thermal_storage::sync(TIMESTAMP t0, TIMESTAMP t1)
 		if (*recharge_time_ptr == 1 && *discharge_time_ptr == 1)
 		{
 			gl_warning("recharge and discharge can not both be scheduled to be concurrently on ~ defaulting to recharge");
+			/*  TROUBLEHSOOT
+			The schedules or control values used to determine when the thermal energy storage can charge or discharge are overlapping.  In this
+			case, the system gives precedence to recharging the thermal energy storage.  If this behavior is undesired, please ensure proper time
+			separation of the controlling charge and discharge signals.
+			*/
 			*discharge_time_ptr = 0;
 		}
 
@@ -314,7 +324,7 @@ TIMESTAMP thermal_storage::sync(TIMESTAMP t0, TIMESTAMP t1)
 		
 		//Ice energy loss calculations
 		//Rate of loss = k*A*(T1-T2)/d [Btu/sec]
-		//k is the coefficient of thermal conductivity [W/m/K or W/m/degC]
+		//k is the coefficient of thermal conductivity [W/m/K - converted to BTU/sec/m/degF]
 		//A is the surface area [m^2]
 		//(T1 - T2) is the inside temperature minus the outside temperature
 		//d is the thickness of the insullation [m]

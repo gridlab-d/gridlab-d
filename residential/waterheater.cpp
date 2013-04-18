@@ -58,11 +58,11 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module){
 			PT_double,"heating_element_capacity[kW]",PADDR(heating_element_capacity), PT_DESCRIPTION,  "the power of the heating element",
 			PT_double,"inlet_water_temperature[degF]",PADDR(Tinlet), PT_DESCRIPTION,  "the inlet temperature of the water tank",
 			PT_enumeration,"heat_mode",PADDR(heat_mode), PT_DESCRIPTION, "the energy source for heating the water heater",
-				PT_KEYWORD,"ELECTRIC",ELECTRIC,
-				PT_KEYWORD,"GASHEAT",GASHEAT,
+				PT_KEYWORD,"ELECTRIC",(enumeration)ELECTRIC,
+				PT_KEYWORD,"GASHEAT",(enumeration)GASHEAT,
 			PT_enumeration,"location",PADDR(location), PT_DESCRIPTION, "whether the water heater is inside or outside",
-				PT_KEYWORD,"INSIDE",INSIDE,
-				PT_KEYWORD,"GARAGE",GARAGE,
+				PT_KEYWORD,"INSIDE",(enumeration)INSIDE,
+				PT_KEYWORD,"GARAGE",(enumeration)GARAGE,
 			PT_double,"tank_setpoint[degF]",PADDR(tank_setpoint), PT_DESCRIPTION, "the temperature around which the water heater will heat its contents",
 			PT_double,"thermostat_deadband[degF]",PADDR(thermostat_deadband), PT_DESCRIPTION, "the degree to heat the water tank, when needed",
 			PT_double,"temperature[degF]",PADDR(Tw), PT_DESCRIPTION, "the outlet temperature of the water tank",
@@ -72,6 +72,8 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module){
 			PT_double,"previous_load[kW]",PADDR(prev_load),PT_DESCRIPTION, "the actual load based on current voltage stored for use in controllers",
 			PT_complex,"actual_power[kVA]",PADDR(waterheater_actual_power), PT_DESCRIPTION, "the actual power based on the current voltage across the coils",
 			PT_double,"is_waterheater_on",PADDR(is_waterheater_on),PT_DESCRIPTION, "simple logic output to determine state of waterheater (1-on, 0-off)",
+			PT_double,"gas_fan_power[kW]",PADDR(gas_fan_power),PT_DESCRIPTION, "load of a running gas waterheater",
+			PT_double,"gas_standby_power[kW]",PADDR(gas_standby_power),PT_DESCRIPTION, "load of a gas waterheater in standby",
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
 	}
@@ -130,6 +132,10 @@ int waterheater::create()
 	load.power_fraction = 0.0;
 	load.impedance_fraction = 1.0;
 	load.heatgain_fraction = 0.0; /* power has no effect on heat loss */
+
+	gas_fan_power = -1.0;
+	gas_standby_power = -1.0;
+
 	return res;
 
 }
@@ -205,6 +211,15 @@ int waterheater::init(OBJECT *parent)
 			else
 				heating_element_capacity = 4.500;
 		}
+	}
+
+	// set gas electric loads, if not provided by the user
+	if(0 > gas_fan_power){
+		gas_fan_power = heating_element_capacity * 0.01;
+	}
+
+	if(0 > gas_standby_power){
+		gas_standby_power = 0.0; // some units consume 3-5W
 	}
 
 	// Other initial conditions
@@ -441,10 +456,10 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 	// determine the power used
 	if (heat_needed == TRUE){
-		/* power_kw */ load.total = heating_element_capacity * (heat_mode == GASHEAT ? 0.01 : 1.0);
+		/* power_kw */ load.total = (heat_mode == GASHEAT ? gas_fan_power : heating_element_capacity);
 		is_waterheater_on = 1;
 	} else {
-		/* power_kw */ load.total = 0.0;
+		/* power_kw */ load.total = (heat_mode == GASHEAT ? gas_standby_power : 0.0);
 		is_waterheater_on = 0;
 	}
 
@@ -515,7 +530,7 @@ TIMESTAMP waterheater::commit(){
 
 /** Tank state determined based on the height of the hot water column
  **/
-waterheater::WHQSTATE waterheater::tank_state(void)
+enumeration waterheater::tank_state(void)
 {
 	if ( h >= height-HEIGHT_PRECISION )
 		return FULL;
@@ -564,7 +579,7 @@ void waterheater::set_time_to_transition(void)
 	temperature differential along the height of the water column when it is full, 
 	emplty or partial at the current height, given the current water draw.
  **/
-waterheater::WHQFLOW waterheater::set_current_model_and_load_state(void)
+enumeration waterheater::set_current_model_and_load_state(void)
 {
 	double dhdt_now = dhdt(h);
 	double dhdt_full = dhdt(height);
@@ -572,7 +587,7 @@ waterheater::WHQFLOW waterheater::set_current_model_and_load_state(void)
 	current_model = NONE;		// by default set it to onenode
 	load_state = STABLE;		// by default
 
-	WHQSTATE tank_status = tank_state();
+	enumeration tank_status = tank_state();
 
 	switch(tank_status) 
 	{
@@ -619,7 +634,13 @@ waterheater::WHQFLOW waterheater::set_current_model_and_load_state(void)
 				bool cur_heat_needed = heat_needed;
 				heat_needed = TRUE;
 				double dhdt_full_temp = dhdt(height);
-				if (dhdt_full_temp < 0)
+				if (re_override == OV_OFF)
+				{
+					current_model = ONENODE;
+					load_state = DEPLETING;
+					heat_needed = FALSE;
+				}
+				else if (dhdt_full_temp < 0)
 				{
 					current_model = TWONODE;
 					load_state = DEPLETING;
@@ -899,7 +920,7 @@ inline double waterheater::new_h_2zone(double h0, double delta_t)
 	return ((exp(cb * delta_t) * (cA + cb * h0)) - cA) / cb;	// [ft]
 }
 
-double waterheater::get_Tambient(WHLOCATION loc)
+double waterheater::get_Tambient(enumeration loc)
 {
 	double ratio;
 	OBJECT *parent = OBJECTHDR(this)->parent;

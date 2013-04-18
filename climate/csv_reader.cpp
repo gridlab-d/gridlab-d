@@ -51,9 +51,9 @@ csv_reader::csv_reader(MODULE *module){
 			PT_double,"peak_solar",PADDR(peak_solar),PT_ACCESS,PA_REFERENCE,
 			PT_int32,"elevation",PADDR(elevation),
 			PT_enumeration,"status",PADDR(status),PT_ACCESS,PA_REFERENCE,
-				PT_KEYWORD,"INIT",CR_INIT,
-				PT_KEYWORD,"OPEN",CR_OPEN,
-				PT_KEYWORD,"ERROR",CR_ERROR,
+				PT_KEYWORD,"INIT",(enumeration)CR_INIT,
+				PT_KEYWORD,"OPEN",(enumeration)CR_OPEN,
+				PT_KEYWORD,"ERROR",(enumeration)CR_ERROR,
 			PT_char32,"timefmt",PADDR(timefmt),
 			PT_char32,"timezone",PADDR(timezone),
 			PT_double,"timezone_offset",PADDR(tz_numval),
@@ -156,7 +156,7 @@ int csv_reader::open(const char *file){
 	// post-process
 	// calculate object lat/long
 	obj->latitude = lat_deg + (lat_deg > 0 ? lat_min : -lat_min) / 60;
-	obj->longitude = long_deg + (long_deg > 0 ? long_min : -long_min / 60);
+	obj->longitude = long_deg + (long_deg > 0 ? long_min : -long_min) / 60;
 
 	return 1;
 }

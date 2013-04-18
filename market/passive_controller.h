@@ -32,15 +32,21 @@ public:
 		CM_DUTYCYCLE=4,
 		CM_PROBOFF=5,	// probabilistic shut-off
 		CM_ELASTICITY_MODEL=6, //For the elasticity model to work
+		CM_DLC=7,
 	} CONTROLMODE;
-	CONTROLMODE control_mode;
+	enumeration control_mode;
+	typedef enum {
+		DLC_OFF=0, // deactivates the load during high prices
+		DLC_CYCLING=1, // cycles the load at a specific rate during high prices
+	} DLCMODE;
+	enumeration dlc_mode;
 	// distribution type, for probabilistic control
 	typedef enum {
 		PDT_NORMAL,
 		PDT_EXPONENTIAL,
 		PDT_UNIFORM
 	} DISTRIBUTIONTYPE;
-	DISTRIBUTIONTYPE distribution_type;
+	enumeration distribution_type;
 	double comfort_level;
 	// sensitivity
 	double sensitivity;					///<
@@ -89,9 +95,12 @@ public:
 	double base_setpoint;
 	bool pool_pump_model;				///< Boolean flag for turning on the pool pump model version of duty cycle control
 	double base_duty_cycle;
+	double cycle_on, cycle_off;			///< used to specify the number of seconds of on and off during the cycling dlc mode
+	bool first_period;					///< boolean for determing whether we need to "seed" the dlc cycling mode
 	
 	bool zipLoadParent;
 	double critical_day;
+	double old_critical_day;
 	double dailyElasticity;
 	double subElasticityFirstSecond;
 	double subElasticityFirstThird;
@@ -139,6 +148,7 @@ public:
 	double totalClearedLoad;
 	double totalOffPeakLoad;
 	double totalPeakLoad;
+	double averagePeakLoad;
 	double totalCriticalPeakLoad;
 
 	enduse *current_load_enduse;
@@ -153,6 +163,7 @@ public:
 	int SecondTierArrayIndex;
 	int FirstTierArrayIndex;
 
+	int first_run;
 	TIMESTAMP starttime;
 	TIMESTAMP returnTime;
 
@@ -161,6 +172,7 @@ private:
 	int calc_dutycycle(TIMESTAMP t0, TIMESTAMP t1);
 	int calc_proboff(TIMESTAMP t0, TIMESTAMP t1);
 	int calc_elasticity(TIMESTAMP t0, TIMESTAMP t1);	
+	int calc_dlc(TIMESTAMP t0, TIMESTAMP t1);
 	int orig_setpoint;
 	int64 last_cycle;
 };

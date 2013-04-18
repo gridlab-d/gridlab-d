@@ -32,7 +32,7 @@ typedef enum{
 	CI_NONE = 0,
 	CI_LINEAR,
 	CI_QUADRATIC
-} CLIMATE_INTERPOLATE;
+};
 
 
 
@@ -161,7 +161,7 @@ typedef	enum {
 		RT_NONE,
 		RT_TMY2,
 		RT_CSV,
-} READERTYPE;
+};
 
 class climate : public gld_object {
 	
@@ -186,7 +186,7 @@ class climate : public gld_object {
 	GL_ATOMIC(double,solar_raw);
 	GL_ATOMIC(double,wind_dir);
 	GL_ATOMIC(double,wind_gust);
-	GL_ATOMIC(CLIMATE_INTERPOLATE,interpolate);
+	GL_ATOMIC(enumeration,interpolate);
 	GL_ATOMIC(double,solar_elevation);
 	GL_ATOMIC(double,solar_azimuth);
 	GL_ATOMIC(double,direct_normal_extra);
@@ -195,12 +195,12 @@ class climate : public gld_object {
 
 	// data not shared with classes in this module (no locks needed)
 private:
-	READERTYPE reader_type;
 	SolarAngles *sa;
 	tmy2_reader file;
 	weather_reader *reader_hndl;
 	TMYDATA *tmy;
 public:
+	enumeration reader_type;
 	static CLASS *oclass;
 	static climate *defaults;
 public:

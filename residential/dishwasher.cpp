@@ -54,14 +54,14 @@ dishwasher::dishwasher(MODULE *module) : residential_enduse(module)
 			PT_double,"total_power[W]",PADDR(total_power),
 
 			PT_enumeration,"state", PADDR(state),
-				PT_KEYWORD,"STOPPED",dishwasher_STOPPED,
-				PT_KEYWORD,"STALLED",dishwasher_STALLED,
-				PT_KEYWORD,"TRIPPED",dishwasher_TRIPPED,
-				PT_KEYWORD,"MOTOR_ONLY",dishwasher_MOTOR_ONLY,
-				PT_KEYWORD,"MOTOR_COIL_ONLY",dishwasher_MOTOR_COIL_ONLY,
-				PT_KEYWORD,"COIL_ONLY",dishwasher_COIL_ONLY,
-				PT_KEYWORD,"CONTROL_ONLY",dishwasher_CONTROL_ONLY,
-				PT_KEYWORD,"HEATEDDRY_ONLY",dishwasher_HEATEDDRY_ONLY,
+				PT_KEYWORD,"STOPPED",(enumeration)dishwasher_STOPPED,
+				PT_KEYWORD,"STALLED",(enumeration)dishwasher_STALLED,
+				PT_KEYWORD,"TRIPPED",(enumeration)dishwasher_TRIPPED,
+				PT_KEYWORD,"MOTOR_ONLY",(enumeration)dishwasher_MOTOR_ONLY,
+				PT_KEYWORD,"MOTOR_COIL_ONLY",(enumeration)dishwasher_MOTOR_COIL_ONLY,
+				PT_KEYWORD,"COIL_ONLY",(enumeration)dishwasher_COIL_ONLY,
+				PT_KEYWORD,"CONTROL_ONLY",(enumeration)dishwasher_CONTROL_ONLY,
+				PT_KEYWORD,"HEATEDDRY_ONLY",(enumeration)dishwasher_HEATEDDRY_ONLY,
 
 
 			

@@ -52,7 +52,7 @@ public:
 	double ramp_rate;
 	double Freq_Low, Freq_High, Freq_Histr;
 	double calc_tol_perc;
-	FREQMODE FreqObjectMode;
+	enumeration FreqObjectMode;
 	int Num_Resp_Eqs;
 	int iter_passes;		//Number of passes that have been made over the object - used to figure out if things need removing or not
 	double day_average, day_std, week_average, week_std;	//Variables for 24- and 168-hour statistics (mean and std dev)

@@ -29,6 +29,7 @@ public:
 	inline underground_line_conductor(CLASS *cl=oclass):powerflow_library(cl){};
 	int isa(char *classname);
 	int create(void);
+	int init(OBJECT *parent);
 };
 
 #endif // _UNDERGROUNDLINECONDUCTOR_H

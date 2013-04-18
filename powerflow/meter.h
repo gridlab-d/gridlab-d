@@ -53,7 +53,8 @@ public:
 		BM_HOURLY,
 		BM_TIERED_RTP
 	} BILLMODE;
-	BILLMODE bill_mode;
+	//BILLMODE bill_mode;
+	enumeration bill_mode;
 	OBJECT *power_market;
 	PROPERTY *price_prop;
 	int32 bill_day;					//Day bill is to be processed (assumed to occur at midnight of that day)

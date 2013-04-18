@@ -457,10 +457,10 @@ char *gld_loadHndl::end_element_global_prop(char *buffer, size_t len){
 }
 
 char *gld_loadHndl::end_element_clock_prop(char *buffer, size_t len){
-//	if(strcmp(propname, buffer) == 0){
+	if(strcmp(propname, buffer) == 0){
 		memset(propname, 0, len);
 		stack_state = CLOCK_STATE;
-//	}
+	}
 	return NULL;
 }
 

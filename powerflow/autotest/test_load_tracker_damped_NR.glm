@@ -1,0 +1,303 @@
+clock
+{
+	timezone UTC0;						//Local timezone for the simulation
+	starttime '2011-01-01 00:00:00'; 	//Start time in the local timezone 
+	stoptime '2011-01-02 00:00:00';		//Stop time in the local timezone
+};
+
+module powerflow
+{
+	solver_method NR;
+	nominal_frequency 50;
+};
+
+module tape;
+module assert;
+
+object meter
+{
+	name SWING_BUS;
+	nominal_voltage 6350.85;
+	voltage_A 6350.85 V;
+	voltage_B 6350.85+120d V;
+	voltage_C 6350.85-120d V;
+	phases ABC;
+	bustype SWING;
+};
+
+object recorder
+{
+	name SWING_BUS_RECORDER;
+	parent SWING_BUS;
+	property measured_real_power[kW],measured_reactive_power[kVAr];
+	interval 600;
+	limit 1000000;
+	file SWING_BUS_RECORDER.csv;
+}
+
+object overhead_line
+{
+	name LINE_1;
+	phases ABC;
+	from SWING_BUS;
+	to NODE_1;
+	configuration conf_OHLine11kV;
+	length 1500 m;
+};
+
+object meter
+{
+	name NODE_1;
+	nominal_voltage 6350.85;
+	phases ABCN;
+};
+
+object load
+{
+	name LOAD_1;
+	parent NODE_1;
+	phases ABC;
+	nominal_voltage 6350.85;
+	base_power_A 14000;
+	base_power_B 14000;
+	base_power_C 14000;
+	power_fraction_A 0.5;
+	power_fraction_B 0.5;
+	power_fraction_C 0.5;
+	current_fraction_A 0.25;
+	current_fraction_B 0.25;
+	current_fraction_C 0.25;
+	impedance_fraction_A 0.25;
+	impedance_fraction_B 0.25;
+	impedance_fraction_C 0.25;
+	power_pf_A 0.9;
+	power_pf_B 0.9;
+	power_pf_C 0.9;
+	current_pf_A 0.8;
+	current_pf_B 0.8;
+	current_pf_C 0.8;
+	impedance_pf_A 0.8;
+	impedance_pf_B 0.8;
+	impedance_pf_C 0.8;
+};
+
+object overhead_line
+{
+	name LINE_2;
+	phases ABC;
+	from NODE_1;
+	to NODE_2;
+	configuration conf_OHLine11kV;
+	length 1500 m;
+};
+
+object meter
+{
+	name NODE_2;
+	nominal_voltage 6350.85;
+	phases ABC;
+};
+
+object switch
+{
+	name RECLOSER_1;
+	phases ABC;
+	from NODE_2;
+	to NODE_3;
+	phase_A_state CLOSED;
+	phase_B_state CLOSED;
+	phase_C_state CLOSED;
+	operating_mode BANKED;
+};
+
+object recorder
+{
+	name RECLOSER_1_RECORDER;
+	parent RECLOSER_1;
+	property power_in;
+	interval 600;
+	limit 1000000;
+	file RECLOSER_1_RECORDER.csv;
+}
+
+object load_tracker
+{
+	name RECLOSER_1_LOAD_TRACKER;
+	target RECLOSER_1;
+	target_property power_in;
+	operation MAGNITUDE;
+	setpoint 145000;
+	deadband 1.0; // Ensure double_assert.within > 219000 * deadband (as a percent)
+	damping  2.0;
+	full_scale 219000; // Note: This is the sum of the base powers 
+	                   //       from the 2 downstream loads. It does
+	                   //       not take account of line losses but
+	                   //       is the expected value users would enter
+	object double_assert
+	{
+		target "setpoint";
+		value  RECLOSER_1_LOAD_TRACKER.feedback;
+		within 2191; // 1%+ of full scale
+	};
+}
+
+object recorder
+{
+	name LOAD_TRACKER_RECORDER;
+	parent RECLOSER_1_LOAD_TRACKER;
+	property setpoint,output,feedback;
+	interval 600;
+	limit 1000000;
+	file LOAD_TRACKER_RECORDER.csv;
+}
+
+object player {
+   name RECLOSER_1_LOAD_PLAYER;
+   parent RECLOSER_1_LOAD_TRACKER;
+   property setpoint;
+   file ../load_tracker_setpoint.player;
+}
+
+object meter
+{
+	name NODE_3;
+	nominal_voltage 6350.85;
+	phases ABC;
+};
+
+object overhead_line
+{
+	name LINE_3;
+	phases ABC;
+	from NODE_3;
+	to NODE_4;
+	configuration conf_OHLine11kV;
+	length 1500 m;
+};
+
+object meter
+{
+	name NODE_4;
+	nominal_voltage 6350.85;
+	phases ABC;
+};
+
+object load
+{
+	name LOAD_2;
+	parent NODE_4;
+	phases ABC;
+	nominal_voltage 6350.85;
+	base_power_A RECLOSER_1_LOAD_TRACKER.output*22000; 
+	base_power_B RECLOSER_1_LOAD_TRACKER.output*22000;
+	base_power_C RECLOSER_1_LOAD_TRACKER.output*22000;
+	power_fraction_A 0.5;
+	power_fraction_B 0.5;
+	power_fraction_C 0.5;
+	current_fraction_A 0.25;
+	current_fraction_B 0.25;
+	current_fraction_C 0.25;
+	impedance_fraction_A 0.25;
+	impedance_fraction_B 0.25;
+	impedance_fraction_C 0.25;
+	power_pf_A 0.9;
+	power_pf_B 0.9;
+	power_pf_C 0.9;
+	current_pf_A 0.8;
+	current_pf_B 0.8;
+	current_pf_C 0.8;
+	impedance_pf_A 0.8;
+	impedance_pf_B 0.8;
+	impedance_pf_C 0.8;
+};
+
+object recorder
+{
+	name LOAD_2_RECORER;
+	parent NODE_4;
+	property measured_real_power[kW],measured_reactive_power[kVAr];
+	interval 600;
+	limit 1000000;
+	file LOAD_2_RECORDER.csv;
+}
+
+object overhead_line
+{
+	name LINE_4;
+	phases ABC;
+	from NODE_4;
+	to NODE_5;
+	configuration conf_OHLine11kV;
+	length 1500 m;
+};
+
+object meter
+{
+	name NODE_5;
+	nominal_voltage 6350.85;
+	phases ABC;
+};
+
+object load
+{
+	name LOAD_3;
+	parent NODE_5;
+	phases ABC;
+	nominal_voltage 6350.85;
+	base_power_A RECLOSER_1_LOAD_TRACKER.output*51000;
+	base_power_B RECLOSER_1_LOAD_TRACKER.output*51000;
+	base_power_C RECLOSER_1_LOAD_TRACKER.output*51000;
+	power_fraction_A 0.5;
+	power_fraction_B 0.5;
+	power_fraction_C 0.5;
+	current_fraction_A 0.25;
+	current_fraction_B 0.25;
+	current_fraction_C 0.25;
+	impedance_fraction_A 0.25;
+	impedance_fraction_B 0.25;
+	impedance_fraction_C 0.25;
+	power_pf_A 0.9;
+	power_pf_B 0.9;
+	power_pf_C 0.9;
+	current_pf_A 0.8;
+	current_pf_B 0.8;
+	current_pf_C 0.8;
+	impedance_pf_A 0.8;
+	impedance_pf_B 0.8;
+	impedance_pf_C 0.8;
+};
+
+object recorder
+{
+	name LOAD_3_RECORER;
+	parent NODE_5;
+	property measured_real_power[kW],measured_reactive_power[kVAr];
+	interval 600;
+	limit 1000000;
+	file LOAD_3_RECORDER.csv;
+}
+
+object line_configuration
+{
+	name conf_OHLine11kV;
+	conductor_A overhead_line_conductor_11kV;
+	conductor_B overhead_line_conductor_11kV;
+	conductor_C overhead_line_conductor_11kV;
+	conductor_N overhead_line_conductor_11kV;
+	spacing line_spacing_11kV;
+};
+
+object line_spacing
+{
+	name line_spacing_11kV;
+	distance_AB 1.0 m;
+	distance_BC 1.0 m;
+	distance_AC 2.0 m;
+};
+
+object overhead_line_conductor
+{
+	name overhead_line_conductor_11kV;
+	geometric_mean_radius .00446;
+	resistance 1.12;
+};

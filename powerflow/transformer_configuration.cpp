@@ -47,60 +47,60 @@ transformer_configuration::transformer_configuration(MODULE *mod) : powerflow_li
 			oclass->trl = TRL_PROVEN;
 
 		if(gl_publish_variable(oclass,
-			PT_enumeration,"connect_type",PADDR(connect_type),
+			PT_enumeration,"connect_type",PADDR(connect_type),PT_DESCRIPTION,"connect type enum: Wye-Wye, single-phase, etc.",
 				PT_KEYWORD,"UNKNOWN",UNKNOWN,
-				PT_KEYWORD,"WYE_WYE",WYE_WYE,
-				PT_KEYWORD,"DELTA_DELTA",DELTA_DELTA,
-				PT_KEYWORD,"DELTA_GWYE",DELTA_GWYE,
-				PT_KEYWORD,"SINGLE_PHASE",SINGLE_PHASE,
-				PT_KEYWORD,"SINGLE_PHASE_CENTER_TAPPED",SINGLE_PHASE_CENTER_TAPPED,
-			PT_enumeration,"install_type",PADDR(install_type),
+				PT_KEYWORD,"WYE_WYE",(enumeration)WYE_WYE,
+				PT_KEYWORD,"DELTA_DELTA",(enumeration)DELTA_DELTA,
+				PT_KEYWORD,"DELTA_GWYE",(enumeration)DELTA_GWYE,
+				PT_KEYWORD,"SINGLE_PHASE",(enumeration)SINGLE_PHASE,
+				PT_KEYWORD,"SINGLE_PHASE_CENTER_TAPPED",(enumeration)SINGLE_PHASE_CENTER_TAPPED,
+			PT_enumeration,"install_type",PADDR(install_type),PT_DESCRIPTION,"Defines location of the transformer installation",
 				PT_KEYWORD,"UNKNOWN",UNKNOWN,
-				PT_KEYWORD,"POLETOP",POLETOP,
-				PT_KEYWORD,"PADMOUNT",PADMOUNT,
-				PT_KEYWORD,"VAULT",VAULT,
-			PT_enumeration,"coolant_type", PADDR(coolant_type),
+				PT_KEYWORD,"POLETOP",(enumeration)POLETOP,
+				PT_KEYWORD,"PADMOUNT",(enumeration)PADMOUNT,
+				PT_KEYWORD,"VAULT",(enumeration)VAULT,
+			PT_enumeration,"coolant_type", PADDR(coolant_type),PT_DESCRIPTION,"coolant type, used in life time model",
 				PT_KEYWORD,"UNKNOWN", UNKNOWN,
-				PT_KEYWORD,"MINERAL_OIL", MINERAL_OIL,
-				PT_KEYWORD,"DRY",DRY,
-			PT_enumeration, "cooling_type", PADDR(cooling_type),
+				PT_KEYWORD,"MINERAL_OIL", (enumeration)MINERAL_OIL,
+				PT_KEYWORD,"DRY",(enumeration)DRY,
+			PT_enumeration, "cooling_type", PADDR(cooling_type),PT_DESCRIPTION,"type of coolant fluid used in life time model",
 				PT_KEYWORD,"UNKNOWN", UNKNOWN,
-				PT_KEYWORD,"OA", OA,
-				PT_KEYWORD,"FA", FA,
-				PT_KEYWORD,"NDFOA", NDFOA,
-				PT_KEYWORD,"NDFOW", NDFOW,
-				PT_KEYWORD,"DFOA", DFOA,
-				PT_KEYWORD,"DFOW", DFOW,
+				PT_KEYWORD,"OA", (enumeration)OA,
+				PT_KEYWORD,"FA", (enumeration)FA,
+				PT_KEYWORD,"NDFOA", (enumeration)NDFOA,
+				PT_KEYWORD,"NDFOW", (enumeration)NDFOW,
+				PT_KEYWORD,"DFOA", (enumeration)DFOA,
+				PT_KEYWORD,"DFOW", (enumeration)DFOW,
 			
-			PT_double, "primary_voltage[V]", PADDR(V_primary),
-			PT_double, "secondary_voltage[V]",PADDR(V_secondary),
-			PT_double, "power_rating[kVA]",PADDR(kVA_rating),
-			PT_double, "powerA_rating[kVA]",PADDR(phaseA_kVA_rating),
-			PT_double, "powerB_rating[kVA]",PADDR(phaseB_kVA_rating),
-			PT_double, "powerC_rating[kVA]",PADDR(phaseC_kVA_rating),
-			PT_double, "resistance[pu.Ohm]",PADDR(impedance.Re()),	// was R_pu
-			PT_double, "reactance[pu.Ohm]",PADDR(impedance.Im()),	// was X_pu
-			PT_complex, "impedance[pu.Ohm]",PADDR(impedance),
-			PT_double, "resistance1[pu.Ohm]",PADDR(impedance1.Re()),	
-			PT_double, "reactance1[pu.Ohm]",PADDR(impedance1.Im()),	
-			PT_complex, "impedance1[pu.Ohm]",PADDR(impedance1),
-			PT_double, "resistance2[pu.Ohm]",PADDR(impedance2.Re()),	
-			PT_double, "reactance2[pu.Ohm]",PADDR(impedance2.Im()),	
-			PT_complex, "impedance2[pu.Ohm]",PADDR(impedance2),
-			PT_double, "shunt_resistance[pu.Ohm]",PADDR(shunt_impedance.Re()),
-			PT_double, "shunt_reactance[pu.Ohm]",PADDR(shunt_impedance.Im()),
-			PT_complex, "shunt_impedance[pu.Ohm]",PADDR(shunt_impedance),
+			PT_double, "primary_voltage[V]", PADDR(V_primary),PT_DESCRIPTION,"primary voltage level in L-L value kV",
+			PT_double, "secondary_voltage[V]",PADDR(V_secondary),PT_DESCRIPTION,"secondary voltage level kV",
+			PT_double, "power_rating[kVA]",PADDR(kVA_rating),PT_DESCRIPTION,"kVA rating of transformer, total",
+			PT_double, "powerA_rating[kVA]",PADDR(phaseA_kVA_rating),PT_DESCRIPTION,"kVA rating of transformer, phase A",
+			PT_double, "powerB_rating[kVA]",PADDR(phaseB_kVA_rating),PT_DESCRIPTION,"kVA rating of transformer, phase B",
+			PT_double, "powerC_rating[kVA]",PADDR(phaseC_kVA_rating),PT_DESCRIPTION,"kVA rating of transformer, phase C",
+			PT_double, "resistance[pu.Ohm]",PADDR(impedance.Re()),PT_DESCRIPTION,"Series impedance, pu, real",
+			PT_double, "reactance[pu.Ohm]",PADDR(impedance.Im()),PT_DESCRIPTION,"Series impedance, pu, imag",
+			PT_complex, "impedance[pu.Ohm]",PADDR(impedance),PT_DESCRIPTION,"Series impedance, pu",
+			PT_double, "resistance1[pu.Ohm]",PADDR(impedance1.Re()),PT_DESCRIPTION,"Secondary series impedance (only used when you want to define each individual winding seperately, pu, real",
+			PT_double, "reactance1[pu.Ohm]",PADDR(impedance1.Im()),PT_DESCRIPTION,"Secondary series impedance (only used when you want to define each individual winding seperately, pu, imag",
+			PT_complex, "impedance1[pu.Ohm]",PADDR(impedance1),PT_DESCRIPTION,"Secondary series impedance (only used when you want to define each individual winding seperately, pu",
+			PT_double, "resistance2[pu.Ohm]",PADDR(impedance2.Re()),PT_DESCRIPTION,"Secondary series impedance (only used when you want to define each individual winding seperately, pu, real",	
+			PT_double, "reactance2[pu.Ohm]",PADDR(impedance2.Im()),PT_DESCRIPTION,"Secondary series impedance (only used when you want to define each individual winding seperately, pu, imag",	
+			PT_complex, "impedance2[pu.Ohm]",PADDR(impedance2),PT_DESCRIPTION,"Secondary series impedance (only used when you want to define each individual winding seperately, pu",
+			PT_double, "shunt_resistance[pu.Ohm]",PADDR(shunt_impedance.Re()),PT_DESCRIPTION,"Shunt impedance on primary side, pu, real",
+			PT_double, "shunt_reactance[pu.Ohm]",PADDR(shunt_impedance.Im()),PT_DESCRIPTION,"Shunt impedance on primary side, pu, imag",
+			PT_complex, "shunt_impedance[pu.Ohm]",PADDR(shunt_impedance),PT_DESCRIPTION,"Shunt impedance on primary side, pu",
 			//thermal aging model parameters
-			PT_double, "core_coil_weight[lb]", PADDR(core_coil_weight),
-			PT_double, "tank_fittings_weight[lb]", PADDR(tank_fittings_weight),
-			PT_double, "oil_volume[gal]", PADDR(oil_vol),
-			PT_double, "rated_winding_time_constant[h]", PADDR(t_W),
-			PT_double, "rated_winding_hot_spot_rise[degC]", PADDR(dtheta_H_AR),
-			PT_double, "rated_top_oil_rise[degC]", PADDR(dtheta_TO_R),
-			PT_double, "no_load_loss[pu]", PADDR(no_load_loss),
-			PT_double, "full_load_loss[pu]", PADDR(full_load_loss),
-			PT_double, "reactance_resistance_ratio", PADDR(RX),
-			PT_double, "installed_insulation_life[h]", PADDR(installed_insulation_life),
+			PT_double, "core_coil_weight[lb]", PADDR(core_coil_weight),PT_DESCRIPTION,"The weight of the core and coil assembly in pounds",
+			PT_double, "tank_fittings_weight[lb]", PADDR(tank_fittings_weight),PT_DESCRIPTION,"The weight of the tank and fittings in pounds",
+			PT_double, "oil_volume[gal]", PADDR(oil_vol),PT_DESCRIPTION,"The number of gallons of oil in the transformer",
+			PT_double, "rated_winding_time_constant[h]", PADDR(t_W),PT_DESCRIPTION,"The rated winding time constant in hours",
+			PT_double, "rated_winding_hot_spot_rise[degC]", PADDR(dtheta_H_AR),PT_DESCRIPTION,"winding hottest-spot rise over ambient temperature at rated load, degrees C",
+			PT_double, "rated_top_oil_rise[degC]", PADDR(dtheta_TO_R),PT_DESCRIPTION,"top-oil hottest-spot rise over ambient temperature at rated load, degrees C",
+			PT_double, "no_load_loss[pu]", PADDR(no_load_loss),PT_DESCRIPTION,"Another method of specifying transformer impedances, defined as per unit power values (shunt)",
+			PT_double, "full_load_loss[pu]", PADDR(full_load_loss),PT_DESCRIPTION,"Another method of specifying transformer impedances, defined as per unit power values (shunt and series)",
+			PT_double, "reactance_resistance_ratio", PADDR(RX),PT_DESCRIPTION,"the reactance to resistance ratio (X/R)",
+			PT_double, "installed_insulation_life[h]", PADDR(installed_insulation_life),PT_DESCRIPTION,"the normal lifetime of the transformer insulation at rated load, hours",
 
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
@@ -146,24 +146,49 @@ int transformer_configuration::init(OBJECT *parent)
 
 	// check connection type
 	if (connect_type==UNKNOWN)
-		throw "connection type not specified";
+		GL_THROW("connection type not specified");
+		/*  TROUBLESHOOT
+		You must specify what type of transformer this is (i.e., WYE_WYE, DELTA_GWYE, etc.).  Please choose
+		a supported connect_type.
+		*/
 	
 	// check installation type
 	if (install_type==UNKNOWN)
-		gl_warning("installation type not specified");
+		gl_verbose("installation type not specified");
+		/*  TROUBLESHOOT
+		The type of installation (i.e., pad mounted versus pole top) was not specified. In most cases, this
+		message can be ignored as it does not effect the solution.  However, if using the transformer aging 
+		model, future implementation may need install_type to be specified.
+		*/
 	
 	// check primary and second voltages
+	if (V_primary==0)
+		GL_THROW("V_primary must be positive");
+		/*  TROUBLESHOOT
+		For the purposes of specifying the equipment, V can only be a positive number. This helps define the turns ratio. 
+		Please specify V_primary as a positive number.
+		*/
 	if (V_secondary==0)
-		throw "V_secondary must be positive";
-	// it is not true for step-up transformer
-	//if (V_primary<=V_secondary)
-	//	throw "V_primary must be greater than V_secondary";
+		GL_THROW("V_secondary must be positive");
+		/*  TROUBLESHOOT
+		For the purposes of specifying the equipment, V can only be a positive number. This helps define the turns ratio. 
+		Please specify V_secondary as a positive number.
+		*/
 
 	// check kVA rating
 	if (kVA_rating<=0)
-		throw "kVA_rating(s) must be positive";
+		GL_THROW("kVA_rating(s) must be positive");
+		/*  TROUBLESHOOT
+		By definition, kVA can only be a positive (or zero) number. But, for the sake of actual equipment,
+		we'll assume this can only be a positive number.  Please specify kVA_rating as a positive number.
+		*/
 	if (fabs((kVA_rating-phaseA_kVA_rating-phaseB_kVA_rating-phaseC_kVA_rating)/kVA_rating)>0.01)
-		throw "kVA rating mismatch across phases exceeds 1%";
+		GL_THROW("kVA rating mismatch across phases exceeds 1%");
+		/*  TROUBLESHOOT
+		Both the total kVA rating and the individual kVA phase ratings were set.  However, they differed by
+		more than 1%, leaving the model in a state of confusion.  Please check your kVA ratings and either
+		specify only the total rating (will evenly split rating between phases) or a by-phase rating.
+		*/
 
 	// check connection type and see if it support shunt or additional series impedance values
 	if (connect_type!=SINGLE_PHASE_CENTER_TAPPED)
@@ -192,7 +217,16 @@ int transformer_configuration::init(OBJECT *parent)
 	}
 	else
 	{
-		if (no_load_loss > 0 && full_load_loss > 0){// Using Jason's equations to determine shunt and series resistances based on no-load and full-load losses
+		if (no_load_loss > 0 && full_load_loss > 0)// Using Jason's equations to determine shunt and series resistances based on no-load and full-load losses
+		// determine shunt and series resistances based on no-load and full-load losses
+		{
+			if (RX == 4.5 && kVA_rating > 500)
+				gl_warning("transormer_configuration:%d (%s) reactance_resistance_ratio was not set and defaulted to 4.5. This may cause issues with larger transformers (>0.5 MVA)",obj->id,obj->name);
+				/* TROUBLESHOOT
+				X/R ratios are highly dependent on the size of the transformer.  As the transformer rating goes up
+				so does the X/R ratio.  For small residential transformers (<500 kVA), the values range from about 2-5 as good
+				estimates. For a good X/R reference, recommend GE's GET-3550F document, Appendix Part II.
+				*/
 			impedance = complex(full_load_loss,RX*full_load_loss);
 			shunt_impedance = complex(1/no_load_loss,RX/no_load_loss);
 		}
@@ -200,23 +234,45 @@ int transformer_configuration::init(OBJECT *parent)
 		{
 			impedance1 = impedance2;
 			gl_warning("impedance2 was defined, but impedance1 was not -- assuming they are equal");
+			/* TROUBLESHOOT
+			One of the secondary side impedances (impedance1 or impedance2, or resistance1 and reactance1) was set to a 
+			non-zero value, indicating you wanted to use the secondary impedances, however, the other value was not also set.
+			If you do not want to use the assumption that they are the same, please set the other impedance value.
+			*/
 		}
 		else if ((impedance1.Re() != 0.0 && impedance1.Im() != 0.0) && (impedance2.Re() == 0.0 && impedance2.Im() == 0.0))
 		{
 			impedance2 = impedance1;
 			gl_warning("impedance1 was defined, but impedance2 was not -- assuming they are equal");
+			/* TROUBLESHOOT
+			One of the secondary side impedances (impedance1 or impedance2, or resistance1 and reactance1) was set to a 
+			non-zero value, indicating you wanted to use the secondary impedances, however, the other value was not also set.
+			If you do not want to use the assumption that they are the same, please set the other impedance value.
+			*/
 		}
 		
 	}
 	// check impedance
 	if (impedance.Re()<=0 || impedance1.Re()<0 || impedance2.Re()<0)
-		throw "resistance must be non-negative and non-zero";
+		GL_THROW("resistance must be non-negative");
+		/* TROUBLESHOOT
+		Please specify either impedance (real portion) or resistance as a positive value.
+		*/
 	if (impedance.Im()<=0 || impedance1.Im()<0 || impedance2.Im()<0)
-		throw "reactance must be non-negative and non-zero";
+		GL_THROW("reactance must be non-negative");
+		/* TROUBLESHOOT
+		Please specify either impedance (imaginary portion)	or reactance as a positive value.
+		*/
 	if (shunt_impedance.Re()<0)
-		throw "shunt_resistance must be non-negative";
+		GL_THROW("shunt_resistance must be non-negative");
+		/* TROUBLESHOOT
+		Please specify either shunt impedance (imaginary portion) or shunt resistance as a positive value.
+		*/
 	if (shunt_impedance.Im()<0)
-		throw "shunt_reactance must be non-negative";
+		GL_THROW("shunt_reactance must be non-negative");
+		/* TROUBLESHOOT
+		Please specify either shunt impedance (imaginary portion) or shunt reactance as a positive value.
+		*/
 	return 1;
 }
 
