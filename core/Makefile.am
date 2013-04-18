@@ -73,6 +73,7 @@ gridlabd_bin_SOURCES = \
 	unit.c unit.h \
 	validate.cpp validate.h \
 	version.h \
+	deltamode.c deltamode.h\
 	# xcore.cpp xcore.h 
 EXTRA_gridlabd_bin_SOURCES = \
 	cmex.c cmex.h xcore.cpp xcore.h
