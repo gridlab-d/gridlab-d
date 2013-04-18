@@ -1,0 +1,46 @@
+// Test file for evcharger_det device
+// Update interval check
+
+clock {
+     timezone PST+8PDT;
+     starttime '2009-06-01 00:00:00';
+     stoptime '2009-06-05 00:00:00';
+}
+
+module tape;
+module residential {
+	implicit_enduses NONE;
+	};
+module assert;
+
+//Default house
+object house {
+     name house_for_sake_of_a_house;
+	 object recorder {	//Here just to push the simulation
+		property hvac_load;
+		interval 3600;
+		file "driverfile.csv";
+		};
+ }
+
+//CSV-populated file - index 2
+object evcharger_det {
+	name ev_file_read;
+	parent house_for_sake_of_a_house;
+	data_file "../data_sample_NHTS.csv";		//CSV file with car parameters
+	vehicle_index 2;					//Could be populated by a script
+	charging_efficiency 0.900000;		//Efficiency of the charger - energy consumed vs. energy put into the battery
+	mileage_classification 110.000000;	//Mileage rating on PHEV (e.g., PHEV-110 runs 110 miles on electric)
+	mileage_efficiency 3.846000;		//Miles per kWh - helps determine battery size
+	maximum_charge_rate 1700.000000;	//Makimum power draw in Watts - used to determine charge rate and load
+	work_charging_available FALSE;		//Whether the vehicle charges at work - just affects SOC - not included as power draw on system (assumes work is on another feeder)
+	object double_assert {
+		target battery_SOC;
+		within 0.01;
+		object player {
+			file "../data_EV_det_output_m1.player";
+			property value;
+			};
+		};
+}
+

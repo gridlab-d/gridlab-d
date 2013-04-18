@@ -1,0 +1,40 @@
+// Test file for evcharger_det device
+// Update interval check
+
+clock {
+     timezone PST+8PDT;
+     starttime '2009-06-01 00:00:00';
+     stoptime '2009-06-05 00:00:00';
+}
+
+module tape;
+module residential {
+	implicit_enduses NONE;
+	};
+module assert;
+
+//Default house
+object house {
+     name house_for_sake_of_a_house;
+	 object recorder {	//Here just to push the simulation
+		property hvac_load;
+		interval 3600;
+		file "driverfile.csv";
+		};
+}
+
+//CSV-populated file
+object evcharger_det {
+	name ev_file_default;
+	parent house_for_sake_of_a_house;
+	battery_SOC 60.8696;	//Makes assert happier
+	object double_assert {
+		target battery_SOC;
+		within 0.01;
+		object player {
+			file "../data_EV_det_output_m1_default.player";
+			property value;
+			};
+		};
+}
+
