@@ -4,7 +4,6 @@
 #set minimum_timestep=1;
 #set init_sequence=DEFERRED
 #set suppress_repeat_messages=TRUE
-#set pauseatexit=TRUE
 
 module tape;
 module assert;

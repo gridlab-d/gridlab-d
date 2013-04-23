@@ -111,7 +111,7 @@ void throw_exception(char *format, /**< the format string */
 	{
 		strncpy(handlers->msg,buffer,sizeof(handlers->msg));
 		// do not use output_* because they use functions that can throw exception
-		fprintf(stderr,"EXCEPTION: %s\n", buffer);
+		//fprintf(stderr,"EXCEPTION: %s\n", buffer);
 		longjmp(handlers->buf,handlers->id);
 	}
 	else

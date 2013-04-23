@@ -59,7 +59,7 @@ object substation {
 			constant_impedance_A 1000+2000j;
 			constant_impedance_B 1000+1000j;
 			constant_impedance_C 1200+800j;
-			nominal_voltage 2400;
+			nominal_voltage 230000;
 		};
 		object complex_assert {
 			target positive_sequence_voltage;

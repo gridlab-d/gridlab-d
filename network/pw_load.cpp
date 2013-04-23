@@ -330,7 +330,6 @@ int pw_load::get_powerworld_nomvolt(){
 	catch (_com_error err) {
 		// @TODO this needs to be a gl_error, but err.ErrorMessage returns a TCHAR*
 		std::cout << "!!! " << err.ErrorMessage() << "\n";
-		gl_verbose("PW_load:get_powerworld_nomvolt.");
 		return 1; // failure
 	}
 	
@@ -613,7 +612,6 @@ int pw_load::init(OBJECT *parent){
 		return 0;
 	}
 	nomvolt_value = get_powerworld_nomvolt();
-	printf("PW_load:INIT. get_powerworld_nomvolt() was successful.");
 	busangle_value = get_powerworld_busangle();
 	voltage_value = get_powerworld_voltage();
 
@@ -683,7 +681,7 @@ int pw_load::init(OBJECT *parent){
 			*/
 		}
 	}
-	gl_verbose("Reached end of pw_load init successfully.");
+
 	return 1;
 }
 

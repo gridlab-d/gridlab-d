@@ -1594,6 +1594,13 @@ STATUS exec_sync_getstatus(struct sync_data *d) /**< Sync data to read sync stat
 	if ( d==NULL ) d=&main_sync;
 	return d->status;
 }
+/** Determine whether sync time is a running simulation
+    @return true if the simulation should keep going, false if it should stop
+ **/
+bool exec_sync_isrunning(struct sync_data *d)
+{
+	return exec_sync_get(d)<=global_stoptime && !exec_sync_isnever(d) && exec_sync_ishard(d);
+}
 
 /******************************************************************
  *  MAIN EXEC LOOP
@@ -1823,13 +1830,12 @@ STATUS exec_start(void)
 	TRY {
 
 		/* main loop runs for iteration limit, or when nothing futher occurs (ignoring soft events) */
-		int running; /* split into two tests to make it easier to tell what's going on */
-		output_debug("starting with stepto=%lli, stop=%lli, events=%i, stop=%i", exec_sync_get(NULL), global_stoptime, exec_sync_getevents(NULL), exec_getexitcode());
-		while ( running = ( exec_sync_get(NULL)<=global_stoptime && 
-				!exec_sync_isnever(NULL) && exec_sync_ishard(NULL) ),
-			iteration_counter>0 && ( running || global_run_realtime>0) && exec_getexitcode()==XC_SUCCESS ) 
+		while ( iteration_counter>0 
+			&& ( exec_sync_isrunning(NULL) || global_run_realtime>0 ) 
+			&& exec_getexitcode()==XC_SUCCESS ) 
 		{
 			TIMESTAMP internal_synctime;
+			output_debug("*** main loop event at %lli; stoptime=%lli, n_events=%i, exitcode=%i ***", exec_sync_get(NULL), global_stoptime, exec_sync_getevents(NULL), exec_getexitcode());
 
 			/* update the process table info */
 			sched_update(global_clock,MLS_RUNNING);
@@ -1915,9 +1921,6 @@ STATUS exec_start(void)
 					output_error("a simulation mode error has occurred");
 					break; /* terminate main loop immediately */
 				}
-				//sync_d.step_to = t;
-				//if ( !((flags&DMF_SOFTEVENT)||(global_simulation_mode!=SM_DELTA)) )
-				//	sync_d.hard_event = 1;
 				exec_sync_set(NULL,t);
 			}
 			else
@@ -2158,7 +2161,7 @@ STATUS exec_start(void)
 						by a more detailed message that explains why it failed.  Follow
 						the guidance for that message and try again.
 					 */
-					return FAILED;
+					THROW("commit failure");
 				} else if( absolute_timestamp(commit_time) < exec_sync_get(NULL) )
 				{
 					exec_sync_set(NULL,commit_time);
@@ -2188,7 +2191,7 @@ STATUS exec_start(void)
 			if ( exec_run_syncscripts()!=XC_SUCCESS )
 			{
 				output_error("sync script(s) failed");
-				return FAILED;
+				THROW("script synchronization failure");;
 			}
 			if (global_run_realtime>0 && tsteps == 1 && global_dumpfile[0]!='\0')
 			{
@@ -2278,7 +2281,7 @@ STATUS exec_start(void)
 		 */
 	}
 	ENDCATCH
-	output_debug("done");
+	output_debug("*** main loop ended at %lli; stoptime=%lli, n_events=%i, exitcode=%i ***", exec_sync_get(NULL), global_stoptime, exec_sync_getevents(NULL), exec_getexitcode());
 	if(global_multirun_mode == MRM_MASTER)
 	{
 		instance_master_done(TS_NEVER); // tell everyone to pack up and go home
