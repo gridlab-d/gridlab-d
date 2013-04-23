@@ -11,6 +11,7 @@
 #include "pw_load.h"
 
 #ifdef HAVE_POWERWORLD
+#ifndef PWX64
 
 /**
  	Scans the argument to validate its VARIANT type, and to perform basic
@@ -773,5 +774,6 @@ int pw_load::isa(char *classname){
 	return (0 == strcmp(classname, oclass->name));
 }
 
+#endif	//PWX64
 #endif //HAVE_POWERWORLD
 // EOF

@@ -10,6 +10,7 @@
 #include "network.h"
 
 #ifdef HAVE_POWERWORLD
+#ifndef PWX64
 
 // something in the import'ed stuff includes wtypes.h, which uses int64 as a member name
 #ifdef int64
@@ -54,6 +55,7 @@ public:
 
 };
 
+#endif // PWX64
 #endif // HAVE_POWERWORLD
 #endif // _PW_MODEL_H_
 

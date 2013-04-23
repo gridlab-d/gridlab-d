@@ -12,6 +12,7 @@
 #include "pw_model.h"
 
 #ifdef HAVE_POWERWORLD
+#ifndef PWX64
 
 #include "comutil.h"
 #include "atlbase.h"
@@ -440,5 +441,6 @@ void pw_model::pw_close_COM(void)
 	CoUninitialize();
 }
 
+#endif //PWX64
 #endif //HAVE_POWERWORLD
 // EOF

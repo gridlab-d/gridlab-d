@@ -12,6 +12,7 @@
 #include "network.h"
 
 #ifdef HAVE_POWERWORLD
+#ifndef PWX64
 
 #include <iostream>
 
@@ -58,6 +59,7 @@ private:
 	int get_powerworld_voltage();
 	int post_powerworld_current();
 };
+#endif // PWX64
 #endif // HAVE_POWERWORLD
 #endif // _PW_LOAD_H_
 

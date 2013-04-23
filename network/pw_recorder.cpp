@@ -1,6 +1,7 @@
 #include "pw_recorder.h"
 
 #ifdef HAVE_POWERWORLD
+#ifndef PWX64
 
 #include <iostream>
 
@@ -553,5 +554,6 @@ int pw_recorder::write_line(TIMESTAMP t1){
 	return 1;
 }
 
+#endif //PWX64
 #endif //HAVE_POWERWORLD
 // EOF

@@ -30,10 +30,14 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	}
 
 #ifdef HAVE_POWERWORLD
+#ifndef PWX64
 	CLASS *first = (new pw_model(module))->oclass;
 	new pw_load(module);
 	new pw_recorder(module);
 	/* always return the first class registered */
+#else
+	CLASS *first = NULL;
+#endif
 #else
 	CLASS *first = NULL;
 #endif
@@ -47,6 +51,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 EXPORT void term(void)
 {
 #ifdef HAVE_POWERWORLD
+#ifndef PWX64
 	pw_model *temp_model;
 
 	if (startedCOM)
@@ -59,7 +64,8 @@ EXPORT void term(void)
 
 		gl_verbose("network: closed out COM connection");
 	}
-#endif
+#endif	//PWX64
+#endif	//HAVE_POWERWORLD
 }
 
 CDECL int do_kill()

@@ -22,9 +22,11 @@ GLOBAL OBJECT *initiatorCOM INIT(NULL);	/* Object that initiated the COM interfa
 #ifdef __cplusplus
 
 #ifdef HAVE_POWERWORLD
+#ifndef PWX64
 #include "pw_model.h"
 #include "pw_load.h"
 #include "pw_recorder.h"
+#endif	//PWX64
 #endif	//HAVE_POWERWORLD
 
 #endif /* __cplusplus */

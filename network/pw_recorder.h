@@ -12,6 +12,7 @@
 #include "pw_model.h"
 
 #ifdef HAVE_POWERWORLD
+#ifndef PWX64
 
 #ifdef int64
 #undef int64
@@ -76,5 +77,6 @@ private:
 	char **out_values; // char [prop_ct][64] in practice
 	bool is_ready;
 };
+#endif //PWX64
 #endif //HAVE_POWERWORLD
 #endif // _PW_RECORDER_H_
