@@ -211,8 +211,6 @@ diesel_dg::diesel_dg(MODULE *module)
 				PT_KEYWORD, "S",(set)PHASE_S,
 
 			//-- This hides from modehelp -- PT_double,"TD[s]",PADDR(gov_TD),PT_DESCRIPTION,"Governor combustion delay (s)",PT_ACCESS,PA_HIDDEN,
-
-			PT_bool,"deltamode_inclusive",PADDR(deltamode_inclusive),PT_DESCRIPTION,"Flag to include this object in deltamode updates",
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		defaults = this;
@@ -413,6 +411,12 @@ int diesel_dg::init(OBJECT *parent)
 
 	static complex default_line123_voltage[3], default_line1_current[3];
 	int i;
+
+	//Set the deltamode flag, if desired
+	if ((obj->flags & OF_DELTAMODE) == OF_DELTAMODE)
+	{
+		deltamode_inclusive = true;	//Set the flag and off we go
+	}
 
 	// find parent meter, if not defined, use a default meter (using static variable 'default_meter')
 	if (parent!=NULL)

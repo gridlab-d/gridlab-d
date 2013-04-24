@@ -116,7 +116,6 @@ powerflow_object::powerflow_object(MODULE *mod)
 				PT_KEYWORD, "B", (set)PHASE_B,
 				PT_KEYWORD, "A", (set)PHASE_A,
 			PT_double,"nominal_voltage[V]",PADDR(nominal_voltage),
-			PT_bool,"deltamode_inclusive",PADDR(deltamode_inclusive),PT_DESCRIPTION,"Flag to include this object in deltamode updates",
 #ifdef SUPPORT_OUTAGES
 			PT_set, "condition", PADDR(condition),
 				PT_KEYWORD, "OPEN", (set)OC_OPEN,
@@ -154,7 +153,6 @@ int powerflow_object::create(void)
 {
 	phases = NO_PHASE;
 	nominal_voltage = 0.0;
-	deltamode_inclusive = false;	//By default, no deltamode
 #ifdef SUPPORT_OUTAGES
 	condition = OC_NORMAL;
 	solution = PS_NORMAL;

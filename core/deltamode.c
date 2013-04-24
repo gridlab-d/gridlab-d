@@ -247,11 +247,13 @@ DT delta_update(void)
 	DT seconds_advance, timestep;
 	DELTAT temp_time;
 	unsigned int delta_iteration_remaining, delta_iteration_count;
-	SIMULATIONMODE interupdate_mode;
+	SIMULATIONMODE interupdate_mode, interupdate_mode_result;
 	int n;
 	double curr_time_val;
 	double dbl_stop_time;
 	double dbl_curr_clk_time;
+	OBJECT *d_obj = NULL;
+	CLASS *d_oclass = NULL;
 
 	/* send preupdate messages */
 	timestep=delta_preupdate();
@@ -300,23 +302,42 @@ DT delta_update(void)
 			/* Loop through objects with their individual updates */
 			for ( n=0 ; n<delta_objectcount ; n++ )
 			{
-				OBJECT *obj = delta_objectlist[n];
-				CLASS *oclass = obj->oclass;
-				if ( oclass->update && !oclass->update(obj,timestep,delta_iteration_count) ){
-					output_error("delta_update(): update failed for object \'%s\'", object_name(obj, temp_name_buff, 63));
-					/* TROUBLESHOOT
-					   An object failed to update correctly while operating in deltamode.
-					   Generally, this is an internal error and should be reported to the GridLAB-D developers.
-					 */
-					return DT_INVALID;
+				d_obj = delta_objectlist[n];	/* Shouldn't need NULL checks, since they were done above */
+				d_oclass = d_obj->oclass;
+				if ( d_oclass->update )	/* Make sure it exists - init should handle this */
+				{
+					/* Call the object-level interupdate */
+					interupdate_mode_result = d_oclass->update(d_obj,global_clock,global_deltaclock,timestep,delta_iteration_count);
+
+					/* Check the status and handle appropriately */
+					switch ( interupdate_mode_result ) {
+						case SM_DELTA_ITER:
+							interupdate_mode = SM_DELTA_ITER;
+							break;
+						case SM_DELTA:
+							if (interupdate_mode != SM_DELTA_ITER)
+								interupdate_mode = SM_DELTA;
+							/* default else - leave it as is (SM_DELTA_ITER) */
+							break;
+						case SM_ERROR:
+							output_error("delta_update(): update failed for object \'%s\'", object_name(d_obj, temp_name_buff, 63));
+							/* TROUBLESHOOT
+							   An object failed to update correctly while operating in deltamode.
+							   Generally, this is an internal error and should be reported to the GridLAB-D developers.
+							 */
+							return DT_INVALID;
+						case SM_EVENT:
+						default: /* mode remains untouched */
+							break;
+					}
 				}
 			}
 
 			/* send interupdate messages */
-			interupdate_mode = delta_interupdate(timestep,delta_iteration_count);
+			interupdate_mode_result = delta_interupdate(timestep,delta_iteration_count);
 
 			/* Check interupdate return statii */
-			if (interupdate_mode == SM_ERROR)
+			if (interupdate_mode_result == SM_ERROR)
 			{
 				output_error("delta_update(): interupdate failed");
 				/* TROUBLESHOOT
@@ -325,7 +346,19 @@ DT delta_update(void)
 				 */
 				return DT_INVALID;
 			}
-			else if ((interupdate_mode == SM_DELTA) || (interupdate_mode == SM_EVENT))
+
+			/* Now reconcile with object-level (if called) -- error is already handled */
+			if ((interupdate_mode_result != SM_EVENT) && (interupdate_mode == SM_EVENT))
+			{
+				interupdate_mode = interupdate_mode_result;	/* It is SM_DELTA or SM_DELTA_ITER, which trumps SM_EVENT */
+			}
+			else if ((interupdate_mode_result == SM_DELTA_ITER) && (interupdate_mode == SM_DELTA))
+			{
+				interupdate_mode = interupdate_mode_result;	/* Sets us to SM_DELTA_ITER */
+			}
+			/* defaulted else - interupdate is SM_DELTA_ITER or both are, so it doesn't matter */
+
+			if ((interupdate_mode == SM_DELTA) || (interupdate_mode == SM_EVENT))
 			{
 				break;	/* Get us out of the while and proceed as appropriate */
 			}

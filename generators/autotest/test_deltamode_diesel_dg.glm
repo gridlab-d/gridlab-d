@@ -48,7 +48,7 @@ object meter {
 	phases ABC;
 	name BUS_1;
 	nominal_voltage 8660.254;
-	deltamode_inclusive true;
+	flags DELTAMODE;
 	object recorder {
 		file bus_1_output_recorder.csv;
 		property voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag;
@@ -62,8 +62,8 @@ object meter {
 	phases ABC;
 	name BUS_2;
 	nominal_voltage 8660.254;
-	deltamode_inclusive true;
 	bustype SWING;
+	flags DELTAMODE;
 	object recorder {
 		file bus_2_output_recorder.csv;
 		property voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag;
@@ -76,7 +76,7 @@ object diesel_dg {
 	parent BUS_1;
 	name Gen_Bus_1;
 	Rated_V 15000.0;
-	deltamode_inclusive true;
+	flags DELTAMODE;
 	Gen_type DYN_SYNCHRONOUS;
 	Exciter_type SEXS;
 	Governor_type DEGOV1;
@@ -101,7 +101,7 @@ object diesel_dg {
 	parent BUS_2;
 	name Gen_Bus_2;
 	Rated_V 15000.0;
-	deltamode_inclusive true;
+	flags DELTAMODE;
 	Gen_type DYN_SYNCHRONOUS;
 	rotor_speed_convergence ${rotor_convergence};
 	//temp properties - sync with example
@@ -127,7 +127,7 @@ object load {
 	constant_power_A 875000.0+575000.0j;
 	constant_power_B 750000.0+575000.0j;
 	constant_power_C 825000.0+575000.0j;
-	deltamode_inclusive true;
+	flags DELTAMODE;
 	object player {
 		file ../diesel_deltamode_load_player_A.csv;
 		property constant_power_A;

@@ -95,6 +95,8 @@ private:
 	MAC_STATES predictor_vals;	//Predictor pass values of variables
 	MAC_STATES corrector_vals;	//Corrector pass values of variables
 
+	bool deltamode_inclusive;	//Boolean for deltamode calls - pulled from object flags
+
 protected:
 	/* TODO: put unpublished but inherited variables */
 public:
@@ -245,7 +247,6 @@ public:
 	//STATUS deltaupdate(unsigned int64 dt, unsigned int iteration_count_val);
 	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 	STATUS post_deltaupdate(complex *useful_value, unsigned int mode_pass);
-	bool deltamode_inclusive;
 public:
 	static CLASS *oclass;
 	static diesel_dg *defaults;

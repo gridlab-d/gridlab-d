@@ -87,6 +87,7 @@ private:
 	TIMESTAMP prev_NTime;			///< Previous timestep - used for propogating child properties
 	complex last_child_power[3][3];	///< Previous power values - used for child object propogation
 	complex last_child_current12;	///< Previous current value - used for child object propogation (namely triplex)
+	bool deltamode_inclusive;		///< Flag for deltamode functionality, just to prevent having to mask the flags
 public:
 	double frequency;			///< frequency (only valid on reference bus) */
 	object reference_bus;		///< reference bus from which frequency is defined */

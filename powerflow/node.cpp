@@ -207,15 +207,17 @@ int node::create(void)
 	prev_power_value = NULL;	//NULL the pointer, again just for the sake of doing so
 	node_type = NORMAL_NODE;	//Assume we're nothing special by default
 	current_accumulated = false;
+	deltamode_inclusive = false;	//Begin assuming we aren't delta-enabled
 
 	return result;
 }
 
 int node::init(OBJECT *parent)
 {
+	OBJECT *obj = OBJECTHDR(this);
+
 	if (solver_method==SM_NR)
 	{
-		OBJECT *obj = OBJECTHDR(this);
 		char ext_lib_file_name[1025];
 		char extpath[1024];
 		CALLBACKS **cbackval = NULL;
@@ -718,8 +720,6 @@ int node::init(OBJECT *parent)
 	}
 	else if (solver_method == SM_FBS)	//Forward back sweep
 	{
-		OBJECT *obj = OBJECTHDR(this);
-
 		// Store the topological parent before anyone overwrites it
 		TopologicalParent = obj->parent;
 
@@ -923,8 +923,11 @@ int node::init(OBJECT *parent)
 	last_disconnect = gl_globalclock;	//Set to current clock
 
 	//Deltamode checks - init, so no locking yet
-	if (deltamode_inclusive)
+	if ((obj->flags & OF_DELTAMODE) == OF_DELTAMODE)
 	{
+		//Flag the variable for later use
+		deltamode_inclusive = true;
+
 		//Increment the counter for allocation
 		pwr_object_count++;
 

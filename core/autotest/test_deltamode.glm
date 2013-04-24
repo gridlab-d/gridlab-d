@@ -27,31 +27,18 @@ object meter {
 	nominal_voltage 240;
 	object player {
 		//in 2001-01-01 00:00:01;
-		file test_deltamode_house_player.csv;
+		file ../test_deltamode_house_player.csv;
 		property voltage_A;
 		flags DELTAMODE;
 	};
 	object recorder {
 		file test_deltamode_diesel_dg_recorder.csv;
 		property voltage_A,voltage_B,voltage_C;
-		//flags DELTAMODE;
+		flags DELTAMODE;
 	};
 	object recorder {
 		file test_diesel_dg_recorder.csv;
 		property voltage_A,voltage_B,voltage_C;
 		interval -1;
-	};
-	object diesel_dg {
-		Gen_mode CONSTANTP;
-		Gen_status ONLINE;
-		name DG_1;
-		flags DELTAMODE;
-	};
-	object diesel_dg {
-		Gen_mode CONSTANTP;
-		Gen_status ONLINE;
-		name DG_2;
-		rank 2;
-		//flags DELTAMODE;
 	};
 }
