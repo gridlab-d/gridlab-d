@@ -64,7 +64,7 @@ object substation {
 		object complex_assert {
 			target positive_sequence_voltage;
 			within 1;
-			value 235730.093+13246.797j;
+			value 227022.553+1572.658j;
 			in '2001-07-25 01:03:00 PDT'; 
 		};
 }	

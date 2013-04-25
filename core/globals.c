@@ -955,7 +955,13 @@ char *global_getvar(char *name, char *buffer, int size)
 
 	var = global_find(name);
 	if(var == NULL)
-		return NULL;
+	{
+		/* try parameter expansion */
+		if ( parameter_expansion(buffer,size,name) )
+			return buffer;
+		else
+			return NULL;
+	}
 	len = class_property_to_string(var->prop, (void *)var->prop->addr, temp, sizeof(temp));
 	if(len < size){ /* if we have enough space, copy to the supplied buffer */
 		strncpy(buffer, temp, len+1);

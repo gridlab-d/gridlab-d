@@ -1,84 +1,185 @@
 #set suppress_repeat_messages=false
 #set strictnames=0
 
+// this shouldn't be necessary once ticket:630 is resolved
+#define ok=ok
+#define failed=failed
+
 // use default parameter
 #print Testing var1...
-#print var1 ${var1:-ok}
+#if ${var1:-ok}!=ok
+#error var1 test 1 failed!
+#endif
 #define var1=ok
-#print var1 ${var1:-failed}
+#if ${var1:-failed}!=ok
+#error var1 test 2 failed!
+#endif
 
 // assign default parameter
 #print Testing var2...
-#print var2 ${var2:=ok}
-#print var2 ${var2:-failed}
+#if ${var2:=ok}!=ok
+#error var2 test 1 failed!
+#endif
+#if ${var2:-failed}!=ok
+#error var2 test 2 failed!
+#endif
 
 // use alternate parameter
 #print Testing var3...
 #define var3=failed
-#print var3 ${var3:+ok}
+#if ${var3:+ok}!=ok
+#error var3 test 1 failed!
+#endif
 
 // substring
 #print Testing var4...
 #define var4=failedok
-#print var4 ${var4:6}
+#if ${var4:6}!=ok
+#error var4 test 1 failed!
+#endif
+
 #print Testing var5...
 #define var5=failedokfailed
-#print var5 ${var5:6:2}
+#if ${var5:6:2}!=ok
+#error var5 test 1 failed!
+#endif
 
 // substitution
 #print Testing var6...
 #define var6=okfailed
-#print var6 ${var6/failed/}
+#if ${var6/failed/}!=ok
+#error var6 test 1 failed!
+#endif
+
 #print Testing var7...
 #define var7=failedok
-#print var7 ${var7/failed/}
+#if ${var7/failed/}!=ok
+#error var7 test 1 failed!
+#endif
+
 #print Testing var8...
 #define var8=ofailedk
-#print var8 ${var8/failed/}
+#if ${var8/failed/}!=ok
+#error var8 test 1 failed!
+#endif
+
 #print Testing var9...
 #define var9=failedofailedkfailed
-#print var9 ${var9//failed/}
+#if ${var9//failed/}!=ok
+#error var9 test 1 failed!
+#endif
 
 // operations
 #print Initializing int1...
 #print int1=${int1=1}
+#if int1!=1
+#error int1 test 1 failed!
+#endif
+
 #print Preincrementing int1... 
 #print int1=${++int1}
+#if int1!=2
+#error int1 test 2 failed!
+#endif
+
 #print Predecrementing int1... 
 #print int1=${--int1}
+#if int1!=1
+#error int1 test 3 failed!
+#endif
+
 #print Postincrementing int1=${int1++}...
 #print int1=${int1}
+#if int1!=2
+#error int1 test 4 failed!
+#endif
+
 #print Postdecrementing int1=${int1--}...
 #print int1=${int1}
+#if int1!=1
+#error int1 test 5 failed!
+#endif
 
-#print Boolean int1==0: ${int1==0?failed:ok}
-#print Boolean int1==1: ${int1==1?ok:failed}
-#print Boolean int1==2: ${int1==2?failed:ok}
+#print Boolean tests... 
+#if ok!=${int1==0?failed:ok}
+#error Boolean == test 1 failed!
+#endif
+#if ok!=${int1==1?ok:failed}
+#error Boolean == test 2 failed!
+#endif
+#if ok!=${int1==2?failed:ok}
+#error Boolean == test 3 failed!
+#endif
 
-#print Boolean int1!=0: ${int1!=0?ok:failed}
-#print Boolean int1!=1: ${int1!=1?failed:ok}
-#print Boolean int1!=2: ${int1!=2?ok:failed}
+#if ok!=${int1!=0?ok:failed}
+#error Boolean != test 1 failed!
+#endif
+#if ok!=${int1!=1?failed:ok}
+#error Boolean != test 2 failed!
+#endif
+#if ok!=${int1!=2?ok:failed}
+#error Boolean != test 3 failed!
+#endif
 
-#print Boolean int1<>0: ${int1<>0?ok:failed}
-#print Boolean int1<>1: ${int1<>1?failed:ok}
-#print Boolean int1<>2: ${int1<>2?ok:failed}
+#if ok!=${int1<>0?ok:failed}
+#error Boolean <> test 1 failed!
+#endif
+#if ok!=${int1<>1?failed:ok}
+#error Boolean <> test 2 failed!
+#endif
+#if ok!=${int1<>2?ok:failed}
+#error Boolean <> test 3 failed!
+#endif
 
-#print Boolean int1<0: ${int1<0?failed:ok}
-#print Boolean int1<1: ${int1<1?failed:ok}
-#print Boolean int1<2: ${int1<2?ok:failed}
+#if ok!=${int1<0?failed:ok}
+#error Boolean < test 1 failed!
+#endif
+#if ok!=${int1<1?failed:ok}
+#error Boolean < test 2 failed!
+#endif
+#if ok!=${int1<2?ok:failed}
+#error Boolean < test 3 failed!
+#endif
 
-#print Boolean int1>0: ${int1>0?ok:failed}
-#print Boolean int1>1: ${int1>1?failed:ok}
-#print Boolean int1>2: ${int1>2?failed:ok}
+#if ok!=${int1>0?ok:failed}
+#error Boolean > test 1 failed!
+#endif
+#if ok!=${int1>1?failed:ok}
+#error Boolean > test 2 failed!
+#endif
+#if ok!=${int1>2?failed:ok}
+#error Boolean > test 3 failed!
+#endif
 
-#print Boolean int1<=0: ${int1<=0?failed:ok}
-#print Boolean int1<=1: ${int1<=1?ok:failed}
-#print Boolean int1<=2: ${int1<=2?ok:failed}
+#if ok!=${int1<=0?failed:ok}
+#error Boolean <= test 1 failed!
+#endif
+#if ok!=${int1<=1?ok:failed}
+#error Boolean <= test 2 failed!
+#endif
+#if ok!=${int1<=2?ok:failed}
+#error Boolean <= test 3 failed!
+#endif
 
-#print Boolean int1>=0: ${int1>=0?ok:failed}
-#print Boolean int1>=1: ${int1>=1?ok:failed}
-#print Boolean int1>=2: ${int1>=2?failed:ok}
+#if ok!=${int1>=0?ok:failed}
+#error Boolean >= test 1 failed!
+#endif
+#if ok!=${int1>=1?ok:failed}
+#error Boolean >= test 2 failed!
+#endif
+#if ok!=${int1>=2?failed:ok}
+#error Boolean >= test 3 failed!
+#endif
 
-#print Bitwise int1|=2=${int1|=2}: ${int1&3?ok:failed}
-#print Bitwise int1&=5=${int1&=5}: ${int1|~4?ok:failed}
-#print Bitwise int1^=2=${int1^=2}: ${int1==3?ok:failed}
+#print Boolean updates int1: ${int1|=2}...
+#if ok!=${int1&3?ok:failed}
+#error Boolean |= test 1 failed!
+#endif
+#print Boolean updates int1: ${int1&=5}...
+#if ok!=${int1|~4?ok:failed}
+#error Boolean &= test 2 failed!
+#endif
+#print Boolean updates int1: ${int1^=2}...
+#if ok!=${int1==3?ok:failed}
+#error Boolean ^= test 3 failed!
+#endif
