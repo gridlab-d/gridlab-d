@@ -89,7 +89,7 @@
 				BuildCommandLine="..\doxygen\build.bat /WorkingDir=.. /ExtraPath=..\..\tools\doxygen OUTPUT_DIRECTORY=&quot;$(OutDir)&quot; SEARCHENGINE=NO"
 				ReBuildCommandLine="..\doxygen\build.bat /WorkingDir=.. /ExtraPath=..\..\tools\doxygen OUTPUT_DIRECTORY=&quot;$(OutDir)&quot; SEARCHENGINE=NO"
 				CleanCommandLine="cmd.exe /c rmdir /s /q &quot;$(OutDir)&quot;"
-				Output=""
+				Output="$(SolutionDir)\docs\html\index.html"
 				PreprocessorDefinitions="WIN32;NDEBUG"
 				IncludeSearchPath=""
 				ForcedIncludes=""
@@ -241,17 +241,6 @@
 			</File>
 			<File
 				RelativePath="..\doxygen\user_manual.h"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="Output Files"
-			Filter="html"
-			ParseFiles="false"
-			SourceControlFiles="false"
-			>
-			<File
-				RelativePath=".\doxygen-doc\html\index.html"
 				>
 			</File>
 		</Filter>
