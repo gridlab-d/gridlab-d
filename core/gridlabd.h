@@ -71,6 +71,7 @@
 
 #ifdef __cplusplus
 	#ifndef CDECL
+		/** Defines a function as a C-type function **/
 		#define CDECL extern "C"
 	#endif
 #else
@@ -79,6 +80,7 @@
 
 #ifdef WIN32
 #ifndef EXPORT
+/** Defines a function as exported to core **/
 #define EXPORT CDECL __declspec(dllexport)
 #endif
 #else

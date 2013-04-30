@@ -621,15 +621,17 @@ typedef struct s_property_struct {
 	PROPERTYNAME part;
 } PROPERTYSTRUCT;
 
+/** Property comparison operators
+ **/
 typedef enum { 
-	TCOP_EQ=0, 
-	TCOP_LE=1, 
-	TCOP_GE=2, 
-	TCOP_NE=3, 
-	TCOP_LT=4,
-	TCOP_GT=5,
-	TCOP_IN=6,
-	TCOP_NI=7,
+	TCOP_EQ=0, /**< property are equal to a **/
+	TCOP_LE=1, /**< property is less than or equal to a **/
+	TCOP_GE=2, /**< property is greater than or equal a **/
+	TCOP_NE=3, /**< property is not equal to a **/
+	TCOP_LT=4, /**< property is less than a **/
+	TCOP_GT=5, /**< property is greater than a **/
+	TCOP_IN=6, /**< property is between a and b (inclusive) **/
+	TCOP_NI=7, /**< property is not between a and b (inclusive) **/
 	_TCOP_LAST,
 	TCOP_NOP,
 	TCOP_ERR=-1
