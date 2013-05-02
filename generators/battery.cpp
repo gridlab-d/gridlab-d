@@ -216,8 +216,10 @@ void battery::fetch_double(double **prop, char *name, OBJECT *parent){
 int battery::init(OBJECT *parent)
 {
 	OBJECT *obj = OBJECTHDR(this);
+	extern bool default_NR_mode;
+	extern complex default_line_current[3];
+	extern complex default_line_voltage[3];
 	if(use_internal_battery_model == FALSE){
-		static complex default_line123_voltage[1], default_line1_current[1];
 		int i;
 
 		// find parent meter, if not defined, use a default meter (using static variable 'default_meter')
@@ -349,6 +351,9 @@ int battery::init(OBJECT *parent)
 			{
 				*(map[i].var) = get_complex(parent,map[i].varname);
 			}
+
+			//Map up default NR mode - use the module static global - local versions are just silly
+			NR_mode = &default_NR_mode;
 		}
 		else if	((parent != NULL && strcmp(parent->oclass->name,"meter") != 0)||(parent != NULL && strcmp(parent->oclass->name,"triplex_meter") != 0)||(parent != NULL && strcmp(parent->oclass->name,"inverter") != 0))
 		{
@@ -363,26 +368,15 @@ int battery::init(OBJECT *parent)
 		{
 			number_of_phases_out = 3;
 			phases = 0x07;
-			struct {
-				complex **var;
-				char *varname;
-			}
-			map[] = {
-			// local object name,	meter object name
-				{&pCircuit_V,			"voltage_A"}, // assumes 2 and 3 follow immediately in memory
-				{&pLine_I,				"current_A"}, // assumes 2 and 3(N) follow immediately in memory
-			};
 
 			gl_warning("Battery:%d has no parent meter object defined; using static voltages", obj->id);
 
 			// attach meter variables to each circuit in the default_meter
-			*(map[0].var) = &default_line123_voltage[0];
-			*(map[1].var) = &default_line1_current[0];
+			pCircuit_V = &default_line_voltage[0];
+			pLine_I = &default_line_current[0];
 
-			// provide initial values for voltages
-			default_line123_voltage[0] = complex(480,0);
-			default_line123_voltage[1] = complex(480*cos(2*PI/3),480*sin(2*PI/3));
-			default_line123_voltage[2] = complex(480*cos(-2*PI/3),480*sin(-2*PI/3));
+			//Map up default NR mode - use the module static global - local versions are just silly
+			NR_mode = &default_NR_mode;
 		}
 
 		if (gen_mode_v==GM_UNKNOWN)

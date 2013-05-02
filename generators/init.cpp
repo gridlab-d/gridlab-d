@@ -11,6 +11,15 @@
 #include "generators.h"
 #undef  _GENERATORS_GLOBALS
 
+//Define defaults, since many use them and they aren't here yet
+complex default_line_voltage[3] = {complex(480.0,0.0),complex(-240.0,-415.69219),complex(-240.0,415.69219)};
+complex default_line_voltage_triplex[3] = {complex(240,0,A),complex(120,0,A),complex(120,0,A)};
+complex default_line_current[3] = {complex(0,0,J),complex(0,0,J),complex(0,0,J)};
+complex default_line_shunt[3] = {complex(0,0,J),complex(0,0,J),complex(0,0,J)};
+complex default_line_power[3] = {complex(0,0,J),complex(0,0,J),complex(0,0,J)};
+int default_meter_status = 1;	//In service
+bool default_NR_mode = false;
+
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
 	if (set_callback(fntable)==NULL)
