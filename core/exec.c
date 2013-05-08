@@ -211,12 +211,6 @@ int exec_init()
 	//global_clock = global_starttime + local_tzoffset(global_starttime);
 	global_clock = global_starttime;
 
-	/* if stoptime not already set */
-	if ( global_stoptime==TS_NEVER )
-
-		/* set it to 1 year after start time */
-		global_stoptime = global_clock + 86400*365;
-
 	/* save locale for simulation */
 	locale_push();
 
@@ -1733,8 +1727,8 @@ STATUS exec_start(void)
 		time(&gtime);
 		global_clock = gtime;
 		output_verbose("realtime mode requires using now (%s) as starttime", convert_from_timestamp(global_clock,buffer,sizeof(buffer))>0?buffer:"invalid time");
-		if (global_stoptime<global_clock)
-			global_stoptime=TS_NEVER;
+		if ( global_stoptime<global_clock )
+			global_stoptime = TS_NEVER;
 	}
 
 	/*** GET FIRST SIGNAL FROM MASTER HERE ****/
@@ -1755,7 +1749,8 @@ STATUS exec_start(void)
 	/* reset sync event */
 	exec_sync_reset(NULL);
 	exec_sync_set(NULL,global_clock);
-	exec_sync_set(NULL,global_stoptime); // only sets if stoptime is not never
+	if ( global_stoptime<TS_NEVER )
+		exec_sync_set(NULL,global_stoptime+1);
 
 	/* signal handler */
 	signal(SIGABRT, exec_sighandler);
@@ -1939,8 +1934,8 @@ STATUS exec_start(void)
 			exec_sync_reset(NULL);
 
 			/* account for stoptime only if global clock is not already at stoptime */
-			if ( global_clock<global_stoptime )
-				exec_sync_set(NULL,global_stoptime);
+			if ( global_clock<=global_stoptime && global_stoptime!=TS_NEVER )
+				exec_sync_set(NULL,global_stoptime+1);
 
 			/* synchronize all internal schedules */
 			internal_synctime = syncall_internals(global_clock);
@@ -2147,7 +2142,7 @@ STATUS exec_start(void)
 			}
 
 			/* check for clock advance (indicating last pass) */
-			if ( exec_sync_get(NULL) != global_clock)
+			if ( exec_sync_get(NULL)!=global_clock )
 			{
 				TIMESTAMP commit_time = TS_NEVER;
 				commit_time = commit_all(global_clock, exec_sync_get(NULL));
