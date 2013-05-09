@@ -454,14 +454,6 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 		heat_needed = FALSE;
 		is_waterheater_on = 0;
 	}
-	// determine the power used
-	if (heat_needed == TRUE){
-		/* power_kw */ load.total = (heat_mode == GASHEAT ? gas_fan_power : heating_element_capacity);
-		is_waterheater_on = 1;
-	} else {
-		/* power_kw */ load.total = (heat_mode == GASHEAT ? gas_standby_power : 0.0);
-		is_waterheater_on = 0;
-	}
 
 	TIMESTAMP t2 = residential_enduse::sync(t0,t1);
 	
@@ -483,6 +475,15 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 		internal_gain = 0;
 	}
 
+	// determine the power used
+	if (heat_needed == TRUE){
+		/* power_kw */ load.total = (heat_mode == GASHEAT ? gas_fan_power : heating_element_capacity);
+		is_waterheater_on = 1;
+	} else {
+		/* power_kw */ load.total = (heat_mode == GASHEAT ? gas_standby_power : 0.0);
+		is_waterheater_on = 0;
+	}
+	
 	//load.total = load.power = /* power_kw */ load.power;
 	load.power = load.total * load.power_fraction;
 	load.admittance = load.total * load.impedance_fraction;
@@ -796,9 +797,6 @@ double waterheater::dhdt(double h)
 	// Pre-set some algebra just for efficiency...
 	const double mdot = water_demand * 60 * RHOWATER / GALPCF;		// lbm/hr...
     const double c1 = RHOWATER * Cp * area * (/*Tupper*/ Tw - Tlower);	// Btu/ft...
-
-	if (water_demand > 0.0)
-		double aaa=1;
 	
     // check c1 before dividing by it
     if (c1 <= ROUNDOFF)
