@@ -3,11 +3,11 @@
 #ifndef _GRIDLABD_VERSION_H
 #define _GRIDLABD_VERSION_H
 
-#define COPYRIGHT "Copyright (C) 2004-2012\nBattelle Memorial Institute\nAll Rights Reserved"
-#define REV_MAJOR 3
+#define COPYRIGHT "Copyright (C) 2004-2013\nBattelle Memorial Institute\nAll Rights Reserved"
+#define REV_MAJOR 4
 #define REV_MINOR 0
 #define REV_PATCH 0
-#define BRANCH "Hassayampa" 
+#define BRANCH "Hatwai" 
 
 #include "build.h"
 #ifndef BUILDNUM
