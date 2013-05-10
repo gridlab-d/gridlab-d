@@ -12,6 +12,7 @@ module powerflow {
 }
 module climate;
 module residential;
+module network;
 
 
 
@@ -21,19 +22,11 @@ clock{
 	stoptime '2001-07-25 01:05:00';
 }
 
-//x86 check
-#ifexist "C:/Program Files (x86)/PowerWorld/Simulator16/pwrworld.exe"
-#define powerworld=true;
-#endif
-
-//x64 check
-#ifexist "C:/Program Files/PowerWorld/Simulator16/pwrworld.exe"
+#if run_powerworld==TRUE
 #define powerworld=true;
 #endif
 
 #ifdef powerworld
-
-module network;
 
 //Copy the model into the specific autotest folder
 #system copy /y ..\TS9Bus.PWB .\TS9Bus.PWB

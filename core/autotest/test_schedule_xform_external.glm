@@ -50,7 +50,7 @@ class player {
 }
 object player {
 	name t_mass;
-	file t_mass.csv;
+	file ../t_mass.csv;
 }
 
 object house {

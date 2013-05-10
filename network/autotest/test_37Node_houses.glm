@@ -15,6 +15,7 @@ module residential {
 	implicit_enduses NONE;
 	ANSI_voltage_check FALSE;
 };
+module network;
 
 
 clock{
@@ -40,19 +41,11 @@ object climate {
      interpolate QUADRATIC;
 };
 
-//x86 check
-#ifexist "C:/Program Files (x86)/PowerWorld/Simulator16/pwrworld.exe"
-#define powerworld=true;
-#endif
-
-//x64 check
-#ifexist "C:/Program Files/PowerWorld/Simulator16/pwrworld.exe"
+#if run_powerworld==TRUE
 #define powerworld=true;
 #endif
 
 #ifdef powerworld
-
-module network;
 
 //Copy the model into the specific autotest folder
 #system copy /y ..\TS9Bus.PWB .\TS9Bus.PWB

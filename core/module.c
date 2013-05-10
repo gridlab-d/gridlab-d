@@ -916,22 +916,27 @@ void module_termall(void)
 #include <sys/stat.h>
 
 #ifdef WIN32
+#ifdef X64
+#define CC "c:/mingw64/bin/gcc"
+#define CCFLAGS "-DWIN32 -DX64"
+#define LDFLAGS "" /* "--export-all-symbols,--add-stdcall,--add-stdcall-alias,--subsystem,windows,--enable-runtime-pseudo-reloc,-no-undefined" */
+#else // !X64
 #define CC "c:/mingw/bin/gcc"
-#define DL "c:/mingw/bin/dlltool"
 #define CCFLAGS "-DWIN32"
 #define LDFLAGS "" /* "--export-all-symbols,--add-stdcall,--add-stdcall-alias,--subsystem,windows,--enable-runtime-pseudo-reloc,-no-undefined" */
+#endif // X64
 #define fstat _fstat
 #define stat _stat
-#else
+#else // !WIN32
 #define CC "/usr/bin/gcc"
 #ifdef __APPLE__
 #define CCFLAGS "-DMACOSX"
 #define LDFLAGS "-dylib"
-#else
+#else // !__APPLE__
 #define CCFLAGS "-DLINUX"
 #define LDFLAGS "" /* --export-all-symbols" */
-#endif
-#endif
+#endif // __APPLE__
+#endif // WIN32
 
 static int cc_verbose=0;
 static int cc_debug=0;

@@ -31,6 +31,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 
 #ifdef HAVE_POWERWORLD
 #ifndef PWX64
+	int status = gl_global_setvar("run_powerworld=true");
 	CLASS *first = (new pw_model(module))->oclass;
 	new pw_load(module);
 	new pw_recorder(module);
