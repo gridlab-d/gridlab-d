@@ -20,14 +20,14 @@
  *************************************/
 //#define HAVE_MATLAB
 //#define HAVE_XERCES
-#define HAVE_POWERWORLD
+//#define HAVE_POWERWORLD
 #endif
 
-#ifdef WIN32
-
+#ifdef WIN32 // NOTE: win32 does not imply 32bit machine, it means Windows API supports 32bit
 
 /*** WINDOWS ***/
 #if defined _M_X64 || defined _M_IA64
+#define X64 // mean 64bit machine
 #define __WORDSIZE__ 64
 #else
 #define __WORDSIZE__ 32
@@ -67,12 +67,14 @@ typedef int pid_t;
 #ifdef __APPLE__ /* although not advised, seems reliable enough */
 #define MACOSX
 #define __WORDSIZE__ 64
+#define X64
 #else
 #define __WORDSIZE__ __WORDSIZE
 #endif
 
 #include <sys/unistd.h>
 #if __WORDSIZE__ == 64
+#define X64
 #define int64 long /**< standard 64-bit integers on 64-bit machines */
 #else
 #define int64 long long /**< standard 64-bit integers on 32-bit machines */
@@ -89,7 +91,7 @@ typedef int pid_t;
 #endif
 #endif
 
-#ifdef I64
+#ifdef X64
 #define NATIVE int64	/**< native integer size */
 #else
 #define NATIVE int32	/**< native integer size */
