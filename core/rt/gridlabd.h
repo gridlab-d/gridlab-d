@@ -335,6 +335,23 @@ typedef int64 TIMESTAMP;
 #define TS_NEVER ((int64)(((unsigned int64)-1)>>1))
 #define MINYEAR 1970
 #define MAXYEAR 2969
+/* Deltamode declarations */
+typedef enum {
+	SM_INIT			= 0x00, /**< initial state of simulation */
+	SM_EVENT		= 0x01, /**< event driven simulation mode */
+	SM_DELTA		= 0x02, /**< finite difference simulation mode */
+	SM_DELTA_ITER	= 0x03, /**< Iteration of finite difference simulation mode */
+	SM_ERROR		= 0xff, /**< simulation mode error */
+} SIMULATIONMODE; /**< simulation mode values */
+typedef enum {
+	DMF_NONE		= 0x00,	/**< no flags */
+	DMF_SOFTEVENT	= 0x01,/**< event is soft */
+} DELTAMODEFLAGS; /**< delta mode flags */
+typedef unsigned int64 DELTAT; /**< stores cumulative delta time values in ns */
+typedef unsigned long DT; /**< stores incremental delta time values in ns */
+#define DT_INFINITY (0xfffffffe)
+#define DT_INVALID  (0xffffffff)
+#define DT_SECOND 1000000000
 
 inline TIMESTAMP gl_timestamp(double t) { return (TIMESTAMP)(t*TS_TPS);}
 inline double gl_seconds(TIMESTAMP t) { return (double)t/(double)TS_TPS;}
@@ -579,6 +596,14 @@ struct s_module_list {
 	int (*import_file)(char *file);
 	int (*export_file)(char *file);
 	int (*check)();
+	/* deltamode */
+	unsigned long (*deltadesired)(DELTAMODEFLAGS*);
+	unsigned long (*preupdate)(void*,int64,unsigned int64);
+	SIMULATIONMODE (*interupdate)(void*,int64,unsigned int64,unsigned long,unsigned int);
+	STATUS (*postupdate)(void*,int64,unsigned int64);
+#ifndef _NO_CPPUNIT
+	int (*module_test)(void *callbacks,int argc,char* argv[]);
+#endif
 	int (*cmdargs)(int,char**);
 	int (*kmldump)(FILE*fp,OBJECT*);
 	void (*test)(int argc, char *argv[]);
@@ -623,6 +648,7 @@ struct s_class_list {
 	FUNCTIONADDR plc;
 	PASSCONFIG passconfig;
 	FUNCTIONADDR recalc;
+	FUNCTIONADDR update;	/**< deltamode related */
 	FUNCTIONADDR heartbeat;
 	CLASS *parent;			/**< parent class from which properties should be inherited */
 	struct {
