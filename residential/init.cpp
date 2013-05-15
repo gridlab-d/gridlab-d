@@ -38,7 +38,6 @@ complex default_line_current[3] = {complex(0,0,J),complex(0,0,J),complex(0,0,J)}
 complex default_line_shunt[3] = {complex(0,0,J),complex(0,0,J),complex(0,0,J)};
 complex default_line_power[3] = {complex(0,0,J),complex(0,0,J),complex(0,0,J)};
 int default_meter_status = 1;	//In service
-bool default_NR_mode = false;
 bool ANSI_voltage_check = true;	//Flag to enable/disable ANSI voltage violation checks
 double default_outdoor_temperature = 74.0;
 double default_humidity = 75.0;

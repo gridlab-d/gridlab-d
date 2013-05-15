@@ -54,6 +54,7 @@ protected:
 
 private:
 	bool offnominal_time;	//Used to detect off-nominal timesteps and perform an exception for them
+	bool iteration_flag;	//Iteration toggler - to maintain logic from previous NR implementation, to a degree
 public:
 	static CLASS *oclass;
 	static CLASS *pclass;

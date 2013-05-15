@@ -226,6 +226,10 @@ TIMESTAMP triplex_meter::presync(TIMESTAMP t0)
 	if (tpmeter_power_consumption != complex(0,0))
 		power[0] = power[1] = 0.0;
 
+	//Reliability addition - clear momentary flag if set
+	if (tpmeter_interrupted_secondary == true)
+		tpmeter_interrupted_secondary = false;
+
 	return triplex_node::presync(t0);
 }
 //Sync needed for reliability
@@ -234,7 +238,7 @@ TIMESTAMP triplex_meter::sync(TIMESTAMP t0)
 	int TempNodeRef;
 
 	//Reliability check
-	if ((NR_mode == false) && (fault_check_object != NULL) && (solver_method == SM_NR))	//solver cycle and fault_check is present (so might need to set flag
+	if ((fault_check_object != NULL) && (solver_method == SM_NR))	//proper solver fault_check is present (so might need to set flag
 	{
 		if (NR_node_reference==-99)	//Childed
 		{
@@ -277,6 +281,9 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	TIMESTAMP rv = TS_NEVER;
 	TIMESTAMP hr = TS_NEVER;
 
+	//Call node postsync now, otherwise current_inj isn't right
+	rv = triplex_node::postsync(t1);
+
 	//measured_voltage[0] = voltageA;
 	//measured_voltage[1] = voltageB;
 	//measured_voltage[2] = voltageC;
@@ -284,122 +291,112 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	measured_voltage[1].SetPolar(voltageB.Mag(),voltageB.Arg());
 	measured_voltage[2].SetPolar(voltageC.Mag(),voltageC.Arg());
 
-	if ((solver_method == SM_NR && NR_cycle == true)||solver_method  == SM_FBS)
+	if (t1 > last_t)
 	{
-		//Reliability addition - clear momentary flag if set
-		if (tpmeter_interrupted_secondary == true)
-			tpmeter_interrupted_secondary = false;
+		dt = t1 - last_t;
+		last_t = t1;
+	}
+	else
+		dt = 0;
 
-		if (t1 > last_t)
-		{
-			dt = t1 - last_t;
-			last_t = t1;
-		}
-		else
-			dt = 0;
-
-		//READLOCK_OBJECT(obj);
-		measured_current[0] = current_inj[0];
-		measured_current[1] = current_inj[1];
-		//READUNLOCK_OBJECT(obj);
-		measured_current[2] = -(measured_current[1]+measured_current[0]);
+	//READLOCK_OBJECT(obj);
+	measured_current[0] = current_inj[0];
+	measured_current[1] = current_inj[1];
+	//READUNLOCK_OBJECT(obj);
+	measured_current[2] = -(measured_current[1]+measured_current[0]);
 
 //		if (dt > 0 && last_t != dt)
+	if (dt > 0)
+	{
+		measured_real_energy += measured_real_power * TO_HOURS(dt);
+		measured_reactive_energy += measured_reactive_power * TO_HOURS(dt);
+	}
+
+	indiv_measured_power[0] = measured_voltage[0]*(~measured_current[0]);
+	indiv_measured_power[1] = complex(-1,0) * measured_voltage[1]*(~measured_current[1]);
+	indiv_measured_power[2] = measured_voltage[2]*(~measured_current[2]);
+
+	measured_power = indiv_measured_power[0] + indiv_measured_power[1] + indiv_measured_power[2];
+
+	measured_real_power = (indiv_measured_power[0]).Re()
+						+ (indiv_measured_power[1]).Re()
+						+ (indiv_measured_power[2]).Re();
+
+	measured_reactive_power = (indiv_measured_power[0]).Im()
+							+ (indiv_measured_power[1]).Im()
+							+ (indiv_measured_power[2]).Im();
+
+	if (measured_real_power>measured_demand)
+		measured_demand=measured_real_power;
+
+
+
+	if (bill_mode == BM_UNIFORM || bill_mode == BM_TIERED)
+	{
 		if (dt > 0)
+			process_bill(t1);
+
+		// Decide when the next billing HAS to be processed (one month later)
+		if (monthly_bill == previous_monthly_bill)
 		{
-			measured_real_energy += measured_real_power * TO_HOURS(dt);
-			measured_reactive_energy += measured_reactive_power * TO_HOURS(dt);
-		}
+			DATETIME t_next;
+			gl_localtime(t1,&t_next);
 
-		indiv_measured_power[0] = measured_voltage[0]*(~measured_current[0]);
-		indiv_measured_power[1] = complex(-1,0) * measured_voltage[1]*(~measured_current[1]);
-		indiv_measured_power[2] = measured_voltage[2]*(~measured_current[2]);
+			t_next.day = bill_day;
 
-		measured_power = indiv_measured_power[0] + indiv_measured_power[1] + indiv_measured_power[2];
-
-		measured_real_power = (indiv_measured_power[0]).Re()
-							+ (indiv_measured_power[1]).Re()
-							+ (indiv_measured_power[2]).Re();
-
-		measured_reactive_power = (indiv_measured_power[0]).Im()
-								+ (indiv_measured_power[1]).Im()
-								+ (indiv_measured_power[2]).Im();
-
-		if (measured_real_power>measured_demand)
-			measured_demand=measured_real_power;
-
-
-
-		if (bill_mode == BM_UNIFORM || bill_mode == BM_TIERED)
-		{
-			if (dt > 0)
-				process_bill(t1);
-
-			// Decide when the next billing HAS to be processed (one month later)
-			if (monthly_bill == previous_monthly_bill)
-			{
-				DATETIME t_next;
-				gl_localtime(t1,&t_next);
-
-				t_next.day = bill_day;
-
-				if (t_next.month != 12)
-					t_next.month += 1;
-				else
-				{
-					t_next.month = 1;
-					t_next.year += 1;
-				}
-				t_next.tz[0] = 0;
-				next_time =	gl_mktime(&t_next);
-			}
-		}
-
-		if( (bill_mode == BM_HOURLY || bill_mode == BM_TIERED_RTP) && power_market != NULL && price_prop != NULL){
-			double seconds;
-			if (dt != last_t)
-				seconds = (double)(dt);
+			if (t_next.month != 12)
+				t_next.month += 1;
 			else
-				seconds = 0;
-			
-			if (seconds > 0)
 			{
-				hourly_acc += seconds/3600 * price * last_measured_real_power/1000;
-				process_bill(t1);
+				t_next.month = 1;
+				t_next.year += 1;
 			}
-
-			// Now that we've accumulated the bill for the last time period, update to the new price
-			double *pprice = (gl_get_double(power_market, price_prop));
-			last_price = price = *pprice;
-			last_measured_real_power = measured_real_power;
-
-			if (monthly_bill == previous_monthly_bill)
-			{
-				DATETIME t_next;
-				gl_localtime(t1,&t_next);
-
-				t_next.day = bill_day;
-
-				if (t_next.month != 12)
-					t_next.month += 1;
-				else
-				{
-					t_next.month = 1;
-					t_next.year += 1;
-				}
-				t_next.tz[0] = 0;
-				next_time =	gl_mktime(&t_next);
-			}
+			t_next.tz[0] = 0;
+			next_time =	gl_mktime(&t_next);
 		}
 	}
-	rv = triplex_node::postsync(t1);
+
+	if( (bill_mode == BM_HOURLY || bill_mode == BM_TIERED_RTP) && power_market != NULL && price_prop != NULL){
+		double seconds;
+		if (dt != last_t)
+			seconds = (double)(dt);
+		else
+			seconds = 0;
+		
+		if (seconds > 0)
+		{
+			hourly_acc += seconds/3600 * price * last_measured_real_power/1000;
+			process_bill(t1);
+		}
+
+		// Now that we've accumulated the bill for the last time period, update to the new price
+		double *pprice = (gl_get_double(power_market, price_prop));
+		last_price = price = *pprice;
+		last_measured_real_power = measured_real_power;
+
+		if (monthly_bill == previous_monthly_bill)
+		{
+			DATETIME t_next;
+			gl_localtime(t1,&t_next);
+
+			t_next.day = bill_day;
+
+			if (t_next.month != 12)
+				t_next.month += 1;
+			else
+			{
+				t_next.month = 1;
+				t_next.year += 1;
+			}
+			t_next.tz[0] = 0;
+			next_time =	gl_mktime(&t_next);
+		}
+	}
 
 	if (next_time != 0 && next_time < rv)
 		return -next_time;
 	else
 		return rv;
-	//return triplex_node::postsync(t1);
-
 }
 
 double triplex_meter::process_bill(TIMESTAMP t1){

@@ -64,6 +64,7 @@ int regulator::create()
 	tap_A_change_count = -1;
 	tap_B_change_count = -1;
 	tap_C_change_count = -1;
+	iteration_flag = true;
 	return result;
 }
 
@@ -303,6 +304,10 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 	node *pTo = OBJECTDATA(to, node);
 	char phaseWarn;
 
+	//Toggle the iteration variable -- only for voltage-type adjustments (since it's in presync now)
+	if ((solver_method == SM_NR) && ((pConfig->Control == pConfig->OUTPUT_VOLTAGE) || (pConfig->Control == pConfig->REMOTE_NODE)))
+		iteration_flag = !iteration_flag;
+
 	if (pConfig->Control == pConfig->MANUAL) {
 		for (int i = 0; i < 3; i++) {
 			if (pConfig->Type == pConfig->A)
@@ -317,8 +322,7 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 		}
 		next_time = TS_NEVER;
 	}
-
-	else if ((solver_method == SM_NR && NR_cycle==true) || solver_method == SM_FBS)
+	else if (iteration_flag==true)
 	{
 		if (pConfig->control_level == pConfig->INDIVIDUAL)
 		{
@@ -811,6 +815,12 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 		next_time = t0;
 	}
 
+	//Force a "reiteration" if we're checking voltage - consequence of this previously being in true pass of NR
+	if ((solver_method == SM_NR) && ((pConfig->Control == pConfig->OUTPUT_VOLTAGE) || (pConfig->Control == pConfig->REMOTE_NODE)) && (iteration_flag==false))
+	{
+		return t0;
+	}
+
 	if (first_run_flag[0] < 1 || first_run_flag[1] < 1 || first_run_flag[2] < 1) return t1;
 	else if (t1 <= next_time) return t1;
 	else if (next_time != TS_NEVER) return -next_time; //soft return to next tap change
@@ -823,7 +833,7 @@ TIMESTAMP regulator::postsync(TIMESTAMP t0)
 
 	TIMESTAMP t1 = link_object::postsync(t0);
 	
-	if ((solver_method == SM_NR && NR_cycle==true) || solver_method == SM_FBS)
+	if (iteration_flag==true)
 	{		
 		if(prev_time < t0){
 			prev_time = t0;

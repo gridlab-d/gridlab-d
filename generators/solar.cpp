@@ -153,8 +153,8 @@ int solar::create(void)
 	wind_speed = 0.0;
 	Insolation = 0;
 	Rinternal = 0.05;
-	prevTemp = 0.0;
-	currTemp = 0.0;
+	prevTemp = 15.0;	//Start at a reasonable ambient temp (degC) - default temp is 59 degF = 15 degC
+	currTemp = 15.0;	//Start at a reasonable ambient temp (degC)
 	prevTime = 0;
 	Rated_Insolation = 92.902; //W/Sf for 1000 W/m2
     V_Max = complex (27.1,0);  // max. power voltage (Vmp) from GE solar cell performance charatcetristics
@@ -547,8 +547,6 @@ int solar::init(OBJECT *parent)
 		{
 			*(map[i].var) = get_complex(parent,map[i].varname);
 		}
-
-		//NR_mode = get_bool(parent,"NR_mode");
 	}
 	else if	(parent != NULL && strcmp(parent->oclass->name,"inverter") != 0)
 	{
@@ -846,13 +844,6 @@ complex *solar::get_complex(OBJECT *obj, char *name)
 	return (complex*)GETADDR(obj,p);
 }
 
-bool *solar::get_bool(OBJECT *obj, char *name)
-{
-	PROPERTY *p = gl_get_property(obj,name);
-	if (p==NULL || p->ptype!=PT_bool)
-		return NULL;
-	return (bool*)GETADDR(obj,p);
-}
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////

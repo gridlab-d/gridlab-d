@@ -18,7 +18,6 @@ complex default_line_current[3] = {complex(0,0,J),complex(0,0,J),complex(0,0,J)}
 complex default_line_shunt[3] = {complex(0,0,J),complex(0,0,J),complex(0,0,J)};
 complex default_line_power[3] = {complex(0,0,J),complex(0,0,J),complex(0,0,J)};
 int default_meter_status = 1;	//In service
-bool default_NR_mode = false;
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {

@@ -973,7 +973,7 @@ TIMESTAMP transformer::postsync(TIMESTAMP t0)
 		TIMESTAMP result = link_object::postsync(t0);
 		temp_A = *ptheta_A;
 		amb_temp = (temp_A-32.0)*(5.0/9.0);
-		if(t0 >= simulation_start_time && t0 != time_before && NR_cycle){
+		if((t0 >= simulation_start_time) && (t0 != time_before)){
 			if(time_before != 0){
 				dt = (double)((t0-time_before)*TS_SECOND)/3600;// calculate the change in time in hours
 

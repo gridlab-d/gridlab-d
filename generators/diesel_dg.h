@@ -57,7 +57,7 @@ class diesel_dg : public gld_object
 {
 private:
 	/* TODO: put private variables here */
-	
+	bool IterationToggle;	///< Iteration toggle device - retains NR "pass" functionality
 	complex *pCircuit_V; ///< pointer to the three voltages on three lines
 	complex *pLine_I; ///< pointer to the three current on three lines
 
@@ -69,7 +69,6 @@ private:
 	complex *full_bus_admittance_mat;	//Link to bus full self-admittance of Ybus form
 	complex *PGenerated;				//Link to bus PGenerated field - mainly used for SWING generator
 	complex *IGenerated;				//Link to direct current injections to powerflow at bus-level
-	bool *NR_mode;						//Flag to NR_mode pass flag inside node - used to determine super-second stuff
 	complex *FreqPower;					//Link to bus "frequency-power weighted" accumulation
 	complex *TotalPower;				//Link to bus "accumulated power" - used for nominal frequency calculation
 	complex generator_admittance[3][3];	//Generator admittance matrix converted from sequence values
@@ -252,7 +251,6 @@ public:
 	static diesel_dg *defaults;
 	complex *get_complex(OBJECT *obj, char *name);
 	double *get_double(OBJECT *obj, char *name);
-	bool *get_bool(OBJECT *obj, char *name);
 	void convert_Ypn0_to_Yabc(complex Y0, complex Y1, complex Y2, complex *Yabcmat);
 	void convert_pn0_to_abc(complex *Xpn0, complex *Xabc);
 	void convert_abc_to_pn0(complex *Xabc, complex *Xpn0);

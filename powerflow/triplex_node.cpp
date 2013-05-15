@@ -90,7 +90,6 @@ triplex_node::triplex_node(MODULE *mod) : node(mod)
 			PT_double, "impedance_2_reac[Ohm]", PADDR(impedance[1].Im()),PT_DESCRIPTION,"constant series impedance on phase 2, imag",
 			PT_double, "impedance_12_reac[Ohm]", PADDR(impedance[2].Im()),PT_DESCRIPTION,"constant series impedance on phase 1 to 2, imag",
 			PT_bool, "house_present", PADDR(house_present),PT_DESCRIPTION,"boolean for detecting whether a house is attached, not an input",
-			PT_bool, "NR_mode", PADDR(NR_mode),PT_DESCRIPTION,"boolean for current NR_solver mode, not an input",
 			PT_enumeration, "service_status", PADDR(service_status),PT_DESCRIPTION,"In and out of service flag",
 				PT_KEYWORD, "IN_SERVICE", (enumeration)ND_IN_SERVICE,
 				PT_KEYWORD, "OUT_OF_SERVICE", (enumeration)ND_OUT_OF_SERVICE,

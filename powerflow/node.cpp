@@ -120,7 +120,6 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			PT_complex, "shunt_A[S]", PADDR(shuntA),PT_DESCRIPTION,"bus shunt admittance, this an accumulator only, not a output or input variable",
 			PT_complex, "shunt_B[S]", PADDR(shuntB),PT_DESCRIPTION,"bus shunt admittance, this an accumulator only, not a output or input variable",
 			PT_complex, "shunt_C[S]", PADDR(shuntC),PT_DESCRIPTION,"bus shunt admittance, this an accumulator only, not a output or input variable",
-			PT_bool, "NR_mode", PADDR(NR_mode),PT_DESCRIPTION,"boolean for solution methodology, not a input or output object",
 			PT_double, "mean_repair_time[s]",PADDR(mean_repair_time), PT_DESCRIPTION, "Time after a fault clears for the object to be back in service",
 
 			PT_enumeration, "service_status", PADDR(service_status),PT_DESCRIPTION,"In and out of service flag",
@@ -1053,10 +1052,6 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 		//Reset flag
 		current_accumulated = false;
 
-		//If we're the swing, toggle tracking variable
-		if (bustype==SWING)
-			NR_cycle = !NR_cycle;
-
 		if (prev_NTime==0)	//First run, if we are a child, make sure no one linked us before we knew that
 		{
 			if (((SubNode == CHILD) || (SubNode == DIFF_CHILD)) && (NR_connected_links>0))
@@ -1257,7 +1252,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			}
 		}//End busdata and branchdata null (first in)
 
-		if ((SubNode==DIFF_PARENT) && (NR_cycle==false))	//Differently connected parent - zero our accumulators
+		if ((SubNode==DIFF_PARENT))	//Differently connected parent - zero our accumulators
 		{
 			//Zero them.  Row 1 is power, row 2 is admittance, row 3 is current
 			Extra_Data[0] = Extra_Data[1] = Extra_Data[2] = 0.0;
@@ -1353,13 +1348,6 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			frequency = pRef->frequency;
 		}
 	}
-
-	//Update NR_mode flag, as necessary (used to be only in triplex devices)
-	//Put at bottom so SWING update is seen (otherwise SWING is out of step)
-	if (solver_method == SM_NR)
-		NR_mode = NR_cycle;		//COpy NR_cycle into NR_mode for houses
-	else
-		NR_mode = false;		//Just put as false for other methods
 	
 	return t1;
 }
@@ -1699,7 +1687,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 					}//End Phase checks for reliability
 				}//End normal node
 
-				if ((SubNode==CHILD) && (NR_cycle==false))
+				if (SubNode==CHILD)
 				{
 					//Post our loads up to our parent
 					node *ParToLoad = OBJECTDATA(SubNodeParent,node);
@@ -1785,7 +1773,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 						last_child_current12 = current12;
 				}
 
-				if ((SubNode==DIFF_CHILD) && (NR_cycle==false))	//Differently connected nodes
+				if (SubNode==DIFF_CHILD)	//Differently connected nodes
 				{
 					//Post our loads up to our parent - in the appropriate fashion
 					node *ParToLoad = OBJECTDATA(SubNodeParent,node);
@@ -1809,100 +1797,75 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 					//Finished, unlock parent
 					UNLOCK_OBJECT(SubNodeParent);
 				}
-
-				if (NR_cycle==true)	//Accumulation cycle, compute our current injections
-				{
-					//This code will become irrelevant once NR is "flattened" - for now, it just repeats calculations
-					int resultval = NR_current_update(false,false);
-
-					//Make sure it worked, just to be thorough
-					if (resultval != 1)
-					{
-						GL_THROW("Attempt to update current/power on node:%s failed!",obj->name);
-						/*  TROUBLESHOOT
-						While attempting to update the current on a node object, an error was encountered.  Please try again.  If the error persists,
-						please submit your code and a bug report via the trac website.
-						*/
-					}
-				}//End NR true
 			}//end uninitialized
 
 			if ((NR_curr_bus==NR_bus_count) && (bustype==SWING))	//Only run the solver once everything has populated
 			{
-				if (NR_cycle==false)	//Solving pass
+				bool bad_computation=false;
+				NRSOLVERMODE powerflow_type;
+				
+				//Depending on operation mode, call solver appropriately
+				if (deltamode_inclusive)	//Dynamics mode, solve the static in a way that generators are handled right
 				{
-					bool bad_computation=false;
-					NRSOLVERMODE powerflow_type;
-					
-					//Depending on operation mode, call solver appropriately
-					if (deltamode_inclusive)	//Dynamics mode, solve the static in a way that generators are handled right
+					if (NR_dyn_first_run==true)	//If it is the first run, perform the initialization powerflow
 					{
-						if (NR_dyn_first_run==true)	//If it is the first run, perform the initialization powerflow
-						{
-							powerflow_type = PF_DYNINIT;
-							NR_dyn_first_run = false;	//Deflag us for future powerflow solutions
-						}
-						else	//After first run - call the "dynamic" version of the powerflow solver (SWING bus different)
-						{
-							powerflow_type = PF_DYNCALC;
-						}
-					}//End deltamode
-					else	//Normal mode
-					{
-						powerflow_type = PF_NORMAL;
+						powerflow_type = PF_DYNINIT;
+						NR_dyn_first_run = false;	//Deflag us for future powerflow solutions
 					}
-
-					int64 result = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &NR_powerflow, powerflow_type, &bad_computation);
-
-					//De-flag the change - no contention should occur
-					NR_admit_change = false;
-
-					if (bad_computation==true)
+					else	//After first run - call the "dynamic" version of the powerflow solver (SWING bus different)
 					{
-						GL_THROW("Newton-Raphson method is unable to converge to a solution at this operation point");
-						/*  TROUBLESHOOT
-						Newton-Raphson has failed to complete even a single iteration on the powerflow.  This is an indication
-						that the method will not solve the system and may have a singularity or other ill-favored condition in the
-						system matrices.
-						*/
+						powerflow_type = PF_DYNCALC;
 					}
-					else if (result<0)	//Failure to converge, but we just let it stay where we are for now
-					{
-						gl_verbose("Newton-Raphson failed to converge, sticking at same iteration.");
-						/*  TROUBLESHOOT
-						Newton-Raphson failed to converge in the number of iterations specified in NR_iteration_limit.
-						It will try again (if the global iteration limit has not been reached).
-						*/
-						NR_retval=t0;
-					}
-					else
-						NR_retval=t1;
-
-					return t0;		//Stay here whether we like it or not (second pass needs to complete)
+				}//End deltamode
+				else	//Normal mode
+				{
+					powerflow_type = PF_NORMAL;
 				}
-				else	//Accumulating pass, let us go where we wanted
-					return NR_retval;
+
+				int64 result = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &NR_powerflow, powerflow_type, &bad_computation);
+
+				//De-flag the change - no contention should occur
+				NR_admit_change = false;
+
+				if (bad_computation==true)
+				{
+					GL_THROW("Newton-Raphson method is unable to converge to a solution at this operation point");
+					/*  TROUBLESHOOT
+					Newton-Raphson has failed to complete even a single iteration on the powerflow.  This is an indication
+					that the method will not solve the system and may have a singularity or other ill-favored condition in the
+					system matrices.
+					*/
+				}
+				else if (result<0)	//Failure to converge, but we just let it stay where we are for now
+				{
+					gl_verbose("Newton-Raphson failed to converge, sticking at same iteration.");
+					/*  TROUBLESHOOT
+					Newton-Raphson failed to converge in the number of iterations specified in NR_iteration_limit.
+					It will try again (if the global iteration limit has not been reached).
+					*/
+					NR_retval=t0;
+				}
+				else
+					NR_retval=t1;
+
+				//See where we wanted to go
+				return NR_retval;
 			}
 			else if (NR_curr_bus==NR_bus_count)	//Population complete, we're not swing, let us go (or we never go on)
 				return t1;
 			else	//Population of data busses is not complete.  Flag us for a go-around, they should be ready next time
 			{
-				if (NR_cycle==false)
-					return t0;
-				else	//True cycle - everything should have been populated by now
+				if (bustype==SWING)	//Only error on swing - if errors with others, seems to be upset.  Too lazy to track down why.
 				{
-					if (bustype==SWING)	//Only error on swing - if errors with others, seems to be upset.  Too lazy to track down why.
-					{
-						GL_THROW("All nodes were not properly populated");
-						/*  TROUBLESHOOT
-						The NR solver is still waiting to initialize an object on the second pass.  Everything should have
-						initialized on the first pass.  Look for orphaned node objects that do not have a line attached and
-						try again.  If the error persists, please submit your code and a bug report via the trac website.
-						*/
-					}
-					else
-						return t0;
+					GL_THROW("All nodes were not properly populated");
+					/*  TROUBLESHOOT
+					The NR solver is still waiting to initialize an object on the second pass.  Everything should have
+					initialized on the first pass.  Look for orphaned node objects that do not have a line attached and
+					try again.  If the error persists, please submit your code and a bug report via the trac website.
+					*/
 				}
+				else
+					return t0;
 			}
 			break;
 		}
@@ -1962,8 +1925,7 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 
 #endif
 	//This code performs the new "flattened" NR calculations.
-	//Once properly "flattened", this code won't need the cycle indicator
-	if ((solver_method == SM_NR) && (NR_cycle==false))
+	if (solver_method == SM_NR)
 	{
 		int result = NR_current_update(true,false);
 
@@ -2169,15 +2131,12 @@ int node::notify(int update_mode, PROPERTY *prop, char *value)
 				else if (update_mode==NM_POSTUPDATE)
 				{
 					//Handle the logics
-					if (NR_cycle==false)	//Beginning of true pass - accumulator pass (toggle hasn't occurred)
-					{
-						//See what the difference is - if it is above the convergence limit, send an NR update
-						diff_val = voltage[0] - prev_voltage_value[0];
+					//See what the difference is - if it is above the convergence limit, send an NR update
+					diff_val = voltage[0] - prev_voltage_value[0];
 
-						if (diff_val.Mag() >= maximum_voltage_error)	//Outside of range, so force a new iteration
-						{
-							NR_retval = gl_globalclock;
-						}
+					if (diff_val.Mag() >= maximum_voltage_error)	//Outside of range, so force a new iteration
+					{
+						NR_retval = gl_globalclock;
 					}
 				}
 			}
@@ -2193,15 +2152,12 @@ int node::notify(int update_mode, PROPERTY *prop, char *value)
 				else if (update_mode==NM_POSTUPDATE)
 				{
 					//Handle the logics
-					if (NR_cycle==false)	//Beginning of true pass - accumulator pass (toggle hasn't occurred)
-					{
-						//See what the difference is - if it is above the convergence limit, send an NR update
-						diff_val = voltage[1] - prev_voltage_value[1];
+					//See what the difference is - if it is above the convergence limit, send an NR update
+					diff_val = voltage[1] - prev_voltage_value[1];
 
-						if (diff_val.Mag() >= maximum_voltage_error)	//Outside of range, so force a new iteration
-						{
-							NR_retval = gl_globalclock;
-						}
+					if (diff_val.Mag() >= maximum_voltage_error)	//Outside of range, so force a new iteration
+					{
+						NR_retval = gl_globalclock;
 					}
 				}
 			}
@@ -2217,15 +2173,12 @@ int node::notify(int update_mode, PROPERTY *prop, char *value)
 				else if (update_mode==NM_POSTUPDATE)
 				{
 					//Handle the logics
-					if (NR_cycle==false)	//Beginning of true pass - accumulator pass (toggle hasn't occurred)
-					{
-						//See what the difference is - if it is above the convergence limit, send an NR update
-						diff_val = voltage[2] - prev_voltage_value[2];
+					//See what the difference is - if it is above the convergence limit, send an NR update
+					diff_val = voltage[2] - prev_voltage_value[2];
 
-						if (diff_val.Mag() >= maximum_voltage_error)	//Outside of range, so force a new iteration
-						{
-							NR_retval = gl_globalclock;
-						}
+					if (diff_val.Mag() >= maximum_voltage_error)	//Outside of range, so force a new iteration
+					{
+						NR_retval = gl_globalclock;
 					}
 				}
 			}
@@ -2602,7 +2555,7 @@ int node::NR_current_update(bool postpass, bool parentcall)
 	{
 		if (postpass)	//Perform what used to be in post-synch - used to childed object items - occurred on "false" pass, so goes before all
 		{
-			if ((SubNode==CHILD) && (NR_cycle==false))	//Remove child contributions
+			if (SubNode==CHILD)	//Remove child contributions
 			{
 				node *ParToLoad = OBJECTDATA(SubNodeParent,node);
 
@@ -2649,7 +2602,7 @@ int node::NR_current_update(bool postpass, bool parentcall)
 					last_child_current12 = 0.0;
 			}
 
-			if (((SubNode==CHILD) || (SubNode==DIFF_CHILD)) && (NR_cycle==false))	//Child Voltage Updates
+			if ((SubNode==CHILD) || (SubNode==DIFF_CHILD))	//Child Voltage Updates
 			{
 				node *ParStealLoad = OBJECTDATA(SubNodeParent,node);
 

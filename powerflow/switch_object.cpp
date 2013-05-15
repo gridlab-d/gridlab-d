@@ -482,24 +482,14 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 
 	if ((solver_method == SM_NR) && (event_schedule != NULL))	//NR-reliability-related stuff
 	{
-		//Only perform changes on NR true cycle
-		if (NR_cycle == true)
-		{
-			//Store our phases going in
-			work_phases_pre = NR_branchdata[NR_branch_reference].phases & 0x07;
-		
-			//Call syncing function
-			work_phases_post = switch_expected_sync_function();
+		//Store our phases going in
+		work_phases_pre = NR_branchdata[NR_branch_reference].phases & 0x07;
+	
+		//Call syncing function
+		work_phases_post = switch_expected_sync_function();
 
-			//Store our phases going out
-			work_phases_post &= 0x07;
-		}
-		else
-		{
-			//Set phases the same
-			work_phases_pre = 0x00;
-			work_phases_post = 0x00;
-		}
+		//Store our phases going out
+		work_phases_post &= 0x07;
 	}
 	else	//Normal execution
 	{

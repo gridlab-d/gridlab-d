@@ -455,6 +455,7 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 		is_waterheater_on = 0;
 	}
 
+
 	TIMESTAMP t2 = residential_enduse::sync(t0,t1);
 	
 	// Now find our current temperatures and boundary height...
@@ -483,7 +484,7 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 		/* power_kw */ load.total = (heat_mode == GASHEAT ? gas_standby_power : 0.0);
 		is_waterheater_on = 0;
 	}
-	
+
 	//load.total = load.power = /* power_kw */ load.power;
 	load.power = load.total * load.power_fraction;
 	load.admittance = load.total * load.impedance_fraction;

@@ -365,240 +365,237 @@ TIMESTAMP fuse::sync(TIMESTAMP t0)
 		//Call overlying link sync
 		t2=link_object::sync(t0);
 
-		//See if we're in the proper cycle - NR only for now
-		if ((NR_cycle == true) && (solver_method == SM_NR))
+		//Always execute check code now
+		//Start with no assumed outages
+		fuse_blew = false;
+		work_phases = 0x00;
+		replacement_time = 0;
+
+		//Check them
+		if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//Phase A valid - check it
 		{
-			//Start with no assumed outages
-			fuse_blew = false;
-			work_phases = 0x00;
-			replacement_time = 0;
+			//Link::sync is where current in is calculated.  Convert the values
+			current_current_values[0] = current_in[0].Mag();
 
-			//Check them
-			if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//Phase A valid - check it
+			if ((current_current_values[0] > current_limit) && (phase_A_state == GOOD))
 			{
-				//Link::sync is where current in is calculated.  Convert the values
-				current_current_values[0] = current_in[0].Mag();
+				phase_A_state = BLOWN;	//Blow the fuse
+				gl_warning("Phase A of fuse:%s just blew!",obj->name);
+				/*  TROUBLESHOOT
+				The current through phase A of the fuse just exceeded the maximum rated value.
+				Use a larger value, or otherwise change your system and try again.
+				*/
 
-				if ((current_current_values[0] > current_limit) && (phase_A_state == GOOD))
+				fuse_blew = true;		//Flag a change
+				work_phases |= 0x04;	//Flag A change
+
+				//See if an update is needed (it's A and first, so yes, but just to be generic)
+				if (replacement_time == 0)
 				{
-					phase_A_state = BLOWN;	//Blow the fuse
-					gl_warning("Phase A of fuse:%s just blew!",obj->name);
-					/*  TROUBLESHOOT
-					The current through phase A of the fuse just exceeded the maximum rated value.
-					Use a larger value, or otherwise change your system and try again.
-					*/
-
-					fuse_blew = true;		//Flag a change
-					work_phases |= 0x04;	//Flag A change
-
-					//See if an update is needed (it's A and first, so yes, but just to be generic)
-					if (replacement_time == 0)
+					//Get length of outage
+					if (restore_dist_type == EXPONENTIAL)
 					{
-						//Get length of outage
-						if (restore_dist_type == EXPONENTIAL)
-						{
-							//Update mean repair time
-							mean_repair_time = gl_random_exponential(RNGSTATE,1.0/mean_replacement_time);
-							replacement_duration = (TIMESTAMP)(mean_repair_time);
-						}
-						else
-						{
-							//Update mean repair time - fuse always overrides link
-							mean_repair_time = mean_replacement_time;
-							replacement_duration = (TIMESTAMP)(mean_repair_time);
-						}
-
-						//Figure out when it is
-						replacement_time = prev_fuse_time + replacement_duration;
+						//Update mean repair time
+						mean_repair_time = gl_random_exponential(RNGSTATE,1.0/mean_replacement_time);
+						replacement_duration = (TIMESTAMP)(mean_repair_time);
 					}
-				}
-				//Else is leave as is - either blown, or reliability hit it
-			}
-
-			if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//Phase B valid - check it
-			{
-				//Link::sync is where current in is calculated.  Convert the values
-				current_current_values[1] = current_in[1].Mag();
-
-				if ((current_current_values[1] > current_limit) && (phase_B_state == GOOD))
-				{
-					phase_B_state = BLOWN;	//Blow the fuse
-
-					gl_warning("Phase B of fuse:%s just blew!",obj->name);
-					/*  TROUBLESHOOT
-					The current through phase B of the fuse just exceeded the maximum rated value.
-					Use a larger value, or otherwise change your system and try again.
-					*/
-
-					fuse_blew = true;		//Flag a change
-					work_phases |= 0x02;	//Flag B change
-
-					//See if an update is needed
-					if (replacement_time == 0)
+					else
 					{
-						//Get length of outage
-						if (restore_dist_type == EXPONENTIAL)
-						{
-							//Update mean repair time
-							mean_repair_time = gl_random_exponential(RNGSTATE,1.0/mean_replacement_time);
-							replacement_duration = (TIMESTAMP)(mean_repair_time);
-						}
-						else
-						{
-							//Update mean repair time - fuse always overrides link
-							mean_repair_time = mean_replacement_time;
-							replacement_duration = (TIMESTAMP)(mean_repair_time);
-						}
-
-						//Figure out when it is
-						replacement_time = prev_fuse_time + replacement_duration;
-					}
-				}
-				//Else is leave as is - either blown, or reliability hit it
-			}
-
-			if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//Phase C valid - check it
-			{
-				//Link::sync is where current in is calculated.  Convert the values
-				current_current_values[2] = current_in[2].Mag();
-
-				if ((current_current_values[2] > current_limit) && (phase_C_state == GOOD))
-				{
-					phase_C_state = BLOWN;	//Blow the fuse
-
-					gl_warning("Phase C of fuse:%s just blew!",obj->name);
-					/*  TROUBLESHOOT
-					The current through phase C of the fuse just exceeded the maximum rated value.
-					Use a larger value, or otherwise change your system and try again.
-					*/
-
-					fuse_blew = true;		//Flag a change
-					work_phases |= 0x01;	//Flag C change
-
-					//See if an update is needed
-					if (replacement_time == 0)
-					{
-						//Get length of outage
-						if (restore_dist_type == EXPONENTIAL)
-						{
-							//Update mean repair time
-							mean_repair_time = gl_random_exponential(RNGSTATE,1.0/mean_replacement_time);
-							replacement_duration = (TIMESTAMP)(mean_repair_time);
-						}
-						else
-						{
-							//Update mean repair time - fuse always overrides link
-							mean_repair_time = mean_replacement_time;
-							replacement_duration = (TIMESTAMP)(mean_repair_time);
-						}
-
-						//Figure out when it is
-						replacement_time = prev_fuse_time + replacement_duration;
-					}
-				}
-				//Else is leave as is - either blown, or reliability hit it
-			}
-
-			if (fuse_blew == true)
-			{
-				//Set up fault type
-				fault_val[0] = 'F';
-				fault_val[1] = 'U';
-				fault_val[2] = 'S';
-				fault_val[3] = '-';
-
-				//Determine who blew and store the time (assumes fuses can be replaced in parallel)
-				switch (work_phases)
-				{
-				case 0x00:	//No fuses blown !??
-					GL_THROW("fuse:%s supposedly blew, but doesn't register the right phases",obj->name);
-					/*  TROUBLESHOOT
-					A fuse reported an over-current condition and blew the appropriate link.  However, it did not appear
-					to fully propogate this condition.  Please try again.  If the error persists, please submit your code
-					and a bug report via the trac website.
-					*/
-					break;
-				case 0x01:	//Phase C blew
-					fix_time[2] = replacement_time;
-					fault_val[4] = 'C';
-					fault_val[5] = '\0';
-					break;
-				case 0x02:	//Phase B blew
-					fix_time[1] = replacement_time;
-					fault_val[4] = 'B';
-					fault_val[5] = '\0';
-					break;
-				case 0x03:	//Phase B and C blew
-					fix_time[1] = replacement_time;
-					fix_time[2] = replacement_time;
-					fault_val[4] = 'B';
-					fault_val[5] = 'C';
-					fault_val[6] = '\0';
-					break;
-				case 0x04:	//Phase A blew
-					fix_time[0] = replacement_time;
-					fault_val[4] = 'A';
-					fault_val[5] = '\0';
-					break;
-				case 0x05:	//Phase A and C blew
-					fix_time[0] = replacement_time;
-					fix_time[2] = replacement_time;
-					fault_val[4] = 'A';
-					fault_val[5] = 'C';
-					fault_val[6] = '\0';
-					break;
-				case 0x06:	//Phase A and B blew
-					fix_time[0] = replacement_time;
-					fix_time[1] = replacement_time;
-					fault_val[4] = 'A';
-					fault_val[5] = 'B';
-					fault_val[6] = '\0';
-					break;
-				case 0x07:	//All three went
-					fix_time[0] = replacement_time;
-					fix_time[1] = replacement_time;
-					fix_time[2] = replacement_time;
-					fault_val[4] = 'A';
-					fault_val[5] = 'B';
-					fault_val[6] = 'C';
-					fault_val[7] = '\0';
-					break;
-				default:
-					GL_THROW("fuse:%s supposedly blew, but doesn't register the right phases",obj->name);
-					//Defined above
-				}//End switch
-
-				if (event_schedule != NULL)	//Function was mapped - go for it!
-				{
-					//Call the function
-					result_val = ((int (*)(OBJECT *, OBJECT *, char *, TIMESTAMP, TIMESTAMP, int, bool))(*event_schedule))(*eventgen_obj,obj,fault_val,t0,replacement_duration,-1,false);
-
-					//Make sure it worked
-					if (result_val != 1)
-					{
-						GL_THROW("Attempt to blow fuse:%s failed in a reliability manner",obj->name);
-						/*  TROUBLESHOOT
-						While attempting to propagate a blown fuse's impacts, an error was encountered.  Please
-						try again.  If the error persists, please submit your code and a bug report via the trac website.
-						*/
+						//Update mean repair time - fuse always overrides link
+						mean_repair_time = mean_replacement_time;
+						replacement_duration = (TIMESTAMP)(mean_repair_time);
 					}
 
-					//Ensure we don't go anywhere yet
-					t2 = t0;
-
-				}	//End fault object present
-				else	//No object, just fail us out - save the iterations
-				{
-					gl_warning("No fault_check object present - Newton-Raphson solver may fail!");
-					/*  TROUBLESHOOT
-					A fuse blew and created an open link.  If the system is not meshed, the Newton-Raphson
-					solver will likely fail.  Theoretically, this should be a quick fail due to a singular matrix.
-					However, the system occasionally gets stuck and will exhaust iteration cycles before continuing.
-					If the fuse is blowing and the NR solver still iterates for a long time, this may be the case.
-					*/
+					//Figure out when it is
+					replacement_time = prev_fuse_time + replacement_duration;
 				}
 			}
-		}//End NR call
+			//Else is leave as is - either blown, or reliability hit it
+		}
+
+		if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//Phase B valid - check it
+		{
+			//Link::sync is where current in is calculated.  Convert the values
+			current_current_values[1] = current_in[1].Mag();
+
+			if ((current_current_values[1] > current_limit) && (phase_B_state == GOOD))
+			{
+				phase_B_state = BLOWN;	//Blow the fuse
+
+				gl_warning("Phase B of fuse:%s just blew!",obj->name);
+				/*  TROUBLESHOOT
+				The current through phase B of the fuse just exceeded the maximum rated value.
+				Use a larger value, or otherwise change your system and try again.
+				*/
+
+				fuse_blew = true;		//Flag a change
+				work_phases |= 0x02;	//Flag B change
+
+				//See if an update is needed
+				if (replacement_time == 0)
+				{
+					//Get length of outage
+					if (restore_dist_type == EXPONENTIAL)
+					{
+						//Update mean repair time
+						mean_repair_time = gl_random_exponential(RNGSTATE,1.0/mean_replacement_time);
+						replacement_duration = (TIMESTAMP)(mean_repair_time);
+					}
+					else
+					{
+						//Update mean repair time - fuse always overrides link
+						mean_repair_time = mean_replacement_time;
+						replacement_duration = (TIMESTAMP)(mean_repair_time);
+					}
+
+					//Figure out when it is
+					replacement_time = prev_fuse_time + replacement_duration;
+				}
+			}
+			//Else is leave as is - either blown, or reliability hit it
+		}
+
+		if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//Phase C valid - check it
+		{
+			//Link::sync is where current in is calculated.  Convert the values
+			current_current_values[2] = current_in[2].Mag();
+
+			if ((current_current_values[2] > current_limit) && (phase_C_state == GOOD))
+			{
+				phase_C_state = BLOWN;	//Blow the fuse
+
+				gl_warning("Phase C of fuse:%s just blew!",obj->name);
+				/*  TROUBLESHOOT
+				The current through phase C of the fuse just exceeded the maximum rated value.
+				Use a larger value, or otherwise change your system and try again.
+				*/
+
+				fuse_blew = true;		//Flag a change
+				work_phases |= 0x01;	//Flag C change
+
+				//See if an update is needed
+				if (replacement_time == 0)
+				{
+					//Get length of outage
+					if (restore_dist_type == EXPONENTIAL)
+					{
+						//Update mean repair time
+						mean_repair_time = gl_random_exponential(RNGSTATE,1.0/mean_replacement_time);
+						replacement_duration = (TIMESTAMP)(mean_repair_time);
+					}
+					else
+					{
+						//Update mean repair time - fuse always overrides link
+						mean_repair_time = mean_replacement_time;
+						replacement_duration = (TIMESTAMP)(mean_repair_time);
+					}
+
+					//Figure out when it is
+					replacement_time = prev_fuse_time + replacement_duration;
+				}
+			}
+			//Else is leave as is - either blown, or reliability hit it
+		}
+
+		if (fuse_blew == true)
+		{
+			//Set up fault type
+			fault_val[0] = 'F';
+			fault_val[1] = 'U';
+			fault_val[2] = 'S';
+			fault_val[3] = '-';
+
+			//Determine who blew and store the time (assumes fuses can be replaced in parallel)
+			switch (work_phases)
+			{
+			case 0x00:	//No fuses blown !??
+				GL_THROW("fuse:%s supposedly blew, but doesn't register the right phases",obj->name);
+				/*  TROUBLESHOOT
+				A fuse reported an over-current condition and blew the appropriate link.  However, it did not appear
+				to fully propogate this condition.  Please try again.  If the error persists, please submit your code
+				and a bug report via the trac website.
+				*/
+				break;
+			case 0x01:	//Phase C blew
+				fix_time[2] = replacement_time;
+				fault_val[4] = 'C';
+				fault_val[5] = '\0';
+				break;
+			case 0x02:	//Phase B blew
+				fix_time[1] = replacement_time;
+				fault_val[4] = 'B';
+				fault_val[5] = '\0';
+				break;
+			case 0x03:	//Phase B and C blew
+				fix_time[1] = replacement_time;
+				fix_time[2] = replacement_time;
+				fault_val[4] = 'B';
+				fault_val[5] = 'C';
+				fault_val[6] = '\0';
+				break;
+			case 0x04:	//Phase A blew
+				fix_time[0] = replacement_time;
+				fault_val[4] = 'A';
+				fault_val[5] = '\0';
+				break;
+			case 0x05:	//Phase A and C blew
+				fix_time[0] = replacement_time;
+				fix_time[2] = replacement_time;
+				fault_val[4] = 'A';
+				fault_val[5] = 'C';
+				fault_val[6] = '\0';
+				break;
+			case 0x06:	//Phase A and B blew
+				fix_time[0] = replacement_time;
+				fix_time[1] = replacement_time;
+				fault_val[4] = 'A';
+				fault_val[5] = 'B';
+				fault_val[6] = '\0';
+				break;
+			case 0x07:	//All three went
+				fix_time[0] = replacement_time;
+				fix_time[1] = replacement_time;
+				fix_time[2] = replacement_time;
+				fault_val[4] = 'A';
+				fault_val[5] = 'B';
+				fault_val[6] = 'C';
+				fault_val[7] = '\0';
+				break;
+			default:
+				GL_THROW("fuse:%s supposedly blew, but doesn't register the right phases",obj->name);
+				//Defined above
+			}//End switch
+
+			if (event_schedule != NULL)	//Function was mapped - go for it!
+			{
+				//Call the function
+				result_val = ((int (*)(OBJECT *, OBJECT *, char *, TIMESTAMP, TIMESTAMP, int, bool))(*event_schedule))(*eventgen_obj,obj,fault_val,t0,replacement_duration,-1,false);
+
+				//Make sure it worked
+				if (result_val != 1)
+				{
+					GL_THROW("Attempt to blow fuse:%s failed in a reliability manner",obj->name);
+					/*  TROUBLESHOOT
+					While attempting to propagate a blown fuse's impacts, an error was encountered.  Please
+					try again.  If the error persists, please submit your code and a bug report via the trac website.
+					*/
+				}
+
+				//Ensure we don't go anywhere yet
+				t2 = t0;
+
+			}	//End fault object present
+			else	//No object, just fail us out - save the iterations
+			{
+				gl_warning("No fault_check object present - Newton-Raphson solver may fail!");
+				/*  TROUBLESHOOT
+				A fuse blew and created an open link.  If the system is not meshed, the Newton-Raphson
+				solver will likely fail.  Theoretically, this should be a quick fail due to a singular matrix.
+				However, the system occasionally gets stuck and will exhaust iteration cycles before continuing.
+				If the fuse is blowing and the NR solver still iterates for a long time, this may be the case.
+				*/
+			}
+		}
 	}//End NR-only reliability calls
 	else	//FBS
 		t2 = link_object::sync(t0);

@@ -471,7 +471,7 @@ TIMESTAMP emissions::postsync(TIMESTAMP t0)
 	}
 
 	//Power determination code
-	if ((curr_cycle_time == t0) && (NR_cycle == true))	//Accumulation cycle
+	if (curr_cycle_time == t0)	//Accumulation cycle
 	{
 		//Grab the current power value - put in kVA
 		temp_power = (ParMeterObj->indiv_measured_power[0] + ParMeterObj->indiv_measured_power[1] + ParMeterObj->indiv_measured_power[2]);

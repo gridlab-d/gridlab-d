@@ -1592,17 +1592,14 @@ TIMESTAMP volt_var_control::presync(TIMESTAMP t0)
 		}
 	}
 
-	if (((solver_method == SM_NR) && (NR_cycle == true)) || (solver_method != SM_NR))	//Accumulation cycle checks
+	if (t0 != prev_time)	//New timestep
 	{
-		if (t0 != prev_time)	//New timestep
-		{
-			first_cycle = true;		//Flag as first entrant this time step (used to reactive control)
-			prev_time = t0;			//Update tracking variable
-		}
-		else
-		{
-			first_cycle = false;	//No longer the first cycle
-		}
+		first_cycle = true;		//Flag as first entrant this time step (used to reactive control)
+		prev_time = t0;			//Update tracking variable
+	}
+	else
+	{
+		first_cycle = false;	//No longer the first cycle
 	}
 
 	if (control_method != prev_mode)	//We've altered our mode
@@ -1649,7 +1646,7 @@ TIMESTAMP volt_var_control::presync(TIMESTAMP t0)
 		prev_mode = (VOLTVARSTATE)control_method;	//Update the tracker
 	}
 
-	if ((((solver_method == SM_NR) && (NR_cycle == false)) || (solver_method != SM_NR)) && (control_method == ACTIVE))	//Solution pass and are turned on
+	if (control_method == ACTIVE)	//are turned on?
 	{
 		for (reg_index=0; reg_index<num_regs; reg_index++)
 		{
@@ -2343,7 +2340,7 @@ TIMESTAMP volt_var_control::postsync(TIMESTAMP t0)
 	bool pf_add_capacitor, pf_check;	
 
 	//Grab power values and all of those related calculations
-	if ((((solver_method == SM_NR) && (NR_cycle == true)) || (solver_method != SM_NR)) && (control_method == ACTIVE) && (Regulator_Change == false))	//Accumulation cycle, or not NR - also no regulator changes in progress
+	if ((control_method == ACTIVE) && (Regulator_Change == false))	//no regulator changes in progress and we're active
 	{
 		link_power_vals = complex(0.0,0.0);	//Zero the power
 

@@ -496,18 +496,15 @@ int load::notify(int update_mode, PROPERTY *prop, char *value)
 				}
 				else if (update_mode==NM_POSTUPDATE)
 				{
-					if (NR_cycle==false)	//Technically true cycle, but it is the begining before the toggle
+					//Calculate the "power tolerance"
+					power_tolerance = constant_power[0].Mag() * default_maximum_power_error;
+
+					//See what the difference is - if it is above the convergence limit, send an NR update
+					diff_val = constant_power[0] - prev_power_value[0];
+
+					if (diff_val.Mag() >= power_tolerance)
 					{
-						//Calculate the "power tolerance"
-						power_tolerance = constant_power[0].Mag() * default_maximum_power_error;
-
-						//See what the difference is - if it is above the convergence limit, send an NR update
-						diff_val = constant_power[0] - prev_power_value[0];
-
-						if (diff_val.Mag() >= power_tolerance)
-						{
-							NR_retval = gl_globalclock;	//Force a reiteration
-						}
+						NR_retval = gl_globalclock;	//Force a reiteration
 					}
 				}
 			}
@@ -522,18 +519,15 @@ int load::notify(int update_mode, PROPERTY *prop, char *value)
 				}
 				else if (update_mode==NM_POSTUPDATE)
 				{
-					if (NR_cycle==false)	//Technically true cycle, but it is the begining before the toggle
+					//Calculate the "power tolerance"
+					power_tolerance = constant_power[1].Mag() * default_maximum_power_error;
+
+					//See what the difference is - if it is above the convergence limit, send an NR update
+					diff_val = constant_power[1] - prev_power_value[1];
+
+					if (diff_val.Mag() >= power_tolerance)
 					{
-						//Calculate the "power tolerance"
-						power_tolerance = constant_power[1].Mag() * default_maximum_power_error;
-
-						//See what the difference is - if it is above the convergence limit, send an NR update
-						diff_val = constant_power[1] - prev_power_value[1];
-
-						if (diff_val.Mag() >= power_tolerance)
-						{
-							NR_retval = gl_globalclock;	//Force a reiteration
-						}
+						NR_retval = gl_globalclock;	//Force a reiteration
 					}
 				}
 			}
@@ -548,18 +542,15 @@ int load::notify(int update_mode, PROPERTY *prop, char *value)
 				}
 				else if (update_mode==NM_POSTUPDATE)
 				{
-					if (NR_cycle==false)	//Technically true cycle, but it is the begining before the toggle
+					//Calculate the "power tolerance"
+					power_tolerance = constant_power[2].Mag() * default_maximum_power_error;
+
+					//See what the difference is - if it is above the convergence limit, send an NR update
+					diff_val = constant_power[2] - prev_power_value[2];
+
+					if (diff_val.Mag() >= power_tolerance)
 					{
-						//Calculate the "power tolerance"
-						power_tolerance = constant_power[2].Mag() * default_maximum_power_error;
-
-						//See what the difference is - if it is above the convergence limit, send an NR update
-						diff_val = constant_power[2] - prev_power_value[2];
-
-						if (diff_val.Mag() >= power_tolerance)
-						{
-							NR_retval = gl_globalclock;	//Force a reiteration
-						}
+						NR_retval = gl_globalclock;	//Force a reiteration
 					}
 				}
 			}

@@ -208,12 +208,6 @@ TIMESTAMP frequency_gen::presync(TIMESTAMP t0)
 	TIMESTAMP t1 = powerflow_object::presync(t0);
 	int indexval, indexer;
 	double tempval;
-	bool PerformUpdate;
-
-	if (((solver_method==SM_NR) && (NR_cycle == true)) || (solver_method!=SM_NR))
-		PerformUpdate = true;
-	else
-		PerformUpdate = false;
 
 	if (prev_time == 0)	//Initialization run
 	{
@@ -226,7 +220,7 @@ TIMESTAMP frequency_gen::presync(TIMESTAMP t0)
 	{
 		curr_dt = (t0-prev_time);	//Calculate time update
 
-		if ((curr_dt>0) && PerformUpdate)	//A change occurred and we are in a good spot to use it
+		if (curr_dt>0)	//A change occurred and we are in a good spot to use it
 		{
 			PrevLoadPower = LoadPower;	//Update power tracking variable
 			PrevGenPower = PMech;		//Update generator output tracking variable
@@ -353,140 +347,260 @@ TIMESTAMP frequency_gen::postsync(TIMESTAMP t0)
 	complex temp_power;
 	double newFVal, power_diff, tempFreq, tempDFreq, work_val, LoadLow, LoadHigh, time_work;
 	int index;
-	bool PerformUpdate;
 	bool CollapsedDone;
 
 	if (FreqObjectMode==AUTO)
 	{
-		if (((solver_method==SM_NR) && (NR_cycle == true)) || (solver_method!=SM_NR))
-			PerformUpdate = true;
-		else
-			PerformUpdate = false;
-
 		//Update power calculation
-		if (PerformUpdate)
+		READLOCK_OBJECT(obj->parent);
+		complex pc[] = {ParNode->current_inj[0],ParNode->current_inj[1],ParNode->current_inj[2]};
+		READUNLOCK_OBJECT(obj->parent);
+
+		temp_power = ParNode->voltage[0]*~pc[0];
+		temp_power += ParNode->voltage[1]*~pc[1];
+		temp_power += ParNode->voltage[2]*~pc[2];
+
+		//Store this as the desired power
+		LoadPower = temp_power.Re();
+
+		if (PrevLoadPower==0.0)	//Initialization catch
 		{
-			READLOCK_OBJECT(obj->parent);
-			complex pc[] = {ParNode->current_inj[0],ParNode->current_inj[1],ParNode->current_inj[2]};
-			READUNLOCK_OBJECT(obj->parent);
+			PrevLoadPower=LoadPower;	//Update load tracking
+			PMech=LoadPower;			//Current output equal to the load
+			return tret;				//Just get us out of here, or try.  First iteration is always screwy.
+		}
 
-			temp_power = ParNode->voltage[0]*~pc[0];
-			temp_power += ParNode->voltage[1]*~pc[1];
-			temp_power += ParNode->voltage[2]*~pc[2];
+		iter_passes++;	//Update iteration passes
+	
+		//Power difference - load change (p.u.)
+		power_diff = (PrevLoadPower-LoadPower)/system_base;
 
-			//Store this as the desired power
-			LoadPower = temp_power.Re();
+		//Calculate expected steady state final value
+		newFVal = FrequencyValue+power_diff/D_Load*NominalFreq;
 
-			if (PrevLoadPower==0.0)	//Initialization catch
-			{
-				PrevLoadPower=LoadPower;	//Update load tracking
-				PMech=LoadPower;			//Current output equal to the load
-				return tret;				//Just get us out of here, or try.  First iteration is always screwy.
-			}
-
-			iter_passes++;	//Update iteration passes
-		
-			//Power difference - load change (p.u.)
-			power_diff = (PrevLoadPower-LoadPower)/system_base;
-
-			//Calculate expected steady state final value
-			newFVal = FrequencyValue+power_diff/D_Load*NominalFreq;
-
-			//Transition through states to determine course of action
-			switch (CurrGenCondition)
-			{
-				case MATCHED:
+		//Transition through states to determine course of action
+		switch (CurrGenCondition)
+		{
+			case MATCHED:
+				{
+					if (iter_passes!=1)	//Multiple pass - delete our scheduled events, just in case they no longer occur
 					{
-						if (iter_passes!=1)	//Multiple pass - delete our scheduled events, just in case they no longer occur
-						{
-							RemoveScheduled(t0);		//remove items for the current time
-							Gov_Delay_Active = false;	//Clear the governor delay flag
-						}
-
-						//if ((newFVal < DB_Low) || (newFVal > DB_High))	//Exceeded the band (or it will) - handle this
-						LoadLow = PMech - P_delta;
-						LoadHigh = PMech + P_delta;
-						if ((LoadPower < LoadLow) || (LoadPower > LoadHigh))
-						{
-							NextGenCondition=GOV_DELAY;	//Transition to governor delay waiting
-							Gov_Delay_Active = true;	//Activate the governor delay tracking
-
-							//Schedule in the details of this change
-								for (index=0; index<Num_Resp_Eqs; index++)	//Find an open spot
-								{
-									if (CurrEquations[index].contype==EMPTY)
-									{
-										CurrEquations[index].coeffa = power_diff*K_val;
-										CurrEquations[index].coeffb = invT_val;
-										CurrEquations[index].contype = STEPEXP;
-										CurrEquations[index].starttime = t0;
-										CurrEquations[index].enteredtime = t0;
-										CurrEquations[index].endtime = t0 + eight_tau_value;	//Go out to 8 tau.  At that point, we'll just become a constant
-										
-										break;	//Out da loop, we found an empty entry
-									}
-
-									if (index==(Num_Resp_Eqs-1))
-									{
-										gl_warning("Failed to process frequency deviation at time %lld",t0);
-										/*  TROUBLESHOOT
-										The equations buffer for the frequency object must be full, so the response to a new power change could
-										not be included.  This needs to be increased via Num_Resp_Eqs, or provoke less changes.  It may also be
-										an indication that your attached generation is nearly at its limit.
-										*/
-									}
-								}//End empty find
-
-								//Guess when we'll cross critical frequency - theoretically only 1 thing active (this load), so manually calculate
-								if ((newFVal <= Freq_Low) || (newFVal > Freq_High))
-								{
-									if (power_diff<0)	//Change up, so frequency will go down
-									{
-										tupdate = (int64)(-1.0*T_val*log(1.0 - ((F_Low_PU-1.0)/power_diff/K_val)));
-									}
-									else	//Must have been up
-									{
-										tupdate = (int64)(-1.0*T_val*log(1.0 - ((F_High_PU-1)/power_diff/K_val)));
-									}
-
-									//Apply offset
-									tupdate += t0 + 1;	//In rounds down by default, so if we go +1, we have passed it (chances of hitting right on .0 are minimal)
-								}
-								else	//Not a factor
-									tupdate = TS_NEVER;
-
-								//Determine what we'll hit first - a frequency cross or the governor delay
-								if (Gov_Delay < tupdate)
-									next_time = Gov_Delay;	//Frequency first
-								else
-									next_time = tupdate;	//Governor first
-						}
-						else	//"Normal" operation.  Just apply this as a direct frequency change since it is small
-						{
-							//If the load has changed a slight bit, apply the change as a constant (update an existing constant, or create a new one)
-							if (power_diff != 0.0)	//Any change
-							{
-								work_val = power_diff/D_Load;	//p.u. frequency change
-
-								//Search for existing permanent constant
-								for (index=0; index<Num_Resp_Eqs; index++)
-								{
-									if (CurrEquations[index].contype == PERSCONST)	//Found one (should be only one anyways)
-									{
-										CurrEquations[index].coeffa += work_val;
-										
-										break;	//Out da loop, we found an empty entry
-									}
-								}//end list traversion
-							}//end load change
-
-							NextGenCondition=MATCHED;	//Update state variable
-							tupdate = TS_NEVER;			//Onward and upward!
-							next_time = TS_NEVER;		//Flag this one as well
-						}
-						break;
+						RemoveScheduled(t0);		//remove items for the current time
+						Gov_Delay_Active = false;	//Clear the governor delay flag
 					}
-				case GOV_DELAY:
+
+					//if ((newFVal < DB_Low) || (newFVal > DB_High))	//Exceeded the band (or it will) - handle this
+					LoadLow = PMech - P_delta;
+					LoadHigh = PMech + P_delta;
+					if ((LoadPower < LoadLow) || (LoadPower > LoadHigh))
+					{
+						NextGenCondition=GOV_DELAY;	//Transition to governor delay waiting
+						Gov_Delay_Active = true;	//Activate the governor delay tracking
+
+						//Schedule in the details of this change
+							for (index=0; index<Num_Resp_Eqs; index++)	//Find an open spot
+							{
+								if (CurrEquations[index].contype==EMPTY)
+								{
+									CurrEquations[index].coeffa = power_diff*K_val;
+									CurrEquations[index].coeffb = invT_val;
+									CurrEquations[index].contype = STEPEXP;
+									CurrEquations[index].starttime = t0;
+									CurrEquations[index].enteredtime = t0;
+									CurrEquations[index].endtime = t0 + eight_tau_value;	//Go out to 8 tau.  At that point, we'll just become a constant
+									
+									break;	//Out da loop, we found an empty entry
+								}
+
+								if (index==(Num_Resp_Eqs-1))
+								{
+									gl_warning("Failed to process frequency deviation at time %lld",t0);
+									/*  TROUBLESHOOT
+									The equations buffer for the frequency object must be full, so the response to a new power change could
+									not be included.  This needs to be increased via Num_Resp_Eqs, or provoke less changes.  It may also be
+									an indication that your attached generation is nearly at its limit.
+									*/
+								}
+							}//End empty find
+
+							//Guess when we'll cross critical frequency - theoretically only 1 thing active (this load), so manually calculate
+							if ((newFVal <= Freq_Low) || (newFVal > Freq_High))
+							{
+								if (power_diff<0)	//Change up, so frequency will go down
+								{
+									tupdate = (int64)(-1.0*T_val*log(1.0 - ((F_Low_PU-1.0)/power_diff/K_val)));
+								}
+								else	//Must have been up
+								{
+									tupdate = (int64)(-1.0*T_val*log(1.0 - ((F_High_PU-1)/power_diff/K_val)));
+								}
+
+								//Apply offset
+								tupdate += t0 + 1;	//In rounds down by default, so if we go +1, we have passed it (chances of hitting right on .0 are minimal)
+							}
+							else	//Not a factor
+								tupdate = TS_NEVER;
+
+							//Determine what we'll hit first - a frequency cross or the governor delay
+							if (Gov_Delay < tupdate)
+								next_time = Gov_Delay;	//Frequency first
+							else
+								next_time = tupdate;	//Governor first
+					}
+					else	//"Normal" operation.  Just apply this as a direct frequency change since it is small
+					{
+						//If the load has changed a slight bit, apply the change as a constant (update an existing constant, or create a new one)
+						if (power_diff != 0.0)	//Any change
+						{
+							work_val = power_diff/D_Load;	//p.u. frequency change
+
+							//Search for existing permanent constant
+							for (index=0; index<Num_Resp_Eqs; index++)
+							{
+								if (CurrEquations[index].contype == PERSCONST)	//Found one (should be only one anyways)
+								{
+									CurrEquations[index].coeffa += work_val;
+									
+									break;	//Out da loop, we found an empty entry
+								}
+							}//end list traversion
+						}//end load change
+
+						NextGenCondition=MATCHED;	//Update state variable
+						tupdate = TS_NEVER;			//Onward and upward!
+						next_time = TS_NEVER;		//Flag this one as well
+					}
+					break;
+				}
+			case GOV_DELAY:
+				{
+					//See which iteration we are on - if above 1, remove our contributions
+					if (iter_passes!=1)	//Multiple pass - delete our scheduled events, just in case they no longer occur
+					{
+						RemoveScheduled(t0);		//remove items for the current time
+					}
+
+					//See if any more load changes have occurred
+					if ((power_diff>calc_tol) || (power_diff<-calc_tol))
+					{
+
+						//Compute the new response - Schedule in the details of this change
+						for (index=0; index<Num_Resp_Eqs; index++)	//Find an open spot
+						{
+							if (CurrEquations[index].contype==EMPTY)
+							{
+								CurrEquations[index].coeffa = power_diff*K_val;
+								CurrEquations[index].coeffb = invT_val;
+								CurrEquations[index].contype = STEPEXP;
+								CurrEquations[index].starttime = t0;
+								CurrEquations[index].enteredtime = t0;
+								CurrEquations[index].endtime = t0 + eight_tau_value;	//Go out to 8 tau.  At that point, we'll just become a constant
+								
+								break;	//Out da loop, we found an empty entry
+							}
+
+							if (index==(Num_Resp_Eqs-1))
+							{
+								gl_warning("Failed to process frequency deviation at time %lld",t0);
+								//Define above
+							}
+						}//End empty find
+					}//End diff != 0
+
+					//Check the status of the delay
+					if (t0 >= Gov_Delay)	//Delay is over!
+					{
+						NextGenCondition = GEN_RAMP;	//Transition us to the ramping stage
+
+						//Apply the ramp to the scheduler, based on current conditions
+						for (index=0; index<Num_Resp_Eqs; index++)	//Find an open spot
+						{
+							if (CurrEquations[index].contype==EMPTY)
+							{
+								//Find out how far we need to go
+								power_diff = PMech - LoadPower;
+
+								if (power_diff>0)	//PG > PL, so ramp down
+								{
+									work_val = -ramp_rate;
+									Gen_Ramp_Direction = false;	//Flag it as so
+									time_work = power_diff/ramp_rate; //Calculate the expected time to reach that
+								}
+								else				//Must be a ramp up
+								{
+									work_val = ramp_rate;
+									Gen_Ramp_Direction = true;
+									time_work = -power_diff/ramp_rate; //Calculate the expected time to reach that
+								}
+
+								//Integerize
+								tupdate_b = (int64)(time_work)+1;
+
+								//per-unit power difference
+								work_val /= system_base;
+
+								//Update equation addition
+								CurrEquations[index].coeffa = work_val*K_val;
+								CurrEquations[index].coeffb = invT_val;
+								CurrEquations[index].delay_time = time_work;	//Ramp stop time
+								CurrEquations[index].contype = RAMPEXP;
+								CurrEquations[index].starttime = t0;
+								CurrEquations[index].enteredtime = t0;
+								CurrEquations[index].endtime = t0 + eight_tau_value + tupdate_b;	//Go out to 8 tau.  At that point, we'll just become a constant
+
+								//Offset tupdate_b now (absolute vs relative time)
+								tupdate_b += t0;
+								
+								//Determine our update time - when we may hit another frequency of interest
+								tempFreq = FrequencyValue;
+								tupdate = updatetime((t0+1),1,tempFreq,tempDFreq);	//See when we think we'll hit a FOI
+
+								//Determine which time we want to aim for
+								if (tupdate > tupdate_b)	//Ramp time
+									next_time = tupdate_b;
+								else
+									next_time = tupdate;	//Frequency time
+
+								break;	//Out da loop, we found an empty entry
+							}
+
+							if (index==(Num_Resp_Eqs-1))
+							{
+								gl_warning("Failed to process frequency deviation at time %lld",t0);
+								//Define above
+							}
+						}//End empty find
+					}//end gov delay over
+					else
+					{
+						//Governor delay or a frequency cross should be all we'd be hitting here
+							tempFreq = FrequencyValue;
+							tupdate = updatetime((t0+1),1,tempFreq,tempDFreq);	//See when we think we'll hit a FOI
+
+							//Now see which one to follow
+							if (tupdate > Gov_Delay)	//Gov first
+								next_time = Gov_Delay;
+							else
+								next_time = tupdate;	//FOI first
+
+						NextGenCondition = GOV_DELAY;	//Make sure we stay here
+						Gov_Delay_Active = true;		//This should already be true, but make sure
+					}//Gov delay not over
+					break;
+				}
+			case GEN_RAMP:	//Ramping period
+				{
+					//Apply the ramp update (happens regardless of whether load changed or not)
+					if (Gen_Ramp_Direction)	//Ramping up
+						PMech += ramp_rate*(double)(curr_dt);
+					else	//Must be down
+						PMech -= ramp_rate*(double)(curr_dt);
+
+					//Flag that we are no longer in governor delay
+					Gov_Delay_Active = false;
+
+					//See if the load has changed in here
+					if (((power_diff>calc_tol) || (power_diff<-calc_tol)) && (Change_Lockout==false))	//Load has changed
 					{
 						//See which iteration we are on - if above 1, remove our contributions
 						if (iter_passes!=1)	//Multiple pass - delete our scheduled events, just in case they no longer occur
@@ -494,423 +608,397 @@ TIMESTAMP frequency_gen::postsync(TIMESTAMP t0)
 							RemoveScheduled(t0);		//remove items for the current time
 						}
 
-						//See if any more load changes have occurred
-						if ((power_diff>calc_tol) || (power_diff<-calc_tol))
+						//Apply this change into the equation list
+						for (index=0; index<Num_Resp_Eqs; index++)	//Find an open spot
 						{
-
-							//Compute the new response - Schedule in the details of this change
-							for (index=0; index<Num_Resp_Eqs; index++)	//Find an open spot
+							if (CurrEquations[index].contype==EMPTY)
 							{
-								if (CurrEquations[index].contype==EMPTY)
-								{
-									CurrEquations[index].coeffa = power_diff*K_val;
-									CurrEquations[index].coeffb = invT_val;
-									CurrEquations[index].contype = STEPEXP;
-									CurrEquations[index].starttime = t0;
-									CurrEquations[index].enteredtime = t0;
-									CurrEquations[index].endtime = t0 + eight_tau_value;	//Go out to 8 tau.  At that point, we'll just become a constant
-									
-									break;	//Out da loop, we found an empty entry
-								}
-
-								if (index==(Num_Resp_Eqs-1))
-								{
-									gl_warning("Failed to process frequency deviation at time %lld",t0);
-									//Define above
-								}
-							}//End empty find
-						}//End diff != 0
-
-						//Check the status of the delay
-						if (t0 >= Gov_Delay)	//Delay is over!
-						{
-							NextGenCondition = GEN_RAMP;	//Transition us to the ramping stage
-
-							//Apply the ramp to the scheduler, based on current conditions
-							for (index=0; index<Num_Resp_Eqs; index++)	//Find an open spot
-							{
-								if (CurrEquations[index].contype==EMPTY)
-								{
-									//Find out how far we need to go
-									power_diff = PMech - LoadPower;
-
-									if (power_diff>0)	//PG > PL, so ramp down
-									{
-										work_val = -ramp_rate;
-										Gen_Ramp_Direction = false;	//Flag it as so
-										time_work = power_diff/ramp_rate; //Calculate the expected time to reach that
-									}
-									else				//Must be a ramp up
-									{
-										work_val = ramp_rate;
-										Gen_Ramp_Direction = true;
-										time_work = -power_diff/ramp_rate; //Calculate the expected time to reach that
-									}
-
-									//Integerize
-									tupdate_b = (int64)(time_work)+1;
-
-									//per-unit power difference
-									work_val /= system_base;
-
-									//Update equation addition
-									CurrEquations[index].coeffa = work_val*K_val;
-									CurrEquations[index].coeffb = invT_val;
-									CurrEquations[index].delay_time = time_work;	//Ramp stop time
-									CurrEquations[index].contype = RAMPEXP;
-									CurrEquations[index].starttime = t0;
-									CurrEquations[index].enteredtime = t0;
-									CurrEquations[index].endtime = t0 + eight_tau_value + tupdate_b;	//Go out to 8 tau.  At that point, we'll just become a constant
-
-									//Offset tupdate_b now (absolute vs relative time)
-									tupdate_b += t0;
-									
-									//Determine our update time - when we may hit another frequency of interest
-									tempFreq = FrequencyValue;
-									tupdate = updatetime((t0+1),1,tempFreq,tempDFreq);	//See when we think we'll hit a FOI
-
-									//Determine which time we want to aim for
-									if (tupdate > tupdate_b)	//Ramp time
-										next_time = tupdate_b;
-									else
-										next_time = tupdate;	//Frequency time
-
-									break;	//Out da loop, we found an empty entry
-								}
-
-								if (index==(Num_Resp_Eqs-1))
-								{
-									gl_warning("Failed to process frequency deviation at time %lld",t0);
-									//Define above
-								}
-							}//End empty find
-						}//end gov delay over
-						else
-						{
-							//Governor delay or a frequency cross should be all we'd be hitting here
-								tempFreq = FrequencyValue;
-								tupdate = updatetime((t0+1),1,tempFreq,tempDFreq);	//See when we think we'll hit a FOI
-
-								//Now see which one to follow
-								if (tupdate > Gov_Delay)	//Gov first
-									next_time = Gov_Delay;
-								else
-									next_time = tupdate;	//FOI first
-
-							NextGenCondition = GOV_DELAY;	//Make sure we stay here
-							Gov_Delay_Active = true;		//This should already be true, but make sure
-						}//Gov delay not over
-						break;
-					}
-				case GEN_RAMP:	//Ramping period
-					{
-						//Apply the ramp update (happens regardless of whether load changed or not)
-						if (Gen_Ramp_Direction)	//Ramping up
-							PMech += ramp_rate*(double)(curr_dt);
-						else	//Must be down
-							PMech -= ramp_rate*(double)(curr_dt);
-
-						//Flag that we are no longer in governor delay
-						Gov_Delay_Active = false;
-
-						//See if the load has changed in here
-						if (((power_diff>calc_tol) || (power_diff<-calc_tol)) && (Change_Lockout==false))	//Load has changed
-						{
-							//See which iteration we are on - if above 1, remove our contributions
-							if (iter_passes!=1)	//Multiple pass - delete our scheduled events, just in case they no longer occur
-							{
-								RemoveScheduled(t0);		//remove items for the current time
+								CurrEquations[index].coeffa = power_diff*K_val;
+								CurrEquations[index].coeffb = invT_val;
+								CurrEquations[index].contype = STEPEXP;
+								CurrEquations[index].starttime = t0;
+								CurrEquations[index].enteredtime = t0;
+								CurrEquations[index].endtime = t0 + eight_tau_value;	//Go out to 8 tau.  At that point, we'll just become a constant
+								
+								break;	//Out da loop, we found an empty entry
 							}
 
-							//Apply this change into the equation list
-							for (index=0; index<Num_Resp_Eqs; index++)	//Find an open spot
+							if (index==(Num_Resp_Eqs-1))
 							{
-								if (CurrEquations[index].contype==EMPTY)
-								{
-									CurrEquations[index].coeffa = power_diff*K_val;
-									CurrEquations[index].coeffb = invT_val;
-									CurrEquations[index].contype = STEPEXP;
-									CurrEquations[index].starttime = t0;
-									CurrEquations[index].enteredtime = t0;
-									CurrEquations[index].endtime = t0 + eight_tau_value;	//Go out to 8 tau.  At that point, we'll just become a constant
-									
-									break;	//Out da loop, we found an empty entry
-								}
+								gl_warning("Failed to process frequency deviation at time %lld",t0);
+								//Define above
+							}
+						}//End empty find
 
-								if (index==(Num_Resp_Eqs-1))
-								{
-									gl_warning("Failed to process frequency deviation at time %lld",t0);
-									//Define above
-								}
-							}//End empty find
+						//Figure out the new difference
+						work_val = (PMech - LoadPower)/system_base;
 
-							//Figure out the new difference
-							work_val = (PMech - LoadPower)/system_base;
-
-							//Determine which scenario we are in
-							if (Gen_Ramp_Direction)	//Ramping up
+						//Determine which scenario we are in
+						if (Gen_Ramp_Direction)	//Ramping up
+						{
+							if (work_val<0)	//Load is still greater, so we're OK directionally
 							{
-								if (work_val<0)	//Load is still greater, so we're OK directionally
-								{
-									//Determine how much our time needs to change
-									time_work = (LoadPower - PrevLoadPower)/ramp_rate;
-									tupdate_b = (int64)(time_work)+1;	//Find the time differential
+								//Determine how much our time needs to change
+								time_work = (LoadPower - PrevLoadPower)/ramp_rate;
+								tupdate_b = (int64)(time_work)+1;	//Find the time differential
 
+								//Find a ramp that satisfies our needs
+								for (index=0; index<Num_Resp_Eqs; index++)
+								{
+									if (CurrEquations[index].contype == RAMPEXP)	//Found one
+									{
+										//Find out when this one is set to stop
+										tupdate = (int64)(CurrEquations[index].delay_time) + CurrEquations[index].starttime;
+
+										//Make sure it hasn't
+										if (tupdate > t0)	//We're OK
+										{
+											//Apply the time update
+											CurrEquations[index].delay_time += time_work;
+
+											//Update our end time to reflect this as well
+											CurrEquations[index].endtime += tupdate_b;
+											
+											//Prevent us from making any more changes in this timestep that are load related
+											Change_Lockout=true;
+
+											//Get us out of this loop
+											break;
+										}
+									}//end found one
+								}//end equation list traversion
+
+								if ((index==Num_Resp_Eqs) && (time_work > 0))	//It went through and did not find one, let's see if an empty spot exists
+								{
 									//Find a ramp that satisfies our needs
 									for (index=0; index<Num_Resp_Eqs; index++)
 									{
-										if (CurrEquations[index].contype == RAMPEXP)	//Found one
+										if (CurrEquations[index].contype == EMPTY)	//Found one
 										{
-											//Find out when this one is set to stop
-											tupdate = (int64)(CurrEquations[index].delay_time) + CurrEquations[index].starttime;
+											//Add in a new ramp, we need to progress further
+											//per-unit power difference
+											work_val = ramp_rate/system_base;
 
-											//Make sure it hasn't
-											if (tupdate > t0)	//We're OK
-											{
-												//Apply the time update
-												CurrEquations[index].delay_time += time_work;
-
-												//Update our end time to reflect this as well
-												CurrEquations[index].endtime += tupdate_b;
-												
-												//Prevent us from making any more changes in this timestep that are load related
-												Change_Lockout=true;
-
-												//Get us out of this loop
-												break;
-											}
-										}//end found one
-									}//end equation list traversion
-
-									if ((index==Num_Resp_Eqs) && (time_work > 0))	//It went through and did not find one, let's see if an empty spot exists
-									{
-										//Find a ramp that satisfies our needs
-										for (index=0; index<Num_Resp_Eqs; index++)
-										{
-											if (CurrEquations[index].contype == EMPTY)	//Found one
-											{
-												//Add in a new ramp, we need to progress further
-												//per-unit power difference
-												work_val = ramp_rate/system_base;
-
-												//Update equation addition
-												CurrEquations[index].coeffa = work_val*K_val;
-												CurrEquations[index].coeffb = invT_val;
-												CurrEquations[index].delay_time = time_work;	//Ramp stop time
-												CurrEquations[index].contype = RAMPEXP;
-												CurrEquations[index].starttime = t0;
-												CurrEquations[index].enteredtime = t0;
-												CurrEquations[index].endtime = t0 + eight_tau_value + tupdate_b;	//Go out to 8 tau.  At that point, we'll just become a constant
-
-												//Break out of the loop
-												break;
-											}//end found one
-
-											if (index==(Num_Resp_Eqs-1))
-											{
-												gl_warning("Failed to process frequency deviation at time %lld",t0);
-												//Define above
-											}
-										}//End empty list traversion
-									}//End Need empty check
-								}
-								else	//Need to reverse >:|
-								{
-									//Traverse the list, find the existing ramp so we can terminate it
-									for (index=0; index<Num_Resp_Eqs; index++)
-									{
-										if (CurrEquations[index].contype == RAMPEXP)	//Found one
-										{
-											//Find out when this one is set to stop
-											tupdate = (int64)(CurrEquations[index].delay_time) + CurrEquations[index].starttime;
-
-											//Make sure it hasn't
-											if (tupdate > t0)	//We're OK
-											{
-												//Apply the time update - should stop us now
-												CurrEquations[index].delay_time = (double)(t0 - CurrEquations[index].starttime);
-
-												//Prevent us from making any more changes in this timestep that are load related
-												Change_Lockout=true;
-
-												//Get us out of this loop
-												break;
-											}
-										}//end found one
-									}//end equation list traversion
-
-									//Now find an empty one and apply a new ramp
-									for (index=0; index<Num_Resp_Eqs; index++)
-									{
-										if (CurrEquations[index].contype == EMPTY)	//Empty!
-										{
-											//Apply reversed direction
-											Gen_Ramp_Direction=false;	//Now going downward
-
-											//Determine time for new ramp
-											time_work = (PMech - LoadPower)/ramp_rate;
-											tupdate_b = (int64)(time_work)+1;
-
-											//Fill in the values
-												//per-unit power difference
-												work_val = -ramp_rate/system_base;
-
-												//Update equation addition
-												CurrEquations[index].coeffa = work_val*K_val;
-												CurrEquations[index].coeffb = invT_val;
-												CurrEquations[index].delay_time = time_work;	//Ramp stop time
-												CurrEquations[index].contype = RAMPEXP;
-												CurrEquations[index].starttime = t0;
-												CurrEquations[index].enteredtime = t0;
-												CurrEquations[index].endtime = t0 + eight_tau_value + tupdate_b;	//Go out to 8 tau.  At that point, we'll just become a constant
+											//Update equation addition
+											CurrEquations[index].coeffa = work_val*K_val;
+											CurrEquations[index].coeffb = invT_val;
+											CurrEquations[index].delay_time = time_work;	//Ramp stop time
+											CurrEquations[index].contype = RAMPEXP;
+											CurrEquations[index].starttime = t0;
+											CurrEquations[index].enteredtime = t0;
+											CurrEquations[index].endtime = t0 + eight_tau_value + tupdate_b;	//Go out to 8 tau.  At that point, we'll just become a constant
 
 											//Break out of the loop
 											break;
-										}//end found empty
+										}//end found one
 
 										if (index==(Num_Resp_Eqs-1))
 										{
 											gl_warning("Failed to process frequency deviation at time %lld",t0);
 											//Define above
 										}
-									}//end equation list traversion
-								}//end reversal
-							}//end ramp up
-							else	//Must be ramping down
+									}//End empty list traversion
+								}//End Need empty check
+							}
+							else	//Need to reverse >:|
 							{
-								if (work_val>0)	//Generation is still greater than load, so we're OK directionally
+								//Traverse the list, find the existing ramp so we can terminate it
+								for (index=0; index<Num_Resp_Eqs; index++)
 								{
-									//Determine how much our time needs to change
-									time_work = (PrevLoadPower - LoadPower)/ramp_rate;
-									tupdate_b = (int64)(time_work)+1;	//Find the time differential
+									if (CurrEquations[index].contype == RAMPEXP)	//Found one
+									{
+										//Find out when this one is set to stop
+										tupdate = (int64)(CurrEquations[index].delay_time) + CurrEquations[index].starttime;
 
+										//Make sure it hasn't
+										if (tupdate > t0)	//We're OK
+										{
+											//Apply the time update - should stop us now
+											CurrEquations[index].delay_time = (double)(t0 - CurrEquations[index].starttime);
+
+											//Prevent us from making any more changes in this timestep that are load related
+											Change_Lockout=true;
+
+											//Get us out of this loop
+											break;
+										}
+									}//end found one
+								}//end equation list traversion
+
+								//Now find an empty one and apply a new ramp
+								for (index=0; index<Num_Resp_Eqs; index++)
+								{
+									if (CurrEquations[index].contype == EMPTY)	//Empty!
+									{
+										//Apply reversed direction
+										Gen_Ramp_Direction=false;	//Now going downward
+
+										//Determine time for new ramp
+										time_work = (PMech - LoadPower)/ramp_rate;
+										tupdate_b = (int64)(time_work)+1;
+
+										//Fill in the values
+											//per-unit power difference
+											work_val = -ramp_rate/system_base;
+
+											//Update equation addition
+											CurrEquations[index].coeffa = work_val*K_val;
+											CurrEquations[index].coeffb = invT_val;
+											CurrEquations[index].delay_time = time_work;	//Ramp stop time
+											CurrEquations[index].contype = RAMPEXP;
+											CurrEquations[index].starttime = t0;
+											CurrEquations[index].enteredtime = t0;
+											CurrEquations[index].endtime = t0 + eight_tau_value + tupdate_b;	//Go out to 8 tau.  At that point, we'll just become a constant
+
+										//Break out of the loop
+										break;
+									}//end found empty
+
+									if (index==(Num_Resp_Eqs-1))
+									{
+										gl_warning("Failed to process frequency deviation at time %lld",t0);
+										//Define above
+									}
+								}//end equation list traversion
+							}//end reversal
+						}//end ramp up
+						else	//Must be ramping down
+						{
+							if (work_val>0)	//Generation is still greater than load, so we're OK directionally
+							{
+								//Determine how much our time needs to change
+								time_work = (PrevLoadPower - LoadPower)/ramp_rate;
+								tupdate_b = (int64)(time_work)+1;	//Find the time differential
+
+								//Find a ramp that satisfies our needs
+								for (index=0; index<Num_Resp_Eqs; index++)
+								{
+									if (CurrEquations[index].contype == RAMPEXP)	//Found one
+									{
+										//Find out when this one is set to stop
+										tupdate = (int64)(CurrEquations[index].delay_time) + CurrEquations[index].starttime;
+
+										//Make sure it hasn't
+										if (tupdate > t0)	//We're OK
+										{
+											//Apply the time update
+											CurrEquations[index].delay_time += time_work;
+
+											//Update our end time as well
+											CurrEquations[index].endtime += tupdate_b;
+
+											//Prevent us from making any more changes in this timestep that are load related
+											Change_Lockout=true;
+
+											//Get us out of this loop
+											break;
+										}
+									}//end found one
+								}//end equation list traversion
+
+								if ((index==Num_Resp_Eqs) && (time_work > 0))	//It went through and did not find one, let's see if an empty spot exists
+								{
 									//Find a ramp that satisfies our needs
 									for (index=0; index<Num_Resp_Eqs; index++)
 									{
-										if (CurrEquations[index].contype == RAMPEXP)	//Found one
+										if (CurrEquations[index].contype == EMPTY)	//Found one
 										{
-											//Find out when this one is set to stop
-											tupdate = (int64)(CurrEquations[index].delay_time) + CurrEquations[index].starttime;
+											//Add in a new ramp, we need to progress further
+											//per-unit power difference
+											work_val = -ramp_rate/system_base;
 
-											//Make sure it hasn't
-											if (tupdate > t0)	//We're OK
-											{
-												//Apply the time update
-												CurrEquations[index].delay_time += time_work;
-
-												//Update our end time as well
-												CurrEquations[index].endtime += tupdate_b;
-
-												//Prevent us from making any more changes in this timestep that are load related
-												Change_Lockout=true;
-
-												//Get us out of this loop
-												break;
-											}
-										}//end found one
-									}//end equation list traversion
-
-									if ((index==Num_Resp_Eqs) && (time_work > 0))	//It went through and did not find one, let's see if an empty spot exists
-									{
-										//Find a ramp that satisfies our needs
-										for (index=0; index<Num_Resp_Eqs; index++)
-										{
-											if (CurrEquations[index].contype == EMPTY)	//Found one
-											{
-												//Add in a new ramp, we need to progress further
-												//per-unit power difference
-												work_val = -ramp_rate/system_base;
-
-												//Update equation addition
-												CurrEquations[index].coeffa = work_val*K_val;
-												CurrEquations[index].coeffb = invT_val;
-												CurrEquations[index].delay_time = time_work;	//Ramp stop time
-												CurrEquations[index].contype = RAMPEXP;
-												CurrEquations[index].starttime = t0;
-												CurrEquations[index].enteredtime = t0;
-												CurrEquations[index].endtime = t0 + eight_tau_value + tupdate_b;	//Go out to 8 tau.  At that point, we'll just become a constant
-
-												//Break out of the loop
-												break;
-											}//end found one
-
-											if (index==(Num_Resp_Eqs-1))
-											{
-												gl_warning("Failed to process frequency deviation at time %lld",t0);
-												//Define above
-											}
-										}//End empty list traversion
-									}//End Need empty check
-								}//end no reversal needed
-								else //reversal needed >:|
-								{
-
-									//Traverse the list, find the existing ramp so we can terminate it
-									for (index=0; index<Num_Resp_Eqs; index++)
-									{
-										if (CurrEquations[index].contype == RAMPEXP)	//Found one
-										{
-											//Find out when this one is set to stop
-											tupdate = (int64)(CurrEquations[index].delay_time) + CurrEquations[index].starttime;
-
-											//Make sure it hasn't
-											if (tupdate > t0)	//We're OK
-											{
-												//Apply the time update - should stop us now
-												CurrEquations[index].delay_time = (double)(t0 - CurrEquations[index].starttime);
-
-												//Prevent us from making any more changes in this timestep that are load related
-												Change_Lockout=true;
-
-												//Get us out of this loop
-												break;
-											}
-										}//end found one
-									}//end equation list traversion
-
-									//Now find an empty one and apply a new ramp
-									for (index=0; index<Num_Resp_Eqs; index++)
-									{
-										if (CurrEquations[index].contype == EMPTY)	//Empty!
-										{
-											//Apply reversed direction
-											Gen_Ramp_Direction=true;	//Now going upward
-
-											//Determine time for new ramp
-											time_work = (LoadPower - PMech)/ramp_rate;
-											tupdate_b = (int64)(time_work)+1;
-
-											//Fill in the values
-												//per-unit power difference
-												work_val = ramp_rate/system_base;
-
-												//Update equation addition
-												CurrEquations[index].coeffa = work_val*K_val;
-												CurrEquations[index].coeffb = invT_val;
-												CurrEquations[index].delay_time = time_work;	//Ramp stop time
-												CurrEquations[index].contype = RAMPEXP;
-												CurrEquations[index].starttime = t0;
-												CurrEquations[index].enteredtime = t0;
-												CurrEquations[index].endtime = t0 + eight_tau_value + tupdate_b;	//Go out to 8 tau.  At that point, we'll just become a constant
+											//Update equation addition
+											CurrEquations[index].coeffa = work_val*K_val;
+											CurrEquations[index].coeffb = invT_val;
+											CurrEquations[index].delay_time = time_work;	//Ramp stop time
+											CurrEquations[index].contype = RAMPEXP;
+											CurrEquations[index].starttime = t0;
+											CurrEquations[index].enteredtime = t0;
+											CurrEquations[index].endtime = t0 + eight_tau_value + tupdate_b;	//Go out to 8 tau.  At that point, we'll just become a constant
 
 											//Break out of the loop
 											break;
-										}//end found empty
+										}//end found one
 
 										if (index==(Num_Resp_Eqs-1))
 										{
 											gl_warning("Failed to process frequency deviation at time %lld",t0);
 											//Define above
 										}
-									}//end equation list traversion
-								}//end reversal
-							}//end ramp down
+									}//End empty list traversion
+								}//End Need empty check
+							}//end no reversal needed
+							else //reversal needed >:|
+							{
 
-							//Keep us here (since we've obviously not met the load now
-							NextGenCondition = GEN_RAMP;
-							Gov_Delay_Active = false;
+								//Traverse the list, find the existing ramp so we can terminate it
+								for (index=0; index<Num_Resp_Eqs; index++)
+								{
+									if (CurrEquations[index].contype == RAMPEXP)	//Found one
+									{
+										//Find out when this one is set to stop
+										tupdate = (int64)(CurrEquations[index].delay_time) + CurrEquations[index].starttime;
 
-							//Determine our update time now
+										//Make sure it hasn't
+										if (tupdate > t0)	//We're OK
+										{
+											//Apply the time update - should stop us now
+											CurrEquations[index].delay_time = (double)(t0 - CurrEquations[index].starttime);
+
+											//Prevent us from making any more changes in this timestep that are load related
+											Change_Lockout=true;
+
+											//Get us out of this loop
+											break;
+										}
+									}//end found one
+								}//end equation list traversion
+
+								//Now find an empty one and apply a new ramp
+								for (index=0; index<Num_Resp_Eqs; index++)
+								{
+									if (CurrEquations[index].contype == EMPTY)	//Empty!
+									{
+										//Apply reversed direction
+										Gen_Ramp_Direction=true;	//Now going upward
+
+										//Determine time for new ramp
+										time_work = (LoadPower - PMech)/ramp_rate;
+										tupdate_b = (int64)(time_work)+1;
+
+										//Fill in the values
+											//per-unit power difference
+											work_val = ramp_rate/system_base;
+
+											//Update equation addition
+											CurrEquations[index].coeffa = work_val*K_val;
+											CurrEquations[index].coeffb = invT_val;
+											CurrEquations[index].delay_time = time_work;	//Ramp stop time
+											CurrEquations[index].contype = RAMPEXP;
+											CurrEquations[index].starttime = t0;
+											CurrEquations[index].enteredtime = t0;
+											CurrEquations[index].endtime = t0 + eight_tau_value + tupdate_b;	//Go out to 8 tau.  At that point, we'll just become a constant
+
+										//Break out of the loop
+										break;
+									}//end found empty
+
+									if (index==(Num_Resp_Eqs-1))
+									{
+										gl_warning("Failed to process frequency deviation at time %lld",t0);
+										//Define above
+									}
+								}//end equation list traversion
+							}//end reversal
+						}//end ramp down
+
+						//Keep us here (since we've obviously not met the load now
+						NextGenCondition = GEN_RAMP;
+						Gov_Delay_Active = false;
+
+						//Determine our update time now
+						power_diff = PMech - LoadPower;
+
+						//Still need more ramping - figure out how long we might need
+						if (power_diff>0)
+							tupdate_b = (int64)(power_diff/ramp_rate);
+						else
+							tupdate_b = (int64)(-power_diff/ramp_rate);
+
+						tupdate_b += t0;	//Apply offset
+
+						if (tupdate_b <= t0)	//Somehow stayed here
+							tupdate_b = t0+1;	//Advance us by one, see what changes
+
+						//Determine if a frequency value will be crossed before then
+						tempFreq = FrequencyValue;
+						tupdate = updatetime((t0+1),1,tempFreq,tempDFreq);	//See when we think we'll hit a FOI
+
+						//Figure out which one we want
+						if (tupdate_b > tupdate)	//FOI before done
+							next_time = tupdate;
+						else
+							next_time = tupdate_b;	//Ramping next time of interest
+					}//end load change
+					else	//No load has changed
+					{
+						//See if we've reached our desired power level (+/- Freq error of final)
+						LoadLow = PrevLoadPower - P_delta;
+						LoadHigh = PrevLoadPower + P_delta;
+
+						//See which way we were ramping
+						if (Gen_Ramp_Direction)	//Going up?
+						{
+							//Make sure we haven't just overshot
+							if ((PrevGenPower < LoadLow) && (PMech > LoadHigh) && ((LoadHigh-LoadLow) < ramp_rate))
+								PMech = PrevLoadPower;
+						}
+						else	//Must be going down
+						{
+							//Make sure we haven't just overshot
+							if ((PrevGenPower > LoadHigh) && (PMech < LoadLow) && ((LoadHigh-LoadLow) < ramp_rate))
+								PMech = PrevLoadPower;
+						}
+
+						if ((PMech > LoadLow) && (PMech < LoadHigh) && (Change_Lockout==false))	//Should be in the range
+						{
+							NextGenCondition = MATCHED;	//We're done, go back to normal!
+							Gov_Delay_Active = false;	//Make sure the governor delay is flagged as false
+							Change_Lockout = true;		//Prevent us from going in here again, since it will mess everything up
+
+							//Parse the list - anything that is in progress will end in the 8-tau time (should be done by then)
+							//Step items.  Others are ignored for now (since they aren't really used)
+							tupdate = t0 + eight_tau_value;	//Goal time
+
+							//Figure out what the value of the frequency will be there
+							tempFreq = FrequencyValue;
+							tupdate_b = updatetime(tupdate,1,tempFreq,tempDFreq);
+
+							//Determine the step size
+							//work_val = (tempFreq - FrequencyValue) / NominalFreq;
+							work_val = (NominalFreq - FrequencyValue) / NominalFreq;
+
+							//Reflag reduction
+							CollapsedDone = false;
+							
+							for (index=0; index<Num_Resp_Eqs; index++)
+							{
+								if ((CurrEquations[index].contype == STEPEXP) || (CurrEquations[index].contype == RAMPEXP))	//Something here
+								{
+									//Doesn't matter what it is, we're now making it a STEPEXP that represents all of these
+									if (CollapsedDone == false)	//This one is now our friend
+									{
+										CurrEquations[index].contype = CSTEPEXP;
+										CurrEquations[index].coeffa = work_val;
+										CurrEquations[index].coeffb = invT_val;
+										CurrEquations[index].delay_time = -work_val;	//This is actually the offset here
+										CurrEquations[index].starttime = t0;
+										CurrEquations[index].enteredtime = t0;
+										CurrEquations[index].endtime = tupdate;	//Set to go away at 8tau
+
+										CollapsedDone = true;	//Indicate we're done
+									}
+									else	//Already had one done
+									{
+										//Clear out the entries
+										CurrEquations[index].coeffa = 0.0;
+										CurrEquations[index].coeffb = 0.0;
+										CurrEquations[index].delay_time = 0.0;
+										CurrEquations[index].contype = EMPTY;
+										CurrEquations[index].starttime = TS_NEVER;
+										CurrEquations[index].enteredtime = TS_NEVER;
+										CurrEquations[index].endtime = TS_NEVER;
+									}
+								}
+							}
+
+							//Transition the update
+							next_time = tupdate;
+
+						}//End PMech reached
+						else
+						{
+							//Find out how far we still have to go
 							power_diff = PMech - LoadPower;
 
 							//Still need more ramping - figure out how long we might need
@@ -919,10 +1007,10 @@ TIMESTAMP frequency_gen::postsync(TIMESTAMP t0)
 							else
 								tupdate_b = (int64)(-power_diff/ramp_rate);
 
-							tupdate_b += t0;	//Apply offset
+							if (tupdate_b == 0)	//Integer round down, step next
+								tupdate_b = 1;
 
-							if (tupdate_b <= t0)	//Somehow stayed here
-								tupdate_b = t0+1;	//Advance us by one, see what changes
+							tupdate_b += t0;	//Apply offset
 
 							//Determine if a frequency value will be crossed before then
 							tempFreq = FrequencyValue;
@@ -933,144 +1021,34 @@ TIMESTAMP frequency_gen::postsync(TIMESTAMP t0)
 								next_time = tupdate;
 							else
 								next_time = tupdate_b;	//Ramping next time of interest
-						}//end load change
-						else	//No load has changed
-						{
-							//See if we've reached our desired power level (+/- Freq error of final)
-							LoadLow = PrevLoadPower - P_delta;
-							LoadHigh = PrevLoadPower + P_delta;
 
-							//See which way we were ramping
-							if (Gen_Ramp_Direction)	//Going up?
-							{
-								//Make sure we haven't just overshot
-								if ((PrevGenPower < LoadLow) && (PMech > LoadHigh) && ((LoadHigh-LoadLow) < ramp_rate))
-									PMech = PrevLoadPower;
-							}
-							else	//Must be going down
-							{
-								//Make sure we haven't just overshot
-								if ((PrevGenPower > LoadHigh) && (PMech < LoadLow) && ((LoadHigh-LoadLow) < ramp_rate))
-									PMech = PrevLoadPower;
-							}
-
-							if ((PMech > LoadLow) && (PMech < LoadHigh) && (Change_Lockout==false))	//Should be in the range
-							{
-								NextGenCondition = MATCHED;	//We're done, go back to normal!
-								Gov_Delay_Active = false;	//Make sure the governor delay is flagged as false
-								Change_Lockout = true;		//Prevent us from going in here again, since it will mess everything up
-
-								//Parse the list - anything that is in progress will end in the 8-tau time (should be done by then)
-								//Step items.  Others are ignored for now (since they aren't really used)
-								tupdate = t0 + eight_tau_value;	//Goal time
-
-								//Figure out what the value of the frequency will be there
-								tempFreq = FrequencyValue;
-								tupdate_b = updatetime(tupdate,1,tempFreq,tempDFreq);
-
-								//Determine the step size
-								//work_val = (tempFreq - FrequencyValue) / NominalFreq;
-								work_val = (NominalFreq - FrequencyValue) / NominalFreq;
-
-								//Reflag reduction
-								CollapsedDone = false;
-								
-								for (index=0; index<Num_Resp_Eqs; index++)
-								{
-									if ((CurrEquations[index].contype == STEPEXP) || (CurrEquations[index].contype == RAMPEXP))	//Something here
-									{
-										//Doesn't matter what it is, we're now making it a STEPEXP that represents all of these
-										if (CollapsedDone == false)	//This one is now our friend
-										{
-											CurrEquations[index].contype = CSTEPEXP;
-											CurrEquations[index].coeffa = work_val;
-											CurrEquations[index].coeffb = invT_val;
-											CurrEquations[index].delay_time = -work_val;	//This is actually the offset here
-											CurrEquations[index].starttime = t0;
-											CurrEquations[index].enteredtime = t0;
-											CurrEquations[index].endtime = tupdate;	//Set to go away at 8tau
-
-											CollapsedDone = true;	//Indicate we're done
-										}
-										else	//Already had one done
-										{
-											//Clear out the entries
-											CurrEquations[index].coeffa = 0.0;
-											CurrEquations[index].coeffb = 0.0;
-											CurrEquations[index].delay_time = 0.0;
-											CurrEquations[index].contype = EMPTY;
-											CurrEquations[index].starttime = TS_NEVER;
-											CurrEquations[index].enteredtime = TS_NEVER;
-											CurrEquations[index].endtime = TS_NEVER;
-										}
-									}
-								}
-
-								//Transition the update
-								next_time = tupdate;
-
-							}//End PMech reached
-							else
-							{
-								//Find out how far we still have to go
-								power_diff = PMech - LoadPower;
-
-								//Still need more ramping - figure out how long we might need
-								if (power_diff>0)
-									tupdate_b = (int64)(power_diff/ramp_rate);
-								else
-									tupdate_b = (int64)(-power_diff/ramp_rate);
-
-								if (tupdate_b == 0)	//Integer round down, step next
-									tupdate_b = 1;
-
-								tupdate_b += t0;	//Apply offset
-
-								//Determine if a frequency value will be crossed before then
-								tempFreq = FrequencyValue;
-								tupdate = updatetime((t0+1),1,tempFreq,tempDFreq);	//See when we think we'll hit a FOI
-
-								//Figure out which one we want
-								if (tupdate_b > tupdate)	//FOI before done
-									next_time = tupdate;
-								else
-									next_time = tupdate_b;	//Ramping next time of interest
-
-								//Set to stay where we are
-								NextGenCondition = GEN_RAMP;
-								Gov_Delay_Active = false;	//Make sure delay is still "de-flagged"
-							}//End PMech not reached
-						}//End no load change
-						break;
-					}
-				default:
-					{
-						GL_THROW("The frequency object has entered an unknown state.");
-						/*  TROUBLESHOOT
-						The frequency generation object has entered an unknown state.  Submit
-						your code and a bug report using the trac website.
-						*/
-					}
-			}//end switch
+							//Set to stay where we are
+							NextGenCondition = GEN_RAMP;
+							Gov_Delay_Active = false;	//Make sure delay is still "de-flagged"
+						}//End PMech not reached
+					}//End no load change
+					break;
+				}
+			default:
+				{
+					GL_THROW("The frequency object has entered an unknown state.");
+					/*  TROUBLESHOOT
+					The frequency generation object has entered an unknown state.  Submit
+					your code and a bug report using the trac website.
+					*/
+				}
+		}//end switch
 
 
-			//Determine return time
-			if (tret > next_time)
-				tret = next_time;
-			//Defaulted else, tret = tret
+		//Determine return time
+		if (tret > next_time)
+			tret = next_time;
+		//Defaulted else, tret = tret
 
-			if (tret==TS_NEVER)
-				return TS_NEVER;
-			else
-				return -tret;	//Crazy negative time
-		}//End perform update
-		else	//Not an update
-		{
-			if (next_time == TS_NEVER)
-				return TS_NEVER;
-			else
-				return -next_time;
-		}
+		if (tret==TS_NEVER)
+			return TS_NEVER;
+		else
+			return -tret;	//Crazy negative time
 	}//End auto mode
 	else	//"Dumb" mode
 		return TS_NEVER;

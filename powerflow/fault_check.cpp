@@ -169,92 +169,89 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 		}//End reliability mode allocing
 	}//end 0th run
 
-	if (NR_cycle==false)	//Getting ready to do a solution, we should see check for "unsupported" systems
+	if ((fcheck_state == SINGLE) && (prev_time == 0))	//Single only occurs on first iteration
 	{
-		if ((fcheck_state == SINGLE) && (prev_time == 0))	//Single only occurs on first iteration
-		{
-			perform_check = true;	//Flag for a check
-		}//end single check
-		else if ((fcheck_state == ONCHANGE) && (NR_admit_change == true))	//Admittance change has been flagged
-		{
-			perform_check = true;	//Flag the check
-		}//end onchange check
-		else if (fcheck_state == ALLT)	//Must be every iteration then
-		{
-			perform_check = true;	//Flag the check
-		}
-		else	//Doesn't fit one of the above
-		{
-			perform_check = false;	//Flag not-a-check
-		}
+		perform_check = true;	//Flag for a check
+	}//end single check
+	else if ((fcheck_state == ONCHANGE) && (NR_admit_change == true))	//Admittance change has been flagged
+	{
+		perform_check = true;	//Flag the check
+	}//end onchange check
+	else if (fcheck_state == ALLT)	//Must be every iteration then
+	{
+		perform_check = true;	//Flag the check
+	}
+	else	//Doesn't fit one of the above
+	{
+		perform_check = false;	//Flag not-a-check
+	}
 
-		if (perform_check)	//Each "check" is identical - split out here to avoid 3x replication
+	if (perform_check)	//Each "check" is identical - split out here to avoid 3x replication
+	{
+		//See if restoration is present - if not, proceed without it
+		if (restoration_object != NULL)
 		{
-			//See if restoration is present - if not, proceed without it
-			if (restoration_object != NULL)
+			//Map to the restoration object
+			rest_obj = OBJECTDATA(restoration_object,restoration);
+
+			//Call the connectivity check
+			support_check(0,rest_obj->populate_tree);
+
+			//Go through the list now - if something is unsupported, call a reconfiguration
+			for (index=0; index<NR_bus_count; index++)
 			{
-				//Map to the restoration object
-				rest_obj = OBJECTDATA(restoration_object,restoration);
-
-				//Call the connectivity check
-				support_check(0,rest_obj->populate_tree);
-
-				//Go through the list now - if something is unsupported, call a reconfiguration
-				for (index=0; index<NR_bus_count; index++)
+				if ((Supported_Nodes[index][0] == 0) || (Supported_Nodes[index][1] == 0) || (Supported_Nodes[index][2] == 0))
 				{
-					if ((Supported_Nodes[index][0] == 0) || (Supported_Nodes[index][1] == 0) || (Supported_Nodes[index][2] == 0))
+					if (output_filename[0] != '\0')	//See if there's an output
 					{
-						if (output_filename[0] != '\0')	//See if there's an output
-						{
-							write_output_file(t0);	//Write it
-						}
-
-						gl_warning("Unsupported phase on node %s",NR_busdata[index].name);	//Only reports the first one
-
-						rest_obj->Perform_Reconfiguration(OBJECTHDR(this),t0);	//Request a reconfiguration
-
-						break;	//Get us out of this loop, only need to detect a solitary failure
+						write_output_file(t0);	//Write it
 					}
+
+					gl_warning("Unsupported phase on node %s",NR_busdata[index].name);	//Only reports the first one
+
+					rest_obj->Perform_Reconfiguration(OBJECTHDR(this),t0);	//Request a reconfiguration
+
+					break;	//Get us out of this loop, only need to detect a solitary failure
 				}
 			}
-			else	//No restoration
+		}
+		else	//No restoration
+		{
+			//Call the connectivity check
+			support_check(0,false);
+
+			//Parse the list - see if anything is broken
+			for (index=0; index<NR_bus_count; index++)
 			{
-				//Call the connectivity check
-				support_check(0,false);
-
-				//Parse the list - see if anything is broken
-				for (index=0; index<NR_bus_count; index++)
+				if ((Supported_Nodes[index][0] == 0) || (Supported_Nodes[index][1] == 0) || (Supported_Nodes[index][2] == 0))
 				{
-					if ((Supported_Nodes[index][0] == 0) || (Supported_Nodes[index][1] == 0) || (Supported_Nodes[index][2] == 0))
+					if (output_filename[0] != '\0')	//See if there's an output
 					{
-						if (output_filename[0] != '\0')	//See if there's an output
-						{
-							write_output_file(t0);	//Write it
-						}
-
-						//See what mode we are in
-						if (reliability_mode == false)
-						{
-							GL_THROW("Unsupported phase on node %s",NR_busdata[index].name);
-							/*  TROUBLESHOOT
-							An unsupported connection was found on the indicated bus in the system.  Since reconfiguration
-							is not enabled, the solver will fail here on the next iteration, so the system is broken early.
-							*/
-						}
-						else	//Must be in reliability mode
-						{
-							gl_warning("Unsupported phase on node %s",NR_busdata[index].name);
-							/*  TROUBLESHOOT
-							An unsupported connection was found on the indicated bus in the system.  Since reliability
-							is enabled, the solver will simply ignore the unsupported components for now.
-							*/
-						}
-						break;	//Only need to do this once
+						write_output_file(t0);	//Write it
 					}
+
+					//See what mode we are in
+					if (reliability_mode == false)
+					{
+						GL_THROW("Unsupported phase on node %s",NR_busdata[index].name);
+						/*  TROUBLESHOOT
+						An unsupported connection was found on the indicated bus in the system.  Since reconfiguration
+						is not enabled, the solver will fail here on the next iteration, so the system is broken early.
+						*/
+					}
+					else	//Must be in reliability mode
+					{
+						gl_warning("Unsupported phase on node %s",NR_busdata[index].name);
+						/*  TROUBLESHOOT
+						An unsupported connection was found on the indicated bus in the system.  Since reliability
+						is enabled, the solver will simply ignore the unsupported components for now.
+						*/
+					}
+					break;	//Only need to do this once
 				}
-			}//no restoration
-		}//End check
-	}//End NR_cycle == false
+			}
+		}//no restoration
+	}//End check
 
 	//Update previous timestep info
 	prev_time = t0;

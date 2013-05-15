@@ -295,6 +295,10 @@ TIMESTAMP meter::presync(TIMESTAMP t0)
 	if (meter_power_consumption != complex(0,0))
 		power[0] = power[1] = power[2] = 0.0;
 
+	//Reliability addition - if momentary flag set - clear it
+	if (meter_interrupted_secondary == true)
+		meter_interrupted_secondary = false;
+
 	return node::presync(t0);
 }
 
@@ -303,7 +307,7 @@ TIMESTAMP meter::sync(TIMESTAMP t0)
 	int TempNodeRef;
 
 	//Reliability check
-	if ((NR_mode == false) && (fault_check_object != NULL) && (solver_method == SM_NR))	//solver cycle and fault_check is present (so might need to set flag
+	if ((fault_check_object != NULL) && (solver_method == SM_NR))	//proper solver and fault_object isn't null - may need to set a flag
 	{
 		if (NR_node_reference==-99)	//Childed
 		{
@@ -349,6 +353,9 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	complex temp_current;
 	TIMESTAMP tretval;
 
+	//Perform node update - do it now, otherwise current_inj isn't populated
+	tretval = node::postsync(t1);
+
 	measured_voltage[0] = voltageA;
 	measured_voltage[1] = voltageB;
 	measured_voltage[2] = voltageC;
@@ -357,12 +364,8 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	measured_voltageD[1] = voltageB - voltageC;
 	measured_voltageD[2] = voltageC - voltageA;
 
-	if ((solver_method == SM_NR && NR_cycle == true)||solver_method  == SM_FBS)
+	if ((solver_method == SM_NR)||solver_method  == SM_FBS)
 	{
-		//Reliability addition - if momentary flag set - clear it
-		if (meter_interrupted_secondary == true)
-			meter_interrupted_secondary = false;
-
 		if (t1 > last_t)
 		{
 			dt = t1 - last_t;
@@ -464,11 +467,8 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 	}
 
-	tretval = node::postsync(t1);
-
 	//Multi run (for now) updates to power values
-	//Note - this probably won't be needed once NR gets flattened permanately.
-	if ((NR_cycle==false) && meter_NR_servered)
+	if (meter_NR_servered)
 	{
 		// compute demand power
 		indiv_measured_power[0] = voltage[0]*(~current_inj[0]);

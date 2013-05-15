@@ -149,6 +149,8 @@ int load_tracker::init(OBJECT *parent)
 
 void load_tracker::update_feedback_variable()
 {
+	//Locking - lock pointed device
+	READLOCK_OBJECT(target);
 		switch (type)
 		{
 		case PT_double:
@@ -189,6 +191,8 @@ void load_tracker::update_feedback_variable()
 			feedback = (double)(*(pointer.i64));
 			break;
 		}
+	//Unlock
+	READUNLOCK_OBJECT(target);
 }
 
 TIMESTAMP load_tracker::presync(TIMESTAMP t0)
@@ -196,39 +200,36 @@ TIMESTAMP load_tracker::presync(TIMESTAMP t0)
 	// We only re-calculate the output variable in the
 	// presync before the powerflow solve.  We are going to
 	// check for output error after the 
-	if ((solver_method == SM_FBS) || NR_cycle == false)
-	{
-		update_feedback_variable();
+	update_feedback_variable();
 
-		if (setpoint == 0.0)
+	if (setpoint == 0.0)
+	{
+		// set output to 0.0 and don't do anything else
+		output = 0.0;
+	}
+	else if (feedback == 0.0)
+	{
+		// can't trust feedback, just use feed forward control
+		output = setpoint / full_scale;
+	}
+	else
+	{
+		// NOTE: we assume a linear response to scaling.
+
+		if (feedback < setpoint)
 		{
-			// set output to 0.0 and don't do anything else
-			output = 0.0;
-		}
-		else if (feedback == 0.0)
-		{
-			// can't trust feedback, just use feed forward control
-			output = setpoint / full_scale;
+			double percent_error = (setpoint-feedback)/full_scale;
+			if (percent_error > (deadband/100.0))
+			{
+				output *= 1.0 + ((setpoint-feedback)/feedback) * (1.0/(1.0+damping));
+			}
 		}
 		else
 		{
-			// NOTE: we assume a linear response to scaling.
-
-			if (feedback < setpoint)
+			double percent_error = (feedback-setpoint)/full_scale;
+			if (percent_error > (deadband/100.0))
 			{
-				double percent_error = (setpoint-feedback)/full_scale;
-				if (percent_error > (deadband/100.0))
-				{
-					output *= 1.0 + ((setpoint-feedback)/feedback) * (1.0/(1.0+damping));
-				}
-			}
-			else
-			{
-				double percent_error = (feedback-setpoint)/full_scale;
-				if (percent_error > (deadband/100.0))
-				{
-					output *= 1.0 - ((feedback-setpoint)/feedback) * (1.0/(1.0+damping));
-				}
+				output *= 1.0 - ((feedback-setpoint)/feedback) * (1.0/(1.0+damping));
 			}
 		}
 	}
@@ -248,7 +249,7 @@ TIMESTAMP load_tracker::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	// After both the powerflow solve has completed and the
 	// measurments have been updated we check the output error
 	// and see if we need to trigger another iteration.
-	if ((solver_method == SM_FBS) || (NR_cycle == true && NR_admit_change == false))
+	if ((solver_method == SM_FBS) || (solver_method == SM_NR && NR_admit_change == false))
 	{
 		update_feedback_variable();
 

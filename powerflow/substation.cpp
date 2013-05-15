@@ -309,7 +309,7 @@ TIMESTAMP substation::presync(TIMESTAMP t0, TIMESTAMP t1)
 	double dt = 0;
 	double total_load;
 	//calculate the energy used
-	if(t1 != t0 && t0 != 0 && (last_power_A.Re() != 0 && last_power_B.Re() != 0 && last_power_C.Re() != 0) && NR_cycle == TRUE){
+	if(t1 != t0 && t0 != 0 && (last_power_A.Re() != 0 && last_power_B.Re() != 0 && last_power_C.Re() != 0)){
 		total_load = last_power_A.Re() + last_power_B.Re() + last_power_C.Re();
 		dt = ((double)(t1 - t0))/(3600 * TS_SECOND);
 		distribution_real_energy += total_load*dt;
@@ -323,23 +323,23 @@ TIMESTAMP substation::sync(TIMESTAMP t0, TIMESTAMP t1)
 	double dist_power_B_diff = 0;
 	double dist_power_C_diff = 0;
 	//set up the phase voltages for the three different cases
-	if((solver_method == SM_NR && NR_cycle == false) || solver_method == SM_FBS){
-		if(has_parent == 1){//has a pw_load as a parent
-			seq_mat[1] = *pPositiveSequenceVoltage;
-			seq_mat[0] = 0.0;	//Force the other two to zero for now - just to make sure
-			seq_mat[2] = 0.0;
-		}
-
-		//Check to see if a sequence conversion needs to be done
-		if (has_parent != 2)
-		{
-			voltageA = (seq_mat[0] + seq_mat[1] + seq_mat[2]) * reference_number;
-			voltageB = (seq_mat[0] + transformation_matrix[1][1] * seq_mat[1] + transformation_matrix[1][2] * seq_mat[2]) * reference_number;
-			voltageC = (seq_mat[0] + transformation_matrix[2][1] * seq_mat[1] + transformation_matrix[2][2] * seq_mat[2]) * reference_number;
-		}
+	if(has_parent == 1){//has a pw_load as a parent
+		seq_mat[1] = *pPositiveSequenceVoltage;
+		seq_mat[0] = 0.0;	//Force the other two to zero for now - just to make sure
+		seq_mat[2] = 0.0;
 	}
+
+	//Check to see if a sequence conversion needs to be done
+	if (has_parent != 2)
+	{
+		voltageA = (seq_mat[0] + seq_mat[1] + seq_mat[2]) * reference_number;
+		voltageB = (seq_mat[0] + transformation_matrix[1][1] * seq_mat[1] + transformation_matrix[1][2] * seq_mat[2]) * reference_number;
+		voltageC = (seq_mat[0] + transformation_matrix[2][1] * seq_mat[1] + transformation_matrix[2][2] * seq_mat[2]) * reference_number;
+	}
+
 	t2 = node::sync(t1);
-	if((solver_method == SM_NR && NR_cycle == true && NR_admit_change == false) || solver_method == SM_FBS){
+
+	if((solver_method == SM_NR && NR_admit_change == false) || solver_method == SM_FBS){
 		distribution_power_A = voltageA * (~current_inj[0]);
 		distribution_power_B = voltageB * (~current_inj[1]);
 		distribution_power_C = voltageC * (~current_inj[2]);

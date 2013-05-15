@@ -166,7 +166,6 @@ public:
 	int notify(int update_mode, PROPERTY *prop, char *value);
 	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
-	bool NR_mode;
 	bool current_accumulated;
 
 	int NR_populate(void);

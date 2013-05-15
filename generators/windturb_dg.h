@@ -46,7 +46,6 @@ private:
 	double std_air_press;
 	complex *pCircuit_V;		//< pointer to the three voltages on three lines
 	complex *pLine_I;			//< pointer to the three current on three lines
-	bool last_NR_mode;		//Toggle to keep track of last NR mode - needed to differentiate between FBS and NR
 	
 protected:
 	/* TODO: put unpublished but inherited variables */
@@ -145,12 +144,8 @@ public:
 	double Max_Vrotor;			// maximum induced voltage in p.u., e.g. 1.2
     double Min_Vrotor;			// minimum induced voltage in p.u., e.g. 0.8
 
-	bool *NR_mode;			//Toggle for NR solving cycle.  If not NR, just goes to false
-	bool default_NR_mode;
-
 public:
 	/* required implementations */
-	bool *get_bool(OBJECT *obj, char *name);
 	windturb_dg(MODULE *module);
 	int create(void);
 	int init(OBJECT *parent);

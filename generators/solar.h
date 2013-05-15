@@ -90,7 +90,6 @@ public:
 	double *pSolarG;		//Global horizontal
 	double *pAlbedo;		//Ground reflectance
 	double *pWindSpeed;
-	bool *NR_mode;			//Toggle for NR solving cycle.  If not NR, just goes to fals
 
 	double Max_P;//< maximum real power capacity in kW
     double Min_P;//< minimus real power capacity in kW
@@ -112,7 +111,6 @@ public:
 	void derate_panel(double Tamb, double Insol);
 	void calculate_IV(double Tamb, double Insol);
 	int init_climate(void);
-	bool *get_bool(OBJECT *obj, char *name);
 
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);

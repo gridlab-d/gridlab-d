@@ -347,7 +347,6 @@ int diesel_dg::create(void)
 	full_bus_admittance_mat = NULL;
 	PGenerated = NULL;
 	IGenerated = NULL;
-	NR_mode = NULL;
 	FreqPower = NULL;
 	TotalPower = NULL;
 
@@ -382,6 +381,7 @@ int diesel_dg::create(void)
 
 	first_run = true;				//First time we run, we are the first run (by definition)
 	first_run_after_delta = false;	//Assumes we aren't entering delta from the get-go
+	IterationToggle = true;			//Pass functionality
 
 	prev_time = 0;
 
@@ -765,11 +765,14 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 	//Assume always want TS_NEVER
 	tret_value = TS_NEVER;
 
+	//Toggle the iteration device
+	IterationToggle = !IterationToggle;
+
 	//First run allocation - in diesel_dg for now, but may need to move elsewhere
 	if (first_run == true)	//First run
 	{
 		//TODO: LOCKING!
-		if (deltamode_inclusive && enable_subsecond_models && (NR_mode==NULL))	//We want deltamode - see if it's populated yet
+		if (deltamode_inclusive && enable_subsecond_models && (torque_delay==NULL))	//We want deltamode - see if it's populated yet
 		{
 			if (((gen_object_current == -1) || (delta_objects==NULL)) && (enable_subsecond_models == true))
 			{
@@ -948,16 +951,6 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 						//Defined above
 					}
 
-					//Map the NR_mode variable
-					NR_mode = get_bool(obj->parent,"NR_mode");
-
-					//See if it worked
-					if (NR_mode==NULL)
-					{
-						GL_THROW("diesel_dg:%s - invalid reference passed from node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
-						//Defined above
-					}
-
 					//Map the value - full bus admittance is 3
 					full_bus_admittance_mat = ((complex * (*)(OBJECT *, unsigned char))(*test_fxn))(obj->parent,3);
 
@@ -1022,8 +1015,11 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//Initialize the trackers
 			torque_delay_write_pos = 0;
 			torque_delay_read_pos = 0;
+
+			//Force us to reiterate one
+			tret_value = t1;
 		}//End deltamode specials - first pass
-		else if (deltamode_inclusive && enable_subsecond_models && (NR_mode!=NULL)) 	//Still "first run", but at least one powerflow has completed (call init dyn now)
+		else if (deltamode_inclusive && enable_subsecond_models && (torque_delay!=NULL)) 	//Still "first run", but at least one powerflow has completed (call init dyn now)
 		{
 			ret_state = init_dynamics(&curr_state);
 
@@ -1178,8 +1174,8 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}//End no dynamic generator (older code)
 	else	//Must be a synchronous dynamic machine
 	{
-		//On NR false pass, update rotor-related stuff
-		if ((*NR_mode == false) && (prev_time != t1))
+		//Update rotor-related stuff
+		if ((prev_time != t1) && (IterationToggle == false))
 		{
 			//See if we just exited deltamode
 			if (deltamode_endtime != TS_NEVER)
@@ -1210,28 +1206,17 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 			//Update time
 			prev_time = t1;
+
+			//Force us to reiterate too
+			tret_value = t1;
 		}
-		else if (*NR_mode == true) //On true pass, update power (always, not first pass decided)
+		else if (IterationToggle == true)	//Update exciter aspects, if desired
 		{
 			//Update global, if necessary - by true, everyone should be done
 			if ((deltamode_endtime != TS_NEVER) && (first_run_after_delta==false))
 			{
 				deltamode_endtime = TS_NEVER;
 			}
-
-			//Update output power
-			//Get current injected
-			temp_current_val[0] = (IGenerated[0] - generator_admittance[0][0]*pCircuit_V[0] - generator_admittance[0][1]*pCircuit_V[1] - generator_admittance[0][2]*pCircuit_V[2]);
-			temp_current_val[1] = (IGenerated[1] - generator_admittance[1][0]*pCircuit_V[0] - generator_admittance[1][1]*pCircuit_V[1] - generator_admittance[1][2]*pCircuit_V[2]);
-			temp_current_val[2] = (IGenerated[2] - generator_admittance[2][0]*pCircuit_V[0] - generator_admittance[2][1]*pCircuit_V[1] - generator_admittance[2][2]*pCircuit_V[2]);
-
-			//Update power output variables, just so we can see what is going on
-			power_val[0] = pCircuit_V[0]*~temp_current_val[0];
-			power_val[1] = pCircuit_V[1]*~temp_current_val[1];
-			power_val[2] = pCircuit_V[2]*~temp_current_val[2];
-
-			//Update the output power variable
-			curr_state.pwr_electric = power_val[0] + power_val[1] + power_val[2];
 
 			//Compute our current voltage point - see if we need to adjust things (if we have an AVR)
 			if (Exciter_type == SEXS)
@@ -1271,20 +1256,38 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 				//Default else - do nothing
 			}
 			//Default else - no AVR
-
 		}
 		//Defaulted else - false pass, but not first
 	
 		//Nothing else in here right now....all handled internal to powerflow
 	}
-	
+
 	return tret_value;
 }
 
 /* Postsync is called when the clock needs to advance on the second top-down pass */
 TIMESTAMP diesel_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
+	complex temp_current_val[3];
+
 	TIMESTAMP t2 = TS_NEVER;
+
+	if (Gen_type == DYNAMIC)
+	{
+		//Update output power
+		//Get current injected
+		temp_current_val[0] = (IGenerated[0] - generator_admittance[0][0]*pCircuit_V[0] - generator_admittance[0][1]*pCircuit_V[1] - generator_admittance[0][2]*pCircuit_V[2]);
+		temp_current_val[1] = (IGenerated[1] - generator_admittance[1][0]*pCircuit_V[0] - generator_admittance[1][1]*pCircuit_V[1] - generator_admittance[1][2]*pCircuit_V[2]);
+		temp_current_val[2] = (IGenerated[2] - generator_admittance[2][0]*pCircuit_V[0] - generator_admittance[2][1]*pCircuit_V[1] - generator_admittance[2][2]*pCircuit_V[2]);
+
+		//Update power output variables, just so we can see what is going on
+		power_val[0] = pCircuit_V[0]*~temp_current_val[0];
+		power_val[1] = pCircuit_V[1]*~temp_current_val[1];
+		power_val[2] = pCircuit_V[2]*~temp_current_val[2];
+
+		//Update the output power variable
+		curr_state.pwr_electric = power_val[0] + power_val[1] + power_val[2];
+	}
 
 	/* TODO: implement post-topdown behavior */
 	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
@@ -1306,15 +1309,6 @@ double *diesel_dg::get_double(OBJECT *obj, char *name)
 	if (p==NULL || p->ptype!=PT_double)
 		return NULL;
 	return (double*)GETADDR(obj,p);
-}
-
-//Retrieves the pointer for a boolean variable from another object
-bool *diesel_dg::get_bool(OBJECT *obj, char *name)
-{
-	PROPERTY *p = gl_get_property(obj,name);
-	if (p==NULL || p->ptype!=PT_bool)
-		return NULL;
-	return (bool*)GETADDR(obj,p);
 }
 
 //Converts the admittance terms from sequence (pn0) to three-phase (abc)

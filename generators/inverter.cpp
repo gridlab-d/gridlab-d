@@ -195,7 +195,6 @@ int inverter::create(void)
 	c_3 = -1;
 	p_max = -1;
 	pMeterStatus = NULL;
-	default_NR_mode = false;
 	efficiency = 0;
 	inv_eta = 0.0;	//Not sure why there's two of these...
 
@@ -209,7 +208,6 @@ int inverter::create(void)
 	powerCalc = NULL;
 	sense_is_link = false;
 	sense_power = NULL;
-	powerflow_NR = false;	//Defaults to assuming NR
 
 	excess_input_power = 0.0;
 	lf_dispatch_power = 0.0;
@@ -253,8 +251,6 @@ int inverter::init(OBJECT *parent)
 		};
 		/// @todo use triplex property mapping instead of assuming memory order for meter variables (residential, low priority) (ticket #139)
 	
-		NR_mode = get_bool(parent,"NR_mode");
-
 		for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
 			*(map[i].var) = get_complex(parent,map[i].varname);
 
@@ -309,8 +305,6 @@ int inverter::init(OBJECT *parent)
 			{&pPower,				"power_12"}, //assumes 2 and 1-2 follow immediately in memory
 			/// @todo use triplex property mapping instead of assuming memory order for meter variables (residential, low priority) (ticket #139)
 		};
-
-		NR_mode = get_bool(parent,"NR_mode");
 
 		// attach meter variables to each circuit
 		for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
@@ -379,8 +373,6 @@ int inverter::init(OBJECT *parent)
 
 		gl_warning("Inverter:%d has no parent meter object defined; using static voltages", obj->id);
 		
-		NR_mode = &default_NR_mode;
-
 		// attach meter variables to each circuit in the default_meter
 		*(map[0].var) = &default_line123_voltage[0];
 		*(map[1].var) = &default_line1_current[0];
@@ -635,34 +627,6 @@ int inverter::init(OBJECT *parent)
 					*/
 					return 0;
 				}
-
-				//Extract the solver method
-				GLOBALVAR *Solver_address;
-				Solver_address = NULL;
-				int *Solver_test_value;
-				
-				//Link it
-				Solver_address = gl_global_find("powerflow::solver_method");
-				
-				//Check it
-				if(Solver_address == NULL)
-				{
-					gl_error("inverter:%s - failed to map solver_method from powerflow module",obj->name);
-					/*  TROUBLESHOOT
-					While attempting to extract the current powerflow solver method, an error was encountered.
-					Please ensure the powerflow module is loaded and try again.  If the error persists,
-					please submit your code and a bug report via the trac website.
-					*/
-					return 0;
-				}
-
-				//Map it
-				Solver_test_value = (int *)Solver_address->prop->addr;
-
-				if (*Solver_test_value==2)	//SM_NR = 2
-					powerflow_NR = true;
-				else	//Assumed FBS - if it is GS, they have bigger problems.
-					powerflow_NR = false;
 
 				//Check lockout times
 				if (charge_lockout_time<0)
@@ -986,7 +950,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 	} else {
 		if(four_quadrant_control_mode == FQM_LOAD_FOLLOWING)
 		{
-			if ((*NR_mode == false) && (t1 != t0))
+			if (t1 != t0)
 			{
 				//See if the "new" timestamp allows us to change
 				if (t1>=next_update_time)
@@ -1088,7 +1052,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	OBJECT *obj = OBJECTHDR(this);
 
-	if ((*NR_mode == false) && (*pMeterStatus==1))	//Make sure the meter is in service and we're on the proper cycle
+	if (*pMeterStatus==1)	//Make sure the meter is in service
 	{
 		phaseA_V_Out = pCircuit_V[0];	//Syncs the meter parent to the generator.
 		phaseB_V_Out = pCircuit_V[1];
@@ -1900,211 +1864,227 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		//See what the sense_object is and determine if we need to update
 		if (sense_is_link)
 		{
-			//Determine solver method - update link power calculations, if necessary
-			if (powerflow_NR)	//NR mode
-			{
-				//Only force the power update on the true cycle, for now
-				if (*NR_mode == true)
-				{
-					//Perform the power update
-					((void (*)(OBJECT *))(*powerCalc))(sense_object);
-				}
-			}
-			else	//FBS - do every time - may already be done, but force just in case ranking issues
-			{
-				//Perform the power update
-				((void (*)(OBJECT *))(*powerCalc))(sense_object);
-			}
+			//Perform the power update
+			((void (*)(OBJECT *))(*powerCalc))(sense_object);
 		}//End link update of power
 
-		//Determine our desired response - all FBS, only on "accumulator" pass of NR
-		if ((powerflow_NR == false) || ((powerflow_NR == true) && (*NR_mode == true)))
-		{
-			//Extract power, mainly just for convenience, but also to offset us for what we are currently "ordering"
-			curr_power_val = sense_power->Re();
+		//Extract power, mainly just for convenience, but also to offset us for what we are currently "ordering"
+		curr_power_val = sense_power->Re();
 
-			//Check power - only focus on real for now -- this will need to be changed if reactive considered
-			if (curr_power_val<=charge_on_threshold)	//Below charging threshold, desire charging
+		//Check power - only focus on real for now -- this will need to be changed if reactive considered
+		if (curr_power_val<=charge_on_threshold)	//Below charging threshold, desire charging
+		{
+			//See if the battery has room
+			if (b_soc < 1.0)
+			{
+				//See if we were already railed - if less, still have room, or we were discharging (either way okay - just may iterate a couple times)
+				if (lf_dispatch_power < max_charge_rate)
+				{
+					//Make sure we weren't discharging
+					if (load_follow_status == DISCHARGE)
+					{
+						//Set us to idle (will force a reiteration) - who knows where we really are
+						new_lf_status = IDLE;
+						new_lf_dispatch_power = 0.0;
+					}
+					else
+					{
+						//Set us up to charge
+						new_lf_status = CHARGE;
+
+						//Determine how far off we are from the "on" point (on is our "maintain" point)
+						diff_power_val = charge_on_threshold - curr_power_val;
+
+						//Accumulate it
+						new_lf_dispatch_power = lf_dispatch_power + diff_power_val;
+
+						//Make sure it isn't too big
+						if (new_lf_dispatch_power > max_charge_rate)
+						{
+							new_lf_dispatch_power = max_charge_rate;	//Desire more than we can give, limit it
+						}
+					}
+				}
+				else	//We were railed, continue with this course
+				{
+					new_lf_status = CHARGE;						//Keep us charging
+					new_lf_dispatch_power = max_charge_rate;	//Set to maximum rate
+				}
+
+			}//End Battery has room
+			else	//Battery full, no charging allowed
+			{
+				gl_verbose("inverter:%s - charge desired, but battery full!",obj->name);
+				/*  TROUBLESHOOT
+				An inverter in LOAD_FOLLOWING mode currently wants to charge the battery more, but the battery
+				is full.  Consider using a larger battery and trying again.
+				*/
+
+				new_lf_status = IDLE;			//Can't do anything, so we're idle
+				new_lf_dispatch_power = 0.0;	//Turn us off
+			}
+		}//End below charge_on_threshold
+		else if (curr_power_val<=charge_off_threshold)	//Below charging off threshold - see what we were doing
+		{
+			if (load_follow_status != CHARGE)
+			{
+				new_lf_status = IDLE;			//We were either idle or discharging, so we are now idle
+				new_lf_dispatch_power = 0.0;	//Idle power as well
+			}
+			else	//Must be charging
 			{
 				//See if the battery has room
 				if (b_soc < 1.0)
 				{
-					//See if we were already railed - if less, still have room, or we were discharging (either way okay - just may iterate a couple times)
-					if (lf_dispatch_power < max_charge_rate)
-					{
-						//Make sure we weren't discharging
-						if (load_follow_status == DISCHARGE)
-						{
-							//Set us to idle (will force a reiteration) - who knows where we really are
-							new_lf_status = IDLE;
-							new_lf_dispatch_power = 0.0;
-						}
-						else
-						{
-							//Set us up to charge
-							new_lf_status = CHARGE;
+					new_lf_status = CHARGE;	//Keep us charging
 
-							//Determine how far off we are from the "on" point (on is our "maintain" point)
-							diff_power_val = charge_on_threshold - curr_power_val;
-
-							//Accumulate it
-							new_lf_dispatch_power = lf_dispatch_power + diff_power_val;
-
-							//Make sure it isn't too big
-							if (new_lf_dispatch_power > max_charge_rate)
-							{
-								new_lf_dispatch_power = max_charge_rate;	//Desire more than we can give, limit it
-							}
-						}
-					}
-					else	//We were railed, continue with this course
-					{
-						new_lf_status = CHARGE;						//Keep us charging
-						new_lf_dispatch_power = max_charge_rate;	//Set to maximum rate
-					}
-
+					//Inside this range, just maintain what we were doing
+					new_lf_dispatch_power = lf_dispatch_power;
 				}//End Battery has room
 				else	//Battery full, no charging allowed
 				{
 					gl_verbose("inverter:%s - charge desired, but battery full!",obj->name);
-					/*  TROUBLESHOOT
-					An inverter in LOAD_FOLLOWING mode currently wants to charge the battery more, but the battery
-					is full.  Consider using a larger battery and trying again.
-					*/
-
-					new_lf_status = IDLE;			//Can't do anything, so we're idle
-					new_lf_dispatch_power = 0.0;	//Turn us off
-				}
-			}//End below charge_on_threshold
-			else if (curr_power_val<=charge_off_threshold)	//Below charging off threshold - see what we were doing
-			{
-				if (load_follow_status != CHARGE)
-				{
-					new_lf_status = IDLE;			//We were either idle or discharging, so we are now idle
-					new_lf_dispatch_power = 0.0;	//Idle power as well
-				}
-				else	//Must be charging
-				{
-					//See if the battery has room
-					if (b_soc < 1.0)
-					{
-						new_lf_status = CHARGE;	//Keep us charging
-
-						//Inside this range, just maintain what we were doing
-						new_lf_dispatch_power = lf_dispatch_power;
-					}//End Battery has room
-					else	//Battery full, no charging allowed
-					{
-						gl_verbose("inverter:%s - charge desired, but battery full!",obj->name);
-						//Defined above
-
-						new_lf_status = IDLE;			//Can't do anything, so we're idle
-						new_lf_dispatch_power = 0.0;	//Turn us off
-					}
-				}//End must be charging
-			}//End below charge_off_threshold (but above charge_on_threshold)
-			else if (curr_power_val<=discharge_off_threshold)	//Below the discharge off threshold - we're idle no matter what here
-			{
-				new_lf_status = IDLE;			//Nothing occuring, between bands
-				new_lf_dispatch_power = 0.0;	//Nothing needed, as a result
-			}//End below discharge_off_threshold (but above charge_off_threshold)
-			else if (curr_power_val<=discharge_on_threshold)	//Below discharge on threshold - see what we were doing
-			{
-				//See if we were discharging
-				if (load_follow_status == DISCHARGE)
-				{
-					//Were discharging - see if we can continue
-					if (b_soc > soc_reserve)
-					{
-						new_lf_status = DISCHARGE;	//Keep us discharging
-
-						new_lf_dispatch_power = lf_dispatch_power;	//Maintain what we were doing inside the deadband
-					}
-					else	//At or below reserve, go to idle
-					{
-						gl_verbose("inverter:%s - discharge desired, but not enough battery capacity!",obj->name);
-						/*  TROUBLESHOOT
-						An inverter in LOAD_FOLLOWING mode currently wants to discharge the battery more, but the battery
-						is at or below the SOC reserve margin.  Consider using a larger battery and trying again.
-						*/
-
-						new_lf_status = IDLE;			//Can't do anything, so we're idle
-						new_lf_dispatch_power = 0.0;	//Turn us off
-					}
-				}
-				else	//Must not have been discharging, go idle first since the lack of charge may drop us enough
-				{
-					new_lf_status = IDLE;			//We'll force a reiteration, maybe
-					new_lf_dispatch_power = 0.0;	//Power to match the idle status
-				}
-			}//End below discharge_on_threshold (but above discharge_off_threshold)
-			else	//We're in the discharge realm
-			{
-				new_lf_status = DISCHARGE;		//Above threshold, so discharge into the grid
-
-				//Check battery status
-				if (b_soc > soc_reserve)
-				{
-					//See if we were charging
-					if (load_follow_status == CHARGE)	//were charging, just turn us off and reiterate
-					{
-						new_lf_status = IDLE;			//Turn us off first, then re-evaluate
-						new_lf_dispatch_power = 0.0;	//Represents the idle
-					}
-					else
-					{
-						new_lf_status = DISCHARGE;	//Keep us discharging
-
-						//See if we were already railed - if less, still have room
-						if (lf_dispatch_power > -max_discharge_rate)
-						{
-							//Determine how far off we are from the "on" point
-							diff_power_val = discharge_on_threshold - curr_power_val;
-
-							//Accumulate it
-							new_lf_dispatch_power = lf_dispatch_power + diff_power_val;
-
-							//Make sure it isn't too big
-							if (new_lf_dispatch_power < -max_discharge_rate)
-							{
-								new_lf_dispatch_power = -max_discharge_rate;	//Desire more than we can give, limit it
-							}
-						}
-						else	//We were railed, continue with this course
-						{
-							new_lf_dispatch_power = -max_discharge_rate;	//Set to maximum discharge rate
-						}
-					}
-				}
-				else	//At or below reserve, go to idle
-				{
-					gl_verbose("inverter:%s - discharge desired, but not enough battery capacity!",obj->name);
 					//Defined above
 
 					new_lf_status = IDLE;			//Can't do anything, so we're idle
 					new_lf_dispatch_power = 0.0;	//Turn us off
 				}
-			}//End above discharge_on_threshold
-
-			//Change checks - see if we need to reiterate
-			if (new_lf_status != load_follow_status)
+			}//End must be charging
+		}//End below charge_off_threshold (but above charge_on_threshold)
+		else if (curr_power_val<=discharge_off_threshold)	//Below the discharge off threshold - we're idle no matter what here
+		{
+			new_lf_status = IDLE;			//Nothing occuring, between bands
+			new_lf_dispatch_power = 0.0;	//Nothing needed, as a result
+		}//End below discharge_off_threshold (but above charge_off_threshold)
+		else if (curr_power_val<=discharge_on_threshold)	//Below discharge on threshold - see what we were doing
+		{
+			//See if we were discharging
+			if (load_follow_status == DISCHARGE)
 			{
-				//Update status
-				load_follow_status = new_lf_status;
+				//Were discharging - see if we can continue
+				if (b_soc > soc_reserve)
+				{
+					new_lf_status = DISCHARGE;	//Keep us discharging
 
-				//Update dispatch, since it obviously changed
+					new_lf_dispatch_power = lf_dispatch_power;	//Maintain what we were doing inside the deadband
+				}
+				else	//At or below reserve, go to idle
+				{
+					gl_verbose("inverter:%s - discharge desired, but not enough battery capacity!",obj->name);
+					/*  TROUBLESHOOT
+					An inverter in LOAD_FOLLOWING mode currently wants to discharge the battery more, but the battery
+					is at or below the SOC reserve margin.  Consider using a larger battery and trying again.
+					*/
+
+					new_lf_status = IDLE;			//Can't do anything, so we're idle
+					new_lf_dispatch_power = 0.0;	//Turn us off
+				}
+			}
+			else	//Must not have been discharging, go idle first since the lack of charge may drop us enough
+			{
+				new_lf_status = IDLE;			//We'll force a reiteration, maybe
+				new_lf_dispatch_power = 0.0;	//Power to match the idle status
+			}
+		}//End below discharge_on_threshold (but above discharge_off_threshold)
+		else	//We're in the discharge realm
+		{
+			new_lf_status = DISCHARGE;		//Above threshold, so discharge into the grid
+
+			//Check battery status
+			if (b_soc > soc_reserve)
+			{
+				//See if we were charging
+				if (load_follow_status == CHARGE)	//were charging, just turn us off and reiterate
+				{
+					new_lf_status = IDLE;			//Turn us off first, then re-evaluate
+					new_lf_dispatch_power = 0.0;	//Represents the idle
+				}
+				else
+				{
+					new_lf_status = DISCHARGE;	//Keep us discharging
+
+					//See if we were already railed - if less, still have room
+					if (lf_dispatch_power > -max_discharge_rate)
+					{
+						//Determine how far off we are from the "on" point
+						diff_power_val = discharge_on_threshold - curr_power_val;
+
+						//Accumulate it
+						new_lf_dispatch_power = lf_dispatch_power + diff_power_val;
+
+						//Make sure it isn't too big
+						if (new_lf_dispatch_power < -max_discharge_rate)
+						{
+							new_lf_dispatch_power = -max_discharge_rate;	//Desire more than we can give, limit it
+						}
+					}
+					else	//We were railed, continue with this course
+					{
+						new_lf_dispatch_power = -max_discharge_rate;	//Set to maximum discharge rate
+					}
+				}
+			}
+			else	//At or below reserve, go to idle
+			{
+				gl_verbose("inverter:%s - discharge desired, but not enough battery capacity!",obj->name);
+				//Defined above
+
+				new_lf_status = IDLE;			//Can't do anything, so we're idle
+				new_lf_dispatch_power = 0.0;	//Turn us off
+			}
+		}//End above discharge_on_threshold
+
+		//Change checks - see if we need to reiterate
+		if (new_lf_status != load_follow_status)
+		{
+			//Update status
+			load_follow_status = new_lf_status;
+
+			//Update dispatch, since it obviously changed
+			lf_dispatch_power = new_lf_dispatch_power;
+
+			//Major change, force a reiteration
+			t2 = t1;
+
+			//Update lockout allowed
+			if (new_lf_status == CHARGE)
+			{
+				//Hard lockout for now
+				lf_dispatch_change_allowed = false;
+
+				//Apply update time - note that this may have issues with TS_NEVER, but unsure if it will be a problem at point (theoretically, the simulation is about to end)
+				next_update_time = t1 + ((TIMESTAMP)(charge_lockout_time));
+			}
+			else if (new_lf_status == DISCHARGE)
+			{
+				//Hard lockout for now
+				lf_dispatch_change_allowed = false;
+
+				//Apply update time - note that this may have issues with TS_NEVER, but unsure if it will be a problem at point (theoretically, the simulation is about to end)
+				next_update_time = t1 + ((TIMESTAMP)(discharge_lockout_time));
+			}
+			//Default else - IDLE has no such restrictions
+		}
+
+		//Dispatch change, but same mode
+		if (new_lf_dispatch_power != lf_dispatch_power)
+		{
+			//See if it is appreciable - just in case - I'm artibrarily declaring milliWatts the threshold
+			if (fabs(new_lf_dispatch_power - lf_dispatch_power)>=0.001)
+			{
+				//Put the new power value in
 				lf_dispatch_power = new_lf_dispatch_power;
 
-				//Major change, force a reiteration
+				//Force a reiteration
 				t2 = t1;
 
-				//Update lockout allowed
+				//Update lockout allowed -- This probably needs to be refined so if in deadband, incremental changes can still occur - TO DO
 				if (new_lf_status == CHARGE)
 				{
 					//Hard lockout for now
 					lf_dispatch_change_allowed = false;
 
-					//Apply update time - note that this may have issues with TS_NEVER, but unsure if it will be a problem at point (theoretically, the simulation is about to end)
+					//Apply update time
 					next_update_time = t1 + ((TIMESTAMP)(charge_lockout_time));
 				}
 				else if (new_lf_status == DISCHARGE)
@@ -2112,46 +2092,13 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 					//Hard lockout for now
 					lf_dispatch_change_allowed = false;
 
-					//Apply update time - note that this may have issues with TS_NEVER, but unsure if it will be a problem at point (theoretically, the simulation is about to end)
+					//Apply update time
 					next_update_time = t1 + ((TIMESTAMP)(discharge_lockout_time));
 				}
 				//Default else - IDLE has no such restrictions
 			}
-
-			//Dispatch change, but same mode
-			if (new_lf_dispatch_power != lf_dispatch_power)
-			{
-				//See if it is appreciable - just in case - I'm artibrarily declaring milliWatts the threshold
-				if (fabs(new_lf_dispatch_power - lf_dispatch_power)>=0.001)
-				{
-					//Put the new power value in
-					lf_dispatch_power = new_lf_dispatch_power;
-
-					//Force a reiteration
-					t2 = t1;
-
-					//Update lockout allowed -- This probably needs to be refined so if in deadband, incremental changes can still occur - TO DO
-					if (new_lf_status == CHARGE)
-					{
-						//Hard lockout for now
-						lf_dispatch_change_allowed = false;
-
-						//Apply update time
-						next_update_time = t1 + ((TIMESTAMP)(charge_lockout_time));
-					}
-					else if (new_lf_status == DISCHARGE)
-					{
-						//Hard lockout for now
-						lf_dispatch_change_allowed = false;
-
-						//Apply update time
-						next_update_time = t1 + ((TIMESTAMP)(discharge_lockout_time));
-					}
-					//Default else - IDLE has no such restrictions
-				}
-				//Defaulted else - change is less than 0.001 W, so who cares
-			}
-		}//End update response
+			//Defaulted else - change is less than 0.001 W, so who cares
+		}
 		//Default else, do nothing
 	}//End LOAD_FOLLOWING redispatch
 

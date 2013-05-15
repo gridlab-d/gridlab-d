@@ -87,8 +87,6 @@ public:
 	complex p_clip_C;
 	complex last_current[4];	//Previously applied power output (used to remove from parent so XML files look proper)
 	complex last_power[4];		//Previously applied power output (as constant power) - used to remove from parent so XML looks right
-	bool *NR_mode;			//Toggle for NR solving cycle.  If not NR, just goes to false
-	bool default_NR_mode;
 	bool islanded;			//ces/nas islanding special boolean.
 
 	//properties for multipoint efficiency model. The model used is from Sandia National Laboratory's 2007 paper "Performance Model For Grid-Connected Photovoltaic Inverters".
@@ -128,7 +126,6 @@ private:
 	//load following variables
 	FUNCTIONADDR powerCalc;				//Address for power_calculate in link object, if it is a link
 	bool sense_is_link;					//Boolean flag for if the sense object is a link or a node
-	bool powerflow_NR;					//Boolean flag to indicate if powerflow is running FBS or NR
 	complex *sense_power;				//Link to measured power value fo sense_object
 	double lf_dispatch_power;			//Amount of real power to try and dispatch to meet thesholds
 	TIMESTAMP next_update_time;			//TIMESTAMP of next dispatching change allowed

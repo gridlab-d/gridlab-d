@@ -109,7 +109,6 @@ public:
 	complex last_current[3];
 	double no_of_cycles;
 	bool Iteration_Toggle;			// "Off" iteration tracker
-	bool *NR_mode;			//Toggle for NR solving cycle.  If not NR, just goes to fals
 	double *pTout;
 	double *pSolar;
 	double parasitic_power_draw;
@@ -152,7 +151,6 @@ public:
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 
-	bool *get_bool(OBJECT *obj, char *name);
 	double calculate_efficiency(complex voltage, complex current);
 	complex *get_complex(OBJECT *obj, char *name);
 	complex calculate_v_terminal(complex v, complex i);

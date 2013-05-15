@@ -111,11 +111,7 @@ object solar { // no climate object available -- using default values
 	object complex_assert {
 		target VA_Out;
 		operation REAL;
-		object player {
-			property value;
-			file "../solar_default_climate_VA_Out.player";
-		};
-		//value 3433.13;	
+		value 3433.13;	
 		within 0.01; 
 	};
 	// object recorder {
