@@ -1418,7 +1418,7 @@ TIMESTAMP link_object::postsync(TIMESTAMP t0)
 			if (temp_power_check > *link_limits[0])
 			{
 				//Exceeded rating - no emergency ratings for transformers, at this time
-				gl_warning("transformer:%s is at %.2f%% its rated power value",OBJECTHDR(this)->name,(temp_power_check/(*link_limits[0])*100.0));
+				gl_warning("transformer:%s is at %.2f%% of its rated power value",OBJECTHDR(this)->name,(temp_power_check/(*link_limits[0])*100.0));
 				/*  TROUBLESHOOT
 				The total power passing through a transformer is above its kVA rating.
 				*/
@@ -1435,14 +1435,14 @@ TIMESTAMP link_object::postsync(TIMESTAMP t0)
 					if (read_I_out[0].Mag() > *link_limits[1])
 					{
 						//Exceeded emergency
-						gl_warning("Line:%s is at %.2f%% its emergency rating on phase A!",OBJECTHDR(this)->name,(read_I_out[0].Mag()/(*link_limits[1])*100.0));
+						gl_warning("Line:%s is at %.2f%% of its emergency rating on phase A!",OBJECTHDR(this)->name,(read_I_out[0].Mag()/(*link_limits[1])*100.0));
 						/*  TROUBLESHOOT
 						Phase A on the line has exceeded the emergency rating associated with it.
 						*/
 					}
 					else	//Just continuous exceed
 					{
-						gl_warning("Line:%s is at %.2f%% its continuous rating on phase A!",OBJECTHDR(this)->name,(read_I_out[0].Mag()/(*link_limits[0])*100.0));
+						gl_warning("Line:%s is at %.2f%% of its continuous rating on phase A!",OBJECTHDR(this)->name,(read_I_out[0].Mag()/(*link_limits[0])*100.0));
 						/*  TROUBLESHOOT
 						Phase A on the line has exceeded the continuous rating associated with it.
 						*/
@@ -1458,14 +1458,14 @@ TIMESTAMP link_object::postsync(TIMESTAMP t0)
 					if (read_I_out[1].Mag() > *link_limits[1])
 					{
 						//Exceeded emergency
-						gl_warning("Line:%s is at %.2f%% its emergency rating on phase B!",OBJECTHDR(this)->name,(read_I_out[1].Mag()/(*link_limits[1])*100.0));
+						gl_warning("Line:%s is at %.2f%% of its emergency rating on phase B!",OBJECTHDR(this)->name,(read_I_out[1].Mag()/(*link_limits[1])*100.0));
 						/*  TROUBLESHOOT
 						Phase B on the line has exceeded the emergency rating associated with it.
 						*/
 					}
 					else	//Just continuous exceed
 					{
-						gl_warning("Line:%s is at %.2f%% its continuous rating on phase B!",OBJECTHDR(this)->name,(read_I_out[1].Mag()/(*link_limits[0])*100.0));
+						gl_warning("Line:%s is at %.2f%% of its continuous rating on phase B!",OBJECTHDR(this)->name,(read_I_out[1].Mag()/(*link_limits[0])*100.0));
 						/*  TROUBLESHOOT
 						Phase B on the line has exceeded the continuous rating associated with it.
 						*/
@@ -1481,14 +1481,14 @@ TIMESTAMP link_object::postsync(TIMESTAMP t0)
 					if (read_I_out[2].Mag() > *link_limits[1])
 					{
 						//Exceeded emergency
-						gl_warning("Line:%s is at %.2f%% its emergency rating on phase C!",OBJECTHDR(this)->name,(read_I_out[2].Mag()/(*link_limits[1])*100.0));
+						gl_warning("Line:%s is at %.2f%% of its emergency rating on phase C!",OBJECTHDR(this)->name,(read_I_out[2].Mag()/(*link_limits[1])*100.0));
 						/*  TROUBLESHOOT
 						Phase C on the line has exceeded the emergency rating associated with it.
 						*/
 					}
 					else	//Just continuous exceed
 					{
-						gl_warning("Line:%s is at %.2f%% its continuous rating on phase C!",OBJECTHDR(this)->name,(read_I_out[2].Mag()/(*link_limits[0])*100.0));
+						gl_warning("Line:%s is at %.2f%% of its continuous rating on phase C!",OBJECTHDR(this)->name,(read_I_out[2].Mag()/(*link_limits[0])*100.0));
 						/*  TROUBLESHOOT
 						Phase C on the line has exceeded the continuous rating associated with it.
 						*/
