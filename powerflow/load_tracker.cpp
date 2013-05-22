@@ -59,10 +59,10 @@ int load_tracker::init(OBJECT *parent)
 	}
 
 	// Make sure we have a target property
-	PROPERTY* target_property = gl_get_property(target,target_prop);
+	PROPERTY* target_property = gl_get_property(target,target_prop.get_string());
 	if (target_property==NULL)
 	{
-		GL_THROW("Unable to find property \"%s\" in object %s", target_prop, target->name);
+		GL_THROW("Unable to find property \"%s\" in object %s", target_prop.get_string(), target->name);
 		/* TROUBLESHOOT
 		Please specify an existing property of the target object to be monitored.
 		*/
@@ -89,26 +89,26 @@ int load_tracker::init(OBJECT *parent)
 	switch (type)
 	{
 	case PT_double:
-		pointer.d = gl_get_double_by_name(target, target_prop);
+		pointer.d = gl_get_double_by_name(target, target_prop.get_string());
 		break;
 	case PT_complex:
-		pointer.c = gl_get_complex_by_name(target, target_prop);
+		pointer.c = gl_get_complex_by_name(target, target_prop.get_string());
 		break;
 	case PT_int16:
-		pointer.i16 = gl_get_int16_by_name(target, target_prop);
+		pointer.i16 = gl_get_int16_by_name(target, target_prop.get_string());
 		break;
 	case PT_int32:
-		pointer.i32 = gl_get_int32_by_name(target, target_prop);
+		pointer.i32 = gl_get_int32_by_name(target, target_prop.get_string());
 		break;
 	case PT_int64:
-		pointer.i64 = gl_get_int64_by_name(target, target_prop);
+		pointer.i64 = gl_get_int64_by_name(target, target_prop.get_string());
 		break;
 	}
 
 	// The VALUEPOINTER is a union of pointers so we only need to check one of them....
 	if (pointer.d == NULL)
 	{
-		GL_THROW("Unable to bind to property \"%s\" in object %s", target_prop, target->name);
+		GL_THROW("Unable to bind to property \"%s\" in object %s", target_prop.get_string(), target->name);
 		/* TROUBLESHOOT
 		The property given does not exist for the given property object. Please specify an existing property of the target object.
 		*/
