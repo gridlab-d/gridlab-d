@@ -60,6 +60,7 @@ int occupantload::create()
 	load.name = oclass->name;
 	load.power = load.admittance = load.current = load.total = complex(0,0,J);
 	load.config = EUC_HEATLOAD;
+	load.config |= EUC_IS220;
 	return res;
 }
 
@@ -98,7 +99,7 @@ int occupantload::init(OBJECT *parent)
 	// "true" on 220 keeps the circuits "balanced"
 	((CIRCUIT *(*)(OBJECT *, ENDUSELOAD *, double, int))(*attach))(hdr->parent, &(this->load), 20, true);
 
-	load.heatgain = number_of_occupants * occupancy_fraction * heatgain_per_person * KWPBTUPH;
+	load.heatgain = number_of_occupants * occupancy_fraction * heatgain_per_person;
 
 	if(shape.type != MT_UNKNOWN && shape.type != MT_ANALOG){
 		char outname[64];
@@ -151,7 +152,7 @@ TIMESTAMP occupantload::sync(TIMESTAMP t0, TIMESTAMP t1)
 			occupancy_fraction = 0;
 		}
 
-		load.heatgain = number_of_occupants * occupancy_fraction * heatgain_per_person * KWPBTUPH;
+		load.heatgain = number_of_occupants * occupancy_fraction * heatgain_per_person;
 	}
 
 	return TS_NEVER; 
