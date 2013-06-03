@@ -133,6 +133,7 @@ void curve::sort(BID *list, KEY *key, const int len, const bool reverse)
 		while (b<key+len)
 			*p++ = *b++;
 		memcpy(key,res,sizeof(KEY)*len);
+		delete[] res;
 	}
 }
 

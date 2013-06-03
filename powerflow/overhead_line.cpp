@@ -239,7 +239,7 @@ void overhead_line::recalc(void)
 		double p_aa, p_ab, p_ac, p_an, p_bb, p_bc, p_bn, p_cc, p_cn, p_nn;
 		double daap, dabp, dacp, danp, dbbp, dbcp, dbnp, dccp, dcnp, dnnp, diamA, diamB, diamC, diamN;
 		complex P_mat[3][3], Cabc_mat[3][3], temp_mat[3][3];
-		bool valid_capacitance;
+		bool valid_capacitance=true;
 		double freq_coeff_real, freq_coeff_imag, freq_additive_term;
 		
 		//Calculate coefficients for self and mutual impedance - incorporates frequency values

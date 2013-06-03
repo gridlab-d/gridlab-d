@@ -189,7 +189,7 @@ B=8 b ; 1 byte
 bar=100000 Pa
 psi=6894.757293178 Pa
 atm=98066.5 Pa
-ihHg=3376.85 Pa ; at 60degF
+inHg=3376.85 Pa ; at 60degF
 inH2O=248.843 Pa ; at 60degF
 
 ; Custom

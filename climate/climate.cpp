@@ -397,6 +397,7 @@ double tmy2_reader::calc_solar(COMPASS_PTS cpt, short doy, double lat, double so
 	SolarAngles *sa = new SolarAngles();
 	double surface_angle = surface_angles[cpt];
 	double cos_incident = sa->cos_incident(lat,RAD(vert_angle),RAD(surface_angle),sol_time,doy);
+	delete sa;
 
 	//double solar = (dnr * cos_incident + dhr/2 + ghr * gnd_ref);
 	double solar = dnr * cos_incident + dhr;
