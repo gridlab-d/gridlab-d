@@ -1333,7 +1333,7 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 					else // We're within the voltage limits, so follow the schedule
 					{
 						double power_desired;
-						if (abs(B_scheduled_power) < abs(Max_P))
+						if (fabs(B_scheduled_power) < fabs(Max_P))
 							 power_desired = B_scheduled_power;
 						else
 							power_desired = Max_P;
@@ -1507,7 +1507,7 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 					else 
 					{
 						double power_desired;
-						if (abs(B_scheduled_power) < abs(Max_P))
+						if (fabs(B_scheduled_power) < fabs(Max_P))
 							 power_desired = B_scheduled_power;
 						else
 							power_desired = Max_P;
@@ -1697,19 +1697,19 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 				//double t2 = (timestamp_to_hours((TIMESTAMP)t1) - timestamp_to_hours((TIMESTAMP)t0));
 				double t2 = (gl_tohours((TIMESTAMP)t1) - gl_tohours((TIMESTAMP)t0));
 
-				if(abs((double)V_Out.Re()) > abs((double)V_Max.Re())){
+				if(fabs((double)V_Out.Re()) > fabs((double)V_Max.Re())){
 					//gl_verbose("battery sync: V_Out exceeded allowable V_Out, setting to max");
 					V_Out = V_Max;
 					V_In = V_Out;
 					V_Internal = V_Out - (I_Out * Rinternal);
 				}
 
-				if(abs((double)I_Out.Re()) > abs((double)I_Max.Re())){
+				if(fabs((double)I_Out.Re()) > fabs((double)I_Max.Re())){
 					//gl_verbose("battery sync: I_Out exceeded allowable I_Out, setting to max");
 					I_Out = I_Max;
 				}
 
-				if(abs((double)VA_Out.Re()) > abs((double)Max_P)){
+				if(fabs((double)VA_Out.Re()) > fabs((double)Max_P)){
 					//gl_verbose("battery sync: VA_Out exceeded allowable VA_Out, setting to max");
 					VA_Out = complex(Max_P , 0);
 					VA_Internal = VA_Out - (I_Out * I_Out * Rinternal);
@@ -1725,12 +1725,12 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 					//gl_verbose("battery sync: battery is empty!");
 					if(connected){
 						//gl_verbose("battery sync: empty BUT it is connected, passing request onward");
-						I_In = I_Max + complex(abs(I_Out.Re()), abs(I_Out.Im())); //power was asked for to discharge but battery is empty, forward request along the line
+						I_In = I_Max + complex(fabs(I_Out.Re()), fabs(I_Out.Im())); //power was asked for to discharge but battery is empty, forward request along the line
 						I_Prev = I_Max / efficiency;
 						//Get as much as you can from the microturbine --> the load asked for as well as the max
 						recalculate = false;
-						E_Next = Energy + (((I_In - complex(abs(I_Out.Re()), abs(I_Out.Im()))) * V_Internal / efficiency) * t2).Re();  // the energy level at t1
-						TIMESTAMP t3 = rfb_event_time(t0, (I_In - complex(abs(I_Out.Re()), abs(I_Out.Im()))) * V_Internal / efficiency, Energy);
+						E_Next = Energy + (((I_In - complex(fabs(I_Out.Re()), fabs(I_Out.Im()))) * V_Internal / efficiency) * t2).Re();  // the energy level at t1
+						TIMESTAMP t3 = rfb_event_time(t0, (I_In - complex(fabs(I_Out.Re()), fabs(I_Out.Im()))) * V_Internal / efficiency, Energy);
 						return t3;
 					}
 					else{
@@ -1749,12 +1749,12 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 					//gl_verbose("battery sync: battery is headed to empty");
 					if(connected){
 						//gl_verbose("battery sync: BUT battery is connected, so pass request onward");
-						I_In = I_Max + complex(abs(I_Out.Re()), abs(I_Out.Im())); //this won't let the battery go empty... change course 
+						I_In = I_Max + complex(fabs(I_Out.Re()), fabs(I_Out.Im())); //this won't let the battery go empty... change course 
 						I_Prev = I_Max / efficiency;
 						//if the battery is connected to something which serves the load and charges the battery
 						E_Next = margin;
 						recalculate = false;
-						TIMESTAMP t3 = rfb_event_time(t0, (I_In - complex(abs(I_Out.Re()), abs(I_Out.Im()))) * V_Internal / efficiency, Energy);
+						TIMESTAMP t3 = rfb_event_time(t0, (I_In - complex(fabs(I_Out.Re()), fabs(I_Out.Im()))) * V_Internal / efficiency, Energy);
 						return t3;
 					}else{
 						//gl_verbose("battery sync: battery is about to be empty with nothing connected!!");
@@ -1898,7 +1898,7 @@ TIMESTAMP battery::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			} else {//unknown battery type
 				v_oc = v_max;
 			}
-			r_in = v_oc*v_oc*abs(p_br-p_max)/(p_br*p_br);
+			r_in = v_oc*v_oc*fabs(p_br-p_max)/(p_br*p_br);
 			v_t = (v_oc+pow((v_oc*v_oc+(4*bat_load*r_in)),0.5))/2;
 			internal_battery_load = v_oc*bat_load/v_t;
 			b_soc_reserve = *pSocReserve;

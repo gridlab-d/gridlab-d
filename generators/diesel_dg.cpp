@@ -1132,9 +1132,9 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 					PoutB = Pconvb - current_B.Mag()*current_B.Mag()*(AMx[1][1] - AMx[0][1]).Re();
 					PoutC = Pconvc - current_C.Mag()*current_C.Mag()*(AMx[2][2] - AMx[0][1]).Re();
 
-					QoutA = pf/abs(pf)*PoutA*sin(acos(pf));
-					QoutB = pf/abs(pf)*PoutB*sin(acos(pf));
-					QoutC = pf/abs(pf)*PoutC*sin(acos(pf));
+					QoutA = pf/fabs(pf)*PoutA*sin(acos(pf));
+					QoutB = pf/fabs(pf)*PoutB*sin(acos(pf));
+					QoutC = pf/fabs(pf)*PoutC*sin(acos(pf));
 
 					current_A = -(~(complex(PoutA,QoutA)/voltage_A));
 					current_B = -(~(complex(PoutB,QoutB)/voltage_B));

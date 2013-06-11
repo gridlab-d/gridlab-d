@@ -259,7 +259,7 @@ void load::load_update_fxn(bool fault_mode)
 				}
 				else
 				{
-					real_power = base_power[index] * power_fraction[index] * abs(power_pf[index]);
+					real_power = base_power[index] * power_fraction[index] * fabs(power_pf[index]);
 					imag_power = real_power * sqrt(1.0/(power_pf[index] * power_pf[index]) - 1.0);
 				}
 
@@ -287,7 +287,7 @@ void load::load_update_fxn(bool fault_mode)
 				}
 				else
 				{
-					real_power = base_power[index] * current_fraction[index] * abs(current_pf[index]);
+					real_power = base_power[index] * current_fraction[index] * fabs(current_pf[index]);
 					imag_power = real_power * sqrt(1.0/(current_pf[index] * current_pf[index]) - 1.0);
 				}
 
@@ -320,7 +320,7 @@ void load::load_update_fxn(bool fault_mode)
 				}
 				else
 				{
-					real_power = base_power[index] * impedance_fraction[index] * abs(impedance_pf[index]);
+					real_power = base_power[index] * impedance_fraction[index] * fabs(impedance_pf[index]);
 					imag_power = real_power * sqrt(1.0/(impedance_pf[index] * impedance_pf[index]) - 1.0);
 				}
 
