@@ -443,6 +443,7 @@ int node::init(OBJECT *parent)
 							
 							parNode->SubNode = PARENT;
 							parNode->SubNodeParent = obj;	//This may get overwritten if we have multiple children, so try not to use it anywhere mission critical.
+							parNode->NR_number_child_nodes[0]++;	//Increment the counter of child nodes - we'll alloc and link them later
 
 							//Update the pointer to our parent's NR pointer (so links can go there appropriately)
 							NR_subnode_reference = &(parNode->NR_node_reference);
