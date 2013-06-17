@@ -12,7 +12,6 @@ clock {
 }
 
 module powerflow;
-module assert;
 
 //module powerflow{
 //	solver_method GS;
@@ -1338,11 +1337,6 @@ object node:3 {
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
      nominal_voltage 2401.7771;
-	object complex_assert {
-		target voltage_C;
-		within 5;
-		value +2481.44+119.592d;
-	};
 }
  
  
@@ -1353,21 +1347,6 @@ object node:8 {
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
      nominal_voltage 2401.7771;
-	object complex_assert {
-		target voltage_A;
-		within 5;
-		value +2440.67-1.43982d;
-	};
-	object complex_assert {
-		target voltage_B;
-		within 5;
-		value +2494.43-120.728d;
-	};
-	object complex_assert {
-		target voltage_C;
-		within 5;
-		value +2462.4+119.203d;
-	};
 }
  
 
@@ -1379,21 +1358,6 @@ object node:13 {
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
      nominal_voltage 2401.7771;
-	object complex_assert {
-		target voltage_A;
-		within 5;
-		value +2421.69-1.87889d;
-	};
-	object complex_assert {
-		target voltage_B;
-		within 5;
-		value +2489.38-120.962d;
-	};
-	object complex_assert {
-		target voltage_C;
-		within 5;
-		value +2448.7+118.92d;
-	};
 }
  
 object node:14 {
@@ -1533,21 +1497,6 @@ object node:54 {
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
      nominal_voltage 2401.7771;
-	object complex_assert {
-		target voltage_A;
-		within 5;
-		value +2397.25-2.541d ;
-	};
-	object complex_assert {
-		target voltage_B;
-		within 5;
-		value +2483.45-121.403d;
-	};
-	object complex_assert {
-		target voltage_C;
-		within 5;
-		value +2434.91+118.457d;
-	};
 }
  
 
@@ -1559,21 +1508,6 @@ object node:57 {
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
      nominal_voltage 2401.7771;
-	object complex_assert {
-		target voltage_A;
-		within 5;
-		value +2389.82-2.84461d;
-	};
-	object complex_assert {
-		target voltage_B;
-		within 5;
-		value +2476.83-121.609d;
-	};
-	object complex_assert {
-		target voltage_C;
-		within 5;
-		value +2428.76+118.244d;
-	};
 }
  
  
@@ -1584,21 +1518,6 @@ object node:61 {
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
      nominal_voltage 2401.7771;
-	object complex_assert {
-		target voltage_A;
-		within 5;
-		value +2374.39-3.52678d ;
-	};
-	object complex_assert {
-		target voltage_B;
-		within 5;
-		value +2465.05-122.008d ;
-	};
-	object complex_assert {
-		target voltage_C;
-		within 5;
-		value +2414.38+117.79d ;
-	};
 }
  
 
@@ -1610,21 +1529,6 @@ object node:67 {
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
      nominal_voltage 2401.7771;
-	object complex_assert {
-		target voltage_A;
-		within 5;
-		value +2488.67-3.77586d ;
-	};
-	object complex_assert {
-		target voltage_B;
-		within 5;
-		value +2478.31-122.188d ;
-	};
-	object complex_assert {
-		target voltage_C;
-		within 5;
-		value +2484.7+117.653d ;
-	};
 }
 
 object node:6701 {
@@ -1635,11 +1539,7 @@ object node:6701 {
      voltage_C -1200.8886+2080.000j;
      nominal_voltage 2401.7771;
 }
- 
-
- 
-
- 
+  
 object node:72 {
      phases "ABCN";
      name 72;
@@ -1647,21 +1547,6 @@ object node:72 {
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
      nominal_voltage 2401.7771;
-	object complex_assert {
-		target voltage_A;
-		within 5;
-		value +2489.67-3.87278d ;
-	};
-	object complex_assert {
-		target voltage_B;
-		within 5;
-		value +2476.22-122.291d ;
-	};
-	object complex_assert {
-		target voltage_C;
-		within 5;
-		value +2484.25+117.535d ;
-	};
 }
  
 
@@ -1673,21 +1558,6 @@ object node:78 {
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
      nominal_voltage 2401.7771;
-	object complex_assert {
-		target voltage_A;
-		within 5;
-		value +2493.03-4.02034d ;
-	};
-	object complex_assert {
-		target voltage_B;
-		within 5;
-		value +2478.75-122.484d ;
-	};
-	object complex_assert {
-		target voltage_C;
-		within 5;
-		value +2488.3+117.388d ;
-	};
 }
  
 
@@ -1699,21 +1569,6 @@ object node:81 {
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
      nominal_voltage 2401.7771;
-	object complex_assert {
-		target voltage_A;
-		within 5;
-		value +2503.25-4.15568d ;
-	};
-	object complex_assert {
-		target voltage_B;
-		within 5;
-		value +2488.28-122.577d ;
-	};
-	object complex_assert {
-		target voltage_C;
-		within 5;
-		value +2491.77+117.18d ;
-	};
 }
  
 
@@ -1726,21 +1581,6 @@ object node:89 {
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
      nominal_voltage 2401.7771;
-	object complex_assert {
-		target voltage_A;
-		within 5;
-		value +2485.02-3.98368d ;
-	};
-	object complex_assert {
-		target voltage_B;
-		within 5;
-		value +2468.37-122.694d ;
-	};
-	object complex_assert {
-		target voltage_C;
-		within 5;
-		value +2491.52+117.424d ;
-	};
 }
  
 
@@ -1752,24 +1592,7 @@ object node:91 {
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
      nominal_voltage 2401.7771;
-	object complex_assert {
-		target voltage_A;
-		within 5;
-		value +2484.54-3.98114d ;
-	};
-	object complex_assert {
-		target voltage_B;
-		within 5;
-		value +2467.58-122.708d ;
-	};
-	object complex_assert {
-		target voltage_C;
-		within 5;
-		value +2492.04+117.408d ;
-	};
 }
- 
-
  
 object node:93 {
      phases "ABCN";
@@ -1778,25 +1601,8 @@ object node:93 {
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
      nominal_voltage 2401.7771;
-	object complex_assert {
-		target voltage_A;
-		within 5;
-		value +2483.78-3.98739d ;
-	};
-	object complex_assert {
-		target voltage_B;
-		within 5;
-		value +2467.2-122.724d ;
-	};
-	object complex_assert {
-		target voltage_C;
-		within 5;
-		value +2492.27+117.414d ;
-	};
 }
- 
-
- 
+  
 object node:97 {
      phases "ABCN";
      name 97;
@@ -1804,25 +1610,8 @@ object node:97 {
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
      nominal_voltage 2401.7771;
-	object complex_assert {
-		target voltage_A;
-		within 5;
-		value +2486.28-3.82811d ;
-	};
-	object complex_assert {
-		target voltage_B;
-		within 5;
-		value +2477.1-122.21d ;
-	};
-	object complex_assert {
-		target voltage_C;
-		within 5;
-		value +2482.94+117.634d ;
-	};
 }
- 
-
- 
+  
 object node:101 {
      phases "ABCN";
      name 101;
@@ -1830,21 +1619,6 @@ object node:101 {
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
      nominal_voltage 2401.7771;
-	object complex_assert {
-		target voltage_A;
-		within 5;
-		value +2484.35-3.87119d ;
-	};
-	object complex_assert {
-		target voltage_B;
-		within 5;
-		value +2476.46-122.225d ;
-	};
-	object complex_assert {
-		target voltage_C;
-		within 5;
-		value +2481.64+117.625d;
-	};
 }
  
 
@@ -1857,9 +1631,7 @@ object node:105 {
      voltage_C -1200.8886+2080.000j;
      nominal_voltage 2401.7771;
 }
- 
-
- 
+  
 object node:108 {
      phases "ABCN";
      name 108;
@@ -1868,9 +1640,7 @@ object node:108 {
      voltage_C -1200.8886+2080.000j;
      nominal_voltage 2401.7771;
 }
- 
-
- 
+  
 object node:110 {
      phases "AN";
      name 110;
@@ -1879,8 +1649,7 @@ object node:110 {
      voltage_C -1200.8886+2080.000j;
      nominal_voltage 2401.7771;
 }
- 
- 
+  
 object node:135 {
      phases "ABCN";
      name 135;
@@ -2050,11 +1819,6 @@ object load:1 {
      voltage_C -1200.8886+2080.000j;
      constant_power_A 40000+20000j;
      nominal_voltage 2401.7771;
-     	object complex_assert {
-     		target voltage_A;
-     		within 5;
-     		value +2477.15-0.647854d ;
-     	};
 }
  
 object load:2 {
@@ -2065,11 +1829,6 @@ object load:2 {
      voltage_C -1200.8886+2080.000j;
      constant_power_B 20000+10000j;
      nominal_voltage 2401.7771;
-    	object complex_assert {
-    		target voltage_B;
-    		within 5;
-    		value +2500.69-120.316d ;
-    	};
 }
  
 object load:4 {
@@ -2080,12 +1839,6 @@ object load:4 {
      voltage_C -1200.8886+2080.000j;
      constant_power_C 40000+20000j;
      nominal_voltage 2401.7771;
-    	object complex_assert {
-    		target voltage_C;
-    		within 5;
-    		value +2480.22+119.582d ;
-    	};
-
 }
  
 object load:5 {
@@ -2096,12 +1849,6 @@ object load:5 {
      voltage_C -1200.8886+2080.000j;
      constant_current_C -0.55781+9.2933j;
      nominal_voltage 2401.7771;
-	object complex_assert {
-		target voltage_C;
-		within 5;
-		value +2478.3+119.567d ;
-	};
-     
 }
  
 object load:6 {
@@ -2112,12 +1859,6 @@ object load:6 {
      voltage_C -1200.8886+2080.000j;
      constant_impedance_C 115.3707+57.6853j;
      nominal_voltage 2401.7771;
-	object complex_assert {
-		target voltage_C;
-		within 5;
-		value +2476.67+119.554d ;
-	};
-
 }
  
 object load:7 {
@@ -2128,21 +1869,6 @@ object load:7 {
      voltage_C -1200.8886+2080.000j;
      constant_power_A 20000+10000j;
      nominal_voltage 2401.7771;
-     	object complex_assert {
-     		target voltage_A;
-     		within 5;
-     		value +2455.02-1.12388d ;
-     	};
-     	object complex_assert {
-     		target voltage_B;
-     		within 5;
-     		value +2497.24-120.562d ;
-     	};
-     	object complex_assert {
-     		target voltage_C;
-     		within 5;
-     		value +2471.56+119.374d ;
-     	};
 }
  
 object load:9 {
@@ -2183,11 +1909,6 @@ object load:12 {
      voltage_C -1200.8886+2080.000j;
      constant_power_B 20000+10000j;
      nominal_voltage 2401.7771;
-	object complex_assert {
-		target voltage_B;
-		within 5;
-		value +2493.75-120.734d ;
-	};
 }
  
 object load:16 {
@@ -2464,11 +2185,6 @@ object load:51 {
      voltage_C -1200.8886+2080.000j;
      constant_power_A 20000+10000j;
      nominal_voltage 2401.7771;
-	object complex_assert {
-		target voltage_A;
-		within 5;
-		value +2380.32-2.57331d;
-	};
 }
  
 object load:52 {
