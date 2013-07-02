@@ -184,6 +184,13 @@ int dishwasher::create()
 int dishwasher::init(OBJECT *parent)
 {
 	OBJECT *hdr = OBJECTHDR(this);
+	if(parent != NULL){
+		if((parent->flags & OF_INIT) != OF_INIT){
+			char objname[256];
+			gl_verbose("dishwasher::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}
 	int rv = 0;
 	// default properties
 	if (motor_power==0) motor_power = gl_random_uniform(&hdr->rng_state,150,350);

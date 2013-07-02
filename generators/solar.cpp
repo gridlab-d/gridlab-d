@@ -299,6 +299,11 @@ int solar::init_climate()
 		}
 		else	//Must be a proper object
 		{
+			if((obj->flags & OF_INIT) != OF_INIT){
+				char objname[256];
+				gl_verbose("solar::init(): deferring initialization on %s", gl_name(obj, objname, 255));
+				return 2; // defer
+			}
 			if (obj->rank<=hdr->rank)
 				gl_set_dependent(obj,hdr);
 		   
@@ -616,6 +621,11 @@ int solar::init(OBJECT *parent)
 	//Rated power output
 	Max_P = Rated_Insolation * efficiency * area; // We are calculating the module efficiency which should be less than cell efficiency. What about the sun hours??
 	inverter *par = OBJECTDATA(obj->parent, inverter);
+	if((parent->flags & OF_INIT) != OF_INIT){
+		char objname[256];
+		gl_verbose("solar::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+		return 2; // defer
+	}
 	if(par->use_multipoint_efficiency == TRUE){
 		if(Max_P > par->p_dco){
 			gl_warning("The PV is over rated for its parent inverter.");

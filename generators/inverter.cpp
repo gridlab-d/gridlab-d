@@ -227,7 +227,13 @@ int inverter::create(void)
 int inverter::init(OBJECT *parent)
 {
 	OBJECT *obj = OBJECTHDR(this);
-	 
+	if(parent != NULL){
+		if((parent->flags & OF_INIT) != OF_INIT){
+			char objname[256];
+			gl_verbose("inverter::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}
 	// construct circuit variable map to meter
 	static complex default_line123_voltage[3], default_line1_current[3];
 	static int default_meter_status;	//Not really a good place to do this, but keep consistent

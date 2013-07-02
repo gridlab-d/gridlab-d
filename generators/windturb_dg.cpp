@@ -452,6 +452,11 @@ int windturb_dg::init(OBJECT *parent)
 	// find parent meter, if not defined, use a default meter (using static variable 'default_meter')
 	if (parent!=NULL)
 	{
+		if((parent->flags & OF_INIT) != OF_INIT){
+			char objname[256];
+			gl_verbose("windturb_dg::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
 		if (gl_object_isa(parent,"meter","powerflow"))	//Attach to meter
 		{
 			//Map phases

@@ -128,6 +128,13 @@ int ZIPload::create()
 
 int ZIPload::init(OBJECT *parent)
 {
+	if(parent != NULL){
+		if((parent->flags & OF_INIT) != OF_INIT){
+			char objname[256];
+			gl_verbose("zipload::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}
 	OBJECT *hdr = OBJECTHDR(this);
 	hdr->flags |= OF_SKIPSAFE;
 

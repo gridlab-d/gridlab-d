@@ -336,6 +336,13 @@ static bool hiV[] = {false,true,true};
 
 int evcharger::init(OBJECT *parent)
 {
+	if(parent != NULL){
+		if((parent->flags & OF_INIT) != OF_INIT){
+			char objname[256];
+			gl_verbose("evcharger::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}
 	static double sizes[] = {20,30,30,40,40,40,50,50,50,50,60,60,60,70,70,80};
 
 	if (mileage==0) mileage = gl_random_uniform(RNGSTATE,0.8,1.2);

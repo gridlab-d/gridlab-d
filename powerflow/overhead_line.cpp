@@ -56,7 +56,7 @@ int overhead_line::init(OBJECT *parent)
 	char index;
 	OBJECT *temp_obj;
 	line::init(parent);
-
+	
 	if (!configuration)
 		throw "no overhead line configuration specified.";
 		/*  TROUBLESHOOT

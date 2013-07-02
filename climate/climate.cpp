@@ -560,6 +560,11 @@ int climate::init(OBJECT *parent)
 			rv = creader->open(found_file);
 //			creader->get_data(t0, &temperature, &humidity, &solar_direct, &solar_diffuse, &wind_speed, &rainfall, &snowdepth);
 		} else {
+			if((reader->flags & OF_INIT) != OF_INIT){
+				char objname[256];
+				gl_verbose("climate::init(): deferring initialization on %s", gl_name(reader, objname, 255));
+				return 2; // defer
+			}
 			csv_reader *my = OBJECTDATA(reader,csv_reader);
 			reader_hndl = my;
 			rv = my->open(my->filename);

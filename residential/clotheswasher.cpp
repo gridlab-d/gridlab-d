@@ -162,6 +162,13 @@ int clotheswasher::create()
 int clotheswasher::init(OBJECT *parent)
 {
 	OBJECT *hdr = OBJECTHDR(this);
+	if(parent != NULL){
+		if((parent->flags & OF_INIT) != OF_INIT){
+			char objname[256];
+			gl_verbose("clotheswasher::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}
 	hdr->flags |= OF_SKIPSAFE;
 	
 	// default properties

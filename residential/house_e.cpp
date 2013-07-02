@@ -1055,6 +1055,11 @@ int house_e::init_climate()
 				double *src = (double*)GETADDR(obj,gl_get_property(obj,map[i].name));
 				if (src) *map[i].dst = *src;
 			}
+			if((obj->flags & OF_INIT) != OF_INIT){
+				char objname[256];
+				gl_verbose("house::init(): deferring initialization on %s", gl_name(obj, objname, 255));
+				return 0; // defer
+			}
 		}
 	}
 	return 1;
@@ -1460,6 +1465,13 @@ and internal gain variables.
 
 int house_e::init(OBJECT *parent)
 {
+	if(parent != NULL){
+		if((parent->flags & OF_INIT) != OF_INIT){
+			char objname[256];
+			gl_verbose("house::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}
 	OBJECT *hdr = OBJECTHDR(this);
 	hdr->flags |= OF_SKIPSAFE;
 
@@ -3159,8 +3171,12 @@ EXPORT int init_house(OBJECT *obj)
 {
 	try {
 		house_e *my = OBJECTDATA(obj,house_e);
-		my->init_climate();
-		return my->init(obj->parent);
+		int rv = my->init_climate();
+		if(rv == 0){// climate object has not initialized
+			return 2;
+		} else {
+			return my->init(obj->parent);
+		}
 	}
 	INIT_CATCHALL(house);
 }

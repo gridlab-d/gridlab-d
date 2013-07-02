@@ -218,7 +218,11 @@ int generator_controller::init(OBJECT *parent)
 			GL_THROW("generator_controller:%s failed to map the power property of the parent device",obj->name);
 			//Defined above - again not really, but meh
 		}
-
+		if((parent->flags & OF_INIT) != OF_INIT){
+			char objname[256];
+			gl_verbose("generator_controller::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
 		//Now mask it in
 		if ((*temp_set & 0x0001) == 0x0001)	//PHASE_A
 		{
@@ -286,7 +290,11 @@ int generator_controller::init(OBJECT *parent)
 		report via the trac website.
 		*/
 	}
-
+	if((market_object->flags & OF_INIT) != OF_INIT){
+		char objname[256];
+		gl_verbose("generator_controller::init(): deferring initialization on %s", gl_name(market_object, objname, 255));
+		return 2; // defer
+	}
 	//Get this object
 	auction_object = OBJECTDATA(market_object,auction);
 

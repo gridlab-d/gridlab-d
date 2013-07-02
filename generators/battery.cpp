@@ -216,6 +216,13 @@ void battery::fetch_double(double **prop, char *name, OBJECT *parent){
 int battery::init(OBJECT *parent)
 {
 	OBJECT *obj = OBJECTHDR(this);
+	if(parent != NULL){
+		if((parent->flags & OF_INIT) != OF_INIT){
+			char objname[256];
+			gl_verbose("battery::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}
 	extern complex default_line_current[3];
 	extern complex default_line_voltage[3];
 	if(use_internal_battery_model == FALSE){
@@ -511,20 +518,13 @@ int battery::init(OBJECT *parent)
 			gl_set_rank(parent,obj->rank+1);
 		}
 
-		// find parent meter, if not defined, use a default meter (using static variable 'default_meter')
-		if(parent != NULL && strcmp(parent->oclass->name,"inverter") != 0)
+		// find parent inverter, if not defined, use a default meter (using static variable 'default_meter')
+		if(parent != NULL && strcmp(parent->oclass->name,"inverter") != 0 || parent == NULL)
 		{
 			GL_THROW("Battery must have an inverter as it's parent");
 			/*  TROUBLESHOOT
-			Check the parent object of the inverter.  The battery is only able to be childed via a meter or 
-			triplex meter when connecting into powerflow systems.  You can also choose to have no parent, in which
-			case the battery will be a stand-alone application using default voltage values for solving purposes.
+			Check the parent object of battery. It must be an inverter.
 			*/
-		}
-		else
-		{
-			number_of_phases_out = 0;
-			phases = 0x00;
 		}
 		
 		switch(rfb_size_v)

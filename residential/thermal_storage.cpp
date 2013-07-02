@@ -139,6 +139,13 @@ int thermal_storage::create(void)
 
 int thermal_storage::init(OBJECT *parent)
 {
+	if(parent != NULL){
+		if((parent->flags & OF_INIT) != OF_INIT){
+			char objname[256];
+			gl_verbose("thermal_storage::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}
 	OBJECT *hdr = OBJECTHDR(this);
 	hdr->flags |= OF_SKIPSAFE;
 	double *design_cooling_capacity;

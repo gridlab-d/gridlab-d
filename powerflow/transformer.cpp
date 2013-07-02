@@ -106,7 +106,11 @@ int transformer::init(OBJECT *parent)
 		of the transformer_configuration object and that you haven't inadvertantly used a line configuration
 		as the transformer configuration.
 		*/
-
+	if((configuration->flags & OF_INIT) != OF_INIT){
+		char objname[256];
+		gl_verbose("transformer::init(): deferring initialization on %s", gl_name(configuration, objname, 255));
+		return 2; // defer
+	}
 	double V_base,za_basehi,za_baselo,V_basehi;
 	double sa_base;
 	double nt, nt_a, nt_b, nt_c, inv_nt_a, inv_nt_b, inv_nt_c;

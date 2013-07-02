@@ -115,6 +115,13 @@ int freezer::create()
 
 int freezer::init(OBJECT *parent)
 {
+	if(parent != NULL){
+		if((parent->flags & OF_INIT) != OF_INIT){
+			char objname[256];
+			gl_verbose("freezer::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}
 	// defaults for unset values */
 	if (size==0)				size = gl_random_uniform(RNGSTATE,20,40); // cf
 	if (thermostat_deadband==0) thermostat_deadband = gl_random_uniform(RNGSTATE,2,3);

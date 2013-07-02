@@ -277,6 +277,11 @@ int controller::init(OBJECT *parent){
 	}
 
 	if(dPeriod == 0.0){
+		if((pMarket->flags & OF_INIT) != OF_INIT){
+			char objname[256];
+			gl_verbose("controller::init(): deferring initialization on %s", gl_name(pMarket, objname, 255));
+			return 2; // defer
+		}
 		period = market->period;
 	} else {
 		period = (TIMESTAMP)floor(dPeriod + 0.5);
