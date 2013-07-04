@@ -28,7 +28,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="..\utilities\buildnum .."
+				CommandLine="..\utilities\configure source=.."
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -117,7 +117,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="..\utilities\buildnum .."
+				CommandLine="..\utilities\configure source=.."
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -206,7 +206,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="..\utilities\buildnum .."
+				CommandLine="..\utilities\configure source=.."
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -292,7 +292,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="..\utilities\buildnum .."
+				CommandLine="..\utilities\configure source=.."
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -383,6 +383,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				CommandLine="..\utilities\configure source=.."
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -469,6 +470,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				CommandLine="..\utilities\configure source=.."
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -1048,15 +1050,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\asm\x86_64\cmpxchg.h"
+				>
+			</File>
+			<File
 				RelativePath=".\asm\cmpxchg.h"
 				>
 			</File>
 			<File
 				RelativePath=".\asm\x86\cmpxchg.h"
-				>
-			</File>
-			<File
-				RelativePath=".\asm\x86_64\cmpxchg.h"
 				>
 			</File>
 			<File

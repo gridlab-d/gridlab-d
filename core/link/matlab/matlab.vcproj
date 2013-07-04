@@ -22,6 +22,7 @@
 			OutputDirectory="..\..\..\VS2005\$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
 			ConfigurationType="2"
+			InheritedPropertySheets=".\MATLAB_specific.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -98,6 +99,7 @@
 			OutputDirectory="..\..\..\VS2005\$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
 			ConfigurationType="2"
+			InheritedPropertySheets=".\MATLAB_specific.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -178,6 +180,7 @@
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
 			ConfigurationType="2"
 			UseOfMFC="1"
+			InheritedPropertySheets=".\MATLAB_specific.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -254,6 +257,7 @@
 			OutputDirectory="..\..\..\VS2005\$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
 			ConfigurationType="2"
+			InheritedPropertySheets=".\MATLAB_specific.vsprops"
 			UseOfMFC="1"
 			CharacterSet="2"
 			>
@@ -332,6 +336,7 @@
 			OutputDirectory="..\VS2005\$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
 			ConfigurationType="2"
+			InheritedPropertySheets=".\MATLAB_specific.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -408,6 +413,7 @@
 			OutputDirectory="..\VS2005\$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
 			ConfigurationType="2"
+			InheritedPropertySheets=".\MATLAB_specific.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
