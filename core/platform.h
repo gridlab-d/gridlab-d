@@ -18,16 +18,16 @@
 /*************************************
  CONTROL WHAT IS PART OF WINDOWS BUILD 
  *************************************/
-//#define HAVE_MATLAB
+#include "config_external.h"
+
 //#define HAVE_XERCES
-//#define HAVE_POWERWORLD
 #endif
 
 #ifdef WIN32 // NOTE: win32 does not imply 32bit machine, it means Windows API supports 32bit
 
 /*** WINDOWS ***/
 #if defined _M_X64 || defined _M_IA64
-#define X64 // mean 64bit machine
+#define X64 // means 64bit machine
 #define __WORDSIZE__ 64
 #else
 #define __WORDSIZE__ 32
