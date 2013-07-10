@@ -42,18 +42,18 @@ histogram::histogram(MODULE *mod)
 			oclass->trl = TRL_PROTOTYPE;
         
         if(gl_publish_variable(oclass,
-			PT_char1024, "filename", PADDR(filename),
-			PT_char8, "filetype", PADDR(ftype),
-			PT_char32, "mode", PADDR(mode),
-			PT_char1024, "group", PADDR(group),
-			PT_char1024, "bins", PADDR(bins),
-			PT_char256, "property", PADDR(property),
-			PT_double, "min", PADDR(min),
-			PT_double, "max", PADDR(max),
-			PT_double, "samplerate[s]", PADDR(sampling_interval),
-			PT_double, "countrate[s]", PADDR(counting_interval),
-			PT_int32, "bin_count", PADDR(bin_count),
-			PT_int32, "limit", PADDR(limit),
+			PT_char1024, "filename", PADDR(filename),PT_DESCRIPTION,"the name of the file to write",
+			PT_char8, "filetype", PADDR(ftype),PT_DESCRIPTION,"the format to output a histogram in",
+			PT_char32, "mode", PADDR(mode),PT_DESCRIPTION,"the mode of file output",
+			PT_char1024, "group", PADDR(group),PT_DESCRIPTION,"the GridLAB-D group expression to use for this histogram",
+			PT_char1024, "bins", PADDR(bins),PT_DESCRIPTION,"the specific bin values to use",
+			PT_char256, "property", PADDR(property),PT_DESCRIPTION,"the property to sample",
+			PT_double, "min", PADDR(min),PT_DESCRIPTION,"the minimum value of the auto-sized bins to use",
+			PT_double, "max", PADDR(max),PT_DESCRIPTION,"the maximum value of the auto-sized bins to use",
+			PT_double, "samplerate[s]", PADDR(sampling_interval),PT_DESCRIPTION,"the rate at which samples are read",
+			PT_double, "countrate[s]", PADDR(counting_interval),PT_DESCRIPTION,"the reate at which bins are counted and written",
+			PT_int32, "bin_count", PADDR(bin_count),PT_DESCRIPTION,"the number of auto-sized bins to use",
+			PT_int32, "limit", PADDR(limit),PT_DESCRIPTION,"the number of samples to write",
             NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 		defaults = this;
 		memset(filename, 0, 1025);
@@ -271,6 +271,11 @@ int histogram::init(OBJECT *parent)
 			prop_ptr = prop; /* saved for later */
 		}
 	}
+	// initialize first timesteps
+	if(counting_interval > 0.0)
+		next_count = gl_globalclock + counting_interval;
+	if(sampling_interval > 0.0)
+		next_sample = gl_globalclock + sampling_interval;
 	/*
 	 *	This will create a uniform partition over the specified range
 	 */
@@ -428,12 +433,12 @@ int histogram::feed_bins(OBJECT *obj){
 			}
 		case PT_enumeration:
 			if(value == 0.0){
-				ival = (prop_ptr ? *gl_get_int64(obj, prop_ptr) : *gl_get_int64_by_name(obj, property.get_string()) );
+				ival = (prop_ptr ? *gl_get_enum(obj, prop_ptr) : *gl_get_enum_by_name(obj, property.get_string()) );
 				value = 1.0;
 			}
 		case PT_set:
 			if(value == 0.0){
-				ival = (prop_ptr ? *gl_get_int64(obj, prop_ptr) : *gl_get_int64_by_name(obj, property.get_string()) );
+				ival = (prop_ptr ? *gl_get_set(obj, prop_ptr) : *gl_get_set_by_name(obj, property.get_string()) );
 				value = 1.0;
 			}
 			
@@ -472,14 +477,14 @@ TIMESTAMP histogram::sync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 		}
 		t_sample = t1;
-		if(sampling_interval > 0.0){
+		if(sampling_interval > 0.0001){
 			next_sample = t1 + (int64)(sampling_interval/TS_SECOND);
 		} else {
 			next_sample = TS_NEVER;
 		}
 	}
 
-	if((counting_interval == -1.0 && t_count > t1) ||
+	if((counting_interval == -1.0 && t_count < t1) ||
 		counting_interval == 0.0 ||
 		(counting_interval > 0.0 && t1 >= next_count))
 	{
@@ -521,7 +526,7 @@ TIMESTAMP histogram::sync(TIMESTAMP t0, TIMESTAMP t1)
 			next_sample = TS_NEVER;
 		}
 	}
-	return ( next_count < next_sample ? next_count : next_sample );
+	return ( next_count < next_sample && counting_interval > 0.0 ? next_count : next_sample );
 }
 
 int histogram::isa(char *classname)

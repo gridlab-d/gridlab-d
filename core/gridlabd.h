@@ -648,6 +648,10 @@ inline char *gl_getvalue(OBJECT *obj,
 
 #define gl_get_enum_by_name (*callback->objvarname.enum_var)
 
+#define gl_get_set (*callback->objvar.set_var)
+
+#define gl_get_set_by_name (*callback->objvarname.set_var)
+
 #define gl_get_int16 (*callback->objvar.int16_var)
 
 #define gl_get_int16_by_name (*callback->objvarname.int16_var)
@@ -1924,6 +1928,7 @@ public: // write accessors
 public: // special operations
 	inline bool is_valid(void) { return pstruct.prop!=NULL; }
 	inline bool has_part(void) { return pstruct.part[0]!='\0'; };
+	inline bool is_complex(void) { if(pstruct.prop->ptype == PT_complex) return true; return false;}
 	inline bool is_double(void) { switch(pstruct.prop->ptype) { case PT_double: case PT_random: case PT_enduse: case PT_loadshape: return true; default: return false;} };
 	inline bool is_integer(void) { switch(pstruct.prop->ptype) { case PT_int16: case PT_int32: case PT_int64: return true; default: return false;} };
 	inline double get_double(void) { errno=0; switch(pstruct.prop->ptype) { case PT_double: case PT_random: case PT_enduse: case PT_loadshape: return has_part() ? get_part() : *(double*)get_addr(); default: errno=EINVAL; return NaN;} };

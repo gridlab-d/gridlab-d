@@ -121,13 +121,10 @@ object node:20 {
 object histogram{
 	name hist_test;
 	filename hist_test.csv;
-	//min 2400.0;
-	//max 4800.0;
-	//bin_count 12;
-	bins "2000-3000,2600-3400, [3000-4000], (3000 .. 4000), ..3600, ..4800";
-	limit 1;
+	bins PQ,PV,SWING;
+	limit 10;
 	samplerate 10;
 	countrate 10;
 	group class=node;
-	property voltage_A.mag;
+	property bustype;
 }

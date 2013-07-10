@@ -212,6 +212,7 @@ typedef struct s_callbacks {
 	struct s_objvar_struct {
 		complex *(*complex_var)(OBJECT *obj, PROPERTY *prop);
 		enumeration *(*enum_var)(OBJECT *obj, PROPERTY *prop);
+		set *(*set_var)(OBJECT *obj, PROPERTY *prop);
 		int16 *(*int16_var)(OBJECT *obj, PROPERTY *prop);
 		int32 *(*int32_var)(OBJECT *obj, PROPERTY *prop);
 		int64 *(*int64_var)(OBJECT *obj, PROPERTY *prop);
@@ -222,6 +223,7 @@ typedef struct s_callbacks {
 	struct s_objvar_name_struct {
 		complex *(*complex_var)(OBJECT *obj, char *name);
 		enumeration *(*enum_var)(OBJECT *obj, char *name);
+		set *(*set_var)(OBJECT *obj, char *name);
 		int16 *(*int16_var)(OBJECT *obj, char *name);
 		int32 *(*int32_var)(OBJECT *obj, char *name);
 		int64 *(*int64_var)(OBJECT *obj, char *name);
@@ -332,6 +334,8 @@ OBJECT **object_get_object(OBJECT *obj, PROPERTY *prop);
 OBJECT **object_get_object_by_name(OBJECT *obj, char *name);
 enumeration *object_get_enum(OBJECT *obj, PROPERTY *prop);
 enumeration *object_get_enum_by_name(OBJECT *obj, char *name);
+set *object_get_set(OBJECT *obj, PROPERTY *prop);
+set *object_get_set_by_name(OBJECT *obj, char *name);
 int16 *object_get_int16(OBJECT *obj, PROPERTY *prop);
 int16 *object_get_int16_by_name(OBJECT *obj, char *name);
 int32 *object_get_int32(OBJECT *obj, PROPERTY *prop);

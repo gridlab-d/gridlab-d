@@ -421,8 +421,8 @@ EXPORT int open_histogram(histogram *my, char *fname, char *flags)
 			fprintf(my->fp,"# group.... %s\n", my->group.get_string());
 		}
 	//	fprintf(my->fp,"# trigger... %s\n", my->trigger[0]=='\0'?"(none)":my->trigger);
-		fprintf(my->fp,"# counting interval.. %d\n", my->counting_interval);
-		fprintf(my->fp,"# sampling interval.. %d\n", my->sampling_interval);
+		fprintf(my->fp,"# counting interval.. %f\n", my->counting_interval);
+		fprintf(my->fp,"# sampling interval.. %f\n", my->sampling_interval);
 		fprintf(my->fp,"# limit..... %d\n", my->limit);
 		if(my->bins[0] != 0){
 			fprintf(my->fp,"# timestamp,%s\n", my->bins.get_string());
