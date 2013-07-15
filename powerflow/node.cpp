@@ -456,9 +456,6 @@ int node::init(OBJECT *parent)
 						}
 					}
 
-					//Give us no parent now, and let it go to SWING (otherwise generic check fails)
-					obj->parent=NULL;
-
 					//Flag our index as a child as well, as yet another catch
 					NR_node_reference = -99;
 
@@ -466,7 +463,6 @@ int node::init(OBJECT *parent)
 					//Ranking - similar to GS
 					gl_set_rank(obj,3);				//Put us below normal nodes (but above links)
 													//This way load postings should propogate during sync (bottom-up)
-
 				}
 			}
 			else		//Phase compatible, no issues
@@ -489,9 +485,6 @@ int node::init(OBJECT *parent)
 					//Update the pointer to our parent's NR pointer (so links can go there appropriately)
 					NR_subnode_reference = &(parNode->NR_node_reference);
 				}
-
-				//Give us no parent now, and let it go to SWING (otherwise generic check fails)
-				obj->parent=NULL;
 
 				//Flag our index as a child as well, as yet another catch
 				NR_node_reference = -99;
@@ -536,9 +529,9 @@ int node::init(OBJECT *parent)
 			if (obj->parent==NULL)
 				GL_THROW("NR: no swing bus found or specified");
 				/*	TROUBLESHOOT
-				Newton-Raphson failed to automatically assign a swing bus to the node.  This should
-				have been detected by this point and represents a bug in the solver.  Please submit
-				a bug report detailing how you obtained this message.
+				Newton-Raphson failed to automatically assign a swing bus to the node (unchilded nodes are referenced
+				to the swing bus).  This should have been detected by this point and represents a bug in the solver.
+				Please submit a bug report detailing how you obtained this message.
 				*/
 		}
 
