@@ -47,6 +47,7 @@ powerflow_la_SOURCES =                                              \
 	triplex_line.cpp               triplex_line.h               \
 	triplex_line_conductor.cpp     triplex_line_conductor.h     \
 	triplex_line_configuration.cpp triplex_line_configuration.h \
+	triplex_load.cpp			   triplex_load.h				\
 	triplex_meter.cpp              triplex_meter.h              \
 	triplex_node.cpp               triplex_node.h               \
 	triplexline_test.h                                          \

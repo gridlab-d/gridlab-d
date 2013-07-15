@@ -40,6 +40,7 @@
 #include "sectionalizer.h"
 #include "emissions.h"
 #include "load_tracker.h"
+#include "triplex_load.h"
 
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
@@ -123,6 +124,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new sectionalizer(module);
 	new emissions(module);
 	new load_tracker(module);
+	new triplex_load(module);
 
 	/* always return the first class registered */
 	return node::oclass;

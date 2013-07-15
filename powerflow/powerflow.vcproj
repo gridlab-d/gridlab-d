@@ -680,6 +680,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\triplex_load.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\triplex_meter.cpp"
 				>
 			</File>
@@ -887,6 +891,10 @@
 			</File>
 			<File
 				RelativePath=".\triplex_line_configuration.h"
+				>
+			</File>
+			<File
+				RelativePath=".\triplex_load.h"
 				>
 			</File>
 			<File
