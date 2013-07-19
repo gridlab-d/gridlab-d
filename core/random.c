@@ -121,16 +121,23 @@ int randwarn(unsigned int *state)
 	}
 	else if ( global_randomnumbergenerator==RNG3 )
 	{
-		/* stateless - use the OS rng, which keeps its own internal state */
-		if ( state==NULL )
-			return rand();
-
 		/* Park-Miller LCG allows very large modulus - this one is use in Cray RANF */
 #define MODULUS 281474976710656ULL (2^48)
 #define MULTIPLIER 44485709377909ULL
+		if ( state==NULL ){
+			if(ur_state != NULL){
+				state = ur_state;
+				*ur_state = (unsigned int)((MULTIPLIER*(unsigned int64)(*ur_state))&0xffffffffffffULL);
+				return ((*state)>>16)&0x7fff;
+			} else {
+				/* stateless - use the OS rng, which keeps its own internal state */
+				return rand();
+			}
+		}
+
 		*state = (unsigned int)((MULTIPLIER*(unsigned int64)(*state))&0xffffffffffffULL); /* %2^48 same as &(2^48-1) */
 		/* state is truncated to 2^32 */
-		return ((*state)>>16)&RAND_MAX;
+		return ((*state)>>16)&0x7fff;
 		/* note that RNG3 writes back the state */
 	}
 	else
@@ -175,7 +182,7 @@ TryAgain:
 	ur = randwarn(state);
 	if (state!=NULL && global_randomnumbergenerator==RNG2 )
 		*state = ur;
-	u = ur/(RAND_MAX+1.0);
+	u = ur/(0x7fff+1.0);
 	if ( u<=0 || u>=1 ){
 		if( state!=0 && *state == 0){
 			*state = randwarn(0);
