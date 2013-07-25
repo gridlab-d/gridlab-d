@@ -292,7 +292,7 @@ size_t stream_decompress(char *buf, const size_t len)
 
 static char stream_name[] = STREAM_NAME;
 static unsigned int stream_version = STREAM_VERSION;
-static unsigned int stream_wordsize = __WORDSIZE__;
+static unsigned int stream_wordsize = sizeof(void*);
 static size_t stream_pos = 0;
 static int flags = 0x00;
 

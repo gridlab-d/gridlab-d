@@ -14,7 +14,7 @@ clock {
 	stoptime '2000-01-01 00:01:00';
 }
 class test {
-	random x;
+	randomvar x;
 }
 object test {
 	name test1;

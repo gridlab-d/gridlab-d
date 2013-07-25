@@ -4,7 +4,7 @@ clock {
 }
 
 class test {
-	random x;
+	randomvar x;
 }
 module tape;
 object test {

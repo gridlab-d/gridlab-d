@@ -134,6 +134,9 @@ object <class>[:<spec>] { // spec may be <id>, or <startid>..<endid>, or ..<coun
 #define DLEXT ".dll"
 #define REALTIME_LDFLAGS ""
 #endif // HAVE_CONFIG_H
+#ifndef REALTIME_LDFLAGS
+#define REALTIME_LDFLAGS ""
+#endif
 
 #include <stdlib.h>
 #include <stdio.h>

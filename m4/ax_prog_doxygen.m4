@@ -1,5 +1,5 @@
 # ===========================================================================
-#            http://autoconf-archive.cryp.to/ax_prog_doxygen.html
+#      http://www.gnu.org/software/autoconf-archive/ax_prog_doxygen.html
 # ===========================================================================
 #
 # SYNOPSIS
@@ -161,19 +161,19 @@
 #     doxygen-ps: @DX_DOCDIR@/@PACKAGE@.ps
 #
 #     @DX_DOCDIR@/@PACKAGE@.ps: @DX_DOCDIR@/@PACKAGE@.tag
-#   	  cd @DX_DOCDIR@/latex; \
-#   	  rm -f *.aux *.toc *.idx *.ind *.ilg *.log *.out; \
-#   	  $(DX_LATEX) refman.tex; \
-#   	  $(MAKEINDEX_PATH) refman.idx; \
-#   	  $(DX_LATEX) refman.tex; \
-#   	  countdown=5; \
-#   	  while $(DX_EGREP) 'Rerun (LaTeX|to get cross-references right)' \
-#   			    refman.log > /dev/null 2>&1 \
-#   	     && test $$countdown -gt 0; do \
-#   	      $(DX_LATEX) refman.tex; \
-#   	      countdown=`expr $$countdown - 1`; \
-#   	  done; \
-#   	  $(DX_DVIPS) -o ../@PACKAGE@.ps refman.dvi
+#         cd @DX_DOCDIR@/latex; \
+#         rm -f *.aux *.toc *.idx *.ind *.ilg *.log *.out; \
+#         $(DX_LATEX) refman.tex; \
+#         $(MAKEINDEX_PATH) refman.idx; \
+#         $(DX_LATEX) refman.tex; \
+#         countdown=5; \
+#         while $(DX_EGREP) 'Rerun (LaTeX|to get cross-references right)' \
+#                           refman.log > /dev/null 2>&1 \
+#            && test $$countdown -gt 0; do \
+#             $(DX_LATEX) refman.tex; \
+#             countdown=`expr $$countdown - 1`; \
+#         done; \
+#         $(DX_DVIPS) -o ../@PACKAGE@.ps refman.dvi
 #
 #     endif DX_COND_ps
 #
@@ -190,19 +190,19 @@
 #     doxygen-pdf: @DX_DOCDIR@/@PACKAGE@.pdf
 #
 #     @DX_DOCDIR@/@PACKAGE@.pdf: @DX_DOCDIR@/@PACKAGE@.tag
-#   	  cd @DX_DOCDIR@/latex; \
-#   	  rm -f *.aux *.toc *.idx *.ind *.ilg *.log *.out; \
-#   	  $(DX_PDFLATEX) refman.tex; \
-#   	  $(DX_MAKEINDEX) refman.idx; \
-#   	  $(DX_PDFLATEX) refman.tex; \
-#   	  countdown=5; \
-#   	  while $(DX_EGREP) 'Rerun (LaTeX|to get cross-references right)' \
-#   			    refman.log > /dev/null 2>&1 \
-#   	     && test $$countdown -gt 0; do \
-#   	      $(DX_PDFLATEX) refman.tex; \
-#   	      countdown=`expr $$countdown - 1`; \
-#   	  done; \
-#   	  mv refman.pdf ../@PACKAGE@.pdf
+#         cd @DX_DOCDIR@/latex; \
+#         rm -f *.aux *.toc *.idx *.ind *.ilg *.log *.out; \
+#         $(DX_PDFLATEX) refman.tex; \
+#         $(DX_MAKEINDEX) refman.idx; \
+#         $(DX_PDFLATEX) refman.tex; \
+#         countdown=5; \
+#         while $(DX_EGREP) 'Rerun (LaTeX|to get cross-references right)' \
+#                           refman.log > /dev/null 2>&1 \
+#            && test $$countdown -gt 0; do \
+#             $(DX_PDFLATEX) refman.tex; \
+#             countdown=`expr $$countdown - 1`; \
+#         done; \
+#         mv refman.pdf ../@PACKAGE@.pdf
 #
 #     endif DX_COND_pdf
 #
@@ -225,8 +225,8 @@
 #     doxygen-doc: doxygen-run $(DX_PS_GOAL) $(DX_PDF_GOAL)
 #
 #     @DX_DOCDIR@/@PACKAGE@.tag: $(DX_CONFIG) $(pkginclude_HEADERS)
-#   	  rm -rf @DX_DOCDIR@
-#   	  $(DX_ENV) $(DX_DOXYGEN) $(srcdir)/$(DX_CONFIG)
+#         rm -rf @DX_DOCDIR@
+#         $(DX_ENV) $(DX_DOXYGEN) $(srcdir)/$(DX_CONFIG)
 #
 #     DX_CLEANFILES = \
 #         @DX_DOCDIR@/@PACKAGE@.tag \
@@ -251,7 +251,10 @@
 #
 #   Copying and distribution of this file, with or without modification, are
 #   permitted in any medium without royalty provided the copyright notice
-#   and this notice are preserved.
+#   and this notice are preserved. This file is offered as-is, without any
+#   warranty.
+
+#serial 12
 
 ## ----------##
 ## Defaults. ##
@@ -259,7 +262,7 @@
 
 DX_ENV=""
 AC_DEFUN([DX_FEATURE_doc],  ON)
-AC_DEFUN([DX_FEATURE_dot],  ON)
+AC_DEFUN([DX_FEATURE_dot],  OFF)
 AC_DEFUN([DX_FEATURE_man],  OFF)
 AC_DEFUN([DX_FEATURE_html], ON)
 AC_DEFUN([DX_FEATURE_chm],  OFF)
@@ -361,12 +364,11 @@ if DX_TEST_FEATURE([$1]); then
     $5
     :
 fi
+AM_CONDITIONAL(DX_COND_$1, DX_TEST_FEATURE([$1]))
 if DX_TEST_FEATURE([$1]); then
-    AM_CONDITIONAL(DX_COND_$1, :)
     $6
     :
 else
-    AM_CONDITIONAL(DX_COND_$1, false)
     $7
     :
 fi
@@ -379,6 +381,7 @@ fi
 # DX_XXX_FEATURE(DEFAULT_STATE)
 # -----------------------------
 AC_DEFUN([DX_DOXYGEN_FEATURE], [AC_DEFUN([DX_FEATURE_doc],  [$1])])
+AC_DEFUN([DX_DOT_FEATURE],     [AC_DEFUN([DX_FEATURE_dot], [$1])])
 AC_DEFUN([DX_MAN_FEATURE],     [AC_DEFUN([DX_FEATURE_man],  [$1])])
 AC_DEFUN([DX_HTML_FEATURE],    [AC_DEFUN([DX_FEATURE_html], [$1])])
 AC_DEFUN([DX_CHM_FEATURE],     [AC_DEFUN([DX_FEATURE_chm],  [$1])])
@@ -491,11 +494,10 @@ DX_ARG_ABLE(pdf, [generate doxygen PDF documentation],
              DX_REQUIRE_PROG([DX_EGREP], egrep)])
 
 # LaTeX generation for PS and/or PDF:
+AM_CONDITIONAL(DX_COND_latex, DX_TEST_FEATURE(ps) || DX_TEST_FEATURE(pdf))
 if DX_TEST_FEATURE(ps) || DX_TEST_FEATURE(pdf); then
-    AM_CONDITIONAL(DX_COND_latex, :)
     DX_ENV_APPEND(GENERATE_LATEX, YES)
 else
-    AM_CONDITIONAL(DX_COND_latex, false)
     DX_ENV_APPEND(GENERATE_LATEX, NO)
 fi
 
@@ -528,3 +530,4 @@ esac
 #echo DX_FLAG_ps=$DX_FLAG_ps
 #echo DX_ENV=$DX_ENV
 ])
+

@@ -44,21 +44,21 @@
 AC_DEFUN([AX_LIB_SUPERLU],
 [
     AC_ARG_WITH([superlu],
-        AC_HELP_STRING([--with-superlu=@<:@ARG@:>@],
+        AS_HELP_STRING([--with-superlu=@<:@ARG@:>@],
             [use SuperLU from given prefix (ARG=path); check standard prefixes (ARG=yes); disable (ARG=no)]
         ),
         [want_superlu="$withval"],
         [want_superlu="yes"]
     )
     AC_ARG_WITH([superlu-inc],
-        AC_HELP_STRING([--with-superlu-inc=@<:@DIR@:>@],
+        AS_HELP_STRING([--with-superlu-inc=@<:@DIR@:>@],
             [path to SuperLU headers]
         ),
         [superlu_include_dir="$withval"],
         [superlu_include_dir=""]
     )
     AC_ARG_WITH([superlu-lib],
-        AC_HELP_STRING([--with-superlu-lib=@<:@ARG@:>@],
+        AS_HELP_STRING([--with-superlu-lib=@<:@ARG@:>@],
             [link options for SuperLU libraries]
         ),
         [superlu_ldflags="-L$withval"],

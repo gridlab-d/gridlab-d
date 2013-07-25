@@ -90,7 +90,7 @@ STATUS legal_notice(void)
 		int build = buildinfo ? atoi(strstr(BUILD,":")+1) : 0;
 		output_message("GridLAB-D %d.%d.%d-%d (%s) %d-bit %s %s\n%s", 
 			global_version_major, global_version_minor, global_version_patch, global_version_build, 
-			global_version_branch, __WORDSIZE__, global_platform,
+			global_version_branch, sizeof(void*), global_platform,
 #ifdef _DEBUG
 		"DEBUG",
 #else
@@ -193,7 +193,7 @@ void *check_version_proc(void *ptr)
 	char *pv = NULL, *nv = NULL;
 	int rc = 0;
 	int mypatch = REV_PATCH;
-	int mybuild = atoi(BUILD);
+	int mybuild = atoi(BUILDNUM);
 
 	/* if result not found */
 	if ( result==NULL || result->body.size==0 )

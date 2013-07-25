@@ -8,7 +8,7 @@
 #include <math.h>
 #include "gridlabd.h"
 
-#include "debug.h"
+#include "gldebug.h"
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {

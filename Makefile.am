@@ -3,18 +3,111 @@
 # This file is distributed under the same terms as GridLAB-D.
 
 ACLOCAL_AMFLAGS = -I m4
-SUBDIRS = . third_party/CBLAS third_party/superLU_MT core assert climate \
-			 commercial powerflow residential tape generators \
-			 tape_file tape_plot market reliability optimize \
-			core/link/matlab core/solvers mysql
 
-include aminclude.am
+CC = $(PTHREAD_CC)
+CXX = $(PTHREAD_CXX)
 
-distdir = $(PACKAGE)_$(VERSION)
+AM_CPPFLAGS =
+AM_CPPFLAGS += -I$(top_srcdir)/core
+AM_CPPFLAGS += $(GLD_CPPFLAGS)
 
-dist_doc_DATA = COPYRIGHT LICENSE
+AM_CFLAGS =
+AM_CFLAGS += $(PTHREAD_CFLAGS)
+AM_CFLAGS += $(GLD_CFLAGS)
 
-EXTRA_DIST = debian doxygen/*.* gridlabd.spec Resources/*.* VERSION README-LINUX README-MACOSX
+AM_CXXFLAGS =
+AM_CXXFLAGS += $(PTHREAD_CFLAGS)
+AM_CXXFLAGS += $(GLD_CXXFLAGS)
+
+AM_LDFLAGS =
+AM_LDFLAGS += -no-undefined
+AM_LDFLAGS += -module
+AM_LDFLAGS += -avoid-version
+AM_LDFLAGS += -export-dynamic
+AM_LDFLAGS += $(GLD_LDFLAGS)
+
+# makefile fragments populate these variables
+BUILT_SOURCES =
+CLEANFILES =
+EXTRA_DIST =
+dist_pkgdata_DATA =
+pkgdata_DATA =
+noinst_LTLIBRARIES =
+pkglib_LTLIBRARIES =
+bin_PROGRAMS =
+bin_SCRIPTS =
+dist_doc_DATA =
+
+# we're using non-recursive Make
+# include Makefile fragments instead of using SUBDIRS
+include assert/Makefile.mk
+include climate/Makefile.mk
+include commercial/Makefile.mk
+#include comm/Makefile.mk
+#include control/Makefile.mk
+include core/link/matlab/Makefile.mk
+include core/Makefile.mk
+include core/rt/Makefile.mk
+include core/solvers/Makefile.mk
+#include debug/Makefile.mk
+include generators/Makefile.mk
+include market/Makefile.mk
+#include matlab/Makefile.mk
+include mysql/Makefile.mk
+#include network/Makefile.mk
+include optimize/Makefile.mk
+#include plc/Makefile.mk
+include powerflow/Makefile.mk
+include reliability/Makefile.mk
+include residential/Makefile.mk
+include tape_file/Makefile.mk
+include tape/Makefile.mk
+include tape_plot/Makefile.mk
+
+# we combine the sources in CBLAS and superLU_MT in a single Makefile fragment
+include third_party/superLU_MT/Makefile_combined.mk
+#include third_party/CBLAS/Makefile.mk
+#include third_party/superLU_MT/Makefile.mk
+
+# for doxygen commands
+include aminclude.mk
+
+dist_doc_DATA += COPYRIGHT
+dist_doc_DATA += LICENSE
+
+EXTRA_DIST += debian/changelog
+EXTRA_DIST += debian/compat
+EXTRA_DIST += debian/control
+EXTRA_DIST += debian/copyright
+EXTRA_DIST += debian/docs
+EXTRA_DIST += debian/gridlabd-dev.install
+EXTRA_DIST += debian/gridlabd.install
+EXTRA_DIST += debian/rules*
+EXTRA_DIST += doxygen/build.bat
+EXTRA_DIST += doxygen/COPYRIGHT
+EXTRA_DIST += doxygen/doxygen-doc.vcproj
+EXTRA_DIST += doxygen/footer.html
+EXTRA_DIST += doxygen/gridlabd.conf
+EXTRA_DIST += doxygen/LICENSE
+EXTRA_DIST += doxygen/STATUS
+EXTRA_DIST += doxygen/user_manual.h
+EXTRA_DIST += gridlabd.spec
+EXTRA_DIST += README-LINUX
+EXTRA_DIST += README-MACOSX
+EXTRA_DIST += Resources/Background.png
+EXTRA_DIST += Resources/GridLAB-D.pmdoc/01core-contents.xml
+EXTRA_DIST += Resources/GridLAB-D.pmdoc/01core.xml
+EXTRA_DIST += Resources/GridLAB-D.pmdoc/02climate-contents.xml
+EXTRA_DIST += Resources/GridLAB-D.pmdoc/02climate.xml
+EXTRA_DIST += Resources/GridLAB-D.pmdoc/03libxerces-contents.xml
+EXTRA_DIST += Resources/GridLAB-D.pmdoc/03libxerces.xml
+EXTRA_DIST += Resources/GridLAB-D.pmdoc/04devel-contents.xml
+EXTRA_DIST += Resources/GridLAB-D.pmdoc/04devel.xml
+EXTRA_DIST += Resources/GridLAB-D.pmdoc/index.xml
+EXTRA_DIST += Resources/License.rtf
+EXTRA_DIST += Resources/Readme.rtf
+EXTRA_DIST += Resources/Welcome.rtf
+EXTRA_DIST += VERSION
 
 if MISSING_XERCES
 all-local:
@@ -29,10 +122,6 @@ all-local:
 	@false
 endif
 
-uninstall-hook:
-	-rmdir $(DESTDIR)$(pkglibdir)
-	-rmdir $(DESTDIR)$(docdir)
-
 help:
 	@echo "Cleaning targets:"
 	@echo "  clean        - Erase from the build tree the files built by 'make all'"
@@ -41,8 +130,7 @@ help:
 	@echo ""
 	@echo "Building targets:"
 	@echo "  all            - Build $(PACKAGE) (same as 'make')"
-	@echo "  install        - Install $(PACKAGE) on the system"
-	@echo "  install DESTDIR=\$$ROOT  - Install $(PACKAGE) in \$$ROOT"
+	@echo "  install        - Install $(PACKAGE) to $(prefix)"
 	@echo "  install-strip  - Same as install, but follow by stripping debug symbols"
 	@echo "  uninstall      - Erase files installed by 'make install'"
 	@echo ""
@@ -85,9 +173,10 @@ clean-wc:
 	@unset REPLY && read -t 60 -p "Clean working copy (type 'yes' to proceed)? " && test "`echo "$$REPLY" | tr '[:upper:]' '[:lower:]'`" = "yes"
 	. utilities/cleanwc
 
-check validate: 
+check-local validate: 
 	python validate.py
 
+#distdir = $(PACKAGE)_$(VERSION)
 scratchdir = scratch
 XERCES_TARNAME = xerces-c-3.1.1
 XERCESCROOT = $(CURDIR)/$(scratchdir)/$(XERCES_TARNAME)
@@ -176,5 +265,7 @@ rpm-prep:
 		test -d "$$DIR" || mkdir -p "$$DIR"; \
 	done
 
-#.PHONY: over clean-wc validate
+
+libtool: $(LIBTOOL_DEPS)
+	$(SHELL) ./config.status libtool
 

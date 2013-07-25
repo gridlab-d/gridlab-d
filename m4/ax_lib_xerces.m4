@@ -1,5 +1,5 @@
 # ===========================================================================
-#             http://autoconf-archive.cryp.to/ax_lib_xerces.html
+#       http://www.gnu.org/software/autoconf-archive/ax_lib_xerces.html
 # ===========================================================================
 #
 # SYNOPSIS
@@ -40,14 +40,17 @@
 #
 #   Copying and distribution of this file, with or without modification, are
 #   permitted in any medium without royalty provided the copyright notice
-#   and this notice are preserved.
+#   and this notice are preserved. This file is offered as-is, without any
+#   warranty.
+
+#serial 10
 
 AC_DEFUN([AX_LIB_XERCES],
 [
-    AC_REQUIRE([ACX_PTHREAD])
+    AC_REQUIRE([AX_PTHREAD])
 
     AC_ARG_WITH([xerces],
-        AC_HELP_STRING([--with-xerces=@<:@ARG@:>@],
+        AS_HELP_STRING([--with-xerces=@<:@ARG@:>@],
             [use Xerces C++ Parser from given prefix (ARG=path); check standard prefixes (ARG=yes); disable (ARG=no)]
         ),
         [
@@ -81,14 +84,14 @@ AC_DEFUN([AX_LIB_XERCES],
     )
 
     AC_ARG_WITH([xerces-inc],
-        AC_HELP_STRING([--with-xerces-inc=@<:@DIR@:>@],
+        AS_HELP_STRING([--with-xerces-inc=@<:@DIR@:>@],
             [path to Xerces C++ Parser headers]
         ),
         [xerces_include_dir="$withval"],
         [xerces_include_dir=""]
     )
     AC_ARG_WITH([xerces-lib],
-        AC_HELP_STRING([--with-xerces-lib=@<:@ARG@:>@],
+        AS_HELP_STRING([--with-xerces-lib=@<:@ARG@:>@],
             [link options for Xerces C++ Parser libraries]
         ),
         [xerces_ldflags="$withval"],
@@ -284,3 +287,4 @@ XMLPlatformUtils::Initialize();
         fi
     fi
 ])
+

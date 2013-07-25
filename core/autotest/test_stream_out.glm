@@ -16,7 +16,7 @@ clock {
 }
 
 class test {
-	random x[kW];
+	randomvar x[kW];
 	complex y[kVA];
 	intrinsic init(OBJECT *p)
 	{

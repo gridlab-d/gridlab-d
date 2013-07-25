@@ -861,7 +861,8 @@ int house_e::create()
 	error_flag = 0;
 
 	//glazing_shgc = 0.65; // assuming generic double glazing
-		// now zero to catch lookup trigger
+	// now zero to catch lookup trigger
+	glazing_shgc = 0;
 	load.power_fraction = 0.8;
 	load.impedance_fraction = 0.2;
 	load.current_fraction = 0.0;
@@ -873,7 +874,7 @@ int house_e::create()
 
 	cooling_supply_air_temp = 50.0;
 	heating_supply_air_temp = 150.0;
-
+	
 	heating_system_type = HT_HEAT_PUMP; // assume heat pump under all circumstances until we are told otherwise
 	cooling_system_type = CT_UNKNOWN;
 	auxiliary_system_type = AT_UNKNOWN;
@@ -983,6 +984,63 @@ int house_e::create()
 	use_latent_heat = true;
 	include_fan_heatgain = true;
 	fan_design_power = -1;
+	heating_setpoint = 0.0;
+	cooling_setpoint = 0.0;
+	panel.max_amps = 0.0;
+	system_type = 0;
+	heating_COP = 0;
+	cooling_COP = 0;
+	number_of_stories = 0;
+	aspect_ratio = 0;
+	floor_area = 0;
+	gross_wall_area = 0;
+	window_wall_ratio = 0;
+	window_roof_ratio = 0;
+	interior_exterior_wall_ratio = 0;
+	exterior_wall_fraction = 0;
+	exterior_ceiling_fraction = 0;
+	exterior_floor_fraction = 0;
+	window_exterior_transmission_coefficient = 0;
+	Rroof = 0;
+	Rwall = 0;
+	Rwindows = 0;
+	Rdoors = 0;
+	volume = 0;
+	air_mass = 0;
+	air_thermal_mass = 0;
+	air_heat_fraction = 0;
+	mass_solar_gain_fraction = 0;
+	mass_internal_gain_fraction = 0;
+	total_thermal_mass_per_floor_area = 0;
+	interior_surface_heat_transfer_coeff = 0;
+	airchange_UA = 0;
+	envelope_UA = 0;
+	design_cooling_setpoint = 0;
+	design_heating_setpoint = 0;
+	design_peak_solar = 0;
+	thermostat_deadband = 0;
+	thermostat_cycle_time = 0;
+	Tair = 0;
+	over_sizing_factor = 0;
+	cooling_design_temperature = 0;
+	design_internal_gains = 0;
+	latent_load_fraction = 0;
+	design_cooling_capacity = 0;
+	design_heating_capacity = 0;
+	system_mode = SM_UNKNOWN;
+	last_system_mode = SM_UNKNOWN;
+	last_mode_timer = 0;
+	aux_heat_capacity = 0;
+	aux_heat_deadband = 0;
+	aux_heat_temp_lockout = 0;
+	aux_heat_time_delay = 0;
+	duct_pressure_drop = 0;
+	fan_design_airflow = 0;
+	fan_low_power_fraction = 0;
+	fan_power = 0;
+	house_content_thermal_mass = 0;
+	house_content_heat_transfer_coeff = 0;
+
 
 	return result;
 }
@@ -2065,6 +2123,8 @@ void house_e::update_model(double dt)
 	dTa = c2*Tm + c1*Ta - (c1+c2)*Tout + Qa/Ca;
 	k1 = (r2*Tair - r2*Teq - dTa)/(r2-r1);
 	k2 = Tair - Teq - k1;
+	//printf("update model %f %f %f\n",Tair,Teq,k1);
+
 }
 
 /** HVAC load synchronizaion is based on the equipment capacity, COP, solar loads and total internal gain
@@ -2598,7 +2658,7 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 		TIMESTAMP t = (TIMESTAMP)(ceil((t2<0 ? -t2 : t2)/system_dwell_time)*system_dwell_time);
 		t2 = (t2<0 ? t : -t);
 	}
-
+	//gl_output("glsovers returns %f.",dt2);
 	//Update the off-return value
 	return t2;
 }

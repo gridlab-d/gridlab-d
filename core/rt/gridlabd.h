@@ -409,7 +409,7 @@ typedef struct s_randomvar {
 	unsigned int flags;			/**< RNG flags */
 	/* internal parameters */
 	struct s_randomvar *next;
-} random;
+} randomvar;
 
 /* int64 is already defined in platform.h */
 typedef enum {_PT_FIRST=-1,

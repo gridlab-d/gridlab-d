@@ -32,16 +32,13 @@
 # 
 
 AC_DEFUN([GLD_CHECK_BUILTIN], [
-	AC_MSG_CHECKING([if compiler has $1 builtin])
-	AC_LINK_IFELSE(
-		[AC_LANG_PROGRAM([$2], [$3])], [have_builtin=yes], [have_builtin=no])
-	AC_MSG_RESULT([$have_builtin])
-	if test x"$have_builtin" = xyes; then
-		AC_DEFINE(m4_toupper([HAVE_$1]), [1],
-			[Define to 1 if you have the `$1' builtin.])
-		$4
-	else
-		:
-		$5
-	fi
+    AC_MSG_CHECKING([if compiler has $1 builtin])
+    AC_LINK_IFELSE(
+        [AC_LANG_PROGRAM([$2], [$3])], [have_builtin=yes], [have_builtin=no])
+    AC_MSG_RESULT([$have_builtin])
+    AS_IF([test x"$have_builtin" = xyes],
+        [AC_DEFINE(m4_toupper([HAVE_$1]), [1],
+            [Define to 1 if you have the `$1' builtin.])
+         $4],
+        [$5])
 ])

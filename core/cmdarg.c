@@ -362,7 +362,7 @@ static int version(int argc, char *argv[])
 {
 	output_message("GridLAB-D %d.%d.%d-%d (%s) %d-bit %s %s", 
 		global_version_major, global_version_minor, global_version_patch, 
-		global_version_build, global_version_branch, __WORDSIZE__, global_platform,
+		global_version_build, global_version_branch, sizeof(void*), global_platform,
 #ifdef _DEBUG
 	"DEBUG"
 #else

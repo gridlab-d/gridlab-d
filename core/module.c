@@ -60,6 +60,10 @@
 #include <malloc.h>
 #endif
 
+#if HAVE_SCHED_H
+#include <sched.h>
+#endif
+
 #include <errno.h>
 #include "platform.h"
 #include "globals.h"
@@ -1659,7 +1663,7 @@ MYPROCINFO *sched_allocate_procs(unsigned int n_threads, pid_t pid)
 	int cpu;
 #elif defined DYN_PROC_AFFINITY
 	cpu_set_t *cpuset = CPU_ALLOC(n_procs);
-#else
+#elif defined HAVE_CPU_SET_T && defined HAVE_CPU_SET_MACROS
 	cpu_set_t *cpuset = malloc(sizeof(cpu_set_t));
 	CPU_ZERO(cpuset);
 #endif
@@ -1697,7 +1701,7 @@ MYPROCINFO *sched_allocate_procs(unsigned int n_threads, pid_t pid)
 		cpu = n;
 #elif defined DYN_PROC_AFFINITY /* linux */
 		CPU_SET_S(n,CPU_ALLOC_SIZE(n_procs),cpuset);	
-#else
+#elif defined HAVE_CPU_SET_T && defined HAVE_CPU_SET_MACROS
 		CPU_SET(n,cpuset);
 #endif
 	}
@@ -1717,10 +1721,10 @@ MYPROCINFO *sched_allocate_procs(unsigned int n_threads, pid_t pid)
 		if ( thread_policy_set(mach_thread_self(), THREAD_AFFINITY_POLICY, &policy, THREAD_AFFINITY_POLICY_COUNT)!=KERN_SUCCESS )
 			output_warning("unable to set thread policy: %s", strerror(errno));
 	}
-#elif DYN_PROC_AFFINITY
+#elif defined DYN_PROC_AFFINITY
 	if (sched_setaffinity(pid,CPU_ALLOC_SIZE(n_procs),cpuset) )
 		output_warning("unable to set current process affinity mask: %s", strerror(errno));
-#else
+#elif defined HAVE_SCHED_SETAFFINITY
 	if (sched_setaffinity(pid,sizeof(cpu_set_t),cpuset) )
 		output_warning("unable to set current process affinity mask: %s", strerror(errno));
 #endif

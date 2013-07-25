@@ -471,6 +471,7 @@ int eventgen::init(OBJECT *parent)
 
 			//Populate the initial lengths though - could do later, but meh
 			UnreliableObjs[index].fail_length = gen_random_time(failure_dist,fail_dist_params[0],fail_dist_params[1]);
+			gl_output("%d\n",UnreliableObjs[index].fail_length);
 
 			//Convert double time to timestamp
 			max_outage_length = (TIMESTAMP)(max_outage_length_dbl);

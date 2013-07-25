@@ -1,0 +1,21 @@
+dnl run "autom4te -l m4sh gridlabd.m4sh > gridlabd"
+AS_INIT
+
+prefix="@prefix@"
+exec_prefix="@exec_prefix@"
+bindir="@bindir@"
+datarootdir="@datarootdir@"
+datadir="@datadir@"
+pkgdatadir="$datadir/@PACKAGE@"
+libdir="@libdir@"
+pkglibdir="$libdir/@PACKAGE@"
+
+BINPATH=`dirname $0`
+AS_IF([test "x$BINPATH" != "x$exec_prefix"],
+    [AS_ECHO(["running gridlabd from outside installation exec_prefix"])])
+
+AS_IF([test "x$GLPATH" = x],
+    [export GLPATH="$pkglibdir:$pkgdatadir"],
+    [export GLPATH="$pkglibdir:$pkgdatadir:$GLPATH"])
+
+"$bindir/gridlabd.bin" "$@"

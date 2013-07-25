@@ -191,7 +191,8 @@ int parse_bin_enum(char *cptr, BIN *bin, PROPERTY *prop){
  *	@param tpart a pointer to the buffer for the property complex type
  */
 void histogram::test_for_complex(char *tprop, char *tpart){
-	if(sscanf(property.get_string(), "%[^.\0\t\n].%s", tprop, tpart) == 2){
+
+	if(sscanf(property.get_string(), "%[^.\n\t ].%s", tprop, tpart) == 2){
 		if(0 == memcmp(tpart, "real", 4)){comp_part = REAL;}
 		else if(0 == memcmp(tpart, "imag", 3)){comp_part = IMAG;}
 		else if(0 == memcmp(tpart, "mag", 3)){comp_part = MAG;}
@@ -225,28 +226,28 @@ int histogram::init(OBJECT *parent)
 	{
 		OBJECT *group_obj = NULL;
 		CLASS *oclass = NULL;
-		if(group[0] == 0){
-			throw("Histogram has no parent and no group");
+		if(group[0] == NULL){
+			gl_error("Histogram has no parent and no group");
 			return 0;
 		}
 		group_list = gl_find_objects(FL_GROUP,group.get_string());
 		if(group_list == NULL){
-			throw("Histogram group could not be parsed");
+			gl_error("Histogram group could not be parsed");
 			return 0;
 		}
 		if(group_list->hit_count < 1){
-			throw("Histogram group is an empty set");
+			gl_error("Histogram group is an empty set");
 			return 0;
 		}
 		/* non-empty set */
-		
+
 		/* parse complex part of property */
 		test_for_complex(tprop, tpart);
-		
+	
 		while(group_obj = gl_find_next(group_list, group_obj)){
 			prop = gl_find_property(group_obj->oclass, property.get_string());
 			if(prop == NULL){
-				throw("Histogram group is unable to find prop '%s' in class '%d' for group '%s'", property.get_string(), group_obj->oclass->name, group.get_string());
+				gl_error("Histogram group is unable to find prop '%s' in class '%s' for group '%s'", property.get_string(), group_obj->oclass->name, group.get_string());
 				return 0;
 			}
 			/* check to see if all the group objects are in the same class, allowing us to cache the target property */
@@ -260,17 +261,19 @@ int histogram::init(OBJECT *parent)
 			
 		}
 	} else { /* if we have a parent, we only focus on that one object */
+
 		test_for_complex(tprop, tpart);
-		
+
 		prop = gl_find_property(parent->oclass, property.get_string());
 		
 		if(prop == NULL){
-			throw("Histogram parent '%s' of class '%s' does not contain property '%s'", parent->name ? parent->name : "(anon)", parent->oclass->name, property.get_string());
+			gl_error("Histogram parent '%s' of class '%s' does not contain property '%s'", parent->name ? parent->name : "(anon)", parent->oclass->name, property.get_string());
 			return 0;
 		} else {
 			prop_ptr = prop; /* saved for later */
 		}
 	}
+
 	// initialize first timesteps
 	if(counting_interval > 0.0)
 		next_count = gl_globalclock + counting_interval;
@@ -287,7 +290,7 @@ int histogram::init(OBJECT *parent)
 		//throw("Histogram bin_count is temporarily disabled.");
 		bin_list = (BIN *)gl_malloc(sizeof(BIN) * bin_count);
 		if(bin_list == NULL){
-			throw("Histogram malloc error: unable to alloc %i * %i bytes for %s", bin_count, sizeof(BIN), obj->name ? obj->name : "(anon. histogram)");
+			gl_error("Histogram malloc error: unable to alloc %i * %i bytes for %s", bin_count, sizeof(BIN), obj->name ? obj->name : "(anon. histogram)");
 			return 0;
 		}
 		memset(bin_list, 0, sizeof(BIN) * bin_count);
@@ -321,7 +324,7 @@ int histogram::init(OBJECT *parent)
 		}
 		bin_list = (BIN *)gl_malloc(sizeof(BIN) * bin_count);
 		if(bin_list == NULL){
-			throw("Histogram malloc error: unable to alloc %i * %i bytes for %s", bin_count, sizeof(BIN), obj->name ? obj->name : "(anon. histogram)");
+			gl_error("Histogram malloc error: unable to alloc %i * %i bytes for %s", bin_count, sizeof(BIN), obj->name ? obj->name : "(anon. histogram)");
 			return 0;
 		}
 		memset(bin_list, 0, sizeof(BIN) * bin_count);
@@ -330,21 +333,24 @@ int histogram::init(OBJECT *parent)
 		if(prop->ptype == PT_complex || prop->ptype == PT_double || prop->ptype == PT_int16 || prop->ptype == PT_int32 || prop->ptype == PT_int64 || prop->ptype == PT_float || prop->ptype == PT_real){
 			for(i = 0; i < bin_count && cptr != NULL; ++i){
 				if(parse_bin_val(cptr, bin_list+i) == 0){
-					throw("Histogram unable to parse \'%s\' in %s", cptr, obj->name ? obj->name : "(unnamed histogram)");
+					gl_error("Histogram unable to parse \'%s\' in %s", cptr, obj->name ? obj->name : "(unnamed histogram)");
+					return 0;
 				}
 				cptr = strtok(NULL, ",\t\r\n\0"); /* minor efficiency gain to use the incremented pointer from parse_bin */
 			}
 		} else if (prop->ptype == PT_enumeration || prop->ptype == PT_set){
 			for(i = 0; i < bin_count && cptr != NULL; ++i){
 				if(parse_bin_enum(cptr, bin_list+i, prop) == 0){
-					throw("Histogram unable to parse \'%s\' in %s", cptr, obj->name ? obj->name : "(unnamed histogram)");
+					gl_error("Histogram unable to parse \'%s\' in %s", cptr, obj->name ? obj->name : "(unnamed histogram)");
+					return 0;
 				}
 				cptr = strtok(NULL, ",\t\r\n\0"); /* minor efficiency gain to use the incremented pointer from parse_bin */
 			}
 		}
 
 		if(i < bin_count){
-			throw("Histrogram encountered a problem parsing bins for %s", obj->name ? obj->name : "(unnamed histogram)");
+			gl_error("Histrogram encountered a problem parsing bins for %s", obj->name ? obj->name : "(unnamed histogram)");
+			return 0;
 		}
 		binctr = (int *)malloc(sizeof(int) * bin_count);
 		memset(binctr, 0, sizeof(int) * bin_count);
@@ -361,7 +367,6 @@ int histogram::init(OBJECT *parent)
 		strcpy(fname,filename);
 //		strcpy(ftype,"file");
 //	}
-
 	/* if no filename given */
 	if (strcmp(fname,"")==0)
 

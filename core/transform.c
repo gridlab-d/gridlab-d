@@ -227,7 +227,7 @@ int64 apply_transform(TIMESTAMP t1, TRANSFORM *xform, double *source)
 }
 
 clock_t transform_synctime = 0;
-TIMESTAMP transform_syncall(TIMESTAMP t1, TRANSFORMSOURCE restrict)
+TIMESTAMP transform_syncall(TIMESTAMP t1, TRANSFORMSOURCE source)
 {
 	TRANSFORM *xform;
 	clock_t start = exec_clock();
@@ -236,7 +236,7 @@ TIMESTAMP transform_syncall(TIMESTAMP t1, TRANSFORMSOURCE restrict)
 	/* process the schedule transformations */
 	for (xform=schedule_xformlist; xform!=NULL; xform=xform->next)
 	{	
-		if (xform->source_type&restrict){
+		if (xform->source_type&source){
 			if((xform->source_type == XS_SCHEDULE) && (xform->target_obj->schedule_skew != 0)){
 				TIMESTAMP t = t1 - xform->target_obj->schedule_skew; // subtract so the +12 is 'twelve seconds later', not earlier
 				if((t < xform->source_schedule->since) || (t >= xform->source_schedule->next_t)){

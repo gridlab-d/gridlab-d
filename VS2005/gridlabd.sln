@@ -137,7 +137,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mysql", "..\mysql\mysql.vcp
 		{11E2543D-382E-4F7D-B76D-A6EC571F2D27} = {11E2543D-382E-4F7D-B76D-A6EC571F2D27}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "debug", "..\debug\debug.vcproj", "{FDCB0E8B-550C-449E-A810-5346F94B19F2}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "debug", "..\debug\gldebug.vcproj", "{FDCB0E8B-550C-449E-A810-5346F94B19F2}"
 	ProjectSection(ProjectDependencies) = postProject
 		{11E2543D-382E-4F7D-B76D-A6EC571F2D27} = {11E2543D-382E-4F7D-B76D-A6EC571F2D27}
 	EndProjectSection

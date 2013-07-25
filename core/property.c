@@ -50,7 +50,7 @@ PROPERTYSPEC property_type[_PT_LAST] = {
 	{"float", "decimal", sizeof(float), 24, convert_from_float, convert_to_float},
 	{"loadshape", "string", sizeof(loadshape), 0, convert_from_loadshape, convert_to_loadshape, loadshape_create,NULL,{TCOPS(double)},},
 	{"enduse", "string", sizeof(enduse), 0, convert_from_enduse, convert_to_enduse, enduse_create,NULL,{TCOPS(double)},enduse_get_part},
-	{"random", "string", sizeof(randomvar), 24, convert_from_randomvar, convert_to_randomvar, randomvar_create,NULL,{TCOPS(double)},random_get_part},
+	{"randomvar", "string", sizeof(randomvar), 24, convert_from_randomvar, convert_to_randomvar, randomvar_create,NULL,{TCOPS(double)},random_get_part},
 };
 
 PROPERTYSPEC *property_getspec(PROPERTYTYPE ptype)

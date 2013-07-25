@@ -1855,7 +1855,7 @@ STATUS exec_start(void)
 					global_clock += global_run_realtime;
 #else
 				struct timeval tv;
-				gettimeofday(&tv);
+				gettimeofday(&tv, NULL);
 				output_verbose("waiting %d usec", 1000000-tv.tv_usec);
 				usleep(1000000-tv.tv_usec);
 				if ( global_run_realtime==1 )

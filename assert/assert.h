@@ -36,4 +36,6 @@ public:
 	static CLASS *oclass;
 	static g_assert *defaults;
 };
+
 #endif // _ASSERT_H
+

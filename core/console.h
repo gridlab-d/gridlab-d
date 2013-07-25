@@ -145,8 +145,16 @@ void attroff(int n)
 	SetConsoleTextAttribute(console,info.wAttributes);
 }
 #else
-#ifdef HAVE_CURSES
-#include <curses.h>
+#if defined HAVE_NCURSESW_CURSES_H
+#  include <ncursesw/curses.h>
+#elif defined HAVE_NCURSESW_H
+#  include <ncursesw.h>
+#elif defined HAVE_NCURSES_CURSES_H
+#  include <ncurses/curses.h>
+#elif defined HAVE_NCURSES_H
+#  include <ncurses.h>
+#elif defined HAVE_CURSES_H
+#  include <curses.h>
 #endif
 #endif
 
