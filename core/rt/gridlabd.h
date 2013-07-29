@@ -632,6 +632,7 @@ typedef enum {CLASSVALID=0xc44d822e} CLASSMAGIC; ///< this is used to uniquely i
 
 struct s_class_list {
 	CLASSMAGIC magic;
+	int id;
 	CLASSNAME name;
 	unsigned int size;
 	MODULE *module;
@@ -652,6 +653,7 @@ struct s_class_list {
 	FUNCTIONADDR heartbeat;
 	CLASS *parent;			/**< parent class from which properties should be inherited */
 	struct {
+		unsigned int lock;
 		int32 numobjs;
 		int64 clocks;
 		int32 count;
