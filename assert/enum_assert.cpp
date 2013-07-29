@@ -35,9 +35,9 @@ enum_assert::enum_assert(MODULE *module)
 		if (gl_publish_variable(oclass,
 			// TO DO:  publish your variables here
 			PT_enumeration,"status",get_status_offset(),
-				PT_KEYWORD,"ASSERT_TRUE",ASSERT_TRUE,
-				PT_KEYWORD,"ASSERT_FALSE",ASSERT_FALSE,
-				PT_KEYWORD,"ASSERT_NONE",ASSERT_NONE,
+				PT_KEYWORD,"ASSERT_TRUE",(enumeration)ASSERT_TRUE,
+				PT_KEYWORD,"ASSERT_FALSE",(enumeration)ASSERT_FALSE,
+				PT_KEYWORD,"ASSERT_NONE",(enumeration)ASSERT_NONE,
 			PT_int32, "value", get_value_offset(),
 			PT_char1024, "target", get_target_offset(),	
 			NULL)<1){
@@ -86,7 +86,7 @@ TIMESTAMP enum_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 	{
 		if (value != x) 
 		{
-			gl_error("Assert failed on %s: %s=%d did not match %d", 
+			gl_error("Assert failed on %s: %s=%g did not match %g", 
 				get_parent()->get_name(), get_target(), x, value);
 			return 0;
 		}
@@ -100,7 +100,7 @@ TIMESTAMP enum_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 	{
 		if (value == x)
 		{
-			gl_error("Assert failed on %s: %s=%d did match %d", 
+			gl_error("Assert failed on %s: %s=%g did match %g", 
 				get_parent()->get_name(), get_target(), x, value);
 			return 0;
 		}

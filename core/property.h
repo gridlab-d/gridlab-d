@@ -539,8 +539,8 @@ typedef enum {_PT_FIRST=-1,
 	PT_double_array, /**< the data is a fixed length double[] */
 	PT_complex_array, /**< the data is a fixed length complex[] */
 /*	PT_object_array, */ /**< the data is a fixed length array of object pointers*/
-	PT_float,	/**< Single-precision float	*/
 	PT_real,	/**< Single or double precision float ~ allows double values to be overriden */
+	PT_float,	/**< Single-precision float	*/
 	PT_loadshape,	/**< Loadshapes are state machines driven by schedules */
 	PT_enduse,		/**< Enduse load data */
 	PT_random,		/**< Randomized number */
@@ -664,6 +664,7 @@ typedef struct s_property_specs { /**<	the property type conversion specificatio
 extern "C" {
 #endif
 
+int property_check(void);
 PROPERTYSPEC *property_getspec(PROPERTYTYPE ptype);
 PROPERTY *property_malloc(PROPERTYTYPE, CLASS *, char *, void *, DELEGATEDTYPE *);
 uint32 property_size(PROPERTY *);

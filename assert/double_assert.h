@@ -13,16 +13,16 @@
 
 class double_assert : public gld_object {
 public:
-	typedef enum {ONCE_FALSE=0, ONCE_TRUE=1, ONCE_DONE=2} ONCESTATUS;
-	typedef enum {IN_ABS=0, IN_RATIO=1} WITHINMODE;
-	typedef enum {ASSERT_TRUE=1, ASSERT_FALSE, ASSERT_NONE} ASSERTSTATUS;
+	enum {ONCE_FALSE=0, ONCE_TRUE=1, ONCE_DONE=2};
+	enum {IN_ABS=0, IN_RATIO=1};
+	enum {ASSERT_TRUE=1, ASSERT_FALSE, ASSERT_NONE};
 
-	GL_ATOMIC(ASSERTSTATUS,status); 
+	GL_ATOMIC(enumeration,status); 
 	GL_STRING(char1024,target);		
 	GL_ATOMIC(double,value);
-	GL_ATOMIC(ONCESTATUS,once);
+	GL_ATOMIC(enumeration,once);
 	GL_ATOMIC(double,once_value);
-	GL_ATOMIC(WITHINMODE,within_mode);
+	GL_ATOMIC(enumeration,within_mode);
 	GL_ATOMIC(double,within);
 
 public:

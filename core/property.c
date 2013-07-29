@@ -25,6 +25,7 @@
 #include "linkage.h"
 #include "compare.h"
 #include "stream.h"
+#include "exec.h"
 
 /* IMPORTANT: this list must match PROPERTYTYPE enum in property.h */
 PROPERTYSPEC property_type[_PT_LAST] = {
@@ -42,10 +43,10 @@ PROPERTYSPEC property_type[_PT_LAST] = {
 	{"char1024", "string", sizeof(char1024), 1024, convert_from_char1024,convert_to_char1024,NULL,NULL,{TCOPS(string)},},
 	{"object", "string", sizeof(OBJECT*), sizeof(OBJECTNAME), convert_from_object,convert_to_object,NULL,NULL,{TCOPB(object)},object_get_part},
 	{"delegated", "string", (unsigned int)-1, 0, convert_from_delegated, convert_to_delegated},
-	{"bool", "string", sizeof(unsigned int), 6, convert_from_boolean, convert_to_boolean,NULL,NULL,{TCOPB(bool)},},
+	{"bool", "string", sizeof(bool), 6, convert_from_boolean, convert_to_boolean,NULL,NULL,{TCOPB(bool)},},
 	{"timestamp", "string", sizeof(int64), 24, convert_from_timestamp_stub, convert_to_timestamp_stub,NULL,NULL,{TCOPS(uint64)},timestamp_get_part},
-	{"double_array", "string", sizeof(double), 0, convert_from_double_array, convert_to_double_array,double_array_create,NULL,{TCNONE},double_array_get_part},
-	{"complex_array", "string", sizeof(complex), 0, convert_from_complex_array, convert_to_complex_array,complex_array_create,NULL,{TCNONE},complex_array_get_part},
+	{"double_array", "string", sizeof(double_array), 0, convert_from_double_array, convert_to_double_array,double_array_create,NULL,{TCNONE},double_array_get_part},
+	{"complex_array", "string", sizeof(complex_array), 0, convert_from_complex_array, convert_to_complex_array,complex_array_create,NULL,{TCNONE},complex_array_get_part},
 	{"real", "decimal", sizeof(real), 24, convert_from_real, convert_to_real},
 	{"float", "decimal", sizeof(float), 24, convert_from_float, convert_to_float},
 	{"loadshape", "string", sizeof(loadshape), 0, convert_from_loadshape, convert_to_loadshape, loadshape_create,NULL,{TCOPS(double)},},
@@ -58,11 +59,59 @@ PROPERTYSPEC *property_getspec(PROPERTYTYPE ptype)
 	return &(property_type[ptype]);
 }
 
+/** Check whether the properties as defined are mapping safely to memory
+    @return 0 on failure, 1 on success
+ **/
+int property_check(void)
+{
+	PROPERTYTYPE ptype;
+	int status = 1;
+	for ( ptype=_PT_FIRST+1 ; ptype<_PT_LAST ; ptype++ )
+	{
+		size_t sz = 0;
+		switch (ptype) {
+		case PT_double: sz = sizeof(double); break;
+		case PT_complex: sz = sizeof(complex); break;
+		case PT_enumeration: sz = sizeof(enumeration); break;
+		case PT_set: sz = sizeof(set); break;
+		case PT_int16: sz = sizeof(int16); break;
+		case PT_int32: sz = sizeof(int32); break;
+		case PT_int64: sz = sizeof(int64); break;
+		case PT_char8: sz = sizeof(char8); break;
+		case PT_char32: sz = sizeof(char32); break;
+		case PT_char256: sz = sizeof(char256); break;
+		case PT_char1024: sz = sizeof(char1024); break;
+		case PT_object: sz = sizeof(OBJECT*); break;
+		case PT_bool: sz = sizeof(bool); break;
+		case PT_timestamp: sz = sizeof(TIMESTAMP); break;
+		case PT_double_array: sz = sizeof(double_array); break;
+		case PT_complex_array: sz = sizeof(complex_array); break;
+		case PT_real: sz = sizeof(real); break;
+		case PT_float: sz = sizeof(float); break;
+		case PT_loadshape: sz = sizeof(loadshape); break;
+		case PT_enduse: sz = sizeof(enduse); break;
+		case PT_random: sz = sizeof(randomvar); break;
+		default: break;
+		}
+		output_verbose("property_check of %s: declared size is %d, actual size is %d", property_type[ptype].name, property_type[ptype].size, sz);
+		if ( sz>0 && property_type[ptype].size<sz )
+		{
+			status = 0;
+			output_error("declared size of property %s smaller than actual size in memory on this platform (declared %d, actual %d)", property_type[ptype].name, property_type[ptype].size, sz);
+		}
+		else if ( sz>0 && property_type[ptype].size!=sz )
+		{
+			output_warning("declared size of property %s does not match actual size in memory on this platform (declared %d, actual %d)", property_type[ptype].name, property_type[ptype].size, sz);
+		}
+	}
+	return status;
+}
+
 PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, char *name, void *addr, DELEGATEDTYPE *delegation)
 {
 	char unitspec[1024];
 	PROPERTY *prop = (PROPERTY*)malloc(sizeof(PROPERTY));
-	
+
 	if (prop==NULL)
 	{
 		output_error("property_malloc(oclass='%s',...): memory allocation failed", oclass->name, name);

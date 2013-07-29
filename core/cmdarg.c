@@ -260,6 +260,12 @@ static int bothstdout(int argc, char *argv[])
 }
 static int check(int argc, char *argv[])
 {
+	/* check main core implementation */
+	if ( property_check()==FAILED )
+	{
+		output_fatal("main core property implementation failed size checks");
+		exit(XC_INIERR);
+	}
 	global_runchecks = !global_runchecks;
 	return 0;
 }

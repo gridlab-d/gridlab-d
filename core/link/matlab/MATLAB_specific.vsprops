@@ -4,4 +4,13 @@
 	Version="8.00"
 	Name="matlab_specific"
 	>
+	<Tool
+		Name="VCCLCompilerTool"
+		AdditionalIncludeDirectories="C:\PROGRA~1\MATLAB\R2011a\extern\include"
+	/>
+	<Tool
+		Name="VCLinkerTool"
+		AdditionalDependencies="libmx.lib libeng.lib"
+		AdditionalLibraryDirectories="C:\PROGRA~1\MATLAB\R2011a\extern\lib\win64\MICROS~1"
+	/>
 </VisualStudioPropertySheet>

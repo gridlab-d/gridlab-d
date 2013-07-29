@@ -1,15 +1,14 @@
 // $Id$
 //
-
 #ifdef WINDOWS
-#setenv PATH=C:\Program files\Matlab\R2011a\bin\win64
+#setenv PATH=C:\Program Files\MATLAB\R2011a\bin\win64
 #endif
 //#set pauseatexit=TRUE
 //#set verbose=TRUE
 
 // link with matlab
 #ifdef MATLAB
-link ../matlab_avi.link;
+link matlab_avi.link;
 #endif
 
 // public a complex global variable

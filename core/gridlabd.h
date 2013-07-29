@@ -1956,25 +1956,25 @@ public: // special operations
 	{ 
 		PROPERTYCOMPAREOP n = callback->properties.get_compare_op(pstruct.prop->ptype,op); 
 		if (n==TCOP_ERR) throw "invalid property compare operation"; 
-		return compare(n,a,b,p); 
+		return compare((enumeration)n,a,b,p); 
 	};
-	inline bool compare(PROPERTYCOMPAREOP op, char *a, char *b=NULL) 
+	inline bool compare(enumeration op, char *a, char *b=NULL) 
 	{ 
 		char v1[1024], v2[1024]; 
-		return callback->convert.string_to_property(pstruct.prop,(void*)v1,a)>0 && callback->properties.compare_basic(pstruct.prop->ptype,op,get_addr(),(void*)v1,(b&&callback->convert.string_to_property(pstruct.prop,(void*)v2,b)>0)?(void*)v2:NULL, NULL);
+		return callback->convert.string_to_property(pstruct.prop,(void*)v1,a)>0 && callback->properties.compare_basic(pstruct.prop->ptype,(PROPERTYCOMPAREOP)op,get_addr(),(void*)v1,(b&&callback->convert.string_to_property(pstruct.prop,(void*)v2,b)>0)?(void*)v2:NULL, NULL);
 	};
-	inline bool compare(PROPERTYCOMPAREOP op, char *a, char *b, char *p) 
+	inline bool compare(enumeration op, char *a, char *b, char *p) 
 	{
 		double v1, v2; v1=atof(a); v2=b?atof(b):0;
-		return callback->properties.compare_basic(pstruct.prop->ptype,op,get_addr(),(void*)&v1,b?(void*)&v2:NULL, p);
+		return callback->properties.compare_basic(pstruct.prop->ptype,(PROPERTYCOMPAREOP)op,get_addr(),(void*)&v1,b?(void*)&v2:NULL, p);
 	};
-	inline bool compare(PROPERTYCOMPAREOP op, double *a, double *b=NULL, char *p=NULL) 
+	inline bool compare(enumeration op, double *a, double *b=NULL, char *p=NULL) 
 	{ 
-		return callback->properties.compare_basic(pstruct.prop->ptype,op,get_addr(),a,b,p);
+		return callback->properties.compare_basic(pstruct.prop->ptype,(PROPERTYCOMPAREOP)op,get_addr(),a,b,p);
 	};
-	inline bool compare(PROPERTYCOMPAREOP op, void *a, void *b=NULL) 
+	inline bool compare(enumeration op, void *a, void *b=NULL) 
 	{ 
-		return callback->properties.compare_basic(pstruct.prop->ptype,op,get_addr(),a,b,NULL);
+		return callback->properties.compare_basic(pstruct.prop->ptype,(PROPERTYCOMPAREOP)op,get_addr(),a,b,NULL);
 	};
 
 public: // iterators

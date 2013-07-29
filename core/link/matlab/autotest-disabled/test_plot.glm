@@ -2,14 +2,14 @@
 //
 
 #ifdef WIN32
-#setenv PATH=C:\Program files\Matlab\R2011a\bin\win64
+#setenv PATH=C:\Program Files\MATLAB\R2011a\bin\win64
 #endif
 //#set pauseatexit=TRUE
 //#set verbose=TRUE
 
 // link with matlab
 #ifdef MATLAB
-link ../matlab_plot.link;
+link matlab_plot.link;
 #endif
 
 // public a complex global variable

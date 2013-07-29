@@ -144,7 +144,7 @@
 				AdditionalDependencies="libeng.lib libmx.lib"
 				OutputFile="$(OutDir)\$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="$(OutDir);&quot;c:\program files\matlab\r2011a\extern\lib\win64\microsoft\&quot;"
+				AdditionalLibraryDirectories="$(OutDir);&quot;c:\program files\matlab\r2011a\extern\lib\win64\microsoft\&quot;;C:\Program Files\MATLAB\R2011a\extern\lib\win64\microsoft"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="17"

@@ -13,9 +13,9 @@
 
 class enum_assert : public gld_object {
 public:
-	typedef enum {ASSERT_TRUE=1, ASSERT_FALSE, ASSERT_NONE} ASSERTSTATUS;
+	enum {ASSERT_TRUE=1, ASSERT_FALSE, ASSERT_NONE}; 
 	
-	GL_ATOMIC(ASSERTSTATUS,status);
+	GL_ATOMIC(enumeration,status);
 	GL_STRING(char1024,target);
 	GL_ATOMIC(int32,value);
 
