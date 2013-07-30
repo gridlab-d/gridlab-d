@@ -937,7 +937,7 @@ void module_termall(void)
 #define CCFLAGS "-DMACOSX"
 #define LDFLAGS "-dylib"
 #else // !__APPLE__
-#define CCFLAGS "-DLINUX"
+#define CCFLAGS "-DLINUX -fPIC"
 #define LDFLAGS "" /* --export-all-symbols" */
 #endif // __APPLE__
 #endif // WIN32

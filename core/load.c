@@ -4013,7 +4013,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				output_error_raw("%s(%d): schedule transform could not be created - %s", filename, linenum, errno?strerror(errno):"(no details)");
 				REJECT;
 			}
-			else
+			else if ( source!=NULL )
 			{
 				/* a transform is unresolved */
 				if (first_unresolved==source)
@@ -4057,7 +4057,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				REJECT;
 				DONE;
 			}
-			else
+			else if ( source!=NULL )
 			{
 				/* a transform is unresolved */
 				if (first_unresolved==source)

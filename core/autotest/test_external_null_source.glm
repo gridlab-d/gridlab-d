@@ -1,0 +1,70 @@
+// test whether ticket:744 is fixed
+
+#setenv GRIDLABD=../../../core
+#set module_compiler_flags=VERBOSE|DEBUG|KEEPWORK|CLEAN
+#set force_compile=1
+
+// deterministic noise source
+extern "C" noise_source : noise@1 // inline "C" code follows
+{
+    #include <math.h>
+	int noise(int nlhs, GLXDATA *plhs, int nrhs, GLXDATA *prhs)
+	{	/* make sure the correct number of args are passed in */
+		if ( nlhs!=1 || nlhs!=1 ) return -1;
+		double t = GLXdouble(prhs[0]);
+		GLXdouble(plhs[0]) = 1e6
+		
+			// diurnal signal
+			+ 4e5*cos(2*3.1416/86400*t)
+			- 3e5*sin(2*2*3.1415/86400*t)
+			
+			// "hourly" noise
+			+ 1.5e4*sin(57*3.1416/86400*t)
+			- 1.9e4*sin(67*3.1416/86400*t)
+			+ 1.7e4*sin(93*3.1416/86400*t)
+			
+			// "minute" noise
+			+ 1.3e3*sin(357*3.1416/86400*t)			
+			- 1.5e3*sin(567*3.1416/86400*t)
+			+ 1.9e3*sin(793*3.1416/86400*t)
+			
+			// "second" noise
+			+ 1.9e2*sin(5357*3.1416/86400*t)
+			- 1.3e2*sin(3567*3.1416/86400*t)
+			+ 1.7e2*sin(9793*3.1416/86400*t);
+		return 0;
+	}	
+} // end inline "C" code
+
+// run example for 1 day
+clock {
+	timezone PST+8PDT;
+	starttime '2009-01-01 00:00:00 PST';
+	stoptime '2009-01-02 00:00:00 PST';
+}
+
+// implement a deterministic noise source and signal target
+class noise {
+	double source; // deterministic source
+	double signal; // destination for the noisy signal
+	intrinsic sync(TIMESTAMP t0, TIMESTAMP t1)
+	{
+		// This provides the main noise source input.
+		// You can source this from either the clock (t0)
+		// or the elasping simulation time (t0-starttime)
+		// or some other deterministic source you like.
+		source = (double)t0; 
+		return t0+1; // update signal every second
+	};
+}
+
+// record the output
+module tape;
+object noise {
+	signal noise(source);
+	object recorder {
+		property signal;
+		file noise_source.csv;
+		interval -1;
+	};
+}
