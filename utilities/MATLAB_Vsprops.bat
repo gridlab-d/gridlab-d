@@ -1,34 +1,34 @@
 @echo off
-if "%2" == "" goto EMPTYMATLAB
+if "%3" == "" goto EMPTYMATLAB
 goto FULLMATLAB
 
 :EMPTYMATLAB
-echo ^<?xml version="1.0" encoding="Windows-1252"?^>> %1
-echo ^<VisualStudioPropertySheet>> %1
-echo		ProjectType="Visual C++">> %1
-echo 	Version="8.00">> %1
-echo 	Name="matlab_specific">> %1
-echo 	^>>> %1
-echo ^</VisualStudioPropertySheet^>>> %1
+echo ^<?xml version="1.0" encoding="Windows-1252"?^>> %2
+echo ^<VisualStudioPropertySheet>> %2
+echo		ProjectType="Visual C++">> %2
+echo 	Version="8.00">> %2
+echo 	Name="matlab_specific_%1">> %2
+echo 	^>>> %2
+echo ^</VisualStudioPropertySheet^>>> %2
 
 goto END
 
 :FULLMATLAB
-echo ^<?xml version="1.0" encoding="Windows-1252"?^>> %1
-echo ^<VisualStudioPropertySheet>> %1
-echo		ProjectType="Visual C++">> %1
-echo 	Version="8.00">> %1
-echo 	Name="matlab_specific">> %1
-echo 	^>>> %1
-echo 	^<Tool>> %1
-echo 		Name="VCCLCompilerTool">> %1
-echo 		AdditionalIncludeDirectories=%2>> %1
-echo 	/^>>> %1
-echo 	^<Tool>> %1
-echo 		Name="VCLinkerTool">> %1
-echo 		AdditionalDependencies="libmx.lib libeng.lib">> %1
-echo 		AdditionalLibraryDirectories=%3>> %1
-echo 	/^>>> %1
-echo ^</VisualStudioPropertySheet^>>> %1
+echo ^<?xml version="1.0" encoding="Windows-1252"?^>> %2
+echo ^<VisualStudioPropertySheet>> %2
+echo		ProjectType="Visual C++">> %2
+echo 	Version="8.00">> %2
+echo 	Name="matlab_specific_%1">> %2
+echo 	^>>> %2
+echo 	^<Tool>> %2
+echo 		Name="VCCLCompilerTool">> %2
+echo 		AdditionalIncludeDirectories=%3>> %2
+echo 	/^>>> %2
+echo 	^<Tool>> %2
+echo 		Name="VCLinkerTool">> %2
+echo 		AdditionalDependencies="libmx.lib libeng.lib">> %2
+echo 		AdditionalLibraryDirectories=%4>> %2
+echo 	/^>>> %2
+echo ^</VisualStudioPropertySheet^>>> %2
 
 :END

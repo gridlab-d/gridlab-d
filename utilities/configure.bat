@@ -11,9 +11,13 @@ set search=C:\
 set source=..
 set config=config_external.h
 set build=build.h
-set matlabfile=MATLAB_specific.vsprops
+set matlabfile_win32=MATLAB_specific_win32.vsprops
+set matlabfile_x64=MATLAB_specific_x64.vsprops
 set MATLAB=_
 set MATLABFILEOUT=no
+set MATLABFoundType=none
+set MATLABFound_win32=no
+set MATLABFound_x64=no
 set mysqlfile=MYSQL_specific.vsprops
 set MYSQL=_
 set MYSQLFILEOUT=no
@@ -192,19 +196,66 @@ rem
 rem - Check for matlab
 rem   Finds the path to extern\include\mex.h and extracts the include and lib paths from it
 rem
+set MATLABORIGINPUT=%MATLAB%
+set MATLABSearchPass=starting
+
+:MATLABCALLS
+rem Reset variables
+set MATLAB=%MATLABORIGINPUT%
+set MATLABFILEOUT=no
+set MATLABFoundType=none
+
+if %MATLABSearchPass% == x64 (
+	set MATLABSearchPass=win32
+)
+if %MATLABSearchPass% == starting (
+	set MATLABSearchPass=x64
+) 
+
+if %MATLABFound_win32% NEQ no (
+	if %MATLABFound_x64% NEQ no goto MATLABBOTHSEARCHED
+	goto MATLABSTILLSEARCH
+) else (
+	goto MATLABSTILLSEARCH
+)
+
+if %MATLABFound_x64% NEQ no (
+	if %MATLABFound_win32% NEQ no goto MATLABBOTHSEARCHED
+	goto MATLABSTILLSEARCH
+) else (
+	goto MATLABSTILLSEARCH
+)
+
+:MATLABBOTHSEARCHED
+goto MATLABEND
+
+:MATLABSTILLSEARCH
+echo %MATLABSearchPass%
+
 if not "%MATLAB: =_%" == "_" goto MATLABSPECIFIED
 if %fullsearch% == yes goto MATLABFULL
 goto MATLABSMART
 REM Full search for MATLAB
 :MATLABFULL
-set target=extern\include\mex.h
+rem set target=extern\include\mex.h
+if %MATLABSearchPass% == win32 (
+	set target=extern\lib\win32\microsoft\libmx.lib
+) else (
+	set target=extern\lib\win64\microsoft\libmx.lib
+)
+
 echo Searching for MATLAB target %target%
 if %verbose% == yes echo on
 for /r "%search%" %%f in ( %target% ) do if exist %%f set MATLAB=%%~fsf
 goto MATLABTEST
 REM Constrained search for MATLAB
 :MATLABSMART
-set target=extern\include\mex.h
+rem set target=extern\include\mex.h
+if %MATLABSearchPass% == win32 (
+	set target=extern\lib\win32\microsoft\libmx.lib
+) else (
+	set target=extern\lib\win64\microsoft\libmx.lib
+)
 echo Searching for MATLAB in expected locations
 if %verbose% == yes echo on
 if exist "C:\Program Files\MATLAB" (
@@ -242,44 +293,136 @@ REM Batch file specified search for MATLAB
 :MATLABSPECIFIED
 echo Searching for MATLAB in specified location
 set MATLAB_TEMP=_
-for /r "%MATLAB%" %%f in ( extern\include\mex.h ) do if exist %%f (
+
+REM Flag both variables as a failure -- the proper one will be overwritten
+set MATLABFound_win32=fail
+set MATLABFound_x64=fail
+
+set target=extern\include\mex.h
+
+for /r "%MATLAB%" %%f in ( %target% ) do if exist %%f (
 	set MATLAB=%%~fsf
-	goto MATLABTEST
+	goto MATLABSPECIFICTEST
 	)
 if "%MATLAB_TEMP: =_%" == "_" (
 	set MATLAB=_
-	echo // %0: MATLAB target not found in specified location >>%config% 
+	echo // %0: MATLAB target not found in specified location >>%config%
 	goto MATLABDONE
 )
 REM Test to see if anything was found
 :MATLABTEST
 if "%MATLAB: =_%" == "_" (
-	echo // %0: MATLAB target extern\include\mex.h not found >>%config% 
+	echo // %0: MATLAB target extern\lib\platform\libmx.lib not found >>%config% 
 	goto MATLABDONE
 )
-echo Found MATLAB target %target% at [%MATLAB%]
-echo // >>%config%
-echo // MATLAB configuration >>%config%
-echo // >>%config%
-echo // %0: found %MATLAB% >>%config%
+
+rem set the environmental variables
+if %MATLABSearchPass% == win32 (
+	set MATLABPre=%MATLAB:\lib\win32\micros~1\libmx.lib=%
+) else (
+	set MATLABPre=%MATLAB:\lib\win64\micros~1\libmx.lib=%
+)
+set MATLAB=%MATLABPre%\include\mex.h
+goto MATLABFILEGEN
+
+:MATLABSPECIFICTEST
+if "%MATLAB: =_%" == "_" (
+	echo // %0: MATLAB target extern\lib\platform\libmx.lib not found >>%config% 
+	goto MATLABDONE
+)
+
+:MATLABFILEGEN
 set MATLAB_INCLUDE=%MATLAB:\mex.h=%
-echo #define MATLAB_INCLUDE "%MATLAB_INCLUDE%" >>%config%
 set MATLAB_EXTERN=%MATLAB_INCLUDE:\include=%
 set MATLAB_LIB=%MATLAB_EXTERN%\lib
 for /r "%MATLAB_LIB%" %%f in ( microsoft\libmx.lib ) do if exist %%f set MATLAB_LIBMEX=%%~fsf
-echo #define MATLAB_LIB "%MATLAB_LIBMEX:\libmx.lib=%" >>%config%
 set MATLAB_DIR=%MATLAB_EXTERN:\extern=%
-echo #define HAVE_MATLAB "%MATLAB_DIR%" >>%config%
 
-REM Flag to generate options
-set MATLABFILEOUT=yes
+rem see which one we found
+
+rem 32-bit
+if not %MATLAB_LIBMEX:win32=% == %MATLAB_LIBMEX% (
+	echo Found x86 MATLAB target extern\include\mex.h at [%MATLAB%]
+	echo // >>%config%
+	echo // MATLAB x86 configuration >>%config%
+	echo // >>%config%
+	echo // %0: found %MATLAB% >>%config%
+	echo #ifndef MATLAB_X64 >>%config%
+	echo #define MATLAB_INCLUDE "%MATLAB_INCLUDE%" >>%config%
+	echo #define MATLAB_LIB "%MATLAB_LIBMEX:\libmx.lib=%" >>%config%
+	echo #define HAVE_MATLAB "%MATLAB_DIR%" >>%config%
+	echo #endif >>%config%
+	
+	set MATLABFoundType=win32
+
+	REM Flag to generate options
+	set MATLABFILEOUT=yes
+	
+	rem Flag for tracking
+	set MATLABFound_win32=yes
+)
+
+rem 64-bit
+if not %MATLAB_LIBMEX:win64=% == %MATLAB_LIBMEX% (
+	echo Found x64 MATLAB target extern\include\mex.h at [%MATLAB%]
+	echo // >>%config%
+	echo // MATLAB x64 configuration >>%config%
+	echo // >>%config%
+	echo // %0: found %MATLAB% >>%config%
+	echo #if defined _M_X64 ^|^| defined _M_IA64 >>%config%
+	echo #define MATLAB_X64 >>%config%
+	echo #endif >>%config%
+	echo. >>%config%
+	echo #ifdef MATLAB_X64 >>%config%
+	echo #define MATLAB_INCLUDE "%MATLAB_INCLUDE%" >>%config%
+	echo #define MATLAB_LIB "%MATLAB_LIBMEX:\libmx.lib=%" >>%config%
+	echo #define HAVE_MATLAB "%MATLAB_DIR%" >>%config%
+	echo #endif >>%config%
+
+	set MATLABFoundType=x64
+
+	REM Flag to generate options
+	set MATLABFILEOUT=yes
+	
+	rem Flag for tracking
+	set MATLABFound_x64=yes
+)
 
 :MATLABDONE
 if %MATLABFILEOUT% == yes (
-	call MATLAB_Vsprops %matlabfile% "%MATLAB_INCLUDE%" "%MATLAB_LIBMEX:\libmx.lib=%" 
-) else (
-	call MATLAB_Vsprops %matlabfile%
+	if %MATLABFoundType% == win32 (
+		call MATLAB_Vsprops win32 %matlabfile_win32% "%MATLAB_INCLUDE%" "%MATLAB_LIBMEX:\libmx.lib=%" 
+		goto MATLABNEXT
+	) else (
+		call MATLAB_Vsprops x64 %matlabfile_x64% "%MATLAB_INCLUDE%" "%MATLAB_LIBMEX:\libmx.lib=%" 
+		goto MATLABNEXT
+	)
 )
+
+:MATLABNEXT
+if %MATLABFound_win32% NEQ no (
+	if %MATLABFound_x64% NEQ no goto MATLABEND
+	goto MATLABCALLS
+) else (
+	goto MATLABCALLS
+)
+
+if %MATLABFound_x64% NEQ no (
+	if %MATLABFound_win32% NEQ no goto MATLABEND
+	goto MATLABCALLS
+) else (
+	goto MATLABCALLS
+)
+
+:MATLABEND
+REM final outputs
+if %MATLABFound_win32% == fail (
+	call MATLAB_Vsprops win32 %matlabfile_win32%
+)
+if %MATLABFound_x64% == fail (
+	call MATLAB_Vsprops x64 %matlabfile_x64%
+)
+
 @if %verbose% == yes echo off
 
 rem
@@ -402,7 +545,8 @@ echo Current build is %newrev%
 echo Moving files to proper location
 if exist %config% move /y %config% "%source%\core"
 if exist %build% move /y %build% "%source%\core"
-if exist %matlabfile% move /y %matlabfile% "%source%\core\link\matlab"
+if exist %matlabfile_win32% move /y %matlabfile_win32% "%source%\core\link\matlab"
+if exist %matlabfile_x64% move /y %matlabfile_x64% "%source%\core\link\matlab"
 if exist %mysqlfile% move /y %mysqlfile% "%source%\mysql"
 
 rem ********************************************************************************************
