@@ -517,6 +517,7 @@ AC_SUBST([MYSQL_LIBS])
 ###############################################################################
 
 AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([gridlabd.spec])
 AC_CONFIG_FILES([core/gridlabd], [chmod +x core/gridlabd])
 AC_OUTPUT
 
