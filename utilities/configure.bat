@@ -18,6 +18,7 @@ set MATLABFILEOUT=no
 set MATLABFoundType=none
 set MATLABFound_win32=no
 set MATLABFound_x64=no
+set MATLABSearchCount=0
 set mysqlfile=MYSQL_specific.vsprops
 set MYSQL=_
 set MYSQLFILEOUT=no
@@ -198,12 +199,23 @@ rem   Finds the path to extern\include\mex.h and extracts the include and lib pa
 rem
 set MATLABORIGINPUT=%MATLAB%
 set MATLABSearchPass=starting
+rem Reset counter, just to be safe
+set MATLABSearchCount=0
 
 :MATLABCALLS
 rem Reset variables
 set MATLAB=%MATLABORIGINPUT%
 set MATLABFILEOUT=no
 set MATLABFoundType=none
+set /a MATLABSearchCount+=1
+
+rem See if we got stuck
+if %MATLABSearchCount% GTR 10 (
+	echo MATLAB search count reached, ending
+	if %MATLABFound_win32% == no set MATLABFound_win32=fail
+	if %MATLABFound_x64% == no set MATLABFound_x64=fail
+	goto MATLABEND
+)
 
 if %MATLABSearchPass% == x64 (
 	set MATLABSearchPass=win32
