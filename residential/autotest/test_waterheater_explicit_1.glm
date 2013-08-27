@@ -1,7 +1,7 @@
 // Test that waterheater is coming on when temperature drops below T_on and turning off when temperature reaches T_off. 
 
 #set profiler=1;
-#set pauseatexit=1;
+//#set pauseatexit=1;
 clock {
      //timezone PST+8PDT;
 	 timezone PST8;

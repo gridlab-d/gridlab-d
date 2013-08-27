@@ -1,7 +1,7 @@
 // Test that waterheater is updating temperature and height of hot water column correctly over a day with scheduled demand.
 
 #set profiler=1;
-#set pauseatexit=1;
+//#set pauseatexit=1;
 clock {
      //timezone PST+8PDT;
 	 timezone PST8;
