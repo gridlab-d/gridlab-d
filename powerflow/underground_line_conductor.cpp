@@ -35,7 +35,7 @@ underground_line_conductor::underground_line_conductor(MODULE *mod) : powerflow_
 			PT_double, "conductor_diameter[in]",PADDR(conductor_diameter),PT_DESCRIPTION,"Diameter of conductor",
 			PT_double, "conductor_resistance[Ohm/mile]",PADDR(conductor_resistance),PT_DESCRIPTION,"Resistance of conductor in ohm/mile",
 			PT_double, "neutral_gmr[ft]",PADDR(neutral_gmr),PT_DESCRIPTION,"Geometric mean radius of an individual neutral conductor/strand",
-			PT_double, "neutral_diameter[in]",PADDR(neutral_diameter),PT_DESCRIPTION,"Diameter over the cable over the concentric neutrals (outside diameter of the circle formed by the concentric neutrals)",
+			PT_double, "neutral_diameter[in]",PADDR(neutral_diameter),PT_DESCRIPTION,"Diameter of individual neutral conductor/strand of concentric neutral",
 			PT_double, "neutral_resistance[Ohm/mile]",PADDR(neutral_resistance),PT_DESCRIPTION,"Resistance of an individual neutral conductor/strand in ohm/mile",
 			PT_int16,  "neutral_strands",PADDR(neutral_strands),PT_DESCRIPTION,"Number of cable strands in neutral conductor",
 			PT_double, "insulation_relative_permitivitty[unit]", PADDR(insulation_rel_permitivitty), PT_DESCRIPTION, "Permitivitty of insulation, relative to air",
