@@ -5,6 +5,9 @@ Building GridLAB-D with the Auto-Toolset Under Linux and Other Unix Variants
 You must have autoconf, automake, libtool, xerces-c and cppunit install to
 build GridLAB-D in this way.
 
+*NOTICE* If you are building from a source distribution and your OS is 10.x you
+must download and install a gnu compatible sed on your machine in order to build.
+
 If you are building from a source distribution you must first run:
 
       % cd gridlab-d/trunk
