@@ -12,7 +12,7 @@ clock{
 }
 
 class house {
-	random uniform_rv;
+	randomvar uniform_rv;
 }
 
 object house:..3 {

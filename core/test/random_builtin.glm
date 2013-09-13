@@ -12,7 +12,7 @@ module climate;
 module tape;
 
 class climate {
-	random clouds;
+	randomvar clouds;
 } 
 
 object climate {
