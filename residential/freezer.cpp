@@ -115,6 +115,7 @@ int freezer::create()
 
 int freezer::init(OBJECT *parent)
 {
+	gl_warning("This device, %s, is considered very experimental and has not been validated.", get_name());
 	if(parent != NULL){
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];

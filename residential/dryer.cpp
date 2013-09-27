@@ -231,6 +231,7 @@ int dryer::init(OBJECT *parent)
 	switch(shape.type){
 		case MT_UNKNOWN:
 			/* normal, undriven behavior. */
+			gl_warning("This device, %s, is considered very experimental and has not been validated.", get_name());
 			break;
 		case MT_ANALOG:
 			if(shape.params.analog.energy == 0.0){

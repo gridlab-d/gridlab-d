@@ -150,6 +150,10 @@ int refrigerator::create()
 	is_240 = true;	
 
 	gl_warning("explicit %s model is experimental", OBJECTHDR(this)->oclass->name);
+	/* TROUBLESHOOT
+		The refrigerator explicit model has some serious issues and should be considered for complete
+		removal.  It is highly suggested that this model NOT be used.
+	*/
 
 	return res;
 }

@@ -227,6 +227,7 @@ int range::create()
  **/
 int range::init(OBJECT *parent)
 {
+	// @todo This class has serious problems and should be deleted and started from scratch. Fuller 9/27/2013.
 	if(parent != NULL){
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
@@ -266,9 +267,10 @@ int range::init(OBJECT *parent)
 	} 
 
 	if (oven_setpoint<90 || oven_setpoint>160)
-		gl_error("oven thermostat is set to %f and is outside the bounds of 90 to 160 degrees Fahrenheit (32.2 - 71.1 Celsius).", oven_setpoint);
+		GL_THROW("This model is experimental and not validated: oven thermostat is set to %f and is outside the bounds of 90 to 160 degrees Fahrenheit (32.2 - 71.1 Celsius).", oven_setpoint);
 		/*	TROUBLESHOOT
-			All ranges must be set between 90 degF and 160 degF.
+			TODO.
+		*/
 
 	/* initialize oven deadband */
 	if (thermostat_deadband>10 || thermostat_deadband < 0.0)
@@ -328,6 +330,7 @@ int range::init(OBJECT *parent)
 	switch(shape.type){
 		case MT_UNKNOWN:
 			/* normal, undriven behavior. */
+			gl_warning("This device, %s, is considered very experimental and has not been validated.", get_name());
 			break;
 		case MT_ANALOG:
 			if(shape.params.analog.energy == 0.0){
@@ -464,12 +467,12 @@ TIMESTAMP range::presync(TIMESTAMP t0, TIMESTAMP t1){
 
 	if(Tw > 212.0){
 		//GL_THROW("the range is boiling!");
-		gl_warning("range:%i is boiling", my->id);
+		gl_warning("range:%i is using an experimental model and should not be considered reliable", my->id);
 		/*	TROUBLESHOOT
-			The temperature model for the range has broken, or the environment around the
-			range has burst into flames.  Please post this with your model and dump files
-			attached to the bug report.
-		 */
+			The range object has a number of VERY experimental features and development is incomplete.
+			If you are receiving this error message, reccommend no longer using this particular feature
+			without considerable overhaul.
+		*/
 	}
 	
 	/* determine loadshape effects */

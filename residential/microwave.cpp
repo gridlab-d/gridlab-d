@@ -120,6 +120,7 @@ int microwave::init(OBJECT *parent)
 
 	if(shape.type == MT_UNKNOWN){
 		init_noshape();
+		gl_warning("This device, %s, is considered very experimental and has not been validated.", get_name());
 		// initial demand
 		update_state(0.0);
 	} else if(shape.type == MT_ANALOG){

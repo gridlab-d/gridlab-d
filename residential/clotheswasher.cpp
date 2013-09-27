@@ -154,7 +154,10 @@ int clotheswasher::create()
 	load.power_fraction = 1.0;
 
 	gl_warning("explicit %s model is experimental", OBJECTHDR(this)->oclass->name);
-
+	/* TROUBLESHOOT
+		The clothes washer explicit model has some serious issues and should be considered for complete
+		removal.  It is highly suggested that this model NOT be used.
+	*/
 
 	return res;
 }
