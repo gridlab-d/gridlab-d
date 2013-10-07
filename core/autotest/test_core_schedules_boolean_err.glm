@@ -1,0 +1,95 @@
+//test_core_schedule_boolean_err.glm tests to make sure the nonzero flag errors out a schedule with a zero value
+
+clock {
+	timezone PST+8PDT;
+	starttime '2013-01-01 0:00:00';
+	stoptime '2013-01-02 0:00:00';
+}
+
+module powerflow;
+module generators;
+module tape;
+
+schedule boolean_schedule {						
+	boolean;						
+	0-29	0	*	*	*	-1;
+	30-59	0	*	*	*	-1;
+	0-29	1	*	*	*	-0.8;
+	30-59	1	*	*	*	-0.6;
+	0-29	2	*	*	*	-0.4;
+	30-59	2	*	*	*	-0.4;
+	0-29	3	*	*	*	-0.2;
+	30-59	3	*	*	*	-0.2;
+	0-29	4	*	*	*	-0.2;
+	30-59	4	*	*	*	0;
+	0-29	5	*	*	*	0;
+	30-59	5	*	*	*	0.6;
+	0-29	6	*	*	*	0.6;
+	30-59	6	*	*	*	0.6;
+	0-29	7	*	*	*	0.6;
+	30-59	7	*	*	*	0;
+	0-29	8	*	*	*	0;
+	30-59	8	*	*	*	0;
+	0-29	9	*	*	*	-0.2;
+	30-59	9	*	*	*	-0.4;
+	0-29	10	*	*	*	-0.4;
+	30-59	10	*	*	*	-0.4;
+	0-29	11	*	*	*	-0.2;
+	30-59	11	*	*	*	0;
+	0-29	12	*	*	*	0;
+	30-59	12	*	*	*	0.2;
+	0-29	13	*	*	*	0.4;
+	30-59	13	*	*	*	0.6;
+	0-29	14	*	*	*	0.8;
+	30-59	14	*	*	*	1;
+	0-29	15	*	*	*	1;
+	30-59	15	*	*	*	1;
+	0-29	16	*	*	*	1;
+	30-59	16	*	*	*	0.8;
+	0-29	17	*	*	*	0.6;
+	30-59	17	*	*	*	0.4;
+	0-29	18	*	*	*	0.2;
+	30-59	18	*	*	*	0;
+	0-29	19	*	*	*	0;
+	30-59	19	*	*	*	0;
+	0-29	20	*	*	*	-0.2;
+	30-59	20	*	*	*	-0.3;
+	0-29	21	*	*	*	-0.4;
+	30-59	21	*	*	*	-0.6;
+	0-29	22	*	*	*	-0.8;
+	30-59	22	*	*	*	-1;
+	0-29	23	*	*	*	-1;
+	30-59	23	*	*	*	-1;
+}						
+
+object meter {
+	name n1;
+	phases ABCN;
+	bustype SWING;
+	nominal_voltage 240;
+}
+
+object battery {
+    parent n1;
+    name battery_1;
+    generator_mode CONSTANT_PQ;
+    V_Max 3000;
+    I_Max 1000;
+    P_Max 250000;
+    E_Max 1000000;
+    base_efficiency 0.86;
+    parasitic_power_draw 10 W;
+    power_type DC;
+    generator_status ONLINE;
+    Energy 1000000;
+    scheduled_power boolean_schedule*13158;//the schedule is included as a glm
+    power_factor 1.0;
+}
+
+object multi_recorder {
+	parent n1;
+	property measured_power.real,measured_power.imag,battery_1:Energy,battery_1:battery_state;
+	file old_battery.csv;
+	interval 1800;
+	limit 49;
+}
