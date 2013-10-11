@@ -149,7 +149,7 @@ int group_recorder::init(OBJECT *obj){
 		// might make this a 'strict-only' issue in the future
 		if(prop_ptr == NULL){
 			gl_error("group_recorder::init(): unable to find property '%s' in an object of type '%s'", property_name.get_string(), gr_obj->oclass->name);
-			/* TROUBLESHOOTING
+			/* TROUBLESHOOT
 				An error occured while reading the specified property in one of the objects.
 			 */
 			return 0;
@@ -461,7 +461,7 @@ int group_recorder::read_line(){
 			offset = gl_get_value(curr->obj, GETADDR(curr->obj, &(curr->prop)), buffer, 127, &(curr->prop));
 			if(0 == offset){
 				gl_error("group_recorder::read_line(): unable to get value for '%s' in object '%s'", curr->prop.name, curr->obj->name);
-				/* TROUBLESHOOTING
+				/* TROUBLESHOOT
 					An error occured while reading the specified property in one of the objects.
 				 */
 				return 0;

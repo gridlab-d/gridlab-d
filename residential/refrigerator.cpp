@@ -160,6 +160,7 @@ int refrigerator::create()
 
 int refrigerator::init(OBJECT *parent)
 {
+
 	if(parent != NULL){
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];

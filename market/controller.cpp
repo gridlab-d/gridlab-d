@@ -381,7 +381,7 @@ int controller::init(OBJECT *parent){
 		}
 		if(ramp_low * ramp_high < 0){
 			gl_warning("%s: controller price curve is not injective and may behave strangely");
-			/* TROUBLESHOOTING
+			/* TROUBLESHOOT
 				The price curve 'changes directions' at the setpoint, which may create odd
 				conditions in a number of circumstances.
 			 */

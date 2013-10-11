@@ -47,7 +47,9 @@ int appliance::create()
 
 int appliance::init(OBJECT *parent)
 {
+
 	gl_warning("This device, %s, is considered very experimental and has not been validated.", get_name());
+
 	// check that duration is a vector
 	if ( duration.get_rows()!=1 )
 		exception("duration must have 1 rows (it has %d)", n_states, duration.get_rows());

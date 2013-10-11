@@ -98,7 +98,7 @@ int dc_dc_converter::create(void)
 int dc_dc_converter::init(OBJECT *parent)
 {
 
-
+	gl_warning("DC_DC_CONVERTER IS AN EXPERIMENTAL MODEL. IT HAS NOT BEEN PROPERLY VALIDATED.");
 	
 				//initialize variables that are used internally
 	//set_terminal_voltage = 240; //V

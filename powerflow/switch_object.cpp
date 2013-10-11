@@ -965,7 +965,7 @@ unsigned char switch_object::switch_expected_sync_function(void)
 	unsigned char phases_out;
 	double phase_total, switch_total;
 	SWITCHSTATE temp_A_state, temp_B_state, temp_C_state;
-	bool temp_status;
+	enumeration temp_status;
 
 	if (solver_method==SM_NR)	//Newton-Raphson checks
 	{

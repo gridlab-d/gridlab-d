@@ -108,7 +108,7 @@ int check_COM_output(_variant_t output){
 
 	if(output.vt != (VT_VARIANT | VT_ARRAY)){
 		gl_error("check_COM_output: COM call did not return an array of variants");
-		/* TROUBLESHOOTING
+		/* TROUBLESHOOT
 		An error was encountered in pw_load while trying to return a required array.  Please try again.
 		If the error persists, please submit your code and a bug report via the trac website
 		*/
@@ -121,7 +121,7 @@ int check_COM_output(_variant_t output){
 			break; //okay
 		case DISP_E_BADINDEX: // bad entry in indices
 			gl_error("check_COM_output: bad index in SafeArrayGetElement");
-			/* TROUBLESHOOTING
+			/* TROUBLESHOOT
 			A bad index value was encountered while parsing the COM output to PowerWorld.  Please ensure
 			all values are correct and try again.
 			*/
@@ -129,7 +129,7 @@ int check_COM_output(_variant_t output){
 			break; 
 		case E_INVALIDARG: 
 			gl_error("check_COM_output: invalid arguement in SafeArrayGetElement");
-			/* TROUBLESHOOTING
+			/* TROUBLESHOOT
 			An invalid argument was encountered while parsing the COM output to PowerWorld.  Please ensure
 			all values are correct and try again.
 			*/
@@ -137,7 +137,7 @@ int check_COM_output(_variant_t output){
 			break; // one of the args was invalid (?)
 		case E_OUTOFMEMORY: 
 			gl_error("check_COM_output: ran out of memory during SafeArrayGetElement");
-			/* TROUBLESHOOTING
+			/* TROUBLESHOOT
 			Memory ran out while parsing the COM output to PowerWorld.  Please ensure
 			all values are correct and try again.  If the error persists, please submit a bug
 			report via the trac website.
@@ -149,7 +149,7 @@ int check_COM_output(_variant_t output){
 	ptr = _com_util::ConvertBSTRToString(bHolder);
 	if(strlen(ptr) > 0){
 		gl_error("check_COM_output: %s", ptr);
-		/* TROUBLESHOOTING
+		/* TROUBLESHOOT
 		A generic COM error was encountered while interfacing with PowerWorld.  Please check
 		MSDN and other resources for what this may mean.
 		*/
@@ -341,7 +341,7 @@ int pw_model::init(OBJECT *parent){
 
 	if(trouble){
 		gl_error("pw_model::init(): no PowerWorld model file specified");
-		/* TROUBLESHOOTING 
+		/* TROUBLESHOOT 
 			The pw_model requires either a valid PWB model file path, or for an alternate mode to be triggered.  Please
 			check the model_name definition, and the path to the desired model file.
 		 */

@@ -1,0 +1,254 @@
+// Testing Four Quadrant Inverter Modes:
+// 		Constant PF & Constant PQ mode 
+//		(w/ fixed solar orientation and multi-point efficiency)
+
+// #set profiler=1
+// #set threadcount=1;
+#set relax_naming_rules=1
+//#set pauseatexit=1;
+module powerflow;
+module generators;
+module tape;
+module climate;
+module assert;
+module residential;
+module powerflow{
+	solver_method NR;
+	default_maximum_voltage_error 1e-9;
+}
+
+clock {
+	timezone PST+8PDT;
+	timestamp '2010-06-01 0:00:00';
+	stoptime '2010-06-02 1:00:00';
+}
+
+schedule pf_sched {
+	* 1 * * * -0.9;
+	* 2 * * * -0.8;
+	* 3 * * * -0.7;
+	* 4 * * * -0.6;
+	* 5 * * * -0.5;
+	* 6 * * * -0.4;
+	* 7 * * * -0.3;
+	* 8 * * * -0.2;
+	* 9 * * * -0.1;
+	*  10 * * * 0;
+	*  11 * * * 0.1;
+	*  12 * * * 0.2;
+	*  13 * * * 0.3;
+	*  14 * * * 0.4;
+	*  15 * * * 0.5;
+	*  16 * * * 0.6;
+	*  17 * * * 0.7;
+	*  18 * * * 0.8;
+	*  19 * * * 0.9;
+	*  20-0 * * * 1;
+}
+
+schedule output_power {
+	* 1 * * * 3420;
+	* 2 * * * 3040;
+	* 3 * * * 2660;
+	* 4 * * * 2280;
+	* 5 * * * 1900;
+	* 6 * * * 1520;
+	* 7 * * * 1140;
+	* 8 * * * 760;
+	* 9 * * * 380;
+	*  10 * * * 0;
+	*  11 * * * 380;
+	*  12 * * * 760;
+	*  13 * * * 1140;
+	*  14 * * * 1520;
+	*  15 * * * 1900;
+	*  16 * * * 2280;
+	*  17 * * * 2660;
+	*  18 * * * 3040;
+	*  19 * * * 3420;
+	*  20-0 * * * 3800;
+}
+
+schedule output_var {
+	* 1 * * * -1656.38;
+	* 2 * * * -2280;
+	* 3 * * * -2713.74;
+	* 4 * * * -3040;
+	* 5 * * * -3290.9;
+	* 6 * * * -3482.76;
+	* 7 * * * -3624.97;
+	* 8 * * * -3723.22;
+	* 9 * * * -3780.95.;
+	*  10 * * * 3800;
+	*  11 * * * 3780.95;
+	*  12 * * * 3723.22;
+	*  13 * * * 3624.97;
+	*  14 * * * 3482.76;
+	*  15 * * * 3290.9;
+	*  16 * * * 3040;
+	*  17 * * * 2713.74;
+	*  18 * * * 2280;
+	*  19 * * * 1656.38;
+	*  20-0 * * * 0;
+}
+
+object climate{
+	name MyClimate;
+	tmyfile "WA-Seattle.tmy2";
+	object recorder {
+		file climate_out.csv;
+		interval 3600;
+		limit 120;
+		property temperature,solar_global,solar_direct;
+	};
+}
+
+object transformer_configuration {
+	name trans_config_to_feeder;
+	connect_type WYE_WYE;
+	install_type PADMOUNT;
+	primary_voltage 33000;
+	secondary_voltage 2401.777;
+	power_rating 5 MVA;
+	impedance 0.00033+0.0022j;
+}
+object transformer_configuration {
+		name inv_transformer;
+		connect_type SINGLE_PHASE_CENTER_TAPPED;
+		install_type POLETOP;
+		shunt_impedance 10000+10000j;
+		primary_voltage 2401.777;
+		secondary_voltage 120;
+		powerB_rating 110 kVA;
+		impedance 0.00033+0.0022j;
+	};
+
+object node {
+	name network_node;
+	bustype SWING;
+	nominal_voltage 33000;
+	phases ABCN;
+}
+
+object transformer {
+	name substation_transformer;
+	from network_node;
+	to 645;
+	phases ABCN;
+	configuration trans_config_to_feeder;
+}; 
+
+object node {     
+	name 645;     
+	phases ABCN;     
+	voltage_A 2401.7771;     
+	voltage_B -1200.8886-2080.000j;     
+	voltage_C -1200.8886+2080.000j;     
+	nominal_voltage 2401.7771;
+	object meter {
+		name const_pq_meter;
+		phases ABCN;     
+		voltage_A 2401.7771;     
+		voltage_B -1200.8886-2080.000j;     
+		voltage_C -1200.8886+2080.000j;     
+		nominal_voltage 2401.7771;
+		// object recorder {
+			// property measured_power,measured_power_A,measured_power_B,measured_power_C; 
+			// file const_pq_meter.csv;
+			// interval 3600;
+			// limit 25;
+		// };
+		object complex_assert {
+			target measured_power;
+			object player {
+				property value;
+				//file "constantPQmeterPower_multi_efficiency.player";
+				file "../constantPQmeterPower_multi_efficiency.player";
+			};
+			within "0.1";
+		};	
+		object inverter {
+			name const_pq_inv;
+			phases BS;
+			inverter_type FOUR_QUADRANT;
+			use_multipoint_efficiency TRUE;
+			inverter_manufacturer XANTREX;
+			four_quadrant_control_mode CONSTANT_PQ;
+			rated_power 1340; // to keep maximum AC power out less than maximum DC power in (4022) for Xantrex
+			P_Out output_power*1;
+			Q_Out output_var*1;
+			V_In 266+0j;
+			I_In 15.1203+0j;
+			// object recorder {
+				// property V_In,I_In,VA_In,VA_Out;
+				// file const_pq_inv.csv;
+				// interval 3600;
+				// limit 25;
+			// };
+		};
+	};
+}  
+
+object transformer {
+	name CTTF_B_645;
+	phases BS;
+	from 645;
+	to tn_B_645;
+	configuration inv_transformer;
+}
+
+object triplex_meter {
+	name tn_B_645;
+	phases BS;
+	nominal_voltage 120;
+	groupid House_Meter;
+	object recorder {
+		property measured_real_power,measured_reactive_power,measured_power;
+		file const_pf_meter.csv;
+		interval 3600;
+		limit 25;
+	};
+	object complex_assert {
+		target measured_power;
+		object player{
+			property value;
+			//file "constantPFmeterPower_multi_efficiency.player";
+			file "../constantPFmeterPower_multi_efficiency.player";
+		};
+		within "0.1";
+	};
+	object inverter {
+		name const_pf_inv;
+		phases BS;
+		inverter_type FOUR_QUADRANT;
+		power_factor pf_sched*1;
+		use_multipoint_efficiency TRUE;
+		inverter_manufacturer XANTREX;
+		maximum_dc_power 6500; //the default for XANTREX is rated under the default solar rating, so it's necessary to set a higher value here
+		four_quadrant_control_mode CONSTANT_PF;
+		// object recorder {
+			// property V_In,I_In,VA_In,VA_Out;
+			// file const_pf_inv.csv;
+			// interval 3600;
+			// limit 25;
+		// };
+		object solar {
+			name sol_inv_B_2_645;
+			generator_mode SUPPLY_DRIVEN;
+			generator_status ONLINE;
+			panel_type SINGLE_CRYSTAL_SILICON;
+			orientation FIXED_AXIS; 
+			object recorder {
+				file PV_out.csv;
+				interval 3600;
+				limit 25;
+				property V_Out,I_Out;
+			};
+		};
+	};
+}
+
+	
+
+	    
+	

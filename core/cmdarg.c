@@ -216,14 +216,14 @@ static STATUS no_cmdargs()
 
 		/* enter server mode and wait */
 #ifdef WIN32
-		if ( htmlfile[2]!=':' )
+		if ( htmlfile[1]!=':' )
 			sprintf(htmlfile,"%s\\gridlabd.htm", global_workdir);
 		output_message("opening html page '%s'", htmlfile);
 		sprintf(cmd,"start %s file:///%s", global_browser, htmlfile);
 #elif defined(MACOSX)
-		sprintf(cmd,"open -a %s file:///%s", global_browser, htmlfile);
+		sprintf(cmd,"open -a %s %s", global_browser, htmlfile);
 #else
-		sprintf(cmd,"%s 'file:///%s' & ps -p $! >/dev/null", global_browser, htmlfile);
+		sprintf(cmd,"%s '%s' & ps -p $! >/dev/null", global_browser, htmlfile);
 #endif
 		output_verbose("Starting browser using command [%s]", cmd);
 		if (system(cmd)!=0)

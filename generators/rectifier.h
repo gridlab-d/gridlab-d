@@ -35,13 +35,13 @@ public:
 	complex VA_Out;  // power out (DC)
 	double P_Out;  // P_Out and Q_Out are set by the user as set values to output in CONSTANT_PQ mode
 	double Q_Out;
-	//double V_Set_A; // irrelevant for DC
-	//double V_Set_B; //irrelevant for DC
-	//double V_Set_C; //irrelevant for DC
+	//double V_Rated_A; // irrelevant for DC
+	//double V_Rated_B; //irrelevant for DC
+	//double V_Rated_C; //irrelevant for DC
 	complex V_In_Set_A;
 	complex V_In_Set_B;
 	complex V_In_Set_C; 
-	double V_Set;
+	double V_Rated;
 	double margin;
 	complex I_out_prev;
 	complex I_step_max;
@@ -57,15 +57,15 @@ public:
 	//complex phaseB_I_Out_prev;
 	//complex phaseC_I_Out_prev;
 
-	complex phaseA_V_In; //voltage in
-	complex phaseB_V_In;
-	complex phaseC_V_In;
+	complex voltage_A; //voltage in
+	complex voltage_B;
+	complex voltage_C;
 
 	complex V_Out; // only one voltage out for DC
 
-	complex phaseA_I_In;      // current in
-	complex phaseB_I_In;
-	complex phaseC_I_In;
+	complex current_A;      // current in
+	complex current_B;
+	complex current_C;
 
 	complex I_Out; //only one current out for DC
 

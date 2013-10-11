@@ -1,0 +1,276 @@
+clock {
+     timezone PST+8PDT;
+     timestamp '2009-01-01 00:00:00';
+     stoptime '2009-01-05 00:00:00';
+}
+
+#define PF=FBS
+
+#set profiler=1;
+#set double_format=%+.12lg
+#set randomseed=10;
+#set relax_naming_rules=1;
+
+module tape;
+module climate;
+module generators;
+
+module powerflow {
+    solver_method ${PF};
+	line_limits FALSE;
+	default_maximum_voltage_error 1e-9;
+};
+
+//#set savefile="test_my_turbine_${PF}.xml"
+
+object climate {
+    tmyfile "../Standard_Weather.csv";
+    reader csvreader;
+};
+
+object csv_reader {
+	name csvreader;
+	filename "../Standard_Weather.csv";
+}
+
+object overhead_line_conductor:100 {
+	geometric_mean_radius 0.0244;
+	resistance 0.306;
+}
+
+object overhead_line_conductor:101 {
+	geometric_mean_radius 0.00814;
+	resistance 0.592;
+}
+
+object line_spacing:200 {
+	distance_AB 2.5;
+	distance_BC 4.5;
+	distance_AC 7.0;
+	distance_AN 5.656854;
+	distance_BN 4.272002;
+	distance_CN 5.0;
+}
+
+object line_configuration:300 {
+	conductor_A overhead_line_conductor:100;
+	conductor_B overhead_line_conductor:100;
+	conductor_C overhead_line_conductor:100;
+	conductor_N overhead_line_conductor:101;
+	spacing line_spacing:200;
+}
+
+object transformer_configuration:400 {
+	connect_type WYE_WYE;
+	power_rating 6000;
+	primary_voltage 12470;
+	secondary_voltage 4160;
+	resistance 0.01;
+	reactance 0.06;
+	install_type PADMOUNT;
+}
+
+object node {
+	name node1;
+	phases "ABCN";
+	bustype SWING;
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7200;
+}
+
+object overhead_line {
+	phases "ABCN";
+	from node1;
+	to node2;
+	length 2000;
+	configuration line_configuration:300;
+}
+
+object node {
+	name node2;
+	phases "ABCN";
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7200;
+}
+
+object transformer_configuration:500 {
+	connect_type WYE_WYE;
+	power_rating 3000;
+	primary_voltage 2401.77;
+	secondary_voltage 600;
+	resistance 0.01;
+	reactance 0.06;
+	install_type PADMOUNT;
+}
+
+object transformer {
+	name xfmr24;
+	phases "ABCN";
+	from node2;
+	to my_meter1;
+	configuration transformer_configuration:500;
+}
+
+object meter {
+	name my_meter1;
+	phases ABCN;
+	nominal_voltage 350;
+}
+
+object windturb_dg {
+	parent my_meter1;
+	phases ABCN;
+	name windturbVestas;
+	Gen_status ONLINE;
+	Gen_type SYNCHRONOUS;
+	Gen_mode CONSTANTP;
+	Turbine_Model VESTAS_V82;
+	object recorder {
+		file TEST_windturbVestas.csv;
+		interval 5;
+		property wind_speed,WSadj,Cp,Pconv, voltage_A,voltage_B,voltage_C,current_A,current_B,current_C,TotalRealPow,TotalReacPow;
+	};
+}
+
+
+
+object transformer {
+	name xfmr23;
+	phases "ABCN";
+	from node2;
+	to node3;
+	configuration transformer_configuration:400;
+	name transformer23;
+
+}
+
+object node {
+	name node3;
+	phases "ABCN";
+	voltage_A +2401.777+0.000j;
+	voltage_B -1200.889-2080.000j;
+	voltage_C -1200.889+2080.000j;
+	nominal_voltage 2400;
+}   
+   
+
+   
+object transformer_configuration {               
+	name IEEE13_SPCT_CONFIG;                
+	connect_type SINGLE_PHASE_CENTER_TAPPED;               
+	install_type PADMOUNT;                
+	primary_voltage 2401.7771 V;               
+	secondary_voltage 120 V;               
+	power_rating 25.0;                //KVA rating
+	impedance 0.01924+0.08658j;                
+	shunt_impedance 409.8361+1844.2624j;                
+}   
+object transformer {
+	name IEEE13_SPCT_1;
+	phases "AS";
+	from node3;
+	to inv_meter;
+	configuration IEEE13_SPCT_CONFIG;
+}
+object transformer {
+	name IEEE13_SPCT_2;
+	phases "AS";
+	from node3;
+	to triplexload_meter;
+	configuration IEEE13_SPCT_CONFIG;
+}
+object triplex_node {
+	name triplexLoad;
+	phases "AS";
+	nominal_voltage 120.0;
+	power_1 5000;
+}
+object triplex_meter {
+	name triplexload_meter;
+	phases "AS";
+	nominal_voltage 120.0;
+	object recorder {
+		property measured_voltage_1, measured_voltage_2, measured_voltage_N, measured_current_1, measured_current_2, measured_current_N, measured_real_power, measured_reactive_power;
+		file TEST_triLoadMeter.csv;
+		interval 5;
+	};
+}
+object triplex_line_configuration {
+		name triplex_config_AB;
+		conductor_1 trip_cond_1;
+		conductor_2 trip_cond_1;
+		conductor_N trip_cond_1;
+		insulation_thickness 0.08 in;
+		diameter 0.368 in;
+}
+object triplex_line {
+	phases AS;
+	length 100 ft;	
+	from triplexload_meter;
+	to triplexLoad;
+	configuration triplex_config_AB;
+}
+object triplex_line_conductor {
+	name trip_cond_1;
+	resistance 0.97;
+	geometric_mean_radius 0.0111;		
+}
+object triplex_meter {
+	name inv_meter;
+	phases "AS";
+	nominal_voltage 120.0;
+	object recorder {
+		property measured_voltage_1, measured_voltage_2, measured_voltage_N, measured_current_1, measured_current_2, measured_current_N, measured_real_power, measured_reactive_power;
+		file TEST_invMeter.csv;
+		interval 5;
+	};
+}
+object inverter {
+	name inv1;
+	phases "AS";
+	parent inv_meter;
+	rated_power 10000;
+	generator_mode CONSTANT_PF; //DEFAULT
+	generator_status ONLINE; //DEFAULT
+	inverter_type PWM; //DEFAULT
+	object recorder {
+		property Vdc, V_In, I_In, phaseA_V_Out, phaseB_V_Out, phaseC_V_Out, phaseA_I_Out, phaseB_I_Out, phaseC_I_Out, P_Out, Q_Out, phases;
+		file TEST_inverter.csv;
+		interval 5;
+	 };
+}
+
+object rectifier {
+	name rect1;
+	parent inv1;
+	phases "ABCN";
+	//efficiency .95;
+	rectifier_type SIX_PULSE;
+	generator_mode SUPPLY_DRIVEN;
+	object recorder {
+		file TEST_rectifier.csv;
+		interval 5;
+		property Vdc, voltage_A,voltage_B,voltage_C,current_A,current_B,current_C, power_A_In, power_B_In, power_C_In;
+	};
+}
+
+
+
+object windturb_dg {
+	parent rect1;
+	phases "ABCN";
+	name windturb1;
+	Gen_status ONLINE;
+	Gen_mode CONSTANTP;
+	Turbine_Model BERGEY_10kW;
+	object recorder {
+		file TEST_windturb.csv;
+		interval 5;
+		property wind_speed,WSadj,Cp,Pconv, voltage_A,voltage_B,voltage_C,current_A,current_B,current_C,TotalRealPow,TotalReacPow;
+	};
+}
+

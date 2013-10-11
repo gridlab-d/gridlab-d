@@ -1,0 +1,234 @@
+//Tests tilt functionality of solar panels
+#set profiler=1;
+//#set pauseatexit=1;
+
+clock {
+     timezone PST+8PDT;
+     starttime '2009-01-01 00:00:00';
+     stoptime '2009-01-01 23:00:00';
+}
+
+schedule load_value {
+     * 0-7 * * 0-6 0.8;
+     * 8 * * 0-6 0.95;
+	 * 9 * * 0-6 1.15;
+	 * 10 * * 0-6 0.8;
+	 * 11 * * 0-6 1.05;
+	 * 12 * * 0-6 0.98;
+	 * 13 * * 0-6 1.001;
+	 * 14 * * 0-6 0.35;
+	 * 15 * * 0-6 0.9;
+     * 16-23 * * 0-6 0.35;
+}
+
+
+
+module tape;
+module generators;
+module assert;
+
+module powerflow {
+     solver_method FBS;
+     NR_iteration_limit 50;
+};
+
+//Three phase meter
+object meter {
+	name swingnode;
+	bustype SWING;
+	phases ABC;
+	nominal_voltage 2400.0;
+	object complex_assert {
+		target measured_power;
+		operation REAL;
+		object player {
+			property value;
+			file "../inv_loadflow_meter_measured_power_real.player";
+		};
+		within 4.0;
+	};
+	object complex_assert {
+		target measured_power;
+		operation IMAGINARY;
+		value 0.0+3457.11j;
+		object player {
+			property value;
+			file "../inv_loadflow_meter_measured_power_imag.player";
+		};
+		within 0.3;
+	};
+}
+
+object load {
+	name nodeval;
+	phases ABC;
+	// constant_power_A 3500.0+1200.0j;
+	// constant_power_B 3300.0+1100.0j;
+	// constant_power_C 3700.0+1000.0j;
+	// constant_power_A_real load_value*3500.0;
+	// constant_power_B_real load_value*3300.0;
+	// constant_power_C_real load_value*3700.0;
+	// constant_power_A_reac 1200.0;
+	// constant_power_B_reac 1100.0;
+	// constant_power_C_reac 1000.0;
+	nominal_voltage 1200.0;
+}
+
+object meter {
+	name meterval;
+	parent nodeval;
+	phases ABC;
+	nominal_voltage 1200.0;
+}
+
+object triplex_meter {
+	name tripmeterval;
+	phases AS;
+	power_12_real load_value*10500;
+	power_12_reac 3300;
+	nominal_voltage 120.0;
+}
+
+
+object transformer_configuration {
+	name stepdownconfig;
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type POLETOP;
+	primary_voltage 1200.0 V;
+	secondary_voltage 120 V;
+	// power_rating 50;
+	// powerA_rating 50.000;
+	// impedance 0.01354+0.06093j;
+	// shunt_impedance 373.1343+1679.1044j;
+	power_rating 75;     
+	powerA_rating 75;     
+	impedance 0.00768+0.03556j;     
+	shunt_impedance 1081.3953+5016.2789j;     
+}
+
+object transformer_configuration {
+	name threephaseconfig;
+	connect_type WYE_WYE;
+	install_type POLETOP;
+	primary_voltage 2400.0 V;
+	secondary_voltage 1200.0 V;
+	power_rating 50;
+	impedance 0.01354+0.06093j;
+}
+
+object transformer {
+	phases ABC;
+	name imatransformer;
+	from swingnode;
+	to nodeval;
+	configuration threephaseconfig;
+}
+
+object transformer {
+	phases AS;
+	name triptransformer;
+	from meterval;
+	to tripmeterval;
+	configuration stepdownconfig;
+}
+
+object inverter {
+      name fourquadinv;
+      inverter_type FOUR_QUADRANT;
+      four_quadrant_control_mode LOAD_FOLLOWING;
+      //parent meterval;
+	  parent tripmeterval;
+	  //sense_object imatransformer;
+	  sense_object triptransformer;
+      rated_power 3000.0;		//Per phase rating
+      inverter_efficiency .95;
+	  charge_on_threshold 5.0 kW;
+	  charge_off_threshold 7.0 kW;
+	  discharge_off_threshold 7.5 kW;
+	  discharge_on_threshold 9.0 kW;
+	  max_discharge_rate 1.0 kW;
+	  max_charge_rate 0.80 kW;
+}
+
+object battery {
+	name batt_test;
+	parent fourquadinv;
+	use_internal_battery_model true;
+	battery_type LI_ION;
+	Energy 20.0 kWh;
+	base_efficiency 1.0;
+	state_of_charge 0.5;
+	generator_mode SUPPLY_DRIVEN;
+	object double_assert {
+		target state_of_charge;
+		object player {
+			property value;
+			file "../inv_loadflow_battery_soc_out.player";
+		};
+		within 0.01;
+	};
+}
+
+//Misc objects - prevent rank issue
+object triplex_line_conductor {     
+      name triplex_4/0 AA;    
+      resistance 0.48;     
+      geometric_mean_radius 0.0158;     
+}       
+
+object triplex_line_configuration {     
+      name triplex_line_configuration_1;     
+      conductor_1 triplex_4/0 AA;    
+      conductor_2 triplex_4/0 AA;    
+      conductor_N triplex_4/0 AA;    
+      insulation_thickness 0.08;     
+      diameter 0.522;     
+}       
+
+object underground_line_conductor {     
+      name underground_line_conductor_2;     
+      //name 1000 AAC (Conc);   
+      rating.summer.continuous 488.0;     
+      outer_diameter 2.15;     
+      conductor_gmr 0.0371 ft;    
+      conductor_diameter 1.152;     
+      conductor_resistance 0.091872;     
+      neutral_gmr 0.0842565914341201 ft;    
+      neutral_resistance 5.3856;     
+      neutral_diameter 0.1019;     
+      neutral_strands 20.0;     
+      shield_gmr 0.00;     
+      shield_resistance 0.00;     
+}       
+
+object underground_line_conductor {     
+      name underground_line_conductor_3;     
+      //name 2 AL (Conc);   
+      rating.summer.continuous 112.0;     
+      outer_diameter 1.09;     
+      conductor_gmr 0.0088 ft;    
+      conductor_diameter 0.292;     
+      conductor_resistance 1.38336;     
+      neutral_gmr 0.0348162687755351 ft;    
+      neutral_resistance 13.5696;     
+      neutral_diameter 0.0641;     
+      neutral_strands 6.0;     
+      shield_gmr 0.00;     
+      shield_resistance 0.00;     
+}       
+
+object underground_line_conductor {     
+      name underground_line_conductor_4;     
+      //name 1000 AAC (Tape);   
+      rating.summer.continuous 775.0;     
+      outer_diameter 1.87;     
+      conductor_gmr 0.0371 ft;    
+      conductor_diameter 1.15;     
+      conductor_resistance 0.0222;     
+      neutral_gmr 0.0732739718442675 ft;    
+      neutral_resistance 0.05;     
+      neutral_diameter 0.102;     
+      neutral_strands 20.0;     
+      shield_gmr 0.00;     
+      shield_resistance 0.00;     
+}       

@@ -48,6 +48,8 @@ rm -rf %{buildroot}
 %{_bindir}/gridlabd
 %{_libdir}/gridlabd/*
 %doc %{_docdir}/gridlabd/*
+/usr/bin/gridlabd.bin
+%{_datadir}/gridlabd/*
 
 
 %package devel

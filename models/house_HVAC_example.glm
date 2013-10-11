@@ -1,0 +1,102 @@
+//This will test the accuracy of the HVAC energy use and temperature behavior
+//This test is an example of a peak cooling day
+#set minimum_timestep=1;
+
+module residential{
+	implicit_enduses NONE;
+}
+module tape;
+module assert;
+module climate;
+module powerflow;
+
+clock{
+	timezone PST+8PDT;
+	starttime '2001-07-22 01:00:00';
+	stoptime '2001-07-23 01:00:36';
+}
+
+
+schedule zippwr {
+	* 0-5 * * * .29307107017222;
+	* 6 * * * 0.58614214034444;
+	* 7-9 * * * 0.87921321051666;
+	* 10-15 * * * 0.58614214034444;
+	* 16 * * * 0.87921321051666;
+	* 17 * * * 1.1722842806889;
+	* 18-20 * * * 1.4653553508611;
+	* 21 * * * 1.1722842806889;
+	* 22 * * * 0.58614214034444;
+	* 23 * * * .29307107017222;
+}
+
+object climate{
+	tmyfile "WA-Yakima.tmy2";
+}
+
+schedule heatspt{
+	* * * * * 60;
+}
+
+schedule coolspt{
+	* * * * * 75;
+}
+
+object triplex_meter{
+	nominal_voltage 120;
+	phases AS;
+	object house{
+		window_wall_ratio 0.07;
+		cooling_COP 3.0;
+		system_mode OFF;
+		auxiliary_strategy DEADBAND;
+		heating_system_type HEAT_PUMP;
+		cooling_system_type ELECTRIC;
+		air_temperature 66.0;
+		mass_temperature 66.0;
+		heating_setpoint heatspt*1;
+		cooling_setpoint coolspt*1;
+		object recorder{
+			property energy,panel.energy;
+			file "test_HVAC_peak_cool.csv";
+			interval 1;
+			limit 86451;
+		};
+		object recorder{
+			property energy,panel.energy;
+			file "test_HVAC_peak_cool_hourly.csv";
+			interval 3600;
+			limit 86451;
+		};
+		object complex_assert{
+			target "energy";
+			in '2001-07-23 1:00:34';
+			once ONCE_TRUE;
+			value 21.822+0i;
+			within 0.10911;//asserting house_e within 0.5 percent of Rob's ETP result
+		};
+		object ZIPload {
+			heat_fraction 1;
+			base_power zippwr*1;		
+			power_pf 1;
+			power_fraction 1;
+			current_pf 0;
+			current_fraction 0;
+			impedance_pf 0;
+			impedance_fraction 0;
+		};
+	};
+	object recorder{
+		property measured_real_energy;
+		file "test_HVAC_peak_cool_energy.csv";
+		interval 1;
+		limit 86451;
+	};
+	object double_assert{
+		target "measured_real_energy";
+		in '2001-07-23 1:00:34';
+		once ONCE_TRUE;
+		value 38823;
+		within 194.11;//asserting house_e within 0.5 percent of Rob's ETP result
+	};
+}

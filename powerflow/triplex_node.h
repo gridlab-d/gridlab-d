@@ -30,8 +30,6 @@ public:
 	TIMESTAMP sync(TIMESTAMP t0);
 	int isa(char *classname);
 
-	bool NR_mode;
-
 	friend class triplex_line;
 };
 

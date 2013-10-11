@@ -39,7 +39,7 @@ diesel_dg::diesel_dg(MODULE *module)
 				PT_KEYWORD,"CONSTANTPQ",(enumeration)CONSTANTPQ,
 				PT_KEYWORD,"CONSTANTP",(enumeration)CONSTANTP,
 
-			PT_enumeration,"Gen_status",PADDR(Gen_status),
+			PT_enumeration,"Gen_status",PADDR(Gen_status),//Gen_status is not used in the code. I suggest removing it from the object.
 				PT_KEYWORD,"UNKNOWN",(enumeration)UNKNOWN,
 				PT_KEYWORD,"OFFLINE",(enumeration)OFFLINE,
 				PT_KEYWORD,"ONLINE",(enumeration)ONLINE,	
@@ -405,7 +405,7 @@ int diesel_dg::init(OBJECT *parent)
 	} map[] = {
 		// local object name,	meter object name
 		{&pCircuit_V,			"voltage_A"}, // assumes 2 and 3 follow immediately in memory
-		{&pLine_I,				"current_A"}, // assumes 2 and 3(N) follow immediately in memory
+		{&pLine_I,				"current_A"}, // assumes 2 and 3 follow immediately in memory
 		/// @todo use triplex property mapping instead of assuming memory order for meter variables (residential, low priority) (ticket #139)
 	};
 
@@ -433,6 +433,33 @@ int diesel_dg::init(OBJECT *parent)
 			/*  TROUBLESHOOT
 			The diesel_dg object has a parent that is not a powerflow node/load/meter object.  At this time, the diesel_dg object can only be parented
 			to a powerflow node, load, or meter or not have a parent.
+			*/
+		}
+
+		//Map phases
+		set *phaseInfo;
+		PROPERTY *tempProp;
+		tempProp = gl_get_property(parent,"phases");
+
+		if ((tempProp==NULL || tempProp->ptype!=PT_set))
+		{
+			GL_THROW("Unable to map phases property - ensure the parent is a meter or a node or a load");
+			/*  TROUBLESHOOT
+			While attempting to map the phases property from the parent object, an error was encountered.
+			Please check and make sure your parent object is a meter or triplex_meter inside the powerflow module and try
+			again.  If the error persists, please submit your code and a bug report via the Trac website.
+			*/
+		}
+		else
+			phaseInfo = (set*)GETADDR(parent,tempProp);
+
+		//Copy in so the code works
+		phases = *phaseInfo;
+		if((phases & 0x0007) != 0x0007){//parent does not have all three meters
+			GL_THROW("The diesel_dg object must be connected to all three phases. Please make sure the parent object has all three phases.");
+			/* TROUBLESHOOT
+			The diesel_dg object is a three-phase generator. This message occured because the parent object does not have all three phases.
+			Please check and make sure your parent object has all three phases and try again. if the error persists, please submit your code and a bug report via the Trac website.
 			*/
 		}
 	}
@@ -476,6 +503,13 @@ int diesel_dg::init(OBJECT *parent)
 			GL_THROW("Generator control mode is not specified");
 			/*  TROUBLESHOOT
 			The generator is in the mode of UNKNOWN.  Please change this mode and try again.
+			*/
+		}
+		if (Gen_mode == CONSTANTP)
+		{
+			GL_THROW("Generator control mode, CONSTANTP is not implemented yet.");
+			/* TROUBLESHOOT
+			The generator is in the mode of CONSTANTP. Please change this to CONSTANTPQ and try again.
 			*/
 		}
 

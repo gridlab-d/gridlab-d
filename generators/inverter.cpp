@@ -1550,10 +1550,25 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//FOUR_QUADRANT model (originally written for NAS/CES, altered for PV)
 			double VA_Efficiency, temp_PF, temp_QVal;
 			complex temp_VA;
+			complex battery_power_out = complex(0,0);
 			
 			//Compute power in - supposedly DC, but since it's complex, we'll be proper (other models may need fixing)
 			VA_In = V_In * ~ I_In;
 
+			//Compute the power contribution of the battery object
+			if((phases & 0x10) == 0x10){ // split phase
+				battery_power_out = power_A;
+			} else { // three phase
+				if((phases & 0x01) == 0x01){ // has phase A
+					battery_power_out += power_A;
+				}
+				if((phases & 0x02) == 0x02){ // hase phase B
+					battery_power_out += power_B;
+				}
+				if((phases & 0x04) == 0x04){ // has phase C
+					battery_power_out += power_C;
+				}
+			}
 			//Determine how to efficiency weight it
 			if(use_multipoint_efficiency == false)
 			{
@@ -1563,14 +1578,14 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 			else
 			{
 				//See if above minimum DC power input
-				if(VA_In <= p_so)
+				if(VA_In.Mag() <= p_so)
 				{
 					VA_Efficiency = 0.0;	//Nope, no output
 				}
 				else	//Yes, apply effiency change
 				{
 					//Make sure voltage isn't too low
-					if(V_In > v_dco)
+					if(V_In.Mag() > v_dco)
 					{
 						gl_warning("The dc voltage is greater than the specified maximum for the inverter. Efficiency model may be inaccurate.");
 						/*  TROUBLESHOOT
@@ -1588,7 +1603,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					VA_Efficiency = (((p_max/(C1-C2))-C3*(C1-C2))*(VA_In.Re()-C2)+C3*(VA_In.Re()-C2)*(VA_In.Re()-C2))*internal_losses*frequency_losses;
 				}
 			}
-
+			VA_Efficiency += battery_power_out.Mag();
 			//Determine 4 quadrant outputs
 			if(four_quadrant_control_mode == FQM_CONSTANT_PF)	//Power factor mode
 			{
@@ -1718,7 +1733,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 
 			//See if load following, if so, make sure storage is appropriate - only considers real right now
-			if (four_quadrant_control_mode == FQM_LOAD_FOLLOWING)
+			if (four_quadrant_control_mode == FQM_LOAD_FOLLOWING || battery_power_out.Mag() != 0.0)
 			{
 				if ((b_soc == 1.0) && (VA_Out.Re() > 0))	//Battery full and positive influx of real power
 				{
@@ -1727,7 +1742,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					In LOAD_FOLLOWING mode, a full battery status was encountered.  The inverter is unable
 					to sink any further energy, so consumption was set to zero.
 					*/
-					VA_Out = 0.0;	//Set to zero - reactive considerations may change this
+					VA_Out.SetReal(0.0);	//Set to zero - reactive considerations may change this
 				}
 				else if ((b_soc <= soc_reserve) && (VA_Out.Re() < 0))	//Battery "empty" and attempting to extract real power
 				{
@@ -1736,14 +1751,14 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					In LOAD_FOLLOWING mode, a empty or "in the SOC reserve margin" battery was encountered and attempted
 					to discharge.  The inverter is unable to extract any further power, so the output is set to zero.
 					*/
-					VA_Out = 0.0;	//Set output to zero - again, reactive considerations may change this
+					VA_Out.SetReal(0.0);	//Set output to zero - again, reactive considerations may change this
 				}
 
 				//Update values to represent what is being pulled (battery uses for SOC updates) - assumes only storage
 				//p_in used by battery - appears reversed to VA_Out
 				if (VA_Out.Re() < 0.0)	//Discharging
 				{
-					p_in = -1.0*VA_Out.Mag()/inv_eta;
+					p_in = VA_Out.Re()/inv_eta;
 				}
 				else if (VA_Out.Re() == 0.0)	//Idle
 				{
@@ -1751,13 +1766,15 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				}
 				else	//Must be positive, so charging
 				{
-					p_in = VA_Out.Mag()*inv_eta;
+					p_in = VA_Out.Re()*inv_eta;
 				}
 			}//End load following battery considerations
 
 			//Assign secondary outputs
-			P_Out = VA_Out.Re();
-			Q_Out = VA_Out.Im();
+			if(four_quadrant_control_mode != FQM_CONSTANT_PQ){
+				P_Out = VA_Out.Re();
+				Q_Out = VA_Out.Im();
+			}
 
 			//Calculate power and post it
 			if ((phases & 0x10) == 0x10) // split phase
@@ -1767,9 +1784,6 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 				//Post the value
 				*pPower +=last_power[3];
-
-				//Assign secondary output
-				power_A = last_power[3];
 			}
 			else	//Three phase variant
 			{
@@ -1780,21 +1794,18 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				{
 					last_power[0] = temp_VA;	//Store last power
 					pPower[0] += temp_VA;		//Post the current value
-					power_A = last_power[0];	//Assign secondary output
 				}
 				
 				if ( (phases & 0x02) == 0x02 ) // has phase B
 				{
 					last_power[1] = temp_VA;	//Store last power
 					pPower[1] += temp_VA;		//Post current value
-					power_B = last_power[1];	//Assign secondary output
 				}
 				
 				if ( (phases & 0x04) == 0x04 ) // has phase C
 				{
 					last_power[2] = temp_VA;	//Store last power
 					pPower[2] += temp_VA;		//Post current value
-					power_C = last_power[2];	//Assign secondary output
 				}
 			}//End three-phase variant
 

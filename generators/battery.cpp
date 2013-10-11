@@ -64,7 +64,7 @@ battery::battery(MODULE *module)
 				PT_KEYWORD, "MED_HIGH_ENERGY", (enumeration)MED_HIGH_ENERGY,
 				PT_KEYWORD, "LARGE", (enumeration)LARGE,
 
-			PT_enumeration,"power_type",PADDR(power_type_v),
+			PT_enumeration,"power_type",PADDR(power_type_v),//This is not used anywhere in the code. I would suggest removing it from the model.
 				PT_KEYWORD,"AC",(enumeration)AC,
 				PT_KEYWORD,"DC",(enumeration)DC,
 
@@ -267,12 +267,23 @@ int battery::init(OBJECT *parent)
 			//Copy in so the code works
 			phases = *phaseInfo;
 
-			if ( (phases & 0x07) == 0x07 ) // three phase
+			if ( (phases & 0x07) == 0x07 ){ // three phase
 				number_of_phases_out = 3;
-			else if ( ((phases & 0x03) == 0x03) || ((phases & 0x05) == 0x05) || ((phases & 0x06) == 0x06) ) // two-phase
+			}
+			else if ( ((phases & 0x03) == 0x03) || ((phases & 0x05) == 0x05) || ((phases & 0x06) == 0x06) ){ // two-phase
 				number_of_phases_out = 2;
-			else if ( ((phases & 0x01) == 0x01) || ((phases & 0x02) == 0x02) || ((phases & 0x04) == 0x04) ) // single phase
+				GL_THROW("Battery %d: The battery can only be connected to a meter with all three phases. Please check parent meter's phases.");
+				/* TROUBLESHOOT
+				The battery's parent is a meter. The battery can only operate correctly when the parent meter is a three-phase meter.
+				*/
+			}
+			else if ( ((phases & 0x01) == 0x01) || ((phases & 0x02) == 0x02) || ((phases & 0x04) == 0x04) ){ // single phase
 				number_of_phases_out = 1;
+				GL_THROW("Battery %d: The battery can only be connected to a meter with all three phases. Please check parent meter's phases.");
+				/* TROUBLESHOOT
+				The battery's parent is a meter. The battery can only operate correctly when the parent meter is a three-phase meter.
+				*/
+			}
 			else
 			{
 				//Never supposed to really get here
@@ -285,7 +296,6 @@ int battery::init(OBJECT *parent)
 		}
 		else if (parent!=NULL && gl_object_isa(parent,"triplex_meter"))
 		{
-			
 			struct {
 				complex **var;
 				char *varname;
@@ -347,7 +357,7 @@ int battery::init(OBJECT *parent)
 				{&pLine_I,				"I_In"}, // assumes 2 and 3(N) follow immediately in memory
 			};
 
-		 // construct circuit variable map to meter
+			// construct circuit variable map to meter
 			for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
 			{
 				*(map[i].var) = get_complex(parent,map[i].varname);
@@ -355,7 +365,7 @@ int battery::init(OBJECT *parent)
 		}
 		else if	((parent != NULL && strcmp(parent->oclass->name,"meter") != 0)||(parent != NULL && strcmp(parent->oclass->name,"triplex_meter") != 0)||(parent != NULL && strcmp(parent->oclass->name,"inverter") != 0))
 		{
-			throw("Battery must have a meter or triplex meter or inverter as it's parent");
+			GL_THROW("Battery must have a meter or triplex meter or inverter as it's parent");
 			/*  TROUBLESHOOT
 			Check the parent object of the inverter.  The battery is only able to be childed via a meter or 
 			triplex meter when connecting into powerflow systems.  You can also choose to have no parent, in which
@@ -381,6 +391,14 @@ int battery::init(OBJECT *parent)
 		else if (gen_mode_v == GM_VOLTAGE_CONTROLLED)
 		{	
 			GL_THROW("VOLTAGE_CONTROLLED generator_mode is not yet implemented.");
+		}
+		else if (gen_mode_v == GM_CONSTANT_PF)
+		{	
+			GL_THROW("CONSTANT_PF generator_mode is not yet implemented.");
+		}
+		else if (gen_mode_v == GM_SUPPLY_DRIVEN)
+		{	
+			GL_THROW("SUPPLY_DRIVEN generator_mode is not yet implemented.");
 		}
 			
 		if (additional_controls == AC_LINEAR_TEMPERATURE)
@@ -934,7 +952,7 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 					return TS_NEVER;
 				}
 			} //End three phase GM_POWER_DRIVEN and HYBRID
-			else if ( ((phases & 0x10) == 0x10) && (number_of_phases_out == 1) ) // Split-phase
+			else if ( ((phases & 0x0010) == 0x0010) && (number_of_phases_out == 1) ) // Split-phase
 			{
 				complex volt;
 				TIMESTAMP dt,t_energy_limit;
@@ -1454,7 +1472,7 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 					return TS_NEVER;
 				}
 			}// End 3-phase meter
-			else if ( ((phases & 0x10) == 0x10) && (number_of_phases_out == 1) ) // Split-phase
+			else if ( ((phases & 0x0010) == 0x0010) && (number_of_phases_out == 1) ) // Split-phase
 			{
 				complex volt;
 				TIMESTAMP dt,t_energy_limit;
@@ -1846,13 +1864,13 @@ TIMESTAMP battery::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		TIMESTAMP result;
 
 		Iteration_Toggle = !Iteration_Toggle;
-		if (number_of_phases_out == 3)
+		if (number_of_phases_out == 3)//has all three phases
 		{
 			pLine_I[0] -= last_current[0];
 			pLine_I[1] -= last_current[1];
 			pLine_I[2] -= last_current[2];
 		}
-		else if ( ((phases & 0x10) == 0x10) && (number_of_phases_out == 4) )
+		else if ( ((phases & 0x0010) == 0x0010) && (number_of_phases_out == 1) )
 		{
 			complex temp;
 			temp = *pLine12;

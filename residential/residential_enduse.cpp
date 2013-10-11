@@ -114,7 +114,7 @@ TIMESTAMP residential_enduse::sync(TIMESTAMP t0, TIMESTAMP t1)
 	gl_debug("%s shape load = %8g", get_name(), gl_get_loadshape_value(&shape));
 	if (load.voltage_factor>1.2 || load.voltage_factor<0.8)
 		gl_verbose("%s voltage is out of normal +/- 20%% range of nominal (vf=%.2f)", get_name(), load.voltage_factor);
-		/* TROUBLESHOOTING
+		/* TROUBLESHOOT
 		   The voltage on the enduse circuit is outside the expected range for that enduse.
 		   This is usually caused by an impropely configure circuit (e.g., 110V on 220V or vice versa).
 		   Fix the circuit configuration for that enduse and try again.

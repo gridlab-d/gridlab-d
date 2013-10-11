@@ -46,6 +46,7 @@ private:
 	double std_air_press;
 	complex *pCircuit_V;		//< pointer to the three voltages on three lines
 	complex *pLine_I;			//< pointer to the three current on three lines
+	bool last_NR_mode;		//Toggle to keep track of last NR mode - needed to differentiate between FBS and NR
 	
 protected:
 	/* TODO: put unpublished but inherited variables */
@@ -64,7 +65,7 @@ public:
 	enumeration Gen_type;
 	enum {CONSTANTE=1, CONSTANTP, CONSTANTPQ};
 	enumeration Gen_mode;
-	enum {GENERIC_SYNCH_SMALL, GENERIC_SYNCH_MID,GENERIC_SYNCH_LARGE, GENERIC_IND_SMALL, GENERIC_IND_MID, GENERIC_IND_LARGE, USER_DEFINED, VESTAS_V82, GE_25MW};
+	enum {GENERIC_SYNCH_SMALL, GENERIC_SYNCH_MID,GENERIC_SYNCH_LARGE, GENERIC_IND_SMALL, GENERIC_IND_MID, GENERIC_IND_LARGE, USER_DEFINED, VESTAS_V82, GE_25MW, BERGEY_10kW};
 	enumeration Turbine_Model;
 	enum {GENERAL_LARGE, GENERAL_MID,GENERAL_SMALL,MANUF_TABLE, CALCULATED, USER_SPECIFY};
 	enumeration CP_Data;
@@ -144,8 +145,12 @@ public:
 	double Max_Vrotor;			// maximum induced voltage in p.u., e.g. 1.2
     double Min_Vrotor;			// minimum induced voltage in p.u., e.g. 0.8
 
+	bool *NR_mode;			//Toggle for NR solving cycle.  If not NR, just goes to false
+	bool default_NR_mode;
+
 public:
 	/* required implementations */
+	bool *get_bool(OBJECT *obj, char *name);
 	windturb_dg(MODULE *module);
 	int create(void);
 	int init(OBJECT *parent);
@@ -159,6 +164,6 @@ public:
 	static CLASS *oclass;
 	static windturb_dg *defaults;
 	complex *get_complex(OBJECT *obj, char *name);
-
+	static CLASS *pclass;
 };
 #endif

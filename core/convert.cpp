@@ -213,7 +213,7 @@ int convert_to_complex(const char *buffer, /**< a pointer to the string buffer *
 	else if (n < 3 || strchr("ijdr",notation[0])==NULL) /* incomplete imaginary part or missing notation */
 	{
 		output_error("convert_to_complex('%s',%s): complex number format is not valid", buffer,prop->name);
-		/* TROUBLESHOOTING
+		/* TROUBLESHOOT
 			A complex number was given that doesn't meet the formatting requirements, e.g., <real><+/-><imaginary><notation>.  
 			Check the format of your complex numbers and try again.
 		 */

@@ -64,11 +64,11 @@ solar::solar(MODULE *module)
 				PT_KEYWORD, "THIN_FILM_GA_AS", (enumeration)THIN_FILM_GA_AS,
 				PT_KEYWORD, "CONCENTRATOR", (enumeration)CONCENTRATOR,
 
-			PT_enumeration,"power_type",PADDR(power_type_v),
+			PT_enumeration,"power_type",PADDR(power_type_v),// this property is not used in the code. I recomend removing it from the code.
 				PT_KEYWORD,"AC",(enumeration)AC,
 				PT_KEYWORD,"DC",(enumeration)DC,
 
-			PT_enumeration, "INSTALLATION_TYPE", PADDR(installation_type_v),
+			PT_enumeration, "INSTALLATION_TYPE", PADDR(installation_type_v),// this property is not used in the code. I recomend removing it from the code.
 			   PT_KEYWORD, "ROOF_MOUNTED", (enumeration)ROOF_MOUNTED,
                PT_KEYWORD, "GROUND_MOUNTED",(enumeration)GROUND_MOUNTED,
 
@@ -127,7 +127,7 @@ solar::solar(MODULE *module)
 
 			//resistances and max P, Q
 
-			    PT_set, "phases", PADDR(phases),
+			    PT_set, "phases", PADDR(phases),//Solar doesn't need phase information for anything.
 				PT_KEYWORD, "A",(set)PHASE_A,
 				PT_KEYWORD, "B",(set)PHASE_B,
 				PT_KEYWORD, "C",(set)PHASE_C,
@@ -518,6 +518,15 @@ int solar::init(OBJECT *parent)
 	{
 		gl_warning("Generator control mode is not specified! Using default: SUPPLY_DRIVEN");
 		gen_mode_v = SUPPLY_DRIVEN;
+	} else if(gen_mode_v == CONSTANT_V){
+		gl_error("Generator control mode is CONSTANT_V. The Solar object only operates in SUPPLY_DRIVEN generator control mode.");
+		return 0;
+	} else if(gen_mode_v == CONSTANT_PQ){
+		gl_error("Generator control mode is CONSTANT_PQ. The Solar object only operates in SUPPLY_DRIVEN generator control mode.");
+		return 0;
+	} else if(gen_mode_v == CONSTANT_PF){
+		gl_error("Generator control mode is CONSTANT_PF. The Solar object only operates in SUPPLY_DRIVEN generator control mode.");
+		return 0;
 	}
 	if (gen_status_v == UNKNOWN)
 	{

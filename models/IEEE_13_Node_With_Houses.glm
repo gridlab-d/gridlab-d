@@ -1,0 +1,1502 @@
+// This file has a model of the IEEE 13 node test feeder with houses attached
+
+#set profiler=1
+#set threadcount=1;
+#set randomseed=1;
+#set relax_naming_rules=1;
+#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	stoptime '2000-01-01 1:00:00';
+	timezone EST+8EDT;
+}
+
+module tape;
+//module generators;
+module powerflow{
+	solver_method FBS;
+	default_maximum_voltage_error 1e-9;
+	line_limits FALSE;
+};
+module climate;
+module residential {
+	implicit_enduses NONE;
+	ANSI_voltage_check FALSE;
+};
+
+schedule waterdemand1 {
+	* 0-5 * * * 0;
+	0-16 6 * * * 0;
+	17-34 6 * * * 0.2;
+	35-59 6 * * * 0.4;
+	0-11 7 * * * 0.3;
+	12-59 7 * * * 0;
+	* 8-16 * * * .05;
+	* 17 * * * 0;
+	0-15 18 * * * 0;
+	16-59 18 * * * 0.8;
+	* 19-21 * * * 0;
+	00-45 22 * * * 0;
+	46-59 22 * * * 0.6;
+	* 23 * * * 0;
+}
+
+schedule waterdemand2 {
+	* 0-4 * * * 0;
+	0-10 5 * * * .4;
+	11-37 5 * * * 0.1;
+	38-59 5 * * * 0.6;
+	0-16 6 * * * 0.4;
+	17-59 6 * * * 0;
+	* 7-16 * * * 0.01;
+	0-12 17 * * * 0.5;
+	13-59 17 * * * 0;
+	* 18-23 * * * 0;
+}
+
+schedule waterdemand3 {
+	* 0-6 * * * 0;
+	0-16 7 * * * 0;
+	17-34 7 * * * 0.4;
+	35-59 7 * * * 0.8;
+	0-11 8 * * * 0.1;
+	12-59 8 * * * 0;
+	* 9-15 * * * 0.005;
+	* 16 * * * 0.1;
+	* 17 * * * 0.2;
+	0-27 18 * * * 0.7;
+	28-59 18 * * * 0;
+	* 19-23 * * * 0;
+}
+
+schedule heatingsetpoint1 {
+	* 0-4 * * * 60;
+	* 5 * * * 70;
+	00-30 6 * * * 70;
+	31-59 6 * * * 60;
+	* 7-16 * * * 60;
+	* 17-21 * * * 70;
+	* 22-23 * * * 60;
+}
+schedule heatingsetpoint2 {
+	* 0-5 * * * 60;
+	* 6 * * * 70;
+	00-15 7 * * * 70;
+	16-59 7 * * * 60;
+	* 8-17 * * * 60;
+	* 18-22 * * * 70;
+	* 23 * * * 60;
+}
+schedule heatingsetpoint3 {
+	* 0-6 * * * 60;
+	* 7 * * * 70;
+	00-23 8 * * * 70;
+	24-59 8 * * * 60;
+	* 9-18 * * * 60;
+	* 19-20 * * * 70;
+	* 21-23 * * * 60;
+}
+schedule heatingsetpoint4 {
+	* 0-4 * * * 60;
+	00-30 5 * * * 60;
+	31-59 5 * * * 70;
+	* 6-7 * * * 70;
+	00-30 8 * * * 70;
+	31-59 8 * * * 60;
+	* 9-17 * * * 60;
+	00-30 18 * * * 60;
+	31-59 18 * * * 70;
+	* 19-20 * * * 70;
+	00-45 21 * * * 70;
+	46-59 21 * * * 60;
+	* 22-23 * * * 60;
+}
+schedule heatingsetpoint5 {
+	* 0-6 * * * 60;
+	00-30 7 * * * 60;
+	31-59 7 * * * 70;
+	* 8 * * * 70;
+	00-30 9 * * * 70;
+	31-59 9 * * * 60;
+	* 10-16 * * * 60;
+	00-15 17 * * * 60;
+	16-59 17 * * * 70;
+	* 18-22 * * * 70;
+	00-42 23 * * * 70;
+	43-59 23 * * * 60;
+}
+
+
+schedule ZIP1base_power {
+	00-29  00   *   *  *   1.686360
+	30-59  00   *   *  *   1.616535
+	00-29  01   *   *  *   1.593260
+	30-59  01   *   *  *   1.553267
+	00-29  02   *   *  *   1.539935
+	30-59  02   *   *  *   1.523217
+	00-29  03   *   *  *   1.517644
+	30-59  03   *   *  *   1.526276
+	00-29  04   *   *  *   1.529154
+	30-59  04   *   *  *   1.579583
+	00-29  05   *   *  *   1.596393
+	30-59  05   *   *  *   1.731125
+	00-29  06   *   *  *   1.776036
+	30-59  06   *   *  *   1.971087
+	00-29  07   *   *  *   2.036104
+	30-59  07   *   *  *   2.123794
+	00-29  08   *   *  *   2.153025
+	30-59  08   *   *  *   2.120079
+	00-29  09   *   *  *   2.109097
+	30-59  09   *   *  *   2.081561
+	00-29  10   *   *  *   2.072382
+	30-59  10   *   *  *   2.056046
+	00-29  11   *   *  *   2.050600
+	30-59  11   *   *  *   2.028199
+	00-29  12   *   *  *   2.020733
+	30-59  12   *   *  *   2.011171
+	00-29  13   *   *  *   2.007984
+	30-59  13   *   *  *   2.000226
+	00-29  14   *   *  *   1.997640
+	30-59  14   *   *  *   1.997694
+	00-29  15   *   *  *   1.997713
+	30-59  15   *   *  *   2.029784
+	00-29  16   *   *  *   2.040474
+	30-59  16   *   *  *   2.157669
+	00-29  17   *   *  *   2.196733
+	30-59  17   *   *  *   2.262461
+	00-29  18   *   *  *   2.284370
+	30-59  18   *   *  *   2.273333
+	00-29  19   *   *  *   2.269654
+	30-59  19   *   *  *   2.239386
+	00-29  20   *   *  *   2.229297
+	30-59  20   *   *  *   2.178758
+	00-29  21   *   *  *   2.161912
+	30-59  21   *   *  *   2.064059
+	00-29  22   *   *  *   2.031441
+	30-59  22   *   *  *   1.897692
+	00-29  23   *   *  *   1.853109
+	30-59  23   *   *  *   1.728047
+}
+
+object triplex_line_conductor {
+	name tp_line_conductor;
+	resistance 0.97;
+	geometric_mean_radius 0.0111;
+};
+
+// Triplex Line
+object triplex_line_configuration {
+	name triplex_line_configuration_1;
+	conductor_1 tp_line_conductor;
+	conductor_2 tp_line_conductor;
+	conductor_N tp_line_conductor;
+	insulation_thickness 0.08;
+	diameter 0.368;
+}
+
+// Phase Conductor for 601: 556,500 26/7 ACSR
+object overhead_line_conductor:6010 {
+	geometric_mean_radius 0.031300;
+	resistance 0.185900;
+}
+
+// Phase Conductor for 602: 4/0 6/1 ACSR
+object overhead_line_conductor:6020 {
+	geometric_mean_radius 0.00814;
+	resistance 0.592000;
+}
+
+// Phase Conductor for 603, 604, 605: 1/0 ACSR
+object overhead_line_conductor:6030 {
+	geometric_mean_radius 0.004460;
+	resistance 1.120000;
+}
+
+// Phase Conductor for 606: 250,000 AA,CN
+object underground_line_conductor:6060 { 
+	outer_diameter 1.290000;
+	conductor_gmr 0.017100;
+	conductor_diameter 0.567000;
+	conductor_resistance 0.410000;
+	neutral_gmr 0.0020800; 
+	neutral_resistance 14.87200;  
+	neutral_diameter 0.0640837;
+	neutral_strands 13.000000;
+	shield_gmr 0.000000;
+	shield_resistance 0.000000;
+}
+
+// Phase Conductor for 607: 1/0 AA,TS N: 1/0 Cu
+object underground_line_conductor:6070 { 
+	outer_diameter 1.060000;
+	conductor_gmr 0.011100;
+	conductor_diameter 0.368000;
+	conductor_resistance 0.970000;
+	neutral_gmr 0.011100;
+	neutral_resistance 0.970000; 
+	neutral_diameter 0.0640837;
+	neutral_strands 6.000000;
+	shield_gmr 0.000000;
+	shield_resistance 0.000000;
+}
+
+// Overhead line configurations
+object line_spacing:500601 {
+	distance_AB 2.5;
+	distance_AC 4.5;
+	distance_BC 7.0;
+	distance_BN 5.656854;
+	distance_AN 4.272002;
+	distance_CN 5.0;
+}
+
+// Overhead line configurations
+object line_spacing:500602 {
+	distance_AC 2.5;
+	distance_AB 4.5;
+	distance_BC 7.0;
+	distance_CN 5.656854;
+	distance_AN 4.272002;
+	distance_BN 5.0;
+}
+
+object line_spacing:505603 {
+	distance_AC 0.0;
+	distance_AB 0.0;
+	distance_BC 7.0;
+	distance_AN 0.0;
+	distance_CN 5.656854;
+	distance_BN 5.0;
+}
+
+object line_spacing:505604 {
+	distance_AC 7.0;
+	distance_AB 0.0;
+	distance_BC 0.0;
+	distance_AN 5.656854;
+	distance_CN 5.0;
+	distance_BN 0.0;
+}
+
+object line_spacing:510 {
+	distance_AC 0.0;
+	distance_AB 0.0;
+	distance_BC 0.0;
+	distance_AN 0.0;
+	distance_CN 5.0;
+	distance_BN 0.0;}
+
+object line_configuration:601 {
+	conductor_A overhead_line_conductor:6010;
+	conductor_B overhead_line_conductor:6010;
+	conductor_C overhead_line_conductor:6010;
+	conductor_N overhead_line_conductor:6020;
+	spacing line_spacing:500601;
+}
+
+object line_configuration:602 {
+	conductor_A overhead_line_conductor:6020;
+	conductor_B overhead_line_conductor:6020;
+	conductor_C overhead_line_conductor:6020;
+	conductor_N overhead_line_conductor:6020;
+	spacing line_spacing:500602;
+}
+
+object line_configuration:603 {
+	conductor_B overhead_line_conductor:6030;
+	conductor_C overhead_line_conductor:6030;
+	conductor_N overhead_line_conductor:6030;
+	spacing line_spacing:505603;
+}
+
+object line_configuration:604 {
+	conductor_A overhead_line_conductor:6030;
+	conductor_C overhead_line_conductor:6030;
+	conductor_N overhead_line_conductor:6030;
+	spacing line_spacing:505604;
+}
+
+object line_configuration:605 {
+	conductor_C overhead_line_conductor:6030;
+	conductor_N overhead_line_conductor:6030;
+	spacing line_spacing:510;
+}
+
+// Underground line configuration
+object line_spacing:515 {
+	distance_AB 0.500000;
+	distance_BC 0.500000;
+	distance_AC 1.000000;
+	distance_AN 0.000000;
+	distance_BN 0.000000;
+	distance_CN 0.000000;
+}
+
+object line_spacing:520 {
+	distance_AB 0.000000;
+	distance_BC 0.000000;
+	distance_AC 0.000000;
+	distance_AN 0.083333;
+	distance_BN 0.000000;
+	distance_CN 0.000000;
+}
+
+object line_configuration:606 {
+	conductor_A underground_line_conductor:6060;
+	conductor_B underground_line_conductor:6060;
+	conductor_C underground_line_conductor:6060;
+	spacing line_spacing:515;
+}
+
+object line_configuration:607 {
+	conductor_A underground_line_conductor:6070;
+	conductor_N underground_line_conductor:6070;
+	spacing line_spacing:520;
+}
+
+// Define line objects
+object overhead_line:632645 {
+	phases "BCN";
+	name 632-645;
+	from node:632;
+	to node:645;
+	length 500;
+	configuration line_configuration:603;
+}
+
+object overhead_line:645646 {
+	phases "BCN";
+	name 645-646;
+	from node:645;
+	to node:646;
+	length 300;
+	configuration line_configuration:603;
+}
+
+object overhead_line:630632 {
+	phases "ABCN";
+	name 630-632;
+	from node:630;
+	to node:632;
+	length 2000;
+	configuration line_configuration:601;
+}
+
+// Split line for distributed load
+object overhead_line:6326321 {
+	phases "ABCN";
+	name 632-6321;
+	from node:632;
+	to node:6321;
+	length 500;
+	configuration line_configuration:601;
+}
+
+object overhead_line:6321671 {
+	phases "ABCN";
+	name 6321-671;
+	from node:6321;
+	to node:671;
+	length 1500;
+	configuration line_configuration:601;
+}
+
+// End split line
+object overhead_line:671680 {
+	phases "ABCN";
+	name 671-680;
+	from node:671;
+	to node:680;
+	length 1000;
+	configuration line_configuration:601;
+}
+
+object overhead_line:671684 {
+	phases "ACN";
+	name 671-684;
+	from node:671;
+	to node:684;
+	length 300;
+	configuration line_configuration:604;
+}
+
+object overhead_line:684611 {
+	phases "CN";
+	name 684-611;
+	from node:684;
+	to node:611;
+	length 300;
+	configuration line_configuration:605;
+}
+
+object underground_line:684652 {
+	phases "AN";
+	name 684-652;
+	from node:684;
+	to node:652;
+	length 800;
+	configuration line_configuration:607;
+}
+
+object underground_line:692675 {
+	phases "ABC";
+	name 692-675;
+	from node:692;
+	to node:675;
+	length 500;
+	configuration line_configuration:606;
+}
+
+object overhead_line:632633 {
+	phases "ABCN";
+	name 632-633;
+	from node:632;
+	to node:633;
+	length 500;
+	configuration line_configuration:602;
+}
+
+// Create node objects
+object node:633 {
+	name 633;
+	phases "ABCN";
+	voltage_A 2401.7771;
+	voltage_B -1200.8886-2080.000j;
+	voltage_C -1200.8886+2080.000j;
+	nominal_voltage 2401.7771;
+}
+
+object node:630 {
+	name 630;
+	phases "ABCN";
+	voltage_A 2401.7771+0j;
+	voltage_B -1200.8886-2080.000j;
+	voltage_C -1200.8886+2080.000j;
+	nominal_voltage 2401.7771;
+}
+ 
+object node:632 {
+	name 632;
+	phases "ABCN";
+	voltage_A 2401.7771;
+	voltage_B -1200.8886-2080.000j;
+	voltage_C -1200.8886+2080.000j;
+	nominal_voltage 2401.7771;
+}
+
+object node:650 {
+	name 650;
+	phases "ABCN";
+	bustype SWING;
+	voltage_A 2401.7771;
+	voltage_B -1200.8886-2080.000j;
+	voltage_C -1200.8886+2080.000j;
+	nominal_voltage 2401.7771;
+} 
+ 
+object node:671 {
+	name 671;
+	phases "ABCN";
+	voltage_A 2401.7771;
+	voltage_B -1200.8886-2080.000j;
+	voltage_C -1200.8886+2080.000j;
+	nominal_voltage 2401.7771;
+}
+
+object node:680 {
+	name 680;
+	phases "ABCN";
+	voltage_A 2401.7771;
+	voltage_B -1200.8886-2080.000j;
+	voltage_C -1200.8886+2080.000j;
+	nominal_voltage 2401.7771;
+}
+ 
+ 
+object node:684 {
+	name 684;
+	phases "ACN";
+	voltage_A 2401.7771;
+	voltage_B -1200.8886-2080.000j;
+	voltage_C -1200.8886+2080.000j;
+	nominal_voltage 2401.7771;
+} 
+ 
+// distributed load between node 632 and 671
+// 2/3 of load 1/4 of length down line: Kersting p.56
+object node:6711 {
+	name 6711;
+	parent 611;
+	phases "CN";
+	voltage_C -1200.8886+2080.000j;
+	nominal_voltage 2401.7771; 
+}
+ 
+object node:6321 {
+	name 6321;
+	phases "ABCN";
+	voltage_A 2401.7771;
+	voltage_B -1200.8886-2080.000j;
+	voltage_C -1200.8886+2080.000j;
+	nominal_voltage 2401.7771;    
+}
+ 
+// Create node objects with attached loads 
+object node:611 {
+	name 611;
+	phases "CN";
+	voltage_C -1200.8886+2080.000j;
+	nominal_voltage 2401.7771;
+}
+
+object node:634 {
+	name 634;
+	phases "ABCN";
+	voltage_A 480.000+0j;
+	voltage_B -240.000-415.6922j;
+	voltage_C -240.000+415.6922j;
+	nominal_voltage 480.000;                          
+}
+
+object node:645 {
+	name 645;
+	phases "BCN";
+	voltage_A 2401.7771;
+	voltage_B -1200.8886-2080.000j;
+	voltage_C -1200.8886+2080.000j;
+	nominal_voltage 2401.7771;            
+}
+
+object node:646 {
+	name 646;
+	phases "BCN";
+	voltage_A 2401.7771;
+	voltage_B -1200.8886-2080.000j;
+	voltage_C -1200.8886+2080.000j;
+	nominal_voltage 2401.7771; 
+}
+
+object node:652 {
+	name 652;
+	phases "AN";
+	voltage_A 2401.7771;
+	voltage_B -1200.8886-2080.000j;
+	voltage_C -1200.8886+2080.000j;
+	nominal_voltage 2401.7771;      
+}
+
+object node:675 {
+	name 675;
+	phases "ABCN";
+	voltage_A 2401.7771;
+	voltage_B -1200.8886-2080.000j;
+	voltage_C -1200.8886+2080.000j;
+	nominal_voltage 2401.7771;
+}
+
+object node:692 {
+	name 692;
+	phases "ABCN";
+	voltage_A 2401.7771;
+	voltage_B -1200.8886-2080.000j;
+	voltage_C -1200.8886+2080.000j;
+	nominal_voltage 2401.7771;
+}
+
+object transformer {
+	name center_tap_1; 
+	phases CS; 
+	from node:611; 
+	to trip_node1; 
+	configuration CS_config;
+}
+
+object transformer {
+	name center_tap_2; 
+	phases AS; 
+	from node:634; 
+	to trip_node2; 
+	configuration AS_config;
+}
+
+object transformer {
+	name center_tap_3; 
+	phases BS; 
+	from node:634; 
+	to trip_node3; 
+	configuration BS_config;
+}
+
+object transformer {
+	name center_tap_4; 
+	phases CS; 
+	from node:634; 
+	to trip_node4; 
+	configuration CS_config;
+}
+
+object transformer {
+	name center_tap_5; 
+	phases BS; 
+	from node:645; 
+	to trip_node5; 
+	configuration BS_config;
+}
+
+object transformer {
+	name center_tap_6; 
+	phases CS; 
+	from node:645; 
+	to trip_node6; 
+	configuration CS_config;
+}
+
+object transformer {
+	name center_tap_7; 
+	phases BS; 
+	from node:646; 
+	to trip_node7; 
+	configuration BS_config;
+}
+
+object transformer {
+	name center_tap_8; 
+	phases CS; 
+	from node:646; 
+	to trip_node8; 
+	configuration CS_config;
+}
+
+object transformer {
+	name center_tap_9; 
+	phases AS; 
+	from node:652; 
+	to trip_node9; 
+	configuration AS_config;
+}
+
+object transformer {
+	name center_tap_10; 
+	phases AS; 
+	from node:675; 
+	to trip_node10; 
+	configuration AS_config;
+}
+
+object transformer {
+	name center_tap_11; 
+	phases BS; 
+	from node:675; 
+	to trip_node11; 
+	configuration BS_config;
+}
+
+object transformer {
+	name center_tap_12; 
+	phases CS; 
+	from node:675; 
+	to trip_node12; 
+	configuration CS_config;
+}
+
+object transformer {
+	name center_tap_13; 
+	phases AS; 
+	from node:692; 
+	to trip_node13; 
+	configuration AS_config;
+}
+
+object transformer {
+	name center_tap_14; 
+	phases BS; 
+	from node:692; 
+	to trip_node14; 
+	configuration BS_config;
+}
+
+object transformer {
+	name center_tap_15; 
+	phases CS; 
+	from node:692; 
+	to trip_node15; 
+	configuration CS_config;
+}
+
+object triplex_node {
+	name trip_node1; 
+	phases CS; 
+	nominal_voltage 120;        
+}
+
+object triplex_node {
+	name trip_node2; 
+	phases AS; 
+	nominal_voltage 120;
+}
+
+object triplex_node {
+	name trip_node3; 
+	phases BS; 
+	nominal_voltage 120;
+}
+
+object triplex_node {
+	name trip_node4; 
+	phases CS; 
+	nominal_voltage 120;
+}
+
+object triplex_node {
+	name trip_node5; 
+	phases BS; 
+	nominal_voltage 120;
+}
+
+object triplex_node {
+	name trip_node6; 
+	phases CS; 
+	nominal_voltage 120;
+}
+
+object triplex_node {
+	name trip_node7; 
+	phases BS; 
+	nominal_voltage 120;
+}
+
+object triplex_node {
+	name trip_node8; 
+	phases CS; 
+	nominal_voltage 120;
+}
+
+object triplex_node {
+	name trip_node9; 
+	phases AS; 
+	nominal_voltage 120;
+}
+
+object triplex_node {
+	name trip_node10; 
+	phases AS; 
+	nominal_voltage 120;
+}
+
+object triplex_node {
+	name trip_node11; 
+	phases BS; 
+	nominal_voltage 120;
+}
+
+object triplex_node {
+	name trip_node12; 
+	phases CS; 
+	nominal_voltage 120;
+}
+
+object triplex_node {
+	name trip_node13; 
+	phases AS; 
+	nominal_voltage 120;
+}
+
+object triplex_node {
+	name trip_node14; 
+	phases BS; 
+	nominal_voltage 120;
+}
+
+object triplex_node {
+	name trip_node15; 
+	phases CS; 
+	nominal_voltage 120;
+}
+
+object triplex_line {
+	name trip_line1; 
+	phases CS; 
+	from trip_node1; 
+	to trip_meter1; 
+	length 0; 
+	configuration triplex_line_configuration_1;
+}
+
+object triplex_line {
+	name trip_line2; 
+	phases AS; 
+	from trip_node2; 
+	to trip_meter2; 
+	length 0; 
+	configuration triplex_line_configuration_1;
+}
+
+object triplex_line {
+	name trip_line3; 
+	phases BS; 
+	from trip_node3; 
+	to trip_meter3; 
+	length 0; 
+	configuration triplex_line_configuration_1;
+}
+
+object triplex_line {
+	name trip_line4; 
+	phases CS; 
+	from trip_node4; 
+	to trip_meter4; 
+	length 0; 
+	configuration triplex_line_configuration_1;
+}
+
+object triplex_line {
+	name trip_line5; 
+	phases BS; 
+	from trip_node5; 
+	to trip_meter5; 
+	length 0; 
+	configuration triplex_line_configuration_1;
+}
+
+object triplex_line {
+	name trip_line6; 
+	phases CS; 
+	from trip_node6; 
+	to trip_meter6; 
+	length 0; 
+	configuration triplex_line_configuration_1;
+}
+
+object triplex_line {
+	name trip_line7; 
+	phases BS; 
+	from trip_node7; 
+	to trip_meter7; 
+	length 0; 
+	configuration triplex_line_configuration_1;
+}
+
+object triplex_line {
+	name trip_line8; 
+	phases CS; 
+	from trip_node8; 
+	to trip_meter8; 
+	length 0; 
+	configuration triplex_line_configuration_1;
+}
+
+object triplex_line {
+	name trip_line9; 
+	phases AS; 
+	from trip_node9; 
+	to trip_meter9; 
+	length 0; 
+	configuration triplex_line_configuration_1;
+}
+
+object triplex_line {
+	name trip_line10; 
+	phases AS; 
+	from trip_node10; 
+	to trip_meter10; 
+	length 0; 
+	configuration triplex_line_configuration_1;
+}
+
+object triplex_line {
+	name trip_line11; 
+	phases BS; 
+	from trip_node11; 
+	to trip_meter11; 
+	length 0; 
+	configuration triplex_line_configuration_1;
+}
+
+object triplex_line {
+	name trip_line12; 
+	phases CS; 
+	from trip_node12; 
+	to trip_meter12; 
+	length 0; 
+	configuration triplex_line_configuration_1;
+}
+
+object triplex_line {
+	name trip_line13; 
+	phases AS; 
+	from trip_node13; 
+	to trip_meter13; 
+	length 0; 
+	configuration triplex_line_configuration_1;
+}
+
+object triplex_line {
+	name trip_line14; 
+	phases BS; 
+	from trip_node14; 
+	to trip_meter14; 
+	length 0; 
+	configuration triplex_line_configuration_1;
+}
+
+object triplex_line {
+	name trip_line15; 
+	phases CS; 
+	from trip_node15; 
+	to trip_meter15; 
+	length 0; 
+	configuration triplex_line_configuration_1;
+}
+
+// House 1 meter
+object triplex_meter {
+	name trip_meter1; 
+	phases CS; 
+	nominal_voltage 120;
+}
+
+// House 2 meter
+object triplex_meter {
+	name trip_meter2; 
+	phases AS; 
+	nominal_voltage 120;
+}
+
+// House 3 meter
+object triplex_meter {
+	name trip_meter3; 
+	phases BS; 
+	nominal_voltage 120;
+}
+
+// House 4 meter
+object triplex_meter {
+	name trip_meter4; 
+	phases CS; 
+	nominal_voltage 120;
+}
+
+// House 5 meter
+object triplex_meter {
+	name trip_meter5; 
+	phases BS; 
+	nominal_voltage 120;
+}
+
+// House 6 meter
+object triplex_meter {
+	name trip_meter6; 
+	phases CS; 
+	nominal_voltage 120;
+}
+
+// House 7 meter
+object triplex_meter {
+	name trip_meter7; 
+	phases BS; 
+	nominal_voltage 120;
+}
+
+// House 8 meter
+object triplex_meter {
+	name trip_meter8; 
+	phases CS; 
+	nominal_voltage 120;
+}
+
+// House 9 meter
+object triplex_meter {
+	name trip_meter9; 
+	phases AS; 
+	nominal_voltage 120;
+}
+
+// House 10 meter
+object triplex_meter {
+	name trip_meter10; 
+	phases AS; 
+	nominal_voltage 120;
+}
+
+// House 11 meter
+object triplex_meter {
+	name trip_meter11; 
+	phases BS; 
+	nominal_voltage 120;
+}
+
+// House 12 meter
+object triplex_meter {
+	name trip_meter12; 
+	phases CS; 
+	nominal_voltage 120;
+}
+
+// House 13 meter
+object triplex_meter {
+	name trip_meter13; 
+	phases AS; 
+	nominal_voltage 120;
+}
+
+// House 14 meter
+object triplex_meter {
+	name trip_meter14; 
+	phases BS; 
+	nominal_voltage 120;
+}
+
+// House 15 meter
+object triplex_meter {
+	name trip_meter15; 
+	phases CS; 
+	nominal_voltage 120;
+}
+ 
+// Switch
+object switch:671692 {
+	phases "ABCN";
+	name 671-692;
+	from node:671;
+	to node:692;
+	status CLOSED;
+}
+ 
+// Transformer
+object transformer_configuration:400 {
+	connect_type WYE_WYE;
+  	install_type PADMOUNT;
+  	power_rating 500;
+  	primary_voltage 4160;
+  	secondary_voltage 480;
+  	resistance 0.011;
+  	reactance 0.02;
+}
+  
+object transformer:633634 {
+  	phases "ABCN";
+  	name 633-634;
+  	from node:633;
+  	to node:634;
+  	configuration transformer_configuration:400;
+}
+
+object transformer_configuration {
+	name AS_config;
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type POLETOP;
+	powerA_rating 75;
+	primary_voltage 2401;
+	secondary_voltage 120.000;
+	impedance 0.006+0.0136j;
+}
+
+object transformer_configuration {
+	name BS_config;
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type POLETOP;
+	powerB_rating 75;
+	primary_voltage 2401;
+	secondary_voltage 120.000;
+	impedance 0.006+0.0136j;
+}
+
+object transformer_configuration {
+	name CS_config;
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type POLETOP;
+	powerC_rating 75;
+	primary_voltage 2401;
+	secondary_voltage 120.000;
+	impedance 0.006+0.0136j;
+}
+
+object capacitor {
+	phases ABCN;
+	name CAP1;
+	pt_phase ABCN;
+	parent 675;
+	phases_connected ABCN;
+	control VOLT;
+	voltage_set_high 2500.0;
+	voltage_set_low 1950.0;
+	capacitor_A 0.300 MVAr;
+	capacitor_B 0.300 MVAr;
+	capacitor_C 0.300 MVAr;
+	control_level INDIVIDUAL;
+	time_delay 0.0;	
+	dwell_time 0.0;
+	switchA CLOSED;				// manual controls for load manipulation (don't use the switch player)
+	switchB CLOSED;
+	switchC CLOSED;
+	nominal_voltage 2401.7771;	
+}
+
+object capacitor {
+	phases ABCN;
+	name CAP2;
+	pt_phase ABCN;
+	parent 675;
+	phases_connected ABCN;
+	control VOLT;
+	voltage_set_high 2600.0;
+	voltage_set_low 2050.0;
+	capacitor_A 0.250 MVAr;
+    capacitor_B 0.250 MVAr;
+	capacitor_C 0.250 MVAr;
+	control_level INDIVIDUAL;
+	time_delay 300.0;	
+	dwell_time 0.0;
+	switchA CLOSED;				// manual controls for load manipulation (don't use the switch player)
+	switchB CLOSED;
+	switchC CLOSED;
+	nominal_voltage 2401.7771;
+}
+  
+// Regulator
+object regulator_configuration:6506321 {
+	connect_type WYE_WYE;
+	band_center 2000.000;
+	band_width 80.0;
+	time_delay 0.0;
+	dwell_time 0.0;
+	raise_taps 16;
+	lower_taps 16;
+	regulation 0.10;
+	Control REMOTE_NODE;
+	tap_pos_A 9;
+	tap_pos_B 7;
+	tap_pos_C 10;
+}
+  
+object regulator:650630 {
+	phases "ABCN";
+	from node:650;
+	to node:630;
+	sense_node 671;
+	configuration regulator_configuration:6506321;
+}
+
+// House 1
+object house:..20 {
+	parent trip_meter1;
+	floor_area random.normal(1750,400);
+	heating_setpoint heatingsetpoint4+random.normal(0,4);
+	cooling_setpoint random.normal (80,2);
+	thermostat_deadband random.normal (2,.5);
+	object ZIPload {
+		base_power ZIP1base_power*random.normal(1,.25);
+		power_fraction 0.2;
+		impedance_fraction 0.3;
+		current_fraction 0.5;
+		power_pf 0.9;
+		current_pf 0.6;
+		impedance_pf 0.8;
+	};
+	object waterheater {
+		location INSIDE;
+		water_demand waterdemand1*random.normal(1,.2);
+	};
+}
+
+// House 2
+object house:..20 {
+	parent trip_meter2;
+	floor_area random.normal(1750,400);
+	heating_setpoint heatingsetpoint2+random.normal(0,4);
+	cooling_setpoint random.normal (80,2);
+	object ZIPload {
+		base_power ZIP1base_power*random.normal(1,.25);
+		power_fraction 0.2;
+		impedance_fraction 0.3;
+		current_fraction 0.5;
+		power_pf 0.9;
+		current_pf 0.6;
+		impedance_pf 0.8;
+	};
+	object waterheater {
+		location INSIDE;
+		water_demand waterdemand3*random.normal(1,.2);
+	};
+}
+
+// House 3
+object house:..20 {
+	parent trip_meter3;
+	floor_area random.normal(1750,400);
+	heating_setpoint heatingsetpoint2+random.normal(0,4);
+	cooling_setpoint random.normal (80,2);
+	object ZIPload {
+		base_power ZIP1base_power*random.normal(1,.25);
+		power_fraction 0.2;
+		impedance_fraction 0.3;
+		current_fraction 0.5;
+		power_pf 0.9;
+		current_pf 0.6;
+		impedance_pf 0.8;
+	};
+	object waterheater {
+		location INSIDE;
+		water_demand waterdemand2*random.normal(1,.2);
+	};
+}
+
+// House 4
+object house:..20 {
+	parent trip_meter4;
+	floor_area random.normal(1750,400);
+	heating_setpoint heatingsetpoint5+random.normal(0,4);
+	cooling_setpoint random.normal (80,2);
+	object ZIPload {
+		base_power ZIP1base_power*random.normal(1,.25);
+		power_fraction 0.2;
+		impedance_fraction 0.3;
+		current_fraction 0.5;
+		power_pf 0.9;
+		current_pf 0.6;
+		impedance_pf 0.8;
+	};
+	object waterheater {
+		location INSIDE;
+		water_demand waterdemand3*random.normal(1,.2);
+	};
+}
+
+// House 5
+object house:..20 {
+	parent trip_meter5;
+	floor_area random.normal(1750,400);
+	heating_setpoint heatingsetpoint2+random.normal(0,4);
+	cooling_setpoint random.normal (80,2);
+	object ZIPload {
+		base_power ZIP1base_power*random.normal(1,.25);
+		power_fraction 0.2;
+		impedance_fraction 0.3;
+		current_fraction 0.5;
+		power_pf 0.9;
+		current_pf 0.6;
+		impedance_pf 0.8;
+	};
+	object waterheater {
+		location INSIDE;
+		water_demand waterdemand3*random.normal(1,.2);
+	};
+}
+
+// House 6
+object house:..20 {
+	parent trip_meter6;
+	floor_area random.normal(1750,400);
+	heating_setpoint heatingsetpoint3+random.normal(0,4);
+	cooling_setpoint random.normal (80,2);
+	object ZIPload {
+		base_power ZIP1base_power*random.normal(1,.25);
+		power_fraction 0.2;
+		impedance_fraction 0.3;
+		current_fraction 0.5;
+		power_pf 0.9;
+		current_pf 0.6;
+		impedance_pf 0.8;
+	};
+	object waterheater {
+		location INSIDE;
+		water_demand waterdemand1*random.normal(1,.2);
+	};
+}
+
+// House 7
+object house:..20 {
+	parent trip_meter7;
+	floor_area random.normal(1750,400);
+	heating_setpoint heatingsetpoint5+random.normal(0,4);
+	cooling_setpoint random.normal (80,2);
+	object ZIPload {
+		base_power ZIP1base_power*random.normal(1,.25);
+		power_fraction 0.2;
+		impedance_fraction 0.3;
+		current_fraction 0.5;
+		power_pf 0.9;
+		current_pf 0.6;
+		impedance_pf 0.8;
+	};
+	object waterheater {
+		location INSIDE;
+		water_demand waterdemand2*random.normal(1,.2);
+	};
+}
+
+// House 8
+object house:..20 {
+	parent trip_meter8;
+	floor_area random.normal(1750,400);
+	heating_setpoint heatingsetpoint2+random.normal(0,4);
+	cooling_setpoint random.normal (80,2);
+	object ZIPload {
+		base_power ZIP1base_power*random.normal(1,.25);
+		power_fraction 0.2;
+		impedance_fraction 0.3;
+		current_fraction 0.5;
+		power_pf 0.9;
+		current_pf 0.6;
+		impedance_pf 0.8;
+	};
+	object waterheater {
+		location INSIDE;
+		water_demand waterdemand2*random.normal(1,.2);
+	};
+}
+
+// House 9
+object house:..20 {
+	parent trip_meter9;
+	floor_area random.normal(1750,400);
+	heating_setpoint heatingsetpoint5+random.normal(0,4);
+	cooling_setpoint random.normal (80,2);
+	object ZIPload {
+		base_power ZIP1base_power*random.normal(1,.25);
+		power_fraction 0.2;
+		impedance_fraction 0.3;
+		current_fraction 0.5;
+		power_pf 0.9;
+		current_pf 0.6;
+		impedance_pf 0.8;
+	};
+	object waterheater {
+		location INSIDE;
+		water_demand waterdemand3*random.normal(1,.2);
+	};
+}
+
+// House 10
+object house:..20 {
+	parent trip_meter10;
+	floor_area random.normal(1750,400);
+	heating_setpoint heatingsetpoint4+random.normal(0,4);
+	cooling_setpoint random.normal (80,2);
+	object ZIPload {
+		base_power ZIP1base_power*random.normal(1,.25);
+		power_fraction 0.2;
+		impedance_fraction 0.3;
+		current_fraction 0.5;
+		power_pf 0.9;
+		current_pf 0.6;
+		impedance_pf 0.8;
+	};
+	object waterheater {
+		location INSIDE;
+		water_demand waterdemand3*random.normal(1,.2);
+	};
+}
+
+// House 11
+object house:..20 {
+	parent trip_meter11;
+	floor_area random.normal(1750,400);
+	heating_setpoint heatingsetpoint2+random.normal(0,4);
+	cooling_setpoint random.normal (80,2);
+	object ZIPload {
+		base_power ZIP1base_power*random.normal(1,.25);
+		power_fraction 0.2;
+		impedance_fraction 0.3;
+		current_fraction 0.5;
+		power_pf 0.9;
+		current_pf 0.6;
+		impedance_pf 0.8;
+	};
+	object waterheater {
+		location INSIDE;
+		water_demand waterdemand2*random.normal(1,.2);
+	};
+}
+
+// House 12
+object house:..20 {
+	parent trip_meter12;
+	floor_area random.normal(1750,400);
+	heating_setpoint heatingsetpoint1+random.normal(0,4);
+	cooling_setpoint random.normal (80,2);
+	object ZIPload {
+		base_power ZIP1base_power*random.normal(1,.25);
+		power_fraction 0.2;
+		impedance_fraction 0.3;
+		current_fraction 0.5;
+		power_pf 0.9;
+		current_pf 0.6;
+		impedance_pf 0.8;
+	};
+	object waterheater {
+		location INSIDE;
+		water_demand waterdemand3*random.normal(1,.2);
+	};
+}
+
+// House 13
+object house:..20 {
+	parent trip_meter13;
+	floor_area random.normal(1750,400);
+	heating_setpoint heatingsetpoint3+random.normal(0,4);
+	cooling_setpoint random.normal (80,2);
+	object ZIPload {
+		base_power ZIP1base_power*random.normal(1,.25);
+		power_fraction 0.2;
+		impedance_fraction 0.3;
+		current_fraction 0.5;
+		power_pf 0.9;
+		current_pf 0.6;
+		impedance_pf 0.8;
+	};
+	object waterheater {
+		location INSIDE;
+		water_demand waterdemand2*random.normal(1,.2);
+	};
+}
+
+// House 14
+object house:..20 {
+	parent trip_meter14;
+	floor_area random.normal(1750,400);
+	heating_setpoint heatingsetpoint4+random.normal(0,4);
+	cooling_setpoint random.normal (80,2);
+	object ZIPload {
+		base_power ZIP1base_power*random.normal(1,.25);
+		power_fraction 0.2;
+		impedance_fraction 0.3;
+		current_fraction 0.5;
+		power_pf 0.9;
+		current_pf 0.6;
+		impedance_pf 0.8;
+	};
+	object waterheater {
+		location INSIDE;
+		water_demand waterdemand1*random.normal(1,.2);
+	};
+}
+
+// House 15
+object house:..20 {
+	parent trip_meter15;
+	floor_area random.normal(1750,400);
+	heating_setpoint heatingsetpoint2+random.normal(0,4);
+	cooling_setpoint random.normal (80,2);
+	object ZIPload {
+		base_power ZIP1base_power*random.normal(1,.25);
+		power_fraction 0.2;
+		impedance_fraction 0.3;
+		current_fraction 0.5;
+		power_pf 0.9;
+		current_pf 0.6;
+		impedance_pf 0.8;
+	};
+	object waterheater {
+		location INSIDE;
+		water_demand waterdemand3*random.normal(1,.2);
+	};
+}
+
+object multi_recorder {
+	property trip_meter1:measured_real_power,trip_meter2:measured_real_power,trip_meter3:measured_real_power,trip_meter4:measured_real_power,trip_meter5:measured_real_power,trip_meter6:measured_real_power,trip_meter7:measured_real_power,trip_meter8:measured_real_power,trip_meter9:measured_real_power,trip_meter10:measured_real_power,trip_meter11:measured_real_power,trip_meter12:measured_real_power,trip_meter13:measured_real_power,trip_meter14:measured_real_power,trip_meter15:measured_real_power;
+	file "IEEE_13_Node_With_Houses.csv";
+	interval 60;
+	limit 60;
+}

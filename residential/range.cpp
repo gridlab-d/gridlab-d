@@ -218,7 +218,6 @@ int range::create()
 
 	enduse_queue_cooktop = 0.99;
 
-
 	return res;
 
 }
@@ -228,6 +227,7 @@ int range::create()
 int range::init(OBJECT *parent)
 {
 	// @todo This class has serious problems and should be deleted and started from scratch. Fuller 9/27/2013.
+	
 	if(parent != NULL){
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];

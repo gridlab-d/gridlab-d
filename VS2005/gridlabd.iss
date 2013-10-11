@@ -4,9 +4,9 @@ OutputDir=.
 
 ; ++RELEASE++
 SourceDir=.\Win32\Release
-OutputBaseFilename=gridlabd-2.1
+OutputBaseFilename=gridlabd-3.0-win32
 AppName=GridLAB-D
-AppVerName=GridLAB-D 2.1
+AppVerName=GridLAB-D 3.0 RC3
 ; --RELEASE--
 
 ; ++DEBUG++
@@ -16,9 +16,9 @@ AppVerName=GridLAB-D 2.1
 ;AppVerName=GridLAB-D 0.1 Debug
 ; --DEBUG--
 
-AppVersion=0.1
+AppVersion=3.0
 AppPublisher=Pacific Northwest National Laboratory, operated by Battelle
-AppCopyright=Copyright © 2004-2008 Battelle Memorial Institute
+AppCopyright=Copyright © 2004-2013 Battelle Memorial Institute
 AppPublisherURL=http://www.pnl.gov
 ;AppReadmeFile={app}\README.TXT
 ;AppSupportURL=http://gridlab.pnl.gov/support
@@ -26,7 +26,7 @@ AppPublisherURL=http://www.pnl.gov
 ;AppComments=<Include application comments here>
 ;AppContact=GridLAB-D Development Team <gridlabd@pnl.gov>
 VersionInfoDescription=Gridlab-D - Grid Simulator
-VersionInfoVersion=2.1.0.0
+VersionInfoVersion=3.0.0.0
 
 ;AppMutex=<Mutex string to prevent installation while application is running>
 DefaultDirName={pf}\GridLAB-D
@@ -44,18 +44,18 @@ Name: core; Description: Core Files; Types: typical custom; Flags: fixed
 ; ++DEBUG++
 ;Name: "debug"; Description: "Debug Files"; Types: typical custom
 ; --DEBUG--
-Name: modules; Description: Modules; Types: typical custom
-Name: modules\climate; Description: Climate Module; Types: typical custom
-Name: modules\market; Description: Market Module; Types: typical custom
-Name: modules\powerflow; Description: Power Flow Module; Types: typical custom
-Name: modules\residential; Description: Residential Module; Types: typical custom
-Name: modules\tape; Description: Tape Module; Types: typical custom
-Name: modules\legacy; Description: Legacy Modules; Types: typical custom
-Name: modules\legacy\commercial; Description: Commercial Module; Types: typical custom
-Name: modules\legacy\reliability; Description: Reliability Module; Types: typical custom
-Name: modules\legacy\generators; Description: Generators Module; Types: typical custom
-;Name: modules\legacy\network; Description: Network Module; Types: typical custom
-Name: modules\legacy\plc; Description: PLC Module; Types: typical custom
+Name: "core"; Description: "Core Files"; Types: typical custom; Flags: fixed
+Name: "modules"; Description: "Modules"; Types: typical custom
+Name: "modules\climate"; Description: "Climate Module"; Types: typical custom
+Name: "modules\generators"; Description: "Generators Module"; Types: typical custom
+Name: "modules\market"; Description: "Market Module"; Types: typical custom
+;Name: "modules\mysql"; Description: "MYSQL Module"; Types: typical custom
+Name: "modules\network"; Description: "Network Module"; Types: typical custom
+Name: "modules\powerflow"; Description: "Power Flow Module"; Types: typical custom
+Name: "modules\reliability"; Description: "Reliability Module"; Types: typical custom
+Name: "modules\residential"; Description: "Residential Module"; Types: typical custom
+Name: "modules\tape"; Description: "Tape Module"; Types: typical custom
+Name: "samples"; Description: "Sample Models"; Types: typical custom
 Name: samples; Description: Sample Models; Types: typical custom
 Name: Compilers; Description: Download and install MinGW
 Name: Plotting_Tools; Description: Download and install GNUPlot
@@ -144,73 +144,59 @@ Source: msvcp80.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: core
 Source: Microsoft.VC80.CRT.manifest; DestDir: {app}\lib; Flags: ignoreversion; Components: core
 
 ;; core files
-Source: gridlabd.exe; DestDir: {app}\bin; Flags: ignoreversion; Components: core
-; ++RELEASE++
-Source: xerces-c_2_8.dll; DestDir: {app}\bin; Flags: ignoreversion; Components: core
-Source: cppunit.dll; DestDir: {app}\bin; Flags: ignoreversion; Components: core
-; --RELEASE--
-; ++DEBUG++
-;Source: "xerces-c_2_8D.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: core
-;Source: "cppunitd.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: core
-; --DEBUG--
-Source: unitfile.txt; DestDir: {app}\etc; Components: core
-Source: tzinfo.txt; DestDir: {app}\etc; Components: core
-Source: climate.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\climate
-Source: commercial.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\legacy\commercial
-;Source: climateview.dll; DestDir: {app}\lib; Flags: ignoreversion
-;Source: network.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\legacy\network
-Source: plc.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\legacy\plc
-Source: market.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\market
-Source: powerflow.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\powerflow
-Source: residential.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\residential
-Source: generators.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\legacy\generators
-Source: tape.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\tape
-Source: tape_file.dll; DestDir: {app}\lib; Flags: ignoreversion
-Source: tape_memory.dll; DestDir: {app}\lib; Flags: ignoreversion
-Source: tape_odbc.dll; DestDir: {app}\lib; Flags: ignoreversion
-Source: glmjava.dll; DestDir: {app}\lib; Flags: ignoreversion
-;Source: network.dll; DestDir: {app}\lib; Flags: ignoreversion
-;Source: sample.dll; DestDir: {app}\lib; Flags: ignoreversion
-Source: reliability.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\legacy\reliability
-Source: market.dll; DestDir: {app}\lib; Flags: ignoreversion
-Source: generators.dll; DestDir: {app}\lib; Flags: ignoreversion
-Source: tape_plot.dll; DestDir: {app}\lib; Flags: ignoreversion
+Source: "assert.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: core
+Source: "gridlabd.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: core
+Source: "glsolvers.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: core
+Source: "glxmatlab.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: core
+Source: "pthreadVC2.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: core
+;Source: "test_extern_function.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: core
+Source: "tzinfo.txt"; DestDir: "{app}\etc"; Components: core
+Source: "unitfile.txt"; DestDir: "{app}\etc"; Components: core
+Source: "xerces-c_3_1.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: core
+Source: "climate.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\climate
+Source: "generators.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\generators
+Source: "market.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\market
+;Source: "mysql.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\mysql
+Source: "network.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\network
+Source: "powerflow.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\powerflow
+Source: "reliability.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\reliability
+Source: "residential.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\residential
+Source: "tape.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\tape
+Source: "tape_file.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\tape
+Source: "tape_memory.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\tape
+Source: "tape_plot.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\tape
 
 ;; sample files
-Source: pthreadVC2.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\tape
-Source: assert.dll; DestDir: {app}\lib; Flags: ignoreversion
-Source: ..\..\..\models\powerflow_IEEE_4node.glm; DestDir: {app}\samples; Components: samples
-Source: ..\..\..\models\residential_loads.glm; DestDir: {app}\samples
-Source: ..\..\..\models\powerflow_IEEE_37node.glm; DestDir: {app}\samples
-Source: ..\..\..\models\lighting.player; DestDir: {app}\samples
-Source: ..\..\..\core\rt\gridlabd.syn; Check: GetTextPadLocation; DestDir: {code:TextPadDestination}\System; Flags: ignoreversion
+Source: "..\..\..\core\rt\gridlabd.syn"; DestDir: "{code:TextPadDestination}\System"; Flags: ignoreversion; Check: GetTextPadLocation
+Source: "..\..\..\README-WINDOWS.txt"; DestDir: "{app}"
+Source: "..\..\..\core\rt\mingw.conf"; DestDir: "{app}\rt"
+Source: "..\..\..\core\rt\gridlabd.conf"; DestDir: "{app}\rt"; Flags: ignoreversion
+Source: "..\..\..\core\rt\debugger.conf"; DestDir: "{app}\rt"; Flags: ignoreversion
+Source: "..\..\..\core\rt\gnuplot.conf"; DestDir: "{app}\rt"; Flags: ignoreversion
+Source: "..\..\..\core\rt\gridlabd.h"; DestDir: "{app}\rt"; Flags: ignoreversion
+Source: "..\..\..\utilities\wget.exe"; DestDir: "{app}"; Flags: deleteafterinstall
+Source: "..\..\..\utilities\7za.exe"; DestDir: "{app}"
 
-;; debug files
-; ++DEBUG++
-;Source: "gridlabd.pdb"; DestDir: "{app}\lib"; Components: core debug
-;Source: "xerces-c_2_8D.pdb"; DestDir: "{app}\lib"; Components: core
-;Source: "cppunitd.pdb"; DestDir: "{app}\lib"; Components: core
-;Source: "climate.pdb"; DestDir: "{app}\lib"; Components: modules\climate debug
-;Source: "commercial.pdb"; DestDir: "{app}\lib"; Components: modules\commercial debug
-;Source: "network.pdb"; DestDir: "{app}\lib"; Components: modules\network debug
-;Source: "plc.pdb"; DestDir: "{app}\lib"; Components: modules\plc debug
-;Source: "powerflow.pdb"; DestDir: "{app}\lib"; Components: modules\powerflow debug
-;Source: "residential.pdb"; DestDir: "{app}\lib"; Components: modules\residential debug
-;Source: "tape.pdb"; DestDir: "{app}\lib"; Components: modules\tape debug
-; --DEBUG--
-Source: ..\..\..\models\dryer.shape; DestDir: {app}\samples
-Source: ..\..\..\README-WINDOWS.txt; DestDir: {app}
-Source: ..\..\..\core\rt\mingw.conf; DestDir: {app}\rt
-Source: ..\..\..\core\rt\gridlabd.conf; DestDir: {app}\rt; Flags: ignoreversion
-Source: ..\..\..\core\rt\debugger.conf; DestDir: {app}\rt; Flags: ignoreversion
-Source: ..\..\..\core\rt\gnuplot.conf; DestDir: {app}\rt; Flags: ignoreversion
-Source: ..\..\..\core\rt\gridlabd.h; DestDir: {app}\rt; Flags: ignoreversion
+; ++ Removed Files ++
+;Source: commercial.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\legacy\commercial
+;Source: climateview.dll; DestDir: {app}\lib; Flags: ignoreversion
+;Source: network.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\legacy\network
+;Source: plc.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\legacy\plc
+;Source: tape_odbc.dll; DestDir: {app}\lib; Flags: ignoreversion
+;Source: glmjava.dll; DestDir: {app}\lib; Flags: ignoreversion
+;Source: network.dll; DestDir: {app}\lib; Flags: ignoreversion
+;Source: sample.dll; DestDir: {app}\lib; Flags: ignoreversion
+;Source: cppunit.dll; DestDir: {app}\bin; Flags: ignoreversion; Components: core
+
+;Source: ..\..\..\models\powerflow_IEEE_4node.glm; DestDir: {app}\samples; Components: samples
+;Source: ..\..\..\models\residential_loads.glm; DestDir: {app}\samples
+;Source: ..\..\..\models\powerflow_IEEE_37node.glm; DestDir: {app}\samples
+;Source: ..\..\..\models\lighting.player; DestDir: {app}\samples
+;Source: ..\..\..\models\dryer.shape; DestDir: {app}\samples
 ;Source: ..\..\..\climate\tmy\*.zip; DestDir: {app}\tmy
 ;Source: ..\..\..\climate\tmy\extract_tmy; DestDir: {app}\tmy
 ;Source: ..\..\..\climate\tmy\build_pkgs; DestDir: {app}\tmy
-Source: ..\..\..\plc\rt\include\plc.h; DestDir: {app}\rt
-Source: ..\..\..\utilities\wget.exe; DestDir: {app}; Flags: deleteafterinstall
-Source: ..\..\..\utilities\7za.exe; DestDir: {app}
+;Source: ..\..\..\plc\rt\include\plc.h; DestDir: {app}\rt
 
 
 [Registry]

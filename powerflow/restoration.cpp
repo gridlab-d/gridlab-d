@@ -233,7 +233,7 @@ void restoration :: Feeder_id_Mark(int initial_node, int feeder)
 						{ 
 								for (indexbr=0; indexbr<NR_branch_count; indexbr++)
 								{
-									if ((NR_branchdata[indexbr].from == initial_node) && (NR_branchdata[indexbr].to == indexx) && (*NR_branchdata[indexbr].status) == true) // If switch is closed										{
+									if ((NR_branchdata[indexbr].from == initial_node) && (NR_branchdata[indexbr].to == indexx) && (*NR_branchdata[indexbr].status) == 1) // If switch is closed										{
 										Feeder_id_Mark(indexx,feeder);
 								}
 						}
@@ -537,7 +537,7 @@ void restoration::Perform_Reconfiguration(OBJECT *faultobj, TIMESTAMP t0)
 	   conval = Connectivity_Matrix[indexx][indexy];
 	   if ( conval == CONN_SWITCH)
 	   {
-		   if  ((*NR_branchdata[indexbr].status) == true)
+		   if  ((*NR_branchdata[indexbr].status) == 1)
 			   sec_switch_number++;
 		   else 
 			   tie_switch_number++;
@@ -557,7 +557,7 @@ void restoration::Perform_Reconfiguration(OBJECT *faultobj, TIMESTAMP t0)
 	   conval = Connectivity_Matrix[indexx][indexy];
 	   if ( conval == CONN_SWITCH)
 	   {
-		   if  ((*NR_branchdata[indexbr].status) == true)
+		   if  ((*NR_branchdata[indexbr].status) == 1)
 		   {
 				sec_switch[sec_switch_number] = indexbr;
    			    sec_switch_number++;
@@ -953,11 +953,11 @@ void restoration::Perform_Reconfiguration(OBJECT *faultobj, TIMESTAMP t0)
 			 		temp_branch_id = temp_switch.Data[indexz];
 					indexx = ((NR_branchdata[temp_branch_id]).from); 
 					indexy = ((NR_branchdata[temp_branch_id]).to);  		
-					 if ((*NR_branchdata[temp_branch_id].status) == true)   // The switch is closed
+					 if ((*NR_branchdata[temp_branch_id].status) == 1)   // The switch is closed
 						 {
 	//						fprintf(FPCONNECT, "close the switch between  %s and  %s \n", NR_busdata[indexx].name, NR_busdata[indexy].name);
 						 }
-					 else if ((*NR_branchdata[temp_branch_id].status) == false)   // The switch is open	
+					 else if ((*NR_branchdata[temp_branch_id].status) == 0)   // The switch is open	
 						 {
 	//						fprintf(FPCONNECT, "open the switch between  %s and  %s \n", NR_busdata[indexx].name, NR_busdata[indexy].name);
 						 }
@@ -1141,11 +1141,11 @@ void restoration::Perform_Reconfiguration(OBJECT *faultobj, TIMESTAMP t0)
 					temp_branch_id = temp_switch.Data[indexz];
 					indexx = ((NR_branchdata[temp_branch_id]).from); 
 					indexy = ((NR_branchdata[temp_branch_id]).to);  		
-					 if ((*NR_branchdata[temp_branch_id].status) == true)   // The switch is closed
+					 if ((*NR_branchdata[temp_branch_id].status) == 1)   // The switch is closed
 						 {
 							printf("---close the switch between bus %s and bus %s \n", NR_busdata[indexx].name, NR_busdata[indexy].name);
 						 }
-					 else if ((*NR_branchdata[temp_branch_id].status) == false)   // The switch is open	
+					 else if ((*NR_branchdata[temp_branch_id].status) == 0)   // The switch is open	
 						 {
 							printf("---open the switch between bus %s and bus %s \n", NR_busdata[indexx].name, NR_busdata[indexy].name);
 						 }

@@ -360,7 +360,7 @@ void fault_check::search_links(int node_int)
 											NR_busdata[temp_branch.from].Child_Nodes[NR_busdata[temp_branch.from].Child_Node_idx] = temp_branch.to;	//Store the to value
 											NR_busdata[temp_branch.from].Child_Node_idx++;	//Increment the pointer
 										}
-										else if ((rest_object ->Connectivity_Matrix[temp_branch.from][ temp_branch.to] == 3) && (*temp_branch.status == true)) //  if the branch is a closed switch connection
+										else if ((rest_object ->Connectivity_Matrix[temp_branch.from][ temp_branch.to] == 3) && (*temp_branch.status == 1)) //  if the branch is a closed switch connection
 										{
 											NR_busdata[temp_branch.from].Child_Nodes[NR_busdata[temp_branch.from].Child_Node_idx] = temp_branch.to;	//Store the to value
 											NR_busdata[temp_branch.from].Child_Node_idx++;	//Increment the pointer

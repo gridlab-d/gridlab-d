@@ -480,7 +480,7 @@ int pw_recorder::GPSE(){
 		if (((_bstr_t)(_variant_t)pResults[0]).length()){
 			tempstr = _com_util::ConvertBSTRToString((_bstr_t)(_variant_t)pResults[0]);
 			gl_error("Error from GetParametersSingleElement(): %s", tempstr);
-			/* TROUBLESHOOTING 
+			/* TROUBLESHOOT 
 				The call to GetParametersSingleElement failed.  Please review the error message and respond accordingly.
 				Addition COM-related error handling may be found on the MSDN website.
 			 */

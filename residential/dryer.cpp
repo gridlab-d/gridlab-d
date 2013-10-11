@@ -152,7 +152,6 @@ int dryer::create()
 
 int dryer::init(OBJECT *parent)
 {
-
 	OBJECT *hdr = OBJECTHDR(this);
 	if(parent != NULL){
 		if((parent->flags & OF_INIT) != OF_INIT){

@@ -1,0 +1,216 @@
+clock {
+     timezone PST+8PDT;
+     timestamp '2009-01-01 00:00:00';
+     stoptime '2009-01-05 00:00:00';
+}
+
+#define PF=FBS
+
+#set profiler=1;
+#set double_format=%+.12lg
+#set randomseed=10;
+#set relax_naming_rules=1;
+
+module tape;
+module climate;
+module generators;
+module assert;
+
+module powerflow {
+    solver_method ${PF};
+	line_limits FALSE;
+	default_maximum_voltage_error 1e-9;
+};
+
+//#set savefile="test_my_turbine_${PF}.xml"
+
+object climate {
+    tmyfile "Standard_Weather.csv";
+    reader csvreader;
+};
+
+object csv_reader {
+	name csvreader;
+	filename "Standard_Weather.csv";
+}
+
+object overhead_line_conductor:100 {
+	geometric_mean_radius 0.0244;
+	resistance 0.306;
+}
+
+object overhead_line_conductor:101 {
+	geometric_mean_radius 0.00814;
+	resistance 0.592;
+}
+
+object line_spacing:200 {
+	distance_AB 2.5;
+	distance_BC 4.5;
+	distance_AC 7.0;
+	distance_AN 5.656854;
+	distance_BN 4.272002;
+	distance_CN 5.0;
+}
+
+object line_configuration:300 {
+	conductor_A overhead_line_conductor:100;
+	conductor_B overhead_line_conductor:100;
+	conductor_C overhead_line_conductor:100;
+	conductor_N overhead_line_conductor:101;
+	spacing line_spacing:200;
+}
+
+object transformer_configuration:400 {
+	connect_type WYE_WYE;
+	power_rating 6000;
+	primary_voltage 12470;
+	secondary_voltage 4160;
+	resistance 0.01;
+	reactance 0.06;
+	install_type PADMOUNT;
+}
+
+object node:1 {
+	phases "ABCN";
+	bustype SWING;
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7200;
+}
+
+object overhead_line:12 {
+	phases "ABCN";
+	from node:1;
+	to node:2;
+	length 2000;
+	configuration line_configuration:300;
+}
+
+object node:2 {
+	phases "ABCN";
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7200;
+}
+
+object transformer:23 {
+	phases "ABCN";
+	from node:2;
+	to node:3;
+	configuration transformer_configuration:400;
+	name transformer23;
+	object recorder {
+		property power_out_real;
+		interval 900;
+		file test_windpower_${PF}.csv;
+	};
+}
+
+object node:3 {
+	phases "ABCN";
+	voltage_A +2401.777+0.000j;
+	voltage_B -1200.889-2080.000j;
+	voltage_C -1200.889+2080.000j;
+	nominal_voltage 2400;
+}
+
+object overhead_line:34 {
+	phases "ABCN";
+	from node:3;
+	to load:4;
+	length 2500;
+	configuration line_configuration:300;
+}
+
+object load:4 {
+	phases "ABCN";
+	voltage_A +2401.777+0.000j;
+	voltage_B -1200.889-2080.000j;
+	voltage_C -1200.889+2080.000j;
+	constant_power_A +1275000.000+790174.031j;
+	constant_power_B +1800000.000+871779.789j;
+	constant_power_C +2375000.000+780624.750j;
+	maximum_voltage_error 0.001;
+	nominal_voltage 2400;
+}
+
+// Add Vestas wind turbine
+object transformer_configuration:500 {
+	connect_type WYE_WYE;
+	power_rating 3000;
+	primary_voltage 4160;
+	secondary_voltage 600;
+	resistance 0.01;
+	reactance 0.06;
+	install_type PADMOUNT;
+}
+
+object transformer {
+	phases "ABCN";
+	from load:4;
+	to my_meter1;
+	configuration transformer_configuration:500;
+}
+
+object meter {
+	name my_meter1;
+	phases ABCN;
+	nominal_voltage 350;
+}
+
+object windturb_dg {
+	parent my_meter1;
+	phases ABCN;
+	name windturb1;
+	Gen_status ONLINE;
+	Gen_type SYNCHRONOUS;
+	Gen_mode CONSTANTP;
+	Turbine_Model VESTAS_V82;
+	object multi_recorder {
+		file test_wind_power_${PF}1.csv;
+		interval 900;
+		property wind_speed,WSadj,Cp,my_meter1:measured_real_power,total_real_power;
+	};
+}
+
+// Add GE wind turbine
+object transformer_configuration:600 {
+	connect_type WYE_WYE;
+	power_rating 3000;
+	primary_voltage 4160;
+	secondary_voltage 690;
+	resistance 0.01;
+	reactance 0.06;
+	install_type PADMOUNT;
+}
+
+object transformer {
+	phases "ABCN";
+	from load:4;
+	to my_meter2;
+	configuration transformer_configuration:600;
+}
+
+object meter {
+	name my_meter2;
+	phases ABCN;
+	nominal_voltage 400;
+}
+
+object windturb_dg {
+	parent my_meter2;
+	phases ABCN;
+	name windturb2;
+	Gen_status ONLINE;
+	Gen_type SYNCHRONOUS;
+	Gen_mode CONSTANTP;
+	Turbine_Model GE_25MW;
+	object multi_recorder {
+		file test_wind_power_${PF}2.csv;
+		interval 900;
+		property wind_speed,WSadj,Cp,my_meter2:measured_real_power,total_real_power;
+	};
+}

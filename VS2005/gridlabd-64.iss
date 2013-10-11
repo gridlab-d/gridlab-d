@@ -4,9 +4,9 @@ OutputDir=.
 
 ; ++RELEASE++
 SourceDir=.\x64\Release
-OutputBaseFilename=gridlabd-2.0
+OutputBaseFilename=gridlabd-3.0-x64
 AppName=GridLAB-D
-AppVerName=GridLAB-D 2.0
+AppVerName=GridLAB-D 3.0 RC3
 ; --RELEASE--
 
 ; ++DEBUG++
@@ -16,9 +16,9 @@ AppVerName=GridLAB-D 2.0
 ;AppVerName=GridLAB-D 0.1 Debug
 ; --DEBUG--
 
-AppVersion=0.1
+AppVersion=3.0
 AppPublisher=Pacific Northwest National Laboratory, operated by Battelle
-AppCopyright=Copyright © 2004-2008 Battelle Memorial Institute
+AppCopyright=Copyright © 2004-2013 Battelle Memorial Institute
 AppPublisherURL=http://www.pnl.gov
 ;AppReadmeFile={app}\README.TXT
 ;AppSupportURL=http://gridlab.pnl.gov/support
@@ -26,7 +26,7 @@ AppPublisherURL=http://www.pnl.gov
 ;AppComments=<Include application comments here>
 ;AppContact=GridLAB-D Development Team <gridlabd@pnl.gov>
 VersionInfoDescription=Gridlab-D - Grid Simulator
-VersionInfoVersion=2.0.0.0
+VersionInfoVersion=3.0.0.0
 
 ;AppMutex=<Mutex string to prevent installation while application is running>
 DefaultDirName={pf}\GridLAB-D
@@ -41,83 +41,78 @@ Name: typical; Description: Typical Installation
 Name: custom; Description: Custom Installation; Flags: iscustom
 
 [Components]
-Name: core; Description: Core Files; Types: typical custom; Flags: fixed
-; ++DEBUG++
-;Name: "debug"; Description: "Debug Files"; Types: typical custom
-; --DEBUG--
-Name: modules; Description: Modules; Types: typical custom
-Name: modules\climate; Description: Climate Module; Types: typical custom
-Name: modules\market; Description: Market Module; Types: typical custom
-Name: modules\powerflow; Description: Power Flow Module; Types: typical custom
-Name: modules\residential; Description: Residential Module; Types: typical custom
-Name: modules\tape; Description: Tape Module; Types: typical custom
-Name: modules\legacy; Description: Legacy Modules; Types: typical custom
-Name: modules\legacy\commercial; Description: Commercial Module; Types: typical custom
-Name: modules\legacy\reliability; Description: Reliability Module; Types: typical custom
-Name: modules\legacy\generators; Description: Generators Module; Types: typical custom
-;Name: modules\legacy\network; Description: Network Module; Types: typical custom
-Name: modules\legacy\plc; Description: PLC Module; Types: typical custom
-Name: samples; Description: Sample Models; Types: typical custom
-Name: Compilers; Description: Download and install MinGW
-Name: Plotting_Tools; Description: Download and install GNUPlot
-Name: Climate_Data; Description: Download climate data files
-Name: Climate_Data\US; Description: US climate data
-Name: Climate_Data\US\North; Description: Northern US climate data
-Name: Climate_Data\US\North\CN; Description: Conneticut climate data
-Name: Climate_Data\US\North\IA; Description: Iowa climate data
-Name: Climate_Data\US\North\ID; Description: Idaho climate data
-Name: Climate_Data\US\North\IL; Description: Illinois climate data
-Name: Climate_Data\US\North\IN; Description: Indiana climate data
-Name: Climate_Data\US\North\MA; Description: Massachusetts climate data
-Name: Climate_Data\US\North\ME; Description: Maine climate data
-Name: Climate_Data\US\North\MI; Description: Michigan climate data
-Name: Climate_Data\US\North\MN; Description: Minnesota climate data
-Name: Climate_Data\US\North\MT; Description: Montana climate data
-Name: Climate_Data\US\North\ND; Description: North Dakota climate data
-Name: Climate_Data\US\North\NE; Description: Nebraska climate data
-Name: Climate_Data\US\North\NH; Description: New Hampshire climate data
-Name: Climate_Data\US\North\NJ; Description: New Jersey climate data
-Name: Climate_Data\US\North\NY; Description: New York climate data
-Name: Climate_Data\US\North\OH; Description: Ohio climate data
-Name: Climate_Data\US\North\PA; Description: Pennsylvania climate data
-Name: Climate_Data\US\North\RI; Description: Rhode Island climate data
-Name: Climate_Data\US\North\SD; Description: South Dakota climate data
-Name: Climate_Data\US\North\VT; Description: Vermont climate data
-Name: Climate_Data\US\North\WI; Description: Wisconsin climate data
-Name: Climate_Data\US\North\WY; Description: Wyoming climate data
-Name: Climate_Data\US\Central; Description: Central US climate data
-Name: Climate_Data\US\Central\AR; Description: Arkansas climate data
-Name: Climate_Data\US\Central\DE; Description: Delaware climate data
-Name: Climate_Data\US\Central\KS; Description: Kansas climate data
-Name: Climate_Data\US\Central\KY; Description: Kentucky climate data
-Name: Climate_Data\US\Central\MD; Description: Maryland climate data
-Name: Climate_Data\US\Central\MO; Description: Missouri climate data
-Name: Climate_Data\US\Central\NC; Description: North Carolina climate data
-Name: Climate_Data\US\Central\OK; Description: Oklahoma climate data
-Name: Climate_Data\US\Central\SC; Description: South Carolina climate data
-Name: Climate_Data\US\Central\TN; Description: Tennessee climate data
-Name: Climate_Data\US\Central\VA; Description: Virginia climate data
-Name: Climate_Data\US\Central\WV; Description: West Virginia climate data
-Name: Climate_Data\US\South; Description: Southern US climate data
-Name: Climate_Data\US\South\AL; Description: Alabama climate data
-Name: Climate_Data\US\South\FL; Description: Florida climate data
-Name: Climate_Data\US\South\GA; Description: Georgia climate data
-Name: Climate_Data\US\South\LA; Description: Louisiana climate data
-Name: Climate_Data\US\South\MS; Description: Mississippi climate data
-Name: Climate_Data\US\South\TX; Description: Texas climate data
-Name: Climate_Data\US\Southwest; Description: Southwestern US climate data
-Name: Climate_Data\US\Southwest\AZ; Description: Arizona climate data
-Name: Climate_Data\US\Southwest\CO; Description: Colorado climate data
-Name: Climate_Data\US\Southwest\NM; Description: New Mexico climate data
-Name: Climate_Data\US\Southwest\NV; Description: Nevada climate data
-Name: Climate_Data\US\Southwest\UT; Description: Utah climate data
-Name: Climate_Data\US\West; Description: Western US climate data Region
-Name: Climate_Data\US\West\CA; Description: California climate data
-Name: Climate_Data\US\West\OR; Description: Oregon climate data
-Name: Climate_Data\US\West\WA; Description: Washington climate data
-Name: Climate_Data\US\Other; Description: Non-Continental US climate data
-Name: Climate_Data\US\Other\AK; Description: Alaska climate data
-Name: Climate_Data\US\Other\HI; Description: Hawaii climate data
+Name: "core"; Description: "Core Files"; Types: typical custom; Flags: fixed
+Name: "modules"; Description: "Modules"; Types: typical custom
+Name: "modules\climate"; Description: "Climate Module"; Types: typical custom
+Name: "modules\generators"; Description: "Generators Module"; Types: typical custom
+Name: "modules\market"; Description: "Market Module"; Types: typical custom
+;Name: "modules\mysql"; Description: "MYSQL Module"; Types: typical custom
+Name: "modules\network"; Description: "Network Module"; Types: typical custom
+Name: "modules\powerflow"; Description: "Power Flow Module"; Types: typical custom
+Name: "modules\reliability"; Description: "Reliability Module"; Types: typical custom
+Name: "modules\residential"; Description: "Residential Module"; Types: typical custom
+Name: "modules\tape"; Description: "Tape Module"; Types: typical custom
+Name: "samples"; Description: "Sample Models"; Types: typical custom
+Name: "Compilers"; Description: "Download and install MinGW"
+Name: "Plotting_Tools"; Description: "Download and install GNUPlot"
+Name: "Climate_Data"; Description: "Download climate data files"
+Name: "Climate_Data\US"; Description: "US climate data"
+Name: "Climate_Data\US\North"; Description: "Northern US climate data"
+Name: "Climate_Data\US\North\CN"; Description: "Conneticut climate data"
+Name: "Climate_Data\US\North\IA"; Description: "Iowa climate data"
+Name: "Climate_Data\US\North\ID"; Description: "Idaho climate data"
+Name: "Climate_Data\US\North\IL"; Description: "Illinois climate data"
+Name: "Climate_Data\US\North\IN"; Description: "Indiana climate data"
+Name: "Climate_Data\US\North\MA"; Description: "Massachusetts climate data"
+Name: "Climate_Data\US\North\ME"; Description: "Maine climate data"
+Name: "Climate_Data\US\North\MI"; Description: "Michigan climate data"
+Name: "Climate_Data\US\North\MN"; Description: "Minnesota climate data"
+Name: "Climate_Data\US\North\MT"; Description: "Montana climate data"
+Name: "Climate_Data\US\North\ND"; Description: "North Dakota climate data"
+Name: "Climate_Data\US\North\NE"; Description: "Nebraska climate data"
+Name: "Climate_Data\US\North\NH"; Description: "New Hampshire climate data"
+Name: "Climate_Data\US\North\NJ"; Description: "New Jersey climate data"
+Name: "Climate_Data\US\North\NY"; Description: "New York climate data"
+Name: "Climate_Data\US\North\OH"; Description: "Ohio climate data"
+Name: "Climate_Data\US\North\PA"; Description: "Pennsylvania climate data"
+Name: "Climate_Data\US\North\RI"; Description: "Rhode Island climate data"
+Name: "Climate_Data\US\North\SD"; Description: "South Dakota climate data"
+Name: "Climate_Data\US\North\VT"; Description: "Vermont climate data"
+Name: "Climate_Data\US\North\WI"; Description: "Wisconsin climate data"
+Name: "Climate_Data\US\North\WY"; Description: "Wyoming climate data"
+Name: "Climate_Data\US\Central"; Description: "Central US climate data"
+Name: "Climate_Data\US\Central\AR"; Description: "Arkansas climate data"
+Name: "Climate_Data\US\Central\DE"; Description: "Delaware climate data"
+Name: "Climate_Data\US\Central\KS"; Description: "Kansas climate data"
+Name: "Climate_Data\US\Central\KY"; Description: "Kentucky climate data"
+Name: "Climate_Data\US\Central\MD"; Description: "Maryland climate data"
+Name: "Climate_Data\US\Central\MO"; Description: "Missouri climate data"
+Name: "Climate_Data\US\Central\NC"; Description: "North Carolina climate data"
+Name: "Climate_Data\US\Central\OK"; Description: "Oklahoma climate data"
+Name: "Climate_Data\US\Central\SC"; Description: "South Carolina climate data"
+Name: "Climate_Data\US\Central\TN"; Description: "Tennessee climate data"
+Name: "Climate_Data\US\Central\VA"; Description: "Virginia climate data"
+Name: "Climate_Data\US\Central\WV"; Description: "West Virginia climate data"
+Name: "Climate_Data\US\South"; Description: "Southern US climate data"
+Name: "Climate_Data\US\South\AL"; Description: "Alabama climate data"
+Name: "Climate_Data\US\South\FL"; Description: "Florida climate data"
+Name: "Climate_Data\US\South\GA"; Description: "Georgia climate data"
+Name: "Climate_Data\US\South\LA"; Description: "Louisiana climate data"
+Name: "Climate_Data\US\South\MS"; Description: "Mississippi climate data"
+Name: "Climate_Data\US\South\TX"; Description: "Texas climate data"
+Name: "Climate_Data\US\Southwest"; Description: "Southwestern US climate data"
+Name: "Climate_Data\US\Southwest\AZ"; Description: "Arizona climate data"
+Name: "Climate_Data\US\Southwest\CO"; Description: "Colorado climate data"
+Name: "Climate_Data\US\Southwest\NM"; Description: "New Mexico climate data"
+Name: "Climate_Data\US\Southwest\NV"; Description: "Nevada climate data"
+Name: "Climate_Data\US\Southwest\UT"; Description: "Utah climate data"
+Name: "Climate_Data\US\West"; Description: "Western US climate data Region"
+Name: "Climate_Data\US\West\CA"; Description: "California climate data"
+Name: "Climate_Data\US\West\OR"; Description: "Oregon climate data"
+Name: "Climate_Data\US\West\WA"; Description: "Washington climate data"
+Name: "Climate_Data\US\Other"; Description: "Non-Continental US climate data"
+Name: "Climate_Data\US\Other\AK"; Description: "Alaska climate data"
+Name: "Climate_Data\US\Other\HI"; Description: "Hawaii climate data"
 
 [Tasks]
 Name: environment; Description: Add GridLAB-D to &PATH environment variable; GroupDescription: Environment
@@ -137,81 +132,67 @@ Name: {app}\rt
 
 [Files]
 ;; Microsoft CRT redist
-Source: Microsoft.VC80.CRT.manifest; DestDir: {app}\bin; Flags: ignoreversion; Components: core
-Source: msvcp80.dll; DestDir: {app}\bin; Flags: ignoreversion; Components: core
-Source: msvcr80.dll; DestDir: {app}\bin; Flags: ignoreversion; Components: core
-Source: msvcr80.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: core
-Source: msvcp80.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: core
-Source: Microsoft.VC80.CRT.manifest; DestDir: {app}\lib; Flags: ignoreversion; Components: core
+Source: "Microsoft.VC80.CRT.manifest"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: core
+Source: "msvcp80.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: core
+Source: "msvcr80.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: core
+Source: "msvcr80.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: core
+Source: "msvcp80.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: core
+Source: "Microsoft.VC80.CRT.manifest"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: core
 
 ;; core files
-Source: gridlabd.exe; DestDir: {app}\bin; Flags: ignoreversion; Components: core
-; ++RELEASE++
-Source: xerces-c_2_8.dll; DestDir: {app}\bin; Flags: ignoreversion; Components: core
-Source: cppunit.dll; DestDir: {app}\bin; Flags: ignoreversion; Components: core
-; --RELEASE--
-; ++DEBUG++
-;Source: "xerces-c_2_8D.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: core
-;Source: "cppunitd.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: core
-; --DEBUG--
-Source: unitfile.txt; DestDir: {app}\etc; Components: core
-Source: tzinfo.txt; DestDir: {app}\etc; Components: core
-Source: climate.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\climate
-Source: commercial.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\legacy\commercial
-;Source: climateview.dll; DestDir: {app}\lib; Flags: ignoreversion
-;Source: network.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\legacy\network
-Source: plc.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\legacy\plc
-Source: market.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\market
-Source: powerflow.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\powerflow
-Source: residential.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\residential
-Source: generators.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\legacy\generators
-Source: tape.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\tape
-Source: tape_file.dll; DestDir: {app}\lib; Flags: ignoreversion
-Source: tape_memory.dll; DestDir: {app}\lib; Flags: ignoreversion
-;;Source: tape_odbc.dll; DestDir: {app}\lib; Flags: ignoreversion
-;;Source: glmjava.dll; DestDir: {app}\lib; Flags: ignoreversion
-;Source: network.dll; DestDir: {app}\lib; Flags: ignoreversion
-;Source: sample.dll; DestDir: {app}\lib; Flags: ignoreversion
-Source: reliability.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\legacy\reliability
-Source: generators.dll; DestDir: {app}\lib; Flags: ignoreversion
-Source: tape_plot.dll; DestDir: {app}\lib; Flags: ignoreversion
+Source: "assert.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: core
+Source: "gridlabd.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: core
+Source: "glsolvers.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: core
+Source: "glxmatlab.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: core
+Source: "pthreadVC2.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: core
+Source: "test_extern_function.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: core
+Source: "tzinfo.txt"; DestDir: "{app}\etc"; Components: core
+Source: "unitfile.txt"; DestDir: "{app}\etc"; Components: core
+Source: "xerces-c_3_1.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: core
+Source: "climate.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\climate
+Source: "generators.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\generators
+Source: "market.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\market
+;Source: "mysql.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\mysql
+Source: "network.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\network
+Source: "powerflow.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\powerflow
+Source: "reliability.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\reliability
+Source: "residential.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\residential
+Source: "tape.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\tape
+Source: "tape_file.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\tape
+Source: "tape_memory.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\tape
+Source: "tape_plot.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\tape
 
 ;; sample files
-Source: pthreadVC2.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\tape
-Source: assert.dll; DestDir: {app}\lib; Flags: ignoreversion
-Source: ..\..\..\models\powerflow_IEEE_4node.glm; DestDir: {app}\samples; Components: samples
-Source: ..\..\..\models\residential_loads.glm; DestDir: {app}\samples
-Source: ..\..\..\models\powerflow_IEEE_37node.glm; DestDir: {app}\samples
-Source: ..\..\..\models\lighting.player; DestDir: {app}\samples
-Source: ..\..\..\core\rt\gridlabd.syn; Check: GetTextPadLocation; DestDir: {code:TextPadDestination}\System; Flags: ignoreversion
+Source: "..\..\..\core\rt\gridlabd.syn"; DestDir: "{code:TextPadDestination}\System"; Flags: ignoreversion; Check: GetTextPadLocation
+Source: "..\..\..\README-WINDOWS.txt"; DestDir: "{app}"
+Source: "..\..\..\core\rt\mingw.conf"; DestDir: "{app}\rt"
+Source: "..\..\..\core\rt\gridlabd.conf"; DestDir: "{app}\rt"; Flags: ignoreversion
+Source: "..\..\..\core\rt\debugger.conf"; DestDir: "{app}\rt"; Flags: ignoreversion
+Source: "..\..\..\core\rt\gnuplot.conf"; DestDir: "{app}\rt"; Flags: ignoreversion
+Source: "..\..\..\core\rt\gridlabd.h"; DestDir: "{app}\rt"; Flags: ignoreversion
+Source: "..\..\..\utilities\wget.exe"; DestDir: "{app}"; Flags: deleteafterinstall
+Source: "..\..\..\utilities\7za.exe"; DestDir: "{app}"
 
-;; debug files
-; ++DEBUG++
-;Source: "gridlabd.pdb"; DestDir: "{app}\lib"; Components: core debug
-;Source: "xerces-c_2_8D.pdb"; DestDir: "{app}\lib"; Components: core
-;Source: "cppunitd.pdb"; DestDir: "{app}\lib"; Components: core
-;Source: "climate.pdb"; DestDir: "{app}\lib"; Components: modules\climate debug
-;Source: "commercial.pdb"; DestDir: "{app}\lib"; Components: modules\commercial debug
-;Source: "network.pdb"; DestDir: "{app}\lib"; Components: modules\network debug
-;Source: "plc.pdb"; DestDir: "{app}\lib"; Components: modules\plc debug
-;Source: "powerflow.pdb"; DestDir: "{app}\lib"; Components: modules\powerflow debug
-;Source: "residential.pdb"; DestDir: "{app}\lib"; Components: modules\residential debug
-;Source: "tape.pdb"; DestDir: "{app}\lib"; Components: modules\tape debug
-; --DEBUG--
-Source: ..\..\..\models\dryer.shape; DestDir: {app}\samples
-Source: ..\..\..\README-WINDOWS.txt; DestDir: {app}
-Source: ..\..\..\core\rt\mingw.conf; DestDir: {app}\rt
-Source: ..\..\..\core\rt\gridlabd.conf; DestDir: {app}\rt; Flags: ignoreversion
-Source: ..\..\..\core\rt\debugger.conf; DestDir: {app}\rt; Flags: ignoreversion
-Source: ..\..\..\core\rt\gnuplot.conf; DestDir: {app}\rt; Flags: ignoreversion
-Source: ..\..\..\core\rt\gridlabd.h; DestDir: {app}\rt; Flags: ignoreversion
+; ++ Removed Files ++
+;Source: commercial.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\legacy\commercial
+;Source: climateview.dll; DestDir: {app}\lib; Flags: ignoreversion
+;Source: network.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\legacy\network
+;Source: plc.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\legacy\plc
+;Source: tape_odbc.dll; DestDir: {app}\lib; Flags: ignoreversion
+;Source: glmjava.dll; DestDir: {app}\lib; Flags: ignoreversion
+;Source: network.dll; DestDir: {app}\lib; Flags: ignoreversion
+;Source: sample.dll; DestDir: {app}\lib; Flags: ignoreversion
+;Source: cppunit.dll; DestDir: {app}\bin; Flags: ignoreversion; Components: core
+
+;Source: ..\..\..\models\powerflow_IEEE_4node.glm; DestDir: {app}\samples; Components: samples
+;Source: ..\..\..\models\residential_loads.glm; DestDir: {app}\samples
+;Source: ..\..\..\models\powerflow_IEEE_37node.glm; DestDir: {app}\samples
+;Source: ..\..\..\models\lighting.player; DestDir: {app}\samples
+;Source: ..\..\..\models\dryer.shape; DestDir: {app}\samples
 ;Source: ..\..\..\climate\tmy\*.zip; DestDir: {app}\tmy
 ;Source: ..\..\..\climate\tmy\extract_tmy; DestDir: {app}\tmy
 ;Source: ..\..\..\climate\tmy\build_pkgs; DestDir: {app}\tmy
-Source: ..\..\..\plc\rt\include\plc.h; DestDir: {app}\rt
-Source: ..\..\..\utilities\wget.exe; DestDir: {app}; Flags: deleteafterinstall
-Source: ..\..\..\utilities\7za.exe; DestDir: {app}
-
+;Source: ..\..\..\plc\rt\include\plc.h; DestDir: {app}\rt
 
 [Registry]
 Root: HKCU; SubKey: Environment; ValueType: string; ValueName: GLPATH; ValueData: "{app}\bin;{app}\etc;{app}\lib;{app}\samples;{app}\rt;{app}\tmy"; Flags: uninsdeletevalue deletevalue; Check: not (IsAdminLoggedOn() or IsPowerUserLoggedOn()); Tasks: overwriteglpath

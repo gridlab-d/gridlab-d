@@ -2447,7 +2447,7 @@ FORECAST *forecast_create(OBJECT *obj, char *specs)
 	fc = malloc(sizeof(FORECAST));
 	if ( fc==NULL ) 
 		throw_exception("forecast_create(): memory allocation failed");
-		/* TROUBLESHOOTING
+		/* TROUBLESHOOT
 		   The forecast_create function could not allocate memory for 
 		   the FORECAST entity.  This is probably due to a lack of system
 		   memory or a problem with the memory allocation system.  Free up system
@@ -2521,7 +2521,7 @@ void forecast_save(FORECAST *fc, TIMESTAMP ts, int32 tstep, int n_values, double
 		fc->values = malloc( n_values * sizeof(double) );
 		if ( fc->values == NULL ) 
 			throw_exception("forecast_save(): memory allocation failed");
-			/* TROUBLESHOOTING
+			/* TROUBLESHOOT
 			   The forecast_create function could not allocate memory for 
 			   the FORECAST entity.  This is probably due to a lack of system
 			   memory or a problem with the memory allocation system.  Free up system

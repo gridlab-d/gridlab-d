@@ -9,8 +9,8 @@
 EXPORT int isa_link(OBJECT *obj, char *classname);
 
 #define impedance(X) (B_mat[X][X])
-#define LS_CLOSED true	//Changed from enums so it could be used by restoration
-#define LS_OPEN false
+//#define LS_CLOSED true	//Changed from enums so it could be used by restoration
+//#define LS_OPEN false
 
 typedef enum {
 		NORMAL=0,			///< defines just a normal link/transformer
@@ -64,8 +64,15 @@ public: /// @todo make this private and create interfaces to control values
 	double link_rating[2];		/**< Values for current line rating - gives individual segments the ability to set */
 	double *get_double(OBJECT *obj, char *name);	/**< Gets address of double - mainly for mean_repair_time */
 public:
-	bool status;	///< link status (open disconnect nodes)
-	bool prev_status;	///< Previous link status (used for recalculation detection)
+	typedef enum {
+		LS_OPEN=0,			///< defines that that link is open
+		LS_CLOSED=1			///< defines that that link is closed
+	} STATUS;
+	enumeration status;
+	//bool status;	///< link status (open disconnect nodes)
+	enumeration prev_status;
+	//bool prev_status;	///< Previous link status (used for recalculation detection)
+
 	bool current_accumulated;	///< Flag to indicate if NR current has been "handled" yet
 	bool check_link_limits;	///< Flag to see if this particular link needs limits checked
 	OBJECT *from;			///< from_node - source node
@@ -108,11 +115,11 @@ public:
 	class node *get_to(void) const;
 	set get_flow(class node **from, class node **to) const; /* determine flow direction (return phases on which flow is reverse) */
 
-	inline bool open(void) { bool previous=status; status=LS_OPEN; return previous;};
-	inline bool close(void) { bool previous=status; status=LS_CLOSED; return previous;};
-	inline bool is_open(void) const { return status==LS_OPEN;};
-	inline bool is_closed(void) const { return status==LS_CLOSED;};
-	inline bool get_status(void) const {return status;};
+	inline enumeration open(void) { enumeration previous=status; status=LS_OPEN; return previous;};
+	inline enumeration close(void) { enumeration previous=status; status=LS_CLOSED; return previous;};
+	inline enumeration is_open(void) const { return status==LS_OPEN;};
+	inline enumeration is_closed(void) const { return status==LS_CLOSED;};
+	inline enumeration get_status(void) const {return status;};
 
 	bool is_frequency_nominal();
 	bool is_voltage_nominal();

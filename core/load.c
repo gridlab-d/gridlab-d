@@ -235,7 +235,7 @@ int inline_code_init(void)
 		code_block = malloc(global_inline_block_size);
 		if ( code_block==NULL ) {
 			output_error("code_block malloc failed (inline_block_size=%d)", global_inline_block_size);
-			/* TROUBLESHOOTING
+			/* TROUBLESHOOT
 			   The memory allocation for the inline code block failed.
 			   Try freeing up memory or reducing the size of the inline blocks (inline_block_size global variable).
 			 */
@@ -248,7 +248,7 @@ int inline_code_init(void)
 		global_block = malloc(global_inline_block_size);
 		if ( global_block==NULL ) {
 			output_error("global_block malloc failed (inline_block_size=%d)", global_inline_block_size);
-			/* TROUBLESHOOTING
+			/* TROUBLESHOOT
 			   The memory allocation for the inline global code block failed.
 			   Try freeing up memory or reducing the size of the inline blocks (inline_block_size global variable).
 			 */
@@ -261,7 +261,7 @@ int inline_code_init(void)
 		init_block = malloc(global_inline_block_size);
 		if ( init_block==NULL ) {
 			output_error("init_block malloc failed (inline_block_size=%d)", global_inline_block_size);
-			/* TROUBLESHOOTING
+			/* TROUBLESHOOT
 			   The memory allocation for the inline init block failed.
 			   Try freeing up memory or reducing the size of the inline blocks (inline_block_size global variable).
 			 */
