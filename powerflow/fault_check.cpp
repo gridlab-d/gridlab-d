@@ -100,6 +100,19 @@ int fault_check::init(OBJECT *parent)
 		may change this.  Please restrict yourself to one fault_check object in the mean time.
 		*/
 	}
+	
+
+	//Make sure the eventgen_object is an actual eventgen object.
+	if(rel_eventgen != NULL){
+		if(!gl_object_isa(rel_eventgen,"eventgen")){
+			gl_error("fault_check:%s %s is not an eventgen object. Please specify the name of an eventgen object.",obj->name,rel_eventgen);
+			return 0;
+			/*  TROUBLESHOOT
+			The property eventgen_object was given the name of an object that is not an eventgen object.
+			Please provide the name of an eventgen object located in your file.
+			*/
+		}
+	}
 
 	//By default, kill the file - open and close it
 	if (output_filename[0] != '\0')	//Make sure it isn't empty
