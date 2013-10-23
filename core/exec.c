@@ -1229,7 +1229,7 @@ TIMESTAMP sync_heartbeats(void)
 /* this function synchronizes all internal behaviors */
 TIMESTAMP syncall_internals(TIMESTAMP t1)
 {
-	TIMESTAMP h1, h2, s1, s2, s3, s4, s5, s6, se;
+	TIMESTAMP h1, h2, s1, s2, s3, s4, s5, s6, se, sa;
 
 	/* external link must be first */
 	h1 = link_syncall(t1);
@@ -1249,7 +1249,17 @@ TIMESTAMP syncall_internals(TIMESTAMP t1)
 	se = absolute_timestamp(earliest_timestamp(s1,s2,s3,s4,s5,s6,TS_ZERO));
 
 	/* final event */
-	return earliest_timestamp(h1,h2,se!=TS_NEVER?-se:TS_NEVER,TS_ZERO);
+	sa = earliest_timestamp(h1,h2,se!=TS_NEVER?-se:TS_NEVER,TS_ZERO);
+
+		// Round off to the minimum timestep
+	if (global_minimum_timestep>1 && absolute_timestamp(sa)>global_clock && sa<TS_NEVER)
+	{
+		if (sa > 0)
+			sa = (((sa-1)/global_minimum_timestep)+1)*global_minimum_timestep;
+		else
+			sa = -(((-sa-1)/global_minimum_timestep)+1)*global_minimum_timestep;
+	}
+	return sa;
 }
 
 void exec_sleep(unsigned int usec)
