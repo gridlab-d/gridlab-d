@@ -432,7 +432,8 @@ libdir="@libdir@"
 pkglibdir="$libdir/@PACKAGE@"
 
 BINPATH=`dirname $0`
-if test "x$BINPATH" != "x$exec_prefix"; then
+#if test "x$BINPATH" != "x$exec_prefix"; then
+if test "${BINPATH#*$exec_prefix}" == "$BINPATH"; then
   $as_echo "running gridlabd from outside installation exec_prefix"
 fi
 

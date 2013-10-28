@@ -6,7 +6,7 @@ OutputDir=.
 SourceDir=.\x64\Release
 OutputBaseFilename=gridlabd-3.0-x64
 AppName=GridLAB-D
-AppVerName=GridLAB-D 3.0 RC3
+AppVerName=GridLAB-D 3.0 RC4
 ; --RELEASE--
 
 ; ++DEBUG++
@@ -163,6 +163,29 @@ Source: "tape_memory.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Component
 Source: "tape_plot.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\tape
 
 ;; sample files
+Source: "..\..\..\models\climate_csvreader_example.glm"; DestDir: "{app}\samples"
+Source: "..\..\..\models\collector_example.glm"; DestDir: "{app}\samples"
+Source: "..\..\..\models\diesel_deltamode_load_player_A.csv"; DestDir: "{app}\samples"
+Source: "..\..\..\models\diesel_deltamode_load_player_B.csv"; DestDir: "{app}\samples"
+Source: "..\..\..\models\diesel_deltamode_load_player_C.csv"; DestDir: "{app}\samples"
+Source: "..\..\..\models\Four_quadrant_inverter_example.glm"; DestDir: "{app}\samples"
+Source: "..\..\..\models\house_HVAC_example.glm"; DestDir: "{app}\samples"
+Source: "..\..\..\models\IEEE_13_Node_Test_Feeder.glm"; DestDir: "{app}\samples"
+Source: "..\..\..\models\IEEE_13_Node_With_Houses.glm"; DestDir: "{app}\samples"
+Source: "..\..\..\models\passive_controller_example.glm"; DestDir: "{app}\samples"
+Source: "..\..\..\models\random_fault_generator_example.glm"; DestDir: "{app}\samples"
+Source: "..\..\..\models\residential_zipload_example.glm"; DestDir: "{app}\samples"
+Source: "..\..\..\models\Standard_Weather.csv"; DestDir: "{app}\samples"
+Source: "..\..\..\models\subsecond_diesel_generator_example.glm"; DestDir: "{app}\samples"
+Source: "..\..\..\models\taxonomy_feeder_R1-12.47-1.glm"; DestDir: "{app}\samples"
+Source: "..\..\..\models\transactive_controller_example.glm"; DestDir: "{app}\samples"
+Source: "..\..\..\models\WA-Seattle.tmy2"; DestDir: "{app}\samples"
+Source: "..\..\..\models\WA-Yakima.tmy2"; DestDir: "{app}\samples"
+Source: "..\..\..\models\waterheater_example.glm"; DestDir: "{app}\samples"
+Source: "..\..\..\models\weather.csv"; DestDir: "{app}\samples"
+Source: "..\..\..\models\wind_turbine_example.glm"; DestDir: "{app}\samples"
+
+;; other files
 Source: "..\..\..\core\rt\gridlabd.syn"; DestDir: "{code:TextPadDestination}\System"; Flags: ignoreversion; Check: GetTextPadLocation
 Source: "..\..\..\README-WINDOWS.txt"; DestDir: "{app}"
 Source: "..\..\..\core\rt\mingw.conf"; DestDir: "{app}\rt"
@@ -172,6 +195,7 @@ Source: "..\..\..\core\rt\gnuplot.conf"; DestDir: "{app}\rt"; Flags: ignoreversi
 Source: "..\..\..\core\rt\gridlabd.h"; DestDir: "{app}\rt"; Flags: ignoreversion
 Source: "..\..\..\utilities\wget.exe"; DestDir: "{app}"; Flags: deleteafterinstall
 Source: "..\..\..\utilities\7za.exe"; DestDir: "{app}"
+Source: "..\..\..\core\gridlabd.htm"; DestDir: "{app}"
 
 ; ++ Removed Files ++
 ;Source: commercial.dll; DestDir: {app}\lib; Flags: ignoreversion; Components: modules\legacy\commercial
