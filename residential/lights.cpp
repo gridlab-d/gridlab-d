@@ -99,7 +99,7 @@ int lights::create(void)
 	load.power_fraction = load.current_fraction = load.impedance_fraction = 0;
 	load.power = load.admittance = load.current = load.total = complex(0,0,J);
 	load.voltage_factor = 1.0;
-	load.power_factor = 0.95;
+	//load.power_factor = 0.95;
 	load.breaker_amps = 0;
 
 	return res;

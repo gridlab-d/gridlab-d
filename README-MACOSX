@@ -3,10 +3,24 @@ Copyright (C) 2009 Battelle Memorial Institute
 
 Building GridLAB-D with the Auto-Toolset Under Linux and Other Unix Variants
 You must have autoconf, automake, libtool, xerces-c and cppunit install to
-build GridLAB-D in this way.
+build GridLAB-D in this way. With newer versions of the mac os, you will also
+need gnu sed symlinked to sed.  To install gnu sed:
 
-*NOTICE* If you are building from a source distribution and your OS is 10.x you
-must download and install a gnu compatible sed on your machine in order to build.
+Install homebrew
+  - Follow instructions on http://brew.sh/
+
+Run the following commands:
+      % brew doctor
+      % brew install sed
+
+Symlink gsed to sed
+      % ln -s /usr/local/bin/gsed /usr/local/bin/sed
+
+Make sure symlinked sed is the first instance of sed in the path
+      % which sed
+
+If /usr/local/bin/sed is not the response, put /usr/local/bin first in the path
+      % export PATH=/usr/local/bin:$PATH
 
 If you are building from a source distribution you must first run:
 
