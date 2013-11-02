@@ -500,6 +500,18 @@ int node::init(OBJECT *parent)
 				last_child_power[2][0] = last_child_power[2][1] = last_child_power[2][2] = complex(0,0);
 				last_child_current12 = 0.0;
 			}//end no issues phase
+
+			//Make sure nominal voltages match
+			if (nominal_voltage != parNode->nominal_voltage)
+			{
+				gl_warning("Node:%s does not have the same nominal voltage as its parent - copying voltage from parent.",(obj->name ? obj->name : "unnamed"));
+				/*  TROUBLESHOOT
+				A node object was parented to another node object with a different nominal_voltage set.  The childed object will now
+				take the parent nominal_voltage.  If this is not intended, please add a transformer between these nodes.
+				*/
+
+				nominal_voltage = parNode->nominal_voltage;
+			}
 		}
 		else	//Non-childed node gets the count updated
 		{
@@ -899,9 +911,9 @@ int node::init(OBJECT *parent)
 	else if (has_phase(PHASE_S))
 	{
 		//Compute differential voltages (1-2, 1-N, 2-N)
-		voltaged[0] = voltage[0] + voltage[1];
-		voltaged[1] = voltage[0] - voltage[2];
-		voltaged[2] = voltage[1] - voltage[2];
+		voltaged[0] = voltage[0] + voltage[1];	//12
+		voltaged[1] = voltage[1] - voltage[2];	//2N
+		voltaged[2] = voltage[0] - voltage[2];	//1N -- odd order
 	}
 
 	//Populate last_voltage with initial values - just in case
@@ -1619,9 +1631,9 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 							}
 
 							//Recalculated V12, V1N, V2N in case a child uses them
-							voltaged[0] = voltage[0] + voltage[1];
-							voltaged[1] = voltage[0] - voltage[2];
-							voltaged[2] = voltage[0] - voltage[2];
+							voltaged[0] = voltage[0] + voltage[1];	//12
+							voltaged[1] = voltage[1] - voltage[2];	//2N
+							voltaged[2] = voltage[0] - voltage[2];	//1N -- unsure why odd
 						}//End triplex
 						else	//Nope
 						{
@@ -1918,6 +1930,30 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 	//kva_in = (voltageA*~current[0] + voltageB*~current[1] + voltageC*~current[2])/1000; /*...or not.  Note sure how this works for a node*/
 
 #endif
+
+	/* check for voltage control requirement */
+	if (require_voltage_control==TRUE)
+	{
+		/* PQ bus must have a source */
+		if ((busflags&NF_HASSOURCE)==0 && bustype==PQ)
+			voltage[0] = voltage[1] = voltage[2] = complex(0,0);
+	}
+
+	//Update appropriate "other" voltages
+	if (has_phase(PHASE_S))
+	{	// split-tap voltage diffs are different
+		voltaged[0] = voltage[0] + voltage[1];	//V12
+		voltaged[1] = voltage[1] - voltage[2];	//V2N
+		voltaged[2] = voltage[0] - voltage[2];	//V1N -- not sure why these are backwards
+	}
+	else
+	{	// compute 3phase voltage differences
+		voltaged[0] = voltage[0] - voltage[1];	//AB
+		voltaged[1] = voltage[1] - voltage[2];	//BC
+		voltaged[2] = voltage[2] - voltage[0];	//CA
+	}
+
+
 	//This code performs the new "flattened" NR calculations.
 	if (solver_method == SM_NR)
 	{
@@ -1929,28 +1965,6 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 			GL_THROW("Attempt to update current/power on node:%s failed!",obj->name);
 			//Defined elsewhere
 		}
-	}
-
-	/* check for voltage control requirement */
-	if (require_voltage_control==TRUE)
-	{
-		/* PQ bus must have a source */
-		if ((busflags&NF_HASSOURCE)==0 && bustype==PQ)
-			voltage[0] = voltage[1] = voltage[2] = complex(0,0);
-	}
-
-	//Update appropriate "other" voltages
-	if (phases&PHASE_S) 
-	{	// split-tap voltage diffs are different
-		voltage12 = voltage1 + voltage2;
-		voltage1N = voltage1 - voltageN;
-		voltage2N = voltage2 - voltageN;
-	}
-	else
-	{	// compute 3phase voltage differences
-		voltageAB = voltageA - voltageB;
-		voltageBC = voltageB - voltageC;
-		voltageCA = voltageC - voltageA;
 	}
 
 	if (solver_method==SM_FBS)
@@ -2605,6 +2619,22 @@ int node::NR_current_update(bool postpass, bool parentcall)
 				voltage[0] = ParStealLoad->voltage[0];
 				voltage[1] = ParStealLoad->voltage[1];
 				voltage[2] = ParStealLoad->voltage[2];
+
+				//Compute "delta" voltages, so current injections upward are correct
+				if (has_phase(PHASE_S))
+				{
+					//Compute the delta voltages
+					voltaged[0] = voltage[0] + voltage[1];	//12
+					voltaged[1] = voltage[1] - voltage[2];	//2N
+					voltaged[2] = voltage[0] - voltage[2];	//1N -- unsure why it is odd
+				}
+				else	//"Normal" three phase - compute normal deltas
+				{
+					//Compute the delta voltages
+					voltaged[0] = voltage[0] - voltage[1];
+					voltaged[1] = voltage[1] - voltage[2];
+					voltaged[2] = voltage[2] - voltage[0];
+				}
 			}
 		}//End postsynch equivalent pass
 
