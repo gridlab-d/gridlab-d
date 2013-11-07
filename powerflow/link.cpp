@@ -6516,10 +6516,10 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name, vo
 						report using the trac website.
 						*/
 					}
-				}
 
-				//Clear "far" device lockout
-				NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(work_phases);	//Remove the phase lock
+					//Clear "far" device lockout
+					NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(work_phases);	//Remove the phase lock
+				}
 
 				//Clear faulted device lockout
 				protect_locations[phaseidx] = -1;
