@@ -750,6 +750,15 @@ int node::init(OBJECT *parent)
 					the child object.  Please check your connections and try again.
 					*/
 				}
+
+				//Make sure nominal voltages match
+				if (nominal_voltage != parNode->nominal_voltage)
+				{
+					gl_warning("Node:%s does not have the same nominal voltage as its parent - copying voltage from parent.",(obj->name ? obj->name : "unnamed"));
+					//Define above
+
+					nominal_voltage = parNode->nominal_voltage;
+				}
 			}//No else here, may be a line due to FBS implementation, so we don't want to fail on that
 		}
 	}
