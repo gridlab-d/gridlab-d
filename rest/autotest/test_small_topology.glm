@@ -1,0 +1,174 @@
+// rest module example topology
+
+clock{
+     timezone PST+8PDT;
+     timestamp '2000-01-01 0:00:00';
+     stoptime '2000-01-01 0:00:00';
+}
+
+#set profiler=1
+//#set pauseatexit=1
+//*********************************************
+// modules
+module tape;
+module residential;
+module climate;
+module powerflow{
+      solver_method NR;
+      default_maximum_voltage_error 1e-6;
+};
+module rest{
+};
+
+object server{
+      port 8080;
+};
+//*********************************************
+object regulator {
+     name R2-25-00-1_reg_1;
+     from R2-25-00-1_node_324;
+     to R2-25-00-1_meter_73;
+     phases ABCN;
+     configuration feeder_reg_cfg;
+}
+
+object regulator_configuration {
+     name feeder_reg_cfg;
+     Control OUTPUT_VOLTAGE;
+     band_center 14975.0;
+     band_width 240;
+     connect_type WYE_WYE;
+     time_delay 30;
+     raise_taps 16;
+     lower_taps 16;
+     regulation 0.10;
+     tap_pos_A 0;
+     tap_pos_B 0;
+     tap_pos_C 0;
+}
+
+object underground_line_conductor:1 {
+     //name 1000 AAC 25kV (Conc);
+     rating.summer.continuous 564.0;
+     outer_diameter 2.291;
+     conductor_gmr 0.03592 ft;
+     conductor_diameter 1.117;
+     conductor_resistance 0.093456;
+     neutral_gmr 0.0897578842950715 ft;
+     neutral_resistance 5.48592;
+     neutral_diameter 0.1019;
+     neutral_strands 20.0;
+     shield_gmr 0.00;
+     shield_resistance 0.00;
+}
+
+object line_spacing:2 {
+     distance_AB 6.0 in;
+     distance_BC 6.0 in;
+     distance_AC 6.0 in;
+     distance_AN 6.0 in;
+     distance_BN 6.0 in;
+     distance_CN 6.0 in;
+}
+
+object line_configuration:3 {
+     conductor_A underground_line_conductor:1;
+     conductor_B underground_line_conductor:1;
+     conductor_C underground_line_conductor:1;
+     conductor_N underground_line_conductor:1;
+     spacing line_spacing:2;
+}
+
+// Meter at feeder
+object meter {
+     latitude 37N25:16.497719914761433;
+     longitude 122W12:41.37121539425152;
+     name R2-25-00-1_meter_73;
+     phases ABCN;
+     nominal_voltage 14376.02;
+     voltage_A 14376.02+0.0j;
+     voltage_B -7188.01-12450j;
+     voltage_C -7188.01+12450j;
+}
+
+object node {
+     latitude 37N25:27.0694852441884;
+     longitude 122W11:31.76351989411182;
+     name R2-25-00-1_node_37;
+     phases ABCN;
+     voltage_A 14376.02+0.0j;
+     voltage_B -7188.01-12450j;
+     voltage_C -7188.01+12450j;
+     nominal_voltage 14376.02;
+}
+
+object node {
+     latitude 37N25:32.0795603722388;
+     longitude 122W11:34.30398299925855;
+     name R2-25-00-1_node_150;
+     phases ABCN;
+     voltage_A 14376.02+0.0j;
+     voltage_B -7188.01-12450j;
+     voltage_C -7188.01+12450j;
+     nominal_voltage 14376.02;
+}
+
+object node {
+     latitude 37N25:26.0694852441884;
+     longitude 122W11:38.850931757890394;
+     name R2-25-00-1_node_324;
+     phases ABCN;
+     bustype SWING;
+     nominal_voltage 14376.02;
+     voltage_A 14376.02+0.0j;
+     voltage_B -7188.01-12450j;
+     voltage_C -7188.01+12450j;
+}
+
+object node {
+     latitude 37N25:28.0694852441884;
+     longitude 122W11:38.550931757890394;
+     name R2-25-00-1_node_317;
+     parent R2-25-00-1_meter_73;
+     phases ABCN;
+     voltage_A 14376.02+0.0j;
+     voltage_B -7188.01-12450j;
+     voltage_C -7188.01+12450j;
+     nominal_voltage 14376.02;
+}
+
+object node {
+     latitude 37N25:35.824359317537755;
+     longitude 122W11:38.77949254396481;
+     name R2-25-00-1_node_300;
+     phases ABCN;
+     voltage_A 14376.02+0.0j;
+     voltage_B -7188.01-12450j;
+     voltage_C -7188.01+12450j;
+     nominal_voltage 14376.02;
+}
+
+object switch {
+     name R2-25-00-1_switch_6;
+     phases ABCN;
+     from R2-25-00-1_node_150;
+     to R2-25-00-1_node_37;
+     status CLOSED;
+}
+
+object switch {
+     name R2-25-00-1_switch_29;
+     phases ABCN;
+     from R2-25-00-1_node_150;
+     to R2-25-00-1_node_300;
+     status CLOSED;
+}
+
+object underground_line {
+     name R2-25-00-1_ul_34;
+     phases ABCN;
+     from R2-25-00-1_node_317;
+     to R2-25-00-1_node_150;
+     length 165.000;
+     configuration line_configuration:3;
+}
