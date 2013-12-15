@@ -225,14 +225,14 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	locale_pop();
 
 	/* if pause enabled */
-/*#ifndef WIN32
+#ifndef WIN32
         if (global_pauseatexit) {
                 output_verbose("pausing at exit");
 		while (true) {
                         sleep(5);
                 }
         }
-#endif*/
+#endif
 
 	/* compute elapsed runtime */
 	output_verbose("elapsed runtime %d seconds", realtime_runtime());
