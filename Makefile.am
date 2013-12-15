@@ -43,6 +43,7 @@ dist_doc_DATA =
 include assert/Makefile.mk
 include climate/Makefile.mk
 include commercial/Makefile.mk
+#include rest/Makefile.mk
 #include comm/Makefile.mk
 #include control/Makefile.mk
 include core/link/matlab/Makefile.mk
@@ -151,7 +152,7 @@ pkgdata_DATA += $(top_srcdir)/models/WA-Yakima.tmy2
 pkgdata_DATA += $(top_srcdir)/models/waterheater_example.glm
 pkgdata_DATA += $(top_srcdir)/models/weather.csv
 pkgdata_DATA += $(top_srcdir)/models/wind_turbine_example.glm
-pkgdata_DATA += $(top_srcdir)/core/gridlabd.htm
+#pkgdata_DATA += $(top_srcdir)/core/gridlabd.htm
 
 if MISSING_XERCES
 all-local:

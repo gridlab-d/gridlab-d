@@ -224,6 +224,16 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	/* restore locale */
 	locale_pop();
 
+	/* if pause enabled */
+/*#ifndef WIN32
+        if (global_pauseatexit) {
+                output_verbose("pausing at exit");
+		while (true) {
+                        sleep(5);
+                }
+        }
+#endif*/
+
 	/* compute elapsed runtime */
 	output_verbose("elapsed runtime %d seconds", realtime_runtime());
 	output_verbose("exit code %d", exec_getexitcode());
