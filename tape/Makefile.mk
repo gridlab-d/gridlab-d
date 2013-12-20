@@ -13,6 +13,7 @@ tape_tape_la_SOURCES += tape/collector.c
 tape_tape_la_SOURCES += tape/file.c
 tape_tape_la_SOURCES += tape/file.h
 tape_tape_la_SOURCES += tape/group_recorder.cpp
+tape_tape_la_SOURCES += tape/group_recorder.h
 tape_tape_la_SOURCES += tape/histogram.cpp
 tape_tape_la_SOURCES += tape/histogram.h
 tape_tape_la_SOURCES += tape/loadshape.cpp
