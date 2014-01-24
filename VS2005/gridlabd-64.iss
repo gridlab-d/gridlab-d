@@ -6,7 +6,7 @@ OutputDir=.
 SourceDir=.\x64\Release
 OutputBaseFilename=gridlabd-3.0-x64
 AppName=GridLAB-D
-AppVerName=GridLAB-D 3.0 RC4
+AppVerName=GridLAB-D 3.0
 ; --RELEASE--
 
 ; ++DEBUG++

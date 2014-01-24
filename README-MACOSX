@@ -2,19 +2,37 @@ Getting Started with GridLAB-D
 Copyright (C) 2009 Battelle Memorial Institute
 
 Building GridLAB-D with the Auto-Toolset Under Linux and Other Unix Variants
-You must have autoconf, automake, libtool, xerces-c and cppunit install to
-build GridLAB-D in this way. With newer versions of the mac os, you will also
-need gnu sed symlinked to sed.  To install gnu sed:
+You must have autoconf, automake, libtool, and xerces-c installed to build 
+GridLAB-D in this way. With newer versions of the mac os, you will also need 
+gnu sed and have it symlinked to sed.  To install the necessary tools, we 
+recommend using XCode and homebrew.
+
+Install XCode
+
+In the XCode menu, select Preferences.  Select the Downloads tab.  Select 
+Command Line Tools and install.
 
 Install homebrew
-  - Follow instructions on http://brew.sh/
+      % sudo ruby -e "$(curl -fsSL https://raw.github.com/mxcl/homebrew/go)"
+      % sudo brew doctor
 
-Run the following commands:
-      % brew doctor
-      % brew install sed
+Install autoconf, automake, and libtool
+      % sudo brew install autoconf
+      % sudo brew install automake
+      % sudo brew install libtool
+
+The above commands should create symlinks in /usr/local/bin to each of these
+tools.  On some combinations of XCode version and Mac OSX version, the
+symlinks don't get created.  If this is the case, create them with
+      % sudo brew ln --force autoconf
+      % sudo brew ln --force automake
+      % sudo brew ln --force libtool
+
+Install gnu sed
+      % sudo brew install gnu-sed
 
 Symlink gsed to sed
-      % ln -s /usr/local/bin/gsed /usr/local/bin/sed
+      % sudo ln -s /usr/local/bin/gsed /usr/local/bin/sed
 
 Make sure symlinked sed is the first instance of sed in the path
       % which sed

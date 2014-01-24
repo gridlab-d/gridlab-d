@@ -129,7 +129,7 @@ TIMESTAMP currdump::commit(TIMESTAMP t){
 	if(runtime == 0){
 		runtime = t;
 	}
-	if((t == runtime || runtime == TS_NEVER) && (runcount < 1)){
+	if((t >= runtime || runtime == TS_NEVER) && (runcount < 1)){
 		/* dump */
 		dump(t);
 		++runcount;

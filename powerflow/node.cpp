@@ -244,6 +244,25 @@ int node::init(OBJECT *parent)
 					swing_count++;
 				}
 			}
+			
+			//Do the same for substations
+			gl_free(bus_list);
+			bus_list = gl_find_objects(FL_NEW,FT_CLASS,SAME,"substation",FT_END);
+
+			//Reset temp_obj
+			temp_obj = NULL;
+
+			//Parse the findlist
+			while(temp_obj=gl_find_next(bus_list,temp_obj))
+			{
+				list_node = OBJECTDATA(temp_obj,node);
+
+				if (list_node->bustype==SWING)
+				{
+					NR_swing_bus=temp_obj;
+					swing_count++;
+				}
+			}
 
 			//Do the same for meters
 			gl_free(bus_list);
@@ -347,8 +366,8 @@ int node::init(OBJECT *parent)
 		//Check for parents to see if they are a parent/childed load
 		if (obj->parent!=NULL) 	//Has a parent, let's see if it is a node and link it up 
 		{						//(this will break anything intentionally done this way - e.g. switch between two nodes)
-			//See if it is a node/load/meter
-			if (!(gl_object_isa(obj->parent,"load","powerflow") | gl_object_isa(obj->parent,"node","powerflow") | gl_object_isa(obj->parent,"meter","powerflow")))
+			//See if it is a node/load/meter/substation
+			if (!(gl_object_isa(obj->parent,"load","powerflow") | gl_object_isa(obj->parent,"node","powerflow") | gl_object_isa(obj->parent,"meter","powerflow") | gl_object_isa(obj->parent,"substation","powerflow")))
 				GL_THROW("NR: Parent is not a node, load or meter!");
 				/*  TROUBLESHOOT
 				A Newton-Raphson parent-child connection was attempted on a non-node.  The parent object must be a node, load, or meter object in the 
@@ -730,7 +749,7 @@ int node::init(OBJECT *parent)
 
 		if (obj->parent != NULL)
 		{
-			if((gl_object_isa(obj->parent,"load","powerflow") | gl_object_isa(obj->parent,"node","powerflow") | gl_object_isa(obj->parent,"meter","powerflow")))	//Parent is another node
+			if((gl_object_isa(obj->parent,"load","powerflow") | gl_object_isa(obj->parent,"node","powerflow") | gl_object_isa(obj->parent,"meter","powerflow") | gl_object_isa(obj->parent,"substation","powerflow")))	//Parent is another node
 			{
 				node *parNode = OBJECTDATA(obj->parent,node);
 

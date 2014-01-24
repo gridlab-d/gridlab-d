@@ -318,6 +318,7 @@ TIMESTAMP substation::presync(TIMESTAMP t0, TIMESTAMP t1)
 }
 TIMESTAMP substation::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
+	OBJECT *obj = OBJECTHDR(this);
 	TIMESTAMP t2;
 	double dist_power_A_diff = 0;
 	double dist_power_B_diff = 0;
@@ -338,6 +339,16 @@ TIMESTAMP substation::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 	t2 = node::sync(t1);
+	
+	// update currents if in NR
+	if(solver_method == SM_NR){
+		int result = node::NR_current_update(true,false);
+
+		if(result != 1){
+			GL_THROW("Attempt to update current/power on substation:%s failed!",obj->name);
+			//Defined elsewhere
+		}
+	}
 
 	if((solver_method == SM_NR && NR_admit_change == false) || solver_method == SM_FBS){
 		distribution_power_A = voltageA * (~current_inj[0]);
