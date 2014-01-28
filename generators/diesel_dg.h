@@ -25,7 +25,7 @@ typedef struct {
 	double xb;				//State variable for transient gain reduction
 } AVR_VARS;
 
-//GOV state variable structure
+//GOV_DEGOV1 state variable structure
 typedef struct {
 	double wref;			//Current reference frequency (p.u.)
 	double x1;				//Electric box state variable
@@ -34,23 +34,34 @@ typedef struct {
 	double x5;				//Actuator state variable
 	double x6;				//Actuator state variable
 	double throttle;		//governor actuator output
-} GOV_VARS;
+} GOV_DEGOV1_VARS;
+
+// gastflag
+//GOV_GAST state variable structure
+typedef struct {
+	double wref;			//Current reference frequency (p.u.)
+	double x1;				//Electric box state variable 
+	double x2;				//Electric box state variable
+	double x3;				//Temp limiter state variable
+	double throttle;		//governor actuator output
+} GOV_GAST_VARS;
 
 //Machine state variable structure
 typedef struct {
-	double rotor_angle;		//Rotor angle of machine
-	double omega;			//Current speed of machine
-	double Vfd;				//Field voltage of machine
-	double Flux1d;			//Transient flux on d-axis
-	double Flux2q;			//Sub-transient flux on q-axis
-	complex EpRotated;		//d-q rotated E' internal voltage
-	complex VintRotated;	//d-q rotated Vint voltage
-	complex EintVal[3];		//Unrotated, un-sequenced internal voltage
-	complex Irotated;		//d-q rotated current value
-	complex pwr_electric;	//Total electric power output of generator
-	double pwr_mech;		//Mechanical power output of generator
-	GOV_VARS gov;			//Governor state variables
-	AVR_VARS avr;			//Automatic Voltage Regulator state variables
+	double rotor_angle;			//Rotor angle of machine
+	double omega;				//Current speed of machine
+	double Vfd;					//Field voltage of machine
+	double Flux1d;				//Transient flux on d-axis
+	double Flux2q;				//Sub-transient flux on q-axis
+	complex EpRotated;			//d-q rotated E' internal voltage
+	complex VintRotated;		//d-q rotated Vint voltage
+	complex EintVal[3];			//Unrotated, un-sequenced internal voltage
+	complex Irotated;			//d-q rotated current value
+	complex pwr_electric;		//Total electric power output of generator
+	double pwr_mech;			//Mechanical power output of generator
+	GOV_DEGOV1_VARS gov_degov1;	//DEGOV1 Governor state variables
+	GOV_GAST_VARS gov_gast;		//GAST Governor state variables // gastflag
+	AVR_VARS avr;				//Automatic Voltage Regulator state variables
 } MAC_STATES;
 
 class diesel_dg : public gld_object
@@ -110,7 +121,8 @@ public:
 	//Dynamics synchronous generator capabilities
 	enum {NO_EXC=1, SEXS};
 	enumeration Exciter_type;
-	enum {NO_GOV=1, DEGOV1};
+	//gastflag
+	enum {NO_GOV=1, DEGOV1, GAST};
 	enumeration Governor_type;
 
 	//Diesel engine inputs
@@ -221,17 +233,29 @@ public:
 	double exc_EMIN;			//Exciter lower limit (p.u.)
 	
 	//Governor properties (DEGOV1)
-	double gov_R;				//Governor droop constant (p.u.)
-	double gov_T1;				//Governor electric control box time constant (s)
-	double gov_T2;				//Governor electric control box time constant (s)
-	double gov_T3;				//Governor electric control box time constant (s)
-	double gov_T4;				//Governor actuator time constant (s)
-	double gov_T5;				//Governor actuator time constant (s)
-	double gov_T6;				//Governor actuator time constant (s)
-	double gov_K;				//Governor actuator gain
-	double gov_TMAX;			//Governor actuator upper limit (p.u.)
-	double gov_TMIN;			//Governor actuator lower limit (p.u.)
-	double gov_TD;				//Governor combustion delay (s)
+	double gov_degov1_R;				//Governor droop constant (p.u.)
+	double gov_degov1_T1;				//Governor electric control box time constant (s)
+	double gov_degov1_T2;				//Governor electric control box time constant (s)
+	double gov_degov1_T3;				//Governor electric control box time constant (s)
+	double gov_degov1_T4;				//Governor actuator time constant (s)
+	double gov_degov1_T5;				//Governor actuator time constant (s)
+	double gov_degov1_T6;				//Governor actuator time constant (s)
+	double gov_degov1_K;				//Governor actuator gain
+	double gov_degov1_TMAX; 			//Governor actuator upper limit (p.u.)
+	double gov_degov1_TMIN;				//Governor actuator lower limit (p.u.)
+	double gov_degov1_TD;				//Governor combustion delay (s)
+
+	//gastflag
+	//Governor properties (GAST)
+	double gov_gast_R;				//Governor droop constant (p.u.)
+	double gov_gast_T1;				//Governor electric control box time constant (s)
+	double gov_gast_T2;				//Governor electric control box time constant (s)
+	double gov_gast_T3;				//Governor temp limiter time constant (s)
+	double gov_gast_AT;				//Governor Ambient Temperature load limit (units)
+	double gov_gast_KT;				//Governor temperature control loop gain
+	double gov_gast_VMAX;			//Governor actuator upper limit (p.u.)
+	double gov_gast_VMIN;			//Governor actuator lower limit (p.u.)
+//	double gov_gast_TD;				//Governor combustion delay (s)
 
 	set phases;	/**< device phases (see PHASE codes) */
 

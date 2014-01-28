@@ -249,7 +249,6 @@ DT delta_update(void)
 	unsigned int delta_iteration_remaining, delta_iteration_count;
 	SIMULATIONMODE interupdate_mode, interupdate_mode_result;
 	int n;
-	double curr_time_val;
 	double dbl_stop_time;
 	double dbl_curr_clk_time;
 	OBJECT *d_obj = NULL;
@@ -276,13 +275,16 @@ DT delta_update(void)
 	for ( global_deltaclock=0; global_deltaclock<global_deltamode_maximumtime; global_deltaclock+=timestep )
 	{
 		/* Check to make sure we haven't reached a stop time */
-		curr_time_val = dbl_curr_clk_time + (double)global_deltaclock/(double)DT_SECOND;
+		global_delta_curr_clock = dbl_curr_clk_time + (double)global_deltaclock/(double)DT_SECOND;
 
 		/* Make sure it isn't over the limit */
-		if (curr_time_val>dbl_stop_time)
+		if (global_delta_curr_clock>dbl_stop_time)
 		{
 			break;	/* Just get us out of here */
 		}
+
+		/* set time context for deltamode */
+		output_set_delta_time_context(global_clock,global_deltaclock);
 
 		/* Initialize iteration limit counter */
 		delta_iteration_remaining = global_deltamode_iteration_limit;
@@ -304,33 +306,39 @@ DT delta_update(void)
 			{
 				d_obj = delta_objectlist[n];	/* Shouldn't need NULL checks, since they were done above */
 				d_oclass = d_obj->oclass;
-				if ( d_oclass->update )	/* Make sure it exists - init should handle this */
-				{
-					/* Call the object-level interupdate */
-					interupdate_mode_result = d_oclass->update(d_obj,global_clock,global_deltaclock,timestep,delta_iteration_count);
 
-					/* Check the status and handle appropriately */
-					switch ( interupdate_mode_result ) {
-						case SM_DELTA_ITER:
-							interupdate_mode = SM_DELTA_ITER;
-							break;
-						case SM_DELTA:
-							if (interupdate_mode != SM_DELTA_ITER)
-								interupdate_mode = SM_DELTA;
-							/* default else - leave it as is (SM_DELTA_ITER) */
-							break;
-						case SM_ERROR:
-							output_error("delta_update(): update failed for object \'%s\'", object_name(d_obj, temp_name_buff, 63));
-							/* TROUBLESHOOT
-							   An object failed to update correctly while operating in deltamode.
-							   Generally, this is an internal error and should be reported to the GridLAB-D developers.
-							 */
-							return DT_INVALID;
-						case SM_EVENT:
-						default: /* mode remains untouched */
-							break;
-					}
-				}
+				/* See if the object is in service or not */
+				if ((d_obj->in_svc_double <= global_delta_curr_clock) && (d_obj->out_svc_double >= global_delta_curr_clock))
+				{
+					if ( d_oclass->update )	/* Make sure it exists - init should handle this */
+					{
+						/* Call the object-level interupdate */
+						interupdate_mode_result = d_oclass->update(d_obj,global_clock,global_deltaclock,timestep,delta_iteration_count);
+
+						/* Check the status and handle appropriately */
+						switch ( interupdate_mode_result ) {
+							case SM_DELTA_ITER:
+								interupdate_mode = SM_DELTA_ITER;
+								break;
+							case SM_DELTA:
+								if (interupdate_mode != SM_DELTA_ITER)
+									interupdate_mode = SM_DELTA;
+								/* default else - leave it as is (SM_DELTA_ITER) */
+								break;
+							case SM_ERROR:
+								output_error("delta_update(): update failed for object \'%s\'", object_name(d_obj, temp_name_buff, 63));
+								/* TROUBLESHOOT
+								   An object failed to update correctly while operating in deltamode.
+								   Generally, this is an internal error and should be reported to the GridLAB-D developers.
+								 */
+								return DT_INVALID;
+							case SM_EVENT:
+							default: /* mode remains untouched */
+								break;
+						}
+					} /*End update exists */
+				}/* End in service */
+				/* Defaulted else, skip over it (not in service) */
 			}
 
 			/* send interupdate messages */

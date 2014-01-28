@@ -42,6 +42,12 @@ recloser::recloser(MODULE *mod) : switch_object(mod)
 			GL_THROW("Unable to publish recloser reliability operation function");
 		if (gl_publish_function(oclass,	"change_recloser_faults", (FUNCTIONADDR)recloser_fault_updates)==NULL)
 			GL_THROW("Unable to publish recloser fault correction function");
+
+		//Publish deltamode functions -- replicate switch
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_switch)==NULL)
+			GL_THROW("Unable to publish recloser deltamode function");
+		if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_link)==NULL)
+			GL_THROW("Unable to publish recloser deltamode function");
     }
 }
 

@@ -34,11 +34,16 @@ underground_line::underground_line(MODULE *mod) : line(mod)
         if(gl_publish_variable(oclass,
 			PT_INHERIT, "line",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
-			if (gl_publish_function(oclass,	"create_fault", (FUNCTIONADDR)create_fault_ugline)==NULL)
-				GL_THROW("Unable to publish fault creation function");
-			if (gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_ugline)==NULL)
-				GL_THROW("Unable to publish fault restoration function");
-		;
+		if (gl_publish_function(oclass,	"create_fault", (FUNCTIONADDR)create_fault_ugline)==NULL)
+			GL_THROW("Unable to publish fault creation function");
+		if (gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_ugline)==NULL)
+			GL_THROW("Unable to publish fault restoration function");
+
+		//Publish deltamode functions
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
+			GL_THROW("Unable to publish underground line deltamode function");
+		if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_link)==NULL)
+			GL_THROW("Unable to publish underground line deltamode function");
     }
 }
 

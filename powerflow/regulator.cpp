@@ -47,6 +47,12 @@ regulator::regulator(MODULE *mod) : link_object(mod)
 			PT_double, "tap_C_change_count",PADDR(tap_C_change_count),PT_DESCRIPTION,"count of all physical tap changes on phase C since beginning of simulation (plus initial value)",
 			PT_object,"sense_node",PADDR(RemoteNode),PT_DESCRIPTION,"Node to be monitored for voltage control in remote sense mode",
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+
+		//Publish deltamode functions
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
+			GL_THROW("Unable to publish regulator deltamode function");
+		if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_link)==NULL)
+			GL_THROW("Unable to publish regulator deltamode function");
 	}
 }
 

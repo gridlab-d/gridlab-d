@@ -796,10 +796,15 @@ inline char *gl_getvalue(OBJECT *obj,
 
 #define gl_globalclock (*(callback->global_clock))
 
+/** Link to double precision deltamode clock (offset by global_clock) **/
+#define gl_globaldeltaclock (*(callback->global_delta_curr_clock))
+
 /** Convert a string to a timestamp
 	@see convert_to_timestamp()
  **/
 #define gl_parsetime (*callback->time.convert_to_timestamp)
+
+#define gl_delta_parsetime (*callback->time.convert_to_timestamp_delta)
 
 #define gl_printtime (*callback->time.convert_from_timestamp)
 
@@ -1342,10 +1347,10 @@ public: // constructors
 	gld_clock(TIMESTAMP ts) { if ( !callback->time.local_datetime(ts,&dt)) memset(&dt,0,sizeof(dt)); };
 	/// Clock constructor for a time string
 	gld_clock(char *str) { from_string(str); };
-	/// Clock constructor for year, month, day, hour, minute, second, microsecond values
+	/// Clock constructor for year, month, day, hour, minute, second, nanosecond values
 	gld_clock(unsigned short y, unsigned short m=0, unsigned short d=0, unsigned short H=0, unsigned short M=0, unsigned short S=0, unsigned short int ms=0, char *tz=NULL, int dst=-1)
 	{
-		dt.year = y; dt.month=m; dt.day=d; dt.hour=H; dt.minute=M; dt.second=S; dt.microsecond=ms;
+		dt.year = y; dt.month=m; dt.day=d; dt.hour=H; dt.minute=M; dt.second=S; dt.nanosecond=ms;
 		if ( dst>=0 ) dt.is_dst=dst;
 		if ( tz!=NULL ) set_tz(tz); else callback->time.mkdatetime(&dt);
 	}
@@ -1382,8 +1387,8 @@ public: // read accessors
 	inline unsigned short get_minute(void) { return dt.minute; };
 	/// Get the second (0-59)
 	inline unsigned short get_second(void) { return dt.second; };
-	/// Get the microseconds (0-999999)
-	inline unsigned int get_microsecond(void) { return dt.microsecond; };
+	/// Get the nanosecond (0-999999)
+	inline unsigned int get_nanosecond(void) { return dt.nanosecond; };
 	/// Get the timezone spec
 	inline char* get_tz(void) { return dt.tz; };
 	/// Get the summer/daylight time flag
@@ -1404,9 +1409,9 @@ public: // write accessors
 	/// Set the date
 	inline TIMESTAMP set_date(unsigned short y, unsigned short m, unsigned short d) { dt.year=y; dt.month=m; dt.day=d; return callback->time.mkdatetime(&dt); };
 	/// Set the time
-	inline TIMESTAMP set_time(unsigned short H, unsigned short M, unsigned short S, unsigned long u=0, char *t=NULL, bool force_dst=false) { dt.hour=H; dt.minute=M; dt.second=S; dt.microsecond=u; strncpy(dt.tz,t,sizeof(dt.tz)); if (force_dst) dt.is_dst=true; return callback->time.mkdatetime(&dt); };
+	inline TIMESTAMP set_time(unsigned short H, unsigned short M, unsigned short S, unsigned long u=0, char *t=NULL, bool force_dst=false) { dt.hour=H; dt.minute=M; dt.second=S; dt.nanosecond=u; strncpy(dt.tz,t,sizeof(dt.tz)); if (force_dst) dt.is_dst=true; return callback->time.mkdatetime(&dt); };
 	/// Set the date and time
-	inline TIMESTAMP set_datetime(unsigned short y, unsigned short m, unsigned short d, unsigned short H, unsigned short M, unsigned short S, unsigned long u=0, char *t=NULL, bool force_dst=false) { dt.year=y; dt.month=m; dt.day=d; dt.hour=H; dt.minute=M; dt.second=S; dt.microsecond=u; strncpy(dt.tz,t,sizeof(dt.tz)); if (force_dst) dt.is_dst=true; return callback->time.mkdatetime(&dt); };
+	inline TIMESTAMP set_datetime(unsigned short y, unsigned short m, unsigned short d, unsigned short H, unsigned short M, unsigned short S, unsigned long u=0, char *t=NULL, bool force_dst=false) { dt.year=y; dt.month=m; dt.day=d; dt.hour=H; dt.minute=M; dt.second=S; dt.nanosecond=u; strncpy(dt.tz,t,sizeof(dt.tz)); if (force_dst) dt.is_dst=true; return callback->time.mkdatetime(&dt); };
 	/// Set the year
 	inline TIMESTAMP set_year(unsigned short y) { dt.year=y; return callback->time.mkdatetime(&dt); };
 	/// Set the month (Jan=0)
@@ -1419,8 +1424,8 @@ public: // write accessors
 	inline TIMESTAMP set_minute(unsigned short m) { dt.minute=m; return callback->time.mkdatetime(&dt); };
 	/// Set the second (0-59)
 	inline TIMESTAMP set_second(unsigned short s) { dt.second=s; return callback->time.mkdatetime(&dt); };
-	/// Set the microsecond (0-999999)
-	inline TIMESTAMP set_microsecond(unsigned int u) { dt.microsecond=u; return callback->time.mkdatetime(&dt); };
+	/// Set the nanosecond (0-999999)
+	inline TIMESTAMP set_nanosecond(unsigned int u) { dt.nanosecond=u; return callback->time.mkdatetime(&dt); };
 	/// Set the timezone (see tzinfo.txt)
 	inline TIMESTAMP set_tz(char* t) { strncpy(dt.tz,t,sizeof(dt.tz)); return callback->time.mkdatetime(&dt); };
 	/// Set the DST flag
@@ -1431,15 +1436,15 @@ public: // special functions
 	/// Convert to string
 	inline unsigned int to_string(char *str, int size) {return callback->time.convert_from_timestamp(dt.timestamp,str,size); };
 	/// Extract the total number of days since 1/1/1970 0:00:00 UTC
-	inline double to_days(TIMESTAMP ts=0) { return (dt.timestamp-ts)/86400.0 + dt.microsecond*1e-6; };
+	inline double to_days(TIMESTAMP ts=0) { return (dt.timestamp-ts)/86400.0 + dt.nanosecond*1e-9; };
 	/// Extract the total number of hours since 1/1/1970 0:00:00 UTC
-	inline double to_hours(TIMESTAMP ts=0) { return (dt.timestamp-ts)/3600.0 + dt.microsecond*1e-6; };
+	inline double to_hours(TIMESTAMP ts=0) { return (dt.timestamp-ts)/3600.0 + dt.nanosecond*1e-9; };
 	/// Extract the total number of minutes since 1/1/1970 0:00:00 UTC
-	inline double to_minutes(TIMESTAMP ts=0) { return (dt.timestamp-ts)/60.0 + dt.microsecond*1e-6; };
+	inline double to_minutes(TIMESTAMP ts=0) { return (dt.timestamp-ts)/60.0 + dt.nanosecond*1e-9; };
 	/// Extract the total number of seconds since 1/1/1970 0:00:00 UTC
-	inline double to_seconds(TIMESTAMP ts=0) { return dt.timestamp-ts + dt.microsecond*1e-6; };
-	/// Extract the total number of microseconds since 1/1/1970 0:00:00 UTC
-	inline double to_microseconds(TIMESTAMP ts=0) { return (dt.timestamp-ts)*1e6 + dt.microsecond; };
+	inline double to_seconds(TIMESTAMP ts=0) { return dt.timestamp-ts + dt.nanosecond*1e-9; };
+	/// Extract the total number of nanoseconds since 1/1/1970 0:00:00 UTC
+	inline double to_nanoseconds(TIMESTAMP ts=0) { return (dt.timestamp-ts)*1e9 + dt.nanosecond; };
 	/// Get the timestamp as a string
 	inline gld_string get_string(const size_t sz=1024) 
 	{

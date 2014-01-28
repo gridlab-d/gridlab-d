@@ -137,6 +137,7 @@ public:
 	complex current12;		/// Used for phase 1-2 current injections in triplex
 	complex nom_res_curr[3];/// Used for the inclusion of nominal residential currents (for angle adjustments)
 	bool house_present;		/// Indicator flag for a house being attached (NR primarily)
+	bool dynamic_norton;	/// Norton-equivalent posting on this bus -- deltamode and generator ties
 	complex *Triplex_Data;	/// Link to triplex line for extra current calculation information (NR)
 	complex *Extra_Data;	/// Link to extra data information (NR)
 	unsigned int NR_connected_links[2];	/// Counter for number of connected links in the system
@@ -164,7 +165,12 @@ public:
 	TIMESTAMP postsync(TIMESTAMP t0);
 	int isa(char *classname);
 	int notify(int update_mode, PROPERTY *prop, char *value);
-	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
+	SIMULATIONMODE inter_deltaupdate_node(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
+
+	//Functionalized portions for deltamode calls -- allows updates
+	void NR_node_presync_fxn(void);
+	void NR_node_sync_fxn(OBJECT *obj);
+	void BOTH_node_postsync_fxn(OBJECT *obj);
 
 	bool current_accumulated;
 

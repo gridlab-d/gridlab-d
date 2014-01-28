@@ -49,6 +49,7 @@
 #define MINUTE (60*TS_SECOND) /**< the number of ticks in one minute */
 #define SECOND (TS_SECOND)/**< the number of ticks in one second */
 #define MICROSECOND (TS_SECOND/1000000) /**< the number of ticks in one microsecond */
+#define NANOSECOND (TS_SECOND/1000000000) /**< the number of ticks in one nanosecond */
 
 typedef struct{
 	int month, nth, day, hour, minute;
@@ -314,8 +315,8 @@ int local_datetime(TIMESTAMP ts, DATETIME *dt)
 	dt->second = (unsigned short)rem / TS_SECOND;
 	rem %= SECOND;
 
-	/* compute microsecond */
-	dt->microsecond = (unsigned int)rem;
+	/* compute nanosecond */
+	dt->nanosecond = (unsigned int)(rem * 1e9);
 
 	/* determine timezone */
 	strncpy(dt->tz, tzvalid ? (dt->is_dst ? tzdst : tzstd) : "GMT", sizeof(dt->tz));
@@ -379,7 +380,7 @@ TIMESTAMP mkdatetime(DATETIME *dt)
 		return ts;
 	}
 	/* add day, hour, minute, second, usecs */
-	ts += (dt->day - 1) * DAY + dt->hour * HOUR + dt->minute * MINUTE + dt->second * SECOND + dt->microsecond * MICROSECOND;
+	ts += (dt->day - 1) * DAY + dt->hour * HOUR + dt->minute * MINUTE + dt->second * SECOND + dt->nanosecond/1.0e9;
 
 	if(dt->tz[0] == 0){
 		strcpy(dt->tz, (isdst(ts) ? tzdst : tzstd));
@@ -418,19 +419,29 @@ int strdatetime(DATETIME *t, char *buffer, int size){
 
 	/* choose best format */
 	if(global_dateformat == DF_ISO){
-		if(t->microsecond != 0){
-			len = sprintf(tbuffer, "%04d-%02d-%02d %02d:%02d:%02d.%06d %s",
-				t->year, t->month, t->day, t->hour, t->minute, t->second, t->microsecond, t->tz);
+		if(t->nanosecond != 0){
+			len = sprintf(tbuffer, "%04d-%02d-%02d %02d:%02d:%02d.%09d %s",
+				t->year, t->month, t->day, t->hour, t->minute, t->second, t->nanosecond, t->tz);
 		} else {
 			len = sprintf(tbuffer, "%04d-%02d-%02d %02d:%02d:%02d %s",
 				t->year, t->month, t->day, t->hour, t->minute, t->second, t->tz);
 		}
 	} else if(global_dateformat == DF_US){
-		len = sprintf(tbuffer, "%02d-%02d-%04d %02d:%02d:%02d",
-			t->month, t->day, t->year, t->hour, t->minute, t->second);
+		if(t->nanosecond != 0){
+			len = sprintf(tbuffer, "%02d-%02d-%04d %02d:%02d:%02d.%09d %s",
+				t->month, t->day, t->year, t->hour, t->minute, t->second, t->nanosecond, t->tz);
+		} else {
+			len = sprintf(tbuffer, "%02d-%02d-%04d %02d:%02d:%02d %s",
+				t->month, t->day, t->year, t->hour, t->minute, t->second, t->tz);
+		}
 	} else if(global_dateformat == DF_EURO){
-		len = sprintf(tbuffer,"%02d-%02d-%04d %02d:%02d:%02d",
-			t->day, t->month, t->year, t->hour, t->minute, t->second);
+		if(t->nanosecond != 0){
+			len = sprintf(tbuffer,"%02d-%02d-%04d %02d:%02d:%02d.%09d %s",
+				t->day, t->month, t->year, t->hour, t->minute, t->second, t->nanosecond,t->tz);
+		} else {
+			len = sprintf(tbuffer,"%02d-%02d-%04d %02d:%02d:%02d %s",
+				t->day, t->month, t->year, t->hour, t->minute, t->second,t->tz);
+		}
 	} else {
 		THROW("global_dateformat=%d is not valid", global_dateformat);
 		/* TROUBLESHOOT
@@ -866,12 +877,38 @@ char *timestamp_set_tz(char *tz_name)
 	return current_tzname;
 }
 
-/** Convert from a timestamp to a string
- **/
+/** Convert from a timestamp to a string - no delta time
+	Created to avoid having to replace gl_printtime calls everywhere
+**/
 int convert_from_timestamp(TIMESTAMP ts, char *buffer, int size)
 {
+	return convert_from_timestamp_delta(ts,0,buffer,size);
+}
+
+/** Convert from a timestamp to a string
+	Delta-compatible version
+ **/
+int convert_from_timestamp_delta(TIMESTAMP ts, DELTAT delta_t, char *buffer, int size)
+{
+	double dt_time;
+	unsigned int nano_seconds;
 	char temp[64]="INVALID";
 	int len=(int)strlen(temp);
+
+	if (delta_t != 0)
+	{
+		/* Figure out the offset the delta time represents */
+		dt_time = (double)ts + (double)delta_t/(double)DT_SECOND;
+
+		/* Convert to integer */
+		ts = (int64)dt_time;
+
+		/* Figure out the nanosecond portion - bias slightly - similar code in recorders*/
+		nano_seconds = (unsigned int)((dt_time - (double)(ts))*1e9 + 0.5);
+	}
+	else
+		nano_seconds = 0;
+
 	if (ts>=365*DAY)
 	{	DATETIME t;
 		if (ts>=0)
@@ -879,7 +916,75 @@ int convert_from_timestamp(TIMESTAMP ts, char *buffer, int size)
 			if (ts<TS_NEVER)
 			{
 				if (local_datetime(ts,&t))
+				{
+					if (nano_seconds != 0)
+					{
+						t.nanosecond = nano_seconds;
+					}
 					len = strdatetime(&t,temp,sizeof(temp));
+				}
+				else
+					THROW("%"FMT_INT64"d is an invalid timestamp", ts);
+					/* TROUBLESHOOT
+						An attempt to convert a timestamp to a date/time string has failed because the timezone isn't valid.
+						This is most likely an internal error and should be reported.
+					 */
+			}
+			else
+				len=sprintf(temp,"%s","NEVER");
+		}
+	}
+	else if (ts>=DAY)
+		len=sprintf(temp,"%lfd",(double)ts/DAY);
+	else if (ts>=HOUR)
+		len=sprintf(temp,"%lfh",(double)ts/HOUR);
+	else if (ts>=MINUTE)
+		len=sprintf(temp,"%lfm",(double)ts/MINUTE);
+	else if (ts>=SECOND)
+		len=sprintf(temp,"%lfs",(double)ts/SECOND);
+	else if (ts==0)
+		len=sprintf(temp,"%s","INIT");
+	else
+		len=sprintf(temp,"%"FMT_INT64"d",ts);
+	if (len<size)
+	{
+		if(ts == TS_NEVER){
+			strcpy(buffer, "NEVER");
+			return (int)strlen("NEVER");
+		}
+		strcpy(buffer,temp);
+		return len;
+	}
+	else
+		return 0;
+}
+
+/** Convert from a timestamp to a string -- deltamode
+ **/
+int convert_from_delta_timestamp(double ts_v, char *buffer, int size)
+{
+	TIMESTAMP ts;
+	unsigned int nano_seconds;
+	char temp[64]="INVALID";
+	int len=(int)strlen(temp);
+
+	/* Convert to integer */
+	ts = (int64)ts_v;
+
+	/* Figure out the nanosecond portion - bias slightly*/
+	nano_seconds = (unsigned int)((ts_v - (double)(ts))*1e9 + 0.5);
+
+	if (ts>=365*DAY)
+	{	DATETIME t;
+		if (ts>=0)
+		{
+			if (ts<TS_NEVER)
+			{
+				if (local_datetime(ts,&t))
+				{
+					t.nanosecond = nano_seconds;
+					len = strdatetime(&t,temp,sizeof(temp));
+				}
 				else
 					THROW("%"FMT_INT64"d is an invalid timestamp", ts);
 					/* TROUBLESHOOT
@@ -993,6 +1098,125 @@ TIMESTAMP convert_to_timestamp(const char *value)
 	}
 	else
 		return TS_NEVER;
+}
+
+/** Convert from a string to a timestamp -- delta compatibility
+ **/
+TIMESTAMP convert_to_timestamp_delta(const char *value, unsigned int *nanoseconds, double *dbl_time_value)
+{
+	/* Declarations - inline ones make angry (since we're technically in C) */
+	DATETIME dt;
+	double seconds_w_nano, t;
+	char *p;
+	char tz[5]="";
+	TIMESTAMP output_value;
+
+	if (*value=='\'' || *value=='"') value++;
+
+	/* By default, nanoseconds is set to 0 */
+	*nanoseconds = 0;
+
+	/* Init double value */
+	*dbl_time_value = 0.0;
+
+	/* Zero the DATETIME structure */
+	dt.year = 0;
+	dt.month = 0;
+	dt.day = 0;
+	dt.hour = 0;
+	dt.minute = 0;
+	dt.second = 0;
+	dt.nanosecond = 0;
+	dt.is_dst = 0;
+	dt.tz[0] = '\0';
+	dt.tzoffset = 0;
+	dt.timestamp = 0;
+
+	/* Default to TS_NEVER */
+	output_value = TS_NEVER;
+
+	/* scan ISO format date/time -- nanosecond inclusive */
+	if (sscanf(value,"%d-%d-%d %d:%d:%lf %[-+:A-Za-z0-9]",&dt.year,&dt.month,&dt.day,&dt.hour,&dt.minute,&seconds_w_nano,tz)>=3)
+	{
+		dt.second = (unsigned int)seconds_w_nano;
+		dt.nanosecond = (unsigned int)(1e9*(seconds_w_nano-(double)dt.second)+0.5);
+		dt.is_dst = (strcmp(tz,tzdst)==0) ? 1 : 0;
+		*nanoseconds = dt.nanosecond;
+		strncpy(dt.tz,tz,sizeof(dt.tz));
+		output_value = mkdatetime(&dt);
+	}
+	/* scan ISO format date/time -- nanosecond inclusive */
+	else if (global_dateformat==DF_ISO && sscanf(value,"%d/%d/%d %d:%d:%lf %[-+:A-Za-z0-9]",&dt.year,&dt.month,&dt.day,&dt.hour,&dt.minute,&seconds_w_nano,tz)>=3)
+	{
+		dt.second = (unsigned int)seconds_w_nano;
+		dt.nanosecond = (unsigned int)(1e9*(seconds_w_nano-(double)dt.second)+0.5);
+		dt.is_dst = (strcmp(tz,tzdst)==0) ? 1 : 0;
+		*nanoseconds = dt.nanosecond;
+		strncpy(dt.tz,tz,sizeof(dt.tz));
+		output_value = mkdatetime(&dt);
+	}
+	/* scan US format date/time -- nanosecond inclusive */
+	else if (global_dateformat==DF_US && sscanf(value,"%d/%d/%d %d:%d:%lf %[-+:A-Za-z0-9]",&dt.month,&dt.day,&dt.year,&dt.hour,&dt.minute,&seconds_w_nano,tz)>=3)
+	{
+		dt.second = (unsigned int)seconds_w_nano;
+		dt.nanosecond = (unsigned int)(1e9*(seconds_w_nano-(double)dt.second)+0.5);
+		dt.is_dst = (strcmp(tz,tzdst)==0) ? 1 : 0;
+		*nanoseconds = dt.nanosecond;
+		strncpy(dt.tz,tz,sizeof(dt.tz));
+		output_value = mkdatetime(&dt);
+	}
+	/* scan EURO format date/time -- nanosecond inclusive */
+	else if (global_dateformat==DF_EURO && sscanf(value,"%d/%d/%d %d:%d:%lf %[-+:A-Za-z0-9]",&dt.day,&dt.month,&dt.year,&dt.hour,&dt.minute,&seconds_w_nano,tz)>=3)
+	{
+		dt.second = (unsigned int)seconds_w_nano;
+		dt.nanosecond = (unsigned int)(1e9*(seconds_w_nano-(double)dt.second)+0.5);
+		dt.is_dst = (strcmp(tz,tzdst)==0) ? 1 : 0;
+		*nanoseconds = dt.nanosecond;
+		strncpy(dt.tz,tz,sizeof(dt.tz));
+		output_value = mkdatetime(&dt);
+	}
+	/* @todo support European format date/time using some kind of global flag */
+	else if (strcmp(value,"INIT")==0)
+		output_value = 0;
+	else if (strcmp(value, "NEVER")==0)
+		output_value = TS_NEVER;
+	else if (strcmp(value, "NOW") == 0)
+		output_value = global_clock;
+	else if (isdigit(value[0]))
+	{	/* timestamp format */
+		t = atof(value);
+		p=value;
+		while (isdigit(*p) || *p=='.') p++;
+		switch (*p) {
+			case 's':
+			case 'S':
+				t *= SECOND;
+				break;
+			case 'm':
+			case 'M':
+				t *= MINUTE;
+				break;
+			case 'h':
+			case 'H':
+				t *= HOUR;
+				break;
+			case 'd':
+			case 'D':
+				t *= DAY;
+				break;
+			default:
+				return TS_NEVER;
+				break;
+		}
+		output_value = (TIMESTAMP)(t+0.5);
+	}
+	else
+		output_value = TS_NEVER;
+
+	/* Perform double conversion */
+	*dbl_time_value = (double)(output_value) + ((double)(dt.nanosecond)/1000000000.0);
+
+	return output_value;
 }
 
 double timestamp_to_days(TIMESTAMP t)

@@ -64,6 +64,9 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	(new solar(module))->oclass;
 	NULL;
 
+	(new central_dg_control(module))->oclass;
+	NULL;
+
 	/* always return the first class registered */
 	return first;
 }
@@ -82,7 +85,7 @@ void schedule_deltamode_start(TIMESTAMP tstart)
 		/*  TROUBLESHOOT
 		The schedule_deltamode_start function was called by an object when generators' overall enabled_subsecond_models
 		flag was not set.  The module-level flag indicates that no devices should use deltamode, but one made the call
-		to a deltamode function.  Please check the deltamode_inclusive flag on all objects.  If deltamode is desired,
+		to a deltamode function.  Please check the DELTAMODE flag on all objects.  If deltamode is desired,
 		please set the module-level enable_subsecond_models flag and try again.
 		*/
 	}
@@ -156,8 +159,14 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 		//Loop through the object list and call the updates
 		for (curr_object_number=0; curr_object_number<gen_object_count; curr_object_number++)
 		{
-			//Call the actual function
-			function_status = ((SIMULATIONMODE (*)(OBJECT *, unsigned int64, unsigned long, unsigned int))(*delta_functions[curr_object_number]))(delta_objects[curr_object_number],delta_time,dt,iteration_count_val);
+			//See if we're in service or not
+			if ((delta_objects[curr_object_number]->in_svc_double <= gl_globaldeltaclock) && (delta_objects[curr_object_number]->out_svc_double >= gl_globaldeltaclock))
+			{
+				//Call the actual function
+				function_status = ((SIMULATIONMODE (*)(OBJECT *, unsigned int64, unsigned long, unsigned int))(*delta_functions[curr_object_number]))(delta_objects[curr_object_number],delta_time,dt,iteration_count_val);
+			}
+			else //Not in service - off to event mode
+				function_status = SM_EVENT;
 
 			//Determine what our return is
 			if (function_status == SM_DELTA)
@@ -233,8 +242,15 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 		//Loop through delta objects and post their "post transient" frequency values - 0 mode accumulation pass
 		for (curr_object_number=0; curr_object_number<gen_object_count; curr_object_number++)
 		{
-			//Call the actual function
-			function_status = ((STATUS (*)(OBJECT *, complex *, unsigned int))(*post_delta_functions[curr_object_number]))(delta_objects[curr_object_number],&temp_complex,0);
+
+			//See if we're in service or not
+			if ((delta_objects[curr_object_number]->in_svc_double <= gl_globaldeltaclock) && (delta_objects[curr_object_number]->out_svc_double >= gl_globaldeltaclock))
+			{
+				//Call the actual function
+				function_status = ((STATUS (*)(OBJECT *, complex *, unsigned int))(*post_delta_functions[curr_object_number]))(delta_objects[curr_object_number],&temp_complex,0);
+			}
+			else //Not in service
+				function_status = SUCCESS;
 
 			//Make sure we worked
 			if (function_status == FAILED)
@@ -263,51 +279,61 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 			return FAILED;
 		}
 
-		//Call the function now
-		pflow_func_status = ((int (*)(unsigned int))((FUNCTIONADDR *)(*func_address)))(0);
-
-		//Make sure it worked
-		if (pflow_func_status == 0)
+		//Semi-legacy call -- see if it actually populated, if not, skip it
+		if (*func_address != NULL)
 		{
-			gl_error("Generator deltamode update - failed to perform powerflow frequency update");
-			/*  TROUBLESHOOT
-			While performing a deltamode update, the frequency calculation portion in the powerflow
-			module failed to calculate properly.
-			*/
-			return FAILED;
-		}
+			//Call the function now
+			pflow_func_status = ((int (*)(unsigned int))((FUNCTIONADDR *)(*func_address)))(0);
 
-		//Now get the "current_frequency" value and push it back
-		extracted_freq = (double *)gl_get_module_var(gl_find_module("powerflow"),"current_frequency");
-
-		//Make sure it worked
-		if (extracted_freq == 0)
-		{
-			gl_error("Generator deltamode update - failed to link to powerflow frequency");
-			/*  TROUBLESHOOT
-			While performing a deltamode update, mapping the current powerflow frequency value failed.
-			Please try again.  If the error persists, please submit a bug report via the trac website.
-			*/
-			return FAILED;
-		}
-
-		//Apply the frequency value to the passing variable
-		temp_complex = complex(*extracted_freq*2.0*PI,0.0);
-
-		//Loop through delta objects and post their "post transient" frequency values - push phase
-		for (curr_object_number=0; curr_object_number<gen_object_count; curr_object_number++)
-		{
-			//Call the actual function
-			function_status = ((STATUS (*)(OBJECT *, complex *, unsigned int))(*post_delta_functions[curr_object_number]))(delta_objects[curr_object_number],&temp_complex,1);
-
-			//Make sure we worked
-			if (function_status == FAILED)
+			//Make sure it worked
+			if (pflow_func_status == 0)
 			{
-				gl_error("Generator object:%s - failed post-deltamode update",delta_objects[curr_object_number]->name);
-				//Defined above
+				gl_error("Generator deltamode update - failed to perform powerflow frequency update");
+				/*  TROUBLESHOOT
+				While performing a deltamode update, the frequency calculation portion in the powerflow
+				module failed to calculate properly.
+				*/
 				return FAILED;
 			}
-			//Default else - successful, keep going
+
+			//Now get the "current_frequency" value and push it back
+			extracted_freq = (double *)gl_get_module_var(gl_find_module("powerflow"),"current_frequency");
+
+			//Make sure it worked
+			if (extracted_freq == 0)
+			{
+				gl_error("Generator deltamode update - failed to link to powerflow frequency");
+				/*  TROUBLESHOOT
+				While performing a deltamode update, mapping the current powerflow frequency value failed.
+				Please try again.  If the error persists, please submit a bug report via the trac website.
+				*/
+				return FAILED;
+			}
+
+			//Apply the frequency value to the passing variable
+			temp_complex = complex(*extracted_freq*2.0*PI,0.0);
+
+			//Loop through delta objects and post their "post transient" frequency values - push phase
+			for (curr_object_number=0; curr_object_number<gen_object_count; curr_object_number++)
+			{
+				//See if we're in service or not
+				if ((delta_objects[curr_object_number]->in_svc_double <= gl_globaldeltaclock) && (delta_objects[curr_object_number]->out_svc_double >= gl_globaldeltaclock))
+				{
+					//Call the actual function
+					function_status = ((STATUS (*)(OBJECT *, complex *, unsigned int))(*post_delta_functions[curr_object_number]))(delta_objects[curr_object_number],&temp_complex,1);
+				}
+				else //Not in service
+					function_status = SUCCESS;
+
+				//Make sure we worked
+				if (function_status == FAILED)
+				{
+					gl_error("Generator object:%s - failed post-deltamode update",delta_objects[curr_object_number]->name);
+					//Defined above
+					return FAILED;
+				}
+				//Default else - successful, keep going
+			}
 		}
 
 		//We always succeed from this, just because (unless we failed above)

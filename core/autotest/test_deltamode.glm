@@ -7,7 +7,7 @@
 
 
 #set deltamode_timestep=100000000
-#set deltamode_maximumtime=6
+#set deltamode_maximumtime=6000000000
 
 clock {
 	timezone "PST+8PDT";

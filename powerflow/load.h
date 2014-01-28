@@ -6,6 +6,8 @@
 
 #include "node.h"
 
+EXPORT SIMULATIONMODE interupdate_load(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
+
 class load : public node
 {
 public:
@@ -38,6 +40,7 @@ public:
 	int init(OBJECT *parent);
 	
 	void load_update_fxn(bool fault_mode);
+	SIMULATIONMODE inter_deltaupdate_load(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
 	load(MODULE *mod);
 	TIMESTAMP sync(TIMESTAMP t0);

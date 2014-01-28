@@ -65,6 +65,12 @@ fuse::fuse(MODULE *mod) : link_object(mod)
 			GL_THROW("Unable to publish fault restoration function");
 		if (gl_publish_function(oclass,	"change_fuse_faults", (FUNCTIONADDR)fuse_fault_updates)==NULL)
 			GL_THROW("Unable to publish fuse fault correction function");
+
+		//Publish deltamode functions
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
+			GL_THROW("Unable to publish fuse deltamode function");
+		if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_link)==NULL)
+			GL_THROW("Unable to publish fuse deltamode function");
     }
 }
 

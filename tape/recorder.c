@@ -666,8 +666,13 @@ EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 
 		{
 			strncpy(my->last.value,buffer,sizeof(my->last.value));
-			my->last.ts = t0;
-			recorder_write(obj);
+
+			/* Deltamode-related check -- if we're ahead, don't overwrite this */
+			if (my->last.ts < t0)
+			{
+				my->last.ts = t0;
+				recorder_write(obj);
+			}
 		} else if (my->interval > 0 && my->last.ts == t0){
 			strncpy(my->last.value,buffer,sizeof(my->last.value));
 		}

@@ -144,7 +144,7 @@ void schedule_deltamode_start(TIMESTAMP tstart)
 		/*  TROUBLESHOOT
 		The schedule_deltamode_start function was called by an object when powerflow's overall enabled_subsecond_models
 		flag was not set.  The module-level flag indicates that no devices should use deltamode, but one made the call
-		to a deltamode function.  Please check the deltamode_inclusive flag on all objects.  If deltamode is desired,
+		to a deltamode function.  Please check the DELTAMODE flag on all objects.  If deltamode is desired,
 		please set the module-level enable_subsecond_models flag and try again.
 		*/
 	}
@@ -219,11 +219,17 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 	if (enable_subsecond_models == true)
 	{
 		//Do the preliminary pass, in case we're needed
-		//Loop through the object list and call the updates - go backward so SWING is last, just because
-		for (curr_object_number=(pwr_object_count-1); curr_object_number>=0; curr_object_number--)
+		//Loop through the object list and call the updates - loop forward, otherwise parent/child code doesn't work right
+		for (curr_object_number=0; curr_object_number<pwr_object_count; curr_object_number++)
 		{
-			//Call the actual function
-			function_status = ((SIMULATIONMODE (*)(OBJECT *, unsigned int64, unsigned long, unsigned int, bool))(*delta_functions[curr_object_number]))(delta_objects[curr_object_number],delta_time,dt,iteration_count_val,false);
+			//See if we're in service or not
+			if ((delta_objects[curr_object_number]->in_svc_double <= gl_globaldeltaclock) && (delta_objects[curr_object_number]->out_svc_double >= gl_globaldeltaclock))
+			{
+				//Call the actual function
+				function_status = ((SIMULATIONMODE (*)(OBJECT *, unsigned int64, unsigned long, unsigned int, bool))(*delta_functions[curr_object_number]))(delta_objects[curr_object_number],delta_time,dt,iteration_count_val,false);
+			}
+			else //Not in service - just pass
+				function_status = SM_DELTA;
 
 			//Just make sure we didn't error 
 			if (function_status == (int)SM_ERROR)
@@ -239,8 +245,21 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 		//Call dynamic powerflow (start of either predictor or correct set)
 		powerflow_type = PF_DYNCALC;
 
-		//Call solver_nr
-		pf_result = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &NR_powerflow, powerflow_type, &bad_computation);
+		//Put in try/catch, since GL_THROWs inside solver_nr tend to be a little upsetting
+		try {
+			//Call solver_nr
+			pf_result = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &NR_powerflow, powerflow_type, &bad_computation);
+		}
+		catch (const char *msg)
+		{
+			gl_error("powerflow:interupdate - solver_nr call: %s", msg);
+			return SM_ERROR;
+		}
+		catch (...)
+		{
+			gl_error("powerflow:interupdate - solver_nr call: unknown exception");
+			return SM_ERROR;
+		}
 		
 		//De-flag any changes that may be in progress
 		NR_admit_change = false;
@@ -267,11 +286,17 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 			return SM_ERROR;
 		}
 
-		//Loop through the object list and call the updates - go backward so SWING is last, just because
-		for (curr_object_number=(pwr_object_count-1); curr_object_number>=0; curr_object_number--)
+		//Loop through the object list and call the updates - loop forward for SWING first, to replicate "postsync"-like order
+		for (curr_object_number=0; curr_object_number<pwr_object_count; curr_object_number++)
 		{
-			//Call the actual function
-			function_status = ((SIMULATIONMODE (*)(OBJECT *, unsigned int64, unsigned long, unsigned int, bool))(*delta_functions[curr_object_number]))(delta_objects[curr_object_number],delta_time,dt,iteration_count_val,true);
+			//See if we're in service or not
+			if ((delta_objects[curr_object_number]->in_svc_double <= gl_globaldeltaclock) && (delta_objects[curr_object_number]->out_svc_double >= gl_globaldeltaclock))
+			{
+				//Call the actual function
+				function_status = ((SIMULATIONMODE (*)(OBJECT *, unsigned int64, unsigned long, unsigned int, bool))(*delta_functions[curr_object_number]))(delta_objects[curr_object_number],delta_time,dt,iteration_count_val,true);
+			}
+			else //Not in service - just pass
+				function_status = SM_EVENT;
 
 			//Determine what our return is
 			if (function_status == SM_DELTA)
@@ -345,8 +370,19 @@ int delta_extra_function(unsigned int mode)
 	//Loop through the object list and call the updates
 	for (curr_object_number=0; curr_object_number<pwr_object_count; curr_object_number++)
 	{
-		//Call the actual function
-		function_status = ((STATUS (*)(OBJECT *, complex *, complex *))(*delta_freq_functions[curr_object_number]))(delta_objects[curr_object_number],&accumulated_power,&accumulated_freqpower);
+		if (delta_freq_functions[curr_object_number] != NULL)
+		{
+			//See if we're in service or not
+			if ((delta_objects[curr_object_number]->in_svc_double <= gl_globaldeltaclock) && (delta_objects[curr_object_number]->out_svc_double >= gl_globaldeltaclock))
+			{
+				//Call the actual function
+				function_status = ((STATUS (*)(OBJECT *, complex *, complex *))(*delta_freq_functions[curr_object_number]))(delta_objects[curr_object_number],&accumulated_power,&accumulated_freqpower);
+			}
+			else	//Defaulted else, not in service
+				function_status = SUCCESS;
+		}
+		else	//Defaulted else, not in service
+			function_status = SUCCESS;
 
 		//Make sure we worked
 		if (function_status == FAILED)

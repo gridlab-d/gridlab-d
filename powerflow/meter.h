@@ -7,6 +7,8 @@
 #include "powerflow.h"
 #include "node.h"
 
+EXPORT SIMULATIONMODE interupdate_meter(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
+
 class meter : public node
 {
 public:
@@ -65,6 +67,10 @@ public:
 
 	double process_bill(TIMESTAMP t1);
 	int check_prices();
+
+	void BOTH_meter_sync_fxn(void);
+
+	SIMULATIONMODE inter_deltaupdate_meter(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
 private:
 	double previous_energy_total;  // Used to track what the meter reading was the previous month

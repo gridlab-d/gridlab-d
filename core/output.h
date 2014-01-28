@@ -48,6 +48,7 @@ int output_profile(const char *format,...);
 int output_notify_error(void (*)(void));
 
 void output_set_time_context(TIMESTAMP ts);
+void output_set_delta_time_context(TIMESTAMP ts, DELTAT delta_ts);
 char *output_get_time_context(void);
 
 int output_xsd(char *spec);

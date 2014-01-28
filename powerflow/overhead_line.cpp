@@ -38,6 +38,12 @@ overhead_line::overhead_line(MODULE *mod) : line(mod)
 				GL_THROW("Unable to publish fault creation function");
 			if (gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_ohline)==NULL)
 				GL_THROW("Unable to publish fault restoration function");
+
+			//Publish deltamode functions
+			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
+				GL_THROW("Unable to publish overhead line deltamode function");
+			if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_link)==NULL)
+				GL_THROW("Unable to publish overhead line deltamode function");
     }
 }
 
@@ -241,6 +247,8 @@ void overhead_line::recalc(void)
 		complex P_mat[3][3], Cabc_mat[3][3], temp_mat[3][3];
 		bool valid_capacitance=true;
 		double freq_coeff_real, freq_coeff_imag, freq_additive_term;
+		
+		valid_capacitance = false;	//Assume capacitance is invalid by default
 		
 		//Calculate coefficients for self and mutual impedance - incorporates frequency values
 		//Per Kersting (4.39) and (4.40)

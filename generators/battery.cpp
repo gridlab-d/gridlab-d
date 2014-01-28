@@ -1884,7 +1884,7 @@ TIMESTAMP battery::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		else
 			return TS_NEVER;
 	} else {//use_internal_battery_model is TRUE
-		bat_load = *pBatteryLoad;
+		bat_load = -(*pBatteryLoad);
 		p_max = *pRatedPower;
 		//figure out the the actual power coming out of the battery due to the battery load and the battery efficiency
 		if(t0 != 0 && bat_load != 0){

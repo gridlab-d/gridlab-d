@@ -503,63 +503,77 @@ void fault_check::write_output_file(TIMESTAMP tval)
 
 		if (phase_outs != 0x00)	//Anything unsupported?
 		{
-			//See if the header's been written
-			if (headerwritten == false)
+			//Make sure we're actually a populated spot, otherwise this fails horribly (Node has separate catch for message)
+			if (NR_busdata[index].type != -1)
 			{
-				//Convert timestamp so readable
-				gl_localtime(tval,&temp_time);
+				//See if the header's been written
+				if (headerwritten == false)
+				{
+					//Convert timestamp so readable
+					gl_localtime(tval,&temp_time);
 
-				fprintf(FPOutput,"Unsupported at timestamp %lld - %04d-%02d-%02d %02d:%02d:%02d =\n\n",tval,temp_time.year,temp_time.month,temp_time.day,temp_time.hour,temp_time.minute,temp_time.second);
-				headerwritten = true;	//Flag it as written
+					fprintf(FPOutput,"Unsupported at timestamp %lld - %04d-%02d-%02d %02d:%02d:%02d =\n\n",tval,temp_time.year,temp_time.month,temp_time.day,temp_time.hour,temp_time.minute,temp_time.second);
+					headerwritten = true;	//Flag it as written
+				}
+
+				//Figure out the "unsupported" structure
+				switch (phase_outs) {
+					case 0x01:	//Only C
+						{
+							fprintf(FPOutput,"Phase C on node %s\n",NR_busdata[index].name);
+							break;
+						}
+					case 0x02:	//Only B
+						{
+							fprintf(FPOutput,"Phase B on node %s\n",NR_busdata[index].name);
+							break;
+						}
+					case 0x03:	//B and C unsupported
+						{
+							fprintf(FPOutput,"Phases B and C on node %s\n",NR_busdata[index].name);
+							break;
+						}
+					case 0x04:	//Only A
+						{
+							fprintf(FPOutput,"Phase A on node %s\n",NR_busdata[index].name);
+							break;
+						}
+					case 0x05:	//A and C unsupported
+						{
+							fprintf(FPOutput,"Phases A and C on node %s\n",NR_busdata[index].name);
+							break;
+						}
+					case 0x06:	//A and B unsupported
+						{
+							fprintf(FPOutput,"Phases A and B on node %s\n",NR_busdata[index].name);
+							break;
+						}
+					case 0x07:	//All three unsupported
+						{
+							fprintf(FPOutput,"Phases A, B, and C on node %s\n",NR_busdata[index].name);
+							break;
+						}
+					default:	//How'd we get here?
+						{
+							GL_THROW("Error parsing unsupported phases on node %s",NR_busdata[index].name);
+							/*  TROUBLESHOOT
+							The output file writing routine for the fault_check object encountered a problem
+							determining which phases are unsupported on the indicated node.  Please try again.
+							If the error persists, submit your code and a bug report using the trac website.
+							*/
+						}
+				}//End case
+			}//end valid name
+			else {
+				//send a warning
+				gl_warning("Unsupported node - never populated in NR_busdata!");
+				/*  TROUBLESHOOT
+				While parsing the unsupported nodes list, a node was encountered that did not
+				populate the NR_busdata structure.  This typically occurs with islanded nodes.
+				Look to an error output elsewhere in the command line to indicate which node this
+				may be and check the connections in the GLM.
+				*/
 			}
-
-			//Figure out the "unsupported" structure
-			switch (phase_outs) {
-				case 0x01:	//Only C
-					{
-						fprintf(FPOutput,"Phase C on node %s\n",NR_busdata[index].name);
-						break;
-					}
-				case 0x02:	//Only B
-					{
-						fprintf(FPOutput,"Phase B on node %s\n",NR_busdata[index].name);
-						break;
-					}
-				case 0x03:	//B and C unsupported
-					{
-						fprintf(FPOutput,"Phases B and C on node %s\n",NR_busdata[index].name);
-						break;
-					}
-				case 0x04:	//Only A
-					{
-						fprintf(FPOutput,"Phase A on node %s\n",NR_busdata[index].name);
-						break;
-					}
-				case 0x05:	//A and C unsupported
-					{
-						fprintf(FPOutput,"Phases A and C on node %s\n",NR_busdata[index].name);
-						break;
-					}
-				case 0x06:	//A and B unsupported
-					{
-						fprintf(FPOutput,"Phases A and B on node %s\n",NR_busdata[index].name);
-						break;
-					}
-				case 0x07:	//All three unsupported
-					{
-						fprintf(FPOutput,"Phases A, B, and C on node %s\n",NR_busdata[index].name);
-						break;
-					}
-				default:	//How'd we get here?
-					{
-						GL_THROW("Error parsing unsupported phases on node %s",NR_busdata[index].name);
-						/*  TROUBLESHOOT
-						The output file writing routine for the fault_check object encountered a problem
-						determining which phases are unsupported on the indicated node.  Please try again.
-						If the error persists, submit your code and a bug report using the trac website.
-						*/
-					}
-			}//End case
 		}//end unsupported
 	}//end bus traversion
 

@@ -1,0 +1,783 @@
+// $Id: IEEE13-Feb27.glm
+//	Copyright (C) 2011 Battelle Memorial Institute
+
+#set iteration_limit=100000;
+
+clock {
+     timezone PST+8PDT;
+	starttime '2009-01-01 0:00:00';
+	stoptime '2009-12-31 23:00:00';
+}
+module tape;
+module generators;
+module assert;
+
+
+module powerflow {
+
+	}
+
+// Phase Conductor for 601: 556,500 26/7 ACSR
+object overhead_line_conductor {
+	name olc6010;
+	geometric_mean_radius 0.031300;
+	diameter 0.927 in;
+	resistance 0.185900;
+}
+
+// Phase Conductor for 602: 4/0 6/1 ACSR
+object overhead_line_conductor {
+	name olc6020;
+	geometric_mean_radius 0.00814;
+	diameter 0.56 in;
+	resistance 0.592000;
+}
+
+
+
+// Overhead line configurations
+object line_spacing {
+	name ls500601;
+	distance_AB 2.5;
+	distance_AC 4.5;
+	distance_BC 7.0;
+	distance_BN 5.656854;
+	distance_AN 4.272002;
+	distance_CN 5.0;
+	distance_AE 28.0;
+	distance_BE 28.0;
+	distance_CE 28.0;
+	distance_NE 24.0;
+}
+
+object line_configuration {
+	name lc601;
+	conductor_A olc6010;
+	conductor_B olc6010;
+	conductor_C olc6010;
+	conductor_N olc6020;
+	spacing ls500601;
+}
+
+
+// Define line objects
+
+
+//Split line for distributed load
+object overhead_line { //6326321 {
+     phases "ABCN";
+     name line_1-2;
+     from m1;
+     to n2;
+     length 250;
+     configuration lc601;
+}
+object overhead_line { //6326321 {
+     phases "ABCN";
+     name line_2-3;
+     from n2;
+     to n3;
+     length 250;
+     configuration lc601;
+}
+object overhead_line { //6326321 {
+     phases "ABCN";
+     name line_3-4;
+     from n3;
+     to n4;
+     length 500;
+     configuration lc601;
+}
+object overhead_line { //6326321 {
+     phases "ABCN";
+     name line_3-5;
+     from n3;
+     to n5;
+     length 250;
+     configuration lc601;
+}
+object overhead_line { //6326321 {
+     phases "ABCN";
+     name line_5-6;
+     from n5;
+     to n6;
+     length 250;
+     configuration lc601;
+}
+object overhead_line { //6326321 {
+     phases "ABCN";
+     name line_6-11;
+     from n6;
+     to n11;
+     length 500;
+     configuration lc601;
+}
+object overhead_line { //6326321 {
+     phases "ABCN";
+     name line_6-7;
+     from n6;
+     to n7;
+     length 250;
+     configuration lc601;
+}
+object overhead_line { //6326321 {
+     phases "ABCN";
+     name line_7-8;
+     from n7;
+     to n8;
+     length 250;
+     configuration lc601;
+}
+object overhead_line { //6326321 {
+     phases "ABCN";
+     name line_8-9;
+     from n8;
+     to n9;
+     length 250;
+     configuration lc601;
+}
+object overhead_line { //6326321 {
+     phases "ABCN";
+     name line_9-10;
+     from n9;
+     to n10;
+     length 100;
+     configuration lc601;
+}
+// Transformer
+object transformer_configuration {
+	name tc400;
+	connect_type WYE_WYE;
+  	install_type PADMOUNT;
+  	power_rating 500;
+  	primary_voltage 4160;
+  	secondary_voltage 480;
+  	resistance 0.011;
+  	reactance 0.02;
+}
+
+// Create node objects
+
+object meter { //633 {
+     name m1;
+	bustype SWING;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+
+}
+
+
+object node { //633 {
+     name n2;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+
+}
+object transformer {
+  	phases "ABCN";
+  	name transformer_2;
+  	from n2;
+  	to m2;
+  	configuration tc400;
+}
+object meter { //633 {
+     name m2;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+object node { //633 {
+     name n3;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+
+}
+object transformer {
+  	phases "ABCN";
+  	name transformer_3;
+  	from n3;
+  	to m3;
+  	configuration tc400;
+}
+object meter { //633 {
+     name m3;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+object node { //633 {
+     name n4;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+
+}
+object transformer {
+  	phases "ABCN";
+  	name transformer_4;
+  	from n4;
+  	to m4;
+  	configuration tc400;
+}
+object meter { //633 {
+     name m4;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+object node { //633 {
+     name n5;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+
+}
+object transformer {
+  	phases "ABCN";
+  	name transformer_5;
+  	from n5;
+  	to m5;
+  	configuration tc400;
+}
+object meter { //633 {
+     name m5;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+object node { //633 {
+     name n6;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+
+}
+object transformer {
+  	phases "ABCN";
+  	name transformer_6;
+  	from n6;
+  	to m6;
+  	configuration tc400;
+}
+object meter { //633 {
+     name m6;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+object node { //633 {
+     name n7;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+
+}
+object transformer {
+  	phases "ABCN";
+  	name transformer_7;
+  	from n7;
+  	to m7;
+  	configuration tc400;
+}
+object meter { //633 {
+     name m7;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+object node { //633 {
+     name n8;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+
+}
+object transformer {
+  	phases "ABCN";
+  	name transformer_8;
+  	from n8;
+  	to m8;
+  	configuration tc400;
+}
+object meter { //633 {
+     name m8;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+object node { //633 {
+     name n9;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+
+}
+object transformer {
+  	phases "ABCN";
+  	name transformer_9;
+  	from n9;
+  	to m9;
+  	configuration tc400;
+}
+object meter { //633 {
+     name m9;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+object node { //633 {
+     name n10;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+
+}
+object transformer {
+  	phases "ABCN";
+  	name transformer_10;
+  	from n10;
+  	to m10;
+  	configuration tc400;
+}
+object meter { //633 {
+     name m10;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+object node { //633 {
+     name n11;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+
+}
+object transformer {
+  	phases "ABCN";
+  	name transformer_11;
+  	from n11;
+  	to m11;
+  	configuration tc400;
+}
+object meter { //633 {
+     name m11;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+
+ 
+object load { //646 {
+     name load2;
+	 parent m2;
+     phases "ABCN";
+     voltage_A 277.13;
+     voltage_B -138.56-240.0j;
+     voltage_C -138.56+240.0j;
+     constant_power_A 1000+300j;
+     constant_power_B 1000+300j;
+     constant_power_C 1000+300j;
+     nominal_voltage 277.13;
+	 object player {
+		property constant_power_A;
+		file "CDGCLoad.player";
+	};
+	 object player {
+		property constant_power_B;
+		file "CDGCLoad.player";
+	};
+	 object player {
+		property constant_power_C;
+		file "CDGCLoad.player";
+	};
+}
+object load { //646 {
+     name load3;
+	 parent m3;
+     phases "ABCN";
+     voltage_A 277.13;
+     voltage_B -138.56-240.0j;
+     voltage_C -138.56+240.0j;
+     constant_power_A 1000+300j;
+     constant_power_B 1000+300j;
+     constant_power_C 1000+300j;
+     nominal_voltage 277.13;
+
+}
+object load { //646 {
+     name load4;
+	 parent m4;
+     phases "ABCN";
+     voltage_A 277.13;
+     voltage_B -138.56-240.0j;
+     voltage_C -138.56+240.0j;
+     constant_power_A 1000+300j;
+     constant_power_B 1000+300j;
+     constant_power_C 1000+300j;
+     nominal_voltage 277.13;
+
+}
+object load { //646 {
+     name load5;
+	 parent m5;
+     phases "ABCN";
+     voltage_A 277.13;
+     voltage_B -138.56-240.0j;
+     voltage_C -138.56+240.0j;
+     constant_power_A 1000+300j;
+     constant_power_B 1000+300j;
+     constant_power_C 1000+300j;
+     nominal_voltage 277.13;
+}
+object load { //646 {
+     name load7;
+	 parent m7;
+     phases "ABCN";
+     voltage_A 277.13;
+     voltage_B -138.56-240.0j;
+     voltage_C -138.56+240.0j;
+     constant_power_A 1000+300j;
+     constant_power_B 1000+300j;
+     constant_power_C 1000+300j;
+     nominal_voltage 277.13;
+}
+object load { //646 {
+     name load8;
+	 parent m8;
+     phases "ABCN";
+     voltage_A 277.13;
+     voltage_B -138.56-240.0j;
+     voltage_C -138.56+240.0j;
+     constant_power_A 1000+300j;
+     constant_power_B 1000+300j;
+     constant_power_C 1000+300j;
+     nominal_voltage 277.13;
+}
+object load { //646 {
+     name load9;
+	 parent m9;
+     phases "ABCN";
+     voltage_A 277.13;
+     voltage_B -138.56-240.0j;
+     voltage_C -138.56+240.0j;
+     constant_power_A 1000+300j;
+     constant_power_B 1000+300j;
+     constant_power_C 1000+300j;
+     nominal_voltage 277.13;
+}
+object load { //646 {
+     name load10;
+	 parent m10;
+     phases "ABCN";
+     voltage_A 277.13;
+     voltage_B -138.56-240.0j;
+     voltage_C -138.56+240.0j;
+     constant_power_A 1000+300j;
+     constant_power_B 1000+300j;
+     constant_power_C 1000+300j;
+     nominal_voltage 277.13;
+}
+object load { //646 {
+     name load11;
+	 parent m11;
+     phases "ABCN";
+     voltage_A 277.13;
+     voltage_B -138.56-240.0j;
+     voltage_C -138.56+240.0j;
+     constant_power_A 1000+300j;
+     constant_power_B 1000+300j;
+     constant_power_C 1000+300j;
+     nominal_voltage 277.13;
+}
+
+
+
+//Inverter with battery child
+object inverter {
+    name inv4;
+	parent m4;
+	groupid "cdc_group";
+    inverter_type FOUR_QUADRANT;
+    four_quadrant_control_mode CONSTANT_PQ;
+	generator_mode CONSTANT_PQ; //Not effectively used, just tired of seeing Warning
+	generator_status ONLINE;
+	inverter_efficiency 1.0;
+    rated_power 20000.0;		//Per phase rating
+	charge_on_threshold 5.0 kW;
+	charge_off_threshold 7.0 kW;
+	discharge_off_threshold 7.5 kW;
+	discharge_on_threshold 9.0 kW;
+	max_discharge_rate 1.0 kW;
+	max_charge_rate 0.80 kW;
+}
+object battery {
+	name batt4;
+	parent inv4;
+	use_internal_battery_model true;
+	battery_type LI_ION;
+	Energy 200.0 kWh;
+	base_efficiency 1.0;
+	state_of_charge 1.0;
+	generator_mode SUPPLY_DRIVEN;
+
+}
+//Parentless battery
+object battery {
+	name batt6;
+	parent m6;
+	battery_type LI_ION;
+	Energy 200.0 kWh;
+	base_efficiency 1.0;
+	state_of_charge 1.0;
+	generator_mode CONSTANT_PQ;
+	scheduled_power 1000.0;
+}
+
+
+object inverter {
+    name inv9;
+	parent m9;
+    inverter_type FOUR_QUADRANT;
+    four_quadrant_control_mode CONSTANT_PQ;
+	generator_mode CONSTANT_PQ; //Not effectively used, just tired of seeing Warning
+	generator_status ONLINE;
+	inverter_efficiency 1.0;
+    rated_power 20000.0;		//Per phase rating
+	charge_on_threshold 5.0 kW;
+	charge_off_threshold 7.0 kW;
+	discharge_off_threshold 7.5 kW;
+	discharge_on_threshold 9.0 kW;
+	max_discharge_rate 1.0 kW;
+	max_charge_rate 0.80 kW;
+}
+object battery {
+	name batt9;
+	parent inv9;
+	use_internal_battery_model true;
+	battery_type LI_ION;
+	Energy 200.0 kWh;
+	base_efficiency 1.0;
+	state_of_charge 1.0;
+	generator_mode SUPPLY_DRIVEN;
+
+}object inverter {
+    name inv10;
+	parent m10;
+	groupid "cdc_group";
+    inverter_type FOUR_QUADRANT;
+    four_quadrant_control_mode CONSTANT_PQ;
+	generator_mode CONSTANT_PQ; //Not effectively used, just tired of seeing Warning
+	generator_status ONLINE;
+	inverter_efficiency 1.0;
+    rated_power 20000.0;		//Per phase rating
+	charge_on_threshold 5.0 kW;
+	charge_off_threshold 7.0 kW;
+	discharge_off_threshold 7.5 kW;
+	discharge_on_threshold 9.0 kW;
+	max_discharge_rate 1.0 kW;
+	max_charge_rate 0.80 kW;
+}
+object battery {
+	name batt10;
+	parent inv10;
+	use_internal_battery_model true;
+	battery_type LI_ION;
+	Energy 200.0 kWh;
+	base_efficiency 1.0;
+	state_of_charge 1.0;
+	generator_mode SUPPLY_DRIVEN;
+
+}
+object inverter {
+    name inv11;
+	groupid "cdc_group";
+	parent m11;
+    inverter_type FOUR_QUADRANT;
+    four_quadrant_control_mode CONSTANT_PQ;
+	generator_mode CONSTANT_PQ; //Not effectively used, just tired of seeing Warning
+	generator_status ONLINE;
+	inverter_efficiency 1.0;
+    rated_power 20000.0;		//Per phase rating
+	charge_on_threshold 5.0 kW;
+	charge_off_threshold 7.0 kW;
+	discharge_off_threshold 7.5 kW;
+	discharge_on_threshold 9.0 kW;
+	max_discharge_rate 1.0 kW;
+	max_charge_rate 0.80 kW;
+}
+object battery {
+	name batt11;
+	parent inv11;
+	use_internal_battery_model true;
+	battery_type LI_ION;
+	Energy 200.0 kWh;
+	base_efficiency 1.0;
+	state_of_charge 1.0;
+	generator_mode SUPPLY_DRIVEN;
+
+}
+object inverter {
+	name inv5;
+	groupid "cdc_group";
+	phases ABCN;
+	parent m5;
+	generator_mode CONSTANT_PQ; //Not effectively used, just tired of seeing Warning
+	generator_status ONLINE;
+	inverter_efficiency 1.0;
+    rated_power 20000.0;		//Per phase rating
+	inverter_type FOUR_QUADRANT;
+    four_quadrant_control_mode CONSTANT_PF;
+	power_factor 1.0;
+}
+
+object solar { // player files are used instead of climate object
+	name sol5;
+	parent inv5;	
+	phases ABCN;
+
+	//weather "WA-Yakima";
+	Rated_kVA 40.0 kVA;
+	area 29.6296 m^2;
+	tilt_angle 45.0;
+	efficiency 0.135;
+	orientation_azimuth 180.0; //equator-facing (South)
+	orientation FIXED_AXIS;
+	SOLAR_POWER_MODEL FLATPLATE;
+	SOLAR_TILT_MODEL PLAYERVALUE; // these players simulate WA-Yakima tmy2 data
+	object player {
+		property Insolation;
+		file "Yakima_Insolation.player";
+	};
+	object player {
+		property ambient_temperature;
+		file "Yakima_ambient_temperature.player";
+	};
+	object player {
+		property wind_speed;
+		file "Yakima_wind_speed.player";
+	};
+
+	// object recorder {
+		// property "Insolation,VA_Out.real,shading_factor";
+		// file "fixed_array_45_S_playerval.csv";
+		// interval 3600;
+	// };
+}
+
+object inverter {
+	name inv8;
+	groupid "cdc_group";
+	phases ABCN;
+	parent m8;
+	generator_mode CONSTANT_PQ; //Not effectively used, just tired of seeing Warning
+	generator_status ONLINE;
+	inverter_efficiency 1.0;
+    rated_power 20000.0;		//Per phase rating
+    inverter_type FOUR_QUADRANT;
+    four_quadrant_control_mode CONSTANT_PF;
+	power_factor 1.0;
+}
+object solar { // player files are used instead of climate object
+	name sol8;
+	parent inv8;	
+	phases ABCN;
+	//weather "WA-Yakima";
+	Rated_kVA 50.0 kVA;
+	area 29.6296 m^2;
+	tilt_angle 45.0;
+	efficiency 0.135;
+	orientation_azimuth 180.0; //equator-facing (South)
+	orientation FIXED_AXIS;
+	SOLAR_POWER_MODEL FLATPLATE;
+	SOLAR_TILT_MODEL PLAYERVALUE; // these players simulate WA-Yakima tmy2 data
+	object player {
+		property Insolation;
+		file "Yakima_Insolation.player";
+	};
+	object player {
+		property ambient_temperature;
+		file "Yakima_ambient_temperature.player";
+	};
+	object player {
+		property wind_speed;
+		file "Yakima_wind_speed.player";
+	};
+
+	// object recorder {
+		// property "Insolation,VA_Out.real,shading_factor";
+		// file "fixed_array_45_S_playerval.csv";
+		// interval 3600;
+	// };
+}
+
+
+object central_dg_control {
+	name cdc;
+	controlled_dgs "cdc_group";
+	feederhead_meter m1;
+	control_mode_0 NO_CONTROL;
+	control_mode_1 CONSTANT_PF;
+	control_mode_2 PEAK_SHAVING;
+	peak_S 200000.0;
+	pf_low -0.99;
+	pf_high 0.99;
+
+}
+object multi_recorder {
+	property m1:measured_power_A,m1:measured_power_B,m1:measured_power_C,inv5:P_Out,inv5:Q_Out,inv5:VA_Out,inv4:P_Out,inv4:Q_Out,inv4:VA_Out,load2:constant_power_A;
+	limit 0;
+	interval 0;
+	file CDGCTestAllSteps.csv;
+};
+object multi_recorder {
+	property m1:measured_power_A,m1:measured_power_B,m1:measured_power_C,inv5:P_Out,inv5:Q_Out,inv5:VA_Out,inv4:P_Out,inv4:Q_Out,inv4:VA_Out,load2:constant_power_A;
+	limit 0;
+	interval 3600;
+	file CDGCTest.csv;
+};
+ 

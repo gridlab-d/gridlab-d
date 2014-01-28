@@ -34,7 +34,6 @@ triplex_line::triplex_line(MODULE *mod) : line(mod)
         if(gl_publish_variable(oclass,
 			PT_INHERIT, "line",
             NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
-        
     }
 }
 

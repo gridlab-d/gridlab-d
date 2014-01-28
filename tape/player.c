@@ -195,6 +195,7 @@ Retry:
 			close_player(my);
 			my->status=TS_DONE;
 			my->next.ts = TS_NEVER;
+			my->next.ns = 0;
 			goto Done;
 		}
 	}
@@ -227,14 +228,14 @@ Retry:
 			dt.hour = H;
 			dt.minute = M;
 			dt.second = (unsigned short)S;
-			dt.microsecond = (unsigned int)(1e6*(S-dt.second));
+			dt.nanosecond = (unsigned int)(1e9*(S-dt.second));
 			strcpy(dt.tz, tz);
 			t1 = (TIMESTAMP)gl_mktime(&dt);
 			if ((obj->flags & OF_DELTAMODE)==OF_DELTAMODE)	/* Only request deltamode if we're explicitly enabled */
-				enable_deltamode(dt.microsecond==0?TS_NEVER:t1);
+				enable_deltamode(dt.nanosecond==0?TS_NEVER:t1);
 			if (t1!=TS_INVALID && my->loop==my->loopnum){
 				my->next.ts = t1;
-				my->next.ns = dt.microsecond*1000;
+				my->next.ns = dt.nanosecond;
 				while(value[voff] == ' '){
 					++voff;
 				}
@@ -266,13 +267,13 @@ Retry:
 			dt.minute = M;
 			dt.second = (unsigned short)S;
 			dt.tz[0] = 0;
-			dt.microsecond = (unsigned int)(1e6*(S-dt.second));
+			dt.nanosecond = (unsigned int)(1e9*(S-dt.second));
 			t1 = (TIMESTAMP)gl_mktime(&dt);
 			if ((obj->flags & OF_DELTAMODE)==OF_DELTAMODE)	/* Only request deltamode if we're explicitly enabled */
-				enable_deltamode(dt.microsecond==0?TS_NEVER:t1);
+				enable_deltamode(dt.nanosecond==0?TS_NEVER:t1);
 			if (t1!=TS_INVALID && my->loop==my->loopnum){
 				my->next.ts = t1;
-				my->next.ns = dt.microsecond*1000;
+				my->next.ns = dt.nanosecond;
 				while(value[voff] == ' '){
 					++voff;
 				}
@@ -477,6 +478,16 @@ EXPORT TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		/* Make sure it is still valid - don't want to get stuck iterating */
 		if ((temp_t<t1) && (temp_t>t0))
 			t1 = temp_t;
+	}
+
+	/* Catch for next delta instances that may occur -- if doesn't pass a reiteration, gets missed when nothing driving*/
+	if ((obj->flags & OF_DELTAMODE) == OF_DELTAMODE)
+	{
+		if ((t1>t0) && (my->next.ts==t0) && (my->next.ns != 0))
+		{
+			/* Return us here, deltamode should have been flagged */
+			t1 = t0;
+		}
 	}
 
 	obj->clock = t0;

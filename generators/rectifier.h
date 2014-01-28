@@ -79,7 +79,7 @@ public:
 	complex XphaseB;
 	complex XphaseC;
 	
-	complex *pCircuit_V;		//< pointer to the three voltages on three lines
+	double *pCircuit_V;		//< pointer to the three voltages on three lines
 	complex *pLine_I;			//< pointer to the three current on three lines
 
 public:
@@ -95,6 +95,7 @@ public:
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 
 	complex *get_complex(OBJECT *obj, char *name);
+	double *get_double(OBJECT *obj, char *name);
 public:
 	static CLASS *oclass;
 	static rectifier *defaults;

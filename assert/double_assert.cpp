@@ -34,20 +34,20 @@ double_assert::double_assert(MODULE *module)
 
 		if (gl_publish_variable(oclass,
 			// TO DO:  publish your variables here
-			PT_enumeration,"status",get_status_offset(),
+			PT_enumeration,"status",get_status_offset(),PT_DESCRIPTION,"Conditions for the assert checks",
 				PT_KEYWORD,"ASSERT_TRUE",(enumeration)ASSERT_TRUE,
 				PT_KEYWORD,"ASSERT_FALSE",(enumeration)ASSERT_FALSE,
 				PT_KEYWORD,"ASSERT_NONE",(enumeration)ASSERT_NONE,
-			PT_enumeration, "once", get_once_offset(),
+			PT_enumeration, "once", get_once_offset(),PT_DESCRIPTION,"Conditions for a single assert check",
 				PT_KEYWORD,"ONCE_FALSE",(enumeration)ONCE_FALSE,
 				PT_KEYWORD,"ONCE_TRUE",(enumeration)ONCE_TRUE,
 				PT_KEYWORD,"ONCE_DONE",(enumeration)ONCE_DONE,
-			PT_enumeration, "within_mode", get_within_mode_offset(),
+			PT_enumeration, "within_mode", get_within_mode_offset(),PT_DESCRIPTION,"Method of applying tolerance",
 				PT_KEYWORD,"WITHIN_VALUE",(enumeration)IN_ABS,
 				PT_KEYWORD,"WITHIN_RATIO",(enumeration)IN_RATIO,
-			PT_double, "value", get_value_offset(),
-			PT_double, "within", get_within_offset(),
-			PT_char1024, "target", get_target_offset(),			
+			PT_double, "value", get_value_offset(),PT_DESCRIPTION,"Value to assert",
+			PT_double, "within", get_within_offset(),PT_DESCRIPTION,"Tolerance for a successful assert",
+			PT_char1024, "target", get_target_offset(),PT_DESCRIPTION,"Property to perform the assert upon",
 			NULL)<1){
 				char msg[256];
 				sprintf(msg, "unable to publish properties in %s",__FILE__);
@@ -175,4 +175,161 @@ int double_assert::postnotify(PROPERTY *prop, char *value)
 		once = ONCE_TRUE;
 	}
 	return 1;
+}
+
+//EXPORT for object-level call (as opposed to module-level)
+EXPORT SIMULATIONMODE update_double_assert(OBJECT *obj, TIMESTAMP t0, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
+{
+	char buff[64];
+	char dateformat[8]="";
+	char error_output_buff[1024];
+	char datebuff[64];
+	double_assert *da = OBJECTDATA(obj,double_assert);
+	DATETIME delta_dt_val;
+	double del_clock;
+	TIMESTAMP del_clock_int;
+	int del_microseconds;
+	double *x;
+
+	if(da->get_once() == da->ONCE_TRUE){
+		da->set_once_value(da->get_value());
+		da->set_once(da->ONCE_DONE);
+	} else if (da->get_once() == da->ONCE_DONE){
+		if(da->get_once_value() == da->get_value()){
+			gl_verbose("Assert skipped with ONCE logic");
+			return SM_EVENT;
+		} else {
+			da->set_once_value(da->get_value());
+		}
+	}
+
+	// get the within range
+	double range = 0.0;
+	if ( da->get_within_mode() == da->IN_RATIO ) 
+	{
+		range = da->get_value() * da->get_within();
+
+		//if ( range<0.001 ) //minimum bounds removed since many deltamode items are small
+		//{	// minimum bounds
+		//	range = 0.001;
+		//}
+	} 
+	else if ( da->get_within_mode()== da->IN_ABS ) 
+	{
+		range = da->get_within();
+	}
+		
+	//Iteration checker - assert only valid on the first timestep
+	if (iteration_count_val == 0)
+	{
+		//Skip first timestep of any delta iteration -- nature of delta means it really isn't checking the right one
+		if (delta_time>=dt)
+		{
+			//Get value
+			x = (double*)gl_get_double_by_name(obj->parent,da->get_target());
+
+			if (x==NULL) 
+			{
+				gl_error("Specified target %s for %s is not valid.",da->get_target(),gl_name(obj->parent,buff,64));
+				/*  TROUBLESHOOT
+				Check to make sure the target you are specifying is a published variable for the object
+				that you are pointing to.  Refer to the documentation of the command flag --modhelp, or 
+				check the wiki page to determine which variables can be published within the object you
+				are pointing to with the assert function.
+				*/
+				return SM_ERROR;
+			}
+			else if (da->get_status() == da->ASSERT_TRUE)
+			{
+				double m = fabs(*x-da->get_value());
+				if (_isnan(m) || m>range)
+				{
+					//Calculate time
+					if (delta_time>=dt)	//After first iteration
+						del_clock  = (double)t0 + (double)(delta_time-dt)/(double)DT_SECOND;
+					else	//First second different, don't back out
+						del_clock  = (double)t0 + (double)(delta_time)/(double)DT_SECOND;
+
+					del_clock_int = (TIMESTAMP)del_clock;	/* Whole seconds - update from global clock because we could be in delta for over 1 second */
+					del_microseconds = (int)((del_clock-(int)(del_clock))*1000000+0.5);	/* microseconds roll-over - biased upward (by 0.5) */
+					
+					//Convert out
+					gl_localtime(del_clock_int,&delta_dt_val);
+
+					//Determine output format
+					gl_global_getvar("dateformat",dateformat,sizeof(dateformat));
+
+					//Output date appropriately
+					if ( strcmp(dateformat,"ISO")==0)
+						sprintf(datebuff,"ERROR    [%04d-%02d-%02d %02d:%02d:%02d.%.06d %s] : ",delta_dt_val.year,delta_dt_val.month,delta_dt_val.day,delta_dt_val.hour,delta_dt_val.minute,delta_dt_val.second,del_microseconds,delta_dt_val.tz);
+					else if ( strcmp(dateformat,"US")==0)
+						sprintf(datebuff,"ERROR    [%02d-%02d-%04d %02d:%02d:%02d.%.06d %s] : ",delta_dt_val.month,delta_dt_val.day,delta_dt_val.year,delta_dt_val.hour,delta_dt_val.minute,delta_dt_val.second,del_microseconds,delta_dt_val.tz);
+					else if ( strcmp(dateformat,"EURO")==0)
+						sprintf(datebuff,"ERROR    [%02d-%02d-%04d %02d:%02d:%02d.%.06d %s] : ",delta_dt_val.day,delta_dt_val.month,delta_dt_val.year,delta_dt_val.hour,delta_dt_val.minute,delta_dt_val.second,del_microseconds,delta_dt_val.tz);
+					else
+						sprintf(datebuff,"ERROR    .09f : ",del_clock);
+
+					//Actual error part
+					sprintf(error_output_buff,"Assert failed on %s - %s (%g) not within %f of given value %g",gl_name(obj->parent, buff, 64),da->get_target(), *x, da->get_within(), da->get_value());
+
+					//Send it out
+					gl_output("%s%s",datebuff,error_output_buff);
+
+					return SM_ERROR;
+				}
+				gl_verbose("Assert passed on %s", gl_name(obj->parent, buff, 64));
+				return SM_EVENT;
+			}
+			else if (da->get_status() == da->ASSERT_FALSE)
+			{
+				double m = fabs(*x-da->get_value());
+				if (_isnan(m) || m<range)
+				{				
+					//Calculate time
+					if (delta_time>=dt)	//After first iteration
+						del_clock  = (double)t0 + (double)(delta_time-dt)/(double)DT_SECOND;
+					else	//First second different, don't back out
+						del_clock  = (double)t0 + (double)(delta_time)/(double)DT_SECOND;
+
+					del_clock_int = (TIMESTAMP)del_clock;	/* Whole seconds - update from global clock because we could be in delta for over 1 second */
+					del_microseconds = (int)((del_clock-(int)(del_clock))*1000000+0.5);	/* microseconds roll-over - biased upward (by 0.5) */
+					
+					//Convert out
+					gl_localtime(del_clock_int,&delta_dt_val);
+
+					//Determine output format
+					gl_global_getvar("dateformat",dateformat,sizeof(dateformat));
+
+					//Output date appropriately
+					if ( strcmp(dateformat,"ISO")==0)
+						sprintf(datebuff,"ERROR    [%04d-%02d-%02d %02d:%02d:%02d.%.06d %s] : ",delta_dt_val.year,delta_dt_val.month,delta_dt_val.day,delta_dt_val.hour,delta_dt_val.minute,delta_dt_val.second,del_microseconds,delta_dt_val.tz);
+					else if ( strcmp(dateformat,"US")==0)
+						sprintf(datebuff,"ERROR    [%02d-%02d-%04d %02d:%02d:%02d.%.06d %s] : ",delta_dt_val.month,delta_dt_val.day,delta_dt_val.year,delta_dt_val.hour,delta_dt_val.minute,delta_dt_val.second,del_microseconds,delta_dt_val.tz);
+					else if ( strcmp(dateformat,"EURO")==0)
+						sprintf(datebuff,"ERROR    [%02d-%02d-%04d %02d:%02d:%02d.%.06d %s] : ",delta_dt_val.day,delta_dt_val.month,delta_dt_val.year,delta_dt_val.hour,delta_dt_val.minute,delta_dt_val.second,del_microseconds,delta_dt_val.tz);
+					else
+						sprintf(datebuff,"ERROR    .09f : ",del_clock);
+
+					//Actual error part
+					sprintf(error_output_buff,"Assert failed on %s - %s (%g) not within %f of given value %g",gl_name(obj->parent, buff, 64),da->get_target(), *x, da->get_within(), da->get_value());
+
+					//Send it out
+					gl_output("%s%s",datebuff,error_output_buff);
+
+					return SM_ERROR;
+				}
+				gl_verbose("Assert passed on %s", gl_name(obj->parent, buff, 64));
+				return SM_EVENT;
+			}
+			else
+			{
+				gl_verbose("Assert test is not being run on %s", gl_name(obj->parent, buff, 64));
+				return SM_EVENT;
+			}
+		}
+		else	//First pass, just proceed
+			return SM_EVENT;
+	}
+	else	//Iteration, so don't care
+		return SM_EVENT;
 }

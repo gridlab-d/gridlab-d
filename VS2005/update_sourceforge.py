@@ -11,6 +11,7 @@ from datetime import datetime
 #
 day_secs = 60 * 60 * 24  # one day in seconds
 
+
 def do_help():
     print("update_sourceforge.py - GridLAB-D autotest/validation script")
     print(

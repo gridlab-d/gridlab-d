@@ -2217,7 +2217,7 @@ int time_value_datetime(PARSER, TIMESTAMP *t)
 		&& TERM(integer16(HERE,&dt.minute)) && LITERAL(":")
 		&& TERM(integer16(HERE,&dt.second)) && LITERAL("'"))
 	{
-		dt.microsecond = 0;
+		dt.nanosecond = 0;
 		dt.weekday = -1;
 		dt.is_dst = -1;
 		strcpy(dt.tz,"");
@@ -2248,7 +2248,7 @@ int time_value_datetimezone(PARSER, TIMESTAMP *t)
 		&& TERM(integer16(HERE,&dt.second)) && LITERAL(" ")
 		&& TERM(name(HERE,dt.tz,sizeof(dt.tz))) && (LITERAL("'")||LITERAL("\"")))
 	{
-		dt.microsecond = 0;
+		dt.nanosecond = 0;
 		dt.weekday = -1;
 		dt.is_dst = -1;
 		*t = mkdatetime(&dt);
@@ -4122,12 +4122,12 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				}
 				else if (strcmp(propname,"in")==0)
 				{
-					obj->in_svc = convert_to_timestamp(propval);
+					obj->in_svc = convert_to_timestamp_delta(propval,&obj->in_svc_micro,&obj->in_svc_double);
 					ACCEPT;
 				}
 				else if (strcmp(propname,"out")==0)
 				{
-					obj->out_svc = convert_to_timestamp(propval);
+					obj->out_svc = convert_to_timestamp_delta(propval,&obj->out_svc_micro,&obj->out_svc_double);
 					ACCEPT;
 				}
 				else if (strcmp(propname,"name")==0)

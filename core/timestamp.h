@@ -33,6 +33,8 @@
 #endif
 
 typedef int64 TIMESTAMP;
+typedef unsigned int64 DELTAT; /**< stores cumulative delta time values in ns */
+typedef unsigned long DT; /**< stores incremental delta time values in ns */
 
 #define TS_ZERO ((int64)0)
 #define TS_MAX (32482080000LL) /* roughly 3000 CE, any date beyond this should be interpreted as TS_NEVER */
@@ -42,6 +44,10 @@ typedef int64 TIMESTAMP;
 #define MAXYEAR 2969
 #define ISLEAPYEAR(Y) ((Y)%4==0 && ((Y)%100!=0 || (Y)%400==0))
 
+#define DT_INFINITY (0xfffffffe)
+#define DT_INVALID  (0xffffffff)
+#define DT_SECOND 1000000000
+
 typedef struct s_datetime {
 	unsigned short year; /**< year (1970 to 2970 is allowed) */
 	unsigned short month; /**< month (1-12) */
@@ -49,7 +55,7 @@ typedef struct s_datetime {
 	unsigned short hour; /**< hour (0-23) */
 	unsigned short minute; /**< minute (0-59) */
 	unsigned short second; /**< second (0-59) */
-	unsigned int microsecond; /**< usecond (0-999999) */
+	unsigned int nanosecond; /**< usecond (0-999999999) */
 	unsigned short is_dst; /**< 0=std, 1=dst */
 	char tz[5]; /**< ptr to tzspec timezone id */
 	unsigned short weekday; /**< 0=Sunday */
@@ -66,12 +72,14 @@ extern "C" {
 char *timestamp_current_timezone(void);
 TIMESTAMP mkdatetime(DATETIME *dt);
 int strdatetime(DATETIME *t, char *buffer, int size);
-int convert_from_timestamp(TIMESTAMP t, char *buffer, int size);
+int convert_from_timestamp(TIMESTAMP ts, char *buffer, int size);
+int convert_from_timestamp_delta(TIMESTAMP ts, DELTAT delta_t, char *buffer, int size);
 double timestamp_to_days(TIMESTAMP t);
 double timestamp_to_hours(TIMESTAMP t);
 double timestamp_to_minutes(TIMESTAMP t);
 double timestamp_to_seconds(TIMESTAMP t);
 TIMESTAMP convert_to_timestamp(const char *value);
+TIMESTAMP convert_to_timestamp_delta(const char *value, unsigned int *nanoseconds, double *dbl_time_value);
 int local_datetime(TIMESTAMP ts, DATETIME *dt);
 
 int timestamp_test(void);

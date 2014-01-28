@@ -123,7 +123,7 @@ meter::meter(MODULE *mod) : node(mod)
 		//Publish deltamode functions
 		if (gl_publish_function(oclass,	"delta_linkage_node", (FUNCTIONADDR)delta_linkage)==NULL)
 			GL_THROW("Unable to publish meter delta_linkage function");
-		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_node)==NULL)
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_meter)==NULL)
 			GL_THROW("Unable to publish meter deltamode function");
 		if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
 			GL_THROW("Unable to publish meter deltamode function");
@@ -302,7 +302,8 @@ TIMESTAMP meter::presync(TIMESTAMP t0)
 	return node::presync(t0);
 }
 
-TIMESTAMP meter::sync(TIMESTAMP t0)
+//Functionalized portion for deltamode compatibility
+void meter::BOTH_meter_sync_fxn()
 {
 	int TempNodeRef;
 
@@ -342,10 +343,15 @@ TIMESTAMP meter::sync(TIMESTAMP t0)
 		if (has_phase(PHASE_C))
 			power[2] += meter_power_consumption / no_phases;
 	}
+}
+
+TIMESTAMP meter::sync(TIMESTAMP t0)
+{
+	//Call functionalized meter sync
+	BOTH_meter_sync_fxn();
 
 	return node::sync(t0);
 }
-
 
 TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
@@ -535,6 +541,95 @@ double meter::process_bill(TIMESTAMP t1){
 	return monthly_bill;
 }
 
+//Module-level call
+SIMULATIONMODE meter::inter_deltaupdate_meter(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
+{
+	unsigned char pass_mod;
+	OBJECT *hdr = OBJECTHDR(this);
+
+	if (interupdate_pos == false)	//Before powerflow call
+	{
+		//Meter-specific presync items
+		if (meter_power_consumption != complex(0,0))
+			power[0] = power[1] = power[2] = 0.0;
+
+		//Reliability addition - if momentary flag set - clear it
+		if (meter_interrupted_secondary == true)
+			meter_interrupted_secondary = false;
+
+		//Call presync-equivalent items
+		NR_node_presync_fxn();
+
+		//Meter sync objects
+		BOTH_meter_sync_fxn();
+
+		//Call sync-equivalent items (solver occurs at end of sync)
+		NR_node_sync_fxn(hdr);
+
+		return SM_DELTA;	//Just return something other than SM_ERROR for this call
+	}
+	else	//After the call
+	{
+		//Perform postsync-like updates on the values
+		BOTH_node_postsync_fxn(hdr);
+
+		//Perform postsync meter functions -- doesn't do energy right now
+		measured_voltage[0] = voltageA;
+		measured_voltage[1] = voltageB;
+		measured_voltage[2] = voltageC;
+
+		measured_voltageD[0] = voltageA - voltageB;
+		measured_voltageD[1] = voltageB - voltageC;
+		measured_voltageD[2] = voltageC - voltageA;
+		
+		measured_current[0] = current_inj[0];
+		measured_current[1] = current_inj[1];
+		measured_current[2] = current_inj[2];
+
+		// compute demand power
+		indiv_measured_power[0] = measured_voltage[0]*(~measured_current[0]);
+		indiv_measured_power[1] = measured_voltage[1]*(~measured_current[1]);
+		indiv_measured_power[2] = measured_voltage[2]*(~measured_current[2]);
+
+		measured_power = indiv_measured_power[0] + indiv_measured_power[1] + indiv_measured_power[2];
+
+		measured_real_power = (indiv_measured_power[0]).Re()
+							+ (indiv_measured_power[1]).Re()
+							+ (indiv_measured_power[2]).Re();
+
+		measured_reactive_power = (indiv_measured_power[0]).Im()
+								+ (indiv_measured_power[1]).Im()
+								+ (indiv_measured_power[2]).Im();
+
+		if (measured_real_power > measured_demand) 
+			measured_demand = measured_real_power;
+
+		//Do deltamode-related logic
+		if (bustype==SWING)	//We're the SWING bus, control our destiny (which is really controlled elsewhere)
+		{
+			//See what we're on
+			pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
+
+			//Check pass
+			if (pass_mod==0)	//Predictor pass
+			{
+				return SM_DELTA_ITER;	//Reiterate - to get us to corrector pass
+			}
+			else	//Corrector pass
+			{
+				//As of right now, we're always ready to leave
+				//Other objects will dictate if we stay (powerflow is indifferent)
+				return SM_EVENT;
+			}//End corrector pass
+		}//End SWING bus handling
+		else	//Normal bus
+		{
+			return SM_EVENT;	//Normal nodes want event mode all the time here - SWING bus will
+								//control the reiteration process for pred/corr steps
+		}
+	}
+}
+
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////
@@ -599,6 +694,23 @@ EXPORT int notify_meter(OBJECT *obj, int update_mode, PROPERTY *prop, char *valu
 	rv = n->notify(update_mode, prop, value);
 
 	return rv;
+}
+
+//Deltamode export
+EXPORT SIMULATIONMODE interupdate_meter(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
+{
+	meter *my = OBJECTDATA(obj,meter);
+	SIMULATIONMODE status = SM_ERROR;
+	try
+	{
+		status = my->inter_deltaupdate_meter(delta_time,dt,iteration_count_val,interupdate_pos);
+		return status;
+	}
+	catch (char *msg)
+	{
+		gl_error("interupdate_meter(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
+		return status;
+	}
 }
 
 /**@}**/

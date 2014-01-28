@@ -55,6 +55,7 @@ void schedule_deltamode_start(TIMESTAMP tstart);	/* Anticipated time for a delta
 #include "power_electronics.h"
 #include "rectifier.h"
 #include "solar.h"
+#include "central_dg_control.h"
 
 #define UNKNOWN 0
 

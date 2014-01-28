@@ -7,6 +7,8 @@
 #include "powerflow.h"
 
 EXPORT int isa_link(OBJECT *obj, char *classname);
+EXPORT STATUS delta_frequency_link(OBJECT *obj, complex *powerval, complex *freqpowerval);
+EXPORT SIMULATIONMODE interupdate_link(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
 #define impedance(X) (B_mat[X][X])
 //#define LS_CLOSED true	//Changed from enums so it could be used by restoration
@@ -128,9 +130,15 @@ public:
 	//Current injection calculation function - so it can be called remotely
 	int CurrentCalculation(int nodecall);
 
+	void NR_link_presync_fxn(void);
+	void BOTH_link_postsync_fxn(void);
+	bool deltamode_inclusive;
+
 	// Fault current calculation functions
 	void fault_current_calc(complex C[7][7], unsigned int removed_phase, double fault_type); // function traces up from fault to swing bus summing up the link objects' impedances
 											  // then calculates the fault current then passes that value back down to the faulted link objects.
+
+	SIMULATIONMODE inter_deltaupdate_link(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
 };
 

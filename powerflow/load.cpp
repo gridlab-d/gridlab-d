@@ -105,7 +105,7 @@ load::load(MODULE *mod) : node(mod)
 			//Publish deltamode functions
 			if (gl_publish_function(oclass,	"delta_linkage_node", (FUNCTIONADDR)delta_linkage)==NULL)
 				GL_THROW("Unable to publish load delta_linkage function");
-			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_node)==NULL)
+			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_load)==NULL)
 				GL_THROW("Unable to publish load deltamode function");
 			if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
 				GL_THROW("Unable to publish load deltamode function");
@@ -561,6 +561,83 @@ int load::notify(int update_mode, PROPERTY *prop, char *value)
 	return 1;
 }
 
+
+//////////////////////////////////////////////////////////////////////////
+// IMPLEMENTATION OF DELTA MODE
+//////////////////////////////////////////////////////////////////////////
+//Module-level call
+SIMULATIONMODE load::inter_deltaupdate_load(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
+{
+	unsigned char pass_mod;
+	OBJECT *hdr = OBJECTHDR(this);
+	bool fault_mode;
+
+	if (interupdate_pos == false)	//Before powerflow call
+	{
+		//Load-specific presync items
+		if (SubNode==PARENT)	//Need to do something slightly different with GS and parented node
+		{
+			shunt[0] = shunt[1] = shunt[2] = 0.0;
+			power[0] = power[1] = power[2] = 0.0;
+			current[0] = current[1] = current[2] = 0.0;
+		}
+
+		//Call presync-equivalent items
+		NR_node_presync_fxn();
+
+		//See if we're reliability-enabled
+		if (fault_check_object == NULL)
+			fault_mode = false;
+		else
+			fault_mode = true;
+
+		//Functionalized so deltamode can parttake
+		load_update_fxn(fault_mode);
+
+		//Call sync-equivalent items (solver occurs at end of sync)
+		NR_node_sync_fxn(hdr);
+
+		return SM_DELTA;	//Just return something other than SM_ERROR for this call
+	}
+	else	//After the call
+	{
+		//Perform postsync-like updates on the values
+		BOTH_node_postsync_fxn(hdr);
+
+		//Postsync load items - measurement population
+		measured_voltage_A.SetPolar(voltageA.Mag(),voltageA.Arg());  //Used for testing and xml output
+		measured_voltage_B.SetPolar(voltageB.Mag(),voltageB.Arg());
+		measured_voltage_C.SetPolar(voltageC.Mag(),voltageC.Arg());
+		measured_voltage_AB = measured_voltage_A-measured_voltage_B;
+		measured_voltage_BC = measured_voltage_B-measured_voltage_C;
+		measured_voltage_CA = measured_voltage_C-measured_voltage_A;
+
+		//Do deltamode-related logic
+		if (bustype==SWING)	//We're the SWING bus, control our destiny (which is really controlled elsewhere)
+		{
+			//See what we're on
+			pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
+
+			//Check pass
+			if (pass_mod==0)	//Predictor pass
+			{
+				return SM_DELTA_ITER;	//Reiterate - to get us to corrector pass
+			}
+			else	//Corrector pass
+			{
+				//As of right now, we're always ready to leave
+				//Other objects will dictate if we stay (powerflow is indifferent)
+				return SM_EVENT;
+			}//End corrector pass
+		}//End SWING bus handling
+		else	//Normal bus
+		{
+			return SM_EVENT;	//Normal nodes want event mode all the time here - SWING bus will
+								//control the reiteration process for pred/corr steps
+		}
+	}
+}
+
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE: load
 //////////////////////////////////////////////////////////////////////////
@@ -646,4 +723,22 @@ EXPORT int notify_load(OBJECT *obj, int update_mode, PROPERTY *prop, char *value
 
 	return rv;
 }
+
+//Deltamode export
+EXPORT SIMULATIONMODE interupdate_load(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
+{
+	load *my = OBJECTDATA(obj,load);
+	SIMULATIONMODE status = SM_ERROR;
+	try
+	{
+		status = my->inter_deltaupdate_load(delta_time,dt,iteration_count_val,interupdate_pos);
+		return status;
+	}
+	catch (char *msg)
+	{
+		gl_error("interupdate_load(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
+		return status;
+	}
+}
+
 /**@}*/

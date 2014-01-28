@@ -333,7 +333,11 @@ OBJECT *object_create_single(CLASS *oclass){ /**< the class of the object */
 	obj->latitude = QNAN;
 	obj->longitude = QNAN;
 	obj->in_svc = TS_ZERO;
+	obj->in_svc_micro = 0;
+	obj->in_svc_double = (double)obj->in_svc;
 	obj->out_svc = TS_NEVER;
+	obj->out_svc_micro = 0;
+	obj->out_svc_double = (double)obj->out_svc;
 	obj->space = object_current_namespace();
 	obj->flags = OF_NONE;
 	obj->rng_state = randwarn(NULL);
@@ -399,7 +403,11 @@ OBJECT *object_create_foreign(OBJECT *obj) /**< a pointer to the OBJECT data str
 	obj->latitude = QNAN;
 	obj->longitude = QNAN;
 	obj->in_svc = TS_ZERO;
+	obj->in_svc_micro = 0;
+	obj->in_svc_double = (double)obj->in_svc;
 	obj->out_svc = TS_NEVER;
+	obj->out_svc_micro = 0;
+	obj->out_svc_double - (double)obj->out_svc;
 	obj->flags = OF_FOREIGN;
 	
 	if(first_object == NULL){
@@ -782,6 +790,10 @@ int object_set_value_by_addr(OBJECT *obj, /**< the object to alter */
 
 static int set_header_value(OBJECT *obj, char *name, char *value)
 {
+	unsigned int temp_microseconds;
+	TIMESTAMP tval;
+	double tval_double;
+
 	if(strcmp(name,"name")==0)
 	{
 		if(obj->name!=NULL)
@@ -879,39 +891,45 @@ static int set_header_value(OBJECT *obj, char *name, char *value)
 	}
 	else if(strcmp(name,"in_svc")==0)
 	{
-		TIMESTAMP t = convert_to_timestamp(value);
-		if(t == TS_INVALID)
+		tval = convert_to_timestamp_delta(value,&temp_microseconds,&tval_double);
+
+		if(tval == TS_INVALID)
 		{
 			output_error("object %s:%d in_svc timestamp '%s' is invalid", obj->oclass->name, obj->id, value);
 			return FAILED;
 		}
-		else if(t >= obj->out_svc)
+		else if ((tval > obj->out_svc) || ((tval == obj->out_svc) && (temp_microseconds >= obj->out_svc_micro)))
 		{
 			output_error("object %s:%d in_svc timestamp '%s' overlaps out_svc timestamp", obj->oclass->name, obj->id, value);
 			return FAILED;
 		}
 		else
 		{
-			obj->in_svc = t;
+			obj->in_svc = tval;
+			obj->in_svc_micro = temp_microseconds;
+			obj->in_svc_double = tval_double;
 			return SUCCESS;
 		}
 	}
 	else if(strcmp(name,"out_svc")==0)
 	{
-		TIMESTAMP t = convert_to_timestamp(value);
-		if(t == TS_INVALID)
+		tval = convert_to_timestamp_delta(value,&temp_microseconds,&tval_double);
+
+		if(tval == TS_INVALID)
 		{
 			output_error("object %s:%d out_svc timestamp '%s' is invalid", obj->oclass->name, obj->id, value);
 			return FAILED;
 		}
-		else if(t <= obj->in_svc)
+		else if ((tval < obj->in_svc) || ((tval == obj->in_svc) && (temp_microseconds <= obj->in_svc_micro)))
 		{
 			output_error("object %s:%d out_svc timestamp '%s' overlaps in_svc timestamp", obj->oclass->name, obj->id, value);
 			return FAILED;
 		}
 		else
 		{
-			obj->out_svc = t;
+			obj->out_svc = tval;
+			obj->out_svc_micro = temp_microseconds;
+			obj->out_svc_double = tval_double;
 			return SUCCESS;
 		}
 	}

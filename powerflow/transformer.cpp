@@ -58,6 +58,12 @@ transformer::transformer(MODULE *mod) : link_object(mod)
 
 			if (gl_publish_function(oclass,"power_calculation",(FUNCTIONADDR)power_calculation)==NULL)
 					GL_THROW("Unable to publish fuse state change function");
+
+			//Publish deltamode functions
+			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
+				GL_THROW("Unable to publish transformer deltamode function");
+			if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_link)==NULL)
+				GL_THROW("Unable to publish transformer deltamode function");
     }
 }
 

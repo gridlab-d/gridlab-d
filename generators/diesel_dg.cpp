@@ -149,9 +149,9 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_double,"flux2q[pu]",PADDR(curr_state.Flux2q),PT_DESCRIPTION,"machine subtransient flux on q-axis state variable",
 			PT_complex,"EpRotated[pu]",PADDR(curr_state.EpRotated),PT_DESCRIPTION,"d-q rotated E-prime internal voltage state variable",
 			PT_complex,"VintRotated[pu]",PADDR(curr_state.VintRotated),PT_DESCRIPTION,"d-q rotated Vint voltage state variable",
-			PT_complex,"Eint_A[pu]",PADDR(curr_state.EintVal[0]),PT_DESCRIPTION,"Unrotated, unsequenced phase A internal voltage",
-			PT_complex,"Eint_B[pu]",PADDR(curr_state.EintVal[1]),PT_DESCRIPTION,"Unrotated, unsequenced phase B internal voltage",
-			PT_complex,"Eint_C[pu]",PADDR(curr_state.EintVal[2]),PT_DESCRIPTION,"Unrotated, unsequenced phase C internal voltage",
+			PT_complex,"Eint_A[V]",PADDR(curr_state.EintVal[0]),PT_DESCRIPTION,"Unrotated, unsequenced phase A internal voltage",
+			PT_complex,"Eint_B[V]",PADDR(curr_state.EintVal[1]),PT_DESCRIPTION,"Unrotated, unsequenced phase B internal voltage",
+			PT_complex,"Eint_C[V]",PADDR(curr_state.EintVal[2]),PT_DESCRIPTION,"Unrotated, unsequenced phase C internal voltage",
 			PT_complex,"Irotated[pu]",PADDR(curr_state.Irotated),PT_DESCRIPTION,"d-q rotated sequence current state variable",
 			PT_complex,"pwr_electric[VA]",PADDR(curr_state.pwr_electric),PT_DESCRIPTION,"Current electrical output of machine",
 			PT_double,"pwr_mech[W]",PADDR(curr_state.pwr_mech),PT_DESCRIPTION,"Current mechanical output of machine",
@@ -180,28 +180,45 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_enumeration,"Governor_type",PADDR(Governor_type),PT_DESCRIPTION,"Governor model for dynamics-capable implementation",
 				PT_KEYWORD,"NO_GOV",(enumeration)NO_GOV,PT_DESCRIPTION,"No exciter",
 				PT_KEYWORD,"DEGOV1",(enumeration)DEGOV1,PT_DESCRIPTION,"DEGOV1 Woodward Diesel Governor",
+				PT_KEYWORD,"GAST",(enumeration)GAST,PT_DESCRIPTION,"GAST Gas Turbine Governor", // gastflag
 
 			//Governor properties (DEGOV1)
-			PT_double,"R[pu]",PADDR(gov_R),PT_DESCRIPTION,"Governor droop constant (p.u.)",
-			PT_double,"T1[s]",PADDR(gov_T1),PT_DESCRIPTION,"Governor electric control box time constant (s)",
-			PT_double,"T2[s]",PADDR(gov_T2),PT_DESCRIPTION,"Governor electric control box time constant (s)",
-			PT_double,"T3[s]",PADDR(gov_T3),PT_DESCRIPTION,"Governor electric control box time constant (s)",
-			PT_double,"T4[s]",PADDR(gov_T4),PT_DESCRIPTION,"Governor actuator time constant (s)",
-			PT_double,"T5[s]",PADDR(gov_T5),PT_DESCRIPTION,"Governor actuator time constant (s)",
-			PT_double,"T6[s]",PADDR(gov_T6),PT_DESCRIPTION,"Governor actuator time constant (s)",
-			PT_double,"K[pu]",PADDR(gov_K),PT_DESCRIPTION,"Governor actuator gain",
-			PT_double,"TMAX[pu]",PADDR(gov_TMAX),PT_DESCRIPTION,"Governor actuator upper limit (p.u.)",
-			PT_double,"TMIN[pu]",PADDR(gov_TMIN),PT_DESCRIPTION,"Governor actuator lower limit (p.u.)",
-			PT_double,"TD[s]",PADDR(gov_TD),PT_DESCRIPTION,"Governor combustion delay (s)",
+			PT_double,"DEGOV1_R[pu]",PADDR(gov_degov1_R),PT_DESCRIPTION,"Governor droop constant (p.u.)",
+			PT_double,"DEGOV1_T1[s]",PADDR(gov_degov1_T1),PT_DESCRIPTION,"Governor electric control box time constant (s)",
+			PT_double,"DEGOV1_T2[s]",PADDR(gov_degov1_T2),PT_DESCRIPTION,"Governor electric control box time constant (s)",
+			PT_double,"DEGOV1_T3[s]",PADDR(gov_degov1_T3),PT_DESCRIPTION,"Governor electric control box time constant (s)",
+			PT_double,"DEGOV1_T4[s]",PADDR(gov_degov1_T4),PT_DESCRIPTION,"Governor actuator time constant (s)",
+			PT_double,"DEGOV1_T5[s]",PADDR(gov_degov1_T5),PT_DESCRIPTION,"Governor actuator time constant (s)",
+			PT_double,"DEGOV1_T6[s]",PADDR(gov_degov1_T6),PT_DESCRIPTION,"Governor actuator time constant (s)",
+			PT_double,"DEGOV1_K[pu]",PADDR(gov_degov1_K),PT_DESCRIPTION,"Governor actuator gain",
+			PT_double,"DEGOV1_TMAX[pu]",PADDR(gov_degov1_TMAX),PT_DESCRIPTION,"Governor actuator upper limit (p.u.)",
+			PT_double,"DEGOV1_TMIN[pu]",PADDR(gov_degov1_TMIN),PT_DESCRIPTION,"Governor actuator lower limit (p.u.)",
+			PT_double,"DEGOV1_TD[s]",PADDR(gov_degov1_TD),PT_DESCRIPTION,"Governor combustion delay (s)",
 
 			//State variables - DEGOV1
-			PT_double,"wref[pu]",PADDR(curr_state.gov.wref),PT_DESCRIPTION,"Governor reference frequency state variable",
-			PT_double,"x1",PADDR(curr_state.gov.x1),PT_DESCRIPTION,"Governor electric box state variable",
-			PT_double,"x2",PADDR(curr_state.gov.x2),PT_DESCRIPTION,"Governor electric box state variable",
-			PT_double,"x4",PADDR(curr_state.gov.x4),PT_DESCRIPTION,"Governor electric box state variable",
-			PT_double,"x5",PADDR(curr_state.gov.x5),PT_DESCRIPTION,"Governor electric box state variable",
-			PT_double,"x6",PADDR(curr_state.gov.x6),PT_DESCRIPTION,"Governor electric box state variable",
-			PT_double,"throttle",PADDR(curr_state.gov.throttle),PT_DESCRIPTION,"Governor electric box state variable",
+			PT_double,"DEGOV1_wref[pu]",PADDR(curr_state.gov_degov1.wref),PT_DESCRIPTION,"Governor reference frequency state variable",
+			PT_double,"DEGOV1_x1",PADDR(curr_state.gov_degov1.x1),PT_DESCRIPTION,"Governor electric box state variable",
+			PT_double,"DEGOV1_x2",PADDR(curr_state.gov_degov1.x2),PT_DESCRIPTION,"Governor electric box state variable",
+			PT_double,"DEGOV1_x4",PADDR(curr_state.gov_degov1.x4),PT_DESCRIPTION,"Governor electric box state variable",
+			PT_double,"DEGOV1_x5",PADDR(curr_state.gov_degov1.x5),PT_DESCRIPTION,"Governor electric box state variable",
+			PT_double,"DEGOV1_x6",PADDR(curr_state.gov_degov1.x6),PT_DESCRIPTION,"Governor electric box state variable",
+			PT_double,"DEGOV1_throttle",PADDR(curr_state.gov_degov1.throttle),PT_DESCRIPTION,"Governor electric box state variable",
+
+			//Governor properties (GAST)
+			PT_double,"GAST_R[pu]",PADDR(gov_gast_R),PT_DESCRIPTION,"Governor droop constant (p.u.)",
+			PT_double,"GAST_T1[s]",PADDR(gov_gast_T1),PT_DESCRIPTION,"Governor electric control box time constant (s)",
+			PT_double,"GAST_T2[s]",PADDR(gov_gast_T2),PT_DESCRIPTION,"Governor electric control box time constant (s)",
+			PT_double,"GAST_T3[s]",PADDR(gov_gast_T3),PT_DESCRIPTION,"Governor temperature limiter time constant (s)",
+			PT_double,"GAST_AT[s]",PADDR(gov_gast_AT),PT_DESCRIPTION,"Governor Ambient Temperature load limit (units)",
+			PT_double,"GAST_KT[pu]",PADDR(gov_gast_KT),PT_DESCRIPTION,"Governor temperature control loop gain",
+			PT_double,"GAST_VMAX[pu]",PADDR(gov_gast_VMAX),PT_DESCRIPTION,"Governor actuator upper limit (p.u.)",
+			PT_double,"GAST_VMIN[pu]",PADDR(gov_gast_VMIN),PT_DESCRIPTION,"Governor actuator lower limit (p.u.)",
+
+			//State variables - GAST
+			PT_double,"GAST_x1",PADDR(curr_state.gov_gast.x1),PT_DESCRIPTION,"Governor electric box state variable",
+			PT_double,"GAST_x2",PADDR(curr_state.gov_gast.x2),PT_DESCRIPTION,"Governor electric box state variable",
+			PT_double,"GAST_x3",PADDR(curr_state.gov_gast.x3),PT_DESCRIPTION,"Governor electric box state variable",
+			PT_double,"GAST_throttle",PADDR(curr_state.gov_gast.throttle),PT_DESCRIPTION,"Governor electric box state variable",
 
 			PT_set, "phases", PADDR(phases), PT_DESCRIPTION, "Specifies which phases to connect to - currently not supported and assumes three-phase connection",
 				PT_KEYWORD, "A",(set)PHASE_A,
@@ -331,17 +348,30 @@ int diesel_dg::create(void)
 	exc_EMIN=-3.0;            
 
 	//DEGOV1 Governor defaults
-	gov_R=0.05;             
-	gov_T1=0.2;             
-	gov_T2=0.3;             
-	gov_T3=0.5;             
-	gov_K=0.8;              
-	gov_T4=1.0;               
-	gov_T5=0.1;             
-	gov_T6=0.2;             
-	gov_TMAX=1.0;             
-	gov_TMIN=0.0;             
-	gov_TD=0.01;            
+	gov_degov1_R=0.05;             
+	gov_degov1_T1=0.2;             
+	gov_degov1_T2=0.3;             
+	gov_degov1_T3=0.5;             
+	gov_degov1_K=0.8;              
+	gov_degov1_T4=1.0;               
+	gov_degov1_T5=0.1;             
+	gov_degov1_T6=0.2;             
+	gov_degov1_TMAX=1.0;             
+	gov_degov1_TMIN=0.0;             
+	gov_degov1_TD=0.01;            
+
+	//GAST Governor defaults
+//	gov_gast_R=.05;             
+//	gov_gast_T1=0.1;
+//	gov_gast_T2=0.05;
+	gov_gast_R=.05;             
+	gov_gast_T1=0.4;
+	gov_gast_T2=0.1;
+	gov_gast_T3=3;
+	gov_gast_AT=1;
+	gov_gast_KT=2;
+	gov_gast_VMAX=1.05;
+	gov_gast_VMIN=-0.05;
 
 	bus_admittance_mat = NULL;
 	full_bus_admittance_mat = NULL;
@@ -393,8 +423,10 @@ int diesel_dg::init(OBJECT *parent)
 {
 	OBJECT *obj = OBJECTHDR(this);
 
+	PROPERTY *pval;
 	double ZB, SB, EB;
 	double test_pf;
+	bool *Norton_posting;
 	complex tst, tst2, tst3, tst4;
 	current_A = current_B = current_C = 0.0;
 
@@ -421,11 +453,34 @@ int diesel_dg::init(OBJECT *parent)
 	// find parent meter, if not defined, use a default meter (using static variable 'default_meter')
 	if (parent!=NULL)
 	{
-		if (gl_object_isa(parent,"meter","powerflow") || gl_object_isa(parent,"node","powerflow") || gl_object_isa(parent,"load","powerflow"))
+		if (gl_object_isa(parent,"meter","powerflow") || gl_object_isa(parent,"node","powerflow") || gl_object_isa(parent,"load","powerflow") ||  gl_object_isa(parent,"elec_frequency","powerflow") )
 		{
 			// attach meter variables to each circuit
 			for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
 				*(map[i].var) = get_complex(parent,map[i].varname);
+
+			//If we were deltamode requesting, set the flag on the other side
+			if (deltamode_inclusive==true)
+			{
+				//Map the flag
+				pval = gl_get_property(parent,"Norton_dynamic");
+
+				//Check it
+				if ((pval==NULL) || (pval->ptype!=PT_bool))
+				{
+					GL_THROW("diesel_dg:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
+					/*  TROUBLESHOOT
+					While attempting to set up the deltamode interfaces and calculations with powerflow, the required interface could not be mapped.
+					Please check your GLM and try again.  If the error persists, please submit a trac ticket with your code.
+					*/
+				}
+
+				//Map to the intermediate
+				Norton_posting = (bool*)GETADDR(parent,pval);
+
+				//Set the flag
+				*Norton_posting = true;
+			}
 		}
 		else	//Only three-phase node objects supported right now
 		{
@@ -900,7 +955,7 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//See if we're attached to a node-esque object
 			if (obj->parent != NULL)
 			{
-				if (gl_object_isa(obj->parent,"meter","powerflow") || gl_object_isa(obj->parent,"load","powerflow") || gl_object_isa(obj->parent,"node","powerflow"))
+				if (gl_object_isa(obj->parent,"meter","powerflow") || gl_object_isa(obj->parent,"load","powerflow") || gl_object_isa(obj->parent,"node","powerflow") || gl_object_isa(obj->parent,"elec_frequency","powerflow"))
 				{
 					//Check the nominal voltage
 					ptemp_double = get_double(obj->parent,"nominal_voltage");
@@ -1222,7 +1277,7 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 			tdiff = (double)(t1-prev_time);
 
 			//Calculate rotor angle update
-			ang_diff = (curr_state.omega - omega_ref)/omega_ref*tdiff;
+			ang_diff = (curr_state.omega - omega_ref)*tdiff;
 			curr_state.rotor_angle += ang_diff;
 
 			//Figure out the rotation to the existing values
@@ -1434,8 +1489,9 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 	//Initialization items
 	if ((delta_time==0) && (iteration_count_val==0))	//First run of new delta call
 	{
+		
 		//Allocate torque-delay array properly - if neeeded
-		if (Governor_type == DEGOV1)
+		if (Governor_type == DEGOV1) 
 		{
 			//See if we need to free first
 			if (torque_delay!=NULL)
@@ -1444,10 +1500,10 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 			}
 
 			//Figure out how big the new array needs to be - Make it one lo
-			torque_delay_len=(unsigned int)(gov_TD*DT_SECOND/dt);
+			torque_delay_len=(unsigned int)(gov_degov1_TD*DT_SECOND/dt);
 
 			//See if there's any leftovers
-			temp_double = gov_TD-(double)(torque_delay_len*dt)/(double)DT_SECOND;
+			temp_double = gov_degov1_TD-(double)(torque_delay_len*dt)/(double)DT_SECOND;
 
 			if (temp_double > 0.0)	//Means bigger, +1 it
 				torque_delay_len += 1;
@@ -1459,7 +1515,7 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 			//Make sure it worked
 			if (torque_delay == NULL)
 			{
-				gl_error("diesel_dg: failed to allocate to allocate the delayed torque array for DEGOV1!");
+				gl_error("diesel_dg: failed to allocate to allocate the delayed torque array for Governor!");
 				/*  TROUBLESHOOT
 				The diesel_dg object failed to allocate the memory needed for the delayed torque array inside
 				the governor control.  Please try again.  If the error persists, please submit your code
@@ -1489,7 +1545,7 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 	else if (iteration_count_val == 0)	//Not first run, just first run of this timestep
 	{
 		//Update "current" pointer of torque array - if necessary
-		if (Governor_type == DEGOV1)
+		if (Governor_type == DEGOV1) 
 		{
 			//Increment positions
 			torque_delay_write_pos++;
@@ -1510,6 +1566,22 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 	//Check pass
 	if (pass_mod==0)	//Predictor pass
 	{
+		//Compute the "present" electric power value before anything gets updated for the new timestep
+		temp_current_val[0] = (IGenerated[0] - generator_admittance[0][0]*pCircuit_V[0] - generator_admittance[0][1]*pCircuit_V[1] - generator_admittance[0][2]*pCircuit_V[2]);
+		temp_current_val[1] = (IGenerated[1] - generator_admittance[1][0]*pCircuit_V[0] - generator_admittance[1][1]*pCircuit_V[1] - generator_admittance[1][2]*pCircuit_V[2]);
+		temp_current_val[2] = (IGenerated[2] - generator_admittance[2][0]*pCircuit_V[0] - generator_admittance[2][1]*pCircuit_V[1] - generator_admittance[2][2]*pCircuit_V[2]);
+
+		//Update power output variables, just so we can see what is going on
+		power_val[0] = pCircuit_V[0]*~temp_current_val[0];
+		power_val[1] = pCircuit_V[1]*~temp_current_val[1];
+		power_val[2] = pCircuit_V[2]*~temp_current_val[2];
+
+		//Update the output power variable
+		curr_state.pwr_electric = power_val[0] + power_val[1] + power_val[2];
+
+		//Copy it into the "next" value as well, so it doesn't get overwritten funny when the transition occurs
+		next_state.pwr_electric = curr_state.pwr_electric;
+
 		//Call dynamics
 		apply_dynamics(&curr_state,&predictor_vals);
 
@@ -1518,9 +1590,10 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 		next_state.Flux2q = curr_state.Flux2q + predictor_vals.Flux2q*deltat;
 		next_state.EpRotated = curr_state.EpRotated + predictor_vals.EpRotated*deltat;
 		next_state.rotor_angle = curr_state.rotor_angle + predictor_vals.rotor_angle*deltat;
-		next_state.omega = curr_state.omega + predictor_vals.omega*omega_ref*deltat;
+		next_state.omega = curr_state.omega + predictor_vals.omega*deltat;
 		
-		next_state.VintRotated  = -((Xqpp-Xl)/(Xqp-Xl)*(-next_state.EpRotated.Re()) + (Xqp-Xqpp)/(Xqp-Xl)*next_state.Flux2q);
+		next_state.VintRotated  = (Xqpp-Xdpp)*curr_state.Irotated.Im();
+		next_state.VintRotated += (Xqpp-Xl)/(Xqp-Xl)*next_state.EpRotated.Re() - (Xqp-Xqpp)/(Xqp-Xl)*next_state.Flux2q;
 		next_state.VintRotated += complex(0.0,1.0)*((Xdpp-Xl)/(Xdp-Xl)*next_state.EpRotated.Im()+(Xdp-Xdpp)/(Xdp-Xl)*next_state.Flux1d);
 
 		//Form rotation multiplier - or demultiplier
@@ -1534,12 +1607,18 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 		//Governor updates, if relevant
 		if (Governor_type == DEGOV1)
 		{
-			next_state.gov.x1 = curr_state.gov.x1 + predictor_vals.gov.x1*deltat;
-			next_state.gov.x2 = curr_state.gov.x2 + predictor_vals.gov.x2*deltat;
-			next_state.gov.x4 = curr_state.gov.x4 + predictor_vals.gov.x4*deltat;
-			next_state.gov.x5 = curr_state.gov.x5 + predictor_vals.gov.x5*deltat;
-			next_state.gov.x6 = curr_state.gov.x6 + predictor_vals.gov.x6*deltat;
+			next_state.gov_degov1.x1 = curr_state.gov_degov1.x1 + predictor_vals.gov_degov1.x1*deltat;
+			next_state.gov_degov1.x2 = curr_state.gov_degov1.x2 + predictor_vals.gov_degov1.x2*deltat;
+			next_state.gov_degov1.x4 = curr_state.gov_degov1.x4 + predictor_vals.gov_degov1.x4*deltat;
+			next_state.gov_degov1.x5 = curr_state.gov_degov1.x5 + predictor_vals.gov_degov1.x5*deltat;
+			next_state.gov_degov1.x6 = curr_state.gov_degov1.x6 + predictor_vals.gov_degov1.x6*deltat;
 		}//End DEGOV1 update
+		if (Governor_type == GAST)
+		{
+			next_state.gov_gast.x1 = curr_state.gov_gast.x1 + predictor_vals.gov_gast.x1*deltat;
+			next_state.gov_gast.x2 = curr_state.gov_gast.x2 + predictor_vals.gov_gast.x2*deltat;
+			next_state.gov_gast.x3 = curr_state.gov_gast.x3 + predictor_vals.gov_gast.x3*deltat;
+		}//End GAST update
 		//Default else - no updates because no governor
 
 		//Exciter updates
@@ -1567,9 +1646,10 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 		next_state.Flux2q = curr_state.Flux2q + (predictor_vals.Flux2q + corrector_vals.Flux2q)*deltath;
 		next_state.EpRotated = curr_state.EpRotated + (predictor_vals.EpRotated + corrector_vals.EpRotated)*deltath;
 		next_state.rotor_angle = curr_state.rotor_angle + (predictor_vals.rotor_angle + corrector_vals.rotor_angle)*deltath;
-		next_state.omega = curr_state.omega + (predictor_vals.omega + corrector_vals.omega)*omega_ref*deltath;
+		next_state.omega = curr_state.omega + (predictor_vals.omega + corrector_vals.omega)*deltath;
 		
-		next_state.VintRotated  = -((Xqpp-Xl)/(Xqp-Xl)*(-next_state.EpRotated.Re()) + (Xqp-Xqpp)/(Xqp-Xl)*next_state.Flux2q);
+		next_state.VintRotated  = (Xqpp-Xdpp)*next_state.Irotated.Im();
+		next_state.VintRotated += (Xqpp-Xl)/(Xqp-Xl)*next_state.EpRotated.Re() - (Xqp-Xqpp)/(Xqp-Xl)*next_state.Flux2q;
 		next_state.VintRotated += complex(0.0,1.0)*((Xdpp-Xl)/(Xdp-Xl)*next_state.EpRotated.Im()+(Xdp-Xdpp)/(Xdp-Xl)*next_state.Flux1d);
 
 		//Form rotation multiplier - or demultiplier
@@ -1583,12 +1663,18 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 		//Governor updates, if relevant
 		if (Governor_type == DEGOV1)
 		{
-			next_state.gov.x1 = curr_state.gov.x1 + (predictor_vals.gov.x1 + corrector_vals.gov.x1)*deltath;
-			next_state.gov.x2 = curr_state.gov.x2 + (predictor_vals.gov.x2 + corrector_vals.gov.x2)*deltath;
-			next_state.gov.x4 = curr_state.gov.x4 + (predictor_vals.gov.x4 + corrector_vals.gov.x4)*deltath;
-			next_state.gov.x5 = curr_state.gov.x5 + (predictor_vals.gov.x5 + corrector_vals.gov.x5)*deltath;
-			next_state.gov.x6 = curr_state.gov.x6 + (predictor_vals.gov.x6 + corrector_vals.gov.x6)*deltath;
+			next_state.gov_degov1.x1 = curr_state.gov_degov1.x1 + (predictor_vals.gov_degov1.x1 + corrector_vals.gov_degov1.x1)*deltath;
+			next_state.gov_degov1.x2 = curr_state.gov_degov1.x2 + (predictor_vals.gov_degov1.x2 + corrector_vals.gov_degov1.x2)*deltath;
+			next_state.gov_degov1.x4 = curr_state.gov_degov1.x4 + (predictor_vals.gov_degov1.x4 + corrector_vals.gov_degov1.x4)*deltath;
+			next_state.gov_degov1.x5 = curr_state.gov_degov1.x5 + (predictor_vals.gov_degov1.x5 + corrector_vals.gov_degov1.x5)*deltath;
+			next_state.gov_degov1.x6 = curr_state.gov_degov1.x6 + (predictor_vals.gov_degov1.x6 + corrector_vals.gov_degov1.x6)*deltath;
 		}//End DEGOV1 update
+		if (Governor_type == GAST)
+		{
+			next_state.gov_gast.x1 = curr_state.gov_gast.x1 + (predictor_vals.gov_gast.x1 + corrector_vals.gov_gast.x1)*deltath;
+			next_state.gov_gast.x2 = curr_state.gov_gast.x2 + (predictor_vals.gov_gast.x2 + corrector_vals.gov_gast.x2)*deltath;
+			next_state.gov_gast.x3 = curr_state.gov_gast.x3 + (predictor_vals.gov_gast.x3 + corrector_vals.gov_gast.x3)*deltath;
+		}//End GAST update
 		//Default else - no updates because no governor
 
 		//Exciter updates
@@ -1613,38 +1699,13 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 		//Update tracking variable
 		prev_rotor_speed_val = curr_state.omega;
 
-		//Calculate "exposed" generator current
-		temp_complex[0] = next_state.EintVal[0]-pCircuit_V[0];
-		temp_complex[1] = next_state.EintVal[1]-pCircuit_V[1];
-		temp_complex[2] = next_state.EintVal[2]-pCircuit_V[2];
-
-		temp_current_val[0] = temp_complex[0]*bus_admittance_mat[0]+
-							  temp_complex[1]*bus_admittance_mat[1]+
-							  temp_complex[2]*bus_admittance_mat[2];
-
-		temp_current_val[1] = temp_complex[0]*bus_admittance_mat[3]+
-							  temp_complex[1]*bus_admittance_mat[4]+
-							  temp_complex[2]*bus_admittance_mat[5];
-
-		temp_current_val[2] = temp_complex[0]*bus_admittance_mat[6]+
-							  temp_complex[1]*bus_admittance_mat[7]+
-							  temp_complex[2]*bus_admittance_mat[8];
-
-		//Update power output variables, just so we can see what is going on
-		power_val[0] = pCircuit_V[0]*~temp_current_val[0];
-		power_val[1] = pCircuit_V[1]*~temp_current_val[1];
-		power_val[2] = pCircuit_V[2]*~temp_current_val[2];
-
-		//Update the output power variable
-		curr_state.pwr_electric = power_val[0] + power_val[1] + power_val[2];
-
 		//Determine our desired state - if rotor speed is settled, exit
 		if (temp_double<=rotor_speed_convergence_criterion)
 		{
-			//Ready to leave
+			//Ready to leave Delta mode
 			return SM_EVENT;
 		}
-		else	//Not "converged"
+		else	//Not "converged" -- I would like to do another update
 		{
 			return SM_DELTA;	//Next delta update
 								//Could theoretically request a reiteration, but we're not allowing that right now
@@ -1694,7 +1755,7 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta)
 	complex Ipn0[3];
 	complex temp_complex;
 	double omega_pu;
-	double temp_double_1, temp_double_2, temp_double_3;
+	double temp_double_1, temp_double_2, temp_double_3, delomega, x0; 
 	double torquenow;
 
 	//Convert current as well
@@ -1713,7 +1774,7 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta)
 	curr_time->Irotated = temp_complex*complex(0.0,1.0)*Ipn0[0];
 
 	//Get speed update - split for readability
-	temp_double_1 = curr_time->pwr_mech/Rated_VA - (Xqpp-Xl)/(Xqp-Xl)*curr_time->EpRotated.Re()*curr_time->Irotated.Re();
+	temp_double_1 = (curr_time->pwr_mech/Rated_VA)/omega_pu - (Xqpp-Xl)/(Xqp-Xl)*curr_time->EpRotated.Re()*curr_time->Irotated.Re();
 	temp_double_1 -=(Xdpp-Xl)/(Xdp-Xl)*curr_time->EpRotated.Im()*curr_time->Irotated.Im();
 	temp_double_1 -=(Xdp-Xdpp)/(Xdp-Xl)*curr_time->Flux1d*curr_time->Irotated.Im();
 	temp_double_1 +=(Xqp-Xqpp)/(Xqp-Xl)*curr_time->Flux2q*curr_time->Irotated.Re();
@@ -1722,13 +1783,13 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta)
 	temp_double_1 -=0.5*Rr*temp_double_3*temp_double_3;
 	temp_double_1 -=damping*(curr_time->omega-omega_ref)/omega_ref;
 
-	temp_double_2 = omega_pu/(2.0*inertia);
+	temp_double_2 = omega_ref/(2.0*inertia);
 
 	//Post the delta value
 	curr_delta->omega = temp_double_1*temp_double_2;
 
 	//Calculate rotor angle update
-	curr_delta->rotor_angle = omega_pu+curr_delta->omega-1.0;
+	curr_delta->rotor_angle = (omega_pu-1.0)*omega_ref;
 
 	//Update flux values
 	curr_delta->Flux1d = (-curr_time->Flux1d + curr_time->EpRotated.Im() - ((Xdp-Xl)*curr_time->Irotated.Re()))/Tdopp;
@@ -1760,17 +1821,17 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta)
 	if (Governor_type == DEGOV1)	//Woodward Governor
 	{
 		//Governor actuator updates - threshold first
-		if (curr_time->gov.x4>gov_TMAX)
-			curr_time->gov.x4 = gov_TMAX;
+		if (curr_time->gov_degov1.x4>gov_degov1_TMAX)
+			curr_time->gov_degov1.x4 = gov_degov1_TMAX;
 
-		if (curr_time->gov.x4<gov_TMIN)
-			curr_time->gov.x4 = gov_TMIN;
+		if (curr_time->gov_degov1.x4<gov_degov1_TMIN)
+			curr_time->gov_degov1.x4 = gov_degov1_TMIN;
 
 		//Find throttle
-		curr_time->gov.throttle = gov_T4*curr_time->gov.x6 + curr_time->gov.x4;
+		curr_time->gov_degov1.throttle = gov_degov1_T4*curr_time->gov_degov1.x6 + curr_time->gov_degov1.x4;
 
 		//Store this value into "the array"
-		torque_delay[torque_delay_write_pos]=curr_time->gov.throttle;
+		torque_delay[torque_delay_write_pos]=curr_time->gov_degov1.throttle;
 
 		//Extract the "delayed" value
 		torquenow = torque_delay[torque_delay_read_pos];
@@ -1779,36 +1840,88 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta)
 		curr_time->pwr_mech = Rated_VA*torquenow*curr_time->omega/omega_ref;
 
 		//Compute the offset currently
-		temp_double_1 = curr_time->gov.wref - curr_time->omega/omega_ref-gov_R*curr_time->gov.throttle;
+		temp_double_1 = curr_time->gov_degov1.wref - curr_time->omega/omega_ref-gov_degov1_R*curr_time->gov_degov1.throttle;
 		
 		//Update variables
-		curr_delta->gov.x2 = (temp_double_1-curr_time->gov.x1-gov_T1*curr_time->gov.x2)/(gov_T1*gov_T2);
-		curr_delta->gov.x1 = curr_time->gov.x2;
+		curr_delta->gov_degov1.x2 = (temp_double_1-curr_time->gov_degov1.x1-gov_degov1_T1*curr_time->gov_degov1.x2)/(gov_degov1_T1*gov_degov1_T2);
+		curr_delta->gov_degov1.x1 = curr_time->gov_degov1.x2;
 
 		//Electric control box updates
-		temp_double_1 = gov_T3*curr_time->gov.x2 + curr_time->gov.x1;
+		temp_double_1 = gov_degov1_T3*curr_time->gov_degov1.x2 + curr_time->gov_degov1.x1;
 
 		//Updates
-		curr_delta->gov.x5 = (gov_K*temp_double_1-curr_time->gov.x5)/gov_T5;
-		curr_delta->gov.x6 = (curr_time->gov.x5 - curr_time->gov.x6)/gov_T6;
-		curr_delta->gov.x4 = curr_time->gov.x6;
+		curr_delta->gov_degov1.x5 = (gov_degov1_K*temp_double_1-curr_time->gov_degov1.x5)/gov_degov1_T5;
+		curr_delta->gov_degov1.x6 = (curr_time->gov_degov1.x5 - curr_time->gov_degov1.x6)/gov_degov1_T6;
+		curr_delta->gov_degov1.x4 = curr_time->gov_degov1.x6;
 
 		//Anti-windup check
-		if (((curr_time->gov.x4>=gov_TMAX) && (curr_time->gov.x6>0)) || ((curr_time->gov.x4<=gov_TMIN) && (curr_time->gov.x6<0)))
+		if (((curr_time->gov_degov1.x4>=gov_degov1_TMAX) && (curr_time->gov_degov1.x6>0)) || ((curr_time->gov_degov1.x4<=gov_degov1_TMIN) && (curr_time->gov_degov1.x6<0)))
 		{
-			curr_delta->gov.x4 = 0;
+			curr_delta->gov_degov1.x4 = 0;
 		}
 	}//End Woodward updates
 	else	//No governor - zero stuff for paranoia reasons
 	{
-		curr_delta->gov.throttle = 0.0;
-		curr_delta->gov.x1 = 0.0;
-		curr_delta->gov.x2 = 0.0;
-		curr_delta->gov.x4 = 0.0;
-		curr_delta->gov.x5 = 0.0;
-		curr_delta->gov.x6 = 0.0;
+		curr_delta->gov_degov1.throttle = 0.0;
+		curr_delta->gov_degov1.x1 = 0.0;
+		curr_delta->gov_degov1.x2 = 0.0;
+		curr_delta->gov_degov1.x4 = 0.0;
+		curr_delta->gov_degov1.x5 = 0.0;
+		curr_delta->gov_degov1.x6 = 0.0;
+	}//End no DEGOV1
+	//Governor updates, if relevant
+	if (Governor_type == GAST)	//Gast Turbine Governor
+	{
+		//Governor actuator updates - threshold first
+		if (curr_time->gov_gast.x1 > gov_gast_VMAX)
+			curr_time->gov_gast.x1 = gov_gast_VMAX;
+
+		if (curr_time->gov_gast.x1 < gov_gast_VMIN)
+			curr_time->gov_gast.x1 = gov_gast_VMIN;
+
+		//Find throttle -- replace with GAST
+		curr_time->gov_gast.throttle = curr_time->gov_gast.x2;
+
+		//Assign the throttle value to torquenow
+		torquenow=curr_time->gov_gast.throttle;
+
+		//Calculate the mechanical power for this time
+		curr_time->pwr_mech = Rated_VA*torquenow*curr_time->omega/omega_ref;
+
+		//Compute the offset currently
+		delomega = curr_time->gov_gast.throttle - (curr_time->omega/omega_ref-1)*gov_gast_R; 
+		if (delomega <= gov_gast_AT+gov_gast_KT*(gov_gast_AT-curr_time->gov_gast.x3))
+		{
+			x0=delomega;
+		}
+		else
+		{
+			x0=gov_gast_AT+gov_gast_KT*(gov_gast_AT-curr_time->gov_gast.x3);
+		}
+
+//		x0 = min(,gov_gast_AT+gov_gast_KT*(gov_gast_AT-curr_time->gov_gast.x3)); 
+//		LL+K*(LL-G1.machine_parameters.curr.gov.x3
+
+		//Update variables
+		curr_delta->gov_gast.x1 = (x0 - curr_time->gov_gast.x1)/gov_gast_T1;
+		curr_delta->gov_gast.x2 = (curr_time->gov_gast.x1 - curr_time->gov_gast.x2)/gov_gast_T2;
+		curr_delta->gov_gast.x3 = (curr_time->gov_gast.x2 - curr_time->gov_gast.x3)/gov_gast_T3;
+
+		//Anti-windup check
+		if (((curr_time->gov_gast.x1>=gov_gast_VMAX) && (x0>0)) || ((curr_time->gov_gast.x1<=gov_gast_VMIN) && (x0<0)))
+		{
+			curr_delta->gov_gast.x1 = 0;
+		}
+	}//End GAST updates
+	else	//No governor - zero stuff for paranoia reasons
+	{
+		curr_delta->gov_gast.throttle = 0.0;
+		curr_delta->gov_gast.x1 = 0.0;
+		curr_delta->gov_gast.x2 = 0.0;
+		curr_delta->gov_gast.x3 = 0.0;
 	}//End no governor
-	
+
+
 	//AVR updates, if relevant
 	if (Exciter_type == SEXS)
 	{
@@ -1891,7 +2004,7 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 	curr_time->rotor_angle = temp_complex_1.Arg();
 
 	//Now figure out the internal voltage based on the subtransient model
-	temp_complex_1 = Vpn0[0]+complex(Ra,Xqpp)*Ipn0[0];
+	temp_complex_1 = Vpn0[0]+complex(Ra,Xdpp)*Ipn0[0];
 
 	//Figure out the rotation
 	temp_complex_2 = complex_exp(-1.0*curr_time->rotor_angle);
@@ -1921,7 +2034,7 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 	//Set field voltage
 	curr_time->Vfd = -1.0*temp_double_1;
 
-	//Now compute initial mechanical power - split for readability
+	//Now compute initial mechanical torque - split for readability
 	temp_double_1  = -(Xqpp-Xl)/(Xqp-Xl)*curr_time->EpRotated.Re()*curr_time->Irotated.Re();
 	temp_double_1 -= (Xdpp-Xl)/(Xdp-Xl)*curr_time->EpRotated.Im()*curr_time->Irotated.Im();
 	temp_double_1 -= (Xdp-Xdpp)/(Xdp-Xl)*curr_time->Flux1d*curr_time->Irotated.Im();
@@ -1931,26 +2044,34 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 	temp_double_1 -= damping*(curr_time->omega-omega_ref)/omega_ref;
 
 	//Set the initial power
-	curr_time->pwr_mech = -1.0*temp_double_1*Rated_VA;
+	curr_time->pwr_mech = -1.0*temp_double_1*Rated_VA*(curr_time->omega/omega_ref);
 
-	//Governor initial conditions needed?
+	//Governor initial conditions
 	if (Governor_type == DEGOV1)
 	{
-		curr_time->gov.x1 = 0;
-		curr_time->gov.x2 = 0;
-		curr_time->gov.x5 = 0;
-		curr_time->gov.x6 = 0;
-		curr_time->gov.x4 = curr_time->pwr_mech/Rated_VA;
-		curr_time->gov.throttle = curr_time->gov.x4;	//Init to Pmech
-		curr_time->gov.wref = curr_time->gov.throttle*gov_R+curr_time->omega/omega_ref;
+		curr_time->gov_degov1.x1 = 0;
+		curr_time->gov_degov1.x2 = 0;
+		curr_time->gov_degov1.x5 = 0;
+		curr_time->gov_degov1.x6 = 0;
+		curr_time->gov_degov1.x4 = curr_time->pwr_mech/Rated_VA/(curr_time->omega/omega_ref);
+		curr_time->gov_degov1.throttle = curr_time->gov_degov1.x4;	//Init to Pmech
+		curr_time->gov_degov1.wref = curr_time->gov_degov1.throttle*gov_degov1_R+curr_time->omega/omega_ref;
 
 		//Populate the "delayed torque" with the throttle value
 		for (index_val=0; index_val<torque_delay_len; index_val++)
 		{
-			torque_delay[index_val] = curr_time->gov.throttle;
+			torque_delay[index_val] = curr_time->gov_degov1.throttle;
 		}
 	}//End DEGOV1 initialization
+	if (Governor_type == GAST)
+	{
+		curr_time->gov_gast.x1 = curr_time->pwr_mech/Rated_VA;
+		curr_time->gov_gast.x2 = curr_time->pwr_mech/Rated_VA;
+		curr_time->gov_gast.x3 = curr_time->pwr_mech/Rated_VA;
+		curr_time->gov_gast.throttle = curr_time->pwr_mech/Rated_VA; //Init to Pmech
+	}//End GAST initialization
 	//Default else - no initialization
+
 
 	//AVR/Exciter initialization
 	if (Exciter_type == SEXS)

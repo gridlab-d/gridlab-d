@@ -505,6 +505,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\central_dg_control.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\dc_dc_converter.cpp"
 				>
 			</File>
@@ -556,6 +560,10 @@
 			>
 			<File
 				RelativePath=".\battery.h"
+				>
+			</File>
+			<File
+				RelativePath=".\central_dg_control.h"
 				>
 			</File>
 			<File

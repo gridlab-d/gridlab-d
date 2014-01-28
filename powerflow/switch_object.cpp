@@ -60,6 +60,13 @@ switch_object::switch_object(MODULE *mod) : link_object(mod)
 				GL_THROW("Unable to publish fault restoration function");
 			if (gl_publish_function(oclass,	"change_switch_faults", (FUNCTIONADDR)switch_fault_updates)==NULL)
 				GL_THROW("Unable to publish switch fault correction function");
+
+			//Publish deltamode functions
+			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_switch)==NULL)
+				GL_THROW("Unable to publish switch deltamode function");
+			if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_link)==NULL)
+				GL_THROW("Unable to publish switch deltamode function");
+
     }
 }
 
@@ -433,63 +440,21 @@ int switch_object::init(OBJECT *parent)
 	return result;
 }
 
-TIMESTAMP switch_object::sync(TIMESTAMP t0)
+//Functionalized switch sync call -- before link call -- for deltamode functionality
+void switch_object::BOTH_switch_sync_pre(unsigned char *work_phases_pre, unsigned char *work_phases_post)
 {
-	OBJECT *obj = OBJECTHDR(this);
-	TIMESTAMP temp_time;
-	unsigned char work_phases, work_phases_pre, work_phases_post, work_phases_closed;
-	char fault_val[9];
-	int result_val, impl_fault;
-	bool fault_mode;
-
-	//Try to map the event_schedule function address, if we haven't tried yet
-	if (event_schedule_map_attempt == false)
-	{
-		//First check to see if a fault_check object even exists
-		if (fault_check_object != NULL)
-		{
-			//It exists, good start! - now see if the proper variable is populated!
-			eventgen_obj = get_object(fault_check_object, "eventgen_object");
-
-			//See if it worked - if not, assume it doesn't exist
-			if (*eventgen_obj != NULL)
-			{
-				//It's not null, map up the scheduler function
-				event_schedule = (FUNCTIONADDR)(gl_get_function(*eventgen_obj,"add_event"));
-								
-				//Make sure it was found
-				if (event_schedule == NULL)
-				{
-					gl_warning("Unable to map add_event function in eventgen:%s",*(*eventgen_obj)->name);
-					/*  TROUBLESHOOT
-					While attempting to map the "add_event" function from an eventgen object, the function failed to be
-					found.  Ensure the target object in fault_check is an eventgen object and this function exists.  If
-					the error persists, please submit your code and a bug report via the trac website.
-					*/
-				}
-			}
-			//Defaulted elses - just leave things as is :(
-		}
-		//Defaulted else - doesn't exist, so leave function address empty
-
-		//Flag the attempt as having occurred
-		event_schedule_map_attempt = true;
-	}
-
-	//Update time variable
-	if (prev_SW_time != t0)	//New timestep
-		prev_SW_time = t0;
+	//unsigned char work_phases, work_phases_pre, work_phases_post, work_phases_closed;
 
 	if ((solver_method == SM_NR) && (event_schedule != NULL))	//NR-reliability-related stuff
 	{
 		//Store our phases going in
-		work_phases_pre = NR_branchdata[NR_branch_reference].phases & 0x07;
+		*work_phases_pre = NR_branchdata[NR_branch_reference].phases & 0x07;
 	
 		//Call syncing function
-		work_phases_post = switch_expected_sync_function();
+		*work_phases_post = switch_expected_sync_function();
 
 		//Store our phases going out
-		work_phases_post &= 0x07;
+		*work_phases_post &= 0x07;
 	}
 	else	//Normal execution
 	{
@@ -497,21 +462,28 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 		switch_sync_function();
 
 		//Set phases the same
-		work_phases_pre = 0x00;
-		work_phases_post = 0x00;
+		*work_phases_pre = 0x00;
+		*work_phases_post = 0x00;
 	}
+}
 
-	//Call overlying link sync
-	TIMESTAMP t2=link_object::sync(t0);
+//Functionalized switch sync call -- after link call -- for deltamode functionality
+void switch_object::NR_switch_sync_post(unsigned char *work_phases_pre, unsigned char *work_phases_post, OBJECT *obj, TIMESTAMP *t0, TIMESTAMP *t2)
+{
+	unsigned char work_phases, work_phases_closed; //work_phases_pre, work_phases_post, work_phases_closed;
+	char fault_val[9];
+	int result_val, impl_fault;
+	bool fault_mode;
+	TIMESTAMP temp_time;
 
 	//See if we're in the proper cycle - NR only for now
-	if ((solver_method == SM_NR) && (work_phases_pre != work_phases_post))
+	if (*work_phases_pre != *work_phases_post)
 	{
 		//Find out what changed
-		work_phases = (work_phases_pre ^ work_phases_post) & 0x07;
+		work_phases = (*work_phases_pre ^ *work_phases_post) & 0x07;
 
 		//See if this transition is a "fault-open" or a "fault-close"
-		work_phases_closed = work_phases & work_phases_post;
+		work_phases_closed = work_phases & *work_phases_post;
 
 		//See how it looks
 		if (work_phases_closed == work_phases)	//It's a close
@@ -600,11 +572,11 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 					temp_time = 50;
 
 				//Call function
-				result_val = ((int (*)(OBJECT *, OBJECT *, char *, TIMESTAMP, TIMESTAMP, int, bool))(*event_schedule))(*eventgen_obj,obj,fault_val,(t0-50),temp_time,impl_fault,fault_mode);
+				result_val = ((int (*)(OBJECT *, OBJECT *, char *, TIMESTAMP, TIMESTAMP, int, bool))(*event_schedule))(*eventgen_obj,obj,fault_val,(*t0-50),temp_time,impl_fault,fault_mode);
 			}
 			else	//Failing - normal
 			{
-				result_val = ((int (*)(OBJECT *, OBJECT *, char *, TIMESTAMP, TIMESTAMP, int, bool))(*event_schedule))(*eventgen_obj,obj,fault_val,t0,TS_NEVER,-1,fault_mode);
+				result_val = ((int (*)(OBJECT *, OBJECT *, char *, TIMESTAMP, TIMESTAMP, int, bool))(*event_schedule))(*eventgen_obj,obj,fault_val,*t0,TS_NEVER,-1,fault_mode);
 			}
 
 			//Make sure it worked
@@ -618,7 +590,7 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 			}
 
 			//Ensure we don't go anywhere yet
-			t2 = t0;
+			*t2 = *t0;
 
 		}	//End fault object present
 		else	//No object, just fail us out - save the iterations
@@ -632,6 +604,62 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 			*/
 		}
 	}//End NR call
+}
+
+TIMESTAMP switch_object::sync(TIMESTAMP t0)
+{
+	OBJECT *obj = OBJECTHDR(this);
+	unsigned char work_phases_pre, work_phases_post;
+
+	//Try to map the event_schedule function address, if we haven't tried yet
+	if (event_schedule_map_attempt == false)
+	{
+		//First check to see if a fault_check object even exists
+		if (fault_check_object != NULL)
+		{
+			//It exists, good start! - now see if the proper variable is populated!
+			eventgen_obj = get_object(fault_check_object, "eventgen_object");
+
+			//See if it worked - if not, assume it doesn't exist
+			if (*eventgen_obj != NULL)
+			{
+				//It's not null, map up the scheduler function
+				event_schedule = (FUNCTIONADDR)(gl_get_function(*eventgen_obj,"add_event"));
+								
+				//Make sure it was found
+				if (event_schedule == NULL)
+				{
+					gl_warning("Unable to map add_event function in eventgen:%s",*(*eventgen_obj)->name);
+					/*  TROUBLESHOOT
+					While attempting to map the "add_event" function from an eventgen object, the function failed to be
+					found.  Ensure the target object in fault_check is an eventgen object and this function exists.  If
+					the error persists, please submit your code and a bug report via the trac website.
+					*/
+				}
+			}
+			//Defaulted elses - just leave things as is :(
+		}
+		//Defaulted else - doesn't exist, so leave function address empty
+
+		//Flag the attempt as having occurred
+		event_schedule_map_attempt = true;
+	}
+
+	//Update time variable
+	if (prev_SW_time != t0)	//New timestep
+		prev_SW_time = t0;
+
+	//Call functionalized "pre-link" sync items
+	BOTH_switch_sync_pre(&work_phases_pre, &work_phases_post);
+
+	//Call overlying link sync
+	TIMESTAMP t2=link_object::sync(t0);
+
+	if (solver_method == SM_NR)
+	{
+		//Call functionalized "post-link" sync items
+		NR_switch_sync_post(&work_phases_pre, &work_phases_post, obj, &t0, &t2);
+	}
 
 	if (t2==TS_NEVER)
 		return(t2);
@@ -1388,6 +1416,39 @@ void switch_object::set_switch_faulted_phases(unsigned char desired_status)
 	phased_switch_status |= desired_status;
 }
 
+//Module-level deltamode call
+SIMULATIONMODE switch_object::inter_deltaupdate_switch(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
+{
+	OBJECT *hdr = OBJECTHDR(this);
+	TIMESTAMP t0_val, t2_val;
+	unsigned char work_phases_pre, work_phases_post;
+
+	//Initialize - just set to random values, not used here
+	t0_val = TS_NEVER;
+	t2_val = TS_NEVER;
+
+	if (interupdate_pos == false)	//Before powerflow call
+	{
+		//Link presync stuff
+		NR_link_presync_fxn();
+
+		//Switch sync item - pre-items
+		BOTH_switch_sync_pre(&work_phases_pre,&work_phases_post);
+
+		//Switch sync item - post items
+		NR_switch_sync_post(&work_phases_pre,&work_phases_post,hdr,&t0_val,&t2_val);
+		
+		return SM_DELTA;	//Just return something other than SM_ERROR for this call
+	}
+	else	//After the call
+	{
+		//Call postsync
+		BOTH_link_postsync_fxn();
+		
+		return SM_EVENT;	//Links always just want out
+	}
+}//End module deltamode
+
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE: switch_object
 //////////////////////////////////////////////////////////////////////////
@@ -1578,4 +1639,20 @@ EXPORT int switch_fault_updates(OBJECT *thisobj, unsigned char restoration_phase
 	return 1;	//We magically always succeed
 }
 
+//Deltamode export
+EXPORT SIMULATIONMODE interupdate_switch(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
+{
+	switch_object *my = OBJECTDATA(obj,switch_object);
+	SIMULATIONMODE status = SM_ERROR;
+	try
+	{
+		status = my->inter_deltaupdate_switch(delta_time,dt,iteration_count_val,interupdate_pos);
+		return status;
+	}
+	catch (char *msg)
+	{
+		gl_error("interupdate_link(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
+		return status;
+	}
+}
 /**@}**/

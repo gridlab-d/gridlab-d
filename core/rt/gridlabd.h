@@ -708,6 +708,10 @@ struct s_object_list {
 	double latitude, longitude; /**< object's geo-coordinates */
 	TIMESTAMP in_svc, /**< time at which object begin's operating */
 		out_svc; /**< time at which object ceases operating */
+	unsigned int in_svc_micro,	/**< Microsecond portion of in_svc */
+		out_svc_micro;	/**< Microsecond portion of out_svc */
+	double in_svc_double;	/**< Double value representation of in service time */
+	double out_svc_double;	/**< Double value representation of out of service time */
 	clock_t synctime[_OPI_NUMITEMS]; /**< total time used by this object */
 	NAMESPACE *space; /**< namespace of object */
 	unsigned int lock; /**< object lock */
@@ -731,7 +735,7 @@ typedef struct s_datetime { ///< The s_datetime structure
 	unsigned short hour; /**< hour (0-23) */
 	unsigned short minute; /**< minute (0-59) */
 	unsigned short second; /**< second (0-59) */
-	unsigned int microsecond; /**< usecond (0-999999) */
+	unsigned int nanosecond; /**< nsecond (0-999999999) */
 	unsigned short is_dst; /**< 0=std, 1=dst */
 	char tz[5]; /**< ptr to tzspec timezone id */
 	unsigned short weekday; /**< 0=Sunday */
@@ -918,6 +922,7 @@ typedef enum {
 
 typedef struct s_callbacks {
 	TIMESTAMP *global_clock;
+	double *global_delta_curr_clock;
 	int (*output_verbose)(char *format, ...);
 	int (*output_message)(char *format, ...);
 	int (*output_warning)(char *format, ...);
@@ -1007,6 +1012,7 @@ typedef struct s_callbacks {
 		double (*timestamp_to_seconds)(TIMESTAMP t);
 		int (*local_datetime)(TIMESTAMP ts, DATETIME *dt);
 		TIMESTAMP (*convert_to_timestamp)(char *value);
+		TIMESTAMP (*convert_to_timestamp_delta)(const char *value, unsigned int *nanoseconds, double *dbl_time_value);
 		int (*convert_from_timestamp)(TIMESTAMP ts, char *buffer, int size);
 	} time;
 	int (*unit_convert)(char *from, char *to, double *value);
@@ -1131,6 +1137,9 @@ typedef FUNCTIONADDR function;
 
 #define gl_globalclock (*(callback->global_clock)) ///< Get the current value of the global clock
 
+/** Link to double precision deltamode clock (offset by global_clock) **/
+#define gl_globaldeltaclock (*(callback->global_delta_curr_clock))
+
 /// Get the name of an object
 /// @return a pointer to a static buffer containing the object's name
 inline char* gl_name(OBJECT *my, char *buffer, size_t size)
@@ -1247,7 +1256,7 @@ inline double gl_random_rayleigh(double a) { return callback->random.rayleigh(NU
 inline bool gl_object_isa(OBJECT *obj, char *type) { return callback->object_isa(obj,type)==1;};
 inline DATETIME *gl_localtime(TIMESTAMP ts,DATETIME *dt) { return callback->time.local_datetime(ts,dt)?dt:NULL;};
 inline TIMESTAMP gl_mkdatetime(DATETIME *dt) { return callback->time.mkdatetime(dt);};
-inline TIMESTAMP gl_mkdatetime(short year, short month, short day, short hour=0, short minute=0, short second=0, char *tz=NULL, short usec=0)
+inline TIMESTAMP gl_mkdatetime(short year, short month, short day, short hour=0, short minute=0, short second=0, char *tz=NULL, unsigned int nsec=0)
 {
 	DATETIME dt;
 	dt.year = year;
@@ -1256,7 +1265,7 @@ inline TIMESTAMP gl_mkdatetime(short year, short month, short day, short hour=0,
 	dt.hour = hour;
 	dt.minute = minute;
 	dt.second = second;
-	dt.microsecond = usec;
+	dt.nanosecond = nsec;
 	strncpy(dt.tz,tz,sizeof(dt.tz));
 	return callback->time.mkdatetime(&dt);
 };

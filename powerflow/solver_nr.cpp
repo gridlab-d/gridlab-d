@@ -155,7 +155,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	bool swing_converged;
 
 	//Deltamode intermediate variables
-	complex temp_complex_0, temp_complex_1, temp_complex_2;
+	complex temp_complex_0, temp_complex_1, temp_complex_2, temp_complex_3, temp_complex_4, temp_complex_5;
 	complex aval, avalsq;
 
 	//Temporary size variable
@@ -197,11 +197,27 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	//Ensure bad computations flag is set first
 	*bad_computations = false;
 
-	//Set the dynamics variable appropriately
-	if (powerflow_type != PF_DYNCALC)
-		swing_is_a_swing = true;		//Normal powerflow and first pass of "initial dynamics" treat this as swing
+	//Determine special circumstances of SWING bus -- do we want it to truly participate right
+	if (powerflow_type != PF_NORMAL)	//Not normal
+	{
+		//Swing is always assumed to be bus zero
+		if (bus[0].full_Y == NULL)
+		{
+			//Set variables
+			swing_is_a_swing = true;
+			powerflow_type = PF_DYNCALC;	//Force it to DYNCALC
+		}
+		else	//We have a generator attached, proceed like "normal"
+		{
+			//Set the dynamics variable appropriately
+			if (powerflow_type != PF_DYNCALC)
+				swing_is_a_swing = true;		//First pass of "initial dynamics" treat this as swing
+			else
+				swing_is_a_swing = false;		//Dynamics solutions (and after first pass of "initial dynamics") swing bus becomes PQ
+		}
+	}
 	else
-		swing_is_a_swing = false;		//Dynamics solutions (and after first pass of "initial dynamics") swing bus becomes PQ
+		swing_is_a_swing = true;	//Normal powerflow, we're always a true SWING
 
 	//Populate aval, if necessary
 	if (powerflow_type == PF_DYNINIT)
@@ -2401,22 +2417,30 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				if ((*bus[indexer].dynamics_enabled==true) && (bus[indexer].full_Y != NULL) && (bus[indexer].DynCurrent != NULL))
 				{
 					//Form denominator term of Ii, since it won't change
-					temp_complex_2 = (~bus[indexer].V[0]) + (~bus[indexer].V[1])*avalsq + (~bus[indexer].V[2])*aval;
-					temp_complex_1 = ~temp_complex_2;
-
+					temp_complex_1 = (~bus[indexer].V[0]) + (~bus[indexer].V[1])*avalsq + (~bus[indexer].V[2])*aval;
+					
 					//Form up numerator portion that doesn't change (Q and admittance)
 					//Do in parts, just for readability
 					temp_complex_2 = ~bus[indexer].V[0];	//conj(Va)
-					temp_complex_0 = complex(0.0,-(*bus[indexer].PGenTotal).Im());	//-jQT
 					
 					//Row 1 of admittance mult
-					temp_complex_0 += temp_complex_2*(bus[indexer].full_Y[0]*bus[indexer].V[0] + bus[indexer].full_Y[1]*bus[indexer].V[1] + bus[indexer].full_Y[2]*bus[indexer].V[2]);
+					temp_complex_0 = temp_complex_2*(bus[indexer].full_Y[0]*bus[indexer].V[0] + bus[indexer].full_Y[1]*bus[indexer].V[1] + bus[indexer].full_Y[2]*bus[indexer].V[2]);
+
+					// Row 1 also calculate Sysource ( = v * conj(ysource * v)) to substract from PTsource and obtain Pgen at generator bus 
+					temp_complex_5 = bus[indexer].full_Y[0]*bus[indexer].V[0] + bus[indexer].full_Y[1]*bus[indexer].V[1] + bus[indexer].full_Y[2]*bus[indexer].V[2];
+					temp_complex_4 = ~temp_complex_5;
+					temp_complex_3 = bus[indexer].V[0]*temp_complex_4;
 
 					//conj(Vb)
 					temp_complex_2 = ~bus[indexer].V[1];
 
 					//Row 2 of admittance
 					temp_complex_0 += temp_complex_2*(bus[indexer].full_Y[3]*bus[indexer].V[0] + bus[indexer].full_Y[4]*bus[indexer].V[1] + bus[indexer].full_Y[5]*bus[indexer].V[2]);
+					
+					// Row 2 also calculate Sysource ( = v * conj(ysource * v)) to substract from PTsource and obtain Pgen at generator bus
+					temp_complex_5 = bus[indexer].full_Y[3]*bus[indexer].V[0] + bus[indexer].full_Y[4]*bus[indexer].V[1] + bus[indexer].full_Y[5]*bus[indexer].V[2];
+					temp_complex_4 = ~temp_complex_5;
+					temp_complex_3 += bus[indexer].V[1]*temp_complex_4;
 
 					//conj(Vc)
 					temp_complex_2 = ~bus[indexer].V[2];
@@ -2424,12 +2448,17 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					//Row 3 of admittance
 					temp_complex_0 += temp_complex_2*(bus[indexer].full_Y[6]*bus[indexer].V[0] + bus[indexer].full_Y[7]*bus[indexer].V[1] + bus[indexer].full_Y[8]*bus[indexer].V[2]);
 
+					// Row 3 also calculate Sysource ( = v * conj(ysource * v)) to substract from PTsource and obtain Pgen at generator bus
+					temp_complex_5 = bus[indexer].full_Y[6]*bus[indexer].V[0] + bus[indexer].full_Y[7]*bus[indexer].V[1] + bus[indexer].full_Y[8]*bus[indexer].V[2];
+					temp_complex_4 = ~temp_complex_5;
+					temp_complex_3 += bus[indexer].V[2]*temp_complex_4;					
+
 					//numerator done, except PT portion (add in below - SWING bus is different
 
-					//On that note, if we are a SWING, zero our PT portion
-					if ((bus[indexer].type == 2)  && (Iteration>0))
+					//On that note, if we are a SWING, zero our PT portion and QT for accumulation
+					if ((bus[indexer].type == 2) && (Iteration>0))
 					{
-						(*bus[indexer].PGenTotal).SetReal(0.0);
+						*bus[indexer].PGenTotal = complex(0.0,0.0);
 					}
 				}
 				else	//Not enabled or not "full-Y-ed" - set to zero
@@ -2847,7 +2876,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							if (Iteration>0)	//Only update SWING on subsequent passes
 							{
 								//Now add it into the "generation total" for the SWING
-								(*bus[indexer].PGenTotal) += temp_complex_2.Re();
+								(*bus[indexer].PGenTotal) += temp_complex_2 - temp_complex_3/3.0; // both PT and QT = Ssource-Sysource = v conj(I) - v conj(ysource v)
 							}
 								
 							//Compute the delta_I, just like below - but don't post it (still zero in calcs)
@@ -2911,7 +2940,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 						if (swing_is_a_swing == true)	//Really only true for PF_DYNINIT anyways
 						{
 							//Power should be all updated, now update current values
-							temp_complex_0 += (*bus[indexer].PGenTotal).Re();
+							temp_complex_0 += complex((*bus[indexer].PGenTotal).Re(),-(*bus[indexer].PGenTotal).Im()); // total generated power injected congugated
 
 							//Compute Ii
 							if (temp_complex_1.Mag() > 0.0)	//Non zero
@@ -4032,7 +4061,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					}
 					//Default else - if we're out of symmetry bounds, but already hit close, good enough
 				}
-				//Defaulted else - we're congerged on all fronts, huzzah!
+				//Defaulted else - we're converged on all fronts, huzzah!
 			}
 			//Default else - still need to iterate
 		}//End special convergence criterion

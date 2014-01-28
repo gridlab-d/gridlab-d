@@ -161,6 +161,12 @@ link_object::link_object(MODULE *mod) : powerflow_object(mod)
 			PT_double, "continuous_rating[A]", PADDR(link_rating[0]), PT_DESCRIPTION, "Continuous rating for this link object (set individual line segments",
 			PT_double, "emergency_rating[A]", PADDR(link_rating[1]), PT_DESCRIPTION, "Emergency rating for this link object (set individual line segments",
 			NULL) < 1 && errno) GL_THROW("unable to publish link properties in %s",__FILE__);
+
+			//Publish deltamode functions
+			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
+				GL_THROW("Unable to publish link deltamode function");
+			if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_link)==NULL)
+				GL_THROW("Unable to publish link deltamode function");
 	}
 }
 
@@ -209,6 +215,8 @@ int link_object::create(void)
 	mean_repair_time = 0.0;
 
 	current_accumulated = false;
+
+	deltamode_inclusive = false;	//By default, we don't support deltamode
 
 	return result;
 }
@@ -489,6 +497,16 @@ int link_object::init(OBJECT *parent)
 		}
 	}
 
+	//Deltamode checks - init, so no locking yet
+	if ((obj->flags & OF_DELTAMODE) == OF_DELTAMODE)
+	{
+		//Flag the variable for later use
+		deltamode_inclusive = true;
+
+		//Increment the counter for allocation
+		pwr_object_count++;
+	}
+
 	return 1;
 }
 
@@ -518,14 +536,271 @@ set link_object::get_flow(node **fn, node **tn) const
 	return reverse;
 }
 
+//Presync portion of NR code - functionalized for deltamode
+void link_object::NR_link_presync_fxn(void)
+{
+	current_accumulated = false;	//Reset the flag
+
+	if (status != prev_status)	//Something's changed, update us
+	{
+		complex Ylinecharge[3][3];
+		complex Y[3][3];
+		complex Yc[3][3];
+		complex Ylefttemp[3][3];
+		complex Yto[3][3];
+		complex Yfrom[3][3];
+		double invratio;
+		char jindex, kindex;
+
+		//Create initial admittance matrix - use code from GS below - store in From_Y (for now)
+		for (jindex=0; jindex<3; jindex++)
+			for (kindex=0; kindex<3; kindex++)
+				Y[jindex][kindex] = 0.0;
+		
+
+		// compute admittance - invert b matrix - special circumstances given different methods
+		if ((SpecialLnk==SWITCH) || (SpecialLnk==REGULATOR))
+		{
+			;	//Just skip over all of this nonsense
+		}
+		else if (has_phase(PHASE_S)) //Triplexy
+		{
+			//Put it straight in
+			equalm(b_mat,Y);
+		}
+		else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && !has_phase(PHASE_C)) //only A
+			Y[0][0] = complex(1.0) / b_mat[0][0];
+		else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //only B
+			Y[1][1] = complex(1.0) / b_mat[1][1];
+		else if (!has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //only C
+			Y[2][2] = complex(1.0) / b_mat[2][2];
+		else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //has A & C
+		{
+			complex detvalue = b_mat[0][0]*b_mat[2][2] - b_mat[0][2]*b_mat[2][0];
+
+			Y[0][0] = b_mat[2][2] / detvalue;
+			Y[0][2] = b_mat[0][2] * -1.0 / detvalue;
+			Y[2][0] = b_mat[2][0] * -1.0 / detvalue;
+			Y[2][2] = b_mat[0][0] / detvalue;
+		}
+		else if (has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //has A & B
+		{
+			complex detvalue = b_mat[0][0]*b_mat[1][1] - b_mat[0][1]*b_mat[1][0];
+
+			Y[0][0] = b_mat[1][1] / detvalue;
+			Y[0][1] = b_mat[0][1] * -1.0 / detvalue;
+			Y[1][0] = b_mat[1][0] * -1.0 / detvalue;
+			Y[1][1] = b_mat[0][0] / detvalue;
+		}
+		else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C))	//has B & C
+		{
+			complex detvalue = b_mat[1][1]*b_mat[2][2] - b_mat[1][2]*b_mat[2][1];
+
+			Y[1][1] = b_mat[2][2] / detvalue;
+			Y[1][2] = b_mat[1][2] * -1.0 / detvalue;
+			Y[2][1] = b_mat[2][1] * -1.0 / detvalue;
+			Y[2][2] = b_mat[1][1] / detvalue;
+		}
+		else if ((has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C)) || (has_phase(PHASE_D))) //has ABC or D (D=ABC)
+			inverse(b_mat,Y);
+		// defaulted else - No phases (e.g., the line does not exist) - just = 0
+
+		if ((voltage_ratio!=1) | (SpecialLnk!=NORMAL))	//Handle transformers slightly different
+		{
+			invratio=1.0/voltage_ratio;
+
+			if (SpecialLnk==DELTAGWYE)	//Delta-Gwye implementation
+			{
+				complex tempImped;
+
+				//Pre-admittancized matrix
+				equalm(b_mat,Yto);
+
+				//Store value into YSto
+				for (jindex=0; jindex<3; jindex++)
+				{
+					for (kindex=0; kindex<3; kindex++)
+					{
+						YSto[jindex*3+kindex]=Yto[jindex][kindex];
+					}
+				}
+
+				//Adjust for To_Y
+				multiply(Yto,c_mat,To_Y);
+
+				//Scale to other size
+				multiply(invratio,Yto,Ylefttemp);
+				multiply(invratio,Ylefttemp,Yfrom);
+
+				//Store value into YSfrom
+				for (jindex=0; jindex<3; jindex++)
+				{
+					for (kindex=0; kindex<3; kindex++)
+					{
+						YSfrom[jindex*3+kindex]=Yfrom[jindex][kindex];
+					}
+				}
+
+				//Adjust for From_Y
+				multiply(B_mat,Yto,From_Y);
+			}
+			else if (SpecialLnk==SPLITPHASE)	//Split phase
+			{
+				//Yto - same for all
+				YSto[0] = b_mat[0][0];
+				YSto[1] = b_mat[0][1];
+				YSto[3] = b_mat[1][0];
+				YSto[4] = b_mat[1][1];
+				YSto[2] = YSto[5] = YSto[6] = YSto[7] = YSto[8] = 0.0;
+
+				if (has_phase(PHASE_A))		//A connected
+				{
+					//To_Y
+					To_Y[0][0] = -b_mat[0][2];
+					To_Y[1][0] = -b_mat[1][2];
+					To_Y[0][1] = To_Y[0][2] = To_Y[1][1] = 0.0;
+					To_Y[1][2] = To_Y[2][0] = To_Y[2][1] = To_Y[2][2] = 0.0;
+
+					//Yfrom
+					YSfrom[0] = b_mat[2][2];
+					YSfrom[1] = YSfrom[2] = YSfrom[3] = YSfrom[4] = 0.0;
+					YSfrom[5] = YSfrom[6] = YSfrom[7] = YSfrom[8] = 0.0;
+
+					//From_Y
+					From_Y[0][0] = -b_mat[2][0];
+					From_Y[0][1] = -b_mat[2][1];
+					From_Y[0][2] = From_Y[1][0] = From_Y[1][1] = 0.0;
+					From_Y[1][2] = From_Y[2][0] = From_Y[2][1] = From_Y[2][2] = 0.0;
+				}
+				else if (has_phase(PHASE_B))	//B connected
+				{
+					//To_Y
+					To_Y[0][1] = -b_mat[0][2];
+					To_Y[1][1] = -b_mat[1][2];
+					To_Y[0][0] = To_Y[0][2] = To_Y[1][0] = 0.0;
+					To_Y[1][2] = To_Y[2][0] = To_Y[2][1] = To_Y[2][2] = 0.0;
+
+					//Yfrom
+					YSfrom[4] = b_mat[2][2];
+					YSfrom[0] = YSfrom[1] = YSfrom[2] = YSfrom[3] = 0.0;
+					YSfrom[5] = YSfrom[6] = YSfrom[7] = YSfrom[8] = 0.0;
+
+					//From_Y
+					From_Y[1][0] = -b_mat[2][0];
+					From_Y[1][1] = -b_mat[2][1];
+					From_Y[0][0] = From_Y[0][1] = From_Y[0][2] = 0.0;
+					From_Y[1][2] = From_Y[2][0] = From_Y[2][1] = From_Y[2][2] = 0.0;
+				}
+				else if (has_phase(PHASE_C))	//C connected
+				{
+					//To_Y
+					To_Y[0][2] = -b_mat[0][2];
+					To_Y[1][2] = -b_mat[1][2];
+					To_Y[0][0] = To_Y[0][1] = To_Y[1][0] = 0.0;
+					To_Y[1][1] = To_Y[2][0] = To_Y[2][1] = To_Y[2][2] = 0.0;
+
+					//Yfrom
+					YSfrom[8] = b_mat[2][2];
+					YSfrom[0] = YSfrom[1] = YSfrom[2] = YSfrom[3] = 0.0;
+					YSfrom[4] = YSfrom[5] = YSfrom[6] = YSfrom[7] = 0.0;
+
+					//From_Y
+					From_Y[2][0] = -b_mat[2][0];
+					From_Y[2][1] = -b_mat[2][1];
+					From_Y[0][0] = From_Y[0][1] = From_Y[0][2] = 0.0;
+					From_Y[1][0] = From_Y[1][1] = From_Y[1][2] = From_Y[2][2] = 0.0;
+				}
+				else
+					GL_THROW("NR: Unknown phase configuration on split-phase transformer");
+					/*  TROUBLESHOOT
+					An unknown phase configuration has been entered for a split-phase,
+					center-tapped transformer.  The Newton-Raphson solver does not know how to
+					handle it.  Fix the phase and try again.
+					*/
+								
+			}
+			else if ((SpecialLnk==SWITCH) || (SpecialLnk==REGULATOR))
+			{
+				;	//More nothingness (all handled inside switch/regulator itself)
+			}
+			else	//Other xformers
+			{
+				//Pre-admittancized matrix
+				equalm(b_mat,Yto);
+
+				//Store value into YSto
+				for (jindex=0; jindex<3; jindex++)
+				{
+					for (kindex=0; kindex<3; kindex++)
+					{
+						YSto[jindex*3+kindex]=Yto[jindex][kindex];
+					}
+				}
+
+				multiply(invratio,Yto,Ylefttemp);		//Scale from admittance by turns ratio
+				multiply(invratio,Ylefttemp,Yfrom);
+
+				//Store value into YSfrom
+				for (jindex=0; jindex<3; jindex++)
+				{
+					for (kindex=0; kindex<3; kindex++)
+					{
+						YSfrom[jindex*3+kindex]=Yfrom[jindex][kindex];
+					}
+				}
+
+				multiply(invratio,Yto,To_Y);		//Incorporate turns ratio information into line's admittance matrix.
+				multiply(voltage_ratio,Yfrom,From_Y); //Scales voltages to same "level" for GS //uncomment me
+			}
+		}
+		else 				//Simple lines
+		{
+			if (use_line_cap == true)	//Capacitance included
+			{
+				//Make "transfer matrices" admittance-less
+				equalm(Y,From_Y);
+				
+				//Compute total self admittance - include line charging capacitance
+				//Basically undo a_mat = I - 1/2 Zabc*Yabc
+				equalm(a_mat,Ylinecharge);
+				Ylinecharge[0][0]-=1;
+				Ylinecharge[1][1]-=1;
+				Ylinecharge[2][2]-=1;
+				multiply(2.0,Ylinecharge,Ylefttemp);
+				multiply(Y,Ylefttemp,Ylinecharge);
+				
+				//Split back in half for application to each side
+				multiply(0.5,Ylinecharge,Ylefttemp);
+				addition(Ylefttemp,Y,Yc);
+
+				//Now parse into the new storage structure (manual to ensure things are placed right)
+				for (jindex=0; jindex<3; jindex++)
+				{
+					for (kindex=0; kindex<3; kindex++)
+					{
+						YSfrom[jindex*3+kindex]=Yc[jindex][kindex];
+					}
+				}
+			}
+			else	//Normal execution
+			{
+				//Just post the admittance straight in - line charging doesn't exist anyways
+				equalm(Y,From_Y);
+			}
+		}
+		
+		//Update status variable
+		prev_status = status;
+	}
+}
+
+//Presync call
 TIMESTAMP link_object::presync(TIMESTAMP t0)
 {
 	TIMESTAMP t1 = powerflow_object::presync(t0); 
 
 	if (solver_method==SM_NR)
 	{
-		current_accumulated = false;	//Reset the flag
-
 		if (prev_LTime==0)	//First run, build up the pointer matrices
 		{
 			node *fnode = OBJECTDATA(from,node);
@@ -923,271 +1198,81 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 					NR_branchdata[NR_branch_reference].lnk_type = 0;
 				}
 			}//end link type population
+
+			//Link up the deltamode functions
+			//Populate individual object references into deltamode, if needed
+			if ((deltamode_inclusive==true) && (enable_subsecond_models == true))
+			{
+				int temp_pwr_object_current;
+
+				//Check limits first
+				if (pwr_object_current>=pwr_object_count)
+				{
+					GL_THROW("Too many objects tried to populate deltamode objects array in the powerflow module!");
+					/*  TROUBLESHOOT
+					While attempting to populate a reference array of deltamode-enabled objects for the powerflow
+					module, an attempt was made to write beyond the allocated array space.  Please try again.  If the
+					error persists, please submit a bug report and your code via the trac website.
+					*/
+				}
+
+				//Lock the SWING bus and get us a value
+				if ( NR_swing_bus!=obj) WRITELOCK_OBJECT(NR_swing_bus);	//Lock Swing for flag
+
+					//Get the value
+					temp_pwr_object_current = pwr_object_current;
+
+					//Increment
+					pwr_object_current++;
+
+				//Unlock
+				if ( NR_swing_bus!=obj) WRITEUNLOCK_OBJECT(NR_swing_bus);	//Lock Swing for flag
+
+				//Add us into the list
+				delta_objects[temp_pwr_object_current] = obj;
+
+				//Map up the function
+				delta_functions[temp_pwr_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"interupdate_pwr_object"));
+
+				//Make sure it worked
+				if (delta_functions[temp_pwr_object_current] == NULL)
+				{
+					GL_THROW("Failure to map deltamode function for device:%s",obj->name);
+					/*  TROUBLESHOOT
+					Attempts to map up the interupdate function of a specific device failed.  Please try again and ensure
+					the object supports deltamode.  If the error persists, please submit your code and a bug report via the
+					trac website.
+					*/
+				}
+
+				//Map up the frequency function
+				delta_freq_functions[temp_pwr_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"delta_freq_pwr_object"));
+
+				//Make sure it worked
+				if (delta_freq_functions[temp_pwr_object_current] == NULL)
+				{
+					GL_THROW("Failure to map deltamode function for devices:%s",obj->name);
+					//Defined above
+				}
+			}//End deltamode populations
 		}//End init loop
 
-		if (status != prev_status)	//Something's changed, update us
-		{
-			complex Ylinecharge[3][3];
-			complex Y[3][3];
-			complex Yc[3][3];
-			complex Ylefttemp[3][3];
-			complex Yto[3][3];
-			complex Yfrom[3][3];
-			double invratio;
-			char jindex, kindex;
+		//Call the presync items that are common to deltamode implementations
+		NR_link_presync_fxn();
 
-			//Create initial admittance matrix - use code from GS below - store in From_Y (for now)
-			for (jindex=0; jindex<3; jindex++)
-				for (kindex=0; kindex<3; kindex++)
-					Y[jindex][kindex] = 0.0;
-			
-
-			// compute admittance - invert b matrix - special circumstances given different methods
-			if ((SpecialLnk==SWITCH) || (SpecialLnk==REGULATOR))
-			{
-				;	//Just skip over all of this nonsense
-			}
-			else if (has_phase(PHASE_S)) //Triplexy
-			{
-				//Put it straight in
-				equalm(b_mat,Y);
-			}
-			else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && !has_phase(PHASE_C)) //only A
-				Y[0][0] = complex(1.0) / b_mat[0][0];
-			else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //only B
-				Y[1][1] = complex(1.0) / b_mat[1][1];
-			else if (!has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //only C
-				Y[2][2] = complex(1.0) / b_mat[2][2];
-			else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //has A & C
-			{
-				complex detvalue = b_mat[0][0]*b_mat[2][2] - b_mat[0][2]*b_mat[2][0];
-
-				Y[0][0] = b_mat[2][2] / detvalue;
-				Y[0][2] = b_mat[0][2] * -1.0 / detvalue;
-				Y[2][0] = b_mat[2][0] * -1.0 / detvalue;
-				Y[2][2] = b_mat[0][0] / detvalue;
-			}
-			else if (has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //has A & B
-			{
-				complex detvalue = b_mat[0][0]*b_mat[1][1] - b_mat[0][1]*b_mat[1][0];
-
-				Y[0][0] = b_mat[1][1] / detvalue;
-				Y[0][1] = b_mat[0][1] * -1.0 / detvalue;
-				Y[1][0] = b_mat[1][0] * -1.0 / detvalue;
-				Y[1][1] = b_mat[0][0] / detvalue;
-			}
-			else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C))	//has B & C
-			{
-				complex detvalue = b_mat[1][1]*b_mat[2][2] - b_mat[1][2]*b_mat[2][1];
-
-				Y[1][1] = b_mat[2][2] / detvalue;
-				Y[1][2] = b_mat[1][2] * -1.0 / detvalue;
-				Y[2][1] = b_mat[2][1] * -1.0 / detvalue;
-				Y[2][2] = b_mat[1][1] / detvalue;
-			}
-			else if ((has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C)) || (has_phase(PHASE_D))) //has ABC or D (D=ABC)
-				inverse(b_mat,Y);
-			// defaulted else - No phases (e.g., the line does not exist) - just = 0
-
-			if ((voltage_ratio!=1) | (SpecialLnk!=NORMAL))	//Handle transformers slightly different
-			{
-				invratio=1.0/voltage_ratio;
-
-				if (SpecialLnk==DELTAGWYE)	//Delta-Gwye implementation
-				{
-					complex tempImped;
-
-					//Pre-admittancized matrix
-					equalm(b_mat,Yto);
-
-					//Store value into YSto
-					for (jindex=0; jindex<3; jindex++)
-					{
-						for (kindex=0; kindex<3; kindex++)
-						{
-							YSto[jindex*3+kindex]=Yto[jindex][kindex];
-						}
-					}
-
-					//Adjust for To_Y
-					multiply(Yto,c_mat,To_Y);
-
-					//Scale to other size
-					multiply(invratio,Yto,Ylefttemp);
-					multiply(invratio,Ylefttemp,Yfrom);
-
-					//Store value into YSfrom
-					for (jindex=0; jindex<3; jindex++)
-					{
-						for (kindex=0; kindex<3; kindex++)
-						{
-							YSfrom[jindex*3+kindex]=Yfrom[jindex][kindex];
-						}
-					}
-
-					//Adjust for From_Y
-					multiply(B_mat,Yto,From_Y);
-				}
-				else if (SpecialLnk==SPLITPHASE)	//Split phase
-				{
-					//Yto - same for all
-					YSto[0] = b_mat[0][0];
-					YSto[1] = b_mat[0][1];
-					YSto[3] = b_mat[1][0];
-					YSto[4] = b_mat[1][1];
-					YSto[2] = YSto[5] = YSto[6] = YSto[7] = YSto[8] = 0.0;
-
-					if (has_phase(PHASE_A))		//A connected
-					{
-						//To_Y
-						To_Y[0][0] = -b_mat[0][2];
-						To_Y[1][0] = -b_mat[1][2];
-						To_Y[0][1] = To_Y[0][2] = To_Y[1][1] = 0.0;
-						To_Y[1][2] = To_Y[2][0] = To_Y[2][1] = To_Y[2][2] = 0.0;
-
-						//Yfrom
-						YSfrom[0] = b_mat[2][2];
-						YSfrom[1] = YSfrom[2] = YSfrom[3] = YSfrom[4] = 0.0;
-						YSfrom[5] = YSfrom[6] = YSfrom[7] = YSfrom[8] = 0.0;
-
-						//From_Y
-						From_Y[0][0] = -b_mat[2][0];
-						From_Y[0][1] = -b_mat[2][1];
-						From_Y[0][2] = From_Y[1][0] = From_Y[1][1] = 0.0;
-						From_Y[1][2] = From_Y[2][0] = From_Y[2][1] = From_Y[2][2] = 0.0;
-					}
-					else if (has_phase(PHASE_B))	//B connected
-					{
-						//To_Y
-						To_Y[0][1] = -b_mat[0][2];
-						To_Y[1][1] = -b_mat[1][2];
-						To_Y[0][0] = To_Y[0][2] = To_Y[1][0] = 0.0;
-						To_Y[1][2] = To_Y[2][0] = To_Y[2][1] = To_Y[2][2] = 0.0;
-
-						//Yfrom
-						YSfrom[4] = b_mat[2][2];
-						YSfrom[0] = YSfrom[1] = YSfrom[2] = YSfrom[3] = 0.0;
-						YSfrom[5] = YSfrom[6] = YSfrom[7] = YSfrom[8] = 0.0;
-
-						//From_Y
-						From_Y[1][0] = -b_mat[2][0];
-						From_Y[1][1] = -b_mat[2][1];
-						From_Y[0][0] = From_Y[0][1] = From_Y[0][2] = 0.0;
-						From_Y[1][2] = From_Y[2][0] = From_Y[2][1] = From_Y[2][2] = 0.0;
-					}
-					else if (has_phase(PHASE_C))	//C connected
-					{
-						//To_Y
-						To_Y[0][2] = -b_mat[0][2];
-						To_Y[1][2] = -b_mat[1][2];
-						To_Y[0][0] = To_Y[0][1] = To_Y[1][0] = 0.0;
-						To_Y[1][1] = To_Y[2][0] = To_Y[2][1] = To_Y[2][2] = 0.0;
-
-						//Yfrom
-						YSfrom[8] = b_mat[2][2];
-						YSfrom[0] = YSfrom[1] = YSfrom[2] = YSfrom[3] = 0.0;
-						YSfrom[4] = YSfrom[5] = YSfrom[6] = YSfrom[7] = 0.0;
-
-						//From_Y
-						From_Y[2][0] = -b_mat[2][0];
-						From_Y[2][1] = -b_mat[2][1];
-						From_Y[0][0] = From_Y[0][1] = From_Y[0][2] = 0.0;
-						From_Y[1][0] = From_Y[1][1] = From_Y[1][2] = From_Y[2][2] = 0.0;
-					}
-					else
-						GL_THROW("NR: Unknown phase configuration on split-phase transformer");
-						/*  TROUBLESHOOT
-						An unknown phase configuration has been entered for a split-phase,
-						center-tapped transformer.  The Newton-Raphson solver does not know how to
-						handle it.  Fix the phase and try again.
-						*/
-									
-				}
-				else if ((SpecialLnk==SWITCH) || (SpecialLnk==REGULATOR))
-				{
-					;	//More nothingness (all handled inside switch/regulator itself)
-				}
-				else	//Other xformers
-				{
-					//Pre-admittancized matrix
-					equalm(b_mat,Yto);
-
-					//Store value into YSto
-					for (jindex=0; jindex<3; jindex++)
-					{
-						for (kindex=0; kindex<3; kindex++)
-						{
-							YSto[jindex*3+kindex]=Yto[jindex][kindex];
-						}
-					}
-
-					multiply(invratio,Yto,Ylefttemp);		//Scale from admittance by turns ratio
-					multiply(invratio,Ylefttemp,Yfrom);
-
-					//Store value into YSfrom
-					for (jindex=0; jindex<3; jindex++)
-					{
-						for (kindex=0; kindex<3; kindex++)
-						{
-							YSfrom[jindex*3+kindex]=Yfrom[jindex][kindex];
-						}
-					}
-
-					multiply(invratio,Yto,To_Y);		//Incorporate turns ratio information into line's admittance matrix.
-					multiply(voltage_ratio,Yfrom,From_Y); //Scales voltages to same "level" for GS //uncomment me
-				}
-			}
-			else 				//Simple lines
-			{
-				if (use_line_cap == true)	//Capacitance included
-				{
-					//Make "transfer matrices" admittance-less
-					equalm(Y,From_Y);
-					
-					//Compute total self admittance - include line charging capacitance
-					//Basically undo a_mat = I - 1/2 Zabc*Yabc
-					equalm(a_mat,Ylinecharge);
-					Ylinecharge[0][0]-=1;
-					Ylinecharge[1][1]-=1;
-					Ylinecharge[2][2]-=1;
-					multiply(2.0,Ylinecharge,Ylefttemp);
-					multiply(Y,Ylefttemp,Ylinecharge);
-					
-					//Split back in half for application to each side
-					multiply(0.5,Ylinecharge,Ylefttemp);
-					addition(Ylefttemp,Y,Yc);
-
-					//Now parse into the new storage structure (manual to ensure things are placed right)
-					for (jindex=0; jindex<3; jindex++)
-					{
-						for (kindex=0; kindex<3; kindex++)
-						{
-							YSfrom[jindex*3+kindex]=Yc[jindex][kindex];
-						}
-					}
-				}
-				else	//Normal execution
-				{
-					//Just post the admittance straight in - line charging doesn't exist anyways
-					equalm(Y,From_Y);
-				}
-			}
-			
-			//Update status variable
-			prev_status = status;
-		}
-		//Check to see if a SC has occured and zero out the falut current
-		if(If_in[0] != 0 || If_in[1] != 0 || If_in[2] != 0){
-			If_in[0] = 0;
-			If_in[1] = 0;
-			If_in[2] = 0;
-			If_out[0] = 0;
-			If_out[1] = 0;
-			If_out[2] = 0;
-		}
 		//Update time variable if necessary
 		if (prev_LTime != t0)
 		{
+			//Check to see if a SC has occured and zero out the fault current - putting in here so reiterations don't break it
+			if(If_in[0] != 0 || If_in[1] != 0 || If_in[2] != 0){
+				If_in[0] = 0;
+				If_in[1] = 0;
+				If_in[2] = 0;
+				If_out[0] = 0;
+				If_out[1] = 0;
+				If_out[2] = 0;
+			}
+
 			prev_LTime=t0;
 		}
 	}//End NR Solver
@@ -1279,112 +1364,10 @@ TIMESTAMP link_object::sync(TIMESTAMP t0)
 	return TS_NEVER;
 }
 
-TIMESTAMP link_object::postsync(TIMESTAMP t0)
+//Functionalized postsync events -- made so deltamode can call
+void link_object::BOTH_link_postsync_fxn(void)
 {
-	TIMESTAMP TRET=TS_NEVER;
 	double temp_power_check;
-
-	if ((solver_method==SM_FBS))
-	{
-		node *f;
-		node *t; //@# make else/if statement for solver method NR; & set current_out->to t->node current_inj;
-		set reverse = get_flow(&f,&t);
-
-		// update published current_out values;
-		READLOCK_OBJECT(to);
-		complex tc[] = {t->current_inj[0], t->current_inj[1], t->current_inj[2]};
-		READUNLOCK_OBJECT(to);
-
-		read_I_out[0] = tc[0];
-		read_I_out[1] = tc[1];
-
-		if (has_phase(PHASE_S) && (voltage_ratio != 1.0))	//Implies SPCT
-			read_I_out[2] = -tc[1] - tc[0];	//Implies ground at TP Node, so I_n is full neutral + ground
-		else
-			read_I_out[2] = tc[2];
-		
-		if (!is_open())
-		{
-			/* compute and update voltages */
-			complex v0 = 
-				A_mat[0][0] * f->voltage[0] +
-				A_mat[0][1] * f->voltage[1] + // 
-				A_mat[0][2] * f->voltage[2] - //@todo current inj; flowing from t node
-				B_mat[0][0] * tc[0] - // current injection put into link from end mode
-				B_mat[0][1] * tc[1] -
-				B_mat[0][2] * tc[2];
-			complex v1 = 
-				A_mat[1][0] * f->voltage[0] +
-				A_mat[1][1] * f->voltage[1] +
-				A_mat[1][2] * f->voltage[2] -
-				B_mat[1][0] * tc[0] -
-				B_mat[1][1] * tc[1] -
-				B_mat[1][2] * tc[2];
-			complex v2 = 
-				A_mat[2][0] * f->voltage[0] +
-				A_mat[2][1] * f->voltage[1] +
-				A_mat[2][2] * f->voltage[2] -
-				B_mat[2][0] * tc[0] -
-				B_mat[2][1] * tc[1] -
-				B_mat[2][2] * tc[2];
-
-			WRITELOCK_OBJECT(to);
-			t->voltage[0] = v0;
-			t->voltage[1] = v1;
-			t->voltage[2] = v2;
-			WRITEUNLOCK_OBJECT(to);
-
-#ifdef SUPPORT_OUTAGES		
-			t->condition=f->condition;
-		}
-		else if (is_open()) //open
-		{
-			t->condition=!OC_NORMAL;
-		}
-
-		/* propagate voltage source flag from to-bus to from-bus */
-		if (t->bustype==node::PQ)
-		{
-			/* keep a copy of the old flags on the to-bus */
-			set of = t->busflags&NF_HASSOURCE;
-
-			/* if the admittance is non-zero */
-			if ((a_mat[0][0].Mag()>0 || a_mat[1][1].Mag()>0 || a_mat[2][2].Mag()>0))
-			{
-				/* the source-flag of the from-bus is copied to the to-bus */
-				LOCKED(to, t->busflags |= (f->busflags&NF_HASSOURCE));
-			}
-			else
-			{
-				/* otherwise the source flag of the to-bus is cleared */
-				LOCKED(to, t->busflags &= ~NF_HASSOURCE);
-			}
-
-			/* if the to-bus flags has changed */
-			if ((t->busflags&NF_HASSOURCE)!=of)
-
-				/* force the solver to make another pass */
-				TRET = t0;
-		}
-#else
-		}
-		/* Zeroing code - TODO: Figure out how to make this work properly
-		else //Assumes open here
-		{
-			//Zero all output voltages - radial assumption
-			LOCKED(to,t->voltage[0] = 0.0);
-			LOCKED(to,t->voltage[1] = 0.0);
-			LOCKED(to,t->voltage[2] = 0.0);
-
-			//Zero output current too, since t->current_inj isn't valid to us no matter what
-			read_I_out[0] = 0.0;
-			read_I_out[1] = 0.0;
-			read_I_out[2] = 0.0;
-		}
-		*/
-#endif
-
-	}//End FBS
 
 	 // updates published current_in variable
 		read_I_in[0] = current_in[0];
@@ -1497,6 +1480,117 @@ TIMESTAMP link_object::postsync(TIMESTAMP t0)
 			}//End has Phase C
 		}//End must be a line check
 	}//End Limit checks
+}
+
+TIMESTAMP link_object::postsync(TIMESTAMP t0)
+{
+	TIMESTAMP TRET=TS_NEVER;
+	//double temp_power_check;
+
+	if ((solver_method==SM_FBS))
+	{
+		node *f;
+		node *t; //@# make else/if statement for solver method NR; & set current_out->to t->node current_inj;
+		set reverse = get_flow(&f,&t);
+
+		// update published current_out values;
+		READLOCK_OBJECT(to);
+		complex tc[] = {t->current_inj[0], t->current_inj[1], t->current_inj[2]};
+		READUNLOCK_OBJECT(to);
+
+		read_I_out[0] = tc[0];
+		read_I_out[1] = tc[1];
+
+		if (has_phase(PHASE_S) && (voltage_ratio != 1.0))	//Implies SPCT
+			read_I_out[2] = -tc[1] - tc[0];	//Implies ground at TP Node, so I_n is full neutral + ground
+		else
+			read_I_out[2] = tc[2];
+		
+		if (!is_open())
+		{
+			/* compute and update voltages */
+			complex v0 = 
+				A_mat[0][0] * f->voltage[0] +
+				A_mat[0][1] * f->voltage[1] + // 
+				A_mat[0][2] * f->voltage[2] - //@todo current inj; flowing from t node
+				B_mat[0][0] * tc[0] - // current injection put into link from end mode
+				B_mat[0][1] * tc[1] -
+				B_mat[0][2] * tc[2];
+			complex v1 = 
+				A_mat[1][0] * f->voltage[0] +
+				A_mat[1][1] * f->voltage[1] +
+				A_mat[1][2] * f->voltage[2] -
+				B_mat[1][0] * tc[0] -
+				B_mat[1][1] * tc[1] -
+				B_mat[1][2] * tc[2];
+			complex v2 = 
+				A_mat[2][0] * f->voltage[0] +
+				A_mat[2][1] * f->voltage[1] +
+				A_mat[2][2] * f->voltage[2] -
+				B_mat[2][0] * tc[0] -
+				B_mat[2][1] * tc[1] -
+				B_mat[2][2] * tc[2];
+
+			WRITELOCK_OBJECT(to);
+			t->voltage[0] = v0;
+			t->voltage[1] = v1;
+			t->voltage[2] = v2;
+			WRITEUNLOCK_OBJECT(to);
+
+#ifdef SUPPORT_OUTAGES		
+			t->condition=f->condition;
+		}
+		else if (is_open()) //open
+		{
+			t->condition=!OC_NORMAL;
+		}
+
+		/* propagate voltage source flag from to-bus to from-bus */
+		if (t->bustype==node::PQ)
+		{
+			/* keep a copy of the old flags on the to-bus */
+			set of = t->busflags&NF_HASSOURCE;
+
+			/* if the admittance is non-zero */
+			if ((a_mat[0][0].Mag()>0 || a_mat[1][1].Mag()>0 || a_mat[2][2].Mag()>0))
+			{
+				/* the source-flag of the from-bus is copied to the to-bus */
+				LOCKED(to, t->busflags |= (f->busflags&NF_HASSOURCE));
+			}
+			else
+			{
+				/* otherwise the source flag of the to-bus is cleared */
+				LOCKED(to, t->busflags &= ~NF_HASSOURCE);
+			}
+
+			/* if the to-bus flags has changed */
+			if ((t->busflags&NF_HASSOURCE)!=of)
+
+				/* force the solver to make another pass */
+				TRET = t0;
+		}
+#else
+		}
+		/* Zeroing code - TODO: Figure out how to make this work properly
+		else //Assumes open here
+		{
+			//Zero all output voltages - radial assumption
+			LOCKED(to,t->voltage[0] = 0.0);
+			LOCKED(to,t->voltage[1] = 0.0);
+			LOCKED(to,t->voltage[2] = 0.0);
+
+			//Zero output current too, since t->current_inj isn't valid to us no matter what
+			read_I_out[0] = 0.0;
+			read_I_out[1] = 0.0;
+			read_I_out[2] = 0.0;
+		}
+		*/
+#endif
+
+	}//End FBS
+
+	//Call functionalized postsync items
+	BOTH_link_postsync_fxn();
 
 	return TRET;
 }
@@ -1676,6 +1770,32 @@ EXPORT TIMESTAMP sync_link(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 EXPORT int isa_link(OBJECT *obj, char *classname)
 {
 	return OBJECTDATA(obj,link_object)->isa(classname);
+}
+
+//Deltamode export
+EXPORT SIMULATIONMODE interupdate_link(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
+{
+	link_object *my = OBJECTDATA(obj,link_object);
+	SIMULATIONMODE status = SM_ERROR;
+	try
+	{
+		status = my->inter_deltaupdate_link(delta_time,dt,iteration_count_val,interupdate_pos);
+		return status;
+	}
+	catch (char *msg)
+	{
+		gl_error("interupdate_link(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
+		return status;
+	}
+}
+
+//Function to extract and post the accumulated power and "frequency power" for
+//updating "system frequency" -- links do nothing in this regard, but needs to be a function so deltamode works
+//Return SUCCESS/FAILED
+EXPORT STATUS delta_frequency_link(OBJECT *obj, complex *powerval, complex *freqpowerval)
+{
+	//Always succeed, for now
+	return SUCCESS;
 }
 
 /**
@@ -2468,6 +2588,28 @@ int link_object::CurrentCalculation(int nodecall)
 	return 1;	//Assume it's always successful now
 }
 
+//Module-level deltamode call
+SIMULATIONMODE link_object::inter_deltaupdate_link(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
+{
+	//OBJECT *hdr = OBJECTHDR(this);
+
+	if (interupdate_pos == false)	//Before powerflow call
+	{
+		//Link presync stuff
+		NR_link_presync_fxn();
+		
+		return SM_DELTA;	//Just return something other than SM_ERROR for this call
+	}
+	else	//After the call
+	{
+		//Call postsync
+		BOTH_link_postsync_fxn();
+		
+		return SM_EVENT;	//Links always just want out
+	}
+}//End module deltamode
+
+//Power calculations
 void link_object::calculate_power_splitphase()
 {
 
@@ -2668,141 +2810,6 @@ void link_object::calculate_power()
 
 		//Calculate overall losses
 		power_loss = indiv_power_loss[0] + indiv_power_loss[1] + indiv_power_loss[2];
-	
-	
-			//GS-esque (but fixed) method of power calculations
-			//complex current_temp[3];
-			//complex Binv[3][3];
-			//complex binv[3][3];
-			//node *fnode = OBJECTDATA(from,node);
-			//node *tnode = OBJECTDATA(to,node);
-			//char jindex, kindex;
-
-			//for (jindex=0; jindex<3; jindex++)
-			//{
-			//	for (kindex=0; kindex<3; kindex++)
-			//	{
-			//		Binv[jindex][kindex] = 0.0;
-			//		binv[jindex][kindex] = 0.0;
-			//	}
-			//}
-
-			//// invert B matrix - special circumstances given different methods
-			//if (has_phase(PHASE_A) && !has_phase(PHASE_B) && !has_phase(PHASE_C)) //only A
-			//{
-			//	Binv[0][0] = complex(1.0) / B_mat[0][0];
-			//	binv[0][0] = complex(1.0) / b_mat[0][0];
-			//}
-			//else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //only B
-			//{
-			//	Binv[1][1] = complex(1.0) / B_mat[1][1];
-			//	binv[1][1] = complex(1.0) / b_mat[1][1];
-			//}
-			//else if (!has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //only C
-			//{
-			//	Binv[2][2] = complex(1.0) / B_mat[2][2];
-			//	binv[2][2] = complex(1.0) / b_mat[2][2];
-			//}
-			//else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //has A & C
-			//{
-			//	complex detvalue = B_mat[0][0]*B_mat[2][2] - B_mat[0][2]*B_mat[2][0];
-
-			//	Binv[0][0] = B_mat[2][2] / detvalue;
-			//	Binv[0][2] = B_mat[0][2] * -1.0 / detvalue;
-			//	Binv[2][0] = B_mat[2][0] * -1.0 / detvalue;
-			//	Binv[2][2] = B_mat[0][0] / detvalue;
-
-			//	//Forward direction calculation
-			//	detvalue = b_mat[0][0]*b_mat[2][2] - b_mat[0][2]*b_mat[2][0];
-
-			//	binv[0][0] = b_mat[2][2] / detvalue;
-			//	binv[0][2] = b_mat[0][2] * -1.0 / detvalue;
-			//	binv[2][0] = b_mat[2][0] * -1.0 / detvalue;
-			//	binv[2][2] = b_mat[0][0] / detvalue;
-			//}
-			//else if (has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //has A & B
-			//{
-			//	complex detvalue = B_mat[0][0]*B_mat[1][1] - B_mat[0][1]*B_mat[1][0];
-
-			//	Binv[0][0] = B_mat[1][1] / detvalue;
-			//	Binv[0][1] = B_mat[0][1] * -1.0 / detvalue;
-			//	Binv[1][0] = B_mat[1][0] * -1.0 / detvalue;
-			//	Binv[1][1] = B_mat[0][0] / detvalue;
-
-			//	//Forward direction calculation
-			//	detvalue = b_mat[0][0]*b_mat[1][1] - b_mat[0][1]*b_mat[1][0];
-
-			//	binv[0][0] = b_mat[1][1] / detvalue;
-			//	binv[0][1] = b_mat[0][1] * -1.0 / detvalue;
-			//	binv[1][0] = b_mat[1][0] * -1.0 / detvalue;
-			//	binv[1][1] = b_mat[0][0] / detvalue;
-			//}
-			//else if ((has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C)) || (has_phase(PHASE_D))) //has ABC or D (D=ABC)
-			//{
-			//	inverse(B_mat,Binv);
-			//	inverse(b_mat,binv);
-			//}
-			//// defaulted else - No phases (e.g., the line does not exist) - just = 0
-
-			////Calculate output currents
-			//current_temp[0] = A_mat[0][0]*fnode->voltage[0]+
-			//				  A_mat[0][1]*fnode->voltage[1]+
-			//				  A_mat[0][2]*fnode->voltage[2]-
-			//				  tnode->voltage[0];
-			//current_temp[1] = A_mat[1][0]*fnode->voltage[0]+
-			//				  A_mat[1][1]*fnode->voltage[1]+
-			//				  A_mat[1][2]*fnode->voltage[2]-
-			//				  tnode->voltage[1];
-			//current_temp[2] = A_mat[2][0]*fnode->voltage[0]+
-			//				  A_mat[2][1]*fnode->voltage[1]+
-			//				  A_mat[2][2]*fnode->voltage[2]-
-			//				  tnode->voltage[2];
-
-			//current_out[0] = Binv[0][0]*current_temp[0]+
-			//				 Binv[0][1]*current_temp[1]+
-			//				 Binv[0][2]*current_temp[2];
-			//current_out[1] = Binv[1][0]*current_temp[0]+
-			//				 Binv[1][1]*current_temp[1]+
-			//				 Binv[1][2]*current_temp[2];
-			//current_out[2] = Binv[2][0]*current_temp[0]+
-			//				 Binv[2][1]*current_temp[1]+
-			//				 Binv[2][2]*current_temp[2];
-
-			////Calculate input currents
-			//current_temp[0] = a_mat[0][0]*fnode->voltage[0]+
-			//				  a_mat[0][1]*fnode->voltage[1]+
-			//				  a_mat[0][2]*fnode->voltage[2]-
-			//				  tnode->voltage[0];
-			//current_temp[1] = a_mat[1][0]*fnode->voltage[0]+
-			//				  a_mat[1][1]*fnode->voltage[1]+
-			//				  a_mat[1][2]*fnode->voltage[2]-
-			//				  tnode->voltage[1];
-			//current_temp[2] = a_mat[2][0]*fnode->voltage[0]+
-			//				  a_mat[2][1]*fnode->voltage[1]+
-			//				  a_mat[2][2]*fnode->voltage[2]-
-			//				  tnode->voltage[2];
-			//
-			//current_in[0] = binv[0][0]*current_temp[0]+
-			//				binv[0][1]*current_temp[1]+
-			//				binv[0][2]*current_temp[2];
-			//current_in[1] = binv[1][0]*current_temp[0]+
-			//				binv[1][1]*current_temp[1]+
-			//				binv[1][2]*current_temp[2];
-			//current_in[2] = binv[2][0]*current_temp[0]+
-			//				binv[2][1]*current_temp[1]+
-			//				binv[2][2]*current_temp[2];
-
-			////Only three-phase portion of individual powers calculated right now
-			//indiv_power_in[0] = fnode->voltage[0]*~current_in[0];
-			//indiv_power_in[1] = fnode->voltage[1]*~current_in[1];
-			//indiv_power_in[2] = fnode->voltage[2]*~current_in[2];
-
-			//indiv_power_out[0] = tnode->voltage[0]*~current_out[0];
-			//indiv_power_out[1] = tnode->voltage[1]*~current_out[1];
-			//indiv_power_out[2] = tnode->voltage[2]*~current_out[2];
-
-			//Only three-phase portion of individual powers calculated right now
-
 }
 
 //Function to calculate current values for use by restoration module

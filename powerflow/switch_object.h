@@ -14,6 +14,8 @@
 #include "powerflow.h"
 #include "link.h"
 
+EXPORT SIMULATIONMODE interupdate_switch(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
+
 class switch_object : public link_object
 {
 public:
@@ -39,6 +41,12 @@ public:
 	void switch_sync_function(void);			//Functionalized since it exists in two spots - no sense having to update two pieces of code
 	unsigned char switch_expected_sync_function(void);	//Function to determined expected results of sync - used for reliability
 	OBJECT **get_object(OBJECT *obj, char *name);	//Function to pull object property - reliability use
+
+	void BOTH_switch_sync_pre(unsigned char *work_phases_pre, unsigned char *work_phases_post);
+	void NR_switch_sync_post(unsigned char *work_phases_pre, unsigned char *work_phases_post, OBJECT *obj, TIMESTAMP *t0, TIMESTAMP *t2);
+
+	//Deltamode call
+	SIMULATIONMODE inter_deltaupdate_switch(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
 	enumeration switch_banked_mode;
 	TIMESTAMP prev_SW_time;	//Used to track switch opens/closes in NR.  Zeros end voltage on first run for other

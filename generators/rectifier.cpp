@@ -195,7 +195,7 @@ int rectifier::init(OBJECT *parent)
 	{
 		parent_string = "inverter";
 
-		struct {
+		/*struct {
 			complex **var;
 			char *varname;
 		}
@@ -203,21 +203,30 @@ int rectifier::init(OBJECT *parent)
 			// local object name,	meter object name
 			{&pCircuit_V,			"Vdc"}, 
 			{&pLine_I,				"I_In"}
-		};
+		};*/
 
 		// attach meter variables to each circuit
-		for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
-		{
-			if ((*(map[i].var) = get_complex(parent,map[i].varname))==NULL)
+			i=0;
+			if ((*(&pCircuit_V) = get_double(parent,"Vdc"))==NULL)
 			{
-				GL_THROW("%s (%s:%d) does not implement triplex_meter variable %s for %s (inverter:%d)", 
+				GL_THROW("%s (%s:%d) does not implement inverter variable %s for %s (inverter:%d)", 
 					/*	TROUBLESHOOT
 					The rectifier requires that the inverter contains certain published properties in order to properly connect. If you encounter this error, please report it to the developers, along with
 					the version of GridLAB-D that raised this error.
 					*/
-					parent->name?parent->name:"unnamed object", parent->oclass->name, parent->id, map[i].varname, obj->name?obj->name:"unnamed", obj->id);
+					parent->name?parent->name:"unnamed object", parent->oclass->name, parent->id, "Vdc", obj->name?obj->name:"unnamed", obj->id);
 			}
-		}
+			i=1;
+			if ((*(&pLine_I) = get_complex(parent,"I_In"))==NULL)
+			{
+				GL_THROW("%s (%s:%d) does not implement inverter variable %s for %s (inverter:%d)", 
+					/*	TROUBLESHOOT
+					The rectifier requires that the inverter contains certain published properties in order to properly connect. If you encounter this error, please report it to the developers, along with
+					the version of GridLAB-D that raised this error.
+					*/
+					parent->name?parent->name:"unnamed object", parent->oclass->name, parent->id, "I_In", obj->name?obj->name:"unnamed", obj->id);
+			}
+		
 	}
 
 	if (parent_string == NULL){
@@ -312,6 +321,13 @@ complex *rectifier::get_complex(OBJECT *obj, char *name)
 	if (p==NULL || p->ptype!=PT_complex)
 		return NULL;
 	return (complex*)GETADDR(obj,p);
+}
+double *rectifier::get_double(OBJECT *obj, char *name)
+{
+	PROPERTY *p = gl_get_property(obj,name);
+	if (p==NULL || p->ptype!=PT_double)
+		return NULL;
+	return (double*)GETADDR(obj,p);
 }
 
 
@@ -495,7 +511,7 @@ TIMESTAMP rectifier::presync(TIMESTAMP t0, TIMESTAMP t1)
 TIMESTAMP rectifier::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
 
-	V_Out = (*pCircuit_V).Re();
+	V_Out = *pCircuit_V;
 	I_Out = (*pLine_I).Re();
 
 	gl_verbose("rectifier sync: V_Out from parent is: (%f , %f)", V_Out.Re(), V_Out.Im());

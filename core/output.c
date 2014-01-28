@@ -292,6 +292,10 @@ void output_set_time_context(TIMESTAMP ts)
 {
 	convert_from_timestamp(ts,time_context,sizeof(time_context)-1);
 }
+void output_set_delta_time_context(TIMESTAMP ts, DELTAT delta_ts)
+{
+	convert_from_timestamp_delta(ts,delta_ts,time_context,sizeof(time_context)-1);
+}
 char *output_get_time_context(void)
 {
 	return time_context;
@@ -720,7 +724,7 @@ int output_progress()
 		DATETIME t;
 		unsigned int64 secs = global_deltaclock/1000000000;
 		local_datetime(global_clock+secs,&t);
-		t.microsecond = (unsigned int)(global_deltaclock-secs*1000000000)/1000;
+		t.nanosecond = (unsigned int)(global_deltaclock-secs*1000000000);
 		strdatetime(&t,buffer,sizeof(buffer));
 		ts = buffer;
 	}

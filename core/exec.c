@@ -438,6 +438,8 @@ static void ss_do_object_sync(int thread, void *item)
 	/* check in and out-of-service dates */
 	if (global_clock<obj->in_svc)
 		this_t = obj->in_svc; /* yet to go in service */
+	else if ((global_clock==obj->in_svc) && (obj->in_svc_micro != 0))	/* If our in service is a little higher, delay to next time */
+		this_t = obj->in_svc + 1;	/* Technically yet to go into service -- deltamode handled separately */
 	else if (global_clock<=obj->out_svc)
 	{
 		this_t = object_sync(obj, global_clock, passtype[pass]);
@@ -883,7 +885,7 @@ static STATUS precommit_all(TIMESTAMP t0)
 		for ( item=precommit_list ; item!=NULL ; item=item->next )
 		{
 			OBJECT *obj = (OBJECT*)item->data;
-			if(obj->in_svc <= t0 && obj->out_svc >= t0)
+			if ((obj->in_svc <= t0 && obj->out_svc >= t0) && (obj->in_svc_micro >= obj->out_svc_micro))
 			{
 				if ( object_precommit(obj, t0)==FAILED )
 				{
@@ -964,6 +966,8 @@ static void commit_call(MTIDATA output, MTIITEM item, MTIDATA input)
 	TIMESTAMP *t0 = (TIMESTAMP*)input;
 	if ( *t0<obj->in_svc )
 		*t2 = obj->in_svc;
+	else if ((*t0 == obj->in_svc) && (obj->in_svc_micro != 0))
+		*t2 = obj->in_svc + 1;
 	else if ( obj->out_svc>=*t0 )
 		*t2 = obj->oclass->commit(obj,*t0);
 	else
@@ -1022,6 +1026,11 @@ static TIMESTAMP commit_all_st(TIMESTAMP t0, TIMESTAMP t2)
 			if ( t0<obj->in_svc )
 			{
 				if ( obj->in_svc<result ) result = obj->in_svc;
+			}
+			else if ((t0 == obj->in_svc) && (obj->in_svc_micro != 0))
+			{
+				if (obj->in_svc == result)
+					result = obj->in_svc + 1;
 			}
 			else if ( obj->out_svc>=t0 )
 			{
@@ -2196,7 +2205,7 @@ STATUS exec_start(void)
 			if ( exec_run_syncscripts()!=XC_SUCCESS )
 			{
 				output_error("sync script(s) failed");
-				THROW("script synchronization failure");;
+				THROW("script synchronization failure");
 			}
 			if (global_run_realtime>0 && tsteps == 1 && global_dumpfile[0]!='\0')
 			{
@@ -2224,7 +2233,8 @@ STATUS exec_start(void)
 					If the error persists, please submit your code and a bug report via the trac website.
 					*/
 					global_simulation_mode = SM_ERROR;
-					break;
+					THROW("Deltamode simulation failure");
+					break;	//Just in case, but probably not needed
 				}
 				exec_sync_set(NULL, global_clock+deltatime);
 				global_simulation_mode = SM_EVENT;
@@ -2255,7 +2265,8 @@ STATUS exec_start(void)
 					If the error persists, please submit your code and a bug report via the trac website.
 					*/
 					global_simulation_mode = SM_ERROR;
-					break;
+					THROW("Deltamode simulation failure");
+					break;	//Just in case, but probably not needed
 				}
 				exec_sync_set(NULL,global_clock + deltatime);
 				global_simulation_mode = SM_EVENT;
@@ -2427,6 +2438,8 @@ STATUS exec_test(struct sync_data *data, /**< the synchronization state data */
 	/* check in and out-of-service dates */
 	if (global_clock<obj->in_svc)
 		this_t = obj->in_svc; /* yet to go in service */
+	else if ((global_clock==obj->in_svc) && (obj->in_svc_micro != 0))
+		this_t = obj->in_svc + 1;	/* Round up for service (deltamode handled separately) */
 	else if (global_clock<=obj->out_svc)
 		this_t = object_sync(obj, global_clock, pass);
 	else 

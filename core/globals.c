@@ -217,6 +217,7 @@ static struct s_varmap {
 	{"deltamode_timestep",PT_int32,&global_deltamode_timestep,PA_PUBLIC, "uniform step size for deltamode simulations"},
 	{"deltamode_maximumtime", PT_int64,&global_deltamode_maximumtime,PA_PUBLIC, "maximum time (ns) deltamode can run"},
 	{"deltaclock", PT_int64, &global_deltaclock, PA_PUBLIC, "cumulative delta runtime with respect to the global clock"},
+	{"delta_current_clock", PT_double, &global_delta_curr_clock, PA_PUBLIC, "Absolute delta time (global clock offset)"},
 	{"deltamode_updateorder", PT_char1024, &global_deltamode_updateorder, PA_REFERENCE, "order in which modules are update in deltamode"},
 	{"deltamode_iteration_limit", PT_int32, &global_deltamode_iteration_limit, PA_PUBLIC, "iteration limit for each delta timestep (object and interupdate)"},
 	{"run_powerworld", PT_bool, &global_run_powerworld, PA_PUBLIC, "boolean that that says your system is set up correctly to run with PowerWorld"},

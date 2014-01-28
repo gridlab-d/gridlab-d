@@ -22,6 +22,7 @@
 #include "object.h"
 #include "aggregate.h"
 #include "histogram.h"
+#include "group_recorder.h"
 
 #define _TAPE_C
 
@@ -409,51 +410,54 @@ EXPORT unsigned long preupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
 	SIMULATIONMODE mode = SM_EVENT;
-	if ( delta_mode_needed!=TS_NEVER )
-	{
-		/* determine the timestamp */
-		double clock = (double)gl_globalclock + (double)delta_time/(double)DT_SECOND;
-		char recorder_timestamp[64];
-		unsigned int n;
 
-		/* prepare the timestamp */
-		static char global_dateformat[8]="";
-		
-		TIMESTAMP integer_clock = (TIMESTAMP)clock;	/* Whole seconds - update from global clock because we could be in delta for over 1 second */
-		int microseconds = (int)((clock-(int)(clock))*1000000+0.5);	/* microseconds roll-over - biased upward (by 0.5) */
-		
-		/* Recorders should only "fire" on the 0th iteration - may need to adjust if "0" is implemented in deltamode */
-		if (iteration_count_val==0)
+	/* determine the timestamp */
+	double clock_val = (double)gl_globalclock + (double)delta_time/(double)DT_SECOND;
+	char recorder_timestamp[64];
+	unsigned int n;
+
+	/* prepare the timestamp */
+	static char global_dateformat[8]="";
+	
+	TIMESTAMP integer_clock = (TIMESTAMP)clock_val;	/* Whole seconds - update from global clock because we could be in delta for over 1 second */
+	int microseconds = (int)((clock_val-(int)(clock_val))*1000000+0.5);	/* microseconds roll-over - biased upward (by 0.5) */
+	
+	/* Recorders should only "fire" on the 0th iteration - may need to adjust if "0" is implemented in deltamode */
+	if (iteration_count_val==0)
+	{
+		/* Set up recorder clock - ignore "first" entry since that is just steady state */
+		if ((integer_clock != t0) || (microseconds != 0))
 		{
-			/* Set up recorder clock - ignore "first" entry since that is just steady state */
-			if ((integer_clock != t0) || (microseconds != 0))
+			DATETIME rec_date_time;
+			TIMESTAMP rec_integer_clock = (TIMESTAMP)recorder_delta_clock;	/* Whole seconds - update from global clock because we could be in delta for over 1 second */
+			int rec_microseconds = (int)((recorder_delta_clock-(int)(recorder_delta_clock))*1000000+0.5);	/* microseconds roll-over - biased upward (by 0.5) */
+			if ( gl_localtime(rec_integer_clock,&rec_date_time)!=0 )
 			{
-				DATETIME rec_date_time;
-				TIMESTAMP rec_integer_clock = (TIMESTAMP)recorder_delta_clock;	/* Whole seconds - update from global clock because we could be in delta for over 1 second */
-				int rec_microseconds = (int)((recorder_delta_clock-(int)(recorder_delta_clock))*1000000+0.5);	/* microseconds roll-over - biased upward (by 0.5) */
-				if ( gl_localtime(rec_integer_clock,&rec_date_time)!=0 )
-				{
-					if ( global_dateformat[0]=='\0')
-						gl_global_getvar("dateformat",global_dateformat,sizeof(global_dateformat));
-					if ( strcmp(global_dateformat,"ISO")==0)
-						sprintf(recorder_timestamp,"%04d-%02d-%02d %02d:%02d:%02d.%.06d",rec_date_time.year,rec_date_time.month,rec_date_time.day,rec_date_time.hour,rec_date_time.minute,rec_date_time.second,rec_microseconds);
-					else if ( strcmp(global_dateformat,"US")==0)
-						sprintf(recorder_timestamp,"%02d-%02d-%04d %02d:%02d:%02d.%.06d",rec_date_time.month,rec_date_time.day,rec_date_time.year,rec_date_time.hour,rec_date_time.minute,rec_date_time.second,rec_microseconds);
-					else if ( strcmp(global_dateformat,"EURO")==0)
-						sprintf(recorder_timestamp,"%02d-%02d-%04d %02d:%02d:%02d.%.06d",rec_date_time.day,rec_date_time.month,rec_date_time.year,rec_date_time.hour,rec_date_time.minute,rec_date_time.second,rec_microseconds);
-					else
-						sprintf(recorder_timestamp,"%.09f",recorder_delta_clock);
-				}
+				if ( global_dateformat[0]=='\0')
+					gl_global_getvar("dateformat",global_dateformat,sizeof(global_dateformat));
+				if ( strcmp(global_dateformat,"ISO")==0)
+					sprintf(recorder_timestamp,"%04d-%02d-%02d %02d:%02d:%02d.%.06d",rec_date_time.year,rec_date_time.month,rec_date_time.day,rec_date_time.hour,rec_date_time.minute,rec_date_time.second,rec_microseconds);
+				else if ( strcmp(global_dateformat,"US")==0)
+					sprintf(recorder_timestamp,"%02d-%02d-%04d %02d:%02d:%02d.%.06d",rec_date_time.month,rec_date_time.day,rec_date_time.year,rec_date_time.hour,rec_date_time.minute,rec_date_time.second,rec_microseconds);
+				else if ( strcmp(global_dateformat,"EURO")==0)
+					sprintf(recorder_timestamp,"%02d-%02d-%04d %02d:%02d:%02d.%.06d",rec_date_time.day,rec_date_time.month,rec_date_time.year,rec_date_time.hour,rec_date_time.minute,rec_date_time.second,rec_microseconds);
 				else
 					sprintf(recorder_timestamp,"%.09f",recorder_delta_clock);
+			}
+			else
+				sprintf(recorder_timestamp,"%.09f",recorder_delta_clock);
 
-				/* output samples to recorders */
-				for ( n=0 ; n<n_recorders ; n++ )
+			/* output samples to recorders */
+			for ( n=0 ; n<n_recorders ; n++ )
+			{
+				OBJECT *obj = delta_recorder_list[n];
+				struct recorder *my = (struct recorder *)OBJECTDATA(obj,struct recorder);
+				char value[1024];
+				extern int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buffer, int size);
+
+				/* See if we're in service */
+				if ((obj->in_svc_double <= gl_globaldeltaclock) && (obj->out_svc_double >= gl_globaldeltaclock))
 				{
-					OBJECT *obj = delta_recorder_list[n];
-					struct recorder *my = (struct recorder *)OBJECTDATA(obj,struct recorder);
-					char value[1024];
-					extern int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buffer, int size);
 					if( read_properties(my, obj->parent,my->target,value,sizeof(value)) )
 					{
 						if ( !my->ops->write(my, recorder_timestamp, value) )
@@ -463,30 +467,36 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 						}
 					}
 				}
+				/* Defaulted else, not in service, do nothing */
 			}
-			
-			/* Store recorder clock (to be used next time) */
-			recorder_delta_clock = clock;
-		}/* End Recorder only on 0th iteration loop */
+		}
+		
+		/* Store recorder clock (to be used next time) */
+		recorder_delta_clock = clock_val;
+	}/* End Recorder only on 0th iteration loop */
 
-		/* input samples from players */
-		for ( n=0 ; n<n_players ; n++ )
+	/* input samples from players */
+	for ( n=0 ; n<n_players ; n++ )
+	{
+		OBJECT *obj = delta_player_list[n];
+		struct player *my = (struct player *)OBJECTDATA(obj,struct player);
+		int y=0,m=0,d=0,H=0,M=0,S=0,ms=0, n=0;
+		char *fmt = "%d/%d/%d %d:%d:%d.%d,%*s";
+		double t = (double)my->next.ts + (double)my->next.ns/1e9;
+		char256 curr_value;
+
+		/* See if we're in service */
+		if ((obj->in_svc_double <= gl_globaldeltaclock) && (obj->out_svc_double >= gl_globaldeltaclock))
 		{
-			OBJECT *obj = delta_player_list[n];
-			struct player *my = (struct player *)OBJECTDATA(obj,struct player);
-			int y=0,m=0,d=0,H=0,M=0,S=0,ms=0, n=0;
-			char *fmt = "%d/%d/%d %d:%d:%d.%d,%*s";
-			double t = (double)my->next.ts + (double)my->next.ns/1e9;
-			char256 curr_value;
 			strcpy(curr_value,my->next.value);
 
 			/* post the current value */
-			if ( t<=clock )
+			if ( t<=clock_val )
 			{
 				extern TIMESTAMP player_read(OBJECT *obj);
 
 				/* Behave similar to "supersecond" players */
-				while ( t<=clock )
+				while ( t<=clock_val )
 				{
 					gl_set_value(obj->parent,GETADDR(obj->parent,my->target),my->next.value,my->target); /* pointer => int64 */
 
@@ -506,7 +516,8 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 				t = (double)my->next.ts + (double)my->next.ns/1e9;
 
 				/* Make sure we haven't passed this time already (last value) */
-				if (t>=clock)
+				/* Check to see if we're within the next second too, so we aren't stuck in delta */
+				if ((t>=clock_val) && (t<(clock_val+1.0)))
 				{
 					/* determine whether deltamode remains necessary */
 					if (my->next.ns!=0)
@@ -514,7 +525,9 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 				}
 			}/*End not TS_NEVER */
 		}
+		/* Default else - not in service */
 	}
+
 	return mode;
 }
 
@@ -559,27 +572,33 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 			struct recorder *my = (struct recorder *)OBJECTDATA(obj,struct recorder);
 			char value[1024];
 			extern int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buffer, int size);
-			if( read_properties(my, obj->parent,my->target,value,sizeof(value)) )
+
+			/* See if we're in service */
+			if ((obj->in_svc_double <= gl_globaldeltaclock) && (obj->out_svc_double >= gl_globaldeltaclock))
 			{
-				if ( !my->ops->write(my, recorder_timestamp, value) )
+				if( read_properties(my, obj->parent,my->target,value,sizeof(value)) )
 				{
-					gl_error("recorder:%d: unable to write sample to file", obj->id);
-					return FAILED;
-				}
+					if ( !my->ops->write(my, recorder_timestamp, value) )
+					{
+						gl_error("recorder:%d: unable to write sample to file", obj->id);
+						return FAILED;
+					}
 
-				/* Update recorders so they don't "minimum timestep up" to where we exited! */
-				if (rec_microseconds > 0)	/* Round us up to the next timestep */
-				{
-					my->last.ts = rec_integer_clock + 1;
-				}
-				else	/* Theoretically "where we are" */
-				{
-					my->last.ts = rec_integer_clock;
-				}
+					/* Update recorders so they don't "minimum timestep up" to where we exited! */
+					if (rec_microseconds > 0)	/* Round us up to the next timestep */
+					{
+						my->last.ts = rec_integer_clock + 1;
+					}
+					else	/* Theoretically "where we are" */
+					{
+						my->last.ts = rec_integer_clock;
+					}
 
-				/*  Copy in the last value, just in case */
-				strcpy(my->last.value,value);
+					/*  Copy in the last value, just in case */
+					strcpy(my->last.value,value);
+				}
 			}
+			/* Defaulted else - not in service */
 		}
 		/* End copied code */
 
@@ -593,8 +612,13 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 	{
 		OBJECT *obj = delta_player_list[n];
 		struct player *my = (struct player *)OBJECTDATA(obj,struct player);
-		if ( my->next.ns!=0 )
-			enable_deltamode(my->next.ts);
+
+		/* See if we're in service */
+		if ((obj->in_svc_double <= gl_globaldeltaclock) && (obj->out_svc_double >= gl_globaldeltaclock))
+		{
+			if ( my->next.ns!=0 )
+				enable_deltamode(my->next.ts);
+		}
 	}
 
 	return SUCCESS;

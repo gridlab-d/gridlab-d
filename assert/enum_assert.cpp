@@ -34,12 +34,12 @@ enum_assert::enum_assert(MODULE *module)
 
 		if (gl_publish_variable(oclass,
 			// TO DO:  publish your variables here
-			PT_enumeration,"status",get_status_offset(),
+			PT_enumeration,"status",get_status_offset(),PT_DESCRIPTION,"Conditions for the assert checks",
 				PT_KEYWORD,"ASSERT_TRUE",(enumeration)ASSERT_TRUE,
 				PT_KEYWORD,"ASSERT_FALSE",(enumeration)ASSERT_FALSE,
 				PT_KEYWORD,"ASSERT_NONE",(enumeration)ASSERT_NONE,
-			PT_int32, "value", get_value_offset(),
-			PT_char1024, "target", get_target_offset(),	
+			PT_int32, "value", get_value_offset(),PT_DESCRIPTION,"Value to assert",
+			PT_char1024, "target", get_target_offset(),PT_DESCRIPTION,"Property to perform the assert upon",	
 			NULL)<1){
 				char msg[256];
 				sprintf(msg, "unable to publish properties in %s",__FILE__);
@@ -115,7 +115,137 @@ TIMESTAMP enum_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 		gl_verbose("Assert test is not being run on %s", get_parent()->get_name());
 		return TS_NEVER;
 	}
-	gl_verbose("Assert passed on %s",get_parent()->get_name());
-	return TS_NEVER;
 }
 
+//Deltamode compatible enumeration assert
+EXPORT SIMULATIONMODE update_enum_assert(OBJECT *obj, TIMESTAMP t0, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
+{
+	char buff[64];
+	char dateformat[8]="";
+	char error_output_buff[1024];
+	char datebuff[64];
+	enum_assert *da = OBJECTDATA(obj,enum_assert);
+	DATETIME delta_dt_val;
+	double del_clock;
+	TIMESTAMP del_clock_int;
+	int del_microseconds;
+	int32 *x;
+
+	//Iteration checker - assert only valid on the first timestep
+	if (iteration_count_val == 0)
+	{
+		//Skip first timestep of any delta iteration -- nature of delta means it really isn't checking the right one
+		if (delta_time>=dt)
+		{
+			//Get the value
+			x = (int32*)gl_get_enum_by_name(obj->parent,da->get_target());
+
+			if (x==NULL) 
+			{
+				gl_error("Specified target %s for %s is not valid.",da->get_target(),gl_name(obj->parent,buff,64));
+				/*  TROUBLESHOOT
+				Check to make sure the target you are specifying is a published variable for the object
+				that you are pointing to.  Refer to the documentation of the command flag --modhelp, or 
+				check the wiki page to determine which variables can be published within the object you
+				are pointing to with the assert function.
+				*/
+				return SM_ERROR;
+			}
+			else if (da->get_status() == da->ASSERT_TRUE)
+			{
+				if (*x != da->get_value())
+				{
+					//Calculate time
+					if (delta_time>=dt)	//After first iteration
+						del_clock  = (double)t0 + (double)(delta_time-dt)/(double)DT_SECOND;
+					else	//First second different, don't back out
+						del_clock  = (double)t0 + (double)(delta_time)/(double)DT_SECOND;
+
+					del_clock_int = (TIMESTAMP)del_clock;	/* Whole seconds - update from global clock because we could be in delta for over 1 second */
+					del_microseconds = (int)((del_clock-(int)(del_clock))*1000000+0.5);	/* microseconds roll-over - biased upward (by 0.5) */
+					
+					//Convert out
+					gl_localtime(del_clock_int,&delta_dt_val);
+
+					//Determine output format
+					gl_global_getvar("dateformat",dateformat,sizeof(dateformat));
+
+					//Output date appropriately
+					if ( strcmp(dateformat,"ISO")==0)
+						sprintf(datebuff,"ERROR    [%04d-%02d-%02d %02d:%02d:%02d.%.06d %s] : ",delta_dt_val.year,delta_dt_val.month,delta_dt_val.day,delta_dt_val.hour,delta_dt_val.minute,delta_dt_val.second,del_microseconds,delta_dt_val.tz);
+					else if ( strcmp(dateformat,"US")==0)
+						sprintf(datebuff,"ERROR    [%02d-%02d-%04d %02d:%02d:%02d.%.06d %s] : ",delta_dt_val.month,delta_dt_val.day,delta_dt_val.year,delta_dt_val.hour,delta_dt_val.minute,delta_dt_val.second,del_microseconds,delta_dt_val.tz);
+					else if ( strcmp(dateformat,"EURO")==0)
+						sprintf(datebuff,"ERROR    [%02d-%02d-%04d %02d:%02d:%02d.%.06d %s] : ",delta_dt_val.day,delta_dt_val.month,delta_dt_val.year,delta_dt_val.hour,delta_dt_val.minute,delta_dt_val.second,del_microseconds,delta_dt_val.tz);
+					else
+						sprintf(datebuff,"ERROR    .09f : ",del_clock);
+
+					//Actual error part
+					sprintf(error_output_buff,"Assert failed on %s - %s (%d) did not match %d",gl_name(obj->parent, buff, 64),da->get_target(), *x, da->get_value());
+
+					//Send it out
+					gl_output("%s%s",datebuff,error_output_buff);
+
+					return SM_ERROR;
+				}
+				else
+				{
+					gl_verbose("Assert passed on %s", gl_name(obj->parent, buff, 64));
+					return SM_EVENT;
+				}
+			}
+			else if (da->get_status() == da->ASSERT_FALSE)
+			{
+				if (*x == da->get_value())
+				{
+					//Calculate time
+					if (delta_time>=dt)	//After first iteration
+						del_clock  = (double)t0 + (double)(delta_time-dt)/(double)DT_SECOND;
+					else	//First second different, don't back out
+						del_clock  = (double)t0 + (double)(delta_time)/(double)DT_SECOND;
+
+					del_clock_int = (TIMESTAMP)del_clock;	/* Whole seconds - update from global clock because we could be in delta for over 1 second */
+					del_microseconds = (int)((del_clock-(int)(del_clock))*1000000+0.5);	/* microseconds roll-over - biased upward (by 0.5) */
+
+					//Convert out
+					gl_localtime(del_clock_int,&delta_dt_val);
+
+					//Determine output format
+					gl_global_getvar("dateformat",dateformat,sizeof(dateformat));
+
+					//Output date appropriately
+					if ( strcmp(dateformat,"ISO")==0)
+						sprintf(datebuff,"ERROR    [%04d-%02d-%02d %02d:%02d:%02d.%.06d %s] : ",delta_dt_val.year,delta_dt_val.month,delta_dt_val.day,delta_dt_val.hour,delta_dt_val.minute,delta_dt_val.second,del_microseconds,delta_dt_val.tz);
+					else if ( strcmp(dateformat,"US")==0)
+						sprintf(datebuff,"ERROR    [%02d-%02d-%04d %02d:%02d:%02d.%.06d %s] : ",delta_dt_val.month,delta_dt_val.day,delta_dt_val.year,delta_dt_val.hour,delta_dt_val.minute,delta_dt_val.second,del_microseconds,delta_dt_val.tz);
+					else if ( strcmp(dateformat,"EURO")==0)
+						sprintf(datebuff,"ERROR    [%02d-%02d-%04d %02d:%02d:%02d.%.06d %s] : ",delta_dt_val.day,delta_dt_val.month,delta_dt_val.year,delta_dt_val.hour,delta_dt_val.minute,delta_dt_val.second,del_microseconds,delta_dt_val.tz);
+					else
+						sprintf(datebuff,"ERROR    .09f : ",del_clock);
+
+					//Actual error part
+					sprintf(error_output_buff,"Assert failed on %s - %s (%d) did not match %d",gl_name(obj->parent, buff, 64),da->get_target(), *x, da->get_value());
+
+					//Send it out
+					gl_output("%s%s",datebuff,error_output_buff);
+
+					return SM_ERROR;
+				}
+				else
+				{
+					gl_verbose("Assert passed on %s", gl_name(obj->parent, buff, 64));
+					return SM_EVENT;
+				}
+			}
+			else
+			{
+				gl_verbose("Assert test is not being run on %s", gl_name(obj->parent, buff, 64));
+				return SM_EVENT;
+			}
+		}
+		else	//first timestep
+			return SM_EVENT;
+	}
+	else	//Iteration, so don't care
+		return SM_EVENT;
+}

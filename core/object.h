@@ -80,6 +80,10 @@ typedef struct s_object_list {
 	double latitude, longitude; /**< object's geo-coordinates */
 	TIMESTAMP in_svc, /**< time at which object begin's operating */
 		out_svc; /**< time at which object ceases operating */
+	unsigned int in_svc_micro,	/**< Microsecond portion of in_svc */
+		out_svc_micro;	/**< Microsecond portion of out_svc */
+	double in_svc_double;	/**< Double value representation of in service time */
+	double out_svc_double;	/**< Double value representation of out of service time */
 	clock_t synctime[_OPI_NUMITEMS]; /**< total time used by this object */
 	NAMESPACE *space; /**< namespace of object */
 	unsigned int lock; /**< object lock */
@@ -94,6 +98,7 @@ typedef struct s_object_list {
  */
 typedef struct s_callbacks {
 	TIMESTAMP *global_clock;
+	double *global_delta_curr_clock;
 	int (*output_verbose)(const char *format, ...);
 	int (*output_message)(const char *format, ...);
 	int (*output_warning)(const char *format, ...);
@@ -185,6 +190,7 @@ typedef struct s_callbacks {
 		double (*timestamp_to_seconds)(TIMESTAMP t);
 		int (*local_datetime)(TIMESTAMP ts, DATETIME *dt);
 		TIMESTAMP (*convert_to_timestamp)(char *value);
+		TIMESTAMP (*convert_to_timestamp_delta)(const char *value, unsigned int *microseconds, double *dbl_time_value);
 		int (*convert_from_timestamp)(TIMESTAMP ts, char *buffer, int size);
 	} time;
 	int (*unit_convert)(char *from, char *to, double *value);
