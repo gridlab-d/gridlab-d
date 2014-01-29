@@ -245,6 +245,17 @@ int auction::init(OBJECT *parent)
 	OBJECT *obj=OBJECTHDR(this);
 	unsigned int i = 0;
 
+	if(capacity_reference_object != NULL){
+		if(obj->rank <= capacity_reference_object->rank){
+			gl_set_rank(obj,capacity_reference_object->rank+1);
+		}
+		if(capacity_reference_object->flags & OF_INIT != OF_INIT){
+			char objname[256];
+			gl_verbose("auction::init(): deferring initialization on %s", gl_name(obj, objname, 255));
+			return 2; // defer
+		}
+	}
+
 	if(trans_log[0] != 0){
 		time_t now = time(NULL);
 		trans_file = fopen(trans_log, "w");
@@ -336,6 +347,9 @@ int auction::init(OBJECT *parent)
 					capacity_reference_property must specify a double property to work properly, and may behave unpredictably should it be pointed at
 					non-double properties.
 					*/
+			}
+			if(capacity_reference_object->rank >= obj->rank){
+				obj->rank = capacity_reference_object->rank + 1;
 			}
 		} else {
 			gl_error("%s (auction:%d) capacity_reference_object specified without a reference property", obj->name?obj->name:"anonymous", obj->id);
@@ -885,7 +899,7 @@ void auction::clear_market(void)
 		}
 		else if (unresponsive.quantity > 0.001)
 		{
-			submit_bid_state(OBJECTHDR(this), capacity_reference_object, -unresponsive.quantity, unresponsive.price, 1, -1);
+			submit_nolock(capacity_reference_object, -unresponsive.quantity, unresponsive.price, -1, BS_ON);
 			gl_verbose("capacity_reference_property %s has %.3f unresponsive load", gl_name(linkref,name,sizeof(name)), -unresponsive.quantity);
 		}
 	}
