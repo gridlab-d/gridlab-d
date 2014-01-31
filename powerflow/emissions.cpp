@@ -503,215 +503,215 @@ TIMESTAMP emissions::postsync(TIMESTAMP t0)
 			{
 				if ((Nuclear_Max_Out < energy_for_calc.Mag() && energy_requirement == true) && (dispatch_order != 0))
 
-			{
-				Nuclear_Out = Nuclear_Max_Out;
+				{
+					Nuclear_Out = Nuclear_Max_Out;
 
-				Nuclear_emissions_CO2 = Nuclear_Out * Nuclear_Conv_Eff * Nuclear_CO2;
-				Nuclear_emissions_SO2 = Nuclear_Out * Nuclear_Conv_Eff * Nuclear_SO2;
-				Nuclear_emissions_NOx = Nuclear_Out * Nuclear_Conv_Eff * Nuclear_NOx;
+					Nuclear_emissions_CO2 = Nuclear_Out * Nuclear_Conv_Eff * Nuclear_CO2;
+					Nuclear_emissions_SO2 = Nuclear_Out * Nuclear_Conv_Eff * Nuclear_SO2;
+					Nuclear_emissions_NOx = Nuclear_Out * Nuclear_Conv_Eff * Nuclear_NOx;
 
-				energy_for_calc = energy_for_calc - Nuclear_Max_Out;
-			}
+					energy_for_calc = energy_for_calc - Nuclear_Max_Out;
+				}
 				else if ((energy_requirement == true) && (dispatch_order != 0))
-			{
-				Nuclear_Out = energy_for_calc.Mag();
+				{
+					Nuclear_Out = energy_for_calc.Mag();
 
-				Nuclear_emissions_CO2 = Nuclear_Out * Nuclear_Conv_Eff * Nuclear_CO2;
-				Nuclear_emissions_SO2 = Nuclear_Out * Nuclear_Conv_Eff * Nuclear_SO2;
-				Nuclear_emissions_NOx = Nuclear_Out * Nuclear_Conv_Eff * Nuclear_NOx;
+					Nuclear_emissions_CO2 = Nuclear_Out * Nuclear_Conv_Eff * Nuclear_CO2;
+					Nuclear_emissions_SO2 = Nuclear_Out * Nuclear_Conv_Eff * Nuclear_SO2;
+					Nuclear_emissions_NOx = Nuclear_Out * Nuclear_Conv_Eff * Nuclear_NOx;
 
-				energy_requirement = false;
+					energy_requirement = false;
 
-				energy_for_calc = energy_for_calc - Nuclear_Out;
+					energy_for_calc = energy_for_calc - Nuclear_Out;
 
-			}
-			else	//Not needed
-			{
-				Nuclear_Out = 0.0;
+				}
+				else	//Not needed
+				{
+					Nuclear_Out = 0.0;
 
 					//Zero the emissions counts, otherwise they maintain previous values (coudl just make local, but are published)
 					Nuclear_emissions_CO2 = 0.0;
 					Nuclear_emissions_SO2 = 0.0;
 					Nuclear_emissions_NOx = 0.0;
-			}
+				}
 			}
 			
 			if (dispatch_order == Hydroelectric_Order)
 			{
 				if ((Hydroelectric_Max_Out < energy_for_calc.Mag() && energy_requirement == true) && (dispatch_order != 0))
-			{
-				Hydroelectric_Out = Hydroelectric_Max_Out;
+				{
+					Hydroelectric_Out = Hydroelectric_Max_Out;
 
-				Hydroelectric_emissions_CO2 = Hydroelectric_Out * Hydroelectric_Conv_Eff * Hydroelectric_CO2;
-				Hydroelectric_emissions_SO2 = Hydroelectric_Out * Hydroelectric_Conv_Eff * Hydroelectric_SO2;
-				Hydroelectric_emissions_NOx = Hydroelectric_Out * Hydroelectric_Conv_Eff * Hydroelectric_NOx;
+					Hydroelectric_emissions_CO2 = Hydroelectric_Out * Hydroelectric_Conv_Eff * Hydroelectric_CO2;
+					Hydroelectric_emissions_SO2 = Hydroelectric_Out * Hydroelectric_Conv_Eff * Hydroelectric_SO2;
+					Hydroelectric_emissions_NOx = Hydroelectric_Out * Hydroelectric_Conv_Eff * Hydroelectric_NOx;
 
-				energy_for_calc = energy_for_calc - Hydroelectric_Max_Out;
-			}
+					energy_for_calc = energy_for_calc - Hydroelectric_Max_Out;
+				}
 				else if ((energy_requirement == true) && (dispatch_order != 0))
-			{
-				Hydroelectric_Out = energy_for_calc.Mag();
+				{
+					Hydroelectric_Out = energy_for_calc.Mag();
 
-				Hydroelectric_emissions_CO2 = Hydroelectric_Out * Hydroelectric_Conv_Eff * Hydroelectric_CO2;
-				Hydroelectric_emissions_SO2 = Hydroelectric_Out * Hydroelectric_Conv_Eff * Hydroelectric_SO2;
-				Hydroelectric_emissions_NOx = Hydroelectric_Out * Hydroelectric_Conv_Eff * Hydroelectric_NOx;
+					Hydroelectric_emissions_CO2 = Hydroelectric_Out * Hydroelectric_Conv_Eff * Hydroelectric_CO2;
+					Hydroelectric_emissions_SO2 = Hydroelectric_Out * Hydroelectric_Conv_Eff * Hydroelectric_SO2;
+					Hydroelectric_emissions_NOx = Hydroelectric_Out * Hydroelectric_Conv_Eff * Hydroelectric_NOx;
 
-				energy_requirement = false;
+					energy_requirement = false;
 
-				energy_for_calc = energy_for_calc - Hydroelectric_Out;		
+					energy_for_calc = energy_for_calc - Hydroelectric_Out;		
 
-			}
-			else	//Not needed
-			{
-				Hydroelectric_Out = 0.0;
+				}
+				else	//Not needed
+				{
+					Hydroelectric_Out = 0.0;
 
 					//Zero the emissions counts, otherwise they maintain previous values (coudl just make local, but are published)
 					Hydroelectric_emissions_CO2 = 0.0;
 					Hydroelectric_emissions_SO2 = 0.0;
 					Hydroelectric_emissions_NOx = 0.0;
-			}
+				}
 			}
 
 			if (dispatch_order == Solarthermal_Order)
 			{
 				if ((Solarthermal_Max_Out < energy_for_calc.Mag() && energy_requirement == true) && (dispatch_order != 0))
-			{
-				Solarthermal_Out = Solarthermal_Max_Out;
+				{
+					Solarthermal_Out = Solarthermal_Max_Out;
 
-				Solarthermal_emissions_CO2 = Solarthermal_Out * Solarthermal_Conv_Eff * Solarthermal_CO2;
-				Solarthermal_emissions_SO2 = Solarthermal_Out * Solarthermal_Conv_Eff * Solarthermal_SO2;
-				Solarthermal_emissions_NOx = Solarthermal_Out * Solarthermal_Conv_Eff * Solarthermal_NOx;
+					Solarthermal_emissions_CO2 = Solarthermal_Out * Solarthermal_Conv_Eff * Solarthermal_CO2;
+					Solarthermal_emissions_SO2 = Solarthermal_Out * Solarthermal_Conv_Eff * Solarthermal_SO2;
+					Solarthermal_emissions_NOx = Solarthermal_Out * Solarthermal_Conv_Eff * Solarthermal_NOx;
 
-				energy_for_calc = energy_for_calc - Solarthermal_Max_Out;
-			}
+					energy_for_calc = energy_for_calc - Solarthermal_Max_Out;
+				}
 				else if ((energy_requirement == true) && (dispatch_order != 0))
-			{
-				Solarthermal_Out = energy_for_calc.Mag();
+				{
+					Solarthermal_Out = energy_for_calc.Mag();
 
-				Solarthermal_emissions_CO2 = Solarthermal_Out * Solarthermal_Conv_Eff * Solarthermal_CO2;
-				Solarthermal_emissions_SO2 = Solarthermal_Out * Solarthermal_Conv_Eff * Solarthermal_SO2;
-				Solarthermal_emissions_NOx = Solarthermal_Out * Solarthermal_Conv_Eff * Solarthermal_NOx;
-				
-				energy_for_calc = energy_for_calc - Solarthermal_Out;
-				
-			}
-			else	//Not needed
-			{
-				Solarthermal_Out = 0.0;
+					Solarthermal_emissions_CO2 = Solarthermal_Out * Solarthermal_Conv_Eff * Solarthermal_CO2;
+					Solarthermal_emissions_SO2 = Solarthermal_Out * Solarthermal_Conv_Eff * Solarthermal_SO2;
+					Solarthermal_emissions_NOx = Solarthermal_Out * Solarthermal_Conv_Eff * Solarthermal_NOx;
+					
+					energy_for_calc = energy_for_calc - Solarthermal_Out;
+					
+				}
+				else	//Not needed
+				{
+					Solarthermal_Out = 0.0;
 
 					//Zero the emissions counts, otherwise they maintain previous values (coudl just make local, but are published)
 					Solarthermal_emissions_CO2 = 0.0;
 					Solarthermal_emissions_SO2 = 0.0;
 					Solarthermal_emissions_NOx = 0.0;
-			}
+				}
 			}
 
 			if (dispatch_order == Biomass_Order)
 			{
 				if ((Biomass_Max_Out < energy_for_calc.Mag() && energy_requirement == true) && (dispatch_order != 0))
-			{
-				Biomass_Out = Biomass_Max_Out ;
+				{
+					Biomass_Out = Biomass_Max_Out ;
 
-				Biomass_emissions_CO2 = Biomass_Out * Biomass_Conv_Eff * Biomass_CO2;
-				Biomass_emissions_SO2 = Biomass_Out * Biomass_Conv_Eff * Biomass_SO2;
-				Biomass_emissions_NOx = Biomass_Out * Biomass_Conv_Eff * Biomass_NOx;
+					Biomass_emissions_CO2 = Biomass_Out * Biomass_Conv_Eff * Biomass_CO2;
+					Biomass_emissions_SO2 = Biomass_Out * Biomass_Conv_Eff * Biomass_SO2;
+					Biomass_emissions_NOx = Biomass_Out * Biomass_Conv_Eff * Biomass_NOx;
 
-				energy_for_calc = energy_for_calc - Biomass_Max_Out;
-			}
+					energy_for_calc = energy_for_calc - Biomass_Max_Out;
+				}
 				else if ((energy_requirement == true) && (dispatch_order != 0))
-			{
-				Biomass_Out = energy_for_calc.Mag();
+				{
+					Biomass_Out = energy_for_calc.Mag();
 
-				Biomass_emissions_CO2 = Biomass_Out * Biomass_Conv_Eff * Biomass_CO2;
-				Biomass_emissions_SO2 = Biomass_Out * Biomass_Conv_Eff * Biomass_SO2;
-				Biomass_emissions_NOx = Biomass_Out * Biomass_Conv_Eff * Biomass_NOx;
+					Biomass_emissions_CO2 = Biomass_Out * Biomass_Conv_Eff * Biomass_CO2;
+					Biomass_emissions_SO2 = Biomass_Out * Biomass_Conv_Eff * Biomass_SO2;
+					Biomass_emissions_NOx = Biomass_Out * Biomass_Conv_Eff * Biomass_NOx;
 
-				energy_requirement = false;
+					energy_requirement = false;
 
-				energy_for_calc = energy_for_calc - Biomass_Out;
-		
-			}
-			else	//Not needed
-			{
-				Biomass_Out = 0.0;
+					energy_for_calc = energy_for_calc - Biomass_Out;
+			
+				}
+				else	//Not needed
+				{
+					Biomass_Out = 0.0;
 					
 					//Zero the emissions counts, otherwise they maintain previous values (coudl just make local, but are published)
 					Biomass_emissions_CO2 = 0.0;
 					Biomass_emissions_SO2 = 0.0;
 					Biomass_emissions_NOx = 0.0;
-			}
+				}
 			}
 
 			if (dispatch_order == Wind_Order)
 			{
 				if ((Wind_Max_Out < energy_for_calc.Mag() && energy_requirement == true) && (dispatch_order != 0))
-			{
-				Wind_Out = Wind_Max_Out;
+				{
+					Wind_Out = Wind_Max_Out;
 
-				Wind_emissions_CO2 = Wind_Out * Wind_Conv_Eff * Wind_CO2;
-				Wind_emissions_SO2 = Wind_Out * Wind_Conv_Eff * Wind_SO2;
-				Wind_emissions_NOx = Wind_Out * Wind_Conv_Eff * Wind_NOx;
+					Wind_emissions_CO2 = Wind_Out * Wind_Conv_Eff * Wind_CO2;
+					Wind_emissions_SO2 = Wind_Out * Wind_Conv_Eff * Wind_SO2;
+					Wind_emissions_NOx = Wind_Out * Wind_Conv_Eff * Wind_NOx;
 
-				energy_for_calc = energy_for_calc - Wind_Max_Out;
-			}
+					energy_for_calc = energy_for_calc - Wind_Max_Out;
+				}
 				else if ((energy_requirement == true) && (dispatch_order != 0))
-			{
-				Wind_Out = energy_for_calc.Mag();
+				{
+					Wind_Out = energy_for_calc.Mag();
 
-				Wind_emissions_CO2 = Wind_Out * Wind_Conv_Eff * Wind_CO2;
-				Wind_emissions_SO2 = Wind_Out * Wind_Conv_Eff * Wind_SO2;
-				Wind_emissions_NOx = Wind_Out * Wind_Conv_Eff * Wind_NOx;	
+					Wind_emissions_CO2 = Wind_Out * Wind_Conv_Eff * Wind_CO2;
+					Wind_emissions_SO2 = Wind_Out * Wind_Conv_Eff * Wind_SO2;
+					Wind_emissions_NOx = Wind_Out * Wind_Conv_Eff * Wind_NOx;	
 
-				energy_requirement = false;
+					energy_requirement = false;
 
-				energy_for_calc = energy_for_calc - Wind_Out;
+					energy_for_calc = energy_for_calc - Wind_Out;
 
-			}
-			else	//Not needed
-			{
-				Wind_Out = 0.0;
-			
+				}
+				else	//Not needed
+				{
+					Wind_Out = 0.0;
+					
 					//Zero the emissions counts, otherwise they maintain previous values (coudl just make local, but are published)
 					Wind_emissions_CO2 = 0.0;
 					Wind_emissions_SO2 = 0.0;
 					Wind_emissions_NOx = 0.0;
-			}
+				}
 			}
 
 			if (dispatch_order == Coal_Order)
 			{
 				if ((Coal_Max_Out < energy_for_calc.Mag() && energy_requirement == true) && (dispatch_order != 0))
-			{
-				Coal_Out = Coal_Max_Out;
+				{
+					Coal_Out = Coal_Max_Out;
 
-				Coal_emissions_CO2 = Coal_Out * Coal_Conv_Eff * Coal_CO2;
-				Coal_emissions_SO2 = Coal_Out * Coal_Conv_Eff * Coal_SO2;
-				Coal_emissions_NOx = Coal_Out * Coal_Conv_Eff * Coal_NOx;
+					Coal_emissions_CO2 = Coal_Out * Coal_Conv_Eff * Coal_CO2;
+					Coal_emissions_SO2 = Coal_Out * Coal_Conv_Eff * Coal_SO2;
+					Coal_emissions_NOx = Coal_Out * Coal_Conv_Eff * Coal_NOx;
 
-				energy_for_calc = energy_for_calc - Coal_Max_Out; 
-			}
+					energy_for_calc = energy_for_calc - Coal_Max_Out; 
+				}
 				else if ((energy_requirement == true) && (dispatch_order != 0))
-			{
-				Coal_Out = energy_for_calc.Mag();
+				{
+					Coal_Out = energy_for_calc.Mag();
 
-				Coal_emissions_CO2 = Coal_Out * Coal_Conv_Eff * Coal_CO2;
-				Coal_emissions_SO2 = Coal_Out * Coal_Conv_Eff * Coal_SO2;
-				Coal_emissions_NOx = Coal_Out * Coal_Conv_Eff * Coal_NOx;	
+					Coal_emissions_CO2 = Coal_Out * Coal_Conv_Eff * Coal_CO2;
+					Coal_emissions_SO2 = Coal_Out * Coal_Conv_Eff * Coal_SO2;
+					Coal_emissions_NOx = Coal_Out * Coal_Conv_Eff * Coal_NOx;	
 
-				energy_requirement = false;
+					energy_requirement = false;
 
-				energy_for_calc = energy_for_calc - Coal_Out; 
+					energy_for_calc = energy_for_calc - Coal_Out; 
 
-			}
-			else	//Not needed
-			{
-				Coal_Out = 0.0;
+				}
+				else	//Not needed
+				{
+					Coal_Out = 0.0;
 					
 					//Zero the emissions counts, otherwise they maintain previous values (coudl just make local, but are published)
 					Coal_emissions_CO2 = 0.0;
 					Coal_emissions_SO2 = 0.0;
 					Coal_emissions_NOx = 0.0;
-			}
+				}
 			}
 
 			
@@ -754,73 +754,73 @@ TIMESTAMP emissions::postsync(TIMESTAMP t0)
 			if (dispatch_order == Geothermal_Order)
 			{
 				if ((Geothermal_Max_Out < energy_for_calc.Mag() && energy_requirement == true) && (dispatch_order != 0))
-			{
-				Geothermal_Out = Geothermal_Max_Out;
+				{
+					Geothermal_Out = Geothermal_Max_Out;
 
-				Geothermal_emissions_CO2 = Geothermal_Out * Geothermal_Conv_Eff * Geothermal_CO2;
-				Geothermal_emissions_SO2 = Geothermal_Out * Geothermal_Conv_Eff * Geothermal_SO2;
-				Geothermal_emissions_NOx = Geothermal_Out * Geothermal_Conv_Eff * Geothermal_NOx;
+					Geothermal_emissions_CO2 = Geothermal_Out * Geothermal_Conv_Eff * Geothermal_CO2;
+					Geothermal_emissions_SO2 = Geothermal_Out * Geothermal_Conv_Eff * Geothermal_SO2;
+					Geothermal_emissions_NOx = Geothermal_Out * Geothermal_Conv_Eff * Geothermal_NOx;
 
-				energy_for_calc = energy_for_calc - Geothermal_Max_Out;
-			}
+					energy_for_calc = energy_for_calc - Geothermal_Max_Out;
+				}
 				else if ((energy_requirement == true) && (dispatch_order != 0))
-			{
-				Geothermal_Out = energy_for_calc.Mag();
+				{
+					Geothermal_Out = energy_for_calc.Mag();
 
-				Geothermal_emissions_CO2 = Geothermal_Out * Geothermal_Conv_Eff * Geothermal_CO2;
-				Geothermal_emissions_SO2 = Geothermal_Out * Geothermal_Conv_Eff * Geothermal_SO2;
-				Geothermal_emissions_NOx = Geothermal_Out * Geothermal_Conv_Eff * Geothermal_NOx;
+					Geothermal_emissions_CO2 = Geothermal_Out * Geothermal_Conv_Eff * Geothermal_CO2;
+					Geothermal_emissions_SO2 = Geothermal_Out * Geothermal_Conv_Eff * Geothermal_SO2;
+					Geothermal_emissions_NOx = Geothermal_Out * Geothermal_Conv_Eff * Geothermal_NOx;
 
-				energy_requirement = false;	
+					energy_requirement = false;	
 
-				energy_for_calc = energy_for_calc - Geothermal_Out;
+					energy_for_calc = energy_for_calc - Geothermal_Out;
 
-			}
-			else	//Not needed
-			{
-				Geothermal_Out = 0.0;
+				}
+				else	//Not needed
+				{
+					Geothermal_Out = 0.0;
 					
 					//Zero the emissions counts, otherwise they maintain previous values (coudl just make local, but are published)
 					Geothermal_emissions_CO2 = 0.0;
 					Geothermal_emissions_SO2 = 0.0;
 					Geothermal_emissions_NOx = 0.0;
-			}
+				}
 			}
 
 			if (dispatch_order == Petroleum_Order)
 			{
 				if ((Petroleum_Max_Out < energy_for_calc.Mag() && energy_requirement == true) && (dispatch_order != 0))
-			{
-				Petroleum_Out = Petroleum_Max_Out;
+				{
+					Petroleum_Out = Petroleum_Max_Out;
 
-				Petroleum_emissions_CO2 = Petroleum_Out * Petroleum_Conv_Eff * Petroleum_CO2;
-				Petroleum_emissions_SO2 = Petroleum_Out * Petroleum_Conv_Eff * Petroleum_SO2;
-				Petroleum_emissions_NOx = Petroleum_Out * Petroleum_Conv_Eff * Petroleum_NOx;
+					Petroleum_emissions_CO2 = Petroleum_Out * Petroleum_Conv_Eff * Petroleum_CO2;
+					Petroleum_emissions_SO2 = Petroleum_Out * Petroleum_Conv_Eff * Petroleum_SO2;
+					Petroleum_emissions_NOx = Petroleum_Out * Petroleum_Conv_Eff * Petroleum_NOx;
 
-				energy_for_calc = energy_for_calc - Petroleum_Max_Out;
-			}
+					energy_for_calc = energy_for_calc - Petroleum_Max_Out;
+				}
 				else if ((energy_requirement == true) && (dispatch_order != 0))
-			{
-				Petroleum_Out = energy_for_calc.Mag();
+				{
+					Petroleum_Out = energy_for_calc.Mag();
 
-				Petroleum_emissions_CO2 = Petroleum_Out * Petroleum_Conv_Eff * Petroleum_CO2;
-				Petroleum_emissions_SO2 = Petroleum_Out * Petroleum_Conv_Eff * Petroleum_SO2;
-				Petroleum_emissions_NOx = Petroleum_Out * Petroleum_Conv_Eff * Petroleum_NOx;	
-				
-				energy_requirement = false;
+					Petroleum_emissions_CO2 = Petroleum_Out * Petroleum_Conv_Eff * Petroleum_CO2;
+					Petroleum_emissions_SO2 = Petroleum_Out * Petroleum_Conv_Eff * Petroleum_SO2;
+					Petroleum_emissions_NOx = Petroleum_Out * Petroleum_Conv_Eff * Petroleum_NOx;	
+					
+					energy_requirement = false;
 
-				energy_for_calc = energy_for_calc - Petroleum_Out;
+					energy_for_calc = energy_for_calc - Petroleum_Out;
 
-			}
-			else	//Not needed
-			{
-				Petroleum_Out = 0.0;
+				}
+				else	//Not needed
+				{
+					Petroleum_Out = 0.0;
 					
 					//Zero the emissions counts, otherwise they maintain previous values (coudl just make local, but are published)
 					Petroleum_emissions_CO2 = 0.0;
 					Petroleum_emissions_SO2 = 0.0;
 					Petroleum_emissions_NOx = 0.0;
-			}
+				}
 			}
 		}//end dispatch FOR loop
 		

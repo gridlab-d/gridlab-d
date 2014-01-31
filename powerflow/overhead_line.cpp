@@ -230,10 +230,26 @@ void overhead_line::recalc(void)
 		{
 			for (int j = 0; j < 3; j++) 
 			{
-				a_mat[i][j] = d_mat[i][j] = A_mat[i][j] = (i == j ? 1.0 : 0.0);
+				a_mat[i][j] = d_mat[i][j] = A_mat[i][j] = 0.0;
 				c_mat[i][j] = 0.0;
 				B_mat[i][j] = b_mat[i][j];
 			}
+		}
+
+		//"Unzero" appropriate values - doing it this way makes FBS more cooperative
+		if (has_phase(PHASE_A))
+		{
+			a_mat[0][0] = d_mat[0][0] = A_mat[0][0] = 1.0;
+		}
+
+		if (has_phase(PHASE_B))
+		{
+			a_mat[1][1] = d_mat[1][1] = A_mat[1][1] = 1.0;
+		}
+
+		if (has_phase(PHASE_C))
+		{
+			a_mat[2][2] = d_mat[2][2] = A_mat[2][2] = 1.0;
 		}
 	}
 	else
@@ -806,10 +822,26 @@ void overhead_line::recalc(void)
 				{
 					for (int j = 0; j < 3; j++) 
 					{
-						a_mat[i][j] = d_mat[i][j] = A_mat[i][j] = (i == j ? 1.0 : 0.0);
+						a_mat[i][j] = d_mat[i][j] = A_mat[i][j] = 0.0;
 						c_mat[i][j] = 0.0;
 						B_mat[i][j] = b_mat[i][j];
 					}
+				}
+
+				//"Unzero" appropriate values - doing it this way makes FBS more cooperative
+				if (has_phase(PHASE_A))
+				{
+					a_mat[0][0] = d_mat[0][0] = A_mat[0][0] = 1.0;
+				}
+
+				if (has_phase(PHASE_B))
+				{
+					a_mat[1][1] = d_mat[1][1] = A_mat[1][1] = 1.0;
+				}
+
+				if (has_phase(PHASE_C))
+				{
+					a_mat[2][2] = d_mat[2][2] = A_mat[2][2] = 1.0;
 				}
 			}
 		}
@@ -819,10 +851,26 @@ void overhead_line::recalc(void)
 			{
 				for (int j = 0; j < 3; j++) 
 				{
-					a_mat[i][j] = d_mat[i][j] = A_mat[i][j] = (i == j ? 1.0 : 0.0);
+					a_mat[i][j] = d_mat[i][j] = A_mat[i][j] = 0.0;
 					c_mat[i][j] = 0.0;
 					B_mat[i][j] = b_mat[i][j];
 				}
+			}
+
+			//"Unzero" appropriate values - doing it this way makes FBS more cooperative
+			if (has_phase(PHASE_A))
+			{
+				a_mat[0][0] = d_mat[0][0] = A_mat[0][0] = 1.0;
+			}
+
+			if (has_phase(PHASE_B))
+			{
+				a_mat[1][1] = d_mat[1][1] = A_mat[1][1] = 1.0;
+			}
+
+			if (has_phase(PHASE_C))
+			{
+				a_mat[2][2] = d_mat[2][2] = A_mat[2][2] = 1.0;
 			}
 		}
 	}
