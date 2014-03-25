@@ -475,6 +475,7 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 				}
 				//Determine how far to advance the clock
 				int64 nt[3];
+				nt[0] = nt[1] = nt[2] = t0;
 				for (int i = 0; i < 3; i++) {
 					if (mech_t_next[i] > t0)
 						nt[i] = mech_t_next[i];
@@ -635,7 +636,7 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 
 				//Determine how far to advance the clock
 				int64 nt[3];
-
+				nt[0] = nt[1] = nt[2] = t0;
 				if (mech_t_next[0] > t0)
 					nt[0] = mech_t_next[0];
 				if (dwell_t_next[0] > t0)

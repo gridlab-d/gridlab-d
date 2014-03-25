@@ -1067,35 +1067,39 @@ static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2)
 		if ( n_commits==-1 ) n_commits = commit_init();
 
 		/* if no commits found, stop here */
-		if ( n_commits==0 ) return TS_NEVER;
-		
-		/* initialize MTI */
-		for ( pc=0 ; pc<2 ; pc++ )
+		if ( n_commits==0 )
 		{
-			if ( mti[pc]==NULL && global_threadcount!=1 && !init_tried )
-			{
-				/* build mti */
-				static MTIFUNCTIONS fns[] = {
-					{commit_get0, commit_call, commit_set,commit_compare, commit_gather, commit_reject},
-					{commit_get1, commit_call, commit_set,commit_compare, commit_gather, commit_reject},
-				};
-				mti[pc] = mti_init("commit",&fns[pc],8);
-				if ( mti[pc]==NULL )
-				{
-					output_warning("commit_all multi-threaded iterator initialization failed - using single-threaded iterator as fallback");
-					init_tried = TRUE;
-				}
-			}
-
-			/* attempt to run multithreaded iterator */
-			if ( mti[pc]!=NULL && mti_run(output,mti[pc],input) )
-				result = *(TIMESTAMP*)output;
-
-			/* resort to single threaded iterator (which handles both passes) */
-			else if ( pc==0 )
-				result = commit_all_st(t0,t2);
+			result = TS_NEVER;
 		}
+		else
+		{
+			/* initialize MTI */
+			for ( pc=0 ; pc<2 ; pc++ )
+			{
+				if ( mti[pc]==NULL && global_threadcount!=1 && !init_tried )
+				{
+					/* build mti */
+					static MTIFUNCTIONS fns[] = {
+						{commit_get0, commit_call, commit_set,commit_compare, commit_gather, commit_reject},
+						{commit_get1, commit_call, commit_set,commit_compare, commit_gather, commit_reject},
+					};
+					mti[pc] = mti_init("commit",&fns[pc],8);
+					if ( mti[pc]==NULL )
+					{
+						output_warning("commit_all multi-threaded iterator initialization failed - using single-threaded iterator as fallback");
+						init_tried = TRUE;
+					}
+				}
 
+				/* attempt to run multithreaded iterator */
+				if ( mti[pc]!=NULL && mti_run(output,mti[pc],input) )
+					result = *(TIMESTAMP*)output;
+
+				/* resort to single threaded iterator (which handles both passes) */
+				else if ( pc==0 )
+					result = commit_all_st(t0,t2);
+			}
+		}
 	}
 	CATCH(const char *msg)
 	{
