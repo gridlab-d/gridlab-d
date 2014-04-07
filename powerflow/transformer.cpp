@@ -292,6 +292,9 @@ int transformer::init(OBJECT *parent)
 
 			break;
 		case transformer_configuration::DELTA_DELTA:
+			//Flag us appropriately - do for both solvers for loss calculation reasons
+			SpecialLnk = DELTADELTA;
+
 			if (solver_method==SM_FBS)
 			{
 				a_mat[0][0] = a_mat[1][1] = a_mat[2][2] = nt * 2.0 / 3.0;
@@ -337,6 +340,9 @@ int transformer::init(OBJECT *parent)
 			}
 			break;
 		case transformer_configuration::DELTA_GWYE:
+			//Flag us appropriately - do for both solvers for loss calculation reasons
+			SpecialLnk = DELTAGWYE;
+			
 			if (solver_method==SM_FBS)
 			{
 				if (nt>1.0)//step down transformer
@@ -377,8 +383,6 @@ int transformer::init(OBJECT *parent)
 			}
 			else if (solver_method==SM_NR)
 			{
-				SpecialLnk = DELTAGWYE;
-
 				complex Izt = complex(1.0,0) / zt;
 
 				complex alphaval = voltage_ratio * sqrt(3.0);

@@ -2302,7 +2302,7 @@ int link_object::CurrentCalculation(int nodecall)
 						}
 
 						//Apply updates to child
-						ofnode->current_inj[1] += itemp[1];
+						ofnode->current_inj[1] += itemp[0];
 
 						//If we locked our from node, be sure to let it go
 						if (flock)
@@ -2357,7 +2357,7 @@ int link_object::CurrentCalculation(int nodecall)
 						}
 
 						//Apply updates to child
-						ofnode->current_inj[2] += itemp[2];
+						ofnode->current_inj[2] += itemp[0];
 
 						//If we locked our from node, be sure to let it go
 						if (flock)
@@ -2798,18 +2798,33 @@ void link_object::calculate_power()
 		power_in = indiv_power_in[0] + indiv_power_in[1] + indiv_power_in[2];
 		power_out = indiv_power_out[0] + indiv_power_out[1] + indiv_power_out[2];
 
-		//Figure out losses - fix for reverse flow capabilities
-		for (int i=0; i<3; i++)
+		//Calculate overall losses
+		if ((SpecialLnk != DELTAGWYE) && (SpecialLnk != DELTADELTA))
 		{
-			indiv_power_loss[i] = indiv_power_in[i] - indiv_power_out[i];
-			if (indiv_power_loss[i].Re() < 0)
-				indiv_power_loss[i].Re() = -indiv_power_loss[i].Re();
-		}
+			//Figure out losses - fix for reverse flow capabilities
+			for (int i=0; i<3; i++)
+			{
+				indiv_power_loss[i] = indiv_power_in[i] - indiv_power_out[i];
+				if (indiv_power_loss[i].Re() < 0)
+					indiv_power_loss[i].Re() = -indiv_power_loss[i].Re();
+			}
 
+
+			power_loss = indiv_power_loss[0] + indiv_power_loss[1] + indiv_power_loss[2];
+		}
+		else	//Delta-GWye is a little different
+		{
+			//Just set to NaN to flag that they mean nothing - this will probably upset some platform
+			indiv_power_loss[0] = NaN;
+			indiv_power_loss[1] = NaN;
+			indiv_power_loss[2] = NaN;
+
+			//Calculate overall losses
+			power_loss = power_in - power_out;
+		}
+	
 		set_flow_directions();
 
-		//Calculate overall losses
-		power_loss = indiv_power_loss[0] + indiv_power_loss[1] + indiv_power_loss[2];
 }
 
 //Function to calculate current values for use by restoration module

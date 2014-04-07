@@ -3647,6 +3647,28 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 		//Close the file, we're done with it
 		fclose(FPoutVal);
+
+		//Dump our position data as well
+		FILE *FPbusout=fopen("businfoout.txt","wt");
+
+		for (jindexer=0; jindexer<NR_bus_count; jindexer++)
+		{
+			fprintf(FPbusout,"%d,%d,%s\n",bus[jindexer].Matrix_Loc,BA_diag[jindexer].size,bus[jindexer].name);
+		}
+
+		fclose(FPbusout);
+
+		//Branches
+		FILE *FPbranchout=fopen("branchinfoout.txt","wt");
+
+		for (jindexer=0; jindexer<NR_branch_count; jindexer++)
+		{
+			fprintf(FPbranchout,"%d,%d,%s,%s,%s\n",bus[branch[jindexer].from].Matrix_Loc,bus[branch[jindexer].to].Matrix_Loc,bus[branch[jindexer].from].name,bus[branch[jindexer].to].name,branch[jindexer].name);
+		}
+
+		fclose(FPbranchout);
+
+
 #endif
 
 		///* Initialize parameters. */

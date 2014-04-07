@@ -1,0 +1,336 @@
+// $id$
+//	Copyright (C) 2014 Battelle Memorial Institute
+// Transformer loss calculations
+// FBS version
+// Any delta-connected transformers solve slightly different -- separate branch for their asserts (so align between solvers)
+
+clock {
+	timezone EST+5EDT;
+	starttime '2000-01-01 0:00:00';
+	stoptime '2000-01-01 0:00:01';
+}
+
+module powerflow {
+	solver_method FBS;
+	line_capacitance true;
+	line_limits false;
+	maximum_voltage_error 1e-12;
+}
+
+module assert;
+
+//COnfiguration information
+//Conductors
+object overhead_line_conductor {
+	name olc301c;	//336,400 26/7 ACSR
+	geometric_mean_radius 0.0244;
+	resistance 0.306;
+	diameter 0.721;
+}
+
+object overhead_line_conductor {
+	name olc301n;	//4/0 6/1 ACSR
+	geometric_mean_radius 0.00814;
+	resistance 0.592;
+	diameter 0.563;
+}
+
+//Line spacings
+//ABCN
+object line_spacing {
+	name ls500301;
+	distance_AB 2.5;
+	distance_AC 7.0;
+	distance_BC 4.5;
+	distance_CN 5.0;
+	distance_AN 5.65685424949;
+	distance_BN 4.27200187266;
+	distance_AE 28.0;
+	distance_BE 28.0;
+	distance_CE 28.0;
+	distance_NE 24.0;
+}
+
+//Line configurations
+//ABCN
+object line_configuration {
+	name lc300;
+	conductor_A olc301c;
+	conductor_B olc301c;
+	conductor_C olc301c;
+	conductor_N olc301n;
+	spacing ls500301;
+}
+
+object transformer_configuration {
+	name tconfigdy;
+	connect_type DELTA_GWYE;
+	power_rating 6000;
+	primary_voltage 12470;
+	secondary_voltage 4160;
+	resistance 0.01;
+	reactance 0.06;
+}
+
+object transformer_configuration {
+	name tconfigdd;
+	connect_type DELTA_DELTA;
+	power_rating 6000;
+	primary_voltage 12470;
+	secondary_voltage 4160;
+	resistance 0.01;
+	reactance 0.06;
+}
+
+object transformer_configuration {
+	name tconfigyy;
+	connect_type WYE_WYE;
+	power_rating 6000;
+	primary_voltage 12470;
+	secondary_voltage 4160;
+	resistance 0.01;
+	reactance 0.06;
+}
+
+object transformer_configuration {
+	name tconfigspctB;
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	power_rating 6000;
+	powerB_rating 6000;
+	primary_voltage 12470;
+	secondary_voltage 4160;
+	resistance 0.01;
+	reactance 0.06;
+}
+
+object transformer_configuration {
+	name tconfigyyspB;
+	connect_type SINGLE_PHASE;
+	power_rating 6000;
+	powerB_rating 6000;
+	primary_voltage 12470;
+	secondary_voltage 4160;
+	resistance 0.01;
+	reactance 0.06;
+}
+
+object meter {
+	name node1;
+	phases "ABCD";
+	bustype SWING;
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7200;
+}
+
+object overhead_line {
+	name ohl12;
+	phases "ABC";
+	from node1;
+	to node2;
+	length 2000;
+	configuration lc300;
+}
+
+object node {
+	name node2;
+	phases "ABCD";
+	nominal_voltage 7200;
+}
+
+object overhead_line {
+	name ohl12del;
+	phases "ABC";
+	from node1;
+	to node2del;
+	length 2000;
+	configuration lc300;
+}
+
+object node {
+	name node2del;
+	phases "ABCD";
+	nominal_voltage 7200;
+}
+
+//DGwye
+object meter {
+	phases ABCD;
+	name node2dy;
+	nominal_voltage 7200.0;
+	parent node2del;
+}
+	
+object transformer {
+	name xform23dy;
+	phases "ABCN";
+	from node2dy;
+	to load4dy;
+	configuration tconfigdy;
+	object complex_assert {
+		target power_losses;
+		within 0.5;
+		value 129706.5+80.5377d;
+	};
+}
+
+object meter {
+	name load4dy;
+	phases "ABCN";
+	nominal_voltage 2400;
+}
+
+object load {
+	name load4dy_load;
+	parent load4dy;
+	phases "ABCN";
+	constant_power_A +1800000.000+800000.000j;
+	constant_power_B +180000.000+80000.000j;
+	constant_power_C +18000.000+8000.000j;
+	nominal_voltage 2400;
+}
+
+//DD
+object meter {
+	phases ABCD;
+	name node2dd;
+	nominal_voltage 7200.0;
+	parent node2del;
+}
+	
+object transformer {
+	name xform23dd;
+	phases "ABCD";
+	from node2dd;
+	to load4dd;
+	configuration tconfigdd;
+	object complex_assert {
+		target power_losses;
+		within 0.5;
+		value 89062.5+80.5377d;
+	};
+}
+
+object meter {
+	name load4dd;
+	phases "ABCD";
+	nominal_voltage 2400;
+}
+
+object load {
+	name load4dd_load;
+	parent load4dd;
+	phases "ABCD";
+	constant_power_A +1800000.000+800000.000j;
+	constant_power_B +180000.000+80000.000j;
+	constant_power_C +18000.000+8000.000j;
+	nominal_voltage 2400;
+}
+
+//YY
+object meter {
+	phases ABC;
+	name node2yy;
+	nominal_voltage 7200.0;
+	parent node2;
+}
+	
+object transformer {
+	name xform23yy;
+	phases "ABCN";
+	from node2yy;
+	to load4yy;
+	configuration tconfigyy;
+	object complex_assert {
+		target power_losses;
+		within 0.5;
+		value 135724+80.5377d;
+	};
+}
+
+object meter {
+	name load4yy;
+	phases "ABC";
+	nominal_voltage 2400;
+}
+
+object load {
+	name load4yy_load;
+	parent load4yy;
+	phases "ABC";
+	constant_power_A +1800000.000+800000.000j;
+	constant_power_B +180000.000+80000.000j;
+	constant_power_C +18000.000+8000.000j;
+	nominal_voltage 2400;
+}
+
+//SPCT
+object meter {
+	phases ABC;
+	name node2spct;
+	nominal_voltage 7200.0;
+	parent node2;
+}
+	
+object transformer {
+	name xform23spct;
+	phases "BS";
+	from node2spct;
+	to load4spct;
+	configuration tconfigspctB;
+	object complex_assert {
+		target power_losses;
+		within 0.5;
+		value 21759.1+130554j;
+	};
+}
+
+object triplex_meter {
+	name load4spct;
+	phases "BS";
+	nominal_voltage 2400;
+}
+
+object triplex_load {
+	name load4spct_load;
+	parent load4spct;
+	phases "BS";
+	constant_power_12 +1800000.000+800000.000j;
+	nominal_voltage 2400;
+}
+
+//Single-phase Y
+object meter {
+	phases ABC;
+	name node2spy;
+	nominal_voltage 7200.0;
+	parent node2;
+}
+	
+object transformer {
+	name xform23spy;
+	phases "BN";
+	from node2spy;
+	to load4spy;
+	configuration tconfigyyspB;
+	object complex_assert {
+		target power_losses;
+		within 0.5;
+		value 132355+80.5377d;
+	};
+}
+
+object meter {
+	name load4spy;
+	phases "B";
+	nominal_voltage 2400;
+}
+
+object load {
+	name load4spy_load;
+	parent load4spy;
+	phases "B";
+	constant_power_B +1800000.000+800000.000j;
+	nominal_voltage 2400;
+}

@@ -19,7 +19,8 @@ typedef enum {
 		REGULATOR=1,		///< defines the link is a regulator
 		DELTAGWYE=2,		///< defines the link is actually a Delta-Gwye transformer
 		SPLITPHASE=3,		///< defines the link is a split-phase transformer
-		SWITCH=4			///< defines the link is a switch
+		SWITCH=4,			///< defines the link is a switch
+		DELTADELTA=5		///< defines the link is a delta-delta transformer - for power operations
 } SPECIAL_LINK;
 
 // flow directions (see link_object::flow_direction)
