@@ -1,0 +1,207 @@
+// $id$
+//	Copyright (C) 2008 Battelle Memorial Institute
+
+// 4 Node Feeder: Unbalanced step-down grY-grY
+// Unity turns ratio
+
+////////////////////////////////////////////////////////
+// BEGIN
+////////////////////////////////////////////////////////
+
+clock {
+	timezone EST+5EDT;
+	starttime '2000-01-01 0:00:00';
+	stoptime '2000-01-01 0:00:01';
+}
+
+module powerflow {
+	solver_method NR;
+}
+module assert;
+
+object overhead_line_conductor {
+	name olc_100;
+	geometric_mean_radius 0.0244 ft;
+	resistance 0.306 Ohm/mile;
+}
+
+object overhead_line_conductor {
+	name olc_101;
+	geometric_mean_radius 0.00814 ft;
+	resistance 0.592 Ohm/mile;
+}
+
+object line_spacing {
+	name ls_200;
+	distance_AB 2.5 ft;
+	distance_BC 4.5 ft;
+	distance_AC 7.0 ft;
+	distance_AN 5.656854 ft; 
+	distance_BN 4.272002 ft;
+	distance_CN 5.0 ft;
+}
+
+object line_configuration {
+	name lc_300;
+	conductor_A olc_100;
+	conductor_B olc_100;
+	conductor_C olc_100;
+	conductor_N olc_101;
+	spacing ls_200;
+}
+
+object transformer_configuration {
+	name tc_400;
+	connect_type WYE_WYE;
+	power_rating 6000;
+	primary_voltage 12470;
+	secondary_voltage 12470;
+	resistance 0.01;
+	reactance 0.06;
+}
+
+object node {
+	name node_1;
+	phases "ABCN";
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	bustype SWING;
+	nominal_voltage 7199.558;
+}
+
+object overhead_line {
+	name ohl_12;
+	phases "ABCN";
+	from node_1;
+	to node_2;
+	length 2000;
+	configuration lc_300;
+	object complex_assert {
+		target current_in_A;
+		within 10;
+		value +180.568-122.111j;
+	};
+	object complex_assert {
+		target current_in_B;
+		within 10;
+		value -255.817-150.483j;
+	};
+	object complex_assert {
+		target current_in_C;
+		within 10;
+		value -37.9476+368.776j;
+	};
+}
+
+object node {
+	name node_2;
+	phases "ABCN";
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7199.558;
+	object complex_assert {
+		target voltage_A;
+		within 5;
+		value +7160.9-0.0878229d;
+	};
+	object complex_assert {
+		target voltage_B;
+		within 5;
+		value +7119.42-120.251d;
+	};
+	object complex_assert {
+		target voltage_C;
+		within 5;
+		value +7125.16+119.25d;
+	};
+}
+
+object transformer {
+	name xform_23;
+	phases "ABCN";
+	from node_2;
+	to node_3;
+	configuration tc_400;
+}
+
+object node {
+	name node_3;
+	phases "ABCN";
+	voltage_A +2401.777+0.000j;
+	voltage_B -1200.889-2080.000j;
+	voltage_C -1200.889+2080.000j;
+	nominal_voltage 7199.558;
+	object complex_assert {
+		target voltage_A;
+		within 5;
+		value +6929.09-2.15135d;
+	};
+	object complex_assert {
+		target voltage_B;
+		within 5;
+		value +6836.33-123.311d;
+	};
+	object complex_assert {
+		target voltage_C;
+		within 5;
+		value +6825.94+115.125d;
+	};
+}
+
+object overhead_line {
+	name ohl_34;
+	phases "ABCN";
+	from node_3;
+	to load_4;
+	length 2500;
+	configuration lc_300;
+	object complex_assert {
+		target current_in_A;
+		within 10;
+		value +180.568-122.111j;
+	};
+	object complex_assert {
+		target current_in_B;
+		within 10;
+		value -255.817-150.483j;
+	};
+	object complex_assert {
+		target current_in_C;
+		within 10;
+		value -37.9476+368.776j;
+	};
+}
+
+object load {
+	name load_4;
+	phases "ABCN";
+	voltage_A +2401.777+0.000j;
+	voltage_B -1200.889-2080.000j;
+	voltage_C -1200.889+2080.000j;
+	constant_power_A +1275000.000+790174.031j;
+	constant_power_B +1800000.000+871779.789j;
+	constant_power_C +2375000.000+780624.750j;
+	nominal_voltage 7199.558;
+	object complex_assert {
+		target voltage_A;
+		within 5;
+		value +6881.33-2.28062d;
+	};
+	object complex_assert {
+		target voltage_B;
+		within 5;
+		value +6738.64-123.692d;
+	};
+	object complex_assert {
+		target voltage_C;
+		within 5;
+		value +6743.58+114.07d;
+	};
+}
+
+
+////////////////////////////////////////////////////////
+// END
+////////////////////////////////////////////////////////

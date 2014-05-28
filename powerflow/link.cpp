@@ -559,7 +559,7 @@ void link_object::NR_link_presync_fxn(void)
 		
 
 		// compute admittance - invert b matrix - special circumstances given different methods
-		if ((SpecialLnk==SWITCH) || (SpecialLnk==REGULATOR))
+		if ((SpecialLnk!=NORMAL) && (SpecialLnk!=SPLITPHASE))
 		{
 			;	//Just skip over all of this nonsense
 		}
@@ -605,7 +605,7 @@ void link_object::NR_link_presync_fxn(void)
 			inverse(b_mat,Y);
 		// defaulted else - No phases (e.g., the line does not exist) - just = 0
 
-		if ((voltage_ratio!=1) | (SpecialLnk!=NORMAL))	//Handle transformers slightly different
+		if (SpecialLnk!=NORMAL)	//Handle transformers and "special" devices slightly different
 		{
 			invratio=1.0/voltage_ratio;
 
@@ -880,7 +880,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 
 
 				//Start with admittance matrix
-				if ((voltage_ratio != 1.0) || (SpecialLnk!=NORMAL))	//Transformer, send more - may not need all 4, but put them there anyways
+				if (SpecialLnk!=NORMAL)	//Transformer, send more - may not need all 4, but put them there anyways
 				{
 					//See if we're a switch (if so, we don't need all the hoopla)
 					if (SpecialLnk==SWITCH)	//Just like normal lines
@@ -1393,7 +1393,7 @@ void link_object::BOTH_link_postsync_fxn(void)
 	if ((use_link_limits==true) && (check_link_limits==true))
 	{
 		//See what we are - if we're a transformer, we're looking at power
-		if (voltage_ratio != 1.0)	//Presumes we're a transformer - if we were not, VR should be 1.0
+		if ((SpecialLnk != NORMAL) && (SpecialLnk != SWITCH) && (SpecialLnk != REGULATOR))
 		{
 			//Check power - rating is in kVA - just use power_out (tends to be a little more accurate
 			temp_power_check = power_out.Mag() / 1000.0;
@@ -1868,7 +1868,7 @@ int link_object::CurrentCalculation(int nodecall)
 			else
 				ofnode = NULL;	//Ensure it's blanked
 
-			if ((voltage_ratio!=1.0) && (SpecialLnk != DELTAGWYE) && (SpecialLnk != SPLITPHASE) && (SpecialLnk != REGULATOR))
+			if ((SpecialLnk == DELTADELTA) || (SpecialLnk == WYEWYE))
 			{
 				invsquared = 1.0 / (voltage_ratio * voltage_ratio);
 				//(-a*Vout+Vin)
@@ -2824,7 +2824,6 @@ void link_object::calculate_power()
 		}
 	
 		set_flow_directions();
-
 }
 
 //Function to calculate current values for use by restoration module
@@ -2842,7 +2841,7 @@ void link_object::calc_currents(complex *Current_Vals)
 	//Perform current_in calculation from sync pass above (just no propogation to current_inj)
 	if (status==LS_CLOSED)
 	{
-		if ((voltage_ratio!=1.0) && (SpecialLnk != DELTAGWYE) && (SpecialLnk != SPLITPHASE))
+		if ((SpecialLnk == DELTADELTA) || (SpecialLnk == WYEWYE))
 		{
 			//(-a*Vout+Vin)
 			vtemp[0] = fnode->voltage[0]-

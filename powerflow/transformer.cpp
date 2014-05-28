@@ -125,10 +125,14 @@ int transformer::init(OBJECT *parent)
 
 	config = OBJECTDATA(configuration,transformer_configuration);
 
-	if (config->connect_type==3)		//Flag Delta-Gwye and Split-phase for phase checks
+	if (config->connect_type==2)		//Flag delta-delta for power calculations
+		SpecialLnk = DELTADELTA;
+	else if (config->connect_type==3)	//Flag Delta-Gwye and Split-phase for phase checks
 		SpecialLnk = DELTAGWYE;
-	else if (config->connect_type==5)
+	else if (config->connect_type==5)	//Flag Delta-Gwye and Split-phase for phase checks
 		SpecialLnk = SPLITPHASE;
+	else								//Wye-wye or single phase, but flag anyways
+		SpecialLnk = WYEWYE;
 
 	//Populate limits - emergency and continuous are the same - moved above the init so the internal check works
 	link_rating[0] = config->kVA_rating;
@@ -292,8 +296,6 @@ int transformer::init(OBJECT *parent)
 
 			break;
 		case transformer_configuration::DELTA_DELTA:
-			//Flag us appropriately - do for both solvers for loss calculation reasons
-			SpecialLnk = DELTADELTA;
 
 			if (solver_method==SM_FBS)
 			{
@@ -340,8 +342,6 @@ int transformer::init(OBJECT *parent)
 			}
 			break;
 		case transformer_configuration::DELTA_GWYE:
-			//Flag us appropriately - do for both solvers for loss calculation reasons
-			SpecialLnk = DELTAGWYE;
 			
 			if (solver_method==SM_FBS)
 			{
@@ -627,8 +627,6 @@ int transformer::init(OBJECT *parent)
 			}
 			else if (solver_method==SM_NR)
 			{
-				SpecialLnk = SPLITPHASE;
-
 				V_basehi = config->V_primary;
 
 				if (has_phase(PHASE_A))
