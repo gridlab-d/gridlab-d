@@ -1,0 +1,12 @@
+#!/bin/bash
+
+EXTLIST=$(cat $0.conf)
+for ext in $EXTLIST ; do
+	LIST=$(find . -name '*.'$ext -print)
+	for f in $LIST ; do
+		cat $f | sed -e 's///g' > tmp
+		mv tmp $f
+		svn ps svn:eol-style native $f
+		svn ps svn:keywords 'Date Revision Author HeadURL Id Header' $f
+	done
+done
