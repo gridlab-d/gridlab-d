@@ -43,7 +43,7 @@ dist_doc_DATA =
 include assert/Makefile.mk
 include climate/Makefile.mk
 include commercial/Makefile.mk
-include rest/Makefile.mk
+#include rest/Makefile.mk
 #include comm/Makefile.mk
 #include control/Makefile.mk
 include core/link/matlab/Makefile.mk

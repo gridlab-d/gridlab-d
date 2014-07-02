@@ -90,9 +90,9 @@ int collector::init(OBJECT *parent)
 			}
 		}
 		if ( options==0xffffffff )
-			exception("mode '%s' is not recognized",mode);
+			exception("mode '%s' is not recognized",(const char *)mode);
 		else if ( options==0xffff )
-			exception("mode '%s' is not valid for a recorder", mode);
+			exception("mode '%s' is not valid for a recorder", (const char *)mode);
 	}
 
 	// verify group is defined

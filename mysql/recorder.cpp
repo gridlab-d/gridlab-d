@@ -91,9 +91,9 @@ int recorder::init(OBJECT *parent)
 			}
 		}
 		if ( options==0xffffffff )
-			exception("mode '%s' is not recognized",mode);
+			exception("mode '%s' is not recognized",(const char*)mode);
 		else if ( options==0xffff )
-			exception("mode '%s' is not valid for a recorder", mode);
+			exception("mode '%s' is not valid for a recorder", (const char*)mode);
 	}
 
 	// connect the target property
@@ -144,7 +144,7 @@ int recorder::init(OBJECT *parent)
 					"`%s` %s, "
 					"INDEX i_t (t) "
 					")", 
-					get_table(), field, db->get_sqltype(target)) )
+					get_table(), (const char*)field, db->get_sqltype(target)) )
 					exception("unable to create table '%s' in schema '%s'", get_table(), db->get_schema());
 				else
 					gl_verbose("table %s created ok", get_table());
@@ -193,7 +193,7 @@ int recorder::init(OBJECT *parent)
 
 	// prepare insert statement
 	char statement[1024];
-	int len = sprintf(statement,"INSERT INTO `%s` (`%s`) VALUES ('?')", get_table(), field);
+	int len = sprintf(statement,"INSERT INTO `%s` (`%s`) VALUES ('?')", get_table(), (const char*)field);
 	gl_verbose("preparing statement '%s'", statement);
 	insert = mysql_stmt_init(db->get_handle());
 	if ( !db->get_sqlbind(value,target,&stmt_error) )
@@ -270,7 +270,7 @@ TIMESTAMP recorder::commit(TIMESTAMP t0, TIMESTAMP t1)
 		}
 		else if ( db->get_sqldata(string,sizeof(string)-1,target) )
 		{
-			gl_verbose("%s sampling: %s='%s'", get_name(), target.get_name(), string);
+			gl_verbose("%s sampling: %s='%s'", get_name(), target.get_name(), (const char*)string);
 			have_data = true;
 		}
 		else
@@ -305,16 +305,16 @@ Insert:
 				if ( target.is_double() )
 				{
 					db->query("INSERT INTO `%s` (t, `%s`) VALUES (from_unixtime('%"FMT_INT64"d'), '%.8g')",
-						get_table(), field, gl_globalclock, real);
+						get_table(), (const char*)field, gl_globalclock, real);
 				}
 				else if ( target.is_integer() )
 				{
 					db->query("INSERT INTO `%s` (t, `%s`) VALUES (from_unixtime('%"FMT_INT64"d'), '%lli')",
-						get_table(), field, gl_globalclock, integer);
+						get_table(), (const char*)field, gl_globalclock, integer);
 				}
 				else
 					db->query("INSERT INTO `%s` (t, `%s`) VALUES (from_unixtime('%"FMT_INT64"d'), '%s')",
-						get_table(), field, gl_globalclock, string);
+						get_table(), (const char*)field, gl_globalclock, (const char*)string);
 			}
 
 			// check limit

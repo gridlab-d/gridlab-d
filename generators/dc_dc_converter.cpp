@@ -344,7 +344,7 @@ TIMESTAMP dc_dc_converter::sync(TIMESTAMP t0, TIMESTAMP t1)
 	
 	V_Out = pCircuit_V[0];
 	
-	gl_verbose("dc_dc_c sync: got voltage from parent, is: %f", V_Out);
+	gl_verbose("dc_dc_c sync: got voltage from parent, is: %f %fj", V_Out.Re(),V_Out.Im());
 	
 	internal_losses = 1 - calculate_loss(Rtotal, Ltotal, Ctotal, DC, AC);
 		
