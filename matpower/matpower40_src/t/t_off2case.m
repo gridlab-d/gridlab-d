@@ -2,7 +2,7 @@ function t_off2case(quiet)
 %T_OFF2CASE  Tests for code in OFF2CASE.
 
 %   MATPOWER
-%   $Id$
+%   $Id: t_off2case.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2005-2010 by Power System Engineering Research Center (PSERC)
 %

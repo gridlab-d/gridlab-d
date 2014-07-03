@@ -13,7 +13,7 @@ function om = build_cost_params(om)
 %   See also OPF_MODEL, ADD_COST, GET_COST_PARAMS, COMPUTE_COST.
 
 %   MATPOWER
-%   $Id$
+%   $Id: build_cost_params.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2008-2010 by Power System Engineering Research Center (PSERC)
 %

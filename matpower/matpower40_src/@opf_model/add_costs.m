@@ -53,7 +53,7 @@ function om = add_costs(om, name, cp, varsets)
 %   See also OPF_MODEL, BUILD_COST_PARAMS, GET_COST_PARAMS, COMPUTE_COST.
 
 %   MATPOWER
-%   $Id$
+%   $Id: add_costs.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2008-2010 by Power System Engineering Research Center (PSERC)
 %

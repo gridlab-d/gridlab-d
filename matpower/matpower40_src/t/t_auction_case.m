@@ -3,7 +3,7 @@ function [baseMVA, bus, gen, branch, areas, gencost] = t_auction_case
 %   Please see CASEFORMAT for details on the case file format.
 
 %   MATPOWER
-%   $Id$
+%   $Id: t_auction_case.m 4738 2014-07-03 00:55:39Z dchassin $
 
 %%-----  Power Flow Data  -----%%
 %% system MVA base

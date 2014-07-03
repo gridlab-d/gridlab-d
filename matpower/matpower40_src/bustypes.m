@@ -6,7 +6,7 @@ function [ref, pv, pq] = bustypes(bus, gen)
 %   GEN have been converted to use internal consecutive bus numbering.
 
 %   MATPOWER
-%   $Id$
+%   $Id: bustypes.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

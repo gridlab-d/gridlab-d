@@ -1,4 +1,4 @@
-/** $Id$
+/** $Id: main.cpp 4738 2014-07-03 00:55:39Z dchassin $
  **/
 
 /* TODO: replace the above Doxygen comments with your documentation */

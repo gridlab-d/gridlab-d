@@ -3,7 +3,7 @@ function [baseMVA, bus, gen, branch, areas, gencost] = t_case9_opf
 %   Please see CASEFORMAT for details on the case file format.
 
 %   MATPOWER
-%   $Id$
+%   $Id: t_case9_opf.m 4738 2014-07-03 00:55:39Z dchassin $
 
 %% MATPOWER Case Format : Version 1
 

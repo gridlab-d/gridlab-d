@@ -134,7 +134,7 @@ function om = opf_model(mpc)
 %           .(user defined fields)
 
 %   MATPOWER
-%   $Id$
+%   $Id: opf_model.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2008-2010 by Power System Engineering Research Center (PSERC)
 %

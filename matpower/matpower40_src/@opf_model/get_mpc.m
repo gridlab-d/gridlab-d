@@ -5,7 +5,7 @@ function mpc = get_mpc(om)
 %   See also OPF_MODEL.
 
 %   MATPOWER
-%   $Id$
+%   $Id: get_mpc.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2008-2010 by Power System Engineering Research Center (PSERC)
 %

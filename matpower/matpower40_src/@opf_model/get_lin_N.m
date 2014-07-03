@@ -7,7 +7,7 @@ function N = get_lin_N(om, varargin)
 %   N = GET_LIN_N(OM, NAME) : number of linear constraints in named set
 
 %   MATPOWER
-%   $Id$
+%   $Id: get_lin_N.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2008-2010 by Power System Engineering Research Center (PSERC)
 %

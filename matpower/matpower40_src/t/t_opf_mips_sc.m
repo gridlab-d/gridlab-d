@@ -2,7 +2,7 @@ function t_opf_mips_sc(quiet)
 %T_OPF_MIPS_SC  Tests for step-controlled MIPS-based AC optimal power flow.
 
 %   MATPOWER
-%   $Id$
+%   $Id: t_opf_mips_sc.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2004-2010 by Power System Engineering Research Center (PSERC)
 %

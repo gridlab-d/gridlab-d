@@ -97,7 +97,7 @@ function [x, f, eflag, output, lambda] = qps_ipopt(H, c, A, l, u, xmin, xmax, x0
 %   https://projects.coin-or.org/Ipopt/.
 
 %   MATPOWER
-%   $Id$
+%   $Id: qps_ipopt.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2010 by Power System Engineering Research Center (PSERC)
 %

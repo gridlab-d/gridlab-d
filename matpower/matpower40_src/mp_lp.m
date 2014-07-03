@@ -52,7 +52,7 @@ function [varargout] = mp_lp(varargin)
 %     or infeasible. 
 
 %   MATPOWER
-%   $Id$
+%   $Id: mp_lp.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

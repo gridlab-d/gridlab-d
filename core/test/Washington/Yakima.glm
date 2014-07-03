@@ -1,4 +1,4 @@
-// $Id$
+// $Id: Yakima.glm 4738 2014-07-03 00:55:39Z dchassin $
 // automatically generated Thu May  7 09:19:15 PDT 2009 from 24243.tm2
 module climate;
 class climate {

@@ -1,4 +1,4 @@
-/** $Id$
+/** $Id: matpower.cpp 4738 2014-07-03 00:55:39Z dchassin $
 	@file solver_matpower.cpp
 	@defgroup solver_matpower Template for a new object class
 	@ingroup MODULENAME

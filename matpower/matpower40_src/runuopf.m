@@ -50,7 +50,7 @@ function [MVAbase, bus, gen, gencost, branch, f, success, et] = ...
 %   See also RUNOPF, RUNDUOPF.
 
 %   MATPOWER
-%   $Id$
+%   $Id: runuopf.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

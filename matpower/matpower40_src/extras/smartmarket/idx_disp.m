@@ -16,7 +16,7 @@ function [QUANTITY, PRICE, FCOST, VCOST, SCOST, PENALTY] = idx_disp
 %    6  PENALTY     penalty cost in $ (not used)
 
 %   MATPOWER
-%   $Id$
+%   $Id: idx_disp.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

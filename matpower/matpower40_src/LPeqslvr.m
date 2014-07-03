@@ -8,7 +8,7 @@ function [x, success] = LPeqslvr(x, om, Ybus, Yf, Yt, Afeq, bfeq, Af, bf, mpopt,
 %   See also LPOPF_SOLVER.
 
 %   MATPOWER
-%   $Id$
+%   $Id: LPeqslvr.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Deqiang (David) Gan, PSERC Cornell & Zhejiang University
 %   and Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)

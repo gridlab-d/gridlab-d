@@ -1,4 +1,4 @@
-/** $Id$
+/** $Id: series_reactor.cpp 4738 2014-07-03 00:55:39Z dchassin $
 	Copyright (C) 2009 Battelle Memorial Institute
 	@file series_reactor.cpp
 	@addtogroup powerflow series_reactor

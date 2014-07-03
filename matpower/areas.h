@@ -1,4 +1,4 @@
-/** $Id$
+/** $Id: areas.h 4738 2014-07-03 00:55:39Z dchassin $
 	@file areas.h
 	@addtogroup areas
 	@ingroup MODULENAME

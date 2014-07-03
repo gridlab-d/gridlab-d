@@ -15,7 +15,7 @@ function om = add_vars(om, name, N, v0, vl, vu)
 %   See also OPF_MODEL, GETV.
 
 %   MATPOWER
-%   $Id$
+%   $Id: add_vars.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2008-2010 by Power System Engineering Research Center (PSERC)
 %

@@ -5,7 +5,7 @@ function [V, converged, i] = state_est(branch, Ybus, Yf, Yt, Sbus, V0, ref, pv, 
 %   State estimator (under construction) based on code from James S. Thorp.
 
 %   MATPOWER
-%   $Id$
+%   $Id: state_est.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   based on code by James S. Thorp, June 2004
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)

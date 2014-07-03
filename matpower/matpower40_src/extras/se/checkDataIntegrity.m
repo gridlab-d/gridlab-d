@@ -7,7 +7,7 @@ function [success, measure, idx, sigma] = checkDataIntegrity(measure, idx, sigma
 %   created by Rui Bo on Jan 9, 2010
 
 %   MATPOWER
-%   $Id$
+%   $Id: checkDataIntegrity.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Rui Bo
 %   Copyright (c) 2009-2010 by Rui Bo
 %

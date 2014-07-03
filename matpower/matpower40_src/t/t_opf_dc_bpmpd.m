@@ -2,7 +2,7 @@ function t_opf_dc_bpmpd(quiet)
 %T_OPF_DC_BPMPD  Tests for DC optimal power flow using BPMPD_MEX solver.
 
 %   MATPOWER
-%   $Id$
+%   $Id: t_opf_dc_bpmpd.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2004-2010 by Power System Engineering Research Center (PSERC)
 %

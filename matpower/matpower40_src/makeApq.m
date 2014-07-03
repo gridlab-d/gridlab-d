@@ -20,7 +20,7 @@ function [Apqh, ubpqh, Apql, ubpql, data] = makeApq(baseMVA, gen)
 %       data.ipql   indices of gens with general PQ cap curves (lower)
 
 %   MATPOWER
-%   $Id$
+%   $Id: makeApq.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   and Carlos E. Murillo-Sanchez, PSERC Cornell & Universidad Autonoma de Manizales
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)

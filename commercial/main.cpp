@@ -1,4 +1,4 @@
-/** $Id$
+/** $Id: main.cpp 4738 2014-07-03 00:55:39Z dchassin $
 	@file main.cpp
 	@defgroup commercial Commercial buildings (commercial)
 	@ingroup modules

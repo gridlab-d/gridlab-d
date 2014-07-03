@@ -38,7 +38,7 @@ function [results, success, raw] = fmincopf6_solver(om, mpopt)
 %   See also OPF, FMINCON.
 
 %   MATPOWER
-%   $Id$
+%   $Id: fmincopf6_solver.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   and Carlos E. Murillo-Sanchez, PSERC Cornell & Universidad Autonoma de Manizales
 %   Copyright (c) 2000-2010 by Power System Engineering Research Center (PSERC)

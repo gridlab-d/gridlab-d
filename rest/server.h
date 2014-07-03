@@ -1,4 +1,4 @@
-/** $Id$
+/** $Id: server.h 4738 2014-07-03 00:55:39Z dchassin $
 	@file server.h
 	@addtogroup server
 	@ingroup MODULENAME

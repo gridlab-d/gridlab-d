@@ -22,7 +22,7 @@ function TorF = hasPQcap(gen, hilo)
 %   constraint is not redundant w.r.t the box constraints.
 
 %   MATPOWER
-%   $Id$
+%   $Id: hasPQcap.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2005-2010 by Power System Engineering Research Center (PSERC)
 %

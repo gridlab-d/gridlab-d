@@ -1,4 +1,4 @@
-/** $Id$
+/** $Id: line.h 4738 2014-07-03 00:55:39Z dchassin $
 	@file line.h
 	@addtogroup line
 	@ingroup MODULENAME

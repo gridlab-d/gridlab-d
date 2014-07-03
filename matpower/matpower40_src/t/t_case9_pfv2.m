@@ -3,7 +3,7 @@ function mpc = t_case9_pfv2
 %   Please see CASEFORMAT for details on the case file format.
 
 %   MATPOWER
-%   $Id$
+%   $Id: t_case9_pfv2.m 4738 2014-07-03 00:55:39Z dchassin $
 
 %% MATPOWER Case Version 2
 mpc.version = '2';

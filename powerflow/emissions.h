@@ -1,4 +1,4 @@
-/** $Id$
+/** $Id: emissions.h 4738 2014-07-03 00:55:39Z dchassin $
 	Copyright (C) 2011 Battelle Memorial Institute
 
 	@Warning: It is still under development.

@@ -1,4 +1,4 @@
-// $Id$
+// $Id: volt_var_control.h 4738 2014-07-03 00:55:39Z dchassin $
 //	Copyright (C) 2010 Battelle Memorial Institute
 
 #ifndef _VOLT_VAR_CONTROL_H

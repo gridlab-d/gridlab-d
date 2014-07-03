@@ -2,7 +2,7 @@ function t_opf_fmincon(quiet)
 %T_OPF_FMINCON  Tests for FMINCON-based optimal power flow.
 
 %   MATPOWER
-%   $Id$
+%   $Id: t_opf_fmincon.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2004-2010 by Power System Engineering Research Center (PSERC)
 %

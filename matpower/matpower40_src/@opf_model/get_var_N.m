@@ -7,7 +7,7 @@ function N = get_var_N(om, varargin)
 %   N = GET_VAR_N(OM, NAME) : number of vars in named set
 
 %   MATPOWER
-%   $Id$
+%   $Id: get_var_N.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2008-2010 by Power System Engineering Research Center (PSERC)
 %

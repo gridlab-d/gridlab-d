@@ -2,7 +2,7 @@ function t_scale_load(quiet)
 %T_SCALE_LOAD  Tests for code in SCALE_LOAD.
 
 %   MATPOWER
-%   $Id$
+%   $Id: t_scale_load.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2008-2010 by Power System Engineering Research Center (PSERC)
 %

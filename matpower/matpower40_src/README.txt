@@ -12,7 +12,7 @@ Authors:    Ray Zimmerman               <rz10@cornell.edu>
 
             Mon, Feb 7, 2011
 
-$Id$
+$Id: README.txt 4738 2014-07-03 00:55:39Z dchassin $
 Copyright (c) 1997-2011 by Power System Engineering Research Center (PSERC)
 See http://www.pserc.cornell.edu/matpower/ for more info.
 

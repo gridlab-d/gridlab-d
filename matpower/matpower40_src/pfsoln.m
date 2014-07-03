@@ -4,7 +4,7 @@ function [bus, gen, branch] = pfsoln(baseMVA, bus0, gen0, branch0, Ybus, Yf, Yt,
 %                                   YBUS, YF, YT, V, REF, PV, PQ)
 
 %   MATPOWER
-%   $Id$
+%   $Id: pfsoln.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

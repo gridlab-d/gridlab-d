@@ -1,4 +1,4 @@
-/** $Id$
+/** $Id: gen_cost.h 4738 2014-07-03 00:55:39Z dchassin $
 	@file gen_cost.h
 	@addtogroup gen_cost
 	@ingroup MODULENAME

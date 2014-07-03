@@ -1,4 +1,4 @@
-// $Id$
+// $Id: setup.cpp 4738 2014-07-03 00:55:39Z dchassin $
 
 #define CONSOLE /* enables console/curses support */
 #include "gridlabd.h"

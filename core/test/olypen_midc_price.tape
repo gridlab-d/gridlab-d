@@ -1,4 +1,4 @@
-# $Id$
+# $Id: olypen_midc_price.tape 4738 2014-07-03 00:55:39Z dchassin $
 # Copyright (C) 2008 Battelle Memorial Institute
 # datetime,price
 2006-04-01 23:00:00,29.02

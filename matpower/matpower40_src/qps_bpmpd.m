@@ -97,7 +97,7 @@ function [x, f, eflag, output, lambda] = qps_bpmpd(H, c, A, l, u, xmin, xmax, x0
 %   See also BPMPD_MEX, http://www.pserc.cornell.edu/bpmpd/.
 
 %   MATPOWER
-%   $Id$
+%   $Id: qps_bpmpd.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2010 by Power System Engineering Research Center (PSERC)
 %

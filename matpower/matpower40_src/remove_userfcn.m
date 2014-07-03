@@ -11,7 +11,7 @@ function mpc = remove_userfcn(mpc, stage, fcn)
 %   RUNOPF_W_RES.
 
 %   MATPOWER
-%   $Id$
+%   $Id: remove_userfcn.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2009-2010 by Power System Engineering Research Center (PSERC)
 %

@@ -14,7 +14,7 @@ function rv = userdata(om, name, val)
 %   See also OPF_MODEL.
 
 %   MATPOWER
-%   $Id$
+%   $Id: userdata.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2008-2010 by Power System Engineering Research Center (PSERC)
 %

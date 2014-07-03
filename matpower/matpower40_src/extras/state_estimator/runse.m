@@ -7,7 +7,7 @@ function [MVAbase, bus, gen, branch, success, et] = runse(casedata, mpopt, fname
 %   parts based on code from James S. Thorp.
 
 %   MATPOWER
-%   $Id$
+%   $Id: runse.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   parts based on code by James S. Thorp, June 2004
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)

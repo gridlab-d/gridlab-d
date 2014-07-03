@@ -33,4 +33,4 @@
 %   under other licensing terms, the licensors of MATPOWER grant
 %   you additional permission to convey the resulting work.
 %
-%   $Id$
+%   $Id: Contents.m 4738 2014-07-03 00:55:39Z dchassin $

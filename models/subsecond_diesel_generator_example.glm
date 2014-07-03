@@ -1,4 +1,4 @@
-// $Id$
+// $Id: subsecond_diesel_generator_example.glm 4738 2014-07-03 00:55:39Z dchassin $
 // Basic deltamode example using the diesel generator model.
 
 #set suppress_repeat_messages=0

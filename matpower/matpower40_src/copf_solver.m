@@ -37,7 +37,7 @@ function [results, success, raw] = copf_solver(om, mpopt)
 %   See also OPF, CONSTR, FUN_COPF, GRAD_COPF.
 
 %   MATPOWER
-%   $Id$
+%   $Id: copf_solver.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   and Carlos E. Murillo-Sanchez, PSERC Cornell & Universidad Autonoma de Manizales
 %   Copyright (c) 2000-2010 by Power System Engineering Research Center (PSERC)

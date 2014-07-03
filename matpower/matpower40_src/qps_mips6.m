@@ -109,7 +109,7 @@ function [x, f, eflag, output, lambda] = qps_mips6(H, c, A, l, u, xmin, xmax, x0
 %   See also MIPS.
 
 %   MIPS
-%   $Id$
+%   $Id: qps_mips6.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2010 by Power System Engineering Research Center (PSERC)
 %

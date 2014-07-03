@@ -1,4 +1,4 @@
-/** $Id$
+/** $Id: baseMVA.cpp 4738 2014-07-03 00:55:39Z dchassin $
 	@file baseMVA.cpp
 	@defgroup baseMVA Template for a new object class
 	@ingroup MODULENAME

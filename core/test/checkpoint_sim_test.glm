@@ -1,4 +1,4 @@
-// $Id$
+// $Id: checkpoint_sim_test.glm 4738 2014-07-03 00:55:39Z dchassin $
 // Copyright (C) 2008 Battelle Memorial Institute
 //
 // This model tests the checkpoint system by saving 
@@ -19,4 +19,10 @@ object house:..10 {
 	floor_area 2500;
 }
 
-object collector {	group class=house;	property sum(air_temperature);	file "tair.csv";	interval 3600;	limit 8760;};
+object collector {
+	group class=house;
+	property sum(air_temperature);
+	file "tair.csv";
+	interval 3600;
+	limit 8760;
+};

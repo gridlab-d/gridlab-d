@@ -12,7 +12,7 @@ function [v0, vl, vu] = getv(om, name)
 %   See also OPF_MODEL.
 
 %   MATPOWER
-%   $Id$
+%   $Id: getv.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2008-2010 by Power System Engineering Research Center (PSERC)
 %

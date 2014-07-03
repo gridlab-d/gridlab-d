@@ -1,4 +1,4 @@
-// $Id$
+// $Id: underground_line_conductor.h 4738 2014-07-03 00:55:39Z dchassin $
 //	Copyright (C) 2008 Battelle Memorial Institute
 
 #ifndef _UNDERGROUNDLINECONDUCTOR_H

@@ -3,7 +3,7 @@ function outputsesoln(idx, sigma, z, z_est, error_sqrsum)
 %   created by Rui Bo on 2008/01/14
 
 %   MATPOWER
-%   $Id$
+%   $Id: outputsesoln.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Rui Bo
 %   Copyright (c) 2009-2010 by Rui Bo
 %

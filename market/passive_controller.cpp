@@ -1,4 +1,4 @@
-/** $Id$
+/** $Id: passive_controller.cpp 4738 2014-07-03 00:55:39Z dchassin $
 	Copyright (C) 2009 Battelle Memorial Institute
 	@file passive_controller.cpp
 	@addtogroup passive_controller

@@ -25,7 +25,7 @@ function [x, duals, idx_workc, idx_bindc] = LPsetup(a, f, b, nequs, vlb, vub, id
 %   See also LPOPF_SOLVER.
 
 %   MATPOWER
-%   $Id$
+%   $Id: LPsetup.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Deqiang (David) Gan, PSERC Cornell & Zhejiang University
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

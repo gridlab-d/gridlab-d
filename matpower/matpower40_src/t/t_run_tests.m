@@ -13,7 +13,7 @@ function t_run_tests(test_names, verbose)
 %   See also T_BEGIN, T_END.
 
 %   MATPOWER
-%   $Id$
+%   $Id: t_run_tests.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2004-2010 by Power System Engineering Research Center (PSERC)
 %

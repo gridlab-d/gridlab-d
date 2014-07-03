@@ -1,4 +1,4 @@
-/** $Id$
+/** $Id: bus.cpp 4738 2014-07-03 00:55:39Z dchassin $
 	@file bus.cpp
 	@defgroup bus Template for a new object class
 	@ingroup MODULENAME

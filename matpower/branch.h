@@ -1,4 +1,4 @@
-/** $Id$
+/** $Id: branch.h 4738 2014-07-03 00:55:39Z dchassin $
 	@file branch.h
 	@addtogroup branch
 	@ingroup MODULENAME

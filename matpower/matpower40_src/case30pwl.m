@@ -5,7 +5,7 @@ function mpc = case30pwl
 %   Identical to case30.m, except with piece-wise linear generator costs.
 
 %   MATPOWER
-%   $Id$
+%   $Id: case30pwl.m 4738 2014-07-03 00:55:39Z dchassin $
 
 %% MATPOWER Case Format : Version 2
 mpc.version = '2';

@@ -46,7 +46,7 @@ function [varargout] = runopf_w_res(varargin)
 %   See also RUNOPF, TOGGLE_RESERVES, T_CASE30_USERFCNS.
 
 %   MATPOWER
-%   $Id$
+%   $Id: runopf_w_res.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2008-2010 by Power System Engineering Research Center (PSERC)
 %

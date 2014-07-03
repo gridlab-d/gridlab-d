@@ -36,7 +36,7 @@ function [h, g, dh, dg] = opf_consfcn(x, om, Ybus, Yf, Yt, mpopt, il, varargin)
 %   See also OPF_COSTFCN, OPF_HESSFCN.
 
 %   MATPOWER
-%   $Id$
+%   $Id: opf_consfcn.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Carlos E. Murillo-Sanchez, PSERC Cornell & Universidad Autonoma de Manizales
 %   and Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)

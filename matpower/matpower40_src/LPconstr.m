@@ -38,7 +38,7 @@ function [x, lambda, converged] = LPconstr(FUN,x,mpopt,step0,VLB,VUB,GRADFUN,LPE
 %   See also LPOPF_SOLVER.
 
 %   MATPOWER
-%   $Id$
+%   $Id: LPconstr.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Deqiang (David) Gan, PSERC Cornell & Zhejiang University
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

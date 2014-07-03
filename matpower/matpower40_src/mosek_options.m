@@ -53,7 +53,7 @@ function opt = mosek_options(overrides, mpopt)
 %   See also MOSEKOPT, MPOPTION.
 
 %   MATPOWER
-%   $Id$
+%   $Id: mosek_options.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2010 by Power System Engineering Research Center (PSERC)
 %

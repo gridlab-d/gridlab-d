@@ -41,7 +41,7 @@ function [co, cb] = auction(offers, bids, auction_type, limit_prc, gtee_prc)
 %   See also RUNMARKET, SMARTMKT.
 
 %   MATPOWER
-%   $Id$
+%   $Id: auction.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

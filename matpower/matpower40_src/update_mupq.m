@@ -13,7 +13,7 @@ function gen = update_mupq(baseMVA, gen, mu_PQh, mu_PQl, data)
 %   See also MAKEAPQ.
 
 %   MATPOWER
-%   $Id$
+%   $Id: update_mupq.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   and Carlos E. Murillo-Sanchez, PSERC Cornell & Universidad Autonoma de Manizales
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)

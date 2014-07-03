@@ -9,7 +9,7 @@ function lim = pricelimits(lim, haveQ)
 %          .Q       (optional, same structure as P)
 
 %   MATPOWER
-%   $Id$
+%   $Id: pricelimits.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2005-2010 by Power System Engineering Research Center (PSERC)
 %

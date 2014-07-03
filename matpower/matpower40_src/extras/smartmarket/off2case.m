@@ -35,7 +35,7 @@ function [gen, gencost] = off2case(gen, gencost, offers, bids, lim)
 %   See also CASE2OFF.
 
 %   MATPOWER
-%   $Id$
+%   $Id: off2case.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

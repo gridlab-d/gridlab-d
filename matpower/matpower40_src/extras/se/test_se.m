@@ -3,7 +3,7 @@ function test_se
 %   created by Rui Bo on 2007/11/12
 
 %   MATPOWER
-%   $Id$
+%   $Id: test_se.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Rui Bo
 %   Copyright (c) 2009-2010 by Rui Bo
 %

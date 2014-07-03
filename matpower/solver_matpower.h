@@ -1,4 +1,4 @@
-/** $Id$
+/** $Id: solver_matpower.h 4738 2014-07-03 00:55:39Z dchassin $
 	@file solver_matpower.h
 	@addtogroup solver_matpower
 	@ingroup MODULENAME

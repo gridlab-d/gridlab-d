@@ -2,7 +2,7 @@ function t_opf_dc_mips(quiet)
 %T_OPF_DC_MIPS  Tests for DC optimal power flow using MIPS solver.
 
 %   MATPOWER
-%   $Id$
+%   $Id: t_opf_dc_ipopt.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2004-2010 by Power System Engineering Research Center (PSERC)
 %

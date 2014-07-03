@@ -1,4 +1,4 @@
-/** $Id$
+/** $Id: baseMVA.h 4738 2014-07-03 00:55:39Z dchassin $
 	@file baseMVA.h
 	@addtogroup baseMVA
 	@ingroup MODULENAME

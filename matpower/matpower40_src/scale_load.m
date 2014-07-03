@@ -72,7 +72,7 @@ function [bus, gen] = scale_load(load, bus, gen, load_zone, opt)
 %   See also TOTAL_LOAD.
 
 %   MATPOWER
-%   $Id$
+%   $Id: scale_load.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2004-2010 by Power System Engineering Research Center (PSERC)
 %

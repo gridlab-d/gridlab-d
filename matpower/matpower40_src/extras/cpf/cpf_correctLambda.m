@@ -7,7 +7,7 @@ function [V, lambda, converged, iterNum] = cpf_correctLambda(baseMVA, bus, gen, 
 %   created by Rui Bo on 2007/11/12
 
 %   MATPOWER
-%   $Id$
+%   $Id: cpf_correctLambda.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Rui Bo
 %   and Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)

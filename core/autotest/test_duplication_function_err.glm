@@ -1,4 +1,4 @@
-// $Id$
+// $Id: test_duplication_function_err.glm 4738 2014-07-03 00:55:39Z dchassin $
 //
 // Test to verify that duplicate function names can be detected
 

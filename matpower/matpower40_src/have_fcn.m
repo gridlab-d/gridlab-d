@@ -31,7 +31,7 @@ function TorF = have_fcn(tag)
 %       end
 
 %   MATPOWER
-%   $Id$
+%   $Id: have_fcn.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2004-2011 by Power System Engineering Research Center (PSERC)
 %

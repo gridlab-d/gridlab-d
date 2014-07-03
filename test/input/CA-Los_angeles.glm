@@ -1,4 +1,4 @@
-// $Id$
+// $Id: CA-Los_angeles.glm 4738 2014-07-03 00:55:39Z dchassin $
 // automatically generated Thu May  7 09:19:14 PDT 2009 from 23174.tm2
 module climate;
 class climate {

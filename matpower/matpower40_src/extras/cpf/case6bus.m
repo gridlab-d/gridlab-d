@@ -5,7 +5,7 @@ function [baseMVA, bus, gen, branch] = case6bus
 %   created by Rui Bo on 2007/11/12
 
 %   MATPOWER
-%   $Id$
+%   $Id: case6bus.m 4738 2014-07-03 00:55:39Z dchassin $
 
 %%-----  Power Flow Data  -----%%
 %% system MVA base

@@ -37,7 +37,7 @@ function [f, g] = fun_copf(x, om, Ybus, Yf, Yt, Afeq, bfeq, Af, bf, mpopt, il)
 %          in MPOPT (only for constrained lines)
 
 %   MATPOWER
-%   $Id$
+%   $Id: fun_copf.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Carlos E. Murillo-Sanchez, PSERC Cornell & Universidad Autonoma de Manizales
 %   and Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)

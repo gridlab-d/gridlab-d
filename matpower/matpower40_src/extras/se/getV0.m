@@ -7,7 +7,7 @@ function V0 = getV0(bus, gen, type_initialguess, V0)
 %                      3 - from input
 
 %   MATPOWER
-%   $Id$
+%   $Id: getV0.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Rui Bo
 %   Copyright (c) 2009-2010 by Rui Bo
 %

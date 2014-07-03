@@ -7,7 +7,7 @@ function TorF = isload(gen)
 %   of both elastic demand and pumped storage units.
 
 %   MATPOWER
-%   $Id$
+%   $Id: isload.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2005-2010 by Power System Engineering Research Center (PSERC)
 %

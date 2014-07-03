@@ -7,7 +7,7 @@ function pwlcost = poly2pwl(polycost, Pmin, Pmax, npts)
 %   uses NPTS evenly spaced points between PMIN and PMAX.
 
 %   MATPOWER
-%   $Id$
+%   $Id: poly2pwl.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

@@ -93,7 +93,7 @@ function [x, f, eflag, output, lambda] = qps_ot(H, c, A, l, u, xmin, xmax, x0, o
 %   See also QUADPROG, LINPROG.
 
 %   MATPOWER
-%   $Id$
+%   $Id: qps_ot.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2010-2011 by Power System Engineering Research Center (PSERC)
 %

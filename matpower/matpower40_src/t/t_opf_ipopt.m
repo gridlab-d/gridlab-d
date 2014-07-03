@@ -2,7 +2,7 @@ function t_opf_ipopt(quiet)
 %T_OPF_IPOPT  Tests for IPOPT-based AC optimal power flow.
 
 %   MATPOWER
-%   $Id$
+%   $Id: t_opf_ipopt.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2004-2010 by Power System Engineering Research Center (PSERC)
 %

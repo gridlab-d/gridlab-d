@@ -18,7 +18,7 @@ function [V, converged, i] = gausspf(Ybus, Sbus, V0, ref, pv, pq, mpopt)
 %   See also RUNPF.
 
 %   MATPOWER
-%   $Id$
+%   $Id: gausspf.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   and Alberto Borghetti, University of Bologna, Italy
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)

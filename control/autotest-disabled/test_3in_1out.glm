@@ -1,4 +1,4 @@
-// $Id$
+// $Id: test_3in_1out.glm 4738 2014-07-03 00:55:39Z dchassin $
 
 clock {
 	timezone PST+8PDT;

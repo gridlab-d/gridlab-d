@@ -14,7 +14,7 @@ function [Ybus, Yf, Yt] = makeYbus(baseMVA, bus, branch)
 %   See also MAKEJAC, MAKESBUS, EXT2INT.
 
 %   MATPOWER
-%   $Id$
+%   $Id: makeYbus.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

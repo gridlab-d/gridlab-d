@@ -1,4 +1,4 @@
-# $Id$
+# $Id: aminclude.mk 4738 2014-07-03 00:55:39Z dchassin $
 # Copyright (C) 2004 Oren Ben-Kiki
 # This file is distributed under the same terms as GridLAB-D.
 # 

@@ -1,4 +1,4 @@
-// $Id$
+// $Id: test_deltamode_diesel_dg.glm 4738 2014-07-03 00:55:39Z dchassin $
 // Basic deltamode test
 // No asserts, just a "did it run without issues"
 

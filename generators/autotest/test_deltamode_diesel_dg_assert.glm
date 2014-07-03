@@ -1,4 +1,4 @@
-// $Id$
+// $Id: test_deltamode_diesel_dg_assert.glm 4738 2014-07-03 00:55:39Z dchassin $
 // Basic deltamode test
 
 #set suppress_repeat_messages=0

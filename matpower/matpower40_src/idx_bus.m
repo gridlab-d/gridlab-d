@@ -47,7 +47,7 @@ function [PQ, PV, REF, NONE, BUS_I, BUS_TYPE, PD, QD, GS, BS, BUS_AREA, VM, ...
 %   See also DEFINE_CONSTANTS.
 
 %   MATPOWER
-%   $Id$
+%   $Id: idx_bus.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

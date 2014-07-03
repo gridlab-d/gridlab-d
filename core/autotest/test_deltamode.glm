@@ -1,4 +1,4 @@
-// $Id$
+// $Id: test_deltamode.glm 4738 2014-07-03 00:55:39Z dchassin $
 // Basic deltamode test - just see if it executes for now
 
 #set suppress_repeat_messages=0

@@ -1,4 +1,4 @@
-// $Id$
+// $Id: test_bare_class.glm 4738 2014-07-03 00:55:39Z dchassin $
 
 // new class with no core functions acts like a library container
 // this is allowed as of V3.0 and doesn't require a compiler to work

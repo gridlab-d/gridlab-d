@@ -1,4 +1,4 @@
-# $Id$                                            -*- Autoconf -*-
+# $Id: configure.ac 4738 2014-07-03 00:55:39Z dchassin $                                            -*- Autoconf -*-
 # Copyright (C) 2008 Battelle Memorial Institute
 # Process this file with autoconf to produce a configure script.
 # This file is distributed under the same terms as GridLAB-D.

@@ -47,7 +47,7 @@ function [Pd, Qd] = total_load(bus, gen, load_zone, which_type)
 %   See also SCALE_LOAD.
 
 %   MATPOWER
-%   $Id$
+%   $Id: total_load.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2004-2010 by Power System Engineering Research Center (PSERC)
 %

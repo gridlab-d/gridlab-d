@@ -1,4 +1,4 @@
-# $Id$
+# $Id: olypen_clallam_temperature.tape 4738 2014-07-03 00:55:39Z dchassin $
 # Copyright (C) 2008 Battelle Memorial Institute
 # read_time, temperature
 2006-04-01 00:15:00,46

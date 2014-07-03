@@ -37,7 +37,7 @@ function cdf2matp(cdf_file, matp_file, mpcver)
 %   using converted data. This is the case when we converted ieee300.cdf.
 
 %   MATPOWER
-%   $Id$
+%   $Id: cdf2matp.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Deqiang (David) Gan, PSERC Cornell & Zhejiang University
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %
@@ -77,7 +77,7 @@ function cdf2matp(cdf_file, matp_file, mpcver)
 [PW_LINEAR, POLYNOMIAL, MODEL, STARTUP, SHUTDOWN, NCOST, COST] = idx_cost;
 [AREA_I, PRICE_REF_BUS] = idx_area;
 
-rev = '$Revision$';
+rev = '$Revision: 4738 $';
 
 % ----- get the original load flow data -----
 if nargin < 1

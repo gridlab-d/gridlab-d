@@ -11,7 +11,7 @@ function mpc = case300
 %  13/05/91 CYME INTERNATIONAL    100.0 1991 S IEEE 300-BUS TEST SYSTEM
 
 %   MATPOWER
-%   $Id$
+%   $Id: case300.m 4738 2014-07-03 00:55:39Z dchassin $
 
 %% MATPOWER Case Format : Version 2
 mpc.version = '2';

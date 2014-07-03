@@ -1,4 +1,4 @@
-// $Id$
+// $Id: res_integrated_test_meter.glm 4738 2014-07-03 00:55:39Z dchassin $
 //
 // Model file for integrated testing
 // One house with each enduse represented for verifying power aggregation

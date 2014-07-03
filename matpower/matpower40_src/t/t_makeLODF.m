@@ -2,7 +2,7 @@ function t_makeLODF(quiet)
 %T_MAKELODF  Tests for MAKELODF.
 
 %   MATPOWER
-%   $Id$
+%   $Id: t_makeLODF.m 4738 2014-07-03 00:55:39Z dchassin $
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2008-2010 by Power System Engineering Research Center (PSERC)
 %
