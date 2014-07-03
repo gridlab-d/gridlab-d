@@ -3,7 +3,7 @@ function t_opf_userfcns(quiet)
 %   Includes high-level tests of reserves and iflims implementations.
 
 %   MATPOWER
-%   $Id: t_opf_userfcns.m,v 1.9 2010/04/26 19:45:26 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2009-2010 by Power System Engineering Research Center (PSERC)
 %

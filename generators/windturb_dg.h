@@ -1,4 +1,4 @@
-/** $Id: windturb_dg.h,v 0.1 2008/06/06 12:00 d3x289 Exp $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file windturb_dg.h
 	@addtogroup windturb_dg

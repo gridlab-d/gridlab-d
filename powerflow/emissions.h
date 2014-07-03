@@ -1,4 +1,4 @@
-/** $Id: emissions.h, V 2.2 2011-2-11 17:00:00Z Bharat Exp $
+/** $Id$
 	Copyright (C) 2011 Battelle Memorial Institute
 
 	@Warning: It is still under development.

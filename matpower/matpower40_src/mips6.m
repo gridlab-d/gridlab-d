@@ -163,7 +163,7 @@ function [x, f, eflag, output, lambda] = mips6(f_fcn, x0, A, l, u, xmin, xmax, g
 %     pp. 1185-1193.
 
 %   MIPS
-%   $Id: mips6.m,v 1.17 2010/06/09 14:56:58 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2009-2010 by Power System Engineering Research Center (PSERC)
 %

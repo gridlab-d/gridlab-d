@@ -42,7 +42,7 @@ function [dSbus_dVm, dSbus_dVa] = dSbus_dV(Ybus, V)
 %             http://www.pserc.cornell.edu/matpower/TN2-OPF-Derivatives.pdf
 
 %   MATPOWER
-%   $Id: dSbus_dV.m,v 1.11 2010/11/16 16:05:47 cvs Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

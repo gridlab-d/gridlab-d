@@ -1,4 +1,4 @@
-/** $Id: link.cpp 1194 2009-01-06 20:50:47Z dchassin $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file link.cpp
 	@addtogroup link Network link (branch)

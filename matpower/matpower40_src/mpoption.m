@@ -235,7 +235,7 @@ function [options, names] = mpoption(varargin)
 %                                   solvers if possible         [   0 or 1  ]
 
 %   MATPOWER
-%   $Id: mpoption.m,v 1.46 2010/11/24 22:31:32 cvs Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

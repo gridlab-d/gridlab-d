@@ -1,4 +1,4 @@
-/** $Id: module.c 1212 2009-01-17 01:42:30Z d3m998 $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file module.cpp
 	@addtogroup modules Runtime modules

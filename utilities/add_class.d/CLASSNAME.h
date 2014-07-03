@@ -1,4 +1,4 @@
-/** $Id: CLASSNAME.h 683 2008-06-18 20:16:29Z d3g637 $
+/** $Id$
 	@file CLASSNAME.h
 	@addtogroup CLASSNAME
 	@ingroup MODULENAME

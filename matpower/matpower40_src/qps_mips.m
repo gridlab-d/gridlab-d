@@ -106,7 +106,7 @@ function [x, f, eflag, output, lambda] = qps_mips(H, c, A, l, u, xmin, xmax, x0,
 %   See also MIPS.
 
 %   MIPS
-%   $Id: qps_mips.m,v 1.10 2010/12/15 18:40:42 cvs Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2010 by Power System Engineering Research Center (PSERC)
 %

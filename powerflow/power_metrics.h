@@ -1,4 +1,4 @@
-// $Id: power_metrics.h 2010-06-14 15:00:00Z d3x593 $
+// $Id$
 //	Copyright (C) 2009 Battelle Memorial Institute
 
 #ifndef _POWER_METRICS_H

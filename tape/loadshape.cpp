@@ -1,4 +1,4 @@
-/** $Id: loadshape.cpp,v 1.13 2009/06/22 14:22:35 mhauer Exp $
+/** $Id$
 	Copyright (C) 2009 Battelle Memorial Institute
 	@file loadshape.cpp
 	@addtogroup loadshape

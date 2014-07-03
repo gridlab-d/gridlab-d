@@ -38,7 +38,7 @@ function [vv, ll, nn, cc] = get_idx(om)
 %   See also OPF_MODEL, ADD_VARS, ADD_CONSTRAINTS, ADD_COSTS.
 
 %   MATPOWER
-%   $Id: get_idx.m,v 1.9 2010/06/09 14:56:58 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2008-2010 by Power System Engineering Research Center (PSERC)
 %

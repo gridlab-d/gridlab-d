@@ -1,4 +1,4 @@
-/* $Id: match.c 1182 2008-12-22 22:08:36Z dchassin $
+/* $Id$
  *	From _Beautiful Code_, edited by Andy Oram and Greg Wilson, CR 2007 O'Reilly Media, Inc.
  *	"A Regular Expression Matcher", Brian Kernighan
  *

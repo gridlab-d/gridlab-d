@@ -1,4 +1,4 @@
-// $Id: triplex_meter.h 942 2008-09-19 20:03:17Z dchassin $
+// $Id$
 //	Copyright (C) 2008 Battelle Memorial Institute
 
 #ifndef _TRIPLEXMETER_H

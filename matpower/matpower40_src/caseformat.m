@@ -142,7 +142,7 @@
 %   and IDX_COST.
 
 %   MATPOWER
-%   $Id: caseformat.m,v 1.17 2010/05/27 14:29:05 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

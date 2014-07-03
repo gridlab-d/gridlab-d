@@ -1,4 +1,4 @@
-/** $Id: CLASSNAME.cpp 858 2008-08-28 21:06:13Z d3g637 $
+/** $Id$
 	@file CLASSNAME.cpp
 	@defgroup CLASSNAME Template for a new object class
 	@ingroup MODULENAME

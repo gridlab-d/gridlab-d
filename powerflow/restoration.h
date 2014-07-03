@@ -1,4 +1,4 @@
-// $Id: restoration.h 2009-11-09 15:00:00Z d3x593 $
+// $Id$
 //	Copyright (C) 2009 Battelle Memorial Institute
 
 #ifndef _RESTORATION_H

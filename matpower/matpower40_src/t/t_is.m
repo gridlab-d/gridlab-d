@@ -19,7 +19,7 @@ function t_is(got, expected, prec, msg)
 %   See also T_OK, T_SKIP, T_BEGIN, T_END, T_RUN_TESTS.
 
 %   MATPOWER
-%   $Id: t_is.m,v 1.13 2010/12/08 18:35:49 cvs Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2004-2010 by Power System Engineering Research Center (PSERC)
 %

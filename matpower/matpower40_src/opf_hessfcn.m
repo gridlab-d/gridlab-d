@@ -32,7 +32,7 @@ function Lxx = opf_hessfcn(x, lambda, cost_mult, om, Ybus, Yf, Yt, mpopt, il)
 %   See also OPF_COSTFCN, OPF_CONSFCN.
 
 %   MATPOWER
-%   $Id: opf_hessfcn.m,v 1.7 2010/05/13 15:42:39 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   and Carlos E. Murillo-Sanchez, PSERC Cornell & Universidad Autonoma de Manizales
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)

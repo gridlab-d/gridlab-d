@@ -1,4 +1,4 @@
-/** $Id: range.h,v 1.13 2011/09/28 23:48:51 d3j168 Exp $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file range.h
 	@addtogroup range
@@ -190,7 +190,7 @@ public:
 
 #endif
 
-/** $Id: range.h,v 1.32 2011/09/28 17:57:03 d3j168 Exp $
+/** $Id$
 	Copyright (C) 2011 Battelle Memorial Institute
 	@file range.h
 	@addtogroup range

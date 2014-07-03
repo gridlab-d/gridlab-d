@@ -2,7 +2,7 @@ function t_opf_mips(quiet)
 %T_OPF_MIPS  Tests for MIPS-based AC optimal power flow.
 
 %   MATPOWER
-%   $Id: t_opf_mips.m,v 1.7 2010/11/30 21:29:11 cvs Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2004-2010 by Power System Engineering Research Center (PSERC)
 %

@@ -1,4 +1,4 @@
-/** $Id: house.cpp,v 1.71 2008/02/13 02:22:35 d3j168 Exp $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file house.cpp
 	@addtogroup house

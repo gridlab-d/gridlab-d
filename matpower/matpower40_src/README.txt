@@ -12,7 +12,7 @@ Authors:    Ray Zimmerman               <rz10@cornell.edu>
 
             Mon, Feb 7, 2011
 
-$Id: README.txt,v 1.34 2011/02/08 18:05:04 cvs Exp $
+$Id$
 Copyright (c) 1997-2011 by Power System Engineering Research Center (PSERC)
 See http://www.pserc.cornell.edu/matpower/ for more info.
 

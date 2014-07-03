@@ -14,7 +14,7 @@ function t_end
 %   See also T_BEGIN, T_OK, T_IS, T_SKIP, T_RUN_TESTS.
 
 %   MATPOWER
-%   $Id: t_end.m,v 1.9 2010/04/26 19:45:26 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2004-2010 by Power System Engineering Research Center (PSERC)
 %

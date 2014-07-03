@@ -13,7 +13,7 @@ function [Avl, lvl, uvl, ivl]  = makeAvl(baseMVA, gen)
 %       [Avl, lvl, uvl, ivl]  = makeAvl(baseMVA, gen);
 
 %   MATPOWER
-%   $Id: makeAvl.m,v 1.6 2010/04/26 19:45:25 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   and Carlos E. Murillo-Sanchez, PSERC Cornell & Universidad Autonoma de Manizales
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)

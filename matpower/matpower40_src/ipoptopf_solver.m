@@ -35,7 +35,7 @@ function [results, success, raw] = ipoptopf_solver(om, mpopt)
 %   See also OPF, MIPS.
 
 %   MATPOWER
-%   $Id: ipoptopf_solver.m,v 1.4 2010/06/09 14:56:58 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   and Carlos E. Murillo-Sanchez, PSERC Cornell & Universidad Autonoma de Manizales
 %   Copyright (c) 2000-2010 by Power System Engineering Research Center (PSERC)

@@ -5,7 +5,7 @@ function t_opf_lp_den(quiet)
 %T_OPF_LP_DEN  Tests for dense LP-based optimal power flow.
 
 %   MATPOWER
-%   $Id: t_opf_lp_den.m,v 1.14 2010/11/30 21:29:11 cvs Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2004-2010 by Power System Engineering Research Center (PSERC)
 %

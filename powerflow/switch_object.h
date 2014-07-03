@@ -1,4 +1,4 @@
-/** $Id: switch_object.h,v 1.5 2008/02/04 23:08:12 d3p988 Exp $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file switch_object.h
 

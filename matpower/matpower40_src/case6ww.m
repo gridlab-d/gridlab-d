@@ -7,7 +7,7 @@ function mpc = case6ww
 %   by Allen. J. Wood and Bruce F. Wollenberg, John Wiley & Sons, NY, Jan 1996.
 
 %   MATPOWER
-%   $Id: case6ww.m,v 1.7 2010/03/10 18:08:15 ray Exp $
+%   $Id$
 
 %% MATPOWER Case Format : Version 2
 mpc.version = '2';

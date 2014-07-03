@@ -1,4 +1,4 @@
-/* $Id: rest.h 683 2008-06-18 20:16:29Z d3g637 $ */
+/* $Id$ */
 
 #ifndef _rest_H
 #define _rest_H

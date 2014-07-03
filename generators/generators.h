@@ -1,4 +1,4 @@
-/** $Id: generators.h,v 1.2 2008/02/12 00:28:08 d3g637 Exp $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
  **/
 

@@ -1,4 +1,4 @@
-/** $Id: main.cpp,v 1.5 2008/02/14 23:26:25 d3p988 Exp $
+/** $Id$
 	@file main.cpp
 	@defgroup commercial Commercial buildings (commercial)
 	@ingroup modules

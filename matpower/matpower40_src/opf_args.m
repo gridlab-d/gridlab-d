@@ -71,7 +71,7 @@ function [baseMVA, bus, gen, branch, gencost, Au, lbu, ubu, ...
 %   for details and default values.
 
 %   MATPOWER
-%   $Id: opf_args.m,v 1.9 2010/04/26 19:45:25 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   and Carlos E. Murillo-Sanchez, PSERC Cornell & Universidad Autonoma de Manizales
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)

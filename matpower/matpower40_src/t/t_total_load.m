@@ -2,7 +2,7 @@ function t_total_load(quiet)
 %T_TOTAL_LOAD  Tests for code in TOTAL_LOAD.
 
 %   MATPOWER
-%   $Id: t_total_load.m,v 1.5 2010/04/26 19:45:26 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2008-2010 by Power System Engineering Research Center (PSERC)
 %

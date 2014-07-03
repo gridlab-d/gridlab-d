@@ -2,7 +2,7 @@ function t_runopf_w_res(quiet)
 %T_RUNOPF_W_RES  Tests RUNOPF_W_RES and the associated callbacks.
 
 %   MATPOWER
-%   $Id: t_runopf_w_res.m,v 1.10 2010/04/26 19:45:26 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2009-2010 by Power System Engineering Research Center (PSERC)
 %

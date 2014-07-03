@@ -51,7 +51,7 @@ function opt = ipopt_options(overrides, mpopt)
 %   See also IPOPT, MPOPTION.
 
 %   MATPOWER
-%   $Id: ipopt_options.m,v 1.5 2010/11/24 21:59:12 cvs Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2010 by Power System Engineering Research Center (PSERC)
 %

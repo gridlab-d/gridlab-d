@@ -2,7 +2,7 @@ function mpc = t_case_ext
 %T_CASE_EXT  Case data in external format used to test EXT2INT and INT2EXT.
 
 %   MATPOWER
-%   $Id: t_case_ext.m,v 1.5 2010/04/19 14:40:12 ray Exp $
+%   $Id$
 
 %% MATPOWER Case Format : Version 2
 mpc.version = '2';

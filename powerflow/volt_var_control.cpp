@@ -1,4 +1,4 @@
-/** $Id: volt_var_control.cpp 2010-02-26 15:00:00Z d3x593 $
+/** $Id$
 	
 	Implemented integrated Volt-VAr control scheme detailed in:
 

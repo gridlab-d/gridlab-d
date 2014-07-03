@@ -1,4 +1,4 @@
-/** $Id: controller.h 1182 2009-09-09 22:08:36Z mhauer $
+/** $Id$
 	Copyright (C) 2009 Battelle Memorial Institute
 	@file controller.h
 	@addtogroup controller

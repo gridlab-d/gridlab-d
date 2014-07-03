@@ -1,4 +1,4 @@
-/** $Id: house_e.h,v 1.44 2008/02/12 06:14:47 d3j168 Exp $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file house_e.h
 	@addtogroup house_e

@@ -5,7 +5,7 @@ function [varargout] = fmincopf(varargin)
 %   output arguments.
 
 %   MATPOWER
-%   $Id: fmincopf.m,v 1.38 2010/04/26 19:45:25 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2000-2010 by Power System Engineering Research Center (PSERC)
 %

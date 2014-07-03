@@ -2,7 +2,7 @@ function t_totcost(quiet)
 %T_TOTCOST  Tests for code in TOTCOST.
 
 %   MATPOWER
-%   $Id: t_totcost.m,v 1.1 2010/06/01 20:11:36 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2010 by Power System Engineering Research Center (PSERC)
 %

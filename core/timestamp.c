@@ -1,4 +1,4 @@
-/** $Id: timestamp.c 1187 2009-01-02 18:58:48Z dchassin $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file timestamp.c
 	@addtogroup timestamp Time management

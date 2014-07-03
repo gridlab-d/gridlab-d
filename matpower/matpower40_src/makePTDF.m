@@ -20,7 +20,7 @@ function H = makePTDF(baseMVA, bus, branch, slack)
 %   at that bus.
 
 %   MATPOWER
-%   $Id: makePTDF.m,v 1.9 2010/04/26 19:45:25 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2006-2010 by Power System Engineering Research Center (PSERC)
 %

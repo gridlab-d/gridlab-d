@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.21 2008/01/22 22:01:09 d3p181 Exp $
+# $Id$
 # Copyright (C) 2008 Battelle Memorial Institute
 # This file is distributed under the same terms as GridLAB-D.
 

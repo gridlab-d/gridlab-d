@@ -5,7 +5,7 @@ function t_mips6(quiet)
 %T_MIPS6  Tests of MIPS NLP solver (for MATLAB 6).
 
 %   MIPS
-%   $Id: t_mips6.m,v 1.14 2010/11/15 19:20:42 cvs Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2010 by Power System Engineering Research Center (PSERC)
 %

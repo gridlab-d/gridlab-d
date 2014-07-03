@@ -1,4 +1,4 @@
-/** $Id: triplex_line.cpp 1186 2009-01-02 18:15:30Z dchassin $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file triplex_line.cpp
 	@addtogroup triplex_line 

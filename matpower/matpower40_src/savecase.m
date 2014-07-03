@@ -24,7 +24,7 @@ function fname_out = savecase(fname, varargin)
 %   version 1 format before saving.
 
 %   MATPOWER
-%   $Id: savecase.m,v 1.35 2010/04/26 19:45:25 ray Exp $
+%   $Id$
 %   by Carlos E. Murillo-Sanchez, PSERC Cornell & Universidad Autonoma de Manizales
 %   and Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)

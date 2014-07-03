@@ -17,7 +17,7 @@ function gencost = modcost(gencost, alpha, modtype)
 %       SHIFT_X           : F_alpha(X + ALPHA) == F(X)
 
 %   MATPOWER
-%   $Id: modcost.m,v 1.1 2010/06/01 20:11:36 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2010 by Power System Engineering Research Center (PSERC)
 %

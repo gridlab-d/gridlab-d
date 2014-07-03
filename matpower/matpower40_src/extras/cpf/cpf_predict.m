@@ -8,7 +8,7 @@ function [V_predicted, lambda_predicted, J] = cpf_predict(Ybus, ref, pv, pq, V, 
 %   created by Rui Bo on 2007/11/12
 
 %   MATPOWER
-%   $Id: cpf_predict.m,v 1.4 2010/04/26 19:45:26 ray Exp $
+%   $Id$
 %   by Rui Bo
 %   Copyright (c) 2009-2010 by Rui Bo
 %

@@ -91,7 +91,7 @@ function [x, f, eflag, output, lambda] = qps_cplex(H, c, A, l, u, xmin, xmax, x0
 %   See also CPLEXQP, CPLEXLP, CPLEX_OPTIONS.
 
 %   MATPOWER
-%   $Id: qps_cplex.m,v 1.4 2010/12/16 20:59:57 cvs Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2010 by Power System Engineering Research Center (PSERC)
 %

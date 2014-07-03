@@ -1,4 +1,4 @@
-/** $Id: aggregate.h 1206 2009-01-12 21:10:23Z d3p988 $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file aggregate.h
 	@addtogroup aggregate

@@ -2,7 +2,7 @@ function t_modcost(quiet)
 %T_MODCOST  Tests for code in MODCOST.
 
 %   MATPOWER
-%   $Id: t_modcost.m,v 1.2 2010/06/01 20:30:06 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2010 by Power System Engineering Research Center (PSERC)
 %

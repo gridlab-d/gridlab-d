@@ -9,7 +9,7 @@ function [val, idx] = fairmax(x)
 %   See also MAX.
 
 %   MATPOWER
-%   $Id: fairmax.m,v 1.7 2010/04/26 19:45:25 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

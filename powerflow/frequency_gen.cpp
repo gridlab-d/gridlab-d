@@ -1,4 +1,4 @@
-/** $Id: frequency_gen.cpp 2009-11-10 17:00:00Z d3x593 $
+/** $Id$
 	Copyright (C) 2009 Battelle Memorial Institute
 **/
 

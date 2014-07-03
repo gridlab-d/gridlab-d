@@ -10,7 +10,7 @@ function printmkt(r, t, dispatch, success, fd, mpopt)
 %   See also SMARTMKT.
 
 %   MATPOWER
-%   $Id: printmkt.m,v 1.13 2010/04/26 19:45:26 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

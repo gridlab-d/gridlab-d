@@ -1,4 +1,4 @@
-/** $Id: recorder.c 1208 2009-01-12 22:48:16Z d3p988 $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file tape.c
 	@addtogroup recorder Recorders

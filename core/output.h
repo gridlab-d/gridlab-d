@@ -1,4 +1,4 @@
-/** $Id: output.h 1188 2009-01-02 21:51:07Z dchassin $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file output.h
 	@addtogroup output

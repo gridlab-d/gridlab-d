@@ -5,7 +5,7 @@ function [co, cb, r, dispatch, success] = ...
 %       OFFERS, BIDS, MKT, MPOPT) runs the ISO smart market.
 
 %   MATPOWER
-%   $Id: smartmkt.m,v 1.33 2010/04/26 19:45:26 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

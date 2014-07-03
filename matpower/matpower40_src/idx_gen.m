@@ -51,7 +51,7 @@ function [GEN_BUS, PG, QG, QMAX, QMIN, VG, MBASE, GEN_STATUS, PMAX, PMIN, ...
 %   See also DEFINE_CONSTANTS.
 
 %   MATPOWER
-%   $Id: idx_gen.m,v 1.15 2010/04/26 19:45:25 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

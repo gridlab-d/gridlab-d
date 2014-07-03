@@ -1,4 +1,4 @@
-/** $Id: range.cpp,v 1.17 2011/09/29 02:22:35 d3j168 Exp $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file range.cpp
 	@addtogroup range
@@ -1308,7 +1308,7 @@ EXPORT TIMESTAMP plc_range(OBJECT *obj, TIMESTAMP t0)
 	return TS_NEVER;  
 }
 
-/** $Id: range.cpp,v 1.51 2008/02/15 00:24:14 d3j168 Exp $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file range.cpp
 	@addtogroup range Electric range

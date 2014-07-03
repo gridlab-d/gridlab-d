@@ -1,4 +1,4 @@
-/** $Id: windturb_dg.cpp,v 1.0 2008/06/12 00:28:08 d3x289 Exp $
+/** $Id$
 Copyright (C) 2008 Battelle Memorial Institute
 @file windturb_dg.cpp
 @defgroup windturb_dg Wind Turbine gensets

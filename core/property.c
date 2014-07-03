@@ -1,4 +1,4 @@
-/** $Id: property.c 1182 2011-05-06 22:08:36Z mhauer $
+/** $Id$
 	Copyright (C) 2011 Battelle Memorial Institute
 	@file property.c
 	@addtogroup property Properties of objects

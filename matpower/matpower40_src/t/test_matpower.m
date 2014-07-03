@@ -7,7 +7,7 @@ function test_matpower(verbose)
 %   See also T_RUN_TESTS.
 
 %   MATPOWER
-%   $Id: test_matpower.m,v 1.39 2010/11/24 22:31:33 cvs Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2004-2010 by Power System Engineering Research Center (PSERC)
 %

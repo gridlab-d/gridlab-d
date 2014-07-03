@@ -1,4 +1,4 @@
-/** $Id: transformer_configuration.cpp 1182 2008-12-22 22:08:36Z dchassin $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file transformer_configuration.cpp
 	@addtogroup transformer_configuration Transformer Configuration

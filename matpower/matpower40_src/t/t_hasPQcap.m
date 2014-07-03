@@ -2,7 +2,7 @@ function t_hasPQcap(quiet)
 %T_HASPQCAP  Tests for HASPQCAP.
 
 %   MATPOWER
-%   $Id: t_hasPQcap.m,v 1.5 2010/04/26 19:45:26 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2005-2010 by Power System Engineering Research Center (PSERC)
 %

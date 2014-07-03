@@ -1,4 +1,4 @@
-/** $Id: import.cpp 1197 2009-01-07 01:31:53Z dchassin $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file import.cpp
 	@addtogroup import Model import

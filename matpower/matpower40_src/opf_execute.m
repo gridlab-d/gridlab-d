@@ -8,7 +8,7 @@ function [results, success, raw] = opf_execute(om, mpopt)
 %   See also OPF, OPF_SETUP.
 
 %   MATPOWER
-%   $Id: opf_execute.m,v 1.6 2010/11/30 21:29:11 cvs Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2009-2010 by Power System Engineering Research Center (PSERC)
 %

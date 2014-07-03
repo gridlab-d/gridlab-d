@@ -16,7 +16,7 @@ function mpc = case30
 %   capacities. V limits and line |S| limits taken from Alsac & Stott.
 
 %   MATPOWER
-%   $Id: case30.m,v 1.12 2010/03/10 18:08:13 ray Exp $
+%   $Id$
 
 %% MATPOWER Case Format : Version 2
 mpc.version = '2';

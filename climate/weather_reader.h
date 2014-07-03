@@ -1,4 +1,4 @@
-/** $Id: weather_reader.h 1182 2009-11-03 22:08:36Z mhauer $
+/** $Id$
 	Copyright (C) 2009 Battelle Memorial Institute
 	@file weather_reader.h
 	@addtogroup climate

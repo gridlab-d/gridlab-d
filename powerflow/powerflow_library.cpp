@@ -1,4 +1,4 @@
-/** $Id: powerflow_library.cpp 858 2008-08-28 21:06:13Z d3g637 $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file powerflow_library.cpp
 	@addtogroup powerflow_library Powerflow library (abstract)

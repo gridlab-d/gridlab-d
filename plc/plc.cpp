@@ -1,4 +1,4 @@
-/** $Id: plc.cpp,v 1.12 2008/01/09 22:25:08 d3p988 Exp $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file plc.cpp
 	@addtogroup plc Programmable logic controllers (plc)

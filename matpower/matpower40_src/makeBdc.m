@@ -15,7 +15,7 @@ function [Bbus, Bf, Pbusinj, Pfinj] = makeBdc(baseMVA, bus, branch)
 %   See also DCPF.
 
 %   MATPOWER
-%   $Id: makeBdc.m,v 1.17 2010/04/26 19:45:25 ray Exp $
+%   $Id$
 %   by Carlos E. Murillo-Sanchez, PSERC Cornell & Universidad Autonoma de Manizales
 %   and Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)

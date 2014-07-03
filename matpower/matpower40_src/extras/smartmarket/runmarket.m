@@ -44,7 +44,7 @@ function [r, co, cb, f, dispatch, success, et] = ...
 %   See also OFF2CASE.
 
 %   MATPOWER
-%   $Id: runmarket.m,v 1.12 2010/05/24 15:51:50 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

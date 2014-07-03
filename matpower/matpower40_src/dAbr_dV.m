@@ -65,7 +65,7 @@ function [dAf_dVa, dAf_dVm, dAt_dVa, dAt_dVm] = ...
 %             http://www.pserc.cornell.edu/matpower/TN2-OPF-Derivatives.pdf
 
 %   MATPOWER
-%   $Id: dAbr_dV.m,v 1.11 2010/11/16 16:05:47 cvs Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

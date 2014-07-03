@@ -1,4 +1,4 @@
-/** $Id: gridlabd_java.h 718 2008-07-07 17:37:57Z d3g988 $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file gridlabd_java.h
 	@author Matthew L. Hauer

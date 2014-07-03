@@ -59,7 +59,7 @@ function [MVAbase, bus, gen, branch, success, et] = ...
 %   See also RUNDCPF.
 
 %   MATPOWER
-%   $Id: runpf.m,v 1.25 2010/04/26 19:45:25 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Enforcing of generator Q limits inspired by contributions
 %   from Mu Lin, Lincoln University, New Zealand (1/14/05).

@@ -34,7 +34,7 @@ function [df, dg, d2f] = grad_copf(x, om, Ybus, Yf, Yt, Afeq, bfeq, Af, bf, mpop
 %   See also FUN_COPF.
 
 %   MATPOWER
-%   $Id: grad_copf.m,v 1.19 2010/04/27 18:55:02 ray Exp $
+%   $Id$
 %   by Carlos E. Murillo-Sanchez, PSERC Cornell & Universidad Autonoma de Manizales
 %   and Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)

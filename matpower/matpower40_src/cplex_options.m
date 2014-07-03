@@ -54,7 +54,7 @@ function opt = cplex_options(overrides, mpopt)
 %   See also CPLEXLP, CPLEXQP, MPOPTION.
 
 %   MATPOWER
-%   $Id: cplex_options.m,v 1.3 2010/11/24 21:58:33 cvs Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2010 by Power System Engineering Research Center (PSERC)
 %

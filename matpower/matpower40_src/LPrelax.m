@@ -9,7 +9,7 @@ function [x2, duals_rlx, idx_workc, idx_bindc] = LPrelax(a, f, b, nequs, vlb, vu
 %   See also LPOPF_SOLVER, MP_LP.
 
 %   MATPOWER
-%   $Id: LPrelax.m,v 1.17 2010/11/23 14:34:40 cvs Exp $
+%   $Id$
 %   by Deqiang (David) Gan, PSERC Cornell & Zhejiang University
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

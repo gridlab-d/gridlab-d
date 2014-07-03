@@ -1,4 +1,4 @@
-/** $Id: tape_plot.cpp,v 1.2 2008/01/15 22:03:00 d3p988 Exp $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file tape_plot.cpp
 	@addtogroup tape_plot File-based tapes

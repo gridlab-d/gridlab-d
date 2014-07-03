@@ -2,7 +2,7 @@ function t_runmarket(quiet)
 %T_RUNMARKET  Tests for code in RUNMKT, SMARTMKT AND AUCTION.
 
 %   MATPOWER
-%   $Id: t_runmarket.m,v 1.12 2010/04/26 19:45:26 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2005-2010 by Power System Engineering Research Center (PSERC)
 %

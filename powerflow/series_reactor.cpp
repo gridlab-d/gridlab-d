@@ -1,4 +1,4 @@
-/** $Id: series_reactor.cpp,v 1.6 2009/10/23 07:40:00 d3x593 Exp $
+/** $Id$
 	Copyright (C) 2009 Battelle Memorial Institute
 	@file series_reactor.cpp
 	@addtogroup powerflow series_reactor

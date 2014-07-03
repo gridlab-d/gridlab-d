@@ -32,7 +32,7 @@ function [results, success, raw] = dcopf_solver(om, mpopt)
 %   See also OPF, QPS_MATPOWER.
 
 %   MATPOWER
-%   $Id: dcopf_solver.m,v 1.37 2010/12/16 20:59:57 cvs Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   and Carlos E. Murillo-Sanchez, PSERC Cornell & Universidad Autonoma de Manizales
 %   Copyright (c) 2000-2010 by Power System Engineering Research Center (PSERC)

@@ -1,4 +1,4 @@
-// $Id: histogram.h 1182 2009-02-16 15:18:36Z mhauer $
+// $Id$
 //	Copyright (C) 2008 Battelle Memorial Institute
 
 #ifndef _HISTOGRAM_H

@@ -1,4 +1,4 @@
-/** $Id: fusetest.h 2008-09-26 d3x044 $
+/** $Id$
 	@file fusetest.h
 	@author Chunlian Jin
 */

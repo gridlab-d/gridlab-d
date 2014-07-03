@@ -1,4 +1,4 @@
-/** $Id: init.cpp,v 1.32 2008/01/09 22:25:08 d3p988 Exp $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file init.cpp
 	@addtogroup residential Residential loads (residential)

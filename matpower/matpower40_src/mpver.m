@@ -9,7 +9,7 @@ function rv = mpver(varargin)
 %   PDIPMOPF, SCPDIPMOPF and TRAMLOPF.
 
 %   MATPOWER
-%   $Id: mpver.m,v 1.44 2011/02/07 21:32:02 cvs Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2005-2011 by Power System Engineering Research Center (PSERC)
 %

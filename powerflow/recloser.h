@@ -1,4 +1,4 @@
-/** $Id: recloser.h,v 2.2 2011/01/04 23:08:12 fish334 Exp $
+/** $Id$
 	Copyright (C) 2011 Battelle Memorial Institute
 	@file recloser.h
  @{

@@ -1,4 +1,4 @@
-/** $Id: dryer.h,v 1.9 2011/09/29 00:05:09 d3j168 Exp $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file dryer.h
 	@addtogroup dryer

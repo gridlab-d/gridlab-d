@@ -5,7 +5,7 @@ function test_se_14bus_err
 %	created by Rui Bo on Jan 6, 2010
 
 %   MATPOWER
-%   $Id: test_se_14bus_err.m,v 1.3 2010/04/26 19:45:26 ray Exp $
+%   $Id$
 %   by Rui Bo
 %   Copyright (c) 2009-2010 by Rui Bo
 %

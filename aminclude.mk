@@ -1,4 +1,4 @@
-# $Id: aminclude.am,v 1.3 2007/10/21 19:15:53 d3g637 Exp $
+# $Id$
 # Copyright (C) 2004 Oren Ben-Kiki
 # This file is distributed under the same terms as GridLAB-D.
 # 

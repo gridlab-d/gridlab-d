@@ -23,7 +23,7 @@ function [f, df, d2f] = opf_costfcn(x, om, varargin)
 %   See also OPF_CONSFCN, OPF_HESSFCN.
 
 %   MATPOWER
-%   $Id: opf_costfcn.m,v 1.6 2010/04/26 19:45:25 ray Exp $
+%   $Id$
 %   by Carlos E. Murillo-Sanchez, PSERC Cornell & Universidad Autonoma de Manizales
 %   and Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)

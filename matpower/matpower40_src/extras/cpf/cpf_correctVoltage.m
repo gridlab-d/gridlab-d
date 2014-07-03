@@ -5,7 +5,7 @@ function [V, lambda, success, iterNum] = cpf_correctVoltage(baseMVA, bus, gen, Y
 %   created by Rui Bo on 2007/11/12
 
 %   MATPOWER
-%   $Id: cpf_correctVoltage.m,v 1.4 2010/04/26 19:45:26 ray Exp $
+%   $Id$
 %   by Rui Bo
 %   Copyright (c) 2009-2010 by Rui Bo
 %

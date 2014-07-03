@@ -8,7 +8,7 @@ function om = opf_setup(mpc, mpopt)
 %   See also OPF, EXT2INT, OPF_EXECUTE.
 
 %   MATPOWER
-%   $Id: opf_setup.m,v 1.5 2010/12/03 15:33:33 cvs Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   and Carlos E. Murillo-Sanchez, PSERC Cornell & Universidad Autonoma de Manizales
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)

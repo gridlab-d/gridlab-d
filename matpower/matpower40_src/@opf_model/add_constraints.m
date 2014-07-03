@@ -25,7 +25,7 @@ function om = add_constraints(om, name, AorN, l, u, varsets)
 %   See also OPF_MODEL, LINEAR_CONSTRAINTS.
 
 %   MATPOWER
-%   $Id: add_constraints.m,v 1.7 2010/06/09 14:56:58 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2008-2010 by Power System Engineering Research Center (PSERC)
 %

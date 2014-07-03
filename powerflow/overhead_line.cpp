@@ -1,4 +1,4 @@
-/** $Id: overhead_line.cpp 1182 2008-12-22 22:08:36Z dchassin $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file overhead_line.cpp
 	@addtogroup overhead_line 

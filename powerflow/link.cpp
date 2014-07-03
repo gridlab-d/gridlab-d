@@ -1,4 +1,4 @@
-/** $Id: link.cpp 1211 2009-01-17 00:45:28Z d3x593 $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file link.cpp
 	@addtogroup powerflow_link Link

@@ -19,7 +19,7 @@ function N = getN(om, selector, name)
 %   See also OPF_MODEL.
 
 %   MATPOWER
-%   $Id: getN.m,v 1.5 2010/06/09 14:56:58 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2008-2010 by Power System Engineering Research Center (PSERC)
 %

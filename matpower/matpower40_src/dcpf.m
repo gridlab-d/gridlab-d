@@ -10,7 +10,7 @@ function Va = dcpf(B, Pbus, Va0, ref, pv, pq)
 %   See also RUNDCPF, RUNPF.
 
 %   MATPOWER
-%   $Id: dcpf.m,v 1.9 2010/04/26 19:45:25 ray Exp $
+%   $Id$
 %   by Carlos E. Murillo-Sanchez, PSERC Cornell & Universidad Autonoma de Manizales
 %   and Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)

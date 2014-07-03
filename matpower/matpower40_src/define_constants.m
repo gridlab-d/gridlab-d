@@ -35,7 +35,7 @@
 %   for high-level code where maximum performance is not a concern.
 
 %   MATPOWER
-%   $Id: define_constants.m,v 1.8 2010/04/26 19:45:25 ray Exp $
+%   $Id$
 %   by Doug Mitarotonda & Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2009-2010 by Power System Engineering Research Center (PSERC)
 %

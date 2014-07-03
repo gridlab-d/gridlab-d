@@ -52,7 +52,7 @@ function [xout, lambdaout, howout, success] = mp_qp(H,f,A,b,VLB,VUB,x0,N,verbose
 %     or infeasible. 
 
 %   MATPOWER
-%   $Id: mp_qp.m,v 1.30 2010/11/23 14:27:50 cvs Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

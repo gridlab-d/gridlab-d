@@ -1,4 +1,4 @@
-// $Id: frequency_gen.h 2009-11-10 17:00:00Z d3x593 $
+// $Id$
 //	Copyright (C) 2009 Battelle Memorial Institute
 
 #ifndef _FREQUENCYGEN_H

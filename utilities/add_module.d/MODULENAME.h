@@ -1,4 +1,4 @@
-/* $Id: MODULENAME.h 683 2008-06-18 20:16:29Z d3g637 $ */
+/* $Id$ */
 
 #ifndef _MODULENAME_H
 #define _MODULENAME_H

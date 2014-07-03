@@ -1,4 +1,4 @@
-/** $Id: freezer.h,v 1.10 2008/02/13 01:26:12 d3j168 Exp $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file freezer.h
 	@addtogroup freezer

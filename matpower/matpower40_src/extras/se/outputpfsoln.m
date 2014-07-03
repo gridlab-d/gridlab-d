@@ -2,7 +2,7 @@ function outputpfsoln(baseMVA, bus, gen, branch, converged, et, type_solver, ite
 %OUTPUTPFSOLN  Output power flow solution.
 
 %   MATPOWER
-%   $Id: outputpfsoln.m,v 1.4 2010/04/26 19:45:26 ray Exp $
+%   $Id$
 %   by Rui Bo
 %   and Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)

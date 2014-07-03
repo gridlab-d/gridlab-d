@@ -1,4 +1,4 @@
-/** $Id: generator_controller.h 2011-02-03 18:00:00Z d3x593 $
+/** $Id$
 	Copyright (C) 2011 Battelle Memorial Institute
 	@file generator_controller.cpp
 	@addtogroup generator_controller

@@ -1,4 +1,4 @@
-/** $Id: sectionalizer.cpp,v 2.2 2011/01/11 23:00:00 d3x593 Exp $
+/** $Id$
 	Copyright (C) 2011 Battelle Memorial Institute
 	@file setionalizer.cpp
 	@addtogroup powerflow sectionalizer

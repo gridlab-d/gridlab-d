@@ -7,7 +7,7 @@ function N = get_nln_N(om, varargin)
 %   N = GET_NLN_N(OM, NAME) : number of nonlinear constraints in named set
 
 %   MATPOWER
-%   $Id: get_nln_N.m,v 1.10 2010/06/09 14:56:58 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2008-2010 by Power System Engineering Research Center (PSERC)
 %

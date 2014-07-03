@@ -1,4 +1,4 @@
-/** $Id: clotheswasher.h,v 1.9 2008/02/09 00:05:09 d3j168 Exp $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file clotheswasher.h
 	@addtogroup clotheswasher

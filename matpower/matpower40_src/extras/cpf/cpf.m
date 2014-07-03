@@ -13,7 +13,7 @@ function [max_lambda, predicted_list, corrected_list, combined_list, success, et
 %   created by Rui Bo on 2007/11/12
 
 %   MATPOWER
-%   $Id: cpf.m,v 1.7 2010/04/26 19:45:26 ray Exp $
+%   $Id$
 %   by Rui Bo
 %   and Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)

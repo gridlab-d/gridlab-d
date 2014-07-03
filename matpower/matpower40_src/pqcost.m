@@ -8,7 +8,7 @@ function [pcost, qcost] = pqcost(gencost, ng, on)
 %   it only returns the rows corresponding to these generators.
 
 %   MATPOWER
-%   $Id: pqcost.m,v 1.9 2010/04/26 19:45:26 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

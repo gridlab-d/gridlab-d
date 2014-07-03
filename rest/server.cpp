@@ -1,4 +1,4 @@
-/** $Id: server.cpp 858 2008-08-28 21:06:13Z d3g637 $
+/** $Id$
 	@file server.cpp
 	@defgroup server Template for a new object class
 	@ingroup MODULENAME

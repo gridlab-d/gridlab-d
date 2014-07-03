@@ -2,7 +2,7 @@ function t_auction_tspopf_pdipm(quiet)
 %T_AUCTION_TSPOPF_PDIPM  Tests for code in auction.m, using PDIPMOPF solver.
 
 %   MATPOWER
-%   $Id: t_auction_tspopf_pdipm.m,v 1.7 2010/04/26 19:45:26 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2004-2010 by Power System Engineering Research Center (PSERC)
 %

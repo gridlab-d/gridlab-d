@@ -7,7 +7,7 @@ function totalcost = totcost(gencost, Pg)
 %   corresponding row of PG.
 
 %   MATPOWER
-%   $Id: totcost.m,v 1.13 2010/04/26 19:45:25 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   & Carlos E. Murillo-Sanchez, PSERC Cornell & Universidad Autonoma de Manizales
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)

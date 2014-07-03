@@ -1,4 +1,4 @@
-// $Id: fault_check.h 2009-12-15 15:00:00Z d3x593 $
+// $Id$
 //	Copyright (C) 2009 Battelle Memorial Institute
 
 #ifndef _FAULT_CHECK_H

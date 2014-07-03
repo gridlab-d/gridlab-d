@@ -1,4 +1,4 @@
-/** $Id: lights.h,v 1.17 2008/01/17 21:03:22 d3p988 Exp $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file lights.h
 	@addtogroup residential_lights

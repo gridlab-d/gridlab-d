@@ -1,4 +1,4 @@
-/** $Id: fault_check.cpp 2009-11-09 15:00:00Z d3x593 $
+/** $Id$
 	Copyright (C) 2009 Battelle Memorial Institute
 **/
 

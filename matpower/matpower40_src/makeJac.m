@@ -16,7 +16,7 @@ function [J, Ybus, Yf, Yt] = makeJac(baseMVA, bus, branch, gen)
 %   See also MAKEYBUS, EXT2INT
 
 %   MATPOWER
-%   $Id: makeJac.m,v 1.1 2010/06/25 17:37:40 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

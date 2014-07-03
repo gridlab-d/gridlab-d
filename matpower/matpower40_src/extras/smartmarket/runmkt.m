@@ -47,7 +47,7 @@ function [MVAbase, cq, cp, bus, gen, gencost, branch, f, dispatch, success, et] 
 %   in MATPOWER format with the specified name with a '.m' extension added.
 
 %   MATPOWER
-%   $Id: runmkt.m,v 1.19 2010/04/26 19:45:26 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

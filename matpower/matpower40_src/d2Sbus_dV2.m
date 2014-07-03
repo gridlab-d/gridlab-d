@@ -26,7 +26,7 @@ function [Gaa, Gav, Gva, Gvv] = d2Sbus_dV2(Ybus, V, lam)
 %             http://www.pserc.cornell.edu/matpower/TN2-OPF-Derivatives.pdf
 
 %   MATPOWER
-%   $Id: d2Sbus_dV2.m,v 1.8 2010/11/16 16:05:47 cvs Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2008-2010 by Power System Engineering Research Center (PSERC)
 %

@@ -19,4 +19,4 @@ object house:..10 {
 	floor_area 2500;
 }
 
-object collector {	group class=house;	property sum(air_temperature);	file "tair.csv";	interval 3600;	limit 8760;};
+object collector {	group class=house;	property sum(air_temperature);	file "tair.csv";	interval 3600;	limit 8760;};

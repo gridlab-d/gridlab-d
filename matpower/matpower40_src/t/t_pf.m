@@ -2,7 +2,7 @@ function t_pf(quiet)
 %T_PF  Tests for power flow solvers.
 
 %   MATPOWER
-%   $Id: t_pf.m,v 1.10 2010/04/28 19:06:45 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2004-2010 by Power System Engineering Research Center (PSERC)
 %

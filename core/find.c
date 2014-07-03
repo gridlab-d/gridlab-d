@@ -1,4 +1,4 @@
-/** $Id: find.c 1204 2009-01-12 17:07:32Z d3p988 $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file find.c
 	@author David P. Chassin

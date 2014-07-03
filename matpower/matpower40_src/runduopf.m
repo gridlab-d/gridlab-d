@@ -49,7 +49,7 @@ function varargout = runduopf(casedata, mpopt, fname, solvedcase)
 %   See also RUNDCOPF, RUNUOPF.
 
 %   MATPOWER
-%   $Id: runduopf.m,v 1.12 2010/04/26 19:45:25 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

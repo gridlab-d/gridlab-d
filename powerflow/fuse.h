@@ -1,4 +1,4 @@
-/** $Id: fuse.h,v 2.2 2011/01/24 17:00:00 d3x593 Exp $
+/** $Id$
 	Copyright (C) 2011 Battelle Memorial Institute
 	@file fuse.h
  @{

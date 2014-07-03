@@ -1,4 +1,4 @@
-/** $Id: power_electronics.h,v 1.0 2008/07/15 Exp $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file power_electronics.h
 	@addtogroup power_electronics

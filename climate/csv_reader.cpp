@@ -1,4 +1,4 @@
-/** $Id: csv_reader.cpp 1182 2010-01-13 18:56:42Z mhauer $
+/** $Id$
 	Copyright (C) 2009 Battelle Memorial Institute
 	@file csv_reader.cpp
 	@author Matthew L. Hauer

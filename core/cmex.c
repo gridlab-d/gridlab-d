@@ -1,4 +1,4 @@
-/** $Id: cmex.c 683 2008-06-18 20:16:29Z d3g637 $
+/** $Id$
 	@file cmex.c
 	@addtogroup cmex CMEX module
 	@ingroup matlab

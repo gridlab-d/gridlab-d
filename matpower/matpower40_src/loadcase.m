@@ -37,7 +37,7 @@ function [baseMVA, bus, gen, branch, areas, gencost, info] = loadcase(casefile)
 %   version 2 format.
 
 %   MATPOWER
-%   $Id: loadcase.m,v 1.24 2010/04/26 19:45:25 ray Exp $
+%   $Id$
 %   by Carlos E. Murillo-Sanchez, PSERC Cornell & Universidad Autonoma de Manizales
 %   and Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)

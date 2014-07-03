@@ -5,7 +5,7 @@ function [baseMVA, bus, gen, branch, areas, gencost] = case3bus_P6_6
 %   created by Rui Bo on 2007/11/12
 
 %   MATPOWER
-%   $Id: case3bus_P6_6.m,v 1.3 2010/04/19 14:40:12 ray Exp $
+%   $Id$
 
 %%-----  Power Flow Data  -----%%
 %% system MVA base

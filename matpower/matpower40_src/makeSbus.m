@@ -7,7 +7,7 @@ function Sbus = makeSbus(baseMVA, bus, gen)
 %   See also MAKEYBUS.
 
 %   MATPOWER
-%   $Id: makeSbus.m,v 1.13 2010/04/26 19:45:25 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

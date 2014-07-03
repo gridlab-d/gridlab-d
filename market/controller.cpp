@@ -1,4 +1,4 @@
-/** $Id: controller.cpp 1182 2009-09-09 22:08:36Z mhauer $
+/** $Id$
 	Copyright (C) 2009 Battelle Memorial Institute
 	@file auction.cpp
 	@defgroup controller Transactive controller, OlyPen experiment style

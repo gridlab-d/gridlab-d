@@ -1,4 +1,4 @@
-/** $Id: stubauction.cpp 1182 2008-12-22 22:08:36Z dchassin $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file stubauction.cpp
 	@defgroup stubauction Template for a new object class

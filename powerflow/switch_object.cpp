@@ -1,4 +1,4 @@
-/** $Id: switch_object.cpp,v 1.6 2008/02/06 19:15:26 natet Exp $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file switch_object.cpp
 	@addtogroup powerflow switch_object

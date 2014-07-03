@@ -37,7 +37,7 @@ function [results, success, raw] = lpopf_solver(om, mpopt)
 %   See also OPF, LPCONSTR, LPEQSLVR, FUN_COPF, GRAD_COPF.
 
 %   MATPOWER
-%   $Id: lpopf_solver.m,v 1.21 2010/06/09 14:56:58 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   and Carlos E. Murillo-Sanchez, PSERC Cornell & Universidad Autonoma de Manizales
 %   Copyright (c) 2000-2010 by Power System Engineering Research Center (PSERC)

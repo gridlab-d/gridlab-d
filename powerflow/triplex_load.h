@@ -1,4 +1,4 @@
-// $Id: triplex_load.h 1182 2012-7-1 2:13 PDT fish334 $
+// $Id$
 //	Copyright (C) 2013 Battelle Memorial Institute
 
 #ifndef _TRIPLEXLOAD_H

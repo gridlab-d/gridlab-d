@@ -1,4 +1,4 @@
-/** $Id: series_reactor.h,v 1.5 2008/02/04 23:08:12 d3p988 Exp $
+/** $Id$
 	Copyright (C) 2009 Battelle Memorial Institute
 	@file series_reactor.h
 

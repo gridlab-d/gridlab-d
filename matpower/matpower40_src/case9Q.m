@@ -6,7 +6,7 @@ function mpc = case9Q
 %   reactive power.
 
 %   MATPOWER
-%   $Id: case9Q.m,v 1.11 2010/03/10 18:08:15 ray Exp $
+%   $Id$
 
 %% MATPOWER Case Format : Version 2
 mpc.version = '2';

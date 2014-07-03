@@ -1,4 +1,4 @@
-/** $Id: test.cpp 1182 2008-12-22 22:08:36Z dchassin $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
  * @file test.cpp 
  * This file contains the module_test function, which is called from the

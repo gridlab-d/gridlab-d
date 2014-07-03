@@ -1,4 +1,4 @@
-// $Id: link.h 1211 2009-01-17 00:45:28Z d3x593 $
+// $Id$
 //	Copyright (C) 2008 Battelle Memorial Institute
 
 #ifndef _LINK_H

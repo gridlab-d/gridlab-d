@@ -1,4 +1,4 @@
-/** $Id: line_spacing.cpp 1182 2008-12-22 22:08:36Z dchassin $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file line_spacing.cpp
 	@addtogroup line_spacing

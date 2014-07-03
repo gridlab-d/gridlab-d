@@ -1,4 +1,4 @@
-# $Id: validate.py 1 2009-06-19 16:09:36Z mhauer $
+# $Id$
 # Copyright (C) 2009 Battelle Memorial Institute
 
 import sys

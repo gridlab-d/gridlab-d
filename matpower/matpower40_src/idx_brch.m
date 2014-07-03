@@ -50,7 +50,7 @@ function [F_BUS, T_BUS, BR_R, BR_X, BR_B, RATE_A, RATE_B, ...
 %   See also DEFINE_CONSTANTS.
 
 %   MATPOWER
-%   $Id: idx_brch.m,v 1.12 2010/04/26 19:45:25 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

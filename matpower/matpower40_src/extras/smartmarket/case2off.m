@@ -6,7 +6,7 @@ function [q, p] = case2off(gen, gencost)
 %   See also OFF2CASE.
 
 %   MATPOWER
-%   $Id: case2off.m,v 1.14 2010/04/26 19:45:26 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

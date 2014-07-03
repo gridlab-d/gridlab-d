@@ -1,4 +1,4 @@
-/** $Id: dryer.cpp,v 1.13 2011/09/29 02:22:35 d3j168 Exp $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file dryer.cpp
 	@addtogroup dryer

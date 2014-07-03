@@ -16,7 +16,7 @@ function t_begin(num_of_tests, quiet)
 %   See also T_END, T_OK, T_IS, T_SKIP, T_RUN_TESTS.
 
 %   MATPOWER
-%   $Id: t_begin.m,v 1.7 2010/04/26 19:45:26 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2004-2010 by Power System Engineering Research Center (PSERC)
 %

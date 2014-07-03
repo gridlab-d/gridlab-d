@@ -1,4 +1,4 @@
-// $Id: load.h 1182 2008-12-22 22:08:36Z dchassin $
+// $Id$
 //	Copyright (C) 2008 Battelle Memorial Institute
 
 #ifndef _LOAD_H

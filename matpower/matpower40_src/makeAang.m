@@ -14,7 +14,7 @@ function [Aang, lang, uang, iang]  = makeAang(baseMVA, branch, nb, mpopt)
 %       [Aang, lang, uang, iang]  = makeAang(baseMVA, branch, nb, mpopt);
 
 %   MATPOWER
-%   $Id: makeAang.m,v 1.8 2010/04/26 19:45:25 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   and Carlos E. Murillo-Sanchez, PSERC Cornell & Universidad Autonoma de Manizales
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)

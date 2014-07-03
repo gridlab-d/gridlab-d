@@ -24,7 +24,7 @@ function mpc1 = load2disp(mpc0, fname, idx, voll)
 %       must match that of IDX. Default is $5000 per MWh.
 
 %   MATPOWER
-%   $Id: load2disp.m,v 1.1 2010/06/25 19:17:07 ray Exp $
+%   $Id$
 %   by Alberto Lamadrid, PSERC Cornell
 %   modified by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2010 by Power System Engineering Research Center (PSERC)

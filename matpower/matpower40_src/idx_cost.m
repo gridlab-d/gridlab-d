@@ -37,7 +37,7 @@ function [PW_LINEAR, POLYNOMIAL, MODEL, STARTUP, SHUTDOWN, NCOST, COST] = idx_co
 %   See also DEFINE_CONSTANTS.
 
 %   MATPOWER
-%   $Id: idx_cost.m,v 1.12 2010/05/27 14:29:05 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

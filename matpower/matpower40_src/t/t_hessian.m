@@ -2,7 +2,7 @@ function t_hessian(quiet)
 %T_HESSIAN  Numerical tests of 2nd derivative code.
 
 %   MATPOWER
-%   $Id: t_hessian.m,v 1.7 2010/04/26 19:45:26 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2004-2010 by Power System Engineering Research Center (PSERC)
 %

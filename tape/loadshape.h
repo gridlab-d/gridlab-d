@@ -1,4 +1,4 @@
-/** $Id: schedule.h,v 1.9 2009/06/22 00:16:24 mhauer Exp $
+/** $Id$
 	Copyright (C) 2009 Battelle Memorial Institute
 	@file loadshape.h
 	@addtogroup loadshape

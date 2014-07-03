@@ -1,4 +1,4 @@
-/** $Id: power_metrics.cpp 2010-06-14 15:00:00Z d3x593 $
+/** $Id$
 	Copyright (C) 2009 Battelle Memorial Institute
 
 	The metric analysis object reports reliability metrics for a system by observing the

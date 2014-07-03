@@ -3,7 +3,7 @@ function [V, converged, iterNum, z, z_est, error_sqrsum] = doSE(baseMVA, bus, ge
 %   created by Rui Bo on 2007/11/12
 
 %   MATPOWER
-%   $Id: doSE.m,v 1.5 2010/04/26 19:45:26 ray Exp $
+%   $Id$
 %   by Rui Bo
 %   and Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)

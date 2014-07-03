@@ -1,4 +1,4 @@
-/** $Id: node.h 1201 2009-01-08 22:31:37Z d3x593 $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@addtogroup powerflow_node Node
 	@ingroup powerflow_object

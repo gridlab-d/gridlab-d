@@ -1,4 +1,4 @@
-/** $Id: machine.cpp,v 1.10 2007/12/12 22:05:50 d3g637 Exp $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file machine.cpp
 	@addtogroup machine Machine implementation

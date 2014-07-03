@@ -2,7 +2,7 @@ function t_mips(quiet)
 %T_MIPS  Tests of MIPS NLP solver.
 
 %   MIPS
-%   $Id: t_mips.m,v 1.14 2010/11/15 19:20:42 cvs Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2010 by Power System Engineering Research Center (PSERC)
 %

@@ -46,7 +46,7 @@ function f = compute_cost(om, x, name)
 %   See also OPF_MODEL, ADD_COST, BUILD_COST_PARAMS, GET_COST_PARAMS.
 
 %   MATPOWER
-%   $Id: compute_cost.m,v 1.5 2010/04/26 19:45:25 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2008-2010 by Power System Engineering Research Center (PSERC)
 %

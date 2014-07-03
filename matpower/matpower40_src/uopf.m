@@ -52,7 +52,7 @@ function [bus, gen, branch, f, success, info, et, g, jac, xr, pimul] = ...
 %   See also OPF, RUNUOPF.
 
 %   MATPOWER
-%   $Id: uopf.m,v 1.24 2010/06/29 19:24:35 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

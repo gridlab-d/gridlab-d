@@ -3,7 +3,7 @@ function test_se
 %   created by Rui Bo on 2007/11/12
 
 %   MATPOWER
-%   $Id: test_se.m,v 1.5 2010/04/26 19:45:26 ray Exp $
+%   $Id$
 %   by Rui Bo
 %   Copyright (c) 2009-2010 by Rui Bo
 %

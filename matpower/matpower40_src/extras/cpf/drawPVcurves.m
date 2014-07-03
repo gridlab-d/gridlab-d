@@ -8,7 +8,7 @@ function drawPVcurves(casedata, loadvarloc, corrected_list, combined_list, flag_
 %   created by Rui Bo on 2008/01/13
 
 %   MATPOWER
-%   $Id: drawPVcurves.m,v 1.6 2010/04/26 19:45:26 ray Exp $
+%   $Id$
 %   by Rui Bo
 %   Copyright (c) 2009-2010 by Rui Bo
 %

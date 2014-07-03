@@ -1,7 +1,7 @@
-/** $Id: debug.h 1182 2008-12-22 22:08:36Z dchassin $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file debug.h
-	@version $Id: debug.h 1182 2008-12-22 22:08:36Z dchassin $
+	@version $Id$
 	@addtogroup debug
 	@ingroup core
  @{

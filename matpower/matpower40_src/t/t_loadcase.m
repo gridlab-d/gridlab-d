@@ -2,7 +2,7 @@ function t_loadcase(quiet)
 %T_LOADCASE  Test that LOADCASE works with a struct as well as case file.
 
 %   MATPOWER
-%   $Id: t_loadcase.m,v 1.12 2010/04/26 19:45:26 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2004-2010 by Power System Engineering Research Center (PSERC)
 %

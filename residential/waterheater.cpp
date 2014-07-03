@@ -1,4 +1,4 @@
-/** $Id: waterheater.cpp,v 1.51 2008/02/15 00:24:14 d3j168 Exp $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file waterheater.cpp
 	@addtogroup waterheater Electric waterheater

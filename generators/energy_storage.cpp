@@ -1,4 +1,4 @@
-/** $Id: energy_storage.cpp,v 1.2 2008/02/12 00:28:08 d3g637 Exp $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file energy_storage.cpp
 	@defgroup energy_storage

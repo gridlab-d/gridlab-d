@@ -6,7 +6,7 @@ function compare_case(mpc1, mpc2)
 %   prints the maximum of any non-zero differences.
 
 %   MATPOWER
-%   $Id: compare_case.m,v 1.8 2010/04/26 19:45:25 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

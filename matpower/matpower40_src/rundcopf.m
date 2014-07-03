@@ -48,7 +48,7 @@ function varargout = rundcopf(casedata, mpopt, fname, solvedcase)
 %   See also RUNOPF, RUNDUOPF.
 
 %   MATPOWER
-%   $Id: rundcopf.m,v 1.11 2010/04/26 19:45:25 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

@@ -17,7 +17,7 @@ function t_ok(cond, msg)
 %   See also T_IS, T_SKIP, T_BEGIN, T_END, T_RUN_TESTS.
 
 %   MATPOWER
-%   $Id: t_ok.m,v 1.7 2010/04/26 19:45:26 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2004-2010 by Power System Engineering Research Center (PSERC)
 %

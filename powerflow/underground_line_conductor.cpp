@@ -1,4 +1,4 @@
-/** $Id: underground_line_conductor.cpp 1182 2008-12-22 22:08:36Z dchassin $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file underground_line_conductor.cpp
 	@addtogroup underground_line_conductor 

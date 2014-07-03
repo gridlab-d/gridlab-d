@@ -2,7 +2,7 @@ function t_opf_dc_cplex(quiet)
 %T_OPF_DC_CPLEX  Tests for DC optimal power flow using CPLEX solver.
 
 %   MATPOWER
-%   $Id: t_opf_dc_cplex.m,v 1.4 2010/12/16 21:14:51 cvs Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2004-2010 by Power System Engineering Research Center (PSERC)
 %

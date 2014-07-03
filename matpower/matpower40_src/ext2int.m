@@ -128,7 +128,7 @@ function [i2e, bus, gen, branch, areas] = ext2int(bus, gen, branch, areas)
 %   See also INT2EXT.
 
 %   MATPOWER
-%   $Id: ext2int.m,v 1.19 2010/04/26 19:45:25 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)
 %

@@ -80,7 +80,7 @@ function mpc = add_userfcn(mpc, stage, fcn, args, allow_multiple)
 %   RUNOPF_W_RES.
 
 %   MATPOWER
-%   $Id: add_userfcn.m,v 1.9 2010/04/26 19:45:25 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2009-2010 by Power System Engineering Research Center (PSERC)
 %

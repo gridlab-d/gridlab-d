@@ -1,4 +1,4 @@
-/** $Id: triplex_load.cpp 1182 2012-7-1 2:13 PDT fish334 $
+/** $Id$
 	Copyright (C) 2013 Battelle Memorial Institute
 	@file triplex_load.cpp
 	@addtogroup triplex_load

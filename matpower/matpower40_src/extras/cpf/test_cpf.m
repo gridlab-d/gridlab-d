@@ -3,7 +3,7 @@ function test_cpf
 %   created by Rui Bo on 2007/11/12
 
 %   MATPOWER
-%   $Id: test_cpf.m,v 1.4 2010/04/26 19:45:26 ray Exp $
+%   $Id$
 %   by Rui Bo
 %   Copyright (c) 2009-2010 by Rui Bo
 %

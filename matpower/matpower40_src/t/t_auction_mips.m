@@ -2,7 +2,7 @@ function t_auction_mips(quiet)
 %T_AUCTION_MIPS  Tests for code in auction.m, using MIPS solver.
 
 %   MATPOWER
-%   $Id: t_auction_mips.m,v 1.5 2010/04/26 19:45:26 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2004-2010 by Power System Engineering Research Center (PSERC)
 %

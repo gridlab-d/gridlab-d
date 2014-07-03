@@ -1,4 +1,4 @@
-/** $Id: recloser.cpp,v 2.2 2011/01/05 11:15:00 fish334 Exp $
+/** $Id$
 	Copyright (C) 2011 Battelle Memorial Institute
 	@file recloser.cpp
 	@addtogroup powerflow recloser

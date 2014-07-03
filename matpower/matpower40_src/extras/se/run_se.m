@@ -13,7 +13,7 @@ function [baseMVA, bus, gen, branch, success, et, z, z_est, error_sqrsum] = run_
 %   created by Rui Bo on 2007/11/12
 
 %   MATPOWER
-%   $Id: run_se.m,v 1.4 2010/04/26 19:45:26 ray Exp $
+%   $Id$
 %   by Rui Bo
 %   and Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 1996-2010 by Power System Engineering Research Center (PSERC)

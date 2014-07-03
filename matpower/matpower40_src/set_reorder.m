@@ -9,7 +9,7 @@ function A = set_reorder(A, B, idx, dim)
 %   See also GET_REORDER.
 
 %   MATPOWER
-%   $Id: set_reorder.m,v 1.5 2010/04/26 19:45:25 ray Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2009-2010 by Power System Engineering Research Center (PSERC)
 %

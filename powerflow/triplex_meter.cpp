@@ -1,4 +1,4 @@
-/** $Id: triplex_meter.cpp 1002 2008-09-29 15:58:23Z d3m998 $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file triplex_meter.cpp
 	@addtogroup powerflow_triplex_meter Meter

@@ -1,4 +1,4 @@
-/** $Id: gridlabd.h 1207 2009-01-12 22:47:29Z d3p988 $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file gridlabd.h
 	@author David P. Chassin

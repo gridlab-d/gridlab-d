@@ -1,4 +1,4 @@
-/** $Id: double_controller.cpp 1182 2010-1-25 22:08:36Z mhauer $
+/** $Id$
 	Copyright (C) 2010 Battelle Memorial Institute
 	@file double_controller.cpp
 	@defgroup double_controller Two-setpoint transactive controller, modified OlyPen experiment style for combined heating & cooling logic

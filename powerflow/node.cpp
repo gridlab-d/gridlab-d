@@ -1,4 +1,4 @@
-/** $Id: node.cpp 1215 2009-01-22 00:54:37Z d3x593 $
+/** $Id$
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file node.cpp
 	@addtogroup powerflow_node Node

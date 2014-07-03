@@ -1,4 +1,4 @@
-/** $Id: gen_cost.cpp 858 2008-08-28 21:06:13Z d3g637 $
+/** $Id$
 	@file gen_cost.cpp
 	@defgroup gen_cost Template for a new object class
 	@ingroup MODULENAME

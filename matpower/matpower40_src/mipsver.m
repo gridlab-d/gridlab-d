@@ -9,7 +9,7 @@ function rv = mipsver(varargin)
 %   See also MPVER.
 
 %   MIPS
-%   $Id: mipsver.m,v 1.10 2011/02/07 21:32:02 cvs Exp $
+%   $Id$
 %   by Ray Zimmerman, PSERC Cornell
 %   Copyright (c) 2010 by Power System Engineering Research Center (PSERC)
 %
