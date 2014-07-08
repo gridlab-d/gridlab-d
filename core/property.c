@@ -134,7 +134,7 @@ PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, char *name, void
 	prop->unit = NULL;
 	prop->notify = 0;
 	prop->notify_override = false;
-	if (sscanf(name,"%[^[][%[%%A-Za-z0-9*/^]]",prop->name,unitspec)==2)
+	if (sscanf(name,"%[^[][%[^]]]",prop->name,unitspec)==2)
 	{
 		/* detect when a unit is associated with non-double/complex property */
 		if (prop->ptype!=PT_double && prop->ptype!=PT_complex)
