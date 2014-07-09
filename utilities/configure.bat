@@ -517,7 +517,7 @@ rem
 rem - Obtain the version number reported by subversion
 rem
 set new=
-for /f "delims=" %%a in ('svn info %source% ^| findstr /b "Last Changed Rev: "') do set new=%%a 
+for /f "delims=" %%a in ('svn info %source% ^| findstr "Rev: "') do set new=%%a 
 set newrev=%new:Last Changed Rev: =%
 
 rem
