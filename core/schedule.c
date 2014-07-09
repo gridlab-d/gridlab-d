@@ -1,4 +1,4 @@
-/** $Id: schedule.c 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id$
  	Copyright (C) 2008 Battelle Memorial Institute
 	@file schedule.c
 	@addtogroup schedule
@@ -23,6 +23,7 @@
 
 static SCHEDULE *schedule_list = NULL;
 static uint32 n_schedules = 0;
+static int interpolated_schedules = FALSE;
 
 #ifdef _DEBUG
 unsigned int schedule_checksum(SCHEDULE *sch)
@@ -224,6 +225,11 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 			sch->flags |= SN_NORMAL|SN_WEIGHTED;
 		else if ( strcmp(token,"absolute")==0 )
 			sch->flags |= SN_NORMAL|SN_ABSOLUTE;
+		else if ( strcmp(token,"interpolated")==0 )
+		{
+			sch->flags |= SN_INTERPOLATED;
+			interpolated_schedules = TRUE;
+		}
 		else if (sscanf(token,"%s%*[ \t]%s%*[ \t]%s%*[ \t]%s%*[ \t]%s%*[ \t]%lf",matcher[0].pattern,matcher[1].pattern,matcher[2].pattern,matcher[3].pattern,matcher[4].pattern,&value)<5) /* value can be missing -> defaults to 1.0 */
 		{
 			output_error("schedule_compile(SCHEDULE *sch='{name=%s, ...}') ignored an invalid definition '%s'", sch->name, token);
@@ -439,6 +445,11 @@ int schedule_compile(SCHEDULE *sch)
 					sch->flags |= SN_NONZERO;
 				else if (strcmp(blockname,"boolean")==0)
 					sch->flags |= SN_BOOLEAN;
+				else if (strcmp(blockname,"interpolated")==0)
+				{
+					sch->flags |= SN_INTERPOLATED;
+					interpolated_schedules = TRUE;
+				}
 				else
 					output_error("schedule %s: block option '%s' is not recognized", sch->name, blockname);
 				state = CLOSE;
@@ -765,7 +776,8 @@ SCHEDULE *schedule_new(void)
 #ifdef _DEBUG
 	sch->magic1 = sch->magic2 = SCHEDULE_MAGIC; 
 #endif
-		sch->next_t = TS_NEVER;
+	sch->since = TS_ZERO;
+	sch->next_t = TS_NEVER;
 	return sch;
 }
 void schedule_add(SCHEDULE *sch)
@@ -973,33 +985,67 @@ double schedule_weight(SCHEDULE *sch,			/**< the schedule to read */
 TIMESTAMP schedule_sync(SCHEDULE *sch, /**< the schedule that is to be synchronized */
 						TIMESTAMP t)	/**< the time to which the schedule is to be synchronized */
 {
-	double value;
 #ifdef _DEBUG
 	if ( sch->magic1!=SCHEDULE_MAGIC || sch->magic2!=SCHEDULE_MAGIC ) // || sch->checksum!=schedule_checksum(sch) )
 		output_warning("schedule '%s' may be corrupted", sch->name);
 #endif
 
-	/* determine whether the current schedule is still valid */
-	if ( sch->next_t==TS_NEVER || t >= sch->next_t )
+	if ((sch->flags & SN_INTERPOLATED) == SN_INTERPOLATED)
 	{
-		/* move to the new schedule */
-		SCHEDULEINDEX index = schedule_index(sch,t);
-		int32 dtnext = schedule_dtnext(sch,index)*60;
-#ifdef _DEBUG
-		if ( dtnext==0 )
-			output_debug("schedule_sync(SCHEDULE *sch={name: '%s',...}, TIMESTAMP t=%"FMT_INT64"d) has a dtnext==0", sch->name, t);
-#endif
-		value = schedule_value(sch,index);
-		if(sch->value != value){
-			sch->since = t;
+		/* 
+		 * In interpolation mode we call for the next sync when the schedule changes, but if any other
+		 * sync operations occur (caused by other objects) we re-interpolate.
+		 */
+
+		if (sch->since == TS_ZERO || t >= sch->next_t)
+		{
+			/* first iteration */
+			SCHEDULEINDEX index = schedule_index(sch,t);
+			int32 dtnext = schedule_dtnext(sch,index)*60;
+			sch->since = sch->since == TS_ZERO ? t : sch->next_t;
+			sch->duration = schedule_duration(sch,index)/60.0;
+			sch->next_t = (dtnext==0 ? TS_NEVER : t + dtnext -  t % 60);
+			if (sch->next_t == TS_NEVER)
+			{
+				/* no next schedule will me we don't interpolate so we had better get the current value. */
+				sch->value = schedule_value(sch,index);
+			}
 		}
-		sch->value = value;
-		sch->duration = schedule_duration(sch,index)/60.0;
-		sch->next_t = (dtnext==0 ? TS_NEVER : t + dtnext -  t % 60);
+
+		if (sch->next_t != TS_NEVER)
+		{
+			/* still in the same window, just re-interpolate. */
+			SCHEDULEINDEX start_index = schedule_index(sch,sch->since);
+			SCHEDULEINDEX end_index = schedule_index(sch,sch->next_t);
+			double start_value = schedule_value(sch,start_index);
+			double end_value = schedule_value(sch,end_index);
+			sch->value = start_value + ((end_value - start_value) * ((double)(t - sch->since) / (double)(sch->next_t - sch->since))); 
+		}
+	}
+	else
+	{
+		/* determine whether the current schedule is still valid */
+		if ( sch->next_t==TS_NEVER || t >= sch->next_t )
+		{
+			/* move to the new schedule */
+			SCHEDULEINDEX index = schedule_index(sch,t);
+			int32 dtnext = schedule_dtnext(sch,index)*60;
+			double value = schedule_value(sch,index);
 #ifdef _DEBUG
-		output_test("time %"FMT_INT64"d: schedule '%s', value %g, duration %g, dt_next %d, next_t %"FMT_INT64"d",
-			t, sch->name, sch->value, sch->duration, dtnext, sch->next_t);
+			if ( dtnext==0 )
+				output_debug("schedule_sync(SCHEDULE *sch={name: '%s',...}, TIMESTAMP t=%"FMT_INT64"d) has a dtnext==0", sch->name, t);
 #endif
+			if(sch->value != value){
+				sch->since = t;
+			}
+			sch->value = value;
+			sch->duration = schedule_duration(sch,index)/60.0;
+			sch->next_t = (dtnext==0 ? TS_NEVER : t + dtnext -  t % 60);
+#ifdef _DEBUG
+			output_test("time %"FMT_INT64"d: schedule '%s', value %g, duration %g, dt_next %d, next_t %"FMT_INT64"d",
+				t, sch->name, sch->value, sch->duration, dtnext, sch->next_t);
+#endif
+		}
 	}
 
 	/* compute the time of the next schedule change */
@@ -1019,7 +1065,8 @@ static pthread_cond_t start_sch = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t startlock_sch = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t done_sch = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t donelock_sch = PTHREAD_MUTEX_INITIALIZER;
-static TIMESTAMP next_t1_sch, next_t2_sch;
+static TIMESTAMP next_t1_sch;
+static TIMESTAMP next_t2_sch = TS_ZERO;
 static unsigned int donecount_sch;
 
 clock_t schedule_synctime = 0;
@@ -1145,8 +1192,12 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 		}
 	}
 
-	// don't update if next_t2 < next_t1
-	if ( next_t2_sch>t1 && next_t2_sch<TS_NEVER )
+	// don't update if no schedules ever expect to change again
+	if (next_t2_sch == TS_NEVER)
+		return TS_NEVER;
+
+	// don't update if next_t2 < next_t1, but override this if there are interpolated schedules
+	if (next_t2_sch > t1 && !interpolated_schedules)
 		return next_t2_sch;
 
 	// no threading required

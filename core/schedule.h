@@ -1,4 +1,4 @@
-/** $Id: schedule.h 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id$
  	Copyright (C) 2008 Battelle Memorial Institute
 	@file schedule.h
 	@addtogroup schedule Schedules
@@ -86,6 +86,7 @@ struct s_schedule {
 #define SN_NORMAL   0x0001	/**< schedule normalization flag - normalize enabled */
 #define SN_ABSOLUTE 0x0002	/**< schedule normalization flag - use absolute values */
 #define SN_WEIGHTED 0x0004	/**< schedule normalization flag - use weighted values */
+#define SN_INTERPOLATED 0x0008	/**< schedule values are interpolated between defined values */
 #define SN_BOOLEAN 0x8000 /**< schedule is boolean (only one/zero values are expected) */
 #define SN_NONZERO 0x4000 /**< schedule is non-zero (no zero values are expected) */
 #define SN_POSITIVE 0x2000 /**< schedule is positive (no negative values are expected) */
