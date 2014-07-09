@@ -1,5 +1,5 @@
 #!/bin/bash
-new=$(svn info $1 | grep '^Revision: ' | cut -f2 -d' ')
+new=$(svn info $1 | grep '^Last Changed Rev: ' | cut -f2 -d':')
 if [ -f build.h ]; then
 	old=$(cat build.h | cut -f3 -d' ')
 else

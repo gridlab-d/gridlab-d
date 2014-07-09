@@ -18,8 +18,8 @@ rem
 rem - Obtain the version number reported by subversion
 rem
 set new=
-for /f "delims=" %%a in ('svn info %dir% ^| findstr /b "Revision: "') do set new=%%a 
-set newrev=%new:Revision: =%
+for /f "delims=" %%a in ('svn info %dir% ^| findstr /b "Last Changed Rev: "') do set new=%%a 
+set newrev=%new:Last Changed Rev: =%
 
 rem
 rem - Obtain the version number stored in build.h

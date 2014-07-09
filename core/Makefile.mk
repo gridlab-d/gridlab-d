@@ -168,7 +168,7 @@ core/build.h: buildnum
 
 .PHONY: buildnum
 buildnum:
-	$(AM_V_GEN)new=`svn info $(top_srcdir) | grep '^Revision: ' | cut -f2 -d' '`; \
+	$(AM_V_GEN)new=`svn info $(top_srcdir) | grep '^Last Changed Rev: ' | cut -f2 -d':'`; \
 	if test -f $(top_build_prefix)core/build.h; then \
 		old=`cat $(top_build_prefix)core/build.h | cut -f3 -d' '`; \
 	else \
