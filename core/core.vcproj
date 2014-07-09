@@ -1437,6 +1437,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\autotest\test_statefull_randomization.glm"
+					>
+				</File>
+				<File
 					RelativePath=".\autotest\test_stream_out.glm"
 					>
 				</File>
