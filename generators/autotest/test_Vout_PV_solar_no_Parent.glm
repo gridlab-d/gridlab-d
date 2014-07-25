@@ -1,0 +1,152 @@
+// $Id: IEEE13.glm $
+//	Copyright (C) 2009 Battelle Memorial Institute
+
+#set profiler=1
+//#set threadcount=1;
+#set relax_naming_rules=1
+
+clock {
+	timezone PST+8PDT;
+	timestamp '2010-01-01 6:00:00';
+	stoptime '2010-01-01 12:00:00';
+}
+
+module powerflow;
+module generators;
+module tape;
+module climate;
+module assert;
+module residential;
+module powerflow{
+	solver_method NR;
+	//acceleration_factor 1.4;
+	default_maximum_voltage_error 1e-9;
+}
+
+
+object climate{
+	name MyClimate;
+	tmyfile ../WA-Seattle.tmy2;
+	//reader CsvReader;
+	object recorder {
+		file climate_out.csv;
+		interval 3600;
+		limit 120;
+		property temperature,solar_direct,solar_diffuse,solar_global,ground_reflectivity;
+	};
+};
+
+
+
+// Create node objects
+
+
+ 
+ object transformer_configuration {
+	name trans_config_to_feeder;
+	connect_type WYE_WYE;
+	install_type PADMOUNT;
+	primary_voltage 33000;
+	secondary_voltage 2401.777;
+	power_rating 5 MVA;
+	impedance 0.00033+0.0022j;
+ }
+ 
+ object transformer_configuration {
+	name SPCT_trans;
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type POLETOP;
+	shunt_impedance 10000+10000j;
+	primary_voltage 2401.777;
+	secondary_voltage 120;
+	powerB_rating 110 kVA;
+	impedance 0.00033+0.0022j;
+}
+ 
+ object node {
+	name network_node;
+	bustype SWING;
+	nominal_voltage 33000;
+	phases ABCN;
+}
+ 
+ 
+ object transformer {
+	name substation_transformer;
+	from network_node;
+	to 645;
+	phases ABCN;
+	configuration trans_config_to_feeder;
+}; 
+
+object node {     
+	name 645;     
+	phases ABCN;     
+	voltage_A 2401.7771;     
+	voltage_B -1200.8886-2080.000j;     
+	voltage_C -1200.8886+2080.000j;     
+	nominal_voltage 2401.7771;     
+}  
+
+
+
+object transformer {
+	name CTTF_B_645;
+	phases BS;
+	from 645;
+	to tn_B_645;
+	configuration SPCT_trans;
+}
+
+ 
+object triplex_meter {
+	name tn_B_645;
+	phases BS;
+	nominal_voltage 120;
+	groupid House_Meter;
+	object inverter {
+		name inv_B_2_645;
+		phases BS;
+		generator_mode CONSTANT_PF;
+		generator_status ONLINE;
+		inverter_type PWM;
+		power_factor 1.0;
+		rated_power 7560;
+//		object recorder {
+//			file inverter_param.csv;
+//			interval 60;
+//			limit 120;
+//			property V_In,I_In;
+//		};
+	};
+}
+
+object solar {
+		name sol_inv_B_2_645;
+		generator_mode SUPPLY_DRIVEN;
+		generator_status ONLINE;
+		panel_type SINGLE_CRYSTAL_SILICON;
+		efficiency 0.2;
+		area 450;
+		V_Max 79.34+0j;  // max. power voltage (Vmp) from GE solar cell performance charatcetristics
+		Voc 91.22+0j;  //taken from GEPVp-200-M-Module performance characteristics, converted to degF
+		Voc_Max 91.22+0j; //taken from GEPVp-200-M-Module performance characteristics,  converted to degF
+		object complex_assert {
+			target "V_Out";
+			object player {
+				property value;
+				file ../solar_Vout.player;
+			};
+			within 0.1;  //within 1 % of variance
+		};
+		object recorder {
+			file PV_out.csv;
+			interval 60;
+			limit 20000;
+			property ambient_temperature,NOCT,Insolation,Voc_temp_coeff,Voc_Max,Voc,V_Max,V_Out,Tmodule;
+		};
+};
+	
+
+	    
+	

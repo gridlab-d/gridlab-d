@@ -1065,7 +1065,7 @@ int module_compile(char *name,	/**< name of library */
 		return rc;
 
 	/* create needed DLL files on windows */
-	if ( (rc=execf("%s %s -Wl%s%s -shared \"%s\" -o \"%s\"", cc, mopt, ((ldflags[0]==0)?"":","), ldflags, ofile,afile))!=0 )
+	if ( (rc=execf("%s %s %s%s -shared \"%s\" -o \"%s\"", cc, mopt, ((ldflags[0]==0)?"":"-Wl,"), ldflags, ofile,afile))!=0 )
 		return rc;
 
 #ifdef LINUX

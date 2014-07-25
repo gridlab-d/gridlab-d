@@ -770,11 +770,11 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double, "hvac_breaker_rating[A]", PADDR(hvac_breaker_rating), PT_DESCRIPTION,"determines the amount of current the HVAC circuit breaker can handle",
 			PT_double, "hvac_power_factor[unit]", PADDR(hvac_power_factor), PT_DESCRIPTION,"power factor of hvac",
 			
-			PT_double,"hvac_load",PADDR(hvac_load),PT_DESCRIPTION,"heating/cooling system load",
+			PT_double,"hvac_load[kW]",PADDR(hvac_load),PT_DESCRIPTION,"heating/cooling system load",
 			PT_double,"last_heating_load",PADDR(last_heating_load),PT_DESCRIPTION,"stores the previous heating/cooling system load",
 			PT_double,"last_cooling_load",PADDR(last_cooling_load),PT_DESCRIPTION,"stores the previous heating/cooling system load",
 			PT_complex,"hvac_power",PADDR(hvac_power),PT_DESCRIPTION,"describes hvac load complex power consumption",
-			PT_double,"total_load",PADDR(total_load),
+			PT_double,"total_load[kW]",PADDR(total_load),
 			PT_enduse,"panel",PADDR(total),PT_DESCRIPTION,"total panel enduse load",
 			PT_double,"design_internal_gain_density[W/sf]",PADDR(design_internal_gain_density),PT_DESCRIPTION,"average density of heat generating devices in the house",
 			PT_bool,"compressor_on",PADDR(compressor_on),
@@ -2773,7 +2773,9 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 	if (this->re_override == OV_ON){
 		TcoolOn = TcoolOff;
 		TheatOn = TheatOff;
-		re_override = OV_NORMAL;
+		if(dlc_offset == 0.0){
+			re_override = OV_NORMAL;
+		}
 //		thermostat_last_cycle_time = gl_globalclock - thermostat_cycle_time - 1;
 	} else if(this->re_override == OV_OFF){
 		if (dlc_offset == 0.0)
@@ -2846,24 +2848,26 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 		switch(system_mode) {
 		case SM_HEAT:
 			/* if (aux deadband OR timer tripped) AND below aux lockout, go auxiliary */
-			if ( auxiliary_system_type != AT_NONE	 &&
-				((auxiliary_strategy & AX_DEADBAND	 && Tair < TauxOn)
-				 || (auxiliary_strategy & AX_TIMER	 && t0 >= thermostat_last_cycle_time + aux_heat_time_delay))
-				 || (auxiliary_strategy & AX_LOCKOUT && *pTout <= aux_heat_temp_lockout)
-				){
-				last_system_mode = system_mode = SM_AUX;
-				power_state = PS_ON;
-				thermostat_last_cycle_time = t1;
-			} else if(Tair > TheatOff - terr/2){
-				system_mode = SM_OFF;
-				power_state = PS_OFF;
-				thermostat_last_cycle_time = t1;
-				thermostat_last_off_cycle_time = t1;
-				turned_off = true;
+			if(re_override != OV_ON){
+				if ( auxiliary_system_type != AT_NONE	 && 
+					((auxiliary_strategy & AX_DEADBAND	 && Tair < TauxOn)
+					 || (auxiliary_strategy & AX_TIMER	 && t0 >= thermostat_last_cycle_time + aux_heat_time_delay))
+					 || (auxiliary_strategy & AX_LOCKOUT && *pTout <= aux_heat_temp_lockout)
+					){
+					last_system_mode = system_mode = SM_AUX;
+					power_state = PS_ON;
+					thermostat_last_cycle_time = t1;
+				} else if(Tair > TheatOff - terr/2){
+					system_mode = SM_OFF;
+					power_state = PS_OFF;
+					thermostat_last_cycle_time = t1;
+					thermostat_last_off_cycle_time = t1;
+					turned_off = true;
+				}
 			}
 			break;
 		case SM_AUX:
-			if(Tair > TheatOff - terr/2){
+			if(Tair > TheatOff - terr/2 && re_override != OV_ON){
 				system_mode = SM_OFF;
 				power_state = PS_OFF;
 				thermostat_last_cycle_time = t1;
@@ -2872,7 +2876,7 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 			}
 			break;
 		case SM_COOL:
-			if(Tair < TcoolOff - terr/2){
+			if(Tair < TcoolOff - terr/2 && re_override != OV_ON){
 				system_mode = SM_OFF;
 				power_state = PS_OFF;
 				thermostat_last_cycle_time = t1;

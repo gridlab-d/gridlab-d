@@ -181,75 +181,53 @@ int overhead_line::init(OBJECT *parent)
 void overhead_line::recalc(void)
 {
 	line_configuration *config = OBJECTDATA(configuration, line_configuration);
-	line_spacing *spacing_val = NULL;
-	double miles = length / 5280.0;
-	double cap_coeff;
-	complex cap_freq_mult;
+	complex Zabc_mat[3][3], Yabc_mat[3][3];
 
-	if (config->impedance11 != 0 || config->impedance22 != 0 || config->impedance33 != 0)
+	// Zero out Zabc_mat and Yabc_mat. Un-needed phases will be left zeroed.
+	for (int i = 0; i < 3; i++) 
 	{
-		for (int i = 0; i < 3; i++) 
+		for (int j = 0; j < 3; j++) 
 		{
-			for (int j = 0; j < 3; j++) 
-			{
-				b_mat[i][j] = 0.0;
-			}
+			Zabc_mat[i][j] = 0.0;
+			Yabc_mat[i][j] = 0.0;
 		}
-		// User defined z-matrix - only assign parts of matrix if phase exists
-		if (has_phase(PHASE_A))
-		{
-			b_mat[0][0] = config->impedance11 * miles;
-			
-			if (has_phase(PHASE_B))
-			{
-				b_mat[0][1] = config->impedance12 * miles;
-				b_mat[1][0] = config->impedance21 * miles;
-			}
-			if (has_phase(PHASE_C))
-			{
-				b_mat[0][2] = config->impedance13 * miles;
-				b_mat[2][0] = config->impedance31 * miles;
-			}
-		}
-		if (has_phase(PHASE_B))
-		{
-			b_mat[1][1] = config->impedance22 * miles;
-			
-			if (has_phase(PHASE_C))
-			{
-				b_mat[1][2] = config->impedance23 * miles;
-				b_mat[2][1] = config->impedance32 * miles;
-			}
-		
-		}
-		if (has_phase(PHASE_C))
-			b_mat[2][2] = config->impedance33 * miles;
+	}
 
-		//Zero appropriate values
-		for (int i = 0; i < 3; i++) 
-		{
-			for (int j = 0; j < 3; j++) 
-			{
-				a_mat[i][j] = d_mat[i][j] = A_mat[i][j] = 0.0;
+		// Set auxillary matrices
+		for (int i = 0; i < 3; i++) {
+			for (int j = 0; j < 3; j++) {
+				a_mat[i][j] = 0.0;
+				d_mat[i][j] = 0.0;
+				A_mat[i][j] = 0.0;
 				c_mat[i][j] = 0.0;
 				B_mat[i][j] = b_mat[i][j];
 			}
 		}
+	if (config->impedance11 != 0 || config->impedance22 != 0 || config->impedance33 != 0)
+	{
+		// Load Zabc_mat and Yabc_mat based on the z11-z33 and c11-c33 line config parameters
+		load_matrix_based_configuration(Zabc_mat, Yabc_mat);
 
-		//"Unzero" appropriate values - doing it this way makes FBS more cooperative
+		//Other auxilliary by phase
 		if (has_phase(PHASE_A))
 		{
-			a_mat[0][0] = d_mat[0][0] = A_mat[0][0] = 1.0;
+			a_mat[0][0] = 1.0;
+			d_mat[0][0] = 1.0;
+			A_mat[0][0] = 1.0;
 		}
 
 		if (has_phase(PHASE_B))
 		{
-			a_mat[1][1] = d_mat[1][1] = A_mat[1][1] = 1.0;
+			a_mat[1][1] = 1.0;
+			d_mat[1][1] = 1.0;
+			A_mat[1][1] = 1.0;
 		}
 
 		if (has_phase(PHASE_C))
 		{
-			a_mat[2][2] = d_mat[2][2] = A_mat[2][2] = 1.0;
+			a_mat[2][2] = 1.0;
+			d_mat[2][2] = 1.0;
+			A_mat[2][2] = 1.0;
 		}
 	}
 	else
@@ -260,11 +238,13 @@ void overhead_line::recalc(void)
 		complex z_aa, z_ab, z_ac, z_an, z_bb, z_bc, z_bn, z_cc, z_cn, z_nn;
 		double p_aa, p_ab, p_ac, p_an, p_bb, p_bc, p_bn, p_cc, p_cn, p_nn;
 		double daap, dabp, dacp, danp, dbbp, dbcp, dbnp, dccp, dcnp, dnnp, diamA, diamB, diamC, diamN;
-		complex P_mat[3][3], Cabc_mat[3][3], temp_mat[3][3];
-		bool valid_capacitance=true;
+		complex P_mat[3][3];
+		bool valid_capacitance = false;	//Assume capacitance is invalid by default
 		double freq_coeff_real, freq_coeff_imag, freq_additive_term;
-		
-		valid_capacitance = false;	//Assume capacitance is invalid by default
+		line_spacing *spacing_val = NULL;
+		double miles = length / 5280.0;
+		double cap_coeff;
+		complex cap_freq_mult;
 		
 		//Calculate coefficients for self and mutual impedance - incorporates frequency values
 		//Per Kersting (4.39) and (4.40)
@@ -615,287 +595,166 @@ void overhead_line::recalc(void)
 		}
 
 		//Update impedance
-		b_mat[0][0] = (z_aa - z_an * z_an * z_nn_inv) * miles;
-		b_mat[0][1] = (z_ab - z_an * z_bn * z_nn_inv) * miles;
-		b_mat[0][2] = (z_ac - z_an * z_cn * z_nn_inv) * miles;
-		b_mat[1][0] = (z_ab - z_bn * z_an * z_nn_inv) * miles;
-		b_mat[1][1] = (z_bb - z_bn * z_bn * z_nn_inv) * miles;
-		b_mat[1][2] = (z_bc - z_bn * z_cn * z_nn_inv) * miles;
-		b_mat[2][0] = (z_ac - z_cn * z_an * z_nn_inv) * miles;
-		b_mat[2][1] = (z_bc - z_cn * z_bn * z_nn_inv) * miles;
-		b_mat[2][2] = (z_cc - z_cn * z_cn * z_nn_inv) * miles;
+		Zabc_mat[0][0] = (z_aa - z_an * z_an * z_nn_inv) * miles;
+		Zabc_mat[0][1] = (z_ab - z_an * z_bn * z_nn_inv) * miles;
+		Zabc_mat[0][2] = (z_ac - z_an * z_cn * z_nn_inv) * miles;
+		Zabc_mat[1][0] = (z_ab - z_bn * z_an * z_nn_inv) * miles;
+		Zabc_mat[1][1] = (z_bb - z_bn * z_bn * z_nn_inv) * miles;
+		Zabc_mat[1][2] = (z_bc - z_bn * z_cn * z_nn_inv) * miles;
+		Zabc_mat[2][0] = (z_ac - z_cn * z_an * z_nn_inv) * miles;
+		Zabc_mat[2][1] = (z_bc - z_cn * z_bn * z_nn_inv) * miles;
+		Zabc_mat[2][2] = (z_cc - z_cn * z_cn * z_nn_inv) * miles;
 
-		if (valid_capacitance == true)	//All calculations worked
+		// If we have valid capacitance values and line capacitance is turned on then
+		// calculate Yabc_mat otherwise just leave is zeroed out.
+
+		if (valid_capacitance == true && use_line_cap == true)
 		{
-			//Create capacitance value, if wanted
-			if (use_line_cap == true)
+			if (p_nn != 0.0)
 			{
-				if (p_nn != 0.0)
-				{
-					//Create the Pabc matric
-					P_mat[0][0] = p_aa - p_an*p_an/p_nn;
-					P_mat[0][1] = P_mat[1][0] = p_ab - p_an*p_bn/p_nn;
-					P_mat[0][2] = P_mat[2][0] = p_ac - p_an*p_cn/p_nn;
+				//Create the Pabc matrix
+				P_mat[0][0] = p_aa - p_an*p_an/p_nn;
+				P_mat[0][1] = P_mat[1][0] = p_ab - p_an*p_bn/p_nn;
+				P_mat[0][2] = P_mat[2][0] = p_ac - p_an*p_cn/p_nn;
 
-					P_mat[1][1] = p_bb - p_bn*p_bn/p_nn;
-					P_mat[1][2] = P_mat[2][1] = p_bc - p_bn*p_cn/p_nn;
+				P_mat[1][1] = p_bb - p_bn*p_bn/p_nn;
+				P_mat[1][2] = P_mat[2][1] = p_bc - p_bn*p_cn/p_nn;
 
-					P_mat[2][2] = p_cc - p_cn*p_cn/p_nn;
-				}
-				else //Neutral must have had issues, ignore it
-				{
-					//Create the Pabc matric
-					P_mat[0][0] = p_aa;
-					P_mat[0][1] = P_mat[1][0] = p_ab;
-					P_mat[0][2] = P_mat[2][0] = p_ac;
+				P_mat[2][2] = p_cc - p_cn*p_cn/p_nn;
+			}
+			else //Neutral must have had issues, ignore it
+			{
+				//Create the Pabc matrix
+				P_mat[0][0] = p_aa;
+				P_mat[0][1] = P_mat[1][0] = p_ab;
+				P_mat[0][2] = P_mat[2][0] = p_ac;
 
-					P_mat[1][1] = p_bb;
-					P_mat[1][2] = P_mat[2][1] = p_bc;
+				P_mat[1][1] = p_bb;
+				P_mat[1][2] = P_mat[2][1] = p_bc;
 
-					P_mat[2][2] = p_cc;
-				}
+				P_mat[2][2] = p_cc;
+			}
 
-				//Zero the storage matrix
-				Cabc_mat[0][0] = Cabc_mat[0][1] = Cabc_mat[0][2] = 0.0;
-				Cabc_mat[1][0] = Cabc_mat[1][1] = Cabc_mat[1][2] = 0.0;
-				Cabc_mat[2][0] = Cabc_mat[2][1] = Cabc_mat[2][2] = 0.0;
+			//Now appropriately invert it - scale for frequency, distance, and microSiemens as well as per Kersting (5.14) and (5.15) 
+			if (has_phase(PHASE_A) && !has_phase(PHASE_B) && !has_phase(PHASE_C)) //only A
+				Yabc_mat[0][0] = complex(1.0) / P_mat[0][0] * cap_freq_mult;
+			else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //only B
+				Yabc_mat[1][1] = complex(1.0) / P_mat[1][1] * cap_freq_mult;
+			else if (!has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //only C
+				Yabc_mat[2][2] = complex(1.0) / P_mat[2][2] * cap_freq_mult;
+			else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //has A & C
+			{
+				complex detvalue = P_mat[0][0]*P_mat[2][2] - P_mat[0][2]*P_mat[2][0];
 
-				//Now appropriately invert it - scale for frequency, distance, and microSiemens as well
-				if (has_phase(PHASE_A) && !has_phase(PHASE_B) && !has_phase(PHASE_C)) //only A
-					Cabc_mat[0][0] = complex(1.0) / P_mat[0][0] * cap_freq_mult;
-				else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //only B
-					Cabc_mat[1][1] = complex(1.0) / P_mat[1][1] * cap_freq_mult;
-				else if (!has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //only C
-					Cabc_mat[2][2] = complex(1.0) / P_mat[2][2] * cap_freq_mult;
-				else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //has A & C
-				{
-					complex detvalue = P_mat[0][0]*P_mat[2][2] - P_mat[0][2]*P_mat[2][0];
+				Yabc_mat[0][0] = P_mat[2][2] / detvalue * cap_freq_mult;
+				Yabc_mat[0][2] = P_mat[0][2] * -1.0 / detvalue * cap_freq_mult;
+				Yabc_mat[2][0] = P_mat[2][0] * -1.0 / detvalue * cap_freq_mult;
+				Yabc_mat[2][2] = P_mat[0][0] / detvalue * cap_freq_mult;
+			}
+			else if (has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //has A & B
+			{
+				complex detvalue = P_mat[0][0]*P_mat[1][1] - P_mat[0][1]*P_mat[1][0];
 
-					Cabc_mat[0][0] = P_mat[2][2] / detvalue * cap_freq_mult;
-					Cabc_mat[0][2] = P_mat[0][2] * -1.0 / detvalue * cap_freq_mult;
-					Cabc_mat[2][0] = P_mat[2][0] * -1.0 / detvalue * cap_freq_mult;
-					Cabc_mat[2][2] = P_mat[0][0] / detvalue * cap_freq_mult;
-				}
-				else if (has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //has A & B
-				{
-					complex detvalue = P_mat[0][0]*P_mat[1][1] - P_mat[0][1]*P_mat[1][0];
+				Yabc_mat[0][0] = P_mat[1][1] / detvalue * cap_freq_mult;
+				Yabc_mat[0][1] = P_mat[0][1] * -1.0 / detvalue * cap_freq_mult;
+				Yabc_mat[1][0] = P_mat[1][0] * -1.0 / detvalue * cap_freq_mult;
+				Yabc_mat[1][1] = P_mat[0][0] / detvalue * cap_freq_mult;
+			}
+			else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C))	//has B & C
+			{
+				complex detvalue = P_mat[1][1]*P_mat[2][2] - P_mat[1][2]*P_mat[2][1];
 
-					Cabc_mat[0][0] = P_mat[1][1] / detvalue * cap_freq_mult;
-					Cabc_mat[0][1] = P_mat[0][1] * -1.0 / detvalue * cap_freq_mult;
-					Cabc_mat[1][0] = P_mat[1][0] * -1.0 / detvalue * cap_freq_mult;
-					Cabc_mat[1][1] = P_mat[0][0] / detvalue * cap_freq_mult;
-				}
-				else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C))	//has B & C
-				{
-					complex detvalue = P_mat[1][1]*P_mat[2][2] - P_mat[1][2]*P_mat[2][1];
+				Yabc_mat[1][1] = P_mat[2][2] / detvalue * cap_freq_mult;
+				Yabc_mat[1][2] = P_mat[1][2] * -1.0 / detvalue * cap_freq_mult;
+				Yabc_mat[2][1] = P_mat[2][1] * -1.0 / detvalue * cap_freq_mult;
+				Yabc_mat[2][2] = P_mat[1][1] / detvalue * cap_freq_mult;
 
-					Cabc_mat[1][1] = P_mat[2][2] / detvalue * cap_freq_mult;
-					Cabc_mat[1][2] = P_mat[1][2] * -1.0 / detvalue * cap_freq_mult;
-					Cabc_mat[2][1] = P_mat[2][1] * -1.0 / detvalue * cap_freq_mult;
-					Cabc_mat[2][2] = P_mat[1][1] / detvalue * cap_freq_mult;
-				}
-				else if ((has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C)) || (has_phase(PHASE_D))) //has ABC or D (D=ABC)
-				{
-					complex detvalue = P_mat[0][0]*P_mat[1][1]*P_mat[2][2] - P_mat[0][0]*P_mat[1][2]*P_mat[2][1] - P_mat[0][1]*P_mat[1][0]*P_mat[2][2] + P_mat[0][1]*P_mat[2][0]*P_mat[1][2] + P_mat[1][0]*P_mat[0][2]*P_mat[2][1] - P_mat[0][2]*P_mat[1][1]*P_mat[2][0];
-
-					//Invert it
-					Cabc_mat[0][0] = (P_mat[1][1]*P_mat[2][2] - P_mat[1][2]*P_mat[2][1]) / detvalue * cap_freq_mult;
-					Cabc_mat[0][1] = (P_mat[0][2]*P_mat[2][1] - P_mat[0][1]*P_mat[2][2]) / detvalue * cap_freq_mult;
-					Cabc_mat[0][2] = (P_mat[0][1]*P_mat[1][2] - P_mat[0][2]*P_mat[1][1]) / detvalue * cap_freq_mult;
-					Cabc_mat[1][0] = (P_mat[2][0]*P_mat[1][2] - P_mat[1][0]*P_mat[2][2]) / detvalue * cap_freq_mult;
-					Cabc_mat[1][1] = (P_mat[0][0]*P_mat[2][2] - P_mat[0][2]*P_mat[2][0]) / detvalue * cap_freq_mult;
-					Cabc_mat[1][2] = (P_mat[1][0]*P_mat[0][2] - P_mat[0][0]*P_mat[1][2]) / detvalue * cap_freq_mult;
-					Cabc_mat[2][0] = (P_mat[1][0]*P_mat[2][1] - P_mat[1][1]*P_mat[2][0]) / detvalue * cap_freq_mult;
-					Cabc_mat[2][1] = (P_mat[0][1]*P_mat[2][0] - P_mat[0][0]*P_mat[2][1]) / detvalue * cap_freq_mult;
-					Cabc_mat[2][2] = (P_mat[0][0]*P_mat[1][1] - P_mat[0][1]*P_mat[1][0]) / detvalue * cap_freq_mult;
-
-				}
-
-				//Update appropriate values - utilize P_mat as a temporary unity matrix
-				P_mat[0][0] = P_mat[1][1] = P_mat[2][2] = 1.0;
-				P_mat[0][1] = P_mat[0][2] = 0.0;
-				P_mat[1][0] = P_mat[1][2] = 0.0;
-				P_mat[2][0] = P_mat[2][1] = 0.0;
-
-				//a_mat & d_mat
-					//Zabc*Yabc
-					multiply(b_mat,Cabc_mat,temp_mat);
-
-					//0.5*Above - use A_mat temporarily
-					multiply(0.5,temp_mat,A_mat);
-
-					//Add unity to make a_mat
-					addition(P_mat,A_mat,a_mat);
-
-					//d_mat is the same as a_mat
-					equalm(a_mat,d_mat);
-
-				//c_mat
-					//Zabc*Yabc is temp_mat from above
-					//So Yabc*(Zabc*Yabc) - use A_mat again
-					multiply(Cabc_mat,temp_mat,A_mat);
-
-					//Multiply by 1/4 - use B_mat temporarily
-					multiply(0.25,A_mat,B_mat);
-
-					//Add to Yabc
-					addition(Cabc_mat,B_mat,c_mat);
-
-				//A_mat is phase dependent inversion - B_mat is a product associated with it
-				//Zero them first
-				for (int i = 0; i < 3; i++) 
-				{
-					for (int j = 0; j < 3; j++) 
-					{
-						A_mat[i][j] = B_mat[i][j] = 0.0;
-					}
-				}
-
-				//Invert appropriately - A_mat = inv(a_mat)
-				if (has_phase(PHASE_A) && !has_phase(PHASE_B) && !has_phase(PHASE_C)) //only A
-				{
-					//Inverted value
-					A_mat[0][0] = complex(1.0) / a_mat[0][0];
-				}
-				else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //only B
-				{
-					//Inverted value
-					A_mat[1][1] = complex(1.0) / a_mat[1][1];
-				}
-				else if (!has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //only C
-				{
-					//Inverted value
-					A_mat[2][2] = complex(1.0) / a_mat[2][2];
-				}
-				else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //has A & C
-				{
-					complex detvalue = a_mat[0][0]*a_mat[2][2] - a_mat[0][2]*a_mat[2][0];
-
-					//Inverted value
-					A_mat[0][0] = a_mat[2][2] / detvalue;
-					A_mat[0][2] = a_mat[0][2] * -1.0 / detvalue;
-					A_mat[2][0] = a_mat[2][0] * -1.0 / detvalue;
-					A_mat[2][2] = a_mat[0][0] / detvalue;
-				}
-				else if (has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //has A & B
-				{
-					complex detvalue = a_mat[0][0]*a_mat[1][1] - a_mat[0][1]*a_mat[1][0];
-
-					//Inverted value
-					A_mat[0][0] = a_mat[1][1] / detvalue;
-					A_mat[0][1] = a_mat[0][1] * -1.0 / detvalue;
-					A_mat[1][0] = a_mat[1][0] * -1.0 / detvalue;
-					A_mat[1][1] = a_mat[0][0] / detvalue;
-				}
-				else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C))	//has B & C
-				{
-					complex detvalue = a_mat[1][1]*a_mat[2][2] - a_mat[1][2]*a_mat[2][1];
-
-					//Inverted value
-					A_mat[1][1] = a_mat[2][2] / detvalue;
-					A_mat[1][2] = a_mat[1][2] * -1.0 / detvalue;
-					A_mat[2][1] = a_mat[2][1] * -1.0 / detvalue;
-					A_mat[2][2] = a_mat[1][1] / detvalue;
-				}
-				else if ((has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C)) || (has_phase(PHASE_D))) //has ABC or D (D=ABC)
-				{
-					complex detvalue = a_mat[0][0]*a_mat[1][1]*a_mat[2][2] - a_mat[0][0]*a_mat[1][2]*a_mat[2][1] - a_mat[0][1]*a_mat[1][0]*a_mat[2][2] + a_mat[0][1]*a_mat[2][0]*a_mat[1][2] + a_mat[1][0]*a_mat[0][2]*a_mat[2][1] - a_mat[0][2]*a_mat[1][1]*a_mat[2][0];
-
-					//Invert it
-					A_mat[0][0] = (a_mat[1][1]*a_mat[2][2] - a_mat[1][2]*a_mat[2][1]) / detvalue;
-					A_mat[0][1] = (a_mat[0][2]*a_mat[2][1] - a_mat[0][1]*a_mat[2][2]) / detvalue;
-					A_mat[0][2] = (a_mat[0][1]*a_mat[1][2] - a_mat[0][2]*a_mat[1][1]) / detvalue;
-					A_mat[1][0] = (a_mat[2][0]*a_mat[1][2] - a_mat[1][0]*a_mat[2][2]) / detvalue;
-					A_mat[1][1] = (a_mat[0][0]*a_mat[2][2] - a_mat[0][2]*a_mat[2][0]) / detvalue;
-					A_mat[1][2] = (a_mat[1][0]*a_mat[0][2] - a_mat[0][0]*a_mat[1][2]) / detvalue;
-					A_mat[2][0] = (a_mat[1][0]*a_mat[2][1] - a_mat[1][1]*a_mat[2][0]) / detvalue;
-					A_mat[2][1] = (a_mat[0][1]*a_mat[2][0] - a_mat[0][0]*a_mat[2][1]) / detvalue;
-					A_mat[2][2] = (a_mat[0][0]*a_mat[1][1] - a_mat[0][1]*a_mat[1][0]) / detvalue;
-				}
-
-				//Now make B_mat value
-				multiply(A_mat,b_mat,B_mat);
-			}//End valid capacitance values
-			else
-			{	//Something failed, treat it like a normal line
-				for (int i = 0; i < 3; i++) 
-				{
-					for (int j = 0; j < 3; j++) 
-					{
-						a_mat[i][j] = d_mat[i][j] = A_mat[i][j] = 0.0;
-						c_mat[i][j] = 0.0;
-						B_mat[i][j] = b_mat[i][j];
-					}
-				}
-
-				//"Unzero" appropriate values - doing it this way makes FBS more cooperative
+				//Other auxilliary by phase
 				if (has_phase(PHASE_A))
 				{
-					a_mat[0][0] = d_mat[0][0] = A_mat[0][0] = 1.0;
+					a_mat[0][0] = 1.0;
+					d_mat[0][0] = 1.0;
+					A_mat[0][0] = 1.0;
 				}
 
 				if (has_phase(PHASE_B))
 				{
-					a_mat[1][1] = d_mat[1][1] = A_mat[1][1] = 1.0;
+					a_mat[1][1] = 1.0;
+					d_mat[1][1] = 1.0;
+					A_mat[1][1] = 1.0;
 				}
 
 				if (has_phase(PHASE_C))
 				{
-					a_mat[2][2] = d_mat[2][2] = A_mat[2][2] = 1.0;
+					a_mat[2][2] = 1.0;
+					d_mat[2][2] = 1.0;
+					A_mat[2][2] = 1.0;
 				}
 			}
-		}
-		else	//Just zero everything
-		{
-			for (int i = 0; i < 3; i++) 
+			else if ((has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C)) || (has_phase(PHASE_D))) //has ABC or D (D=ABC)
 			{
-				for (int j = 0; j < 3; j++) 
-				{
-					a_mat[i][j] = d_mat[i][j] = A_mat[i][j] = 0.0;
-					c_mat[i][j] = 0.0;
-					B_mat[i][j] = b_mat[i][j];
-				}
+				complex detvalue = P_mat[0][0]*P_mat[1][1]*P_mat[2][2] - P_mat[0][0]*P_mat[1][2]*P_mat[2][1] - P_mat[0][1]*P_mat[1][0]*P_mat[2][2] + P_mat[0][1]*P_mat[2][0]*P_mat[1][2] + P_mat[1][0]*P_mat[0][2]*P_mat[2][1] - P_mat[0][2]*P_mat[1][1]*P_mat[2][0];
+
+				//Invert it
+				Yabc_mat[0][0] = (P_mat[1][1]*P_mat[2][2] - P_mat[1][2]*P_mat[2][1]) / detvalue * cap_freq_mult;
+				Yabc_mat[0][1] = (P_mat[0][2]*P_mat[2][1] - P_mat[0][1]*P_mat[2][2]) / detvalue * cap_freq_mult;
+				Yabc_mat[0][2] = (P_mat[0][1]*P_mat[1][2] - P_mat[0][2]*P_mat[1][1]) / detvalue * cap_freq_mult;
+				Yabc_mat[1][0] = (P_mat[2][0]*P_mat[1][2] - P_mat[1][0]*P_mat[2][2]) / detvalue * cap_freq_mult;
+				Yabc_mat[1][1] = (P_mat[0][0]*P_mat[2][2] - P_mat[0][2]*P_mat[2][0]) / detvalue * cap_freq_mult;
+				Yabc_mat[1][2] = (P_mat[1][0]*P_mat[0][2] - P_mat[0][0]*P_mat[1][2]) / detvalue * cap_freq_mult;
+				Yabc_mat[2][0] = (P_mat[1][0]*P_mat[2][1] - P_mat[1][1]*P_mat[2][0]) / detvalue * cap_freq_mult;
+				Yabc_mat[2][1] = (P_mat[0][1]*P_mat[2][0] - P_mat[0][0]*P_mat[2][1]) / detvalue * cap_freq_mult;
+				Yabc_mat[2][2] = (P_mat[0][0]*P_mat[1][1] - P_mat[0][1]*P_mat[1][0]) / detvalue * cap_freq_mult;
 			}
 
-			//"Unzero" appropriate values - doing it this way makes FBS more cooperative
+			//Other auxilliary by phase
 			if (has_phase(PHASE_A))
 			{
-				a_mat[0][0] = d_mat[0][0] = A_mat[0][0] = 1.0;
+				a_mat[0][0] = 1.0;
+				d_mat[0][0] = 1.0;
+				A_mat[0][0] = 1.0;
 			}
 
 			if (has_phase(PHASE_B))
 			{
-				a_mat[1][1] = d_mat[1][1] = A_mat[1][1] = 1.0;
+				a_mat[1][1] = 1.0;
+				d_mat[1][1] = 1.0;
+				A_mat[1][1] = 1.0;
 			}
 
 			if (has_phase(PHASE_C))
 			{
-				a_mat[2][2] = d_mat[2][2] = A_mat[2][2] = 1.0;
+				a_mat[2][2] = 1.0;
+				d_mat[2][2] = 1.0;
+				A_mat[2][2] = 1.0;
 			}
 		}
 	}
+
+	// Calculate line matrixies A_mat, B_mat, a_mat, b_mat, c_mat and d_mat based on Zabc_mat and Yabc_mat
+	recalc_line_matricies(Zabc_mat, Yabc_mat);
 
 #ifdef _TESTING
 	if (show_matrix_values)
 	{
 		OBJECT *obj = GETOBJECT(this);
 
-		gl_testmsg("overhead_line: %d a matrix",obj->id);
+		gl_testmsg("overhead_line: %s a matrix",obj->name);
 		print_matrix(a_mat);
 
-		gl_testmsg("overhead_line: %d A matrix",obj->id);
+		gl_testmsg("overhead_line: %s A matrix",obj->name);
 		print_matrix(A_mat);
 
-		gl_testmsg("overhead_line: %d b matrix",obj->id);
+		gl_testmsg("overhead_line: %s b matrix",obj->name);
 		print_matrix(b_mat);
 
-		gl_testmsg("overhead_line: %d B matrix",obj->id);
+		gl_testmsg("overhead_line: %s B matrix",obj->name);
 		print_matrix(B_mat);
 
-		gl_testmsg("overhead_line: %d c matrix",obj->id);
+		gl_testmsg("overhead_line: %s c matrix",obj->name);
 		print_matrix(c_mat);
 
-		gl_testmsg("overhead_line: %d d matrix",obj->id);
+		gl_testmsg("overhead_line: %s d matrix",obj->name);
 		print_matrix(d_mat);
 	}
 #endif

@@ -538,51 +538,6 @@ int solar::init(OBJECT *parent)
 		gl_warning("Solar panel type is unknown! Using default: SINGLE_CRYSTAL_SILICON");
 		panel_type_v = SINGLE_CRYSTAL_SILICON;
 	}
-
-	struct {
-		complex **var;
-		char *varname;
-	} 
-	
-	map[] = {
-		// map the V & I from the inverter
-		{&pCircuit_V,			"V_In"}, // assumes 2 and 3 follow immediately in memory
-		{&pLine_I,				"I_In"}, // assumes 2 and 3(N) follow immediately in memory
-	};
-
-	static complex default_line_voltage[1], default_line_current[1];
-	int i;
-
-	// find parent inverter, if not defined, use a default voltage
-	if (parent != NULL && strcmp(parent->oclass->name,"inverter") == 0)
-	{
-		// construct circuit variable map to meter
-		for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
-		{
-			*(map[i].var) = get_complex(parent,map[i].varname);
-		}
-	}
-	else if	(parent != NULL && strcmp(parent->oclass->name,"inverter") != 0)
-	{
-		throw("Solar panel must have an inverter as it's parent");
-	}
-	else
-	{	// default values of voltage
-		// construct circuit variable map to meter
-		/// @todo use triplex property mapping instead of assuming memory order for meter variables (residential, low priority) (ticket #139)
-		gl_warning("solar panel:%d has no parent defined. Using static voltages.", obj->id);
-
-		// attach meter variables to each circuit in the default_meter
-		*(map[0].var) = &default_line_voltage[0];
-		*(map[1].var) = &default_line_current[0];
-
-		// provide initial values for voltages
-		default_line_voltage[0] = complex(V_Max.Re()/sqrt(3.0),0);
-        	//default_line_voltage[0] = V_Max/sqrt(3.0);
-     
-	}
-	//1 m/s = 2.24 mph
-		
 	switch(panel_type_v)
 	{
 		case SINGLE_CRYSTAL_SILICON:
@@ -623,52 +578,107 @@ int solar::init(OBJECT *parent)
 				efficiency = 0.10;
 			break;
 	}
-		
+
+	static complex default_line_voltage[1], default_line_current[1];
+	int i;
+
 	//efficiency dictates how much of the rate insolation the panel can capture and
 	//turn into electricity
-
 	//Rated power output
 	Max_P = Rated_Insolation * efficiency * area; // We are calculating the module efficiency which should be less than cell efficiency. What about the sun hours??
-	inverter *par = OBJECTDATA(obj->parent, inverter);
-	if((parent->flags & OF_INIT) != OF_INIT){
-		char objname[256];
-		gl_verbose("solar::init(): deferring initialization on %s", gl_name(parent, objname, 255));
-		return 2; // defer
-	}
-	if(par->use_multipoint_efficiency == TRUE){
-		if(Max_P > par->p_dco){
-			gl_warning("The PV is over rated for its parent inverter.");
-			/*  TROUBLESHOOT
-			The maximum output for the PV array is larger than the inverter rating.  Ensure this 
-			was done intentionally.  If not, please correct your values and try again.
-			*/
+
+	// find parent inverter, if not defined, use a default voltage
+	if (parent != NULL && strcmp(parent->oclass->name,"inverter") == 0) // SOLAR has a PARENT and PARENT is an INVERTER
+	{
+		struct {
+			complex **var;
+			char *varname;
+		} map[] = {
+			// map the V & I from the inverter
+			{&pCircuit_V,			"V_In"}, // assumes 2 and 3 follow immediately in memory
+			{&pLine_I,				"I_In"}, // assumes 2 and 3(N) follow immediately in memory
+		};
+		// construct circuit variable map to meter
+		for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
+		{
+			*(map[i].var) = get_complex(parent,map[i].varname);
 		}
-	} else if(par->inverter_type_v == 4){//four quadrant inverter
-		if(par->number_of_phases_out == 4){
-			if(Max_P > par->p_rated/par->inv_eta){
+
+		inverter *par = OBJECTDATA(obj->parent, inverter);
+
+		if((parent->flags & OF_INIT) != OF_INIT)
+		{
+			char objname[256];
+			gl_verbose("solar::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+
+		if(par->use_multipoint_efficiency == TRUE)
+		{
+			if(Max_P > par->p_dco){
 				gl_warning("The PV is over rated for its parent inverter.");
-				//Defined above
+				/*  TROUBLESHOOT
+				The maximum output for the PV array is larger than the inverter rating.  Ensure this 
+				was done intentionally.  If not, please correct your values and try again.
+				*/
+			}
+		}
+		else if(par->inverter_type_v == 4)
+		{//four quadrant inverter
+			if(par->number_of_phases_out == 4){
+				if(Max_P > par->p_rated/par->inv_eta){
+					gl_warning("The PV is over rated for its parent inverter.");
+					//Defined above
+				}
+			} else {
+				if(Max_P > par->number_of_phases_out*par->p_rated/par->inv_eta){
+					gl_warning("The PV is over rated for its parent inverter.");
+					//Defined above
+				}
 			}
 		} else {
-			if(Max_P > par->number_of_phases_out*par->p_rated/par->inv_eta){
-				gl_warning("The PV is over rated for its parent inverter.");
-				//Defined above
+			if(par->number_of_phases_out == 4){
+				if(Max_P > par->p_rated/par->efficiency){
+					gl_warning("The PV is over rated for its parent inverter.");
+					//Defined above
+				}
+			} else {
+				if(Max_P > par->number_of_phases_out*par->p_rated/par->efficiency){
+					gl_warning("The PV is over rated for its parent inverter.");
+					//Defined above
+				}
 			}
 		}
-	} else {
-		if(par->number_of_phases_out == 4){
-			if(Max_P > par->p_rated/par->efficiency){
-				gl_warning("The PV is over rated for its parent inverter.");
-				//Defined above
-			}
-		} else {
-			if(Max_P > par->number_of_phases_out*par->p_rated/par->efficiency){
-				gl_warning("The PV is over rated for its parent inverter.");
-				//Defined above
-			}
-		}
+		//gl_verbose("Max_P is : %f", Max_P);
 	}
-	//gl_verbose("Max_P is : %f", Max_P);
+	else if	(parent != NULL && strcmp(parent->oclass->name,"inverter") != 0)
+	{
+		GL_THROW("Solar panel can only have an inverter as its parent.");
+		/* TROUBLESHOOT
+		   The solar panel can only have an INVERTER as parent, and no other object. Or it can be all by itself, without a parent.
+		*/
+	}
+	else
+	{	// default values of voltage
+		gl_warning("solar panel:%d has no parent defined. Using static voltages.", obj->id);
+		struct {
+			complex **var;
+			char *varname;
+		} map[] = {
+			// map the V & I from the inverter
+			{&pCircuit_V,			"V_In"}, // assumes 2 and 3 follow immediately in memory
+			{&pLine_I,				"I_In"}, // assumes 2 and 3(N) follow immediately in memory
+		};
+		// attach meter variables to each circuit in the default_meter
+		*(map[0].var) = &default_line_voltage[0];
+		*(map[1].var) = &default_line_current[0];
+
+		// provide initial values for voltages
+		default_line_voltage[0] = complex(V_Max.Re()/sqrt(3.0),0);
+        	//default_line_voltage[0] = V_Max/sqrt(3.0);
+     
+	}
+	//1 m/s = 2.24 mph
 
 	climate_result=init_climate();
 

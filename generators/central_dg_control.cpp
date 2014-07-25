@@ -107,19 +107,29 @@ int central_dg_control::init(OBJECT *parent)
 	//Find all inverters with controller group id
 	inverter_list = gl_find_objects(FL_NEW,FT_CLASS,SAME,"inverter",AND,FT_GROUPID,SAME,controlled_objects.get_string(),FT_END);
 	if(inverter_list == NULL){
-		gl_error("no inverters with given group id found.");
+		gl_error("No inverters with given group id found.");
+		/*  TROUBLESHOOT
+		While trying to put together a list of all inverter objects with the specified controller groupid, no such inverter objects were found.
+		*/
+		
 		return 0;
 	}
 	//Find all batteries whose parents are inverters with controller group id
 	battery_list = gl_find_objects(FL_NEW,FT_CLASS,SAME,"battery",AND,FT_PARENT,FT_CLASS,SAME,"inverter",AND,FT_PARENT,FT_GROUPID,SAME,controlled_objects.get_string(),FT_END);
 	if(battery_list == NULL){
-		gl_error("no inverters with given group id found.");
+		gl_error("No batteries with inverter parents with given group id found.");
+		/*  TROUBLESHOOT
+		While trying to put together a list of all battery objects with parent inverter objects with the specified controller groupid, no such battery objects were found.
+		*/
 		return 0;
 	}
 	//Find all solars whose parents are inverters with controller group id
 	solar_list = gl_find_objects(FL_NEW,FT_CLASS,SAME,"solar",AND,FT_PARENT,FT_CLASS,SAME,"inverter",AND,FT_PARENT,FT_GROUPID,SAME,controlled_objects.get_string(),FT_END);
 	if(solar_list == NULL){
-		gl_error("no inverters with given group id found.");
+		gl_error("no solars with inverter parents with given group id found.");
+		/*  TROUBLESHOOT
+		While trying to put together a list of all solar objects with parent inverter objects with the specified controller groupid, no such solar objects were found.
+		*/
 		return 0;
 	}
 
@@ -127,30 +137,45 @@ int central_dg_control::init(OBJECT *parent)
 	inverter_set = (inverter **)gl_malloc((battery_list->hit_count*sizeof(battery*))+(solar_list->hit_count*sizeof(solar*)));
 	if(inverter_set == NULL){
 		gl_error("Failed to allocate inverter array.");
+		/*  TROUBLESHOOT
+		While trying to allocate the array of pointers to the controlled inverters, the pointer array came back null.
+		*/
 		return 0;
 	}
 	//Allocate battery pointer array
 	battery_set = (battery **)gl_malloc(battery_list->hit_count*sizeof(battery*));
 	if(battery_set == NULL){
 		gl_error("Failed to allocate battery array.");
+		/*  TROUBLESHOOT
+		While trying to allocate the array of pointers to the controlled batteries, the pointer array came back null.		
+		*/
 		return 0;
 	}
 	//Allocate solar pointer array
 	solar_set = (solar **)gl_malloc(solar_list->hit_count*sizeof(solar*));
 	if(solar_set == NULL){
 		gl_error("Failed to allocate solar array.");
+		/*  TROUBLESHOOT
+		While trying to allocate the array of pointers to the controlled solars, the pointer array came back null.
+		*/
 		return 0;
 	}
 	//Allocate pointer array for inverters with battery children
 	battery_inverter_set = (inverter ***)gl_malloc(battery_list->hit_count*sizeof(inverter**));
 	if(battery_inverter_set == NULL){
 		gl_error("Failed to allocate battery array.");
+		/*  TROUBLESHOOT
+		While trying to allocate the array of pointers to the controlled inverters with battery children, the pointer array came back null.
+		*/
 		return 0;
 	}
 	//Allocate pointer array for inverters with solar children
 	solar_inverter_set = (inverter ***)gl_malloc(solar_list->hit_count*sizeof(inverter**));
 	if(solar_inverter_set == NULL){
 		gl_error("Failed to allocate solar array.");
+		/*  TROUBLESHOOT
+		While trying to allocate the array of pointers to the controlled inverters with solar children, the pointer array came back null.
+		*/
 		return 0;
 	}
 
@@ -166,17 +191,26 @@ int central_dg_control::init(OBJECT *parent)
 		battery_set[index] = OBJECTDATA(obj,battery);
 		if(battery_set[index] == NULL){
 			gl_error("Unable to map object as battery.");
+			/*  TROUBLESHOOT
+			While trying to map a battery from the list as a battery object, a null pointer was returned.
+			*/
 			return 0;
 		}
 		inverter_set[inverter_filled_to + 1] = OBJECTDATA(obj->parent, inverter);
 		if(inverter_set[inverter_filled_to + 1] == NULL){
 			gl_error("Unable to map object as inverter.");
+			/*  TROUBLESHOOT
+			While trying to map an inverter from the list as an inveter object, a null pointer was returned.
+			*/
 			return 0;
 		}
 		inverter_filled_to++;
 		battery_inverter_set[index] = &inverter_set[inverter_filled_to];
 		if (battery_inverter_set[index] == NULL) {
 			gl_error("Unable to map battery parent object as inverter.");
+			/*  TROUBLESHOOT
+			While trying to map an inverter from the listof inverters with battery children as an inverter object, a null pointer was returned.
+			*/
 			return 0;
 		}
 		//Aggregate (three-phase) battery inverter rated complex power
@@ -193,17 +227,26 @@ int central_dg_control::init(OBJECT *parent)
 		solar_set[index] = OBJECTDATA(obj,solar);
 		if(solar_set[index] == NULL){
 			gl_error("Unable to map object as solar.");
+			/*  TROUBLESHOOT
+			While trying to map a solar from the list as a solar object, a null pointer was returned.
+			*/
 			return 0;
 		}
 		inverter_set[inverter_filled_to + 1] = OBJECTDATA(obj->parent, inverter);
 		if(inverter_set[inverter_filled_to + 1] == NULL){
 			gl_error("Unable to map object as inverter.");
+			/*  TROUBLESHOOT
+			While trying to map an inverter from the listof inverters an inverter object, a null pointer was returned.
+			*/
 			return 0;
 		}
 		inverter_filled_to++;
 		solar_inverter_set[index] = &inverter_set[inverter_filled_to];
 		if (solar_inverter_set[index] == NULL) {
 			gl_error("Unable to map solar parent object as inverter.");
+			/*  TROUBLESHOOT
+			While trying to map an inverter from the listof inverters with solar children as an inverter object, a null pointer was returned.
+			*/
 			return 0;
 		}
 		//Aggregate (three-phase) solar inverter rated complex power
@@ -281,7 +324,7 @@ TIMESTAMP central_dg_control::sync(TIMESTAMP t0, TIMESTAMP t1)
 	//The target power factor is the midpoint of the two values specifying the allowable band. However, due to the 
 	//discontinuous/nonlinear nature of the signed power factor used in GridLAB-D, calculation of the midpoint is 
 	//easiest by calculating the corresponding power factor angles.
-	double pf_angle_goal = ((pf_low/abs(pf_low))*acos(abs(pf_low)) + (pf_high/abs(pf_high))*acos(abs(pf_high)))/2.0;
+	double pf_angle_goal = ((pf_low/fabs(pf_low))*acos(fabs(pf_low)) + (pf_high/fabs(pf_high))*acos(fabs(pf_high)))/2.0;
 	double pf_goal;
 	//Assign power factors using calculated goal and correct sign.
 	if (pf_angle_goal < 0)
@@ -348,7 +391,7 @@ TIMESTAMP central_dg_control::sync(TIMESTAMP t0, TIMESTAMP t1)
 					//Calculate measured power factor at feederhead. Note this is signed power factor. The magnitude is 
 					//equal to |P|/|S|. The sign is positive where the Q is positive (from a load perspective, i.e. Q is 
 					//being consumed). For cases where Q is 0, a power factor of positive 1 is assigned.
-					pf_meas_3p = (Q_3p == 0 ? 1.0 : Q_3p)/abs(Q_3p == 0 ? 1.0 : Q_3p)*(S_3p.Mag() == 0 ? 1.0 : abs(P_3p))/(S_3p.Mag() == 0 ? 1.0 : S_3p.Mag());
+					pf_meas_3p = (Q_3p == 0 ? 1.0 : Q_3p)/fabs(Q_3p == 0 ? 1.0 : Q_3p)*(S_3p.Mag() == 0 ? 1.0 : fabs(P_3p))/(S_3p.Mag() == 0 ? 1.0 : S_3p.Mag());
 
 					//Due to diabolical confusing nature of signed power factor, many cases must be used to correctly handle
 					//the various combinations of power factor limit and measurement cases. If power factor is outside the limit
@@ -356,10 +399,10 @@ TIMESTAMP central_dg_control::sync(TIMESTAMP t0, TIMESTAMP t1)
 					//control mode exits.
 					if (pf_low > 0.0) {
 						if (pf_meas_3p < 0.0||(pf_meas_3p > 0.0 && pf_meas_3p > pf_low)) {
-							Q_disp_3p = Q_3p + Q_gen_3p - abs(P_3p)*tan(acos(pf_goal));
+							Q_disp_3p = Q_3p + Q_gen_3p - fabs(P_3p)*tan(acos(pf_goal));
 						}
 						else if (pf_meas_3p < pf_high) {
-							Q_disp_3p = Q_3p + Q_gen_3p - abs(P_3p)*tan(acos(pf_goal));
+							Q_disp_3p = Q_3p + Q_gen_3p - fabs(P_3p)*tan(acos(pf_goal));
 						}
 						//Power factor within limits.
 						else {
@@ -368,10 +411,10 @@ TIMESTAMP central_dg_control::sync(TIMESTAMP t0, TIMESTAMP t1)
 					}
 					else if (pf_high > 0.0) {
 						if (pf_meas_3p < 0.0 && pf_meas_3p > pf_low) {
-							Q_disp_3p = Q_3p + Q_gen_3p - abs(P_3p)*tan(acos(pf_goal));
+							Q_disp_3p = Q_3p + Q_gen_3p - fabs(P_3p)*tan(acos(pf_goal));
 						}
 						else if (pf_meas_3p >= 0.0 && pf_meas_3p < pf_high) {
-							Q_disp_3p = Q_3p + Q_gen_3p - abs(P_3p)*tan(acos(pf_goal));
+							Q_disp_3p = Q_3p + Q_gen_3p - fabs(P_3p)*tan(acos(pf_goal));
 						}
 						//Power factor within limits
 						else {
@@ -381,10 +424,10 @@ TIMESTAMP central_dg_control::sync(TIMESTAMP t0, TIMESTAMP t1)
 					//limits must both be negative
 					else { 
 						if (pf_meas_3p < 0.0 && pf_low < pf_meas_3p) {
-							Q_disp_3p = Q_3p + Q_gen_3p - abs(P_3p)*tan(acos(pf_goal));
+							Q_disp_3p = Q_3p + Q_gen_3p - fabs(P_3p)*tan(acos(pf_goal));
 						}
 						else if ((pf_meas_3p < 0.0 && pf_meas_3p < pf_high)||(pf_meas_3p > 0)) {
-							Q_disp_3p = Q_3p + Q_gen_3p - abs(P_3p)*tan(acos(pf_goal));
+							Q_disp_3p = Q_3p + Q_gen_3p - fabs(P_3p)*tan(acos(pf_goal));
 						}
 						//Power factor within limits
 						else {
@@ -413,7 +456,7 @@ TIMESTAMP central_dg_control::sync(TIMESTAMP t0, TIMESTAMP t1)
 					}
 				
 					//Can we meet the Q dispatch with our capacity? If yes allocate the whole dispatch.
-					if (abs(Q_avail_3p) >= abs(Q_disp_3p)) {
+					if (fabs(Q_avail_3p) >= fabs(Q_disp_3p)) {
 						for (n=0; n < inverter_count; n++) {
 							//Dispatch to solar inverters (those in constant PF mode) who are currently producing some real power.
 							if ((inverter_set[n])->four_quadrant_control_mode==2 && (inverter_set[n])->VA_Out.Re() > 0.0) {
@@ -421,7 +464,7 @@ TIMESTAMP central_dg_control::sync(TIMESTAMP t0, TIMESTAMP t1)
 								//Q dispatch portion calculated using ratio of this inverter's capacity factor to total capacity factor.
 								this_Q = (inverter_set[n])->p_rated*3.0*sin(acos((inverter_set[n])->VA_Out.Re()/((inverter_set[n])->p_rated)*3.0))/Q_avail_3p*Q_disp_3p;
 								//Calculate and correctly sign corresponding power factor.
-								(inverter_set[n])->power_factor = -(this_Q/abs(this_Q))*abs((inverter_set[n])->VA_Out.Re())/complex((inverter_set[n])->VA_Out.Re(),this_Q).Mag();
+								(inverter_set[n])->power_factor = -(this_Q/fabs(this_Q))*fabs((inverter_set[n])->VA_Out.Re())/complex((inverter_set[n])->VA_Out.Re(),this_Q).Mag();
 							}
 							//Dispatch to battery inverters (those in constant PQ mode)
 							else if ((inverter_set[n])->four_quadrant_control_mode==1)
@@ -437,7 +480,7 @@ TIMESTAMP central_dg_control::sync(TIMESTAMP t0, TIMESTAMP t1)
 							if ((inverter_set[n])->four_quadrant_control_mode==2 && (inverter_set[n])->VA_Out.Re() > 0.0) {
 								//This inverter QRef = (This inverter available Q/total Available Q)*Q to be dispatched
 								this_Q = (inverter_set[n])->p_rated*3.0*sin(acos((inverter_set[n])->VA_Out.Re()/((inverter_set[n])->p_rated)*3.0));
-								(inverter_set[n])->power_factor = -(this_Q/abs(this_Q))*abs((inverter_set[n])->VA_Out.Re())/complex((inverter_set[n])->VA_Out.Re(),this_Q).Mag();
+								(inverter_set[n])->power_factor = -(this_Q/fabs(this_Q))*fabs((inverter_set[n])->VA_Out.Re())/complex((inverter_set[n])->VA_Out.Re(),this_Q).Mag();
 							}
 							else if ((inverter_set[n])->four_quadrant_control_mode==1)
 							{

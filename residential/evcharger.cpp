@@ -336,6 +336,8 @@ static bool hiV[] = {false,true,true};
 
 int evcharger::init(OBJECT *parent)
 {
+	int retval;
+
 	if(parent != NULL){
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
@@ -380,9 +382,11 @@ int evcharger::init(OBJECT *parent)
 	if (strcmp(demand_profile,"")!=0)
 		pDemand = get_demand_profile(demand_profile);
 	
+	retval = residential_enduse::init(parent);
+
 	update_state();
 
-	return residential_enduse::init(parent);
+	return retval;
 }
 
 int evcharger::isa(char *classname)

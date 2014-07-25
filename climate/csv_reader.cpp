@@ -321,6 +321,7 @@ int csv_reader::read_line(char *line, int linenum){
 	if(timefmt[0] == 0){
 		TIMESTAMP ts = callback->time.convert_to_timestamp(token);
 		DATETIME dt;
+		dt.nanosecond = 0;
 		if ( ts!=TS_INVALID && callback->time.local_datetime(ts,&dt) )
 		{
 			 sample->month = dt.month;
@@ -403,6 +404,8 @@ TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double
 	int i = 0;
 	int idx = index;
 	int start = index;
+	now.nanosecond = 0;
+	then.nanosecond = 0;
 
 	int localres;
 
@@ -416,6 +419,7 @@ TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double
 	if(next_ts == 0){
 		//	initialize to the correct index & next_ts
 		DATETIME guess_dt;
+		guess_dt.nanosecond = 0;
 		TIMESTAMP guess_ts;
 		int i;
 #if 0
@@ -491,6 +495,7 @@ TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double
 		then.hour = samples[(index+1)%sample_ct]->hour;
 		then.minute = samples[(index+1)%sample_ct]->minute;
 		then.second = samples[(index+1)%sample_ct]->second;
+		then.nanosecond = 0;
 		strcpy(then.tz, now.tz);
 
 		next_ts = (TIMESTAMP)gl_mktime(&then);

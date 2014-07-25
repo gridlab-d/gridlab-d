@@ -1,0 +1,8 @@
+# file...... ../CDGCTest.csv
+# date...... Thu Feb 06 16:26:37 2014
+# user...... fish334
+# host...... (null)
+# trigger... (none)
+# interval.. 3600
+# limit..... 0
+# timestamp,m1:measured_power_A,m1:measured_power_B,m1:measured_power_C,inv5:P_Out,inv5:Q_Out,inv5:VA_Out,inv4:P_Out,inv4:Q_Out,inv4:VA_Out,load2:constant_power_A

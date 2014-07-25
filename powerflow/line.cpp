@@ -106,6 +106,195 @@ int line::isa(char *classname)
 	return strcmp(classname,"line")==0 || link_object::isa(classname);
 }
 
+void line::load_matrix_based_configuration(complex Zabc_mat[3][3], complex Yabc_mat[3][3])
+{
+	line_configuration *config = OBJECTDATA(configuration, line_configuration);
+	double miles;
+	complex cap_freq_mult;
+
+	// ft -> miles as z-matrix and c-matrix values are specified in Ohms / nF per mile.
+	miles = length / 5280.0;
+
+	//Set capacitor frequency/distance/scaling factor (rad/s*S)
+	//scale factor allows for the fact that the internal representation of the C matrix
+	//is specified in nF/mile and converts back to Siemens
+	cap_freq_mult = complex(0,(2.0*PI*nominal_frequency*0.000000001*miles));
+
+	// Setting Zabc_mat based on the z-matrix configuration parameters
+	// Setting Yabc_mat based on the c-matrix configuration parameters and the application of Kersting (5.15)
+
+	// User defined z-matrix and c-matrix - only assign parts of matrix if phase exists
+	if (has_phase(PHASE_A))
+	{
+		Zabc_mat[0][0] = config->impedance11 * miles;
+		Yabc_mat[0][0] = cap_freq_mult * config->capacitance11;
+		
+		if (has_phase(PHASE_B))
+		{
+			Zabc_mat[0][1] = config->impedance12 * miles;
+			Zabc_mat[1][0] = config->impedance21 * miles;
+			Yabc_mat[0][1] = cap_freq_mult * config->capacitance12;
+			Yabc_mat[1][0] = cap_freq_mult * config->capacitance21;
+		}
+		if (has_phase(PHASE_C))
+		{
+			Zabc_mat[0][2] = config->impedance13 * miles;
+			Zabc_mat[2][0] = config->impedance31 * miles;
+			Yabc_mat[0][2] = cap_freq_mult * config->capacitance13;
+			Yabc_mat[2][0] = cap_freq_mult * config->capacitance31;
+		}
+	}
+	if (has_phase(PHASE_B))
+	{
+		Zabc_mat[1][1] = config->impedance22 * miles;
+		Yabc_mat[1][1] = cap_freq_mult * config->capacitance22;
+		
+		if (has_phase(PHASE_C))
+		{
+			Zabc_mat[1][2] = config->impedance23 * miles;
+			Zabc_mat[2][1] = config->impedance32 * miles;
+			Yabc_mat[1][2] = cap_freq_mult * config->capacitance23;
+			Yabc_mat[2][1] = cap_freq_mult * config->capacitance32;
+		}
+	
+	}
+	if (has_phase(PHASE_C))
+	{
+		Zabc_mat[2][2] = config->impedance33 * miles;
+		Yabc_mat[2][2] = cap_freq_mult * config->capacitance33;
+	}
+
+	// Make sure use_line_cap is turned on if capacitance values have been specified.  Otherwise we need to warn
+	// the user and zero out Yabc_mat as otherwise the powerflow engine will give quirky results.
+	if (config->capacitance11 != 0 || config->capacitance22 != 0 || config->capacitance33 != 0)
+	{
+		if (use_line_cap == false)
+		{
+			gl_warning("Shunt capacitance of line:%s specified without setting powerflow::line_capacitance = TRUE. Shunt capacitance will be ignotred.",OBJECTHDR(this)->name);
+
+			for (int i = 0; i < 3; i++) 
+			{
+				for (int j = 0; j < 3; j++) 
+				{
+					Yabc_mat[i][j] = 0.0;
+				}
+			}
+		}
+	}
+}
+
+void line::recalc_line_matricies(complex Zabc_mat[3][3], complex Yabc_mat[3][3])
+{
+	complex U_mat[3][3], temp_mat[3][3];
+
+	// Setup unity matrix
+	U_mat[0][0] = U_mat[1][1] = U_mat[2][2] = 1.0;
+	U_mat[0][1] = U_mat[0][2] = 0.0;
+	U_mat[1][0] = U_mat[1][2] = 0.0;
+	U_mat[2][0] = U_mat[2][1] = 0.0;
+
+	//b_mat = Zabc_mat as per Kersting (6.10)
+		equalm(Zabc_mat,b_mat);
+
+	//a_mat & d_mat as per Kersting (6.9) and (6.18)
+		//Zabc*Yabc
+		multiply(Zabc_mat,Yabc_mat,temp_mat);
+
+		//0.5*Above - use A_mat temporarily
+		multiply(0.5,temp_mat,A_mat);
+
+		//Add unity to make a_mat
+		addition(U_mat,A_mat,a_mat);
+
+		//d_mat is the same as a_mat
+		equalm(a_mat,d_mat);
+
+	//c_mat as per Kersting (6.17)
+		//Zabc*Yabc is temp_mat from above
+		//So Yabc*(Zabc*Yabc) - use A_mat again
+		multiply(Yabc_mat,temp_mat,A_mat);
+
+		//Multiply by 1/4 - use B_mat temporarily
+		multiply(0.25,A_mat,B_mat);
+
+		//Add to Yabc
+		addition(Yabc_mat,B_mat,c_mat);
+
+	//A_mat is phase dependent inversion - B_mat is a product associated with it
+	//Zero them first
+	for (int i = 0; i < 3; i++) 
+	{
+		for (int j = 0; j < 3; j++) 
+		{
+			A_mat[i][j] = B_mat[i][j] = 0.0;
+		}
+	}
+
+	//Invert appropriately - A_mat = inv(a_mat) as per Kersting (6.27)
+	if (has_phase(PHASE_A) && !has_phase(PHASE_B) && !has_phase(PHASE_C)) //only A
+	{
+		//Inverted value
+		A_mat[0][0] = complex(1.0) / a_mat[0][0];
+	}
+	else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //only B
+	{
+		//Inverted value
+		A_mat[1][1] = complex(1.0) / a_mat[1][1];
+	}
+	else if (!has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //only C
+	{
+		//Inverted value
+		A_mat[2][2] = complex(1.0) / a_mat[2][2];
+	}
+	else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //has A & C
+	{
+		complex detvalue = a_mat[0][0]*a_mat[2][2] - a_mat[0][2]*a_mat[2][0];
+
+		//Inverted value
+		A_mat[0][0] = a_mat[2][2] / detvalue;
+		A_mat[0][2] = a_mat[0][2] * -1.0 / detvalue;
+		A_mat[2][0] = a_mat[2][0] * -1.0 / detvalue;
+		A_mat[2][2] = a_mat[0][0] / detvalue;
+	}
+	else if (has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //has A & B
+	{
+		complex detvalue = a_mat[0][0]*a_mat[1][1] - a_mat[0][1]*a_mat[1][0];
+
+		//Inverted value
+		A_mat[0][0] = a_mat[1][1] / detvalue;
+		A_mat[0][1] = a_mat[0][1] * -1.0 / detvalue;
+		A_mat[1][0] = a_mat[1][0] * -1.0 / detvalue;
+		A_mat[1][1] = a_mat[0][0] / detvalue;
+	}
+	else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C))	//has B & C
+	{
+		complex detvalue = a_mat[1][1]*a_mat[2][2] - a_mat[1][2]*a_mat[2][1];
+
+		//Inverted value
+		A_mat[1][1] = a_mat[2][2] / detvalue;
+		A_mat[1][2] = a_mat[1][2] * -1.0 / detvalue;
+		A_mat[2][1] = a_mat[2][1] * -1.0 / detvalue;
+		A_mat[2][2] = a_mat[1][1] / detvalue;
+	}
+	else if ((has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C)) || (has_phase(PHASE_D))) //has ABC or D (D=ABC)
+	{
+		complex detvalue = a_mat[0][0]*a_mat[1][1]*a_mat[2][2] - a_mat[0][0]*a_mat[1][2]*a_mat[2][1] - a_mat[0][1]*a_mat[1][0]*a_mat[2][2] + a_mat[0][1]*a_mat[2][0]*a_mat[1][2] + a_mat[1][0]*a_mat[0][2]*a_mat[2][1] - a_mat[0][2]*a_mat[1][1]*a_mat[2][0];
+
+		//Invert it
+		A_mat[0][0] = (a_mat[1][1]*a_mat[2][2] - a_mat[1][2]*a_mat[2][1]) / detvalue;
+		A_mat[0][1] = (a_mat[0][2]*a_mat[2][1] - a_mat[0][1]*a_mat[2][2]) / detvalue;
+		A_mat[0][2] = (a_mat[0][1]*a_mat[1][2] - a_mat[0][2]*a_mat[1][1]) / detvalue;
+		A_mat[1][0] = (a_mat[2][0]*a_mat[1][2] - a_mat[1][0]*a_mat[2][2]) / detvalue;
+		A_mat[1][1] = (a_mat[0][0]*a_mat[2][2] - a_mat[0][2]*a_mat[2][0]) / detvalue;
+		A_mat[1][2] = (a_mat[1][0]*a_mat[0][2] - a_mat[0][0]*a_mat[1][2]) / detvalue;
+		A_mat[2][0] = (a_mat[1][0]*a_mat[2][1] - a_mat[1][1]*a_mat[2][0]) / detvalue;
+		A_mat[2][1] = (a_mat[0][1]*a_mat[2][0] - a_mat[0][0]*a_mat[2][1]) / detvalue;
+		A_mat[2][2] = (a_mat[0][0]*a_mat[1][1] - a_mat[0][1]*a_mat[1][0]) / detvalue;
+	}
+
+	//Now make B_mat value as per Kersting (6.28)
+	multiply(A_mat,b_mat,B_mat);
+}
 
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE: line

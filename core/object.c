@@ -1391,7 +1391,7 @@ TIMESTAMP _object_sync(OBJECT *obj, /**< the object to synchronize */
 	if (autolock) wlock(&obj->lock);
 	sync_time = (*obj->oclass->sync)(obj,ts,pass);
 	if (autolock) wunlock(&obj->lock);
-	if(plc_time<sync_time)
+	if(absolute_timestamp(plc_time)<absolute_timestamp(sync_time))
 		sync_time = plc_time;
 
 	/* compute valid_to time */

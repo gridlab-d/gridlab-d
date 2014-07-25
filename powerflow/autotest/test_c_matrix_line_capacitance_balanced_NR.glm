@@ -1,0 +1,340 @@
+clock
+{
+	timezone GMT0;
+	timestamp '2000-01-01 0:00:00';
+};
+
+module powerflow
+{
+	solver_method NR;
+	nominal_frequency 50;
+	line_capacitance TRUE;
+};
+
+module assert;
+
+// Line Configurations
+
+// In SINCAL the lines have been specified with the following configuration:
+//   r = 11.67 Ohm/km  r0 = 11.77 Ohm/km
+//   x =  0.44 Ohm/km  x0 =  1.21 Ohm/km
+//   c = 170.2 nF/km   c0 = 103.0 nF/km
+//
+// Conversion is applied using:
+//   z = complex(r, x);
+//   z0 = complex(r0, x0);
+//   z11 = z22 = z33 = (z0 + 2.0 * z) / 3.0;
+//   z12 = z13 = z21 = z23 = z31 = z32 = (z0 - z) / 3.0;
+//   c11 = c22 = c33 = (c0 + 2.0 * c) / 3.0;
+//   c12 = c13 = c21 = c23 = c31 = c32 = (c0 - c) / 3.0;
+//
+// Therefore:
+//   z11 = z22 = z33 = (11.77+1.21j + 2.0 * 11.67+0.44j) / 3.0 = 11.703333333333+0.696666666667j Ohm/km
+//   z12 = z13 = z21 = z23 = z31 = z32 = (11.77+1.21j - 11.67+0.44j) / 3.0 = 0.033333333333+0.256666666667j Ohm/km
+//   c11 = c22 = c33 = (103.0 + 2.0 * 170.2) / 3.0 = 147.8 nF/km
+//   c12 = c13 = c21 = c23 = c31 = c32 = (103.0 - 170.2) / 3.0 = -22.4 nF/km
+
+object line_configuration {
+	name line_config_without_capacitance;
+	z11 11.703333333333+0.696666666667j Ohm/km;
+	z12 0.033333333333+0.256666666667j Ohm/km;
+	z13 0.033333333333+0.256666666667j Ohm/km;
+	z21 0.033333333333+0.256666666667j Ohm/km;
+	z22 11.703333333333+0.696666666667j Ohm/km;
+	z23 0.033333333333+0.256666666667j Ohm/km;
+	z31 0.033333333333+0.256666666667j Ohm/km;
+	z32 0.033333333333+0.256666666667j Ohm/km;
+	z33 11.703333333333+0.696666666667j Ohm/km;
+};
+
+object line_configuration {
+	name line_config_with_capacitance;
+	z11 11.703333333333+0.696666666667j Ohm/km;
+	z12 0.033333333333+0.256666666667j Ohm/km;
+	z13 0.033333333333+0.256666666667j Ohm/km;
+	z21 0.033333333333+0.256666666667j Ohm/km;
+	z22 11.703333333333+0.696666666667j Ohm/km;
+	z23 0.033333333333+0.256666666667j Ohm/km;
+	z31 0.033333333333+0.256666666667j Ohm/km;
+	z32 0.033333333333+0.256666666667j Ohm/km;
+	z33 11.703333333333+0.696666666667j Ohm/km;
+    c11 147.8 nF/km;
+    c12 -22.4 nF/km;
+    c13 -22.4 nF/km;
+    c21 -22.4 nF/km;
+    c22 147.8 nF/km;
+    c23 -22.4 nF/km;
+    c31 -22.4 nF/km;
+    c32 -22.4 nF/km;
+    c33 147.8 nF/km;
+};
+
+// Nodes
+
+object meter {
+	name _SWING_BUS;
+	phases ABCN;
+	nominal_voltage 6350.85296108588;
+	voltage_A 6350.85296108588;
+	voltage_B 6350.85296108588+120d;
+	voltage_C 6350.85296108588-120d;
+	bustype SWING;
+};
+
+object meter {
+	name N1;
+	phases ABC;
+	nominal_voltage 6350.85296108588;
+	// Assert values from SINCAL model
+	object complex_assert {
+		target voltage_A;
+		within 1.0;
+		value 5187+5.623d;
+	};
+	object complex_assert {
+		target voltage_B;
+		within 1.0;
+		value 5187+125.623d;
+	};
+	object complex_assert {
+		target voltage_C;
+		within 1.0;
+		value 5187-114.377d;
+	};	
+};
+
+object meter {
+	name N2;
+	phases ABC;
+	nominal_voltage 6350.85296108588;
+	// Assert values from SINCAL model
+	object complex_assert {
+		target voltage_A;
+		within 1.0;
+		value 4381+10.973d;
+	};
+	object complex_assert {
+		target voltage_B;
+		within 1.0;
+		value 4381+130.973d;
+	};
+	object complex_assert {
+		target voltage_C;
+		within 1.0;
+		value 4381-109.027d;
+	};
+};
+
+object meter {
+	name N3;
+	phases ABC;
+	nominal_voltage 6350.85296108588;
+	// Assert values from SINCAL model
+	object complex_assert {
+		target voltage_A;
+		within 1.0;
+		value 4017+15.332d;
+	};
+	object complex_assert {
+		target voltage_B;
+		within 1.0;
+		value 4017+135.332d;
+	};
+	object complex_assert {
+		target voltage_C;
+		within 1.0;
+		value 4017-104.668d;
+	};
+};
+
+object meter {
+	name N11;
+	phases ABC;
+	nominal_voltage 6350.85296108588;
+	// Assert values from SINCAL model
+	object complex_assert {
+		target voltage_A;
+		within 1.0;
+		value 5257+4.033d;
+	};
+	object complex_assert {
+		target voltage_B;
+		within 1.0;
+		value 5257+124.033d;
+	};
+	object complex_assert {
+		target voltage_C;
+		within 1.0;
+		value 5257-115.967d;
+	};
+};
+
+object meter {
+	name N12;
+	phases ABC;
+	nominal_voltage 6350.85296108588;
+	// Assert values from SINCAL model
+	object complex_assert {
+		target voltage_A;
+		within 1.0;
+		value 4491+8.091d;
+	};
+	object complex_assert {
+		target voltage_B;
+		within 1.0;
+		value 4491+128.091d;
+	};
+	object complex_assert {
+		target voltage_C;
+		within 1.0;
+		value 4491-111.909d;
+	};
+};
+
+object meter {
+	name N13;
+	phases ABC;
+	nominal_voltage 6350.85296108588;
+	// Assert values from SINCAL model
+	object complex_assert {
+		target voltage_A;
+		within 1.0;
+		value 4142+11.801d;
+	};
+	object complex_assert {
+		target voltage_B;
+		within 1.0;
+		value 4142+131.801d;
+	};
+	object complex_assert {
+		target voltage_C;
+		within 1.0;
+		value 4142-108.199d;
+	};
+};
+
+// Lines
+
+object overhead_line {
+	name L1;
+	phases ABCN;
+	from _SWING_BUS;
+	to N1;
+	length 5.0 km;
+	configuration line_config_without_capacitance;
+};
+
+object underground_line {
+	name L2;
+	phases ABCN;
+	from N1;
+	to N2;
+	length 5.0 km;
+	configuration line_config_without_capacitance;
+};
+
+object overhead_line {
+	name L3;
+	phases ABCN;
+	from N2;
+	to N3;
+	length 5.0 km;
+	configuration line_config_without_capacitance;
+};
+
+object overhead_line {
+	name L11;
+	phases ABCN;
+	from _SWING_BUS;
+	to N11;
+	length 5.0 km;
+	configuration line_config_with_capacitance;
+};
+
+object underground_line {
+	name L12;
+	phases ABCN;
+	from N11;
+	to N12;
+	length 5.0 km;
+	configuration line_config_with_capacitance;
+};
+
+object overhead_line {
+	name L13;
+	phases ABCN;
+	from N12;
+	to N13;
+	length 5.0 km;
+	configuration line_config_with_capacitance;
+};
+
+// Loads
+
+object load {
+	name LO1;
+	parent N1;
+	phases ABCN;
+	nominal_voltage 6350.85296108588;
+	// Load is 0.1 MVA 0.8pf
+	constant_power_A 0.026666666667+0.02j MVA;
+	constant_power_B 0.026666666667+0.02j MVA;
+	constant_power_C 0.026666666667+0.02j MVA;
+};
+
+object load {
+	name LO2;
+	parent N2;
+	phases ABCN;
+	nominal_voltage 6350.85296108588;
+	// Load is 0.1 MVA 0.9pf
+	constant_power_A 0.03+0.014529663145j MVA;
+	constant_power_B 0.03+0.014529663145j MVA;
+	constant_power_C 0.03+0.014529663145j MVA;
+};
+
+object load {
+	name LO3;
+	parent N3;
+	phases ABCN;
+	nominal_voltage 6350.85296108588;
+	// Load is 0.1 MVA 0.7pf
+	constant_power_A 0.023333333333+0.023804761428j MVA;
+	constant_power_B 0.023333333333+0.023804761428j MVA;
+	constant_power_C 0.023333333333+0.023804761428j MVA;
+};
+
+object load {
+	name LO11;
+	parent N11;
+	phases ABCN;
+	nominal_voltage 6350.85296108588;
+	// Load is 0.1 MVA 0.8pf
+	constant_power_A 0.026666666667+0.02j MVA;
+	constant_power_B 0.026666666667+0.02j MVA;
+	constant_power_C 0.026666666667+0.02j MVA;
+};
+
+object load {
+	name LO12;
+	parent N12;
+	phases ABCN;
+	nominal_voltage 6350.85296108588;
+	// Load is 0.1 MVA 0.9pf
+	constant_power_A 0.03+0.014529663145j MVA;
+	constant_power_B 0.03+0.014529663145j MVA;
+	constant_power_C 0.03+0.014529663145j MVA;
+};
+
+object load {
+	name LO13;
+	parent N13;
+	phases ABCN;
+	nominal_voltage 6350.85296108588;
+	// Load is 0.1 MVA 0.7pf
+	constant_power_A 0.023333333333+0.023804761428j MVA;
+	constant_power_B 0.023333333333+0.023804761428j MVA;
+	constant_power_C 0.023333333333+0.023804761428j MVA;
+};
+
+

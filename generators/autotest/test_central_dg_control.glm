@@ -166,6 +166,30 @@ object meter { //633 {
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
      nominal_voltage 2401.7771;
+	object complex_assert {
+		target measured_power_A;
+		object player{
+			property value;
+			file "../cdgc_test_meter_power_assert.player";
+		};
+		within "10";
+	};
+	object complex_assert {
+		target measured_power_B;
+		object player{
+			property value;
+			file "../cdgc_test_meter_power_assert.player";
+		};
+		within "10";
+	};
+	object complex_assert {
+		target measured_power_C;
+		object player{
+			property value;
+			file "../cdgc_test_meter_power_assert.player";
+		};
+		within "10";
+	};
 
 }
 
@@ -189,10 +213,10 @@ object transformer {
 object meter { //633 {
      name m2;
      phases "ABCN";
-     voltage_A 2401.7771;
-     voltage_B -1200.8886-2080.000j;
-     voltage_C -1200.8886+2080.000j;
-     nominal_voltage 2401.7771;
+     voltage_A 277.13;
+     voltage_B -138.56-240.0j;
+     voltage_C -138.56+240.0j;
+     nominal_voltage 277.13;
 }
 object node { //633 {
      name n3;
@@ -213,10 +237,10 @@ object transformer {
 object meter { //633 {
      name m3;
      phases "ABCN";
-     voltage_A 2401.7771;
-     voltage_B -1200.8886-2080.000j;
-     voltage_C -1200.8886+2080.000j;
-     nominal_voltage 2401.7771;
+     voltage_A 277.13;
+     voltage_B -138.56-240.0j;
+     voltage_C -138.56+240.0j;
+     nominal_voltage 277.13;
 }
 object node { //633 {
      name n4;
@@ -237,10 +261,10 @@ object transformer {
 object meter { //633 {
      name m4;
      phases "ABCN";
-     voltage_A 2401.7771;
-     voltage_B -1200.8886-2080.000j;
-     voltage_C -1200.8886+2080.000j;
-     nominal_voltage 2401.7771;
+     voltage_A 277.13;
+     voltage_B -138.56-240.0j;
+     voltage_C -138.56+240.0j;
+     nominal_voltage 277.13;
 }
 object node { //633 {
      name n5;
@@ -261,10 +285,10 @@ object transformer {
 object meter { //633 {
      name m5;
      phases "ABCN";
-     voltage_A 2401.7771;
-     voltage_B -1200.8886-2080.000j;
-     voltage_C -1200.8886+2080.000j;
-     nominal_voltage 2401.7771;
+     voltage_A 277.13;
+     voltage_B -138.56-240.0j;
+     voltage_C -138.56+240.0j;
+     nominal_voltage 277.13;
 }
 object node { //633 {
      name n6;
@@ -285,10 +309,10 @@ object transformer {
 object meter { //633 {
      name m6;
      phases "ABCN";
-     voltage_A 2401.7771;
-     voltage_B -1200.8886-2080.000j;
-     voltage_C -1200.8886+2080.000j;
-     nominal_voltage 2401.7771;
+     voltage_A 277.13;
+     voltage_B -138.56-240.0j;
+     voltage_C -138.56+240.0j;
+     nominal_voltage 277.13;
 }
 object node { //633 {
      name n7;
@@ -309,10 +333,10 @@ object transformer {
 object meter { //633 {
      name m7;
      phases "ABCN";
-     voltage_A 2401.7771;
-     voltage_B -1200.8886-2080.000j;
-     voltage_C -1200.8886+2080.000j;
-     nominal_voltage 2401.7771;
+     voltage_A 277.13;
+     voltage_B -138.56-240.0j;
+     voltage_C -138.56+240.0j;
+     nominal_voltage 277.13;
 }
 object node { //633 {
      name n8;
@@ -333,10 +357,10 @@ object transformer {
 object meter { //633 {
      name m8;
      phases "ABCN";
-     voltage_A 2401.7771;
-     voltage_B -1200.8886-2080.000j;
-     voltage_C -1200.8886+2080.000j;
-     nominal_voltage 2401.7771;
+     voltage_A 277.13;
+     voltage_B -138.56-240.0j;
+     voltage_C -138.56+240.0j;
+     nominal_voltage 277.13;
 }
 object node { //633 {
      name n9;
@@ -357,10 +381,10 @@ object transformer {
 object meter { //633 {
      name m9;
      phases "ABCN";
-     voltage_A 2401.7771;
-     voltage_B -1200.8886-2080.000j;
-     voltage_C -1200.8886+2080.000j;
-     nominal_voltage 2401.7771;
+     voltage_A 277.13;
+     voltage_B -138.56-240.0j;
+     voltage_C -138.56+240.0j;
+     nominal_voltage 277.13;
 }
 object node { //633 {
      name n10;
@@ -381,10 +405,10 @@ object transformer {
 object meter { //633 {
      name m10;
      phases "ABCN";
-     voltage_A 2401.7771;
-     voltage_B -1200.8886-2080.000j;
-     voltage_C -1200.8886+2080.000j;
-     nominal_voltage 2401.7771;
+     voltage_A 277.13;
+     voltage_B -138.56-240.0j;
+     voltage_C -138.56+240.0j;
+     nominal_voltage 277.13;
 }
 object node { //633 {
      name n11;
@@ -405,10 +429,10 @@ object transformer {
 object meter { //633 {
      name m11;
      phases "ABCN";
-     voltage_A 2401.7771;
-     voltage_B -1200.8886-2080.000j;
-     voltage_C -1200.8886+2080.000j;
-     nominal_voltage 2401.7771;
+     voltage_A 277.13;
+     voltage_B -138.56-240.0j;
+     voltage_C -138.56+240.0j;
+     nominal_voltage 277.13;
 }
 
  
@@ -425,15 +449,15 @@ object load { //646 {
      nominal_voltage 277.13;
 	 object player {
 		property constant_power_A;
-		file "CDGCLoad.player";
+		file "../CDGCLoad.player";
 	};
 	 object player {
 		property constant_power_B;
-		file "CDGCLoad.player";
+		file "../CDGCLoad.player";
 	};
 	 object player {
 		property constant_power_C;
-		file "CDGCLoad.player";
+		file "../CDGCLoad.player";
 	};
 }
 object load { //646 {
@@ -691,20 +715,20 @@ object solar { // player files are used instead of climate object
 	SOLAR_TILT_MODEL PLAYERVALUE; // these players simulate WA-Yakima tmy2 data
 	object player {
 		property Insolation;
-		file "Yakima_Insolation.player";
+		file "../Yakima_Insolation.player";
 	};
 	object player {
 		property ambient_temperature;
-		file "Yakima_ambient_temperature.player";
+		file "../Yakima_ambient_temperature.player";
 	};
 	object player {
 		property wind_speed;
-		file "Yakima_wind_speed.player";
+		file "../Yakima_wind_speed.player";
 	};
 
 	// object recorder {
 		// property "Insolation,VA_Out.real,shading_factor";
-		// file "fixed_array_45_S_playerval.csv";
+		// file "../fixed_array_45_S_playerval.csv";
 		// interval 3600;
 	// };
 }
@@ -737,20 +761,20 @@ object solar { // player files are used instead of climate object
 	SOLAR_TILT_MODEL PLAYERVALUE; // these players simulate WA-Yakima tmy2 data
 	object player {
 		property Insolation;
-		file "Yakima_Insolation.player";
+		file "../Yakima_Insolation.player";
 	};
 	object player {
 		property ambient_temperature;
-		file "Yakima_ambient_temperature.player";
+		file "../Yakima_ambient_temperature.player";
 	};
 	object player {
 		property wind_speed;
-		file "Yakima_wind_speed.player";
+		file "../Yakima_wind_speed.player";
 	};
 
 	// object recorder {
 		// property "Insolation,VA_Out.real,shading_factor";
-		// file "fixed_array_45_S_playerval.csv";
+		// file "../fixed_array_45_S_playerval.csv";
 		// interval 3600;
 	// };
 }
@@ -768,16 +792,21 @@ object central_dg_control {
 	pf_high 0.99;
 
 }
-object multi_recorder {
-	property m1:measured_power_A,m1:measured_power_B,m1:measured_power_C,inv5:P_Out,inv5:Q_Out,inv5:VA_Out,inv4:P_Out,inv4:Q_Out,inv4:VA_Out,load2:constant_power_A;
-	limit 0;
-	interval 0;
-	file CDGCTestAllSteps.csv;
-};
-object multi_recorder {
-	property m1:measured_power_A,m1:measured_power_B,m1:measured_power_C,inv5:P_Out,inv5:Q_Out,inv5:VA_Out,inv4:P_Out,inv4:Q_Out,inv4:VA_Out,load2:constant_power_A;
-	limit 0;
-	interval 3600;
-	file CDGCTest.csv;
-};
- 
+// object multi_recorder {
+	// property m1:measured_power_A,m1:measured_power_B,m1:measured_power_C,inv5:P_Out,inv5:Q_Out,inv5:VA_Out,inv4:P_Out,inv4:Q_Out,inv4:VA_Out,load2:constant_power_A;
+	// limit 0;
+	// interval 0;
+	// file "../CDGCTestAllSteps.csv";
+// };
+// object multi_recorder {
+	// property m1:measured_power_A,m1:measured_power_B,m1:measured_power_C,inv5:P_Out,inv5:Q_Out,inv5:VA_Out,inv4:P_Out,inv4:Q_Out,inv4:VA_Out,load2:constant_power_A;
+	// limit 0;
+	// interval 3600;
+	// file "../CDGCTest.csv";
+// };
+ // object multi_recorder {
+	// property m1:measured_power_A;
+	// limit 0;
+	// interval 0;
+	// file "assertcd.csv";
+	// };
