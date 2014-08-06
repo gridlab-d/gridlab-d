@@ -208,7 +208,7 @@ EXPORT int64 calc_solar_solpos_shading_rad(OBJECT *obj, double tilt, double orie
 	}
 	sa.solpos_vals.year = dt.year;
 	sa.solpos_vals.daynum = (dt.yearday+1);
-	sa.solpos_vals.hour = dt.hour;
+	sa.solpos_vals.hour = dt.hour+(dt.is_dst?-1:0);
 	sa.solpos_vals.minute = dt.minute;
 	sa.solpos_vals.second = dt.second;
 	sa.solpos_vals.temp = temp_value;

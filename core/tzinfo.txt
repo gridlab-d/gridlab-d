@@ -163,3 +163,7 @@ MST+7MDT,M3.2.0/02:00,M11.1.0/02:00 ; Mountain, DST 2am second Sun/Mar to first 
 PST+8PDT,M3.2.0/02:00,M11.1.0/02:00 ; Pacific, DST 2am second Sun/Mar to first Sun/Nov
 AST+9ADT,M3.2.0/02:00,M11.1.0/02:00 ; Alaska, DST 2am second Sun/Mar to first Sun/Nov
 HST+10HDT,M3.2.0/02:00,M11.1.0/02:00 ; Hawaii, DST 2am second Sun/Mar to first Sun/Nov
+[2008] ; Rules as of 2008
+
+; Australia
+AEST-10AEDT,M10.1.0/03:00,M4.1.0/02:00:00 ; Aus Eastern, DST first Sun/Oct to first Sun/Apr start @ 2AM end @ 3AM

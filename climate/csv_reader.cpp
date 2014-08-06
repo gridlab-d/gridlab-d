@@ -322,7 +322,7 @@ int csv_reader::read_line(char *line, int linenum){
 		TIMESTAMP ts = callback->time.convert_to_timestamp(token);
 		DATETIME dt;
 		dt.nanosecond = 0;
-		if ( ts!=TS_INVALID && callback->time.local_datetime(ts,&dt) )
+		if ( ts!=TS_INVALID && ts!=TS_NEVER && callback->time.local_datetime(ts,&dt) )
 		{
 			 sample->month = dt.month;
 			 sample->day = dt.day;
