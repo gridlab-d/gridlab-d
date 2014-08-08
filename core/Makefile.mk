@@ -170,10 +170,11 @@ core/build.h: buildnum
 buildnum:
 	$(AM_V_GEN)new=`svn info $(top_srcdir) | grep '^Last Changed Rev: ' | cut -f2 -d':'`; \
 	if test -f $(top_build_prefix)core/build.h; then \
-		old=`cat $(top_build_prefix)core/build.h | cut -f3 -d' '`; \
+		old=`cut -f3 -d' ' < $(top_build_prefix)core/build.h x| `; \
 	else \
 		old=0; \
 	fi; \
-	if test $$new -ne $$old; then \
+	echo "New version is '$$new', old version is '$$old'"; \
+	if test -z "$$old" -o $$new -ne $$old; then \
 		echo "#define BUILDNUM $$new" > $(top_build_prefix)core/build.h; \
 	fi;

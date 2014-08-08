@@ -919,7 +919,7 @@ inline double waterheater::new_h_2zone(double h0, double delta_t)
 		
 //	#define CWATER		(0.9994)		// BTU/lb/F
 	const double cA = -mdot / (RHOWATER * area) + (actual_kW()*BTUPHPKW + tank_UA * (get_Tambient(location) - Tlower)) / c1;
-	// lbm/hr / lb/ft + kW * Btu.h/kW + 
+	// lbm/hr / lb/ft + kW * Btu*h/kW + 
 	const double cb = (tank_UA / height) * (/*Tupper*/ Tw - Tlower) / c1;
 
     if (fabs(cb) <= ROUNDOFF)
