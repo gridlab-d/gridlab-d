@@ -23,53 +23,12 @@
 
 #define _CRT_SECURE_NO_DEPRECATE 1
 
-/*Convert a string of 2-byte chars to a string of 1-byte chars*/
-int gld_loadHndl::convertXMLChToString(char* retValue,const XMLCh* oldStr,size_t len){
-        if (oldStr ==NULL) 
-	  return -1;        
-	char buffer[len+1];
-        char* c;
-	int count = 0;
-	for(c = (char*)oldStr;(*c)!=0;c+=2){
-	  buffer[count] = *c;
-	  count++;
-	  if (count>(len+1)){
-	    output_error("convertXMLChToString(): Tried to overwrite XMLCh buffer!");
-            load_state = 0;
-	    return -1;
-	  }
-	}
-	buffer[count] = 0;
-	strcpy(retValue,buffer);
-	return count;
-}
-/*Convert a string of 1-byte chars to a string of 2-byte chars*/
-int gld_loadHndl::convertStringToXMLCh(XMLCh* retvalue,char* oldStr,size_t len){
-        if (oldStr ==NULL) 
-	  return -1;
-	
-	XMLCh buffer[len+1];
-	char* c;
-	int count = 0;
-	for(c = oldStr;(*c)!=0;c+=1){
-	  buffer[count] = *c;
-	  count++;
-	  if (count>(len+1)){
-            output_error("convertStringToXMLCh(): Tried to overwrite XMLCh buffer!");
-	    load_state = 0;
-	    return -1;
-          }
-	}
-	buffer[count] = 0;
-	memcpy(retvalue,buffer,count*2+1);
-	return count;
-}
-
 gld_loadHndl::gld_loadHndl() : fFormatter("LATIN1", 0, this, XMLFormatter::NoEscapes, (const XMLFormatter::UnRepFlags) 0),
 		fExpandNS ( false ){
 	depth = 0;
 	first = last = -1;
 	stack_state = EMPTY;
+
 	load_state = false;
 	module_name[0] = 0;
 	obj = NULL;
@@ -101,32 +60,27 @@ void gld_loadHndl::setDocumentLocator(const Locator *const loc){
 	this->locator = loc;
 }
 
+void gld_loadHndl::writeChars(const XMLByte* const toWrite){
+	;
+}
 
 #if XERCES_VERSION_MAJOR < 3
 void gld_loadHndl::writeChars(const XMLByte* const toWrite, const unsigned int count, XMLFormatter* const formatter){
 #else
 void gld_loadHndl::writeChars(const XMLByte* const toWrite, const XMLSize_t count, XMLFormatter* const formatter){
 #endif
-  //printf("%s", (char *)toWrite);
+	//printf("%s", (char *)toWrite);
 	;
 }
- 
+
 void gld_loadHndl::error(const SAXParseException& e){
-  char sysID[1024];
-  char sysMessage[1024];
-  convertXMLChToString(sysID,e.getSystemId(),1024);
-  convertXMLChToString(sysMessage,e.getMessage(),1024);
-  output_error("XML_Load: %s(%i:char %i)\n Message: %s", sysID, e.getLineNumber(), e.getColumnNumber(), sysMessage);
-  load_state = false;
+	output_error("XML_Load: %ls(%i:char %i)\n Message: %ls", (char *)e.getSystemId(), e.getLineNumber(), e.getColumnNumber(), (char *)e.getMessage());
+	load_state = false;
 }
 
 void gld_loadHndl::fatalError(const SAXParseException& e){
-  char sysID[1024];
-  char sysMessage[1024];
-  convertXMLChToString(sysID,e.getSystemId(),1024);
-  convertXMLChToString(sysMessage,e.getMessage(),1024);
-  output_error("XML_Load: %s(%i:char %i)\n Message: %s", sysID, e.getLineNumber(), e.getColumnNumber(), sysMessage);
-  load_state = false;
+	output_error("XML_Load: %ls(%i:char %i)\n Message: %ls", (char *)e.getSystemId(), e.getLineNumber(), e.getColumnNumber(), (char *)e.getMessage());
+	load_state = false;
 }
 
 void gld_loadHndl::warning(const SAXParseException& e){
@@ -137,28 +91,27 @@ void gld_loadHndl::warning(const SAXParseException& e){
 
 void gld_loadHndl::notationDecl(const  XMLCh* const name, const XMLCh* const publicId, const XMLCh* const systemId){
     ;
-    }
+}
 
 /** parse_property() breaks a string into its propname and propval before handing both to the module getvar/setvar methods.
- 
+*/
 void gld_loadHndl::parse_property(char *buffer){
 	;
-	}
-*/
-/*Read in a module's property (eg. solver_method) and set its value*/
+}
+
 char *gld_loadHndl::read_module_prop(char *buffer, size_t len){
-	
+	//printf("read_module_prop (%s)\n", buffer);
 	if(strcmp(propname, "major") == 0){
 		char temp[8];
 		int major_in = atoi(buffer);
 		int major = 0;
 		module_getvar(this->module, "major", temp, 8);
 		major = atoi(temp);
-		if(major == 0)	//	don't care if major = 0
+		if(major == 0)					//	don't care if major = 0
 			return NULL;
-		if(major == major_in){	//	current version, continue
+		if(major == major_in){			//	current version, continue
 			return NULL;
-		} else if(major > major_in){  //	old version
+		} else if(major > major_in){	//	old version
 			output_warning("The input file was built using an older major version of the module.");
 			return NULL;
 		} else if(major < major_in){	//	newer version
@@ -190,10 +143,9 @@ char *gld_loadHndl::read_module_prop(char *buffer, size_t len){
 }
 
 char *gld_loadHndl::read_global_prop(char *buffer, size_t len){
-  //global_setvar(propname,buffer); shouldn't be setting anything?
-        return 0;
+	return 0;
 }
-/*Set clock properties (eg. starttime,stoptime,timezone,ect)*/
+
 char *gld_loadHndl::read_clock_prop(char* buffer, size_t len){
 	TIMESTAMP tsval = 0;
 	if(strcmp(propname, "tick") == 0){
@@ -203,34 +155,26 @@ char *gld_loadHndl::read_clock_prop(char* buffer, size_t len){
 			sprintf(errmsg, "timezone %s is not defined", timezone);
 			return errmsg;
 		}
-	} else if(strcmp(propname, "timestamp") == 0 ||strcmp(propname,"starttime")==0){
+	} else if(strcmp(propname, "timestamp") == 0){
 		if(time_value_datetime(buffer, &tsval)){
-			global_starttime = tsval;
+			global_clock = tsval;
 		} else if(time_value_datetimezone(buffer, &tsval)){
-			global_starttime = tsval;
+			global_clock = tsval;
 		} else {
 			sprintf(errmsg, "timestamp \"%s\" could not be resolved", buffer);
 			return errmsg;
 		}
-	}else if(strcmp(propname,"stoptime")==0){
-	       if(time_value_datetime(buffer, &tsval)){
-		 global_stoptime = tsval;
-	       } else if(time_value_datetimezone(buffer, &tsval)){
-		 global_stoptime = tsval;
-	       } else {
-		 sprintf(errmsg, "stoptime \"%s\" could not be resolved", buffer);
-		 return errmsg;
-	       }
-	}
-	else {
+	} else {
 		sprintf(errmsg, "Unrecognized keyword in start_element_clock(%s)", buffer);
 		return errmsg;
 	}
 	return NULL;
 }
-/*Set a property of the current object with the value in buffer*/
+
 char *gld_loadHndl::read_object_prop(char *buffer, size_t len){
-        char *rand_ptr = NULL;
+	//wchar_t wbuff[1024];
+	//char tbuff[1024];
+	char *rand_ptr = NULL;
 	char *rand_mode_ptr = NULL;
 	char *unit_ptr = NULL;
 	double realval = 0.0;
@@ -281,7 +225,7 @@ char *gld_loadHndl::read_object_prop(char *buffer, size_t len){
 					//output_error("XML_Load: misformed random() value");
 					load_state = false;
 					sprintf(errmsg, "Misformed random() value in read_object_prop(%s)", buffer);
-				        return errmsg;
+					return errmsg;
 				}
 				rt = random_type(modep);
 				if(rt == 0){
@@ -335,7 +279,7 @@ char *gld_loadHndl::read_object_prop(char *buffer, size_t len){
 		default:
 			if(prop->ptype < _PT_LAST){	//	set value by name
 				if (object_set_value_by_name(obj, propname, buffer)==0)	{
-					//output_error(XML_Load: property %s of %s:%s could not be set to '%s'", propname, obj->oclass->name, obj->id, buffer);
+					//output_error("XML_Load: property %s of %s:%s could not be set to '%s'", propname, obj->oclass->name, obj->id, buffer);
 					sprintf(errmsg, "Property %s of %s:%i could not be set to \"%s\" in read_object_prop()", propname, obj->oclass->name, obj->id, buffer);
 					load_state = false;
 					return errmsg;
@@ -350,14 +294,94 @@ char *gld_loadHndl::read_object_prop(char *buffer, size_t len){
 	return 0;
 }
 
-void gld_loadHndl::characters(const XMLCh* const chars, const unsigned int length){
-       ;
-}  
-
-
-/*endDocument() is called when the end of the file is reached.  Any post-processing within the parser should occur here.
+/**	characters() is where the raw text between the tags is handled.
 */
+void gld_loadHndl::characters(const XMLCh* const chars, const unsigned int length){
+    char buffer[1024];
+	char tbuff[1024];
+	wchar_t wbuff[1024];
+	SAXParseException *e = NULL;
+	char *unit_ptr = NULL;
+	unsigned int i = 0;
+	size_t len = 0;
+	char *retval = NULL;	//	negative logic
+	switch(stack_state){
+		case MODULE_PROP:
+		case GLOBAL_PROP:
+		case OBJECT_PROP:
+		case CLOCK_PROP:
+			//	get prop
+			if((len = wcslen((const wchar_t *)chars)) < 1){
+				sprintf(tbuff, "Unable to get length of characters in characters()");
+				mbstowcs(wbuff, tbuff, 1024);
+				e = new SAXParseException((const XMLCh *)wbuff, *(this->locator));
+				error(*e);
+				delete e;
+				return;
+			}
+			if(len != wcstombs(buffer, (const wchar_t *)chars, 1024)){
+				sprintf(tbuff, "Unable to convert wcs to char in characters()");
+				mbstowcs(wbuff, tbuff, 1024);
+				e = new SAXParseException((const XMLCh *)wbuff, *(this->locator));
+				error(*e);
+				delete e;
+				return;
+			}
+			break;
+		default:
+			return;	//	ignore whatever characters we read, we don't use them here.
+	}
+	if(len > 0){
+		int j = 0;
+		int i = 0;
+		for(i = 0; i < (int)len; ++i){
+			if(isspace(buffer[i])){
+				++j;
+			}
+		}
+		if(i == j){
+			output_verbose("XML_Load: ignored: %i spaces.", length);
+			retval = 0;
+			return;
+		}
+	} else {
+		output_verbose("XML_Load: ignored empty characters() call");
+		retval = 0;
+		return;
+	}
+	if(buffer[0] == '"' && buffer[1] == '"'){
+		output_verbose("XML_Load: ignored empty doublequote characters() call");
+		retval = 0;
+		return;
+	}
+	switch(stack_state){
+		case MODULE_PROP:
+			retval = this->read_module_prop(buffer, len);
+			break;
+		case GLOBAL_PROP:
+			retval = this->read_global_prop(buffer, len);
+			break;
+		case OBJECT_PROP:
+			retval = this->read_object_prop(buffer, len);
+			//	get prop
+			break;
+		case CLOCK_PROP:
+			retval = this->read_clock_prop(buffer, len);
+	}
+	if(retval != NULL){
+		stack_state = EMPTY;	//	stop processing
+		output_error("Error reading the XML file");
+		mbstowcs(wbuff, errmsg, 1024);
+		e = new SAXParseException((const XMLCh *)wbuff, *(this->locator));
+		error(*e);
+		delete e;
+		load_state = 0;
+	}
 
+}
+
+/**	endDocument() is called when the end of the file is reached.  Any post-processing within the parser should occur here.
+*/
 void gld_loadHndl::endDocument(){
 	OBJECT *tempobj = object_get_first();
 
@@ -368,9 +392,8 @@ void gld_loadHndl::endDocument(){
 	}
 	/* "establish ranks" */
 
-	for (; tempobj!=NULL; tempobj=tempobj->next)
-	  object_set_parent(tempobj,tempobj->parent);
-	
+	for (; obj!=NULL; obj=obj->next)
+		object_set_parent(obj,obj->parent);
 	output_verbose("XML_Load: %d object%s loaded.", object_get_count(), object_get_count() > 0 ? "s" : "");
 	if(object_count > 0)
 		if(object_get_count() != this->object_count)
@@ -405,8 +428,8 @@ char *gld_loadHndl::end_element_module_prop(char *buffer, size_t len){
 	return NULL;
 }
 
-char *gld_loadHndl::end_element_object(char *buffer, size_t len){	
-  if(strcmp("object", buffer) == 0)
+char *gld_loadHndl::end_element_object(char *buffer, size_t len){
+	if(strcmp("object", buffer) == 0)
 		stack_state = MODULE_STATE;
 	return NULL;
 }
@@ -458,8 +481,9 @@ void gld_loadHndl::endElement(const XMLCh* const uri, const XMLCh* const localna
 	
 	--depth;
 
-	convertXMLChToString(buffer, qname, 128);
-	len = strlen(buffer);
+	len = wcslen((const wchar_t *)qname);
+	wcstombs(buffer, (const wchar_t *)qname, 128);
+	
 	switch(stack_state){
 		case EMPTY:
 			retval = end_element_empty(buffer, len);
@@ -496,7 +520,7 @@ void gld_loadHndl::endElement(const XMLCh* const uri, const XMLCh* const localna
 
 
 void gld_loadHndl::ignorableWhitespace(const XMLCh* const chars, const unsigned int length){
-  output_verbose("XML_Load: ignored: %i spaces.", length);
+	output_verbose("XML_Load: ignored: %i spaces.", length);
 }
 
 
@@ -514,36 +538,29 @@ void gld_loadHndl::startDocument(){
 }
 
 char *gld_loadHndl::start_element_empty(char *buffer, size_t len, const Attributes& attributes){
-  
-  if(strcmp(buffer, "load") == 0){
+	if(strcmp(buffer, "load") == 0){
 		stack_state = LOAD;
 	} // cut some slack, don't break here.
 	return NULL;
 }
 
 char *gld_loadHndl::start_element_load(char *buffer, size_t len, const Attributes& attributes){
-        static XMLCh xmlCh_type[5], xmlCh_minor[6], xmlCh_major[6];
-	static size_t wcs_type_len = convertStringToXMLCh(xmlCh_type, "type", 5);
-	static size_t wcs_major_len = convertStringToXMLCh(xmlCh_major, "major", 6);
-	static size_t wcs_minor_len = convertStringToXMLCh(xmlCh_minor, "minor", 6);
+	static wchar_t wcs_type[5], wcs_minor[6], wcs_major[6];
+	static size_t wcs_type_len = mbstowcs(wcs_type, "type", 5);
+	static size_t wcs_major_len = mbstowcs(wcs_major, "major", 6);
+	static size_t wcs_minor_len = mbstowcs(wcs_minor, "minor", 6);
 	XMLCh *_major = NULL, *_minor = NULL;
 	int32 major = 0, minor = 0;
 	if(strcmp(buffer, "global") == 0){
 		stack_state = GLOBAL_STATE;
 	} else if(strcmp(buffer, "module") == 0){	//	LOAD THE MODULE
-		convertXMLChToString(module_name, attributes.getValue(xmlCh_type), 1024);
-		_major = (XMLCh *)attributes.getValue(xmlCh_major);
-		_minor = (XMLCh *)attributes.getValue(xmlCh_minor);
-		if(_major != NULL){
-		        char buff[1024];
-			convertXMLChToString(buff,_major,1024);
-			major = atol(buff);
-		}
-		if(_minor != NULL){
-		    char buff[1024];
-		    convertXMLChToString(buff,_minor,1024);
-		    minor = atol(buff);
-		  }
+		wcstombs(module_name, (const wchar_t *)attributes.getValue((const XMLCh *)wcs_type), 1024);
+		_major = (XMLCh *)attributes.getValue((const XMLCh *)wcs_major);
+		_minor = (XMLCh *)attributes.getValue((const XMLCh *)wcs_minor);
+		if(_major != NULL)
+			major = wcstol((const wchar_t *)_major, NULL, 10);
+		if(_minor != NULL)
+			minor = wcstol((const wchar_t *)_minor, NULL, 10);
 		
 		if((module = module_load(module_name, 0, NULL)) == NULL){
 			sprintf(errmsg, "Unable to load module \"%s\" in start_element_load()", module_name);
@@ -580,12 +597,12 @@ char *gld_loadHndl::start_element_load(char *buffer, size_t len, const Attribute
 }
 
 char *gld_loadHndl::start_element_module_build_object(const Attributes &attributes){
-	static XMLCh str_id[3],
+	static wchar_t str_id[3],
 			str_name[5],
 			str_type[5];
-	static size_t str_id_len = convertStringToXMLCh(str_id, "id", 3),
-			str_name_len = convertStringToXMLCh(str_name, "name", 5),
-			str_type_len = convertStringToXMLCh(str_type, "type", 5);
+	static size_t str_id_len = mbstowcs(str_id, "id", 3),
+			str_name_len = mbstowcs(str_name, "name", 5),
+			str_type_len = mbstowcs(str_type, "type", 5);
 	char object_type[64],
 		object_id[64],
 		object_name[64];
@@ -593,11 +610,11 @@ char *gld_loadHndl::start_element_module_build_object(const Attributes &attribut
 	char *retval = NULL;
 	int first = -1,
 		last = -1;
-	if(attributes.getIndex(str_type) < 0){
+	if(attributes.getIndex((const XMLCh *) str_type) < 0){
 		sprintf(errmsg, "object tag without a type in start_element_module_build_object()");
 		return errmsg;
 	} else {
-		convertXMLChToString(object_type, attributes.getValue(str_type), 64);
+		wcstombs(object_type, (const wchar_t *)attributes.getValue((const XMLCh *) str_type), 64);
 		oclass = class_get_class_from_classname_in_module(object_type, module);
 		if(oclass == NULL){
 			sprintf(errmsg, "Class \"%s\" for module \"%s\"is not recognized in start_element_module_build_object()", object_type, module->name);
@@ -610,7 +627,7 @@ char *gld_loadHndl::start_element_module_build_object(const Attributes &attribut
 		/* anonymous objects are legit - mh */
 		last = first = -1;
 	} else {
-		convertXMLChToString(object_id, attributes.getValue(str_id), 64);
+		wcstombs(object_id, (wchar_t *)attributes.getValue((const XMLCh *) str_id), 64);
 		temp = strchr(object_id, '.');
 		if(temp == NULL){ /* no "..", just a number*/
 			first = strtol(object_id, NULL, 10);
@@ -663,32 +680,31 @@ char *gld_loadHndl::start_element_module_build_object(const Attributes &attribut
 	} else {
 		;
 	}
-	if(attributes.getIndex(str_name) < 0){
+	if(attributes.getIndex((const XMLCh *) str_name) < 0){
 		strcpy(object_name, "(none)");
 	} else {
-	        
-		convertXMLChToString(object_name, attributes.getValue(str_name), 64);
+		wcstombs(object_name, (wchar_t *)attributes.getValue((const XMLCh *) str_name), 64);
 		object_set_name(obj, object_name);
 	}
+	//printf("object: type = %s, id = %s, name = %s\n", object_type, object_id, object_name);
 	stack_state = OBJECT_STATE;
 	return NULL;
 }
 
 char *gld_loadHndl::start_element_module(char *buffer, size_t len, const Attributes& attributes){
-  //	check generic props
+	//	check generic props
 	if(0 == strcmp(buffer, "object")){
 		strcpy(propname, "object");
 		return start_element_module_build_object(attributes);
 	}/* else if(0 == strcmp(buffer, "major")){
 		strcpy(propname, "major");
 		stack_state = MODULE_PROP;
-		= strcmp(buffer, "minor")){
+	} else if(0 == strcmp(buffer, "minor")){
 		strcpy(propname, "minor");
 		stack_state = MODULE_PROP;
-		} */
-	else if(0 == strcmp(buffer, "properties")){	//	check for module props ~ note plural t
-	  strcpy(propname, buffer);
-	  stack_state = MODULE_PROP;
+	} */else if(0 == strcmp(buffer, "properties")){	//	check for module props ~ note plural tag
+		strcpy(propname, buffer);
+		stack_state = MODULE_PROP;
 	} else {
 		sprintf(errmsg, "Unrecognized keyword in start_element_module(%s)", buffer);
 		return errmsg;
@@ -705,20 +721,12 @@ char *gld_loadHndl::start_element_module_prop(char *buffer, size_t len, const At
 		output_warning("XML: start_element_module_prop: property \"\" not found, initializing");
 		strcpy(propname, pname);
 	}
-
-	char propVal[1024];
-        if(convertXMLChToString(propVal,attributes.getValue((XMLSize_t)0),1024)<1){
-	  char errMsg[128]; 
-	  sprintf(errMsg,"can't find value for %s\n",propname);
-	  return errMsg;
-	}
-     
-	return this->read_module_prop(propVal, strlen(buffer));
+	return NULL;
 }
 
 char *gld_loadHndl::start_element_object(char *buffer, size_t len, const Attributes& attributes){
-  //	check generic props
-  	if(0 == strcmp(buffer, "parent")){
+	//	check generic props
+	if(0 == strcmp(buffer, "parent")){
 		strcpy(propname, "parent");
 		stack_state = OBJECT_PROP;
 	} else if(0 == strcmp(buffer, "root")){
@@ -746,23 +754,15 @@ char *gld_loadHndl::start_element_object(char *buffer, size_t len, const Attribu
 		strcpy(propname, "library");	//	uhm?  an object library?
 		stack_state = OBJECT_PROP;
 	}	//	check specific props
-	else if((prop = class_find_property(oclass, buffer)) != NULL){ 
-	  strcpy(propname, buffer);
-	  stack_state = OBJECT_PROP;
-	  } else {
+	else if((prop = class_find_property(oclass, buffer)) != NULL){
+		strcpy(propname, buffer);
+		stack_state = OBJECT_PROP;
+	} else {
 		sprintf(errmsg, "Unrecognized property in start_element_object(%s)", buffer);
 		return errmsg;
 	}
 	prop = class_find_property(obj->oclass, buffer);	//	prop = NULL is valid for hardcoded properties. -MH
-	
-        char propVal[1024];
-	if(convertXMLChToString(propVal,attributes.getValue((XMLSize_t)0),1024)<1){
-          char errMsg[128];
-          sprintf(errMsg,"can't find value for %s\n",propname);
-          return errMsg;
-        }
-
-	return this->read_object_prop(propVal, strlen(propVal));	
+	return NULL;
 }
 
 char *gld_loadHndl::start_element_object_prop(char *buffer, size_t len, const Attributes& attributes){
@@ -771,7 +771,7 @@ char *gld_loadHndl::start_element_object_prop(char *buffer, size_t len, const At
 }
 
 char *gld_loadHndl::start_element_global(char *buffer, size_t len, const Attributes& attributes){
-  	//	check generic props
+	//	check generic props
 	if(0 == strcmp(buffer, "version_major")){
 		strcpy(propname, "version_major");
 		stack_state = GLOBAL_PROP;
@@ -792,28 +792,16 @@ char *gld_loadHndl::start_element_global(char *buffer, size_t len, const Attribu
 		stack_state = GLOBAL_PROP;
 	}
 	//	anything else, we don't care about.
-	else{
-	  return NULL;
-	}
-
-	char propVal[1024];
-        if(convertXMLChToString(propVal,attributes.getValue((XMLSize_t)0),1024)<1){
-          char errMsg[128];
-          sprintf(errMsg,"can't find value for %s\n",propname);
-          return errMsg;
-        }
-	return this->read_global_prop(propVal, strlen(propVal));
-
+	return NULL;
 }
 
 char *gld_loadHndl::start_element_global_prop(char *buffer, size_t len, const Attributes& attributes){
-  	//	we may not supposed to be here?
+	//	we may not supposed to be here?
 	return NULL;
 }
 
 char *gld_loadHndl::start_element_clock(char *buffer, size_t len, const Attributes& attributes){
-  	
-        if(strcmp(buffer, "tick") == 0){
+	if(strcmp(buffer, "tick") == 0){
 		stack_state = CLOCK_PROP;
 		strcpy(propname, "tick");
 	} else if(strcmp(buffer, "timezone") == 0){
@@ -832,18 +820,11 @@ char *gld_loadHndl::start_element_clock(char *buffer, size_t len, const Attribut
 		sprintf(errmsg, "Unrecognized keyword in start_element_clock(%s)", buffer);
 		return errmsg;
 	}
-        char propVal[1024];
-	if(convertXMLChToString(propVal,attributes.getValue((XMLSize_t)0),1024)<1){
-          char errMsg[128];
-          sprintf(errMsg,"can't find value for %s\n",propname);
-          return errMsg;
-        }
-
-	return this->read_clock_prop(propVal, strlen(propVal));
+	return NULL;
 }
 
 char *gld_loadHndl::start_element_clock_prop(char *buffer, size_t len, const Attributes& attributes){
-  return NULL;
+	return NULL;
 }
 
 #define ADD_KEYWORD(A) 	stack_ptr = new gldStack(); \
@@ -851,33 +832,32 @@ char *gld_loadHndl::start_element_clock_prop(char *buffer, size_t len, const Att
 						strcpy(stack_ptr->keyword, (A)); \
 
 void gld_loadHndl::startElement(const XMLCh* const uri, const XMLCh* const localname, const XMLCh* const qname,
-				const Attributes& attributes){
+								const Attributes& attributes){
 	char buffer[128];
 	char *temp = NULL;
 	unsigned int i = 0;
 	size_t len = 0;
 	char *retval = 0;	//	negative logic
 	gldStack *currStack = NULL;
-	XMLCh str_id[3],	/* = "id", */
+	wchar_t str_id[3],	/* = "id", */
 			str_name[5],/* = "name", */
 			str_type[5];/* = "type"; */
 
-	convertStringToXMLCh(str_id, "id", 3);
-	convertStringToXMLCh(str_name, "name", 5);
-	convertStringToXMLCh(str_type, "type", 5);
-	
-	if(convertXMLChToString(buffer,qname,128) < 1){
+	mbstowcs(str_id, "id", 3);
+	mbstowcs(str_name, "name", 5);
+	mbstowcs(str_type, "type", 5);
+
+	if((len = wcslen((const wchar_t *)qname)) < 1){
+		output_error("startElement: Unable to parse element tag length!");
+		load_state = 0;
+		return;
+	}
+	if(wcstombs(buffer, (const wchar_t *)qname, 128) < 1){
 		output_error("startElement: Unable to convert element tag name from wchar to char!");
 		load_state = 0;
 		return;
 	}
-	
-	if((len = strlen(buffer)) < 1){
-	  output_error("startElement: Unable to parse element tag length!");
-	  load_state = 0;
-	  return;
-        }
-       	switch(this->stack_state){
+	switch(this->stack_state){
 		case EMPTY:
 			retval = start_element_empty(buffer, len, attributes);
 			break;
@@ -911,10 +891,10 @@ void gld_loadHndl::startElement(const XMLCh* const uri, const XMLCh* const local
 	}
 	if(retval != NULL){
 		char tbuff[256];
-		XMLCh wbuff[256];
+		wchar_t wbuff[256];
 		SAXParseException *e = NULL;
 		sprintf(tbuff, "Error in start_element with tag \"%s\": %s", buffer, retval);
-		convertStringToXMLCh(wbuff, tbuff, 1024);
+		mbstowcs(wbuff, tbuff, 1024);
 		e = new SAXParseException((const XMLCh *)wbuff, *(this->locator));
 		error(*e);
 		delete e;
@@ -933,7 +913,8 @@ char *gld_loadHndl::build_object_vect(int start, int end){
 	obj_vect.clear();
 	if(start == end){
 		if((*oclass->create)(&obj, NULL) == 0){
-		  sprintf(errmsg, "Unable to create a lone object with ID = %i in build_object_vect(%i, %i)", start, start, end);
+			//output_error("XML_Load: Unable to create a lone object with ID = %i.", start);
+			sprintf(errmsg, "Unable to create a lone object with ID = %i in build_object_vect(%i, %i)", start, start, end);
 			load_state = false;
 			return errmsg;
 		}
@@ -975,7 +956,7 @@ char *gld_loadHndl::build_object_vect(int start, int end){
 			sprintf(errmsg, "Unable to create an object in build_object_vect(%i, %i)", start, end);
 			load_state = false;
 			/* cleanup existing objects, if any */
-			return errmsg;	
+			return errmsg;
 		}
 	}
 	return NULL; /* positive logic */

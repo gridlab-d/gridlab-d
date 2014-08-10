@@ -135,14 +135,6 @@ def run_tests(argv):
 	#autotestdirs = find_autotest_dirs(there_dir)
 	autotestdirs = []
 	for path, dirs, files in os.walk(there_dir):
-		if (path =="python/"):
-			print "RUNNING PYTHON-PARSER TESTS"
-			rv1 = subprocess.call(["gridlabd","--generate_python"])
-			rv2=subprocess.call(["python","python/autotest/testGLMparser.py"])
-			if (rv1!=0 or rv2!=0):
-				print "[ERROR] python parsing scripts return an error!"
-			else:
-				print "PYTHON-PARSER SCRIPTS SUCCESFUL"
 		if "autotest" in dirs:
 			autotestdirs.append(os.path.abspath(os.path.join(path,"autotest")))
 	
@@ -154,8 +146,7 @@ def run_tests(argv):
 	autotestfiles = []
 	for path in autotestdirs:
 		for file in os.listdir(path):
-			if (file.startswith("test_")  and(file.endswith(".glm") or file.endswith(".xml")) and 
-			    file[0] != '.'):
+			if file.startswith("test_") and file.endswith(".glm") and file[0] != '.':
 				autotestfiles.append((path, file))
 				test_count += 1
 				

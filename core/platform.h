@@ -1,4 +1,4 @@
-/** $Id: platform.h 1182 2008-12-22 22:08:36Z dchassin $
+/** $Id: platform.h 4738 2014-07-03 00:55:39Z dchassin $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file platform.h
 	@author David P. Chassin
@@ -14,14 +14,13 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#define HAVE_XERCES
 #else
 /*************************************
  CONTROL WHAT IS PART OF WINDOWS BUILD 
  *************************************/
 #include "config_external.h"
 
-#define HAVE_XERCES
+//#define HAVE_XERCES
 #endif
 
 #ifdef WIN32 // NOTE: win32 does not imply 32bit machine, it means Windows API supports 32bit
