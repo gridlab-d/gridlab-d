@@ -2,7 +2,7 @@
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file cmdarg.c
 	@addtogroup cmdarg Command-line arguments
-	@ingroup core
+A	@ingroup core
 
 	The command-line argument processing module processes arguments as they are encountered.
 	
@@ -239,10 +239,131 @@ static STATUS no_cmdargs()
 	}
 	else
 		output_error("default html file '%s' not found (workdir='%s')", "gridlabd.htm",global_workdir);
-
+        
 	return SUCCESS;
 }
 
+//create .py file with all fields in a given module
+static int generate_module_file(MODULE* m)
+{
+        GLOBALVAR *gvptr = NULL;
+	char tname[67];
+	size_t tlen;
+	char filename[128];
+	int numVars=0;
+	sprintf(filename,"python/gridspice/element/modules/module_%s.py",m->name);
+	FILE* fd = fopen(filename,"w");
+	
+	if (fd==NULL) {
+	  output_error_raw("Problem creating output file %s\n",filename);
+	  return 1;
+	}
+
+	gvptr = global_getnext(NULL);
+	sprintf(tname,"%s::",m->name);
+	tlen = strlen(tname);
+	
+	fprintf(fd,"class module_%s():\n\tdef __init__(self):\n", m->name);
+	
+	while(gvptr !=NULL){
+	  if(strncmp(tname,gvptr->prop->name,tlen)==0){
+	    fprintf(fd,"\t\tself.%s=None\n", gvptr->prop->name+tlen);
+	    numVars++;
+	  }
+	  gvptr = global_getnext(gvptr);
+	}
+	if (numVars ==0) fprintf(fd,"\t\tpass\n");
+	if (fclose(fd)!=0){
+	  output_error_raw("Trouble closing file: %s ",filename);
+	  return 1;
+	}
+}
+//return index at which key appears in mapKeys, otherwise return -1
+static int replacePeriods(char* oldName){
+       int i;
+       int strLen = strlen(oldName);
+       char newName[strLen+1];
+       for (i =0;i<strLen;i++){
+	 if (oldName[i] == '.') 
+	   newName[i] = '_';
+	 else 
+	   newName[i]= oldName[i];
+       }
+       newName[i] = '\0';
+       return strdup(newName);
+}
+
+//generate a .csv file listing all classes contained in a given module,
+//.py class files for all modules, and .py class files for all object
+//classes in the given modules
+static int generate_python(int argc, char *argv[])
+{
+        global_compileonly = true;
+	int i;	      
+	int numModules = 8;
+	char* modules[] = {"powerflow","residential","generators","tape","reliability","climate","market","assert"};
+	
+	FILE* moduleToClassMap = fopen("python/moduleMap.csv","w");
+	if (moduleToClassMap==NULL){
+	  output_error_raw("Problem creating module map csv file");
+	  return 1;
+	}
+	
+	MODULE* m;
+	for(i =0;i<numModules;i++){
+	  MODULE* m =module_load(modules[i],0,NULL); 
+	  generate_module_file(m);
+
+	  CLASS* oclass;
+	  char filename[128];
+	  sprintf(filename,"python/gridspice/element/%s/%s_objects.py",m->name,m->name);
+	  FILE* fd = fopen(filename,"w");
+	  
+	  if (fd==NULL) {
+	    output_error_raw("Problem creating output file %s\n",filename);
+	    return 1;
+	  }
+	  
+	  fprintf(moduleToClassMap,"%s",m->name); 
+
+	  if (strcmp(m->name,"powerflow")==0)
+	    fprintf(fd,"from pf_object import powerflow_object\n\n");
+	  fprintf(fd,"from .. import elementBase\n");
+
+	  for(oclass =m->oclass; oclass!=NULL; oclass = oclass->next){
+	    
+	    fprintf(moduleToClassMap,",%s",oclass->name);
+	    char* parent = "elementBase.elementBase";
+	    if ((oclass->parent)!=NULL) parent = (oclass->parent)->name;
+	    fprintf(fd,"class %s(%s):\n\tdef __init__(self):\n",oclass->name,parent);
+	    fprintf(fd,"\t\tsuper(%s,self).__init__()\n",oclass->name);
+	    PROPERTY* prop;
+	    for(prop=oclass->pmap;prop!=NULL;prop=prop->next){
+	
+	      char* propertyName = prop->name;
+	      if (strcmp(propertyName,"to")==0) 
+		propertyName = "toNode";
+	      else if (strcmp(propertyName,"from")==0)
+		propertyName ="fromNode";
+
+	      propertyName = replacePeriods(propertyName); //adhere to python naming conventions
+	      fprintf(fd,"\t\tself.%s = None\n",propertyName); //set up all field values in constructor
+	      free(propertyName);
+	    }
+	    fprintf(fd,"\n");
+	  }
+	  if (fclose(fd)!=0){
+	    output_error_raw("Trouble closing file: %s ",filename);
+	    return 1;
+	  }
+	  fprintf(moduleToClassMap,"\n");
+	}
+	if (fclose(moduleToClassMap)!=0){
+	  output_error_raw("Trouble closing file: moduleMap.csv");
+	  return 1;
+	}
+	return 0;
+}
 static int copyright(int argc, char *argv[])
 {
 	legal_notice();
@@ -1124,6 +1245,7 @@ static CMDARG main[] = {
 	{NULL,NULL,NULL,NULL, "Command-line options"},
 
 	/* long_str, short_str, processor_call, arglist_desc, help_desc */
+	{"generate_python",NULL, generate_python, NULL, "Generate .py files for all modules"},
 	{"check",		"c",	check,			NULL, "Performs module checks before starting simulation" },
 	{"debug",		NULL,	debug,			NULL, "Toggles display of debug messages" },
 	{"debugger",	NULL,	debugger,		NULL, "Enables the debugger" },

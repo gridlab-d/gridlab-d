@@ -14,7 +14,7 @@ gridlabd_bin_LDFLAGS += $(XERCES_LDFLAGS)
 gridlabd_bin_LDFLAGS += $(AM_LDFLAGS)
 
 gridlabd_bin_LDADD =
-gridlabd_bin_LDADD += $(XERCES_LIB)
+gridlabd_bin_LDADD += $(XERCES_LIBS)
 gridlabd_bin_LDADD += $(CURSES_LIB)
 gridlabd_bin_LDADD += -ldl
 
@@ -168,13 +168,12 @@ core/build.h: buildnum
 
 .PHONY: buildnum
 buildnum:
-	$(AM_V_GEN)new=`svn info $(top_srcdir) | grep '^Last Changed Rev: ' | cut -f2 -d':'`; \
+	$(AM_V_GEN)new=`svn info $(top_srcdir) | grep '^Revision: ' | cut -f2 -d' '`; \
 	if test -f $(top_build_prefix)core/build.h; then \
-		old=`cut -f3 -d' ' < $(top_build_prefix)core/build.h x| `; \
+		old=`cat $(top_build_prefix)core/build.h | cut -f3 -d' '`; \
 	else \
 		old=0; \
 	fi; \
-	echo "New version is '$$new', old version is '$$old'"; \
-	if test -z "$$old" -o $$new -ne $$old; then \
+	if test $$new -ne $$old; then \
 		echo "#define BUILDNUM $$new" > $(top_build_prefix)core/build.h; \
 	fi;

@@ -1,4 +1,4 @@
-/* $Id: load_xml_handle.h 4738 2014-07-03 00:55:39Z dchassin $
+/* $Id: load_xml_handle.h 1182 2008-12-22 22:08:36Z dchassin $
  	Copyright (C) 2008 Battelle Memorial Institute
  * 
  * Authors:
@@ -73,7 +73,6 @@ public:
 
 	bool did_load(){return load_state;}
 
-	void writeChars(const XMLByte* const toWrite);
 #if XERCES_VERSION_MAJOR < 3
 	virtual void writeChars(const XMLByte* const toWrite, const unsigned int count, XMLFormatter* const formatter);
 #else
@@ -81,22 +80,22 @@ public:
 #endif
 	virtual void setDocumentLocator(const Locator *const locator);
 	virtual void endDocument();
-    virtual void endElement(const XMLCh* const uri, const XMLCh* const localname, const XMLCh* const qname);
-    virtual void characters(const XMLCh* const chars, const unsigned int length);
-    virtual void ignorableWhitespace(const XMLCh* const chars, const unsigned int length);
-    virtual void processingInstruction(const XMLCh* const target, const XMLCh* const data);
-    virtual void startDocument();
-    virtual void startElement(const XMLCh* const uri, const XMLCh* const localname, const XMLCh* const qname, const Attributes& attributes);
+	virtual void endElement(const XMLCh* const uri, const XMLCh* const localname, const XMLCh* const qname);
+	virtual void characters(const XMLCh* const chars, const unsigned int length);
+	virtual void ignorableWhitespace(const XMLCh* const chars, const unsigned int length);
+	virtual void processingInstruction(const XMLCh* const target, const XMLCh* const data);
+	virtual void startDocument();
+	virtual void startElement(const XMLCh* const uri, const XMLCh* const localname, const XMLCh* const qname, const Attributes& attributes);
 
-    virtual void warning(const SAXParseException& exc);
-    virtual void error(const SAXParseException& exc);
-    virtual void fatalError(const SAXParseException& exc);
+	virtual void warning(const SAXParseException& exc);
+	virtual void error(const SAXParseException& exc);
+	virtual void fatalError(const SAXParseException& exc);
 
-    virtual void notationDecl(const XMLCh* const name, const XMLCh* const publicId, const XMLCh* const systemId);
+	virtual void notationDecl(const XMLCh* const name, const XMLCh* const publicId, const XMLCh* const systemId);
     /* void unparsedEntityDecl(const XMLCh* const name, const XMLCh* const publicId, const XMLCh* const systemId, const XMLCh* const notationName); */
 
 	char *build_object_vect(int start, int end);
-	void parse_property(char *buffer);
+	//void parse_property(char *buffer);
 private :
     XMLFormatter    fFormatter;
 	bool			fExpandNS ;
@@ -109,7 +108,9 @@ private :
 	OBJECT *obj;
 	PROPERTY *prop;
 	char propname[256];
-
+	
+	int convertStringToXMLCh(XMLCh* retvalue,char* oldStr,size_t len);
+	int convertXMLChToString(char* retValue,const XMLCh* oldStr, size_t len);
 	char *read_module_prop(char *buffer, size_t len);
 	char *read_global_prop(char *buffer, size_t len);
 	char *read_object_prop(char *buffer, size_t len);
