@@ -4,10 +4,10 @@
 #define _GRIDLABD_VERSION_H
 
 #define COPYRIGHT "Copyright (C) 2004-2013\nBattelle Memorial Institute\nAll Rights Reserved"
-#define REV_MAJOR 3
+#define REV_MAJOR 4
 #define REV_MINOR 0
 #define REV_PATCH 0
-#define BRANCH "Hatwai" 
+#define BRANCH "trunk" 
 
 #include "build.h"
 #ifndef BUILDNUM
