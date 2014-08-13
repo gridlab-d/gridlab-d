@@ -109,7 +109,7 @@ object house {
 		name w1;
 		heating_element_capacity 4.0 kW;
 		thermostat_deadband 4;
-		demand daily_use*1;
+		water_demand daily_use*1;
 		tank_setpoint 120;
 		temperature 121;
 		tank_volume 20;

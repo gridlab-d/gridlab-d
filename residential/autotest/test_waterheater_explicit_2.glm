@@ -161,7 +161,7 @@ object house {
 		//schedule_skew -2817;
 		heating_element_capacity 4.0 kW;
 		thermostat_deadband 4;
-		demand daily_use*1;
+		water_demand daily_use*1;
 		tank_setpoint 120;
 		temperature 110;
 		tank_volume 20;
@@ -183,12 +183,12 @@ object house {
 			};
 			within 0.01;
 		};
-		// object recorder {
-			// file "waterheater1.csv";
-			// property tank_setpoint,thermostat_deadband,temperature,height,demand,is_waterheater_on,actual_load,previous_load,load_state,current_model;
-			// interval -1;
-			// limit 2880;
-		// };
+		object recorder {
+			file "waterheater1.csv";
+			property tank_setpoint,thermostat_deadband,temperature,height,water_demand,demand,is_waterheater_on,actual_load,previous_load;
+			interval -1;
+			limit 2880;
+		};
 };
  };
 // object multi_recorder {

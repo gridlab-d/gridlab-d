@@ -1,4 +1,4 @@
-/** $Id: waterheater.cpp 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id: waterheater.cpp,v 1.51 2008/02/15 00:24:14 d3j168 Exp $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file waterheater.cpp
 	@addtogroup waterheater Electric waterheater
@@ -52,7 +52,7 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module){
 		if (gl_publish_variable(oclass,
 			PT_INHERIT, "residential_enduse",
 			PT_double,"tank_volume[gal]",PADDR(tank_volume), PT_DESCRIPTION, "the volume of water in the tank when it is full",
-			PT_double,"tank_UA[Btu/degF*h]",PADDR(tank_UA), PT_DESCRIPTION, "the UA of the tank (surface area divided by R-value)",
+			PT_double,"tank_UA[Btu*h/degF]",PADDR(tank_UA), PT_DESCRIPTION, "the UA of the tank (surface area divided by R-value)",
 			PT_double,"tank_diameter[ft]",PADDR(tank_diameter), PT_DESCRIPTION, "the diameter of the water heater tank",
 			PT_double,"water_demand[gpm]",PADDR(water_demand), PT_DESCRIPTION, "the hot water draw from the water heater",
 			PT_double,"heating_element_capacity[kW]",PADDR(heating_element_capacity), PT_DESCRIPTION,  "the power of the heating element",
@@ -67,7 +67,7 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module){
 			PT_double,"thermostat_deadband[degF]",PADDR(thermostat_deadband), PT_DESCRIPTION, "the degree to heat the water tank, when needed",
 			PT_double,"temperature[degF]",PADDR(Tw), PT_DESCRIPTION, "the outlet temperature of the water tank",
 			PT_double,"height[ft]",PADDR(h), PT_DESCRIPTION, "the height of the hot water column within the water tank",
-			PT_double,"demand[gpm]",PADDR(water_demand), PT_DESCRIPTION, "the water consumption",
+			PT_complex,"demand[kVA]",PADDR(load.total), PT_DESCRIPTION, "the water heater power consumption",
 			PT_double,"actual_load[kW]",PADDR(actual_load),PT_DESCRIPTION, "the actual load based on the current voltage across the coils",
 			PT_double,"previous_load[kW]",PADDR(prev_load),PT_DESCRIPTION, "the actual load based on current voltage stored for use in controllers",
 			PT_complex,"actual_power[kVA]",PADDR(waterheater_actual_power), PT_DESCRIPTION, "the actual power based on the current voltage across the coils",
@@ -919,7 +919,7 @@ inline double waterheater::new_h_2zone(double h0, double delta_t)
 		
 //	#define CWATER		(0.9994)		// BTU/lb/F
 	const double cA = -mdot / (RHOWATER * area) + (actual_kW()*BTUPHPKW + tank_UA * (get_Tambient(location) - Tlower)) / c1;
-	// lbm/hr / lb/ft + kW * Btu*h/kW + 
+	// lbm/hr / lb/ft + kW * Btu.h/kW + 
 	const double cb = (tank_UA / height) * (/*Tupper*/ Tw - Tlower) / c1;
 
     if (fabs(cb) <= ROUNDOFF)
