@@ -37,7 +37,7 @@ frequency_gen::frequency_gen(MODULE *mod) : powerflow_object(mod)
 			PT_double,"FreqChange[Hz/s]",PADDR(FrequencyChange),PT_DESCRIPTION,"Frequency change from last timestep",
 			PT_double,"Deadband[Hz]",PADDR(Freq_Histr),PT_DESCRIPTION,"Frequency deadband of the governor",
 			PT_double,"Tolerance[%]",PADDR(calc_tol_perc),PT_DESCRIPTION,"% threshold a power difference must be before it is cared about",
-			PT_double,"M[pu.s]",PADDR(Mac_Inert),PT_DESCRIPTION,"Inertial constant of the system",
+			PT_double,"M[pu*s]",PADDR(Mac_Inert),PT_DESCRIPTION,"Inertial constant of the system",
 			PT_double,"D[%]",PADDR(D_Load),PT_DESCRIPTION,"Load-damping constant",
 			PT_double,"Rated_power[W]",PADDR(system_base),PT_DESCRIPTION,"Rated power of system (base power)",
 			PT_double,"Gen_power[W]",PADDR(PMech),PT_DESCRIPTION,"Mechanical power equivalent",
