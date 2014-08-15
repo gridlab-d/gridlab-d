@@ -5926,9 +5926,9 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			}
 		} else if(sscanf(term, "<%[^>]>", value) == 1){
 			/* C include file */
-			output_verbose("added C include for \"%s\", value");
-			append_code(value);
-			strcpy(line,"");
+			output_verbose("added C include for \"%s\"", value);
+			append_code("#include <%s>\n",value);
+			strcpy(line,"\n");
 			return TRUE;
 		}
 		else if ( sscanf(term, "[%[^]]]", value)==1 )
