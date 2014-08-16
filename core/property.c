@@ -147,22 +147,13 @@ PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, char *name, void
 		/* verify that the requested unit exists or can be derived */
 		else 
 		{
-			TRY {
-				if ((prop->unit = unit_find(unitspec))==NULL)
-					output_error("property_malloc(oclass='%s',...): property %s unit '%s' is not recognized",oclass->name, prop->name,unitspec);
-					/*	TROUBLESHOOT
-						A class is attempting to publish a variable using a unit that is not defined.  
-						This is caused by an incorrect unit specification in a variable publication (in C++) or declaration (in GLM).
-						Units are defined in the unit file located in the GridLAB-D <b>etc</b> folder.  
-					 */
-			} CATCH (char *msg) {
-					output_error("property_malloc(oclass='%s',...): property %s unit '%s' is not recognized",oclass->name, prop->name,unitspec);
-					/*	TROUBLESHOOT
-						A class is attempting to publish a variable using a unit that is not defined.  
-						This is caused by an incorrect unit specification in a variable publication (in C++) or declaration (in GLM).
-						Units are defined in the unit file located in the GridLAB-D <b>etc</b> folder.  
-					 */
-			} ENDCATCH;
+			if ((prop->unit = unit_find(unitspec))==NULL)
+				throw_exception("property_malloc(oclass='%s',...): property %s unit '%s' is not recognized",oclass->name, prop->name,unitspec);
+				/*	TROUBLESHOOT
+					A class is attempting to publish a variable using a unit that is not defined.  
+					This is caused by an incorrect unit specification in a variable publication (in C++) or declaration (in GLM).
+					Units are defined in the unit file located in the GridLAB-D <b>etc</b> folder.  
+				 */
 		}
 	}
 	prop->addr = addr;

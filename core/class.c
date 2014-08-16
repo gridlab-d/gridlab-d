@@ -833,14 +833,9 @@ int class_define_map(CLASS *oclass, /**< the object class */
 				char *unitspec = va_arg(arg,char*);
 				TRY {
 					if ((prop->unit = unit_find(unitspec))==NULL)
-						output_error("class_define_map(oclass='%s',...): property %s unit '%s' is not recognized",oclass->name, prop->name,unitspec);
-						/*	TROUBLESHOOT
-							A class is attempting to publish a variable using a unit that is not defined.
-							This is caused by an incorrect unit specification in a variable publication (in C++) or declaration (in GLM).
-							Units are defined in the unit file located in the GridLAB-D <b>etc</b> folder.
-						 */
-				} CATCH (char *msg) {
-						output_error("class_define_map(oclass='%s',...): property %s unit '%s' is not recognized",oclass->name, prop->name,unitspec);
+						throw_exception("unable to define unit '%s'", unitspec); 
+				} CATCH (const char *msg) {
+						output_error("class_define_map(oclass='%s',...): property %s unit '%s' is not recognized: %s",oclass->name, prop->name,unitspec,msg);
 						/*	TROUBLESHOOT
 							A class is attempting to publish a variable using a unit that is not defined.
 							This is caused by an incorrect unit specification in a variable publication (in C++) or declaration (in GLM).
