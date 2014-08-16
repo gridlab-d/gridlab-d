@@ -1,13 +1,13 @@
 script export clock;
 
-script on_create "echo create done";
-script on_init "echo init done";
+script on_create "echo create done >script.out";
+script on_init "echo init done >>script.out";
 #ifdef WINDOWS
-script on_sync "echo sync done at %clock%";
+script on_sync "echo sync done at %clock% >>script.out";
 #else
-script on_sync "echo sync done at $clock";
+script on_sync "echo sync done at $clock >>script.out";
 #endif
-script on_term "echo term done";
+script on_term "echo term done >>script.out";
 
 clock {
 	starttime '2000-01-01 00:00:00';
