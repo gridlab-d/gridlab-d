@@ -1667,12 +1667,34 @@ int object_dump(char *outbuffer, /**< the destination buffer */
 /** Save an object to the buffer provided
     @return the number of bytes written to the buffer, 0 on error, with errno set
  **/
+static int object_save_x(char *temp, int size, OBJECT *obj, CLASS *oclass)
+{
+	char buffer[1024];
+	PROPERTY *prop;
+	int count = sprintf(temp, "\t// %s properties\n", oclass->name);
+	for ( prop=oclass->pmap; prop!=NULL && prop->oclass==oclass; prop=prop->next )
+	{
+		char *value = object_property_to_string(obj, prop->name, buffer, 1023);
+		if ( value!=NULL )
+		{
+			if ( prop->ptype==PT_timestamp)  // timestamps require single quotes
+				count += sprintf(temp+count, "\t%s '%s';\n", prop->name, value);
+			else if ( strcmp(value,"")==0 || ( strpbrk(value," \t") && prop->unit==NULL ) ) // double quotes needed empty strings and when white spaces are present in non-real values
+				count += sprintf(temp+count, "\t%s \"%s\";\n", prop->name, value);
+			else
+				count += sprintf(temp+count, "\t%s %s;\n", prop->name, value);
+		}
+	}
+	return count;
+}
 int object_save(char *buffer, int size, OBJECT *obj)
 {
 	char temp[65536];
 	char32 oname="";
-	PROPERTY *prop;
+	CLASS *pclass;
 	int count = sprintf(temp,"object %s:%d {\n\n\t// header properties\n", obj->oclass->name, obj->id);
+
+	output_debug("saving object %s:%d", obj->oclass->name, obj->id);
 
 	/* dump header properties */
 	if(obj->parent != NULL){
@@ -1691,23 +1713,15 @@ int object_save(char *buffer, int size, OBJECT *obj)
 	if( !isnan(obj->longitude) ){
 		count += sprintf(temp+count, "\tlongitude %s;\n", convert_from_longitude(obj->longitude, buffer, sizeof(buffer)) ? buffer : "(invalid)");
 	}
-	count += sprintf(temp+count, "\tflags %s;\n\n\t// %s properties\n", convert_from_set(buffer, sizeof(buffer), &(obj->flags), object_flag_property()) ? buffer : "(invalid)", obj->oclass->name);
+	count += sprintf(temp+count, "\tflags %s;\n", convert_from_set(buffer, sizeof(buffer), &(obj->flags), object_flag_property()) ? buffer : "(invalid)");
 
 	/* dump class-defined properties */
-	for ( prop=obj->oclass->pmap; prop!=NULL && prop->oclass==obj->oclass; prop=prop->next )
-	{
-		char *value = object_property_to_string(obj, prop->name, buffer, 1023);
-		if ( value!=NULL )
-		{
-			if ( prop->ptype==PT_timestamp)  // timestamps require single quotes
-				count += sprintf(temp+count, "\t%s '%s';\n", prop->name, value);
-			else if ( strcmp(value,"")==0 || ( strpbrk(value," \t") && prop->unit==NULL ) ) // double quotes needed empty strings and when white spaces are present in non-real values
-				count += sprintf(temp+count, "\t%s \"%s\";\n", prop->name, value);
-			else
-				count += sprintf(temp+count, "\t%s %s;\n", prop->name, value);
-		}
-	}
+	for ( pclass=obj->oclass->parent ; pclass!=NULL ; pclass=pclass->parent )
+		count += object_save_x(temp+count,size-count,obj,pclass);
+	count += object_save_x(temp+count,size-count,obj,obj->oclass);
 	count += sprintf(temp+count,"}\n");
+	if ( count>=sizeof(temp) )
+		output_warning("object_save(char *buffer=%p, int size=%d, OBJECT *obj={%s:%d}: buffer overflow", buffer, size, obj->oclass->name, obj->id);
 	if ( count<size )
 	{
 		strcpy(buffer,temp);
