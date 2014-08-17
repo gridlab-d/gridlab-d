@@ -60,7 +60,7 @@ STATUS environment_start(int argc, /**< the number of arguments to pass to the e
 						Follow the guidance for that message and try again.
 					 */
 				else
-					output_message("dump to '%s' complete", global_dumpfile);
+					output_debug("dump to '%s' complete", global_dumpfile);
 			}
 			return FAILED;
 		}

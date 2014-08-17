@@ -2221,7 +2221,7 @@ STATUS exec_start(void)
 						Follow the guidance for that message and try again.
 					 */
 				else
-					output_message("initial model dump to '%s' complete", global_dumpfile);
+					output_debug("initial model dump to '%s' complete", global_dumpfile);
 			}
 			
 			/* handle delta mode operation */
@@ -2253,7 +2253,7 @@ STATUS exec_start(void)
 						Follow the guidance for that message and try again.
 					 */
 				else
-					output_message("initial model dump to '%s' complete", global_dumpfile);
+					output_debug("initial model dump to '%s' complete", global_dumpfile);
 			}
 			
 			/* handle delta mode operation */

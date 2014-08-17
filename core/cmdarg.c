@@ -1077,6 +1077,8 @@ static int example(int argc, char *argv[])
 		return CMDERR;
 	}
 	global_clock = time(NULL);
+	output_redirect("error",NULL);
+	output_redirect("warning",NULL);
 	if ( !object_init(object) )
 		output_warning("--example: unable to initialize example object from class %s", classname);
 	if ( object_save(buffer,sizeof(buffer),object)>0 )
