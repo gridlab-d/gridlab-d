@@ -99,7 +99,7 @@ int lights::create(void)
 	load.power_fraction = load.current_fraction = load.impedance_fraction = 0;
 	load.power = load.admittance = load.current = load.total = complex(0,0,J);
 	load.voltage_factor = 1.0;
-	//load.power_factor = 0.95;
+	//load.power_factor = 0.95; commenting out this line means a default power factor of 1.00
 	load.breaker_amps = 0;
 
 	return res;
@@ -131,13 +131,22 @@ int lights::init(OBJECT *parent)
 			Use a positive lighting load and try again.
 		 */
 
-	if (load.power_factor==0) load.power_factor = power_factor[type];
-	if (load.voltage_factor==0) load.voltage_factor = 1.0;
+	if (load.power_factor==0)
+	{
+		load.power_factor = power_factor[type];
+		gl_warning("No value was given for power factor. Defaulting to power factor 1.00 and incandescent light type.");
+	}
+	if (load.voltage_factor==0) 
+	{
+		load.voltage_factor = 1.0;
+		gl_warning("No value was given for voltage factor.  Defaulting to voltage factor 1.00");
+	}
 	if ( (load.power_fraction + load.current_fraction + load.impedance_fraction) == 0.0)
 	{
 		load.power_fraction = power_fraction[type][2];
 		load.current_fraction = power_fraction[type][1];
 		load.impedance_fraction = power_fraction[type][0];
+		gl_warning("No value was given for power fraction. Defaulting to incandescent light type and corresponding power fraction 1,0,0.");
 	}
 	// check for the right kind of loadshape schedule 
 	if (shape.type!=MT_ANALOG && shape.type != MT_UNKNOWN)
