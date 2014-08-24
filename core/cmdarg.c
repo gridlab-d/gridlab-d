@@ -1087,7 +1087,68 @@ static int example(int argc, char *argv[])
 		output_warning("no output generated for object");
 	return CMDOK;
 }
+static int mclassdef(int argc, char *argv[])
+{
+	MODULE *module;
+	CLASS *oclass;
+	OBJECT *obj;
+	char modname[1024], classname[1024];
+	int n;
+	char buffer[65536];
+	PROPERTY *prop;
+	int count = 0;
 
+	/* generate the object */
+	if ( argc < 2 )
+	{
+		output_error("--mclassdef requires a module:class argument");
+		return CMDERR;
+	}
+	n = sscanf(argv[1],"%1023[A-Za-z_]:%1024[A-Za-z_0-9]",modname,classname);
+        if ( n!=2 )
+        {
+                output_error("--mclassdef: %s name is not valid",n==0?"module":"class");
+                return CMDERR;
+        }
+        module = module_load(modname,0,NULL);
+        if ( module==NULL )
+        {
+                output_error("--mclassdef: module %d is not found", modname);
+                return CMDERR;
+        }
+        oclass = class_get_class_from_classname(classname);
+        if ( oclass==NULL )
+        {
+                output_error("--mclassdef: class %d is not found", classname);
+                return CMDERR;
+        }
+        obj = object_create_single(oclass);
+        if ( obj==NULL )
+        {
+                output_error("--mclassdef: unable to create mclassdef object from class %s", classname);
+                return CMDERR;
+        }
+        global_clock = time(NULL);
+        output_redirect("error",NULL);
+        output_redirect("warning",NULL);
+        if ( !object_init(obj) )
+                output_warning("--mclassdef: unable to initialize mclassdef object from class %s", classname);
+	
+	/* output the classdef */
+	count = sprintf(buffer,"struct('module','%s','class','%s'", modname, classname);
+	for ( prop = oclass->pmap ; prop!=NULL && prop->oclass==oclass ; prop=prop->next )
+	{
+		if ( strchr(prop->name,'.')!=NULL )
+			continue; /* do not output structures */
+		char temp[1024];
+		char *value = object_property_to_string(obj, prop->name, temp, 1023);
+		if ( value!=NULL )
+                       count += sprintf(buffer+count, ",...\n\t'%s','%s'", prop->name, value);
+	}
+	count += sprintf(buffer+count,");\n");
+	output_raw("%s",buffer);
+        return CMDOK;
+}
 static int locktest(int argc, char *argv[])
 {
 	test_lock();
@@ -1175,7 +1236,8 @@ static CMDARG main[] = {
 	{"help",		"h",		help,		NULL, "Displays command line help" },
 	{"info",		NULL,		info,		"<subject>", "Obtain online help regarding <subject>"},
 	{"modhelp",		NULL,		modhelp,	"module[:class]", "Display structure of a class or all classes in a module" },
-	{"example",		NULL,		example,	"module:class", "Display an example of an instance of the class before init" },
+	{"example",		NULL,		example,	"module:class", "Display an example of an instance of the class after init" },
+	{"mclassdef",		NULL,		mclassdef,	"module:class", "Generate Matlab classdef of an instance of the class after init" },
 
 	{NULL,NULL,NULL,NULL, "Process control"},
 	{"pidfile",		NULL,	pidfile,		"[=<filename>]", "Set the process ID file (default is gridlabd.pid)" },
