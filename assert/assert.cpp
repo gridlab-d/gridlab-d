@@ -34,6 +34,7 @@ g_assert::g_assert(MODULE *module)
 		defaults = this;
 		if (gl_publish_variable(oclass,
 			PT_enumeration,"status",get_status_offset(),PT_DESCRIPTION,"desired outcome of assert test",
+				PT_KEYWORD,"INIT",(enumeration)AS_INIT,
 				PT_KEYWORD,"TRUE",(enumeration)AS_TRUE,
 				PT_KEYWORD,"FALSE",(enumeration)AS_FALSE,
 				PT_KEYWORD,"NONE",(enumeration)AS_NONE,
