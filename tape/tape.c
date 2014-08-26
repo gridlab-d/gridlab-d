@@ -1,4 +1,4 @@
-/** $Id: tape.c 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id: tape.c 1182 2008-12-22 22:08:36Z dchassin $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file tape.c
 	@addtogroup tapes Players and recorders (tape)
@@ -436,11 +436,11 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 				if ( global_dateformat[0]=='\0')
 					gl_global_getvar("dateformat",global_dateformat,sizeof(global_dateformat));
 				if ( strcmp(global_dateformat,"ISO")==0)
-					sprintf(recorder_timestamp,"%04d-%02d-%02d %02d:%02d:%02d.%.06d",rec_date_time.year,rec_date_time.month,rec_date_time.day,rec_date_time.hour,rec_date_time.minute,rec_date_time.second,rec_microseconds);
+					sprintf(recorder_timestamp,"%04d-%02d-%02d %02d:%02d:%02d.%.06d %s",rec_date_time.year,rec_date_time.month,rec_date_time.day,rec_date_time.hour,rec_date_time.minute,rec_date_time.second,rec_microseconds,rec_date_time.tz);
 				else if ( strcmp(global_dateformat,"US")==0)
-					sprintf(recorder_timestamp,"%02d-%02d-%04d %02d:%02d:%02d.%.06d",rec_date_time.month,rec_date_time.day,rec_date_time.year,rec_date_time.hour,rec_date_time.minute,rec_date_time.second,rec_microseconds);
+					sprintf(recorder_timestamp,"%02d-%02d-%04d %02d:%02d:%02d.%.06d %s",rec_date_time.month,rec_date_time.day,rec_date_time.year,rec_date_time.hour,rec_date_time.minute,rec_date_time.second,rec_microseconds,rec_date_time.tz);
 				else if ( strcmp(global_dateformat,"EURO")==0)
-					sprintf(recorder_timestamp,"%02d-%02d-%04d %02d:%02d:%02d.%.06d",rec_date_time.day,rec_date_time.month,rec_date_time.year,rec_date_time.hour,rec_date_time.minute,rec_date_time.second,rec_microseconds);
+					sprintf(recorder_timestamp,"%02d-%02d-%04d %02d:%02d:%02d.%.06d %s",rec_date_time.day,rec_date_time.month,rec_date_time.year,rec_date_time.hour,rec_date_time.minute,rec_date_time.second,rec_microseconds,rec_date_time.tz);
 				else
 					sprintf(recorder_timestamp,"%.09f",recorder_delta_clock);
 			}
@@ -554,11 +554,11 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 			if ( global_dateformat[0]=='\0')
 				gl_global_getvar("dateformat",global_dateformat,sizeof(global_dateformat));
 			if ( strcmp(global_dateformat,"ISO")==0)
-				sprintf(recorder_timestamp,"%04d-%02d-%02d %02d:%02d:%02d.%.06d",rec_date_time.year,rec_date_time.month,rec_date_time.day,rec_date_time.hour,rec_date_time.minute,rec_date_time.second,rec_microseconds);
+				sprintf(recorder_timestamp,"%04d-%02d-%02d %02d:%02d:%02d.%.06d %s",rec_date_time.year,rec_date_time.month,rec_date_time.day,rec_date_time.hour,rec_date_time.minute,rec_date_time.second,rec_microseconds,rec_date_time.tz);
 			else if ( strcmp(global_dateformat,"US")==0)
-				sprintf(recorder_timestamp,"%02d-%02d-%04d %02d:%02d:%02d.%.06d",rec_date_time.month,rec_date_time.day,rec_date_time.year,rec_date_time.hour,rec_date_time.minute,rec_date_time.second,rec_microseconds);
+				sprintf(recorder_timestamp,"%02d-%02d-%04d %02d:%02d:%02d.%.06d %s",rec_date_time.month,rec_date_time.day,rec_date_time.year,rec_date_time.hour,rec_date_time.minute,rec_date_time.second,rec_microseconds,rec_date_time.tz);
 			else if ( strcmp(global_dateformat,"EURO")==0)
-				sprintf(recorder_timestamp,"%02d-%02d-%04d %02d:%02d:%02d.%.06d",rec_date_time.day,rec_date_time.month,rec_date_time.year,rec_date_time.hour,rec_date_time.minute,rec_date_time.second,rec_microseconds);
+				sprintf(recorder_timestamp,"%02d-%02d-%04d %02d:%02d:%02d.%.06d %s",rec_date_time.day,rec_date_time.month,rec_date_time.year,rec_date_time.hour,rec_date_time.minute,rec_date_time.second,rec_microseconds,rec_date_time.tz);
 			else
 				sprintf(recorder_timestamp,"%.09f",recorder_delta_clock);
 		}
@@ -584,15 +584,9 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 						return FAILED;
 					}
 
-					/* Update recorders so they don't "minimum timestep up" to where we exited! */
-					if (rec_microseconds > 0)	/* Round us up to the next timestep */
-					{
-						my->last.ts = rec_integer_clock + 1;
-					}
-					else	/* Theoretically "where we are" */
-					{
-						my->last.ts = rec_integer_clock;
-					}
+					///* Update recorders so they don't "minimum timestep up" to where we exited! */
+					my->last.ts = rec_integer_clock;
+					my->last.ns = rec_microseconds;
 
 					/*  Copy in the last value, just in case */
 					strcpy(my->last.value,value);
@@ -616,7 +610,7 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 		/* See if we're in service */
 		if ((obj->in_svc_double <= gl_globaldeltaclock) && (obj->out_svc_double >= gl_globaldeltaclock))
 		{
-			if ( my->next.ns!=0 )
+			if (( my->next.ns!=0 ) && (my->next.ts != t0))	/* See if we need to go back into deltamode, but make sure we aren't stuck! */
 				enable_deltamode(my->next.ts);
 		}
 	}

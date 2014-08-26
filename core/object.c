@@ -407,7 +407,7 @@ OBJECT *object_create_foreign(OBJECT *obj) /**< a pointer to the OBJECT data str
 	obj->in_svc_double = (double)obj->in_svc;
 	obj->out_svc = TS_NEVER;
 	obj->out_svc_micro = 0;
-	obj->out_svc_double - (double)obj->out_svc;
+	obj->out_svc_double = (double)obj->out_svc;
 	obj->flags = OF_FOREIGN;
 	
 	if(first_object == NULL){

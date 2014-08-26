@@ -1,4 +1,4 @@
-/** $Id: triplex_line.cpp 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id: triplex_line.cpp 1186 2009-01-02 18:15:30Z dchassin $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file triplex_line.cpp
 	@addtogroup triplex_line 
@@ -34,6 +34,10 @@ triplex_line::triplex_line(MODULE *mod) : line(mod)
         if(gl_publish_variable(oclass,
 			PT_INHERIT, "line",
             NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+
+		//Publish deltamode functions
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
+			GL_THROW("Unable to publish triplex line deltamode function");
     }
 }
 
@@ -155,6 +159,8 @@ int triplex_line::init(OBJECT *parent)
 void triplex_line::recalc(void)
 {
 	triplex_line_configuration *line_config = OBJECTDATA(configuration,triplex_line_configuration);
+
+	OBJECT *obj = OBJECTHDR(this);
 	
 	if (line_config->impedance11 != 0.0 || line_config->impedance22 != 0.0)
 	{
@@ -333,6 +339,23 @@ void triplex_line::recalc(void)
 			multiply(1/(length/5280.0),zs,b_mat); // Length comes in ft, convert to miles.
 			multiply(1/(length/5280.0),zs,B_mat); // We're in admittance form now, so multiply by 1/L.
 		}
+	}
+	
+	//Check for negative resistance in the line's impedance matrix
+	bool neg_res = false;
+	for (int n = 0; n < 2; n++){
+		if(b_mat[0][n].Re() < 0.0){
+			neg_res = true;
+		}
+	}
+	
+	if(neg_res == true){
+		gl_warning("INIT: triplex_line:%s has a negative resistance in it's impedance matrix. This will result in unusual behavior. Please check the line's geometry and cable parameters.", obj->name);
+		/*  TROUBLESHOOT
+		A negative resistance value was found for one or more the real parts of the triplex_line's impedance matrix.
+		While this is numerically possible, it is a physical impossibility. This resulted most likely from a improperly 
+		defined conductor cable. Please check and modify the conductor objects used for this line to correct this issue.
+		*/
 	}
 
 	// Same in all cases

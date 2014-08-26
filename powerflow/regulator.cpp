@@ -1,4 +1,4 @@
-// $Id: regulator.cpp 4738 2014-07-03 00:55:39Z dchassin $
+// $Id: regulator.cpp 1186 2009-01-02 18:15:30Z dchassin $
 /**	Copyright (C) 2008 Battelle Memorial Institute
 
 	@file regulator.cpp
@@ -46,12 +46,11 @@ regulator::regulator(MODULE *mod) : link_object(mod)
 			PT_double, "tap_B_change_count",PADDR(tap_B_change_count),PT_DESCRIPTION,"count of all physical tap changes on phase B since beginning of simulation (plus initial value)",
 			PT_double, "tap_C_change_count",PADDR(tap_C_change_count),PT_DESCRIPTION,"count of all physical tap changes on phase C since beginning of simulation (plus initial value)",
 			PT_object,"sense_node",PADDR(RemoteNode),PT_DESCRIPTION,"Node to be monitored for voltage control in remote sense mode",
+			PT_double,"regulator_resistance[Ohm]",PADDR(regulator_resistance), PT_DESCRIPTION,"The resistance value of the regulator when it is not blown.",
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Publish deltamode functions
 		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
-			GL_THROW("Unable to publish regulator deltamode function");
-		if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_link)==NULL)
 			GL_THROW("Unable to publish regulator deltamode function");
 	}
 }
@@ -71,6 +70,7 @@ int regulator::create()
 	tap_B_change_count = -1;
 	tap_C_change_count = -1;
 	iteration_flag = true;
+	regulator_resistance = -1.0;
 	return result;
 }
 
@@ -79,6 +79,8 @@ int regulator::init(OBJECT *parent)
 	bool TapInitialValue[3];
 	char jindex;
 	int result = link_object::init(parent);
+
+	OBJECT *obj = OBJECTHDR(this);
 
 	if (!configuration)
 		throw "no regulator configuration specified.";
@@ -179,14 +181,24 @@ int regulator::init(OBJECT *parent)
 
 			if (solver_method == SM_NR)
 			{
+				if(regulator_resistance == 0.0){
+					gl_warning("Regulator:%s regulator_resistance has been set to zero. This will result singular matrix. Setting to the global default.",obj->name);
+					/*  TROUBLESHOOT
+					Under Newton-Raphson solution method the impedance matrix cannot be a singular matrix for the inversion process.
+					Change the value of regulator_resistance to something small but larger that zero.
+					*/
+				}
+				if(regulator_resistance < 0.0){
+					regulator_resistance = default_resistance;
+				}
 				SpecialLnk = REGULATOR;
 				//complex Izt = complex(1,0) / zt;
 				if (has_phase(PHASE_A))
-					b_mat[0][0] = 1e4;
+					b_mat[0][0] = 1/regulator_resistance;
 				if (has_phase(PHASE_B))
-					b_mat[1][1] = 1e4;
+					b_mat[1][1] = 1/regulator_resistance;
 				if (has_phase(PHASE_C))
-					b_mat[2][2] = 1e4;
+					b_mat[2][2] = 1/regulator_resistance;
 			}
 			break;
 		case regulator_configuration::OPEN_DELTA_ABBC:

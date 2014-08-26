@@ -1,4 +1,4 @@
-/** $Id: diesel_dg.cpp 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id: diesel_dg.cpp,v 1.2 2008/02/12 00:28:08 d3g637 Exp $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file diesel_dg.cpp
 	@defgroup diesel_dg Diesel gensets
@@ -155,6 +155,9 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_complex,"Irotated[pu]",PADDR(curr_state.Irotated),PT_DESCRIPTION,"d-q rotated sequence current state variable",
 			PT_complex,"pwr_electric[VA]",PADDR(curr_state.pwr_electric),PT_DESCRIPTION,"Current electrical output of machine",
 			PT_double,"pwr_mech[W]",PADDR(curr_state.pwr_mech),PT_DESCRIPTION,"Current mechanical output of machine",
+			PT_double,"torque_mech[N*m]",PADDR(curr_state.torque_mech),PT_DESCRIPTION,"Current mechanical torque of machine",
+			PT_double,"torque_elec[N*m]",PADDR(curr_state.torque_elec),PT_DESCRIPTION,"Current electrical torque output of machine",
+
 
 			//Properties for AVR/Exciter of dynamics model
 			PT_enumeration,"Exciter_type",PADDR(Exciter_type),PT_DESCRIPTION,"Exciter model for dynamics-capable implementation",
@@ -379,6 +382,8 @@ int diesel_dg::create(void)
 	IGenerated = NULL;
 	FreqPower = NULL;
 	TotalPower = NULL;
+	Governor_type = NO_GOV;
+	Exciter_type = NO_EXC;
 
 	power_val[0] = 0.0;
 	power_val[1] = 0.0;
@@ -410,10 +415,9 @@ int diesel_dg::create(void)
 	deltamode_inclusive = false;	//By default, don't be included in deltamode simulations
 
 	first_run = true;				//First time we run, we are the first run (by definition)
-	first_run_after_delta = false;	//Assumes we aren't entering delta from the get-go
-	IterationToggle = true;			//Pass functionality
 
 	prev_time = 0;
+	prev_time_dbl = 0.0;
 
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -727,7 +731,7 @@ int diesel_dg::init(OBJECT *parent)
 		//Check for zeros - if any are zero, 50% them (real generator, arbitrary)
 		if (power_val[0].Mag() == 0.0)
 		{
-			gl_warning("diesel_dg:%s - power_out_A is zero - arbitrarily setting to 50%",obj->name?obj->name:"unnamed");
+			gl_warning("diesel_dg:%s - power_out_A is zero - arbitrarily setting to 50%%",obj->name?obj->name:"unnamed");
 			/*  TROUBLESHOOT
 			The diesel_dg object has a power_out_A value that is zero.  This can cause the generator to never
 			partake in the powerflow.  It is being arbitrarily set to 50% of the per-phase rating.  If this is
@@ -739,7 +743,7 @@ int diesel_dg::init(OBJECT *parent)
 
 		if (power_val[1].Mag() == 0.0)
 		{
-			gl_warning("diesel_dg:%s - power_out_B is zero - arbitrarily setting to 50%",obj->name?obj->name:"unnamed");
+			gl_warning("diesel_dg:%s - power_out_B is zero - arbitrarily setting to 50%%",obj->name?obj->name:"unnamed");
 			/*  TROUBLESHOOT
 			The diesel_dg object has a power_out_B value that is zero.  This can cause the generator to never
 			partake in the powerflow.  It is being arbitrarily set to 50% of the per-phase rating.  If this is
@@ -751,7 +755,7 @@ int diesel_dg::init(OBJECT *parent)
 
 		if (power_val[2].Mag() == 0.0)
 		{
-			gl_warning("diesel_dg:%s - power_out_C is zero - arbitrarily setting to 50%",obj->name?obj->name:"unnamed");
+			gl_warning("diesel_dg:%s - power_out_C is zero - arbitrarily setting to 50%%",obj->name?obj->name:"unnamed");
 			/*  TROUBLESHOOT
 			The diesel_dg object has a power_out_C value that is zero.  This can cause the generator to never
 			partake in the powerflow.  It is being arbitrarily set to 50% of the per-phase rating.  If this is
@@ -841,10 +845,8 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 	double temp_double_high, temp_double_low, tdiff, ang_diff;
 	complex temp_current_val[3];
 	complex temp_voltage_val[3];
-	complex aval, avalsq;
 	FUNCTIONADDR test_fxn;
 	complex rotate_value;
-	int ret_state;
 	TIMESTAMP tret_value;
 	double vdiff;
 	double voltage_mag_curr;
@@ -853,9 +855,6 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	//Assume always want TS_NEVER
 	tret_value = TS_NEVER;
-
-	//Toggle the iteration device
-	IterationToggle = !IterationToggle;
 
 	//First run allocation - in diesel_dg for now, but may need to move elsewhere
 	if (first_run == true)	//First run
@@ -1108,33 +1107,6 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//Force us to reiterate one
 			tret_value = t1;
 		}//End deltamode specials - first pass
-		else if (deltamode_inclusive && enable_subsecond_models && (torque_delay!=NULL)) 	//Still "first run", but at least one powerflow has completed (call init dyn now)
-		{
-			ret_state = init_dynamics(&curr_state);
-
-			if (ret_state == FAILED)
-			{
-				GL_THROW("diesel_dg:%s - unsuccessful call to dynamics initialization",(obj->name?obj->name:"unnamed"));
-				/*  TROUBLESHOOT
-				While attempting to call the dynamics initialization function of the diesel_dg object, a failure
-				state was encountered.  See other error messages for further details.
-				*/
-			}
-
-			//Compute the AVR-related admittance - convert to positive sequence value first
-			//Constants
-			aval = complex(cos(2.0*PI/3.0),sin(2.0*PI/3.0));
-			avalsq = aval*aval;
-
-			//Perform the conversion
-			YS1_Full = full_bus_admittance_mat[0]+aval*full_bus_admittance_mat[3]+avalsq*full_bus_admittance_mat[6];
-			YS1_Full += avalsq*full_bus_admittance_mat[1]+full_bus_admittance_mat[4]+aval*full_bus_admittance_mat[7];
-			YS1_Full += aval*full_bus_admittance_mat[2]+avalsq*full_bus_admittance_mat[5]+full_bus_admittance_mat[8];
-			YS1_Full /= 3.0;
-
-			//Deflag us
-			first_run = false;
-		}//End "first run" paired
 		//Default else - no deltamode stuff
 	}//End first timestep
 
@@ -1263,18 +1235,11 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}//End no dynamic generator (older code)
 	else	//Must be a synchronous dynamic machine
 	{
-		//Update rotor-related stuff
-		if ((prev_time != t1) && (IterationToggle == false))
+		//Only do updates if this is a new timestep
+		if ((prev_time < t1) && (first_run == false))
 		{
-			//See if we just exited deltamode
-			if (deltamode_endtime != TS_NEVER)
-			{
-				prev_time = deltamode_endtime;
-				first_run_after_delta = false;	//Deflag us
-			}
-
 			//Get time difference
-			tdiff = (double)(t1-prev_time);
+			tdiff = (double)(t1)-prev_time_dbl;
 
 			//Calculate rotor angle update
 			ang_diff = (curr_state.omega - omega_ref)*tdiff;
@@ -1295,17 +1260,7 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 			//Update time
 			prev_time = t1;
-
-			//Force us to reiterate too
-			tret_value = t1;
-		}
-		else if (IterationToggle == true)	//Update exciter aspects, if desired
-		{
-			//Update global, if necessary - by true, everyone should be done
-			if ((deltamode_endtime != TS_NEVER) && (first_run_after_delta==false))
-			{
-				deltamode_endtime = TS_NEVER;
-			}
+			prev_time_dbl = (double)(t1);
 
 			//Compute our current voltage point - see if we need to adjust things (if we have an AVR)
 			if (Exciter_type == SEXS)
@@ -1346,10 +1301,8 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 			//Default else - no AVR
 		}
-		//Defaulted else - false pass, but not first
-	
 		//Nothing else in here right now....all handled internal to powerflow
-	}
+	}//End synchronous dynamics-enabled generator
 
 	return tret_value;
 }
@@ -1358,11 +1311,21 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 TIMESTAMP diesel_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	complex temp_current_val[3];
+	int ret_state;
+	OBJECT *obj = OBJECTHDR(this);
+	complex aval, avalsq;
 
 	TIMESTAMP t2 = TS_NEVER;
 
 	if (Gen_type == DYNAMIC)
 	{
+		//Update global, if necessary - assume everyone grabbed by sync
+		if (deltamode_endtime != TS_NEVER)
+		{
+			deltamode_endtime = TS_NEVER;
+			deltamode_endtime_dbl = TSNVRDBL;
+		}
+
 		//Update output power
 		//Get current injected
 		temp_current_val[0] = (IGenerated[0] - generator_admittance[0][0]*pCircuit_V[0] - generator_admittance[0][1]*pCircuit_V[1] - generator_admittance[0][2]*pCircuit_V[2]);
@@ -1378,7 +1341,39 @@ TIMESTAMP diesel_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		curr_state.pwr_electric = power_val[0] + power_val[1] + power_val[2];
 	}
 
-	/* TODO: implement post-topdown behavior */
+	if (first_run == true)	//Final init items - namely deltamode supersecond exciter
+	{
+		if (deltamode_inclusive && enable_subsecond_models && (torque_delay!=NULL)) 	//Still "first run", but at least one powerflow has completed (call init dyn now)
+		{
+			ret_state = init_dynamics(&curr_state);
+
+			if (ret_state == FAILED)
+			{
+				GL_THROW("diesel_dg:%s - unsuccessful call to dynamics initialization",(obj->name?obj->name:"unnamed"));
+				/*  TROUBLESHOOT
+				While attempting to call the dynamics initialization function of the diesel_dg object, a failure
+				state was encountered.  See other error messages for further details.
+				*/
+			}
+
+			//Compute the AVR-related admittance - convert to positive sequence value first
+			//Constants
+			aval = complex(cos(2.0*PI/3.0),sin(2.0*PI/3.0));
+			avalsq = aval*aval;
+
+			//Perform the conversion
+			YS1_Full = full_bus_admittance_mat[0]+aval*full_bus_admittance_mat[3]+avalsq*full_bus_admittance_mat[6];
+			YS1_Full += avalsq*full_bus_admittance_mat[1]+full_bus_admittance_mat[4]+aval*full_bus_admittance_mat[7];
+			YS1_Full += aval*full_bus_admittance_mat[2]+avalsq*full_bus_admittance_mat[5]+full_bus_admittance_mat[8];
+			YS1_Full /= 3.0;
+
+		}//End "first run" paired
+		//Default else - not dynamics-oriented, deflag
+		
+		//Deflag us
+		first_run = false;
+	}
+
 	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
 }
 
@@ -1478,6 +1473,7 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 	unsigned char pass_mod;
 	double temp_double;
 	double deltat, deltath;
+	double omega_pu;
 	complex temp_rotation;
 	complex temp_complex[3];
 	complex temp_current_val[3];
@@ -1537,9 +1533,6 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 
 		//Replicate curr_state into next
 		memcpy(&next_state,&curr_state,sizeof(MAC_STATES));
-
-		//Set our tracking flag
-		first_run_after_delta = true;
 
 	}//End first pass and timestep of deltamode (initial condition stuff)
 	else if (iteration_count_val == 0)	//Not first run, just first run of this timestep
@@ -1629,10 +1622,13 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 		}//End SEXS update
 		//Default else - no updates because no exciter
 
+		//Nab per-unit omega, while we're at it
+	    omega_pu = curr_state.omega/omega_ref;
+
 		//Update generator current injection (technically is done "before" next powerflow)
-		IGenerated[0] = next_state.EintVal[0]*YS1;
-		IGenerated[1] = next_state.EintVal[1]*YS1;
-		IGenerated[2] = next_state.EintVal[2]*YS1;
+		IGenerated[0] = next_state.EintVal[0]*YS1*omega_pu;
+		IGenerated[1] = next_state.EintVal[1]*YS1*omega_pu;
+		IGenerated[2] = next_state.EintVal[2]*YS1*omega_pu;
 
 		return SM_DELTA_ITER;	//Reiterate - to get us to corrector pass
 	}
@@ -1685,10 +1681,13 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 		}//End SEXS update
 		//Default else - no updates because no exciter
 
+		//Nab per-unit omega, while we're at it
+	    omega_pu = curr_state.omega/omega_ref;
+
 		//Update generator current injection (technically is done "before" next powerflow)
-		IGenerated[0] = next_state.EintVal[0]*YS1;
-		IGenerated[1] = next_state.EintVal[1]*YS1;
-		IGenerated[2] = next_state.EintVal[2]*YS1;
+		IGenerated[0] = next_state.EintVal[0]*YS1*omega_pu;
+		IGenerated[1] = next_state.EintVal[1]*YS1*omega_pu;
+		IGenerated[2] = next_state.EintVal[2]*YS1*omega_pu;
 
 		//Copy everything back into curr_state, since we'll be back there
 		memcpy(&curr_state,&next_state,sizeof(MAC_STATES));
@@ -1726,6 +1725,18 @@ STATUS diesel_dg::post_deltaupdate(complex *useful_value, unsigned int mode_pass
 
 		//Add in our "current" power for the weighting
 		*TotalPower += curr_state.pwr_electric;
+
+		//Update tracking variable - see if it was an exact second or not
+		if (deltamode_supersec_endtime != deltamode_endtime)
+		{
+			prev_time = deltamode_supersec_endtime;
+			prev_time_dbl = deltamode_endtime_dbl;
+		}
+		else	//It was, do an intentional cast so things don't get wierd
+		{
+			prev_time = deltamode_endtime;
+			prev_time_dbl = (double)(deltamode_endtime);
+		}
 	}
 	else if (mode_pass == 1)	//Push the frequency
 	{
@@ -1763,6 +1774,12 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta)
 	current_pu[1] = (IGenerated[1] - generator_admittance[1][0]*pCircuit_V[0] - generator_admittance[1][1]*pCircuit_V[1] - generator_admittance[1][2]*pCircuit_V[2])/current_base;
 	current_pu[2] = (IGenerated[2] - generator_admittance[2][0]*pCircuit_V[0] - generator_admittance[2][1]*pCircuit_V[1] - generator_admittance[2][2]*pCircuit_V[2])/current_base;
 
+	// post currents
+	current_A=current_pu[0]*current_base;
+	current_B=current_pu[1]*current_base;
+	current_C=current_pu[2]*current_base;
+
+
 	//Nab per-unit omega, while we're at it
 	omega_pu = curr_time->omega/omega_ref;
 
@@ -1774,14 +1791,20 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta)
 	curr_time->Irotated = temp_complex*complex(0.0,1.0)*Ipn0[0];
 
 	//Get speed update - split for readability
-	temp_double_1 = (curr_time->pwr_mech/Rated_VA)/omega_pu - (Xqpp-Xl)/(Xqp-Xl)*curr_time->EpRotated.Re()*curr_time->Irotated.Re();
+	temp_double_1 =  -(Xqpp-Xl)/(Xqp-Xl)*curr_time->EpRotated.Re()*curr_time->Irotated.Re();
 	temp_double_1 -=(Xdpp-Xl)/(Xdp-Xl)*curr_time->EpRotated.Im()*curr_time->Irotated.Im();
 	temp_double_1 -=(Xdp-Xdpp)/(Xdp-Xl)*curr_time->Flux1d*curr_time->Irotated.Im();
 	temp_double_1 +=(Xqp-Xqpp)/(Xqp-Xl)*curr_time->Flux2q*curr_time->Irotated.Re();
 	temp_double_1 -=(Xqpp-Xdpp)*curr_time->Irotated.Re()*curr_time->Irotated.Im();
 	temp_double_3 = Ipn0[1].Mag();
 	temp_double_1 -=0.5*Rr*temp_double_3*temp_double_3;
+	curr_time->torque_elec=-temp_double_1*Rated_VA/omega_ref; 
+	temp_double_1 =(curr_time->torque_mech/(Rated_VA/omega_ref)-curr_time->torque_elec/(Rated_VA/omega_ref));
 	temp_double_1 -=damping*(curr_time->omega-omega_ref)/omega_ref;
+
+	curr_time->pwr_mech = curr_time->torque_mech*curr_time->omega;
+
+	
 
 	temp_double_2 = omega_ref/(2.0*inertia);
 
@@ -1837,7 +1860,8 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta)
 		torquenow = torque_delay[torque_delay_read_pos];
 
 		//Calculate the mechanical power for this time
-		curr_time->pwr_mech = Rated_VA*torquenow*curr_time->omega/omega_ref;
+		curr_time->torque_mech = (Rated_VA/omega_ref)*torquenow;
+		curr_time->pwr_mech = curr_time->torque_mech*curr_time->omega;
 
 		//Compute the offset currently
 		temp_double_1 = curr_time->gov_degov1.wref - curr_time->omega/omega_ref-gov_degov1_R*curr_time->gov_degov1.throttle;
@@ -1886,7 +1910,8 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta)
 		torquenow=curr_time->gov_gast.throttle;
 
 		//Calculate the mechanical power for this time
-		curr_time->pwr_mech = Rated_VA*torquenow*curr_time->omega/omega_ref;
+		curr_time->torque_mech = (Rated_VA/omega_ref)*torquenow;
+		curr_time->pwr_mech = curr_time->torque_mech*curr_time->omega;
 
 		//Compute the offset currently
 		delomega = curr_time->gov_gast.throttle - (curr_time->omega/omega_ref-1)*gov_gast_R; 
@@ -1989,6 +2014,12 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 	current_pu[1] = (IGenerated[1] - generator_admittance[1][0]*pCircuit_V[0] - generator_admittance[1][1]*pCircuit_V[1] - generator_admittance[1][2]*pCircuit_V[2])/current_base;
 	current_pu[2] = (IGenerated[2] - generator_admittance[2][0]*pCircuit_V[0] - generator_admittance[2][1]*pCircuit_V[1] - generator_admittance[2][2]*pCircuit_V[2])/current_base;
 
+	// post currents
+	current_A=current_pu[0]*current_base;
+	current_B=current_pu[1]*current_base;
+	current_C=current_pu[2]*current_base;
+
+	
 	//Compute initial power
 	curr_time->pwr_electric = (voltage_pu[0]*~current_pu[0]+voltage_pu[1]*~current_pu[1]+voltage_pu[2]*~current_pu[2])*voltage_base*current_base;
 
@@ -2004,12 +2035,12 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 	curr_time->rotor_angle = temp_complex_1.Arg();
 
 	//Now figure out the internal voltage based on the subtransient model
-	temp_complex_1 = Vpn0[0]+complex(Ra,Xdpp)*Ipn0[0];
+	temp_complex_1 = (Vpn0[0]+complex(Ra,Xdpp)*Ipn0[0])/omega_pu; // /omega_pu to be able to initialize at omega <> 60Hz
 
 	//Figure out the rotation
 	temp_complex_2 = complex_exp(-1.0*curr_time->rotor_angle);
 	curr_time->Irotated = temp_complex_2*complex(0.0,1.0)*Ipn0[0];
-	curr_time->VintRotated = temp_complex_2*complex(0.0,1.0)*temp_complex_1;
+	curr_time->VintRotated = (temp_complex_2*complex(0.0,1.0)*temp_complex_1);
 
 	//Compute vr
 	temp_complex_1 = temp_complex_2*complex(0.0,1.0)*Vpn0[0];
@@ -2041,10 +2072,12 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 	temp_double_1 += (Xqp-Xqpp)/(Xqp-Xl)*curr_time->Flux2q*curr_time->Irotated.Re();
 	temp_double_1 -= (Xqpp-Xdpp)*curr_time->Irotated.Re()*curr_time->Irotated.Im();
 	temp_double_1 -= 0.5*Rr*Ipn0[1].Mag()*Ipn0[1].Mag();
+	curr_time->torque_elec = -1.0*temp_double_1*Rated_VA/omega_ref;
 	temp_double_1 -= damping*(curr_time->omega-omega_ref)/omega_ref;
 
 	//Set the initial power
-	curr_time->pwr_mech = -1.0*temp_double_1*Rated_VA*(curr_time->omega/omega_ref);
+	curr_time->torque_mech = -1.0*temp_double_1*Rated_VA/omega_ref;
+	curr_time->pwr_mech = curr_time->torque_mech*curr_time->omega;
 
 	//Governor initial conditions
 	if (Governor_type == DEGOV1)
@@ -2053,8 +2086,8 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 		curr_time->gov_degov1.x2 = 0;
 		curr_time->gov_degov1.x5 = 0;
 		curr_time->gov_degov1.x6 = 0;
-		curr_time->gov_degov1.x4 = curr_time->pwr_mech/Rated_VA/(curr_time->omega/omega_ref);
-		curr_time->gov_degov1.throttle = curr_time->gov_degov1.x4;	//Init to Pmech
+		curr_time->gov_degov1.x4 = curr_time->torque_mech/(Rated_VA/omega_ref);
+		curr_time->gov_degov1.throttle = curr_time->gov_degov1.x4;	//Init to Tmech
 		curr_time->gov_degov1.wref = curr_time->gov_degov1.throttle*gov_degov1_R+curr_time->omega/omega_ref;
 
 		//Populate the "delayed torque" with the throttle value
@@ -2065,10 +2098,10 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 	}//End DEGOV1 initialization
 	if (Governor_type == GAST)
 	{
-		curr_time->gov_gast.x1 = curr_time->pwr_mech/Rated_VA;
-		curr_time->gov_gast.x2 = curr_time->pwr_mech/Rated_VA;
-		curr_time->gov_gast.x3 = curr_time->pwr_mech/Rated_VA;
-		curr_time->gov_gast.throttle = curr_time->pwr_mech/Rated_VA; //Init to Pmech
+		curr_time->gov_gast.x1 = curr_time->torque_mech/(Rated_VA/omega_ref);
+		curr_time->gov_gast.x2 = curr_time->torque_mech/(Rated_VA/omega_ref);
+		curr_time->gov_gast.x3 = curr_time->torque_mech/(Rated_VA/omega_ref);
+		curr_time->gov_gast.throttle = curr_time->torque_mech/(Rated_VA/omega_ref); //Init to Tmech
 	}//End GAST initialization
 	//Default else - no initialization
 

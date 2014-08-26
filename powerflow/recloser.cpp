@@ -1,4 +1,4 @@
-/** $Id: recloser.cpp 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id: recloser.cpp,v 2.2 2011/01/05 11:15:00 fish334 Exp $
 	Copyright (C) 2011 Battelle Memorial Institute
 	@file recloser.cpp
 	@addtogroup powerflow recloser
@@ -45,8 +45,6 @@ recloser::recloser(MODULE *mod) : switch_object(mod)
 
 		//Publish deltamode functions -- replicate switch
 		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_switch)==NULL)
-			GL_THROW("Unable to publish recloser deltamode function");
-		if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_link)==NULL)
 			GL_THROW("Unable to publish recloser deltamode function");
     }
 }

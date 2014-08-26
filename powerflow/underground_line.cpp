@@ -1,4 +1,4 @@
-/** $Id: underground_line.cpp 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id: underground_line.cpp 1182 2008-12-22 22:08:36Z dchassin $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file underground_line.cpp
 	@addtogroup underground_line 
@@ -41,8 +41,6 @@ underground_line::underground_line(MODULE *mod) : line(mod)
 
 		//Publish deltamode functions
 		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
-			GL_THROW("Unable to publish underground line deltamode function");
-		if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_link)==NULL)
 			GL_THROW("Unable to publish underground line deltamode function");
     }
 }
@@ -183,6 +181,8 @@ void underground_line::recalc(void)
 {
 	line_configuration *config = OBJECTDATA(configuration, line_configuration);
 	complex Zabc_mat[3][3], Yabc_mat[3][3];
+	bool not_TS_CN = false;
+	OBJECT *obj = OBJECTHDR(this);
 
 	// Zero out Zabc_mat and Yabc_mat. Un-needed phases will be left zeroed.
 	for (int i = 0; i < 3; i++) 
@@ -194,16 +194,17 @@ void underground_line::recalc(void)
 		}
 	}
 
-		// Set auxillary matrices
-		for (int i = 0; i < 3; i++) {
-			for (int j = 0; j < 3; j++) {
-				a_mat[i][j] = 0.0;
-				d_mat[i][j] = 0.0;
-				A_mat[i][j] = 0.0;
-				c_mat[i][j] = 0.0;
-				B_mat[i][j] = b_mat[i][j];
-			}
+	// Set auxillary matrices
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 3; j++) {
+			a_mat[i][j] = 0.0;
+			d_mat[i][j] = 0.0;
+			A_mat[i][j] = 0.0;
+			c_mat[i][j] = 0.0;
+			B_mat[i][j] = b_mat[i][j];
 		}
+	}
+
 	if (config->impedance11 != 0 || config->impedance22 != 0 || config->impedance33 != 0)
 	{
 		// Load Zabc_mat and Yabc_mat based on the z11-z33 and c11-c33 line config parameters
@@ -237,10 +238,10 @@ void underground_line::recalc(void)
 		int16 strands_4, strands_5, strands_6;
 		double rad_14, rad_25, rad_36;
 		double dia[7], res[7], gmr[7], gmrcn[3], rcn[3], gmrs[3], ress[3];
-		double d[6][6];
+		double d[7][7];
 		double perm_A, perm_B, perm_C, c_an, c_bn, c_cn, temp_denom;
 		complex cap_freq_coeff;
-		complex z[6][6]; //, z_ij[3][3], z_in[3][3], z_nj[3][3], z_nn[3][3], z_abc[3][3];
+		complex z[7][7]; //, z_ij[3][3], z_in[3][3], z_nj[3][3], z_nn[3][3], z_abc[3][3];
 		double freq_coeff_real, freq_coeff_imag, freq_additive_term;
 		double miles = length / 5280.0;
 
@@ -315,8 +316,13 @@ void underground_line::recalc(void)
 		GMRCN(6) = !(has_phase(PHASE_C) && strands_6 > 0) ? 0.0 :
 			pow(GMR(6) * strands_6 * pow(rad_36, (strands_6 - 1)), (1.0 / strands_6));
 
+		//Check to see if this is not a tape-shielded line or a concentric neutral line
+
+		if (GMR(4) == 0.0 && GMR(5) == 0.0 && GMR(6) == 0.0 && GMR_S(4) == 0.0 && GMR_S(5) == 0.0 && GMR_S(6) == 0.0){// the gmr for the neutral strands and the tape shield is zero this is just an insulated underground cable
+			not_TS_CN = true;
+		}
 		//Capacitance stuff, if desired
-		if (use_line_cap == true)
+		if (use_line_cap == true && not_TS_CN == false)
 		{
 			//Extract relative permitivitty
 			perm_A = UG_GET(A, insulation_rel_permitivitty);
@@ -337,6 +343,7 @@ void underground_line::recalc(void)
 			D(1, 4) = GMR_S(4);
 		D(1, 5) = D(1, 2);
 		D(1, 6) = D(1, 3);
+		D(1, 7) = DIST(A, N);
 		D(2, 1) = D(1, 2);
 		D(2, 3) = DIST(B, C);
 		D(2, 4) = D(2, 1);
@@ -344,6 +351,7 @@ void underground_line::recalc(void)
 		if(GMR_S(5) > 0)
 			D(2, 5) = GMR_S(5);
 		D(2, 6) = D(2, 3);
+		D(2, 7) = DIST(B, N);
 		D(3, 1) = D(1, 3);
 		D(3, 2) = D(2, 3);
 		D(3, 4) = D(3, 1);
@@ -351,21 +359,31 @@ void underground_line::recalc(void)
 		D(3, 6) = rad_36;
 		if(GMR_S(6) > 0)
 			D(3, 6) = GMR_S(6);
+		D(3, 7) = DIST(C, N);
 		D(4, 1) = D(1, 4);
 		D(4, 2) = D(2, 4);
 		D(4, 3) = D(3, 4);
 		D(4, 5) = D(1, 2);
 		D(4, 6) = D(1, 3);
+		D(4, 7) = D(1, 7);
 		D(5, 1) = D(1, 5);
 		D(5, 2) = D(2, 5);
 		D(5, 3) = D(3, 5);
 		D(5, 4) = D(4, 5);
 		D(5, 6) = D(2, 3);
+		D(5, 7) = D(2, 7);
 		D(6, 1) = D(1, 6);
 		D(6, 2) = D(2, 6);
 		D(6, 3) = D(3, 6);
 		D(6, 4) = D(4, 6);
 		D(6, 5) = D(5, 6);
+		D(6, 7) = D(3, 7);
+		D(7, 1) = D(1, 7);
+		D(7, 2) = D(2, 7);
+		D(7, 3) = D(3, 7);
+		D(7, 4) = D(1, 7);
+		D(7, 5) = D(2, 7);
+		D(7, 6) = D(3, 7);
 
 		#undef DIST
 		#undef DIA
@@ -376,10 +394,10 @@ void underground_line::recalc(void)
 		#define Z_GMR_S(i) (GMR_S(i) == 0.0 ? complex(0.0) : complex(freq_coeff_real + RES_S(i), freq_coeff_imag*(log(1.0/GMR_S(i)) + freq_additive_term)))
 		#define Z_DIST(i, j) (D(i, j) == 0.0 ? complex(0.0) : complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / D(i, j)) + freq_additive_term)))
 
-		for (int i = 1; i < 7; i++) {
-			for (int j = 1; j < 7; j++) {
+		for (int i = 1; i < 8; i++) {
+			for (int j = 1; j < 8; j++) {
 				if (i == j) {
-					if (i > 3){
+					if (i > 3 && i != 7){
 						Z(i, j) = Z_GMRCN(i);
 						if(Z_GMR_S(i) > 0 && Z(i, j) == 0)
 							Z(i, j) = Z_GMR_S(i);
@@ -402,39 +420,55 @@ void underground_line::recalc(void)
 		#undef Z_GMR
 		#undef Z_GMRCN
 		#undef Z_DIST
-
-		complex z_ij[3][3] = {{Z(1, 1), Z(1, 2), Z(1, 3)},
-							  {Z(2, 1), Z(2, 2), Z(2, 3)},
-							  {Z(3, 1), Z(3, 2), Z(3, 3)}};
-		complex z_in[3][3] = {{Z(1, 4), Z(1, 5), Z(1, 6)},
-							  {Z(2, 4), Z(2, 5), Z(2, 6)},
-							  {Z(3, 4), Z(3, 5), Z(3, 6)}};
-		complex z_nj[3][3] = {{Z(1, 4), Z(2, 4), Z(3, 4)},
-							  {Z(1, 5), Z(2, 5), Z(3, 5)},
-							  {Z(1, 6), Z(2, 6), Z(3, 6)}};
-		complex z_nn[3][3] = {{Z(4, 4), Z(4, 5), Z(4, 6)},
-							  {Z(5, 4), Z(5, 5), Z(5, 6)},
-							  {Z(6, 4), Z(6, 5), Z(6, 6)}};
-		complex z_nn_inv[3][3], z_p1[3][3], z_p2[3][3], z_abc[3][3];
-
-		#undef Z
-
-		if (!(has_phase(PHASE_A)&&has_phase(PHASE_B)&&has_phase(PHASE_C))){
-			if (!has_phase(PHASE_A))
-				z_nn[0][0]=complex(1.0);
-			if (!has_phase(PHASE_B))
-				z_nn[1][1]=complex(1.0);
-			if (!has_phase(PHASE_C))
-				z_nn[2][2]=complex(1.0);
-		}
 		
-		inverse(z_nn,z_nn_inv);
-		multiply(z_in, z_nn_inv, z_p1);
-		multiply(z_p1, z_nj, z_p2);
-		subtract(z_ij, z_p2, z_abc);
-		multiply(miles, z_abc, Zabc_mat);
+		if (not_TS_CN == false){
+			complex z_ij[3][3] = {{Z(1, 1), Z(1, 2), Z(1, 3)},
+								  {Z(2, 1), Z(2, 2), Z(2, 3)},
+								  {Z(3, 1), Z(3, 2), Z(3, 3)}};
+			complex z_in[3][3] = {{Z(1, 4), Z(1, 5), Z(1, 6)},
+								  {Z(2, 4), Z(2, 5), Z(2, 6)},
+								  {Z(3, 4), Z(3, 5), Z(3, 6)}};
+			complex z_nj[3][3] = {{Z(1, 4), Z(2, 4), Z(3, 4)},
+								  {Z(1, 5), Z(2, 5), Z(3, 5)},
+								  {Z(1, 6), Z(2, 6), Z(3, 6)}};
+			complex z_nn[3][3] = {{Z(4, 4), Z(4, 5), Z(4, 6)},
+								  {Z(5, 4), Z(5, 5), Z(5, 6)},
+								  {Z(6, 4), Z(6, 5), Z(6, 6)}};
+			complex z_nn_inv[3][3], z_p1[3][3], z_p2[3][3], z_abc[3][3];
 
-		if (use_line_cap == true)
+
+			if (!(has_phase(PHASE_A)&&has_phase(PHASE_B)&&has_phase(PHASE_C))){
+				if (!has_phase(PHASE_A))
+					z_nn[0][0]=complex(1.0);
+				if (!has_phase(PHASE_B))
+					z_nn[1][1]=complex(1.0);
+				if (!has_phase(PHASE_C))
+					z_nn[2][2]=complex(1.0);
+			}
+			
+			inverse(z_nn,z_nn_inv);
+			multiply(z_in, z_nn_inv, z_p1);
+			multiply(z_p1, z_nj, z_p2);
+			subtract(z_ij, z_p2, z_abc);
+			multiply(miles, z_abc, Zabc_mat);
+		} else {
+			complex z_nn_inv = 0;
+			if(Z(7, 7) != 0.0){
+				z_nn_inv = Z(7, 7)^(-1.0);
+			}
+			Zabc_mat[0][0] = (Z(1, 1) - Z(1, 7) * Z(1, 7) * z_nn_inv) * miles;
+			Zabc_mat[0][1] = (Z(1, 2) - Z(1, 7) * Z(2, 7) * z_nn_inv) * miles;
+			Zabc_mat[0][2] = (Z(1, 3) - Z(1, 7) * Z(3, 7) * z_nn_inv) * miles;
+			Zabc_mat[1][0] = (Z(2, 1) - Z(2, 7) * Z(1, 7) * z_nn_inv) * miles;
+			Zabc_mat[1][1] = (Z(2, 2) - Z(2, 7) * Z(2, 7) * z_nn_inv) * miles;
+			Zabc_mat[1][2] = (Z(2, 3) - Z(2, 7) * Z(3, 7) * z_nn_inv) * miles;
+			Zabc_mat[2][0] = (Z(3, 1) - Z(3, 7) * Z(1, 7) * z_nn_inv) * miles;
+			Zabc_mat[2][1] = (Z(3, 2) - Z(3, 7) * Z(2, 7) * z_nn_inv) * miles;
+			Zabc_mat[2][2] = (Z(3, 3) - Z(3, 7) * Z(3, 7) * z_nn_inv) * miles;
+		}
+#undef Z
+
+		if ((use_line_cap == true) && (not_TS_CN == false))
 		{
 			//Compute base capacitances - split denominator to handle 
 			if (has_phase(PHASE_A))
@@ -589,6 +623,25 @@ void underground_line::recalc(void)
 
 	// Calculate line matrixies A_mat, B_mat, a_mat, b_mat, c_mat and d_mat based on Zabc_mat and Yabc_mat
 	recalc_line_matricies(Zabc_mat, Yabc_mat);
+	
+	//Check for negative resistance in the line's impedance matrix
+	bool neg_res = false;
+	for (int n = 0; n < 3; n++){
+		for (int m = 0; m < 3; m++){
+			if(b_mat[n][m].Re() < 0.0){
+				neg_res = true;
+			}
+		}
+	}
+	
+	if(neg_res == true){
+		gl_warning("INIT: underground_line:%s has a negative resistance in it's impedance matrix. This will result in unusual behavior. Please check the line's geometry and cable parameters.", obj->name);
+		/*  TROUBLESHOOT
+		A negative resistance value was found for one or more the real parts of the underground_line's impedance matrix.
+		While this is numerically possible, it is a physical impossibility. This resulted most likely from a improperly 
+		defined conductor cable. Please check and modify the conductor objects used for this line to correct this issue.
+		*/
+	}
 
 #ifdef _TESTING
 	/// @todo use output_test() instead of cout (powerflow, high priority) (ticket #137)

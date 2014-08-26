@@ -1,4 +1,4 @@
-/** $Id: triplex_meter.cpp 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id: triplex_meter.cpp 1002 2008-09-29 15:58:23Z d3m998 $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file triplex_meter.cpp
 	@addtogroup powerflow_triplex_meter Meter
@@ -114,6 +114,14 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 			PT_double, "third_tier_energy[kWh]", PADDR(tier_energy[2]),PT_DESCRIPTION,"price of energy on tier above second tier",
 
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+
+			//Deltamode functions
+			if (gl_publish_function(oclass,	"delta_linkage_node", (FUNCTIONADDR)delta_linkage)==NULL)
+				GL_THROW("Unable to publish triplex_meter delta_linkage function");
+			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_triplex_meter)==NULL)
+				GL_THROW("Unable to publish triplex_meter deltamode function");
+			if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
+				GL_THROW("Unable to publish triplex_meter deltamode function");
 		}
 }
 
@@ -456,6 +464,135 @@ double triplex_meter::process_bill(TIMESTAMP t1){
 }
 
 //////////////////////////////////////////////////////////////////////////
+// IMPLEMENTATION OF DELTA MODE
+//////////////////////////////////////////////////////////////////////////
+//Module-level call
+SIMULATIONMODE triplex_meter::inter_deltaupdate_triplex_meter(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
+{
+	//unsigned char pass_mod;
+	OBJECT *hdr = OBJECTHDR(this);
+	int TempNodeRef;
+
+	if (interupdate_pos == false)	//Before powerflow call
+	{
+		//Triplex meter presync items
+			if (tpmeter_power_consumption != complex(0,0))
+				power[0] = power[1] = 0.0;
+
+			//Reliability addition - clear momentary flag if set
+			if (tpmeter_interrupted_secondary == true)
+				tpmeter_interrupted_secondary = false;
+
+		//Call triplex-specific call
+		BOTH_triplex_node_presync_fxn();
+
+		//Call node presync-equivalent items
+		NR_node_presync_fxn();
+
+		//Triplex-meter specific sync items
+			//Reliability check
+			if ((fault_check_object != NULL) && (solver_method == SM_NR))	//proper solver fault_check is present (so might need to set flag
+			{
+				if (NR_node_reference==-99)	//Childed
+				{
+					TempNodeRef=*NR_subnode_reference;
+				}
+				else	//Normal
+				{
+					//Just assign it to our normal index
+					TempNodeRef=NR_node_reference;
+				}
+
+				if ((NR_busdata[TempNodeRef].origphases & NR_busdata[TempNodeRef].phases) != NR_busdata[TempNodeRef].origphases)	//We have a phase mismatch - something has been lost
+				{
+					tpmeter_interrupted = true;	//Someone is out of service, they just may not know it
+
+					//See if we were "momentary" as well - if so, clear us.
+					if (tpmeter_interrupted_secondary == true)
+						tpmeter_interrupted_secondary = false;
+				}
+				else
+				{
+					tpmeter_interrupted = false;	//All is well
+				}
+			}
+
+			if (tpmeter_power_consumption != complex(0,0))
+			{
+				power[0] += tpmeter_power_consumption/2;
+				power[1] += tpmeter_power_consumption/2;
+			}
+
+		//Call sync-equivalent of triplex portion first
+		BOTH_triplex_node_sync_fxn();
+
+		//Call node sync-equivalent items (solver occurs at end of sync)
+		NR_node_sync_fxn(hdr);
+
+		return SM_DELTA;	//Just return something other than SM_ERROR for this call
+	}
+	else	//After the call
+	{
+		//Perform node postsync-like updates on the values - call first so current is right
+		BOTH_node_postsync_fxn(hdr);
+
+		//Triplex_meter-specific postsync
+			measured_voltage[0].SetPolar(voltageA.Mag(),voltageA.Arg());
+			measured_voltage[1].SetPolar(voltageB.Mag(),voltageB.Arg());
+			measured_voltage[2].SetPolar(voltageC.Mag(),voltageC.Arg());
+
+			measured_current[0] = current_inj[0];
+			measured_current[1] = current_inj[1];
+			measured_current[2] = -(measured_current[1]+measured_current[0]);
+
+			indiv_measured_power[0] = measured_voltage[0]*(~measured_current[0]);
+			indiv_measured_power[1] = complex(-1,0) * measured_voltage[1]*(~measured_current[1]);
+			indiv_measured_power[2] = measured_voltage[2]*(~measured_current[2]);
+
+			measured_power = indiv_measured_power[0] + indiv_measured_power[1] + indiv_measured_power[2];
+
+			measured_real_power = (indiv_measured_power[0]).Re()
+								+ (indiv_measured_power[1]).Re()
+								+ (indiv_measured_power[2]).Re();
+
+			measured_reactive_power = (indiv_measured_power[0]).Im()
+									+ (indiv_measured_power[1]).Im()
+									+ (indiv_measured_power[2]).Im();
+
+			if (measured_real_power>measured_demand)
+				measured_demand=measured_real_power;
+
+		//No control required at this time - powerflow defers to the whims of other modules
+		//Code below implements predictor/corrector-type logic, even though it effectively does nothing
+		return SM_EVENT;
+
+		////Do deltamode-related logic
+		//if (bustype==SWING)	//We're the SWING bus, control our destiny (which is really controlled elsewhere)
+		//{
+		//	//See what we're on
+		//	pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
+
+		//	//Check pass
+		//	if (pass_mod==0)	//Predictor pass
+		//	{
+		//		return SM_DELTA_ITER;	//Reiterate - to get us to corrector pass
+		//	}
+		//	else	//Corrector pass
+		//	{
+		//		//As of right now, we're always ready to leave
+		//		//Other objects will dictate if we stay (powerflow is indifferent)
+		//		return SM_EVENT;
+		//	}//End corrector pass
+		//}//End SWING bus handling
+		//else	//Normal bus
+		//{
+		//	return SM_EVENT;	//Normal nodes want event mode all the time here - SWING bus will
+		//						//control the reiteration process for pred/corr steps
+		//}
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////
 
@@ -521,4 +658,20 @@ EXPORT int notify_triplex_meter(OBJECT *obj, int update_mode, PROPERTY *prop, ch
 	return rv;
 }
 
+//Deltamode export
+EXPORT SIMULATIONMODE interupdate_triplex_meter(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
+{
+	triplex_meter *my = OBJECTDATA(obj,triplex_meter);
+	SIMULATIONMODE status = SM_ERROR;
+	try
+	{
+		status = my->inter_deltaupdate_triplex_meter(delta_time,dt,iteration_count_val,interupdate_pos);
+		return status;
+	}
+	catch (char *msg)
+	{
+		gl_error("interupdate_triplex_meter(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
+		return status;
+	}
+}
 /**@}**/

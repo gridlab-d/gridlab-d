@@ -1,4 +1,4 @@
-// $Id: init.cpp 4738 2014-07-03 00:55:39Z dchassin $
+// $Id$
 // Copyright (C) 2008 Battelle Memorial Institute
 
 #include <stdlib.h>
@@ -28,8 +28,8 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	}
 
 	/* Publish external global variables */
-	gl_global_create("generators::enable_subsecond_models", PT_bool, &enable_subsecond_models,NULL);
-	gl_global_create("generators::deltamode_timestep", PT_int32, &deltamode_timestep,NULL);
+	gl_global_create("generators::enable_subsecond_models", PT_bool, &enable_subsecond_models,PT_DESCRIPTION,"Enable deltamode capabilities within the powerflow module",NULL);
+	gl_global_create("generators::deltamode_timestep", PT_double, &deltamode_timestep_publish,PT_UNITS,"ns",PT_DESCRIPTION,"Desired minimum timestep for deltamode-related simulations",NULL);
 
 	CLASS *first =
 	/*** DO NOT EDIT NEXT LINE ***/
@@ -130,12 +130,29 @@ EXPORT unsigned long deltamode_desired(int *flags)
 //preudpate function of deltamode
 //Module-level call at beginning of each deltamode simulation
 //Returns the timestep this module requires - to be used to determine minimimum
-//detamode simulation stepsize
+//deltamode simulation stepsize
 EXPORT unsigned long preupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 {
 	if (enable_subsecond_models == true)
 	{
-		return deltamode_timestep;
+		if (deltamode_timestep_publish<=0.0)
+		{
+			gl_error("generators::deltamode_timestep must be a positive, non-zero number!");
+			/*  TROUBLESHOOT
+			The value for deltamode_timestep, as specified as the module level in generators, must be a positive, non-zero number.
+			Please use such a number and try again.
+			*/
+
+			return DT_INVALID;
+		}
+		else
+		{
+			//Cast in the published value
+			deltamode_timestep = (unsigned long)(deltamode_timestep_publish+0.5);
+
+			//Return it
+			return deltamode_timestep;
+		}
 	}
 	else	//Not desired, just return an arbitrarily large value
 	{
@@ -229,15 +246,17 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 		//See if it rounded
 		temp_time = dt - ((unsigned int64)(seconds_advance)*DT_SECOND);
 
+		//Store the "pre-incremented" seconds advance time - used to set object clocks
+		//so being the previous second is better for deltamode->supersecond transitions
+		deltamode_supersec_endtime = t0 + seconds_advance;
+
 		/* Determine if an increment is necessary */
 		if (temp_time != 0)
 			seconds_advance++;
 
 		//Update the tracking variable
 		deltamode_endtime = t0 + seconds_advance;
-
-		//Initialize working value, just for grins
-		temp_complex = 0.0;
+		deltamode_endtime_dbl = (double)(t0) + ((double)(dt)/double(DT_SECOND));
 
 		//Loop through delta objects and post their "post transient" frequency values - 0 mode accumulation pass
 		for (curr_object_number=0; curr_object_number<gen_object_count; curr_object_number++)

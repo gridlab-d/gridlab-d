@@ -1,4 +1,4 @@
-// $Id: init.cpp 4738 2014-07-03 00:55:39Z dchassin $
+// $Id: init.cpp 1182 2008-12-22 22:08:36Z dchassin $
 //	Copyright (C) 2008 Battelle Memorial Institute
 
 #include <stdlib.h>
@@ -21,7 +21,6 @@
 #include "meter.h"
 #include "node.h"
 #include "regulator.h"
-#include "relay.h"
 #include "transformer.h"
 #include "switch_object.h"
 #include "substation.h"
@@ -41,7 +40,6 @@
 #include "emissions.h"
 #include "load_tracker.h"
 #include "triplex_load.h"
-
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
@@ -76,10 +74,12 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	gl_global_create("powerflow::default_maximum_voltage_error",PT_double,&default_maximum_voltage_error,NULL);
 	gl_global_create("powerflow::default_maximum_power_error",PT_double,&default_maximum_power_error,NULL);
 	gl_global_create("powerflow::NR_admit_change",PT_bool,&NR_admit_change,NULL);
-	gl_global_create("powerflow::enable_subsecond_models", PT_bool, &enable_subsecond_models,NULL);
-	gl_global_create("powerflow::deltamode_timestep", PT_int32, &deltamode_timestep,NULL);
+	gl_global_create("powerflow::enable_subsecond_models", PT_bool, &enable_subsecond_models,PT_DESCRIPTION,"Enable deltamode capabilities within the powerflow module",NULL);
+	gl_global_create("powerflow::all_powerflow_delta", PT_bool, &all_powerflow_delta,PT_DESCRIPTION,"Forces all powerflow objects that are capable to participate in deltamode",NULL);
+	gl_global_create("powerflow::deltamode_timestep", PT_double, &deltamode_timestep_publish,PT_UNITS,"ns",PT_DESCRIPTION,"Desired minimum timestep for deltamode-related simulations",NULL);
 	gl_global_create("powerflow::deltamode_extra_function", PT_int64, &deltamode_extra_function,NULL);
-	gl_global_create("powerflow::current_frequency",PT_double,&current_frequency,NULL);
+	gl_global_create("powerflow::current_frequency",PT_double,&current_frequency,PT_UNITS,"Hz",PT_DESCRIPTION,"Current system-level frequency of the powerflow system",NULL);
+	gl_global_create("powerflow::default_resistance",PT_double,&default_resistance,NULL);
 
 	// register each object class by creating the default instance
 	new powerflow_object(module);
@@ -96,7 +96,6 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
     new overhead_line_conductor(module);
     new underground_line_conductor(module);
     new line_configuration(module);
-	new relay(module);
 	new transformer_configuration(module);
 	new transformer(module);
 	new load(module);
@@ -194,7 +193,24 @@ EXPORT unsigned long preupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 {
 	if (enable_subsecond_models == true)
 	{
-		return deltamode_timestep;
+		if (deltamode_timestep_publish<=0.0)
+		{
+			gl_error("powerflow::deltamode_timestep must be a positive, non-zero number!");
+			/*  TROUBLESHOOT
+			The value for deltamode_timestep, as specified as the module level in powerflow, must be a positive, non-zero number.
+			Please use such a number and try again.
+			*/
+
+			return DT_INVALID;
+		}
+		else
+		{
+			//Cast in the published value
+			deltamode_timestep = (unsigned long)(deltamode_timestep_publish+0.5);
+
+			//Return it
+			return deltamode_timestep;
+		}
 	}
 	else	//Not desired, just return an arbitrarily large value
 	{
@@ -225,8 +241,15 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 			//See if we're in service or not
 			if ((delta_objects[curr_object_number]->in_svc_double <= gl_globaldeltaclock) && (delta_objects[curr_object_number]->out_svc_double >= gl_globaldeltaclock))
 			{
-				//Call the actual function
-				function_status = ((SIMULATIONMODE (*)(OBJECT *, unsigned int64, unsigned long, unsigned int, bool))(*delta_functions[curr_object_number]))(delta_objects[curr_object_number],delta_time,dt,iteration_count_val,false);
+				if (delta_functions[curr_object_number] != NULL)
+				{
+					//Call the actual function
+					function_status = ((SIMULATIONMODE (*)(OBJECT *, unsigned int64, unsigned long, unsigned int, bool))(*delta_functions[curr_object_number]))(delta_objects[curr_object_number],delta_time,dt,iteration_count_val,false);
+				}
+				else	//No functional call for this, skip it
+				{
+					function_status = SM_EVENT;	//Just put something here, mainly for error checks
+				}
 			}
 			else //Not in service - just pass
 				function_status = SM_DELTA;
@@ -292,8 +315,15 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 			//See if we're in service or not
 			if ((delta_objects[curr_object_number]->in_svc_double <= gl_globaldeltaclock) && (delta_objects[curr_object_number]->out_svc_double >= gl_globaldeltaclock))
 			{
-				//Call the actual function
-				function_status = ((SIMULATIONMODE (*)(OBJECT *, unsigned int64, unsigned long, unsigned int, bool))(*delta_functions[curr_object_number]))(delta_objects[curr_object_number],delta_time,dt,iteration_count_val,true);
+				if (delta_functions[curr_object_number] != NULL)
+				{
+					//Call the actual function
+					function_status = ((SIMULATIONMODE (*)(OBJECT *, unsigned int64, unsigned long, unsigned int, bool))(*delta_functions[curr_object_number]))(delta_objects[curr_object_number],delta_time,dt,iteration_count_val,true);
+				}
+				else	//Doesn't have a function, either intentionally, or "lack of supportly"
+				{
+					function_status = SM_EVENT;	//No function present, just assume we only like events
+				}
 			}
 			else //Not in service - just pass
 				function_status = SM_EVENT;
@@ -375,8 +405,16 @@ int delta_extra_function(unsigned int mode)
 			//See if we're in service or not
 			if ((delta_objects[curr_object_number]->in_svc_double <= gl_globaldeltaclock) && (delta_objects[curr_object_number]->out_svc_double >= gl_globaldeltaclock))
 			{
-				//Call the actual function
-				function_status = ((STATUS (*)(OBJECT *, complex *, complex *))(*delta_freq_functions[curr_object_number]))(delta_objects[curr_object_number],&accumulated_power,&accumulated_freqpower);
+				//See if the function actually exists
+				if (delta_freq_functions[curr_object_number] != NULL)
+				{
+					//Call the actual function
+					function_status = ((STATUS (*)(OBJECT *, complex *, complex *))(*delta_freq_functions[curr_object_number]))(delta_objects[curr_object_number],&accumulated_power,&accumulated_freqpower);
+				}
+				else	//Doesn't exit, assume we succeeded
+				{
+					function_status = SUCCESS;
+				}
 			}
 			else	//Defaulted else, not in service
 				function_status = SUCCESS;

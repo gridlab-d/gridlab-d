@@ -1,4 +1,4 @@
-/** $Id: powerflow.h 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id: powerflow.h 1182 2008-12-22 22:08:36Z dchassin $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file powerflow.h
 	@ingroup powerflow
@@ -65,7 +65,6 @@ GLOBAL double primary_voltage_ratio INIT(60.0);		/**< primary voltage ratio (@to
 GLOBAL double nominal_frequency INIT(60.0);			/**< nomimal operating frequencty */
 GLOBAL double warning_underfrequency INIT(55.0);	/**< frequency below which a warning is posted */
 GLOBAL double warning_overfrequency INIT(65.0);		/**< frequency above which a warning is posted */
-GLOBAL double nominal_voltage INIT(240.0);			/**< nominal voltage level */
 GLOBAL double warning_undervoltage INIT(0.8);		/**< voltage magnitude (per unit) below which a warning is posted */
 GLOBAL double warning_overvoltage INIT(1.2);		/**< voltage magnitude (per unit) above which a warning is posted */
 GLOBAL double warning_voltageangle INIT(2.0);		/**< voltage angle (over link) above which a warning is posted */
@@ -78,7 +77,9 @@ GLOBAL OBJECT *restoration_object INIT(NULL);		/**< restoration object of the sy
 GLOBAL OBJECT *fault_check_object INIT(NULL);		/**< fault_check object of the system */
 
 GLOBAL bool enable_subsecond_models INIT(false);		/* normally not operating in delta mode */
-GLOBAL unsigned long deltamode_timestep INIT(10000000); /* 10 ms timestep, at first */
+GLOBAL bool all_powerflow_delta INIT(false);			/* Flag to make all powerflow objects participate in deltamode -- otherwise is individually flagged per object */
+GLOBAL unsigned long deltamode_timestep INIT(10000000); /* deltamode timestep value - 10 ms timestep, at first - intermnal */
+GLOBAL double deltamode_timestep_publish INIT(10000000.0); /* deltamode module-published 10 ms timestep, at first -- module property version, to be converted*/
 GLOBAL OBJECT **delta_objects INIT(NULL);				/* Array pointer objects that need deltamode interupdate calls */
 GLOBAL FUNCTIONADDR *delta_functions INIT(NULL);	/* Array pointer functions for objects that need deltamode interupdate calls */
 GLOBAL FUNCTIONADDR *delta_freq_functions INIT(NULL);	/* Array pointer functions for objects that have "frequency" updates at end of deltamode */
@@ -87,6 +88,7 @@ GLOBAL int pwr_object_current INIT(-1);				/* Index of current deltamode object 
 GLOBAL TIMESTAMP deltamode_starttime INIT(TS_NEVER);	/* Tracking variable for next desired instance of deltamode */
 GLOBAL double current_frequency INIT(60.0);			/**< Current operating frequency of the system - used by deltamode stuff */
 GLOBAL int64 deltamode_extra_function INIT(0);		/**< Kludge pointer to module-level function, so generators can call it */
+GLOBAL double default_resistance INIT(1e-4);		/**< sets the default resistance for safety devices */
 
 // Deltamode stuff
 void schedule_deltamode_start(TIMESTAMP tstart);	/* Anticipated time for a deltamode start, even if it is now */

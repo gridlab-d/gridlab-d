@@ -628,10 +628,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\relay.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\restoration.cpp"
 				>
 			</File>
@@ -831,14 +827,6 @@
 			</File>
 			<File
 				RelativePath=".\regulator_test.h"
-				>
-			</File>
-			<File
-				RelativePath=".\relay.h"
-				>
-			</File>
-			<File
-				RelativePath=".\relay_test.h"
 				>
 			</File>
 			<File

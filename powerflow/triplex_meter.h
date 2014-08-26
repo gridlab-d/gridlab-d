@@ -1,4 +1,4 @@
-// $Id: triplex_meter.h 4738 2014-07-03 00:55:39Z dchassin $
+// $Id: triplex_meter.h 942 2008-09-19 20:03:17Z dchassin $
 //	Copyright (C) 2008 Battelle Memorial Institute
 
 #ifndef _TRIPLEXMETER_H
@@ -6,6 +6,8 @@
 
 #include "powerflow.h"
 #include "triplex_node.h"
+
+EXPORT SIMULATIONMODE interupdate_triplex_meter(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
 class triplex_meter : public triplex_node
 {
@@ -76,6 +78,8 @@ public:
 	TIMESTAMP sync(TIMESTAMP t0);
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 	int isa(char *classname);
+
+	SIMULATIONMODE inter_deltaupdate_triplex_meter(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 };
 
 #endif // _TRIPLEXMETER_H

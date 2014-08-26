@@ -1,4 +1,4 @@
-/** $Id: recorder.c 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id: recorder.c 1208 2009-01-12 22:48:16Z d3p988 $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file tape.c
 	@addtogroup recorder Recorders
@@ -52,6 +52,7 @@ EXPORT int create_recorder(OBJECT **obj, OBJECT *parent)
 		my->interval = -1; /* transients only */
 		my->dInterval = -1.0;
 		my->last.ts = -1;
+		my->last.ns = -1;
 		strcpy(my->last.value,"");
 		my->limit = 0;
 		my->samples = 0;
@@ -588,7 +589,10 @@ EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	}
 
 	if(my->last.ts < 1 && my->interval != -1)
+	{
 		my->last.ts = t0;
+		my->last.ns = 0;
+	}
 
 	/* connect to property */
 	if (my->target==NULL){
@@ -608,8 +612,13 @@ EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		obj->clock = t0;
 		// if the recorder is clock-based, write the value
 		if((my->interval > 0) && (my->last.ts < t0) && (my->last.value[0] != 0)){
-			recorder_write(obj);
-			my->last.value[0] = 0; // once it's been finalized, dump it
+			if (my->last.ns == 0)
+			{
+				recorder_write(obj);
+				my->last.value[0] = 0; // once it's been finalized, dump it
+			}
+			else	//Just dump it, we already recorded this "timestamp"
+				my->last.value[0] = 0;
 		}
 	}
 
@@ -623,7 +632,7 @@ EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		}
 	}
 	if ((my->target != NULL) && (my->interval > 0)){
-		if((t0 >=my->last.ts + my->interval) || (t0 == my->last.ts)){
+		if((t0 >=my->last.ts + my->interval) || ((t0 == my->last.ts) && (my->last.ns == 0))){
 			if(read_properties(my, obj->parent,my->target,buffer,sizeof(buffer))==0)
 			{
 				sprintf(buffer,"unable to read property '%s' of %s %d", my->property, obj->parent->oclass->name, obj->parent->id);
@@ -631,6 +640,7 @@ EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 				my->status = TS_ERROR;
 			}
 			my->last.ts = t0;
+			my->last.ns = 0;
 		}
 	}
 
@@ -655,7 +665,10 @@ EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	}
 
 	if(my->last.ts < 1 && my->interval != -1)
+	{
 		my->last.ts = t0;
+		my->last.ns = 0;
+	}
 
 	/* write tape */
 	if (my->status==TS_OPEN)
@@ -671,9 +684,10 @@ EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			if (my->last.ts < t0)
 			{
 				my->last.ts = t0;
+				my->last.ns = 0;
 				recorder_write(obj);
 			}
-		} else if (my->interval > 0 && my->last.ts == t0){
+		} else if ((my->interval > 0) && (my->last.ts == t0) && (my->last.ns == 0)){
 			strncpy(my->last.value,buffer,sizeof(my->last.value));
 		}
 	}

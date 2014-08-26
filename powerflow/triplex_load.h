@@ -1,10 +1,12 @@
-// $Id: triplex_load.h 4738 2014-07-03 00:55:39Z dchassin $
+// $Id: triplex_load.h 1182 2012-7-1 2:13 PDT fish334 $
 //	Copyright (C) 2013 Battelle Memorial Institute
 
 #ifndef _TRIPLEXLOAD_H
 #define _TRIPLEXLOAD_H
 
 #include "triplex_node.h"
+
+EXPORT SIMULATIONMODE interupdate_triplex_load(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
 class triplex_load : public triplex_node
 {
@@ -33,7 +35,7 @@ public:
 	int create(void);
 	int init(OBJECT *parent);
 	
-	void load_update_fxn(void);
+	void triplex_load_update_fxn(void);
 
 	triplex_load(MODULE *mod);
 	TIMESTAMP sync(TIMESTAMP t0);
@@ -41,6 +43,8 @@ public:
 	TIMESTAMP presync(TIMESTAMP t0);
 	inline triplex_load(CLASS *cl=oclass):triplex_node(cl){};
 	int isa(char *classname);
+
+	SIMULATIONMODE inter_deltaupdate_triplex_load(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 };
 
 #endif // _TRIPLEX_LOAD_H

@@ -1,4 +1,4 @@
-/** $Id: triplex_node.cpp 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id: triplex_node.cpp 1186 2009-01-02 18:15:30Z dchassin $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file triplex_node.cpp
 	@addtogroup triplex_node
@@ -98,6 +98,14 @@ triplex_node::triplex_node(MODULE *mod) : node(mod)
 			PT_double, "current_uptime[min]", PADDR(current_uptime),PT_DESCRIPTION,"Current time since last disconnect of node in minutes",
 			PT_object, "topological_parent", PADDR(TopologicalParent),PT_DESCRIPTION,"topological parent as per GLM configuration",
          	NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+
+			//Deltamode functions
+			if (gl_publish_function(oclass,	"delta_linkage_node", (FUNCTIONADDR)delta_linkage)==NULL)
+				GL_THROW("Unable to publish triplex_node delta_linkage function");
+			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_triplex_node)==NULL)
+				GL_THROW("Unable to publish triplex_node deltamode function");
+			if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
+				GL_THROW("Unable to publish triplex_node deltamode function");
     }
 }
 
@@ -142,19 +150,26 @@ int triplex_node::init(OBJECT *parent)
 	return node::init(parent);
 }
 
-TIMESTAMP triplex_node::presync(TIMESTAMP t0)
+//Functionalized triplex_node presync -- mainly so 
+//External deltamode calls still execute things right
+void triplex_node::BOTH_triplex_node_presync_fxn(void)
 {
 	//Clear the shunt values
 	shunt[0] = shunt[1] = shunt[2] = 0.0;
+}
+
+TIMESTAMP triplex_node::presync(TIMESTAMP t0)
+{
+	//Call the functionalized version
+	BOTH_triplex_node_presync_fxn();
 
 	return node::presync(t0);
 }
 
-TIMESTAMP triplex_node::sync(TIMESTAMP t0)
+//Functionalized sync routine
+//For external calls
+void triplex_node::BOTH_triplex_node_sync_fxn(void)
 {
-	complex I;
-	OBJECT *obj = OBJECTHDR(this);
-
 	//Update shunt value here, otherwise it will only be a static value
 	//Prioritizes shunt over impedance
 	if ((pub_shunt[0] == 0) && (impedance[0] != 0))	//Impedance specified
@@ -171,8 +186,76 @@ TIMESTAMP triplex_node::sync(TIMESTAMP t0)
 		shunt[2] += complex(1.0,0)/impedance[2];		
 	else											//Shunt specified (impedance ignored)
 		shunt[2] += pub_shunt[2];
+}
+
+TIMESTAMP triplex_node::sync(TIMESTAMP t0)
+{
+	//Call the functionalized version
+	BOTH_triplex_node_sync_fxn();
 
 	return node::sync(t0);
+}
+
+//////////////////////////////////////////////////////////////////////////
+// IMPLEMENTATION OF DELTA MODE
+//////////////////////////////////////////////////////////////////////////
+//Module-level call
+SIMULATIONMODE triplex_node::inter_deltaupdate_triplex_node(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
+{
+	//unsigned char pass_mod;
+	OBJECT *hdr = OBJECTHDR(this);
+
+	if (interupdate_pos == false)	//Before powerflow call
+	{
+		//Call triplex-specific call
+		BOTH_triplex_node_presync_fxn();
+
+		//Call node presync-equivalent items
+		NR_node_presync_fxn();
+
+		//Call sync-equivalent of triplex portion first
+		BOTH_triplex_node_sync_fxn();
+
+		//Call node sync-equivalent items (solver occurs at end of sync)
+		NR_node_sync_fxn(hdr);
+
+		return SM_DELTA;	//Just return something other than SM_ERROR for this call
+	}
+	else	//After the call
+	{
+		//No triplex-specific postsync for node
+
+		//Perform node postsync-like updates on the values
+		BOTH_node_postsync_fxn(hdr);
+
+		//No control required at this time - powerflow defers to the whims of other modules
+		//Code below implements predictor/corrector-type logic, even though it effectively does nothing
+		return SM_EVENT;
+
+		////Do deltamode-related logic
+		//if (bustype==SWING)	//We're the SWING bus, control our destiny (which is really controlled elsewhere)
+		//{
+		//	//See what we're on
+		//	pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
+
+		//	//Check pass
+		//	if (pass_mod==0)	//Predictor pass
+		//	{
+		//		return SM_DELTA_ITER;	//Reiterate - to get us to corrector pass
+		//	}
+		//	else	//Corrector pass
+		//	{
+		//		//As of right now, we're always ready to leave
+		//		//Other objects will dictate if we stay (powerflow is indifferent)
+		//		return SM_EVENT;
+		//	}//End corrector pass
+		//}//End SWING bus handling
+		//else	//Normal bus
+		//{
+		//	return SM_EVENT;	//Normal nodes want event mode all the time here - SWING bus will
+		//						//control the reiteration process for pred/corr steps
+		//}
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -260,4 +343,22 @@ EXPORT int notify_triplex_node(OBJECT *obj, int update_mode, PROPERTY *prop, cha
 
 	return rv;
 }
+
+//Deltamode export
+EXPORT SIMULATIONMODE interupdate_triplex_node(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
+{
+	triplex_node *my = OBJECTDATA(obj,triplex_node);
+	SIMULATIONMODE status = SM_ERROR;
+	try
+	{
+		status = my->inter_deltaupdate_triplex_node(delta_time,dt,iteration_count_val,interupdate_pos);
+		return status;
+	}
+	catch (char *msg)
+	{
+		gl_error("interupdate_triplex_node(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
+		return status;
+	}
+}
+
 /**@}*/

@@ -1,4 +1,4 @@
-/** $Id: tape.h 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id: tape.h 1182 2008-12-22 22:08:36Z dchassin $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file tape.h
  **/
@@ -65,7 +65,7 @@ struct player {
 	/* public */
 	char1024 file; /**< the name of the player source */
 	char8 filetype; /**< the type of the player source */
-	char32 mode;
+	char256 mode;
 	char256 property; /**< the target property */
 	int32 loop; /**< the number of time to replay the tape */
 	/* private */
@@ -80,8 +80,8 @@ struct player {
 	int32 loopnum;
 	struct {
 		TIMESTAMP ts;
-		TIMESTAMP ns;
-		char32 value;
+		int64 ns;
+		char256 value;
 	} next;
 	struct {
 		TIMESTAMP ts;
@@ -172,6 +172,7 @@ struct recorder {
 	char8 delim;
 	struct {
 		TIMESTAMP ts;
+		int64 ns;
 		char1024 value;
 	} last;
 	int32 samples;

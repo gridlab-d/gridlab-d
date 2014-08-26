@@ -1,4 +1,4 @@
-/** $Id: powerflow_object.cpp 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id: powerflow_object.cpp 1182 2008-12-22 22:08:36Z dchassin $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file powerflow_object.cpp
 	@addtogroup powerflow_object Powerflow objects (abstract)
@@ -151,8 +151,14 @@ int powerflow_object::isa(char *classname)
 
 int powerflow_object::create(void)
 {
+	OBJECT *obj = OBJECTHDR(this);
 	phases = NO_PHASE;
 	nominal_voltage = 0.0;
+
+	//Deltamode override flag
+	if (all_powerflow_delta == true)
+		obj->flags |= OF_DELTAMODE;
+
 #ifdef SUPPORT_OUTAGES
 	condition = OC_NORMAL;
 	solution = PS_NORMAL;

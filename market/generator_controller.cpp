@@ -303,6 +303,7 @@ int generator_controller::init(OBJECT *parent)
 	market_latency = (TIMESTAMP)(auction_object->dLatency);
 	price_cap_value = auction_object->pricecap+0.01;	//Set to 0.01 higher - used as an initialization variable
 	curr_market_id = &(auction_object->market_id);
+	next_clear = &(auction_object->clearat);
 
 	//Determine number of latency slots we need
 	number_latency_sections = (int)((market_latency/market_period)+2);	//Delay # + current bid + current active

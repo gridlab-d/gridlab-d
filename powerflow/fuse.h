@@ -50,6 +50,8 @@ public:
 	double mean_replacement_time;
 	TIMESTAMP fix_time[3];
 	double current_current_values[3];
+
+	double fuse_resistance;
 private:
 	TIMESTAMP prev_fuse_time;				//Tracking variable
 	OBJECT **eventgen_obj;					//Reliability variable - link to eventgen object

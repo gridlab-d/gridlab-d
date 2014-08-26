@@ -1,4 +1,4 @@
-/** $Id: link.cpp 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id: link.cpp 1211 2009-01-17 00:45:28Z d3x593 $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file link.cpp
 	@addtogroup powerflow_link Link
@@ -164,8 +164,6 @@ link_object::link_object(MODULE *mod) : powerflow_object(mod)
 
 			//Publish deltamode functions
 			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
-				GL_THROW("Unable to publish link deltamode function");
-			if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_link)==NULL)
 				GL_THROW("Unable to publish link deltamode function");
 	}
 }
@@ -1237,23 +1235,18 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 				//Make sure it worked
 				if (delta_functions[temp_pwr_object_current] == NULL)
 				{
-					GL_THROW("Failure to map deltamode function for device:%s",obj->name);
+					gl_warning("Failure to map deltamode function for device:%s",obj->name);
 					/*  TROUBLESHOOT
 					Attempts to map up the interupdate function of a specific device failed.  Please try again and ensure
-					the object supports deltamode.  If the error persists, please submit your code and a bug report via the
+					the object supports deltamode.  The object simply may not support delta mode.  If the error persists
+					and the object sh, please submit your code and a bug report via the
 					trac website.
 					*/
 				}
 
-				//Map up the frequency function
-				delta_freq_functions[temp_pwr_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"delta_freq_pwr_object"));
+				//Null out the frequency function - links don't do anything with it anyways
+				delta_freq_functions[temp_pwr_object_current] = NULL;
 
-				//Make sure it worked
-				if (delta_freq_functions[temp_pwr_object_current] == NULL)
-				{
-					GL_THROW("Failure to map deltamode function for devices:%s",obj->name);
-					//Defined above
-				}
 			}//End deltamode populations
 		}//End init loop
 
@@ -1787,15 +1780,6 @@ EXPORT SIMULATIONMODE interupdate_link(OBJECT *obj, unsigned int64 delta_time, u
 		gl_error("interupdate_link(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
 		return status;
 	}
-}
-
-//Function to extract and post the accumulated power and "frequency power" for
-//updating "system frequency" -- links do nothing in this regard, but needs to be a function so deltamode works
-//Return SUCCESS/FAILED
-EXPORT STATUS delta_frequency_link(OBJECT *obj, complex *powerval, complex *freqpowerval)
-{
-	//Always succeed, for now
-	return SUCCESS;
 }
 
 /**

@@ -85,11 +85,7 @@ int central_dg_control::init(OBJECT *parent)
 	FINDLIST *inverter_list;
 	FINDLIST *battery_list;
 	FINDLIST *solar_list;
-	FINDLIST *battery_inverter_list;
-	FINDLIST *solar_inverter_list;
 	int index = 0;
-	int n;
-	bool found;
 	OBJECT *obj = 0;
 	all_inverter_S_rated = 0;
 	all_battery_S_rated = 0;
@@ -103,6 +99,7 @@ int central_dg_control::init(OBJECT *parent)
 	if(controlled_objects[0] == '\0'){
 		gl_error("No group id given for controlled DG objects.");
 		return 0;
+		
 	}
 	//Find all inverters with controller group id
 	inverter_list = gl_find_objects(FL_NEW,FT_CLASS,SAME,"inverter",AND,FT_GROUPID,SAME,controlled_objects.get_string(),FT_END);
@@ -296,7 +293,6 @@ TIMESTAMP central_dg_control::sync(TIMESTAMP t0, TIMESTAMP t1)
 		return t1;
 	}
 	int i;
-	int phase;
 	int n;
 	
 	complex *complex_power[3];

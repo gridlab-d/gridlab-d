@@ -1,4 +1,4 @@
-/** $Id: switch_object.h 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id: switch_object.h,v 1.5 2008/02/04 23:08:12 d3p988 Exp $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file switch_object.h
 
@@ -57,6 +57,8 @@ public:
 	enumeration phase_A_state;				///< Defines the current state of the phase A switch
 	enumeration phase_B_state;				///< Defines the current state of the phase B switch
 	enumeration phase_C_state;				///< Defines the current state of the phase C switch
+
+	double switch_resistance;
 private:
 	OBJECT **eventgen_obj;					//Reliability variable - link to eventgen object
 	FUNCTIONADDR event_schedule;			//Reliability variable - links to "add_event" function in eventgen

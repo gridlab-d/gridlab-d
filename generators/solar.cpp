@@ -1,4 +1,4 @@
-/** $Id: solar.cpp 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id: solar.cpp,v 1.2 2008/02/12 00:28:08 d3g637 Exp $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file solar.cpp
 	@defgroup solar Diesel gensets
@@ -678,7 +678,6 @@ int solar::init(OBJECT *parent)
         	//default_line_voltage[0] = V_Max/sqrt(3.0);
      
 	}
-	//1 m/s = 2.24 mph
 
 	climate_result=init_climate();
 

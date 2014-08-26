@@ -1,4 +1,4 @@
-/** $Id: transformer.cpp 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id: transformer.cpp 1211 2009-01-17 00:45:29Z d3x593 $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file transformer.cpp
 	@addtogroup powerflow_transformer Transformer
@@ -61,8 +61,6 @@ transformer::transformer(MODULE *mod) : link_object(mod)
 
 			//Publish deltamode functions
 			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
-				GL_THROW("Unable to publish transformer deltamode function");
-			if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_link)==NULL)
 				GL_THROW("Unable to publish transformer deltamode function");
     }
 }

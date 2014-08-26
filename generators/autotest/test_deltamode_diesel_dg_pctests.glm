@@ -1,8 +1,9 @@
-// $Id: test_deltamode_diesel_dg_pctests.glm 4738 2014-07-03 00:55:39Z dchassin $
+// $Id$
 // Basic deltamode test
 // parented devices test
 // identical to test_deltamode_diesel_dg_assert.glm, but with parented meter on BUS_1
 // and LOAD_1 parented to a meter
+// Also tests unit conversion in modules
 
 #set suppress_repeat_messages=0
 //#set profiler=1
@@ -25,12 +26,12 @@ module assert;
 module tape;
 module powerflow {
 	enable_subsecond_models true;
-	deltamode_timestep 10000000;	//10 ms
+	deltamode_timestep 10.0 ms;	//10 ms
 	solver_method NR;
 };
 module generators {
 	enable_subsecond_models TRUE;
-	deltamode_timestep 10000000;	//Initial value - dictates how we want the models to run
+	deltamode_timestep 10000.0 us;	//10 ms
 }
 
 //Reference line type

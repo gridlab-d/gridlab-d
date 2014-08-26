@@ -1,4 +1,4 @@
-/** $Id: overhead_line.cpp 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id: overhead_line.cpp 1182 2008-12-22 22:08:36Z dchassin $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file overhead_line.cpp
 	@addtogroup overhead_line 
@@ -41,8 +41,6 @@ overhead_line::overhead_line(MODULE *mod) : line(mod)
 
 			//Publish deltamode functions
 			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
-				GL_THROW("Unable to publish overhead line deltamode function");
-			if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_link)==NULL)
 				GL_THROW("Unable to publish overhead line deltamode function");
     }
 }
@@ -182,6 +180,7 @@ void overhead_line::recalc(void)
 {
 	line_configuration *config = OBJECTDATA(configuration, line_configuration);
 	complex Zabc_mat[3][3], Yabc_mat[3][3];
+	OBJECT *obj = OBJECTHDR(this);
 
 	// Zero out Zabc_mat and Yabc_mat. Un-needed phases will be left zeroed.
 	for (int i = 0; i < 3; i++) 
@@ -193,16 +192,17 @@ void overhead_line::recalc(void)
 		}
 	}
 
-		// Set auxillary matrices
-		for (int i = 0; i < 3; i++) {
-			for (int j = 0; j < 3; j++) {
-				a_mat[i][j] = 0.0;
-				d_mat[i][j] = 0.0;
-				A_mat[i][j] = 0.0;
-				c_mat[i][j] = 0.0;
-				B_mat[i][j] = b_mat[i][j];
-			}
+	// Set auxillary matrices
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 3; j++) {
+			a_mat[i][j] = 0.0;
+			d_mat[i][j] = 0.0;
+			A_mat[i][j] = 0.0;
+			c_mat[i][j] = 0.0;
+			B_mat[i][j] = b_mat[i][j];
 		}
+	}
+	
 	if (config->impedance11 != 0 || config->impedance22 != 0 || config->impedance33 != 0)
 	{
 		// Load Zabc_mat and Yabc_mat based on the z11-z33 and c11-c33 line config parameters
@@ -733,6 +733,25 @@ void overhead_line::recalc(void)
 
 	// Calculate line matrixies A_mat, B_mat, a_mat, b_mat, c_mat and d_mat based on Zabc_mat and Yabc_mat
 	recalc_line_matricies(Zabc_mat, Yabc_mat);
+	
+	//Check for negative resistance in the line's impedance matrix
+	bool neg_res = false;
+	for (int n = 0; n < 3; n++){
+		for (int m = 0; m < 3; m++){
+			if(b_mat[n][m].Re() < 0.0){
+				neg_res = true;
+			}
+		}
+	}
+	
+	if(neg_res == true){
+		gl_warning("INIT: overhead_line:%s has a negative resistance in it's impedance matrix. This will result in unusual behavior. Please check the line's geometry and cable parameters.", obj->name);
+		/*  TROUBLESHOOT
+		A negative resistance value was found for one or more the real parts of the overhead_line's impedance matrix.
+		While this is numerically possible, it is a physical impossibility. This resulted most likely from a improperly 
+		defined conductor cable. Please check and modify the conductor objects used for this line to correct this issue.
+		*/
+	}
 
 #ifdef _TESTING
 	if (show_matrix_values)

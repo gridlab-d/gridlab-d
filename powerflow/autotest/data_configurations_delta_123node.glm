@@ -1,0 +1,427 @@
+
+//Conductors
+object overhead_line_conductor {
+	name olc301c;	//336,400 26/7 ACSR
+	geometric_mean_radius 0.0244;
+	resistance 0.306;
+	diameter 0.721;
+}
+
+object overhead_line_conductor {
+	name olc301n;	//4/0 6/1 ACSR
+	geometric_mean_radius 0.00814;
+	resistance 0.592;
+	diameter 0.563;
+}
+
+object overhead_line_conductor {
+	name olc309;	//1/0 ACSR
+	geometric_mean_radius 0.004460;
+	resistance 1.120000;
+	diameter 0.398;
+}
+
+object underground_line_conductor {
+	name ulc312;	//1/0 AA, CN
+	outer_diameter 1.06;
+	conductor_gmr 0.0111;
+	conductor_diameter 0.368;
+	conductor_resistance 0.97;
+	neutral_gmr 0.00208;
+	neutral_resistance 14.8722;
+	neutral_diameter 0.0640837;
+	neutral_strands 16.0;
+}
+
+//Line spacings
+//ABCN
+object line_spacing {
+	name ls500301;
+	distance_AB 2.5;
+	distance_AC 7.0;
+	distance_BC 4.5;
+	distance_CN 5.0;
+	distance_AN 5.65685424949;
+	distance_BN 4.27200187266;
+	distance_AE 28.0;
+	distance_BE 28.0;
+	distance_CE 28.0;
+	distance_NE 24.0;
+}
+
+//CABN
+object line_spacing {
+	name ls500302;
+	distance_AB 4.5;
+	distance_AC 2.5;
+	distance_BC 7.0;
+	distance_AN 4.27200187266;
+	distance_CN 5.65685424949;
+	distance_BN 5.0;
+	distance_AE 28.0;
+	distance_BE 28.0;
+	distance_CE 28.0;
+	distance_NE 24.0;
+}
+
+//BCAN
+object line_spacing {
+	name ls500303;
+	distance_AB 7.0;
+	distance_AC 4.5;
+	distance_BC 2.5;
+	distance_AN 5.0;
+	distance_BN 5.65685424949;
+	distance_CN 4.27200187266;
+	distance_AE 28.0;
+	distance_BE 28.0;
+	distance_CE 28.0;
+	distance_NE 24.0;
+}
+
+//CBAN
+object line_spacing {
+	name ls500304;
+	distance_AB 4.5;
+	distance_AC 7.0;
+	distance_BC 2.5;
+	distance_AN 5.0;
+	distance_BN 4.27200187266;
+	distance_CN 5.65685424949;
+	distance_AE 28.0;
+	distance_BE 28.0;
+	distance_CE 28.0;
+	distance_NE 24.0;
+}
+
+//BACN
+object line_spacing {
+	name ls500305;
+	distance_AB 2.5;
+	distance_AC 4.5;
+	distance_BC 7.0;
+	distance_CN 5.0;
+	distance_AN 4.27200187266;
+	distance_BN 5.65685424949;
+	distance_AE 28.0;
+	distance_BE 28.0;
+	distance_CE 28.0;
+	distance_NE 24.0;
+}
+
+//ACBN
+object line_spacing {
+	name ls500306;
+	distance_AB 2.5;
+	distance_AC 7.0;
+	distance_BC 4.5;
+	distance_CN 5.0;
+	distance_BN 4.27200187266;
+	distance_AN 5.65685424949;
+	distance_AE 28.0;
+	distance_BE 28.0;
+	distance_CE 28.0;
+	distance_NE 24.0;
+}
+
+//ACN
+object line_spacing {
+	name ls505307;
+	distance_AC 7.0;
+	distance_AN 5.65685424949;
+	distance_CN 5.0;
+	distance_AE 28.0;
+	distance_CE 28.0;
+	distance_NE 24.0;
+}
+
+//ABN
+object line_spacing {
+	name ls505308;
+	distance_AB 7.0;
+	distance_AN 5.65685424949;
+	distance_BN 5.0;
+	distance_AE 28.0;
+	distance_BE 28.0;
+	distance_NE 24.0;
+}
+
+//AN
+object line_spacing {
+	name ls510309;
+	distance_AN 5.024937811;
+	distance_AE 28.0;
+	distance_NE 24.0;
+}
+
+//BN
+object line_spacing {
+	name ls510310;
+	distance_BN 5.024937811;
+	distance_BE 28.0;
+	distance_NE 24.0;
+}
+
+//CN
+object line_spacing {
+	name ls510311;
+	distance_CN 5.024937811;
+	distance_CE 28.0;
+	distance_NE 24.0;
+}
+
+//UGL - ABC
+object line_spacing {
+	name ls515312;
+	distance_AB 0.5;
+	distance_AC 1.0;
+	distance_BC 0.5;
+}
+
+//Line configurations
+//ABCN
+object line_configuration {
+	name lc301;
+	conductor_A olc301c;
+	conductor_B olc301c;
+	conductor_C olc301c;
+	conductor_N olc301n;
+	spacing ls500301;
+}
+
+//CABN
+object line_configuration {
+	name lc302;
+	conductor_A olc301c;
+	conductor_B olc301c;
+	conductor_C olc301c;
+	conductor_N olc301n;
+	spacing ls500302;
+}
+
+//BCAN
+object line_configuration {
+	name lc303;
+	conductor_A olc301c;
+	conductor_B olc301c;
+	conductor_C olc301c;
+	conductor_N olc301n;
+	spacing ls500303;
+}
+
+//CBAN
+object line_configuration {
+	name lc304;
+	conductor_A olc301c;
+	conductor_B olc301c;
+	conductor_C olc301c;
+	conductor_N olc301n;
+	spacing ls500304;
+}
+
+//BACN
+object line_configuration {
+	name lc305;
+	conductor_A olc301c;
+	conductor_B olc301c;
+	conductor_C olc301c;
+	conductor_N olc301n;
+	spacing ls500305;
+}
+
+//ACBN
+object line_configuration {
+	name lc306;
+	conductor_A olc301c;
+	conductor_B olc301c;
+	conductor_C olc301c;
+	conductor_N olc301n;
+	spacing ls500306;
+}
+
+//ACN
+object line_configuration {
+	name lc307;
+	conductor_A olc301c;
+	conductor_C olc301c;
+	conductor_N olc301n;
+	spacing ls505307;
+}
+
+//ABN
+object line_configuration {
+	name lc308;
+	conductor_A olc301c;
+	conductor_B olc301c;
+	conductor_N olc301n;
+	spacing ls505308;
+}
+
+//AN
+object line_configuration {
+	name lc309;
+	conductor_A olc309;
+	conductor_N olc309;
+	spacing ls510309;
+}
+
+//BN
+object line_configuration {
+	name lc310;
+	conductor_B olc309;
+	conductor_N olc309;
+	spacing ls510310;
+}
+
+//CN
+object line_configuration {
+	name lc311;
+	conductor_C olc309;
+	conductor_N olc309;
+	spacing ls510311;
+}
+
+//ABC
+object line_configuration {
+	name lc312;
+	conductor_A ulc312;
+	conductor_B ulc312;
+	conductor_C ulc312;
+	spacing ls515312;
+}
+
+//Transformer configurations
+object transformer_configuration {
+	name tc500;
+	connect_type DELTA_DELTA;
+	install_type PADMOUNT;
+	power_rating 150.0 kVA;
+	primary_voltage 4160.0;
+	secondary_voltage 480.0;
+	resistance 0.0127;
+	reactance 0.0272;
+}
+
+//SPCT transformer configuration - lifted from random file
+object transformer_configuration {
+	name spct_config_B;
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	primary_voltage 2401.7771;
+	secondary_voltage 120.0;
+	power_rating 200.0 kVA;
+	powerB_rating 200.0 kVA;
+	impedance 0.00998+0.04491j;     
+	shunt_impedance 1503.7594+6766.9173j;     
+}
+
+//Triplex configuration - stolen from another file
+object triplex_line_conductor {     
+      name F2407-4/0_AA_triplex;     
+      resistance 0.484;     
+      geometric_mean_radius 0.0158;     
+      rating.summer.continuous 299;     
+}       
+
+object triplex_line_configuration {     
+      name tplex_line_cfg;     
+      conductor_1 F2407-4/0_AA_triplex;     
+      conductor_2 F2407-4/0_AA_triplex;     
+      conductor_N F2407-4/0_AA_triplex;     
+      insulation_thickness 0.08;     
+      diameter 0.522;     
+}       
+	
+// Regulator configs
+object regulator_configuration {
+	name rc501;
+	connect_type 1;
+	band_center 120.000;
+	band_width 2.0;
+	time_delay 30.0;
+	raise_taps 16;
+	lower_taps 16;
+	current_transducer_ratio 700;
+	power_transducer_ratio 20;
+	compensator_r_setting_A 3.0;
+	compensator_x_setting_A 7.5;
+	CT_phase "A";
+	PT_phase "A";
+	regulation 0.10;
+	Control MANUAL;
+	Type A;
+	tap_pos_A 7;
+	tap_pos_B 7;
+	tap_pos_C 7;
+}
+
+object regulator_configuration {
+	name rc502;
+	connect_type 1;
+	band_center 120.000;
+	band_width 2.0;
+	time_delay 30.0;
+	raise_taps 16;
+	lower_taps 16;
+	current_transducer_ratio 50;
+	power_transducer_ratio 20;
+	compensator_r_setting_A 0.4;
+	compensator_x_setting_A 0.4;
+	CT_phase "A";
+	PT_phase "A";
+	regulation 0.10;
+	Control MANUAL;
+	Type A;
+	tap_pos_A -1;
+	tap_pos_B 0;
+	tap_pos_C 0;
+}
+
+object regulator_configuration {
+	name rc503;
+	connect_type 1;
+	band_center 120.000;
+	band_width 1.0;
+	time_delay 30.0;
+	raise_taps 16;
+	lower_taps 16;
+	current_transducer_ratio 50;
+	power_transducer_ratio 20;
+	compensator_r_setting_A 0.4;
+	compensator_r_setting_C 0.4;
+	compensator_x_setting_A 0.4;
+	compensator_x_setting_C 0.4;
+	CT_phase "AC";
+	PT_phase "AC";
+	regulation 0.10;
+	Control MANUAL;
+	Type A;
+	tap_pos_A 0;
+	tap_pos_B 0;
+	tap_pos_C -1;
+}
+
+object regulator_configuration {
+	name rc504;
+	connect_type 1;
+	band_center 124.000;
+	band_width 2.0;
+	time_delay 30.0;
+	raise_taps 16;
+	lower_taps 16;
+	current_transducer_ratio 300;
+	power_transducer_ratio 20;
+	compensator_r_setting_A 0.6;
+	compensator_r_setting_B 1.4;
+	compensator_r_setting_C 0.2;
+	compensator_x_setting_A 1.3;
+	compensator_x_setting_B 2.6;
+	compensator_x_setting_C 1.4;
+	CT_phase "ABC";
+	PT_phase "ABC";
+	regulation 0.10;
+	Control MANUAL;
+	Type A;
+	tap_pos_A 8;
+	tap_pos_B 1;
+	tap_pos_C 5;
+}

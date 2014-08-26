@@ -1,4 +1,4 @@
-// $Id: capacitor.cpp 4738 2014-07-03 00:55:39Z dchassin $
+// $Id: capacitor.cpp 1182 2008-12-22 22:08:36Z dchassin $
 /**	Copyright (C) 2008 Battelle Memorial Institute
 
 	@file capacitor.cpp
@@ -89,6 +89,14 @@ capacitor::capacitor(MODULE *mod):node(mod)
 				PT_KEYWORD, "BANK", (enumeration)BANK,
 				PT_KEYWORD, "INDIVIDUAL", (enumeration)INDIVIDUAL, 
          	NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+
+			//Publish deltamode functions
+			if (gl_publish_function(oclass,	"delta_linkage_node", (FUNCTIONADDR)delta_linkage)==NULL)
+				GL_THROW("Unable to publish load delta_linkage function");
+			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_node)==NULL)
+				GL_THROW("Unable to publish load deltamode function");
+			if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
+				GL_THROW("Unable to publish load deltamode function");
     }
 }
 

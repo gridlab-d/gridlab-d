@@ -169,6 +169,7 @@ int64 lock_spin;
 static CALLBACKS callbacks = {
 	&global_clock,
 	&global_delta_curr_clock,
+	&global_stoptime,
 	output_verbose,
 	output_message,
 	output_warning,

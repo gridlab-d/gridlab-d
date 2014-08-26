@@ -1,4 +1,4 @@
-/** $Id: line.cpp 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id: line.cpp 1186 2009-01-02 18:15:30Z dchassin $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file line.cpp
 	@addtogroup line 
@@ -70,6 +70,10 @@ line::line(MODULE *mod) : link_object(mod) {
 			PT_object, "configuration",PADDR(configuration),
 			PT_double, "length[ft]",PADDR(length),
 			NULL) < 1) GL_THROW("unable to publish line properties in %s",__FILE__);
+
+		//Publish deltamode functions
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
+			GL_THROW("Unable to publish line deltamode function");
 	}
 }
 

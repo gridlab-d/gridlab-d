@@ -923,6 +923,7 @@ typedef enum {
 typedef struct s_callbacks {
 	TIMESTAMP *global_clock;
 	double *global_delta_curr_clock;
+	TIMESTAMP *global_stoptime;
 	int (*output_verbose)(char *format, ...);
 	int (*output_message)(char *format, ...);
 	int (*output_warning)(char *format, ...);
@@ -1139,6 +1140,9 @@ typedef FUNCTIONADDR function;
 
 /** Link to double precision deltamode clock (offset by global_clock) **/
 #define gl_globaldeltaclock (*(callback->global_delta_curr_clock))
+
+/** Link to stop time of the simulation **/
+#define gl_globalstoptime (*(callback->global_stoptime))
 
 /// Get the name of an object
 /// @return a pointer to a static buffer containing the object's name

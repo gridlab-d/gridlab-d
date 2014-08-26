@@ -1,0 +1,735 @@
+//Parameters adapted from IEEE 4-node system
+// #set pauseatexit=1
+// #set profiler=1
+// #set savefile=outputvalues.xml
+// #define stylesheet="C:/Code/ticket767/core/gridlabd-3_0"
+
+clock {
+	timezone EST+5EDT;
+	starttime '2000-01-01 0:00:00';
+	stoptime '2000-01-01 0:00:01';
+}
+
+module powerflow {
+	solver_method NR;
+}
+module assert;
+
+// object voltdump {
+	// file output_voltage.csv;
+	// mode rect;
+// }
+
+object overhead_line_conductor {
+	name olc100;
+	geometric_mean_radius 0.0244;
+	resistance 0.306;
+}
+
+object overhead_line_conductor {
+	name olc101;
+	geometric_mean_radius 0.00814;
+	resistance 0.592;
+}
+
+object line_spacing {
+	name ls200;
+	distance_AB 2.5;
+	distance_BC 4.5;
+	distance_AC 7.0;
+	distance_AN 5.656854;
+	distance_BN 4.272002;
+	distance_CN 5.0;
+}
+
+object line_configuration {
+	name lc300;
+	conductor_A olc100;
+	conductor_B olc100;
+	conductor_C olc100;
+	conductor_N olc101;
+	spacing ls200;
+}
+
+object node {
+	name node1;
+	phases "ABCD";
+	bustype SWING;
+	nominal_voltage 7200;
+}
+
+object overhead_line {
+	name ohl12;
+	phases "ABCD";
+	from node1;
+	to node2;
+	length 2000;
+	configuration lc300;
+}
+
+object node {
+	name node2;
+	phases "ABCD";
+	nominal_voltage 7200;
+	//All others tree, so if node2 is right, all should be right
+	object complex_assert {
+		target voltage_A;
+		value 6998.818058-81.612657j;
+		within 0.1;
+	};
+	object complex_assert {
+		target voltage_B;
+		value -3610.063217-6021.688427j;
+		within 0.1;
+	};
+	object complex_assert {
+		target voltage_C;
+		value -3391.120135+6068.370027j;
+		within 0.1;
+	};
+}
+
+object overhead_line {
+	name ohl_2_deltapwr1;
+	phases ABC;
+	from node2;
+	to load_delt_old_pwr;
+	configuration lc300;
+	length 1500.0;
+}
+
+//Delta load, old style power
+object load {
+	name load_delt_old_pwr;
+	phases ABCD;
+	constant_power_A 5000.0+400.0j;
+	constant_power_B 4000.0+300.0j;
+	constant_power_C 4500.0+100.0j;
+	constant_current_A 3.5-1.7j;
+	constant_current_B -4.0-2.8j;
+	constant_current_C -0.4+4.8j;
+	constant_impedance_A 538.9+219.5j;
+	constant_impedance_B 438.9+319.5j;
+	constant_impedance_C 338.9+419.5j;
+	nominal_voltage 7200.0;
+}
+
+object overhead_line {
+	name ohl_2_deltapwr1_new;
+	phases ABC;
+	from node2;
+	to load_delt_new_pwr;
+	configuration lc300;
+	length 1500.0;
+}
+
+//Delta load, new style power
+object load {
+	name load_delt_new_pwr;
+	phases ABCD;
+	constant_power_AB 5000.0+400.0j;
+	constant_power_BC 4000.0+300.0j;
+	constant_power_CA 4500.0+100.0j;
+	constant_current_AB 3.5-1.7j;
+	constant_current_BC -4.0-2.8j;
+	constant_current_CA -0.4+4.8j;
+	constant_impedance_AB 538.9+219.5j;
+	constant_impedance_BC 438.9+319.5j;
+	constant_impedance_CA 338.9+419.5j;
+	nominal_voltage 7200.0;
+	object complex_assert {
+		target voltage_A;
+		value 6990.471535-83.418643j;
+		within 0.1;
+	};
+	object complex_assert {
+		target voltage_B;
+		value -3610.875357-6012.799288j;
+		within 0.1;
+	};
+	object complex_assert {
+		target voltage_C;
+		value -3383.267444+6062.201317j;
+		within 0.1;
+	};
+}
+
+object overhead_line {
+	name ohl_2_deltapwr1_new_nod;
+	phases ABC;
+	from node2;
+	to load_delt_notdelt_new_pwr;
+	configuration lc300;
+	length 1500.0;
+}
+
+//Delta load, new style power, not delta designated
+object load {
+	name load_delt_notdelt_new_pwr;
+	phases ABC;
+	constant_power_AB 5000.0+400.0j;
+	constant_power_BC 4000.0+300.0j;
+	constant_power_CA 4500.0+100.0j;
+	constant_current_AB 3.5-1.7j;
+	constant_current_BC -4.0-2.8j;
+	constant_current_CA -0.4+4.8j;
+	constant_impedance_AB 538.9+219.5j;
+	constant_impedance_BC 438.9+319.5j;
+	constant_impedance_CA 338.9+419.5j;
+	nominal_voltage 7200.0;
+}
+
+//Wye connections
+object overhead_line {
+	name ohl_2_wyepwr1;
+	phases ABC;
+	from node2;
+	to load_wye_old_pwr;
+	configuration lc300;
+	length 1500.0;
+}
+
+//Wye load, old style power
+object load {
+	name load_wye_old_pwr;
+	phases ABC;
+	constant_power_A 5000.0+400.0j;
+	constant_power_B 4000.0+300.0j;
+	constant_power_C 4500.0+100.0j;
+	constant_current_A 3.5-1.7j;
+	constant_current_B -4.0-2.8j;
+	constant_current_C -0.4+4.8j;
+	constant_impedance_A 538.9+219.5j;
+	constant_impedance_B 438.9+319.5j;
+	constant_impedance_C 338.9+419.5j;
+	nominal_voltage 7200.0;
+}
+
+object overhead_line {
+	name ohl_2_wyepwr1_new;
+	phases ABC;
+	from node2;
+	to load_wye_new_pwr;
+	configuration lc300;
+	length 1500.0;
+}
+
+//Wye load, new style power
+object load {
+	name load_wye_new_pwr;
+	phases ABC;
+	constant_power_AN 5000.0+400.0j;
+	constant_power_BN 4000.0+300.0j;
+	constant_power_CN 4500.0+100.0j;
+	constant_current_AN 3.5-1.7j;
+	constant_current_BN -4.0-2.8j;
+	constant_current_CN -0.4+4.8j;
+	constant_impedance_AN 538.9+219.5j;
+	constant_impedance_BN 438.9+319.5j;
+	constant_impedance_CN 338.9+419.5j;
+	nominal_voltage 7200.0;
+}
+
+object overhead_line {
+	name ohl_2_dwyepwr1_new_nod;
+	phases ABC;
+	from node2;
+	to load_wye_delt_new_pwr;
+	configuration lc300;
+	length 1500.0;
+}
+
+//Wye load, new style power, delta designated
+object load {
+	name load_wye_delt_new_pwr;
+	phases ABCD;
+	constant_power_AN 5000.0+400.0j;
+	constant_power_BN 4000.0+300.0j;
+	constant_power_CN 4500.0+100.0j;
+	constant_current_AN 3.5-1.7j;
+	constant_current_BN -4.0-2.8j;
+	constant_current_CN -0.4+4.8j;
+	constant_impedance_AN 538.9+219.5j;
+	constant_impedance_BN 438.9+319.5j;
+	constant_impedance_CN 338.9+419.5j;
+	nominal_voltage 7200.0;
+	object complex_assert {
+		target voltage_A;
+		value 6996.383689-84.183184j;
+		within 0.1;
+	};
+	object complex_assert {
+		target voltage_B;
+		value -3609.793448-6019.126658j;
+		within 0.1;
+	};
+	object complex_assert {
+		target voltage_C;
+		value -3387.777046+6065.589144j;
+		within 0.1;
+	};
+}
+
+//Both connections
+object overhead_line {
+	name ohl_2_delwyepwr1;
+	phases ABC;
+	from node2;
+	to load_deltawye_old_pwr;
+	configuration lc300;
+	length 1500.0;
+}
+
+//Delta-Wye load, old style power
+object load {
+	name load_deltawye_old_pwr;
+	phases ABC;
+	constant_power_A 5000.0+400.0j;
+	constant_power_B 4000.0+300.0j;
+	constant_power_C 4500.0+100.0j;
+	constant_current_A 3.5-1.7j;
+	constant_current_B -4.0-2.8j;
+	constant_current_C -0.4+4.8j;
+	constant_impedance_A 538.9+219.5j;
+	constant_impedance_B 438.9+319.5j;
+	constant_impedance_C 338.9+419.5j;
+	nominal_voltage 7200.0;
+}
+
+object load {
+	name load_deltawye_old_pwr_child;
+	parent load_deltawye_old_pwr;
+	phases ABCD;
+	constant_power_A 5000.0+400.0j;
+	constant_power_B 4000.0+300.0j;
+	constant_power_C 4500.0+100.0j;
+	constant_current_A 3.5-1.7j;
+	constant_current_B -4.0-2.8j;
+	constant_current_C -0.4+4.8j;
+	constant_impedance_A 538.9+219.5j;
+	constant_impedance_B 438.9+319.5j;
+	constant_impedance_C 338.9+419.5j;
+	nominal_voltage 7200.0;
+}
+
+object overhead_line {
+	name ohl_2_delwyepwr1_new;
+	phases ABC;
+	from node2;
+	to load_deltawye_new_pwr;
+	configuration lc300;
+	length 1500.0;
+}
+
+//Delta-Wye load, new style power, delta
+object load {
+	name load_deltawye_new_pwr;
+	phases ABCD;
+	constant_power_AN 5000.0+400.0j;
+	constant_power_BN 4000.0+300.0j;
+	constant_power_CN 4500.0+100.0j;
+	constant_current_AN 3.5-1.7j;
+	constant_current_BN -4.0-2.8j;
+	constant_current_CN -0.4+4.8j;
+	constant_impedance_AN 538.9+219.5j;
+	constant_impedance_BN 438.9+319.5j;
+	constant_impedance_CN 338.9+419.5j;
+	constant_power_AB 5000.0+400.0j;
+	constant_power_BC 4000.0+300.0j;
+	constant_power_CA 4500.0+100.0j;
+	constant_current_AB 3.5-1.7j;
+	constant_current_BC -4.0-2.8j;
+	constant_current_CA -0.4+4.8j;
+	constant_impedance_AB 538.9+219.5j;
+	constant_impedance_BC 438.9+319.5j;
+	constant_impedance_CA 338.9+419.5j;
+	nominal_voltage 7200.0;
+}
+
+object overhead_line {
+	name ohl_2_deltadwyepwr1_new_nod;
+	phases ABC;
+	from node2;
+	to load_deltawye_delt_new_pwr;
+	configuration lc300;
+	length 1500.0;
+}
+
+//Wye load, new style power, not delta designated
+object load {
+	name load_deltawye_delt_new_pwr;
+	phases ABC;
+	constant_power_AN 5000.0+400.0j;
+	constant_power_BN 4000.0+300.0j;
+	constant_power_CN 4500.0+100.0j;
+	constant_current_AN 3.5-1.7j;
+	constant_current_BN -4.0-2.8j;
+	constant_current_CN -0.4+4.8j;
+	constant_impedance_AN 538.9+219.5j;
+	constant_impedance_BN 438.9+319.5j;
+	constant_impedance_CN 338.9+419.5j;
+	constant_power_AB 5000.0+400.0j;
+	constant_power_BC 4000.0+300.0j;
+	constant_power_CA 4500.0+100.0j;
+	constant_current_AB 3.5-1.7j;
+	constant_current_BC -4.0-2.8j;
+	constant_current_CA -0.4+4.8j;
+	constant_impedance_AB 538.9+219.5j;
+	constant_impedance_BC 438.9+319.5j;
+	constant_impedance_CA 338.9+419.5j;
+	nominal_voltage 7200.0;
+}
+
+//Final test, make sure childing works
+//Delta childed to wye full
+object overhead_line {
+	name ohl_2_child1;
+	phases ABC;
+	from node2;
+	to load_child1_wye;
+	configuration lc300;
+	length 1500.0;
+}
+
+//Delta load childed to overall wye load
+object load {
+	name load_child1_wye;
+	phases ABC;
+	constant_power_AN 5000.0+400.0j;
+	constant_power_BN 4000.0+300.0j;
+	constant_power_CN 4500.0+100.0j;
+	constant_current_AN 3.5-1.7j;
+	constant_current_BN -4.0-2.8j;
+	constant_current_CN -0.4+4.8j;
+	constant_impedance_AN 538.9+219.5j;
+	constant_impedance_BN 438.9+319.5j;
+	constant_impedance_CN 338.9+419.5j;
+	nominal_voltage 7200.0;
+}
+
+object load {
+	name load_child1_delta;
+	phases ABCD;
+	parent load_child1_wye;
+	constant_power_AB 5000.0+400.0j;
+	constant_power_BC 4000.0+300.0j;
+	constant_power_CA 4500.0+100.0j;
+	constant_current_AB 3.5-1.7j;
+	constant_current_BC -4.0-2.8j;
+	constant_current_CA -0.4+4.8j;
+	constant_impedance_AB 538.9+219.5j;
+	constant_impedance_BC 438.9+319.5j;
+	constant_impedance_CA 338.9+419.5j;
+	nominal_voltage 7200.0;
+}
+
+//wye childed to delta full
+object overhead_line {
+	name ohl_2_child2;
+	phases ABC;
+	from node2;
+	to load_child2_delta;
+	configuration lc300;
+	length 1500.0;
+}
+
+//Wye load childed to overall delta load
+object load {
+	name load_child2_delta;
+	phases ABCD;
+	constant_power_AB 5000.0+400.0j;
+	constant_power_BC 4000.0+300.0j;
+	constant_power_CA 4500.0+100.0j;
+	constant_current_AB 3.5-1.7j;
+	constant_current_BC -4.0-2.8j;
+	constant_current_CA -0.4+4.8j;
+	constant_impedance_AB 538.9+219.5j;
+	constant_impedance_BC 438.9+319.5j;
+	constant_impedance_CA 338.9+419.5j;
+	nominal_voltage 7200.0;
+}
+
+object load {
+	name load_child2_wye;
+	parent load_child2_delta;
+	phases ABC;
+	constant_power_AN 5000.0+400.0j;
+	constant_power_BN 4000.0+300.0j;
+	constant_power_CN 4500.0+100.0j;
+	constant_current_AN 3.5-1.7j;
+	constant_current_BN -4.0-2.8j;
+	constant_current_CN -0.4+4.8j;
+	constant_impedance_AN 538.9+219.5j;
+	constant_impedance_BN 438.9+319.5j;
+	constant_impedance_CN 338.9+419.5j;
+	nominal_voltage 7200.0;
+}
+
+//Full childed to wye base
+object overhead_line {
+	name ohl_2_child3;
+	phases ABC;
+	from node2;
+	to load_child3_wye;
+	configuration lc300;
+	length 1500.0;
+}
+
+//Full childed to wye
+object load {
+	name load_child3_wye;
+	phases ABC;
+	nominal_voltage 7200.0;
+}
+
+object load {
+	name load_child3_full_wye;
+	parent load_child3_wye;
+	phases ABC;
+	constant_power_AN 5000.0+400.0j;
+	constant_power_BN 4000.0+300.0j;
+	constant_power_CN 4500.0+100.0j;
+	constant_current_AN 3.5-1.7j;
+	constant_current_BN -4.0-2.8j;
+	constant_current_CN -0.4+4.8j;
+	constant_impedance_AN 538.9+219.5j;
+	constant_impedance_BN 438.9+319.5j;
+	constant_impedance_CN 338.9+419.5j;
+	constant_power_AB 5000.0+400.0j;
+	constant_power_BC 4000.0+300.0j;
+	constant_power_CA 4500.0+100.0j;
+	constant_current_AB 3.5-1.7j;
+	constant_current_BC -4.0-2.8j;
+	constant_current_CA -0.4+4.8j;
+	constant_impedance_AB 538.9+219.5j;
+	constant_impedance_BC 438.9+319.5j;
+	constant_impedance_CA 338.9+419.5j;
+	nominal_voltage 7200.0;
+}
+
+//Full childed to delta base
+object overhead_line {
+	name ohl_2_child4;
+	phases ABC;
+	from node2;
+	to load_child4_delta;
+	configuration lc300;
+	length 1500.0;
+}
+
+//Full childed to delta
+object load {
+	name load_child4_delta;
+	phases ABCD;
+	nominal_voltage 7200.0;
+}
+
+object load {
+	name load_child4_full_wye;
+	parent load_child4_delta;
+	phases ABC;
+	constant_power_AN 5000.0+400.0j;
+	constant_power_BN 4000.0+300.0j;
+	constant_power_CN 4500.0+100.0j;
+	constant_current_AN 3.5-1.7j;
+	constant_current_BN -4.0-2.8j;
+	constant_current_CN -0.4+4.8j;
+	constant_impedance_AN 538.9+219.5j;
+	constant_impedance_BN 438.9+319.5j;
+	constant_impedance_CN 338.9+419.5j;
+	constant_power_AB 5000.0+400.0j;
+	constant_power_BC 4000.0+300.0j;
+	constant_power_CA 4500.0+100.0j;
+	constant_current_AB 3.5-1.7j;
+	constant_current_BC -4.0-2.8j;
+	constant_current_CA -0.4+4.8j;
+	constant_impedance_AB 538.9+219.5j;
+	constant_impedance_BC 438.9+319.5j;
+	constant_impedance_CA 338.9+419.5j;
+	nominal_voltage 7200.0;
+	//All of these child tests should be at the same voltage, so check a random one
+	object complex_assert {
+		target voltage_A;
+		value 6988.041350-85.983562j;
+		within 0.1;
+	};
+	object complex_assert {
+		target voltage_B;
+		value -3610.601426-6010.241324j;
+		within 0.1;
+	};
+	object complex_assert {
+		target voltage_C;
+		value -3379.931721+6059.423583j;
+		within 0.1;
+	};
+}
+
+//Full childed to wye base
+object overhead_line {
+	name ohl_2_child5;
+	phases ABC;
+	from node2;
+	to load_child5_wye;
+	configuration lc300;
+	length 1500.0;
+}
+
+//Full childed to wye
+object node {
+	name load_child5_wye;
+	phases ABC;
+	nominal_voltage 7200.0;
+}
+
+object load {
+	name load_child5_full_wye;
+	parent load_child5_wye;
+	phases ABC;
+	constant_power_AN 5000.0+400.0j;
+	constant_power_BN 4000.0+300.0j;
+	constant_power_CN 4500.0+100.0j;
+	constant_current_AN 3.5-1.7j;
+	constant_current_BN -4.0-2.8j;
+	constant_current_CN -0.4+4.8j;
+	constant_impedance_AN 538.9+219.5j;
+	constant_impedance_BN 438.9+319.5j;
+	constant_impedance_CN 338.9+419.5j;
+	constant_power_AB 5000.0+400.0j;
+	constant_power_BC 4000.0+300.0j;
+	constant_power_CA 4500.0+100.0j;
+	constant_current_AB 3.5-1.7j;
+	constant_current_BC -4.0-2.8j;
+	constant_current_CA -0.4+4.8j;
+	constant_impedance_AB 538.9+219.5j;
+	constant_impedance_BC 438.9+319.5j;
+	constant_impedance_CA 338.9+419.5j;
+	nominal_voltage 7200.0;
+}
+
+//Full childed to delta base
+object overhead_line {
+	name ohl_2_child6;
+	phases ABC;
+	from node2;
+	to load_child6_delta;
+	configuration lc300;
+	length 1500.0;
+}
+
+//Full childed to delta
+object node {
+	name load_child6_delta;
+	phases ABCD;
+	nominal_voltage 7200.0;
+}
+
+object load {
+	name load_child6_full_wye;
+	parent load_child6_delta;
+	phases ABC;
+	constant_power_AN 5000.0+400.0j;
+	constant_power_BN 4000.0+300.0j;
+	constant_power_CN 4500.0+100.0j;
+	constant_current_AN 3.5-1.7j;
+	constant_current_BN -4.0-2.8j;
+	constant_current_CN -0.4+4.8j;
+	constant_impedance_AN 538.9+219.5j;
+	constant_impedance_BN 438.9+319.5j;
+	constant_impedance_CN 338.9+419.5j;
+	constant_power_AB 5000.0+400.0j;
+	constant_power_BC 4000.0+300.0j;
+	constant_power_CA 4500.0+100.0j;
+	constant_current_AB 3.5-1.7j;
+	constant_current_BC -4.0-2.8j;
+	constant_current_CA -0.4+4.8j;
+	constant_impedance_AB 538.9+219.5j;
+	constant_impedance_BC 438.9+319.5j;
+	constant_impedance_CA 338.9+419.5j;
+	nominal_voltage 7200.0;
+}
+
+//Full childed to wye base
+object overhead_line {
+	name ohl_2_child7;
+	phases ABC;
+	from node2;
+	to load_child7_wye;
+	configuration lc300;
+	length 1500.0;
+}
+
+
+//Full childed to wye
+object meter {
+	name load_child7_wye;
+	phases ABC;
+	nominal_voltage 7200.0;
+}
+
+object load {
+	name load_child7_full_wye;
+	parent load_child7_wye;
+	phases ABC;
+	constant_power_AN 5000.0+400.0j;
+	constant_power_BN 4000.0+300.0j;
+	constant_power_CN 4500.0+100.0j;
+	constant_current_AN 3.5-1.7j;
+	constant_current_BN -4.0-2.8j;
+	constant_current_CN -0.4+4.8j;
+	constant_impedance_AN 538.9+219.5j;
+	constant_impedance_BN 438.9+319.5j;
+	constant_impedance_CN 338.9+419.5j;
+	constant_power_AB 5000.0+400.0j;
+	constant_power_BC 4000.0+300.0j;
+	constant_power_CA 4500.0+100.0j;
+	constant_current_AB 3.5-1.7j;
+	constant_current_BC -4.0-2.8j;
+	constant_current_CA -0.4+4.8j;
+	constant_impedance_AB 538.9+219.5j;
+	constant_impedance_BC 438.9+319.5j;
+	constant_impedance_CA 338.9+419.5j;
+	nominal_voltage 7200.0;
+}
+
+//Full childed to delta base
+object overhead_line {
+	name ohl_2_child8;
+	phases ABC;
+	from node2;
+	to load_child8_delta;
+	configuration lc300;
+	length 1500.0;
+}
+
+//Full childed to delta
+object meter {
+	name load_child8_delta;
+	phases ABCD;
+	nominal_voltage 7200.0;
+}
+
+object load {
+	name load_child8_full_wye;
+	parent load_child8_delta;
+	phases ABC;
+	constant_power_AN 5000.0+400.0j;
+	constant_power_BN 4000.0+300.0j;
+	constant_power_CN 4500.0+100.0j;
+	constant_current_AN 3.5-1.7j;
+	constant_current_BN -4.0-2.8j;
+	constant_current_CN -0.4+4.8j;
+	constant_impedance_AN 538.9+219.5j;
+	constant_impedance_BN 438.9+319.5j;
+	constant_impedance_CN 338.9+419.5j;
+	constant_power_AB 5000.0+400.0j;
+	constant_power_BC 4000.0+300.0j;
+	constant_power_CA 4500.0+100.0j;
+	constant_current_AB 3.5-1.7j;
+	constant_current_BC -4.0-2.8j;
+	constant_current_CA -0.4+4.8j;
+	constant_impedance_AB 538.9+219.5j;
+	constant_impedance_BC 438.9+319.5j;
+	constant_impedance_CA 338.9+419.5j;
+	nominal_voltage 7200.0;
+}

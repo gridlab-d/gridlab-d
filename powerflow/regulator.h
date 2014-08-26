@@ -1,4 +1,4 @@
-// $Id: regulator.h 4738 2014-07-03 00:55:39Z dchassin $
+// $Id: regulator.h 1182 2008-12-22 22:08:36Z dchassin $
 //	Copyright (C) 2008 Battelle Memorial Institute
 
 #ifndef _REGULATOR_H
@@ -41,6 +41,8 @@ public:
 	int16 prev_tap_A;
 	int16 prev_tap_B;
 	int16 prev_tap_C;
+
+	double regulator_resistance;
 
 protected:
 	int64 mech_t_next[3];	 //next time step after tap change

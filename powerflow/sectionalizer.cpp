@@ -1,4 +1,4 @@
-/** $Id: sectionalizer.cpp 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id: sectionalizer.cpp,v 2.2 2011/01/11 23:00:00 d3x593 Exp $
 	Copyright (C) 2011 Battelle Memorial Institute
 	@file setionalizer.cpp
 	@addtogroup powerflow sectionalizer
@@ -44,8 +44,6 @@ sectionalizer::sectionalizer(MODULE *mod) : switch_object(mod)
 
 		//Publish deltamode functions
 		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_switch)==NULL)
-			GL_THROW("Unable to publish sectionalizer deltamode function");
-		if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_link)==NULL)
 			GL_THROW("Unable to publish sectionalizer deltamode function");
     }
 }

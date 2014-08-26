@@ -1,4 +1,4 @@
-// $Id: link.h 4738 2014-07-03 00:55:39Z dchassin $
+// $Id: link.h 1211 2009-01-17 00:45:28Z d3x593 $
 //	Copyright (C) 2008 Battelle Memorial Institute
 
 #ifndef _LINK_H
@@ -7,7 +7,6 @@
 #include "powerflow.h"
 
 EXPORT int isa_link(OBJECT *obj, char *classname);
-EXPORT STATUS delta_frequency_link(OBJECT *obj, complex *powerval, complex *freqpowerval);
 EXPORT SIMULATIONMODE interupdate_link(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
 #define impedance(X) (B_mat[X][X])

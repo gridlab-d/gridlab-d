@@ -1,4 +1,4 @@
-/** $Id: node.h 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id: node.h 1201 2009-01-08 22:31:37Z d3x593 $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@addtogroup powerflow_node Node
 	@ingroup powerflow_object
@@ -86,6 +86,7 @@ private:
 	complex current_inj[3];			///< current injection (total of current+shunt+power)
 	TIMESTAMP prev_NTime;			///< Previous timestep - used for propogating child properties
 	complex last_child_power[3][3];	///< Previous power values - used for child object propogation
+	complex last_child_power_dy[6][3];	///< Previous power values joint - used for child object propogation
 	complex last_child_current12;	///< Previous current value - used for child object propogation (namely triplex)
 	bool deltamode_inclusive;		///< Flag for deltamode functionality, just to prevent having to mask the flags
 public:
@@ -130,6 +131,9 @@ public:
 	complex current[3];		/// bus current injection (positive = in)
 	complex power[3];		/// bus power injection (positive = in)
 	complex shunt[3];		/// bus shunt admittance 
+	complex current_dy[6];	/// bus current injection (positive = in), explicitly specify delta and wye portions
+	complex power_dy[6];	/// bus power injection (positive = in), explicitly specify delta and wye portions
+	complex shunt_dy[6];	/// bus shunt admittance, explicitly specify delta and wye portions
 	complex *full_Y;		/// full 3x3 bus shunt admittance - populate as necessary
 	complex *full_Y_all;	/// Full 3x3 bus admittance with "other" contributions (self of full admittance) - populate as necessary
 	complex *DynVariable;	/// Dynamics extra variable (current and power for gens, typically)
@@ -183,6 +187,7 @@ public:
 	friend class meter;	// needs access to current_inj
 	friend class substation; //needs access to current_inj
 	friend class triplex_meter; // needs access to current_inj
+	friend class load;			// Needs access to deltamode_inclusive
 	friend class fuse;			// needs access to current_inj
 	friend class frequency_gen;	// needs access to current_inj
 

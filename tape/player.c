@@ -1,4 +1,4 @@
-/** $Id: player.c 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id: player.c 1182 2008-12-22 22:08:36Z dchassin $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file player.c
 	@addtogroup player Players
@@ -151,7 +151,7 @@ static void trim(char *str, char *to){
 
 TIMESTAMP player_read(OBJECT *obj)
 {
-	char buffer[64];
+	char buffer[256];
 	char timebuf[64], valbuf[256], tbuf[64];
 	char tz[6];
 	int Y=0,m=0,d=0,H=0,M=0;
@@ -487,6 +487,13 @@ EXPORT TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		{
 			/* Return us here, deltamode should have been flagged */
 			t1 = t0;
+		}
+
+		/* Check for a final stoppping point -- if player value goes ns beyond current stop time, it will get stuck and iterate */
+		if ((my->next.ts == gl_globalstoptime) && (my->next.ns != 0) && (t1 == gl_globalstoptime))
+		{
+			/* Push it one second forward, just so GLD thinks it's done and can get out */
+			t1 = t1 + 1;
 		}
 	}
 

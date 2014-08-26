@@ -26,6 +26,8 @@
 #define MT // this enables multithreaded SuperLU
 
 //#define NR_MATRIX_OUT	//This directive enables a text file dump of the sparse-formatted admittance matrix - useful for debugging
+//#define NR_VOLTAGE_PORTION_OUT	//This directive also enables the voltages to be appended to the admittance matrix dump - debugging and requires NR_MATRIX_OUT to be set
+//#define NR_REFERENCES_OUT		//This directive also enables a row-range association per node appended to the admittance matrix dump - debugging and requires NR_MATRIX_OUT to be set
 
 #ifdef MT
 #include <pdsp_defs.h>	//superLU_MT 
@@ -166,9 +168,13 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	complex Temp_Ad_B[3][3];
 
 	//Temporary load calculation variables
-	complex undeltacurr[3], undeltaimped[3], undeltapower[3];
+	complex undeltacurr[3];
 	complex delta_current[3], voltageDel[3];
 	complex temp_current[3], temp_power[3], temp_store[3];
+	complex adjusted_constant_current[6];
+	complex adjust_temp_voltage[3], adjust_temp_nominal_voltage[3];
+	double adjust_temp_voltage_mag[3];
+	double adjust_nominal_voltage_val;
 
 	//DV checking array
 	complex DVConvCheck[3];
@@ -205,7 +211,6 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		{
 			//Set variables
 			swing_is_a_swing = true;
-			powerflow_type = PF_DYNCALC;	//Force it to DYNCALC
 		}
 		else	//We have a generator attached, proceed like "normal"
 		{
@@ -1954,6 +1959,139 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		{
 			if ((bus[indexer].phases & 0x08) == 0x08)	//Delta connected node
 			{
+				//Populate the values for constant current -- deltamode different right now (all same in future?)
+				if (*bus[indexer].dynamics_enabled == true)
+				{
+					//Create nominal magnitudes
+					adjust_nominal_voltage_val = bus[indexer].kv_base * sqrt(3.0);
+
+					//Create the nominal voltage vectors
+					adjust_temp_nominal_voltage[0].SetPolar(adjust_nominal_voltage_val,PI/6.0);
+					adjust_temp_nominal_voltage[1].SetPolar(adjust_nominal_voltage_val,-1.0*PI/2.0);
+					adjust_temp_nominal_voltage[2].SetPolar(adjust_nominal_voltage_val,5.0*PI/6.0);
+
+					//Compute delta voltages
+					voltageDel[0] = bus[indexer].V[0] - bus[indexer].V[1];
+					voltageDel[1] = bus[indexer].V[1] - bus[indexer].V[2];
+					voltageDel[2] = bus[indexer].V[2] - bus[indexer].V[0];
+
+					//Get magnitudes of all
+					adjust_temp_voltage_mag[0] = voltageDel[0].Mag();
+					adjust_temp_voltage_mag[1] = voltageDel[1].Mag();
+					adjust_temp_voltage_mag[2] = voltageDel[2].Mag();
+
+					//Start adjustments - AB
+					if ((bus[indexer].I[0] != 0.0) && (adjust_temp_voltage_mag[0] != 0.0))
+					{
+						//calculate new value
+						adjusted_constant_current[0] = ~(adjust_temp_nominal_voltage[0] * ~bus[indexer].I[0] * adjust_temp_voltage_mag[0] / (voltageDel[0] * adjust_nominal_voltage_val));
+					}
+					else
+					{
+						adjusted_constant_current[0] = 0.0;
+					}
+
+					//Start adjustments - BC
+					if ((bus[indexer].I[1] != 0.0) && (adjust_temp_voltage_mag[1] != 0.0))
+					{
+						//calculate new value
+						adjusted_constant_current[1] = ~(adjust_temp_nominal_voltage[1] * ~bus[indexer].I[1] * adjust_temp_voltage_mag[1] / (voltageDel[1] * adjust_nominal_voltage_val));
+					}
+					else
+					{
+						adjusted_constant_current[1] = 0.0;
+					}
+
+					//Start adjustments - CA
+					if ((bus[indexer].I[2] != 0.0) && (adjust_temp_voltage_mag[2] != 0.0))
+					{
+						//calculate new value
+						adjusted_constant_current[2] = ~(adjust_temp_nominal_voltage[2] * ~bus[indexer].I[2] * adjust_temp_voltage_mag[2] / (voltageDel[2] * adjust_nominal_voltage_val));
+					}
+					else
+					{
+						adjusted_constant_current[2] = 0.0;
+					}
+
+					//See if we have any "different children"
+					if ((bus[indexer].phases & 0x10) == 0x10)
+					{
+						//Create nominal magnitudes
+						adjust_nominal_voltage_val = bus[indexer].kv_base;
+
+						//Create the nominal voltage vectors
+						adjust_temp_nominal_voltage[0].SetPolar(bus[indexer].kv_base,0.0);
+						adjust_temp_nominal_voltage[1].SetPolar(bus[indexer].kv_base,-2.0*PI/3.0);
+						adjust_temp_nominal_voltage[2].SetPolar(bus[indexer].kv_base,2.0*PI/3.0);
+
+						//Get magnitudes of all
+						adjust_temp_voltage_mag[0] = bus[indexer].V[0].Mag();
+						adjust_temp_voltage_mag[1] = bus[indexer].V[1].Mag();
+						adjust_temp_voltage_mag[2] = bus[indexer].V[2].Mag();
+
+						//Start adjustments - A
+						if ((bus[indexer].extra_var[6] != 0.0) && (adjust_temp_voltage_mag[0] != 0.0))
+						{
+							//calculate new value
+							adjusted_constant_current[3] = ~(adjust_temp_nominal_voltage[0] * ~bus[indexer].extra_var[6] * adjust_temp_voltage_mag[0] / (bus[indexer].V[0] * adjust_nominal_voltage_val));
+						}
+						else
+						{
+							adjusted_constant_current[3] = 0.0;
+						}
+
+						//Start adjustments - B
+						if ((bus[indexer].extra_var[7] != 0.0) && (adjust_temp_voltage_mag[1] != 0.0))
+						{
+							//calculate new value
+							adjusted_constant_current[4] = ~(adjust_temp_nominal_voltage[1] * ~bus[indexer].extra_var[7] * adjust_temp_voltage_mag[1] / (bus[indexer].V[1] * adjust_nominal_voltage_val));
+						}
+						else
+						{
+							adjusted_constant_current[4] = 0.0;
+						}
+
+						//Start adjustments - C
+						if ((bus[indexer].extra_var[8] != 0.0) && (adjust_temp_voltage_mag[2] != 0.0))
+						{
+							//calculate new value
+							adjusted_constant_current[5] = ~(adjust_temp_nominal_voltage[2] * ~bus[indexer].extra_var[8] * adjust_temp_voltage_mag[2] / (bus[indexer].V[2] * adjust_nominal_voltage_val));
+						}
+						else
+						{
+							adjusted_constant_current[5] = 0.0;
+						}
+					}
+					else	//Nope
+					{
+						//Set to zero, just cause
+						adjusted_constant_current[3] = 0.0;
+						adjusted_constant_current[4] = 0.0;
+						adjusted_constant_current[5] = 0.0;
+					}
+				}
+				else	//"Normal" modes -- handle traditionally
+				{
+					adjusted_constant_current[0] = bus[indexer].I[0];
+					adjusted_constant_current[1] = bus[indexer].I[1];
+					adjusted_constant_current[2] = bus[indexer].I[2];
+
+					//See if we have different children too
+					if ((bus[indexer].phases & 0x10) == 0x10)
+					{
+						//Store them too
+						adjusted_constant_current[3] = bus[indexer].extra_var[6];
+						adjusted_constant_current[4] = bus[indexer].extra_var[7];
+						adjusted_constant_current[5] = bus[indexer].extra_var[8];
+					}
+					else	//Nope, just zero this for now
+					{
+						adjusted_constant_current[3] = 0.0;
+						adjusted_constant_current[4] = 0.0;
+						adjusted_constant_current[5] = 0.0;
+					}
+				}//End adjustment code
+
 				//Delta components - populate according to what is there
 				if ((bus[indexer].phases & 0x06) == 0x06)	//Check for AB
 				{
@@ -1965,7 +2103,6 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 					//Convert delta connected load to appropriate Wye
 					delta_current[0] += voltageDel[0] * (bus[indexer].Y[0]);
-
 				}
 				else
 				{
@@ -1984,7 +2121,6 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 					//Convert delta connected load to appropriate Wye
 					delta_current[1] += voltageDel[1] * (bus[indexer].Y[1]);
-
 				}
 				else
 				{
@@ -2003,7 +2139,6 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 					//Convert delta connected load to appropriate Wye
 					delta_current[2] += voltageDel[2] * (bus[indexer].Y[2]);
-
 				}
 				else
 				{
@@ -2016,7 +2151,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				//Everything will be accumulated into the "current" field for ease (including differents)
 				if ((bus[indexer].phases & 0x04) == 0x04)	//Has a phase A
 				{
-					undeltacurr[0]=(bus[indexer].I[0]+delta_current[0])-(bus[indexer].I[2]+delta_current[2]);
+					undeltacurr[0]=(adjusted_constant_current[0]+delta_current[0])-(adjusted_constant_current[2]+delta_current[2]);
 
 					//Check for "different" children and apply them, as well
 					if ((bus[indexer].phases & 0x10) == 0x10)	//We do, so they must be Wye-connected
@@ -2028,7 +2163,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 						undeltacurr[0] += bus[indexer].extra_var[3]*bus[indexer].V[0];
 
 						//Current values
-						undeltacurr[0] += bus[indexer].extra_var[6];
+						undeltacurr[0] += adjusted_constant_current[3];
 					}
 				}
 				else
@@ -2039,7 +2174,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 				if ((bus[indexer].phases & 0x02) == 0x02)	//Has a phase B
 				{
-					undeltacurr[1]=(bus[indexer].I[1]+delta_current[1])-(bus[indexer].I[0]+delta_current[0]);
+					undeltacurr[1]=(adjusted_constant_current[1]+delta_current[1])-(adjusted_constant_current[0]+delta_current[0]);
 
 					//Check for "different" children and apply them, as well
 					if ((bus[indexer].phases & 0x10) == 0x10)	//We do, so they must be Wye-connected
@@ -2051,7 +2186,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 						undeltacurr[1] += bus[indexer].extra_var[4]*bus[indexer].V[1];
 
 						//Current values
-						undeltacurr[1] += bus[indexer].extra_var[7];
+						undeltacurr[1] += adjusted_constant_current[4];
 					}
 				}
 				else
@@ -2063,7 +2198,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 				if ((bus[indexer].phases & 0x01) == 0x01)	//Has a phase C
 				{
-					undeltacurr[2]=(bus[indexer].I[2]+delta_current[2])-(bus[indexer].I[1]+delta_current[1]);
+					undeltacurr[2]=(adjusted_constant_current[2]+delta_current[2])-(adjusted_constant_current[1]+delta_current[1]);
 
 					//Check for "different" children and apply them, as well
 					if ((bus[indexer].phases & 0x10) == 0x10)		//We do, so they must be Wye-connected
@@ -2075,7 +2210,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 						undeltacurr[2] += bus[indexer].extra_var[5]*bus[indexer].V[2];
 
 						//Current values
-						undeltacurr[2] += bus[indexer].extra_var[8];
+						undeltacurr[2] += adjusted_constant_current[5];
 					}
 				}
 				else
@@ -2218,6 +2353,139 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			}//end split-phase connected
 			else	//Wye-connected node
 			{
+				//Populate the values for constant current -- deltamode different right now (all same in future?)
+				if (*bus[indexer].dynamics_enabled == true)
+				{
+					//Create nominal magnitudes
+					adjust_nominal_voltage_val = bus[indexer].kv_base;
+
+					//Create the nominal voltage vectors
+					adjust_temp_nominal_voltage[0].SetPolar(bus[indexer].kv_base,0.0);
+					adjust_temp_nominal_voltage[1].SetPolar(bus[indexer].kv_base,-2.0*PI/3.0);
+					adjust_temp_nominal_voltage[2].SetPolar(bus[indexer].kv_base,2.0*PI/3.0);
+
+					//Get magnitudes of all
+					adjust_temp_voltage_mag[0] = bus[indexer].V[0].Mag();
+					adjust_temp_voltage_mag[1] = bus[indexer].V[1].Mag();
+					adjust_temp_voltage_mag[2] = bus[indexer].V[2].Mag();
+
+					//Start adjustments - A
+					if ((bus[indexer].I[0] != 0.0) && (adjust_temp_voltage_mag[0] != 0.0))
+					{
+						//calculate new value
+						adjusted_constant_current[0] = ~(adjust_temp_nominal_voltage[0] * ~bus[indexer].I[0] * adjust_temp_voltage_mag[0] / (bus[indexer].V[0] * adjust_nominal_voltage_val));
+					}
+					else
+					{
+						adjusted_constant_current[0] = 0.0;
+					}
+
+					//Start adjustments - B
+					if ((bus[indexer].I[1] != 0.0) && (adjust_temp_voltage_mag[1] != 0.0))
+					{
+						//calculate new value
+						adjusted_constant_current[1] = ~(adjust_temp_nominal_voltage[1] * ~bus[indexer].I[1] * adjust_temp_voltage_mag[1] / (bus[indexer].V[1] * adjust_nominal_voltage_val));
+					}
+					else
+					{
+						adjusted_constant_current[1] = 0.0;
+					}
+
+					//Start adjustments - C
+					if ((bus[indexer].I[2] != 0.0) && (adjust_temp_voltage_mag[2] != 0.0))
+					{
+						//calculate new value
+						adjusted_constant_current[2] = ~(adjust_temp_nominal_voltage[2] * ~bus[indexer].I[2] * adjust_temp_voltage_mag[2] / (bus[indexer].V[2] * adjust_nominal_voltage_val));
+					}
+					else
+					{
+						adjusted_constant_current[2] = 0.0;
+					}
+
+					//See if we have any "different children"
+					if ((bus[indexer].phases & 0x10) == 0x10)
+					{
+						//Create nominal magnitudes
+						adjust_nominal_voltage_val = bus[indexer].kv_base * sqrt(3.0);
+
+						//Create the nominal voltage vectors
+						adjust_temp_nominal_voltage[0].SetPolar(adjust_nominal_voltage_val,PI/6.0);
+						adjust_temp_nominal_voltage[1].SetPolar(adjust_nominal_voltage_val,-1.0*PI/2.0);
+						adjust_temp_nominal_voltage[2].SetPolar(adjust_nominal_voltage_val,5.0*PI/6.0);
+
+						//Compute delta voltages
+						voltageDel[0] = bus[indexer].V[0] - bus[indexer].V[1];
+						voltageDel[1] = bus[indexer].V[1] - bus[indexer].V[2];
+						voltageDel[2] = bus[indexer].V[2] - bus[indexer].V[0];
+
+						//Get magnitudes of all
+						adjust_temp_voltage_mag[0] = voltageDel[0].Mag();
+						adjust_temp_voltage_mag[1] = voltageDel[1].Mag();
+						adjust_temp_voltage_mag[2] = voltageDel[2].Mag();
+
+						//Start adjustments - AB
+						if ((bus[indexer].extra_var[6] != 0.0) && (adjust_temp_voltage_mag[0] != 0.0))
+						{
+							//calculate new value
+							adjusted_constant_current[3] = ~(adjust_temp_nominal_voltage[0] * ~bus[indexer].extra_var[6] * adjust_temp_voltage_mag[0] / (voltageDel[0] * adjust_nominal_voltage_val));
+						}
+						else
+						{
+							adjusted_constant_current[3] = 0.0;
+						}
+
+						//Start adjustments - BC
+						if ((bus[indexer].extra_var[7] != 0.0) && (adjust_temp_voltage_mag[1] != 0.0))
+						{
+							//calculate new value
+							adjusted_constant_current[4] = ~(adjust_temp_nominal_voltage[1] * ~bus[indexer].extra_var[7] * adjust_temp_voltage_mag[1] / (voltageDel[1] * adjust_nominal_voltage_val));
+						}
+						else
+						{
+							adjusted_constant_current[4] = 0.0;
+						}
+
+						//Start adjustments - CA
+						if ((bus[indexer].extra_var[8] != 0.0) && (adjust_temp_voltage_mag[2] != 0.0))
+						{
+							//calculate new value
+							adjusted_constant_current[5] = ~(adjust_temp_nominal_voltage[2] * ~bus[indexer].extra_var[8] * adjust_temp_voltage_mag[2] / (voltageDel[2] * adjust_nominal_voltage_val));
+						}
+						else
+						{
+							adjusted_constant_current[5] = 0.0;
+						}
+					}
+					else	//Nope
+					{
+						//Set to zero, just cause
+						adjusted_constant_current[3] = 0.0;
+						adjusted_constant_current[4] = 0.0;
+						adjusted_constant_current[5] = 0.0;
+					}
+				}
+				else	//"Normal" modes -- handle traditionally
+				{
+					adjusted_constant_current[0] = bus[indexer].I[0];
+					adjusted_constant_current[1] = bus[indexer].I[1];
+					adjusted_constant_current[2] = bus[indexer].I[2];
+
+					//See if we have different children too
+					if ((bus[indexer].phases & 0x10) == 0x10)
+					{
+						//Store them too
+						adjusted_constant_current[3] = bus[indexer].extra_var[6];
+						adjusted_constant_current[4] = bus[indexer].extra_var[7];
+						adjusted_constant_current[5] = bus[indexer].extra_var[8];
+					}
+					else	//Nope, just zero this for now
+					{
+						adjusted_constant_current[3] = 0.0;
+						adjusted_constant_current[4] = 0.0;
+						adjusted_constant_current[5] = 0.0;
+					}
+				}//End adjustment code
+
 				//For Wye-connected, only compute and store phases that exist (make top heavy)
 				temp_index = -1;
 				temp_index_b = -1;
@@ -2275,9 +2543,9 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					}
 
 					//Convert delta-current into a phase current - reuse temp variable
-					undeltacurr[0]=(bus[indexer].extra_var[6]+delta_current[0])-(bus[indexer].extra_var[8]+delta_current[2]);
-					undeltacurr[1]=(bus[indexer].extra_var[7]+delta_current[1])-(bus[indexer].extra_var[6]+delta_current[0]);
-					undeltacurr[2]=(bus[indexer].extra_var[8]+delta_current[2])-(bus[indexer].extra_var[7]+delta_current[1]);
+					undeltacurr[0]=(adjusted_constant_current[3]+delta_current[0])-(adjusted_constant_current[5]+delta_current[2]);
+					undeltacurr[1]=(adjusted_constant_current[4]+delta_current[1])-(adjusted_constant_current[3]+delta_current[0]);
+					undeltacurr[2]=(adjusted_constant_current[5]+delta_current[2])-(adjusted_constant_current[4]+delta_current[1]);
 				}
 				else	//zero the variable so we don't have excessive ifs
 				{
@@ -2356,20 +2624,224 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 					//Perform the power calculation
 					tempPbus = (bus[indexer].S[temp_index_b]).Re();									// Real power portion of constant power portion
-					tempPbus += (bus[indexer].I[temp_index_b]).Re() * (bus[indexer].V[temp_index_b]).Re() + (bus[indexer].I[temp_index_b]).Im() * (bus[indexer].V[temp_index_b]).Im();	// Real power portion of Constant current component multiply the magnitude of bus voltage
+					tempPbus += (adjusted_constant_current[temp_index_b]).Re() * (bus[indexer].V[temp_index_b]).Re() + (adjusted_constant_current[temp_index_b]).Im() * (bus[indexer].V[temp_index_b]).Im();	// Real power portion of Constant current component multiply the magnitude of bus voltage
 					tempPbus += (undeltacurr[temp_index_b]).Re() * (bus[indexer].V[temp_index_b]).Re() + (undeltacurr[temp_index_b]).Im() * (bus[indexer].V[temp_index_b]).Im();	// Real power portion of Constant current from "different" children
 					tempPbus += (bus[indexer].Y[temp_index_b]).Re() * (bus[indexer].V[temp_index_b]).Re() * (bus[indexer].V[temp_index_b]).Re() + (bus[indexer].Y[temp_index_b]).Re() * (bus[indexer].V[temp_index_b]).Im() * (bus[indexer].V[temp_index_b]).Im();	// Real power portion of Constant impedance component multiply the square of the magnitude of bus voltage
 					bus[indexer].PL[temp_index] = tempPbus;	//Real power portion
 					
 					
 					tempQbus = (bus[indexer].S[temp_index_b]).Im();									// Reactive power portion of constant power portion
-					tempQbus += (bus[indexer].I[temp_index_b]).Re() * (bus[indexer].V[temp_index_b]).Im() - (bus[indexer].I[temp_index_b]).Im() * (bus[indexer].V[temp_index_b]).Re();	// Reactive power portion of Constant current component multiply the magnitude of bus voltage
+					tempQbus += (adjusted_constant_current[temp_index_b]).Re() * (bus[indexer].V[temp_index_b]).Im() - (adjusted_constant_current[temp_index_b]).Im() * (bus[indexer].V[temp_index_b]).Re();	// Reactive power portion of Constant current component multiply the magnitude of bus voltage
 					tempQbus += (undeltacurr[temp_index_b]).Re() * (bus[indexer].V[temp_index_b]).Im() - (undeltacurr[temp_index_b]).Im() * (bus[indexer].V[temp_index_b]).Re();	// Reactive power portion of Constant current from "different" children
 					tempQbus += -(bus[indexer].Y[temp_index_b]).Im() * (bus[indexer].V[temp_index_b]).Im() * (bus[indexer].V[temp_index_b]).Im() - (bus[indexer].Y[temp_index_b]).Im() * (bus[indexer].V[temp_index_b]).Re() * (bus[indexer].V[temp_index_b]).Re();	// Reactive power portion of Constant impedance component multiply the square of the magnitude of bus voltage				
 					bus[indexer].QL[temp_index] = tempQbus;	//Reactive power portion  
 
 				}//end phase traversion
 			}//end wye-connected
+
+			//Perform explicit delta/wye load accumulation - do if not triplex
+			if ((bus[indexer].phases & 0x80) != 0x80)
+			{
+				//Delta components - populate according to what is there
+				if ((bus[indexer].phases & 0x06) == 0x06)	//Check for AB
+				{
+					//Voltage calculations
+					voltageDel[0] = bus[indexer].V[0] - bus[indexer].V[1];
+
+					//Power - convert to a current (uses less iterations this way)
+					delta_current[0] = (voltageDel[0] == 0) ? 0 : ~(bus[indexer].S_dy[0]/voltageDel[0]);
+
+					//Convert delta connected load to appropriate Wye
+					delta_current[0] += voltageDel[0] * (bus[indexer].Y_dy[0]);
+
+				}
+				else
+				{
+					//Zero values - they shouldn't be used anyhow
+					voltageDel[0] = 0.0;
+					delta_current[0] = 0.0;
+				}
+
+				if ((bus[indexer].phases & 0x03) == 0x03)	//Check for BC
+				{
+					//Voltage calculations
+					voltageDel[1] = bus[indexer].V[1] - bus[indexer].V[2];
+
+					//Power - convert to a current (uses less iterations this way)
+					delta_current[1] = (voltageDel[1] == 0) ? 0 : ~(bus[indexer].S_dy[1]/voltageDel[1]);
+
+					//Convert delta connected load to appropriate Wye
+					delta_current[1] += voltageDel[1] * (bus[indexer].Y_dy[1]);
+
+				}
+				else
+				{
+					//Zero unused
+					voltageDel[1] = 0.0;
+					delta_current[1] = 0.0;
+				}
+
+				if ((bus[indexer].phases & 0x05) == 0x05)	//Check for CA
+				{
+					//Voltage calculations
+					voltageDel[2] = bus[indexer].V[2] - bus[indexer].V[0];
+
+					//Power - convert to a current (uses less iterations this way)
+					delta_current[2] = (voltageDel[2] == 0) ? 0 : ~(bus[indexer].S_dy[2]/voltageDel[2]);
+
+					//Convert delta connected load to appropriate Wye
+					delta_current[2] += voltageDel[2] * (bus[indexer].Y_dy[2]);
+
+				}
+				else
+				{
+					//Zero unused
+					voltageDel[2] = 0.0;
+					delta_current[2] = 0.0;
+				}
+				
+				//Convert delta-current into a phase current, where appropriate - reuse temp variable
+				//Everything will be accumulated into the "current" field for ease (including differents)
+				//Also handle wye currents in here (was a differently connected child code before)
+				if ((bus[indexer].phases & 0x04) == 0x04)	//Has a phase A
+				{
+					undeltacurr[0]=(bus[indexer].I_dy[0]+delta_current[0])-(bus[indexer].I_dy[2]+delta_current[2]);
+
+					//Power values
+					undeltacurr[0] += (bus[indexer].V[0] == 0) ? 0 : ~(bus[indexer].S_dy[3]/bus[indexer].V[0]);
+
+					//Shunt values
+					undeltacurr[0] += bus[indexer].Y_dy[3]*bus[indexer].V[0];
+
+					//Current values
+					undeltacurr[0] += bus[indexer].I_dy[3];
+				}
+				else
+				{
+					//Zero it, just in case
+					undeltacurr[0] = 0.0;
+				}
+
+				if ((bus[indexer].phases & 0x02) == 0x02)	//Has a phase B
+				{
+					undeltacurr[1]=(bus[indexer].I_dy[1]+delta_current[1])-(bus[indexer].I_dy[0]+delta_current[0]);
+
+					//Power values
+					undeltacurr[1] += (bus[indexer].V[1] == 0) ? 0 : ~(bus[indexer].S_dy[4]/bus[indexer].V[1]);
+
+					//Shunt values
+					undeltacurr[1] += bus[indexer].Y_dy[4]*bus[indexer].V[1];
+
+					//Current values
+					undeltacurr[1] += bus[indexer].I_dy[4];
+				}
+				else
+				{
+					//Zero it, just in case
+					undeltacurr[1] = 0.0;
+				}
+
+
+				if ((bus[indexer].phases & 0x01) == 0x01)	//Has a phase C
+				{
+					undeltacurr[2]=(bus[indexer].I_dy[2]+delta_current[2])-(bus[indexer].I_dy[1]+delta_current[1]);
+
+					//Power values
+					undeltacurr[2] += (bus[indexer].V[2] == 0) ? 0 : ~(bus[indexer].S_dy[5]/bus[indexer].V[2]);
+
+					//Shunt values
+					undeltacurr[2] += bus[indexer].Y_dy[5]*bus[indexer].V[2];
+
+					//Current values
+					undeltacurr[2] += bus[indexer].I_dy[5];
+				}
+				else
+				{
+					//Zero it, just in case
+					undeltacurr[2] = 0.0;
+				}
+
+				//Provide updates to relevant phases
+				//only compute and store phases that exist (make top heavy)
+				temp_index = -1;
+				temp_index_b = -1;
+				
+				for (jindex=0; jindex<powerflow_values->BA_diag[indexer].size; jindex++)
+				{
+					switch(bus[indexer].phases & 0x07) {
+						case 0x01:	//C
+							{
+								temp_index=0;
+								temp_index_b=2;
+								break;
+							}
+						case 0x02:	//B
+							{
+								temp_index=0;
+								temp_index_b=1;
+								break;
+							}
+						case 0x03:	//BC
+							{
+								if (jindex==0)	//B
+								{
+									temp_index=0;
+									temp_index_b=1;
+								}
+								else			//C
+								{
+									temp_index=1;
+									temp_index_b=2;
+								}
+								break;
+							}
+						case 0x04:	//A
+							{
+								temp_index=0;
+								temp_index_b=0;
+								break;
+							}
+						case 0x05:	//AC
+							{
+								if (jindex==0)	//A
+								{
+									temp_index=0;
+									temp_index_b=0;
+								}
+								else			//C
+								{
+									temp_index=1;
+									temp_index_b=2;
+								}
+								break;
+							}
+						case 0x06:	//AB
+						case 0x07:	//ABC
+							{
+								temp_index=jindex;
+								temp_index_b=jindex;
+								break;
+							}
+						default:
+							break;
+					}//end case
+
+					if ((temp_index==-1) || (temp_index_b==-1))
+					{
+						GL_THROW("NR: A scheduled power update element failed.");
+						//Defined below
+					}
+
+					//Real power calculations
+					tempPbus = (undeltacurr[temp_index_b]).Re() * (bus[indexer].V[temp_index_b]).Re() + (undeltacurr[temp_index_b]).Im() * (bus[indexer].V[temp_index_b]).Im();	// Real power portion of Constant current component multiply the magnitude of bus voltage
+					bus[indexer].PL[temp_index] += tempPbus;	//Real power portion - all is current based -- accumulate in case mixed and matched with old above
+
+					//Reactive load calculations
+					tempQbus = (undeltacurr[temp_index_b]).Re() * (bus[indexer].V[temp_index_b]).Im() - (undeltacurr[temp_index_b]).Im() * (bus[indexer].V[temp_index_b]).Re();	// Reactive power portion of Constant current component multiply the magnitude of bus voltage
+					bus[indexer].QL[temp_index] += tempQbus;	//Reactive power portion - all is current based -- accumulate in case mixed and matched with old above
+						
+				}//End phase traversion
+			}//End delta/wye explicit load update
 		}//end bus traversion for power update
 	
 		// Calculate the mismatch of three phase current injection at each bus (deltaI), 
@@ -2602,7 +3074,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					//Determine how we are posting this update
 					if ((bus[indexer].type == 2) && swing_is_a_swing)	//SWING bus is different (when it really is a SWING bus)
 					{
-						if (powerflow_type == PF_DYNINIT)
+						if ((powerflow_type == PF_DYNINIT) && (bus[indexer].full_Y != NULL))
 						{
 							//Compute the delta_I, just like below - but don't post it (still zero in calcs)
 							work_vals_double_3 = tempPbus - tempIcalcReal;
@@ -2622,7 +3094,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 						powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + jindex] = 0.0;
 						powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc + jindex] = 0.0;
 					}//End SWING bus cases
-					else	//PQ bus or SWING masquerading as a SWING
+					else	//PQ bus or SWING masquerading as a PQ
 					{
 						//It's I.  Just a direct conversion (P changed above to I as well)
 						powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc+ powerflow_values->BA_diag[indexer].size + jindex] = tempPbus - tempIcalcReal;
@@ -2868,7 +3340,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					//Determine how we are posting this update
 					if ((bus[indexer].type == 2) && swing_is_a_swing)	//SWING bus is different (when it really is a SWING bus)
 					{
-						if (powerflow_type == PF_DYNINIT)
+						if ((powerflow_type == PF_DYNINIT) && (bus[indexer].full_Y != NULL))
 						{
 							//Compute our "power generated" value for this phase - conjugated in formation
 							temp_complex_2 = bus[indexer].V[jindex] * complex(tempIcalcReal,-tempIcalcImag);
@@ -2908,7 +3380,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 						powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + jindex] = 0.0;
 						powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc + jindex] = 0.0;
 					}//End SWING bus cases
-					else	//PQ bus or SWING masquerading as a SWING
+					else	//PQ bus or SWING masquerading as a PQ
 					{
 						work_vals_double_0 = (bus[indexer].V[temp_index_b]).Mag()*(bus[indexer].V[temp_index_b]).Mag();
 
@@ -2937,7 +3409,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					if ((bus[indexer].phases & 0x07) == 0x07)	//Make sure is three-phase
 					{
 						//Only update in particular mode - SWING bus values should still be treated as such
-						if (swing_is_a_swing == true)	//Really only true for PF_DYNINIT anyways
+						if ((swing_is_a_swing == true) && (powerflow_type == PF_DYNINIT))	//Really only true for PF_DYNINIT anyways
 						{
 							//Power should be all updated, now update current values
 							temp_complex_0 += complex((*bus[indexer].PGenTotal).Re(),-(*bus[indexer].PGenTotal).Im()); // total generated power injected congugated
@@ -2992,6 +3464,139 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		{
 			if ((bus[indexer].phases & 0x08) == 0x08)	//Delta connected node
 			{
+				//Populate the values for constant current -- deltamode different right now (all same in future?)
+				if (*bus[indexer].dynamics_enabled == true)
+				{
+					//Create nominal magnitudes
+					adjust_nominal_voltage_val = bus[indexer].kv_base * sqrt(3.0);
+
+					//Create the nominal voltage vectors
+					adjust_temp_nominal_voltage[0].SetPolar(adjust_nominal_voltage_val,PI/6.0);
+					adjust_temp_nominal_voltage[1].SetPolar(adjust_nominal_voltage_val,-1.0*PI/2.0);
+					adjust_temp_nominal_voltage[2].SetPolar(adjust_nominal_voltage_val,5.0*PI/6.0);
+
+					//Compute delta voltages
+					voltageDel[0] = bus[indexer].V[0] - bus[indexer].V[1];
+					voltageDel[1] = bus[indexer].V[1] - bus[indexer].V[2];
+					voltageDel[2] = bus[indexer].V[2] - bus[indexer].V[0];
+
+					//Get magnitudes of all
+					adjust_temp_voltage_mag[0] = voltageDel[0].Mag();
+					adjust_temp_voltage_mag[1] = voltageDel[1].Mag();
+					adjust_temp_voltage_mag[2] = voltageDel[2].Mag();
+
+					//Start adjustments - AB
+					if ((bus[indexer].I[0] != 0.0) && (adjust_temp_voltage_mag[0] != 0.0))
+					{
+						//calculate new value
+						adjusted_constant_current[0] = ~(adjust_temp_nominal_voltage[0] * ~bus[indexer].I[0] * adjust_temp_voltage_mag[0] / (voltageDel[0] * adjust_nominal_voltage_val));
+					}
+					else
+					{
+						adjusted_constant_current[0] = 0.0;
+					}
+
+					//Start adjustments - BC
+					if ((bus[indexer].I[1] != 0.0) && (adjust_temp_voltage_mag[1] != 0.0))
+					{
+						//calculate new value
+						adjusted_constant_current[1] = ~(adjust_temp_nominal_voltage[1] * ~bus[indexer].I[1] * adjust_temp_voltage_mag[1] / (voltageDel[1] * adjust_nominal_voltage_val));
+					}
+					else
+					{
+						adjusted_constant_current[1] = 0.0;
+					}
+
+					//Start adjustments - CA
+					if ((bus[indexer].I[2] != 0.0) && (adjust_temp_voltage_mag[2] != 0.0))
+					{
+						//calculate new value
+						adjusted_constant_current[2] = ~(adjust_temp_nominal_voltage[2] * ~bus[indexer].I[2] * adjust_temp_voltage_mag[2] / (voltageDel[2] * adjust_nominal_voltage_val));
+					}
+					else
+					{
+						adjusted_constant_current[2] = 0.0;
+					}
+
+					//See if we have any "different children"
+					if ((bus[indexer].phases & 0x10) == 0x10)
+					{
+						//Create nominal magnitudes
+						adjust_nominal_voltage_val = bus[indexer].kv_base;
+
+						//Create the nominal voltage vectors
+						adjust_temp_nominal_voltage[0].SetPolar(bus[indexer].kv_base,0.0);
+						adjust_temp_nominal_voltage[1].SetPolar(bus[indexer].kv_base,-2.0*PI/3.0);
+						adjust_temp_nominal_voltage[2].SetPolar(bus[indexer].kv_base,2.0*PI/3.0);
+
+						//Get magnitudes of all
+						adjust_temp_voltage_mag[0] = bus[indexer].V[0].Mag();
+						adjust_temp_voltage_mag[1] = bus[indexer].V[1].Mag();
+						adjust_temp_voltage_mag[2] = bus[indexer].V[2].Mag();
+
+						//Start adjustments - A
+						if ((bus[indexer].extra_var[6] != 0.0) && (adjust_temp_voltage_mag[0] != 0.0))
+						{
+							//calculate new value
+							adjusted_constant_current[3] = ~(adjust_temp_nominal_voltage[0] * ~bus[indexer].extra_var[6] * adjust_temp_voltage_mag[0] / (bus[indexer].V[0] * adjust_nominal_voltage_val));
+						}
+						else
+						{
+							adjusted_constant_current[3] = 0.0;
+						}
+
+						//Start adjustments - B
+						if ((bus[indexer].extra_var[7] != 0.0) && (adjust_temp_voltage_mag[1] != 0.0))
+						{
+							//calculate new value
+							adjusted_constant_current[4] = ~(adjust_temp_nominal_voltage[1] * ~bus[indexer].extra_var[7] * adjust_temp_voltage_mag[1] / (bus[indexer].V[1] * adjust_nominal_voltage_val));
+						}
+						else
+						{
+							adjusted_constant_current[4] = 0.0;
+						}
+
+						//Start adjustments - C
+						if ((bus[indexer].extra_var[8] != 0.0) && (adjust_temp_voltage_mag[2] != 0.0))
+						{
+							//calculate new value
+							adjusted_constant_current[5] = ~(adjust_temp_nominal_voltage[2] * ~bus[indexer].extra_var[8] * adjust_temp_voltage_mag[2] / (bus[indexer].V[2] * adjust_nominal_voltage_val));
+						}
+						else
+						{
+							adjusted_constant_current[5] = 0.0;
+						}
+					}
+					else	//Nope
+					{
+						//Set to zero, just cause
+						adjusted_constant_current[3] = 0.0;
+						adjusted_constant_current[4] = 0.0;
+						adjusted_constant_current[5] = 0.0;
+					}
+				}
+				else	//"Normal" modes -- handle traditionally
+				{
+					adjusted_constant_current[0] = bus[indexer].I[0];
+					adjusted_constant_current[1] = bus[indexer].I[1];
+					adjusted_constant_current[2] = bus[indexer].I[2];
+
+					//See if we have different children too
+					if ((bus[indexer].phases & 0x10) == 0x10)
+					{
+						//Store them too
+						adjusted_constant_current[3] = bus[indexer].extra_var[6];
+						adjusted_constant_current[4] = bus[indexer].extra_var[7];
+						adjusted_constant_current[5] = bus[indexer].extra_var[8];
+					}
+					else	//Nope, just zero this for now
+					{
+						adjusted_constant_current[3] = 0.0;
+						adjusted_constant_current[4] = 0.0;
+						adjusted_constant_current[5] = 0.0;
+					}
+				}//End adjustment code
+
 				//Delta components - populate according to what is there
 				if ((bus[indexer].phases & 0x06) == 0x06)	//Check for AB
 				{
@@ -3054,7 +3659,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				//Everything will be accumulated into the "current" field for ease (including differents)
 				if ((bus[indexer].phases & 0x04) == 0x04)	//Has a phase A
 				{
-					undeltacurr[0]=(bus[indexer].I[0]+delta_current[0])-(bus[indexer].I[2]+delta_current[2]);
+					undeltacurr[0]=(adjusted_constant_current[0]+delta_current[0])-(adjusted_constant_current[2]+delta_current[2]);
 
 					//Check for "different" children and apply them, as well
 					if ((bus[indexer].phases & 0x10) == 0x10)	//We do, so they must be Wye-connected
@@ -3066,7 +3671,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 						undeltacurr[0] += bus[indexer].extra_var[3]*bus[indexer].V[0];
 
 						//Current values
-						undeltacurr[0] += bus[indexer].extra_var[6];
+						undeltacurr[0] += adjusted_constant_current[3];
 					}
 				}
 				else
@@ -3077,7 +3682,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 				if ((bus[indexer].phases & 0x02) == 0x02)	//Has a phase B
 				{
-					undeltacurr[1]=(bus[indexer].I[1]+delta_current[1])-(bus[indexer].I[0]+delta_current[0]);
+					undeltacurr[1]=(adjusted_constant_current[1]+delta_current[1])-(adjusted_constant_current[0]+delta_current[0]);
 
 					//Check for "different" children and apply them, as well
 					if ((bus[indexer].phases & 0x10) == 0x10)	//We do, so they must be Wye-connected
@@ -3089,7 +3694,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 						undeltacurr[1] += bus[indexer].extra_var[4]*bus[indexer].V[1];
 
 						//Current values
-						undeltacurr[1] += bus[indexer].extra_var[7];
+						undeltacurr[1] += adjusted_constant_current[4];
 					}
 				}
 				else
@@ -3101,7 +3706,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 				if ((bus[indexer].phases & 0x01) == 0x01)	//Has a phase C
 				{
-					undeltacurr[2]=(bus[indexer].I[2]+delta_current[2])-(bus[indexer].I[1]+delta_current[1]);
+					undeltacurr[2]=(adjusted_constant_current[2]+delta_current[2])-(adjusted_constant_current[1]+delta_current[1]);
 
 					//Check for "different" children and apply them, as well
 					if ((bus[indexer].phases & 0x10) == 0x10)		//We do, so they must be Wye-connected
@@ -3113,7 +3718,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 						undeltacurr[2] += bus[indexer].extra_var[5]*bus[indexer].V[2];
 
 						//Current values
-						undeltacurr[2] += bus[indexer].extra_var[8];
+						undeltacurr[2] += adjusted_constant_current[5];
 					}
 				}
 				else
@@ -3195,17 +3800,17 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 					if ((bus[indexer].V[temp_index_b]).Mag()!=0)
 					{
-						bus[indexer].Jacob_A[temp_index] = ((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Re() + (undeltacurr[temp_index_b]).Im() *pow((bus[indexer].V[temp_index_b]).Im(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3) + (undeltaimped[temp_index_b]).Im();// second part of equation(37) - no power term needed
-						bus[indexer].Jacob_B[temp_index] = -((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Im() + (undeltacurr[temp_index_b]).Re() *pow((bus[indexer].V[temp_index_b]).Re(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3) - (undeltaimped[temp_index_b]).Re();// second part of equation(38) - no power term needed
-						bus[indexer].Jacob_C[temp_index] =((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Im() - (undeltacurr[temp_index_b]).Re() *pow((bus[indexer].V[temp_index_b]).Im(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3) - (undeltaimped[temp_index_b]).Re();// second part of equation(39) - no power term needed
-						bus[indexer].Jacob_D[temp_index] = ((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Re() - (undeltacurr[temp_index_b]).Im() *pow((bus[indexer].V[temp_index_b]).Re(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3) - (undeltaimped[temp_index_b]).Im();// second part of equation(40) - no power term needed
+						bus[indexer].Jacob_A[temp_index] = ((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Re() + (undeltacurr[temp_index_b]).Im() *pow((bus[indexer].V[temp_index_b]).Im(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3);// second part of equation(37) - no power term needed
+						bus[indexer].Jacob_B[temp_index] = -((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Im() + (undeltacurr[temp_index_b]).Re() *pow((bus[indexer].V[temp_index_b]).Re(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3);// second part of equation(38) - no power term needed
+						bus[indexer].Jacob_C[temp_index] =((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Im() - (undeltacurr[temp_index_b]).Re() *pow((bus[indexer].V[temp_index_b]).Im(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3);// second part of equation(39) - no power term needed
+						bus[indexer].Jacob_D[temp_index] = ((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Re() - (undeltacurr[temp_index_b]).Im() *pow((bus[indexer].V[temp_index_b]).Re(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3);// second part of equation(40) - no power term needed
 					}
 					else	//Zero voltage = only impedance is valid (others get divided by VMag, so are IND) - not entirely sure how this gets in here anyhow
 					{
-						bus[indexer].Jacob_A[temp_index] = (undeltaimped[temp_index_b]).Im() - 1e-4;	//Small offset to avoid singularities (if impedance is zero too)
-						bus[indexer].Jacob_B[temp_index] = -(undeltaimped[temp_index_b]).Re() - 1e-4;
-						bus[indexer].Jacob_C[temp_index] = -(undeltaimped[temp_index_b]).Re() - 1e-4;
-						bus[indexer].Jacob_D[temp_index] = -(undeltaimped[temp_index_b]).Im() - 1e-4;
+						bus[indexer].Jacob_A[temp_index] = -1e-4;	//Small offset to avoid singularities (if impedance is zero too)
+						bus[indexer].Jacob_B[temp_index] = -1e-4;
+						bus[indexer].Jacob_C[temp_index] = -1e-4;
+						bus[indexer].Jacob_D[temp_index] = -1e-4;
 					}
 				}//End phase traversion
 			}//end delta-connected load
@@ -3280,6 +3885,139 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			}//end split-phase connected
 			else	//Wye-connected system/load
 			{
+				//Populate the values for constant current -- deltamode different right now (all same in future?)
+				if (*bus[indexer].dynamics_enabled == true)
+				{
+					//Create nominal magnitudes
+					adjust_nominal_voltage_val = bus[indexer].kv_base;
+
+					//Create the nominal voltage vectors
+					adjust_temp_nominal_voltage[0].SetPolar(bus[indexer].kv_base,0.0);
+					adjust_temp_nominal_voltage[1].SetPolar(bus[indexer].kv_base,-2.0*PI/3.0);
+					adjust_temp_nominal_voltage[2].SetPolar(bus[indexer].kv_base,2.0*PI/3.0);
+
+					//Get magnitudes of all
+					adjust_temp_voltage_mag[0] = bus[indexer].V[0].Mag();
+					adjust_temp_voltage_mag[1] = bus[indexer].V[1].Mag();
+					adjust_temp_voltage_mag[2] = bus[indexer].V[2].Mag();
+
+					//Start adjustments - A
+					if ((bus[indexer].I[0] != 0.0) && (adjust_temp_voltage_mag[0] != 0.0))
+					{
+						//calculate new value
+						adjusted_constant_current[0] = ~(adjust_temp_nominal_voltage[0] * ~bus[indexer].I[0] * adjust_temp_voltage_mag[0] / (bus[indexer].V[0] * adjust_nominal_voltage_val));
+					}
+					else
+					{
+						adjusted_constant_current[0] = 0.0;
+					}
+
+					//Start adjustments - B
+					if ((bus[indexer].I[1] != 0.0) && (adjust_temp_voltage_mag[1] != 0.0))
+					{
+						//calculate new value
+						adjusted_constant_current[1] = ~(adjust_temp_nominal_voltage[1] * ~bus[indexer].I[1] * adjust_temp_voltage_mag[1] / (bus[indexer].V[1] * adjust_nominal_voltage_val));
+					}
+					else
+					{
+						adjusted_constant_current[1] = 0.0;
+					}
+
+					//Start adjustments - C
+					if ((bus[indexer].I[2] != 0.0) && (adjust_temp_voltage_mag[2] != 0.0))
+					{
+						//calculate new value
+						adjusted_constant_current[2] = ~(adjust_temp_nominal_voltage[2] * ~bus[indexer].I[2] * adjust_temp_voltage_mag[2] / (bus[indexer].V[2] * adjust_nominal_voltage_val));
+					}
+					else
+					{
+						adjusted_constant_current[2] = 0.0;
+					}
+
+					//See if we have any "different children"
+					if ((bus[indexer].phases & 0x10) == 0x10)
+					{
+						//Create nominal magnitudes
+						adjust_nominal_voltage_val = bus[indexer].kv_base * sqrt(3.0);
+
+						//Create the nominal voltage vectors
+						adjust_temp_nominal_voltage[0].SetPolar(adjust_nominal_voltage_val,PI/6.0);
+						adjust_temp_nominal_voltage[1].SetPolar(adjust_nominal_voltage_val,-1.0*PI/2.0);
+						adjust_temp_nominal_voltage[2].SetPolar(adjust_nominal_voltage_val,5.0*PI/6.0);
+
+						//Compute delta voltages
+						voltageDel[0] = bus[indexer].V[0] - bus[indexer].V[1];
+						voltageDel[1] = bus[indexer].V[1] - bus[indexer].V[2];
+						voltageDel[2] = bus[indexer].V[2] - bus[indexer].V[0];
+
+						//Get magnitudes of all
+						adjust_temp_voltage_mag[0] = voltageDel[0].Mag();
+						adjust_temp_voltage_mag[1] = voltageDel[1].Mag();
+						adjust_temp_voltage_mag[2] = voltageDel[2].Mag();
+
+						//Start adjustments - AB
+						if ((bus[indexer].extra_var[6] != 0.0) && (adjust_temp_voltage_mag[0] != 0.0))
+						{
+							//calculate new value
+							adjusted_constant_current[3] = ~(adjust_temp_nominal_voltage[0] * ~bus[indexer].extra_var[6] * adjust_temp_voltage_mag[0] / (voltageDel[0] * adjust_nominal_voltage_val));
+						}
+						else
+						{
+							adjusted_constant_current[3] = 0.0;
+						}
+
+						//Start adjustments - BC
+						if ((bus[indexer].extra_var[7] != 0.0) && (adjust_temp_voltage_mag[1] != 0.0))
+						{
+							//calculate new value
+							adjusted_constant_current[4] = ~(adjust_temp_nominal_voltage[1] * ~bus[indexer].extra_var[7] * adjust_temp_voltage_mag[1] / (voltageDel[1] * adjust_nominal_voltage_val));
+						}
+						else
+						{
+							adjusted_constant_current[4] = 0.0;
+						}
+
+						//Start adjustments - CA
+						if ((bus[indexer].extra_var[8] != 0.0) && (adjust_temp_voltage_mag[2] != 0.0))
+						{
+							//calculate new value
+							adjusted_constant_current[5] = ~(adjust_temp_nominal_voltage[2] * ~bus[indexer].extra_var[8] * adjust_temp_voltage_mag[2] / (voltageDel[2] * adjust_nominal_voltage_val));
+						}
+						else
+						{
+							adjusted_constant_current[5] = 0.0;
+						}
+					}
+					else	//Nope
+					{
+						//Set to zero, just cause
+						adjusted_constant_current[3] = 0.0;
+						adjusted_constant_current[4] = 0.0;
+						adjusted_constant_current[5] = 0.0;
+					}
+				}
+				else	//"Normal" modes -- handle traditionally
+				{
+					adjusted_constant_current[0] = bus[indexer].I[0];
+					adjusted_constant_current[1] = bus[indexer].I[1];
+					adjusted_constant_current[2] = bus[indexer].I[2];
+
+					//See if we have different children too
+					if ((bus[indexer].phases & 0x10) == 0x10)
+					{
+						//Store them too
+						adjusted_constant_current[3] = bus[indexer].extra_var[6];
+						adjusted_constant_current[4] = bus[indexer].extra_var[7];
+						adjusted_constant_current[5] = bus[indexer].extra_var[8];
+					}
+					else	//Nope, just zero this for now
+					{
+						adjusted_constant_current[3] = 0.0;
+						adjusted_constant_current[4] = 0.0;
+						adjusted_constant_current[5] = 0.0;
+					}
+				}//End adjustment code
+
 				//For Wye-connected, only compute and store phases that exist (make top heavy)
 				temp_index = -1;
 				temp_index_b = -1;
@@ -3344,9 +4082,9 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					}
 
 					//Convert delta-current into a phase current - reuse temp variable
-					undeltacurr[0]=(bus[indexer].extra_var[6]+delta_current[0])-(bus[indexer].extra_var[8]+delta_current[2]);
-					undeltacurr[1]=(bus[indexer].extra_var[7]+delta_current[1])-(bus[indexer].extra_var[6]+delta_current[0]);
-					undeltacurr[2]=(bus[indexer].extra_var[8]+delta_current[2])-(bus[indexer].extra_var[7]+delta_current[1]);
+					undeltacurr[0]=(adjusted_constant_current[3]+delta_current[0])-(adjusted_constant_current[5]+delta_current[2]);
+					undeltacurr[1]=(adjusted_constant_current[4]+delta_current[1])-(adjusted_constant_current[3]+delta_current[0]);
+					undeltacurr[2]=(adjusted_constant_current[5]+delta_current[2])-(adjusted_constant_current[4]+delta_current[1]);
 				}
 				else	//zero the variable so we don't have excessive ifs
 				{
@@ -3426,19 +4164,19 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					if ((bus[indexer].V[temp_index_b]).Mag()!=0)
 					{
 						bus[indexer].Jacob_A[temp_index] = ((bus[indexer].S[temp_index_b]).Im() * (pow((bus[indexer].V[temp_index_b]).Re(),2) - pow((bus[indexer].V[temp_index_b]).Im(),2)) - 2*(bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(bus[indexer].S[temp_index_b]).Re())/pow((bus[indexer].V[temp_index_b]).Mag(),4);// first part of equation(37)
-						bus[indexer].Jacob_A[temp_index] += ((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(bus[indexer].I[temp_index_b]).Re() + (bus[indexer].I[temp_index_b]).Im() *pow((bus[indexer].V[temp_index_b]).Im(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3) + (bus[indexer].Y[temp_index_b]).Im();// second part of equation(37)
+						bus[indexer].Jacob_A[temp_index] += ((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(adjusted_constant_current[temp_index_b]).Re() + (adjusted_constant_current[temp_index_b]).Im() *pow((bus[indexer].V[temp_index_b]).Im(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3) + (bus[indexer].Y[temp_index_b]).Im();// second part of equation(37)
 						bus[indexer].Jacob_A[temp_index] += ((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Re() + (undeltacurr[temp_index_b]).Im() *pow((bus[indexer].V[temp_index_b]).Im(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3);// current part of equation (37) - Handles "different" children
 						
 						bus[indexer].Jacob_B[temp_index] = ((bus[indexer].S[temp_index_b]).Re() * (pow((bus[indexer].V[temp_index_b]).Re(),2) - pow((bus[indexer].V[temp_index_b]).Im(),2)) + 2*(bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(bus[indexer].S[temp_index_b]).Im())/pow((bus[indexer].V[temp_index_b]).Mag(),4);// first part of equation(38)
-						bus[indexer].Jacob_B[temp_index] += -((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(bus[indexer].I[temp_index_b]).Im() + (bus[indexer].I[temp_index_b]).Re() *pow((bus[indexer].V[temp_index_b]).Re(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3) - (bus[indexer].Y[temp_index_b]).Re();// second part of equation(38)
+						bus[indexer].Jacob_B[temp_index] += -((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(adjusted_constant_current[temp_index_b]).Im() + (adjusted_constant_current[temp_index_b]).Re() *pow((bus[indexer].V[temp_index_b]).Re(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3) - (bus[indexer].Y[temp_index_b]).Re();// second part of equation(38)
 						bus[indexer].Jacob_B[temp_index] += -((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Im() + (undeltacurr[temp_index_b]).Re() *pow((bus[indexer].V[temp_index_b]).Re(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3);// current part of equation(38) - Handles "different" children
 						
 						bus[indexer].Jacob_C[temp_index] = ((bus[indexer].S[temp_index_b]).Re() * (pow((bus[indexer].V[temp_index_b]).Im(),2) - pow((bus[indexer].V[temp_index_b]).Re(),2)) - 2*(bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(bus[indexer].S[temp_index_b]).Im())/pow((bus[indexer].V[temp_index_b]).Mag(),4);// first part of equation(39)
-						bus[indexer].Jacob_C[temp_index] +=((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(bus[indexer].I[temp_index_b]).Im() - (bus[indexer].I[temp_index_b]).Re() *pow((bus[indexer].V[temp_index_b]).Im(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3) - (bus[indexer].Y[temp_index_b]).Re();// second part of equation(39)
+						bus[indexer].Jacob_C[temp_index] +=((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(adjusted_constant_current[temp_index_b]).Im() - (adjusted_constant_current[temp_index_b]).Re() *pow((bus[indexer].V[temp_index_b]).Im(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3) - (bus[indexer].Y[temp_index_b]).Re();// second part of equation(39)
 						bus[indexer].Jacob_C[temp_index] +=((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Im() - (undeltacurr[temp_index_b]).Re() *pow((bus[indexer].V[temp_index_b]).Im(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3);// Current part of equation(39) - Handles "different" children
 						
 						bus[indexer].Jacob_D[temp_index] = ((bus[indexer].S[temp_index_b]).Im() * (pow((bus[indexer].V[temp_index_b]).Re(),2) - pow((bus[indexer].V[temp_index_b]).Im(),2)) - 2*(bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(bus[indexer].S[temp_index_b]).Re())/pow((bus[indexer].V[temp_index_b]).Mag(),4);// first part of equation(40)
-						bus[indexer].Jacob_D[temp_index] += ((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(bus[indexer].I[temp_index_b]).Re() - (bus[indexer].I[temp_index_b]).Im() *pow((bus[indexer].V[temp_index_b]).Re(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3) - (bus[indexer].Y[temp_index_b]).Im();// second part of equation(40)
+						bus[indexer].Jacob_D[temp_index] += ((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(adjusted_constant_current[temp_index_b]).Re() - (adjusted_constant_current[temp_index_b]).Im() *pow((bus[indexer].V[temp_index_b]).Re(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3) - (bus[indexer].Y[temp_index_b]).Im();// second part of equation(40)
 						bus[indexer].Jacob_D[temp_index] += ((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Re() - (undeltacurr[temp_index_b]).Im() *pow((bus[indexer].V[temp_index_b]).Re(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3);// Current part of equation(40) - Handles "different" children
 					
 					}
@@ -3451,6 +4189,222 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					}
 				}//End phase traversion - Wye
 			}//End wye-connected load
+
+			//Perform delta/wye explicit load updates -- no triplex
+			if ((bus[indexer].phases & 0x80) != 0x80)	//Not triplex
+			{
+				//Delta components - populate according to what is there
+				if ((bus[indexer].phases & 0x06) == 0x06)	//Check for AB
+				{
+					//Voltage calculations
+					voltageDel[0] = bus[indexer].V[0] - bus[indexer].V[1];
+
+					//Power - convert to a current (uses less iterations this way)
+					delta_current[0] = (voltageDel[0] == 0) ? 0 : ~(bus[indexer].S_dy[0]/voltageDel[0]);
+
+					//Convert delta connected load to appropriate Wye
+					delta_current[0] += voltageDel[0] * (bus[indexer].Y_dy[0]);
+
+				}
+				else
+				{
+					//Zero values - they shouldn't be used anyhow
+					voltageDel[0] = 0.0;
+					delta_current[0] = 0.0;
+				}
+
+				if ((bus[indexer].phases & 0x03) == 0x03)	//Check for BC
+				{
+					//Voltage calculations
+					voltageDel[1] = bus[indexer].V[1] - bus[indexer].V[2];
+
+					//Power - convert to a current (uses less iterations this way)
+					delta_current[1] = (voltageDel[1] == 0) ? 0 : ~(bus[indexer].S_dy[1]/voltageDel[1]);
+
+					//Convert delta connected load to appropriate Wye
+					delta_current[1] += voltageDel[1] * (bus[indexer].Y_dy[1]);
+
+				}
+				else
+				{
+					//Zero unused
+					voltageDel[1] = 0.0;
+					delta_current[1] = 0.0;
+				}
+
+				if ((bus[indexer].phases & 0x05) == 0x05)	//Check for CA
+				{
+					//Voltage calculations
+					voltageDel[2] = bus[indexer].V[2] - bus[indexer].V[0];
+
+					//Power - convert to a current (uses less iterations this way)
+					delta_current[2] = (voltageDel[2] == 0) ? 0 : ~(bus[indexer].S_dy[2]/voltageDel[2]);
+
+					//Convert delta connected load to appropriate Wye
+					delta_current[2] += voltageDel[2] * (bus[indexer].Y_dy[2]);
+
+				}
+				else
+				{
+					//Zero unused
+					voltageDel[2] = 0.0;
+					delta_current[2] = 0.0;
+				}
+				
+				//Convert delta-current into a phase current, where appropriate - reuse temp variable
+				//Everything will be accumulated into the "current" field for ease (including differents)
+				if ((bus[indexer].phases & 0x04) == 0x04)	//Has a phase A
+				{
+					undeltacurr[0]=(bus[indexer].I_dy[0]+delta_current[0])-(bus[indexer].I_dy[2]+delta_current[2]);
+
+					//Apply wye-connected loads
+
+					//Power values
+					undeltacurr[0] += (bus[indexer].V[0] == 0) ? 0 : ~(bus[indexer].S_dy[3]/bus[indexer].V[0]);
+
+					//Shunt values
+					undeltacurr[0] += bus[indexer].Y_dy[3]*bus[indexer].V[0];
+
+					//Current values
+					undeltacurr[0] += bus[indexer].I_dy[3];
+				}
+				else
+				{
+					//Zero it, just in case
+					undeltacurr[0] = 0.0;
+				}
+
+				if ((bus[indexer].phases & 0x02) == 0x02)	//Has a phase B
+				{
+					undeltacurr[1]=(bus[indexer].I_dy[1]+delta_current[1])-(bus[indexer].I_dy[0]+delta_current[0]);
+
+					//Apply wye-connected loads
+
+					//Power values
+					undeltacurr[1] += (bus[indexer].V[1] == 0) ? 0 : ~(bus[indexer].S_dy[4]/bus[indexer].V[1]);
+
+					//Shunt values
+					undeltacurr[1] += bus[indexer].Y_dy[4]*bus[indexer].V[1];
+
+					//Current values
+					undeltacurr[1] += bus[indexer].I_dy[4];
+				}
+				else
+				{
+					//Zero it, just in case
+					undeltacurr[1] = 0.0;
+				}
+
+
+				if ((bus[indexer].phases & 0x01) == 0x01)	//Has a phase C
+				{
+					undeltacurr[2]=(bus[indexer].I_dy[2]+delta_current[2])-(bus[indexer].I_dy[1]+delta_current[1]);
+
+					//Apply wye-connected loads
+
+					//Power values
+					undeltacurr[2] += (bus[indexer].V[2] == 0) ? 0 : ~(bus[indexer].S_dy[5]/bus[indexer].V[2]);
+
+					//Shunt values
+					undeltacurr[2] += bus[indexer].Y_dy[5]*bus[indexer].V[2];
+
+					//Current values
+					undeltacurr[2] += bus[indexer].I_dy[5];
+				}
+				else
+				{
+					//Zero it, just in case
+					undeltacurr[2] = 0.0;
+				}
+
+				//Provide updates to relevant phases
+				//only compute and store phases that exist (make top heavy)
+				temp_index = -1;
+				temp_index_b = -1;
+				
+				for (jindex=0; jindex<powerflow_values->BA_diag[indexer].size; jindex++)
+				{
+					switch(bus[indexer].phases & 0x07) {
+						case 0x01:	//C
+							{
+								temp_index=0;
+								temp_index_b=2;
+								break;
+							}
+						case 0x02:	//B
+							{
+								temp_index=0;
+								temp_index_b=1;
+								break;
+							}
+						case 0x03:	//BC
+							{
+								if (jindex==0)	//B
+								{
+									temp_index=0;
+									temp_index_b=1;
+								}
+								else			//C
+								{
+									temp_index=1;
+									temp_index_b=2;
+								}
+								break;
+							}
+						case 0x04:	//A
+							{
+								temp_index=0;
+								temp_index_b=0;
+								break;
+							}
+						case 0x05:	//AC
+							{
+								if (jindex==0)	//A
+								{
+									temp_index=0;
+									temp_index_b=0;
+								}
+								else			//C
+								{
+									temp_index=1;
+									temp_index_b=2;
+								}
+								break;
+							}
+						case 0x06:	//AB
+						case 0x07:	//ABC
+							{
+								temp_index=jindex;
+								temp_index_b=jindex;
+								break;
+							}
+						default:
+							break;
+					}//end case
+
+					if ((temp_index==-1) || (temp_index_b==-1))
+					{
+						GL_THROW("NR: A Jacobian update element failed.");
+						//Defined below
+					}
+
+					if ((bus[indexer].V[temp_index_b]).Mag()!=0)
+					{
+						//Apply as an accumulation, in case any "normal" connections are present too
+						bus[indexer].Jacob_A[temp_index] += ((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Re() + (undeltacurr[temp_index_b]).Im() *pow((bus[indexer].V[temp_index_b]).Im(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3); // + (undeltaimped[temp_index_b]).Im();// second part of equation(37) - no power term needed
+						bus[indexer].Jacob_B[temp_index] += -((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Im() + (undeltacurr[temp_index_b]).Re() *pow((bus[indexer].V[temp_index_b]).Re(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3); // - (undeltaimped[temp_index_b]).Re();// second part of equation(38) - no power term needed
+						bus[indexer].Jacob_C[temp_index] +=((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Im() - (undeltacurr[temp_index_b]).Re() *pow((bus[indexer].V[temp_index_b]).Im(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3); // - (undeltaimped[temp_index_b]).Re();// second part of equation(39) - no power term needed
+						bus[indexer].Jacob_D[temp_index] += ((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Re() - (undeltacurr[temp_index_b]).Im() *pow((bus[indexer].V[temp_index_b]).Re(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3); // - (undeltaimped[temp_index_b]).Im();// second part of equation(40) - no power term needed
+					}
+					else	//Zero voltage = only impedance is valid (others get divided by VMag, so are IND) - not entirely sure how this gets in here anyhow
+					{
+						bus[indexer].Jacob_A[temp_index] += -1e-4; //(undeltaimped[temp_index_b]).Im() - 1e-4;	//Small offset to avoid singularities (if impedance is zero too)
+						bus[indexer].Jacob_B[temp_index] += -1e-4; //-(undeltaimped[temp_index_b]).Re() - 1e-4;
+						bus[indexer].Jacob_C[temp_index] += -1e-4; //-(undeltaimped[temp_index_b]).Re() - 1e-4;
+						bus[indexer].Jacob_D[temp_index] += -1e-4; //-(undeltaimped[temp_index_b]).Im() - 1e-4;
+					}
+				}//End phase traversion
+			}//End delta/wye explicit loads
 		}//end bus traversion for a,b,c, d value computation
 
 		//Build the dynamic diagnal elements of 6n*6n Y matrix. All the elements in this part will be updated at each iteration.
@@ -3640,6 +4594,9 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 		//Print the values - printed as "row index, column index, value"
 		//This particular output is after they have been column sorted for the algorithm
+		fprintf(FPoutVal,"Matrix Information - size = %d\n",size_Amatrix);
+
+		fprintf(FPoutVal,"Matrix Information - row, column, value\n");
 		for (jindexer=0; jindexer<size_Amatrix; jindexer++)
 		{
 			fprintf(FPoutVal,"%d,%d,%f\n",powerflow_values->Y_Amatrix[jindexer].row_ind,powerflow_values->Y_Amatrix[jindexer].col_ind,powerflow_values->Y_Amatrix[jindexer].Y_value);
@@ -3647,28 +4604,6 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 		//Close the file, we're done with it
 		fclose(FPoutVal);
-
-		//Dump our position data as well
-		FILE *FPbusout=fopen("businfoout.txt","wt");
-
-		for (jindexer=0; jindexer<NR_bus_count; jindexer++)
-		{
-			fprintf(FPbusout,"%d,%d,%s\n",bus[jindexer].Matrix_Loc,BA_diag[jindexer].size,bus[jindexer].name);
-		}
-
-		fclose(FPbusout);
-
-		//Branches
-		FILE *FPbranchout=fopen("branchinfoout.txt","wt");
-
-		for (jindexer=0; jindexer<NR_branch_count; jindexer++)
-		{
-			fprintf(FPbranchout,"%d,%d,%s,%s,%s\n",bus[branch[jindexer].from].Matrix_Loc,bus[branch[jindexer].to].Matrix_Loc,bus[branch[jindexer].from].name,bus[branch[jindexer].to].name,branch[jindexer].name);
-		}
-
-		fclose(FPbranchout);
-
-
 #endif
 
 		///* Initialize parameters. */
@@ -4064,8 +4999,121 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			}
 		}//End bus traversion
 
+		//Further debug stuff
+#ifdef NR_MATRIX_OUT
+		
+#if defined(NR_VOLTAGE_PORTION_OUT) || defined(NR_REFERENCES_OUT)
+		//Open the text file again
+		FILE *FPoutValue=fopen("matrixinfoout.txt","at");
+#endif
+
+#ifdef NR_VOLTAGE_PORTION_OUT
+
+		//Print voltage information
+		fprintf(FPoutValue,"\nVoltage Information - row,value\n");
+
+		for (indexer=0; indexer<bus_count; indexer++)
+		{
+			//Figure out the offset we need to be for each phase
+			if ((bus[indexer].phases & 0x80) == 0x80)	//Split phase
+			{
+				fprintf(FPoutValue,"%d,%f\n",2*bus[indexer].Matrix_Loc,bus[indexer].V[0].Re());
+				fprintf(FPoutValue,"%d,%f\n",(2*bus[indexer].Matrix_Loc+1),bus[indexer].V[1].Re());
+				fprintf(FPoutValue,"%d,%f\n",(2*bus[indexer].Matrix_Loc+2),bus[indexer].V[0].Im());
+				fprintf(FPoutValue,"%d,%f\n",(2*bus[indexer].Matrix_Loc+3),bus[indexer].V[1].Im());
+			}//end split phase update
+			else										//Not split phase
+			{
+				for (jindex=0; jindex<powerflow_values->BA_diag[indexer].size; jindex++)	//parse through the phases
+				{
+					switch(bus[indexer].phases & 0x07) {
+						case 0x01:	//C
+							{
+								temp_index=0;
+								temp_index_b=2;
+								break;
+							}
+						case 0x02:	//B
+							{
+								temp_index=0;
+								temp_index_b=1;
+								break;
+							}
+						case 0x03:	//BC
+							{
+								if (jindex==0)	//B
+								{
+									temp_index=0;
+									temp_index_b=1;
+								}
+								else			//C
+								{
+									temp_index=1;
+									temp_index_b=2;
+								}
+
+								break;
+							}
+						case 0x04:	//A
+							{
+								temp_index=0;
+								temp_index_b=0;
+								break;
+							}
+						case 0x05:	//AC
+							{
+								if (jindex==0)	//A
+								{
+									temp_index=0;
+									temp_index_b=0;
+								}
+								else			//C
+								{
+									temp_index=1;
+									temp_index_b=2;
+								}
+								break;
+							}
+						case 0x06:	//AB
+						case 0x07:	//ABC
+							{
+								temp_index = jindex;
+								temp_index_b = jindex;
+								break;
+							}
+					}//end phase switch/case
+
+					fprintf(FPoutValue,"%d,%f\n",(2*bus[indexer].Matrix_Loc+temp_index),bus[indexer].V[temp_index_b].Re());
+					fprintf(FPoutValue,"%d,%f\n",(2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size+temp_index),bus[indexer].V[temp_index_b].Im());
+
+				}//End For loop for phase traversion
+			}//End not split phase update
+		}//End bus traversion
+#endif
+
+#ifdef NR_REFERENCES_OUT
+		//Print the index information
+		fprintf(FPoutValue,"\nMatrix Index information - start,stop,name\n");
+
+		for (indexer=0; indexer<bus_count; indexer++)
+		{
+			jindexer = 2*bus[indexer].Matrix_Loc;
+			kindexer = jindexer + 2*powerflow_values->BA_diag[indexer].size - 1;
+
+
+			fprintf(FPoutValue,"%d,%d,%s\n",jindexer,kindexer,bus[indexer].name);
+		}
+#endif
+
+#if defined(NR_VOLTAGE_PORTION_OUT) || defined(NR_REFERENCES_OUT)
+		//Close the file, we're done with it
+		fclose(FPoutValue);
+#endif
+
+#endif	//End NR_MATIRX_OUT
+
 		//Additional checks for special modes - only needs to happen in first dynamics powerflow
-		if (powerflow_type == PF_DYNINIT)
+		if ((powerflow_type == PF_DYNINIT) && (bus[0].full_Y != NULL))
 		{
 			//See what "mode" we're in
 			if (!newiter)	//Overall powerflow has converged

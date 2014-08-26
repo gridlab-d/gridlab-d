@@ -99,6 +99,7 @@ typedef struct s_object_list {
 typedef struct s_callbacks {
 	TIMESTAMP *global_clock;
 	double *global_delta_curr_clock;
+	TIMESTAMP *global_stoptime;
 	int (*output_verbose)(const char *format, ...);
 	int (*output_message)(const char *format, ...);
 	int (*output_warning)(const char *format, ...);

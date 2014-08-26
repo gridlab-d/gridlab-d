@@ -1,4 +1,4 @@
-/** $Id: meter.cpp 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id: meter.cpp 1182 2008-12-22 22:08:36Z dchassin $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file meter.cpp
 	@addtogroup powerflow_meter Meter
@@ -544,7 +544,7 @@ double meter::process_bill(TIMESTAMP t1){
 //Module-level call
 SIMULATIONMODE meter::inter_deltaupdate_meter(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
 {
-	unsigned char pass_mod;
+	//unsigned char pass_mod;
 	OBJECT *hdr = OBJECTHDR(this);
 
 	if (interupdate_pos == false)	//Before powerflow call
@@ -604,29 +604,33 @@ SIMULATIONMODE meter::inter_deltaupdate_meter(unsigned int64 delta_time, unsigne
 		if (measured_real_power > measured_demand) 
 			measured_demand = measured_real_power;
 
-		//Do deltamode-related logic
-		if (bustype==SWING)	//We're the SWING bus, control our destiny (which is really controlled elsewhere)
-		{
-			//See what we're on
-			pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
+		//No control required at this time - powerflow defers to the whims of other modules
+		//Code below implements predictor/corrector-type logic, even though it effectively does nothing
+		return SM_EVENT;
 
-			//Check pass
-			if (pass_mod==0)	//Predictor pass
-			{
-				return SM_DELTA_ITER;	//Reiterate - to get us to corrector pass
-			}
-			else	//Corrector pass
-			{
-				//As of right now, we're always ready to leave
-				//Other objects will dictate if we stay (powerflow is indifferent)
-				return SM_EVENT;
-			}//End corrector pass
-		}//End SWING bus handling
-		else	//Normal bus
-		{
-			return SM_EVENT;	//Normal nodes want event mode all the time here - SWING bus will
-								//control the reiteration process for pred/corr steps
-		}
+		////Do deltamode-related logic
+		//if (bustype==SWING)	//We're the SWING bus, control our destiny (which is really controlled elsewhere)
+		//{
+		//	//See what we're on
+		//	pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
+
+		//	//Check pass
+		//	if (pass_mod==0)	//Predictor pass
+		//	{
+		//		return SM_DELTA_ITER;	//Reiterate - to get us to corrector pass
+		//	}
+		//	else	//Corrector pass
+		//	{
+		//		//As of right now, we're always ready to leave
+		//		//Other objects will dictate if we stay (powerflow is indifferent)
+		//		return SM_EVENT;
+		//	}//End corrector pass
+		//}//End SWING bus handling
+		//else	//Normal bus
+		//{
+		//	return SM_EVENT;	//Normal nodes want event mode all the time here - SWING bus will
+		//						//control the reiteration process for pred/corr steps
+		//}
 	}
 }
 

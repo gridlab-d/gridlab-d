@@ -1,4 +1,4 @@
-// $Id: load.h 4738 2014-07-03 00:55:39Z dchassin $
+// $Id: load.h 1182 2008-12-22 22:08:36Z dchassin $
 //	Copyright (C) 2008 Battelle Memorial Institute
 
 #ifndef _LOAD_H
@@ -23,6 +23,9 @@ public:
 	complex constant_power[3];		// power load
 	complex constant_current[3];	// current load
 	complex constant_impedance[3];	// impedance load
+	complex constant_power_dy[6];		// Power load, explicitly specified wye and delta -- delta first, then wye
+	complex constant_current_dy[6];	// Current load, explicitly specified wye and delta -- delta first, then wye
+	complex constant_impedance_dy[6];	// Impedance load, explicitly specified wye and delta -- delta first, then wye
 
 	double base_power[3];
 	double power_pf[3];

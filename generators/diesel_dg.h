@@ -1,4 +1,4 @@
-/** $Id: diesel_dg.h 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id: diesel_dg.h,v 1.2 2008/02/12 00:28:08 d3g637 Exp $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file diesel_dg.h
 	@addtogroup diesel_dg
@@ -59,6 +59,8 @@ typedef struct {
 	complex Irotated;			//d-q rotated current value
 	complex pwr_electric;		//Total electric power output of generator
 	double pwr_mech;			//Mechanical power output of generator
+	double torque_mech;			//Mechanical torque of generator
+	double torque_elec;			//electrical torque of generator
 	GOV_DEGOV1_VARS gov_degov1;	//DEGOV1 Governor state variables
 	GOV_GAST_VARS gov_gast;		//GAST Governor state variables // gastflag
 	AVR_VARS avr;				//Automatic Voltage Regulator state variables
@@ -68,12 +70,10 @@ class diesel_dg : public gld_object
 {
 private:
 	/* TODO: put private variables here */
-	bool IterationToggle;	///< Iteration toggle device - retains NR "pass" functionality
 	complex *pCircuit_V; ///< pointer to the three voltages on three lines
 	complex *pLine_I; ///< pointer to the three current on three lines
 
 	bool first_run;		///< Flag for first run of the diesel_dg object - eliminates t0==0 dependence
-	bool first_run_after_delta;	///< Flag for first run after deltamode - namely because powerflow is in true pass
 
 	//Internal synchronous machine variables
 	complex *bus_admittance_mat;		//Link to bus raw self-admittance value - grants 3x3 access instead of diagonal
@@ -99,6 +99,7 @@ private:
 	double prev_rotor_speed_val;		//Previous value of rotor speed - used for delta-exiting convergence check
 	complex last_power_output[3];		//Tracking variable for previous power output - used to do super-second frequency adjustments
 	TIMESTAMP prev_time;				//Tracking variable for previous "new time" run
+	double prev_time_dbl;				//Tracking variable for previous "new time" run -- deltamode capable
 
 	MAC_STATES curr_state;		//Current state of all vari
 	MAC_STATES next_state;

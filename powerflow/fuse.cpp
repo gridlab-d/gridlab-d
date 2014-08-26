@@ -1,4 +1,4 @@
-// $Id: fuse.cpp 4738 2014-07-03 00:55:39Z dchassin $
+// $Id: fuse.cpp 1186 2009-01-02 18:15:30Z dchassin $
 /**	Copyright (C) 2008 Battelle Memorial Institute
 
 	@file fuse.cpp
@@ -53,6 +53,7 @@ fuse::fuse(MODULE *mod) : link_object(mod)
 				PT_KEYWORD, "EXPONENTIAL", (enumeration)EXPONENTIAL,
 			PT_double, "current_limit[A]", PADDR(current_limit),
 			PT_double, "mean_replacement_time[s]",PADDR(mean_replacement_time),	//Retains compatibility with older files
+			PT_double, "fuse_resistance[Ohm]",PADDR(fuse_resistance), PT_DESCRIPTION,"The resistance value of the fuse when it is not blown.",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		if (gl_publish_function(oclass,"change_fuse_state",(FUNCTIONADDR)change_fuse_state)==NULL)
@@ -68,8 +69,6 @@ fuse::fuse(MODULE *mod) : link_object(mod)
 
 		//Publish deltamode functions
 		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
-			GL_THROW("Unable to publish fuse deltamode function");
-		if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_link)==NULL)
 			GL_THROW("Unable to publish fuse deltamode function");
     }
 }
@@ -106,6 +105,7 @@ int fuse::create()
 	event_schedule = NULL;
 	eventgen_obj = NULL;
 	event_schedule_map_attempt = false;	//Haven't tried to map yet
+	fuse_resistance = -1.0;
 
 	return result;
 }
@@ -179,6 +179,19 @@ int fuse::init(OBJECT *parent)
 		Either ignore these values or figure out a way to work around this limitation (player objects).
 		*/
 	}
+	//check the fuse resistance value to see that it is not zero
+	if (solver_method == SM_NR){
+		if(fuse_resistance == 0.0){
+			gl_warning("Fuse:%s fuse_resistance has been set to zero. This will result singular matrix. Setting to the global default.",obj->name);
+			/*  TROUBLESHOOT
+			Under Newton-Raphson solution method the impedance matrix cannot be a singular matrix for the inversion process.
+			Change the value of fuse_resistance to something small but larger that zero.
+			*/
+		}
+		if(fuse_resistance < 0.0){
+			fuse_resistance = default_resistance;
+		}
+	}
 
 	//Initialize matrices
 	for (jindex=0;jindex<3;jindex++)
@@ -225,7 +238,7 @@ int fuse::init(OBJECT *parent)
 			{
 				if (phase_A_state == GOOD)
 				{
-					From_Y[0][0] = complex(1e4,1e4);
+					From_Y[0][0] = complex(1/fuse_resistance,1/fuse_resistance);
 					prev_full_status |= 0x04;
 				}
 				else	//Must be open
@@ -239,7 +252,7 @@ int fuse::init(OBJECT *parent)
 			{
 				if (phase_B_state == GOOD)
 				{
-					From_Y[1][1] = complex(1e4,1e4);
+					From_Y[1][1] = complex(1/fuse_resistance,1/fuse_resistance);
 					prev_full_status |= 0x02;
 				}
 				else	//Must be open
@@ -253,7 +266,7 @@ int fuse::init(OBJECT *parent)
 			{
 				if (phase_C_state == GOOD)
 				{
-					From_Y[2][2] = complex(1e4,1e4);
+					From_Y[2][2] = complex(1/fuse_resistance,1/fuse_resistance);
 					prev_full_status |= 0x01;
 				}
 				else	//Must be open
@@ -575,7 +588,7 @@ TIMESTAMP fuse::sync(TIMESTAMP t0)
 			if (event_schedule != NULL)	//Function was mapped - go for it!
 			{
 				//Call the function
-				result_val = ((int (*)(OBJECT *, OBJECT *, char *, TIMESTAMP, TIMESTAMP, int, bool))(*event_schedule))(*eventgen_obj,obj,fault_val,t0,replacement_duration,-1,false);
+				result_val = ((int (*)(OBJECT *, OBJECT *, char *, TIMESTAMP, TIMESTAMP, int, bool))(*event_schedule))(*eventgen_obj,obj,fault_val,t0,0,-1,false);
 
 				//Make sure it worked
 				if (result_val != 1)
@@ -727,7 +740,7 @@ void fuse::fuse_sync_function(void)
 			{
 				if (phase_A_state == GOOD)
 				{
-					From_Y[0][0] = complex(1e4,1e4);
+					From_Y[0][0] = complex(1/fuse_resistance,1/fuse_resistance);
 					pres_status |= 0x04;
 					NR_branchdata[NR_branch_reference].phases |= 0x04;	//Ensure we're set
 				}
@@ -742,7 +755,7 @@ void fuse::fuse_sync_function(void)
 			{
 				if (phase_B_state == GOOD)
 				{
-					From_Y[1][1] = complex(1e4,1e4);
+					From_Y[1][1] = complex(1/fuse_resistance,1/fuse_resistance);
 					pres_status |= 0x02;
 					NR_branchdata[NR_branch_reference].phases |= 0x02;	//Ensure we're set
 				}
@@ -757,7 +770,7 @@ void fuse::fuse_sync_function(void)
 			{
 				if (phase_C_state == GOOD)
 				{
-					From_Y[2][2] = complex(1e4,1e4);
+					From_Y[2][2] = complex(1/fuse_resistance,1/fuse_resistance);
 					pres_status |= 0x01;
 					NR_branchdata[NR_branch_reference].phases |= 0x01;	//Ensure we're set
 				}

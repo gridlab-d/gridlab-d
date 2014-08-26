@@ -1,4 +1,4 @@
-/** $Id: series_reactor.cpp 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id: series_reactor.cpp,v 1.6 2009/10/23 07:40:00 d3x593 Exp $
 	Copyright (C) 2009 Battelle Memorial Institute
 	@file series_reactor.cpp
 	@addtogroup powerflow series_reactor
@@ -50,6 +50,10 @@ series_reactor::series_reactor(MODULE *mod) : link_object(mod)
 			PT_double, "phase_C_reactance[Ohm]",PADDR(phase_C_impedance.Im()),PT_DESCRIPTION,"Reactive portion of phase C's impedance",
 			PT_double, "rated_current_limit[A]",PADDR(rated_current_limit),PT_DESCRIPTION,"Rated current limit for the reactor",
             NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+
+		//Publish deltamode functions
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
+			GL_THROW("Unable to publish series reactor deltamode function");
     }
 }
 

@@ -799,6 +799,9 @@ inline char *gl_getvalue(OBJECT *obj,
 /** Link to double precision deltamode clock (offset by global_clock) **/
 #define gl_globaldeltaclock (*(callback->global_delta_curr_clock))
 
+/** Link to stop time of the simulation **/
+#define gl_globalstoptime (*(callback->global_stoptime))
+
 /** Convert a string to a timestamp
 	@see convert_to_timestamp()
  **/

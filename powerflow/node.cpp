@@ -1,4 +1,4 @@
-/** $Id: node.cpp 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id: node.cpp 1215 2009-01-22 00:54:37Z d3x593 $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file node.cpp
 	@addtogroup powerflow_node Node
@@ -120,6 +120,26 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			PT_complex, "shunt_A[S]", PADDR(shuntA),PT_DESCRIPTION,"bus shunt admittance, this an accumulator only, not a output or input variable",
 			PT_complex, "shunt_B[S]", PADDR(shuntB),PT_DESCRIPTION,"bus shunt admittance, this an accumulator only, not a output or input variable",
 			PT_complex, "shunt_C[S]", PADDR(shuntC),PT_DESCRIPTION,"bus shunt admittance, this an accumulator only, not a output or input variable",
+
+			PT_complex, "current_AB[A]", PADDR(current_dy[0]),PT_DESCRIPTION,"bus current delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "current_BC[A]", PADDR(current_dy[1]),PT_DESCRIPTION,"bus current delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "current_CA[A]", PADDR(current_dy[2]),PT_DESCRIPTION,"bus current delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "current_AN[A]", PADDR(current_dy[3]),PT_DESCRIPTION,"bus current wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "current_BN[A]", PADDR(current_dy[4]),PT_DESCRIPTION,"bus current wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "current_CN[A]", PADDR(current_dy[5]),PT_DESCRIPTION,"bus current wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "power_AB[VA]", PADDR(power_dy[0]),PT_DESCRIPTION,"bus power delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "power_BC[VA]", PADDR(power_dy[1]),PT_DESCRIPTION,"bus power delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "power_CA[VA]", PADDR(power_dy[2]),PT_DESCRIPTION,"bus power delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "power_AN[VA]", PADDR(power_dy[3]),PT_DESCRIPTION,"bus power wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "power_BN[VA]", PADDR(power_dy[4]),PT_DESCRIPTION,"bus power wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "power_CN[VA]", PADDR(power_dy[5]),PT_DESCRIPTION,"bus power wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "shunt_AB[S]", PADDR(power_dy[0]),PT_DESCRIPTION,"bus shunt delta-connected admittance, this an accumulator only, not a output or input variable",
+			PT_complex, "shunt_BC[S]", PADDR(power_dy[1]),PT_DESCRIPTION,"bus shunt delta-connected admittance, this an accumulator only, not a output or input variable",
+			PT_complex, "shunt_CA[S]", PADDR(power_dy[2]),PT_DESCRIPTION,"bus shunt delta-connected admittance, this an accumulator only, not a output or input variable",
+			PT_complex, "shunt_AN[S]", PADDR(power_dy[3]),PT_DESCRIPTION,"bus shunt wye-connected admittance, this an accumulator only, not a output or input variable",
+			PT_complex, "shunt_BN[S]", PADDR(power_dy[4]),PT_DESCRIPTION,"bus shunt wye-connected admittance, this an accumulator only, not a output or input variable",
+			PT_complex, "shunt_CN[S]", PADDR(power_dy[5]),PT_DESCRIPTION,"bus shunt wye-connected admittance, this an accumulator only, not a output or input variable",
+
 			PT_double, "mean_repair_time[s]",PADDR(mean_repair_time), PT_DESCRIPTION, "Time after a fault clears for the object to be back in service",
 
 			PT_enumeration, "service_status", PADDR(service_status),PT_DESCRIPTION,"In and out of service flag",
@@ -202,6 +222,13 @@ int node::create(void)
 	memset(current,0,sizeof(current));
 	memset(power,0,sizeof(power));
 	memset(shunt,0,sizeof(shunt));
+
+	current_dy[0] = current_dy[1] = current_dy[2] = complex(0.0,0.0);
+	current_dy[3] = current_dy[4] = current_dy[5] = complex(0.0,0.0);
+	power_dy[0] = power_dy[1] = power_dy[2] = complex(0.0,0.0);
+	power_dy[3] = power_dy[4] = power_dy[5] = complex(0.0,0.0);
+	shunt_dy[0] = shunt_dy[1] = shunt_dy[2] = complex(0.0,0.0);
+	shunt_dy[3] = shunt_dy[4] = shunt_dy[5] = complex(0.0,0.0);
 
 	prev_voltage_value = NULL;	//NULL the pointer, just for the sake of doing so
 	prev_power_value = NULL;	//NULL the pointer, again just for the sake of doing so
@@ -493,6 +520,14 @@ int node::init(OBJECT *parent)
 							last_child_power[1][0] = last_child_power[1][1] = last_child_power[1][2] = complex(0,0);
 							last_child_power[2][0] = last_child_power[2][1] = last_child_power[2][2] = complex(0,0);
 							last_child_current12 = 0.0;
+
+							//Do the same for the delta/wye explicit portions
+							last_child_power_dy[0][0] = last_child_power_dy[0][1] = last_child_power_dy[0][2] = complex(0.0,0.0);
+							last_child_power_dy[1][0] = last_child_power_dy[1][1] = last_child_power_dy[1][2] = complex(0.0,0.0);
+							last_child_power_dy[2][0] = last_child_power_dy[2][1] = last_child_power_dy[2][2] = complex(0.0,0.0);
+							last_child_power_dy[3][0] = last_child_power_dy[3][1] = last_child_power_dy[3][2] = complex(0.0,0.0);
+							last_child_power_dy[4][0] = last_child_power_dy[4][1] = last_child_power_dy[4][2] = complex(0.0,0.0);
+							last_child_power_dy[5][0] = last_child_power_dy[5][1] = last_child_power_dy[5][2] = complex(0.0,0.0);
 						}
 					}
 
@@ -539,6 +574,14 @@ int node::init(OBJECT *parent)
 				last_child_power[1][0] = last_child_power[1][1] = last_child_power[1][2] = complex(0,0);
 				last_child_power[2][0] = last_child_power[2][1] = last_child_power[2][2] = complex(0,0);
 				last_child_current12 = 0.0;
+
+				//Do the same for the delta/wye explicit portions
+				last_child_power_dy[0][0] = last_child_power_dy[0][1] = last_child_power_dy[0][2] = complex(0.0,0.0);
+				last_child_power_dy[1][0] = last_child_power_dy[1][1] = last_child_power_dy[1][2] = complex(0.0,0.0);
+				last_child_power_dy[2][0] = last_child_power_dy[2][1] = last_child_power_dy[2][2] = complex(0.0,0.0);
+				last_child_power_dy[3][0] = last_child_power_dy[3][1] = last_child_power_dy[3][2] = complex(0.0,0.0);
+				last_child_power_dy[4][0] = last_child_power_dy[4][1] = last_child_power_dy[4][2] = complex(0.0,0.0);
+				last_child_power_dy[5][0] = last_child_power_dy[5][1] = last_child_power_dy[5][2] = complex(0.0,0.0);
 			}//end no issues phase
 
 			//Make sure nominal voltages match
@@ -740,6 +783,11 @@ int node::init(OBJECT *parent)
 					matrix_solver_method=MM_SUPERLU;
 				}//end failed to find/load
 			}//end somethign was attempted
+
+			if(default_resistance <= 0.0){
+				gl_error("INIT: The global default_resistance was less than or equal to zero. default_resistance must be greater than zero.");
+				return 0;
+			}
 		}//End matrix solver if
 
 		if (mean_repair_time < 0.0)
@@ -990,6 +1038,19 @@ int node::init(OBJECT *parent)
 		{
 			//Assign the function variable for deltamode
 			deltamode_extra_function = (int64)(&(delta_extra_function));
+		}
+
+		//Check out parent and toss some warnings
+		if (TopologicalParent != NULL)
+		{
+			if ((TopologicalParent->flags & OF_DELTAMODE) != OF_DELTAMODE)
+			{
+				gl_warning("Object %s (node:%d) is flagged for deltamode, but it's parent is not.  This may lead to incorrect answers!",obj->name?obj->name:"Unknown",obj->id);
+				/*  TROUBLESHOOT
+				A childed node's parent is not flagged for deltamode.  This may lead to some erroneous errors in the powerflow.  Please apply the
+				flags DELTAMODE property to the parent, or utilize the all_powerflow_delta module-level flag to fix this.
+				*/
+			}
 		}
 	}
 
@@ -1385,11 +1446,12 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			//Make sure it worked
 			if (delta_functions[temp_pwr_object_current] == NULL)
 			{
-				GL_THROW("Failure to map deltamode function for device:%s",obj->name);
+				gl_warning("Failure to map deltamode function for device:%s",obj->name);
 				/*  TROUBLESHOOT
 				Attempts to map up the interupdate function of a specific device failed.  Please try again and ensure
-				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
-				trac website.
+				the object supports deltamode.  This error may simply be an indication that the object of interest
+				does not support deltamode.  If the error persists and the object does, please submit your code and
+				a bug report via the trac website.
 				*/
 			}
 
@@ -1399,8 +1461,12 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			//Make sure it worked
 			if (delta_freq_functions[temp_pwr_object_current] == NULL)
 			{
-				GL_THROW("Failure to map deltamode function for devices:%s",obj->name);
-				//Defined above
+				//Make sure we didn't already warn out -- it's an indication we're not delta-compliant and the "overall" flag is hitting us
+				if (delta_functions[temp_pwr_object_current] != NULL)
+				{
+					gl_warning("Failure to map deltamode function for devices:%s",obj->name);
+					//Defined above - assumes they exist in pairs
+				}
 			}
 
 			//Do any additional parent/child mappings for deltamode -- if necessary
@@ -1529,6 +1595,8 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 //Put in place so deltamode can call it and properly udpate
 void node::NR_node_sync_fxn(OBJECT *obj)
 {
+	int loop_index_var;
+
 	//Reliability check - sets and removes voltages (theory being previous answer better than starting at 0)
 	unsigned char phase_checks_var;
 
@@ -1653,6 +1721,14 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 				ParToLoad->current[1]+=current[1];
 				ParToLoad->current[2]+=current[2];
 
+				//Do the same for explicit delta/wye portions
+				for (loop_index_var=0; loop_index_var<6; loop_index_var++)
+				{
+					ParToLoad->power_dy[loop_index_var] += power_dy[loop_index_var];
+					ParToLoad->shunt_dy[loop_index_var] += shunt_dy[loop_index_var];
+					ParToLoad->current_dy[loop_index_var] += current_dy[loop_index_var];
+				}
+
 				//All done, unlock
 				UNLOCK_OBJECT(SubNodeParent);
 			}
@@ -1673,6 +1749,14 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 				ParToLoad->current[0]+=current[0]-last_child_power[2][0];
 				ParToLoad->current[1]+=current[1]-last_child_power[2][1];
 				ParToLoad->current[2]+=current[2]-last_child_power[2][2];
+
+				//Do the same for the explicit delta/wye loads - last_child_power is set up as columns of ZIP, not ABC
+				for (loop_index_var=0; loop_index_var<6; loop_index_var++)
+				{
+					ParToLoad->power_dy[loop_index_var] += power_dy[loop_index_var] - last_child_power_dy[loop_index_var][0];
+					ParToLoad->shunt_dy[loop_index_var] += shunt_dy[loop_index_var] - last_child_power_dy[loop_index_var][1];
+					ParToLoad->current_dy[loop_index_var] += current_dy[loop_index_var] - last_child_power_dy[loop_index_var][2];
+				}
 
 				if (has_phase(PHASE_S))	//Triplex gets another term as well
 				{
@@ -1712,11 +1796,20 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 			last_child_power[2][1] = current[1];
 			last_child_power[2][2] = current[2];
 
+			//Do the same for delta/wye explicit loads
+			for (loop_index_var=0; loop_index_var<6; loop_index_var++)
+			{
+				last_child_power_dy[loop_index_var][0] = power_dy[loop_index_var];
+				last_child_power_dy[loop_index_var][1] = shunt_dy[loop_index_var];
+				last_child_power_dy[loop_index_var][2] = current_dy[loop_index_var];
+			}
+
 			if (has_phase(PHASE_S))		//Triplex extra current update
 				last_child_current12 = current12;
 		}
 
-		if (SubNode==DIFF_CHILD)	//Differently connected nodes
+		//Accumulations for "differently connected nodes" is still basically the same for delta/wye combination loads
+		if (SubNode==DIFF_CHILD)
 		{
 			//Post our loads up to our parent - in the appropriate fashion
 			node *ParToLoad = OBJECTDATA(SubNodeParent,node);
@@ -1737,9 +1830,25 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 			ParToLoad->Extra_Data[7] += current[1];
 			ParToLoad->Extra_Data[8] += current[2];
 
+			//Import power and "load" characteristics for explicit delta/wye portions
+			for (loop_index_var=0; loop_index_var<6; loop_index_var++)
+			{
+				ParToLoad->power_dy[loop_index_var] += power_dy[loop_index_var];
+				ParToLoad->shunt_dy[loop_index_var] += shunt_dy[loop_index_var];
+				ParToLoad->current_dy[loop_index_var] += current_dy[loop_index_var];
+			}
+
 			//Finished, unlock parent
 			UNLOCK_OBJECT(SubNodeParent);
-		}
+
+			//Update our tracking variable
+			for (loop_index_var=0; loop_index_var<6; loop_index_var++)
+			{
+				last_child_power_dy[loop_index_var][0] = power_dy[loop_index_var];
+				last_child_power_dy[loop_index_var][1] = shunt_dy[loop_index_var];
+				last_child_power_dy[loop_index_var][2] = current_dy[loop_index_var];
+			}
+		}//End differently connected child
 	}//end not uninitialized
 }
 
@@ -1747,6 +1856,11 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 {
 	TIMESTAMP t1 = powerflow_object::sync(t0);
 	OBJECT *obj = OBJECTHDR(this);
+	complex delta_current[3];
+	complex power_current[3];
+	complex delta_shunt[3];
+	complex delta_shunt_curr[3];
+	complex dy_curr_accum[3];
 	
 	//Generic time keeping variable - used for phase checks (GS does this explicitly below)
 	if (t0!=prev_NTime)
@@ -1840,11 +1954,6 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		{   // 'Delta' connected load
 			
 			//Convert delta connected power to appropriate line current
-			complex delta_current[3];
-			complex power_current[3];
-			complex delta_shunt[3];
-			complex delta_shunt_curr[3];
-
 			delta_current[0]= (voltageAB.IsZero()) ? 0 : ~(powerA/voltageAB);
 			delta_current[1]= (voltageBC.IsZero()) ? 0 : ~(powerB/voltageBC);
 			delta_current[2]= (voltageCA.IsZero()) ? 0 : ~(powerC/voltageCA);
@@ -1924,6 +2033,49 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			current_inj[2] += d[2];
 #endif
 		}
+
+		//Handle explicit delta-wye connections now -- no triplex
+		if (!(has_phase(PHASE_S)))
+		{
+			//Convert delta connected power to appropriate line current
+			delta_current[0]= (voltageAB.IsZero()) ? 0 : ~(power_dy[0]/voltageAB);
+			delta_current[1]= (voltageBC.IsZero()) ? 0 : ~(power_dy[1]/voltageBC);
+			delta_current[2]= (voltageCA.IsZero()) ? 0 : ~(power_dy[2]/voltageCA);
+
+			power_current[0]=delta_current[0]-delta_current[2];
+			power_current[1]=delta_current[1]-delta_current[0];
+			power_current[2]=delta_current[2]-delta_current[1];
+
+			//Convert delta connected load to appropriate line current
+			delta_shunt[0] = voltageAB*shunt_dy[0];
+			delta_shunt[1] = voltageBC*shunt_dy[1];
+			delta_shunt[2] = voltageCA*shunt_dy[2];
+
+			delta_shunt_curr[0] = delta_shunt[0]-delta_shunt[2];
+			delta_shunt_curr[1] = delta_shunt[1]-delta_shunt[0];
+			delta_shunt_curr[2] = delta_shunt[2]-delta_shunt[1];
+
+			//Convert delta-current into a phase current - reuse temp variable
+			delta_current[0]=current_dy[0]-current_dy[2];
+			delta_current[1]=current_dy[1]-current_dy[0];
+			delta_current[2]=current_dy[2]-current_dy[1];
+
+			//Accumulate
+			dy_curr_accum[0] = delta_current[0] + power_current[0] + delta_shunt_curr[0];
+			dy_curr_accum[1] = delta_current[1] + power_current[1] + delta_shunt_curr[1];
+			dy_curr_accum[2] = delta_current[2] + power_current[2] + delta_shunt_curr[2];
+
+			//Wye-connected portions
+			dy_curr_accum[0] += (voltageA.IsZero() || (power_dy[3].IsZero() && shunt_dy[3].IsZero())) ? current_dy[3] : current_dy[3] + ~(power_dy[3]/voltageA) + voltageA*shunt_dy[3];
+			dy_curr_accum[1] += (voltageB.IsZero() || (power_dy[4].IsZero() && shunt_dy[4].IsZero())) ? current_dy[4] : current_dy[4] + ~(power_dy[4]/voltageB) + voltageB*shunt_dy[4];
+			dy_curr_accum[2] += (voltageC.IsZero() || (power_dy[5].IsZero() && shunt_dy[5].IsZero())) ? current_dy[5] : current_dy[5] + ~(power_dy[5]/voltageC) + voltageC*shunt_dy[5];
+				
+			//Accumulate in to final portion
+			current_inj[0] += dy_curr_accum[0];
+			current_inj[1] += dy_curr_accum[1];
+			current_inj[2] += dy_curr_accum[2];
+
+		}//End delta/wye explicit
 
 #ifdef SUPPORT_OUTAGES
 	if (is_open_any())
@@ -2162,20 +2314,6 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 #endif
 	//Call NR-related and some "common" node postsync routines
 	BOTH_node_postsync_fxn(obj);
-
-
-	//This code performs the new "flattened" NR calculations.
-	if (solver_method == SM_NR)
-	{
-		int result = NR_current_update(true,false);
-
-		//Make sure it worked, just to be thorough
-		if (result != 1)
-		{
-			GL_THROW("Attempt to update current/power on node:%s failed!",obj->name);
-			//Defined elsewhere
-		}
-	}
 
 	if (solver_method==SM_FBS)
 	{
@@ -2582,6 +2720,15 @@ int node::NR_populate(void)
 	//Populate current
 	NR_busdata[NR_node_reference].I = &current[0];
 
+	//Populate explicit power
+	NR_busdata[NR_node_reference].S_dy = &power_dy[0];
+
+	//Populate explicit admittance
+	NR_busdata[NR_node_reference].Y_dy = &shunt_dy[0];
+
+	//Populate explicit current
+	NR_busdata[NR_node_reference].I_dy = &current_dy[0];
+
 	//Allocate our link list
 	NR_busdata[NR_node_reference].Link_Table = (int *)gl_malloc(NR_connected_links[0]*sizeof(int));
 	
@@ -2663,8 +2810,8 @@ int node::NR_populate(void)
 		NR_busdata[NR_node_reference].phases |= 0x10;			//Special flag for a phase mismatch being present
 	}
 
-	//Per unit values
-	NR_busdata[NR_node_reference].kv_base = -1.0;
+	//Per unit values - populate nominal voltage on a whim
+	NR_busdata[NR_node_reference].kv_base = nominal_voltage;
 	NR_busdata[NR_node_reference].mva_base = -1.0;
 
 	//Set the matrix value to -1 to know it hasn't been set (probably not necessary)
@@ -2767,9 +2914,11 @@ int node::NR_current_update(bool postpass, bool parentcall)
 {
 	unsigned int table_index;
 	link_object *temp_link;
-	int temp_result;
+	int temp_result, loop_index;
 	OBJECT *obj = OBJECTHDR(this);
 	complex temp_current_inj[3];
+	complex delta_shunt[3];
+	complex delta_current[3];
 
 	//Don't do anything if we've already been "updated"
 	if (current_accumulated==false)
@@ -2802,6 +2951,14 @@ int node::NR_current_update(bool postpass, bool parentcall)
 				if (has_phase(PHASE_S))	//Triplex slightly different
 					ParToLoad->current12-=last_child_current12;
 
+				//Remove power and "load" characteristics for explicit delta/wye values
+				for (loop_index=0; loop_index<6; loop_index++)
+				{
+					ParToLoad->power_dy[loop_index] -= last_child_power_dy[loop_index][0];		//Power
+					ParToLoad->shunt_dy[loop_index] -= last_child_power_dy[loop_index][1];		//Shunt
+					ParToLoad->current_dy[loop_index] -= last_child_power_dy[loop_index][2];	//Current
+				}
+
 				if (!parentcall)	//Wasn't a parent call - unlock us so our siblings get a shot
 				{
 					//Unlock the parent now that it is done
@@ -2818,9 +2975,49 @@ int node::NR_current_update(bool postpass, bool parentcall)
 				//Current
 				last_child_power[2][0] = last_child_power[2][1] = last_child_power[2][2] = 0.0;
 
+				//Zero the last power accumulators
+				for (loop_index=0; loop_index<6; loop_index++)
+				{
+					last_child_power_dy[loop_index][0] = complex(0.0);	//Power
+					last_child_power_dy[loop_index][1] = complex(0.0);	//Shunt
+					last_child_power_dy[loop_index][2] = complex(0.0);	//Current
+				}
+
 				//Current 12 if we are triplex
 				if (has_phase(PHASE_S))
 					last_child_current12 = 0.0;
+			}
+			else if (SubNode==DIFF_CHILD)	//Differently connected 
+			{
+				node *ParToLoad = OBJECTDATA(SubNodeParent,node);
+
+				if (!parentcall)	//We weren't called by our parent, so lock us to create sibling rivalry!
+				{
+					//Lock the parent for writing
+					LOCK_OBJECT(SubNodeParent);
+				}
+
+				//Remove power and "load" characteristics for explicit delta/wye values
+				for (loop_index=0; loop_index<6; loop_index++)
+				{
+					ParToLoad->power_dy[loop_index] -= last_child_power_dy[loop_index][0];		//Power
+					ParToLoad->shunt_dy[loop_index] -= last_child_power_dy[loop_index][1];		//Shunt
+					ParToLoad->current_dy[loop_index] -= last_child_power_dy[loop_index][2];	//Current
+				}
+
+				if (!parentcall)	//Wasn't a parent call - unlock us so our siblings get a shot
+				{
+					//Unlock the parent now that it is done
+					UNLOCK_OBJECT(SubNodeParent);
+				}
+
+				//Zero the last power accumulators
+				for (loop_index=0; loop_index<6; loop_index++)
+				{
+					last_child_power_dy[loop_index][0] = complex(0.0);	//Power
+					last_child_power_dy[loop_index][1] = complex(0.0);	//Shunt
+					last_child_power_dy[loop_index][2] = complex(0.0);	//Current
+				}
 			}
 
 			if ((SubNode==CHILD) || (SubNode==DIFF_CHILD))	//Child Voltage Updates
@@ -2876,9 +3073,6 @@ int node::NR_current_update(bool postpass, bool parentcall)
 
 		if (has_phase(PHASE_D))	//Delta connection
 		{
-			complex delta_shunt[3];
-			complex delta_current[3];
-
 			//Convert delta connected impedance
 			delta_shunt[0] = voltageAB*shunt[0];
 			delta_shunt[1] = voltageBC*shunt[1];
@@ -2981,6 +3175,32 @@ int node::NR_current_update(bool postpass, bool parentcall)
 			temp_current_inj[2] = d[2];
 		}
 
+		//Explicit delta-wye portions (do both) -- make sure not triplex though
+		if (!(has_phase(PHASE_S)))
+		{
+			//Do delta-connected portions
+
+			//Convert delta connected impedance
+			delta_shunt[0] = voltaged[0]*shunt_dy[0];
+			delta_shunt[1] = voltaged[1]*shunt_dy[1];
+			delta_shunt[2] = voltaged[2]*shunt_dy[2];
+
+			//Convert delta connected power
+			delta_current[0]= (voltaged[0]==0) ? complex(0,0) : ~(power_dy[0]/voltaged[0]);
+			delta_current[1]= (voltaged[1]==0) ? complex(0,0) : ~(power_dy[1]/voltaged[1]);
+			delta_current[2]= (voltaged[2]==0) ? complex(0,0) : ~(power_dy[2]/voltaged[2]);
+
+			//Put into accumulator
+			temp_current_inj[0] += delta_shunt[0]-delta_shunt[2] + delta_current[0]-delta_current[2] + current_dy[0]-current_dy[2];
+			temp_current_inj[1] += delta_shunt[1]-delta_shunt[0] + delta_current[1]-delta_current[0] + current_dy[1]-current_dy[0];
+			temp_current_inj[2] += delta_shunt[2]-delta_shunt[1] + delta_current[2]-delta_current[1] + current_dy[2]-current_dy[1];
+
+			//Now put in Wye components
+			temp_current_inj[0] += ((voltage[0]==0) ? complex(0,0) : ~(power_dy[3]/voltage[0])) + voltage[0]*shunt_dy[3] + current_dy[3];
+			temp_current_inj[1] += ((voltage[1]==0) ? complex(0,0) : ~(power_dy[4]/voltage[1])) + voltage[1]*shunt_dy[4] + current_dy[4];
+			temp_current_inj[2] += ((voltage[2]==0) ? complex(0,0) : ~(power_dy[5]/voltage[2])) + voltage[2]*shunt_dy[5] + current_dy[5];
+		}//End both delta/wye
+
 		//If we are a child, apply our current injection directly up to our parent - links accumulate afterwards now because they bypass child relationships
 		if ((SubNode==CHILD) || (SubNode==DIFF_CHILD))
 		{
@@ -3058,7 +3278,7 @@ int node::NR_current_update(bool postpass, bool parentcall)
 //Module-level call
 SIMULATIONMODE node::inter_deltaupdate_node(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
 {
-	unsigned char pass_mod;
+	//unsigned char pass_mod;
 	OBJECT *hdr = OBJECTHDR(this);
 
 	if (interupdate_pos == false)	//Before powerflow call
@@ -3076,29 +3296,33 @@ SIMULATIONMODE node::inter_deltaupdate_node(unsigned int64 delta_time, unsigned 
 		//Perform postsync-like updates on the values
 		BOTH_node_postsync_fxn(hdr);
 
-		//Do deltamode-related logic
-		if (bustype==SWING)	//We're the SWING bus, control our destiny (which is really controlled elsewhere)
-		{
-			//See what we're on
-			pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
+		//No control required at this time - powerflow defers to the whims of other modules
+		//Code below implements predictor/corrector-type logic, even though it effectively does nothing
+		return SM_EVENT;
 
-			//Check pass
-			if (pass_mod==0)	//Predictor pass
-			{
-				return SM_DELTA_ITER;	//Reiterate - to get us to corrector pass
-			}
-			else	//Corrector pass
-			{
-				//As of right now, we're always ready to leave
-				//Other objects will dictate if we stay (powerflow is indifferent)
-				return SM_EVENT;
-			}//End corrector pass
-		}//End SWING bus handling
-		else	//Normal bus
-		{
-			return SM_EVENT;	//Normal nodes want event mode all the time here - SWING bus will
-								//control the reiteration process for pred/corr steps
-		}
+		////Do deltamode-related logic
+		//if (bustype==SWING)	//We're the SWING bus, control our destiny (which is really controlled elsewhere)
+		//{
+		//	//See what we're on
+		//	pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
+
+		//	//Check pass
+		//	if (pass_mod==0)	//Predictor pass
+		//	{
+		//		return SM_DELTA_ITER;	//Reiterate - to get us to corrector pass
+		//	}
+		//	else	//Corrector pass
+		//	{
+		//		//As of right now, we're always ready to leave
+		//		//Other objects will dictate if we stay (powerflow is indifferent)
+		//		return SM_EVENT;
+		//	}//End corrector pass
+		//}//End SWING bus handling
+		//else	//Normal bus
+		//{
+		//	return SM_EVENT;	//Normal nodes want event mode all the time here - SWING bus will
+		//						//control the reiteration process for pred/corr steps
+		//}
 	}
 }
 

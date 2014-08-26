@@ -1,4 +1,4 @@
-/** $Id: load.cpp 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id: load.cpp 1182 2008-12-22 22:08:36Z dchassin $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file load.cpp
 	@addtogroup load
@@ -67,6 +67,63 @@ load::load(MODULE *mod) : node(mod)
 			PT_double, "constant_impedance_A_reac[Ohm]", PADDR(constant_impedance[0].Im()),PT_DESCRIPTION,"constant impedance load on phase A, imaginary only, specified as Ohms",
 			PT_double, "constant_impedance_B_reac[Ohm]", PADDR(constant_impedance[1].Im()),PT_DESCRIPTION,"constant impedance load on phase B, imaginary only, specified as Ohms",
 			PT_double, "constant_impedance_C_reac[Ohm]", PADDR(constant_impedance[2].Im()),PT_DESCRIPTION,"constant impedance load on phase C, imaginary only, specified as Ohms",
+
+			PT_complex, "constant_power_AN[VA]", PADDR(constant_power_dy[3]),PT_DESCRIPTION,"constant power wye-connected load on phase A, specified as VA",
+			PT_complex, "constant_power_BN[VA]", PADDR(constant_power_dy[4]),PT_DESCRIPTION,"constant power wye-connected load on phase B, specified as VA",
+			PT_complex, "constant_power_CN[VA]", PADDR(constant_power_dy[5]),PT_DESCRIPTION,"constant power wye-connected load on phase C, specified as VA",
+			PT_double, "constant_power_AN_real[W]", PADDR(constant_power_dy[3].Re()),PT_DESCRIPTION,"constant power wye-connected load on phase A, real only, specified as W",
+			PT_double, "constant_power_BN_real[W]", PADDR(constant_power_dy[4].Re()),PT_DESCRIPTION,"constant power wye-connected load on phase B, real only, specified as W",
+			PT_double, "constant_power_CN_real[W]", PADDR(constant_power_dy[5].Re()),PT_DESCRIPTION,"constant power wye-connected load on phase C, real only, specified as W",
+			PT_double, "constant_power_AN_reac[VAr]", PADDR(constant_power_dy[3].Im()),PT_DESCRIPTION,"constant power wye-connected load on phase A, imaginary only, specified as VAr",
+			PT_double, "constant_power_BN_reac[VAr]", PADDR(constant_power_dy[4].Im()),PT_DESCRIPTION,"constant power wye-connected load on phase B, imaginary only, specified as VAr",
+			PT_double, "constant_power_CN_reac[VAr]", PADDR(constant_power_dy[5].Im()),PT_DESCRIPTION,"constant power wye-connected load on phase C, imaginary only, specified as VAr",
+			PT_complex, "constant_current_AN[A]", PADDR(constant_current_dy[3]),PT_DESCRIPTION,"constant current wye-connected load on phase A, specified as Amps",
+			PT_complex, "constant_current_BN[A]", PADDR(constant_current_dy[4]),PT_DESCRIPTION,"constant current wye-connected load on phase B, specified as Amps",
+			PT_complex, "constant_current_CN[A]", PADDR(constant_current_dy[5]),PT_DESCRIPTION,"constant current wye-connected load on phase C, specified as Amps",
+			PT_double, "constant_current_AN_real[A]", PADDR(constant_current_dy[3].Re()),PT_DESCRIPTION,"constant current wye-connected load on phase A, real only, specified as Amps",
+			PT_double, "constant_current_BN_real[A]", PADDR(constant_current_dy[4].Re()),PT_DESCRIPTION,"constant current wye-connected load on phase B, real only, specified as Amps",
+			PT_double, "constant_current_CN_real[A]", PADDR(constant_current_dy[5].Re()),PT_DESCRIPTION,"constant current wye-connected load on phase C, real only, specified as Amps",
+			PT_double, "constant_current_AN_reac[A]", PADDR(constant_current_dy[3].Im()),PT_DESCRIPTION,"constant current wye-connected load on phase A, imaginary only, specified as Amps",
+			PT_double, "constant_current_BN_reac[A]", PADDR(constant_current_dy[4].Im()),PT_DESCRIPTION,"constant current wye-connected load on phase B, imaginary only, specified as Amps",
+			PT_double, "constant_current_CN_reac[A]", PADDR(constant_current_dy[5].Im()),PT_DESCRIPTION,"constant current wye-connected load on phase C, imaginary only, specified as Amps",
+			PT_complex, "constant_impedance_AN[Ohm]", PADDR(constant_impedance_dy[3]),PT_DESCRIPTION,"constant impedance wye-connected load on phase A, specified as Ohms",
+			PT_complex, "constant_impedance_BN[Ohm]", PADDR(constant_impedance_dy[4]),PT_DESCRIPTION,"constant impedance wye-connected load on phase B, specified as Ohms",
+			PT_complex, "constant_impedance_CN[Ohm]", PADDR(constant_impedance_dy[5]),PT_DESCRIPTION,"constant impedance wye-connected load on phase C, specified as Ohms",
+			PT_double, "constant_impedance_AN_real[Ohm]", PADDR(constant_impedance_dy[3].Re()),PT_DESCRIPTION,"constant impedance wye-connected load on phase A, real only, specified as Ohms",
+			PT_double, "constant_impedance_BN_real[Ohm]", PADDR(constant_impedance_dy[4].Re()),PT_DESCRIPTION,"constant impedance wye-connected load on phase B, real only, specified as Ohms",
+			PT_double, "constant_impedance_CN_real[Ohm]", PADDR(constant_impedance_dy[5].Re()),PT_DESCRIPTION,"constant impedance wye-connected load on phase C, real only, specified as Ohms",
+			PT_double, "constant_impedance_AN_reac[Ohm]", PADDR(constant_impedance_dy[3].Im()),PT_DESCRIPTION,"constant impedance wye-connected load on phase A, imaginary only, specified as Ohms",
+			PT_double, "constant_impedance_BN_reac[Ohm]", PADDR(constant_impedance_dy[4].Im()),PT_DESCRIPTION,"constant impedance wye-connected load on phase B, imaginary only, specified as Ohms",
+			PT_double, "constant_impedance_CN_reac[Ohm]", PADDR(constant_impedance_dy[5].Im()),PT_DESCRIPTION,"constant impedance wye-connected load on phase C, imaginary only, specified as Ohms",
+
+			PT_complex, "constant_power_AB[VA]", PADDR(constant_power_dy[0]),PT_DESCRIPTION,"constant power delta-connected load on phase A, specified as VA",
+			PT_complex, "constant_power_BC[VA]", PADDR(constant_power_dy[1]),PT_DESCRIPTION,"constant power delta-connected load on phase B, specified as VA",
+			PT_complex, "constant_power_CA[VA]", PADDR(constant_power_dy[2]),PT_DESCRIPTION,"constant power delta-connected load on phase C, specified as VA",
+			PT_double, "constant_power_AB_real[W]", PADDR(constant_power_dy[0].Re()),PT_DESCRIPTION,"constant power delta-connected load on phase A, real only, specified as W",
+			PT_double, "constant_power_BC_real[W]", PADDR(constant_power_dy[1].Re()),PT_DESCRIPTION,"constant power delta-connected load on phase B, real only, specified as W",
+			PT_double, "constant_power_CA_real[W]", PADDR(constant_power_dy[2].Re()),PT_DESCRIPTION,"constant power delta-connected load on phase C, real only, specified as W",
+			PT_double, "constant_power_AB_reac[VAr]", PADDR(constant_power_dy[0].Im()),PT_DESCRIPTION,"constant power delta-connected load on phase A, imaginary only, specified as VAr",
+			PT_double, "constant_power_BC_reac[VAr]", PADDR(constant_power_dy[1].Im()),PT_DESCRIPTION,"constant power delta-connected load on phase B, imaginary only, specified as VAr",
+			PT_double, "constant_power_CA_reac[VAr]", PADDR(constant_power_dy[2].Im()),PT_DESCRIPTION,"constant power delta-connected load on phase C, imaginary only, specified as VAr",
+			PT_complex, "constant_current_AB[A]", PADDR(constant_current_dy[0]),PT_DESCRIPTION,"constant current delta-connected load on phase A, specified as Amps",
+			PT_complex, "constant_current_BC[A]", PADDR(constant_current_dy[1]),PT_DESCRIPTION,"constant current delta-connected load on phase B, specified as Amps",
+			PT_complex, "constant_current_CA[A]", PADDR(constant_current_dy[2]),PT_DESCRIPTION,"constant current delta-connected load on phase C, specified as Amps",
+			PT_double, "constant_current_AB_real[A]", PADDR(constant_current_dy[0].Re()),PT_DESCRIPTION,"constant current delta-connected load on phase A, real only, specified as Amps",
+			PT_double, "constant_current_BC_real[A]", PADDR(constant_current_dy[1].Re()),PT_DESCRIPTION,"constant current delta-connected load on phase B, real only, specified as Amps",
+			PT_double, "constant_current_CA_real[A]", PADDR(constant_current_dy[2].Re()),PT_DESCRIPTION,"constant current delta-connected load on phase C, real only, specified as Amps",
+			PT_double, "constant_current_AB_reac[A]", PADDR(constant_current_dy[0].Im()),PT_DESCRIPTION,"constant current delta-connected load on phase A, imaginary only, specified as Amps",
+			PT_double, "constant_current_BC_reac[A]", PADDR(constant_current_dy[1].Im()),PT_DESCRIPTION,"constant current delta-connected load on phase B, imaginary only, specified as Amps",
+			PT_double, "constant_current_CA_reac[A]", PADDR(constant_current_dy[2].Im()),PT_DESCRIPTION,"constant current delta-connected load on phase C, imaginary only, specified as Amps",
+			PT_complex, "constant_impedance_AB[Ohm]", PADDR(constant_impedance_dy[0]),PT_DESCRIPTION,"constant impedance delta-connected load on phase A, specified as Ohms",
+			PT_complex, "constant_impedance_BC[Ohm]", PADDR(constant_impedance_dy[1]),PT_DESCRIPTION,"constant impedance delta-connected load on phase B, specified as Ohms",
+			PT_complex, "constant_impedance_CA[Ohm]", PADDR(constant_impedance_dy[2]),PT_DESCRIPTION,"constant impedance delta-connected load on phase C, specified as Ohms",
+			PT_double, "constant_impedance_AB_real[Ohm]", PADDR(constant_impedance_dy[0].Re()),PT_DESCRIPTION,"constant impedance delta-connected load on phase A, real only, specified as Ohms",
+			PT_double, "constant_impedance_BC_real[Ohm]", PADDR(constant_impedance_dy[1].Re()),PT_DESCRIPTION,"constant impedance delta-connected load on phase B, real only, specified as Ohms",
+			PT_double, "constant_impedance_CA_real[Ohm]", PADDR(constant_impedance_dy[2].Re()),PT_DESCRIPTION,"constant impedance delta-connected load on phase C, real only, specified as Ohms",
+			PT_double, "constant_impedance_AB_reac[Ohm]", PADDR(constant_impedance_dy[0].Im()),PT_DESCRIPTION,"constant impedance delta-connected load on phase A, imaginary only, specified as Ohms",
+			PT_double, "constant_impedance_BC_reac[Ohm]", PADDR(constant_impedance_dy[1].Im()),PT_DESCRIPTION,"constant impedance delta-connected load on phase B, imaginary only, specified as Ohms",
+			PT_double, "constant_impedance_CA_reac[Ohm]", PADDR(constant_impedance_dy[2].Im()),PT_DESCRIPTION,"constant impedance delta-connected load on phase C, imaginary only, specified as Ohms",
+
 			PT_complex,	"measured_voltage_A",PADDR(measured_voltage_A),PT_DESCRIPTION,"current measured voltage on phase A",
 			PT_complex,	"measured_voltage_B",PADDR(measured_voltage_B),PT_DESCRIPTION,"current measured voltage on phase B",
 			PT_complex,	"measured_voltage_C",PADDR(measured_voltage_C),PT_DESCRIPTION,"current measured voltage on phase C",
@@ -132,6 +189,19 @@ int load::create(void)
 	load_class = LC_UNKNOWN;
 	three_phase_protect = false;	//By default, let all three phases go
 
+	//Zero all loads (get the ones missed above)
+	constant_power[0] = constant_power[1] = constant_power[2] = 0.0;
+	constant_current[0] = constant_current[1] = constant_current[2] = 0.0;
+	constant_impedance[0] = constant_impedance[1] = constant_impedance[2] = 0.0;
+
+	constant_power_dy[0] = constant_power_dy[1] = constant_power_dy[2] = 0.0;
+	constant_current_dy[0] = constant_current_dy[1] = constant_current_dy[2] = 0.0;
+	constant_impedance_dy[0] = constant_impedance_dy[1] = constant_impedance_dy[2] = 0.0;
+
+	constant_power_dy[3] = constant_power_dy[4] = constant_power_dy[5] = 0.0;
+	constant_current_dy[3] = constant_current_dy[4] = constant_current_dy[5] = 0.0;
+	constant_impedance_dy[3] = constant_impedance_dy[4] = constant_impedance_dy[5] = 0.0;
+
 	//Flag us as a load
 	node_type = LOAD_NODE;
 
@@ -142,6 +212,7 @@ int load::create(void)
 int load::init(OBJECT *parent)
 {
 	char temp_buff[128];
+	OBJECT *obj = OBJECTHDR(this);
 	
 	if (has_phase(PHASE_S))
 	{
@@ -183,18 +254,42 @@ int load::init(OBJECT *parent)
 		}
 	}
 
+	if ((obj->flags & OF_DELTAMODE) == OF_DELTAMODE)	//Deltamode warning check
+	{
+		if ((constant_current[0] != 0.0) || (constant_current[1] != 0.0) || (constant_current[2] != 0.0))
+		{
+			gl_warning("load:%s - constant_current loads in deltamode are handled slightly different", obj->name ? obj->name : "unnamed");
+			/*  TROUBLESHOOT
+			Due to the potential for moving reference frame of deltamode systems, constant current loads are computed using a scaled
+			per-unit approach, rather than the fixed constant_current value.  You may get results that differ from traditional GridLAB-D
+			super-second or static powerflow results in this mode.
+			*/
+		}
+	}
+
 	return node::init(parent);
 }
 
 TIMESTAMP load::presync(TIMESTAMP t0)
 {
-	if ((solver_method!=SM_FBS) && (SubNode==PARENT))	//Need to do something slightly different with GS and parented node
+	if ((solver_method!=SM_FBS) && ((SubNode==PARENT) || (SubNode==DIFF_PARENT)))	//Need to do something slightly different with NR and parented node
 	{
-		shunt[0] = shunt[1] = shunt[2] = 0.0;
-		power[0] = power[1] = power[2] = 0.0;
-		current[0] = current[1] = current[2] = 0.0;
+		if (SubNode == PARENT)
+		{
+			shunt[0] = shunt[1] = shunt[2] = 0.0;
+			power[0] = power[1] = power[2] = 0.0;
+			current[0] = current[1] = current[2] = 0.0;
+		}
+
+		//Explicitly specified load portions
+		shunt_dy[0] = shunt_dy[1] = shunt_dy[2] = 0.0;
+		shunt_dy[3] = shunt_dy[4] = shunt_dy[5] = 0.0;
+		power_dy[0] = power_dy[1] = power_dy[2] = 0.0;
+		power_dy[3] = power_dy[4] = power_dy[5] = 0.0;
+		current_dy[0] = current_dy[1] = current_dy[2] = 0.0;
+		current_dy[3] = current_dy[4] = current_dy[5] = 0.0;
 	}
-	
+
 	//Must be at the bottom, or the new values will be calculated after the fact
 	TIMESTAMP result = node::presync(t0);
 	
@@ -242,6 +337,7 @@ TIMESTAMP load::postsync(TIMESTAMP t0)
 void load::load_update_fxn(bool fault_mode)
 {
 	bool all_three_phases;
+	int index_var;
 
 	for (int index=0; index<3; index++)
 	{
@@ -341,24 +437,62 @@ void load::load_update_fxn(bool fault_mode)
 
 	if (fault_mode == false)	//Not reliability mode - normal mode
 	{
-		if ((solver_method!=SM_FBS) && (SubNode==PARENT))	//Need to do something slightly different with GS/NR and parented load
+		if ((solver_method!=SM_FBS) && ((SubNode==PARENT) || (SubNode==DIFF_PARENT)))	//Need to do something slightly different with GS/NR and parented load
 		{													//associated with change due to player methods
+			if (SubNode == PARENT)	//Normal parent gets one routine
+			{
+				if (!(constant_impedance[0].IsZero()))
+					shunt[0] += complex(1.0)/constant_impedance[0];
 
-			if (!(constant_impedance[0].IsZero()))
-				shunt[0] += complex(1.0)/constant_impedance[0];
+				if (!(constant_impedance[1].IsZero()))
+					shunt[1] += complex(1.0)/constant_impedance[1];
+				
+				if (!(constant_impedance[2].IsZero()))
+					shunt[2] += complex(1.0)/constant_impedance[2];
 
-			if (!(constant_impedance[1].IsZero()))
-				shunt[1] += complex(1.0)/constant_impedance[1];
-			
-			if (!(constant_impedance[2].IsZero()))
-				shunt[2] += complex(1.0)/constant_impedance[2];
-			
-			power[0] += constant_power[0];
-			power[1] += constant_power[1];	
-			power[2] += constant_power[2];
-			current[0] += constant_current[0];
-			current[1] += constant_current[1];
-			current[2] += constant_current[2];
+				power[0] += constant_power[0];
+				power[1] += constant_power[1];	
+				power[2] += constant_power[2];
+
+				current[0] += constant_current[0];
+				current[1] += constant_current[1];
+				current[2] += constant_current[2];
+			}
+			else //DIFF_PARENT
+			{
+				if(constant_impedance[0].IsZero())
+					shunt[0] = 0.0;
+				else
+					shunt[0] = complex(1)/constant_impedance[0];
+
+				if(constant_impedance[1].IsZero())
+					shunt[1] = 0.0;
+				else
+					shunt[1] = complex(1)/constant_impedance[1];
+				
+				if(constant_impedance[2].IsZero())
+					shunt[2] = 0.0;
+				else
+					shunt[2] = complex(1)/constant_impedance[2];
+				
+				power[0] = constant_power[0];
+				power[1] = constant_power[1];	
+				power[2] = constant_power[2];
+				current[0] = constant_current[0];
+				current[1] = constant_current[1];
+				current[2] = constant_current[2];
+			}
+
+			//Do the same for explicit delta/wye connections -- both parent types get this
+			for (index_var=0; index_var<6; index_var++)
+			{
+				if (!(constant_impedance_dy[index_var].IsZero()))
+					shunt_dy[index_var] += complex(1.0)/constant_impedance_dy[index_var];
+
+				power_dy[index_var] += constant_power_dy[index_var];
+
+				current_dy[index_var] += constant_current_dy[index_var];
+			}
 		}
 		else
 		{
@@ -380,9 +514,23 @@ void load::load_update_fxn(bool fault_mode)
 			power[0] = constant_power[0];
 			power[1] = constant_power[1];	
 			power[2] = constant_power[2];
+
 			current[0] = constant_current[0];
 			current[1] = constant_current[1];
 			current[2] = constant_current[2];
+
+			//Do the same for explicit delta/wye connections - handle the same way (draconian overwrites!)
+			for (index_var=0; index_var<6; index_var++)
+			{
+				if (constant_impedance_dy[index_var].IsZero())
+					shunt_dy[index_var] = 0.0;
+				else
+					shunt_dy[index_var] = complex(1.0)/constant_impedance_dy[index_var];
+
+				power_dy[index_var] = constant_power_dy[index_var];
+
+				current_dy[index_var] = constant_current_dy[index_var];
+			}
 		}
 	}//End normal mode
 	else	//Reliability mode
@@ -414,24 +562,63 @@ void load::load_update_fxn(bool fault_mode)
 
 		if (all_three_phases == true)	//Handle all phases correctly
 		{
-			if ((solver_method!=SM_FBS) && (SubNode==PARENT))	//Need to do something slightly different with GS/NR and parented load
+			if ((solver_method!=SM_FBS) && ((SubNode==PARENT) || (SubNode==DIFF_PARENT)))	//Need to do something slightly different with GS/NR and parented load
 			{													//associated with change due to player methods
 
-				if (!(constant_impedance[0].IsZero()))
-					shunt[0] += complex(1.0)/constant_impedance[0];
+				if (SubNode == PARENT)	//Normal parents need this
+				{
+					if (!(constant_impedance[0].IsZero()))
+						shunt[0] += complex(1.0)/constant_impedance[0];
 
-				if (!(constant_impedance[1].IsZero()))
-					shunt[1] += complex(1.0)/constant_impedance[1];
-				
-				if (!(constant_impedance[2].IsZero()))
-					shunt[2] += complex(1.0)/constant_impedance[2];
-				
-				power[0] += constant_power[0];
-				power[1] += constant_power[1];	
-				power[2] += constant_power[2];
-				current[0] += constant_current[0];
-				current[1] += constant_current[1];
-				current[2] += constant_current[2];
+					if (!(constant_impedance[1].IsZero()))
+						shunt[1] += complex(1.0)/constant_impedance[1];
+					
+					if (!(constant_impedance[2].IsZero()))
+						shunt[2] += complex(1.0)/constant_impedance[2];
+					
+					power[0] += constant_power[0];
+					power[1] += constant_power[1];	
+					power[2] += constant_power[2];
+
+					current[0] += constant_current[0];
+					current[1] += constant_current[1];
+					current[2] += constant_current[2];
+				}
+				else //DIFF_PARENT
+				{
+					if(constant_impedance[0].IsZero())
+						shunt[0] = 0.0;
+					else
+						shunt[0] = complex(1)/constant_impedance[0];
+
+					if(constant_impedance[1].IsZero())
+						shunt[1] = 0.0;
+					else
+						shunt[1] = complex(1)/constant_impedance[1];
+					
+					if(constant_impedance[2].IsZero())
+						shunt[2] = 0.0;
+					else
+						shunt[2] = complex(1)/constant_impedance[2];
+					
+					power[0] = constant_power[0];
+					power[1] = constant_power[1];	
+					power[2] = constant_power[2];
+					current[0] = constant_current[0];
+					current[1] = constant_current[1];
+					current[2] = constant_current[2];
+				}
+
+				//Do the same for explicit delta/wye connections -- both parent types handled the same
+				for (index_var=0; index_var<6; index_var++)
+				{
+					if (!(constant_impedance_dy[index_var].IsZero()))
+						shunt_dy[index_var] += complex(1.0)/constant_impedance_dy[index_var];
+
+					power_dy[index_var] += constant_power_dy[index_var];
+
+					current_dy[index_var] += constant_current_dy[index_var];
+				}
 			}
 			else
 			{
@@ -453,9 +640,23 @@ void load::load_update_fxn(bool fault_mode)
 				power[0] = constant_power[0];
 				power[1] = constant_power[1];	
 				power[2] = constant_power[2];
+
 				current[0] = constant_current[0];
 				current[1] = constant_current[1];
 				current[2] = constant_current[2];
+
+				//Do the same for explicit delta/wye connections - handle the same way (draconian overwrites!)
+				for (index_var=0; index_var<6; index_var++)
+				{
+					if (constant_impedance_dy[index_var].IsZero())
+						shunt_dy[index_var] = 0.0;
+					else
+						shunt_dy[index_var] = complex(1.0)/constant_impedance_dy[index_var];
+
+					power_dy[index_var] = constant_power_dy[index_var];
+
+					current_dy[index_var] = constant_current_dy[index_var];
+				}
 			}
 		}//Handle all three
 		else	//Zero all three - may cause issues with P/C loads, but why parent a load to a load??
@@ -469,6 +670,15 @@ void load::load_update_fxn(bool fault_mode)
 			current[0] = 0.0;
 			current[1] = 0.0;
 			current[2] = 0.0;
+
+			//Zero out all of the explicit delta/wye connections as well
+			//Do the same for explicit delta/wye connections - handle the same way (draconian overwrites!)
+			for (index_var=0; index_var<6; index_var++)
+			{
+				shunt_dy[index_var] = complex(0.0,0.0);
+				power_dy[index_var] = complex(0.0,0.0);
+				current_dy[index_var] = complex(0.0,0.0);
+			}
 		}//End zero
 	}//End reliability mode
 }
@@ -476,6 +686,7 @@ void load::load_update_fxn(bool fault_mode)
 //Notify function
 //NOTE: The NR-based notify stuff may no longer be needed after NR is "flattened", since it will
 //      effectively be like FBS at that point.
+//Second NOTE: This function doesn't incorporate the newer explicit delta/wye connected load structure (TODO)
 int load::notify(int update_mode, PROPERTY *prop, char *value)
 {
 	complex diff_val;
@@ -568,7 +779,7 @@ int load::notify(int update_mode, PROPERTY *prop, char *value)
 //Module-level call
 SIMULATIONMODE load::inter_deltaupdate_load(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
 {
-	unsigned char pass_mod;
+	//unsigned char pass_mod;
 	OBJECT *hdr = OBJECTHDR(this);
 	bool fault_mode;
 
@@ -612,29 +823,33 @@ SIMULATIONMODE load::inter_deltaupdate_load(unsigned int64 delta_time, unsigned 
 		measured_voltage_BC = measured_voltage_B-measured_voltage_C;
 		measured_voltage_CA = measured_voltage_C-measured_voltage_A;
 
-		//Do deltamode-related logic
-		if (bustype==SWING)	//We're the SWING bus, control our destiny (which is really controlled elsewhere)
-		{
-			//See what we're on
-			pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
+		//No control required at this time - powerflow defers to the whims of other modules
+		//Code below implements predictor/corrector-type logic, even though it effectively does nothing
+		return SM_EVENT;
 
-			//Check pass
-			if (pass_mod==0)	//Predictor pass
-			{
-				return SM_DELTA_ITER;	//Reiterate - to get us to corrector pass
-			}
-			else	//Corrector pass
-			{
-				//As of right now, we're always ready to leave
-				//Other objects will dictate if we stay (powerflow is indifferent)
-				return SM_EVENT;
-			}//End corrector pass
-		}//End SWING bus handling
-		else	//Normal bus
-		{
-			return SM_EVENT;	//Normal nodes want event mode all the time here - SWING bus will
-								//control the reiteration process for pred/corr steps
-		}
+		////Do deltamode-related logic
+		//if (bustype==SWING)	//We're the SWING bus, control our destiny (which is really controlled elsewhere)
+		//{
+		//	//See what we're on
+		//	pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
+
+		//	//Check pass
+		//	if (pass_mod==0)	//Predictor pass
+		//	{
+		//		return SM_DELTA_ITER;	//Reiterate - to get us to corrector pass
+		//	}
+		//	else	//Corrector pass
+		//	{
+		//		//As of right now, we're always ready to leave
+		//		//Other objects will dictate if we stay (powerflow is indifferent)
+		//		return SM_EVENT;
+		//	}//End corrector pass
+		//}//End SWING bus handling
+		//else	//Normal bus
+		//{
+		//	return SM_EVENT;	//Normal nodes want event mode all the time here - SWING bus will
+		//						//control the reiteration process for pred/corr steps
+		//}
 	}
 }
 

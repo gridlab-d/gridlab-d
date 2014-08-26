@@ -16,6 +16,9 @@ typedef struct  {
 	complex *S;				///< constant power
 	complex *Y;				///< constant admittance (impedance loads)
 	complex *I;				///< constant current
+	complex *S_dy;			///< constant power -- explicit delta/wye values
+	complex *Y_dy;			///< constant admittance -- explicit delta/wye values
+	complex *I_dy;			///< constant current -- explicit delta/wye values
 	complex *full_Y;		///< constant admittance - full 3x3 table (used by dynamic loads) - set to NULL for loads that don't matter
 	complex *full_Y_all;	///< Admittance - self admittance value for "static" portions - used by dynamic loads
 	complex *extra_var;		///< Extra variable - used mainly for current12 in triplex and "differently-connected" children

@@ -1,4 +1,4 @@
-/** $Id: triplex_load.cpp 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id: triplex_load.cpp 1182 2012-7-1 2:13 PDT fish334 $
 	Copyright (C) 2013 Battelle Memorial Institute
 	@file triplex_load.cpp
 	@addtogroup triplex_load
@@ -98,6 +98,14 @@ triplex_load::triplex_load(MODULE *mod) : triplex_node(mod)
 			PT_double, "impedance_fraction_12[pu]",PADDR(impedance_fraction[2]),PT_DESCRIPTION,"this is the constant impedance fraction of base power on phase 12",
 
          	NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+
+			//Publish deltamode functions
+			if (gl_publish_function(oclass,	"delta_linkage_node", (FUNCTIONADDR)delta_linkage)==NULL)
+				GL_THROW("Unable to publish triplex_load delta_linkage function");
+			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_triplex_load)==NULL)
+				GL_THROW("Unable to publish triplex_load deltamode function");
+			if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
+				GL_THROW("Unable to publish triplex_load deltamode function");
     }
 }
 
@@ -156,7 +164,7 @@ TIMESTAMP triplex_load::sync(TIMESTAMP t0)
 		fault_mode = true;
 
 	//Functionalized so deltamode can parttake
-	load_update_fxn();
+	triplex_load_update_fxn();
 
 	//Must be at the bottom, or the new values will be calculated after the fact
 	TIMESTAMP result = triplex_node::sync(t0);
@@ -179,7 +187,7 @@ TIMESTAMP triplex_load::postsync(TIMESTAMP t0)
 
 //Functional call to sync-level load updates
 //Here primarily so deltamode players can actually influence things
-void triplex_load::load_update_fxn()
+void triplex_load::triplex_load_update_fxn()
 {
 	complex volt = complex(0,0);
 
@@ -444,6 +452,89 @@ void triplex_load::load_update_fxn()
 	}
 }
 
+//////////////////////////////////////////////////////////////////////////
+// IMPLEMENTATION OF DELTA MODE
+//////////////////////////////////////////////////////////////////////////
+//Module-level call
+SIMULATIONMODE triplex_load::inter_deltaupdate_triplex_load(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
+{
+	//unsigned char pass_mod;
+	OBJECT *hdr = OBJECTHDR(this);
+	bool fault_mode;
+
+	if (interupdate_pos == false)	//Before powerflow call
+	{
+		//Triplex_load presync items
+			if ((solver_method!=SM_FBS) && (SubNode==PARENT))	//Need to do something slightly different with GS and parented node
+			{
+				shunt[0] = shunt[1] = shunt[2] = 0.0;
+				power[0] = power[1] = power[2] = 0.0;
+				current[0] = current[1] = current[2] = 0.0;
+			}
+
+		//Call triplex-specific call
+		BOTH_triplex_node_presync_fxn();
+
+		//Call node presync-equivalent items
+		NR_node_presync_fxn();
+
+		//Triplex_load-specific sync calls
+			//See if we're reliability-enabled
+			if (fault_check_object == NULL)
+				fault_mode = false;
+			else
+				fault_mode = true;
+
+			//Functionalized so deltamode can parttake
+			triplex_load_update_fxn();
+
+		//Call sync-equivalent of triplex portion first
+		BOTH_triplex_node_sync_fxn();
+
+		//Call node sync-equivalent items (solver occurs at end of sync)
+		NR_node_sync_fxn(hdr);
+
+		return SM_DELTA;	//Just return something other than SM_ERROR for this call
+	}
+	else	//After the call
+	{
+		//Perform node postsync-like updates on the values
+		BOTH_node_postsync_fxn(hdr);
+
+		//Triplex_load-specific postsync items
+			measured_voltage_1.SetPolar(voltage1.Mag(),voltage1.Arg());  //Used for testing and xml output
+			measured_voltage_2.SetPolar(voltage2.Mag(),voltage2.Arg());
+			measured_voltage_12.SetPolar(voltage12.Mag(),voltage12.Arg());
+
+		//No control required at this time - powerflow defers to the whims of other modules
+		//Code below implements predictor/corrector-type logic, even though it effectively does nothing
+		return SM_EVENT;
+
+		////Do deltamode-related logic
+		//if (bustype==SWING)	//We're the SWING bus, control our destiny (which is really controlled elsewhere)
+		//{
+		//	//See what we're on
+		//	pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
+
+		//	//Check pass
+		//	if (pass_mod==0)	//Predictor pass
+		//	{
+		//		return SM_DELTA_ITER;	//Reiterate - to get us to corrector pass
+		//	}
+		//	else	//Corrector pass
+		//	{
+		//		//As of right now, we're always ready to leave
+		//		//Other objects will dictate if we stay (powerflow is indifferent)
+		//		return SM_EVENT;
+		//	}//End corrector pass
+		//}//End SWING bus handling
+		//else	//Normal bus
+		//{
+		//	return SM_EVENT;	//Normal nodes want event mode all the time here - SWING bus will
+		//						//control the reiteration process for pred/corr steps
+		//}
+	}
+}
 
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE: triplex_load
@@ -520,5 +611,22 @@ EXPORT TIMESTAMP sync_triplex_load(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 EXPORT int isa_triplex_load(OBJECT *obj, char *classname)
 {
 	return OBJECTDATA(obj,triplex_load)->isa(classname);
+}
+
+//Deltamode export
+EXPORT SIMULATIONMODE interupdate_triplex_load(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
+{
+	triplex_load *my = OBJECTDATA(obj,triplex_load);
+	SIMULATIONMODE status = SM_ERROR;
+	try
+	{
+		status = my->inter_deltaupdate_triplex_load(delta_time,dt,iteration_count_val,interupdate_pos);
+		return status;
+	}
+	catch (char *msg)
+	{
+		gl_error("interupdate_triplex_load(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
+		return status;
+	}
 }
 /**@}*/
