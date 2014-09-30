@@ -1995,7 +1995,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				if((phases & 0x01) == 0x01){ // has phase A
 					battery_power_out += power_A;
 				}
-				if((phases & 0x02) == 0x02){ // hase phase B
+				if((phases & 0x02) == 0x02){ // has phase B
 					battery_power_out += power_B;
 				}
 				if((phases & 0x04) == 0x04){ // has phase C
@@ -2081,14 +2081,24 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						temp_VA = complex(P_Out,Q_Out);
 
 						
-						//See if we exceed input power
-						/*if (temp_VA.Mag() > VA_Efficiency)
+						//Ensuring battery has capacity to charge or discharge as needed.
+						if ((b_soc >= 1.0) && (temp_VA.Re() < 0))	//Battery full and positive influx of real power
 						{
-							//Over-sized - previous implementation gave preference to real power
-							if (VA_Efficiency > fabs(temp_VA.Re()))	//More "available" power than input
+							gl_warning("inverter:%s - battery full - no charging allowed",obj->name);
+							temp_VA.SetReal(0.0);	//Set to zero - reactive considerations may change this
+						}
+						else if ((b_soc <= soc_reserve) && (temp_VA.Re() > 0))	//Battery "empty" and attempting to extract real power
+						{
+							gl_warning("inverter:%s - battery at or below the SOC reserve - no discharging allowed",obj->name);
+							temp_VA.SetReal(0.0);	//Set output to zero - again, reactive considerations may change this
+						}
+
+						//Ensuring power rating of inverter is not exceeded.
+						if (fabs(temp_VA.Mag()) > p_max){ //Requested power output (P_Out, Q_Out) is greater than inverter rating
+							if (p_max > fabs(temp_VA.Re())) //Can we reduce the reactive power output and stay within the inverter rating?
 							{
 								//Determine the Q we can provide
-								temp_QVal = sqrt((VA_Efficiency*VA_Efficiency) - (temp_VA.Re()*temp_VA.Re()));
+								temp_QVal = sqrt((p_max*p_max) - (temp_VA.Re()*temp_VA.Re()));
 
 								//Assign to output, negating signs as necessary (temp_VA already negated)
 								if (temp_VA.Im() < 0.0)	//Negative Q dispatch
@@ -2100,37 +2110,39 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 									VA_Out = complex(temp_VA.Re(),temp_QVal);
 								}
 							}
-							else	//Equal to or smaller than real power desired, give it all we go
+							else	//Inverter rated power is equal to or smaller than real power desired, give it all we can
 							{
 								//Maintain desired sign convention
 								if (temp_VA.Re() < 0.0)
 								{
-									VA_Out = complex(-VA_Efficiency,0.0);
+									VA_Out = complex(-p_max,0.0);
 								}
 								else	//Positive
 								{
-									VA_Out = complex(VA_Efficiency,0.0);
+									VA_Out = complex(p_max,0.0);
 								}
 							}
 						}
 						else	//Doesn't exceed, assign it
-						{*/
-							//Inverter rating clipping will occur below
+						{
 							VA_Out = temp_VA;
-							
-							if (VA_Out.Re() < 0.0)	//Discharging
-							{
-								p_in = VA_Out.Re()/inv_eta;
-							}
-							else if (VA_Out.Re() == 0.0)	//Idle
-							{
-								p_in = 0.0;
-							}
-							else	//Must be positive, so charging
-							{
-								p_in = VA_Out.Re()*inv_eta;
-							}
-						//}
+						}
+
+
+						//Update values to represent what is being pulled (battery uses for SOC updates) - assumes only storage
+						//p_in used by battery - appears reversed to VA_Out
+						if (VA_Out.Re() > 0.0)	//Discharging
+						{
+							p_in = VA_Out.Re()/inv_eta;
+						}
+						else if (VA_Out.Re() == 0.0)	//Idle
+						{
+							p_in = 0.0;
+						}
+						else	//Must be positive, so charging
+						{
+							p_in = VA_Out.Re()*inv_eta;
+						}
 					}
 					else if (four_quadrant_control_mode == FQM_LOAD_FOLLOWING)
 					{
