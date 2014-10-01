@@ -1,0 +1,13 @@
+// test_int_assert
+
+module assert;
+module residential;
+
+object house {
+	compressor_count 4;
+	object int_assert {
+		target "compressor_count";
+		value 4;
+		within 1;
+	};
+};
