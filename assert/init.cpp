@@ -12,7 +12,6 @@
 #include "double_assert.h"
 #include "complex_assert.h"
 #include "enum_assert.h"
-#include "int_assert.h"
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
