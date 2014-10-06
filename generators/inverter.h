@@ -120,6 +120,8 @@ public:
 	complex I_In; // I_in (DC)
 	complex VA_In; //power in (DC)
 
+	enum PF_REG {INCLUDED=1, EXCLUDED=2} pf_reg;
+	enum PF_REG_STATUS {REGULATING = 1, IDLING = 2} pf_reg_status;
 	enum LOAD_FOLLOW_STATUS {IDLE=0, DISCHARGE=1, CHARGE=2} load_follow_status;	//Status variable for what the load_following mode is doing
 	enum COUPLING_INDUCTANCE_TYPE {COUPLING_NONE=0,COUPLING_L=1,COUPLING_LCL=2} coupling_inductance_type;
 
@@ -222,6 +224,12 @@ public:
 	double charge_lockout_time;		//Time a charge operation is held before another dispatch operation is allowed
 	double discharge_lockout_time;	//Time a discharge operation is held before another dispatch operation is allowed
 
+	//properties for pf regulation mode
+	double pf_reg_activate;			//Lowest acceptable power-factor level below which power-factor regulation will activate.
+	double pf_reg_deactivate;		//Lowest acceptable power-factor above which no power-factor regulation is needed.
+	double pf_reg_activate_lockout_time; //Mandatory pause between the deactivation of power-factor regulation and it reactivation
+
+
 	CTRL_PARAMS *active_params;
 	CTRL_PARAMS PQ_params;
 	CTRL_PARAMS droop_PQ_params;
@@ -250,11 +258,15 @@ private:
 	FUNCTIONADDR powerCalc;				//Address for power_calculate in link object, if it is a link
 	bool sense_is_link;					//Boolean flag for if the sense object is a link or a node
 	complex *sense_power;				//Link to measured power value fo sense_object
-	double lf_dispatch_power;			//Amount of real power to try and dispatch to meet thesholds
+	double lf_dispatch_power;			//Amount of real power to try and dispatch to meet thresholds
 	TIMESTAMP next_update_time;			//TIMESTAMP of next dispatching change allowed
 	bool lf_dispatch_change_allowed;	//Flag to indicate if a change in dispatch is allowed
-
 	
+	//pf regulation variables
+	bool pf_reg_dispatch_change_allowed;	//Flag to indicate if a change in dispatch is allowed for power factor regulation
+	double pf_reg_dispatch_VAR;		//(Reactive only?) power dispatched to meet power factor regulation threshold.
+	TIMESTAMP pf_reg_next_update_time;	//TIMESTAMP of next dispatching change allowed
+
 	TIMESTAMP prev_time;				//Tracking variable for previous "new time" run
 
 
