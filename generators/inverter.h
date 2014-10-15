@@ -206,7 +206,7 @@ public:
 	enumeration inverter_manufacturer; //known manufacturer to set some presets else use variables themselves for custom inverter.
 
 	//properties for four quadrant control modes
-	enum FOUR_QUADRANT_CONTROL_MODE {FQM_NONE=0,FQM_CONSTANT_PQ=1,FQM_CONSTANT_PF=2,FQM_CONSTANT_V=3,FQM_VOLT_VAR=4,FQM_LOAD_FOLLOWING=5, FQM_GENERIC_DROOP=6};
+	enum FOUR_QUADRANT_CONTROL_MODE {FQM_NONE=0,FQM_CONSTANT_PQ=1,FQM_CONSTANT_PF=2,FQM_CONSTANT_V=3,FQM_VOLT_VAR=4,FQM_LOAD_FOLLOWING=5, FQM_GENERIC_DROOP=6, FQM_GROUP_LF=7};
 	enumeration four_quadrant_control_mode;
 	enum CONTROL_MODE_SWITCH {CONTROL_SWITCH_NONE=0, ISLANDING_DROOP=1};
 	enumeration control_mode_switch;
@@ -229,6 +229,12 @@ public:
 	double pf_reg_deactivate;		//Lowest acceptable power-factor above which no power-factor regulation is needed.
 	double pf_reg_activate_lockout_time; //Mandatory pause between the deactivation of power-factor regulation and it reactivation
 
+	//Properties for group load-following
+	double charge_threshold;		//Level at which all inverters in the group will begin charging attached batteries. Regulated minimum load level.
+	double discharge_threshold;		//Level at which all inverters in the group will begin discharging attached batteries. Regulated maximum load level.
+	double group_max_charge_rate;		//Sum of the charge rates of the inverters involved in the group load-following.
+	double group_max_discharge_rate;		//Sum of the discharge rates of the inverters involved in the group load-following.
+	double group_rated_power;		//Sum of the inverter power ratings of the inverters involved in the group power-factor regulation.
 
 	CTRL_PARAMS *active_params;
 	CTRL_PARAMS PQ_params;
@@ -266,6 +272,8 @@ private:
 	bool pf_reg_dispatch_change_allowed;	//Flag to indicate if a change in dispatch is allowed for power factor regulation
 	double pf_reg_dispatch_VAR;		//(Reactive only?) power dispatched to meet power factor regulation threshold.
 	TIMESTAMP pf_reg_next_update_time;	//TIMESTAMP of next dispatching change allowed
+
+
 
 	TIMESTAMP prev_time;				//Tracking variable for previous "new time" run
 
