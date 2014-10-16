@@ -3104,7 +3104,9 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		curr_pf = fabs(curr_real_power_val)/sqrt((curr_reactive_power_val*curr_reactive_power_val)+(curr_real_power_val * curr_real_power_val));
 
 		//Check pf
-		if ((curr_pf <= pf_reg_activate) || ((curr_pf >= pf_reg_activate) && (curr_pf <= pf_reg_deactivate) && (new_pf_reg_status == REGULATING)) )	//Below min acceptable pf threshold, taking action
+		if ( (curr_pf <= pf_reg_activate) ||
+			((curr_pf >= pf_reg_activate) && (curr_pf <= pf_reg_deactivate) && (new_pf_reg_status == REGULATING)) ||
+			((curr_reactive_power_val < 0) && (curr_pf < 0.98)) ) //Only worrying about regulating leading power factor if it is "excessive".
 		{
 			//See if we were already at max VA - if less, still have room to add some VARs
 			//Regardless of which four-quadrant control mode, VA_Out is the output of the inverter
@@ -3113,7 +3115,32 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				new_pf_reg_status = REGULATING;
 
 				//Calculate the required VARs to bring pf back up to acceptable value
-				Q_target = curr_real_power_val * tan(acos(pf_reg_activate));
+
+				if (curr_reactive_power_val < 0)
+				{
+					if (four_quadrant_control_mode == FQM_GROUP_LF) //operating in group mode, PF regulation should also operate in group mode.
+					{
+						if ((pf_reg_dispatch_VAR * group_rated_power/p_max) > fabs(curr_reactive_power_val))
+						{
+							Q_target = - (curr_reactive_power_val - pf_reg_dispatch_VAR);
+						}
+						else
+						{
+							Q_target = - (curr_reactive_power_val - (pf_reg_dispatch_VAR * group_rated_power/p_max));
+						}
+
+					}
+					else
+					{
+						Q_target = - (curr_reactive_power_val - pf_reg_dispatch_VAR);
+					}
+
+				}
+				else
+				{
+					Q_target = - (curr_reactive_power_val - curr_real_power_val * tan(acos(pf_reg_deactivate)));
+				}
+
 
 				if (four_quadrant_control_mode == FQM_GROUP_LF) //operating in group mode, PF regulation should also operate in group mode.
 				{
@@ -3122,20 +3149,8 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				}
 				else
 				{
-					Q_out = Q_target + pf_reg_dispatch_VAR;
+					Q_out = Q_target;
 				}
-
-				//Keeping just under the calculated value to help limit. oscillation. Sign weirdness due to load/generator perspective switch.
-				if (curr_reactive_power_val < 0)
-				{
-					Q_out = -0.95 * Q_out;
-				}
-				else
-				{
-					Q_out = 0.95 * Q_out;
-				}
-
-
 
 				//Calculate the VARs that can be dispatched without violating the inverter's VA limit, p_max.
 				Q_available = sqrt((p_max*p_max) - (VA_Out.Re()*VA_Out.Re()));
@@ -3143,22 +3158,32 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				//Only output the reactive power that is needed (if we have it).
 				if (fabs(Q_out) <= fabs(Q_available))
 				{
-					new_Q_out = fabs(Q_out);
+					new_pf_reg_distpatch_VAR = Q_out;
 				}
 				else
 				{
-					new_Q_out = Q_available;
+					if (Q_out < 0)
+					{
+						new_pf_reg_distpatch_VAR = -Q_available;
+					}
+					else
+					{
+						new_pf_reg_distpatch_VAR = Q_available;
+					}
 				}
-
 
 				//Dispatching the reactive power to counteract what was measured at the sense node.
-				if (curr_reactive_power_val < 0)
+				if (four_quadrant_control_mode == FQM_GROUP_LF)  //Only need to do this in group mode as a best guess
+																 // to handle the uncertainty of other inverter involvement.
 				{
-					new_pf_reg_distpatch_VAR = new_Q_out;
-				}
-				else
-				{
-					new_pf_reg_distpatch_VAR = -new_Q_out;
+					if (curr_reactive_power_val < 0)
+					{
+						new_pf_reg_distpatch_VAR = fabs(new_pf_reg_distpatch_VAR);
+					}
+					else
+					{
+						new_pf_reg_distpatch_VAR = -fabs(new_pf_reg_distpatch_VAR);
+					}
 				}
 			}
 			else	//We were railed, continue with this course
