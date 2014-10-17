@@ -1359,6 +1359,16 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 
 
 				//Charge thresholds
+				if (charge_threshold == -1)
+				{
+					GL_THROW("inverter:%s - charge_threshold must be defined for GROUP_LOAD_FOLLOW mode.",obj->name);
+				}
+
+				if (discharge_threshold == -1)
+				{
+					GL_THROW("inverter:%s - discharge_threshold must be defined for GROUP_LOAD_FOLLOW mode.",obj->name);
+				}
+
 				if (charge_threshold == discharge_threshold)
 				{
 					gl_warning("inverter:%s - charge_threshold and discharge_threshold are equal - not recommended, oscillations may occur.",obj->name);
@@ -3169,20 +3179,6 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 					else
 					{
 						new_pf_reg_distpatch_VAR = Q_available;
-					}
-				}
-
-				//Dispatching the reactive power to counteract what was measured at the sense node.
-				if (four_quadrant_control_mode == FQM_GROUP_LF)  //Only need to do this in group mode as a best guess
-																 // to handle the uncertainty of other inverter involvement.
-				{
-					if (curr_reactive_power_val < 0)
-					{
-						new_pf_reg_distpatch_VAR = fabs(new_pf_reg_distpatch_VAR);
-					}
-					else
-					{
-						new_pf_reg_distpatch_VAR = -fabs(new_pf_reg_distpatch_VAR);
 					}
 				}
 			}
