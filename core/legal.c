@@ -49,9 +49,9 @@
 	Four Corners	Version 2.2 originated at PNNL November 2010
 	Grizzly			Version 2.3 originated at PNNL November 2011
 	Hassayampa		Version 3.0 originated at PNNL November 2011
-	Hatwai
-	Jojoba
-	Keeler
+	Hatwai			Version 3.1 originated at PNNL 2013
+	Jojoba			Version 3.2 originated at PNNL 2014
+	Keeler			Version 4.0 planned for 2015
 	Lugo
 	McNary
 	Navajo

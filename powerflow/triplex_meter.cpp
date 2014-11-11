@@ -36,6 +36,9 @@ EXPORT int64 triplex_meter_reset(OBJECT *obj)
 	return 0;
 }
 
+// variable name for market clearing price
+static char1024 market_price_name = "current_market.clearing_price";
+
 //////////////////////////////////////////////////////////////////////////
 // triplex_meter CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
@@ -179,9 +182,9 @@ int triplex_meter::init(OBJECT *parent)
 #endif
 
 	if(power_market != 0){
-		price_prop = gl_get_property(power_market, "current_market.clearing_price");
+		price_prop = gl_get_property(power_market, market_price_name);
 		if(price_prop == 0){
-			GL_THROW("triplex_meter::power_market object \'%s\' does not publish \'current_market.clearing_price\'", (power_market->name ? power_market->name : "(anon)"));
+			GL_THROW("triplex_meter::power_market object \'%s\' does not publish \'%s\'", (power_market->name ? power_market->name : "(anon)"), market_price_name);
 		}
 	}
 	check_prices();
