@@ -184,7 +184,7 @@ int triplex_meter::init(OBJECT *parent)
 	if(power_market != 0){
 		price_prop = gl_get_property(power_market, market_price_name);
 		if(price_prop == 0){
-			GL_THROW("triplex_meter::power_market object \'%s\' does not publish \'%s\'", (power_market->name ? power_market->name : "(anon)"), market_price_name);
+			GL_THROW("triplex_meter::power_market object \'%s\' does not publish \'%s\'", (power_market->name ? power_market->name : "(anon)"), (const char*) market_price_name);
 		}
 	}
 	check_prices();
