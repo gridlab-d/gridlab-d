@@ -3115,7 +3115,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 		//Check pf
 		if ( (curr_pf <= pf_reg_activate) ||
-			((curr_pf >= pf_reg_activate) && (curr_pf <= pf_reg_deactivate) && (new_pf_reg_status == REGULATING)) ||
+			((curr_pf >= pf_reg_activate) && (curr_pf <= pf_reg_deactivate) && (pf_reg_status == REGULATING)) ||
 			((curr_reactive_power_val < 0) && (curr_pf < 0.98)) ) //Only worrying about regulating leading power factor if it is "excessive".
 		{
 			//See if we were already at max VA - if less, still have room to add some VARs
