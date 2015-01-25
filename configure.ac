@@ -476,8 +476,9 @@ AC_CACHE_CHECK([for matlab LD_LIBRARY_PATH], [gld_cv_matlab_ldpath],
             [gld_cv_matlab_ldpath=`$MATLAB -e | grep ^DYLD_LIBRARY_PATH= | cut -f2 -d=`
 ])])])
 AS_IF([test "x$MATLAB" != x],
-    [MATLAB_CPPFLAGS="-I$MATLAB/extern/include"
-     MATLAB_LDFLAGS="-L${MATLAB_LDPATH//:/ -L}"
+    [MATLAB=`$MATLAB -e | grep ^MATLAB= | cut -f2 -d=`
+	MATLAB_CPPFLAGS="-I$MATLAB/extern/include"
+     MATLAB_LDFLAGS="-L${gld_cv_matlab_ldpath//:/ -L}"
      MATLAB_LIBS="-lmx -leng"
      GLD_CPPFLAGS="$GLD_CPPFLAGS -DHAVE_MATLAB"
      HAVE_MATLAB=yes],
