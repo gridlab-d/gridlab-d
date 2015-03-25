@@ -898,11 +898,6 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 	}
 	else
 		oclass->has_runtime = false;
-
-	/* clear buffers */
-	code_block[0] = global_block[0] = init_block[0] = '\0';
-	code_used = 0;
-
 	return SUCCESS;
 }
 

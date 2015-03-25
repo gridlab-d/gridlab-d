@@ -53,11 +53,6 @@ inverter::inverter(MODULE *module)
 				//PT_KEYWORD,"VOLT_VAR",FQM_VOLT_VAR,
 				PT_KEYWORD,"LOAD_FOLLOWING",(enumeration)FQM_LOAD_FOLLOWING,
 				PT_KEYWORD,"GENERIC_DROOP",(enumeration)FQM_GENERIC_DROOP,
-				PT_KEYWORD,"GROUP_LOAD_FOLLOWING",(enumeration)FQM_GROUP_LF,
-
-			PT_enumeration,"pf_reg",PADDR(pf_reg),
-				PT_KEYWORD,"INCLUDED",(enumeration)INCLUDED,
-				PT_KEYWORD,"EXCLUDED",(enumeration)EXCLUDED,
 
 			PT_enumeration,"generator_status",PADDR(gen_status_v),
 				PT_KEYWORD,"OFFLINE",(enumeration)OFFLINE,
@@ -200,21 +195,6 @@ inverter::inverter(MODULE *module)
 			PT_double,"excess_input_power[W]", PADDR(excess_input_power), PT_DESCRIPTION, "Excess power at the input of the inverter that is otherwise just lost, or could be shunted to a battery",
 			PT_double,"charge_lockout_time[s]",PADDR(charge_lockout_time), PT_DESCRIPTION, "Lockout time when a charging operation occurs before another LOAD_FOLLOWING dispatch operation can occur",
 			PT_double,"discharge_lockout_time[s]",PADDR(discharge_lockout_time), PT_DESCRIPTION, "Lockout time when a discharging operation occurs before another LOAD_FOLLOWING dispatch operation can occur",
-
-			//Power-factor regulation  parameters
-			//PT_object,"sense_object", PADDR(sense_object), PF regulation uses the same sense object as load-following
-			PT_double,"pf_reg_activate", PADDR(pf_reg_activate), PT_DESCRIPTION, "Lowest acceptable power-factor level below which power-factor regulation will activate.",
-			PT_double,"pf_reg_deactivate", PADDR(pf_reg_deactivate), PT_DESCRIPTION, "Lowest acceptable power-factor above which no power-factor regulation is needed.",
-			PT_double,"pf_reg_activate_lockout_time[s]", PADDR(pf_reg_activate_lockout_time), PT_DESCRIPTION, "Mandatory pause between the deactivation of power-factor regulation and it reactivation",
-
-			//Group load-following (and power factor regulation) parameters
-			PT_double,"charge_threshold[W]", PADDR(charge_threshold), PT_DESCRIPTION, "Level at which all inverters in the group will begin charging attached batteries. Regulated minimum load level.",
-			PT_double,"discharge_threshold[W]", PADDR(discharge_threshold), PT_DESCRIPTION, "Level at which all inverters in the group will begin discharging attached batteries. Regulated maximum load level.",
-			PT_double,"group_max_charge_rate[W]", PADDR(group_max_charge_rate), PT_DESCRIPTION, "Sum of the charge rates of the batteries involved in the group load-following.",
-			PT_double,"group_max_discharge_rate[W]", PADDR(group_max_discharge_rate), PT_DESCRIPTION, "Sum of the discharge rates of the batteries involved in the group load-following.",
-			PT_double,"group_rated_power[W]", PADDR(group_rated_power), PT_DESCRIPTION, "Sum of the inverter power ratings of the inverters involved in the group power-factor regulation.",
-
-
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 			defaults = this;
@@ -314,30 +294,17 @@ int inverter::create(void)
 	sense_is_link = false;
 	sense_power = NULL;
 
-	pf_reg_activate = -2;
-	pf_reg_deactivate = -1;
-	pf_reg_dispatch_change_allowed = true;
-	pf_reg_dispatch_VAR = 0.0;
-	pf_reg_status = IDLING;
-	pf_reg_next_update_time = 0;
-	pf_reg_activate_lockout_time = -1;
-
-	charge_threshold = -1;
-	discharge_threshold = -1;
-	group_max_charge_rate = -1;
-	group_max_discharge_rate = -1;
-	group_rated_power = -1;
-
-
 	excess_input_power = 0.0;
 	lf_dispatch_power = 0.0;
 	load_follow_status = IDLE;	//LOAD_FOLLOWING starts out doing nothing
 	four_quadrant_control_mode = FQM_CONSTANT_PF;	//Four quadrant defaults to constant PF mode
 
 	next_update_time = 0;
-	lf_dispatch_change_allowed = true;	//Begins with change allowed
+	lf_dispatch_change_allowed = true;	//Begins with changle allowed
 	charge_lockout_time = 0.0;	//Charge and discharge default to no delay
 	discharge_lockout_time = 0.0;
+
+	b_soc = -1;
 
 	////////////////////////////////////////////////////////
 	// DELTA MODE 
@@ -674,7 +641,7 @@ int inverter::init(OBJECT *parent)
 			}
 			break;
 		case FOUR_QUADRANT:
-			if(four_quadrant_control_mode == FQM_LOAD_FOLLOWING || pf_reg == INCLUDED || four_quadrant_control_mode == FQM_GROUP_LF )
+			if(four_quadrant_control_mode == FQM_LOAD_FOLLOWING)
 			{
 				//Make sure we have an appropriate object to look at, if null, steal our parent
 				if (sense_object == NULL)
@@ -683,7 +650,7 @@ int inverter::init(OBJECT *parent)
 					{
 						//Put the parent in there
 						sense_object = parent;
-						gl_warning("inverter:%s - sense_object not specified for LOAD_FOLLOWING and/or power-factor regulation - attempting to use parent object",obj->name);
+						gl_warning("inverter:%s - sense_object not specified for LOAD_FOLLOWING - attempting to use parent object",obj->name);
 						/*  TROUBLESHOOT
 						The inverter is currently configured for LOAD_FOLLOWING mode, but did not have an appropriate
 						sense_object specified.  The inverter is therefore using the parented object as the expected
@@ -692,7 +659,7 @@ int inverter::init(OBJECT *parent)
 					}
 					else
 					{
-						gl_error("inverter:%s - LOAD_FOLLOWING and power-factor regulation will not work without a specified sense_object!",obj->name);
+						gl_error("inverter:%s - LOAD_FOLLOWING will not work without a specified sense_object!",obj->name);
 						/*  TROUBLESHOOT
 						The inverter is currently configured for LOAD_FOLLOWING mode, but does not have
 						an appropriate sense_object specified.  Please specify a proper object and try again.
@@ -727,7 +694,7 @@ int inverter::init(OBJECT *parent)
 						//Random warning about ranks, if not our parent
 						if (sense_object != parent)
 						{
-							gl_warning("inverter:%s is LOAD_FOLLOWING and/or power-factor regulating based on a meter or triplex_meter, ensure the inverter is connected inline with that object!",obj->name);
+							gl_warning("inverter:%s is LOAD_FOLLOWING based on a meter or triplex_meter, ensure the inverter is connected inline with that object!",obj->name);
 							/*  TROUBLESHOOT
 							The inverter operates in LOAD_FOLLOWING mode under the assumption the sense_object meter or triplex_meter is either attached to
 							the inverter, or directly upstream in the flow.  If this assumption is violated, the results may not be as expected.
@@ -801,82 +768,46 @@ int inverter::init(OBJECT *parent)
 				}
 
 				//Check lockout times
-				if (pf_reg == INCLUDED)
+				if (charge_lockout_time<0)
 				{
-					if (pf_reg_activate_lockout_time < 0)
-					{
-						pf_reg_activate_lockout_time = 60;
-						gl_warning("inverter:%s - pf_reg_activate_lockout_time is unassigned, using default value of 60s.",obj->name);
-						/*  TROUBLESHOOT
-						The pf_reg_activate_lockout_time for the inverter is negative.  Negative lockout times
-						are not allowed inside the inverter.  Please correct the value and try again.
-						*/
-
-					}
-					else if (pf_reg_activate_lockout_time < 60)
-					{
-						pf_reg_activate_lockout_time = 1;
-						gl_warning("inverter:%s - a short pf_reg_activate_lockout_time may lead to inverter controller oscillations. Recommended time: > 60s",obj->name);
-						/*  TROUBLESHOOT
-						The pf_reg_activate_lockout_time for the inverter is negative.  Negative lockout times
-						are not allowed inside the inverter.  Please correct the value and try again.
-						*/
-
-					}
-
-					else if (charge_lockout_time == 0.0)
-					{
-						gl_warning("inverter:%s - pf_reg_activate_lockout_time is zero, oscillations may occur",obj->name);
-						/*  TROUBLESHOOT
-						The value for pf_reg_activate_lockout_time is zero, which means there is no delay in new dispatch
-						operations.  This may result in excessive switching and iteration limits being hit.  If this is
-						not desired, specify a charge_lockout_time larger than zero.
-						*/
-					}
+					gl_error("inverter:%s - charge_lockout_time is negative!",obj->name);
+					/*  TROUBLESHOOT
+					The charge_lockout_time for the inverter is negative.  Negative lockout times
+					are not allowed inside the inverter.  Please correct the value and try again.
+					*/
+					return 0;
 				}
-				if (four_quadrant_control_mode == FQM_LOAD_FOLLOWING)
+				else if (charge_lockout_time == 0.0)
 				{
-					if (charge_lockout_time<0)
-					{
-						gl_error("inverter:%s - charge_lockout_time is negative!",obj->name);
-						/*  TROUBLESHOOT
-						The charge_lockout_time for the inverter is negative.  Negative lockout times
-						are not allowed inside the inverter.  Please correct the value and try again.
-						*/
-						return 0;
-					}
-					else if (charge_lockout_time == 0.0)
-					{
-						gl_warning("inverter:%s - charge_lockout_time is zero, oscillations may occur",obj->name);
-						/*  TROUBLESHOOT
-						The value for charge_lockout_time is zero, which means there is no delay in new dispatch
-						operations.  This may result in excessive switching and iteration limits being hit.  If this is
-						not desired, specify a charge_lockout_time larger than zero.
-						*/
-					}
-					//Defaulted else, must be okay
-
-					if (discharge_lockout_time<0)
-					{
-						gl_error("inverter:%s - discharge_lockout_time is negative!",obj->name);
-						/*  TROUBLESHOOT
-						The discharge_lockout_time for the inverter is negative.  Negative lockout times
-						are not allowed inside the inverter.  Please correct the value and try again.
-						*/
-						return 0;
-					}
-					else if (discharge_lockout_time == 0.0)
-					{
-						gl_warning("inverter:%s - discharge_lockout_time is zero, oscillations may occur",obj->name);
-						/*  TROUBLESHOOT
-						The value for discharge_lockout_time is zero, which means there is no delay in new dispatch
-						operations.  This may result in excessive switching and iteration limits being hit.  If this is
-						not desired, specify a discharge_lockout_time larger than zero.
-						*/
-					}
-				} //End FQM_LOAD_FOLLOWING
+					gl_warning("inverter:%s - charge_lockout_time is zero, oscillations may occur",obj->name);
+					/*  TROUBLESHOOT
+					The value for charge_lockout_time is zero, which means there is no delay in new dispatch
+					operations.  This may result in excessive switching and iteration limits being hit.  If this is
+					not desired, specify a charge_lockout_time larger than zero.
+					*/
+				}
 				//Defaulted else, must be okay
-			}//End FOUR_QUADRANT checks
+
+				if (discharge_lockout_time<0)
+				{
+					gl_error("inverter:%s - discharge_lockout_time is negative!",obj->name);
+					/*  TROUBLESHOOT
+					The discharge_lockout_time for the inverter is negative.  Negative lockout times
+					are not allowed inside the inverter.  Please correct the value and try again.
+					*/
+					return 0;
+				}
+				else if (discharge_lockout_time == 0.0)
+				{
+					gl_warning("inverter:%s - discharge_lockout_time is zero, oscillations may occur",obj->name);
+					/*  TROUBLESHOOT
+					The value for discharge_lockout_time is zero, which means there is no delay in new dispatch
+					operations.  This may result in excessive switching and iteration limits being hit.  If this is
+					not desired, specify a discharge_lockout_time larger than zero.
+					*/
+				}
+				//Defaulted else, must be okay
+			}//End LOAD_FOLLOWING checks
 
 			if (inv_eta==0)
 			{
@@ -1186,45 +1117,6 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 	if(inverter_type_v != FOUR_QUADRANT){
 		phaseA_I_Out = phaseB_I_Out = phaseC_I_Out = 0.0;
 	} else {
-		if (pf_reg == INCLUDED)
-		{
-			if (t1 != t0)
-			{
-				//See if the "new" timestamp allows us to change
-				if (t1>=pf_reg_next_update_time)
-				{
-					//Above the previous time, so allow a change
-					pf_reg_dispatch_change_allowed = true;
-				}
-				if (pf_reg_activate == -2)
-				{
-					pf_reg_activate = 0.80;
-					gl_warning("inverter:%s - pf_reg_activate undefined, setting to default value of 0.80.",obj->name);
-				}
-				if (pf_reg_deactivate == -1)
-				{
-					pf_reg_deactivate = 0.95;
-					gl_warning("inverter:%s - pf_reg_deactivate undefined, setting to default value of 0.95.",obj->name);
-				}
-				if (pf_reg_deactivate >= 0.99)
-				{
-					gl_warning("inverter:%s - Very high values pf_reg_deactivate (~ 0.99) may lead to inverter control oscillation.",obj->name);
-				}
-				if (pf_reg_activate > pf_reg_deactivate)
-				{
-					GL_THROW("inverter:%s - pf_reg_activate is greater than pf_reg_deactivate.",obj->name);
-				}
-				if (pf_reg_activate < 0 || pf_reg_deactivate < 0)
-				{
-					GL_THROW("inverter:%s - pf_reg_activate and/or pf_reg_deactivate are negative.",obj->name);
-				}
-				if (pf_reg_activate == pf_reg_deactivate)
-				{
-					gl_warning("inverter:%s - pf_reg_activate and pf_reg_deactivate are equal - pf regluation may not behave properly and/or oscillate.",obj->name);;
-				}
-			}
-		}
-
 		if(four_quadrant_control_mode == FQM_LOAD_FOLLOWING)
 		{
 			if (t1 != t0)
@@ -1320,68 +1212,6 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 				}
 			}
 		}//End LOAD_FOLLOWING checks
-
-
-		if(four_quadrant_control_mode == FQM_GROUP_LF)
-		{
-			if (t1 != t0)
-			{
-				//See if the "new" timestamp allows us to change
-				if (t1>=next_update_time)
-				{
-					//Above the previous time, so allow a change
-					lf_dispatch_change_allowed = true;
-				}
-
-				//Threshold checks
-				if (group_max_charge_rate < 0)
-				{
-					GL_THROW("inverter:%s - group_max_charge_rate cannot be negative.",obj->name);
-				}
-				else if (max_charge_rate == 0)
-				{
-					gl_warning("inverter:%s - group_max_charge_rate is zero.",obj->name);
-				}
-
-				if (group_max_discharge_rate < 0)
-				{
-					GL_THROW("inverter:%s - group_max_discharge_rate cannot be negative.",obj->name);
-				}
-				else if (group_max_discharge_rate == 0)
-				{
-					gl_warning("inverter:%s - group_max_discharge_rate is zero",obj->name);
-				}
-
-				if (group_rated_power <= 0)
-				{
-					GL_THROW("inverter:%s - group_rated_power must be positive.",obj->name);
-				}
-
-
-				//Charge thresholds
-				if (charge_threshold == -1)
-				{
-					GL_THROW("inverter:%s - charge_threshold must be defined for GROUP_LOAD_FOLLOW mode.",obj->name);
-				}
-
-				if (discharge_threshold == -1)
-				{
-					GL_THROW("inverter:%s - discharge_threshold must be defined for GROUP_LOAD_FOLLOW mode.",obj->name);
-				}
-
-				if (charge_threshold == discharge_threshold)
-				{
-					gl_warning("inverter:%s - charge_threshold and discharge_threshold are equal - not recommended, oscillations may occur.",obj->name);
-				}
-
-
-				//Combination of the two
-				if (discharge_threshold < charge_threshold)
-				{
-					gl_error("inverter:%s - discharge_threshold must be larger than the charge_threshold",obj->name);
-				}
-			} //t1 != t0
-		}// End FQM_GROUP_LF
 	}
 
 		
@@ -2254,12 +2084,12 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 						
 						//Ensuring battery has capacity to charge or discharge as needed.
-						if ((b_soc >= 1.0) && (temp_VA.Re() < 0))	//Battery full and positive influx of real power
+						if ((b_soc >= 1.0) && (temp_VA.Re() < 0) && (b_soc != -1))	//Battery full and positive influx of real power
 						{
 							gl_warning("inverter:%s - battery full - no charging allowed",obj->name);
 							temp_VA.SetReal(0.0);	//Set to zero - reactive considerations may change this
 						}
-						else if ((b_soc <= soc_reserve) && (temp_VA.Re() > 0))	//Battery "empty" and attempting to extract real power
+						else if ((b_soc <= soc_reserve) && (temp_VA.Re() > 0) && (b_soc != -1))	//Battery "empty" and attempting to extract real power
 						{
 							gl_warning("inverter:%s - battery at or below the SOC reserve - no discharging allowed",obj->name);
 							temp_VA.SetReal(0.0);	//Set output to zero - again, reactive considerations may change this
@@ -2320,16 +2150,6 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					{
 						VA_Out = -lf_dispatch_power;	//Place the expected dispatch power into the output
 					}
-					else if (four_quadrant_control_mode == FQM_GROUP_LF)
-					{
-						VA_Out = -lf_dispatch_power;	//Place the expected dispatch power into the output
-					}
-
-					//Execution of power-factor regulation output of inverter that will get included in power-flow solution
-					if (pf_reg == INCLUDED)
-					{
-						VA_Out.Im() = -pf_reg_dispatch_VAR; //Flipping from load to generator perspective.
-					}
 				
 				//Not implemented and removed from above, so no check needed
 				//else if(four_quadrant_control_mode == FQM_CONSTANT_V){
@@ -2381,9 +2201,9 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				}
 
 				//See if load following, if so, make sure storage is appropriate - only considers real right now
-				if (four_quadrant_control_mode == FQM_LOAD_FOLLOWING || four_quadrant_control_mode == FQM_GROUP_LF || battery_power_out.Mag() != 0.0)
+				if (four_quadrant_control_mode == FQM_LOAD_FOLLOWING || battery_power_out.Mag() != 0.0)
 				{
-					if ((b_soc == 1.0) && (VA_Out.Re() < 0))	//Battery full and positive influx of real power
+					if ((b_soc == 1.0) && (VA_Out.Re() < 0) && (b_soc != -1))	//Battery full and positive influx of real power
 					{
 						gl_warning("inverter:%s - battery full - no charging allowed",obj->name);
 						/*  TROUBLESHOOT
@@ -2392,7 +2212,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						*/
 						VA_Out.SetReal(0.0);	//Set to zero - reactive considerations may change this
 					}
-					else if ((b_soc <= soc_reserve) && (VA_Out.Re() > 0))	//Battery "empty" and attempting to extract real power
+					else if ((b_soc <= soc_reserve) && (VA_Out.Re() > 0) && (b_soc != -1))	//Battery "empty" and attempting to extract real power
 					{
 						gl_warning("inverter:%s - battery at or below the SOC reserve - no discharging allowed",obj->name);
 						/*  TROUBLESHOOT
@@ -2466,7 +2286,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					}
 				}//End three-phase variant
 			}
-			else //delta_mode_inclusive == true
+			else
 			{
 				if (four_quadrant_control_mode == FQM_CONSTANT_PQ)
 				{
@@ -2662,10 +2482,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	OBJECT *obj = OBJECTHDR(this);
 	TIMESTAMP t2 = TS_NEVER;		//By default, we're done forever!
 	LOAD_FOLLOW_STATUS new_lf_status;
-	PF_REG_STATUS new_pf_reg_status;
-	double new_lf_dispatch_power, curr_power_val, diff_power_val;
-	double new_pf_reg_distpatch_VAR, curr_real_power_val, curr_reactive_power_val, curr_pf, available_VA, new_Q_out, Q_out, Q_required, Q_available, Q_load;
-	double scaling_factor, Q_target;
+	double new_lf_dispatch_power, curr_power_val, diff_power_val;				
 
 	//Check and see if we need to redispatch
 	if ((inverter_type_v == FOUR_QUADRANT) && (four_quadrant_control_mode == FQM_LOAD_FOLLOWING) && (lf_dispatch_change_allowed==true))
@@ -2684,7 +2501,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		if (curr_power_val<=charge_on_threshold)	//Below charging threshold, desire charging
 		{
 			//See if the battery has room
-			if (b_soc < 1.0)
+			if ((b_soc < 1.0) && (b_soc != -1))
 			{
 				//See if we were already railed - if less, still have room, or we were discharging (either way okay - just may iterate a couple times)
 				if (lf_dispatch_power < max_charge_rate)
@@ -2743,7 +2560,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			else	//Must be charging
 			{
 				//See if the battery has room
-				if (b_soc < 1.0)
+				if ((b_soc < 1.0) && (b_soc != -1))
 				{
 					new_lf_status = CHARGE;	//Keep us charging
 
@@ -2762,7 +2579,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		}//End below charge_off_threshold (but above charge_on_threshold)
 		else if (curr_power_val<=discharge_off_threshold)	//Below the discharge off threshold - we're idle no matter what here
 		{
-			new_lf_status = IDLE;			//Nothing occurring, between bands
+			new_lf_status = IDLE;			//Nothing occuring, between bands
 			new_lf_dispatch_power = 0.0;	//Nothing needed, as a result
 		}//End below discharge_off_threshold (but above charge_off_threshold)
 		else if (curr_power_val<=discharge_on_threshold)	//Below discharge on threshold - see what we were doing
@@ -2771,7 +2588,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			if (load_follow_status == DISCHARGE)
 			{
 				//Were discharging - see if we can continue
-				if (b_soc > soc_reserve)
+				if ((b_soc > soc_reserve) && (b_soc != -1))
 				{
 					new_lf_status = DISCHARGE;	//Keep us discharging
 
@@ -2800,7 +2617,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			new_lf_status = DISCHARGE;		//Above threshold, so discharge into the grid
 
 			//Check battery status
-			if (b_soc > soc_reserve)
+			if ((b_soc > soc_reserve) && (b_soc != -1))
 			{
 				//See if we were charging
 				if (load_follow_status == CHARGE)	//were charging, just turn us off and reiterate
@@ -2878,191 +2695,6 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		//Dispatch change, but same mode
 		if (new_lf_dispatch_power != lf_dispatch_power)
 		{
-			//See if it is appreciable - just in case - I'm arbitrarily declaring milliWatts the threshold
-			if (fabs(new_lf_dispatch_power - lf_dispatch_power)>=0.001)
-			{
-				//Put the new power value in
-				lf_dispatch_power = new_lf_dispatch_power;
-
-				//Force a reiteration
-				t2 = t1;
-
-				//Update lockout allowed -- This probably needs to be refined so if in deadband, incremental changes can still occur - TO DO
-				if (new_lf_status == CHARGE)
-				{
-					//Hard lockout for now
-					lf_dispatch_change_allowed = false;
-
-					//Apply update time
-					next_update_time = t1 + ((TIMESTAMP)(charge_lockout_time));
-				}
-				else if (new_lf_status == DISCHARGE)
-				{
-					//Hard lockout for now
-					lf_dispatch_change_allowed = false;
-
-					//Apply update time
-					next_update_time = t1 + ((TIMESTAMP)(discharge_lockout_time));
-				}
-				//Default else - IDLE has no such restrictions
-			}
-			//Defaulted else - change is less than 0.001 W, so who cares
-		}
-		//Default else, do nothing
-	}//End LOAD_FOLLOWING redispatch
-
-	//***************************************************************************************
-	// Group load-following mode using a (more or less) uncoordinated but decentralized control
-	if (inverter_type_v == FOUR_QUADRANT && four_quadrant_control_mode == FQM_GROUP_LF && lf_dispatch_change_allowed==true)
-	{
-		//See what the sense_object is and determine if we need to update
-		if (sense_is_link)
-		{
-			//Perform the power update
-			((void (*)(OBJECT *))(*powerCalc))(sense_object);
-		}//End link update of power
-
-		//Extract power, mainly just for convenience, but also to offset us for what we are currently "ordering"
-		curr_power_val = sense_power->Re();
-
-		//Check power - only focus on real for now -- this will need to be changed if reactive considered
-		if (curr_power_val<=charge_threshold)	//Below charging threshold, desire charging
-		{
-			//See if the battery has room
-			if (b_soc < 1.0)
-			{
-				//See if we were already railed - if less, still have room, or we were discharging (either way okay - just may iterate a couple times)
-				if (lf_dispatch_power < max_charge_rate)
-				{
-					//Make sure we weren't discharging
-					if (load_follow_status == DISCHARGE)
-					{
-						//Set us to idle (will force a reiteration) - who knows where we really are
-						new_lf_status = IDLE;
-						new_lf_dispatch_power = 0.0;
-					}
-					else
-					{
-						//Set us up to charge
-						new_lf_status = CHARGE;
-
-						//Scaling charge rate based on rating of inverters in group
-						scaling_factor = (charge_threshold - curr_power_val)/(group_max_charge_rate);
-						new_lf_dispatch_power = (scaling_factor * max_charge_rate) + lf_dispatch_power;
-
-						//Make sure it isn't too big
-						if (new_lf_dispatch_power > max_charge_rate)
-						{
-							new_lf_dispatch_power = max_charge_rate;	//Desire more than we can give, limit it
-						}
-					}
-				}
-				else	//We were railed, continue with this course
-				{
-					new_lf_status = CHARGE;						//Keep us charging
-					new_lf_dispatch_power = max_charge_rate;	//Set to maximum rate
-				}
-
-			}//End Battery has room
-			else	//Battery full, no charging allowed
-			{
-				gl_verbose("inverter:%s - charge desired, but battery full!",obj->name);
-				/*  TROUBLESHOOT
-				An inverter in LOAD_FOLLOWING mode currently wants to charge the battery more, but the battery
-				is full.  Consider using a larger battery and trying again.
-				*/
-
-				new_lf_status = IDLE;			//Can't do anything, so we're idle
-				new_lf_dispatch_power = 0.0;	//Turn us off
-			}
-		}//End below charge_threshold
-		else if (curr_power_val > charge_threshold && curr_power_val < discharge_threshold)	//Above charge threshold and  below discharge threshold.
-		{
-			new_lf_status = IDLE;
-			new_lf_dispatch_power = 0.00; //lf_dispatch_power;
-		}
-		else if (curr_power_val >= discharge_threshold)	//Above discharge threshold
-		{
-			new_lf_status = DISCHARGE;		//Above threshold, so discharge into the grid
-
-			//Check battery status
-			if (b_soc > soc_reserve)
-			{
-				//See if we were charging
-				if (load_follow_status == CHARGE)	//were charging, just turn us off and reiterate
-				{
-					new_lf_status = IDLE;			//Turn us off first, then re-evaluate
-					new_lf_dispatch_power = 0.0;	//Represents the idle
-				}
-				else
-				{
-					new_lf_status = DISCHARGE;	//Keep us discharging
-
-					//See if we were already railed - if less, still have room
-					if (lf_dispatch_power > -max_discharge_rate)
-					{
-
-						//Scaling charge rate based on rating of inverters in group
-						scaling_factor = (curr_power_val - discharge_threshold)/(group_max_discharge_rate);
-						new_lf_dispatch_power = lf_dispatch_power + (scaling_factor * -max_charge_rate);
-
-						//Make sure it isn't too big
-						if (new_lf_dispatch_power < -max_discharge_rate)
-						{
-							new_lf_dispatch_power = -max_discharge_rate;	//Desire more than we can give, limit it
-						}
-					}
-					else	//We were railed, continue with this course
-					{
-						new_lf_dispatch_power = -max_discharge_rate;	//Set to maximum discharge rate
-					}
-				}
-			}
-			else	//At or below reserve, go to idle
-			{
-				gl_verbose("inverter:%s - discharge desired, but not enough battery capacity!",obj->name);
-				//Defined above
-
-				new_lf_status = IDLE;			//Can't do anything, so we're idle
-				new_lf_dispatch_power = 0.0;	//Turn us off
-			}
-		}//End above discharge_threshold
-
-		//Change checks - see if we need to reiterate
-		if (new_lf_status != load_follow_status)
-		{
-			//Update status
-			load_follow_status = new_lf_status;
-
-			//Update dispatch, since it obviously changed
-			lf_dispatch_power = new_lf_dispatch_power;
-
-			//Major change, force a reiteration
-			t2 = t1;
-
-			//Update lockout allowed
-			if (new_lf_status == CHARGE)
-			{
-				//Hard lockout for now
-				lf_dispatch_change_allowed = false;
-
-				//Apply update time - note that this may have issues with TS_NEVER, but unsure if it will be a problem at point (theoretically, the simulation is about to end)
-				next_update_time = t1 + ((TIMESTAMP)(charge_lockout_time));
-			}
-			else if (new_lf_status == DISCHARGE)
-			{
-				//Hard lockout for now
-				lf_dispatch_change_allowed = false;
-
-				//Apply update time - note that this may have issues with TS_NEVER, but unsure if it will be a problem at point (theoretically, the simulation is about to end)
-				next_update_time = t1 + ((TIMESTAMP)(discharge_lockout_time));
-			}
-			//Default else - IDLE has no such restrictions
-		}
-
-		//Dispatch change, but same mode
-		if (new_lf_dispatch_power != lf_dispatch_power)
-		{
 			//See if it is appreciable - just in case - I'm artibrarily declaring milliWatts the threshold
 			if (fabs(new_lf_dispatch_power - lf_dispatch_power)>=0.001)
 			{
@@ -3094,163 +2726,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			//Defaulted else - change is less than 0.001 W, so who cares
 		}
 		//Default else, do nothing
-	}// End FQM_GROUP_LF
-
-	//***************************************************************************************
-	//Power-factor regulation, modifying VA_Out to use any available VAs for power-factor regulation
-	if ((inverter_type_v == FOUR_QUADRANT) && (pf_reg == INCLUDED) && (pf_reg_dispatch_change_allowed==true))
-	{
-		//Need to modify dispatch from load following and/or adjust the reactive power output of the inverter to meet power factor regulation needs.
-		//See what the sense_object is and determine if we need to update
-		if (sense_is_link)
-		{
-			//Perform the power update
-			((void (*)(OBJECT *))(*powerCalc))(sense_object);
-		}//End link update of power
-
-		//Extract power to calculate the necessary reactive power output and offset us for what we are currently "ordering"
-		curr_real_power_val = sense_power->Re();
-		curr_reactive_power_val = sense_power->Im();
-		curr_pf = fabs(curr_real_power_val)/sqrt((curr_reactive_power_val*curr_reactive_power_val)+(curr_real_power_val * curr_real_power_val));
-
-		//Check pf
-		if ( (curr_pf <= pf_reg_activate) ||
-			((curr_pf >= pf_reg_activate) && (curr_pf <= pf_reg_deactivate) && (pf_reg_status == REGULATING)) ||
-			((curr_reactive_power_val < 0) && (curr_pf < 0.98)) ) //Only worrying about regulating leading power factor if it is "excessive".
-		{
-			//See if we were already at max VA - if less, still have room to add some VARs
-			//Regardless of which four-quadrant control mode, VA_Out is the output of the inverter
-			if ((inverter_type_v == FOUR_QUADRANT) && (VA_Out.Mag() <= p_max))
-			{
-				new_pf_reg_status = REGULATING;
-
-				//Calculate the required VARs to bring pf back up to acceptable value
-
-				if (curr_reactive_power_val < 0)
-				{
-					if (four_quadrant_control_mode == FQM_GROUP_LF) //operating in group mode, PF regulation should also operate in group mode.
-					{
-						if ((pf_reg_dispatch_VAR * group_rated_power/p_max) > fabs(curr_reactive_power_val))
-						{
-							Q_target = - (curr_reactive_power_val - pf_reg_dispatch_VAR);
-						}
-						else
-						{
-							Q_target = - (curr_reactive_power_val - (pf_reg_dispatch_VAR * group_rated_power/p_max));
-						}
-
-					}
-					else
-					{
-						Q_target = - (curr_reactive_power_val - pf_reg_dispatch_VAR);
-					}
-
-				}
-				else
-				{
-					Q_target = - (curr_reactive_power_val - curr_real_power_val * tan(acos(pf_reg_deactivate)));
-				}
-
-
-				if (four_quadrant_control_mode == FQM_GROUP_LF) //operating in group mode, PF regulation should also operate in group mode.
-				{
-					scaling_factor = (Q_target - curr_reactive_power_val)/group_rated_power;
-					Q_out = (scaling_factor * p_max) + pf_reg_dispatch_VAR;
-				}
-				else
-				{
-					Q_out = Q_target;
-				}
-
-				//Calculate the VARs that can be dispatched without violating the inverter's VA limit, p_max.
-				Q_available = sqrt((p_max*p_max) - (VA_Out.Re()*VA_Out.Re()));
-
-				//Only output the reactive power that is needed (if we have it).
-				if (fabs(Q_out) <= fabs(Q_available))
-				{
-					new_pf_reg_distpatch_VAR = Q_out;
-				}
-				else
-				{
-					if (Q_out < 0)
-					{
-						new_pf_reg_distpatch_VAR = -Q_available;
-					}
-					else
-					{
-						new_pf_reg_distpatch_VAR = Q_available;
-					}
-				}
-			}
-			else	//We were railed, continue with this course
-			{
-				new_pf_reg_status = REGULATING;
-				new_pf_reg_distpatch_VAR = -VA_Out.Im(); //Injecting negative reactive power.
-			}
-		}//End pf_reg_activate
-		else if (curr_pf >= pf_reg_deactivate)	// Don't change output since we are above our deactivate limit.
-												// Changing the output of the inverter will alter the sensed pf
-												// and may cause us to drop below the activate limit,
-												// potentially beginning control oscillation
-		{
-			new_pf_reg_status = IDLING;
-			new_pf_reg_distpatch_VAR = pf_reg_dispatch_VAR;
-		}
-		else //Nothing else going on, idling
-		{
-			new_pf_reg_status = IDLING;
-			new_pf_reg_distpatch_VAR = pf_reg_dispatch_VAR;
-		}//End hysteresis implementation
-
-		//Checks due to change in operation - see if we need to reiterate
-		//Mode change
-		if (new_pf_reg_status != pf_reg_status)
-		{
-			//Update status
-			pf_reg_status = new_pf_reg_status;
-
-			//Update dispatch, since it obviously changed
-			pf_reg_dispatch_VAR = new_pf_reg_distpatch_VAR;
-
-			//Major change, force a reiteration
-			t2 = t1;
-
-			//Update lockout allowed
-			if (new_pf_reg_status == REGULATING)
-			{
-				//Hard lockout for now
-				pf_reg_dispatch_change_allowed = false;
-
-				//Apply update time - note that this may have issues with TS_NEVER, but unsure if it will be a problem at point (theoretically, the simulation is about to end)
-				pf_reg_next_update_time = t1 + ((TIMESTAMP)(pf_reg_activate_lockout_time));
-			}
-		}
-
-		//Same mode, new dispatch
-		if (new_pf_reg_distpatch_VAR != pf_reg_dispatch_VAR)
-		{
-			//See if it is appreciable - just in case - I'm artibrarily declaring milliVARs the threshold
-			if (fabs(new_pf_reg_distpatch_VAR - pf_reg_dispatch_VAR)>=0.001)
-			{
-				//Put the new power value in
-				pf_reg_dispatch_VAR = new_pf_reg_distpatch_VAR;
-
-				//Force a reiteration
-				t2 = t1;
-
-				//Update lockout allowed -- This probably needs to be refined so if in deadband, incremental changes can still occur - TO DO
-				if (new_pf_reg_status == REGULATING)
-				{
-					//Hard lockout for now
-					pf_reg_dispatch_change_allowed = false;
-
-					//Apply update time
-					pf_reg_next_update_time = t1 + ((TIMESTAMP)(pf_reg_activate_lockout_time));
-				}
-				//Default else - IDLE has no such restrictions
-			}
-		}
-	} //End power-factor regulation
+	}//End LOAD_FOLLOWING redispatch
 
 	if (inverter_type_v != FOUR_QUADRANT)	//Remove contributions for XML properness
 	{

@@ -512,7 +512,7 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 			min = setpoint0 + range_low * slider_setting;
 			max = setpoint0 + range_high * slider_setting;
 			if(range_low != 0)
-				ramp_low = 2 + (1 - slider_setting);
+				ramp_low = -2 - (1 - slider_setting);
 			else
 				ramp_low = 0;
 			if(range_high != 0)
@@ -531,7 +531,7 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 			cool_min = cooling_setpoint0 + cool_range_low * slider_setting_cool;
 			cool_max = cooling_setpoint0 + cool_range_high * slider_setting_cool;
 			if (cool_range_low != 0.0)
-				cool_ramp_low = 2 + (1 - slider_setting_cool);
+				cool_ramp_low = -2 - (1 - slider_setting_cool);
 			else
 				cool_ramp_low = 0;
 			if (cool_range_high != 0.0)
@@ -549,7 +549,7 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 			heat_min = heating_setpoint0 + heat_range_low * slider_setting_heat;
 			heat_max = heating_setpoint0 + heat_range_high * slider_setting_heat;
 			if (heat_range_low != 0.0)
-				heat_ramp_low = -2 - (1 - slider_setting_heat);
+				heat_ramp_low = 2 + (1 - slider_setting_heat);
 			else
 				heat_ramp_low = 0;
 			if (heat_range_high != 0)

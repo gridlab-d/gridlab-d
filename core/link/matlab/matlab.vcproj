@@ -121,7 +121,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\core;C:\Program Files\MATLAB\R2011a\extern\include"
+				AdditionalIncludeDirectories="..\..\..\core"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -179,8 +179,8 @@
 			OutputDirectory="..\..\..\VS2005\$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
 			ConfigurationType="2"
-			InheritedPropertySheets=".\MATLAB_specific_win32.vsprops"
 			UseOfMFC="1"
+			InheritedPropertySheets=".\MATLAB_specific_win32.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -280,7 +280,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\core;C:\Program Files\MATLAB\R2011a\extern\include"
+				AdditionalIncludeDirectories="..\..\..\core;"
 				PreprocessorDefinitions="WIN32;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE;_NO_CPPUNIT"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -301,7 +301,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="$(OutDir);&quot;C:\Program Files\MATLAB\R2011a\extern\lib&quot;"
+				AdditionalLibraryDirectories="$(OutDir)"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="17"

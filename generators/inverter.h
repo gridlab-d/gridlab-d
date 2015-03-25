@@ -120,8 +120,6 @@ public:
 	complex I_In; // I_in (DC)
 	complex VA_In; //power in (DC)
 
-	enum PF_REG {INCLUDED=1, EXCLUDED=2} pf_reg;
-	enum PF_REG_STATUS {REGULATING = 1, IDLING = 2} pf_reg_status;
 	enum LOAD_FOLLOW_STATUS {IDLE=0, DISCHARGE=1, CHARGE=2} load_follow_status;	//Status variable for what the load_following mode is doing
 	enum COUPLING_INDUCTANCE_TYPE {COUPLING_NONE=0,COUPLING_L=1,COUPLING_LCL=2} coupling_inductance_type;
 
@@ -206,7 +204,7 @@ public:
 	enumeration inverter_manufacturer; //known manufacturer to set some presets else use variables themselves for custom inverter.
 
 	//properties for four quadrant control modes
-	enum FOUR_QUADRANT_CONTROL_MODE {FQM_NONE=0,FQM_CONSTANT_PQ=1,FQM_CONSTANT_PF=2,FQM_CONSTANT_V=3,FQM_VOLT_VAR=4,FQM_LOAD_FOLLOWING=5, FQM_GENERIC_DROOP=6, FQM_GROUP_LF=7};
+	enum FOUR_QUADRANT_CONTROL_MODE {FQM_NONE=0,FQM_CONSTANT_PQ=1,FQM_CONSTANT_PF=2,FQM_CONSTANT_V=3,FQM_VOLT_VAR=4,FQM_LOAD_FOLLOWING=5, FQM_GENERIC_DROOP=6};
 	enumeration four_quadrant_control_mode;
 	enum CONTROL_MODE_SWITCH {CONTROL_SWITCH_NONE=0, ISLANDING_DROOP=1};
 	enumeration control_mode_switch;
@@ -223,18 +221,6 @@ public:
 	double discharge_off_threshold;	//Threshold to disable discharging of the battery
 	double charge_lockout_time;		//Time a charge operation is held before another dispatch operation is allowed
 	double discharge_lockout_time;	//Time a discharge operation is held before another dispatch operation is allowed
-
-	//properties for pf regulation mode
-	double pf_reg_activate;			//Lowest acceptable power-factor level below which power-factor regulation will activate.
-	double pf_reg_deactivate;		//Lowest acceptable power-factor above which no power-factor regulation is needed.
-	double pf_reg_activate_lockout_time; //Mandatory pause between the deactivation of power-factor regulation and it reactivation
-
-	//Properties for group load-following
-	double charge_threshold;		//Level at which all inverters in the group will begin charging attached batteries. Regulated minimum load level.
-	double discharge_threshold;		//Level at which all inverters in the group will begin discharging attached batteries. Regulated maximum load level.
-	double group_max_charge_rate;		//Sum of the charge rates of the inverters involved in the group load-following.
-	double group_max_discharge_rate;		//Sum of the discharge rates of the inverters involved in the group load-following.
-	double group_rated_power;		//Sum of the inverter power ratings of the inverters involved in the group power-factor regulation.
 
 	CTRL_PARAMS *active_params;
 	CTRL_PARAMS PQ_params;
@@ -264,17 +250,11 @@ private:
 	FUNCTIONADDR powerCalc;				//Address for power_calculate in link object, if it is a link
 	bool sense_is_link;					//Boolean flag for if the sense object is a link or a node
 	complex *sense_power;				//Link to measured power value fo sense_object
-	double lf_dispatch_power;			//Amount of real power to try and dispatch to meet thresholds
+	double lf_dispatch_power;			//Amount of real power to try and dispatch to meet thesholds
 	TIMESTAMP next_update_time;			//TIMESTAMP of next dispatching change allowed
 	bool lf_dispatch_change_allowed;	//Flag to indicate if a change in dispatch is allowed
+
 	
-	//pf regulation variables
-	bool pf_reg_dispatch_change_allowed;	//Flag to indicate if a change in dispatch is allowed for power factor regulation
-	double pf_reg_dispatch_VAR;		//(Reactive only?) power dispatched to meet power factor regulation threshold.
-	TIMESTAMP pf_reg_next_update_time;	//TIMESTAMP of next dispatching change allowed
-
-
-
 	TIMESTAMP prev_time;				//Tracking variable for previous "new time" run
 
 

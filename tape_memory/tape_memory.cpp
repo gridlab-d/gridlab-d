@@ -26,16 +26,15 @@
 #include <ctype.h>
 #include <time.h>
 
-#define DLMAIN
 #include "gridlabd.h"
-EXPORT int do_kill(void*) { return 0; }
-
 #include "../tape/tape.h"
 #include "tape_memory.h"
 
 /*******************************************************************
  * players 
  */
+
+EXPORT CALLBACKS *callback = NULL;
 
 int open_player(struct player *my, char *fname, char *flags)
 {

@@ -108,7 +108,7 @@
 #endif /* __cplusplus */
 #define INIT(X)
 #endif
-CDECL EXTERN CALLBACKS *callback INIT(NULL);
+CDECL EXPORT EXTERN CALLBACKS *callback INIT(NULL);
 #undef INIT
 #undef EXTERN
 
