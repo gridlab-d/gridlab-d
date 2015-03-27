@@ -7,9 +7,11 @@
 #define REV_MAJOR 4
 #define REV_MINOR 0
 #define REV_PATCH 0
-#define BRANCH "trunk" 
 
-#include "build.h"
+#include "build.h" // BRANCH will be defined automatically from the ticket
+#ifndef BRANCH
+#define BRANCH "Keeler" // update this from legal.h each time trunk is branched
+#endif
 #ifndef BUILDNUM
 #pragma message("core/build.h was not updated properly - try deleting this file and rebuilding again")
 #ifdef BUILD

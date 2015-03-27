@@ -738,7 +738,7 @@ int validate(int argc, char *argv[])
 	
 	report_data();
 	report_data("Platform");
-	report_data("%d-bit %s %s", sizeof(void*), global_platform,
+	report_data("%d-bit %s %s", sizeof(void*)*8, global_platform,
 #ifdef _DEBUG
 		"DEBUG"
 #else
