@@ -2211,38 +2211,7 @@ STATUS exec_start(void)
 				output_error("sync script(s) failed");
 				THROW("script synchronization failure");
 			}
-			if (global_run_realtime>0 && tsteps == 1 && global_dumpfile[0]!='\0')
-			{
-				if (!saveall(global_dumpfile))
-					output_error("dump to '%s' failed", global_dumpfile);
-					/* TROUBLESHOOT
-						An attempt to create a dump file failed.  This message should be
-						preceded by a more detailed message explaining why if failed.
-						Follow the guidance for that message and try again.
-					 */
-				else
-					output_debug("initial model dump to '%s' complete", global_dumpfile);
-			}
-			
-			/* handle delta mode operation */
-			if ( global_simulation_mode==SM_DELTA && exec_sync_get(NULL)>=global_clock )
-			{
-				DT deltatime = delta_update();
-				if ( deltatime==DT_INVALID )
-				{
-					output_error("delta_update() failed, deltamode operation cannot continue");
-					/*  TROUBLESHOOT
-					An error was encountered while trying to perform a deltamode update.  Look for
-					other relevant deltamode messages for indications as to why this may have occurred.
-					If the error persists, please submit your code and a bug report via the trac website.
-					*/
-					global_simulation_mode = SM_ERROR;
-					THROW("Deltamode simulation failure");
-					break;	//Just in case, but probably not needed
-				}
-				exec_sync_set(NULL, global_clock+deltatime);
-				global_simulation_mode = SM_EVENT;
-			}
+
 			if (global_run_realtime>0 && tsteps == 1 && global_dumpfile[0]!='\0')
 			{
 				if (!saveall(global_dumpfile))
