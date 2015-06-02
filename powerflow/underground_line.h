@@ -1,4 +1,4 @@
-// $Id: underground_line.h 4738 2014-07-03 00:55:39Z dchassin $
+// $Id: underground_line.h 1182 2008-12-22 22:08:36Z dchassin $
 //	Copyright (C) 2008 Battelle Memorial Institute
 
 #ifndef _UNDERGROUNDLINE_H
@@ -23,4 +23,5 @@ private:
 
 EXPORT int create_fault_ugline(OBJECT *thisobj, OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time, void *Extra_Data);
 EXPORT int fix_fault_ugline(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name, void* Extra_Data);
+EXPORT int recalc_underground_line(OBJECT *obj);
 #endif // _UNDERGROUNDLINE_H

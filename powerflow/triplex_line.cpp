@@ -38,6 +38,14 @@ triplex_line::triplex_line(MODULE *mod) : line(mod)
 		//Publish deltamode functions
 		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
 			GL_THROW("Unable to publish triplex line deltamode function");
+		if (gl_publish_function(oclass,	"recalc_distribution_line", (FUNCTIONADDR)recalc_triplex_line)==NULL)
+			GL_THROW("Unable to publish triplex line recalc function");
+
+		//Publish restoration-related function (current update)
+		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
+			GL_THROW("Unable to publish triplex line external power calculation function");
+		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+			GL_THROW("Unable to publish triplex line external power limit calculation function");
     }
 }
 
@@ -216,9 +224,18 @@ void triplex_line::recalc(void)
 
 		//Calculate coefficients for self and mutual impedance - incorporates frequency values
 		//Per Kersting (4.39) and (4.40) - coefficients end up same as OHLs
-		freq_coeff_real = 0.00158836*nominal_frequency;
-		freq_coeff_imag = 0.00202237*nominal_frequency;
-		freq_additive_term = log(EARTH_RESISTIVITY/nominal_frequency)/2.0 + 7.6786;
+		if (enable_frequency_dependence == true)	//See which frequency to use
+		{
+			freq_coeff_real = 0.00158836*current_frequency;
+			freq_coeff_imag = 0.00202237*current_frequency;
+			freq_additive_term = log(EARTH_RESISTIVITY/current_frequency)/2.0 + 7.6786;
+		}
+		else
+		{
+			freq_coeff_real = 0.00158836*nominal_frequency;
+			freq_coeff_imag = 0.00202237*nominal_frequency;
+			freq_additive_term = log(EARTH_RESISTIVITY/nominal_frequency)/2.0 + 7.6786;
+		}
 
 		// Gather data stored in configuration objects
 		dcond = line_config->diameter;

@@ -1,4 +1,4 @@
-// $Id: triplex_line.h 4738 2014-07-03 00:55:39Z dchassin $
+// $Id: triplex_line.h 1182 2008-12-22 22:08:36Z dchassin $
 //	Copyright (C) 2008 Battelle Memorial Institute
 
 #ifndef _TRIPLEXLINE_H
@@ -19,5 +19,5 @@ public:
 	int create(void);
 };
 
-
+EXPORT int recalc_triplex_line(OBJECT *obj);
 #endif // _TRIPLEXLINE_H

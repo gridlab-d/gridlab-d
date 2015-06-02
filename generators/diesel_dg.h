@@ -107,6 +107,7 @@ private:
 	MAC_STATES corrector_vals;	//Corrector pass values of variables
 
 	bool deltamode_inclusive;	//Boolean for deltamode calls - pulled from object flags
+	double *mapped_freq_variable;	//Mapping to frequency variable in powerflow module - deltamode updates
 
 protected:
 	/* TODO: put unpublished but inherited variables */

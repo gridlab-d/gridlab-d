@@ -194,8 +194,5 @@ public:
 	int kmldump(int (*stream)(const char*,...));
 };
 
-#include "load.h"
-#include "triplex_node.h"
-
 #endif // _NODE_H
 

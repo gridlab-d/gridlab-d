@@ -12,8 +12,7 @@
 #include <errno.h>
 #include <math.h>
 
-#include "node.h"
-#include "meter.h"
+#include "triplex_node.h"
 
 CLASS* triplex_node::oclass = NULL;
 CLASS* triplex_node::pclass = NULL;

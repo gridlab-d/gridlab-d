@@ -1,10 +1,10 @@
-// $Id: pqload.h 4738 2014-07-03 00:55:39Z dchassin $
+// $Id: pqload.h 1182 2008-12-22 22:08:36Z dchassin $
 //	Copyright (C) 2008 Battelle Memorial Institute
 
 #ifndef _PQLOAD_H
 #define _PQLOAD_H
 
-#include "node.h"
+#include "load.h"
 
 typedef struct s_schedule_list {
 	struct s_schedule_list *next;

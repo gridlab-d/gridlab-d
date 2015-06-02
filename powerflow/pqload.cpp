@@ -1,4 +1,4 @@
-/** $Id: pqload.cpp 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id: pqload.cpp 1182 2008-12-22 22:08:36Z dchassin $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file pqload.cpp
 	@addtogroup pqload
@@ -14,8 +14,6 @@
 #include <errno.h>
 #include <math.h>
 
-#include "node.h"
-#include "meter.h"
 #include "pqload.h"
 
 SCHED_LIST *new_slist(){

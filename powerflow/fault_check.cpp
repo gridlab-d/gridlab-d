@@ -11,8 +11,6 @@
 using namespace std;
 
 #include "fault_check.h"
-#include "restoration.h"
-#include "solver_nr.h"
 
 //////////////////////////////////////////////////////////////////////////
 // fault_check CLASS FUNCTIONS
@@ -68,6 +66,8 @@ int fault_check::create(void)
 
 	rel_eventgen = NULL;		//No object linked by default
 
+	restoration_fxn = NULL;		//No restoration function mapped by default
+
 	return result;
 }
 
@@ -115,6 +115,9 @@ int fault_check::init(OBJECT *parent)
 			Please provide the name of an eventgen object located in your file.
 			*/
 		}
+
+		//Assume this means reliability is a go!
+		reliability_mode = true;
 	}
 
 	//By default, kill the file - open and close it
@@ -124,6 +127,12 @@ int fault_check::init(OBJECT *parent)
 		fclose(FPoint);
 	}
 
+	//Set powerflow global flag for checking things
+	if (reliability_search_mode == false)
+	{
+		meshed_fault_checking_enabled = true;	//Let other powerflow objects know we're a mesh-based check
+	}
+
 	return powerflow_object::init(parent);
 }
 
@@ -131,124 +140,14 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	TIMESTAMP tret = powerflow_object::sync(t0);
-	restoration *rest_obj;
 	unsigned int index;
-	unsigned char phases_adjust;
+	int return_val;
 	bool perform_check, override_output;
-		
+
 	if (prev_time == 0)	//First run - see if restoration exists (we need it for now)
 	{
-		if (restoration_object==NULL)
-		{
-			gl_warning("Restoration object not detected!");	//Put down here because the variable may not be populated in time for init
-			/*  TROUBLESHOOT
-			The fault_check object can use a restoration object in the system.  If the restoration object is present,
-			unsuccessful node support checks will call the reconfiguration.
-			*/
-		}
-
-		//Create our node reference vector - one for each bus
-		Supported_Nodes = (unsigned int**)gl_malloc(NR_bus_count*sizeof(unsigned int*));
-		if (Supported_Nodes == NULL)
-		{
-			GL_THROW("fault_check: node status vector allocation failure");
-			/*  TROUBLESHOOT
-			The fault_check object has failed to allocate the node information vector.  Please try
-			again and if the problem persists, submit your code and a bug report via the trac website.
-			*/
-		}
-
-		//Now create the per-phase reference vector
-		for (index=0; index<NR_bus_count; index++)
-		{
-			Supported_Nodes[index] = (unsigned int*)gl_malloc(3*sizeof(unsigned int));
-
-			if (Supported_Nodes[index] == NULL)
-			{
-				GL_THROW("fault_check: node status vector allocation failure");
-				//Defined above
-			}
-		}
-
-		//Replicate the above if reliability is running
-		if (reliability_mode == true)
-		{
-			//Create our node reference vector - one for each bus
-			Alteration_Nodes = (char*)gl_malloc(NR_bus_count*sizeof(char));
-			if (Alteration_Nodes == NULL)
-			{
-				GL_THROW("fault_check: node alteration status vector allocation failure");
-				/*  TROUBLESHOOT
-				The fault_check object has failed to allocate the node alteration information vector.  Please try
-				again and if the problem persists, submit your code and a bug report via the trac website.
-				*/
-			}
-
-			//Populate mesh-based items if necessary too
-			if (reliability_search_mode == false)
-			{
-				Alteration_Links = (char*)gl_malloc(NR_branch_count*sizeof(char));
-
-				//Check it
-				if (Alteration_Links == NULL)
-				{
-					GL_THROW("fault_check: link alteration status vector allocation failure");
-					/*  TROUBLESHOOT
-					The fault_check object has failed to allocate the node alteration information vector.  Please try
-					again and if the problem persists, submit your code and a bug report via the trac website.
-					*/
-				}
-
-				//Do the same for the tracking variables - nodes
-				Altered_Node_Track = (s_obj_supp_check*)gl_malloc(NR_bus_count*sizeof(s_obj_supp_check));
-
-				//Check it
-				if (Altered_Node_Track == NULL)
-				{
-					GL_THROW("fault_check: node alteration status vector allocation failure");
-					//Defined above
-				}
-
-				//Do the same for the tracking variables -- links
-				Altered_Link_Track = (s_obj_supp_check*)gl_malloc(NR_branch_count*sizeof(s_obj_supp_check));
-
-				//Check it
-				if (Altered_Link_Track == NULL)
-				{
-					GL_THROW("fault_check: link alteration status vector allocation failure");
-					//Defined above
-				}
-
-				//Initialize the two altered list trackers
-				for (index=0; index<NR_bus_count; index++)
-				{
-					Altered_Node_Track[index].altering_object = -9999;
-					Altered_Node_Track[index].phases_altered = 0x00;
-					Altered_Node_Track[index].next = NULL;
-				}
-
-				for (index=0; index<NR_branch_count; index++)
-				{
-					Altered_Link_Track[index].altering_object = -9999;
-					Altered_Link_Track[index].phases_altered = 0x00;
-					Altered_Link_Track[index].next = NULL;
-				}
-
-				//Populate the phases field too
-				valid_phases = (unsigned char*)gl_malloc(NR_bus_count*sizeof(unsigned char));
-
-				//Check it
-				if (valid_phases == NULL)
-				{
-					GL_THROW("fault_check: node alteration status vector allocation failure");
-					//Defined above
-				}
-			}//End additional allocations
-
-			//Apply the general reset
-			reset_alterations_check();
-		}//End reliability mode allocing
-	}//end 0th run
+		allocate_alterations_values(reliability_mode);
+	}
 
 	if ((fcheck_state == SINGLE) && (prev_time == 0))	//Single only occurs on first iteration
 	{
@@ -272,13 +171,59 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 		//See if restoration is present - if not, proceed without it
 		if (restoration_object != NULL)
 		{
-			//Map to the restoration object
-			rest_obj = OBJECTDATA(restoration_object,restoration);
+			//See if we've linked our function yet or not
+			if (restoration_fxn == NULL)
+			{
+				//Map it
+				restoration_fxn = (FUNCTIONADDR)(gl_get_function(restoration_object,"perform_restoration"));
 
+				//Check it
+				if (restoration_fxn == NULL)
+				{
+					GL_THROW("Unable to map restoration function");
+					/*  TROUBLESHOOT
+					While attempting to map the restoration configuration function, an error occurred.  Please
+					try again.  If the error persists, please submit your code and a bug report via the ticketing system.
+					*/
+				}
+			}//End restoration function map
+
+			//Mandate "mesh mode" for this, just because I say so
+			if (reliability_search_mode == true)	//Radial
+			{
+				gl_warning("fault_check interaction with restoration requires meshed checking mode - enabling this now");
+				/*  TROUBLESHOOT
+				The restoration algorithm is improved by using the meshed mode of topology checking for faults.  This has
+				been automatically enabled for the object.  If this is undesired, do not use fault_check with restoration.
+				*/
+
+				//Set it to mesh
+				reliability_search_mode = false;
+			}
+
+			//Call restoration -- fault_checks will occur as part of this
+			return_val = ((int (*)(OBJECT *))(*restoration_fxn))(restoration_object);
+
+			//Make sure it worked
+			if (return_val != 1)
+			{
+				GL_THROW("Restoration failed to execute properly");
+				/*  TROUBLESHOOT
+				While attempting to call the restoration/reconfiguration, an error was encountered in the function.
+				Please look for other error messages from restoration itself.
+				*/
+			}
+
+			//Now break into normal check, just to do one last one to make sure things work
+		}//End restoration object not null
+
+		//Perform the appropriate check -- occurs one more time after restoration (if it was called)
+		if (reliability_search_mode == true)
+		{
 			//Call the connectivity check
-			support_check(0,rest_obj->populate_tree);
+			support_check(0);
 
-			//Go through the list now - if something is unsupported, call a reconfiguration
+			//Parse the list - see if anything is broken
 			for (index=0; index<NR_bus_count; index++)
 			{
 				if ((Supported_Nodes[index][0] == 0) || (Supported_Nodes[index][1] == 0) || (Supported_Nodes[index][2] == 0))
@@ -288,93 +233,68 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 						write_output_file(t0);	//Write it
 					}
 
-					gl_warning("Unsupported phase on node %s",NR_busdata[index].name);	//Only reports the first one
-
-					rest_obj->Perform_Reconfiguration(OBJECTHDR(this),t0);	//Request a reconfiguration
-
-					break;	//Get us out of this loop, only need to detect a solitary failure
-				}
-			}
-		}
-		else	//No restoration
-		{
-			if (reliability_search_mode == true)
-			{
-				//Call the connectivity check
-				support_check(0,false);
-
-				//Parse the list - see if anything is broken
-				for (index=0; index<NR_bus_count; index++)
-				{
-					if ((Supported_Nodes[index][0] == 0) || (Supported_Nodes[index][1] == 0) || (Supported_Nodes[index][2] == 0))
-					{
-						if (output_filename[0] != '\0')	//See if there's an output
-						{
-							write_output_file(t0);	//Write it
-						}
-
-						//See what mode we are in
-						if (reliability_mode == false)
-						{
-							GL_THROW("Unsupported phase on node %s",NR_busdata[index].name);
-							/*  TROUBLESHOOT
-							An unsupported connection was found on the indicated bus in the system.  Since reconfiguration
-							is not enabled, the solver will fail here on the next iteration, so the system is broken early.
-							*/
-						}
-						else	//Must be in reliability mode
-						{
-							gl_warning("Unsupported phase on node %s",NR_busdata[index].name);
-							/*  TROUBLESHOOT
-							An unsupported connection was found on the indicated bus in the system.  Since reliability
-							is enabled, the solver will simply ignore the unsupported components for now.
-							*/
-						}
-						break;	//Only need to do this once
-					}
-				}
-			}
-			else	//Mesh, maybe
-			{
-				//Call the connectivity check
-				support_check_mesh(0,-9999,&phases_adjust);
-
-				//If the first run and we just ran, see if anything started "bad"
-				if (prev_time == 0)
-				{
-					support_search_links_mesh(-99,false,&phases_adjust);
-				}
-
-				override_output = output_check_supported_mesh();	//See if anything changed
-
-				//See if anything broke
-				if (override_output == true)
-				{
-					if (output_filename[0] != '\0')	//See if there's an output
-					{
-						write_output_file(t0);	//Write it
-					}
-
 					//See what mode we are in
 					if (reliability_mode == false)
 					{
-						GL_THROW("Unsupported phase on a possibly meshed node");
+						GL_THROW("Unsupported phase on node %s",NR_busdata[index].name);
 						/*  TROUBLESHOOT
-						An unsupported connection was found on the system.  Since reconfiguration is not enabled,
-						the solver will possibly fail here on the next iteration, so the system is broken early.
+						An unsupported connection was found on the indicated bus in the system.  Since reconfiguration
+						is not enabled, the solver will fail here on the next iteration, so the system is broken early.
 						*/
 					}
 					else	//Must be in reliability mode
 					{
-						gl_warning("Unsupported phase on a possibly meshed node");
+						gl_warning("Unsupported phase on node %s",NR_busdata[index].name);
 						/*  TROUBLESHOOT
-						An unsupported connection was found on the system.  Since reliability is enabled,
-						the solver will simply ignore the unsupported components for now.
+						An unsupported connection was found on the indicated bus in the system.  Since reliability
+						is enabled, the solver will simply ignore the unsupported components for now.
 						*/
 					}
+					break;	//Only need to do this once
 				}
 			}
-		}//no restoration
+		}
+		else	//Mesh, maybe
+		{
+			//Call the connectivity check
+			support_check_mesh(0);
+
+			//If the first run and we just ran, see if anything started "bad"
+			if (prev_time == 0)
+			{
+				//Special flag, so removal doesn't break everything (theoretically)
+				support_search_links_mesh(-77,false);
+			}
+
+			override_output = true; //output_check_supported_mesh();	//See if anything changed
+
+			//See if anything broke
+			if (override_output == true)
+			{
+				if (output_filename[0] != '\0')	//See if there's an output
+				{
+					write_output_file(t0);	//Write it
+				}
+
+				//See what mode we are in
+				if (reliability_mode == false)
+				{
+					GL_THROW("Unsupported phase on a possibly meshed node");
+					/*  TROUBLESHOOT
+					An unsupported connection was found on the system.  Since reconfiguration is not enabled,
+					the solver will possibly fail here on the next iteration, so the system is broken early.
+					*/
+				}
+				else	//Must be in reliability mode
+				{
+					gl_warning("Unsupported phase on a possibly meshed node");
+					/*  TROUBLESHOOT
+					An unsupported connection was found on the system.  Since reliability is enabled,
+					the solver will simply ignore the unsupported components for now.
+					*/
+				}
+			}
+		}
 	}//End check
 
 	//Update previous timestep info
@@ -386,11 +306,10 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 
 void fault_check::search_links(int node_int)
 {
-	unsigned int index, temp_child_idx, indexb;
+	unsigned int index, indexb;
 	bool both_handled, from_val, first_resto, proceed_in;
 	int branch_val;
 	BRANCHDATA temp_branch;
-	restoration *rest_object;
 	unsigned char work_phases;
 
 	//Loop through the connectivity and populate appropriately
@@ -459,55 +378,6 @@ void fault_check::search_links(int node_int)
 							}
 						}
 
-						//Pull out the link to the restoration object, if it exists
-						if (restoration_object != NULL)
-						{
-							//Link to the restoration object
-							rest_object = OBJECTDATA(restoration_object,restoration);
-
-							//Populate the parent/child tree if wanted
-							if ((rest_object->populate_tree == true) && (first_resto == false))
-							{
-								first_resto = true;		//Flag that first pass has happened on this branch
-
-								if (from_val)	//we're the from end
-								{
-									//This means we are the to end's parent - just write this.  If mesh or multi-sourced, this will just get overwritten
-									NR_busdata[temp_branch.to].Parent_Node = temp_branch.from;
-
-									//This also means the to end is our child
-									temp_child_idx = NR_busdata[temp_branch.from].Link_Table_Size;
-									if (NR_busdata[temp_branch.from].Child_Node_idx < temp_child_idx)	//Still in a valid range
-									{
-										if (rest_object ->Connectivity_Matrix[temp_branch.from][ temp_branch.to] != 3)	// if the branch is not a switch connection
-										{
-											NR_busdata[temp_branch.from].Child_Nodes[NR_busdata[temp_branch.from].Child_Node_idx] = temp_branch.to;	//Store the to value
-											NR_busdata[temp_branch.from].Child_Node_idx++;	//Increment the pointer
-										}
-										else if ((rest_object ->Connectivity_Matrix[temp_branch.from][ temp_branch.to] == 3) && (*temp_branch.status == 1)) //  if the branch is a closed switch connection
-										{
-											NR_busdata[temp_branch.from].Child_Nodes[NR_busdata[temp_branch.from].Child_Node_idx] = temp_branch.to;	//Store the to value
-											NR_busdata[temp_branch.from].Child_Node_idx++;	//Increment the pointer
-										}
-										else	// if the branch is open switch, the child is not populated for this branch
-										{
-											 temp_child_idx -= 1;
-										}
-									}
-									else
-									{
-										GL_THROW("NR: Too many children were attempted to be populated!");
-										/*  TROUBLESHOOT
-										While populating the tree structure for the restoration module, a memory allocation limit
-										was exceeded.  Please ensure no new nodes have been introduced into the system and try again.  If
-										the error persists, please submit your code and a bug report using the trac website.
-										*/
-									}
-								}
-								//To end, we don't want to do anything (should all be handled from from end)
-							}//Populate tree
-						}//End restoration object present
-
 						//Flag us as connected
 						Supported_Nodes[branch_val][indexb] = 1;
 
@@ -525,12 +395,10 @@ void fault_check::search_links(int node_int)
 }
 
 //Mesh searching function -- checks to see how something was removed
-void fault_check::search_links_mesh(int node_int, int buslink_fault, unsigned char fault_phases)
+void fault_check::search_links_mesh(int node_int)
 {
-	unsigned char phases_altered;
 	unsigned int index, device_value, node_value;
 	unsigned char temp_phases;
-	bool return_status;
 
 	//Loop through our connected nodes
 	for (index=0; index<NR_busdata[node_int].Link_Table_Size; index++)
@@ -553,40 +421,35 @@ void fault_check::search_links_mesh(int node_int, int buslink_fault, unsigned ch
 		//Get initial phasing information - the ones that are available
 		temp_phases = NR_branchdata[device_value].phases;
 
-		//See if we're the oringally "altered" bus -- mainly to keep us from overriding any reliability actions
-		if (device_value != buslink_fault)
+		//See if either end has any valid phases
+		if ((valid_phases[node_int] != 0x00) || (valid_phases[node_value] != 0x00))
 		{
-			//See if this particular link was removed by the currently occurring fault
-			return_status = altered_device_search(&Altered_Link_Track[device_value],buslink_fault,fault_phases,&phases_altered,false);
-
-			//If it was removed by this, allow that portion potential re-instation
-			if (return_status == true)
+			//Are we a switch
+			if ((NR_branchdata[device_value].lnk_type == 2) || (NR_branchdata[device_value].lnk_type == 5) || (NR_branchdata[device_value].lnk_type == 6))
 			{
-				temp_phases |= (NR_branchdata[device_value].origphases & phases_altered);
+				if (*NR_branchdata[device_value].status == 1)
+				{
+					temp_phases |= NR_branchdata[device_value].origphases & 0x07;
+				}
 			}
-			//Default else, no adjustments
-		}//End no the faulted bus
-		//Default else -- our phase manipulations were hopefully handled elsewhere
+			else
+			{
+				temp_phases |= NR_branchdata[device_value].origphases & 0x07;
+			}
+		}
 
 		//Populate the phase information
 		valid_phases[node_value] |= (valid_phases[node_int] & temp_phases);
 	}//End of node link table traversion
 }
 
-void fault_check::support_check(int swing_node_int,bool rest_pop_tree)
+void fault_check::support_check(int swing_node_int)
 {
 	unsigned int index;
 	unsigned char phase_vals;
 
 	//Reset the node status list
 	reset_support_check();
-
-	//See if we want the tree structure populated
-	if (rest_pop_tree == true)
-	{
-		for (index=0; index<NR_bus_count; index++)
-			NR_busdata[index].Child_Node_idx = 0;	//Zero the child object index
-	}
 
 	//Swing node has support - if the phase exists (changed for complete faults)
 	for (index=0; index<3; index++)
@@ -602,10 +465,8 @@ void fault_check::support_check(int swing_node_int,bool rest_pop_tree)
 }
 
 //Mesh-capable version of support check -- by default, it doesn't support restoration object
-void fault_check::support_check_mesh(int swing_node_int,int buslink_fault,unsigned char *temp_phases)
+void fault_check::support_check_mesh(int swing_node_int)
 {
-	//unsigned char temp_phases;
-	s_obj_supp_check *temp_check;
 	unsigned int indexa, indexb;
 
 	//Reset the node status list
@@ -614,92 +475,6 @@ void fault_check::support_check_mesh(int swing_node_int,int buslink_fault,unsign
 	//Swing node has support - if the phase exists (changed for complete faults)
 	valid_phases[swing_node_int] = NR_busdata[swing_node_int].phases & 0x07;
 
-	//Figure out what the phases altered was for the "fault" we're looking at -- mainly to pass this information
-	//Make sure it wasn't a swing fault or a "non-existant" fault
-	if ((buslink_fault != -99) && (buslink_fault != -9999))
-	{
-		//Check first entry
-		if (Altered_Link_Track[buslink_fault].altering_object ==  buslink_fault)	//If it is ourself
-		{
-			//Extract the data
-			*temp_phases = Altered_Link_Track[buslink_fault].phases_altered;
-		}
-		else	//No match on first entry
-		{
-			//Make sure there is at least one more
-			if (Altered_Link_Track[buslink_fault].next != NULL)
-			{
-				//Set an initial default, just in case we progress out
-				*temp_phases = 0x80;
-
-				//Map to the next entry
-				temp_check = Altered_Link_Track[buslink_fault].next;
-
-				//Check it
-				if (temp_check->altering_object == buslink_fault)
-				{
-					//Extract it
-					*temp_phases = temp_check->phases_altered;
-				}
-
-				//Progress
-				while (temp_check->next != NULL)
-				{
-					//Progress inward
-					temp_check = temp_check->next;
-
-					if (temp_check->altering_object == buslink_fault)
-					{
-						//Extract it
-						*temp_phases = temp_check->phases_altered;
-
-						//Get out
-						break;
-					}
-				}//End traversion
-
-				//Got to the end, which means we were never found, add us in (mainly to prevent later errors)
-				*temp_phases = ((NR_branchdata[buslink_fault].origphases ^ NR_branchdata[buslink_fault].phases) & 0x07);
-
-				//Store us too - even if we don't do anything, prevents errors later
-				altered_device_add(&Altered_Link_Track[buslink_fault],buslink_fault,*temp_phases,*temp_phases);
-			}
-			else	//Nope -- might be first entry, just flag it
-			{
-				if (Altered_Link_Track[buslink_fault].altering_object == -9999)	//No faults, so we're the first in -- record us
-				{
-					*temp_phases = ((NR_branchdata[buslink_fault].origphases ^ NR_branchdata[buslink_fault].phases) & 0x07);
-
-					//Store us too - even if we don't do anything, prevents errors later
-					altered_device_add(&Altered_Link_Track[buslink_fault],buslink_fault,*temp_phases,*temp_phases);
-				}
-				else	//Somethign odd, just flag us generic and see what happens (shouldn't really get here)
-				{
-					//Just set a semi empty value -- nothing to find or compare
-					*temp_phases = 0xFF;
-				}
-			}
-		}//End not match on first entry
-	}//End not a swing or generic fault
-	else if (buslink_fault == -99)	//It is a SWING fault
-	{
-		//Check and see if we're a removal or a re-instation
-		if (NR_busdata[0].origphases != NR_busdata[0].phases)
-		{
-			//Figure out what was removed
-			*temp_phases = ((NR_busdata[0].origphases ^ NR_busdata[0].phases) & 0x07);
-		}
-		else
-		{
-			//Read our information -- assumes a SWING fault is ALWAYS the only one affecting the SWING
-			*temp_phases = Altered_Node_Track[0].phases_altered;
-		}
-	}
-	else	//Left over, just a generic "check"
-	{
-		*temp_phases = 0xFF;
-	}
-
 	//Call the node link-erator (node support check) - call it on the swing, the details are handled inside
 	//Supports possibly meshed topology - brute force method
 	for (indexa=0; indexa<NR_bus_count; indexa++)
@@ -707,7 +482,7 @@ void fault_check::support_check_mesh(int swing_node_int,int buslink_fault,unsign
 		for (indexb=0; indexb<NR_bus_count; indexb++)
 		{
 			//Call the search link on individual nodes
-			search_links_mesh(indexb,buslink_fault,*temp_phases);
+			search_links_mesh(indexb);
 		}
 	}
 }
@@ -859,13 +634,17 @@ void fault_check::write_output_file(TIMESTAMP tval)
 void fault_check::support_check_alterations(int baselink_int, bool rest_mode)
 {
 	int base_bus_val;
-	unsigned char phases_adjust;
+
+	if (prev_time == 0)	//First run - see if restoration exists (we need it for now)
+	{
+		allocate_alterations_values(true);
+	}
 
 	//Check the mode
 	if (reliability_search_mode == true)	//Strickly radial assumption, continue as always
 	{
 		//See if the "faulting branch" is the swing node
-		if (baselink_int == -99)	//Swing
+		if ((baselink_int == -99) || (baselink_int == -77))	//Swing or initial-type fault
 			base_bus_val = 0;	//Swing is always 0th position
 		else	//Not swing, see what our to side is
 		{
@@ -913,36 +692,32 @@ void fault_check::support_check_alterations(int baselink_int, bool rest_mode)
 
 		//Call a support check -- reset handled inside
 		//Always assumed to NOT be in "restoration object" mode
-		support_check_mesh(0,baselink_int,&phases_adjust);
+		support_check_mesh(0);
 
 		//Now loop through and remove those components that are not supported anymore -- start from SWING, just because we have to start somewhere
-		support_search_links_mesh(baselink_int,rest_mode,&phases_adjust);
+		support_search_links_mesh(baselink_int,rest_mode);
 	}
 }
 
 //Recursive function to traverse powerflow and alter phases as necessary
 //Checks against support found, not an assumed radial traversion (little slower, but more thorough)
 //Based on support_search_links below
-void fault_check::support_search_links_mesh(int baselink_int, bool impact_mode,unsigned char *phases_adjust)
+void fault_check::support_search_links_mesh(int baselink_int, bool impact_mode)
 {
 	unsigned int indexval, index;
 	int device_index;
-	unsigned char temp_phases, work_phases, remove_phases, add_phases_orig, add_phases;
-	bool remove_status;
+	unsigned char temp_phases, work_phases, remove_phases, add_phases;
 
 	//First things first -- figure out how to flag ourselves
 	if (impact_mode == false)	//Removal mode
 	{
-		if (baselink_int != -99)	//Not a SWING-related fault, so actually do something (SWING just proceeds in)
+		if ((baselink_int != -99) && (baselink_int != -77))	//Not a SWING-related fault, so actually do something (SWING just proceeds in)
 		{
 			//Figure out which phases mismatch the FROM/TO ends of this link - 
 			temp_phases = ((valid_phases[NR_branchdata[baselink_int].from] ^ valid_phases[NR_branchdata[baselink_int].to]) & 0x07);
 
 			//Cast by our original phases, in case something else broke us first
 			remove_phases = temp_phases & NR_branchdata[baselink_int].origphases;
-
-			//Create our entry
-			altered_device_add(&Altered_Link_Track[baselink_int],baselink_int,remove_phases,*phases_adjust);
 
 			//Flag us as handled
 			Alteration_Links[baselink_int] = 1;
@@ -952,9 +727,6 @@ void fault_check::support_search_links_mesh(int baselink_int, bool impact_mode,u
 			//See what phases were removed from us
 			remove_phases = ((NR_busdata[0].origphases ^ NR_busdata[0].phases) & 0x07);
 
-			//Add this to the node tracker
-			altered_device_add(&Altered_Node_Track[0],baselink_int,remove_phases,*phases_adjust);
-
 			//Flag us as handled
 			Alteration_Nodes[0] = 1;
 		}
@@ -962,42 +734,13 @@ void fault_check::support_search_links_mesh(int baselink_int, bool impact_mode,u
 	}
 	else	//Restoration mode
 	{
-		if (baselink_int != -99)	//Not a SWING-related fault, so actually do somethign (SWING just proceeds in)
+		if ((baselink_int != -99) && (baselink_int != -77))	//Not a SWING-related fault, so actually do somethign (SWING just proceeds in)
 		{
-			//Remove our entry -- Search not necessary, we should be part of our own fault!
-			//Note that current reliability operations will get confused if you induce multiple "faults" explicitly on the same
-			//device -- this will need to be fixed if future implementations require it
-			//Mainly comes as a limitation that reliability is fixing the fault outside of this object, so when it checks for
-			//"restoration", it can get confused
-			
-			//Go forth and see what we find
-			remove_status = altered_device_search(&Altered_Link_Track[baselink_int],baselink_int,*phases_adjust,&add_phases_orig,true);
-
-			//Make sure it worked.  If it didn't, something bad happened
-			if (remove_status == false)
-			{
-				GL_THROW("An error was encountered trying to remove the faulted state from the original faulting object!");
-				/*  TROUBLESHOOT
-				While attempting to restore the original "faulting" device from the faulted state, an error occurred.
-				Please try again.  If the error persists, please submit your file and a description via the trac system.
-				*/
-			}
-
 			//Flag us as handled
 			Alteration_Links[baselink_int] = 1;
 		}//Not a SWING fault
 		else	//Are a swing node, get the information back
 		{
-			//Go forth and see what we find
-			remove_status = altered_device_search(&Altered_Node_Track[0],baselink_int,*phases_adjust,&add_phases_orig,true);
-
-			//Make sure it worked.  If it didn't, something bad happened
-			if (remove_status == false)
-			{
-				GL_THROW("An error was encountered trying to remove the faulted state from the original faulting object!");
-				//Defined above
-			}
-
 			//Flag us as handled
 			Alteration_Nodes[0] = 1;
 		}
@@ -1034,20 +777,6 @@ void fault_check::support_search_links_mesh(int baselink_int, bool impact_mode,u
 				//Apply the change to the TO node
 				NR_busdata[indexval].phases |= add_phases;
 
-				//Remove our reference in the altered list
-				remove_status = altered_device_search(&Altered_Node_Track[indexval],baselink_int,*phases_adjust,&add_phases,true);
-
-				//Make sure it worked, just to be safe.  It should have, but you never know
-				if (remove_status == false)
-				{
-					GL_THROW("Failed to remove faulted entry information after object has been restored!");
-					/*  TROUBLESHOOT
-					While attempting to remove the information for a particular fault from an object's database,
-					an error was encountered.  Please try again.  If the error persists, please submit your model
-					and a bug report via the trac website.
-					*/
-				}
-
 				//Loop through our links and adjust anyone necessary
 				for (index=0; index<NR_busdata[indexval].Link_Table_Size; index++)	//parse through our connected link
 				{
@@ -1075,15 +804,6 @@ void fault_check::support_search_links_mesh(int baselink_int, bool impact_mode,u
 							//Restore components - USBs are typically node oriented, so they aren't explicitly included here
 							NR_branchdata[device_index].phases |= add_phases;
 
-							//Remove our reference in the altered list
-							remove_status = altered_device_search(&Altered_Link_Track[device_index],baselink_int,*phases_adjust,&add_phases,true);
-
-							//Make sure it worked, just to be safe.  It should have, but you never know
-							if (remove_status == false)
-							{
-								GL_THROW("Failed to remove faulted entry information after object has been restored!");
-								//Defined above
-							}
 						}//End addition of phases
 						//Default else, nothing new supported here
 
@@ -1115,9 +835,6 @@ void fault_check::support_search_links_mesh(int baselink_int, bool impact_mode,u
 				//Figure out what was just removed -- assumes it was a removal
 				remove_phases = ((NR_busdata[indexval].phases ^ work_phases) & 0x07);
 
-				//Add our noded link in
-				altered_device_add(&Altered_Node_Track[indexval],baselink_int,remove_phases,*phases_adjust);
-
 				//Loop through our link table -- if we don't have a support phase, they shouldn't be valid either
 				for (index=0; index<NR_busdata[indexval].Link_Table_Size; index++)	//parse through our connected link
 				{
@@ -1138,9 +855,6 @@ void fault_check::support_search_links_mesh(int baselink_int, bool impact_mode,u
 							//Remove components - USBs are typically node oriented, so they aren't included here
 							NR_branchdata[device_index].phases &= work_phases;
 						}
-
-						//Add our details to the fault tracking system
-						altered_device_add(&Altered_Link_Track[device_index],baselink_int,remove_phases,*phases_adjust);
 
 						//Flag as handled
 						Alteration_Links[device_index] = 1;
@@ -1185,161 +899,165 @@ void fault_check::special_object_alteration_handle(int branch_idx)
 	OBJECT *temp_obj;
 	FUNCTIONADDR funadd = NULL;
 
-	//See if we're a switch - if so, call the appropriate function
-	if (NR_branchdata[branch_idx].lnk_type == 2)
+	//See which mode we're in -- bypass if needed (might be always)
+	if (meshed_fault_checking_enabled == false)
 	{
-		//Find this object
-		temp_obj = gl_get_object(NR_branchdata[branch_idx].name);
-
-		//Make sure it worked
-		if (temp_obj == NULL)
+		//See if we're a switch - if so, call the appropriate function
+		if (NR_branchdata[branch_idx].lnk_type == 2)
 		{
-			GL_THROW("Failed to find switch object:%s for reliability manipulation",NR_branchdata[branch_idx].name);
-			/*  TROUBLESHOOT
-			While attemping to map to an object for reliability-based modifications, GridLAB-D failed to find the object of interest.
-			Please try again.  If they error persists, please submit your code and a bug report to the trac website.
-			*/
+			//Find this object
+			temp_obj = gl_get_object(NR_branchdata[branch_idx].name);
+
+			//Make sure it worked
+			if (temp_obj == NULL)
+			{
+				GL_THROW("Failed to find switch object:%s for reliability manipulation",NR_branchdata[branch_idx].name);
+				/*  TROUBLESHOOT
+				While attemping to map to an object for reliability-based modifications, GridLAB-D failed to find the object of interest.
+				Please try again.  If they error persists, please submit your code and a bug report to the trac website.
+				*/
+			}
+
+			//map the function
+			funadd = (FUNCTIONADDR)(gl_get_function(temp_obj,"reliability_operation"));
+
+			//make sure it worked
+			if (funadd==NULL)
+			{
+				GL_THROW("Failed to find reliability manipulation method on object %s",NR_branchdata[branch_idx].name);
+				/*  TROUBLESHOOT
+				While attempting to handle special reliability actions on a "special" device (switch, recloser, etc.), the function required
+				was not located.  Ensure this object type supports special actions and try again.  If the problem persists, please submit a bug
+				report and your code to the trac website.
+				*/
+			}
+
+			//Call the update
+			temp_phases = (NR_branchdata[branch_idx].phases & 0x07);
+			return_val = ((int (*)(OBJECT *, unsigned char))(*funadd))(temp_obj,temp_phases);
+
+			if (return_val == 0)	//Failed :(
+			{
+				GL_THROW("Failed to handle reliability manipulation on %s",NR_branchdata[branch_idx].name);
+				/*  TROUBLESHOOT
+				While attempting to handle special reliability actions on a "special" device (switch, recloser, etc.), the function required
+				failed to execute properly.  If the problem persists, please submit a bug report and your code to the trac website.
+				*/
+			}
 		}
-
-		//map the function
-		funadd = (FUNCTIONADDR)(gl_get_function(temp_obj,"reliability_operation"));
-
-		//make sure it worked
-		if (funadd==NULL)
+		else if (NR_branchdata[branch_idx].lnk_type == 3)	//See if we're a fuse
 		{
-			GL_THROW("Failed to find reliability manipulation method on object %s",NR_branchdata[branch_idx].name);
-			/*  TROUBLESHOOT
-			While attempting to handle special reliability actions on a "special" device (switch, recloser, etc.), the function required
-			was not located.  Ensure this object type supports special actions and try again.  If the problem persists, please submit a bug
-			report and your code to the trac website.
-			*/
-		}
+			//Find this object
+			temp_obj = gl_get_object(NR_branchdata[branch_idx].name);
 
-		//Call the update
-		temp_phases = (NR_branchdata[branch_idx].phases & 0x07);
-		return_val = ((int (*)(OBJECT *, unsigned char))(*funadd))(temp_obj,temp_phases);
+			//Make sure it worked
+			if (temp_obj == NULL)
+			{
+				GL_THROW("Failed to find fuse object:%s for reliability manipulation",NR_branchdata[branch_idx].name);
+				/*  TROUBLESHOOT
+				While attemping to map to an object for reliability-based modifications, GridLAB-D failed to find the object of interest.
+				Please try again.  If they error persists, please submit your code and a bug report to the trac website.
+				*/
+			}
 
-		if (return_val == 0)	//Failed :(
+			//map the function
+			funadd = (FUNCTIONADDR)(gl_get_function(temp_obj,"reliability_operation"));
+
+			//make sure it worked
+			if (funadd==NULL)
+			{
+				GL_THROW("Failed to find reliability manipulation method on object %s",NR_branchdata[branch_idx].name);
+				/*  TROUBLESHOOT
+				While attempting to handle special reliability actions on a "special" device (switch, recloser, etc.), the function required
+				was not located.  Ensure this object type supports special actions and try again.  If the problem persists, please submit a bug
+				report and your code to the trac website.
+				*/
+			}
+
+			//Call the update
+			temp_phases = (NR_branchdata[branch_idx].phases & 0x07);
+			return_val = ((int (*)(OBJECT *, unsigned char))(*funadd))(temp_obj,temp_phases);
+
+			if (return_val == 0)	//Failed :(
+			{
+				GL_THROW("Failed to handle reliability manipulation on %s",NR_branchdata[branch_idx].name);
+				/*  TROUBLESHOOT
+				While attempting to handle special reliability actions on a "special" device (switch, recloser, etc.), the function required
+				failed to execute properly.  If the problem persists, please submit a bug report and your code to the trac website.
+				*/
+			}
+		}//end fuse
+		else if (NR_branchdata[branch_idx].lnk_type == 6)	//Recloser
 		{
-			GL_THROW("Failed to handle reliability manipulation on %s",NR_branchdata[branch_idx].name);
-			/*  TROUBLESHOOT
-			While attempting to handle special reliability actions on a "special" device (switch, recloser, etc.), the function required
-			failed to execute properly.  If the problem persists, please submit a bug report and your code to the trac website.
-			*/
-		}
-	}
-	else if (NR_branchdata[branch_idx].lnk_type == 3)	//See if we're a fuse
-	{
-		//Find this object
-		temp_obj = gl_get_object(NR_branchdata[branch_idx].name);
+			//Find this object
+			temp_obj = gl_get_object(NR_branchdata[branch_idx].name);
 
-		//Make sure it worked
-		if (temp_obj == NULL)
+			//Make sure it worked
+			if (temp_obj == NULL)
+			{
+				GL_THROW("Failed to find recloser object:%s for reliability manipulation",NR_branchdata[branch_idx].name);
+				/*  TROUBLESHOOT
+				While attemping to map to an object for reliability-based modifications, GridLAB-D failed to find the object of interest.
+				Please try again.  If they error persists, please submit your code and a bug report to the trac website.
+				*/
+			}
+
+			//map the function
+			funadd = (FUNCTIONADDR)(gl_get_function(temp_obj,"recloser_reliability_operation"));
+
+			//make sure it worked
+			if (funadd==NULL)
+			{
+				GL_THROW("Failed to find reliability manipulation method on object %s",NR_branchdata[branch_idx].name);
+				//defined above
+			}
+
+			//Call the update
+			temp_phases = (NR_branchdata[branch_idx].phases & 0x07);
+			return_val = ((int (*)(OBJECT *, unsigned char))(*funadd))(temp_obj,temp_phases);
+
+			if (return_val == 0)	//Failed :(
+			{
+				GL_THROW("Failed to handle reliability manipulation on %s",NR_branchdata[branch_idx].name);
+				//Define above
+			}
+		}//end recloser
+		else if (NR_branchdata[branch_idx].lnk_type == 5)	//Sectionalizer
 		{
-			GL_THROW("Failed to find fuse object:%s for reliability manipulation",NR_branchdata[branch_idx].name);
-			/*  TROUBLESHOOT
-			While attemping to map to an object for reliability-based modifications, GridLAB-D failed to find the object of interest.
-			Please try again.  If they error persists, please submit your code and a bug report to the trac website.
-			*/
-		}
+			//Find this object
+			temp_obj = gl_get_object(NR_branchdata[branch_idx].name);
 
-		//map the function
-		funadd = (FUNCTIONADDR)(gl_get_function(temp_obj,"reliability_operation"));
+			//Make sure it worked
+			if (temp_obj == NULL)
+			{
+				GL_THROW("Failed to find sectionalizer object:%s for reliability manipulation",NR_branchdata[branch_idx].name);
+				/*  TROUBLESHOOT
+				While attemping to map to an object for reliability-based modifications, GridLAB-D failed to find the object of interest.
+				Please try again.  If they error persists, please submit your code and a bug report to the trac website.
+				*/
+			}
 
-		//make sure it worked
-		if (funadd==NULL)
-		{
-			GL_THROW("Failed to find reliability manipulation method on object %s",NR_branchdata[branch_idx].name);
-			/*  TROUBLESHOOT
-			While attempting to handle special reliability actions on a "special" device (switch, recloser, etc.), the function required
-			was not located.  Ensure this object type supports special actions and try again.  If the problem persists, please submit a bug
-			report and your code to the trac website.
-			*/
-		}
+			//map the function
+			funadd = (FUNCTIONADDR)(gl_get_function(temp_obj,"sectionalizer_reliability_operation"));
 
-		//Call the update
-		temp_phases = (NR_branchdata[branch_idx].phases & 0x07);
-		return_val = ((int (*)(OBJECT *, unsigned char))(*funadd))(temp_obj,temp_phases);
+			//make sure it worked
+			if (funadd==NULL)
+			{
+				GL_THROW("Failed to find reliability manipulation method on object %s",NR_branchdata[branch_idx].name);
+				//Defined above
+			}
 
-		if (return_val == 0)	//Failed :(
-		{
-			GL_THROW("Failed to handle reliability manipulation on %s",NR_branchdata[branch_idx].name);
-			/*  TROUBLESHOOT
-			While attempting to handle special reliability actions on a "special" device (switch, recloser, etc.), the function required
-			failed to execute properly.  If the problem persists, please submit a bug report and your code to the trac website.
-			*/
-		}
-	}//end fuse
-	else if (NR_branchdata[branch_idx].lnk_type == 6)	//Recloser
-	{
-		//Find this object
-		temp_obj = gl_get_object(NR_branchdata[branch_idx].name);
+			//Call the update
+			temp_phases = (NR_branchdata[branch_idx].phases & 0x07);
+			return_val = ((int (*)(OBJECT *, unsigned char))(*funadd))(temp_obj,temp_phases);
 
-		//Make sure it worked
-		if (temp_obj == NULL)
-		{
-			GL_THROW("Failed to find recloser object:%s for reliability manipulation",NR_branchdata[branch_idx].name);
-			/*  TROUBLESHOOT
-			While attemping to map to an object for reliability-based modifications, GridLAB-D failed to find the object of interest.
-			Please try again.  If they error persists, please submit your code and a bug report to the trac website.
-			*/
-		}
-
-		//map the function
-		funadd = (FUNCTIONADDR)(gl_get_function(temp_obj,"recloser_reliability_operation"));
-
-		//make sure it worked
-		if (funadd==NULL)
-		{
-			GL_THROW("Failed to find reliability manipulation method on object %s",NR_branchdata[branch_idx].name);
-			//defined above
-		}
-
-		//Call the update
-		temp_phases = (NR_branchdata[branch_idx].phases & 0x07);
-		return_val = ((int (*)(OBJECT *, unsigned char))(*funadd))(temp_obj,temp_phases);
-
-		if (return_val == 0)	//Failed :(
-		{
-			GL_THROW("Failed to handle reliability manipulation on %s",NR_branchdata[branch_idx].name);
-			//Define above
-		}
-	}//end recloser
-	else if (NR_branchdata[branch_idx].lnk_type == 5)	//Sectionalizer
-	{
-		//Find this object
-		temp_obj = gl_get_object(NR_branchdata[branch_idx].name);
-
-		//Make sure it worked
-		if (temp_obj == NULL)
-		{
-			GL_THROW("Failed to find sectionalizer object:%s for reliability manipulation",NR_branchdata[branch_idx].name);
-			/*  TROUBLESHOOT
-			While attemping to map to an object for reliability-based modifications, GridLAB-D failed to find the object of interest.
-			Please try again.  If they error persists, please submit your code and a bug report to the trac website.
-			*/
-		}
-
-		//map the function
-		funadd = (FUNCTIONADDR)(gl_get_function(temp_obj,"sectionalizer_reliability_operation"));
-
-		//make sure it worked
-		if (funadd==NULL)
-		{
-			GL_THROW("Failed to find reliability manipulation method on object %s",NR_branchdata[branch_idx].name);
-			//Defined above
-		}
-
-		//Call the update
-		temp_phases = (NR_branchdata[branch_idx].phases & 0x07);
-		return_val = ((int (*)(OBJECT *, unsigned char))(*funadd))(temp_obj,temp_phases);
-
-		if (return_val == 0)	//Failed :(
-		{
-			GL_THROW("Failed to handle reliability manipulation on %s",NR_branchdata[branch_idx].name);
-			//Defined above
-		}
-	}//end sectionalizer
+			if (return_val == 0)	//Failed :(
+			{
+				GL_THROW("Failed to handle reliability manipulation on %s",NR_branchdata[branch_idx].name);
+				//Defined above
+			}
+		}//end sectionalizer
+	}//End "normal" reliability operations
 }
 
 //Functionalized entry to find end of linked-list and add entry in
@@ -1393,6 +1111,7 @@ void fault_check::altered_device_add(s_obj_supp_check *base_item, int fault_caus
 
 //Functionalized entry to see if a particular fault record is part of this entry
 //If appropriately flagged, will remove it too
+//Special flags in for "started broken" (-77) checks
 bool fault_check::altered_device_search(s_obj_supp_check *base_item, int fault_case, unsigned char phases_fault, unsigned char *phases_alter, bool remove_mode)
 {
 	bool ignore_phases;
@@ -1410,7 +1129,7 @@ bool fault_check::altered_device_search(s_obj_supp_check *base_item, int fault_c
 	//See if there's more than one entry
 	if (base_item->next == NULL)	//Single entry, so it better be us
 	{
-		if ((base_item->altering_object == fault_case) && ((base_item->fault_phases == phases_fault) || ignore_phases))	//Match!
+		if (((base_item->altering_object == fault_case) || (base_item->altering_object == -77)) && ((base_item->fault_phases == phases_fault) || ignore_phases))	//Match!
 		{
 			//Export our alteration
 			*phases_alter = base_item->phases_altered;
@@ -1436,7 +1155,7 @@ bool fault_check::altered_device_search(s_obj_supp_check *base_item, int fault_c
 	else	//More than one -- transition the list
 	{
 		//See if we're the first one
-		if ((base_item->altering_object == fault_case) && ((base_item->fault_phases == phases_fault) || ignore_phases))	//We are
+		if (((base_item->altering_object == fault_case) || (base_item->altering_object == -77)) && ((base_item->fault_phases == phases_fault) || ignore_phases))	//We are
 		{
 			//Export values
 			*phases_alter = base_item->phases_altered;
@@ -1473,7 +1192,7 @@ bool fault_check::altered_device_search(s_obj_supp_check *base_item, int fault_c
 				temp_check_next = temp_check_prev->next;
 
 				//Check us
-				if ((temp_check_next->altering_object == fault_case) && ((temp_check_next->fault_phases == phases_fault) || ignore_phases))	//Found it
+				if (((temp_check_next->altering_object == fault_case) || (temp_check_next->altering_object == -77)) && ((temp_check_next->fault_phases == phases_fault) || ignore_phases))	//Found it
 				{
 					//Export items
 					*phases_alter = temp_check_next->phases_altered;
@@ -1765,6 +1484,12 @@ void fault_check::reset_alterations_check(void)
 {
 	unsigned int index;
 
+	//Do a check for initialization
+	if (Alteration_Nodes == NULL)
+	{
+		allocate_alterations_values(true);
+	}
+
 	//Reset the node - just whether the algorithm has looked at it or not
 	for (index=0; index<NR_bus_count; index++)
 	{
@@ -1780,6 +1505,95 @@ void fault_check::reset_alterations_check(void)
 		}
 	}
 }
+
+//FUnctionalized version of the allocation routine, mainly so it can be called by
+//events that start before fault_check's presync has occurred.
+void fault_check::allocate_alterations_values(bool reliability_mode_bool)
+{
+	unsigned int index;
+	
+	//Make sure we haven't been allocated before
+	if (Supported_Nodes == NULL)
+	{
+		if (restoration_object==NULL)
+		{
+			gl_warning("Restoration object not detected!");	//Put down here because the variable may not be populated in time for init
+			/*  TROUBLESHOOT
+			The fault_check object can use a restoration object in the system.  If the restoration object is present,
+			unsuccessful node support checks will call the reconfiguration.
+			*/
+		}
+
+		//Create our node reference vector - one for each bus
+		Supported_Nodes = (unsigned int**)gl_malloc(NR_bus_count*sizeof(unsigned int*));
+		
+		if (Supported_Nodes == NULL)
+		{
+			GL_THROW("fault_check: node status vector allocation failure");
+			/*  TROUBLESHOOT
+			The fault_check object has failed to allocate the node information vector.  Please try
+			again and if the problem persists, submit your code and a bug report via the trac website.
+			*/
+		}
+
+		//Now create the per-phase reference vector
+		for (index=0; index<NR_bus_count; index++)
+		{
+			Supported_Nodes[index] = (unsigned int*)gl_malloc(3*sizeof(unsigned int));
+
+			if (Supported_Nodes[index] == NULL)
+			{
+				GL_THROW("fault_check: node status vector allocation failure");
+				//Defined above
+			}
+		}
+
+		//Replicate the above if reliability is running, or we're in mesh mode
+		if ((reliability_mode_bool == true) || (reliability_search_mode == false))
+		{
+			//Create our node reference vector - one for each bus
+			Alteration_Nodes = (char*)gl_malloc(NR_bus_count*sizeof(char));
+			if (Alteration_Nodes == NULL)
+			{
+				GL_THROW("fault_check: node alteration status vector allocation failure");
+				/*  TROUBLESHOOT
+				The fault_check object has failed to allocate the node alteration information vector.  Please try
+				again and if the problem persists, submit your code and a bug report via the trac website.
+				*/
+			}
+
+			//Populate mesh-based items if necessary too
+			if (reliability_search_mode == false)
+			{
+				Alteration_Links = (char*)gl_malloc(NR_branch_count*sizeof(char));
+
+				//Check it
+				if (Alteration_Links == NULL)
+				{
+					GL_THROW("fault_check: link alteration status vector allocation failure");
+					/*  TROUBLESHOOT
+					The fault_check object has failed to allocate the node alteration information vector.  Please try
+					again and if the problem persists, submit your code and a bug report via the trac website.
+					*/
+				}
+			}//End additional allocations
+
+			//Populate the phases field too
+			valid_phases = (unsigned char*)gl_malloc(NR_bus_count*sizeof(unsigned char));
+
+			//Check it
+			if (valid_phases == NULL)
+			{
+				GL_THROW("fault_check: node alteration status vector allocation failure");
+				//Defined above
+			}
+
+			//Apply the general reset
+			reset_alterations_check();
+		}//End reliability mode allocing
+	}//End allocations actually needed
+}
+
 
 //Function to progress downwards and flag momentary interruptions
 void fault_check::momentary_activation(int node_int)

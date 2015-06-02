@@ -413,6 +413,7 @@ int diesel_dg::create(void)
 	curr_state.omega = 2*PI*60.0;
 
 	deltamode_inclusive = false;	//By default, don't be included in deltamode simulations
+	mapped_freq_variable = NULL;
 
 	first_run = true;				//First time we run, we are the first run (by definition)
 
@@ -431,6 +432,7 @@ int diesel_dg::init(OBJECT *parent)
 	double ZB, SB, EB;
 	double test_pf;
 	bool *Norton_posting;
+	bool *Frequency_mapped;
 	complex tst, tst2, tst3, tst4;
 	current_A = current_B = current_C = 0.0;
 
@@ -822,6 +824,42 @@ int diesel_dg::init(OBJECT *parent)
 		}
 		else
 		{
+			//Perform the mapping check for frequency variable -- if no one has elected yet, we become master of frequency
+			//Temporary deltamode workarond until elec_frequency object is complete
+			Frequency_mapped = NULL;
+
+			//Get linking to checker variable
+			Frequency_mapped = (bool *)gl_get_module_var(gl_find_module("powerflow"),"master_frequency_update");
+
+			//See if it worked
+			if (Frequency_mapped == NULL)
+			{
+				GL_THROW("diesel_dg:%s - Failed to map frequency checking variable from powerflow for deltamode",obj->name?obj->name:"unnamed");
+				/*  TROUBLESHOOT
+				While attempting to map one of the electrical frequency update variables from the powerflow module, an error
+				was encountered.  Please try again, insuring the diesel_dg is parented to a deltamode powerflow object.  If
+				the error persists, please submit your code and a bug report via the ticketing system.
+				*/
+			}
+			
+			//Check the value
+			if (*Frequency_mapped == false)	//No one has mapped yet, we are volunteered
+			{
+				//Update powerflow frequency
+				mapped_freq_variable = (double *)gl_get_module_var(gl_find_module("powerflow"),"current_frequency");
+
+				//Make sure it isn't empty
+				if (mapped_freq_variable == NULL)
+				{
+					GL_THROW("diesel_dg:%s - Failed to map frequency checking variable from powerflow for deltamode",obj->name?obj->name:"unnamed");
+					//Defined above
+				}
+
+				//Flag the frequency mapping as having occurred
+				*Frequency_mapped = true;
+			}
+			//Default else -- someone else is already mapped, just continue onward
+
 			gen_object_count++;	//Increment the counter
 		}
 	}
@@ -1698,6 +1736,13 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 		//Update tracking variable
 		prev_rotor_speed_val = curr_state.omega;
 
+		//Update the frequency for powerflow, if we're mapped
+		//Work around for a generator to dictate frequency
+		if (mapped_freq_variable!=NULL)
+		{
+			*mapped_freq_variable = curr_state.omega/(2.0*PI);
+		}
+
 		//Determine our desired state - if rotor speed is settled, exit
 		if (temp_double<=rotor_speed_convergence_criterion)
 		{
@@ -1720,11 +1765,8 @@ STATUS diesel_dg::post_deltaupdate(complex *useful_value, unsigned int mode_pass
 {
 	if (mode_pass == 0)	//Accumulation pass
 	{
-		//Add in our frequency-weighted power
-		*FreqPower += complex(curr_state.pwr_electric.Re()*curr_state.omega,0.0);
-
-		//Add in our "current" power for the weighting
-		*TotalPower += curr_state.pwr_electric;
+		//Put the powerflow frequency in as our current rotor speed (should basically be this way already)
+		curr_state.omega = useful_value->Re();
 
 		//Update tracking variable - see if it was an exact second or not
 		if (deltamode_supersec_endtime != deltamode_endtime)
@@ -1737,10 +1779,6 @@ STATUS diesel_dg::post_deltaupdate(complex *useful_value, unsigned int mode_pass
 			prev_time = deltamode_endtime;
 			prev_time_dbl = (double)(deltamode_endtime);
 		}
-	}
-	else if (mode_pass == 1)	//Push the frequency
-	{
-		curr_state.omega = useful_value->Re();
 	}
 	else
 		return FAILED;	//Not sure how we get here, but fail us if we do

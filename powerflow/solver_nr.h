@@ -30,7 +30,7 @@ typedef struct  {
 	bool *dynamics_enabled;	///< Flag indicating this particular node has a dynamics contribution function
 	complex *PGenTotal;		///< Total output of any generation at this node - lumped for now for dynamics
 	complex *DynCurrent;	///< Dynamics current portions - used as storage/tracking for generator dynamics
-	double kv_base;			///< kV basis
+	double volt_base;		///< voltage basis
     double mva_base;		/// MVA basis
 	double Jacob_A[3];		// Element a in equation (37), which is used to update the Jacobian matrix at each iteration
 	double Jacob_B[3];		// Element b in equation (38), which is used to update the Jacobian matrix at each iteration
@@ -40,9 +40,6 @@ typedef struct  {
 	double max_volt_error;	///< Maximum voltage error specified for that node
 	char *name;				///< original name
 	OBJECT *obj;			///< Link to original object header
-	int Parent_Node;					///< index to parent node in BUSDATA structure - restoration related - may not be valid for meshed systems or reverse flow (restoration usage)
-	int *Child_Nodes;					///< index to child nodes in BUSDATA structure - restoration related - may not be valid for meshed systems or reverse flow (restoration usage)
-	unsigned int Child_Node_idx;		///< indexing variable to know location of next valid Child_Nodes entry
 } BUSDATA;
 
 typedef struct {
@@ -63,6 +60,7 @@ typedef struct {
 	OBJECT *obj;			///< Link to original object header
 	complex *If_from;		///< 3 phase fault currents on the from side
 	complex *If_to;			///< 3 phase fault currents on the to side 
+	FUNCTIONADDR limit_check;	////< Link to overload checking function (calculate_overlimit_link) -- restoration related
 } BRANCHDATA;
 
 typedef struct Y_NR{

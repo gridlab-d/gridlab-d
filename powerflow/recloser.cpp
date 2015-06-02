@@ -46,6 +46,12 @@ recloser::recloser(MODULE *mod) : switch_object(mod)
 		//Publish deltamode functions -- replicate switch
 		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_switch)==NULL)
 			GL_THROW("Unable to publish recloser deltamode function");
+
+		//Publish restoration-related function (current update)
+		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
+			GL_THROW("Unable to publish recloser external power calculation function");
+		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+			GL_THROW("Unable to publish recloser external power limit calculation function");
     }
 }
 
@@ -220,7 +226,7 @@ EXPORT double change_recloser_state(OBJECT *thisobj, unsigned char phase_change,
 	//Map the switch
 	swtchobj = OBJECTDATA(thisobj,switch_object);
 
-	if (swtchobj->switch_banked_mode == switch_object::BANKED_SW)	//Banked mode - all become "state", just cause
+	if ((swtchobj->switch_banked_mode == switch_object::BANKED_SW) || (meshed_fault_checking_enabled == true))
 	{
 		swtchobj->set_switch(state);
 	}

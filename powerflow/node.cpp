@@ -53,9 +53,8 @@
 #include <math.h>
 
 #include "solver_nr.h"
-#include "restoration.h"
 #include "node.h"
-#include "transformer.h"
+#include "link.h"
 
 //Library imports items - for external LU solver - stolen from somewhere else in GridLAB-D (tape, I believe)
 #ifdef WIN32
@@ -259,7 +258,6 @@ int node::init(OBJECT *parent)
 		{
 			OBJECT *temp_obj = NULL;
 			node *list_node;
-			unsigned int swing_count = 0;
 			FINDLIST *bus_list = gl_find_objects(FL_NEW,FT_CLASS,SAME,"node",FT_END);
 
 			//Parse the findlist
@@ -270,7 +268,6 @@ int node::init(OBJECT *parent)
 				if (list_node->bustype==SWING)
 				{
 					NR_swing_bus=temp_obj;
-					swing_count++;
 				}
 			}
 			
@@ -289,7 +286,6 @@ int node::init(OBJECT *parent)
 				if (list_node->bustype==SWING)
 				{
 					NR_swing_bus=temp_obj;
-					swing_count++;
 				}
 			}
 
@@ -308,7 +304,6 @@ int node::init(OBJECT *parent)
 				if (list_node->bustype==SWING)
 				{
 					NR_swing_bus=temp_obj;
-					swing_count++;
 				}
 			}
 			
@@ -327,7 +322,6 @@ int node::init(OBJECT *parent)
 				if (list_node->bustype==SWING)
 				{
 					NR_swing_bus=temp_obj;
-					swing_count++;
 				}
 			}
 
@@ -346,7 +340,6 @@ int node::init(OBJECT *parent)
 				if (list_node->bustype==SWING)
 				{
 					NR_swing_bus=temp_obj;
-					swing_count++;
 				}
 			}
 
@@ -365,7 +358,6 @@ int node::init(OBJECT *parent)
 				if (list_node->bustype==SWING)
 				{
 					NR_swing_bus=temp_obj;
-					swing_count++;
 				}
 			}
 
@@ -384,29 +376,19 @@ int node::init(OBJECT *parent)
 				if (list_node->bustype==SWING)
 				{
 					NR_swing_bus=temp_obj;
-					swing_count++;
 				}
 			}
 
 			//Free the buslist
 			gl_free(bus_list);
 
-			if (swing_count==0)
+			//Make sure there is one bus to rule them all, even if it actually has rivals
+			if (NR_swing_bus == NULL)
 			{
 				GL_THROW("NR: no swing bus found");
 				/*	TROUBLESHOOT
 				No swing bus was located in the test system.  Newton-Raphson requires at least one node
 				be designated "bustype SWING".
-				*/
-			}
-
-			if (swing_count>1)
-			{
-				GL_THROW("NR: more than one swing bus found!");
-				/*	TROUBLESHOOT
-				More than one swing bus was found.  Newton-Raphson currently only supports one swing bus
-				at this time.  Please split the system into individual files or consider merging the system to
-				only one swing bus.
 				*/
 			}
 		}//end swing bus search
@@ -602,11 +584,11 @@ int node::init(OBJECT *parent)
 
 			//Update ranking
 			//Ranking - similar to GS
-			if (bustype==SWING)
+			if ((bustype==SWING) && (obj==NR_swing_bus))	//Make sure we're THE swing bus and not just A swing bus
 			{
 				gl_set_rank(obj,6);
 			}
-			else	
+			else	//Normal nodes and rival swing buses end up in the same rank
 			{		
 				gl_set_rank(obj,4);
 			}
@@ -631,7 +613,8 @@ int node::init(OBJECT *parent)
 		}
 
 		//Use SWING node to hook in the solver - since it's called by SWING, might as well
-		if (bustype==SWING)
+		//Make sure it is the "master swing" too
+		if ((bustype==SWING) && (obj == NR_swing_bus))
 		{
 			if (LUSolverName[0]=='\0')	//Empty name, default to superLU
 			{
@@ -875,9 +858,67 @@ int node::init(OBJECT *parent)
 		powerflow_object *pParent = OBJECTDATA(parent,powerflow_object);
 		if (gl_object_isa(parent,"transformer"))
 		{
-			transformer *pTransformer = OBJECTDATA(parent,transformer);
-			transformer_configuration *pConfiguration = OBJECTDATA(pTransformer->configuration,transformer_configuration);
-			nominal_voltage = pConfiguration->V_secondary;
+			PROPERTY *transformer_config,*transformer_secondary_voltage;
+			OBJECT *trans_config_obj;
+			double *trans_secondary_voltage_value;
+			size_t offset_val;
+			char buffer[128];
+
+			//Get configuration link
+			transformer_config = gl_get_property(parent,"configuration");
+
+			//Check it
+			if (transformer_config == NULL)
+			{
+				GL_THROW("Error mapping secondary voltage property from transformer:%d %s",parent->id,parent->name?parent->name:"unnamed");
+				/*  TROUBLESHOOT
+				While attempting to map to the secondary voltage of a transformer to get a value for nominal voltage, an error
+				occurred.  Please try again.  If the problem persists, please submit your code and a bug report via the ticketing
+				system.
+				*/
+			}
+
+			//Pull the object pointer
+			offset_val = gl_get_value(parent, GETADDR(parent, transformer_config), buffer, 127, transformer_config);
+
+			//Make sure it worked
+			if (offset_val == 0)
+			{
+				GL_THROW("Error mapping secondary voltage property from transformer:%d %s",parent->id,parent->name?parent->name:"unnamed");
+				//Defined above
+			}
+
+			//trans_config_obj = gl_get_object(parent,transformer_config);
+			trans_config_obj = gl_get_object(buffer);
+
+			if (trans_config_obj == 0)
+			{
+				GL_THROW("Error mapping secondary voltage property from transformer:%d %s",parent->id,parent->name?parent->name:"unnamed");
+				//Defined above
+			}
+
+			//Now get secondary voltage
+			transformer_secondary_voltage = gl_get_property(trans_config_obj,"secondary_voltage");
+
+			//Make sure it worked
+			if (transformer_secondary_voltage == NULL)
+			{
+				GL_THROW("Error mapping secondary voltage property from transformer:%d %s",parent->id,parent->name?parent->name:"unnamed");
+				//Defined above
+			}
+
+			//Now get the final one, the double value for secondary voltage
+			trans_secondary_voltage_value = gl_get_double(trans_config_obj,transformer_secondary_voltage);
+
+			//Make sure it worked
+			if (trans_secondary_voltage_value == NULL)
+			{
+				GL_THROW("Error mapping secondary voltage property from transformer:%d %s",parent->id,parent->name?parent->name:"unnamed");
+				//Defined above
+			}
+
+			//Now steal the value
+			nominal_voltage = *trans_secondary_voltage_value;
 		}
 		else
 			nominal_voltage = pParent->nominal_voltage;
@@ -1033,8 +1074,8 @@ int node::init(OBJECT *parent)
 		//Increment the counter for allocation
 		pwr_object_count++;
 
-		//If we're SWING, map the variable for the extra function as well
-		if (bustype == SWING)
+		//If we're THE SWING, map the variable for the extra function as well
+		if ((bustype == SWING) && (obj==NR_swing_bus))
 		{
 			//Assign the function variable for deltamode
 			deltamode_extra_function = (int64)(&(delta_extra_function));
@@ -1094,6 +1135,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 	TIMESTAMP t1 = powerflow_object::presync(t0); 
 	TIMESTAMP temp_time_value;
 	node *temp_par_node = NULL;
+	FUNCTIONADDR temp_funadd = NULL;
 
 	//Determine the flag state - see if a schedule is overriding us
 	if (service_status_dbl>-1.0)
@@ -1378,14 +1420,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			//Unlock the swing bus
 			if ( NR_swing_bus!=obj) WRITEUNLOCK_OBJECT(NR_swing_bus);
 
-			//Populate the connectivity matrix if a restoration object is present
-			if (restoration_object != NULL)
-			{
-				restoration *Rest_Module = OBJECTDATA(restoration_object,restoration);
-				Rest_Module->CreateConnectivity();
-			}
-
-			if (bustype==SWING)
+			if ((bustype==SWING) && (obj==NR_swing_bus))	//Make sure we're the great MASTER SWING
 			{
 				NR_populate();		//Force a first population via the swing bus.  Not really necessary, but I'm saying it has to be this way.
 				NR_admit_change = true;	//Ensure the admittance update variable is flagged
@@ -2133,7 +2168,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			//Call NR sync function items
 			NR_node_sync_fxn(obj);
 
-			if ((NR_curr_bus==NR_bus_count) && (bustype==SWING))	//Only run the solver once everything has populated
+			if ((NR_curr_bus==NR_bus_count) && (bustype==SWING) && (obj==NR_swing_bus))	//Only run the solver once everything has populated
 			{
 				bool bad_computation=false;
 				NRSOLVERMODE powerflow_type;
@@ -2189,7 +2224,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 				return t1;
 			else	//Population of data busses is not complete.  Flag us for a go-around, they should be ready next time
 			{
-				if (bustype==SWING)	//Only error on swing - if errors with others, seems to be upset.  Too lazy to track down why.
+				if ((bustype==SWING) && (obj == NR_swing_bus))	//Only error on MASTER swing - if errors with others, seems to be upset.  Too lazy to track down why.
 				{
 					GL_THROW("All nodes were not properly populated");
 					/*  TROUBLESHOOT
@@ -2424,35 +2459,7 @@ int node::kmldump(int (*stream)(const char*,...))
 	/// @todo complete KML implement of supply (ticket #133)
 
 	// demand
-	if (gl_object_isa(obj,"load"))
-	{
-		load *pLoad = OBJECTDATA(obj,load);
-		stream("<TR><TH ALIGN=LEFT>Load</TH>");
-		if (has_phase(PHASE_A))
-		{
-			complex load_A = ~voltageA*pLoad->constant_current[0] + pLoad->powerA;
-			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">%.3f&nbsp;kW&nbsp;&nbsp;<BR>%.3f&nbsp;kVAR</TD>",
-				load_A.Re(),load_A.Im());
-		}
-		else
-			stream("<TD></TD>");
-		if (has_phase(PHASE_B))
-		{
-			complex load_B = ~voltageB*pLoad->constant_current[1] + pLoad->powerB;
-			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">%.3f&nbsp;kW&nbsp;&nbsp;<BR>%.3f&nbsp;kVAR</TD>",
-				load_B.Re(),load_B.Im());
-		}
-		else
-			stream("<TD></TD>");
-		if (has_phase(PHASE_C))
-		{
-			complex load_C = ~voltageC*pLoad->constant_current[2] + pLoad->powerC;
-			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">%.3f&nbsp;kW&nbsp;&nbsp;<BR>%.3f&nbsp;kVAR</TD>",
-				load_C.Re(),load_C.Im());
-		}
-		else
-			stream("<TD></TD>");
-	}
+	// Removed due to "erroneous" linking problem (headers) - add in with supply, if needed
 	stream("</TR>\n");
 	stream("</TABLE>\n");
 	stream("]]>\n");
@@ -2742,54 +2749,6 @@ int node::NR_populate(void)
 		*/
 	}
 
-	//If a restoration object is present, create space for an equivalent table
-	if (restoration_object != NULL)
-	{
-		if (NR_connected_links[0] != 1)	//Make sure we aren't an only child
-		{
-			NR_busdata[NR_node_reference].Child_Nodes = (int *)gl_malloc((NR_connected_links[0]-1)*sizeof(int));
-
-			if (NR_busdata[NR_node_reference].Child_Nodes == NULL)
-			{
-				GL_THROW("NR: Failed to allocate child node table for node:%d - %s",me->id,me->name);
-				/*  TROUBLESHOOT
-				While attempting to allocate memory for a tree table for the restoration module, memory failed to be allocated.
-				Make sure you ahve enough memory and try again.  If the problem persists, please submit your code and a bug report
-				to the trac website.
-				*/
-			}
-
-			//Initialize the children and the parent
-			NR_busdata[NR_node_reference].Parent_Node = -1;
-
-			for (unsigned int index=0; index<(NR_connected_links[0]-1); index++)
-				NR_busdata[NR_node_reference].Child_Nodes[index] = -1;
-
-			NR_busdata[NR_node_reference].Child_Node_idx = 0;	//Initialize the population index
-		}
-		else	//Only child, ensure we set it as zero
-		{
-			if (bustype == SWING)	//Swing bus isn't an only child, it's a single parent
-			{
-				NR_busdata[NR_node_reference].Child_Nodes = (int *)gl_malloc(sizeof(int));	//Just allocate one spot in this case
-
-				if (NR_busdata[NR_node_reference].Child_Nodes == NULL)
-				{
-					GL_THROW("NR: Failed to allocate child node table for node:%d - %s",me->id,me->name);
-					//Defined above
-				}
-
-				NR_busdata[NR_node_reference].Child_Nodes[0] = -1;	//Initialize it to -1 - flags as unpopulated
-
-				NR_busdata[NR_node_reference].Parent_Node = 0;	//We're our own parent (the implications are astounding)
-			}
-			else	//Normal only child
-			{
-				NR_busdata[NR_node_reference].Child_Nodes = 0;
-			}
-		}
-	}
-
 	//Populate our size
 	NR_busdata[NR_node_reference].Link_Table_Size = NR_connected_links[0];
 
@@ -2811,7 +2770,7 @@ int node::NR_populate(void)
 	}
 
 	//Per unit values - populate nominal voltage on a whim
-	NR_busdata[NR_node_reference].kv_base = nominal_voltage;
+	NR_busdata[NR_node_reference].volt_base = nominal_voltage;
 	NR_busdata[NR_node_reference].mva_base = -1.0;
 
 	//Set the matrix value to -1 to know it hasn't been set (probably not necessary)

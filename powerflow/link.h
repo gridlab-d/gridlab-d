@@ -8,10 +8,10 @@
 
 EXPORT int isa_link(OBJECT *obj, char *classname);
 EXPORT SIMULATIONMODE interupdate_link(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
+EXPORT int updatepowercalc_link(OBJECT *obj);
+EXPORT int calculate_overlimit_link(OBJECT *obj, double *overload_value, bool *overloaded);
 
 #define impedance(X) (B_mat[X][X])
-//#define LS_CLOSED true	//Changed from enums so it could be used by restoration
-//#define LS_OPEN false
 
 typedef enum {
 		NORMAL=0,			///< defines just a normal link/transformer
@@ -59,7 +59,6 @@ public: /// @todo make this private and create interfaces to control values
 	void calculate_power();
 	void calculate_power_splitphase();
 	void set_flow_directions();
-	void calc_currents(complex *Current_Vals);	//Function to perform "immediate" current calculation - used by restoration object
 	int link_fault_on(OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time, void *Extra_Data);		//Function to create fault on line
 	int link_fault_off(int *implemented_fault, char *imp_fault_name, void *Extra_Data);	//Function to remove fault from line
 	double mean_repair_time;
@@ -67,14 +66,8 @@ public: /// @todo make this private and create interfaces to control values
 	double link_rating[2];		/**< Values for current line rating - gives individual segments the ability to set */
 	double *get_double(OBJECT *obj, char *name);	/**< Gets address of double - mainly for mean_repair_time */
 public:
-	typedef enum {
-		LS_OPEN=0,			///< defines that that link is open
-		LS_CLOSED=1			///< defines that that link is closed
-	} STATUS;
-	enumeration status;
-	//bool status;	///< link status (open disconnect nodes)
-	enumeration prev_status;
-	//bool prev_status;	///< Previous link status (used for recalculation detection)
+	enumeration status;	///< link status (open disconnect nodes)
+	enumeration prev_status;	///< Previous link status (used for recalculation detection)
 
 	bool current_accumulated;	///< Flag to indicate if NR current has been "handled" yet
 	bool check_link_limits;	///< Flag to see if this particular link needs limits checked
@@ -93,6 +86,7 @@ public:
 	complex indiv_power_out[3];	///< power flow out (w.r.t. to node) - individual quantities
 	complex indiv_power_loss[3];///< power losses - individual quantities
 	int protect_locations[3];	///< Links to protection object for different phase faults - part of reliability
+	FUNCTIONADDR link_recalc_fxn;	///< Function address for link recalculation function - frequency dependence
 
 	int create(void);
 	int init(OBJECT *parent);
@@ -133,7 +127,12 @@ public:
 
 	void NR_link_presync_fxn(void);
 	void BOTH_link_postsync_fxn(void);
-	bool deltamode_inclusive;
+	void perform_limit_checks(double *over_limit_value, bool *over_limits);
+
+	//New matrix functions associated with transformer inrush (bigger)
+	void lmatrix_add(complex *matrix_in_A, complex *matrix_in_B, complex *matrix_out, int matsize);
+	void lmatrix_mult(complex *matrix_in_A, complex *matrix_in_B, complex *matrix_out, int matsize);
+	void lmatrix_vmult(complex *matrix_in, complex *vector_in, complex *vector_out, int matsize);
 
 	// Fault current calculation functions
 	void fault_current_calc(complex C[7][7], unsigned int removed_phase, double fault_type); // function traces up from fault to swing bus summing up the link objects' impedances
@@ -141,6 +140,8 @@ public:
 
 	SIMULATIONMODE inter_deltaupdate_link(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
+private:
+	bool deltamode_inclusive;
 };
 
 //Macros
@@ -150,8 +151,11 @@ void multiply(complex a[3][3], complex b[3][3], complex c[3][3]);
 void subtract(complex a[3][3], complex b[3][3], complex c[3][3]);
 void addition(complex a[3][3], complex b[3][3], complex c[3][3]);
 void equalm(complex a[3][3], complex b[3][3]);
-void lu_decomp(complex a[7][7], complex l[7][7], complex u[7][7]); //lu decomposition function for a 7 by 7 matrix
-void forward_sub(complex l[7][7], complex b[7], complex z[7]); //backwards substitution  algorithm for a 7 by 7 system 
-void back_sub(complex u[7][7], complex z[7], complex x[7]); // forwards substitution algorithm for a 7 by 7 system
+
+//LU Decomp stuff
+void lu_decomp(complex *a, complex *l, complex *u, int size_val); //lu decomposition function for a generic square matrix
+void forward_sub(complex *l, complex *b, complex *z, int size_val); //backwards substitution  algorithm for a generic square system 
+void back_sub(complex *u, complex *z, complex *x, int size_val); // forwards substitution algorithm for a generic square system
+void lu_matrix_inverse(complex *input_mat, complex *output_mat, int size_val);	//matrix inversion calculated by LU decomp method
 #endif // _LINK_H
 

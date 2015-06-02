@@ -31,6 +31,11 @@ void print_matrix(complex mat[3][3]);
 typedef enum {SM_FBS=0, SM_GS=1, SM_NR=2} SOLVERMETHOD;		/**< powerflow solver methodology */
 typedef enum {MM_SUPERLU=0, MM_EXTERN=1} MATRIXSOLVERMETHOD;	/**< NR matrix solver methodlogy */
 
+typedef enum {
+	LS_OPEN=0,			///< defines that that link is open
+	LS_CLOSED=1			///< defines that that link is closed
+} LINESTATUS;	//Line/link status - made at powerflow level for reusability
+
 //Structure to hold external LU solver calls
 typedef struct s_ext_fxn {
 	void *dllLink;
@@ -75,6 +80,8 @@ GLOBAL double default_maximum_voltage_error INIT(1e-6);	/**< default sync voltag
 GLOBAL double default_maximum_power_error INIT(0.0001);	/**< default power convergence limit for multirun */
 GLOBAL OBJECT *restoration_object INIT(NULL);		/**< restoration object of the system */
 GLOBAL OBJECT *fault_check_object INIT(NULL);		/**< fault_check object of the system */
+GLOBAL bool meshed_fault_checking_enabled INIT(false);	/*** fault_check object flag for possible meshing -- adjusts how reliability-related code runs */
+GLOBAL bool restoration_checks_active INIT(false);	/***< Overall flag for when reconfigurations are occurring - special actions in devices */
 
 GLOBAL bool enable_subsecond_models INIT(false);		/* normally not operating in delta mode */
 GLOBAL bool all_powerflow_delta INIT(false);			/* Flag to make all powerflow objects participate in deltamode -- otherwise is individually flagged per object */
@@ -87,8 +94,12 @@ GLOBAL int pwr_object_count INIT(0);				/* deltamode object count */
 GLOBAL int pwr_object_current INIT(-1);				/* Index of current deltamode object */
 GLOBAL TIMESTAMP deltamode_starttime INIT(TS_NEVER);	/* Tracking variable for next desired instance of deltamode */
 GLOBAL double current_frequency INIT(60.0);			/**< Current operating frequency of the system - used by deltamode stuff */
+GLOBAL bool master_frequency_update INIT(false);	/**< Whether a generator has designated itself "keeper of frequency" -- temporary deltamode override */
+GLOBAL bool enable_frequency_dependence INIT(false);	/**< Flag to enable frequency-based updates of impedance values, namely loads and lines */
 GLOBAL int64 deltamode_extra_function INIT(0);		/**< Kludge pointer to module-level function, so generators can call it */
 GLOBAL double default_resistance INIT(1e-4);		/**< sets the default resistance for safety devices */
+
+GLOBAL double deltatimestep_running INIT(-1.0);			/** Value of the current deltamode simulation - used for integration method in in-rush */
 
 // Deltamode stuff
 void schedule_deltamode_start(TIMESTAMP tstart);	/* Anticipated time for a deltamode start, even if it is now */

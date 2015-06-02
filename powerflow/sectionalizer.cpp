@@ -45,6 +45,12 @@ sectionalizer::sectionalizer(MODULE *mod) : switch_object(mod)
 		//Publish deltamode functions
 		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_switch)==NULL)
 			GL_THROW("Unable to publish sectionalizer deltamode function");
+
+		//Publish restoration-related function (current update)
+		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
+			GL_THROW("Unable to publish sectionalizer external power calculation function");
+		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+			GL_THROW("Unable to publish sectionalizer external power limit calculation function");
     }
 }
 
@@ -154,7 +160,7 @@ EXPORT double change_sectionalizer_state(OBJECT *thisobj, unsigned char phase_ch
 	//Init
 	count_values = 0.0;
 
-	if (state == false)	//Check routine to find a recloser
+	if ((state == false) && (restoration_checks_active == false))	//Check routine to find a recloser (or we're in reconfiguration mode)
 	{
 		//Map us up as a proper object
 		sectionobj = OBJECTDATA(thisobj,sectionalizer);
@@ -220,7 +226,7 @@ EXPORT double change_sectionalizer_state(OBJECT *thisobj, unsigned char phase_ch
 		//Map the switch
 		swtchobj = OBJECTDATA(thisobj,switch_object);
 
-		if (swtchobj->switch_banked_mode == switch_object::BANKED_SW)	//Banked mode - all become "state", just cause
+		if ((swtchobj->switch_banked_mode == switch_object::BANKED_SW) || (meshed_fault_checking_enabled == true))
 		{
 			swtchobj->set_switch(state);
 		}

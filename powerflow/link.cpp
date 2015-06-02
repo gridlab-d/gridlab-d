@@ -93,7 +93,6 @@
 #include <math.h>
 #include "link.h"
 #include "node.h"
-#include "restoration.h"
 
 CLASS* link_object::oclass = NULL;
 CLASS* link_object::pclass = NULL;
@@ -165,6 +164,12 @@ link_object::link_object(MODULE *mod) : powerflow_object(mod)
 			//Publish deltamode functions
 			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
 				GL_THROW("Unable to publish link deltamode function");
+			
+			//Publish restoration-related function (current update)
+			if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
+				GL_THROW("Unable to publish link external power calculation function");
+			if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+				GL_THROW("Unable to publish link external power limit calculation function");
 	}
 }
 
@@ -199,7 +204,7 @@ int link_object::create(void)
 	If_in[0] = If_in[1] = If_in[2] = complex(0,0);
 	If_out[0] = If_out[1] = If_out[2] = complex(0,0);
 
-	protect_locations[0] = protect_locations[1] = protect_locations[2] = 0;
+	protect_locations[0] = protect_locations[1] = protect_locations[2] = -1;	//Initalize cleared
 
 	current_in[0] = current_in[1] = current_in[2] = complex(0,0);
 
@@ -215,6 +220,8 @@ int link_object::create(void)
 	current_accumulated = false;
 
 	deltamode_inclusive = false;	//By default, we don't support deltamode
+
+	link_recalc_fxn = NULL;	//Initialize frequency dependence calculation
 
 	return result;
 }
@@ -503,6 +510,13 @@ int link_object::init(OBJECT *parent)
 
 		//Increment the counter for allocation
 		pwr_object_count++;
+	}	//End deltamode items -- like in-rush
+
+	//If frequency dependence is enabled, try to map the recalc function
+	if (enable_frequency_dependence == true)
+	{
+		//Try to map the function.  If it fails, just assume it has no frequency dependence
+		link_recalc_fxn = (FUNCTIONADDR)(gl_get_function(obj,"recalc_distribution_line"));
 	}
 
 	return 1;
@@ -537,9 +551,50 @@ set link_object::get_flow(node **fn, node **tn) const
 //Presync portion of NR code - functionalized for deltamode
 void link_object::NR_link_presync_fxn(void)
 {
+	OBJECT *obj = OBJECTHDR(this);
+	int ret_value;
+	bool force_link_update;
+	complex temp_value_A, temp_value_B;
+	char jindex, kindex;
+
+	//See if a frequency dependence is desired -- if so, update it
+	if (enable_frequency_dependence == true)
+	{
+		if (link_recalc_fxn != NULL)	//See if a function was mapped -- perform an update
+		{
+			//Make the call to update impedance values
+			ret_value = ((int (*)(OBJECT *))(*link_recalc_fxn))(obj);
+
+			//Make sure it worked -- not sure how this happens right now (all return 1), but just in case
+			if (ret_value != 1)
+			{
+				GL_THROW("Updating the frequency-dependent terms of link:%d,%s failed!",obj->id,obj->name?obj->name:"unnamed");
+				/*  TROUBLESHOOT
+				While attempting to call the recalc function for a frequency-dependent link object, an error was returned.
+				Please check your parameters and try again.
+				*/
+			}
+
+			//Flag an admittance change, since we may have adjusted something
+			NR_admit_change = true;
+
+			//Force an update of the link
+			force_link_update = true;
+		}
+		else	//No frequency dependency mapped, just treat like normal
+		{
+			//Set the flag
+			force_link_update = false;
+		}
+	}//End frequency dependence check
+	else	//Treat like normal
+	{
+		force_link_update = false;
+	}
+	
 	current_accumulated = false;	//Reset the flag
 
-	if (status != prev_status)	//Something's changed, update us
+	if ((status != prev_status) || (force_link_update == true))	//Something's changed, update us
 	{
 		complex Ylinecharge[3][3];
 		complex Y[3][3];
@@ -548,13 +603,11 @@ void link_object::NR_link_presync_fxn(void)
 		complex Yto[3][3];
 		complex Yfrom[3][3];
 		double invratio;
-		char jindex, kindex;
 
 		//Create initial admittance matrix - use code from GS below - store in From_Y (for now)
 		for (jindex=0; jindex<3; jindex++)
 			for (kindex=0; kindex<3; kindex++)
 				Y[jindex][kindex] = 0.0;
-		
 
 		// compute admittance - invert b matrix - special circumstances given different methods
 		if ((SpecialLnk!=NORMAL) && (SpecialLnk!=SPLITPHASE))
@@ -759,7 +812,7 @@ void link_object::NR_link_presync_fxn(void)
 				equalm(Y,From_Y);
 				
 				//Compute total self admittance - include line charging capacitance
-				//Basically undo a_mat = I - 1/2 Zabc*Yabc
+				//Basically undo a_mat = I + 1/2 Zabc*Yabc
 				equalm(a_mat,Ylinecharge);
 				Ylinecharge[0][0]-=1;
 				Ylinecharge[1][1]-=1;
@@ -952,6 +1005,20 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 
 				//Link to ourselves
 				NR_branchdata[NR_branch_reference].obj = obj;
+
+				//Link to our limit checking function -- seems a little silly to do it this way, but allows external calls
+				NR_branchdata[NR_branch_reference].limit_check = (FUNCTIONADDR)(gl_get_function(obj,"check_limits_pwr_object"));
+
+				//Make sure it worked, for now
+				if (NR_branchdata[NR_branch_reference].limit_check == NULL)
+				{
+					GL_THROW("Unable to map limit checking function for link:%s",obj->name ? obj->name : "Unnamed");
+					/*  TROUBLESHOOT
+					While attempting to map the power/current checking function for a link object, the mapping failed.
+					Please try again.  If the error persists, please submit your code and a bug report via the ticketing
+					system.
+					*/
+				}
 
 				//Populate phases property
 				NR_branchdata[NR_branch_reference].phases = 128*has_phase(PHASE_S) + 4*has_phase(PHASE_A) + 2*has_phase(PHASE_B) + has_phase(PHASE_C);
@@ -1147,12 +1214,6 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 				//Populate voltage ratio
 				NR_branchdata[NR_branch_reference].v_ratio = voltage_ratio;
 
-				//Populate the connectivity matrix with our to/from/type information if restoration exists
-				if (restoration_object != NULL)
-				{
-					restoration *Rest_Object = OBJECTDATA(restoration_object,restoration);
-					Rest_Object->PopulateConnectivity(NR_branchdata[NR_branch_reference].from,NR_branchdata[NR_branch_reference].to,obj);
-				}
 			}
 			else
 			{
@@ -1361,6 +1422,7 @@ TIMESTAMP link_object::sync(TIMESTAMP t0)
 void link_object::BOTH_link_postsync_fxn(void)
 {
 	double temp_power_check;
+	bool over_limit;
 
 	 // updates published current_in variable
 		read_I_in[0] = current_in[0];
@@ -1382,6 +1444,23 @@ void link_object::BOTH_link_postsync_fxn(void)
 	else
 		calculate_power();
 
+	//Perform limit check
+	perform_limit_checks(&temp_power_check, &over_limit);
+}
+
+//Functionalized limit checking, mostly for restoration calls
+void link_object::perform_limit_checks(double *over_limit_value, bool *over_limits)
+{
+	double temp_power_check, temp_current_diff;
+	node *nTo;
+
+	//Default values
+	*over_limit_value = 0.0;
+	*over_limits = false;
+
+	//Set it to zero
+	temp_power_check = 0.0;
+
 	//Check to see if limits need to be checked
 	if ((use_link_limits==true) && (check_link_limits==true))
 	{
@@ -1398,12 +1477,18 @@ void link_object::BOTH_link_postsync_fxn(void)
 				/*  TROUBLESHOOT
 				The total power passing through a transformer is above its kVA rating.
 				*/
+
+				//Add in the value
+				*over_limit_value = (temp_power_check - (power_out.Mag()/1000.0))*1000.0;
+
+				//Flag as over
+				*over_limits = true;
 			}
 		}//End transformers
 		else	//Must be a line - that's the only other option right now
 		{
-			//Check individual currents (line ratings in Amps)
-			if (has_phase(PHASE_A))
+			//Make sure it isn't triplex first
+			if (has_phase(PHASE_S))
 			{
 				if (read_I_out[0].Mag() > *link_limits[0])
 				{
@@ -1411,66 +1496,192 @@ void link_object::BOTH_link_postsync_fxn(void)
 					if (read_I_out[0].Mag() > *link_limits[1])
 					{
 						//Exceeded emergency
-						gl_warning("Line:%s is at %.2f%% of its emergency rating on phase A!",OBJECTHDR(this)->name,(read_I_out[0].Mag()/(*link_limits[1])*100.0));
+						gl_warning("Line:%s is at %.2f%% of its emergency rating on phase 1!",OBJECTHDR(this)->name,(read_I_out[0].Mag()/(*link_limits[1])*100.0));
 						/*  TROUBLESHOOT
-						Phase A on the line has exceeded the emergency rating associated with it.
+						Phase 1 on the line has exceeded the emergency rating associated with it.
 						*/
 					}
 					else	//Just continuous exceed
 					{
-						gl_warning("Line:%s is at %.2f%% of its continuous rating on phase A!",OBJECTHDR(this)->name,(read_I_out[0].Mag()/(*link_limits[0])*100.0));
+						gl_warning("Line:%s is at %.2f%% of its continuous rating on phase 1!",OBJECTHDR(this)->name,(read_I_out[0].Mag()/(*link_limits[0])*100.0));
 						/*  TROUBLESHOOT
-						Phase A on the line has exceeded the continuous rating associated with it.
+						Phase 1 on the line has exceeded the continuous rating associated with it.
 						*/
 					}
-				}//End Phase A check
-			}//End has Phase A
 
-			if (has_phase(PHASE_B))
-			{
+					//Get this as a power value, for accumulation
+					nTo = OBJECTDATA(to,node);
+
+					//Find "overcurrent"
+					temp_current_diff = read_I_out[0].Mag() - *link_limits[0];
+
+					//Compute the power - crude, but meh
+					temp_power_check = (nTo->voltage[0].Mag())*temp_current_diff;
+
+					//Accumulate it
+					*over_limit_value += temp_power_check;
+
+					//Flag as over
+					*over_limits = true;
+
+				}//End Phase 1 check
+
 				if (read_I_out[1].Mag() > *link_limits[0])
 				{
 					//Exceeded continuous - check emergency
 					if (read_I_out[1].Mag() > *link_limits[1])
 					{
 						//Exceeded emergency
-						gl_warning("Line:%s is at %.2f%% of its emergency rating on phase B!",OBJECTHDR(this)->name,(read_I_out[1].Mag()/(*link_limits[1])*100.0));
+						gl_warning("Line:%s is at %.2f%% of its emergency rating on phase 2!",OBJECTHDR(this)->name,(read_I_out[1].Mag()/(*link_limits[1])*100.0));
 						/*  TROUBLESHOOT
-						Phase B on the line has exceeded the emergency rating associated with it.
+						Phase 1 on the line has exceeded the emergency rating associated with it.
 						*/
 					}
 					else	//Just continuous exceed
 					{
-						gl_warning("Line:%s is at %.2f%% of its continuous rating on phase B!",OBJECTHDR(this)->name,(read_I_out[1].Mag()/(*link_limits[0])*100.0));
+						gl_warning("Line:%s is at %.2f%% of its continuous rating on phase 2!",OBJECTHDR(this)->name,(read_I_out[1].Mag()/(*link_limits[0])*100.0));
 						/*  TROUBLESHOOT
-						Phase B on the line has exceeded the continuous rating associated with it.
+						Phase 1 on the line has exceeded the continuous rating associated with it.
 						*/
 					}
-				}//End Phase B check
-			}//End has Phase B
 
-			if (has_phase(PHASE_C))
+					//Get this as a power value, for accumulation
+					nTo = OBJECTDATA(to,node);
+
+					//Find "overcurrent"
+					temp_current_diff = read_I_out[1].Mag() - *link_limits[0];
+
+					//Compute the power - crude, but meh
+					temp_power_check = (nTo->voltage[1].Mag())*temp_current_diff;
+
+					//Accumulate it
+					*over_limit_value += temp_power_check;
+
+					//Flag as over
+					*over_limits = true;
+
+				}//End Phase 2 check
+			}//End triplex line check
+			else	//"Normal" line
 			{
-				if (read_I_out[2].Mag() > *link_limits[0])
+				//Check individual currents (line ratings in Amps)
+				if (has_phase(PHASE_A))
 				{
-					//Exceeded continuous - check emergency
-					if (read_I_out[2].Mag() > *link_limits[1])
+					if (read_I_out[0].Mag() > *link_limits[0])
 					{
-						//Exceeded emergency
-						gl_warning("Line:%s is at %.2f%% of its emergency rating on phase C!",OBJECTHDR(this)->name,(read_I_out[2].Mag()/(*link_limits[1])*100.0));
-						/*  TROUBLESHOOT
-						Phase C on the line has exceeded the emergency rating associated with it.
-						*/
-					}
-					else	//Just continuous exceed
+						//Exceeded continuous - check emergency
+						if (read_I_out[0].Mag() > *link_limits[1])
+						{
+							//Exceeded emergency
+							gl_warning("Line:%s is at %.2f%% of its emergency rating on phase A!",OBJECTHDR(this)->name,(read_I_out[0].Mag()/(*link_limits[1])*100.0));
+							/*  TROUBLESHOOT
+							Phase A on the line has exceeded the emergency rating associated with it.
+							*/
+						}
+						else	//Just continuous exceed
+						{
+							gl_warning("Line:%s is at %.2f%% of its continuous rating on phase A!",OBJECTHDR(this)->name,(read_I_out[0].Mag()/(*link_limits[0])*100.0));
+							/*  TROUBLESHOOT
+							Phase A on the line has exceeded the continuous rating associated with it.
+							*/
+						}
+
+						//Get this as a power value, for accumulation
+						nTo = OBJECTDATA(to,node);
+
+						//Find "overcurrent"
+						temp_current_diff = read_I_out[0].Mag() - *link_limits[0];
+
+						//Compute the power - crude, but meh
+						temp_power_check = (nTo->voltage[0].Mag())*temp_current_diff;
+
+						//Accumulate it
+						*over_limit_value += temp_power_check;
+
+						//Flag as over
+						*over_limits = true;
+
+					}//End Phase A check
+				}//End has Phase A
+
+				if (has_phase(PHASE_B))
+				{
+					if (read_I_out[1].Mag() > *link_limits[0])
 					{
-						gl_warning("Line:%s is at %.2f%% of its continuous rating on phase C!",OBJECTHDR(this)->name,(read_I_out[2].Mag()/(*link_limits[0])*100.0));
-						/*  TROUBLESHOOT
-						Phase C on the line has exceeded the continuous rating associated with it.
-						*/
-					}
-				}//End Phase C check
-			}//End has Phase C
+						//Exceeded continuous - check emergency
+						if (read_I_out[1].Mag() > *link_limits[1])
+						{
+							//Exceeded emergency
+							gl_warning("Line:%s is at %.2f%% of its emergency rating on phase B!",OBJECTHDR(this)->name,(read_I_out[1].Mag()/(*link_limits[1])*100.0));
+							/*  TROUBLESHOOT
+							Phase B on the line has exceeded the emergency rating associated with it.
+							*/
+						}
+						else	//Just continuous exceed
+						{
+							gl_warning("Line:%s is at %.2f%% of its continuous rating on phase B!",OBJECTHDR(this)->name,(read_I_out[1].Mag()/(*link_limits[0])*100.0));
+							/*  TROUBLESHOOT
+							Phase B on the line has exceeded the continuous rating associated with it.
+							*/
+						}
+
+						//Get this as a power value, for accumulation
+						nTo = OBJECTDATA(to,node);
+
+						//Find "overcurrent"
+						temp_current_diff = read_I_out[1].Mag() - *link_limits[0];
+
+						//Compute the power - crude, but meh
+						temp_power_check = (nTo->voltage[1].Mag())*temp_current_diff;
+
+						//Accumulate it
+						*over_limit_value += temp_power_check;
+
+						//Flag as over
+						*over_limits = true;
+
+					}//End Phase B check
+				}//End has Phase B
+
+				if (has_phase(PHASE_C))
+				{
+					if (read_I_out[2].Mag() > *link_limits[0])
+					{
+						//Exceeded continuous - check emergency
+						if (read_I_out[2].Mag() > *link_limits[1])
+						{
+							//Exceeded emergency
+							gl_warning("Line:%s is at %.2f%% of its emergency rating on phase C!",OBJECTHDR(this)->name,(read_I_out[2].Mag()/(*link_limits[1])*100.0));
+							/*  TROUBLESHOOT
+							Phase C on the line has exceeded the emergency rating associated with it.
+							*/
+						}
+						else	//Just continuous exceed
+						{
+							gl_warning("Line:%s is at %.2f%% of its continuous rating on phase C!",OBJECTHDR(this)->name,(read_I_out[2].Mag()/(*link_limits[0])*100.0));
+							/*  TROUBLESHOOT
+							Phase C on the line has exceeded the continuous rating associated with it.
+							*/
+						}
+
+						//Get this as a power value, for accumulation
+						nTo = OBJECTDATA(to,node);
+
+						//Find "overcurrent"
+						temp_current_diff = read_I_out[2].Mag() - *link_limits[0];
+
+						//Compute the power - crude, but meh
+						temp_power_check = (nTo->voltage[2].Mag())*temp_current_diff;
+
+						//Accumulate it
+						*over_limit_value += temp_power_check;
+
+						//Flag as over
+						*over_limits = true;
+
+					}//End Phase C check
+				}//End has Phase C
+			}//End "normal line" check
 		}//End must be a line check
 	}//End Limit checks
 }
@@ -1780,6 +1991,48 @@ EXPORT SIMULATIONMODE interupdate_link(OBJECT *obj, unsigned int64 delta_time, u
 		gl_error("interupdate_link(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
 		return status;
 	}
+}
+
+//Externally callable power update -- for restoration code, primarily
+EXPORT int updatepowercalc_link(OBJECT *obj)
+{
+	link_object *my = OBJECTDATA(obj,link_object);
+
+	//Call the current update -- do it as a "self call"
+	my->CurrentCalculation(-1);
+
+	//Now update the power value
+	my->calculate_power();
+
+	//We always succeed, because we're just that good.
+	return 1;
+}
+
+//Externally callable function -- do power update and check against limits
+//Basically does the same thing as updatepowercalc_link, but then checks it too
+EXPORT int calculate_overlimit_link(OBJECT *obj, double *overload_value, bool *overloaded)
+{
+	link_object *my = OBJECTDATA(obj,link_object);
+	
+	//Set some default values - assume we start "not loaded"
+	*overload_value = 0.0;
+	*overloaded = false;
+	
+	//Do another overall line limits check -- restoration does this, but just in case something else does, as well
+	if (use_link_limits == true)
+	{
+		//Call the current update -- do it as a "self call"
+		my->CurrentCalculation(-1);
+
+		//Now update the power value
+		my->calculate_power();
+
+		//Compute the overload amount, if any
+		my->perform_limit_checks(overload_value,overloaded);
+	}
+
+	//Assume success
+	return 1;
 }
 
 /**
@@ -2810,166 +3063,6 @@ void link_object::calculate_power()
 		set_flow_directions();
 }
 
-//Function to calculate current values for use by restoration module
-void link_object::calc_currents(complex *Current_Vals)
-{
-	node *fnode = OBJECTDATA(from,node);
-	node *tnode = OBJECTDATA(to,node);
-	complex vtemp[3];
-	complex itemp[3];
-	complex current_temp[3];
-
-	//Zero the values, in case we are using the same temp variable every time
-	Current_Vals[0] = Current_Vals[1] = Current_Vals[2] = 0.0;
-
-	//Perform current_in calculation from sync pass above (just no propogation to current_inj)
-	if (status==LS_CLOSED)
-	{
-		if ((SpecialLnk == DELTADELTA) || (SpecialLnk == WYEWYE))
-		{
-			//(-a*Vout+Vin)
-			vtemp[0] = fnode->voltage[0]-
-					   a_mat[0][0]*tnode->voltage[0]-
-					   a_mat[0][1]*tnode->voltage[1]-
-					   a_mat[0][2]*tnode->voltage[2];
-
-			vtemp[1] = fnode->voltage[1]-
-					   a_mat[1][0]*tnode->voltage[0]-
-					   a_mat[1][1]*tnode->voltage[1]-
-					   a_mat[1][2]*tnode->voltage[2];
-
-			vtemp[2] = fnode->voltage[2]-
-					   a_mat[2][0]*tnode->voltage[0]-
-					   a_mat[2][1]*tnode->voltage[1]-
-					   a_mat[2][2]*tnode->voltage[2];
-
-			Current_Vals[0] = d_mat[0][0]*vtemp[0]+
-							  d_mat[0][1]*vtemp[1]+
-							  d_mat[0][2]*vtemp[2];
-
-			Current_Vals[1] = d_mat[1][0]*vtemp[0]+
-							  d_mat[1][1]*vtemp[1]+
-							  d_mat[1][2]*vtemp[2];
-
-			Current_Vals[2] = d_mat[2][0]*vtemp[0]+
-							  d_mat[2][1]*vtemp[1]+
-							  d_mat[2][2]*vtemp[2];
-
-		}//end normal transformers
-		else if (SpecialLnk == DELTAGWYE)
-		{
-			vtemp[0]=fnode->voltage[0]*a_mat[0][0]+
-					 fnode->voltage[1]*a_mat[0][1]+
-					 fnode->voltage[2]*a_mat[0][2]-
-					 tnode->voltage[0];
-
-			vtemp[1]=fnode->voltage[0]*a_mat[1][0]+
-					 fnode->voltage[1]*a_mat[1][1]+
-					 fnode->voltage[2]*a_mat[1][2]-
-					 tnode->voltage[1];
-
-			vtemp[2]=fnode->voltage[0]*a_mat[2][0]+
-					 fnode->voltage[1]*a_mat[2][1]+
-					 fnode->voltage[2]*a_mat[2][2]-
-					 tnode->voltage[2];
-
-			//Get low side current
-			itemp[0] = vtemp[0] * b_mat[0][0];
-			itemp[1] = vtemp[1] * b_mat[1][1];
-			itemp[2] = vtemp[2] * b_mat[2][2];
-
-			//Translate back to high-side
-			Current_Vals[0] = d_mat[0][0]*itemp[0]+
-							  d_mat[0][1]*itemp[1]+
-							  d_mat[0][2]*itemp[2];
-
-			Current_Vals[1] = d_mat[1][0]*itemp[0]+
-							  d_mat[1][1]*itemp[1]+
-							  d_mat[1][2]*itemp[2];
-
-			Current_Vals[2] = d_mat[2][0]*itemp[0]+
-							  d_mat[2][1]*itemp[1]+
-							  d_mat[2][2]*itemp[2];
-
-		}//end delta-GWYE
-		else if (SpecialLnk == SPLITPHASE)	//Split phase, center tapped xformer
-		{
-			if (has_phase(PHASE_A))
-			{
-				itemp[0] = fnode->voltage[0]*b_mat[2][2]+
-						   tnode->voltage[0]*b_mat[2][0]+
-						   tnode->voltage[1]*b_mat[2][1];
-
-				Current_Vals[0] = itemp[0];
-			}
-			else if (has_phase(PHASE_B))
-			{
-				itemp[0] = fnode->voltage[1]*b_mat[2][2]+
-						   tnode->voltage[0]*b_mat[2][0]+
-						   tnode->voltage[1]*b_mat[2][1];
-
-				Current_Vals[1] = itemp[0];
-			}
-			else if (has_phase(PHASE_C))
-			{
-				itemp[0] = fnode->voltage[2]*b_mat[2][2]+
-						   tnode->voltage[0]*b_mat[2][0]+
-						   tnode->voltage[1]*b_mat[2][1];
-
-				Current_Vals[2] = itemp[0];
-			}
-
-		}//end split-phase, center tapped xformer
-		else if (has_phase(PHASE_S))	//Split-phase line
-		{
-			//(-a*Vout+Vin)
-			vtemp[0] = fnode->voltage[0]-
-					   a_mat[0][0]*tnode->voltage[0]-
-					   a_mat[0][1]*tnode->voltage[1];
-
-			vtemp[1] = fnode->voltage[1]-
-					   a_mat[1][0]*tnode->voltage[0]-
-					   a_mat[1][1]*tnode->voltage[1];
-
-			Current_Vals[0] = From_Y[0][0]*vtemp[0]+
-							  From_Y[0][1]*vtemp[1];
-
-			Current_Vals[1] = From_Y[1][0]*vtemp[0]+
-							  From_Y[1][1]*vtemp[1];
-		}
-		else
-		{
-			//(-a*Vout+Vin)
-			vtemp[0] = fnode->voltage[0]-
-					   a_mat[0][0]*tnode->voltage[0]-
-					   a_mat[0][1]*tnode->voltage[1]-
-					   a_mat[0][2]*tnode->voltage[2];
-
-			vtemp[1] = fnode->voltage[1]-
-					   a_mat[1][0]*tnode->voltage[0]-
-					   a_mat[1][1]*tnode->voltage[1]-
-					   a_mat[1][2]*tnode->voltage[2];
-
-			vtemp[2] = fnode->voltage[2]-
-					   a_mat[2][0]*tnode->voltage[0]-
-					   a_mat[2][1]*tnode->voltage[1]-
-					   a_mat[2][2]*tnode->voltage[2];
-
-			Current_Vals[0] = From_Y[0][0]*vtemp[0]+
-							  From_Y[0][1]*vtemp[1]+
-							  From_Y[0][2]*vtemp[2];
-
-			Current_Vals[1] = From_Y[1][0]*vtemp[0]+
-							  From_Y[1][1]*vtemp[1]+
-							  From_Y[1][2]*vtemp[2];
-
-			Current_Vals[2] = From_Y[2][0]*vtemp[0]+
-							  From_Y[2][1]*vtemp[1]+
-							  From_Y[2][2]*vtemp[2];
-		}
-	}
-}
-
 //Retrieve value of a double
 double *link_object::get_double(OBJECT *obj, char *name)
 {
@@ -3033,258 +3126,404 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 	bool switch_val;
 	complex C_mat[7][7];
 
-	// set defaults for C_mat
-	for(int n=0; n<7; n++){
-		for(int m=0; m<7; m++) {
-			C_mat[n][m]=complex(0,0);
+	//Check to see which mode we are in
+	if (meshed_fault_checking_enabled == false)	//"Normal" mode
+	{
+		// set defaults for C_mat
+		for(int n=0; n<7; n++){
+			for(int m=0; m<7; m++) {
+				C_mat[n][m]=complex(0,0);
+			}
 		}
-	}
-	C_mat[0][0]=C_mat[1][1]=C_mat[2][2]=complex(1,0);
-	
-	//Default switch_val - special case
-	switch_val = false;
+		C_mat[0][0]=C_mat[1][1]=C_mat[2][2]=complex(1,0);
+		
+		//Default switch_val - special case
+		switch_val = false;
 
-	//Protective device set to NULL (should already be this way, but just in case)
-	*protect_obj = NULL;
+		//Protective device set to NULL (should already be this way, but just in case)
+		*protect_obj = NULL;
 
-	//Default repair time is non-existant
-	*repair_time = 0;
+		//Default repair time is non-existant
+		*repair_time = 0;
 
-	//Link up recloser counts for manipulation
-	Recloser_Counts = (double *)Extra_Data;
+		//Link up recloser counts for manipulation
+		Recloser_Counts = (double *)Extra_Data;
 
-	//Initial check - faults only work for NR right now
-	if (solver_method != SM_NR)
-	{
-		GL_THROW("Only the NR solver supports link faults!");
-		/*  TROUBLESHOOT
-		At this time, only the Newton-Raphson solution method supports faults for link objects.
-		Please utilize this solver method, or check back at a later date.
-		*/
-	}
-
-	if ((fault_type[0] == 'S') && (fault_type[1] == 'L') && (fault_type[2] == 'G'))	//SLG - single-line-ground fault
-	{
-		//See which phase we want to fault - skip [3] - it should be a dash (if it isn't, we ignore it)
-		//First see if it is an 'X' - for random phase.  If so, pick one and proceed
-		if (fault_type[4] == 'X')
+		//Initial check - faults only work for NR right now
+		if (solver_method != SM_NR)
 		{
-			//Reset counter
+			GL_THROW("Only the NR solver supports link faults!");
+			/*  TROUBLESHOOT
+			At this time, only the Newton-Raphson solution method supports faults for link objects.
+			Please utilize this solver method, or check back at a later date.
+			*/
+		}
+
+		if ((fault_type[0] == 'S') && (fault_type[1] == 'L') && (fault_type[2] == 'G'))	//SLG - single-line-ground fault
+		{
+			//See which phase we want to fault - skip [3] - it should be a dash (if it isn't, we ignore it)
+			//First see if it is an 'X' - for random phase.  If so, pick one and proceed
+			if (fault_type[4] == 'X')
+			{
+				//Reset counter
+				numphase = 0;
+
+				//See how many phases we get to work with 0 populate the phase array at the same time
+				if (has_phase(PHASE_A))
+				{
+					tempphase[numphase] = 4;	//Flag for phase A - NR convention
+					numphase++;					//Increment count
+				}
+
+				if (has_phase(PHASE_B))
+				{
+					tempphase[numphase] = 2;	//Flag for phase B - NR convention
+					numphase++;					//Increment count
+				}
+
+				if (has_phase(PHASE_C))
+				{
+					tempphase[numphase] = 1;	//Flag for phase C - NR convention
+					numphase++;					//Increment count
+				}
+
+				//Get a random value
+				randval = gl_random_sampled(RNGSTATE,numphase,tempphase);
+
+				//Put it back into proper format
+				rand_phases = (unsigned char)(randval);
+			}
+			else	//Not a random - clear the variable, just in case
+				rand_phases = 0x00;
+
+			if ((fault_type[4] == 'A') || (rand_phases == 0x04))
+			{
+				if (has_phase(PHASE_A))
+				{
+					if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//make sure phase A is active (no previous fault)
+					{
+						//Remove phase A
+						NR_branchdata[NR_branch_reference].phases &= 0xFB;
+
+						//Flag which phase we've removed
+						phase_remove = 0x04;
+
+						//Flag the fault type
+						*implemented_fault = 1;
+					}
+					else	//Already in a fault - just flag us as none and go on our way
+					{
+						*implemented_fault = 0;
+					}
+				}//end has PHASE_A
+				else
+				{
+					gl_warning("%s does not have a phase A to fault!",OBJECTHDR(this)->name);
+					/*  TROUBLESHOOT
+					A fault event was attempted on phase A of the link object. This object
+					does not have a valid phase A to fault.
+					*/
+				}
+			}//End A fault
+			else if ((fault_type[4] == 'B') || (rand_phases == 0x02))
+			{
+				if (has_phase(PHASE_B))
+				{
+					if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//make sure phase B is active (no previous fault)
+					{
+						//Remove phase B
+						NR_branchdata[NR_branch_reference].phases &= 0xFD;
+
+						//Flag which phase we've removed
+						phase_remove = 0x02;
+
+						//Flag the fault type
+						*implemented_fault = 2;
+					}
+					else	//Already in a fault - just flag us as none and go on our way
+					{
+						*implemented_fault = 0;
+					}
+				}//end has PHASE_B
+				else
+				{
+					gl_warning("%s does not have a phase B to fault!",OBJECTHDR(this)->name);
+					/*  TROUBLESHOOT
+					A fault event was attempted on phase B of the link object. This object
+					does not have a valid phase B to fault.
+					*/
+				}
+			}
+			else if ((fault_type[4] == 'C') || (rand_phases == 0x01))
+			{
+				if (has_phase(PHASE_C))
+				{
+					if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//make sure phase C is active (no previous fault)
+					{
+						//Remove phase C
+						NR_branchdata[NR_branch_reference].phases &= 0xFE;
+
+						//Flag which phase we've removed
+						phase_remove = 0x01;
+
+						//Flag the fault type
+						*implemented_fault = 3;
+					}
+					else	//Already in a fault - just flag us as none and go on our way
+					{
+						*implemented_fault = 0;
+					}
+				}//end has PHASE_C
+				else
+				{
+					gl_warning("%s does not have a phase C to fault!",OBJECTHDR(this)->name);
+					/*  TROUBLESHOOT
+					A fault event was attempted on phase C of the link object. This object
+					does not have a valid phase C to fault.
+					*/
+				}
+			}
+			else	//Something else, fail
+			{
+				GL_THROW("Fault type %s for link objects has an invalid phase specification");
+				/*  TROUBLESHOOT
+				The phase specified for the link fault is not a valid A, B, or C value.  Please check your syntax
+				and ensure the values are uppercase.
+				*/
+			}
+		}//end SLG
+		else if ((fault_type[0] == 'D') && (fault_type[1] == 'L') && (fault_type[2] == 'G'))	//DLG - double-line-ground fault
+		{
+			//Figure out who we want to alter - assume [3] is a -, so check [4]+
+			work_phases = 0x00;
+
+			if (fault_type[4] == 'X')	//Random, flag as such
+				work_phases |= 0x08;
+			
+			if ((fault_type[4] == 'A') || (fault_type[5] == 'A'))	//A is desired
+				work_phases |= 0x04;
+
+			if ((fault_type[4] == 'B') || (fault_type[5] == 'B'))	//B is desired
+				work_phases |= 0x02;
+
+			if ((fault_type[4] == 'C') || (fault_type[5] == 'C'))	//C is desired
+				work_phases |= 0x01;
+
+			//See how many phases we have to deal with
 			numphase = 0;
 
-			//See how many phases we get to work with 0 populate the phase array at the same time
 			if (has_phase(PHASE_A))
 			{
-				tempphase[numphase] = 4;	//Flag for phase A - NR convention
 				numphase++;					//Increment count
 			}
 
 			if (has_phase(PHASE_B))
 			{
-				tempphase[numphase] = 2;	//Flag for phase B - NR convention
 				numphase++;					//Increment count
 			}
 
 			if (has_phase(PHASE_C))
 			{
-				tempphase[numphase] = 1;	//Flag for phase C - NR convention
 				numphase++;					//Increment count
 			}
 
-			//Get a random value
-			randval = gl_random_sampled(RNGSTATE,numphase,tempphase);
+			//Pull out what phases we have to play with
+			temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
 
-			//Put it back into proper format
-			rand_phases = (unsigned char)(randval);
-		}
-		else	//Not a random - clear the variable, just in case
-			rand_phases = 0x00;
-
-		if ((fault_type[4] == 'A') || (rand_phases == 0x04))
-		{
-			if (has_phase(PHASE_A))
+			if (numphase == 0)
 			{
-				if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//make sure phase A is active (no previous fault)
-				{
-					//Remove phase A
-					NR_branchdata[NR_branch_reference].phases &= 0xFB;
-
-					//Flag which phase we've removed
-					phase_remove = 0x04;
-
-					//Flag the fault type
-					*implemented_fault = 1;
-				}
-				else	//Already in a fault - just flag us as none and go on our way
-				{
-					*implemented_fault = 0;
-				}
-			}//end has PHASE_A
-			else
-			{
-				gl_warning("%s does not have a phase A to fault!",OBJECTHDR(this)->name);
+				GL_THROW("No phases detected for %s!",objhdr->name);
 				/*  TROUBLESHOOT
-				A fault event was attempted on phase A of the link object. This object
-				does not have a valid phase A to fault.
+				No phases were detected for the link object specified.  This should have
+				been caught much earlier.  Please submit your code and a bug report using the
+				trac website.
 				*/
-			}
-		}//End A fault
-		else if ((fault_type[4] == 'B') || (rand_phases == 0x02))
-		{
-			if (has_phase(PHASE_B))
+			}//end 0 phase
+			else if (numphase < 2)	//Single phase line (no zero phase this way)
 			{
-				if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//make sure phase B is active (no previous fault)
-				{
-					//Remove phase B
-					NR_branchdata[NR_branch_reference].phases &= 0xFD;
+				//Refine our criteria
+				if ((work_phases & 0x08) != 0x08)	//Not random case
+					temp_phases &= work_phases;
 
-					//Flag which phase we've removed
-					phase_remove = 0x02;
+				//defaulted else - if random case, only getting one phase out of this anywho (leave temp_phases as is)
 
-					//Flag the fault type
-					*implemented_fault = 2;
-				}
-				else	//Already in a fault - just flag us as none and go on our way
+				switch (temp_phases)
 				{
-					*implemented_fault = 0;
-				}
-			}//end has PHASE_B
-			else
+				case 0x00:	//No phases available - something must have faulted
+					*implemented_fault = 0;	//Flag as such
+					break;
+				case 0x01:	//Phase C
+					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+					*implemented_fault = 3;								//Flag as a C SLG fault
+					break;
+				case 0x02:	//Phase B
+					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+					*implemented_fault = 2;								//Flag as a B SLG fault
+					break;
+				case 0x04:	//Phase A
+					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+					*implemented_fault = 1;								//Flag as a A SLG fault
+					break;
+				default:	//No other cases should exist
+					GL_THROW("Fault type %s for link objects has an invalid phase specification");
+					//Defined above
+					break;
+				}//end switch
+
+				phase_remove = temp_phases;	//Flag phase removing
+
+			}//end <2 phases (only 1 presumably)
+			else if (numphase == 2)	//Only two phases present
 			{
-				gl_warning("%s does not have a phase B to fault!",OBJECTHDR(this)->name);
-				/*  TROUBLESHOOT
-				A fault event was attempted on phase B of the link object. This object
-				does not have a valid phase B to fault.
-				*/
-			}
-		}
-		else if ((fault_type[4] == 'C') || (rand_phases == 0x01))
-		{
-			if (has_phase(PHASE_C))
-			{
-				if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//make sure phase C is active (no previous fault)
+				//See how the two present coincide with the two we're asking for
+				if ((work_phases & 0x08) != 0x08)	//Not random case, see what we have
+					temp_phases &= work_phases;
+				//Defaulted else - if random, only 1 choice exists, which is temp_phases (leave temp_phases as is)
+
+				//Implement the appropriate fault
+				switch (temp_phases)
 				{
-					//Remove phase C
-					NR_branchdata[NR_branch_reference].phases &= 0xFE;
+				case 0x00:	//No phases!
+					*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
+					break;
+				case 0x01:	//Only phase C
+					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+					*implemented_fault = 3;								//Flag as a C SLG fault
+					break;
+				case 0x02:	//Only phase B
+					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+					*implemented_fault = 2;								//Flag as a B SLG fault
+					break;
+				case 0x03:	//B and C
+					NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+					*implemented_fault = 5;								//Flag as a B & C fault
+					break;
+				case 0x04:	//Only A
+					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+					*implemented_fault = 1;								//Flag as a A SLG fault
+					break;
+				case 0x05:	//A and C
+					NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+					*implemented_fault = 6;								//Flag as A and C fault
+					break;
+				case 0x06:	//A and B
+					NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+					*implemented_fault = 4;								//Flag as A and B fault
+					break;
+				default:	//Not sure how we'd ever get here
+					GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
+					/*  TROUBLESHOOT
+					While attempting to implement a two-phase fault on a link object, an unknown phase
+					configuration was encountered.  Please try again.  If the error persists, please submit
+					your code and a bug report using the trac website.
+					*/
+					break;
+				}//end switch
 
-					//Flag which phase we've removed
-					phase_remove = 0x01;
+				phase_remove = temp_phases;	//Flag phase removing
 
-					//Flag the fault type
-					*implemented_fault = 3;
-				}
-				else	//Already in a fault - just flag us as none and go on our way
-				{
-					*implemented_fault = 0;
-				}
-			}//end has PHASE_C
-			else
+			}//end 2 phases present
+			else if (numphase == 3)	//All phases present
 			{
-				gl_warning("%s does not have a phase C to fault!",OBJECTHDR(this)->name);
-				/*  TROUBLESHOOT
-				A fault event was attempted on phase C of the link object. This object
-				does not have a valid phase C to fault.
-				*/
-			}
-		}
-		else	//Something else, fail
-		{
-			GL_THROW("Fault type %s for link objects has an invalid phase specification");
-			/*  TROUBLESHOOT
-			The phase specified for the link fault is not a valid A, B, or C value.  Please check your syntax
-			and ensure the values are uppercase.
-			*/
-		}
-	}//end SLG
-	else if ((fault_type[0] == 'D') && (fault_type[1] == 'L') && (fault_type[2] == 'G'))	//DLG - double-line-ground fault
-	{
-		//Figure out who we want to alter - assume [3] is a -, so check [4]+
-		work_phases = 0x00;
+				if ((work_phases & 0x08) == 0x08)	//Random condition
+				{
+					//See if we have all three available to fault (if one or more is already faulted, we won't care)
+					rand_phases = 0;
 
-		if (fault_type[4] == 'X')	//Random, flag as such
-			work_phases |= 0x08;
-		
-		if ((fault_type[4] == 'A') || (fault_type[5] == 'A'))	//A is desired
-			work_phases |= 0x04;
+					//Check and populate random array as well
+					if ((temp_phases & 0x01) == 0x01)	//Check for C availability
+					{
+						tempphase[rand_phases] = 1;
+						rand_phases++;
+					}
 
-		if ((fault_type[4] == 'B') || (fault_type[5] == 'B'))	//B is desired
-			work_phases |= 0x02;
+					if ((temp_phases & 0x02) == 0x02)	//Check for B availability
+					{
+						tempphase[rand_phases] = 2;
+						rand_phases++;
+					}
 
-		if ((fault_type[4] == 'C') || (fault_type[5] == 'C'))	//C is desired
-			work_phases |= 0x01;
+					if ((temp_phases & 0x04) == 0x04)	//Check for A availability
+					{
+						tempphase[rand_phases] = 4;
+						rand_phases++;
+					}
 
-		//See how many phases we have to deal with
-		numphase = 0;
+					if (rand_phases <= 2)	//Two or fewer available, just mask us out
+						work_phases = 0x07;	//This will pull the appropriate phase
+					else	//Must be 3, right?
+					{
+						//Pick a random phase - this will be the one we DON'T fault
+						randval = gl_random_sampled(RNGSTATE,numphase,tempphase);
 
-		if (has_phase(PHASE_A))
-		{
-			numphase++;					//Increment count
-		}
+						//Set temp_phases appropriate
+						if (randval == 1)	//Leave phase C
+							work_phases = 0x06;	//A and B fault
+						else if (randval == 2)	//Leave phase B
+							work_phases = 0x05;	//A and C fault
+						else	//Must be 4	- leave phase A
+							work_phases = 0x03;	//B and C fault
+					}//end must be 3
+				}//end random condition
+				//Defaulted else - not random, so just use as normal mask
 
-		if (has_phase(PHASE_B))
-		{
-			numphase++;					//Increment count
-		}
-
-		if (has_phase(PHASE_C))
-		{
-			numphase++;					//Increment count
-		}
-
-		//Pull out what phases we have to play with
-		temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
-
-		if (numphase == 0)
-		{
-			GL_THROW("No phases detected for %s!",objhdr->name);
-			/*  TROUBLESHOOT
-			No phases were detected for the link object specified.  This should have
-			been caught much earlier.  Please submit your code and a bug report using the
-			trac website.
-			*/
-		}//end 0 phase
-		else if (numphase < 2)	//Single phase line (no zero phase this way)
-		{
-			//Refine our criteria
-			if ((work_phases & 0x08) != 0x08)	//Not random case
+				//Determine phases to fault
 				temp_phases &= work_phases;
 
-			//defaulted else - if random case, only getting one phase out of this anywho (leave temp_phases as is)
+				//Implement the appropriate fault
+				switch (temp_phases)
+				{
+				case 0x00:	//No phases!
+					*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
+					break;
+				case 0x01:	//Only phase C
+					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+					*implemented_fault = 3;								//Flag as a C SLG fault
+					break;
+				case 0x02:	//Only phase B
+					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+					*implemented_fault = 2;								//Flag as a B SLG fault
+					break;
+				case 0x03:	//B and C
+					NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+					*implemented_fault = 5;								//Flag as a B & C fault
+					break;
+				case 0x04:	//Only A
+					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+					*implemented_fault = 1;								//Flag as a A SLG fault
+					break;
+				case 0x05:	//A and C
+					NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+					*implemented_fault = 6;								//Flag as A and C fault
+					break;
+				case 0x06:	//A and B
+					NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+					*implemented_fault = 4;								//Flag as A and B fault
+					break;
+				default:	//Not sure how we'd ever get here
+					GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
+					//Defined above
+					break;
+				}//end switch
 
-			switch (temp_phases)
+				phase_remove = temp_phases;	//Flag phase removing
+
+			}//end all three present
+			else	//Hmmm, how'd we get here?
 			{
-			case 0x00:	//No phases available - something must have faulted
-				*implemented_fault = 0;	//Flag as such
-				break;
-			case 0x01:	//Phase C
-				NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
-				*implemented_fault = 3;								//Flag as a C SLG fault
-				break;
-			case 0x02:	//Phase B
-				NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
-				*implemented_fault = 2;								//Flag as a B SLG fault
-				break;
-			case 0x04:	//Phase A
-				NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
-				*implemented_fault = 1;								//Flag as a A SLG fault
-				break;
-			default:	//No other cases should exist
-				GL_THROW("Fault type %s for link objects has an invalid phase specification");
-				//Defined above
-				break;
-			}//end switch
-
-			phase_remove = temp_phases;	//Flag phase removing
-
-		}//end <2 phases (only 1 presumably)
-		else if (numphase == 2)	//Only two phases present
+				GL_THROW("An invalid number of phases appears present for %s",objhdr->name);
+				/*  TROUBLESHOOT
+				An unexpected number of phases was found on the link object.  Please submit your
+				code and a bug report using the trac website.
+				*/
+			}
+		}//End DLG
+		else if ((fault_type[0] == 'T') && (fault_type[1] == 'L') && (fault_type[2] == 'G'))	//TLG - triple-line-ground fault
 		{
-			//See how the two present coincide with the two we're asking for
-			if ((work_phases & 0x08) != 0x08)	//Not random case, see what we have
-				temp_phases &= work_phases;
-			//Defaulted else - if random, only 1 choice exists, which is temp_phases (leave temp_phases as is)
+			//Let's see what phases we have to play with
+			temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
 
-			//Implement the appropriate fault
+			//Case it out - if we want TLG, but don't have all three phases, just trip whatever we have
 			switch (temp_phases)
 			{
 			case 0x00:	//No phases!
@@ -3292,11 +3531,11 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				break;
 			case 0x01:	//Only phase C
 				NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
-				*implemented_fault = 3;								//Flag as a C SLG fault
+				*implemented_fault = 3;								//Flag as a C only fault
 				break;
 			case 0x02:	//Only phase B
 				NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
-				*implemented_fault = 2;								//Flag as a B SLG fault
+				*implemented_fault = 2;								//Flag as a B only fault
 				break;
 			case 0x03:	//B and C
 				NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
@@ -3304,7 +3543,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				break;
 			case 0x04:	//Only A
 				NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
-				*implemented_fault = 1;								//Flag as a A SLG fault
+				*implemented_fault = 1;								//Flag as a A only fault
 				break;
 			case 0x05:	//A and C
 				NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
@@ -3314,67 +3553,29 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
 				*implemented_fault = 4;								//Flag as A and B fault
 				break;
+			case 0x07:	//A, B, and C
+				NR_branchdata[NR_branch_reference].phases &= 0xF8;	//Remove A, B, and C
+				*implemented_fault = 10;							//Flag as all three fault
+				break;
 			default:	//Not sure how we'd ever get here
-				GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
+				GL_THROW("Unknown phase condition on three-phase fault of %s!",objhdr->name);
 				/*  TROUBLESHOOT
-				While attempting to implement a two-phase fault on a link object, an unknown phase
+				While attempting to implement a three-phase fault on a link object, an unknown phase
 				configuration was encountered.  Please try again.  If the error persists, please submit
 				your code and a bug report using the trac website.
 				*/
 				break;
-			}//end switch
+			}//end phase cases
 
 			phase_remove = temp_phases;	//Flag phase removing
 
-		}//end 2 phases present
-		else if (numphase == 3)	//All phases present
+		}//End TLG
+		else if ((fault_type[0] == 'T') && (fault_type[1] == 'L') && (fault_type[2] == 'L'))	//TLL - triple-line-line fault
 		{
-			if ((work_phases & 0x08) == 0x08)	//Random condition
-			{
-				//See if we have all three available to fault (if one or more is already faulted, we won't care)
-				rand_phases = 0;
+			//Let's see what phases we have to play with
+			temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
 
-				//Check and populate random array as well
-				if ((temp_phases & 0x01) == 0x01)	//Check for C availability
-				{
-					tempphase[rand_phases] = 1;
-					rand_phases++;
-				}
-
-				if ((temp_phases & 0x02) == 0x02)	//Check for B availability
-				{
-					tempphase[rand_phases] = 2;
-					rand_phases++;
-				}
-
-				if ((temp_phases & 0x04) == 0x04)	//Check for A availability
-				{
-					tempphase[rand_phases] = 4;
-					rand_phases++;
-				}
-
-				if (rand_phases <= 2)	//Two or fewer available, just mask us out
-					work_phases = 0x07;	//This will pull the appropriate phase
-				else	//Must be 3, right?
-				{
-					//Pick a random phase - this will be the one we DON'T fault
-					randval = gl_random_sampled(RNGSTATE,numphase,tempphase);
-
-					//Set temp_phases appropriate
-					if (randval == 1)	//Leave phase C
-						work_phases = 0x06;	//A and B fault
-					else if (randval == 2)	//Leave phase B
-						work_phases = 0x05;	//A and C fault
-					else	//Must be 4	- leave phase A
-						work_phases = 0x03;	//B and C fault
-				}//end must be 3
-			}//end random condition
-			//Defaulted else - not random, so just use as normal mask
-
-			//Determine phases to fault
-			temp_phases &= work_phases;
-
-			//Implement the appropriate fault
+			//Case it out - if we want TLG, but don't have all three phases, just trip whatever we have
 			switch (temp_phases)
 			{
 			case 0x00:	//No phases!
@@ -3382,831 +3583,49 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				break;
 			case 0x01:	//Only phase C
 				NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
-				*implemented_fault = 3;								//Flag as a C SLG fault
+				*implemented_fault = 13;							//Flag as a C only OC fault
 				break;
 			case 0x02:	//Only phase B
 				NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
-				*implemented_fault = 2;								//Flag as a B SLG fault
+				*implemented_fault = 12;							//Flag as a B only OC fault
 				break;
 			case 0x03:	//B and C
 				NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
-				*implemented_fault = 5;								//Flag as a B & C fault
+				*implemented_fault = 8;								//Flag as a B & C LL fault
 				break;
 			case 0x04:	//Only A
 				NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
-				*implemented_fault = 1;								//Flag as a A SLG fault
+				*implemented_fault = 11;							//Flag as a A only OC fault
 				break;
 			case 0x05:	//A and C
 				NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
-				*implemented_fault = 6;								//Flag as A and C fault
+				*implemented_fault = 9;								//Flag as A and C LL fault
 				break;
 			case 0x06:	//A and B
 				NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
-				*implemented_fault = 4;								//Flag as A and B fault
+				*implemented_fault = 7;								//Flag as A and B LL fault
+				break;
+			case 0x07:	//A, B, and C
+				NR_branchdata[NR_branch_reference].phases &= 0xF8;	//Remove A, B, and C
+				*implemented_fault = 32;							//Flag as all three fault
 				break;
 			default:	//Not sure how we'd ever get here
-				GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
-				//Defined above
+				GL_THROW("Unknown phase condition on three-phase fault of %s!",objhdr->name);
+				//Defined elsewhere
 				break;
-			}//end switch
+			}//end phase cases
 
 			phase_remove = temp_phases;	//Flag phase removing
 
-		}//end all three present
-		else	//Hmmm, how'd we get here?
-		{
-			GL_THROW("An invalid number of phases appears present for %s",objhdr->name);
-			/*  TROUBLESHOOT
-			An unexpected number of phases was found on the link object.  Please submit your
-			code and a bug report using the trac website.
-			*/
-		}
-	}//End DLG
-	else if ((fault_type[0] == 'T') && (fault_type[1] == 'L') && (fault_type[2] == 'G'))	//TLG - triple-line-ground fault
-	{
-		//Let's see what phases we have to play with
-		temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
-
-		//Case it out - if we want TLG, but don't have all three phases, just trip whatever we have
-		switch (temp_phases)
-		{
-		case 0x00:	//No phases!
-			*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
-			break;
-		case 0x01:	//Only phase C
-			NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
-			*implemented_fault = 3;								//Flag as a C only fault
-			break;
-		case 0x02:	//Only phase B
-			NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
-			*implemented_fault = 2;								//Flag as a B only fault
-			break;
-		case 0x03:	//B and C
-			NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
-			*implemented_fault = 5;								//Flag as a B & C fault
-			break;
-		case 0x04:	//Only A
-			NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
-			*implemented_fault = 1;								//Flag as a A only fault
-			break;
-		case 0x05:	//A and C
-			NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
-			*implemented_fault = 6;								//Flag as A and C fault
-			break;
-		case 0x06:	//A and B
-			NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
-			*implemented_fault = 4;								//Flag as A and B fault
-			break;
-		case 0x07:	//A, B, and C
-			NR_branchdata[NR_branch_reference].phases &= 0xF8;	//Remove A, B, and C
-			*implemented_fault = 10;							//Flag as all three fault
-			break;
-		default:	//Not sure how we'd ever get here
-			GL_THROW("Unknown phase condition on three-phase fault of %s!",objhdr->name);
-			/*  TROUBLESHOOT
-			While attempting to implement a three-phase fault on a link object, an unknown phase
-			configuration was encountered.  Please try again.  If the error persists, please submit
-			your code and a bug report using the trac website.
-			*/
-			break;
-		}//end phase cases
-
-		phase_remove = temp_phases;	//Flag phase removing
-
-	}//End TLG
-	else if ((fault_type[0] == 'T') && (fault_type[1] == 'L') && (fault_type[2] == 'L'))	//TLL - triple-line-line fault
-	{
-		//Let's see what phases we have to play with
-		temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
-
-		//Case it out - if we want TLG, but don't have all three phases, just trip whatever we have
-		switch (temp_phases)
-		{
-		case 0x00:	//No phases!
-			*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
-			break;
-		case 0x01:	//Only phase C
-			NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
-			*implemented_fault = 13;							//Flag as a C only OC fault
-			break;
-		case 0x02:	//Only phase B
-			NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
-			*implemented_fault = 12;							//Flag as a B only OC fault
-			break;
-		case 0x03:	//B and C
-			NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
-			*implemented_fault = 8;								//Flag as a B & C LL fault
-			break;
-		case 0x04:	//Only A
-			NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
-			*implemented_fault = 11;							//Flag as a A only OC fault
-			break;
-		case 0x05:	//A and C
-			NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
-			*implemented_fault = 9;								//Flag as A and C LL fault
-			break;
-		case 0x06:	//A and B
-			NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
-			*implemented_fault = 7;								//Flag as A and B LL fault
-			break;
-		case 0x07:	//A, B, and C
-			NR_branchdata[NR_branch_reference].phases &= 0xF8;	//Remove A, B, and C
-			*implemented_fault = 32;							//Flag as all three fault
-			break;
-		default:	//Not sure how we'd ever get here
-			GL_THROW("Unknown phase condition on three-phase fault of %s!",objhdr->name);
-			//Defined elsewhere
-			break;
-		}//end phase cases
-
-		phase_remove = temp_phases;	//Flag phase removing
-
-	}//End TLL
-	else if ((fault_type[0] == 'L') && (fault_type[1] == 'L'))	//Line-line fault
-	{
-		//Figure out who we want to alter - assume [2] is a -, so check [3]+
-		work_phases = 0x00;
-
-		if (fault_type[3] == 'X')	//Random, flag as such
-			work_phases |= 0x08;
-		
-		if ((fault_type[3] == 'A') || (fault_type[4] == 'A'))	//A is desired
-			work_phases |= 0x04;
-
-		if ((fault_type[3] == 'B') || (fault_type[4] == 'B'))	//B is desired
-			work_phases |= 0x02;
-
-		if ((fault_type[3] == 'C') || (fault_type[4] == 'C'))	//C is desired
-			work_phases |= 0x01;
-
-		//See how many phases we have to deal with
-		numphase = 0;
-
-		if (has_phase(PHASE_A))
-		{
-			numphase++;					//Increment count
-		}
-
-		if (has_phase(PHASE_B))
-		{
-			numphase++;					//Increment count
-		}
-
-		if (has_phase(PHASE_C))
-		{
-			numphase++;					//Increment count
-		}
-
-		//Pull out what phases we have to play with
-		temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
-
-		if (numphase == 0)
-		{
-			GL_THROW("No phases detected for %s!",objhdr->name);
-			//Defined above
-		}//end 0 phase
-		else if (numphase < 2)	//Single phase line (no zero phase this way)
-		{
-			//Refine our criteria
-			if ((work_phases & 0x08) != 0x08)	//Not random case
-				temp_phases &= work_phases;
-
-			//defaulted else - if random case, only getting one phase out of this anywho (leave temp_phases as is)
-
-			switch (temp_phases)
-			{
-			case 0x00:	//No phases available - something must have faulted
-				*implemented_fault = 0;	//Flag as such
-				break;
-			case 0x01:	//Phase C
-				NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
-				*implemented_fault = 13;							//Flag as a C OC fault
-				break;
-			case 0x02:	//Phase B
-				NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
-				*implemented_fault = 12;							//Flag as a B OC fault
-				break;
-			case 0x04:	//Phase A
-				NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
-				*implemented_fault = 11;							//Flag as a A OC fault
-				break;
-			default:	//No other cases should exist
-				GL_THROW("Fault type %s for link objects has an invalid phase specification");
-				//Defined above
-				break;
-			}//end switch
-
-			phase_remove = temp_phases;	//Flag phase removing
-		}//end <2 phases (only 1 presumably)
-		else if (numphase == 2)	//Only two phases present
-		{
-			//See how the two present coincide with the two we're asking for
-			if ((work_phases & 0x08) != 0x08)	//Not random case, see what we have
-				temp_phases &= work_phases;
-			//Defaulted else - if random, only 1 choice exists, which is temp_phases (leave temp_phases as is)
-
-			//Implement the appropriate fault
-			switch (temp_phases)
-			{
-			case 0x00:	//No phases!
-				*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
-				break;
-			case 0x01:	//Only phase C
-				NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
-				*implemented_fault = 13;							//Flag as a C OC fault
-				break;
-			case 0x02:	//Only phase B
-				NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
-				*implemented_fault = 12;							//Flag as a B OC fault
-				break;
-			case 0x03:	//B and C
-				NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
-				*implemented_fault = 8;								//Flag as a B & C fault
-				break;
-			case 0x04:	//Only A
-				NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
-				*implemented_fault = 11;							//Flag as a A OC fault
-				break;
-			case 0x05:	//A and C
-				NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
-				*implemented_fault = 9;								//Flag as A and C fault
-				break;
-			case 0x06:	//A and B
-				NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
-				*implemented_fault = 7;								//Flag as A and B fault
-				break;
-			default:	//Not sure how we'd ever get here
-				GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
-				//Defined above
-				break;
-			}//end switch
-
-			phase_remove = temp_phases;	//Flag phase removing
-
-		}//end 2 phases present
-		else if (numphase == 3)	//All phases present
-		{
-			if ((work_phases & 0x08) == 0x08)	//Random condition
-			{
-				//See if we have all three available to fault (if one or more is already faulted, we won't care)
-				rand_phases = 0;
-
-				//Check and populate random array as well
-				if ((temp_phases & 0x01) == 0x01)	//Check for C availability
-				{
-					tempphase[rand_phases] = 1;
-					rand_phases++;
-				}
-
-				if ((temp_phases & 0x02) == 0x02)	//Check for B availability
-				{
-					tempphase[rand_phases] = 2;
-					rand_phases++;
-				}
-
-				if ((temp_phases & 0x04) == 0x04)	//Check for A availability
-				{
-					tempphase[rand_phases] = 4;
-					rand_phases++;
-				}
-
-				if (rand_phases <= 2)	//Two or fewer available, just mask us out
-					work_phases = 0x07;	//This will pull the appropriate phase
-				else	//Must be 3, right?
-				{
-					//Pick a random phase - this will be the one we DON'T fault
-					randval = gl_random_sampled(RNGSTATE,numphase,tempphase);
-
-					//Set temp_phases appropriate
-					if (randval == 1)	//Leave phase C
-						work_phases = 0x06;	//A and B fault
-					else if (randval == 2)	//Leave phase B
-						work_phases = 0x05;	//A and C fault
-					else	//Must be 4	- leave phase A
-						work_phases = 0x03;	//B and C fault
-				}//end must be 3
-			}//end random condition
-			//Defaulted else - not random, so just use as normal mask
-
-			//Determine phases to fault
-			temp_phases &= work_phases;
-
-			//Implement the appropriate fault
-			switch (temp_phases)
-			{
-			case 0x00:	//No phases!
-				*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
-				break;
-			case 0x01:	//Only phase C
-				NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
-				*implemented_fault = 13;							//Flag as a C OC fault
-				break;
-			case 0x02:	//Only phase B
-				NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
-				*implemented_fault = 12;							//Flag as a B OC fault
-				break;
-			case 0x03:	//B and C
-				NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
-				*implemented_fault = 8;								//Flag as a B & C fault
-				break;
-			case 0x04:	//Only A
-				NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
-				*implemented_fault = 11;							//Flag as an A OC fault
-				break;
-			case 0x05:	//A and C
-				NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
-				*implemented_fault = 9;								//Flag as A and C fault
-				break;
-			case 0x06:	//A and B
-				NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
-				*implemented_fault = 7;								//Flag as A and B fault
-				break;
-			default:	//Not sure how we'd ever get here
-				GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
-				//Defined above
-				break;
-			}//end switch
-
-			phase_remove = temp_phases;	//Flag phase removing
-
-		}//end all three present
-		else	//Hmmm, how'd we get here?
-		{
-			GL_THROW("An invalid number of phases appears present for %s",objhdr->name);
-			//Defined above
-		}
-	}//End LL
-	else if (((fault_type[0] == 'O') && (fault_type[1] == 'C') && (fault_type[2] == '-')) || ((fault_type[0] == 'O') && (fault_type[1] == 'C') && (fault_type[2] == '1')))	//Open conductor
-	{
-		//See which phase we want to fault - skip [3] if OC1, or [2] if OC - it should be a dash (if it isn't, we ignore it)
-		if ((fault_type[0] == 'O') && (fault_type[1] == 'C') && (fault_type[2] == '-'))
-			phaseidx=3;
-		else	//Must be OC1- then
-			phaseidx=4;
-
-		//First see if it is an 'X' - for random phase.  If so, pick one and proceed
-		if (fault_type[phaseidx] == 'X')
-		{
-			//Reset counter
-			numphase = 0;
-
-			//See how many phases we get to work with 0 populate the phase array at the same time
-			if (has_phase(PHASE_A))
-			{
-				tempphase[numphase] = 4;	//Flag for phase A - NR convention
-				numphase++;					//Increment count
-			}
-
-			if (has_phase(PHASE_B))
-			{
-				tempphase[numphase] = 2;	//Flag for phase B - NR convention
-				numphase++;					//Increment count
-			}
-
-			if (has_phase(PHASE_C))
-			{
-				tempphase[numphase] = 1;	//Flag for phase C - NR convention
-				numphase++;					//Increment count
-			}
-
-			//Get a random value
-			randval = gl_random_sampled(RNGSTATE,numphase,tempphase);
-
-			//Put it back into proper format
-			rand_phases = (unsigned char)(randval);
-		}
-		else	//Not a random - clear the variable, just in case
-			rand_phases = 0x00;
-
-		if ((fault_type[phaseidx] == 'A') || (rand_phases == 0x04))
-		{
-			if (has_phase(PHASE_A))
-			{
-				if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//make sure phase A is active (no previous fault)
-				{
-					//Remove phase A
-					NR_branchdata[NR_branch_reference].phases &= 0xFB;
-
-					phase_remove = 0x04;	//Flag phase being removed
-
-					//Flag the fault type
-					*implemented_fault = 11;
-				}
-				else	//Already in a fault - just flag us as none and go on our way
-				{
-					*implemented_fault = 0;
-				}
-			}//end has PHASE_A
-			else
-			{
-				gl_warning("%s does not have a phase A to fault!",OBJECTHDR(this)->name);
-				//Defined above
-			}
-		}//End A fault
-		else if ((fault_type[phaseidx] == 'B') || (rand_phases == 0x02))
-		{
-			if (has_phase(PHASE_B))
-			{
-				if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//make sure phase B is active (no previous fault)
-				{
-					//Remove phase B
-					NR_branchdata[NR_branch_reference].phases &= 0xFD;
-
-					//Flag phase being removed
-					phase_remove = 0x02;
-
-					//Flag the fault type
-					*implemented_fault = 12;
-				}
-				else	//Already in a fault - just flag us as none and go on our way
-				{
-					*implemented_fault = 0;
-				}
-			}//end has PHASE_B
-			else
-			{
-				gl_warning("%s does not have a phase B to fault!",OBJECTHDR(this)->name);
-				//Defined above
-			}
-		}
-		else if ((fault_type[phaseidx] == 'C') || (rand_phases == 0x01))
-		{
-			if (has_phase(PHASE_C))
-			{
-				if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//make sure phase C is active (no previous fault)
-				{
-					//Remove phase C
-					NR_branchdata[NR_branch_reference].phases &= 0xFE;
-
-					//Flag phase being removed
-					phase_remove = 0x01;
-
-					//Flag the fault type
-					*implemented_fault = 13;
-				}
-				else	//Already in a fault - just flag us as none and go on our way
-				{
-					*implemented_fault = 0;
-				}
-			}//end has PHASE_C
-			else
-			{
-				gl_warning("%s does not have a phase C to fault!",OBJECTHDR(this)->name);
-				//defined above
-			}
-		}
-		else	//Something else, fail
-		{
-			GL_THROW("Fault type %s for link objects has an invalid phase specification");
-			//Defined above
-		}
-	}//End OC1
-	else if ((fault_type[0] == 'O') && (fault_type[1] == 'C') && (fault_type[2] == '2'))	//Double open-conductor fault
-	{
-		//Figure out who we want to alter - assume [3] is a -, so check [4]+
-		work_phases = 0x00;
-
-		if (fault_type[4] == 'X')	//Random, flag as such
-			work_phases |= 0x08;
-		
-		if ((fault_type[4] == 'A') || (fault_type[5] == 'A'))	//A is desired
-			work_phases |= 0x04;
-
-		if ((fault_type[4] == 'B') || (fault_type[5] == 'B'))	//B is desired
-			work_phases |= 0x02;
-
-		if ((fault_type[4] == 'C') || (fault_type[5] == 'C'))	//C is desired
-			work_phases |= 0x01;
-
-		//See how many phases we have to deal with
-		numphase = 0;
-
-		if (has_phase(PHASE_A))
-		{
-			numphase++;					//Increment count
-		}
-
-		if (has_phase(PHASE_B))
-		{
-			numphase++;					//Increment count
-		}
-
-		if (has_phase(PHASE_C))
-		{
-			numphase++;					//Increment count
-		}
-
-		//Pull out what phases we have to play with
-		temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
-
-		if (numphase == 0)
-		{
-			GL_THROW("No phases detected for %s!",objhdr->name);
-			//Defined above
-		}//end 0 phase
-		else if (numphase < 2)	//Single phase line (no zero phase this way)
-		{
-			//Refine our criteria
-			if ((work_phases & 0x08) != 0x08)	//Not random case
-				temp_phases &= work_phases;
-
-			//defaulted else - if random case, only getting one phase out of this anywho (leave temp_phases as is)
-
-			switch (temp_phases)
-			{
-			case 0x00:	//No phases available - something must have faulted
-				*implemented_fault = 0;	//Flag as such
-				break;
-			case 0x01:	//Phase C
-				NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
-				*implemented_fault = 13;							//Flag as a C OC fault
-				break;
-			case 0x02:	//Phase B
-				NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
-				*implemented_fault = 12;							//Flag as a B OC fault
-				break;
-			case 0x04:	//Phase A
-				NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
-				*implemented_fault = 11;							//Flag as a A OC fault
-				break;
-			default:	//No other cases should exist
-				GL_THROW("Fault type %s for link objects has an invalid phase specification");
-				//Defined above
-				break;
-			}//end switch
-
-			phase_remove = temp_phases;	//Flag phase removing
-
-		}//end <2 phases (only 1 presumably)
-		else if (numphase == 2)	//Only two phases present
-		{
-			//See how the two present coincide with the two we're asking for
-			if ((work_phases & 0x08) != 0x08)	//Not random case, see what we have
-				temp_phases &= work_phases;
-			//Defaulted else - if random, only 1 choice exists, which is temp_phases (leave temp_phases as is)
-
-			//Implement the appropriate fault
-			switch (temp_phases)
-			{
-			case 0x00:	//No phases!
-				*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
-				break;
-			case 0x01:	//Only phase C
-				NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
-				*implemented_fault = 13;							//Flag as a C OC fault
-				break;
-			case 0x02:	//Only phase B
-				NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
-				*implemented_fault = 12;							//Flag as a B OC fault
-				break;
-			case 0x03:	//B and C
-				NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
-				*implemented_fault = 15;							//Flag as a B & C fault
-				break;
-			case 0x04:	//Only A
-				NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
-				*implemented_fault = 11;							//Flag as a A OC fault
-				break;
-			case 0x05:	//A and C
-				NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
-				*implemented_fault = 16;							//Flag as A and C fault
-				break;
-			case 0x06:	//A and B
-				NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
-				*implemented_fault = 14;							//Flag as A and B fault
-				break;
-			default:	//Not sure how we'd ever get here
-				GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
-				//Defined above
-				break;
-			}//end switch
-
-			phase_remove = temp_phases;	//Flag phase removing
-
-		}//end 2 phases present
-		else if (numphase == 3)	//All phases present
-		{
-			if ((work_phases & 0x08) == 0x08)	//Random condition
-			{
-				//See if we have all three available to fault (if one or more is already faulted, we won't care)
-				rand_phases = 0;
-
-				//Check and populate random array as well
-				if ((temp_phases & 0x01) == 0x01)	//Check for C availability
-				{
-					tempphase[rand_phases] = 1;
-					rand_phases++;
-				}
-
-				if ((temp_phases & 0x02) == 0x02)	//Check for B availability
-				{
-					tempphase[rand_phases] = 2;
-					rand_phases++;
-				}
-
-				if ((temp_phases & 0x04) == 0x04)	//Check for A availability
-				{
-					tempphase[rand_phases] = 4;
-					rand_phases++;
-				}
-
-				if (rand_phases <= 2)	//Two or fewer available, just mask us out
-					work_phases = 0x07;	//This will pull the appropriate phase
-				else	//Must be 3, right?
-				{
-					//Pick a random phase - this will be the one we DON'T fault
-					randval = gl_random_sampled(RNGSTATE,numphase,tempphase);
-
-					//Set temp_phases appropriate
-					if (randval == 1)	//Leave phase C
-						work_phases = 0x06;	//A and B fault
-					else if (randval == 2)	//Leave phase B
-						work_phases = 0x05;	//A and C fault
-					else	//Must be 4	- leave phase A
-						work_phases = 0x03;	//B and C fault
-				}//end must be 3
-			}//end random condition
-			//Defaulted else - not random, so just use as normal mask
-
-			//Determine phases to fault
-			temp_phases &= work_phases;
-
-			//Implement the appropriate fault
-			switch (temp_phases)
-			{
-			case 0x00:	//No phases!
-				*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
-				break;
-			case 0x01:	//Only phase C
-				NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
-				*implemented_fault = 13;							//Flag as a C OC fault
-				break;
-			case 0x02:	//Only phase B
-				NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
-				*implemented_fault = 12;							//Flag as a B OC fault
-				break;
-			case 0x03:	//B and C
-				NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
-				*implemented_fault = 15;							//Flag as a B & C fault
-				break;
-			case 0x04:	//Only A
-				NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
-				*implemented_fault = 11;							//Flag as a A OC fault
-				break;
-			case 0x05:	//A and C
-				NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
-				*implemented_fault = 16;							//Flag as A and C fault
-				break;
-			case 0x06:	//A and B
-				NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
-				*implemented_fault = 14;							//Flag as A and B fault
-				break;
-			default:	//Not sure how we'd ever get here
-				GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
-				//Defined above
-				break;
-			}//end switch
-
-			phase_remove = temp_phases;	//Flag phase removing
-
-		}//end all three present
-		else	//Hmmm, how'd we get here?
-		{
-			GL_THROW("An invalid number of phases appears present for %s",objhdr->name);
-			//Defined above
-		}
-	}//End OC2
-	else if ((fault_type[0] == 'O') && (fault_type[1] == 'C') && (fault_type[2] == '3'))	//Triple open-conductor fault
-	{
-		//Let's see what phases we have to play with
-		temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
-
-		//Case it out - if we want TLG, but don't have all three phases, just trip whatever we have
-		switch (temp_phases)
-		{
-		case 0x00:	//No phases!
-			*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
-			break;
-		case 0x01:	//Only phase C
-			NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
-			*implemented_fault = 13;							//Flag as a C only fault
-			break;
-		case 0x02:	//Only phase B
-			NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
-			*implemented_fault = 12;							//Flag as a B only fault
-			break;
-		case 0x03:	//B and C
-			NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
-			*implemented_fault = 15;							//Flag as a B & C fault
-			break;
-		case 0x04:	//Only A
-			NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
-			*implemented_fault = 11;							//Flag as a A only fault
-			break;
-		case 0x05:	//A and C
-			NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
-			*implemented_fault = 16;							//Flag as A and C fault
-			break;
-		case 0x06:	//A and B
-			NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
-			*implemented_fault = 14;							//Flag as A and B fault
-			break;
-		case 0x07:	//A, B, and C
-			NR_branchdata[NR_branch_reference].phases &= 0xF8;	//Remove A, B, and C
-			*implemented_fault = 17;							//Flag as all three fault
-			break;
-		default:	//Not sure how we'd ever get here
-			GL_THROW("Unknown phase condition on three-phase fault of %s!",objhdr->name);
-			//Defined above
-			break;
-		}//end phase cases
-
-		phase_remove = temp_phases;	//Flag phase removing
-
-	}//End OC3
-	else if ((fault_type[0] == 'S') && (fault_type[1] == 'W') && (fault_type[2] == '-'))	//Switch operations - event or user induced (no random - so handled slightly different)
-	{
-		//Determine which scenario we're in
-		if ((fault_type[3] == 'A') && (fault_type[4] == '\0'))	//Phase A occurance
-		{
-			if (has_phase(PHASE_A))
-			{
-				if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//make sure phase A is active (no previous fault)
-				{
-					//Remove phase A
-					NR_branchdata[NR_branch_reference].phases &= 0xFB;
-
-					phase_remove = 0x04;	//Flag phase being removed
-
-					//Flag the fault type
-					*implemented_fault = 18;
-				}
-				else	//Already in a fault - just flag us as none and go on our way
-				{
-					*implemented_fault = 0;
-				}
-			}//end has PHASE_A
-			else
-			{
-				gl_warning("%s does not have a phase A to fault!",OBJECTHDR(this)->name);
-				//Defined above
-			}
-		}
-		else if ((fault_type[3] == 'B') && (fault_type[4] == '\0'))	//Phase B occurance
-		{
-			if (has_phase(PHASE_B))
-			{
-				if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//make sure phase B is active (no previous fault)
-				{
-					//Remove phase B
-					NR_branchdata[NR_branch_reference].phases &= 0xFD;
-
-					phase_remove = 0x02;	//Flag phase being removed
-
-					//Flag the fault type
-					*implemented_fault = 19;
-				}
-				else	//Already in a fault - just flag us as none and go on our way
-				{
-					*implemented_fault = 0;
-				}
-			}//end has PHASE_B
-			else
-			{
-				gl_warning("%s does not have a phase B to fault!",OBJECTHDR(this)->name);
-				//Defined above
-			}
-		}
-		else if ((fault_type[3] == 'C') && (fault_type[4] == '\0'))	//Phase C occurance
-		{
-			if (has_phase(PHASE_C))
-			{
-				if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//make sure phase C is active (no previous fault)
-				{
-					//Remove phase C
-					NR_branchdata[NR_branch_reference].phases &= 0xFE;
-
-					phase_remove = 0x01;	//Flag phase being removed
-
-					//Flag the fault type
-					*implemented_fault = 20;
-				}
-				else	//Already in a fault - just flag us as none and go on our way
-				{
-					*implemented_fault = 0;
-				}
-			}//end has PHASE_C
-			else
-			{
-				gl_warning("%s does not have a phase C to fault!",OBJECTHDR(this)->name);
-				//Defined above
-			}
-		}
-		else if (fault_type[5] == '\0')	//Two Phase occurance
+		}//End TLL
+		else if ((fault_type[0] == 'L') && (fault_type[1] == 'L'))	//Line-line fault
 		{
 			//Figure out who we want to alter - assume [2] is a -, so check [3]+
 			work_phases = 0x00;
 
+			if (fault_type[3] == 'X')	//Random, flag as such
+				work_phases |= 0x08;
+			
 			if ((fault_type[3] == 'A') || (fault_type[4] == 'A'))	//A is desired
 				work_phases |= 0x04;
 
@@ -4244,10 +3663,12 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}//end 0 phase
 			else if (numphase < 2)	//Single phase line (no zero phase this way)
 			{
-				//See how the present coincide with the two we're asking for
-				temp_phases &= work_phases;
+				//Refine our criteria
+				if ((work_phases & 0x08) != 0x08)	//Not random case
+					temp_phases &= work_phases;
 
-				//Figure out what is going on
+				//defaulted else - if random case, only getting one phase out of this anywho (leave temp_phases as is)
+
 				switch (temp_phases)
 				{
 				case 0x00:	//No phases available - something must have faulted
@@ -4255,15 +3676,15 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					break;
 				case 0x01:	//Phase C
 					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
-					*implemented_fault = 20;							//Flag as a C switching
+					*implemented_fault = 13;							//Flag as a C OC fault
 					break;
 				case 0x02:	//Phase B
 					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
-					*implemented_fault = 19;							//Flag as a B switching
+					*implemented_fault = 12;							//Flag as a B OC fault
 					break;
 				case 0x04:	//Phase A
 					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
-					*implemented_fault = 18;							//Flag as a A switching
+					*implemented_fault = 11;							//Flag as a A OC fault
 					break;
 				default:	//No other cases should exist
 					GL_THROW("Fault type %s for link objects has an invalid phase specification");
@@ -4272,12 +3693,13 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}//end switch
 
 				phase_remove = temp_phases;	//Flag phase removing
-
 			}//end <2 phases (only 1 presumably)
 			else if (numphase == 2)	//Only two phases present
 			{
 				//See how the two present coincide with the two we're asking for
-				temp_phases &= work_phases;
+				if ((work_phases & 0x08) != 0x08)	//Not random case, see what we have
+					temp_phases &= work_phases;
+				//Defaulted else - if random, only 1 choice exists, which is temp_phases (leave temp_phases as is)
 
 				//Implement the appropriate fault
 				switch (temp_phases)
@@ -4287,27 +3709,27 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					break;
 				case 0x01:	//Only phase C
 					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
-					*implemented_fault = 20;							//Flag as a C switching
+					*implemented_fault = 13;							//Flag as a C OC fault
 					break;
 				case 0x02:	//Only phase B
 					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
-					*implemented_fault = 19;							//Flag as a B switching
+					*implemented_fault = 12;							//Flag as a B OC fault
 					break;
 				case 0x03:	//B and C
 					NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
-					*implemented_fault = 22;							//Flag as a B & C switching
+					*implemented_fault = 8;								//Flag as a B & C fault
 					break;
 				case 0x04:	//Only A
 					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
-					*implemented_fault = 18;							//Flag as a A switching
+					*implemented_fault = 11;							//Flag as a A OC fault
 					break;
 				case 0x05:	//A and C
 					NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
-					*implemented_fault = 23;							//Flag as A and C switching
+					*implemented_fault = 9;								//Flag as A and C fault
 					break;
 				case 0x06:	//A and B
 					NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
-					*implemented_fault = 21;							//Flag as A and B switching
+					*implemented_fault = 7;								//Flag as A and B fault
 					break;
 				default:	//Not sure how we'd ever get here
 					GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
@@ -4320,6 +3742,48 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}//end 2 phases present
 			else if (numphase == 3)	//All phases present
 			{
+				if ((work_phases & 0x08) == 0x08)	//Random condition
+				{
+					//See if we have all three available to fault (if one or more is already faulted, we won't care)
+					rand_phases = 0;
+
+					//Check and populate random array as well
+					if ((temp_phases & 0x01) == 0x01)	//Check for C availability
+					{
+						tempphase[rand_phases] = 1;
+						rand_phases++;
+					}
+
+					if ((temp_phases & 0x02) == 0x02)	//Check for B availability
+					{
+						tempphase[rand_phases] = 2;
+						rand_phases++;
+					}
+
+					if ((temp_phases & 0x04) == 0x04)	//Check for A availability
+					{
+						tempphase[rand_phases] = 4;
+						rand_phases++;
+					}
+
+					if (rand_phases <= 2)	//Two or fewer available, just mask us out
+						work_phases = 0x07;	//This will pull the appropriate phase
+					else	//Must be 3, right?
+					{
+						//Pick a random phase - this will be the one we DON'T fault
+						randval = gl_random_sampled(RNGSTATE,numphase,tempphase);
+
+						//Set temp_phases appropriate
+						if (randval == 1)	//Leave phase C
+							work_phases = 0x06;	//A and B fault
+						else if (randval == 2)	//Leave phase B
+							work_phases = 0x05;	//A and C fault
+						else	//Must be 4	- leave phase A
+							work_phases = 0x03;	//B and C fault
+					}//end must be 3
+				}//end random condition
+				//Defaulted else - not random, so just use as normal mask
+
 				//Determine phases to fault
 				temp_phases &= work_phases;
 
@@ -4331,27 +3795,27 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					break;
 				case 0x01:	//Only phase C
 					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
-					*implemented_fault = 20;							//Flag as a C switching
+					*implemented_fault = 13;							//Flag as a C OC fault
 					break;
 				case 0x02:	//Only phase B
 					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
-					*implemented_fault = 19;							//Flag as a B switching
+					*implemented_fault = 12;							//Flag as a B OC fault
 					break;
 				case 0x03:	//B and C
 					NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
-					*implemented_fault = 22;							//Flag as a B & C fault
+					*implemented_fault = 8;								//Flag as a B & C fault
 					break;
 				case 0x04:	//Only A
 					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
-					*implemented_fault = 18;							//Flag as a A switching
+					*implemented_fault = 11;							//Flag as an A OC fault
 					break;
 				case 0x05:	//A and C
 					NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
-					*implemented_fault = 23;							//Flag as A and C switching
+					*implemented_fault = 9;								//Flag as A and C fault
 					break;
 				case 0x06:	//A and B
 					NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
-					*implemented_fault = 21;							//Flag as A and B switching
+					*implemented_fault = 7;								//Flag as A and B fault
 					break;
 				default:	//Not sure how we'd ever get here
 					GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
@@ -4367,13 +3831,353 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				GL_THROW("An invalid number of phases appears present for %s",objhdr->name);
 				//Defined above
 			}
-		}//End Switch two phases
-		else if (fault_type[6] == '\0')	//Three Phase occurance
+		}//End LL
+		else if (((fault_type[0] == 'O') && (fault_type[1] == 'C') && (fault_type[2] == '-')) || ((fault_type[0] == 'O') && (fault_type[1] == 'C') && (fault_type[2] == '1')))	//Open conductor
+		{
+			//See which phase we want to fault - skip [3] if OC1, or [2] if OC - it should be a dash (if it isn't, we ignore it)
+			if ((fault_type[0] == 'O') && (fault_type[1] == 'C') && (fault_type[2] == '-'))
+				phaseidx=3;
+			else	//Must be OC1- then
+				phaseidx=4;
+
+			//First see if it is an 'X' - for random phase.  If so, pick one and proceed
+			if (fault_type[phaseidx] == 'X')
+			{
+				//Reset counter
+				numphase = 0;
+
+				//See how many phases we get to work with 0 populate the phase array at the same time
+				if (has_phase(PHASE_A))
+				{
+					tempphase[numphase] = 4;	//Flag for phase A - NR convention
+					numphase++;					//Increment count
+				}
+
+				if (has_phase(PHASE_B))
+				{
+					tempphase[numphase] = 2;	//Flag for phase B - NR convention
+					numphase++;					//Increment count
+				}
+
+				if (has_phase(PHASE_C))
+				{
+					tempphase[numphase] = 1;	//Flag for phase C - NR convention
+					numphase++;					//Increment count
+				}
+
+				//Get a random value
+				randval = gl_random_sampled(RNGSTATE,numphase,tempphase);
+
+				//Put it back into proper format
+				rand_phases = (unsigned char)(randval);
+			}
+			else	//Not a random - clear the variable, just in case
+				rand_phases = 0x00;
+
+			if ((fault_type[phaseidx] == 'A') || (rand_phases == 0x04))
+			{
+				if (has_phase(PHASE_A))
+				{
+					if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//make sure phase A is active (no previous fault)
+					{
+						//Remove phase A
+						NR_branchdata[NR_branch_reference].phases &= 0xFB;
+
+						phase_remove = 0x04;	//Flag phase being removed
+
+						//Flag the fault type
+						*implemented_fault = 11;
+					}
+					else	//Already in a fault - just flag us as none and go on our way
+					{
+						*implemented_fault = 0;
+					}
+				}//end has PHASE_A
+				else
+				{
+					gl_warning("%s does not have a phase A to fault!",OBJECTHDR(this)->name);
+					//Defined above
+				}
+			}//End A fault
+			else if ((fault_type[phaseidx] == 'B') || (rand_phases == 0x02))
+			{
+				if (has_phase(PHASE_B))
+				{
+					if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//make sure phase B is active (no previous fault)
+					{
+						//Remove phase B
+						NR_branchdata[NR_branch_reference].phases &= 0xFD;
+
+						//Flag phase being removed
+						phase_remove = 0x02;
+
+						//Flag the fault type
+						*implemented_fault = 12;
+					}
+					else	//Already in a fault - just flag us as none and go on our way
+					{
+						*implemented_fault = 0;
+					}
+				}//end has PHASE_B
+				else
+				{
+					gl_warning("%s does not have a phase B to fault!",OBJECTHDR(this)->name);
+					//Defined above
+				}
+			}
+			else if ((fault_type[phaseidx] == 'C') || (rand_phases == 0x01))
+			{
+				if (has_phase(PHASE_C))
+				{
+					if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//make sure phase C is active (no previous fault)
+					{
+						//Remove phase C
+						NR_branchdata[NR_branch_reference].phases &= 0xFE;
+
+						//Flag phase being removed
+						phase_remove = 0x01;
+
+						//Flag the fault type
+						*implemented_fault = 13;
+					}
+					else	//Already in a fault - just flag us as none and go on our way
+					{
+						*implemented_fault = 0;
+					}
+				}//end has PHASE_C
+				else
+				{
+					gl_warning("%s does not have a phase C to fault!",OBJECTHDR(this)->name);
+					//defined above
+				}
+			}
+			else	//Something else, fail
+			{
+				GL_THROW("Fault type %s for link objects has an invalid phase specification");
+				//Defined above
+			}
+		}//End OC1
+		else if ((fault_type[0] == 'O') && (fault_type[1] == 'C') && (fault_type[2] == '2'))	//Double open-conductor fault
+		{
+			//Figure out who we want to alter - assume [3] is a -, so check [4]+
+			work_phases = 0x00;
+
+			if (fault_type[4] == 'X')	//Random, flag as such
+				work_phases |= 0x08;
+			
+			if ((fault_type[4] == 'A') || (fault_type[5] == 'A'))	//A is desired
+				work_phases |= 0x04;
+
+			if ((fault_type[4] == 'B') || (fault_type[5] == 'B'))	//B is desired
+				work_phases |= 0x02;
+
+			if ((fault_type[4] == 'C') || (fault_type[5] == 'C'))	//C is desired
+				work_phases |= 0x01;
+
+			//See how many phases we have to deal with
+			numphase = 0;
+
+			if (has_phase(PHASE_A))
+			{
+				numphase++;					//Increment count
+			}
+
+			if (has_phase(PHASE_B))
+			{
+				numphase++;					//Increment count
+			}
+
+			if (has_phase(PHASE_C))
+			{
+				numphase++;					//Increment count
+			}
+
+			//Pull out what phases we have to play with
+			temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
+
+			if (numphase == 0)
+			{
+				GL_THROW("No phases detected for %s!",objhdr->name);
+				//Defined above
+			}//end 0 phase
+			else if (numphase < 2)	//Single phase line (no zero phase this way)
+			{
+				//Refine our criteria
+				if ((work_phases & 0x08) != 0x08)	//Not random case
+					temp_phases &= work_phases;
+
+				//defaulted else - if random case, only getting one phase out of this anywho (leave temp_phases as is)
+
+				switch (temp_phases)
+				{
+				case 0x00:	//No phases available - something must have faulted
+					*implemented_fault = 0;	//Flag as such
+					break;
+				case 0x01:	//Phase C
+					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+					*implemented_fault = 13;							//Flag as a C OC fault
+					break;
+				case 0x02:	//Phase B
+					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+					*implemented_fault = 12;							//Flag as a B OC fault
+					break;
+				case 0x04:	//Phase A
+					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+					*implemented_fault = 11;							//Flag as a A OC fault
+					break;
+				default:	//No other cases should exist
+					GL_THROW("Fault type %s for link objects has an invalid phase specification");
+					//Defined above
+					break;
+				}//end switch
+
+				phase_remove = temp_phases;	//Flag phase removing
+
+			}//end <2 phases (only 1 presumably)
+			else if (numphase == 2)	//Only two phases present
+			{
+				//See how the two present coincide with the two we're asking for
+				if ((work_phases & 0x08) != 0x08)	//Not random case, see what we have
+					temp_phases &= work_phases;
+				//Defaulted else - if random, only 1 choice exists, which is temp_phases (leave temp_phases as is)
+
+				//Implement the appropriate fault
+				switch (temp_phases)
+				{
+				case 0x00:	//No phases!
+					*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
+					break;
+				case 0x01:	//Only phase C
+					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+					*implemented_fault = 13;							//Flag as a C OC fault
+					break;
+				case 0x02:	//Only phase B
+					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+					*implemented_fault = 12;							//Flag as a B OC fault
+					break;
+				case 0x03:	//B and C
+					NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+					*implemented_fault = 15;							//Flag as a B & C fault
+					break;
+				case 0x04:	//Only A
+					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+					*implemented_fault = 11;							//Flag as a A OC fault
+					break;
+				case 0x05:	//A and C
+					NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+					*implemented_fault = 16;							//Flag as A and C fault
+					break;
+				case 0x06:	//A and B
+					NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+					*implemented_fault = 14;							//Flag as A and B fault
+					break;
+				default:	//Not sure how we'd ever get here
+					GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
+					//Defined above
+					break;
+				}//end switch
+
+				phase_remove = temp_phases;	//Flag phase removing
+
+			}//end 2 phases present
+			else if (numphase == 3)	//All phases present
+			{
+				if ((work_phases & 0x08) == 0x08)	//Random condition
+				{
+					//See if we have all three available to fault (if one or more is already faulted, we won't care)
+					rand_phases = 0;
+
+					//Check and populate random array as well
+					if ((temp_phases & 0x01) == 0x01)	//Check for C availability
+					{
+						tempphase[rand_phases] = 1;
+						rand_phases++;
+					}
+
+					if ((temp_phases & 0x02) == 0x02)	//Check for B availability
+					{
+						tempphase[rand_phases] = 2;
+						rand_phases++;
+					}
+
+					if ((temp_phases & 0x04) == 0x04)	//Check for A availability
+					{
+						tempphase[rand_phases] = 4;
+						rand_phases++;
+					}
+
+					if (rand_phases <= 2)	//Two or fewer available, just mask us out
+						work_phases = 0x07;	//This will pull the appropriate phase
+					else	//Must be 3, right?
+					{
+						//Pick a random phase - this will be the one we DON'T fault
+						randval = gl_random_sampled(RNGSTATE,numphase,tempphase);
+
+						//Set temp_phases appropriate
+						if (randval == 1)	//Leave phase C
+							work_phases = 0x06;	//A and B fault
+						else if (randval == 2)	//Leave phase B
+							work_phases = 0x05;	//A and C fault
+						else	//Must be 4	- leave phase A
+							work_phases = 0x03;	//B and C fault
+					}//end must be 3
+				}//end random condition
+				//Defaulted else - not random, so just use as normal mask
+
+				//Determine phases to fault
+				temp_phases &= work_phases;
+
+				//Implement the appropriate fault
+				switch (temp_phases)
+				{
+				case 0x00:	//No phases!
+					*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
+					break;
+				case 0x01:	//Only phase C
+					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+					*implemented_fault = 13;							//Flag as a C OC fault
+					break;
+				case 0x02:	//Only phase B
+					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+					*implemented_fault = 12;							//Flag as a B OC fault
+					break;
+				case 0x03:	//B and C
+					NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+					*implemented_fault = 15;							//Flag as a B & C fault
+					break;
+				case 0x04:	//Only A
+					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+					*implemented_fault = 11;							//Flag as a A OC fault
+					break;
+				case 0x05:	//A and C
+					NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+					*implemented_fault = 16;							//Flag as A and C fault
+					break;
+				case 0x06:	//A and B
+					NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+					*implemented_fault = 14;							//Flag as A and B fault
+					break;
+				default:	//Not sure how we'd ever get here
+					GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
+					//Defined above
+					break;
+				}//end switch
+
+				phase_remove = temp_phases;	//Flag phase removing
+
+			}//end all three present
+			else	//Hmmm, how'd we get here?
+			{
+				GL_THROW("An invalid number of phases appears present for %s",objhdr->name);
+				//Defined above
+			}
+		}//End OC2
+		else if ((fault_type[0] == 'O') && (fault_type[1] == 'C') && (fault_type[2] == '3'))	//Triple open-conductor fault
 		{
 			//Let's see what phases we have to play with
 			temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
 
-			//Case it out - if we want three-phase switching, but don't have all three phases, just switch whatever we have
+			//Case it out - if we want TLG, but don't have all three phases, just trip whatever we have
 			switch (temp_phases)
 			{
 			case 0x00:	//No phases!
@@ -4381,31 +4185,31 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				break;
 			case 0x01:	//Only phase C
 				NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
-				*implemented_fault = 20;							//Flag as a C only switching
+				*implemented_fault = 13;							//Flag as a C only fault
 				break;
 			case 0x02:	//Only phase B
 				NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
-				*implemented_fault = 19;							//Flag as a B only switching
+				*implemented_fault = 12;							//Flag as a B only fault
 				break;
 			case 0x03:	//B and C
 				NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
-				*implemented_fault = 22;							//Flag as a B & C switching
+				*implemented_fault = 15;							//Flag as a B & C fault
 				break;
 			case 0x04:	//Only A
 				NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
-				*implemented_fault = 18;							//Flag as a A only switching
+				*implemented_fault = 11;							//Flag as a A only fault
 				break;
 			case 0x05:	//A and C
 				NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
-				*implemented_fault = 23;							//Flag as A and C switching
+				*implemented_fault = 16;							//Flag as A and C fault
 				break;
 			case 0x06:	//A and B
 				NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
-				*implemented_fault = 21;							//Flag as A and B switching
+				*implemented_fault = 14;							//Flag as A and B fault
 				break;
 			case 0x07:	//A, B, and C
 				NR_branchdata[NR_branch_reference].phases &= 0xF8;	//Remove A, B, and C
-				*implemented_fault = 24;							//Flag as all three switching
+				*implemented_fault = 17;							//Flag as all three fault
 				break;
 			default:	//Not sure how we'd ever get here
 				GL_THROW("Unknown phase condition on three-phase fault of %s!",objhdr->name);
@@ -4414,216 +4218,940 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}//end phase cases
 
 			phase_remove = temp_phases;	//Flag phase removing
-		}//End three-phase occurance
 
-		//Flag as special case
-		switch_val = true;
-
-	}//End switches
-	else if ((fault_type[0] == 'F') && (fault_type[1] == 'U') && (fault_type[2] == 'S') && (fault_type[3] == '-') && (fault_type[5] == '\0'))	//Single phase fuse fault
-	{
-		//First see if it is an 'X' - for random phase.  If so, pick one and proceed
-		if (fault_type[4] == 'X')
+		}//End OC3
+		else if ((fault_type[0] == 'S') && (fault_type[1] == 'W') && (fault_type[2] == '-'))	//Switch operations - event or user induced (no random - so handled slightly different)
 		{
-			//Reset counter
-			numphase = 0;
-
-			//See how many phases we get to work with 0 populate the phase array at the same time
-			if (has_phase(PHASE_A))
+			//See if we're in mesh-searching mode or not
+			if (meshed_fault_checking_enabled == true)
 			{
-				tempphase[numphase] = 4;	//Flag for phase A - NR convention
-				numphase++;					//Increment count
-			}
-
-			if (has_phase(PHASE_B))
-			{
-				tempphase[numphase] = 2;	//Flag for phase B - NR convention
-				numphase++;					//Increment count
-			}
-
-			if (has_phase(PHASE_C))
-			{
-				tempphase[numphase] = 1;	//Flag for phase C - NR convention
-				numphase++;					//Increment count
-			}
-
-			//Get a random value
-			randval = gl_random_sampled(RNGSTATE,numphase,tempphase);
-
-			//Put it back into proper format
-			rand_phases = (unsigned char)(randval);
-		}
-		else	//Not a random - clear the variable, just in case
-			rand_phases = 0x00;
-
-		if ((fault_type[4] == 'A') || (rand_phases == 0x04))
-		{
-			if (has_phase(PHASE_A))
-			{
-				if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//make sure phase A is active (no previous fault)
+				//Determine which scenario we're in
+				if ((fault_type[3] == 'A') && (fault_type[4] == '\0'))	//Phase A occurance
 				{
-					//Remove phase A
-					NR_branchdata[NR_branch_reference].phases &= 0xFB;
+					if (has_phase(PHASE_A))
+					{
+						if ((NR_branchdata[NR_branch_reference].origphases & 0x04) == 0x04)	//make sure phase A is active (no previous fault)
+						{
+							//Remove phase A
+							NR_branchdata[NR_branch_reference].phases &= 0xFB;
 
-					phase_remove = 0x04;	//Flag phase being removed
+							phase_remove = 0x04;	//Flag phase being removed
 
-					//Flag the fault type
-					*implemented_fault = 25;
+							//Flag the fault type
+							*implemented_fault = 18;
+						}
+						else	//Already in a fault - just flag us as none and go on our way
+						{
+							*implemented_fault = 0;
+						}
+					}//end has PHASE_A
+					else
+					{
+						gl_warning("%s does not have a phase A to fault!",OBJECTHDR(this)->name);
+						//Defined above
+					}
 				}
-				else	//Already in a fault - just flag us as none and go on our way
+				else if ((fault_type[3] == 'B') && (fault_type[4] == '\0'))	//Phase B occurance
 				{
-					*implemented_fault = 0;
+					if (has_phase(PHASE_B))
+					{
+						if ((NR_branchdata[NR_branch_reference].origphases & 0x02) == 0x02)	//make sure phase B is active (no previous fault)
+						{
+							//Remove phase B
+							NR_branchdata[NR_branch_reference].phases &= 0xFD;
+
+							phase_remove = 0x02;	//Flag phase being removed
+
+							//Flag the fault type
+							*implemented_fault = 19;
+						}
+						else	//Already in a fault - just flag us as none and go on our way
+						{
+							*implemented_fault = 0;
+						}
+					}//end has PHASE_B
+					else
+					{
+						gl_warning("%s does not have a phase B to fault!",OBJECTHDR(this)->name);
+						//Defined above
+					}
 				}
-			}//end has PHASE_A
-			else
-			{
-				gl_warning("%s does not have a phase A to fault!",OBJECTHDR(this)->name);
-				//Defined above
+				else if ((fault_type[3] == 'C') && (fault_type[4] == '\0'))	//Phase C occurance
+				{
+					if (has_phase(PHASE_C))
+					{
+						if ((NR_branchdata[NR_branch_reference].origphases & 0x01) == 0x01)	//make sure phase C is active (no previous fault)
+						{
+							//Remove phase C
+							NR_branchdata[NR_branch_reference].phases &= 0xFE;
+
+							phase_remove = 0x01;	//Flag phase being removed
+
+							//Flag the fault type
+							*implemented_fault = 20;
+						}
+						else	//Already in a fault - just flag us as none and go on our way
+						{
+							*implemented_fault = 0;
+						}
+					}//end has PHASE_C
+					else
+					{
+						gl_warning("%s does not have a phase C to fault!",OBJECTHDR(this)->name);
+						//Defined above
+					}
+				}
+				else if (fault_type[5] == '\0')	//Two Phase occurance
+				{
+					//Figure out who we want to alter - assume [2] is a -, so check [3]+
+					work_phases = 0x00;
+
+					if ((fault_type[3] == 'A') || (fault_type[4] == 'A'))	//A is desired
+						work_phases |= 0x04;
+
+					if ((fault_type[3] == 'B') || (fault_type[4] == 'B'))	//B is desired
+						work_phases |= 0x02;
+
+					if ((fault_type[3] == 'C') || (fault_type[4] == 'C'))	//C is desired
+						work_phases |= 0x01;
+
+					//See how many phases we have to deal with
+					numphase = 0;
+
+					if (has_phase(PHASE_A))
+					{
+						numphase++;					//Increment count
+					}
+
+					if (has_phase(PHASE_B))
+					{
+						numphase++;					//Increment count
+					}
+
+					if (has_phase(PHASE_C))
+					{
+						numphase++;					//Increment count
+					}
+
+					//Pull out what phases we have to play with
+					temp_phases = NR_branchdata[NR_branch_reference].origphases & 0x07;
+
+					if (numphase == 0)
+					{
+						GL_THROW("No phases detected for %s!",objhdr->name);
+						//Defined above
+					}//end 0 phase
+					else if (numphase < 2)	//Single phase line (no zero phase this way)
+					{
+						//See how the present coincide with the two we're asking for
+						temp_phases &= work_phases;
+
+						//Figure out what is going on
+						switch (temp_phases)
+						{
+						case 0x00:	//No phases available - something must have faulted
+							*implemented_fault = 0;	//Flag as such
+							break;
+						case 0x01:	//Phase C
+							NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+							*implemented_fault = 20;							//Flag as a C switching
+							break;
+						case 0x02:	//Phase B
+							NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+							*implemented_fault = 19;							//Flag as a B switching
+							break;
+						case 0x04:	//Phase A
+							NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+							*implemented_fault = 18;							//Flag as a A switching
+							break;
+						default:	//No other cases should exist
+							GL_THROW("Fault type %s for link objects has an invalid phase specification");
+							//Defined above
+							break;
+						}//end switch
+
+						phase_remove = temp_phases;	//Flag phase removing
+
+					}//end <2 phases (only 1 presumably)
+					else if (numphase == 2)	//Only two phases present
+					{
+						//See how the two present coincide with the two we're asking for
+						temp_phases &= work_phases;
+
+						//Implement the appropriate fault
+						switch (temp_phases)
+						{
+						case 0x00:	//No phases!
+							*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
+							break;
+						case 0x01:	//Only phase C
+							NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+							*implemented_fault = 20;							//Flag as a C switching
+							break;
+						case 0x02:	//Only phase B
+							NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+							*implemented_fault = 19;							//Flag as a B switching
+							break;
+						case 0x03:	//B and C
+							NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+							*implemented_fault = 22;							//Flag as a B & C switching
+							break;
+						case 0x04:	//Only A
+							NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+							*implemented_fault = 18;							//Flag as a A switching
+							break;
+						case 0x05:	//A and C
+							NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+							*implemented_fault = 23;							//Flag as A and C switching
+							break;
+						case 0x06:	//A and B
+							NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+							*implemented_fault = 21;							//Flag as A and B switching
+							break;
+						default:	//Not sure how we'd ever get here
+							GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
+							//Defined above
+							break;
+						}//end switch
+
+						phase_remove = temp_phases;	//Flag phase removing
+
+					}//end 2 phases present
+					else if (numphase == 3)	//All phases present
+					{
+						//Determine phases to fault
+						temp_phases &= work_phases;
+
+						//Implement the appropriate fault
+						switch (temp_phases)
+						{
+						case 0x00:	//No phases!
+							*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
+							break;
+						case 0x01:	//Only phase C
+							NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+							*implemented_fault = 20;							//Flag as a C switching
+							break;
+						case 0x02:	//Only phase B
+							NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+							*implemented_fault = 19;							//Flag as a B switching
+							break;
+						case 0x03:	//B and C
+							NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+							*implemented_fault = 22;							//Flag as a B & C fault
+							break;
+						case 0x04:	//Only A
+							NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+							*implemented_fault = 18;							//Flag as a A switching
+							break;
+						case 0x05:	//A and C
+							NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+							*implemented_fault = 23;							//Flag as A and C switching
+							break;
+						case 0x06:	//A and B
+							NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+							*implemented_fault = 21;							//Flag as A and B switching
+							break;
+						default:	//Not sure how we'd ever get here
+							GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
+							//Defined above
+							break;
+						}//end switch
+
+						phase_remove = temp_phases;	//Flag phase removing
+
+					}//end all three present
+					else	//Hmmm, how'd we get here?
+					{
+						GL_THROW("An invalid number of phases appears present for %s",objhdr->name);
+						//Defined above
+					}
+				}//End Switch two phases
+				else if (fault_type[6] == '\0')	//Three Phase occurance
+				{
+					//Let's see what phases we have to play with
+					temp_phases = NR_branchdata[NR_branch_reference].origphases & 0x07;
+
+					//Case it out - if we want three-phase switching, but don't have all three phases, just switch whatever we have
+					switch (temp_phases)
+					{
+					case 0x00:	//No phases!
+						*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
+						break;
+					case 0x01:	//Only phase C
+						NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+						*implemented_fault = 20;							//Flag as a C only switching
+						break;
+					case 0x02:	//Only phase B
+						NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+						*implemented_fault = 19;							//Flag as a B only switching
+						break;
+					case 0x03:	//B and C
+						NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+						*implemented_fault = 22;							//Flag as a B & C switching
+						break;
+					case 0x04:	//Only A
+						NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+						*implemented_fault = 18;							//Flag as a A only switching
+						break;
+					case 0x05:	//A and C
+						NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+						*implemented_fault = 23;							//Flag as A and C switching
+						break;
+					case 0x06:	//A and B
+						NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+						*implemented_fault = 21;							//Flag as A and B switching
+						break;
+					case 0x07:	//A, B, and C
+						NR_branchdata[NR_branch_reference].phases &= 0xF8;	//Remove A, B, and C
+						*implemented_fault = 24;							//Flag as all three switching
+						break;
+					default:	//Not sure how we'd ever get here
+						GL_THROW("Unknown phase condition on three-phase fault of %s!",objhdr->name);
+						//Defined above
+						break;
+					}//end phase cases
+
+					phase_remove = temp_phases;	//Flag phase removing
+				}//End three-phase occurance
 			}
-		}//End A fault
-		else if ((fault_type[4] == 'B') || (rand_phases == 0x02))
+			else	//Normal method
+			{
+				//Determine which scenario we're in
+				if ((fault_type[3] == 'A') && (fault_type[4] == '\0'))	//Phase A occurance
+				{
+					if (has_phase(PHASE_A))
+					{
+						if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//make sure phase A is active (no previous fault)
+						{
+							//Remove phase A
+							NR_branchdata[NR_branch_reference].phases &= 0xFB;
+
+							phase_remove = 0x04;	//Flag phase being removed
+
+							//Flag the fault type
+							*implemented_fault = 18;
+						}
+						else	//Already in a fault - just flag us as none and go on our way
+						{
+							*implemented_fault = 0;
+						}
+					}//end has PHASE_A
+					else
+					{
+						gl_warning("%s does not have a phase A to fault!",OBJECTHDR(this)->name);
+						//Defined above
+					}
+				}
+				else if ((fault_type[3] == 'B') && (fault_type[4] == '\0'))	//Phase B occurance
+				{
+					if (has_phase(PHASE_B))
+					{
+						if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//make sure phase B is active (no previous fault)
+						{
+							//Remove phase B
+							NR_branchdata[NR_branch_reference].phases &= 0xFD;
+
+							phase_remove = 0x02;	//Flag phase being removed
+
+							//Flag the fault type
+							*implemented_fault = 19;
+						}
+						else	//Already in a fault - just flag us as none and go on our way
+						{
+							*implemented_fault = 0;
+						}
+					}//end has PHASE_B
+					else
+					{
+						gl_warning("%s does not have a phase B to fault!",OBJECTHDR(this)->name);
+						//Defined above
+					}
+				}
+				else if ((fault_type[3] == 'C') && (fault_type[4] == '\0'))	//Phase C occurance
+				{
+					if (has_phase(PHASE_C))
+					{
+						if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//make sure phase C is active (no previous fault)
+						{
+							//Remove phase C
+							NR_branchdata[NR_branch_reference].phases &= 0xFE;
+
+							phase_remove = 0x01;	//Flag phase being removed
+
+							//Flag the fault type
+							*implemented_fault = 20;
+						}
+						else	//Already in a fault - just flag us as none and go on our way
+						{
+							*implemented_fault = 0;
+						}
+					}//end has PHASE_C
+					else
+					{
+						gl_warning("%s does not have a phase C to fault!",OBJECTHDR(this)->name);
+						//Defined above
+					}
+				}
+				else if (fault_type[5] == '\0')	//Two Phase occurance
+				{
+					//Figure out who we want to alter - assume [2] is a -, so check [3]+
+					work_phases = 0x00;
+
+					if ((fault_type[3] == 'A') || (fault_type[4] == 'A'))	//A is desired
+						work_phases |= 0x04;
+
+					if ((fault_type[3] == 'B') || (fault_type[4] == 'B'))	//B is desired
+						work_phases |= 0x02;
+
+					if ((fault_type[3] == 'C') || (fault_type[4] == 'C'))	//C is desired
+						work_phases |= 0x01;
+
+					//See how many phases we have to deal with
+					numphase = 0;
+
+					if (has_phase(PHASE_A))
+					{
+						numphase++;					//Increment count
+					}
+
+					if (has_phase(PHASE_B))
+					{
+						numphase++;					//Increment count
+					}
+
+					if (has_phase(PHASE_C))
+					{
+						numphase++;					//Increment count
+					}
+
+					//Pull out what phases we have to play with
+					temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
+
+					if (numphase == 0)
+					{
+						GL_THROW("No phases detected for %s!",objhdr->name);
+						//Defined above
+					}//end 0 phase
+					else if (numphase < 2)	//Single phase line (no zero phase this way)
+					{
+						//See how the present coincide with the two we're asking for
+						temp_phases &= work_phases;
+
+						//Figure out what is going on
+						switch (temp_phases)
+						{
+						case 0x00:	//No phases available - something must have faulted
+							*implemented_fault = 0;	//Flag as such
+							break;
+						case 0x01:	//Phase C
+							NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+							*implemented_fault = 20;							//Flag as a C switching
+							break;
+						case 0x02:	//Phase B
+							NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+							*implemented_fault = 19;							//Flag as a B switching
+							break;
+						case 0x04:	//Phase A
+							NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+							*implemented_fault = 18;							//Flag as a A switching
+							break;
+						default:	//No other cases should exist
+							GL_THROW("Fault type %s for link objects has an invalid phase specification");
+							//Defined above
+							break;
+						}//end switch
+
+						phase_remove = temp_phases;	//Flag phase removing
+
+					}//end <2 phases (only 1 presumably)
+					else if (numphase == 2)	//Only two phases present
+					{
+						//See how the two present coincide with the two we're asking for
+						temp_phases &= work_phases;
+
+						//Implement the appropriate fault
+						switch (temp_phases)
+						{
+						case 0x00:	//No phases!
+							*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
+							break;
+						case 0x01:	//Only phase C
+							NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+							*implemented_fault = 20;							//Flag as a C switching
+							break;
+						case 0x02:	//Only phase B
+							NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+							*implemented_fault = 19;							//Flag as a B switching
+							break;
+						case 0x03:	//B and C
+							NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+							*implemented_fault = 22;							//Flag as a B & C switching
+							break;
+						case 0x04:	//Only A
+							NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+							*implemented_fault = 18;							//Flag as a A switching
+							break;
+						case 0x05:	//A and C
+							NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+							*implemented_fault = 23;							//Flag as A and C switching
+							break;
+						case 0x06:	//A and B
+							NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+							*implemented_fault = 21;							//Flag as A and B switching
+							break;
+						default:	//Not sure how we'd ever get here
+							GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
+							//Defined above
+							break;
+						}//end switch
+
+						phase_remove = temp_phases;	//Flag phase removing
+
+					}//end 2 phases present
+					else if (numphase == 3)	//All phases present
+					{
+						//Determine phases to fault
+						temp_phases &= work_phases;
+
+						//Implement the appropriate fault
+						switch (temp_phases)
+						{
+						case 0x00:	//No phases!
+							*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
+							break;
+						case 0x01:	//Only phase C
+							NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+							*implemented_fault = 20;							//Flag as a C switching
+							break;
+						case 0x02:	//Only phase B
+							NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+							*implemented_fault = 19;							//Flag as a B switching
+							break;
+						case 0x03:	//B and C
+							NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+							*implemented_fault = 22;							//Flag as a B & C fault
+							break;
+						case 0x04:	//Only A
+							NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+							*implemented_fault = 18;							//Flag as a A switching
+							break;
+						case 0x05:	//A and C
+							NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+							*implemented_fault = 23;							//Flag as A and C switching
+							break;
+						case 0x06:	//A and B
+							NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+							*implemented_fault = 21;							//Flag as A and B switching
+							break;
+						default:	//Not sure how we'd ever get here
+							GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
+							//Defined above
+							break;
+						}//end switch
+
+						phase_remove = temp_phases;	//Flag phase removing
+
+					}//end all three present
+					else	//Hmmm, how'd we get here?
+					{
+						GL_THROW("An invalid number of phases appears present for %s",objhdr->name);
+						//Defined above
+					}
+				}//End Switch two phases
+				else if (fault_type[6] == '\0')	//Three Phase occurance
+				{
+					//Let's see what phases we have to play with
+					temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
+
+					//Case it out - if we want three-phase switching, but don't have all three phases, just switch whatever we have
+					switch (temp_phases)
+					{
+					case 0x00:	//No phases!
+						*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
+						break;
+					case 0x01:	//Only phase C
+						NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+						*implemented_fault = 20;							//Flag as a C only switching
+						break;
+					case 0x02:	//Only phase B
+						NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+						*implemented_fault = 19;							//Flag as a B only switching
+						break;
+					case 0x03:	//B and C
+						NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+						*implemented_fault = 22;							//Flag as a B & C switching
+						break;
+					case 0x04:	//Only A
+						NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+						*implemented_fault = 18;							//Flag as a A only switching
+						break;
+					case 0x05:	//A and C
+						NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+						*implemented_fault = 23;							//Flag as A and C switching
+						break;
+					case 0x06:	//A and B
+						NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+						*implemented_fault = 21;							//Flag as A and B switching
+						break;
+					case 0x07:	//A, B, and C
+						NR_branchdata[NR_branch_reference].phases &= 0xF8;	//Remove A, B, and C
+						*implemented_fault = 24;							//Flag as all three switching
+						break;
+					default:	//Not sure how we'd ever get here
+						GL_THROW("Unknown phase condition on three-phase fault of %s!",objhdr->name);
+						//Defined above
+						break;
+					}//end phase cases
+
+					phase_remove = temp_phases;	//Flag phase removing
+				}//End three-phase occurance
+			}//end of normal reliability mode
+
+			//Flag as special case
+			switch_val = true;
+
+		}//End switches
+		else if ((fault_type[0] == 'F') && (fault_type[1] == 'U') && (fault_type[2] == 'S') && (fault_type[3] == '-') && (fault_type[5] == '\0'))	//Single phase fuse fault
 		{
-			if (has_phase(PHASE_B))
+			//First see if it is an 'X' - for random phase.  If so, pick one and proceed
+			if (fault_type[4] == 'X')
 			{
-				if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//make sure phase B is active (no previous fault)
-				{
-					//Remove phase B
-					NR_branchdata[NR_branch_reference].phases &= 0xFD;
+				//Reset counter
+				numphase = 0;
 
-					//Flag phase being removed
-					phase_remove = 0x02;
-
-					//Flag the fault type
-					*implemented_fault = 26;
-				}
-				else	//Already in a fault - just flag us as none and go on our way
+				//See how many phases we get to work with 0 populate the phase array at the same time
+				if (has_phase(PHASE_A))
 				{
-					*implemented_fault = 0;
+					tempphase[numphase] = 4;	//Flag for phase A - NR convention
+					numphase++;					//Increment count
 				}
-			}//end has PHASE_B
-			else
-			{
-				gl_warning("%s does not have a phase B to fault!",OBJECTHDR(this)->name);
-				//Defined above
+
+				if (has_phase(PHASE_B))
+				{
+					tempphase[numphase] = 2;	//Flag for phase B - NR convention
+					numphase++;					//Increment count
+				}
+
+				if (has_phase(PHASE_C))
+				{
+					tempphase[numphase] = 1;	//Flag for phase C - NR convention
+					numphase++;					//Increment count
+				}
+
+				//Get a random value
+				randval = gl_random_sampled(RNGSTATE,numphase,tempphase);
+
+				//Put it back into proper format
+				rand_phases = (unsigned char)(randval);
 			}
-		}
-		else if ((fault_type[4] == 'C') || (rand_phases == 0x01))
-		{
-			if (has_phase(PHASE_C))
-			{
-				if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//make sure phase C is active (no previous fault)
-				{
-					//Remove phase C
-					NR_branchdata[NR_branch_reference].phases &= 0xFE;
+			else	//Not a random - clear the variable, just in case
+				rand_phases = 0x00;
 
-					//Flag phase being removed
-					phase_remove = 0x01;
-
-					//Flag the fault type
-					*implemented_fault = 27;
-				}
-				else	//Already in a fault - just flag us as none and go on our way
-				{
-					*implemented_fault = 0;
-				}
-			}//end has PHASE_C
-			else
+			if ((fault_type[4] == 'A') || (rand_phases == 0x04))
 			{
-				gl_warning("%s does not have a phase C to fault!",OBJECTHDR(this)->name);
-				//defined above
+				if (has_phase(PHASE_A))
+				{
+					if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//make sure phase A is active (no previous fault)
+					{
+						//Remove phase A
+						NR_branchdata[NR_branch_reference].phases &= 0xFB;
+
+						phase_remove = 0x04;	//Flag phase being removed
+
+						//Flag the fault type
+						*implemented_fault = 25;
+					}
+					else	//Already in a fault - just flag us as none and go on our way
+					{
+						*implemented_fault = 0;
+					}
+				}//end has PHASE_A
+				else
+				{
+					gl_warning("%s does not have a phase A to fault!",OBJECTHDR(this)->name);
+					//Defined above
+				}
+			}//End A fault
+			else if ((fault_type[4] == 'B') || (rand_phases == 0x02))
+			{
+				if (has_phase(PHASE_B))
+				{
+					if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//make sure phase B is active (no previous fault)
+					{
+						//Remove phase B
+						NR_branchdata[NR_branch_reference].phases &= 0xFD;
+
+						//Flag phase being removed
+						phase_remove = 0x02;
+
+						//Flag the fault type
+						*implemented_fault = 26;
+					}
+					else	//Already in a fault - just flag us as none and go on our way
+					{
+						*implemented_fault = 0;
+					}
+				}//end has PHASE_B
+				else
+				{
+					gl_warning("%s does not have a phase B to fault!",OBJECTHDR(this)->name);
+					//Defined above
+				}
 			}
-		}
-		else	//Something else, fail
-		{
-			GL_THROW("Fault type %s for link objects has an invalid phase specification");
-			//Defined above
-		}
-	}//End single phase fuse fault
-	else if ((fault_type[0] == 'F') && (fault_type[1] == 'U') && (fault_type[2] == 'S') && (fault_type[3] == '-') && (fault_type[6] == '\0'))	//Double fuse fault
-	{
-		//Figure out who we want to alter - assume [3] is a -, so check [4]+
-		work_phases = 0x00;
-
-		if (fault_type[4] == 'X')	//Random, flag as such
-			work_phases |= 0x08;
-		
-		if ((fault_type[4] == 'A') || (fault_type[5] == 'A'))	//A is desired
-			work_phases |= 0x04;
-
-		if ((fault_type[4] == 'B') || (fault_type[5] == 'B'))	//B is desired
-			work_phases |= 0x02;
-
-		if ((fault_type[4] == 'C') || (fault_type[5] == 'C'))	//C is desired
-			work_phases |= 0x01;
-
-		//See how many phases we have to deal with
-		numphase = 0;
-
-		if (has_phase(PHASE_A))
-		{
-			numphase++;					//Increment count
-		}
-
-		if (has_phase(PHASE_B))
-		{
-			numphase++;					//Increment count
-		}
-
-		if (has_phase(PHASE_C))
-		{
-			numphase++;					//Increment count
-		}
-
-		//Pull out what phases we have to play with
-		temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
-
-		if (numphase == 0)
-		{
-			GL_THROW("No phases detected for %s!",objhdr->name);
-			//Defined above
-		}//end 0 phase
-		else if (numphase < 2)	//Single phase line (no zero phase this way)
-		{
-			//Refine our criteria
-			if ((work_phases & 0x08) != 0x08)	//Not random case
-				temp_phases &= work_phases;
-
-			//defaulted else - if random case, only getting one phase out of this anywho (leave temp_phases as is)
-
-			switch (temp_phases)
+			else if ((fault_type[4] == 'C') || (rand_phases == 0x01))
 			{
-			case 0x00:	//No phases available - something must have faulted
-				*implemented_fault = 0;	//Flag as such
-				break;
-			case 0x01:	//Phase C
-				NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
-				*implemented_fault = 27;							//Flag as a C fuse fault
-				break;
-			case 0x02:	//Phase B
-				NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
-				*implemented_fault = 26;							//Flag as a B fuse fault
-				break;
-			case 0x04:	//Phase A
-				NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
-				*implemented_fault = 25;							//Flag as a A fuse fault
-				break;
-			default:	//No other cases should exist
+				if (has_phase(PHASE_C))
+				{
+					if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//make sure phase C is active (no previous fault)
+					{
+						//Remove phase C
+						NR_branchdata[NR_branch_reference].phases &= 0xFE;
+
+						//Flag phase being removed
+						phase_remove = 0x01;
+
+						//Flag the fault type
+						*implemented_fault = 27;
+					}
+					else	//Already in a fault - just flag us as none and go on our way
+					{
+						*implemented_fault = 0;
+					}
+				}//end has PHASE_C
+				else
+				{
+					gl_warning("%s does not have a phase C to fault!",OBJECTHDR(this)->name);
+					//defined above
+				}
+			}
+			else	//Something else, fail
+			{
 				GL_THROW("Fault type %s for link objects has an invalid phase specification");
 				//Defined above
-				break;
-			}//end switch
-
-			phase_remove = temp_phases;	//Flag phase removing
-
-		}//end <2 phases (only 1 presumably)
-		else if (numphase == 2)	//Only two phases present
+			}
+		}//End single phase fuse fault
+		else if ((fault_type[0] == 'F') && (fault_type[1] == 'U') && (fault_type[2] == 'S') && (fault_type[3] == '-') && (fault_type[6] == '\0'))	//Double fuse fault
 		{
-			//See how the two present coincide with the two we're asking for
-			if ((work_phases & 0x08) != 0x08)	//Not random case, see what we have
+			//Figure out who we want to alter - assume [3] is a -, so check [4]+
+			work_phases = 0x00;
+
+			if (fault_type[4] == 'X')	//Random, flag as such
+				work_phases |= 0x08;
+			
+			if ((fault_type[4] == 'A') || (fault_type[5] == 'A'))	//A is desired
+				work_phases |= 0x04;
+
+			if ((fault_type[4] == 'B') || (fault_type[5] == 'B'))	//B is desired
+				work_phases |= 0x02;
+
+			if ((fault_type[4] == 'C') || (fault_type[5] == 'C'))	//C is desired
+				work_phases |= 0x01;
+
+			//See how many phases we have to deal with
+			numphase = 0;
+
+			if (has_phase(PHASE_A))
+			{
+				numphase++;					//Increment count
+			}
+
+			if (has_phase(PHASE_B))
+			{
+				numphase++;					//Increment count
+			}
+
+			if (has_phase(PHASE_C))
+			{
+				numphase++;					//Increment count
+			}
+
+			//Pull out what phases we have to play with
+			temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
+
+			if (numphase == 0)
+			{
+				GL_THROW("No phases detected for %s!",objhdr->name);
+				//Defined above
+			}//end 0 phase
+			else if (numphase < 2)	//Single phase line (no zero phase this way)
+			{
+				//Refine our criteria
+				if ((work_phases & 0x08) != 0x08)	//Not random case
+					temp_phases &= work_phases;
+
+				//defaulted else - if random case, only getting one phase out of this anywho (leave temp_phases as is)
+
+				switch (temp_phases)
+				{
+				case 0x00:	//No phases available - something must have faulted
+					*implemented_fault = 0;	//Flag as such
+					break;
+				case 0x01:	//Phase C
+					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+					*implemented_fault = 27;							//Flag as a C fuse fault
+					break;
+				case 0x02:	//Phase B
+					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+					*implemented_fault = 26;							//Flag as a B fuse fault
+					break;
+				case 0x04:	//Phase A
+					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+					*implemented_fault = 25;							//Flag as a A fuse fault
+					break;
+				default:	//No other cases should exist
+					GL_THROW("Fault type %s for link objects has an invalid phase specification");
+					//Defined above
+					break;
+				}//end switch
+
+				phase_remove = temp_phases;	//Flag phase removing
+
+			}//end <2 phases (only 1 presumably)
+			else if (numphase == 2)	//Only two phases present
+			{
+				//See how the two present coincide with the two we're asking for
+				if ((work_phases & 0x08) != 0x08)	//Not random case, see what we have
+					temp_phases &= work_phases;
+				//Defaulted else - if random, only 1 choice exists, which is temp_phases (leave temp_phases as is)
+
+				//Implement the appropriate fault
+				switch (temp_phases)
+				{
+				case 0x00:	//No phases!
+					*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
+					break;
+				case 0x01:	//Only phase C
+					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+					*implemented_fault = 27;							//Flag as a C fuse fault
+					break;
+				case 0x02:	//Only phase B
+					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+					*implemented_fault = 26;							//Flag as a B fuse fault
+					break;
+				case 0x03:	//B and C
+					NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+					*implemented_fault = 29;							//Flag as a B & C fuse fault
+					break;
+				case 0x04:	//Only A
+					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+					*implemented_fault = 25;							//Flag as a A fuse fault
+					break;
+				case 0x05:	//A and C
+					NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+					*implemented_fault = 30;							//Flag as A and C fuse fault
+					break;
+				case 0x06:	//A and B
+					NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+					*implemented_fault = 28;							//Flag as A and B fuse fault
+					break;
+				default:	//Not sure how we'd ever get here
+					GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
+					//Defined above
+					break;
+				}//end switch
+
+				phase_remove = temp_phases;	//Flag phase removing
+
+			}//end 2 phases present
+			else if (numphase == 3)	//All phases present
+			{
+				if ((work_phases & 0x08) == 0x08)	//Random condition
+				{
+					//See if we have all three available to fault (if one or more is already faulted, we won't care)
+					rand_phases = 0;
+
+					//Check and populate random array as well
+					if ((temp_phases & 0x01) == 0x01)	//Check for C availability
+					{
+						tempphase[rand_phases] = 1;
+						rand_phases++;
+					}
+
+					if ((temp_phases & 0x02) == 0x02)	//Check for B availability
+					{
+						tempphase[rand_phases] = 2;
+						rand_phases++;
+					}
+
+					if ((temp_phases & 0x04) == 0x04)	//Check for A availability
+					{
+						tempphase[rand_phases] = 4;
+						rand_phases++;
+					}
+
+					if (rand_phases <= 2)	//Two or fewer available, just mask us out
+						work_phases = 0x07;	//This will pull the appropriate phase
+					else	//Must be 3, right?
+					{
+						//Pick a random phase - this will be the one we DON'T fault
+						randval = gl_random_sampled(RNGSTATE,numphase,tempphase);
+
+						//Set temp_phases appropriate
+						if (randval == 1)	//Leave phase C
+							work_phases = 0x06;	//A and B fuse fault
+						else if (randval == 2)	//Leave phase B
+							work_phases = 0x05;	//A and C fuse fault
+						else	//Must be 4	- leave phase A
+							work_phases = 0x03;	//B and C fuse fault
+					}//end must be 3
+				}//end random condition
+				//Defaulted else - not random, so just use as normal mask
+
+				//Determine phases to fault
 				temp_phases &= work_phases;
-			//Defaulted else - if random, only 1 choice exists, which is temp_phases (leave temp_phases as is)
 
-			//Implement the appropriate fault
+				//Implement the appropriate fault
+				switch (temp_phases)
+				{
+				case 0x00:	//No phases!
+					*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
+					break;
+				case 0x01:	//Only phase C
+					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+					*implemented_fault = 27;							//Flag as a C fuse fault
+					break;
+				case 0x02:	//Only phase B
+					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+					*implemented_fault = 26;							//Flag as a B fuse fault
+					break;
+				case 0x03:	//B and C
+					NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+					*implemented_fault = 29;							//Flag as a B & C fuse fault
+					break;
+				case 0x04:	//Only A
+					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+					*implemented_fault = 25;							//Flag as a A fuse fault
+					break;
+				case 0x05:	//A and C
+					NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+					*implemented_fault = 30;							//Flag as A and C fuse fault
+					break;
+				case 0x06:	//A and B
+					NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+					*implemented_fault = 28;							//Flag as A and B fuse fault
+					break;
+				default:	//Not sure how we'd ever get here
+					GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
+					//Defined above
+					break;
+				}//end switch
+
+				phase_remove = temp_phases;	//Flag phase removing
+
+			}//end all three present
+			else	//Hmmm, how'd we get here?
+			{
+				GL_THROW("An invalid number of phases appears present for %s",objhdr->name);
+				//Defined above
+			}
+		}//End two-phase fuse fault
+		else if ((fault_type[0] == 'F') && (fault_type[1] == 'U') && (fault_type[2] == 'S') && (fault_type[3] == '-') && (fault_type[7] == '\0'))	//Three-phase fuse pop
+		{
+			//Let's see what phases we have to play with
+			temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
+
+			//Case it out - if we want TLG, but don't have all three phases, just trip whatever we have
 			switch (temp_phases)
 			{
 			case 0x00:	//No phases!
@@ -4631,11 +5159,11 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				break;
 			case 0x01:	//Only phase C
 				NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
-				*implemented_fault = 27;							//Flag as a C fuse fault
+				*implemented_fault = 27;							//Flag as a C only fuse fault
 				break;
 			case 0x02:	//Only phase B
 				NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
-				*implemented_fault = 26;							//Flag as a B fuse fault
+				*implemented_fault = 26;							//Flag as a B only fuse fault
 				break;
 			case 0x03:	//B and C
 				NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
@@ -4643,7 +5171,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				break;
 			case 0x04:	//Only A
 				NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
-				*implemented_fault = 25;							//Flag as a A fuse fault
+				*implemented_fault = 25;							//Flag as a A only fuse fault
 				break;
 			case 0x05:	//A and C
 				NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
@@ -4653,529 +5181,237 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
 				*implemented_fault = 28;							//Flag as A and B fuse fault
 				break;
+			case 0x07:	//A, B, and C
+				NR_branchdata[NR_branch_reference].phases &= 0xF8;	//Remove A, B, and C
+				*implemented_fault = 31;							//Flag as all three fuse fault
+				break;
 			default:	//Not sure how we'd ever get here
-				GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
+				GL_THROW("Unknown phase condition on three-phase fault of %s!",objhdr->name);
 				//Defined above
 				break;
-			}//end switch
+			}//end phase cases
 
 			phase_remove = temp_phases;	//Flag phase removing
 
-		}//end 2 phases present
-		else if (numphase == 3)	//All phases present
+		}//End three-phase fuse fault
+		else	//Undetermined fault - fail us
 		{
-			if ((work_phases & 0x08) == 0x08)	//Random condition
-			{
-				//See if we have all three available to fault (if one or more is already faulted, we won't care)
-				rand_phases = 0;
-
-				//Check and populate random array as well
-				if ((temp_phases & 0x01) == 0x01)	//Check for C availability
-				{
-					tempphase[rand_phases] = 1;
-					rand_phases++;
-				}
-
-				if ((temp_phases & 0x02) == 0x02)	//Check for B availability
-				{
-					tempphase[rand_phases] = 2;
-					rand_phases++;
-				}
-
-				if ((temp_phases & 0x04) == 0x04)	//Check for A availability
-				{
-					tempphase[rand_phases] = 4;
-					rand_phases++;
-				}
-
-				if (rand_phases <= 2)	//Two or fewer available, just mask us out
-					work_phases = 0x07;	//This will pull the appropriate phase
-				else	//Must be 3, right?
-				{
-					//Pick a random phase - this will be the one we DON'T fault
-					randval = gl_random_sampled(RNGSTATE,numphase,tempphase);
-
-					//Set temp_phases appropriate
-					if (randval == 1)	//Leave phase C
-						work_phases = 0x06;	//A and B fuse fault
-					else if (randval == 2)	//Leave phase B
-						work_phases = 0x05;	//A and C fuse fault
-					else	//Must be 4	- leave phase A
-						work_phases = 0x03;	//B and C fuse fault
-				}//end must be 3
-			}//end random condition
-			//Defaulted else - not random, so just use as normal mask
-
-			//Determine phases to fault
-			temp_phases &= work_phases;
-
-			//Implement the appropriate fault
-			switch (temp_phases)
-			{
-			case 0x00:	//No phases!
-				*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
-				break;
-			case 0x01:	//Only phase C
-				NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
-				*implemented_fault = 27;							//Flag as a C fuse fault
-				break;
-			case 0x02:	//Only phase B
-				NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
-				*implemented_fault = 26;							//Flag as a B fuse fault
-				break;
-			case 0x03:	//B and C
-				NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
-				*implemented_fault = 29;							//Flag as a B & C fuse fault
-				break;
-			case 0x04:	//Only A
-				NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
-				*implemented_fault = 25;							//Flag as a A fuse fault
-				break;
-			case 0x05:	//A and C
-				NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
-				*implemented_fault = 30;							//Flag as A and C fuse fault
-				break;
-			case 0x06:	//A and B
-				NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
-				*implemented_fault = 28;							//Flag as A and B fuse fault
-				break;
-			default:	//Not sure how we'd ever get here
-				GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
-				//Defined above
-				break;
-			}//end switch
-
-			phase_remove = temp_phases;	//Flag phase removing
-
-		}//end all three present
-		else	//Hmmm, how'd we get here?
-		{
-			GL_THROW("An invalid number of phases appears present for %s",objhdr->name);
-			//Defined above
-		}
-	}//End two-phase fuse fault
-	else if ((fault_type[0] == 'F') && (fault_type[1] == 'U') && (fault_type[2] == 'S') && (fault_type[3] == '-') && (fault_type[7] == '\0'))	//Three-phase fuse pop
-	{
-		//Let's see what phases we have to play with
-		temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
-
-		//Case it out - if we want TLG, but don't have all three phases, just trip whatever we have
-		switch (temp_phases)
-		{
-		case 0x00:	//No phases!
-			*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
-			break;
-		case 0x01:	//Only phase C
-			NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
-			*implemented_fault = 27;							//Flag as a C only fuse fault
-			break;
-		case 0x02:	//Only phase B
-			NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
-			*implemented_fault = 26;							//Flag as a B only fuse fault
-			break;
-		case 0x03:	//B and C
-			NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
-			*implemented_fault = 29;							//Flag as a B & C fuse fault
-			break;
-		case 0x04:	//Only A
-			NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
-			*implemented_fault = 25;							//Flag as a A only fuse fault
-			break;
-		case 0x05:	//A and C
-			NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
-			*implemented_fault = 30;							//Flag as A and C fuse fault
-			break;
-		case 0x06:	//A and B
-			NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
-			*implemented_fault = 28;							//Flag as A and B fuse fault
-			break;
-		case 0x07:	//A, B, and C
-			NR_branchdata[NR_branch_reference].phases &= 0xF8;	//Remove A, B, and C
-			*implemented_fault = 31;							//Flag as all three fuse fault
-			break;
-		default:	//Not sure how we'd ever get here
-			GL_THROW("Unknown phase condition on three-phase fault of %s!",objhdr->name);
-			//Defined above
-			break;
-		}//end phase cases
-
-		phase_remove = temp_phases;	//Flag phase removing
-
-	}//End three-phase fuse fault
-	else	//Undetermined fault - fail us
-	{
-		GL_THROW("Fault type %s is not recognized for link objects!",fault_type);
-		/*  TROUBLESHOOT
-		The fault type specified in the eventgen object is invalid for link objects.  Please select the
-		appropriate fault type and try again.  If this message has come up in error, please submit your code and a
-		bug report using the trac website.
-		*/
-
-		return 0;	//Shouldn't get here, but just in case.
-	}
-
-	//Preliminary error check - see if switch faults or fuse faults are indeed being done on a fuse/switch
-	if ((*implemented_fault>=18) && (*implemented_fault <= 24))	//Switch faults
-	{
-		if (NR_branchdata[NR_branch_reference].lnk_type != 2)	//Switch
-		{
-			GL_THROW("Event type %s was tried on a non-switch object!",fault_type);
+			GL_THROW("Fault type %s is not recognized for link objects!",fault_type);
 			/*  TROUBLESHOOT
-			A switch-related faulted was attempted on a device that is not a switch.
-			Please specify a switch in the eventgen group and try again.  If the error
-			persists, please submit your code and a bug report via the trac website.
+			The fault type specified in the eventgen object is invalid for link objects.  Please select the
+			appropriate fault type and try again.  If this message has come up in error, please submit your code and a
+			bug report using the trac website.
 			*/
-		}
-	}
 
-	if ((*implemented_fault>=25) && (*implemented_fault <= 31))	//fuse faults
-	{
-		if (NR_branchdata[NR_branch_reference].lnk_type != 3)	//Fuse
+			return 0;	//Shouldn't get here, but just in case.
+		}
+
+		//Preliminary error check - see if switch faults or fuse faults are indeed being done on a fuse/switch
+		if ((*implemented_fault>=18) && (*implemented_fault <= 24))	//Switch faults
 		{
-			GL_THROW("Event type %s was tried on a non-fuse object!",fault_type);
-			/*  TROUBLESHOOT
-			A fuse-related faulted was attempted on a device that is not a fuse.
-			Please specify a fuse in the eventgen group and try again.  If the error
-			persists, please submit your code and a bug report via the trac website.
-			*/
-		}
-	}
-
-	//See if we actually did anything - if we were already in a fault, we don't care
-	if (*implemented_fault != 0)
-	{
-		LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
-
-		NR_admit_change = true;		//Flag an admittance update - this should trigger fault_check
-		
-		UNLOCK_OBJECT(NR_swing_bus);	//Release us
-
-		//set up the remaining 4 fault specific equations in C_mat before calculating the fault current
-		if(*implemented_fault == 1){ //SLG-A -> Ifb=Ifc=Vax=Vxg=0
-			C_mat[3][1]=C_mat[4][2]=C_mat[5][3]=C_mat[6][6]=complex(1,0);
-			type_fault = 1;
-			fault_current_calc(C_mat, phase_remove, type_fault);
-		} else if(*implemented_fault == 2){ //SLG-B -> Ifa=Ifc=Vbx=Vxg=0
-			C_mat[3][0]=C_mat[4][2]=C_mat[5][4]=C_mat[6][6]=complex(1,0);
-			type_fault = 2;
-			fault_current_calc(C_mat, phase_remove, type_fault);
-		} else if(*implemented_fault == 3){ //SLG-C -> Ifa=Ifb=Vcx=Vxg=0
-			C_mat[3][0]=C_mat[4][1]=C_mat[5][5]=C_mat[6][6]=complex(1,0);
-			type_fault = 3;
-			fault_current_calc(C_mat, phase_remove, type_fault);
-		} else if(*implemented_fault == 4){ //DLG-AB -> Ifc=Vax=Vbx=Vxg=0
-			C_mat[3][2]=C_mat[4][3]=C_mat[5][4]=C_mat[6][6]=complex(1,0);
-			type_fault = 4;
-			fault_current_calc(C_mat, phase_remove, type_fault);
-		} else if(*implemented_fault == 5){ //DLG-BC -> Ifa=Vbx=Vcx=Vxg=0
-			C_mat[3][0]=C_mat[4][4]=C_mat[5][5]=C_mat[6][6]=complex(1,0);
-			type_fault = 5;
-			fault_current_calc(C_mat, phase_remove, type_fault);
-		} else if(*implemented_fault == 6){ //DLG-CA -> Ifb=Vax=Vcx=Vxg=0
-			C_mat[3][1]=C_mat[4][3]=C_mat[5][5]=C_mat[6][6]=complex(1,0);
-			type_fault = 6;
-			fault_current_calc(C_mat, phase_remove, type_fault);
-		} else if(*implemented_fault == 7){ //LL-AB -> Ifa+Ifb=Ifc=Vax=Vbx=0
-			C_mat[3][0]=C_mat[3][1]=C_mat[4][2]=C_mat[5][3]=C_mat[6][4]=complex(1,0);
-			type_fault = 7;
-			fault_current_calc(C_mat, phase_remove, type_fault);
-		} else if(*implemented_fault == 8){ //LL-BC -> Ifb+Ifc=Ifa=Vbx=Vcx=0
-			C_mat[3][1]=C_mat[3][2]=C_mat[4][0]=C_mat[5][4]=C_mat[6][5]=complex(1,0);
-			type_fault = 8;
-			fault_current_calc(C_mat, phase_remove, type_fault);
-		} else if(*implemented_fault == 9){ //LL-CA -> Ifa+Ifc=Ifb=Vax=Vcx=0
-			C_mat[3][0]=C_mat[3][2]=C_mat[4][1]=C_mat[5][3]=C_mat[6][5]=complex(1,0);
-			type_fault = 9;
-			fault_current_calc(C_mat, phase_remove, type_fault);
-		} else if(*implemented_fault == 10){ //TLG-ABC -> Vax=Vbx=Vcx=Vxg=0
-			C_mat[3][3]=C_mat[4][4]=C_mat[5][5]=C_mat[6][6]=complex(1,0);
-			type_fault = 10;
-			fault_current_calc(C_mat, phase_remove, type_fault);
-		} else if(*implemented_fault == 32){ //TLL-ABC -> Ifa+Ifb+Ifc=Vax=Vbx=Vcx=0
-			C_mat[3][0]=C_mat[3][1]=C_mat[3][2]=C_mat[4][3]=C_mat[5][4]=C_mat[6][5]=complex(1,0);
-			type_fault = 11;
-			fault_current_calc(C_mat, phase_remove, type_fault);
-		}
-		// Calculate the fault current
-
-		
-
-		//Progress upward through the list until we hit a "safety" device (fuse or switch) - pop said device
-		//If we somehow hit the swing bus, kill that entire phase
-
-		//First off, see if we ARE a safety device.  That makes things easier
-		//Safety devices classified as fuse or recloser - switches and sectionalizers only aid in mitigation, not actual faulting
-		//Switches are included here in cases of where they are an intentionally induced action - sectionalizers have no such thing thus far
-		if (NR_branchdata[NR_branch_reference].lnk_type == 3)	//Fuse
-		{
-			//Get the fuse
-			tmpobj = gl_get_object(NR_branchdata[NR_branch_reference].name);
-
-			if (tmpobj == NULL)
+			if (NR_branchdata[NR_branch_reference].lnk_type != 2)	//Switch
 			{
-				GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[NR_branch_reference].name);
+				GL_THROW("Event type %s was tried on a non-switch object!",fault_type);
 				/*  TROUBLESHOOT
-				While attempting to set the state of a fuse, an error occurred.  Please try again.  If the error persists,
-				please submit a bug report and your code via the trac website.
+				A switch-related faulted was attempted on a device that is not a switch.
+				Please specify a switch in the eventgen group and try again.  If the error
+				persists, please submit your code and a bug report via the trac website.
 				*/
 			}
+		}
 
-			funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_state"));
+		if ((*implemented_fault>=25) && (*implemented_fault <= 31))	//fuse faults
+		{
+			if (NR_branchdata[NR_branch_reference].lnk_type != 3)	//Fuse
+			{
+				GL_THROW("Event type %s was tried on a non-fuse object!",fault_type);
+				/*  TROUBLESHOOT
+				A fuse-related faulted was attempted on a device that is not a fuse.
+				Please specify a fuse in the eventgen group and try again.  If the error
+				persists, please submit your code and a bug report via the trac website.
+				*/
+			}
+		}
+
+		//See if we actually did anything - if we were already in a fault, we don't care
+		if (*implemented_fault != 0)
+		{
+			LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
+
+			NR_admit_change = true;		//Flag an admittance update - this should trigger fault_check
 			
-			//Make sure it was found
-			if (funadd == NULL)
-			{
-				GL_THROW("Unable to change fuse state on %s",tmpobj->name);
-				/*  TROUBLESHOOT
-				While attempting to alter a fuse state, the proper fuse function was not found.
-				If the problem persists, please submit a bug report and your code to the trac website.
-				*/
+			UNLOCK_OBJECT(NR_swing_bus);	//Release us
+
+			//set up the remaining 4 fault specific equations in C_mat before calculating the fault current
+			if(*implemented_fault == 1){ //SLG-A -> Ifb=Ifc=Vax=Vxg=0
+				C_mat[3][1]=C_mat[4][2]=C_mat[5][3]=C_mat[6][6]=complex(1,0);
+				type_fault = 1;
+				fault_current_calc(C_mat, phase_remove, type_fault);
+			} else if(*implemented_fault == 2){ //SLG-B -> Ifa=Ifc=Vbx=Vxg=0
+				C_mat[3][0]=C_mat[4][2]=C_mat[5][4]=C_mat[6][6]=complex(1,0);
+				type_fault = 2;
+				fault_current_calc(C_mat, phase_remove, type_fault);
+			} else if(*implemented_fault == 3){ //SLG-C -> Ifa=Ifb=Vcx=Vxg=0
+				C_mat[3][0]=C_mat[4][1]=C_mat[5][5]=C_mat[6][6]=complex(1,0);
+				type_fault = 3;
+				fault_current_calc(C_mat, phase_remove, type_fault);
+			} else if(*implemented_fault == 4){ //DLG-AB -> Ifc=Vax=Vbx=Vxg=0
+				C_mat[3][2]=C_mat[4][3]=C_mat[5][4]=C_mat[6][6]=complex(1,0);
+				type_fault = 4;
+				fault_current_calc(C_mat, phase_remove, type_fault);
+			} else if(*implemented_fault == 5){ //DLG-BC -> Ifa=Vbx=Vcx=Vxg=0
+				C_mat[3][0]=C_mat[4][4]=C_mat[5][5]=C_mat[6][6]=complex(1,0);
+				type_fault = 5;
+				fault_current_calc(C_mat, phase_remove, type_fault);
+			} else if(*implemented_fault == 6){ //DLG-CA -> Ifb=Vax=Vcx=Vxg=0
+				C_mat[3][1]=C_mat[4][3]=C_mat[5][5]=C_mat[6][6]=complex(1,0);
+				type_fault = 6;
+				fault_current_calc(C_mat, phase_remove, type_fault);
+			} else if(*implemented_fault == 7){ //LL-AB -> Ifa+Ifb=Ifc=Vax=Vbx=0
+				C_mat[3][0]=C_mat[3][1]=C_mat[4][2]=C_mat[5][3]=C_mat[6][4]=complex(1,0);
+				type_fault = 7;
+				fault_current_calc(C_mat, phase_remove, type_fault);
+			} else if(*implemented_fault == 8){ //LL-BC -> Ifb+Ifc=Ifa=Vbx=Vcx=0
+				C_mat[3][1]=C_mat[3][2]=C_mat[4][0]=C_mat[5][4]=C_mat[6][5]=complex(1,0);
+				type_fault = 8;
+				fault_current_calc(C_mat, phase_remove, type_fault);
+			} else if(*implemented_fault == 9){ //LL-CA -> Ifa+Ifc=Ifb=Vax=Vcx=0
+				C_mat[3][0]=C_mat[3][2]=C_mat[4][1]=C_mat[5][3]=C_mat[6][5]=complex(1,0);
+				type_fault = 9;
+				fault_current_calc(C_mat, phase_remove, type_fault);
+			} else if(*implemented_fault == 10){ //TLG-ABC -> Vax=Vbx=Vcx=Vxg=0
+				C_mat[3][3]=C_mat[4][4]=C_mat[5][5]=C_mat[6][6]=complex(1,0);
+				type_fault = 10;
+				fault_current_calc(C_mat, phase_remove, type_fault);
+			} else if(*implemented_fault == 32){ //TLL-ABC -> Ifa+Ifb+Ifc=Vax=Vbx=Vcx=0
+				C_mat[3][0]=C_mat[3][1]=C_mat[3][2]=C_mat[4][3]=C_mat[5][4]=C_mat[6][5]=complex(1,0);
+				type_fault = 11;
+				fault_current_calc(C_mat, phase_remove, type_fault);
 			}
+			// Calculate the fault current
 
-			//Update the fuse statii
-			ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
-
-			//Make sure it worked
-			if (ext_result != 1)
-			{
-				GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[NR_branch_reference].name);
-				//defined above
-			}
-
-			//Retrieve the mean_repair_time
-			temp_double_val = get_double(tmpobj,"mean_repair_time");
-
-			//See if it worked
-			if (temp_double_val == NULL)
-			{
-				gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
-				/*  TROUBLESHOOT
-				While attempting to access the mean_repair_time of the safety device, GridLAB-D encountered
-				an error.  Ensure the object has this value.  If it does not, it will be ignored.  If it does
-				exist and this warning appeared, please try again.  If the warning persists, please submit your
-				code and a bug report via the trac website.
-				*/
-				*repair_time = 0;
-			}
-			else	//It did map - get the value
-			{
-				*repair_time = (TIMESTAMP)(*temp_double_val);
-			}
-
-			//Store the branch as an index in appropriate phases
-			for (phaseidx=0; phaseidx < 3; phaseidx++)
-			{
-				temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
-
-				if ((phase_remove & temp_phases) == temp_phases)
-				{
-					protect_locations[phaseidx] = NR_branch_reference;	//Store ourselves
-				}
-			}
-
-			//Update our fault phases so we aren't restored
-			NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
-
-			//Remove the relevant phases 
-			NR_branchdata[NR_branch_reference].phases &= ~(phase_remove);
-
-			//Store the object handle
-			*protect_obj=tmpobj;
-
-			//Flag us as being protected
-			safety_hit = true;
-
-		}//end fuse
-		else if (NR_branchdata[NR_branch_reference].lnk_type == 6)	//Recloser
-		{
-			//Get the recloser
-			tmpobj = gl_get_object(NR_branchdata[NR_branch_reference].name);
-
-			if (tmpobj == NULL)
-			{
-				GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[NR_branch_reference].name);
-				/*  TROUBLESHOOT
-				While attempting to set the state of a recloser, an error occurred.  Please try again.  If the error persists,
-				please submit a bug report and your code via the trac website.
-				*/
-			}
-
-			funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_state"));
 			
-			//Make sure it was found
-			if (funadd == NULL)
+
+			//Progress upward through the list until we hit a "safety" device (fuse or switch) - pop said device
+			//If we somehow hit the swing bus, kill that entire phase
+
+			//First off, see if we ARE a safety device.  That makes things easier
+			//Safety devices classified as fuse or recloser - switches and sectionalizers only aid in mitigation, not actual faulting
+			//Switches are included here in cases of where they are an intentionally induced action - sectionalizers have no such thing thus far
+			if (NR_branchdata[NR_branch_reference].lnk_type == 3)	//Fuse
 			{
-				GL_THROW("Unable to change recloser state on %s",tmpobj->name);
-				/*  TROUBLESHOOT
-				While attempting to alter a recloser state, the proper recloser function was not found.
-				If the problem persists, please submit a bug report and your code to the trac website.
-				*/
-			}
+				//Get the fuse
+				tmpobj = gl_get_object(NR_branchdata[NR_branch_reference].name);
 
-			//Update the recloser statii - return is the number of attempts (max attempts in this case)
-			ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
-
-			//Make sure it worked
-			if (ext_result_dbl == 0)
-			{
-				GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[NR_branch_reference].name);
-				//defined above
-			}
-
-			//Retrieve the mean_repair_time
-			temp_double_val = get_double(tmpobj,"mean_repair_time");
-
-			//See if it worked
-			if (temp_double_val == NULL)
-			{
-				gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
-				//Defined above
-				*repair_time = 0;
-			}
-			else	//It did map - get the value
-			{
-				*repair_time = (TIMESTAMP)(*temp_double_val);
-			}
-
-			//Store the number of recloser actions
-			*Recloser_Counts = ext_result_dbl;
-
-			//Store the branch as an index in appropriate phases
-			for (phaseidx=0; phaseidx < 3; phaseidx++)
-			{
-				temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
-
-				if ((phase_remove & temp_phases) == temp_phases)
+				if (tmpobj == NULL)
 				{
-					protect_locations[phaseidx] = NR_branch_reference;	//Store ourselves
+					GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[NR_branch_reference].name);
+					/*  TROUBLESHOOT
+					While attempting to set the state of a fuse, an error occurred.  Please try again.  If the error persists,
+					please submit a bug report and your code via the trac website.
+					*/
 				}
-			}
 
-			//Update our fault phases so we aren't restored
-			NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
-
-			//Remove the relevant phases 
-			NR_branchdata[NR_branch_reference].phases &= ~(phase_remove);
-
-			//Store the object handle
-			*protect_obj=tmpobj;
-
-			//Flag us as being protected
-			safety_hit = true;
-
-		}//End recloser
-		else if ((NR_branchdata[NR_branch_reference].lnk_type == 2) && (switch_val == true))	//Switch induced fault - handle it
-		{
-			//Follows convention of safety devices above
-			//Extra coding - basically what would have happened below when it was classified as a safety device
-			//Get the switch
-			tmpobj = gl_get_object(NR_branchdata[NR_branch_reference].name);
-
-			if (tmpobj == NULL)
-			{
-				GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[NR_branch_reference].name);
-				/*  TROUBLESHOOT
-				While attempting to set the state of a switch, an error occurred.  Please try again.  If the error persists,
-				please submit a bug report and your code via the trac website.
-				*/
-			}
-
-			funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_switch_state"));
-			
-			//Make sure it was found
-			if (funadd == NULL)
-			{
-				GL_THROW("Unable to change switch state on %s",tmpobj->name);
-				/*  TROUBLESHOOT
-				While attempting to alter a switch state, the proper switch function was not found.
-				If the problem persists, please submit a bug report and your code to the trac website.
-				*/
-			}
-
-			//Update the switch statii
-			ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
-
-			//Make sure it worked
-			if (ext_result != 1)
-			{
-				GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[NR_branch_reference].name);
-				//defined above
-			}
-
-			//Retrieve the mean_repair_time
-			temp_double_val = get_double(tmpobj,"mean_repair_time");
-
-			//See if it worked
-			if (temp_double_val == NULL)
-			{
-				gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
-				//Defined above
-				*repair_time = 0;
-			}
-			else	//It did map - get the value
-			{
-				*repair_time = (TIMESTAMP)(*temp_double_val);
-			}
-
-			//Store ourselves as our protective device
-			for (phaseidx=0; phaseidx < 3; phaseidx++)
-			{
-				temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
-
-				if ((phase_remove & temp_phases) == temp_phases)
+				funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_state"));
+				
+				//Make sure it was found
+				if (funadd == NULL)
 				{
-					protect_locations[phaseidx] = NR_branch_reference;	//Store ourselves
+					GL_THROW("Unable to change fuse state on %s",tmpobj->name);
+					/*  TROUBLESHOOT
+					While attempting to alter a fuse state, the proper fuse function was not found.
+					If the problem persists, please submit a bug report and your code to the trac website.
+					*/
 				}
-			}
 
-			//Flag our fault phases
-			NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
+				//Update the fuse statii
+				ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
 
-			//Remove the relevant phases 
-			NR_branchdata[NR_branch_reference].phases &= ~(phase_remove);
+				//Make sure it worked
+				if (ext_result != 1)
+				{
+					GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[NR_branch_reference].name);
+					//defined above
+				}
 
-			//Store the object handle
-			*protect_obj=tmpobj;
+				//Retrieve the mean_repair_time
+				temp_double_val = get_double(tmpobj,"mean_repair_time");
 
-			safety_hit = true;	//We hit a protective device
-		}
-		else
-		{
-			safety_hit = false;	//Nope, let's find one
-		}
+				//See if it worked
+				if (temp_double_val == NULL)
+				{
+					gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
+					/*  TROUBLESHOOT
+					While attempting to access the mean_repair_time of the safety device, GridLAB-D encountered
+					an error.  Ensure the object has this value.  If it does not, it will be ignored.  If it does
+					exist and this warning appeared, please try again.  If the warning persists, please submit your
+					code and a bug report via the trac website.
+					*/
+					*repair_time = 0;
+				}
+				else	//It did map - get the value
+				{
+					*repair_time = (TIMESTAMP)(*temp_double_val);
+				}
 
-		//Start up the loop - populate initial variable
-		temp_branch = NR_branch_reference;
-
-		while (safety_hit != true)
-		{
-			//Pull from bus of current link
-			temp_node = NR_branchdata[temp_branch].from;
-
-			//See if temp_node is a swing.  If so, remove the relevant phase and we're done
-			if (NR_busdata[temp_node].type == 2)
-			{
-				//Store the swing as an index in appropriate phases
+				//Store the branch as an index in appropriate phases
 				for (phaseidx=0; phaseidx < 3; phaseidx++)
 				{
 					temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
 
 					if ((phase_remove & temp_phases) == temp_phases)
 					{
-						protect_locations[phaseidx] = -99;	//Flag for swing
+						protect_locations[phaseidx] = NR_branch_reference;	//Store ourselves
 					}
 				}
 
-				//Get the swing bus value
-				tmpobj = gl_get_object(NR_busdata[temp_node].name);
+				//Update our fault phases so we aren't restored
+				NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
+
+				//Remove the relevant phases 
+				NR_branchdata[NR_branch_reference].phases &= ~(phase_remove);
+
+				//Store the object handle
+				*protect_obj=tmpobj;
+
+				//Flag us as being protected
+				safety_hit = true;
+
+			}//end fuse
+			else if (NR_branchdata[NR_branch_reference].lnk_type == 6)	//Recloser
+			{
+				//Get the recloser
+				tmpobj = gl_get_object(NR_branchdata[NR_branch_reference].name);
 
 				if (tmpobj == NULL)
 				{
-					GL_THROW("An attempt to find the swing node %s failed.",NR_busdata[temp_node].name);
+					GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[NR_branch_reference].name);
 					/*  TROUBLESHOOT
-					While attempting to get the mean repair time for the swing bus, an error occurred.  Please try again.  If the error persists,
+					While attempting to set the state of a recloser, an error occurred.  Please try again.  If the error persists,
 					please submit a bug report and your code via the trac website.
 					*/
+				}
+
+				funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_state"));
+				
+				//Make sure it was found
+				if (funadd == NULL)
+				{
+					GL_THROW("Unable to change recloser state on %s",tmpobj->name);
+					/*  TROUBLESHOOT
+					While attempting to alter a recloser state, the proper recloser function was not found.
+					If the problem persists, please submit a bug report and your code to the trac website.
+					*/
+				}
+
+				//Update the recloser statii - return is the number of attempts (max attempts in this case)
+				ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
+
+				//Make sure it worked
+				if (ext_result_dbl == 0)
+				{
+					GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[NR_branch_reference].name);
+					//defined above
 				}
 
 				//Retrieve the mean_repair_time
@@ -5193,151 +5429,219 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					*repair_time = (TIMESTAMP)(*temp_double_val);
 				}
 
-				//Remove the required phases
-				NR_busdata[temp_node].phases &= (~(phase_remove));
+				//Store the number of recloser actions
+				*Recloser_Counts = ext_result_dbl;
+
+				//Store the branch as an index in appropriate phases
+				for (phaseidx=0; phaseidx < 3; phaseidx++)
+				{
+					temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+					if ((phase_remove & temp_phases) == temp_phases)
+					{
+						protect_locations[phaseidx] = NR_branch_reference;	//Store ourselves
+					}
+				}
 
 				//Update our fault phases so we aren't restored
 				NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
 
+				//Remove the relevant phases 
+				NR_branchdata[NR_branch_reference].phases &= ~(phase_remove);
+
 				//Store the object handle
 				*protect_obj=tmpobj;
 
-				safety_hit = true;	//Flag as a safety hit (assumes SWING bus is somehow protected on transmission side)
+				//Flag us as being protected
+				safety_hit = true;
 
-				break;	//Get us out of this loop
-			}
-			else	//Not a swing, find the first branch this node is a "to" value for
+			}//End recloser
+			else if ((NR_branchdata[NR_branch_reference].lnk_type == 2) && (switch_val == true))	//Switch induced fault - handle it
 			{
-				for (temp_table_loc=0; temp_table_loc<NR_busdata[temp_node].Link_Table_Size; temp_table_loc++)
+				//Follows convention of safety devices above
+				//Extra coding - basically what would have happened below when it was classified as a safety device
+				//Get the switch
+				tmpobj = gl_get_object(NR_branchdata[NR_branch_reference].name);
+
+				if (tmpobj == NULL)
 				{
-					//See if node is a to end - assumes radial phase progressions (i.e., no phase AB and phase C running into a node to form node ABC)
-					if (NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].to == temp_node)	//This node is a to end
+					GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[NR_branch_reference].name);
+					/*  TROUBLESHOOT
+					While attempting to set the state of a switch, an error occurred.  Please try again.  If the error persists,
+					please submit a bug report and your code via the trac website.
+					*/
+				}
+
+				funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_switch_state"));
+				
+				//Make sure it was found
+				if (funadd == NULL)
+				{
+					GL_THROW("Unable to change switch state on %s",tmpobj->name);
+					/*  TROUBLESHOOT
+					While attempting to alter a switch state, the proper switch function was not found.
+					If the problem persists, please submit a bug report and your code to the trac website.
+					*/
+				}
+
+				//Update the switch statii
+				ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
+
+				//Make sure it worked
+				if (ext_result != 1)
+				{
+					GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[NR_branch_reference].name);
+					//defined above
+				}
+
+				//Retrieve the mean_repair_time
+				temp_double_val = get_double(tmpobj,"mean_repair_time");
+
+				//See if it worked
+				if (temp_double_val == NULL)
+				{
+					gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
+					//Defined above
+					*repair_time = 0;
+				}
+				else	//It did map - get the value
+				{
+					*repair_time = (TIMESTAMP)(*temp_double_val);
+				}
+
+				//Store ourselves as our protective device
+				for (phaseidx=0; phaseidx < 3; phaseidx++)
+				{
+					temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+					if ((phase_remove & temp_phases) == temp_phases)
 					{
-						//See if we are of a "protective" device implementation
-						if (NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].lnk_type == 6)	//Recloser
+						protect_locations[phaseidx] = NR_branch_reference;	//Store ourselves
+					}
+				}
+
+				//Flag our fault phases
+				NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
+
+				//Remove the relevant phases 
+				NR_branchdata[NR_branch_reference].phases &= ~(phase_remove);
+
+				//Store the object handle
+				*protect_obj=tmpobj;
+
+				safety_hit = true;	//We hit a protective device
+			}
+			else
+			{
+				safety_hit = false;	//Nope, let's find one
+			}
+
+			//Start up the loop - populate initial variable
+			temp_branch = NR_branch_reference;
+
+			while (safety_hit != true)
+			{
+				//Pull from bus of current link
+				temp_node = NR_branchdata[temp_branch].from;
+
+				//See if temp_node is a swing.  If so, remove the relevant phase and we're done
+				if (NR_busdata[temp_node].type == 2)
+				{
+					//Store the swing as an index in appropriate phases
+					for (phaseidx=0; phaseidx < 3; phaseidx++)
+					{
+						temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+						if ((phase_remove & temp_phases) == temp_phases)
 						{
-							//Get the recloser
-							tmpobj = gl_get_object(NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+							protect_locations[phaseidx] = -99;	//Flag for swing
+						}
+					}
 
-							if (tmpobj == NULL)
+					//Get the swing bus value
+					tmpobj = gl_get_object(NR_busdata[temp_node].name);
+
+					if (tmpobj == NULL)
+					{
+						GL_THROW("An attempt to find the swing node %s failed.",NR_busdata[temp_node].name);
+						/*  TROUBLESHOOT
+						While attempting to get the mean repair time for the swing bus, an error occurred.  Please try again.  If the error persists,
+						please submit a bug report and your code via the trac website.
+						*/
+					}
+
+					//Retrieve the mean_repair_time
+					temp_double_val = get_double(tmpobj,"mean_repair_time");
+
+					//See if it worked
+					if (temp_double_val == NULL)
+					{
+						gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
+						//Defined above
+						*repair_time = 0;
+					}
+					else	//It did map - get the value
+					{
+						*repair_time = (TIMESTAMP)(*temp_double_val);
+					}
+
+					//Remove the required phases
+					NR_busdata[temp_node].phases &= (~(phase_remove));
+
+					//Update our fault phases so we aren't restored
+					NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
+
+					//Store the object handle
+					*protect_obj=tmpobj;
+
+					safety_hit = true;	//Flag as a safety hit (assumes SWING bus is somehow protected on transmission side)
+
+					break;	//Get us out of this loop
+				}
+				else	//Not a swing, find the first branch this node is a "to" value for
+				{
+					for (temp_table_loc=0; temp_table_loc<NR_busdata[temp_node].Link_Table_Size; temp_table_loc++)
+					{
+						//See if node is a to end - assumes radial phase progressions (i.e., no phase AB and phase C running into a node to form node ABC)
+						if (NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].to == temp_node)	//This node is a to end
+						{
+							//See if we are of a "protective" device implementation
+							if (NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].lnk_type == 6)	//Recloser
 							{
-								GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
-								/*  TROUBLESHOOT
-								While attempting to set the state of a recloser, an error occurred.  Please try again.  If the error persists,
-								please submit a bug report and your code via the trac website.
-								*/
-							}
+								//Get the recloser
+								tmpobj = gl_get_object(NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
 
-							funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_state"));
-							
-							//Make sure it was found
-							if (funadd == NULL)
-							{
-								GL_THROW("Unable to change recloser state on %s",tmpobj->name);
-								/*  TROUBLESHOOT
-								While attempting to alter a recloser state, the proper recloser function was not found.
-								If the problem persists, please submit a bug report and your code to the trac website.
-								*/
-							}
-
-							//Update the recloser statii - return is the number of attempts (max attempts in this case)
-							ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
-
-							//Make sure it worked
-							if (ext_result_dbl == 0)
-							{
-								GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
-								//defined above
-							}
-
-							//Retrieve the mean_repair_time
-							temp_double_val = get_double(tmpobj,"mean_repair_time");
-
-							//See if it worked
-							if (temp_double_val == NULL)
-							{
-								gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
-								//Defined above
-								*repair_time = 0;
-							}
-							else	//It did map - get the value
-							{
-								*repair_time = (TIMESTAMP)(*temp_double_val);
-							}
-
-							//Store the number of recloser actions
-							*Recloser_Counts = ext_result_dbl;
-
-							//Store the branch as an index in appropriate phases
-							for (phaseidx=0; phaseidx < 3; phaseidx++)
-							{
-								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
-
-								if ((phase_remove & temp_phases) == temp_phases)
+								if (tmpobj == NULL)
 								{
-									protect_locations[phaseidx] = NR_busdata[temp_node].Link_Table[temp_table_loc];	//Store our location
+									GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									/*  TROUBLESHOOT
+									While attempting to set the state of a recloser, an error occurred.  Please try again.  If the error persists,
+									please submit a bug report and your code via the trac website.
+									*/
 								}
-							}
 
-							//Flag the remote object's appropriate phases
-							NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].faultphases |= phase_remove;
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_state"));
+								
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change recloser state on %s",tmpobj->name);
+									/*  TROUBLESHOOT
+									While attempting to alter a recloser state, the proper recloser function was not found.
+									If the problem persists, please submit a bug report and your code to the trac website.
+									*/
+								}
 
-							//Update our fault phases so we aren't restored
-							NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
+								//Update the recloser statii - return is the number of attempts (max attempts in this case)
+								ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
 
-							//Store the object handle
-							*protect_obj=tmpobj;
+								//Make sure it worked
+								if (ext_result_dbl == 0)
+								{
+									GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									//defined above
+								}
 
-							//Flag us as being protected
-							safety_hit = true;
-
-							//Break out of this pesky loop
-							break;
-						}//end recloser
-						else if (NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].lnk_type == 5)	//Sectionalizer
-						{
-							//Get the sectionalizer
-							tmpobj = gl_get_object(NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
-
-							if (tmpobj == NULL)
-							{
-								GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
-								/*  TROUBLESHOOT
-								While attempting to set the state of a sectionalizer, an error occurred.  Please try again.  If the error persists,
-								please submit a bug report and your code via the trac website.
-								*/
-							}
-
-							funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_state"));
-							
-							//Make sure it was found
-							if (funadd == NULL)
-							{
-								GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
-								/*  TROUBLESHOOT
-								While attempting to alter a sectionalizer state, the proper sectionalizer function was not found.
-								If the problem persists, please submit a bug report and your code to the trac website.
-								*/
-							}
-
-							//Update the sectionalizer statii
-							ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
-
-							//Make sure it worked
-							if (ext_result_dbl == 0)
-							{
-								GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
-								//defined above
-							}
-							else if (ext_result_dbl < 0)	//Negative number means no upstream recloser was found
-							{
-								//Treat us as nothing special - just proceed up a branch - if no recloser, that means we need to hit a fuse...or the swing bus
-								//Go up to the next level
-								temp_branch = NR_busdata[temp_node].Link_Table[temp_table_loc];
-								break;	//Out of this for we go!
-							}
-							else	//Positive number - recloser operated
-							{
 								//Retrieve the mean_repair_time
 								temp_double_val = get_double(tmpobj,"mean_repair_time");
 
@@ -5381,204 +5685,2858 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 								//Break out of this pesky loop
 								break;
-							}//End sectionalizer logic
-						}//end sectionalizer
-						else if (NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].lnk_type == 3)	//Fuse
-						{
-							//Get the fuse
-							tmpobj = gl_get_object(NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
-
-							if (tmpobj == NULL)
+							}//end recloser
+							else if (NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].lnk_type == 5)	//Sectionalizer
 							{
-								GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
-								/*  TROUBLESHOOT
-								While attempting to set the state of a fuse, an error occurred.  Please try again.  If the error persists,
-								please submit a bug report and your code via the trac website.
-								*/
-							}
+								//Get the sectionalizer
+								tmpobj = gl_get_object(NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
 
-							funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_state"));
-							
-							//Make sure it was found
-							if (funadd == NULL)
+								if (tmpobj == NULL)
+								{
+									GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									/*  TROUBLESHOOT
+									While attempting to set the state of a sectionalizer, an error occurred.  Please try again.  If the error persists,
+									please submit a bug report and your code via the trac website.
+									*/
+								}
+
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_state"));
+								
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
+									/*  TROUBLESHOOT
+									While attempting to alter a sectionalizer state, the proper sectionalizer function was not found.
+									If the problem persists, please submit a bug report and your code to the trac website.
+									*/
+								}
+
+								//Update the sectionalizer statii
+								ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
+
+								//Make sure it worked
+								if (ext_result_dbl == 0)
+								{
+									GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									//defined above
+								}
+								else if (ext_result_dbl < 0)	//Negative number means no upstream recloser was found
+								{
+									//Treat us as nothing special - just proceed up a branch - if no recloser, that means we need to hit a fuse...or the swing bus
+									//Go up to the next level
+									temp_branch = NR_busdata[temp_node].Link_Table[temp_table_loc];
+									break;	//Out of this for we go!
+								}
+								else	//Positive number - recloser operated
+								{
+									//Retrieve the mean_repair_time
+									temp_double_val = get_double(tmpobj,"mean_repair_time");
+
+									//See if it worked
+									if (temp_double_val == NULL)
+									{
+										gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
+										//Defined above
+										*repair_time = 0;
+									}
+									else	//It did map - get the value
+									{
+										*repair_time = (TIMESTAMP)(*temp_double_val);
+									}
+
+									//Store the number of recloser actions
+									*Recloser_Counts = ext_result_dbl;
+
+									//Store the branch as an index in appropriate phases
+									for (phaseidx=0; phaseidx < 3; phaseidx++)
+									{
+										temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+										if ((phase_remove & temp_phases) == temp_phases)
+										{
+											protect_locations[phaseidx] = NR_busdata[temp_node].Link_Table[temp_table_loc];	//Store our location
+										}
+									}
+
+									//Flag the remote object's appropriate phases
+									NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].faultphases |= phase_remove;
+
+									//Update our fault phases so we aren't restored
+									NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
+
+									//Store the object handle
+									*protect_obj=tmpobj;
+
+									//Flag us as being protected
+									safety_hit = true;
+
+									//Break out of this pesky loop
+									break;
+								}//End sectionalizer logic
+							}//end sectionalizer
+							else if (NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].lnk_type == 3)	//Fuse
 							{
-								GL_THROW("Unable to change fuse state on %s",tmpobj->name);
-								/*  TROUBLESHOOT
-								While attempting to alter a fuse state, the proper fuse function was not found.
-								If the problem persists, please submit a bug report and your code to the trac website.
-								*/
-							}
+								//Get the fuse
+								tmpobj = gl_get_object(NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
 
-							//Update the fuse statii
-							ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
+								if (tmpobj == NULL)
+								{
+									GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									/*  TROUBLESHOOT
+									While attempting to set the state of a fuse, an error occurred.  Please try again.  If the error persists,
+									please submit a bug report and your code via the trac website.
+									*/
+								}
 
-							//Make sure it worked
-							if (ext_result != 1)
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_state"));
+								
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change fuse state on %s",tmpobj->name);
+									/*  TROUBLESHOOT
+									While attempting to alter a fuse state, the proper fuse function was not found.
+									If the problem persists, please submit a bug report and your code to the trac website.
+									*/
+								}
+
+								//Update the fuse statii
+								ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
+
+								//Make sure it worked
+								if (ext_result != 1)
+								{
+									GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									//defined above
+								}
+
+								//Retrieve the mean_repair_time
+								temp_double_val = get_double(tmpobj,"mean_repair_time");
+
+								//See if it worked
+								if (temp_double_val == NULL)
+								{
+									gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
+									//Defined above
+									*repair_time = 0;
+								}
+								else	//It did map - get the value
+								{
+									*repair_time = (TIMESTAMP)(*temp_double_val);
+								}
+
+								//Store the branch as an index in appropriate phases
+								for (phaseidx=0; phaseidx < 3; phaseidx++)
+								{
+									temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+									if ((phase_remove & temp_phases) == temp_phases)
+									{
+										protect_locations[phaseidx] = NR_busdata[temp_node].Link_Table[temp_table_loc];	//Store our location
+									}
+								}
+
+								//Flag the remote objects removed phases
+								NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].faultphases |= phase_remove;
+
+								//Update our fault phases so we aren't restored
+								NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
+
+								//Store the object handle
+								*protect_obj=tmpobj;
+
+								//Flag us as being protected
+								safety_hit = true;
+
+								//Break out of this pesky loop
+								break;
+							}//end fuse
+							else if (NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].lnk_type == 4)	//Transformer - not really "protective" - we assume it explodes
 							{
-								GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
-								//defined above
-							}
+								//Get the transformer
+								tmpobj = gl_get_object(NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
 
-							//Retrieve the mean_repair_time
-							temp_double_val = get_double(tmpobj,"mean_repair_time");
+								if (tmpobj == NULL)
+								{
+									GL_THROW("An attempt to alter transformer %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									/*  TROUBLESHOOT
+									While attempting to set the state of a transformer, an error occurred.  Please try again.  If the error persists,
+									please submit a bug report and your code via the trac website.
+									*/
+								}
 
-							//See if it worked
-							if (temp_double_val == NULL)
-							{
-								gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
-								//Defined above
-								*repair_time = 0;
-							}
-							else	//It did map - get the value
-							{
-								*repair_time = (TIMESTAMP)(*temp_double_val);
-							}
+								//Transformers are magical "all phases removed" devices - basically we're assuming catastrophic failure
+								NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].phases &= 0xF0;
 
-							//Store the branch as an index in appropriate phases
-							for (phaseidx=0; phaseidx < 3; phaseidx++)
-							{
-								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
-
-								if ((phase_remove & temp_phases) == temp_phases)
+								//Store the branch as an index in appropriate phases - transformer becomes all, not matter what
+								for (phaseidx=0; phaseidx < 3; phaseidx++)
 								{
 									protect_locations[phaseidx] = NR_busdata[temp_node].Link_Table[temp_table_loc];	//Store our location
 								}
-							}
 
-							//Flag the remote objects removed phases
-							NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].faultphases |= phase_remove;
+								//Retrieve the mean_repair_time
+								temp_double_val = get_double(tmpobj,"mean_repair_time");
 
-							//Update our fault phases so we aren't restored
-							NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
+								//See if it worked
+								if (temp_double_val == NULL)
+								{
+									gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
+									//Defined above
+									*repair_time = 0;
+								}
+								else	//It did map - get the value
+								{
+									*repair_time = (TIMESTAMP)(*temp_double_val);
+								}
 
-							//Store the object handle
-							*protect_obj=tmpobj;
+								//Flag remote transformer phases - all of them by default
+								NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].faultphases = 0x07;
 
-							//Flag us as being protected
-							safety_hit = true;
+								//Update our fault phases so we aren't restored
+								NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
 
-							//Break out of this pesky loop
-							break;
-						}//end fuse
-						else if (NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].lnk_type == 4)	//Transformer - not really "protective" - we assume it explodes
-						{
-							//Get the transformer
-							tmpobj = gl_get_object(NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+								//Store the object handle
+								*protect_obj=tmpobj;
 
-							if (tmpobj == NULL)
+								//Protective device found!
+								safety_hit = true;
+
+								//Get out of this for loop
+								break;
+							}//end transformer
+							else	//Normal or triplex line - proceed
 							{
-								GL_THROW("An attempt to alter transformer %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
-								/*  TROUBLESHOOT
-								While attempting to set the state of a transformer, an error occurred.  Please try again.  If the error persists,
-								please submit a bug report and your code via the trac website.
-								*/
-							}
+								//Go up to the next level
+								temp_branch = NR_busdata[temp_node].Link_Table[temp_table_loc];
+								break;	//Out of this for we go!
+							}//end normal
+						}//End it is a to-end
+						//Default else - it must be a from, just proceed
+					}//End link table for traversion
 
-							//Transformers are magical "all phases removed" devices - basically we're assuming catastrophic failure
-							NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].phases &= 0xF0;
+					//Make sure we didn't somehow reach the end
+					if (temp_table_loc == NR_busdata[temp_node].Link_Table_Size)
+					{
+						GL_THROW("Error finding proper to reference for node %s",NR_busdata[temp_node].name);
+						/*  TROUBLESHOOT
+						While attempting to induce a safety reaction to a fault, a progression through the
+						links of the system failed.  Please try again.  If the bug persists, please submit your
+						code and a bug report using the trac website.
+						*/
+					}
+				}//end not a swing bus
+			}//end safety not hit while
 
-							//Store the branch as an index in appropriate phases - transformer becomes all, not matter what
-							for (phaseidx=0; phaseidx < 3; phaseidx++)
-							{
-								protect_locations[phaseidx] = NR_busdata[temp_node].Link_Table[temp_table_loc];	//Store our location
-							}
+			//Safety device enacted - now call fault_check function and let it remove all invalid objects
+			//Map the function
+			funadd = (FUNCTIONADDR)(gl_get_function(fault_check_object,"reliability_alterations"));
+			
+			//Make sure it was found
+			if (funadd == NULL)
+			{
+				GL_THROW("Unable to update objects for reliability effects");
+				/*  TROUBLESHOOT
+				While attempting to update the powerflow to properly represent the new post-fault state, an error
+				occurred.  If the problem persists, please submit a bug report and your code to the trac website.
+				*/
+			}
 
-							//Retrieve the mean_repair_time
-							temp_double_val = get_double(tmpobj,"mean_repair_time");
+			//Update the device - find a valid phase
+			for (phaseidx=0; phaseidx < 3; phaseidx++)
+			{
+				temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
 
-							//See if it worked
-							if (temp_double_val == NULL)
-							{
-								gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
-								//Defined above
-								*repair_time = 0;
-							}
-							else	//It did map - get the value
-							{
-								*repair_time = (TIMESTAMP)(*temp_double_val);
-							}
-
-							//Flag remote transformer phases - all of them by default
-							NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].faultphases = 0x07;
-
-							//Update our fault phases so we aren't restored
-							NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
-
-							//Store the object handle
-							*protect_obj=tmpobj;
-
-							//Protective device found!
-							safety_hit = true;
-
-							//Get out of this for loop
-							break;
-						}//end transformer
-						else	//Normal or triplex line - proceed
-						{
-							//Go up to the next level
-							temp_branch = NR_busdata[temp_node].Link_Table[temp_table_loc];
-							break;	//Out of this for we go!
-						}//end normal
-					}//End it is a to-end
-					//Default else - it must be a from, just proceed
-				}//End link table for traversion
-
-				//Make sure we didn't somehow reach the end
-				if (temp_table_loc == NR_busdata[temp_node].Link_Table_Size)
+				if ((phase_remove & temp_phases) == temp_phases)
 				{
-					GL_THROW("Error finding proper to reference for node %s",NR_busdata[temp_node].name);
-					/*  TROUBLESHOOT
-					While attempting to induce a safety reaction to a fault, a progression through the
-					links of the system failed.  Please try again.  If the bug persists, please submit your
-					code and a bug report using the trac website.
-					*/
+					if (protect_locations[phaseidx] == -1)
+					{
+						GL_THROW("Attempted to restore a device that never appears to have been faulted!");
+						/*  TROUBLESHOOT
+						While attempting to restore a device, it was found to have never been in a fault.
+						It is unclear how this occurs, but it should not and should be fixed.
+						*/
+					}
+					temp_branch = protect_locations[phaseidx];	//Pull protective device number
+					break;		//Only need one to know where to start
 				}
-			}//end not a swing bus
-		}//end safety not hit while
+			}
 
-		//Safety device enacted - now call fault_check function and let it remove all invalid objects
-		//Map the function
-		funadd = (FUNCTIONADDR)(gl_get_function(fault_check_object,"reliability_alterations"));
+			//Update powerflow - removal mode
+			ext_result = ((int (*)(OBJECT *, int, bool))(*funadd))(fault_check_object,temp_branch,false);
+
+			//Make sure it worked
+			if (ext_result != 1)
+			{
+				GL_THROW("Unable to update objects for reliability effects");
+				//defined above
+			}
+
+			if (temp_branch == -99)
+				gl_verbose("Event %d induced on %s by using %s",*implemented_fault,objhdr->name,NR_busdata[0].name);
+			else
+				gl_verbose("Event %d induced on %s by using %s",*implemented_fault,objhdr->name,NR_branchdata[temp_branch].name);
+		}//End a change has been flagged
+
+		return 1;	//Successful
+	}//End "normal" fault operations mode
+	else	//Meshed checking -- handle differently
+	{
+		// set defaults for C_mat
+		for(int n=0; n<7; n++){
+			for(int m=0; m<7; m++) {
+				C_mat[n][m]=complex(0,0);
+			}
+		}
+		C_mat[0][0]=C_mat[1][1]=C_mat[2][2]=complex(1,0);
 		
-		//Make sure it was found
-		if (funadd == NULL)
+		//Default switch_val - special case
+		switch_val = false;
+
+		//Protective device set to NULL (should already be this way, but just in case)
+		*protect_obj = NULL;
+
+		//Default repair time is non-existant
+		*repair_time = 0;
+
+		//Link up recloser counts for manipulation
+		Recloser_Counts = (double *)Extra_Data;
+
+		//Initial check - faults only work for NR right now
+		if (solver_method != SM_NR)
 		{
-			GL_THROW("Unable to update objects for reliability effects");
+			GL_THROW("Only the NR solver supports link faults!");
 			/*  TROUBLESHOOT
-			While attempting to update the powerflow to properly represent the new post-fault state, an error
-			occurred.  If the problem persists, please submit a bug report and your code to the trac website.
+			At this time, only the Newton-Raphson solution method supports faults for link objects.
+			Please utilize this solver method, or check back at a later date.
 			*/
 		}
 
-		//Update the device - find a valid phase
-		for (phaseidx=0; phaseidx < 3; phaseidx++)
+		if ((fault_type[0] == 'S') && (fault_type[1] == 'L') && (fault_type[2] == 'G'))	//SLG - single-line-ground fault
 		{
-			temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
-
-			if ((phase_remove & temp_phases) == temp_phases)
+			//See which phase we want to fault - skip [3] - it should be a dash (if it isn't, we ignore it)
+			//First see if it is an 'X' - for random phase.  If so, pick one and proceed
+			if (fault_type[4] == 'X')
 			{
-				temp_branch = protect_locations[phaseidx];	//Pull protective device number
-				break;		//Only need one to know where to start
+				//Reset counter
+				numphase = 0;
+
+				//See how many phases we get to work with 0 populate the phase array at the same time
+				if (has_phase(PHASE_A))
+				{
+					tempphase[numphase] = 4;	//Flag for phase A - NR convention
+					numphase++;					//Increment count
+				}
+
+				if (has_phase(PHASE_B))
+				{
+					tempphase[numphase] = 2;	//Flag for phase B - NR convention
+					numphase++;					//Increment count
+				}
+
+				if (has_phase(PHASE_C))
+				{
+					tempphase[numphase] = 1;	//Flag for phase C - NR convention
+					numphase++;					//Increment count
+				}
+
+				//Get a random value
+				randval = gl_random_sampled(RNGSTATE,numphase,tempphase);
+
+				//Put it back into proper format
+				rand_phases = (unsigned char)(randval);
+			}
+			else	//Not a random - clear the variable, just in case
+				rand_phases = 0x00;
+
+			if ((fault_type[4] == 'A') || (rand_phases == 0x04))
+			{
+				if (has_phase(PHASE_A))
+				{
+					if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//make sure phase A is active (no previous fault)
+					{
+						//Remove phase A
+						NR_branchdata[NR_branch_reference].phases &= 0xFB;
+
+						//Flag which phase we've removed
+						phase_remove = 0x04;
+
+						//Flag the fault type
+						*implemented_fault = 1;
+					}
+					else	//Already in a fault - just flag us as none and go on our way
+					{
+						*implemented_fault = 0;
+					}
+				}//end has PHASE_A
+				else
+				{
+					gl_warning("%s does not have a phase A to fault!",OBJECTHDR(this)->name);
+					/*  TROUBLESHOOT
+					A fault event was attempted on phase A of the link object. This object
+					does not have a valid phase A to fault.
+					*/
+				}
+			}//End A fault
+			else if ((fault_type[4] == 'B') || (rand_phases == 0x02))
+			{
+				if (has_phase(PHASE_B))
+				{
+					if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//make sure phase B is active (no previous fault)
+					{
+						//Remove phase B
+						NR_branchdata[NR_branch_reference].phases &= 0xFD;
+
+						//Flag which phase we've removed
+						phase_remove = 0x02;
+
+						//Flag the fault type
+						*implemented_fault = 2;
+					}
+					else	//Already in a fault - just flag us as none and go on our way
+					{
+						*implemented_fault = 0;
+					}
+				}//end has PHASE_B
+				else
+				{
+					gl_warning("%s does not have a phase B to fault!",OBJECTHDR(this)->name);
+					/*  TROUBLESHOOT
+					A fault event was attempted on phase B of the link object. This object
+					does not have a valid phase B to fault.
+					*/
+				}
+			}
+			else if ((fault_type[4] == 'C') || (rand_phases == 0x01))
+			{
+				if (has_phase(PHASE_C))
+				{
+					if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//make sure phase C is active (no previous fault)
+					{
+						//Remove phase C
+						NR_branchdata[NR_branch_reference].phases &= 0xFE;
+
+						//Flag which phase we've removed
+						phase_remove = 0x01;
+
+						//Flag the fault type
+						*implemented_fault = 3;
+					}
+					else	//Already in a fault - just flag us as none and go on our way
+					{
+						*implemented_fault = 0;
+					}
+				}//end has PHASE_C
+				else
+				{
+					gl_warning("%s does not have a phase C to fault!",OBJECTHDR(this)->name);
+					/*  TROUBLESHOOT
+					A fault event was attempted on phase C of the link object. This object
+					does not have a valid phase C to fault.
+					*/
+				}
+			}
+			else	//Something else, fail
+			{
+				GL_THROW("Fault type %s for link objects has an invalid phase specification");
+				/*  TROUBLESHOOT
+				The phase specified for the link fault is not a valid A, B, or C value.  Please check your syntax
+				and ensure the values are uppercase.
+				*/
+			}
+		}//end SLG
+		else if ((fault_type[0] == 'D') && (fault_type[1] == 'L') && (fault_type[2] == 'G'))	//DLG - double-line-ground fault
+		{
+			//Figure out who we want to alter - assume [3] is a -, so check [4]+
+			work_phases = 0x00;
+
+			if (fault_type[4] == 'X')	//Random, flag as such
+				work_phases |= 0x08;
+			
+			if ((fault_type[4] == 'A') || (fault_type[5] == 'A'))	//A is desired
+				work_phases |= 0x04;
+
+			if ((fault_type[4] == 'B') || (fault_type[5] == 'B'))	//B is desired
+				work_phases |= 0x02;
+
+			if ((fault_type[4] == 'C') || (fault_type[5] == 'C'))	//C is desired
+				work_phases |= 0x01;
+
+			//See how many phases we have to deal with
+			numphase = 0;
+
+			if (has_phase(PHASE_A))
+			{
+				numphase++;					//Increment count
+			}
+
+			if (has_phase(PHASE_B))
+			{
+				numphase++;					//Increment count
+			}
+
+			if (has_phase(PHASE_C))
+			{
+				numphase++;					//Increment count
+			}
+
+			//Pull out what phases we have to play with
+			temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
+
+			if (numphase == 0)
+			{
+				GL_THROW("No phases detected for %s!",objhdr->name);
+				/*  TROUBLESHOOT
+				No phases were detected for the link object specified.  This should have
+				been caught much earlier.  Please submit your code and a bug report using the
+				trac website.
+				*/
+			}//end 0 phase
+			else if (numphase < 2)	//Single phase line (no zero phase this way)
+			{
+				//Refine our criteria
+				if ((work_phases & 0x08) != 0x08)	//Not random case
+					temp_phases &= work_phases;
+
+				//defaulted else - if random case, only getting one phase out of this anywho (leave temp_phases as is)
+
+				switch (temp_phases)
+				{
+				case 0x00:	//No phases available - something must have faulted
+					*implemented_fault = 0;	//Flag as such
+					break;
+				case 0x01:	//Phase C
+					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+					*implemented_fault = 3;								//Flag as a C SLG fault
+					break;
+				case 0x02:	//Phase B
+					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+					*implemented_fault = 2;								//Flag as a B SLG fault
+					break;
+				case 0x04:	//Phase A
+					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+					*implemented_fault = 1;								//Flag as a A SLG fault
+					break;
+				default:	//No other cases should exist
+					GL_THROW("Fault type %s for link objects has an invalid phase specification");
+					//Defined above
+					break;
+				}//end switch
+
+				phase_remove = temp_phases;	//Flag phase removing
+
+			}//end <2 phases (only 1 presumably)
+			else if (numphase == 2)	//Only two phases present
+			{
+				//See how the two present coincide with the two we're asking for
+				if ((work_phases & 0x08) != 0x08)	//Not random case, see what we have
+					temp_phases &= work_phases;
+				//Defaulted else - if random, only 1 choice exists, which is temp_phases (leave temp_phases as is)
+
+				//Implement the appropriate fault
+				switch (temp_phases)
+				{
+				case 0x00:	//No phases!
+					*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
+					break;
+				case 0x01:	//Only phase C
+					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+					*implemented_fault = 3;								//Flag as a C SLG fault
+					break;
+				case 0x02:	//Only phase B
+					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+					*implemented_fault = 2;								//Flag as a B SLG fault
+					break;
+				case 0x03:	//B and C
+					NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+					*implemented_fault = 5;								//Flag as a B & C fault
+					break;
+				case 0x04:	//Only A
+					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+					*implemented_fault = 1;								//Flag as a A SLG fault
+					break;
+				case 0x05:	//A and C
+					NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+					*implemented_fault = 6;								//Flag as A and C fault
+					break;
+				case 0x06:	//A and B
+					NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+					*implemented_fault = 4;								//Flag as A and B fault
+					break;
+				default:	//Not sure how we'd ever get here
+					GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
+					/*  TROUBLESHOOT
+					While attempting to implement a two-phase fault on a link object, an unknown phase
+					configuration was encountered.  Please try again.  If the error persists, please submit
+					your code and a bug report using the trac website.
+					*/
+					break;
+				}//end switch
+
+				phase_remove = temp_phases;	//Flag phase removing
+
+			}//end 2 phases present
+			else if (numphase == 3)	//All phases present
+			{
+				if ((work_phases & 0x08) == 0x08)	//Random condition
+				{
+					//See if we have all three available to fault (if one or more is already faulted, we won't care)
+					rand_phases = 0;
+
+					//Check and populate random array as well
+					if ((temp_phases & 0x01) == 0x01)	//Check for C availability
+					{
+						tempphase[rand_phases] = 1;
+						rand_phases++;
+					}
+
+					if ((temp_phases & 0x02) == 0x02)	//Check for B availability
+					{
+						tempphase[rand_phases] = 2;
+						rand_phases++;
+					}
+
+					if ((temp_phases & 0x04) == 0x04)	//Check for A availability
+					{
+						tempphase[rand_phases] = 4;
+						rand_phases++;
+					}
+
+					if (rand_phases <= 2)	//Two or fewer available, just mask us out
+						work_phases = 0x07;	//This will pull the appropriate phase
+					else	//Must be 3, right?
+					{
+						//Pick a random phase - this will be the one we DON'T fault
+						randval = gl_random_sampled(RNGSTATE,numphase,tempphase);
+
+						//Set temp_phases appropriate
+						if (randval == 1)	//Leave phase C
+							work_phases = 0x06;	//A and B fault
+						else if (randval == 2)	//Leave phase B
+							work_phases = 0x05;	//A and C fault
+						else	//Must be 4	- leave phase A
+							work_phases = 0x03;	//B and C fault
+					}//end must be 3
+				}//end random condition
+				//Defaulted else - not random, so just use as normal mask
+
+				//Determine phases to fault
+				temp_phases &= work_phases;
+
+				//Implement the appropriate fault
+				switch (temp_phases)
+				{
+				case 0x00:	//No phases!
+					*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
+					break;
+				case 0x01:	//Only phase C
+					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+					*implemented_fault = 3;								//Flag as a C SLG fault
+					break;
+				case 0x02:	//Only phase B
+					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+					*implemented_fault = 2;								//Flag as a B SLG fault
+					break;
+				case 0x03:	//B and C
+					NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+					*implemented_fault = 5;								//Flag as a B & C fault
+					break;
+				case 0x04:	//Only A
+					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+					*implemented_fault = 1;								//Flag as a A SLG fault
+					break;
+				case 0x05:	//A and C
+					NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+					*implemented_fault = 6;								//Flag as A and C fault
+					break;
+				case 0x06:	//A and B
+					NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+					*implemented_fault = 4;								//Flag as A and B fault
+					break;
+				default:	//Not sure how we'd ever get here
+					GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
+					//Defined above
+					break;
+				}//end switch
+
+				phase_remove = temp_phases;	//Flag phase removing
+
+			}//end all three present
+			else	//Hmmm, how'd we get here?
+			{
+				GL_THROW("An invalid number of phases appears present for %s",objhdr->name);
+				/*  TROUBLESHOOT
+				An unexpected number of phases was found on the link object.  Please submit your
+				code and a bug report using the trac website.
+				*/
+			}
+		}//End DLG
+		else if ((fault_type[0] == 'T') && (fault_type[1] == 'L') && (fault_type[2] == 'G'))	//TLG - triple-line-ground fault
+		{
+			//Let's see what phases we have to play with
+			temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
+
+			//Case it out - if we want TLG, but don't have all three phases, just trip whatever we have
+			switch (temp_phases)
+			{
+			case 0x00:	//No phases!
+				*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
+				break;
+			case 0x01:	//Only phase C
+				NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+				*implemented_fault = 3;								//Flag as a C only fault
+				break;
+			case 0x02:	//Only phase B
+				NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+				*implemented_fault = 2;								//Flag as a B only fault
+				break;
+			case 0x03:	//B and C
+				NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+				*implemented_fault = 5;								//Flag as a B & C fault
+				break;
+			case 0x04:	//Only A
+				NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+				*implemented_fault = 1;								//Flag as a A only fault
+				break;
+			case 0x05:	//A and C
+				NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+				*implemented_fault = 6;								//Flag as A and C fault
+				break;
+			case 0x06:	//A and B
+				NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+				*implemented_fault = 4;								//Flag as A and B fault
+				break;
+			case 0x07:	//A, B, and C
+				NR_branchdata[NR_branch_reference].phases &= 0xF8;	//Remove A, B, and C
+				*implemented_fault = 10;							//Flag as all three fault
+				break;
+			default:	//Not sure how we'd ever get here
+				GL_THROW("Unknown phase condition on three-phase fault of %s!",objhdr->name);
+				/*  TROUBLESHOOT
+				While attempting to implement a three-phase fault on a link object, an unknown phase
+				configuration was encountered.  Please try again.  If the error persists, please submit
+				your code and a bug report using the trac website.
+				*/
+				break;
+			}//end phase cases
+
+			phase_remove = temp_phases;	//Flag phase removing
+
+		}//End TLG
+		else if ((fault_type[0] == 'T') && (fault_type[1] == 'L') && (fault_type[2] == 'L'))	//TLL - triple-line-line fault
+		{
+			//Let's see what phases we have to play with
+			temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
+
+			//Case it out - if we want TLG, but don't have all three phases, just trip whatever we have
+			switch (temp_phases)
+			{
+			case 0x00:	//No phases!
+				*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
+				break;
+			case 0x01:	//Only phase C
+				NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+				*implemented_fault = 13;							//Flag as a C only OC fault
+				break;
+			case 0x02:	//Only phase B
+				NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+				*implemented_fault = 12;							//Flag as a B only OC fault
+				break;
+			case 0x03:	//B and C
+				NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+				*implemented_fault = 8;								//Flag as a B & C LL fault
+				break;
+			case 0x04:	//Only A
+				NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+				*implemented_fault = 11;							//Flag as a A only OC fault
+				break;
+			case 0x05:	//A and C
+				NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+				*implemented_fault = 9;								//Flag as A and C LL fault
+				break;
+			case 0x06:	//A and B
+				NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+				*implemented_fault = 7;								//Flag as A and B LL fault
+				break;
+			case 0x07:	//A, B, and C
+				NR_branchdata[NR_branch_reference].phases &= 0xF8;	//Remove A, B, and C
+				*implemented_fault = 32;							//Flag as all three fault
+				break;
+			default:	//Not sure how we'd ever get here
+				GL_THROW("Unknown phase condition on three-phase fault of %s!",objhdr->name);
+				//Defined elsewhere
+				break;
+			}//end phase cases
+
+			phase_remove = temp_phases;	//Flag phase removing
+
+		}//End TLL
+		else if ((fault_type[0] == 'L') && (fault_type[1] == 'L'))	//Line-line fault
+		{
+			//Figure out who we want to alter - assume [2] is a -, so check [3]+
+			work_phases = 0x00;
+
+			if (fault_type[3] == 'X')	//Random, flag as such
+				work_phases |= 0x08;
+			
+			if ((fault_type[3] == 'A') || (fault_type[4] == 'A'))	//A is desired
+				work_phases |= 0x04;
+
+			if ((fault_type[3] == 'B') || (fault_type[4] == 'B'))	//B is desired
+				work_phases |= 0x02;
+
+			if ((fault_type[3] == 'C') || (fault_type[4] == 'C'))	//C is desired
+				work_phases |= 0x01;
+
+			//See how many phases we have to deal with
+			numphase = 0;
+
+			if (has_phase(PHASE_A))
+			{
+				numphase++;					//Increment count
+			}
+
+			if (has_phase(PHASE_B))
+			{
+				numphase++;					//Increment count
+			}
+
+			if (has_phase(PHASE_C))
+			{
+				numphase++;					//Increment count
+			}
+
+			//Pull out what phases we have to play with
+			temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
+
+			if (numphase == 0)
+			{
+				GL_THROW("No phases detected for %s!",objhdr->name);
+				//Defined above
+			}//end 0 phase
+			else if (numphase < 2)	//Single phase line (no zero phase this way)
+			{
+				//Refine our criteria
+				if ((work_phases & 0x08) != 0x08)	//Not random case
+					temp_phases &= work_phases;
+
+				//defaulted else - if random case, only getting one phase out of this anywho (leave temp_phases as is)
+
+				switch (temp_phases)
+				{
+				case 0x00:	//No phases available - something must have faulted
+					*implemented_fault = 0;	//Flag as such
+					break;
+				case 0x01:	//Phase C
+					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+					*implemented_fault = 13;							//Flag as a C OC fault
+					break;
+				case 0x02:	//Phase B
+					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+					*implemented_fault = 12;							//Flag as a B OC fault
+					break;
+				case 0x04:	//Phase A
+					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+					*implemented_fault = 11;							//Flag as a A OC fault
+					break;
+				default:	//No other cases should exist
+					GL_THROW("Fault type %s for link objects has an invalid phase specification");
+					//Defined above
+					break;
+				}//end switch
+
+				phase_remove = temp_phases;	//Flag phase removing
+			}//end <2 phases (only 1 presumably)
+			else if (numphase == 2)	//Only two phases present
+			{
+				//See how the two present coincide with the two we're asking for
+				if ((work_phases & 0x08) != 0x08)	//Not random case, see what we have
+					temp_phases &= work_phases;
+				//Defaulted else - if random, only 1 choice exists, which is temp_phases (leave temp_phases as is)
+
+				//Implement the appropriate fault
+				switch (temp_phases)
+				{
+				case 0x00:	//No phases!
+					*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
+					break;
+				case 0x01:	//Only phase C
+					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+					*implemented_fault = 13;							//Flag as a C OC fault
+					break;
+				case 0x02:	//Only phase B
+					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+					*implemented_fault = 12;							//Flag as a B OC fault
+					break;
+				case 0x03:	//B and C
+					NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+					*implemented_fault = 8;								//Flag as a B & C fault
+					break;
+				case 0x04:	//Only A
+					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+					*implemented_fault = 11;							//Flag as a A OC fault
+					break;
+				case 0x05:	//A and C
+					NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+					*implemented_fault = 9;								//Flag as A and C fault
+					break;
+				case 0x06:	//A and B
+					NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+					*implemented_fault = 7;								//Flag as A and B fault
+					break;
+				default:	//Not sure how we'd ever get here
+					GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
+					//Defined above
+					break;
+				}//end switch
+
+				phase_remove = temp_phases;	//Flag phase removing
+
+			}//end 2 phases present
+			else if (numphase == 3)	//All phases present
+			{
+				if ((work_phases & 0x08) == 0x08)	//Random condition
+				{
+					//See if we have all three available to fault (if one or more is already faulted, we won't care)
+					rand_phases = 0;
+
+					//Check and populate random array as well
+					if ((temp_phases & 0x01) == 0x01)	//Check for C availability
+					{
+						tempphase[rand_phases] = 1;
+						rand_phases++;
+					}
+
+					if ((temp_phases & 0x02) == 0x02)	//Check for B availability
+					{
+						tempphase[rand_phases] = 2;
+						rand_phases++;
+					}
+
+					if ((temp_phases & 0x04) == 0x04)	//Check for A availability
+					{
+						tempphase[rand_phases] = 4;
+						rand_phases++;
+					}
+
+					if (rand_phases <= 2)	//Two or fewer available, just mask us out
+						work_phases = 0x07;	//This will pull the appropriate phase
+					else	//Must be 3, right?
+					{
+						//Pick a random phase - this will be the one we DON'T fault
+						randval = gl_random_sampled(RNGSTATE,numphase,tempphase);
+
+						//Set temp_phases appropriate
+						if (randval == 1)	//Leave phase C
+							work_phases = 0x06;	//A and B fault
+						else if (randval == 2)	//Leave phase B
+							work_phases = 0x05;	//A and C fault
+						else	//Must be 4	- leave phase A
+							work_phases = 0x03;	//B and C fault
+					}//end must be 3
+				}//end random condition
+				//Defaulted else - not random, so just use as normal mask
+
+				//Determine phases to fault
+				temp_phases &= work_phases;
+
+				//Implement the appropriate fault
+				switch (temp_phases)
+				{
+				case 0x00:	//No phases!
+					*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
+					break;
+				case 0x01:	//Only phase C
+					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+					*implemented_fault = 13;							//Flag as a C OC fault
+					break;
+				case 0x02:	//Only phase B
+					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+					*implemented_fault = 12;							//Flag as a B OC fault
+					break;
+				case 0x03:	//B and C
+					NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+					*implemented_fault = 8;								//Flag as a B & C fault
+					break;
+				case 0x04:	//Only A
+					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+					*implemented_fault = 11;							//Flag as an A OC fault
+					break;
+				case 0x05:	//A and C
+					NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+					*implemented_fault = 9;								//Flag as A and C fault
+					break;
+				case 0x06:	//A and B
+					NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+					*implemented_fault = 7;								//Flag as A and B fault
+					break;
+				default:	//Not sure how we'd ever get here
+					GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
+					//Defined above
+					break;
+				}//end switch
+
+				phase_remove = temp_phases;	//Flag phase removing
+
+			}//end all three present
+			else	//Hmmm, how'd we get here?
+			{
+				GL_THROW("An invalid number of phases appears present for %s",objhdr->name);
+				//Defined above
+			}
+		}//End LL
+		else if (((fault_type[0] == 'O') && (fault_type[1] == 'C') && (fault_type[2] == '-')) || ((fault_type[0] == 'O') && (fault_type[1] == 'C') && (fault_type[2] == '1')))	//Open conductor
+		{
+			//See which phase we want to fault - skip [3] if OC1, or [2] if OC - it should be a dash (if it isn't, we ignore it)
+			if ((fault_type[0] == 'O') && (fault_type[1] == 'C') && (fault_type[2] == '-'))
+				phaseidx=3;
+			else	//Must be OC1- then
+				phaseidx=4;
+
+			//First see if it is an 'X' - for random phase.  If so, pick one and proceed
+			if (fault_type[phaseidx] == 'X')
+			{
+				//Reset counter
+				numphase = 0;
+
+				//See how many phases we get to work with 0 populate the phase array at the same time
+				if (has_phase(PHASE_A))
+				{
+					tempphase[numphase] = 4;	//Flag for phase A - NR convention
+					numphase++;					//Increment count
+				}
+
+				if (has_phase(PHASE_B))
+				{
+					tempphase[numphase] = 2;	//Flag for phase B - NR convention
+					numphase++;					//Increment count
+				}
+
+				if (has_phase(PHASE_C))
+				{
+					tempphase[numphase] = 1;	//Flag for phase C - NR convention
+					numphase++;					//Increment count
+				}
+
+				//Get a random value
+				randval = gl_random_sampled(RNGSTATE,numphase,tempphase);
+
+				//Put it back into proper format
+				rand_phases = (unsigned char)(randval);
+			}
+			else	//Not a random - clear the variable, just in case
+				rand_phases = 0x00;
+
+			if ((fault_type[phaseidx] == 'A') || (rand_phases == 0x04))
+			{
+				if (has_phase(PHASE_A))
+				{
+					if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//make sure phase A is active (no previous fault)
+					{
+						//Remove phase A
+						NR_branchdata[NR_branch_reference].phases &= 0xFB;
+
+						phase_remove = 0x04;	//Flag phase being removed
+
+						//Flag the fault type
+						*implemented_fault = 11;
+					}
+					else	//Already in a fault - just flag us as none and go on our way
+					{
+						*implemented_fault = 0;
+					}
+				}//end has PHASE_A
+				else
+				{
+					gl_warning("%s does not have a phase A to fault!",OBJECTHDR(this)->name);
+					//Defined above
+				}
+			}//End A fault
+			else if ((fault_type[phaseidx] == 'B') || (rand_phases == 0x02))
+			{
+				if (has_phase(PHASE_B))
+				{
+					if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//make sure phase B is active (no previous fault)
+					{
+						//Remove phase B
+						NR_branchdata[NR_branch_reference].phases &= 0xFD;
+
+						//Flag phase being removed
+						phase_remove = 0x02;
+
+						//Flag the fault type
+						*implemented_fault = 12;
+					}
+					else	//Already in a fault - just flag us as none and go on our way
+					{
+						*implemented_fault = 0;
+					}
+				}//end has PHASE_B
+				else
+				{
+					gl_warning("%s does not have a phase B to fault!",OBJECTHDR(this)->name);
+					//Defined above
+				}
+			}
+			else if ((fault_type[phaseidx] == 'C') || (rand_phases == 0x01))
+			{
+				if (has_phase(PHASE_C))
+				{
+					if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//make sure phase C is active (no previous fault)
+					{
+						//Remove phase C
+						NR_branchdata[NR_branch_reference].phases &= 0xFE;
+
+						//Flag phase being removed
+						phase_remove = 0x01;
+
+						//Flag the fault type
+						*implemented_fault = 13;
+					}
+					else	//Already in a fault - just flag us as none and go on our way
+					{
+						*implemented_fault = 0;
+					}
+				}//end has PHASE_C
+				else
+				{
+					gl_warning("%s does not have a phase C to fault!",OBJECTHDR(this)->name);
+					//defined above
+				}
+			}
+			else	//Something else, fail
+			{
+				GL_THROW("Fault type %s for link objects has an invalid phase specification");
+				//Defined above
+			}
+		}//End OC1
+		else if ((fault_type[0] == 'O') && (fault_type[1] == 'C') && (fault_type[2] == '2'))	//Double open-conductor fault
+		{
+			//Figure out who we want to alter - assume [3] is a -, so check [4]+
+			work_phases = 0x00;
+
+			if (fault_type[4] == 'X')	//Random, flag as such
+				work_phases |= 0x08;
+			
+			if ((fault_type[4] == 'A') || (fault_type[5] == 'A'))	//A is desired
+				work_phases |= 0x04;
+
+			if ((fault_type[4] == 'B') || (fault_type[5] == 'B'))	//B is desired
+				work_phases |= 0x02;
+
+			if ((fault_type[4] == 'C') || (fault_type[5] == 'C'))	//C is desired
+				work_phases |= 0x01;
+
+			//See how many phases we have to deal with
+			numphase = 0;
+
+			if (has_phase(PHASE_A))
+			{
+				numphase++;					//Increment count
+			}
+
+			if (has_phase(PHASE_B))
+			{
+				numphase++;					//Increment count
+			}
+
+			if (has_phase(PHASE_C))
+			{
+				numphase++;					//Increment count
+			}
+
+			//Pull out what phases we have to play with
+			temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
+
+			if (numphase == 0)
+			{
+				GL_THROW("No phases detected for %s!",objhdr->name);
+				//Defined above
+			}//end 0 phase
+			else if (numphase < 2)	//Single phase line (no zero phase this way)
+			{
+				//Refine our criteria
+				if ((work_phases & 0x08) != 0x08)	//Not random case
+					temp_phases &= work_phases;
+
+				//defaulted else - if random case, only getting one phase out of this anywho (leave temp_phases as is)
+
+				switch (temp_phases)
+				{
+				case 0x00:	//No phases available - something must have faulted
+					*implemented_fault = 0;	//Flag as such
+					break;
+				case 0x01:	//Phase C
+					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+					*implemented_fault = 13;							//Flag as a C OC fault
+					break;
+				case 0x02:	//Phase B
+					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+					*implemented_fault = 12;							//Flag as a B OC fault
+					break;
+				case 0x04:	//Phase A
+					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+					*implemented_fault = 11;							//Flag as a A OC fault
+					break;
+				default:	//No other cases should exist
+					GL_THROW("Fault type %s for link objects has an invalid phase specification");
+					//Defined above
+					break;
+				}//end switch
+
+				phase_remove = temp_phases;	//Flag phase removing
+
+			}//end <2 phases (only 1 presumably)
+			else if (numphase == 2)	//Only two phases present
+			{
+				//See how the two present coincide with the two we're asking for
+				if ((work_phases & 0x08) != 0x08)	//Not random case, see what we have
+					temp_phases &= work_phases;
+				//Defaulted else - if random, only 1 choice exists, which is temp_phases (leave temp_phases as is)
+
+				//Implement the appropriate fault
+				switch (temp_phases)
+				{
+				case 0x00:	//No phases!
+					*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
+					break;
+				case 0x01:	//Only phase C
+					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+					*implemented_fault = 13;							//Flag as a C OC fault
+					break;
+				case 0x02:	//Only phase B
+					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+					*implemented_fault = 12;							//Flag as a B OC fault
+					break;
+				case 0x03:	//B and C
+					NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+					*implemented_fault = 15;							//Flag as a B & C fault
+					break;
+				case 0x04:	//Only A
+					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+					*implemented_fault = 11;							//Flag as a A OC fault
+					break;
+				case 0x05:	//A and C
+					NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+					*implemented_fault = 16;							//Flag as A and C fault
+					break;
+				case 0x06:	//A and B
+					NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+					*implemented_fault = 14;							//Flag as A and B fault
+					break;
+				default:	//Not sure how we'd ever get here
+					GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
+					//Defined above
+					break;
+				}//end switch
+
+				phase_remove = temp_phases;	//Flag phase removing
+
+			}//end 2 phases present
+			else if (numphase == 3)	//All phases present
+			{
+				if ((work_phases & 0x08) == 0x08)	//Random condition
+				{
+					//See if we have all three available to fault (if one or more is already faulted, we won't care)
+					rand_phases = 0;
+
+					//Check and populate random array as well
+					if ((temp_phases & 0x01) == 0x01)	//Check for C availability
+					{
+						tempphase[rand_phases] = 1;
+						rand_phases++;
+					}
+
+					if ((temp_phases & 0x02) == 0x02)	//Check for B availability
+					{
+						tempphase[rand_phases] = 2;
+						rand_phases++;
+					}
+
+					if ((temp_phases & 0x04) == 0x04)	//Check for A availability
+					{
+						tempphase[rand_phases] = 4;
+						rand_phases++;
+					}
+
+					if (rand_phases <= 2)	//Two or fewer available, just mask us out
+						work_phases = 0x07;	//This will pull the appropriate phase
+					else	//Must be 3, right?
+					{
+						//Pick a random phase - this will be the one we DON'T fault
+						randval = gl_random_sampled(RNGSTATE,numphase,tempphase);
+
+						//Set temp_phases appropriate
+						if (randval == 1)	//Leave phase C
+							work_phases = 0x06;	//A and B fault
+						else if (randval == 2)	//Leave phase B
+							work_phases = 0x05;	//A and C fault
+						else	//Must be 4	- leave phase A
+							work_phases = 0x03;	//B and C fault
+					}//end must be 3
+				}//end random condition
+				//Defaulted else - not random, so just use as normal mask
+
+				//Determine phases to fault
+				temp_phases &= work_phases;
+
+				//Implement the appropriate fault
+				switch (temp_phases)
+				{
+				case 0x00:	//No phases!
+					*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
+					break;
+				case 0x01:	//Only phase C
+					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+					*implemented_fault = 13;							//Flag as a C OC fault
+					break;
+				case 0x02:	//Only phase B
+					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+					*implemented_fault = 12;							//Flag as a B OC fault
+					break;
+				case 0x03:	//B and C
+					NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+					*implemented_fault = 15;							//Flag as a B & C fault
+					break;
+				case 0x04:	//Only A
+					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+					*implemented_fault = 11;							//Flag as a A OC fault
+					break;
+				case 0x05:	//A and C
+					NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+					*implemented_fault = 16;							//Flag as A and C fault
+					break;
+				case 0x06:	//A and B
+					NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+					*implemented_fault = 14;							//Flag as A and B fault
+					break;
+				default:	//Not sure how we'd ever get here
+					GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
+					//Defined above
+					break;
+				}//end switch
+
+				phase_remove = temp_phases;	//Flag phase removing
+
+			}//end all three present
+			else	//Hmmm, how'd we get here?
+			{
+				GL_THROW("An invalid number of phases appears present for %s",objhdr->name);
+				//Defined above
+			}
+		}//End OC2
+		else if ((fault_type[0] == 'O') && (fault_type[1] == 'C') && (fault_type[2] == '3'))	//Triple open-conductor fault
+		{
+			//Let's see what phases we have to play with
+			temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
+
+			//Case it out - if we want TLG, but don't have all three phases, just trip whatever we have
+			switch (temp_phases)
+			{
+			case 0x00:	//No phases!
+				*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
+				break;
+			case 0x01:	//Only phase C
+				NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+				*implemented_fault = 13;							//Flag as a C only fault
+				break;
+			case 0x02:	//Only phase B
+				NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+				*implemented_fault = 12;							//Flag as a B only fault
+				break;
+			case 0x03:	//B and C
+				NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+				*implemented_fault = 15;							//Flag as a B & C fault
+				break;
+			case 0x04:	//Only A
+				NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+				*implemented_fault = 11;							//Flag as a A only fault
+				break;
+			case 0x05:	//A and C
+				NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+				*implemented_fault = 16;							//Flag as A and C fault
+				break;
+			case 0x06:	//A and B
+				NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+				*implemented_fault = 14;							//Flag as A and B fault
+				break;
+			case 0x07:	//A, B, and C
+				NR_branchdata[NR_branch_reference].phases &= 0xF8;	//Remove A, B, and C
+				*implemented_fault = 17;							//Flag as all three fault
+				break;
+			default:	//Not sure how we'd ever get here
+				GL_THROW("Unknown phase condition on three-phase fault of %s!",objhdr->name);
+				//Defined above
+				break;
+			}//end phase cases
+
+			phase_remove = temp_phases;	//Flag phase removing
+
+		}//End OC3
+		else if ((fault_type[0] == 'S') && (fault_type[1] == 'W') && (fault_type[2] == '-'))	//Switch operations - event or user induced (no random - so handled slightly different)
+		{
+			//Determine which scenario we're in
+			if ((fault_type[3] == 'A') && (fault_type[4] == '\0'))	//Phase A occurance
+			{
+				if (has_phase(PHASE_A))
+				{
+					if ((NR_branchdata[NR_branch_reference].origphases & 0x04) == 0x04)	//make sure phase A is active (no previous fault)
+					{
+						//Remove phase A
+						NR_branchdata[NR_branch_reference].phases &= 0xFB;
+
+						phase_remove = 0x04;	//Flag phase being removed
+
+						//Flag the fault type
+						*implemented_fault = 18;
+					}
+					else	//Already in a fault - just flag us as none and go on our way
+					{
+						*implemented_fault = 0;
+					}
+				}//end has PHASE_A
+				else
+				{
+					gl_warning("%s does not have a phase A to fault!",OBJECTHDR(this)->name);
+					//Defined above
+				}
+			}
+			else if ((fault_type[3] == 'B') && (fault_type[4] == '\0'))	//Phase B occurance
+			{
+				if (has_phase(PHASE_B))
+				{
+					if ((NR_branchdata[NR_branch_reference].origphases & 0x02) == 0x02)	//make sure phase B is active (no previous fault)
+					{
+						//Remove phase B
+						NR_branchdata[NR_branch_reference].phases &= 0xFD;
+
+						phase_remove = 0x02;	//Flag phase being removed
+
+						//Flag the fault type
+						*implemented_fault = 19;
+					}
+					else	//Already in a fault - just flag us as none and go on our way
+					{
+						*implemented_fault = 0;
+					}
+				}//end has PHASE_B
+				else
+				{
+					gl_warning("%s does not have a phase B to fault!",OBJECTHDR(this)->name);
+					//Defined above
+				}
+			}
+			else if ((fault_type[3] == 'C') && (fault_type[4] == '\0'))	//Phase C occurance
+			{
+				if (has_phase(PHASE_C))
+				{
+					if ((NR_branchdata[NR_branch_reference].origphases & 0x01) == 0x01)	//make sure phase C is active (no previous fault)
+					{
+						//Remove phase C
+						NR_branchdata[NR_branch_reference].phases &= 0xFE;
+
+						phase_remove = 0x01;	//Flag phase being removed
+
+						//Flag the fault type
+						*implemented_fault = 20;
+					}
+					else	//Already in a fault - just flag us as none and go on our way
+					{
+						*implemented_fault = 0;
+					}
+				}//end has PHASE_C
+				else
+				{
+					gl_warning("%s does not have a phase C to fault!",OBJECTHDR(this)->name);
+					//Defined above
+				}
+			}
+			else if (fault_type[5] == '\0')	//Two Phase occurance
+			{
+				//Figure out who we want to alter - assume [2] is a -, so check [3]+
+				work_phases = 0x00;
+
+				if ((fault_type[3] == 'A') || (fault_type[4] == 'A'))	//A is desired
+					work_phases |= 0x04;
+
+				if ((fault_type[3] == 'B') || (fault_type[4] == 'B'))	//B is desired
+					work_phases |= 0x02;
+
+				if ((fault_type[3] == 'C') || (fault_type[4] == 'C'))	//C is desired
+					work_phases |= 0x01;
+
+				//See how many phases we have to deal with
+				numphase = 0;
+
+				if (has_phase(PHASE_A))
+				{
+					numphase++;					//Increment count
+				}
+
+				if (has_phase(PHASE_B))
+				{
+					numphase++;					//Increment count
+				}
+
+				if (has_phase(PHASE_C))
+				{
+					numphase++;					//Increment count
+				}
+
+				//Pull out what phases we have to play with
+				temp_phases = NR_branchdata[NR_branch_reference].origphases & 0x07;
+
+				if (numphase == 0)
+				{
+					GL_THROW("No phases detected for %s!",objhdr->name);
+					//Defined above
+				}//end 0 phase
+				else if (numphase < 2)	//Single phase line (no zero phase this way)
+				{
+					//See how the present coincide with the two we're asking for
+					temp_phases &= work_phases;
+
+					//Figure out what is going on
+					switch (temp_phases)
+					{
+					case 0x00:	//No phases available - something must have faulted
+						*implemented_fault = 0;	//Flag as such
+						break;
+					case 0x01:	//Phase C
+						NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+						*implemented_fault = 20;							//Flag as a C switching
+						break;
+					case 0x02:	//Phase B
+						NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+						*implemented_fault = 19;							//Flag as a B switching
+						break;
+					case 0x04:	//Phase A
+						NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+						*implemented_fault = 18;							//Flag as a A switching
+						break;
+					default:	//No other cases should exist
+						GL_THROW("Fault type %s for link objects has an invalid phase specification");
+						//Defined above
+						break;
+					}//end switch
+
+					phase_remove = temp_phases;	//Flag phase removing
+
+				}//end <2 phases (only 1 presumably)
+				else if (numphase == 2)	//Only two phases present
+				{
+					//See how the two present coincide with the two we're asking for
+					temp_phases &= work_phases;
+
+					//Implement the appropriate fault
+					switch (temp_phases)
+					{
+					case 0x00:	//No phases!
+						*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
+						break;
+					case 0x01:	//Only phase C
+						NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+						*implemented_fault = 20;							//Flag as a C switching
+						break;
+					case 0x02:	//Only phase B
+						NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+						*implemented_fault = 19;							//Flag as a B switching
+						break;
+					case 0x03:	//B and C
+						NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+						*implemented_fault = 22;							//Flag as a B & C switching
+						break;
+					case 0x04:	//Only A
+						NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+						*implemented_fault = 18;							//Flag as a A switching
+						break;
+					case 0x05:	//A and C
+						NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+						*implemented_fault = 23;							//Flag as A and C switching
+						break;
+					case 0x06:	//A and B
+						NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+						*implemented_fault = 21;							//Flag as A and B switching
+						break;
+					default:	//Not sure how we'd ever get here
+						GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
+						//Defined above
+						break;
+					}//end switch
+
+					phase_remove = temp_phases;	//Flag phase removing
+
+				}//end 2 phases present
+				else if (numphase == 3)	//All phases present
+				{
+					//Determine phases to fault
+					temp_phases &= work_phases;
+
+					//Implement the appropriate fault
+					switch (temp_phases)
+					{
+					case 0x00:	//No phases!
+						*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
+						break;
+					case 0x01:	//Only phase C
+						NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+						*implemented_fault = 20;							//Flag as a C switching
+						break;
+					case 0x02:	//Only phase B
+						NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+						*implemented_fault = 19;							//Flag as a B switching
+						break;
+					case 0x03:	//B and C
+						NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+						*implemented_fault = 22;							//Flag as a B & C fault
+						break;
+					case 0x04:	//Only A
+						NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+						*implemented_fault = 18;							//Flag as a A switching
+						break;
+					case 0x05:	//A and C
+						NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+						*implemented_fault = 23;							//Flag as A and C switching
+						break;
+					case 0x06:	//A and B
+						NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+						*implemented_fault = 21;							//Flag as A and B switching
+						break;
+					default:	//Not sure how we'd ever get here
+						GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
+						//Defined above
+						break;
+					}//end switch
+
+					phase_remove = temp_phases;	//Flag phase removing
+
+				}//end all three present
+				else	//Hmmm, how'd we get here?
+				{
+					GL_THROW("An invalid number of phases appears present for %s",objhdr->name);
+					//Defined above
+				}
+			}//End Switch two phases
+			else if (fault_type[6] == '\0')	//Three Phase occurance
+			{
+				//Let's see what phases we have to play with
+				temp_phases = NR_branchdata[NR_branch_reference].origphases & 0x07;
+
+				//Case it out - if we want three-phase switching, but don't have all three phases, just switch whatever we have
+				switch (temp_phases)
+				{
+				case 0x00:	//No phases!
+					*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
+					break;
+				case 0x01:	//Only phase C
+					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+					*implemented_fault = 20;							//Flag as a C only switching
+					break;
+				case 0x02:	//Only phase B
+					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+					*implemented_fault = 19;							//Flag as a B only switching
+					break;
+				case 0x03:	//B and C
+					NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+					*implemented_fault = 22;							//Flag as a B & C switching
+					break;
+				case 0x04:	//Only A
+					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+					*implemented_fault = 18;							//Flag as a A only switching
+					break;
+				case 0x05:	//A and C
+					NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+					*implemented_fault = 23;							//Flag as A and C switching
+					break;
+				case 0x06:	//A and B
+					NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+					*implemented_fault = 21;							//Flag as A and B switching
+					break;
+				case 0x07:	//A, B, and C
+					NR_branchdata[NR_branch_reference].phases &= 0xF8;	//Remove A, B, and C
+					*implemented_fault = 24;							//Flag as all three switching
+					break;
+				default:	//Not sure how we'd ever get here
+					GL_THROW("Unknown phase condition on three-phase fault of %s!",objhdr->name);
+					//Defined above
+					break;
+				}//end phase cases
+
+				phase_remove = temp_phases;	//Flag phase removing
+			}//End three-phase occurance
+
+			//Flag as special case
+			switch_val = true;
+
+		}//End switches
+		else if ((fault_type[0] == 'F') && (fault_type[1] == 'U') && (fault_type[2] == 'S') && (fault_type[3] == '-') && (fault_type[5] == '\0'))	//Single phase fuse fault
+		{
+			//First see if it is an 'X' - for random phase.  If so, pick one and proceed
+			if (fault_type[4] == 'X')
+			{
+				//Reset counter
+				numphase = 0;
+
+				//See how many phases we get to work with 0 populate the phase array at the same time
+				if (has_phase(PHASE_A))
+				{
+					tempphase[numphase] = 4;	//Flag for phase A - NR convention
+					numphase++;					//Increment count
+				}
+
+				if (has_phase(PHASE_B))
+				{
+					tempphase[numphase] = 2;	//Flag for phase B - NR convention
+					numphase++;					//Increment count
+				}
+
+				if (has_phase(PHASE_C))
+				{
+					tempphase[numphase] = 1;	//Flag for phase C - NR convention
+					numphase++;					//Increment count
+				}
+
+				//Get a random value
+				randval = gl_random_sampled(RNGSTATE,numphase,tempphase);
+
+				//Put it back into proper format
+				rand_phases = (unsigned char)(randval);
+			}
+			else	//Not a random - clear the variable, just in case
+				rand_phases = 0x00;
+
+			if ((fault_type[4] == 'A') || (rand_phases == 0x04))
+			{
+				if (has_phase(PHASE_A))
+				{
+					if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//make sure phase A is active (no previous fault)
+					{
+						//Remove phase A
+						NR_branchdata[NR_branch_reference].phases &= 0xFB;
+
+						phase_remove = 0x04;	//Flag phase being removed
+
+						//Flag the fault type
+						*implemented_fault = 25;
+					}
+					else	//Already in a fault - just flag us as none and go on our way
+					{
+						*implemented_fault = 0;
+					}
+				}//end has PHASE_A
+				else
+				{
+					gl_warning("%s does not have a phase A to fault!",OBJECTHDR(this)->name);
+					//Defined above
+				}
+			}//End A fault
+			else if ((fault_type[4] == 'B') || (rand_phases == 0x02))
+			{
+				if (has_phase(PHASE_B))
+				{
+					if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//make sure phase B is active (no previous fault)
+					{
+						//Remove phase B
+						NR_branchdata[NR_branch_reference].phases &= 0xFD;
+
+						//Flag phase being removed
+						phase_remove = 0x02;
+
+						//Flag the fault type
+						*implemented_fault = 26;
+					}
+					else	//Already in a fault - just flag us as none and go on our way
+					{
+						*implemented_fault = 0;
+					}
+				}//end has PHASE_B
+				else
+				{
+					gl_warning("%s does not have a phase B to fault!",OBJECTHDR(this)->name);
+					//Defined above
+				}
+			}
+			else if ((fault_type[4] == 'C') || (rand_phases == 0x01))
+			{
+				if (has_phase(PHASE_C))
+				{
+					if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//make sure phase C is active (no previous fault)
+					{
+						//Remove phase C
+						NR_branchdata[NR_branch_reference].phases &= 0xFE;
+
+						//Flag phase being removed
+						phase_remove = 0x01;
+
+						//Flag the fault type
+						*implemented_fault = 27;
+					}
+					else	//Already in a fault - just flag us as none and go on our way
+					{
+						*implemented_fault = 0;
+					}
+				}//end has PHASE_C
+				else
+				{
+					gl_warning("%s does not have a phase C to fault!",OBJECTHDR(this)->name);
+					//defined above
+				}
+			}
+			else	//Something else, fail
+			{
+				GL_THROW("Fault type %s for link objects has an invalid phase specification");
+				//Defined above
+			}
+		}//End single phase fuse fault
+		else if ((fault_type[0] == 'F') && (fault_type[1] == 'U') && (fault_type[2] == 'S') && (fault_type[3] == '-') && (fault_type[6] == '\0'))	//Double fuse fault
+		{
+			//Figure out who we want to alter - assume [3] is a -, so check [4]+
+			work_phases = 0x00;
+
+			if (fault_type[4] == 'X')	//Random, flag as such
+				work_phases |= 0x08;
+			
+			if ((fault_type[4] == 'A') || (fault_type[5] == 'A'))	//A is desired
+				work_phases |= 0x04;
+
+			if ((fault_type[4] == 'B') || (fault_type[5] == 'B'))	//B is desired
+				work_phases |= 0x02;
+
+			if ((fault_type[4] == 'C') || (fault_type[5] == 'C'))	//C is desired
+				work_phases |= 0x01;
+
+			//See how many phases we have to deal with
+			numphase = 0;
+
+			if (has_phase(PHASE_A))
+			{
+				numphase++;					//Increment count
+			}
+
+			if (has_phase(PHASE_B))
+			{
+				numphase++;					//Increment count
+			}
+
+			if (has_phase(PHASE_C))
+			{
+				numphase++;					//Increment count
+			}
+
+			//Pull out what phases we have to play with
+			temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
+
+			if (numphase == 0)
+			{
+				GL_THROW("No phases detected for %s!",objhdr->name);
+				//Defined above
+			}//end 0 phase
+			else if (numphase < 2)	//Single phase line (no zero phase this way)
+			{
+				//Refine our criteria
+				if ((work_phases & 0x08) != 0x08)	//Not random case
+					temp_phases &= work_phases;
+
+				//defaulted else - if random case, only getting one phase out of this anywho (leave temp_phases as is)
+
+				switch (temp_phases)
+				{
+				case 0x00:	//No phases available - something must have faulted
+					*implemented_fault = 0;	//Flag as such
+					break;
+				case 0x01:	//Phase C
+					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+					*implemented_fault = 27;							//Flag as a C fuse fault
+					break;
+				case 0x02:	//Phase B
+					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+					*implemented_fault = 26;							//Flag as a B fuse fault
+					break;
+				case 0x04:	//Phase A
+					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+					*implemented_fault = 25;							//Flag as a A fuse fault
+					break;
+				default:	//No other cases should exist
+					GL_THROW("Fault type %s for link objects has an invalid phase specification");
+					//Defined above
+					break;
+				}//end switch
+
+				phase_remove = temp_phases;	//Flag phase removing
+
+			}//end <2 phases (only 1 presumably)
+			else if (numphase == 2)	//Only two phases present
+			{
+				//See how the two present coincide with the two we're asking for
+				if ((work_phases & 0x08) != 0x08)	//Not random case, see what we have
+					temp_phases &= work_phases;
+				//Defaulted else - if random, only 1 choice exists, which is temp_phases (leave temp_phases as is)
+
+				//Implement the appropriate fault
+				switch (temp_phases)
+				{
+				case 0x00:	//No phases!
+					*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
+					break;
+				case 0x01:	//Only phase C
+					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+					*implemented_fault = 27;							//Flag as a C fuse fault
+					break;
+				case 0x02:	//Only phase B
+					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+					*implemented_fault = 26;							//Flag as a B fuse fault
+					break;
+				case 0x03:	//B and C
+					NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+					*implemented_fault = 29;							//Flag as a B & C fuse fault
+					break;
+				case 0x04:	//Only A
+					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+					*implemented_fault = 25;							//Flag as a A fuse fault
+					break;
+				case 0x05:	//A and C
+					NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+					*implemented_fault = 30;							//Flag as A and C fuse fault
+					break;
+				case 0x06:	//A and B
+					NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+					*implemented_fault = 28;							//Flag as A and B fuse fault
+					break;
+				default:	//Not sure how we'd ever get here
+					GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
+					//Defined above
+					break;
+				}//end switch
+
+				phase_remove = temp_phases;	//Flag phase removing
+
+			}//end 2 phases present
+			else if (numphase == 3)	//All phases present
+			{
+				if ((work_phases & 0x08) == 0x08)	//Random condition
+				{
+					//See if we have all three available to fault (if one or more is already faulted, we won't care)
+					rand_phases = 0;
+
+					//Check and populate random array as well
+					if ((temp_phases & 0x01) == 0x01)	//Check for C availability
+					{
+						tempphase[rand_phases] = 1;
+						rand_phases++;
+					}
+
+					if ((temp_phases & 0x02) == 0x02)	//Check for B availability
+					{
+						tempphase[rand_phases] = 2;
+						rand_phases++;
+					}
+
+					if ((temp_phases & 0x04) == 0x04)	//Check for A availability
+					{
+						tempphase[rand_phases] = 4;
+						rand_phases++;
+					}
+
+					if (rand_phases <= 2)	//Two or fewer available, just mask us out
+						work_phases = 0x07;	//This will pull the appropriate phase
+					else	//Must be 3, right?
+					{
+						//Pick a random phase - this will be the one we DON'T fault
+						randval = gl_random_sampled(RNGSTATE,numphase,tempphase);
+
+						//Set temp_phases appropriate
+						if (randval == 1)	//Leave phase C
+							work_phases = 0x06;	//A and B fuse fault
+						else if (randval == 2)	//Leave phase B
+							work_phases = 0x05;	//A and C fuse fault
+						else	//Must be 4	- leave phase A
+							work_phases = 0x03;	//B and C fuse fault
+					}//end must be 3
+				}//end random condition
+				//Defaulted else - not random, so just use as normal mask
+
+				//Determine phases to fault
+				temp_phases &= work_phases;
+
+				//Implement the appropriate fault
+				switch (temp_phases)
+				{
+				case 0x00:	//No phases!
+					*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
+					break;
+				case 0x01:	//Only phase C
+					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+					*implemented_fault = 27;							//Flag as a C fuse fault
+					break;
+				case 0x02:	//Only phase B
+					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+					*implemented_fault = 26;							//Flag as a B fuse fault
+					break;
+				case 0x03:	//B and C
+					NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+					*implemented_fault = 29;							//Flag as a B & C fuse fault
+					break;
+				case 0x04:	//Only A
+					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+					*implemented_fault = 25;							//Flag as a A fuse fault
+					break;
+				case 0x05:	//A and C
+					NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+					*implemented_fault = 30;							//Flag as A and C fuse fault
+					break;
+				case 0x06:	//A and B
+					NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+					*implemented_fault = 28;							//Flag as A and B fuse fault
+					break;
+				default:	//Not sure how we'd ever get here
+					GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
+					//Defined above
+					break;
+				}//end switch
+
+				phase_remove = temp_phases;	//Flag phase removing
+
+			}//end all three present
+			else	//Hmmm, how'd we get here?
+			{
+				GL_THROW("An invalid number of phases appears present for %s",objhdr->name);
+				//Defined above
+			}
+		}//End two-phase fuse fault
+		else if ((fault_type[0] == 'F') && (fault_type[1] == 'U') && (fault_type[2] == 'S') && (fault_type[3] == '-') && (fault_type[7] == '\0'))	//Three-phase fuse pop
+		{
+			//Let's see what phases we have to play with
+			temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
+
+			//Case it out - if we want TLG, but don't have all three phases, just trip whatever we have
+			switch (temp_phases)
+			{
+			case 0x00:	//No phases!
+				*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
+				break;
+			case 0x01:	//Only phase C
+				NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+				*implemented_fault = 27;							//Flag as a C only fuse fault
+				break;
+			case 0x02:	//Only phase B
+				NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+				*implemented_fault = 26;							//Flag as a B only fuse fault
+				break;
+			case 0x03:	//B and C
+				NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+				*implemented_fault = 29;							//Flag as a B & C fuse fault
+				break;
+			case 0x04:	//Only A
+				NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+				*implemented_fault = 25;							//Flag as a A only fuse fault
+				break;
+			case 0x05:	//A and C
+				NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+				*implemented_fault = 30;							//Flag as A and C fuse fault
+				break;
+			case 0x06:	//A and B
+				NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+				*implemented_fault = 28;							//Flag as A and B fuse fault
+				break;
+			case 0x07:	//A, B, and C
+				NR_branchdata[NR_branch_reference].phases &= 0xF8;	//Remove A, B, and C
+				*implemented_fault = 31;							//Flag as all three fuse fault
+				break;
+			default:	//Not sure how we'd ever get here
+				GL_THROW("Unknown phase condition on three-phase fault of %s!",objhdr->name);
+				//Defined above
+				break;
+			}//end phase cases
+
+			phase_remove = temp_phases;	//Flag phase removing
+
+		}//End three-phase fuse fault
+		else	//Undetermined fault - fail us
+		{
+			GL_THROW("Fault type %s is not recognized for link objects!",fault_type);
+			/*  TROUBLESHOOT
+			The fault type specified in the eventgen object is invalid for link objects.  Please select the
+			appropriate fault type and try again.  If this message has come up in error, please submit your code and a
+			bug report using the trac website.
+			*/
+
+			return 0;	//Shouldn't get here, but just in case.
+		}
+
+		//Preliminary error check - see if switch faults or fuse faults are indeed being done on a fuse/switch
+		if ((*implemented_fault>=18) && (*implemented_fault <= 24))	//Switch faults
+		{
+			if (NR_branchdata[NR_branch_reference].lnk_type != 2)	//Switch
+			{
+				GL_THROW("Event type %s was tried on a non-switch object!",fault_type);
+				/*  TROUBLESHOOT
+				A switch-related faulted was attempted on a device that is not a switch.
+				Please specify a switch in the eventgen group and try again.  If the error
+				persists, please submit your code and a bug report via the trac website.
+				*/
 			}
 		}
 
-		//Update powerflow - removal mode
-		ext_result = ((int (*)(OBJECT *, int, bool))(*funadd))(fault_check_object,temp_branch,false);
-
-		//Make sure it worked
-		if (ext_result != 1)
+		if ((*implemented_fault>=25) && (*implemented_fault <= 31))	//fuse faults
 		{
-			GL_THROW("Unable to update objects for reliability effects");
-			//defined above
+			if (NR_branchdata[NR_branch_reference].lnk_type != 3)	//Fuse
+			{
+				GL_THROW("Event type %s was tried on a non-fuse object!",fault_type);
+				/*  TROUBLESHOOT
+				A fuse-related faulted was attempted on a device that is not a fuse.
+				Please specify a fuse in the eventgen group and try again.  If the error
+				persists, please submit your code and a bug report via the trac website.
+				*/
+			}
 		}
 
-		if (temp_branch == -99)
-			gl_verbose("Event %d induced on %s by using %s",*implemented_fault,objhdr->name,NR_busdata[0].name);
-		else
-			gl_verbose("Event %d induced on %s by using %s",*implemented_fault,objhdr->name,NR_branchdata[temp_branch].name);
-	}//End a change has been flagged
+		//See if we actually did anything - if we were already in a fault, we don't care
+		if (*implemented_fault != 0)
+		{
+			LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
 
-	return 1;	//Successful
+			NR_admit_change = true;		//Flag an admittance update - this should trigger fault_check
+			
+			UNLOCK_OBJECT(NR_swing_bus);	//Release us
+
+			//set up the remaining 4 fault specific equations in C_mat before calculating the fault current
+			if(*implemented_fault == 1){ //SLG-A -> Ifb=Ifc=Vax=Vxg=0
+				C_mat[3][1]=C_mat[4][2]=C_mat[5][3]=C_mat[6][6]=complex(1,0);
+				type_fault = 1;
+				fault_current_calc(C_mat, phase_remove, type_fault);
+			} else if(*implemented_fault == 2){ //SLG-B -> Ifa=Ifc=Vbx=Vxg=0
+				C_mat[3][0]=C_mat[4][2]=C_mat[5][4]=C_mat[6][6]=complex(1,0);
+				type_fault = 2;
+				fault_current_calc(C_mat, phase_remove, type_fault);
+			} else if(*implemented_fault == 3){ //SLG-C -> Ifa=Ifb=Vcx=Vxg=0
+				C_mat[3][0]=C_mat[4][1]=C_mat[5][5]=C_mat[6][6]=complex(1,0);
+				type_fault = 3;
+				fault_current_calc(C_mat, phase_remove, type_fault);
+			} else if(*implemented_fault == 4){ //DLG-AB -> Ifc=Vax=Vbx=Vxg=0
+				C_mat[3][2]=C_mat[4][3]=C_mat[5][4]=C_mat[6][6]=complex(1,0);
+				type_fault = 4;
+				fault_current_calc(C_mat, phase_remove, type_fault);
+			} else if(*implemented_fault == 5){ //DLG-BC -> Ifa=Vbx=Vcx=Vxg=0
+				C_mat[3][0]=C_mat[4][4]=C_mat[5][5]=C_mat[6][6]=complex(1,0);
+				type_fault = 5;
+				fault_current_calc(C_mat, phase_remove, type_fault);
+			} else if(*implemented_fault == 6){ //DLG-CA -> Ifb=Vax=Vcx=Vxg=0
+				C_mat[3][1]=C_mat[4][3]=C_mat[5][5]=C_mat[6][6]=complex(1,0);
+				type_fault = 6;
+				fault_current_calc(C_mat, phase_remove, type_fault);
+			} else if(*implemented_fault == 7){ //LL-AB -> Ifa+Ifb=Ifc=Vax=Vbx=0
+				C_mat[3][0]=C_mat[3][1]=C_mat[4][2]=C_mat[5][3]=C_mat[6][4]=complex(1,0);
+				type_fault = 7;
+				fault_current_calc(C_mat, phase_remove, type_fault);
+			} else if(*implemented_fault == 8){ //LL-BC -> Ifb+Ifc=Ifa=Vbx=Vcx=0
+				C_mat[3][1]=C_mat[3][2]=C_mat[4][0]=C_mat[5][4]=C_mat[6][5]=complex(1,0);
+				type_fault = 8;
+				fault_current_calc(C_mat, phase_remove, type_fault);
+			} else if(*implemented_fault == 9){ //LL-CA -> Ifa+Ifc=Ifb=Vax=Vcx=0
+				C_mat[3][0]=C_mat[3][2]=C_mat[4][1]=C_mat[5][3]=C_mat[6][5]=complex(1,0);
+				type_fault = 9;
+				fault_current_calc(C_mat, phase_remove, type_fault);
+			} else if(*implemented_fault == 10){ //TLG-ABC -> Vax=Vbx=Vcx=Vxg=0
+				C_mat[3][3]=C_mat[4][4]=C_mat[5][5]=C_mat[6][6]=complex(1,0);
+				type_fault = 10;
+				fault_current_calc(C_mat, phase_remove, type_fault);
+			} else if(*implemented_fault == 32){ //TLL-ABC -> Ifa+Ifb+Ifc=Vax=Vbx=Vcx=0
+				C_mat[3][0]=C_mat[3][1]=C_mat[3][2]=C_mat[4][3]=C_mat[5][4]=C_mat[6][5]=complex(1,0);
+				type_fault = 11;
+				fault_current_calc(C_mat, phase_remove, type_fault);
+			}
+			// Calculate the fault current
+
+			
+
+			//Progress upward through the list until we hit a "safety" device (fuse or switch) - pop said device
+			//If we somehow hit the swing bus, kill that entire phase
+
+			//First off, see if we ARE a safety device.  That makes things easier
+			//Safety devices classified as fuse or recloser - switches and sectionalizers only aid in mitigation, not actual faulting
+			//Switches are included here in cases of where they are an intentionally induced action - sectionalizers have no such thing thus far
+			if (NR_branchdata[NR_branch_reference].lnk_type == 3)	//Fuse
+			{
+				//Get the fuse
+				tmpobj = gl_get_object(NR_branchdata[NR_branch_reference].name);
+
+				if (tmpobj == NULL)
+				{
+					GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[NR_branch_reference].name);
+					/*  TROUBLESHOOT
+					While attempting to set the state of a fuse, an error occurred.  Please try again.  If the error persists,
+					please submit a bug report and your code via the trac website.
+					*/
+				}
+
+				funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_state"));
+				
+				//Make sure it was found
+				if (funadd == NULL)
+				{
+					GL_THROW("Unable to change fuse state on %s",tmpobj->name);
+					/*  TROUBLESHOOT
+					While attempting to alter a fuse state, the proper fuse function was not found.
+					If the problem persists, please submit a bug report and your code to the trac website.
+					*/
+				}
+
+				//Update the fuse statii
+				ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
+
+				//Make sure it worked
+				if (ext_result != 1)
+				{
+					GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[NR_branch_reference].name);
+					//defined above
+				}
+
+				//Retrieve the mean_repair_time
+				temp_double_val = get_double(tmpobj,"mean_repair_time");
+
+				//See if it worked
+				if (temp_double_val == NULL)
+				{
+					gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
+					/*  TROUBLESHOOT
+					While attempting to access the mean_repair_time of the safety device, GridLAB-D encountered
+					an error.  Ensure the object has this value.  If it does not, it will be ignored.  If it does
+					exist and this warning appeared, please try again.  If the warning persists, please submit your
+					code and a bug report via the trac website.
+					*/
+					*repair_time = 0;
+				}
+				else	//It did map - get the value
+				{
+					*repair_time = (TIMESTAMP)(*temp_double_val);
+				}
+
+				//Store the branch as an index in appropriate phases
+				for (phaseidx=0; phaseidx < 3; phaseidx++)
+				{
+					temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+					if ((phase_remove & temp_phases) == temp_phases)
+					{
+						protect_locations[phaseidx] = NR_branch_reference;	//Store ourselves
+					}
+				}
+
+				//Update our fault phases so we aren't restored
+				NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
+
+				//Remove the relevant phases 
+				NR_branchdata[NR_branch_reference].phases &= ~(phase_remove);
+
+				//Store the object handle
+				*protect_obj=tmpobj;
+
+				//Flag us as being protected
+				safety_hit = true;
+
+			}//end fuse
+			else if (NR_branchdata[NR_branch_reference].lnk_type == 6)	//Recloser
+			{
+				//Get the recloser
+				tmpobj = gl_get_object(NR_branchdata[NR_branch_reference].name);
+
+				if (tmpobj == NULL)
+				{
+					GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[NR_branch_reference].name);
+					/*  TROUBLESHOOT
+					While attempting to set the state of a recloser, an error occurred.  Please try again.  If the error persists,
+					please submit a bug report and your code via the trac website.
+					*/
+				}
+
+				funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_state"));
+				
+				//Make sure it was found
+				if (funadd == NULL)
+				{
+					GL_THROW("Unable to change recloser state on %s",tmpobj->name);
+					/*  TROUBLESHOOT
+					While attempting to alter a recloser state, the proper recloser function was not found.
+					If the problem persists, please submit a bug report and your code to the trac website.
+					*/
+				}
+
+				//Update the recloser statii - return is the number of attempts (max attempts in this case)
+				ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
+
+				//Make sure it worked
+				if (ext_result_dbl == 0)
+				{
+					GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[NR_branch_reference].name);
+					//defined above
+				}
+
+				//Retrieve the mean_repair_time
+				temp_double_val = get_double(tmpobj,"mean_repair_time");
+
+				//See if it worked
+				if (temp_double_val == NULL)
+				{
+					gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
+					//Defined above
+					*repair_time = 0;
+				}
+				else	//It did map - get the value
+				{
+					*repair_time = (TIMESTAMP)(*temp_double_val);
+				}
+
+				//Store the number of recloser actions
+				*Recloser_Counts = ext_result_dbl;
+
+				//Store the branch as an index in appropriate phases
+				for (phaseidx=0; phaseidx < 3; phaseidx++)
+				{
+					temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+					if ((phase_remove & temp_phases) == temp_phases)
+					{
+						protect_locations[phaseidx] = NR_branch_reference;	//Store ourselves
+					}
+				}
+
+				//Update our fault phases so we aren't restored
+				NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
+
+				//Remove the relevant phases 
+				NR_branchdata[NR_branch_reference].phases &= ~(phase_remove);
+
+				//Store the object handle
+				*protect_obj=tmpobj;
+
+				//Flag us as being protected
+				safety_hit = true;
+
+			}//End recloser
+			else if ((NR_branchdata[NR_branch_reference].lnk_type == 2) && (switch_val == true))	//Switch induced fault - handle it
+			{
+				//Follows convention of safety devices above
+				//Extra coding - basically what would have happened below when it was classified as a safety device
+				//Get the switch
+				tmpobj = gl_get_object(NR_branchdata[NR_branch_reference].name);
+
+				if (tmpobj == NULL)
+				{
+					GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[NR_branch_reference].name);
+					/*  TROUBLESHOOT
+					While attempting to set the state of a switch, an error occurred.  Please try again.  If the error persists,
+					please submit a bug report and your code via the trac website.
+					*/
+				}
+
+				funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_switch_state"));
+				
+				//Make sure it was found
+				if (funadd == NULL)
+				{
+					GL_THROW("Unable to change switch state on %s",tmpobj->name);
+					/*  TROUBLESHOOT
+					While attempting to alter a switch state, the proper switch function was not found.
+					If the problem persists, please submit a bug report and your code to the trac website.
+					*/
+				}
+
+				//Update the switch statii
+				ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
+
+				//Make sure it worked
+				if (ext_result != 1)
+				{
+					GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[NR_branch_reference].name);
+					//defined above
+				}
+
+				//Retrieve the mean_repair_time
+				temp_double_val = get_double(tmpobj,"mean_repair_time");
+
+				//See if it worked
+				if (temp_double_val == NULL)
+				{
+					gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
+					//Defined above
+					*repair_time = 0;
+				}
+				else	//It did map - get the value
+				{
+					*repair_time = (TIMESTAMP)(*temp_double_val);
+				}
+
+				//Store ourselves as our protective device
+				for (phaseidx=0; phaseidx < 3; phaseidx++)
+				{
+					temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+					if ((phase_remove & temp_phases) == temp_phases)
+					{
+						protect_locations[phaseidx] = NR_branch_reference;	//Store ourselves
+					}
+				}
+
+				//Flag our fault phases
+				NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
+
+				//Remove the relevant phases 
+				NR_branchdata[NR_branch_reference].phases &= ~(phase_remove);
+
+				//Store the object handle
+				*protect_obj=tmpobj;
+
+				safety_hit = true;	//We hit a protective device
+			}
+			else
+			{
+				safety_hit = false;	//Nope, let's find one
+			}
+
+			//Start up the loop - populate initial variable
+			temp_branch = NR_branch_reference;
+
+			while (safety_hit != true)
+			{
+				//Pull from bus of current link
+				temp_node = NR_branchdata[temp_branch].from;
+
+				//See if temp_node is a swing.  If so, remove the relevant phase and we're done
+				if (NR_busdata[temp_node].type == 2)
+				{
+					//Store the swing as an index in appropriate phases
+					for (phaseidx=0; phaseidx < 3; phaseidx++)
+					{
+						temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+						if ((phase_remove & temp_phases) == temp_phases)
+						{
+							protect_locations[phaseidx] = -99;	//Flag for swing
+						}
+					}
+
+					//Get the swing bus value
+					tmpobj = gl_get_object(NR_busdata[temp_node].name);
+
+					if (tmpobj == NULL)
+					{
+						GL_THROW("An attempt to find the swing node %s failed.",NR_busdata[temp_node].name);
+						/*  TROUBLESHOOT
+						While attempting to get the mean repair time for the swing bus, an error occurred.  Please try again.  If the error persists,
+						please submit a bug report and your code via the trac website.
+						*/
+					}
+
+					//Retrieve the mean_repair_time
+					temp_double_val = get_double(tmpobj,"mean_repair_time");
+
+					//See if it worked
+					if (temp_double_val == NULL)
+					{
+						gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
+						//Defined above
+						*repair_time = 0;
+					}
+					else	//It did map - get the value
+					{
+						*repair_time = (TIMESTAMP)(*temp_double_val);
+					}
+
+					//Remove the required phases
+					NR_busdata[temp_node].phases &= (~(phase_remove));
+
+					//Update our fault phases so we aren't restored
+					NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
+
+					//Store the object handle
+					*protect_obj=tmpobj;
+
+					safety_hit = true;	//Flag as a safety hit (assumes SWING bus is somehow protected on transmission side)
+
+					break;	//Get us out of this loop
+				}
+				else	//Not a swing, find the first branch this node is a "to" value for
+				{
+					for (temp_table_loc=0; temp_table_loc<NR_busdata[temp_node].Link_Table_Size; temp_table_loc++)
+					{
+						//See if node is a to end - assumes radial phase progressions (i.e., no phase AB and phase C running into a node to form node ABC)
+						if (NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].to == temp_node)	//This node is a to end
+						{
+							//See if we are of a "protective" device implementation
+							if (NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].lnk_type == 6)	//Recloser
+							{
+								//Get the recloser
+								tmpobj = gl_get_object(NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+
+								if (tmpobj == NULL)
+								{
+									GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									/*  TROUBLESHOOT
+									While attempting to set the state of a recloser, an error occurred.  Please try again.  If the error persists,
+									please submit a bug report and your code via the trac website.
+									*/
+								}
+
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_state"));
+								
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change recloser state on %s",tmpobj->name);
+									/*  TROUBLESHOOT
+									While attempting to alter a recloser state, the proper recloser function was not found.
+									If the problem persists, please submit a bug report and your code to the trac website.
+									*/
+								}
+
+								//Update the recloser statii - return is the number of attempts (max attempts in this case)
+								ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
+
+								//Make sure it worked
+								if (ext_result_dbl == 0)
+								{
+									GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									//defined above
+								}
+
+								//Retrieve the mean_repair_time
+								temp_double_val = get_double(tmpobj,"mean_repair_time");
+
+								//See if it worked
+								if (temp_double_val == NULL)
+								{
+									gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
+									//Defined above
+									*repair_time = 0;
+								}
+								else	//It did map - get the value
+								{
+									*repair_time = (TIMESTAMP)(*temp_double_val);
+								}
+
+								//Store the number of recloser actions
+								*Recloser_Counts = ext_result_dbl;
+
+								//Store the branch as an index in appropriate phases
+								for (phaseidx=0; phaseidx < 3; phaseidx++)
+								{
+									temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+									if ((phase_remove & temp_phases) == temp_phases)
+									{
+										protect_locations[phaseidx] = NR_busdata[temp_node].Link_Table[temp_table_loc];	//Store our location
+									}
+								}
+
+								//Flag the remote object's appropriate phases
+								NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].faultphases |= phase_remove;
+
+								//Update our fault phases so we aren't restored
+								NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
+
+								//Store the object handle
+								*protect_obj=tmpobj;
+
+								//Flag us as being protected
+								safety_hit = true;
+
+								//Break out of this pesky loop
+								break;
+							}//end recloser
+							else if (NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].lnk_type == 5)	//Sectionalizer
+							{
+								//Get the sectionalizer
+								tmpobj = gl_get_object(NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+
+								if (tmpobj == NULL)
+								{
+									GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									/*  TROUBLESHOOT
+									While attempting to set the state of a sectionalizer, an error occurred.  Please try again.  If the error persists,
+									please submit a bug report and your code via the trac website.
+									*/
+								}
+
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_state"));
+								
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
+									/*  TROUBLESHOOT
+									While attempting to alter a sectionalizer state, the proper sectionalizer function was not found.
+									If the problem persists, please submit a bug report and your code to the trac website.
+									*/
+								}
+
+								//Update the sectionalizer statii
+								ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
+
+								//Make sure it worked
+								if (ext_result_dbl == 0)
+								{
+									GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									//defined above
+								}
+								else if (ext_result_dbl < 0)	//Negative number means no upstream recloser was found
+								{
+									//Treat us as nothing special - just proceed up a branch - if no recloser, that means we need to hit a fuse...or the swing bus
+									//Go up to the next level
+									temp_branch = NR_busdata[temp_node].Link_Table[temp_table_loc];
+									break;	//Out of this for we go!
+								}
+								else	//Positive number - recloser operated
+								{
+									//Retrieve the mean_repair_time
+									temp_double_val = get_double(tmpobj,"mean_repair_time");
+
+									//See if it worked
+									if (temp_double_val == NULL)
+									{
+										gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
+										//Defined above
+										*repair_time = 0;
+									}
+									else	//It did map - get the value
+									{
+										*repair_time = (TIMESTAMP)(*temp_double_val);
+									}
+
+									//Store the number of recloser actions
+									*Recloser_Counts = ext_result_dbl;
+
+									//Store the branch as an index in appropriate phases
+									for (phaseidx=0; phaseidx < 3; phaseidx++)
+									{
+										temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+										if ((phase_remove & temp_phases) == temp_phases)
+										{
+											protect_locations[phaseidx] = NR_busdata[temp_node].Link_Table[temp_table_loc];	//Store our location
+										}
+									}
+
+									//Flag the remote object's appropriate phases
+									NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].faultphases |= phase_remove;
+
+									//Update our fault phases so we aren't restored
+									NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
+
+									//Store the object handle
+									*protect_obj=tmpobj;
+
+									//Flag us as being protected
+									safety_hit = true;
+
+									//Break out of this pesky loop
+									break;
+								}//End sectionalizer logic
+							}//end sectionalizer
+							else if (NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].lnk_type == 3)	//Fuse
+							{
+								//Get the fuse
+								tmpobj = gl_get_object(NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+
+								if (tmpobj == NULL)
+								{
+									GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									/*  TROUBLESHOOT
+									While attempting to set the state of a fuse, an error occurred.  Please try again.  If the error persists,
+									please submit a bug report and your code via the trac website.
+									*/
+								}
+
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_state"));
+								
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change fuse state on %s",tmpobj->name);
+									/*  TROUBLESHOOT
+									While attempting to alter a fuse state, the proper fuse function was not found.
+									If the problem persists, please submit a bug report and your code to the trac website.
+									*/
+								}
+
+								//Update the fuse statii
+								ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
+
+								//Make sure it worked
+								if (ext_result != 1)
+								{
+									GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									//defined above
+								}
+
+								//Retrieve the mean_repair_time
+								temp_double_val = get_double(tmpobj,"mean_repair_time");
+
+								//See if it worked
+								if (temp_double_val == NULL)
+								{
+									gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
+									//Defined above
+									*repair_time = 0;
+								}
+								else	//It did map - get the value
+								{
+									*repair_time = (TIMESTAMP)(*temp_double_val);
+								}
+
+								//Store the branch as an index in appropriate phases
+								for (phaseidx=0; phaseidx < 3; phaseidx++)
+								{
+									temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+									if ((phase_remove & temp_phases) == temp_phases)
+									{
+										protect_locations[phaseidx] = NR_busdata[temp_node].Link_Table[temp_table_loc];	//Store our location
+									}
+								}
+
+								//Flag the remote objects removed phases
+								NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].faultphases |= phase_remove;
+
+								//Update our fault phases so we aren't restored
+								NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
+
+								//Store the object handle
+								*protect_obj=tmpobj;
+
+								//Flag us as being protected
+								safety_hit = true;
+
+								//Break out of this pesky loop
+								break;
+							}//end fuse
+							else if (NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].lnk_type == 4)	//Transformer - not really "protective" - we assume it explodes
+							{
+								//Get the transformer
+								tmpobj = gl_get_object(NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+
+								if (tmpobj == NULL)
+								{
+									GL_THROW("An attempt to alter transformer %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									/*  TROUBLESHOOT
+									While attempting to set the state of a transformer, an error occurred.  Please try again.  If the error persists,
+									please submit a bug report and your code via the trac website.
+									*/
+								}
+
+								//Transformers are magical "all phases removed" devices - basically we're assuming catastrophic failure
+								NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].phases &= 0xF0;
+
+								//Store the branch as an index in appropriate phases - transformer becomes all, not matter what
+								for (phaseidx=0; phaseidx < 3; phaseidx++)
+								{
+									protect_locations[phaseidx] = NR_busdata[temp_node].Link_Table[temp_table_loc];	//Store our location
+								}
+
+								//Retrieve the mean_repair_time
+								temp_double_val = get_double(tmpobj,"mean_repair_time");
+
+								//See if it worked
+								if (temp_double_val == NULL)
+								{
+									gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
+									//Defined above
+									*repair_time = 0;
+								}
+								else	//It did map - get the value
+								{
+									*repair_time = (TIMESTAMP)(*temp_double_val);
+								}
+
+								//Flag remote transformer phases - all of them by default
+								NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].faultphases = 0x07;
+
+								//Update our fault phases so we aren't restored
+								NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
+
+								//Store the object handle
+								*protect_obj=tmpobj;
+
+								//Protective device found!
+								safety_hit = true;
+
+								//Get out of this for loop
+								break;
+							}//end transformer
+							else	//Normal or triplex line - proceed
+							{
+								//Go up to the next level
+								temp_branch = NR_busdata[temp_node].Link_Table[temp_table_loc];
+								break;	//Out of this for we go!
+							}//end normal
+						}//End it is a to-end
+						//Default else - it must be a from, just proceed
+					}//End link table for traversion
+
+					//Make sure we didn't somehow reach the end
+					if (temp_table_loc == NR_busdata[temp_node].Link_Table_Size)
+					{
+						GL_THROW("Error finding proper to reference for node %s",NR_busdata[temp_node].name);
+						/*  TROUBLESHOOT
+						While attempting to induce a safety reaction to a fault, a progression through the
+						links of the system failed.  Please try again.  If the bug persists, please submit your
+						code and a bug report using the trac website.
+						*/
+					}
+				}//end not a swing bus
+			}//end safety not hit while
+
+			//Safety device enacted - now call fault_check function and let it remove all invalid objects
+			//Map the function
+			funadd = (FUNCTIONADDR)(gl_get_function(fault_check_object,"reliability_alterations"));
+			
+			//Make sure it was found
+			if (funadd == NULL)
+			{
+				GL_THROW("Unable to update objects for reliability effects");
+				/*  TROUBLESHOOT
+				While attempting to update the powerflow to properly represent the new post-fault state, an error
+				occurred.  If the problem persists, please submit a bug report and your code to the trac website.
+				*/
+			}
+
+			//Update the device - find a valid phase
+			for (phaseidx=0; phaseidx < 3; phaseidx++)
+			{
+				temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+				if ((phase_remove & temp_phases) == temp_phases)
+				{
+					if (protect_locations[phaseidx] == -1)
+					{
+						GL_THROW("Attempted to restore a device that never appears to have been faulted!");
+						/*  TROUBLESHOOT
+						While attempting to restore a device, it was found to have never been in a fault.
+						It is unclear how this occurs, but it should not and should be fixed.
+						*/
+					}
+					temp_branch = protect_locations[phaseidx];	//Pull protective device number
+					break;		//Only need one to know where to start
+				}
+			}
+
+			//Update powerflow - removal mode
+			ext_result = ((int (*)(OBJECT *, int, bool))(*funadd))(fault_check_object,temp_branch,false);
+
+			//Make sure it worked
+			if (ext_result != 1)
+			{
+				GL_THROW("Unable to update objects for reliability effects");
+				//defined above
+			}
+
+			if (temp_branch == -99)
+				gl_verbose("Event %d induced on %s by using %s",*implemented_fault,objhdr->name,NR_busdata[0].name);
+			else
+				gl_verbose("Event %d induced on %s by using %s",*implemented_fault,objhdr->name,NR_branchdata[temp_branch].name);
+		}//End a change has been flagged
+
+		return 1;	//Successful
+	}//End "Msehed mode" checks
 }
 
 //Function to remove enacted fault on link - use same list as above (link_fault_on)
@@ -5595,378 +8553,1398 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name, vo
 	double *Recloser_Counts;
 	bool switch_val;
 
-	//Set up default switch variable - used to indicate special cases
-	switch_val = false;
-
-	//Link up recloser counts for manipulation
-	Recloser_Counts = (double *)Extra_Data;
-
-	//Less logic here - just undo what we did before - find the fault type and clear it out
-	switch (*implemented_fault)
+	//Check our operations mode
+	if (meshed_fault_checking_enabled == false)	//Normal mode
 	{
-		case 0:	//No fault - do nothing
-			imp_fault_name[0] = 'N';
-			imp_fault_name[1] = 'o';
-			imp_fault_name[2] = 'n';
-			imp_fault_name[3] = 'e';
-			imp_fault_name[4] = '\0';
-			break;
-		case 1:	//SLG-A
-			imp_fault_name[0] = 'S';
-			imp_fault_name[1] = 'L';
-			imp_fault_name[2] = 'G';
-			imp_fault_name[3] = '-';
-			imp_fault_name[4] = 'A';
-			imp_fault_name[5] = '\0';
-			phase_restore = 0x04;	//Put A back in service
-			break;
-		case 2:	//SLG-B
-			imp_fault_name[0] = 'S';
-			imp_fault_name[1] = 'L';
-			imp_fault_name[2] = 'G';
-			imp_fault_name[3] = '-';
-			imp_fault_name[4] = 'B';
-			imp_fault_name[5] = '\0';
-			phase_restore = 0x02;	//Put B back in service
-			break;
-		case 3:	//SLG-C
-			imp_fault_name[0] = 'S';
-			imp_fault_name[1] = 'L';
-			imp_fault_name[2] = 'G';
-			imp_fault_name[3] = '-';
-			imp_fault_name[4] = 'C';
-			imp_fault_name[5] = '\0';
-			phase_restore = 0x01;	//Put C back in service
-			break;
-		case 4:	//DLG-AB
-			imp_fault_name[0] = 'D';
-			imp_fault_name[1] = 'L';
-			imp_fault_name[2] = 'G';
-			imp_fault_name[3] = '-';
-			imp_fault_name[4] = 'A';
-			imp_fault_name[5] = 'B';
-			imp_fault_name[6] = '\0';
-			phase_restore = 0x06;	//Put A and B back in service
-			break;
-		case 5:	//DLG-BC
-			imp_fault_name[0] = 'D';
-			imp_fault_name[1] = 'L';
-			imp_fault_name[2] = 'G';
-			imp_fault_name[3] = '-';
-			imp_fault_name[4] = 'B';
-			imp_fault_name[5] = 'C';
-			imp_fault_name[6] = '\0';
-			phase_restore = 0x03;	//Put B and C back in service
-			break;
-		case 6:	//DLG-CA
-			imp_fault_name[0] = 'D';
-			imp_fault_name[1] = 'L';
-			imp_fault_name[2] = 'G';
-			imp_fault_name[3] = '-';
-			imp_fault_name[4] = 'C';
-			imp_fault_name[5] = 'A';
-			imp_fault_name[6] = '\0';
-			phase_restore = 0x05;	//Put C and A back in service
-			break;
-		case 7:	//LL-AB
-			imp_fault_name[0] = 'L';
-			imp_fault_name[1] = 'L';
-			imp_fault_name[2] = '-';
-			imp_fault_name[3] = 'A';
-			imp_fault_name[4] = 'B';
-			imp_fault_name[5] = '\0';
-			phase_restore = 0x06;	//Put A and B back in service
-			break;
-		case 8:	//LL-BC
-			imp_fault_name[0] = 'L';
-			imp_fault_name[1] = 'L';
-			imp_fault_name[2] = '-';
-			imp_fault_name[3] = 'B';
-			imp_fault_name[4] = 'C';
-			imp_fault_name[5] = '\0';
-			phase_restore = 0x03;	//Put B and C back in service
-			break;
-		case 9:	//LL-CA
-			imp_fault_name[0] = 'L';
-			imp_fault_name[1] = 'L';
-			imp_fault_name[2] = '-';
-			imp_fault_name[3] = 'C';
-			imp_fault_name[4] = 'A';
-			imp_fault_name[5] = '\0';
-			phase_restore = 0x05;	//Put C and A back in service
-			break;
-		case 10:	//TLG
-			imp_fault_name[0] = 'T';
-			imp_fault_name[1] = 'L';
-			imp_fault_name[2] = 'G';
-			imp_fault_name[3] = '\0';
-			phase_restore = 0x07;	//Put A, B, and C back in service
-			break;
-		case 11:	//OC-A
-			imp_fault_name[0] = 'O';
-			imp_fault_name[1] = 'C';
-			imp_fault_name[2] = '-';
-			imp_fault_name[3] = 'A';
-			imp_fault_name[4] = '\0';
-			phase_restore = 0x04;	//Put A back in service
-			break;
-		case 12:	//OC-B
-			imp_fault_name[0] = 'O';
-			imp_fault_name[1] = 'C';
-			imp_fault_name[2] = '-';
-			imp_fault_name[3] = 'B';
-			imp_fault_name[4] = '\0';
-			phase_restore = 0x02;	//Put B back in service
-			break;
-		case 13:	//OC-C
-			imp_fault_name[0] = 'O';
-			imp_fault_name[1] = 'C';
-			imp_fault_name[2] = '-';
-			imp_fault_name[3] = 'C';
-			imp_fault_name[4] = '\0';
-			phase_restore = 0x01;	//Put C back in service
-			break;
-		case 14:	//OC2-AB
-			imp_fault_name[0] = 'O';
-			imp_fault_name[1] = 'C';
-			imp_fault_name[2] = '2';
-			imp_fault_name[3] = '-';
-			imp_fault_name[4] = 'A';
-			imp_fault_name[5] = 'B';
-			imp_fault_name[6] = '\0';
-			phase_restore = 0x06;	//Put A and B back in service
-			break;
-		case 15:	//OC2-BC
-			imp_fault_name[0] = 'O';
-			imp_fault_name[1] = 'C';
-			imp_fault_name[2] = '2';
-			imp_fault_name[3] = '-';
-			imp_fault_name[4] = 'B';
-			imp_fault_name[5] = 'C';
-			imp_fault_name[6] = '\0';
-			phase_restore = 0x03;	//Put B and C back in service
-			break;
-		case 16:	//OC2-CA
-			imp_fault_name[0] = 'O';
-			imp_fault_name[1] = 'C';
-			imp_fault_name[2] = '2';
-			imp_fault_name[3] = '-';
-			imp_fault_name[4] = 'C';
-			imp_fault_name[5] = 'A';
-			imp_fault_name[6] = '\0';
-			phase_restore = 0x05;	//Put C and A back in service
-			break;
-		case 17:	//OC3
-			imp_fault_name[0] = 'O';
-			imp_fault_name[1] = 'C';
-			imp_fault_name[2] = '3';
-			imp_fault_name[3] = '\0';
-			phase_restore = 0x07;	//Put A, B, and C back in service
-			break;
-		case 18:	//SW-A
-			imp_fault_name[0] = 'S';
-			imp_fault_name[1] = 'W';
-			imp_fault_name[2] = '-';
-			imp_fault_name[3] = 'A';
-			imp_fault_name[4] = '\0';
-			phase_restore = 0x04;	//Put A back in service
-			switch_val = true;		//Flag as a switch action
-			break;
-		case 19:	//SW-B
-			imp_fault_name[0] = 'S';
-			imp_fault_name[1] = 'W';
-			imp_fault_name[2] = '-';
-			imp_fault_name[3] = 'B';
-			imp_fault_name[4] = '\0';
-			phase_restore = 0x02;	//Put B back in service
-			switch_val = true;		//Flag as a switch action
-			break;
-		case 20:	//SW-C
-			imp_fault_name[0] = 'S';
-			imp_fault_name[1] = 'W';
-			imp_fault_name[2] = '-';
-			imp_fault_name[3] = 'C';
-			imp_fault_name[4] = '\0';
-			phase_restore = 0x01;	//Put C back in service
-			switch_val = true;		//Flag as a switch action
-			break;
-		case 21:	//SW-AB
-			imp_fault_name[0] = 'S';
-			imp_fault_name[1] = 'W';
-			imp_fault_name[2] = '-';
-			imp_fault_name[3] = 'A';
-			imp_fault_name[4] = 'B';
-			imp_fault_name[5] = '\0';
-			phase_restore = 0x06;	//Put A and B back in service
-			switch_val = true;		//Flag as a switch action
-			break;
-		case 22:	//SW-BC
-			imp_fault_name[0] = 'S';
-			imp_fault_name[1] = 'W';
-			imp_fault_name[2] = '-';
-			imp_fault_name[3] = 'B';
-			imp_fault_name[4] = 'C';
-			imp_fault_name[5] = '\0';
-			phase_restore = 0x03;	//Put B and C back in service
-			switch_val = true;		//Flag as a switch action
-			break;
-		case 23:	//SW-CA
-			imp_fault_name[0] = 'S';
-			imp_fault_name[1] = 'W';
-			imp_fault_name[2] = '-';
-			imp_fault_name[3] = 'C';
-			imp_fault_name[4] = 'A';
-			imp_fault_name[5] = '\0';
-			phase_restore = 0x05;	//Put C and A back in service
-			switch_val = true;		//Flag as a switch action
-			break;
-		case 24:	//SW-ABC
-			imp_fault_name[0] = 'S';
-			imp_fault_name[1] = 'W';
-			imp_fault_name[2] = '-';
-			imp_fault_name[3] = 'A';
-			imp_fault_name[4] = 'B';
-			imp_fault_name[5] = 'C';
-			imp_fault_name[6] = '\0';
-			phase_restore = 0x07;	//Put A, B, and C back in service
-			switch_val = true;		//Flag as a switch action
-			break;
-		case 25:	//FUS-A
-			imp_fault_name[0] = 'F';
-			imp_fault_name[1] = 'U';
-			imp_fault_name[2] = 'S';
-			imp_fault_name[3] = '-';
-			imp_fault_name[4] = 'A';
-			imp_fault_name[5] = '\0';
-			phase_restore = 0x04;	//Put A back in service
-			break;
-		case 26:	//FUS-B
-			imp_fault_name[0] = 'F';
-			imp_fault_name[1] = 'U';
-			imp_fault_name[2] = 'S';
-			imp_fault_name[3] = '-';
-			imp_fault_name[4] = 'B';
-			imp_fault_name[5] = '\0';
-			phase_restore = 0x02;	//Put B back in service
-			break;
-		case 27:	//FUS-C
-			imp_fault_name[0] = 'F';
-			imp_fault_name[1] = 'U';
-			imp_fault_name[2] = 'S';
-			imp_fault_name[3] = '-';
-			imp_fault_name[4] = 'C';
-			imp_fault_name[5] = '\0';
-			phase_restore = 0x01;	//Put C back in service
-			break;
-		case 28:	//FUS-AB
-			imp_fault_name[0] = 'F';
-			imp_fault_name[1] = 'U';
-			imp_fault_name[2] = 'S';
-			imp_fault_name[3] = '-';
-			imp_fault_name[4] = 'A';
-			imp_fault_name[5] = 'B';
-			imp_fault_name[6] = '\0';
-			phase_restore = 0x06;	//Put A and B back in service
-			break;
-		case 29:	//FUS-BC
-			imp_fault_name[0] = 'F';
-			imp_fault_name[1] = 'U';
-			imp_fault_name[2] = 'S';
-			imp_fault_name[3] = '-';
-			imp_fault_name[4] = 'B';
-			imp_fault_name[5] = 'C';
-			imp_fault_name[6] = '\0';
-			phase_restore = 0x03;	//Put B and C back in service
-			break;
-		case 30:	//FUS-CA
-			imp_fault_name[0] = 'F';
-			imp_fault_name[1] = 'U';
-			imp_fault_name[2] = 'S';
-			imp_fault_name[3] = '-';
-			imp_fault_name[4] = 'C';
-			imp_fault_name[5] = 'A';
-			imp_fault_name[6] = '\0';
-			phase_restore = 0x05;	//Put C and A back in service
-			break;
-		case 31:	//FUS-ABC
-			imp_fault_name[0] = 'F';
-			imp_fault_name[1] = 'U';
-			imp_fault_name[2] = 'S';
-			imp_fault_name[3] = '-';
-			imp_fault_name[4] = 'A';
-			imp_fault_name[5] = 'B';
-			imp_fault_name[6] = 'C';
-			imp_fault_name[7] = '\0';
-			phase_restore = 0x07;	//Put A, B, and C back in service
-			break;
-		case 32:	//TLL
-			imp_fault_name[0] = 'T';
-			imp_fault_name[1] = 'L';
-			imp_fault_name[2] = 'L';
-			imp_fault_name[3] = '\0';
-			phase_restore = 0x07;	//Put A, B, and C back in service
-			break;
-		default:	//Should never get here
-			GL_THROW("%s - attempted to recover from unsupported fault!",objhdr->name);
-			/*  TROUBLESHOOT
-			The link object attempted to recover from an unknown fault type.  Please try again.  If the
-			error persists, please submit your code and a bug report to the trac website.
-			*/
-			break;
-	}//end switch
+		//Set up default switch variable - used to indicate special cases
+		switch_val = false;
 
-	//Flag an update if something changed (not a 0 state)
-	if (*implemented_fault != 0)
-	{
-		temp_node = -1;	//Default value
+		//Link up recloser counts for manipulation
+		Recloser_Counts = (double *)Extra_Data;
 
-		//Remove our restrictions for these phases
-		for (phaseidx=0; phaseidx<3; phaseidx++)
+		//Less logic here - just undo what we did before - find the fault type and clear it out
+		switch (*implemented_fault)
 		{
-			work_phases = 0x04 >> phaseidx;	//Get check
+			case 0:	//No fault - do nothing
+				imp_fault_name[0] = 'N';
+				imp_fault_name[1] = 'o';
+				imp_fault_name[2] = 'n';
+				imp_fault_name[3] = 'e';
+				imp_fault_name[4] = '\0';
+				break;
+			case 1:	//SLG-A
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x04;	//Put A back in service
+				break;
+			case 2:	//SLG-B
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x02;	//Put B back in service
+				break;
+			case 3:	//SLG-C
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x01;	//Put C back in service
+				break;
+			case 4:	//DLG-AB
+				imp_fault_name[0] = 'D';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = 'B';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x06;	//Put A and B back in service
+				break;
+			case 5:	//DLG-BC
+				imp_fault_name[0] = 'D';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = 'C';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x03;	//Put B and C back in service
+				break;
+			case 6:	//DLG-CA
+				imp_fault_name[0] = 'D';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = 'A';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x05;	//Put C and A back in service
+				break;
+			case 7:	//LL-AB
+				imp_fault_name[0] = 'L';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'A';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x06;	//Put A and B back in service
+				break;
+			case 8:	//LL-BC
+				imp_fault_name[0] = 'L';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'B';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x03;	//Put B and C back in service
+				break;
+			case 9:	//LL-CA
+				imp_fault_name[0] = 'L';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'C';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x05;	//Put C and A back in service
+				break;
+			case 10:	//TLG
+				imp_fault_name[0] = 'T';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '\0';
+				phase_restore = 0x07;	//Put A, B, and C back in service
+				break;
+			case 11:	//OC-A
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'A';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x04;	//Put A back in service
+				break;
+			case 12:	//OC-B
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'B';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x02;	//Put B back in service
+				break;
+			case 13:	//OC-C
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'C';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x01;	//Put C back in service
+				break;
+			case 14:	//OC2-AB
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '2';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = 'B';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x06;	//Put A and B back in service
+				break;
+			case 15:	//OC2-BC
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '2';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = 'C';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x03;	//Put B and C back in service
+				break;
+			case 16:	//OC2-CA
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '2';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = 'A';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x05;	//Put C and A back in service
+				break;
+			case 17:	//OC3
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '3';
+				imp_fault_name[3] = '\0';
+				phase_restore = 0x07;	//Put A, B, and C back in service
+				break;
+			case 18:	//SW-A
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'A';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x04;	//Put A back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 19:	//SW-B
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'B';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x02;	//Put B back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 20:	//SW-C
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'C';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x01;	//Put C back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 21:	//SW-AB
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'A';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x06;	//Put A and B back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 22:	//SW-BC
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'B';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x03;	//Put B and C back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 23:	//SW-CA
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'C';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x05;	//Put C and A back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 24:	//SW-ABC
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'A';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = 'C';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x07;	//Put A, B, and C back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 25:	//FUS-A
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x04;	//Put A back in service
+				break;
+			case 26:	//FUS-B
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x02;	//Put B back in service
+				break;
+			case 27:	//FUS-C
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x01;	//Put C back in service
+				break;
+			case 28:	//FUS-AB
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = 'B';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x06;	//Put A and B back in service
+				break;
+			case 29:	//FUS-BC
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = 'C';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x03;	//Put B and C back in service
+				break;
+			case 30:	//FUS-CA
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = 'A';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x05;	//Put C and A back in service
+				break;
+			case 31:	//FUS-ABC
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = 'B';
+				imp_fault_name[6] = 'C';
+				imp_fault_name[7] = '\0';
+				phase_restore = 0x07;	//Put A, B, and C back in service
+				break;
+			case 32:	//TLL
+				imp_fault_name[0] = 'T';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'L';
+				imp_fault_name[3] = '\0';
+				phase_restore = 0x07;	//Put A, B, and C back in service
+				break;
+			default:	//Should never get here
+				GL_THROW("%s - attempted to recover from unsupported fault!",objhdr->name);
+				/*  TROUBLESHOOT
+				The link object attempted to recover from an unknown fault type.  Please try again.  If the
+				error persists, please submit your code and a bug report to the trac website.
+				*/
+				break;
+		}//end switch
 
-			if ((phase_restore & work_phases) == work_phases)	//Valid phase to restore
+		//Flag an update if something changed (not a 0 state)
+		if (*implemented_fault != 0)
+		{
+			temp_node = -1;	//Default value
+
+			//Remove our restrictions for these phases
+			for (phaseidx=0; phaseidx<3; phaseidx++)
 			{
-				//Store the value of protect_locations for later
-				temp_node = protect_locations[phaseidx];
+				work_phases = 0x04 >> phaseidx;	//Get check
 
-				//See if our "protective device" was the swing bus
-				if (protect_locations[phaseidx] == -99)
+				if ((phase_restore & work_phases) == work_phases)	//Valid phase to restore
 				{
-					//Theoretically, this phase should exist on the SWING.  Let's check to make sure
-					if ((NR_busdata[0].origphases & work_phases) == work_phases)	//Valid phase
+					//Store the value of protect_locations for later
+					temp_node = protect_locations[phaseidx];
+
+					//See if our "protective device" was the swing bus
+					if (protect_locations[phaseidx] == -1)
 					{
-						NR_busdata[0].phases |= work_phases;	//Just turn it back on - it's the SWING, it has to work
-					}
-					else
-					{
-						GL_THROW("A fault was induced on the SWING bus for an unsupported phase!");
+						GL_THROW("An attempt to restore something that was never faulted has occurred!");
 						/*  TROUBLESHOOT
-						Somehow, a fault was induced on a phase that should not exist on the system.  While
-						attemtping to restore this fault, the SWING bus did not have the proper original phases,
-						so this could not be restored.  Please submit your code and a bug report using the trac website.
+						While attempting to restore a device, an unknown state was encountered where it
+						had somehow started faulted and was not caught.  If you have any switches in your
+						system, consider starting them closed first.
 						*/
 					}
-				}//End SWING
-				else	//Not the SWING Bus
-				{
-					//See if we are of a "protective" device implementation
-					if ((NR_branchdata[protect_locations[phaseidx]].lnk_type == 2) && (switch_val == true))	//Switch
+					else if (protect_locations[phaseidx] == -99)
 					{
-						//Get the switch
-						tmpobj = gl_get_object(NR_branchdata[protect_locations[phaseidx]].name);
-
-						if (tmpobj == NULL)
+						//Theoretically, this phase should exist on the SWING.  Let's check to make sure
+						if ((NR_busdata[0].origphases & work_phases) == work_phases)	//Valid phase
 						{
-							GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
-							//Defined above
+							NR_busdata[0].phases |= work_phases;	//Just turn it back on - it's the SWING, it has to work
+						}
+						else
+						{
+							GL_THROW("A fault was induced on the SWING bus for an unsupported phase!");
+							/*  TROUBLESHOOT
+							Somehow, a fault was induced on a phase that should not exist on the system.  While
+							attemtping to restore this fault, the SWING bus did not have the proper original phases,
+							so this could not be restored.  Please submit your code and a bug report using the trac website.
+							*/
+						}
+					}//End SWING
+					else	//Not the SWING Bus
+					{
+						//See if we are of a "protective" device implementation
+						if ((NR_branchdata[protect_locations[phaseidx]].lnk_type == 2) && (switch_val == true))	//Switch
+						{
+							//Get the switch
+							tmpobj = gl_get_object(NR_branchdata[protect_locations[phaseidx]].name);
+
+							if (tmpobj == NULL)
+							{
+								GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+								//Defined above
+							}
+
+							//Check and see what the supporting nodes are doing - if a switch is already in a fault, this causes issues
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
+
+							if ((phase_restore & temp_phases) == phase_restore)	//Support is available, one way or another
+							{
+								//Get function address
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_switch_state"));
+								
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change switch state on %s",tmpobj->name);
+									//Defined above
+								}
+
+								//Update the fuse statii
+								ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_restore,true);
+
+								//Make sure it worked
+								if (ext_result != 1)
+								{
+									GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+									//defined above
+								}
+							}
+							else if ((phase_restore & temp_phases) != 0x00)	//Some support is available
+							{
+								//Update fault phases
+								temp_phases_B = (phase_restore & temp_phases);		//these are the phases to restore
+								temp_phases = (phase_restore & (~temp_phases_B));	//These are the phases just to update
+
+								//Get function address
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_switch_faults"));
+								
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change switch state on %s",tmpobj->name);
+									//Defined above - despite being slightly different
+								}
+
+								//Update the switch statii
+								ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,temp_phases);
+
+								//Make sure it worked
+								if (ext_result != 1)
+								{
+									GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+									//defined above
+								}
+
+								//Restore other phase(s)
+								//Get function address
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_switch_state"));
+								
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change switch state on %s",tmpobj->name);
+									//Defined above
+								}
+
+								//Update the fuse statii
+								ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,temp_phases_B,true);
+
+								//Make sure it worked
+								if (ext_result != 1)
+								{
+									GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+									//defined above
+								}
+							}
+							else	//No support available
+							{
+								//Just update fault phases
+								//Get function address
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_switch_faults"));
+								
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change switch state on %s",tmpobj->name);
+									//Defined above - despite being slightly different
+								}
+
+								//Update the switch statii
+								ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,phase_restore);
+
+								//Make sure it worked
+								if (ext_result != 1)
+								{
+									GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+									//defined above
+								}
+							}
+
+							//Modify our phases as appropriate
+							if (meshed_fault_checking_enabled == true)
+							{
+								if ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & 0x07) != 0x00)
+								{
+									NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & 0x07);
+								}
+								else if ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases & 0x07) != 0x00)
+								{
+									NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases & 0x07);
+								}
+								//Default else, busted
+							}
+							else	//Normal, radial mode
+							{
+								NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & 0x07);
+							}
+
+							//Flag the remote object's appropriate phases
+							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
+
+							//Remove the branch as an index in appropriate phases
+							for (phaseidx=0; phaseidx < 3; phaseidx++)
+							{
+								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+								if ((phase_restore & temp_phases) == temp_phases)
+								{
+									protect_locations[phaseidx] = -1;	//Clear our location
+								}
+							}
+
+							//Update our fault phases
+							NR_branchdata[NR_branch_reference].faultphases &= ~(phase_restore);
+
+							//Break out of this pesky loop
+							break;
+						}//end switch closure
+						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 6)	//recloser
+						{
+							//Get the recloser
+							tmpobj = gl_get_object(NR_branchdata[protect_locations[phaseidx]].name);
+
+							if (tmpobj == NULL)
+							{
+								GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+								//Defined above
+							}
+
+							//Check and see what the supporting nodes are doing - if a recloser is already in a fault, this causes issues
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
+
+							if ((phase_restore & temp_phases) == phase_restore)	//Support is available, one way or another
+							{
+								//Get function address
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_state"));
+								
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change recloser state on %s",tmpobj->name);
+									//Defined above
+								}
+
+								//Update the recloser statii
+								ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_restore,true);
+
+								//Make sure it worked
+								if (ext_result_dbl != 1.0)
+								{
+									GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+									//defined above
+								}
+							}
+							else if ((phase_restore & temp_phases) != 0x00)	//Some support is available
+							{
+								//Update fault phases
+								temp_phases_B = (phase_restore & temp_phases);		//these are the phases to restore
+								temp_phases = (phase_restore & (~temp_phases_B));	//These are the phases just to update
+
+								//Get function address
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_faults"));
+								
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change recloser state on %s",tmpobj->name);
+									//Defined above - despite being slightly different
+								}
+
+								//Update the sectionalizer statii
+								ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,temp_phases);
+
+								//Make sure it worked
+								if (ext_result != 1)
+								{
+									GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+									//defined above
+								}
+
+								//Restore other phase(s)
+								//Get function address
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_state"));
+								
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change recloser state on %s",tmpobj->name);
+									//Defined above
+								}
+
+								//Update the recloser statii
+								ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_restore,true);
+
+								//Make sure it worked
+								if (ext_result_dbl != 1.0)
+								{
+									GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+									//defined above
+								}
+							}
+							else	//No support available
+							{
+								//Just update fault phases
+								//Get function address
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_faults"));
+								
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change sectionalizer recloser on %s",tmpobj->name);
+									//Defined above - despite being slightly different
+								}
+
+								//Update the sectionalizer statii
+								ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,phase_restore);
+
+								//Make sure it worked
+								if (ext_result != 1)
+								{
+									GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+									//defined above
+								}
+							}
+
+							//Modify our phases as appropriate
+							NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & 0x07);
+
+							//Flag the remote object's appropriate phases
+							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
+
+							//Remove the branch as an index in appropriate phases
+							for (phaseidx=0; phaseidx < 3; phaseidx++)
+							{
+								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+								if ((phase_restore & temp_phases) == temp_phases)
+								{
+									protect_locations[phaseidx] = -1;	//Clear our location
+								}
+							}
+
+							//Update our fault phases
+							NR_branchdata[NR_branch_reference].faultphases &= ~(phase_restore);
+
+							//Break out of this pesky loop
+							break;
+						}//end recloser closure
+						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 5)	//Sectionalizer
+						{
+							//Get the sectionalizer
+							tmpobj = gl_get_object(NR_branchdata[protect_locations[phaseidx]].name);
+
+							if (tmpobj == NULL)
+							{
+								GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+								//Defined above
+							}
+
+							//Check and see what the supporting nodes are doing - if a sectionalizer is already in a fault, this causes issues
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
+
+							if ((phase_restore & temp_phases) == phase_restore)	//Support is available, one way or another
+							{
+								//Get function address
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_state"));
+								
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
+									//Defined above
+								}
+
+								//Update the sectionalizer statii
+								ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_restore,true);
+
+								//Make sure it worked
+								if (ext_result_dbl != 1.0)
+								{
+									GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+									//defined above
+								}
+							}
+							else if ((phase_restore & temp_phases) != 0x00)	//Some support is available
+							{
+								//Update fault phases
+								temp_phases_B = (phase_restore & temp_phases);		//these are the phases to restore
+								temp_phases = (phase_restore & (~temp_phases_B));	//These are the phases just to update
+
+								//Get function address
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_faults"));
+								
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
+									//Defined above - despite being slightly different
+								}
+
+								//Update the sectionalizer statii
+								ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,temp_phases);
+
+								//Make sure it worked
+								if (ext_result != 1)
+								{
+									GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+									//defined above
+								}
+
+								//Restore other phase(s)
+								//Get function address
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_state"));
+								
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
+									//Defined above
+								}
+
+								//Update the sectionalizer statii
+								ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_restore,true);
+
+								//Make sure it worked
+								if (ext_result_dbl != 1.0)
+								{
+									GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+									//defined above
+								}
+							}
+							else	//No support available
+							{
+								//Just update fault phases
+								//Get function address
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_faults"));
+								
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
+									//Defined above - despite being slightly different
+								}
+
+								//Update the sectionalizer statii
+								ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,phase_restore);
+
+								//Make sure it worked
+								if (ext_result != 1)
+								{
+									GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+									//defined above
+								}
+							}
+							
+							//Modify our phases as appropriate
+							NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & 0x07);
+
+							//Flag the remote object's appropriate phases
+							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
+
+							//Remove the branch as an index in appropriate phases
+							for (phaseidx=0; phaseidx < 3; phaseidx++)
+							{
+								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+								if ((phase_restore & temp_phases) == temp_phases)
+								{
+									protect_locations[phaseidx] = -1;	//Clear our location
+								}
+							}
+
+							//Update our fault phases
+							NR_branchdata[NR_branch_reference].faultphases &= ~(phase_restore);
+
+							//Break out of this pesky loop
+							break;
+						}//end sectionalizer closure
+						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 3)	//fuse
+						{
+							//Get the fuse
+							tmpobj = gl_get_object(NR_branchdata[protect_locations[phaseidx]].name);
+
+							if (tmpobj == NULL)
+							{
+								GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+								//Defined above
+							}
+
+							//Check and see what the supporting nodes are doing - if a fuse is already in a fault, this causes issues
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
+
+							if ((phase_restore & temp_phases) == phase_restore)	//Support is available, one way or another
+							{
+								//Get function address
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_state"));
+								
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change fuse state on %s",tmpobj->name);
+									//Defined above
+								}
+
+								//Update the fuse statii
+								ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_restore,true);
+
+								//Make sure it worked
+								if (ext_result != 1)
+								{
+									GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+									//defined above
+								}
+							}
+							else if ((phase_restore & temp_phases) != 0x00)	//Some support is available
+							{
+								//Update fault phases
+								temp_phases_B = (phase_restore & temp_phases);		//these are the phases to restore
+								temp_phases = (phase_restore & (~temp_phases_B));	//These are the phases just to update
+
+								//Get function address
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_faults"));
+								
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change fuse state on %s",tmpobj->name);
+									//Defined above - despite being slightly different
+								}
+
+								//Update the fuse statii
+								ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,temp_phases);
+
+								//Make sure it worked
+								if (ext_result != 1)
+								{
+									GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+									//defined above
+								}
+
+								//Restore other phase(s)
+								//Get function address
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_state"));
+								
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change fuse state on %s",tmpobj->name);
+									//Defined above
+								}
+
+								//Update the fuse statii
+								ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,temp_phases_B,true);
+
+								//Make sure it worked
+								if (ext_result != 1)
+								{
+									GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+									//defined above
+								}
+							}
+							else	//No support available
+							{
+								//Just update fault phases
+								//Get function address
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_faults"));
+								
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change fuse state on %s",tmpobj->name);
+									//Defined above - despite being slightly different
+								}
+
+								//Update the fuse statii
+								ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,phase_restore);
+
+								//Make sure it worked
+								if (ext_result != 1)
+								{
+									GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+									//defined above
+								}
+							}
+
+							//Modify our phases as appropriate
+							NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & 0x07);
+
+							//Flag the remote object's appropriate phases
+							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
+
+							//Remove the branch as an index in appropriate phases
+							for (phaseidx=0; phaseidx < 3; phaseidx++)
+							{
+								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+								if ((phase_restore & temp_phases) == temp_phases)
+								{
+									protect_locations[phaseidx] = -1;	//Clear our location
+								}
+							}
+
+							//Update our fault phases
+							NR_branchdata[NR_branch_reference].faultphases &= ~(phase_restore);
+
+							//Break out of this pesky loop
+							break;
+						}//End fuse closure
+						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 4)	//Transformer
+						{
+							//Transformers are special case - if the source is supported, all three phases are reinstated
+							temp_phases = NR_branchdata[protect_locations[phaseidx]].origphases & 0x07;
+
+							//Make sure we match
+							if ((temp_phases & NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases) == temp_phases)
+							{
+								//Support is there, restore all relevant phases
+								NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(temp_phases);
+
+								//Check for SPCT rating
+								if ((NR_branchdata[protect_locations[phaseidx]].origphases & 0x80) == 0x80)	//SPCT
+								{
+									temp_phases |= 0x80;	//Apply SPCT flag
+								}
+								//Defaulted else - normal xformer
+
+								//Pull the phases back into service
+								NR_branchdata[protect_locations[phaseidx]].phases = (NR_branchdata[protect_locations[phaseidx]].origphases & temp_phases);
+							}
+							else	//Support is not there - clear the flag, but don't restore
+							{
+								NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(temp_phases);
+							}
+
+							//Remove our fault for the appropriate phases
+							temp_phases = NR_branchdata[protect_locations[phaseidx]].origphases & 0x07;
+							NR_branchdata[NR_branch_reference].faultphases &= ~(temp_phases);
+
+							//Remove fault indices - loop through transformer phases
+							for (indexval=0; indexval<3; indexval++)
+							{
+								temp_phases = 0x04 >> indexval;
+
+								if ((temp_phases & NR_branchdata[NR_branch_reference].faultphases) == 0x00)	//No fault here
+									protect_locations[indexval] = -1;	//Clear flag
+							}
+
+							break;	//Get us out of phase loop - transformers handle all 3 phases at once
+						}//End transformer restoration
+						else
+						{
+							GL_THROW("Protective device %s invalid for restoration!",NR_branchdata[protect_locations[phaseidx]].name);
+							/*  TROUBLESHOOT
+							While attempting to restore a protective device, something besides a switch, fuse, or transformer was used.
+							This should not have happened.  Please try again.  If the error persists, please submit your code and a bug
+							report using the trac website.
+							*/
 						}
 
-						//Check and see what the supporting nodes are doing - if a switch is already in a fault, this causes issues
-						temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
+						//Clear "far" device lockout
+						NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(work_phases);	//Remove the phase lock
+					}
 
-						if ((phase_restore & temp_phases) == phase_restore)	//Support is available, one way or another
+					//Clear faulted device lockout
+					protect_locations[phaseidx] = -1;
+
+					//Clear faulted device protect_locations
+					NR_branchdata[NR_branch_reference].faultphases &= ~(work_phases);	//Remove the phase lock from us as well
+				}//End valid phase
+				//Default else - not a phase we care about
+			}//End phase loop
+
+			//Perform rescan for validities
+			//Safety device enacted - now call fault_check function and let it restore  objects
+			//Map the function
+			funadd = (FUNCTIONADDR)(gl_get_function(fault_check_object,"reliability_alterations"));
+			
+			//Make sure it was found
+			if (funadd == NULL)
+			{
+				GL_THROW("Unable to update objects for reliability effects");
+				//Defined above
+			}
+
+			//Make sure we have a valid value
+			if (temp_node == -1)
+			{
+				GL_THROW("Attempts to map a fault location failed!");
+				/*  TROUBLESHOOT
+				While attempting to restore a fault's protective device, no location
+				for the protective device was found.  If the problem persists, please submit
+				your code and a bug report using the trac website.
+				*/
+			}
+
+			//Update powerflow - removal mode
+			ext_result = ((int (*)(OBJECT *, int, bool))(*funadd))(fault_check_object,temp_node,true);
+
+			//Make sure it worked
+			if (ext_result != 1)
+			{
+				GL_THROW("Unable to update objects for reliability effects");
+				//defined above
+			}
+
+			LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
+			NR_admit_change = true;	
+			UNLOCK_OBJECT(NR_swing_bus);	//Release us
+
+			if (temp_node == -99)
+				gl_verbose("Event %s removed from %s by restoring %s",imp_fault_name,objhdr->name,NR_busdata[0].name);
+			else
+				gl_verbose("Event %s removed from %s by restoring %s",imp_fault_name,objhdr->name,NR_branchdata[temp_node].name);
+		}//End actual change
+
+		return 1;
+	}//End "normal" operations mode
+	else	//Must be crazy mesh checking mode
+	{
+		//Set up default switch variable - used to indicate special cases
+		switch_val = false;
+
+		//Link up recloser counts for manipulation
+		Recloser_Counts = (double *)Extra_Data;
+
+		//Less logic here - just undo what we did before - find the fault type and clear it out
+		switch (*implemented_fault)
+		{
+			case 0:	//No fault - do nothing
+				imp_fault_name[0] = 'N';
+				imp_fault_name[1] = 'o';
+				imp_fault_name[2] = 'n';
+				imp_fault_name[3] = 'e';
+				imp_fault_name[4] = '\0';
+				break;
+			case 1:	//SLG-A
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x04;	//Put A back in service
+				break;
+			case 2:	//SLG-B
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x02;	//Put B back in service
+				break;
+			case 3:	//SLG-C
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x01;	//Put C back in service
+				break;
+			case 4:	//DLG-AB
+				imp_fault_name[0] = 'D';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = 'B';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x06;	//Put A and B back in service
+				break;
+			case 5:	//DLG-BC
+				imp_fault_name[0] = 'D';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = 'C';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x03;	//Put B and C back in service
+				break;
+			case 6:	//DLG-CA
+				imp_fault_name[0] = 'D';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = 'A';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x05;	//Put C and A back in service
+				break;
+			case 7:	//LL-AB
+				imp_fault_name[0] = 'L';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'A';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x06;	//Put A and B back in service
+				break;
+			case 8:	//LL-BC
+				imp_fault_name[0] = 'L';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'B';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x03;	//Put B and C back in service
+				break;
+			case 9:	//LL-CA
+				imp_fault_name[0] = 'L';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'C';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x05;	//Put C and A back in service
+				break;
+			case 10:	//TLG
+				imp_fault_name[0] = 'T';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '\0';
+				phase_restore = 0x07;	//Put A, B, and C back in service
+				break;
+			case 11:	//OC-A
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'A';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x04;	//Put A back in service
+				break;
+			case 12:	//OC-B
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'B';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x02;	//Put B back in service
+				break;
+			case 13:	//OC-C
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'C';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x01;	//Put C back in service
+				break;
+			case 14:	//OC2-AB
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '2';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = 'B';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x06;	//Put A and B back in service
+				break;
+			case 15:	//OC2-BC
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '2';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = 'C';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x03;	//Put B and C back in service
+				break;
+			case 16:	//OC2-CA
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '2';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = 'A';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x05;	//Put C and A back in service
+				break;
+			case 17:	//OC3
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '3';
+				imp_fault_name[3] = '\0';
+				phase_restore = 0x07;	//Put A, B, and C back in service
+				break;
+			case 18:	//SW-A
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'A';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x04;	//Put A back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 19:	//SW-B
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'B';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x02;	//Put B back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 20:	//SW-C
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'C';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x01;	//Put C back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 21:	//SW-AB
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'A';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x06;	//Put A and B back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 22:	//SW-BC
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'B';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x03;	//Put B and C back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 23:	//SW-CA
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'C';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x05;	//Put C and A back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 24:	//SW-ABC
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'A';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = 'C';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x07;	//Put A, B, and C back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 25:	//FUS-A
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x04;	//Put A back in service
+				break;
+			case 26:	//FUS-B
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x02;	//Put B back in service
+				break;
+			case 27:	//FUS-C
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x01;	//Put C back in service
+				break;
+			case 28:	//FUS-AB
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = 'B';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x06;	//Put A and B back in service
+				break;
+			case 29:	//FUS-BC
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = 'C';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x03;	//Put B and C back in service
+				break;
+			case 30:	//FUS-CA
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = 'A';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x05;	//Put C and A back in service
+				break;
+			case 31:	//FUS-ABC
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = 'B';
+				imp_fault_name[6] = 'C';
+				imp_fault_name[7] = '\0';
+				phase_restore = 0x07;	//Put A, B, and C back in service
+				break;
+			case 32:	//TLL
+				imp_fault_name[0] = 'T';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'L';
+				imp_fault_name[3] = '\0';
+				phase_restore = 0x07;	//Put A, B, and C back in service
+				break;
+			default:	//Should never get here
+				GL_THROW("%s - attempted to recover from unsupported fault!",objhdr->name);
+				/*  TROUBLESHOOT
+				The link object attempted to recover from an unknown fault type.  Please try again.  If the
+				error persists, please submit your code and a bug report to the trac website.
+				*/
+				break;
+		}//end switch
+
+		//Flag an update if something changed (not a 0 state)
+		if (*implemented_fault != 0)
+		{
+			temp_node = -1;	//Default value
+
+			//Remove our restrictions for these phases
+			for (phaseidx=0; phaseidx<3; phaseidx++)
+			{
+				work_phases = 0x04 >> phaseidx;	//Get check
+
+				if ((phase_restore & work_phases) == work_phases)	//Valid phase to restore
+				{
+					//Store the value of protect_locations for later
+					temp_node = protect_locations[phaseidx];
+
+					//See if our "protective device" was the swing bus
+					if (protect_locations[phaseidx] == -1)
+					{
+						GL_THROW("An attempt to restore something that was never faulted has occurred!");
+						/*  TROUBLESHOOT
+						While attempting to restore a device, an unknown state was encountered where it
+						had somehow started faulted and was not caught.  If you have any switches in your
+						system, consider starting them closed first.
+						*/
+					}
+					else if (protect_locations[phaseidx] == -99)
+					{
+						//Theoretically, this phase should exist on the SWING.  Let's check to make sure
+						if ((NR_busdata[0].origphases & work_phases) == work_phases)	//Valid phase
 						{
+							NR_busdata[0].phases |= work_phases;	//Just turn it back on - it's the SWING, it has to work
+						}
+						else
+						{
+							GL_THROW("A fault was induced on the SWING bus for an unsupported phase!");
+							/*  TROUBLESHOOT
+							Somehow, a fault was induced on a phase that should not exist on the system.  While
+							attemtping to restore this fault, the SWING bus did not have the proper original phases,
+							so this could not be restored.  Please submit your code and a bug report using the trac website.
+							*/
+						}
+					}//End SWING
+					else	//Not the SWING Bus
+					{
+						//See if we are of a "protective" device implementation
+						if ((NR_branchdata[protect_locations[phaseidx]].lnk_type == 2) && (switch_val == true))	//Switch
+						{
+							//Get the switch
+							tmpobj = gl_get_object(NR_branchdata[protect_locations[phaseidx]].name);
+
+							if (tmpobj == NULL)
+							{
+								GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+								//Defined above
+							}
+
+							//Just call the restoration -- fault_check should pick up any abnormalities, or so the theory goes
+
 							//Get function address
 							funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_switch_state"));
 							
@@ -5986,601 +9964,540 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name, vo
 								GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 								//defined above
 							}
-						}
-						else if ((phase_restore & temp_phases) != 0x00)	//Some support is available
+
+							//Shouldn't even need to alter the flags
+							////Flag one of our ends as active, just in case
+							//if ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & 0x07) != 0x00)
+							//{
+							//	NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & 0x07);
+							//}
+							//else if ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases & 0x07) != 0x00)
+							//{
+							//	NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases & 0x07);
+							//}
+							////Default else, busted
+
+							//Flag the remote object's appropriate phases
+							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
+
+							//Remove the branch as an index in appropriate phases
+							for (phaseidx=0; phaseidx < 3; phaseidx++)
+							{
+								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+								if ((phase_restore & temp_phases) == temp_phases)
+								{
+									protect_locations[phaseidx] = -1;	//Clear our location
+								}
+							}
+
+							//Update our fault phases
+							NR_branchdata[NR_branch_reference].faultphases &= ~(phase_restore);
+
+							//Break out of this pesky loop
+							break;
+						}//end switch closure
+						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 6)	//recloser
 						{
-							//Update fault phases
-							temp_phases_B = (phase_restore & temp_phases);		//these are the phases to restore
-							temp_phases = (phase_restore & (~temp_phases_B));	//These are the phases just to update
+							//Get the recloser
+							tmpobj = gl_get_object(NR_branchdata[protect_locations[phaseidx]].name);
 
-							//Get function address
-							funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_switch_faults"));
-							
-							//Make sure it was found
-							if (funadd == NULL)
-							{
-								GL_THROW("Unable to change switch state on %s",tmpobj->name);
-								//Defined above - despite being slightly different
-							}
-
-							//Update the switch statii
-							ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,temp_phases);
-
-							//Make sure it worked
-							if (ext_result != 1)
-							{
-								GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
-								//defined above
-							}
-
-							//Restore other phase(s)
-							//Get function address
-							funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_switch_state"));
-							
-							//Make sure it was found
-							if (funadd == NULL)
-							{
-								GL_THROW("Unable to change switch state on %s",tmpobj->name);
-								//Defined above
-							}
-
-							//Update the fuse statii
-							ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,temp_phases_B,true);
-
-							//Make sure it worked
-							if (ext_result != 1)
-							{
-								GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
-								//defined above
-							}
-						}
-						else	//No support available
-						{
-							//Just update fault phases
-							//Get function address
-							funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_switch_faults"));
-							
-							//Make sure it was found
-							if (funadd == NULL)
-							{
-								GL_THROW("Unable to change switch state on %s",tmpobj->name);
-								//Defined above - despite being slightly different
-							}
-
-							//Update the switch statii
-							ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,phase_restore);
-
-							//Make sure it worked
-							if (ext_result != 1)
-							{
-								GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
-								//defined above
-							}
-						}
-
-						//Modify our phases as appropriate
-						NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & 0x07);
-
-						//Flag the remote object's appropriate phases
-						NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
-
-						//Remove the branch as an index in appropriate phases
-						for (phaseidx=0; phaseidx < 3; phaseidx++)
-						{
-							temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
-
-							if ((phase_restore & temp_phases) == temp_phases)
-							{
-								protect_locations[phaseidx] = -1;	//Clear our location
-							}
-						}
-
-						//Update our fault phases
-						NR_branchdata[NR_branch_reference].faultphases &= ~(phase_restore);
-
-						//Break out of this pesky loop
-						break;
-					}//end switch closure
-					else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 6)	//recloser
-					{
-						//Get the recloser
-						tmpobj = gl_get_object(NR_branchdata[protect_locations[phaseidx]].name);
-
-						if (tmpobj == NULL)
-						{
-							GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
-							//Defined above
-						}
-
-						//Check and see what the supporting nodes are doing - if a recloser is already in a fault, this causes issues
-						temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
-
-						if ((phase_restore & temp_phases) == phase_restore)	//Support is available, one way or another
-						{
-							//Get function address
-							funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_state"));
-							
-							//Make sure it was found
-							if (funadd == NULL)
-							{
-								GL_THROW("Unable to change recloser state on %s",tmpobj->name);
-								//Defined above
-							}
-
-							//Update the recloser statii
-							ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_restore,true);
-
-							//Make sure it worked
-							if (ext_result_dbl != 1.0)
+							if (tmpobj == NULL)
 							{
 								GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
-								//defined above
-							}
-						}
-						else if ((phase_restore & temp_phases) != 0x00)	//Some support is available
-						{
-							//Update fault phases
-							temp_phases_B = (phase_restore & temp_phases);		//these are the phases to restore
-							temp_phases = (phase_restore & (~temp_phases_B));	//These are the phases just to update
-
-							//Get function address
-							funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_faults"));
-							
-							//Make sure it was found
-							if (funadd == NULL)
-							{
-								GL_THROW("Unable to change recloser state on %s",tmpobj->name);
-								//Defined above - despite being slightly different
-							}
-
-							//Update the sectionalizer statii
-							ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,temp_phases);
-
-							//Make sure it worked
-							if (ext_result != 1)
-							{
-								GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
-								//defined above
-							}
-
-							//Restore other phase(s)
-							//Get function address
-							funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_state"));
-							
-							//Make sure it was found
-							if (funadd == NULL)
-							{
-								GL_THROW("Unable to change recloser state on %s",tmpobj->name);
 								//Defined above
 							}
 
-							//Update the recloser statii
-							ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_restore,true);
+							//Check and see what the supporting nodes are doing - if a recloser is already in a fault, this causes issues
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
 
-							//Make sure it worked
-							if (ext_result_dbl != 1.0)
+							if ((phase_restore & temp_phases) == phase_restore)	//Support is available, one way or another
 							{
-								GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
-								//defined above
+								//Get function address
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_state"));
+								
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change recloser state on %s",tmpobj->name);
+									//Defined above
+								}
+
+								//Update the recloser statii
+								ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_restore,true);
+
+								//Make sure it worked
+								if (ext_result_dbl != 1.0)
+								{
+									GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+									//defined above
+								}
 							}
-						}
-						else	//No support available
+							else if ((phase_restore & temp_phases) != 0x00)	//Some support is available
+							{
+								//Update fault phases
+								temp_phases_B = (phase_restore & temp_phases);		//these are the phases to restore
+								temp_phases = (phase_restore & (~temp_phases_B));	//These are the phases just to update
+
+								//Get function address
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_faults"));
+								
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change recloser state on %s",tmpobj->name);
+									//Defined above - despite being slightly different
+								}
+
+								//Update the sectionalizer statii
+								ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,temp_phases);
+
+								//Make sure it worked
+								if (ext_result != 1)
+								{
+									GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+									//defined above
+								}
+
+								//Restore other phase(s)
+								//Get function address
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_state"));
+								
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change recloser state on %s",tmpobj->name);
+									//Defined above
+								}
+
+								//Update the recloser statii
+								ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_restore,true);
+
+								//Make sure it worked
+								if (ext_result_dbl != 1.0)
+								{
+									GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+									//defined above
+								}
+							}
+							else	//No support available
+							{
+								//Just update fault phases
+								//Get function address
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_faults"));
+								
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change sectionalizer recloser on %s",tmpobj->name);
+									//Defined above - despite being slightly different
+								}
+
+								//Update the sectionalizer statii
+								ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,phase_restore);
+
+								//Make sure it worked
+								if (ext_result != 1)
+								{
+									GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+									//defined above
+								}
+							}
+
+							//Modify our phases as appropriate
+							NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & 0x07);
+
+							//Flag the remote object's appropriate phases
+							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
+
+							//Remove the branch as an index in appropriate phases
+							for (phaseidx=0; phaseidx < 3; phaseidx++)
+							{
+								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+								if ((phase_restore & temp_phases) == temp_phases)
+								{
+									protect_locations[phaseidx] = -1;	//Clear our location
+								}
+							}
+
+							//Update our fault phases
+							NR_branchdata[NR_branch_reference].faultphases &= ~(phase_restore);
+
+							//Break out of this pesky loop
+							break;
+						}//end recloser closure
+						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 5)	//Sectionalizer
 						{
-							//Just update fault phases
-							//Get function address
-							funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_faults"));
-							
-							//Make sure it was found
-							if (funadd == NULL)
-							{
-								GL_THROW("Unable to change sectionalizer recloser on %s",tmpobj->name);
-								//Defined above - despite being slightly different
-							}
+							//Get the sectionalizer
+							tmpobj = gl_get_object(NR_branchdata[protect_locations[phaseidx]].name);
 
-							//Update the sectionalizer statii
-							ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,phase_restore);
-
-							//Make sure it worked
-							if (ext_result != 1)
-							{
-								GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
-								//defined above
-							}
-						}
-
-						//Modify our phases as appropriate
-						NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & 0x07);
-
-						//Flag the remote object's appropriate phases
-						NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
-
-						//Remove the branch as an index in appropriate phases
-						for (phaseidx=0; phaseidx < 3; phaseidx++)
-						{
-							temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
-
-							if ((phase_restore & temp_phases) == temp_phases)
-							{
-								protect_locations[phaseidx] = -1;	//Clear our location
-							}
-						}
-
-						//Update our fault phases
-						NR_branchdata[NR_branch_reference].faultphases &= ~(phase_restore);
-
-						//Break out of this pesky loop
-						break;
-					}//end recloser closure
-					else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 5)	//Sectionalizer
-					{
-						//Get the sectionalizer
-						tmpobj = gl_get_object(NR_branchdata[protect_locations[phaseidx]].name);
-
-						if (tmpobj == NULL)
-						{
-							GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
-							//Defined above
-						}
-
-						//Check and see what the supporting nodes are doing - if a sectionalizer is already in a fault, this causes issues
-						temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
-
-						if ((phase_restore & temp_phases) == phase_restore)	//Support is available, one way or another
-						{
-							//Get function address
-							funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_state"));
-							
-							//Make sure it was found
-							if (funadd == NULL)
-							{
-								GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
-								//Defined above
-							}
-
-							//Update the sectionalizer statii
-							ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_restore,true);
-
-							//Make sure it worked
-							if (ext_result_dbl != 1.0)
+							if (tmpobj == NULL)
 							{
 								GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
-								//defined above
-							}
-						}
-						else if ((phase_restore & temp_phases) != 0x00)	//Some support is available
-						{
-							//Update fault phases
-							temp_phases_B = (phase_restore & temp_phases);		//these are the phases to restore
-							temp_phases = (phase_restore & (~temp_phases_B));	//These are the phases just to update
-
-							//Get function address
-							funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_faults"));
-							
-							//Make sure it was found
-							if (funadd == NULL)
-							{
-								GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
-								//Defined above - despite being slightly different
-							}
-
-							//Update the sectionalizer statii
-							ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,temp_phases);
-
-							//Make sure it worked
-							if (ext_result != 1)
-							{
-								GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
-								//defined above
-							}
-
-							//Restore other phase(s)
-							//Get function address
-							funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_state"));
-							
-							//Make sure it was found
-							if (funadd == NULL)
-							{
-								GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
 								//Defined above
 							}
 
-							//Update the sectionalizer statii
-							ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_restore,true);
+							//Check and see what the supporting nodes are doing - if a sectionalizer is already in a fault, this causes issues
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
 
-							//Make sure it worked
-							if (ext_result_dbl != 1.0)
+							if ((phase_restore & temp_phases) == phase_restore)	//Support is available, one way or another
 							{
-								GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
-								//defined above
+								//Get function address
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_state"));
+								
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
+									//Defined above
+								}
+
+								//Update the sectionalizer statii
+								ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_restore,true);
+
+								//Make sure it worked
+								if (ext_result_dbl != 1.0)
+								{
+									GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+									//defined above
+								}
 							}
-						}
-						else	//No support available
-						{
-							//Just update fault phases
-							//Get function address
-							funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_faults"));
+							else if ((phase_restore & temp_phases) != 0x00)	//Some support is available
+							{
+								//Update fault phases
+								temp_phases_B = (phase_restore & temp_phases);		//these are the phases to restore
+								temp_phases = (phase_restore & (~temp_phases_B));	//These are the phases just to update
+
+								//Get function address
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_faults"));
+								
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
+									//Defined above - despite being slightly different
+								}
+
+								//Update the sectionalizer statii
+								ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,temp_phases);
+
+								//Make sure it worked
+								if (ext_result != 1)
+								{
+									GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+									//defined above
+								}
+
+								//Restore other phase(s)
+								//Get function address
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_state"));
+								
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
+									//Defined above
+								}
+
+								//Update the sectionalizer statii
+								ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_restore,true);
+
+								//Make sure it worked
+								if (ext_result_dbl != 1.0)
+								{
+									GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+									//defined above
+								}
+							}
+							else	//No support available
+							{
+								//Just update fault phases
+								//Get function address
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_faults"));
+								
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
+									//Defined above - despite being slightly different
+								}
+
+								//Update the sectionalizer statii
+								ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,phase_restore);
+
+								//Make sure it worked
+								if (ext_result != 1)
+								{
+									GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+									//defined above
+								}
+							}
 							
-							//Make sure it was found
-							if (funadd == NULL)
+							//Modify our phases as appropriate
+							NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & 0x07);
+
+							//Flag the remote object's appropriate phases
+							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
+
+							//Remove the branch as an index in appropriate phases
+							for (phaseidx=0; phaseidx < 3; phaseidx++)
 							{
-								GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
-								//Defined above - despite being slightly different
+								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+								if ((phase_restore & temp_phases) == temp_phases)
+								{
+									protect_locations[phaseidx] = -1;	//Clear our location
+								}
 							}
 
-							//Update the sectionalizer statii
-							ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,phase_restore);
+							//Update our fault phases
+							NR_branchdata[NR_branch_reference].faultphases &= ~(phase_restore);
 
-							//Make sure it worked
-							if (ext_result != 1)
-							{
-								GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
-								//defined above
-							}
-						}
-						
-						//Modify our phases as appropriate
-						NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & 0x07);
-
-						//Flag the remote object's appropriate phases
-						NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
-
-						//Remove the branch as an index in appropriate phases
-						for (phaseidx=0; phaseidx < 3; phaseidx++)
+							//Break out of this pesky loop
+							break;
+						}//end sectionalizer closure
+						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 3)	//fuse
 						{
-							temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+							//Get the fuse
+							tmpobj = gl_get_object(NR_branchdata[protect_locations[phaseidx]].name);
 
-							if ((phase_restore & temp_phases) == temp_phases)
+							if (tmpobj == NULL)
 							{
-								protect_locations[phaseidx] = -1;	//Clear our location
-							}
-						}
-
-						//Update our fault phases
-						NR_branchdata[NR_branch_reference].faultphases &= ~(phase_restore);
-
-						//Break out of this pesky loop
-						break;
-					}//end sectionalizer closure
-					else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 3)	//fuse
-					{
-						//Get the fuse
-						tmpobj = gl_get_object(NR_branchdata[protect_locations[phaseidx]].name);
-
-						if (tmpobj == NULL)
-						{
-							GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
-							//Defined above
-						}
-
-						//Check and see what the supporting nodes are doing - if a fuse is already in a fault, this causes issues
-						temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
-
-						if ((phase_restore & temp_phases) == phase_restore)	//Support is available, one way or another
-						{
-							//Get function address
-							funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_state"));
-							
-							//Make sure it was found
-							if (funadd == NULL)
-							{
-								GL_THROW("Unable to change fuse state on %s",tmpobj->name);
+								GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 								//Defined above
 							}
 
-							//Update the fuse statii
-							ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_restore,true);
+							//Check and see what the supporting nodes are doing - if a fuse is already in a fault, this causes issues
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
 
-							//Make sure it worked
-							if (ext_result != 1)
+							if ((phase_restore & temp_phases) == phase_restore)	//Support is available, one way or another
 							{
-								GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
-								//defined above
+								//Get function address
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_state"));
+								
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change fuse state on %s",tmpobj->name);
+									//Defined above
+								}
+
+								//Update the fuse statii
+								ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_restore,true);
+
+								//Make sure it worked
+								if (ext_result != 1)
+								{
+									GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+									//defined above
+								}
 							}
-						}
-						else if ((phase_restore & temp_phases) != 0x00)	//Some support is available
+							else if ((phase_restore & temp_phases) != 0x00)	//Some support is available
+							{
+								//Update fault phases
+								temp_phases_B = (phase_restore & temp_phases);		//these are the phases to restore
+								temp_phases = (phase_restore & (~temp_phases_B));	//These are the phases just to update
+
+								//Get function address
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_faults"));
+								
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change fuse state on %s",tmpobj->name);
+									//Defined above - despite being slightly different
+								}
+
+								//Update the fuse statii
+								ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,temp_phases);
+
+								//Make sure it worked
+								if (ext_result != 1)
+								{
+									GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+									//defined above
+								}
+
+								//Restore other phase(s)
+								//Get function address
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_state"));
+								
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change fuse state on %s",tmpobj->name);
+									//Defined above
+								}
+
+								//Update the fuse statii
+								ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,temp_phases_B,true);
+
+								//Make sure it worked
+								if (ext_result != 1)
+								{
+									GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+									//defined above
+								}
+							}
+							else	//No support available
+							{
+								//Just update fault phases
+								//Get function address
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_faults"));
+								
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change fuse state on %s",tmpobj->name);
+									//Defined above - despite being slightly different
+								}
+
+								//Update the fuse statii
+								ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,phase_restore);
+
+								//Make sure it worked
+								if (ext_result != 1)
+								{
+									GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+									//defined above
+								}
+							}
+
+							//Modify our phases as appropriate
+							NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & 0x07);
+
+							//Flag the remote object's appropriate phases
+							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
+
+							//Remove the branch as an index in appropriate phases
+							for (phaseidx=0; phaseidx < 3; phaseidx++)
+							{
+								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+								if ((phase_restore & temp_phases) == temp_phases)
+								{
+									protect_locations[phaseidx] = -1;	//Clear our location
+								}
+							}
+
+							//Update our fault phases
+							NR_branchdata[NR_branch_reference].faultphases &= ~(phase_restore);
+
+							//Break out of this pesky loop
+							break;
+						}//End fuse closure
+						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 4)	//Transformer
 						{
-							//Update fault phases
-							temp_phases_B = (phase_restore & temp_phases);		//these are the phases to restore
-							temp_phases = (phase_restore & (~temp_phases_B));	//These are the phases just to update
+							//Transformers are special case - if the source is supported, all three phases are reinstated
+							temp_phases = NR_branchdata[protect_locations[phaseidx]].origphases & 0x07;
 
-							//Get function address
-							funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_faults"));
-							
-							//Make sure it was found
-							if (funadd == NULL)
+							//Make sure we match
+							if ((temp_phases & NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases) == temp_phases)
 							{
-								GL_THROW("Unable to change fuse state on %s",tmpobj->name);
-								//Defined above - despite being slightly different
+								//Support is there, restore all relevant phases
+								NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(temp_phases);
+
+								//Check for SPCT rating
+								if ((NR_branchdata[protect_locations[phaseidx]].origphases & 0x80) == 0x80)	//SPCT
+								{
+									temp_phases |= 0x80;	//Apply SPCT flag
+								}
+								//Defaulted else - normal xformer
+
+								//Pull the phases back into service
+								NR_branchdata[protect_locations[phaseidx]].phases = (NR_branchdata[protect_locations[phaseidx]].origphases & temp_phases);
+							}
+							else	//Support is not there - clear the flag, but don't restore
+							{
+								NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(temp_phases);
 							}
 
-							//Update the fuse statii
-							ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,temp_phases);
+							//Remove our fault for the appropriate phases
+							temp_phases = NR_branchdata[protect_locations[phaseidx]].origphases & 0x07;
+							NR_branchdata[NR_branch_reference].faultphases &= ~(temp_phases);
 
-							//Make sure it worked
-							if (ext_result != 1)
+							//Remove fault indices - loop through transformer phases
+							for (indexval=0; indexval<3; indexval++)
 							{
-								GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
-								//defined above
+								temp_phases = 0x04 >> indexval;
+
+								if ((temp_phases & NR_branchdata[NR_branch_reference].faultphases) == 0x00)	//No fault here
+									protect_locations[indexval] = -1;	//Clear flag
 							}
 
-							//Restore other phase(s)
-							//Get function address
-							funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_state"));
-							
-							//Make sure it was found
-							if (funadd == NULL)
-							{
-								GL_THROW("Unable to change fuse state on %s",tmpobj->name);
-								//Defined above
-							}
-
-							//Update the fuse statii
-							ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,temp_phases_B,true);
-
-							//Make sure it worked
-							if (ext_result != 1)
-							{
-								GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
-								//defined above
-							}
-						}
-						else	//No support available
+							break;	//Get us out of phase loop - transformers handle all 3 phases at once
+						}//End transformer restoration
+						else
 						{
-							//Just update fault phases
-							//Get function address
-							funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_faults"));
-							
-							//Make sure it was found
-							if (funadd == NULL)
-							{
-								GL_THROW("Unable to change fuse state on %s",tmpobj->name);
-								//Defined above - despite being slightly different
-							}
-
-							//Update the fuse statii
-							ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,phase_restore);
-
-							//Make sure it worked
-							if (ext_result != 1)
-							{
-								GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
-								//defined above
-							}
+							GL_THROW("Protective device %s invalid for restoration!",NR_branchdata[protect_locations[phaseidx]].name);
+							/*  TROUBLESHOOT
+							While attempting to restore a protective device, something besides a switch, fuse, or transformer was used.
+							This should not have happened.  Please try again.  If the error persists, please submit your code and a bug
+							report using the trac website.
+							*/
 						}
 
-						//Modify our phases as appropriate
-						NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & 0x07);
-
-						//Flag the remote object's appropriate phases
-						NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
-
-						//Remove the branch as an index in appropriate phases
-						for (phaseidx=0; phaseidx < 3; phaseidx++)
-						{
-							temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
-
-							if ((phase_restore & temp_phases) == temp_phases)
-							{
-								protect_locations[phaseidx] = -1;	//Clear our location
-							}
-						}
-
-						//Update our fault phases
-						NR_branchdata[NR_branch_reference].faultphases &= ~(phase_restore);
-
-						//Break out of this pesky loop
-						break;
-					}//End fuse closure
-					else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 4)	//Transformer
-					{
-						//Transformers are special case - if the source is supported, all three phases are reinstated
-						temp_phases = NR_branchdata[protect_locations[phaseidx]].origphases & 0x07;
-
-						//Make sure we match
-						if ((temp_phases & NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases) == temp_phases)
-						{
-							//Support is there, restore all relevant phases
-							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(temp_phases);
-
-							//Check for SPCT rating
-							if ((NR_branchdata[protect_locations[phaseidx]].origphases & 0x80) == 0x80)	//SPCT
-							{
-								temp_phases |= 0x80;	//Apply SPCT flag
-							}
-							//Defaulted else - normal xformer
-
-							//Pull the phases back into service
-							NR_branchdata[protect_locations[phaseidx]].phases = (NR_branchdata[protect_locations[phaseidx]].origphases & temp_phases);
-						}
-						else	//Support is not there - clear the flag, but don't restore
-						{
-							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(temp_phases);
-						}
-
-						//Remove our fault for the appropriate phases
-						temp_phases = NR_branchdata[protect_locations[phaseidx]].origphases & 0x07;
-						NR_branchdata[NR_branch_reference].faultphases &= ~(temp_phases);
-
-						//Remove fault indices - loop through transformer phases
-						for (indexval=0; indexval<3; indexval++)
-						{
-							temp_phases = 0x04 >> indexval;
-
-							if ((temp_phases & NR_branchdata[NR_branch_reference].faultphases) == 0x00)	//No fault here
-								protect_locations[indexval] = -1;	//Clear flag
-						}
-
-						break;	//Get us out of phase loop - transformers handle all 3 phases at once
-					}//End transformer restoration
-					else
-					{
-						GL_THROW("Protective device %s invalid for restoration!",NR_branchdata[protect_locations[phaseidx]].name);
-						/*  TROUBLESHOOT
-						While attempting to restore a protective device, something besides a switch, fuse, or transformer was used.
-						This should not have happened.  Please try again.  If the error persists, please submit your code and a bug
-						report using the trac website.
-						*/
+						//Clear "far" device lockout
+						NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(work_phases);	//Remove the phase lock
 					}
 
-					//Clear "far" device lockout
-					NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(work_phases);	//Remove the phase lock
-				}
+					//Clear faulted device lockout
+					protect_locations[phaseidx] = -1;
 
-				//Clear faulted device lockout
-				protect_locations[phaseidx] = -1;
+					//Clear faulted device protect_locations
+					NR_branchdata[NR_branch_reference].faultphases &= ~(work_phases);	//Remove the phase lock from us as well
+				}//End valid phase
+				//Default else - not a phase we care about
+			}//End phase loop
 
-				//Clear faulted device protect_locations
-				NR_branchdata[NR_branch_reference].faultphases &= ~(work_phases);	//Remove the phase lock from us as well
-			}//End valid phase
-			//Default else - not a phase we care about
-		}//End phase loop
+			//Perform rescan for validities
+			//Safety device enacted - now call fault_check function and let it restore  objects
+			//Map the function
+			funadd = (FUNCTIONADDR)(gl_get_function(fault_check_object,"reliability_alterations"));
+			
+			//Make sure it was found
+			if (funadd == NULL)
+			{
+				GL_THROW("Unable to update objects for reliability effects");
+				//Defined above
+			}
 
-		//Perform rescan for validities
-		//Safety device enacted - now call fault_check function and let it restore  objects
-		//Map the function
-		funadd = (FUNCTIONADDR)(gl_get_function(fault_check_object,"reliability_alterations"));
-		
-		//Make sure it was found
-		if (funadd == NULL)
-		{
-			GL_THROW("Unable to update objects for reliability effects");
-			//Defined above
-		}
+			//Make sure we have a valid value
+			if (temp_node == -1)
+			{
+				GL_THROW("Attempts to map a fault location failed!");
+				/*  TROUBLESHOOT
+				While attempting to restore a fault's protective device, no location
+				for the protective device was found.  If the problem persists, please submit
+				your code and a bug report using the trac website.
+				*/
+			}
 
-		//Make sure we have a valid value
-		if (temp_node == -1)
-		{
-			GL_THROW("Attempts to map a fault location failed!");
-			/*  TROUBLESHOOT
-			While attempting to restore a fault's protective device, no location
-			for the protective device was found.  If the problem persists, please submit
-			your code and a bug report using the trac website.
-			*/
-		}
+			//Update powerflow - removal mode
+			ext_result = ((int (*)(OBJECT *, int, bool))(*funadd))(fault_check_object,temp_node,true);
 
-		//Update powerflow - removal mode
-		ext_result = ((int (*)(OBJECT *, int, bool))(*funadd))(fault_check_object,temp_node,true);
+			//Make sure it worked
+			if (ext_result != 1)
+			{
+				GL_THROW("Unable to update objects for reliability effects");
+				//defined above
+			}
 
-		//Make sure it worked
-		if (ext_result != 1)
-		{
-			GL_THROW("Unable to update objects for reliability effects");
-			//defined above
-		}
+			LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
+			NR_admit_change = true;	
+			UNLOCK_OBJECT(NR_swing_bus);	//Release us
 
-		LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
-		NR_admit_change = true;	
-		UNLOCK_OBJECT(NR_swing_bus);	//Release us
+			if (temp_node == -99)
+				gl_verbose("Event %s removed from %s by restoring %s",imp_fault_name,objhdr->name,NR_busdata[0].name);
+			else
+				gl_verbose("Event %s removed from %s by restoring %s",imp_fault_name,objhdr->name,NR_branchdata[temp_node].name);
+		}//End actual change
 
-		if (temp_node == -99)
-			gl_verbose("Event %s removed from %s by restoring %s",imp_fault_name,objhdr->name,NR_busdata[0].name);
-		else
-			gl_verbose("Event %s removed from %s by restoring %s",imp_fault_name,objhdr->name,NR_branchdata[temp_node].name);
-	}//End actual change
-
-	return 1;
+		return 1;
+	}//End meshed checking mode
 }
-//adding function to calculate the fault current seen at the swing bus then distribut that current down to fault path to the faulted line
+//adding function to calculate the fault current seen at the swing bus then distribute that current down to fault path to the faulted line
 //right now it is assumed that all faults occur at the to end of the faulted link object.
 void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase, double fault_type)
 {
@@ -6641,7 +10558,7 @@ void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase,
 		{
 			GL_THROW("Error finding proper to reference for node %s",NR_busdata[temp_node].name);
 			/*  TROUBLESHOOT
-			While attempting to enduce a safety reaction to a fault, a progression through the
+			While attempting to induce a safety reaction to a fault, a progression through the
 			links of the system failed.  Please try again.  If the bug persists, please submit your
 			*/
 		}
@@ -7197,6 +11114,128 @@ void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase,
 		NR_branchdata[temp_branch_fc].If_from[2] = NR_branchdata[temp_branch_fc].If_to[2];
 	}	
 }
+
+////////////////////////////////////////////////////////
+// Larger matrix operations -- mostly for transformers
+////////////////////////////////////////////////////////
+
+//Inverse handled via lu_matrix_inverse routine - generic
+
+//Performs a general matrix addition for square matrices of size "size"
+//Computes matrix_in_A + matrix_in_B = matrix_out
+//Insure all matrices are preallocated
+void link_object::lmatrix_add(complex *matrix_in_A, complex *matrix_in_B, complex *matrix_out, int matsize)
+{
+	//Variables
+	int jindex, kindex;
+	OBJECT *obj = OBJECTHDR(this);
+
+	//Initial check - make sure nothing NULL has been passed
+	if ((matrix_in_A == NULL) || (matrix_in_B == NULL) || (matrix_out == NULL))
+	{
+		GL_THROW("link:%d-%s attempted to do a large matrix operation with an unallocated input or output matrix",obj->id,(obj->name ? obj->name : "unnamed"));
+		//Defined above
+	}
+
+	//Do a negative/zero size check, just to stop stupid people
+	if (matsize<1)
+	{
+		GL_THROW("link:%d-%s attempted to add matrices of an invalid size",obj->id,(obj->name ? obj->name : "unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to perform a "large matrix" addition operation, but a negative or zero size was passed.  Please
+		fix this and try again.
+		*/
+	}
+
+	//Loop and do the add - simple
+	for (jindex=0; jindex<matsize; jindex++)
+	{
+		for (kindex=0; kindex<matsize; kindex++)
+		{
+			matrix_out[jindex*matsize+kindex] = matrix_in_A[jindex*matsize+kindex] + matrix_in_B[jindex*matsize+kindex];
+		}
+	}
+}
+
+//Performs a general matrix multiplication for square matrices of size "size"
+//Computes matrix_in_A * matrix_in_B = matrix_out
+//Insure all matrices are preallocated
+void link_object::lmatrix_mult(complex *matrix_in_A, complex *matrix_in_B, complex *matrix_out, int matsize)
+{
+	//Variables
+	int jindex, kindex, lindex;
+	OBJECT *obj = OBJECTHDR(this);
+
+	//Initial check - make sure nothing NULL has been passed
+	if ((matrix_in_A == NULL) || (matrix_in_B == NULL) || (matrix_out == NULL))
+	{
+		GL_THROW("link:%d-%s attempted to do a large matrix operation with an unallocated input or output matrix",obj->id,(obj->name ? obj->name : "unnamed"));
+		//Defined above
+	}
+
+	//Do a negative/zero size check, just to stop stupid people
+	if (matsize<1)
+	{
+		GL_THROW("link:%d-%s attempted to multiply matrices of an invalid size",obj->id,(obj->name ? obj->name : "unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to perform a "large matrix" multiplication operation, but a negative or zero size was passed.  Please
+		fix this and try again.
+		*/
+	}
+
+	//Perform the matrix mulitplication
+	for (jindex=0; jindex<matsize; jindex++)
+	{
+		for (kindex=0; kindex<matsize; kindex++)
+		{
+			//Zero the entry, since we'll accumulate into it
+			matrix_out[jindex*matsize+kindex] = complex(0.0,0.0);
+
+			for (lindex=0; lindex<matsize; lindex++)
+			{
+				matrix_out[jindex*matsize+kindex] += matrix_in_A[jindex*matsize+lindex] * matrix_in_B[lindex*matsize+kindex];
+			}//End lindex
+		}//End kindex
+	}//End jindex
+}
+
+//Performs a general matrix-vector multiplication for square matrices of size "matsize"
+//Computes matrix_in * vector_in = vector_out
+//Insure all matrices/vector are preallocated
+void link_object::lmatrix_vmult(complex *matrix_in, complex *vector_in, complex *vector_out, int matsize)
+{
+	//Variables
+	int jindex, kindex;
+	OBJECT *obj = OBJECTHDR(this);
+
+	//Initial check - make sure nothing NULL has been passed
+	if ((matrix_in == NULL) || (vector_in == NULL) || (vector_out == NULL))
+	{
+		GL_THROW("link:%d-%s attempted to do a large matrix operation with an unallocated input or output matrix",obj->id,(obj->name ? obj->name : "unnamed"));
+		//Defined above
+	}
+
+	//Do a negative/zero size check, just to stop stupid people
+	if (matsize<1)
+	{
+		GL_THROW("link:%d-%s attempted to multiply matrices of an invalid size",obj->id,(obj->name ? obj->name : "unnamed"));
+		//Define elsewhere
+	}
+
+	//Perform the matrix mulitplication
+	for (jindex=0; jindex<matsize; jindex++)
+	{
+		//Zero the entry, since we'll accumulate into it
+		vector_out[jindex] = complex(0.0,0.0);
+
+		//Multiply across the columns/rows
+		for (kindex=0; kindex<matsize; kindex++)
+		{
+			vector_out[jindex] += matrix_in[jindex*matsize+kindex] * vector_in[kindex];
+		}//End kindex
+	}//End jindex
+}
+
 //////////////////////////////////////////////////////////////////////////
 // MATRIX OPS FOR LINKS
 //////////////////////////////////////////////////////////////////////////
@@ -7265,64 +11304,174 @@ void equalm(complex a[3][3], complex b[3][3])
 	MEQ(2, 0); MEQ(2, 1); MEQ(2, 2);
 	#undef MEQ
 }
-void lu_decomp(complex a[7][7], complex l[7][7], complex u[7][7])
+
+//Perform LU decomposition
+void lu_decomp(complex *a, complex *l, complex *u, int size_val)
 {
 	int k, n, m, s;
 	complex sum;
 	// make sure L and U contain zeroes
-	for(n=0; n<7; n++){
-		for(m=0;m<7;m++){
-			l[n][m] = complex(0,0);
-			u[n][m] = complex(0,0);
+	for(n=0; n<size_val; n++){
+		for(m=0;m<size_val;m++){
+			l[n*size_val+m] = complex(0,0);
+			u[n*size_val+m] = complex(0,0);
 		}
 	}
 	// for loop to decompose a in to lower triangular matrix l and upper triangular matirx u
-	for(k=0; k<7; k++){
-		l[k][k] = complex(1,0);
-		for(m=k; m<7; m++){
+	for(k=0; k<size_val; k++){
+		l[k*size_val+k] = complex(1,0);
+		for(m=k; m<size_val; m++){
 			if(k==0){
-				u[k][m] = a[k][m];
+				u[k*size_val+m] = a[k*size_val+m];
 			}else{
 				sum = complex(0,0);
 				for(s=0; s<k; s++){
-					sum += l[k][s]*u[s][m];
+					sum += l[k*size_val+s]*u[s*size_val+m];
 				}
-				u[k][m] = a[k][m] - sum;
+				u[k*size_val+m] = a[k*size_val+m] - sum;
 			}
 		}// end U loop
-		for(n=k+1; n<7; n++){
+		for(n=k+1; n<size_val; n++){
 			if(k==0){
-				l[n][k] = a[n][k]/u[k][k];
+				l[n*size_val+k] = a[n*size_val+k]/u[k*size_val+k];
 			}else{
 				sum = complex(0,0);
 				for(s=0; s<k; s++){
-					sum += l[n][s]*u[s][k];
+					sum += l[n*size_val+s]*u[s*size_val+k];
 				}
-				l[n][k] = (a[n][k] - sum)/u[k][k];
+				l[n*size_val+k] = (a[n*size_val+k] - sum)/u[k*size_val+k];
 			}			
 		}// end L loop
 	}// end decomp loop
 }
-void forward_sub(complex l[7][7], complex b[7], complex z[7])// inputs l and b compute output z
+
+//Performs forward substitution for LU decomp inversion method
+void forward_sub(complex *l, complex *b, complex *z, int size_val)// inputs l and b compute output z
 {
 	int n, m;
 	z[0] = b[0];
-	for(n=1; n<7; n++){
+	for(n=1; n<size_val; n++){
 		for(m=0; m<n; m++){
-			b[n] = b[n] - (l[n][m]*z[m]);
+			b[n] = b[n] - (l[n*size_val+m]*z[m]);
 		}
 		z[n] = b[n];
 	}
 }
-void back_sub(complex u[7][7], complex z[7], complex x[7])// inputs u and z comput output x
+
+//Performs backward substitution for LU decomp inversion method
+void back_sub(complex *u, complex *z, complex *x, int size_val)// inputs u and z comput output x
 {
 	int n, m;
-	x[6] = z[6]/u[6][6];
-	for(n=5; n>-1; n--){
-		for(m=n+1; m<7; m++){
-			z[n] = z[n] - (u[n][m]*x[m]); 
+	x[(size_val-1)] = z[(size_val-1)]/u[(size_val*size_val-1)];
+	for(n=(size_val-2); n>-1; n--){
+		for(m=n+1; m<size_val; m++){
+			z[n] = z[n] - (u[n*size_val+m]*x[m]); 
 		}
-		x[n] = z[n]/u[n][n];
+		x[n] = z[n]/u[n*size_val+n];
 	}
 }
+
+//Perform an inversion calculation using the LU decomposition as a basis
+//Assumes all matrices prealloced in advance
+//output_mat = inv(input_mat)
+//size_val represents the square dimension -- 6x6 matrix = 6
+void lu_matrix_inverse(complex *input_mat, complex *output_mat, int size_val)
+{
+	complex *l_mat, *u_mat, *b_vec, *z_vec, *x_vec;
+	int sq_size,loop_val_x, loop_val_y;
+
+	//Get overall size (save a multiply, save something)
+	sq_size = size_val*size_val;
+
+	//Allocate them on the heap, for now
+	l_mat = (complex *)gl_malloc(sq_size*sizeof(complex));
+
+	//Check it
+	if (l_mat == NULL)
+	{
+		GL_THROW("link: error allocated space for LU matrix inversion");
+		/*  TROUBLESHOOT
+		While attempting to allocate space to perform a LU-decomp-based
+		matrix inversion, an error occurred.  Please try again.  If the error
+		persists, please submit you code and a bug report via the ticketing website.
+		*/
+	}
+
+	u_mat = (complex *)gl_malloc(sq_size*sizeof(complex));
+
+	//Check it
+	if (u_mat == NULL)
+	{
+		GL_THROW("link: error allocated space for LU matrix inversion");
+		//Defined above
+	}
+
+	b_vec = (complex *)gl_malloc(size_val*sizeof(complex));
+
+	//Check it
+	if (b_vec == NULL)
+	{
+		GL_THROW("link: error allocated space for LU matrix inversion");
+		//Defined above
+	}
+
+	z_vec = (complex *)gl_malloc(size_val*sizeof(complex));
+
+	//Check it
+	if (z_vec == NULL)
+	{
+		GL_THROW("link: error allocated space for LU matrix inversion");
+		//Defined above
+	}
+
+	x_vec = (complex *)gl_malloc(size_val*sizeof(complex));
+
+	//Check it
+	if (x_vec == NULL)
+	{
+		GL_THROW("link: error allocated space for LU matrix inversion");
+		//Defined above
+	}
+
+	//Do the LU decomp
+	lu_decomp(input_mat,l_mat,u_mat,size_val);
+
+	//Loop for the inverse
+	for (loop_val_x=0; loop_val_x<size_val; loop_val_x++)
+	{
+		//Form "solution" vector
+		for (loop_val_y=0; loop_val_y<size_val; loop_val_y++)
+		{
+			if (loop_val_x == loop_val_y)
+			{
+				b_vec[loop_val_y] = complex(1.0,0.0);
+			}
+			else
+			{
+				b_vec[loop_val_y] = complex(0.0,0.0);
+			}
+		}//End solution vector formulation
+
+		//Perform forward substitution
+		forward_sub(l_mat,b_vec,z_vec,size_val);
+
+		//Perform backward substitution
+		back_sub(u_mat,z_vec,x_vec,size_val);
+
+		//Now copy it in
+		for (loop_val_y=0; loop_val_y<size_val; loop_val_y++)
+		{
+			output_mat[loop_val_y*size_val+loop_val_x] = x_vec[loop_val_y];
+		}
+	}//End column loop
+
+	//Free up all the heap variables
+	gl_free(l_mat);
+	gl_free(u_mat);
+	gl_free(b_vec);
+	gl_free(z_vec);
+	gl_free(x_vec);
+}
+
+
 /**@}*/

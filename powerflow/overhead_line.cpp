@@ -34,15 +34,24 @@ overhead_line::overhead_line(MODULE *mod) : line(mod)
         if(gl_publish_variable(oclass,
 			PT_INHERIT, "line",
 			NULL) < 1) GL_THROW("unable to publish overhead_line properties in %s",__FILE__);
-			if (gl_publish_function(oclass,	"create_fault", (FUNCTIONADDR)create_fault_ohline)==NULL)
-				GL_THROW("Unable to publish fault creation function");
-			if (gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_ohline)==NULL)
-				GL_THROW("Unable to publish fault restoration function");
 
-			//Publish deltamode functions
-			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
-				GL_THROW("Unable to publish overhead line deltamode function");
-    }
+		if (gl_publish_function(oclass,	"create_fault", (FUNCTIONADDR)create_fault_ohline)==NULL)
+			GL_THROW("Unable to publish fault creation function");
+		if (gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_ohline)==NULL)
+			GL_THROW("Unable to publish fault restoration function");
+
+		//Publish deltamode functions
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
+			GL_THROW("Unable to publish overhead line deltamode function");
+		if (gl_publish_function(oclass,	"recalc_distribution_line", (FUNCTIONADDR)recalc_overhead_line)==NULL)
+			GL_THROW("Unable to publish overhead line recalc function");
+
+		//Publish restoration-related function (current update)
+		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
+			GL_THROW("Unable to publish overhead line external power calculation function");
+		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+			GL_THROW("Unable to publish overhead line external power limit calculation function");
+	}
 }
 
 int overhead_line::create(void)
@@ -248,9 +257,18 @@ void overhead_line::recalc(void)
 		
 		//Calculate coefficients for self and mutual impedance - incorporates frequency values
 		//Per Kersting (4.39) and (4.40)
-		freq_coeff_real = 0.00158836*nominal_frequency;
-		freq_coeff_imag = 0.00202237*nominal_frequency;
-		freq_additive_term = log(EARTH_RESISTIVITY/nominal_frequency)/2.0 + 7.6786;
+		if (enable_frequency_dependence == true)	//See if we may be updating due to frequency changes
+		{
+			freq_coeff_real = 0.00158836*current_frequency;
+			freq_coeff_imag = 0.00202237*current_frequency;
+			freq_additive_term = log(EARTH_RESISTIVITY/current_frequency)/2.0 + 7.6786;
+		}
+		else
+		{
+			freq_coeff_real = 0.00158836*nominal_frequency;
+			freq_coeff_imag = 0.00202237*nominal_frequency;
+			freq_additive_term = log(EARTH_RESISTIVITY/nominal_frequency)/2.0 + 7.6786;
+		}
 
 		#define GMR(ph) (has_phase(PHASE_##ph) && config->phase##ph##_conductor ? \
 			OBJECTDATA(config->phase##ph##_conductor, overhead_line_conductor)->geometric_mean_radius : 0.0)
@@ -296,7 +314,14 @@ void overhead_line::recalc(void)
 			cap_coeff = 1.0/(PERMITIVITTY_AIR*2.0*PI);
 
 			//Set capacitor frequency/distance/scaling factor (rad/s*S)
-			cap_freq_mult = complex(0,(2.0*PI*nominal_frequency*0.000001*miles));
+			if (enable_frequency_dependence == true)	//See which frequency to use
+			{
+				cap_freq_mult = complex(0,(2.0*PI*current_frequency*0.000001*miles));
+			}
+			else
+			{
+				cap_freq_mult = complex(0,(2.0*PI*nominal_frequency*0.000001*miles));
+			}
 
 			//Extract line spacing (nned for capacitance)
 			spacing_val = OBJECTDATA(config->line_spacing, line_spacing);

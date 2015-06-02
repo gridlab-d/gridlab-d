@@ -79,6 +79,8 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	gl_global_create("powerflow::deltamode_timestep", PT_double, &deltamode_timestep_publish,PT_UNITS,"ns",PT_DESCRIPTION,"Desired minimum timestep for deltamode-related simulations",NULL);
 	gl_global_create("powerflow::deltamode_extra_function", PT_int64, &deltamode_extra_function,NULL);
 	gl_global_create("powerflow::current_frequency",PT_double,&current_frequency,PT_UNITS,"Hz",PT_DESCRIPTION,"Current system-level frequency of the powerflow system",NULL);
+	gl_global_create("powerflow::master_frequency_update",PT_bool,&master_frequency_update,PT_DESCRIPTION,"Tracking variable to see if an object has become the system frequency updater",NULL);
+	gl_global_create("powerflow::enable_frequency_dependence",PT_bool,&enable_frequency_dependence,PT_DESCRIPTION,"Flag to enable frequency-based variations in impedance values of lines and loads",NULL);
 	gl_global_create("powerflow::default_resistance",PT_double,&default_resistance,NULL);
 
 	// register each object class by creating the default instance
@@ -232,6 +234,14 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 	NRSOLVERMODE powerflow_type;
 	int64 pf_result;
 	
+	//See if this is the first instance -- if so, update the timestep (if in-rush enabled)
+	if (deltatimestep_running < 0.0)
+	{
+		//Set the powerflow global -- technically the same as dt, but in double precision (less divides)
+		deltatimestep_running = (double)((double)dt/(double)DT_SECOND);
+	}
+	//Default else -- already set
+
 	if (enable_subsecond_models == true)
 	{
 		//Do the preliminary pass, in case we're needed
@@ -374,6 +384,9 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 	{
 		//Final item of transitioning out is resetting the next timestep so a smaller one can take its place
 		deltamode_starttime = TS_NEVER;
+
+		//Deflag the timestep variable as well
+		deltatimestep_running = -1.0;
 		
 		return SUCCESS;
 	}
@@ -426,9 +439,6 @@ int delta_extra_function(unsigned int mode)
 		if (function_status == FAILED)
 			return 0;
 	}
-	
-	//Post the value to the powerflow global - pu in Hz too (is in radians)
-	current_frequency = (accumulated_freqpower.Re()/accumulated_power.Re())/(2.0*PI);
 
 	return 1;	
 }

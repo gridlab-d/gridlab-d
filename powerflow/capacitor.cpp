@@ -92,11 +92,11 @@ capacitor::capacitor(MODULE *mod):node(mod)
 
 			//Publish deltamode functions
 			if (gl_publish_function(oclass,	"delta_linkage_node", (FUNCTIONADDR)delta_linkage)==NULL)
-				GL_THROW("Unable to publish load delta_linkage function");
-			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_node)==NULL)
-				GL_THROW("Unable to publish load deltamode function");
+				GL_THROW("Unable to publish capacitor delta_linkage function");
+			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_capacitor)==NULL)
+				GL_THROW("Unable to publish capacitor deltamode function");
 			if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
-				GL_THROW("Unable to publish load deltamode function");
+				GL_THROW("Unable to publish capacitor deltamode function");
     }
 }
 
@@ -131,12 +131,12 @@ int capacitor::create()
 	time_delay = 0.0;
 	dwell_time = 0.0;
 	lockout_time = 0.0;
-	time_to_change = 0;
-	dwell_time_left = 0;
-	lockout_time_left_A = 0;
-	lockout_time_left_B = 0;
-	lockout_time_left_C = 0;
-	last_time = 0;
+	time_to_change = 0.0;
+	dwell_time_left = 0.0;
+	lockout_time_left_A = 0.0;
+	lockout_time_left_B = 0.0;
+	lockout_time_left_C = 0.0;
+	last_time = 0.0;
 	cap_nominal_voltage = 0.0;
 	RemoteSensor = NULL;
 	SecondaryRemote=NULL;
@@ -372,7 +372,7 @@ int capacitor::init(OBJECT *parent)
 	if(cap_switchC_count < 0)
 		cap_switchC_count = 0;
 	
-	prev_time = gl_globalclock;
+	prev_time = (double)gl_globalclock;
 	
 	prev_switchA_state = init_switchA_state = (CAPSWITCH)switchA_state;
 	prev_switchB_state = init_switchB_state = (CAPSWITCH)switchB_state;
@@ -385,23 +385,107 @@ int capacitor::init(OBJECT *parent)
 
 TIMESTAMP capacitor::sync(TIMESTAMP t0)
 {
+	double curr_time_value;
+	bool Phase_Mismatch;
+	TIMESTAMP result;
+
+	//cast the current time
+	curr_time_value = (double)t0;
+	
+	//Call the functionalized version of the sync
+	Phase_Mismatch = cap_sync_fxn(curr_time_value);
+
+	//Perform our inherited class sync
+	result = node::sync(t0);
+
+	//Perform appropriate updates
+	if (service_status == ND_IN_SERVICE)
+	{
+		//Compute time delays -- see if we're in deltamode
+		if (deltatimestep_running > 0)	//Deltamode active
+		{
+			if (dwell_time_left>0)		//Dwelling in progress, flag us to iterate when it should be done
+				result = t0 + (TIMESTAMP)dwell_time_left;	//If nothing changes in the system, it will reiterate at the dwell time.  Otherwise, it will come in earlier
+			else if (time_to_change>0)	//Change in progress, flag us to iterate when it should be done
+				result = t0 + (TIMESTAMP)time_to_change;
+			else;
+		}
+		else	//Normal mode, do some "rounding"
+		{
+			if (dwell_time_left>0)		//Dwelling in progress, flag us to iterate when it should be done
+			{
+				if (dwell_time_left < 1)
+					result = t0 + 1;
+				else
+					result = t0 + (TIMESTAMP)dwell_time_left;	//If nothing changes in the system, it will reiterate at the dwell time.  Otherwise, it will come in earlier
+			}//End Dwell time check
+			else if (time_to_change>0)	//Change in progress, flag us to iterate when it should be done
+			{
+				if (time_to_change < 1)
+					result = t0 + 1;
+				else
+					result = t0 + (TIMESTAMP)time_to_change;
+			}//End time_to_change check
+			else;
+		}
+
+		if (NotFirstIteration==false)	//Force a reiteration on the very first pass, no matter what
+		{
+			result = t0;
+			time_to_change = -1;
+			NotFirstIteration=true;	//Deflag us
+		}
+		//Defaulted else, not the first iteration
+
+		if ((solver_method == SM_NR) && (Phase_Mismatch == true))	//Kludgy test to get to reiteratte - DELETE ME OR FIX ME!
+		{
+			if ((Iteration_Toggle == true) && (NR_cycle_cap == true))
+			{
+				result = t0;
+				NR_cycle_cap = false;
+			}
+		}
+
+	}
+	//Defaulted else -- out of service portions are handled already
+
+	//Handle return value
+	if (result != TS_NEVER)
+	{
+		if (result==t0)
+			return result;
+		else
+			return -result;
+	}
+	else
+		return TS_NEVER;
+}
+
+//Functionalized version of some portions of sync for capacitor logic
+//Functioned so deltamode compatibility can properly occur
+bool capacitor::cap_sync_fxn(double time_value)
+{
+	bool Phase_Mismatch;
+
+	//Initial value
+	Phase_Mismatch = false;
+
+	//Check by status
 	if (service_status == ND_IN_SERVICE)
 	{
 		complex VoltVals[3];
 		complex temp_shunt[3];
-		bool Phase_Mismatch = false;
-		TIMESTAMP result;
 
 		//Update time trackers
-		time_to_change -= (t0 - last_time);
-		dwell_time_left -= (t0 - last_time);
-		lockout_time_left_A -= (t0 - last_time);
-		lockout_time_left_B -= (t0 - last_time);
-		lockout_time_left_C -= (t0 - last_time);
+		time_to_change -= (time_value - last_time);
+		dwell_time_left -= (time_value - last_time);
+		lockout_time_left_A -= (time_value - last_time);
+		lockout_time_left_B -= (time_value - last_time);
+		lockout_time_left_C -= (time_value - last_time);
 
-		if (last_time!=t0)	//If we've transitioned, update the transition value
+		if (last_time!=time_value)	//If we've transitioned, update the transition value
 		{
-			last_time = t0;
+			last_time = time_value;
 		}
 
 		if (control==MANUAL)	//Manual requires slightly different scheme
@@ -417,7 +501,7 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 					switchA_state_Next =(CAPSWITCH) switchA_state;
 					switchA_state = switchA_state_Prev;
 				}
-				time_to_change=(int64)time_delay;	//Change detected on anything, so reset time delay
+				time_to_change=time_delay;	//Change detected on anything, so reset time delay
 			}
 
 			if (switchB_state != switchB_state_Prev)
@@ -431,7 +515,7 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 					switchB_state_Next = (CAPSWITCH)switchB_state;
 					switchB_state = switchB_state_Prev;
 				}
-				time_to_change=(int64)time_delay;	//Change detected on anything, so reset time delay
+				time_to_change=time_delay;	//Change detected on anything, so reset time delay
 			}
 
 			if (switchC_state != switchC_state_Prev)
@@ -445,7 +529,7 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 					switchC_state_Next = (CAPSWITCH)switchC_state;
 					switchC_state = switchC_state_Prev;
 				}
-				time_to_change=(int64)time_delay;	//Change detected on anything, so reset time delay
+				time_to_change=time_delay;	//Change detected on anything, so reset time delay
 			}
 		}
 
@@ -633,18 +717,18 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 							
 							if ((control_level == BANK) && (lockout_state_change[0] | lockout_state_change[1] | lockout_state_change[2]))	//Bank control
 							{
-								lockout_time_left_A = lockout_time_left_B = lockout_time_left_C = (int64)lockout_time;	//Bank control, so lock 'em all
+								lockout_time_left_A = lockout_time_left_B = lockout_time_left_C = lockout_time;	//Bank control, so lock 'em all
 							}
 							else if ((control_level == INDIVIDUAL) && (lockout_state_change[0] | lockout_state_change[1] | lockout_state_change[2]))	//Individual control
 							{
 								if (lockout_state_change[0]==true)
-									lockout_time_left_A = (int64)lockout_time;
+									lockout_time_left_A = lockout_time;
 
 								if (lockout_state_change[1]==true)
-									lockout_time_left_B = (int64)lockout_time;
+									lockout_time_left_B = lockout_time;
 
 								if (lockout_state_change[2]==true)
-									lockout_time_left_C = (int64)lockout_time;
+									lockout_time_left_C = lockout_time;
 							}
 							else;
 						}
@@ -749,7 +833,7 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 			//Checking of dwell times to see if we can transition the next state or not
 			if (((switchA_state_Prev != switchA_state_Req_Next) || (switchB_state_Prev != switchB_state_Req_Next) || (switchC_state_Prev != switchC_state_Req_Next)) && (control != MANUAL))
 			{
-				dwell_time_left = (int64)dwell_time;			//Reset counter
+				dwell_time_left = dwell_time;			//Reset counter
 				switchA_state_Prev = switchA_state_Req_Next;	//Reset trackers
 				switchB_state_Prev = switchB_state_Req_Next;
 				switchC_state_Prev = switchC_state_Req_Next;
@@ -804,7 +888,7 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 
 			//See what our new delay needs to be
 			if ((switchA_state != switchA_state_Next) | (switchB_state != switchB_state_Next) | (switchC_state != switchC_state_Next))	//Not same
-				time_to_change=(int64)time_delay;
+				time_to_change=time_delay;
 			else
 				time_to_change=-1;	//Flag value to pass normal result, not a modified version
 
@@ -875,43 +959,7 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 			if ((phases_connected & (PHASE_C)) == PHASE_C)
 				shunt[2] = switchC_state==CLOSED ? temp_shunt[2] : complex(0.0);
 		}
-
-		//Perform our inherited class sync
-		result = node::sync(t0);
-
-		if (dwell_time_left>0)		//Dwelling in progress, flag us to iterate when it should be done
-			result = t0 + dwell_time_left;	//If nothing changes in the system, it will reiterate at the dwell time.  Otherwise, it will come in earlier
-		else if (time_to_change>0)	//Change in progress, flag us to iterate when it should be done
-			result = t0 + time_to_change;
-		else;
-
-		if (NotFirstIteration==false)	//Force a reiteration on the very first pass, no matter what
-		{
-			result = t0;
-			time_to_change = -1;
-			NotFirstIteration=true;	//Deflag us
-		}
-		//Defaulted else, not the first iteration
-
-		if ((solver_method == SM_NR) && (Phase_Mismatch == true))	//Kludgy test to get to reiteratte - DELETE ME OR FIX ME!
-		{
-			if ((Iteration_Toggle == true) && (NR_cycle_cap == true))
-			{
-				result = t0;
-				NR_cycle_cap = false;
-			}
-		}
-
-		if (result != TS_NEVER)
-		{
-			if (result==t0)
-				return result;
-			else
-				return -result;
-		}
-		else
-			return TS_NEVER;
-	}
+	}//End in service
 	else //Out-of-service
 	{
 		switchA_state = switchB_state = switchC_state = OPEN;
@@ -924,31 +972,65 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 
 		if ((phases_connected & (PHASE_C)) == PHASE_C)
 			shunt[2] = complex(0.0);
+	}//End Out of service
 
-		TIMESTAMP result = node::sync(t0);
-
-		if (result != TS_NEVER)
-		{
-			if (result==t0)
-				return result;
-			else
-				return -result;
-		}
-		else
-			return TS_NEVER;
-	}
+	//Return a status-type flag
+	return Phase_Mismatch;
 }
 
 TIMESTAMP capacitor::postsync(TIMESTAMP t0)
 {
 	TIMESTAMP result;
-	CAPSWITCH cap_A_test_state, cap_B_test_state, cap_C_test_state;
-	complex VoltVals[3];
+	double result_dbl, t0_dbl;
+	int retvalue;
 
-	if(prev_time < t0){
+	//Cast t0 as a double, just cause
+	t0_dbl = (double)t0;
+
+	retvalue = cap_prePost_fxn(t0_dbl);
+
+	//Check it	-- gl_errors inside (unsure why aren't throws)
+	if (retvalue != 1)
+	{
+		return TS_INVALID;
+	}
+
+	//Perform sync update, just in case
+	result=node::postsync(t0);
+
+	//Cast it - but check
+	if (result == TS_NEVER)
+	{
+		result_dbl = TSNVRDBL;
+	}
+	else
+	{
+		result_dbl = (double)result;
+	}
+
+	//Call the functionalized postsync
+	result_dbl = cap_postPost_fxn(result_dbl,t0_dbl);
+
+	//Now check and see how to return
+	if (result_dbl != TSNVRDBL)
+	{
+		result = (TIMESTAMP)result_dbl;
+	}
+	else
+	{
+		result = TS_NEVER;
+	}
+
+	return result;
+}
+
+// Functionalized "pre Node postsync" postsync routine, so can be called by deltamode	
+int capacitor::cap_prePost_fxn(double time_value)
+{
+	if(prev_time < time_value){
 		Iteration_Toggle = false;
 		NR_cycle_cap = true;
-		prev_time = t0;
+		prev_time = time_value;
 		init_switchA_state =(CAPSWITCH) prev_switchA_state;
 		init_switchB_state =(CAPSWITCH) prev_switchB_state;
 		init_switchC_state =(CAPSWITCH) prev_switchC_state;
@@ -974,7 +1056,7 @@ TIMESTAMP capacitor::postsync(TIMESTAMP t0)
 	else
 		Iteration_Toggle = true;
 
-	if(prev_time == t0){
+	if(prev_time == time_value){
 		if(switchA_changed == 0){
 			if(prev_switchA_state != switchA_state){
 				prev_switchA_state = (CAPSWITCH)switchA_state;
@@ -988,7 +1070,7 @@ TIMESTAMP capacitor::postsync(TIMESTAMP t0)
 				cap_switchA_count--;
 				if(cap_switchA_count < 0){
 					gl_error("Unusual control of the capacitor has resulted in a negative switch change count on phase A.");
-					return TS_INVALID;
+					return 0;
 				}
 				switchA_changed = 0;
 			} else if(prev_switchA_state != switchA_state){
@@ -1011,7 +1093,7 @@ TIMESTAMP capacitor::postsync(TIMESTAMP t0)
 				cap_switchB_count--;
 				if(cap_switchB_count < 0){
 					gl_error("Unusual control of the capacitor has resulted in a negative switch change count on phase B.");
-					return TS_INVALID;
+					return 0;
 				}
 				switchB_changed = 0;
 			} else if(prev_switchB_state != switchB_state){
@@ -1034,7 +1116,7 @@ TIMESTAMP capacitor::postsync(TIMESTAMP t0)
 				cap_switchC_count--;
 				if(cap_switchC_count < 0){
 					gl_error("Unusual control of the capacitor has resulted in a negative switch change count on phase C.");
-					return TS_INVALID;
+					return 0;
 				}
 				switchC_changed = 0;
 			} else if(prev_switchC_state != switchC_state){
@@ -1046,8 +1128,14 @@ TIMESTAMP capacitor::postsync(TIMESTAMP t0)
 		}
 	}
 
-	//Perform sync update, just in case
-	result=node::postsync(t0);
+	return 1;
+}
+
+// Functionalized "post Node postsync" postsync routine, so can be called by deltamode	
+double capacitor::cap_postPost_fxn(double result, double time_value)
+{
+	CAPSWITCH cap_A_test_state, cap_B_test_state, cap_C_test_state;
+	complex VoltVals[3];
 
 	if ((control==VAR) || (control==VARVOLT))	//Grab the power values from remote link
 	{
@@ -1104,16 +1192,16 @@ TIMESTAMP capacitor::postsync(TIMESTAMP t0)
 
 			//Check and see if anything changed.  If so, reiterate.
 			if ((Iteration_Toggle == false) && (switchA_state_Req_Next != cap_A_test_state))
-				result = t0;
+				result = time_value;
 
 			if ((Iteration_Toggle == false) && (switchB_state_Req_Next != cap_B_test_state))
-				result = t0;
+				result = time_value;
 
 			if ((Iteration_Toggle == false) && (switchC_state_Req_Next != cap_C_test_state))
-				result = t0;
+				result = time_value;
 
 			//See if we've already requested a reiteration
-			if ((result != t0) && (control == VARVOLT))
+			if ((result != time_value) && (control == VARVOLT))
 			{
 				//Update voltage values
 				if ((pt_phase & PHASE_D) != (PHASE_D))	//See if we are interested in L-N or L-L voltages
@@ -1242,13 +1330,13 @@ TIMESTAMP capacitor::postsync(TIMESTAMP t0)
 
 				//Check VARVOLT updates to see if a reiteration is needed
 				if ((Iteration_Toggle == false) && (switchA_state_Req_Next != cap_A_test_state))
-					result = t0;
+					result = time_value;
 
 				if ((Iteration_Toggle == false) && (switchB_state_Req_Next != cap_B_test_state))
-					result = t0;
+					result = time_value;
 
 				if ((Iteration_Toggle == false) && (switchC_state_Req_Next != cap_C_test_state))
-					result = t0;
+					result = time_value;
 
 			}//end VARVOLT mode extra logic
 		}//End NR solver logic
@@ -1302,13 +1390,13 @@ TIMESTAMP capacitor::postsync(TIMESTAMP t0)
 
 			//Check capacitor changes - see if a reiteration is needed
 			if ((Iteration_Toggle == false) && (switchA_state_Req_Next != cap_A_test_state))
-				result = t0;
+				result = time_value;
 
 			if ((Iteration_Toggle == false) && (switchB_state_Req_Next != cap_B_test_state))
-				result = t0;
+				result = time_value;
 
 			if ((Iteration_Toggle == false) && (switchC_state_Req_Next != cap_C_test_state))
-				result = t0;
+				result = time_value;
 		}
 		//Defaulted else - FBS seems to behave okay (forces an iteration anyways)
 	}
@@ -1417,16 +1505,17 @@ TIMESTAMP capacitor::postsync(TIMESTAMP t0)
 
 		//Check to see if the voltage update needs a reiteration
 		if ((Iteration_Toggle == false) && (switchA_state_Req_Next != cap_A_test_state))
-			result = t0;
+			result = time_value;
 
 		if ((Iteration_Toggle == false) && (switchB_state_Req_Next != cap_B_test_state))
-			result = t0;
+			result = time_value;
 
 		if ((Iteration_Toggle == false) && (switchC_state_Req_Next != cap_C_test_state))
-			result = t0;
+			result = time_value;
 
 	}	//End VOLT mode under NR extra logic
 
+	//Send the value back
 	return result;
 }
 
@@ -1476,6 +1565,104 @@ void capacitor::toggle_bank_status(bool des_status){
 int capacitor::isa(char *classname)
 {
 	return strcmp(classname,"capacitor")==0 || node::isa(classname);
+}
+
+//////////////////////////////////////////////////////////////////////////
+// IMPLEMENTATION OF DELTA MODE
+//////////////////////////////////////////////////////////////////////////
+//Module-level call
+SIMULATIONMODE capacitor::inter_deltaupdate_capacitor(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
+{
+	//unsigned char pass_mod;
+	OBJECT *hdr = OBJECTHDR(this);
+	double curr_time_value;	//Current time of simulation
+	double result_dbl;		//Working variable for capacitors
+	int retvalue;	//Working variable for one case
+	bool Phase_Mismatch;	//Working variable
+
+	//cast the current time
+	curr_time_value = gl_globaldeltaclock;
+
+	if (interupdate_pos == false)	//Before powerflow call
+	{
+		//Call presync-equivalent items
+		NR_node_presync_fxn();
+
+		//Call the functionalized version of the sync
+		Phase_Mismatch = cap_sync_fxn(curr_time_value);
+
+		//Call sync-equivalent items (solver occurs at end of sync)
+		NR_node_sync_fxn(hdr);
+
+		//Perform appropriate updates - appears to be associated with action counting
+		if (service_status == ND_IN_SERVICE)
+		{
+			if (Phase_Mismatch == true)	//Kludgy test to get to reiteratte - DELETE ME OR FIX ME!
+			{
+				if ((Iteration_Toggle == true) && (NR_cycle_cap == true))
+				{
+					//Was a return t0 here -- force a reiterate somehow (happens by default)
+					NR_cycle_cap = false;
+				}
+			}
+		}
+		//Defaulted else -- out of service portions are handled already
+
+		//Crazy time checks of sync ignored -- deltamode doesn't care in this step (only checks for errors)
+
+		return SM_DELTA;	//Just return something other than SM_ERROR for this call
+	}
+	else	//After the call
+	{
+		//Perform the pre-postsync portions of the capacitor
+		retvalue = cap_prePost_fxn(curr_time_value);
+
+		//Check it	-- gl_errors inside (unsure why aren't throws)
+		if (retvalue != 1)
+		{
+			//Error returned, so exit us out
+			return SM_ERROR;
+		}
+
+		//Perform postsync-like updates on the values
+		BOTH_node_postsync_fxn(hdr);
+
+		//Always assume node wants to go forever (faking this out)
+		result_dbl = TSNVRDBL;
+
+		//Call the functionalized postsync
+		result_dbl = cap_postPost_fxn(result_dbl,curr_time_value);
+
+		//Always "exit" -- if we progress forward, capacitor will operate appropriately
+		
+		//No control required at this time - powerflow defers to the whims of other modules
+		//Code below implements predictor/corrector-type logic, even though it effectively does nothing
+		return SM_EVENT;
+
+		////Do deltamode-related logic
+		//if (bustype==SWING)	//We're the SWING bus, control our destiny (which is really controlled elsewhere)
+		//{
+		//	//See what we're on
+		//	pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
+
+		//	//Check pass
+		//	if (pass_mod==0)	//Predictor pass
+		//	{
+		//		return SM_DELTA_ITER;	//Reiterate - to get us to corrector pass
+		//	}
+		//	else	//Corrector pass
+		//	{
+		//		//As of right now, we're always ready to leave
+		//		//Other objects will dictate if we stay (powerflow is indifferent)
+		//		return SM_EVENT;
+		//	}//End corrector pass
+		//}//End SWING bus handling
+		//else	//Normal bus
+		//{
+		//	return SM_EVENT;	//Normal nodes want event mode all the time here - SWING bus will
+		//						//control the reiteration process for pred/corr steps
+		//}
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -1563,6 +1750,23 @@ EXPORT TIMESTAMP sync_capacitor(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 EXPORT int isa_capacitor(OBJECT *obj, char *classname)
 {
 	return OBJECTDATA(obj,capacitor)->isa(classname);
+}
+
+//Deltamode export
+EXPORT SIMULATIONMODE interupdate_capacitor(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
+{
+	capacitor *my = OBJECTDATA(obj,capacitor);
+	SIMULATIONMODE status = SM_ERROR;
+	try
+	{
+		status = my->inter_deltaupdate_capacitor(delta_time,dt,iteration_count_val,interupdate_pos);
+		return status;
+	}
+	catch (char *msg)
+	{
+		gl_error("interupdate_capacitor(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
+		return status;
+	}
 }
 
 /**@}*/

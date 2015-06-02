@@ -718,10 +718,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\check.h"
-				>
-			</File>
-			<File
 				RelativePath=".\currdump.h"
 				>
 			</File>

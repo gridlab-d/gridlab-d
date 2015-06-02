@@ -14,8 +14,6 @@
 #include <errno.h>
 #include <math.h>
 
-#include "triplex_node.h"
-#include "triplex_meter.h"
 #include "triplex_load.h"
 
 CLASS* triplex_load::oclass = NULL;
@@ -134,7 +132,26 @@ int triplex_load::create(void)
 // Initialize, return 1 on success
 int triplex_load::init(OBJECT *parent)
 {
-	return triplex_node::init(parent);
+	int ret_value;
+	OBJECT *obj = OBJECTHDR(this);
+
+	ret_value = triplex_node::init(parent);
+
+	//Provide warning about constant current loads
+	if ((obj->flags & OF_DELTAMODE) == OF_DELTAMODE)	//Deltamode warning check
+	{
+		if ((constant_current[0] != 0.0) || (constant_current[1] != 0.0) || (constant_current[2] != 0.0))
+		{
+			gl_warning("triplex_load:%s - constant_current loads in deltamode are handled slightly different", obj->name ? obj->name : "unnamed");
+			/*  TROUBLESHOOT
+			Due to the potential for moving reference frame of deltamode systems, constant current loads are computed using a scaled
+			per-unit approach, rather than the fixed constant_current value.  You may get results that differ from traditional GridLAB-D
+			super-second or static powerflow results in this mode.
+			*/
+		}
+	}
+
+	return ret_value;
 }
 
 TIMESTAMP triplex_load::presync(TIMESTAMP t0)
@@ -189,7 +206,8 @@ TIMESTAMP triplex_load::postsync(TIMESTAMP t0)
 //Here primarily so deltamode players can actually influence things
 void triplex_load::triplex_load_update_fxn()
 {
-	complex volt = complex(0,0);
+	complex intermed_impedance[3];
+	int index_var;
 
 	if(base_power[0] != 0.0){// Phase 1
 		// Put in the constant power portion
@@ -407,17 +425,53 @@ void triplex_load::triplex_load_update_fxn()
 		}
 	}
 
+	//Apply any frequency dependencies, if relevant
+	//Perform the intermediate impedance calculations, if necessary
+	if (enable_frequency_dependence == true)
+	{
+		//Check impedance values for normal connections - 1,2,12
+		for (index_var=0; index_var<3; index_var++)
+		{
+			if ((constant_impedance[index_var].IsZero()) == false)
+			{
+				//Assign real part
+				intermed_impedance[index_var].SetReal(constant_impedance[index_var].Re());
+				
+				//Assign reactive part -- apply fix based on inductance/capacitance
+				if (constant_impedance[index_var].Im()<0)	//Capacitive
+				{
+					intermed_impedance[index_var].SetImag(constant_impedance[index_var].Im()/current_frequency*nominal_frequency);
+				}
+				else	//Inductive
+				{
+					intermed_impedance[index_var].SetImag(constant_impedance[index_var].Im()/nominal_frequency*current_frequency);
+				}
+			}
+			else
+			{
+				intermed_impedance[index_var] = 0.0;
+			}
+		}
+	}
+	else //No frequency dependence
+	{
+		//Just copy in
+		intermed_impedance[0] = constant_impedance[0];
+		intermed_impedance[1] = constant_impedance[1];
+		intermed_impedance[2] = constant_impedance[2];
+	}
+	
 	if ((solver_method!=SM_FBS) && (SubNode==PARENT))	//Need to do something slightly different with GS/NR and parented load
 	{													//associated with change due to player methods
 
-		if (!(constant_impedance[0].IsZero()))
-			pub_shunt[0] += complex(1.0)/constant_impedance[0];
+		if (!(intermed_impedance[0].IsZero()))
+			pub_shunt[0] += complex(1.0)/intermed_impedance[0];
 
-		if (!(constant_impedance[1].IsZero()))
-			pub_shunt[1] += complex(1.0)/constant_impedance[1];
+		if (!(intermed_impedance[1].IsZero()))
+			pub_shunt[1] += complex(1.0)/intermed_impedance[1];
 		
-		if (!(constant_impedance[2].IsZero()))
-			pub_shunt[2] += complex(1.0)/constant_impedance[2];
+		if (!(intermed_impedance[2].IsZero()))
+			pub_shunt[2] += complex(1.0)/intermed_impedance[2];
 		
 		power1 += constant_power[0];
 		power2 += constant_power[1];	
@@ -428,20 +482,20 @@ void triplex_load::triplex_load_update_fxn()
 	}
 	else
 	{
-		if(constant_impedance[0].IsZero())
+		if(intermed_impedance[0].IsZero())
 			pub_shunt[0] = 0.0;
 		else
-			pub_shunt[0] = complex(1)/constant_impedance[0];
+			pub_shunt[0] = complex(1)/intermed_impedance[0];
 
-		if(constant_impedance[1].IsZero())
+		if(intermed_impedance[1].IsZero())
 			pub_shunt[1] = 0.0;
 		else
-			pub_shunt[1] = complex(1)/constant_impedance[1];
+			pub_shunt[1] = complex(1)/intermed_impedance[1];
 		
-		if(constant_impedance[2].IsZero())
+		if(intermed_impedance[2].IsZero())
 			pub_shunt[2] = 0.0;
 		else
-			pub_shunt[2] = complex(1)/constant_impedance[2];
+			pub_shunt[2] = complex(1)/intermed_impedance[2];
 		
 		power1 = constant_power[0];
 		power2 = constant_power[1];	

@@ -14,8 +14,7 @@
 #include <errno.h>
 #include <math.h>
 
-#include "node.h"
-#include "meter.h"
+#include "load.h"
 
 CLASS* load::oclass = NULL;
 CLASS* load::pclass = NULL;
@@ -213,6 +212,7 @@ int load::init(OBJECT *parent)
 {
 	char temp_buff[128];
 	OBJECT *obj = OBJECTHDR(this);
+	int ret_value;
 	
 	if (has_phase(PHASE_S))
 	{
@@ -254,6 +254,9 @@ int load::init(OBJECT *parent)
 		}
 	}
 
+	//Initialize the node prior to the next step, otherwise the "all flagger" hasn't occurred and the warning won't pop
+	ret_value = node::init(parent);
+
 	if ((obj->flags & OF_DELTAMODE) == OF_DELTAMODE)	//Deltamode warning check
 	{
 		if ((constant_current[0] != 0.0) || (constant_current[1] != 0.0) || (constant_current[2] != 0.0))
@@ -265,9 +268,16 @@ int load::init(OBJECT *parent)
 			super-second or static powerflow results in this mode.
 			*/
 		}
+
+		//Separate, secondary check (for readibility) for the explicit D-Y loads
+		if ((constant_current_dy[0] != 0.0) || (constant_current_dy[1] != 0.0) || (constant_current_dy[2] != 0.0) || (constant_current_dy[3] != 0.0) || (constant_current_dy[4] != 0.0) || (constant_current_dy[5] != 0.0))
+		{
+			gl_warning("load:%s - constant_current loads in deltamode are handled slightly different", obj->name ? obj->name : "unnamed");
+			//Defined above
+		}
 	}
 
-	return node::init(parent);
+	return ret_value;
 }
 
 TIMESTAMP load::presync(TIMESTAMP t0)
@@ -337,7 +347,14 @@ TIMESTAMP load::postsync(TIMESTAMP t0)
 void load::load_update_fxn(bool fault_mode)
 {
 	bool all_three_phases;
+	complex intermed_impedance[3];
+	complex intermed_impedance_dy[6];
 	int index_var;
+	complex nominal_voltage_value;
+	int node_reference_value;
+	complex working_impedance_value, working_data_value, working_admittance_value;
+	OBJECT *obj;
+	node *temp_par_node = NULL;
 
 	for (int index=0; index<3; index++)
 	{
@@ -435,20 +452,84 @@ void load::load_update_fxn(bool fault_mode)
 		}
 	}
 
+	//Perform the intermediate impedance calculations, if necessary
+	if (enable_frequency_dependence == true)
+	{
+		//Check impedance values for normal connections
+		for (index_var=0; index_var<3; index_var++)
+		{
+			if ((constant_impedance[index_var].IsZero()) == false)
+			{
+				//Assign real part
+				intermed_impedance[index_var].SetReal(constant_impedance[index_var].Re());
+				
+				//Assign reactive part -- apply fix based on inductance/capacitance
+				if (constant_impedance[index_var].Im()<0)	//Capacitive
+				{
+					intermed_impedance[index_var].SetImag(constant_impedance[index_var].Im()/current_frequency*nominal_frequency);
+				}
+				else	//Inductive
+				{
+					intermed_impedance[index_var].SetImag(constant_impedance[index_var].Im()/nominal_frequency*current_frequency);
+				}
+			}
+			else
+			{
+				intermed_impedance[index_var] = 0.0;
+			}
+		}
+
+		//Check impedance values for explicit delta/wye connections
+		for (index_var=0; index_var<6; index_var++)
+		{
+			if ((constant_impedance_dy[index_var].IsZero()) == false)
+			{
+				//Assign real part
+				intermed_impedance_dy[index_var].SetReal(constant_impedance_dy[index_var].Re());
+				
+				//Assign reactive part -- apply fix based on inductance/capacitance
+				if (constant_impedance_dy[index_var].Im()<0)	//Capacitive
+				{
+					intermed_impedance_dy[index_var].SetImag(constant_impedance_dy[index_var].Im()/current_frequency*nominal_frequency);
+				}
+				else	//Inductive
+				{
+					intermed_impedance_dy[index_var].SetImag(constant_impedance_dy[index_var].Im()/nominal_frequency*current_frequency);
+				}
+			}
+			else
+			{
+				intermed_impedance_dy[index_var] = 0.0;
+			}
+		}
+	}
+	else //normal
+	{
+		intermed_impedance[0] = constant_impedance[0];
+		intermed_impedance[1] = constant_impedance[1];
+		intermed_impedance[2] = constant_impedance[2];
+
+		//Do the same for explicit delta/wye connections -- both parent types get this
+		for (index_var=0; index_var<6; index_var++)
+		{
+			intermed_impedance_dy[index_var] = constant_impedance_dy[index_var];
+		}
+	}
+
 	if (fault_mode == false)	//Not reliability mode - normal mode
 	{
 		if ((solver_method!=SM_FBS) && ((SubNode==PARENT) || (SubNode==DIFF_PARENT)))	//Need to do something slightly different with GS/NR and parented load
 		{													//associated with change due to player methods
 			if (SubNode == PARENT)	//Normal parent gets one routine
 			{
-				if (!(constant_impedance[0].IsZero()))
-					shunt[0] += complex(1.0)/constant_impedance[0];
+				if (!(intermed_impedance[0].IsZero()))
+					shunt[0] += complex(1.0)/intermed_impedance[0];
 
-				if (!(constant_impedance[1].IsZero()))
-					shunt[1] += complex(1.0)/constant_impedance[1];
+				if (!(intermed_impedance[1].IsZero()))
+					shunt[1] += complex(1.0)/intermed_impedance[1];
 				
-				if (!(constant_impedance[2].IsZero()))
-					shunt[2] += complex(1.0)/constant_impedance[2];
+				if (!(intermed_impedance[2].IsZero()))
+					shunt[2] += complex(1.0)/intermed_impedance[2];
 
 				power[0] += constant_power[0];
 				power[1] += constant_power[1];	
@@ -460,20 +541,20 @@ void load::load_update_fxn(bool fault_mode)
 			}
 			else //DIFF_PARENT
 			{
-				if(constant_impedance[0].IsZero())
+				if(intermed_impedance[0].IsZero())
 					shunt[0] = 0.0;
 				else
-					shunt[0] = complex(1)/constant_impedance[0];
+					shunt[0] = complex(1.0)/intermed_impedance[0];
 
-				if(constant_impedance[1].IsZero())
+				if(intermed_impedance[1].IsZero())
 					shunt[1] = 0.0;
 				else
-					shunt[1] = complex(1)/constant_impedance[1];
+					shunt[1] = complex(1.0)/intermed_impedance[1];
 				
-				if(constant_impedance[2].IsZero())
+				if(intermed_impedance[2].IsZero())
 					shunt[2] = 0.0;
 				else
-					shunt[2] = complex(1)/constant_impedance[2];
+					shunt[2] = complex(1.0)/intermed_impedance[2];
 				
 				power[0] = constant_power[0];
 				power[1] = constant_power[1];	
@@ -486,8 +567,8 @@ void load::load_update_fxn(bool fault_mode)
 			//Do the same for explicit delta/wye connections -- both parent types get this
 			for (index_var=0; index_var<6; index_var++)
 			{
-				if (!(constant_impedance_dy[index_var].IsZero()))
-					shunt_dy[index_var] += complex(1.0)/constant_impedance_dy[index_var];
+				if (!(intermed_impedance_dy[index_var].IsZero()))
+					shunt_dy[index_var] += complex(1.0)/intermed_impedance_dy[index_var];
 
 				power_dy[index_var] += constant_power_dy[index_var];
 
@@ -496,20 +577,20 @@ void load::load_update_fxn(bool fault_mode)
 		}
 		else
 		{
-			if(constant_impedance[0].IsZero())
+			if(intermed_impedance[0].IsZero())
 				shunt[0] = 0.0;
 			else
-				shunt[0] = complex(1)/constant_impedance[0];
+				shunt[0] = complex(1.0)/intermed_impedance[0];
 
-			if(constant_impedance[1].IsZero())
+			if(intermed_impedance[1].IsZero())
 				shunt[1] = 0.0;
 			else
-				shunt[1] = complex(1)/constant_impedance[1];
+				shunt[1] = complex(1.0)/intermed_impedance[1];
 			
-			if(constant_impedance[2].IsZero())
+			if(intermed_impedance[2].IsZero())
 				shunt[2] = 0.0;
 			else
-				shunt[2] = complex(1)/constant_impedance[2];
+				shunt[2] = complex(1.0)/intermed_impedance[2];
 			
 			power[0] = constant_power[0];
 			power[1] = constant_power[1];	
@@ -522,10 +603,10 @@ void load::load_update_fxn(bool fault_mode)
 			//Do the same for explicit delta/wye connections - handle the same way (draconian overwrites!)
 			for (index_var=0; index_var<6; index_var++)
 			{
-				if (constant_impedance_dy[index_var].IsZero())
+				if (intermed_impedance_dy[index_var].IsZero())
 					shunt_dy[index_var] = 0.0;
 				else
-					shunt_dy[index_var] = complex(1.0)/constant_impedance_dy[index_var];
+					shunt_dy[index_var] = complex(1.0)/intermed_impedance_dy[index_var];
 
 				power_dy[index_var] = constant_power_dy[index_var];
 
@@ -564,17 +645,16 @@ void load::load_update_fxn(bool fault_mode)
 		{
 			if ((solver_method!=SM_FBS) && ((SubNode==PARENT) || (SubNode==DIFF_PARENT)))	//Need to do something slightly different with GS/NR and parented load
 			{													//associated with change due to player methods
-
 				if (SubNode == PARENT)	//Normal parents need this
 				{
-					if (!(constant_impedance[0].IsZero()))
-						shunt[0] += complex(1.0)/constant_impedance[0];
+					if (!(intermed_impedance[0].IsZero()))
+						shunt[0] += complex(1.0)/intermed_impedance[0];
 
-					if (!(constant_impedance[1].IsZero()))
-						shunt[1] += complex(1.0)/constant_impedance[1];
+					if (!(intermed_impedance[1].IsZero()))
+						shunt[1] += complex(1.0)/intermed_impedance[1];
 					
-					if (!(constant_impedance[2].IsZero()))
-						shunt[2] += complex(1.0)/constant_impedance[2];
+					if (!(intermed_impedance[2].IsZero()))
+						shunt[2] += complex(1.0)/intermed_impedance[2];
 					
 					power[0] += constant_power[0];
 					power[1] += constant_power[1];	
@@ -583,23 +663,35 @@ void load::load_update_fxn(bool fault_mode)
 					current[0] += constant_current[0];
 					current[1] += constant_current[1];
 					current[2] += constant_current[2];
-				}
+
+					//Combination Portion
+					//Do the same for explicit delta/wye connections
+					for (index_var=0; index_var<6; index_var++)
+					{
+						if (!(intermed_impedance_dy[index_var].IsZero()))
+							shunt_dy[index_var] += complex(1.0)/intermed_impedance_dy[index_var];
+
+						power_dy[index_var] += constant_power_dy[index_var];
+
+						current_dy[index_var] += constant_current_dy[index_var];
+					}
+				}//End normal parent
 				else //DIFF_PARENT
 				{
-					if(constant_impedance[0].IsZero())
+					if(intermed_impedance[0].IsZero())
 						shunt[0] = 0.0;
 					else
-						shunt[0] = complex(1)/constant_impedance[0];
+						shunt[0] = complex(1.0)/intermed_impedance[0];
 
-					if(constant_impedance[1].IsZero())
+					if(intermed_impedance[1].IsZero())
 						shunt[1] = 0.0;
 					else
-						shunt[1] = complex(1)/constant_impedance[1];
+						shunt[1] = complex(1.0)/intermed_impedance[1];
 					
-					if(constant_impedance[2].IsZero())
+					if(intermed_impedance[2].IsZero())
 						shunt[2] = 0.0;
 					else
-						shunt[2] = complex(1)/constant_impedance[2];
+						shunt[2] = complex(1.0)/intermed_impedance[2];
 					
 					power[0] = constant_power[0];
 					power[1] = constant_power[1];	
@@ -607,35 +699,60 @@ void load::load_update_fxn(bool fault_mode)
 					current[0] = constant_current[0];
 					current[1] = constant_current[1];
 					current[2] = constant_current[2];
-				}
 
-				//Do the same for explicit delta/wye connections -- both parent types handled the same
-				for (index_var=0; index_var<6; index_var++)
-				{
-					if (!(constant_impedance_dy[index_var].IsZero()))
-						shunt_dy[index_var] += complex(1.0)/constant_impedance_dy[index_var];
+					//Combination Portion
+					//Do the same for explicit delta/wye connections
+					for (index_var=0; index_var<6; index_var++)
+					{
+						if (!(intermed_impedance_dy[index_var].IsZero()))
+							shunt_dy[index_var] += complex(1.0)/intermed_impedance_dy[index_var];
 
-					power_dy[index_var] += constant_power_dy[index_var];
+						power_dy[index_var] += constant_power_dy[index_var];
 
-					current_dy[index_var] += constant_current_dy[index_var];
-				}
-			}
-			else
+						current_dy[index_var] += constant_current_dy[index_var];
+					}
+				}//End differently connected parent
+			}//Some form of NR parent
+			else	//Basically, not a NR parent
 			{
-				if(constant_impedance[0].IsZero())
+				//See if we're a child or not
+				if (NR_node_reference == -99)	//Child or other special object
+				{
+					node_reference_value = *NR_subnode_reference;	//Grab out parent
+
+					//Check it, for giggles/thoroughness
+					if (node_reference_value < 0)
+					{
+						//Get header information
+						obj = OBJECTHDR(this);
+
+						GL_THROW("node:%s -- %s tried to perform an impedance conversion with an uninitialzed child node!",obj->id, obj->name?obj->name:"unnamed");
+						/*  TROUBLESHOOT
+						While attempting to convert a load to a constant impedance value for in-rush modeling, a problem occurred mapping a parent node.
+						Please try again.  If the error persists, please submit your code and a bug report via the ticketing system.
+						*/
+					}
+					//Defaulted else -- it's theoretically a good value
+				}//end child or other
+				else //Normal node
+				{
+					node_reference_value = NR_node_reference;
+				}
+
+				if(intermed_impedance[0].IsZero())
 					shunt[0] = 0.0;
 				else
-					shunt[0] = complex(1)/constant_impedance[0];
+					shunt[0] = complex(1)/intermed_impedance[0];
 
-				if(constant_impedance[1].IsZero())
+				if(intermed_impedance[1].IsZero())
 					shunt[1] = 0.0;
 				else
-					shunt[1] = complex(1)/constant_impedance[1];
+					shunt[1] = complex(1)/intermed_impedance[1];
 				
-				if(constant_impedance[2].IsZero())
+				if(intermed_impedance[2].IsZero())
 					shunt[2] = 0.0;
 				else
-					shunt[2] = complex(1)/constant_impedance[2];
+					shunt[2] = complex(1)/intermed_impedance[2];
 				
 				power[0] = constant_power[0];
 				power[1] = constant_power[1];	
@@ -648,16 +765,16 @@ void load::load_update_fxn(bool fault_mode)
 				//Do the same for explicit delta/wye connections - handle the same way (draconian overwrites!)
 				for (index_var=0; index_var<6; index_var++)
 				{
-					if (constant_impedance_dy[index_var].IsZero())
+					if (intermed_impedance_dy[index_var].IsZero())
 						shunt_dy[index_var] = 0.0;
 					else
-						shunt_dy[index_var] = complex(1.0)/constant_impedance_dy[index_var];
+						shunt_dy[index_var] = complex(1.0)/intermed_impedance_dy[index_var];
 
 					power_dy[index_var] = constant_power_dy[index_var];
 
 					current_dy[index_var] = constant_current_dy[index_var];
 				}
-			}
+			}//End not a parented NR
 		}//Handle all three
 		else	//Zero all three - may cause issues with P/C loads, but why parent a load to a load??
 		{

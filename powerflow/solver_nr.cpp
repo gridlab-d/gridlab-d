@@ -151,6 +151,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	bool newiter;
 
 	//Deltamode pass flag - changes how SWING buses are handled
+	//Multiple SWING-bus attached generators may cause issues, but no good way to detect
 	bool swing_is_a_swing;
 
 	//Deltamode initial dynamics run - swing convergence flag (symmetry)
@@ -172,9 +173,9 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	complex delta_current[3], voltageDel[3];
 	complex temp_current[3], temp_power[3], temp_store[3];
 	complex adjusted_constant_current[6];
-	complex adjust_temp_voltage[3], adjust_temp_nominal_voltage[3];
-	double adjust_temp_voltage_mag[3];
-	double adjust_nominal_voltage_val;
+	complex adjust_temp_nominal_voltage[6];
+	double adjust_temp_voltage_mag[6];
+	double adjust_nominal_voltage_val, adjust_nominal_voltaged_val;
 
 	//DV checking array
 	complex DVConvCheck[3];
@@ -206,8 +207,8 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	//Determine special circumstances of SWING bus -- do we want it to truly participate right
 	if (powerflow_type != PF_NORMAL)	//Not normal
 	{
-		//Swing is always assumed to be bus zero
-		if (bus[0].full_Y == NULL)
+		//Master Swing is always assumed to be bus zero
+		if ((bus[0].full_Y == NULL) || ((bus[0].full_Y != NULL) && (bus[0].DynCurrent == NULL)))
 		{
 			//Set variables
 			swing_is_a_swing = true;
@@ -1963,7 +1964,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				if (*bus[indexer].dynamics_enabled == true)
 				{
 					//Create nominal magnitudes
-					adjust_nominal_voltage_val = bus[indexer].kv_base * sqrt(3.0);
+					adjust_nominal_voltage_val = bus[indexer].volt_base * sqrt(3.0);
 
 					//Create the nominal voltage vectors
 					adjust_temp_nominal_voltage[0].SetPolar(adjust_nominal_voltage_val,PI/6.0);
@@ -2017,23 +2018,23 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					if ((bus[indexer].phases & 0x10) == 0x10)
 					{
 						//Create nominal magnitudes
-						adjust_nominal_voltage_val = bus[indexer].kv_base;
+						adjust_nominal_voltage_val = bus[indexer].volt_base;
 
 						//Create the nominal voltage vectors
-						adjust_temp_nominal_voltage[0].SetPolar(bus[indexer].kv_base,0.0);
-						adjust_temp_nominal_voltage[1].SetPolar(bus[indexer].kv_base,-2.0*PI/3.0);
-						adjust_temp_nominal_voltage[2].SetPolar(bus[indexer].kv_base,2.0*PI/3.0);
+						adjust_temp_nominal_voltage[3].SetPolar(bus[indexer].volt_base,0.0);
+						adjust_temp_nominal_voltage[4].SetPolar(bus[indexer].volt_base,-2.0*PI/3.0);
+						adjust_temp_nominal_voltage[5].SetPolar(bus[indexer].volt_base,2.0*PI/3.0);
 
 						//Get magnitudes of all
-						adjust_temp_voltage_mag[0] = bus[indexer].V[0].Mag();
-						adjust_temp_voltage_mag[1] = bus[indexer].V[1].Mag();
-						adjust_temp_voltage_mag[2] = bus[indexer].V[2].Mag();
+						adjust_temp_voltage_mag[3] = bus[indexer].V[0].Mag();
+						adjust_temp_voltage_mag[4] = bus[indexer].V[1].Mag();
+						adjust_temp_voltage_mag[5] = bus[indexer].V[2].Mag();
 
 						//Start adjustments - A
-						if ((bus[indexer].extra_var[6] != 0.0) && (adjust_temp_voltage_mag[0] != 0.0))
+						if ((bus[indexer].extra_var[6] != 0.0) && (adjust_temp_voltage_mag[3] != 0.0))
 						{
 							//calculate new value
-							adjusted_constant_current[3] = ~(adjust_temp_nominal_voltage[0] * ~bus[indexer].extra_var[6] * adjust_temp_voltage_mag[0] / (bus[indexer].V[0] * adjust_nominal_voltage_val));
+							adjusted_constant_current[3] = ~(adjust_temp_nominal_voltage[3] * ~bus[indexer].extra_var[6] * adjust_temp_voltage_mag[3] / (bus[indexer].V[0] * adjust_nominal_voltage_val));
 						}
 						else
 						{
@@ -2041,10 +2042,10 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 						}
 
 						//Start adjustments - B
-						if ((bus[indexer].extra_var[7] != 0.0) && (adjust_temp_voltage_mag[1] != 0.0))
+						if ((bus[indexer].extra_var[7] != 0.0) && (adjust_temp_voltage_mag[4] != 0.0))
 						{
 							//calculate new value
-							adjusted_constant_current[4] = ~(adjust_temp_nominal_voltage[1] * ~bus[indexer].extra_var[7] * adjust_temp_voltage_mag[1] / (bus[indexer].V[1] * adjust_nominal_voltage_val));
+							adjusted_constant_current[4] = ~(adjust_temp_nominal_voltage[4] * ~bus[indexer].extra_var[7] * adjust_temp_voltage_mag[4] / (bus[indexer].V[1] * adjust_nominal_voltage_val));
 						}
 						else
 						{
@@ -2052,10 +2053,10 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 						}
 
 						//Start adjustments - C
-						if ((bus[indexer].extra_var[8] != 0.0) && (adjust_temp_voltage_mag[2] != 0.0))
+						if ((bus[indexer].extra_var[8] != 0.0) && (adjust_temp_voltage_mag[5] != 0.0))
 						{
 							//calculate new value
-							adjusted_constant_current[5] = ~(adjust_temp_nominal_voltage[2] * ~bus[indexer].extra_var[8] * adjust_temp_voltage_mag[2] / (bus[indexer].V[2] * adjust_nominal_voltage_val));
+							adjusted_constant_current[5] = ~(adjust_temp_nominal_voltage[5] * ~bus[indexer].extra_var[8] * adjust_temp_voltage_mag[5] / (bus[indexer].V[2] * adjust_nominal_voltage_val));
 						}
 						else
 						{
@@ -2357,23 +2358,23 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				if (*bus[indexer].dynamics_enabled == true)
 				{
 					//Create nominal magnitudes
-					adjust_nominal_voltage_val = bus[indexer].kv_base;
+					adjust_nominal_voltage_val = bus[indexer].volt_base;
 
 					//Create the nominal voltage vectors
-					adjust_temp_nominal_voltage[0].SetPolar(bus[indexer].kv_base,0.0);
-					adjust_temp_nominal_voltage[1].SetPolar(bus[indexer].kv_base,-2.0*PI/3.0);
-					adjust_temp_nominal_voltage[2].SetPolar(bus[indexer].kv_base,2.0*PI/3.0);
+					adjust_temp_nominal_voltage[3].SetPolar(bus[indexer].volt_base,0.0);
+					adjust_temp_nominal_voltage[4].SetPolar(bus[indexer].volt_base,-2.0*PI/3.0);
+					adjust_temp_nominal_voltage[5].SetPolar(bus[indexer].volt_base,2.0*PI/3.0);
 
 					//Get magnitudes of all
-					adjust_temp_voltage_mag[0] = bus[indexer].V[0].Mag();
-					adjust_temp_voltage_mag[1] = bus[indexer].V[1].Mag();
-					adjust_temp_voltage_mag[2] = bus[indexer].V[2].Mag();
+					adjust_temp_voltage_mag[3] = bus[indexer].V[0].Mag();
+					adjust_temp_voltage_mag[4] = bus[indexer].V[1].Mag();
+					adjust_temp_voltage_mag[5] = bus[indexer].V[2].Mag();
 
 					//Start adjustments - A
-					if ((bus[indexer].I[0] != 0.0) && (adjust_temp_voltage_mag[0] != 0.0))
+					if ((bus[indexer].I[0] != 0.0) && (adjust_temp_voltage_mag[3] != 0.0))
 					{
 						//calculate new value
-						adjusted_constant_current[0] = ~(adjust_temp_nominal_voltage[0] * ~bus[indexer].I[0] * adjust_temp_voltage_mag[0] / (bus[indexer].V[0] * adjust_nominal_voltage_val));
+						adjusted_constant_current[0] = ~(adjust_temp_nominal_voltage[3] * ~bus[indexer].I[0] * adjust_temp_voltage_mag[3] / (bus[indexer].V[0] * adjust_nominal_voltage_val));
 					}
 					else
 					{
@@ -2381,10 +2382,10 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					}
 
 					//Start adjustments - B
-					if ((bus[indexer].I[1] != 0.0) && (adjust_temp_voltage_mag[1] != 0.0))
+					if ((bus[indexer].I[1] != 0.0) && (adjust_temp_voltage_mag[4] != 0.0))
 					{
 						//calculate new value
-						adjusted_constant_current[1] = ~(adjust_temp_nominal_voltage[1] * ~bus[indexer].I[1] * adjust_temp_voltage_mag[1] / (bus[indexer].V[1] * adjust_nominal_voltage_val));
+						adjusted_constant_current[1] = ~(adjust_temp_nominal_voltage[4] * ~bus[indexer].I[1] * adjust_temp_voltage_mag[4] / (bus[indexer].V[1] * adjust_nominal_voltage_val));
 					}
 					else
 					{
@@ -2392,10 +2393,10 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					}
 
 					//Start adjustments - C
-					if ((bus[indexer].I[2] != 0.0) && (adjust_temp_voltage_mag[2] != 0.0))
+					if ((bus[indexer].I[2] != 0.0) && (adjust_temp_voltage_mag[5] != 0.0))
 					{
 						//calculate new value
-						adjusted_constant_current[2] = ~(adjust_temp_nominal_voltage[2] * ~bus[indexer].I[2] * adjust_temp_voltage_mag[2] / (bus[indexer].V[2] * adjust_nominal_voltage_val));
+						adjusted_constant_current[2] = ~(adjust_temp_nominal_voltage[5] * ~bus[indexer].I[2] * adjust_temp_voltage_mag[5] / (bus[indexer].V[2] * adjust_nominal_voltage_val));
 					}
 					else
 					{
@@ -2406,7 +2407,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					if ((bus[indexer].phases & 0x10) == 0x10)
 					{
 						//Create nominal magnitudes
-						adjust_nominal_voltage_val = bus[indexer].kv_base * sqrt(3.0);
+						adjust_nominal_voltage_val = bus[indexer].volt_base * sqrt(3.0);
 
 						//Create the nominal voltage vectors
 						adjust_temp_nominal_voltage[0].SetPolar(adjust_nominal_voltage_val,PI/6.0);
@@ -2700,12 +2701,117 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					delta_current[2] = 0.0;
 				}
 				
+				//Populate the values for constant current -- deltamode different right now (all same in future?)
+				if (*bus[indexer].dynamics_enabled == true)
+				{
+					//Create line-line nominal magnitude
+					adjust_nominal_voltage_val = bus[indexer].volt_base;
+					adjust_nominal_voltaged_val = bus[indexer].volt_base * sqrt(3.0);
+
+					//Create the nominal voltage vectors
+					adjust_temp_nominal_voltage[0].SetPolar(adjust_nominal_voltaged_val,PI/6.0);
+					adjust_temp_nominal_voltage[1].SetPolar(adjust_nominal_voltaged_val,-1.0*PI/2.0);
+					adjust_temp_nominal_voltage[2].SetPolar(adjust_nominal_voltaged_val,5.0*PI/6.0);
+					adjust_temp_nominal_voltage[3].SetPolar(adjust_nominal_voltage_val,0.0);
+					adjust_temp_nominal_voltage[4].SetPolar(adjust_nominal_voltage_val,-2.0*PI/3.0);
+					adjust_temp_nominal_voltage[5].SetPolar(adjust_nominal_voltage_val,2.0*PI/3.0);
+
+					//Compute delta voltages
+					voltageDel[0] = bus[indexer].V[0] - bus[indexer].V[1];
+					voltageDel[1] = bus[indexer].V[1] - bus[indexer].V[2];
+					voltageDel[2] = bus[indexer].V[2] - bus[indexer].V[0];
+
+					//Get magnitudes of all
+					adjust_temp_voltage_mag[0] = voltageDel[0].Mag();
+					adjust_temp_voltage_mag[1] = voltageDel[1].Mag();
+					adjust_temp_voltage_mag[2] = voltageDel[2].Mag();
+					adjust_temp_voltage_mag[3] = bus[indexer].V[0].Mag();
+					adjust_temp_voltage_mag[4] = bus[indexer].V[1].Mag();
+					adjust_temp_voltage_mag[5] = bus[indexer].V[2].Mag();
+
+					//Start adjustments - A
+					if ((bus[indexer].I_dy[3] != 0.0) && (adjust_temp_voltage_mag[3] != 0.0))
+					{
+						//calculate new value
+						adjusted_constant_current[3] = ~(adjust_temp_nominal_voltage[3] * ~bus[indexer].I_dy[3] * adjust_temp_voltage_mag[3] / (bus[indexer].V[0] * adjust_nominal_voltage_val));
+					}
+					else
+					{
+						adjusted_constant_current[3] = 0.0;
+					}
+
+					//Start adjustments - B
+					if ((bus[indexer].I_dy[4] != 0.0) && (adjust_temp_voltage_mag[4] != 0.0))
+					{
+						//calculate new value
+						adjusted_constant_current[4] = ~(adjust_temp_nominal_voltage[4] * ~bus[indexer].I_dy[4] * adjust_temp_voltage_mag[4] / (bus[indexer].V[1] * adjust_nominal_voltage_val));
+					}
+					else
+					{
+						adjusted_constant_current[4] = 0.0;
+					}
+
+					//Start adjustments - C
+					if ((bus[indexer].I_dy[5] != 0.0) && (adjust_temp_voltage_mag[5] != 0.0))
+					{
+						//calculate new value
+						adjusted_constant_current[5] = ~(adjust_temp_nominal_voltage[5] * ~bus[indexer].I_dy[5] * adjust_temp_voltage_mag[5] / (bus[indexer].V[2] * adjust_nominal_voltage_val));
+					}
+					else
+					{
+						adjusted_constant_current[5] = 0.0;
+					}
+
+					//Start adjustments - AB
+					if ((bus[indexer].I_dy[0] != 0.0) && (adjust_temp_voltage_mag[0] != 0.0))
+					{
+						//calculate new value
+						adjusted_constant_current[0] = ~(adjust_temp_nominal_voltage[0] * ~bus[indexer].I_dy[0] * adjust_temp_voltage_mag[0] / (voltageDel[0] * adjust_nominal_voltaged_val));
+					}
+					else
+					{
+						adjusted_constant_current[0] = 0.0;
+					}
+
+					//Start adjustments - BC
+					if ((bus[indexer].I_dy[1] != 0.0) && (adjust_temp_voltage_mag[1] != 0.0))
+					{
+						//calculate new value
+						adjusted_constant_current[1] = ~(adjust_temp_nominal_voltage[1] * ~bus[indexer].I_dy[1] * adjust_temp_voltage_mag[1] / (voltageDel[1] * adjust_nominal_voltaged_val));
+					}
+					else
+					{
+						adjusted_constant_current[1] = 0.0;
+					}
+
+					//Start adjustments - CA
+					if ((bus[indexer].I_dy[2] != 0.0) && (adjust_temp_voltage_mag[2] != 0.0))
+					{
+						//calculate new value
+						adjusted_constant_current[2] = ~(adjust_temp_nominal_voltage[2] * ~bus[indexer].I_dy[2] * adjust_temp_voltage_mag[2] / (voltageDel[2] * adjust_nominal_voltaged_val));
+					}
+					else
+					{
+						adjusted_constant_current[2] = 0.0;
+					}
+				}//End deltamode adjustment
+				else	//Normal mode
+				{
+					//Just copy the values in
+					adjusted_constant_current[0] = bus[indexer].I_dy[0];
+					adjusted_constant_current[1] = bus[indexer].I_dy[1];
+					adjusted_constant_current[2] = bus[indexer].I_dy[2];
+					adjusted_constant_current[3] = bus[indexer].I_dy[3];
+					adjusted_constant_current[4] = bus[indexer].I_dy[4];
+					adjusted_constant_current[5] = bus[indexer].I_dy[5];
+				}
+
 				//Convert delta-current into a phase current, where appropriate - reuse temp variable
 				//Everything will be accumulated into the "current" field for ease (including differents)
 				//Also handle wye currents in here (was a differently connected child code before)
 				if ((bus[indexer].phases & 0x04) == 0x04)	//Has a phase A
 				{
-					undeltacurr[0]=(bus[indexer].I_dy[0]+delta_current[0])-(bus[indexer].I_dy[2]+delta_current[2]);
+					undeltacurr[0]=(adjusted_constant_current[0]+delta_current[0])-(adjusted_constant_current[2]+delta_current[2]);
 
 					//Power values
 					undeltacurr[0] += (bus[indexer].V[0] == 0) ? 0 : ~(bus[indexer].S_dy[3]/bus[indexer].V[0]);
@@ -2714,7 +2820,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					undeltacurr[0] += bus[indexer].Y_dy[3]*bus[indexer].V[0];
 
 					//Current values
-					undeltacurr[0] += bus[indexer].I_dy[3];
+					undeltacurr[0] += adjusted_constant_current[3];
 				}
 				else
 				{
@@ -2724,7 +2830,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 				if ((bus[indexer].phases & 0x02) == 0x02)	//Has a phase B
 				{
-					undeltacurr[1]=(bus[indexer].I_dy[1]+delta_current[1])-(bus[indexer].I_dy[0]+delta_current[0]);
+					undeltacurr[1]=(adjusted_constant_current[1]+delta_current[1])-(adjusted_constant_current[0]+delta_current[0]);
 
 					//Power values
 					undeltacurr[1] += (bus[indexer].V[1] == 0) ? 0 : ~(bus[indexer].S_dy[4]/bus[indexer].V[1]);
@@ -2733,7 +2839,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					undeltacurr[1] += bus[indexer].Y_dy[4]*bus[indexer].V[1];
 
 					//Current values
-					undeltacurr[1] += bus[indexer].I_dy[4];
+					undeltacurr[1] += adjusted_constant_current[4];
 				}
 				else
 				{
@@ -2744,7 +2850,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 				if ((bus[indexer].phases & 0x01) == 0x01)	//Has a phase C
 				{
-					undeltacurr[2]=(bus[indexer].I_dy[2]+delta_current[2])-(bus[indexer].I_dy[1]+delta_current[1]);
+					undeltacurr[2]=(adjusted_constant_current[2]+delta_current[2])-(adjusted_constant_current[1]+delta_current[1]);
 
 					//Power values
 					undeltacurr[2] += (bus[indexer].V[2] == 0) ? 0 : ~(bus[indexer].S_dy[5]/bus[indexer].V[2]);
@@ -2753,7 +2859,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					undeltacurr[2] += bus[indexer].Y_dy[5]*bus[indexer].V[2];
 
 					//Current values
-					undeltacurr[2] += bus[indexer].I_dy[5];
+					undeltacurr[2] += adjusted_constant_current[5];
 				}
 				else
 				{
@@ -3074,7 +3180,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					//Determine how we are posting this update
 					if ((bus[indexer].type == 2) && swing_is_a_swing)	//SWING bus is different (when it really is a SWING bus)
 					{
-						if ((powerflow_type == PF_DYNINIT) && (bus[indexer].full_Y != NULL))
+						if ((powerflow_type == PF_DYNINIT) && (bus[indexer].full_Y != NULL) && (bus[indexer].DynCurrent != NULL))
 						{
 							//Compute the delta_I, just like below - but don't post it (still zero in calcs)
 							work_vals_double_3 = tempPbus - tempIcalcReal;
@@ -3340,7 +3446,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					//Determine how we are posting this update
 					if ((bus[indexer].type == 2) && swing_is_a_swing)	//SWING bus is different (when it really is a SWING bus)
 					{
-						if ((powerflow_type == PF_DYNINIT) && (bus[indexer].full_Y != NULL))
+						if ((powerflow_type == PF_DYNINIT) && (bus[indexer].full_Y != NULL) && (bus[indexer].DynCurrent != NULL))
 						{
 							//Compute our "power generated" value for this phase - conjugated in formation
 							temp_complex_2 = bus[indexer].V[jindex] * complex(tempIcalcReal,-tempIcalcImag);
@@ -3446,14 +3552,25 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 						}
 						//Defaulted else - leave as they were
 					}//End three-phase
-					else	//Not three-phase
+					else	//Not three-phase athe moment
 					{
-						GL_THROW("NR_solver: bus:%s has tried updating deltamode dyanmics, but is not three-phase!",bus[indexer].name);
-						/*  TROUBLESHOOT
-						The NR_solver routine tried update a three-phase current value for a bus that is not
-						three phase.  At this time, the deltamode system only supports three-phase buses for
-						generator attachment.
-						*/
+						//See if we ever were (reliability call)
+						if ((bus[indexer].origphases & 0x07) == 0x07)
+						{
+							//Just zero it
+							bus[indexer].DynCurrent[0] = complex(0.0,0.0);
+							bus[indexer].DynCurrent[1] = complex(0.0,0.0);
+							bus[indexer].DynCurrent[2] = complex(0.0,0.0);
+						}
+						else	//Never was, just fail out
+						{
+							GL_THROW("NR_solver: bus:%s has tried updating deltamode dyanmics, but is not three-phase!",bus[indexer].name);
+							/*  TROUBLESHOOT
+							The NR_solver routine tried update a three-phase current value for a bus that is not
+							three phase.  At this time, the deltamode system only supports three-phase buses for
+							generator attachment.
+							*/
+						}
 					}
 				}//End extra current adds
 			}//End dynamic (generator postings)
@@ -3468,7 +3585,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				if (*bus[indexer].dynamics_enabled == true)
 				{
 					//Create nominal magnitudes
-					adjust_nominal_voltage_val = bus[indexer].kv_base * sqrt(3.0);
+					adjust_nominal_voltage_val = bus[indexer].volt_base * sqrt(3.0);
 
 					//Create the nominal voltage vectors
 					adjust_temp_nominal_voltage[0].SetPolar(adjust_nominal_voltage_val,PI/6.0);
@@ -3522,23 +3639,23 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					if ((bus[indexer].phases & 0x10) == 0x10)
 					{
 						//Create nominal magnitudes
-						adjust_nominal_voltage_val = bus[indexer].kv_base;
+						adjust_nominal_voltage_val = bus[indexer].volt_base;
 
 						//Create the nominal voltage vectors
-						adjust_temp_nominal_voltage[0].SetPolar(bus[indexer].kv_base,0.0);
-						adjust_temp_nominal_voltage[1].SetPolar(bus[indexer].kv_base,-2.0*PI/3.0);
-						adjust_temp_nominal_voltage[2].SetPolar(bus[indexer].kv_base,2.0*PI/3.0);
+						adjust_temp_nominal_voltage[3].SetPolar(bus[indexer].volt_base,0.0);
+						adjust_temp_nominal_voltage[4].SetPolar(bus[indexer].volt_base,-2.0*PI/3.0);
+						adjust_temp_nominal_voltage[5].SetPolar(bus[indexer].volt_base,2.0*PI/3.0);
 
 						//Get magnitudes of all
-						adjust_temp_voltage_mag[0] = bus[indexer].V[0].Mag();
-						adjust_temp_voltage_mag[1] = bus[indexer].V[1].Mag();
-						adjust_temp_voltage_mag[2] = bus[indexer].V[2].Mag();
+						adjust_temp_voltage_mag[3] = bus[indexer].V[0].Mag();
+						adjust_temp_voltage_mag[4] = bus[indexer].V[1].Mag();
+						adjust_temp_voltage_mag[5] = bus[indexer].V[2].Mag();
 
 						//Start adjustments - A
-						if ((bus[indexer].extra_var[6] != 0.0) && (adjust_temp_voltage_mag[0] != 0.0))
+						if ((bus[indexer].extra_var[6] != 0.0) && (adjust_temp_voltage_mag[3] != 0.0))
 						{
 							//calculate new value
-							adjusted_constant_current[3] = ~(adjust_temp_nominal_voltage[0] * ~bus[indexer].extra_var[6] * adjust_temp_voltage_mag[0] / (bus[indexer].V[0] * adjust_nominal_voltage_val));
+							adjusted_constant_current[3] = ~(adjust_temp_nominal_voltage[3] * ~bus[indexer].extra_var[6] * adjust_temp_voltage_mag[3] / (bus[indexer].V[0] * adjust_nominal_voltage_val));
 						}
 						else
 						{
@@ -3546,10 +3663,10 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 						}
 
 						//Start adjustments - B
-						if ((bus[indexer].extra_var[7] != 0.0) && (adjust_temp_voltage_mag[1] != 0.0))
+						if ((bus[indexer].extra_var[7] != 0.0) && (adjust_temp_voltage_mag[4] != 0.0))
 						{
 							//calculate new value
-							adjusted_constant_current[4] = ~(adjust_temp_nominal_voltage[1] * ~bus[indexer].extra_var[7] * adjust_temp_voltage_mag[1] / (bus[indexer].V[1] * adjust_nominal_voltage_val));
+							adjusted_constant_current[4] = ~(adjust_temp_nominal_voltage[4] * ~bus[indexer].extra_var[7] * adjust_temp_voltage_mag[4] / (bus[indexer].V[1] * adjust_nominal_voltage_val));
 						}
 						else
 						{
@@ -3557,10 +3674,10 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 						}
 
 						//Start adjustments - C
-						if ((bus[indexer].extra_var[8] != 0.0) && (adjust_temp_voltage_mag[2] != 0.0))
+						if ((bus[indexer].extra_var[8] != 0.0) && (adjust_temp_voltage_mag[5] != 0.0))
 						{
 							//calculate new value
-							adjusted_constant_current[5] = ~(adjust_temp_nominal_voltage[2] * ~bus[indexer].extra_var[8] * adjust_temp_voltage_mag[2] / (bus[indexer].V[2] * adjust_nominal_voltage_val));
+							adjusted_constant_current[5] = ~(adjust_temp_nominal_voltage[5] * ~bus[indexer].extra_var[8] * adjust_temp_voltage_mag[5] / (bus[indexer].V[2] * adjust_nominal_voltage_val));
 						}
 						else
 						{
@@ -3889,23 +4006,23 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				if (*bus[indexer].dynamics_enabled == true)
 				{
 					//Create nominal magnitudes
-					adjust_nominal_voltage_val = bus[indexer].kv_base;
+					adjust_nominal_voltage_val = bus[indexer].volt_base;
 
 					//Create the nominal voltage vectors
-					adjust_temp_nominal_voltage[0].SetPolar(bus[indexer].kv_base,0.0);
-					adjust_temp_nominal_voltage[1].SetPolar(bus[indexer].kv_base,-2.0*PI/3.0);
-					adjust_temp_nominal_voltage[2].SetPolar(bus[indexer].kv_base,2.0*PI/3.0);
+					adjust_temp_nominal_voltage[3].SetPolar(bus[indexer].volt_base,0.0);
+					adjust_temp_nominal_voltage[4].SetPolar(bus[indexer].volt_base,-2.0*PI/3.0);
+					adjust_temp_nominal_voltage[5].SetPolar(bus[indexer].volt_base,2.0*PI/3.0);
 
 					//Get magnitudes of all
-					adjust_temp_voltage_mag[0] = bus[indexer].V[0].Mag();
-					adjust_temp_voltage_mag[1] = bus[indexer].V[1].Mag();
-					adjust_temp_voltage_mag[2] = bus[indexer].V[2].Mag();
+					adjust_temp_voltage_mag[3] = bus[indexer].V[0].Mag();
+					adjust_temp_voltage_mag[4] = bus[indexer].V[1].Mag();
+					adjust_temp_voltage_mag[5] = bus[indexer].V[2].Mag();
 
 					//Start adjustments - A
-					if ((bus[indexer].I[0] != 0.0) && (adjust_temp_voltage_mag[0] != 0.0))
+					if ((bus[indexer].I[0] != 0.0) && (adjust_temp_voltage_mag[3] != 0.0))
 					{
 						//calculate new value
-						adjusted_constant_current[0] = ~(adjust_temp_nominal_voltage[0] * ~bus[indexer].I[0] * adjust_temp_voltage_mag[0] / (bus[indexer].V[0] * adjust_nominal_voltage_val));
+						adjusted_constant_current[0] = ~(adjust_temp_nominal_voltage[3] * ~bus[indexer].I[0] * adjust_temp_voltage_mag[3] / (bus[indexer].V[0] * adjust_nominal_voltage_val));
 					}
 					else
 					{
@@ -3913,10 +4030,10 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					}
 
 					//Start adjustments - B
-					if ((bus[indexer].I[1] != 0.0) && (adjust_temp_voltage_mag[1] != 0.0))
+					if ((bus[indexer].I[1] != 0.0) && (adjust_temp_voltage_mag[4] != 0.0))
 					{
 						//calculate new value
-						adjusted_constant_current[1] = ~(adjust_temp_nominal_voltage[1] * ~bus[indexer].I[1] * adjust_temp_voltage_mag[1] / (bus[indexer].V[1] * adjust_nominal_voltage_val));
+						adjusted_constant_current[1] = ~(adjust_temp_nominal_voltage[4] * ~bus[indexer].I[1] * adjust_temp_voltage_mag[4] / (bus[indexer].V[1] * adjust_nominal_voltage_val));
 					}
 					else
 					{
@@ -3924,10 +4041,10 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					}
 
 					//Start adjustments - C
-					if ((bus[indexer].I[2] != 0.0) && (adjust_temp_voltage_mag[2] != 0.0))
+					if ((bus[indexer].I[2] != 0.0) && (adjust_temp_voltage_mag[5] != 0.0))
 					{
 						//calculate new value
-						adjusted_constant_current[2] = ~(adjust_temp_nominal_voltage[2] * ~bus[indexer].I[2] * adjust_temp_voltage_mag[2] / (bus[indexer].V[2] * adjust_nominal_voltage_val));
+						adjusted_constant_current[2] = ~(adjust_temp_nominal_voltage[5] * ~bus[indexer].I[2] * adjust_temp_voltage_mag[5] / (bus[indexer].V[2] * adjust_nominal_voltage_val));
 					}
 					else
 					{
@@ -3938,7 +4055,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					if ((bus[indexer].phases & 0x10) == 0x10)
 					{
 						//Create nominal magnitudes
-						adjust_nominal_voltage_val = bus[indexer].kv_base * sqrt(3.0);
+						adjust_nominal_voltage_val = bus[indexer].volt_base * sqrt(3.0);
 
 						//Create the nominal voltage vectors
 						adjust_temp_nominal_voltage[0].SetPolar(adjust_nominal_voltage_val,PI/6.0);
@@ -4250,12 +4367,117 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					voltageDel[2] = 0.0;
 					delta_current[2] = 0.0;
 				}
-				
+
+				//Populate the values for constant current -- deltamode different right now (all same in future?)
+				if (*bus[indexer].dynamics_enabled == true)
+				{
+					//Create line-line nominal magnitude
+					adjust_nominal_voltage_val = bus[indexer].volt_base;
+					adjust_nominal_voltaged_val = bus[indexer].volt_base * sqrt(3.0);
+
+					//Create the nominal voltage vectors
+					adjust_temp_nominal_voltage[0].SetPolar(adjust_nominal_voltaged_val,PI/6.0);
+					adjust_temp_nominal_voltage[1].SetPolar(adjust_nominal_voltaged_val,-1.0*PI/2.0);
+					adjust_temp_nominal_voltage[2].SetPolar(adjust_nominal_voltaged_val,5.0*PI/6.0);
+					adjust_temp_nominal_voltage[3].SetPolar(adjust_nominal_voltage_val,0.0);
+					adjust_temp_nominal_voltage[4].SetPolar(adjust_nominal_voltage_val,-2.0*PI/3.0);
+					adjust_temp_nominal_voltage[5].SetPolar(adjust_nominal_voltage_val,2.0*PI/3.0);
+
+					//Compute delta voltages
+					voltageDel[0] = bus[indexer].V[0] - bus[indexer].V[1];
+					voltageDel[1] = bus[indexer].V[1] - bus[indexer].V[2];
+					voltageDel[2] = bus[indexer].V[2] - bus[indexer].V[0];
+
+					//Get magnitudes of all
+					adjust_temp_voltage_mag[0] = voltageDel[0].Mag();
+					adjust_temp_voltage_mag[1] = voltageDel[1].Mag();
+					adjust_temp_voltage_mag[2] = voltageDel[2].Mag();
+					adjust_temp_voltage_mag[3] = bus[indexer].V[0].Mag();
+					adjust_temp_voltage_mag[4] = bus[indexer].V[1].Mag();
+					adjust_temp_voltage_mag[5] = bus[indexer].V[2].Mag();
+
+					//Start adjustments - A
+					if ((bus[indexer].I_dy[3] != 0.0) && (adjust_temp_voltage_mag[3] != 0.0))
+					{
+						//calculate new value
+						adjusted_constant_current[3] = ~(adjust_temp_nominal_voltage[3] * ~bus[indexer].I_dy[3] * adjust_temp_voltage_mag[3] / (bus[indexer].V[0] * adjust_nominal_voltage_val));
+					}
+					else
+					{
+						adjusted_constant_current[3] = 0.0;
+					}
+
+					//Start adjustments - B
+					if ((bus[indexer].I_dy[4] != 0.0) && (adjust_temp_voltage_mag[4] != 0.0))
+					{
+						//calculate new value
+						adjusted_constant_current[4] = ~(adjust_temp_nominal_voltage[4] * ~bus[indexer].I_dy[4] * adjust_temp_voltage_mag[4] / (bus[indexer].V[1] * adjust_nominal_voltage_val));
+					}
+					else
+					{
+						adjusted_constant_current[4] = 0.0;
+					}
+
+					//Start adjustments - C
+					if ((bus[indexer].I_dy[5] != 0.0) && (adjust_temp_voltage_mag[5] != 0.0))
+					{
+						//calculate new value
+						adjusted_constant_current[5] = ~(adjust_temp_nominal_voltage[5] * ~bus[indexer].I_dy[5] * adjust_temp_voltage_mag[5] / (bus[indexer].V[2] * adjust_nominal_voltage_val));
+					}
+					else
+					{
+						adjusted_constant_current[5] = 0.0;
+					}
+
+					//Start adjustments - AB
+					if ((bus[indexer].I_dy[0] != 0.0) && (adjust_temp_voltage_mag[0] != 0.0))
+					{
+						//calculate new value
+						adjusted_constant_current[0] = ~(adjust_temp_nominal_voltage[0] * ~bus[indexer].I_dy[0] * adjust_temp_voltage_mag[0] / (voltageDel[0] * adjust_nominal_voltaged_val));
+					}
+					else
+					{
+						adjusted_constant_current[0] = 0.0;
+					}
+
+					//Start adjustments - BC
+					if ((bus[indexer].I_dy[1] != 0.0) && (adjust_temp_voltage_mag[1] != 0.0))
+					{
+						//calculate new value
+						adjusted_constant_current[1] = ~(adjust_temp_nominal_voltage[1] * ~bus[indexer].I_dy[1] * adjust_temp_voltage_mag[1] / (voltageDel[1] * adjust_nominal_voltaged_val));
+					}
+					else
+					{
+						adjusted_constant_current[1] = 0.0;
+					}
+
+					//Start adjustments - CA
+					if ((bus[indexer].I_dy[2] != 0.0) && (adjust_temp_voltage_mag[2] != 0.0))
+					{
+						//calculate new value
+						adjusted_constant_current[2] = ~(adjust_temp_nominal_voltage[2] * ~bus[indexer].I_dy[2] * adjust_temp_voltage_mag[2] / (voltageDel[2] * adjust_nominal_voltaged_val));
+					}
+					else
+					{
+						adjusted_constant_current[2] = 0.0;
+					}
+				}//End deltamode adjustment
+				else	//Normal mode
+				{
+					//Just copy the values in
+					adjusted_constant_current[0] = bus[indexer].I_dy[0];
+					adjusted_constant_current[1] = bus[indexer].I_dy[1];
+					adjusted_constant_current[2] = bus[indexer].I_dy[2];
+					adjusted_constant_current[3] = bus[indexer].I_dy[3];
+					adjusted_constant_current[4] = bus[indexer].I_dy[4];
+					adjusted_constant_current[5] = bus[indexer].I_dy[5];
+				}
+
 				//Convert delta-current into a phase current, where appropriate - reuse temp variable
 				//Everything will be accumulated into the "current" field for ease (including differents)
 				if ((bus[indexer].phases & 0x04) == 0x04)	//Has a phase A
 				{
-					undeltacurr[0]=(bus[indexer].I_dy[0]+delta_current[0])-(bus[indexer].I_dy[2]+delta_current[2]);
+					undeltacurr[0]=(adjusted_constant_current[0]+delta_current[0])-(adjusted_constant_current[2]+delta_current[2]);
 
 					//Apply wye-connected loads
 
@@ -4266,7 +4488,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					undeltacurr[0] += bus[indexer].Y_dy[3]*bus[indexer].V[0];
 
 					//Current values
-					undeltacurr[0] += bus[indexer].I_dy[3];
+					undeltacurr[0] += adjusted_constant_current[3];
 				}
 				else
 				{
@@ -4276,7 +4498,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 				if ((bus[indexer].phases & 0x02) == 0x02)	//Has a phase B
 				{
-					undeltacurr[1]=(bus[indexer].I_dy[1]+delta_current[1])-(bus[indexer].I_dy[0]+delta_current[0]);
+					undeltacurr[1]=(adjusted_constant_current[1]+delta_current[1])-(adjusted_constant_current[0]+delta_current[0]);
 
 					//Apply wye-connected loads
 
@@ -4287,7 +4509,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					undeltacurr[1] += bus[indexer].Y_dy[4]*bus[indexer].V[1];
 
 					//Current values
-					undeltacurr[1] += bus[indexer].I_dy[4];
+					undeltacurr[1] += adjusted_constant_current[4];
 				}
 				else
 				{
@@ -4295,10 +4517,9 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					undeltacurr[1] = 0.0;
 				}
 
-
 				if ((bus[indexer].phases & 0x01) == 0x01)	//Has a phase C
 				{
-					undeltacurr[2]=(bus[indexer].I_dy[2]+delta_current[2])-(bus[indexer].I_dy[1]+delta_current[1]);
+					undeltacurr[2]=(adjusted_constant_current[2]+delta_current[2])-(adjusted_constant_current[1]+delta_current[1]);
 
 					//Apply wye-connected loads
 
@@ -4309,7 +4530,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					undeltacurr[2] += bus[indexer].Y_dy[5]*bus[indexer].V[2];
 
 					//Current values
-					undeltacurr[2] += bus[indexer].I_dy[5];
+					undeltacurr[2] += adjusted_constant_current[5];
 				}
 				else
 				{
@@ -5113,7 +5334,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 #endif	//End NR_MATIRX_OUT
 
 		//Additional checks for special modes - only needs to happen in first dynamics powerflow
-		if ((powerflow_type == PF_DYNINIT) && (bus[0].full_Y != NULL))
+		if ((powerflow_type == PF_DYNINIT) && (bus[0].full_Y != NULL) && (bus[0].DynCurrent != NULL))	//Builds on assumption index 0 is MASTER swing
 		{
 			//See what "mode" we're in
 			if (!newiter)	//Overall powerflow has converged

@@ -66,6 +66,11 @@ switch_object::switch_object(MODULE *mod) : link_object(mod)
 			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_switch)==NULL)
 				GL_THROW("Unable to publish switch deltamode function");
 
+			//Publish restoration-related function (current update)
+			if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
+				GL_THROW("Unable to publish switch external power calculation function");
+			if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+				GL_THROW("Unable to publish switch external power limit calculation function");
     }
 }
 
@@ -461,14 +466,22 @@ void switch_object::BOTH_switch_sync_pre(unsigned char *work_phases_pre, unsigne
 
 	if ((solver_method == SM_NR) && (event_schedule != NULL))	//NR-reliability-related stuff
 	{
-		//Store our phases going in
-		*work_phases_pre = NR_branchdata[NR_branch_reference].phases & 0x07;
-	
-		//Call syncing function
-		*work_phases_post = switch_expected_sync_function();
+		if (meshed_fault_checking_enabled == false)
+		{
+			//Store our phases going in
+			*work_phases_pre = NR_branchdata[NR_branch_reference].phases & 0x07;
+		
+			//Call syncing function
+			*work_phases_post = switch_expected_sync_function();
 
-		//Store our phases going out
-		*work_phases_post &= 0x07;
+			//Store our phases going out
+			*work_phases_post &= 0x07;
+		}
+		else	//Meshed checking, simplified operations
+		{
+			//Call syncing function
+			switch_sync_function();
+		}
 	}
 	else	//Normal execution
 	{
@@ -486,138 +499,176 @@ void switch_object::NR_switch_sync_post(unsigned char *work_phases_pre, unsigned
 {
 	unsigned char work_phases, work_phases_closed; //work_phases_pre, work_phases_post, work_phases_closed;
 	char fault_val[9];
-	int result_val, impl_fault;
+	int working_protect_phases[3];
+	int result_val, impl_fault, indexval;
 	bool fault_mode;
 	TIMESTAMP temp_time;
 
-	//See if we're in the proper cycle - NR only for now
-	if (*work_phases_pre != *work_phases_post)
+	//Overall encompassing check -- meshed handled differently
+	if (meshed_fault_checking_enabled == false)
 	{
-		//Find out what changed
-		work_phases = (*work_phases_pre ^ *work_phases_post) & 0x07;
-
-		//See if this transition is a "fault-open" or a "fault-close"
-		work_phases_closed = work_phases & *work_phases_post;
-
-		//See how it looks
-		if (work_phases_closed == work_phases)	//It's a close
+		//See if we're in the proper cycle - NR only for now
+		if (*work_phases_pre != *work_phases_post)
 		{
-			fault_mode = true;
-			//work_phases = (~work_phases) & 0x07;
-		}
-		else	//It's an open
-		{
-			fault_mode = false;
-			//Work phases is already in the proper format
-		}
+			//Initialize the variable
+			working_protect_phases[0] = 0;
+			working_protect_phases[1] = 0;
+			working_protect_phases[2] = 0;
 
-		//Set up fault type
-		fault_val[0] = 'S';
-		fault_val[1] = 'W';
-		fault_val[2] = '-';
+			//Find out what changed
+			work_phases = (*work_phases_pre ^ *work_phases_post) & 0x07;
 
-		//Default fault - none - will cause a failure if not caught
-		impl_fault = -1;
+			//See if this transition is a "fault-open" or a "fault-close"
+			work_phases_closed = work_phases & *work_phases_post;
 
-		//Determine who opened and store the time
-		switch (work_phases)
-		{
-		case 0x00:	//No switches opened !??
-			GL_THROW("switch:%s supposedly opened, but doesn't register the right phases",obj->name);
-			/*  TROUBLESHOOT
-			A switch reported changing to an open status.  However, it did not appear to fully propogate this
-			condition.  Please try again.  If the error persists, please submit your code and a bug report
-			via the trac website.
-			*/
-			break;
-		case 0x01:	//Phase C action
-			fault_val[3] = 'C';
-			fault_val[4] = '\0';
-			impl_fault = 20;
-			break;
-		case 0x02:	//Phase B action
-			fault_val[3] = 'B';
-			fault_val[4] = '\0';
-			impl_fault = 19;
-			break;
-		case 0x03:	//Phase B and C action
-			fault_val[3] = 'B';
-			fault_val[4] = 'C';
-			fault_val[5] = '\0';
-			impl_fault = 22;
-			break;
-		case 0x04:	//Phase A action
-			fault_val[3] = 'A';
-			fault_val[4] = '\0';
-			impl_fault = 18;
-			break;
-		case 0x05:	//Phase A and C action
-			fault_val[3] = 'A';
-			fault_val[4] = 'C';
-			fault_val[5] = '\0';
-			impl_fault = 23;
-			break;
-		case 0x06:	//Phase A and B action
-			fault_val[3] = 'A';
-			fault_val[4] = 'B';
-			fault_val[5] = '\0';
-			impl_fault = 21;
-			break;
-		case 0x07:	//All three went
-			fault_val[3] = 'A';
-			fault_val[4] = 'B';
-			fault_val[5] = 'C';
-			fault_val[6] = '\0';
-			impl_fault = 24;
-			break;
-		default:
-			GL_THROW("switch:%s supposedly opened, but doesn't register the right phases",obj->name);
-			//Defined above
-		}//End switch
-
-		if (event_schedule != NULL)	//Function was mapped - go for it!
-		{
-			//Call the function
-			if (fault_mode == true)	//Restoration - make fail time in the past
+			//See how it looks
+			if (work_phases_closed == work_phases)	//It's a close
 			{
-				if (mean_repair_time != 0)
-					temp_time = 50 + (TIMESTAMP)(mean_repair_time);
-				else
-					temp_time = 50;
-
-				//Call function
-				result_val = ((int (*)(OBJECT *, OBJECT *, char *, TIMESTAMP, TIMESTAMP, int, bool))(*event_schedule))(*eventgen_obj,obj,fault_val,(*t0-50),temp_time,impl_fault,fault_mode);
+				fault_mode = true;
+				//work_phases = (~work_phases) & 0x07;
 			}
-			else	//Failing - normal
+			else	//It's an open
 			{
-				result_val = ((int (*)(OBJECT *, OBJECT *, char *, TIMESTAMP, TIMESTAMP, int, bool))(*event_schedule))(*eventgen_obj,obj,fault_val,*t0,TS_NEVER,-1,fault_mode);
+				fault_mode = false;
+				//Work phases is already in the proper format
 			}
 
-			//Make sure it worked
-			if (result_val != 1)
+			//Set up fault type
+			fault_val[0] = 'S';
+			fault_val[1] = 'W';
+			fault_val[2] = '-';
+
+			//Default fault - none - will cause a failure if not caught
+			impl_fault = -1;
+
+			//Determine who opened and store the time
+			switch (work_phases)
 			{
-				GL_THROW("Attempt to change switch:%s failed in a reliability manner",obj->name);
+			case 0x00:	//No switches opened !??
+				GL_THROW("switch:%s supposedly opened, but doesn't register the right phases",obj->name);
 				/*  TROUBLESHOOT
-				While attempting to propagate a changed switch's impacts, an error was encountered.  Please
-				try again.  If the error persists, please submit your code and a bug report via the trac website.
+				A switch reported changing to an open status.  However, it did not appear to fully propogate this
+				condition.  Please try again.  If the error persists, please submit your code and a bug report
+				via the trac website.
+				*/
+				break;
+			case 0x01:	//Phase C action
+				fault_val[3] = 'C';
+				fault_val[4] = '\0';
+				impl_fault = 20;
+				working_protect_phases[2] = 1;
+				break;
+			case 0x02:	//Phase B action
+				fault_val[3] = 'B';
+				fault_val[4] = '\0';
+				impl_fault = 19;
+				working_protect_phases[1] = 1;
+				break;
+			case 0x03:	//Phase B and C action
+				fault_val[3] = 'B';
+				fault_val[4] = 'C';
+				fault_val[5] = '\0';
+				impl_fault = 22;
+				working_protect_phases[1] = 1;
+				working_protect_phases[2] = 1;
+				break;
+			case 0x04:	//Phase A action
+				fault_val[3] = 'A';
+				fault_val[4] = '\0';
+				impl_fault = 18;
+				working_protect_phases[0] = 1;
+				break;
+			case 0x05:	//Phase A and C action
+				fault_val[3] = 'A';
+				fault_val[4] = 'C';
+				fault_val[5] = '\0';
+				impl_fault = 23;
+				working_protect_phases[0] = 1;
+				working_protect_phases[2] = 1;
+				break;
+			case 0x06:	//Phase A and B action
+				fault_val[3] = 'A';
+				fault_val[4] = 'B';
+				fault_val[5] = '\0';
+				impl_fault = 21;
+				working_protect_phases[0] = 1;
+				working_protect_phases[1] = 1;
+				break;
+			case 0x07:	//All three went
+				fault_val[3] = 'A';
+				fault_val[4] = 'B';
+				fault_val[5] = 'C';
+				fault_val[6] = '\0';
+				impl_fault = 24;
+				working_protect_phases[0] = 1;
+				working_protect_phases[1] = 1;
+				working_protect_phases[2] = 1;
+				break;
+			default:
+				GL_THROW("switch:%s supposedly opened, but doesn't register the right phases",obj->name);
+				//Defined above
+			}//End switch
+
+			//See if we're a close an not in any previous faulting
+			if (fault_mode == true)
+			{
+				//Loop through the phases
+				for (indexval=0; indexval<3; indexval++)
+				{
+					//See if we need to be "our own protector"
+					if ((protect_locations[indexval] == -1) && (working_protect_phases[indexval] == 1))
+					{
+						//Flag us as our own device -- otherwise restoration gets a little odd
+						protect_locations[indexval] = NR_branch_reference;
+					}
+				}
+			}
+
+			if (event_schedule != NULL)	//Function was mapped - go for it!
+			{
+				//Call the function
+				if (fault_mode == true)	//Restoration - make fail time in the past
+				{
+					if (mean_repair_time != 0)
+						temp_time = 50 + (TIMESTAMP)(mean_repair_time);
+					else
+						temp_time = 50;
+
+					//Call function
+					result_val = ((int (*)(OBJECT *, OBJECT *, char *, TIMESTAMP, TIMESTAMP, int, bool))(*event_schedule))(*eventgen_obj,obj,fault_val,(*t0-50),temp_time,impl_fault,fault_mode);
+				}
+				else	//Failing - normal
+				{
+					result_val = ((int (*)(OBJECT *, OBJECT *, char *, TIMESTAMP, TIMESTAMP, int, bool))(*event_schedule))(*eventgen_obj,obj,fault_val,*t0,TS_NEVER,-1,fault_mode);
+				}
+
+				//Make sure it worked
+				if (result_val != 1)
+				{
+					GL_THROW("Attempt to change switch:%s failed in a reliability manner",obj->name);
+					/*  TROUBLESHOOT
+					While attempting to propagate a changed switch's impacts, an error was encountered.  Please
+					try again.  If the error persists, please submit your code and a bug report via the trac website.
+					*/
+				}
+
+				//Ensure we don't go anywhere yet
+				*t2 = *t0;
+
+			}	//End fault object present
+			else	//No object, just fail us out - save the iterations
+			{
+				gl_warning("No fault_check object present - Newton-Raphson solver may fail!");
+				/*  TROUBLESHOOT
+				A switch changed and created an open link.  If the system is not meshed, the Newton-Raphson
+				solver will likely fail.  Theoretically, this should be a quick fail due to a singular matrix.
+				However, the system occasionally gets stuck and will exhaust iteration cycles before continuing.
+				If the fuse is blowing and the NR solver still iterates for a long time, this may be the case.
 				*/
 			}
-
-			//Ensure we don't go anywhere yet
-			*t2 = *t0;
-
-		}	//End fault object present
-		else	//No object, just fail us out - save the iterations
-		{
-			gl_warning("No fault_check object present - Newton-Raphson solver may fail!");
-			/*  TROUBLESHOOT
-			A switch changed and created an open link.  If the system is not meshed, the Newton-Raphson
-			solver will likely fail.  Theoretically, this should be a quick fail due to a singular matrix.
-			However, the system occasionally gets stuck and will exhaust iteration cycles before continuing.
-			If the fuse is blowing and the NR solver still iterates for a long time, this may be the case.
-			*/
-		}
-	}//End NR call
+		}//End NR call
+	}//end not meshed checking mode
+	//defaulted else -- meshed checking, but we don't do anything for that (link handles all)
 }
 
 TIMESTAMP switch_object::sync(TIMESTAMP t0)
@@ -690,181 +741,355 @@ void switch_object::switch_sync_function(void)
 
 	pres_status = 0x00;	//Reset individual status indicator - assumes all start open
 
-	if (switch_banked_mode == BANKED_SW)	//Banked mode
+	//See which mode we are operating in
+	if (meshed_fault_checking_enabled == false)	//"Normal" mode
 	{
-		if (status == prev_status)
+		if (switch_banked_mode == BANKED_SW)	//Banked mode
 		{
-			//Banked mode is operated by majority rule.  If the majority are a different state, all become that state
-			phase_total = (double)(has_phase(PHASE_A) + has_phase(PHASE_B) + has_phase(PHASE_C));	//See how many switches we have
-
-			switch_total = 0.0;
-			if (has_phase(PHASE_A) && (phase_A_state == CLOSED))
-				switch_total += 1.0;
-
-			if (has_phase(PHASE_B) && (phase_B_state == CLOSED))
-				switch_total += 1.0;
-
-			if (has_phase(PHASE_C) && (phase_C_state == CLOSED))
-				switch_total += 1.0;
-
-			switch_total /= phase_total;
-
-			if (switch_total > 0.5)	//In two switches, a stalemate occurs.  We'll consider this a "maintain status quo" state
+			if (status == prev_status)
 			{
-				status = LS_CLOSED;	//If it wasn't here, it is now
-				phase_A_state = phase_B_state = phase_C_state = CLOSED;	//Set all to closed - phase checks will sort it out
-			}
-			else	//Minority or stalemate
-			{
-				if (switch_total == 0.5)	//Stalemate
+				//Banked mode is operated by majority rule.  If the majority are a different state, all become that state
+				phase_total = (double)(has_phase(PHASE_A) + has_phase(PHASE_B) + has_phase(PHASE_C));	//See how many switches we have
+
+				switch_total = 0.0;
+				if (has_phase(PHASE_A) && (phase_A_state == CLOSED))
+					switch_total += 1.0;
+
+				if (has_phase(PHASE_B) && (phase_B_state == CLOSED))
+					switch_total += 1.0;
+
+				if (has_phase(PHASE_C) && (phase_C_state == CLOSED))
+					switch_total += 1.0;
+
+				switch_total /= phase_total;
+
+				if (switch_total > 0.5)	//In two switches, a stalemate occurs.  We'll consider this a "maintain status quo" state
 				{
-					if (status == LS_OPEN)	//These check assume phase_X_state will be manipulated, not status
+					status = LS_CLOSED;	//If it wasn't here, it is now
+					phase_A_state = phase_B_state = phase_C_state = CLOSED;	//Set all to closed - phase checks will sort it out
+				}
+				else	//Minority or stalemate
+				{
+					if (switch_total == 0.5)	//Stalemate
 					{
-						phase_A_state = phase_B_state = phase_C_state = OPEN;
+						if (status == LS_OPEN)	//These check assume phase_X_state will be manipulated, not status
+						{
+							phase_A_state = phase_B_state = phase_C_state = OPEN;
+						}
+						else	//Closed
+						{
+							phase_A_state = phase_B_state = phase_C_state = CLOSED;
+						}
 					}
-					else	//Closed
+					else	//Not stalemate - open all
 					{
-						phase_A_state = phase_B_state = phase_C_state = CLOSED;
+						status = LS_OPEN;
+						phase_A_state = phase_B_state = phase_C_state = OPEN;	//Set all to open - phase checks will sort it out
 					}
 				}
-				else	//Not stalemate - open all
-				{
-					status = LS_OPEN;
-					phase_A_state = phase_B_state = phase_C_state = OPEN;	//Set all to open - phase checks will sort it out
-				}
-			}
-		}//End status is same
-		else	//Not the same - force the inputs
-		{
+			}//End status is same
+			else	//Not the same - force the inputs
+			{
+				if (status==LS_OPEN)
+					phase_A_state = phase_B_state = phase_C_state = OPEN;	//Flag all as open
+				else
+					phase_A_state = phase_B_state = phase_C_state = CLOSED;	//Flag all as closed
+			}//End not same
+
 			if (status==LS_OPEN)
-				phase_A_state = phase_B_state = phase_C_state = OPEN;	//Flag all as open
-			else
-				phase_A_state = phase_B_state = phase_C_state = CLOSED;	//Flag all as closed
-		}//End not same
-
-		if (status==LS_OPEN)
-		{
-			if (has_phase(PHASE_A))
 			{
+				if (has_phase(PHASE_A))
+				{
+					if (solver_method == SM_NR)
+					{
+						From_Y[0][0] = complex(0.0,0.0);	//Update admittance
+						a_mat[0][0] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
+						d_mat[0][0] = 0.0;	
+						NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove this bit
+					}
+					else	//Assume FBS
+					{
+						A_mat[0][0] = 0.0;
+						d_mat[0][0] = 0.0;
+					}
+				}
+
+				if (has_phase(PHASE_B))
+				{
+					if (solver_method == SM_NR)
+					{
+						From_Y[1][1] = complex(0.0,0.0);	//Update admittance
+						a_mat[1][1] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
+						d_mat[1][1] = 0.0;	
+						NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove this bit
+					}
+					else
+					{
+						A_mat[1][1] = 0.0;
+						d_mat[1][1] = 0.0;
+					}
+				}
+
+				if (has_phase(PHASE_C))
+				{
+					if (solver_method == SM_NR)
+					{
+						From_Y[2][2] = complex(0.0,0.0);	//Update admittance
+						a_mat[2][2] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
+						d_mat[2][2] = 0.0;
+						NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove this bit
+					}
+					else
+					{
+						A_mat[2][2] = 0.0;
+						d_mat[2][2] = 0.0;
+					}
+				}
+			}//end open
+			else					//Must be closed then
+			{
+				if (has_phase(PHASE_A))
+				{
+					pres_status |= 0x04;				//Flag as closed
+
+					if (solver_method == SM_NR)
+					{
+						From_Y[0][0] = complex(1/switch_resistance,1/switch_resistance);	//Update admittance
+						a_mat[0][0] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
+						d_mat[0][0] = 1.0;
+						NR_branchdata[NR_branch_reference].phases |= 0x04;	//Ensure we're set
+					}
+					else	//Assumed FBS
+					{
+						A_mat[0][0] = 1.0;
+						d_mat[0][0] = 1.0;
+					}
+				}
+
+				if (has_phase(PHASE_B))
+				{
+					pres_status |= 0x02;				//Flag as closed
+
+					if (solver_method == SM_NR)
+					{
+						From_Y[1][1] = complex(1/switch_resistance,1/switch_resistance);	//Update admittance
+						a_mat[1][1] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
+						d_mat[1][1] = 1.0;
+						NR_branchdata[NR_branch_reference].phases |= 0x02;	//Ensure we're set
+					}
+					else
+					{
+						A_mat[1][1] = 1.0;
+						d_mat[1][1] = 1.0;
+					}
+				}
+
+				if (has_phase(PHASE_C))
+				{
+					pres_status |= 0x01;				//Flag as closed
+
+					if (solver_method == SM_NR)
+					{
+						From_Y[2][2] = complex(1/switch_resistance,1/switch_resistance);	//Update admittance
+						a_mat[2][2] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
+						d_mat[2][2] = 1.0;
+						NR_branchdata[NR_branch_reference].phases |= 0x01;	//Ensure we're set
+					}
+					else
+					{
+						A_mat[2][2] = 1.0;
+						d_mat[2][2] = 1.0;
+					}
+				}
+			}//end closed
+		}//End banked mode
+		else	//Individual mode
+		{
+			if (status == LS_OPEN)	//Fully opened means all go open
+			{
+				phase_A_state = phase_B_state = phase_C_state = OPEN;	//All open
+
 				if (solver_method == SM_NR)
 				{
-					From_Y[0][0] = complex(0.0,0.0);	//Update admittance
-					a_mat[0][0] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
-					d_mat[0][0] = 0.0;	
-					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove this bit
+					From_Y[0][0] = complex(0.0,0.0);
+					From_Y[1][1] = complex(0.0,0.0);
+					From_Y[2][2] = complex(0.0,0.0);
+		
+					NR_branchdata[NR_branch_reference].phases &= 0xF0;		//Remove all our phases
 				}
-				else	//Assume FBS
+				else //Assumed FBS
 				{
 					A_mat[0][0] = 0.0;
-					d_mat[0][0] = 0.0;
-				}
-			}
-
-			if (has_phase(PHASE_B))
-			{
-				if (solver_method == SM_NR)
-				{
-					From_Y[1][1] = complex(0.0,0.0);	//Update admittance
-					a_mat[1][1] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
-					d_mat[1][1] = 0.0;	
-					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove this bit
-				}
-				else
-				{
 					A_mat[1][1] = 0.0;
-					d_mat[1][1] = 0.0;
-				}
-			}
-
-			if (has_phase(PHASE_C))
-			{
-				if (solver_method == SM_NR)
-				{
-					From_Y[2][2] = complex(0.0,0.0);	//Update admittance
-					a_mat[2][2] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
-					d_mat[2][2] = 0.0;
-					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove this bit
-				}
-				else
-				{
 					A_mat[2][2] = 0.0;
+
+					d_mat[0][0] = 0.0;
+					d_mat[1][1] = 0.0;
 					d_mat[2][2] = 0.0;
 				}
 			}
-		}//end open
-		else					//Must be closed then
+			else	//Closed means a phase-by-phase basis
+			{
+				if (has_phase(PHASE_A))
+				{
+					if (phase_A_state == CLOSED)
+					{
+						pres_status |= 0x04;
+
+						if (solver_method == SM_NR)
+						{
+							From_Y[0][0] = complex(1/switch_resistance,1/switch_resistance);
+							NR_branchdata[NR_branch_reference].phases |= 0x04;	//Ensure we're set
+							a_mat[0][0] = 1.0;
+							d_mat[0][0] = 1.0;
+						}
+						else	//Assumed FBS
+						{
+							A_mat[0][0] = 1.0;
+							d_mat[0][0] = 1.0;
+						}
+					}
+					else	//Must be open
+					{
+						if (solver_method == SM_NR)
+						{
+							From_Y[0][0] = complex(0.0,0.0);
+							NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Make sure we're removed
+							a_mat[0][0] = 0.0;
+							d_mat[0][0] = 0.0;
+						}
+						else
+						{
+							A_mat[0][0] = 0.0;
+							d_mat[0][0] = 0.0;
+						}
+					}
+				}
+
+				if (has_phase(PHASE_B))
+				{
+					if (phase_B_state == CLOSED)
+					{
+						pres_status |= 0x02;
+
+						if (solver_method == SM_NR)
+						{
+							From_Y[1][1] = complex(1/switch_resistance,1/switch_resistance);
+							NR_branchdata[NR_branch_reference].phases |= 0x02;	//Ensure we're set
+							a_mat[1][1] = 1.0;
+							d_mat[1][1] = 1.0;
+						}
+						else
+						{
+							A_mat[1][1] = 1.0;
+							d_mat[1][1] = 1.0;
+						}
+					}
+					else	//Must be open
+					{
+						if (solver_method == SM_NR)
+						{
+							From_Y[1][1] = complex(0.0,0.0);
+							NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Make sure we're removed
+							a_mat[1][1] = 0.0;
+							d_mat[1][1] = 0.0;
+						}
+						else
+						{
+							A_mat[1][1] = 0.0;
+							d_mat[1][1] = 0.0;
+						}
+					}
+				}
+
+				if (has_phase(PHASE_C))
+				{
+					if (phase_C_state == CLOSED)
+					{
+						pres_status |= 0x01;
+
+						if (solver_method == SM_NR)
+						{
+							From_Y[2][2] = complex(1/switch_resistance,1/switch_resistance);
+							NR_branchdata[NR_branch_reference].phases |= 0x01;	//Ensure we're set
+							a_mat[2][2] = 1.0;
+							d_mat[2][2] = 1.0;
+						}
+						else
+						{
+							A_mat[2][2] = 1.0;
+							d_mat[2][2] = 1.0;
+						}
+					}
+					else	//Must be open
+					{
+						if (solver_method == SM_NR)
+						{
+							From_Y[2][2] = complex(0.0,0.0);
+							NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Make sure we're removed
+							a_mat[2][2] = 0.0;
+							d_mat[2][2] = 0.0;
+						}
+						else
+						{
+							A_mat[2][2] = 0.0;
+							d_mat[2][2] = 0.0;
+						}
+					}
+				}
+			}
+		}//end individual mode
+
+		//Check status before running sync (since it will clear it)
+		//NR locking
+		if (solver_method == SM_NR)
 		{
-			if (has_phase(PHASE_A))
+			if ((status != prev_status) || (pres_status != prev_full_status))
 			{
-				pres_status |= 0x04;				//Flag as closed
-
-				if (solver_method == SM_NR)
-				{
-					From_Y[0][0] = complex(1/switch_resistance,1/switch_resistance);	//Update admittance
-					a_mat[0][0] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
-					d_mat[0][0] = 1.0;
-					NR_branchdata[NR_branch_reference].phases |= 0x04;	//Ensure we're set
-				}
-				else	//Assumed FBS
-				{
-					A_mat[0][0] = 1.0;
-					d_mat[0][0] = 1.0;
-				}
+				LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
+				NR_admit_change = true;	//Flag an admittance change
+				UNLOCK_OBJECT(NR_swing_bus);	//Finished
 			}
+		}
 
-			if (has_phase(PHASE_B))
-			{
-				pres_status |= 0x02;				//Flag as closed
-
-				if (solver_method == SM_NR)
-				{
-					From_Y[1][1] = complex(1/switch_resistance,1/switch_resistance);	//Update admittance
-					a_mat[1][1] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
-					d_mat[1][1] = 1.0;
-					NR_branchdata[NR_branch_reference].phases |= 0x02;	//Ensure we're set
-				}
-				else
-				{
-					A_mat[1][1] = 1.0;
-					d_mat[1][1] = 1.0;
-				}
-			}
-
-			if (has_phase(PHASE_C))
-			{
-				pres_status |= 0x01;				//Flag as closed
-
-				if (solver_method == SM_NR)
-				{
-					From_Y[2][2] = complex(1/switch_resistance,1/switch_resistance);	//Update admittance
-					a_mat[2][2] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
-					d_mat[2][2] = 1.0;
-					NR_branchdata[NR_branch_reference].phases |= 0x01;	//Ensure we're set
-				}
-				else
-				{
-					A_mat[2][2] = 1.0;
-					d_mat[2][2] = 1.0;
-				}
-			}
-		}//end closed
-	}//End banked mode
-	else	//Individual mode
+		prev_full_status = pres_status;	//Update the status flags
+	}//End of "Normal" operation
+	else	//Meshed fault checking -- phases are handled externally by link.cpp, just like other objects
 	{
-		if (status == LS_OPEN)	//Fully opened means all go open
+		if (status != prev_status)
 		{
-			phase_A_state = phase_B_state = phase_C_state = OPEN;	//All open
-
-			if (solver_method == SM_NR)
+			//Loop through and handle phases appropriate
+			if (status == CLOSED)
 			{
+				//Check phases
+				if (has_phase(PHASE_A))
+				{
+					From_Y[0][0] = complex(1/switch_resistance,1/switch_resistance);
+					a_mat[0][0] = 1.0;
+					d_mat[0][0] = 1.0;
+				}
+
+				if (has_phase(PHASE_B))
+				{
+					From_Y[1][1] = complex(1/switch_resistance,1/switch_resistance);
+					a_mat[1][1] = 1.0;
+					d_mat[1][1] = 1.0;
+				}
+
+				if (has_phase(PHASE_C))
+				{
+					From_Y[2][2] = complex(1/switch_resistance,1/switch_resistance);
+					a_mat[2][2] = 1.0;
+					d_mat[2][2] = 1.0;
+				}
+			}
+			else	//Must be open
+			{
+				//Zero it all, just because
 				From_Y[0][0] = complex(0.0,0.0);
 				From_Y[1][1] = complex(0.0,0.0);
 				From_Y[2][2] = complex(0.0,0.0);
 	
-				NR_branchdata[NR_branch_reference].phases &= 0xF0;		//Remove all our phases
-			}
-			else //Assumed FBS
-			{
 				A_mat[0][0] = 0.0;
 				A_mat[1][1] = 0.0;
 				A_mat[2][2] = 0.0;
@@ -873,132 +1098,17 @@ void switch_object::switch_sync_function(void)
 				d_mat[1][1] = 0.0;
 				d_mat[2][2] = 0.0;
 			}
-		}
-		else	//Closed means a phase-by-phase basis
-		{
-			if (has_phase(PHASE_A))
-			{
-				if (phase_A_state == CLOSED)
-				{
-					pres_status |= 0x04;
 
-					if (solver_method == SM_NR)
-					{
-						From_Y[0][0] = complex(1/switch_resistance,1/switch_resistance);
-						NR_branchdata[NR_branch_reference].phases |= 0x04;	//Ensure we're set
-						a_mat[0][0] = 1.0;
-						d_mat[0][0] = 1.0;
-					}
-					else	//Assumed FBS
-					{
-						A_mat[0][0] = 1.0;
-						d_mat[0][0] = 1.0;
-					}
-				}
-				else	//Must be open
-				{
-					if (solver_method == SM_NR)
-					{
-						From_Y[0][0] = complex(0.0,0.0);
-						NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Make sure we're removed
-						a_mat[0][0] = 0.0;
-						d_mat[0][0] = 0.0;
-					}
-					else
-					{
-						A_mat[0][0] = 0.0;
-						d_mat[0][0] = 0.0;
-					}
-				}
-			}
+			//Update status
+			prev_status = status;
 
-			if (has_phase(PHASE_B))
-			{
-				if (phase_B_state == CLOSED)
-				{
-					pres_status |= 0x02;
-
-					if (solver_method == SM_NR)
-					{
-						From_Y[1][1] = complex(1/switch_resistance,1/switch_resistance);
-						NR_branchdata[NR_branch_reference].phases |= 0x02;	//Ensure we're set
-						a_mat[1][1] = 1.0;
-						d_mat[1][1] = 1.0;
-					}
-					else
-					{
-						A_mat[1][1] = 1.0;
-						d_mat[1][1] = 1.0;
-					}
-				}
-				else	//Must be open
-				{
-					if (solver_method == SM_NR)
-					{
-						From_Y[1][1] = complex(0.0,0.0);
-						NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Make sure we're removed
-						a_mat[1][1] = 0.0;
-						d_mat[1][1] = 0.0;
-					}
-					else
-					{
-						A_mat[1][1] = 0.0;
-						d_mat[1][1] = 0.0;
-					}
-				}
-			}
-
-			if (has_phase(PHASE_C))
-			{
-				if (phase_C_state == CLOSED)
-				{
-					pres_status |= 0x01;
-
-					if (solver_method == SM_NR)
-					{
-						From_Y[2][2] = complex(1/switch_resistance,1/switch_resistance);
-						NR_branchdata[NR_branch_reference].phases |= 0x01;	//Ensure we're set
-						a_mat[2][2] = 1.0;
-						d_mat[2][2] = 1.0;
-					}
-					else
-					{
-						A_mat[2][2] = 1.0;
-						d_mat[2][2] = 1.0;
-					}
-				}
-				else	//Must be open
-				{
-					if (solver_method == SM_NR)
-					{
-						From_Y[2][2] = complex(0.0,0.0);
-						NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Make sure we're removed
-						a_mat[2][2] = 0.0;
-						d_mat[2][2] = 0.0;
-					}
-					else
-					{
-						A_mat[2][2] = 0.0;
-						d_mat[2][2] = 0.0;
-					}
-				}
-			}
-		}
-	}//end individual mode
-
-	//Check status before running sync (since it will clear it)
-	//NR locking
-	if (solver_method == SM_NR)
-	{
-		if ((status != prev_status) || (pres_status != prev_full_status))
-		{
+			//Flag an update
 			LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
 			NR_admit_change = true;	//Flag an admittance change
 			UNLOCK_OBJECT(NR_swing_bus);	//Finished
 		}
-	}
-
-	prev_full_status = pres_status;	//Update the status flags
+		//defaulted else - do nothing, something must have handled it externally
+	}//End of meshed checking
 }
 
 //Function to replicate sync_switch_function, but not call anything (just for reliability checks)
@@ -1396,18 +1506,23 @@ void switch_object::set_switch_full_reliability(unsigned char desired_status)
 	else
 		desC=2;	//indifferent - no change
 
-	//If a fault is present and we are banked, make sure we aren't any more
-	if ((faulted_switch_phases != 0x00) && (prefault_banked == true) && (switch_banked_mode == BANKED_SW))
+	//Kludge
+	if (meshed_fault_checking_enabled == false)
 	{
-		//Put into individual mode
-		switch_banked_mode = INDIVIDUAL_SW;
+		//If a fault is present and we are banked, make sure we aren't any more
+		if ((faulted_switch_phases != 0x00) && (prefault_banked == true) && (switch_banked_mode == BANKED_SW))
+		{
+			//Put into individual mode
+			switch_banked_mode = INDIVIDUAL_SW;
+		}
+		else if ((faulted_switch_phases == 0x00) && (prefault_banked == true) && (switch_banked_mode == INDIVIDUAL_SW))
+		{
+			//Put back into banked mode
+			switch_banked_mode = BANKED_SW;
+		}
+		//defaulted elses - either not in banked mode, or it is set appropriately
 	}
-	else if ((faulted_switch_phases == 0x00) && (prefault_banked == true) && (switch_banked_mode == INDIVIDUAL_SW))
-	{
-		//Put back into banked mode
-		switch_banked_mode = BANKED_SW;
-	}
-	//defaulted elses - either not in banked mode, or it is set appropriately
+	//Default else, leave it as it was
 
 	//Perform the setting
 	set_switch_full(desA,desB,desC);
@@ -1557,7 +1672,7 @@ EXPORT int change_switch_state(OBJECT *thisobj, unsigned char phase_change, bool
 	//Map the switch
 	switch_object *swtchobj = OBJECTDATA(thisobj,switch_object);
 
-	if (swtchobj->switch_banked_mode == switch_object::BANKED_SW)	//Banked mode - all become "state", just cause
+	if ((swtchobj->switch_banked_mode == switch_object::BANKED_SW) || (meshed_fault_checking_enabled == true))	//Banked mode - all become "state", just cause
 	{
 		swtchobj->set_switch(state);
 	}

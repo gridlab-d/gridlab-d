@@ -1,4 +1,4 @@
-// $Id: capacitor.h 4738 2014-07-03 00:55:39Z dchassin $
+// $Id: capacitor.h 1182 2008-12-22 22:08:36Z dchassin $
 //	Copyright (C) 2008 Battelle Memorial Institute
 
 #ifndef _CAPACITOR_H
@@ -7,6 +7,9 @@
 #include "powerflow.h"
 #include "node.h"
 #include "link.h"
+
+#define TSNVRDBL 9223372036854775808.0
+EXPORT SIMULATIONMODE interupdate_capacitor(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
 class capacitor : public node
 {
@@ -40,7 +43,7 @@ public:
 	int16 switchA_changed;
 	int16 switchB_changed;
 	int16 switchC_changed;
-	TIMESTAMP prev_time;
+	double prev_time;
 	double cap_switchA_count;
 	double cap_switchB_count;
 	double cap_switchC_count;
@@ -51,13 +54,18 @@ public:
 	double lockout_time;		// Time for capacitor to remain locked out from further switching operations (VARVOLT control)
 	void toggle_bank_status(bool des_status);	//Function to toggle capacitor state (mainly bypass all timers for VVC controller)
 
+	bool cap_sync_fxn(double time_value);						// Functionalized sync routine, so can be called by deltamode
+	int cap_prePost_fxn(double time_value);						// Functionalized "pre Node postsync" postsync routine, so can be called by deltamode	
+	double cap_postPost_fxn(double result, double time_value);	// Functionalized "post Node postsync" postsync routine, so can be called by deltamode
+	SIMULATIONMODE inter_deltaupdate_capacitor(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
+
 protected:
-	int64 time_to_change;       // time until state change
-	int64 dwell_time_left;		// time until dwell interval is met
-	int64 lockout_time_left_A;	// time until lockout interval is met for phase A
-	int64 lockout_time_left_B;	// time until lockout interval is met for phase B
-	int64 lockout_time_left_C;	// time until lockout interval is met for phase C
-	int64 last_time;			// last time capacitor was checked
+	double time_to_change;       // time until state change
+	double dwell_time_left;		// time until dwell interval is met
+	double lockout_time_left_A;	// time until lockout interval is met for phase A
+	double lockout_time_left_B;	// time until lockout interval is met for phase B
+	double lockout_time_left_C;	// time until lockout interval is met for phase C
+	double last_time;			// last time capacitor was checked
 	double cap_nominal_voltage;	// Nominal voltage for the capacitor. Used for calculation of capacitance value.
 
 public:
