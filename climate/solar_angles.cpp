@@ -606,7 +606,7 @@ void SolarAngles::geometry ( SOLPOS_POSDATA *pdat )
             approximate solar position (1950-2050).  Solar Energy 40 (3),
             pp. 227-235. */
     pdat->eclong  = pdat->mnlong + 1.915 * sin ( pdat->mnanom * raddeg ) +
-                    0.20 * sin ( 2.0 * pdat->mnanom * raddeg );
+                    0.020 * sin ( 2.0 * pdat->mnanom * raddeg );
 
     /* (dump the multiples of 360, so the answer is between 0 and 360) */
     pdat->eclong -= 360.0 * (int) ( pdat->eclong / 360.0 );
