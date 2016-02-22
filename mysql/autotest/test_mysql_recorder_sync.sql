@@ -1,2 +1,2 @@
-select count(*) from `test2.csv`;
-select * from `test4.csv`;
+select count(*) from `test_recorder_2.csv`;
+select * from `test_recorder_4.csv`;

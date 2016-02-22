@@ -16,7 +16,7 @@
 
 #include "version.h"
 
-#if defined WIN32 && ! defined MINGW
+#if defined WIN32
 #include <io.h>
 #else
 #include <sys/ioctl.h>
@@ -32,28 +32,27 @@
 
 #include "http_client.h"
 
-#if defined WIN32 && ! defined MINGW
-	#define _WIN32_WINNT 0x0400
-	#include <windows.h>
-	#ifndef DLEXT
-		#define DLEXT ".dll"
-	#endif
-	#define DLLOAD(P) LoadLibrary(P)
-	#define DLSYM(H,S) GetProcAddress((HINSTANCE)H,S)
-	#define snprintf _snprintf
+#if defined(WIN32) && !defined(__MINGW32__)
+#define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
+#define _WIN32_WINNT 0x0400
+#include <windows.h>
+#ifndef DLEXT
+#define DLEXT ".dll"
+#endif
+#define DLLOAD(P) LoadLibrary(P)
+#define DLSYM(H,S) (void *)GetProcAddress((HINSTANCE)H,S)
+#define snprintf _snprintf
 #else /* ANSI */
-#ifndef MINGW
-	#include "dlfcn.h"
-#endif
-	#ifndef DLEXT
-		#define DLEXT ".so"
-	#endif
-#ifndef MINGW
-	#define DLLOAD(P) dlopen(P,RTLD_LAZY)
+#include "dlfcn.h"
+#ifndef DLEXT
+#ifdef __MINGW32__
+#define DLEXT ".dll"
 #else
-	#define DLLOAD(P) dlopen(P)
+#define DLEXT ".so"
 #endif
-	#define DLSYM(H,S) dlsym(H,S)
+#endif
+#define DLLOAD(P) dlopen(P,RTLD_LAZY)
+#define DLSYM(H,S) dlsym(H,S)
 #endif
 
 #if !defined(HAVE_CONFIG_H) || defined(HAVE_MALLOC_H)
@@ -75,9 +74,7 @@
 #include "exception.h"
 #include "unit.h"
 #include "interpolate.h"
-#ifndef MINGW
 #include "lock.h"
-#endif
 #include "schedule.h"
 #include "exec.h"
 #include "stream.h"
@@ -92,7 +89,7 @@ int get_exe_path(char *buf, int len, void *mod){	/* void for GetModuleFileName, 
 		return 0;
 	if(len < 1)
 		return 0;
-#if defined WIN32 && ! defined MINGW
+#if defined WIN32 && ! defined __MINGW32__
 	rv = GetModuleFileName((HMODULE) mod, buf, len);
 	if(rv){
 		for(i = rv; ((buf[i] != '/') && (buf[i] != '\\') && (i >= 0)); --i){
@@ -120,7 +117,7 @@ int module_get_path(char *buf, int len, MODULE *mod){
 
 void dlload_error(const char *filename)
 {
-#ifndef MINGW
+#ifndef __MINGW32__
 #if defined WIN32
 	LPTSTR error;
 	LPTSTR end;
@@ -139,7 +136,7 @@ void dlload_error(const char *filename)
 	char *error = "unknown error";
 #endif
 	output_debug("%s: %s (LD_LIBRARY_PATH=%s)", filename, error,getenv("LD_LIBRARY_PATH"));
-#if defined WIN32 && ! defined MINGW
+#if defined WIN32 && ! defined __MINGW32__
 	if (result)
 		LocalFree(error);
 #endif
@@ -178,14 +175,14 @@ static CALLBACKS callbacks = {
 	output_test,
 	class_register,
 	{object_create_single,object_create_array,object_create_foreign},
-	class_define_map,
+	class_define_map, class_add_loadmethod,
 	class_get_first_class,
 	class_get_class_from_classname,
 	{class_define_function,class_get_function},
 	class_define_enumeration_member,
 	class_define_set_member,
 	{object_get_first,object_set_dependent,object_set_parent,object_set_rank,},
-	{object_get_property, object_set_value_by_addr,object_get_value_by_addr, object_set_value_by_name,object_get_value_by_name,object_get_reference,object_get_unit,object_get_addr,class_string_to_propertytype,property_compare_basic,property_compare_op,property_get_part},
+	{object_get_property, object_set_value_by_addr,object_get_value_by_addr, object_set_value_by_name,object_get_value_by_name,object_get_reference,object_get_unit,object_get_addr,class_string_to_propertytype,property_compare_basic,property_compare_op,property_get_part,property_getspec},
 	{find_objects,find_next,findlist_copy,findlist_add,findlist_del,findlist_clear},
 	class_find_property,
 	module_malloc,
@@ -390,7 +387,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	hLib = DLLOAD(tpath);
 	if (hLib==NULL)
 	{
-#if defined WIN32 && ! defined MINGW
+#if defined(WIN32) && ! defined(__MINGW32__)
 		if ( GetLastError()==193 ) /* invalid exe format -- happens when wrong version of MinGW is used */
 		{
 			output_error("module '%s' load failed - invalid DLL format",file);
@@ -452,7 +449,10 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	mod->deltadesired = (unsigned long(*)(DELTAMODEFLAGS*))DLSYM(hLib,"deltamode_desired");
 	mod->preupdate = (unsigned long(*)(void*,int64,unsigned int64))DLSYM(hLib,"preupdate");
 	mod->interupdate = (SIMULATIONMODE(*)(void*,int64,unsigned int64,unsigned long, unsigned int))DLSYM(hLib,"interupdate");
+	mod->deltaClockUpdate = (SIMULATIONMODE(*)(void *, double, unsigned long, SIMULATIONMODE))DLSYM(hLib,"deltaClockUpdate");
 	mod->postupdate = (STATUS(*)(void*,int64,unsigned int64))DLSYM(hLib,"postupdate");
+	/* clock  update */
+	mod->clockupdate = (TIMESTAMP(*)(TIMESTAMP))DLSYM(hLib,"clock_update");
 	mod->cmdargs = (int(*)(int,char**))DLSYM(hLib,"cmdargs");
 	mod->kmldump = (int(*)(FILE*,OBJECT*))DLSYM(hLib,"kmldump");
 	mod->subload = (MODULE *(*)(char *, MODULE **, CLASS **, int, char **))DLSYM(hLib, "subload");
@@ -644,7 +644,7 @@ int module_saveall_xml(FILE *fp){
 	return count;
 }
 
-#if defined WIN32 && ! defined MINGW
+#if defined WIN32 && ! defined __MINGW32__
 #define isnan _isnan  /* map isnan to appropriate function under Windows */
 #endif
 
@@ -923,11 +923,11 @@ void module_termall(void)
 
 #ifdef WIN32
 #ifdef X64
-#define CC "c:/mingw64/bin/gcc"
+#define CC "gcc"
 #define CCFLAGS "-DWIN32 -DX64"
 #define LDFLAGS "" /* "--export-all-symbols,--add-stdcall,--add-stdcall-alias,--subsystem,windows,--enable-runtime-pseudo-reloc,-no-undefined" */
 #else // !X64
-#define CC "c:/mingw/bin/gcc"
+#define CC "gcc"
 #define CCFLAGS "-DWIN32"
 #define LDFLAGS "" /* "--export-all-symbols,--add-stdcall,--add-stdcall-alias,--subsystem,windows,--enable-runtime-pseudo-reloc,-no-undefined" */
 #endif // X64

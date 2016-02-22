@@ -89,6 +89,8 @@ int double_controller::create(){
 	memset(this, 0, sizeof(double_controller));
 	sprintf(avg_target, "avg24");
 	sprintf(std_target, "std24");
+	controller_bid.rebid = false;
+	controller_bid.bid_accepted = true;
 	return 1;
 }
 
@@ -212,6 +214,14 @@ int double_controller::init(OBJECT *parent){
 
 	next_run = 0;
 
+	controller_bid.bid_id = (int64)hdr->id;
+	submit = (FUNCTIONADDR)(gl_get_function(pMarket, "submit_bid_state"));
+	if(submit == NULL){
+	char buf[256];
+	gl_error("Unable to find function, submit_bid_state(), for object %s.", (char *)gl_name(pMarket, buf, 255));
+		return 0;
+	}
+
 	return 1;
 }
 
@@ -257,6 +267,8 @@ TIMESTAMP double_controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 	double heat_ramp, cool_ramp;
 	double new_limit;
 	OBJECT *hdr = OBJECTHDR(this);
+	char mktname[1024];
+	char ctrname[1024];
 
 	/* short circuit if we've run recently */
 	if(t1 < next_run){
@@ -391,10 +403,22 @@ TIMESTAMP double_controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 
 		if (bid_quant!=0)
 		{
+			controller_bid.market_id = lastmkt_id;
+			controller_bid.price = bid_price;
+			controller_bid.quantity = -bid_quant;
 			if(state_ptr != 0){
-				lastbid_id = submit_bid_state(pMarket, hdr, -bid_quant, bid_price, (*state_ptr > 0 ? 1 : 0), bid_id);
+				if (*state_ptr > 0) {
+					controller_bid.state = BS_ON;
+				} else {
+					controller_bid.state = BS_OFF;
+				}
+				((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)gl_name(pMarket, mktname, 1024), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
 			} else {
-				lastbid_id = submit_bid(pMarket, hdr, -bid_quant, bid_price, bid_id);
+				controller_bid.state = BS_UNKNOWN;
+				((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)gl_name(pMarket, mktname, 1024), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+			}
+			if(controller_bid.bid_accepted == false){
+				return TS_INVALID;
 			}
 		}
 	}

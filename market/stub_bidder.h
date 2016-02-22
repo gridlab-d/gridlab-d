@@ -18,7 +18,7 @@ public:
 public:
 	double bid_period;
 	int16 count;
-	object market;
+	OBJECT *market;
 	typedef enum {
 		BUYER=0, 
 		SELLER=1,
@@ -27,11 +27,14 @@ public:
 	double price;
 	double quantity;
 	int64 *thismkt_id;
+	int64 bid_id;
+	BIDINFO controller_bid;
 private:
 	int64 next_t;
 	KEY new_bid_id;
 	KEY lastbid_id;
 	int64 lastmkt_id;
+	FUNCTIONADDR submit;
 };
 
 #endif //_stub_bidder_h

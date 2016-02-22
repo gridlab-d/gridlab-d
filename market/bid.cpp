@@ -1,35 +1,41 @@
 #include "bid.h"
 
-EXPORT int64 submit_bid(OBJECT *obj, OBJECT *from, double quantity, double price, KEY bid_id)
+EXPORT void submit_bid_state(char *from, char *to, char *function_name, char *function_class, void *bidding_buffer, size_t bid_len)//(char *obj, char *from, double quantity, double price, unsigned int is_on, KEY bid_id)
 {
 	char biddername[64];
-	if (obj->oclass==auction::oclass)
-	{
-		gl_verbose("%s submits stateless bid for %.0f at %.0f", gl_name(from,biddername,sizeof(biddername)),quantity,price);
-		auction *mkt = OBJECTDATA(obj,auction);
-		return mkt->submit(from,quantity,price,bid_id);
-	}
-	else if(obj->oclass == stubauction::oclass){
-		return -1;
-	} else	{
-		gl_error("%s submitted a bid to an object that is not an auction", gl_name(from,biddername,sizeof(biddername)));
-		return -1;
-	}
-}
+	int rv;
+	OBJECT *obj = NULL;
+	BIDINFO *bidding_info = (BIDINFO *)bidding_buffer;
+	if( strncmp(function_name, "submit_bid_state", 16)== 0){
+		obj = gl_get_object(to);
+		if( obj == NULL){
+			gl_error("bid::submit_bid_state: No auction object exists with given name %s.", to);
+			bidding_info->bid_accepted = false;
+		}
 
-EXPORT int64 submit_bid_state(OBJECT *obj, OBJECT *from, double quantity, double price, unsigned int is_on, KEY bid_id)
-{
-	char biddername[64];
-	if (obj->oclass==auction::oclass)
-	{
-		gl_verbose("%s submits stateful (%s) bid for Q:%.2f at P:%.4f", gl_name(from,biddername,sizeof(biddername)),is_on?"on":"off",quantity,price);
-		auction *mkt = OBJECTDATA(obj,auction);
-		return mkt->submit(from,quantity,price,bid_id,is_on?BS_ON:BS_OFF);
-	} else if(obj->oclass == stubauction::oclass){
-		return -1;
+		if (obj->oclass==auction::oclass)
+		{
+			if(bidding_info->state == BS_UNKNOWN) {// not a stateful bid
+				gl_verbose("%s submits stateless bid for Q:%.2f at P:%.4f", from,bidding_info->quantity,bidding_info->price);
+				auction *mkt = OBJECTDATA(obj,auction);
+				rv = mkt->submit(from,bidding_info->quantity,bidding_info->price,bidding_info->bid_id,bidding_info->state,bidding_info->rebid, bidding_info->market_id);
+			} else {
+				gl_verbose("%s submits stateful (%s) bid for Q:%.2f at P:%.4f", from,bidding_info->state,bidding_info->quantity,bidding_info->price);
+				auction *mkt = OBJECTDATA(obj,auction);
+				rv = mkt->submit(from,bidding_info->quantity,bidding_info->price,bidding_info->bid_id,bidding_info->state,bidding_info->rebid, bidding_info->market_id);
+			}
+			if(rv == 0) {
+				bidding_info->bid_accepted = false;
+			}
+		} else if(obj->oclass == stubauction::oclass){
+			gl_error("bid::submit_bid_state: market object is not an auction object.");
+			bidding_info->bid_accepted = false;
+		} else {
+			gl_error("bid::submit_bid_state: market object is not an auction object.");
+			bidding_info->bid_accepted = false;
+		}
 	} else {
-		gl_error("%s submitted a bid to an object that is not an auction", gl_name(from,biddername,sizeof(biddername)));
-		return -1;
+		gl_error("bid::submit_bid_state: This function is not the intended function. %s was the intended function to call. Ignoring bid", function_name);
 	}
 }
 

@@ -31,6 +31,7 @@ controller::controller(MODULE *module){
 			PT_enumeration, "bid_mode", PADDR(bidmode),
 				PT_KEYWORD, "ON", (enumeration)BM_ON,
 				PT_KEYWORD, "OFF", (enumeration)BM_OFF,
+				PT_KEYWORD, "PROXY", (enumeration)BM_PROXY,
 			PT_enumeration, "use_override", PADDR(use_override),
 				PT_KEYWORD, "OFF", (enumeration)OU_OFF,
 				PT_KEYWORD, "ON", (enumeration)OU_ON,
@@ -43,7 +44,7 @@ controller::controller(MODULE *module){
 			PT_char32, "demand", PADDR(demand), PT_DESCRIPTION, "the controlled load when on",
 			PT_char32, "load", PADDR(load), PT_DESCRIPTION, "the current controlled load",
 			PT_char32, "total", PADDR(total), PT_DESCRIPTION, "the uncontrolled load (if any)",
-			PT_object, "market", PADDR(pMarket), PT_DESCRIPTION, "the market to bid into",
+			PT_char32, "market", PADDR(pMkt), PT_DESCRIPTION, "the market to bid into",
 			PT_char32, "state", PADDR(state), PT_DESCRIPTION, "the state property of the controlled load",
 			PT_char32, "avg_target", PADDR(avg_target),
 			PT_char32, "std_target", PADDR(std_target),
@@ -85,6 +86,7 @@ controller::controller(MODULE *module){
 			// redefinitions
 			PT_char32, "average_target", PADDR(avg_target),
 			PT_char32, "standard_deviation_target", PADDR(std_target),
+			PT_int64, "bid_id", PADDR(bid_id),
 #ifdef _DEBUG
 			PT_enumeration, "current_mode", PADDR(thermostat_mode),
 				PT_KEYWORD, "INVALID", (enumeration)TM_INVALID,
@@ -105,6 +107,14 @@ controller::controller(MODULE *module){
 			PT_double, "cool_min", PADDR(cool_min),
 #endif
 			PT_int32, "bid_delay", PADDR(bid_delay),
+			// PROXY PROPERTIES
+			PT_double, "proxy_average", PADDR(proxy_avg),
+			PT_double, "proxy_standard_deviation", PADDR(proxy_std),
+			PT_int64, "proxy_market_id", PADDR(proxy_mkt_id),
+			PT_double, "proxy_clear_price[$]", PADDR(proxy_clear_price),
+			PT_double, "proxy_price_cap", PADDR(proxy_price_cap),
+			PT_char32, "proxy_market_unit", PADDR(proxy_mkt_unit),
+			PT_double, "proxy_initial_price", PADDR(proxy_init_price),
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		memset(this,0,sizeof(controller));
 	}
@@ -112,8 +122,8 @@ controller::controller(MODULE *module){
 
 int controller::create(){
 	memset(this, 0, sizeof(controller));
-	sprintf(avg_target.get_string(), "avg24");
-	sprintf(std_target.get_string(), "std24");
+	sprintf((char *)(&avg_target), "avg24");
+	sprintf((char *)(&std_target), "std24");
 	slider_setting_heat = -0.001;
 	slider_setting_cool = -0.001;
 	slider_setting = -0.001;
@@ -126,6 +136,14 @@ int controller::create(){
 	use_override = OU_OFF;
 	period = 0;
 	use_predictive_bidding = FALSE;
+	controller_bid.bid_id = -1;
+	controller_bid.market_id = -1;
+	controller_bid.price = 0;
+	controller_bid.quantity = 0;
+	controller_bid.state = BS_UNKNOWN;
+	controller_bid.rebid = false;
+	controller_bid.bid_accepted = true;
+	bid_id = -1;
 	return 1;
 }
 
@@ -201,16 +219,15 @@ void controller::cheat(){
 			range_high = 10;
 			break;
 		case SM_DOUBLE_RAMP:
-			sprintf(target, "air_temperature");
-			sprintf(heating_setpoint.get_string(), "heating_setpoint");
-			sprintf(heating_demand.get_string(), "heating_demand");
-			sprintf(heating_total.get_string(), "total_load");		// using total instead of heating_total
-			sprintf(heating_load.get_string(), "hvac_load");			// using load instead of heating_load
-			sprintf(cooling_setpoint.get_string(), "cooling_setpoint");
-			sprintf(cooling_demand.get_string(), "cooling_demand");
-			sprintf(cooling_total.get_string(), "total_load");		// using total instead of cooling_total
-			sprintf(cooling_load.get_string(), "hvac_load");			// using load instead of cooling_load
-			sprintf(deadband.get_string(), "thermostat_deadband");
+			sprintf((char *)(&heating_setpoint), "heating_setpoint");
+			sprintf((char *)(&heating_demand), "heating_demand");
+			sprintf((char *)(&heating_total), "total_load");		// using total instead of heating_total
+			sprintf((char *)(&heating_load), "hvac_load");			// using load instead of heating_load
+			sprintf((char *)(&cooling_setpoint), "cooling_setpoint");
+			sprintf((char *)(&cooling_demand), "cooling_demand");
+			sprintf((char *)(&cooling_total), "total_load");		// using total instead of cooling_total
+			sprintf((char *)(&cooling_load), "hvac_load");			// using load instead of cooling_load
+			sprintf((char *)(&deadband), "thermostat_deadband");
 			sprintf(load, "hvac_load");
 			sprintf(total, "total_load");
 			heat_ramp_low = -2;
@@ -230,7 +247,7 @@ void controller::cheat(){
 
 /** convenience shorthand
  **/
-void controller::fetch(double **prop, char *name, OBJECT *parent){
+void controller::fetch_double(double **prop, char *name, OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
 	*prop = gl_get_double_by_name(parent, name);
 	if(*prop == NULL){
@@ -246,13 +263,48 @@ void controller::fetch(double **prop, char *name, OBJECT *parent){
 	}
 }
 
+void controller::fetch_int64(int64 **prop, char *name, OBJECT *parent){
+	OBJECT *hdr = OBJECTHDR(this);
+	*prop = gl_get_int64_by_name(parent, name);
+	if(*prop == NULL){
+		char tname[32];
+		char *namestr = (hdr->name ? hdr->name : tname);
+		char msg[256];
+		sprintf(tname, "controller:%i", hdr->id);
+		if(*name == NULL)
+			sprintf(msg, "%s: controller unable to find property: name is NULL", namestr);
+		else
+			sprintf(msg, "%s: controller unable to find %s", namestr, name);
+		throw(msg);
+	}
+}
+
+void controller::fetch_enum(enumeration **prop, char *name, OBJECT *parent){
+	OBJECT *hdr = OBJECTHDR(this);
+	*prop = gl_get_enum_by_name(parent, name);
+	if(*prop == NULL){
+		char tname[32];
+		char *namestr = (hdr->name ? hdr->name : tname);
+		char msg[256];
+		sprintf(tname, "controller:%i", hdr->id);
+		if(*name == NULL){
+			sprintf(msg, "%: controller unable to find property: name is NULL", namestr);
+		}
+		else
+		{
+			sprintf(msg, "%s: controller unable to find %s", namestr, name);
+		}
+		throw(msg);
+	}
+}
+
 /** initialization process
  **/
 int controller::init(OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
 	char tname[32];
 	char *namestr = (hdr->name ? hdr->name : tname);
-//	double high, low;
+	double *pInitPrice = NULL;
 
 	sprintf(tname, "controller:%i", hdr->id);
 
@@ -263,28 +315,74 @@ int controller::init(OBJECT *parent){
 		return 0;
 	}
 
-	if(pMarket == NULL){
-		gl_error("%s: controller has no market, therefore no price signals", namestr);
-		return 0;
-	}
+	if(bidmode != BM_PROXY){
+		pMarket = gl_get_object((char *)(&pMkt));
+		if(pMarket == NULL){
+			gl_error("%s: controller has no market, therefore no price signals", namestr);
+			return 0;
+		}
 
-	if(gl_object_isa(pMarket, "auction")){
-		gl_set_dependent(hdr, pMarket);
-		market = OBJECTDATA(pMarket, auction);
-	} else {
-		gl_error("controllers only work when attached to an 'auction' object");
-		return 0;
-	}
-
-	if(dPeriod == 0.0){
 		if((pMarket->flags & OF_INIT) != OF_INIT){
 			char objname[256];
 			gl_verbose("controller::init(): deferring initialization on %s", gl_name(pMarket, objname, 255));
 			return 2; // defer
 		}
-		period = market->period;
+
+		if(gl_object_isa(pMarket, "auction")){
+			gl_set_dependent(hdr, pMarket);
+		}
+
+		if(dPeriod == 0.0){
+			double *pPeriod = NULL;
+			fetch_double(&pPeriod, "period", pMarket);
+			period = *pPeriod;
+		} else {
+			period = (TIMESTAMP)floor(dPeriod + 0.5);
+		}
+
+		fetch_double(&pAvg, (char *)(&avg_target), pMarket);
+		fetch_double(&pStd, (char *)(&std_target), pMarket);
+		fetch_int64(&pMarketId, "market_id", pMarket);
+		fetch_double(&pClearedPrice, "current_market.clearing_price", pMarket);
+		fetch_double(&pPriceCap, "price_cap", pMarket);
+		fetch_double(&pMarginalFraction, "current_market.marginal_quantity_frac", pMarket);
+		fetch_enum(&pMarginMode, "margin_mode", pMarket);
+		gld_property marketunit(pMarket, "unit");
+		gld_string mku;
+		mku = marketunit.get_string();
+		strncpy(market_unit, mku.get_buffer(), 31);
+		submit = (FUNCTIONADDR)(gl_get_function(pMarket, "submit_bid_state"));
+		if(submit == NULL){
+			char buf[256];
+			gl_error("Unable to find function, submit_bid_state(), for object %s.", (char *)gl_name(pMarket, buf, 255));
+			return 0;
+		}
+		fetch_double(&pInitPrice, "init_price", pMarket);
 	} else {
-		period = (TIMESTAMP)floor(dPeriod + 0.5);
+		if (dPeriod == 0.0)
+		{
+			period =300;
+		}
+		else
+		{
+			period = (TIMESTAMP)floor(dPeriod + 0.5);
+		}
+		pMarket = OBJECTHDR(this);
+		pAvg = &(this->proxy_avg);
+		pStd = &(this->proxy_std);
+		pMarketId = &(this->proxy_mkt_id);
+		pClearedPrice = &(this->proxy_clear_price);
+		pPriceCap = &(this->proxy_price_cap);
+		pMarginMode = &(this->proxy_margin_mode);
+		pMarginalFraction = &(this->proxy_marginal_fraction);
+		strncpy(market_unit, proxy_mkt_unit, 31);
+		submit = (FUNCTIONADDR)(gl_get_function(pMarket, "submit_bid_state"));
+		if(submit == NULL){
+			char buf[256];
+			gl_error("Unable to find function, submit_bid_state(), for object %s.", (char *)gl_name(pMarket, buf, 255));
+			return 0;
+		}
+		pInitPrice = &(this->proxy_init_price);
 	}
 
 	if(bid_delay < 0){
@@ -299,7 +397,7 @@ int controller::init(OBJECT *parent){
 		GL_THROW("controller: %i, target property not specified", hdr->id);
 	}
 	if(setpoint[0] == 0 && control_mode == CN_RAMP){
-		GL_THROW("controller: %i, setpoint property not specified", hdr->id);;
+		GL_THROW("controller: %i, setpoint property not specified", hdr->id);
 	}
 	if(demand[0] == 0 && control_mode == CN_RAMP){
 		GL_THROW("controller: %i, demand property not specified", hdr->id);
@@ -315,14 +413,14 @@ int controller::init(OBJECT *parent){
 	}
 
 	if(heating_setpoint[0] == 0 && control_mode == CN_DOUBLE_RAMP){
-		GL_THROW("controller: %i, heating_setpoint property not specified", hdr->id);;
+		GL_THROW("controller: %i, heating_setpoint property not specified", hdr->id);
 	}
 	if(heating_demand[0] == 0 && control_mode == CN_DOUBLE_RAMP){
 		GL_THROW("controller: %i, heating_demand property not specified", hdr->id);
 	}
 
 	if(cooling_setpoint[0] == 0 && control_mode == CN_DOUBLE_RAMP){
-		GL_THROW("controller: %i, cooling_setpoint property not specified", hdr->id);;
+		GL_THROW("controller: %i, cooling_setpoint property not specified", hdr->id);
 	}
 	if(cooling_demand[0] == 0 && control_mode == CN_DOUBLE_RAMP){
 		GL_THROW("controller: %i, cooling_demand property not specified", hdr->id);
@@ -332,35 +430,39 @@ int controller::init(OBJECT *parent){
 		GL_THROW("controller: %i, deadband property not specified", hdr->id);
 	}
 
-	fetch(&pMonitor, target, parent);
+	fetch_double(&pMonitor, target, parent);
 	if(control_mode == CN_RAMP){
-		fetch(&pSetpoint, setpoint, parent);
-		fetch(&pDemand, demand, parent);
-		fetch(&pTotal, total, parent);
-		fetch(&pLoad, load, parent);
+		fetch_double(&pSetpoint, setpoint, parent);
+		fetch_double(&pDemand, demand, parent);
+		fetch_double(&pTotal, total, parent);
+		fetch_double(&pLoad, load, parent);
 		if(use_predictive_bidding == TRUE){
-			fetch(&pDeadband, deadband.get_string(), parent);
+			fetch_double(&pDeadband, (char *)(&deadband), parent);
 		}
 	} else if(control_mode == CN_DOUBLE_RAMP){
 		sprintf(aux_state, "is_AUX_on");
 		sprintf(heat_state, "is_HEAT_on");
 		sprintf(cool_state, "is_COOL_on");
-		fetch(&pHeatingSetpoint, heating_setpoint.get_string(), parent);
-		fetch(&pHeatingDemand, heating_demand.get_string(), parent);
-		fetch(&pHeatingTotal, total, parent);
-		fetch(&pHeatingLoad, total, parent);
-		fetch(&pCoolingSetpoint, cooling_setpoint.get_string(), parent);
-		fetch(&pCoolingDemand, cooling_demand.get_string(), parent);
-		fetch(&pCoolingTotal, total, parent);
-		fetch(&pCoolingLoad, load, parent);
-		fetch(&pDeadband, deadband.get_string(), parent);
-		fetch(&pAuxState, aux_state.get_string(), parent);
-		fetch(&pHeatState, heat_state.get_string(), parent);
-		fetch(&pCoolState, cool_state.get_string(), parent);
+		fetch_double(&pHeatingSetpoint, (char *)(&heating_setpoint), parent);
+		fetch_double(&pHeatingDemand, (char *)(&heating_demand), parent);
+		fetch_double(&pHeatingTotal, total, parent);
+		fetch_double(&pHeatingLoad, total, parent);
+		fetch_double(&pCoolingSetpoint, (char *)(&cooling_setpoint), parent);
+		fetch_double(&pCoolingDemand, (char *)(&cooling_demand), parent);
+		fetch_double(&pCoolingTotal, total, parent);
+		fetch_double(&pCoolingLoad, load, parent);
+		fetch_double(&pDeadband, (char *)(&deadband), parent);
+		fetch_double(&pAuxState, (char *)(&aux_state), parent);
+		fetch_double(&pHeatState, (char *)(&heat_state), parent);
+		fetch_double(&pCoolState, (char *)(&cool_state), parent);
 	}
-	fetch(&pAvg, avg_target.get_string(), pMarket);
-	fetch(&pStd, std_target.get_string(), pMarket);
 
+	if(bid_id == -1){
+		controller_bid.bid_id = (int64)hdr->id;
+		bid_id = (int64)hdr->id;
+	} else {
+		controller_bid.bid_id = bid_id;
+	}
 
 	if(dir == 0){
 		double high = ramp_high * range_high;
@@ -420,7 +522,7 @@ int controller::init(OBJECT *parent){
 		// grab state pointer
 		pHeatingState = gl_get_enum_by_name(parent, heating_state);
 		if(pHeatingState == 0){
-			gl_error("heating_state property name \'%s\' is not published by parent class", heating_state.get_string());
+			gl_error("heating_state property name \'%s\' is not published by parent class", (char *)(&heating_state));
 			return 0;
 		}
 	}
@@ -429,7 +531,7 @@ int controller::init(OBJECT *parent){
 		// grab state pointer
 		pCoolingState = gl_get_enum_by_name(parent, cooling_state);
 		if(pCoolingState == 0){
-			gl_error("cooling_state property name \'%s\' is not published by parent class", cooling_state.get_string());
+			gl_error("cooling_state property name \'%s\' is not published by parent class", (char *)(&cooling_state));
 			return 0;
 		}
 	}
@@ -471,16 +573,16 @@ int controller::init(OBJECT *parent){
 		}
 		// get override, if set
 	}
-	last_p = market->init_price;
+	//get initial clear price
+	last_p = *pInitPrice;
+	lastmkt_id = 0;
 	return 1;
 }
-
 
 int controller::isa(char *classname)
 {
 	return strcmp(classname,"controller")==0;
 }
-
 
 TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 	if(slider_setting < -0.001)
@@ -502,7 +604,6 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 		heating_setpoint0 = *pHeatingSetpoint;
 	if(control_mode == CN_DOUBLE_RAMP && cooling_setpoint0 == -1)
 		cooling_setpoint0 = *pCoolingSetpoint;
-
 
 	if(control_mode == CN_RAMP){
 		if (slider_setting == -0.001){
@@ -587,11 +688,17 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 	double prediction_range = 0.0;
 	double midpoint = 0.0;
 	OBJECT *hdr = OBJECTHDR(this);
-
-
+	char mktname[1024];
+	char ctrname[1024];
+	if(t1 == next_run && *pMarketId == lastmkt_id && bidmode == BM_PROXY){
+		/*
+		 * This case is only true when dealing with co-simulation with FNCS.
+		 */
+		return TS_NEVER;
+	}
 
 	/* short circuit if the state variable doesn't change during the specified interval */
-	if((t1 < next_run) && (market->market_id == lastmkt_id)){
+	if((t1 < next_run) && (*pMarketId == lastmkt_id)){
 		if(t1 <= next_run - bid_delay){
 			if(use_predictive_bidding == TRUE && ((control_mode == CN_RAMP && last_setpoint != setpoint0) || (control_mode == CN_DOUBLE_RAMP && (last_heating_setpoint != heating_setpoint0 || last_cooling_setpoint != cooling_setpoint0)))) {
 				;
@@ -613,13 +720,14 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 
 	if(control_mode == CN_RAMP){
 		// if market has updated, continue onwards
-		if(market->market_id != lastmkt_id){// && (*pAvg == 0.0 || *pStd == 0.0 || setpoint0 == 0.0)){
-			lastmkt_id = market->market_id;
+		if(*pMarketId != lastmkt_id){// && (*pAvg == 0.0 || *pStd == 0.0 || setpoint0 == 0.0)){
+			lastmkt_id = *pMarketId;
 			lastbid_id = -1; // clear last bid id, refers to an old market
 			// update using last price
 			// T_set,a = T_set + (P_clear - P_avg) * | T_lim - T_set | / (k_T * stdev24)
 
-			clear_price = market->current_frame.clearing_price;
+			clear_price = *pClearedPrice;
+			controller_bid.rebid = false;
 
 			if(use_predictive_bidding == TRUE){
 				if((dir > 0 && clear_price < last_p) || (dir < 0 && clear_price > last_p)){
@@ -663,19 +771,19 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		if(dir > 0){
 			if(use_predictive_bidding == TRUE){
 				if(*pState == 0 && *pMonitor > (max - deadband_shift)){
-					bid = market->pricecap;
+					bid = *pPriceCap;
 				} else if(*pState != 0 && *pMonitor < (min + deadband_shift)){
 					bid = 0.0;
 					no_bid = 1;
 				} else if(*pState != 0 && *pMonitor > max){
-					bid = market->pricecap;
+					bid = *pPriceCap;
 				} else if(*pState == 0 && *pMonitor < min){
 					bid = 0.0;
 					no_bid = 1;
 				}
 			} else {
 				if(*pMonitor > max){
-					bid = market->pricecap;
+					bid = *pPriceCap;
 				} else if (*pMonitor < min){
 					bid = 0.0;
 					no_bid = 1;
@@ -684,19 +792,19 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		} else if(dir < 0){
 			if(use_predictive_bidding == TRUE){
 				if(*pState == 0 && *pMonitor < (min + deadband_shift)){
-					bid = market->pricecap;
+					bid = *pPriceCap;
 				} else if(*pState != 0 && *pMonitor > (max - deadband_shift)){
 					bid = 0.0;
 					no_bid = 1;
 				} else if(*pState != 0 && *pMonitor < min){
-					bid = market->pricecap;
+					bid = *pPriceCap;
 				} else if(*pState == 0 && *pMonitor > max){
 					bid = 0.0;
 					no_bid = 1;
 				}
 			} else {
 				if(*pMonitor < min){
-					bid = market->pricecap;
+					bid = *pPriceCap;
 				} else if (*pMonitor > max){
 					bid = 0.0;
 					no_bid = 1;
@@ -707,16 +815,16 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				if(direction == 0.0) {
 					gl_error("the variable direction did not get set correctly.");
 				} else if((*pMonitor > max + deadband_shift || (*pState != 0 && *pMonitor > min - deadband_shift)) && direction > 0){
-					bid = market->pricecap;
+					bid = *pPriceCap;
 				} else if((*pMonitor < min - deadband_shift || (*pState != 0 && *pMonitor < max + deadband_shift)) && direction < 0){
-					bid = market->pricecap;
+					bid = *pPriceCap;
 				} else {
 					bid = 0.0;
 					no_bid = 1;
 				}
 			} else {
 				if(*pMonitor < min){
-					bid = market->pricecap;
+					bid = *pPriceCap;
 				} else if(*pMonitor > max){
 					bid = 0.0;
 					no_bid = 1;
@@ -748,23 +856,37 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		// bid the response part of the load
 		double residual = *pTotal;
 		/* WARNING ~ bid ID check will not work properly */
-		KEY bid_id = (KEY)(lastmkt_id == market->market_id ? lastbid_id : -1);
+		//KEY bid_id = (KEY)(lastmkt_id == *pMarketId ? lastbid_id : -1);
 		// override
 		//bid_id = -1;
 		if(*pDemand > 0 && no_bid != 1){
 			last_p = bid;
 			last_q = *pDemand;
-			if(0 != strcmp(market->unit, "")){
-				if(0 == gl_convert("kW", market->unit, &(last_q))){
-					gl_error("unable to convert bid units from 'kW' to '%s'", market->unit.get_string());
+			if(0 != strcmp(market_unit, "")){
+				if(0 == gl_convert("kW", market_unit, &(last_q))){
+					gl_error("unable to convert bid units from 'kW' to '%s'", market_unit);
 					return TS_INVALID;
 				}
 			}
 			//lastbid_id = market->submit(OBJECTHDR(this), -last_q, last_p, bid_id, (BIDDERSTATE)(pState != 0 ? *pState : 0));
+			controller_bid.market_id = lastmkt_id;
+			controller_bid.price = last_p;
+			controller_bid.quantity = -last_q;
 			if(pState != 0){
-				lastbid_id = submit_bid_state(pMarket, hdr, -last_q, last_p, (*pState > 0 ? 1 : 0), bid_id);
+				if (*pState > 0) {
+					controller_bid.state = BS_ON;
+				} else {
+					controller_bid.state = BS_OFF;
+				}
+				((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+				controller_bid.rebid = true;
 			} else {
-				lastbid_id = submit_bid(pMarket, hdr, -last_q, last_p, bid_id);
+				controller_bid.state = BS_UNKNOWN;
+				((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+				controller_bid.rebid = true;
+			}
+			if(controller_bid.bid_accepted == false){
+				return TS_INVALID;
 			}
 			residual -= *pLoad;
 
@@ -826,25 +948,12 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			}
 		}
 		// if the market has updated,
-		if(lastmkt_id != market->market_id){
-			lastmkt_id = market->market_id;
+		if(lastmkt_id != *pMarketId){
+			lastmkt_id = *pMarketId;
 			lastbid_id = -1;
 			// retrieve cleared price
-			clear_price = market->current_frame.clearing_price;
-			if(clear_price == last_p){
-				// determine what to do at the marginal price
-				switch(market->clearing_type){
-					case CT_SELLER:	// may need to curtail
-						break;
-					case CT_PRICE:	// should not occur
-					case CT_NULL:	// q zero or logic error ~ should not occur
-						// occurs during the zero-eth market.
-						//gl_warning("clearing price and bid price are equal with a market clearing type that involves inequal prices");
-						break;
-					default:
-						break;
-				}
-			}
+			clear_price = *pClearedPrice;
+			controller_bid.rebid = false;
 			if(use_predictive_bidding == TRUE){
 				if((thermostat_mode == TM_COOL && clear_price < last_p) || (thermostat_mode == TM_HEAT && clear_price > last_p)){
 					shift_direction = -1;
@@ -877,18 +986,18 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			// apply overrides
 			if((use_override == OU_ON)){
 				if(last_q != 0.0){
-					if(clear_price == last_p && clear_price != market->pricecap){
-						if(market->margin_mode == AM_DENY){
+					if(clear_price == last_p && clear_price != *pPriceCap){
+						if(*pMarginMode == AM_DENY){
 							*pOverride = -1;
-						} else if(market->margin_mode == AM_PROB){
+						} else if(*pMarginMode == AM_PROB){
 							double r = gl_random_uniform(RNGSTATE,0, 1.0);
-							if(r < market->current_frame.marginal_frac){
+							if(r < *pMarginalFraction){
 								*pOverride = 1;
 							} else {
 								*pOverride = -1;
 							}
 						}
-					} else if(market->current_frame.clearing_price <= last_p){				
+					} else if(*pClearedPrice <= last_p){
 						*pOverride = 1;
 					} else {
 						*pOverride = -1;
@@ -908,7 +1017,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			if(*pHeatingSetpoint < heat_min)
 				*pHeatingSetpoint = heat_min;
 
-			lastmkt_id = market->market_id;
+			lastmkt_id = *pMarketId;
 
 
 		}
@@ -920,12 +1029,12 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		
 		// We have to cool
 		if(*pMonitor > cool_max){
-			last_p = market->pricecap;
+			last_p = *pPriceCap;
 			last_q = *pCoolingDemand;
 		}
 		// We have to heat
 		else if(*pMonitor < heat_min){
-			last_p = market->pricecap;
+			last_p = *pPriceCap;
 			last_q = *pHeatingDemand;
 		}
 		// We're floating in between heating and cooling
@@ -958,36 +1067,57 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			last_q = *pCoolingDemand;
 		}
 
-		if(last_p > market->pricecap)
-			last_p = market->pricecap;
-		if(last_p < -market->pricecap)
-			last_p = -market->pricecap;
-		if(0 != strcmp(market->unit, "")){
-			if(0 == gl_convert("kW", market->unit, &(last_q))){
-				gl_error("unable to convert bid units from 'kW' to '%s'", market->unit.get_string());
+		if(last_p > *pPriceCap)
+			last_p = *pPriceCap;
+		if(last_p < -*pPriceCap)
+			last_p = -*pPriceCap;
+		if(0 != strcmp(market_unit, "")){
+			if(0 == gl_convert("kW", market_unit, &(last_q))){
+				gl_error("unable to convert bid units from 'kW' to '%s'", market_unit);
 				return TS_INVALID;
 			}
 		}
+		controller_bid.market_id = lastmkt_id;
+		controller_bid.price = last_p;
+		controller_bid.quantity = -last_q;
+
 		if(last_q > 0.001){
-			if (pState != 0 ) {
-				KEY bid = (KEY)(lastmkt_id == market->market_id ? lastbid_id : -1);
-				lastbid_id = submit_bid_state(this->pMarket, OBJECTHDR(this), -last_q, last_p, (*pState > 0 ? 1 : 0), bid);
+			if(pState != 0){
+				if (*pState > 0) {
+					controller_bid.state = BS_ON;
+				} else {
+					controller_bid.state = BS_OFF;
+				}
+				((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+				controller_bid.rebid = true;
+			} else {
+				controller_bid.state = BS_UNKNOWN;
+				((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+				controller_bid.rebid = true;
 			}
-			else {
-				KEY bid = (KEY)(lastmkt_id == market->market_id ? lastbid_id : -1);
-				lastbid_id = submit_bid(this->pMarket, OBJECTHDR(this), -last_q, last_p, bid);
+			if(controller_bid.bid_accepted == false){
+				return TS_INVALID;
 			}
 		}
 		else
 		{
 			if (last_pState != *pState)
 			{
-				KEY bid = (KEY)(lastmkt_id == market->market_id ? lastbid_id : -1);
-				double my_bid = -market->pricecap;
+				KEY bid = (KEY)(lastmkt_id == *pMarketId ? lastbid_id : -1);
+				double my_bid = -*pPriceCap;
 				if (*pState != 0)
 					my_bid = last_p;
 
-				lastbid_id = submit_bid_state(this->pMarket, OBJECTHDR(this), -last_q, my_bid, (*pState > 0 ? 1 : 0), bid);
+				if (*pState > 0) {
+					controller_bid.state = BS_ON;
+				} else {
+					controller_bid.state = BS_OFF;
+				}
+				((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+				if(controller_bid.bid_accepted == false){
+					return TS_INVALID;
+				}
+				controller_bid.rebid = true;
 			}
 		}
 	}

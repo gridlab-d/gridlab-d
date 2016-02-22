@@ -1,12 +1,14 @@
-CREATE TABLE IF NOT EXISTS `test.csv` (
+DROP TABLE IF EXISTS `test_player`;
+CREATE TABLE IF NOT EXISTS `test_player` (
 	`id` INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY,
 	`t` DATETIME NOT NULL,
 	`x[min]` DOUBLE
 );
 
 LOAD DATA LOCAL INFILE '../test_mysql_player.csv' 
-INTO TABLE `test.csv`
+INTO TABLE `test_player`
 FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"'
 LINES TERMINATED BY '\n'
 IGNORE 1 LINES
 (id, t,`x[min]`);
+

@@ -57,7 +57,7 @@
 #include "link.h"
 
 //Library imports items - for external LU solver - stolen from somewhere else in GridLAB-D (tape, I believe)
-#ifdef WIN32
+#if defined(WIN32) && !defined(__MINGW32__)
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 #define _WIN32_WINNT 0x0400
 #include <windows.h>
@@ -65,13 +65,16 @@
 #define DLEXT ".dll"
 #endif
 #define DLLOAD(P) LoadLibrary(P)
-#define DLSYM(H,S) GetProcAddress((HINSTANCE)H,S)
+#define DLSYM(H,S) (void *)GetProcAddress((HINSTANCE)H,S)
 #define snprintf _snprintf
 #else /* ANSI */
 #include "dlfcn.h"
 #ifndef DLEXT
-#define DLEXT ".so"
+#ifdef __MINGW32__
+#define DLEXT ".dll"
 #else
+#define DLEXT ".so"
+#endif
 #endif
 #define DLLOAD(P) dlopen(P,RTLD_LAZY)
 #define DLSYM(H,S) dlsym(H,S)

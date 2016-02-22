@@ -12,6 +12,7 @@ private:
 	int n_bids;
 	BID *bids;
 	KEY *keys;
+	KEY *bid_ids;
 	double total;
 	double total_on;
 	double total_off;
@@ -23,7 +24,8 @@ public:
 	inline unsigned int getcount() { return n_bids;};
 	void clear(void);
 	KEY submit(BID *bid);
-	KEY resubmit(BID *bid, KEY key);
+	KEY resubmit(BID *bid);
+	int remove_bid(KEY bid_id);
 	void sort(bool reverse = false);
 	BID *getbid(KEY n);
 	inline double get_total() { return total;};

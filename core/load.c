@@ -3900,304 +3900,327 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 	}
 	else if (TERM(dotted_name(HERE,propname,sizeof(propname))) && WHITE)
 	{
-		PROPERTY *prop = class_find_property(oclass,propname);
-		OBJECT *subobj=NULL;
-		current_object = obj; /* object context */
-		current_module = obj->oclass->module; /* module context */
-		if (prop!=NULL && prop->ptype==PT_object && TERM(object_block(HERE,NULL,&subobj)))
+		LOADMETHOD *method = class_get_loadmethod(obj->oclass,propname);
+		if ( method!=NULL )
 		{
-			char objname[64];
-			if (subobj->name) strcpy(objname,subobj->name); else sprintf(objname,"%s:%d", subobj->oclass->name,subobj->id);
-			if (object_set_value_by_name(obj,propname,objname))
-				ACCEPT
+			if ( TERM(value(HERE,propval,sizeof(propval))) )
+			{
+				if ( method->call(obj,propval)==1 )
+				{
+					ACCEPT;
+				}
+				else
+				{
+					output_error_raw("%s(%d): load method '%s/%s::%s' failed on value '%s'", filename, linenum, obj->oclass->module->name,obj->oclass->name,propname,propval);
+					REJECT;
+				}
+			}
 			else
 			{
-				output_error_raw("%s(%d): unable to link subobject to property '%s'", filename, linenum,propname);
+				output_error_raw("%s(%d): unable to parse value for load method '%s/%s::%s'", filename, linenum, obj->oclass->module->name,obj->oclass->name,propname);
 				REJECT;
 			}
 		}
-		else if (prop!=NULL && prop->ptype==PT_complex && TERM(complex_unit(HERE,&cval,&unit)))
-		{
-			if (unit!=NULL && prop->unit!=NULL && strcmp((char *)unit, "") != 0 && unit_convert_complex(unit,prop->unit,&cval)==0)
+		else {
+			PROPERTY *prop = class_find_property(oclass,propname);
+			OBJECT *subobj=NULL;
+			current_object = obj; /* object context */
+			current_module = obj->oclass->module; /* module context */
+			if (prop!=NULL && prop->ptype==PT_object && TERM(object_block(HERE,NULL,&subobj)))
 			{
-				output_error_raw("%s(%d): units of value are incompatible with units of property, cannot convert from %s to %s", filename, linenum, unit->name,prop->unit->name);
-				REJECT;
+				char objname[64];
+				if (subobj->name) strcpy(objname,subobj->name); else sprintf(objname,"%s:%d", subobj->oclass->name,subobj->id);
+				if (object_set_value_by_name(obj,propname,objname))
+					ACCEPT
+				else
+				{
+					output_error_raw("%s(%d): unable to link subobject to property '%s'", filename, linenum,propname);
+					REJECT;
+				}
 			}
-			else if (object_set_complex_by_name(obj,propname,cval)==0)
+			else if (prop!=NULL && prop->ptype==PT_complex && TERM(complex_unit(HERE,&cval,&unit)))
 			{
-				output_error_raw("%s(%d): property %s of %s %s could not be set to '%g%+gi'", filename, linenum, propname, format_object(obj), cval.r, cval.i);
-				REJECT;
+				if (unit!=NULL && prop->unit!=NULL && strcmp((char *)unit, "") != 0 && unit_convert_complex(unit,prop->unit,&cval)==0)
+				{
+					output_error_raw("%s(%d): units of value are incompatible with units of property, cannot convert from %s to %s", filename, linenum, unit->name,prop->unit->name);
+					REJECT;
+				}
+				else if (object_set_complex_by_name(obj,propname,cval)==0)
+				{
+					output_error_raw("%s(%d): property %s of %s %s could not be set to '%g%+gi'", filename, linenum, propname, format_object(obj), cval.r, cval.i);
+					REJECT;
+				}
+				else
+					ACCEPT;
 			}
-			else
-				ACCEPT;
-		}
-		else if (prop!=NULL && prop->ptype==PT_double && TERM(expression(HERE, &dval, &unit, obj)))
-		{
-			if (unit!=NULL && prop->unit!=NULL && strcmp((char *)unit, "") != 0 && unit_convert_ex(unit,prop->unit,&dval)==0)
+			else if (prop!=NULL && prop->ptype==PT_double && TERM(expression(HERE, &dval, &unit, obj)))
 			{
-				output_error_raw("%s(%d): units of value are incompatible with units of property, cannot convert from %s to %s", filename, linenum, unit->name,prop->unit->name);
-				REJECT;
+				if (unit!=NULL && prop->unit!=NULL && strcmp((char *)unit, "") != 0 && unit_convert_ex(unit,prop->unit,&dval)==0)
+				{
+					output_error_raw("%s(%d): units of value are incompatible with units of property, cannot convert from %s to %s", filename, linenum, unit->name,prop->unit->name);
+					REJECT;
+				}
+				else if (object_set_double_by_name(obj,propname,dval)==0)
+				{
+					output_error_raw("%s(%d): property %s of %s %s could not be set to '%g'", filename, linenum, propname, format_object(obj), dval);
+					REJECT;
+				}
+				else
+					ACCEPT;
 			}
-			else if (object_set_double_by_name(obj,propname,dval)==0)
+			else if (prop!=NULL && prop->ptype==PT_double && TERM(functional_unit(HERE,&dval,&unit)))
 			{
-				output_error_raw("%s(%d): property %s of %s %s could not be set to '%g'", filename, linenum, propname, format_object(obj), dval);
-				REJECT;
+				if (unit!=NULL && prop->unit!=NULL && strcmp((char *)unit, "") != 0 && unit_convert_ex(unit,prop->unit,&dval)==0)
+				{
+					output_error_raw("%s(%d): units of value are incompatible with units of property, cannot convert from %s to %s", filename, linenum, unit->name,prop->unit->name);
+					REJECT;
+				}
+				else if (object_set_double_by_name(obj,propname,dval)==0)
+				{
+					output_error_raw("%s(%d): property %s of %s %s could not be set to '%g'", filename, linenum, propname, format_object(obj), dval);
+					REJECT;
+				}
+				else
+					ACCEPT;
 			}
-			else
-				ACCEPT;
-		} 
-		else if (prop!=NULL && prop->ptype==PT_double && TERM(functional_unit(HERE,&dval,&unit)))
-		{
-			if (unit!=NULL && prop->unit!=NULL && strcmp((char *)unit, "") != 0 && unit_convert_ex(unit,prop->unit,&dval)==0)
-			{
-				output_error_raw("%s(%d): units of value are incompatible with units of property, cannot convert from %s to %s", filename, linenum, unit->name,prop->unit->name);
-				REJECT;
-			}
-			else if (object_set_double_by_name(obj,propname,dval)==0)
-			{
-				output_error_raw("%s(%d): property %s of %s %s could not be set to '%g'", filename, linenum, propname, format_object(obj), dval);
-				REJECT;
-			}
-			else
-				ACCEPT;
-		}
-		else if(prop != NULL && is_int(prop->ptype) && TERM(functional_unit(HERE, &dval, &unit))){
-			int64 ival = 0;
-			int16 ival16 = 0;
-			int32 ival32 = 0;
-			int64 ival64 = 0;
-			int rv = 0;
+			else if(prop != NULL && is_int(prop->ptype) && TERM(functional_unit(HERE, &dval, &unit))){
+				int64 ival = 0;
+				int16 ival16 = 0;
+				int32 ival32 = 0;
+				int64 ival64 = 0;
+				int rv = 0;
 
-			if(unit != NULL && prop->unit != NULL && strcmp((char *)(unit), "") != 0 && unit_convert_ex(unit, prop->unit, &dval) == 0){
-				output_error_raw("%s(%d): units of value are incompatible with units of property, cannot convert from %s to %s", filename, linenum, unit->name,prop->unit->name);
-				REJECT;
-			} else {
-				switch(prop->ptype){
-					case PT_int16:
-						ival16 = (int16)dval;
-						ival = rv = object_set_int16_by_name(obj, propname, ival16);
-						break;
-					case PT_int32:
-						ival = ival32 = (int32)dval;
-						rv = object_set_int32_by_name(obj, propname, ival32);
-						break;
-					case PT_int64:
-						ival = ival64 = (int64)dval;
-						rv = object_set_int64_by_name(obj, propname, ival64);
-						break;
-					default:
-						output_error("function_int operating on a non-integer (we shouldn't be here)");
+				if(unit != NULL && prop->unit != NULL && strcmp((char *)(unit), "") != 0 && unit_convert_ex(unit, prop->unit, &dval) == 0){
+					output_error_raw("%s(%d): units of value are incompatible with units of property, cannot convert from %s to %s", filename, linenum, unit->name,prop->unit->name);
+					REJECT;
+				} else {
+					switch(prop->ptype){
+						case PT_int16:
+							ival16 = (int16)dval;
+							ival = rv = object_set_int16_by_name(obj, propname, ival16);
+							break;
+						case PT_int32:
+							ival = ival32 = (int32)dval;
+							rv = object_set_int32_by_name(obj, propname, ival32);
+							break;
+						case PT_int64:
+							ival = ival64 = (int64)dval;
+							rv = object_set_int64_by_name(obj, propname, ival64);
+							break;
+						default:
+							output_error("function_int operating on a non-integer (we shouldn't be here)");
+							REJECT;
+					} /* end switch */
+					if(rv == 0){
+						output_error_raw("%s(%d): property %s of %s %s could not be set to '%g'", filename, linenum, propname, format_object(obj), ival);
 						REJECT;
-				} /* end switch */
-				if(rv == 0){
-					output_error_raw("%s(%d): property %s of %s %s could not be set to '%g'", filename, linenum, propname, format_object(obj), ival);
+					} else {
+						ACCEPT;
+					}
+#if 0
+				if (object_set_double_by_name(obj,propname,dval)==0)
+				{
+					output_message("%s(%d): property %s of %s %s could not be set to '%g'", filename, linenum, propname, format_object(obj), dval);
 					REJECT;
 				} else {
 					ACCEPT;
 				}
-#if 0
-			if (object_set_double_by_name(obj,propname,dval)==0)
-			{
-				output_message("%s(%d): property %s of %s %s could not be set to '%g'", filename, linenum, propname, format_object(obj), dval);
-				REJECT;
-			} else {
-				ACCEPT;
-			}
 #endif
-			} /* end unit_convert_ex else */
-		}
-		else if (prop!=NULL 
-			&& ( ( prop->ptype>=PT_double && prop->ptype<=PT_int64 ) || ( prop->ptype>=PT_bool && prop->ptype<=PT_timestamp ) || ( prop->ptype>=PT_float && prop->ptype<=PT_enduse ) )
-			&& TERM(linear_transform(HERE, &xstype, &source,&scale,&bias,obj)))
-		{
-			void *target = (void*)((char*)(obj+1) + (int64)prop->addr);
-
-			/* add the transform list */
-			if (!transform_add_linear(xstype,source,target,scale,bias,obj,prop,(xstype == XS_SCHEDULE ? source : 0)))
-			{
-				output_error_raw("%s(%d): schedule transform could not be created - %s", filename, linenum, errno?strerror(errno):"(no details)");
-				REJECT;
+				} /* end unit_convert_ex else */
 			}
-			else if ( source!=NULL )
+			else if (prop!=NULL
+				&& ( ( prop->ptype>=PT_double && prop->ptype<=PT_int64 ) || ( prop->ptype>=PT_bool && prop->ptype<=PT_timestamp ) || ( prop->ptype>=PT_float && prop->ptype<=PT_enduse ) )
+				&& TERM(linear_transform(HERE, &xstype, &source,&scale,&bias,obj)))
 			{
-				/* a transform is unresolved */
-				if (first_unresolved==source)
+				void *target = (void*)((char*)(obj+1) + (int64)prop->addr);
 
-					/* source was the unresolved entry, for now it will be the transform itself */
-					first_unresolved->ref = (void*)transform_getnext(NULL);
+				/* add the transform list */
+				if (!transform_add_linear(xstype,source,target,scale,bias,obj,prop,(xstype == XS_SCHEDULE ? source : 0)))
+				{
+					output_error_raw("%s(%d): schedule transform could not be created - %s", filename, linenum, errno?strerror(errno):"(no details)");
+					REJECT;
+				}
+				else if ( source!=NULL )
+				{
+					/* a transform is unresolved */
+					if (first_unresolved==source)
 
-				ACCEPT;
+						/* source was the unresolved entry, for now it will be the transform itself */
+						first_unresolved->ref = (void*)transform_getnext(NULL);
+
+					ACCEPT;
+				}
 			}
-		}
-		else if (prop!=NULL && prop->ptype==PT_double && TERM(external_transform(HERE, &xstype, sources, sizeof(sources), transformname, sizeof(transformname), obj)))
-		{
-			// TODO handle more than one source
-			char sobj[64], sprop[64];
-			int n = sscanf(sources,"%[^.].%[^,]",sobj,sprop);
-			OBJECT *source_obj;
-			PROPERTY *source_prop;
-
-			/* get source object */
-			source_obj = (n==1||strcmp(sobj,"this")==0) ? obj : object_find_name(sobj);
-			if ( !source_obj )
+			else if (prop!=NULL && prop->ptype==PT_double && TERM(external_transform(HERE, &xstype, sources, sizeof(sources), transformname, sizeof(transformname), obj)))
 			{
-				output_error_raw("%s(%d): transform source object '%s' not found", filename, linenum, n==1?"this":sobj);
-				REJECT;
-				DONE;
-			}
+				// TODO handle more than one source
+				char sobj[64], sprop[64];
+				int n = sscanf(sources,"%[^.].%[^,]",sobj,sprop);
+				OBJECT *source_obj;
+				PROPERTY *source_prop;
 
-			/* get source property */
-			source_prop = object_get_property(source_obj, n==1?sobj:sprop,NULL);
-			if ( !source_prop )
-			{
-				output_error_raw("%s(%d): transform source property '%s' of object '%s' not found", filename, linenum, n==1?sobj:sprop, n==1?"this":sobj);
-				REJECT;
-				DONE;
-			}
-
-			/* add to external transform list */
-			if ( !transform_add_external(obj,prop,transformname,source_obj,source_prop) )
-			{
-				output_error_raw("%s(%d): schedule transform could not be created - %s", filename, linenum, errno?strerror(errno):"(no details)");
-				REJECT;
-				DONE;
-			}
-			else if ( source!=NULL )
-			{
-				/* a transform is unresolved */
-				if (first_unresolved==source)
-
-					/* source was the unresolved entry, for now it will be the transform itself */
-					first_unresolved->ref = (void*)transform_getnext(NULL);
-
-				ACCEPT;
-			}
-		}
-		else if TERM(alternate_value(HERE,propval,sizeof(propval)))
-		{
-			if (prop==NULL)
-			{
-				/* check for special properties */
-				if (strcmp(propname,"root")==0)
-					obj->parent = NULL;
-				else if (strcmp(propname,"parent")==0)
+				/* get source object */
+				source_obj = (n==1||strcmp(sobj,"this")==0) ? obj : object_find_name(sobj);
+				if ( !source_obj )
 				{
-					if (add_unresolved(obj,PT_object,(void*)&obj->parent,oclass,propval,filename,linenum,UR_RANKS)==NULL)
-					{
-						output_error_raw("%s(%d): unable to add unresolved reference to parent %s", filename, linenum, propval);
-						REJECT;
-					}
-					else
-						ACCEPT;
-				}
-				else if (strcmp(propname,"rank")==0)
-				{
-					if ((obj->rank = atoi(propval))<0)
-					{
-						output_error_raw("%s(%d): unable to set rank to %s", filename, linenum, propval);
-						REJECT;
-					}
-					else
-						ACCEPT;
-				}
-				else if (strcmp(propname,"clock")==0)
-				{
-					obj->clock = atoi64(propval); // @todo convert_to_timestamp should be used
-					ACCEPT;
-				}
-				else if (strcmp(propname,"valid_to")==0)
-				{
-					obj->valid_to = atoi64(propval); // @todo convert_to_timestamp should be used
-					ACCEPT;
-				}
-				else if (strcmp(propname,"schedule_skew")==0)
-				{
-					obj->schedule_skew = atoi64(propval);
-					ACCEPT;
-				}
-				else if (strcmp(propname,"latitude")==0)
-				{
-					obj->latitude = load_latitude(propval);
-					ACCEPT;
-				}
-				else if (strcmp(propname,"longitude")==0)
-				{
-					obj->longitude = load_longitude(propval);
-					ACCEPT;
-				}
-				else if (strcmp(propname,"in")==0)
-				{
-					obj->in_svc = convert_to_timestamp_delta(propval,&obj->in_svc_micro,&obj->in_svc_double);
-					ACCEPT;
-				}
-				else if (strcmp(propname,"out")==0)
-				{
-					obj->out_svc = convert_to_timestamp_delta(propval,&obj->out_svc_micro,&obj->out_svc_double);
-					ACCEPT;
-				}
-				else if (strcmp(propname,"name")==0)
-				{
-					if (object_set_name(obj,propval)==NULL)
-					{
-						output_error_raw("%s(%d): property name %s could not be used", filename, linenum, propval);
-						REJECT;
-					}
-					else
-						ACCEPT;
-				}
-				else if ( strcmp(propname,"heartbeat")==0 )
-				{
-					obj->heartbeat = convert_to_timestamp(propval);
-					ACCEPT;
-				}
-				else if (strcmp(propname,"groupid")==0){
-					strncpy(obj->groupid, propval, sizeof(obj->groupid));
-				}
-				else if (strcmp(propname,"flags")==0)
-				{
-					if(set_flags(obj,propval) == 0)
-					{
-						REJECT;
-					}
-					else
-						ACCEPT;
-				}
-				else if (strcmp(propname,"library")==0)
-				{
-					output_warning("%s(%d): libraries not yet supported", filename, linenum);
-					/* TROUBLESHOOT
-						An attempt to use the <b>library</b> GLM directive was made.  Library directives
-						are not supported yet.
-					 */
-					ACCEPT;
+					output_error_raw("%s(%d): transform source object '%s' not found", filename, linenum, n==1?"this":sobj);
+					REJECT;
 					DONE;
 				}
-				else
+
+				/* get source property */
+				source_prop = object_get_property(source_obj, n==1?sobj:sprop,NULL);
+				if ( !source_prop )
 				{
-					output_error_raw("%s(%d): property %s is not defined in class %s", filename, linenum, propname, oclass->name);
+					output_error_raw("%s(%d): transform source property '%s' of object '%s' not found", filename, linenum, n==1?sobj:sprop, n==1?"this":sobj);
 					REJECT;
+					DONE;
 				}
-			}
-			else if (prop->ptype==PT_object)
-			{	void *addr = object_get_addr(obj,propname);
-				if (addr==NULL)
+
+				/* add to external transform list */
+				if ( !transform_add_external(obj,prop,transformname,source_obj,source_prop) )
 				{
-					output_error_raw("%s(%d): unable to get %s member %s", filename, linenum, format_object(obj), propname);
+					output_error_raw("%s(%d): schedule transform could not be created - %s", filename, linenum, errno?strerror(errno):"(no details)");
 					REJECT;
+					DONE;
 				}
-				else
+				else if ( source!=NULL )
 				{
-					add_unresolved(obj,PT_object,addr,oclass,propval,filename,linenum,UR_NONE);
+					/* a transform is unresolved */
+					if (first_unresolved==source)
+
+						/* source was the unresolved entry, for now it will be the transform itself */
+						first_unresolved->ref = (void*)transform_getnext(NULL);
+
 					ACCEPT;
 				}
 			}
-			else if (object_set_value_by_name(obj,propname,propval)==0)
+			else if TERM(alternate_value(HERE,propval,sizeof(propval)))
 			{
-				output_error_raw("%s(%d): property %s of %s could not be set to '%s'", filename, linenum, propname, format_object(obj), propval);
-				REJECT;
+				if (prop==NULL)
+				{
+					/* check for special properties */
+					if (strcmp(propname,"root")==0)
+						obj->parent = NULL;
+					else if (strcmp(propname,"parent")==0)
+					{
+						if (add_unresolved(obj,PT_object,(void*)&obj->parent,oclass,propval,filename,linenum,UR_RANKS)==NULL)
+						{
+							output_error_raw("%s(%d): unable to add unresolved reference to parent %s", filename, linenum, propval);
+							REJECT;
+						}
+						else
+							ACCEPT;
+					}
+					else if (strcmp(propname,"rank")==0)
+					{
+						if ((obj->rank = atoi(propval))<0)
+						{
+							output_error_raw("%s(%d): unable to set rank to %s", filename, linenum, propval);
+							REJECT;
+						}
+						else
+							ACCEPT;
+					}
+					else if (strcmp(propname,"clock")==0)
+					{
+						obj->clock = atoi64(propval); // @todo convert_to_timestamp should be used
+						ACCEPT;
+					}
+					else if (strcmp(propname,"valid_to")==0)
+					{
+						obj->valid_to = atoi64(propval); // @todo convert_to_timestamp should be used
+						ACCEPT;
+					}
+					else if (strcmp(propname,"schedule_skew")==0)
+					{
+						obj->schedule_skew = atoi64(propval);
+						ACCEPT;
+					}
+					else if (strcmp(propname,"latitude")==0)
+					{
+						obj->latitude = load_latitude(propval);
+						ACCEPT;
+					}
+					else if (strcmp(propname,"longitude")==0)
+					{
+						obj->longitude = load_longitude(propval);
+						ACCEPT;
+					}
+					else if (strcmp(propname,"in")==0)
+					{
+						obj->in_svc = convert_to_timestamp_delta(propval,&obj->in_svc_micro,&obj->in_svc_double);
+						ACCEPT;
+					}
+					else if (strcmp(propname,"out")==0)
+					{
+						obj->out_svc = convert_to_timestamp_delta(propval,&obj->out_svc_micro,&obj->out_svc_double);
+						ACCEPT;
+					}
+					else if (strcmp(propname,"name")==0)
+					{
+						if (object_set_name(obj,propval)==NULL)
+						{
+							output_error_raw("%s(%d): property name %s could not be used", filename, linenum, propval);
+							REJECT;
+						}
+						else
+							ACCEPT;
+					}
+					else if ( strcmp(propname,"heartbeat")==0 )
+					{
+						obj->heartbeat = convert_to_timestamp(propval);
+						ACCEPT;
+					}
+					else if (strcmp(propname,"groupid")==0){
+						strncpy(obj->groupid, propval, sizeof(obj->groupid));
+					}
+					else if (strcmp(propname,"flags")==0)
+					{
+						if(set_flags(obj,propval) == 0)
+						{
+							REJECT;
+						}
+						else
+							ACCEPT;
+					}
+					else if (strcmp(propname,"library")==0)
+					{
+						output_warning("%s(%d): libraries not yet supported", filename, linenum);
+						/* TROUBLESHOOT
+							An attempt to use the <b>library</b> GLM directive was made.  Library directives
+							are not supported yet.
+						 */
+						ACCEPT;
+						DONE;
+					}
+					else
+					{
+						output_error_raw("%s(%d): property %s is not defined in class %s", filename, linenum, propname, oclass->name);
+						REJECT;
+					}
+				}
+				else if (prop->ptype==PT_object)
+				{	void *addr = object_get_addr(obj,propname);
+					if (addr==NULL)
+					{
+						output_error_raw("%s(%d): unable to get %s member %s", filename, linenum, format_object(obj), propname);
+						REJECT;
+					}
+					else
+					{
+						add_unresolved(obj,PT_object,addr,oclass,propval,filename,linenum,UR_NONE);
+						ACCEPT;
+					}
+				}
+				else if (object_set_value_by_name(obj,propname,propval)==0)
+				{
+					output_error_raw("%s(%d): property %s of %s could not be set to '%s'", filename, linenum, propname, format_object(obj), propval);
+					REJECT;
+				}
+				else
+					ACCEPT; // @todo shouldn't this be REJECT?
 			}
-			else
-				ACCEPT; // @todo shouldn't this be REJECT?
 		}
 		if WHITE ACCEPT;
 		if LITERAL(";") {ACCEPT;}
@@ -4210,7 +4233,14 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 	else if LITERAL("}") {/* don't accept yet */ DONE;}
 	else { syntax_error(HERE); REJECT; }
 	/* may be repeated */
-	if TERM(object_properties(HERE,oclass,obj)) ACCEPT;
+	if TERM(object_properties(HERE,oclass,obj))
+	{
+		ACCEPT;
+	}
+	else
+	{
+		REJECT;
+	}
 	DONE;
 }
 
@@ -5736,6 +5766,66 @@ int is_autodef(char *value)
 	return 0;
 }
 
+/* started processes */
+#include "threadpool.h"
+#include "signal.h"
+struct s_threadlist {
+	pthread_t *data;
+	struct s_threadlist *next;
+} *threadlist = NULL;
+void kill_processes(void)
+{
+	while ( threadlist!=NULL )
+	{
+		void *ptr;
+		struct s_threadlist *next = threadlist->next;
+		int sig = SIGTERM;
+		int rc = pthread_kill(*(threadlist->data),sig);
+		switch ( rc ) {
+		case 0:
+			output_debug("killing thread %p", threadlist->data);
+			break;
+		case ESRCH:
+			output_error("unable to kill thread %p (no such thread)", threadlist->data);
+			break;
+		case EINVAL:
+			output_error("unable to kill thread %p (signal %d invalid/ignored)", threadlist->data, sig);
+			break;
+		default:
+			output_error("unable to kill thread %p (unknown return code %d)", threadlist->data, rc);
+			break;
+		}
+		free(threadlist->data);
+		threadlist=next;
+	}
+}
+
+/** @return -1 on failure, thread_id on success **/
+void* start_process(const char *cmd)
+{
+	static bool first = true;
+	pthread_t *pThreadInfo = (pthread_t*)malloc(sizeof(pthread_t));
+	struct s_threadlist *thread = (struct s_threadlist*)malloc(sizeof(struct s_threadlist));
+	char *args = malloc(strlen(cmd)+1);
+	strcpy(args,cmd);
+	if ( thread==NULL || pThreadInfo==NULL || pthread_create(pThreadInfo,NULL,(void*(*)(void*))system,args)!=0 )
+	{
+		output_error_raw("%s(%d): unable to create thread to start '%s'", filename, linenum, cmd);
+		return NULL;
+	}
+	else
+		output_debug("creating thread %p for process '%s'", pThreadInfo, cmd);
+	thread->data = pThreadInfo;
+	thread->next = threadlist;
+	threadlist = thread;
+	if ( first )
+	{
+		atexit(kill_processes);
+		first = false;
+	}
+	return threadlist;
+}
+
 /** @return TRUE/SUCCESS for a successful macro read, FALSE/FAILED on parse error (which halts the loader) */
 static int process_macro(char *line, int size, char *_filename, int linenum)
 {
@@ -6286,6 +6376,30 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			return TRUE;
 		}
 	}
+	else if (strncmp(line,MACRO "start",6)==0)
+	{
+		char *term = strchr(line+6,' ');
+		char value[1024];
+		if (term==NULL)
+		{
+			output_error_raw("%s(%d): %sstart missing system call",filename,linenum,MACRO);
+			strcpy(line,"\n");
+			return FALSE;
+		}
+		strcpy(value, strip_right_white(term+1));
+		output_debug("%s(%d): executing system(char *cmd='%s')", filename, linenum, value);
+		if( start_process(value)==NULL )
+		{
+			output_error_raw("%s(%d): ERROR unable to start '%s'", filename, linenum, value);
+			strcpy(line,"\n");
+			return FALSE;
+		}
+		else
+		{
+			strcpy(line,"\n");
+			return TRUE;
+		}
+	}
 	else if ( strncmp(line,MACRO "option",7)==0 )
 	{
 		char *term = strchr(line+7,' ');
@@ -6299,6 +6413,14 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		strcpy(value, strip_right_white(term+1));
 		strcpy(line,"\n");
 		return cmdarg_runoption(value)>=0;
+	}
+	else if ( strncmp(line,MACRO "sleep",6)==0 )
+	{
+		int msec = atoi(line+6);
+		output_debug("sleeping %.3f seconds...",msec/1000.0);
+		exec_sleep(msec*1000);
+		strcpy(line,"\n");
+		return TRUE;
 	}
 	else
 	{

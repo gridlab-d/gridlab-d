@@ -56,6 +56,12 @@ typedef struct s_function_map {
 	struct s_function_map *next;
 } FUNCTION;
 
+typedef struct s_loadmethod {
+	char *name;
+	int (*call)(void*,char*);
+	struct s_loadmethod *next;
+} LOADMETHOD;
+
 /* Set operations */
 #define SET_MASK 0xffff
 #define SET_ADD(set,value) (set = set | value )
@@ -102,6 +108,7 @@ struct s_class_list {
 	FUNCTIONADDR recalc;
 	FUNCTIONADDR update;	/**< deltamode related */
 	FUNCTIONADDR heartbeat;
+	LOADMETHOD *loadmethods;
 	CLASS *parent;			/**< parent class from which properties should be inherited */
 	struct {
 		unsigned int lock;
@@ -153,6 +160,9 @@ FUNCTION *class_define_function(CLASS *oclass, FUNCTIONNAME functionname, FUNCTI
 FUNCTIONADDR class_get_function(char *classname, char *functionname);
 DELEGATEDTYPE *class_register_type(CLASS *oclass, char *type,int (*from_string)(void*,char*),int (*to_string)(void*,char*,int));
 int class_define_type(CLASS *oclass, DELEGATEDTYPE *delegation, ...);
+
+int class_add_loadmethod(CLASS *oclass, char *name, int (*call)(void*,char*));
+LOADMETHOD *class_get_loadmethod(CLASS *oclass,char *name);
 
 #ifdef __cplusplus
 }

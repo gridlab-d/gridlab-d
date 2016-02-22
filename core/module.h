@@ -29,7 +29,10 @@ struct s_module_list {
 	unsigned long (*deltadesired)(DELTAMODEFLAGS*);
 	unsigned long (*preupdate)(void*,int64,unsigned int64);
 	SIMULATIONMODE (*interupdate)(void*,int64,unsigned int64,unsigned long,unsigned int);
+	SIMULATIONMODE (*deltaClockUpdate)(void *, double, unsigned long, SIMULATIONMODE);
 	STATUS (*postupdate)(void*,int64,unsigned int64);
+	/* clock hook*/
+	TIMESTAMP (*clockupdate)(TIMESTAMP *);
 	int (*cmdargs)(int,char**);
 	int (*kmldump)(int(*)(const char*,...),OBJECT*);
 	void (*test)(int argc, char *argv[]);	
@@ -75,7 +78,7 @@ extern "C" {
 	void *module_malloc(size_t size);
 	void module_free(void *ptr);
 
-#ifdef WIN32
+#if defined WIN32 && !defined __MINGW32__
 	// added in module.c because it has WIN32 API
 	void sched_init(int readonly);
 	void sched_clear(void);

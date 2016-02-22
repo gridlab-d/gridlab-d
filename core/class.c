@@ -18,31 +18,28 @@
 #include "stream.h"
 #include "random.h"
 
-#if defined WIN32 && ! defined MINGW
-	#define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
-	#define _WIN32_WINNT 0x0400
-	#include <windows.h>
-	#ifndef DLEXT
-		#define DLEXT ".dll"
-	#endif
-	#define DLLOAD(P) LoadLibrary(P)
-	#define DLSYM(H,S) GetProcAddress((HINSTANCE)H,S)
-	#define snprintf _snprintf
+#if defined(WIN32) && !defined(__MINGW32__)
+#define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
+#define _WIN32_WINNT 0x0400
+#include <windows.h>
+#ifndef DLEXT
+#define DLEXT ".dll"
+#endif
+#define DLLOAD(P) LoadLibrary(P)
+#define DLSYM(H,S) (void *)GetProcAddress((HINSTANCE)H,S)
+#define snprintf _snprintf
 #else /* ANSI */
-#ifndef MINGW
-	#include "dlfcn.h"
-#endif
-	#ifndef DLEXT
-		#define DLEXT ".so"
-	#endif
-#ifndef MINGW
-	#define DLLOAD(P) dlopen(P,RTLD_LAZY)
+#include "dlfcn.h"
+#ifndef DLEXT
+#ifdef __MINGW32__
+#define DLEXT ".dll"
 #else
-	#define DLLOAD(P) dlopen(P)
+#define DLEXT ".so"
 #endif
-	#define DLSYM(H,S) dlsym(H,S)
 #endif
-
+#define DLLOAD(P) dlopen(P,RTLD_LAZY)
+#define DLSYM(H,S) dlsym(H,S)
+#endif
 static unsigned int class_count = 0;
 
 /* defined in property.c */
@@ -1227,6 +1224,27 @@ DELEGATEDTYPE *class_register_type(CLASS *oclass, /**< the object class */
 			This is most likely caused by a lack of memory or an unstable system.
 		 */
 	return dt;
+}
+
+int class_add_loadmethod(CLASS *oclass, char *name, int (*call)(void*,char*))
+{
+	LOADMETHOD *method = (LOADMETHOD*)malloc(sizeof(LOADMETHOD));
+	method->name = name;
+	method->call = call;
+	method->next = oclass->loadmethods;
+	oclass->loadmethods = method;
+	return 1;
+}
+
+LOADMETHOD *class_get_loadmethod(CLASS *oclass,char *name)
+{
+	LOADMETHOD *method;
+	for ( method=oclass->loadmethods ; method!=NULL ; method=method->next )
+	{
+		if ( strcmp(method->name,name)==0 )
+			return method;
+	}
+	return NULL;
 }
 
 /* this is not supported */

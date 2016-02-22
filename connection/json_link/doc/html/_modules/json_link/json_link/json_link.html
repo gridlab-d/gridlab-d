@@ -1,0 +1,1026 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>json_link.json_link.json_link &mdash; JSON Link 0.9.2a documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.9.2a',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="JSON Link 0.9.2a documentation" href="../../../index.html" />
+    <link rel="up" title="json_link.json_link" href="../json_link.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">JSON Link 0.9.2a documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../json_link.html" accesskey="U">json_link.json_link</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for json_link.json_link.json_link</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">A python module for GridLAB-D data (JSON) link handshaking (over UDP and TCP)</span>
+
+<span class="sd">Classes:</span>
+<span class="sd">    MasterLink</span>
+<span class="sd">    SlaveLink</span>
+
+<span class="sd">Implemented Methods:</span>
+<span class="sd">  </span>
+
+<span class="sd">Notes:</span>
+<span class="sd">* Should work with Python 2.6+ and 3.x. Tested with 2.7.2 and 3.3</span>
+<span class="sd">* Currently only supports IPv4</span>
+<span class="sd">* The SLAVE will handle connections from any number of masters, BUT since the</span>
+<span class="sd">code is only single threaded each processing (including delay) are</span>
+<span class="sd">blocking. Hence, the SLAVE may miss packets if it is busy processing</span>
+<span class="sd">(or waiting to send) a different reply.</span>
+<span class="sd">    </span>
+<span class="sd">@author: Bryan Palmintier, NREL 2013</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c"># Enable use of Python 3.0 print statement in older (2.x) versions, ignored in</span>
+<span class="c"># newer (3.x) versions</span>
+<span class="c"># Must occur at top of file</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">print_function</span>
+
+<span class="n">__author__</span> <span class="o">=</span> <span class="s">&quot;Bryan Palmintier&quot;</span>
+<span class="n">__copyright__</span> <span class="o">=</span> <span class="s">&quot;Copyright (c) 2013 Bryan Palmintier&quot;</span>
+<span class="n">__license__</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot; </span>
+<span class="s">@copyright: Copyright (c) 2013, Bryan Palmintier</span>
+<span class="s">@license: BSD 3-clause --</span>
+<span class="s">All rights reserved.</span>
+
+<span class="s">Redistribution and use in source and binary forms, with or without modification, </span>
+<span class="s">are permitted provided that the following conditions are met:</span>
+<span class="s"> 1) Redistributions of source code must retain the above copyright notice, this</span>
+<span class="s">    list of conditions and the following disclaimer.</span>
+<span class="s"> 2) Redistributions in binary form must reproduce the above copyright notice, </span>
+<span class="s">    this list of conditions and the following disclaimer in the documentation </span>
+<span class="s">    and/or other materials provided with the distribution.</span>
+<span class="s"> 3) Neither the name of the National Renewable Energy Lab nor the names of its </span>
+<span class="s">    contributors may be used to endorse or promote products derived from this </span>
+<span class="s">    software without specific prior written permission.</span>
+<span class="s">    </span>
+<span class="s">THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot; AND</span>
+<span class="s">ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED</span>
+<span class="s">WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE</span>
+<span class="s">DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR</span>
+<span class="s">ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES</span>
+<span class="s">(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;</span>
+<span class="s">LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON</span>
+<span class="s">ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT</span>
+<span class="s">(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS</span>
+<span class="s">SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.&quot;&quot;&quot;</span>
+
+<span class="c">## ===== History ====</span>
+<span class="c">#  [Current]             version     date       time     who     Comments</span>
+<span class="c">#                        -------  ----------    ----- ---------- ------------- </span>
+<span class="n">__version__</span><span class="p">,</span> <span class="n">__date__</span> <span class="o">=</span> <span class="s">&quot;0.9.2b&quot;</span><span class="p">,</span><span class="s">&quot;2013-04-29&quot;</span>  <span class="c">#22:20   BryanP   Move __init__ to _BaseLink. Master retry Init until slave ready</span>
+<span class="c"># [Older, in reverse order]</span>
+<span class="c"># version      date       time     who     Comments</span>
+<span class="c"># -------   ----------    ----- ---------- --------------------------------------- </span>
+<span class="c">#  0.9.1b   2013-04-28    22:20   BryanP   Corrected slave timing &amp; start/term sequencing. Rename gld_tcp_udp to raw_xchg with *Xchg*</span>
+<span class="c">#  0.9.0b   2013-04-27    02:00   BryanP   Full State Machine Functionality</span>
+<span class="c">#  0.1.0a   2013-04-25    17:20   BryanP   Initial Code</span>
+
+<span class="c">#Standard Library imports</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">timeit</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">datetime</span> <span class="kn">as</span> <span class="nn">dt</span>
+<span class="kn">import</span> <span class="nn">random</span>
+
+<span class="c">#local imports</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">raw_xchg</span>
+
+<span class="c">#===============================================================================</span>
+<span class="c"># Module level constants</span>
+<span class="c">#===============================================================================</span>
+
+
+<span class="c">#===============================================================================</span>
+<span class="c"># Error (Exception) Class definitions</span>
+<span class="c">#===============================================================================</span>
+<div class="viewcode-block" id="JsonLinkError"><a class="viewcode-back" href="../../../json_link.json_link.html#json_link.json_link.json_link.JsonLinkError">[docs]</a><span class="k">class</span> <span class="nc">JsonLinkError</span><span class="p">(</span><span class="ne">IOError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base class for exceptions in the gld_json_link module&quot;&quot;&quot;</span>
+    <span class="n">code</span> <span class="o">=</span> <span class="mi">2000</span>
+    </div>
+<div class="viewcode-block" id="JsonLinkTimeoutError"><a class="viewcode-back" href="../../../json_link.json_link.html#json_link.json_link.json_link.JsonLinkTimeoutError">[docs]</a><span class="k">class</span> <span class="nc">JsonLinkTimeoutError</span><span class="p">(</span><span class="n">JsonLinkError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Timeout waiting for reply&quot;&quot;&quot;</span>
+    <span class="n">code</span> <span class="o">=</span> <span class="n">JsonLinkError</span><span class="o">.</span><span class="n">code</span> <span class="o">+</span> <span class="mi">1</span>
+</div>
+<div class="viewcode-block" id="JsonLinkNoDataError"><a class="viewcode-back" href="../../../json_link.json_link.html#json_link.json_link.json_link.JsonLinkNoDataError">[docs]</a><span class="k">class</span> <span class="nc">JsonLinkNoDataError</span><span class="p">(</span><span class="n">JsonLinkError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Expected data is empty&quot;&quot;&quot;</span>
+    <span class="n">code</span> <span class="o">=</span> <span class="n">JsonLinkError</span><span class="o">.</span><span class="n">code</span> <span class="o">+</span> <span class="mi">2</span>
+</div>
+<div class="viewcode-block" id="JsonLinkBadWrapperError"><a class="viewcode-back" href="../../../json_link.json_link.html#json_link.json_link.json_link.JsonLinkBadWrapperError">[docs]</a><span class="k">class</span> <span class="nc">JsonLinkBadWrapperError</span><span class="p">(</span><span class="n">JsonLinkError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Malformed wrapper&quot;&quot;&quot;</span>
+    <span class="n">code</span> <span class="o">=</span> <span class="n">JsonLinkError</span><span class="o">.</span><span class="n">code</span> <span class="o">+</span> <span class="mi">3</span>
+</div>
+<div class="viewcode-block" id="JsonLinkRemoteError"><a class="viewcode-back" href="../../../json_link.json_link.html#json_link.json_link.json_link.JsonLinkRemoteError">[docs]</a><span class="k">class</span> <span class="nc">JsonLinkRemoteError</span><span class="p">(</span><span class="n">JsonLinkError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;received a (reasonably) well formed error packet from the remote machine&quot;&quot;&quot;</span>
+    <span class="n">code</span> <span class="o">=</span> <span class="n">JsonLinkError</span><span class="o">.</span><span class="n">code</span> <span class="o">+</span> <span class="mi">4</span>
+</div>
+<div class="viewcode-block" id="JsonLinkOldMsgError"><a class="viewcode-back" href="../../../json_link.json_link.html#json_link.json_link.json_link.JsonLinkOldMsgError">[docs]</a><span class="k">class</span> <span class="nc">JsonLinkOldMsgError</span><span class="p">(</span><span class="n">JsonLinkError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Received a message with id older than a previously processed message&quot;&quot;&quot;</span>
+    <span class="n">code</span> <span class="o">=</span> <span class="n">JsonLinkError</span><span class="o">.</span><span class="n">code</span> <span class="o">+</span> <span class="mi">5</span>
+</div>
+<div class="viewcode-block" id="JsonLinkActionMismatchError"><a class="viewcode-back" href="../../../json_link.json_link.html#json_link.json_link.json_link.JsonLinkActionMismatchError">[docs]</a><span class="k">class</span> <span class="nc">JsonLinkActionMismatchError</span><span class="p">(</span><span class="n">JsonLinkError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Incorrect handshaking order&quot;&quot;&quot;</span>
+    <span class="n">code</span> <span class="o">=</span> <span class="n">JsonLinkError</span><span class="o">.</span><span class="n">code</span> <span class="o">+</span> <span class="mi">6</span>
+
+<span class="c">#===============================================================================</span>
+<span class="c"># _BaseLink (module internal)</span>
+<span class="c">#===============================================================================</span></div>
+<span class="k">class</span> <span class="nc">_BaseLink</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Base class for JSON link subclasses&quot;&quot;&quot;</span>
+    
+    <span class="c">#internal state machine</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="s">&#39;beginState&#39;</span>
+    
+    <span class="n">in_schema</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">out_schema</span> <span class="o">=</span> <span class="bp">None</span>
+    
+    <span class="c">#handshaking</span>
+    <span class="n">msg_num</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">remote_msg_num</span> <span class="o">=</span> <span class="mi">0</span>
+    
+    <span class="n">response_str_out</span> <span class="o">=</span> <span class="bp">None</span>     <span class="c">#override in subclass</span>
+    <span class="n">response_str_in</span> <span class="o">=</span> <span class="bp">None</span>     <span class="c">#override in subclass</span>
+    <span class="n">retries</span> <span class="o">=</span> <span class="mi">0</span>
+    
+    <span class="c">#low level data exchange object</span>
+    <span class="n">_xchg</span> <span class="o">=</span> <span class="bp">None</span>
+        
+    <span class="c">#Options</span>
+    <span class="n">opt_verbose</span> <span class="o">=</span> <span class="bp">True</span>
+    
+    <span class="n">ignore_old</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">ignore_dup</span> <span class="o">=</span> <span class="bp">False</span>
+    
+    <span class="c">#Track link statistics</span>
+    <span class="n">num_err</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">num_tx</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">num_rx</span> <span class="o">=</span> <span class="mi">0</span>
+    
+    <span class="c">#Internal process (Run) timing information</span>
+    <span class="n">_run_end_time</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">run_timestep</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="n">run_delay</span> <span class="o">=</span> <span class="mf">0.1</span>
+    <span class="n">run_max</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">run_count</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run_timestep</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">run_delay</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">run_max</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">Xchg_args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Constructor&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_timestep</span> <span class="o">=</span> <span class="n">run_timestep</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_delay</span> <span class="o">=</span> <span class="n">run_delay</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_max</span> <span class="o">=</span> <span class="n">run_max</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">_setupOurXchg</span><span class="p">(</span><span class="o">**</span><span class="n">Xchg_args</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_setupOurXchg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">Xchg_args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Must be implemented by subclasses to configure their raw exchange layer&quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+    
+    <span class="k">def</span> <span class="nf">go</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Method to beginState link execution&quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">wrapJson</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">data_name</span><span class="o">=</span><span class="s">&#39;data&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;encapsulate data (typically a nested data dictionary) in side a JSON link wrapper&quot;&quot;&quot;</span>
+        
+        <span class="c">#build message</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">response_str_out</span><span class="p">:</span><span class="n">action</span><span class="p">}</span>
+        <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">msg</span><span class="p">[</span><span class="n">data_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="n">msg</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">msg_num</span>
+        
+        <span class="c">#convert to JSON string</span>
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">unwrapJson</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">data_name</span><span class="o">=</span><span class="s">&#39;data&#39;</span><span class="p">,</span> <span class="n">ignore_msg_num</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;check JSON link wrapper and decode data (typically a nested data dictionary)&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">msg</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">JsonLinkNoDataError</span><span class="p">(</span><span class="s">&#39;No Data received&#39;</span><span class="p">)</span>
+        
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">dict</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">JsonLinkBadWrapperError</span><span class="p">(</span><span class="s">&#39;JSON Message is not a dictionary object&#39;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="s">&#39;error&#39;</span> <span class="ow">in</span> <span class="n">msg</span><span class="p">:</span>
+            <span class="n">err_msg</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+            <span class="k">if</span> <span class="s">&#39;params&#39;</span> <span class="ow">in</span> <span class="n">msg</span><span class="p">[</span><span class="s">&#39;error&#39;</span><span class="p">]:</span>
+                <span class="n">err_msg</span> <span class="o">+=</span> <span class="n">msg</span><span class="p">[</span><span class="s">&#39;error&#39;</span><span class="p">][</span><span class="s">&#39;params&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="s">&#39;code&#39;</span> <span class="ow">in</span> <span class="n">msg</span><span class="p">[</span><span class="s">&#39;error&#39;</span><span class="p">]:</span>
+                <span class="n">err_msg</span> <span class="o">+=</span> <span class="s">&quot; [code=</span><span class="si">%s</span><span class="s">]&quot;</span><span class="o">%</span><span class="n">msg</span><span class="p">[</span><span class="s">&#39;error&#39;</span><span class="p">][</span><span class="s">&#39;code&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">err_msg</span> <span class="o">==</span> <span class="s">&#39;&#39;</span><span class="p">:</span>
+                <span class="n">err_msg</span> <span class="o">=</span> <span class="s">&#39;Remote Error Received, no message param or code&#39;</span>  
+            <span class="k">raise</span> <span class="n">JsonLinkRemoteError</span><span class="p">(</span><span class="n">err_msg</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">ignore_msg_num</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="s">&#39;id&#39;</span> <span class="ow">in</span> <span class="n">msg</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">JsonLinkBadWrapperError</span><span class="p">(</span><span class="s">&#39;Missing id field in JSON message&#39;</span><span class="p">)</span>
+    
+            <span class="c"># Process id (sequence number)</span>
+            <span class="n">msg_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">msg</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">])</span> 
+            <span class="k">if</span> <span class="n">msg_id</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">remote_msg_num</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ignore_old</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+                        <span class="k">print</span><span class="p">(</span><span class="s">&#39;WARNING: Ignoring packet with old message id </span><span class="si">%d</span><span class="s"> (expected </span><span class="si">%d</span><span class="s">)&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">msg_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">remote_msg_num</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+                    <span class="k">return</span> <span class="bp">None</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">JsonLinkOldMsgError</span><span class="p">(</span><span class="s">&#39;A newer JSON message has been received (id=</span><span class="si">%d</span><span class="s"> expected=</span><span class="si">%d</span><span class="s">)&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">msg_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">remote_msg_num</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">msg_id</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">remote_msg_num</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ignore_dup</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+                        <span class="k">print</span><span class="p">(</span><span class="s">&#39;WARNING: Ignoring duplicate message (id=</span><span class="si">%d</span><span class="s">)&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">msg_id</span><span class="p">))</span>
+                    <span class="k">return</span> <span class="bp">None</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">JsonLinkOldMsgError</span><span class="p">(</span><span class="s">&#39;Duplicate message (id=</span><span class="si">%d</span><span class="s">)&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">msg_id</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">remote_msg_num</span> <span class="o">=</span> <span class="n">msg_id</span>
+
+        <span class="c">#check action/response_str</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">response_str_in</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">msg</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">JsonLinkBadWrapperError</span><span class="p">(</span><span class="s">&#39;Wrong type of JSON message (missing </span><span class="si">%s</span><span class="s">)&#39;</span><span class="o">%</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">response_str_in</span><span class="p">))</span>
+        
+        <span class="k">if</span> <span class="n">msg</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">response_str_in</span><span class="p">]</span> <span class="o">!=</span> <span class="n">action</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">msg</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">response_str_in</span><span class="p">],</span> <span class="bp">None</span><span class="p">)</span>
+
+        
+        <span class="k">if</span> <span class="n">data_name</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">action</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">data_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">msg</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">JsonLinkBadWrapperError</span><span class="p">(</span><span class="s">&#39;JSON Message missing data payload (</span><span class="si">%s</span><span class="s">)&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">data_name</span><span class="p">))</span>
+        
+        <span class="k">return</span> <span class="p">(</span><span class="n">action</span><span class="p">,</span> <span class="n">msg</span><span class="p">[</span><span class="n">data_name</span><span class="p">])</span>
+        
+
+    <span class="k">def</span> <span class="nf">tx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">increment</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Transmit preformatted data message&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_xchg</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">increment</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">msg_num</span> <span class="o">+=</span> <span class="mi">1</span>
+    
+
+    <span class="k">def</span> <span class="nf">rx</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Wait for and receive data&quot;&quot;&quot;</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xchg</span><span class="o">.</span><span class="n">receive</span><span class="p">()</span>
+        
+        <span class="k">return</span> <span class="n">msg</span>
+
+    <span class="k">def</span> <span class="nf">handleAltAction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">data_name</span><span class="o">=</span><span class="s">&#39;data&#39;</span><span class="p">,</span> <span class="n">out_data</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">prompt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">_actual_action</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unwrapJson</span><span class="p">(</span><span class="n">action</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">data_name</span><span class="p">,</span> <span class="n">ignore_msg_num</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">prompt</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">print</span><span class="p">(</span><span class="s">&#39;Rx </span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">action</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span> <span class="n">data</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">print</span><span class="p">(</span><span class="s">&#39;  </span><span class="si">%s%s</span><span class="s">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span><span class="n">data</span><span class="p">))</span>
+
+        <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wrapJson</span><span class="p">(</span><span class="n">action</span><span class="p">,</span> <span class="n">out_data</span><span class="p">,</span> <span class="n">data_name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tx</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;Tx </span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">action</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span> <span class="n">out_data</span><span class="p">))</span>
+        
+        <span class="k">return</span> <span class="n">data</span>
+
+    <span class="k">def</span> <span class="nf">sendMsg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">data_name</span><span class="o">=</span><span class="s">&#39;data&#39;</span><span class="p">,</span> 
+                <span class="n">raw_json</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">raw_packet</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Helper function to send general messages&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">raw_packet</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_xchg</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">elif</span> <span class="n">raw_json</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tx</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wrapJson</span><span class="p">(</span><span class="n">action</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">data_name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+                <span class="k">print</span><span class="p">(</span><span class="s">&#39;Tx </span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">action</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span> <span class="n">data_name</span><span class="p">,</span> <span class="n">data</span><span class="p">))</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">tx</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">raw_xchg</span><span class="o">.</span><span class="n">RawXchgCantSendError</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">return</span> <span class="bp">True</span>
+
+<span class="c">#------- Simple Message functions. Designed to be overloaded for fault injection</span>
+    <span class="k">def</span> <span class="nf">sendInit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Send INIT message&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sendMsg</span><span class="p">(</span><span class="s">&#39;init&#39;</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="s">&#39;params&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">sendInSchema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Send INPUT message&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sendMsg</span><span class="p">(</span><span class="s">&#39;input&#39;</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="s">&#39;schema&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">sendOutSchema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Send OUTPUT message&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sendMsg</span><span class="p">(</span><span class="s">&#39;output&#39;</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="s">&#39;schema&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">sendStart</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Send START message&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sendMsg</span><span class="p">(</span><span class="s">&#39;start&#39;</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">sendSync</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Send SYNC message&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sendMsg</span><span class="p">(</span><span class="s">&#39;sync&#39;</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">sendTerm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Send TERM message&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sendMsg</span><span class="p">(</span><span class="s">&#39;term&#39;</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">runWaitForTimeStep</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">while</span> <span class="n">timeit</span><span class="o">.</span><span class="n">default_timer</span><span class="p">()</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_end_time</span><span class="p">:</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">run_timestep</span><span class="o">/</span><span class="mi">1000</span><span class="p">)</span>
+
+        <span class="c">#Find next time period end.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_run_end_time</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_timestep</span>
+        
+        <span class="c">#Ensure that the next time end is in the future and warn if missed step</span>
+        <span class="k">while</span> <span class="n">timeit</span><span class="o">.</span><span class="n">default_timer</span><span class="p">()</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_end_time</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+                <span class="k">print</span><span class="p">(</span><span class="s">&#39;Oops: that run step was too long. Skipping a step to resync&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_run_end_time</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_timestep</span>
+
+    <span class="k">def</span> <span class="nf">endState</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_state</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;endState state&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">END</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
+            <span class="nb">exit</span><span class="p">()</span>
+
+<span class="c">#===============================================================================</span>
+<span class="c"># MasterLink</span>
+<span class="c">#===============================================================================</span>
+<div class="viewcode-block" id="MasterLink"><a class="viewcode-back" href="../../../json_link.json_link.html#json_link.json_link.json_link.MasterLink">[docs]</a><span class="k">class</span> <span class="nc">MasterLink</span><span class="p">(</span><span class="n">_BaseLink</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Implements a GridLAB-D JSON Link Master/client state machine&quot;&quot;&quot;</span>
+    
+    <span class="n">response_str_out</span> <span class="o">=</span> <span class="s">&#39;method&#39;</span>
+    <span class="n">response_str_in</span> <span class="o">=</span> <span class="s">&#39;result&#39;</span>
+
+    <span class="n">description_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;application&#39;</span><span class="p">:</span><span class="s">&quot;Generic_JSON_Link_Master&quot;</span><span class="p">,</span> 
+                        <span class="s">&#39;version&#39;</span><span class="p">:</span><span class="n">__version__</span><span class="p">,</span> 
+                        <span class="s">&#39;modelname&#39;</span><span class="p">:</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                        <span class="p">}</span>
+    <span class="n">in_schema</span> <span class="o">=</span> <span class="p">{</span><span class="s">&quot;clock&quot;</span><span class="p">:</span> <span class="s">&quot;timestamp global.clock&quot;</span><span class="p">,</span>
+                 <span class="s">&quot;y0&quot;</span><span class="p">:</span> <span class="s">&quot;double test_0.y&quot;</span><span class="p">,</span>
+                 <span class="s">&quot;y1&quot;</span><span class="p">:</span> <span class="s">&quot;double test_1.y&quot;</span>
+                 <span class="p">}</span>
+    <span class="n">out_schema</span> <span class="o">=</span> <span class="p">{</span><span class="s">&quot;clock&quot;</span><span class="p">:</span> <span class="s">&quot;timestamp global.clock&quot;</span><span class="p">,</span>
+                  <span class="s">&quot;x0&quot;</span><span class="p">:</span> <span class="s">&quot;random test_0.x&quot;</span><span class="p">,</span>
+                  <span class="s">&quot;x1&quot;</span><span class="p">:</span> <span class="s">&quot;random test_1.y&quot;</span>
+                  <span class="p">}</span>
+
+    <span class="n">send_in_schema</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="n">send_out_schema</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="n">remote_data</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">local_data</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="n">_run_send</span> <span class="o">=</span> <span class="bp">True</span>
+    
+    <span class="n">INIT_RECHECK_DELAY</span> <span class="o">=</span> <span class="mi">1</span> <span class="c">#Additional time (beyond timeout) to wait before resending Init </span>
+    
+    <span class="k">def</span> <span class="nf">_setupOurXchg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">Xchg_args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Setup the raw MASTER data exchange&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_xchg</span> <span class="o">=</span> <span class="n">raw_xchg</span><span class="o">.</span><span class="n">MasterXchg</span><span class="p">(</span><span class="o">**</span><span class="n">Xchg_args</span><span class="p">)</span>
+        
+
+<div class="viewcode-block" id="MasterLink.go"><a class="viewcode-back" href="../../../json_link.json_link.html#json_link.json_link.json_link.MasterLink.go">[docs]</a>    <span class="k">def</span> <span class="nf">go</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Begin JSON link Master state machine execution&quot;&quot;&quot;</span>
+        <span class="n">old_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span>
+        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s">&#39;beginState&#39;</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">beginState</span><span class="p">(</span><span class="n">old_state</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s">&#39;waitInitReplyState&#39;</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">waitInitReplyState</span><span class="p">(</span><span class="n">old_state</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s">&#39;decideInSchema&#39;</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">decideInSchema</span><span class="p">(</span><span class="n">old_state</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s">&#39;waitInSchemaReplyState&#39;</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">waitInSchemaReplyState</span><span class="p">(</span><span class="n">old_state</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s">&#39;decideOutSchema&#39;</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">decideOutSchema</span><span class="p">(</span><span class="n">old_state</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s">&#39;waitOutSchemaReplyState&#39;</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">waitOutSchemaReplyState</span><span class="p">(</span><span class="n">old_state</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s">&#39;waitStartReplyState&#39;</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">waitStartReplyState</span><span class="p">(</span><span class="n">old_state</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s">&#39;runState&#39;</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runState</span><span class="p">(</span><span class="n">old_state</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s">&#39;waitTermReplyState&#39;</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">waitTermReplyState</span><span class="p">(</span><span class="n">old_state</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s">&#39;endState&#39;</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">endState</span><span class="p">(</span><span class="n">old_state</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">JsonLinkError</span><span class="p">(</span><span class="s">&#39;Invalid state </span><span class="si">%s</span><span class="s">&#39;</span><span class="o">%</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">)</span>
+
+            <span class="n">old_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span>
+            <span class="k">if</span> <span class="n">new_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">new_state</span>
+</div>
+<div class="viewcode-block" id="MasterLink.beginState"><a class="viewcode-back" href="../../../json_link.json_link.html#json_link.json_link.json_link.MasterLink.beginState">[docs]</a>    <span class="k">def</span> <span class="nf">beginState</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_state</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;beginState state&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;BEGIN&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_xchg</span><span class="o">.</span><span class="n">setupXchg</span><span class="p">()</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">msg_num</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sendInit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">description_dict</span><span class="p">):</span>
+            <span class="k">return</span> <span class="s">&#39;waitInitReplyState&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span>
+</div>
+<div class="viewcode-block" id="MasterLink.waitInitReplyState"><a class="viewcode-back" href="../../../json_link.json_link.html#json_link.json_link.json_link.MasterLink.waitInitReplyState">[docs]</a>    <span class="k">def</span> <span class="nf">waitInitReplyState</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_state</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;waitInitReplyState state&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span> <span class="ow">and</span> <span class="n">old_state</span> <span class="o">!=</span> <span class="s">&#39;waitInitReplyState&#39;</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">STATE: waitInitReplyState...&#39;</span><span class="p">)</span>
+        
+        <span class="n">msg</span> <span class="o">=</span> <span class="bp">None</span>
+                    
+        <span class="c">#Keep trying to send the Init message until we get a response</span>
+        <span class="k">while</span> <span class="n">msg</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rx</span><span class="p">()</span>
+            <span class="k">except</span> <span class="n">raw_xchg</span><span class="o">.</span><span class="n">RawXchgError</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+                    <span class="k">print</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">No Response. Retrying INIT. Has the slave been started?&#39;</span><span class="p">)</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">INIT_RECHECK_DELAY</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">sendInit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">description_dict</span><span class="p">):</span>
+                    <span class="k">continue</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">actual_action</span><span class="p">,</span> <span class="n">remote_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unwrapJson</span><span class="p">(</span><span class="s">&#39;init&#39;</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="s">&#39;params&#39;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="n">JsonLinkError</span><span class="p">,</span> <span class="n">raw_xchg</span><span class="o">.</span><span class="n">RawXchgError</span><span class="p">)</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;ERROR: </span><span class="si">%s</span><span class="s"> [code=</span><span class="si">%d</span><span class="s">]&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">err</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">err</span><span class="o">.</span><span class="n">code</span><span class="p">))</span>
+            <span class="k">return</span> <span class="s">&#39;endState&#39;</span>
+
+        <span class="k">if</span> <span class="n">actual_action</span> <span class="o">==</span> <span class="s">&#39;error&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sendTerm</span><span class="p">({})</span>
+            <span class="k">return</span> <span class="s">&#39;endState&#39;</span>
+        <span class="k">elif</span> <span class="n">actual_action</span> <span class="o">!=</span> <span class="s">&#39;init&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sendInit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">description_dict</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">None</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&quot;--&gt; Linked with REMOTE: </span><span class="si">%s</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">%</span><span class="n">remote_info</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="s">&#39;decideInSchema&#39;</span>
+</div>
+<div class="viewcode-block" id="MasterLink.decideInSchema"><a class="viewcode-back" href="../../../json_link.json_link.html#json_link.json_link.json_link.MasterLink.decideInSchema">[docs]</a>    <span class="k">def</span> <span class="nf">decideInSchema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_state</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;decideInSchema state&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span> <span class="ow">and</span> <span class="n">old_state</span> <span class="o">!=</span> <span class="s">&#39;decideInSchema&#39;</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">STATE: decideInSchema...&#39;</span><span class="p">)</span>
+            
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_in_schema</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sendInSchema</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">in_schema</span><span class="p">):</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+                    <span class="k">print</span><span class="p">(</span><span class="s">&#39;--&gt; INPUT Schema sent: </span><span class="si">%s</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">%</span><span class="bp">self</span><span class="o">.</span><span class="n">in_schema</span><span class="p">)</span>
+                <span class="k">return</span> <span class="s">&#39;waitInSchemaReplyState&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s">&#39;decideOutSchemaState&#39;</span>
+</div>
+<div class="viewcode-block" id="MasterLink.waitInSchemaReplyState"><a class="viewcode-back" href="../../../json_link.json_link.html#json_link.json_link.json_link.MasterLink.waitInSchemaReplyState">[docs]</a>    <span class="k">def</span> <span class="nf">waitInSchemaReplyState</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_state</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;waitInSchemaReplyState state&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span> <span class="ow">and</span> <span class="n">old_state</span> <span class="o">!=</span> <span class="s">&#39;waitInSchemaReplyState&#39;</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">STATE: waitInSchemaReplyState...&#39;</span><span class="p">)</span>
+        
+        <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rx</span><span class="p">()</span>
+        
+        <span class="k">if</span> <span class="n">msg</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sendTerm</span><span class="p">({})</span>
+            <span class="k">return</span> <span class="s">&#39;endState&#39;</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">actual_action</span><span class="p">,</span> <span class="n">_data_in</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unwrapJson</span><span class="p">(</span><span class="s">&#39;input&#39;</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="n">JsonLinkError</span><span class="p">,</span> <span class="n">raw_xchg</span><span class="o">.</span><span class="n">RawXchgError</span><span class="p">)</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;ERROR: </span><span class="si">%s</span><span class="s"> [code=</span><span class="si">%d</span><span class="s">]&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">err</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">err</span><span class="o">.</span><span class="n">code</span><span class="p">))</span>
+            <span class="k">return</span> <span class="s">&#39;endState&#39;</span>
+
+        <span class="k">if</span> <span class="n">actual_action</span> <span class="o">==</span> <span class="s">&#39;error&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sendTerm</span><span class="p">({})</span>
+            <span class="k">return</span> <span class="s">&#39;endState&#39;</span>
+        <span class="k">elif</span> <span class="n">actual_action</span> <span class="o">!=</span> <span class="s">&#39;input&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sendInSchema</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">in_schema</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">None</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&quot;--&gt; INPUT schema Accepted</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="s">&#39;decideOutSchema&#39;</span>
+</div>
+<div class="viewcode-block" id="MasterLink.decideOutSchema"><a class="viewcode-back" href="../../../json_link.json_link.html#json_link.json_link.json_link.MasterLink.decideOutSchema">[docs]</a>    <span class="k">def</span> <span class="nf">decideOutSchema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_state</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;decideOutSchema state&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span> <span class="ow">and</span> <span class="n">old_state</span> <span class="o">!=</span> <span class="s">&#39;decideOutSchema&#39;</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">STATE: decideOutSchema...&#39;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_out_schema</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sendOutSchema</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">out_schema</span><span class="p">):</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+                    <span class="k">print</span><span class="p">(</span><span class="s">&#39;--&gt; OUTPUT Schema sent: </span><span class="si">%s</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">%</span><span class="bp">self</span><span class="o">.</span><span class="n">out_schema</span><span class="p">)</span>
+                <span class="k">return</span> <span class="s">&#39;waitOutSchemaReplyState&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s">&#39;waitStartReply&#39;</span>
+</div>
+<div class="viewcode-block" id="MasterLink.waitOutSchemaReplyState"><a class="viewcode-back" href="../../../json_link.json_link.html#json_link.json_link.json_link.MasterLink.waitOutSchemaReplyState">[docs]</a>    <span class="k">def</span> <span class="nf">waitOutSchemaReplyState</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_state</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;waitOutSchemaReplyState state&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span> <span class="ow">and</span> <span class="n">old_state</span> <span class="o">!=</span> <span class="s">&#39;waitOutSchemaReplyState&#39;</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">STATE: waitOutSchemaReplyState...&#39;</span><span class="p">)</span>
+        
+        <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rx</span><span class="p">()</span>
+        
+        <span class="k">if</span> <span class="n">msg</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sendTerm</span><span class="p">({})</span>
+            <span class="k">return</span> <span class="s">&#39;endState&#39;</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">actual_action</span><span class="p">,</span> <span class="n">_data_in</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unwrapJson</span><span class="p">(</span><span class="s">&#39;output&#39;</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="n">JsonLinkError</span><span class="p">,</span> <span class="n">raw_xchg</span><span class="o">.</span><span class="n">RawXchgError</span><span class="p">)</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;ERROR: </span><span class="si">%s</span><span class="s"> [code=</span><span class="si">%d</span><span class="s">]&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">err</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">err</span><span class="o">.</span><span class="n">code</span><span class="p">))</span>
+            <span class="k">return</span> <span class="s">&#39;endState&#39;</span>
+
+        <span class="k">if</span> <span class="n">actual_action</span> <span class="o">==</span> <span class="s">&#39;error&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sendTerm</span><span class="p">({})</span>
+            <span class="k">return</span> <span class="s">&#39;endState&#39;</span>
+        <span class="k">elif</span> <span class="n">actual_action</span> <span class="o">!=</span> <span class="s">&#39;output&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sendOutSchema</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">in_schema</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">None</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&quot;--&gt; OUTPUT schema Accepted</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sendStart</span><span class="p">(</span><span class="n">dummyData</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">out_schema</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="s">&#39;waitStartReplyState&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+</div>
+<div class="viewcode-block" id="MasterLink.waitStartReplyState"><a class="viewcode-back" href="../../../json_link.json_link.html#json_link.json_link.json_link.MasterLink.waitStartReplyState">[docs]</a>    <span class="k">def</span> <span class="nf">waitStartReplyState</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_state</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;waitStartReplyState state&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span> <span class="ow">and</span> <span class="n">old_state</span> <span class="o">!=</span> <span class="s">&#39;waitStartReplyState&#39;</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">STATE: waitStartReplyState...&#39;</span><span class="p">)</span>
+        
+        <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rx</span><span class="p">()</span>
+        
+        <span class="k">if</span> <span class="n">msg</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sendTerm</span><span class="p">({})</span>
+            <span class="k">return</span> <span class="s">&#39;endState&#39;</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">actual_action</span><span class="p">,</span> <span class="n">data_in</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unwrapJson</span><span class="p">(</span><span class="s">&#39;start&#39;</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="s">&#39;data&#39;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="n">JsonLinkError</span><span class="p">,</span> <span class="n">raw_xchg</span><span class="o">.</span><span class="n">RawXchgError</span><span class="p">)</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;ERROR: </span><span class="si">%s</span><span class="s"> [code=</span><span class="si">%d</span><span class="s">]&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">err</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">err</span><span class="o">.</span><span class="n">code</span><span class="p">))</span>
+            <span class="k">return</span> <span class="s">&#39;endState&#39;</span>
+
+        <span class="k">if</span> <span class="n">actual_action</span> <span class="o">==</span> <span class="s">&#39;error&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sendTerm</span><span class="p">({})</span>
+            <span class="k">return</span> <span class="s">&#39;endState&#39;</span>
+        <span class="k">elif</span> <span class="n">actual_action</span> <span class="o">!=</span> <span class="s">&#39;start&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sendStart</span><span class="p">(</span><span class="n">dummyData</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">out_schema</span><span class="p">))</span>
+            <span class="k">return</span> <span class="bp">None</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">remote_data</span> <span class="o">=</span> <span class="n">data_in</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&quot;--&gt; Link STARTed. Remote Data=</span><span class="si">%s</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">%</span><span class="n">data_in</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="s">&#39;runState&#39;</span>
+</div>
+<div class="viewcode-block" id="MasterLink.runState"><a class="viewcode-back" href="../../../json_link.json_link.html#json_link.json_link.json_link.MasterLink.runState">[docs]</a>    <span class="k">def</span> <span class="nf">runState</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_state</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Run internal process and sync with remote&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span> <span class="ow">and</span> <span class="n">old_state</span> <span class="o">!=</span> <span class="s">&#39;runState&#39;</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">STATE: Run&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="s">&#39;runDoMaster&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_run_end_time</span> <span class="o">=</span> <span class="n">timeit</span><span class="o">.</span><span class="n">default_timer</span><span class="p">()</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_timestep</span>
+    
+        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span> <span class="c">#Note iteration count handled in runDoMaster</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s">&#39;runWaitSyncReplyState&#39;</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runWaitSyncReplyState</span><span class="p">(</span><span class="n">old_state</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s">&#39;runDoMaster&#39;</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runDoMaster</span><span class="p">(</span><span class="n">old_state</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">new_state</span>
+            
+            <span class="n">old_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span>
+            <span class="k">if</span> <span class="n">new_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">new_state</span>
+                
+        <span class="c">#Should never get here</span>
+        <span class="k">raise</span> <span class="n">JsonLinkError</span><span class="p">(</span><span class="s">&#39;INVALID STATE: Final runDoMaster should switch to runWaitTermReply&#39;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="MasterLink.runWaitSyncReplyState"><a class="viewcode-back" href="../../../json_link.json_link.html#json_link.json_link.json_link.MasterLink.runWaitSyncReplyState">[docs]</a>    <span class="k">def</span> <span class="nf">runWaitSyncReplyState</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_state</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;(Master) wait for remote to reply with sync data&quot;&quot;&quot;</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="bp">None</span>
+        
+        <span class="c"># Note: this while loop attempts to work around some common errors as</span>
+        <span class="c"># long as there is time left. It is NOT the main timing loop, which can</span>
+        <span class="c"># be found in runDoMaster</span>
+        <span class="k">while</span> <span class="n">timeit</span><span class="o">.</span><span class="n">default_timer</span><span class="p">()</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_end_time</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rx</span><span class="p">()</span>
+            <span class="k">except</span> <span class="n">raw_xchg</span><span class="o">.</span><span class="n">RawXchgError</span><span class="p">:</span>
+                <span class="c">#TODO: add a few other specific error</span>
+                <span class="k">continue</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">actual_action</span><span class="p">,</span> <span class="n">new_remote_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unwrapJson</span><span class="p">(</span><span class="s">&#39;sync&#39;</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="s">&#39;data&#39;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">JsonLinkRemoteError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                <span class="k">print</span><span class="p">(</span><span class="s">&#39;Rx ERROR: </span><span class="si">%s</span><span class="s">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">err</span><span class="p">))</span>
+                <span class="k">return</span> <span class="s">&#39;endState&#39;</span>
+            <span class="k">except</span> <span class="n">JsonLinkNoDataError</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="n">actual_action</span> <span class="o">!=</span> <span class="s">&#39;sync&#39;</span><span class="p">:</span>
+                <span class="c"># handle alternative message types</span>
+                <span class="k">if</span> <span class="n">actual_action</span> <span class="o">==</span> <span class="s">&#39;error&#39;</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="s">&#39;endState&#39;</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">print</span><span class="p">(</span><span class="s">&#39;Rx </span><span class="si">%s</span><span class="s"> packet: Ignoring&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">actual_action</span><span class="o">.</span><span class="n">upper</span><span class="p">()))</span>
+                    <span class="k">continue</span>
+
+            
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+                <span class="k">print</span><span class="p">(</span><span class="s">&#39;Rx SYNC: </span><span class="si">%s</span><span class="s">&#39;</span><span class="o">%</span><span class="n">new_remote_data</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">remote_data</span> <span class="o">=</span> <span class="n">new_remote_data</span>
+            <span class="k">break</span>
+        
+        <span class="k">return</span> <span class="s">&#39;runDoMaster&#39;</span>
+    </div>
+<div class="viewcode-block" id="MasterLink.runDoMaster"><a class="viewcode-back" href="../../../json_link.json_link.html#json_link.json_link.json_link.MasterLink.runDoMaster">[docs]</a>    <span class="k">def</span> <span class="nf">runDoMaster</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_state</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Internal Process for master. This version creates a simple set of 2 data points&quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_count</span> <span class="o">+=</span> <span class="mi">1</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;Remote Data: </span><span class="si">%s</span><span class="s">&#39;</span><span class="o">%</span><span class="bp">self</span><span class="o">.</span><span class="n">remote_data</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;Run (</span><span class="si">%d</span><span class="s">)...</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">%</span><span class="bp">self</span><span class="o">.</span><span class="n">run_count</span><span class="p">)</span>
+
+        <span class="c">#Do internal process, including simulated processing delay</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">run_delay</span><span class="p">)</span>
+        <span class="n">my_data</span> <span class="o">=</span> <span class="n">dummyData</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">out_schema</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">local_data</span> <span class="o">=</span> <span class="n">my_data</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;Local (master) Data: </span><span class="si">%s</span><span class="s">&#39;</span><span class="o">%</span><span class="n">my_data</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">runWaitForTimeStep</span><span class="p">()</span>
+
+        <span class="c">#Monitor number of runs and transition appropriately</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_count</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_max</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sendSync</span><span class="p">(</span><span class="n">my_data</span><span class="p">)</span>
+            <span class="k">return</span> <span class="s">&#39;runWaitSyncReplyState&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+                <span class="k">print</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">Run: Max Iteration Count (</span><span class="si">%d</span><span class="s">)&#39;</span><span class="o">%</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">run_count</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sendTerm</span><span class="p">(</span><span class="n">my_data</span><span class="p">)</span>            
+            <span class="k">return</span> <span class="s">&#39;waitTermReplyState&#39;</span>
+</div>
+<div class="viewcode-block" id="MasterLink.waitTermReplyState"><a class="viewcode-back" href="../../../json_link.json_link.html#json_link.json_link.json_link.MasterLink.waitTermReplyState">[docs]</a>    <span class="k">def</span> <span class="nf">waitTermReplyState</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_state</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;waitTermReplyState state&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span> <span class="ow">and</span> <span class="n">old_state</span> <span class="o">!=</span> <span class="s">&#39;waitTermReplyState&#39;</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">STATE: waitTermReplyState...&#39;</span><span class="p">)</span>
+        
+        <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rx</span><span class="p">()</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">_actual_action</span><span class="p">,</span> <span class="n">data_in</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unwrapJson</span><span class="p">(</span><span class="s">&#39;term&#39;</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="s">&#39;data&#39;</span><span class="p">)</span>
+        <span class="c">#TODO: Catch receipt of error packets</span>
+        <span class="k">except</span> <span class="p">(</span><span class="n">JsonLinkError</span><span class="p">,</span> <span class="n">raw_xchg</span><span class="o">.</span><span class="n">RawXchgError</span><span class="p">)</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;ERROR: </span><span class="si">%s</span><span class="s"> [code=</span><span class="si">%d</span><span class="s">]&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">err</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">err</span><span class="o">.</span><span class="n">code</span><span class="p">))</span>
+            <span class="k">return</span> <span class="s">&#39;endState&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">remote_data</span> <span class="o">=</span> <span class="n">data_in</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&quot;--&gt; Link TERMinated. Final Remote Data=</span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="n">data_in</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="s">&#39;endState&#39;</span>
+
+<span class="c">#===============================================================================</span>
+<span class="c"># SlaveLink</span>
+<span class="c">#===============================================================================</span></div></div>
+<div class="viewcode-block" id="SlaveLink"><a class="viewcode-back" href="../../../json_link.json_link.html#json_link.json_link.json_link.SlaveLink">[docs]</a><span class="k">class</span> <span class="nc">SlaveLink</span><span class="p">(</span><span class="n">_BaseLink</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Implements a GridLAB-D JSON Link Slave/server state machine&quot;&quot;&quot;</span>
+    
+    <span class="n">response_str_out</span> <span class="o">=</span> <span class="s">&#39;result&#39;</span>
+    <span class="n">response_str_in</span> <span class="o">=</span> <span class="s">&#39;method&#39;</span>
+    
+    <span class="n">remote_data</span> <span class="o">=</span> <span class="bp">None</span>
+    
+    <span class="n">_run_send</span> <span class="o">=</span> <span class="bp">True</span>
+    
+    <span class="n">in_schema</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">out_schema</span> <span class="o">=</span> <span class="bp">None</span>
+    
+    <span class="c">#Passed via the init link message, must include &#39;remote&#39;</span>
+    <span class="n">description_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;remote&#39;</span><span class="p">:</span><span class="s">&quot;Generic GridLAB-D Slave Link&quot;</span><span class="p">,</span> <span class="s">&#39;version&#39;</span><span class="p">:</span><span class="n">__version__</span><span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">_setupOurXchg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">Xchg_args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Setup the raw Slave data exchange&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_xchg</span> <span class="o">=</span> <span class="n">raw_xchg</span><span class="o">.</span><span class="n">SlaveXchg</span><span class="p">(</span><span class="o">**</span><span class="n">Xchg_args</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SlaveLink.go"><a class="viewcode-back" href="../../../json_link.json_link.html#json_link.json_link.json_link.SlaveLink.go">[docs]</a>    <span class="k">def</span> <span class="nf">go</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Begin JSON link Slave state machine execution&quot;&quot;&quot;</span>
+        <span class="n">old_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span>
+        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s">&#39;beginState&#39;</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">beginState</span><span class="p">(</span><span class="n">old_state</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s">&#39;preInitState&#39;</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">preInitState</span><span class="p">(</span><span class="n">old_state</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s">&#39;waitStartState&#39;</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">waitStartState</span><span class="p">(</span><span class="n">old_state</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s">&#39;runState&#39;</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runState</span><span class="p">(</span><span class="n">old_state</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s">&#39;endState&#39;</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">endState</span><span class="p">(</span><span class="n">old_state</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">JsonLinkError</span><span class="p">(</span><span class="s">&#39;Invalid state </span><span class="si">%s</span><span class="s">&#39;</span><span class="o">%</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">)</span>
+
+            <span class="n">old_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span>
+            <span class="k">if</span> <span class="n">new_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">new_state</span>
+</div>
+<div class="viewcode-block" id="SlaveLink.sendError"><a class="viewcode-back" href="../../../json_link.json_link.html#json_link.json_link.json_link.SlaveLink.sendError">[docs]</a>    <span class="k">def</span> <span class="nf">sendError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">code</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">err_str</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Helper function to send error messages&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;ERROR: </span><span class="si">%s</span><span class="s"> [code=</span><span class="si">%d</span><span class="s">]&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">err_str</span><span class="p">,</span><span class="n">code</span><span class="p">))</span>
+
+        <span class="n">err_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;code&#39;</span><span class="p">:</span><span class="n">code</span><span class="p">,</span> <span class="s">&#39;params&#39;</span><span class="p">:</span><span class="n">err_str</span><span class="p">}</span>
+        <span class="n">err_msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wrapJson</span><span class="p">(</span><span class="n">action</span><span class="p">,</span> <span class="n">err_dict</span><span class="p">,</span> <span class="s">&#39;error&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;Tx ERROR: </span><span class="si">%s</span><span class="s">&#39;</span><span class="o">%</span><span class="n">err_dict</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tx</span><span class="p">(</span><span class="n">err_msg</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">True</span>
+    </div>
+<div class="viewcode-block" id="SlaveLink.rxIgnoreErr"><a class="viewcode-back" href="../../../json_link.json_link.html#json_link.json_link.json_link.SlaveLink.rxIgnoreErr">[docs]</a>    <span class="k">def</span> <span class="nf">rxIgnoreErr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Robust message receive that ignores timeouts and other errors&quot;&quot;&quot;</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="k">while</span> <span class="ow">not</span> <span class="n">msg</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rx</span><span class="p">()</span>
+            <span class="k">except</span> <span class="n">raw_xchg</span><span class="o">.</span><span class="n">RawXchgError</span><span class="p">:</span>
+                <span class="k">continue</span>
+        <span class="k">return</span> <span class="n">msg</span>
+
+</div>
+<div class="viewcode-block" id="SlaveLink.beginState"><a class="viewcode-back" href="../../../json_link.json_link.html#json_link.json_link.json_link.SlaveLink.beginState">[docs]</a>    <span class="k">def</span> <span class="nf">beginState</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_state</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;beginState state&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;BEGIN&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_xchg</span><span class="o">.</span><span class="n">setupXchg</span><span class="p">()</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">msg_num</span> <span class="o">+=</span> <span class="mi">1</span>
+        
+        <span class="k">return</span> <span class="s">&#39;preInitState&#39;</span>
+</div>
+<div class="viewcode-block" id="SlaveLink.preInitState"><a class="viewcode-back" href="../../../json_link.json_link.html#json_link.json_link.json_link.SlaveLink.preInitState">[docs]</a>    <span class="k">def</span> <span class="nf">preInitState</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_state</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;preInitState state&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span> <span class="ow">and</span> <span class="n">old_state</span> <span class="o">!=</span> <span class="s">&#39;preInitState&#39;</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">STATE: Pre-Init...&#39;</span><span class="p">)</span>
+
+        <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rxIgnoreErr</span><span class="p">()</span>
+            
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">actual_action</span><span class="p">,</span> <span class="n">remote_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unwrapJson</span><span class="p">(</span><span class="s">&#39;init&#39;</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="s">&#39;params&#39;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">JsonLinkOldMsgError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sendError</span><span class="p">(</span><span class="s">&#39;init&#39;</span><span class="p">,</span> <span class="n">err</span><span class="o">.</span><span class="n">code</span><span class="p">,</span> <span class="n">err</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">return</span> <span class="s">&#39;endState&#39;</span>
+
+        <span class="k">if</span> <span class="n">actual_action</span> <span class="o">!=</span> <span class="s">&#39;init&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sendError</span><span class="p">(</span><span class="s">&#39;init&#39;</span><span class="p">,</span> <span class="n">JsonLinkActionMismatchError</span><span class="o">.</span><span class="n">code</span><span class="p">,</span> <span class="s">&#39;Sequence Error, expecting init&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="s">&#39;endState&#39;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;Rx INIT remote info: </span><span class="si">%s</span><span class="s">&#39;</span><span class="o">%</span><span class="n">remote_info</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">sendInit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">description_dict</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="s">&#39;waitStartState&#39;</span>
+</div>
+<div class="viewcode-block" id="SlaveLink.waitStartState"><a class="viewcode-back" href="../../../json_link.json_link.html#json_link.json_link.json_link.SlaveLink.waitStartState">[docs]</a>    <span class="k">def</span> <span class="nf">waitStartState</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_state</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;waitStartState state&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span> <span class="ow">and</span> <span class="n">old_state</span> <span class="o">!=</span> <span class="s">&#39;waitStartState&#39;</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">STATE: Wait for Start (waitStartState)...&#39;</span><span class="p">)</span>        
+
+        <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rxIgnoreErr</span><span class="p">()</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">actual_action</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unwrapJson</span><span class="p">(</span><span class="s">&#39;start&#39;</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="s">&#39;data&#39;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="n">JsonLinkError</span><span class="p">,</span> <span class="n">raw_xchg</span><span class="o">.</span><span class="n">RawXchgError</span><span class="p">)</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sendError</span><span class="p">(</span><span class="s">&#39;start&#39;</span><span class="p">,</span> <span class="n">code</span><span class="o">=</span><span class="n">err</span><span class="o">.</span><span class="n">code</span><span class="p">,</span> <span class="n">err_str</span><span class="o">=</span><span class="n">err</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">return</span> <span class="s">&#39;endState&#39;</span>
+
+        <span class="k">if</span> <span class="n">actual_action</span> <span class="o">!=</span> <span class="s">&#39;start&#39;</span><span class="p">:</span>
+            <span class="c"># handle alternative message types</span>
+            <span class="k">if</span> <span class="n">actual_action</span> <span class="o">==</span> <span class="s">&#39;init&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">handleAltAction</span><span class="p">(</span><span class="s">&#39;init&#39;</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">data_name</span><span class="o">=</span><span class="s">&#39;params&#39;</span><span class="p">,</span> 
+                                     <span class="n">out_data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">description_dict</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">None</span>
+            <span class="k">elif</span> <span class="n">actual_action</span> <span class="o">==</span> <span class="s">&#39;input&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">in_schema</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handleAltAction</span><span class="p">(</span><span class="s">&#39;input&#39;</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">data_name</span><span class="o">=</span><span class="s">&#39;schema&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+                    <span class="k">print</span><span class="p">(</span><span class="s">&#39;--&gt; Storing INPUT SCHEMA: </span><span class="si">%s</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">%</span><span class="bp">self</span><span class="o">.</span><span class="n">in_schema</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">None</span>
+            <span class="k">elif</span> <span class="n">actual_action</span> <span class="o">==</span> <span class="s">&#39;output&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">out_schema</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handleAltAction</span><span class="p">(</span><span class="s">&#39;output&#39;</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">data_name</span><span class="o">=</span><span class="s">&#39;schema&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+                    <span class="k">print</span><span class="p">(</span><span class="s">&#39;--&gt; Storing OUTPUT SCHEMA: </span><span class="si">%s</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">%</span><span class="bp">self</span><span class="o">.</span><span class="n">out_schema</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">None</span>
+            <span class="k">elif</span> <span class="n">actual_action</span> <span class="o">==</span> <span class="s">&#39;term&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">handleAltAction</span><span class="p">(</span><span class="s">&#39;term&#39;</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+                <span class="k">return</span> <span class="s">&#39;endState&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">sendError</span><span class="p">(</span><span class="s">&#39;start&#39;</span><span class="p">,</span> <span class="n">JsonLinkActionMismatchError</span><span class="o">.</span><span class="n">code</span><span class="p">,</span> 
+                               <span class="n">err_str</span><span class="o">=</span><span class="s">&#39;Sequence Error, not expecting </span><span class="si">%s</span><span class="s">&#39;</span><span class="o">%</span><span class="n">actual_action</span><span class="p">)</span>
+                <span class="k">return</span> <span class="s">&#39;endState&#39;</span>
+
+        <span class="c">#Setup our local run time interval</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_run_end_time</span> <span class="o">=</span> <span class="n">timeit</span><span class="o">.</span><span class="n">default_timer</span><span class="p">()</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_timestep</span>
+
+        <span class="c">#Store a copy of the remote data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">remote_data</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;Rx START: </span><span class="si">%s</span><span class="s">&#39;</span><span class="o">%</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="c">#Respond to start message with initial conditions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sendStart</span><span class="p">(</span><span class="n">dummyData</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">out_schema</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;--&gt; Link STARTed: </span><span class="si">%s</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">%</span><span class="n">data</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="s">&#39;runState&#39;</span>
+    </div>
+<div class="viewcode-block" id="SlaveLink.runState"><a class="viewcode-back" href="../../../json_link.json_link.html#json_link.json_link.json_link.SlaveLink.runState">[docs]</a>    <span class="k">def</span> <span class="nf">runState</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_state</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Run internal process and sync with remote&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span> <span class="ow">and</span> <span class="n">old_state</span> <span class="o">!=</span> <span class="s">&#39;runState&#39;</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">STATE: Run&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="s">&#39;runDoSlave&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_run_send</span> <span class="o">=</span> <span class="bp">False</span>
+    
+        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_count</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_max</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_max</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s">&#39;runWaitSyncState&#39;</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runWaitSyncState</span><span class="p">(</span><span class="n">old_state</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s">&#39;runDoSlave&#39;</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runDoSlave</span><span class="p">(</span><span class="n">old_state</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">new_state</span>
+            
+            <span class="n">old_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span>
+            <span class="k">if</span> <span class="n">new_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">new_state</span>
+                
+        <span class="k">return</span> <span class="s">&#39;endState&#39;</span>
+</div>
+<div class="viewcode-block" id="SlaveLink.runWaitSyncState"><a class="viewcode-back" href="../../../json_link.json_link.html#json_link.json_link.json_link.SlaveLink.runWaitSyncState">[docs]</a>    <span class="k">def</span> <span class="nf">runWaitSyncState</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_state</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;sync data with remote&quot;&quot;&quot;</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_run_send</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="n">retry</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">MAX_RETRY</span><span class="o">=</span><span class="mi">1</span>
+        
+        <span class="k">print</span><span class="p">()</span>
+
+        <span class="k">while</span> <span class="n">retry</span> <span class="o">&lt;</span> <span class="n">MAX_RETRY</span><span class="p">:</span>
+            <span class="n">retry</span> <span class="o">+=</span><span class="mi">1</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rx</span><span class="p">()</span>
+            <span class="k">except</span> <span class="n">raw_xchg</span><span class="o">.</span><span class="n">RawXchgError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">actual_action</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unwrapJson</span><span class="p">(</span><span class="s">&#39;sync&#39;</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="s">&#39;data&#39;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">JsonLinkError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">sendError</span><span class="p">(</span><span class="s">&#39;sync&#39;</span><span class="p">,</span> <span class="n">err</span><span class="o">.</span><span class="n">code</span><span class="p">,</span> <span class="n">err</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                    <span class="k">return</span> <span class="s">&#39;endState&#39;</span>
+
+            <span class="k">if</span> <span class="n">actual_action</span> <span class="o">!=</span> <span class="s">&#39;sync&#39;</span><span class="p">:</span>
+                <span class="c"># handle alternative message types</span>
+                <span class="k">if</span> <span class="n">actual_action</span> <span class="o">==</span> <span class="s">&#39;term&#39;</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">handleAltAction</span><span class="p">(</span><span class="s">&#39;term&#39;</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">out_data</span><span class="o">=</span><span class="n">dummyData</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">out_schema</span><span class="p">))</span>
+                    <span class="k">return</span> <span class="s">&#39;endState&#39;</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">sendError</span><span class="p">(</span><span class="n">actual_action</span><span class="p">,</span> <span class="n">JsonLinkActionMismatchError</span><span class="o">.</span><span class="n">code</span><span class="p">,</span> 
+                                   <span class="n">err_str</span><span class="o">=</span><span class="s">&#39;Sequence Error, not expecting </span><span class="si">%s</span><span class="s">&#39;</span><span class="o">%</span><span class="n">actual_action</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="s">&#39;endState&#39;</span>
+                
+            <span class="c">#Store our data</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">remote_data</span> <span class="o">=</span> <span class="n">data</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_run_send</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+                <span class="k">print</span><span class="p">(</span><span class="s">&#39;Rx SYNC: </span><span class="si">%s</span><span class="s">&#39;</span><span class="o">%</span><span class="n">data</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="s">&#39;runDoSlave&#39;</span>
+    </div>
+<div class="viewcode-block" id="SlaveLink.runDoSlave"><a class="viewcode-back" href="../../../json_link.json_link.html#json_link.json_link.json_link.SlaveLink.runDoSlave">[docs]</a>    <span class="k">def</span> <span class="nf">runDoSlave</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_state</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Internal Process for slave. This version simply echos the current data&quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;Remote Data: </span><span class="si">%s</span><span class="s">&#39;</span><span class="o">%</span><span class="bp">self</span><span class="o">.</span><span class="n">remote_data</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;Run (</span><span class="si">%d</span><span class="s">)...&#39;</span><span class="o">%</span><span class="bp">self</span><span class="o">.</span><span class="n">run_count</span><span class="p">)</span>
+        
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">run_delay</span><span class="p">)</span>
+        <span class="n">my_data</span> <span class="o">=</span> <span class="n">dummyData</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">in_schema</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;Local (slave) Data: </span><span class="si">%s</span><span class="s">&#39;</span><span class="o">%</span><span class="n">my_data</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_send</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sendSync</span><span class="p">(</span><span class="n">my_data</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">runWaitForTimeStep</span><span class="p">()</span>
+            
+        <span class="k">return</span> <span class="s">&#39;runWaitSyncState&#39;</span>
+
+<span class="c">#===============================================================================</span>
+<span class="c"># Related Functions</span>
+<span class="c">#===============================================================================</span></div></div>
+<div class="viewcode-block" id="dummyData"><a class="viewcode-back" href="../../../json_link.json_link.html#json_link.json_link.json_link.dummyData">[docs]</a><span class="k">def</span> <span class="nf">dummyData</span><span class="p">(</span><span class="n">schema</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Build up dummy json data package based on the provided schema&quot;&quot;&quot;</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">schema</span><span class="p">:</span>
+            <span class="n">f_type</span> <span class="o">=</span> <span class="n">schema</span><span class="p">[</span><span class="n">field</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">f_type</span> <span class="o">==</span>  <span class="s">&#39;timestamp&#39;</span><span class="p">:</span>
+                <span class="n">data</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">data</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">data</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">JSON Link 0.9.2a documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../json_link.html" >json_link.json_link</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan Palmintier.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
+    </div>
+  </body>
+</html>

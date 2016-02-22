@@ -29,10 +29,45 @@
 #include "globals.h"
 #include "complex.h"
 #include "lock.h"
+#include "platform.h"
 
 #ifdef WIN32
 #define finite _finite
 #define getpid _getpid
+#endif
+
+#ifdef __MINGW32__
+inline char* strtok_t(char *str, const char *delim, char **nextp)
+{
+    char *ret;
+
+    if (str == NULL)
+    {
+        str = *nextp;
+    }
+
+    str += strspn(str, delim);
+
+    if (*str == '\0')
+    {
+        return NULL;
+    }
+
+    ret = str;
+
+    str += strcspn(str, delim);
+
+    if (*str)
+    {
+        *str++ = '\0';
+    }
+
+    *nextp = str;
+
+    return ret;
+} 
+
+#define strtok_s strtok_t
 #endif
 
 static unsigned int *ur_state = NULL;

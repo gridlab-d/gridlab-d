@@ -68,7 +68,7 @@ private:
 	int push_market_frame(TIMESTAMP t1);
 	int check_next_market(TIMESTAMP t1);
 	TIMESTAMP pop_market_frame(TIMESTAMP t1);
-	void record_bid(OBJECT *from, double quantity, double real_price, BIDDERSTATE state);
+	void record_bid(char *from, double quantity, double real_price, BIDDERSTATE state);
 	void record_curve(double, double);
 	// variables
 	curve asks;			/**< demand curve */ 
@@ -78,7 +78,7 @@ private:
 protected:
 public:
 	int32 immediate;	// debug variable
-	char32 unit;		/**< unit of quantity (see unitfile.txt) */
+	GL_STRING(char32,unit);		/**< unit of quantity (see unitfile.txt) */
 	double dPeriod, dLatency;
 	TIMESTAMP period;		/**< time period of auction closing (s) */
 	TIMESTAMP latency;		/**< delay after closing before unit commitment (s) */
@@ -149,9 +149,9 @@ private:
 	FILE *curve_file;
 	int64 curve_log_count;
 public:
-	KEY submit(OBJECT *from, double quantity, double real_price, KEY key=-1, BIDDERSTATE state=BS_UNKNOWN);
+	int submit(char *from, double quantity, double real_price, KEY key, BIDDERSTATE state, bool rebid, int64 mkt_id);
 private:
-	KEY submit_nolock(OBJECT *from, double quantity, double real_price, KEY key=-1, BIDDERSTATE state=BS_UNKNOWN);
+	int submit_nolock(char *from, double quantity, double real_price, KEY key, BIDDERSTATE state, bool rebid, int64 mkt_id);
 public:
 	TIMESTAMP nextclear() const;
 private:

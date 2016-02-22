@@ -136,19 +136,18 @@
 #include "pthread.h"
 
 /** Set/get exit code **/
-static int exit_code = XC_SUCCESS;
 int exec_setexitcode(int xc)
 {
-	int oldxc = exit_code;
+	int oldxc = global_exit_code;
 	if ( oldxc!=XC_SUCCESS )
 		output_warning("new exitcode %d overwrites existing exitcode %d", xc,oldxc);
-	exit_code = xc;
+	global_exit_code = xc;
 	output_debug("exit code %d", xc);
 	return oldxc;
 }
 int exec_getexitcode(void)
 {
-	return exit_code;
+	return global_exit_code;
 }
 
 const char *exec_getexitcodestr(EXITCODE xc)
@@ -157,7 +156,7 @@ const char *exec_getexitcodestr(EXITCODE xc)
 	case XC_SUCCESS: /* per system(3) */ return "ok";
 	case XC_EXFAILED: /* exec/wait failure - per system(3) */ return "exec/wait failed";
 	case XC_ARGERR: /* error processing command line arguments */ return "bad command";
-	case XC_ENVERR: /* bad environment startup */ return "environment startup failed";
+	case XC_ENVERR: /* bad environment startup */ return "environment startup/load failed";
 	case XC_TSTERR: /* test failed */ return "test failed";
 	case XC_USRERR: /* user reject terms of use */ return "user rejected license terms";
 	case XC_RUNERR: /* simulation did not complete as desired */ return "simulation failed";
@@ -431,7 +430,8 @@ static void ss_do_object_sync(int thread, void *item)
 	struct sync_data *data = &thread_data->data[thread];
 	OBJECT *obj = (OBJECT *) item;
 	TIMESTAMP this_t;
-	
+	char b[64];
+
 	//printf("thread %d\t%d\t%s\n", thread, obj->rank, obj->name);
 	//this_t = object_sync(obj, global_clock, passtype[pass]);
 
@@ -443,6 +443,12 @@ static void ss_do_object_sync(int thread, void *item)
 	else if (global_clock<=obj->out_svc)
 	{
 		this_t = object_sync(obj, global_clock, passtype[pass]);
+		if (this_t == global_clock)
+		{
+			output_verbose("%s: object %s calling for re-sync", simtime(), object_name(obj, b, 63));
+		}
+
+
 #ifdef _DEBUG
 		/* sync dumpfile */
 		if (global_sync_dumpfile[0]!='\0')
@@ -1467,7 +1473,7 @@ static struct sync_data main_sync = {TS_NEVER,0,SUCCESS};
 
 	This call clears the sync data structure
 	and prepares it for a new interation pass.
-	If not sync event are posted, the result of
+	If no sync event are posted, the result of
 	the pass will be a successful soft NEVER,
 	which usually means the simulation stops at
 	steady state.
@@ -1619,6 +1625,30 @@ bool exec_sync_isrunning(struct sync_data *d)
 	return exec_sync_get(d)<=global_stoptime && !exec_sync_isnever(d) && exec_sync_ishard(d);
 }
 
+void exec_clock_update_modules()
+{
+	TIMESTAMP t1 = exec_sync_get(NULL);
+	MODULE *mod;
+	int ok = 0;
+	while ( !ok )
+	{
+		ok = 1;
+		for ( mod=module_get_first() ; mod!=NULL ; mod=mod->next )
+		{
+			if ( mod->clockupdate!=NULL )
+			{
+				TIMESTAMP t2 = mod->clockupdate(t1);
+				if ( t2<t1 )
+				{
+					t1 = t2;
+					ok = 0;
+				}
+			}
+		}
+	}
+	exec_sync_set(NULL,t1);
+}
+
 /******************************************************************
  *  MAIN EXEC LOOP
  ******************************************************************/
@@ -1630,11 +1660,11 @@ bool exec_sync_isrunning(struct sync_data *d)
 STATUS exec_start(void)
 {
 	int64 passes = 0, tsteps = 0;
-	int ptc_rv = 0;
-	int ptj_rv = 0;
-	int pc_rv = 0;
-	STATUS fnl_rv = 0;
-	time_t started_at = realtime_now();
+	int ptc_rv = 0; // unused
+	int ptj_rv = 0; // unused
+	int pc_rv = 0; // precommit return value
+	STATUS fnl_rv = 0; // finalize all return value
+	time_t started_at = realtime_now(); // for profiler
 	int j, k;
 	LISTITEM *ptr;
 	int incr;
@@ -1848,9 +1878,7 @@ STATUS exec_start(void)
 	TRY {
 
 		/* main loop runs for iteration limit, or when nothing futher occurs (ignoring soft events) */
-		while ( iteration_counter>0 
-			&& ( exec_sync_isrunning(NULL) || global_run_realtime>0 ) 
-			&& exec_getexitcode()==XC_SUCCESS ) 
+		while ( iteration_counter>0 && exec_sync_isrunning(NULL) && exec_getexitcode()==XC_SUCCESS ) 
 		{
 			TIMESTAMP internal_synctime;
 			output_debug("*** main loop event at %lli; stoptime=%lli, n_events=%i, exitcode=%i ***", exec_sync_get(NULL), global_stoptime, exec_sync_getevents(NULL), exec_getexitcode());
@@ -1865,27 +1893,36 @@ STATUS exec_start(void)
 			do_checkpoint();
 
 			/* realtime control of global clock */
-			if (global_run_realtime>0)
+			if (global_run_realtime==0 && global_clock >= global_enter_realtime)
+				global_run_realtime = 1;
+
+			if (global_run_realtime>0 && iteration_counter>0)
 			{
 #ifdef WIN32
 				struct timeb tv;
 				ftime(&tv);
-				output_verbose("waiting %d msec", 1000-tv.millitm);
-				Sleep(1000-tv.millitm );
-				if ( global_run_realtime==1 )
-					global_clock = tv.time + global_run_realtime;
-				else
+				if (1000-tv.millitm >= 0)
+				{
+					output_verbose("waiting %d msec", 1000-tv.millitm);
+					Sleep(1000-tv.millitm );
 					global_clock += global_run_realtime;
+				}
+				else
+					output_error("simulation failed to keep up with real time");
 #else
 				struct timeval tv;
 				gettimeofday(&tv, NULL);
-				output_verbose("waiting %d usec", 1000000-tv.tv_usec);
-				usleep(1000000-tv.tv_usec);
-				if ( global_run_realtime==1 )
-					global_clock = tv.tv_sec+global_run_realtime;
-				else
+				if (1000000-tv.tv_usec >= 0)
+				{
+					output_verbose("waiting %d usec", 1000000-tv.tv_usec);
+					usleep(1000000-tv.tv_usec);
 					global_clock += global_run_realtime;
+				}
+				else
+					output_error("simulation failed to keep up with real time");
 #endif
+				exec_sync_reset(NULL);
+				exec_sync_set(NULL,global_clock);
 				output_verbose("realtime clock advancing to %d", (int)global_clock);
 			}
 
@@ -1896,12 +1933,13 @@ STATUS exec_start(void)
 			/* operate delta mode if necessary (but only when event mode is active, e.g., not right after init) */
 			/* note that delta mode cannot be supported for realtime simulation */
 			global_deltaclock = 0;
-			if ( global_run_realtime==0 ) 
+//			if ( global_run_realtime==0 )
 			{
 				/* determine whether any modules seek delta mode */
 				DELTAMODEFLAGS flags=DMF_NONE;
 				DT delta_dt = delta_modedesired(&flags);
 				TIMESTAMP t = TS_NEVER;
+				output_verbose("delta_dt is %d", (int)delta_dt);
 				switch ( delta_dt ) {
 				case DT_INFINITY: /* no dt -> event mode */
 					global_simulation_mode = SM_EVENT;
@@ -1941,8 +1979,8 @@ STATUS exec_start(void)
 				}
 				exec_sync_set(NULL,t);
 			}
-			else
-				global_simulation_mode = SM_EVENT;
+//			else
+//				global_simulation_mode = SM_EVENT;
 			
 			/* synchronize all internal schedules */
 			if ( global_clock < 0 )
@@ -2211,19 +2249,6 @@ STATUS exec_start(void)
 				output_error("sync script(s) failed");
 				THROW("script synchronization failure");
 			}
-
-			if (global_run_realtime>0 && tsteps == 1 && global_dumpfile[0]!='\0')
-			{
-				if (!saveall(global_dumpfile))
-					output_error("dump to '%s' failed", global_dumpfile);
-					/* TROUBLESHOOT
-						An attempt to create a dump file failed.  This message should be
-						preceded by a more detailed message explaining why if failed.
-						Follow the guidance for that message and try again.
-					 */
-				else
-					output_debug("initial model dump to '%s' complete", global_dumpfile);
-			}
 			
 			/* handle delta mode operation */
 			if ( global_simulation_mode==SM_DELTA && exec_sync_get(NULL)>=global_clock )
@@ -2243,6 +2268,11 @@ STATUS exec_start(void)
 				}
 				exec_sync_set(NULL,global_clock + deltatime);
 				global_simulation_mode = SM_EVENT;
+			}
+
+			/* clock update is the very last chance to change the next time */
+			if(exec_sync_get(NULL) != global_clock){
+				exec_clock_update_modules();
 			}
 		} // end of while loop
 
@@ -2283,7 +2313,6 @@ STATUS exec_start(void)
 	if(FAILED == fnl_rv)
 	{
 		output_error("finalize_all() failed");
-		output_verbose("not that it's going to stop us");
 	}
 
 	/* run term scripts, if any */

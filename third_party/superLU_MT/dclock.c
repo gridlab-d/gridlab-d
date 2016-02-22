@@ -21,7 +21,7 @@
 	#define DELTA_EPOCH_IN_MICROSECS  11644473600000000ULL 
 #endif 
 
-#ifdef WIN32
+#if defined WIN32 && ! defined __MINGW32__
 //sj: implement gettimeofday in windows
 struct timezone 
 {  

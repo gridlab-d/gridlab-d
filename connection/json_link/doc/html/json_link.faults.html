@@ -1,0 +1,197 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>faults Package &mdash; JSON Link 0.9.2a documentation</title>
+    
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.9.2a',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="JSON Link 0.9.2a documentation" href="index.html" />
+    <link rel="up" title="json_link Package" href="json_link.html" />
+    <link rel="next" title="test Package" href="json_link.test.html" />
+    <link rel="prev" title="bin Package" href="json_link.bin.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="json_link.test.html" title="test Package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="json_link.bin.html" title="bin Package"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">JSON Link 0.9.2a documentation</a> &raquo;</li>
+          <li><a href="modules.html" >json_link</a> &raquo;</li>
+          <li><a href="json_link.html" accesskey="U">json_link Package</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">faults Package</a><ul>
+<li><a class="reference internal" href="#module-json_link.faults.fault_inject"><tt class="docutils literal"><span class="pre">fault_inject</span></tt> Module</a><ul>
+<li><a class="reference internal" href="#fault-inject">Fault Inject</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="json_link.bin.html"
+                        title="previous chapter">bin Package</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="json_link.test.html"
+                        title="next chapter">test Package</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/json_link.faults.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="faults-package">
+<h1>faults Package<a class="headerlink" href="#faults-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-json_link.faults.fault_inject">
+<span id="fault-inject-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">fault_inject</span></tt> Module<a class="headerlink" href="#module-json_link.faults.fault_inject" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="fault-inject">
+<h3>Fault Inject<a class="headerlink" href="#fault-inject" title="Permalink to this headline">¶</a></h3>
+<p>A module that enables easy injection of faults into a JSON link exchange, useful
+for both our own unit tests and when testing other implementations</p>
+<p>Classes:</p>
+<ul class="simple">
+<li><a class="reference internal" href="#json_link.faults.fault_inject.FaultInjectMixIn" title="json_link.faults.fault_inject.FaultInjectMixIn"><tt class="xref py py-class docutils literal"><span class="pre">FaultInjectMixIn</span></tt></a></li>
+<li><a class="reference internal" href="#json_link.faults.fault_inject.MasterFaultInject" title="json_link.faults.fault_inject.MasterFaultInject"><tt class="xref py py-class docutils literal"><span class="pre">MasterFaultInject</span></tt></a></li>
+<li><a class="reference internal" href="#json_link.faults.fault_inject.SlaveFaultInject" title="json_link.faults.fault_inject.SlaveFaultInject"><tt class="xref py py-class docutils literal"><span class="pre">SlaveFaultInject</span></tt></a></li>
+</ul>
+<p>Related Functions:</p>
+<p>Notes:</p>
+<p>&#64;author: Bryan Palmintier, NREL 2013</p>
+<dl class="class">
+<dt id="json_link.faults.fault_inject.FaultInjectMixIn">
+<em class="property">class </em><tt class="descclassname">json_link.faults.fault_inject.</tt><tt class="descname">FaultInjectMixIn</tt><big>(</big><em>run_timestep=1.0</em>, <em>run_delay=0.1</em>, <em>run_max=-1</em>, <em>opt_verbose=2</em>, <em>non_sync_retry=None</em>, <em>**Xchg_args</em><big>)</big><a class="reference internal" href="_modules/json_link/faults/fault_inject.html#FaultInjectMixIn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#json_link.faults.fault_inject.FaultInjectMixIn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">json_link.json_link._BaseLink</span></tt></p>
+<p>Mix in class to enable JSON fault injection by overloading message sending functions</p>
+<dl class="attribute">
+<dt id="json_link.faults.fault_inject.FaultInjectMixIn.fault">
+<tt class="descname">fault</tt><em class="property"> = {}</em><a class="headerlink" href="#json_link.faults.fault_inject.FaultInjectMixIn.fault" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_link.faults.fault_inject.FaultInjectMixIn.sendMsg">
+<tt class="descname">sendMsg</tt><big>(</big><em>action</em>, <em>data</em>, <em>data_name='data'</em><big>)</big><a class="reference internal" href="_modules/json_link/faults/fault_inject.html#FaultInjectMixIn.sendMsg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#json_link.faults.fault_inject.FaultInjectMixIn.sendMsg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Injects a fault into either the JSON link or raw exchange message
+by using the fault data field instead of the proper message</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="json_link.faults.fault_inject.FaultInjectMixIn.send_count">
+<tt class="descname">send_count</tt><em class="property"> = {'init': 0, 'start': 0, 'term': 0, 'output': 0, 'error': 0, 'sync': 0, 'input': 0}</em><a class="headerlink" href="#json_link.faults.fault_inject.FaultInjectMixIn.send_count" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="json_link.faults.fault_inject.MasterFaultInject">
+<em class="property">class </em><tt class="descclassname">json_link.faults.fault_inject.</tt><tt class="descname">MasterFaultInject</tt><big>(</big><em>in_schema=None</em>, <em>out_schema=None</em>, <em>schema_to_send=''</em>, <em>**Other_args</em><big>)</big><a class="reference internal" href="_modules/json_link/faults/fault_inject.html#MasterFaultInject"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#json_link.faults.fault_inject.MasterFaultInject" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="json_link.html#json_link.json_link.MasterLink" title="json_link.json_link.MasterLink"><tt class="xref py py-class docutils literal"><span class="pre">json_link.json_link.MasterLink</span></tt></a>, <a class="reference internal" href="#json_link.faults.fault_inject.FaultInjectMixIn" title="json_link.faults.fault_inject.FaultInjectMixIn"><tt class="xref py py-class docutils literal"><span class="pre">json_link.faults.fault_inject.FaultInjectMixIn</span></tt></a></p>
+<p>JSON Link Master/client with fault injection</p>
+<dl class="attribute">
+<dt id="json_link.faults.fault_inject.MasterFaultInject.description_dict">
+<tt class="descname">description_dict</tt><em class="property"> = {'application': 'JSON_Link_Master_with_Fault_Inject', 'version': '0.1.0a', 'modelname': '/usr/local/bin/sphinx-build'}</em><a class="headerlink" href="#json_link.faults.fault_inject.MasterFaultInject.description_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="json_link.faults.fault_inject.SlaveFaultInject">
+<em class="property">class </em><tt class="descclassname">json_link.faults.fault_inject.</tt><tt class="descname">SlaveFaultInject</tt><big>(</big><em>in_schema=None</em>, <em>out_schema=None</em>, <em>**other_args</em><big>)</big><a class="reference internal" href="_modules/json_link/faults/fault_inject.html#SlaveFaultInject"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#json_link.faults.fault_inject.SlaveFaultInject" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="json_link.html#json_link.json_link.SlaveLink" title="json_link.json_link.SlaveLink"><tt class="xref py py-class docutils literal"><span class="pre">json_link.json_link.SlaveLink</span></tt></a>, <a class="reference internal" href="#json_link.faults.fault_inject.FaultInjectMixIn" title="json_link.faults.fault_inject.FaultInjectMixIn"><tt class="xref py py-class docutils literal"><span class="pre">json_link.faults.fault_inject.FaultInjectMixIn</span></tt></a></p>
+<p>JSON Link Slave/server with fault injection</p>
+<dl class="attribute">
+<dt id="json_link.faults.fault_inject.SlaveFaultInject.description_dict">
+<tt class="descname">description_dict</tt><em class="property"> = {'version': '0.1.0a', 'remote': 'JSON Link Slave/Server with Fault Inject'}</em><a class="headerlink" href="#json_link.faults.fault_inject.SlaveFaultInject.description_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="json_link.test.html" title="test Package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="json_link.bin.html" title="bin Package"
+             >previous</a> |</li>
+        <li><a href="index.html">JSON Link 0.9.2a documentation</a> &raquo;</li>
+          <li><a href="modules.html" >json_link</a> &raquo;</li>
+          <li><a href="json_link.html" >json_link Package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan Palmintier.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
+    </div>
+  </body>
+</html>

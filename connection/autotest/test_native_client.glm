@@ -1,0 +1,15 @@
+// $Id$
+
+module connection
+{
+	security STANDARD;
+	lockout 1 min;
+}
+object native {
+	mode CLIENT;
+	transport TCP;
+}
+object native {
+	mode CLIENT;
+	transport UDP;
+}

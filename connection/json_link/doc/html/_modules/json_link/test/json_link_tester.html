@@ -1,0 +1,508 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>json_link.test.json_link_tester &mdash; JSON Link 0.9.2a documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.9.2a',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="JSON Link 0.9.2a documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">JSON Link 0.9.2a documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for json_link.test.json_link_tester</h1><div class="highlight"><pre>
+<span class="c">#!/usr/local/bin/python3</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">json_test: </span>
+<span class="sd">A simple program for test the JSON link protocol over TCP or UDP exchange.  It </span>
+<span class="sd">can act as either the Master (aka client) or the Slave (aka server)</span>
+
+<span class="sd">As a SLAVE (Default) it:</span>
+<span class="sd">    1) Listens on a specified IP port for UDP or TCP packets</span>
+<span class="sd">    2) Displays any packets received</span>
+<span class="sd">    3) Waits a specified delay (to simulate processing or waiting for the slave</span>
+<span class="sd">        values to stabilize.</span>
+<span class="sd">    4) Replies with a modified packet. In this packet, the clock string is</span>
+<span class="sd">        updated, a random y0 value and a value of y1=2*x1 (zero if no x1) are </span>
+<span class="sd">        added and x0; any x0 or x1 values sent are removed; and any other fields</span>
+<span class="sd">        are returned intact.</span>
+<span class="sd">    5) Resumes listening</span>
+<span class="sd">    </span>
+<span class="sd">As a MASTER it:</span>
+<span class="sd">    1) Sending a dummy JSON data packet to a remote host via UDP or TCP</span>
+<span class="sd">    2) Waiting for a JSON data reply (with a timeout)</span>
+<span class="sd">    3) Repeats these steps at at a specified (DELAY) rate</span>
+
+<span class="sd">Classes:</span>
+<span class="sd">  NONE</span>
+
+<span class="sd">Implemented Methods:</span>
+<span class="sd">  main()              #the main program</span>
+
+<span class="sd">Notes:</span>
+<span class="sd"> -- Should work with Python 2.6+ and 3.x. Tested with 2.7.2 and 3.3</span>
+<span class="sd"> -- Currently only supports IPv4</span>
+<span class="sd"> -- The SLAVE will handle connections from any number of masters, BUT since the</span>
+<span class="sd">    code is only single threaded each processing (including delay) are</span>
+<span class="sd">    blocking. Hence, the SLAVE may miss packets if it is busy processing</span>
+<span class="sd">    (or waiting to send) a different reply.</span>
+
+<span class="sd">@author: Bryan Palmintier, NREL 2013</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c"># Enable use of Python 3.0 print statement in older (2.x) versions, ignored in</span>
+<span class="c"># newer (3.x) versions</span>
+<span class="c"># Must occur at top of file</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">print_function</span>
+
+<span class="n">__author__</span> <span class="o">=</span> <span class="s">&quot;Bryan Palmintier&quot;</span>
+<span class="n">__copyright__</span> <span class="o">=</span> <span class="s">&quot;Copyright (c) 2013 Bryan Palmintier&quot;</span>
+<span class="n">__license__</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot; </span>
+<span class="s">@copyright: Copyright (c) 2013, Bryan Palmintier</span>
+<span class="s">@license: BSD 3-clause --</span>
+<span class="s">All rights reserved.</span>
+
+<span class="s">Redistribution and use in source and binary forms, with or without modification, </span>
+<span class="s">are permitted provided that the following conditions are met:</span>
+<span class="s"> 1) Redistributions of source code must retain the above copyright notice, this</span>
+<span class="s">    list of conditions and the following disclaimer.</span>
+<span class="s"> 2) Redistributions in binary form must reproduce the above copyright notice, </span>
+<span class="s">    this list of conditions and the following disclaimer in the documentation </span>
+<span class="s">    and/or other materials provided with the distribution.</span>
+<span class="s"> 3) Neither the name of the National Renewable Energy Lab nor the names of its </span>
+<span class="s">    contributors may be used to endorse or promote products derived from this </span>
+<span class="s">    software without specific prior written permission.</span>
+<span class="s">    </span>
+<span class="s">THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot; AND</span>
+<span class="s">ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED</span>
+<span class="s">WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE</span>
+<span class="s">DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR</span>
+<span class="s">ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES</span>
+<span class="s">(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;</span>
+<span class="s">LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON</span>
+<span class="s">ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT</span>
+<span class="s">(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS</span>
+<span class="s">SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.&quot;&quot;&quot;</span>
+
+<span class="c">## ===== History ====</span>
+<span class="c">#  [Current]             version     date       time     who     Comments</span>
+<span class="c">#                        -------  ----------    ----- ---------- ------------- </span>
+<span class="n">__version__</span><span class="p">,</span> <span class="n">__date__</span> <span class="o">=</span> <span class="s">&quot;0.8.2a&quot;</span><span class="p">,</span><span class="s">&quot;2013-04-29&quot;</span>  <span class="c">#20:10   BryanP   Expanded/Refined timing options: run_timestep vs delay vs timeout</span>
+<span class="c"># [Older, in reverse order]</span>
+<span class="c"># version      date       time     who     Comments</span>
+<span class="c"># -------   ----------    ----- ---------- --------------------------------------- </span>
+<span class="c">#  0.8.1a   2013-04-28    22:20   BryanP   Rename gld_tcp_udp to raw_xchg &amp; methods to Xchg* and Errors to RawXchg*Error</span>
+<span class="c">#  0.8.0a   2013-04-27    02:00   BryanP   RENAMED json_link_test. Use json_link for FULL HANDSHAKING. Added --run_count</span>
+<span class="c">#  0.7.1a   2013-04-25    16:23   BryanP   Updated for gld_upd_tcp v 0.3.0a (Exceptions Link* -&gt; Xchg*)</span>
+<span class="c">#  0.7.0a   2013-04-25    03:33   BryanP   Extracted low-level request/response header to raw_xchg.py</span>
+<span class="c">#  0.6.1a   2013-04-24    00:43   BryanP   BUG FIX: UDP socket close, abstract out setupSlaveSocket()</span>
+<span class="c">#   0.6a    2013-04-23    22:43   BryanP   Added GridLAB request/response header support</span>
+<span class="c">#  0.5.5a   2013-04-09    15:23   BryanP   Corrected python3.x and windows support, added num_var option</span>
+<span class="c">#  0.5.4a   2013-04-09    11:23   BryanP   Switched to master/slave terminology. Default now slave</span>
+<span class="c">#  0.5.3a   2013-04-09    00:23   BryanP   Client auto-repeat</span>
+<span class="c">#  0.5.2a   2013-04-08    12:32   BryanP   Added server delay &amp; client timeout</span>
+<span class="c">#  0.5.1a   2013-04-08    22:00   BryanP   Implemented (basic, fixed) JSON exchange</span>
+<span class="c">#   0.4a    2013-04-08    17:30   BryanP   Merged client and server (and shared) into single file</span>
+<span class="c">#   0.3a    2013-04-08            BryanP   Command Line options using JSON_test_shared</span>
+<span class="c">#   0.2a    2013-04-08    12:32   BryanP   Added Metadata Header</span>
+<span class="c">#   0.1a    2012-04-05            BryanP   Initial Code, partially adapted from http://docs.python.org/3.3/library/socket.html#example</span>
+
+<span class="c"># Standard Library imports</span>
+<span class="kn">import</span> <span class="nn">optparse</span>  <span class="c"># Use older optparse for pre-2.7/3.2 compatibility. argparse preferred for newer projects</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">datetime</span> <span class="kn">as</span> <span class="nn">dt</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">timeit</span>
+
+<span class="c"># Local imports</span>
+<span class="kn">from</span> <span class="nn">..json_link</span> <span class="kn">import</span> <span class="n">json_link</span>
+<span class="kn">from</span> <span class="nn">..json_link</span> <span class="kn">import</span> <span class="n">raw_xchg</span>
+
+<span class="c"># module variables</span>
+<span class="n">TIMEOUT_REDUCE</span> <span class="o">=</span> <span class="mf">0.001</span>     <span class="c">#sec to allow for actual python processing</span>
+
+<span class="c">#-------------------</span>
+<span class="c"># runSimpleMaster</span>
+<span class="c">#-------------------</span>
+<div class="viewcode-block" id="runSimpleMaster"><a class="viewcode-back" href="../../../json_link.test.html#json_link.test.json_link_tester.runSimpleMaster">[docs]</a><span class="k">def</span> <span class="nf">runSimpleMaster</span><span class="p">(</span><span class="n">opt</span><span class="p">):</span>
+    
+    <span class="c"># Initialize underlying socket.</span>
+    <span class="c"># Note: if opt.raw is used, use raw_xchg to print packet data</span>
+    <span class="n">link</span> <span class="o">=</span> <span class="n">raw_xchg</span><span class="o">.</span><span class="n">MasterXchg</span><span class="p">(</span><span class="n">opt</span><span class="o">.</span><span class="n">host_addr</span><span class="p">,</span> <span class="n">opt</span><span class="o">.</span><span class="n">port</span><span class="p">,</span> <span class="n">opt</span><span class="o">.</span><span class="n">sock_type</span><span class="p">,</span>
+                                  <span class="n">opt_verbose</span><span class="o">=</span><span class="n">opt</span><span class="o">.</span><span class="n">raw</span><span class="p">,</span>
+                                  <span class="n">opt_header</span><span class="o">=</span><span class="p">(</span><span class="ow">not</span> <span class="n">opt</span><span class="o">.</span><span class="n">no_head</span><span class="p">),</span>
+                                  <span class="n">timeout</span><span class="o">=</span><span class="n">opt</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span>
+
+    <span class="n">link</span><span class="o">.</span><span class="n">setupXchg</span><span class="p">()</span>
+    <span class="n">end_time</span> <span class="o">=</span> <span class="n">timeit</span><span class="o">.</span><span class="n">default_timer</span><span class="p">()</span>
+        
+    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+        <span class="n">end_time</span> <span class="o">+=</span> <span class="n">opt</span><span class="o">.</span><span class="n">delay</span>
+                    
+        <span class="k">if</span> <span class="n">link</span><span class="o">.</span><span class="n">isReady</span><span class="p">():</span>
+            <span class="c"># -- Build message and send it</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">buildMessage</span><span class="p">(</span><span class="n">opt</span><span class="p">)</span>
+            <span class="n">msg_out</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">link</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">msg_out</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">opt</span><span class="o">.</span><span class="n">raw</span><span class="p">:</span>
+                <span class="n">printIO</span><span class="p">(</span><span class="s">&#39;TX: &#39;</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+                
+            
+            <span class="c"># And wait for a response</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">reply</span> <span class="o">=</span> <span class="n">link</span><span class="o">.</span><span class="n">receive</span><span class="p">()</span>
+            <span class="k">except</span> <span class="n">raw_xchg</span><span class="o">.</span><span class="n">RawXchgTimeoutError</span><span class="p">:</span>
+                <span class="n">reply</span> <span class="o">=</span> <span class="bp">None</span>
+
+            <span class="k">if</span> <span class="n">reply</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>                    
+                <span class="n">reply</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">reply</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">opt</span><span class="o">.</span><span class="n">raw</span><span class="p">:</span>
+                    <span class="n">printIO</span><span class="p">(</span><span class="s">&#39;RX: &#39;</span><span class="p">,</span> <span class="n">reply</span><span class="p">)</span>
+        
+        <span class="c"># Add blank line between exchanges</span>
+        <span class="k">print</span><span class="p">()</span>
+            
+        <span class="c"># Setup link here for more consistant tx interval, since not dependent on setup delays</span>
+        <span class="n">link</span><span class="o">.</span><span class="n">setupXchg</span><span class="p">()</span>
+        
+        <span class="c"># Wait for repeat timer, but yield each loop to prevent excess CPU</span>
+        <span class="k">while</span> <span class="n">timeit</span><span class="o">.</span><span class="n">default_timer</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">end_time</span><span class="p">:</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">opt</span><span class="o">.</span><span class="n">delay</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">)</span>
+
+
+<span class="c">#-------------------</span>
+<span class="c"># runSimpleSlave</span>
+<span class="c">#-------------------</span></div>
+<div class="viewcode-block" id="runSimpleSlave"><a class="viewcode-back" href="../../../json_link.test.html#json_link.test.json_link_tester.runSimpleSlave">[docs]</a><span class="k">def</span> <span class="nf">runSimpleSlave</span><span class="p">(</span><span class="n">opt</span><span class="p">):</span>
+    <span class="c"># Initialize underlying socket.</span>
+    <span class="c"># Note: if opt.raw is used, use raw_xchg to print packet data</span>
+    <span class="n">link</span> <span class="o">=</span> <span class="n">raw_xchg</span><span class="o">.</span><span class="n">SlaveXchg</span><span class="p">(</span><span class="n">opt</span><span class="o">.</span><span class="n">host_addr</span><span class="p">,</span> <span class="n">opt</span><span class="o">.</span><span class="n">port</span><span class="p">,</span> <span class="n">opt</span><span class="o">.</span><span class="n">sock_type</span><span class="p">,</span>
+                                 <span class="n">opt_verbose</span><span class="o">=</span><span class="n">opt</span><span class="o">.</span><span class="n">raw</span><span class="p">,</span>
+                                 <span class="n">opt_header</span><span class="o">=</span><span class="p">(</span><span class="ow">not</span> <span class="n">opt</span><span class="o">.</span><span class="n">no_head</span><span class="p">),</span>
+                                 <span class="n">timeout</span><span class="o">=</span><span class="n">opt</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span>
+
+    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+        <span class="n">link</span><span class="o">.</span><span class="n">setupXchg</span><span class="p">()</span>
+
+        <span class="c"># --Wait for connection</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">link</span><span class="o">.</span><span class="n">receive</span><span class="p">()</span>
+        <span class="k">except</span> <span class="n">raw_xchg</span><span class="o">.</span><span class="n">RawXchgTimeoutError</span><span class="p">:</span>
+            <span class="k">continue</span>
+        
+        <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">continue</span>        
+        
+        <span class="c"># Process incoming</span>
+        <span class="k">if</span> <span class="n">opt</span><span class="o">.</span><span class="n">echo</span><span class="p">:</span>
+            <span class="n">msg_out</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">opt</span><span class="o">.</span><span class="n">raw</span><span class="p">:</span>
+            <span class="n">printIO</span><span class="p">(</span><span class="s">&#39;RX: &#39;</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+        <span class="c"># Wait delay period</span>
+        <span class="k">if</span> <span class="n">opt</span><span class="o">.</span><span class="n">delay</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">opt</span><span class="o">.</span><span class="n">delay</span><span class="p">)</span>
+ 
+        <span class="c"># Build Reply</span>
+        <span class="n">reply</span> <span class="o">=</span> <span class="n">buildReply</span><span class="p">(</span><span class="n">opt</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+        <span class="n">msg_out</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">reply</span><span class="p">)</span>
+            
+        <span class="c"># and send it out</span>
+        <span class="n">link</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">msg_out</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">opt</span><span class="o">.</span><span class="n">raw</span><span class="p">:</span>
+            <span class="n">printIO</span><span class="p">(</span><span class="s">&#39;TX: &#39;</span><span class="p">,</span> <span class="n">reply</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">()</span>
+
+<span class="c">#-------------------</span>
+<span class="c"># buildMessage</span>
+<span class="c">#-------------------</span></div>
+<div class="viewcode-block" id="buildMessage"><a class="viewcode-back" href="../../../json_link.test.html#json_link.test.json_link_tester.buildMessage">[docs]</a><span class="k">def</span> <span class="nf">buildMessage</span><span class="p">(</span><span class="n">opt</span><span class="p">):</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="n">data</span><span class="p">[</span><span class="s">&#39;clock&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">opt</span><span class="o">.</span><span class="n">num_var</span><span class="p">):</span>
+        <span class="n">data</span><span class="p">[</span><span class="s">&#39;x</span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">data</span>
+
+
+
+<span class="c">#-------------------</span>
+<span class="c"># buildReply</span>
+<span class="c">#-------------------</span></div>
+<div class="viewcode-block" id="buildReply"><a class="viewcode-back" href="../../../json_link.test.html#json_link.test.json_link_tester.buildReply">[docs]</a><span class="k">def</span> <span class="nf">buildReply</span><span class="p">(</span><span class="n">opt</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="c"># Build reply</span>
+        <span class="k">if</span> <span class="s">&#39;clock&#39;</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">[</span><span class="s">&#39;clock&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">opt</span><span class="o">.</span><span class="n">num_var</span><span class="p">):</span>
+            <span class="c"># Use random numbers for first half of y data</span>
+            <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="n">opt</span><span class="o">.</span><span class="n">num_var</span> <span class="o">/</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">data</span><span class="p">[</span><span class="s">&#39;y</span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+            <span class="c"># For second half, double corresponding x, or return 0</span>
+                <span class="k">if</span> <span class="s">&#39;x</span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+                    <span class="n">data</span><span class="p">[</span><span class="s">&#39;y</span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">data</span><span class="p">[</span><span class="s">&#39;x</span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">n</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">data</span><span class="p">[</span><span class="s">&#39;y</span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c"># For all cases remove all x followed by only digits</span>
+        <span class="n">data_keys</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>  <span class="c"># Note cache full key list b/c otherwise python complains when the dict changes size</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">data_keys</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;x&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">k</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s">&#39;x&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">isdigit</span><span class="p">():</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>  <span class="c"># Non-dictionary value for data</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;ERROR: Expected a dictionary object in JSON. Returning Empty JSON reply&#39;</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>    
+    <span class="k">return</span> <span class="n">data</span>
+    
+<span class="c">#-------------------</span>
+<span class="c"># printIO</span>
+<span class="c">#-------------------</span></div>
+<div class="viewcode-block" id="printIO"><a class="viewcode-back" href="../../../json_link.test.html#json_link.test.json_link_tester.printIO">[docs]</a><span class="k">def</span> <span class="nf">printIO</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s">&#39;clock&#39;</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&quot;clock=&#39;</span><span class="si">%s</span><span class="s">&#39; &quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s">&#39;clock&#39;</span><span class="p">]),</span> <span class="n">end</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s">&#39;clock&#39;</span><span class="p">:</span>
+                <span class="k">print</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">=</span><span class="si">%.3f</span><span class="s"> &quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="p">]),</span> <span class="n">end</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">)</span>                
+    <span class="k">print</span><span class="p">(</span><span class="n">suffix</span><span class="p">)</span>
+    
+<span class="c">#-------------------</span>
+<span class="c"># _handleCommandLine</span>
+<span class="c">#-------------------</span></div>
+<span class="k">def</span> <span class="nf">_handleCommandLine</span><span class="p">():</span>
+    <span class="c"># Note: this function uses the now depreciated optparse module for backward compatibility</span>
+    
+    <span class="c"># Define some string constants</span>
+    <span class="n">usage</span> <span class="o">=</span> <span class="s">&quot;usage: %prog [options]&quot;</span>
+    <span class="n">ver_str</span> <span class="o">=</span> <span class="s">&quot;JSON Link over Raw UDP/TCP Exchange tester -- v</span><span class="si">%s</span><span class="s"> (</span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">__version__</span><span class="p">,</span> <span class="n">__date__</span><span class="p">)</span>
+    
+    <span class="c"># Initialize command line parser</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">optparse</span><span class="o">.</span><span class="n">OptionParser</span><span class="p">(</span><span class="n">usage</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="n">ver_str</span><span class="p">)</span>
+    
+    <span class="c"># -- Add shared options</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;--doc&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s">&#39;store_true&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                 <span class="n">help</span><span class="o">=</span><span class="s">&quot;Display extended help documentation&quot;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&quot;-t&quot;</span><span class="p">,</span> <span class="s">&quot;--tcp&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s">&quot;store_const&quot;</span><span class="p">,</span> <span class="n">const</span><span class="o">=</span><span class="n">raw_xchg</span><span class="o">.</span><span class="n">TCP</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&quot;sock_type&quot;</span><span class="p">,</span>
+                <span class="n">help</span><span class="o">=</span><span class="s">&quot;Use TCP sockets&quot;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&quot;-u&quot;</span><span class="p">,</span> <span class="s">&quot;--udp&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s">&quot;store_const&quot;</span><span class="p">,</span> <span class="n">const</span><span class="o">=</span><span class="n">raw_xchg</span><span class="o">.</span><span class="n">UDP</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&quot;sock_type&quot;</span><span class="p">,</span>
+                <span class="n">help</span><span class="o">=</span><span class="s">&quot;Use UDP sockets (default)&quot;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&quot;-a&quot;</span><span class="p">,</span> <span class="s">&quot;--host_addr&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s">&#39;localhost&#39;</span><span class="p">,</span>
+                <span class="n">help</span><span class="o">=</span><span class="s">&quot;Host name/IP address (Default: localhost) for SLAVE (aka SERVER) on non-windows use All for all interfaces&quot;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&quot;-p&quot;</span><span class="p">,</span> <span class="s">&quot;--port&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">50007</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s">&quot;int&quot;</span><span class="p">,</span>
+                <span class="n">help</span><span class="o">=</span><span class="s">&quot;Port Number&quot;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&quot;--buf_size&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">4906</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s">&quot;int&quot;</span><span class="p">,</span>
+                <span class="n">help</span><span class="o">=</span><span class="s">&quot;Network buffer size in bytes&quot;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&quot;-r&quot;</span><span class="p">,</span> <span class="s">&quot;--run_timestep&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s">&quot;float&quot;</span><span class="p">,</span>
+                <span class="n">help</span><span class="o">=</span><span class="s">&quot;Run timestep in Sec. Duration of each sub-run in the internal process loop. MASTER: sets to the transmit interval. SLAVE: time to wait before running using the last received value (default=0.5)&quot;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&quot;-d&quot;</span><span class="p">,</span> <span class="s">&quot;--delay&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s">&quot;float&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+                <span class="n">help</span><span class="o">=</span><span class="s">&quot;Minimum delay after rx before tx. Used to simulate a minimum internal synchronous process running time (default=0.1sec)&quot;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&quot;-T&quot;</span><span class="p">,</span> <span class="s">&quot;--timeout&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s">&quot;float&quot;</span><span class="p">,</span>
+                <span class="n">help</span><span class="o">=</span><span class="s">&quot;Timeout for low-level data exchange in seconds. (default=step-delay-</span><span class="si">%f</span><span class="s">)&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">TIMEOUT_REDUCE</span><span class="p">))</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;-s&#39;</span><span class="p">,</span> <span class="s">&#39;--slave&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&quot;slave&quot;</span><span class="p">,</span>
+                 <span class="n">help</span><span class="o">=</span><span class="s">&quot;Run as SLAVE (aka server) by listening for data &amp; replying (Default)&quot;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;-m&#39;</span><span class="p">,</span> <span class="s">&#39;--master&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s">&quot;store_false&quot;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&quot;slave&quot;</span><span class="p">,</span>
+                 <span class="n">help</span><span class="o">=</span><span class="s">&quot;Run as MASTER (aka client) by initiating data transfer &amp; waiting for reply&quot;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;--raw&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                 <span class="n">help</span><span class="o">=</span><span class="s">&quot;Print Raw packet contents including header (Default=False, print cleaner output)&quot;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;-H&#39;</span><span class="p">,</span> <span class="s">&#39;--no_head&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                 <span class="n">help</span><span class="o">=</span><span class="s">&quot;Suppress request/response header and send only JSON contents (Default=False, use full header)&quot;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;-c&#39;</span><span class="p">,</span> <span class="s">&#39;--run_count&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s">&quot;int&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+                 <span class="n">help</span><span class="o">=</span><span class="s">&quot;Number of run iterations before quitting (default=-1, Unlimited)&quot;</span><span class="p">)</span>
+
+    <span class="n">p</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;--simple&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                 <span class="n">help</span><span class="o">=</span><span class="s">&quot;Exchange simple, bare JSON data packets without using GridLAB-D JSON link protocol handshaking (Default=False, use handshaking)&quot;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;-e&#39;</span><span class="p">,</span> <span class="s">&#39;--echo&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                 <span class="n">help</span><span class="o">=</span><span class="s">&quot;!SIMPLE ONLY! SLAVE (aka SERVER) only: Echo (do not process) received packets&quot;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span><span class="s">&#39;-n&#39;</span><span class="p">,</span> <span class="s">&#39;--num_var&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s">&quot;int&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                 <span class="n">help</span><span class="o">=</span><span class="s">&quot;!SIMPLE ONLY! Number of numeric variable to include in JSON packet&quot;</span><span class="p">)</span>
+                 
+
+    <span class="c"># Setup multi-option defaults... otherwise uses add_option default=...</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">sock_type</span><span class="o">=</span><span class="n">raw_xchg</span><span class="o">.</span><span class="n">UDP</span><span class="p">,</span> <span class="n">slave</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+
+    <span class="c"># Actually parse command line</span>
+    <span class="p">(</span><span class="n">opt</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+    <span class="c"># Implement our own help function so we can include the Doc string</span>
+    <span class="k">if</span> <span class="n">opt</span><span class="o">.</span><span class="n">doc</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">()</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">ver_str</span><span class="p">)</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">print_help</span><span class="p">()</span>  <span class="c"># Show default optparse generated help info</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">__doc__</span><span class="p">)</span>  <span class="c"># Tack on our doc string, the first string in this file</span>
+        <span class="nb">exit</span><span class="p">()</span>
+    
+    <span class="c"># Update values based on mode</span>
+    <span class="k">if</span> <span class="n">opt</span><span class="o">.</span><span class="n">slave</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">opt</span><span class="o">.</span><span class="n">run_timestep</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">opt</span><span class="o">.</span><span class="n">run_timestep</span> <span class="o">=</span> <span class="mf">0.5</span>
+        <span class="k">if</span> <span class="n">opt</span><span class="o">.</span><span class="n">host_addr</span> <span class="o">==</span> <span class="s">&#39;All&#39;</span><span class="p">:</span>
+            <span class="n">opt</span><span class="o">.</span><span class="n">host_addr</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+    <span class="k">else</span><span class="p">:</span>  <span class="c"># Master</span>
+        <span class="k">if</span> <span class="n">opt</span><span class="o">.</span><span class="n">run_timestep</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">opt</span><span class="o">.</span><span class="n">run_timestep</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="k">if</span> <span class="n">opt</span><span class="o">.</span><span class="n">timeout</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">opt</span><span class="o">.</span><span class="n">timeout</span> <span class="o">=</span> <span class="n">opt</span><span class="o">.</span><span class="n">run_timestep</span><span class="o">-</span><span class="n">opt</span><span class="o">.</span><span class="n">delay</span><span class="o">-</span><span class="n">TIMEOUT_REDUCE</span>
+
+    
+    <span class="c"># --Display status information</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">JSON Link packet test (v</span><span class="si">%s</span><span class="s">) &quot;</span><span class="o">%</span><span class="p">(</span><span class="n">__version__</span><span class="p">),</span> <span class="n">end</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">opt</span><span class="o">.</span><span class="n">slave</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&quot;SLAVE (aka SERVER) mode (waits for data)&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&quot;MASTER (aka CLIENT) mode (initiates transfer)&quot;</span><span class="p">)</span>
+
+    <span class="k">print</span><span class="p">(</span><span class="s">&quot;    Run timestep = </span><span class="si">%.3f</span><span class="s">sec&quot;</span> <span class="o">%</span> <span class="n">opt</span><span class="o">.</span><span class="n">run_timestep</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&quot;    (minimum) Reply Delay = </span><span class="si">%.3f</span><span class="s">sec&quot;</span> <span class="o">%</span> <span class="n">opt</span><span class="o">.</span><span class="n">delay</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&quot;    (raw exchange) Timeout = </span><span class="si">%.3f</span><span class="s">sec&quot;</span> <span class="o">%</span> <span class="n">opt</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span>
+
+
+        
+    <span class="k">if</span> <span class="n">opt</span><span class="o">.</span><span class="n">host_addr</span> <span class="o">==</span> <span class="s">&#39;&#39;</span><span class="p">:</span>
+        <span class="n">host_txt</span> <span class="o">=</span> <span class="s">&quot;AnyInterface&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">host_txt</span> <span class="o">=</span> <span class="n">opt</span><span class="o">.</span><span class="n">host_addr</span>
+        
+    <span class="k">if</span> <span class="n">opt</span><span class="o">.</span><span class="n">sock_type</span> <span class="o">==</span> <span class="n">raw_xchg</span><span class="o">.</span><span class="n">TCP</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&quot;    Using TCP packets on </span><span class="si">%s</span><span class="s">:</span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">host_txt</span><span class="p">,</span> <span class="n">opt</span><span class="o">.</span><span class="n">port</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&quot;    Using UDP packets on </span><span class="si">%s</span><span class="s">:</span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">host_txt</span><span class="p">,</span> <span class="n">opt</span><span class="o">.</span><span class="n">port</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">opt</span><span class="o">.</span><span class="n">slave</span> <span class="ow">and</span> <span class="n">opt</span><span class="o">.</span><span class="n">echo</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&quot;    ECHO mode on (no JSON processing for reply)&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">opt</span><span class="o">.</span><span class="n">raw</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&quot;    RAW mode on: displaying full packet with header&quot;</span><span class="p">)</span>
+        
+    <span class="k">if</span> <span class="n">opt</span><span class="o">.</span><span class="n">no_head</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&quot;    NO_HEADer mode: Using raw JSON without reply/response header&quot;</span><span class="p">)</span>
+        
+
+    <span class="c"># Add blank line</span>
+    <span class="k">print</span><span class="p">()</span>
+               
+    <span class="c"># Return a parse object, accessible using opt.OPTION</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">opt</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>    
+    
+<span class="c">#-------------------</span>
+<span class="c"># Run main when called stand-alone</span>
+<span class="c">#-------------------</span>
+<div class="viewcode-block" id="main"><a class="viewcode-back" href="../../../json_link.test.html#json_link.test.json_link_tester.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="c"># -- Get Command Line options</span>
+    <span class="p">(</span><span class="n">opt</span><span class="p">,</span> <span class="n">_args</span><span class="p">)</span> <span class="o">=</span> <span class="n">_handleCommandLine</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">opt</span><span class="o">.</span><span class="n">simple</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">opt</span><span class="o">.</span><span class="n">slave</span><span class="p">:</span>
+            <span class="n">runSimpleSlave</span><span class="p">(</span><span class="n">opt</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">runSimpleMaster</span><span class="p">(</span><span class="n">opt</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">keyword_args</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;host_addr&#39;</span><span class="p">:</span><span class="n">opt</span><span class="o">.</span><span class="n">host_addr</span><span class="p">,</span>
+                        <span class="s">&#39;port&#39;</span><span class="p">:</span><span class="n">opt</span><span class="o">.</span><span class="n">port</span><span class="p">,</span>
+                        <span class="s">&#39;protocol&#39;</span><span class="p">:</span><span class="n">opt</span><span class="o">.</span><span class="n">sock_type</span><span class="p">,</span>
+                        <span class="s">&#39;opt_verbose&#39;</span><span class="p">:</span><span class="n">opt</span><span class="o">.</span><span class="n">raw</span><span class="p">,</span>
+                        <span class="s">&#39;buf_size&#39;</span><span class="p">:</span><span class="n">opt</span><span class="o">.</span><span class="n">buf_size</span><span class="p">,</span>
+                        <span class="s">&#39;opt_header&#39;</span><span class="p">:(</span><span class="ow">not</span> <span class="n">opt</span><span class="o">.</span><span class="n">no_head</span><span class="p">),</span>
+                        <span class="s">&#39;run_max&#39;</span><span class="p">:</span><span class="n">opt</span><span class="o">.</span><span class="n">run_count</span><span class="p">,</span>
+                        <span class="s">&#39;run_timestep&#39;</span><span class="p">:</span><span class="n">opt</span><span class="o">.</span><span class="n">run_timestep</span><span class="p">,</span>
+                        <span class="s">&#39;run_delay&#39;</span><span class="p">:</span><span class="n">opt</span><span class="o">.</span><span class="n">delay</span><span class="p">,</span>
+                        <span class="s">&#39;timeout&#39;</span><span class="p">:</span><span class="n">opt</span><span class="o">.</span><span class="n">timeout</span>
+                        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">opt</span><span class="o">.</span><span class="n">slave</span><span class="p">:</span>
+            <span class="n">state_machine</span> <span class="o">=</span> <span class="n">json_link</span><span class="o">.</span><span class="n">SlaveLink</span><span class="p">(</span><span class="o">**</span><span class="n">keyword_args</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">state_machine</span> <span class="o">=</span> <span class="n">json_link</span><span class="o">.</span><span class="n">MasterLink</span><span class="p">(</span><span class="o">**</span><span class="n">keyword_args</span><span class="p">)</span>
+
+        <span class="n">state_machine</span><span class="o">.</span><span class="n">go</span><span class="p">()</span>
+</div>
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">JSON Link 0.9.2a documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan Palmintier.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
+    </div>
+  </body>
+</html>

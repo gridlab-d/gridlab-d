@@ -477,6 +477,10 @@ static counters run_test(char *file, double *elapsed_time=NULL)
 	dt = exec_clock() - dt;
 	double t = (double)dt/(double)CLOCKS_PER_SEC;
 	if ( elapsed_time!=NULL ) *elapsed_time = t;
+#ifdef WIN32
+	if ( code>256 )
+		output_warning("%s exit code %x is outside normal exit code range and may be interpreted incorrectly", name, code);
+#endif
 	bool exited = WIFEXITED(code);
 	if ( exited )
 	{

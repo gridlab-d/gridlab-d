@@ -10,7 +10,7 @@
 
 #include "link.h"
 
-#if defined WIN32 && ! defined MINGW
+#if defined WIN32 && ! defined __MINGW32__
 	#define _WIN32_WINNT 0x0400
 	#undef int64 // wtypes.h also used int64
 	#include <windows.h>
@@ -21,21 +21,24 @@
 	#endif
 	#define DLLOAD(P) LoadLibrary(P)
 	#define DLSYM(H,S) GetProcAddress((HINSTANCE)H,S)
+	#define DLERR "no diagnostics available"
 	#define snprintf _snprintf
 #else /* ANSI */
-#ifndef MINGW
+#ifndef __MINGW32__
 	#include "dlfcn.h"
 #endif
 	#define PREFIX ""
 	#ifndef DLEXT
 		#define DLEXT ".so"
 	#endif
-#ifndef MINGW
+#ifndef __MINGW32__
 	#define DLLOAD(P) dlopen(P,RTLD_LAZY)
 #else
-	#define DLLOAD(P) dlopen(P)
+	#include "dlfcn.h"
+	#define DLLOAD(P) dlopen(P,RTLD_LAZY)
 #endif
 	#define DLSYM(H,S) dlsym(H,S)
+	#define DLERR dlerror()
 #endif
 
 glxlink *glxlink::first = NULL;
@@ -364,7 +367,7 @@ bool glxlink::set_target(char *name)
 		handle = DLLOAD(path);
 		if ( handle==NULL )
 		{
-			output_error("unable to load '%s' for target '%s'", path,name);
+			output_error("unable to load '%s' for target '%s': %s", path,name,DLERR);
 			return false;
 		}
 

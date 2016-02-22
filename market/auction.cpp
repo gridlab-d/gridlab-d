@@ -192,7 +192,6 @@ auction::auction(MODULE *module)
 				sprintf(msg, "unable to publish properties in %s",__FILE__);
 				throw msg;
 			}
-		gl_publish_function(oclass,	"submit_bid", (FUNCTIONADDR)submit_bid);
 		gl_publish_function(oclass,	"submit_bid_state", (FUNCTIONADDR)submit_bid_state);
 		gl_publish_function(oclass, "get_market_for_time", (FUNCTIONADDR)get_market_for_time);
 		gl_publish_function(oclass, "register_participant", (FUNCTIONADDR)register_participant);
@@ -796,13 +795,13 @@ void auction::record_curve(double bu, double su){
 	if(CO_EXTRA == curve_log_info)
 		fprintf(curve_file, "# supply curve at %s: %f total and %f unresponsive\n", timestr, cleared_frame.seller_total_quantity, su);
 	for (i=0; i<offers.getcount(); i++){
-		fprintf(curve_file, "%d,%s,%4d,%s,%.3f,%.6f\n",(int32)market_id,timestr,i,gl_name(offers.getbid(i)->from,name,sizeof(name)), offers.getbid(i)->quantity,offers.getbid(i)->price);
+		fprintf(curve_file, "%d,%s,%4d,%s,%.3f,%.6f\n",(int32)market_id,timestr,i,offers.getbid(i)->from, offers.getbid(i)->quantity,offers.getbid(i)->price);
 	}
 
 	if(CO_EXTRA == curve_log_info)
 		fprintf(curve_file, "# demand curve at %s: %f total and %f unresponsive\n", timestr, cleared_frame.buyer_total_quantity, bu);
 	for (i=0; i<asks.getcount(); i++){
-		fprintf(curve_file, "%d,%s,%4d,%s,%.3f,%.6f\n",(int32)market_id,timestr,i,gl_name(asks.getbid(i)->from,name,sizeof(name)), -asks.getbid(i)->quantity,asks.getbid(i)->price);
+		fprintf(curve_file, "%d,%s,%4d,%s,%.3f,%.6f\n",(int32)market_id,timestr,i,asks.getbid(i)->from, -asks.getbid(i)->quantity,asks.getbid(i)->price);
 	}
 
 	if(CO_EXTRA == curve_log_info){
@@ -888,10 +887,12 @@ void auction::clear_market(void)
 			gl_warning("total_unknown is %.0f -> some controllers are not providing their states with their bids", total_unknown);
 		}
 		//unresponsive.from = linkref;
-		unresponsive.from = capacity_reference_object;
+		char capname[1024];
+		unresponsive.from = (char *)gl_name(capacity_reference_object, capname, sizeof(capname));
 		unresponsive.price = pricecap;
 		unresponsive.state = BS_UNKNOWN;
 		unresponsive.quantity = (refload - asks.get_total_on() - total_unknown/2); /* estimate load on as 1/2 unknown load */
+		unresponsive.bid_id = (int64)capacity_reference_object->id;
 		cap_ref_unrep = unresponsive.quantity;
 		if (unresponsive.quantity < -0.001)
 		{
@@ -899,7 +900,7 @@ void auction::clear_market(void)
 		}
 		else if (unresponsive.quantity > 0.001)
 		{
-			submit_nolock(capacity_reference_object, -unresponsive.quantity, unresponsive.price, -1, BS_ON);
+			submit_nolock(unresponsive.from, -unresponsive.quantity, unresponsive.price, unresponsive.bid_id, BS_ON, false, market_id);
 			gl_verbose("capacity_reference_property %s has %.3f unresponsive load", gl_name(linkref,name,sizeof(name)), -unresponsive.quantity);
 		}
 	}
@@ -922,7 +923,7 @@ void auction::clear_market(void)
 					sprintf(msg, "capacity_reference_property %s uses units of %s and is incompatible with auction units (%s)", capacity_reference_property->name, capacity_reference_property->unit->name, unit.get_string());
 					throw msg;
 				} else {
-					submit_nolock(OBJECTHDR(this), max_capacity_reference_bid_quantity, capacity_reference_bid_price, -1, BS_ON);
+					submit_nolock((char *)OBJECTHDR(this)->name, max_capacity_reference_bid_quantity, capacity_reference_bid_price, (int64)OBJECTHDR(this)->id, BS_ON, false, market_id);
 					if (verbose) gl_output("Capacity reference object: %s bids %.2f at %.2f", capacity_reference_object->name, max_capacity_reference_bid_quantity, capacity_reference_bid_price);
 				}
 			}
@@ -941,7 +942,7 @@ void auction::clear_market(void)
 			}
 			for (unsigned int i=0; i<offers.getcount(); i++){
 				if (verbose){
-					gl_output("   ...  %4d: %s offers %.3f %s at %.2f $/%s",i,gl_name(offers.getbid(i)->from,name,sizeof(name)), offers.getbid(i)->quantity,unit.get_string(),offers.getbid(i)->price,unit.get_string());
+					gl_output("   ...  %4d: %s offers %.3f %s at %.2f $/%s",i,offers.getbid(i)->from, offers.getbid(i)->quantity,unit.get_string(),offers.getbid(i)->price,unit.get_string());
 				}
 			}
 			if(fixed_price * fixed_quantity != 0.0){
@@ -989,7 +990,7 @@ void auction::clear_market(void)
 			}
 			for (unsigned int i=0; i<asks.getcount(); i++){
 				if (verbose){
-					gl_output("   ...  %4d: %s asks %.3f %s at %.2f $/%s",i,gl_name(asks.getbid(i)->from,name,sizeof(name)), asks.getbid(i)->quantity,unit.get_string(),asks.getbid(i)->price,unit.get_string());
+					gl_output("   ...  %4d: %s asks %.3f %s at %.2f $/%s",i,asks.getbid(i)->from, asks.getbid(i)->quantity,unit.get_string(),asks.getbid(i)->price,unit.get_string());
 				}
 			}
 			if(fixed_price * fixed_quantity != 0.0){
@@ -1036,7 +1037,7 @@ void auction::clear_market(void)
 				gl_warning("Seller-only auction was given purchasing bids");
 			}
 			asks.clear();
-			submit(OBJECTHDR(this), -fixed_quantity, fixed_price, -1, BS_ON);
+			submit((char *)OBJECTHDR(this)->name, -fixed_quantity, fixed_price, (int64)OBJECTHDR(this)->id, BS_ON, false, market_id);
 			break;
 		case MD_FIXED_BUYER:
 			asks.sort(true);
@@ -1044,7 +1045,7 @@ void auction::clear_market(void)
 				gl_warning("Buyer-only auction was given offering bids");
 			}
 			offers.clear();
-			submit(OBJECTHDR(this), fixed_quantity, fixed_price, -1, BS_ON);
+			submit((char *)OBJECTHDR(this)->name, fixed_quantity, fixed_price, (int64)OBJECTHDR(this)->id, BS_ON, false, market_id);
 			break;
 		case MD_NONE:
 			offers.sort(false);
@@ -1089,7 +1090,7 @@ void auction::clear_market(void)
 			}
 			for (i=0; i<offers.getcount(); i++){
 				if (verbose){
-					gl_output("   ...  %4d: %s offers %.3f %s at %.2f $/%s",i,gl_name(offers.getbid(i)->from,name,sizeof(name)), offers.getbid(i)->quantity,unit.get_string(),offers.getbid(i)->price,unit.get_string());
+					gl_output("   ...  %4d: %s offers %.3f %s at %.2f $/%s",i,offers.getbid(i)->from, offers.getbid(i)->quantity,unit.get_string(),offers.getbid(i)->price,unit.get_string());
 				}
 				if(offers.getbid(i)->price == -pricecap){
 					unresponsive_sell += offers.getbid(i)->quantity;
@@ -1103,7 +1104,7 @@ void auction::clear_market(void)
 			}
 			for (i=0; i<asks.getcount(); i++){
 				if (verbose){
-					gl_output("   ...  %4d: %s asks %.3f %s at %.2f $/%s",i,gl_name(asks.getbid(i)->from,name,sizeof(name)), asks.getbid(i)->quantity,unit.get_string(),asks.getbid(i)->price,unit.get_string());
+					gl_output("   ...  %4d: %s asks %.3f %s at %.2f $/%s",i,asks.getbid(i)->from, asks.getbid(i)->quantity,unit.get_string(),asks.getbid(i)->price,unit.get_string());
 				}
 				if(asks.getbid(i)->price == pricecap){
 					unresponsive_buy += asks.getbid(i)->quantity;
@@ -1403,7 +1404,7 @@ void auction::clear_market(void)
 	}
 }
 
-void auction::record_bid(OBJECT *from, double quantity, double real_price, BIDDERSTATE state){
+void auction::record_bid(char *from, double quantity, double real_price, BIDDERSTATE state){
 	char name_buffer[256];
 	char *unkState = "unknown";
 	char *offState = "off";
@@ -1430,7 +1431,7 @@ void auction::record_bid(OBJECT *from, double quantity, double real_price, BIDDE
 					break;
 			}
 			tStr = (gl_strtime(&dt,buffer,sizeof(buffer)) ? buffer : unk);
-			sprintf(bigbuffer, "%d,%s,%s,%f,%f,%s", (int32)market_id, tStr, gl_name(from, name_buffer, 256), real_price, quantity, pState);
+			sprintf(bigbuffer, "%d,%s,%s,%f,%f,%s", (int32)market_id, tStr, from, real_price, quantity, pState);
 			fprintf(trans_file, "%s\n", bigbuffer);
 			--trans_log_count;
 		} else {
@@ -1441,12 +1442,12 @@ void auction::record_bid(OBJECT *from, double quantity, double real_price, BIDDE
 	}
 }
 
-KEY auction::submit(OBJECT *from, double quantity, double real_price, KEY key, BIDDERSTATE state)
+int auction::submit(char *from, double quantity, double real_price, KEY key, BIDDERSTATE state, bool rebid, int64 mkt_id)
 {
 	gld_wlock lock(my());
-	return submit_nolock(from,quantity,real_price,key,state);
+	return submit_nolock(from,quantity,real_price,key,state, rebid, mkt_id);
 }
-KEY auction::submit_nolock(OBJECT *from, double quantity, double real_price, KEY key, BIDDERSTATE state)
+int auction::submit_nolock(char *from, double quantity, double real_price, KEY key, BIDDERSTATE state, bool rebid, int64 mkt_id)
 {
 	char myname[64];
 	TIMESTAMP submit_time = gl_globalclock;
@@ -1455,6 +1456,9 @@ KEY auction::submit_nolock(OBJECT *from, double quantity, double real_price, KEY
 	gl_localtime(submit_time,&dt);
 	char buffer[256];
 	BIDDEF biddef;
+	KEY b_id = key;
+	KEY bid_key = -1;
+	int result = 0;
 
 	/* suppress demand bidding until market stabilizes */
 	unsigned int sph24 = (unsigned int)(3600/period*24);
@@ -1467,68 +1471,78 @@ KEY auction::submit_nolock(OBJECT *from, double quantity, double real_price, KEY
 	if (total_samples<sph24 && quantity<0 && warmup)
 	{
 		if (verbose) gl_output("   ...  %s ignoring demand bid during first 24 hours", gl_name(OBJECTHDR(this),myname,sizeof(myname)));
-		return -1;
+		return 1;
 	}
 
 	/* translate key */
-	if(key == -1 || key == 0xccccccccffffffffULL){ // new bid ~ rebuild key
-		//write_bid(key, market_id, -1, BID_UNKNOWN);
+	if(rebid == false){ // new bid ~ rebuild key
 		biddef.bid = -1;
 		biddef.bid_type = BID_UNKNOWN;
 		biddef.market = -1;
 		biddef.raw = -1;
 	} else {
-		if((key & 0xFFFFFFFF00000000ULL) == 0xCCCCCCCC00000000ULL){
-			key &= 0x00000000FFFFFFFFULL;
+		if((-1 & 0xFFFFFFFF00000000ULL) == 0xCCCCCCCC00000000ULL){
+			bid_key &= 0x00000000FFFFFFFFULL;
 		}
 		translate_bid(biddef, key);
 	}
 
-	if (biddef.market > market_id)
+	if (mkt_id > market_id)
 	{	// future market
 		gl_error("bidding into future markets is not yet supported");
 		/* TROUBLESHOOT
 			Tracking bids input markets other than the immediately open one will be supported in the future.
 			*/
 	}
-	else if (biddef.market == market_id) // resubmit
+	else if (mkt_id == market_id && rebid == true) // resubmit
 	{
-		char biddername[64];
 		KEY out;
 		if (verbose){
 			gl_output("   ...  %s resubmits %s from object %s for %.2f %s at $%.2f/%s at %s", 
-				gl_name(OBJECTHDR(this),myname,sizeof(myname)), quantity<0?"ask":"offer", gl_name(from,biddername,sizeof(biddername)), 
+				gl_name(OBJECTHDR(this),myname,sizeof(myname)), quantity<0?"ask":"offer", from,
 				fabs(quantity), unit.get_string(), price, unit.get_string(), gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
 		}
-		BID bid = {from,fabs(quantity),price,state};
-		if (biddef.bid_type == BID_BUY){
-			out = asks.resubmit(&bid,biddef.bid);
-		} else if (biddef.bid_type == BID_SELL){
-			out = offers.resubmit(&bid,biddef.bid);
+		BID bid = {from,b_id,fabs(quantity),price,state};
+		if (quantity < 0){
+			result = offers.remove_bid(bid.bid_id);
+			out = asks.resubmit(&bid);
+		} else if (quantity > 0){
+			result = asks.remove_bid(bid.bid_id);
+			out = offers.resubmit(&bid);
 		} else {
-			;
+			int rslt = offers.remove_bid(bid.bid_id);
+			result = asks.remove_bid(bid.bid_id);
+			gl_debug("zero quantity bid from %s is ignored", from);
+			if(rslt == -1 || result == -1){
+				return 0;
+			} else {
+				return 1;
+			}
 		}
+
+		if (out == -1 || result == -1){
+			return 0;
+		}
+
 		record_bid(from, quantity, real_price, state);
-		return biddef.raw;
-	}
-	else if (biddef.market < 0 || biddef.bid_type == BID_UNKNOWN){
+		return 1;
+	} else if (mkt_id == market_id && rebid == false){
 		char myname[64];
 		char biddername[64];
 		KEY out;
 		if (verbose){
 			gl_output("   ...  %s receives %s from object %s for %.2f %s at $%.2f/%s at %s", 
-				gl_name(OBJECTHDR(this),myname,sizeof(myname)), quantity<0?"ask":"offer", gl_name(from,biddername,sizeof(biddername)), 
+				gl_name(OBJECTHDR(this),myname,sizeof(myname)), quantity<0?"ask":"offer", from,
 				fabs(quantity), unit.get_string(), price, unit.get_string(), gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
 		}
-		BID bid = {from,fabs(quantity),price,state};
+		BID bid = {from,b_id,fabs(quantity),price,state};
 		if (quantity<0){
 			out = asks.submit(&bid);
 		} else if (quantity>0){
 			out = offers.submit(&bid);
 		} else {
-			char name[64];
-			gl_debug("zero quantity bid from %s is ignored", gl_name(from,name,sizeof(name)));
-			return -1;
+			gl_debug("zero quantity bid from %s is ignored", from);
+			return 1;
 		}
 		biddef.bid = (int16)out;
 		biddef.market = market_id;
@@ -1537,18 +1551,16 @@ KEY auction::submit_nolock(OBJECT *from, double quantity, double real_price, KEY
 		// interject transaction log file writing here
 		record_bid(from, quantity, real_price, state);
 		biddef.raw = out;
-		return biddef.raw;
+		return 1;
 	} else { // key between cleared market and 'market_id' ~ points to an old market
 		if(verbose){
 			char myname[64];
-			char biddername[64];
 			gl_output(" ... %s receives %s from object %s for a previously cleared market",
 				gl_name(OBJECTHDR(this),myname,sizeof(myname)),quantity<0?"ask":"offer",
-				gl_name(from,biddername,sizeof(biddername)));
+				from);
 		}
-		return 0;
+		return 1;
 	}
-	return 0;
 }
 
 TIMESTAMP auction::nextclear(void) const

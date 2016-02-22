@@ -6,12 +6,13 @@ powerflow_powerflow_la_CPPFLAGS += $(AM_CPPFLAGS)
 
 powerflow_powerflow_la_LDFLAGS =
 powerflow_powerflow_la_LDFLAGS += $(AM_LDFLAGS)
+powerflow_powerflow_la_LDFLAGS += -ldl
 
 powerflow_powerflow_la_LIBADD =
 powerflow_powerflow_la_LIBADD += third_party/superLU_MT/libsuperlu.la
 powerflow_powerflow_la_LIBADD += $(PTHREAD_CFLAGS)
 powerflow_powerflow_la_LIBADD += $(PTHREAD_LIBS)
-powerflow_powerflow_la_LIBADD += -ldl
+
 
 powerflow_powerflow_la_SOURCES =
 powerflow_powerflow_la_SOURCES += powerflow/billdump.cpp

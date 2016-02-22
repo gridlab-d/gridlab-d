@@ -247,7 +247,7 @@ DT delta_update(void)
 	DT seconds_advance, timestep;
 	DELTAT temp_time;
 	unsigned int delta_iteration_remaining, delta_iteration_count;
-	SIMULATIONMODE interupdate_mode, interupdate_mode_result;
+	SIMULATIONMODE interupdate_mode, interupdate_mode_result, clockupdate_result;
 	int n;
 	double dbl_stop_time;
 	double dbl_curr_clk_time;
@@ -389,6 +389,19 @@ DT delta_update(void)
 			return DT_INVALID;
 		}
 
+		// We have finished the current timestep. Call delta_clockUpdate.
+		clockupdate_result = delta_clockupdate(timestep, interupdate_mode);
+
+		if(clockupdate_result == SM_ERROR)
+		{
+			output_error("delta_update(): clockupdate failed");
+			/* TROUBLESHOOT
+			 * A module failed to complete an clockupdate correctly while operating in deltamode.
+			 * Generally, this is an internal error and should be reported to the GridLAB-D developers.
+			 */
+			return DT_INVALID;
+		}
+
 		if ( interupdate_mode==SM_EVENT )
 		{
 			/* no module wants deltamode to continue any further */
@@ -475,6 +488,76 @@ static SIMULATIONMODE delta_interupdate(DT timestep,unsigned int iteration_count
 	profile.t_interupdate += clock() - t;
 	profile.t_count++;
 	return mode;
+}
+
+static SIMULATIONMODE delta_clockupdate(DT timestep, SIMULATIONMODE interupdate_result)
+{
+	clock_t t = clock();
+	double nextTime = 0;
+	DT exitDeltaTimestep = 0;
+	MODULE ** module;
+	SIMULATIONMODE rv = SM_DELTA;
+	SIMULATIONMODE result = SM_EVENT;
+	if(interupdate_result == SM_DELTA)
+	{
+		//calculate the next timestep that we are going to in nanoseconds
+		nextTime = global_delta_curr_clock + ((double)timestep)/((double)DT_SECOND);
+		for(module=delta_modulelist; module < (delta_modulelist + delta_modulecount); module++)
+		{
+			if((*module)->deltaClockUpdate != NULL)
+			{
+				result = (*module)->deltaClockUpdate(*module, nextTime, timestep, interupdate_result);
+				switch ( result )
+				{
+				case SM_DELTA_ITER:
+					output_error("delta_clockupdate(): It is too late to reiterate on the current time step.");
+					return SM_EVENT;
+				case SM_DELTA:
+						rv = SM_DELTA;
+					/* default else - leave it as is (SM_DELTA_ITER) */
+					break;
+				case SM_ERROR:
+					return SM_ERROR;
+				case SM_EVENT:
+					rv = SM_DELTA;
+					break;
+				default: /* mode remains untouched */
+					break;
+				}
+			}
+		}
+	} else if(interupdate_result == SM_EVENT) {
+		// we are exiting deltamode so we need to determine the timestep to the next whole second.
+		nextTime = ceil(global_delta_curr_clock);
+		exitDeltaTimestep = (DT)((nextTime - global_delta_curr_clock)*DT_SECOND);
+		for(module=delta_modulelist; module < (delta_modulelist + delta_modulecount); module++)
+		{
+			if((*module)->deltaClockUpdate != NULL)
+			{
+				result = (*module)->deltaClockUpdate(*module, nextTime, exitDeltaTimestep, interupdate_result);
+				switch ( result )
+				{
+				case SM_DELTA_ITER:
+					output_error("delta_clockupdate(): It is too late to reiterate on the current time step.");
+					return SM_ERROR;
+				case SM_DELTA:
+					output_error("delta_clockupdate(); Every object wishes to exit delta mode. It is too late to stay in it.");
+					/* default else - leave it as is (SM_DELTA_ITER) */
+					return SM_ERROR;
+					break;
+				case SM_ERROR:
+					return SM_ERROR;
+				case SM_EVENT:
+					rv = SM_EVENT;
+					break;
+				default: /* mode remains untouched */
+					break;
+				}
+			}
+		}
+	}
+	profile.t_clockupdate += clock() - t;
+	return rv;
 }
 
 static STATUS delta_postupdate(void)

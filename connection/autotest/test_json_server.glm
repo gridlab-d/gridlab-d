@@ -1,0 +1,46 @@
+// $Id$
+//
+// This test can be started either from the client or the server script.
+// Each will automatically start the other to provide the other side of
+// the test.  
+//
+
+#ifndef NOCLIENT
+#define wait=2
+#print Starting client...
+#ifdef WINDOWS
+#system "start ${exename} -D verbose=${verbose} -D debug=${debug} -D NOSERVER=1 test_json_client.glm"
+#else
+#system "${exename} -D verbose=${verbose} -D debug=${debug} -D NOSERVER=1 test_json_client.glm &"
+#endif
+#print Waiting ${wait} seconds...
+#sleep ${wait}000
+#print Server client...
+#endif
+
+module connection
+{
+	security STANDARD;
+	lockout 1 min;
+}
+class test {
+  double x;
+  double y;  
+}
+object test {
+  name my;
+  x 1.23;
+  y 3.45;
+}
+object json {
+	link "allow:my.x->var1";
+	link "allow:my.y <-var2";
+	link "sync:my.x-> var1";
+	link "sync:my.y <- var2";
+	// create function submit_bid in test and route the call to auction on remote side
+	link "function:my/submit_bid -> auction/submit_bid";
+	option "connection:server,udp";
+	option "transport:hostname localhost, timeout 1000, on_error retry, maxretry none";
+//	option "readcache:size 512"; 
+//	option "writecache:size 512";
+}

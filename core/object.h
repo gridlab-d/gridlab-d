@@ -113,6 +113,7 @@ typedef struct s_callbacks {
 		OBJECT *(*foreign)(OBJECT *);
 	} create;
 	int (*define_map)(CLASS*,...);
+	int (*loadmethod)(CLASS*,char*,int (*call)(OBJECT*,char*));
 	CLASS *(*class_getfirst)(void);
 	CLASS *(*class_getname)(char*);
 	struct {
@@ -140,6 +141,7 @@ typedef struct s_callbacks {
 		bool (*compare_basic)(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void* x, void* a, void* b, char *part);
 		PROPERTYCOMPAREOP (*get_compare_op)(PROPERTYTYPE ptype, char *opstr);
 		double (*get_part)(OBJECT*,PROPERTY*,char*);
+		PROPERTYSPEC *(*get_spec)(PROPERTYTYPE);
 	} properties;
 	struct {
 		struct s_findlist *(*objects)(struct s_findlist *,...);
@@ -402,6 +404,8 @@ void object_remote_write(void *local, OBJECT *obj, PROPERTY *prop); /** access r
 
 double object_get_part(void *x, char *name);
 TIMESTAMP object_heartbeat(OBJECT *obj);
+
+int object_loadmethod(OBJECT *obj, char *name, char *value);
 
 #ifdef __cplusplus
 }

@@ -1,0 +1,15 @@
+// $Id$
+
+module connection
+{
+	security STANDARD;
+	lockout 1 min;
+}
+object xml {
+	mode CLIENT;
+	transport TCP;
+}
+object xml {
+	mode CLIENT;
+	transport UDP;
+}

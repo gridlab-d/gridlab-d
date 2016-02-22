@@ -116,6 +116,8 @@ private:
 	double *pPeriod;
 	double *pNextP;
 	int64 *pMarketID;
+	BIDINFO controller_bid;
+	FUNCTIONADDR submit;
 };
 
 #endif

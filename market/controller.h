@@ -38,6 +38,7 @@ public:
 	typedef enum {
 		BM_OFF,
 		BM_ON,
+		BM_PROXY,
 	} BIDMODE;
 	enumeration bidmode;
 
@@ -76,6 +77,7 @@ public:
 	char state[33];
 	char32 avg_target;
 	char32 std_target;
+	char pMkt[33];
 	OBJECT *pMarket;
 	auction *market;
 	KEY lastbid_id;
@@ -126,7 +128,7 @@ public:
 	double last_setpoint;
 	double last_heating_setpoint;
 	double last_cooling_setpoint;
-
+	int64 bid_id;
 
 private:
 	TIMESTAMP next_run;
@@ -138,10 +140,13 @@ private:
 	double *pLoad;
 	double *pAvg;
 	double *pStd;
+	double *pMarginalFraction;
 	enumeration *pState;
 	enumeration last_pState;
 	void cheat();
-	void fetch(double **prop, char *name, OBJECT *parent);
+	void fetch_double(double **prop, char *name, OBJECT *parent);
+	void fetch_int64(int64 **prop, char *name, OBJECT *parent);
+	void fetch_enum(enumeration **prop, char *name, OBJECT *parent);
 	int dir, direction;
 	double min, max;
 	double T_lim, k_T;
@@ -167,8 +172,28 @@ private:
 	int64 dtime_delay;
 	TIMESTAMP time_off;
 	bool use_market_period;
+	BIDINFO controller_bid;
+	FUNCTIONADDR submit;
 
 	enumeration *pOverride;
+	int64 *pMarketId;
+	double *pClearedPrice;
+	double *pPriceCap;
+	GL_STRING(char32,marketunit);
+	char market_unit[32];
+	enumeration *pMarginMode;
+	static controller *defaults;
+
+	//PROXY PROPERTIES
+	double proxy_avg;
+	double proxy_std;
+	int64 proxy_mkt_id;
+	double proxy_clear_price;
+	double proxy_price_cap;
+	char proxy_mkt_unit[32];
+	double proxy_init_price;
+	enumeration proxy_margin_mode;
+	double proxy_marginal_fraction;
 };
 
 #endif // _controller_H

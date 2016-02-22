@@ -71,6 +71,27 @@ AC_ARG_ENABLE([optimization],
     [optimization=0])
 
 ###############################################################################
+#windows-mingw specific flag runs
+###############################################################################
+AC_CANONICAL_HOST
+case $host_os in
+  *mingw*) mingw=true ;;
+  *) mingw=false ;;
+esac
+AM_CONDITIONAL([HAVE_MINGW], [test "x$mingw" = "xtrue"])
+
+#case `gcc -dumpmachine` in
+#	*mingw*) mingw=true ;;
+#	*) mingw=false ;;
+#esac
+#AM_CONDITIONAL([HAVE_MINGW], [test "x$mingw" = "xtrue"])
+
+###another trial#####
+#case $host in
+#*mingw*)
+#		LDFLAGS = $LDFLAGS -lws2_32
+#esac
+###############################################################################
 # C compiler
 ###############################################################################
 AC_MSG_NOTICE
@@ -82,7 +103,7 @@ AC_GNU_SOURCE   # defines _GNU_SOURCE
 AM_PROG_CC_C_O  # required for automake to support subdir-objects
 
 AS_IF([test "x$debug" = "true"], [GLD_CFLAGS="$GLD_CFLAGS -g"])
-GLD_CFLAGS="$GLD_CFLAGS -O$optimization"
+GLD_CFLAGS="$GLD_CFLAGS"
 
 #--------------------------------------
 # Checks for C header files.
@@ -156,7 +177,7 @@ AC_LANG_PUSH([C++])
 AC_PROG_CXX
 
 AS_IF([test "x$debug" = "true"], [GLD_CXXFLAGS="$GLD_CXXFLAGS -g"])
-GLD_CXXFLAGS="$GLD_CXXFLAGS -O$optimization"
+GLD_CXXFLAGS="$GLD_CXXFLAGS"
 
 #--------------------------------------
 # Checks for C++ header files.
@@ -400,6 +421,59 @@ AC_SUBST([CPPUNIT_CPPFLAGS])
 AC_SUBST([CPPUNIT_LDFLAGS])
 AC_SUBST([CPPUNIT_LIBS])
 
+# Check for Framework for Network Co-Simulation (FNCS)
+AC_ARG_WITH([fncs],
+    [AS_HELP_STRING([--with-fncs],
+                    [Link to FNCS from the given prefix (=path)  @<:@default=no@:>@])],
+    [],
+    [with_fncs=no])
+AS_CASE([$with_fncs],
+        [yes],  [],
+        [no],   [],
+                [GLD_FLAG_PARSE([with_fncs],
+                        [FNCS_LIBS],
+                        [FNCS_LDFLAGS],
+                        [FNCS_CPPFLAGS])])
+gld_save_LIBS="$LIBS"; LIBS="$LIBS $FNCS_LIBS"
+gld_save_LDFLAGS="$LDFLAGS"; LDFLAGS="$LDFLAGS $FNCS_LDFLAGS"
+gld_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $FNCS_CPPFLAGS"
+# add libfncs to FNCS_LIBS if missing
+AS_CASE([$FNCS_LIBS],
+        [*lfncs*], [], [FNCS_LIBS="$FNCS_LIBS -lfncs"])
+AS_CASE([$LIBS],
+        [*lfncs*], [], [LIBS="$LIBS -lfncs"])
+# add libczmq to FNCS_LIBS if missing
+AS_CASE([$FNCS_LIBS],
+        [*lczmq*], [], [FNCS_LIBS="$FNCS_LIBS -lczmq"])
+AS_CASE([$LIBS],
+        [*lczmq*], [], [LIBS="$LIBS -lczmq"])
+# add libzmq to FNCS_LIBS if missing
+AS_CASE([$FNCS_LIBS],
+        [*lzmq*], [], [FNCS_LIBS="$FNCS_LIBS -lzmq"])
+AS_CASE([$LIBS],
+        [*lzmq*], [], [LIBS="$LIBS -lzmq"])
+have_fncs=yes
+AC_MSG_CHECKING([for FNCS])
+AC_LINK_IFELSE(
+    [AC_LANG_PROGRAM([[
+#include<fncs.hpp>
+]],
+[[
+fncs::time t;
+fncs::initialize();
+]])],
+    [have_fncs=yes; have_fncs_int=1],
+    [have_fncs=no; have_fncs_int=0])
+LIBS="$gld_save_LIBS"
+LDFLAGS="$gld_save_LDFLAGS"
+CPPFLAGS="$gld_save_CPPFLAGS"
+AC_SUBST([FNCS_LIBS])
+AC_SUBST([FNCS_LDFLAGS])
+AC_SUBST([FNCS_CPPFLAGS])
+AC_MSG_RESULT([$have_fncs])
+AC_DEFINE_UNQUOTED([HAVE_FNCS], [$have_fncs_int], [whether FNCS was found])
+AM_CONDITIONAL([HAVE_FNCS], [test "x$have_fncs" = xyes])
+
 AC_SUBST([GLD_CPPFLAGS])
 
 AC_LANG_POP([C++])
@@ -460,55 +534,63 @@ AS_IF([test -n "$DX_DOXYGEN"],
       [HAVE_DOXYGEN=no])
 
 # Check for Matlab
-AC_CHECK_PROGS([MATLAB], [matlab])
-AC_CACHE_CHECK([for matlab environment (matlab -e)], [gld_cv_matlab_e],
-    [AS_IF([test "x$MATLAB" != x],
-        [AS_IF([$MATLAB -e > /dev/null 2>&1],
-            [gld_cv_matlab_e=yes; have_matlab_val=1],
-            [gld_cv_matlab_e=no; have_matlab_val=0])])])
-AC_CACHE_CHECK([for matlab path], [gld_cv_matlab_path],
-    [AS_IF([test "x$gld_cv_matlab_e" = xyes],
-        [gld_cv_matlab_path=`$MATLAB -e | grep ^MATLAB= | cut -f2 -d=`])])
-AC_CACHE_CHECK([for matlab LD_LIBRARY_PATH], [gld_cv_matlab_ldpath],
-    [AS_IF([test "x$gld_cv_matlab_e" = xyes],
-        [gld_cv_matlab_ldpath=`$MATLAB -e | grep ^LD_LIBRARY_PATH= | cut -f2 -d=`
-         AS_IF([test "x$gld_cv_matlab_ldpath" = x],
-            [gld_cv_matlab_ldpath=`$MATLAB -e | grep ^DYLD_LIBRARY_PATH= | cut -f2 -d=`
-])])])
-AS_IF([test "x$MATLAB" != x],
-    [MATLAB=`$MATLAB -e | grep ^MATLAB= | cut -f2 -d=`
-	MATLAB_CPPFLAGS="-I$MATLAB/extern/include"
-     MATLAB_LDFLAGS="-L${gld_cv_matlab_ldpath//:/ -L}"
-     MATLAB_LIBS="-lmx -leng"
-     GLD_CPPFLAGS="$GLD_CPPFLAGS -DHAVE_MATLAB"
-     HAVE_MATLAB=yes],
-    [HAVE_MATLAB=no])
-AM_CONDITIONAL([HAVE_MATLAB], [test "x$MATLAB" != x])
+AC_ARG_WITH([matlab],
+	[AS_HELP_STRING([--with-matlab],
+		[Link to MATLAB from a given prefix (=path) @<:@default=no@:>@])],
+	[],
+	[with_matlab=no])
+MATLAB=$with_matlab
+AS_CASE([$with_matlab],
+	[yes], [],
+	[no], [],)
+AS_IF([test "x$MATLAB" != "xno"],
+	[MATLAB_CPPFLAGS="'-I$MATLAB/extern/include'"
+	AS_CASE([$host],
+		[*linux*], [AS_CASE([$build_cpu],
+							[*x86_64*], [MATLAB_LDFLAGS="'-L$MATLAB/bin/glnxa64' '-L$MATLAB/extern/lib/glnxa64'"],
+							[*i686*], [MATLAB_LDFLAGS="'-L$MATLAB/bin/glnx86' '-L$MATLAB/extern/lib/glnx86'"])],
+		[*darwin*], [AS_CASE([$build_cpu],
+							[*x86_64*], [MATLAB_LDFLAGS="'-L$MATLAB/bin/maci64' '-L$MATLAB/extern/lib/maci64'"],
+							[*i686*], [MATLAB_LDFLAGS="'-L$MATLAB/bin/macx86' '-L$MATLAB/extern/lib/macx86'"])],
+		[*mingw*], [AS_CASE([$build_cpu],
+							[*x86_64*], [MATLAB_LDFLAGS="'-L$MATLAB/bin/win64' '-L$MATLAB/extern/lib/win64/microsoft'"],
+							[*i686*], [MATLAB_LDFLAGS="'-L$MATLAB/bin/win32' '-L$MATLAB/extern/lib/win32/microsoft'"])])
+	MATLAB_LIBS="-lmx -leng"
+	GLD_CPPFLAGS="$GLD_CPPFLAG -DHAVE_MATLAB"
+	HAVE_MATLAB=yes],
+	[HAVE_MATLAB=no])
 AC_SUBST([MATLAB_CPPFLAGS])
 AC_SUBST([MATLAB_LDFLAGS])
 AC_SUBST([MATLAB_LDPATH])
 AC_SUBST([MATLAB_LIBS])
+	
+# Check for MinGW	
+AS_CASE([$host],
+	[*linux*], [HAVE_MINGW=no],
+	[*darwin*], [HAVE_MINGW=no],
+	[*mingw*], [HAVE_MINGW=yes])
+AM_CONDITIONAL([HAVE_MINGW], [test "x$mingw" != xfalse])
 
 # Check for mysql
-m4_define([mysql_include], [/usr/local/mysql-connector-c/include])
-m4_define([mysql_lib],     [/usr/local/mysql-connector-c/lib])
-AC_CACHE_CHECK([for mysql_include/mysql.h], [gld_cv_mysql],
-    [AS_IF([test -f mysql_include/mysql.h],
-           [gld_cv_mysql=yes],
-           [gld_cv_mysql=no])])
-AS_IF([test "x$gld_cv_mysql" = xyes],
-    [MYSQL_CPPFLAGS=[-I]mysql_include
-     MYSQL_LIBS="-lmysqlclient"
-     GLD_CPPFLAGS="$GLD_CPPFLAGS -DHAVE_MYSQL"
-     HAVE_MYSQL=yes],
-    [HAVE_MYSQL=no])
-AC_CACHE_CHECK([for mysql_lib], [gld_cv_mysql_lib],
-    [AS_IF([test -d mysql_lib],
-           [gld_cv_mysql_lib=yes],
-           [gld_cv_mysql_lib=no])])
-AS_IF([test "x$gld_cv_mysql_lib" = xyes],
-    [MYSQL_LDFLAGS=[-L]mysql_lib])
-AM_CONDITIONAL([HAVE_MYSQL], [test "x$HAVE_MYSQL" = xyes])
+
+AC_ARG_WITH([mysql],
+	[AS_HELP_STRING([--with-mysql],
+		[Link to MySQL from a given prefix (=path)])],
+	[],
+	[with_mysql=no])
+MYSQL=$with_mysql
+AS_IF([test "x$MYSQL" != "xno"],
+	[MYSQL_CPPFLAGS="'-I$MYSQL/include'"
+		AS_CASE([$host],
+			[*mingw*], [MYSQL_LDFLAGS="'-L$MYSQL/lib'"
+				MYSQL_LIBS="-lmysql"],
+			[*linux*], [MYSQL_LDFLAGS="'-L$MYSQL/lib'"
+				MYSQL_LIBS="-lmysqlclient"],
+			[*darwin*], [MYSQL_LDFLAGS="'-L$MYSQL/lib'"
+				MYSQL_LIBS="-lmysqlclient"])
+		GLD_CPPFLAGS="$GLD_CPPFLAGS -DHAVE_MYSQL"
+		HAVE_MYSQL=yes],
+	[HAVE_MYSQL=no])
 AC_SUBST([MYSQL_CPPFLAGS])
 AC_SUBST([MYSQL_LDFLAGS])
 AC_SUBST([MYSQL_LIBS])
@@ -541,6 +623,7 @@ AC_MSG_RESULT([
 
   Dependencies:
 
+    MinGW: ...................... $HAVE_MINGW
     Doxygen: .................... $HAVE_DOXYGEN
     libcppunit: ................. $HAVE_CPPUNIT
     libxerces-c: ................ $HAVE_XERCES

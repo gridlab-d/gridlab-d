@@ -21,7 +21,12 @@ typedef struct s_class_list CLASS;
 // also in class.h
 #ifndef FADDR
 #define FADDR
+#ifdef __MINGW32__
+#warning Temporary hard coded __int64
+typedef __int64 (*FUNCTIONADDR)(void*,...); /** the entry point of a module function */
+#else 
 typedef int64 (*FUNCTIONADDR)(void*,...); /** the entry point of a module function */
+#endif
 #endif
 
 #ifdef HAVE_STDINT_H
@@ -65,7 +70,7 @@ public:
 	inline char *find(const char c) { return strchr(buffer,c); };
 	inline char *find(const char *s) { return strstr(buffer,s); };
 	inline char *findrev(const char c) { return strrchr(buffer,c); };
-	inline char *token(char *from, const char *delim, char **context) { strtok_s(from,delim,context); };
+	inline char *token(char *from, const char *delim, char **context) { this->strtok_s(from,delim,context); };
 	inline size_t format(char *fmt, ...) { va_list ptr; va_start(ptr,fmt); size_t len=vsnprintf(buffer,size,fmt,ptr); va_end(ptr); return len; };
 	inline size_t vformat(char *fmt, va_list ptr) { return vsnprintf(buffer,size,fmt,ptr); };
 };

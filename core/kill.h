@@ -5,6 +5,9 @@
 #define _KILL_H
 
 #ifdef WIN32
+#ifdef __MINGW32__
+#include <sys/types.h>
+#endif
 void kill_starthandler(void);
 void kill_stophandler(void);
 int kill(pid_t pid, int sig);

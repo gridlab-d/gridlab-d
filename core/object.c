@@ -2662,4 +2662,10 @@ double object_get_part(void *x, char *name)
 	return QNAN;
 }
 
+int object_loadmethod(OBJECT *obj, char *name, char *value)
+{
+	LOADMETHOD *method = class_get_loadmethod(obj->oclass,name);
+	return method ? method->call(obj,value) : 0;
+}
+
 /** @} **/

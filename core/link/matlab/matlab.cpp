@@ -47,6 +47,7 @@ typedef struct {
 	mxArray *root;
 } MATLABLINK;
 
+static int64 g_skipsafe = 0;
 static mxArray* matlab_exec(MATLABLINK *matlab, char *format, ...)
 {
 	char cmd[4096];
@@ -350,6 +351,23 @@ EXPORT bool glx_settag(glxlink *mod, char *tag, char *data)
 			strcpy(matlab->term,data);
 		}
 	}
+	else if( strcmp(tag, "skipsafe")==0 )
+	{
+		if( strcmp(data, "yes")==0 )
+		{
+			mod->glxflags |= LF_SKIPSAFE;
+			char buf[1024];
+		}
+		else if( strcmp(data, "no")==0 )
+		{
+			mod->glxflags &= ~LF_SKIPSAFE;
+		}
+		else
+		{
+			gl_error("glxmatlab::glx_settag ~ skipsafe value '%s' is not valid", data);
+			return false;
+		}
+	}
 	else
 	{
 		gl_output("tag '%s' not valid for matlab target", tag);
@@ -402,6 +420,7 @@ EXPORT bool glx_init(glxlink *mod)
 		return false;
 	}
 #else
+	gl_verbose("opening engine with command '%s'", matlab->command);
 	matlab->engine = engOpen(matlab->command);
 	if ( matlab->engine==NULL )
 	{
@@ -412,12 +431,15 @@ EXPORT bool glx_init(glxlink *mod)
 
 	// set the output buffer
 	if ( matlab->output_buffer!=NULL )
+	{
+		gl_verbose("configuring output buffer of size %d bytes", (int)matlab->output_size);
 		engOutputBuffer(matlab->engine,matlab->output_buffer,(int)matlab->output_size);
+	}
 
 	// setup matlab engine
 	engSetVisible(matlab->engine,window_show(matlab));
 
-	gl_debug("matlab link is open");
+	gl_verbose("matlab link is open");
 
 	// special values needed by matlab
 	mxArray *ts_never = mxCreateDoubleScalar((double)(TIMESTAMP)TS_NEVER);
@@ -432,26 +454,30 @@ EXPORT bool glx_init(glxlink *mod)
 	// set the workdir
 	if ( strcmp(matlab->workdir,"")!=0 )
 	{
+		gl_verbose("setting workdir to '%s'", matlab->workdir);
 #ifdef WIN32
 		_mkdir(matlab->workdir);
 #else
 		mkdir(matlab->workdir,0750);
 #endif
 		if ( matlab->workdir[0]=='/' )
-			matlab_exec(matlab,"cd '%s'", matlab->workdir);
+			matlab_exec(matlab,"cd '%s'; ans=GLD_OK;", matlab->workdir);
 		else
-			matlab_exec(matlab,"cd '%s/%s'", getcwd(NULL,0),matlab->workdir);
+			matlab_exec(matlab,"cd '%s/%s'; ans=GLD_OK;", getcwd(NULL,0),matlab->workdir);
 	}
 
 	// run the initialization command(s)
 	if ( matlab->init )
 	{
+		gl_verbose("running initiatilization script");
 		mxArray *ans = matlab_exec(matlab,"%s",matlab->init);
 		if ( ans && mxIsDouble(ans) && (bool)*mxGetPr(ans)==false )
 		{
 			gl_error("matlab init failed");
 			return false;
 		}
+		else
+			gl_verbose("answer received");
 	}
 
 	if ( matlab->rootname!=NULL )
@@ -688,7 +714,7 @@ EXPORT bool glx_init(glxlink *mod)
 
 	static int32 matlab_flag = 1;
 	gl_global_create("MATLAB",PT_int32,&matlab_flag,PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"indicates that MATLAB is available",NULL);
-
+	mod->last_t = gl_globalclock;
 	return true;
 }
 
@@ -808,14 +834,23 @@ EXPORT TIMESTAMP glx_sync(glxlink* mod,TIMESTAMP t0)
 
 	if ( matlab->sync )
 	{
+		TIMESTAMP effective_valid_to = mod->valid_to;
+		if((mod->glxflags & LF_SKIPSAFE) && t0 < effective_valid_to)
+				return effective_valid_to;
+		mod->last_t = t0;
 		mxArray *ans = matlab_exec(matlab,"%s",matlab->sync);
 		if ( ans && mxIsDouble(ans) )
 		{
 				
 			double *pVal = (double*)mxGetData(ans);
-			if ( pVal!=NULL ) t1 = floor(*pVal);
-			if ( t1<TS_INVALID ) t1=TS_NEVER;
+			if ( pVal!=NULL ){
+				t1 = floor(*pVal);
+			}
+			if ( t1<TS_INVALID || t1 > TS_MAX ){
+				t1=TS_NEVER;
+			}
 		}
+		mod->valid_to = t1;
 	}
 
 	if ( !copy_imports(mod) )

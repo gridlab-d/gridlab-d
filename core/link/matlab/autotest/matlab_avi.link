@@ -1,0 +1,77 @@
+# $Id$
+# 
+# Test Matlab link control file
+#
+
+target matlab
+
+#
+# Matlab working directory
+# The workdir is automatically created if it doesn't exist
+# If omitted, the current working directory is used
+#
+workdir temp
+
+#
+# Matlab window disposition (hide, show, keep)
+# Default is 'hide'
+#
+window hide
+
+#
+# Matlab output buffer size for verbose output
+# If omitted, output is not displayed when verbose is enabled
+#
+output 65536
+
+#
+# Matlab command on init
+#   ans is GLD_OK when init succeeds
+#   and is GLD_ERROR when init fails
+#
+on_init q=zeros(1000,1); n=1; v=VideoWriter('q.avi'); if ( exist('v') ) ans=GLD_OK; open(v); else ans=GLD_ERROR; end; 
+
+#
+# Matlab command on sync
+#   ans is timestamp of next needed sync event
+#   ans is TS_NEVER if no sync event needed
+#   ass is TS_ERROR if an error occurred
+#
+on_sync if (n<1000) q(n)=z; h=figure(1); cla(h); plot(1:n,q(1:n)); xlim([0 1000]); ylim([-100 100]); writeVideo(v,getframe(h)); n=n+1; end; ans=TS_NEVER; 
+
+#
+# Matlab command on term
+#   ans is GLD_OK when term succeeds
+#   ans is GLD_ERROR when term fails
+on_term close(v); ans=GLD_OK;
+
+#
+# Matlab root variable name for published data
+# Default is 'gridlabd'
+#
+root gld
+
+#
+# Global variables to publish (readonly)
+# Default is all globals
+# Listing "global" all by itself once will cause no globals to be published
+# 
+#
+global clock
+global test_complex
+
+#
+# Objects to publish (readonly)
+# Default is all objects
+# Listing "object" all by itself once will cause no objects to be published
+#
+object my_test0
+object my_test3
+
+#
+# Variables to export/import to workspace (by name)
+# Default is none are exported or imported
+#
+export my_test6.x x
+export my_test9.y y
+import my_test12.z z

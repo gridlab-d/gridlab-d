@@ -1,4 +1,4 @@
-create table if not exists test1 (id int);
-create table if not exists test3 (id int);
-select count(*) from test1;
-select * from test3;
+create table if not exists test_recorder_1 (id int);
+create table if not exists test_recorder_3 (id int);
+select count(*) from test_recorder_1;
+select * from test_recorder_3;

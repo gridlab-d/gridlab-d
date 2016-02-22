@@ -39,6 +39,24 @@ typedef struct s_globalvar {
 	unsigned int lock;
 } GLOBALVAR;
 
+/* Exit codes */
+typedef int EXITCODE;
+#define XC_SUCCESS 0 /* per system(3) */
+#define XC_EXFAILED -1 /* exec/wait failure - per system(3) */
+#define XC_ARGERR 1 /* error processing command line arguments */
+#define XC_ENVERR 2 /* bad environment startup */
+#define XC_TSTERR 3 /* test failed */
+#define XC_USRERR 4 /* user reject terms of use */
+#define XC_RUNERR 5 /* simulation did not complete as desired */
+#define XC_INIERR 6 /* initialization failed */
+#define XC_PRCERR 7 /* process control error */
+#define XC_SVRKLL 8 /* server killed */
+#define XC_IOERR 9 /* I/O error */
+#define XC_SHFAILED 127 /* shell failure - per system(3) */
+#define XC_SIGNAL 128 /* signal caught - must be or'd with SIG value if known */
+#define XC_SIGINT (XC_SIGNAL|SIGINT) /* SIGINT caught */
+#define XC_EXCEPTION 255 /* exception caught */
+
 STATUS global_init(void);
 GLOBALVAR *global_getnext(GLOBALVAR *previous);
 GLOBALVAR *global_find(char *name);
@@ -121,6 +139,7 @@ GLOBAL int global_init_sequence INIT(IS_DEFERRED); /** initialization sequence, 
 #include "realtime.h"
 
 GLOBAL TIMESTAMP global_clock INIT(TS_ZERO); /**< The main clock timestamp */
+GLOBAL TIMESTAMP global_nextTime INIT(TS_ZERO); /** < The next smallest event timestamp */
 GLOBAL TIMESTAMP global_starttime INIT(946684800); /**< The simulation starting time (default is 2000-01-01 0:00) */
 GLOBAL TIMESTAMP global_stoptime INIT(TS_NEVER); /**< The simulation stop time (default is 1 year after start time) */
 
@@ -147,6 +166,7 @@ GLOBAL int global_suppress_repeat_messages INIT(1); /**< flag that allows repeat
 GLOBAL int global_suppress_deprecated_messages INIT(0); /**< flag to suppress output notice of deprecated properties usage */
 
 GLOBAL int global_run_realtime INIT(0); /**< flag to force simulator into realtime mode */
+GLOBAL TIMESTAMP global_enter_realtime INIT(TS_NEVER); /**< The simulation transitions from simtime to realtime at this timestep */
 
 #ifdef _DEBUG
 GLOBAL char global_sync_dumpfile[1024] INIT(""); /**< enable sync event dump file */
@@ -253,6 +273,7 @@ GLOBAL int32 global_signal_timeout INIT(5000); /**< signal timeout in millisecon
 
 /* system call */
 GLOBAL int global_return_code INIT(0); /**< return code from last system call */
+GLOBAL EXITCODE global_exit_code INIT(XC_SUCCESS);
 GLOBAL int global_init_max_defer INIT(64); /**< maximum number of times objects will be deferred for initialization */
 
 /* remote data access */

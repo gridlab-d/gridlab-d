@@ -4,6 +4,8 @@
 #ifndef _LINK_H
 #define _LINK_H
 
+#define LF_SKIPSAFE 0x01
+
 typedef struct {
 	OBJECT *obj;
 	PROPERTY *prop;
@@ -107,6 +109,11 @@ public: // accessors
 		if ( item->data!=NULL ) free(item->data);
 		item->data=(void*)var; 
 	};
+
+public:// valid to implementation
+	uint32 glxflags;
+	TIMESTAMP valid_to;
+	TIMESTAMP last_t;
 };
 extern "C" {
 #else // __cplusplus

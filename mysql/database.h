@@ -12,7 +12,7 @@
 #ifdef WIN32
 #undef int64
 #include <winsock2.h>
-#define int64 _int64
+#define int64 long long
 #else
 #include <ctype.h>
 #include <sys/types.h>

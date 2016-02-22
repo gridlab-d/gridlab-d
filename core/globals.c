@@ -170,6 +170,7 @@ static struct s_varmap {
 	{"suppress_repeat_messages",PT_bool, &global_suppress_repeat_messages, PA_PUBLIC, "suppress repeated messages enable flag"},
 	{"maximum_synctime",PT_int32, &global_maximum_synctime, PA_PUBLIC, "maximum sync time for deltamode"},
 	{"run_realtime",PT_bool, &global_run_realtime, PA_PUBLIC, "realtime enable flag"},
+	{"enter_realtime",PT_timestamp, &global_enter_realtime, PA_PUBLIC, "timestamp to transition to realtime mode"},
 	{"no_deprecate",PT_bool, &global_suppress_deprecated_messages, PA_PUBLIC, "suppress deprecated usage message enable flag"},
 #ifdef _DEBUG
 	{"sync_dumpfile",PT_char1024, &global_sync_dumpfile, PA_PUBLIC, "sync event dump file name"},
@@ -204,6 +205,7 @@ static struct s_varmap {
 	{"slave_port", PT_int16, &global_slave_port, PA_PUBLIC, "unused"},
 	{"slave_id", PT_int64, &global_slave_id, PA_PUBLIC, "unused"},
 	{"return_code", PT_int32, &global_return_code, PA_REFERENCE, "unused"},
+	{"exit_code", PT_int16, &global_exit_code, PA_REFERENCE, "The exit code for GridLAB-D"},
 	{"module_compiler_flags", PT_set, &global_module_compiler_flags, PA_PUBLIC, "module compiler flags", mcf_keys},
 	{"init_max_defer", PT_int32, &global_init_max_defer, PA_REFERENCE, "deferred initialization limit"},
 	{"mt_analysis", PT_bool, &global_mt_analysis, PA_PUBLIC, "perform multithread profile optimization analysis"},
@@ -221,6 +223,7 @@ static struct s_varmap {
 	{"deltamode_updateorder", PT_char1024, &global_deltamode_updateorder, PA_REFERENCE, "order in which modules are update in deltamode"},
 	{"deltamode_iteration_limit", PT_int32, &global_deltamode_iteration_limit, PA_PUBLIC, "iteration limit for each delta timestep (object and interupdate)"},
 	{"run_powerworld", PT_bool, &global_run_powerworld, PA_PUBLIC, "boolean that that says your system is set up correctly to run with PowerWorld"},
+	{"exename", PT_char1024, &global_execname, PA_REFERENCE, "argv[0] value"},
 	/* add new global variables here */
 };
 
@@ -924,6 +927,14 @@ char *global_getvar(char *name, char *buffer, int size)
 		{"APPLE",global_true},
 #else
 		{"LINUX",global_true},
+#endif
+#ifdef HAVE_MATLAB
+		//Used specifically to run MATLAB integration autotests
+		{"MATLAB",global_true},
+#endif
+#ifdef HAVE_MYSQL
+		//Used specifically to run MYSQL integration autotests
+		{"MYSQL",global_true},
 #endif
 	};
 	int i;	

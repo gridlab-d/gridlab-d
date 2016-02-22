@@ -1,0 +1,31 @@
+// $Id$
+
+module connection
+{
+	security STANDARD;
+	lockout 1 min;
+}
+class test {
+  double x;
+  double y;  
+}
+object test {
+  name my;
+  x 1.23;
+  y 3.45;
+}
+object xml {
+	link "allow:my.x->var1";
+	link "allow:my.y <-var2";
+	link "presync:my.x-> var1";
+	link "sync:my.y <- var2";
+	option "connection:server,maxclients 2"; // pass options all at once
+	option "server:maxclients 1"; // pass options one at a time
+//	option "transport:udp";
+//	option "readcache:size 1024";
+//	option "writecache:size 1024";
+}
+object xml {
+	mode SERVER;
+	transport UDP;
+}

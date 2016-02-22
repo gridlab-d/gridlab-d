@@ -628,6 +628,12 @@ typedef enum {
 	TRL_PROVEN			= 9,
 } TECHNOLOGYREADINESSLEVEL;
 
+typedef struct s_loadmethod {
+	char *name;
+	int (*call)(void*,char*);
+	struct s_loadmethod *next;
+} LOADMETHOD;
+
 typedef enum {CLASSVALID=0xc44d822e} CLASSMAGIC; ///< this is used to uniquely identify class structure
 
 struct s_class_list {
@@ -651,6 +657,7 @@ struct s_class_list {
 	FUNCTIONADDR recalc;
 	FUNCTIONADDR update;	/**< deltamode related */
 	FUNCTIONADDR heartbeat;
+	LOADMETHOD loadmethods;
 	CLASS *parent;			/**< parent class from which properties should be inherited */
 	struct {
 		unsigned int lock;
@@ -978,6 +985,29 @@ typedef enum {
 	TCOP_NOP,
 	TCOP_ERR=-1
 } PROPERTYCOMPAREOP;
+typedef int PROPERTYCOMPAREFUNCTION(void*,void*,void*);
+
+typedef struct s_property_specs { /**<	the property type conversion specifications.
+																It is critical that the order of entries in this list must match 
+																the order of entries in the enumeration #PROPERTYTYPE 
+													  **/
+	char *name; /**< the property type name */
+	char *xsdname;
+	unsigned int size; /**< the size of 1 instance */
+	unsigned int csize; /**< the minimum size of a converted instance (not including '\0' or unit, 0 means a call to property_minimum_buffersize() is necessary) */ 
+	int (*data_to_string)(char *,int,void*,PROPERTY*); /**< the function to convert from data to a string */
+	int (*string_to_data)(const char *,void*,PROPERTY*); /**< the function to convert from a string to data */
+	int (*create)(void*); /**< the function used to create the property, if any */
+	size_t (*stream)(FILE*,int,void*,PROPERTY*); /**< the function to read data from a stream */
+	struct {
+		PROPERTYCOMPAREOP op;
+		char str[16];
+		PROPERTYCOMPAREFUNCTION* fn;
+		int trinary;
+	} compare[_TCOP_LAST]; /**< the list of comparison operators available for this type */
+	double (*get_part)(void*,char *name); /**< the function to get a part of a property */
+	// @todo for greater generality this should be implemented as a linked list
+} PROPERTYSPEC;
 
 typedef struct s_callbacks {
 	TIMESTAMP *global_clock;
@@ -996,6 +1026,7 @@ typedef struct s_callbacks {
 		OBJECT *(*foreign)(OBJECT *obj);
 	} create;
 	int (*define_map)(CLASS*,...);
+	int (*loadmethod)(CLASS*,char*,int (*call)(OBJECT*,char*));
 	CLASS *(*class_getfirst)(void);
 	CLASS *(*class_getname)(char*);
 	struct {
@@ -1022,6 +1053,7 @@ typedef struct s_callbacks {
 		int (*set_value_by_type)(PROPERTYTYPE,void *data,char *);
 		bool (*compare_basic)(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void* x, void* a, void* b, char *part);
 		PROPERTYCOMPAREOP (*get_compare_op)(PROPERTYTYPE ptype, char *opstr);
+		PROPERTYSPEC *(*get_spec)(PROPERTYTYPE ptype);
 	} properties;
 	struct {
 		struct s_findlist *(*objects)(struct s_findlist *,...);

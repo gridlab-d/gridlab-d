@@ -106,6 +106,7 @@ public:
 	double hours_in_year;			//Number of hours assumed to be in the year
 	double op_and_maint_cost;		//Operation and maintenance costs per runtime year
 	double input_unit_base;			//Base multiple of [W] that bidding units are specified in - work around for market mismathc issue right now
+	int64 bid_id;
 
 private:
 	auction *auction_object;
@@ -136,6 +137,8 @@ private:
 	bool curve_file_mode;
 	TIMESTAMP bid_delay;			//TIMESTAMPed value of bid_delay
 	GENERATOR_STATE prev_bid_state;	//Used to track last state in sync
+	BIDINFO controller_bid;
+	FUNCTIONADDR submit;
 };
 
 #endif // _GENCONTROLLER_H

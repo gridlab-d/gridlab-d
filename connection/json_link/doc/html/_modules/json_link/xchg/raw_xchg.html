@@ -1,0 +1,516 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>json_link.xchg.raw_xchg &mdash; JSON Link 0.9.2a documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.9.2a',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="JSON Link 0.9.2a documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">JSON Link 0.9.2a documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for json_link.xchg.raw_xchg</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">A python module for GridLAB-D data (JSON) data exchange over UDP and TCP</span>
+
+<span class="sd">Classes:</span>
+<span class="sd">  MasterXchg</span>
+<span class="sd">  SlaveXchg</span>
+
+<span class="sd">Implemented Methods:</span>
+<span class="sd">  </span>
+
+<span class="sd">Notes:</span>
+<span class="sd"> -- Should work with Python 2.6+ and 3.x. Tested with 2.7.2 and 3.3</span>
+<span class="sd"> -- Currently only supports IPv4</span>
+<span class="sd"> -- The SLAVE will handle connections from any number of masters, BUT since the</span>
+<span class="sd">    code is only single threaded each processing (including delay) are</span>
+<span class="sd">    blocking. Hence, the SLAVE may miss packets if it is busy processing</span>
+<span class="sd">    (or waiting to send) a different reply.</span>
+<span class="sd">    </span>
+<span class="sd">@author: Bryan Palmintier, NREL 2013</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c"># Enable use of Python 3.0 print statement in older (2.x) versions, ignored in</span>
+<span class="c"># newer (3.x) versions</span>
+<span class="c"># Must occur at top of file</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">print_function</span>
+
+<span class="n">__author__</span> <span class="o">=</span> <span class="s">&quot;Bryan Palmintier&quot;</span>
+<span class="n">__copyright__</span> <span class="o">=</span> <span class="s">&quot;Copyright (c) 2013 Bryan Palmintier&quot;</span>
+<span class="n">__license__</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot; </span>
+<span class="s">@copyright: Copyright (c) 2013, Bryan Palmintier</span>
+<span class="s">@license: BSD 3-clause --</span>
+<span class="s">All rights reserved.</span>
+
+<span class="s">Redistribution and use in source and binary forms, with or without modification, </span>
+<span class="s">are permitted provided that the following conditions are met:</span>
+<span class="s"> 1) Redistributions of source code must retain the above copyright notice, this</span>
+<span class="s">    list of conditions and the following disclaimer.</span>
+<span class="s"> 2) Redistributions in binary form must reproduce the above copyright notice, </span>
+<span class="s">    this list of conditions and the following disclaimer in the documentation </span>
+<span class="s">    and/or other materials provided with the distribution.</span>
+<span class="s"> 3) Neither the name of the National Renewable Energy Lab nor the names of its </span>
+<span class="s">    contributors may be used to endorse or promote products derived from this </span>
+<span class="s">    software without specific prior written permission.</span>
+<span class="s">    </span>
+<span class="s">THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot; AND</span>
+<span class="s">ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED</span>
+<span class="s">WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE</span>
+<span class="s">DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR</span>
+<span class="s">ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES</span>
+<span class="s">(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;</span>
+<span class="s">LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON</span>
+<span class="s">ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT</span>
+<span class="s">(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS</span>
+<span class="s">SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.&quot;&quot;&quot;</span>
+
+<span class="c">## ===== History ====</span>
+<span class="c">#  [Current]             version     date       time     who     Comments</span>
+<span class="c">#                        -------  ----------    ----- ---------- ------------- </span>
+<span class="n">__version__</span><span class="p">,</span> <span class="n">__date__</span> <span class="o">=</span> <span class="s">&quot;0.4.1b&quot;</span><span class="p">,</span><span class="s">&quot;2013-04-29&quot;</span>  <span class="c">#22:20   BryanP   BUGFIX: receive timeout when connect not ready. Move receive to _BaseXchg</span>
+<span class="c"># [Older, in reverse order]</span>
+<span class="c"># version      date       time     who     Comments</span>
+<span class="c"># -------   ----------    ----- ---------- --------------------------------------- </span>
+<span class="c">#  0.4.0b   2013-04-28    22:20   BryanP   RENAMED to raw_xchg &amp; methods to Xchg* and Errors to RawXchg*Error</span>
+<span class="c">#  0.3.1a   2013-04-27    02:00   BryanP   Throw exception when can&#39;t send. Added codes to Exceptions, Add &quot;Raw&quot; prefix to verbose msg</span>
+<span class="c">#  0.3.0a   2013-04-25    16:23   BryanP   Use Exceptions for error handling. Renamed Link* to Xchg*</span>
+<span class="c">#  0.2.0a   2013-04-25    03:30   BryanP   Works! Added Master TCP timeouts</span>
+<span class="c">#  0.1.0a   2013-04-24    21:43   BryanP   Extracted from json_test.py v1.6.1a</span>
+
+<span class="c">#Standard Library imports</span>
+<span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">import</span> <span class="nn">timeit</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="c">#===============================================================================</span>
+<span class="c"># Module level constants</span>
+<span class="c">#===============================================================================</span>
+<span class="n">UDP</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_DGRAM</span>
+<span class="n">TCP</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span>
+
+<span class="n">HEAD_VER</span> <span class="o">=</span> <span class="s">&#39;0&#39;</span>
+<span class="n">MSG_TYPE</span> <span class="o">=</span> <span class="s">&#39;JSON&#39;</span>
+<span class="n">MSG_VER</span> <span class="o">=</span> <span class="s">&#39;1.0&#39;</span>
+
+
+<span class="c">#===============================================================================</span>
+<span class="c"># Error (Exception) Class definitions</span>
+<span class="c">#===============================================================================</span>
+<div class="viewcode-block" id="RawXchgError"><a class="viewcode-back" href="../../../json_link.xchg.html#json_link.xchg.raw_xchg.RawXchgError">[docs]</a><span class="k">class</span> <span class="nc">RawXchgError</span><span class="p">(</span><span class="ne">IOError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base class for exceptions in the raw_xchg module&quot;&quot;&quot;</span>
+    <span class="n">code</span> <span class="o">=</span> <span class="mi">1000</span>
+    </div>
+<div class="viewcode-block" id="RawXchgTimeoutError"><a class="viewcode-back" href="../../../json_link.xchg.html#json_link.xchg.raw_xchg.RawXchgTimeoutError">[docs]</a><span class="k">class</span> <span class="nc">RawXchgTimeoutError</span><span class="p">(</span><span class="n">RawXchgError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Timeout waiting for reply&quot;&quot;&quot;</span>
+    <span class="n">code</span> <span class="o">=</span> <span class="n">RawXchgError</span><span class="o">.</span><span class="n">code</span> <span class="o">+</span> <span class="mi">1</span>
+</div>
+<div class="viewcode-block" id="RawXchgSetupError"><a class="viewcode-back" href="../../../json_link.xchg.html#json_link.xchg.raw_xchg.RawXchgSetupError">[docs]</a><span class="k">class</span> <span class="nc">RawXchgSetupError</span><span class="p">(</span><span class="n">RawXchgError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Problems setting up the communication (e.g. opening the socket)&quot;&quot;&quot;</span>
+    <span class="n">code</span> <span class="o">=</span> <span class="n">RawXchgError</span><span class="o">.</span><span class="n">code</span> <span class="o">+</span> <span class="mi">2</span>
+</div>
+<div class="viewcode-block" id="RawXchgHeaderError"><a class="viewcode-back" href="../../../json_link.xchg.html#json_link.xchg.raw_xchg.RawXchgHeaderError">[docs]</a><span class="k">class</span> <span class="nc">RawXchgHeaderError</span><span class="p">(</span><span class="n">RawXchgError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Malformed or incorrect header&quot;&quot;&quot;</span>
+    <span class="n">code</span> <span class="o">=</span> <span class="n">RawXchgError</span><span class="o">.</span><span class="n">code</span> <span class="o">+</span> <span class="mi">3</span>
+</div>
+<div class="viewcode-block" id="RawXchgNoDataError"><a class="viewcode-back" href="../../../json_link.xchg.html#json_link.xchg.raw_xchg.RawXchgNoDataError">[docs]</a><span class="k">class</span> <span class="nc">RawXchgNoDataError</span><span class="p">(</span><span class="n">RawXchgError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;No data read&quot;&quot;&quot;</span>
+    <span class="n">code</span> <span class="o">=</span> <span class="n">RawXchgError</span><span class="o">.</span><span class="n">code</span> <span class="o">+</span> <span class="mi">4</span>
+</div>
+<div class="viewcode-block" id="RawXchgCantSendError"><a class="viewcode-back" href="../../../json_link.xchg.html#json_link.xchg.raw_xchg.RawXchgCantSendError">[docs]</a><span class="k">class</span> <span class="nc">RawXchgCantSendError</span><span class="p">(</span><span class="n">RawXchgError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Unable to send packet&quot;&quot;&quot;</span>
+    <span class="n">code</span> <span class="o">=</span> <span class="n">RawXchgError</span><span class="o">.</span><span class="n">code</span> <span class="o">+</span> <span class="mi">5</span>
+
+
+<span class="c">#===============================================================================</span>
+<span class="c"># _BaseXchg (module internal)</span>
+<span class="c">#===============================================================================</span></div>
+<span class="k">class</span> <span class="nc">_BaseXchg</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Base class for UDP/TCP link subclasses&quot;&quot;&quot;</span>
+    
+    <span class="c">#socket and settings</span>
+    <span class="n">_sock</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="n">PROTOCOL</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">HOST_ADDR</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">PORT</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">TIMEOUT</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">BUF_SIZE</span> <span class="o">=</span> <span class="mi">4906</span>
+    
+    <span class="n">response_code_out</span> <span class="o">=</span> <span class="bp">None</span>     <span class="c">#override in subclass</span>
+    
+    <span class="c">#Options</span>
+    <span class="n">opt_verbose</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="n">opt_header</span> <span class="o">=</span> <span class="bp">True</span>
+    
+    <span class="n">ignore_head_err</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">ignore_no_data_err</span> <span class="o">=</span> <span class="bp">True</span>
+    
+    <span class="c">#Track link statistics</span>
+    <span class="n">num_err</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">num_tx</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">num_rx</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host_addr</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">protocol</span><span class="p">,</span>
+                 <span class="n">opt_verbose</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">opt_header</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">buf_size</span><span class="o">=</span><span class="mi">4906</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Constructor&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">HOST_ADDR</span> <span class="o">=</span> <span class="n">host_addr</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">PORT</span> <span class="o">=</span> <span class="n">port</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">PROTOCOL</span> <span class="o">=</span> <span class="n">protocol</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span> <span class="o">=</span> <span class="n">opt_verbose</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opt_header</span> <span class="o">=</span> <span class="n">opt_header</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">TIMEOUT</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">timeout</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">BUF_SIZE</span> <span class="o">=</span> <span class="n">buf_size</span>
+        
+    <span class="k">def</span> <span class="nf">isReady</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns True if we have assigned the socket. Does not check socket connectivity&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span>
+
+    <span class="c">#-------------------</span>
+    <span class="c"># wrapPacket</span>
+    <span class="c">#-------------------</span>
+    <span class="c"># From: https://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=JSON_link_protocol</span>
+    <span class="c">#</span>
+    <span class="c"># Bytes     Contents</span>
+    <span class="c"># --------- --------------------------------------------------------------------------------</span>
+    <span class="c"># 00-01     Header version (currently &quot;0&quot;, space padded)</span>
+    <span class="c"># 02-05     Offset to message from byte 00 (currently always 32, max is 999, space padded)</span>
+    <span class="c"># 06-13     Size of message (varies, max is 9999999, left justified, space padded), count does not include string termination character</span>
+    <span class="c"># 14-19     Type of message (currently &quot;JSON&quot;, left justified, space padded)</span>
+    <span class="c"># 20-23     Version of type (currently &quot;1.0&quot;, left justified, space padded)</span>
+    <span class="c"># 24-25     Connection status (0=closed, 1-9=keep-alive timeout, space padded)</span>
+    <span class="c"># 26-29     Response code (0 for requests, must be 200 for responses, left justified, space padded)</span>
+    <span class="c"># 30-31     Reserved (space padded)</span>
+    <span class="c"># 32-       Message content (current JSON 1.0 format)</span>
+    <span class="c">#</span>
+    <span class="c">#  Byte Number          111111111122222222223333333333444444444455555555556666666666</span>
+    <span class="c">#             0123456789 123456789 123456789 123456789 123456789 123456789 123456789</span>
+    <span class="c"># Master Ex: &#39;0 32  27       JSON 1.0 1 0     {&quot;method&quot;:&quot;example&quot;,&quot;id&quot;:1}&#39;</span>
+    <span class="c"># Slave Ex:  &#39;0 32  27       JSON 1.0 1 200   {&quot;result&quot;:&quot;example&quot;,&quot;id&quot;:1}&#39;</span>
+    <span class="c">#  Message Length                                      111111111122222222223333333333444444444455555555556666666666</span>
+    <span class="c">#                                             123456789 123456789 123456789 123456789 123456789 123456789 123456789</span>
+    <span class="k">def</span> <span class="nf">wrapPacket</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">keep_alive</span><span class="o">=</span><span class="mi">9</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Add GridLAB UDP/TCP header and return complete data packet to send&quot;&quot;&quot;</span>
+        <span class="n">msg_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="c">#Build potentially variable portion of header</span>
+        <span class="c">#            0123456- 234-892123 456-  9312</span>
+        <span class="n">head_str</span> <span class="o">=</span>        <span class="s">&quot;</span><span class="si">%-7d</span><span class="s"> </span><span class="si">%5s</span><span class="s"> </span><span class="si">%3s</span><span class="s"> </span><span class="si">%d</span><span class="s"> </span><span class="si">%-3s</span><span class="s">   &quot;</span><span class="o">%</span><span class="p">(</span><span class="n">msg_size</span><span class="p">,</span> <span class="n">MSG_TYPE</span><span class="p">,</span> <span class="n">MSG_VER</span><span class="p">,</span> <span class="n">keep_alive</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">response_code_out</span><span class="p">)</span>
+        <span class="c">#Measure current size and add 5bytes for the header ver &amp; msg offset</span>
+        <span class="n">head_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">head_str</span><span class="p">)</span> <span class="o">+</span> <span class="mi">6</span>
+        <span class="k">assert</span> <span class="n">head_len</span><span class="o">==</span><span class="mi">32</span><span class="p">,</span> <span class="s">&quot;outgoing packet header length should be 32 not </span><span class="si">%d</span><span class="s">&quot;</span><span class="o">%</span><span class="n">head_len</span>
+        
+        <span class="c">#Return the complete Packet String</span>
+        <span class="k">return</span> <span class="s">&quot;</span><span class="si">%1s</span><span class="s"> </span><span class="si">%-3d</span><span class="s"> </span><span class="si">%s%s</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">HEAD_VER</span><span class="p">,</span> <span class="n">head_len</span><span class="p">,</span> <span class="n">head_str</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span> 
+    
+    <span class="c">#-------------------</span>
+    <span class="c"># unwrapPacket</span>
+    <span class="c">#-------------------</span>
+    <span class="k">def</span> <span class="nf">unwrapPacket</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">packet_str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Remove GridLAB UDP/TCP header, check validity and return Packet JSON content&quot;&quot;&quot;</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">reopen_conn</span> <span class="o">=</span> <span class="bp">False</span>
+        
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">packet_str</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">RawXchgNoDataError</span><span class="p">(</span><span class="s">&quot;No Packet Data&quot;</span><span class="p">)</span>
+            
+        
+        <span class="k">if</span> <span class="n">packet_str</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">HEAD_VER</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">RawXchgHeaderError</span><span class="p">(</span><span class="s">&quot;Header: unsupported version must be </span><span class="si">%s</span><span class="s"> not </span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">HEAD_VER</span><span class="p">,</span> <span class="n">packet_str</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c">#Extract header size (data offset) and split header and body</span>
+            <span class="n">head_len</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">packet_str</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="mi">5</span><span class="p">])</span>
+            <span class="n">head</span> <span class="o">=</span> <span class="n">packet_str</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">head_len</span><span class="p">]</span>
+            <span class="n">body</span> <span class="o">=</span> <span class="n">packet_str</span><span class="p">[</span><span class="n">head_len</span><span class="p">:]</span>
+            
+            <span class="c">#Attempt to extract whitespace delimited header</span>
+            <span class="n">_head_ver</span><span class="p">,</span> <span class="n">_offset</span><span class="p">,</span> <span class="n">msg_size</span><span class="p">,</span> <span class="n">msg_type</span><span class="p">,</span> <span class="n">msg_ver</span><span class="p">,</span> <span class="n">conn_status</span><span class="p">,</span> <span class="n">response</span> <span class="o">=</span> <span class="n">head</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">RawXchgHeaderError</span><span class="p">(</span><span class="s">&#39;Header: Invalid Format-must have 7 whitespace delimited fields&#39;</span><span class="p">)</span>
+        
+        <span class="c">#Verify/Parse header contents</span>
+        <span class="c"># Note: already checked head_ver &amp; offset is redundant b/c we used the same</span>
+        <span class="c"># same data to split head and body. (At least assuming reasonable space </span>
+        <span class="c"># delimiting</span>
+        <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">msg_size</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">body</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">RawXchgHeaderError</span><span class="p">(</span><span class="s">&#39;Header: message length mismatch (</span><span class="si">%s</span><span class="s"> vs </span><span class="si">%d</span><span class="s"> actual)&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">msg_size</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">body</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="n">msg_type</span> <span class="o">!=</span> <span class="n">MSG_TYPE</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">RawXchgHeaderError</span><span class="p">(</span><span class="s">&#39;Header: Unsupported message type (</span><span class="si">%s</span><span class="s">). Must be </span><span class="si">%s</span><span class="s">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">msg_type</span><span class="p">,</span> <span class="n">MSG_TYPE</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">msg_ver</span> <span class="o">!=</span> <span class="n">MSG_VER</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">RawXchgHeaderError</span><span class="p">(</span><span class="s">&#39;Header: Unsupported message version (</span><span class="si">%s</span><span class="s">). Must be </span><span class="si">%s</span><span class="s">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">msg_ver</span><span class="p">,</span> <span class="n">MSG_VER</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">response</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">response_code_in</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">RawXchgHeaderError</span><span class="p">(</span><span class="s">&#39;Header: Invalid request (</span><span class="si">%s</span><span class="s">), expected </span><span class="si">%s</span><span class="s">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">response_code_in</span><span class="p">))</span>
+    
+        <span class="c">#Extract connection re-open flag</span>
+        <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">conn_status</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">reopen_conn</span> <span class="o">=</span> <span class="bp">True</span>
+    
+        <span class="k">return</span> <span class="n">body</span><span class="p">,</span> <span class="n">reopen_conn</span>
+    
+    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;gracefully close the current socket&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="o">.</span><span class="n">shutdown</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">SHUT_RDWR</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span> <span class="o">=</span> <span class="bp">None</span>
+ 
+    <span class="k">def</span> <span class="nf">receive</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Receive data and process. May need to be proceeded by some additional setup&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">setupXchg</span><span class="p">()</span>
+
+        <span class="n">msg_in</span> <span class="o">=</span> <span class="bp">None</span>
+        
+        <span class="c">#Listen for data with timeout</span>
+        <span class="n">end_time</span> <span class="o">=</span> <span class="n">timeit</span><span class="o">.</span><span class="n">default_timer</span><span class="p">()</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">TIMEOUT</span>
+        <span class="n">not_run_once</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">while</span> <span class="n">timeit</span><span class="o">.</span><span class="n">default_timer</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">end_time</span> <span class="ow">or</span> <span class="n">not_run_once</span><span class="p">:</span>
+            <span class="n">not_run_once</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">msg_in</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_remote_addr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="o">.</span><span class="n">recvfrom</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">BUF_SIZE</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">TIMEOUT</span><span class="o">/</span><span class="mi">1000</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">msg_in</span><span class="p">:</span> 
+                <span class="k">break</span>
+            
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">msg_in</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">RawXchgTimeoutError</span><span class="p">(</span><span class="s">&#39;Receive timeout&#39;</span><span class="p">)</span>
+
+        <span class="n">msg_in</span><span class="o">=</span><span class="n">msg_in</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&quot;  Raw RX: </span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">msg_in</span><span class="p">))</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_header</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">msg_in</span><span class="p">,</span> <span class="n">reopen_conn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unwrapPacket</span><span class="p">(</span><span class="n">msg_in</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">RawXchgHeaderError</span><span class="p">:</span>
+                <span class="n">err</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span>   <span class="c">#Use instead of &quot;as err&quot; For compatibility with python &lt; 2.6</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ignore_head_err</span><span class="p">:</span>
+                    <span class="k">print</span><span class="p">(</span><span class="s">&#39;WARNING: </span><span class="si">%s</span><span class="s">&#39;</span><span class="o">%</span><span class="n">err</span><span class="p">)</span>
+                    <span class="n">msg_in</span> <span class="o">=</span> <span class="bp">None</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">err</span>
+            <span class="k">except</span> <span class="n">RawXchgNoDataError</span><span class="p">:</span> 
+                <span class="n">err</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span>   <span class="c">#Use instead of &quot;as err&quot; For compatibility with python &lt; 2.6</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ignore_no_data_err</span><span class="p">:</span>
+                    <span class="k">print</span><span class="p">(</span><span class="s">&#39;WARNING: </span><span class="si">%s</span><span class="s">&#39;</span><span class="o">%</span><span class="n">err</span><span class="p">)</span>
+                    <span class="n">msg_in</span> <span class="o">=</span> <span class="bp">None</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">err</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">reopen_conn</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">msg_in</span>
+ 
+    
+<span class="c">#===============================================================================</span>
+<span class="c"># MasterXchg</span>
+<span class="c">#===============================================================================</span>
+<div class="viewcode-block" id="MasterXchg"><a class="viewcode-back" href="../../../json_link.xchg.html#json_link.xchg.raw_xchg.MasterXchg">[docs]</a><span class="k">class</span> <span class="nc">MasterXchg</span><span class="p">(</span><span class="n">_BaseXchg</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Implements a low-level GridLAB-D (JSON) UDP/TCP Master/client link&quot;&quot;&quot;</span>
+    
+    <span class="n">response_code_out</span> <span class="o">=</span> <span class="s">&#39;0&#39;</span>
+    <span class="n">response_code_in</span> <span class="o">=</span> <span class="s">&#39;200&#39;</span>
+
+<div class="viewcode-block" id="MasterXchg.setupXchg"><a class="viewcode-back" href="../../../json_link.xchg.html#json_link.xchg.raw_xchg.MasterXchg.setupXchg">[docs]</a>    <span class="k">def</span> <span class="nf">setupXchg</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">isReady</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">family</span><span class="o">=</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">PROTOCOL</span><span class="p">)</span>
+    
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="o">.</span><span class="n">connect</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">HOST_ADDR</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">PORT</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">print</span><span class="p">(</span><span class="s">&quot;ERROR: Can&#39;t Connect to Slave (Are you using the right packet type?)&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="o">=</span><span class="bp">None</span>
+                <span class="k">return</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="o">.</span><span class="n">settimeout</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">TIMEOUT</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="MasterXchg.send"><a class="viewcode-back" href="../../../json_link.xchg.html#json_link.xchg.raw_xchg.MasterXchg.send">[docs]</a>    <span class="k">def</span> <span class="nf">send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg_out</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Wrap message with a header and send out&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">isReady</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">setupXchg</span><span class="p">()</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_header</span><span class="p">:</span>
+            <span class="n">msg_out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wrapPacket</span><span class="p">(</span><span class="n">msg_out</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="n">msg_out</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+                <span class="k">print</span><span class="p">(</span><span class="s">&quot;Unable to Send Packet&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">raise</span> <span class="n">RawXchgCantSendError</span><span class="p">(</span><span class="s">&quot;Unable to Send Packet&quot;</span><span class="p">)</span>
+            
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&quot;  Raw TX: </span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">msg_out</span><span class="p">))</span>
+        
+<span class="c">#===============================================================================</span>
+<span class="c"># SlaveXchg</span>
+<span class="c">#===============================================================================</span></div></div>
+<div class="viewcode-block" id="SlaveXchg"><a class="viewcode-back" href="../../../json_link.xchg.html#json_link.xchg.raw_xchg.SlaveXchg">[docs]</a><span class="k">class</span> <span class="nc">SlaveXchg</span><span class="p">(</span><span class="n">_BaseXchg</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Implements a low_level GridLAB-D (JSON) UDP/TCP Slave/server link&quot;&quot;&quot;</span>
+    
+    <span class="n">response_code_out</span> <span class="o">=</span> <span class="s">&#39;200&#39;</span>
+    <span class="n">response_code_in</span> <span class="o">=</span> <span class="s">&#39;0&#39;</span>
+        
+    <span class="n">_reopen_conn</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">_remote_addr</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_connected</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">_conn</span> <span class="o">=</span> <span class="bp">None</span>
+    
+<div class="viewcode-block" id="SlaveXchg.close"><a class="viewcode-back" href="../../../json_link.xchg.html#json_link.xchg.raw_xchg.SlaveXchg.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Expanded close to handle our state flags&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">PROTOCOL</span> <span class="o">==</span> <span class="n">UDP</span><span class="p">:</span>
+            <span class="n">_BaseXchg</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_reopen_conn</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_connected</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_conn</span><span class="o">.</span><span class="n">shutdown</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">SHUT_RDWR</span><span class="p">)</span>
+                <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
+                    <span class="k">pass</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>
+                    <span class="k">pass</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_conn</span> <span class="o">=</span> <span class="bp">None</span>
+    </div>
+<div class="viewcode-block" id="SlaveXchg.setupXchg"><a class="viewcode-back" href="../../../json_link.xchg.html#json_link.xchg.raw_xchg.SlaveXchg.setupXchg">[docs]</a>    <span class="k">def</span> <span class="nf">setupXchg</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Setup (Internet) socket for Slave.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">isReady</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">PROTOCOL</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="o">.</span><span class="n">bind</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">HOST_ADDR</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">PORT</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">RawXchgSetupError</span><span class="p">(</span><span class="s">&#39;could not bind to socket&#39;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">PROTOCOL</span> <span class="o">==</span> <span class="n">TCP</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="o">.</span><span class="n">listen</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_conn</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_remote_addr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="o">.</span><span class="n">accept</span><span class="p">()</span>  <span class="c">#Updates our socket for connection</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_connected</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_conn</span><span class="o">.</span><span class="n">settimeout</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">TIMEOUT</span><span class="p">)</span>
+                <span class="k">print</span><span class="p">(</span><span class="s">&#39;Connected by&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_remote_addr</span><span class="p">)</span>
+            
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="o">.</span><span class="n">settimeout</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">TIMEOUT</span><span class="p">)</span>
+            </div>
+<div class="viewcode-block" id="SlaveXchg.receive"><a class="viewcode-back" href="../../../json_link.xchg.html#json_link.xchg.raw_xchg.SlaveXchg.receive">[docs]</a>    <span class="k">def</span> <span class="nf">receive</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;(Slave) wait to receive a packet, decode the header, and return data&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">setupXchg</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">PROTOCOL</span> <span class="o">==</span> <span class="n">TCP</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">setupXchg</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">_BaseXchg</span><span class="o">.</span><span class="n">receive</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+    </div>
+<div class="viewcode-block" id="SlaveXchg.send"><a class="viewcode-back" href="../../../json_link.xchg.html#json_link.xchg.raw_xchg.SlaveXchg.send">[docs]</a>    <span class="k">def</span> <span class="nf">send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg_out</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Wrap message with a header and send out&quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_header</span><span class="p">:</span>
+            <span class="n">msg_out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wrapPacket</span><span class="p">(</span><span class="n">msg_out</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">PROTOCOL</span> <span class="o">==</span> <span class="n">TCP</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_conn</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">msg_out</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="o">.</span><span class="n">sendto</span><span class="p">(</span><span class="n">msg_out</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_remote_addr</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&quot;  Raw TX: </span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">msg_out</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reopen_conn</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>    </div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">JSON Link 0.9.2a documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan Palmintier.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
+    </div>
+  </body>
+</html>

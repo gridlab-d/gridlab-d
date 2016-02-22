@@ -58,6 +58,7 @@ generator_controller::generator_controller(MODULE *module){
 			PT_double, "license_premium", PADDR(license_premium), PT_DESCRIPTION, "current value of the generator license premium calculated",
 			PT_double, "hours_in_year[h]", PADDR(hours_in_year), PT_DESCRIPTION, "Number of hours assumed for the total year",
 			PT_double, "op_and_maint_cost[$]", PADDR(op_and_maint_cost), PT_DESCRIPTION, "Operation and maintenance cost per runtime year",
+			PT_int64, "bid_id", PADDR(bid_id),
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 	}
 }
@@ -154,6 +155,9 @@ int generator_controller::create(void)
 	input_unit_base = 1.0;			//Input base is assumed to be MW, in line with what the typical market it (part of ticket #574)
 	unit_scaling_value = 1000000.0;	//Multiplier for bids to get from "input" to load posting value
 
+	controller_bid.rebid = false;
+	controller_bid.bid_accepted = true;
+	bid_id = -1;
 	return 1;
 }
 
@@ -304,6 +308,19 @@ int generator_controller::init(OBJECT *parent)
 	price_cap_value = auction_object->pricecap+0.01;	//Set to 0.01 higher - used as an initialization variable
 	curr_market_id = &(auction_object->market_id);
 	next_clear = &(auction_object->clearat);
+
+	if(bid_id == -1){
+		controller_bid.bid_id = (int64)obj->id;
+		bid_id = controller_bid.bid_id;
+	} else {
+		controller_bid.bid_id = bid_id;
+	}
+	submit = (FUNCTIONADDR)(gl_get_function(market_object, "submit_bid_state"));
+	if(submit == NULL){
+		char buf[256];
+		gl_error("Unable to find function, submit_bid_state(), for object %s.", (char *)gl_name(market_object, buf, 255));
+		return 0;
+	}
 
 	//Determine number of latency slots we need
 	number_latency_sections = (int)((market_latency/market_period)+2);	//Delay # + current bid + current active
@@ -649,6 +666,8 @@ TIMESTAMP generator_controller::sync(TIMESTAMP t0, TIMESTAMP t1)
 	int index;
 	int64 bidID_val;
 	double per_phase_power, per_phase_old_power, shutdown_cost_temp, prev_section_power, prev_section_price, temp_time_var, temp_power_value;
+	char mktname[1024];
+	char ctrname[1024];
 
 	//Update runtime hours - if necessary
 	if (total_hours_year != 0.0)
@@ -763,6 +782,7 @@ TIMESTAMP generator_controller::sync(TIMESTAMP t0, TIMESTAMP t1)
 	//If market changes, update
 	if ((last_market_id != *curr_market_id) && (t1 >= next_bid))
 	{
+		controller_bid.rebid = false;
 		//See if the bid curve needs updating
 		if (update_curve == true)
 			parse_bid_curve(obj,t0);	//It does, do so first
@@ -1019,14 +1039,22 @@ TIMESTAMP generator_controller::sync(TIMESTAMP t0, TIMESTAMP t1)
 					/* TODO: this needs to be fixed as part of ticket #574 */
 					temp_power_value = bid_curve_values[latency_write_section].Curve_Info[index].power_delta*input_unit_base;
 
-					//Bid in proper state
-					if (gen_state != GEN_OFF)	//Generator is not off, so must be starting/started
-						bidID_val=auction_object->submit(obj,temp_power_value,bid_curve_values[latency_write_section].Curve_Info[index].price,-1,BS_ON);
-					else	//Must be off then
-						bidID_val=auction_object->submit(obj,temp_power_value,bid_curve_values[latency_write_section].Curve_Info[index].price,-1,BS_OFF);
+					controller_bid.market_id = *curr_market_id;
+					controller_bid.price = bid_curve_values[latency_write_section].Curve_Info[index].price;
+					controller_bid.quantity = temp_power_value;
+					if (gen_state != GEN_OFF) {
+						controller_bid.state = BS_ON;
+					} else {
+						controller_bid.state = BS_OFF;
+					}
+					((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(obj, ctrname, 1024), (char *)gl_name(market_object, mktname, 1024), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+					if(controller_bid.bid_accepted == false){
+						return TS_INVALID;
+					}
+					controller_bid.rebid = true;
 
 					//Store the bidID
-					bid_curve_values[latency_write_section].Curve_Info[index].lastbid_id = bidID_val;
+					bid_curve_values[latency_write_section].Curve_Info[index].lastbid_id = controller_bid.bid_id;
 				}
 			}//End Standalone bidding mode
 			else	//Must be building mode
@@ -1050,13 +1078,23 @@ TIMESTAMP generator_controller::sync(TIMESTAMP t0, TIMESTAMP t1)
 					temp_power_value = bid_curve_values[latency_write_section].expected_building_load*input_unit_base;
 					
 					//Bid us in as a negative load - if gen is off, the building is "on"
-					if (gen_state == GEN_OFF)
-						bidID_val=auction_object->submit(obj,-temp_power_value,bid_curve_values[latency_write_section].Curve_Info[0].price,-1,BS_ON);
-					else	//Must be on or starting, so building is "off"
-						bidID_val=auction_object->submit(obj,-temp_power_value,bid_curve_values[latency_write_section].Curve_Info[0].price,-1,BS_OFF);
+
+					controller_bid.market_id = *curr_market_id;
+					controller_bid.price = bid_curve_values[latency_write_section].Curve_Info[0].price;
+					controller_bid.quantity = -temp_power_value;
+					if (gen_state == GEN_OFF) {
+						controller_bid.state = BS_ON;
+					} else {
+						controller_bid.state = BS_OFF;
+					}
+					((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(obj, ctrname, 1024), (char *)gl_name(market_object, mktname, 1024), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+					if(controller_bid.bid_accepted == false){
+						return TS_INVALID;
+					}
+					controller_bid.rebid = true;
 
 					//Store the bidID
-					bid_curve_values[latency_write_section].Curve_Info[0].lastbid_id = bidID_val;
+					bid_curve_values[latency_write_section].Curve_Info[0].lastbid_id = controller_bid.market_id;
 				}//End only 1 (valid) bidding curve section
 			}//End building mode bid
 

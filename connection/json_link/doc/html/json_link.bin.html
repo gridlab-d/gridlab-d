@@ -1,0 +1,319 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>bin Package &mdash; JSON Link 0.9.2a documentation</title>
+    
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.9.2a',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="JSON Link 0.9.2a documentation" href="index.html" />
+    <link rel="next" title="faults Package" href="json_link.faults.html" />
+    <link rel="prev" title="xchg Package" href="json_link.xchg.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="json_link.faults.html" title="faults Package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="json_link.xchg.html" title="xchg Package"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">JSON Link 0.9.2a documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">bin Package</a><ul>
+<li><a class="reference internal" href="#module-json_link.bin.json_link_tester"><tt class="docutils literal"><span class="pre">json_link_tester</span></tt> Module</a><ul>
+<li><a class="reference internal" href="#json-link-tester">json_link_tester</a><ul>
+<li><a class="reference internal" href="#basic-udp-slave">Basic UDP slave</a></li>
+<li><a class="reference internal" href="#basic-udp-master">Basic UDP master</a></li>
+<li><a class="reference internal" href="#additional-options">Additional Options</a><ul>
+<li><a class="reference internal" href="#transfer-setup">Transfer Setup</a></li>
+<li><a class="reference internal" href="#debugging-information-display">Debugging Information Display</a></li>
+<li><a class="reference internal" href="#run-timing">Run timing</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#notes">Notes</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="json_link.xchg.html"
+                        title="previous chapter">xchg Package</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="json_link.faults.html"
+                        title="next chapter">faults Package</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/json_link.bin.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="bin-package">
+<h1>bin Package<a class="headerlink" href="#bin-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-json_link.bin.json_link_tester">
+<span id="json-link-tester-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">json_link_tester</span></tt> Module<a class="headerlink" href="#module-json_link.bin.json_link_tester" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="json-link-tester">
+<h3>json_link_tester<a class="headerlink" href="#json-link-tester" title="Permalink to this headline">¶</a></h3>
+<p>Test program for JSON link protocol over TCP or UDP exchange.  It 
+can act as either the Master (aka client) or the Slave (aka server) and can
+optionally inject arbitrary faults to test responses.</p>
+<p><em>Note:</em> On many installs there top-level script <cite>json_link_demo.py</cite> that can be
+used in place of <cite>python -m json_link.bin.json_link_tester</cite> in the examples
+below</p>
+<div class="section" id="basic-udp-slave">
+<h4>Basic UDP slave<a class="headerlink" href="#basic-udp-slave" title="Permalink to this headline">¶</a></h4>
+<p>For a basic UDP slave with max run count of 4 use (from the parent directory for
+json_link/):</p>
+<div class="highlight-python"><pre>$ python -m json_link.bin.json_link_tester -c4</pre>
+</div>
+<p>This runs a JSON link slave using the localhost. After initial handshaking, the
+simulated run cycle executes every 0.5sec by filling the input (master oriented
+names) schema with dummy data. If sync messages are received from the master,
+the latest local data is sent in reply. If run with the basic UDP master,
+below this produces something like:</p>
+<div class="highlight-python"><pre>JSON Link packet test (v0.9.2a) SLAVE (aka SERVER) mode (waits for data)
+    Run timestep = 0.500sec
+    (minimum) Reply Delay = 0.100sec
+    (raw exchange) Timeout = 0.001sec
+    Using UDP packets on localhost:50007
+
+Waiting for master to send INIT...
+--&gt; Linked with REMOTE: {&#x27;modelname&#x27;: &#x27;json_link_demo.py&#x27;, &#x27;application&#x27;: &#x27;Generic_JSON_Link_Master&#x27;, &#x27;version&#x27;: &#x27;0.9.5a&#x27;}
+
+Waiting for START
+Run (3/4). Sync count=1
+
+Remote TERMINATED Connection</pre>
+</div>
+</div>
+<div class="section" id="basic-udp-master">
+<h4>Basic UDP master<a class="headerlink" href="#basic-udp-master" title="Permalink to this headline">¶</a></h4>
+<p>For a basic UDP master (with max run count) run (from the parent directory for
+json_link/):</p>
+<div class="highlight-python"><pre>$ python -m json_link.bin.json_link_tester -m -c2</pre>
+</div>
+<p>This runs a JSON link master using the localhost. After initial handshaking, the
+simulated run cycle executes every 1sec by filling the output schema with dummy
+data and attempting to send a sync message to the slave and use the response. If
+there is a timeout waiting for the slave, the master run loop continues using
+the old slave data. If run with the basic UDP slave above, this produces
+something like:</p>
+<div class="highlight-python"><pre>JSON Link packet test (v0.9.2a) MASTER (aka CLIENT) mode (initiates transfer)
+    Run timestep = 1.000sec
+    (minimum) Reply Delay = 0.100sec
+    (raw exchange) Timeout = 0.001sec
+    Using UDP packets on localhost:50007
+
+Waiting for slave&#x27;s INIT response...
+--&gt; Linked with REMOTE: {u&#x27;version&#x27;: u&#x27;0.9.5a&#x27;, u&#x27;remote&#x27;: u&#x27;Generic JSON Link Slave/Server&#x27;}
+
+--&gt; Link STARTed. Remote Data=None
+
+Run (2/2). Sync count=1
+
+TERMINATING: Max Iteration Count (2)
+--&gt; Link TERMinated. Final Remote Data=None</pre>
+</div>
+</div>
+<div class="section" id="additional-options">
+<h4>Additional Options<a class="headerlink" href="#additional-options" title="Permalink to this headline">¶</a></h4>
+<p>A wide range of additional configuration options are available. The complete
+list is available at the command line with:</p>
+<div class="highlight-python"><pre>$ python -m json_link.bin.json_link_tester -h</pre>
+</div>
+<p>Some highlights:</p>
+<div class="section" id="transfer-setup">
+<h5>Transfer Setup<a class="headerlink" href="#transfer-setup" title="Permalink to this headline">¶</a></h5>
+<table class="docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">-t</span>, <span class="option">--tcp</span></kbd></td>
+<td>Use TCP sockets</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-a <var>HOST_ADDR</var></span>, <span class="option">--host_addr=<var>HOST_ADDR</var></span></kbd></td>
+</tr>
+<tr><td>&nbsp;</td><td>Host name/IP address (Default: localhost) for SLAVE
+(aka SERVER) on non-windows use All for all interfaces</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-p <var>PORT</var></span>, <span class="option">--port=<var>PORT</var></span></kbd></td>
+</tr>
+<tr><td>&nbsp;</td><td>Port Number</td></tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="debugging-information-display">
+<h5>Debugging Information Display<a class="headerlink" href="#debugging-information-display" title="Permalink to this headline">¶</a></h5>
+<table class="docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">--raw</span></kbd></td>
+<td>Print Raw packet contents including header
+(Default=False, print cleaner output)</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-v <var>VERBOSE</var></span>, <span class="option">--verbose=<var>VERBOSE</var></span></kbd></td>
+</tr>
+<tr><td>&nbsp;</td><td>Control level of verbosity for JSON link level output.
+See &#8211;raw for raw_xchg. verbosity requires an integer
+parameter. 0=no output 1=basic init and run only &amp;
+errors, 2=add state machine &amp; warnings, 3+=add link-
+level messages</td></tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="run-timing">
+<h5>Run timing<a class="headerlink" href="#run-timing" title="Permalink to this headline">¶</a></h5>
+<table class="docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-r <var>RUN_TIMESTEP</var></span>, <span class="option">--run_timestep=<var>RUN_TIMESTEP</var></span></kbd></td>
+</tr>
+<tr><td>&nbsp;</td><td>Run timestep in Sec. Duration of each sub-run in the
+internal process loop. MASTER: sets to the transmit
+interval. (default=1.0) SLAVE: time to wait before
+running using the last received  value (default=0.5)</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-d <var>DELAY</var></span>, <span class="option">--delay=<var>DELAY</var></span></kbd></td>
+</tr>
+<tr><td>&nbsp;</td><td>Minimum delay after rx before tx. Used to simulate a
+minimum internal synchronous process running time
+(default=0.1sec)</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="notes">
+<h4>Notes<a class="headerlink" href="#notes" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li>Should work with Python 2.6+ and 3.x. Tested with 2.7.2 and 3.3</li>
+<li>Currently only supports IPv4</li>
+<li>The SLAVE will handle connections from any number of masters, BUT since the
+code is only single threaded each processing (including delay) are
+blocking. Hence, the SLAVE may miss packets if it is busy processing
+(or waiting to send) a different reply.</li>
+</ul>
+<p>&#64;author: Bryan Palmintier, NREL 2013</p>
+<dl class="function">
+<dt id="json_link.bin.json_link_tester.buildMessage">
+<tt class="descclassname">json_link.bin.json_link_tester.</tt><tt class="descname">buildMessage</tt><big>(</big><em>opt</em><big>)</big><a class="reference internal" href="_modules/json_link/bin/json_link_tester.html#buildMessage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#json_link.bin.json_link_tester.buildMessage" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="json_link.bin.json_link_tester.buildReply">
+<tt class="descclassname">json_link.bin.json_link_tester.</tt><tt class="descname">buildReply</tt><big>(</big><em>opt</em>, <em>data</em><big>)</big><a class="reference internal" href="_modules/json_link/bin/json_link_tester.html#buildReply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#json_link.bin.json_link_tester.buildReply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="json_link.bin.json_link_tester.main">
+<tt class="descclassname">json_link.bin.json_link_tester.</tt><tt class="descname">main</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/json_link/bin/json_link_tester.html#main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#json_link.bin.json_link_tester.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="json_link.bin.json_link_tester.printIO">
+<tt class="descclassname">json_link.bin.json_link_tester.</tt><tt class="descname">printIO</tt><big>(</big><em>prefix</em>, <em>data</em>, <em>suffix=''</em><big>)</big><a class="reference internal" href="_modules/json_link/bin/json_link_tester.html#printIO"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#json_link.bin.json_link_tester.printIO" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="json_link.bin.json_link_tester.runSimpleMaster">
+<tt class="descclassname">json_link.bin.json_link_tester.</tt><tt class="descname">runSimpleMaster</tt><big>(</big><em>opt</em><big>)</big><a class="reference internal" href="_modules/json_link/bin/json_link_tester.html#runSimpleMaster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#json_link.bin.json_link_tester.runSimpleMaster" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="json_link.bin.json_link_tester.runSimpleSlave">
+<tt class="descclassname">json_link.bin.json_link_tester.</tt><tt class="descname">runSimpleSlave</tt><big>(</big><em>opt</em><big>)</big><a class="reference internal" href="_modules/json_link/bin/json_link_tester.html#runSimpleSlave"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#json_link.bin.json_link_tester.runSimpleSlave" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="json_link.faults.html" title="faults Package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="json_link.xchg.html" title="xchg Package"
+             >previous</a> |</li>
+        <li><a href="index.html">JSON Link 0.9.2a documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan Palmintier.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
+    </div>
+  </body>
+</html>

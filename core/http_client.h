@@ -10,7 +10,7 @@
 #endif
 	#include <winsock2.h>
 #ifndef int64
-#define int64 _int64
+#define int64 __int64
 #endif
 #else
 	#include <sys/types.h>

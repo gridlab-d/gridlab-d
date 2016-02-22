@@ -1,0 +1,280 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>xchg Package &mdash; JSON Link 0.9.2a documentation</title>
+    
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.9.2a',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="JSON Link 0.9.2a documentation" href="index.html" />
+    <link rel="up" title="json_link Package" href="json_link.html" />
+    <link rel="prev" title="test Package" href="json_link.test.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="json_link.test.html" title="test Package"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">JSON Link 0.9.2a documentation</a> &raquo;</li>
+          <li><a href="modules.html" >json_link</a> &raquo;</li>
+          <li><a href="json_link.html" accesskey="U">json_link Package</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">xchg Package</a><ul>
+<li><a class="reference internal" href="#module-json_link.xchg.raw_xchg"><tt class="docutils literal"><span class="pre">raw_xchg</span></tt> Module</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="json_link.test.html"
+                        title="previous chapter">test Package</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/json_link.xchg.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="xchg-package">
+<h1>xchg Package<a class="headerlink" href="#xchg-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-json_link.xchg.raw_xchg">
+<span id="raw-xchg-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">raw_xchg</span></tt> Module<a class="headerlink" href="#module-json_link.xchg.raw_xchg" title="Permalink to this headline">¶</a></h2>
+<p>A python module for GridLAB-D data (JSON) data exchange over UDP and TCP</p>
+<dl class="docutils">
+<dt>Classes:</dt>
+<dd>MasterXchg
+SlaveXchg</dd>
+</dl>
+<p>Implemented Methods:</p>
+<p>Notes:</p>
+<ul class="simple">
+<li>Should work with Python 2.6+ and 3.x. Tested with 2.7.2 and 3.3</li>
+<li>Currently only supports IPv4</li>
+<li>The SLAVE will handle connections from any number of masters, BUT since the
+code is only single threaded each processing (including delay) are
+blocking. Hence, the SLAVE may miss packets if it is busy processing
+(or waiting to send) a different reply.</li>
+</ul>
+<p>&#64;author: Bryan Palmintier, NREL 2013</p>
+<dl class="class">
+<dt id="json_link.xchg.raw_xchg.MasterXchg">
+<em class="property">class </em><tt class="descclassname">json_link.xchg.raw_xchg.</tt><tt class="descname">MasterXchg</tt><big>(</big><em>host_addr</em>, <em>port</em>, <em>protocol</em>, <em>opt_raw=True</em>, <em>opt_header=True</em>, <em>timeout=None</em>, <em>buf_size=4906</em><big>)</big><a class="reference internal" href="_modules/json_link/xchg/raw_xchg.html#MasterXchg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#json_link.xchg.raw_xchg.MasterXchg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">json_link.xchg.raw_xchg._BaseXchg</span></tt></p>
+<p>Implements a low-level GridLAB-D (JSON) UDP/TCP Master/client link</p>
+<dl class="attribute">
+<dt id="json_link.xchg.raw_xchg.MasterXchg.response_code_in">
+<tt class="descname">response_code_in</tt><em class="property"> = '200'</em><a class="headerlink" href="#json_link.xchg.raw_xchg.MasterXchg.response_code_in" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="json_link.xchg.raw_xchg.MasterXchg.response_code_out">
+<tt class="descname">response_code_out</tt><em class="property"> = '0'</em><a class="headerlink" href="#json_link.xchg.raw_xchg.MasterXchg.response_code_out" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_link.xchg.raw_xchg.MasterXchg.send">
+<tt class="descname">send</tt><big>(</big><em>msg_out</em>, <em>add_header=True</em><big>)</big><a class="reference internal" href="_modules/json_link/xchg/raw_xchg.html#MasterXchg.send"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#json_link.xchg.raw_xchg.MasterXchg.send" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrap message with a header and send out</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="json_link.xchg.raw_xchg.MasterXchg.setupXchg">
+<tt class="descname">setupXchg</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/json_link/xchg/raw_xchg.html#MasterXchg.setupXchg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#json_link.xchg.raw_xchg.MasterXchg.setupXchg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="json_link.xchg.raw_xchg.RawXchgCantSendError">
+<em class="property">exception </em><tt class="descclassname">json_link.xchg.raw_xchg.</tt><tt class="descname">RawXchgCantSendError</tt><a class="reference internal" href="_modules/json_link/xchg/raw_xchg.html#RawXchgCantSendError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#json_link.xchg.raw_xchg.RawXchgCantSendError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#json_link.xchg.raw_xchg.RawXchgError" title="json_link.xchg.raw_xchg.RawXchgError"><tt class="xref py py-class docutils literal"><span class="pre">json_link.xchg.raw_xchg.RawXchgError</span></tt></a></p>
+<p>Unable to send packet</p>
+<dl class="attribute">
+<dt id="json_link.xchg.raw_xchg.RawXchgCantSendError.code">
+<tt class="descname">code</tt><em class="property"> = 1005</em><a class="headerlink" href="#json_link.xchg.raw_xchg.RawXchgCantSendError.code" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="json_link.xchg.raw_xchg.RawXchgError">
+<em class="property">exception </em><tt class="descclassname">json_link.xchg.raw_xchg.</tt><tt class="descname">RawXchgError</tt><a class="reference internal" href="_modules/json_link/xchg/raw_xchg.html#RawXchgError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#json_link.xchg.raw_xchg.RawXchgError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">builtins.OSError</span></tt></p>
+<p>Base class for exceptions in the raw_xchg module</p>
+<dl class="attribute">
+<dt id="json_link.xchg.raw_xchg.RawXchgError.code">
+<tt class="descname">code</tt><em class="property"> = 1000</em><a class="headerlink" href="#json_link.xchg.raw_xchg.RawXchgError.code" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="json_link.xchg.raw_xchg.RawXchgHeaderError">
+<em class="property">exception </em><tt class="descclassname">json_link.xchg.raw_xchg.</tt><tt class="descname">RawXchgHeaderError</tt><a class="reference internal" href="_modules/json_link/xchg/raw_xchg.html#RawXchgHeaderError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#json_link.xchg.raw_xchg.RawXchgHeaderError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#json_link.xchg.raw_xchg.RawXchgError" title="json_link.xchg.raw_xchg.RawXchgError"><tt class="xref py py-class docutils literal"><span class="pre">json_link.xchg.raw_xchg.RawXchgError</span></tt></a></p>
+<p>Malformed or incorrect header</p>
+<dl class="attribute">
+<dt id="json_link.xchg.raw_xchg.RawXchgHeaderError.code">
+<tt class="descname">code</tt><em class="property"> = 1003</em><a class="headerlink" href="#json_link.xchg.raw_xchg.RawXchgHeaderError.code" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="json_link.xchg.raw_xchg.RawXchgNoDataError">
+<em class="property">exception </em><tt class="descclassname">json_link.xchg.raw_xchg.</tt><tt class="descname">RawXchgNoDataError</tt><a class="reference internal" href="_modules/json_link/xchg/raw_xchg.html#RawXchgNoDataError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#json_link.xchg.raw_xchg.RawXchgNoDataError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#json_link.xchg.raw_xchg.RawXchgError" title="json_link.xchg.raw_xchg.RawXchgError"><tt class="xref py py-class docutils literal"><span class="pre">json_link.xchg.raw_xchg.RawXchgError</span></tt></a></p>
+<p>No data read</p>
+<dl class="attribute">
+<dt id="json_link.xchg.raw_xchg.RawXchgNoDataError.code">
+<tt class="descname">code</tt><em class="property"> = 1004</em><a class="headerlink" href="#json_link.xchg.raw_xchg.RawXchgNoDataError.code" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="json_link.xchg.raw_xchg.RawXchgSetupError">
+<em class="property">exception </em><tt class="descclassname">json_link.xchg.raw_xchg.</tt><tt class="descname">RawXchgSetupError</tt><a class="reference internal" href="_modules/json_link/xchg/raw_xchg.html#RawXchgSetupError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#json_link.xchg.raw_xchg.RawXchgSetupError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#json_link.xchg.raw_xchg.RawXchgError" title="json_link.xchg.raw_xchg.RawXchgError"><tt class="xref py py-class docutils literal"><span class="pre">json_link.xchg.raw_xchg.RawXchgError</span></tt></a></p>
+<p>Problems setting up the communication (e.g. opening the socket)</p>
+<dl class="attribute">
+<dt id="json_link.xchg.raw_xchg.RawXchgSetupError.code">
+<tt class="descname">code</tt><em class="property"> = 1002</em><a class="headerlink" href="#json_link.xchg.raw_xchg.RawXchgSetupError.code" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="json_link.xchg.raw_xchg.RawXchgTimeoutError">
+<em class="property">exception </em><tt class="descclassname">json_link.xchg.raw_xchg.</tt><tt class="descname">RawXchgTimeoutError</tt><a class="reference internal" href="_modules/json_link/xchg/raw_xchg.html#RawXchgTimeoutError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#json_link.xchg.raw_xchg.RawXchgTimeoutError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#json_link.xchg.raw_xchg.RawXchgError" title="json_link.xchg.raw_xchg.RawXchgError"><tt class="xref py py-class docutils literal"><span class="pre">json_link.xchg.raw_xchg.RawXchgError</span></tt></a></p>
+<p>Timeout waiting for reply</p>
+<dl class="attribute">
+<dt id="json_link.xchg.raw_xchg.RawXchgTimeoutError.code">
+<tt class="descname">code</tt><em class="property"> = 1001</em><a class="headerlink" href="#json_link.xchg.raw_xchg.RawXchgTimeoutError.code" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="json_link.xchg.raw_xchg.SlaveXchg">
+<em class="property">class </em><tt class="descclassname">json_link.xchg.raw_xchg.</tt><tt class="descname">SlaveXchg</tt><big>(</big><em>host_addr</em>, <em>port</em>, <em>protocol</em>, <em>opt_raw=True</em>, <em>opt_header=True</em>, <em>timeout=None</em>, <em>buf_size=4906</em><big>)</big><a class="reference internal" href="_modules/json_link/xchg/raw_xchg.html#SlaveXchg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#json_link.xchg.raw_xchg.SlaveXchg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">json_link.xchg.raw_xchg._BaseXchg</span></tt></p>
+<p>Implements a low_level GridLAB-D (JSON) UDP/TCP Slave/server link</p>
+<dl class="method">
+<dt id="json_link.xchg.raw_xchg.SlaveXchg.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/json_link/xchg/raw_xchg.html#SlaveXchg.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#json_link.xchg.raw_xchg.SlaveXchg.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Expanded close to handle our state flags</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="json_link.xchg.raw_xchg.SlaveXchg.receive">
+<tt class="descname">receive</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/json_link/xchg/raw_xchg.html#SlaveXchg.receive"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#json_link.xchg.raw_xchg.SlaveXchg.receive" title="Permalink to this definition">¶</a></dt>
+<dd><p>(Slave) wait to receive a packet, decode the header, and return data</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="json_link.xchg.raw_xchg.SlaveXchg.response_code_in">
+<tt class="descname">response_code_in</tt><em class="property"> = '0'</em><a class="headerlink" href="#json_link.xchg.raw_xchg.SlaveXchg.response_code_in" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="json_link.xchg.raw_xchg.SlaveXchg.response_code_out">
+<tt class="descname">response_code_out</tt><em class="property"> = '200'</em><a class="headerlink" href="#json_link.xchg.raw_xchg.SlaveXchg.response_code_out" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_link.xchg.raw_xchg.SlaveXchg.send">
+<tt class="descname">send</tt><big>(</big><em>msg_out</em>, <em>add_header=True</em><big>)</big><a class="reference internal" href="_modules/json_link/xchg/raw_xchg.html#SlaveXchg.send"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#json_link.xchg.raw_xchg.SlaveXchg.send" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrap message with a header and send out</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="json_link.xchg.raw_xchg.SlaveXchg.setupXchg">
+<tt class="descname">setupXchg</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/json_link/xchg/raw_xchg.html#SlaveXchg.setupXchg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#json_link.xchg.raw_xchg.SlaveXchg.setupXchg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Setup (Internet) socket for Slave.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="json_link.test.html" title="test Package"
+             >previous</a> |</li>
+        <li><a href="index.html">JSON Link 0.9.2a documentation</a> &raquo;</li>
+          <li><a href="modules.html" >json_link</a> &raquo;</li>
+          <li><a href="json_link.html" >json_link Package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Bryan Palmintier.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
+    </div>
+  </body>
+</html>

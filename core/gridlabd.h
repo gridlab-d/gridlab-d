@@ -427,6 +427,8 @@ inline bool gl_object_isa(OBJECT *obj, /**< object to test */
  **/
 #define gl_publish_variable (*callback->define_map)
 
+#define gl_publish_loadmethod (*callback->loadmethod)
+
 /** Publishes an object function.  This is currently unused.
 	@see object_define_function()
  **/
@@ -1464,17 +1466,17 @@ public: // special functions
 class gld_rlock {
 private: OBJECT *my;
 	/// Constructor
-public: gld_rlock(OBJECT *obj) : my(obj) {::rlock(&obj->lock);}; 
+public: inline gld_rlock(OBJECT *obj) : my(obj) {::rlock(&my->lock);}; 
 	/// Destructor
-public: ~gld_rlock(void) {::runlock(&my->lock);};
+public: inline ~gld_rlock(void) {::runlock(&my->lock);};
 };
 /// Write lock container
 class gld_wlock {
 private: OBJECT *my;
 		 /// Constructor
-public: gld_wlock(OBJECT *obj) : my(obj) {::wlock(&obj->lock);}; 
+public: inline gld_wlock(OBJECT *obj) : my(obj) {::wlock(&my->lock);}; 
 		/// Destructor
-public: ~gld_wlock(void) {::wunlock(&my->lock);};
+public: inline ~gld_wlock(void) {::wunlock(&my->lock);};
 };
 
 class gld_class;
@@ -1603,6 +1605,7 @@ public: // constructors/casts
 
 public: // read accessors
 	// TODO size,conversions,etc...
+	PROPERTYSPEC *get_spec(void) { return callback->properties.get_spec(type);};
 
 public: // write accessors
 
@@ -1845,6 +1848,9 @@ public: // iterators
 
 public: // exceptions
 	inline void exception(char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); throw (const char*)buf;};
+	inline void error(char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_error("%s",buf);};
+	inline void warning(char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_warning("%s",buf);};
+	inline void debug(char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_debug("%s",buf);};
 };
 /// Create a gld_object from an OBJECT
 static inline gld_object* get_object(OBJECT*obj)
@@ -1892,7 +1898,17 @@ public: // constructors/casts
 	inline gld_property(OBJECT *o, PROPERTY *p) : obj(o), pstruct(nullpstruct) { pstruct.prop=p; };
 	inline gld_property(GLOBALVAR *v) : obj(NULL), pstruct(nullpstruct) { pstruct.prop=v->prop; };
 	inline gld_property(char *n) : obj(NULL), pstruct(nullpstruct) 
-	{ 
+	{
+		char oname[256], vname[256];
+		if ( sscanf(n,"%[A-Za-z0-9_].%[A-Za-z0-9_.]",oname,vname)==2 )
+		{
+			obj = callback->get_object(oname);
+			if ( obj )
+			{
+				callback->properties.get_property(obj,vname,&pstruct);
+				return;
+			}
+		}
 		GLOBALVAR *v=callback->global.find(n); 
 		pstruct.prop = (v?v->prop:NULL);  
 	};
@@ -1904,6 +1920,7 @@ public: // constructors/casts
 		pstruct.prop= (v?v->prop:NULL);  
 	};
 	inline operator PROPERTY*(void) { return pstruct.prop; };
+	inline operator OBJECT*(void) { return obj; };
 
 public: // read accessors
 	inline OBJECT *get_object(void) { return obj; };
@@ -1945,6 +1962,33 @@ public: // special operations
 	inline bool is_complex(void) { if(pstruct.prop->ptype == PT_complex) return true; return false;}
 	inline bool is_double(void) { switch(pstruct.prop->ptype) { case PT_double: case PT_random: case PT_enduse: case PT_loadshape: return true; default: return false;} };
 	inline bool is_integer(void) { switch(pstruct.prop->ptype) { case PT_int16: case PT_int32: case PT_int64: return true; default: return false;} };
+	inline bool is_enumeration(void)
+	{
+		if(pstruct.prop->ptype == PT_enumeration)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	inline bool is_character(void)
+	{
+		switch(pstruct.prop->ptype)
+		{
+		case PT_char8:
+			return true;
+		case PT_char32:
+			return true;
+		case PT_char256:
+			return true;
+		case PT_char1024:
+			return true;
+		default:
+			return false;
+		}
+	}
 	inline double get_double(void) { errno=0; switch(pstruct.prop->ptype) { case PT_double: case PT_random: case PT_enduse: case PT_loadshape: return has_part() ? get_part() : *(double*)get_addr(); default: errno=EINVAL; return NaN;} };
 	inline int64 get_integer(void) { errno=0; switch(pstruct.prop->ptype) { case PT_int16: return (int64)*(int16*)get_addr(); case PT_int32: return (int64)*(int32*)get_addr(); case PT_int64: return *(int64*)get_addr(); default: errno=EINVAL; return 0;} };
 	template <class T> inline void getp(T &value) { ::rlock(&obj->lock); value = *(T*)get_addr(); ::runlock(&obj->lock); };
@@ -2229,13 +2273,20 @@ CDECL int dllkill() { do_kill(NULL); }
 /// Implement class finalize export
 #define EXPORT_FINALIZE(X) EXPORT_FINALIZE_C(X,X)
 
-#define EXPORT_NOTIFY_C_P(X,C,P) EXPORT int notify_##X_##P(OBJECT *obj, char *value) \
+#define EXPORT_NOTIFY_C_P(X,C,P) EXPORT int notify_##X##_##P(OBJECT *obj, char *value) \
 {	C *my = OBJECTDATA(obj,C); try { if ( obj!=NULL ) { \
 	return my->notify_##P(value); \
 	} else return 0; } \
 	T_CATCHALL(X,notify_##P); return 1; }
 /// Implement property notify export
 #define EXPORT_NOTIFY_PROP(X,P) EXPORT_NOTIFY_C_P(X,X,P)
+
+#define EXPORT_LOADMETHOD_C(X,C,N) EXPORT int loadmethod_##X##_##N(OBJECT *obj, char *value) \
+{	C *my = OBJECTDATA(obj,C); try { if ( obj!=NULL ) { \
+	return my->N(value); \
+	} else return 0; } \
+	T_CATCHALL(X,loadmethod); }
+#define EXPORT_LOADMETHOD(X,N) EXPORT_LOADMETHOD_C(X,X,N)
 
 #endif
 
@@ -2244,7 +2295,7 @@ CDECL int dllkill() { do_kill(NULL); }
  ****************************************/
 #ifdef USE_GLSOLVERS
 
-#if defined WIN32 && ! defined MINGW
+#if defined WIN32 && ! defined __MINGW32__
 	#define _WIN32_WINNT 0x0400
 	#undef int64 // wtypes.h also used int64
 	#include <windows.h>
@@ -2257,17 +2308,18 @@ CDECL int dllkill() { do_kill(NULL); }
 	#define DLSYM(H,S) GetProcAddress((HINSTANCE)H,S)
 	#define snprintf _snprintf
 #else /* ANSI */
-#ifndef MINGW
+#ifndef __MINGW32__
 	#include "dlfcn.h"
 #endif
 	#define PREFIX ""
 	#ifndef DLEXT
 		#define DLEXT ".so"
 	#endif
-#ifndef MINGW
+#ifndef __MINGW32__
 	#define DLLOAD(P) dlopen(P,RTLD_LAZY)
 #else
-	#define DLLOAD(P) dlopen(P)
+	#include "dlfcn.h"
+	#define DLLOAD(P) dlopen(P,RTLD_LAZY)
 #endif
 	#define DLSYM(H,S) dlsym(H,S)
 #endif
