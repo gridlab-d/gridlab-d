@@ -1079,7 +1079,10 @@ TIMESTAMP transformer::postsync(TIMESTAMP t0)
 			if(return_at<t0){
 				gl_error("%s: transformer granularity is too small for the minimum timestep specified",obj->name);
 				/*  TROUBLESHOOT
-				During the simulation, the transformer lifetime model resulted in an   If the latter, please post on the GridLAB-D forums.
+				During the simulation, the time step that occured was greater than what the aging_granularity was set to.
+				The usual cause is becasue the aging_granularity wasn't set or set to zero.
+				If setting the aging_granularity parameter to something greater than 0 doesn't get
+				rid of this error please post on the GridLAB-D forums.
 				*/
 				return TS_INVALID;
 			}
