@@ -1324,6 +1324,16 @@ static int variable_list(PARSER, char *result, int size)
 	DONE;
 }
 
+static int property_list(PARSER, char *result, int size)
+{	/* basic list of variable names */
+	START;
+	/* names cannot start with a digit */
+	if (isdigit(*_p)) return 0;
+	while (size>1 && isalpha(*_p) || isdigit(*_p) || *_p==',' || *_p==' ' || *_p=='.' || *_p=='_' || *_p==':') COPY(result);
+	result[_n]='\0';
+	DONE;
+}
+
 static int unitspec(PARSER, UNIT **unit)
 {
 	char result[1024];
@@ -3786,12 +3796,38 @@ static int transform_source(PARSER, TRANSFORMSOURCE *xstype, void **source, OBJE
 	DONE;
 }
 
+static int filter_transform(PARSER, TRANSFORMSOURCE *xstype, char *sources, size_t srcsize, char *filtername, size_t namesize, OBJECT *from)
+{
+	char fncname[1024];
+	char varlist[4096];
+	START;
+	if ( TERM(name(HERE,fncname,sizeof(fncname))) && (WHITE,LITERAL("(")) && (WHITE,TERM(property_list(HERE,varlist,sizeof(varlist)))) && LITERAL(")") )
+	{
+		if ( strlen(fncname)<namesize && strlen(varlist)<srcsize )
+		{
+			strcpy(filtername,fncname);
+			strcpy(sources,varlist);
+			ACCEPT;
+		}
+		else
+		{
+			output_error_raw("%s(%d): filter name/input too long",filename,linenum);
+			REJECT;
+		}
+	}
+	else
+	{
+		REJECT;
+	}
+	DONE;
+}
+
 static int external_transform(PARSER, TRANSFORMSOURCE *xstype, char *sources, size_t srcsize, char *functionname, size_t namesize, OBJECT *from)
 {
 	char fncname[1024];
 	char varlist[4096];
 	START;
-	if ( TERM(name(HERE,fncname,sizeof(fncname))) && WHITE,LITERAL("(") && WHITE,TERM(variable_list(HERE,varlist,sizeof(varlist))) && LITERAL(")") )
+	if ( TERM(name(HERE,fncname,sizeof(fncname))) && (WHITE,LITERAL("(")) && (WHITE,TERM(variable_list(HERE,varlist,sizeof(varlist)))) && LITERAL(")") )
 	{
 		if ( strlen(fncname)<namesize && strlen(varlist)<srcsize )
 		{
@@ -4080,7 +4116,51 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				/* add to external transform list */
 				if ( !transform_add_external(obj,prop,transformname,source_obj,source_prop) )
 				{
-					output_error_raw("%s(%d): schedule transform could not be created - %s", filename, linenum, errno?strerror(errno):"(no details)");
+					output_error_raw("%s(%d): external transform could not be created - %s", filename, linenum, errno?strerror(errno):"(no details)");
+					REJECT;
+					DONE;
+				}
+				else if ( source!=NULL )
+				{
+					/* a transform is unresolved */
+					if (first_unresolved==source)
+
+						/* source was the unresolved entry, for now it will be the transform itself */
+						first_unresolved->ref = (void*)transform_getnext(NULL);
+
+					ACCEPT;
+				}
+			}
+			else if (prop!=NULL && prop->ptype==PT_double && TERM(filter_transform(HERE, &xstype, sources, sizeof(sources), transformname, sizeof(transformname), obj)))
+			{
+				// TODO handle more than one source
+				char sobj[64], sprop[64];
+				int n = sscanf(sources,"%[^:]:%[^,]",sobj,sprop);
+				OBJECT *source_obj;
+				PROPERTY *source_prop;
+
+				/* get source object */
+				source_obj = (n==1||strcmp(sobj,"this")==0) ? obj : object_find_name(sobj);
+				if ( !source_obj )
+				{
+					output_error_raw("%s(%d): filter source object '%s' not found", filename, linenum, n==1?"this":sobj);
+					REJECT;
+					DONE;
+				}
+
+				/* get source property */
+				source_prop = object_get_property(source_obj, n==1?sobj:sprop,NULL);
+				if ( !source_prop )
+				{
+					output_error_raw("%s(%d): filter source property '%s' of object '%s' not found", filename, linenum, n==1?sobj:sprop, n==1?"this":sobj);
+					REJECT;
+					DONE;
+				}
+
+				/* add to external transform list */
+				if ( !transform_add_filter(obj,prop,transformname,source_obj,source_prop) )
+				{
+					output_error_raw("%s(%d): filter transform could not be created - %s", filename, linenum, errno?strerror(errno):"(no details)");
 					REJECT;
 					DONE;
 				}
@@ -5099,6 +5179,207 @@ static int C_code_block(PARSER, char *buffer, int size)
 	DONE;
 }
 
+static int filter_name(PARSER, char *result, int size)
+{
+	START;
+	/* names cannot start with a digit */
+	if (isdigit(*_p)) return 0;
+	while (size>1 && isalpha(*_p) || isdigit(*_p) || *_p=='_') COPY(result);
+	result[_n]='\0';
+	DONE;
+}
+static int double_timestep(PARSER,double *step)
+{
+	START;
+	if ( WHITE,TERM(real_value(HERE,step)) )
+	{
+		UNIT *from = NULL;
+		if ( WHITE,TERM(unitspec(HERE,&from)) )
+		{
+			// convert to seconds
+			UNIT *to = unit_find("s");
+			if ( unit_convert_ex(from,to,step)==0)
+			{
+				REJECT;
+			}
+			else
+			{
+				ACCEPT;
+			}
+		}
+		else
+		{
+			ACCEPT;
+		}
+	}
+	else
+	{
+		REJECT;
+	}
+	DONE;
+}
+static int filter_mononomial(PARSER,char *domain,double *a, unsigned int *n)
+{
+	double x[64];
+	double m = -1;
+	double sign = 1;
+	double coeff = 1;
+	int64 power = 0;
+	int first = 1;
+	START;
+	memset(x,0,sizeof(x));
+	if ( WHITE,(first||LITERAL("+")||(LITERAL("-")&&(sign=-1,true)))
+		&& (WHITE,TERM(real_value(HERE,&coeff))||(coeff=1,true))
+		&& (WHITE,LITERAL(domain)&&(power=1,true) && (LITERAL("^") && TERM(integer(HERE,&power)))||true) )
+	{
+		first = 0;
+		if ( power > 63 )
+		{
+			output_error_raw("%s(%d): filter polynomial order cannot be higher than 63",filename,linenum);
+			REJECT;
+			goto Done;
+		}
+		else
+		{
+			ACCEPT;
+			x[power] = sign*coeff;
+			if ( power > m )
+				m = power;
+		}
+	}
+	if ( m==-1 )
+	{
+		output_error_raw("%s(%d): invalid polynomial",filename,linenum);
+		REJECT;
+	}
+	else
+	{
+		// copy to result buffers
+		*n = (m+1);
+		memcpy(a,x,sizeof(double)*(m+1));
+	}
+Done:
+	DONE;
+}
+static int filter_polynomial(PARSER,char *domain,double *a,unsigned int *n)
+{
+	double x[64]; // maximum 64th order polynomial
+	int m = -1; // order of polynomial
+	int first = 1;
+	START;
+	memset(x,0,sizeof(x));
+	if ( WHITE,LITERAL("(") )
+	{
+		ACCEPT;
+		while ( !(WHITE,LITERAL(")")) )
+		{
+			double sign = 1;
+			double coeff = 1;
+			int64 power = 0;
+			if ( WHITE,(first||LITERAL("+")||(LITERAL("-")&&(sign=-1,true)))
+				&& (WHITE,TERM(real_value(HERE,&coeff))||(coeff=1,true))
+				&& (WHITE,LITERAL(domain)&&(power=1,true) && (LITERAL("^") && TERM(integer(HERE,&power)))||true) )
+			{
+				first = 0;
+				if ( power > 63 )
+				{
+					output_error_raw("%s(%d): filter polynomial order cannot be higher than 63",filename,linenum);
+					REJECT;
+					break;
+				}
+				else
+				{
+					ACCEPT;
+					x[power] = sign*coeff;
+					if ( power > m )
+						m = power;
+				}
+			}
+		}
+		ACCEPT;
+		if ( m==-1 )
+		{
+			output_error_raw("%s(%d): invalid polynomial",filename,linenum);
+			REJECT;
+		}
+		else
+		{
+			// copy to result buffers
+			*n = (m+1);
+			memcpy(a,x,sizeof(double)*(m+1));
+		}
+	}
+	else if ( TERM(filter_mononomial(HERE,domain,a,n)) )
+	{
+		ACCEPT;
+	}
+	else
+	{
+		REJECT;
+	}
+	DONE;
+}
+static int filter_block(PARSER)
+{
+	char tfname[1024];
+	START;
+	if WHITE ACCEPT;
+	if ( LITERAL("filter") && (WHITE,TERM(filter_name(HERE,tfname,sizeof(tfname)))) )
+	{
+		char domain[64];
+		double timestep=1;
+		double timeskew=0;
+		if ( (WHITE,LITERAL("(")) && (WHITE,TERM(name(HERE,domain,sizeof(domain)))) )
+		{
+			if ( strcmp(domain,"z")==0 )
+			{
+				double a[64],b[64]; // polynomial coefficients
+				unsigned int n,m; // polynomial orders
+
+				// parse z-domain filter parameters
+				ACCEPT;
+				if ( (WHITE,LITERAL(",")) && (WHITE,TERM(double_timestep(HERE,&timestep))) ) { ACCEPT; }
+				if ( (WHITE,LITERAL(",")) && (WHITE,TERM(double_timestep(HERE,&timeskew))) ) { ACCEPT; }
+				if ( WHITE,LITERAL(")") ) { ACCEPT; }
+				else
+				{
+					output_error_raw("%s(%d): filter domain and time arguments are not valid", filename, linenum);
+					REJECT;
+				}
+
+				// parse z-domain filter numerator and denominator
+				if ( (WHITE,LITERAL("=")) && (WHITE,TERM(filter_polynomial(HERE,domain,b,&m))) && (WHITE,LITERAL("/"))
+					&& (WHITE,TERM(filter_polynomial(HERE,domain,a,&n))) )
+				{
+					if ( transfer_function_add(tfname,domain,timestep,timeskew,n,a,m,b)==0 )
+					{
+						output_error_raw("%s(%d): unable to create transfer function'%s(%s)",filename, linenum,tfname,domain);
+						REJECT;
+					}
+					else
+					{
+						ACCEPT;
+					}
+				}
+				else
+				{
+					output_error_raw("%s(%d): filter transfer function is not valid", filename, linenum);
+					REJECT;
+				}
+			}
+			else {
+				output_error_raw("%s(%d): only z-domain filters are supported", filename, linenum);
+				REJECT;
+			}
+		}
+		else
+		REJECT;
+	}
+	else
+		REJECT;
+	DONE;
+}
+
 static int extern_block(PARSER)
 {
 	char code[65536];
@@ -5115,7 +5396,7 @@ static int extern_block(PARSER)
 		{
 			ACCEPT;
 		}
-		else 
+		else
 		{
 			output_error_raw("%s(%d): missing library name and/or external function list", filename, linenum);
 			REJECT;
@@ -5362,6 +5643,7 @@ static int gridlabd_file(PARSER)
 	OR if TERM(instance_block(HERE)) {ACCEPT; DONE; }
 	OR if TERM(gui(HERE)) {ACCEPT; DONE;}
 	OR if TERM(extern_block(HERE)) {ACCEPT; DONE; }
+	OR if TERM(filter_block(HERE)) {ACCEPT; DONE; }
 	OR if TERM(global_declaration(HERE)) {ACCEPT; DONE; }
 	OR if TERM(link_declaration(HERE)) { ACCEPT; DONE; }
 	OR if TERM(script_directive(HERE)) { ACCEPT; DONE; }

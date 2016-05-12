@@ -14,7 +14,7 @@
 # 
 new=`svn info $1 | sed -ne 's/^Last Changed Rev: //p'`
 dir=`svn info $1 | sed -ne 's/^URL: //p' | sed -ne 's:^.*gridlab-d/code/::p'`
-mod=$(echo `svn -q status $1 | cut -c1-7 | sort -u`)
+mod=$(echo `svn -q status $1 | cut -c1-7 | sort -u` | sed -e 's/ //g')
 branch="$dir${mod:+:}$mod"
 if test -f $2 ; then 
 	oldnum=`cat $2 | sed -ne 's/^#define BUILDNUM //p'`

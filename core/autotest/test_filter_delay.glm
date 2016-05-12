@@ -1,0 +1,30 @@
+// Filter test simple delay
+//
+clock {
+	timezone PST+8PDT;
+	starttime '2000-01-01 00:00:00 PST';
+	stoptime '2000-01-01 01:00:00 PST';
+}
+#set debug=1
+filter delay(z,5min,10s) = 1/z;
+class from {
+	randomvar value;
+}
+class to {
+	double value;
+}
+object from {
+	name from;
+	value "type:normal(0,1); min:-3.0; max:+3.0; refresh:1min";
+}
+object to {
+	name to;
+	value delay(from:value);
+}
+#set debug=0
+module tape;
+object multi_recorder {
+	file output.csv;
+	interval -1;
+	property "from:value,to:value";
+}

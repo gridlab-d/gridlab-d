@@ -85,6 +85,182 @@ TRANSFORM *transform_getnext(TRANSFORM *xform)
 	return xform?xform->next:schedule_xformlist;
 }
 
+TRANSFERFUNCTION *tflist = NULL; ///< transfer function list
+int write_term(char *buffer,double a,char *x,int n,bool first)
+{
+	int len = 0;
+	if ( fabs(a)>1e-6 ) // non-zero
+	{
+		if ( n==0 ) // z^0 term
+		{
+			if ( fabs(a-1)<1e-6 )
+				len += sprintf(buffer+len,"%s",first?"1":"+1");
+			else if ( fabs(-a-1)<1e-6 )
+				len += sprintf(buffer+len,"%s","-1");
+			else
+				len += sprintf(buffer+len,first?"%.4f":"%+.4f",a);
+		}
+		else // z^n term
+		{
+			if ( fabs(a-1)>1e-6 ) // non-unitary coefficient
+				len += sprintf(buffer+len,"%.4f",a);
+			else if ( fabs(-a-1)<1e-6 ) // -1 coefficient
+				len += sprintf(buffer+len,"-");
+			len += sprintf(buffer+len,"%s",x); // domain variable
+			if ( n>1 ) // higher-order
+				len += sprintf(buffer+len,"^%d",n);
+		}
+	}
+	return len;
+}
+int transfer_function_add(char *name,		///< transfer function name
+						  char *domain,		///< domain variable name
+						  double timestep,	///< timestep (seconds)
+						  double timeskew,	///< timeskew (seconds)
+						  unsigned int n,		///< denominator order
+						  double *a,			///< denominator coefficients
+						  unsigned int m,		///< numerator order
+						  double *b)			///< numerator coefficients
+{
+	TRANSFERFUNCTION *tf = (TRANSFERFUNCTION*)malloc(sizeof(TRANSFERFUNCTION));
+	if ( tf == NULL )
+	{
+		output_error("transfer_function_add(): memory allocation failure");
+		return 0;
+	}
+	memset(tf,0,sizeof(TRANSFERFUNCTION));
+	strncpy(tf->name,name,sizeof(tf->name)-1);
+	strncpy(tf->domain,domain,sizeof(tf->domain)-1);
+	tf->timestep = timestep;
+	tf->timeskew = timeskew;
+	tf->n = n;
+	tf->a = (double*)malloc(sizeof(double)*n);
+	if ( tf->a == NULL )
+	{
+		output_error("transfer_function_add(): memory allocation failure");
+		return 0;
+	}
+	memcpy(tf->a,a,sizeof(double)*n);
+	tf->m = m;
+	tf->b = (double*)malloc(sizeof(double)*m);
+	if ( tf->b == NULL )
+	{
+		output_error("transfer_function_add(): memory allocation failure");
+		return 0;
+	}
+	memcpy(tf->b,b,sizeof(double)*m);
+	tf->next = tflist;
+	tflist = tf;
+
+	// debugging output
+	if ( global_debug_output )
+	{
+		char num[1024]="", den[1024]="";
+		int i;
+		int len;
+		int count1=0, count2=0;
+		for ( len=0,i=n-1 ; i>=0 ; i-- )
+		{
+			int c = write_term(den+len,a[i],domain,i,len==0);
+			if ( c>0 ) count1++;
+			len +=c;
+		}
+		for ( len=0,i=m-1 ; i>=0 ; i-- )
+		{
+			int c = write_term(num+len,b[i],domain,i,len==0);
+			if ( c>0 ) count2++;
+			len +=c;
+		}
+		output_debug("defining transfer function %s(%s) = %s%s%s/%s%s%s, step=%.0fs, skew=%.0fs", name,domain,
+			count1>1?"(":"",num,count1>1?")":"",
+			count2>1?"(":"",den,count2>1?")":"",
+			timestep,timeskew);
+	}
+	return 1;
+}
+TRANSFERFUNCTION *find_filter(char *name)
+{
+	TRANSFERFUNCTION *tf;
+	for ( tf = tflist ; tf != NULL ; tf = tf->next )
+	{
+		if ( strcmp(tf->name,name)==0 )
+			return tf;
+	}
+	return NULL;
+}
+int get_source_type(PROPERTY *prop)
+{
+	/* TODO extend this to support multiple sources */
+	int source_type = 0;
+	switch ( prop->ptype ) {
+	case PT_double: case PT_random: source_type = XS_DOUBLE; break;
+	case PT_complex: source_type = XS_COMPLEX; break;
+	case PT_loadshape: source_type = XS_LOADSHAPE; break;
+	case PT_enduse: source_type = XS_ENDUSE; break;
+	default:
+		output_error("tranform/get_source_type(PROPERTY *prop='%s'): unsupported source property type '%s'",
+			prop->name,property_getspec(prop->ptype)->name);
+		break;
+	}
+}
+int transform_add_filter(OBJECT *target_obj,		/* pointer to the target object (lhs) */
+						 PROPERTY *target_prop,	/* pointer to the target property */
+						 char *filter,			/* filter name to use */
+						 OBJECT *source_obj,		/* object containing source value (rhs) */
+						 PROPERTY *source_prop)		/* schedule object associated with target value, used if stype == XS_SCHEDULE */
+{
+	char buffer1[1024], buffer2[1024];
+	TRANSFORM *xform;
+	TRANSFERFUNCTION *tf;
+
+	// find the filter
+	tf = find_filter(filter);
+	if ( tf == NULL )
+	{
+		output_error("transform_add_filter(source='%s:%s',filter='%s',target='%s:%s'): transfer function not defined",
+			object_name(target_obj,buffer1,sizeof(buffer1)),target_prop->name,filter, object_name(source_obj,buffer2,sizeof(buffer2)),source_prop->name);
+		return 0;
+	}
+
+	// allocate memory for the transform
+	xform = (TRANSFORM*)malloc(sizeof(TRANSFORM));
+	if ( xform == NULL )
+	{
+		output_error("transform_add_filter(source='%s:%s',filter='%s',target='%s:%s'): memory allocation failure",
+			object_name(target_obj,buffer1,sizeof(buffer1)),target_prop->name,filter, object_name(source_obj,buffer2,sizeof(buffer2)),source_prop->name);
+		return 0;
+	}
+	xform->x = (double*)malloc(sizeof(double)*(tf->n-1));
+	if ( xform->x == NULL )
+	{
+		output_error("transform_add_filter(source='%s:%s',filter='%s',target='%s:%s'): memory allocation failure",
+			object_name(target_obj,buffer1,sizeof(buffer1)),target_prop->name,filter, object_name(source_obj,buffer2,sizeof(buffer2)),source_prop->name);
+		free(xform);
+		return 0;
+	}
+	memset(xform->x,0,sizeof(double)*(tf->n-1));
+
+	// build tranform
+	xform->source = object_get_addr(source_obj,source_prop->name);
+	xform->source_type = get_source_type(source_prop);
+	xform->target_obj = target_obj;
+	xform->target_prop = target_prop;
+	xform->function_type = XT_FILTER;
+	xform->tf = tf;
+	xform->y = object_get_addr(target_obj,target_prop->name);
+	xform->t2 = (int64)(global_starttime/tf->timestep)*tf->timestep + tf->timeskew;
+	xform->next = schedule_xformlist;
+	schedule_xformlist = xform;
+
+	if ( global_debug_output )
+	{
+		output_debug("added filter '%s' from source '%s:%s' to target '%s:%s'", filter,
+			object_name(target_obj,buffer1,sizeof(buffer1)),target_prop->name,object_name(source_obj,buffer2,sizeof(buffer2)),source_prop->name);
+	}
+	return 1;
+
+}
+
 int transform_add_external(	OBJECT *target_obj,		/* pointer to the target object (lhs) */
 							PROPERTY *target_prop,	/* pointer to the target property */
 							char *function,			/* function name to use */
@@ -106,18 +282,7 @@ int transform_add_external(	OBJECT *target_obj,		/* pointer to the target object
 	xform->function_type = XT_EXTERNAL;
 
 	/* apply source type */
-	/* TODO extend this to support multiple sources */
-	xform->source_type = 0;
-	switch (source_prop->ptype) {
-	case PT_double: xform->source_type |= XS_DOUBLE; break;
-	case PT_complex: xform->source_type |= XS_COMPLEX; break;
-	case PT_loadshape: xform->source_type |= XS_LOADSHAPE; break;
-	case PT_enduse: xform->source_type |= XS_ENDUSE; break;
-	default:
-		output_error("transform_add_external(source='%s:%s',function='%s',target='%s:%s'): unsupported source property type '%s'", 
-			object_name(target_obj,buffer1,sizeof(buffer1)),target_prop->name,function, object_name(source_obj,buffer2,sizeof(buffer2)),source_prop->name,property_getspec(source_prop->ptype)->name);
-		break;
-	}
+	xform->source_type = get_source_type(source_prop);
 
 	/* build lhs (target) */
 	/* TODO extend to support multiple targets, e.g., complex */
@@ -190,11 +355,39 @@ void cast_from_double(PROPERTYTYPE ptype, void *addr, double value)
 	}
 }
 
+TIMESTAMP apply_filter(TRANSFERFUNCTION *f,	///< transfer function
+					   double *u,			///< input vector
+					   double *x,			///< state vector
+					   double *y,			///< output vector
+					   TIMESTAMP t1)		///< current time value
+{
+	unsigned int n = f->n-1;
+	unsigned int m = f->m;
+	double *a = f->a;
+	double *b = f->b;
+	double dx[64];
+	unsigned int i;
+
+	// observable form
+	if ( n>sizeof(dx)/sizeof(double) ) throw_exception("transfer function %s order too high", f->name);
+	for ( i=0 ; i<n ; i++ )
+	{
+		if ( i==0 )
+			dx[i] = -a[i]*x[n-1];
+		else
+			dx[i] = x[i-1] - a[i]*x[n-1];
+		if ( i<m )
+			dx[i] += b[i] * (*u);
+	}
+	memcpy(x,dx,sizeof(double)*n);
+	*y = x[n-1]; // output
+	return ((int64)(t1/f->timestep)+1)*f->timestep + f->timeskew;
+}
 
 /** apply the transform, source is optional and xform.source is used when source is NULL 
     @return timestamp for next update, TS_NEVER for none, TS_ZERO for error
 **/
-int64 apply_transform(TIMESTAMP t1, TRANSFORM *xform, double *source)
+TIMESTAMP apply_transform(TIMESTAMP t1, TRANSFORM *xform, double *source)
 {
 	char buffer[1024];
 	TIMESTAMP t2;
@@ -217,6 +410,14 @@ int64 apply_transform(TIMESTAMP t1, TRANSFORM *xform, double *source)
 			t2 = TS_NEVER;
 		else
 			t2 = t1 + xform->retval; /* timer given */
+		break;
+	case XT_FILTER:
+#ifdef _DEBUG
+		output_debug("running filter transform for %s:%s", object_name(xform->target_obj,buffer,sizeof(buffer)), xform->target_prop->name);
+#endif
+		if ( xform->t2 <= t1 )
+			xform->t2 = apply_filter(xform->tf,xform->source,xform->x,xform->y,t1);
+		t2 = xform->t2;
 		break;
 	default:
 		output_error("apply_transform(): invalid function type %d", xform->function_type);

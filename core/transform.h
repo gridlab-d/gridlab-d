@@ -30,7 +30,26 @@ typedef enum {
 typedef enum {
 	XT_LINEAR	= 0x00,
 	XT_EXTERNAL = 0x01,
+//	XT_DIFF		= 0x02, ///< transform is a finite difference
+//	XT_SUM		= 0x03, ///< transform is a discrete sum
+	XT_FILTER	= 0x04, ///< transform is a discrete-time filter
 } TRANSFORMFUNCTIONTYPE;
+
+/****************************************************************
+ * Transfer function implementation
+ ****************************************************************/
+
+typedef struct s_transferfunction {
+	char name[64];		///< transfer function name
+	char domain[4];		///< domain variable name
+	double timestep;	///< timestep (seconds)
+	double timeskew;	///< timeskew (seconds)
+	unsigned int n;		///< denominator order
+	double *a;			///< denominator coefficients
+	unsigned int m;		///< numerator order
+	double *b;			///< numerator coefficients
+	struct s_transferfunction *next;
+} TRANSFERFUNCTION;
 
 /* transform data structure */
 typedef struct s_transform {
@@ -55,6 +74,13 @@ typedef struct s_transform {
 			int nrhs; /// number of rhs values
 			GLDVAR *prhs; /// vector of rhs value pointers
 		};
+		struct { // used only by filter transforms
+			TRANSFERFUNCTION *tf; ///< transfer function
+			double *u; ///< u vector
+			double *y; ///< y vector
+			double *x; ///< x vector
+			TIMESTAMP t2; ///< next sample time
+		};
 	};
 	struct s_transform *next; ///* next item in linked list
 } TRANSFORM;
@@ -78,6 +104,9 @@ PROPERTYTYPE gldvar_gettype(GLDVAR *var, unsigned int n);
 char *gldvar_getname(GLDVAR *var, unsigned int n);
 char *gldvar_getstring(GLDVAR *var, unsigned int n, char *buffer, int size);
 UNIT *gldvar_getunits(GLDVAR *var, unsigned int n);
+
+int transform_add_filter(struct s_object_list *target_obj, struct s_property_map *target_prop, char *function, struct s_object_list *source_obj, struct s_property_map *source_prop);
+int transfer_function_add(char *tfname, char *domain, double timestep, double timeskew, unsigned int n, double *a, unsigned int m, double *b);
 
 #ifdef __cplusplus
 }
