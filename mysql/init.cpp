@@ -51,6 +51,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		PT_KEYWORD,"SSL",(int64)CLIENT_SSL,
 		PT_KEYWORD,"REMEMBER_OPTIONS",(int64)CLIENT_REMEMBER_OPTIONS,
 		NULL);
+	gl_global_create("mysql::table_prefix",PT_char256,default_table_prefix,PT_ACCESS,PA_PUBLIC,PT_DESCRIPTION,"table prefix for import/export",NULL);
 
 	new database(module);
 	new recorder(module);

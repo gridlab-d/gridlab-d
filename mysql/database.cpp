@@ -106,7 +106,7 @@ int database::init(OBJECT *parent)
 	gl_verbose("mysql_connect(hostname='%s',username='%s',password='%s',schema='%s',port=%u,socketname='%s',clientflags=0x%016llx[%s])",
 		(const char*)hostname,(const char*)username,(const char*)password,(const char*)schema,port,(const char*)socketname,get_clientflags(),(const char*)flags);
 
-	mysql = mysql_real_connect(mysql_client,hostname,username,strcpy(password,"")?password:NULL,NULL,port,socketname,(unsigned long)clientflags);
+	mysql = mysql_real_connect(mysql_client,hostname,username,strcmp(password,"")?password:NULL,NULL,port,socketname,(unsigned long)clientflags);
 	if ( mysql==NULL )
 		exception("mysql connect failed - %s", mysql_error(mysql_client));
 	else

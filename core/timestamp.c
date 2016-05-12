@@ -1374,4 +1374,9 @@ TIMESTAMP earliest_timestamp(TIMESTAMP t, ...)
 	return t1;
 }
 
+int is_soft_timestamp(TIMESTAMP t)
+{
+	return t>=-TS_MAX && t<0 ? 1 : 0;
+}
+
 /**@}*/

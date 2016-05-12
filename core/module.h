@@ -63,12 +63,14 @@ extern "C" {
 	int module_depends(const char *name, unsigned char major, unsigned char minor, unsigned short build);
 	int module_setvar(MODULE *mod, const char *varname, char *value);
 	int module_import(MODULE *mod, const char *filename);
+	int module_export(MODULE *mod, const char *filename);
 	int module_check(MODULE *mod);
 	int module_checkall();
 	int module_saveall(FILE *fp);
 	int module_saveall_xml(FILE *fp);
 	int module_dumpall();
 	void module_libinfo(const char *module_name);
+	const char *module_find_transform_function(TRANSFORMFUNCTION function);
 #ifndef _NO_CPPUNIT
 	int module_test(TEST_CALLBACKS *callbacks,int argc,char* argv[]);
 #endif
@@ -91,7 +93,7 @@ extern "C" {
 #endif
 
 	int module_load_function_list(char *libname, char *fnclist);
-	TRANSFORMFUNCTION module_get_transform_function(char *function);
+	TRANSFORMFUNCTION module_get_transform_function(const char *function);
 
 	int module_compile(char *name, char *code, int flags, char *prefix, char *file, int line);
 	void module_profiles(void);

@@ -443,8 +443,8 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 		{PT_double, "voltage_factor[pu]", (char *)PADDR(voltage_factor), "the voltage change factor"},
 		{PT_double, "breaker_amps[A]", (char *)PADDR(breaker_amps), "the rated breaker amperage"},
 		{PT_set, "configuration", (char *)PADDR(config), "the load configuration options"},
+			{PT_KEYWORD, "IS110", (set)EUC_IS110},
 			{PT_KEYWORD, "IS220", (set)EUC_IS220},
-			//{PT_KEYWORD, "NONE",(set)0},
 	}, *last=NULL;
 
 	// publish the enduse load itself
@@ -518,6 +518,7 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 				 */
 				return -result;
 			}
+			continue;
 		}
 		else
 		{
@@ -585,6 +586,10 @@ int convert_to_enduse(char *string, void *data, PROPERTY *prop)
 			e->power_fraction = atof(value);
 		else if (strcmp(param,"power_factor")==0)
 			e->power_factor = atof(value);
+		else if ( strcmp(param,"power.r")==0 )
+			e->power.r = atof(value);
+		else if ( strcmp(param,"power.i")==0 )
+			e->power.i = atof(value);
 		else if (strcmp(param,"loadshape")==0)
 		{
 			PROPERTY *pref = class_find_property(prop->oclass,value);

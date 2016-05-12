@@ -220,6 +220,7 @@ public:
 	double thermal_storage_inuse;		//Flag to indicate thermal storage is being pulled at the moment
 
 	typedef enum {
+		ST_NONE = 0x00000000,	///< flag to indicate no system is installed
 		ST_GAS	= 0x00000001,	///< flag to indicate gas heating is used
 		ST_AC	= 0x00000002,	///< flag to indicate the air-conditioning is used
 		ST_AIR	= 0x00000004,	///< flag to indicate central air is used

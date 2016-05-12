@@ -1939,7 +1939,7 @@ STATUS exec_start(void)
 				DELTAMODEFLAGS flags=DMF_NONE;
 				DT delta_dt = delta_modedesired(&flags);
 				TIMESTAMP t = TS_NEVER;
-				output_verbose("delta_dt is %d", (int)delta_dt);
+				output_debug("delta_dt is %d", (int)delta_dt);
 				switch ( delta_dt ) {
 				case DT_INFINITY: /* no dt -> event mode */
 					global_simulation_mode = SM_EVENT;
@@ -1985,9 +1985,11 @@ STATUS exec_start(void)
 			/* synchronize all internal schedules */
 			if ( global_clock < 0 )
 				throw_exception("clock time is negative (global_clock=%lli)", global_clock);
-			else
-				output_debug("global_clock=%d\n",global_clock);
-
+			else if ( global_debug_output )
+			{
+				char dt[64]="(invalid)"; convert_from_timestamp(global_clock,dt,sizeof(dt));
+				output_debug("global_clock -> %s\n",dt);
+			}
 			/* set time context */
 			output_set_time_context(global_clock);
 

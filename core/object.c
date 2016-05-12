@@ -953,7 +953,7 @@ static int set_header_value(OBJECT *obj, char *name, char *value)
 		}
 	}
 	else {
-		output_error("object %s:%d called set_header_value() for invalid field '%s'", name);
+		output_error("object %s:%d called set_header_value() for invalid field '%s'", obj->oclass->name, obj->id, name);
 		/*	TROUBLESHOOT
 			The valid header fields are "name", "parent", "rank", "clock", "valid_to", "latitude",
 			"longitude", "in_svc", "out_svc", "heartbeat", and "flags".
@@ -1423,48 +1423,6 @@ TIMESTAMP object_sync(OBJECT *obj, /**< the object to synchronize */
 {
 	clock_t t=exec_clock();
 	TIMESTAMP t2=TS_NEVER;
-	//TIMESTAMP t_start = ts;
-	//TIMESTAMP abs_t2 = ts;
-	//char namestr[65];
-	//int itr = global_iteration_limit;
-	//if(obj->clock == 0 || obj->valid_to >= ts){
-	//	// object has not started, or object's previous t2 is equal to or greater the clock + minimum timestep
-	//	return _object_sync(obj, ts, pass);
-	//} else {
-	//	// object started AND it had a state change before the next minimum timestep
-	//	t_start = obj->clock; // where the object was
-	//	if(obj->valid_to > 0){
-	//		abs_t2 = obj->valid_to; // where the object wanted to advance to
-	//	} else {
-	//		abs_t2 = -obj->valid_to; // soft timestep
-	//	}
-	//	
-	//	do {
-	//		/* don't call sync beyond valid horizon */
-	//		t2 = _object_sync(obj,(abs_t2<(obj->valid_to>0?obj->valid_to:TS_NEVER)?abs_t2:obj->valid_to),pass);
-	//		if(t2 < 0){
-	//			abs_t2 = -t2;
-	//		} else {
-	//			abs_t2 = t2;
-	//		}
-	//		if(abs_t2 == t_start){
-	//			--itr;
-	//			if(itr == 0){
-	//				output_fatal("mini-iteration limit reached for object %s in object_sync", object_name(obj, namestr, 64));
-	//				return TS_INVALID;
-	//			}
-	//		}
-	//		if(abs_t2 < t_start){
-	//			output_error("return time is less than current time!");
-	//			return TS_INVALID;
-	//		} else {
-	//			t_start = abs_t2;
-	//			itr = global_iteration_limit;
-	//		}
-	//		
-	//	} while (t2>0 && ts>(t2<0?-t2:t2) && t2<TS_NEVER);
-	//	return t2;
-	//}
 	do {
 		/* don't call sync beyond valid horizon */
 		t2 = _object_sync(obj,(ts<(obj->valid_to>0?obj->valid_to:TS_NEVER)?ts:obj->valid_to),pass);	
@@ -1480,7 +1438,13 @@ TIMESTAMP object_sync(OBJECT *obj, /**< the object to synchronize */
 		default: break;
 		}
 	}
-
+	if ( global_debug_output>0 )
+	{
+		const char *passname[]={"NOSYNC","PRESYNC","SYNC","INVALID","POSTSYNC"};
+		char dt1[64]="(invalid)"; convert_from_timestamp(absolute_timestamp(ts),dt1,sizeof(dt1));
+		char dt2[64]="(invalid)"; convert_from_timestamp(absolute_timestamp(t2),dt2,sizeof(dt2));
+		output_debug("object %s:%d pass %s sync to %s -> %s %s", obj->oclass->name, obj->id, pass<0||pass>4?"(invalid)":passname[pass], dt1, is_soft_timestamp(t2)?"SOFT":"HARD", dt2);
+	}
 	return t2;
 }
 
@@ -1489,6 +1453,11 @@ TIMESTAMP object_heartbeat(OBJECT *obj)
 	clock_t t=exec_clock();
 	TIMESTAMP t1 = obj->oclass->heartbeat ? obj->oclass->heartbeat(obj) : TS_NEVER;
 	object_profile(obj,OPI_HEARTBEAT,t);
+		if ( global_debug_output>0 )
+		{
+			char dt[64]="(invalid)"; convert_from_timestamp(absolute_timestamp(t1),dt,sizeof(dt));
+			output_debug("object %s:%d heartbeat -> %s %s", obj->oclass->name, obj->id, is_soft_timestamp(t1)?"(SOFT)":"(HARD)", dt);
+		}
 	return t1;
 }
 
@@ -1505,6 +1474,8 @@ int object_init(OBJECT *obj) /**< the object to initialize */
 	if(obj->oclass->init != NULL)
 		rv = (int)(*(obj->oclass->init))(obj, obj->parent);
 	object_profile(obj,OPI_INIT,t);
+	if ( global_debug_output>0 )
+		output_debug("object %s:%d init -> %s", obj->oclass->name, obj->id, rv?"ok":"failed");
 	return rv;
 }
 
@@ -1528,6 +1499,8 @@ STATUS object_precommit(OBJECT *obj, TIMESTAMP t1)
 		rv = SUCCESS;
 	}
 	object_profile(obj,OPI_PRECOMMIT,t);
+		if ( global_debug_output>0 )
+			output_debug("object %s:%d precommit -> %s", obj->oclass->name, obj->id, rv?"ok":"failed");
 	return rv;
 }
 
@@ -1542,6 +1515,11 @@ TIMESTAMP object_commit(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 		rv =TS_NEVER;
 	} 
 	object_profile(obj,OPI_COMMIT,t);
+	if ( global_debug_output>0 )
+	{
+		char dt[64]="(invalid)"; convert_from_timestamp(absolute_timestamp(rv),dt,sizeof(dt));
+		output_debug("object %s:%d commit -> %s %s", obj->oclass->name, obj->id, is_soft_timestamp(rv)?"SOFT":"HARD", dt);
+	}
 	return rv;
 }
 
@@ -1562,6 +1540,10 @@ STATUS object_finalize(OBJECT *obj)
 		rv = SUCCESS;
 	}
 	object_profile(obj,OPI_FINALIZE,t);
+	if ( global_debug_output>0 )
+	{
+		output_debug("object %s:%d finalize -> %s", obj->oclass->name, obj->id, rv?"ok":"failed");
+	}
 	return rv;
 }
 

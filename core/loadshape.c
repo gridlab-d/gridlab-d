@@ -503,8 +503,9 @@ int loadshape_initall(void)
 void loadshape_recalc(loadshape *ls)
 {
 	switch (ls->type) {
-	case MT_ANALOG:
-		break;
+	case MT_UNKNOWN:
+ 	case MT_ANALOG:
+ 		break;
 	case MT_PULSED:
 		ls->d[MS_OFF] = 1; /* scalar determine how many pulses per period are emitted */
 		ls->d[MS_ON] = 0;
@@ -1064,6 +1065,8 @@ int convert_from_loadshape(char *string,int size,void *data, PROPERTY *prop)
 	char buffer[9];
 	loadshape *ls = (loadshape*)data;
 	switch (ls->type) {
+	case MT_UNKNOWN:
+		return sprintf(string,"%s","type: unknown");
 	case MT_ANALOG:
 		if (ls->params.analog.energy>0)
 			return sprintf(string,"type: analog; schedule: %s; energy: %g kWh",	ls->schedule->name, ls->params.analog.energy);
@@ -1198,6 +1201,8 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 				ls->params.scheduled.off_time = 16.0; // 4 pm
 				ls->params.scheduled.off_ramp = -1.0; // 1/h
 			}
+			else if (strcmp(value,"unknown")==0)
+				memset(ls,0,sizeof(ls));
 			else
 			{
 				output_error("convert_to_loadshape(string='%-.64s...', ...) type '%s' is invalid",string,value);

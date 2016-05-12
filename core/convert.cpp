@@ -746,7 +746,10 @@ int convert_from_object(char *buffer, /**< pointer to the string buffer */
 	char temp[256];
 	memset(temp, 0, 256);
 	if (obj==NULL)
-		return 0;
+	{
+		strcpy(buffer,"");
+		return 1;
+	}
 
 	/* get the object's namespace */
 	if (object_current_namespace()!=obj->space)
@@ -787,7 +790,12 @@ int convert_to_object(const char *buffer, /**< a pointer to the string buffer */
 	OBJECTNUM id;
 	OBJECT **target = (OBJECT**)data;
 	char oname[256];
-	if (sscanf(buffer,"\"%[^\"]\"",oname)==1 || (strchr(buffer,':')==NULL && strncpy(oname,buffer,sizeof(oname))))
+	if ( strcmp(buffer,"0")==0 ) // NOTE: this is inconsistent with what convert_from_object does for NULL object
+ 	{
+		*target = NULL;
+		return 1;
+	}
+	else if (sscanf(buffer,"\"%[^\"]\"",oname)==1 || (strchr(buffer,':')==NULL && strncpy(oname,buffer,sizeof(oname))))
 	{
 		oname[sizeof(oname)-1]='\0'; /* terminate unterminated string */
 		*target = object_find_name(oname);

@@ -111,7 +111,7 @@ int schedule_test(void);
 void schedule_dump(SCHEDULE *sch, char *file, char *mode);
 void schedule_dumpall(char *file);
 int schedule_createwait(void);
-
+SCHEDULE *schedule_getfirst(void);
 
 #ifdef __cplusplus
 }

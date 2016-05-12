@@ -1299,6 +1299,29 @@ TIMESTAMP randomvar_sync(randomvar *var, TIMESTAMP t1)
 	return var->update_rate<=0 ? TS_NEVER : ((t1/var->update_rate)+1)*var->update_rate;
 }
 
+randomvar *randomvar_getnext(randomvar*var)
+{
+	return var ? randomvar_list : var->next;
+}
+
+size_t randomvar_getspec(char *str, size_t size, const randomvar *var)
+{
+	char buffer[1024];
+	char specs[1024];
+	size_t len;
+	if ( _random_specs(var->type,var->a,var->b,specs,sizeof(specs))<=0 )
+		return 0;
+	len = sprintf(buffer,"state: %u; type: %s; min: %g; max: %g; refresh: %u%s",
+		var->state, specs, var->low, var->high, var->update_rate, var->flags&RNF_INTEGRATE ? "; integrate" : "");
+	if ( len > 0 && len<size )
+	{
+		strcpy(str,buffer);
+		return len;
+	}
+	else
+		return 0;
+}
+
 TIMESTAMP randomvar_syncall(TIMESTAMP t1)
 {
 	if ( randomvar_list )

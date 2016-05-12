@@ -36,6 +36,11 @@ unsigned int schedule_checksum(SCHEDULE *sch)
 }
 #endif
 
+SCHEDULE *schedule_getfirst(void)
+{
+	return schedule_list;
+}
+
 /** Iterate through the schedule list
 	@return the next schedule pointer (or first schedule)
  **/

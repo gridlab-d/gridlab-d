@@ -93,6 +93,7 @@ int transform_add_external(struct s_object_list *target_obj, struct s_property_m
 int transform_add_linear(TRANSFORMSOURCE stype, double *source, void *target, double scale, double bias, struct s_object_list *obj, struct s_property_map *prop, SCHEDULE *s);
 TRANSFORM *transform_getnext(TRANSFORM *xform);
 TIMESTAMP transform_syncall(TIMESTAMP t, TRANSFORMSOURCE source);
+int64 transform_apply(TIMESTAMP t1, TRANSFORM *xform, double *source);
 
 GLDVAR *gldvar_create(unsigned int dim);
 int gldvar_isset(GLDVAR *var, unsigned int n);

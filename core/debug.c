@@ -401,7 +401,7 @@ typedef struct s_watchpoint {
 	int num; /**< the watchpoint id number */
 	OBJECT *obj; /**< the object watched, if any */
 	PROPERTY *prop; /**< the property being watched, if any */
-	char buffer[4096]; /**< the current value being watched */
+	char buffer[65536]; /**< the current value being watched */
 	struct s_watchpoint *next; /**< the next watchpoint in the watchpoint list */
 } WATCHPOINT; /**< the structure for a watchpoint entry */
 static WATCHPOINT *first_watchpoint=NULL, /**< a pointer to the first watchpoint */
@@ -414,7 +414,7 @@ static int exec_add_watchpoint(OBJECT *obj, /**< the object being watched */
 							   PROPERTY *prop) /**< the property being watched */
 {
 	WATCHPOINT *wp = (WATCHPOINT*)malloc(sizeof(WATCHPOINT));
-	char buffer[1024];
+	char buffer[65536];
 	if (wp==NULL)
 	{
 		output_error("exec_add_watchpoint() - memory allocation failed");
@@ -1313,7 +1313,7 @@ int exec_debug(struct sync_data *data, /**< the current sync status of the mail 
 			{
 				if (wp->prop==NULL)
 				{
-					char tmp[4096];
+					char tmp[65536];
 					if (object_dump(tmp,sizeof(tmp),obj) && strcmp(tmp,wp->buffer)!=0)
 					{
 						output_debug("watchpoint %d stopped on object %s", wp->num, get_objname(obj));

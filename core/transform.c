@@ -387,7 +387,7 @@ TIMESTAMP apply_filter(TRANSFERFUNCTION *f,	///< transfer function
 /** apply the transform, source is optional and xform.source is used when source is NULL 
     @return timestamp for next update, TS_NEVER for none, TS_ZERO for error
 **/
-TIMESTAMP apply_transform(TIMESTAMP t1, TRANSFORM *xform, double *source)
+TIMESTAMP transform_apply(TIMESTAMP t1, TRANSFORM *xform, double *source)
 {
 	char buffer[1024];
 	TIMESTAMP t2;
@@ -420,7 +420,7 @@ TIMESTAMP apply_transform(TIMESTAMP t1, TRANSFORM *xform, double *source)
 		t2 = xform->t2;
 		break;
 	default:
-		output_error("apply_transform(): invalid function type %d", xform->function_type);
+		output_error("transform_apply(): invalid function type %d", xform->function_type);
 		t2 = TS_ZERO;
 		break;
 	}
@@ -443,16 +443,16 @@ TIMESTAMP transform_syncall(TIMESTAMP t1, TRANSFORMSOURCE source)
 				if((t < xform->source_schedule->since) || (t >= xform->source_schedule->next_t)){
 					SCHEDULEINDEX index = schedule_index(xform->source_schedule,t);
 					double value = schedule_value(xform->source_schedule,index);
-					TIMESTAMP t = apply_transform(t1,xform,&value);
+					TIMESTAMP t = transform_apply(t1,xform,&value);
 					if ( t<t2 ) t2=t;
 				} 
 				else 
 				{
-					TIMESTAMP t = apply_transform(t1,xform,NULL);
+					TIMESTAMP t = transform_apply(t1,xform,NULL);
 					if ( t<t2 ) t2=t;
 				}
 			} else {
-				TIMESTAMP t = apply_transform(t1,xform,NULL);
+				TIMESTAMP t = transform_apply(t1,xform,NULL);
 				if ( t<t2 ) t2=t;
 			}
 		}

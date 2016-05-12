@@ -78,6 +78,7 @@
 #include "schedule.h"
 #include "exec.h"
 #include "stream.h"
+#include "transform.h"
 
 #include "console.h"
 
@@ -178,6 +179,7 @@ static CALLBACKS callbacks = {
 	class_define_map, class_add_loadmethod,
 	class_get_first_class,
 	class_get_class_from_classname,
+	class_add_extended_property,
 	{class_define_function,class_get_function},
 	class_define_enumeration_member,
 	class_define_set_member,
@@ -188,7 +190,7 @@ static CALLBACKS callbacks = {
 	module_malloc,
 	module_free,
 	{aggregate_mkgroup,aggregate_value,},
-	{module_getvar_addr,module_get_first,module_depends},
+	{module_getvar_addr,module_get_first,module_depends,module_find_transform_function},
 	{random_uniform, random_normal, random_bernoulli, random_pareto, random_lognormal, random_sampled, random_exponential, random_type, random_value, pseudorandom_value, random_triangle, random_beta, random_gamma, random_weibull, random_rayleigh},
 	object_isa,
 	class_register_type,
@@ -204,11 +206,11 @@ static CALLBACKS callbacks = {
 		object_get_double_by_name, object_get_string_by_name, object_get_object_by_name},
 	{class_string_to_property, class_property_to_string,},
 	module_find,
-	object_find_name,
+	object_find_name, object_find_by_id,
 	object_build_name,
 	object_get_oflags,
 	object_get_count,
-	{schedule_create, schedule_index, schedule_value, schedule_dtnext, schedule_find_byname},
+	{schedule_create, schedule_index, schedule_value, schedule_dtnext, schedule_find_byname, schedule_getfirst},
 	{loadshape_create,loadshape_init},
 	{enduse_create,enduse_sync},
 	{interpolate_linear, interpolate_quadratic},
@@ -217,6 +219,8 @@ static CALLBACKS callbacks = {
 	{objlist_create,objlist_search,objlist_destroy,objlist_add,objlist_del,objlist_size,objlist_get,objlist_apply},
 	{{convert_from_latitude, convert_to_latitude},{convert_from_longitude,convert_to_longitude}},
 	{http_read,http_delete_result},
+	{transform_getnext,transform_add_linear,transform_add_external,transform_apply},
+	{randomvar_getnext,randomvar_getspec},
 };
 CALLBACKS *module_callbacks(void) { return &callbacks; }
 
@@ -796,6 +800,16 @@ int module_import(MODULE *mod, const char *filename)
 	return (*mod->import_file)(filename);
 }
 
+int module_export(MODULE *mod, const char *filename)
+{
+	if (mod->export_file == NULL)
+	{
+		errno = ENOENT;
+		return 0;
+	}
+	return (*mod->export_file)(filename);
+}
+
 int module_save(MODULE *mod, const char *filename)
 {
 	if (mod->export_file == NULL)
@@ -893,11 +907,15 @@ int module_depends(const char *name, unsigned char major, unsigned char minor, u
 	for (mod=first_module; mod!=NULL; mod=mod->next)
 	{
 		if (strcmp(mod->name,name)==0)
-			if(mod->major > 0)
-				if(mod->major==major && mod->minor>=minor)
-					return 1;
+			if( major>0 && mod->major>0 )
+				if( mod->major==major && mod->minor>=minor )
+					return 1; // version matched
+				else
+					return 0; // version mismatched
+			else
+				return 1; // indifferent to version
 	}
-	return 0;
+	return module_load(name,0,NULL)!=NULL;
 }
 
 MODULE *module_get_next(MODULE*module)
@@ -1211,13 +1229,25 @@ int module_load_function_list(char *libname, char *fnclist)
 }
 
 /* gets an external function from a module to use as a transform function */
-TRANSFORMFUNCTION module_get_transform_function(char *function)
+TRANSFORMFUNCTION module_get_transform_function(const char *function)
 {
 	EXTERNALFUNCTION *item;
 	for ( item=external_function_list; item!=NULL ; item=item->next )
 	{
 		if ( strcmp(item->fname,function)==0 )
 			return item->call;
+	}
+	errno = ENOENT;
+	return NULL;
+}
+
+const char *module_find_transform_function(TRANSFORMFUNCTION function)
+{
+	EXTERNALFUNCTION *item;
+	for ( item=external_function_list; item!=NULL ; item=item->next )
+	{
+		if ( strcmp(item->call,function)==0 )
+			return item->fname;
 	}
 	errno = ENOENT;
 	return NULL;

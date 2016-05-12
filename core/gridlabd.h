@@ -53,7 +53,7 @@
 #define _GRIDLABD_H
 
 /* version info */
-#define MAJOR 3
+#define MAJOR 4
 #define MINOR 0
 
 /* permanently disable use of CPPUNIT */
@@ -378,6 +378,8 @@ inline int gl_module_depends(char *name, /**< module name */
 	@see class_register()
  **/
 #define gl_register_class (*callback->register_class)
+#define gl_class_get_first (*callback->class_getfirst)
+#define gl_class_get_by_name (*callback->class_getname)
 /** @} **/
 
 /******************************************************************************
@@ -490,6 +492,8 @@ inline int gl_set_rank(OBJECT *obj, /**< object to change rank */
 #define gl_set_rank (*callback->object.set_rank)
 #endif
 
+#define gl_object_get_first (*callback->object.get_first)
+#define gl_object_find_by_id (*callback->object_find_by_id)
 /** @} **/
 
 /******************************************************************************
@@ -507,6 +511,7 @@ inline int gl_set_rank(OBJECT *obj, /**< object to change rank */
 	@see class_register()
  **/
 #define gl_register_type (*callback->register_type)
+#define gl_class_add_extended_property (*callback->class_add_extended_property)
 
 /** Publish an delegate property type for a class
 	@note This is not supported in Version 1.
@@ -988,6 +993,10 @@ inline int32 gl_schedule_dtnext(SCHEDULE *sch, SCHEDULEINDEX index)
 {
 	return callback->schedule.dtnext(sch,index);
 }
+inline SCHEDULE *gl_schedule_getfirst(void)
+{
+	return callback->schedule.getfirst();
+}
 /** Create an enduse
  **/
 inline int gl_enduse_create(enduse *e)
@@ -1128,6 +1137,35 @@ inline size_t nextpow2(register size_t x)
 #define I_CATCHALL(T,C) catch (char *msg) { gl_error(#T "_" #C ": %s", msg); return 0; } catch (const char *msg) { gl_error(#T "_" #C ": %s", msg); return 0; } catch (...) { gl_error(#T "_" #C ": unhandled exception"); return 0; }
 #define T_CATCHALL(T,C) catch (char *msg) { gl_error(#T "_" #C "(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg); return TS_INVALID; } catch (const char *msg) { gl_error(#T "_" #C "(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg); return TS_INVALID; } catch (...) { gl_error(#T "_" #C "(obj=%d;%s): unhandled exception", obj->id, obj->name?obj->name:"unnamed"); return TS_INVALID; }
 /**@}*/
+
+/****************************
+ * Transform access
+ */
+/** @defgroup gridlabd_h_transform Transform access
+ * @{
+ */
+#ifdef __cplusplus
+inline TRANSFORM *gl_transform_getfirst(void) { return callback->transform.getnext(NULL); };
+inline TRANSFORM *gl_transform_getnext(TRANSFORM *xform) { return callback->transform.getnext(xform); };
+inline int gl_transform_add_linear(TRANSFORMSOURCE stype,double *source,void *target,double scale,double bias,OBJECT *obj,PROPERTY *prop,SCHEDULE *sched) { return callback->transform.add_linear(stype,source,target,scale,bias,obj,prop,sched); };
+inline int gl_transform_add_external(OBJECT *target_obj, PROPERTY *target_prop,char *function,OBJECT *source_obj, PROPERTY* source_prop) { return callback->transform.add_external(target_obj,target_prop,function,source_obj,source_prop); };
+inline const char *gl_module_find_transform_function(TRANSFORMFUNCTION function) { return callback->module.find_transform_function(function); };
+#else
+#define gl_transform_getnext (*callback->transform.getnext) /* TRANSFORM *(*transform.getnext)(TRANSFORM*); */
+#define gl_transform_add_linear (*callback->transfor.add_linear) /* int transform_add_linear(TRANSFORMSOURCE stype,double *source,void *target,double scale,double bias,OBJECT *obj,PROPERTY *prop,SCHEDULE *sched) */
+#define gl_transform_add_external (*callback->transform.add_external) /* int (*transform.add_external)(OBJECT*,PROPERTY*,char*,OBJECT*,PROPERTY*); */
+#define gl_module_find_transform_function (*callback->module.find_transform_function)
+#endif
+/**@}*/
+
+#ifdef __cplusplus
+inline randomvar *gl_randomvar_getfirst(void) { return callback->randomvar.getnext(NULL); };
+inline randomvar *gl_randomvar_getnext(randomvar *var) { return callback->randomvar.getnext(var); };
+inline size_t gl_randomvar_getspec(char *str, size_t size, const randomvar *var) { return callback->randomvar.getspec(str,size,var); };
+#else
+#define gl_randomvar_getnext (*callback->randomvar.getnext) /* randomvar *(*randomvar.getnext)(randomvar*) */
+#define gl_randomvar_getspec (*callback->randomvar.getspec) /* size_t (*randomvar.getspec(char*,size_t,randomvar*) */
+#endif
 
 /******************************************************************************
  * Remote data access
@@ -1847,10 +1885,10 @@ public: // iterators
 	inline gld_object* get_next(void) { return OBJECTDATA(my()->next,gld_object); };
 
 public: // exceptions
-	inline void exception(char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); throw (const char*)buf;};
-	inline void error(char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_error("%s",buf);};
-	inline void warning(char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_warning("%s",buf);};
-	inline void debug(char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_debug("%s",buf);};
+	inline void exception(const char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); throw (const char*)buf;};
+	inline void error(const char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_error("%s",buf);};
+	inline void warning(const char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_warning("%s",buf);};
+	inline void debug(const char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_debug("%s",buf);};
 };
 /// Create a gld_object from an OBJECT
 static inline gld_object* get_object(OBJECT*obj)
@@ -1931,6 +1969,7 @@ public: // read accessors
 	inline size_t get_size(void) { return (size_t)(pstruct.prop->size); };
 	inline size_t get_width(void) { return (size_t)(pstruct.prop->width); };
 	inline PROPERTYACCESS get_access(void) { return pstruct.prop->access; };
+	inline bool get_access(unsigned int bits, unsigned int mask=0xffff) {  return ((pstruct.prop->access&mask)|bits); };
 	inline gld_unit* get_unit(void) { return (gld_unit*)pstruct.prop->unit; };
 	inline void* get_addr(void) { return obj?((void*)((char*)(obj+1)+(unsigned int64)(pstruct.prop->addr))):pstruct.prop->addr; };
 	inline gld_keyword* get_first_keyword(void) { return (gld_keyword*)pstruct.prop->keywords; };
@@ -2044,7 +2083,7 @@ public: // comparators
 	inline bool outside(char* a, char* b) { return compare(TCOP_NI,a,b); };
 
 private: // exceptions
-	inline void exception(char *msg, ...) 
+	inline void exception(const char *msg, ...)
 	{ 
 		static char buf[1024]; 
 		va_list ptr; 
@@ -2062,7 +2101,7 @@ private: // data
 	GLOBALVAR *var;
 
 public: // constructors
-	inline gld_global(void) : var(NULL) {};
+	inline gld_global(void) { var=callback->global.find(NULL); };
 	inline gld_global(GLOBALVAR *v) : var(v) {};
 	inline gld_global(char *n) { var=callback->global.find(n); };
 	inline gld_global(char *n, PROPERTYTYPE t, void *p) { var=callback->global.create(n,t,p,NULL); };
@@ -2099,6 +2138,7 @@ public: // external accessors
 	// TODO
 
 public: // iterators
+	inline GLOBALVAR* get_first(void) { return callback->global.find(NULL); };
 	inline bool is_last(void) { if (!var) return false; else return (var->next==NULL); };
 	inline GLOBALVAR* get_next(void) { if (!var) return NULL; else return var->next; };
 };
@@ -2154,7 +2194,7 @@ public:
 	inline size_t get_size(void) { return list->size; };
 	inline OBJECT *get(size_t n) { return list->objlist[n]; };
 	inline int apply(void *arg, int (*function)(OBJECT *,void*,int)) { return callback->objlist.apply(list,arg,function);};
-	inline void exception(char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf,msg,ptr); va_end(ptr); throw (const char*)buf;};
+	inline void exception(const char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf,msg,ptr); va_end(ptr); throw (const char*)buf;};
 };
 
 /// Web data container
@@ -2331,7 +2371,7 @@ public:
 	int (*set)(char*,...);
 	int (*get)(char*,...);
 private:
-	inline void exception(char *fmt,...)
+	inline void exception(const char *fmt,...)
 	{
 		static char buffer[1024]="";
 		va_list ptr;

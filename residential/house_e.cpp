@@ -679,6 +679,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"thermal_storage_in_use",PADDR(thermal_storage_inuse),PT_DESCRIPTION,"logic statement for determining if energy storage is being utilized",
 
 			PT_set,"system_type",PADDR(system_type),PT_DESCRIPTION,"heating/cooling system type/options",
+				PT_KEYWORD, "NONE", (set)ST_NONE,
 				PT_KEYWORD, "GAS",	(set)ST_GAS,
 				PT_KEYWORD, "AIRCONDITIONING", (set)ST_AC,
 				PT_KEYWORD, "FORCEDAIR", (set)ST_AIR,
@@ -2252,7 +2253,7 @@ void house_e::update_system(double dt)
 
 	adj_cooling_cap = cooling_capacity_adj;
 	adj_heating_cap = heating_capacity_adj;
-#pragma message("house_e: add update_system voltage adjustment for heating")
+#pragma warning("house_e: add update_system voltage adjustment for heating")
 	double voltage_adj = (((pCircuit_V[0]).Mag() * (pCircuit_V[0]).Mag()) / (240.0 * 240.0) * load.impedance_fraction + ((pCircuit_V[0]).Mag() / 240.0) * load.current_fraction + load.power_fraction);
 	double voltage_adj_resistive = ((pCircuit_V[0]).Mag() * (pCircuit_V[0]).Mag()) / (240.0 * 240.0);
 	

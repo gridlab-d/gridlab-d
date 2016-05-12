@@ -301,6 +301,8 @@ STATUS global_init(void)
 GLOBALVAR *global_find(char *name) /**< name of global variable to find */
 {
 	GLOBALVAR *var = NULL;
+	if ( name==NULL ) /* get first global in list */
+			return global_getnext(NULL);
 	for(var = global_getnext(NULL); var != NULL; var = global_getnext(var)){
 		if(strcmp(var->prop->name, name) == 0){
 			return var;

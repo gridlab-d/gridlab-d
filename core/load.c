@@ -1206,7 +1206,9 @@ static int resolve_list(UNRESOLVED *item)
 }
 /*static*/ int load_resolve_all()
 {
-	return resolve_list(first_unresolved);
+	int result = resolve_list(first_unresolved);
+	first_unresolved = NULL;
+	return result;
 }
 
 #define PARSER char *_p
@@ -4604,6 +4606,69 @@ static int import(PARSER)
 	DONE
 }
 
+static int export(PARSER)
+{
+	char32 modname;
+	char1024 fname;
+	START;
+	if WHITE ACCEPT;
+	if (LITERAL("export") && WHITE) /* enforced whitespace */
+	{
+		if (TERM(name(HERE,modname,sizeof(modname))) && WHITE) /* enforced whitespace */
+		{
+			current_object = NULL; /* object context */
+			current_module = NULL; /* module context */
+			if TERM(alternate_value(HERE,fname,sizeof(fname)))
+			{
+				if LITERAL(";")
+				{
+					int result;
+					MODULE *module = module_find(modname);
+					if (module==NULL)
+					{
+						output_error_raw("%s(%d): module %s not loaded", filename, linenum, modname);
+						REJECT;
+					}
+					if ( !load_resolve_all(first_unresolved) )
+						output_error_raw("%s(%d): module export encountered before all object names were resolved", filename, linenum, modname);
+					result = module_export(module,fname);
+					if (result < 0)
+					{
+						output_error_raw("%s(%d): %d errors export %s from %s module", filename, linenum, -result, fname, modname);
+						REJECT;
+					}
+					else if (result==0)
+					{
+						output_error_raw("%s(%d): module %s export of %s failed; %s", filename, linenum, modname, fname, errno?strerror(errno):"(no details)");
+						REJECT;
+					}
+					else
+					{
+						output_verbose("%d objects export from %s to %s", result, modname, fname);
+						ACCEPT;
+					}
+				}
+				else
+				{
+					output_error_raw("%s(%d): expected ; after module %s export from %s statement", filename, linenum, modname, fname);
+					REJECT;
+				}
+			}
+			else
+			{
+				output_error_raw("%s(%d): expected export specification after module %s export statement", filename, linenum, modname);
+				REJECT;
+			}
+		}
+		else
+		{
+			output_error_raw("%s(%d): expected module name after import statement", filename, linenum);
+			REJECT;
+		}
+	}
+	DONE
+}
+
 static int library(PARSER)
 {
 	START;
@@ -5638,6 +5703,7 @@ static int gridlabd_file(PARSER)
 	OR if TERM(module_block(HERE)) {ACCEPT; DONE;}
 	OR if TERM(clock_block(HERE)) {ACCEPT; DONE;}
 	OR if TERM(import(HERE)) {ACCEPT; DONE; }
+	OR if TERM(export(HERE)) {ACCEPT; DONE; }
 	OR if TERM(library(HERE)) {ACCEPT; DONE; }
 	OR if TERM(schedule(HERE)) {ACCEPT; DONE; }
 	OR if TERM(instance_block(HERE)) {ACCEPT; DONE; }
