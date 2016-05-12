@@ -159,7 +159,7 @@ DX_CLEAN_LATEX = @DX_DOCDIR@/latex
 
 endif DX_COND_latex
 
-.PHONY: doxygen-run doxygen-doc $(DX_PS_GOAL) $(DX_PDF_GOAL)
+.PHONY: doxygen-run doxygen-doc $(DX_PS_GOAL) $(DX_PDF_GOAL) buildnum
 
 .INTERMEDIATE: doxygen-run $(DX_PS_GOAL) $(DX_PDF_GOAL)
 

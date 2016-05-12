@@ -166,6 +166,5 @@ pkginclude_HEADERS += core/version.h
 
 core/build.h: buildnum
 
-.PHONY: buildnum
-buildnum:
+buildnum: utilities/build_number
 	/bin/bash -c "source $(top_build_prefix)utilities/build_number $(top_srcdir) $(top_build_prefix)core/build.h"
