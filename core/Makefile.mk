@@ -168,17 +168,4 @@ core/build.h: buildnum
 
 .PHONY: buildnum
 buildnum:
-	$(AM_V_GEN)new=`svn info $(top_srcdir) | sed -ne 's/^Last Changed Rev: //p'`; \
-	$(AM_V_GEN)dir=`svn info $(top_srcdir) | sed -ne 's/^URL: //p' | sed -ne 's:^.*gridlab-d/code/::p'`; \
-	if test -f $(top_build_prefix)core/build.h; then \
-		old=`cat $(top_build_prefix)core/build.h | sed -ne 's/^#define BUILDNUM //p'`; \
-	else \
-		old=0; \
-	fi; \
-	echo "New revnum is '$$new', old revnum is '$$old', svnurl is '$$dir'"; \
-	if test -z "$$old" -o $$new -ne $$old; then \
-		echo "#define BUILDNUM $$new" > $(top_build_prefix)core/build.h; \
-		if test "$${dir:0:6}" != "branch"; then \
-                	echo "#define BRANCH \"$$dir\"" >> $(top_build_prefix)core/build.h; \
-		fi \
-	fi;
+	/bin/bash -c "source $(top_build_prefix)utilities/build_number $(top_srcdir) $(top_build_prefix)core/build.h"
