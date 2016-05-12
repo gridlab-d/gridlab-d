@@ -5,9 +5,6 @@
 
 #ifdef HAVE_MYSQL
 #include "database.h"
-#else
-#include "gridlabd.h"
-#endif
 
 #define MYSQL_TS_NEVER "'2038-01-01 00:00:00'" // near maximum mysql timestamp is used for TS_NEVER
 #define MYSQL_TS_ZERO "'1970-01-01 00:00:00'" // zero mysql timestamp is used for TS_ZERO
@@ -28,6 +25,10 @@ bool show_query = false; ///< flag to show queries when verbose is on
 bool no_create = false; ///< flag to not create tables when exporting data
 bool overwrite = true; ///< flag to not drop tables when exporting data
 
+#else
+#include "gridlabd.h"
+#endif
+
 /********************************************************
  * MODULE SUPPORT
  ********************************************************/
@@ -43,6 +44,7 @@ EXPORT int check(){
 	return 0;
 }
 
+#ifdef HAVE_MYSQL
 /********************************************************
  * MYSQL SUPPORT
  ********************************************************/
@@ -1289,3 +1291,5 @@ EXPORT int export_file(char *info)
 	mysql_close(mysql);
 	return rc;
 }
+#endif
+
