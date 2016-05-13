@@ -1,6 +1,5 @@
 // test whether ticket:114 is fixed
 
-#setenv GRIDLABD=../../../core
 #set module_compiler_flags=VERBOSE|DEBUG|KEEPWORK|CLEAN
 #set force_compile=1
 #include <math.h>

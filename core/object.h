@@ -321,6 +321,7 @@ typedef struct s_callbacks {
 		unsigned int (*build)(void);
 		const char * (*branch)(void);
 	} version;
+	long unsigned int magic; /* used to check structure alignment */
 } CALLBACKS; /**< core callback function table */
 
 #ifdef __cplusplus

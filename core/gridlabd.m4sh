@@ -18,4 +18,10 @@ AS_IF([test "x$GLPATH" = x],
     [export GLPATH="$pkglibdir:$pkgdatadir"],
     [export GLPATH="$pkglibdir:$pkgdatadir:$GLPATH"])
 
-"$bindir/gridlabd.bin" "$@"
+AS_IF([test "x$TERM" = "xcygwin"],
+	[export CXXFLAGS="$CXXFLAGS -I${pkgdatadir/#\/usr/${WD//\\//}..}"],
+	[export CXXFLAGS="$CXXFLAGS -I$pkgdatadir"])
+
+AS_IF([test "x$GRIDLABD_DEBUG" = "x"],
+  	["$bindir/gridlabd.bin" "$@"],
+  	["$GRIDLABD_DEBUG" "$bindir/gridlabd.bin"])

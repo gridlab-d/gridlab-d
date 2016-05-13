@@ -162,6 +162,7 @@ void module_free(void *ptr)
 
 /* these are the core functions available to loadable modules
  * the structure is defined in object.h */
+#define MAGIC 0x012BB0B9
 int64 lock_count;
 int64 lock_spin;
 static CALLBACKS callbacks = {
@@ -222,6 +223,7 @@ static CALLBACKS callbacks = {
 	{transform_getnext,transform_add_linear,transform_add_external,transform_apply},
 	{randomvar_getnext,randomvar_getspec},
 	{version_major,version_minor,version_patch,version_build,version_branch},
+	MAGIC /* used to check structure */
 };
 CALLBACKS *module_callbacks(void) { return &callbacks; }
 
@@ -261,6 +263,11 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	CLASS *previous = NULL;
 	CLASS *c;
 
+	if ( callbacks.magic != MAGIC )
+	{
+		output_fatal("callback function table alignment error (magic number position mismatch)");
+		return NULL;
+	}
 #ifdef NEVER /* this shouldn't ever be necessary but sometimes for debugging purposes it is helpful */
 	/* if LD_LIBRARY_PATH is not set, default to current directory */
 	if (getenv("LD_LIBRARY_PATH")==NULL)

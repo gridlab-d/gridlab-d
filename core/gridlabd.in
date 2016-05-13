@@ -444,5 +444,14 @@ else
   export GLPATH="$pkglibdir:$pkgdatadir:$GLPATH"
 fi
 
+if test "x$TERM" = "xcygwin" ; then
+    export CXXFLAGS="$CXXFLAGS -I${pkgdatadir/#\/usr/${WD//\\//}..}"
+else
+  export CXXFLAGS="$CXXFLAGS -I$pkgdatadir"
+fi	
 
-"$bindir/gridlabd.bin" "$@"
+if test "x$GRIDLABD_DEBUG" = "x"; then
+  "$bindir/gridlabd.bin" "$@"
+else
+  "$GRIDLABD_DEBUG" "$bindir/gridlabd.bin"
+fi

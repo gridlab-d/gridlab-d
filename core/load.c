@@ -132,11 +132,7 @@ object <class>[:<spec>] { // spec may be <id>, or <startid>..<endid>, or ..<coun
 #include "config.h"
 #else // not a build using automake
 #define DLEXT ".dll"
-#define REALTIME_LDFLAGS ""
 #endif // HAVE_CONFIG_H
-#ifndef REALTIME_LDFLAGS
-#define REALTIME_LDFLAGS ""
-#endif
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -631,6 +627,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 
 	include_file_str[0] = '\0';
 
+#ifdef HAVE_CONFIG
 	/* check global_include */
 	if (strlen(global_include)==0)
 	{
@@ -641,15 +638,16 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 		}
 		else
 		{
-			output_error("'include' variable is not set and neither is GRIDLABD environment, compiler cannot proceed without a way to find rt/gridlabd.h");
+			output_error("'include' variable is not set and neither is GRIDLABD environment, compiler cannot proceed without a way to find gridlabd.h");
 			/* TROUBLESHOOT
-				The runtime class compiler needs to find the file rt/gridlabd.h and uses either the <i>include</i> global variable or the <b>gridlabd</b> 
+				The runtime class compiler needs to find the file gridlabd.h and uses either the <i>include</i> global variable or the <b>gridlabd</b>
 				environment variable to find it.  Check the definition of the <b>gridlabd</b> environment variable or use the 
-				<code>#define include=<i>path</i></code> to specify the path to the <code>rt/gridlabd.h</code>.
+				<code>#define include=<i>path</i></code> to specify the path to the <code>gridlabd.h</code>.
 			 */
 			return FAILED;
 		}
 	}
+#endif
 
 	if (code_used>0)
 	{
@@ -663,7 +661,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 		char afile[1024];
 		char file[1024];
 		char tmp[1024];
-		char tbuf[64];
+		char tbuf[1024];
 		size_t ifs_off = 0;
 		INCLUDELIST *lptr = 0;
 
@@ -726,7 +724,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 			if (write_file(fp,"/* automatically generated from GridLAB-D */\n\n"
 					"int major=0, minor=0;\n\n"
 					"%s\n\n"
-					"#include \"rt/gridlabd.h\"\n\n"
+					"#include <gridlabd.h>\n\n"
 					"%s"
 					"CALLBACKS *callback = NULL;\n"
 					"static CLASS *myclass = NULL;\n"
@@ -770,20 +768,13 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 
 			/* compile object file */
 			output_verbose("compiling inline code from '%s'", cfile);
-			output_debug("PATH=%s", getenv("PATH"));
-			output_debug("INCLUDE=%s", getenv("INCLUDE"));
-			output_debug("LIB=%s", getenv("LIB"));
 			if (!use_msvc)
 			{
-#ifdef WIN32
-#define EXTRA_CXXFLAGS ""
-#else
-#define EXTRA_CXXFLAGS "-fPIC"
-#endif
-
+#define DEFAULT_CXX "g++"
+#define DEFAULT_CXXFLAGS "-w"
+#define DEFAULT_LDFLAGS ""
 				char execstr[1024];
 				char ldstr[1024];
-				char exportsyms[64] = REALTIME_LDFLAGS;
 				char mopt[8]="";
 				char *libs = "-lstdc++";
 #ifdef WIN32
@@ -791,28 +782,36 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 				libs = "";
 #endif
 
-				sprintf(execstr, "%s %s -w %s %s -I \"%s\" -c \"%s\" -o \"%s\"", getenv("CXX")?getenv("CXX"):"g++", 
-					getenv("CXXFLAGS")?getenv("CXXFLAGS"):EXTRA_CXXFLAGS, mopt, global_debug_output?"-g -O0":"", global_include, cfile, ofile);
-				output_verbose("compile string: \"%s\"", execstr);
-				//if (exec("g++ %s -I\"%s\" -c \"%s\" -o \"%s\"", global_debug_output?"-g -O0":"", global_include, cfile, ofile)==FAILED)
+				sprintf(execstr, "%s %s %s %s -c \"%s\" -o \"%s\"",
+						getenv("CXX")?getenv("CXX"):DEFAULT_CXX,
+						global_debug_output?"-g -O0":"-O0",
+						mopt,
+						getenv("CXXFLAGS")?getenv("CXXFLAGS"):DEFAULT_CXXFLAGS,
+						cfile, ofile);
+				output_verbose("compile command: [%s]", execstr);
 				if(exec(execstr)==FAILED)
 					return FAILED;
-				if (!(global_gdb||global_gdb_window))
+				if ( !(global_gdb||global_gdb_window) && getenv("GRIDLABD_DEBUG")==NULL )
 					unlink(cfile);
 
 
 				/* link new runtime module */
 				output_verbose("linking inline code from '%s'", ofile);
-				sprintf(ldstr, "%s %s %s %s %s -shared -Wl,\"%s\" -o \"%s\" %s", getenv("CXX")?getenv("CXX"):"g++" , mopt, getenv("LDFLAGS")?getenv("LDFLAGS"):EXTRA_CXXFLAGS, global_debug_output?"-g -O0":"", exportsyms, ofile,afile,libs);
-				output_verbose("linking string: \"%s\"", ldstr);
-				//if (exec("%s %s %s %s -shared -Wl,\"%s\" -o \"%s\" -lstdc++", getenv("CXX")?getenv("CXX"):"g++" , getenv("LDFLAGS")?getenv("LDFLAGS"):EXTRA_CXXFLAGS, global_debug_output?"-g -O0":"", exportsyms, ofile,afile)==FAILED)
+				sprintf(ldstr, "%s %s %s %s -shared -Wl,\"%s\" -o \"%s\" %s",
+						getenv("CXX")?getenv("CXX"):DEFAULT_CXX,
+						mopt,
+						global_debug_output?"-g -O0":"",
+						getenv("LDFLAGS")?getenv("LDFLAGS"):DEFAULT_LDFLAGS,
+						ofile, afile, libs);
+				output_verbose("link command: [%s]", ldstr);
 				if(exec(ldstr) == FAILED)
 					return FAILED;
 
-				if (global_getvar("control_textrel_shlib_t",tbuf,63)!=NULL)
+				/* post linking command (optional) */
+				if ( global_getvar("LDPOSTLINK",tbuf,sizeof(tbuf))!=NULL )
 				{
-					/* SE linux need the new module marked as relocatable (textrel_shlib_t) */
-					exec("chcon -t textrel_shlib_t '%s'", afile);
+					/* SE linux needs the new module marked as relocatable (textrel_shlib_t) */
+					exec("%s '%s'", tbuf, afile);
 				}
 
 				unlink(ofile);
@@ -3551,7 +3550,7 @@ static int class_block(PARSER)
 				append_code("extern \"C\" int64 create_%s(OBJECT **obj, OBJECT *parent)\n{\n",oclass->name);
 				append_code(
 						"\tif ((*obj=gl_create_object(myclass))==NULL)\n\t\treturn 0;\n"
-						"\tgl_set_parent(*obj,parent);\n", oclass->name,oclass->name);
+						"\tif ( parent ) gl_set_parent(*obj,parent);\n", oclass->name,oclass->name);
 					if (functions&FN_CREATE) 
 					{
 						ENTERING(*obj,create);
@@ -6504,95 +6503,18 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 	}
 	else if (strncmp(line,MACRO "binpath",8)==0)
 	{
-		char *term = strchr(line+8,' ');
-		char value[1024];
-		if (term==NULL)
-		{
-			output_error_raw("%s(%d): %sbinpath macro missing term",filename,linenum,MACRO);
-			strcpy(line,"\n");
-			return FALSE;
-		}
-		//if (sscanf(term+1,"%[^\n\r]",value)==1)
-		strcpy(value, strip_right_white(term+1));
-		if(1){
-			char path[1024];
-			sprintf(path,"PATH=%s",value);
-#ifdef WIN32
-                        putenv(path);
-#else
-                        setenv("PATH", value, 1);
-#endif
-
-			strcpy(line,"\n");
-			return SUCCESS;
-		}
-		else
-		{
-			output_error_raw("%s(%d): %sbinpath term missing or invalid",filename,linenum,MACRO);
-			strcpy(line,"\n");
-			return FALSE;
-		}
+		output_error("#binpath is no longer supported, use PATH environment variable instead");
+		return FALSE;
 	}
 	else if (strncmp(line,MACRO "libpath",8)==0)
 	{
-		char *term = strchr(line+8,' ');
-		char value[1024];
-		if (term==NULL)
-		{
-			output_error_raw("%s(%d): %slibpath macro missing term",filename,linenum,MACRO);
-			strcpy(line,"\n");
-			return FALSE;
-		}
-		//if (sscanf(term+1,"%[^\n\r]",value)==1)
-		strcpy(value, strip_right_white(term+1));
-		if(1){
-			char path[1024];
-			sprintf(path,"GLPATH=%s",value);
-#ifdef WIN32
-                        putenv(path);
-#else
-                        setenv("GLPATH", value, 1);
-#endif
-			strcpy(line,"\n");
-			return SUCCESS;
-		}
-		else
-		{
-			output_error_raw("%s(%d): %slibpath term missing or invalid",filename,linenum, MACRO);
-			strcpy(line,"\n");
-			return FALSE;
-		}
+		output_error("#libpath is no longer supported, use LDFLAGS environment variable instead");
+		return FALSE;
 	}
 	else if (strncmp(line,MACRO "incpath",8)==0)
 	{
-		char *term = strchr(line+8,' ');
-		char value[1024];
-		if (term==NULL)
-		{
-			output_error_raw("%s(%d): %sincpath macro missing term",filename,linenum,MACRO);
-			strcpy(line,"\n");
-			return FALSE;
-		}
-		//if (sscanf(term+1,"%[^\n\r]",value)==1)
-		strcpy(value, strip_right_white(term+1));
-		if(1){
-			char path[1024];
-			sprintf(path,"INCLUDE=%s",value);
-#ifdef WIN32
-                        putenv(path);
-#else
-                        setenv("INCLUDE", value, 1);
-#endif
-
-			strcpy(line,"\n");
-			return SUCCESS;
-		}
-		else
-		{
-			output_error_raw("%s(%d): %sincpath term missing or invalid",filename,linenum, MACRO);
-			strcpy(line,"\n");
-			return FALSE;
-		}
+		output_error("#incpath is no longer supported, use CXXFLAGS environment variable instead");
+		return FALSE;
 	}
 	else if (strncmp(line,MACRO "define",7)==0)
 	{

@@ -1202,7 +1202,7 @@ static int set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 	}
 	if(rank >= object_get_count()){
 		char b[74];
-		output_error("%s: set_rank wigging out, rank > object count", object_name(first, b, 64));
+		output_error("%s: set_rank internal error, rank > object count", object_name(first, b, 64));
 		/*	TROUBLESHOOT
 			As a sanity check, the rank of an object should not exceed the number of objects in the model.  If the model
 			is deliberately playing with the ranks, please either reduce the manual rank adjustment, or add a number of
@@ -1218,7 +1218,7 @@ static int set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 	}
 	if(obj->flags & OF_RERANK){
 		char b[64];
-		output_error("%s: object flaged as already re-ranked", object_name(obj, b, 63));
+		output_error("%s: object flagged as already re-ranked", object_name(obj, b, 63));
 		return -1;
 	} else {
 		obj->flags |= OF_RERANK;
