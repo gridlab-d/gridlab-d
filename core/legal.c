@@ -74,20 +74,20 @@
  **/
 STATUS legal_notice(void)
 {
-	char *buildinfo = strstr(BUILD,":");
-
 	/* suppress copyright info if copyright file exists */
-	char copyright[1024] = "GridLAB-D " COPYRIGHT;
-	char *end = strchr(copyright,'\n');
+	char copyright[1024];
+	char *end;
 	int suppress = global_suppress_repeat_messages;
 	char path[1024];
 	global_suppress_repeat_messages = 0;
-	while ((end = strchr(copyright,'\n'))!=NULL) {
+	sprintf(copyright,"GridLAB-D %s", version_copyright());
+	end = strchr(copyright,'\n');
+	while ((end = strchr(copyright,'\n'))!=NULL)
+	{
 		*end = ' ';
 	}
 	if (find_file(copyright,NULL,R_OK,path,sizeof(path))==NULL)
 	{
-		int build = buildinfo ? atoi(strstr(BUILD,":")+1) : 0;
 		output_message("GridLAB-D %d.%d.%d-%d (%s) %d-bit %s %s\n%s", 
 			global_version_major, global_version_minor, global_version_patch, global_version_build, 
 			global_version_branch, 8*sizeof(void*), global_platform,
@@ -96,7 +96,7 @@ STATUS legal_notice(void)
 #else
 		"RELEASE",
 #endif
-		COPYRIGHT);
+		copyright);
 	}
 	global_suppress_repeat_messages = suppress;
 	return SUCCESS; /* conditions of use have been met */
@@ -110,8 +110,7 @@ STATUS legal_license(void)
 	int surpress = global_suppress_repeat_messages;
 	global_suppress_repeat_messages = 0;
 	output_message(
-		COPYRIGHT
-		"\n"
+		"%s\n"
 		"1. Battelle Memorial Institute (hereinafter Battelle) hereby grants\n"
 		"   permission to any person or entity lawfully obtaining a copy of\n"
 		"   this software and associated documentation files (hereinafter \"the\n"
@@ -153,8 +152,7 @@ STATUS legal_license(void)
 		"   for the accuracy, completeness or usefulness of any data, apparatus,\n"
 		"   product or process disclosed, or represents that its use would not\n"
 		"   infringe privately owned rights.\n"
-		"\n"
-		);
+		"\n", version_copyright());
 	global_suppress_repeat_messages = surpress;
 	return SUCCESS;
 }
@@ -187,13 +185,13 @@ static pthread_t check_version_thread_id;
 void *check_version_proc(void *ptr)
 {
 	int patch, build;
-	char *url = "http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/versions.txt";
+	char *url = "http://sourceforge.net/p/gridlab-d/code/HEAD/tree/trunk/core/versions.txt?format=raw";
 	HTTPRESULT *result = http_read(url,0x1000);
 	char target[32];
 	char *pv = NULL, *nv = NULL;
 	int rc = 0;
-	int mypatch = REV_PATCH;
-	int mybuild = atoi(BUILDNUM);
+	int mypatch = version_patch();
+	int mybuild = version_build();
 
 	/* if result not found */
 	if ( result==NULL || result->body.size==0 )
@@ -212,17 +210,17 @@ void *check_version_proc(void *ptr)
 	}
 
 	/* read version data */
-	sprintf(target,"%d.%d:",REV_MAJOR,REV_MINOR);
+	sprintf(target,"%d.%d:",version_major(),version_minor());
 	pv = strstr(result->body.data,target);
 	if ( pv==NULL )
 	{
-		output_warning("check_version: '%s' has no entry for version %d.%d", url, REV_MAJOR, REV_MINOR);
+		output_warning("check_version: '%s' has no entry for version %d.%d", url, version_major(),version_minor());
 		rc=CV_NODATA;
 		goto Done;
 	}
 	if ( sscanf(pv,"%*d.%*d:%d:%d", &patch, &build)!=2 )
 	{
-		output_warning("check_version: '%s' entry for version %d.%d is bad", url, REV_MAJOR, REV_MINOR);
+		output_warning("check_version: '%s' entry for version %d.%d is bad", url, version_major(),version_minor());
 		rc=CV_NODATA;
 		goto Done;
 	}
@@ -233,20 +231,20 @@ void *check_version_proc(void *ptr)
 		while ( *nv!='\0' && isspace(*nv) ) nv++;
 		if ( *nv!='\0' )
 		{
-			output_warning("check_version: newer versions than %s (Version %d.%d) are available", BRANCH, REV_MAJOR, REV_MINOR);
+			output_warning("check_version: newer versions than %s (Version %d.%d) are available", version_branch(), version_major(),version_minor());
 			rc|=CV_NEWVER;
 		}
 		/* not done yet */
 	}
 	if ( mypatch<patch )
 	{
-		output_warning("check_version: a newer patch of %s (Version %d.%d.%d-%d) is available", BRANCH, REV_MAJOR, REV_MINOR, patch, build);
+		output_warning("check_version: a newer patch of %s (Version %d.%d.%d-%d) is available", version_branch(), version_major(),version_minor(), patch, build);
 		rc|=CV_NEWPATCH;
 		/* not done yet */
 	}
 	if ( mybuild>0 && mybuild<build )
 	{
-		output_warning("check_version: a newer build of %s (Version %d.%d.%d-%d) is available", BRANCH, REV_MAJOR, REV_MINOR, patch, build);
+		output_warning("check_version: a newer build of %s (Version %d.%d.%d-%d) is available", version_branch(), version_major(),version_minor(), patch, build);
 		rc|=CV_NEWBUILD;
 	}
 	if ( rc==0 )

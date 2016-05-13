@@ -108,8 +108,8 @@ xml::xml(MODULE *module) : native(module)
 int xml::create(void) 
 {
 	strcpy(version,"1.0");
-	strcpy(schema,"http://www.gridlabd.org/gridlabd-3_0.xsd");
-	strcpy(stylesheet,"http://www.gridlabd.org/gridlabd-3_0.xsl");
+	sprintf(schema,"http://www.gridlabd.org/gridlabd-%d_%d.xsd",gl_version_major(),gl_version_minor());
+	sprintf(stylesheet,"http://www.gridlabd.org/gridlabd-%d_%d.xsl",gl_version_major(),gl_version_minor());
 	return native::create();
 }
 
@@ -123,7 +123,7 @@ int xml::init(OBJECT *parent)
 
 	char appname[1024] = PACKAGE;
 	char appversion[1024];
-	sprintf(appversion,"%d.%d.%d-%d (%s)", REV_MAJOR, REV_MINOR, REV_PATCH, BUILDNUM, BRANCH);
+	sprintf(appversion,"%d.%d.%d-%d (%s)", gl_version_major(),gl_version_minor(), gl_version_patch(), gl_version_build(), gl_version_branch()); // TODO read from core
 	int id = get_connection()->client_initiated(
 		MSG_CRITICAL,
 		MSG_INITIATE, 

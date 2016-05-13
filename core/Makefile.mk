@@ -136,6 +136,7 @@ gridlabd_bin_SOURCES += core/unit.c
 gridlabd_bin_SOURCES += core/unit.h
 gridlabd_bin_SOURCES += core/validate.cpp
 gridlabd_bin_SOURCES += core/validate.h
+gridlabd_bin_SOURCES += core/version.c
 gridlabd_bin_SOURCES += core/version.h
 
 EXTRA_gridlabd_bin_SOURCES =

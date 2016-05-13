@@ -28,4 +28,5 @@ if test -z "$oldnum" -o "$new" -ne "$oldnum" -o -z "$oldbranch" -o "$oldbranch" 
 	if test "${dir:0:6}" != "branch" -o ! -z "$mod" ; then 
 		echo "#define BRANCH \"$branch\"" >> $2
 	fi
+	echo "#define REV_YEAR $(date +%Y)" >> $2
 fi

@@ -276,6 +276,12 @@ STATUS global_init(void)
 
 	buildtmp();
 
+	global_version_major = version_major();
+	global_version_minor = version_minor();
+	global_version_patch = version_patch();
+	global_version_build = version_build();
+	strncpy(global_version_branch,version_branch(),sizeof(global_version_branch));
+
 	for (i = 0; i < sizeof(map) / sizeof(map[0]); i++){
 		struct s_varmap *p = &(map[i]);
 		GLOBALVAR *var = global_create(p->name, p->type, p->addr, PT_ACCESS, p->access, p->description?PT_DESCRIPTION:0, p->description, NULL);

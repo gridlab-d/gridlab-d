@@ -221,6 +221,7 @@ static CALLBACKS callbacks = {
 	{http_read,http_delete_result},
 	{transform_getnext,transform_add_linear,transform_add_external,transform_apply},
 	{randomvar_getnext,randomvar_getspec},
+	{version_major,version_minor,version_patch,version_build,version_branch},
 };
 CALLBACKS *module_callbacks(void) { return &callbacks; }
 
@@ -2080,7 +2081,7 @@ void sched_continuous(void)
 			int n;
 			char line[1024];
 			clear();
-			mvprintw(0,0,"GridLAB-D Process Control - Version %d.%d.%d-%d (%s)",REV_MAJOR,REV_MINOR,REV_PATCH,BUILDNUM,BRANCH);
+			mvprintw(0,0,"GridLAB-D Process Control - Version %d.%d.%d-%d (%s)",REV_MAJOR,REV_MINOR,REV_PATCH,version_build(),version_branch());
 			sched_getinfo(-1,line,sizeof(line));
 			mvprintw(2,0,"%s",line);
 			sched_getinfo(-2,line,sizeof(line));

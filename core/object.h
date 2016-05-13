@@ -314,6 +314,13 @@ typedef struct s_callbacks {
 		randomvar *(*getnext)(randomvar*);
 		size_t (*getspec)(char *, size_t, const randomvar *);
 	} randomvar;
+	struct {
+		unsigned int (*major)(void);
+		unsigned int (*minor)(void);
+		unsigned int (*patch)(void);
+		unsigned int (*build)(void);
+		const char * (*branch)(void);
+	} version;
 } CALLBACKS; /**< core callback function table */
 
 #ifdef __cplusplus

@@ -52,14 +52,14 @@
 #ifndef _GRIDLABD_H
 #define _GRIDLABD_H
 
-/* version info */
-#define MAJOR 4
-#define MINOR 0
-
 /* permanently disable use of CPPUNIT */
 #ifndef _NO_CPPUNIT
 #define _NO_CPPUNIT
 #endif
+
+// module version info (must match core version info)
+#define MAJOR 4
+#define MINOR 0
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -115,6 +115,15 @@ CDECL EXTERN CALLBACKS *callback INIT(NULL);
 #ifndef MODULENAME
 #define MODULENAME(obj) (obj->oclass->module->name)
 #endif
+
+/******************************************************************************
+ * Access information about version of core
+ */
+#define gl_version_major (*callback->version.major)
+#define gl_version_minor (*callback->version.minor)
+#define gl_version_patch (*callback->version.patch)
+#define gl_version_build (*callback->version.build)
+#define gl_version_branch (*callback->version.branch)
 
 /******************************************************************************
  * Variable publishing
