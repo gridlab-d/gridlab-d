@@ -6536,7 +6536,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		//if (sscanf(term+1,"%[^\n\r]",value)==1)
 		strcpy(value, strip_right_white(term+1));
 		if(1){
-			output_error_raw("%s(%d): %s", filename, linenum, value);
+			output_message("%s(%d): %s", filename, linenum, value);
 			strcpy(line,"\n");
 			return TRUE;
 		}
