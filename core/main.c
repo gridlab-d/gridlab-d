@@ -103,6 +103,9 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	if (!output_init(argc,argv) || !exec_init())
 		exit(XC_INIERR);
 
+	/* setup the random number generator */
+	random_init();
+
 	/* process command line arguments */
 	if (cmdarg_load(argc,argv)==FAILED)
 	{
@@ -131,9 +134,6 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	/* see if newer version is available */
 	if ( global_check_version )
 		check_version(1);
-
-	/* setup the random number generator */
-	random_init();
 
 	/* pidfile */
 	if (strcmp(global_pidfile,"")!=0)
