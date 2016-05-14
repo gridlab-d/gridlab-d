@@ -485,33 +485,8 @@ static STATUS debugger(char *target)
 
 static char *setup_class(CLASS *oclass)
 {
-	static char buffer[65536] = "";
-	int len = 0;
-	PROPERTY *prop;
-	len += sprintf(buffer+len,"\tOBJECT obj; obj.oclass = oclass; %s *t = (%s*)((&obj)+1);\n",oclass->name,oclass->name);
-	//len += sprintf(buffer+len,"\tif (callback->define_map(oclass,\n");
-	len += sprintf(buffer+len,"\toclass->size = sizeof(%s);\n", oclass->name);
-	for (prop=oclass->pmap; prop!=NULL; prop=prop->next)
-	{
-		len += sprintf(buffer+len,"\t(*(callback->properties.get_property))(&obj,\"%s\",NULL)->addr = (PROPERTYADDR)((char*)&(t->%s) - (char*)t);\n",prop->name,prop->name);
-#ifdef NEVER
-		if (prop->unit==NULL)
-			len += sprintf(buffer+len,"\t\tPT_%s,\"%s\",(char*)&(t->%s)-(char*)t,\n",
-				class_get_property_typename(prop->ptype),prop->name,prop->name);
-		else
-			len += sprintf(buffer+len,"\t\tPT_%s,\"%s[%s]\",(char*)&(t->%s)-char(*)t,\n",
-				class_get_property_typename(prop->ptype),prop->name,prop->unit->name,prop->name);
-		if (prop->keywords)
-		{
-			KEYWORD *key;
-			for (key=prop->keywords; key!=NULL; key=key->next)
-				len += sprintf(buffer+len, "\t\t\tPT_KEYWORD, \"%s\", %d,\n", key->name, key->value);
-		}
-#endif
-	}
-	//len += sprintf(buffer+len,"\t\tNULL)<1) throw(\"unable to publish properties in class %s\");\n", oclass->name);
-	len += sprintf(buffer+len,"%s\n",init_block);
-	return buffer;
+	/* no longer needed now that property extension works */
+	return "";
 }
 
 static int outlinenum = 0;
