@@ -445,9 +445,9 @@ else
 fi
 
 if test "x$TERM" = "xcygwin" ; then
-    export CXXFLAGS="$CXXFLAGS -I${pkgdatadir/#\/usr/${WD//\\//}..}"
+  export CXXFLAGS="-I${pkgdatadir/#\/usr/${WD//\\//}..} $CXXFLAGS"
 else
-  export CXXFLAGS="$CXXFLAGS -I$pkgdatadir"
+  export CXXFLAGS="-I$pkgdatadir $CXXFLAGS"
 fi	
 
 if test "x$GRIDLABD_DEBUG" = "x"; then
