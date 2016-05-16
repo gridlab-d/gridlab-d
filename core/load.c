@@ -746,7 +746,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 			if (!use_msvc)
 			{
 #define DEFAULT_CXX "g++"
-#define DEFAULT_CXXFLAGS "-w"
+#define DEFAULT_CXXFLAGS ""
 #define DEFAULT_LDFLAGS ""
 				char execstr[1024];
 				char ldstr[1024];
@@ -757,8 +757,9 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 				libs = "";
 #endif
 
-				sprintf(execstr, "%s %s %s %s -c \"%s\" -o \"%s\"",
+				sprintf(execstr, "%s %s %s %s %s -c \"%s\" -o \"%s\"",
 						getenv("CXX")?getenv("CXX"):DEFAULT_CXX,
+						global_warn_mode?"-w":"",
 						global_debug_output?"-g -O0":"-O0",
 						mopt,
 						getenv("CXXFLAGS")?getenv("CXXFLAGS"):DEFAULT_CXXFLAGS,
