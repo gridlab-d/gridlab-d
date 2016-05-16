@@ -757,7 +757,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 				libs = "";
 #endif
 
-				sprintf(execstr, "%s %s %s %s %s -c \"%s\" -o \"%s\"",
+				sprintf(execstr, "%s %s %s %s %s -fPIC -c \"%s\" -o \"%s\"",
 						getenv("CXX")?getenv("CXX"):DEFAULT_CXX,
 						global_warn_mode?"-w":"",
 						global_debug_output?"-g -O0":"-O0",
