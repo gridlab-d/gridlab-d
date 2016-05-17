@@ -46,7 +46,13 @@ typedef enum {
 
 	/// @todo add other implicit enduse flags as they are defined
 	IEU_ALL				= 0x03170303, ///< all (needed to filter)
-} IMPLICITENDUSEFLAGS;
+} IMPLICITENDUSEFLAGS; ///< values for implicit_enduses_active set
+
+typedef enum {
+	IES_ELCAP1990	= 0,	///< implicit enduse data source is ELCAP 1990
+	IES_ELCAP2010	= 1,	///< implicit enduse data source is ELCAP 2010
+	IES_RBSA2014	= 2,	///< implicit enduse data source is RBSA 2014
+} IMPLICITENDUSESOURCE; ///< values for implicit_enduse_source enumeration
 
 //Solar quadrant definitions
 #define NO_SOLAR	0x0000
@@ -72,6 +78,7 @@ public:
 	int *pMeterStatus;						///< Pointer to service_status variable on triplex parent
 	IMPLICITENDUSE *implicit_enduse_list;	///< implicit enduses
 	static set implicit_enduses_active;		///< implicit enduses that are to be activated
+	static enumeration implicit_enduse_source; ///< source of implicit enduses (e.g., ELCAP1990, ELCAP2010, RBSA2014)
 public:
 	// building design variables
 	double floor_area;							///< house_e floor area (ft^2)
