@@ -6670,6 +6670,17 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 	}
 	else
 	{
+		char tmp[1024], *p;
+		strncpy(tmp,line,sizeof(tmp)-1);
+		for ( p=tmp ; p!='\0' ; p++ )
+		{
+			if ( isspace(*p) )
+			{
+				*p = '\0';
+				break;
+			}
+		}
+		output_error_raw("%s(%d): macro command '%s' is not recognized", filename,linenum,tmp);
 		strcpy(line,"\n");
 		return FALSE;
 	}
