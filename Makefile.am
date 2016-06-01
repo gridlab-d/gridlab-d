@@ -226,7 +226,7 @@ clean-wc:
 	. utilities/cleanwc
 
 check-local validate: 
-	python validate.py
+	gridlabd --validate
 
 distdir = $(PACKAGE)_$(VERSION)
 scratchdir = scratch
