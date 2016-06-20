@@ -746,7 +746,7 @@ TIMESTAMP instance_syncall(TIMESTAMP t1)
 	if ( instance_list )
 	{
 		TIMESTAMP t2 = TS_NEVER;
-		clock_t ts = exec_clock();
+		clock_t ts = (clock_t)exec_clock();
 		instance *inst;
 
 		/* check to see if an instance was lost */
@@ -784,7 +784,7 @@ TIMESTAMP instance_syncall(TIMESTAMP t1)
 		}
 	
 		output_debug("instance sync time is %"FMT_INT64"d", t2);
-		instance_synctime += exec_clock() - ts;
+		instance_synctime += (clock_t)exec_clock() - ts;
 		return t2;
 	}
 	else

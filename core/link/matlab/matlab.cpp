@@ -48,6 +48,12 @@ typedef struct {
 } MATLABLINK;
 
 static int64 g_skipsafe = 0;
+int start_test = 0;
+char* error_handling_begin = "try; ";
+char* error_handling_end = " catch err; errFuncLine=''; for i = 1:length(err.stack); errFuncLine = [errFuncLine,' ''',err.stack(i).name,' (line ',num2str(err.stack(i).line),')''']; end; ans=['Matlab: ''',err.message(1:end-1),''' in',errFuncLine]; end;";
+size_t error_handling_begin_len = strlen(error_handling_begin);
+size_t error_handling_end_len = strlen(error_handling_end);
+
 static mxArray* matlab_exec(MATLABLINK *matlab, char *format, ...)
 {
 	char cmd[4096];
@@ -276,6 +282,7 @@ EXPORT bool glx_create(glxlink *mod, CALLBACKS *fntable)
 	memset(matlab,0,sizeof(MATLABLINK));
 	matlab->rootname="gridlabd";
 	mod->set_data(matlab);
+	mod->valid_to=0;
 	return true;
 }
 
@@ -326,29 +333,44 @@ EXPORT bool glx_settag(glxlink *mod, char *tag, char *data)
 	}
 	else if ( strcmp(tag,"on_init")==0 )
 	{
-		size_t len = strlen(data);
-		if ( len>0 )
+		size_t data_len = strlen(data);
+		char *data_new = (char*)malloc(error_handling_begin_len+error_handling_end_len+data_len+1);
+		strcpy (data_new,error_handling_begin);
+		strcat (data_new,data);
+		strcat (data_new,error_handling_end);
+		if ( (error_handling_begin_len+error_handling_end_len+data_len)>0 )
 		{
-			matlab->init = (char*)malloc(len+1);
-			strcpy(matlab->init,data);
+			matlab->init = (char*)malloc(error_handling_begin_len+error_handling_end_len+data_len+1);
+			strcpy(matlab->init,data_new);
+			free(data_new);
 		}
 	}
 	else if ( strcmp(tag,"on_sync")==0 )
 	{
-		size_t len = strlen(data);
-		if ( len>0 )
+		size_t data_len = strlen(data);
+		char *data_new = (char*)malloc(error_handling_begin_len+error_handling_end_len+data_len+1);
+		strcpy (data_new,error_handling_begin);
+		strcat (data_new,data);
+		strcat (data_new,error_handling_end);
+		if ( (error_handling_begin_len+error_handling_end_len+data_len)>0 )
 		{
-			matlab->sync = (char*)malloc(len+1);
-			strcpy(matlab->sync,data);
+			matlab->sync = (char*)malloc(error_handling_begin_len+error_handling_end_len+data_len+1);
+			strcpy(matlab->sync,data_new);
+			free(data_new);
 		}
 	}
 	else if ( strcmp(tag,"on_term")==0 )
 	{
-		size_t len = strlen(data);
-		if ( len>0 )
+		size_t data_len = strlen(data);
+		char *data_new = (char*)malloc(error_handling_begin_len+error_handling_end_len+data_len+1);
+		strcpy (data_new,error_handling_begin);
+		strcat (data_new,data);
+		strcat (data_new,error_handling_end);
+		if ( (error_handling_begin_len+error_handling_end_len+data_len)>0 )
 		{
-			matlab->term = (char*)malloc(len+1);
-			strcpy(matlab->term,data);
+			matlab->term = (char*)malloc(error_handling_begin_len+error_handling_end_len+data_len+1);
+			strcpy(matlab->term,data_new);
+			free(data_new);
 		}
 	}
 	else if( strcmp(tag, "skipsafe")==0 )
@@ -356,7 +378,6 @@ EXPORT bool glx_settag(glxlink *mod, char *tag, char *data)
 		if( strcmp(data, "yes")==0 )
 		{
 			mod->glxflags |= LF_SKIPSAFE;
-			char buf[1024];
 		}
 		else if( strcmp(data, "no")==0 )
 		{
@@ -420,7 +441,6 @@ EXPORT bool glx_init(glxlink *mod)
 		return false;
 	}
 #else
-	gl_verbose("opening engine with command '%s'", matlab->command);
 	matlab->engine = engOpen(matlab->command);
 	if ( matlab->engine==NULL )
 	{
@@ -431,15 +451,12 @@ EXPORT bool glx_init(glxlink *mod)
 
 	// set the output buffer
 	if ( matlab->output_buffer!=NULL )
-	{
-		gl_verbose("configuring output buffer of size %d bytes", (int)matlab->output_size);
 		engOutputBuffer(matlab->engine,matlab->output_buffer,(int)matlab->output_size);
-	}
 
 	// setup matlab engine
 	engSetVisible(matlab->engine,window_show(matlab));
 
-	gl_verbose("matlab link is open");
+	gl_debug("matlab link is open");
 
 	// special values needed by matlab
 	mxArray *ts_never = mxCreateDoubleScalar((double)(TIMESTAMP)TS_NEVER);
@@ -454,30 +471,42 @@ EXPORT bool glx_init(glxlink *mod)
 	// set the workdir
 	if ( strcmp(matlab->workdir,"")!=0 )
 	{
-		gl_verbose("setting workdir to '%s'", matlab->workdir);
 #ifdef WIN32
 		_mkdir(matlab->workdir);
 #else
 		mkdir(matlab->workdir,0750);
 #endif
 		if ( matlab->workdir[0]=='/' )
-			matlab_exec(matlab,"cd '%s'; ans=GLD_OK;", matlab->workdir);
+			matlab_exec(matlab,"cd '%s'", matlab->workdir);
 		else
-			matlab_exec(matlab,"cd '%s/%s'; ans=GLD_OK;", getcwd(NULL,0),matlab->workdir);
+			matlab_exec(matlab,"cd '%s/%s'", getcwd(NULL,0),matlab->workdir);
 	}
 
 	// run the initialization command(s)
 	if ( matlab->init )
 	{
-		gl_verbose("running initiatilization script");
 		mxArray *ans = matlab_exec(matlab,"%s",matlab->init);
 		if ( ans && mxIsDouble(ans) && (bool)*mxGetPr(ans)==false )
 		{
 			gl_error("matlab init failed");
 			return false;
 		}
-		else
-			gl_verbose("answer received");
+		else if ( ans && mxIsChar(ans) )
+		{
+			int buflen = (mxGetM(ans) * mxGetN(ans)) + 1;
+			char *string =(char*)malloc(buflen);
+			int status_error = mxGetString(ans, string, buflen);
+			if (status_error == 0)
+			{
+				gl_error("'%s'",string);
+				return false;
+			}
+			else
+			{			
+				gl_error("Did not catch Matlab error");
+				return false;
+			}
+		}
 	}
 
 	if ( matlab->rootname!=NULL )
@@ -829,19 +858,19 @@ EXPORT TIMESTAMP glx_sync(glxlink* mod,TIMESTAMP t0)
 	TIMESTAMP t1 = TS_NEVER;
 	MATLABLINK *matlab = (MATLABLINK*)mod->get_data();
 
+	TIMESTAMP effective_valid_to = mod->valid_to;
+	if((mod->glxflags & LF_SKIPSAFE) && t0 < effective_valid_to){
+		return effective_valid_to;
+	}
 	if ( !copy_exports(mod) )
 		return TS_INVALID; // error
 
 	if ( matlab->sync )
 	{
-		TIMESTAMP effective_valid_to = mod->valid_to;
-		if((mod->glxflags & LF_SKIPSAFE) && t0 < effective_valid_to)
-				return effective_valid_to;
 		mod->last_t = t0;
 		mxArray *ans = matlab_exec(matlab,"%s",matlab->sync);
 		if ( ans && mxIsDouble(ans) )
 		{
-				
 			double *pVal = (double*)mxGetData(ans);
 			if ( pVal!=NULL ){
 				t1 = floor(*pVal);
@@ -849,6 +878,26 @@ EXPORT TIMESTAMP glx_sync(glxlink* mod,TIMESTAMP t0)
 			if ( t1<TS_INVALID || t1 > TS_MAX ){
 				t1=TS_NEVER;
 			}
+		}
+		else if ( ans && mxIsChar(ans) )
+		{
+			int buflen = (mxGetM(ans) * mxGetN(ans)) + 1;
+			char *string =(char*)malloc(buflen);
+			int status_error = mxGetString(ans, string, buflen);
+			if (status_error == 0)
+			{
+				gl_error("'%s'",string);
+				return TS_INVALID; // error
+			}
+			else
+			{			
+				gl_error("Did not catch Matlab error");
+				return TS_INVALID; // error
+			}
+		}
+		else
+		{
+			gl_error("Check what you return as ans for on_sync!");
 		}
 		mod->valid_to = t1;
 	}
@@ -872,6 +921,24 @@ EXPORT bool glx_term(glxlink* mod)
 			{
 				gl_error("matlab term failed");
 				return false;
+			}
+			else if ( ans && mxIsChar(ans) )
+			{
+				int buflen = (mxGetM(ans) * mxGetN(ans)) + 1;
+				char *string =(char*)malloc(buflen);
+				int status_error = mxGetString(ans, string, buflen);
+				if (status_error == 0)
+				{
+					gl_error("'%s'",string);
+					engClose(matlab->engine)==0;
+					return false;
+				}
+				else
+				{			
+					gl_error("Did not catch Matlab error");
+					engClose(matlab->engine)==0;
+					return false;
+				}
 			}
 		}
 		if ( window_kill(matlab) ) engClose(matlab->engine)==0;

@@ -9,6 +9,7 @@ datadir="@datadir@"
 pkgdatadir="$datadir/@PACKAGE@"
 libdir="@libdir@"
 pkglibdir="$libdir/@PACKAGE@"
+HAS_MINGW="@HAS_MINGW@"
 
 BINPATH=`dirname $0`
 AS_IF([test "x$BINPATH" != "x$exec_prefix"],
@@ -23,5 +24,9 @@ AS_IF([test "x$TERM" = "xcygwin"],
 	[export CXXFLAGS="-I$pkgdatadir $CXXFLAGS"])
 
 AS_IF([test "x$GRIDLABD_DEBUG" = "x"],
-  	["$bindir/gridlabd.bin" "$@"],
-  	["$GRIDLABD_DEBUG" "$bindir/gridlabd.bin"])
+  	[AS_IF([test "x$HAS_MINGW" = "xyes"],
+		["$bindir/gridlabd.exe" "$@"],
+		["$bindir/gridlabd.bin" "$@"])],
+  	[AS_IF([test "x$HAS_MINGW" = "xyes"],
+		["$GRIDLABD_DEBUG" "$bindir/gridlabd.exe"],
+		["$GRIDLABD_DEBUG" "$bindir/gridlabd.bin"])])

@@ -16,6 +16,7 @@
 #include "transform.h"
 #include "exception.h"
 #include "module.h"
+#include "exec.h"
 
 static TRANSFORM *schedule_xformlist=NULL;
 
@@ -431,7 +432,7 @@ clock_t transform_synctime = 0;
 TIMESTAMP transform_syncall(TIMESTAMP t1, TRANSFORMSOURCE source)
 {
 	TRANSFORM *xform;
-	clock_t start = exec_clock();
+	clock_t start = (clock_t)exec_clock();
 	TIMESTAMP t2 = TS_NEVER;
 
 	/* process the schedule transformations */
@@ -457,6 +458,6 @@ TIMESTAMP transform_syncall(TIMESTAMP t1, TRANSFORMSOURCE source)
 			}
 		}
 	}
-	transform_synctime += exec_clock() - start;
+	transform_synctime += (clock_t)exec_clock() - start;
 	return t2;
 }

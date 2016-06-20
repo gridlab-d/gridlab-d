@@ -93,32 +93,119 @@ typedef complex triplex[3];
 #define BYREF 0x01
 #include <math.h>
 
-#ifndef __cplusplus
-typedef struct s_doublearray {
-#else
+#ifdef __cplusplus
+class double_array;
+class double_vector {
+private:
+	double **data;
+public:
+	double_vector(double **x) 
+	{ 
+		data=x; 
+	};
+	double &operator[] (const size_t n) 
+	{ 
+		if ( data[n]==NULL ) data[n]=new double; 
+		return *data[n]; 
+	};
+	const double operator[] (const size_t n) const
+	{
+		if ( data[n]==NULL ) data[n]=new double; 
+		return *data[n];
+	}
+};
 class double_array {
 private:
+#else
+typedef struct s_doublearray {
 #endif
 	size_t n, m; /** n rows, m cols */
 	size_t max; /** current allocation size max x max */
+	unsigned int *refs; /** reference count **/
 	double ***x; /** pointer to 2D array of pointers to double values */
 	unsigned char *f; /** pointer to array of flags: bit0=byref, */
+	const char *name;
 #ifndef __cplusplus
 } double_array;
 #else
+	friend class double_vector;
 private:
-	inline void set_rows(size_t i) { n=i; };
-	inline void set_cols(size_t i) { m=i; };
-	inline void set_flag(size_t r, size_t c, unsigned char b) {f[r*m+c]|=b;};
-	inline void clr_flag(size_t r, size_t c, unsigned char b) {f[r*m+c]&=~b;};
-	inline bool tst_flag(size_t r, size_t c, unsigned char b) {return (f[r*m+c]&b)==b;};
+
+	inline void exception(const char *msg,...) const
+	{ 
+		static char buf[1024]; 
+		va_list ptr;
+		va_start(ptr,msg);
+		sprintf(buf,"%s", name?name:""); 
+		vsprintf(buf+strlen(buf), msg, ptr); 
+		throw (const char*)buf;
+		va_end(ptr);
+	};
+	inline void set_rows(const size_t i) { n=i; };
+	inline void set_cols(const size_t i) { m=i; };
+	inline void set_flag(const size_t r, size_t c, const unsigned char b) {f[r*m+c]|=b;};
+	inline void clr_flag(const size_t r, size_t c, const unsigned char b) {f[r*m+c]&=~b;};
+	inline bool tst_flag(const size_t r, size_t c, const unsigned char b) const {return (f[r*m+c]&b)==b;};
+	double &my(const size_t r, const size_t c) 
+	{ 
+		if ( x[r][c]==NULL ) x[r][c] = new double;
+		return (*x[r][c]); 
+	};
 public:
-	inline size_t get_rows(void) { return n; };
-	inline size_t get_cols(void) { return m; };
-	inline size_t get_max(void) { return max; };
-	inline void set_max(size_t size) 
+	inline double_vector operator[] (const size_t n) { return double_vector(x[n]); }
+	inline const double_vector operator[] (const size_t n) const { return double_vector(x[n]); }
+	double_array(const size_t rows=0, const size_t cols=0, double **data=NULL)
 	{
-		if ( size<=max ) throw "cannot shrink double_array";
+		refs = new unsigned int;
+		*refs = 0;
+		m = n = max = 0;
+		x = NULL;
+		f = NULL;
+		if ( rows>0 )
+			grow_to(rows,cols);
+		for ( size_t r=0 ; r<rows ; r++ )
+		{
+			for ( size_t c=0 ; c<cols ; c++ )
+			{
+				set_at(r,c, ( data!=NULL ? data[r][c] : 0.0 ) );
+			}
+		}
+	}
+	double_array(const double_array &a)
+	{
+		n = a.n;
+		m = a.m;
+		max = a.max;
+		refs = a.refs;
+		x = a.x;
+		f = a.f;
+		name = a.name;
+		(*refs)++;
+	}
+	~double_array(void)
+	{
+		if ( (*refs)-- == 0 )
+		{
+			size_t r,c;
+			for ( r=0 ; r<n ; r++ )
+				for ( c=0 ; c<m ; c++ )
+					if ( tst_flag(r,c,BYREF) )
+						free(x[r][c]); 
+				free(x[r]);
+			free(x);
+			delete refs;
+		}
+	}
+public:
+	void set_name(const char *v) { name = v; }; 
+	inline const char *get_name(void) const { return name; };
+	void copy_name(const char *v) { char *s=(char*)malloc(strlen(v)+1); strcpy(s,v); name=(const char*)s; };
+	inline const size_t get_rows(void) const { return n; };
+	inline const size_t get_cols(void) const { return m; };
+	inline const size_t get_max(void) const { return max; };
+	void set_max(const size_t size) 
+	{
+		if ( size<=max ) exception(".set_max(%u): cannot shrink double_array",size);
 		size_t r;
 		double ***z = (double***)malloc(sizeof(double**)*size);
 		// create new rows
@@ -127,7 +214,7 @@ public:
 			if ( x[r]!=NULL )
 			{
 				double **y = (double**)malloc(sizeof(double*)*size);
-				if ( y==NULL ) throw "unable to expand double_array";
+				if ( y==NULL ) exception(".set_max(%u): unable to expand double_array",size);
 				memcpy(y,x[r],sizeof(double*)*max);
 				memset(y+max,0,sizeof(double*)*(size-max));
 				free(x[r]);
@@ -151,14 +238,14 @@ public:
 		f = nf;
 		max=size; 
 	};
-	inline void grow_to(size_t r, size_t c=0) 
+	void grow_to(const size_t r, const size_t c) 
 	{ 
-		size_t s = max;
+		size_t s = (max<1?1:max);
 		while ( c>=s || r>=s ) s*=2; 
 		if ( s>max )set_max(s);
 
 		// add rows
-		while ( n<=r ) 
+		while ( n<r ) 
 		{
 			if ( x[n]==NULL ) 
 			{
@@ -167,33 +254,113 @@ public:
 			}
 			n++;
 		}
-		if (m<=c) m=c+1; 
+
+		// add columns
+		if ( m<c )
+		{
+			size_t i;
+			for ( i=0 ; i<n ; i++ )
+			{
+				double **y = (double**)malloc(sizeof(double*)*c);
+				if ( x[i]!=NULL )
+				{
+					memcpy(y,x[i],sizeof(double**)*m);
+					free(x[i]);
+				}
+				memset(y+m,0,sizeof(double**)*(c-m));
+				x[i] = y;
+			}
+			m=c;
+		}
 	};
-	inline void check_valid(size_t r, size_t c=0) { if ( !is_valid(r,c) ) throw "double_array col/row spec is invalid"; };
-	inline bool is_valid(size_t r, size_t c=0) { return r<n && c<m; };
-	inline bool is_nan(size_t r, size_t c=0) 
+	void grow_to(const size_t c) { grow_to(n>0?n:1,c); };
+	void grow_to(const double_array &y) { grow_to(y.get_rows(),y.get_cols()); };
+	void check_valid(const size_t r, const size_t c) const { if ( !is_valid(r,c) ) exception(".check_value(%u,%u): invalid (r,c)",r,c); };
+	inline void check_valid(const size_t c) const { check_valid(0,c); };
+	bool is_valid(const size_t r, const size_t c) const { return r<n && c<m; };
+	inline bool is_valid(const size_t c) const { return is_valid(0,c); };
+	bool is_nan(const size_t r, const size_t c)  const
 	{
 		check_valid(r,c);
 		return ! ( x[r][c]!=NULL && isfinite(*(x[r][c])) ); 
 	};
-	inline bool is_empty(void) { return n==0 && m==0; };
-	inline void clr_at(size_t r, size_t c=0) 
+	inline bool is_nan(const size_t c) const { return is_nan(0,c); };
+	bool is_empty(void) const { return n==0 && m==0; };
+	void clr_at(const size_t r, const size_t c) 
 	{ 
 		check_valid(r,c);
 		if ( tst_flag(r,c,BYREF) )
 			free(x[r][c]); 
 		x[r][c]=NULL; 
 	};
-	inline double *get_addr(size_t r, size_t c=0) { return x[r][c]; };
-	inline double get_at(size_t r, size_t c=0) { return is_nan(r,c) ? QNAN : *(x[r][c]) ; };
-	inline void set_at(size_t r, size_t c, double v) 
+	inline void clr_at(const size_t c) { return clr_at(0,c); };
+	/// make a new matrix (row major)
+	double **copy_matrix(void) 
+	{   
+		double **y = new double*[n];
+		unsigned int r;
+		for ( r=0 ; r<n ; r++ )
+		{
+			y[r] = new double[m];
+			unsigned int c;
+			for ( c=0 ; c<m ; c++ )
+				y[r][c] = *(x[r][c]);
+		}
+		return y;               
+	};
+	/// free a matrix
+	void free_matrix(double **y)
+	{
+		unsigned int r;
+		for ( r=0 ; r<n ; r++ )
+			delete [] y[r];
+		delete [] y;
+	};
+	/// vector copy (row major)
+	double *copy_vector(double *y=NULL)
+	{
+		if ( y==NULL ) y=new double[m*n];
+		unsigned i=0;
+		unsigned int r, c;
+		for ( r=0 ; r<n ; r++ )
+		{
+			for ( c=0 ; c<m ; c++ )
+				y[i++] = *(x[r][c]);
+		}
+		return y;
+	}
+	void transpose(void) {
+		double ***xt = new double**[n];
+		size_t i;
+		for ( i=0 ; i<m ; i++ )
+		{
+			xt[i] = new double*[n];
+			size_t j;
+			for ( j=0 ; j<n ; j++ )
+				xt[i][j] = x[j][i];
+		}
+		for ( i=0 ; i<n ; i++ )
+			delete [] x[i];
+		delete [] x;
+		x = xt;
+		size_t t=m; m=n; n=t;
+	};
+	inline double *get_addr(const size_t r, const size_t c) { return x[r][c]; };
+	inline double *get_addr(const size_t c) { return get_addr(0,c); };
+	double get_at(const size_t r, const size_t c) { return is_nan(r,c) ? QNAN : *(x[r][c]) ; };
+	inline double get_at(const size_t c) { return get_at(0,c); };
+	inline double &get(const size_t r, const size_t c) { return *x[r][c]; };
+	inline double &get(const size_t c) { return get(0,c); };
+	inline void set_at(const size_t c, const double v) { set_at(0,c,v); };
+	void set_at(const size_t r, const size_t c, const double v) 
 	{ 
 		check_valid(r,c);
 		if ( x[r][c]==NULL ) 
 			x[r][c]=(double*)malloc(sizeof(double)); 
 		*(x[r][c]) = v; 
 	};
-	inline void set_at(size_t r, size_t c, double *v) 
+	inline void set_at(const size_t c, double *v) { set_at(0,c,v); };
+	void set_at(const size_t r, const size_t c, double *v) 
 	{ 
 		check_valid(r,c);
 		if ( v==NULL ) 
@@ -207,80 +374,201 @@ public:
 			x[r][c] = v; 
 		}
 	};
-	inline void set_ident(void)
+	void set_ident(void)
 	{
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
-				set_at(r,c,(r==c)?1:0);
+				my(r,c) = (r==c) ? 1 : 0;
 		}
 	};
-	inline void operator= (double y)
+	void dump(size_t r1=0, size_t r2=-1, size_t c1=0, size_t c2=-1)
+	{
+		if ( r2==-1 ) r2 = n-1;
+		if ( c2==-1 ) c2 = m-1;
+		if ( r2<r1 || c2<c1 ) exception(".dump(%u,%u,%u,%u): invalid (r,c)", r1,r2,c1,c2);
+		size_t r,c;
+		fprintf(stderr,"double_array %s = {\n",name?name:"unnamed"); 
+		for ( r=r1 ; r<=n ; r++ )
+		{
+			for ( c=c1 ; c<=m ; c++ )
+				fprintf(stderr," %8g", my(r,c));
+			fprintf(stderr,"\n");
+		}
+		fprintf(stderr," }\n");
+	}
+	void operator= (const double y)
 	{
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
-				set_at(r,c,y);
+				my(r,c) = y;
 		}
 	};
-	inline void operator= (double_array &y)
+	double_array &operator= (const double_array &y)
+	{
+		size_t r,c;
+		grow_to(y);
+		for ( r=0 ; r<y.get_rows() ; r++ )
+		{
+			for ( c=0 ; c<y.get_cols() ; c++ )
+				my(r,c) = y[r][c];
+		}
+		return *this;
+	};
+	double_array &operator+= (const double &y)
 	{
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
-				set_at(r,c,y.get_at(r,c));
+				my(r,c) += y;
 		}
-	};
-	inline void operator+= (double_array &y)
+		return *this;
+	}
+	double_array &operator+= (const double_array &y)
 	{
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
-				set_at(r,c,get_at(r,c) + y.get_at(r,c));
+				my(r,c) += y[r][c];
 		}
+		return *this;
 	};
-	inline void operator-= (double_array &y)
+	double_array &operator-= (const double &y)
 	{
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
-				set_at(r,c,get_at(r,c) - y.get_at(r,c));
+				my(r,c) -= y;
 		}
+		return *this;
 	};
-	inline void operator *= (double y)
+	double_array &operator-= (const double_array &y)
 	{
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
-				set_at(r,c,get_at(r,c)*y);
+				my(r,c) -= y[r][c];
 		}
+		return *this;
 	};
-	inline void operator /= (double y)
+	double_array &operator *= (const double y)
 	{
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
-				set_at(r,c,get_at(r,c)/y);
+				my(r,c) *= y;
 		}
+		return *this;
 	};
-	inline void extract_row(double*y,size_t r)
+	double_array &operator /= (const double y)
+	{
+		size_t r,c;
+		for ( r=0 ; r<get_rows() ; r++ )
+		{
+			for ( c=0 ; c<get_cols() ; c++ )
+				my(r,c) /= y;
+		}
+		return *this;
+	};
+	// binary operators
+	double_array operator+ (const double y)
+	{
+		double_array a(get_rows(),get_cols());
+		size_t r,c;
+		for ( r=0 ; r<get_rows() ; r++ )
+			for ( c=0 ; c<get_cols() ; c++ )
+				a[r][c] = my(r,c) + y;
+		return a;
+	}
+	double_array operator- (const double y)
+	{
+		double_array a(get_rows(),get_cols());
+		size_t r,c;
+		for ( r=0 ; r<get_rows() ; r++ )
+			for ( c=0 ; c<get_cols() ; c++ )
+				a[r][c] = my(r,c) - y;
+		return a;
+	}
+	double_array operator* (const double y)
+	{
+		double_array a(get_rows(),get_cols());
+		size_t r,c;
+		for ( r=0 ; r<get_rows() ; r++ )
+			for ( c=0 ; c<get_cols() ; c++ )
+				a[r][c] = my(r,c) * y;
+		return a;
+	}
+	double_array operator/ (const double y)
+	{
+		double_array a(get_rows(),get_cols());
+		size_t r,c;
+		for ( r=0 ; r<get_rows() ; r++ )
+			for ( c=0 ; c<get_cols() ; c++ )
+				a[r][c] = my(r,c) / y;
+		return a;
+	}
+	double_array operator + (const double_array &y)
+	{
+		size_t r,c;
+		if ( get_rows()!=y.get_rows() || get_cols()!=y.get_cols() )
+			exception("+%s: size mismatch",y.get_name());
+		double_array a(get_rows(),get_cols());
+		a.set_name("(?+?)");
+		for ( r=0 ; r<get_rows() ; r++ )
+			for ( c=0 ; c<y.get_cols() ; c++ )
+				a[r][c] = my(r,c) + y[r][c];
+		return a;
+	};
+	double_array operator - (const double_array &y)
+	{
+		size_t r,c;
+		if ( get_rows()!=y.get_rows() || get_cols()!=y.get_cols() )
+			exception("-%s: size mismatch",y.get_name());
+		double_array a(get_rows(),get_cols());
+		a.set_name("(?-?)");
+		for ( r=0 ; r<get_rows() ; r++ )
+			for ( c=0 ; c<y.get_cols() ; c++ )
+				a[r][c] = my(r,c) - y[r][c];
+		return a;
+	};
+	double_array operator * (const double_array &y)
+	{
+		size_t r,c,k;
+		if ( get_cols()!=y.get_rows() )
+			exception("*%s: size mismatch",y.get_name());
+		double_array a(get_rows(),y.get_cols());
+		a.set_name("(?*?)");
+		for ( r=0 ; r<get_rows() ; r++ )
+		{
+			for ( c=0 ; c<y.get_cols() ; c++ )
+			{	
+				double b = 0;
+				for ( k=0 ; k<get_cols() ; k++ )
+					b += my(r,k) * y[k][c];
+				a[r][c] = b;
+			}
+		}
+		return a;
+	};
+	void extract_row(double*y,const size_t r)
 	{
 		size_t c;
 		for ( c=0 ; c<m ; c++ )
-			y[c] = get_at(r,c);
+			y[c] = my(r,c);
 	}
-	inline void extract_col(double*y,size_t c)
+	void extract_col(double*y,const size_t c)
 	{
 		size_t r;
 		for ( r=0 ; r<n ; r++ )
-			y[r] = get_at(r,c);
+			y[r] = my(r,c);
 	}
 };
 #endif

@@ -253,7 +253,7 @@ void *check_version_proc(void *ptr)
 	/* done */
 Done:
 	http_delete_result(result);
-	return (void*)rc;
+	return (void*)(int64)rc;
 }
 
 void check_version(int mt)

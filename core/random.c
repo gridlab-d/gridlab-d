@@ -30,9 +30,11 @@
 #include "complex.h"
 #include "lock.h"
 #include "platform.h"
+#include "exec.h"
 
 #ifdef WIN32
 #define finite _finite
+#include <process.h>
 #define getpid _getpid
 #endif
 
@@ -1328,13 +1330,13 @@ TIMESTAMP randomvar_syncall(TIMESTAMP t1)
 	{
 		randomvar *var;
 		TIMESTAMP t2 = TS_NEVER;
-		clock_t ts = exec_clock();
+		clock_t ts = (clock_t)exec_clock();
 		for (var=randomvar_list; var!=NULL; var=var->next)
 		{
 			TIMESTAMP t3 = randomvar_sync(var,t1);
 			if ( absolute_timestamp(t3)<absolute_timestamp(t2) ) t2 = t3;
 		}
-		randomvar_synctime += exec_clock() - ts;
+		randomvar_synctime += (clock_t)exec_clock() - ts;
 		return t2!=TS_NEVER ? -absolute_timestamp(t2) : TS_NEVER;
 	}
 	else

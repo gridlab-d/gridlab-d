@@ -34,6 +34,7 @@ char *simtime(void);
 STATUS t_setup_ranks(void);
 INDEX **exec_getranks(void);
 void exec_sleep(unsigned int usec);
+int64 exec_clock(void);
 
 void exec_mls_create(void);
 void exec_mls_init(void);
@@ -42,6 +43,7 @@ void exec_mls_resume(TIMESTAMP next_pause);
 void exec_mls_done(void);
 void exec_mls_statewait(unsigned states);
 void exec_slave_node();
+int exec_run_createscripts(void);
 
 void exec_sync_reset(struct sync_data *d);
 void exec_sync_merge(struct sync_data *to, struct sync_data *from);

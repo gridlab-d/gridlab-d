@@ -80,12 +80,6 @@ case $host_os in
 esac
 AM_CONDITIONAL([HAVE_MINGW], [test "x$mingw" = "xtrue"])
 
-#case `gcc -dumpmachine` in
-#	*mingw*) mingw=true ;;
-#	*) mingw=false ;;
-#esac
-#AM_CONDITIONAL([HAVE_MINGW], [test "x$mingw" = "xtrue"])
-
 ###another trial#####
 #case $host in
 #*mingw*)
@@ -564,12 +558,14 @@ AC_SUBST([MATLAB_LDFLAGS])
 AC_SUBST([MATLAB_LDPATH])
 AC_SUBST([MATLAB_LIBS])
 	
-# Check for MinGW	
-AS_CASE([$host],
-	[*linux*], [HAVE_MINGW=no],
-	[*darwin*], [HAVE_MINGW=no],
-	[*mingw*], [HAVE_MINGW=yes])
-AM_CONDITIONAL([HAVE_MINGW], [test "x$mingw" != xfalse])
+# Check for MinGW
+AS_IF([test "x$mingw" = "xtrue"],
+	[HAS_MINGW=yes],
+	[AS_CASE([$host],
+		[*linux*], [HAS_MINGW=no],
+		[*darwin*], [HAS_MINGW=no],
+		[*mingw*], [HAS_MINGW="no (required)"])])
+AC_SUBST([HAS_MINGW])		
 
 # Check for mysql
 
@@ -623,7 +619,7 @@ AC_MSG_RESULT([
 
   Dependencies:
 
-    MinGW: ...................... $HAVE_MINGW
+    MinGW: ...................... $HAS_MINGW
     Doxygen: .................... $HAVE_DOXYGEN
     libcppunit: ................. $HAVE_CPPUNIT
     libxerces-c: ................ $HAVE_XERCES

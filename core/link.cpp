@@ -294,6 +294,9 @@ glxlink::glxlink(char *filename)
 	init = NULL;
 	sync = NULL;
 	term = NULL;
+	glxflags = 0;
+	valid_to = 0;
+	last_t = 0;
 
 	FILE *fp = fopen(filename,"rt");
 	if ( fp==NULL )

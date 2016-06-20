@@ -132,6 +132,7 @@
 #include "linkage.h"
 #include "test.h"
 #include "link.h"
+#include "save.h"
 
 #include "pthread.h"
 
@@ -1549,11 +1550,11 @@ void exec_sync_set(struct sync_data *d, /**< sync data to update (NULL to update
 	{
 		if ( t<TS_NEVER && t>0 )
 		{
-			d->step_to=t;
+			d->step_to = t;
 			d->hard_event++;
 		}
 		else if ( t<0 )
-			d->step_to=t;
+			d->step_to = -t;
 		else 
 			d->status = FAILED;
 	}
@@ -1878,7 +1879,7 @@ STATUS exec_start(void)
 		return SUCCESS;
 
 	//sjin: GetMachineCycleCount
-	cstart = exec_clock();
+	cstart = (clock_t)exec_clock();
 
 	/* main loop exception handler */
 	TRY {
@@ -2315,7 +2316,7 @@ STATUS exec_start(void)
 	}
 
 	//sjin: GetMachineCycleCount
-	cend = exec_clock();
+	cend = (clock_t)exec_clock();
 
 	fnl_rv = finalize_all();
 	if(FAILED == fnl_rv)

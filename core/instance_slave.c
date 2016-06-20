@@ -270,7 +270,7 @@ int instance_slave_wait_mmap(){
 	ResetEvent(local_inst.hSlave);
 	// copy the data from the mmap to the cache
 	memcpy(local_inst.cache, local_inst.filemap, local_inst.cachesize);
-	printcontent(local_inst.cache, local_inst.cachesize);
+	printcontent((char*)local_inst.cache, local_inst.cachesize);
 	output_verbose("wait_mmap: resumed with fmap ts = %lli", tc->ts);
 #else
 	// fatal error
@@ -485,7 +485,7 @@ void *instance_slaveproc(void *ptr)
 		//output_debug("slave %d controller resuming exec with %lli", slave_id, local_inst.cache->ts);
 		output_debug("slave %d controller resuming exec with %lli", local_inst.cache->id, local_inst.cache->ts);
 		output_debug("slave %d controller setting step_to %lli to cache->ts %lli", local_inst.cache->id, exec_sync_get(NULL), local_inst.cache->ts);
-		exec_sync_merge(NULL,&local_inst.cache);
+		exec_sync_merge(NULL,(void*)&local_inst.cache);
 
 		pthread_cond_broadcast(&mls_inst_signal);
 
@@ -513,8 +513,8 @@ void *instance_slaveproc(void *ptr)
 
 		/* copy the next time stamp */
 		/* how about we copy the time we want to step to and see what the master says, instead? -MH */
-		exec_sync_reset(&local_inst.cache);
-		exec_sync_set(&local_inst.cache,NULL);
+		exec_sync_reset((void*)&local_inst.cache);
+		exec_sync_set((void*)&local_inst.cache,0);
 
 		instance_slave_done();
 	} while (global_clock != TS_NEVER && rv == SUCCESS);
@@ -580,7 +580,7 @@ STATUS instance_slave_init_mem(){
 	
 	local_inst.name_size = *(local_inst.message->name_size);
 	local_inst.prop_size = *(local_inst.message->data_size);
-	exec_sync_merge(NULL,&local_inst.cache);
+	exec_sync_merge(NULL,(void*)&local_inst.cache);
 
 	/* open slave signalling event */
 	sprintf(eventName,"GLD-%"FMT_INT64"x-S", global_master_port);
@@ -720,8 +720,8 @@ STATUS instance_slave_init_socket(){
 	local_inst.cache->name_size = (int16)local_inst.name_size;
 	local_inst.cache->data_size = (int16)local_inst.prop_size;
 	local_inst.cache->id = local_inst.id;
-	exec_sync_set(&local_inst.cache,pickle.ts);
-	exec_sync_merge(NULL,&local_inst.cache);
+	exec_sync_set((void*)&local_inst.cache,pickle.ts);
+	exec_sync_merge(NULL,(void*)&local_inst.cache);
 	if(0 == local_inst.buffer){
 		output_error("malloc() error with li.buffer");
 		return FAILED;

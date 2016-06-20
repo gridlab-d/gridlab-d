@@ -39,7 +39,11 @@ struct s_module_list {
 	MODULE *(*subload)(char *, MODULE **, CLASS **, int, char **);
 	PROPERTY *globals;
 	void (*term)(void);
-	STREAMCALLBACK stream;
+#ifndef STREAM_MODULE
+	STREAMCALL stream;
+#else
+	void *stream;
+#endif
 	struct s_module_list *next;
 }; /* MODULE */
 

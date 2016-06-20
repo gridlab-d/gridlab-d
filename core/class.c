@@ -1214,7 +1214,7 @@ DELEGATEDTYPE *class_register_type(CLASS *oclass, /**< the object class */
 	{
 		dt->oclass = oclass;
 		strncpy(dt->type,type,sizeof(dt->type));
-		dt->from_string = from_string;
+		dt->from_string = (int (*)(void*,const char*))from_string;
 		dt->to_string = to_string;
 	}
 	else

@@ -74,6 +74,7 @@ TIMESTAMP mkdatetime(DATETIME *dt);
 int strdatetime(DATETIME *t, char *buffer, int size);
 int convert_from_timestamp(TIMESTAMP ts, char *buffer, int size);
 int convert_from_timestamp_delta(TIMESTAMP ts, DELTAT delta_t, char *buffer, int size);
+int convert_from_deltatime_timestamp(double ts_v, char *buffer, int size);
 double timestamp_to_days(TIMESTAMP t);
 double timestamp_to_hours(TIMESTAMP t);
 double timestamp_to_minutes(TIMESTAMP t);

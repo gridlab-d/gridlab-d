@@ -477,10 +477,10 @@ static counters run_test(char *file, double *elapsed_time=NULL)
 	dt = exec_clock() - dt;
 	double t = (double)dt/(double)CLOCKS_PER_SEC;
 	if ( elapsed_time!=NULL ) *elapsed_time = t;
-#ifdef WIN32
-	if ( code>256 )
-		output_warning("%s exit code %x is outside normal exit code range and may be interpreted incorrectly", name, code);
-#endif
+//#ifdef WIN32
+// 	if ( code>256 )
+// 		output_warning("%s exit code %x is outside normal exit code range and may be interpreted incorrectly", name, code);
+//#endif
 	bool exited = WIFEXITED(code);
 	if ( exited )
 	{
@@ -792,7 +792,7 @@ int validate(int argc, char *argv[])
 		report_newtable("FILE TEST RESULTS");
 	int n_procs = global_threadcount;
 	if ( n_procs==0 ) n_procs = processor_count();
-	n_procs = min(final.get_tested(),n_procs);
+	n_procs = min(final.get_tested(),(unsigned)n_procs);
 	pthread_t *pid = new pthread_t[n_procs];
 	output_debug("starting validation with cmdargs '%s' using %d threads", validate_cmdargs, n_procs);
 	for ( i=0 ; i<n_procs ; i++ )

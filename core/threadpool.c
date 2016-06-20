@@ -23,6 +23,12 @@
 #include "globals.h"
 #include "threadpool.h"
 
+// should include output.h, but this causes a conflict with int64
+int output_error(const char *format,...);
+// should include exec.h, but this causes a conflict with int64
+int64 exec_clock(void);
+
+
 static int mti_debug_mode = 0;
 int mti_debug(MTI *mti, char *fmt, ...)
 {
@@ -188,11 +194,11 @@ MTI *mti_init(const char *name, MTIFUNCTIONS *fn, size_t minitems)
 	/* compute number of threads */
 	mti->n_processes = global_threadcount;
 	if ( nitems<mti->n_processes*minitems )
-		mti->n_processes = nitems/minitems;
+		mti->n_processes = (unsigned int)(nitems/minitems);
 	if ( mti->n_processes==0 )
 		mti->n_processes = 1;
 	items_per_process = nitems/mti->n_processes;
-	mti->n_processes = nitems/items_per_process;
+	mti->n_processes = (unsigned int)(nitems/items_per_process);
 	if ( mti->n_processes*items_per_process<nitems )
 		mti->n_processes++;
 	mti_debug(mti,"nitems = %d", nitems);
@@ -220,7 +226,7 @@ MTI *mti_init(const char *name, MTIFUNCTIONS *fn, size_t minitems)
 			return NULL;
 		}
 		memset(mti->process,0,sizeof(MTIPROC)*mti->n_processes);
-		for ( p=0 ; p<mti->n_processes ; p++ )
+		for ( p=0 ; p<(int)(mti->n_processes) ; p++ )
 		{
 			MTIPROC *proc = &mti->process[p];
 			proc->mti = mti;
@@ -250,7 +256,7 @@ MTI *mti_init(const char *name, MTIFUNCTIONS *fn, size_t minitems)
 
 int mti_run(MTIDATA result, MTI *mti, MTIDATA input)
 {
-	clock_t t0 = exec_clock();
+	clock_t t0 = (clock_t)exec_clock();
 	mti->fn->set(result,NULL);
 
 	/* no update required */
@@ -303,6 +309,6 @@ int mti_run(MTIDATA result, MTI *mti, MTIDATA input)
 		mti->fn->gather(result,mti->output);
 		mti_debug(mti,"%d iterators completed", mti->n_processes);
 	}
-	mti->runtime += exec_clock() - t0;
+	mti->runtime += (clock_t)exec_clock() - t0;
 	return 1;
 }

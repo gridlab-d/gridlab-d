@@ -32,6 +32,7 @@
 #include "exec.h"
 #include "kml.h"
 #include "kill.h"
+#include "threadpool.h"
 
 #if defined WIN32 && _DEBUG 
 /** Implements a pause on exit capability for Windows consoles
@@ -103,8 +104,11 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	if (!output_init(argc,argv) || !exec_init())
 		exit(XC_INIERR);
 
-	/* setup the random number generator */
-	random_init();
+	/* set thread count equal to processor count if not passed on command-line */
+	if (global_threadcount == 0)
+		global_threadcount = processor_count();
+	output_verbose("detected %d processor(s)", processor_count());
+	output_verbose("using %d helper thread(s)", global_threadcount);
 
 	/* process command line arguments */
 	if (cmdarg_load(argc,argv)==FAILED)
@@ -134,6 +138,9 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	/* see if newer version is available */
 	if ( global_check_version )
 		check_version(1);
+
+	/* setup the random number generator */
+	random_init();
 
 	/* pidfile */
 	if (strcmp(global_pidfile,"")!=0)

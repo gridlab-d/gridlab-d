@@ -20,6 +20,7 @@
 #include "schedule.h"
 #include "enduse.h"
 #include "gridlabd.h"
+#include "exec.h"
 
 static enduse *enduse_list = NULL;
 static unsigned int n_enduses = 0;
@@ -265,7 +266,7 @@ TIMESTAMP enduse_syncall(TIMESTAMP t1)
 	static unsigned int n_threads_ed=0;
 	static ENDUSESYNCDATA *thread_ed = NULL;
 	TIMESTAMP t2 = TS_NEVER;
-	clock_t ts = exec_clock();
+	clock_t ts = (clock_t)exec_clock();
 	
 	// skip enduse_syncall if there's no enduse in the glm
 	if (n_enduses == 0)
@@ -375,7 +376,7 @@ TIMESTAMP enduse_syncall(TIMESTAMP t1)
 		if (next_t2_ed<t2) t2=next_t2_ed;
 	}
 
-	enduse_synctime += exec_clock() - ts;
+	enduse_synctime += (clock_t)exec_clock() - ts;
 	return t2;
 
 	/*enduse *e;
@@ -546,12 +547,13 @@ int convert_to_enduse(char *string, void *data, PROPERTY *prop)
 	/* use structure conversion if opens with { */
 	if ( string[0]=='{')
 	{
+		UNIT *unit = unit_find("kVA");
 		PROPERTY eus[] = {
-			{NULL,"total",PT_complex,0,0,PA_PUBLIC,"kVA",(char*)(&e->total)-(char*)e,NULL,NULL,NULL,eus+1},
-			{NULL,"energy",PT_complex,0,0,PA_PUBLIC,"kVA",(char*)(&e->total)-(char*)e,NULL,NULL,NULL,eus+2},
-			{NULL,"demand",PT_complex,0,0,PA_PUBLIC,"kVA",(char*)(&e->total)-(char*)e,NULL,NULL,NULL,NULL},
+			{NULL,"total",PT_complex,0,0,PA_PUBLIC,unit,(PROPERTYADDR)((char*)(&e->total)-(char*)e),NULL,NULL,NULL,eus+1},
+			{NULL,"energy",PT_complex,0,0,PA_PUBLIC,unit,(PROPERTYADDR)((char*)(&e->energy)-(char*)e),NULL,NULL,NULL,eus+2},
+			{NULL,"demand",PT_complex,0,0,PA_PUBLIC,unit,(PROPERTYADDR)((char*)(&e->demand)-(char*)e),NULL,NULL,NULL,NULL},
 		};
-		return convert_to_struct(string,data,&eus);
+		return convert_to_struct(string,data,(void*)&eus);
 	}
 
 	/* check string length before copying to buffer */

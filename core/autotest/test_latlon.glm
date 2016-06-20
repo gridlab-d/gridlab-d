@@ -1,0 +1,59 @@
+#set suppress_repeat_messages=FALSE
+#set debug=1
+clock {
+	timezone PST8PDT;
+	starttime '2000-01-01 00:00:00 PST';
+	stoptime '2001-01-01 00:00:00 PST';
+}
+class test {
+	double x;
+}
+object test {
+	latitude 51.123456;
+	longitude 14.123456;
+}
+object test {
+	latitude -51.123456;
+	longitude 14.123456;
+}
+object test {
+	latitude 51.123456;
+	longitude -14.123456;
+}
+object test {
+	latitude -51.123456;
+	longitude -14.123456;
+}
+object test {
+	latitude 51N12.3456;
+	longitude 14W12.3456;
+}
+object test {
+	latitude 51S12.3456;
+	longitude 14W12.3456;
+}
+object test {
+	latitude 51N12.3456;
+	longitude 14E12.3456;
+}
+object test {
+	latitude 51S12.3456;
+	longitude 14E12.3456;
+}
+object test {
+	latitude 51N12:34.56;
+	longitude 14W12:34.56;
+}
+object test {
+	latitude 51S12:34.56;
+	longitude 14W12:34;
+}
+object test {
+	latitude 51N12:34.56;
+	longitude 14E12:34.56;
+}
+object test {
+	latitude 51S12:34.56;
+	longitude 14E12:34.56;
+}
+

@@ -93,7 +93,7 @@ HTTP* hopen(char *url, int maxlen)
 	http->buf = (char*)malloc(maxlen+1);
 	http->len = 0;
 	do {
-		len = recv(http->sd,http->buf+http->len,maxlen-http->len,0x00);
+		len = recv(http->sd,http->buf+http->len,(int)(maxlen-http->len),0x00);
 		if ( len==0 )
 		{
 			output_debug("hopen(char *url='%s', maxlen=%d): connection closed", url, maxlen);
@@ -203,14 +203,13 @@ HTTPRESULT *http_read(char *url, int maxlen)
 			}
 			else 
 			{
-				int dlen;
 				buffer[len]='\0';
 				data = strstr(buffer,"\r\n\r\n");
 				if ( data!=NULL )
 				{
 					hlen = data - buffer;
 					*data++ = '\0';
-					result->body.size = len - hlen - 1;
+					result->body.size = (int)(len - hlen - 1);
 					while ( isspace(*data) ) { data++; result->body.size--; }
 //					if ( sscanf(data,"%x",&dlen)==1 )
 //					{
@@ -231,7 +230,7 @@ HTTPRESULT *http_read(char *url, int maxlen)
 					result->body.data = "";
 					result->body.size = 0;
 				}
-				result->header.size = hlen;
+				result->header.size = (int)hlen;
 				result->header.data = malloc(hlen+1);
 				strcpy(result->header.data,buffer);
 				result->status = 0;

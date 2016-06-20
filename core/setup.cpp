@@ -30,7 +30,7 @@ static bool edit_bool(int row, int col, int len, PROPERTY *prop)
 static bool edit_in_place(int row, int col, int len, PROPERTY *prop)
 {
 	mvprintw(row,col-1,"[");
-	if ( prop->width>0 && prop->width<len ) len=prop->width;
+	if ( prop->width>0 && prop->width<(size_t)len ) len=prop->width;
 	if ( col+len>width-2 ) len = width-2-col;
 	mvprintw(row,col+len+1,"]");
 	int key;
@@ -68,7 +68,7 @@ static int edit_globals(void)
 		while ( (v=global_getnext(v)) ) 
 		{
 			var[nvars++] = v;
-			int s = strlen(v->prop->name);
+			int s = (int)strlen(v->prop->name);
 			if ( s>nsize ) nsize=s;
 		}
 	}
@@ -76,7 +76,7 @@ static int edit_globals(void)
 	// window pos and selection
 	static int first=0, sel=0, vsize=height-5;
 	int last = first+vsize;
-	if ( last>=nvars ) last=nvars-1;
+	if ( last>=nvars ) last=(int)(nvars-1);
 
 	// write data
 	int row=4;
@@ -220,7 +220,7 @@ extern "C" int setup(int argc, char *argv[])
 			if ( i==tab ) attron(A_BOLD);
 			mvprintw(2,pos,"[%s]",group[i].name);
 			if ( i==tab ) attroff(A_BOLD);
-			pos += strlen(group[i].name)+3;
+			pos += (int)(strlen(group[i].name)+3);
 		}
 		mvprintw(3,0,"%s",hline);
 

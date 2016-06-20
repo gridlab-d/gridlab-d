@@ -196,7 +196,7 @@ static CALLBACKS callbacks = {
 	object_isa,
 	class_register_type,
 	class_define_type,
-	{mkdatetime,strdatetime,timestamp_to_days,timestamp_to_hours,timestamp_to_minutes,timestamp_to_seconds,local_datetime,convert_to_timestamp,convert_to_timestamp_delta,convert_from_timestamp},
+	{mkdatetime,strdatetime,timestamp_to_days,timestamp_to_hours,timestamp_to_minutes,timestamp_to_seconds,local_datetime,convert_to_timestamp,convert_to_timestamp_delta,convert_from_timestamp,convert_from_deltatime_timestamp},
 	unit_convert, unit_convert_ex, unit_find,
 	{create_exception_handler,delete_exception_handler,throw_exception,exception_msg},
 	{global_create, global_setvar, global_getvar, global_find},
@@ -466,10 +466,10 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	/* clock  update */
 	mod->clockupdate = (TIMESTAMP(*)(TIMESTAMP))DLSYM(hLib,"clock_update");
 	mod->cmdargs = (int(*)(int,char**))DLSYM(hLib,"cmdargs");
-	mod->kmldump = (int(*)(FILE*,OBJECT*))DLSYM(hLib,"kmldump");
+	mod->kmldump = (int(*)(int(*)(const char*,...),OBJECT*))DLSYM(hLib,"kmldump");
 	mod->subload = (MODULE *(*)(char *, MODULE **, CLASS **, int, char **))DLSYM(hLib, "subload");
 	mod->test = (void(*)(int,char*[]))DLSYM(hLib,"test");
-	mod->stream = (size_t(*)(FILE*,int))DLSYM(hLib,"stream");
+	mod->stream = (STREAMCALL)DLSYM(hLib,"stream");
 	mod->globals = NULL;
 	mod->term = (void(*)(void))DLSYM(hLib,"term");
 	strcpy(mod->name,file);
@@ -1525,7 +1525,7 @@ int sched_getinfo(int n,char *buf, size_t sz)
 	if ( ioctl(1,TIOCGWINSZ,&ws)!=-1 )
 		width = ws.ws_col-1;
 #endif
-	namesize = width - (strstr(HEADING,"MODEL")-HEADING);
+	namesize = (int)(width - (strstr(HEADING,"MODEL")-HEADING));
 	if ( namesize<8 ) namesize=8;
 	if ( namesize>1024 ) namesize=1024;
 	if ( name!=NULL ) free(name);
@@ -1534,7 +1534,7 @@ int sched_getinfo(int n,char *buf, size_t sz)
 	if ( n==-1 ) /* heading string */
 	{
 		strncpy(buf,HEADING,sz);
-		return strlen(buf);		
+		return (int)strlen(buf);		
 	}
 	else if ( n==-2 ) /* heading underlines */
 	{
@@ -1587,8 +1587,8 @@ int sched_getinfo(int n,char *buf, size_t sz)
 				int m = 0;
 	
 				/* compute elapsed time */
-				h = s/3600; s=s%3600;
-				m = s/60; s=s%60;
+				h = (int)(s/3600); s=s%3600;
+				m = (int)(s/60); s=s%60;
 				if ( h>0 ) sprintf(t,"%4d:%02d:%02d",h,m,(int)s);
 				else if ( m>0 ) sprintf(t,"     %2d:%02d",m,(int)s);
 				else sprintf(t,"       %2ds", (int)s);
@@ -1614,7 +1614,7 @@ int sched_getinfo(int n,char *buf, size_t sz)
 		}
 		
 		/* rewrite model name to fit length limit */
-		len = strlen(modelname);
+		len = (int)strlen(modelname);
 		if ( len<namesize )
 			strcpy(name,modelname);
 		else
@@ -1632,7 +1632,7 @@ int sched_getinfo(int n,char *buf, size_t sz)
 	else
 		sz = sprintf(buf,"%4d   -", n);
 	sched_unlock(n);
-	return sz;
+	return (int)sz;
 }
 
 void sched_print(int flags) /* flag=0 for single listing, flag=1 for continuous listing */
@@ -1654,7 +1654,7 @@ void sched_print(int flags) /* flag=0 for single listing, flag=1 for continuous 
 	if ( ioctl(1,TIOCGWINSZ,&ws)!=-1 )
 		width = ws.ws_col;
 #endif
-	namesize = width - (strstr(HEADING,"MODEL")-HEADING);
+	namesize = (int)(width - (strstr(HEADING,"MODEL")-HEADING));
 	if ( namesize<8 ) namesize=8;
 	if ( namesize>1024 ) namesize=1024;
 	if ( name!=NULL ) free(name);
@@ -1665,7 +1665,6 @@ void sched_print(int flags) /* flag=0 for single listing, flag=1 for continuous 
 		int first=1;
 		if ( flags==1 )
 		{
-			int i;
 			sched_getinfo(-1,line,sizeof(line));
 			printf("%s\n",line);
 			sched_getinfo(-2,line,sizeof(line));
@@ -1712,7 +1711,7 @@ MYPROCINFO *sched_allocate_procs(unsigned int n_threads, pid_t pid)
 	my_proc = malloc(sizeof(MYPROCINFO));
 	my_proc->list = malloc(sizeof(unsigned short)*n_threads);
 	my_proc->n_procs = n_threads;
-	for ( t=0 ; t<n_threads ; t++ )
+	for ( t=0 ; t<(int)n_threads ; t++ )
 	{
 		int n;
 		for ( n=0 ; n<n_procs ; n++ )
@@ -1998,7 +1997,7 @@ ARGS* get_args(char *line)
 		case P_TEXT:
 			if ( isspace(*p) )
 			{
-				int len = p-tag;
+				int len = (int)(p-tag);
 				args->arg[args->n] = (char*)malloc(sizeof(char)*(len+1));
 				strncpy(args->arg[args->n],tag,len);
 				args->arg[args->n][len] = '\0';

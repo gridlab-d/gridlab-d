@@ -40,6 +40,8 @@
 #include "globals.h"
 #include "module.h"
 #include "lock.h"
+#include "threadpool.h"
+#include "exec.h"
 
 /* object list */
 static OBJECTNUM next_object_id = 0;
@@ -1324,7 +1326,7 @@ void object_profile(OBJECT *obj, OBJECTPROFILEITEM pass, clock_t t)
 {
 	if ( global_profiler==1 )
 	{
-		clock_t dt = exec_clock()-t;
+		clock_t dt = (clock_t)exec_clock()-t;
 		obj->synctime[pass] += dt;
 		wlock(&obj->oclass->profiler.lock);
 		obj->oclass->profiler.count++;
@@ -1421,7 +1423,7 @@ TIMESTAMP object_sync(OBJECT *obj, /**< the object to synchronize */
 					  TIMESTAMP ts, /**< the desire clock to sync to */
 					  PASSCONFIG pass) /**< the pass configuration */
 {
-	clock_t t=exec_clock();
+	clock_t t = (clock_t)exec_clock();
 	TIMESTAMP t2=TS_NEVER;
 	do {
 		/* don't call sync beyond valid horizon */
@@ -1450,7 +1452,7 @@ TIMESTAMP object_sync(OBJECT *obj, /**< the object to synchronize */
 
 TIMESTAMP object_heartbeat(OBJECT *obj)
 {
-	clock_t t=exec_clock();
+	clock_t t = (clock_t)exec_clock();
 	TIMESTAMP t1 = obj->oclass->heartbeat ? obj->oclass->heartbeat(obj) : TS_NEVER;
 	object_profile(obj,OPI_HEARTBEAT,t);
 		if ( global_debug_output>0 )
@@ -1468,7 +1470,7 @@ TIMESTAMP object_heartbeat(OBJECT *obj)
  **/
 int object_init(OBJECT *obj) /**< the object to initialize */
 {
-	clock_t t=exec_clock();
+	clock_t t = (clock_t)exec_clock();
 	int rv = 1;
 	obj->clock = global_starttime;
 	if(obj->oclass->init != NULL)
@@ -1490,7 +1492,7 @@ int object_init(OBJECT *obj) /**< the object to initialize */
  **/
 STATUS object_precommit(OBJECT *obj, TIMESTAMP t1)
 {
-	clock_t t=exec_clock();
+	clock_t t = (clock_t)exec_clock();
 	STATUS rv = SUCCESS;
 	if(obj->oclass->precommit != NULL){
 		rv = (STATUS)(*(obj->oclass->precommit))(obj, t1);
@@ -1506,7 +1508,7 @@ STATUS object_precommit(OBJECT *obj, TIMESTAMP t1)
 
 TIMESTAMP object_commit(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
-	clock_t t=exec_clock();
+	clock_t t = (clock_t)exec_clock();
 	TIMESTAMP rv = 1;
 	if(obj->oclass->commit != NULL){
 		rv = (TIMESTAMP)(*(obj->oclass->commit))(obj, t1, t2);
@@ -1531,7 +1533,7 @@ TIMESTAMP object_commit(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
  **/
 STATUS object_finalize(OBJECT *obj)
 {
-	clock_t t=exec_clock();
+	clock_t t = (clock_t)exec_clock();
 	STATUS rv = SUCCESS;
 	if(obj->oclass->finalize != NULL){
 		rv = (STATUS)(*(obj->oclass->finalize))(obj);
@@ -1897,70 +1899,99 @@ int object_saveall_xml_old(FILE *fp){ /**< the stream to write to */
 	return count;	
 }
 
-int convert_from_latitude(double v, void *buffer, int bufsize){
+int convert_from_latitude(double v, void *buffer, size_t bufsize)
+{
 	double d = floor(fabs(v));
 	double r = fabs(v) - d;
 	double m = floor(r * 60.0);
 	double s = (r - (double)m / 60.0) * 3600.0;
 	char ns = (v < 0) ? 'S' : 'N';
 
-	if(isnan(v)){
+	if ( isnan(v) )
 		return 0;
-	}
-	
-	return sprintf(buffer, "%.0f%c%.0f:%.2fs", d, ns, m, s);
+	else
+		return sprintf(buffer, "%.0f%c%.0f:%.2f", d, ns, m, s);
 }
 
-int convert_from_longitude(double v, void *buffer, int bufsize){
+int convert_from_longitude(double v, void *buffer, size_t bufsize){
 	double d = floor(fabs(v));
 	double r = fabs(v)-d;
 	double m = floor(r*60);
 	double s = (r - (double)m/60.0)*3600;
 	char ns = (v < 0) ? 'W' : 'E';
 
-	if(isnan(v)){
+	if ( isnan(v) )
 		return 0;
-	}
-
-	return sprintf(buffer, "%.0f%c%.0f'%.2f\"", d, ns, m, s);
+	else
+		return sprintf(buffer, "%.0f%c%.0f:%.2f", d, ns, m, s);
 }
 
-double convert_to_latitude(char *buffer){
-	int32 d, m = 0;
-	double s = 0;
-	char ns;
+double convert_to_latitude(char *buffer)
+{
+	int m = 0;
+	double v = 0;
+	char ns, ds[32];
 	
-	if(sscanf(buffer, "%d%c%d'%lf\"", &d, &ns, &m, &s) > 1){	
-		double v = (double)d + (double)m / 60.0 + s / 3600.0;
-		if(v >= 0.0 || v <= 90.0){
-			if(ns == 'S'){
-				return -v;
-			} else if(ns == 'N'){
-				return v;
-			}
+	if ( sscanf(buffer,"%[0-9]%c%u:%lf", ds, &ns, &m, &v)==4 && (ns=='N'||ns=='S') ) 
+		v = atof(ds) + (double)m / 60.0 + v / 3600.0;
+	else if ( sscanf(buffer,"%[0-9]%c%lf", ds, &ns, &v)==3 && (ns=='N'||ns=='S') )
+		v = atof(ds) + v / 60.0;
+	else if ( sscanf(buffer,"%lf", &v)==1 )
+	{
+		if ( v<0 )
+		{
+			v = -v;
+			ns = 'S';
+		}
+		else
+			ns = 'N';
+	}
+	else
+		return QNAN;
+	if ( v >= 0.0 || v <= 90.0 )
+	{
+		switch ( ns ) {
+		case 'N': return v;
+		case 'S': return -v;
+		default: return QNAN;
 		}
 	}
-
-	return QNAN;
+	else
+		return QNAN;
 }
 
-double convert_to_longitude(char *buffer){
-	int32 d, m = 0;
-	double s = 0;
-	char ns;
+double convert_to_longitude(char *buffer)
+{
+	int m = 0;
+	double v = 0;
+	char ew, ds[32];
 
-	if(sscanf(buffer, "%d%c%d'%lf\"", &d, &ns, &m, &s) > 1){	
-		double v = (double)d + (double)m / 60.0 + s / 3600.0;
-		if(v >= 0.0 || v <= 90.0){
-			if(ns == 'W'){
-				return -v;
-			} else if(ns=='E'){
-				return v;
-			}
+	if ( sscanf(buffer,"%[0-9]%c%d:%lf", ds, &ew, &m, &v)==4 && (ew=='W'||ew=='E') )
+		v = atof(ds) + (double)m / 60.0 + v / 3600.0;
+	else if ( sscanf(buffer,"%[0-9]%c%lf", ds, &ew, &v)==3 && (ew=='W'||ew=='E') )
+		v = atof(ds) + (double)v/60.0; 
+	else if ( sscanf(buffer,"%lf", &v)==1 )
+	{
+		if ( v<0 )
+		{
+			v = -v;
+			ew = 'E';
+		}
+		else
+			ew = 'W';
+	}
+	else
+		return QNAN;
+	if ( v >= 0.0 || v <= 180.0 )
+	{
+		switch ( ew ) {
+		case 'W': return v;
+		case 'E': return -v;
+		default: return QNAN;
 		}
 	}
-
-	return QNAN;
+	else
+		return QNAN;
 }
 
 /***************************************************************************

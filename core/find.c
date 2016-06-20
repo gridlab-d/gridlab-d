@@ -8,9 +8,11 @@
  @{
  **/
 
+#include <stdlib.h>
 #include <ctype.h>
 #include <stdio.h>
-#ifdef WIN32
+#ifdef WIN32 && !(__MINGW__)
+#include <io.h>
 #	define snprintf _snprintf
 #endif
 #include "globals.h"
@@ -154,7 +156,7 @@ static int compare_string(char *a, FINDOP op, char *b)
 		return 0;
 	}
 CompareInt:
-	return compare_int((int64)strcmp(a,b),op,0);
+	return compare_int(a!=NULL && b!=NULL && (int64)strcmp(a,b),op,0);
 
 }
 
@@ -251,9 +253,9 @@ static int compare(OBJECT *obj, FINDTYPE ftype, FINDOP op, void *value, char *pr
 	switch (ftype) {
 	case FT_ID: return compare_int((int64)obj->id,op,(int64)*(OBJECTNUM*)value);
 	case FT_SIZE: return compare_int((int64)obj->oclass->size,op,(int64)*(int*)value);
-	case FT_CLASS: return compare_string((char*)obj->oclass->name,op,(char*)value);
+	case FT_CLASS: return obj->oclass->module!=NULL && compare_string((char*)obj->oclass->name,op,(char*)value);
 	case FT_ISA: return object_isa(obj,(char*)value);
-	case FT_MODULE: return obj->oclass->module!=NULL && compare_string((char*)obj->oclass->module->name,op,(char*)value);
+	case FT_MODULE: return ( obj->oclass->module!=NULL && compare_string((char*)obj->oclass->module->name,op,(char*)value) );
 	case FT_GROUPID: return compare_string((char*)obj->groupid,op,(char*)value);
 	case FT_RANK: return compare_int((int64)obj->rank,op,(int64)*(int*)value);
 	case FT_CLOCK: return compare_int((int64)obj->clock,op,(int64)*(TIMESTAMP*)value);

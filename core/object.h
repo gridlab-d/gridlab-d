@@ -197,6 +197,7 @@ typedef struct s_callbacks {
 		TIMESTAMP (*convert_to_timestamp)(char *value);
 		TIMESTAMP (*convert_to_timestamp_delta)(const char *value, unsigned int *microseconds, double *dbl_time_value);
 		int (*convert_from_timestamp)(TIMESTAMP ts, char *buffer, int size);
+		int (*convert_from_deltatime_timestamp)(double ts_v, char *buffer, int size);
 	} time;
 	int (*unit_convert)(char *from, char *to, double *value);
 	int (*unit_convert_ex)(UNIT *pFrom, UNIT *pTo, double *pValue);
@@ -397,8 +398,8 @@ int object_saveall_xml(FILE *fp);
 void object_stream_fixup(OBJECT *obj, char *classname, char *objname);
 
 char *object_name(OBJECT *obj, char *, int);
-int convert_from_latitude(double,void*,int);
-int convert_from_longitude(double,void*,int);
+int convert_from_latitude(double,void*,size_t);
+int convert_from_longitude(double,void*,size_t);
 double convert_to_latitude(char *buffer);
 double convert_to_longitude(char *buffer);
 

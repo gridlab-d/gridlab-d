@@ -40,6 +40,7 @@
 #include "globals.h"
 #include "random.h"
 #include "schedule.h"
+#include "exec.h"
 
 static loadshape *loadshape_list = NULL;
 static unsigned int n_shapes = 0;
@@ -938,7 +939,7 @@ TIMESTAMP loadshape_syncall(TIMESTAMP t1)
 	static unsigned int n_threads_ls=0;
 	static LOADSHAPESYNCDATA *thread_ls = NULL;
 	TIMESTAMP t2 = TS_NEVER;
-	clock_t ts = exec_clock();
+	clock_t ts = (clock_t)exec_clock();
 
 	// skip loadshape_syncall if there's no loadshape in the glm
 	if (n_shapes == 0)

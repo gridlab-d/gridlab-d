@@ -12,8 +12,7 @@ UFILE *uopen(char *fname, void *arg)
 	errno = 0;
 	if ( strncmp(fname,"http://",7)==0)
 	{
-
-		HTTP *http = hopen(fname,(size_t)arg);
+		HTTP *http = hopen(fname,(int)arg);
 		if ( http==NULL ) return NULL;
 		rp = (UFILE*)malloc(sizeof(UFILE));
 		if ( rp==NULL ) 

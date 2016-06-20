@@ -13,6 +13,11 @@
 
 #include <stdio.h>
 #include <string.h>
+#ifdef WIN32 && !(__MINGW__)
+#include <direct.h>
+#else
+#include <unistd.h>
+#endif
 
 #include "platform.h"
 #include "globals.h"
@@ -1277,9 +1282,10 @@ int cmdarg_runoption(const char *value)
 		for ( i=0 ; i<sizeof(main)/sizeof(main[0]) ; i++ )
 		{
 			if ( main[i].lopt!=NULL && strcmp(main[i].lopt,option)==0 )
-				return main[i].call(n,&params);
+				return main[i].call(n,(void*)&params);
 		}
 	}
+	return 0;
 }
 
 static int help(int argc, char *argv[])
@@ -1373,8 +1379,11 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 		for ( i=0 ; i<sizeof(main)/sizeof(main[0]) ; i++ )
 		{
 			CMDARG arg = main[i];
-			if ( ( arg.sopt && strncmp(*argv,"-",1)==0 && strcmp((*argv)+1,arg.sopt)==0 ) ||
-				 ( arg.lopt && strncmp(*argv,"--",2)==0 && strcmp((*argv)+2,arg.lopt)==0 ) )
+			char tmp[1024];
+			sprintf(tmp,"%s=",arg.lopt);
+			if ( ( arg.sopt && strncmp(*argv,"-",1)==0 && strcmp((*argv)+1,arg.sopt)==0 ) 
+			  || ( arg.lopt && strncmp(*argv,"--",2)==0 && strcmp((*argv)+2,arg.lopt)==0 ) 
+			  || ( arg.lopt && strncmp(*argv,"--",2)==0 && strncmp((*argv)+2,tmp,strlen(tmp))==0 ) )
 			{
 				int n = arg.call(argc,argv);
 				switch (n) {
@@ -1407,13 +1416,13 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 				else {
 					clock_t start = clock();
 
-					if (!loadall(*argv))
-						status = FAILED;
-					loader_time += clock() - start;
-
 					/* preserve name of first model only */
 					if (strcmp(global_modelname,"")==0)
 						strcpy(global_modelname,*argv);
+
+					if (!loadall(*argv))
+						status = FAILED;
+					loader_time += clock() - start;
 				}
 			}
 

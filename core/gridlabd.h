@@ -290,14 +290,10 @@ inline void GL_THROW(char *format, ...)
 **/
 #define gl_error (*callback->output_error)
 
-#ifdef _DEBUG
 /** Produces a debug message on stderr, but only when \b --debug is provided on the command line.
  	@see output_debug(char *format, ...)
  **/
 #define gl_debug (*callback->output_debug)
-#else
-#define gl_debug
-#endif
 
 /** Produces a test message in the test record file, but only when \b --testfile is provided on the command line.
 	@see output_testmsg(char *format, ...)
@@ -826,6 +822,8 @@ inline char *gl_getvalue(OBJECT *obj,
 #define gl_delta_parsetime (*callback->time.convert_to_timestamp_delta)
 
 #define gl_printtime (*callback->time.convert_from_timestamp)
+
+#define gl_printtimedelta (*callback->time.convert_from_deltatime_timestamp)
 
 /** Convert a timestamp to a date/time structure
 	@see mkdatetime()
@@ -1757,7 +1755,10 @@ public: // iterators
 	inline T get_##X(gld_rlock&) { return X; }; \
 	inline T get_##X(gld_wlock&) { return X; }; \
 	inline void set_##X(T p) { X=p; }; \
-	inline void set_##X(T p, gld_wlock&) { X=p; }; 
+	inline void set_##X(T p, gld_wlock&) { X=p; }; \
+	inline gld_string get_##X##_string(void) { return get_##X##_property().get_string(); }; \
+	inline void set_##X(char *str) { get_##X##_property().from_string(str); }; \
+
 /// Define a structured property
 #define GL_STRUCT(T,X) protected: T X; public: \
 	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
@@ -1766,7 +1767,10 @@ public: // iterators
 	inline T get_##X(gld_rlock&) { return X; }; \
 	inline T get_##X(gld_wlock&) { return X; }; \
 	inline void set_##X(T p) { gld_wlock _lock(my()); X=p; }; \
-	inline void set_##X(T p, gld_wlock&) { X=p; }; 
+	inline void set_##X(T p, gld_wlock&) { X=p; }; \
+	inline gld_string get_##X##_string(void) { return get_##X##_property().get_string(); }; \
+	inline void set_##X(char *str) { get_##X##_property().from_string(str); }; \
+
 /// Define a string property
 #define GL_STRING(T,X) 	protected: T X; public: \
 	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
@@ -1780,7 +1784,8 @@ public: // iterators
 	inline void set_##X(char *p) { gld_wlock _lock(my()); strncpy(X,p,sizeof(X)); }; \
 	inline void set_##X(char *p, gld_wlock&) { strncpy(X,p,sizeof(X)); }; \
 	inline void set_##X(size_t n, char c) { gld_wlock _lock(my()); X[n]=c; }; \
-	inline void set_##X(size_t n, char c, gld_wlock&) { X[n]=c; }; 
+	inline void set_##X(size_t n, char c, gld_wlock&) { X[n]=c; };  \
+
 /// Define an array property
 #define GL_ARRAY(T,X,S) protected: T X[S]; public: \
 	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
@@ -1794,7 +1799,8 @@ public: // iterators
 	inline void set_##X(T* p) { gld_wlock _lock(my()); memcpy(X,p,sizeof(X)); }; \
 	inline void set_##X(T* p, gld_wlock&) { memcpy(X,p,sizeof(X)); }; \
 	inline void set_##X(size_t n, T m) { gld_wlock _lock(my()); X[n]=m; }; \
-	inline void set_##X(size_t n, T m, gld_wlock&) { X[n]=m; }; 
+	inline void set_##X(size_t n, T m, gld_wlock&) { X[n]=m; };  \
+
 /// Define a bitflag property
 #define GL_BITFLAGS(T,X) protected: T X; public: \
 	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
@@ -1805,7 +1811,9 @@ public: // iterators
 	inline void set_##X(T p) { X=p; }; \
 	inline void set_##X##_bits(T p) { gld_rlock _lock(my()); (X)|=(p); }; \
 	inline void clr_##X##_bits(T p) { gld_rlock _lock(my()); (X)&=~(p); }; \
-	inline void set_##X(T p, gld_wlock&) { X=p; }; 
+	inline void set_##X(T p, gld_wlock&) { X=p; }; \
+	inline gld_string get_##X##_string(void) { return get_##X##_property().get_string(); }; \
+	inline void set_##X(char *str) { get_##X##_property().from_string(str); }; \
 
 /// Set bits of a bitflag property
 inline void setbits(unsigned long &flags, unsigned int bits) { flags|=bits; }; 

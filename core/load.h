@@ -66,6 +66,9 @@ int time_value_datetimezone(char *c, TIMESTAMP *t);
 int set_flags(OBJECT *obj, char *propval);
 UNRESOLVED *add_unresolved(OBJECT *by, PROPERTYTYPE ptype, void *ref, CLASS *oclass, char *id, char *file, unsigned int line, int flags);
 int load_resolve_all();
+OBJECT *load_get_current_object(void);
+MODULE *load_get_current_module(void);
+
 #ifdef __cplusplus
 }
 #endif

@@ -145,6 +145,8 @@ object <class>[:<spec>] { // spec may be <id>, or <startid>..<endid>, or ..<coun
 #include <math.h>
 #include "stream.h"
 #include "http_client.h"
+#include "link.h"
+#include "exec.h"
 
 /* define this to use # for comment and % for macros (the way Version 1.x works) */
 /* #define OLDSTYLE	*/
@@ -485,8 +487,34 @@ static STATUS debugger(char *target)
 
 static char *setup_class(CLASS *oclass)
 {
+	static char buffer[65536] = "";
+	int len = 0;
 	/* no longer needed now that property extension works */
-	return "";
+#ifdef NEVER
+	PROPERTY *prop;
+	len += sprintf(buffer+len,"\tOBJECT obj; obj.oclass = oclass; %s *t = (%s*)((&obj)+1);\n",oclass->name,oclass->name);
+	//len += sprintf(buffer+len,"\tif (callback->define_map(oclass,\n");
+	len += sprintf(buffer+len,"\toclass->size = sizeof(%s);\n", oclass->name);
+	for (prop=oclass->pmap; prop!=NULL; prop=prop->next)
+	{
+		len += sprintf(buffer+len,"\t(*(callback->properties.get_property))(&obj,\"%s\",NULL)->addr = (PROPERTYADDR)((char*)&(t->%s) - (char*)t);\n",prop->name,prop->name);
+		if (prop->unit==NULL)
+			len += sprintf(buffer+len,"\t\tPT_%s,\"%s\",(char*)&(t->%s)-(char*)t,\n",
+				class_get_property_typename(prop->ptype),prop->name,prop->name);
+		else
+			len += sprintf(buffer+len,"\t\tPT_%s,\"%s[%s]\",(char*)&(t->%s)-char(*)t,\n",
+				class_get_property_typename(prop->ptype),prop->name,prop->unit->name,prop->name);
+		if (prop->keywords)
+		{
+			KEYWORD *key;
+			for (key=prop->keywords; key!=NULL; key=key->next)
+				len += sprintf(buffer+len, "\t\t\tPT_KEYWORD, \"%s\", %d,\n", key->name, key->value);
+		}
+	}
+#endif
+	//len += sprintf(buffer+len,"\t\tNULL)<1) throw(\"unable to publish properties in class %s\");\n", oclass->name);
+	len += sprintf(buffer+len,"\t/* begin init block */\n%s\n\t/* end init block */\n",init_block);
+	return buffer;
 }
 
 static int outlinenum = 0;
@@ -766,7 +794,10 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 						cfile, ofile);
 				output_verbose("compile command: [%s]", execstr);
 				if(exec(execstr)==FAILED)
+				{
+					errno = EINVAL;
 					return FAILED;
+				}
 				if ( !(global_gdb||global_gdb_window) && getenv("GRIDLABD_DEBUG")==NULL )
 					unlink(cfile);
 
@@ -781,8 +812,10 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 						ofile, afile, libs);
 				output_verbose("link command: [%s]", ldstr);
 				if(exec(ldstr) == FAILED)
+				{
+					errno = EINVAL;
 					return FAILED;
-
+				}
 				/* post linking command (optional) */
 				if ( global_getvar("LDPOSTLINK",tbuf,sizeof(tbuf))!=NULL )
 				{
@@ -2279,46 +2312,22 @@ int time_value_datetimezone(PARSER, TIMESTAMP *t)
 
 double load_latitude(char *buffer)
 {
-	double d=0, m=0, s=0;
-	char ns;
-	if((strcmp(buffer, "none") == 0) || (strcmp(buffer, "NONE") == 0)){
-		return QNAN;
-	}
-	if (sscanf(buffer,"%lf%c%lf:%lf",&d,&ns,&m,&s)>1)
-	{
-		double v = d+m/60+s/3600;
-		if (v>=0 && v<=90)
-		{
-			if (ns=='S')
-				return -v;
-			else if (ns=='N')
-				return v;
-		}
-	}
-	output_error_raw("%s(%d): '%s' is not a valid latitude", filename,linenum,buffer);
-	return QNAN;
+	double v = convert_to_latitude(buffer);
+	if ( isnan(v) && ( strcmp(buffer,"")!=0 || stricmp(buffer, "none")!=0 ) )
+		output_error_raw("%s(%d): '%s' is not a valid latitude", filename,linenum,buffer);
+	else
+		output_debug("%s(%d): latitude is converted to %lf", filename, linenum, v);
+	return v;
 }
 
 double load_longitude(char *buffer)
 {
-	double d=0, m=0, s=0;
-	char ns;
-	if((strcmp(buffer, "none") == 0) || (strcmp(buffer, "NONE") == 0)){
-		return QNAN;
-	}
-	if (sscanf(buffer,"%lf%c%lf:%lf",&d,&ns,&m,&s)>1)
-	{
-		double v = (double)d+(double)m/60+s/3600;
-		if (v>=0 && v<=180)
-		{
-			if (ns=='W')
-				return -v;
-			else if (ns=='E')
-				return v;
-		}
-	}
-	output_error_raw("%s(%d): '%s' is not a valid longitude", filename,linenum,buffer);
-	return QNAN;
+	double v = convert_to_longitude(buffer);
+	if ( isnan(v) && ( strcmp(buffer,"")!=0 || stricmp(buffer, "none")!=0 ) )
+		output_error_raw("%s(%d): '%s' is not a valid longitude", filename,linenum,buffer);
+	else
+		output_debug("%s(%d): longitude is convert to %lf", filename, linenum, v);
+	return v;
 }
 
 static int clock_properties(PARSER)
@@ -3742,6 +3751,7 @@ static int property_ref(PARSER, TRANSFORMSOURCE *xstype, void **ref, OBJECT *fro
 				enduse *eu = (void*)object_get_addr(obj,pname);
 				*ref = &(eu->total.r);
 				*xstype = XS_ENDUSE;
+				ACCEPT;
 			}
 			else
 			{
@@ -3882,6 +3892,14 @@ static int linear_transform(PARSER, TRANSFORMSOURCE *xstype, void **source, doub
 	DONE;
 }
 
+OBJECT *load_get_current_object(void)
+{
+	return current_object;
+}
+MODULE *load_get_current_module(void)
+{
+	return current_module;
+}
 static int object_block(PARSER, OBJECT *parent, OBJECT **obj);
 static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 {
@@ -6586,7 +6604,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		//if (sscanf(term+1,"%[^\n\r]",value)==1)
 		strcpy(value, strip_right_white(term+1));
 		if(1){
-			output_error_raw("%s(%d): WARNING - %s", filename, linenum, value);
+			output_warning("%s(%d): %s", filename, linenum, value);
 			strcpy(line,"\n");
 			return TRUE;
 		}

@@ -199,7 +199,7 @@ int local_tzoffset(TIMESTAMP t)
 	}
 	return old_tzoffset;
 #else
-	return tzoffset + (isdst(t)?3600:0);
+	return (int)(tzoffset + (isdst(t)?3600:0));
 #endif
 }
 
@@ -322,7 +322,7 @@ int local_datetime(TIMESTAMP ts, DATETIME *dt)
 	strncpy(dt->tz, tzvalid ? (dt->is_dst ? tzdst : tzstd) : "GMT", sizeof(dt->tz));
 
 	/* timezone offset in seconds */
-	dt->tzoffset = tzoffset - (isdst(dt->timestamp)?3600:0);
+	dt->tzoffset = (int)(tzoffset - (isdst(dt->timestamp)?3600:0));
 
 #ifdef USE_TS_CACHE
 	/* cache result */
@@ -380,7 +380,7 @@ TIMESTAMP mkdatetime(DATETIME *dt)
 		return ts;
 	}
 	/* add day, hour, minute, second, usecs */
-	ts += (dt->day - 1) * DAY + dt->hour * HOUR + dt->minute * MINUTE + dt->second * SECOND + dt->nanosecond/1.0e9;
+	ts += (TIMESTAMP)((dt->day - 1) * DAY + dt->hour * HOUR + dt->minute * MINUTE + dt->second * SECOND + dt->nanosecond/1.0e9);
 
 	if(dt->tz[0] == 0){
 		strcpy(dt->tz, (isdst(ts) ? tzdst : tzstd));
@@ -698,12 +698,12 @@ void set_tzspec(int year, char *tzname, SPEC *pStart, SPEC *pEnd){
 			if (pStart->month > pEnd->month)
 			{
 				dststart[y] = compute_dstevent(y + YEAR0, pStart, tzoffset);
-				dstend[y] = compute_dstevent(y + YEAR0 + 1, pEnd, tzoffset);
+				dstend[y] = compute_dstevent(y + YEAR0 + 1, pEnd, tzoffset) - 1;
 			}
 			else	//"Standard" northern hemisphere rules
 			{
 				dststart[y] = compute_dstevent(y + YEAR0, pStart, tzoffset);
-				dstend[y] = compute_dstevent(y + YEAR0, pEnd, tzoffset);
+				dstend[y] = compute_dstevent(y + YEAR0, pEnd, tzoffset) - 1;
 			}
 		}
 		else
@@ -961,7 +961,7 @@ int convert_from_timestamp_delta(TIMESTAMP ts, DELTAT delta_t, char *buffer, int
 
 /** Convert from a timestamp to a string -- deltamode
  **/
-int convert_from_delta_timestamp(double ts_v, char *buffer, int size)
+int convert_from_deltatime_timestamp(double ts_v, char *buffer, int size)
 {
 	TIMESTAMP ts;
 	unsigned int nano_seconds;
@@ -1071,7 +1071,7 @@ TIMESTAMP convert_to_timestamp(const char *value)
 	else if (isdigit(value[0]))
 	{	/* timestamp format */
 		double t = atof(value);
-		char *p=value;
+		const char *p=value;
 		while (isdigit(*p) || *p=='.') p++;
 		switch (*p) {
 		case 's':
@@ -1107,7 +1107,7 @@ TIMESTAMP convert_to_timestamp_delta(const char *value, unsigned int *nanosecond
 	/* Declarations - inline ones make angry (since we're technically in C) */
 	DATETIME dt;
 	double seconds_w_nano, t;
-	char *p;
+	const char *p;
 	char tz[5]="";
 	TIMESTAMP output_value;
 

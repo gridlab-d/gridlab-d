@@ -22,7 +22,11 @@ extern "C" {
 	void stream_register ( STREAMCALL call )
 	{
 		struct s_stream *stream = (struct s_stream*)malloc(sizeof(struct s_stream));
-		if ( stream==NULL ) throw "stream_register(): malloc failed";
+		if ( stream==NULL ) 
+		{
+			fprintf(stderr,"FATAL ERROR: stream_register(): malloc failed");
+			return;
+		}
 		stream->call = call;
 		stream->next = stream_list;
 		stream_list = stream;
@@ -32,7 +36,7 @@ extern "C" {
 	size_t stream_callback(void *ptr, size_t len, int is_str, void *match)
 	{
 		try {
-			return stream(ptr,len,is_str,match);
+			return stream(ptr,len,is_str?true:false,match);
 		}
 		catch (...) { return -1; }
 	}

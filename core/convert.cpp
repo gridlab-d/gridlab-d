@@ -18,6 +18,7 @@
 #include "globals.h"
 #include "convert.h"
 #include "object.h"
+#include "load.h"
 
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
@@ -945,6 +946,7 @@ int convert_from_double_array(char *buffer, int size, void *data, PROPERTY *prop
 int convert_to_double_array(const char *buffer, void *data, PROPERTY *prop)
 {
 	double_array *a=(double_array*)data;
+	a->set_name(prop->name);
 	unsigned row=0, col=0;
 	const char *p = buffer;
 	
@@ -973,26 +975,29 @@ int convert_to_double_array(const char *buffer, void *data, PROPERTY *prop)
 			}
 			else if ( isdigit(*p) || *p=='.' || *p=='-' || *p=='+' ) /* probably real value */
 			{
-				a->grow_to(row,col);
+				a->grow_to(row+1,col+1);
 				a->set_at(row,col,atof(p));
 				col++;
 			}
 			else if ( sscanf(value,"%[^.].%[^; \t]",objectname,propertyname)==2 ) /* object property */
 			{
-				OBJECT *obj = object_find_name(objectname);
-				PROPERTY *prop;
+				OBJECT *obj = load_get_current_object();
+				if ( obj!=NULL && strcmp(objectname,"parent")==0 )
+					obj = obj->parent;
+				else if ( strcmp(objectname,"this")!=0 )
+					obj = object_find_name(objectname);
 				if ( obj==NULL )
 				{
-					output_error("convert_to_double_array(const char *buffer='%10s...',...): entry at row %d, col %d - object '%s' not found", buffer,row,col,objectname);
+					output_error("convert_to_double_array(const char *buffer='%10s...',...): entry at row %d, col %d - object property '%s' not found", buffer,row,col,objectname);
 					return 0;
 				}
-				prop = object_get_property(obj,propertyname,NULL);
+				PROPERTY *prop = object_get_property(obj,propertyname,NULL);
 				if ( prop==NULL )
 				{
 					output_error("convert_to_double_array(const char *buffer='%10s...',...): entry at row %d, col %d - property '%s' not found in object '%s'", buffer,row,col,propertyname,objectname);
 					return 0;
 				}
-				a->grow_to(row,col);
+				a->grow_to(row+1,col+1);
 				a->set_at(row,col,object_get_double(obj,prop));
 				if ( a->is_nan(row,col) )
 				{
@@ -1001,22 +1006,52 @@ int convert_to_double_array(const char *buffer, void *data, PROPERTY *prop)
 				}
 				col++;
 			}
-			else if ( sscanf(value,"%[^; \t]",propertyname)==1 ) /* object property */
+			else if ( sscanf(value,"%[^; \t]",propertyname)==1 ) /* current object/global property */
 			{
-				GLOBALVAR *var = global_find(propertyname);
-				if ( var==NULL )
+				OBJECT *obj;
+				PROPERTY *target = NULL;
+				obj  = (OBJECT*)((char*)data - (char*)prop->addr)-1;
+				object_name(obj,objectname,sizeof(objectname));
+				target = object_get_property(obj,propertyname,NULL);
+				if ( target!=NULL )
 				{
-					output_error("convert_to_double_array(const char *buffer='%10s...',...): entry at row %d, col %d global '%s' not found", buffer,row,col,propertyname);
-					return 0;
+					if ( target->ptype!=PT_double && target->ptype!=PT_random && target->ptype!=PT_enduse && target->ptype!=PT_loadshape && target->ptype!=PT_enduse )
+					{
+						output_error("convert_to_double_array(const char *buffer='%10s...',...): entry at row %d, col %d property '%s' in object '%s' refers to property '%s', which is not an underlying double",
+								buffer,row,col,propertyname,objectname,target->name);
+						return 0;
+					}
+					a->grow_to(row+1,col+1);
+					a->set_at(row,col,object_get_double(obj,target));
+					if ( a->is_nan(row,col) )
+					{
+						output_error("convert_to_double_array(const char *buffer='%10s...',...): entry at row %d, col %d property '%s' in object '%s' is not accessible", buffer,row,col,propertyname,objectname);
+						return 0;
+					}
+					col++;
 				}
-				a->grow_to(row,col);
-				a->set_at(row,col,(double*)var->prop->addr);
-				if ( a->is_nan(row,col) )
+				else
 				{
-					output_error("convert_to_double_array(const char *buffer='%10s...',...): entry at row %d, col %d property '%s' in object '%s' is not accessible", buffer,row,col,propertyname,objectname);
-					return 0;
+					GLOBALVAR *var = global_find(propertyname);
+					if ( var==NULL )
+					{
+						output_error("convert_to_double_array(const char *buffer='%10s...',...): entry at row %d, col %d global '%s' not found", buffer,row,col,propertyname);
+						return 0;
+					}
+					if ( var->prop->ptype!=PT_double )
+					{
+						output_error("convert_to_double_array(const char *buffer='%10s...',...): entry at row %d, col %d property '%s' in object '%s' refers to a global '%s', which is not an underlying double", buffer,row,col,propertyname,objectname,propertyname);
+						return 0;
+					}
+					a->grow_to(row+1,col+1);
+					a->set_at(row,col,(double*)var->prop->addr);
+					if ( a->is_nan(row,col) )
+					{
+						output_error("convert_to_double_array(const char *buffer='%10s...',...): entry at row %d, col %d property '%s' in object '%s' is not accessible", buffer,row,col,propertyname,objectname);
+						return 0;
+					}
+					col++;
 				}
-				col++;
 			}
 			else /* not a valid entry */
 			{
@@ -1168,7 +1203,7 @@ extern "C" int convert_unit_double(char *buffer,char *unit, double *data)
  **/
 int convert_from_struct(char *buffer, size_t len, void *data, PROPERTY *prop)
 {
-	size_t pos = sprintf(buffer,"%s","{ ");
+	int pos = sprintf(buffer,"%s","{ ");
 	while ( prop!=NULL )
 	{
 		void *addr = (char*)data + (size_t)prop->addr;
@@ -1188,7 +1223,7 @@ int convert_from_struct(char *buffer, size_t len, void *data, PROPERTY *prop)
 	@return length of string on success, 0 for empty, -1 for failure
  **/int convert_to_struct(const char *buffer, void *data, PROPERTY *structure)
 {
-	size_t len = 0;
+	int len = 0;
 	char temp[1025];
 	if ( buffer[0]!='{' ) return -1;
 	strncpy(temp,buffer+1,sizeof(temp));
