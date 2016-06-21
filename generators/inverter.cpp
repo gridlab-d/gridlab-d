@@ -38,193 +38,124 @@ inverter::inverter(MODULE *module)
 		
 		if (gl_publish_variable(oclass,
 
-			PT_enumeration,"inverter_type",PADDR(inverter_type_v),
+			PT_enumeration,"inverter_type",PADDR(inverter_type_v), PT_DESCRIPTION, "LEGACY MODEL: Sets efficiencies and other parameters; if using four_quadrant_control_mode, set this to FOUR_QUADRANT",
 				PT_KEYWORD,"TWO_PULSE",(enumeration)TWO_PULSE,
 				PT_KEYWORD,"SIX_PULSE",(enumeration)SIX_PULSE,
 				PT_KEYWORD,"TWELVE_PULSE",(enumeration)TWELVE_PULSE,
 				PT_KEYWORD,"PWM",(enumeration)PWM,
 				PT_KEYWORD,"FOUR_QUADRANT",(enumeration)FOUR_QUADRANT,
 
-			PT_enumeration,"four_quadrant_control_mode",PADDR(four_quadrant_control_mode),
+				PT_enumeration,"four_quadrant_control_mode",PADDR(four_quadrant_control_mode), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Activates various control modes",
 				PT_KEYWORD,"NONE",(enumeration)FQM_NONE,
 				PT_KEYWORD,"CONSTANT_PQ",(enumeration)FQM_CONSTANT_PQ,
 				PT_KEYWORD,"CONSTANT_PF",(enumeration)FQM_CONSTANT_PF,
 				//PT_KEYWORD,"CONSTANT_V",FQM_CONSTANT_V,	//Not implemented yet
-				//PT_KEYWORD,"VOLT_VAR",FQM_VOLT_VAR,
+				PT_KEYWORD,"VOLT_VAR",(enumeration)FQM_VOLT_VAR,
 				PT_KEYWORD,"LOAD_FOLLOWING",(enumeration)FQM_LOAD_FOLLOWING,
-				PT_KEYWORD,"GENERIC_DROOP",(enumeration)FQM_GENERIC_DROOP,
 				PT_KEYWORD,"GROUP_LOAD_FOLLOWING",(enumeration)FQM_GROUP_LF,
 
-			PT_enumeration,"pf_reg",PADDR(pf_reg),
+			PT_enumeration,"pf_reg",PADDR(pf_reg), PT_DESCRIPTION, "Activate (or not) power factor regulation in four_quadrant_control_mode",
 				PT_KEYWORD,"INCLUDED",(enumeration)INCLUDED,
 				PT_KEYWORD,"EXCLUDED",(enumeration)EXCLUDED,
 
-			PT_enumeration,"generator_status",PADDR(gen_status_v),
+			PT_enumeration,"generator_status",PADDR(gen_status_v), PT_DESCRIPTION, "describes whether the generator is online or offline",
 				PT_KEYWORD,"OFFLINE",(enumeration)OFFLINE,
 				PT_KEYWORD,"ONLINE",(enumeration)ONLINE,	
 
-			PT_enumeration,"generator_mode",PADDR(gen_mode_v),
+			PT_enumeration,"generator_mode",PADDR(gen_mode_v), PT_DESCRIPTION, "LEGACY MODEL: Selects generator control mode when using legacy model; in non-legacy models, this should be SUPPLY_DRIVEN.",
 				PT_KEYWORD,"UNKNOWN",UNKNOWN,
 				PT_KEYWORD,"CONSTANT_V",(enumeration)CONSTANT_V,
 				PT_KEYWORD,"CONSTANT_PQ",(enumeration)CONSTANT_PQ,
 				PT_KEYWORD,"CONSTANT_PF",(enumeration)CONSTANT_PF,
 				PT_KEYWORD,"SUPPLY_DRIVEN",(enumeration)SUPPLY_DRIVEN,
 			
-			PT_enumeration,"control_mode_switch",PADDR(control_mode_switch),
-				PT_KEYWORD,"CONTROL_SWITCH_NONE",(enumeration)CONTROL_SWITCH_NONE,
-				PT_KEYWORD,"ISLANDING_DROOP",(enumeration)ISLANDING_DROOP,
-
-			PT_enumeration,"coupling_inductance_type",PADDR(coupling_inductance_type),
-				PT_KEYWORD,"NONE",(enumeration)COUPLING_NONE,
-				PT_KEYWORD,"COUPLING_L",(enumeration)COUPLING_L,
-				PT_KEYWORD,"COUPLING_LCL",(enumeration)COUPLING_LCL,
-			PT_double, "inverter_convergence_criterion",PADDR(inverter_convergence_criterion),
-			PT_complex, "V_In[V]",PADDR(V_In),
-			PT_complex, "I_In[A]",PADDR(I_In),
-			PT_complex, "VA_In[VA]", PADDR(VA_In),
-			PT_complex, "VA_Out[VA]", PADDR(VA_Out),
-			PT_double, "Vdc[V]", PADDR(Vdc),
-			PT_complex, "phaseA_V_Out[V]", PADDR(phaseA_V_Out),
-			PT_complex, "phaseB_V_Out[V]", PADDR(phaseB_V_Out),
-			PT_complex, "phaseC_V_Out[V]", PADDR(phaseC_V_Out),
-			PT_complex, "phaseA_I_Out[V]", PADDR(phaseA_I_Out),
-			PT_complex, "phaseB_I_Out[V]", PADDR(phaseB_I_Out),
-			PT_complex, "phaseC_I_Out[V]", PADDR(phaseC_I_Out),
-			PT_complex, "power_A[VA]", PADDR(power_A),
-			PT_complex, "power_B[VA]", PADDR(power_B),
-			PT_complex, "power_C[VA]", PADDR(power_C),
+			PT_complex, "V_In[V]",PADDR(V_In), PT_DESCRIPTION, "DC voltage",
+			PT_complex, "I_In[A]",PADDR(I_In), PT_DESCRIPTION, "DC current",
+			PT_complex, "VA_In[VA]", PADDR(VA_In), PT_DESCRIPTION, "DC power",
+			PT_complex, "VA_Out[VA]", PADDR(VA_Out), PT_DESCRIPTION, "AC power",
+			PT_double, "Vdc[V]", PADDR(Vdc), PT_DESCRIPTION, "LEGACY MODEL: DC voltage",
+			PT_complex, "phaseA_V_Out[V]", PADDR(phaseA_V_Out), PT_DESCRIPTION, "AC voltage on A phase in three-phase system; 240-V connection on a triplex system",
+			PT_complex, "phaseB_V_Out[V]", PADDR(phaseB_V_Out), PT_DESCRIPTION, "AC voltage on B phase in three-phase system",
+			PT_complex, "phaseC_V_Out[V]", PADDR(phaseC_V_Out), PT_DESCRIPTION, "AC voltage on C phase in three-phase system",
+			PT_complex, "phaseA_I_Out[V]", PADDR(phaseA_I_Out), PT_DESCRIPTION, "AC current on A phase in three-phase system; 240-V connection on a triplex system",
+			PT_complex, "phaseB_I_Out[V]", PADDR(phaseB_I_Out), PT_DESCRIPTION, "AC current on B phase in three-phase system",
+			PT_complex, "phaseC_I_Out[V]", PADDR(phaseC_I_Out), PT_DESCRIPTION, "AC current on C phase in three-phase system",
+			PT_complex, "power_A[VA]", PADDR(power_A), PT_DESCRIPTION, "AC power on A phase in three-phase system; 240-V connection on a triplex system",
+			PT_complex, "power_B[VA]", PADDR(power_B), PT_DESCRIPTION, "AC power on B phase in three-phase system",
+			PT_complex, "power_C[VA]", PADDR(power_C), PT_DESCRIPTION, "AC power on C phase in three-phase system",
 			
 			//Input
-			PT_double, "P_Out[VA]", PADDR(P_Out),
-			PT_double, "Q_Out[VAr]", PADDR(Q_Out),
-			PT_double, "power_in[W]", PADDR(p_in),
-			PT_double, "rated_power[VA]", PADDR(p_rated),
-			PT_double, "rated_battery_power[W]", PADDR(bp_rated),
-			PT_double, "inverter_efficiency", PADDR(inv_eta),
-			PT_double, "battery_soc[pu]", PADDR(b_soc),
-			PT_double, "soc_reserve[pu]", PADDR(soc_reserve),
-			PT_double, "power_factor[unit]", PADDR(power_factor),
-			PT_double, "nominal_frequency[Hz]", PADDR(f_nominal),
-			PT_double, "nominal_VRMSLG[V]", PADDR(VRMSLG_nominal),
-			PT_bool,"islanded_state", PADDR(islanded),
-			PT_double, "droop_P1[W]", PADDR(droop_P1),
-			PT_double, "droop_P2[W]", PADDR(droop_P2),
-			PT_double, "droop_Q1[VAr]", PADDR(droop_Q1),
-			PT_double, "droop_Q2[VAr]", PADDR(droop_Q2),
-			PT_double, "droop_f1[Hz]", PADDR(droop_f1),
-			PT_double, "droop_f2[Hz]", PADDR(droop_f2),
-			PT_double, "droop_V1[V]", PADDR(droop_V1),
-			PT_double, "droop_V2[V]", PADDR(droop_V2),
-			PT_double, "constant_PQ_KPPLL[unit]", PADDR(PQ_params.KPPLL),
-			PT_double, "constant_PQ_KIPLL[unit]", PADDR(PQ_params.KIPLL),
-			PT_double, "constant_PQ_KPP[unit]", PADDR(PQ_params.KPP),
-			PT_double, "constant_PQ_KIP[unit]", PADDR(PQ_params.KIP),
-			PT_double, "constant_PQ_KPQ[unit]", PADDR(PQ_params.KPQ),
-			PT_double, "constant_PQ_KIQ[unit]", PADDR(PQ_params.KIQ),
-			PT_double, "constant_PQ_T_MeasP[s]", PADDR(PQ_params.T_MeasP),
-			PT_double, "constant_PQ_T_MeasQ[s]", PADDR(PQ_params.T_MeasQ),
-			PT_double, "constant_PQ_T_MeasV[s]", PADDR(PQ_params.T_MeasV),
-			PT_double, "constant_PQ_TPRefFilter[s]", PADDR(PQ_params.T_PRefFilter),
-			PT_double, "constant_PQ_TQRefFilter[s]", PADDR(PQ_params.T_QRefFilter),
-			PT_double, "constant_PQ_vt_max_angle_ref[rad]", PADDR(PQ_params.angleRefMax),
-			PT_double, "constant_PQ_vt_min_angle_ref[rad]", PADDR(PQ_params.angleRefMin),
-			PT_double, "constant_PQ_vt_max_mag_ref[pu]", PADDR(PQ_params.magRefMax),
-			PT_double, "constant_PQ_vt_min_mag_ref[pu]", PADDR(PQ_params.magRefMin),
-			PT_double, "droop_PQ_KPPLL[unit]", PADDR(droop_PQ_params.KPPLL),
-			PT_double, "droop_PQ_KIPLL[unit]", PADDR(droop_PQ_params.KIPLL),
-			PT_double, "droop_PQ_KPP[unit]", PADDR(droop_PQ_params.KPP),
-			PT_double, "droop_PQ_KIP[unit]", PADDR(droop_PQ_params.KIP),
-			PT_double, "droop_PQ_KPQ[unit]", PADDR(droop_PQ_params.KPQ),
-			PT_double, "droop_PQ_KIQ[unit]", PADDR(droop_PQ_params.KIQ),
-			PT_double, "droop_PQ_T_MeasP[s]", PADDR(droop_PQ_params.T_MeasP),
-			PT_double, "droop_PQ_T_MeasQ[s]", PADDR(droop_PQ_params.T_MeasQ),
-			PT_double, "droop_PQ_T_MeasV[s]", PADDR(droop_PQ_params.T_MeasV),
-			PT_double, "droop_PQ_TPRefFilter[s]", PADDR(droop_PQ_params.T_PRefFilter),
-			PT_double, "droop_PQ_TQRefFilter[s]", PADDR(droop_PQ_params.T_QRefFilter),
-			PT_double, "droop_PQ_vt_max_angle_ref[rad]", PADDR(droop_PQ_params.angleRefMax),
-			PT_double, "droop_PQ_vt_min_angle_ref[rad]", PADDR(droop_PQ_params.angleRefMin),
-			PT_double, "droop_PQ_vt_max_mag_ref[pu]", PADDR(droop_PQ_params.magRefMax),
-			PT_double, "droop_PQ_vt_min_mag_ref[pu]", PADDR(droop_PQ_params.magRefMin),
-			PT_double, "coupling_L1[H]", PADDR(coupling_L1),
-			PT_double, "coupling_L2[H]", PADDR(coupling_L2),
-			PT_double, "coupling_C[F]", PADDR(coupling_C),
-			PT_double, "initial_inverter_frequency[Hz]", PADDR(corr_derivs.x.theta_rel),
-			PT_double, "measured_VRMSLL[V]", PADDR(curr_state.x.VRMSLL),
-			//Ouputs for Plotting
-			PT_double, "filtered_reference_output_P[VA]", PADDR(curr_state.x.PO_ref_fil),
-			PT_double, "filtered_reference_output_Q[VAr]", PADDR(curr_state.x.QO_ref_fil),
-			PT_double, "inverter_measured_terminal_P[W]", PADDR(curr_state.x.P),
-			PT_double, "inverter_measured_terminal_Q[VAr]", PADDR(curr_state.x.Q),
-			PT_double, "inverter_measured_coupling_P[W]", PADDR(curr_state.x.PO),
-			PT_double, "inverter_measured_coupling_Q[VAr]", PADDR(curr_state.x.QO),
-			PT_double, "inverter_true_coupling_P[W]", PADDR(curr_state.PO_true),
-			PT_double, "inverter_true_coupling_Q[VAr]", PADDR(curr_state.QO_true),
-			PT_double, "PLL_measured_frequency[Hz]", PADDR(curr_state.f_PLL),
-			PT_complex, "internal_vt_a[V]", PADDR(curr_state.v_t[0]),
-			PT_complex, "internal_vt_synch_a[V]", PADDR(curr_state.v_t_synch[0]),
-			PT_complex, "vO_a[V]", PADDR(phaseA_V_Out),
-			PT_complex, "vO_synch_a[V]", PADDR(curr_state.v_O_synch[0]),
-			PT_complex, "norton_i_a[A]", PADDR(curr_state.i_Norton[0]),
-			PT_complex, "iO_a[A]", PADDR(curr_state.i_O[0]),
-			PT_complex, "vO_dq[V]", PADDR(curr_state.v_O_dq0[0]),
-			PT_double, "theta_PLL[rad]", PADDR(curr_state.x.theta_rel),
+			PT_double, "P_Out[VA]", PADDR(P_Out), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Scheduled real power out in CONSTANT_PQ control mode",
+			PT_double, "Q_Out[VAr]", PADDR(Q_Out), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Schedule reactive power out in CONSTANT_PQ control mode",
+			PT_double, "power_in[W]", PADDR(p_in),  PT_DESCRIPTION, "LEGACY MODEL: No longer used",
+			PT_double, "rated_power[VA]", PADDR(p_rated), PT_DESCRIPTION, "FOUR QUADRANT MODEL: The rated power of the inverter",
+			PT_double, "rated_battery_power[W]", PADDR(bp_rated), PT_DESCRIPTION, "FOUR QUADRANT MODEL: The rated power of battery when battery is attached",
+			PT_double, "inverter_efficiency", PADDR(inv_eta), PT_DESCRIPTION, "FOUR QUADRANT MODEL: The efficiency of the inverter",
+			PT_double, "battery_soc[pu]", PADDR(b_soc), PT_DESCRIPTION, "FOUR QUADRANT MODEL: The state of charge of an attached battery",
+			PT_double, "soc_reserve[pu]", PADDR(soc_reserve), PT_DESCRIPTION, "FOUR QUADRANT MODEL: The reserve state of charge of an attached battery for islanding cases",
+			PT_double, "power_factor[unit]", PADDR(power_factor),  PT_DESCRIPTION, "FOUR QUADRANT MODEL: The power factor used for CONSTANT_PF control mode",
+			PT_bool,"islanded_state", PADDR(islanded),  PT_DESCRIPTION, "FOUR QUADRANT MODEL: Boolean used to let control modes to act under island conditions",
 
-			PT_set, "phases", PADDR(phases),
+			PT_set, "phases", PADDR(phases),  PT_DESCRIPTION, "The phases the inverter is attached to",
 				PT_KEYWORD, "A",(set)PHASE_A,
 				PT_KEYWORD, "B",(set)PHASE_B,
 				PT_KEYWORD, "C",(set)PHASE_C,
 				PT_KEYWORD, "N",(set)PHASE_N,
 				PT_KEYWORD, "S",(set)PHASE_S,
 			//multipoint efficiency model parameters'
-			PT_bool, "use_multipoint_efficiency", PADDR(use_multipoint_efficiency),
-			PT_enumeration, "inverter_manufacturer", PADDR(inverter_manufacturer),
+			PT_bool, "use_multipoint_efficiency", PADDR(use_multipoint_efficiency), PT_DESCRIPTION, "FOUR QUADRANT MODEL: boolean to used the multipoint efficiency curve for the inverter when solar is attached",
+			PT_enumeration, "inverter_manufacturer", PADDR(inverter_manufacturer), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the manufacturer of the inverter to setup up pre-existing efficiency curves",
 				PT_KEYWORD, "NONE", (enumeration)NONE,
 				PT_KEYWORD, "FRONIUS", (enumeration)FRONIUS,
 				PT_KEYWORD, "SMA", (enumeration)SMA,
 				PT_KEYWORD, "XANTREX", (enumeration)XANTREX,
-			PT_double, "maximum_dc_power", PADDR(p_dco),
-			PT_double, "maximum_dc_voltage", PADDR(v_dco),
-			PT_double, "minimum_dc_power", PADDR(p_so),
-			PT_double, "c_0", PADDR(c_o),
-			PT_double, "c_1", PADDR(c_1),
-			PT_double, "c_2", PADDR(c_2),
-			PT_double, "c_3", PADDR(c_3),
+			PT_double, "maximum_dc_power", PADDR(p_dco), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the maximum dc power point for the efficiency curve",
+			PT_double, "maximum_dc_voltage", PADDR(v_dco), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the maximum dc voltage point for the efficiency curve",
+			PT_double, "minimum_dc_power", PADDR(p_so), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the minimum dc power point for the efficiency curve",
+			PT_double, "c_0", PADDR(c_o), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the first coeficient in the efficienty curve",
+			PT_double, "c_1", PADDR(c_1), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the second coeficient in the efficienty curve",
+			PT_double, "c_2", PADDR(c_2), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the third coeficient in the efficienty curve",
+			PT_double, "c_3", PADDR(c_3), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the fourth coeficient in the efficienty curve",
 			//load following parameters
-			PT_object,"sense_object", PADDR(sense_object), PT_DESCRIPTION, "name of the object the inverter is trying to mitigate the load on (node/link) in LOAD_FOLLOWING",
-			PT_double,"max_charge_rate[W]", PADDR(max_charge_rate), PT_DESCRIPTION, "maximum rate the battery can be charged in LOAD_FOLLOWING",
-			PT_double,"max_discharge_rate[W]", PADDR(max_discharge_rate), PT_DESCRIPTION, "maximum rate the battery can be discharged in LOAD_FOLLOWING",
-			PT_double,"charge_on_threshold[W]", PADDR(charge_on_threshold), PT_DESCRIPTION, "power level at which the inverter should try charging the battery in LOAD_FOLLOWING",
-			PT_double,"charge_off_threshold[W]", PADDR(charge_off_threshold), PT_DESCRIPTION, "power level at which the inverter should cease charging the battery in LOAD_FOLLOWING",
-			PT_double,"discharge_on_threshold[W]", PADDR(discharge_on_threshold), PT_DESCRIPTION, "power level at which the inverter should try discharging the battery in LOAD_FOLLOWING",
-			PT_double,"discharge_off_threshold[W]", PADDR(discharge_off_threshold), PT_DESCRIPTION, "power level at which the inverter should cease discharging the battery in LOAD_FOLLOWING",
-			PT_double,"excess_input_power[W]", PADDR(excess_input_power), PT_DESCRIPTION, "Excess power at the input of the inverter that is otherwise just lost, or could be shunted to a battery",
-			PT_double,"charge_lockout_time[s]",PADDR(charge_lockout_time), PT_DESCRIPTION, "Lockout time when a charging operation occurs before another LOAD_FOLLOWING dispatch operation can occur",
-			PT_double,"discharge_lockout_time[s]",PADDR(discharge_lockout_time), PT_DESCRIPTION, "Lockout time when a discharging operation occurs before another LOAD_FOLLOWING dispatch operation can occur",
+			PT_object,"sense_object", PADDR(sense_object), PT_DESCRIPTION, "FOUR QUADRANT MODEL: name of the object the inverter is trying to mitigate the load on (node/link) in LOAD_FOLLOWING",
+			PT_double,"max_charge_rate[W]", PADDR(max_charge_rate), PT_DESCRIPTION, "FOUR QUADRANT MODEL: maximum rate the battery can be charged in LOAD_FOLLOWING",
+			PT_double,"max_discharge_rate[W]", PADDR(max_discharge_rate), PT_DESCRIPTION, "FOUR QUADRANT MODEL: maximum rate the battery can be discharged in LOAD_FOLLOWING",
+			PT_double,"charge_on_threshold[W]", PADDR(charge_on_threshold), PT_DESCRIPTION, "FOUR QUADRANT MODEL: power level at which the inverter should try charging the battery in LOAD_FOLLOWING",
+			PT_double,"charge_off_threshold[W]", PADDR(charge_off_threshold), PT_DESCRIPTION, "FOUR QUADRANT MODEL: power level at which the inverter should cease charging the battery in LOAD_FOLLOWING",
+			PT_double,"discharge_on_threshold[W]", PADDR(discharge_on_threshold), PT_DESCRIPTION, "FOUR QUADRANT MODEL: power level at which the inverter should try discharging the battery in LOAD_FOLLOWING",
+			PT_double,"discharge_off_threshold[W]", PADDR(discharge_off_threshold), PT_DESCRIPTION, "FOUR QUADRANT MODEL: power level at which the inverter should cease discharging the battery in LOAD_FOLLOWING",
+			PT_double,"excess_input_power[W]", PADDR(excess_input_power), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Excess power at the input of the inverter that is otherwise just lost, or could be shunted to a battery",
+			PT_double,"charge_lockout_time[s]",PADDR(charge_lockout_time), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Lockout time when a charging operation occurs before another LOAD_FOLLOWING dispatch operation can occur",
+			PT_double,"discharge_lockout_time[s]",PADDR(discharge_lockout_time), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Lockout time when a discharging operation occurs before another LOAD_FOLLOWING dispatch operation can occur",
 
 			//Power-factor regulation  parameters
 			//PT_object,"sense_object", PADDR(sense_object), PF regulation uses the same sense object as load-following
-			PT_double,"pf_reg_activate", PADDR(pf_reg_activate), PT_DESCRIPTION, "Lowest acceptable power-factor level below which power-factor regulation will activate.",
-			PT_double,"pf_reg_deactivate", PADDR(pf_reg_deactivate), PT_DESCRIPTION, "Lowest acceptable power-factor above which no power-factor regulation is needed.",
-			PT_double,"pf_reg_activate_lockout_time[s]", PADDR(pf_reg_activate_lockout_time), PT_DESCRIPTION, "Mandatory pause between the deactivation of power-factor regulation and it reactivation",
+			PT_double,"pf_reg_activate", PADDR(pf_reg_activate), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Lowest acceptable power-factor level below which power-factor regulation will activate.",
+			PT_double,"pf_reg_deactivate", PADDR(pf_reg_deactivate), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Lowest acceptable power-factor above which no power-factor regulation is needed.",
+			PT_double,"pf_reg_activate_lockout_time[s]", PADDR(pf_reg_activate_lockout_time), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Mandatory pause between the deactivation of power-factor regulation and it reactivation",
 
 			//Group load-following (and power factor regulation) parameters
-			PT_double,"charge_threshold[W]", PADDR(charge_threshold), PT_DESCRIPTION, "Level at which all inverters in the group will begin charging attached batteries. Regulated minimum load level.",
-			PT_double,"discharge_threshold[W]", PADDR(discharge_threshold), PT_DESCRIPTION, "Level at which all inverters in the group will begin discharging attached batteries. Regulated maximum load level.",
-			PT_double,"group_max_charge_rate[W]", PADDR(group_max_charge_rate), PT_DESCRIPTION, "Sum of the charge rates of the batteries involved in the group load-following.",
-			PT_double,"group_max_discharge_rate[W]", PADDR(group_max_discharge_rate), PT_DESCRIPTION, "Sum of the discharge rates of the batteries involved in the group load-following.",
-			PT_double,"group_rated_power[W]", PADDR(group_rated_power), PT_DESCRIPTION, "Sum of the inverter power ratings of the inverters involved in the group power-factor regulation.",
-
-
+			PT_double,"charge_threshold[W]", PADDR(charge_threshold), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Level at which all inverters in the group will begin charging attached batteries. Regulated minimum load level.",
+			PT_double,"discharge_threshold[W]", PADDR(discharge_threshold), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Level at which all inverters in the group will begin discharging attached batteries. Regulated maximum load level.",
+			PT_double,"group_max_charge_rate[W]", PADDR(group_max_charge_rate), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Sum of the charge rates of the batteries involved in the group load-following.",
+			PT_double,"group_max_discharge_rate[W]", PADDR(group_max_discharge_rate), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Sum of the discharge rates of the batteries involved in the group load-following.",
+			PT_double,"group_rated_power[W]", PADDR(group_rated_power), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Sum of the inverter power ratings of the inverters involved in the group power-factor regulation.",
+			//Volt Var Parameters
+			PT_double,"V_base[V]", PADDR(V_base), PT_DESCRIPTION, "FOUR QUADRANT MODEL: The base voltage on the grid side of the inverter. Used in VOLT_VAR control mode.",
+			PT_double,"V1[pu]", PADDR(V1), PT_DESCRIPTION, "FOUR QUADRANT MODEL: voltage point 1 in volt/var curve. Used in VOLT_VAR control mode.",
+			PT_double,"Q1[pu]", PADDR(Q1), PT_DESCRIPTION, "FOUR QUADRANT MODEL: VAR point 1 in volt/var curve. Used in VOLT_VAR control mode.",
+			PT_double,"V2[pu]", PADDR(V2), PT_DESCRIPTION, "FOUR QUADRANT MODEL: voltage point 2 in volt/var curve. Used in VOLT_VAR control mode.",
+			PT_double,"Q2[pu]", PADDR(Q2), PT_DESCRIPTION, "FOUR QUADRANT MODEL: VAR point 2 in volt/var curve. Used in VOLT_VAR control mode.",
+			PT_double,"V3[pu]", PADDR(V3), PT_DESCRIPTION, "FOUR QUADRANT MODEL: voltage point 3 in volt/var curve. Used in VOLT_VAR control mode.",
+			PT_double,"Q3[pu]", PADDR(Q3), PT_DESCRIPTION, "FOUR QUADRANT MODEL: VAR point 3 in volt/var curve. Used in VOLT_VAR control mode.",
+			PT_double,"V4[pu]", PADDR(V4), PT_DESCRIPTION, "FOUR QUADRANT MODEL: voltage point 4 in volt/var curve. Used in VOLT_VAR control mode.",
+			PT_double,"Q4[pu]", PADDR(Q4), PT_DESCRIPTION, "FOUR QUADRANT MODEL: VAR point 4 in volt/var curve. Used in VOLT_VAR control mode.",
+			PT_double,"volt_var_control_lockout[s]", PADDR(vv_lockout), PT_DESCRIPTION, "FOUR QUADRANT QUADRANT MODEL: the lockout time between volt/var actions.",
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 			defaults = this;
 
 			memset(this,0,sizeof(inverter));
-
-			if (gl_publish_function(oclass,	"interupdate_gen_object", (FUNCTIONADDR)interupdate_inverter)==NULL)
-				GL_THROW("Unable to publish inverter deltamode function");
-			if (gl_publish_function(oclass,	"postupdate_gen_object", (FUNCTIONADDR)postupdate_inverter)==NULL)
-				GL_THROW("Unable to publish inverter deltamode function");
 	}
 }
 /* Object creation is called once for each object that is created by the core */
@@ -328,7 +259,6 @@ int inverter::create(void)
 	group_max_discharge_rate = -1;
 	group_rated_power = -1;
 
-
 	excess_input_power = 0.0;
 	lf_dispatch_power = 0.0;
 	load_follow_status = IDLE;	//LOAD_FOLLOWING starts out doing nothing
@@ -338,22 +268,20 @@ int inverter::create(void)
 	lf_dispatch_change_allowed = true;	//Begins with change allowed
 	charge_lockout_time = 0.0;	//Charge and discharge default to no delay
 	discharge_lockout_time = 0.0;
-
 	b_soc = -1;
-
-	////////////////////////////////////////////////////////
-	// DELTA MODE 
-	////////////////////////////////////////////////////////
-	f_nominal = 60;
-	
-
-	deltamode_inclusive = false;	//By default, don't be included in deltamode simulations
-
 	first_run = true;				//First time we run, we are the first run (by definition)
-	first_run_after_delta = false;	//Assumes we aren't entering delta from the get-go
-	IterationToggle = true;			//Pass functionality
-	corr_derivs.x.theta_ref = f_nominal*2*PI;
-	corr_derivs.x.theta_rel = 0;
+
+	// Volt Var Parameters
+	V_base = 0;
+	V1 = -2;
+	Q1 = -2;
+	V2 = -2;
+	Q2 = -2;
+	V3 = -2;
+	Q3 = -2;
+	V4 = -2;
+	Q4 = -2;
+	vv_lockout = -1;
 	/* TODO: set the context-free initial value of properties */
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -375,42 +303,11 @@ int inverter::init(OBJECT *parent)
 	static complex default_line123_voltage[3], default_line1_current[3];
 	static int default_meter_status;	//Not really a good place to do this, but keep consistent
 	int i;
-
 	
-	omega_nominal = f_nominal*2*PI;
-	
-	//Set the deltamode flag, if desired
-	if ((obj->flags & OF_DELTAMODE) == OF_DELTAMODE)
-	{
-		deltamode_inclusive = true;	//Set the flag and off we go
-	}
 	// find parent meter or triplex_meter, if not defined, use default voltages, and if
 	// the parent is not a meter throw an exception
 	if (parent!=NULL && gl_object_isa(parent,"meter"))
 	{
-
-		//If we were deltamode requesting, set the flag on the other side
-		if (deltamode_inclusive==true)
-		{
-			//Map the flag
-			pval = gl_get_property(parent,"Norton_dynamic");
-
-			//Check it
-			if ((pval==NULL) || (pval->ptype!=PT_bool))
-			{
-				GL_THROW("diesel_dg:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
-				/*  TROUBLESHOOT
-				While attempting to set up the deltamode interfaces and calculations with powerflow, the required interface could not be mapped.
-				Please check your GLM and try again.  If the error persists, please submit a trac ticket with your code.
-				*/
-			}
-
-			//Map to the intermediate
-			Norton_posting = (bool*)GETADDR(parent,pval);
-
-			//Set the flag
-			*Norton_posting = true;
-		}
 		// attach meter variables to each circuit
 		parent_string = "meter";
 		struct {
@@ -583,7 +480,7 @@ int inverter::init(OBJECT *parent)
 		*/
 	}
 
-	if (gen_mode_v == UNKNOWN)
+	if (gen_mode_v == UNKNOWN && inverter_type_v != FOUR_QUADRANT)
 	{
 		gl_warning("Inverter control mode is not specified! Using default: CONSTANT_PF");
 		gen_mode_v = (enumeration)CONSTANT_PF;
@@ -935,7 +832,7 @@ int inverter::init(OBJECT *parent)
 
 	//seting up defaults for multipoint efficiency
 	if(use_multipoint_efficiency == TRUE){
-		switch(inverter_manufacturer){//all manufacurer defaults use the CEC parameters
+		switch(inverter_manufacturer){//all manufacturer defaults use the CEC parameters
 			case NONE:
 				if(p_dco < 0){
 					gl_error("no maximum dc power was given for the inverter.");
@@ -1148,30 +1045,70 @@ int inverter::init(OBJECT *parent)
 		}
 	}
 	
-	///////////////////////////////////////////////////////////////////////////
-	// DELTA MODE
-	///////////////////////////////////////////////////////////////////////////
-		//See if we desire a deltamode update (module-level)
-	if (deltamode_inclusive)
-	{
-		//Check global, for giggles
-		if (enable_subsecond_models!=true)
-		{
-			gl_warning("diesel_dg:%s indicates it wants to run deltamode, but the module-level flag is not set!",obj->name?obj->name:"unnamed");
-			/*  TROUBLESHOOT
-			The diesel_dg object has the deltamode_inclusive flag set, but not the module-level enable_subsecond_models flag.  The generator
-			will not simulate any dynamics this way.
-			*/
+
+	if (four_quadrant_control_mode == FQM_VOLT_VAR) {
+		if (V1 == -2) {
+			V1 = 0.97;
 		}
-		else
-		{
-			gen_object_count++;	//Increment the counter
-			first_sync_delta_enabled = true;
+		if (V2 == -2) {
+			V2 = 0.99;
 		}
+		if (V3 == -2) {
+			V3 = 1.01;
+		}
+		if (V4 == -2) {
+			V4 = 1.03;
+		}
+		if (Q1 == -2) {
+			Q1 = 0.50;
+		}
+		if (Q2 == -2) {
+			Q2 = 0.0;
+		}
+		if (Q3 == -2) {
+			Q3 = 0.0;
+		}
+		if (Q4 == -2) {
+			Q4 = -0.50;
+		}
+		if (V1 > V2 || V2 > V3 || V3 > V4) {
+			gl_error("inverter::init(): The curve was not constructed properly. V1 <= V2 <= V3 <= V4 must be true.");
+			return 0;
+		}
+		if (Q1 < Q2 || Q2 < Q3 || Q3 < Q4) {
+			gl_error("inverter::init(): The curve was not constructed properly. Q1 >= Q2 >= Q3 >= Q4 must be true.");
+			return 0;
+		}
+		if (V_base == 0) {
+			gl_error("inverter::init(): The base voltage must be greater than 0.");
+			return 0;
+		}
+		if (V2 != V1) {
+			m12 = (Q2 - Q1) / (V2 - V1);
+		} else {
+			m12 = 0;
+		}
+		if (V3 != V2) {
+			m23 = (Q3 - Q2) / (V3 - V2);
+		} else {
+			m23 = 0;
+		}
+		if (V4 != V3) {
+			m34 = (Q4 - Q3) / (V4 - V3);
+		} else {
+			m34 = 0;
+		}
+		b12 = Q1 - (m12 * V1);
+		b23 = Q2 - (m23 * V2);
+		b34 = Q3 - (m34 * V3);
+
+		if (vv_lockout < 0.0) {
+			gl_warning("volt var control lockout is 0. Warning this may cause oscillating behavior.");
+			vv_lockout = 0;
+		}
+		allowed_vv_action = 0;
+		last_vv_check = 0;
 	}
-	omega_nominal = f_nominal*2*PI;
-	corr_derivs.x.theta_ref = omega_nominal;
-	VRMSLL_nominal = VRMSLG_nominal*sqrt(3.0);
 	VA_Out = complex(P_Out,Q_Out);
 	//I_In = complex((VA_Out.Mag())/V_In.Mag(),0.0);
 	P_Out_t0 = P_Out;
@@ -1321,10 +1258,21 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 					*/
 				}
 			}
-		}//End LOAD_FOLLOWING checks
-
-
-		if(four_quadrant_control_mode == FQM_GROUP_LF)
+		} //End LOAD_FOLLOWING checks
+		else if (four_quadrant_control_mode == FQM_VOLT_VAR)
+		{
+			if ((phases & 0x10) == 0x10)	//Triplex
+			{
+				*pPower -= last_power[3];	//Theoretically pPower is mapped to power_12, which already has the [2] offset applied
+			}
+			else	//Variation of three-phase
+			{
+				pPower[0] -= last_power[0];
+				pPower[1] -= last_power[1];
+				pPower[2] -= last_power[2];
+			}
+		}//End VOLT_VAR
+		else if(four_quadrant_control_mode == FQM_GROUP_LF)
 		{
 			if (t1 != t0)
 			{
@@ -1408,262 +1356,36 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 	//Assume always want TS_NEVER
 	tret_value = TS_NEVER;
 
+	if(gen_status_v == OFFLINE){
+		power_A = complex(0);
+		power_B = complex(0);
+		power_C = complex(0);
+		P_Out = 0;
+		Q_Out = 0;
+		VA_Out = complex(0);
+		if ((phases & 0x10) == 0x10) {
+			last_power[3] = -power_A;
+			*pPower += last_power[3];
+		} else {
+			p_in = 0;
+			if ((phases & 0x01) == 0x01) {
+				last_power[0] = -power_A;
+				pPower[0] += last_power[0];
+			}
+			if ((phases & 0x02) == 0x02) {
+				last_power[1] = -power_B;
+				pPower[1] += last_power[1];
+			}
+			if ((phases & 0x04) == 0x04) {
+				last_power[2] = -power_C;
+				pPower[2] += last_power[2];
+			}
+		}
+		return tret_value;
+	}
+
 	//Toggle the iteration device
 	IterationToggle = !IterationToggle;
-	
-	if (first_run == true)	//First run
-	{
-		//TODO: LOCKING!
-		if (deltamode_inclusive && enable_subsecond_models && (first_sync_delta_enabled))	//We want deltamode - see if it's populated yet
-		{
-			if (((gen_object_current == -1) || (delta_objects==NULL)) && (enable_subsecond_models == true))
-			{
-				//Allocate the deltamode object array
-				delta_objects = (OBJECT**)gl_malloc(gen_object_count*sizeof(OBJECT*));
-
-				//Make sure it worked
-				if (delta_objects == NULL)
-				{
-					GL_THROW("Failed to allocate deltamode objects array for generators module!");
-					/*  TROUBLESHOOT
-					While attempting to create a reference array for generator module deltamode-enabled
-					objects, an error was encountered.  Please try again.  If the error persists, please
-					submit your code and a bug report via the trac website.
-					*/
-				}
-
-				//Allocate the function reference list as well
-				delta_functions = (FUNCTIONADDR*)gl_malloc(gen_object_count*sizeof(FUNCTIONADDR));
-
-				//Make sure it worked
-				if (delta_functions == NULL)
-				{
-					GL_THROW("Failed to allocate deltamode objects function array for generators module!");
-					/*  TROUBLESHOOT
-					While attempting to create a reference array for generator module deltamode-enabled
-					objects, an error was encountered.  Please try again.  If the error persists, please
-					submit your code and a bug report via the trac website.
-					*/
-				}
-
-				//Allocate the function reference list for postupdate as well
-				post_delta_functions = (FUNCTIONADDR*)gl_malloc(gen_object_count*sizeof(FUNCTIONADDR));
-
-				//Make sure it worked
-				if (post_delta_functions == NULL)
-				{
-					GL_THROW("Failed to allocate deltamode objects function array for generators module!");
-					//Defined above
-				}
-
-				//Initialize index
-				gen_object_current = 0;
-			}
-
-			//Check limits of the array
-			if (gen_object_current>=gen_object_count)
-			{
-				GL_THROW("Too many objects tried to populate deltamode objects array in the generators module!");
-				/*  TROUBLESHOOT
-				While attempting to populate a reference array of deltamode-enabled objects for the generator
-				module, an attempt was made to write beyond the allocated array space.  Please try again.  If the
-				error persists, please submit a bug report and your code via the trac website.
-				*/
-			}
-
-			//Add us into the list
-			delta_objects[gen_object_current] = obj;
-
-			//Map up the function for interupdate
-			delta_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"interupdate_gen_object"));
-
-			//Make sure it worked
-			if (delta_functions[gen_object_current] == NULL)
-			{
-				GL_THROW("Failure to map deltamode function for device:%s",obj->name);
-				/*  TROUBLESHOOT
-				Attempts to map up the interupdate function of a specific device failed.  Please try again and ensure
-				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
-				trac website.
-				*/
-			}
-
-			//Map up the function for postupdate
-			post_delta_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"postupdate_gen_object"));
-
-			//Make sure it worked
-			if (post_delta_functions[gen_object_current] == NULL)
-			{
-				GL_THROW("Failure to map post-deltamode function for device:%s",obj->name);
-				/*  TROUBLESHOOT
-				Attempts to map up the postupdate function of a specific device failed.  Please try again and ensure
-				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
-				trac website.
-				*/
-			}
-
-			//Update pointer
-			gen_object_current++;
-
-			//See if we're attached to a node-esque object
-			if (obj->parent != NULL)
-			{
-				if (gl_object_isa(obj->parent,"meter","powerflow") || gl_object_isa(obj->parent,"load","powerflow") || gl_object_isa(obj->parent,"node","powerflow"))
-				{
-					//Check the nominal voltage
-					parent_voltage = get_double(obj->parent,"nominal_voltage");
-
-					if (parent_voltage == NULL)
-					{
-						GL_THROW("inverter:%s - unable to retrieve nominal_voltage from parent!",obj->name?obj->name:"unnamed");
-						/*  TROUBLESHOOT
-						While attempting to retrieve the nominal_voltage value of the parented node, something went wrong.  Please
-						try again.  If the error persists, please submit your code and a bug report via the trac website.
-						*/
-					}
-					else	//Found it
-					{
-						//Form a "deadband" - not sure how much it will like "exact" comparisons of doubles
-						VRMSLG_high_limit = VRMSLL_nominal/sqrt(3.0)*1.01;
-						VRMSLG_low_limit = VRMSLL_nominal/sqrt(3.0)*0.99;
-
-						//Compare it
-						if ((*parent_voltage > VRMSLG_high_limit) || (*parent_voltage < VRMSLG_low_limit))
-						{
-							GL_THROW("inverter:%s - nominal voltage mismatch!",obj->name?obj->name:"unnamed");
-							/*  TROUBLESHOOT
-							The Rated_V value for the inverter object (line-line value) is not within 1% of the nominal
-							wye-voltage of the parent meter.  Please fix this and try again.
-							*/
-						}
-					}//End found point else
-
-					//Map the bus mappings
-					test_fxn = (FUNCTIONADDR)(gl_get_function(obj->parent,"delta_linkage_node"));
-
-					//See if it was located
-					if (test_fxn == NULL)
-					{
-						GL_THROW("inverter:%s - failed to map bus admittance matrix from node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
-						/*  TROUBLESHOOT
-						While attempting to map the location of a bus interface point for the deltamode capabilities, an error was encountered.
-						Please try again.  If the error persists, please submit your code and a bug report via the trac website.
-						*/
-					}
-
-					//Map the value - bus admittance is 0
-					y_bus = ((complex * (*)(OBJECT *, unsigned char))(*test_fxn))(obj->parent,0);
-
-					//See if it worked (should return NULL if the object wasn't "delta-compliant"
-					if (y_bus==NULL)
-					{
-						GL_THROW("inverter:%s - invalid reference passed from node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
-						/*  TROUBLESHOOT
-						While attempting to map a deltamode interface variable, an error occurred.  This could be due to the matrix not being
-						initialized correctly, or because the attached node is not flagged for deltamode.
-						*/
-					}
-
-					//Copy the contents in
-					for (jindex=0; jindex<3; jindex++)
-					{
-						if (coupling_inductance_type == COUPLING_L)
-						{
-							y_bus[3*jindex+jindex]+=complex(1,0)/(complex(0, coupling_L1*omega_nominal));
-						}
-						else 
-						{
-							GL_THROW("inverter:%s - only simple series coupling inductance supported at this time.",(obj->name?obj->name:"unnamed"));
-						}
-					}
-
-					//Map the value - PGenerated is 1
-					PGenerated = ((complex * (*)(OBJECT *, unsigned char))(*test_fxn))(obj->parent,1);
-
-					//See if it worked (should return NULL if the object wasn't "delta-compliant"
-					if (PGenerated==NULL)
-					{
-						GL_THROW("inverter:%s - invalid reference passed from node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
-						//Defined above
-					}
-
-					//Map current "injection" - direct generator current
-					IGenerated = ((complex * (*)(OBJECT *, unsigned char))(*test_fxn))(obj->parent,2);
-
-					//See if it worked (should return NULL if the object wasn't "delta-compliant"
-					if (IGenerated==NULL)
-					{
-						GL_THROW("inverter:%s - invalid reference passed from node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
-						//Defined above
-					}
-
-					//Map the value - full bus admittance is 3
-					full_y_bus = ((complex * (*)(OBJECT *, unsigned char))(*test_fxn))(obj->parent,3);
-
-					//See if it worked (should return NULL if the object wasn't "delta-compliant"
-					if (full_y_bus==NULL)
-					{
-						GL_THROW("inverter:%s - invalid reference passed from node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
-						//Defined above
-					}
-
-					//Map the Frequency-power weighting value
-					FreqPower = ((complex * (*)(OBJECT *, unsigned char))(*test_fxn))(obj->parent,4);
-
-					//See if it worked (should return NULL if the object wasn't "delta-compliant"
-					if (FreqPower==NULL)
-					{
-						GL_THROW("inverter:%s - invalid reference passed from node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
-						//Defined above
-					}
-
-					//Map the total power weighting value
-					TotalPower = ((complex * (*)(OBJECT *, unsigned char))(*test_fxn))(obj->parent,5);
-
-					//See if it worked (should return NULL if the object wasn't "delta-compliant"
-					if (TotalPower==NULL)
-					{
-						GL_THROW("inverter:%s - invalid reference passed from node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
-						//Defined above
-					}
-
-					//Map up requisite variables we missed earlier?
-
-				*PGenerated = complex(-P_Out, -Q_Out);
-
-				}//End parent is a node object
-				else	//Nope, so who knows what is going on - better fail, just to be safe
-				{
-					GL_THROW("inverter:%s - invalid parent object:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
-					/*  TROUBLESHOOT
-					At this time, for proper dynamic functionality a inverter object must be parented to a three-phase powerflow node
-					object (node, load, meter).  The parent object is not one of those objects.
-					*/
-				}
-			}//End non-null parent
-			first_sync_delta_enabled = false;
-			//Force us to reiterate one
-			tret_value = t1;
-		}//End deltamode specials - first pass
-		else if (deltamode_inclusive && enable_subsecond_models && (first_sync_delta_enabled == false)) 	//Still "first run", but at least one powerflow has completed (call init dyn now)
-		{
-			ret_state = init_dynamics(&curr_state,&corr_derivs);
-
-			if (ret_state == FAILED)
-			{
-				GL_THROW("inverter:%s - unsuccessful call to dynamics initialization",(obj->name?obj->name:"unnamed"));
-				/*  TROUBLESHOOT
-				While attempting to call the dynamics initialization function of the inverter object, a failure
-				state was encountered.  See other error messages for further details.
-				*/
-			}
-
-
-			//Deflag us
-			first_run = false;
-		}//End "first run" paired
-		//Default else - no deltamode stuff
-	}//End first timestep
 	
 	if (*pMeterStatus==1)	//Make sure the meter is in service
 	{
@@ -2158,188 +1880,239 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 			double VA_Efficiency, temp_PF, temp_QVal;
 			complex temp_VA;
 			complex battery_power_out = complex(0,0);
-			
-			//Compute power in - supposedly DC, but since it's complex, we'll be proper (other models may need fixing)
-			VA_In = V_In * ~ I_In;
+			if (four_quadrant_control_mode != FQM_VOLT_VAR) {
+				//Compute power in - supposedly DC, but since it's complex, we'll be proper (other models may need fixing)
+				VA_In = V_In * ~ I_In;
 
-			//Compute the power contribution of the battery object
-			if((phases & 0x10) == 0x10){ // split phase
-				battery_power_out = power_A;
-			} else { // three phase
-				if((phases & 0x01) == 0x01){ // has phase A
-					battery_power_out += power_A;
+				//Compute the power contribution of the battery object
+				if((phases & 0x10) == 0x10){ // split phase
+					battery_power_out = power_A;
+				} else { // three phase
+					if((phases & 0x01) == 0x01){ // has phase A
+						battery_power_out += power_A;
+					}
+					if((phases & 0x02) == 0x02){ // hase phase B
+						battery_power_out += power_B;
+					}
+					if((phases & 0x04) == 0x04){ // has phase C
+						battery_power_out += power_C;
+					}
 				}
-				if((phases & 0x02) == 0x02){ // has phase B
-					battery_power_out += power_B;
-				}
-				if((phases & 0x04) == 0x04){ // has phase C
-					battery_power_out += power_C;
-				}
-			}
-			//Determine how to efficiency weight it
-			if(use_multipoint_efficiency == false)
-			{
-				//Normal scaling
-				VA_Efficiency = VA_In.Re() * efficiency * internal_losses * frequency_losses;
-			}
-			else
-			{
-				//See if above minimum DC power input
-				if(VA_In.Mag() <= p_so)
+				//Determine how to efficiency weight it
+				if(use_multipoint_efficiency == false)
 				{
-					VA_Efficiency = 0.0;	//Nope, no output
+					//Normal scaling
+					VA_Efficiency = VA_In.Re() * efficiency * internal_losses * frequency_losses;
 				}
-				else	//Yes, apply effiency change
+				else
 				{
-					//Make sure voltage isn't too low
-					if(V_In.Mag() > v_dco)
+					//See if above minimum DC power input
+					if(VA_In.Mag() <= p_so)
 					{
-						gl_warning("The dc voltage is greater than the specified maximum for the inverter. Efficiency model may be inaccurate.");
-						/*  TROUBLESHOOT
-						The DC voltage at the input to the inverter is less than the maximum voltage supported by the inverter.  As a result, the
-						multipoint efficiency model may not provide a proper result.
-						*/
+						VA_Efficiency = 0.0;	//Nope, no output
 					}
+					else	//Yes, apply effiency change
+					{
+						//Make sure voltage isn't too low
+						if(V_In.Mag() > v_dco)
+						{
+							gl_warning("The dc voltage is greater than the specified maximum for the inverter. Efficiency model may be inaccurate.");
+							/*  TROUBLESHOOT
+							The DC voltage at the input to the inverter is less than the maximum voltage supported by the inverter.  As a result, the
+							multipoint efficiency model may not provide a proper result.
+							*/
+						}
 
-					//Compute coefficients for multipoint efficiency
-					C1 = p_dco*(1+c_1*(V_In.Re()-v_dco));
-					C2 = p_so*(1+c_2*(V_In.Re()-v_dco));
-					C3 = c_o*(1+c_3*(V_In.Re()-v_dco));
+						//Compute coefficients for multipoint efficiency
+						C1 = p_dco*(1+c_1*(V_In.Re()-v_dco));
+						C2 = p_so*(1+c_2*(V_In.Re()-v_dco));
+						C3 = c_o*(1+c_3*(V_In.Re()-v_dco));
 
-					//Apply this to the output
-					VA_Efficiency = (((p_max/(C1-C2))-C3*(C1-C2))*(VA_In.Re()-C2)+C3*(VA_In.Re()-C2)*(VA_In.Re()-C2))*internal_losses*frequency_losses;
+						//Apply this to the output
+						VA_Efficiency = (((p_max/(C1-C2))-C3*(C1-C2))*(VA_In.Re()-C2)+C3*(VA_In.Re()-C2)*(VA_In.Re()-C2))*internal_losses*frequency_losses;
+					}
+				}
+				VA_Efficiency += battery_power_out.Mag();
+			} else {
+				//Compute power in - supposedly DC, but since it's complex, we'll be proper (other models may need fixing)
+				VA_In = V_In * ~ I_In;
+				//Determine how to efficiency weight it
+				if(use_multipoint_efficiency == false)
+				{
+					//Normal scaling
+					VA_Efficiency = VA_In.Re() * efficiency * internal_losses * frequency_losses;
+				}
+				else
+				{
+					//See if above minimum DC power input
+					if(VA_In.Mag() <= p_so)
+					{
+						VA_Efficiency = 0.0;	//Nope, no output
+					}
+					else	//Yes, apply effiency change
+					{
+						//Make sure voltage isn't too low
+						if(V_In.Mag() > v_dco)
+						{
+							gl_warning("The dc voltage is greater than the specified maximum for the inverter. Efficiency model may be inaccurate.");
+							/*  TROUBLESHOOT
+							The DC voltage at the input to the inverter is less than the maximum voltage supported by the inverter.  As a result, the
+							multipoint efficiency model may not provide a proper result.
+							*/
+						}
+
+						//Compute coefficients for multipoint efficiency
+						C1 = p_dco*(1+c_1*(V_In.Re()-v_dco));
+						C2 = p_so*(1+c_2*(V_In.Re()-v_dco));
+						C3 = c_o*(1+c_3*(V_In.Re()-v_dco));
+
+						//Apply this to the output
+						VA_Efficiency = (((p_max/(C1-C2))-C3*(C1-C2))*(VA_In.Re()-C2)+C3*(VA_In.Re()-C2)*(VA_In.Re()-C2))*internal_losses*frequency_losses;
+					}
+				}
+				if ((phases & 0x10) == 0x10){
+					power_A.SetReal(VA_Efficiency);
+				} else {
+					if ((phases & 0x01) == 0x01) {
+						power_A.SetReal(VA_Efficiency/number_of_phases_out);
+					}
+					if ((phases & 0x02) == 0x02) {
+						power_B.SetReal(VA_Efficiency/number_of_phases_out);
+					}
+					if ((phases & 0x04) == 0x04) {
+						power_C.SetReal(VA_Efficiency/number_of_phases_out);
+					}
 				}
 			}
-			VA_Efficiency += battery_power_out.Mag();
-			if (deltamode_inclusive != true)
+
+			//Determine 4 quadrant outputs
+			if(four_quadrant_control_mode == FQM_CONSTANT_PF)	//Power factor mode
 			{
-					//Determine 4 quadrant outputs
-					if(four_quadrant_control_mode == FQM_CONSTANT_PF)	//Power factor mode
+				if(power_factor != 0.0)	//Not purely imaginary
+				{
+					if (VA_In<0.0)	//Discharge at input, so must be "load"
 					{
-						if(power_factor != 0.0)	//Not purely imaginary
-						{
-							if (VA_In<0.0)	//Discharge at input, so must be "load"
-							{
-								//Total power output is the magnitude
-								VA_Out.SetReal(VA_Efficiency*-1.0);
-							}
-							else if (VA_In>0.0)	//Positive input, so must be generator
-							{
-								//Total power output is the magnitude
-								VA_Out.SetReal(VA_Efficiency);
-							}
-							else
-							{
-								VA_Out.SetReal(0.0);
-							}
-
-							//Apply power factor sign properly - + sign is lagging in, which is proper here
-							//Treat like a normal load right now
-							if (power_factor < 0)
-							{
-								VA_Out.SetImag((VA_Efficiency/sqrt(power_factor*power_factor))*sqrt(1.0-(power_factor*power_factor)));
-							}
-							else	//Must be positive
-							{
-								VA_Out.SetImag((VA_Efficiency/sqrt(power_factor*power_factor))*-1.0*sqrt(1.0-(power_factor*power_factor)));
-							}
-						}
-						else	//Purely imaginary value
-						{
-							VA_Out = complex(0.0,VA_Efficiency);
-						}
+						//Total power output is the magnitude
+						VA_Out.SetReal(VA_Efficiency*-1.0);
 					}
-					else if (four_quadrant_control_mode == FQM_CONSTANT_PQ)
+					else if (VA_In>0.0)	//Positive input, so must be generator
 					{
-						//Compute desired output - sign convention appears to be backwards
-						temp_VA = complex(P_Out,Q_Out);
-
-						
-						//Ensuring battery has capacity to charge or discharge as needed.
-						if ((b_soc >= 1.0) && (temp_VA.Re() < 0) && (b_soc != -1))	//Battery full and positive influx of real power
-						{
-							gl_warning("inverter:%s - battery full - no charging allowed",obj->name);
-							temp_VA.SetReal(0.0);	//Set to zero - reactive considerations may change this
-						}
-						else if ((b_soc <= soc_reserve) && (temp_VA.Re() > 0) && (b_soc != -1))	//Battery "empty" and attempting to extract real power
-						{
-							gl_warning("inverter:%s - battery at or below the SOC reserve - no discharging allowed",obj->name);
-							temp_VA.SetReal(0.0);	//Set output to zero - again, reactive considerations may change this
-						}
-
-						//Ensuring power rating of inverter is not exceeded.
-						if (fabs(temp_VA.Mag()) > p_max){ //Requested power output (P_Out, Q_Out) is greater than inverter rating
-							if (p_max > fabs(temp_VA.Re())) //Can we reduce the reactive power output and stay within the inverter rating?
-							{
-								//Determine the Q we can provide
-								temp_QVal = sqrt((p_max*p_max) - (temp_VA.Re()*temp_VA.Re()));
-
-								//Assign to output, negating signs as necessary (temp_VA already negated)
-								if (temp_VA.Im() < 0.0)	//Negative Q dispatch
-								{
-									VA_Out = complex(temp_VA.Re(),-temp_QVal);
-								}
-								else	//Positive Q dispatch
-								{
-									VA_Out = complex(temp_VA.Re(),temp_QVal);
-								}
-							}
-							else	//Inverter rated power is equal to or smaller than real power desired, give it all we can
-							{
-								//Maintain desired sign convention
-								if (temp_VA.Re() < 0.0)
-								{
-									VA_Out = complex(-p_max,0.0);
-								}
-								else	//Positive
-								{
-									VA_Out = complex(p_max,0.0);
-								}
-							}
-						}
-						else	//Doesn't exceed, assign it
-						{
-							VA_Out = temp_VA;
-						}
-
-
-						//Update values to represent what is being pulled (battery uses for SOC updates) - assumes only storage
-						//p_in used by battery - appears reversed to VA_Out
-						if (VA_Out.Re() > 0.0)	//Discharging
-						{
-							p_in = VA_Out.Re()/inv_eta;
-						}
-						else if (VA_Out.Re() == 0.0)	//Idle
-						{
-							p_in = 0.0;
-						}
-						else	//Must be positive, so charging
-						{
-							p_in = VA_Out.Re()*inv_eta;
-						}
+						//Total power output is the magnitude
+						VA_Out.SetReal(VA_Efficiency);
 					}
-					else if (four_quadrant_control_mode == FQM_LOAD_FOLLOWING)
+					else
 					{
-						VA_Out = -lf_dispatch_power;	//Place the expected dispatch power into the output
-					}
-					else if (four_quadrant_control_mode == FQM_GROUP_LF)
-					{
-						VA_Out = -lf_dispatch_power;	//Place the expected dispatch power into the output
+						VA_Out.SetReal(0.0);
 					}
 
-					//Execution of power-factor regulation output of inverter that will get included in power-flow solution
-					if (pf_reg == INCLUDED)
+					//Apply power factor sign properly - + sign is lagging in, which is proper here
+					//Treat like a normal load right now
+					if (power_factor < 0)
 					{
-						VA_Out.Im() = -pf_reg_dispatch_VAR; //Flipping from load to generator perspective.
+						VA_Out.SetImag((VA_Efficiency/sqrt(power_factor*power_factor))*sqrt(1.0-(power_factor*power_factor)));
 					}
+					else	//Must be positive
+					{
+						VA_Out.SetImag((VA_Efficiency/sqrt(power_factor*power_factor))*-1.0*sqrt(1.0-(power_factor*power_factor)));
+					}
+				}
+				else	//Purely imaginary value
+				{
+					VA_Out = complex(0.0,VA_Efficiency);
+				}
+			}
+			else if (four_quadrant_control_mode == FQM_CONSTANT_PQ)
+			{
+				//Compute desired output - sign convention appears to be backwards
+				temp_VA = complex(P_Out,Q_Out);
+
 				
-				//Not implemented and removed from above, so no check needed
-				//else if(four_quadrant_control_mode == FQM_CONSTANT_V){
-				//	GL_THROW("CONSTANT_V mode is not supported at this time.");
-				//} else if(four_quadrant_control_mode == FQM_VOLT_VAR){
-				//	GL_THROW("VOLT_VAR mode is not supported at this time.");
+				//Ensuring battery has capacity to charge or discharge as needed.
+				if ((b_soc >= 1.0) && (temp_VA.Re() < 0) && (b_soc != -1))	//Battery full and positive influx of real power
+				{
+					gl_warning("inverter:%s - battery full - no charging allowed",obj->name);
+					temp_VA.SetReal(0.0);	//Set to zero - reactive considerations may change this
+				}
+				else if ((b_soc <= soc_reserve) && (temp_VA.Re() > 0) && (b_soc != -1))	//Battery "empty" and attempting to extract real power
+				{
+					gl_warning("inverter:%s - battery at or below the SOC reserve - no discharging allowed",obj->name);
+					temp_VA.SetReal(0.0);	//Set output to zero - again, reactive considerations may change this
+				}
+
+				//Ensuring power rating of inverter is not exceeded.
+				if (fabs(temp_VA.Mag()) > p_max){ //Requested power output (P_Out, Q_Out) is greater than inverter rating
+					if (p_max > fabs(temp_VA.Re())) //Can we reduce the reactive power output and stay within the inverter rating?
+					{
+						//Determine the Q we can provide
+						temp_QVal = sqrt((p_max*p_max) - (temp_VA.Re()*temp_VA.Re()));
+
+						//Assign to output, negating signs as necessary (temp_VA already negated)
+						if (temp_VA.Im() < 0.0)	//Negative Q dispatch
+						{
+							VA_Out = complex(temp_VA.Re(),-temp_QVal);
+						}
+						else	//Positive Q dispatch
+						{
+							VA_Out = complex(temp_VA.Re(),temp_QVal);
+						}
+					}
+					else	//Inverter rated power is equal to or smaller than real power desired, give it all we can
+					{
+						//Maintain desired sign convention
+						if (temp_VA.Re() < 0.0)
+						{
+							VA_Out = complex(-p_max,0.0);
+						}
+						else	//Positive
+						{
+							VA_Out = complex(p_max,0.0);
+						}
+					}
+				}
+				else	//Doesn't exceed, assign it
+				{
+					VA_Out = temp_VA;
+				}
+
+
+				//Update values to represent what is being pulled (battery uses for SOC updates) - assumes only storage
+				//p_in used by battery - appears reversed to VA_Out
+				if (VA_Out.Re() > 0.0)	//Discharging
+				{
+					p_in = VA_Out.Re()/inv_eta;
+				}
+				else if (VA_Out.Re() == 0.0)	//Idle
+				{
+					p_in = 0.0;
+				}
+				else	//Must be positive, so charging
+				{
+					p_in = VA_Out.Re()*inv_eta;
+				}
 				//}
-				
+			}
+			else if (four_quadrant_control_mode == FQM_LOAD_FOLLOWING)
+			{
+				VA_Out = -lf_dispatch_power;	//Place the expected dispatch power into the output
+			}
+			else if (four_quadrant_control_mode == FQM_GROUP_LF)
+			{
+				VA_Out = -lf_dispatch_power;	//Place the expected dispatch power into the output
+			}
+
+			//Execution of power-factor regulation output of inverter that will get included in power-flow solution
+			if (pf_reg == INCLUDED)
+			{
+				VA_Out.Im() = -pf_reg_dispatch_VAR; //Flipping from load to generator perspective.
+			}
+			
+			//Not implemented and removed from above, so no check needed
+			//else if(four_quadrant_control_mode == FQM_CONSTANT_V){
+			//	GL_THROW("CONSTANT_V mode is not supported at this time.");
+			//} else if(four_quadrant_control_mode == FQM_VOLT_VAR){
+			//	GL_THROW("VOLT_VAR mode is not supported at this time.");
+			//}
+			if (four_quadrant_control_mode != FQM_VOLT_VAR){
 				//check to see if VA_Out is within rated absolute power rating
 				if(VA_Out.Mag() > p_max)
 				{
@@ -2445,13 +2218,13 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						last_power[0] = temp_VA;	//Store last power
 						pPower[0] += temp_VA;		//Post the current value
 					}
-					
+
 					if ( (phases & 0x02) == 0x02 ) // has phase B
 					{
 						last_power[1] = temp_VA;	//Store last power
 						pPower[1] += temp_VA;		//Post current value
 					}
-					
+
 					if ( (phases & 0x04) == 0x04 ) // has phase C
 					{
 						last_power[2] = temp_VA;	//Store last power
@@ -2467,137 +2240,79 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						}*/
 					}
 				}//End three-phase variant
-			}
-			else //delta_mode_inclusive == true
-			{
-				if (four_quadrant_control_mode == FQM_CONSTANT_PQ)
-				{
-					
-					//Compute desired output - sign convention appears to be backwards
-					temp_VA = complex(P_Out,Q_Out);
-
-					//See if we exceed input power
-					if (temp_VA.Mag() > VA_Efficiency)
-					{
-						//Over-sized - previous implementation gave preference to real power
-						if (VA_Efficiency > fabs(temp_VA.Re()))	//More "available" power than input
-						{
-							//Determine the Q we can provide
-							temp_QVal = sqrt((VA_Efficiency*VA_Efficiency) - (temp_VA.Re()*temp_VA.Re()));
-
-							//Assign to output, negating signs as necessary (temp_VA already negated)
-							if (temp_VA.Im() < 0.0)	//Negative Q dispatch
-							{
-								VA_Out = complex(temp_VA.Re(),-temp_QVal);
-							}
-							else	//Positive Q dispatch
-							{
-								VA_Out = complex(temp_VA.Re(),temp_QVal);
-							}
-						}
-						else	//Equal to or smaller than real power desired, give it all we go
-						{
-							//Maintain desired sign convention
-							if (temp_VA.Re() < 0.0)
-							{
-								VA_Out = complex(-VA_Efficiency,0.0);
-							}
-							else	//Positive
-							{
-								VA_Out = complex(VA_Efficiency,0.0);
-							}
+			} else { // Volt Var Control mode
+				if (power_A.Mag() > p_rated ) {
+					if (power_A.Re() > p_rated) {
+						power_A.SetReal(p_rated);
+						power_A.SetImag(0);
+					} else if (power_A.Re() < -p_rated) {
+						power_A.SetReal(-p_rated);
+						power_A.SetImag(0);
+					} else if (power_A.Re() < p_rated && power_A.Re() > -p_rated) {
+						double q_max = 0;
+						q_max = sqrt((p_rated * p_rated) - (power_A.Re() * power_A.Re()));
+						if (power_A.Im() > q_max) {
+							power_A.SetImag(q_max);
+						} else {
+							power_A.SetImag(-q_max);
 						}
 					}
-					else	//Doesn't exceed, assign it
-					{
-						//Inverter rating clipping will occur below
-						VA_Out = temp_VA;
-					}
-					VA_Out = VA_Out/number_of_phases_out;
-
-					//last_power[0] = VA_Out/number_of_phases_out;
-					//last_power[1] = VA_Out/number_of_phases_out;
-					//last_power[2] = VA_Out/number_of_phases_out;
-									
-
-					if (IterationToggle == false)
-					{
-						if (prev_time != t1)
-						{
-							//See if we just exited deltamode
-							if (deltamode_endtime != TS_NEVER)
-							{
-								prev_time = deltamode_endtime;
-								first_run_after_delta = false;	//Deflag us
-							}
-							//Get time difference
-							tdiff = (double)(t1-prev_time);
-
-							//Calculate rotor angle update
-							ang_diff = corr_derivs.x.theta_rel*tdiff;
-							curr_state.x.theta_ref += omega_nominal*tdiff;
-							curr_state.x.theta_rel += ang_diff;
-
-							//Figure out the rotation to the existing values
-							rotate_value = complex_exp(ang_diff);
-
-							//Apply to voltage - See if this breaks stuff
-							pCircuit_V[0] = pCircuit_V[0]*rotate_value;
-							pCircuit_V[1] = pCircuit_V[1]*rotate_value;
-							pCircuit_V[2] = pCircuit_V[2]*rotate_value;
-
-							//Rotate the current injection too, otherwise it may "undo" this
-							IGenerated[0] = IGenerated[0]*rotate_value;
-							IGenerated[1] = IGenerated[1]*rotate_value;
-							IGenerated[2] = IGenerated[2]*rotate_value;
+				}
+				if (power_B.Mag() > p_rated ) {
+					if (power_B.Re() > p_rated) {
+						power_B.SetReal(p_rated);
+						power_B.SetImag(0);
+					} else if (power_B.Re() < -p_rated) {
+						power_B.SetReal(-p_rated);
+						power_B.SetImag(0);
+					} else if (power_B.Re() < p_rated && power_B.Re() > -p_rated) {
+						double q_max = 0;
+						q_max = sqrt((p_rated * p_rated) - (power_B.Re() * power_B.Re()));
+						if (power_B.Im() > q_max) {
+							power_B.SetImag(q_max);
+						} else {
+							power_B.SetImag(-q_max);
 						}
-							//Update time
-							prev_time = t1;
-
-							//Force us to reiterate too
-							tret_value = t1;
-						
 					}
-					else if (IterationToggle == true)	
-					{
-						//Update global, if necessary - by true, everyone should be done
-						if ((deltamode_endtime != TS_NEVER) && (first_run_after_delta==false))
-						{
-							deltamode_endtime = TS_NEVER;
+				}
+				if (power_C.Mag() > p_rated ) {
+					if (power_C.Re() > p_rated) {
+						power_C.SetReal(p_rated);
+						power_C.SetImag(0);
+					} else if (power_C.Re() < -p_rated) {
+						power_C.SetReal(-p_rated);
+						power_C.SetImag(0);
+					} else if (power_C.Re() < p_rated && power_C.Re() > -p_rated) {
+						double q_max = 0;
+						q_max = sqrt((p_rated * p_rated) - (power_C.Re() * power_C.Re()));
+						if (power_C.Im() > q_max) {
+							power_C.SetImag(q_max);
+						} else {
+							power_C.SetImag(-q_max);
 						}
-	
-						//Here this is the actual iO
-						calculated_iO[0] = IGenerated[0] - pCircuit_V[0]*complex(1,0)/complex(0, coupling_L1*omega_nominal);
-						calculated_iO[1] = IGenerated[1] - pCircuit_V[1]*complex(1,0)/complex(0, coupling_L1*omega_nominal);
-						calculated_iO[2] = IGenerated[2] - pCircuit_V[2]*complex(1,0)/complex(0, coupling_L1*omega_nominal);
-
-						temp_VA = pCircuit_V[0]*~calculated_iO[0] + pCircuit_V[1]*~calculated_iO[1] + pCircuit_V[2]*~calculated_iO[2];
-						
-						if ((temp_VA.Re()/3.0<.999*VA_Out.Re())||(temp_VA.Re()/3.0>1.001*VA_Out.Re())||(temp_VA.Im()/3.0<.999*VA_Out.Im())||(temp_VA.Im()/3.0>1.001*VA_Out.Im()))
-						{
-							//Here this is the iO needed to achieve desired P & Q
-							calculated_iO[0] = ~(VA_Out/pCircuit_V[0]);
-							calculated_iO[1] = ~(VA_Out/pCircuit_V[1]);
-							calculated_iO[2] = ~(VA_Out/pCircuit_V[2]);
-
-
-
-							//Apply and see what happens
-							IGenerated[0] =  calculated_iO[0] + pCircuit_V[0]*complex(1,0)/complex(0, coupling_L1*omega_nominal);
-							IGenerated[1] =  calculated_iO[1] + pCircuit_V[1]*complex(1,0)/complex(0, coupling_L1*omega_nominal);
-							IGenerated[2] =  calculated_iO[2] + pCircuit_V[2]*complex(1,0)/complex(0, coupling_L1*omega_nominal);
-							
-
-							//curr_state.x.theta_rel = 
-
-							//Keep us here
-							tret_value = t1;
-						}						
 					}
-					//Defaulted else - false pass, but not first
-			
-					//Nothing else in here right now....all handled internal to powerflow
-	
+				}
+				if ((phases & 0x10) == 0x10) {
+					p_in = power_A.Re() / inv_eta;
+					last_power[3] = -power_A;
+					*pPower += last_power[3];
+				} else {
+					p_in = 0;
+					if ((phases & 0x01) == 0x01) {
+						p_in += power_A.Re()/inv_eta;
+						last_power[0] = -power_A;
+						pPower[0] += last_power[0];
+					}
+					if ((phases & 0x02) == 0x02) {
+						p_in += power_B.Re()/inv_eta;
+						last_power[1] = -power_B;
+						pPower[1] += last_power[1];
+					}
+					if ((phases & 0x04) == 0x04) {
+						p_in += power_C.Re()/inv_eta;
+						last_power[2] = -power_C;
+						pPower[2] += last_power[2];
+					}
 				}
 			}
 			//Negate VA_Out, so it matches sign ideals
@@ -2665,7 +2380,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	TIMESTAMP t2 = TS_NEVER;		//By default, we're done forever!
 	LOAD_FOLLOW_STATUS new_lf_status;
 	PF_REG_STATUS new_pf_reg_status;
-	double new_lf_dispatch_power, curr_power_val, diff_power_val;
+	double new_lf_dispatch_power, curr_power_val, diff_power_val;				
 	double new_pf_reg_distpatch_VAR, curr_real_power_val, curr_reactive_power_val, curr_pf, available_VA, new_Q_out, Q_out, Q_required, Q_available, Q_load;
 	double scaling_factor, Q_target;
 
@@ -3097,6 +2812,82 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 		//Default else, do nothing
 	}// End FQM_GROUP_LF
+	else if ((inverter_type_v == FOUR_QUADRANT) && (four_quadrant_control_mode == FQM_VOLT_VAR))
+	{
+		if (t1 >= allowed_vv_action && (t1 > last_vv_check)) {
+			vv_operation = false;
+			last_vv_check = t1;
+			if ((phases & 0x10) == 0x10) {
+				if((pCircuit_V[0].Mag() / V_base) <= V1) {
+					power_A.SetImag(Q1 * p_rated);
+				} else if ((pCircuit_V[0].Mag() / V_base) <= V2 && V1 < (pCircuit_V[0].Mag() / V_base)) {
+					power_A.SetImag(getVar((pCircuit_V[0].Mag() / V_base), m12, b12) * p_rated);
+				} else if ((pCircuit_V[0].Mag() / V_base) <= V3 && V2 < (pCircuit_V[0].Mag() / V_base)) {
+					power_A.SetImag(getVar((pCircuit_V[0].Mag() / V_base), m23, b23) * p_rated);
+				} else if ((pCircuit_V[0].Mag() / V_base) <= V4 && V3 < (pCircuit_V[0].Mag() / V_base)) {
+					power_A.SetImag(getVar((pCircuit_V[0].Mag() / V_base), m34, b34) * p_rated);
+				} else if (V4 < (pCircuit_V[0].Mag() / V_base)) {
+					power_A.SetImag(Q4 * p_rated);
+				}
+				if (last_power->Im() != power_A.Im()) {
+					vv_operation = true;
+				}
+			} else {
+				if ((phases & 0x01) == 0x01) {
+					if((pCircuit_V[0].Mag() / V_base) <= V1) {
+						power_A.SetImag(Q1 * p_rated);
+					} else if ((pCircuit_V[0].Mag() / V_base) <= V2 && V1 < (pCircuit_V[0].Mag() / V_base)) {
+						power_A.SetImag(getVar((pCircuit_V[0].Mag() / V_base), m12, b12) * p_rated);
+					} else if ((pCircuit_V[0].Mag() / V_base) <= V3 && V2 < (pCircuit_V[0].Mag() / V_base)) {
+						power_A.SetImag(getVar((pCircuit_V[0].Mag() / V_base), m23, b23) * p_rated);
+					} else if ((pCircuit_V[0].Mag() / V_base) <= V4 && V3 < (pCircuit_V[0].Mag() / V_base)) {
+						power_A.SetImag(getVar((pCircuit_V[0].Mag() / V_base), m34, b34) * p_rated);
+					} else if (V4 < (pCircuit_V[0].Mag() / V_base)) {
+						power_A.SetImag(Q4 * p_rated);
+					}
+					if (last_power[0].Im() != power_A.Im()) {
+						vv_operation = true;
+					}
+				}
+				if ((phases & 0x02) == 0x02) {
+					if((pCircuit_V[1].Mag() / V_base) <= V1) {
+						power_B.SetImag(Q1 * p_rated);
+					} else if ((pCircuit_V[1].Mag() / V_base) <= V2 && V1 < (pCircuit_V[1].Mag() / V_base)) {
+						power_B.SetImag(getVar((pCircuit_V[1].Mag() / V_base), m12, b12) * p_rated);
+					} else if ((pCircuit_V[1].Mag() / V_base) <= V3 && V2 < (pCircuit_V[1].Mag() / V_base)) {
+						power_B.SetImag(getVar((pCircuit_V[1].Mag() / V_base), m23, b23) * p_rated);
+					} else if ((pCircuit_V[1].Mag() / V_base) <= V4 && V3 < (pCircuit_V[1].Mag() / V_base)) {
+						power_B.SetImag(getVar((pCircuit_V[1].Mag() / V_base), m34, b34) * p_rated);
+					} else if (V4 < (pCircuit_V[1].Mag() / V_base)) {
+						power_B.SetImag(Q4 * p_rated);
+					}
+					if (last_power[1].Im() != power_B.Im()) {
+						vv_operation = true;
+					}
+				}
+				if ((phases & 0x04) == 0x04) {
+					if((pCircuit_V[2].Mag() / V_base) <= V1) {
+						power_C.SetImag(Q1 * p_rated);
+					} else if ((pCircuit_V[2].Mag() / V_base) <= V2 && V1 < (pCircuit_V[2].Mag() / V_base)) {
+						power_C.SetImag(getVar((pCircuit_V[2].Mag() / V_base), m12, b12) * p_rated);
+					} else if ((pCircuit_V[2].Mag() / V_base) <= V3 && V2 < (pCircuit_V[2].Mag() / V_base)) {
+						power_C.SetImag(getVar((pCircuit_V[2].Mag() / V_base), m23, b23) * p_rated);
+					} else if ((pCircuit_V[2].Mag() / V_base) <= V4 && V3 < (pCircuit_V[2].Mag() / V_base)) {
+						power_C.SetImag(getVar((pCircuit_V[2].Mag() / V_base), m34, b34) * p_rated);
+					} else if (V4 < (pCircuit_V[2].Mag() / V_base)) {
+						power_C.SetImag(Q4 * p_rated);
+					}
+					if (last_power[2].Im() != power_C.Im()) {
+						vv_operation = true;
+					}
+				}
+			}
+			if (vv_operation) {
+				t2 = t1;
+				allowed_vv_action = (TIMESTAMP)floor((double)t1 + vv_lockout + 0.5);
+			}
+		}
+	}
 
 	//***************************************************************************************
 	//Power-factor regulation, modifying VA_Out to use any available VAs for power-factor regulation
@@ -3270,8 +3061,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 	else	//Must be four quadrant (load_following or otherwise)
 	{
-		if(!deltamode_inclusive)
-		{
+		if (four_quadrant_control_mode != FQM_VOLT_VAR) {
 			if ((phases & 0x10) == 0x10)	//Triplex
 			{
 				*pPower -= last_power[3];	//Theoretically pPower is mapped to power_12, which already has the [2] offset applied
@@ -3283,524 +3073,9 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				pPower[2] -= last_power[2];
 			}
 		}
-		else
-		{
-			last_power[0] = pCircuit_V[0]*~(IGenerated[0] - pCircuit_V[0]*(complex(1,0)/complex(0, coupling_L1*omega_nominal)));
-			last_power[1] = pCircuit_V[1]*~(IGenerated[1] - pCircuit_V[1]*(complex(1,0)/complex(0, coupling_L1*omega_nominal)));
-			last_power[2] = pCircuit_V[2]*~(IGenerated[2] - pCircuit_V[2]*(complex(1,0)/complex(0, coupling_L1*omega_nominal)));
-		}
 	}
 	
 	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
-}
-
-
-
-
-
-//////////////////////////////////////////////////////////////////////////
-// IMPLEMENTATION OF DELTA MODE
-//////////////////////////////////////////////////////////////////////////
-//Module-level call
-SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
-{
-	double aZero = 0.0;
-	unsigned char pass_mod;
-	double deltat, deltath;
-	double P_update, Q_update;
-	double droop_RP, droop_RQ;
-	double thetaAdjust, magAdjust;
-
-	//Create delta_t variable
-	deltat = (double)dt/(double)DT_SECOND;
-	deltath = deltat/2.0;
-	next_state.i_Norton[0]=IGenerated[0];
-	next_state.i_Norton[1]=IGenerated[1];
-	next_state.i_Norton[2]=IGenerated[2];
-	//Initialization items
-	if ((delta_time==0) && (iteration_count_val==0))	//First run of new delta call
-	{
-		
-		//Initialize dynamics
-		init_dynamics(&curr_state,&corr_derivs);
-		
-		//Initialize 'previous' power values used for convergence testing
-		PO_prev_it = curr_state.x.PO;
-		QO_prev_it = curr_state.x.QO;
-
-		//Replicate curr_state into next
-		memcpy(&next_state,&curr_state,sizeof(INV_VARS));
-
-		//Set our tracking flag
-		first_run_after_delta = true;
-
-	}
-
-	//See what we're on, for tracking
-	pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
-
-	if (control_mode_switch == 1 && islanded && four_quadrant_control_mode != FQM_GENERIC_DROOP)
-	{
-		four_quadrant_control_mode = FQM_GENERIC_DROOP;
-		
-	}
-	//Check pass
-	if (pass_mod==0)	//Predictor pass
-	{
-		if (four_quadrant_control_mode == FQM_CONSTANT_PQ)
-		{
-			active_params = &PQ_params;
-			next_state.PO_ref = P_Out;
-			next_state.QO_ref = Q_Out;
-		}
-		else if (four_quadrant_control_mode == FQM_GENERIC_DROOP)
-		{
-			active_params = &droop_PQ_params;
-			droop_RP = (droop_P2-droop_P1)/(droop_f2-droop_f1);
-			droop_RQ = (droop_Q2-droop_Q1)/(droop_V2-droop_V1);
-			next_state.PO_ref = droop_RP*(next_state.f_PLL-droop_f1) + droop_P1;
-			next_state.QO_ref = droop_RQ*(next_state.x.VRMSLL-droop_V1) + droop_Q1;
-			next_state.PO_ref = fmax(next_state.PO_ref,droop_P2);
-			next_state.PO_ref = fmin(next_state.PO_ref,droop_P1);
-			next_state.QO_ref = fmax(next_state.QO_ref,droop_Q2);
-			next_state.QO_ref = fmin(next_state.QO_ref,droop_Q1);
-			
-		}
-
-		//Call dynamics
-		next_state.islanded = curr_state.islanded;
-		apply_dynamics(&curr_state,&pred_derivs);
-
-		//Apply prediction update
-		next_state.x.theta_ref = curr_state.x.theta_ref + pred_derivs.x.theta_ref*deltat;
-		next_state.x.theta_rel = curr_state.x.theta_rel + pred_derivs.x.theta_rel*deltat;
-		next_state.x.phi_PLL = curr_state.x.phi_PLL + pred_derivs.x.phi_PLL*deltat;
-		next_state.x.VRMSLL = curr_state.x.VRMSLL + pred_derivs.x.VRMSLL*deltat;
-		next_state.x.P = curr_state.x.P + pred_derivs.x.P*deltat;
-		next_state.x.Q = curr_state.x.Q + pred_derivs.x.Q*deltat;
-		next_state.x.PO = curr_state.x.PO + pred_derivs.x.PO*deltat;
-		next_state.x.QO = curr_state.x.QO + pred_derivs.x.QO*deltat;
-		next_state.x.PO_ref_fil = curr_state.x.PO_ref_fil + pred_derivs.x.PO_ref_fil*deltat;
-		next_state.x.QO_ref_fil = curr_state.x.QO_ref_fil + pred_derivs.x.QO_ref_fil*deltat;
-		next_state.x.PO_err_int = curr_state.x.PO_err_int + pred_derivs.x.PO_err_int*deltat;
-		next_state.x.QO_err_int = curr_state.x.QO_err_int + pred_derivs.x.QO_err_int*deltat;
-		
-		next_state.w_PLL = f_nominal*2*PI + pred_derivs.x.theta_rel;
-		next_state.f_PLL = next_state.w_PLL/(2*PI);
-		
-
-		
-
-		next_state.PO_err = next_state.x.PO_ref_fil - next_state.x.PO;
-		next_state.QO_err = next_state.x.QO_ref_fil - next_state.x.QO;
-		
-		thetaAdjust = fmax(fmin(active_params->KPP*next_state.PO_err + active_params->KIP*next_state.x.PO_err_int,active_params->angleRefMax),active_params->angleRefMin);
-		magAdjust = fmax(fmin(1.0 + active_params->KPQ*next_state.QO_err + active_params->KIQ*next_state.x.QO_err_int,active_params->magRefMax),active_params->magRefMin);
-		
-		next_state.v_t_synch_theta_refs[0] = curr_state.v_O_synch[0].Arg() + thetaAdjust;
-		next_state.v_t_synch_theta_refs[1] = curr_state.v_O_synch[1].Arg() + thetaAdjust;
-		next_state.v_t_synch_theta_refs[2] = curr_state.v_O_synch[2].Arg() + thetaAdjust;
-		next_state.v_t_synch_mag_refs[0] = curr_state.v_O_synch[0].Mag()*magAdjust;
-		next_state.v_t_synch_mag_refs[1] = curr_state.v_O_synch[1].Mag()*magAdjust;
-		next_state.v_t_synch_mag_refs[2] = curr_state.v_O_synch[2].Mag()*magAdjust;
-
-		
-		if (fmax(next_state.v_t_synch_mag_refs[0], next_state.v_t_synch_mag_refs[1], next_state.v_t_synch_mag_refs[2]) > sqrt(2.0)/3.0*V_In.Mag())
-		{
-			next_state.v_t_synch[0].Mag(next_state.v_t_synch_mag_refs[0]*sqrt(2.0)/3.0*V_In.Mag()/fmax(next_state.v_t_synch_mag_refs[0], next_state.v_t_synch_mag_refs[1], next_state.v_t_synch_mag_refs[2]));
-			next_state.v_t_synch[1].Mag(next_state.v_t_synch_mag_refs[1]*sqrt(2.0)/3.0*V_In.Mag()/fmax(next_state.v_t_synch_mag_refs[0], next_state.v_t_synch_mag_refs[1], next_state.v_t_synch_mag_refs[2]));
-			next_state.v_t_synch[2].Mag(next_state.v_t_synch_mag_refs[2]*sqrt(2.0)/3.0*V_In.Mag()/fmax(next_state.v_t_synch_mag_refs[0], next_state.v_t_synch_mag_refs[1], next_state.v_t_synch_mag_refs[2]));
-		}
-		else
-		{
-			next_state.v_t_synch[0].Mag(next_state.v_t_synch_mag_refs[0]);
-			next_state.v_t_synch[1].Mag(next_state.v_t_synch_mag_refs[1]);
-			next_state.v_t_synch[2].Mag(next_state.v_t_synch_mag_refs[2]);
-		}
-		next_state.v_t_synch[0].Arg(next_state.v_t_synch_theta_refs[0]);
-		next_state.v_t_synch[1].Arg(next_state.v_t_synch_theta_refs[1]);
-		next_state.v_t_synch[2].Arg(next_state.v_t_synch_theta_refs[2]);
-		
-		convert_abc_to_dq0(next_state.v_t_synch,next_state.v_t_dq0,&aZero);
-		convert_dq0_to_abc(next_state.v_t_dq0,next_state.v_t,&(next_state.x.theta_rel));
-		
-		
-		
-		//next_state.i_O[0] = (next_state.v_t[0]-pCircuit_V[0])/complex(0, coupling_L1*(pred_derivs.x.theta_ref + pred_derivs.x.theta_rel));
-		//next_state.i_O[1] = (next_state.v_t[0]-pCircuit_V[0])/complex(0, coupling_L1*(pred_derivs.x.theta_ref + pred_derivs.x.theta_rel));
-		//next_state.i_O[2] = (next_state.v_t[0]-pCircuit_V[0])/complex(0, coupling_L1*(pred_derivs.x.theta_ref + pred_derivs.x.theta_rel));
-		next_state.i_O[0] = (next_state.v_t[0]-pCircuit_V[0])/complex(0, coupling_L1*(omega_nominal));
-		next_state.i_O[1] = (next_state.v_t[1]-pCircuit_V[1])/complex(0, coupling_L1*(omega_nominal));
-		next_state.i_O[2] = (next_state.v_t[2]-pCircuit_V[2])/complex(0, coupling_L1*(omega_nominal));
-		
-		next_state.i_t[0] = next_state.i_O[0];
-		next_state.i_t[1] = next_state.i_O[1];
-		next_state.i_t[2] = next_state.i_O[2];
-		
-		//pPower[0] = pCircuit_V[0]*~next_state.i_O[0];
-		//pPower[1] = pCircuit_V[1]*~next_state.i_O[1];
-		//pPower[2] = pCircuit_V[2]*~next_state.i_O[2];
-
-
-
-
-		//Apply and see what happens
-		//IGenerated[0] =  next_state.i_O[0] + pCircuit_V[0]/complex(0, coupling_L1*(pred_derivs.x.theta_ref + pred_derivs.x.theta_rel));
-		//IGenerated[1] =  next_state.i_O[1] + pCircuit_V[1]/complex(0, coupling_L1*(pred_derivs.x.theta_ref + pred_derivs.x.theta_rel));
-		//IGenerated[2] =  next_state.i_O[2] + pCircuit_V[2]/complex(0, coupling_L1*(pred_derivs.x.theta_ref + pred_derivs.x.theta_rel));
-		
-		IGenerated[0] =  next_state.i_O[0] + pCircuit_V[0]/complex(0, coupling_L1*(omega_nominal));
-		IGenerated[1] =  next_state.i_O[1] + pCircuit_V[1]/complex(0, coupling_L1*(omega_nominal));
-		IGenerated[2] =  next_state.i_O[2] + pCircuit_V[2]/complex(0, coupling_L1*(omega_nominal));
-		
-
-		return SM_DELTA_ITER;	//Reiterate - to get us to corrector pass
-	}
-	else	//Corrector pass
-	{
-		if (four_quadrant_control_mode == FQM_CONSTANT_PQ)
-		{
-			active_params = &PQ_params;
-			next_state.PO_ref = P_Out;
-			next_state.QO_ref = Q_Out;
-		}
-		else if (four_quadrant_control_mode == FQM_GENERIC_DROOP)
-		{
-			active_params = &droop_PQ_params;
-			droop_RP = (droop_P2-droop_P1)/(droop_f2-droop_f1);
-			droop_RQ = (droop_Q2-droop_Q1)/(droop_V2-droop_V1);
-			next_state.PO_ref = droop_RP*(next_state.f_PLL-droop_f1) + droop_P1;
-			next_state.QO_ref = droop_RQ*(next_state.x.VRMSLL-droop_V1) + droop_Q1;
-			next_state.PO_ref = fmax(next_state.PO_ref,droop_P2);
-			next_state.PO_ref = fmin(next_state.PO_ref,droop_P1);
-			next_state.QO_ref = fmax(next_state.QO_ref,droop_Q2);
-			next_state.QO_ref = fmin(next_state.QO_ref,droop_Q1);
-			
-		}
-		//Call dynamics
-		apply_dynamics(&next_state,&corr_derivs);
-
-		next_state.x.theta_ref = curr_state.x.theta_ref + (pred_derivs.x.theta_ref + corr_derivs.x.theta_ref)*deltath;
-		next_state.x.theta_rel = curr_state.x.theta_rel + (pred_derivs.x.theta_rel + corr_derivs.x.theta_rel)*deltath;
-		next_state.x.phi_PLL = curr_state.x.phi_PLL + (pred_derivs.x.phi_PLL + corr_derivs.x.phi_PLL)*deltath;
-		next_state.x.VRMSLL = curr_state.x.VRMSLL + (pred_derivs.x.VRMSLL + corr_derivs.x.VRMSLL)*deltath;
-		next_state.x.P = curr_state.x.P + (pred_derivs.x.P + corr_derivs.x.P)*deltath;
-		next_state.x.Q = curr_state.x.Q + (pred_derivs.x.Q + corr_derivs.x.Q)*deltath;
-		next_state.x.PO = curr_state.x.PO + (pred_derivs.x.PO + corr_derivs.x.PO)*deltath;
-		next_state.x.QO = curr_state.x.QO + (pred_derivs.x.QO + corr_derivs.x.QO)*deltath;
-		next_state.x.PO_ref_fil = curr_state.x.PO_ref_fil + (pred_derivs.x.PO_ref_fil + corr_derivs.x.PO_ref_fil)*deltath;
-		next_state.x.QO_ref_fil = curr_state.x.QO_ref_fil + (pred_derivs.x.QO_ref_fil + corr_derivs.x.QO_ref_fil)*deltath;
-		next_state.x.PO_err_int = curr_state.x.PO_err_int + (pred_derivs.x.PO_err_int + corr_derivs.x.PO_err_int)*deltath;
-		next_state.x.QO_err_int = curr_state.x.QO_err_int + (pred_derivs.x.QO_err_int + corr_derivs.x.QO_err_int)*deltath;
-		
-		next_state.w_PLL = f_nominal*2.0*PI + (pred_derivs.x.theta_rel + corr_derivs.x.theta_rel)/2.0;
-		next_state.f_PLL = next_state.w_PLL/(2.0*PI);
-		
-
-		
-
-		next_state.PO_err = next_state.x.PO_ref_fil - next_state.x.PO;
-		next_state.QO_err = next_state.x.QO_ref_fil - next_state.x.QO;
-		
-		thetaAdjust = fmax(fmin(active_params->KPP*next_state.PO_err + active_params->KIP*next_state.x.PO_err_int,active_params->angleRefMax),active_params->angleRefMin);
-		magAdjust = fmax(fmin(1.0 + active_params->KPQ*next_state.QO_err + active_params->KIQ*next_state.x.QO_err_int,active_params->magRefMax),active_params->magRefMin);
-		
-		next_state.v_t_synch_theta_refs[0] = next_state.v_O_synch[0].Arg() + thetaAdjust;
-		next_state.v_t_synch_theta_refs[1] = next_state.v_O_synch[1].Arg() + thetaAdjust;
-		next_state.v_t_synch_theta_refs[2] = next_state.v_O_synch[2].Arg() + thetaAdjust;
-		next_state.v_t_synch_mag_refs[0] = next_state.v_O_synch[0].Mag()*magAdjust;
-		next_state.v_t_synch_mag_refs[1] = next_state.v_O_synch[1].Mag()*magAdjust;
-		next_state.v_t_synch_mag_refs[2] = next_state.v_O_synch[2].Mag()*magAdjust;
-
-		
-		if (fmax(next_state.v_t_synch_mag_refs[0], next_state.v_t_synch_mag_refs[1], next_state.v_t_synch_mag_refs[2]) > sqrt(2.0)/3.0*V_In.Mag())
-		{
-			next_state.v_t_synch[0].Mag(next_state.v_t_synch_mag_refs[0]*sqrt(2.0)/3*V_In.Mag()/fmax(next_state.v_t_synch_mag_refs[0], next_state.v_t_synch_mag_refs[1], next_state.v_t_synch_mag_refs[2]));
-			next_state.v_t_synch[1].Mag(next_state.v_t_synch_mag_refs[1]*sqrt(2.0)/3*V_In.Mag()/fmax(next_state.v_t_synch_mag_refs[0], next_state.v_t_synch_mag_refs[1], next_state.v_t_synch_mag_refs[2]));
-			next_state.v_t_synch[2].Mag(next_state.v_t_synch_mag_refs[2]*sqrt(2.0)/3*V_In.Mag()/fmax(next_state.v_t_synch_mag_refs[0], next_state.v_t_synch_mag_refs[1], next_state.v_t_synch_mag_refs[2]));
-		}
-		else
-		{
-			next_state.v_t_synch[0].Mag(next_state.v_t_synch_mag_refs[0]);
-			next_state.v_t_synch[1].Mag(next_state.v_t_synch_mag_refs[1]);
-			next_state.v_t_synch[2].Mag(next_state.v_t_synch_mag_refs[2]);
-		}
-		next_state.v_t_synch[0].Arg(next_state.v_t_synch_theta_refs[0]);
-		next_state.v_t_synch[1].Arg(next_state.v_t_synch_theta_refs[1]);
-		next_state.v_t_synch[2].Arg(next_state.v_t_synch_theta_refs[2]);
-		
-		convert_abc_to_dq0(next_state.v_t_synch,next_state.v_t_dq0,&aZero);
-		convert_dq0_to_abc(next_state.v_t_dq0,next_state.v_t,&(next_state.x.theta_rel));
-		
-
-
-
-		//next_state.i_O[0] = (next_state.v_t[0]-pCircuit_V[0])/complex(0, coupling_L1*(pred_derivs.x.theta_ref + pred_derivs.x.theta_rel + corr_derivs.x.theta_ref + corr_derivs.x.theta_rel)/2.0);
-		//next_state.i_O[1] = (next_state.v_t[0]-pCircuit_V[0])/complex(0, coupling_L1*(pred_derivs.x.theta_ref + pred_derivs.x.theta_rel + corr_derivs.x.theta_ref + corr_derivs.x.theta_rel)/2.0);
-		//next_state.i_O[2] = (next_state.v_t[0]-pCircuit_V[0])/complex(0, coupling_L1*(pred_derivs.x.theta_ref + pred_derivs.x.theta_rel + corr_derivs.x.theta_ref + corr_derivs.x.theta_rel)/2.0);
-
-		next_state.i_O[0] = (next_state.v_t[0]-pCircuit_V[0])/complex(0, coupling_L1*omega_nominal);
-		next_state.i_O[1] = (next_state.v_t[1]-pCircuit_V[1])/complex(0, coupling_L1*omega_nominal);
-		next_state.i_O[2] = (next_state.v_t[2]-pCircuit_V[2])/complex(0, coupling_L1*omega_nominal);
-		
-		next_state.i_t[0] = next_state.i_O[0];
-		next_state.i_t[1] = next_state.i_O[1];
-		next_state.i_t[2] = next_state.i_O[2];
-		
-		//IGenerated[0] =  next_state.i_O[0] + pCircuit_V[0]/complex(0, coupling_L1*(pred_derivs.x.theta_ref + pred_derivs.x.theta_rel + corr_derivs.x.theta_ref + corr_derivs.x.theta_rel)/2.0);
-		//IGenerated[1] =  next_state.i_O[1] + pCircuit_V[1]/complex(0, coupling_L1*(pred_derivs.x.theta_ref + pred_derivs.x.theta_rel + corr_derivs.x.theta_ref + corr_derivs.x.theta_rel)/2.0);
-		//IGenerated[2] =  next_state.i_O[2] + pCircuit_V[2]/complex(0, coupling_L1*(pred_derivs.x.theta_ref + pred_derivs.x.theta_rel + corr_derivs.x.theta_ref + corr_derivs.x.theta_rel)/2.0);
-
-		IGenerated[0] =  next_state.i_O[0] + pCircuit_V[0]/complex(0, coupling_L1*omega_nominal);
-		IGenerated[1] =  next_state.i_O[1] + pCircuit_V[1]/complex(0, coupling_L1*omega_nominal);
-		IGenerated[2] =  next_state.i_O[2] + pCircuit_V[2]/complex(0, coupling_L1*omega_nominal);
-
-		//pPower[0] = pCircuit_V[0]*~next_state.i_O[0];
-		//pPower[1] = pCircuit_V[1]*~next_state.i_O[1];
-		//pPower[2] = pCircuit_V[2]*~next_state.i_O[2];
-		
-
-		//Copy everything back into curr_state, since we'll be back there
-		memcpy(&curr_state,&next_state,sizeof(INV_VARS));
-
-		P_update = fabs(curr_state.x.PO - PO_prev_it);
-		Q_update = fabs(curr_state.x.QO - QO_prev_it);
-
-		if (P_update <= inverter_convergence_criterion && Q_update <= inverter_convergence_criterion)
-		{
-			//Ready to leave
-			return SM_EVENT;
-		}
-		else	//Not "converged"
-		{
-			return SM_DELTA;	//Next delta update
-								//Could theoretically request a reiteration, but we're not allowing that right now
-		}
-	}//End corrector pass
-}
-
-//Module-level post update call
-
-STATUS inverter::post_deltaupdate(complex *useful_value, unsigned int mode_pass)
-{
-	
-
-	return SUCCESS;	//Always succeeds right now
-}
-
-
-//Object-level call, if needed
-//int diesel_dg::deltaupdate(unsigned int64 dt, unsigned int iteration_count_val)	//Returns success/fail - interrupdate handles EVENT/DELTA
-//{
-//	return SUCCESS;	//Just indicate success right now
-//}
-
-//Applies dynamic equations for predictor/corrector sets
-//Functionalized since they are identical
-//Returns a SUCCESS/FAIL
-//curr_time is the current states/information
-//curr_delta is the calculated differentials
-STATUS inverter::apply_dynamics(INV_VARS *curr_time, INV_VARS *curr_delta)
-{
-	
-		//Define algebraic variables only used for calculating state var updates
-		double aZero = 0.0;
-		complex vo_dqo[3];
-		double trueVRMS;
-		double trueP;
-		double trueQ;
-		double S_ref_mag;
-		double PO_ref_lim;
-		double QO_ref_lim;
-		double s_rated;
-		
-		s_rated = p_rated*3.0; //Get three-phase rating
-		//Calculate values for these algebraic variables		
-		convert_abc_to_dq0(pCircuit_V,vo_dqo,&(curr_time->x.theta_rel));
-		convert_dq0_to_abc(vo_dqo,curr_time->v_O_synch,&aZero);
-		trueVRMS = sqrt(1.0/3.0*pow(pCircuit_V[0].Mag() + pCircuit_V[1].Mag() + pCircuit_V[2].Mag(),2));
-		trueP = (curr_time->v_t[0]*~curr_time->i_t[0] + curr_time->v_t[1]*~curr_time->i_t[1] + curr_time->v_t[2]*~curr_time->i_t[2]).Re();
-		trueQ = (curr_time->v_t[0]*~curr_time->i_t[0] + curr_time->v_t[1]*~curr_time->i_t[1] + curr_time->v_t[2]*~curr_time->i_t[2]).Im();
-		curr_time->PO_true = (pCircuit_V[0]*~curr_time->i_O[0] + pCircuit_V[1]*~curr_time->i_O[1] + pCircuit_V[2]*~curr_time->i_O[2]).Re();
-		curr_time->QO_true = (pCircuit_V[0]*~curr_time->i_O[0] + pCircuit_V[1]*~curr_time->i_O[1] + pCircuit_V[2]*~curr_time->i_O[2]).Im();
-		S_ref_mag = sqrt(pow(curr_time->PO_ref,2) + pow(curr_time->QO_ref,2));
-		if (S_ref_mag <= s_rated)
-		{
-			PO_ref_lim = curr_time->PO_ref;
-			QO_ref_lim = curr_time->QO_ref;
-		}
-		else if (abs(curr_time->PO_ref) < s_rated)
-		{
-			PO_ref_lim = curr_time->PO_ref;
-			QO_ref_lim = curr_time->QO_ref/abs(curr_time->QO_ref)*s_rated*sin(acos(curr_time->PO_ref/s_rated));
-		}
-		else
-		{
-			PO_ref_lim  = curr_time->PO_ref/abs(curr_time->PO_ref)*p_rated;
-			QO_ref_lim = 0;
-		}
-		
-		
-		//Calculate state variable derivatives
-		curr_delta->x.theta_ref = omega_nominal;
-		curr_delta->x.phi_PLL = vo_dqo[0].Im();
-		curr_delta->x.theta_rel = active_params->KPPLL*vo_dqo[0].Im() + active_params->KIPLL*curr_time->x.phi_PLL;
-		curr_delta->x.VRMSLL = (trueVRMS-curr_time->x.VRMSLL)/active_params->T_MeasV;
-		curr_delta->x.P = (trueP-curr_time->x.P)/active_params->T_MeasP;
-		curr_delta->x.Q = (trueQ-curr_time->x.Q)/active_params->T_MeasQ;
-		curr_delta->x.PO = (curr_time->PO_true-curr_time->x.PO)/active_params->T_MeasP;
-		curr_delta->x.QO = (curr_time->QO_true-curr_time->x.QO)/active_params->T_MeasQ;
-		curr_delta->x.PO_ref_fil = (PO_ref_lim-curr_time->x.PO_ref_fil)/active_params->T_PRefFilter;
-		curr_delta->x.QO_ref_fil = (QO_ref_lim-curr_time->x.QO_ref_fil)/active_params->T_QRefFilter;
-		curr_delta->x.PO_err_int = curr_time->PO_err;
-		curr_delta->x.QO_err_int = curr_time->QO_err;
-		
-		
-
-		return SUCCESS;	//Always succeeds for now, but could have error checks later
-	
-}
-
-//Initializes dynamic equations for first entry
-//Returns a SUCCESS/FAIL
-//curr_time is the initial states/information
-STATUS inverter::init_dynamics(INV_VARS *curr_time, INV_VARS *corr_derivs)
-{
-
-	double aZero = 0.0;
-	complex coupling_impedance;
-
-
-	if (four_quadrant_control_mode == FQM_CONSTANT_PQ)
-	{
-		active_params = &PQ_params;
-		curr_time->PO_ref = P_Out;
-		curr_time->QO_ref = Q_Out;
-		curr_time->x.PO_ref_fil = P_Out;
-		curr_time->x.QO_ref_fil = Q_Out;
-		
-
-	}
-	else if (four_quadrant_control_mode == FQM_GENERIC_DROOP)
-	{
-		active_params = &droop_PQ_params;
-		//curr_time->P_ref = droop_RP*(curr_time->f_PLL-f_nominal) + droop_P_nominal;
-		//curr_time->Q_ref = droop_RQ*(curr_time->x.VRMSLL-VRMSLL_nominal) + droop_Q_nominal;
-		//curr_time->P_ref = fmax(curr_time->P_ref,0);
-		//curr_time->P_ref = fmin(curr_time->P_ref,2/3*p_rated);
-		//curr_time->Q_ref = fmax(curr_time->Q_ref,-1/2*p_rated);
-		//curr_time->Q_ref = fmin(curr_time->Q_ref,1/2*p_rated);
-		//curr_time->x.P_ref_fil = curr_time->P_ref;
-		//curr_time->x.Q_ref_fil = curr_time->Q_ref;
-		curr_time->PO_ref = P_Out;
-		curr_time->QO_ref = Q_Out;
-		curr_time->x.PO_ref_fil = P_Out;
-		curr_time->x.QO_ref_fil = Q_Out;
-	}
-	curr_time->islanded = false;
-	
-	//curr_time->i_O[0] = last_power[0]/~pCircuit_V[0];
-	//curr_time->i_O[1] = last_power[1]/~pCircuit_V[1];
-	//curr_time->i_O[2] = last_power[2]/~pCircuit_V[2];
-	
-	if (coupling_inductance_type == COUPLING_L)
-	{
-		coupling_impedance = complex(0.0, (corr_derivs->x.theta_rel + corr_derivs->x.theta_ref)*coupling_L1);
-		curr_time->v_t[0] = IGenerated[0]*coupling_impedance;
-		curr_time->v_t[1] = IGenerated[1]*coupling_impedance;
-		curr_time->v_t[2] = IGenerated[2]*coupling_impedance;
-
-		curr_time->i_t[0] = curr_time->i_O[0] = (curr_time->v_t[0] - pCircuit_V[0])/coupling_impedance;
-		curr_time->i_t[1] = curr_time->i_O[1] = (curr_time->v_t[1] - pCircuit_V[1])/coupling_impedance;
-		curr_time->i_t[2] = curr_time->i_O[2] = (curr_time->v_t[2] - pCircuit_V[2])/coupling_impedance;
-
-	}
-	curr_time->w_PLL = omega_nominal;
-	curr_time->f_PLL = omega_nominal/(2*PI);
-	//curr_time->i_O[0] = (curr_time->v_t[0]-pCircuit_V[0])*y_bus[0] + (curr_time->v_t[1]-pCircuit_V[1])*y_bus[1] + (curr_time->v_t[2]-pCircuit_V[2])*y_bus[2];
-	//curr_time->i_O[1] = (curr_time->v_t[0]-pCircuit_V[0])*y_bus[3] + (curr_time->v_t[1]-pCircuit_V[1])*y_bus[4] + (curr_time->v_t[2]-pCircuit_V[2])*y_bus[5];
-	//curr_time->i_O[2] = (curr_time->v_t[0]-pCircuit_V[0])*y_bus[6] + (curr_time->v_t[1]-pCircuit_V[1])*y_bus[7] + (curr_time->v_t[2]-pCircuit_V[2])*y_bus[8];
-	
-	
-
-	corr_derivs->x.theta_rel = 0;
-	curr_time->x.phi_PLL = 0;
-	corr_derivs->x.phi_PLL = 0;
-	curr_time->x.VRMSLL = sqrt(1.0/3.0*pow(pCircuit_V[0].Mag() + pCircuit_V[1].Mag() + pCircuit_V[2].Mag(),2));
-	convert_abc_to_dq0(curr_time->v_t,curr_time->v_t_dq0,&aZero);
-	convert_dq0_to_abc(curr_time->v_t_dq0,curr_time->v_t_synch,&curr_time->x.theta_rel);
-	curr_time->x.PO = (pCircuit_V[0]*~curr_time->i_O[0] + pCircuit_V[1]*~curr_time->i_O[1] + pCircuit_V[2]*~curr_time->i_O[2]).Re();
-	curr_time->x.QO = (pCircuit_V[0]*~curr_time->i_O[0] + pCircuit_V[1]*~curr_time->i_O[1] + pCircuit_V[2]*~curr_time->i_O[2]).Im();
-	curr_time->x.P = (curr_time->v_t[0]*~curr_time->i_t[0] + curr_time->v_t[1]*~curr_time->i_t[1] + curr_time->v_t[2]*~curr_time->i_t[2]).Re();
-	curr_time->x.Q = (curr_time->v_t[0]*~curr_time->i_t[0] + curr_time->v_t[1]*~curr_time->i_t[1] + curr_time->v_t[2]*~curr_time->i_t[2]).Im();
-	curr_time->x.PO_err_int = (curr_time->v_t[0].Arg()-pCircuit_V[0].Arg())/active_params->KIP;
-	curr_time->x.QO_err_int = (curr_time->v_t[0].Mag()/pCircuit_V[0].Mag()-1)/active_params->KIQ;
-	
-
-
-	//convert_abc_to_dq0(curr_time->v_t,curr_time->v_t_dq0,&(curr_time->x.theta_rel));
-	//convert_dq0_to_abc(curr_time->v_t_dq0,curr_time->v_t_synch,pointerToAZero);
-	
-	
-
-	return SUCCESS;	//Always succeeds for now, but could have error checks later
-}
-double inverter::fmin(double a, double b)
-{
-	if (a < b)
-		return a;
-	else
-		return b;
-}
-double inverter::fmin(double a, double b, double c)
-{
-	if (a < b && a < c)
-		return a;
-	else if (b < c)
-		return b;
-	else
-		return c;
-		
-}
-double inverter::fmax(double a, double b)
-{
-	if (a > b)
-		return a;
-	else
-		return b;
-}
-double inverter::fmax(double a, double b, double c)
-{
-	if (a > b && a > c)
-		return a;
-	else if (b > c)
-		return b;
-	else
-		return c;
-		
-}
-
-//Converts a 3x1 abc vector to a 3x1 sequence components vector
-//Xabc is formatted [a b c]
-//Xpn0 is formatted [positive, negative, zero]
-void inverter::convert_abc_to_dq0(complex *Xabc, complex *Xdq0, double *theta)
-{
-	Xdq0[0] = complex(sqrt(2.0/3.0))*(Xabc[0]*cos(*theta) + Xabc[1]*cos(*theta-2*PI/3) + Xabc[2]*cos(*theta+2*PI/3));
-	Xdq0[1] = complex(sqrt(2.0/3.0))*(-Xabc[0]*sin(*theta) - Xabc[1]*sin(*theta-2*PI/3) - Xabc[2]*sin(*theta+2*PI/3));
-	Xdq0[2] = complex(sqrt(2.0/3.0))*(Xabc[0]/sqrt(2.0) + Xabc[1]/sqrt(2.0) + Xabc[2]/sqrt(2.0));
-
-}
-//Converts a 3x1 sequence vector to a 3x1 abc vector
-//Xpn0 is formatted [positive, negative, zero]
-//Xabc is formatted [a b c]
-void inverter::convert_dq0_to_abc(complex *Xdq0, complex *Xabc, double *theta)
-{
-
-	Xabc[0] = complex(sqrt(2.0/3.0))*( Xdq0[0]*cos(*theta) - Xdq0[1]*sin(*theta) + Xdq0[2]/sqrt(2.0));
-	Xabc[1] = complex(sqrt(2.0/3.0))*( Xdq0[0]*cos(*theta-2*PI/3) - Xdq0[1]*sin(*theta-2*PI/3) + Xdq0[2]/sqrt(2.0));
-	Xabc[2] = complex(sqrt(2.0/3.0))*( Xdq0[0]*cos(*theta+2*PI/3) - Xdq0[1]*sin(*theta+2*PI/3) + Xdq0[2]/sqrt(2.0));
-
-
 }
 
 //Retrieves the pointer for a double variable from another object
@@ -3832,18 +3107,13 @@ complex * inverter::get_complex(OBJECT *obj, char *name)
 		return NULL;
 	return (complex*)GETADDR(obj,p);
 }
-//Function to perform exp(j*val)
-//Basically a complex rotation
-complex inverter::complex_exp(double angle)
+
+double inverter::getVar(double volt, double m, double b)
 {
-	complex output_val;
-
-	//exp(jx) = cos(x)+j*sin(x)
-	output_val = complex(cos(angle),sin(angle));
-
-	return output_val;
+	double Q = 0;
+	Q = (m * volt) + b;
+	return Q;
 }
-
 	
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE
@@ -3903,35 +3173,4 @@ EXPORT TIMESTAMP sync_inverter(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 	}
 	SYNC_CATCHALL(inverter);
 	return t2;
-}
-EXPORT SIMULATIONMODE interupdate_inverter(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
-{
-	inverter *my = OBJECTDATA(obj,inverter);
-	SIMULATIONMODE status = SM_ERROR;
-	try
-	{
-		status = my->inter_deltaupdate(delta_time,dt,iteration_count_val);
-		return status;
-	}
-	catch (char *msg)
-	{
-		gl_error("interupdate_inverter(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
-		return status;
-	}
-}
-
-EXPORT STATUS postupdate_inverter(OBJECT *obj, complex *useful_value, unsigned int mode_pass)
-{
-	inverter *my = OBJECTDATA(obj,inverter);
-	STATUS status = FAILED;
-	try
-	{
-		status = my->post_deltaupdate(useful_value, mode_pass);
-		return status;
-	}
-	catch (char *msg)
-	{
-		gl_error("postupdate_inverter(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
-		return status;
-	}
 }

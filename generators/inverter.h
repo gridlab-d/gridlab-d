@@ -14,99 +14,12 @@
 #include "power_electronics.h"
 #include "generators.h"
 
-EXPORT SIMULATIONMODE interupdate_inverter(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
-EXPORT STATUS postupdate_inverter(OBJECT *obj, complex *useful_value, unsigned int mode_pass);
-
-//Inverter state variable structure
-typedef struct {
-	double theta_ref;
-	double theta_rel;
-	double phi_PLL;	
-	double VRMSLL;	
-	double P;
-	double Q;
-	double PO;
-	double QO;
-	double PO_ref_fil;
-	double QO_ref_fil;
-	double PO_err_int;
-	double QO_err_int;
-	} INV_STATES;
-	
-
-	typedef struct {
-	complex v_t[3];
-	complex v_t_dq0[3];
-	complex v_t_synch[3];
-	complex v_O_dq0[3];
-	complex v_O_synch[3];
-	complex i_t[3];
-	complex i_t_dq0[3];	
-	complex i_t_synch[3];
-	complex i_O[3];
-	complex i_O_dq0[3];
-	complex i_O_synch[3];
-	complex i_Norton[3];
-	double PO_ref;
-	double QO_ref;
-	double PO_err;
-	double QO_err;
-	double VRMS_true;
-	double PO_true;
-	double QO_true;
-	double PO_ref_lim;
-	double QO_ref_lim;
-	double v_t_synch_theta_refs[3];
-	double v_t_synch_mag_refs[3];
-
-	double w_PLL;
-	double f_PLL;
-	bool islanded;
-	INV_STATES x;
-	} INV_VARS;
-	
-	typedef struct {
-		double KPPLL;
-		double KIPLL;
-		double KPP;
-		double KIP;
-		double KPQ;
-		double KIQ;
-		double T_MeasP;
-		double T_MeasQ;
-		double T_MeasV;
-		double T_PRefFilter;
-		double T_QRefFilter;
-		double angleRefMin;
-		double angleRefMax;
-		double magRefMin;
-		double magRefMax;
-	} CTRL_PARAMS;
-
-
 //inverter extends power_electronics
 class inverter: public power_electronics
 {
 private:
 	bool IterationToggle;	///< Iteration toggle device - retains NR "pass" functionality
 	bool first_run;		///< Flag for first run of the diesel_dg object - eliminates t0==0 dependence
-	bool first_run_after_delta;	///< Flag for first run after deltamode - namely because powerflow is in true pass
-	INV_VARS curr_state;		//Current state of all vari
-	INV_VARS next_state;
-	INV_VARS pred_derivs;	//Predictor pass values of variables
-	INV_VARS corr_derivs;	//Corrector pass values of variables
-
-	bool deltamode_inclusive;	//Boolean for deltamode calls - pulled from object flags
-	bool first_sync_delta_enabled;
-
-	complex *y_bus;		//Link to bus raw self-admittance value - grants 3x3 access instead of diagonal
-	complex *full_y_bus;	//Link to bus full self-admittance of Ybus form
-	complex *PGenerated;				//Link to bus PGenerated field - mainly used for SWING generator
-	complex *IGenerated;				//Link to direct current injections to powerflow at bus-level
-	complex *FreqPower;					//Link to bus "frequency-power weighted" accumulation
-	complex *TotalPower;
-	double PO_prev_it;
-	double QO_prev_it;
 protected:
 	/* TODO: put unpublished but inherited variables */
 public:
@@ -123,7 +36,6 @@ public:
 	enum PF_REG {INCLUDED=1, EXCLUDED=2} pf_reg;
 	enum PF_REG_STATUS {REGULATING = 1, IDLING = 2} pf_reg_status;
 	enum LOAD_FOLLOW_STATUS {IDLE=0, DISCHARGE=1, CHARGE=2} load_follow_status;	//Status variable for what the load_following mode is doing
-	enum COUPLING_INDUCTANCE_TYPE {COUPLING_NONE=0,COUPLING_L=1,COUPLING_LCL=2} coupling_inductance_type;
 
 	
 	complex VA_Out;
@@ -134,10 +46,6 @@ public:
 	double soc_reserve; // the battery reserve in pu
 	double p_rated; // the power rating of the inverter per phase
 	double bp_rated; // the power rating on the DC side
-	double f_nominal;
-	double omega_nominal;
-	double VRMSLG_nominal;
-	double VRMSLL_nominal;
 	double inv_eta; // the inverter's efficiency
 	double V_Set_A;
 	double V_Set_B;
@@ -208,8 +116,6 @@ public:
 	//properties for four quadrant control modes
 	enum FOUR_QUADRANT_CONTROL_MODE {FQM_NONE=0,FQM_CONSTANT_PQ=1,FQM_CONSTANT_PF=2,FQM_CONSTANT_V=3,FQM_VOLT_VAR=4,FQM_LOAD_FOLLOWING=5, FQM_GENERIC_DROOP=6, FQM_GROUP_LF=7};
 	enumeration four_quadrant_control_mode;
-	enum CONTROL_MODE_SWITCH {CONTROL_SWITCH_NONE=0, ISLANDING_DROOP=1};
-	enumeration control_mode_switch;
 
 	double excess_input_power;		//Variable tracking excess power on the input that is not placed to the output
 
@@ -235,30 +141,29 @@ public:
 	double group_max_charge_rate;		//Sum of the charge rates of the inverters involved in the group load-following.
 	double group_max_discharge_rate;		//Sum of the discharge rates of the inverters involved in the group load-following.
 	double group_rated_power;		//Sum of the inverter power ratings of the inverters involved in the group power-factor regulation.
+	
+	//VoltVar Control Parameters
+	double V_base;
+	double V1;
+	double V2;
+	double V3;
+	double V4;
+	double Q1;
+	double Q2;
+	double Q3;
+	double Q4;
+	double m12;
+	double b12;
+	double m23;
+	double b23;
+	double m34;
+	double b34;
+	double getVar(double volt, double m, double b);
+	double vv_lockout;
+	TIMESTAMP allowed_vv_action;
+	TIMESTAMP last_vv_check;
+	bool vv_operation;
 
-	CTRL_PARAMS *active_params;
-	CTRL_PARAMS PQ_params;
-	CTRL_PARAMS droop_PQ_params;
-	
-	double inverter_convergence_criterion;
-	
-	//droop control properties
-	//double droop_RP;
-	//double droop_RQ;
-	double droop_f1;
-	double droop_f2;
-	double droop_V1;
-	double droop_V2;
-	double droop_P1;
-	double droop_P2;
-	double droop_Q1;
-	double droop_Q2;
-	
-	//coupling impedance properties, currently only used in deltamode
-	double coupling_L1;
-	double coupling_L2;
-	double coupling_C;
-	
 private:
 	//load following variables
 	FUNCTIONADDR powerCalc;				//Address for power_calculate in link object, if it is a link
@@ -273,10 +178,7 @@ private:
 	double pf_reg_dispatch_VAR;		//(Reactive only?) power dispatched to meet power factor regulation threshold.
 	TIMESTAMP pf_reg_next_update_time;	//TIMESTAMP of next dispatching change allowed
 
-
-
 	TIMESTAMP prev_time;				//Tracking variable for previous "new time" run
-
 
 public:
 	/* required implementations */
@@ -287,8 +189,6 @@ public:
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
-	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
-	STATUS post_deltaupdate(complex *useful_value, unsigned int mode_pass);
 	int *get_enum(OBJECT *obj, char *name);
 public:
 	static CLASS *oclass;
@@ -296,56 +196,6 @@ public:
 	static CLASS *plcass;
 	complex *get_complex(OBJECT *obj, char *name);
 	double *get_double(OBJECT *obj, char *name);
-	void convert_dq0_to_abc(complex *Xdq0, complex *Xabc, double *theta);
-	void convert_abc_to_dq0(complex *Xabc, complex *Xdq0, double *theta);
-	double fmin(double a, double b);
-	double fmin(double a, double b, double c);
-	double fmax(double a, double b);
-	double fmax(double a, double b, double c);
-	STATUS apply_dynamics(INV_VARS *curr_time, INV_VARS *curr_delta);
-	STATUS init_dynamics(INV_VARS *curr_time,INV_VARS *corr_derivs);
-	complex complex_exp(double angle);
-#ifdef OPTIONAL
-	static CLASS *pclass; /**< defines the parent class */
-	TIMESTAMPP plc(TIMESTAMP t0, TIMESTAMP t1); /**< defines the default PLC code */
-#endif
-};
-
-#endif
-
-/**@}*/
-/** $Id: inverter.h,v 1.0 2008/06/16
-	@file inverter.h
-	@addtogroup inverter
-	@ingroup MODULENAME
-
- @{  
- **/
-
-#ifndef _inverter_H
-#define _inverter_H
-
-#include <stdarg.h>
-#include "gridlabd.h"
-
-class inverter {
-private:
-	/* TODO: put private variables here */
-protected:
-	/* TODO: put unpublished but inherited variables */
-public:
-	/* TODO: put published variables here */
-public:
-	/* required implementations */
-	inverter(MODULE *module);
-	int create(void);
-	int init(OBJECT *parent);
-	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
-	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
-	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
-public:
-	static CLASS *oclass;
-	static inverter *defaults;
 #ifdef OPTIONAL
 	static CLASS *pclass; /**< defines the parent class */
 	TIMESTAMPP plc(TIMESTAMP t0, TIMESTAMP t1); /**< defines the default PLC code */

@@ -79,7 +79,7 @@ public:
 	complex XphaseB;
 	complex XphaseC;
 	
-	double *pCircuit_V;		//< pointer to the three voltages on three lines
+	complex *pCircuit_V;		//< pointer to the three voltages on three lines
 	complex *pLine_I;			//< pointer to the three current on three lines
 
 public:

@@ -207,7 +207,7 @@ int rectifier::init(OBJECT *parent)
 
 		// attach meter variables to each circuit
 			i=0;
-			if ((*(&pCircuit_V) = get_double(parent,"Vdc"))==NULL)
+			if ((*(&pCircuit_V) = get_complex(parent,"V_In"))==NULL)
 			{
 				GL_THROW("%s (%s:%d) does not implement inverter variable %s for %s (inverter:%d)", 
 					/*	TROUBLESHOOT
@@ -511,7 +511,7 @@ TIMESTAMP rectifier::presync(TIMESTAMP t0, TIMESTAMP t1)
 TIMESTAMP rectifier::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
 
-	V_Out = *pCircuit_V;
+	V_Out = complex(V_Rated, 0);
 	I_Out = (*pLine_I).Re();
 
 	gl_verbose("rectifier sync: V_Out from parent is: (%f , %f)", V_Out.Re(), V_Out.Im());
@@ -556,7 +556,7 @@ TIMESTAMP rectifier::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 				I_Out = ~(VA_Out / V_Out); //These values are completely real, but since parent object uses complex, use here as well and follow rule for complex conjugate
 				*pLine_I=I_Out;
-
+				*pCircuit_V = V_Out;
 				gl_verbose("rectifier sync: VA_Out is: (%f , %f)", VA_Out.Re(), VA_Out.Im());
 				gl_verbose("rectifier sync: V_Out is: (%f , %f)", V_Out.Re(), V_Out.Im());
 				gl_verbose("rectifier sync: I_Out is: (%f , %f)", I_Out.Re(), I_Out.Im());

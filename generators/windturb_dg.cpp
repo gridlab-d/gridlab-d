@@ -759,6 +759,9 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 		air_dens = (*pPress*100) * Molar / (Ridealgas * ( (*pTemp - 32)*5/9 + 273.15));
 
 		//wind speed at height of hub - uses European Wind Atlas method
+		if(ref_height == roughness_l){
+			ref_height = roughness_l+0.001;
+		}
 		WSadj = *pWS * log(turbine_height/roughness_l)/log(ref_height/roughness_l); 
 
 		double test = *pPress;
@@ -872,10 +875,14 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 			voltage_A = pCircuit_V[0];	//Syncs the meter parent to the generator.
 			voltage_B = pCircuit_V[1];
 			voltage_C = pCircuit_V[2];
-
-			double Pconva = (voltage_A.Mag() / (voltage_A.Mag() + voltage_B.Mag() + voltage_C.Mag()))*Pconv;
-			double Pconvb = (voltage_B.Mag() / (voltage_A.Mag() + voltage_B.Mag() + voltage_C.Mag()))*Pconv;
-			double Pconvc = (voltage_C.Mag() / (voltage_A.Mag() + voltage_B.Mag() + voltage_C.Mag()))*Pconv;
+			double Pconva = 0.0;
+			double Pconvb = 0.0;
+			double Pconvc = 0.0;
+			if((voltage_A.Mag() + voltage_B.Mag() + voltage_C.Mag()) > 1e-9){
+				Pconva = (voltage_A.Mag() / (voltage_A.Mag() + voltage_B.Mag() + voltage_C.Mag()))*Pconv;
+				Pconvb = (voltage_B.Mag() / (voltage_A.Mag() + voltage_B.Mag() + voltage_C.Mag()))*Pconv;
+				Pconvc = (voltage_C.Mag() / (voltage_A.Mag() + voltage_B.Mag() + voltage_C.Mag()))*Pconv;
+			}
 
 			if (Gen_type == INDUCTION)	//TO DO:  Induction gen. Ef not working correctly yet.
 			{
@@ -1006,17 +1013,28 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 					if (Pconvc > 1.025*Max_P/3) {
 						Pconvc = 1.025*Max_P/3;
 					}
-
-					current_A = -(~(complex(Pconva,Pconva*tan(acos(pf)))/voltage_A));
-					current_B = -(~(complex(Pconvb,Pconvb*tan(acos(pf)))/voltage_B));
-					current_C = -(~(complex(Pconvc,Pconvc*tan(acos(pf)))/voltage_C));
+					if(voltage_A.Mag() > 0.0){
+						current_A = -(~(complex(Pconva,Pconva*tan(acos(pf)))/voltage_A));
+					} else {
+						current_A = complex(0.0,0.0);
+					}
+					if(voltage_B.Mag() > 0.0){
+						current_B = -(~(complex(Pconvb,Pconvb*tan(acos(pf)))/voltage_B));
+					} else {
+						current_B = complex(0.0,0.0);
+					}
+					if(voltage_B.Mag() > 0.0){
+						current_C = -(~(complex(Pconvc,Pconvc*tan(acos(pf)))/voltage_C));
+					} else {
+						current_C = complex(0.0,0.0);
+					}
 
 					if (Pconv > 0)
 					{
 						double last_current = 0;
 						double current_current = current_A.Mag() + current_B.Mag() + current_C.Mag();
 						unsigned int temp_count = 1;
-
+						
 						while ( fabs( (last_current-current_current)/current_current) > 0.005 )
 						{
 							last_current = current_current;
@@ -1028,10 +1046,21 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 							QoutA = pf/fabs(pf)*PoutA*sin(acos(pf));
 							QoutB = pf/fabs(pf)*PoutB*sin(acos(pf));
 							QoutC = pf/fabs(pf)*PoutC*sin(acos(pf));
-
-							current_A = -(~(complex(PoutA,QoutA)/voltage_A));
+							if(voltage_A.Mag() > 0.0){
+								current_A = -(~(complex(PoutA,QoutA)/voltage_A));
+							} else {
+								current_A = complex(0.0,0.0);
+							}
+							if(voltage_B.Mag() > 0.0){
 							current_B = -(~(complex(PoutB,QoutB)/voltage_B));
+							} else {
+								current_B = complex(0.0,0.0);
+							}
+							if(voltage_C.Mag() > 0.0){
 							current_C = -(~(complex(PoutC,QoutC)/voltage_C));
+							} else {
+								current_C = complex(0.0,0.0);
+							}
 
 							current_current = current_A.Mag() + current_B.Mag() + current_C.Mag();
 
