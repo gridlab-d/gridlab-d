@@ -176,6 +176,9 @@ auction::auction(MODULE *module)
 				PT_KEYWORD, "DENY", (enumeration)AM_DENY,
 				PT_KEYWORD, "PROB", (enumeration)AM_PROB,
 			PT_int32, "warmup", PADDR(warmup),
+			PT_enumeration, "ignore_failed_market", PADDR(ignore_failedmarket),
+				PT_KEYWORD, "FALSE", (enumeration)IFM_FALSE,
+				PT_KEYWORD, "TRUE", (enumeration)IFM_TRUE,
 			PT_enumeration, "ignore_pricecap", PADDR(ignore_pricecap),
 				PT_KEYWORD, "FALSE", (enumeration)IP_FALSE,
 				PT_KEYWORD, "TRUE", (enumeration)IP_TRUE,
@@ -248,7 +251,7 @@ int auction::init(OBJECT *parent)
 		if(obj->rank <= capacity_reference_object->rank){
 			gl_set_rank(obj,capacity_reference_object->rank+1);
 		}
-		if(capacity_reference_object->flags & OF_INIT != OF_INIT){
+		if( (capacity_reference_object->flags & OF_INIT) != OF_INIT){
 			char objname[256];
 			gl_verbose("auction::init(): deferring initialization on %s", gl_name(obj, objname, 255));
 			return 2; // defer
@@ -399,14 +402,17 @@ int auction::init(OBJECT *parent)
 	if(longest_statistic > 0){
 		history_count = (uint32)longest_statistic / (uint32)(this->period) + 2;
 		new_prices = (double *)malloc(sizeof(double) * history_count);
+		new_market_failures = (double *)malloc(sizeof(double) * history_count);
 	} else {
 		history_count = 1;
 		new_prices = (double *)malloc(sizeof(double));
+		new_market_failures = (double *)malloc(sizeof(double));
 	}
 	price_index = 0;
 	price_count = 0;
 	for(i = 0; i < history_count; ++i){
 		new_prices[i] = init_price;
+		new_market_failures[i] = CT_EXACT; // initialize all markets as NOT FAILED
 	}
 
 	if(init_stdev < 0.0){
@@ -553,17 +559,25 @@ int auction::update_statistics(){
 		start = (unsigned int)((history_count + stop - sample_need) % history_count); // one off for initial period delay
 		for(i = 0; i < sample_need; ++i){
 			idx = (start + i + history_count) % history_count;
-			if( (ignore_pricecap == IP_FALSE) || 
-				((new_prices[idx] != pricecap) && (new_prices[idx] != -pricecap))){
-				mean += new_prices[idx];
-			} else {
+			if( (ignore_pricecap == IP_TRUE) && ((new_prices[idx] == pricecap) || (new_prices[idx] == -pricecap))){
 				++skipped;
+			} else if( (ignore_failedmarket == IFM_TRUE) && (new_market_failures[idx] == CT_FAILURE) )  {
+				++skipped;
+			} else {
+				mean += new_prices[idx];
 			}
 		}
 		if(skipped != sample_need){
-			mean /= sample_need;
+			mean /= (sample_need - skipped);
 		} else {
 			mean = 0; // problem!
+			gl_warning("All values in auction statistic calculations were skipped. Setting mean to zero.");
+			/* TROUBLESHOOT
+				You may need to check your auction setup.  At least two flags are used to skip values in the calculation
+				of the statistics (ignore_pricecap & ignore_failedmarket).  This error indicates that every value was 
+				skipped.  This may be by design, but one should be aware of it.  Note, standard deviation will also
+				be set to zero after the initial statistics collection period.
+			*/
 		}
 		if(use_future_mean_price)
 			mean = future_mean_price;
@@ -578,14 +592,19 @@ int auction::update_statistics(){
 				stdev = 0.0;
 				for(i = 0; i < sample_need; ++i){
 					idx = (start + i + history_count) % history_count;
-					if( (ignore_pricecap == IP_FALSE) || 
-						((new_prices[idx] != pricecap) && (new_prices[idx] != -pricecap))){
-							x = new_prices[idx] - mean;
-							stdev += x * x;
+					if( (ignore_pricecap == IP_TRUE) && ((new_prices[idx] == pricecap) || (new_prices[idx] == -pricecap))){
+						// Ignore the value
+					}
+					else if( (ignore_failedmarket == IFM_TRUE) && (new_market_failures[idx] == CT_FAILURE) ) {
+						// Ignore the value
+					}
+					else {
+						x = new_prices[idx] - mean;
+						stdev += x * x;
 					}
 				}
 				if(skipped != sample_need){
-					stdev /= sample_need;
+					stdev /= (sample_need - skipped);
 				} else {
 					stdev = 0; // problem!
 				}
@@ -961,7 +980,11 @@ void auction::clear_market(void)
 				} else {
 					clearing_type = CT_FAILURE;
 					single_quantity = 0.0;
-					single_price = offers.getbid(0)->price - bid_offset;
+					// Jason: Not sure this is the right way, but seems to work when nobody is bidding (neither supply or demand)
+					if (offers.getcount() == 0)
+						single_price = 0;
+					else
+						single_price = offers.getbid(0)->price - bid_offset;
 				}
 			} else if(fixed_quantity < 0.0){
 				GL_THROW("fixed_quantity is negative");
@@ -1126,8 +1149,12 @@ void auction::clear_market(void)
 			if (buy_quantity > sell_quantity)
 			{
 				clear.quantity = supply_quantity = sell_quantity;
-				a = b = buy->price;
-				sell = offers.getbid(++j);
+				a = b = buy->price;	
+				++j;
+
+				if (j < offers.getcount() )
+					sell = offers.getbid(j);
+				
 				check = false;
 				clearing_type = CT_BUYER;
 			}
@@ -1135,7 +1162,11 @@ void auction::clear_market(void)
 			{
 				clear.quantity = demand_quantity = buy_quantity;
 				a = b = sell->price;
-				buy = asks.getbid(++i);
+				i++;
+
+				if (i < asks.getcount() )
+					buy = asks.getbid(i);
+
 				check = false;
 				clearing_type = CT_SELLER;
 			}
@@ -1144,8 +1175,15 @@ void auction::clear_market(void)
 				clear.quantity = demand_quantity = supply_quantity = buy_quantity;
 				a = buy->price;
 				b = sell->price;
-				buy = asks.getbid(++i);
-				sell = offers.getbid(++j);
+				i++;
+				j++;
+
+				if (i < asks.getcount() )
+					buy = asks.getbid(i);
+
+				if (j < offers.getcount() )
+					sell = offers.getbid(j);
+
 				check = true;
 			}
 		}
@@ -1336,6 +1374,7 @@ void auction::clear_market(void)
 			price_index = 0;
 		}
 		new_prices[price_index] = next.price;
+		new_market_failures[price_index] = current_frame.clearing_type;
 		//int update_rv = update_statistics();
 		++price_index;
 	}

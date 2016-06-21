@@ -58,6 +58,10 @@ public:
 	typedef enum {ST_ON=0, ST_OFF=1} STATISTICMODE;
 	typedef enum {IP_FALSE=0, IP_TRUE=1} IGNOREPRICECAP;
 	enumeration ignore_pricecap;
+	// Ignore prices from a FAILED market in statistics collection
+	//  Leaving FALSE as default, as this is the way it has been for a long time
+	typedef enum {IFM_FALSE=0, IFM_TRUE=1} IGNOREFAILEDMARKET;
+	enumeration ignore_failedmarket;
 	typedef enum {CO_NORMAL=0, CO_EXTRA=1} CURVEOUTPUT;
 	enumeration curve_log_info;
 	enumeration margin_mode;
@@ -115,6 +119,7 @@ public:
 	
 	// statistics
 	double *new_prices;
+	double *new_market_failures; //0 indicates it did NOT fail, 1 indicates failure
 	double *statdata;
 	unsigned int price_index;
 	unsigned int64 price_count;
