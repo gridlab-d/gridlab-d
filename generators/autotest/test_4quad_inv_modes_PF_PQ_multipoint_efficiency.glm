@@ -238,6 +238,7 @@ object triplex_meter {
 			generator_status ONLINE;
 			panel_type SINGLE_CRYSTAL_SILICON;
 			orientation FIXED_AXIS; 
+			area 323;
 			object recorder {
 				file PV_out.csv;
 				interval 3600;

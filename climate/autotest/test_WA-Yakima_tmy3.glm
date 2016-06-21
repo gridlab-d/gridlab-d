@@ -1,0 +1,18 @@
+clock {
+	timezone PST+8PDT;
+	starttime '2000-01-01 0:00:00';
+	stoptime '2001-01-01 0:00:00';
+}
+
+module climate;
+class climate {
+	double elevation[m];
+	double tzoffset[h];
+}
+object climate {
+	name "Yakima WA";
+	tmyfile "../WA-Yakima.tmy3";
+	tzoffset -8;
+	elevation 325;
+}
+

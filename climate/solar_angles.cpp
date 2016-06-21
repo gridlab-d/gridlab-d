@@ -262,7 +262,7 @@ double SolarAngles::elevation(
     return asin(sin(decl)*sin(latitude) + cos(decl)*cos(latitude)*cos(hr_ang));
 }
 
-//sjin: add solar azimuth funcion
+// TODO: CDC - Fix this function; this function does not compute azimuth correctly
 double SolarAngles::azimuth(
     short day_of_yr,    // day of year from Jan 1
     double latitude,    // latitude (radians)

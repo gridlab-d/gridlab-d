@@ -27,6 +27,8 @@
 #include "generators.h"
 #include "solar.h"
 
+#define RAD(x) (x*PI)/180
+
 CLASS *solar::oclass = NULL;
 solar *solar::defaults = NULL;
 
@@ -105,7 +107,8 @@ solar::solar(MODULE *module)
 			PT_double, "derating[pu]", PADDR(derating_factor), PT_DESCRIPTION, "Panel derating to account for manufacturing variances",
 			PT_double, "Tcell[degC]", PADDR(Tcell),
 
-			PT_double, "Rated_kVA[kVA]", PADDR(Rated_kVA),
+			PT_double, "Rated_kVA[kVA]", PADDR(Rated_kVA), PT_DEPRECATED, PT_DESCRIPTION, "This variable has issues with inconsistent handling in the code, so we will deprecate this in the future (VA maps to kVA, for example).",
+			PT_double, "rated_power[W]", PADDR(Max_P), PT_DESCRIPTION, "Used to define the size of the solar panel in power rather than square footage.", 
 			PT_complex, "P_Out[kW]", PADDR(P_Out),
 			PT_complex, "V_Out[V]", PADDR(V_Out),
 			PT_complex, "I_Out[A]", PADDR(I_Out),
@@ -116,6 +119,9 @@ solar::solar(MODULE *module)
 			PT_double, "tilt_angle[deg]", PADDR(tilt_angle), PT_DESCRIPTION, "Tilt angle of PV array",
 			PT_double, "orientation_azimuth[deg]", PADDR(orientation_azimuth), PT_DESCRIPTION, "Facing direction of the PV array",
 			PT_bool, "latitude_angle_fix", PADDR(fix_angle_lat), PT_DESCRIPTION, "Fix tilt angle to installation latitude value",
+
+			PT_double, "latitude[deg]", PADDR(latitude), PT_DESCRIPTION, "The location of the array in degrees latitude",
+			PT_double, "longitude[deg]", PADDR(longitude), PT_DESCRIPTION, "The location of the array in degrees longitude",
 
 			PT_enumeration, "orientation", PADDR(orientation_type),
 				PT_KEYWORD, "DEFAULT", (enumeration)DEFAULT,
@@ -162,7 +168,7 @@ int solar::create(void)
 	Voc = complex (34,0);  //taken from GEPVp-200-M-Module performance characteristics
 	P_Out = 0.0;
 
-	area = 323; //sq f , 30m2
+	area = 0; //sq f , 30m2
     
 	//Defaults for flagging
 	efficiency = 0;
@@ -192,6 +198,10 @@ int solar::create(void)
 	orientation_type = DEFAULT;	//Default = ideal tracking
 	solar_model_tilt = LIUJORDAN;	//"Classic" tilt model - from Duffie and Beckman (same as ETP inputs)
 	solar_power_model = BASEEFFICIENT; //Use older power output calculation model - unsure where it came from
+
+	// by default, the array has no position
+	latitude = NaN;
+	longitude = NaN;
 
 	//Null out the function pointers
 	calc_solar_radiation = NULL;
@@ -414,19 +424,26 @@ int solar::init_climate()
 				*/
 			}
 
-			//Check the solar method
-			if (orientation_type == FIXED_AXIS)
+			// Check the solar method
+			// CDC: This method of determining solar model based on tracking type seemed flawed. They should be independent of each other.
+			if (orientation_type == DEFAULT)
+			{
+				calc_solar_radiation = (FUNCTIONADDR)(gl_get_function(obj,"calc_solar_ideal_shading_position_radians"));
+			}
+			else if (orientation_type == FIXED_AXIS)
 			{
 				//See which function we want to use
 				if (solar_model_tilt==LIUJORDAN)
 				{
 					//Map up the "classic" function
-					calc_solar_radiation = (FUNCTIONADDR)(gl_get_function(obj,"calculate_solar_radiation_shading_degrees"));
+					//calc_solar_radiation = (FUNCTIONADDR)(gl_get_function(obj,"calculate_solar_radiation_shading_degrees"));
+					calc_solar_radiation = (FUNCTIONADDR)(gl_get_function(obj,"calculate_solar_radiation_shading_position_radians"));
 				}
 				else if (solar_model_tilt==SOLPOS)	//Use the solpos/Perez tilt model
 				{
 					//Map up the "classic" function
-					calc_solar_radiation = (FUNCTIONADDR)(gl_get_function(obj,"calc_solpos_radiation_shading_degrees"));
+					//calc_solar_radiation = (FUNCTIONADDR)(gl_get_function(obj,"calc_solpos_radiation_shading_degrees"));
+					calc_solar_radiation = (FUNCTIONADDR)(gl_get_function(obj,"calculate_solpos_radiation_shading_position_radians"));
 				}
 								
 				//Make sure it was found
@@ -488,8 +505,10 @@ int solar::init_climate()
 						*/
 					}
 				}
-				else	//Right now only SOLPOS, which is "correct" - if another is implemented, may need another case
+				else
+				{ //Right now only SOLPOS, which is "correct" - if another is implemented, may need another case
 					orientation_azimuth_corrected = orientation_azimuth;
+				}
 			}
 			//Defaulted else for now - don't do anything
 		}//End valid weather - mapping check
@@ -585,7 +604,51 @@ int solar::init(OBJECT *parent)
 	//efficiency dictates how much of the rate insolation the panel can capture and
 	//turn into electricity
 	//Rated power output
-	Max_P = Rated_Insolation * efficiency * area; // We are calculating the module efficiency which should be less than cell efficiency. What about the sun hours??
+	if (Max_P == 0) {
+		Max_P = Rated_Insolation * efficiency * area; // We are calculating the module efficiency which should be less than cell efficiency. What about the sun hours??
+		gl_verbose("init(): Rated_kVA was not specified.  Calculating from other defaults.");
+		/* TROUBLESHOOT
+		The relationship between power output and other physical variables is described by Rated_kVA = Rated_Insolation * efficiency * area. Since Rated_kVA 
+		was not set, using this equation to calculate it.
+		*/
+
+		if(Max_P == 0) {
+			gl_warning("init(): Rated_kVA or {area or rated insolation or effiency} were not specified or specified as zero.  Leads to maximum power output of 0.");
+			/* TROUBLESHOOT
+			The relationship between power output and other physical variables is described by Rated_kVA = Rated_Insolation * efficiency * area. Since Rated_kVA
+			was not specified and this equation leads to a value of zero, the output of the model is likely to be no power at all times.
+			*/
+		}
+	}
+	else {
+		if (efficiency != 0 && area != 0 && Rated_Insolation != 0) {
+			double temp = Rated_Insolation * efficiency * area;
+
+			if (temp < Max_P * .99 || temp > Max_P* 1.01) {
+				Max_P = temp;
+				gl_warning("init(): Rated_kVA, efficiency, Rate_Insolation, and area did not calculated to the same value.  Ignoring Rated_kVA.");
+				/* TROUBLESHOOT
+				The relationship between power output and other physical variables is described by Rated_kVA = Rated_Insolation * efficiency * area. However, the model
+				can be overspecified. In the case that it is, we have defaulted to old versions of GridLAB-D and ignored the Rated_kVA and re-calculated it using
+				the other values.  If you would like to use Rated_kVA, please only specify Rated_Insolation and Rated_kVA.
+				*/
+			}
+		}
+	}
+	
+	if (Rated_Insolation == 0) {
+		if (area != 0 && efficiency != 0) 
+			Rated_Insolation = Max_P / area / efficiency;
+		else {
+			gl_error("init(): Rated Insolation was not specified (or zero).  Power outputs cannot be calculated without a rated insolation value.");
+			/* TROUBLESHOOT
+			The relationship between power output and other physical variables is described by Rated_kVA = Rated_Insolation * efficiency * area.  Rated_kVA
+			and Rated_Insolation are required values for the solar model.  Please specify both of these parameters or efficiency and area.
+			*/
+		}
+	}
+
+	Rated_kVA = Max_P / 1000;
 
 	// find parent inverter, if not defined, use a default voltage
 	if (parent != NULL && strcmp(parent->oclass->name,"inverter") == 0) // SOLAR has a PARENT and PARENT is an INVERTER
@@ -740,13 +803,21 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 		switch (orientation_type) {
 			case DEFAULT:
 				{
-					Insolation = shading_factor*(*pSolarD) + *pSolarH + *pSolarG*(1 - cos(tilt_angle))*(*pAlbedo)/2.0;
+					if (weather == NULL)
+					{
+						Insolation = shading_factor*(*pSolarD) + *pSolarH + *pSolarG*(1 - cos(tilt_angle))*(*pAlbedo)/2.0;
+					}
+					else
+					{
+						ret_value = ((int64 (*)(OBJECT *, double, double, double, double, double *))(*calc_solar_radiation))(weather, RAD(tilt_angle), latitude, longitude, shading_factor, &Insolation);
+					}
 					break;
 				}
-			case FIXED_AXIS:
+			case FIXED_AXIS: // NOTE that this means FIXED, stationary. There is no AXIS at all. FIXED_AXIS is known as Single Axis Tracking by some, so the term is misleading.
 				{
 					//Snag solar insolation - prorate by shading (direct axis) - uses model selected earlier
-					ret_value = ((int64 (*)(OBJECT *, double, double, double, double *))(*calc_solar_radiation))(weather,tilt_angle,orientation_azimuth_corrected,shading_factor,&Insolation);
+					ret_value = ((int64 (*)(OBJECT *, double, double, double, double, double, double *))(*calc_solar_radiation))(weather,RAD(tilt_angle),RAD(orientation_azimuth_corrected),latitude,longitude,shading_factor,&Insolation);
+					//ret_value = ((int64 (*)(OBJECT *, double, double, double, double *))(*calc_solar_radiation))(weather,tilt_angle,orientation_azimuth_corrected,shading_factor,&Insolation);
 
 					//Make sure it worked
 					if (ret_value == 0)
@@ -827,7 +898,8 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 		Ftempcorr = 1.0 + module_Tcoeff*(Tcell-25.0)/100.0;
 
 		//Place into the DC value - factor in area, derating, and all of the related items
-		P_Out = Insolation*soiling_factor*derating_factor*area*efficiency*Ftempcorr;
+		//P_Out = Insolation*soiling_factor*derating_factor*area*efficiency*Ftempcorr;
+		P_Out = Insolation*soiling_factor*derating_factor*(Max_P / Rated_Insolation)*Ftempcorr;
 		
 		//Populate VA, just because it seems to be used below
 		VA_Out = P_Out;

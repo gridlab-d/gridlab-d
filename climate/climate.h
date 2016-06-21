@@ -14,6 +14,7 @@
 #include "solar_angles.h"
 #include "weather_reader.h"
 #include "csv_reader.h"
+#include <vector>
 
 typedef enum{
 	CP_H    = 0,
@@ -34,6 +35,10 @@ typedef enum{
 	CI_QUADRATIC
 };
 
+typedef enum{
+	CM_NONE = 0,
+	CM_CUMULUS = 1
+} CLOUDMODEL;
 
 
 typedef struct s_tmy {
@@ -52,18 +57,23 @@ typedef struct s_tmy {
 	double snowdepth; // in
 	double solar_azimuth;
 	double solar_elevation;
+	double solar_zenith;
+	double global_horizontal_extra;
+	double wind_dir;
+	double tot_sky_cov;
+	double opq_sky_cov;
 } TMYDATA;
 
 /* published functions */
 EXPORT int64 calculate_solar_radiation_degrees(OBJECT *obj, double tilt, double orientation, double *value);
 EXPORT int64 calculate_solar_radiation_radians(OBJECT *obj, double tilt, double orientation, double *value);
 EXPORT int64 calculate_solar_radiation_shading_degrees(OBJECT *obj, double tilt, double orientation, double shading_value, double *value);
+EXPORT int64 calculate_solar_radiation_shading_position_radians(OBJECT *obj, double tilt, double orientation, double latitude, double longitude, double shading_value, double *value);
 EXPORT int64 calculate_solar_radiation_shading_radians(OBJECT *obj, double tilt, double orientation, double shading_value, double *value);
 EXPORT int64 calc_solar_solpos_shading_deg(OBJECT *obj, double tilt, double orientation, double shading_value, double *value);
+EXPORT int64 calc_solar_solpos_shading_position_rad(OBJECT *obj, double tilt, double orientation, double latitude, double longitude, double shading_value, double *value);
 EXPORT int64 calc_solar_solpos_shading_rad(OBJECT *obj, double tilt, double orientation, double shading_value, double *value);
-//sjin: add solar elevation and azimuth published funcions
-EXPORT int64 calculate_solar_elevation(OBJECT *obj, double latitude, double *value);
-EXPORT int64 calculate_solar_azimuth(OBJECT *obj, double latitude, double *value);
+EXPORT int64 calc_solar_ideal_shading_position_radians(OBJECT *obj, double tilt, double latitude, double longitude, double shading_value, double *value);
 
 /**
  * This implements a Gridlab-D specific TMY2 data reader.  It was implemented
@@ -89,10 +99,11 @@ private:
 	double peak_solar;	
 
 	FILE *fp;
-	char buf[500]; // buffer to hold line data.
+	//char buf[500]; // buffer to hold line data.
 
 public:
 	int tz_offset;
+	char buf[500]; // buffer to hold line data.
 	tmy2_reader(){}
 
 	int elevation;
@@ -141,7 +152,7 @@ public:
 	 * @param pressure - atmospheric pressure
 	 * @param extra_terr_dni - Extra terrestrial direct normal irradiance (top of atmosphere)
 	 */
-	int read_data(double *dnr, double *dhr, double *ghr, double *tdb, double *rh, int* month, int* day, int* hour, double *wind=0,double *precip=0, double *snowDepth=0, double *pressure = 0, double *extra_terr_dni = 0);
+	int read_data(double *dnr, double *dhr, double *ghr, double *tdb, double *rh, int* month, int* day, int* hour, double *wind=0, double *winddir=0, double *precip=0, double *snowDepth=0, double *pressure = 0, double *extra_terr_dni=0, double *extra_terr_ghi=0, double *tot_sky_cov=0, double *opq_sky_cov=0);
 
 	/** obtain records **/
 
@@ -189,9 +200,16 @@ class climate : public gld_object {
 	GL_ATOMIC(enumeration,interpolate);
 	GL_ATOMIC(double,solar_elevation);
 	GL_ATOMIC(double,solar_azimuth);
+	GL_ATOMIC(double,solar_zenith);
 	GL_ATOMIC(double,direct_normal_extra);
 	GL_ATOMIC(double,pressure);
 	GL_ATOMIC(double,tz_offset_val);
+	GL_ATOMIC(double,global_horizontal_extra);
+	GL_ATOMIC(double,tot_sky_cov);
+	GL_ATOMIC(double,opq_sky_cov);
+	GL_ATOMIC(double,cloud_opacity);
+	GL_ATOMIC(double,cloud_reflectivity);
+	GL_ATOMIC(enumeration,cloud_model);
 
 	// data not shared with classes in this module (no locks needed)
 private:
@@ -205,6 +223,31 @@ public:
 	static climate *defaults;
 public:
 	void update_forecasts(TIMESTAMP t0);
+	void init_cloud_pattern(void);
+	void update_cloud_pattern(TIMESTAMP dt);
+	int get_solar_for_location(double latitude, double longitude, double *direct, double *global, double *diffuse);
+private:
+	int calc_cloud_pattern_size(std::vector<std::vector<double> > &location_list);
+	void build_cloud_pattern(int col_min, int col_max, int row_min, int row_max);
+	void write_out_cloud_pattern(char pattern);
+	void write_out_pattern_shift(int row_shift, int col_shift);
+	void rebuild_cloud_pattern_edge( char edge_needing_rebuilt);
+	void trim_pattern_edge( char rebuilt_edge);
+	void erase_off_screen_pattern( char edge_to_erase);
+	int get_fuzzy_cloud_value_for_location(double latitude, double longitude, double *cloud);
+	int get_binary_cloud_value_for_location(double latitude, double longitude, int *cloud);
+	double convert_to_binary_cloud();
+	void convert_to_fuzzy_cloud( double cut_elevation, int num_fuzzy_layers, double alpha);
+	TIMESTAMP prev_NTime;
+	int MIN_LAT_INDEX;
+	int MAX_LAT_INDEX;
+	double MIN_LAT;
+	double MAX_LAT;
+	int MIN_LON_INDEX;
+	int MAX_LON_INDEX;
+	double MIN_LON;
+	double MAX_LON;
+	double global_attenuation;
 public:
 	climate(MODULE *module);
 	int create(void);

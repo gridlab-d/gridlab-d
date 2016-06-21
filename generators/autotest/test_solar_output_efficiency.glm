@@ -53,11 +53,11 @@ object inverter {
 		};
 		within 0.01;
 	};
-	// object recorder {
-		// property "VA_In.real, VA_Out.real";
-		// file "inverter1_VA_in_VA_out.csv";
-		// interval 3600;
-	// };
+//	 object recorder {
+//		 property "VA_In.real, VA_Out.real";
+//		 file "inverter1_VA_in_VA_out.csv";
+//		 interval 3600;
+//	 };
 }
 
 //default solar object
@@ -65,6 +65,7 @@ object solar {
 	name trip_solar1;
 	phases AS;
 	parent trip_inv1;
+	area 323;
 	object double_assert {
 		target Insolation;
 		object player {
@@ -109,11 +110,11 @@ object inverter {
 		};
 		within 0.01;
 	};
-	// object recorder {
-		// property "VA_In.real, VA_Out.real";
-		// file "inverter2_VA_in_VA_out.csv";
-		// interval 3600;
-	// };
+//	 object recorder {
+//		 property "VA_In.real, VA_Out.real";
+//		 file "inverter2_VA_in_VA_out.csv";
+//		 interval 3600;
+//	 };
 }
 
 //default solar object
@@ -130,11 +131,11 @@ object solar {
 	orientation FIXED_AXIS;
 	SOLAR_TILT_MODEL SOLPOS;
 	SOLAR_POWER_MODEL FLATPLATE;
-	// object recorder {
-		// property "Insolation,VA_Out,shading_factor";
-		// file "deafult_array.csv";
-		// interval 3600;
-		// };
+//	 object recorder {
+//		 property "Insolation,VA_Out,shading_factor";
+//		 file "deafult_array.csv";
+//		 interval 3600;
+//		 };
 	object complex_assert {
 		target VA_Out;
 		operation REAL;
