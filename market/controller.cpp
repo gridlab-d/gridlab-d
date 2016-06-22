@@ -58,6 +58,7 @@ controller::controller(MODULE *module){
 			PT_enumeration, "control_mode", PADDR(control_mode),
 				PT_KEYWORD, "RAMP", (enumeration)CN_RAMP,
 				PT_KEYWORD, "DOUBLE_RAMP", (enumeration)CN_DOUBLE_RAMP,
+				PT_KEYWORD, "DEV_LEVEL", (enumeration)CN_DEV_LEVEL,
 			PT_enumeration, "resolve_mode", PADDR(resolve_mode),
 				PT_KEYWORD, "DEADBAND", (enumeration)RM_DEADBAND,
 				PT_KEYWORD, "SLIDING", (enumeration)RM_SLIDING,
@@ -83,6 +84,28 @@ controller::controller(MODULE *module){
 			PT_char32, "cooling_demand", PADDR(cooling_demand),
 			PT_double, "sliding_time_delay[s]", PADDR(sliding_time_delay), PT_DESCRIPTION, "time interval desired for the sliding resolve mode to change from cooling or heating to off",
 			PT_bool, "use_predictive_bidding", PADDR(use_predictive_bidding),
+			
+			// DEV_LEVEL
+			PT_double, "device_actively_engaged", PADDR(is_engaged),
+			PT_int32, "cleared_market", PADDR(last_market),  
+			PT_int32, "locked", PADDR(locked),
+			PT_double,"p_ON",PADDR(P_ON),
+			PT_double,"p_OFF",PADDR(P_OFF),
+			PT_double,"p_ONLOCK",PADDR(P_ONLOCK),
+			PT_double,"p_OFFLOCK",PADDR(P_OFFLOCK),
+			PT_double,"delta_u",PADDR(delta_u),
+			PT_object, "regulation_market_on", PADDR(pMkt2), PT_DESCRIPTION, "the willing to change state from ON->OFF market to bid into for regulation case",
+			PT_object, "regulation_market_off", PADDR(pMkt), PT_DESCRIPTION, "the willing to change state from OFF->ON market to bid into for regulation case",
+			PT_double, "fast_regulation_signal[s]", PADDR(fast_reg_signal), PT_DESCRIPTION, "the regulation signal that the controller compares against (i.e., how often is there a control action",
+			PT_double, "market_price_on", PADDR(clear_price2), PT_DESCRIPTION, "the current market clearing price seen by the controller in ON->OFF regulation market",
+			PT_double, "market_price_off", PADDR(clear_price), PT_DESCRIPTION, "the current market clearing price seen by the controller  in OFF->ON regulation market",
+			PT_double, "period_on[s]", PADDR(dPeriod2), PT_DESCRIPTION, "interval of time between market clearings in ON->OFF regulation market",
+			PT_double, "period_off[s]", PADDR(dPeriod), PT_DESCRIPTION, "interval of time between market clearings in  OFF->ON regulation market",
+			PT_int32, "regulation_period", PADDR(reg_period), PT_DESCRIPTION, "fast regulation signal period",
+			PT_double, "r1",PADDR(r1), PT_DESCRIPTION, "temporary diagnostic variable",
+			PT_double, "mu0",PADDR(mu0), PT_DESCRIPTION, "temporary diagnostic variable",
+			PT_double, "mu1",PADDR(mu1), PT_DESCRIPTION, "temporary diagnostic variable",
+
 			// redefinitions
 			PT_char32, "average_target", PADDR(avg_target),
 			PT_char32, "standard_deviation_target", PADDR(std_target),
@@ -111,6 +134,7 @@ controller::controller(MODULE *module){
 			PT_double, "proxy_average", PADDR(proxy_avg),
 			PT_double, "proxy_standard_deviation", PADDR(proxy_std),
 			PT_int64, "proxy_market_id", PADDR(proxy_mkt_id),
+			PT_int64, "proxy_market2_id", PADDR(proxy_mkt_id2),
 			PT_double, "proxy_clear_price[$]", PADDR(proxy_clear_price),
 			PT_double, "proxy_price_cap", PADDR(proxy_price_cap),
 			PT_char32, "proxy_market_unit", PADDR(proxy_mkt_unit),
@@ -135,6 +159,7 @@ int controller::create(){
 	cool_range_high = 5;
 	use_override = OU_OFF;
 	period = 0;
+	period2 = 0;
 	use_predictive_bidding = FALSE;
 	controller_bid.bid_id = -1;
 	controller_bid.market_id = -1;
@@ -143,6 +168,13 @@ int controller::create(){
 	controller_bid.state = BS_UNKNOWN;
 	controller_bid.rebid = false;
 	controller_bid.bid_accepted = true;
+	controller_bid2.bid_id = -1;
+	controller_bid2.market_id = -1;
+	controller_bid2.price = 0;
+	controller_bid2.quantity = 0;
+	controller_bid2.state = BS_UNKNOWN;
+	controller_bid2.rebid = false;
+	controller_bid2.bid_accepted = true;
 	bid_id = -1;
 	return 1;
 }
@@ -219,6 +251,7 @@ void controller::cheat(){
 			range_high = 10;
 			break;
 		case SM_DOUBLE_RAMP:
+			sprintf(target, "air_temperature");
 			sprintf((char *)(&heating_setpoint), "heating_setpoint");
 			sprintf((char *)(&heating_demand), "heating_demand");
 			sprintf((char *)(&heating_total), "total_load");		// using total instead of heating_total
@@ -339,7 +372,33 @@ int controller::init(OBJECT *parent){
 		} else {
 			period = (TIMESTAMP)floor(dPeriod + 0.5);
 		}
+		if(control_mode == CN_DEV_LEVEL){
+			pMarket2 = gl_get_object((char *)(&pMkt2));
+			if(pMarket2 == NULL){
+				gl_error("%s: controller has no second market, therefore no price signals from the second market", namestr);
+				return 0;
+			}
 
+			if(gl_object_isa(pMarket2, "auction")){
+				gl_set_dependent(hdr, pMarket2);
+			} else {
+				gl_error("controllers only work in the secnond market when attached to an 'auction' object");
+				return 0;
+			}
+
+			if((pMarket2->flags & OF_INIT) != OF_INIT){
+				char objname[256];
+				gl_verbose("Second market: controller::init(): deferring initialization on %s", gl_name(pMarket2, objname, 255));
+				return 2; // defer
+			}
+			if(dPeriod2 == 0.0){
+				double *pPeriod2 = NULL;
+				fetch_double(&pPeriod2, "period", pMarket2);
+				period2 = *pPeriod2;
+			} else {
+				period2 = (TIMESTAMP)floor(dPeriod2 + 0.5);
+			}
+		}
 		fetch_double(&pAvg, (char *)(&avg_target), pMarket);
 		fetch_double(&pStd, (char *)(&std_target), pMarket);
 		fetch_int64(&pMarketId, "market_id", pMarket);
@@ -347,6 +406,9 @@ int controller::init(OBJECT *parent){
 		fetch_double(&pPriceCap, "price_cap", pMarket);
 		fetch_double(&pMarginalFraction, "current_market.marginal_quantity_frac", pMarket);
 		fetch_enum(&pMarginMode, "margin_mode", pMarket);
+		fetch_double(&pClearedQuantity, "current_market.clearing_quantity", pMarket);
+		fetch_double(&pSellerTotalQuantity, "current_market.seller_total_quantity", pMarket);
+		fetch_enum(&pClearingType, "current_market.clearing_type", pMarket);
 		gld_property marketunit(pMarket, "unit");
 		gld_string mku;
 		mku = marketunit.get_string();
@@ -358,6 +420,24 @@ int controller::init(OBJECT *parent){
 			return 0;
 		}
 		fetch_double(&pInitPrice, "init_price", pMarket);
+		if(control_mode == CN_DEV_LEVEL) {
+			fetch_int64(&pMarketId2, "market_id", pMarket2);
+			fetch_double(&pClearedPrice2, "current_market.clearing_price", pMarket2);
+			fetch_double(&pPriceCap2, "price_cap", pMarket2);
+			fetch_double(&pMarginalFraction2, "current_market.marginal_quantity_frac", pMarket2);
+			fetch_double(&pClearedQuantity2, "current_market.clearing_quantity", pMarket2);
+			fetch_double(&pSellerTotalQuantity2, "current_market.seller_total_quantity", pMarket2);
+			fetch_enum(&pClearingType2, "current_market.clearing_type", pMarket2);
+			gld_property marketunit2(pMarket2, "unit");
+			mku = marketunit2.get_string();
+			strncpy(market_unit2, mku.get_buffer(), 31);
+			submit2 = (FUNCTIONADDR)(gl_get_function(pMarket2, "submit_bid_state"));
+			if(submit2 == NULL){
+				char buf[256];
+				gl_error("Unable to find function, submit_bid_state(), for object %s.", (char *)gl_name(pMarket2, buf, 255));
+				return 0;
+			}
+		}
 	} else {
 		if (dPeriod == 0.0)
 		{
@@ -375,6 +455,9 @@ int controller::init(OBJECT *parent){
 		pPriceCap = &(this->proxy_price_cap);
 		pMarginMode = &(this->proxy_margin_mode);
 		pMarginalFraction = &(this->proxy_marginal_fraction);
+		pClearedQuantity = &(this->proxy_clearing_quantity);
+		pSellerTotalQuantity = &(this->proxy_seller_total_quantity);
+		pClearingType = &(this->proxy_clearing_type);
 		strncpy(market_unit, proxy_mkt_unit, 31);
 		submit = (FUNCTIONADDR)(gl_get_function(pMarket, "submit_bid_state"));
 		if(submit == NULL){
@@ -383,6 +466,28 @@ int controller::init(OBJECT *parent){
 			return 0;
 		}
 		pInitPrice = &(this->proxy_init_price);
+		if(control_mode == CN_DEV_LEVEL) {
+			if(dPeriod2 == 0.0){
+				period2 = 300;
+			} else {
+				period2 = (TIMESTAMP)floor(dPeriod2 + 0.5);
+			}
+			pMarket2 = OBJECTHDR(this);
+			pMarketId2 = &(this->proxy_mkt_id2);
+			pClearedPrice2 = &(this->proxy_clear_price2);
+			pPriceCap2 = &(this->proxy_price_cap2);
+			pMarginalFraction2 = &(this->proxy_marginal_fraction2);
+			pClearedQuantity2 = &(this->proxy_clearing_quantity2);
+			pSellerTotalQuantity2 = &(this->proxy_seller_total_quantity2);
+			pClearingType2 = &(this->proxy_clearing_type2);
+			strncpy(market_unit2, proxy_mkt_unit2, 31);
+			submit2 = (FUNCTIONADDR)(gl_get_function(pMarket2, "submit_bid_state"));
+			if(submit2 == NULL){
+				char buf[256];
+				gl_error("Unable to find function, submit_bid_state(), for object %s.", (char *)gl_name(pMarket2, buf, 255));
+				return 0;
+			}
+		}
 	}
 
 	if(bid_delay < 0){
@@ -391,6 +496,16 @@ int controller::init(OBJECT *parent){
 	if(bid_delay > period){
 		gl_warning("Bid delay is greater than the controller period. Resetting bid delay to 0.");
 		bid_delay = 0;
+	}
+
+	if(control_mode == CN_DEV_LEVEL){
+		if(bid_delay2 < 0){
+			bid_delay2 = -bid_delay2;
+		}
+		if(bid_delay2 > period2){
+			gl_warning("Bid delay is greater than the controller period. Resetting bid delay to 0.");
+			bid_delay2 = 0;
+		}
 	}
 
 	if(target[0] == 0){
@@ -405,6 +520,27 @@ int controller::init(OBJECT *parent){
 	if(deadband[0] == 0 && use_predictive_bidding == TRUE && control_mode == CN_RAMP){
 		GL_THROW("controller: %i, deadband property not specified", hdr->id);
 	}
+	
+	if(bid_delay < 0){
+		bid_delay = -bid_delay;
+	}
+	if(bid_delay > period){
+		gl_warning("Bid delay is greater than the controller period. Resetting bid delay to 0.");
+		bid_delay = 0;
+	}
+
+	if(setpoint[0] == 0 && control_mode == CN_DEV_LEVEL){
+		GL_THROW("controller: %i, setpoint property not specified", hdr->id);
+	}
+
+	if(demand[0] == 0 && control_mode == CN_DEV_LEVEL){
+		GL_THROW("controller: %i, demand property not specified", hdr->id);
+	}
+
+	if(deadband[0] == 0 && use_predictive_bidding == TRUE && control_mode == CN_DEV_LEVEL){
+		GL_THROW("controller: %i, deadband property not specified", hdr->id);
+	}
+
 	if(total[0] == 0){
 		GL_THROW("controller: %i, total property not specified", hdr->id);
 	}
@@ -431,7 +567,7 @@ int controller::init(OBJECT *parent){
 	}
 
 	fetch_double(&pMonitor, target, parent);
-	if(control_mode == CN_RAMP){
+	if(control_mode == CN_RAMP || control_mode == CN_DEV_LEVEL){
 		fetch_double(&pSetpoint, setpoint, parent);
 		fetch_double(&pDemand, demand, parent);
 		fetch_double(&pTotal, total, parent);
@@ -463,6 +599,7 @@ int controller::init(OBJECT *parent){
 	} else {
 		controller_bid.bid_id = bid_id;
 	}
+	controller_bid2.bid_id = controller_bid.bid_id;
 
 	if(dir == 0){
 		double high = ramp_high * range_high;
@@ -501,6 +638,7 @@ int controller::init(OBJECT *parent){
 //	double period = market->period;
 //	next_run = gl_globalclock + (TIMESTAMP)(period - fmod(gl_globalclock+period,period));
 	next_run = gl_globalclock;// + (market->period - gl_globalclock%market->period);
+	last_run = next_run;
 	init_time = gl_globalclock;
 	time_off = TS_NEVER;
 	if(sliding_time_delay < 0 )
@@ -554,6 +692,18 @@ int controller::init(OBJECT *parent){
 			slider_setting = 1.0;
 		}
 	}
+
+	if(control_mode == CN_DEV_LEVEL){
+		if(slider_setting < -0.001){
+			gl_warning("slider_setting is negative, reseting to 0.0");
+			slider_setting = 0.0;
+		}
+		if(slider_setting > 1.0){
+			gl_warning("slider_setting is greater than 1.0, reseting to 1.0");
+			slider_setting = 1.0;
+		}
+	}
+
 	if(control_mode == CN_DOUBLE_RAMP){
 		if(slider_setting_heat < -0.001){
 			gl_warning("slider_setting_heat is negative, reseting to 0.0");
@@ -576,6 +726,10 @@ int controller::init(OBJECT *parent){
 	//get initial clear price
 	last_p = *pInitPrice;
 	lastmkt_id = 0;
+	market_flag = -1;
+	engaged = 0;
+	locked = 0;
+
 	return 1;
 }
 
@@ -599,6 +753,8 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 		slider_setting_cool = 1.0;
 
 	if(control_mode == CN_RAMP && setpoint0 == -1)
+		setpoint0 = *pSetpoint;
+	if(control_mode == CN_DEV_LEVEL && setpoint0 == -1)
 		setpoint0 = *pSetpoint;
 	if(control_mode == CN_DOUBLE_RAMP && heating_setpoint0 == -1)
 		heating_setpoint0 = *pHeatingSetpoint;
@@ -624,7 +780,28 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 			min = setpoint0;
 			max = setpoint0;
 		}
-	} else if(control_mode == CN_DOUBLE_RAMP){
+	} 
+	else if(control_mode == CN_DEV_LEVEL){
+		if (slider_setting == -0.001){
+			min = setpoint0 + range_low;
+			max = setpoint0 + range_high;
+		} else if(slider_setting > 0){
+			min = setpoint0 + range_low * slider_setting;
+			max = setpoint0 + range_high * slider_setting;
+			if(range_low != 0)
+				ramp_low = 2 + (1 - slider_setting);
+			else
+				ramp_low = 0;
+			if(range_high != 0)
+				ramp_high = 2 + (1 - slider_setting);
+			else
+				ramp_high = 0;
+		} else {
+			min = setpoint0;
+			max = setpoint0;
+		}
+	}
+	else if(control_mode == CN_DOUBLE_RAMP){
 		if (slider_setting_cool == -0.001){
 			cool_min = cooling_setpoint0 + cool_range_low;
 			cool_max = cooling_setpoint0 + cool_range_high;
@@ -687,9 +864,21 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 	double prediction_ramp = 0.0;
 	double prediction_range = 0.0;
 	double midpoint = 0.0;
+	TIMESTAMP fast_reg_run;
 	OBJECT *hdr = OBJECTHDR(this);
 	char mktname[1024];
 	char ctrname[1024];
+	if (control_mode == CN_DEV_LEVEL) {		
+		//printf("Reg signal is %f\n",fast_reg_signal);
+		fast_reg_run = gl_globalclock + (TIMESTAMP)(reg_period - (gl_globalclock+reg_period) % reg_period);
+
+		if (t1 == fast_reg_run-reg_period){
+			if(dev_level_ctrl(t0, t1) != 0){
+				GL_THROW("error occured when handling the device level controller");
+			}
+		}
+	}
+
 	if(t1 == next_run && *pMarketId == lastmkt_id && bidmode == BM_PROXY){
 		/*
 		 * This case is only true when dealing with co-simulation with FNCS.
@@ -704,13 +893,41 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				;
 			} else {// check to see if we have changed states
 				if(pState == 0){
-					return next_run;
+					if(control_mode == CN_DEV_LEVEL)
+						return fast_reg_run;
+					else
+						return next_run;
 				} else if(*pState == last_pState){
-					return next_run;
+					if(control_mode == CN_DEV_LEVEL)
+						return fast_reg_run;
+					else
+						return next_run;
 				}
 			}
 		} else {
-			return next_run;
+			if(control_mode == CN_DEV_LEVEL)
+				return fast_reg_run;
+			else
+				return next_run;
+		}
+	}
+
+	if(control_mode == CN_DEV_LEVEL){
+
+		if((t1 < next_run) && (*pMarketId2 == lastmkt_id2)){
+			if(t1 <= next_run - bid_delay2){
+				if(use_predictive_bidding == TRUE && (control_mode == CN_DEV_LEVEL && last_setpoint != setpoint0)) {
+					;
+				} else {// check to see if we have changed states
+					if(pState == 0){
+						return fast_reg_run;
+					} else if(*pState == last_pState){
+						return fast_reg_run;
+					}
+				}
+			} else {
+				return fast_reg_run;
+			}
 		}
 	}
 	
@@ -897,7 +1114,293 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		}
 		if(residual < -0.001)
 			gl_warning("controller:%d: residual unresponsive load is negative! (%.1f kW)", hdr->id, residual);
-	} else if (control_mode == CN_DOUBLE_RAMP){
+	} 
+	else if(control_mode == CN_DEV_LEVEL){
+		// if market has updated, continue onwards
+		if(*pMarketId != lastmkt_id && *pMarketId2 != lastmkt_id2){// && (*pAvg == 0.0 || *pStd == 0.0 || setpoint0 == 0.0)){
+			controller_bid.rebid = false;
+			controller_bid2.rebid = false;
+			lastmkt_id = *pMarketId;
+			lastbid_id = -1; 
+			lastmkt_id2 = *pMarketId2;
+			lastbid_id2 = -1;// clear last bid id, refers to an old market
+			
+			P_ONLOCK = 0;			//Ebony
+			P_OFFLOCK = 0;			//Ebony
+			last_run = next_run;	//Ebony
+			engaged = 0;
+
+			last_market = market_flag;
+
+			// If the market failed with some sellers, let's go ahead and use what is available
+			if (*pClearedQuantity == 0) {
+				P_OFF = *pSellerTotalQuantity;
+			}
+			else {
+				P_OFF = *pClearedQuantity;
+			}
+
+			if (*pClearedQuantity2 == 0) {
+				P_ON = *pSellerTotalQuantity2;
+			}
+			else {
+				P_ON = *pClearedQuantity2;
+			}
+
+			// Choose whether we should be part of the control action or not.
+			// We didn't actually bid in the last market
+			if (last_q == 0) {
+				engaged = 0;
+			}
+			// One of the markets failed
+			else if(*pClearingType == CT_FAILURE || *pClearingType == CT_NULL || *pClearingType2 == CT_FAILURE || *pClearingType2 == CT_NULL) {
+				engaged = 0;
+			}
+			// The cleared quantities weren't balanced - we could eventually allow some percentage of difference
+			else if (*pClearedQuantity != *pClearedQuantity2) {
+				engaged = 0;
+			}
+			// One of the markets didn't clear with any quantity
+			else if (*pClearedQuantity == 0) {
+				engaged = 0;
+			}
+			// One of the markets didn't clear with any quantity
+			else if (*pClearedQuantity2 == 0) {
+				engaged = 0;
+			}
+			// We bid into the OFF->ON market
+			else if (market_flag == 0) {   
+				clear_price = *pClearedPrice;
+
+				if (last_p < clear_price) { // Cleared at the right price
+					engaged = 1;
+				}
+				else if (last_p == clear_price) { // We're a marginal unit, so randomize whether to engage or not
+					double my_rand = gl_random_uniform(RNGSTATE,0, 1.0);
+					if (my_rand <= *pMarginalFraction) {
+						engaged = 1;
+					}
+					else {
+						engaged = 0;
+					}
+				}
+				else {
+					engaged = 0;
+				}	
+			}
+			// We bid into the ON->OFF market
+			else if (market_flag == 1) {
+				clear_price = *pClearedPrice2;
+
+				if (last_p < clear_price) { // Cleared at the right price
+					engaged = 1;
+				}
+				else if (last_p == clear_price) { // We're a marginal unit, so randomize whether to engage or not
+					double my_rand = gl_random_uniform(RNGSTATE,0, 1.0);
+					if (my_rand <= *pMarginalFraction2) {
+						engaged = 1;
+					}
+					else {
+						engaged = 0;
+					}
+				}
+				else {
+					engaged = 0;
+				}	
+			}
+			else {
+				engaged = 0;
+			}
+
+			if(use_predictive_bidding == TRUE){
+				if((dir > 0 && clear_price < last_p) || (dir < 0 && clear_price > last_p)){
+					shift_direction = -1;
+				} else if((dir > 0 && clear_price >= last_p) || (dir < 0 && clear_price <= last_p)){
+					shift_direction = 1;
+				} else {
+					shift_direction = 0;
+				}
+			}
+		}
+
+		if(dir > 0){
+			if(use_predictive_bidding == TRUE){
+				if(*pState == 0 && *pMonitor > (max - deadband_shift)){
+					bid = *pPriceCap;
+				} else if(*pState != 0 && *pMonitor < (min + deadband_shift)){
+					bid = 0.0;
+					no_bid = 1;
+				} else if(*pState != 0 && *pMonitor > max){
+					bid = *pPriceCap;
+				} else if(*pState == 0 && *pMonitor < min){
+					bid = 0.0;
+					no_bid = 1;
+				}
+			} else {
+				if(*pMonitor > max){
+					bid = *pPriceCap;
+				} else if (*pMonitor < min){
+					bid = 0.0;
+					no_bid = 1;
+				}
+			}
+		} else if(dir < 0){
+			if(use_predictive_bidding == TRUE){
+				if(*pState == 0 && *pMonitor < (min + deadband_shift)){
+					bid = *pPriceCap;
+				} else if(*pState != 0 && *pMonitor > (max - deadband_shift)){
+					bid = 0.0;
+					no_bid = 1;
+				} else if(*pState != 0 && *pMonitor < min){
+					bid = *pPriceCap;
+				} else if(*pState == 0 && *pMonitor > max){
+					bid = 0.0;
+					no_bid = 1;
+				}
+			} else {
+				if(*pMonitor < min){
+					bid = *pPriceCap;
+				} else if (*pMonitor > max){
+					bid = 0.0;
+					no_bid = 1;
+				}
+			}
+		} else if(dir == 0){
+			if(use_predictive_bidding == TRUE){
+				if(direction == 0.0) {
+					gl_error("the variable direction did not get set correctly.");
+				} else if((*pMonitor > max + deadband_shift || (*pState != 0 && *pMonitor > min - deadband_shift)) && direction > 0){
+					bid = *pPriceCap;
+				} else if((*pMonitor < min - deadband_shift || (*pState != 0 && *pMonitor < max + deadband_shift)) && direction < 0){
+					bid = *pPriceCap;
+				} else {
+					bid = 0.0;
+					no_bid = 1;
+				}
+			} else {
+				if(*pMonitor < min){
+					bid = *pPriceCap;
+				} else if(*pMonitor > max){
+					bid = 0.0;
+					no_bid = 1;
+				} else {
+					bid = *pAvg;
+				}
+			}
+		}
+
+		// calculate bid price
+		if(*pMonitor > setpoint0){
+			k_T = ramp_high;
+			T_lim = range_high;
+		} else if(*pMonitor < setpoint0) {
+			k_T = ramp_low;
+			T_lim = range_low;
+		} else {
+			k_T = 0.0;
+			T_lim = 0.0;
+		}
+		
+		
+		if(bid < 0.0 && *pMonitor != setpoint0) {
+			bid = *pAvg + ( (fabs(*pStd) < bid_offset) ? 0.0 : (*pMonitor - setpoint0) * (k_T * *pStd) / fabs(T_lim) );
+		} else if(*pMonitor == setpoint0) {
+			bid = *pAvg;
+		}
+
+		//Let's dissallow negative or zero bidding in this, for now
+		if (bid <= 0.0)
+			bid = bid_offset;
+
+		// WARNING ~ bid ID check will not work properly 
+		//KEY bid_id = (KEY)(lastmkt_id == *pMarketId ? lastbid_id : -1);
+		//KEY bid_id2 = (KEY)(lastmkt_id2 == *pMarketId2 ? lastbid_id2 : -1);
+
+		if(*pDemand > 0 && no_bid != 1){
+			last_p = bid;
+			last_q = *pDemand;
+			
+			if(*pState == 1){
+				if(0 != strcmp(market_unit2, "")){
+					if(0 == gl_convert("kW", market_unit2, &(last_q))){
+						gl_error("unable to convert bid units from 'kW' to '%s'", market_unit2);
+						return TS_INVALID;
+					}
+				}
+
+				if (last_p > *pPriceCap2)
+					last_p = *pPriceCap2;
+
+				//lastbid_id2 = submit_bid(pMarket2, hdr, last_q, last_p, bid_id2);
+				controller_bid2.market_id = lastmkt_id2;
+				controller_bid2.price = last_p;
+				controller_bid2.quantity = last_q;
+				controller_bid2.state = BS_UNKNOWN;
+				((void (*)(char *, char *, char *, char *, void *, size_t))(*submit2))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt2), "submit_bid_state", "auction", (void *)&controller_bid2, (size_t)sizeof(controller_bid2));
+				controller_bid2.rebid = true;
+				if(controller_bid2.bid_accepted == false){
+					return TS_INVALID;
+				}
+				market_flag = 1;
+
+				// We had already bid into the other market, so let's cancel that bid out
+				if (controller_bid.rebid) {
+					//lastbid_id = submit_bid(pMarket, hdr, 0, *pPriceCap, bid_id);
+					controller_bid.market_id = lastmkt_id;
+					controller_bid.price = *pPriceCap;
+					controller_bid.quantity = last_q;
+					controller_bid.state = BS_UNKNOWN;
+					((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+					controller_bid.rebid = true;
+					if(controller_bid.bid_accepted == false){
+						return TS_INVALID;
+					}
+				}
+			} else if (*pState == 0) {
+				if(0 != strcmp(market_unit, "")){
+					if(0 == gl_convert("kW", market_unit, &(last_q))){
+						gl_error("unable to convert bid units from 'kW' to '%s'", market_unit);
+						return TS_INVALID;
+					}
+				}
+
+				if (last_p > *pPriceCap)
+					last_p = *pPriceCap;
+
+				//lastbid_id = submit_bid(pMarket, hdr, last_q, last_p, bid_id);
+				controller_bid.market_id = lastmkt_id;
+				controller_bid.price = last_p;
+				controller_bid.quantity = last_q;
+				controller_bid.state = BS_UNKNOWN;
+				((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+				controller_bid.rebid = true;
+				if(controller_bid.bid_accepted == false){
+					return TS_INVALID;
+				}
+				market_flag = 0;
+
+				// We had already bid into the other market, so let's cancel that bid out
+				if (controller_bid2.rebid) {
+					//lastbid_id2 = submit_bid(pMarket2, hdr, 0, *pPriceCap2, bid_id2);
+					controller_bid2.market_id = lastmkt_id2;
+					controller_bid2.price = *pPriceCap2;
+					controller_bid2.quantity = last_q;
+					controller_bid2.state = BS_UNKNOWN;
+					((void (*)(char *, char *, char *, char *, void *, size_t))(*submit2))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt2), "submit_bid_state", "auction", (void *)&controller_bid2, (size_t)sizeof(controller_bid2));
+					controller_bid2.rebid = true;
+					if(controller_bid2.bid_accepted == false){
+						return TS_INVALID;
+					}
+				}
+			}
+		} else {
+			last_p = 0;
+			last_q = 0;
+			gl_verbose("%s's is not bidding", hdr->name);
+		}
+
+	}
+	else if (control_mode == CN_DOUBLE_RAMP){
 		/*
 		double heat_range_high;
 		double heat_range_low;
@@ -954,6 +1457,20 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			// retrieve cleared price
 			clear_price = *pClearedPrice;
 			controller_bid.rebid = false;
+			if(clear_price == last_p){
+				// determine what to do at the marginal price
+				switch(*pClearingType){
+					case CT_SELLER:	// may need to curtail
+						break;
+					case CT_PRICE:	// should not occur
+					case CT_NULL:	// q zero or logic error ~ should not occur
+						// occurs during the zero-eth market.
+						//gl_warning("clearing price and bid price are equal with a market clearing type that involves inequal prices");
+						break;
+					default:
+						break;
+				}
+			}
 			if(use_predictive_bidding == TRUE){
 				if((thermostat_mode == TM_COOL && clear_price < last_p) || (thermostat_mode == TM_HEAT && clear_price > last_p)){
 					shift_direction = -1;
@@ -1129,12 +1646,20 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 	gl_printtime(t1,timebuf,127);
 	//gl_verbose("controller:%i::sync(): bid $%f for %f kW at %s",hdr->id,last_p,last_q,timebuf);
 	//return postsync(t0, t1);
+
+	if (control_mode == CN_DEV_LEVEL) {		
+		return fast_reg_run;
+	}
+
 	return TS_NEVER;
 }
 
 TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 	TIMESTAMP rv = next_run - bid_delay;
 	if(last_setpoint != setpoint0 && control_mode == CN_RAMP){
+		last_setpoint = setpoint0;
+	}
+	if(last_setpoint != setpoint0 && control_mode == CN_DEV_LEVEL){
 		last_setpoint = setpoint0;
 	}
 	if(last_heating_setpoint != heating_setpoint0 && control_mode == CN_DOUBLE_RAMP){
@@ -1179,6 +1704,146 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 	}
 
 	return rv;
+}
+
+int controller::dev_level_ctrl(TIMESTAMP t0, TIMESTAMP t1){
+	if (engaged == 1)
+		if (last_market == 1)
+			is_engaged = 1;
+		else
+			is_engaged = -1;
+	else
+		is_engaged = 0;
+	
+	OBJECT *hdr = OBJECTHDR(this);
+	double my_id = hdr->id;
+
+	// Not sure if this is needed, but lets clean up the Override signal if we are entering a new market
+	//  We'll catch the new signal one reg signal too late for now
+	if(((t1-last_run) % int(dPeriod)) == 0) {
+		*pOverride = 0; 
+		last_override = 0;
+	}
+	// If engaged and during the first pass, check to see if we should override
+	else if (engaged==1)	{ 
+		if ( t0 < t1 ) {
+			// Only re-calculate this stuff on the defined regulation time
+			if(((t1-last_run) % reg_period) == 0){
+
+				// First time through this market period, grab some of the initial data
+				if (t1 <=last_run + reg_period) {
+					P_ON_init = P_ON;
+					delta_u = fast_reg_signal*P_ON_init;		
+					locked = 0;
+					*pOverride = 0;
+					last_override = 0;
+					u_last = (1+fast_reg_signal)*P_ON_init;
+				}
+				else {
+					delta_u = (1+fast_reg_signal)*P_ON_init - u_last;
+					u_last = (1+fast_reg_signal)*P_ON_init;
+				}
+
+				// if we are part of the OFF->ON market
+				if (delta_u > 0 && last_market == 0) {
+					if (locked == 0) {
+						if (P_OFF != 0)
+							mu0 = delta_u/P_OFF;
+						else
+							mu0 = 0;
+						mu1 = 0;
+
+						r1 = gl_random_uniform(RNGSTATE,0, 1.0);
+
+						if(r1 < mu0){
+							*pOverride = 1;
+							locked = 1;
+						} 
+						else {
+							if (use_override == OU_ON)
+								*pOverride = -1; //keep it in the OFF position
+							else
+								*pOverride = 0;	 //else operate normally is probably not needed
+						}
+					}
+					else if (use_override == OU_ON) {
+						*pOverride = 1; //keep it in the ON position
+					}
+				}
+				// Ensure that it stays in the position we have decided on
+				else if (last_market == 0) {
+					mu0=0;
+					if (P_ON != 0.0)
+						mu1=-delta_u/P_ON;
+					else
+						mu1 = 0;
+					if (use_override == OU_ON) {
+						if (locked == 1)
+							*pOverride = 1; //keep it in the ON position
+						else
+							*pOverride = -1; //keep it in the OFF position
+					}
+				}
+				// If we are part of the ON->OFF market
+				else if (delta_u < 0 && last_market == 1) {
+					if (locked == 0) {
+						mu0=0;
+						if (P_ON != 0.0)
+							mu1=-delta_u/P_ON;
+						else
+							mu1 = 0;
+
+						r1 = gl_random_uniform(RNGSTATE,0, 1.0);
+
+						if(r1 < mu1){
+							*pOverride = -1;
+							locked = 1;
+						} else {
+							if (use_override == OU_ON)
+								*pOverride = 1; // keep it in the ON position
+							else
+								*pOverride = 0;	// operate normally is probably not needed
+						}	
+					}
+					else if (use_override == OU_ON) {
+						*pOverride = -1; //keep it in the OFF position
+					}
+				}
+				else if (last_market == 1) {
+					if (P_OFF != 0)
+							mu0 = delta_u/P_OFF;
+						else
+							mu0 = 0;
+						mu1 = 0;
+					if (use_override == OU_ON) {
+						if (locked == 1)
+							*pOverride = -1; //keep it in the OFF position
+						else
+							*pOverride = 1; //keep it in the ON position
+					}
+				}
+				else {
+					mu0 = 0;
+					mu1 = 0;
+					*pOverride = 0;
+				}
+
+				last_override = *pOverride;
+
+				P_OFFLOCK = P_OFFLOCK + mu1*P_ON;			
+				P_ON = (1-mu1)*P_ON;
+				P_ONLOCK = P_ONLOCK + mu0*P_OFF;
+				P_OFF = (1-mu0)*P_OFF; 
+			}
+			else {
+				*pOverride = last_override;
+			}
+		}
+		else {
+			*pOverride = last_override;
+		}
+	}
+	return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////

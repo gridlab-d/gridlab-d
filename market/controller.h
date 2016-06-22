@@ -45,6 +45,7 @@ public:
 	typedef enum {
 		CN_RAMP,
 		CN_DOUBLE_RAMP,
+		CN_DEV_LEVEL,
 	} CONTROLMODE;
 	enumeration control_mode;
 	
@@ -78,20 +79,27 @@ public:
 	char32 avg_target;
 	char32 std_target;
 	char pMkt[33];
+	char pMkt2[33];
 	OBJECT *pMarket;
+	OBJECT *pMarket2;
 	auction *market;
 	KEY lastbid_id;
 	KEY lastmkt_id;
+	KEY lastbid_id2;
+	KEY lastmkt_id2;
 	double last_p;
 	double last_q;
+	double P_ON,P_OFF,P_ONLOCK,P_OFFLOCK;  //Ebony
+	double mu0, mu1; //Ebony
 	double set_temp;
 	int may_run;
 
 	// new stuff
 	double clear_price;
+	double clear_price2;
 	double ramp_low, ramp_high;
-	double dPeriod;
-	int64 period;
+	double dPeriod,dPeriod2;
+	int64 period,period2;
 	double slider_setting;
 	double slider_setting_heat;
 	double slider_setting_cool;
@@ -122,7 +130,7 @@ public:
 	double heating_setpoint0;
 	double cooling_setpoint0;
 	double sliding_time_delay;
-	int bid_delay;
+	int bid_delay,bid_delay2;
 
 	bool use_predictive_bidding;
 	double last_setpoint;
@@ -132,6 +140,8 @@ public:
 
 private:
 	TIMESTAMP next_run;
+	TIMESTAMP last_run;
+	TIMESTAMP fast_reg_run;		//Ebony
 	TIMESTAMP init_time;
 	double *pMonitor;
 	double *pSetpoint;
@@ -141,6 +151,8 @@ private:
 	double *pAvg;
 	double *pStd;
 	double *pMarginalFraction;
+	double *pAvg2;	//Second Market
+	double *pStd2;	//Second Market
 	enumeration *pState;
 	enumeration last_pState;
 	void cheat();
@@ -148,8 +160,15 @@ private:
 	void fetch_int64(int64 **prop, char *name, OBJECT *parent);
 	void fetch_enum(enumeration **prop, char *name, OBJECT *parent);
 	int dir, direction;
+	int dir2, direction2;
+	int market_flag;
+	int last_override;
+	int locked;
+	double r1;
 	double min, max;
 	double T_lim, k_T;
+	double fast_reg_signal;
+	int reg_period;
 	double heat_min, heat_max;
 	double cool_min, cool_max;
 	double *pDeadband;
@@ -172,28 +191,60 @@ private:
 	int64 dtime_delay;
 	TIMESTAMP time_off;
 	bool use_market_period;
+	int last_market;  //ebony
+	int engaged;   //ebony
+	double is_engaged;
+	double delta_u;
+	double P_ON_init;
+	double P_total_init;
+	double u_last;
 	BIDINFO controller_bid;
+	BIDINFO controller_bid2;
 	FUNCTIONADDR submit;
+	FUNCTIONADDR submit2;
 
 	enumeration *pOverride;
+	enumeration *pOverride2;
 	int64 *pMarketId;
+	int64 *pMarketId2;
 	double *pClearedPrice;
+	double *pClearedPrice2;
 	double *pPriceCap;
+	double *pPriceCap2;
 	GL_STRING(char32,marketunit);
 	char market_unit[32];
+	char market_unit2[32];
 	enumeration *pMarginMode;
 	static controller *defaults;
-
+	int dev_level_ctrl(TIMESTAMP t0, TIMESTAMP t1);
+	double *pClearedQuantity;
+	double *pClearedQuantity2;
+	double *pSellerTotalQuantity;
+	double *pSellerTotalQuantity2;
+	enumeration *pClearingType;
+	enumeration *pClearingType2;
+	double *pMarginalFraction2;
 	//PROXY PROPERTIES
 	double proxy_avg;
 	double proxy_std;
 	int64 proxy_mkt_id;
+	int64 proxy_mkt_id2;
 	double proxy_clear_price;
+	double proxy_clear_price2;
 	double proxy_price_cap;
+	double proxy_price_cap2;
 	char proxy_mkt_unit[32];
+	char proxy_mkt_unit2[32];
 	double proxy_init_price;
 	enumeration proxy_margin_mode;
 	double proxy_marginal_fraction;
+	double proxy_clearing_quantity;
+	double proxy_clearing_quantity2;
+	double proxy_seller_total_quantity;
+	double proxy_seller_total_quantity2;
+	enumeration proxy_clearing_type;
+	enumeration proxy_clearing_type2;
+	double proxy_marginal_fraction2;
 };
 
 #endif // _controller_H
