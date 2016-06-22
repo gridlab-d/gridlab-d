@@ -142,7 +142,7 @@ pthread_create (pthread_t * tid,
 
   if (a != NULL)
     {
-      stackSize = a->stacksize;
+      stackSize = (long)a->stacksize;
       tp->detachState = a->detachstate;
       priority = a->param.sched_priority;
 

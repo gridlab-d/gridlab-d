@@ -128,6 +128,7 @@ int evcharger_det::init(OBJECT *parent)
 	double home_arrive, home_durr, temp_miles, work_arrive, work_durr, glob_min_timestep_dbl, temp_val;
 	double temp_hours_curr, temp_hours_curr_two, temp_hours_A, temp_hours_B, temp_hours_C, temp_hours_D;
 	double temp_sec_curr, temp_sec_curr_two, temp_sec_A, temp_sec_B, temp_sec_C, temp_sec_D;
+	double temp_amps;
 	FILE *FPTemp;
 	TIMESTAMP temp_time;
 	DATETIME temp_date;
@@ -165,17 +166,38 @@ int evcharger_det::init(OBJECT *parent)
 	}
 
 	//End-use properties
-	//Check the maximum charge rate - if over 1.7 kW, make it 220 VAC
+	//Check the maximum charge rate - if over 1.7 kW, see if it is 220 VAC
 	if (CarInformation.MaxChargeRate > 1700)
 	{
-		load.config = EUC_IS220;
-	//	load.breaker_amps = (double)((int)(CarInformation.MaxChargeRate / 220.0 * 1.1));	//May not be a realistic value
-		load.breaker_amps = floor(((CarInformation.MaxChargeRate * 1.1) / 220.0) + 0.5);
-		gl_verbose("INIT: load.breaker_amps = %0.4f.", load.breaker_amps);
+		if (load.config != EUC_IS220)
+		{
+			gl_warning("evcharger_det:%s - The max charge rate is over 1.7 kW (Level 1), but the load is still 110-V connected.",hdr->name ? hdr->name : "unnamed");
+			/*  TROUBLESHOOT
+			The evcharger_det maximum_charge_rate implies a level 2 or higher charge rate, but it still set up to be connected as a normal level 1 110/120 VAC device.
+			This may cause issues with circuit breakers tripping.  If this is undesired, be sure to specify the proper configuration property.
+			*/
+		}
 	}
-	else
+
+	//Check breaker rating
+	//Get rough calculation
+	if (load.config == EUC_IS220)
 	{
-		load.breaker_amps = 20.0;	//110 VAC - just assume it is a 20 Amp breaker
+		temp_amps = floor(((CarInformation.MaxChargeRate * 1.1) / 220.0) + 0.5);
+	}
+	else	//Assume 110/120 connected
+	{
+		temp_amps = floor(((CarInformation.MaxChargeRate * 1.1) / 110.0) + 0.5);
+	}
+
+	//See if it is bigger
+	if (temp_amps > load.breaker_amps)
+	{
+		gl_warning("evcharger_det:%s - the breaker rating may be too low for this maximum charge rate.",hdr->name ? hdr->name : "unnamed");
+		/*  TROUBLESHOOT
+		The evcharger_det maximum_charge_rate and configuration calculated a maximum breaker current that may be above the current setting.
+		This may cause the breaker to trip and affect simulation results.  If this is undesired, set the breaker_amps property to a higher value.
+		*/
 	}
 
 	//Initialize enduse structure

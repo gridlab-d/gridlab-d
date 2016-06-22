@@ -137,6 +137,18 @@ public:
 	double window_exterior_transmission_coefficient; ///< fraction of energy that transmits through windows
 	double solar_heatgain_factor;				///< product of the window solar heatgain coefficient and the exterior transmission coefficient
 
+	/* Simulated window openings */
+	bool window_openings;		// Activate this mode...by default, not activated
+	double window_open;			// Tracks the state of the window
+	double window_low_temp;		// Low temperature cutoff
+	double window_high_temp;	// High temperature cutoff
+	double window_a;			// quadratic coefficient for function between low and high cutoffs
+	double window_b;			// linear coefficient for function between low and high cutoffs
+	double window_c;			// constant coefficient for function between low and high cutoffs
+	double window_temp_delta;   // difference in outdoor temperature that triggers a re-calculation of the model
+	double last_temperature;	// last temperature of a state change
+	int window_first_time_through; // determine if this is the first time through the model or not
+
 	// system design variables
 	// thermostat
 	double thermostat_deadband;		///< thermostat deadband (degF)

@@ -248,7 +248,16 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"design_heating_setpoint[degF]",PADDR(design_heating_setpoint),PT_DESCRIPTION,"system design heating setpoint",
 			PT_double,"design_cooling_setpoint[degF]",PADDR(design_cooling_setpoint),PT_DESCRIPTION,"system design cooling setpoint",
 			PT_double,"over_sizing_factor",PADDR(over_sizing_factor),PT_DESCRIPTION,"over sizes the heating and cooling system from standard specifications (0.2 ='s 120% sizing)",
-			
+
+			PT_bool,"simulate_window_openings",PADDR(window_openings),PT_DESCRIPTION,"activates a representation of an occupant opening a window and de-activating the HVAC system",
+			PT_double,"is_window_open",PADDR(window_open),PT_DESCRIPTION,"defines the state of the window opening, 1=open, 2=closed",
+			PT_double,"window_low_temperature_cutoff[degF]",PADDR(window_low_temp),PT_DESCRIPTION,"lowest temperature at which the window opening might occur",
+			PT_double,"window_high_temperature_cutoff[degF]",PADDR(window_high_temp),PT_DESCRIPTION,"highest temperature at which the window opening might occur",
+			PT_double,"window_quadratic_coefficient",PADDR(window_a),PT_DESCRIPTION,"quadratic coefficient for describing function between low and high temperature cutoffs",
+			PT_double,"window_linear_coefficient",PADDR(window_b),PT_DESCRIPTION,"linear coefficient for describing function between low and high temperature cutoffs",
+			PT_double,"window_constant_coefficient",PADDR(window_c),PT_DESCRIPTION,"constant coefficient for describing function between low and high temperature cutoffs",
+			PT_double,"window_temperature_delta",PADDR(window_temp_delta),PT_DESCRIPTION,"change in outdoor temperature required to update the window opening model",
+
 			PT_double,"design_heating_capacity[Btu/h]",PADDR(design_heating_capacity),PT_DESCRIPTION,"system heating capacity",
 			PT_double,"design_cooling_capacity[Btu/h]",PADDR(design_cooling_capacity),PT_DESCRIPTION,"system cooling capacity",
 			PT_double,"cooling_design_temperature[degF]", PADDR(cooling_design_temperature),PT_DESCRIPTION,"system cooling design temperature",
@@ -276,8 +285,8 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"fan_current_fraction[pu]",PADDR(fan_current_fraction),PT_DESCRIPTION,"Current component of fan ZIP load",
 			PT_double,"fan_power_factor[pu]",PADDR(fan_power_factor),PT_DESCRIPTION,"Power factor of the fan load",
 
-			PT_double,"heating_demand",PADDR(heating_demand),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the current power draw to run the heating system",
-			PT_double,"cooling_demand",PADDR(cooling_demand),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the current power draw to run the cooling system",
+			PT_double,"heating_demand[kW]",PADDR(heating_demand),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the current power draw to run the heating system",
+			PT_double,"cooling_demand[kW]",PADDR(cooling_demand),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the current power draw to run the cooling system",
 			PT_double,"heating_COP[pu]",PADDR(heating_COP),PT_DESCRIPTION,"system heating performance coefficient",
 			PT_double,"cooling_COP[Btu/kWh]",PADDR(cooling_COP),PT_DESCRIPTION,"system cooling performance coefficient",
 			//PT_double,"COP_coeff",PADDR(COP_coeff),PT_DESCRIPTION,"effective system performance coefficient",
@@ -396,9 +405,9 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double, "hvac_power_factor[unit]", PADDR(hvac_power_factor), PT_DESCRIPTION,"power factor of hvac",
 			
 			PT_double,"hvac_load[kW]",PADDR(hvac_load),PT_DESCRIPTION,"heating/cooling system load",
-			PT_double,"last_heating_load",PADDR(last_heating_load),PT_DESCRIPTION,"stores the previous heating/cooling system load",
-			PT_double,"last_cooling_load",PADDR(last_cooling_load),PT_DESCRIPTION,"stores the previous heating/cooling system load",
-			PT_complex,"hvac_power",PADDR(hvac_power),PT_DESCRIPTION,"describes hvac load complex power consumption",
+			PT_double,"last_heating_load[kW]",PADDR(last_heating_load),PT_DESCRIPTION,"stores the previous heating/cooling system load",
+			PT_double,"last_cooling_load[kW]",PADDR(last_cooling_load),PT_DESCRIPTION,"stores the previous heating/cooling system load",
+			PT_complex,"hvac_power[kVA]",PADDR(hvac_power),PT_DESCRIPTION,"describes hvac load complex power consumption",
 			PT_double,"total_load[kW]",PADDR(total_load),
 			PT_enduse,"panel",PADDR(total),PT_DESCRIPTION,"total panel enduse load",
 			PT_double,"design_internal_gain_density[W/sf]",PADDR(design_internal_gain_density),PT_DESCRIPTION,"average density of heat generating devices in the house",
@@ -406,7 +415,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_int64,"compressor_count",PADDR(compressor_count),
 			PT_timestamp,"hvac_last_on",PADDR(hvac_last_on),
 			PT_timestamp,"hvac_last_off",PADDR(hvac_last_off),
-			PT_double,"hvac_period_length",PADDR(hvac_period_length),
+			PT_double,"hvac_period_length[s]",PADDR(hvac_period_length),
 			PT_double,"hvac_duty_cycle",PADDR(hvac_duty_cycle),
 
 			// these are hidden so we can spy on ETP
@@ -688,6 +697,16 @@ int house_e::create()
 	house_content_thermal_mass = 0;
 	house_content_heat_transfer_coeff = 0;
 
+	// Window openings
+	window_openings = FALSE;
+	window_open = 0;			
+	window_low_temp = 60;		
+	window_high_temp = 80;		
+	window_a = 0;			
+	window_b = 0;		
+	window_c = 1;
+	window_temp_delta = 5; 
+	last_temperature = 75;
 
 	return result;
 }
@@ -1691,16 +1710,36 @@ void house_e::update_model(double dt)
 		throw "UA must be positive";
 
 	a = Cm*Ca/Hm;
-	b = Cm*(Ua+Hm)/Hm+Ca;
-	c = Ua;
-	c1 = -(Ua + Hm)/Ca;
+	
+	if (window_open == 1)
+	{
+		b = Cm*(10*Ua+Hm)/Hm+Ca;
+		c = 10*Ua;
+		c1 = -(10*Ua + Hm)/Ca;
+	}
+	else
+	{
+		b = Cm*(Ua+Hm)/Hm+Ca;
+		c = Ua;
+		c1 = -(Ua + Hm)/Ca;
+	}
+
 	c2 = Hm/Ca;
 	double rr = sqrt(b*b-4*a*c)/(2*a);
 	double r = -b/(2*a);
 	r1 = r+rr;
 	r2 = r-rr;
-	A3 = Ca/Hm * r1 + (Ua+Hm)/Hm;
-	A4 = Ca/Hm * r2 + (Ua+Hm)/Hm;
+
+	if (window_open == 1)
+	{
+		A3 = Ca/Hm * r1 + (10*Ua+Hm)/Hm;
+		A4 = Ca/Hm * r2 + (10*Ua+Hm)/Hm;
+	}
+	else
+	{
+		A3 = Ca/Hm * r1 + (Ua+Hm)/Hm;
+		A4 = Ca/Hm * r2 + (Ua+Hm)/Hm;
+	}
 
 	//for (i=1; i<9; i++) //Compass points of pSolar include direct normal and diffuse radiation into one value
 	//	incident_solar_radiation += pSolar[i];
@@ -1763,7 +1802,10 @@ void house_e::update_model(double dt)
 	Qa = Qh + (1-mass_internal_gain_fraction)*Qi + (1-mass_solar_gain_fraction)*Qs;
 	Qm = mass_internal_gain_fraction*Qi + mass_solar_gain_fraction*Qs;
 
-	d = Qa + Qm + (Ua)*Tout;
+	if (window_open == 1)
+		d = Qa + Qm + (10*Ua)*Tout;
+	else
+		d = Qa + Qm + (Ua)*Tout;
 	Teq = d/c;
 
 	/* compute next initial condition */
@@ -2153,7 +2195,101 @@ TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1)
 			const double e1 = k1*exp(r1*dt);
 			const double e2 = k2*exp(r2*dt);
 			Tair = e1 + e2 + Teq;
-			Tmaterials = A3*e1 + A4*e2 + Qm/Hm + (Qm+Qa)/(Ua) + Tout;
+			if (window_open == 1)
+				Tmaterials = A3*e1 + A4*e2 + Qm/Hm + (Qm+Qa)/(10*Ua) + Tout;
+			else
+				Tmaterials = A3*e1 + A4*e2 + Qm/Hm + (Qm+Qa)/(Ua) + Tout;
+		}
+	}
+
+	if (window_openings == TRUE) 
+	{
+		if (window_high_temp <= window_low_temp)
+		{
+			gl_error("The high window temperature cutoff must be greater than the low window temperature cutoff.");
+			/* TROUBLESHOOT
+			The window_high_temperature_cutoff must be a value greater than the window_low_temperature_cutoff.  These
+			two values define a temperature "deadband" in which there is a possibility that the window will "open".  
+			Please take	a look at your specified values and ensure that the high is greater than the low.
+			*/
+		}
+		if (Tout >= window_low_temp && Tout <= window_high_temp)
+		{
+			// First time through the model since we hit this temp band
+			if ( window_first_time_through == 1 )
+			{
+				window_first_time_through = 0;
+
+				double random_val = gl_random_uniform(RNGSTATE,0,1);
+				double calc_val = window_a * Tout * Tout + window_b * Tout + window_c;
+
+				if (calc_val > 1.0) 
+				{
+					gl_verbose("Function value for window_opening calculation was greater than 1 (%.2f). Capping value at 1.", calc_val); 
+					/* TROUBLESHOOT
+					The function to described whether the window should open or not is limited to the range [0,1], as it is compared to a
+					uniformly distributed random number in the range [0,1]. If your function (using a=window_quadratic_coefficient,
+					b=window_linear_coefficient, and c=window_constant_coefficient), f(a,b,c) = a*Tout^2 + b*Tout + c, calculates a value
+					outside the range of [0,1], it will be capped at either side.
+					*/
+					calc_val = 1.01;
+				}
+				else if (calc_val < 0.)
+				{
+					gl_verbose("Function value for window_opening calculation was less than 0 (%.2f). Capping value at 0.", calc_val); 
+					/* TROUBLESHOOT
+					The function to described whether the window should open or not is limited to the range [0,1], as it is compared to a
+					uniformly distributed random number in the range [0,1]. If your function (using a=window_quadratic_coefficient,
+					b=window_linear_coefficient, and c=window_constant_coefficient), f(a,b,c) = a*Tout^2 + b*Tout + c, calculates a value
+					outside the range of [0,1], it will be capped at either side.
+					*/
+					calc_val = -0.01;
+				}
+
+				if (random_val <= calc_val)
+				{
+					window_open = 1;
+					last_temperature = Tout;
+				}
+				else
+				{
+					window_open = 0;
+				}
+			}
+			// We've changed enough that we need to update the model
+			else if ( abs(last_temperature - Tout) > window_temp_delta )
+			{	
+				double random_val = gl_random_uniform(RNGSTATE,0,1);
+				double calc_val = window_a * Tout * Tout + window_b * Tout + window_c;
+
+				if (calc_val > 1.0) 
+				{
+					gl_verbose("Function value for window_opening calculation was greater than 1 or less than 0 (%.2f). Limiting to that range", calc_val); 
+					calc_val = 1.01;
+				}
+				else if (calc_val < 0.)
+				{
+					gl_verbose("Function value for window_opening calculation was greater than 1 or less than 0 (%.2f). Limiting to that range", calc_val); 
+					calc_val = -0.01;
+				}
+
+				if (random_val <= calc_val)
+				{
+					window_open = 1;
+					last_temperature = Tout;
+				}
+				else
+				{
+					window_open = 0;
+					last_temperature = Tout;
+				}
+			}		
+		}
+		else
+		{
+			window_open = 0; // no, it won't be open outside the temperature bounds
+			last_temperature = Tout;
+			window_first_time_through = 1;
 		}
 	}
 
@@ -2416,12 +2552,45 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 		}
 	}
 
+	if (window_openings == TRUE) 
+	{
+		if (window_open == 1)
+		{
+			this->re_override = OV_OFF;
+			dlc_offset = 20;
+		}
+		else
+		{
+			dlc_offset = 0;
+		}
+	}
+
 	// skip the historisis and turn on or off, if the HVAC is in a state where it _could_ be on or off.
 	if (this->re_override == OV_ON){
-		TcoolOn = TcoolOff;
-		TheatOn = TheatOff;
-		if(dlc_offset == 0.0){
+		if (dlc_offset == 0.0)
+		{
+			TcoolOn = TcoolOff;
+			TheatOn = TheatOff;
 			re_override = OV_NORMAL;
+		}
+		else // this will let the DLC from passive controller adjust the cooling/heating without adjusting setpoints
+		{
+			switch(last_system_mode){
+				case SM_HEAT:
+				case SM_AUX:
+					TcoolOn = TcoolOn + dlc_offset; 
+					TcoolOff = TcoolOff + dlc_offset;
+					TheatOn = TheatOff + dlc_offset;
+					TheatOff = TheatOff + dlc_offset;
+					break;
+				case SM_OFF: //Let's make the assumption that cooling wins in this case.
+				case SM_COOL:
+					TcoolOn = TcoolOff - dlc_offset; 
+					TcoolOff = TcoolOff - dlc_offset;
+					TheatOn = TheatOn - dlc_offset;
+					TheatOff = TheatOff - dlc_offset;
+					break;
+			}
 		}
 //		thermostat_last_cycle_time = gl_globalclock - thermostat_cycle_time - 1;
 	} else if(this->re_override == OV_OFF){
@@ -2434,9 +2603,9 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 		else // this will let the DLC from passive controller adjust the cooling/heating without adjusting setpoints
 		{
 			TcoolOn = TcoolOn + dlc_offset;
-			TcoolOff = TcoolOff + dlc_offset;
+			TcoolOff = TcoolOn + dlc_offset;
 			TheatOn = TheatOff - dlc_offset;
-			TheatOff = TheatOff - dlc_offset;
+			TheatOff = TheatOn - dlc_offset;
 		}
 //		thermostat_last_cycle_time = gl_globalclock - thermostat_cycle_time - 1;
 	} 
