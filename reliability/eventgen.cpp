@@ -637,6 +637,7 @@ TIMESTAMP eventgen::presync(TIMESTAMP t0, TIMESTAMP t1)
 	OBJECT *hdr = OBJECTHDR(this);
 	int index;
 	double t1_dbl;
+	double gld_stoptime;
 
 	//Cast time for any "deltamode-needed" calculations
 	t1_dbl = (double)t1;
@@ -755,8 +756,27 @@ TIMESTAMP eventgen::presync(TIMESTAMP t0, TIMESTAMP t1)
 	//If the next time point is the whole second right before the time for a deltamode event, we need to schedule to enter deltamode.
 	if ((next_event_time == t1) && deltamode_inclusive) 
 	{
-		schedule_deltamode_start(next_event_time);
-		return -next_event_time; //Return here and we will do all the work in deltamode
+		//Provide a check for if the event is beyond stop time -- if it is, we get stuck here and iterate forever
+		gld_stoptime = (double)gl_globalstoptime;
+
+		if (next_event_time_dbl <= gld_stoptime)
+		{
+			schedule_deltamode_start(next_event_time);
+
+			//Do the event too, just because
+			//Parse event list and execute any that are occurring
+			//do_event(t1,t1_dbl,false);
+			/*********************** May need to revisit this portion -- might still be needed ********************************************/
+
+			return -next_event_time; //Return here and we will do all the work in deltamode
+		}
+		else	//Arbitrarily return one more - it will trip the core
+		{
+			next_event_time++;
+
+			//Send this out
+			return -next_event_time;	//Theoretically 1 forward in time, which means core will quit us
+		}
 	}
 
 	//See if the event times need to be updated
