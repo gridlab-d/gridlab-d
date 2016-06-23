@@ -391,13 +391,13 @@ int tmy2_reader::read_data(double *dnr, double *dhr, double *ghr, double *tdb, d
 	int tmp_dnr, tmp_dhr, tmp_tot_sky_cov, tmp_opq_sky_cov, tmp_tdb, tmp_rh, tmp_wd, tmp_ws, tmp_precip, tmp_sf, tmp_ghr, tmp_extra_ghr, tmp_extra_dni, tmp_press;
 	//sscanf(buf, "%*2s%2d%2d%2d%*14s%4d%*2s%4d%*40s%4d%8*s%3d%*s",month,day,hour,&tmp_dnr,&tmp_dhr,&tmp_tdb,&tmp_rh);
 	int tmh, tday, thr, t_mon, t_d,t_hr;
-	char t_ymd[11],t_hm[10],t_dni[10],t_ghr[10],t_dnr[10],t_dhr[10],t_tdb[10],t_rh[10],t_press[10],t_ws[10],t_precip[10],t_sf[10],t_month[2],t_day[2],t_year[5],t_hour[2],t_min[2];
+	char t_ymd[11],t_hm[10],t_ehr[10],t_dni[10],t_ghr[10],t_dnr[10],t_dhr[10],t_tkc[10],t_osc[10],t_tdb[10],t_rh[10],t_press[10],t_wd[10],t_ws[10],t_precip[10],t_sf[10],t_month[2],t_day[2],t_year[5],t_hour[2],t_min[2];
 	if(month == NULL) month = &tmh;
 	if(day == NULL) day = &tday;
 	if(hour == NULL) hour = &thr;
 	if(buf[2] == '/') {
 		//rct = sscanf(buf, "%d/%d/%*s,%d:%*s,%*s,%d,%d,%*s,%*s,%d,%*s,%*s,%d,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%d,%*s,%*s,%*s,%*s,%*s,%d,%*s,%*s,%d,%*s,%*s,%*s,%*s,%*s,%d,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%d,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%d",month,day,hour,&tmp_extra_dni,&tmp_ghr,&tmp_dnr,&tmp_dhr,&tmp_tdb,&tmp_rh,&tmp_press,&tmp_ws,&tmp_precip,&tmp_sf);
-		rct = sscanf(buf, "%[^','],%[^','],%*[^','],%[^','],%[^','],%*[^','],%*[^','],%[^','],%*[^','],%*[^','],%[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%[^','],%*[^','],%*[^','],%[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%[^','],%*[^','],%*[^','],%*[^','],%*s",t_ymd,t_hm,t_dni,t_ghr,t_dnr,t_dhr,t_tdb,t_rh,t_press,t_ws,t_precip,t_sf);		
+		rct = sscanf(buf, "%[^','],%[^','],%[^','],%[^','],%[^','],%*[^','],%*[^','],%[^','],%*[^','],%*[^','],%[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%[^','],%*[^','],%*[^','],%[^','],%*[^','],%*[^','],%[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%[^','],%*[^','],%*[^','],%[^','],%*[^','],%*[^','],%[^','],%*[^','],%*[^','],%[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%[^','],%*[^','],%*[^','],%*[^','],%*s",t_ymd,t_hm,t_ehr,t_dni,t_ghr,t_dnr,t_dhr,t_tkc,t_osc,t_tdb,t_rh,t_press,t_wd,t_ws,t_precip,t_sf);		
 		//rct_ymd = sscanf(t_ymd,"%[^'/']/%[^'/']/%*s",t_month,t_day);
 		//rct_hm = sscanf(t_hm,"%[^':']:%*s",t_hour);
 		//t_mon = atoi(t_month);
@@ -408,19 +408,23 @@ int tmy2_reader::read_data(double *dnr, double *dhr, double *ghr, double *tdb, d
 		//hour = &t_hr;
 		rct_ymd = sscanf(t_ymd,"%d/%d/%*d",month,day);
 		rct_hm = sscanf(t_hm,"%d:%*d",hour);
+		tmp_extra_ghr = atoi(t_ehr);
 		tmp_extra_dni = atoi(t_dni);
 		tmp_ghr = atoi(t_ghr);
 		tmp_dnr = atoi(t_dnr);
 		tmp_dhr = atoi(t_dhr);
-		tmp_tdb = atoi(t_tdb);
+		tmp_tot_sky_cov = atoi(t_tkc);
+		tmp_opq_sky_cov = atoi(t_osc);
+		tmp_tdb = (int)(atof(t_tdb)*10); //Since for TMY3, measurement is 1/10. So we are multiplying this by 10 to avoid code changes later on. tmp_tdb is now scaled same as TMY2 value 
 		tmp_rh = atoi(t_rh);
 		tmp_press = atoi(t_press);
-		tmp_ws = atoi(t_ws);
-		tmp_precip = atoi(t_precip);
+		tmp_wd = atoi(t_wd);
+		tmp_ws = (int)(atof(t_ws)*10);
+		tmp_precip = (int)(atof(t_precip)*10);//converting from centimeters to millimeters
 		tmp_sf = atoi(t_sf);		
 		rct = rct+1;
 		tmp_sf = 0; //tmy3 doesnt have this field (snow depth). so set to 0
-		tmp_precip = tmp_precip*10; //converting from centimeters to millimeters
+
 	}
 	else {
 	//rct = sscanf(buf, "%*2s%2d%2d%2d%*4s%4d%4d%*2s%4d%*2s%4d%*34s%4d%*8s%3d%*2s%4d%*7s%3d%*25s%3d%*7s%3d",month,day,hour,&tmp_extra_dni,&tmp_ghr,&tmp_dnr,&tmp_dhr,&tmp_tdb,&tmp_rh,&tmp_press,&tmp_ws,&tmp_precip,&tmp_sf);
