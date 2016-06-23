@@ -53,10 +53,14 @@ protected:
 	int16 first_run_flag[3]; //keeps the system from blowing up on bad initial tap position guess
 	complex check_voltage[3];//Voltage that is being checked against
 	void get_monitored_voltage();  //Function to calculate check_voltage depending on mode
+	bool toggle_reverse_flow[3];
+	bool toggle_reverse_flow_banked;
+	int16 reverse_flow_tap[3];
 
 private:
 	bool offnominal_time;	//Used to detect off-nominal timesteps and perform an exception for them
 	bool iteration_flag;	//Iteration toggler - to maintain logic from previous NR implementation, to a degree
+	bool new_reverse_flow_action[3];
 public:
 	static CLASS *oclass;
 	static CLASS *pclass;

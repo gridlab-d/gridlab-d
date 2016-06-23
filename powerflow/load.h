@@ -13,6 +13,8 @@ class load : public node
 public:
 	static CLASS *oclass;
 	static CLASS *pclass;
+private:
+	complex prev_shunt[3];
 public:
 	complex measured_voltage_A;	///< measured voltage
 	complex measured_voltage_B;

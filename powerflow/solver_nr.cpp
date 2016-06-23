@@ -21,6 +21,17 @@
 //gl_free(yvecttest);
 // ***** End Random Useful Code to Note ****
 
+/*
+***********************************************************************
+Generic in-rush notes here 
+--------------------------
+What about P/C relationships for history terms, how handle?
+
+***********************************************************************
+*/
+
+
+
 #include "solver_nr.h"
 
 #define MT // this enables multithreaded SuperLU
@@ -48,65 +59,105 @@ SuperMatrix A_LU,B_LU;
 //External solver global
 void *ext_solver_glob_vars;
 
-void merge_sort(Y_NR *Input_Array, unsigned int Alen, Y_NR *Work_Array){	//Merge sorting algorithm - basis stolen from auction.cpp in market module
-	unsigned int split_point;
-	unsigned int right_length;
-	Y_NR *leftside, *rightside;
-	Y_NR *Final_P;
-
-	if (Alen>0)	//Only occurs if over zero
-	{
-		split_point = Alen/2;	//Find the middle point
-		right_length = Alen - split_point;	//Figure out how big the right hand side is
-
-		//Make the appropriate pointers
-		leftside = Input_Array;
-		rightside = Input_Array+split_point;
-
-		//Check to see what condition we are in (keep splitting it)
-		if (split_point>1)
-			merge_sort(leftside,split_point,Work_Array);
-
-		if (right_length>1)
-			merge_sort(rightside,right_length,Work_Array);
-
-		//Point at the first location
-		Final_P = Work_Array;
-
-		//Merge them now
-		do {
-			if (leftside->col_ind < rightside->col_ind)
-				*Final_P++ = *leftside++;
-			else if (leftside->col_ind == rightside->col_ind)
-			{
-				if (leftside->row_ind < rightside->row_ind)
-					*Final_P++ = *leftside++;
-				else if (leftside->row_ind > rightside->row_ind)
-					*Final_P++ = *rightside++;
-				else	//Catch for duplicate entries
+void sparse_init(SPARSE* sm, int nels, int ncols)
 				{
-					GL_THROW("NR: duplicate entry found in admittance matrix - look for parallel lines!");
+	sm->cols = (SP_E**)calloc(ncols, sizeof(SP_E*));
+	sm->llheap = (SP_E*)calloc(nels, sizeof(SP_E));
+	sm->llptr = 0;
+	sm->ncols = ncols;
+}
+
+void sparse_clear(SPARSE* sm)
+{
+	free(sm->llheap);
+	free(sm->cols);
+	sm->ncols = 0;
+				}
+
+void sparse_reset(SPARSE* sm, int ncols)
+{
+	sm->ncols = ncols;
+	memset(sm->cols, 0, ncols * sizeof(SP_E*));
+	sm->llptr = 0;
+			}
+
+inline void sparse_add(SPARSE* sm, int row, int col, double value)
+{
+	SP_E* insertion_point = sm->cols[col];
+	SP_E* new_list_element = &(sm->llheap[sm->llptr++]);
+
+	new_list_element->next = NULL;
+	new_list_element->row_ind = row;
+	new_list_element->value = value;
+
+	//if there's a non empty list, traverse to find our rightful insertion point
+	if(insertion_point != NULL)
+	{
+		if(insertion_point->row_ind > new_list_element->row_ind)
+		{
+			//insert the new list element at the first position
+			new_list_element->next = insertion_point;
+			sm->cols[col] = new_list_element;
+		}
+		else
+		{
+			while((insertion_point->next != NULL) && (insertion_point->next->row_ind < new_list_element->row_ind))
+			{
+				insertion_point = insertion_point->next;
+			}
+
+			//Duplicate check -- see how we exited
+			if (insertion_point->next != NULL)	//We exited because the next element is GEQ to the new element
+			{
+				if (insertion_point->next->row_ind == new_list_element->row_ind)	//Same entry (by column), so bad
+				{
+					GL_THROW("NR: duplicate admittance entry found - check for parallel circuits between common nodes!");
 					/*  TROUBLESHOOT
-					While sorting the admittance matrix for the Newton-Raphson solver, a duplicate entry was
-					found.  This is usually caused by a line between two nodes having another, parallel line between
-					the same two nodes.  This is only an issue if the parallel lines overlap in phase (e.g., AB and BC).
-					If no overlapping phase is present, this error should not occur.  Methods to narrow down the location
-					of this conflict are under development.
+					While building up the admittance matrix for the Newton-Raphson solver, a duplicate entry was found.
+					This is often caused by having multiple lines on the same phases in parallel between two nodes.  Please
+					reconcile this model difference and try again.
 					*/
 				}
 			}
-			else
-				*Final_P++ = *rightside++;
-		} while ((leftside<(Input_Array+split_point)) && (rightside<(Input_Array+Alen)));	//Sort the list until one of them empties
+			else	//No next item, so see if our value matches
+			{
+				if (insertion_point->row_ind == new_list_element->row_ind)	//Same entry (by column), so bad
+				{
+					GL_THROW("NR: duplicate admittance entry found - check for parallel circuits between common nodes!");
+					//Defined above
+				}
+			}
 
-		while (leftside<(Input_Array+split_point))	//Put any remaining entries into the list
-			*Final_P++ = *leftside++;
+			//insert the new list element at the next position
+			new_list_element->next = insertion_point->next;
+			insertion_point->next = new_list_element;
+		}
+	}
+	else
+		sm->cols[col] = new_list_element;
+}
 
-		while (rightside<(Input_Array+Alen))		//Put any remaining entries into the list
-			*Final_P++ = *rightside++;
-
-		memcpy(Input_Array,Work_Array,sizeof(Y_NR)*Alen);	//Copy the result back into the input
-	}	//End length > 0
+void sparse_tonr(SPARSE* sm, NR_SOLVER_VARS *matrices_LU)
+{
+	//traverse each linked list, which are in order, and copy values into new array
+	unsigned int rowidx = 0;
+	unsigned int colidx = 0;
+	matrices_LU->cols_LU[0] = 0;
+	for(unsigned int i = 0; i < sm->ncols; i++)
+	{
+		SP_E* LL_pointer = sm->cols[i];
+		if(LL_pointer != NULL)
+		{
+			matrices_LU->cols_LU[colidx++] = rowidx;
+		}		
+		while(LL_pointer != NULL)
+		{
+			matrices_LU->rows_LU[rowidx] = LL_pointer->row_ind; // row pointers of non zero values
+			matrices_LU->a_LU[rowidx] = LL_pointer->value;
+			++rowidx;
+			LL_pointer = LL_pointer->next;
+		}		
+	}
 }
 
 /** Newton-Raphson solver
@@ -195,6 +246,10 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	int nnz, info;
 	unsigned int m,n;
 	double *sol_LU;
+	
+	//New sparse matrix format variables
+	unsigned int sparse_row, sparse_col;
+	double sparse_value;
 	
 #ifndef MT
 	superlu_options_t options;	//Additional variables for sequential superLU
@@ -3272,10 +3327,16 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							*/
 						}
 
-						//Diagonal contributions
+						//Normal diagonal contributions
 						tempIcalcReal += (powerflow_values->BA_diag[indexer].Y[jindex][kindex]).Re() * (bus[indexer].V[temp_index]).Re() - (powerflow_values->BA_diag[indexer].Y[jindex][kindex]).Im() * (bus[indexer].V[temp_index]).Im();// equation (7), the diag elements of bus admittance matrix 
 						tempIcalcImag += (powerflow_values->BA_diag[indexer].Y[jindex][kindex]).Re() * (bus[indexer].V[temp_index]).Im() + (powerflow_values->BA_diag[indexer].Y[jindex][kindex]).Im() * (bus[indexer].V[temp_index]).Re();// equation (8), the diag elements of bus admittance matrix 
 
+						//In-rush load contributions (if any) - only along explicit diagonal
+						if ((bus[indexer].full_Y_load != NULL) && (jindex==kindex))
+						{
+							tempIcalcReal += (bus[indexer].full_Y_load[temp_index]).Re() * (bus[indexer].V[temp_index]).Re() - (bus[indexer].full_Y_load[temp_index]).Im() * (bus[indexer].V[temp_index]).Im();// equation (7), the diag elements of bus admittance matrix 
+							tempIcalcImag += (bus[indexer].full_Y_load[temp_index]).Re() * (bus[indexer].V[temp_index]).Im() + (bus[indexer].full_Y_load[temp_index]).Im() * (bus[indexer].V[temp_index]).Re();// equation (8), the diag elements of bus admittance matrix 
+						}
 
 						//Off diagonal contributions
 						//Need another variable to handle the rows
@@ -3481,10 +3542,18 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							}
 						}//End PF_DYNINIT SWING traversion
 
-						//Zero out the components, regardless of normal run or not
+						//Effectively Zero out the components, regardless of normal run or not
 						//Should already be zerod, but do it again for paranoia sake
-						powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + jindex] = 0.0;
-						powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc + jindex] = 0.0;
+						if (NR_busdata[indexer].BusHistTerm != NULL)	//See if we're "delta-capable"
+						{
+							powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + jindex] = NR_busdata[indexer].BusHistTerm[jindex].Re();
+							powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc + jindex] = NR_busdata[indexer].BusHistTerm[jindex].Im();
+						}
+						else
+						{
+							powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + jindex] = 0.0;
+							powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc + jindex] = 0.0;
+						}
 					}//End SWING bus cases
 					else	//PQ bus or SWING masquerading as a PQ
 					{
@@ -3494,13 +3563,31 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 						{
 							work_vals_double_1 = (bus[indexer].V[temp_index_b]).Re();
 							work_vals_double_2 = (bus[indexer].V[temp_index_b]).Im();
-							powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc+ powerflow_values->BA_diag[indexer].size + jindex] = (tempPbus * work_vals_double_1 + tempQbus * work_vals_double_2)/ (work_vals_double_0) - tempIcalcReal ; // equation(7), Real part of deltaI, left hand side of equation (11)
-							powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc + jindex] = (tempPbus * work_vals_double_2 - tempQbus * work_vals_double_1)/ (work_vals_double_0) - tempIcalcImag; // Imaginary part of deltaI, left hand side of equation (11)
+
+							//See if deltamode needs to include extra term
+							if (NR_busdata[indexer].BusHistTerm != NULL)
+							{
+								powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc+ powerflow_values->BA_diag[indexer].size + jindex] = (tempPbus * work_vals_double_1 + tempQbus * work_vals_double_2)/ (work_vals_double_0) + NR_busdata[indexer].BusHistTerm[jindex].Re() - tempIcalcReal ; // equation(7), Real part of deltaI, left hand side of equation (11)
+								powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc + jindex] = (tempPbus * work_vals_double_2 - tempQbus * work_vals_double_1)/ (work_vals_double_0) + NR_busdata[indexer].BusHistTerm[jindex].Im() - tempIcalcImag; // Imaginary part of deltaI, left hand side of equation (11)
+							}
+							else	//Nope
+							{
+								powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc+ powerflow_values->BA_diag[indexer].size + jindex] = (tempPbus * work_vals_double_1 + tempQbus * work_vals_double_2)/ (work_vals_double_0) - tempIcalcReal ; // equation(7), Real part of deltaI, left hand side of equation (11)
+								powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc + jindex] = (tempPbus * work_vals_double_2 - tempQbus * work_vals_double_1)/ (work_vals_double_0) - tempIcalcImag; // Imaginary part of deltaI, left hand side of equation (11)
+							}
 						}
 						else
 						{
-           					powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + jindex] = 0.0;
-							powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc + jindex] = 0.0;
+							if (NR_busdata[indexer].BusHistTerm != NULL)	//See if extra deltamode term needs to be included
+							{
+           						powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + jindex] = NR_busdata[indexer].BusHistTerm[jindex].Re();
+								powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc + jindex] = NR_busdata[indexer].BusHistTerm[jindex].Im();
+							}
+							else
+							{
+           						powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + jindex] = 0.0;
+								powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc + jindex] = 0.0;
+							}
 						}
 					}//End normal bus handling
 				}//End three-phase or variant thereof
@@ -4624,8 +4711,92 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 						bus[indexer].Jacob_C[temp_index] += -1e-4; //-(undeltaimped[temp_index_b]).Re() - 1e-4;
 						bus[indexer].Jacob_D[temp_index] += -1e-4; //-(undeltaimped[temp_index_b]).Im() - 1e-4;
 					}
+
 				}//End phase traversion
 			}//End delta/wye explicit loads
+
+			//Delta load components  get added to the Jacobian values too -- mostly because this is the most convenient place to do it
+			//See if we're even needed first
+			if (bus[indexer].full_Y_load != NULL)
+			{
+				//Provide updates to relevant phases
+				//only compute and store phases that exist (make top heavy)
+				temp_index = -1;
+				temp_index_b = -1;
+				
+				for (jindex=0; jindex<powerflow_values->BA_diag[indexer].size; jindex++)
+				{
+					switch(bus[indexer].phases & 0x07) {
+						case 0x01:	//C
+							{
+								temp_index=0;
+								temp_index_b=2;
+								break;
+							}
+						case 0x02:	//B
+							{
+								temp_index=0;
+								temp_index_b=1;
+								break;
+							}
+						case 0x03:	//BC
+							{
+								if (jindex==0)	//B
+								{
+									temp_index=0;
+									temp_index_b=1;
+								}
+								else			//C
+								{
+									temp_index=1;
+									temp_index_b=2;
+								}
+								break;
+							}
+						case 0x04:	//A
+							{
+								temp_index=0;
+								temp_index_b=0;
+								break;
+							}
+						case 0x05:	//AC
+							{
+								if (jindex==0)	//A
+								{
+									temp_index=0;
+									temp_index_b=0;
+								}
+								else			//C
+								{
+									temp_index=1;
+									temp_index_b=2;
+								}
+								break;
+							}
+						case 0x06:	//AB
+						case 0x07:	//ABC
+							{
+								temp_index=jindex;
+								temp_index_b=jindex;
+								break;
+							}
+						default:
+							break;
+					}//end case
+
+					if ((temp_index==-1) || (temp_index_b==-1))
+					{
+						GL_THROW("NR: A Jacobian update element failed.");
+						//Defined below
+					}
+
+					//Accumulate the values
+					bus[indexer].Jacob_A[temp_index] += bus[indexer].full_Y_load[temp_index_b].Im();
+					bus[indexer].Jacob_B[temp_index] += bus[indexer].full_Y_load[temp_index_b].Re();
+					bus[indexer].Jacob_C[temp_index] += bus[indexer].full_Y_load[temp_index_b].Re();
+					bus[indexer].Jacob_D[temp_index] -= bus[indexer].full_Y_load[temp_index_b].Im();
+				}//End phase traversion
+			}//End deltamode-enabled in-rush loads updates
 		}//end bus traversion for a,b,c, d value computation
 
 		//Build the dynamic diagnal elements of 6n*6n Y matrix. All the elements in this part will be updated at each iteration.
@@ -4743,7 +4914,8 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 		if (powerflow_values->Y_Amatrix == NULL)
 		{
-			powerflow_values->Y_Amatrix = (Y_NR *)gl_malloc((size_Amatrix) *sizeof(Y_NR));   // Amatrix includes all the elements of powerflow_values->Y_offdiag_PQ, powerflow_values->Y_diag_fixed and powerflow_values->Y_diag_update.
+			powerflow_values->Y_Amatrix = (SPARSE*) gl_malloc(sizeof(SPARSE));
+			sparse_init(powerflow_values->Y_Amatrix, size_Amatrix, 6*NR_bus_count);
 
 			//Make sure it worked
 			if (powerflow_values->Y_Amatrix == NULL)
@@ -4751,84 +4923,53 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		}
 		else if (powerflow_values->NR_realloc_needed)	//If one of the above changed, we changed too
 		{
-			//Destroy the faulty version
-			gl_free(powerflow_values->Y_Amatrix);
+			//Destroy the old version
+			sparse_clear(powerflow_values->Y_Amatrix);
 
-			//Create a new one that holds our new ampleness
-			powerflow_values->Y_Amatrix = (Y_NR *)gl_malloc((size_Amatrix) *sizeof(Y_NR));
-
-			//Make sure it worked
-			if (powerflow_values->Y_Amatrix == NULL)
-				GL_THROW("NR: Failed to allocate memory for one of the necessary matrices");
+			//Create a new 
+			sparse_init(powerflow_values->Y_Amatrix, size_Amatrix, 6*NR_bus_count);
+		} else {
+			sparse_reset(powerflow_values->Y_Amatrix, 6*NR_bus_count);
 		}
 
 		//integrate off diagonal components
 		for (indexer=0; indexer<powerflow_values->size_offdiag_PQ*2; indexer++)
 		{
-			powerflow_values->Y_Amatrix[indexer].row_ind = powerflow_values->Y_offdiag_PQ[indexer].row_ind;
-			powerflow_values->Y_Amatrix[indexer].col_ind = powerflow_values->Y_offdiag_PQ[indexer].col_ind;
-			powerflow_values->Y_Amatrix[indexer].Y_value = powerflow_values->Y_offdiag_PQ[indexer].Y_value;
+			sparse_row = powerflow_values->Y_offdiag_PQ[indexer].row_ind;
+			sparse_col = powerflow_values->Y_offdiag_PQ[indexer].col_ind;
+			sparse_value = powerflow_values->Y_offdiag_PQ[indexer].Y_value;
+			sparse_add(powerflow_values->Y_Amatrix, sparse_row, sparse_col, sparse_value);
 		}
 
 		//Integrate fixed portions of diagonal components
 		for (indexer=powerflow_values->size_offdiag_PQ*2; indexer< (powerflow_values->size_offdiag_PQ*2 + powerflow_values->size_diag_fixed*2); indexer++)
 		{
-			powerflow_values->Y_Amatrix[indexer].row_ind = powerflow_values->Y_diag_fixed[indexer - powerflow_values->size_offdiag_PQ*2 ].row_ind;
-			powerflow_values->Y_Amatrix[indexer].col_ind = powerflow_values->Y_diag_fixed[indexer - powerflow_values->size_offdiag_PQ*2 ].col_ind;
-			powerflow_values->Y_Amatrix[indexer].Y_value = powerflow_values->Y_diag_fixed[indexer - powerflow_values->size_offdiag_PQ*2 ].Y_value;
+			sparse_row = powerflow_values->Y_diag_fixed[indexer - powerflow_values->size_offdiag_PQ*2 ].row_ind;
+			sparse_col = powerflow_values->Y_diag_fixed[indexer - powerflow_values->size_offdiag_PQ*2 ].col_ind;
+			sparse_value = powerflow_values->Y_diag_fixed[indexer - powerflow_values->size_offdiag_PQ*2 ].Y_value;
+			sparse_add(powerflow_values->Y_Amatrix, sparse_row, sparse_col, sparse_value);
 		}
 
 		//Integrate the variable portions of the diagonal components
 		for (indexer=powerflow_values->size_offdiag_PQ*2 + powerflow_values->size_diag_fixed*2; indexer< size_Amatrix; indexer++)
 		{
-			powerflow_values->Y_Amatrix[indexer].row_ind = powerflow_values->Y_diag_update[indexer - powerflow_values->size_offdiag_PQ*2 - powerflow_values->size_diag_fixed*2].row_ind;
-			powerflow_values->Y_Amatrix[indexer].col_ind = powerflow_values->Y_diag_update[indexer - powerflow_values->size_offdiag_PQ*2 - powerflow_values->size_diag_fixed*2].col_ind;
-			powerflow_values->Y_Amatrix[indexer].Y_value = powerflow_values->Y_diag_update[indexer - powerflow_values->size_offdiag_PQ*2 - powerflow_values->size_diag_fixed*2].Y_value;
+			sparse_row = powerflow_values->Y_diag_update[indexer - powerflow_values->size_offdiag_PQ*2 - powerflow_values->size_diag_fixed*2].row_ind;
+			sparse_col = powerflow_values->Y_diag_update[indexer - powerflow_values->size_offdiag_PQ*2 - powerflow_values->size_diag_fixed*2].col_ind;
+			sparse_value = powerflow_values->Y_diag_update[indexer - powerflow_values->size_offdiag_PQ*2 - powerflow_values->size_diag_fixed*2].Y_value;
+			sparse_add(powerflow_values->Y_Amatrix, sparse_row, sparse_col, sparse_value);
 		}
 
-		/* sorting integers */
-		//Declare working array
-		if (powerflow_values->Y_Work_Amatrix == NULL)
-		{
-			powerflow_values->Y_Work_Amatrix = (Y_NR *)gl_malloc(size_Amatrix*sizeof(Y_NR));
-			if (powerflow_values->Y_Work_Amatrix==NULL)
-				GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
-		}
-		else if (powerflow_values->NR_realloc_needed)	//Y_Amatrix was likely resized, so we need it too since we's cousins
-		{
-			//Get rid of the old
-			gl_free(powerflow_values->Y_Work_Amatrix);
-
-			//And in with the new
-			powerflow_values->Y_Work_Amatrix = (Y_NR *)gl_malloc(size_Amatrix*sizeof(Y_NR));
-			if (powerflow_values->Y_Work_Amatrix==NULL)
-				GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
-		}
-
-		merge_sort(powerflow_values->Y_Amatrix, size_Amatrix, powerflow_values->Y_Work_Amatrix);
-		
 #ifdef NR_MATRIX_OUT
 		//Debugging code to export the sparse matrix values - useful for debugging issues, but needs preprocessor declaration
 		
-		//Open a text file
-		FILE *FPoutVal=fopen("matrixinfoout.txt","wt");
-
-		//Print the values - printed as "row index, column index, value"
-		//This particular output is after they have been column sorted for the algorithm
-		fprintf(FPoutVal,"Matrix Information - size = %d\n",size_Amatrix);
-
-		fprintf(FPoutVal,"Matrix Information - row, column, value\n");
-		for (jindexer=0; jindexer<size_Amatrix; jindexer++)
-		{
-			fprintf(FPoutVal,"%d,%d,%f\n",powerflow_values->Y_Amatrix[jindexer].row_ind,powerflow_values->Y_Amatrix[jindexer].col_ind,powerflow_values->Y_Amatrix[jindexer].Y_value);
-		}
-
-		//Close the file, we're done with it
-		fclose(FPoutVal);
+		//Unsupported at this time -- in 3.2+ code
+		gl_warning("sparse matrix dump not currently implemented");
 #endif
 
 		///* Initialize parameters. */
-		m = 2*powerflow_values->total_variables; n = 2*powerflow_values->total_variables; nnz = size_Amatrix;
+		m = 2*powerflow_values->total_variables;
+		n = 2*powerflow_values->total_variables;
+		nnz = size_Amatrix;
 
 		if (matrices_LU.a_LU == NULL)	//First run
 		{
@@ -5012,28 +5153,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		//Default else - not superLU
 #endif
 		
-		for (indexer=0; indexer<size_Amatrix; indexer++)
-		{
-			matrices_LU.rows_LU[indexer] = powerflow_values->Y_Amatrix[indexer].row_ind ; // row pointers of non zero values
-			matrices_LU.a_LU[indexer] = powerflow_values->Y_Amatrix[indexer].Y_value;
-		}
-
-		matrices_LU.cols_LU[0] = 0;
-		indexer = 0;
-		temp_index_c = 0;
-		
-		for ( jindexer = 0; jindexer< (size_Amatrix-1); jindexer++)
-		{ 
-			indexer += 1;
-			tempa = powerflow_values->Y_Amatrix[jindexer].col_ind;
-			tempb = powerflow_values->Y_Amatrix[jindexer+1].col_ind;
-			if (tempb > tempa)
-			{
-				temp_index_c += 1;
-				matrices_LU.cols_LU[temp_index_c] = indexer;
-			}
-		}
-
+		sparse_tonr(powerflow_values->Y_Amatrix, &matrices_LU);
 		matrices_LU.cols_LU[n] = nnz ;// number of non-zeros;
 
 		for (temp_index_c=0;temp_index_c<m;temp_index_c++)

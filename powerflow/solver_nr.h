@@ -19,8 +19,9 @@ typedef struct  {
 	complex *S_dy;			///< constant power -- explicit delta/wye values
 	complex *Y_dy;			///< constant admittance -- explicit delta/wye values
 	complex *I_dy;			///< constant current -- explicit delta/wye values
-	complex *full_Y;		///< constant admittance - full 3x3 table (used by dynamic loads) - set to NULL for loads that don't matter
+	complex *full_Y;		///< constant admittance - full 3x3 table (used by fixed dynamic devices) - set to NULL for devices that don't matter
 	complex *full_Y_all;	///< Admittance - self admittance value for "static" portions - used by dynamic loads
+	complex *full_Y_load;	///< Admittance - 3-element diagonal table (used by in-rush-capable loads, right now) - set to NULL for devices that don't matter
 	complex *extra_var;		///< Extra variable - used mainly for current12 in triplex and "differently-connected" children
 	complex *house_var;		///< Extra variable - used mainly for nominal house current 
 	int *Link_Table;		///< table of links that connect to us (for population purposes)
@@ -30,6 +31,7 @@ typedef struct  {
 	bool *dynamics_enabled;	///< Flag indicating this particular node has a dynamics contribution function
 	complex *PGenTotal;		///< Total output of any generation at this node - lumped for now for dynamics
 	complex *DynCurrent;	///< Dynamics current portions - used as storage/tracking for generator dynamics
+	complex *BusHistTerm;	///< History term pointer for in-rush-based calculations
 	double volt_base;		///< voltage basis
     double mva_base;		/// MVA basis
 	double Jacob_A[3];		// Element a in equation (37), which is used to update the Jacobian matrix at each iteration
@@ -89,6 +91,21 @@ typedef enum {
 	PF_DYNCALC=2	///< Modified powerflow, for dynamics mode after initial powerflow
 	} NRSOLVERMODE;
 
+// Sparse element
+typedef struct SP_E {
+	struct SP_E* next;
+	int row_ind;  ///< row location of the element
+    double value; ///< value of the element
+} SP_E;
+
+// Sparse matrix
+typedef struct {
+	SP_E** cols;
+	SP_E* llheap;
+	unsigned int llptr;
+	unsigned int ncols;
+} SPARSE;
+
 typedef struct {
 	double *deltaI_NR;					/// Storage array for current injection
 	unsigned int size_offdiag_PQ;		/// Number of fixed off-diagonal matrix elements
@@ -104,7 +121,7 @@ typedef struct {
 	Y_NR *Y_offdiag_PQ;					///Y_offdiag_PQ store the row,column and value of off_diagonal elements of 6n*6n Y_NR matrix. No PV bus is included.
 	Y_NR *Y_diag_fixed;					///Y_diag_fixed store the row,column and value of fixed diagonal elements of 6n*6n Y_NR matrix. No PV bus is included.
 	Y_NR *Y_diag_update;				///Y_diag_update store the row,column and value of updated diagonal elements of 6n*6n Y_NR matrix at each iteration. No PV bus is included.
-	Y_NR *Y_Amatrix;					///Y_Amatrix store all the elements of Amatrix in equation AX=B;
+	SPARSE *Y_Amatrix;					///Y_Amatrix store all the elements of Amatrix in equation AX=B;
 	Y_NR *Y_Work_Amatrix;				///Temporary storage version of Y_Amatrix
 } NR_SOLVER_STRUCT;
 

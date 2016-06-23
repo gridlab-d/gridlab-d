@@ -80,6 +80,10 @@
 #define DLSYM(H,S) dlsym(H,S)
 #endif
 
+//"Small" multiplier for restoring voltages in in-rush.  Zeros seem to make it angry
+//TODO: See if this is a "zero-catch" somewhere making it useless, or legitimate numerical stability
+#define MULTTERM 0.00000000000001
+
 CLASS *node::oclass = NULL;
 CLASS *node::pclass = NULL;
 
@@ -216,8 +220,18 @@ int node::create(void)
 	current_uptime = -1.0;		///< Flags as not initialized
 
 	full_Y = NULL;		//Not used by default
+	full_Y_load = NULL;	//Not used by default
 	full_Y_all = NULL;	//Not used by default
 	DynVariable = NULL;	//Not used by default
+	BusHistTerm[0] = complex(0.0,0.0);
+	BusHistTerm[1] = complex(0.0,0.0);
+	BusHistTerm[2] = complex(0.0,0.0);
+	prev_delta_time = -1.0;
+	ahrlloadstore = NULL;
+	bhrlloadstore = NULL;
+	chrcloadstore = NULL;
+	LoadHistTermL = NULL;
+	LoadHistTermC = NULL;
 
 	memset(voltage,0,sizeof(voltage));
 	memset(voltaged,0,sizeof(voltaged));
@@ -537,8 +551,12 @@ int node::init(OBJECT *parent)
 					//Set appropriate flags (store parent name and flag self & parent)
 					SubNode = CHILD;
 					SubNodeParent = obj->parent;
-					
-					parNode->SubNode = PARENT;
+
+					//Check our parent -- if it is already differently flagged, don't override it
+					if (parNode->SubNode != DIFF_PARENT)
+					{
+						parNode->SubNode = PARENT;
+					}
 					parNode->SubNodeParent = obj;	//This may get overwritten if we have multiple children, so try not to use it anywhere mission critical.
 					parNode->NR_number_child_nodes[0]++;	//Increment the counter of child nodes - we'll alloc and link them later
 
@@ -1105,11 +1123,29 @@ int node::init(OBJECT *parent)
 //Put in place so deltamode can call it and properly udpate
 void node::NR_node_presync_fxn(void)
 {
+	double curr_delta_time;
+
 	//Zero the accumulators for later (meters and such)
 	current_inj[0] = current_inj[1] = current_inj[2] = 0.0;
 
 	//Reset flag
 	current_accumulated = false;
+
+	//See if in-rush is enabled and we're in deltamode
+	if ((deltatimestep_running > 0) && (enable_inrush_calculations == true))
+	{
+		//Get current deltamode timestep
+		curr_delta_time = gl_globaldeltaclock;
+
+		//Check and see if we're in a different timestep -- if so, zero the accumulators
+		if (curr_delta_time != prev_delta_time)
+		{
+			//Zero the accumulators
+			BusHistTerm[0] = BusHistTerm[1] = BusHistTerm[2] = complex(0.0,0.0);
+		}
+		//Default else - not a new time, so keep going with same values (no rezero)
+	}//End inrush and deltmaode running
+	//Defaulted else -- no in-rush or not deltamode
 
 	if ((SubNode==DIFF_PARENT))	//Differently connected parent - zero our accumulators
 	{
@@ -1667,9 +1703,21 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 					}
 					else	//Put back in service
 					{
-						voltage[0] = last_voltage[0];
-						voltage[1] = last_voltage[1];
-						voltage[2] = last_voltage[2];
+						//See if in-rush is enabled or not
+						if (enable_inrush_calculations == false)
+						{
+							voltage[0] = last_voltage[0];
+							voltage[1] = last_voltage[1];
+							voltage[2] = last_voltage[2];
+						}
+						else	//When restoring from inrush, a very small term is needed (or nothing happens)
+						{
+							voltage[0] = last_voltage[0] * MULTTERM;
+							voltage[1] = last_voltage[1] * MULTTERM;
+							voltage[2] = last_voltage[2] * MULTTERM;
+						}
+
+						//Default else - leave it be and just leave them to zero (more fun!)
 					}
 
 					//Recalculated V12, V1N, V2N in case a child uses them
@@ -1691,7 +1739,16 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 						}
 						else	//A just came back
 						{
-							voltage[0] = last_voltage[0];	//Read in the previous values
+							if (enable_inrush_calculations == false)
+							{
+								voltage[0] = last_voltage[0];	//Read in the previous values
+							}
+							else	//When restoring from inrush, a very small term is needed (or nothing happens)
+							{
+								voltage[0] = last_voltage[0] * MULTTERM;
+							}
+
+							//Default else -- in-rush enabled, just leave as they were
 						}
 					}//End Phase A change
 
@@ -1704,9 +1761,18 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 							last_voltage[1] = voltage[1];	//Store the last value
 							voltage[1] = 0.0;				//Put us to zero, so volt_dump is happy
 						}
-						else	//A just came back
+						else	//B just came back
 						{
-							voltage[1] = last_voltage[1];	//Read in the previous values
+							if (enable_inrush_calculations == false)
+							{
+								voltage[1] = last_voltage[1];	//Read in the previous values
+							}
+							else	//When restoring from inrush, a very small term is needed (or nothing happens)
+							{
+								voltage[1] = last_voltage[1] * MULTTERM;
+							}
+
+							//Default else - in-rush enabled, we want these to be zero
 						}
 					}//End Phase B change
 
@@ -1719,9 +1785,18 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 							last_voltage[2] = voltage[2];	//Store the last value
 							voltage[2] = 0.0;				//Put us to zero, so volt_dump is happy
 						}
-						else	//A just came back
+						else	//C just came back
 						{
-							voltage[2] = last_voltage[2];	//Read in the previous values
+							if (enable_inrush_calculations == false)
+							{
+								voltage[2] = last_voltage[2];	//Read in the previous values
+							}
+							else	//When restoring from inrush, a very small term is needed (or nothing happens)
+							{
+								voltage[2] = last_voltage[2] * MULTTERM;
+							}
+
+							//Default else - in-rush enabled and want them zero
 						}
 					}//End Phase C change
 
@@ -2270,6 +2345,23 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 //Put in place so deltamode can call it and properly udpate
 void node::BOTH_node_postsync_fxn(OBJECT *obj)
 {
+	double curr_delta_time;
+
+	//Update tracking variables for nodes/loads/meters
+	if ((deltatimestep_running > 0) && (enable_inrush_calculations == true))
+	{
+		//Get current deltamode timestep
+		curr_delta_time = gl_globaldeltaclock;
+
+		//Check and see if we're in a different timestep -- if so, zero the accumulators
+		if (curr_delta_time != prev_delta_time)
+		{
+			//Update the tracker
+			prev_delta_time = curr_delta_time;
+		}
+	}//End deltamode and in-rush
+	//Default else -- no in-rush and no deltamode
+
 	/* check for voltage control requirement */
 	if (require_voltage_control==TRUE)
 	{
@@ -2787,6 +2879,23 @@ int node::NR_populate(void)
 
 	//Populate dynamic mode flag address
 	NR_busdata[NR_node_reference].dynamics_enabled = &deltamode_inclusive;
+
+	//Check and see if we're in deltamode, and in-rush is enabled to allocation a variable
+	if ((deltamode_inclusive==true) && (enable_inrush_calculations==true))
+	{
+		//Link up the array (prealloced now, so always exists)
+		NR_busdata[NR_node_reference].BusHistTerm = BusHistTerm;
+
+		//Link our load matrix -- if we're a load, it was done in init
+		//If we're not a load, one of our children will do it later (and this is NULL anyways)
+		NR_busdata[NR_node_reference].full_Y_load = full_Y_load;
+	}
+	else	//One of these isn't true
+	{
+		//Null it, just to be safe - do with both
+		NR_busdata[NR_node_reference].BusHistTerm = NULL;
+		NR_busdata[NR_node_reference].full_Y_load = NULL;
+	}
 
 	//Allocate full admittance matrix, if desired (for now, not) -- only if something has requested it
 	if ((deltamode_inclusive==true) && (dynamic_norton==true))

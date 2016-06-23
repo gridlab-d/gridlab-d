@@ -37,6 +37,7 @@ fault_check::fault_check(MODULE *mod) : powerflow_object(mod)
 			PT_char1024,"output_filename",PADDR(output_filename),PT_DESCRIPTION,"Output filename for list of unsupported nodes",
 			PT_bool,"reliability_mode",PADDR(reliability_mode),PT_DESCRIPTION,"General flag indicating if fault_check is operating under faulting or restoration mode -- reliability set this",
 			PT_bool,"strictly_radial",PADDR(reliability_search_mode),PT_DESCRIPTION,"Flag to indicate if a system is known to be strictly radial -- uses radial assumptions for reliability alterations",
+			PT_bool,"full_output_file",PADDR(full_print_output),PT_DESCRIPTION,"Flag to indicate if the output_filename report contains both supported and unsupported nodes -- if false, just does unsupported",
 			PT_object,"eventgen_object",PADDR(rel_eventgen),PT_DESCRIPTION,"Link to generic eventgen object to handle unexpected faults",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 			if (gl_publish_function(oclass,"reliability_alterations",(FUNCTIONADDR)powerflow_alterations)==NULL)
@@ -59,6 +60,8 @@ int fault_check::create(void)
 
 	fcheck_state = SINGLE;	//Default to only one check
 	output_filename[0] = '\0';	//Empty file name
+
+	full_print_output = false;	//By default, only output unsupported nodes
 
 	reliability_mode = false;	//By default, we find errors and fail - if true, dumps log, but continues on its merry way
 
@@ -202,7 +205,7 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 			}
 
 			//Call restoration -- fault_checks will occur as part of this
-			return_val = ((int (*)(OBJECT *))(*restoration_fxn))(restoration_object);
+			return_val = ((int (*)(OBJECT *,int))(*restoration_fxn))(restoration_object,-99);
 
 			//Make sure it worked
 			if (return_val != 1)
@@ -230,7 +233,7 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 				{
 					if (output_filename[0] != '\0')	//See if there's an output
 					{
-						write_output_file(t0);	//Write it
+						write_output_file(t0,0);	//Write it
 					}
 
 					//See what mode we are in
@@ -266,14 +269,14 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 				support_search_links_mesh(-77,false);
 			}
 
-			override_output = true; //output_check_supported_mesh();	//See if anything changed
+			override_output = output_check_supported_mesh();	//See if anything changed
 
 			//See if anything broke
 			if (override_output == true)
 			{
 				if (output_filename[0] != '\0')	//See if there's an output
 				{
-					write_output_file(t0);	//Write it
+					write_output_file(t0,0);	//Write it
 				}
 
 				//See what mode we are in
@@ -531,12 +534,25 @@ void fault_check::reset_support_check(void)
 	}
 }
 
-void fault_check::write_output_file(TIMESTAMP tval)
+void fault_check::write_output_file(TIMESTAMP tval, double tval_delta)
 {
-	unsigned int index;
+	unsigned int index, ret_value;
 	DATETIME temp_time;
 	bool headerwritten = false;
+	bool supportheaderwritten = false;
+	bool deltamodeflag;
 	char phase_outs;
+	char deltaprint_buffer[64];
+
+	//Do a deltamode check - fault check is not really privy to what mode we're in -- it doesn't care
+	if (tval == 0)	//Deltamode flag
+	{
+		deltamodeflag=true;
+	}
+	else	//Nope
+	{
+		deltamodeflag=false;
+	}
 
 	//open the file
 	FILE *FPOutput = fopen(output_filename,"at");
@@ -567,10 +583,22 @@ void fault_check::write_output_file(TIMESTAMP tval)
 			//See if the header's been written
 			if (headerwritten == false)
 			{
-				//Convert timestamp so readable
-				gl_localtime(tval,&temp_time);
+				if (deltamodeflag == true)
+				{
+					//Convert the current time to an output
+					ret_value = gl_printtimedelta(tval_delta,deltaprint_buffer,64);
 
-				fprintf(FPOutput,"Unsupported at timestamp %lld - %04d-%02d-%02d %02d:%02d:%02d =\n\n",tval,temp_time.year,temp_time.month,temp_time.day,temp_time.hour,temp_time.minute,temp_time.second);
+					//Write it
+					fprintf(FPOutput,"Unsupported at timestamp %0.9f - %s =\n\n",tval_delta,deltaprint_buffer);
+				}
+				else	//Event-based mode
+				{
+					//Convert timestamp so readable
+					gl_localtime(tval,&temp_time);
+
+					fprintf(FPOutput,"Unsupported at timestamp %lld - %04d-%02d-%02d %02d:%02d:%02d =\n\n",tval,temp_time.year,temp_time.month,temp_time.day,temp_time.hour,temp_time.minute,temp_time.second);
+				}
+
 				headerwritten = true;	//Flag it as written
 			}
 
@@ -624,6 +652,95 @@ void fault_check::write_output_file(TIMESTAMP tval)
 		}//end unsupported
 	}//end bus traversion
 
+	//Check and see if we want supported nodes too
+	if (full_print_output == true)
+	{
+		for (index=0; index<NR_bus_count; index++)	//Loop through all bus values - find the unsupported section
+		{
+			phase_outs = (NR_busdata[index].phases & 0x07);
+
+			if (phase_outs != 0x00)	//Supported
+			{
+
+				//See if the header's been written
+				if (headerwritten == false)
+				{
+					if (deltamodeflag == true)
+					{
+						//Convert the current time to an output
+						ret_value = gl_printtimedelta(tval_delta,deltaprint_buffer,64);
+
+						//Write it
+						fprintf(FPOutput,"Supported at timestamp %0.9f - %s =\n\n",tval_delta,deltaprint_buffer);
+					}
+					else	//Event-based mode
+					{
+						//Convert timestamp so readable
+						gl_localtime(tval,&temp_time);
+
+						fprintf(FPOutput,"Supported at timestamp %lld - %04d-%02d-%02d %02d:%02d:%02d =\n\n",tval,temp_time.year,temp_time.month,temp_time.day,temp_time.hour,temp_time.minute,temp_time.second);
+					}
+
+					headerwritten = true;	//Flag it as written
+					supportheaderwritten = true;	//Flag intermediate as written too
+				}
+				else if (supportheaderwritten == false)	//Tiemstamp written, but not second header
+				{
+					fprintf(FPOutput,"Supported Nodes\n");
+					supportheaderwritten = true;	//Flag intermediate as written too
+				}
+
+				//Figure out the "supported" structure
+				switch (phase_outs) {
+					case 0x01:	//Only C
+						{
+							fprintf(FPOutput,"Phase C on node %s\n",NR_busdata[index].name);
+							break;
+						}
+					case 0x02:	//Only B
+						{
+							fprintf(FPOutput,"Phase B on node %s\n",NR_busdata[index].name);
+							break;
+						}
+					case 0x03:	//B and C supported
+						{
+							fprintf(FPOutput,"Phases B and C on node %s\n",NR_busdata[index].name);
+							break;
+						}
+					case 0x04:	//Only A
+						{
+							fprintf(FPOutput,"Phase A on node %s\n",NR_busdata[index].name);
+							break;
+						}
+					case 0x05:	//A and C supported
+						{
+							fprintf(FPOutput,"Phases A and C on node %s\n",NR_busdata[index].name);
+							break;
+						}
+					case 0x06:	//A and B supported
+						{
+							fprintf(FPOutput,"Phases A and B on node %s\n",NR_busdata[index].name);
+							break;
+						}
+					case 0x07:	//All three supported
+						{
+							fprintf(FPOutput,"Phases A, B, and C on node %s\n",NR_busdata[index].name);
+							break;
+						}
+					default:	//How'd we get here?
+						{
+							GL_THROW("Error parsing supported phases on node %s",NR_busdata[index].name);
+							/*  TROUBLESHOOT
+							The output file writing routine for the fault_check object encountered a problem
+							determining which phases are supported on the indicated node.  Please try again.
+							If the error persists, submit your code and a bug report using the trac website.
+							*/
+						}
+				}//End case
+			}//end supported
+		}//end secondary bus bus traversion
+	}//End proper reliability mode
+
 	fprintf(FPOutput,"\n");	//Put some blank lines between time entries
 
 	//Close the file
@@ -633,7 +750,9 @@ void fault_check::write_output_file(TIMESTAMP tval)
 //Function to traverse powerflow and remove/restore now unsupported objects' phases (so NR solves happy)
 void fault_check::support_check_alterations(int baselink_int, bool rest_mode)
 {
-	int base_bus_val;
+	int base_bus_val, return_val;
+	double delta_ts_value;
+	TIMESTAMP event_ts_value;
 
 	if (prev_time == 0)	//First run - see if restoration exists (we need it for now)
 	{
@@ -687,6 +806,29 @@ void fault_check::support_check_alterations(int baselink_int, bool rest_mode)
 	}
 	else	//Not assumed to be strictly radial, or just being safe -- check EVERYTHING
 	{
+		//See if we should even go in first
+		if (restoration_checks_active == false)
+		{
+			//Now see if the restoration object and function are mapped
+			if ((restoration_object != NULL) && (restoration_fxn != NULL))
+			{
+				//Call restoration -- fault_checks will occur as part of this
+				return_val = ((int (*)(OBJECT *,int))(*restoration_fxn))(restoration_object,baselink_int);
+
+				//Make sure it worked
+				if (return_val != 1)
+				{
+					GL_THROW("Restoration failed to execute properly");
+					/*  TROUBLESHOOT
+					While attempting to call the restoration/reconfiguration, an error was encountered in the function.
+					Please look for other error messages from restoration itself.
+					*/
+				}
+			}
+			//Default else -- not mapped, so do nothing
+		}//End restoration checks active
+		//Default else -- no restoration or we're in "exploratory" mode
+
 		//Reset the alteration matrix
 		reset_alterations_check();
 
@@ -696,7 +838,33 @@ void fault_check::support_check_alterations(int baselink_int, bool rest_mode)
 
 		//Now loop through and remove those components that are not supported anymore -- start from SWING, just because we have to start somewhere
 		support_search_links_mesh(baselink_int,rest_mode);
-	}
+	}//End Strictly radial assumption
+
+	//Determine if an output is desired and if we're not in restoration check mode (otherwise, it may flood the output log)
+	if ((restoration_checks_active == false) && (output_filename[0] != '\0'))
+	{
+		//See if we're a deltamode write or not
+		if (deltatimestep_running > 0.0)
+		{
+			//Get current delta time
+			delta_ts_value = gl_globaldeltaclock;
+
+			//Zero event time
+			event_ts_value = 0;
+		}
+		else	//Event mode - write that instead
+		{
+			//Get event time
+			event_ts_value = gl_globalclock;
+
+			//Zero the delta time
+			delta_ts_value = 0.0;
+		}
+
+		//Perform the actual write -- may duplicate times (if an event calls after sync, but shows what may be changing from an event)
+		write_output_file(event_ts_value,delta_ts_value);
+	}//End write an output
+	//Default else -- no output (none desired, or in restoration calls)
 }
 
 //Recursive function to traverse powerflow and alter phases as necessary

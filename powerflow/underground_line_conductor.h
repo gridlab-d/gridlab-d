@@ -1,4 +1,4 @@
-// $Id: underground_line_conductor.h 4738 2014-07-03 00:55:39Z dchassin $
+// $Id: underground_line_conductor.h 1182 2008-12-22 22:08:36Z dchassin $
 //	Copyright (C) 2008 Battelle Memorial Institute
 
 #ifndef _UNDERGROUNDLINECONDUCTOR_H
@@ -23,6 +23,8 @@ public:
 	double insulation_rel_permitivitty;
 	double shield_gmr;
 	double shield_resistance;
+	double shield_thickness;
+	double shield_diameter;
 	LINERATINGS winter, summer;
 	
 	underground_line_conductor(MODULE *mod);

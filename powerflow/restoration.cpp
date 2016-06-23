@@ -43,6 +43,7 @@ restoration::restoration(MODULE *mod) : powerflow_library(mod)
 			PT_double,"lower_voltage_limit[pu]",PADDR(voltage_limit[0]),PT_DESCRIPTION,"Lower voltage limit for the reconfiguration validity checks - per unit",
 			PT_double,"upper_voltage_limit[pu]",PADDR(voltage_limit[1]),PT_DESCRIPTION,"Upper voltage limit for the reconfiguration validity checks - per unit",
 			PT_char1024,"output_filename",PADDR(logfile_name),PT_DESCRIPTION,"Output text file name to describe final or attempted switching operations",
+			PT_bool,"generate_all_scenarios",PADDR(stop_and_generate),PT_DESCRIPTION,"Flag to determine if restoration reconfiguration and continues, or explores the full space",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		if (gl_publish_function(oclass,	"perform_restoration", (FUNCTIONADDR)perform_restoration)==NULL)
@@ -59,8 +60,9 @@ int restoration::create(void)
 {
 	reconfig_attempts = 20;			//Arbitrary
 	reconfig_iter_limit = 50;		//Arbitrary
-	InitialConstruction = false;	//By default, we're not initialized
 	file_output_desired = false;	//By default, no output
+
+	stop_and_generate = false;		//By default, just reconfigure until we're happy
 
 	feeder_power_limit = NULL;
 	microgrid_limit = NULL;
@@ -459,7 +461,7 @@ int restoration::init(OBJECT *parent)
 }
 
 //Internal version of exposed restoration call
-int restoration::PerformRestoration(void)
+int restoration::PerformRestoration(int faulting_link)
 {
 	unsigned int indexval;
 	int num_swi_open, num_swi_closed, secindexval, IdxSW;
@@ -468,9 +470,10 @@ int restoration::PerformRestoration(void)
 	//Set global flag active
 	restoration_checks_active = true;
 
-	if (InitialConstruction == false)	//First run, populate
+	if (fault_check_object != NULL)
 	{
-		if (fault_check_object != NULL)
+		//See if we've mapped the function yet
+		if (fault_check_fxn == NULL)
 		{
 			//Map the function
 			fault_check_fxn = (FUNCTIONADDR)(gl_get_function(fault_check_object,"reliability_alterations"));
@@ -482,314 +485,330 @@ int restoration::PerformRestoration(void)
 				//Defined somewhere else
 			}
 		}
-		else	//Throw an error
-		{
-			GL_THROW("Restoration: fault_check object not found.");
-			/*  TROUBLESHOOT
-			While attemping to map a function for the fault_check object, no fault_check
-			object could be found.  Restoration requires one to function.  Please add one and try
-			again.
-			*/
-		}
+		//Default else, already mapped
+	}
+	else	//Throw an error
+	{
+		GL_THROW("Restoration: fault_check object not found.");
+		/*  TROUBLESHOOT
+		While attemping to map a function for the fault_check object, no fault_check
+		object could be found.  Restoration requires one to function.  Please add one and try
+		again.
+		*/
+	}
 
-		//Make sure the source vertex is defined
-		if (sourceVerObj == NULL)
-		{
-			gl_warning("restoration: The source vertex for the reconfiguration is not defined, defaulting to a swing bus");
-			/*  TROUBLESHOOT
-			To properly operate, the reconfiguration needs the sources vertex of the system defined.  If left blank, the first
-			SWING bus will be utilized instead.
-			*/
+	//Make sure the source vertex is defined
+	if (sourceVerObj == NULL)
+	{
+		gl_warning("restoration: The source vertex for the reconfiguration is not defined, defaulting to a swing bus");
+		/*  TROUBLESHOOT
+		To properly operate, the reconfiguration needs the sources vertex of the system defined.  If left blank, the first
+		SWING bus will be utilized instead.
+		*/
 
-			//Grab the powerflow designated "master swing bus"
-			sourceVerObj = NR_swing_bus;
-		}
+		//Grab the powerflow designated "master swing bus"
+		sourceVerObj = NR_swing_bus;
+	}
 
-		//Simplified readNode_2 code -- create a new LinkedUndigraph item for the number of nodes
-		//Steal the NR-based numbering schemes, since they're already done
-		top_ori = (LinkedUndigraph *)gl_malloc(sizeof(LinkedUndigraph));	//Allocate the storage item
+	//Simplified readNode_2 code -- create a new LinkedUndigraph item for the number of nodes
+	//Steal the NR-based numbering schemes, since they're already done
+	top_ori = (LinkedUndigraph *)gl_malloc(sizeof(LinkedUndigraph));	//Allocate the storage item
 
-		//Make sure it worked
-		if (top_ori == NULL)
-		{
-			GL_THROW("Restoration: failed to allocte graph theory object");
-			/*  TROUBLESHOOT
-			While attempting to allocate memory for one of the graph theory objects inside the
-			restoration object, an error was encountered.  Please try again.  If the error persists,
-			please submit your code and a bug report via the ticketing system.
-			*/
-		}
+	//Make sure it worked
+	if (top_ori == NULL)
+	{
+		GL_THROW("Restoration: failed to allocte graph theory object");
+		/*  TROUBLESHOOT
+		While attempting to allocate memory for one of the graph theory objects inside the
+		restoration object, an error was encountered.  Please try again.  If the error persists,
+		please submit your code and a bug report via the ticketing system.
+		*/
+	}
 
-		//Call the constructor for the number of NR nodes
-		new (top_ori) LinkedUndigraph(NR_bus_count);
+	//Call the constructor for the number of NR nodes
+	new (top_ori) LinkedUndigraph(NR_bus_count);
 
 
-		//Populate the microgrid edges -- allocate first
-		INTVECTalloc(&MGIdx,numMG);
-		INTVECTalloc(&MGIdx_1,numMG);
-		INTVECTalloc(&MGIdx_2,numMG);
+	//Populate the microgrid edges -- allocate first
+	INTVECTalloc(&MGIdx,numMG);
+	INTVECTalloc(&MGIdx_1,numMG);
+	INTVECTalloc(&MGIdx_2,numMG);
 
-		//Loop and populate the list - do reversed, since may exit faster that way
-		for (secindexval=0; secindexval<numMG; secindexval++)
-		{
-			//Loop through buses to see if we have a match
-			for (indexval=0; indexval<NR_bus_count; indexval++)
-			{
-				if (mVerObjList[secindexval] == NR_busdata[indexval].obj)
-				{
-					MGIdx.data[MGIdx.currSize] = indexval;
-					MGIdx.currSize++;
-					break;	//Next loop
-				}
-			}//End bus traversion
-		}//End microgrid edge traversion
-
-		//Do readEdges_2 routine and part of readSwitches_2 routine
-		//Simplified to loop the NR_branchdata array and populate almost everything
-		//Switches that are open are apparently removed, later
-
-		//Performed up here so source-connected switch can be removed -- this was done in a separate routine before
-		//Set the source vertex
+	//Loop and populate the list - do reversed, since may exit faster that way
+	for (secindexval=0; secindexval<numMG; secindexval++)
+	{
+		//Loop through buses to see if we have a match
 		for (indexval=0; indexval<NR_bus_count; indexval++)
 		{
-			if (sourceVerObj == NR_busdata[indexval].obj)
+			if (mVerObjList[secindexval] == NR_busdata[indexval].obj)
 			{
-				s_ver = indexval;
-				break;
+				MGIdx.data[MGIdx.currSize] = indexval;
+				MGIdx.currSize++;
+				break;	//Next loop
 			}
-		}
+		}//End bus traversion
+	}//End microgrid edge traversion
 
-		//Check it, for grins
-		if (s_ver == -1)
+	//Do readEdges_2 routine and part of readSwitches_2 routine
+	//Simplified to loop the NR_branchdata array and populate almost everything
+	//Switches that are open are apparently removed, later
+
+	//Performed up here so source-connected switch can be removed -- this was done in a separate routine before
+	//Set the source vertex
+	for (indexval=0; indexval<NR_bus_count; indexval++)
+	{
+		if (sourceVerObj == NR_busdata[indexval].obj)
 		{
-			GL_THROW("Restoration: failed to find the source vertex!");
-			/*  TROUBLESHOOT
-			While attempting to map the source vertex of the graph, the node in question
-			could not be located.  Be sure it is part of the main system island and try again.
-			If the error persists, please submit your code and a bug report via the ticketing system.
-			*/
+			s_ver = indexval;
+			break;
 		}
+	}
 
-		//Zero the accumulators
-		num_swi_open = 0;
-		num_swi_closed = 0;
+	//Check it, for grins
+	if (s_ver == -1)
+	{
+		GL_THROW("Restoration: failed to find the source vertex!");
+		/*  TROUBLESHOOT
+		While attempting to map the source vertex of the graph, the node in question
+		could not be located.  Be sure it is part of the main system island and try again.
+		If the error persists, please submit your code and a bug report via the ticketing system.
+		*/
+	}
 
-		for (indexval=0; indexval<NR_branch_count; indexval++)
+	//Zero the accumulators
+	num_swi_open = 0;
+	num_swi_closed = 0;
+
+	for (indexval=0; indexval<NR_branch_count; indexval++)
+	{
+		//Add them in, unless it is an open fuse/open switch/open sectionalizer
+		if ((NR_branchdata[indexval].lnk_type == 3) || (NR_branchdata[indexval].lnk_type == 2) || (NR_branchdata[indexval].lnk_type == 5))	//Normal switch considered sectionalizer, as well
 		{
-			//Add them in, unless it is an open fuse/open switch/open sectionalizer
-			if ((NR_branchdata[indexval].lnk_type == 3) || (NR_branchdata[indexval].lnk_type == 2) || (NR_branchdata[indexval].lnk_type == 5))	//Normal switch considered sectionalizer, as well
-			{
-				//Make sure it is closed (if open, just don't add it)
-				if (*NR_branchdata[indexval].status == LS_CLOSED)
-				{
-					top_ori->addEdge(NR_branchdata[indexval].from,NR_branchdata[indexval].to);
-				}
-				//Default else, don't add it
-
-				//Update the count of what it is (if not a fuse)
-				if (NR_branchdata[indexval].lnk_type != 3)	//Must be a switch or sectionalizer
-				{
-					if (*NR_branchdata[indexval].status == LS_CLOSED)	//Closed switches
-					{
-						//See if one side is connected to the source vertex -- if so, don't count it (WSU algorithm does this separately)
-						//if ((NR_branchdata[indexval].from != s_ver) && (NR_branchdata[indexval].to != s_ver))
-						{
-							num_swi_closed++;
-						}
-						//Default else - connected to source vertex, so don't count
-					}
-					else	//Must be open
-					{
-						num_swi_open++;
-					}
-				}
-				//Else a fuse, no count needed (not used anywhere)
-			}//End is a fuse, switch, or rsectionalizer
-			else	//Not a fuse, switch, or sectionalizer just add it, for now (reclosers always assumed closed)
+			//Make sure it is closed (if open, just don't add it)
+			if (*NR_branchdata[indexval].status == LS_CLOSED)
 			{
 				top_ori->addEdge(NR_branchdata[indexval].from,NR_branchdata[indexval].to);
+			}
+			//Default else, don't add it
 
-				//See if we're a recloser
-				if (NR_branchdata[indexval].lnk_type == 6)
-				{
-					num_swi_closed++;
-				}
-				//default else -- something else
-			}//End not a fuse, switch, or sectionalizer
-		}//End NR_branchdata parse
-
-		//Allocate tracking arrays - allocate them all to the same size (multiple passes)
-		CHORDSETalloc(&tie_swi,num_swi_open);
-		CHORDSETalloc(&tie_swi_1,num_swi_open);
-		CHORDSETalloc(&tie_swi_2,num_swi_open);
-		LOCSETalloc(&tie_swi_loc,num_swi_open);
-
-		CHORDSETalloc(&sec_swi,num_swi_closed);
-		CHORDSETalloc(&sec_swi_1,num_swi_closed);
-		//CHORDSETalloc(&sec_swi_2,num_swi_closed);
-		LOCSETalloc(&sec_swi_loc,num_swi_closed);
-
-		//Now populate these arrays (requires a second pass)
-		for (indexval=0; indexval<NR_branch_count; indexval++)
-		{
-			//See if we're a normal switch or sectionalizer
-			if ((NR_branchdata[indexval].lnk_type == 2) || (NR_branchdata[indexval].lnk_type == 5))
+			//Update the count of what it is (if not a fuse)
+			if (NR_branchdata[indexval].lnk_type != 3)	//Must be a switch or sectionalizer
 			{
-				//Check out status
-				if (*NR_branchdata[indexval].status == LS_CLOSED)
+				if (*NR_branchdata[indexval].status == LS_CLOSED)	//Closed switches
 				{
-					//Make sure we're not source-vertex connected, just like above
+					//See if one side is connected to the source vertex -- if so, don't count it (WSU algorithm does this separately)
 					//if ((NR_branchdata[indexval].from != s_ver) && (NR_branchdata[indexval].to != s_ver))
 					{
-						//Switch closed - sectionalizing -- add it to the list
-						sec_swi.data_1[sec_swi.currSize] = NR_branchdata[indexval].from;
-						sec_swi.data_2[sec_swi.currSize] = NR_branchdata[indexval].to;
-						sec_swi.currSize++;
-
-						//Populate the location matrix thing
-						sec_swi_loc.data_1[sec_swi_loc.currSize] = indexval;	//This was originally line number in the GLM.  Not sure this is needed anymore
-						sec_swi_loc.data_2[sec_swi_loc.currSize] = 0;
-						sec_swi_loc.data_3[sec_swi_loc.currSize] = 0;
-						sec_swi_loc.data_4[sec_swi_loc.currSize] = 0;
-						sec_swi_loc.currSize++;
+						num_swi_closed++;
 					}
-					//Default else -- closed and connected to the source vertex - ignore it (WSU requirement)
+					//Default else - connected to source vertex, so don't count
 				}
-				else
+				else	//Must be open
 				{
-					//Switch open - tie
-					tie_swi.data_1[tie_swi.currSize] = NR_branchdata[indexval].from;
-					tie_swi.data_2[tie_swi.currSize] = NR_branchdata[indexval].to;
-					tie_swi.currSize++;
+					num_swi_open++;
+				}
+			}
+			//Else a fuse, no count needed (not used anywhere)
+		}//End is a fuse, switch, or rsectionalizer
+		else	//Not a fuse, switch, or sectionalizer just add it, for now (reclosers always assumed closed)
+		{
+			top_ori->addEdge(NR_branchdata[indexval].from,NR_branchdata[indexval].to);
+
+			//See if we're a recloser
+			if (NR_branchdata[indexval].lnk_type == 6)
+			{
+				num_swi_closed++;
+			}
+			//default else -- something else
+		}//End not a fuse, switch, or sectionalizer
+	}//End NR_branchdata parse
+
+	//Allocate tracking arrays - allocate them all to the same size (multiple passes)
+	CHORDSETalloc(&tie_swi,num_swi_open);
+	CHORDSETalloc(&tie_swi_1,num_swi_open);
+	CHORDSETalloc(&tie_swi_2,num_swi_open);
+	LOCSETalloc(&tie_swi_loc,num_swi_open);
+
+	CHORDSETalloc(&sec_swi,num_swi_closed);
+	CHORDSETalloc(&sec_swi_1,num_swi_closed);
+	//CHORDSETalloc(&sec_swi_2,num_swi_closed);
+	LOCSETalloc(&sec_swi_loc,num_swi_closed);
+
+	//Now populate these arrays (requires a second pass)
+	for (indexval=0; indexval<NR_branch_count; indexval++)
+	{
+		//See if we're a normal switch or sectionalizer
+		if ((NR_branchdata[indexval].lnk_type == 2) || (NR_branchdata[indexval].lnk_type == 5))
+		{
+			//Check out status
+			if (*NR_branchdata[indexval].status == LS_CLOSED)
+			{
+				//Make sure we're not source-vertex connected, just like above
+				//if ((NR_branchdata[indexval].from != s_ver) && (NR_branchdata[indexval].to != s_ver))
+				{
+					//Switch closed - sectionalizing -- add it to the list
+					sec_swi.data_1[sec_swi.currSize] = NR_branchdata[indexval].from;
+					sec_swi.data_2[sec_swi.currSize] = NR_branchdata[indexval].to;
+					sec_swi.currSize++;
 
 					//Populate the location matrix thing
-					tie_swi_loc.data_1[tie_swi_loc.currSize] = indexval;	//This was originally line number in the GLM.  Not sure this is needed anymore
-					tie_swi_loc.data_2[tie_swi_loc.currSize] = 0;
-					tie_swi_loc.data_3[tie_swi_loc.currSize] = 0;
-					tie_swi_loc.data_4[tie_swi_loc.currSize] = 0;
-					tie_swi_loc.currSize++;
-
+					sec_swi_loc.data_1[sec_swi_loc.currSize] = indexval;	//This was originally line number in the GLM.  Not sure this is needed anymore
+					sec_swi_loc.data_2[sec_swi_loc.currSize] = 0;
+					sec_swi_loc.data_3[sec_swi_loc.currSize] = 0;
+					sec_swi_loc.data_4[sec_swi_loc.currSize] = 0;
+					sec_swi_loc.currSize++;
 				}
-			}//End is a switch, or rsectionalizer
-			else if (NR_branchdata[indexval].lnk_type == 6)	//If it's a recloser, automatically a sectionalizing switch
+				//Default else -- closed and connected to the source vertex - ignore it (WSU requirement)
+			}
+			else
 			{
-				//No open/closed test for these -- all go into the same category
-				sec_swi.data_1[sec_swi.currSize] = NR_branchdata[indexval].from;
-				sec_swi.data_2[sec_swi.currSize] = NR_branchdata[indexval].to;
-				sec_swi.currSize++;
+				//Switch open - tie
+				tie_swi.data_1[tie_swi.currSize] = NR_branchdata[indexval].from;
+				tie_swi.data_2[tie_swi.currSize] = NR_branchdata[indexval].to;
+				tie_swi.currSize++;
 
 				//Populate the location matrix thing
-				sec_swi_loc.data_1[sec_swi_loc.currSize] = indexval;	//This was originally line number in the GLM.  Not sure this is needed anymore
-				sec_swi_loc.data_2[sec_swi_loc.currSize] = 0;
-				sec_swi_loc.data_3[sec_swi_loc.currSize] = 0;
-				sec_swi_loc.data_4[sec_swi_loc.currSize] = 0;
-				sec_swi_loc.currSize++;
-			}//End is recloser
-			//Default else -- normal link and we don't care
-		}//Second NR_branch parse
+				tie_swi_loc.data_1[tie_swi_loc.currSize] = indexval;	//This was originally line number in the GLM.  Not sure this is needed anymore
+				tie_swi_loc.data_2[tie_swi_loc.currSize] = 0;
+				tie_swi_loc.data_3[tie_swi_loc.currSize] = 0;
+				tie_swi_loc.data_4[tie_swi_loc.currSize] = 0;
+				tie_swi_loc.currSize++;
 
-		//Do whatever this readLoads_2 thing does - forms load_matrix, which appears to just represent constant_xxx_x portions, so we're skipping it
-
-		//Source vertex setting is above here -- needed for removing source-connected switches for WSU reconfiguration
-
-		//Set the fault section
-		for (indexval=0; indexval<NR_branch_count; indexval++)
+			}
+		}//End is a switch, or rsectionalizer
+		else if (NR_branchdata[indexval].lnk_type == 6)	//If it's a recloser, automatically a sectionalizing switch
 		{
-			if (faultSecObj == NR_branchdata[indexval].obj)
+			//No open/closed test for these -- all go into the same category
+			sec_swi.data_1[sec_swi.currSize] = NR_branchdata[indexval].from;
+			sec_swi.data_2[sec_swi.currSize] = NR_branchdata[indexval].to;
+			sec_swi.currSize++;
+
+			//Populate the location matrix thing
+			sec_swi_loc.data_1[sec_swi_loc.currSize] = indexval;	//This was originally line number in the GLM.  Not sure this is needed anymore
+			sec_swi_loc.data_2[sec_swi_loc.currSize] = 0;
+			sec_swi_loc.data_3[sec_swi_loc.currSize] = 0;
+			sec_swi_loc.data_4[sec_swi_loc.currSize] = 0;
+			sec_swi_loc.currSize++;
+		}//End is recloser
+		//Default else -- normal link and we don't care
+	}//Second NR_branch parse
+
+	//Do whatever this readLoads_2 thing does - forms load_matrix, which appears to just represent constant_xxx_x portions, so we're skipping it
+
+	//Source vertex setting is above here -- needed for removing source-connected switches for WSU reconfiguration
+
+	//Do a check to set the fault section -- see if we're reading the GLM or fault_check
+	if (faulting_link == -99)
+	{
+		//Read the GLM -- make sure it is valid
+		if (faultSecObj == NULL)
+		{
+			//Not set, hard-code to zero (swing fault?  Default setting of original MATLAB code)
+			f_sec.from_vert = 0;
+			f_sec.to_vert = 0;
+		}
+		else
+		{	//Proceed as normal
+
+			//Set the fault section
+			for (indexval=0; indexval<NR_branch_count; indexval++)
 			{
-				f_sec.from_vert = NR_branchdata[indexval].from;
-				f_sec.to_vert = NR_branchdata[indexval].to;
-				break;
+				if (faultSecObj == NR_branchdata[indexval].obj)
+				{
+					f_sec.from_vert = NR_branchdata[indexval].from;
+					f_sec.to_vert = NR_branchdata[indexval].to;
+					break;
+				}
 			}
 		}
-
-		//Do a check
-		if ((f_sec.from_vert == -1) || (f_sec.to_vert == -1))
-		{
-			GL_THROW("Restoration: failed to find the fault vertex");
-			/*  TROUBLESHOOT
-			While attempting to map the faulted line section to the graph, the edge in
-			question could not be located.  Please try again.  If the error persists,
-			please submit your code and a bug report via the ticketing system.
-			*/
-		}
-
-		//Original MATLAB trimmed excess portions here (shouldn't need to be done - should be GLM level)
-
-		//Allocate the feeder vertices
-		INTVECTalloc(&feederVertices,numfVer);
-
-		//Loop and populate - do reversed, since may exit faster that way
-		for (secindexval=0; secindexval<numfVer; secindexval++)
-		{
-			//Loop through buses to see if we have a match
-			for (indexval=0; indexval<NR_bus_count; indexval++)
-			{
-				if (fVerObjList[secindexval] == NR_busdata[indexval].obj)
-				{
-					feederVertices.data[feederVertices.currSize] = indexval;
-					feederVertices.currSize++;
-					break;	//Next loop
-				}
-			}//End bus traversion
-		}//End feeder edge traversion
-
-		//simplifyTop_1
-		simplifyTop_1();
-
-		//Reduced feeder vertices (ver_map_1 on feederVertices)
-		INTVECTalloc(&feederVertices_1,ver_map_1.currSize);
-		
-		//Copy the mapping
-		for (secindexval=0; secindexval<feederVertices.currSize; secindexval++)
-		{
-			feederVertices_1.data[secindexval] = ver_map_1.data[feederVertices.data[secindexval]];
-			feederVertices_1.currSize++;
-		}
-
-		//Load in the 1st simplified topology
-		/************ Note below, but still not sure this does anything/is needed *******************/
-		//loadInfo();
-
-		//Second simplification
-		simplifyTop_2();
-
-		//Feeder vertices
-		setFeederVertices_2();
-
-		//Microgrid vertices
-		setMicrogridVertices();
-
-		//Removes the switches from source and feeders as switches -- tried to do this at the GLM level, but it breaks other things
-		modifySecSwiList();
-
-		//Form the map
-		formSecSwiMap();
-
-		//Allocate other items
-		top_res = (LinkedUndigraph *)gl_malloc(sizeof(LinkedUndigraph));
-		top_tmp = (LinkedUndigraph *)gl_malloc(sizeof(LinkedUndigraph));
-
-		//Check them
-		if ((top_res == NULL) || (top_tmp == NULL))
-		{
-			GL_THROW("Restoration: failed to allocte graph theory object");
-			//Defined elsewhere
-		}
-
-		//Call the constructors
-		new (top_res) LinkedUndigraph(0);
-		new (top_tmp) LinkedUndigraph(0);
-
-		top_tmp->copy(top_sim_1);
-
-		//Create the powerflow backup
-		PowerflowSave();
-
-		InitialConstruction = true;	//Set flag
 	}
-	//Default else -- do non-start up items
-	//************** Revisit the above if -- does this really only exist as a one-time deal?
+	else	//Read the index
+	{
+		f_sec.from_vert = NR_branchdata[faulting_link].from;
+		f_sec.to_vert = NR_branchdata[faulting_link].to;
+	}
+
+	//Do a check
+	if ((f_sec.from_vert == -1) || (f_sec.to_vert == -1))
+	{
+		GL_THROW("Restoration: failed to find the fault vertex");
+		/*  TROUBLESHOOT
+		While attempting to map the faulted line section to the graph, the edge in
+		question could not be located.  Please try again.  If the error persists,
+		please submit your code and a bug report via the ticketing system.
+		*/
+	}
+
+	//Original MATLAB trimmed excess portions here (shouldn't need to be done - should be GLM level)
+
+	//Allocate the feeder vertices
+	INTVECTalloc(&feederVertices,numfVer);
+
+	//Loop and populate - do reversed, since may exit faster that way
+	for (secindexval=0; secindexval<numfVer; secindexval++)
+	{
+		//Loop through buses to see if we have a match
+		for (indexval=0; indexval<NR_bus_count; indexval++)
+		{
+			if (fVerObjList[secindexval] == NR_busdata[indexval].obj)
+			{
+				feederVertices.data[feederVertices.currSize] = indexval;
+				feederVertices.currSize++;
+				break;	//Next loop
+			}
+		}//End bus traversion
+	}//End feeder edge traversion
+
+	//simplifyTop_1
+	simplifyTop_1();
+
+	//Reduced feeder vertices (ver_map_1 on feederVertices)
+	INTVECTalloc(&feederVertices_1,ver_map_1.currSize);
+	
+	//Copy the mapping
+	for (secindexval=0; secindexval<feederVertices.currSize; secindexval++)
+	{
+		feederVertices_1.data[secindexval] = ver_map_1.data[feederVertices.data[secindexval]];
+		feederVertices_1.currSize++;
+	}
+
+	//Load in the 1st simplified topology
+	//This step is skipped, because it is effectively handled natively by GLD
+
+	//Second simplification
+	simplifyTop_2();
+
+	//Feeder vertices
+	setFeederVertices_2();
+
+	//Microgrid vertices
+	setMicrogridVertices();
+
+	//Removes the switches from source and feeders as switches -- tried to do this at the GLM level, but it breaks other things
+	modifySecSwiList();
+
+	//Form the map
+	formSecSwiMap();
+
+	//Allocate other items
+	top_res = (LinkedUndigraph *)gl_malloc(sizeof(LinkedUndigraph));
+	top_tmp = (LinkedUndigraph *)gl_malloc(sizeof(LinkedUndigraph));
+
+	//Check them
+	if ((top_res == NULL) || (top_tmp == NULL))
+	{
+		GL_THROW("Restoration: failed to allocte graph theory object");
+		//Defined elsewhere
+	}
+
+	//Call the constructors
+	new (top_res) LinkedUndigraph(0);
+	new (top_tmp) LinkedUndigraph(0);
+
+	top_tmp->copy(top_sim_1);
+
+	//Create the powerflow backup
+	PowerflowSave();
 
 	//Create a copy of sec_swi for looping/examining
 	CHORDSETalloc(&sec_list,sec_swi.maxSize);
@@ -817,6 +836,13 @@ int restoration::PerformRestoration(void)
 		{
 			printResult(IdxSW);
 		}
+
+		//Check mode of operation
+		if (stop_and_generate == false)	//"GridLAB-D" mode - exit and onward
+		{
+			break;	//Get out of this loop
+		}
+		//Default else -- Full report mode, so continue loop
 	}
 
 	//Deflag the global value
@@ -1814,38 +1840,6 @@ void restoration::simplifyTop_1(void)
 	s_ver_1 = ver_map_1.data[s_ver];
 }
 
-////LoadInfo function
-////************************ Does this really need to be done?????  ************************/
-//void restoration::loadInfo(void)
-//{
-//////	int idx, row;
-//	int top_ori_numVertices;
-//
-//////	ver_load_tmp = zeros(resObj.top_ori.numVertices,3);            
-//	top_ori_numVertices = top_ori->numVertices;
-//	////for (idx=0; idx<top_ori_numVertices; idx++)
-//	////{
-//	////	ver_load_tmp(idx,1) = resObj.ver_map_1(idx);
-//	////	row = find(resObj.node_load_info(:,1)==idx,1);
-//	////	if ~isempty(row)
-//	////		ver_load_tmp(idx,2:3) = resObj.node_load_info(row,2:3);
-//	////	else
-//	////		ver_load_tmp(idx,2:3) = [0,0];
-//	////	end
-//	////}
-//
-//	////P = accumarray(ver_load_tmp(:,1),ver_load_tmp(:,2));
-//	////Q = accumarray(ver_load_tmp(:,1),ver_load_tmp(:,3));
-//
-//	////resObj.node_load_info_1 = [];
-//	////for idx = 1:size(P,1)
-//	////	if P(idx) ~= 0 || Q(idx) ~= 0
-//	////		resObj.node_load_info_1 = [resObj.node_load_info_1;...
-//	////			idx, P(idx), Q(idx), sqrt(P(idx)^2+Q(idx)^2)];
-//	////	end
-//	////end
-//}
-
 // The 2nd Simplification, all vertices whose degree equal to 1 or 2
 // are deleted. The source node, vertices with tie switches or the
 // faulted section should not be deleted.
@@ -1947,11 +1941,11 @@ void restoration::setFeederVertices_2(void)
 	//Empty it, to be safe
 	nodeSet.data = NULL;
 
-	//Allocate the temporary vector - assume won't be bigger than feederVertices?
-	INTVECTalloc(&nodeSet,feederVertices.currSize);
+	//Allocate the temporary vector - assume won't be bigger than feederVertices_1? (failed horribly on feederVertices)
+	INTVECTalloc(&nodeSet,feederVertices_1.maxSize);
 
 	//Allocate the feederVertices_2 vector
-	INTVECTalloc(&feederVertices_2,feederVertices.currSize);
+	INTVECTalloc(&feederVertices_2,feederVertices_1.maxSize);
 	
 	//Arbitrarily size, since "NULL/-1" seems to be a status vector of this???
 	feederVertices_2.currSize = feederVertices_2.maxSize;
@@ -2356,8 +2350,7 @@ void restoration::renewFaultLocation(BRANCHVERTICES *faultsection)
 
 	// Graph after restoration
 	//These were theoretically allocated earlier
-	//*************** recalling the constructor is likely to cause memory leakage -- REVISIT THIS
-	if (top_res != NULL)	//As an attempt at fixing this, try to empty them first
+	if (top_res != NULL)	//As an attempt at fixing possible memory leaks, try to empty them first
 	{
 		top_res->delAllVer();
 	}
@@ -2444,15 +2437,20 @@ int restoration::spanningTreeSearch(void)
 		//Allocate the switch operation fields - go on assumption of for loop below
 		//Make as big as fundamental switch set
 
-		//DEBUG - Fix this -- arbitrary guess for debugging
-		allocsize = 300; //tie_swi.currSize + sec_swi.currSize;
+		//Still not sure how this is being sized -- this guess seems to work
+		//Revisit this!! Seems like it should be FCutSet_2.currSize
+		if (numMG > 0)
+		{
+			allocsize = 2*numMG*numfVer*(tie_swi.currSize + sec_swi.currSize);	//Arbitrarily sized - MATLAB is sloppy
+		}
+		else
+		{
+			allocsize = 2*numfVer*(tie_swi.currSize + sec_swi.currSize);	//Arbitrarily sized - MATLAB is sloppy
+		}
+
 		CANDSWOPalloc(&candidateSwOpe,allocsize);
 		CANDSWOPalloc(&candidateSwOpe_1,allocsize);
 		CANDSWOPalloc(&candidateSwOpe_2,allocsize);
-
-		//CANDSWOPalloc(&candidateSwOpe,FCutSet_2.currSize);
-		//CANDSWOPalloc(&candidateSwOpe_1,FCutSet_2.currSize);
-		//CANDSWOPalloc(&candidateSwOpe_2,FCutSet_2.currSize);
 
 	for (idx=0; idx<FCutSet_2.currSize; idx++)
 	{
@@ -2495,6 +2493,11 @@ int restoration::spanningTreeSearch(void)
 		{
 			//Adjustment from WSU code below - just run a powerflow
 			//If it fails, then modifyModel again (should de-toggle all of what was just toggled)
+
+				//Initialize storage variables, in case we fail
+				overLoad = 0.0;
+				feederID = 0;
+
 				//Perform the modification
 				modifyModel(counter);
 
@@ -2536,6 +2539,17 @@ int restoration::spanningTreeSearch(void)
 			// If feasible restoration scheme is found
 			if (feasible == true)
 			{
+				//Check our desired "approach" on this -- see if we need to undo for the next section or not
+				if (stop_and_generate == true)
+				{
+					//Undo it by calling it again
+					modifyModel(counter);
+
+					//Restore voltage for next pass
+					PowerflowRestore();
+				}
+				//Default else -- "GridLAB-D" mode, just exit and go onward
+
 				//IdxSW = counter;
 				//Before exiting, free up some of our junk
 				CHORDSETfree(&FCutSet);
@@ -2543,13 +2557,10 @@ int restoration::spanningTreeSearch(void)
 				CHORDSETfree(&FCutSet_2);
 				CHORDSETfree(&FCutSet_2_1);
 				CHORDSETfree(&FCutSet_2_2);
-				CANDSWOPfree(&candidateSwOpe);
-				CANDSWOPfree(&candidateSwOpe_1);
-				CANDSWOPfree(&candidateSwOpe_2);
 
 				return counter;
 			}
-	        
+
 			// If feasible restoration scheme is not found
 			// Save the mount of load need shedding for partial restoration
 			candidateSwOpe_2.data_6[counter] = overLoad;
@@ -2719,6 +2730,17 @@ int restoration::spanningTreeSearch(void)
 			// If feasible restoration scheme is found
 			if (feasible == true)
 			{
+				//Check our desired "approach" on this -- see if we need to undo for the next section or not
+				if (stop_and_generate == true)
+				{
+					//Undo it by calling it again
+					modifyModel(counter);
+
+					//Restore voltage for next pass
+					PowerflowRestore();
+				}
+				//Default else -- "GridLAB-D" mode, just exit and go onward
+
 				//IdxSW = counter;
 				//Before exiting, free up some of our junk
 				CHORDSETfree(&FCutSet);
@@ -2726,13 +2748,10 @@ int restoration::spanningTreeSearch(void)
 				CHORDSETfree(&FCutSet_2);
 				CHORDSETfree(&FCutSet_2_1);
 				CHORDSETfree(&FCutSet_2_2);
-				CANDSWOPfree(&candidateSwOpe);
-				CANDSWOPfree(&candidateSwOpe_1);
-				CANDSWOPfree(&candidateSwOpe_2);
 
 				return counter;
 			}
-	        
+
 			// If feasible restoration scheme is not found
 			candidateSwOpe_2.data_6[counter] = overLoad;
 			candidateSwOpe_1.data_6[counter] = overLoad;
@@ -2745,7 +2764,8 @@ int restoration::spanningTreeSearch(void)
 			//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 			//%%% If counter > 300, we can assume full restoration
 			//%%% is failed.
-			if (counter >= 299)	//Zero referenced
+			//Adjust this to the real size, to stop things from breaking horribly
+			if (counter >= (allocsize-1))
 			{
 				//If caught here, the stuff below should be correct, by default
 				//resObj.candidateSwOpe = resObj.candidateSwOpe(1:300,:);
@@ -2758,11 +2778,8 @@ int restoration::spanningTreeSearch(void)
 				CHORDSETfree(&FCutSet_2);
 				CHORDSETfree(&FCutSet_2_1);
 				CHORDSETfree(&FCutSet_2_2);
-				CANDSWOPfree(&candidateSwOpe);
-				CANDSWOPfree(&candidateSwOpe_1);
-				CANDSWOPfree(&candidateSwOpe_2);
 
-				//Send effectively, and error
+				//Send effectively, an error
 				return -1;
 			}
 			//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2929,9 +2946,6 @@ int restoration::spanningTreeSearch(void)
 	CHORDSETfree(&FCutSet_2);
 	CHORDSETfree(&FCutSet_2_1);
 	CHORDSETfree(&FCutSet_2_2);
-	CANDSWOPfree(&candidateSwOpe);
-	CANDSWOPfree(&candidateSwOpe_1);
-	CANDSWOPfree(&candidateSwOpe_2);
 
 	return -1;
 }
@@ -3184,11 +3198,11 @@ void restoration::modifyModel(int counter)
 			//See what our status was, and do the opposite
 			if (*NR_branchdata[locations.data[idx]].status == LS_OPEN)	//Was open, close it
 			{
-				return_val = ((int (*)(OBJECT *,unsigned char,bool))(*switching_fxn))(thisobj,0x07,true);
+				return_val = ((int (*)(OBJECT *,unsigned char,bool))(*switching_fxn))(swobj,0x07,true);
 			}
 			else	//Must be closed, open it
 			{
-				return_val = ((int (*)(OBJECT *,unsigned char,bool))(*switching_fxn))(thisobj,0x07,false);
+				return_val = ((int (*)(OBJECT *,unsigned char,bool))(*switching_fxn))(swobj,0x07,false);
 			}
 		}
 		else	//Double return - reclosers and sectionalizers
@@ -3196,11 +3210,11 @@ void restoration::modifyModel(int counter)
 			//See what our status was, and do the opposite
 			if (*NR_branchdata[locations.data[idx]].status == LS_OPEN)	//Was open, close it
 			{
-				return_val_double = ((double (*)(OBJECT *,unsigned char,bool))(*switching_fxn))(thisobj,0x07,true);
+				return_val_double = ((double (*)(OBJECT *,unsigned char,bool))(*switching_fxn))(swobj,0x07,true);
 			}
 			else	//Must be closed, open it
 			{
-				return_val_double = ((double (*)(OBJECT *,unsigned char,bool))(*switching_fxn))(thisobj,0x07,false);
+				return_val_double = ((double (*)(OBJECT *,unsigned char,bool))(*switching_fxn))(swobj,0x07,false);
 			}
 
 			//Check our values - general error checks
@@ -3609,7 +3623,7 @@ void restoration::printResult(int IdxSW)
 	FILE *FPOutput;
 	TIMESTAMP tval;
 	int delta_microseconds_value;
-	double delta_tval, loadShedding;
+	double delta_tval, loadShedding, seconds_dbl_value;
 	DATETIME res_event_time;
 	int retvalue, indexvalue;
 
@@ -3621,17 +3635,35 @@ void restoration::printResult(int IdxSW)
 	delta_microseconds_value = (int)((delta_tval - (int)(delta_tval))*1000000+0.5);	// microseconds roll-over - biased upward (by 0.5)
 	retvalue = gl_localtime(tval,&res_event_time);	//Could check to make sure this worked, but meh
 
+	//Create the seconds counter
+	seconds_dbl_value = (double)(res_event_time.second) + (double)(delta_microseconds_value)/1000000.0;
+
 	//Open the file handle
 	FPOutput = fopen(logfile_name,"at");
 
 	// Case infomation
-	fprintf(FPOutput,"-- Restoration session of %4d-%2d-%2d %2d:%2d:%2d.%6f --\n\n",res_event_time.year,res_event_time.month,res_event_time.day,res_event_time.hour,res_event_time.minute,res_event_time.second,delta_microseconds_value);
+	//Simple print mechanism
+	if (res_event_time.second < 10)	//10 or below, add a zero for giggles
+	{
+		fprintf(FPOutput,"-- Restoration session of %4d-%02d-%02d %02d:%02d:0%2.6f --\n\n",res_event_time.year,res_event_time.month,res_event_time.day,res_event_time.hour,res_event_time.minute,seconds_dbl_value);
+	}
+	else	//10 or above, 2 digit print works
+	{
+		fprintf(FPOutput,"-- Restoration session of %4d-%02d-%02d %02d:%02d:%2.6f --\n\n",res_event_time.year,res_event_time.month,res_event_time.day,res_event_time.hour,res_event_time.minute,seconds_dbl_value);
+	}
 	fprintf(FPOutput, "Fault section: %d - %d (in original topology), %d - %d (in simplified topology)\n", f_sec.from_vert, f_sec.to_vert, f_sec_1.from_vert, f_sec_1.to_vert);
 	fprintf(FPOutput, "Fault section: %s - %s (in original topology)\n", NR_busdata[f_sec.from_vert].name, NR_busdata[f_sec.to_vert].name);
-	fprintf(FPOutput, "Fault section: %s\n",faultSecObj->name ? faultSecObj->name : "Unnamed");
+	if (faultSecObj != NULL)
+	{
+		fprintf(FPOutput, "Fault section: %s\n",faultSecObj->name ? faultSecObj->name : "Unnamed");
+	}
+	else
+	{
+		fprintf(FPOutput, "Fault section: Not set, assumed SWING -- %s\n",NR_busdata[0].name ? NR_busdata[0].name : "Unnamed");
+	}
 
 	// Restoration results
-	if (IdxSW != 0) // Full restoration is successful
+	if (IdxSW >= 0) // Full restoration is successful	-- was "1" in MATLAB, but that is a counter.  -1 values coded as bad for GLD
 	{
 		fprintf(FPOutput, "Full restoration is successful.\n");
 		fprintf(FPOutput, "The optimal switching sequence is as follows \n");
@@ -3674,12 +3706,16 @@ void restoration::printResult(int IdxSW)
 //Print swith operations, recursively
 void restoration::printSOs(FILE *FPHandle, int IdxSW)
 {
-	if (candidateSwOpe.data_5[IdxSW] != 0)
+	//Overall size check
+	if (IdxSW<candidateSwOpe.currSize)
 	{
-		//Recursive call to ourselves
-		printSOs(FPHandle,candidateSwOpe.data_5[IdxSW]);
+		if (candidateSwOpe.data_5[IdxSW] != 0)
+		{
+			//Recursive call to ourselves
+			printSOs(FPHandle,candidateSwOpe.data_5[IdxSW]);
+		}
+		printCIO(FPHandle,IdxSW);
 	}
-	printCIO(FPHandle,IdxSW);
 }
 
 //Print cyclic interchange operations
@@ -3751,7 +3787,7 @@ bool restoration::isSwiInFeeder(BRANCHVERTICES *swi_2, int feederID_overload)
 {
 	bool flag;
 	int curNode, feederID_current, microgridID_current;
-	int idxval, tempval;
+	int idxval, tempval, count_check;
 
 	curNode = swi_2->from_vert;      
     if (feederID_overload < 100) // If a feeder overloaded
@@ -3768,7 +3804,10 @@ bool restoration::isSwiInFeeder(BRANCHVERTICES *swi_2, int feederID_overload)
 			}
 		}
 
-        while (feederID_current != -1)
+		//"Stuck" detector -- not sure why it does sometimes, but this is a kludgy way to prevent it
+		count_check = NR_bus_count;	//Arbitrary assignment
+
+        while ((feederID_current != -1) && (count_check > 0))
 		{
 			tempval = -1;
 			for (idxval=0;idxval<MGIdx_2.currSize; idxval++)
@@ -3797,6 +3836,9 @@ bool restoration::isSwiInFeeder(BRANCHVERTICES *swi_2, int feederID_overload)
 					break;
 				}
 			}
+
+			//Stuck counter decrement
+			count_check--;
 		}
         if ((feederID_current+1) == feederID_overload)
 		{
@@ -3821,7 +3863,10 @@ bool restoration::isSwiInFeeder(BRANCHVERTICES *swi_2, int feederID_overload)
 			}
 		}
 
-        while (microgridID_current == -1)
+		//"Stuck" detector -- not sure why it does sometimes, but this is a kludgy way to prevent it
+		count_check = NR_bus_count;	//Arbitrary assignment
+
+        while ((microgridID_current == -1) && (count_check > 0))
 		{
 			curNode = top_res->parent_value[curNode];
 
@@ -3843,6 +3888,9 @@ bool restoration::isSwiInFeeder(BRANCHVERTICES *swi_2, int feederID_overload)
 					break;
 				}
 			}
+
+			//Stuck counter decrement
+			count_check--;
 		}
         if ((microgridID_current+1) == (feederID_overload - 100))
 		{
@@ -5744,7 +5792,7 @@ void LinkedUndigraph::mergeVer_2(INTVECT *vMap)
 	{
 		//Search for matches
 		find_int(vMap,&merge_V,V_new.data[idx],-1);
-        // **** Seems like there should be an empty check here, but ????
+        // **** Seems like there should be an empty check here, but seems to be handled by changes below
 
 		//Add found values into array
 		numFound = merge_V.currSize + 1;
@@ -6115,11 +6163,11 @@ void merge_sort_int(int *Input_Array, unsigned int Alen, int *Work_Array)
 
 
 //Export for external object function calls
-EXPORT int perform_restoration(OBJECT *thisobj)
+EXPORT int perform_restoration(OBJECT *thisobj, int faulting_link)
 {
 	restoration *temp_rest_obj = OBJECTDATA(thisobj,restoration);
 
-	return temp_rest_obj->PerformRestoration();
+	return temp_rest_obj->PerformRestoration(faulting_link);
 }
 
 

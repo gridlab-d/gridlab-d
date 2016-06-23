@@ -6,7 +6,7 @@
 
 	@{
 **/
-
+//3.2
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
@@ -190,6 +190,7 @@ void underground_line::recalc(void)
 	line_configuration *config = OBJECTDATA(configuration, line_configuration);
 	complex Zabc_mat[3][3], Yabc_mat[3][3];
 	bool not_TS_CN = false;
+	bool is_CN_ug_line = false;
 	OBJECT *obj = OBJECTHDR(this);
 
 	// Zero out Zabc_mat and Yabc_mat. Un-needed phases will be left zeroed.
@@ -245,11 +246,11 @@ void underground_line::recalc(void)
 		double dia_od1, dia_od2, dia_od3;
 		int16 strands_4, strands_5, strands_6;
 		double rad_14, rad_25, rad_36;
-		double dia[7], res[7], gmr[7], gmrcn[3], rcn[3], gmrs[3], ress[3];
+				double dia[7], res[7], gmr[7], gmrcn[3], rcn[3], gmrs[3], ress[3], tap[8];
 		double d[7][7];
 		double perm_A, perm_B, perm_C, c_an, c_bn, c_cn, temp_denom;
 		complex cap_freq_coeff;
-		complex z[7][7]; //, z_ij[3][3], z_in[3][3], z_nj[3][3], z_nn[3][3], z_abc[3][3];
+		complex z[7][7],z_ts[3][3]; //, z_ij[3][3], z_in[3][3], z_nj[3][3], z_nn[3][3], z_abc[3][3];
 		double freq_coeff_real, freq_coeff_imag, freq_additive_term;
 		double miles = length / 5280.0;
 
@@ -279,6 +280,8 @@ void underground_line::recalc(void)
 		#define RCN(i) (rcn[i - 4])
 		#define D(i, j) (d[i - 1][j - 1])
 		#define Z(i, j) (z[i - 1][j - 1])
+		#define Z_TS(i, j) (z_ts[i - 1][j - 1])
+		#define TAP(i) (tap[i - 1])
 
 		#define UG_GET(ph, name) (has_phase(PHASE_##ph) && config->phase##ph##_conductor ? \
 				OBJECTDATA(config->phase##ph##_conductor, underground_line_conductor)->name : 0)
@@ -313,6 +316,14 @@ void underground_line::recalc(void)
 		RES_S(4) = UG_GET(A, shield_resistance);
 		RES_S(5) = UG_GET(B, shield_resistance);
 		RES_S(6) = UG_GET(C, shield_resistance);
+		TAP(1) = UG_GET(A, shield_thickness);
+		TAP(2) = UG_GET(B, shield_thickness);
+		TAP(3) = UG_GET(C, shield_thickness);
+		TAP(4) = UG_GET(N, shield_thickness);
+		TAP(5) = UG_GET(A, shield_diameter);
+		TAP(6) = UG_GET(B, shield_diameter);
+		TAP(7) = UG_GET(C, shield_diameter);
+		TAP(8) = UG_GET(N, shield_diameter);
 		strands_4 = UG_GET(A, neutral_strands);
 		strands_5 = UG_GET(B, neutral_strands);
 		strands_6 = UG_GET(C, neutral_strands);
@@ -321,6 +332,12 @@ void underground_line::recalc(void)
 			rad_25 = (dia_od2 - DIA(5)) / 24.0;
 			rad_36 = (dia_od3 - DIA(6)) / 24.0;
 		}
+	else
+		{
+			rad_14 = 0.0;
+			rad_25 = 0.0;
+			rad_36 = 0.0;
+		}
 		RCN(4) = has_phase(PHASE_A) && strands_4 > 0 ? RES(4) / strands_4 : 0.0;
 		RCN(5) = has_phase(PHASE_B) && strands_5 > 0 ? RES(5) / strands_5 : 0.0;
 		RCN(6) = has_phase(PHASE_C) && strands_6 > 0 ? RES(6) / strands_6 : 0.0;
@@ -328,7 +345,7 @@ void underground_line::recalc(void)
 		//Concentric neutral code
 		GMRCN(4) = !(has_phase(PHASE_A) && strands_4 > 0) ? 0.0 :
 			pow(GMR(4) * strands_4 * pow(rad_14, (strands_4 - 1)), (1.0 / strands_4));
-		GMRCN(5) = !(has_phase(PHASE_B) && strands_5 > 0) ? GMR_S(5) :
+		GMRCN(5) = !(has_phase(PHASE_B) && strands_5 > 0) ? 0.0 :
 			pow(GMR(5) * strands_5 * pow(rad_25, (strands_5 - 1)), (1.0 / strands_5));
 		GMRCN(6) = !(has_phase(PHASE_C) && strands_6 > 0) ? 0.0 :
 			pow(GMR(6) * strands_6 * pow(rad_36, (strands_6 - 1)), (1.0 / strands_6));
@@ -337,6 +354,20 @@ void underground_line::recalc(void)
 
 		if (GMR(4) == 0.0 && GMR(5) == 0.0 && GMR(6) == 0.0 && GMR_S(4) == 0.0 && GMR_S(5) == 0.0 && GMR_S(6) == 0.0){// the gmr for the neutral strands and the tape shield is zero this is just an insulated underground cable
 			not_TS_CN = true;
+		}
+		else	//Implies it IS a CN or TS version, figure out which
+		{
+			if ((GMR_S(4) == 0.0) && (GMR_S(5) == 0.0) && (GMR_S(6) == 0.0))
+			{
+				is_CN_ug_line = true;
+			}
+			else	//Just assume tape shield
+			{
+				is_CN_ug_line = false;
+				rad_14 = (TAP(5) - TAP(1))/2;
+				rad_25 = (TAP(6) - TAP(2))/2;
+				rad_36 = (TAP(7) - TAP(3))/2;
+			}
 		}
 		//Capacitance stuff, if desired
 		if (use_line_cap == true && not_TS_CN == false)
@@ -413,29 +444,81 @@ void underground_line::recalc(void)
 		#undef DIA
 		#undef UG_GET
 
-		#define Z_GMR(i) (GMR(i) == 0.0 ? complex(0.0) : complex(freq_coeff_real + RES(i), freq_coeff_imag * (log(1.0 / GMR(i)) + freq_additive_term)))
-		#define Z_GMRCN(i) (GMRCN(i) == 0.0 ? complex(0.0) : complex(freq_coeff_real + RCN(i), freq_coeff_imag * (log(1.0 / GMRCN(i)) + freq_additive_term)))
-		#define Z_GMR_S(i) (GMR_S(i) == 0.0 ? complex(0.0) : complex(freq_coeff_real + RES_S(i), freq_coeff_imag*(log(1.0/GMR_S(i)) + freq_additive_term)))
-		#define Z_DIST(i, j) (D(i, j) == 0.0 ? complex(0.0) : complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / D(i, j)) + freq_additive_term)))
+		 if (is_CN_ug_line == true) {
+			#define Z_GMR(i) (GMR(i) == 0.0 ? complex(0.0) : complex(freq_coeff_real + RES(i), freq_coeff_imag * (log(1.0 / GMR(i)) + freq_additive_term)))
+			#define Z_GMRCN(i) (GMRCN(i) == 0.0 ? complex(0.0) : complex(freq_coeff_real + RCN(i), freq_coeff_imag * (log(1.0 / GMRCN(i)) + freq_additive_term)))
+			#define Z_GMR_S(i) (GMR_S(i) == 0.0 ? complex(0.0) : complex(freq_coeff_real + RES_S(i), freq_coeff_imag*(log(1.0/GMR_S(i)) + freq_additive_term)))
+			#define Z_DIST(i, j) (D(i, j) == 0.0 ? complex(0.0) : complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / D(i, j)) + freq_additive_term)))
+
+			for (int i = 1; i < 8; i++) {
+				for (int j = 1; j < 8; j++) {
+					if (i == j) {
+						if (i > 3 && i != 7){
+							Z(i, j) = Z_GMRCN(i);
+							if(Z_GMR_S(i) > 0 && Z(i, j) == 0)
+								Z(i, j) = Z_GMR_S(i);
+							test=Z_GMRCN(i);
+						}
+						else
+							Z(i, j) = Z_GMR(i);
+					}
+					else
+						Z(i, j) = Z_DIST(i, j);
+				}
+			}	
+		 } else {
+                // see example: 4.4
+                #define Z_GMR(i) (GMR(i) == 0.0 ? complex(0.0) : complex(freq_coeff_real + RES(i), freq_coeff_imag * (log(1.0 / GMR(i)) + freq_additive_term))) 
+		//Notes for above #define: z11, z22, z33 - self conductor; z77 - self neutral. RES(i=4,5,6) is neutral_resitance, GMR(i=4,5,6) is neutral GMR. For z77, neutral_resistance to be added in real term
+                //so pick RES(i) such that is is neutral_resistance. For imaginaray temrm, neutral_gmr to be used in ln(1/GMRn) so pick GMR(i) such that it is neutral GMR
+                #define Z_GMR_S_SELF(i) (GMR_S(i) == 0.0 ? complex(0.0) : complex(freq_coeff_real+RES_S(i), freq_coeff_imag*(log(1.0/GMR_S(i)) + freq_additive_term))) //z44, z55, z66 - self tape
+                #define Z_GMR_S(i) (GMR_S(i) == 0.0 ? complex(0.0) : complex(freq_coeff_real, freq_coeff_imag*(log(1.0/GMR_S(i)) + freq_additive_term))) //z14, z25, z36 - mutual - conductor-tape  
+                #define Z_DIST(i, j) (D(i, j) == 0.0 ? complex(0.0) : complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / D(i, j)) + freq_additive_term))) 
+               //Notes for above #define: z12,z13,z15,z16,z17,z21,z23,z24,z26,z27,z31,z32,z34,z35,z37,z41,z42,z43,z45,z46,z47,z51-z54,z36,z57,z61-z65,z67,z71-z76 mutual/coupling
 
 		for (int i = 1; i < 8; i++) {
 			for (int j = 1; j < 8; j++) {
 				if (i == j) {
 					if (i > 3 && i != 7){
-						Z(i, j) = Z_GMRCN(i);
-						if(Z_GMR_S(i) > 0 && Z(i, j) == 0)
-							Z(i, j) = Z_GMR_S(i);
-						test=Z_GMRCN(i);
+						Z(i, j) = Z_GMR_S_SELF(i); //44,55,66 //there is 'test' in this if for CN Z formation. is it needed here?
+					}
+					else if (i == 7) {
+						if (has_phase(PHASE_A)) {
+							Z(i, j) = Z_GMR(4); //z77 for phase-A conductor
+						}
+						else if (has_phase(PHASE_B)) {
+							Z(i, j) = Z_GMR(5); //z77 for phase-B conductor
+						}
+						else if (has_phase(PHASE_C)) {
+							Z(i, j) = Z_GMR(6); //z77 for phase-C conductor
+						}
 					}
 					else
-						Z(i, j) = Z_GMR(i);
+						Z(i, j) = Z_GMR(i); //11,22,33
 				}
-				else
-					Z(i, j) = Z_DIST(i, j);
+				else {
+					if ((i == 1 && j == 4) || (i == 2 && j == 5) || (i == 3 && j == 6)) {
+						Z(i, j) = Z_GMR_S(j); //14,25,36
+					}
+					else
+						Z(i, j) = Z_DIST(i, j);//all remaining elements. see Notes below #define Z_DIST
+				}
+					
 			}
-		}	
+		}
 
-
+		/* //this was a test based on example 4.4 in Kersting's book
+                Z(1,1) = Z_GMR(1);
+                Z(1,2) = Z_GMR_S(4);//Does it work for all phases? dont know yet
+                Z(1,3) = Z_DIST(1,7);
+                Z(2,1) = Z_GMR_S(4);// it is Z(1,2);
+                Z(2,2) = Z_GMR_S_M(4);
+                Z(2,3) = Z_DIST(1,7);
+                Z(3,1) = Z_DIST(1,7);// it is Z(1,3);
+                Z(3,2) = Z_DIST(1,7);// it is Z(2,3);
+                Z(3,3) = Z_GMR_F_N(1);
+                */
+             }  
 		#undef RES
 		#undef GMR
 		#undef GMRCN
@@ -445,36 +528,137 @@ void underground_line::recalc(void)
 		#undef Z_GMRCN
 		#undef Z_DIST
 		
-		if (not_TS_CN == false){
-			complex z_ij[3][3] = {{Z(1, 1), Z(1, 2), Z(1, 3)},
-								  {Z(2, 1), Z(2, 2), Z(2, 3)},
-								  {Z(3, 1), Z(3, 2), Z(3, 3)}};
-			complex z_in[3][3] = {{Z(1, 4), Z(1, 5), Z(1, 6)},
-								  {Z(2, 4), Z(2, 5), Z(2, 6)},
-								  {Z(3, 4), Z(3, 5), Z(3, 6)}};
-			complex z_nj[3][3] = {{Z(1, 4), Z(2, 4), Z(3, 4)},
-								  {Z(1, 5), Z(2, 5), Z(3, 5)},
-								  {Z(1, 6), Z(2, 6), Z(3, 6)}};
-			complex z_nn[3][3] = {{Z(4, 4), Z(4, 5), Z(4, 6)},
-								  {Z(5, 4), Z(5, 5), Z(5, 6)},
-								  {Z(6, 4), Z(6, 5), Z(6, 6)}};
-			complex z_nn_inv[3][3], z_p1[3][3], z_p2[3][3], z_abc[3][3];
-
-
-			if (!(has_phase(PHASE_A)&&has_phase(PHASE_B)&&has_phase(PHASE_C))){
-				if (!has_phase(PHASE_A))
-					z_nn[0][0]=complex(1.0);
-				if (!has_phase(PHASE_B))
-					z_nn[1][1]=complex(1.0);
-				if (!has_phase(PHASE_C))
-					z_nn[2][2]=complex(1.0);
+		if (not_TS_CN == false){			
+			if (is_CN_ug_line == true) {
+				complex z_ij_cn[3][3] = {{Z(1, 1), Z(1, 2), Z(1, 3)},
+									  {Z(2, 1), Z(2, 2), Z(2, 3)},
+									  {Z(3, 1), Z(3, 2), Z(3, 3)}};
+				complex z_in_cn[3][3] = {{Z(1, 4), Z(1, 5), Z(1, 6)},
+									  {Z(2, 4), Z(2, 5), Z(2, 6)},
+									  {Z(3, 4), Z(3, 5), Z(3, 6)}};
+				complex z_nj_cn[3][3] = {{Z(4, 1), Z(4, 2), Z(4, 3)},
+									  {Z(5, 1), Z(5, 2), Z(5, 3)},
+									  {Z(6, 1), Z(6, 2), Z(6, 3)}};
+				complex z_nn_cn[3][3] = {{Z(4, 4), Z(4, 5), Z(4, 6)},
+									  {Z(5, 4), Z(5, 5), Z(5, 6)},
+									  {Z(6, 4), Z(6, 5), Z(6, 6)}};
+				
+				if (!(has_phase(PHASE_A)&&has_phase(PHASE_B)&&has_phase(PHASE_C))){
+					if (!has_phase(PHASE_A))
+						z_nn_cn[0][0]=complex(1.0);
+					if (!has_phase(PHASE_B))
+						z_nn_cn[1][1]=complex(1.0);
+					if (!has_phase(PHASE_C))
+						z_nn_cn[2][2]=complex(1.0);
+				}
+				complex z_nn_inv_cn[3][3], z_p1_cn[3][3], z_p2_cn[3][3], z_abc_cn[3][3];
+				inverse(z_nn_cn,z_nn_inv_cn);
+				multiply(z_in_cn, z_nn_inv_cn, z_p1_cn);
+				multiply(z_p1_cn, z_nj_cn, z_p2_cn);
+				subtract(z_ij_cn, z_p2_cn, z_abc_cn);
+				multiply(miles, z_abc_cn, Zabc_mat);
 			}
-			
-			inverse(z_nn,z_nn_inv);
-			multiply(z_in, z_nn_inv, z_p1);
-			multiply(z_p1, z_nj, z_p2);
-			subtract(z_ij, z_p2, z_abc);
-			multiply(miles, z_abc, Zabc_mat);
+			else {
+			complex z_ij_ts[3][3] = {{Z(1, 1), Z(1, 2), Z(1, 3)},
+									  {Z(2, 1), Z(2, 2), Z(2, 3)},
+									  {Z(3, 1), Z(3, 2), Z(3, 3)}};
+				complex z_in_ts[3][4] = {{Z(1, 4), Z(1, 5), Z(1, 6), Z(1,7)},
+									  {Z(2, 4), Z(2, 5), Z(2, 6), Z(2,7)},
+									  {Z(3, 4), Z(3, 5), Z(3, 6), Z(3,7)}};
+				complex z_nj_ts[4][3] = {{Z(4, 1), Z(4, 2), Z(4, 3)},
+									  {Z(5, 1), Z(5, 2), Z(5, 3)},
+									  {Z(6, 1), Z(6, 2), Z(6, 3)},
+									  {Z(7, 1), Z(7, 2), Z(7, 3)}};
+
+
+				complex z_nn_ts[4][4] = {{Z(4, 4), Z(4, 5), Z(4, 6), Z(4, 7)},
+									  {Z(5, 4), Z(5, 5), Z(5, 6), Z(5, 7)},
+									  {Z(6, 4), Z(6, 5), Z(6, 6), Z(6, 7)},
+									  {Z(7, 4), Z(7, 5), Z(7, 6), Z(7, 7)}};
+			if (!(has_phase(PHASE_A)&&has_phase(PHASE_B)&&has_phase(PHASE_C))){
+					if (!has_phase(PHASE_A))
+						z_nn_ts[0][0]=complex(1.0);
+					if (!has_phase(PHASE_B))
+						z_nn_ts[1][1]=complex(1.0);
+					if (!has_phase(PHASE_C))
+						z_nn_ts[2][2]=complex(1.0);
+				}
+			complex z_nn_inv_ts[4][4], z_p1_ts[3][4], z_p2_ts[3][3], z_abc_ts[3][3];
+				lu_matrix_inverse(&z_nn_ts[0][0],&z_nn_inv_ts[0][0],4);
+				
+				for (int row = 0; row < 3; row++) {
+					for (int col = 0; col < 4; col++) {
+						// Multiply the row of A by the column of B to get the row, column of product.
+						for (int inner = 0; inner < 4; inner++) {
+							z_p1_ts[row][col] += z_in_ts[row][inner] * z_nn_inv_ts[inner][col];
+						}
+					}
+				}				
+				//multiply(z_in, z_nn_inv, z_p1);
+				
+				for (int roww = 0; roww < 3; roww++) {
+					for (int coll = 0; coll < 3; coll++) {
+						// Multiply the row of A by the column of B to get the row, column of product.
+						for (int innerr = 0; innerr < 4; innerr++) {
+							z_p2_ts[roww][coll] += z_p1_ts[roww][innerr] * z_nj_ts[innerr][coll];
+						}
+					}
+				}	
+				//multiply(z_p1, z_nj, z_p2);
+				
+				subtract(z_ij_ts, z_p2_ts, z_abc_ts);
+				multiply(miles, z_abc_ts, Zabc_mat);
+
+				/* //This is a test example based on example 4.4 in Kersting's
+				complex z_ij_ts[1][1] = {Z(1, 1)};
+				complex z_in_ts[1][2] = {Z(1, 2), Z(1, 3)};
+				complex z_nj_ts[2][1] = {{Z(1, 2)},
+					                {Z(1, 3)}};
+				complex z_nn_ts[2][2] = {{Z(2, 2), Z(2, 3)},
+						         {Z(3, 2), Z(3, 3)}};
+
+				if (!(has_phase(PHASE_A)&&has_phase(PHASE_B)&&has_phase(PHASE_C))){
+					if (!has_phase(PHASE_A))
+						z_nn_ts[0][0]=complex(1.0);
+					if (!has_phase(PHASE_B))
+						z_nn_ts[1][1]=complex(1.0);
+					if (!has_phase(PHASE_C))
+						z_nn_ts[2][2]=complex(1.0);
+				}				
+				complex z_nn_inv_ts[2][2], z_p1_ts[1][2], z_p2_ts[1][1], z_abc_ts[1][1];
+				//lu_matrix_inverse(&z_nn_ts[0][0],&z_nn_inv_ts[0][0],2);
+				
+				z_nn_inv_ts[0][0] = z_nn_ts[1][1]/((z_nn_ts[0][0] * z_nn_ts[1][1]) - (z_nn_ts[0][1] * z_nn_ts[1][0]));			
+				z_nn_inv_ts[1][1] = z_nn_ts[0][0]/((z_nn_ts[0][0] * z_nn_ts[1][1]) - (z_nn_ts[0][1] * z_nn_ts[1][0]));	
+				z_nn_inv_ts[0][1] = -z_nn_ts[0][1]/((z_nn_ts[0][0] * z_nn_ts[1][1]) - (z_nn_ts[0][1] * z_nn_ts[1][0]));
+				z_nn_inv_ts[1][0] = -z_nn_ts[1][0]/((z_nn_ts[0][0] * z_nn_ts[1][1]) - (z_nn_ts[0][1] * z_nn_ts[1][0]));
+
+				z_p1_ts[0][0] = (z_in_ts[0][0] * z_nn_inv_ts[0][0]) + (z_in_ts[0][1] * z_nn_inv_ts[1][0]);
+				z_p1_ts[0][1] = (z_in_ts[0][0] * z_nn_inv_ts[1][0]) + (z_in_ts[0][1] * z_nn_inv_ts[1][1]);
+				
+				z_p2_ts[0][0] = (z_p1_ts[0][0] * z_nj_ts[0][0]) + (z_p1_ts[0][1] * z_nj_ts[1][0]);
+	
+
+                                z_abc_ts[0][0]  = z_ij_ts[0][0] - z_p2_ts[0][0];
+
+				Zabc_mat[0][0] = (z_abc_ts[0][0]) * miles;
+				Zabc_mat[0][1] = complex(0,0);
+				Zabc_mat[0][2] = complex(0,0);
+
+
+				Zabc_mat[1][0] = complex(0,0);
+				Zabc_mat[1][1] = complex(0,0);
+
+				Zabc_mat[1][2] = complex(0,0);
+				Zabc_mat[2][0] = complex(0,0);
+				Zabc_mat[2][1] = complex(0,0);
+
+				Zabc_mat[2][2] = complex(0,0);
+				//multiply(miles, z_abc_ts, Zabc_mat);
+				*/
+			}
+
+	
 		} else {
 			complex z_nn_inv = 0;
 			if(Z(7, 7) != 0.0){
@@ -492,116 +676,264 @@ void underground_line::recalc(void)
 		}
 #undef Z
 
+
 		if ((use_line_cap == true) && (not_TS_CN == false))
 		{
-			//Compute base capacitances - split denominator to handle 
-			if (has_phase(PHASE_A))
-			{
-				if ((dia[0]==0.0) || (rad_14==0.0) || (strands_4 == 0))	//Make sure conductor or "neutral ring" radius are not zero
-				{
-					gl_warning("Unable to compute capacitance for %s",OBJECTHDR(this)->name);
-					/* TROUBLESHOOT
-					One phase of an underground line has either a conductor diameter, a concentric-neutral location diameter, or a neutral
-					strand count of zero.  This will lead to indeterminant values in the analysis.  Please fix these values, or run the simulation
-					with line capacitance disabled.
-					*/
-					
-					c_an = 0.0;
-				}
-				else	//All should be OK
-				{
-					//Compute the denominator (make sure it isn't zero)
-					temp_denom = log(rad_14/(dia[0] / 24.0)) - (1.0 / ((double)(strands_4))) * log(((double)(strands_4))*dia[3] / 24.0 / rad_14);
+			//Concentric neutral code 
+			if (is_CN_ug_line == true)
 
-					if (temp_denom == 0.0)
+
+			{
+				//Compute base capacitances - split denominator to handle 
+				if (has_phase(PHASE_A))
+
+				{
+					if ((dia[0]==0.0) || (rad_14==0.0) || (strands_4 == 0))	//Make sure conductor or "neutral ring" radius are not zero
 					{
-						gl_warning("Capacitance calculation failure for %s",OBJECTHDR(this)->name);
-						/*  TROUBLESHOOT
-						While computing the capacitance, a zero-value denominator was encountered.  Please check
-						your underground_conductor parameter values and try again.
+						gl_warning("Unable to compute capacitance for %s",OBJECTHDR(this)->name);
+						/* TROUBLESHOOT
+						One phase of an underground line has either a conductor diameter, a concentric-neutral location diameter, or a neutral
+						strand count of zero.  This will lead to indeterminant values in the analysis.  Please fix these values, or run the simulation
+						with line capacitance disabled.
 						*/
 						
 						c_an = 0.0;
 					}
-					else	//Valid, continue
+					else	//All should be OK
+
 					{
-						//Calculate capacitance value for A
-						c_an = (2.0 * PI * PERMITIVITTY_FREE * perm_A) / temp_denom;
+						//Compute the denominator (make sure it isn't zero)
+						temp_denom = log(rad_14/(dia[0] / 24.0)) - (1.0 / ((double)(strands_4))) * log(((double)(strands_4))*dia[3] / 24.0 / rad_14);
+
+						if (temp_denom == 0.0)
+						{
+							gl_warning("Capacitance calculation failure for %s",OBJECTHDR(this)->name);
+							/*  TROUBLESHOOT
+							While computing the capacitance, a zero-value denominator was encountered.  Please check
+							your underground_conductor parameter values and try again.
+							*/
+							
+							c_an = 0.0;
+						}
+						else	//Valid, continue
+						{
+							//Calculate capacitance value for A
+							c_an = (2.0 * PI * PERMITIVITTY_FREE * perm_A) / temp_denom;
+						}
 					}
 				}
-			}
-			else //No phase A
-			{
-				c_an = 0.0;	//No capacitance
-			}
 
-			//Compute base capacitances - split denominator to handle 
-			if (has_phase(PHASE_B))
-			{
-				if ((dia[1]==0.0) || (rad_25==0.0) || (strands_5 == 0))	//Make sure conductor or "neutral ring" radius are not zero
+				else //No phase A
 				{
-					gl_warning("Unable to compute capacitance for %s",OBJECTHDR(this)->name);
-					//Defined above
 
-					c_bn = 0.0;
+					c_an = 0.0;	//No capacitance
 				}
-				else	//All should be OK
-				{
-					//Compute the denominator (make sure it isn't zero)
-					temp_denom = log(rad_25/(dia[1] / 24.0)) - (1.0 / ((double)(strands_5))) * log(((double)(strands_5))*dia[4] / 24.0 / rad_25);
 
-					if (temp_denom == 0.0)
+
+				//Compute base capacitances - split denominator to handle 
+				if (has_phase(PHASE_B))
+
+
+				{
+					if ((dia[1]==0.0) || (rad_25==0.0) || (strands_5 == 0))	//Make sure conductor or "neutral ring" radius are not zero
 					{
-						gl_warning("Capacitance calculation failure for %s",OBJECTHDR(this)->name);
+						gl_warning("Unable to compute capacitance for %s",OBJECTHDR(this)->name);
 						//Defined above
 
 						c_bn = 0.0;
 					}
-					else	//Valid, continue
+					else	//All should be OK
 					{
-						//Calculate capacitance value for A
-						c_bn = (2.0 * PI * PERMITIVITTY_FREE * perm_B) / temp_denom;
+						//Compute the denominator (make sure it isn't zero)
+						temp_denom = log(rad_25/(dia[1] / 24.0)) - (1.0 / ((double)(strands_5))) * log(((double)(strands_5))*dia[4] / 24.0 / rad_25);
+
+						if (temp_denom == 0.0)
+						{
+							gl_warning("Capacitance calculation failure for %s",OBJECTHDR(this)->name);
+							//Defined above
+
+							c_bn = 0.0;
+						}
+						else	//Valid, continue
+						{
+							//Calculate capacitance value for A
+							c_bn = (2.0 * PI * PERMITIVITTY_FREE * perm_B) / temp_denom;
+						}
 					}
+
 				}
-			}
-			else //No phase B
-			{
-				c_bn = 0.0;	//No capacitance
-			}
+				else //No phase B
 
-			//Compute base capacitances - split denominator to handle 
-			if (has_phase(PHASE_C))
-			{
-				if ((dia[2]==0.0) || (rad_36==0.0) || (strands_6 == 0))	//Make sure conductor or "neutral ring" radius are not zero
 				{
-					gl_warning("Unable to compute capacitance for %s",OBJECTHDR(this)->name);
-					//Defined above
-
-					c_cn = 0.0;
+					c_bn = 0.0;	//No capacitance
 				}
-				else	//All should be OK
-				{
-					//Compute the denominator (make sure it isn't zero)
-					temp_denom = log(rad_36/(dia[2] / 24.0)) - (1.0 / ((double)(strands_6))) * log(((double)(strands_6))*dia[5] / 24.0 / rad_36);
 
-					if (temp_denom == 0.0)
+
+
+				//Compute base capacitances - split denominator to handle 
+				if (has_phase(PHASE_C))
+				{
+					if ((dia[2]==0.0) || (rad_36==0.0) || (strands_6 == 0))	//Make sure conductor or "neutral ring" radius are not zero
+
 					{
-						gl_warning("Capacitance calculation failure for %s",OBJECTHDR(this)->name);
+						gl_warning("Unable to compute capacitance for %s",OBJECTHDR(this)->name);
 						//Defined above
 
 						c_cn = 0.0;
 					}
-					else	//Valid, continue
+					else	//All should be OK
+
 					{
-						//Calculate capacitance value for C
-						c_cn = (2.0 * PI * PERMITIVITTY_FREE * perm_C) / temp_denom;
+						//Compute the denominator (make sure it isn't zero)
+						temp_denom = log(rad_36/(dia[2] / 24.0)) - (1.0 / ((double)(strands_6))) * log(((double)(strands_6))*dia[5] / 24.0 / rad_36);
+
+						if (temp_denom == 0.0)
+						{
+							gl_warning("Capacitance calculation failure for %s",OBJECTHDR(this)->name);
+							//Defined above
+
+							c_cn = 0.0;
+						}
+						else	//Valid, continue
+						{
+							//Calculate capacitance value for C
+							c_cn = (2.0 * PI * PERMITIVITTY_FREE * perm_C) / temp_denom;
+						}
 					}
 				}
-			}
-			else //No phase C
+
+				else //No phase C
+				{
+					c_cn = 0.0;	//No capacitance
+				}
+			}//End concentric neutral calculations
+			else	//Implies tape-shielded
 			{
-				c_cn = 0.0;	//No capacitance
+				//*************** THIS HAS NOT BEEN FIXED --- Tape Shield Capacitor Code would go down here ************************//
+				//Compute base capacitances - split denominator to handle 
+				
+				if (has_phase(PHASE_A))
+				{
+					
+					if ((dia[0]==0.0) || (rad_14==0.0))	//Make sure conductor or "neutral ring" radius are not zero
+					{
+						gl_warning("Unable to compute capacitance for %s",OBJECTHDR(this)->name);
+						/* TROUBLESHOOT
+						One phase of an underground line has either a conductor diameter, a concentric-neutral location diameter, or a neutral
+						strand count of zero.  This will lead to indeterminant values in the analysis.  Please fix these values, or run the simulation
+						with line capacitance disabled.
+						*/
+						
+						c_an = 0.0;
+					}
+					else	//All should be OK
+					{
+						//Compute the denominator (make sure it isn't zero)
+						temp_denom = log(rad_14/(dia[0] / 2.0));
+
+						if (temp_denom == 0.0)
+						{
+							gl_warning("Capacitance calculation failure for %s",OBJECTHDR(this)->name);
+							/*  TROUBLESHOOT
+							While computing the capacitance, a zero-value denominator was encountered.  Please check
+							your underground_conductor parameter values and try again.
+							*/
+							
+							c_an = 0.0;
+						}
+						else	//Valid, continue
+						{
+							//Calculate capacitance value for A
+							c_an = (2.0 * PI * PERMITIVITTY_FREE * perm_A) / temp_denom;
+						}
+					}
+				}
+				else //No phase A
+				{
+					c_an = 0.0;	//No capacitance
+				}
+
+
+				//Compute base capacitances - split denominator to handle 
+				if (has_phase(PHASE_B))
+
+
+				{
+					
+					if ((dia[1]==0.0) || (rad_25==0.0))	//Make sure conductor or "neutral ring" radius are not zero
+					{
+						gl_warning("Unable to compute capacitance for %s",OBJECTHDR(this)->name);
+						//Defined above
+
+						c_bn = 0.0;
+					}
+					else	//All should be OK
+					{
+						//Compute the denominator (make sure it isn't zero)
+						temp_denom = log(rad_25/(dia[1] / 2.0));
+
+						if (temp_denom == 0.0)
+						{
+							gl_warning("Capacitance calculation failure for %s",OBJECTHDR(this)->name);
+							//Defined above
+
+							c_bn = 0.0;
+						}
+						else	//Valid, continue
+						{
+							//Calculate capacitance value for A
+							c_bn = (2.0 * PI * PERMITIVITTY_FREE * perm_B) / temp_denom;
+						}
+					}
+
+				}
+				else //No phase B
+
+				{
+					c_bn = 0.0;	//No capacitance
+				}
+
+
+
+				//Compute base capacitances - split denominator to handle 
+				if (has_phase(PHASE_C))
+				{
+					
+					if ((dia[2]==0.0) || (rad_36==0.0))	//Make sure conductor or "neutral ring" radius are not zero
+
+					{
+						gl_warning("Unable to compute capacitance for %s",OBJECTHDR(this)->name);
+						//Defined above
+
+						c_cn = 0.0;
+					}
+					else	//All should be OK
+
+					{
+						//Compute the denominator (make sure it isn't zero)
+						temp_denom = log(rad_36/(dia[2] / 2.0));
+
+						if (temp_denom == 0.0)
+						{
+							gl_warning("Capacitance calculation failure for %s",OBJECTHDR(this)->name);
+							//Defined above
+
+							c_cn = 0.0;
+						}
+						else	//Valid, continue
+						{
+							//Calculate capacitance value for C
+							c_cn = (2.0 * PI * PERMITIVITTY_FREE * perm_C) / temp_denom;
+						}
+					}
+				}
+				else //No phase C
+				{
+					c_cn = 0.0;	//No capacitance
+				}
 			}
+
+
 
 			//Make admittance matrix, scaling for frequency, distance, and microSiemens as well as per Kersting (5.15) 
 			Yabc_mat[0][0] = cap_freq_coeff * c_an;

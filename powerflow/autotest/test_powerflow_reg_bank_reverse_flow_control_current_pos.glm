@@ -1,0 +1,199 @@
+
+// 4 node system with a balanced load and a regulator
+// being controlled under LINE_DROP_COMP mode, each phase
+// individually controlled.  Check to make sure voltages are being
+// regulated correctly with both a Type A & B regulator.
+// Somewhat contrived test, as a 200000 ft overhead line is used
+// to artificially lower the voltage at the regulator, but tests
+// the regulator function.
+// this test is given a wider error than the FBS test because of known differences of how NR approaches the solution in combination with regulator tap positions
+// the assert allows the NR solution to be one tap off from the FBS solution.
+
+
+clock {
+	timezone EST+5EDT;
+	starttime '2000-01-01 0:00:00';
+	stoptime '2000-01-01 1:05:00';
+}
+
+module powerflow {
+	solver_method NR;
+};
+
+module assert;
+module tape;
+
+#set relax_naming_rules=1
+
+object overhead_line_conductor:100 {
+	geometric_mean_radius 0.0244;
+	resistance 0.306;
+}
+
+object overhead_line_conductor:101 {
+	geometric_mean_radius 0.00814;
+	resistance 0.592;
+}
+
+object line_spacing:200 {
+	distance_AB 2.5;
+	distance_BC 4.5;
+	distance_AC 7.0;
+	distance_AN 5.656854;
+	distance_BN 4.272002;
+	distance_CN 5.0;
+}
+
+object line_configuration:300 {
+	conductor_A overhead_line_conductor:100;
+	conductor_B overhead_line_conductor:100;
+	conductor_C overhead_line_conductor:100;
+	conductor_N overhead_line_conductor:101;
+	spacing line_spacing:200;
+}
+
+object regulator_configuration {
+	connect_type WYE_WYE;
+	name auto_regulator;
+	raise_taps 16;
+	lower_taps 16;
+	regulation 0.1;
+	Type A;
+	Control LINE_DROP_COMP;
+	compensator_r_setting_A 0.1; // Should approximately look
+	compensator_r_setting_B 0.1; // at the voltage at the load
+	compensator_r_setting_C 0.1;
+	compensator_x_setting_A 0.2;
+	compensator_x_setting_B 0.2;
+	compensator_x_setting_C 0.2;
+	power_transducer_ratio 60;
+	current_transducer_ratio 10;
+	band_center 120;
+	band_width 1.5; // approximately one tap difference
+	control_level BANK;
+	CT_phase A;
+	PT_phase A;
+	reverse_flow_control LOCK_CURRENT_POSITION;
+}
+
+object node {
+	phases ABCN;
+	name FeederNode;
+	bustype SWING;
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7200;
+}
+
+object overhead_line {
+	phases "ABCN";
+	from FeederNode;
+	to InterNode;
+	length 200000;
+	configuration line_configuration:300;
+}
+
+object node {
+	phases ABCN;
+	name InterNode;
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7200;
+}
+	
+object regulator {
+	name Regulator;
+	phases ABCN;
+	from InterNode;
+	to TopNode;
+	configuration auto_regulator;
+	object recorder {
+		property tap_A,tap_B,tap_C;
+		file test_powerflow_reg_bank_rev_flow_control_current_pos_tap_pos.csv;
+		interval 300;
+	};
+	object assert {
+		target tap_A;
+		object player {
+			property value;
+			file ../test_powerflow_reg_bank_rev_flow_control_current_pos_tap_pos.player;
+			loop 0;
+		};
+		within 0.1;
+	};
+	object assert {
+		target tap_B;
+		object player {
+			property value;
+			file ../test_powerflow_reg_bank_rev_flow_control_current_pos_tap_pos.player;
+			loop 0;
+		};
+		within 0.1;
+	};
+	object assert {
+		target tap_C;
+		object player {
+			property value;
+			file ../test_powerflow_reg_bank_rev_flow_control_current_pos_tap_pos.player;
+			loop 0;
+		};
+		within 0.1;
+	};
+}
+
+object node {
+	phases "ABCN";
+	name TopNode;
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7200;
+}
+
+object overhead_line {
+	phases "ABCN";
+	from TopNode;
+	to MiddleNode;
+	length 2000;
+	configuration line_configuration:300;
+}
+
+object node {
+	phases "ABCN";
+	nominal_voltage 7200;
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	name MiddleNode;
+}
+
+object overhead_line {
+	phases "ABCN";
+	from MiddleNode;
+	to BottomLoad;
+	length 2500;
+	configuration line_configuration:300;
+}
+
+object load {
+	phases "ABCN";
+	name BottomLoad;
+	nominal_voltage 7200;
+	object player {
+		property constant_power_A;
+		file ../test_powerflow_reg_rev_flow_control_neutral_ind_A.player;
+		loop 0;
+	};
+	object player {
+		property constant_power_B;
+		file ../test_powerflow_reg_rev_flow_control_neutral_ind_B.player;
+		loop 0;
+	};
+	object player {
+		property constant_power_C;
+		file ../test_powerflow_reg_rev_flow_control_neutral_ind_C.player;
+		loop 0;
+	};
+}

@@ -128,6 +128,7 @@ public:
 	void NR_link_presync_fxn(void);
 	void BOTH_link_postsync_fxn(void);
 	void perform_limit_checks(double *over_limit_value, bool *over_limits);
+	double inrush_tol_value;	///< Tolerance value (of vdiff on the line ends) before "inrush convergence" is accepted
 
 	//New matrix functions associated with transformer inrush (bigger)
 	void lmatrix_add(complex *matrix_in_A, complex *matrix_in_B, complex *matrix_out, int matsize);
@@ -142,6 +143,16 @@ public:
 
 private:
 	bool deltamode_inclusive;
+	bool inrush_computations_needed;	///< Flag for in-rush computations to determine when an exit from deltamode would be allowed
+	double inrush_vdiffmag_prev[3];		///< Tracking variable to determine when in-rush has run its course and inrush_computations_needed can be deflagged
+	complex *ahrlstore;			///< Pointer for array used to store line history constant ahrl -- associated with inductance
+	complex *bhrlstore;			///< Pointer for array used to store line history constant bhrl -- associated with inductance
+	double *chrcstore;			///< Pointer for array used to store line history constant chrc -- associated with capacitance
+	complex *LinkCapShuntTerm;	///< Pointer for array used to store line history shunt capacitance term -- associated with getting currents out of the in-rush later
+	complex *LinkHistTermL;		///< Pointer for array used to store line history value for deltamode-based in-rush computations -- Inductive terms
+	complex *LinkHistTermCf;	///< Pointer for array used to store line history value for deltamode-based in-rush computations -- Shunt capacitance "from" terms
+	complex *LinkHistTermCt;	///< Pointer for array used to store line history value for deltamode-based in-rush computations -- Shunt capacitance "to" terms
+	double deltamode_prev_time;	///< Tracking variable to tell when new deltamode timesteps have occurred (in-rush)
 };
 
 //Macros

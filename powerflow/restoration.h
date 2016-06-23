@@ -192,8 +192,11 @@ public:
 
 	double voltage_limit[2];			//Lower and upper limits of load voltages
 
+	bool stop_and_generate;				//Flag to either perform the base-WSU functionality (check all scenarios), or to just do a "first solution exit" approach
+										//False = GLD approach (exit when first valid reconfig found), true = WSU MATLAB (generate all)
+
 	//I/O functions for GLD Interface
-	int PerformRestoration(void);	//Base function - similar to main class of MATLAB (called by fault_check)
+	int PerformRestoration(int faulting_link);	//Base function - similar to main class of MATLAB (called by fault_check)
 
 	restoration(MODULE *mod);
 	inline restoration(CLASS *cl=oclass):powerflow_library(cl){};
@@ -228,7 +231,6 @@ private:
 	
 	FUNCTIONADDR fault_check_fxn;		//Function address for "reliability_alterations" function - meant to do topology check after a restoration operation
 
-	bool InitialConstruction;			//Flag to do the initial construction
 	bool file_output_desired;			//Flag to see if a text file output is wanted
 
 	LinkedUndigraph *top_ori;			//Graph object for original network
@@ -314,7 +316,7 @@ private:
 	void checkLinePower(bool *lFlag, double *overLoad, int *lineID);
 };
 
-EXPORT int perform_restoration(OBJECT *thisobj);
+EXPORT int perform_restoration(OBJECT *thisobj,int faulting_link);
 
 void unique_int(INTVECT *inputvect, INTVECT *outputvect);										//Outputvect is unique elements of input vector (sorted)
 void merge_sort_int(int *Input_Array, unsigned int Alen, int *Work_Array);						//Merge sort - stolen from solver_nr

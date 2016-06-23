@@ -37,6 +37,7 @@ public:
 	char1024 output_filename;		//File name to output unconnected bus values
 	bool reliability_mode;			//Flag for reliability implementation
 	bool reliability_search_mode;	//Flag for how the object removal search occurs - basically assuming radial versus not
+	bool full_print_output;			//Flag to determine if both supported and unsupported nodes get written to the output file
 	OBJECT *rel_eventgen;			//Eventgen object in reliability - allows "unscheduled" faults
 
 	fault_check(MODULE *mod);
@@ -49,7 +50,7 @@ public:
 	void support_check(int swing_node_int);						//Function that performs the connectivity check - this way so can be easily externally accessed
 	void support_check_mesh(int swing_node_int);				//Function that performs the connectivity check for not-so-radial systems
 	void reset_support_check(void);								//Function to re-init the support matrix
-	void write_output_file(TIMESTAMP tval);						//Function to write out "unsupported" items
+	void write_output_file(TIMESTAMP tval, double tval_delta);	//Function to write out "unsupported" items
 
 	void support_check_alterations(int baselink_int, bool rest_mode);	//Function to update powerflow for "no longer supported" devices
 	void reset_alterations_check(void);									//Function to re-init the alterations support matrix - mainly used to see if ends have been touched or not

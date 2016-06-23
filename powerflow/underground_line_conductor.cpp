@@ -1,4 +1,4 @@
-/** $Id: underground_line_conductor.cpp 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id: underground_line_conductor.cpp 1182 2008-12-22 22:08:36Z dchassin $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file underground_line_conductor.cpp
 	@addtogroup underground_line_conductor 
@@ -38,6 +38,8 @@ underground_line_conductor::underground_line_conductor(MODULE *mod) : powerflow_
 			PT_double, "neutral_diameter[in]",PADDR(neutral_diameter),PT_DESCRIPTION,"Diameter of individual neutral conductor/strand of concentric neutral",
 			PT_double, "neutral_resistance[Ohm/mile]",PADDR(neutral_resistance),PT_DESCRIPTION,"Resistance of an individual neutral conductor/strand in ohm/mile",
 			PT_int16,  "neutral_strands",PADDR(neutral_strands),PT_DESCRIPTION,"Number of cable strands in neutral conductor",
+			PT_double, "shield_thickness[in]",PADDR(shield_thickness),PT_DESCRIPTION,"The thickness of Tape shield in inches",
+			PT_double, "shield_diameter[in]",PADDR(shield_diameter),PT_DESCRIPTION,"The outside diameter of Tape shield in inches",
 			PT_double, "insulation_relative_permitivitty[unit]", PADDR(insulation_rel_permitivitty), PT_DESCRIPTION, "Permitivitty of insulation, relative to air",
 			PT_double, "shield_gmr[ft]",PADDR(shield_gmr),PT_DESCRIPTION,"Geometric mean radius of shielding sheath",
 			PT_double, "shield_resistance[Ohm/mile]",PADDR(shield_resistance),PT_DESCRIPTION,"Resistance of shielding sheath in ohms/mile",
@@ -56,6 +58,8 @@ int underground_line_conductor::create(void)
 	neutral_resistance = shield_gmr = 0.0;
 	neutral_strands = 0;
 	shield_resistance = 0.0;
+	shield_thickness = 0.0;
+	shield_diameter = 0.0;
 	insulation_rel_permitivitty = 1.0;	//Assumed to be same as air
 	summer.continuous = winter.continuous = 1000;
 	summer.emergency = winter.emergency = 2000;
@@ -78,6 +82,13 @@ int underground_line_conductor::init(OBJECT *parent)
 		/* TROUBLESHOOT
 		The outer diameter is the diameter of the entire cable, and therefore should be the largest value. Please check your values
 		and refer to Fig. 4.11 of "Distribution System Modeling and Analysis, Third Edition" by William H. Kersting for a diagram.
+		*/
+	}
+	if (shield_diameter <= shield_thickness)
+	{
+		GL_THROW("shield_diameter was specified as less than or equal to the tapeshield_thickness");
+		/* TROUBLESHOOT
+		Refer to Example 5.4 in "Distribution System Modeling and Analysis, Third Edition" by William H. Kersting for a diagram.
 		*/
 	}
 	return 1;

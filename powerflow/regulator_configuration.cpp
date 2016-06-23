@@ -76,6 +76,10 @@ regulator_configuration::regulator_configuration(MODULE *mod) : powerflow_librar
 				PT_KEYWORD, "OUTPUT_VOLTAGE", (enumeration)OUTPUT_VOLTAGE,
 				PT_KEYWORD, "LINE_DROP_COMP", (enumeration)LINE_DROP_COMP,
 				PT_KEYWORD, "REMOTE_NODE", (enumeration)REMOTE_NODE,
+			PT_enumeration, "reverse_flow_control",PADDR(reverse_flow_control),PT_DESCRIPTION,"Type of control used when power is flowing in reverse through the regulator",
+				PT_KEYWORD, "LOCK_NONE", (enumeration)LOCK_NONE,
+				PT_KEYWORD, "LOCK_NEUTRAL", (enumeration)LOCK_NEUTRAL,
+				PT_KEYWORD, "LOCK_CURRENT_POSITION", (enumeration)LOCK_CURRENT,
 			PT_enumeration, "Type",PADDR(Type),PT_DESCRIPTION,"Defines regulator type",
 				PT_KEYWORD, "A", (enumeration)A,
 				PT_KEYWORD, "B", (enumeration)B,
@@ -108,6 +112,7 @@ int regulator_configuration::create(void)
 	PT_phase = PHASE_ABC;
 	Control = MANUAL;
 	control_level = INDIVIDUAL;
+	reverse_flow_control = LOCK_NONE;
 	Type = B;
 	regulation = 0.0;
 

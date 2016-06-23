@@ -282,42 +282,43 @@ int regulator::init(OBJECT *parent)
 	prev_tap[2] = tap[2];
 
 	//Get global_minimum_timestep value and set the appropriate flag
-		unsigned int glob_min_timestep, temp_val;
-		char temp_buff[128];
-		char indexval;
+	unsigned int glob_min_timestep, temp_val;
+	char temp_buff[128];
+	char indexval;
 
-		//Retrieve the global value, only does so as a text string for some reason
-		gl_global_getvar("minimum_timestep",temp_buff,sizeof(temp_buff));
+	//Retrieve the global value, only does so as a text string for some reason
+	gl_global_getvar("minimum_timestep",temp_buff,sizeof(temp_buff));
 
-		//Initialize our parsing variables
-		indexval = 0;
-		glob_min_timestep = 0;
+	//Initialize our parsing variables
+	indexval = 0;
+	glob_min_timestep = 0;
 
-		//Loop through the buffer
-		while ((indexval < 128) && (temp_buff[indexval] != 0))
-		{
-			glob_min_timestep *= 10;				//Adjust previous iteration value
-			temp_val = (temp_buff[indexval]-48);	//Decode the ASCII
-			glob_min_timestep += temp_val;			//Accumulate it
+	//Loop through the buffer
+	while ((indexval < 128) && (temp_buff[indexval] != 0))
+	{
+		glob_min_timestep *= 10;				//Adjust previous iteration value
+		temp_val = (temp_buff[indexval]-48);	//Decode the ASCII
+		glob_min_timestep += temp_val;			//Accumulate it
 
-			indexval++;								//Increment the index
-		}
+		indexval++;								//Increment the index
+	}
 
-		if (glob_min_timestep > 1)					//Now check us and set the flag if true
-			offnominal_time=true;
+	if (glob_min_timestep > 1)					//Now check us and set the flag if true
+		offnominal_time=true;
 
-		prev_tap_A = initial_tap_A = tap[0];
-		prev_tap_B = initial_tap_B = tap[1];
-		prev_tap_C = initial_tap_C = tap[2];
-		if(tap_A_change_count < 0)
-			tap_A_change_count = 0;
-		if(tap_B_change_count < 0)
-			tap_B_change_count = 0;
-		if(tap_C_change_count < 0)
-			tap_C_change_count = 0;
+	prev_tap_A = initial_tap_A = tap[0];
+	prev_tap_B = initial_tap_B = tap[1];
+	prev_tap_C = initial_tap_C = tap[2];
+	if(tap_A_change_count < 0)
+		tap_A_change_count = 0;
+	if(tap_B_change_count < 0)
+		tap_B_change_count = 0;
+	if(tap_C_change_count < 0)
+		tap_C_change_count = 0;
 
-		tap_A_changed = tap_B_changed = tap_C_changed = 2;
-		prev_time = gl_globalclock;
+	tap_A_changed = tap_B_changed = tap_C_changed = 2;
+	prev_time = gl_globalclock;
+	new_reverse_flow_action[0] = new_reverse_flow_action[1] = new_reverse_flow_action[2] = false;
 	return result;
 }
 
@@ -385,7 +386,11 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 						//can fail on the first timestep
 						if (first_run_flag[i] == 0) 
 						{	
-							tap[i] = tap[i] + (int16)ceil((pConfig->band_center - check_voltage[i].Mag())/VtapChange);
+							if(toggle_reverse_flow[i]) {
+								tap[i] = reverse_flow_tap[i];
+							} else {
+								tap[i] = tap[i] + (int16)ceil((pConfig->band_center - check_voltage[i].Mag())/VtapChange);
+							}
 							if (tap[i] > pConfig->raise_taps) 
 							{
 								tap[i] = pConfig->raise_taps;
@@ -400,8 +405,12 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 						}
 						//if both flags say it's okay to change the tap, then change the tap
 						else if (mech_flag[i] == 1 && dwell_flag[i] == 1) 
-						{		 
-							tap[i] = tap[i] + (int16) 1;						
+						{
+							if(toggle_reverse_flow[i]) {
+								tap[i] = reverse_flow_tap[i];
+							} else {
+								tap[i] = tap[i] + (int16) 1;
+							}
 
 							if (tap[i] > pConfig->raise_taps) 
 							{
@@ -429,7 +438,11 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 					{
 						if (first_run_flag[i] == 0) 
 						{
-							tap[i] = tap[i] - (int16)ceil((check_voltage[i].Mag() - pConfig->band_center)/VtapChange);
+							if(toggle_reverse_flow[i]) {
+								tap[i] = reverse_flow_tap[i];
+							} else {
+								tap[i] = tap[i] - (int16)ceil((check_voltage[i].Mag() - pConfig->band_center)/VtapChange);
+							}
 							if (tap[i] < -pConfig->lower_taps) 
 							{
 								tap[i] = -pConfig->lower_taps;
@@ -443,8 +456,11 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 						}
 						else if (mech_flag[i] == 1 && dwell_flag[i] == 1) 
 						{
-							tap[i] = tap[i] - (int16) 1;							
-							
+							if(toggle_reverse_flow[i]) {
+								tap[i] = reverse_flow_tap[i];
+							} else {
+								tap[i] = tap[i] - (int16) 1;
+							}
 							if (tap[i] < -pConfig->lower_taps) 
 							{
 								tap[i] = -pConfig->lower_taps;
@@ -549,8 +565,14 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 					//hit the band center for convergence on first run, otherwise bad initial guess on tap settings 
 					//can fail on the first timestep
 					if (first_run_flag[0] == 0) 
-					{	
-						tap[0] = tap[1] = tap[2] = tap[0] + (int16)ceil((pConfig->band_center - check_voltage[0].Mag())/VtapChange);
+					{
+						if(toggle_reverse_flow_banked) {
+							tap[0] = reverse_flow_tap[0];
+							tap[1] = reverse_flow_tap[1];
+							tap[2] = reverse_flow_tap[2];
+						} else {
+							tap[0] = tap[1] = tap[2] = tap[0] + (int16)ceil((pConfig->band_center - check_voltage[0].Mag())/VtapChange);
+						}
 						if (tap[0] > pConfig->raise_taps) 
 						{
 							tap[0] = tap[1] = tap[2] = pConfig->raise_taps;
@@ -566,8 +588,13 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 					//if both flags say it's okay to change the tap, then change the tap
 					else if (mech_flag[0] == 1 && dwell_flag[0] == 1) 
 					{		 
-						tap[0] = tap[1] = tap[2] = tap[0] + (int16) 1;						
-
+						if(toggle_reverse_flow_banked) {
+							tap[0] = reverse_flow_tap[0];
+							tap[1] = reverse_flow_tap[1];
+							tap[2] = reverse_flow_tap[2];
+						} else {
+							tap[0] = tap[1] = tap[2] = tap[0] + (int16) 1;
+						}
 						if (tap[0] > pConfig->raise_taps) 
 						{
 							tap[0] = tap[1] = tap[2] = pConfig->raise_taps;
@@ -594,7 +621,13 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 				{
 					if (first_run_flag[0] == 0) 
 					{
-						tap[0] = tap[1] = tap[2] = tap[0] - (int16)ceil((check_voltage[0].Mag() - pConfig->band_center)/VtapChange);
+						if(toggle_reverse_flow_banked) {
+							tap[0] = reverse_flow_tap[0];
+							tap[1] = reverse_flow_tap[1];
+							tap[2] = reverse_flow_tap[2];
+						} else {
+							tap[0] = tap[1] = tap[2] = tap[0] - (int16)ceil((check_voltage[0].Mag() - pConfig->band_center)/VtapChange);
+						}
 						if (tap[0] < -pConfig->lower_taps) 
 						{
 							tap[0] = tap[1] = tap[2] = -pConfig->lower_taps;
@@ -608,8 +641,13 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 					}
 					else if (mech_flag[0] == 1 && dwell_flag[0] == 1) 
 					{
-						tap[0] = tap[1] = tap[2] = tap[0] - (int16) 1;							
-						
+						if(toggle_reverse_flow_banked) {
+							tap[0] = reverse_flow_tap[0];
+							tap[1] = reverse_flow_tap[1];
+							tap[2] = reverse_flow_tap[2];
+						} else {
+							tap[0] = tap[1] = tap[2] = tap[0] - (int16) 1;
+						}
 						if (tap[0] < -pConfig->lower_taps) 
 						{
 							tap[0] = tap[1] = tap[2] = -pConfig->lower_taps;
@@ -971,20 +1009,110 @@ TIMESTAMP regulator::postsync(TIMESTAMP t0)
 			}
 	
 			get_monitored_voltage();
-				
+
 			int i;
+			for (i = 0; i < 3; i++) {
+				new_reverse_flow_action[i] = false;
+			}
+			if (pConfig->reverse_flow_control == pConfig->LOCK_NEUTRAL) {
+				if (pConfig->control_level == pConfig->INDIVIDUAL) {
+					if ((flow_direction & FD_A_MASK) == FD_A_REVERSE && !toggle_reverse_flow[0]) {// Phase A power in reverse
+						toggle_reverse_flow[0] = true;
+						reverse_flow_tap[0] = 0;
+						new_reverse_flow_action[0] = true;
+					} else if ((flow_direction & FD_A_MASK) != FD_A_REVERSE && toggle_reverse_flow[0]) {
+						toggle_reverse_flow[0] = false;
+					}
+					if ((flow_direction & FD_B_MASK) == FD_B_REVERSE && !toggle_reverse_flow[1]) {// Phase A power in reverse
+						toggle_reverse_flow[1] = true;
+						reverse_flow_tap[1] = 0;
+						new_reverse_flow_action[1] = true;
+					} else if ((flow_direction & FD_B_MASK) != FD_B_REVERSE && toggle_reverse_flow[1]) {
+						toggle_reverse_flow[1] = false;
+					}
+					if ((flow_direction & FD_C_MASK) == FD_C_REVERSE && !toggle_reverse_flow[2]) {// Phase A power in reverse
+						toggle_reverse_flow[2] = true;
+						reverse_flow_tap[2] = 0;
+						new_reverse_flow_action[2] = true;
+					} else if ((flow_direction & FD_C_MASK) != FD_C_REVERSE && toggle_reverse_flow[2]) {
+						toggle_reverse_flow[2] = false;
+					}
+				} else if (pConfig->control_level == pConfig->BANK) {
+					if (((flow_direction & FD_A_MASK) == FD_A_REVERSE || (flow_direction & FD_B_MASK) == FD_B_REVERSE || (flow_direction & FD_C_MASK) == FD_C_REVERSE) && !toggle_reverse_flow_banked) {// Phase A power in reverse
+						toggle_reverse_flow_banked = true;
+						reverse_flow_tap[0] = 0;
+						reverse_flow_tap[1] = 0;
+						reverse_flow_tap[2] = 0;
+						new_reverse_flow_action[0] = true;
+						new_reverse_flow_action[1] = true;
+						new_reverse_flow_action[2] = true;
+					} else if (((flow_direction & FD_A_MASK) != FD_A_REVERSE && (flow_direction & FD_B_MASK) != FD_B_REVERSE && (flow_direction & FD_C_MASK) != FD_C_REVERSE) && toggle_reverse_flow_banked) {// Phase A power in reverse
+						toggle_reverse_flow_banked = false;
+					}
+				}
+			} else if (pConfig->reverse_flow_control == pConfig->LOCK_CURRENT) {
+				if (pConfig->control_level == pConfig->INDIVIDUAL) {
+					if ((flow_direction & FD_A_MASK) == FD_A_REVERSE && !toggle_reverse_flow[0]) {// Phase A power in reverse
+						toggle_reverse_flow[0] = true;
+						reverse_flow_tap[0] = tap[0];
+						new_reverse_flow_action[0] = true;
+					} else if ((flow_direction & FD_A_MASK) != FD_A_REVERSE && toggle_reverse_flow[0]) {
+						toggle_reverse_flow[0] = false;
+					}
+					if ((flow_direction & FD_B_MASK) == FD_B_REVERSE && !toggle_reverse_flow[1]) {// Phase A power in reverse
+						toggle_reverse_flow[1] = true;
+						reverse_flow_tap[1] = tap[1];
+						new_reverse_flow_action[1] = true;
+					} else if ((flow_direction & FD_B_MASK) != FD_B_REVERSE && toggle_reverse_flow[1]) {
+						toggle_reverse_flow[1] = false;
+					}
+					if ((flow_direction & FD_C_MASK) == FD_C_REVERSE && !toggle_reverse_flow[2]) {// Phase A power in reverse
+						toggle_reverse_flow[2] = true;
+						reverse_flow_tap[2] = tap[2];
+						new_reverse_flow_action[2] = true;
+					} else if ((flow_direction & FD_C_MASK) != FD_C_REVERSE && toggle_reverse_flow[2]) {
+						toggle_reverse_flow[2] = false;
+					}
+				} else if (pConfig->control_level == pConfig->BANK) {
+					if (((flow_direction & FD_A_MASK) == FD_A_REVERSE || (flow_direction & FD_B_MASK) == FD_B_REVERSE || (flow_direction & FD_C_MASK) == FD_C_REVERSE) && !toggle_reverse_flow_banked) {// Phase A power in reverse
+						toggle_reverse_flow_banked = true;
+						reverse_flow_tap[0] = tap[0];
+						reverse_flow_tap[1] = tap[1];
+						reverse_flow_tap[2] = tap[2];
+						new_reverse_flow_action[0] = true;
+						new_reverse_flow_action[1] = true;
+						new_reverse_flow_action[2] = true;
+					} else if (((flow_direction & FD_A_MASK) != FD_A_REVERSE && (flow_direction & FD_B_MASK) != FD_B_REVERSE && (flow_direction & FD_C_MASK) != FD_C_REVERSE) && toggle_reverse_flow_banked) {// Phase A power in reverse
+						toggle_reverse_flow_banked = false;
+					}
+				}
+			}
+
+
 			for (i=0; i<3; i++)
 			{
 				if (first_run_flag[i] < 1)
 					return t0;
 				if (dwell_flag[i] == 1 && mech_flag[i] == 1)
 				{			
-					if (check_voltage[i].Mag() < Vlow && tap[i] != -pConfig->lower_taps)
-						return t0;
+					if (check_voltage[i].Mag() < Vlow && tap[i] != pConfig->lower_taps && new_reverse_flow_action[i] == false) {
+						if (pConfig->control_level == pConfig->INDIVIDUAL && toggle_reverse_flow[i] == false) {
+							return t0;
+						} else if (pConfig->control_level == pConfig->BANK && toggle_reverse_flow_banked == false) {
+							return t0;
+						}
+					}
 
-					if (check_voltage[i].Mag() > Vhigh && tap[i] != -pConfig->raise_taps)
-						return t0;
+					if (check_voltage[i].Mag() > Vhigh && tap[i] != -pConfig->raise_taps && new_reverse_flow_action[i] == false) {
+						if (pConfig->control_level == pConfig->INDIVIDUAL && toggle_reverse_flow[i] == false) {
+							return t0;
+						} else if (pConfig->control_level == pConfig->BANK && toggle_reverse_flow_banked == false) {
+							return t0;
+						}
+					}
 				}
+				if (new_reverse_flow_action[i] == true && (toggle_reverse_flow[i] == true || toggle_reverse_flow_banked == true))
+					return t0;
 			}
 		}
 	}

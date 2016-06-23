@@ -99,6 +99,9 @@ GLOBAL bool enable_frequency_dependence INIT(false);	/**< Flag to enable frequen
 GLOBAL int64 deltamode_extra_function INIT(0);		/**< Kludge pointer to module-level function, so generators can call it */
 GLOBAL double default_resistance INIT(1e-4);		/**< sets the default resistance for safety devices */
 
+//In-rush deltamode stuff
+GLOBAL bool enable_inrush_calculations INIT(false);	/**< Flag to enable in-rush calculations in deltamode */
+GLOBAL double impedance_conversion_low_pu INIT(0.7);	/** Lower PU voltage level to convert all loads to impedance */
 GLOBAL double deltatimestep_running INIT(-1.0);			/** Value of the current deltamode simulation - used for integration method in in-rush */
 
 // Deltamode stuff

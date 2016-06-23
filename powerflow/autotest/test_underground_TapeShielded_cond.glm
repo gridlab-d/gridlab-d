@@ -1,0 +1,525 @@
+// Based on the IEEE 13-node, since it has both types
+// of underground cables.  Changed to capture wider range
+// I.E., THIS IS NOT THE IEEE 13-NODE SYSTEM ANYMORE
+
+#set iteration_limit=100000;
+//#set pauseatexit=1
+#set savefile=UG_line.xml
+#define stylesheet=C:\GridlabD\944\VS2005\x64\Debug\gridlabd-2_0
+clock {
+	timezone EST+5EDT;
+	starttime '2000-01-01 0:00:00';
+	stoptime '2000-01-01 0:00:01';
+}
+ 
+ 
+module powerflow {
+	solver_method FBS;
+	line_capacitance true;
+}
+
+
+module assert;
+
+
+// Phase Conductor for 607: 1/0 AA,TS N: 1/0 Cu
+object underground_line_conductor { 
+	name ulc6070;
+	outer_diameter 1.060000 in;
+	conductor_gmr 0.011100 ft;
+        neutral_gmr 0.01113 ft;
+	conductor_diameter 0.368000 in;
+	conductor_resistance 0.970000 Ohm/mile;
+        neutral_resistance 0.607 Ohm/mile;
+	insulation_relative_permitivitty 2.3;
+	shield_gmr 0.0365 ft;
+	shield_resistance 4.2786 Ohm/mile;
+	shield_diameter 0.88 in;
+	shield_thickness 0.005 in;
+}
+
+object line_spacing {
+	name ls520ABCN;
+	distance_AB 2.5;
+	distance_AC 4.5;
+	distance_BC 7.0;
+	distance_BN 0.25;//5.656854;
+	distance_AN 0.25;//4.272002;
+	distance_CN 0.25;//5.0;
+}
+object line_spacing {
+	name ls520ABC;
+	distance_AB 2.5;
+	distance_AC 4.5;
+	distance_BC 7.0;
+}
+object line_spacing {
+	name ls520AN;
+	distance_AN 0.25;//4.272002;
+}
+object line_spacing {
+	name ls520BN;
+	distance_BN 0.25;//5.656854;
+}
+object line_spacing {
+	name ls520CN;
+	distance_CN 0.25;//5.0;
+}
+object line_spacing {
+	name ls520ABN;
+	distance_AB 2.5;
+	distance_BN 0.25;//5.656854;
+	distance_AN 0.25;//4.272002;
+}
+object line_spacing {
+	name ls520BCN;
+	distance_BC 7.0;
+	distance_BN 0.25;//5.656854;
+	distance_CN 0.25;//5.0;
+}
+object line_spacing {
+	name ls520CAN;
+	distance_AC 4.5;
+	distance_AN 0.25;//4.272002;
+	distance_CN 0.25;//5.0;
+}
+object line_spacing {
+	name ls520AB;
+	distance_AB 2.5;
+}
+object line_spacing {
+	name ls520BC;
+	distance_BC 7.0;
+}
+object line_spacing {
+	name ls520CA;
+	distance_AC 4.5;
+}
+// Line Configuration
+object line_configuration {
+	name lc607ABCN;
+	conductor_A ulc6070;
+	conductor_B ulc6070;
+	conductor_C ulc6070;
+	conductor_N ulc6070;
+	spacing ls520ABCN;
+}
+object line_configuration {
+	name lc607ABC;
+	conductor_A ulc6070;
+	conductor_B ulc6070;
+	conductor_C ulc6070;
+	spacing ls520ABC;
+}
+object line_configuration {
+	name lc607AN;
+	conductor_A ulc6070;
+	conductor_N ulc6070;
+	spacing ls520AN;
+}
+object line_configuration {
+	name lc607BN;
+	conductor_B ulc6070;
+	conductor_N ulc6070;
+	spacing ls520BN;
+}
+object line_configuration {
+	name lc607CN;
+	conductor_C ulc6070;
+	conductor_N ulc6070;
+	spacing ls520CN;
+}object line_configuration {
+	name lc607ABN;
+	conductor_A ulc6070;
+	conductor_B ulc6070;
+	conductor_N ulc6070;
+	spacing ls520ABN;
+}object line_configuration {
+	name lc607BCN;
+	conductor_B ulc6070;
+	conductor_C ulc6070;
+	conductor_N ulc6070;
+	spacing ls520BCN;
+}object line_configuration {
+	name lc607CAN;
+	conductor_A ulc6070;
+	conductor_C ulc6070;
+	conductor_N ulc6070;
+	spacing ls520CAN;
+}
+object line_configuration {
+	name lc607AB;
+	conductor_A ulc6070;
+	conductor_B ulc6070;
+	spacing ls520AB;
+}
+object line_configuration {
+	name lc607BC;
+	conductor_B ulc6070;
+	conductor_C ulc6070;
+	spacing ls520BC;
+}
+object line_configuration {
+	name lc607CA;
+	conductor_A ulc6070;
+	conductor_C ulc6070;
+	spacing ls520CA;
+}
+// Define line objects
+
+ // Phases AN, BN, CN, ABCN
+object underground_line { 
+	phases "AN";
+	name line_684-652_AN;
+	from n684;
+	to l652_AN;
+	length 1 mile;
+	configuration lc607AN;
+}
+object underground_line { 
+	phases "BN";
+	name line_684-652_BN;
+	from n684;
+	to l652_BN;
+	length 1 mile;
+	configuration lc607BN;
+}
+object underground_line { 
+	phases "CN";
+	name line_684-652_CN;
+	from n684;
+	to l652_CN;
+	length 1 mile;
+	configuration lc607CN;
+}
+object underground_line { 
+	phases "ABCN";
+	name line_684-652_ABCN;
+	from n684;
+	to l652_ABCN;
+	length 1 mile;
+	configuration lc607ABCN;
+}
+
+ // Phases ABN, BCN, CAN
+object underground_line { 
+	phases "ABN";
+	name line_684-652_ABN;
+	from n684;
+	to l652_ABN;
+	length 1 mile;
+	configuration lc607ABN;
+}
+object underground_line { 
+	phases "BCN";
+	name line_684-652_BCN;
+	from n684;
+	to l652_BCN;
+	length 1 mile;
+	configuration lc607BCN;
+}
+object underground_line { 
+	phases "CAN";
+	name line_684-652_CAN;
+	from n684;
+	to l652_CAN;
+	length 1 mile;
+	configuration lc607CAN;
+}
+
+ 
+ // Phases AB, BC, CA, ABC
+object underground_line { 
+	phases "AB";
+	name line_684-652_AB;
+	from n684;
+	to l652_AB;
+	//length 800 ft;
+	length 1 mile;
+	configuration lc607AB;
+}
+object underground_line { 
+	phases "BC";
+	name line_684-652_BC;
+	from n684;
+	to l652_BC;
+	//length 800 ft;
+	length 1 mile;
+	configuration lc607BC;
+}
+object underground_line { 
+	phases "CA";
+	name line_684-652_CA;
+	from n684;
+	to l652_CA;
+	//length 800 ft;
+	length 1 mile;
+	configuration lc607CA;
+}
+object underground_line { 
+	phases "ABC";
+	name line_684-652_ABC;
+	from n684;
+	to l652_ABC;
+	length 1 mile;
+	configuration lc607ABC;
+}
+// node
+object node { 
+	name n684;
+	bustype SWING;	
+	phases "ABCN";
+	voltage_A 2401.7771;
+	voltage_B -1200.8886-2080.000j;
+	voltage_C -1200.8886+2080.000j;
+	nominal_voltage 2401.7771;
+
+} 
+ 
+ //loads
+ // Phases AN, BN, CN
+ 
+ object load { 
+	name l652_AN;
+	phases "AN";
+	voltage_A 2401.7771;
+	voltage_B -1200.8886-2080.000j;
+	voltage_C -1200.8886+2080.000j;
+	constant_impedance_A 31.0501+20.8618j;
+	nominal_voltage 2401.7771;
+	object complex_assert {
+		target voltage_A;
+		value +2310.79+10.414j; //+2307.26+11.2559j;	
+		within 0.01; 
+	};	
+
+}
+
+ object load { 
+	name l652_BN;
+	phases "BN";
+	voltage_A 2401.7771;
+	voltage_B -1200.8886-2080.000j;
+	voltage_C -1200.8886+2080.000j;
+	constant_impedance_B 31.0501+20.8618j;
+	nominal_voltage 2401.7771;
+	object complex_assert {
+		target voltage_B;
+		value -1146.38-2006.41j; //-1143.38-2003.77j;//-1143.88-2003.77j; //-1146.38-2006.41j
+		within 0.01; 
+	};
+
+}
+
+ object load { 
+	name l652_CN;
+	phases "CN";
+	voltage_A 2401.7771;
+	voltage_B -1200.8886-2080.000j;
+	voltage_C -1200.8886+2080.000j;
+	constant_impedance_C 31.0501+20.8618j;
+	nominal_voltage 2401.7771;
+	object complex_assert {
+		target voltage_C;
+		value -1164.41+1996j;	//-1164.41+1992.5j;	
+		within 0.01; 
+	};
+}
+
+
+
+
+// Phases ABN, BCN, CAN
+
+  object load { 
+	name l652_ABN;
+	phases "ABN";
+	voltage_A 2401.7771;
+	voltage_B -1200.8886-2080.000j;
+	voltage_C -1200.8886+2080.000j;
+	constant_power_A +18000.000+8717.789j;
+	constant_power_B +18000.000+8717.789j;
+	nominal_voltage 2401.7771;
+	object complex_assert {
+		target voltage_A;
+		value +2391.37+0.997664j; //+2391.41+0.999035j;	//+2391.37+0.997664j //+2388.85+1.21321j
+		within 0.01; 
+		};
+	object complex_assert {
+		target voltage_B;
+		value -1197.27-2068.42j ; //-1197.31-2068.47j;	//-1197.27-2068.42j //-1199.99-2068.25j
+		within 0.01; 
+		};
+
+}
+
+object load { 
+	name l652_BCN;
+	phases "BCN";
+	voltage_A 2401.7771;
+	voltage_B -1200.8886-2080.000j;
+	voltage_C -1200.8886+2080.000j;
+	//constant_impedance_B 31.0501+20.8618j;
+	constant_power_B +18000.000+8717.789j;
+	constant_power_C +18000.000+8717.789j;
+	nominal_voltage 2401.7771;
+	object complex_assert {
+		target voltage_B;
+		value -1195.75-2071.21j; //-1195.77-2071.25j;	
+		within 0.01; 
+		};
+	object complex_assert {
+		target voltage_C;
+		value -1192.25+2070.2j; //-1192.28+2070.26j;	
+		within 0.01; 
+		};
+}
+
+ object load { 
+	name l652_CAN;
+	phases "CAN";
+	voltage_A 2401.7771;
+	voltage_B -1200.8886-2080.000j;
+	voltage_C -1200.8886+2080.000j;
+	//constant_impedance_A 31.0501+20.8618j;
+	constant_power_A +18000.000+8717.789j;
+	constant_power_C +18000.000+8717.789j;
+	nominal_voltage 2401.7771;
+	object complex_assert {
+		target voltage_C;
+		value -1196.15+2070.88j;	
+		within 0.01; 
+		};
+	object complex_assert {
+		target voltage_A;
+		value 2389.39-2.62361j;	
+		within 0.01; 
+		};
+}
+
+// Phases ABCN
+  object load { 
+	name l652_ABCN;
+	phases "ABCN";
+	voltage_A 2401.7771;
+	voltage_B -1200.8886-2080.000j;
+	voltage_C -1200.8886+2080.000j;
+	constant_power_A +18000.000+8717.789j;
+	constant_power_B +18000.000+8717.789j;
+	nominal_voltage 2401.7771;
+	object complex_assert {
+		target voltage_A;
+		value +2391.38+0.907984j; //+2391.42+0.909195j;	
+		within 0.01; 
+		};
+	object complex_assert {
+		target voltage_B;
+		value -1197.29-2068.51j; //-1197.32-2068.56j;	
+		within 0.01; 
+		};
+	object complex_assert {
+		target voltage_C;
+		value -1200.51+2081.77j; //-1200.51+2081.76j;	
+		within 0.01; 
+		};
+	
+}
+
+// Phases AB, BC, CA, ABC
+ 
+  object load { 
+
+
+	name l652_AB;
+	phases "AB";
+	voltage_A 2401.7771;
+	voltage_B -1200.8886-2080.000j;
+	voltage_C -1200.8886+2080.000j;
+//	constant_impedance_A 31.0501+20.8618j;
+	constant_power_A +18000.000+8717.789j;
+	constant_power_B +18000.000+8717.789j;
+	nominal_voltage 2401.7771;
+	object complex_assert {
+		target voltage_A;
+		value +2386.73+2.19331j; //+2386.8+2.20589j;	
+		within 0.01; 
+		};
+	object complex_assert {
+		target voltage_B;
+		value -1201.89-2067.23j;
+		within 0.01; 
+		};
+}
+
+ object load { 
+	name l652_BC;
+	phases "BC";
+	voltage_A 2401.7771;
+
+
+	voltage_B -1200.8886-2080.000j;
+	voltage_C -1200.8886+2080.000j;
+	//constant_impedance_B 31.0501+20.8618j;
+	constant_power_B +18000.000+8717.789j;
+	constant_power_C +18000.000+8717.789j;
+	nominal_voltage 2401.7771;
+	object complex_assert {
+		target voltage_B;
+		value -1192.5-2067.58j	;
+		within 0.01; 
+		};
+	object complex_assert {
+		target voltage_C;
+		value -1189.03+2073.81j	;
+		within 0.01; 
+		};
+}
+
+ object load { 
+	name l652_CA;
+	phases "CA";
+	voltage_A 2401.7771;
+	voltage_B -1200.8886-2080.000j;
+	voltage_C -1200.8886+2080.000j;
+	//constant_impedance_A 31.0501+20.8618j;
+	constant_power_A +18000.000+8717.789j;
+	constant_power_C +18000.000+8717.789j;
+	nominal_voltage 2401.7771;
+	object complex_assert {
+		target voltage_A;
+		value +2390.8-7.21662j	;
+		within 0.01; 
+		};
+	object complex_assert {
+		target voltage_C;
+		value -1194.73+2066.25j;
+		within 0.01; 
+		};
+}
+ object load { 
+	name l652_ABC;
+	phases "ABC";
+	voltage_A 2401.7771;
+	voltage_B -1200.8886-2080.000j;
+	voltage_C -1200.8886+2080.000j;
+	//constant_impedance_A 31.0501+20.8618j;
+	constant_power_A +8000.000+8717.789j;
+	constant_power_B +8000.000+8717.789j;
+	constant_power_C +8000.000+8717.789j;
+	nominal_voltage 2401.7771;
+	object complex_assert {
+		target voltage_A;
+		value +2395.81+1.69771j; //+2395.82+1.69871j;	
+		within 0.01; 
+		};
+	object complex_assert {
+		target voltage_B;
+		value -1197.2-2075.4j;	
+		within 0.01; 
+		};
+	object complex_assert {
+		target voltage_C;
+		value -1198.95+2073.91j;	
+		within 0.01; 
+		};
+}

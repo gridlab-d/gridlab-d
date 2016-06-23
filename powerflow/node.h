@@ -89,6 +89,14 @@ private:
 	complex last_child_power_dy[6][3];	///< Previous power values joint - used for child object propogation
 	complex last_child_current12;	///< Previous current value - used for child object propogation (namely triplex)
 	bool deltamode_inclusive;		///< Flag for deltamode functionality, just to prevent having to mask the flags
+	complex BusHistTerm[3];			///< Pointer for array used to store load history value for deltamode-based in-rush computations
+	double prev_delta_time;			///< Tracking variable for last time deltamode call occurred - used for "once a timestep" in-rush computations
+	complex *ahrlloadstore;			///< Pointer for array used to store load history constant ahrl -- associated with inductance
+	complex *bhrlloadstore;			///< Pointer for array used to store load history constant bhrl -- associated with inductance
+	complex *chrcloadstore;			///< Pointer for array used to store load history constant chrc -- associated with capacitance
+	complex *LoadHistTermL;			///< Pointer for array used to store load history value for deltamode-based in-rush computations -- Inductive terms
+	complex *LoadHistTermC;			///< Pointer for array used to store load history value for deltamode-based in-rush computations -- Shunt capacitance terms
+
 public:
 	double frequency;			///< frequency (only valid on reference bus) */
 	object reference_bus;		///< reference bus from which frequency is defined */
@@ -135,6 +143,7 @@ public:
 	complex power_dy[6];	/// bus power injection (positive = in), explicitly specify delta and wye portions
 	complex shunt_dy[6];	/// bus shunt admittance, explicitly specify delta and wye portions
 	complex *full_Y;		/// full 3x3 bus shunt admittance - populate as necessary
+	complex *full_Y_load;	/// 3x1 bus shunt admittance - meant to update (not part of BA_diag) - populate as necessary
 	complex *full_Y_all;	/// Full 3x3 bus admittance with "other" contributions (self of full admittance) - populate as necessary
 	complex *DynVariable;	/// Dynamics extra variable (current and power for gens, typically)
 	DYN_NODE_TYPE node_type;/// Variable to indicate what we are - prevents needing a gl_object_isa EVERY...SINGLE...TIME in an already slow dynamic simulation

@@ -1,0 +1,236 @@
+//Tests multiple children where one is differently connected
+//under NR.  "Last child" is the same as parent, to make sure it doesn't
+//override the flagging in NR.
+//Tests a bug discovered via a forum post (code below is from post, more or less)
+
+clock
+{
+    timezone EST+5EDT;
+    starttime '2000-01-01 0:00:00';
+    stoptime '2000-01-01 0:00:01';
+}
+
+module powerflow
+{
+    solver_method NR;
+}
+module assert;
+
+////////////////////////////////////////////////////////////////////////////////
+// Overhead Line Spacings
+////////////////////////////////////////////////////////////////////////////////
+
+// Overhead line spacing 500_BAC (4 occurrences)
+object line_spacing {
+    name         olspc_500_BAC;
+    distance_AB  2.5000;
+    distance_AC  4.5000;
+    distance_BC  7.0000;
+    distance_AN  4.2720;
+    distance_BN  5.6569;
+    distance_CN  5.0000;
+    distance_AE  28.0000;
+    distance_BE  28.0000;
+    distance_CE  28.0000;
+    distance_NE  24.0000;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Underground Cable Spacings
+////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////
+// Overhead Line Conductors
+////////////////////////////////////////////////////////////////////////////////
+
+// Overhead line conductor #2 ACSR;
+object overhead_line_conductor
+{
+    name                    olcon__2_ACSR;
+    geometric_mean_radius   0.0042;
+    resistance              1.6900;
+    diameter                0.3160;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Underground Cable Conductors
+////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////
+// Overhead Line Configurations
+////////////////////////////////////////////////////////////////////////////////
+
+// Overhead line configuration dlc
+object line_configuration
+{
+    name           olcfg_dlc;
+    conductor_A    olcon__2_ACSR;
+    conductor_B    olcon__2_ACSR;
+    conductor_C    olcon__2_ACSR;
+    conductor_N    olcon__2_ACSR;
+    spacing        olspc_500_BAC;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Underground Cable Configurations
+////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////
+// Swing Node
+////////////////////////////////////////////////////////////////////////////////
+
+// Swing Node dlc-834
+object node
+{
+  name               node_dlc_834;
+  phases             ABC;
+  nominal_voltage    2401.7771;
+  bustype            SWING;
+  voltage_A          2401.7771+0.0000j;
+  voltage_B          -1200.8886-2080.0000j;
+  voltage_C          -1200.8886+2080.0000j;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Nodes
+////////////////////////////////////////////////////////////////////////////////
+
+// Node dlc-842
+object node
+{
+  name            node_dlc_842;
+  phases          ABCN;
+  nominal_voltage 2401.7771;
+  bustype         PQ;
+}
+
+// Node dlc-844
+object node
+{
+  name            node_dlc_844;
+  phases          ABCN;
+  nominal_voltage 2401.7771;
+  bustype         PQ;
+}
+
+// Node dlc-846
+object node
+{
+  name            node_dlc_846;
+  phases          ABCN;
+  nominal_voltage 2401.7771;
+  bustype         PQ;
+}
+
+// Node dlc-848
+object node
+{
+  name            node_dlc_848;
+  phases          ABCN;
+  nominal_voltage 2401.7771;
+  bustype         PQ;
+  //Check the voltage on this node
+	object complex_assert {
+		target voltage_A;
+		value 2142.499081-90.709894j;
+		within 0.1;
+	};
+	object complex_assert {
+		target voltage_B;
+		value -1169.737987-1826.572314j;
+		within 0.1;
+	};
+	object complex_assert {
+		target voltage_C;
+		value -989.333555+1908.318400j;
+		within 0.1;
+	};
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Overhead Lines
+////////////////////////////////////////////////////////////////////////////////
+
+// Overhead line dlc-834-dlc-842
+object overhead_line
+{
+    name           ol_dlc_834_dlc_842;
+    phases         ABCN;
+    from           node_dlc_834;
+    to             node_dlc_842;
+    length         2500.0000;
+    configuration  olcfg_dlc;
+}
+
+// Overhead line dlc-842-dlc-844
+object overhead_line
+{
+    name           ol_dlc_842_dlc_844;
+    phases         ABCN;
+    from           node_dlc_842;
+    to             node_dlc_844;
+    length         2500.0000;
+    configuration  olcfg_dlc;
+}
+
+// Overhead line dlc-844-dlc-846
+object overhead_line
+{
+    name           ol_dlc_844_dlc_846;
+    phases         ABCN;
+    from           node_dlc_844;
+    to             node_dlc_846;
+    length         2500.0000;
+    configuration  olcfg_dlc;
+}
+
+// Overhead line dlc-846-dlc-848
+object overhead_line
+{
+    name           ol_dlc_846_dlc_848;
+    phases         ABCN;
+    from           node_dlc_846;
+    to             node_dlc_848;
+    length         2500.0000;
+    configuration  olcfg_dlc;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Spot Loads 
+////////////////////////////////////////////////////////////////////////////////
+
+// Load dlc-848 (Load model: Z)
+object load
+{
+  name                      load_dlc_848;
+  parent                    node_dlc_848;
+  //name                      node_dlc_848;
+  phases                    ABCD;
+  constant_impedance_A_real     52.7610;
+  constant_impedance_A_reac     42.2088;
+  constant_impedance_B_real     52.7610;
+  constant_impedance_B_reac     42.2088;
+  constant_impedance_C_real     52.7610;
+  constant_impedance_C_reac     42.2088;
+  nominal_voltage           2401.7771;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Capacitors 
+////////////////////////////////////////////////////////////////////////////////
+
+// Capacitor dlc-848
+object capacitor
+{
+  name                          cap_dlc_848;
+  parent                        node_dlc_848;
+  phases                        ABCN;
+  phases_connected              ABCN;
+  switchA                       CLOSED;
+  switchB                       CLOSED;
+  switchC                       CLOSED;
+  nominal_voltage               2401.7771;
+  capacitor_A                   150000.0000;
+  capacitor_B                   150000.0000;
+  capacitor_C                   150000.0000;
+}

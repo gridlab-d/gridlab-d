@@ -36,7 +36,6 @@ EXPORT int64 triplex_meter_reset(OBJECT *obj)
 	return 0;
 }
 
-// variable name for market clearing price
 static char1024 market_price_name = "current_market.clearing_price";
 
 //////////////////////////////////////////////////////////////////////////
@@ -125,6 +124,9 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 				GL_THROW("Unable to publish triplex_meter deltamode function");
 			if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
 				GL_THROW("Unable to publish triplex_meter deltamode function");
+
+                        // market price name
+                        gl_global_create("powerflow::market_price_name",PT_char1024,&market_price_name,NULL);
 		}
 }
 
@@ -184,7 +186,7 @@ int triplex_meter::init(OBJECT *parent)
 	if(power_market != 0){
 		price_prop = gl_get_property(power_market, market_price_name);
 		if(price_prop == 0){
-			GL_THROW("triplex_meter::power_market object \'%s\' does not publish \'%s\'", (power_market->name ? power_market->name : "(anon)"), (const char*) market_price_name);
+                        GL_THROW("triplex_meter::power_market object \'%s\' does not publish \'%s\'", (power_market->name ? power_market->name : "(anon)"), (const char*)market_price_name);
 		}
 	}
 	check_prices();

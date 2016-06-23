@@ -210,6 +210,20 @@ void triplex_load::triplex_load_update_fxn()
 	int index_var;
 
 	if(base_power[0] != 0.0){// Phase 1
+		if (power_fraction[0] + current_fraction[0] + impedance_fraction[0] != 1.0)
+		{	
+			power_fraction[0] = 1 - current_fraction[0] - impedance_fraction[0];
+
+			OBJECT *obj = OBJECTHDR(this);
+
+			gl_warning("load:%s - ZIP components on phase 1 did not sum to 1. Setting power_fraction to %.2f", obj->name ? obj->name : "unnamed", power_fraction[0]);
+			/*  TROUBLESHOOT
+			ZIP load fractions must sum to 1.  The values (power_fraction_1, impedance_fraction_1, and current_fraction_1) did not sum to 1. To 
+			ensure that constraint (Z+I+P=1), power_fraction is being calculated and overwritten.
+			*/
+		}
+
+
 		// Put in the constant power portion
 		if (power_fraction[0] != 0.0){
 			double real_power, imag_power;
@@ -282,6 +296,18 @@ void triplex_load::triplex_load_update_fxn()
 	}
 
 	if(base_power[1] != 0.0){// Phase 2
+		if (power_fraction[1] + current_fraction[1] + impedance_fraction[1] != 1.0)
+		{	
+			power_fraction[1] = 1 - current_fraction[1] - impedance_fraction[1];
+
+			OBJECT *obj = OBJECTHDR(this);
+
+			gl_warning("load:%s - ZIP components on phase 2 did not sum to 1. Setting power_fraction to %.2f", obj->name ? obj->name : "unnamed", power_fraction[1]);
+			/*  TROUBLESHOOT
+			ZIP load fractions must sum to 1.  The values (power_fraction_2, impedance_fraction_2, and current_fraction_2) did not sum to 1. To 
+			ensure that constraint (Z+I+P=1), power_fraction is being calculated and overwritten.
+			*/
+		}
 		// Put in the constant power portion
 		if (power_fraction[1] != 0.0){
 			double real_power, imag_power;
@@ -354,6 +380,18 @@ void triplex_load::triplex_load_update_fxn()
 	}
 
 	if(base_power[2] != 0.0){// Phase 12
+		if (power_fraction[2] + current_fraction[2] + impedance_fraction[2] != 1.0)
+		{	
+			power_fraction[2] = 1 - current_fraction[2] - impedance_fraction[2];
+
+			OBJECT *obj = OBJECTHDR(this);
+
+			gl_warning("load:%s - ZIP components on phase 12 did not sum to 1. Setting power_fraction to %.2f", obj->name ? obj->name : "unnamed", power_fraction[2]);
+			/*  TROUBLESHOOT
+			ZIP load fractions must sum to 1.  The values (power_fraction_12, impedance_fraction_12, and current_fraction_12) did not sum to 1. To 
+			ensure that constraint (Z+I+P=1), power_fraction is being calculated and overwritten.
+			*/
+		}
 		// Put in the constant power portion
 		if (power_fraction[2] != 0.0){
 			double real_power, imag_power;

@@ -36,12 +36,19 @@ public:
 		B
 	} Type_enum;
 
+	typedef enum {
+		LOCK_NONE = 0,
+		LOCK_NEUTRAL=1,
+		LOCK_CURRENT=2
+	}reverse_flow_control_enum;
+
 
 	//Split out for access in other objects, fixes some odd enum issues
 	enumeration Control;
 	enumeration control_level;
 	enumeration Type;
 	enumeration connect_type;
+	enumeration reverse_flow_control;
 
 	/* get_name acquires the name of an object or 'unnamed' if non set */
 	inline const char *get_name(void) const { static char tmp[64]; OBJECT *obj=OBJECTHDR(this); return obj->name?obj->name:(sprintf(tmp,"%s:%d",obj->oclass->name,obj->id)>0?tmp:"(unknown)");};

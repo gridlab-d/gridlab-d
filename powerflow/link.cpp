@@ -159,6 +159,7 @@ link_object::link_object(MODULE *mod) : powerflow_object(mod)
 			PT_double, "mean_repair_time[s]",PADDR(mean_repair_time), PT_DESCRIPTION, "Time after a fault clears for the object to be back in service",
 			PT_double, "continuous_rating[A]", PADDR(link_rating[0]), PT_DESCRIPTION, "Continuous rating for this link object (set individual line segments",
 			PT_double, "emergency_rating[A]", PADDR(link_rating[1]), PT_DESCRIPTION, "Emergency rating for this link object (set individual line segments",
+			PT_double, "inrush_convergence_value[V]", PADDR(inrush_tol_value), PT_DESCRIPTION, "Tolerance, as change in line voltage drop between iterations, for deltamode in-rush completion",
 			NULL) < 1 && errno) GL_THROW("unable to publish link properties in %s",__FILE__);
 
 			//Publish deltamode functions
@@ -222,6 +223,18 @@ int link_object::create(void)
 	deltamode_inclusive = false;	//By default, we don't support deltamode
 
 	link_recalc_fxn = NULL;	//Initialize frequency dependence calculation
+
+	ahrlstore = NULL;	//Initialize history terms
+	bhrlstore = NULL;
+	chrcstore = NULL;
+	LinkHistTermL = NULL;
+	LinkHistTermCf = NULL;
+	LinkHistTermCt = NULL;
+	LinkCapShuntTerm = NULL;
+	inrush_computations_needed = false;	//By default, we behave like an ordinary deltamode link
+	inrush_vdiffmag_prev[0] = inrush_vdiffmag_prev[1] = inrush_vdiffmag_prev[2] = 0.0;
+	deltamode_prev_time = -1.0; 
+	inrush_tol_value = 0.0001;	//0.1 mV - arbitrary
 
 	return result;
 }
@@ -510,6 +523,242 @@ int link_object::init(OBJECT *parent)
 
 		//Increment the counter for allocation
 		pwr_object_count++;
+
+		//Check for in-rush capabilities
+		if (enable_inrush_calculations==true)
+		{
+			//See if we're a normal line
+			if (SpecialLnk == NORMAL)
+			{
+				//Allocate the terms -- Inductance -- fully allocate, to stay consistent
+				LinkHistTermL = (complex *)gl_malloc(6*sizeof(complex));
+
+				//Check it
+				if (LinkHistTermL == NULL)
+				{
+					GL_THROW("Link:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
+					/*  TROUBLESHOOT
+					While attempting to allocate memory for a link object to dynamics-required in-rush calculation
+					terms, an error occurred.  Please try again.  If the error persists, please submit your code and
+					a bug report to the ticketing system.
+					*/
+				}
+
+				//Zero everything, to be safe
+				LinkHistTermL[0] = complex(0.0,0.0);
+				LinkHistTermL[1] = complex(0.0,0.0);
+				LinkHistTermL[2] = complex(0.0,0.0);
+				LinkHistTermL[3] = complex(0.0,0.0);
+				LinkHistTermL[4] = complex(0.0,0.0);
+				LinkHistTermL[5] = complex(0.0,0.0);
+
+				//Allocate the "constant" terms
+				//Ahrl
+				//Allocate the terms -- inductance ahrl constant
+				ahrlstore = (complex *)gl_malloc(9*sizeof(complex));
+
+				//Check it
+				if (ahrlstore == NULL)
+				{
+					GL_THROW("Link:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
+					//Defined above
+				}
+
+				//Zero everything, to be safe -- from side
+				ahrlstore[0] = complex(0.0,0.0);
+				ahrlstore[1] = complex(0.0,0.0);
+				ahrlstore[2] = complex(0.0,0.0);
+				ahrlstore[3] = complex(0.0,0.0);
+				ahrlstore[4] = complex(0.0,0.0);
+				ahrlstore[5] = complex(0.0,0.0);
+				ahrlstore[6] = complex(0.0,0.0);
+				ahrlstore[7] = complex(0.0,0.0);
+				ahrlstore[8] = complex(0.0,0.0);
+
+				//Bhrl
+				//Allocate the terms -- inductance bhrl constant
+				bhrlstore = (complex *)gl_malloc(9*sizeof(complex));
+
+				//Check it
+				if (bhrlstore == NULL)
+				{
+					GL_THROW("Link:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
+					//Defined above
+				}
+
+				//Zero everything, to be safe -- from side
+				bhrlstore[0] = complex(0.0,0.0);
+				bhrlstore[1] = complex(0.0,0.0);
+				bhrlstore[2] = complex(0.0,0.0);
+				bhrlstore[3] = complex(0.0,0.0);
+				bhrlstore[4] = complex(0.0,0.0);
+				bhrlstore[5] = complex(0.0,0.0);
+				bhrlstore[6] = complex(0.0,0.0);
+				bhrlstore[7] = complex(0.0,0.0);
+				bhrlstore[8] = complex(0.0,0.0);
+
+				//Allocate the capacitance history term -- if it is enabled
+				if (use_line_cap == true)	//Capacitance enabled
+				{
+					//Allocate the terms -- Capacitance -- fully allocate, to stay consistent -- from side
+					LinkHistTermCf = (complex *)gl_malloc(6*sizeof(complex));
+
+					//Check it
+					if (LinkHistTermCf == NULL)
+					{
+						GL_THROW("Link:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
+						//Defined above
+					}
+
+					//Allocate the terms -- Capacitance -- fully allocate, to stay consistent -- to side
+					LinkHistTermCt = (complex *)gl_malloc(6*sizeof(complex));
+
+					//Check it
+					if (LinkHistTermCt == NULL)
+					{
+						GL_THROW("Link:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
+						//Defined above
+					}
+
+					//Zero everything, to be safe -- from side
+					LinkHistTermCf[0] = complex(0.0,0.0);
+					LinkHistTermCf[1] = complex(0.0,0.0);
+					LinkHistTermCf[2] = complex(0.0,0.0);
+					LinkHistTermCf[3] = complex(0.0,0.0);
+					LinkHistTermCf[4] = complex(0.0,0.0);
+					LinkHistTermCf[5] = complex(0.0,0.0);
+
+					//Zero everything, to be safe -- to side
+					LinkHistTermCt[0] = complex(0.0,0.0);
+					LinkHistTermCt[1] = complex(0.0,0.0);
+					LinkHistTermCt[2] = complex(0.0,0.0);
+					LinkHistTermCt[3] = complex(0.0,0.0);
+					LinkHistTermCt[4] = complex(0.0,0.0);
+					LinkHistTermCt[5] = complex(0.0,0.0);
+
+					//Chrc
+					//Allocate the terms -- capacitance chrc constant
+					chrcstore = (double *)gl_malloc(9*sizeof(double));
+
+					//Check it
+					if (chrcstore == NULL)
+					{
+						GL_THROW("Link:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
+						//Defined above
+					}
+
+					//Allocate the current calculation term
+					LinkCapShuntTerm = (complex *)gl_malloc(9*sizeof(complex));
+
+					//Check it
+					if (LinkCapShuntTerm == NULL)
+					{
+						GL_THROW("Link:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
+						//Defined above
+					}
+
+					//Zero everything, to be safe -- from side
+					chrcstore[0] = 0.0;
+					chrcstore[1] = 0.0;
+					chrcstore[2] = 0.0;
+					chrcstore[3] = 0.0;
+					chrcstore[4] = 0.0;
+					chrcstore[5] = 0.0;
+					chrcstore[6] = 0.0;
+					chrcstore[7] = 0.0;
+					chrcstore[8] = 0.0;
+
+					LinkCapShuntTerm[0] = complex(0.0,0.0);
+					LinkCapShuntTerm[1] = complex(0.0,0.0);
+					LinkCapShuntTerm[2] = complex(0.0,0.0);
+					LinkCapShuntTerm[3] = complex(0.0,0.0);
+					LinkCapShuntTerm[4] = complex(0.0,0.0);
+					LinkCapShuntTerm[5] = complex(0.0,0.0);
+					LinkCapShuntTerm[6] = complex(0.0,0.0);
+					LinkCapShuntTerm[7] = complex(0.0,0.0);
+					LinkCapShuntTerm[8] = complex(0.0,0.0);
+				}
+				//Default else -- capacitance not enabled
+			}//End "normal" (so a line
+			else if (SpecialLnk == WYEWYE)	//Wye-wye transformer
+			{
+				//Allocate the terms -- Inductance -- fully allocate, to stay consistent
+				LinkHistTermL = (complex *)gl_malloc(12*sizeof(complex));
+
+				//Check it
+				if (LinkHistTermL == NULL)
+				{
+					GL_THROW("Link:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
+					/*  TROUBLESHOOT
+					While attempting to allocate memory for a link object to dynamics-required in-rush calculation
+					terms, an error occurred.  Please try again.  If the error persists, please submit your code and
+					a bug report to the ticketing system.
+					*/
+				}
+
+				//Zero everything, to be safe
+				LinkHistTermL[0] = complex(0.0,0.0);
+				LinkHistTermL[1] = complex(0.0,0.0);
+				LinkHistTermL[2] = complex(0.0,0.0);
+				LinkHistTermL[3] = complex(0.0,0.0);
+				LinkHistTermL[4] = complex(0.0,0.0);
+				LinkHistTermL[5] = complex(0.0,0.0);
+				LinkHistTermL[6] = complex(0.0,0.0);
+				LinkHistTermL[7] = complex(0.0,0.0);
+				LinkHistTermL[8] = complex(0.0,0.0);
+				LinkHistTermL[9] = complex(0.0,0.0);
+				LinkHistTermL[10] = complex(0.0,0.0);
+				LinkHistTermL[11] = complex(0.0,0.0);
+
+				//Allocate the "constant" terms
+				//Ahrl
+				//Allocate the terms -- inductance ahrl constant
+				ahrlstore = (complex *)gl_malloc(36*sizeof(complex));
+
+				//Check it
+				if (ahrlstore == NULL)
+				{
+					GL_THROW("Link:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
+					//Defined above
+				}
+
+				//Zero everything, to be safe -- from side
+				ahrlstore[0] = ahrlstore[9]  = ahrlstore[18] = ahrlstore[27] = complex(0.0,0.0);
+				ahrlstore[1] = ahrlstore[10] = ahrlstore[19] = ahrlstore[28] = complex(0.0,0.0);
+				ahrlstore[2] = ahrlstore[11] = ahrlstore[20] = ahrlstore[29] = complex(0.0,0.0);
+				ahrlstore[3] = ahrlstore[12] = ahrlstore[21] = ahrlstore[30] = complex(0.0,0.0);
+				ahrlstore[4] = ahrlstore[13] = ahrlstore[22] = ahrlstore[31] = complex(0.0,0.0);
+				ahrlstore[5] = ahrlstore[14] = ahrlstore[23] = ahrlstore[32] = complex(0.0,0.0);
+				ahrlstore[6] = ahrlstore[15] = ahrlstore[24] = ahrlstore[33] = complex(0.0,0.0);
+				ahrlstore[7] = ahrlstore[16] = ahrlstore[25] = ahrlstore[34] = complex(0.0,0.0);
+				ahrlstore[8] = ahrlstore[17] = ahrlstore[26] = ahrlstore[35] = complex(0.0,0.0);
+				
+				//Bhrl
+				//Allocate the terms -- inductance bhrl constant
+				bhrlstore = (complex *)gl_malloc(36*sizeof(complex));
+
+				//Check it
+				if (bhrlstore == NULL)
+				{
+					GL_THROW("Link:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
+					//Defined above
+				}
+
+				//Zero everything, to be safe
+				bhrlstore[0] = bhrlstore[9]  = bhrlstore[18] = bhrlstore[27] = complex(0.0,0.0);
+				bhrlstore[1] = bhrlstore[10] = bhrlstore[19] = bhrlstore[28] = complex(0.0,0.0);
+				bhrlstore[2] = bhrlstore[11] = bhrlstore[20] = bhrlstore[29] = complex(0.0,0.0);
+				bhrlstore[3] = bhrlstore[12] = bhrlstore[21] = bhrlstore[30] = complex(0.0,0.0);
+				bhrlstore[4] = bhrlstore[13] = bhrlstore[22] = bhrlstore[31] = complex(0.0,0.0);
+				bhrlstore[5] = bhrlstore[14] = bhrlstore[23] = bhrlstore[32] = complex(0.0,0.0);
+				bhrlstore[6] = bhrlstore[15] = bhrlstore[24] = bhrlstore[33] = complex(0.0,0.0);
+				bhrlstore[7] = bhrlstore[16] = bhrlstore[25] = bhrlstore[34] = complex(0.0,0.0);
+				bhrlstore[8] = bhrlstore[17] = bhrlstore[26] = bhrlstore[35] = complex(0.0,0.0);
+
+			}//End transformer WYE-WYE
+			//Default else - something we don't support
+		}
+		//Default else -- normal, so no in-rush
 	}	//End deltamode items -- like in-rush
 
 	//If frequency dependence is enabled, try to map the recalc function
@@ -554,6 +803,11 @@ void link_object::NR_link_presync_fxn(void)
 	OBJECT *obj = OBJECTHDR(this);
 	int ret_value;
 	bool force_link_update;
+	double curr_delta_time;
+	bool require_inrush_update;
+	complex work_matrix_A[6][6], work_matrix_B[6][6], work_matrix_C[6][6],work_matrix_D[6][6],work_matrix_E[6][6],work_matrix_F[6][6];
+	complex work_matrix_G[6][6], work_matrix_H[6][6], work_matrix_I[6][6];
+	complex work_vector_A[6], work_vector_B[6], work_vector_C[6];
 	complex temp_value_A, temp_value_B;
 	char jindex, kindex;
 
@@ -592,6 +846,230 @@ void link_object::NR_link_presync_fxn(void)
 		force_link_update = false;
 	}
 	
+	//Deltamode catch and check
+	if ((enable_inrush_calculations == true) && (SpecialLnk==NORMAL))	//Lines are only supported at the moment -- maybe flag this different in the future?
+	{
+		//See if we're in deltamode or not
+		if (deltatimestep_running > 0)
+		{
+			//Get current deltamode timestep
+			curr_delta_time = gl_globaldeltaclock;
+
+			//Commented for now, until transformers work
+			////See if we're a "normal line"
+			//if (SpecialLnk == NORMAL)
+			//{
+				//Set flag
+				require_inrush_update = true;
+
+				//See if we're a different timestep
+				if (curr_delta_time != deltamode_prev_time)
+				{
+					//Update the tracker
+					deltamode_prev_time = curr_delta_time;
+
+					//Copy the old history terms in first
+					LinkHistTermL[3] = LinkHistTermL[0];	//Inductance
+					LinkHistTermL[4] = LinkHistTermL[1];
+					LinkHistTermL[5] = LinkHistTermL[2];
+
+					if (use_line_cap == true)	//Only enable if capacitance is on
+					{
+						LinkHistTermCf[3] = LinkHistTermCf[0];	//"from" capacitance
+						LinkHistTermCf[4] = LinkHistTermCf[1];
+						LinkHistTermCf[5] = LinkHistTermCf[2];
+
+						LinkHistTermCt[3] = LinkHistTermCt[0];	//"to" capacitance
+						LinkHistTermCt[4] = LinkHistTermCt[1];
+						LinkHistTermCt[5] = LinkHistTermCt[2];
+					}
+
+					//Calculate the updated history terms - hrl = ahrl*(vfromprev-vtoprev)-bhrl*hrlprev
+					//Cheating references to voltages
+					LinkHistTermL[0] = (NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] - NR_busdata[NR_branchdata[NR_branch_reference].to].V[0]) * ahrlstore[0] +
+									   (NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] - NR_busdata[NR_branchdata[NR_branch_reference].to].V[1]) * ahrlstore[1] +
+									   (NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] - NR_busdata[NR_branchdata[NR_branch_reference].to].V[2]) * ahrlstore[2] -
+									   bhrlstore[0] * LinkHistTermL[3] -
+									   bhrlstore[1] * LinkHistTermL[4] -
+									   bhrlstore[2] * LinkHistTermL[5];
+
+					LinkHistTermL[1] = (NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] - NR_busdata[NR_branchdata[NR_branch_reference].to].V[0]) * ahrlstore[3] +
+									   (NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] - NR_busdata[NR_branchdata[NR_branch_reference].to].V[1]) * ahrlstore[4] +
+									   (NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] - NR_busdata[NR_branchdata[NR_branch_reference].to].V[2]) * ahrlstore[5] -
+									   bhrlstore[3] * LinkHistTermL[3] -
+									   bhrlstore[4] * LinkHistTermL[4] -
+									   bhrlstore[5] * LinkHistTermL[5];
+
+					LinkHistTermL[2] = (NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] - NR_busdata[NR_branchdata[NR_branch_reference].to].V[0]) * ahrlstore[6] +
+									   (NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] - NR_busdata[NR_branchdata[NR_branch_reference].to].V[1]) * ahrlstore[7] +
+									   (NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] - NR_busdata[NR_branchdata[NR_branch_reference].to].V[2]) * ahrlstore[8] -
+									   bhrlstore[6] * LinkHistTermL[3] -
+									   bhrlstore[7] * LinkHistTermL[4] -
+									   bhrlstore[8] * LinkHistTermL[5];
+
+					if (use_line_cap == true)	//Only do if capacitance is enabled
+					{
+						//Calculate the updated history terms - hrcf = chrc*vfromprev - hrcfprev
+						LinkHistTermCf[0] = NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[0] +
+											NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[1] +
+											NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[2] -
+											LinkHistTermCf[3];
+
+						LinkHistTermCf[1] = NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[3] +
+											NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[4] +
+											NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[5] -
+											LinkHistTermCf[4];
+
+						LinkHistTermCf[2] = NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[6] +
+											NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[7] +
+											NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[8] -
+											LinkHistTermCf[5];
+
+						//Calculate the updated history terms - hrcf = chrc*vfromprev - hrcfprev
+						LinkHistTermCt[0] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[0] +
+											NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[1] +
+											NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[2] -
+											LinkHistTermCt[3];
+
+						LinkHistTermCt[1] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[3] +
+											NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[4] +
+											NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[5] -
+											LinkHistTermCt[4];
+
+						LinkHistTermCt[2] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[6] +
+											NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[7] +
+											NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[8] -
+											LinkHistTermCt[5];
+
+						//Compute the values and post them to the appropriate nodes
+						NR_busdata[NR_branchdata[NR_branch_reference].from].BusHistTerm[0] += LinkHistTermL[0] + LinkHistTermCf[0];
+						NR_busdata[NR_branchdata[NR_branch_reference].from].BusHistTerm[1] += LinkHistTermL[1] + LinkHistTermCf[1];
+						NR_busdata[NR_branchdata[NR_branch_reference].from].BusHistTerm[2] += LinkHistTermL[2] + LinkHistTermCf[2];
+
+						NR_busdata[NR_branchdata[NR_branch_reference].to].BusHistTerm[0] -= LinkHistTermL[0] - LinkHistTermCt[0];
+						NR_busdata[NR_branchdata[NR_branch_reference].to].BusHistTerm[1] -= LinkHistTermL[1] - LinkHistTermCt[1];
+						NR_busdata[NR_branchdata[NR_branch_reference].to].BusHistTerm[2] -= LinkHistTermL[2] - LinkHistTermCt[2];
+					}//End capacitance enabled
+					else	//Not enabled
+					{
+						//Compute the values and post them to the appropriate nodes
+						NR_busdata[NR_branchdata[NR_branch_reference].from].BusHistTerm[0] += LinkHistTermL[0];
+						NR_busdata[NR_branchdata[NR_branch_reference].from].BusHistTerm[1] += LinkHistTermL[1];
+						NR_busdata[NR_branchdata[NR_branch_reference].from].BusHistTerm[2] += LinkHistTermL[2];
+
+						NR_busdata[NR_branchdata[NR_branch_reference].to].BusHistTerm[0] -= LinkHistTermL[0];
+						NR_busdata[NR_branchdata[NR_branch_reference].to].BusHistTerm[1] -= LinkHistTermL[1];
+						NR_busdata[NR_branchdata[NR_branch_reference].to].BusHistTerm[2] -= LinkHistTermL[2];
+					}
+				}
+				//Defaulted else -- not a new time, so don't update it
+			//}//End "normal line"
+			//else if (SpecialLnk == WYEWYE)	//Wye-wye transformer	-- shell code, this doesn't work
+			//{
+			//	//Set flag
+			//	require_inrush_update = true;
+
+			//	//See if we're a different timestep
+			//	if (curr_delta_time != deltamode_prev_time)
+			//	{
+			//		//Update the tracker
+			//		deltamode_prev_time = curr_delta_time;
+
+			//		//Copy the old history terms in first
+			//		LinkHistTermL[6] =  LinkHistTermL[0];	//Inductance
+			//		LinkHistTermL[7] =  LinkHistTermL[1];
+			//		LinkHistTermL[8] =  LinkHistTermL[2];
+			//		LinkHistTermL[9] =  LinkHistTermL[3];
+			//		LinkHistTermL[10] = LinkHistTermL[4];
+			//		LinkHistTermL[11] = LinkHistTermL[5];
+
+			//		//Calculate the updated history terms - hrl = ahrl*vprev-bhrl*hrlprev
+
+			//		//Copy voltage terms into common vector
+			//		work_vector_A[0] = NR_busdata[NR_branchdata[NR_branch_reference].from].V[0];
+			//		work_vector_A[1] = NR_busdata[NR_branchdata[NR_branch_reference].from].V[1];
+			//		work_vector_A[2] = NR_busdata[NR_branchdata[NR_branch_reference].from].V[2];
+			//		work_vector_A[3] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[0];
+			//		work_vector_A[4] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[1];
+			//		work_vector_A[5] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[2];
+
+			//		//Perform the multiply of ahrl*vprev - put into LinkHistTerm first parts
+			//		lmatrix_vmult(ahrlstore, &work_vector_A[0], LinkHistTermL, 6);
+
+			//		//Perform the multiply of bhrlstore*hprev
+			//		lmatrix_vmult(bhrlstore, &LinkHistTermL[6], &work_vector_C[0], 6);
+
+			//		//Subtrack to form the new LinkHistTerm
+			//		for (jindex=0; jindex<6; jindex++)
+			//		{
+			//			LinkHistTermL[jindex] -= work_vector_C[jindex];
+			//		}
+
+			//		//Compute the values and post them to the appropriate nodes
+			//		NR_busdata[NR_branchdata[NR_branch_reference].from].BusHistTerm[0] += LinkHistTermL[0];
+			//		NR_busdata[NR_branchdata[NR_branch_reference].from].BusHistTerm[1] += LinkHistTermL[1];
+			//		NR_busdata[NR_branchdata[NR_branch_reference].from].BusHistTerm[2] += LinkHistTermL[2];
+
+			//		NR_busdata[NR_branchdata[NR_branch_reference].to].BusHistTerm[0] += LinkHistTermL[3];
+			//		NR_busdata[NR_branchdata[NR_branch_reference].to].BusHistTerm[1] += LinkHistTermL[4];
+			//		NR_busdata[NR_branchdata[NR_branch_reference].to].BusHistTerm[2] += LinkHistTermL[5];
+			//	}
+			//	//Defaulted else -- not a new time, so don't update it
+			//}
+			//else	//Something unsupported
+			//{
+			//	require_inrush_update = false;	//deflag
+			//}
+		
+		}//End deltamode active
+		else	//in-rush capable, but not enabled
+		{
+			//Deflag us
+			require_inrush_update = false;
+
+			//Zero the various working matrices, on priniciple
+			/********** TODO - Like loads, this may be something that postupdate can do ********************/
+			LinkHistTermL[0] = complex(0.0,0.0);
+			LinkHistTermL[1] = complex(0.0,0.0);
+			LinkHistTermL[2] = complex(0.0,0.0);
+			LinkHistTermL[3] = complex(0.0,0.0);
+			LinkHistTermL[4] = complex(0.0,0.0);
+			LinkHistTermL[5] = complex(0.0,0.0);
+
+			//Zero capacitance, if they exist
+			if (use_line_cap == true)
+			{
+				LinkHistTermCt[0] = complex(0.0,0.0);
+				LinkHistTermCt[1] = complex(0.0,0.0);
+				LinkHistTermCt[2] = complex(0.0,0.0);
+				LinkHistTermCt[3] = complex(0.0,0.0);
+				LinkHistTermCt[4] = complex(0.0,0.0);
+				LinkHistTermCt[5] = complex(0.0,0.0);
+
+				LinkHistTermCt[0] = complex(0.0,0.0);
+				LinkHistTermCt[1] = complex(0.0,0.0);
+				LinkHistTermCt[2] = complex(0.0,0.0);
+				LinkHistTermCt[3] = complex(0.0,0.0);
+				LinkHistTermCt[4] = complex(0.0,0.0);
+				LinkHistTermCt[5] = complex(0.0,0.0);
+			}
+			//Default else -- no capacitance
+
+			//Compute the values and post them to the appropriate nodes
+			NR_busdata[NR_branchdata[NR_branch_reference].from].BusHistTerm[0] = complex(0.0,0.0);
+			NR_busdata[NR_branchdata[NR_branch_reference].from].BusHistTerm[1] = complex(0.0,0.0);
+			NR_busdata[NR_branchdata[NR_branch_reference].from].BusHistTerm[2] = complex(0.0,0.0);
+
+			NR_busdata[NR_branchdata[NR_branch_reference].to].BusHistTerm[0] = complex(0.0,0.0);
+			NR_busdata[NR_branchdata[NR_branch_reference].to].BusHistTerm[1] = complex(0.0,0.0);
+			NR_busdata[NR_branchdata[NR_branch_reference].to].BusHistTerm[2] = complex(0.0,0.0);
+		}//End deltamode not active
+	}//End inrush enabled
+	else	//Not in in-rush or deltamode - flag to not
+	{
+		require_inrush_update = false;
+	}
+
 	current_accumulated = false;	//Reset the flag
 
 	if ((status != prev_status) || (force_link_update == true))	//Something's changed, update us
@@ -602,12 +1080,13 @@ void link_object::NR_link_presync_fxn(void)
 		complex Ylefttemp[3][3];
 		complex Yto[3][3];
 		complex Yfrom[3][3];
-		double invratio;
+		double invratio, workingvalue;
 
 		//Create initial admittance matrix - use code from GS below - store in From_Y (for now)
 		for (jindex=0; jindex<3; jindex++)
 			for (kindex=0; kindex<3; kindex++)
 				Y[jindex][kindex] = 0.0;
+		
 
 		// compute admittance - invert b matrix - special circumstances given different methods
 		if ((SpecialLnk!=NORMAL) && (SpecialLnk!=SPLITPHASE))
@@ -618,6 +1097,10 @@ void link_object::NR_link_presync_fxn(void)
 		{
 			//Put it straight in
 			equalm(b_mat,Y);
+		}
+		else if ((SpecialLnk==NORMAL) && (require_inrush_update == true))
+		{
+			;	//Skip us as well -- impedance matrix is manipulated, so no sense inverting it twice
 		}
 		else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && !has_phase(PHASE_C)) //only A
 			Y[0][0] = complex(1.0) / b_mat[0][0];
@@ -776,6 +1259,8 @@ void link_object::NR_link_presync_fxn(void)
 			}
 			else	//Other xformers
 			{
+				//Perform normal update -- if in-rush enabled, we need the base set anyways
+
 				//Pre-admittancized matrix
 				equalm(b_mat,Yto);
 
@@ -802,15 +1287,309 @@ void link_object::NR_link_presync_fxn(void)
 
 				multiply(invratio,Yto,To_Y);		//Incorporate turns ratio information into line's admittance matrix.
 				multiply(voltage_ratio,Yfrom,From_Y); //Scales voltages to same "level" for GS //uncomment me
-			}
+
+				//See if we're in in-rush and if we're the right type - always update, since we just broke it with
+				//the "standard" transformer update above
+				if ((enable_inrush_calculations == true) && (SpecialLnk == WYEWYE))
+				{
+					//Yfrom portion
+					lu_matrix_inverse(YSfrom,&Ylefttemp[0][0],3);
+
+					for (jindex=0; jindex<3; jindex++)
+					{
+						for (kindex=0; kindex<3; kindex++)
+						{
+							work_matrix_B[jindex][kindex] = Ylefttemp[jindex][kindex];
+						}
+					}
+
+					//From_Y portion
+					lu_matrix_inverse(&From_Y[0][0],&Ylefttemp[0][0],3);
+
+					for (jindex=0; jindex<3; jindex++)
+					{
+						for (kindex=0; kindex<3; kindex++)
+						{
+							work_matrix_B[jindex][kindex+3] = complex(-1.0,0.0) * Ylefttemp[jindex][kindex];
+						}
+					}
+
+					//To_Y portion
+					lu_matrix_inverse(&To_Y[0][0],&Ylefttemp[0][0],3);
+
+					for (jindex=0; jindex<3; jindex++)
+					{
+						for (kindex=0; kindex<3; kindex++)
+						{
+							work_matrix_B[jindex+3][kindex] = complex(-1.0,0.0) * Ylefttemp[jindex][kindex];
+						}
+					}
+
+					//Yto portion
+					lu_matrix_inverse(YSto,&Ylefttemp[0][0],3);
+
+					for (jindex=0; jindex<3; jindex++)
+					{
+						for (kindex=0; kindex<3; kindex++)
+						{
+							work_matrix_B[jindex+3][kindex+3] = Ylefttemp[jindex][kindex];
+						}
+					}
+
+					//Extract imaginary parts of the "impedance"
+					for (jindex=0; jindex<6; jindex++)
+					{
+						for (kindex=0; kindex<6; kindex++)
+						{
+							//Extract the imaginary part (should be only part) and de-phasor it (make inductance) - Yshunt/(2*pi*f)
+							//Store as L portion
+							//work_matrix_E[jindex][kindex] = work_matrix_B[jindex][kindex].Im() / (PI * 2.0 * current_frequency);
+							//As an inverse
+							if (work_matrix_B[jindex][kindex].Im() != 0.0)
+							{
+								work_matrix_F[jindex][kindex] = complex(1.0,0.0) / (work_matrix_B[jindex][kindex].Im() / (PI * 2.0 * current_frequency));
+							}
+							else
+							{
+								work_matrix_F[jindex][kindex] = complex(0.0,0.0);
+							}
+
+							//Extract resistive part for later too
+							work_matrix_C[jindex][kindex] = work_matrix_B[jindex][kindex].Re();
+						}//End kindex
+					}//End jindex
+
+					//Form up GRL and "anti-GRL"
+					//Perform L^-1*R
+					lmatrix_mult(&work_matrix_F[0][0],&work_matrix_C[0][0],&work_matrix_E[0][0],6);
+
+					//Form up the L^-1R+(2/dt+jw)I and L^-1R+(-2/dt+jw)I portions
+					temp_value_A = complex((2.0 / deltatimestep_running),(2.0 * PI * current_frequency));
+					temp_value_B = complex((-2.0 / deltatimestep_running),(2.0 * PI * current_frequency));
+
+					//Perform the addition/subtraction
+					for (jindex=0; jindex<6; jindex++)
+					{
+						for (kindex=0; kindex<6; kindex++)
+						{
+							//Copy value of L^-1 into both matrices
+							work_matrix_G[jindex][kindex] = work_matrix_E[jindex][kindex];
+							work_matrix_H[jindex][kindex] = work_matrix_E[jindex][kindex];
+
+							//If we're the diagonal, apply the offsets
+							if (jindex==kindex)
+							{
+								work_matrix_G[jindex][kindex] += temp_value_A;
+								work_matrix_H[jindex][kindex] += temp_value_B;
+							}
+						}//end kindex
+					}//end jindex
+
+					//Invert the "+" form for later use (L^-1R+(2/dt+jw)I)
+					lu_matrix_inverse(&work_matrix_G[0][0],&work_matrix_B[0][0],6);
+
+					//Form the "new admittance" matrix by doing "+"-term inverse x L^-1
+					lmatrix_mult(&work_matrix_B[0][0],&work_matrix_F[0][0],&work_matrix_A[0][0],6);
+
+					//Form the left and right hand sides of HRL
+					//ahrl = [L^-1R+(2/dt + jws)I]^1 x Hmat x GRL - GRL]
+					//hmat x GRL
+					lmatrix_mult(&work_matrix_H[0][0],&work_matrix_A[0][0],&work_matrix_C[0][0],6);
+
+					//"+" inverse x above
+					lmatrix_mult(&work_matrix_B[0][0],&work_matrix_C[0][0],&work_matrix_F[0][0],6);
+
+					//subtract GRL and put into ahrl store - do as a loop for the negative
+					for (jindex=0; jindex<6; jindex++)
+					{
+						for (kindex=0; kindex<6; kindex++)
+						{
+							ahrlstore[jindex*6+kindex] = work_matrix_F[jindex][kindex] - work_matrix_A[jindex][kindex];
+						}
+					}
+
+					//Form up right hand side of HRL
+					//bhrl = ("+" term inverse) x "-" term
+					lmatrix_mult(&work_matrix_B[0][0],&work_matrix_H[0][0],bhrlstore,6);
+
+					//Put the "new admittance" materials back
+					for (jindex=0; jindex<3; jindex++)
+					{
+						for (kindex=0; kindex<3; kindex++)
+						{
+							//Yfrom portion
+							YSfrom[jindex*3+kindex] = work_matrix_A[jindex][kindex];
+
+							//From_Y portion
+							From_Y[jindex][kindex] = complex(-1.0,0.0) * work_matrix_A[jindex][kindex+3];
+
+							//To_Y portion
+							To_Y[jindex][kindex] = complex(-1.0,0.0) * work_matrix_A[jindex+3][kindex];
+
+							//Yto portion
+							YSto[jindex*3+kindex] = work_matrix_A[jindex+3][kindex+3];
+						}//end kindex
+					}//end jindex
+				}//End WYEWYE in-rush stuff
+			}//End other transformers
 		}
 		else 				//Simple lines
 		{
+			//Compute the inductance portions for inrush
+			if ((enable_inrush_calculations == true) && (require_inrush_update==true))
+			{
+				//Zero working matrices - reuse existing, just to annoy later coders
+				for (jindex=0; jindex<3; jindex++)
+				{
+					for (kindex=0; kindex<3; kindex++)
+					{
+						Ylefttemp[jindex][kindex] = complex(0.0,0.0);
+						Yfrom[jindex][kindex] = complex(0.0,0.0);
+						Yto[jindex][kindex] = complex(0.0,0.0);
+					}
+				}
+
+				//If capacitance is enabled, copy the original b_mat before we break it
+				if (use_line_cap == true)
+				{
+					equalm(b_mat,Yc);	//Copy to Yc temporarily
+				}
+
+				//Form intermediate inductance values and constants
+				for (jindex=0; jindex<3; jindex++)
+				{
+					for (kindex=0; kindex<3; kindex++)
+					{
+						//Extract the imaginary part (should be only part) and de-phasor it - Yshunt/(2*pi*f)*2/dt
+						workingvalue = b_mat[jindex][kindex].Im() / (PI * current_frequency * deltatimestep_running);
+
+						//Put into the other working matrix (zh)
+						Ylefttemp[jindex][kindex] = b_mat[jindex][kindex] - complex(workingvalue,0.0);
+
+						//Put back into the impedance matrix
+						b_mat[jindex][kindex] += complex(workingvalue,0.0);
+					}
+				}
+
+				//Inversion sequence to get Y (admittance)
+				if (has_phase(PHASE_A) && !has_phase(PHASE_B) && !has_phase(PHASE_C)) //only A
+					Y[0][0] = complex(1.0) / b_mat[0][0];
+				else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //only B
+					Y[1][1] = complex(1.0) / b_mat[1][1];
+				else if (!has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //only C
+					Y[2][2] = complex(1.0) / b_mat[2][2];
+				else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //has A & C
+				{
+					complex detvalue = b_mat[0][0]*b_mat[2][2] - b_mat[0][2]*b_mat[2][0];
+
+					Y[0][0] = b_mat[2][2] / detvalue;
+					Y[0][2] = b_mat[0][2] * -1.0 / detvalue;
+					Y[2][0] = b_mat[2][0] * -1.0 / detvalue;
+					Y[2][2] = b_mat[0][0] / detvalue;
+				}
+				else if (has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //has A & B
+				{
+					complex detvalue = b_mat[0][0]*b_mat[1][1] - b_mat[0][1]*b_mat[1][0];
+
+					Y[0][0] = b_mat[1][1] / detvalue;
+					Y[0][1] = b_mat[0][1] * -1.0 / detvalue;
+					Y[1][0] = b_mat[1][0] * -1.0 / detvalue;
+					Y[1][1] = b_mat[0][0] / detvalue;
+				}
+				else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C))	//has B & C
+				{
+					complex detvalue = b_mat[1][1]*b_mat[2][2] - b_mat[1][2]*b_mat[2][1];
+
+					Y[1][1] = b_mat[2][2] / detvalue;
+					Y[1][2] = b_mat[1][2] * -1.0 / detvalue;
+					Y[2][1] = b_mat[2][1] * -1.0 / detvalue;
+					Y[2][2] = b_mat[1][1] / detvalue;
+				}
+				else if ((has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C)) || (has_phase(PHASE_D))) //has ABC or D (D=ABC)
+					inverse(b_mat,Y);
+
+				//Form the bhrl term - Y*Zh = bhrl
+				multiply(Y,Ylefttemp,Yfrom);
+
+				//Compute the ahrl term - Y(Zh*Y - I)
+				multiply(Ylefttemp,Y,Yto);	//Zh*Y
+				Yto[0][0]-=1.0;	// -I
+				Yto[1][1]-=1.0;
+				Yto[2][2]-=1.0;
+				multiply(Y,Yto,Ylefttemp);	//Y(Zh*Y-I)
+
+				//Loop and store them - translate due to mallocing to be safe
+				for (jindex=0; jindex<3; jindex++)
+				{
+					for (kindex=0; kindex<3; kindex++)
+					{
+						//ahrl
+						ahrlstore[jindex*3+kindex] = Ylefttemp[jindex][kindex];
+
+						//bhrl
+						bhrlstore[jindex*3+kindex] = Yfrom[jindex][kindex];
+					}
+				}
+
+				//Restore b_mat for capacitance
+				if (use_line_cap == true)
+				{
+					equalm(Yc,b_mat);
+				}
+			}//End in-rush-enabled calculation updates -- impedance/inductance portion
+
 			if (use_line_cap == true)	//Capacitance included
 			{
 				//Make "transfer matrices" admittance-less
 				equalm(Y,From_Y);
 				
+				//Zero out Y first, just in case - mainly if something above used it
+				for (jindex=0; jindex<3; jindex++)
+				{
+					for (kindex=0; kindex<3; kindex++)
+					{
+						Y[jindex][kindex]=complex(0.0,0.0);
+					}
+				}
+
+				//Replicate the inversion, again, but with the "less modified" version - Stored from Yc=b_mat earlier
+				//Inversion sequence to get Y (admittance)
+				if (has_phase(PHASE_A) && !has_phase(PHASE_B) && !has_phase(PHASE_C)) //only A
+					Y[0][0] = complex(1.0) / b_mat[0][0];
+				else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //only B
+					Y[1][1] = complex(1.0) / b_mat[1][1];
+				else if (!has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //only C
+					Y[2][2] = complex(1.0) / b_mat[2][2];
+				else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //has A & C
+				{
+					complex detvalue = b_mat[0][0]*b_mat[2][2] - b_mat[0][2]*b_mat[2][0];
+
+					Y[0][0] = b_mat[2][2] / detvalue;
+					Y[0][2] = b_mat[0][2] * -1.0 / detvalue;
+					Y[2][0] = b_mat[2][0] * -1.0 / detvalue;
+					Y[2][2] = b_mat[0][0] / detvalue;
+				}
+				else if (has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //has A & B
+				{
+					complex detvalue = b_mat[0][0]*b_mat[1][1] - b_mat[0][1]*b_mat[1][0];
+
+					Y[0][0] = b_mat[1][1] / detvalue;
+					Y[0][1] = b_mat[0][1] * -1.0 / detvalue;
+					Y[1][0] = b_mat[1][0] * -1.0 / detvalue;
+					Y[1][1] = b_mat[0][0] / detvalue;
+				}
+				else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C))	//has B & C
+				{
+					complex detvalue = b_mat[1][1]*b_mat[2][2] - b_mat[1][2]*b_mat[2][1];
+
+					Y[1][1] = b_mat[2][2] / detvalue;
+					Y[1][2] = b_mat[1][2] * -1.0 / detvalue;
+					Y[2][1] = b_mat[2][1] * -1.0 / detvalue;
+					Y[2][2] = b_mat[1][1] / detvalue;
+				}
+				else if ((has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C)) || (has_phase(PHASE_D))) //has ABC or D (D=ABC)
+					inverse(b_mat,Y);
+
 				//Compute total self admittance - include line charging capacitance
 				//Basically undo a_mat = I + 1/2 Zabc*Yabc
 				equalm(a_mat,Ylinecharge);
@@ -822,7 +1601,33 @@ void link_object::NR_link_presync_fxn(void)
 				
 				//Split back in half for application to each side
 				multiply(0.5,Ylinecharge,Ylefttemp);
-				addition(Ylefttemp,Y,Yc);
+
+				//See how this is being handled
+				if ((enable_inrush_calculations == true) && (require_inrush_update == true))
+				{
+					//Update constant terms - shunt is the same for capacitance
+					for (jindex=0; jindex<3; jindex++)
+					{
+						for (kindex=0; kindex<3; kindex++)
+						{
+							//Extract the imaginary part (should be only part) and de-phasor it - Yshunt/(2*pi*f)*2/dt
+							workingvalue = Ylefttemp[jindex][kindex].Im() / (PI * current_frequency * deltatimestep_running);
+
+							//Put into the "shunt" matrix
+							Ylefttemp[jindex][kindex] += complex(workingvalue,0.0);
+
+							//Copy this value into the final storage matrix too
+							LinkCapShuntTerm[jindex*3+kindex] = Ylefttemp[jindex][kindex];
+
+							//Create chrcstore while we're in here
+							chrcstore[jindex*3+kindex] = 2.0 * workingvalue;
+						}
+					}
+				}
+				//Defaulted else -- In-rush not enabled, just continue like normal
+
+				//Combine back into the full shunt term
+				addition(Ylefttemp,From_Y,Yc);
 
 				//Now parse into the new storage structure (manual to ensure things are placed right)
 				for (jindex=0; jindex<3; jindex++)
@@ -2050,6 +2855,9 @@ int link_object::CurrentCalculation(int nodecall)
 {
 	if (current_accumulated==false)	//Only update if we haven't done so yet
 	{
+		//Reset the deltamode-oriented flag, just because - will stay by exception
+		inrush_computations_needed = false;
+
 		if (is_closed())	//Only compute this if the overall link is "in service"
 		{
 			//Solve current equations to get current injections
@@ -2060,7 +2868,9 @@ int link_object::CurrentCalculation(int nodecall)
 			OBJECT *tobjval = NULL;
 			complex vtemp[3];
 			complex itemp[3];
+			double vmagtemp[3];
 			complex current_temp[3];
+			complex cap_shunt_current[6];
 			complex invsquared;
 			bool flock;	//Flags to know if from side needs locking
 
@@ -2107,140 +2917,238 @@ int link_object::CurrentCalculation(int nodecall)
 
 			if ((SpecialLnk == DELTADELTA) || (SpecialLnk == WYEWYE))
 			{
-				invsquared = 1.0 / (voltage_ratio * voltage_ratio);
-				//(-a*Vout+Vin)
-				vtemp[0] = fnode->voltage[0]-
-						   A_mat[0][0]*tnode->voltage[0]-
-						   A_mat[0][1]*tnode->voltage[1]-
-						   A_mat[0][2]*tnode->voltage[2];
+				////See if we're in deltamode and in-rush enabled
+				//if ((deltatimestep_running > 0) && (enable_inrush_calculations == true) && (SpecialLnk == WYEWYE))
+				//{
+				//	//******************  DEBUG/TODO ************************/
+				//	/* Fix when transformer implementation complte */
 
-				vtemp[1] = fnode->voltage[1]-
-						   A_mat[1][0]*tnode->voltage[0]-
-						   A_mat[1][1]*tnode->voltage[1]-
-						   A_mat[1][2]*tnode->voltage[2];
+				//	invsquared = 1.0 / (voltage_ratio * voltage_ratio);
+				//	//(-a*Vout+Vin)
+				//	vtemp[0] = fnode->voltage[0]-
+				//			   A_mat[0][0]*tnode->voltage[0]-
+				//			   A_mat[0][1]*tnode->voltage[1]-
+				//			   A_mat[0][2]*tnode->voltage[2];
 
-				vtemp[2] = fnode->voltage[2]-
-						   A_mat[2][0]*tnode->voltage[0]-
-						   A_mat[2][1]*tnode->voltage[1]-
-						   A_mat[2][2]*tnode->voltage[2];
+				//	vtemp[1] = fnode->voltage[1]-
+				//			   A_mat[1][0]*tnode->voltage[0]-
+				//			   A_mat[1][1]*tnode->voltage[1]-
+				//			   A_mat[1][2]*tnode->voltage[2];
 
-				//Put across admittance
-				itemp[0] = b_mat[0][0]*vtemp[0]+
-						   b_mat[0][1]*vtemp[1]+
-						   b_mat[0][2]*vtemp[2];
+				//	vtemp[2] = fnode->voltage[2]-
+				//			   A_mat[2][0]*tnode->voltage[0]-
+				//			   A_mat[2][1]*tnode->voltage[1]-
+				//			   A_mat[2][2]*tnode->voltage[2];
 
-				itemp[1] = b_mat[1][0]*vtemp[0]+
-						   b_mat[1][1]*vtemp[1]+
-						   b_mat[1][2]*vtemp[2];
+				//	//See if phases are valid
+				//	if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
+				//	{
+				//		current_out[0] = From_Y[0][0]*vtemp[0]+
+				//						From_Y[0][1]*vtemp[1]+
+				//						From_Y[0][2]*vtemp[2] - 
+				//						LinkHistTermL[0];
 
-				itemp[2] = b_mat[2][0]*vtemp[0]+
-						   b_mat[2][1]*vtemp[1]+
-						   b_mat[2][2]*vtemp[2];
+				//		//Update our vmag value
+				//		vmagtemp[0] = vtemp[0].Mag();
+				//	}
+				//	else
+				//	{
+				//		current_out[0] = 0.0;
+				//		vmagtemp[0] = 0.0;
+				//	}
 
-				//Scale the "b_mat" value by the inverse (make it high-side impedance)
-				//Post values based on phases (reliability related)
-				if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
-					current_in[0] = itemp[0]*invsquared;
-				else
-					current_in[0] = 0.0;
+				//	if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
+				//	{
+				//		current_out[1] = From_Y[1][0]*vtemp[0]+
+				//						From_Y[1][1]*vtemp[1]+
+				//						From_Y[1][2]*vtemp[2] -
+				//						LinkHistTermL[1];
 
-				if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
-					current_in[1] = itemp[1]*invsquared;
-				else
-					current_in[1] = 0.0;
+				//		//Update our vmag value
+				//		vmagtemp[1] = vtemp[1].Mag();
+				//	}
+				//	else
+				//	{
+				//		current_out[1] = 0.0;
+				//		vmagtemp[1] = 0.0;
+				//	}
 
-				if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
-					current_in[2] = itemp[2]*invsquared;
-				else
-					current_in[2] = 0.0;
+				//	if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
+				//	{
+				//		current_out[2] = From_Y[2][0]*vtemp[0]+
+				//					From_Y[2][1]*vtemp[1]+
+				//					From_Y[2][2]*vtemp[2] - 
+				//					LinkHistTermL[2];
 
-				//Calculate current out
-				if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
-				{
-					current_out[0] = A_mat[0][0]*current_in[0]+
-									 A_mat[0][1]*current_in[1]+
-									 A_mat[0][2]*current_in[2];
+				//		//Update our vmag value
+				//		vmagtemp[2] = vtemp[2].Mag();
+				//	}
+				//	else
+				//	{
+				//		current_out[2] = 0.0;
+				//		vmagtemp[2] = 0.0;
+				//	}
 
-					//Apply additional change
-					if (a_mat[0][0] != 0)
+				//	//Now calculate current_in
+				//	current_in[0] = current_out[0];
+				//	current_in[1] = current_out[1];
+				//	current_in[2] = current_out[2];
+
+				//	//Final determination of "convergence" or not
+				//	if (fabs(vmagtemp[0]-inrush_vdiffmag_prev[0]) > inrush_tol_value)
+				//		inrush_computations_needed = true;
+
+				//	if (fabs(vmagtemp[1]-inrush_vdiffmag_prev[1]) > inrush_tol_value)
+				//		inrush_computations_needed = true;
+
+				//	if (fabs(vmagtemp[2]-inrush_vdiffmag_prev[2]) > inrush_tol_value)
+				//		inrush_computations_needed = true;
+
+				//	//Store the new "previous" values
+				//	inrush_vdiffmag_prev[0] = vmagtemp[0];
+				//	inrush_vdiffmag_prev[1] = vmagtemp[1];
+				//	inrush_vdiffmag_prev[2] = vmagtemp[2];
+
+				//	//************************************ Question ****************************************/
+				//	//This may be different than how GLD does this -- is in the curr+shunt and out curr - shunt?
+				//}//End WYEWYE in-rush calculations
+				//else	//Not a WYEWYE or not an in-rush running version
+				//{
+					invsquared = 1.0 / (voltage_ratio * voltage_ratio);
+					//(-a*Vout+Vin)
+					vtemp[0] = fnode->voltage[0]-
+							   A_mat[0][0]*tnode->voltage[0]-
+							   A_mat[0][1]*tnode->voltage[1]-
+							   A_mat[0][2]*tnode->voltage[2];
+
+					vtemp[1] = fnode->voltage[1]-
+							   A_mat[1][0]*tnode->voltage[0]-
+							   A_mat[1][1]*tnode->voltage[1]-
+							   A_mat[1][2]*tnode->voltage[2];
+
+					vtemp[2] = fnode->voltage[2]-
+							   A_mat[2][0]*tnode->voltage[0]-
+							   A_mat[2][1]*tnode->voltage[1]-
+							   A_mat[2][2]*tnode->voltage[2];
+
+					//Put across admittance
+					itemp[0] = b_mat[0][0]*vtemp[0]+
+							   b_mat[0][1]*vtemp[1]+
+							   b_mat[0][2]*vtemp[2];
+
+					itemp[1] = b_mat[1][0]*vtemp[0]+
+							   b_mat[1][1]*vtemp[1]+
+							   b_mat[1][2]*vtemp[2];
+
+					itemp[2] = b_mat[2][0]*vtemp[0]+
+							   b_mat[2][1]*vtemp[1]+
+							   b_mat[2][2]*vtemp[2];
+
+					//Scale the "b_mat" value by the inverse (make it high-side impedance)
+					//Post values based on phases (reliability related)
+					if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
+						current_in[0] = itemp[0]*invsquared;
+					else
+						current_in[0] = 0.0;
+
+					if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
+						current_in[1] = itemp[1]*invsquared;
+					else
+						current_in[1] = 0.0;
+
+					if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
+						current_in[2] = itemp[2]*invsquared;
+					else
+						current_in[2] = 0.0;
+
+					//Calculate current out
+					if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
 					{
-						current_out[0] -= tnode->voltage[0]/a_mat[0][0]*voltage_ratio;
+						current_out[0] = A_mat[0][0]*current_in[0]+
+										 A_mat[0][1]*current_in[1]+
+										 A_mat[0][2]*current_in[2];
+
+						//Apply additional change
+						if (a_mat[0][0] != 0)
+						{
+							current_out[0] -= tnode->voltage[0]/a_mat[0][0]*voltage_ratio;
+						}
 					}
-				}
-				else
-					current_out[0] = 0.0;
+					else
+						current_out[0] = 0.0;
 
-				if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
-				{
-					current_out[1] = A_mat[1][0]*current_in[0]+
-									 A_mat[1][1]*current_in[1]+
-									 A_mat[1][2]*current_in[2];
-
-					//Apply additional update
-					if (a_mat[1][1] != 0)
+					if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
 					{
-						current_out[1] -= tnode->voltage[1]/a_mat[1][1]*voltage_ratio;
+						current_out[1] = A_mat[1][0]*current_in[0]+
+										 A_mat[1][1]*current_in[1]+
+										 A_mat[1][2]*current_in[2];
+
+						//Apply additional update
+						if (a_mat[1][1] != 0)
+						{
+							current_out[1] -= tnode->voltage[1]/a_mat[1][1]*voltage_ratio;
+						}
 					}
-				}
-				else
-					current_out[1] = 0.0;
+					else
+						current_out[1] = 0.0;
 
-				if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
-				{
-					current_out[2] = A_mat[2][0]*current_in[0]+
-									 A_mat[2][1]*current_in[1]+
-									 A_mat[2][2]*current_in[2];
-
-					//Apply additional update
-					if (a_mat[2][2] != 0)
+					if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
 					{
-						current_out[2] -= tnode->voltage[2]/a_mat[2][2]*voltage_ratio;
+						current_out[2] = A_mat[2][0]*current_in[0]+
+										 A_mat[2][1]*current_in[1]+
+										 A_mat[2][2]*current_in[2];
+
+						//Apply additional update
+						if (a_mat[2][2] != 0)
+						{
+							current_out[2] -= tnode->voltage[2]/a_mat[2][2]*voltage_ratio;
+						}
 					}
-				}
-				else
-					current_out[2] = 0.0;
+					else
+						current_out[2] = 0.0;
 
-				//See if our nature requires a lock
-				if (flock)
-				{
-					//Lock the from side for current dispersion
-					WRITELOCK_OBJECT(fobjval);
-				}
-
-				//Current in is just the same
-				fnode->current_inj[0] += current_in[0];
-				fnode->current_inj[1] += current_in[1];
-				fnode->current_inj[2] += current_in[2];
-
-				//If we locked our from node, be sure to let it go
-				if (flock)
-				{
-					//Unlock the from side so others can play
-					WRITEUNLOCK_OBJECT(fobjval);
-				}
-
-				//Replicate to the "original parent" if needed
-				if (ofnode != NULL)
-				{
 					//See if our nature requires a lock
 					if (flock)
 					{
 						//Lock the from side for current dispersion
-						WRITELOCK_OBJECT(from);
+						WRITELOCK_OBJECT(fobjval);
 					}
 
-					//Apply current injection updates to child as well
-					ofnode->current_inj[0] += current_in[0];
-					ofnode->current_inj[1] += current_in[1];
-					ofnode->current_inj[2] += current_in[2];
+					//Current in is just the same
+					fnode->current_inj[0] += current_in[0];
+					fnode->current_inj[1] += current_in[1];
+					fnode->current_inj[2] += current_in[2];
 
 					//If we locked our from node, be sure to let it go
 					if (flock)
 					{
 						//Unlock the from side so others can play
-						WRITEUNLOCK_OBJECT(from);
+						WRITEUNLOCK_OBJECT(fobjval);
 					}
-				}
+
+					//Replicate to the "original parent" if needed
+					if (ofnode != NULL)
+					{
+						//See if our nature requires a lock
+						if (flock)
+						{
+							//Lock the from side for current dispersion
+							WRITELOCK_OBJECT(from);
+						}
+
+						//Apply current injection updates to child as well
+						ofnode->current_inj[0] += current_in[0];
+						ofnode->current_inj[1] += current_in[1];
+						ofnode->current_inj[2] += current_in[2];
+
+						//If we locked our from node, be sure to let it go
+						if (flock)
+						{
+							//Unlock the from side so others can play
+							WRITEUNLOCK_OBJECT(from);
+						}
+					}
+				//}//End not in-rush calculations (normal)
 			}//end normal transformers
 			else if (SpecialLnk == REGULATOR)
 			{
@@ -2703,71 +3611,236 @@ int link_object::CurrentCalculation(int nodecall)
 			}//End split phase line
 			else
 			{
-				//(-a*Vout+Vin)
-				vtemp[0] = fnode->voltage[0]-
-						   a_mat[0][0]*tnode->voltage[0]-
-						   a_mat[0][1]*tnode->voltage[1]-
-						   a_mat[0][2]*tnode->voltage[2];
-
-				vtemp[1] = fnode->voltage[1]-
-						   a_mat[1][0]*tnode->voltage[0]-
-						   a_mat[1][1]*tnode->voltage[1]-
-						   a_mat[1][2]*tnode->voltage[2];
-
-				vtemp[2] = fnode->voltage[2]-
-						   a_mat[2][0]*tnode->voltage[0]-
-						   a_mat[2][1]*tnode->voltage[1]-
-						   a_mat[2][2]*tnode->voltage[2];
-
-				//See if phases are valid
-				if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
+				//See if we're in deltamode and in-rush enabled
+				if ((deltatimestep_running > 0) && (enable_inrush_calculations == true) && (SpecialLnk == NORMAL))
 				{
-					current_out[0] = From_Y[0][0]*vtemp[0]+
-									From_Y[0][1]*vtemp[1]+
-									From_Y[0][2]*vtemp[2];
-				}
-				else
-					current_out[0] = 0.0;
+					//(-a*Vout+Vin)
+					vtemp[0] = fnode->voltage[0]-
+							   a_mat[0][0]*tnode->voltage[0]-
+							   a_mat[0][1]*tnode->voltage[1]-
+							   a_mat[0][2]*tnode->voltage[2];
 
-				if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
+					vtemp[1] = fnode->voltage[1]-
+							   a_mat[1][0]*tnode->voltage[0]-
+							   a_mat[1][1]*tnode->voltage[1]-
+							   a_mat[1][2]*tnode->voltage[2];
+
+					vtemp[2] = fnode->voltage[2]-
+							   a_mat[2][0]*tnode->voltage[0]-
+							   a_mat[2][1]*tnode->voltage[1]-
+							   a_mat[2][2]*tnode->voltage[2];
+
+					//See if line capacitance is enabled
+					if (use_line_cap == true)
+					{
+						//Compute shunt current values
+						if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
+						{
+							cap_shunt_current[0] = LinkCapShuntTerm[0] * fnode->voltage[0] + 
+												   LinkCapShuntTerm[1] * fnode->voltage[1] + 
+												   LinkCapShuntTerm[2] * fnode->voltage[2] -
+												   LinkHistTermCf[0];
+
+							cap_shunt_current[3] = LinkCapShuntTerm[0] * tnode->voltage[0] + 
+												   LinkCapShuntTerm[1] * tnode->voltage[1] + 
+												   LinkCapShuntTerm[2] * tnode->voltage[2] -
+												   LinkHistTermCt[0];
+						}
+						else	//Nope, zero these
+						{
+							cap_shunt_current[0] = complex(0.0,0.0);
+							cap_shunt_current[3] = complex(0.0,0.0);
+						}
+
+						//Compute shunt current values
+						if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
+						{
+							cap_shunt_current[1] = LinkCapShuntTerm[3] * fnode->voltage[0] + 
+												   LinkCapShuntTerm[4] * fnode->voltage[1] + 
+												   LinkCapShuntTerm[5] * fnode->voltage[2] -
+												   LinkHistTermCf[1];
+
+							cap_shunt_current[4] = LinkCapShuntTerm[3] * tnode->voltage[0] + 
+												   LinkCapShuntTerm[4] * tnode->voltage[1] + 
+												   LinkCapShuntTerm[5] * tnode->voltage[2] -
+												   LinkHistTermCt[1];
+						}
+						else	//Nope, zero these
+						{
+							cap_shunt_current[1] = complex(0.0,0.0);
+							cap_shunt_current[4] = complex(0.0,0.0);
+						}
+
+						//Compute shunt current values
+						if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
+						{
+							cap_shunt_current[2] = LinkCapShuntTerm[6] * fnode->voltage[0] + 
+												   LinkCapShuntTerm[7] * fnode->voltage[1] + 
+												   LinkCapShuntTerm[8] * fnode->voltage[2] -
+												   LinkHistTermCf[2];
+
+							cap_shunt_current[5] = LinkCapShuntTerm[6] * tnode->voltage[0] + 
+												   LinkCapShuntTerm[7] * tnode->voltage[1] + 
+												   LinkCapShuntTerm[8] * tnode->voltage[2] -
+												   LinkHistTermCt[2];
+						}
+						else	//Nope, zero these
+						{
+							cap_shunt_current[2] = complex(0.0,0.0);
+							cap_shunt_current[5] = complex(0.0,0.0);
+						}
+					}
+					else	//Just zero the values out - 0-2 = from, 3-5 = to
+					{
+						cap_shunt_current[0] = cap_shunt_current[1] = cap_shunt_current[2] = complex(0.0,0.0);
+						cap_shunt_current[3] = cap_shunt_current[4] = cap_shunt_current[5] = complex(0.0,0.0);
+					}
+
+					//See if phases are valid
+					if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
+					{
+						current_out[0] = From_Y[0][0]*vtemp[0]+
+										From_Y[0][1]*vtemp[1]+
+										From_Y[0][2]*vtemp[2] - 
+										LinkHistTermL[0];
+
+						//Update our vmag value
+						vmagtemp[0] = vtemp[0].Mag();
+					}
+					else
+					{
+						current_out[0] = 0.0;
+						vmagtemp[0] = 0.0;
+					}
+
+					if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
+					{
+						current_out[1] = From_Y[1][0]*vtemp[0]+
+										From_Y[1][1]*vtemp[1]+
+										From_Y[1][2]*vtemp[2] -
+										LinkHistTermL[1];
+
+						//Update our vmag value
+						vmagtemp[1] = vtemp[1].Mag();
+					}
+					else
+					{
+						current_out[1] = 0.0;
+						vmagtemp[1] = 0.0;
+					}
+
+					if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
+					{
+						current_out[2] = From_Y[2][0]*vtemp[0]+
+									From_Y[2][1]*vtemp[1]+
+									From_Y[2][2]*vtemp[2] - 
+									LinkHistTermL[2];
+
+						//Update our vmag value
+						vmagtemp[2] = vtemp[2].Mag();
+					}
+					else
+					{
+						current_out[2] = 0.0;
+						vmagtemp[2] = 0.0;
+					}
+
+					//Now calculate current_in
+					current_in[0] = current_out[0] + cap_shunt_current[0];
+					current_in[1] = current_out[1] + cap_shunt_current[1];
+					current_in[2] = current_out[2] + cap_shunt_current[2];
+
+					//Adjust current out
+					current_out[0] -= cap_shunt_current[3];
+					current_out[1] -= cap_shunt_current[4];
+					current_out[2] -= cap_shunt_current[5];
+
+					//Final determination of "convergence" or not
+					if (fabs(vmagtemp[0]-inrush_vdiffmag_prev[0]) > inrush_tol_value)
+						inrush_computations_needed = true;
+
+					if (fabs(vmagtemp[1]-inrush_vdiffmag_prev[1]) > inrush_tol_value)
+						inrush_computations_needed = true;
+
+					if (fabs(vmagtemp[2]-inrush_vdiffmag_prev[2]) > inrush_tol_value)
+						inrush_computations_needed = true;
+
+					//Store the new "previous" values
+					inrush_vdiffmag_prev[0] = vmagtemp[0];
+					inrush_vdiffmag_prev[1] = vmagtemp[1];
+					inrush_vdiffmag_prev[2] = vmagtemp[2];
+
+					//************************************ Question ****************************************/
+					//This may be different than how GLD does this -- is in the curr+shunt and out curr - shunt?
+				}
+				else	//Normal or non-in-rush delta -- compute like usual
 				{
-					current_out[1] = From_Y[1][0]*vtemp[0]+
-									From_Y[1][1]*vtemp[1]+
-									From_Y[1][2]*vtemp[2];
-				}
-				else
-					current_out[1] = 0.0;
+					//(-a*Vout+Vin)
+					vtemp[0] = fnode->voltage[0]-
+							   a_mat[0][0]*tnode->voltage[0]-
+							   a_mat[0][1]*tnode->voltage[1]-
+							   a_mat[0][2]*tnode->voltage[2];
 
-				if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
-				{
-					current_out[2] = From_Y[2][0]*vtemp[0]+
-								From_Y[2][1]*vtemp[1]+
-								From_Y[2][2]*vtemp[2];
-				}
-				else
-					current_out[2] = 0.0;
+					vtemp[1] = fnode->voltage[1]-
+							   a_mat[1][0]*tnode->voltage[0]-
+							   a_mat[1][1]*tnode->voltage[1]-
+							   a_mat[1][2]*tnode->voltage[2];
 
-				//Now calculate current_in
-				current_in[0] = c_mat[0][0]*tnode->voltage[0]+
-								c_mat[0][1]*tnode->voltage[1]+
-								c_mat[0][2]*tnode->voltage[2]+
-								d_mat[0][0]*current_out[0]+
-								d_mat[0][1]*current_out[1]+
-								d_mat[0][2]*current_out[2];
+					vtemp[2] = fnode->voltage[2]-
+							   a_mat[2][0]*tnode->voltage[0]-
+							   a_mat[2][1]*tnode->voltage[1]-
+							   a_mat[2][2]*tnode->voltage[2];
 
-				current_in[1] = c_mat[1][0]*tnode->voltage[0]+
-								c_mat[1][1]*tnode->voltage[1]+
-								c_mat[1][2]*tnode->voltage[2]+
-								d_mat[1][0]*current_out[0]+
-								d_mat[1][1]*current_out[1]+
-								d_mat[1][2]*current_out[2];
+					//See if phases are valid
+					if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
+					{
+						current_out[0] = From_Y[0][0]*vtemp[0]+
+										From_Y[0][1]*vtemp[1]+
+										From_Y[0][2]*vtemp[2];
+					}
+					else
+						current_out[0] = 0.0;
 
-				current_in[2] = c_mat[2][0]*tnode->voltage[0]+
-								c_mat[2][1]*tnode->voltage[1]+
-								c_mat[2][2]*tnode->voltage[2]+
-								d_mat[2][0]*current_out[0]+
-								d_mat[2][1]*current_out[1]+
-								d_mat[2][2]*current_out[2];
+					if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
+					{
+						current_out[1] = From_Y[1][0]*vtemp[0]+
+										From_Y[1][1]*vtemp[1]+
+										From_Y[1][2]*vtemp[2];
+					}
+					else
+						current_out[1] = 0.0;
+
+					if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
+					{
+						current_out[2] = From_Y[2][0]*vtemp[0]+
+									From_Y[2][1]*vtemp[1]+
+									From_Y[2][2]*vtemp[2];
+					}
+					else
+						current_out[2] = 0.0;
+
+					//Now calculate current_in
+					current_in[0] = c_mat[0][0]*tnode->voltage[0]+
+									c_mat[0][1]*tnode->voltage[1]+
+									c_mat[0][2]*tnode->voltage[2]+
+									d_mat[0][0]*current_out[0]+
+									d_mat[0][1]*current_out[1]+
+									d_mat[0][2]*current_out[2];
+
+					current_in[1] = c_mat[1][0]*tnode->voltage[0]+
+									c_mat[1][1]*tnode->voltage[1]+
+									c_mat[1][2]*tnode->voltage[2]+
+									d_mat[1][0]*current_out[0]+
+									d_mat[1][1]*current_out[1]+
+									d_mat[1][2]*current_out[2];
+
+					current_in[2] = c_mat[2][0]*tnode->voltage[0]+
+									c_mat[2][1]*tnode->voltage[1]+
+									c_mat[2][2]*tnode->voltage[2]+
+									d_mat[2][0]*current_out[0]+
+									d_mat[2][1]*current_out[1]+
+									d_mat[2][2]*current_out[2];
+				}//End "normal" calculation
 
 				//See if our nature requires a lock
 				if (flock)
@@ -2841,8 +3914,24 @@ SIMULATIONMODE link_object::inter_deltaupdate_link(unsigned int64 delta_time, un
 	{
 		//Call postsync
 		BOTH_link_postsync_fxn();
-		
-		return SM_EVENT;	//Links always just want out
+
+		//See if we're in-rush-desired.  If so, check that we're ready to leave
+		if (enable_inrush_calculations == true)
+		{
+			//See if we lack confidence to exit
+			if (inrush_computations_needed == false)	//We're happy/don't care, onward!
+			{
+				return SM_EVENT;
+			}
+			else	//Must still want some computations
+			{
+				return SM_DELTA;
+			}
+		}
+		else	//Standard deltamode
+		{
+			return SM_EVENT;	//Links always just want out
+		}
 	}
 }//End module deltamode
 

@@ -204,6 +204,9 @@ int load::create(void)
 	//Flag us as a load
 	node_type = LOAD_NODE;
 
+	//in-rush related zeroing
+	prev_shunt[0] = prev_shunt[1] = prev_shunt[2] = complex(0.0,0.0);
+
     return res;
 }
 
@@ -275,6 +278,90 @@ int load::init(OBJECT *parent)
 			gl_warning("load:%s - constant_current loads in deltamode are handled slightly different", obj->name ? obj->name : "unnamed");
 			//Defined above
 		}
+
+		//See if we're going to be "in-rushy" or not
+		if (enable_inrush_calculations==true)
+		{
+			//Allocate all of the terms - inductive and capacitive, just in case
+			//Allocate ahrl - inductive term
+			ahrlloadstore = (complex *)gl_malloc(3*sizeof(complex));
+
+			//Check it
+			if (ahrlloadstore == NULL)
+			{
+				GL_THROW("load:%d-%s - failed to allocate memory for in-rush calculations",obj->id, obj->name ? obj->name : "unnamed");
+				/*  TROUBLESHOOT
+				While allocating memory for the in-rush calculations, an error was encountering.  Please try again.  If the error persists,
+				please post a bug report to the forums or ticketing website, along with your GLM code.
+				*/
+			}
+
+			//bhrl inductive term
+			bhrlloadstore = (complex *)gl_malloc(3*sizeof(complex));
+
+			//Check it
+			if (bhrlloadstore == NULL)
+			{
+				GL_THROW("load:%d-%s - failed to allocate memory for in-rush calculations",obj->id, obj->name ? obj->name : "unnamed");
+				//Defined above
+			}
+
+			//chrc - capacitive term
+			chrcloadstore = (complex *)gl_malloc(3*sizeof(complex));
+
+			//Check it
+			if (chrcloadstore == NULL)
+			{
+				GL_THROW("load:%d-%s - failed to allocate memory for in-rush calculations",obj->id, obj->name ? obj->name : "unnamed");
+				//Defined above
+			}
+
+			//LoadHistTermL - history term for inductive
+			LoadHistTermL = (complex *)gl_malloc(6*sizeof(complex));
+
+			//Check it
+			if (LoadHistTermL == NULL)
+			{
+				GL_THROW("load:%d-%s - failed to allocate memory for in-rush calculations",obj->id, obj->name ? obj->name : "unnamed");
+				//Defined above
+			}
+
+			//LoadHistTermC - history term for capacitive
+			LoadHistTermC = (complex *)gl_malloc(6*sizeof(complex));
+
+			//Check it
+			if (LoadHistTermC == NULL)
+			{
+				GL_THROW("load:%d-%s - failed to allocate memory for in-rush calculations",obj->id, obj->name ? obj->name : "unnamed");
+				//Defined above
+			}
+
+			//Allocate our "updating admittance" portion as well
+			full_Y_load = (complex *)gl_malloc(3*sizeof(complex));
+
+			//Check it
+			if (full_Y_load == NULL)
+			{
+				GL_THROW("load:%d-%s - failed to allocate memory for in-rush calculations",obj->id, obj->name ? obj->name : "unnamed");
+				//Defined above
+			}
+
+			//Now zero them all, for good measure
+			ahrlloadstore[0] = ahrlloadstore[1] = ahrlloadstore[2] = complex(0.0,0.0);
+			bhrlloadstore[0] = bhrlloadstore[1] = bhrlloadstore[2] = complex(0.0,0.0);
+			chrcloadstore[0] = chrcloadstore[1] = chrcloadstore[2] = complex(0.0,0.0);
+
+			LoadHistTermL[0] = LoadHistTermL[1] = LoadHistTermL[2] = complex(0.0,0.0);
+			LoadHistTermL[3] = LoadHistTermL[4] = LoadHistTermL[5] = complex(0.0,0.0);
+
+			LoadHistTermC[0] = LoadHistTermC[1] = LoadHistTermC[2] = complex(0.0,0.0);
+			LoadHistTermC[3] = LoadHistTermC[4] = LoadHistTermC[5] = complex(0.0,0.0);
+
+			full_Y_load[0] = full_Y_load[1] = full_Y_load[2] = complex(0.0,0.0);
+			//full_Y_load[3] = full_Y_load[4] = full_Y_load[5] = complex(0.0,0.0);	//If this ever becomes 3x3, need these
+			//full_Y_load[6] = full_Y_load[7] = full_Y_load[8] = complex(0.0,0.0);	//Need to update the admittance to handle them though (lazy)
+		}
+		//Default else - not needed
 	}
 
 	return ret_value;
@@ -350,9 +437,15 @@ void load::load_update_fxn(bool fault_mode)
 	complex intermed_impedance[3];
 	complex intermed_impedance_dy[6];
 	int index_var;
+	bool volt_below_thresh;
+	double voltage_base_val;
+	double voltage_pu_vals[3];
 	complex nominal_voltage_value;
 	int node_reference_value;
+	double curr_delta_time;
+	bool require_inrush_update;
 	complex working_impedance_value, working_data_value, working_admittance_value;
+	double workingvalue;
 	OBJECT *obj;
 	node *temp_par_node = NULL;
 
@@ -360,6 +453,22 @@ void load::load_update_fxn(bool fault_mode)
 	{
 		if (base_power[index] != 0.0)
 		{
+
+			if (power_fraction[index] + current_fraction[index] + impedance_fraction[index] != 1.0)
+			{	
+				power_fraction[index] = 1 - current_fraction[index] - impedance_fraction[index];
+				
+				char temp[3] = {'A','B','C'};
+
+				OBJECT *obj = OBJECTHDR(this);
+
+				gl_warning("load:%s - ZIP components on phase %c did not sum to 1. Setting power_fraction to %.2f", obj->name ? obj->name : "unnamed", temp[index], power_fraction[index]);
+				/*  TROUBLESHOOT
+				ZIP load fractions must sum to 1.  The values (power_fraction_X, impedance_fraction_X, and current_fraction_X) on the given phase did not sum to 1. To 
+				ensure that constraint (Z+I+P=1), power_fraction is being calculated and overwritten.
+				*/
+			}
+
 			// Put in the constant power portion
 			if (power_fraction[index] != 0.0)
 			{
@@ -647,70 +756,941 @@ void load::load_update_fxn(bool fault_mode)
 			{													//associated with change due to player methods
 				if (SubNode == PARENT)	//Normal parents need this
 				{
-					if (!(intermed_impedance[0].IsZero()))
-						shunt[0] += complex(1.0)/intermed_impedance[0];
-
-					if (!(intermed_impedance[1].IsZero()))
-						shunt[1] += complex(1.0)/intermed_impedance[1];
-					
-					if (!(intermed_impedance[2].IsZero()))
-						shunt[2] += complex(1.0)/intermed_impedance[2];
-					
-					power[0] += constant_power[0];
-					power[1] += constant_power[1];	
-					power[2] += constant_power[2];
-
-					current[0] += constant_current[0];
-					current[1] += constant_current[1];
-					current[2] += constant_current[2];
-
-					//Combination Portion
-					//Do the same for explicit delta/wye connections
-					for (index_var=0; index_var<6; index_var++)
+					//See if in-rush is enabled - only makes sense in reliability situations
+					if (enable_inrush_calculations == true)
 					{
-						if (!(intermed_impedance_dy[index_var].IsZero()))
-							shunt_dy[index_var] += complex(1.0)/intermed_impedance_dy[index_var];
+						//Reset variable
+						volt_below_thresh = false;
 
-						power_dy[index_var] += constant_power_dy[index_var];
+						//Check to see if we're under the voltage pu limit or not -- any version under will trip it
+						if (has_phase(PHASE_D))
+						{
+							voltage_base_val = nominal_voltage * sqrt(3.0);
 
-						current_dy[index_var] += constant_current_dy[index_var];
-					}
+							//Compute per-unit values
+							voltage_pu_vals[0] = voltaged[0].Mag()/voltage_base_val;
+							voltage_pu_vals[1] = voltaged[1].Mag()/voltage_base_val;
+							voltage_pu_vals[2] = voltaged[2].Mag()/voltage_base_val;
+
+							//Check them - Phase AB
+							if (((NR_busdata[NR_node_reference].phases & 0x06) == 0x06) && (voltage_pu_vals[0] < impedance_conversion_low_pu))
+							{
+								volt_below_thresh = true;
+							}
+
+							//Check them - Phase BC
+							if (((NR_busdata[NR_node_reference].phases & 0x03) == 0x03) && (voltage_pu_vals[1] < impedance_conversion_low_pu))
+							{
+								volt_below_thresh = true;
+							}
+
+							//Check them - Phase CA
+							if (((NR_busdata[NR_node_reference].phases & 0x05) == 0x05) && (voltage_pu_vals[2] < impedance_conversion_low_pu))
+							{
+								volt_below_thresh = true;
+							}
+						}
+						else	//Must be Wye-connected
+						{
+							//Set nominal voltage
+							voltage_base_val = nominal_voltage;
+
+							//Compute per-unit values
+							voltage_pu_vals[0] = voltage[0].Mag()/voltage_base_val;
+							voltage_pu_vals[1] = voltage[1].Mag()/voltage_base_val;
+							voltage_pu_vals[2] = voltage[2].Mag()/voltage_base_val;
+
+							//Check them - Phase A
+							if (((NR_busdata[NR_node_reference].phases & 0x04) == 0x04) && (voltage_pu_vals[0] < impedance_conversion_low_pu))
+							{
+								volt_below_thresh = true;
+							}
+
+							//Check them - Phase B
+							if (((NR_busdata[NR_node_reference].phases & 0x02) == 0x01) && (voltage_pu_vals[1] < impedance_conversion_low_pu))
+							{
+								volt_below_thresh = true;
+							}
+
+							//Check them - Phase C
+							if (((NR_busdata[NR_node_reference].phases & 0x01) == 0x01) && (voltage_pu_vals[2] < impedance_conversion_low_pu))
+							{
+								volt_below_thresh = true;
+							}
+						}
+
+						//See if tripped
+						if (volt_below_thresh == true)
+						{
+							//Convert all loads to an impedance-equivalent
+							if (has_phase(PHASE_D))	//Delta-connected
+							{
+								//Reset - out of paranoia
+								voltage_base_val = nominal_voltage * sqrt(3.0);
+
+								//Check phases - AB
+								if ((NR_busdata[NR_node_reference].phases & 0x06) == 0x06)
+								{
+									//Check power value
+									if (!(constant_power[0].IsZero()))
+									{
+										//Set nominal voltage - |V|^2
+										nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+										//Compute the value
+										intermed_impedance[0] += ~(nominal_voltage_value/constant_power[0]);
+									}
+
+									//Check current
+									if (!(constant_current[0].IsZero()))
+									{
+										//Set nominal voltage - actual angle
+										nominal_voltage_value.SetPolar(voltage_base_val,PI/6);
+
+										//Compute the value
+										intermed_impedance[0] += nominal_voltage_value/constant_current[0];
+									}
+								}//End AB check
+
+								//Check phases - BC
+								if ((NR_busdata[NR_node_reference].phases & 0x03) == 0x03)
+								{
+									//Check power value
+									if (!(constant_power[1].IsZero()))
+									{
+										//Set nominal voltage - |V|^2
+										nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+										//Compute the value
+										intermed_impedance[1] += ~(nominal_voltage_value/constant_power[1]);
+									}
+
+									//Check current
+									if (!(constant_current[1].IsZero()))
+									{
+										//Set nominal voltage - actual angle
+										nominal_voltage_value.SetPolar(voltage_base_val,-1.0*PI/2.0);
+
+										//Compute the value
+										intermed_impedance[1] += nominal_voltage_value/constant_current[1];
+									}
+								}//End BC check
+
+								//Check phases - CA
+								if ((NR_busdata[NR_node_reference].phases & 0x05) == 0x05)
+								{
+									//Check power value
+									if (!(constant_power[2].IsZero()))
+									{
+										//Set nominal voltage - |V|^2
+										nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+										//Compute the value
+										intermed_impedance[2] += ~(nominal_voltage_value/constant_power[2]);
+									}
+
+									//Check current
+									if (!(constant_current[2].IsZero()))
+									{
+										//Set nominal voltage - actual angle
+										nominal_voltage_value.SetPolar(voltage_base_val,5.0*PI/6.0);
+
+										//Compute the value
+										intermed_impedance[2] += nominal_voltage_value/constant_current[2];
+									}
+								}//End CA check
+							}//End Delta connection
+							else	//Wye-connected
+							{
+								//Reset - out of paranoia
+								voltage_base_val = nominal_voltage;
+
+								//Check phases - A
+								if ((NR_busdata[NR_node_reference].phases & 0x04) == 0x04)
+								{
+									//Check power value
+									if (!(constant_power[0].IsZero()))
+									{
+										//Set nominal voltage - |V|^2
+										nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+										//Compute the value
+										intermed_impedance[0] += ~(nominal_voltage_value/constant_power[0]);
+									}
+
+									//Check current
+									if (!(constant_current[0].IsZero()))
+									{
+										//Set nominal voltage - actual angle
+										nominal_voltage_value = complex(voltage_base_val,0.0);
+
+										//Compute the value
+										intermed_impedance[0] += nominal_voltage_value/constant_current[0];
+									}
+								}//End A check
+
+								//Check phases - B
+								if ((NR_busdata[NR_node_reference].phases & 0x02) == 0x02)
+								{
+									//Check power value
+									if (!(constant_power[1].IsZero()))
+									{
+										//Set nominal voltage - |V|^2
+										nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+										//Compute the value
+										intermed_impedance[1] += ~(nominal_voltage_value/constant_power[1]);
+									}
+
+									//Check current
+									if (!(constant_current[1].IsZero()))
+									{
+										//Set nominal voltage - actual angle
+										nominal_voltage_value.SetPolar(voltage_base_val,-2.0*PI/3.0);
+
+										//Compute the value
+										intermed_impedance[1] += nominal_voltage_value/constant_current[1];
+									}
+								}//End B check
+
+								//Check phases - C
+								if ((NR_busdata[NR_node_reference].phases & 0x01) == 0x01)
+								{
+									//Check power value
+									if (!(constant_power[2].IsZero()))
+									{
+										//Set nominal voltage - |V|^2
+										nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+										//Compute the value
+										intermed_impedance[2] += ~(nominal_voltage_value/constant_power[2]);
+									}
+
+									//Check current
+									if (!(constant_current[2].IsZero()))
+									{
+										//Set nominal voltage - actual angle
+										nominal_voltage_value.SetPolar(voltage_base_val,2.0*PI/3.0);
+
+										//Compute the value
+										intermed_impedance[2] += nominal_voltage_value/constant_current[2];
+									}
+								}//End C check
+							}//End wye connection
+
+							//Add the values in
+							if (!(intermed_impedance[0].IsZero()))
+								shunt[0] += complex(1.0)/intermed_impedance[0];
+
+							if (!(intermed_impedance[1].IsZero()))
+								shunt[1] += complex(1.0)/intermed_impedance[1];
+							
+							if (!(intermed_impedance[2].IsZero()))
+								shunt[2] += complex(1.0)/intermed_impedance[2];
+
+							//Power and current remain zero
+
+							//Combination load section
+
+							// *********** DELTA Portions *************
+							//Set new base value
+							voltage_base_val = nominal_voltage * sqrt(3.0);
+
+							//Check phases - AB
+							if ((NR_busdata[NR_node_reference].phases & 0x06) == 0x06)
+							{
+								//Check power value
+								if (!(constant_power_dy[0].IsZero()))
+								{
+									//Set nominal voltage - |V|^2
+									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+									//Compute the value
+									intermed_impedance_dy[0] += ~(nominal_voltage_value/constant_power_dy[0]);
+								}
+
+								//Check current
+								if (!(constant_current_dy[0].IsZero()))
+								{
+									//Set nominal voltage - actual angle
+									nominal_voltage_value.SetPolar(voltage_base_val,PI/6);
+
+									//Compute the value
+									intermed_impedance_dy[0] += nominal_voltage_value/constant_current_dy[0];
+								}
+							}//End AB check
+
+							//Check phases - BC
+							if ((NR_busdata[NR_node_reference].phases & 0x03) == 0x03)
+							{
+								//Check power value
+								if (!(constant_power_dy[1].IsZero()))
+								{
+									//Set nominal voltage - |V|^2
+									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+									//Compute the value
+									intermed_impedance_dy[1] += ~(nominal_voltage_value/constant_power_dy[1]);
+								}
+
+								//Check current
+								if (!(constant_current_dy[1].IsZero()))
+								{
+									//Set nominal voltage - actual angle
+									nominal_voltage_value.SetPolar(voltage_base_val,-1.0*PI/2.0);
+
+									//Compute the value
+									intermed_impedance_dy[1] += nominal_voltage_value/constant_current_dy[1];
+								}
+							}//End BC check
+
+							//Check phases - CA
+							if ((NR_busdata[NR_node_reference].phases & 0x05) == 0x05)
+							{
+								//Check power value
+								if (!(constant_power_dy[2].IsZero()))
+								{
+									//Set nominal voltage - |V|^2
+									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+									//Compute the value
+									intermed_impedance_dy[2] += ~(nominal_voltage_value/constant_power_dy[2]);
+								}
+
+								//Check current
+								if (!(constant_current_dy[2].IsZero()))
+								{
+									//Set nominal voltage - actual angle
+									nominal_voltage_value.SetPolar(voltage_base_val,5.0*PI/6.0);
+
+									//Compute the value
+									intermed_impedance_dy[2] += nominal_voltage_value/constant_current_dy[2];
+								}
+							}//End CA check
+
+							// ********** WYE portions *****************
+							//Set new base value
+							voltage_base_val = nominal_voltage;
+
+							//Check phases - A
+							if ((NR_busdata[NR_node_reference].phases & 0x04) == 0x04)
+							{
+								//Check power value
+								if (!(constant_power_dy[3].IsZero()))
+								{
+									//Set nominal voltage - |V|^2
+									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+									//Compute the value
+									intermed_impedance_dy[3] += ~(nominal_voltage_value/constant_power_dy[3]);
+								}
+
+								//Check current
+								if (!(constant_current_dy[3].IsZero()))
+								{
+									//Set nominal voltage - actual angle
+									nominal_voltage_value = complex(voltage_base_val,0.0);
+
+									//Compute the value
+									intermed_impedance_dy[3] += nominal_voltage_value/constant_current_dy[3];
+								}
+							}//End A check
+
+							//Check phases - B
+							if ((NR_busdata[NR_node_reference].phases & 0x02) == 0x02)
+							{
+								//Check power value
+								if (!(constant_power_dy[4].IsZero()))
+								{
+									//Set nominal voltage - |V|^2
+									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+									//Compute the value
+									intermed_impedance_dy[4] += ~(nominal_voltage_value/constant_power_dy[4]);
+								}
+
+								//Check current
+								if (!(constant_current_dy[4].IsZero()))
+								{
+									//Set nominal voltage - actual angle
+									nominal_voltage_value.SetPolar(voltage_base_val,-2.0*PI/3.0);
+
+									//Compute the value
+									intermed_impedance_dy[4] += nominal_voltage_value/constant_current_dy[4];
+								}
+							}//End B check
+
+							//Check phases - C
+							if ((NR_busdata[NR_node_reference].phases & 0x01) == 0x01)
+							{
+								//Check power value
+								if (!(constant_power_dy[5].IsZero()))
+								{
+									//Set nominal voltage - |V|^2
+									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+									//Compute the value
+									intermed_impedance_dy[5] += ~(nominal_voltage_value/constant_power_dy[5]);
+								}
+
+								//Check current
+								if (!(constant_current_dy[5].IsZero()))
+								{
+									//Set nominal voltage - actual angle
+									nominal_voltage_value.SetPolar(voltage_base_val,2.0*PI/3.0);
+
+									//Compute the value
+									intermed_impedance_dy[5] += nominal_voltage_value/constant_current_dy[5];
+								}
+							}//End C check
+
+							//Do the updated portion
+							for (index_var=0; index_var<6; index_var++)
+							{
+								if (!(intermed_impedance_dy[index_var].IsZero()))
+									shunt_dy[index_var] += complex(1.0)/intermed_impedance_dy[index_var];
+							}
+						}//End below thresh - convert
+						else	//Must be above, be "normal"
+						{
+							if (!(intermed_impedance[0].IsZero()))
+								shunt[0] += complex(1.0)/intermed_impedance[0];
+
+							if (!(intermed_impedance[1].IsZero()))
+								shunt[1] += complex(1.0)/intermed_impedance[1];
+							
+							if (!(intermed_impedance[2].IsZero()))
+								shunt[2] += complex(1.0)/intermed_impedance[2];
+							
+							power[0] += constant_power[0];
+							power[1] += constant_power[1];	
+							power[2] += constant_power[2];
+
+							current[0] += constant_current[0];
+							current[1] += constant_current[1];
+							current[2] += constant_current[2];
+
+							//Combination portion
+							//Do the same for explicit delta/wye connections
+							for (index_var=0; index_var<6; index_var++)
+							{
+								if (!(intermed_impedance_dy[index_var].IsZero()))
+									shunt_dy[index_var] += complex(1.0)/intermed_impedance_dy[index_var];
+
+								power_dy[index_var] += constant_power_dy[index_var];
+
+								current_dy[index_var] += constant_current_dy[index_var];
+							}
+						}//End "perform normally"
+					}//end in-rush
+					else	//False, so go normal
+					{
+						if (!(intermed_impedance[0].IsZero()))
+							shunt[0] += complex(1.0)/intermed_impedance[0];
+
+						if (!(intermed_impedance[1].IsZero()))
+							shunt[1] += complex(1.0)/intermed_impedance[1];
+						
+						if (!(intermed_impedance[2].IsZero()))
+							shunt[2] += complex(1.0)/intermed_impedance[2];
+						
+						power[0] += constant_power[0];
+						power[1] += constant_power[1];	
+						power[2] += constant_power[2];
+
+						current[0] += constant_current[0];
+						current[1] += constant_current[1];
+						current[2] += constant_current[2];
+
+						//Combination Portion
+						//Do the same for explicit delta/wye connections
+						for (index_var=0; index_var<6; index_var++)
+						{
+							if (!(intermed_impedance_dy[index_var].IsZero()))
+								shunt_dy[index_var] += complex(1.0)/intermed_impedance_dy[index_var];
+
+							power_dy[index_var] += constant_power_dy[index_var];
+
+							current_dy[index_var] += constant_current_dy[index_var];
+						}
+					}//End non-inrush
 				}//End normal parent
 				else //DIFF_PARENT
 				{
-					if(intermed_impedance[0].IsZero())
-						shunt[0] = 0.0;
-					else
-						shunt[0] = complex(1.0)/intermed_impedance[0];
-
-					if(intermed_impedance[1].IsZero())
-						shunt[1] = 0.0;
-					else
-						shunt[1] = complex(1.0)/intermed_impedance[1];
-					
-					if(intermed_impedance[2].IsZero())
-						shunt[2] = 0.0;
-					else
-						shunt[2] = complex(1.0)/intermed_impedance[2];
-					
-					power[0] = constant_power[0];
-					power[1] = constant_power[1];	
-					power[2] = constant_power[2];
-					current[0] = constant_current[0];
-					current[1] = constant_current[1];
-					current[2] = constant_current[2];
-
-					//Combination Portion
-					//Do the same for explicit delta/wye connections
-					for (index_var=0; index_var<6; index_var++)
+					//See if in-rush is enabled - only makes sense in reliability situations
+					if (enable_inrush_calculations == true)
 					{
-						if (!(intermed_impedance_dy[index_var].IsZero()))
-							shunt_dy[index_var] += complex(1.0)/intermed_impedance_dy[index_var];
+						//Reset variable
+						volt_below_thresh = false;
 
-						power_dy[index_var] += constant_power_dy[index_var];
+						//Check to see if we're under the voltage pu limit or not -- any version under will trip it
+						if (has_phase(PHASE_D))
+						{
+							voltage_base_val = nominal_voltage * sqrt(3.0);
 
-						current_dy[index_var] += constant_current_dy[index_var];
-					}
+							//Compute per-unit values
+							voltage_pu_vals[0] = voltaged[0].Mag()/voltage_base_val;
+							voltage_pu_vals[1] = voltaged[1].Mag()/voltage_base_val;
+							voltage_pu_vals[2] = voltaged[2].Mag()/voltage_base_val;
+
+							//Check them - Phase AB
+							if (((NR_busdata[NR_node_reference].phases & 0x06) == 0x06) && (voltage_pu_vals[0] < impedance_conversion_low_pu))
+							{
+								volt_below_thresh = true;
+							}
+
+							//Check them - Phase BC
+							if (((NR_busdata[NR_node_reference].phases & 0x03) == 0x03) && (voltage_pu_vals[1] < impedance_conversion_low_pu))
+							{
+								volt_below_thresh = true;
+							}
+
+							//Check them - Phase CA
+							if (((NR_busdata[NR_node_reference].phases & 0x05) == 0x05) && (voltage_pu_vals[2] < impedance_conversion_low_pu))
+							{
+								volt_below_thresh = true;
+							}
+						}
+						else	//Must be Wye-connected
+						{
+							//Set nominal voltage
+							voltage_base_val = nominal_voltage;
+
+							//Compute per-unit values
+							voltage_pu_vals[0] = voltage[0].Mag()/voltage_base_val;
+							voltage_pu_vals[1] = voltage[1].Mag()/voltage_base_val;
+							voltage_pu_vals[2] = voltage[2].Mag()/voltage_base_val;
+
+							//Check them - Phase A
+							if (((NR_busdata[NR_node_reference].phases & 0x04) == 0x04) && (voltage_pu_vals[0] < impedance_conversion_low_pu))
+							{
+								volt_below_thresh = true;
+							}
+
+							//Check them - Phase B
+							if (((NR_busdata[NR_node_reference].phases & 0x02) == 0x01) && (voltage_pu_vals[1] < impedance_conversion_low_pu))
+							{
+								volt_below_thresh = true;
+							}
+
+							//Check them - Phase C
+							if (((NR_busdata[NR_node_reference].phases & 0x01) == 0x01) && (voltage_pu_vals[2] < impedance_conversion_low_pu))
+							{
+								volt_below_thresh = true;
+							}
+						}
+
+						//See if tripped
+						if (volt_below_thresh == true)
+						{
+							//Convert all loads to an impedance-equivalent
+							if (has_phase(PHASE_D))	//Delta-connected
+							{
+								//Reset - out of paranoia
+								voltage_base_val = nominal_voltage * sqrt(3.0);
+
+								//Check phases - AB
+								if ((NR_busdata[NR_node_reference].phases & 0x06) == 0x06)
+								{
+									//Check power value
+									if (!(constant_power[0].IsZero()))
+									{
+										//Set nominal voltage - |V|^2
+										nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+										//Compute the value
+										intermed_impedance[0] += ~(nominal_voltage_value/constant_power[0]);
+									}
+
+									//Check current
+									if (!(constant_current[0].IsZero()))
+									{
+										//Set nominal voltage - actual angle
+										nominal_voltage_value.SetPolar(voltage_base_val,PI/6);
+
+										//Compute the value
+										intermed_impedance[0] += nominal_voltage_value/constant_current[0];
+									}
+								}//End AB check
+
+								//Check phases - BC
+								if ((NR_busdata[NR_node_reference].phases & 0x03) == 0x03)
+								{
+									//Check power value
+									if (!(constant_power[1].IsZero()))
+									{
+										//Set nominal voltage - |V|^2
+										nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+										//Compute the value
+										intermed_impedance[1] += ~(nominal_voltage_value/constant_power[1]);
+									}
+
+									//Check current
+									if (!(constant_current[1].IsZero()))
+									{
+										//Set nominal voltage - actual angle
+										nominal_voltage_value.SetPolar(voltage_base_val,-1.0*PI/2.0);
+
+										//Compute the value
+										intermed_impedance[1] += nominal_voltage_value/constant_current[1];
+									}
+								}//End BC check
+
+								//Check phases - CA
+								if ((NR_busdata[NR_node_reference].phases & 0x05) == 0x05)
+								{
+									//Check power value
+									if (!(constant_power[2].IsZero()))
+									{
+										//Set nominal voltage - |V|^2
+										nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+										//Compute the value
+										intermed_impedance[2] += ~(nominal_voltage_value/constant_power[2]);
+									}
+
+									//Check current
+									if (!(constant_current[2].IsZero()))
+									{
+										//Set nominal voltage - actual angle
+										nominal_voltage_value.SetPolar(voltage_base_val,5.0*PI/6.0);
+
+										//Compute the value
+										intermed_impedance[2] += nominal_voltage_value/constant_current[2];
+									}
+								}//End CA check
+							}//End Delta connection
+							else	//Wye-connected
+							{
+								//Reset - out of paranoia
+								voltage_base_val = nominal_voltage;
+
+								//Check phases - A
+								if ((NR_busdata[NR_node_reference].phases & 0x04) == 0x04)
+								{
+									//Check power value
+									if (!(constant_power[0].IsZero()))
+									{
+										//Set nominal voltage - |V|^2
+										nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+										//Compute the value
+										intermed_impedance[0] += ~(nominal_voltage_value/constant_power[0]);
+									}
+
+									//Check current
+									if (!(constant_current[0].IsZero()))
+									{
+										//Set nominal voltage - actual angle
+										nominal_voltage_value = complex(voltage_base_val,0.0);
+
+										//Compute the value
+										intermed_impedance[0] += nominal_voltage_value/constant_current[0];
+									}
+								}//End A check
+
+								//Check phases - B
+								if ((NR_busdata[NR_node_reference].phases & 0x02) == 0x02)
+								{
+									//Check power value
+									if (!(constant_power[1].IsZero()))
+									{
+										//Set nominal voltage - |V|^2
+										nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+										//Compute the value
+										intermed_impedance[1] += ~(nominal_voltage_value/constant_power[1]);
+									}
+
+									//Check current
+									if (!(constant_current[1].IsZero()))
+									{
+										//Set nominal voltage - actual angle
+										nominal_voltage_value.SetPolar(voltage_base_val,-2.0*PI/3.0);
+
+										//Compute the value
+										intermed_impedance[1] += nominal_voltage_value/constant_current[1];
+									}
+								}//End B check
+
+								//Check phases - C
+								if ((NR_busdata[NR_node_reference].phases & 0x01) == 0x01)
+								{
+									//Check power value
+									if (!(constant_power[2].IsZero()))
+									{
+										//Set nominal voltage - |V|^2
+										nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+										//Compute the value
+										intermed_impedance[2] += ~(nominal_voltage_value/constant_power[2]);
+									}
+
+									//Check current
+									if (!(constant_current[2].IsZero()))
+									{
+										//Set nominal voltage - actual angle
+										nominal_voltage_value.SetPolar(voltage_base_val,2.0*PI/3.0);
+
+										//Compute the value
+										intermed_impedance[2] += nominal_voltage_value/constant_current[2];
+									}
+								}//End C check
+							}//End wye connection
+
+							//Add the values in
+							if (!(intermed_impedance[0].IsZero()))
+								shunt[0] = complex(1.0)/intermed_impedance[0];
+							else
+								shunt[0] = complex(0.0,0.0);	//Zero, just in case
+
+							if (!(intermed_impedance[1].IsZero()))
+								shunt[1] = complex(1.0)/intermed_impedance[1];
+							else
+								shunt[1] = complex(0.0,0.0);	//Zero, just in case
+							
+							if (!(intermed_impedance[2].IsZero()))
+								shunt[2] = complex(1.0)/intermed_impedance[2];
+							else
+								shunt[2] = complex(0.0,0.0);	//Zero, just in case
+
+							//Power and current remain zero
+							
+							//Combination load section
+
+							// *********** DELTA Portions *************
+							//Set new base value
+							voltage_base_val = nominal_voltage * sqrt(3.0);
+
+							//Check phases - AB
+							if ((NR_busdata[NR_node_reference].phases & 0x06) == 0x06)
+							{
+								//Check power value
+								if (!(constant_power_dy[0].IsZero()))
+								{
+									//Set nominal voltage - |V|^2
+									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+									//Compute the value
+									intermed_impedance_dy[0] += ~(nominal_voltage_value/constant_power_dy[0]);
+								}
+
+								//Check current
+								if (!(constant_current_dy[0].IsZero()))
+								{
+									//Set nominal voltage - actual angle
+									nominal_voltage_value.SetPolar(voltage_base_val,PI/6);
+
+									//Compute the value
+									intermed_impedance_dy[0] += nominal_voltage_value/constant_current_dy[0];
+								}
+							}//End AB check
+
+							//Check phases - BC
+							if ((NR_busdata[NR_node_reference].phases & 0x03) == 0x03)
+							{
+								//Check power value
+								if (!(constant_power_dy[1].IsZero()))
+								{
+									//Set nominal voltage - |V|^2
+									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+									//Compute the value
+									intermed_impedance_dy[1] += ~(nominal_voltage_value/constant_power_dy[1]);
+								}
+
+								//Check current
+								if (!(constant_current_dy[1].IsZero()))
+								{
+									//Set nominal voltage - actual angle
+									nominal_voltage_value.SetPolar(voltage_base_val,-1.0*PI/2.0);
+
+									//Compute the value
+									intermed_impedance_dy[1] += nominal_voltage_value/constant_current_dy[1];
+								}
+							}//End BC check
+
+							//Check phases - CA
+							if ((NR_busdata[NR_node_reference].phases & 0x05) == 0x05)
+							{
+								//Check power value
+								if (!(constant_power_dy[2].IsZero()))
+								{
+									//Set nominal voltage - |V|^2
+									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+									//Compute the value
+									intermed_impedance_dy[2] += ~(nominal_voltage_value/constant_power_dy[2]);
+								}
+
+								//Check current
+								if (!(constant_current_dy[2].IsZero()))
+								{
+									//Set nominal voltage - actual angle
+									nominal_voltage_value.SetPolar(voltage_base_val,5.0*PI/6.0);
+
+									//Compute the value
+									intermed_impedance_dy[2] += nominal_voltage_value/constant_current_dy[2];
+								}
+							}//End CA check
+
+							// ********** WYE portions *****************
+							//Set new base value
+							voltage_base_val = nominal_voltage;
+
+							//Check phases - A
+							if ((NR_busdata[NR_node_reference].phases & 0x04) == 0x04)
+							{
+								//Check power value
+								if (!(constant_power_dy[3].IsZero()))
+								{
+									//Set nominal voltage - |V|^2
+									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+									//Compute the value
+									intermed_impedance_dy[3] += ~(nominal_voltage_value/constant_power_dy[3]);
+								}
+
+								//Check current
+								if (!(constant_current_dy[3].IsZero()))
+								{
+									//Set nominal voltage - actual angle
+									nominal_voltage_value = complex(voltage_base_val,0.0);
+
+									//Compute the value
+									intermed_impedance_dy[3] += nominal_voltage_value/constant_current_dy[3];
+								}
+							}//End A check
+
+							//Check phases - B
+							if ((NR_busdata[NR_node_reference].phases & 0x02) == 0x02)
+							{
+								//Check power value
+								if (!(constant_power_dy[4].IsZero()))
+								{
+									//Set nominal voltage - |V|^2
+									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+									//Compute the value
+									intermed_impedance_dy[4] += ~(nominal_voltage_value/constant_power_dy[4]);
+								}
+
+								//Check current
+								if (!(constant_current_dy[4].IsZero()))
+								{
+									//Set nominal voltage - actual angle
+									nominal_voltage_value.SetPolar(voltage_base_val,-2.0*PI/3.0);
+
+									//Compute the value
+									intermed_impedance_dy[4] += nominal_voltage_value/constant_current_dy[4];
+								}
+							}//End B check
+
+							//Check phases - C
+							if ((NR_busdata[NR_node_reference].phases & 0x01) == 0x01)
+							{
+								//Check power value
+								if (!(constant_power_dy[5].IsZero()))
+								{
+									//Set nominal voltage - |V|^2
+									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+									//Compute the value
+									intermed_impedance_dy[5] += ~(nominal_voltage_value/constant_power_dy[5]);
+								}
+
+								//Check current
+								if (!(constant_current_dy[5].IsZero()))
+								{
+									//Set nominal voltage - actual angle
+									nominal_voltage_value.SetPolar(voltage_base_val,2.0*PI/3.0);
+
+									//Compute the value
+									intermed_impedance_dy[5] += nominal_voltage_value/constant_current_dy[5];
+								}
+							}//End C check
+
+							//Do the updated portion
+							for (index_var=0; index_var<6; index_var++)
+							{
+								if (!(intermed_impedance_dy[index_var].IsZero()))
+									shunt_dy[index_var] += complex(1.0)/intermed_impedance_dy[index_var];
+							}
+						}//End below thresh - convert
+						else	//Must be above, be "normal"
+						{
+							if(intermed_impedance[0].IsZero())
+								shunt[0] = 0.0;
+							else
+								shunt[0] = complex(1.0)/intermed_impedance[0];
+
+							if(intermed_impedance[1].IsZero())
+								shunt[1] = 0.0;
+							else
+								shunt[1] = complex(1.0)/intermed_impedance[1];
+							
+							if(intermed_impedance[2].IsZero())
+								shunt[2] = 0.0;
+							else
+								shunt[2] = complex(1.0)/intermed_impedance[2];
+							
+							power[0] = constant_power[0];
+							power[1] = constant_power[1];	
+							power[2] = constant_power[2];
+							current[0] = constant_current[0];
+							current[1] = constant_current[1];
+							current[2] = constant_current[2];
+
+							//Combination Portion
+							//Do the same for explicit delta/wye connections
+							for (index_var=0; index_var<6; index_var++)
+							{
+								if (!(intermed_impedance_dy[index_var].IsZero()))
+									shunt_dy[index_var] += complex(1.0)/intermed_impedance_dy[index_var];
+
+								power_dy[index_var] += constant_power_dy[index_var];
+
+								current_dy[index_var] += constant_current_dy[index_var];
+							}
+						}//End normal operations
+					}//End in-rush enabled
+					else	//No in-rush, normal operations
+					{
+						if(intermed_impedance[0].IsZero())
+							shunt[0] = 0.0;
+						else
+							shunt[0] = complex(1.0)/intermed_impedance[0];
+
+						if(intermed_impedance[1].IsZero())
+							shunt[1] = 0.0;
+						else
+							shunt[1] = complex(1.0)/intermed_impedance[1];
+						
+						if(intermed_impedance[2].IsZero())
+							shunt[2] = 0.0;
+						else
+							shunt[2] = complex(1.0)/intermed_impedance[2];
+						
+						power[0] = constant_power[0];
+						power[1] = constant_power[1];	
+						power[2] = constant_power[2];
+						current[0] = constant_current[0];
+						current[1] = constant_current[1];
+						current[2] = constant_current[2];
+
+						//Combination Portion
+						//Do the same for explicit delta/wye connections
+						for (index_var=0; index_var<6; index_var++)
+						{
+							if (!(intermed_impedance_dy[index_var].IsZero()))
+								shunt_dy[index_var] += complex(1.0)/intermed_impedance_dy[index_var];
+
+							power_dy[index_var] += constant_power_dy[index_var];
+
+							current_dy[index_var] += constant_current_dy[index_var];
+						}
+					}//End normal operations
 				}//End differently connected parent
 			}//Some form of NR parent
 			else	//Basically, not a NR parent
@@ -739,41 +1719,498 @@ void load::load_update_fxn(bool fault_mode)
 					node_reference_value = NR_node_reference;
 				}
 
-				if(intermed_impedance[0].IsZero())
-					shunt[0] = 0.0;
-				else
-					shunt[0] = complex(1)/intermed_impedance[0];
-
-				if(intermed_impedance[1].IsZero())
-					shunt[1] = 0.0;
-				else
-					shunt[1] = complex(1)/intermed_impedance[1];
-				
-				if(intermed_impedance[2].IsZero())
-					shunt[2] = 0.0;
-				else
-					shunt[2] = complex(1)/intermed_impedance[2];
-				
-				power[0] = constant_power[0];
-				power[1] = constant_power[1];	
-				power[2] = constant_power[2];
-
-				current[0] = constant_current[0];
-				current[1] = constant_current[1];
-				current[2] = constant_current[2];
-
-				//Do the same for explicit delta/wye connections - handle the same way (draconian overwrites!)
-				for (index_var=0; index_var<6; index_var++)
+				//See if in-rush is enabled - only makes sense in reliability situations
+				if (enable_inrush_calculations == true)
 				{
-					if (intermed_impedance_dy[index_var].IsZero())
-						shunt_dy[index_var] = 0.0;
+					//Reset variable
+					volt_below_thresh = false;
+
+					//Check to see if we're under the voltage pu limit or not -- any version under will trip it
+					if (has_phase(PHASE_D))
+					{
+						voltage_base_val = nominal_voltage * sqrt(3.0);
+
+						//Compute per-unit values
+						voltage_pu_vals[0] = voltaged[0].Mag()/voltage_base_val;
+						voltage_pu_vals[1] = voltaged[1].Mag()/voltage_base_val;
+						voltage_pu_vals[2] = voltaged[2].Mag()/voltage_base_val;
+
+						//Check them - Phase AB
+						if (((NR_busdata[node_reference_value].phases & 0x06) == 0x06) && (voltage_pu_vals[0] < impedance_conversion_low_pu))
+						{
+							volt_below_thresh = true;
+						}
+
+						//Check them - Phase BC
+						if (((NR_busdata[node_reference_value].phases & 0x03) == 0x03) && (voltage_pu_vals[1] < impedance_conversion_low_pu))
+						{
+							volt_below_thresh = true;
+						}
+
+						//Check them - Phase CA
+						if (((NR_busdata[node_reference_value].phases & 0x05) == 0x05) && (voltage_pu_vals[2] < impedance_conversion_low_pu))
+						{
+							volt_below_thresh = true;
+						}
+					}
+					else	//Must be Wye-connected
+					{
+						//Set nominal voltage
+						voltage_base_val = nominal_voltage;
+
+						//Compute per-unit values
+						voltage_pu_vals[0] = voltage[0].Mag()/voltage_base_val;
+						voltage_pu_vals[1] = voltage[1].Mag()/voltage_base_val;
+						voltage_pu_vals[2] = voltage[2].Mag()/voltage_base_val;
+
+						//Check them - Phase A
+						if (((NR_busdata[node_reference_value].phases & 0x04) == 0x04) && (voltage_pu_vals[0] < impedance_conversion_low_pu))
+						{
+							volt_below_thresh = true;
+						}
+
+						//Check them - Phase B
+						if (((NR_busdata[node_reference_value].phases & 0x02) == 0x01) && (voltage_pu_vals[1] < impedance_conversion_low_pu))
+						{
+							volt_below_thresh = true;
+						}
+
+						//Check them - Phase C
+						if (((NR_busdata[node_reference_value].phases & 0x01) == 0x01) && (voltage_pu_vals[2] < impedance_conversion_low_pu))
+						{
+							volt_below_thresh = true;
+						}
+					}
+
+					//See if tripped
+					if (volt_below_thresh == true)
+					{
+						//Zero local power and current accumulators - unparented loads don't do this by default (expect to overwrite)
+						power[0] = 0.0;
+						power[1] = 0.0;
+						power[2] = 0.0;
+						current[0] = 0.0;
+						current[1] = 0.0;
+						current[2] = 0.0;
+
+						//Explicitly specified load portions
+						power_dy[0] = power_dy[1] = power_dy[2] = 0.0;
+						power_dy[3] = power_dy[4] = power_dy[5] = 0.0;
+						current_dy[0] = current_dy[1] = current_dy[2] = 0.0;
+						current_dy[3] = current_dy[4] = current_dy[5] = 0.0;
+
+						//Convert all loads to an impedance-equivalent
+						if (has_phase(PHASE_D))	//Delta-connected
+						{
+							//Reset - out of paranoia
+							voltage_base_val = nominal_voltage * sqrt(3.0);
+
+							//Check phases - AB
+							if ((NR_busdata[node_reference_value].phases & 0x06) == 0x06)
+							{
+								//Check power value
+								if (!(constant_power[0].IsZero()))
+								{
+									//Set nominal voltage - |V|^2
+									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+									//Compute the value
+									intermed_impedance[0] += ~(nominal_voltage_value/constant_power[0]);
+								}
+
+								//Check current
+								if (!(constant_current[0].IsZero()))
+								{
+									//Set nominal voltage - actual angle
+									nominal_voltage_value.SetPolar(voltage_base_val,PI/6);
+
+									//Compute the value
+									intermed_impedance[0] += nominal_voltage_value/constant_current[0];
+								}
+							}//End AB check
+
+							//Check phases - BC
+							if ((NR_busdata[node_reference_value].phases & 0x03) == 0x03)
+							{
+								//Check power value
+								if (!(constant_power[1].IsZero()))
+								{
+									//Set nominal voltage - |V|^2
+									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+									//Compute the value
+									intermed_impedance[1] += ~(nominal_voltage_value/constant_power[1]);
+								}
+
+								//Check current
+								if (!(constant_current[1].IsZero()))
+								{
+									//Set nominal voltage - actual angle
+									nominal_voltage_value.SetPolar(voltage_base_val,-1.0*PI/2.0);
+
+									//Compute the value
+									intermed_impedance[1] += nominal_voltage_value/constant_current[1];
+								}
+							}//End BC check
+
+							//Check phases - CA
+							if ((NR_busdata[node_reference_value].phases & 0x05) == 0x05)
+							{
+								//Check power value
+								if (!(constant_power[2].IsZero()))
+								{
+									//Set nominal voltage - |V|^2
+									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+									//Compute the value
+									intermed_impedance[2] += ~(nominal_voltage_value/constant_power[2]);
+								}
+
+								//Check current
+								if (!(constant_current[2].IsZero()))
+								{
+									//Set nominal voltage - actual angle
+									nominal_voltage_value.SetPolar(voltage_base_val,5.0*PI/6.0);
+
+									//Compute the value
+									intermed_impedance[2] += nominal_voltage_value/constant_current[2];
+								}
+							}//End CA check
+						}//End Delta connection
+						else	//Wye-connected
+						{
+							//Reset - out of paranoia
+							voltage_base_val = nominal_voltage;
+
+							//Check phases - A
+							if ((NR_busdata[node_reference_value].phases & 0x04) == 0x04)
+							{
+								//Check power value
+								if (!(constant_power[0].IsZero()))
+								{
+									//Set nominal voltage - |V|^2
+									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+									//Compute the value
+									intermed_impedance[0] += ~(nominal_voltage_value/constant_power[0]);
+								}
+
+								//Check current
+								if (!(constant_current[0].IsZero()))
+								{
+									//Set nominal voltage - actual angle
+									nominal_voltage_value = complex(voltage_base_val,0.0);
+
+									//Compute the value
+									intermed_impedance[0] += nominal_voltage_value/constant_current[0];
+								}
+							}//End A check
+
+							//Check phases - B
+							if ((NR_busdata[node_reference_value].phases & 0x02) == 0x02)
+							{
+								//Check power value
+								if (!(constant_power[1].IsZero()))
+								{
+									//Set nominal voltage - |V|^2
+									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+									//Compute the value
+									intermed_impedance[1] += ~(nominal_voltage_value/constant_power[1]);
+								}
+
+								//Check current
+								if (!(constant_current[1].IsZero()))
+								{
+									//Set nominal voltage - actual angle
+									nominal_voltage_value.SetPolar(voltage_base_val,-2.0*PI/3.0);
+
+									//Compute the value
+									intermed_impedance[1] += nominal_voltage_value/constant_current[1];
+								}
+							}//End B check
+
+							//Check phases - C
+							if ((NR_busdata[node_reference_value].phases & 0x01) == 0x01)
+							{
+								//Check power value
+								if (!(constant_power[2].IsZero()))
+								{
+									//Set nominal voltage - |V|^2
+									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+									//Compute the value
+									intermed_impedance[2] += ~(nominal_voltage_value/constant_power[2]);
+								}
+
+								//Check current
+								if (!(constant_current[2].IsZero()))
+								{
+									//Set nominal voltage - actual angle
+									nominal_voltage_value.SetPolar(voltage_base_val,2.0*PI/3.0);
+
+									//Compute the value
+									intermed_impedance[2] += nominal_voltage_value/constant_current[2];
+								}
+							}//End C check
+						}//End Wye connection
+
+						//Add the values in
+						if (!(intermed_impedance[0].IsZero()))
+							shunt[0] = complex(1.0)/intermed_impedance[0];
+						else
+							shunt[0] = complex(0.0,0.0);	//Zero, just in case
+
+						if (!(intermed_impedance[1].IsZero()))
+							shunt[1] = complex(1.0)/intermed_impedance[1];
+						else
+							shunt[1] = complex(0.0,0.0);	//Zero, just in case
+						
+						if (!(intermed_impedance[2].IsZero()))
+							shunt[2] = complex(1.0)/intermed_impedance[2];
+						else
+							shunt[2] = complex(0.0,0.0);	//Zero, just in case
+
+						//Power and current remain zero
+						
+						//Combination load section
+
+						// *********** DELTA Portions *************
+						//Set new base value
+						voltage_base_val = nominal_voltage * sqrt(3.0);
+
+						//Check phases - AB
+						if ((NR_busdata[node_reference_value].phases & 0x06) == 0x06)
+						{
+							//Check power value
+							if (!(constant_power_dy[0].IsZero()))
+							{
+								//Set nominal voltage - |V|^2
+								nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+								//Compute the value
+								intermed_impedance_dy[0] += ~(nominal_voltage_value/constant_power_dy[0]);
+							}
+
+							//Check current
+							if (!(constant_current_dy[0].IsZero()))
+							{
+								//Set nominal voltage - actual angle
+								nominal_voltage_value.SetPolar(voltage_base_val,PI/6);
+
+								//Compute the value
+								intermed_impedance_dy[0] += nominal_voltage_value/constant_current_dy[0];
+							}
+						}//End AB check
+
+						//Check phases - BC
+						if ((NR_busdata[node_reference_value].phases & 0x03) == 0x03)
+						{
+							//Check power value
+							if (!(constant_power_dy[1].IsZero()))
+							{
+								//Set nominal voltage - |V|^2
+								nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+								//Compute the value
+								intermed_impedance_dy[1] += ~(nominal_voltage_value/constant_power_dy[1]);
+							}
+
+							//Check current
+							if (!(constant_current_dy[1].IsZero()))
+							{
+								//Set nominal voltage - actual angle
+								nominal_voltage_value.SetPolar(voltage_base_val,-1.0*PI/2.0);
+
+								//Compute the value
+								intermed_impedance_dy[1] += nominal_voltage_value/constant_current_dy[1];
+							}
+						}//End BC check
+
+						//Check phases - CA
+						if ((NR_busdata[node_reference_value].phases & 0x05) == 0x05)
+						{
+							//Check power value
+							if (!(constant_power_dy[2].IsZero()))
+							{
+								//Set nominal voltage - |V|^2
+								nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+								//Compute the value
+								intermed_impedance_dy[2] += ~(nominal_voltage_value/constant_power_dy[2]);
+							}
+
+							//Check current
+							if (!(constant_current_dy[2].IsZero()))
+							{
+								//Set nominal voltage - actual angle
+								nominal_voltage_value.SetPolar(voltage_base_val,5.0*PI/6.0);
+
+								//Compute the value
+								intermed_impedance_dy[2] += nominal_voltage_value/constant_current_dy[2];
+							}
+						}//End CA check
+
+						// ********** WYE portions *****************
+						//Set new base value
+						voltage_base_val = nominal_voltage;
+
+						//Check phases - A
+						if ((NR_busdata[node_reference_value].phases & 0x04) == 0x04)
+						{
+							//Check power value
+							if (!(constant_power_dy[3].IsZero()))
+							{
+								//Set nominal voltage - |V|^2
+								nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+								//Compute the value
+								intermed_impedance_dy[3] += ~(nominal_voltage_value/constant_power_dy[3]);
+							}
+
+							//Check current
+							if (!(constant_current_dy[3].IsZero()))
+							{
+								//Set nominal voltage - actual angle
+								nominal_voltage_value = complex(voltage_base_val,0.0);
+
+								//Compute the value
+								intermed_impedance_dy[3] += nominal_voltage_value/constant_current_dy[3];
+							}
+						}//End A check
+
+						//Check phases - B
+						if ((NR_busdata[node_reference_value].phases & 0x02) == 0x02)
+						{
+							//Check power value
+							if (!(constant_power_dy[4].IsZero()))
+							{
+								//Set nominal voltage - |V|^2
+								nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+								//Compute the value
+								intermed_impedance_dy[4] += ~(nominal_voltage_value/constant_power_dy[4]);
+							}
+
+							//Check current
+							if (!(constant_current_dy[4].IsZero()))
+							{
+								//Set nominal voltage - actual angle
+								nominal_voltage_value.SetPolar(voltage_base_val,-2.0*PI/3.0);
+
+								//Compute the value
+								intermed_impedance_dy[4] += nominal_voltage_value/constant_current_dy[4];
+							}
+						}//End B check
+
+						//Check phases - C
+						if ((NR_busdata[node_reference_value].phases & 0x01) == 0x01)
+						{
+							//Check power value
+							if (!(constant_power_dy[5].IsZero()))
+							{
+								//Set nominal voltage - |V|^2
+								nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+
+								//Compute the value
+								intermed_impedance_dy[5] += ~(nominal_voltage_value/constant_power_dy[5]);
+							}
+
+							//Check current
+							if (!(constant_current_dy[5].IsZero()))
+							{
+								//Set nominal voltage - actual angle
+								nominal_voltage_value.SetPolar(voltage_base_val,2.0*PI/3.0);
+
+								//Compute the value
+								intermed_impedance_dy[5] += nominal_voltage_value/constant_current_dy[5];
+							}
+						}//End C check
+
+						//Do the updated portion
+						for (index_var=0; index_var<6; index_var++)
+						{
+							if (!(intermed_impedance_dy[index_var].IsZero()))
+								shunt_dy[index_var] = complex(1.0)/intermed_impedance_dy[index_var];
+						}
+					}//End below thresh - convert
+					else	//Must be above, be "normal"
+					{
+						if(intermed_impedance[0].IsZero())
+							shunt[0] = 0.0;
+						else
+							shunt[0] = complex(1)/intermed_impedance[0];
+
+						if(intermed_impedance[1].IsZero())
+							shunt[1] = 0.0;
+						else
+							shunt[1] = complex(1)/intermed_impedance[1];
+						
+						if(intermed_impedance[2].IsZero())
+							shunt[2] = 0.0;
+						else
+							shunt[2] = complex(1)/intermed_impedance[2];
+						
+						power[0] = constant_power[0];
+						power[1] = constant_power[1];	
+						power[2] = constant_power[2];
+
+						current[0] = constant_current[0];
+						current[1] = constant_current[1];
+						current[2] = constant_current[2];
+
+						//Do the same for explicit delta/wye connections - handle the same way (draconian overwrites!)
+						for (index_var=0; index_var<6; index_var++)
+						{
+							if (intermed_impedance_dy[index_var].IsZero())
+								shunt_dy[index_var] = 0.0;
+							else
+								shunt_dy[index_var] = complex(1.0)/intermed_impedance_dy[index_var];
+
+							power_dy[index_var] = constant_power_dy[index_var];
+
+							current_dy[index_var] = constant_current_dy[index_var];
+						}
+					}//End above voltage threshold
+				}//End in-rush enabled
+				else	//Not in-rush, just normal operations
+				{
+					if(intermed_impedance[0].IsZero())
+						shunt[0] = 0.0;
 					else
-						shunt_dy[index_var] = complex(1.0)/intermed_impedance_dy[index_var];
+						shunt[0] = complex(1)/intermed_impedance[0];
 
-					power_dy[index_var] = constant_power_dy[index_var];
+					if(intermed_impedance[1].IsZero())
+						shunt[1] = 0.0;
+					else
+						shunt[1] = complex(1)/intermed_impedance[1];
+					
+					if(intermed_impedance[2].IsZero())
+						shunt[2] = 0.0;
+					else
+						shunt[2] = complex(1)/intermed_impedance[2];
+					
+					power[0] = constant_power[0];
+					power[1] = constant_power[1];	
+					power[2] = constant_power[2];
 
-					current_dy[index_var] = constant_current_dy[index_var];
-				}
+					current[0] = constant_current[0];
+					current[1] = constant_current[1];
+					current[2] = constant_current[2];
+
+					//Do the same for explicit delta/wye connections - handle the same way (draconian overwrites!)
+					for (index_var=0; index_var<6; index_var++)
+					{
+						if (intermed_impedance_dy[index_var].IsZero())
+							shunt_dy[index_var] = 0.0;
+						else
+							shunt_dy[index_var] = complex(1.0)/intermed_impedance_dy[index_var];
+
+						power_dy[index_var] = constant_power_dy[index_var];
+
+						current_dy[index_var] = constant_current_dy[index_var];
+					}
+				}//End normal operations
 			}//End not a parented NR
 		}//Handle all three
 		else	//Zero all three - may cause issues with P/C loads, but why parent a load to a load??
@@ -798,6 +2235,302 @@ void load::load_update_fxn(bool fault_mode)
 			}
 		}//End zero
 	}//End reliability mode
+
+	//One time initialization (for now) code for in-rush -- checks for allocations
+	if (enable_inrush_calculations == true)
+	{
+		//See if we're a parent or child
+		if ((SubNode == CHILD) || (SubNode == DIFF_CHILD))	//We're a child - check with our Mommy/Daddy
+		{
+			//We're not a legit parent! See if we need to allocate for our senile parents
+			if (NR_busdata[*NR_subnode_reference].full_Y_load == NULL)	//Nope, not set yet
+			{
+				//Map our parent
+				temp_par_node = OBJECTDATA(SubNodeParent,node);
+
+				//Make sure it worked, for giggles
+				if (temp_par_node == NULL)
+				{
+					//Get header information
+					obj = OBJECTHDR(this);
+
+					GL_THROW("load:%s - failed to map parent object for childed node",obj->name ? obj->name : "unnamed");
+					/*  TROUBLESHOOT
+					While attempting to link to the parent load, an error occurred.  Please try again.
+					If the error persists, please submit your code and a bug report via the trac website.
+					*/
+				}
+
+				//See if our parent has been allocated yet or not - theoretically should have been done by now
+				if (temp_par_node->full_Y_load == NULL)
+				{
+					//Lock our parent
+					LOCK_OBJECT(SubNodeParent);
+
+					//Do allocations
+					temp_par_node->full_Y_load = (complex *)gl_malloc(3*sizeof(complex));
+
+					//Check it
+					if (temp_par_node->full_Y_load==NULL)
+					{
+						GL_THROW("Node:%s failed to allocate space for the a deltamode variable",SubNodeParent->name);
+						/*  TROUBLESHOOT
+						While attempting to allocate memory for a dynamics-required (deltamode) variable, an error
+						occurred. Please try again.  If the error persists, please submit your code and a bug
+						report via the trac website.
+						*/
+					}
+
+					//Zero it, just to be safe (gens will accumulate into it)
+					temp_par_node->full_Y_load[0] = temp_par_node->full_Y_load[1] = temp_par_node->full_Y_load[2] = complex(0.0,0.0);
+					//temp_par_node->full_Y_load[3] = temp_par_node->full_Y_load[4] = temp_par_node->full_Y_load[5] = complex(0.0,0.0);	//Needed if ever go full 3x3
+					//temp_par_node->full_Y_load[6] = temp_par_node->full_Y_load[7] = temp_par_node->full_Y_load[8] = complex(0.0,0.0);
+
+					//Unlock our parent
+					UNLOCK_OBJECT(SubNodeParent);
+
+					//Link our parent up inside the NR_busdata structure, otherwise this will do nothing
+					NR_busdata[*NR_subnode_reference].full_Y_load = temp_par_node->full_Y_load;
+				}//End parent wasn't allocated
+			}//End allocation check
+		}//End childed load
+		//Default else -- if we're a parent, we're a load, so we already allocated this as part of our routine in init
+	}
+	//Defaulted else -- either already done, or not needed
+
+	//In-rush update information - incorporate the latest "impedance" values
+	//Put at bottom to insure it gets the "converted impedance final result"
+	//Deltamode catch and check
+	//if ((deltatimestep_running > 0) && (enable_inrush_calculations == true))
+	if (enable_inrush_calculations == true)
+	{
+		if (deltatimestep_running > 0)	//In deltamode
+		{
+			//Get current deltamode timestep
+			curr_delta_time = gl_globaldeltaclock;
+
+			//Set flag
+			require_inrush_update = true;
+
+			//See if we're a different timestep
+			if (curr_delta_time != prev_delta_time)
+			{
+				//Loop through the phases for the updates
+				for (index_var=0; index_var<3; index_var++)
+				{
+					//Check and see what type of load this is -- Phase A
+					if (shunt[index_var].Im()>0.0)	//Capacitve
+					{
+						//Zero all inductive terms, just because
+						LoadHistTermL[index_var] = complex(0.0,0.0);
+						LoadHistTermL[index_var+3] = complex(0.0,0.0);
+
+						//Update capacitive history terms
+						LoadHistTermC[index_var+3] = LoadHistTermC[index_var];
+
+						//Calculate the updated history terms - hrcf = chrc*vfromprev - hrcfprev
+						LoadHistTermC[index_var] = NR_busdata[NR_node_reference].V[index_var] * chrcloadstore[index_var] -
+												   LoadHistTermC[index_var+3];
+					}
+					else if (shunt[index_var].Im()<0.0) //Inductive
+					{
+						//Zero all capacitive terms, just because
+						LoadHistTermC[index_var] = complex(0.0,0.0);
+						LoadHistTermC[index_var+3] = complex(0.0,0.0);
+
+						//Update inductive history terms
+						LoadHistTermL[index_var+3] = LoadHistTermL[index_var];
+
+						//Calculate the updated history terms - hrl = ahrl*vprev-bhrl*hrlprev
+						//Cheating references to voltages
+						//Do a parent check
+						if ((SubNode != CHILD) && (SubNode != DIFF_CHILD))
+						{
+							LoadHistTermL[index_var] = NR_busdata[NR_node_reference].V[index_var] * ahrlloadstore[index_var] -
+													   bhrlloadstore[index_var] * LoadHistTermL[index_var+3];
+						}
+						else	//Childed, steal our parent's values
+						{
+							LoadHistTermL[index_var] = NR_busdata[*NR_subnode_reference].V[index_var] * ahrlloadstore[index_var] -
+													   bhrlloadstore[index_var] * LoadHistTermL[index_var+3];
+						}
+					}
+					else	//Must be zero -- purely resistive, or something
+					{
+						//Zero everything on principle
+						LoadHistTermL[index_var] = complex(0.0,0.0);
+						LoadHistTermL[index_var+3] = complex(0.0,0.0);
+
+						LoadHistTermC[index_var] = complex(0.0,0.0);
+						LoadHistTermC[index_var+3] = complex(0.0,0.0);
+					}
+
+					//See if we're a parented load or not
+					if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+					{
+						//Compute the values and post them to our bus term
+						NR_busdata[NR_node_reference].BusHistTerm[index_var] += LoadHistTermL[index_var] + LoadHistTermC[index_var];
+					}
+					else	//It is a child - look at parent
+					{
+						//Compute the values and post them to our bus term
+						NR_busdata[*NR_subnode_reference].BusHistTerm[index_var] += LoadHistTermL[index_var] + LoadHistTermC[index_var];
+					}
+				}//End Phase loop
+			}//End new delta timestep
+			//Defaulted else -- not a new time, so don't update it
+		}//End deltamode running
+		else	//Inrush, but not delta mode
+		{
+			//******************* TODO -- See if this can basically be incorporated into postupdate, since it should only need to be done once ********************/
+			//Deflag
+			require_inrush_update = false;
+
+			//Zero everything on principle
+			LoadHistTermL[0] = complex(0.0,0.0);
+			LoadHistTermL[1] = complex(0.0,0.0);
+			LoadHistTermL[2] = complex(0.0,0.0);
+			LoadHistTermL[3] = complex(0.0,0.0);
+			LoadHistTermL[4] = complex(0.0,0.0);
+			LoadHistTermL[5] = complex(0.0,0.0);
+
+			LoadHistTermC[0] = complex(0.0,0.0);
+			LoadHistTermC[1] = complex(0.0,0.0);
+			LoadHistTermC[2] = complex(0.0,0.0);
+			LoadHistTermC[3] = complex(0.0,0.0);
+			LoadHistTermC[4] = complex(0.0,0.0);
+			LoadHistTermC[5] = complex(0.0,0.0);
+
+			//Zero our full load component too
+			//See if we're a parented load or not -- zero us as well (assumes nothing is in delta)
+			if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+			{
+				//Compute the values and post them to our bus term
+				NR_busdata[NR_node_reference].BusHistTerm[0] = complex(0.0,0.0);
+				NR_busdata[NR_node_reference].BusHistTerm[1] = complex(0.0,0.0);
+				NR_busdata[NR_node_reference].BusHistTerm[2] = complex(0.0,0.0);
+
+				//Add this into the main admittance matrix (handled directly)
+				NR_busdata[NR_node_reference].full_Y_load[0] = complex(0.0,0.0);
+				NR_busdata[NR_node_reference].full_Y_load[1] = complex(0.0,0.0);
+				NR_busdata[NR_node_reference].full_Y_load[2] = complex(0.0,0.0);
+			}
+			else	//It is a child - look at parent
+			{
+				//Compute the values and post them to our bus term
+				NR_busdata[*NR_subnode_reference].BusHistTerm[0] = complex(0.0,0.0);
+				NR_busdata[*NR_subnode_reference].BusHistTerm[1] = complex(0.0,0.0);
+				NR_busdata[*NR_subnode_reference].BusHistTerm[2] = complex(0.0,0.0);
+
+				NR_busdata[*NR_subnode_reference].full_Y_load[0] = complex(0.0,0.0);
+				NR_busdata[*NR_subnode_reference].full_Y_load[1] = complex(0.0,0.0);
+				NR_busdata[*NR_subnode_reference].full_Y_load[2] = complex(0.0,0.0);
+			}
+
+			//Zero previous shunt values, just because
+			prev_shunt[0] = complex(0.0,0.0);
+			prev_shunt[1] = complex(0.0,0.0);
+			prev_shunt[2] = complex(0.0,0.0);
+		}
+	}
+	else	//Not in in-rush or deltamode - flag to not
+	{
+		require_inrush_update = false;
+	}
+
+	//Update the impedance terms
+	if (require_inrush_update==true)
+	{
+		//Loop the whole set - all phases
+		for (index_var=0; index_var<3; index_var++)
+		{
+			//Figure out what type of load it is
+			if (shunt[index_var].Im()>0.0)	//Capacitve
+			{
+				//Zero the two inductive terms
+				ahrlloadstore[index_var] = complex(0.0,0.0);
+				bhrlloadstore[index_var] = complex(0.0,0.0);
+
+				//Extract the imaginary part (should be only part) and de-phasor it - Yshunt/(2*pi*f)*2/dt
+				workingvalue = shunt[index_var].Im() / (PI * current_frequency * deltatimestep_running);
+
+				//Put into the "shunt" admittance value
+				shunt[index_var] += complex(workingvalue,0.0);
+
+				//Create chrcstore while we're in here
+				chrcloadstore[index_var] = 2.0 * workingvalue;
+			}//End capacitve term update
+			else if (shunt[index_var].Im()<0.0) //Inductive
+			{
+				//Zero the capacitive term
+				chrcloadstore[index_var] = complex(0.0,0.0);
+
+				//Form the equivalent impedance value
+				working_impedance_value = complex(1.0,0.0) / shunt[index_var];
+
+				//Extract the imaginary part (should be only part) and de-phasor it - Yimped/(2*pi*f)*2/dt
+				workingvalue = working_impedance_value.Im() / (PI * current_frequency * deltatimestep_running);
+
+				//Put into the other working matrix (zh)
+				working_data_value = working_impedance_value - complex(workingvalue,0.0);
+
+				//Put back into "real" impedance value to make Y (Znew)
+				working_impedance_value += complex(workingvalue,0.0);
+
+				//Make it an admittance again, for the update - Y
+				if (working_impedance_value.IsZero() != true)
+				{
+					working_admittance_value = complex(1.0,0.0) / working_impedance_value;
+				}
+				else
+				{
+					working_admittance_value = complex(0.0,0.0);
+				}
+
+				//Form the bhrl term - Y*Zh = bhrl
+				bhrlloadstore[index_var] = working_admittance_value * working_data_value;
+
+				//Compute the ahrl term - Y(Zh*Y - I)
+				ahrlloadstore[index_var] = working_admittance_value*(working_data_value * working_admittance_value - complex(1.0,0.0));
+
+				//Make sure we store the "new Y" so things get updated right
+				shunt[index_var] = working_admittance_value;
+			}//end inductive term update
+			else	//Must be zero -- purely resistive, or something
+			{
+				//Zero both sets of terms
+				ahrlloadstore[index_var] = complex(0.0,0.0);
+				bhrlloadstore[index_var] = complex(0.0,0.0);
+
+				chrcloadstore[index_var] = complex(0.0,0.0);
+			}//End something else term update
+
+			//See if we're a parented load or not, to make sure we update right
+			if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+			{
+				//Add this into the main admittance matrix (handled directly)
+				NR_busdata[NR_node_reference].full_Y_load[index_var] += shunt[index_var]-prev_shunt[index_var];
+			}
+			else	//It is a child - look at parent
+			{
+				//Add this into the main admittance matrix (handled directly)
+				NR_busdata[*NR_subnode_reference].full_Y_load[index_var] += shunt[index_var]-prev_shunt[index_var];
+			}
+
+			//Update tracker
+			prev_shunt[index_var] = shunt[index_var];
+
+			//Zero it
+			shunt[index_var] = complex(0.0,0.0);
+		}//End phase looping for in-rush terms
+
+		//TODO:
+		/**************************************************** Combination loads still need to be done *********************/
+		//Good chance those will require full 3x3 implementations -- may end up being a 4.0 implementation
+		//
+
+	}//End in-rush term updat needed
+	//Default else -- no update needed
 }
 
 //Notify function
