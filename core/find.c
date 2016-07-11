@@ -618,7 +618,7 @@ int compare_real_li(void *a, FINDVALUE b) {
 	return 0;
 }
 
-int compare_string_li(void *a, FINDVALUE b) {return match(*(char **)a, b.string);}
+int compare_string_li(void *a, FINDVALUE b) {return match(b.string, (char *)a);}
 
 int compare_integer16_li(void *a, FINDVALUE b) {
 	char temp[256];
@@ -1070,7 +1070,7 @@ static int expression(PARSER, FINDPGM **pgm)
 			FINDVALUE v;
 			strcpy(v.string, pvalue);
 			//printf("find(): v.string=\"%s\", pvalue=\"%s\"\n", v.string, pvalue);
-			add_pgm(pgm, comparemap[op].string, OFFSET(groupid), v, NULL, findlist_del);
+			add_pgm(pgm, comparemap[op%7].string, OFFSET(groupid), v, NULL, findlist_del);
 			(*pgm)->constflags |= CF_NAME;
 			ACCEPT;
 			DONE;

@@ -1150,6 +1150,7 @@ typedef struct s_callbacks {
 		int64 *(*int64_var)(OBJECT *obj, char *name);
 		double *(*double_var)(OBJECT *obj, char *name);
 		char *(*string_var)(OBJECT *obj, char *name);
+		OBJECT *(*object_var)(OBJECT *obj, char *name);
 	} objvarname;
 	struct {
 		int (*string_to_property)(PROPERTY *prop, void *addr, char *value);

@@ -112,6 +112,7 @@ MST7 ; Mountain no DST
 PST8 ; Pacific no DST
 AST9 ; Alaska no DST
 HST10; Hawaii no DST
+AEST-10 ; Australian Eastern Standard Time, no DST
 
 [1970] ; Rules as of 1970
 ; DPC: this rule is suspicious -- no locale uses it and the spec doesn't differentiate seasons
