@@ -1,0 +1,17 @@
+#set wget_options=maxsize:10MB;update:newer
+#wget ${svnroot}/trunk/core/versions.txt
+#ifexist versions.txt
+#wget ${svnroot}/trunk/core/versions.txt versions1.txt
+#ifexist versions1.txt
+#print wget ok
+#else
+#error 'wget URL file' failed
+#endif
+#else
+#error 'wget URL' failed
+#endif
+
+#wget ${svnroot}/data/US/tmy/WA.zip
+#ifexist WA.zip
+#system unzip WA.zip
+#endif

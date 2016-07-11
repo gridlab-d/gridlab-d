@@ -6678,6 +6678,34 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		strcpy(line,"\n");
 		return cmdarg_runoption(value)>=0;
 	}
+	else if ( strncmp(line,MACRO "wget",5)==0 )
+	{
+		char url[1024], file[1024];
+		size_t n = sscanf(line+5,"%s %[^\n\r]",url,file);
+		HTTPRESULT *http;
+		strcpy(line,"\n");
+		if ( n<1 )
+		{
+			output_error_raw("%s(%d): %swget missing url", filename, linenum, MACRO);
+			return FALSE;
+		}
+		else if ( n==1 )
+		{
+			char *basename = strrchr(url,'/');
+			if ( basename==NULL )
+			{
+				output_error_raw("%s(%d): unable to extract basename of URL '%s'", filename, linenum, url);
+				return FALSE;
+			}
+			strncpy(file,basename+1,sizeof(file)-1);
+		}
+		if ( http_saveas(url,file)==0 )
+		{
+			output_error_raw("%s(%d): unable to save URL '%s' as '%s'", filename, linenum, url, file);
+			return FALSE;
+		}
+		return TRUE;
+	}
 	else if ( strncmp(line,MACRO "sleep",6)==0 )
 	{
 		int msec = atoi(line+6);

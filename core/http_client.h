@@ -53,6 +53,7 @@ size_t hread(char *buffer, size_t size, HTTP* http);
 HTTPRESULT *http_read(char *url, int maxlen); 
 void http_delete_result(HTTPRESULT *result);
 HTTPRESULT *http_new_result(void);
+int http_saveas(char *url, char *file);
 
 #ifdef __cplusplus
 }

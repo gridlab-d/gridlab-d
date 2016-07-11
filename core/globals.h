@@ -307,6 +307,8 @@ GLOBAL char1024 global_sanitizeindex INIT(".txt"); /**< sanitize index file spec
 GLOBAL char32 global_sanitizeoffset INIT(""); /**< sanitize lat/lon offset */
 
 GLOBAL bool global_run_powerworld INIT(false);
+GLOBAL char1024 global_svnroot INIT("http://gridlab-d.svn.sourceforge.net/svnroot/gridlab-d");
+GLOBAL char1024 global_wget_options INIT("maxsize:100MB;update:newer"); /**< maximum size of wget request */
 
 #ifdef __cplusplus
 }
