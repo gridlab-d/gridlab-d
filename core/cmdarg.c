@@ -369,6 +369,24 @@ static int server_portnum(int argc, char *argv[])
 		return CMDERR;
 	}
 }
+static int server_inaddr(int argc, char *argv[])
+{
+	if ( argc>1 )
+	{
+		strncpy(global_server_inaddr,(argc--,*++argv),sizeof(global_server_inaddr)-1);
+		return 1;
+	}
+	else
+	{
+		output_fatal("missing server ip address");
+		/*	TROUBLESHOOT
+			The <b>--server_inaddr</b> command line directive
+			was not followed by a valid IP address.  The correct syntax is
+			<b>--server_inaddr <i>interface address</i></b>.
+		 */
+		return CMDERR;
+	}
+}
 static int version(int argc, char *argv[])
 {
 	output_message("GridLAB-D %d.%d.%d-%d (%s) %d-bit %s %s", 
@@ -1268,6 +1286,7 @@ static CMDARG main[] = {
 	{"pstatus",		NULL,	pstatus,		NULL, "Prints the process list" },
 	{"redirect",	NULL,	redirect,		"<stream>[:<file>]", "Redirects an output to stream to a file (or null)" },
 	{"server_portnum", "P", server_portnum, NULL, "Sets the server port number (default is 6267)" },
+	{"server_inaddr", NULL, server_inaddr,	NULL, "Sets the server interface address (default is INADDR_ANY, any interface)"},
 	{"slave",		NULL,	slave,			"<master>", "Enables slave mode under master"},
 	{"slavenode",	NULL,	slavenode,		NULL, "Sets a listener for a remote GridLAB-D call to run in slave mode"},
 	{"id",			NULL,	slave_id,		"<idnum>", "Sets the ID number for the slave to inform its using to the master"},

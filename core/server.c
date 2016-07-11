@@ -205,7 +205,19 @@ STATUS server_startup(int argc, char *argv[])
 
 Retry:
 	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	if ( strlen(global_server_inaddr)>0 )
+	{
+		serv_addr.sin_addr.s_addr = inet_addr(global_server_inaddr);
+		if ( !serv_addr.sin_addr.s_addr )
+		{
+			output_error("invalid server_inaddr argument supplied : %s", global_server_inaddr);
+			return FAILED;
+		}
+	}
+	else
+	{
+		serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	}
 	serv_addr.sin_port = htons(portNumber);
 
 	/* bind socket to server address */
