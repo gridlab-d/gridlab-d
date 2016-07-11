@@ -3148,7 +3148,8 @@ static int class_intrinsic_function(PARSER, CLASS *oclass, int64 *functions, cha
 		if (oclass->module==NULL)
 		{
 			mark_linex(filename,startline);
-			append_code("\t%s %s (%s) { OBJECT*my=((OBJECT*)this)-1;",ftype,fname,arglist);
+			append_code("\t%s %s (%s) {\n\tOBJECT*my=((OBJECT*)this)-1; ",ftype,fname,arglist);
+			append_code("\n#ifdef GLAPI3\n\tgl_core gl(my);\n#endif");
 			append_code("\n\ttry %s ",source);
 			append_code("catch (char *msg) {callback->output_error(\"%%s[%%s:%%d] exception - %%s\",my->name?my->name:\"(unnamed)\",my->oclass->name,my->id,msg); return 0;} ");
 			append_code("catch (const char *msg) {callback->output_error(\"%%s[%%s:%%d] exception - %%s\",my->name?my->name:\"(unnamed)\",my->oclass->name,my->id,msg); return 0;} ");

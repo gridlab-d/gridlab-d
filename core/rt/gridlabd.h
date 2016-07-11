@@ -1908,5 +1908,33 @@ public:
 			y[r] = my(r,c);
 	}
 };
-
+///////////////////////////////////////////////////////////////////////////////////
+// Extended runtime API for 3.0
+#define GLAPI3 // enable gl class to support extended API
+class gl_core {
+private:
+	OBJECT *my;
+public:
+	inline gl_core(OBJECT*obj) : my(obj) {};
+public:
+	inline void error(char *fmt,...)
+	{
+		char buffer[1024];
+		char tmp[256];
+		va_list ptr;
+		va_start(ptr,fmt);
+		vsprintf(buffer,fmt,ptr);
+		(*callback->output_error)("%s: %s", gl_name(my,tmp,sizeof(tmp)),buffer);
+		va_end(ptr);
+	};
+	inline void warning(char *fmt,...)
+	{
+		char buffer[1024];
+		char tmp[256];
+		va_list ptr;
+		va_start(ptr,fmt);
+		vsprintf(buffer,fmt,ptr);
+		(*callback->output_warning)("%s: %s", gl_name(my,tmp,sizeof(tmp)),buffer);
+		va_end(ptr);
+	};};
 /**@}**/

@@ -1,0 +1,40 @@
+// test of extended API runtime code for a generic house
+
+clock {
+	timezone "PST+8PDT";
+	starttime '2001-01-01 00:00:00 PST';
+}
+
+class house {
+	int32 n;
+	double dt[s];
+	intrinsic init(OBJECT *parent)
+	{
+		if ( dt<0 )
+		{
+			gl.error("dt must be positive");
+			return 0;
+		}
+		else if ( dt==0 )
+			dt = 3600; // default 1 hour
+		if ( n<0 )
+		{
+			gl.error("n must be positive");
+			return 0;
+		}
+		else if ( n==0 )
+			n = 24*3600/dt; // default to 24 hours 
+		return 1;
+	};
+	intrinsic sync(TIMESTAMP t0, TIMESTAMP t1)
+	{
+		if ( n-->0 )
+			return t1 + dt;
+		else
+			return TS_NEVER;
+	};
+}
+
+object house {
+	dt 5 min;
+}

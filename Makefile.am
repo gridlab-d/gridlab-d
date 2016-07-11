@@ -53,6 +53,7 @@ include commercial/Makefile.mk
 #include comm/Makefile.mk
 include connection/Makefile.mk
 #include control/Makefile.mk
+include core/link/engine/Makefile.mk
 include core/link/matlab/Makefile.mk
 include core/Makefile.mk
 include core/rt/Makefile.mk
