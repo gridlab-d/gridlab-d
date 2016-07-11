@@ -40,6 +40,7 @@
 #include "emissions.h"
 #include "load_tracker.h"
 #include "triplex_load.h"
+#include "impedance_dump.h"
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
@@ -128,6 +129,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new emissions(module);
 	new load_tracker(module);
 	new triplex_load(module);
+	new impedance_dump(module);
 
 	/* always return the first class registered */
 	return node::oclass;
