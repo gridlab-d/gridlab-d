@@ -1,0 +1,82 @@
+#set suppress_repeat_messages=FALSE
+link test_engine.link;
+
+clock {
+	timezone PST+8PDT;
+	starttime '2001-01-01 0:00:00';
+	stoptime '2001-01-02 0:00:00';
+}
+
+module powerflow {
+	solver_method FBS;
+}
+module tape;
+
+//Reference line type
+object line_configuration {
+	name OHL_config;
+	z11 0.3465+1.0179j;	//Ohms/mile
+	z12 0.1560+0.5017j;
+	z13 0.1580+0.4236j;
+	z21 0.1560+0.5017j;
+	z22 0.3375+1.0478j;
+	z23 0.1535+0.3849j;
+	z31 0.1580+0.4236j;
+	z32 0.1535+0.3849j;
+	z33 0.3414+1.0348j;
+}
+
+//Power system
+object meter {
+	phases ABC;
+	name BUS_1;
+	nominal_voltage 8660.254;
+}
+
+object meter {
+	phases ABC;
+	name BUS_2;
+	nominal_voltage 8660.254;
+	bustype SWING;
+}
+
+object load {
+	phases ABC;
+	name LOAD_1;
+	nominal_voltage 8660.254;
+	constant_power_A 875000.0+575000.0j;
+	constant_power_B 750000.0+575000.0j;
+	constant_power_C 825000.0+575000.0j;
+	// flags DELTAMODE;
+	// object player {
+		// file load_player_A.csv;
+		// property constant_power_A;
+	// };
+	// object player {
+		// file load_player_B.csv;
+		// property constant_power_B;
+	// };
+	// object player {
+		// file load_player_C.csv;
+		// property constant_power_C;
+	// };
+}
+
+//Create overhead lines
+object overhead_line {
+	phases ABC;
+	name BUS_1_to_BUS_2;
+	from BUS_1;
+	to BUS_2;
+	length 3500.0 ft;
+	configuration OHL_config;
+}
+
+object overhead_line {
+	phases ABC;
+	name BUS_1_to_LOAD_1;
+	from BUS_1;
+	to LOAD_1;
+	length 1000.0 ft;
+	configuration OHL_config;
+}

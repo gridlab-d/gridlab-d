@@ -1,0 +1,36 @@
+target engine
+
+#   ans is timestamp of next needed sync event
+#   ans is TS_NEVER if no sync event needed
+#   ass is TS_ERROR if an error occurred
+#
+#on_sync x0 = x0*0.99; ans=TS_NEVER; % sync is ok with no future sync to schedule
+
+#
+# Global variables to publish (readonly)
+# Default is all globals
+# Listing "global" all by itself once will cause no globals to be published
+# 
+#
+global clock
+global powerflow::solver_method
+#global test_complex
+
+#
+# Objects to publish (readonly)
+# Default is all objects
+# Listing "object" all by itself once will cause no objects to be published
+#
+#object test_swing
+#object my_test3
+
+#
+# Variables to export/import to workspace (by name)
+# Default is none are exported or imported
+#
+import BUS_2.nominal_voltage y0
+import BUS_1.voltage_A z0
+export BUS_1.voltage_B x0
+import BUS_1.voltage_B x0
+#export my_test9.y y
+#import my_test12.z z
