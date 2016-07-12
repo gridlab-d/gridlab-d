@@ -298,6 +298,10 @@ void file_close_recorder(struct recorder *my)
 	fprintf(my->fp,"# end of tape\n");
 	fclose(my->fp);
 }
+void file_flush_recorder(struct recorder *my)
+{
+	fflush(my->fp);
+}
 
 /*******************************************************************
  * collectors 
@@ -348,4 +352,9 @@ void file_close_collector(struct collector *my)
 	fprintf(my->fp,"# end of tape\n");
 	fclose(my->fp);
 
+}
+
+void file_flush_collector(struct collector *my)
+{
+	fflush(my->fp);
 }

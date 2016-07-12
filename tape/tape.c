@@ -92,6 +92,7 @@ typedef int (*WRITEFUNC)(void *, char *, char *);
 typedef int (*REWINDFUNC)(void *);
 typedef void (*CLOSEFUNC)(void *);
 typedef void (*VOIDCALL)(void);
+typedef void (*FLUSHFUNC)(void*);
 
 TAPEFUNCS *get_ftable(char *mode){
 	/* check what we've already loaded */
@@ -127,37 +128,52 @@ TAPEFUNCS *get_ftable(char *mode){
 	c = (CALLBACKS **)DLSYM(lib, "callback");
 	if(c)
 		*c = callback;
+
 	//	nonfatal ommission
 	ops = fptr->collector = malloc(sizeof(TAPEOPS));
+	memset(ops,0,sizeof(TAPEOPS));
 	ops->open = (OPENFUNC)DLSYM(lib, "open_collector");
 	ops->read = NULL;
 	ops->write = (WRITEFUNC)DLSYM(lib, "write_collector");
 	ops->rewind = NULL;
 	ops->close = (CLOSEFUNC)DLSYM(lib, "close_collector");
+	ops->flush = (FLUSHFUNC)DLSYM(lib, "flush_collector");
+
 	ops = fptr->player = malloc(sizeof(TAPEOPS));
+	memset(ops,0,sizeof(TAPEOPS));
 	ops->open = (OPENFUNC)DLSYM(lib, "open_player");
 	ops->read = (READFUNC)DLSYM(lib, "read_player");
 	ops->write = NULL;
 	ops->rewind = (REWINDFUNC)DLSYM(lib, "rewind_player");
 	ops->close = (CLOSEFUNC)DLSYM(lib, "close_player");
+	ops->flush = NULL;
+
 	ops = fptr->recorder = malloc(sizeof(TAPEOPS));
+	memset(ops,0,sizeof(TAPEOPS));
 	ops->open = (OPENFUNC)DLSYM(lib, "open_recorder");
 	ops->read = NULL;
 	ops->write = (WRITEFUNC)DLSYM(lib, "write_recorder");
 	ops->rewind = NULL;
 	ops->close = (CLOSEFUNC)DLSYM(lib, "close_recorder");
+	ops->flush = (FLUSHFUNC)DLSYM(lib, "flush_collector");
+
 	ops = fptr->histogram = malloc(sizeof(TAPEOPS));
+	memset(ops,0,sizeof(TAPEOPS));
 	ops->open = (OPENFUNC)DLSYM(lib, "open_histogram");
 	ops->read = NULL;
 	ops->write = (WRITEFUNC)DLSYM(lib, "write_histogram");
 	ops->rewind = NULL;
 	ops->close = (CLOSEFUNC)DLSYM(lib, "close_histogram");
+	ops->flush = (FLUSHFUNC)DLSYM(lib, "flush_collector");
+
 	ops = fptr->shaper = malloc(sizeof(TAPEOPS));
+	memset(ops,0,sizeof(TAPEOPS));
 	ops->open = (OPENFUNC)DLSYM(lib, "open_shaper");
 	ops->read = (READFUNC)DLSYM(lib, "read_shaper");
 	ops->write = NULL;
 	ops->rewind = (REWINDFUNC)DLSYM(lib, "rewind_shaper");
 	ops->close = (CLOSEFUNC)DLSYM(lib, "close_shaper");
+
 	fptr->next = funcs;
 	funcs = fptr;
 
@@ -225,6 +241,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 	PUBLISH_STRUCT(recorder,char1024,plotcommands);
 	PUBLISH_STRUCT(recorder,char32,xdata);
 	PUBLISH_STRUCT(recorder,char32,columns);
+	PUBLISH_STRUCT(recorder,int32,flush);
 	
 	if(gl_publish_variable(recorder_class,
 		PT_double, "interval[s]", ((char*)&(my.dInterval) - (char *)&my),
@@ -290,6 +307,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 	//PUBLISH_STRUCT(collector,int64,interval);
 	PUBLISH_STRUCT(collector,int32,limit);
 	PUBLISH_STRUCT(collector,char256,group);
+	PUBLISH_STRUCT(collector,int32,flush);
 	if(gl_publish_variable(collector_class,
 		PT_double, "interval[s]", ((char*)&(my2.dInterval) - (char *)&my2),
 			NULL) < 1)

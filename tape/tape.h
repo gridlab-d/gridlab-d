@@ -29,6 +29,7 @@ typedef struct s_tape_operations {
 	int (*write)(void *my, char *timestamp, char *value);
 	int (*rewind)(void *my);
 	void (*close)(void *my);
+	void (*flush)(void *my);
 } TAPEOPS;
 
 typedef struct s_tape_funcs {
@@ -156,6 +157,7 @@ struct recorder {
 	char32 xdata;
 	char32 columns;
 	char32 trigger;
+	int32 flush;
 	/* private */
 	RECORDER_MAP *rmap;
 	TAPEOPS *ops;
@@ -198,6 +200,7 @@ struct collector {
 	char32 columns;
 	char32 trigger;
 	char256 group;
+	int32 flush;
 	/* private */
 	TAPEOPS *ops;
 	FILETYPE type;

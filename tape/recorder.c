@@ -98,6 +98,7 @@ EXPORT int create_recorder(OBJECT **obj, OBJECT *parent)
 		my->target = gl_get_property(*obj,my->property,NULL);
 		my->header_units = HU_DEFAULT;
 		my->line_units = LU_DEFAULT;
+		my->flush = -1; /* -1 (default): flush when buffer full, 0 flush each line, >0 flush seconds */
 		return 1;
 	}
 	return 0;
@@ -155,6 +156,7 @@ static int recorder_open(OBJECT *obj)
 			fprintf(my->multifp,"# trigger... %s\n", my->trigger[0]=='\0'?"(none)":my->trigger);
 			fprintf(my->multifp,"# interval.. %d\n", my->interval);
 			fprintf(my->multifp,"# limit..... %d\n", my->limit);
+			fprintf(my->multifp,"# flush..... %d\n", my->flush);
 			fprintf(my->multifp,"# property.. %s\n", my->property);
 			//fprintf(my->multifp,"# timestamp,%s\n", my->property);
 		}
@@ -355,7 +357,10 @@ static int recorder_open(OBJECT *obj)
 
 static int write_recorder(struct recorder *my, char *ts, char *value)
 {
-	return my->ops->write(my, ts, value);
+	int rc=my->ops->write(my, ts, value);
+	if ( (my->flush==0 || (my->flush>0 && my->flush%gl_globalclock==0)) && my->ops->flush!=NULL ) 
+		my->ops->flush(my);
+	return rc;
 }
 
 static void close_recorder(struct recorder *my)
