@@ -42,6 +42,10 @@ triplex_line_configuration::triplex_line_configuration(MODULE *mod) : line_confi
 			PT_complex, "z12[Ohm/mile]",PADDR(impedance12),PT_DESCRIPTION,"phase 1-2 induced impedance, used for direct entry of impedance values",
 			PT_complex, "z21[Ohm/mile]",PADDR(impedance21),PT_DESCRIPTION,"phase 2-1 induced impedance, used for direct entry of impedance values",
 			PT_complex, "z22[Ohm/mile]",PADDR(impedance22),PT_DESCRIPTION,"phase 2 self-impedance, used for direct entry of impedance values",
+			PT_double, "rating.summer.continuous[A]", PADDR(summer.continuous),PT_DESCRIPTION,"amp rating in summer, continuous",
+			PT_double, "rating.summer.emergency[A]", PADDR(summer.emergency),PT_DESCRIPTION,"amp rating in summer, short term",
+			PT_double, "rating.winter.continuous[A]", PADDR(winter.continuous),PT_DESCRIPTION,"amp rating in winter, continuous",
+			PT_double, "rating.winter.emergency[A]", PADDR(winter.emergency),PT_DESCRIPTION,"amp rating in winter, short term",
             NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
 }
@@ -56,6 +60,8 @@ int triplex_line_configuration::create(void)
 	ins_thickness = 0.0;
 	diameter  = 0.0;
 	line_spacing = NULL;
+	summer.continuous = winter.continuous = 1000;
+	summer.emergency = winter.emergency = 2000;
 	return result;
 }
 

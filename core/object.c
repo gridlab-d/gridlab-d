@@ -537,6 +537,22 @@ OBJECT **object_get_object_by_name(OBJECT *obj, char *name)
 	}
 }
 
+bool *object_get_bool(OBJECT *obj, PROPERTY *prop)
+{
+	if(object_prop_in_class(obj, prop) && prop->ptype==PT_bool && prop->access != PA_PRIVATE)
+		return (bool *)((char*)obj+sizeof(OBJECT)+(int64)(prop->addr)); /* warning: cast from pointer to integer of different size */
+	errno = ENOENT;
+	return NULL;
+}
+
+bool *object_get_bool_by_name(OBJECT *obj, char *name)
+{
+	PROPERTY *prop = class_find_property(obj->oclass,name);
+	if(prop!=NULL && prop->access != PA_PRIVATE)
+		return (bool *)((char*)obj+sizeof(OBJECT)+(int64)(prop->addr)); /* warning: cast from pointer to integer of different size */
+	errno = ENOENT;
+	return NULL;
+}
 enumeration *object_get_enum(OBJECT *obj, PROPERTY *prop){
 	if(object_prop_in_class(obj, prop) && prop->ptype == PT_enumeration && prop->access != PA_PRIVATE){
 		return (enumeration *)((char *)(obj) + sizeof(OBJECT) + (int64)(prop->addr));
@@ -1195,7 +1211,7 @@ OBJECT *object_get_next(OBJECT *obj){ /**< the object from which to start */
 	the request to prevent looping.  This will prevent
 	an object_set_parent call from creating a parent loop.
  */
-static int set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
+static int _set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 {
 	OBJECTRANK parent_rank = -1;
 	if(obj == NULL){
@@ -1229,12 +1245,63 @@ static int set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 		obj->rank = rank+1;
 	if(obj->parent != NULL)
 	{
-		parent_rank = set_rank(obj->parent,obj->rank,first?first:obj);
+		parent_rank = _set_rank(obj->parent,obj->rank,first?first:obj);
 		if(parent_rank == -1)
 			return -1;
 	}
 	obj->flags &= ~OF_RERANK;
 	return obj->rank;
+}
+/* this version is fast, blind to errors, and not recursive -- it's only used when global_fastrank is TRUE */
+static int _set_rankx(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
+{
+	int n = object_get_count();
+	if ( obj == NULL )
+	{
+		output_error("set_rank called for a null object");
+		return -1;
+	}
+	while ( obj!=NULL )
+	{
+		if ( n--<0 )
+		{
+			char tmp[64];
+			output_error("%s: set_rank internal error, rank > object count", object_name(first, tmp, sizeof(tmp)));
+			/*	TROUBLESHOOT
+				As a sanity check, the rank of an object should not exceed the number of objects in the model.  If the model
+				is deliberately playing with the ranks, please either reduce the manual rank adjustment, or add a number of
+				"harmless" objects to inflate the number of objects in the model.
+			 */
+			return -1;
+		}
+		if ( first==NULL )
+			first = obj;
+		else if ( first==obj )
+		{
+			char tmp[64];
+			output_error("%s: set_rank failed, parent loopback has occurred", object_name(first, tmp, sizeof(tmp)));
+			return -1;
+		}
+		if ( rank >= obj->rank )
+		{
+			if ( obj->flags & OF_RERANK )
+			{
+				char b[64];
+				output_error("%s: object flagged as already re-ranked", object_name(obj, b, 63));
+				return -1;
+			}
+			else
+				obj->flags |= OF_RERANK;
+			obj->rank = ++rank;
+		}
+		obj = obj->parent;
+	}
+	for ( obj=first ; obj!=NULL ; obj=obj->parent )
+		obj->flags &= ~OF_RERANK;
+}
+static int set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
+{
+	global_bigranks==TRUE ? _set_rankx(obj,rank,NULL) : _set_rank(obj,rank,NULL);
 }
 
 /** Set the rank of an object but forcing it's parent

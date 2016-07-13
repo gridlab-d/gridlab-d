@@ -56,6 +56,7 @@ inverter::inverter(MODULE *module)
 
 			PT_enumeration,"pf_reg",PADDR(pf_reg), PT_DESCRIPTION, "Activate (or not) power factor regulation in four_quadrant_control_mode",
 				PT_KEYWORD,"INCLUDED",(enumeration)INCLUDED,
+				PT_KEYWORD,"INCLUDED_ALT",(enumeration)INCLUDED_ALT,
 				PT_KEYWORD,"EXCLUDED",(enumeration)EXCLUDED,
 
 			PT_enumeration,"generator_status",PADDR(gen_status_v), PT_DESCRIPTION, "describes whether the generator is online or offline",
@@ -132,6 +133,13 @@ inverter::inverter(MODULE *module)
 			//PT_object,"sense_object", PADDR(sense_object), PF regulation uses the same sense object as load-following
 			PT_double,"pf_reg_activate", PADDR(pf_reg_activate), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Lowest acceptable power-factor level below which power-factor regulation will activate.",
 			PT_double,"pf_reg_deactivate", PADDR(pf_reg_deactivate), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Lowest acceptable power-factor above which no power-factor regulation is needed.",
+
+			//Second power-factor regulation control parameters
+			PT_double,"pf_target", PADDR(pf_target_var), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Desired power-factor to maintain (signed) positive is inductive",
+			PT_double,"pf_reg_high", PADDR(pf_reg_high), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Upper limit for power-factor - if exceeds, go full reverse reactive",
+			PT_double,"pf_reg_low", PADDR(pf_reg_low), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Lower limit for power-factor - if exceeds, stop regulating - pf_target_var is below this",
+			
+			//Common parameters for power-factor regulation approaches
 			PT_double,"pf_reg_activate_lockout_time[s]", PADDR(pf_reg_activate_lockout_time), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Mandatory pause between the deactivation of power-factor regulation and it reactivation",
 
 			//Group load-following (and power factor regulation) parameters
@@ -245,6 +253,7 @@ int inverter::create(void)
 	sense_is_link = false;
 	sense_power = NULL;
 
+	pf_reg = EXCLUDED;
 	pf_reg_activate = -2;
 	pf_reg_deactivate = -1;
 	pf_reg_dispatch_change_allowed = true;
@@ -253,6 +262,10 @@ int inverter::create(void)
 	pf_reg_next_update_time = 0;
 	pf_reg_activate_lockout_time = -1;
 
+	pf_target_var = -2;
+	pf_reg_high = -2;
+	pf_reg_low = -2;	
+	
 	charge_threshold = -1;
 	discharge_threshold = -1;
 	group_max_charge_rate = -1;
@@ -700,7 +713,7 @@ int inverter::init(OBJECT *parent)
 				}
 
 				//Check lockout times
-				if (pf_reg == INCLUDED)
+				if (pf_reg != EXCLUDED)
 				{
 					if (pf_reg_activate_lockout_time < 0)
 					{
@@ -1163,6 +1176,83 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 				}
 			}
 		}
+		else if (pf_reg == INCLUDED_ALT)
+		{
+			if (t1 != t0)
+			{
+				//See if the "new" timestamp allows us to change
+				if (t1>=pf_reg_next_update_time)
+				{
+					//Above the previous time, so allow a change
+					pf_reg_dispatch_change_allowed = true;
+				}
+
+				//Checks for ranges
+				if (pf_target_var == -2.0)
+				{
+					pf_target_var = 0.95;
+					gl_warning("inverter:%s - pf_target_var is undefined, setting to a default value of 0.95",obj->name ? obj->name : "Unnamed");
+					/*  TROUBLESHOOT
+					A value was not specified for pf_pf_target_var.  This has been arbitrarily set to 0.95 lagging (inductive).  If this is not acceptable,
+					please specify the desired power factor value.
+					*/
+				}
+
+				if (pf_reg_high == -2.0)
+				{
+					pf_reg_high = -0.95;
+					gl_warning("inverter:%s - pf_reg_high is undefined, setting to a default value of -0.95",obj->name ? obj->name : "Unnamed");
+					/*  TROUBLESHOOT
+					A value was not specified for pf_reg_high.  This has been arbitrarily set to 0.95 leading (capacitive).  If this is not acceptable,
+					please specify the desired power factor value.
+					*/
+				}
+
+				if (pf_reg_low == -2.0)
+				{
+					pf_reg_low = 0.97;
+					gl_warning("inverter:%s - pf_reg_low is undefined, setting to a default value of 0.97",obj->name ? obj->name : "Unnamed");
+					/*  TROUBLESHOOT
+					A value was not specified for pf_reg_low.  This has been arbitrarily set to 0.97 lagging (inductive).  If this is not acceptable,
+					please specify the desired power factor value.
+					*/
+				}
+
+				//Check values based on sign
+				if (pf_target_var < 0.0)	//Capacitive power factor specified
+				{
+					//Make sure target is below the lower limit
+					if ((pf_reg_low < 0) && (pf_reg_low > pf_target_var))
+					{
+						GL_THROW("inverter:%s - pf_reg_low is below the pf_target_var value!",obj->name ? obj->name : "Unnamed");
+						/*  TROUBLESHOOT
+						For the alternative power factor correction mode, the pf_reg_low value must be a higher power factor than the desired value, in terms of relative power factor.
+						*/
+					}
+				}//end capacitive
+				else	//Assume inductive, by elimination
+				{
+					//Make sure target is below the lower limit
+					if ((pf_reg_low > 0) && (pf_reg_low < pf_target_var))
+					{
+						GL_THROW("inverter:%s - pf_reg_low is below the pf_target_var value!",obj->name ? obj->name : "Unnamed");
+						//Defined above
+					}
+
+				}//End inductive
+
+				//Generic check - make sure things are in the right order
+				//Make sure the upper is in a proper place too
+				if (((pf_reg_high > 0) && (pf_reg_low > 0) && (pf_reg_high <= pf_reg_low)) || ((pf_reg_low < 0) && (pf_reg_high < 0) && (pf_reg_high >= pf_reg_low)))
+				{
+					GL_THROW("inverter:%s - pf_reg_low is higher than pf_reg_high",obj->name ? obj->name : "Unnamed");
+					/*  TROUBLESHOOT
+					For the alternative power factor correction mode, the pf_reg_low value must be a "more inductive" power factor than the desired value, in terms of
+					relative power factor.
+					*/
+				}
+			}//End new time
+		}//End pf alt mode
 
 		if(four_quadrant_control_mode == FQM_LOAD_FOLLOWING)
 		{
@@ -2101,7 +2191,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 
 			//Execution of power-factor regulation output of inverter that will get included in power-flow solution
-			if (pf_reg == INCLUDED)
+			if ((pf_reg == INCLUDED) || (pf_reg == INCLUDED_ALT))
 			{
 				VA_Out.Im() = -pf_reg_dispatch_VAR; //Flipping from load to generator perspective.
 			}
@@ -2891,7 +2981,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 	//***************************************************************************************
 	//Power-factor regulation, modifying VA_Out to use any available VAs for power-factor regulation
-	if ((inverter_type_v == FOUR_QUADRANT) && (pf_reg == INCLUDED) && (pf_reg_dispatch_change_allowed==true))
+	if ((inverter_type_v == FOUR_QUADRANT) && (pf_reg != EXCLUDED) && (pf_reg_dispatch_change_allowed==true))
 	{
 		//Need to modify dispatch from load following and/or adjust the reactive power output of the inverter to meet power factor regulation needs.
 		//See what the sense_object is and determine if we need to update
@@ -2906,94 +2996,303 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		curr_reactive_power_val = sense_power->Im();
 		curr_pf = fabs(curr_real_power_val)/sqrt((curr_reactive_power_val*curr_reactive_power_val)+(curr_real_power_val * curr_real_power_val));
 
-		//Check pf
-		if ( (curr_pf <= pf_reg_activate) ||
-			((curr_pf >= pf_reg_activate) && (curr_pf <= pf_reg_deactivate) && (pf_reg_status == REGULATING)) ||
-			((curr_reactive_power_val < 0) && (curr_pf < 0.98)) ) //Only worrying about regulating leading power factor if it is "excessive".
+		if (pf_reg == INCLUDED)
 		{
-			//See if we were already at max VA - if less, still have room to add some VARs
-			//Regardless of which four-quadrant control mode, VA_Out is the output of the inverter
-			if ((inverter_type_v == FOUR_QUADRANT) && (VA_Out.Mag() <= p_max))
+			//Check pf
+			if ( (curr_pf <= pf_reg_activate) ||
+				((curr_pf >= pf_reg_activate) && (curr_pf <= pf_reg_deactivate) && (pf_reg_status == REGULATING)) ||
+				((curr_reactive_power_val < 0) && (curr_pf < 0.98)) ) //Only worrying about regulating leading power factor if it is "excessive".
 			{
-				new_pf_reg_status = REGULATING;
-
-				//Calculate the required VARs to bring pf back up to acceptable value
-
-				if (curr_reactive_power_val < 0)
+				//See if we were already at max VA - if less, still have room to add some VARs
+				//Regardless of which four-quadrant control mode, VA_Out is the output of the inverter
+				if ((inverter_type_v == FOUR_QUADRANT) && (VA_Out.Mag() <= p_max))
 				{
-					if (four_quadrant_control_mode == FQM_GROUP_LF) //operating in group mode, PF regulation should also operate in group mode.
+					new_pf_reg_status = REGULATING;
+
+					//Calculate the required VARs to bring pf back up to acceptable value
+
+					if (curr_reactive_power_val < 0)
 					{
-						if ((pf_reg_dispatch_VAR * group_rated_power/p_max) > fabs(curr_reactive_power_val))
+						if (four_quadrant_control_mode == FQM_GROUP_LF) //operating in group mode, PF regulation should also operate in group mode.
 						{
-							Q_target = - (curr_reactive_power_val - pf_reg_dispatch_VAR);
+							if ((pf_reg_dispatch_VAR * group_rated_power/p_max) > fabs(curr_reactive_power_val))
+							{
+								Q_target = - (curr_reactive_power_val - pf_reg_dispatch_VAR);
+							}
+							else
+							{
+								Q_target = - (curr_reactive_power_val - (pf_reg_dispatch_VAR * group_rated_power/p_max));
+							}
+
 						}
 						else
 						{
-							Q_target = - (curr_reactive_power_val - (pf_reg_dispatch_VAR * group_rated_power/p_max));
+							Q_target = - (curr_reactive_power_val - pf_reg_dispatch_VAR);
 						}
 
 					}
 					else
 					{
-						Q_target = - (curr_reactive_power_val - pf_reg_dispatch_VAR);
+						Q_target = - (curr_reactive_power_val - curr_real_power_val * tan(acos(pf_reg_deactivate)));
 					}
 
-				}
-				else
-				{
-					Q_target = - (curr_reactive_power_val - curr_real_power_val * tan(acos(pf_reg_deactivate)));
-				}
 
-
-				if (four_quadrant_control_mode == FQM_GROUP_LF) //operating in group mode, PF regulation should also operate in group mode.
-				{
-					scaling_factor = (Q_target - curr_reactive_power_val)/group_rated_power;
-					Q_out = (scaling_factor * p_max) + pf_reg_dispatch_VAR;
-				}
-				else
-				{
-					Q_out = Q_target;
-				}
-
-				//Calculate the VARs that can be dispatched without violating the inverter's VA limit, p_max.
-				Q_available = sqrt((p_max*p_max) - (VA_Out.Re()*VA_Out.Re()));
-
-				//Only output the reactive power that is needed (if we have it).
-				if (fabs(Q_out) <= fabs(Q_available))
-				{
-					new_pf_reg_distpatch_VAR = Q_out;
-				}
-				else
-				{
-					if (Q_out < 0)
+					if (four_quadrant_control_mode == FQM_GROUP_LF) //operating in group mode, PF regulation should also operate in group mode.
 					{
-						new_pf_reg_distpatch_VAR = -Q_available;
+						scaling_factor = (Q_target - curr_reactive_power_val)/group_rated_power;
+						Q_out = (scaling_factor * p_max) + pf_reg_dispatch_VAR;
 					}
 					else
 					{
-						new_pf_reg_distpatch_VAR = Q_available;
+						Q_out = Q_target;
+					}
+
+					//Calculate the VARs that can be dispatched without violating the inverter's VA limit, p_max.
+					Q_available = sqrt((p_max*p_max) - (VA_Out.Re()*VA_Out.Re()));
+
+					//Only output the reactive power that is needed (if we have it).
+					if (fabs(Q_out) <= fabs(Q_available))
+					{
+						new_pf_reg_distpatch_VAR = Q_out;
+					}
+					else
+					{
+						if (Q_out < 0)
+						{
+							new_pf_reg_distpatch_VAR = -Q_available;
+						}
+						else
+						{
+							new_pf_reg_distpatch_VAR = Q_available;
+						}
 					}
 				}
-			}
-			else	//We were railed, continue with this course
+				else	//We were railed, continue with this course
+				{
+					new_pf_reg_status = REGULATING;
+					new_pf_reg_distpatch_VAR = -VA_Out.Im(); //Injecting negative reactive power.
+				}
+			}//End pf_reg_activate
+			else if (curr_pf >= pf_reg_deactivate)	// Don't change output since we are above our deactivate limit.
+													// Changing the output of the inverter will alter the sensed pf
+													// and may cause us to drop below the activate limit,
+													// potentially beginning control oscillation
 			{
-				new_pf_reg_status = REGULATING;
-				new_pf_reg_distpatch_VAR = -VA_Out.Im(); //Injecting negative reactive power.
+				new_pf_reg_status = IDLING;
+				new_pf_reg_distpatch_VAR = pf_reg_dispatch_VAR;
 			}
-		}//End pf_reg_activate
-		else if (curr_pf >= pf_reg_deactivate)	// Don't change output since we are above our deactivate limit.
-												// Changing the output of the inverter will alter the sensed pf
-												// and may cause us to drop below the activate limit,
-												// potentially beginning control oscillation
+			else //Nothing else going on, idling
+			{
+				new_pf_reg_status = IDLING;
+				new_pf_reg_distpatch_VAR = pf_reg_dispatch_VAR;
+			}//End hysteresis implementation
+		}//End INCLUDED mode
+		else if (pf_reg == INCLUDED_ALT)	//INCLUDED_ALT Mode
 		{
-			new_pf_reg_status = IDLING;
-			new_pf_reg_distpatch_VAR = pf_reg_dispatch_VAR;
-		}
-		else //Nothing else going on, idling
-		{
-			new_pf_reg_status = IDLING;
-			new_pf_reg_distpatch_VAR = pf_reg_dispatch_VAR;
-		}//End hysteresis implementation
+			//Init Q_target, for giggles (use old value)
+			Q_target = pf_reg_dispatch_VAR;
+
+			//See if we have room to spare
+			if (VA_Out.Mag() <= p_max)
+			{
+				//"Sign" the current power factor, based on reactive power.  Technically not a proper pf, but what this algorithm uses
+				if (curr_reactive_power_val < 0.0)
+				{
+					curr_pf = -1.0 * curr_pf;
+				}
+
+				//De-sign the real power
+				if (curr_real_power_val < 0.0)
+				{
+					curr_real_power_val = -1.0 * curr_real_power_val;
+				}
+
+				//See which region we're in - check our overall "desired" first
+				if (pf_target_var < 0)	//Capacitive
+				{
+					//See which band we're in
+					if (pf_reg_low < 0.0)	//Capacitive "switching" limit
+					{
+						if (pf_reg_high < 0.0)	//Capacitive "on" value too
+						{
+							//See which band we're in
+							if (((curr_pf < 0.0) && (curr_pf <= pf_reg_high)) || (curr_pf > 0.0))	//More negative, so we should be in "recovery" mode
+							{
+								//Set us up as regulating
+								new_pf_reg_status = REGULATING;
+
+								//Figure out the offset to get us back into the acceptable capacitance range
+								Q_target = -(curr_reactive_power_val - (curr_real_power_val * tan(acos(pf_reg_high)))) + pf_reg_dispatch_VAR;
+							}
+							else if (curr_pf <= pf_reg_low)	//In the deadband
+							{
+								//Set us up as non-regulating
+								new_pf_reg_status = IDLING;
+
+								//Copy the old value in, to prevent us from changing
+								Q_target = pf_reg_dispatch_VAR;
+							}
+							else	//Regulating band
+							{
+								//Flag as regulating
+								new_pf_reg_status = REGULATING;
+
+								//Figure out the offset to get us back into the acceptable capacitance range
+								Q_target = -(curr_reactive_power_val - (curr_real_power_val * tan(acos(pf_target_var)))) + pf_reg_dispatch_VAR;
+							}
+						}
+						else	//High value is inductive
+						{
+							if ((curr_pf > 0.0) && (curr_pf <= pf_reg_high))	//Below other size, so should be in "recovery" mode
+							{
+								//Flag as regulating
+								new_pf_reg_status = REGULATING;
+
+								//Figure out the offset to get us back into the acceptable capacitance range
+								Q_target = -(curr_reactive_power_val - (curr_real_power_val * tan(acos(pf_target_var)))) + pf_reg_dispatch_VAR;
+							}
+							else if (((curr_pf < 0.0) && (curr_pf <= pf_reg_low)) || ((curr_pf > 0.0) && (curr_pf >= pf_reg_high)))	//In the deadband
+							{
+								//Set us up as non-regulating
+								new_pf_reg_status = IDLING;
+
+								//Copy the old value in, to prevent us from changing
+								Q_target = pf_reg_dispatch_VAR;
+							}
+							else	//Regulating band
+							{
+								//Flag as regulating
+								new_pf_reg_status = REGULATING;
+
+								//Figure out the offset to get us back into the acceptable capacitance range
+								Q_target = -(curr_reactive_power_val - (curr_real_power_val * tan(acos(pf_target_var)))) + pf_reg_dispatch_VAR;
+							}
+						}//End high value is inductive
+					}//End switching limit is inductive
+					else	//Switching value is inductive
+					{
+						if ((curr_pf > 0.0) && (curr_pf <= pf_reg_high))	//Inside the recovery zone
+						{
+							//Flag as regulating
+							new_pf_reg_status = REGULATING;
+
+							//Figure out the offset to get us back into the acceptable capacitance range
+							Q_target = -(curr_reactive_power_val - (curr_real_power_val * tan(acos(pf_target_var)))) + pf_reg_dispatch_VAR;
+						}
+						else if ((curr_pf > 0.0) && (curr_pf <= pf_reg_low))	//Deadband
+						{
+							//Set us up as non-regulating
+							new_pf_reg_status = IDLING;
+
+							//Copy the old value in, to prevent us from changing
+							Q_target = pf_reg_dispatch_VAR;
+						}
+						else	//Regulating band
+						{
+							//Flag as regulating
+							new_pf_reg_status = REGULATING;
+
+							//Different around 1?  Doesn't seem to be
+							//Figure out the offset to get us back into the acceptable capacitance range
+							Q_target = -(curr_reactive_power_val - (curr_real_power_val * tan(acos(pf_target_var)))) + pf_reg_dispatch_VAR;
+						}
+					}//End switching limit is low
+				}//End capacitive pf logic
+				else	//Inductive, by elimination
+				{
+					if (pf_reg_low < 0.0)	//Capacitive switching point
+					{
+						if ((curr_pf < 0.0) && (curr_pf >= pf_reg_high))	//Recovery mode
+						{
+							//Flag as regulating
+							new_pf_reg_status = REGULATING;
+
+							//Figure out the offset to get us back into the acceptable capacitance range
+							Q_target = -(curr_reactive_power_val - (curr_real_power_val * tan(acos(pf_target_var)))) + pf_reg_dispatch_VAR;
+						}
+						else if ((curr_pf < 0.0) && (curr_pf >= pf_reg_low))	//Deadband
+						{
+							//Set us up as non-regulating
+							new_pf_reg_status = IDLING;
+
+							//Copy the old value in, to prevent us from changing
+							Q_target = pf_reg_dispatch_VAR;
+						}
+						else	//Regulating band
+						{
+							//Flag as regulating
+							new_pf_reg_status = REGULATING;
+
+							//Being centered around 1 doesn't seem to matter
+							//Figure out the offset to get us back into the acceptable capacitance range
+							Q_target = -(curr_reactive_power_val - (curr_real_power_val * tan(acos(pf_target_var)))) + pf_reg_dispatch_VAR;
+						}
+					}//Capactive switching point
+					else	//Inductive, by default
+					{
+						if (pf_reg_high < 0.0)	//Capacitive high switching point
+						{
+							if ((curr_pf < 0.0) && (curr_pf >= pf_reg_high))	//Recovery mode
+							{
+								//Flag as regulating
+								new_pf_reg_status = REGULATING;
+
+								//Figure out the offset to get us back into the acceptable capacitance range
+								Q_target = -(curr_reactive_power_val - (curr_real_power_val * tan(acos(pf_target_var)))) + pf_reg_dispatch_VAR;
+							}
+							else if (((curr_pf < 0.0) && (curr_pf <= pf_reg_high)) || ((curr_pf > 0.0) && (curr_pf >= pf_reg_low)))	//Deadband
+							{
+								//Set us up as non-regulating
+								new_pf_reg_status = IDLING;
+
+								//Copy the old value in, to prevent us from changing
+								Q_target = pf_reg_dispatch_VAR;
+							}
+							else	//Regulating band
+							{
+								//Flag as regulating
+								new_pf_reg_status = REGULATING;
+
+								//Figure out the offset to get us back into the acceptable capacitance range
+								Q_target = -(curr_reactive_power_val - (curr_real_power_val * tan(acos(pf_target_var)))) + pf_reg_dispatch_VAR;
+							}
+						}//End inductive set, inductive switch, but capacitive recovery
+						else	//Inductive as well
+						{
+							if ((curr_pf < 0.0) || ((curr_pf > 0.0) && (curr_pf >= pf_reg_high)))	//Recovery mode
+							{
+								//Flag as regulating
+								new_pf_reg_status = REGULATING;
+
+								//Figure out the offset to get us back into the acceptable capacitance range
+								Q_target = -(curr_reactive_power_val - (curr_real_power_val * tan(acos(pf_target_var)))) + pf_reg_dispatch_VAR;
+							}
+							else if (curr_pf >= pf_reg_low)	//Deadband
+							{
+								//Set us up as non-regulating
+								new_pf_reg_status = IDLING;
+
+								//Copy the old value in, to prevent us from changing
+								Q_target = pf_reg_dispatch_VAR;
+							}
+							else	//Regulating band
+							{
+								//Flag as regulating
+								new_pf_reg_status = REGULATING;
+
+								//Figure out the offset to get us back into the acceptable capacitance range
+								Q_target = -(curr_reactive_power_val - (curr_real_power_val * tan(acos(pf_target_var)))) + pf_reg_dispatch_VAR;
+							}
+						}//End inductive high switching point
+					}//End inductive target and inductive switching
+				}//End inductive target
+			}//End room to do reactive
+			else	//No room, zero and idle us
+			{
+				new_pf_reg_status = IDLING;
+				new_pf_reg_distpatch_VAR = 0.0;
+			}//No room
+		}//End INCLUDED_ALT
 
 		//Checks due to change in operation - see if we need to reiterate
 		//Mode change

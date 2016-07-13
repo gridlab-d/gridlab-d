@@ -85,13 +85,17 @@ int triplex_line::init(OBJECT *parent)
 	temp_config = OBJECTDATA(configuration,triplex_line_configuration);
 
 	//Values are populated now - populate link ratings parameter
-	for (index=0; index<3; index++)
+	for (index=0; index<4; index++)
 	{
 		if (index==0)
 		{
-			temp_obj = temp_config->phaseA_conductor;
+			temp_obj = configuration;
 		}
 		else if (index==1)
+		{
+			temp_obj = temp_config->phaseA_conductor;
+		}
+		else if (index==2)
 		{
 			temp_obj = temp_config->phaseB_conductor;
 		}

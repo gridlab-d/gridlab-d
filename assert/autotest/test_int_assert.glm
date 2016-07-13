@@ -1,0 +1,19 @@
+// test_int_assert
+
+clock {
+	timezone PST+8PDT; 
+	starttime '2000-01-01 0:00:00';
+	stoptime '2000-01-01 0:00:00';
+}
+
+module assert;
+module residential;
+
+object house {
+	compressor_count 4;
+	object int_assert {
+		target "compressor_count";
+		value 4;
+		within 1;
+	};
+};

@@ -35,6 +35,7 @@ public:
 	double  capacitance31;
 	double  capacitance32;
 	double  capacitance33;
+	LINERATINGS winter, summer;
 	
 	line_configuration(MODULE *mod);
 	inline line_configuration(CLASS *cl=oclass):powerflow_library(cl){};

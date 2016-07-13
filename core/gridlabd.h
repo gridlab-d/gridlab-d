@@ -647,7 +647,33 @@ inline char *gl_getvalue(OBJECT *obj,
 
 #define gl_get_object_count (*callback->object_count)
 
+#ifdef __cplusplus
+inline OBJECT **gl_get_object_prop(OBJECT *obj, PROPERTY *prop){
+    return (*callback->objvar.object_var)(obj, prop);
+}
+#else
 #define gl_get_object_prop (*callback->objvar.object_var)
+#endif
+
+#ifdef __cplusplus
+inline bool *gl_get_bool(OBJECT *obj, /**< object to set dependency */
+							PROPERTY *prop) /**< object dependent on */
+{
+    return (*callback->objvar.bool_var)(obj,prop);
+}
+#else
+#define gl_get_bool (*callback->objvar.bool_var)
+#endif
+
+#ifdef __cplusplus
+inline bool *gl_get_bool(OBJECT *obj, /**< object to set dependency */
+							char *propname) /**< object dependent on */
+{
+    return (*callback->objvarname.bool_var)(obj,propname);
+}
+#else
+#define gl_get_bool_by_name (*callback->objvarname.bool_var)
+#endif
 
 /** Retrieve the complex value associated with the property
 	@see object_get_complex()
@@ -681,6 +707,8 @@ inline char *gl_getvalue(OBJECT *obj,
 #define gl_get_double (*callback->objvar.double_var)
 
 #define gl_get_string_by_name (*callback->objvarname.string_var)
+
+#define gl_get_object_prop_by_name (*callback->objvarname.object_var)
 
 #define gl_get_string (*callback->objvar.string_var)
 

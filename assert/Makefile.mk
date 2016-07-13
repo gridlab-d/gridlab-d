@@ -17,5 +17,7 @@ assert_assert_la_SOURCES += assert/double_assert.cpp
 assert_assert_la_SOURCES += assert/double_assert.h
 assert_assert_la_SOURCES += assert/enum_assert.cpp
 assert_assert_la_SOURCES += assert/enum_assert.h
+assert_assert_la_SOURCES += assert/int_assert.cpp
+assert_assert_la_SOURCES += assert/int_assert.h
 assert_assert_la_SOURCES += assert/init.cpp
 assert_assert_la_SOURCES += assert/main.cpp

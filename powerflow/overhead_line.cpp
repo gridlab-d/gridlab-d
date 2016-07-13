@@ -102,17 +102,21 @@ int overhead_line::init(OBJECT *parent)
 	recalc();
 
 	//Values are populated now - populate link ratings parameter
-	for (index=0; index<4; index++)
+	for (index=0; index<5; index++)
 	{
 		if (index==0)
 		{
-			temp_obj = config->phaseA_conductor;
+			temp_obj = configuration;
 		}
 		else if (index==1)
 		{
-			temp_obj = config->phaseB_conductor;
+			temp_obj = config->phaseA_conductor;
 		}
 		else if (index==2)
+		{
+			temp_obj = config->phaseB_conductor;
+		}
+		else if (index==3)
 		{
 			temp_obj = config->phaseC_conductor;
 		}

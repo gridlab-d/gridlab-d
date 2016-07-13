@@ -444,11 +444,14 @@ static counters run_test(char *file, double *elapsed_time=NULL)
 		output_error("run_test(char *file='%s'): unable to destroy test folder", dir);
 		result.inc_access(file);
 		return result;
+    } else {
+        //output_verbose("run_test(): deleted '%s'", dir);
+        rmdir(dir);
 	}
 #ifdef WIN32
-	if ( !mkdir(dir) && clean )
+	if ( (0 != mkdir(dir)) && clean )
 #else
-	if ( !mkdir(dir,0750) && clean )
+	if ( (0 != mkdir(dir,0750)) && clean )
 #endif
 	{
 		output_error("run_test(char *file='%s'): unable to create test folder", dir);
@@ -482,6 +485,7 @@ static counters run_test(char *file, double *elapsed_time=NULL)
 // 		output_warning("%s exit code %x is outside normal exit code range and may be interpreted incorrectly", name, code);
 //#endif
 	bool exited = WIFEXITED(code);
+    bool problem = false;
 	if ( exited )
 	{
 		code = WEXITSTATUS(code);
@@ -503,12 +507,16 @@ static counters run_test(char *file, double *elapsed_time=NULL)
 			output_verbose("%s error was expected, code %d in %.1f seconds", name, code, t);
 		else if ( code==XC_SUCCESS ) // expected success
 			output_verbose("%s success was expected, code %d in %.1f seconds", name, code, t);
-		else if ( code==XC_EXCEPTION ) // unexpected exception
+        else if ( code==XC_EXCEPTION ){ // unexpected exception
 			result.inc_exceptions(file,code,t);
-		else if ( code==XC_SUCCESS  ) // unexpected success
+            problem = true;
+        } else if ( code==XC_SUCCESS  ){ // unexpected success
 			result.inc_success(file,code,t);
-		else if ( code!=XC_SUCCESS ) // unexpected error
+            problem = true;
+        } else if ( code!=XC_SUCCESS ){ // unexpected error
 			result.inc_failed(file,code,t);
+            problem = true;
+		}
 	}
 	else // signaled
 	{
@@ -518,10 +526,21 @@ static counters run_test(char *file, double *elapsed_time=NULL)
 			output_warning("optional test %s exception, code %d in %.1f seconds", name, code, t);
 		else if ( is_exc ) // expected exception
 			output_warning("%s exception expected, code %d in %.1f seconds", name, code, t);
-		else 
+        else {
 			result.inc_exceptions(file,code,t);
+            problem = true;
+        }
 	} 
 	output_debug("run_test(char *file='%s') done", file);
+    if ( !problem && clean && !destroy_dir(dir) )
+    {
+        output_error("run_test(char *file='%s'): unable to destroy test folder after the test", dir);
+        result.inc_access(file);
+        return result;
+    } else {
+        //output_verbose("run_test(): deleted '%s'", dir);
+        rmdir(dir);
+    }
 	return result;
 }
 

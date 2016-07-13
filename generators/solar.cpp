@@ -613,7 +613,7 @@ int solar::init(OBJECT *parent)
 		*/
 
 		if(Max_P == 0) {
-			gl_warning("init(): Rated_kVA or {area or rated insolation or effiency} were not specified or specified as zero.  Leads to maximum power output of 0.");
+			gl_warning("init(): Rated_kVA or {area or rated insolation or efficiency} were not specified or specified as zero.  Leads to maximum power output of 0.");
 			/* TROUBLESHOOT
 			The relationship between power output and other physical variables is described by Rated_kVA = Rated_Insolation * efficiency * area. Since Rated_kVA
 			was not specified and this equation leads to a value of zero, the output of the model is likely to be no power at all times.

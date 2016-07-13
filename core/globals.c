@@ -223,6 +223,7 @@ static struct s_varmap {
 	{"deltamode_updateorder", PT_char1024, &global_deltamode_updateorder, PA_REFERENCE, "order in which modules are update in deltamode"},
 	{"deltamode_iteration_limit", PT_int32, &global_deltamode_iteration_limit, PA_PUBLIC, "iteration limit for each delta timestep (object and interupdate)"},
 	{"run_powerworld", PT_bool, &global_run_powerworld, PA_PUBLIC, "boolean that that says your system is set up correctly to run with PowerWorld"},
+	{"bigranks", PT_bool, &global_bigranks, PA_PUBLIC, "enable fast/blind set_rank operations"},
 	{"exename", PT_char1024, &global_execname, PA_REFERENCE, "argv[0] value"},
 	{"wget_options", PT_char1024, &global_wget_options, PA_PUBLIC, "wget options"},
 	{"svnroot", PT_char1024, &global_svnroot, PA_PUBLIC, "svnroot"},

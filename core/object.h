@@ -222,6 +222,7 @@ typedef struct s_callbacks {
 		char *(*find_file)(char *name, char *path, int mode, char *buffer, int len);
 	} file;
 	struct s_objvar_struct {
+		bool *(*bool_var)(OBJECT *obj, PROPERTY *prop);
 		complex *(*complex_var)(OBJECT *obj, PROPERTY *prop);
 		enumeration *(*enum_var)(OBJECT *obj, PROPERTY *prop);
 		set *(*set_var)(OBJECT *obj, PROPERTY *prop);
@@ -233,6 +234,7 @@ typedef struct s_callbacks {
 		OBJECT **(*object_var)(OBJECT *obj, PROPERTY *prop);
 	} objvar;
 	struct s_objvar_name_struct {
+		bool *(*bool_var)(OBJECT *obj, char *name);
 		complex *(*complex_var)(OBJECT *obj, char *name);
 		enumeration *(*enum_var)(OBJECT *obj, char *name);
 		set *(*set_var)(OBJECT *obj, char *name);
@@ -348,6 +350,8 @@ int object_set_int16_by_name(OBJECT *obj, PROPERTYNAME name, int16 value);
 int object_set_int32_by_name(OBJECT *obj, PROPERTYNAME name, int32 value);
 int object_set_int64_by_name(OBJECT *obj, PROPERTYNAME name, int64 value);
 int object_set_double_by_name(OBJECT *obj, PROPERTYNAME name, double value);
+bool *object_get_bool(OBJECT *obj, PROPERTY *prop);
+bool *object_get_bool_by_name(OBJECT *obj, char *name);
 int object_set_complex_by_name(OBJECT *obj, PROPERTYNAME name, complex value);
 int object_get_value_by_name(OBJECT *obj, PROPERTYNAME name, char *value, int size);
 int object_get_value_by_addr(OBJECT *obj, void *addr, char *value, int size, PROPERTY *prop);

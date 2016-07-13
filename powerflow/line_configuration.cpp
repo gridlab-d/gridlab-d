@@ -58,6 +58,10 @@ line_configuration::line_configuration(MODULE *mod) : powerflow_library(mod)
 			PT_double, "c31[nF/mile]",PADDR(capacitance31),
 			PT_double, "c32[nF/mile]",PADDR(capacitance32),
 			PT_double, "c33[nF/mile]",PADDR(capacitance33),
+			PT_double, "rating.summer.continuous[A]", PADDR(summer.continuous),PT_DESCRIPTION,"amp rating in summer, continuous",
+			PT_double, "rating.summer.emergency[A]", PADDR(summer.emergency),PT_DESCRIPTION,"amp rating in summer, short term",
+			PT_double, "rating.winter.continuous[A]", PADDR(winter.continuous),PT_DESCRIPTION,"amp rating in winter, continuous",
+			PT_double, "rating.winter.emergency[A]", PADDR(winter.emergency),PT_DESCRIPTION,"amp rating in winter, short term",
             NULL) < 1) GL_THROW("unable to publish line_configuration properties in %s",__FILE__);
     }
 }
@@ -72,7 +76,8 @@ int line_configuration::create(void)
 	line_spacing = NULL;
 	impedance11 = impedance12 = impedance13 = impedance21 = impedance22 = impedance23 = impedance31 = impedance32 = impedance33 = complex(0,0);
 	capacitance11 = capacitance12 = capacitance13 = capacitance21 = capacitance22 = capacitance23 = capacitance31 = capacitance32 = capacitance33 = 0.0;
-
+	summer.continuous = winter.continuous = 1000;
+	summer.emergency = winter.emergency = 2000;
 	return 1;
 }
 

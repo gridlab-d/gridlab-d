@@ -33,7 +33,7 @@ public:
 	complex I_In; // I_in (DC)
 	complex VA_In; //power in (DC)
 
-	enum PF_REG {INCLUDED=1, EXCLUDED=2} pf_reg;
+	enum PF_REG {INCLUDED=1, EXCLUDED=2, INCLUDED_ALT=3} pf_reg;
 	enum PF_REG_STATUS {REGULATING = 1, IDLING = 2} pf_reg_status;
 	enum LOAD_FOLLOW_STATUS {IDLE=0, DISCHARGE=1, CHARGE=2} load_follow_status;	//Status variable for what the load_following mode is doing
 
@@ -130,11 +130,17 @@ public:
 	double charge_lockout_time;		//Time a charge operation is held before another dispatch operation is allowed
 	double discharge_lockout_time;	//Time a discharge operation is held before another dispatch operation is allowed
 
-	//properties for pf regulation mode
+	//properties for pf regulation mode - first control method
 	double pf_reg_activate;			//Lowest acceptable power-factor level below which power-factor regulation will activate.
 	double pf_reg_deactivate;		//Lowest acceptable power-factor above which no power-factor regulation is needed.
+	
+	//properties for pf regulation mode - second control method
+	double pf_target_var;			//Desired power-factor to maintain (signed)
+	double pf_reg_high;				//Upper limit for power factor regulation - if above (other side), go full opposite
+	double pf_reg_low;				//Lower limit for power factor regulation - if above, just leave it be (don't regulator)
+	
 	double pf_reg_activate_lockout_time; //Mandatory pause between the deactivation of power-factor regulation and it reactivation
-
+	
 	//Properties for group load-following
 	double charge_threshold;		//Level at which all inverters in the group will begin charging attached batteries. Regulated minimum load level.
 	double discharge_threshold;		//Level at which all inverters in the group will begin discharging attached batteries. Regulated maximum load level.

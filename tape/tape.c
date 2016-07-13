@@ -318,6 +318,10 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 
 	/* new group_recorder() */
 	new_group_recorder(module);
+
+	/* new violation_recorder() */
+	new_violation_recorder(module);
+
 #if 0
 	new_loadshape(module);
 #endif // zero

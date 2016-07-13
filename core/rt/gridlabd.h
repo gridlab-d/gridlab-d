@@ -1131,6 +1131,7 @@ typedef struct s_callbacks {
 		char *(*find_file)(char *name, char *path, int mode);
 	} file;
 	struct s_objvar_struct {
+		bool *(*bool_var)(OBJECT *obj, PROPERTY *prop);
 		complex *(*complex_var)(OBJECT *obj, PROPERTY *prop);
 		enumeration *(*enum_var)(OBJECT *obj, PROPERTY *prop);
 		set *(*set_var)(OBJECT *obj, PROPERTY *prop);
@@ -1142,6 +1143,7 @@ typedef struct s_callbacks {
 		OBJECT *(*object_var)(OBJECT *obj, PROPERTY *prop);
 	} objvar;
 	struct s_objvar_name_struct {
+		bool *(*bool_var)(OBJECT *obj, char *name);
 		complex *(*complex_var)(OBJECT *obj, char *name);
 		enumeration *(*enum_var)(OBJECT *obj, char *name);
 		set *(*set_var)(OBJECT *obj, char *name);
