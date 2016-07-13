@@ -8,6 +8,9 @@
 #include "line.h"
 #include "transformer.h"
 #include "node.h"
+#include "regulator.h"
+#include "capacitor.h"
+#include "switch_object.h"
 
 typedef enum {
 	IDM_RECT,
@@ -23,14 +26,15 @@ public:
 	link_object **pFuse;
 	line **pOhLine;
 	link_object **pRecloser;
-	link_object **pRegulator;
+	regulator **pRegulator;
 	link_object **pRelay;
 	link_object **pSectionalizer;
 	link_object **pSeriesReactor;
-	link_object **pSwitch;
+	switch_object **pSwitch;
 	transformer **pTransformer;
 	line **pTpLine;
 	line **pUgLine;
+	capacitor **pCapacitor;
 	TIMESTAMP runtime;
 	int32 runcount;
 	complex *node_voltage;

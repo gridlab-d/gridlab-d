@@ -73,7 +73,7 @@ complex * impedance_dump::get_complex(OBJECT *obj, char *name)
 
 int impedance_dump::dump(TIMESTAMP t)
 {
-	FINDLIST *fuses, *ohlines, *reclosers, *regulators, *relays, *sectionalizers, *series_reactors, *switches, *transformers, *tplines, *uglines;
+	FINDLIST *capacitors, *fuses, *ohlines, *reclosers, *regulators, *relays, *sectionalizers, *series_reactors, *switches, *transformers, *tplines, *uglines;
 	OBJECT *obj = NULL;
 	char buffer[1024];
 	FILE *fn = NULL;
@@ -83,6 +83,7 @@ int impedance_dump::dump(TIMESTAMP t)
 	int y = 0;
 	CLASS *obj_class;
 	char timestr[64];
+	PROPERTY *xfmrconfig;
 
 	//find the link objects
 	if(group[0] == '\0'){
@@ -97,6 +98,7 @@ int impedance_dump::dump(TIMESTAMP t)
 		transformers = gl_find_objects(FL_NEW,FT_CLASS,SAME,"transformer",FT_END);			//find all transformers
 		tplines = gl_find_objects(FL_NEW,FT_CLASS,SAME,"triplex_line",FT_END);				//find all triplex_lines
 		uglines = gl_find_objects(FL_NEW,FT_CLASS,SAME,"underground_line",FT_END);			//find all underground_lines
+		capacitors = gl_find_objects(FL_NEW,FT_CLASS,SAME,"capacitor",FT_END);
 	} else {
 		fuses = gl_find_objects(FL_NEW,FT_CLASS,SAME,"fuse",AND,FT_GROUPID,SAME,group.get_string(),FT_END);
 		ohlines = gl_find_objects(FL_NEW,FT_CLASS,SAME,"overhead_line",AND,FT_GROUPID,SAME,group.get_string(),FT_END);
@@ -109,6 +111,7 @@ int impedance_dump::dump(TIMESTAMP t)
 		transformers = gl_find_objects(FL_NEW,FT_CLASS,SAME,"transformer",AND,FT_GROUPID,SAME,group.get_string(),FT_END);
 		tplines = gl_find_objects(FL_NEW,FT_CLASS,SAME,"triplex_line",AND,FT_GROUPID,SAME,group.get_string(),FT_END);
 		uglines = gl_find_objects(FL_NEW,FT_CLASS,SAME,"underground_line",AND,FT_GROUPID,SAME,group.get_string(),FT_END);
+		capacitors = gl_find_objects(FL_NEW,FT_CLASS,SAME,"capacitor",AND,FT_GROUPID,SAME,group.get_string(),FT_END);
 	}
 	if(fuses == NULL && ohlines == NULL && reclosers == NULL && regulators == NULL && relays == NULL && sectionalizers == NULL && series_reactors == NULL && switches == NULL && transformers == NULL && tplines == NULL && uglines == NULL){
 		gl_error("No link objects were found.");
@@ -209,6 +212,15 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<to_voltage>%f</to_voltage>\n",node_voltage->Mag());
 
 			//write the phases
+			if(pFuse[index]->phases == 0x0001){//A
+				fprintf(fn,"\t\t<phases>A</phases>\n");
+			}
+			if(pFuse[index]->phases == 0x0002){//B
+				fprintf(fn,"\t\t<phases>B</phases>\n");
+			}
+			if(pFuse[index]->phases == 0x0004){//C
+				fprintf(fn,"\t\t<phases>C</phases>\n");
+			}
 			if(pFuse[index]->phases == 0x0009){//AN
 				fprintf(fn,"\t\t<phases>AN</phases>\n");
 			}
@@ -261,15 +273,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pFuse[index]->a_mat[x][y].Re() >= 0){
 						if(pFuse[index]->a_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<a%d%d>+%f+%fj</a%d%d>\n",x+1,y+1,pFuse[index]->a_mat[x][y].Re(),pFuse[index]->a_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>+%.15f+%.15fj</a%d%d>\n",x+1,y+1,pFuse[index]->a_mat[x][y].Re(),pFuse[index]->a_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<a%d%d>+%f-%fj</a%d%d>\n",x+1,y+1,pFuse[index]->a_mat[x][y].Re(),abs(pFuse[index]->a_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>+%.15f-%.15fj</a%d%d>\n",x+1,y+1,pFuse[index]->a_mat[x][y].Re(),abs(pFuse[index]->a_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pFuse[index]->a_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<a%d%d>-%f+%fj</a%d%d>\n",x+1,y+1,abs(pFuse[index]->a_mat[x][y].Re()),pFuse[index]->a_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>-%.15f+%.15fj</a%d%d>\n",x+1,y+1,abs(pFuse[index]->a_mat[x][y].Re()),pFuse[index]->a_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<a%d%d>-%f-%fj</a%d%d>\n",x+1,y+1,abs(pFuse[index]->a_mat[x][y].Re()),abs(pFuse[index]->a_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>-%.15f-%.15fj</a%d%d>\n",x+1,y+1,abs(pFuse[index]->a_mat[x][y].Re()),abs(pFuse[index]->a_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -282,15 +294,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pFuse[index]->b_mat[x][y].Re() >= 0){
 						if(pFuse[index]->b_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<b%d%d>+%f+%fj</b%d%d>\n",x+1,y+1,pFuse[index]->b_mat[x][y].Re(),pFuse[index]->b_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>+%.15f+%.15fj</b%d%d>\n",x+1,y+1,pFuse[index]->b_mat[x][y].Re(),pFuse[index]->b_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<b%d%d>+%f-%fj</b%d%d>\n",x+1,y+1,pFuse[index]->b_mat[x][y].Re(),abs(pFuse[index]->b_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>+%.15f-%.15fj</b%d%d>\n",x+1,y+1,pFuse[index]->b_mat[x][y].Re(),abs(pFuse[index]->b_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pFuse[index]->b_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<b%d%d>-%f+%fj</b%d%d>\n",x+1,y+1,abs(pFuse[index]->b_mat[x][y].Re()),pFuse[index]->b_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>-%.15f+%.15fj</b%d%d>\n",x+1,y+1,abs(pFuse[index]->b_mat[x][y].Re()),pFuse[index]->b_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<b%d%d>-%f-%fj</b%d%d>\n",x+1,y+1,abs(pFuse[index]->b_mat[x][y].Re()),abs(pFuse[index]->b_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>-%.15f-%.15fj</b%d%d>\n",x+1,y+1,abs(pFuse[index]->b_mat[x][y].Re()),abs(pFuse[index]->b_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -303,15 +315,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pFuse[index]->c_mat[x][y].Re() >= 0){
 						if(pFuse[index]->c_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<c%d%d>+%f+%fj</c%d%d>\n",x+1,y+1,pFuse[index]->c_mat[x][y].Re(),pFuse[index]->c_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>+%.15f+%.15fj</c%d%d>\n",x+1,y+1,pFuse[index]->c_mat[x][y].Re(),pFuse[index]->c_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<c%d%d>+%f-%fj</c%d%d>\n",x+1,y+1,pFuse[index]->c_mat[x][y].Re(),abs(pFuse[index]->c_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>+%.15f-%.15fj</c%d%d>\n",x+1,y+1,pFuse[index]->c_mat[x][y].Re(),abs(pFuse[index]->c_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pFuse[index]->c_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<c%d%d>-%f+%fj</c%d%d>\n",x+1,y+1,abs(pFuse[index]->c_mat[x][y].Re()),pFuse[index]->c_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>-%.15f+%.15fj</c%d%d>\n",x+1,y+1,abs(pFuse[index]->c_mat[x][y].Re()),pFuse[index]->c_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<c%d%d>-%f-%fj</c%d%d>\n",x+1,y+1,abs(pFuse[index]->c_mat[x][y].Re()),abs(pFuse[index]->c_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>-%.15f-%.15fj</c%d%d>\n",x+1,y+1,abs(pFuse[index]->c_mat[x][y].Re()),abs(pFuse[index]->c_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -324,15 +336,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pFuse[index]->d_mat[x][y].Re() >= 0){
 						if(pFuse[index]->d_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<d%d%d>+%f+%fj</d%d%d>\n",x+1,y+1,pFuse[index]->d_mat[x][y].Re(),pFuse[index]->d_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>+%.15f+%.15fj</d%d%d>\n",x+1,y+1,pFuse[index]->d_mat[x][y].Re(),pFuse[index]->d_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<d%d%d>+%f-%fj</d%d%d>\n",x+1,y+1,pFuse[index]->d_mat[x][y].Re(),abs(pFuse[index]->d_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>+%.15f-%.15fj</d%d%d>\n",x+1,y+1,pFuse[index]->d_mat[x][y].Re(),abs(pFuse[index]->d_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pFuse[index]->d_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<d%d%d>-%f+%fj</d%d%d>\n",x+1,y+1,abs(pFuse[index]->d_mat[x][y].Re()),pFuse[index]->d_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>-%.15f+%.15fj</d%d%d>\n",x+1,y+1,abs(pFuse[index]->d_mat[x][y].Re()),pFuse[index]->d_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<d%d%d>-%f-%fj</d%d%d>\n",x+1,y+1,abs(pFuse[index]->d_mat[x][y].Re()),abs(pFuse[index]->d_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>-%.15f-%.15fj</d%d%d>\n",x+1,y+1,abs(pFuse[index]->d_mat[x][y].Re()),abs(pFuse[index]->d_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -345,15 +357,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pFuse[index]->A_mat[x][y].Re() >= 0){
 						if(pFuse[index]->A_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<A%d%d>+%f+%fj</A%d%d>\n",x+1,y+1,pFuse[index]->A_mat[x][y].Re(),pFuse[index]->A_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>+%.15f+%.15fj</A%d%d>\n",x+1,y+1,pFuse[index]->A_mat[x][y].Re(),pFuse[index]->A_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<A%d%d>+%f-%fj</A%d%d>\n",x+1,y+1,pFuse[index]->A_mat[x][y].Re(),abs(pFuse[index]->A_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>+%.15f-%.15fj</A%d%d>\n",x+1,y+1,pFuse[index]->A_mat[x][y].Re(),abs(pFuse[index]->A_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pFuse[index]->A_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<A%d%d>-%f+%fj</A%d%d>\n",x+1,y+1,abs(pFuse[index]->A_mat[x][y].Re()),pFuse[index]->A_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>-%.15f+%.15fj</A%d%d>\n",x+1,y+1,abs(pFuse[index]->A_mat[x][y].Re()),pFuse[index]->A_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<A%d%d>-%f-%fj</A%d%d>\n",x+1,y+1,abs(pFuse[index]->A_mat[x][y].Re()),abs(pFuse[index]->A_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>-%.15f-%.15fj</A%d%d>\n",x+1,y+1,abs(pFuse[index]->A_mat[x][y].Re()),abs(pFuse[index]->A_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -366,15 +378,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pFuse[index]->B_mat[x][y].Re() >= 0){
 						if(pFuse[index]->B_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<B%d%d>+%f+%fj</B%d%d>\n",x+1,y+1,pFuse[index]->B_mat[x][y].Re(),pFuse[index]->B_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>+%.15f+%.15fj</B%d%d>\n",x+1,y+1,pFuse[index]->B_mat[x][y].Re(),pFuse[index]->B_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<B%d%d>+%f-%fj</B%d%d>\n",x+1,y+1,pFuse[index]->B_mat[x][y].Re(),abs(pFuse[index]->B_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>+%.15f-%.15fj</B%d%d>\n",x+1,y+1,pFuse[index]->B_mat[x][y].Re(),abs(pFuse[index]->B_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pFuse[index]->B_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<B%d%d>-%f+%fj</B%d%d>\n",x+1,y+1,abs(pFuse[index]->B_mat[x][y].Re()),pFuse[index]->B_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>-%.15f+%.15fj</B%d%d>\n",x+1,y+1,abs(pFuse[index]->B_mat[x][y].Re()),pFuse[index]->B_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<B%d%d>-%f-%fj</B%d%d>\n",x+1,y+1,abs(pFuse[index]->B_mat[x][y].Re()),abs(pFuse[index]->B_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>-%.15f-%.15fj</B%d%d>\n",x+1,y+1,abs(pFuse[index]->B_mat[x][y].Re()),abs(pFuse[index]->B_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -465,6 +477,15 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<to_voltage>%f</to_voltage>\n",node_voltage->Mag());
 
 			//write the phases
+			if(pOhLine[index]->phases == 0x0001){//A
+				fprintf(fn,"\t\t<phases>A</phases>\n");
+			}
+			if(pOhLine[index]->phases == 0x0002){//B
+				fprintf(fn,"\t\t<phases>B</phases>\n");
+			}
+			if(pOhLine[index]->phases == 0x0004){//C
+				fprintf(fn,"\t\t<phases>C</phases>\n");
+			}
 			if(pOhLine[index]->phases == 0x0009){//AN
 				fprintf(fn,"\t\t<phases>AN</phases>\n");
 			}
@@ -512,7 +533,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			}
 
 			//write the length
-			fprintf(fn,"\t\t<length>%f</length>\n",pOhLine[index]->length);
+			fprintf(fn,"\t\t<length>%.15f</length>\n",pOhLine[index]->length);
 
 			//write a_mat
 			fprintf(fn,"\t\t<a_matrix>\n");
@@ -520,15 +541,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pOhLine[index]->a_mat[x][y].Re() >= 0){
 						if(pOhLine[index]->a_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<a%d%d>+%f+%fj</a%d%d>\n",x+1,y+1,pOhLine[index]->a_mat[x][y].Re(),pOhLine[index]->a_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>+%.15f+%.15fj</a%d%d>\n",x+1,y+1,pOhLine[index]->a_mat[x][y].Re(),pOhLine[index]->a_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<a%d%d>+%f-%fj</a%d%d>\n",x+1,y+1,pOhLine[index]->a_mat[x][y].Re(),abs(pOhLine[index]->a_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>+%.15f-%.15fj</a%d%d>\n",x+1,y+1,pOhLine[index]->a_mat[x][y].Re(),abs(pOhLine[index]->a_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pOhLine[index]->a_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<a%d%d>-%f+%fj</a%d%d>\n",x+1,y+1,abs(pOhLine[index]->a_mat[x][y].Re()),pOhLine[index]->a_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>-%.15f+%.15fj</a%d%d>\n",x+1,y+1,abs(pOhLine[index]->a_mat[x][y].Re()),pOhLine[index]->a_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<a%d%d>-%f-%fj</a%d%d>\n",x+1,y+1,abs(pOhLine[index]->a_mat[x][y].Re()),abs(pOhLine[index]->a_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>-%.15f-%.15fj</a%d%d>\n",x+1,y+1,abs(pOhLine[index]->a_mat[x][y].Re()),abs(pOhLine[index]->a_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -541,15 +562,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pOhLine[index]->b_mat[x][y].Re() >= 0){
 						if(pOhLine[index]->b_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<b%d%d>+%f+%fj</b%d%d>\n",x+1,y+1,pOhLine[index]->b_mat[x][y].Re(),pOhLine[index]->b_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>+%.15f+%.15fj</b%d%d>\n",x+1,y+1,pOhLine[index]->b_mat[x][y].Re(),pOhLine[index]->b_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<b%d%d>+%f-%fj</b%d%d>\n",x+1,y+1,pOhLine[index]->b_mat[x][y].Re(),abs(pOhLine[index]->b_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>+%.15f-%.15fj</b%d%d>\n",x+1,y+1,pOhLine[index]->b_mat[x][y].Re(),abs(pOhLine[index]->b_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pOhLine[index]->b_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<b%d%d>-%f+%fj</b%d%d>\n",x+1,y+1,abs(pOhLine[index]->b_mat[x][y].Re()),pOhLine[index]->b_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>-%.15f+%.15fj</b%d%d>\n",x+1,y+1,abs(pOhLine[index]->b_mat[x][y].Re()),pOhLine[index]->b_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<b%d%d>-%f-%fj</b%d%d>\n",x+1,y+1,abs(pOhLine[index]->b_mat[x][y].Re()),abs(pOhLine[index]->b_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>-%.15f-%.15fj</b%d%d>\n",x+1,y+1,abs(pOhLine[index]->b_mat[x][y].Re()),abs(pOhLine[index]->b_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -562,15 +583,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pOhLine[index]->c_mat[x][y].Re() >= 0){
 						if(pOhLine[index]->c_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<c%d%d>+%f+%fj</c%d%d>\n",x+1,y+1,pOhLine[index]->c_mat[x][y].Re(),pOhLine[index]->c_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>+%.15f+%.15fj</c%d%d>\n",x+1,y+1,pOhLine[index]->c_mat[x][y].Re(),pOhLine[index]->c_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<c%d%d>+%f-%fj</c%d%d>\n",x+1,y+1,pOhLine[index]->c_mat[x][y].Re(),abs(pOhLine[index]->c_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>+%.15f-%.15fj</c%d%d>\n",x+1,y+1,pOhLine[index]->c_mat[x][y].Re(),abs(pOhLine[index]->c_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pOhLine[index]->c_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<c%d%d>-%f+%fj</c%d%d>\n",x+1,y+1,abs(pOhLine[index]->c_mat[x][y].Re()),pOhLine[index]->c_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>-%.15f+%.15fj</c%d%d>\n",x+1,y+1,abs(pOhLine[index]->c_mat[x][y].Re()),pOhLine[index]->c_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<c%d%d>-%f-%fj</c%d%d>\n",x+1,y+1,abs(pOhLine[index]->c_mat[x][y].Re()),abs(pOhLine[index]->c_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>-%.15f-%.15fj</c%d%d>\n",x+1,y+1,abs(pOhLine[index]->c_mat[x][y].Re()),abs(pOhLine[index]->c_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -583,15 +604,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pOhLine[index]->d_mat[x][y].Re() >= 0){
 						if(pOhLine[index]->d_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<d%d%d>+%f+%fj</d%d%d>\n",x+1,y+1,pOhLine[index]->d_mat[x][y].Re(),pOhLine[index]->d_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>+%.15f+%.15fj</d%d%d>\n",x+1,y+1,pOhLine[index]->d_mat[x][y].Re(),pOhLine[index]->d_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<d%d%d>+%f-%fj</d%d%d>\n",x+1,y+1,pOhLine[index]->d_mat[x][y].Re(),abs(pOhLine[index]->d_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>+%.15f-%.15fj</d%d%d>\n",x+1,y+1,pOhLine[index]->d_mat[x][y].Re(),abs(pOhLine[index]->d_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pOhLine[index]->d_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<d%d%d>-%f+%fj</d%d%d>\n",x+1,y+1,abs(pOhLine[index]->d_mat[x][y].Re()),pOhLine[index]->d_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>-%.15f+%.15fj</d%d%d>\n",x+1,y+1,abs(pOhLine[index]->d_mat[x][y].Re()),pOhLine[index]->d_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<d%d%d>-%f-%fj</d%d%d>\n",x+1,y+1,abs(pOhLine[index]->d_mat[x][y].Re()),abs(pOhLine[index]->d_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>-%.15f-%.15fj</d%d%d>\n",x+1,y+1,abs(pOhLine[index]->d_mat[x][y].Re()),abs(pOhLine[index]->d_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -604,15 +625,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pOhLine[index]->A_mat[x][y].Re() >= 0){
 						if(pOhLine[index]->A_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<A%d%d>+%f+%fj</A%d%d>\n",x+1,y+1,pOhLine[index]->A_mat[x][y].Re(),pOhLine[index]->A_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>+%.15f+%.15fj</A%d%d>\n",x+1,y+1,pOhLine[index]->A_mat[x][y].Re(),pOhLine[index]->A_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<A%d%d>+%f-%fj</A%d%d>\n",x+1,y+1,pOhLine[index]->A_mat[x][y].Re(),abs(pOhLine[index]->A_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>+%.15f-%.15fj</A%d%d>\n",x+1,y+1,pOhLine[index]->A_mat[x][y].Re(),abs(pOhLine[index]->A_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pOhLine[index]->A_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<A%d%d>-%f+%fj</A%d%d>\n",x+1,y+1,abs(pOhLine[index]->A_mat[x][y].Re()),pOhLine[index]->A_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>-%.15f+%.15fj</A%d%d>\n",x+1,y+1,abs(pOhLine[index]->A_mat[x][y].Re()),pOhLine[index]->A_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<A%d%d>-%f-%fj</A%d%d>\n",x+1,y+1,abs(pOhLine[index]->A_mat[x][y].Re()),abs(pOhLine[index]->A_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>-%.15f-%.15fj</A%d%d>\n",x+1,y+1,abs(pOhLine[index]->A_mat[x][y].Re()),abs(pOhLine[index]->A_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -625,15 +646,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pOhLine[index]->B_mat[x][y].Re() >= 0){
 						if(pOhLine[index]->B_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<B%d%d>+%f+%fj</B%d%d>\n",x+1,y+1,pOhLine[index]->B_mat[x][y].Re(),pOhLine[index]->B_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>+%.15f+%.15fj</B%d%d>\n",x+1,y+1,pOhLine[index]->B_mat[x][y].Re(),pOhLine[index]->B_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<B%d%d>+%f-%fj</B%d%d>\n",x+1,y+1,pOhLine[index]->B_mat[x][y].Re(),abs(pOhLine[index]->B_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>+%.15f-%.15fj</B%d%d>\n",x+1,y+1,pOhLine[index]->B_mat[x][y].Re(),abs(pOhLine[index]->B_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pOhLine[index]->B_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<B%d%d>-%f+%fj</B%d%d>\n",x+1,y+1,abs(pOhLine[index]->B_mat[x][y].Re()),pOhLine[index]->B_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>-%.15f+%.15fj</B%d%d>\n",x+1,y+1,abs(pOhLine[index]->B_mat[x][y].Re()),pOhLine[index]->B_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<B%d%d>-%f-%fj</B%d%d>\n",x+1,y+1,abs(pOhLine[index]->B_mat[x][y].Re()),abs(pOhLine[index]->B_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>-%.15f-%.15fj</B%d%d>\n",x+1,y+1,abs(pOhLine[index]->B_mat[x][y].Re()),abs(pOhLine[index]->B_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -724,6 +745,15 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<to_voltage>%f</to_voltage>\n",node_voltage->Mag());
 
 			//write the phases
+			if(pRecloser[index]->phases == 0x0001){//A
+				fprintf(fn,"\t\t<phases>A</phases>\n");
+			}
+			if(pRecloser[index]->phases == 0x0002){//B
+				fprintf(fn,"\t\t<phases>B</phases>\n");
+			}
+			if(pRecloser[index]->phases == 0x0004){//C
+				fprintf(fn,"\t\t<phases>C</phases>\n");
+			}
 			if(pRecloser[index]->phases == 0x0009){//AN
 				fprintf(fn,"\t\t<phases>AN</phases>\n");
 			}
@@ -776,15 +806,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pRecloser[index]->a_mat[x][y].Re() >= 0){
 						if(pRecloser[index]->a_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<a%d%d>+%f+%fj</a%d%d>\n",x+1,y+1,pRecloser[index]->a_mat[x][y].Re(),pRecloser[index]->a_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>+%.15f+%.15fj</a%d%d>\n",x+1,y+1,pRecloser[index]->a_mat[x][y].Re(),pRecloser[index]->a_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<a%d%d>+%f-%fj</a%d%d>\n",x+1,y+1,pRecloser[index]->a_mat[x][y].Re(),abs(pRecloser[index]->a_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>+%.15f-%.15fj</a%d%d>\n",x+1,y+1,pRecloser[index]->a_mat[x][y].Re(),abs(pRecloser[index]->a_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pRecloser[index]->a_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<a%d%d>-%f+%fj</a%d%d>\n",x+1,y+1,abs(pRecloser[index]->a_mat[x][y].Re()),pRecloser[index]->a_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>-%.15f+%.15fj</a%d%d>\n",x+1,y+1,abs(pRecloser[index]->a_mat[x][y].Re()),pRecloser[index]->a_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<a%d%d>-%f-%fj</a%d%d>\n",x+1,y+1,abs(pRecloser[index]->a_mat[x][y].Re()),abs(pRecloser[index]->a_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>-%.15f-%.15fj</a%d%d>\n",x+1,y+1,abs(pRecloser[index]->a_mat[x][y].Re()),abs(pRecloser[index]->a_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -797,15 +827,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pRecloser[index]->b_mat[x][y].Re() >= 0){
 						if(pRecloser[index]->b_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<b%d%d>+%f+%fj</b%d%d>\n",x+1,y+1,pRecloser[index]->b_mat[x][y].Re(),pRecloser[index]->b_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>+%.15f+%.15fj</b%d%d>\n",x+1,y+1,pRecloser[index]->b_mat[x][y].Re(),pRecloser[index]->b_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<b%d%d>+%f-%fj</b%d%d>\n",x+1,y+1,pRecloser[index]->b_mat[x][y].Re(),abs(pRecloser[index]->b_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>+%.15f-%.15fj</b%d%d>\n",x+1,y+1,pRecloser[index]->b_mat[x][y].Re(),abs(pRecloser[index]->b_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pRecloser[index]->b_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<b%d%d>-%f+%fj</b%d%d>\n",x+1,y+1,abs(pRecloser[index]->b_mat[x][y].Re()),pRecloser[index]->b_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>-%.15f+%.15fj</b%d%d>\n",x+1,y+1,abs(pRecloser[index]->b_mat[x][y].Re()),pRecloser[index]->b_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<b%d%d>-%f-%fj</b%d%d>\n",x+1,y+1,abs(pRecloser[index]->b_mat[x][y].Re()),abs(pRecloser[index]->b_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>-%.15f-%.15fj</b%d%d>\n",x+1,y+1,abs(pRecloser[index]->b_mat[x][y].Re()),abs(pRecloser[index]->b_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -818,15 +848,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pRecloser[index]->c_mat[x][y].Re() >= 0){
 						if(pRecloser[index]->c_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<c%d%d>+%f+%fj</c%d%d>\n",x+1,y+1,pRecloser[index]->c_mat[x][y].Re(),pRecloser[index]->c_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>+%.15f+%.15fj</c%d%d>\n",x+1,y+1,pRecloser[index]->c_mat[x][y].Re(),pRecloser[index]->c_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<c%d%d>+%f-%fj</c%d%d>\n",x+1,y+1,pRecloser[index]->c_mat[x][y].Re(),abs(pRecloser[index]->c_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>+%.15f-%.15fj</c%d%d>\n",x+1,y+1,pRecloser[index]->c_mat[x][y].Re(),abs(pRecloser[index]->c_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pRecloser[index]->c_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<c%d%d>-%f+%fj</c%d%d>\n",x+1,y+1,abs(pRecloser[index]->c_mat[x][y].Re()),pRecloser[index]->c_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>-%.15f+%.15fj</c%d%d>\n",x+1,y+1,abs(pRecloser[index]->c_mat[x][y].Re()),pRecloser[index]->c_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<c%d%d>-%f-%fj</c%d%d>\n",x+1,y+1,abs(pRecloser[index]->c_mat[x][y].Re()),abs(pRecloser[index]->c_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>-%.15f-%.15fj</c%d%d>\n",x+1,y+1,abs(pRecloser[index]->c_mat[x][y].Re()),abs(pRecloser[index]->c_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -839,15 +869,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pRecloser[index]->d_mat[x][y].Re() >= 0){
 						if(pRecloser[index]->d_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<d%d%d>+%f+%fj</d%d%d>\n",x+1,y+1,pRecloser[index]->d_mat[x][y].Re(),pRecloser[index]->d_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>+%.15f+%.15fj</d%d%d>\n",x+1,y+1,pRecloser[index]->d_mat[x][y].Re(),pRecloser[index]->d_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<d%d%d>+%f-%fj</d%d%d>\n",x+1,y+1,pRecloser[index]->d_mat[x][y].Re(),abs(pRecloser[index]->d_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>+%.15f-%.15fj</d%d%d>\n",x+1,y+1,pRecloser[index]->d_mat[x][y].Re(),abs(pRecloser[index]->d_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pRecloser[index]->d_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<d%d%d>-%f+%fj</d%d%d>\n",x+1,y+1,abs(pRecloser[index]->d_mat[x][y].Re()),pRecloser[index]->d_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>-%.15f+%.15fj</d%d%d>\n",x+1,y+1,abs(pRecloser[index]->d_mat[x][y].Re()),pRecloser[index]->d_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<d%d%d>-%f-%fj</d%d%d>\n",x+1,y+1,abs(pRecloser[index]->d_mat[x][y].Re()),abs(pRecloser[index]->d_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>-%.15f-%.15fj</d%d%d>\n",x+1,y+1,abs(pRecloser[index]->d_mat[x][y].Re()),abs(pRecloser[index]->d_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -860,15 +890,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pRecloser[index]->A_mat[x][y].Re() >= 0){
 						if(pRecloser[index]->A_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<A%d%d>+%f+%fj</A%d%d>\n",x+1,y+1,pRecloser[index]->A_mat[x][y].Re(),pRecloser[index]->A_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>+%.15f+%.15fj</A%d%d>\n",x+1,y+1,pRecloser[index]->A_mat[x][y].Re(),pRecloser[index]->A_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<A%d%d>+%f-%fj</A%d%d>\n",x+1,y+1,pRecloser[index]->A_mat[x][y].Re(),abs(pRecloser[index]->A_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>+%.15f-%.15fj</A%d%d>\n",x+1,y+1,pRecloser[index]->A_mat[x][y].Re(),abs(pRecloser[index]->A_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pRecloser[index]->A_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<A%d%d>-%f+%fj</A%d%d>\n",x+1,y+1,abs(pRecloser[index]->A_mat[x][y].Re()),pRecloser[index]->A_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>-%.15f+%.15fj</A%d%d>\n",x+1,y+1,abs(pRecloser[index]->A_mat[x][y].Re()),pRecloser[index]->A_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<A%d%d>-%f-%fj</A%d%d>\n",x+1,y+1,abs(pRecloser[index]->A_mat[x][y].Re()),abs(pRecloser[index]->A_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>-%.15f-%.15fj</A%d%d>\n",x+1,y+1,abs(pRecloser[index]->A_mat[x][y].Re()),abs(pRecloser[index]->A_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -881,15 +911,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pRecloser[index]->B_mat[x][y].Re() >= 0){
 						if(pRecloser[index]->B_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<B%d%d>+%f+%fj</B%d%d>\n",x+1,y+1,pRecloser[index]->B_mat[x][y].Re(),pRecloser[index]->B_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>+%.15f+%.15fj</B%d%d>\n",x+1,y+1,pRecloser[index]->B_mat[x][y].Re(),pRecloser[index]->B_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<B%d%d>+%f-%fj</B%d%d>\n",x+1,y+1,pRecloser[index]->B_mat[x][y].Re(),abs(pRecloser[index]->B_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>+%.15f-%.15fj</B%d%d>\n",x+1,y+1,pRecloser[index]->B_mat[x][y].Re(),abs(pRecloser[index]->B_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pRecloser[index]->B_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<B%d%d>-%f+%fj</B%d%d>\n",x+1,y+1,abs(pRecloser[index]->B_mat[x][y].Re()),pRecloser[index]->B_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>-%.15f+%.15fj</B%d%d>\n",x+1,y+1,abs(pRecloser[index]->B_mat[x][y].Re()),pRecloser[index]->B_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<B%d%d>-%f-%fj</B%d%d>\n",x+1,y+1,abs(pRecloser[index]->B_mat[x][y].Re()),abs(pRecloser[index]->B_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>-%.15f-%.15fj</B%d%d>\n",x+1,y+1,abs(pRecloser[index]->B_mat[x][y].Re()),abs(pRecloser[index]->B_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -905,7 +935,7 @@ int impedance_dump::dump(TIMESTAMP t)
 	index = 0;
 	//write regulators
 	if(regulators != NULL){
-		pRegulator = (link_object **)gl_malloc(regulators->hit_count*sizeof(link_object*));
+		pRegulator = (regulator **)gl_malloc(regulators->hit_count*sizeof(regulator*));
 		if(pRegulator == NULL){
 			gl_error("Failed to allocate fuse array.");
 			return TS_NEVER;
@@ -914,7 +944,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			if(index >= regulators->hit_count){
 				break;
 			}
-			pRegulator[index] = OBJECTDATA(obj,link_object);
+			pRegulator[index] = OBJECTDATA(obj,regulator);
 			if(pRegulator[index] == NULL){
 				gl_error("Unable to map object as a link object.");
 				return 0;
@@ -924,7 +954,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t<regulator>\n");
 
 			//write the name
-			if(obj->name[0] != 0){
+			if(obj->name != NULL){
 				fprintf(fn,"\t\t<name>%s</name>\n",obj->name);
 			} else {
 				fprintf(fn,"\t\t<name>NA</name>\n");
@@ -980,6 +1010,15 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<to_voltage>%f</to_voltage>\n",node_voltage->Mag());
 
 			//write the phases
+			if(pRegulator[index]->phases == 0x0001){//A
+				fprintf(fn,"\t\t<phases>A</phases>\n");
+			}
+			if(pRegulator[index]->phases == 0x0002){//B
+				fprintf(fn,"\t\t<phases>B</phases>\n");
+			}
+			if(pRegulator[index]->phases == 0x0004){//C
+				fprintf(fn,"\t\t<phases>C</phases>\n");
+			}
 			if(pRegulator[index]->phases == 0x0009){//AN
 				fprintf(fn,"\t\t<phases>AN</phases>\n");
 			}
@@ -1026,21 +1065,25 @@ int impedance_dump::dump(TIMESTAMP t)
 				fprintf(fn,"\t\t<phases>ABCD</phases>\n");
 			}
 
+			//write taps
+			fprintf(fn,"\t\t<tapA>%d</tapA>\n",pRegulator[index]->tap[0]);
+			fprintf(fn,"\t\t<tapB>%d</tapB>\n",pRegulator[index]->tap[1]);
+			fprintf(fn,"\t\t<tapC>%d</tapC>\n",pRegulator[index]->tap[2]);
 			//write a_mat
 			fprintf(fn,"\t\t<a_matrix>\n");
 			for(x = 0; x < 3; x++){
 				for(y = 0; y < 3; y++){
 					if(pRegulator[index]->a_mat[x][y].Re() >= 0){
 						if(pRegulator[index]->a_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<a%d%d>+%f+%fj</a%d%d>\n",x+1,y+1,pRegulator[index]->a_mat[x][y].Re(),pRegulator[index]->a_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>+%.15f+%.15fj</a%d%d>\n",x+1,y+1,pRegulator[index]->a_mat[x][y].Re(),pRegulator[index]->a_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<a%d%d>+%f-%fj</a%d%d>\n",x+1,y+1,pRegulator[index]->a_mat[x][y].Re(),abs(pRegulator[index]->a_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>+%.15f-%.15fj</a%d%d>\n",x+1,y+1,pRegulator[index]->a_mat[x][y].Re(),abs(pRegulator[index]->a_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pRegulator[index]->a_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<a%d%d>-%f+%fj</a%d%d>\n",x+1,y+1,abs(pRegulator[index]->a_mat[x][y].Re()),pRegulator[index]->a_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>-%.15f+%.15fj</a%d%d>\n",x+1,y+1,abs(pRegulator[index]->a_mat[x][y].Re()),pRegulator[index]->a_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<a%d%d>-%f-%fj</a%d%d>\n",x+1,y+1,abs(pRegulator[index]->a_mat[x][y].Re()),abs(pRegulator[index]->a_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>-%.15f-%.15fj</a%d%d>\n",x+1,y+1,abs(pRegulator[index]->a_mat[x][y].Re()),abs(pRegulator[index]->a_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -1053,15 +1096,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pRegulator[index]->b_mat[x][y].Re() >= 0){
 						if(pRegulator[index]->b_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<b%d%d>+%f+%fj</b%d%d>\n",x+1,y+1,pRegulator[index]->b_mat[x][y].Re(),pRegulator[index]->b_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>+%.15f+%.15fj</b%d%d>\n",x+1,y+1,pRegulator[index]->b_mat[x][y].Re(),pRegulator[index]->b_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<b%d%d>+%f-%fj</b%d%d>\n",x+1,y+1,pRegulator[index]->b_mat[x][y].Re(),abs(pRegulator[index]->b_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>+%.15f-%.15fj</b%d%d>\n",x+1,y+1,pRegulator[index]->b_mat[x][y].Re(),abs(pRegulator[index]->b_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pRegulator[index]->b_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<b%d%d>-%f+%fj</b%d%d>\n",x+1,y+1,abs(pRegulator[index]->b_mat[x][y].Re()),pRegulator[index]->b_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>-%.15f+%.15fj</b%d%d>\n",x+1,y+1,abs(pRegulator[index]->b_mat[x][y].Re()),pRegulator[index]->b_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<b%d%d>-%f-%fj</b%d%d>\n",x+1,y+1,abs(pRegulator[index]->b_mat[x][y].Re()),abs(pRegulator[index]->b_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>-%.15f-%.15fj</b%d%d>\n",x+1,y+1,abs(pRegulator[index]->b_mat[x][y].Re()),abs(pRegulator[index]->b_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -1074,15 +1117,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pRegulator[index]->c_mat[x][y].Re() >= 0){
 						if(pRegulator[index]->c_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<c%d%d>+%f+%fj</c%d%d>\n",x+1,y+1,pRegulator[index]->c_mat[x][y].Re(),pRegulator[index]->c_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>+%.15f+%.15fj</c%d%d>\n",x+1,y+1,pRegulator[index]->c_mat[x][y].Re(),pRegulator[index]->c_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<c%d%d>+%f-%fj</c%d%d>\n",x+1,y+1,pRegulator[index]->c_mat[x][y].Re(),abs(pRegulator[index]->c_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>+%.15f-%.15fj</c%d%d>\n",x+1,y+1,pRegulator[index]->c_mat[x][y].Re(),abs(pRegulator[index]->c_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pRegulator[index]->c_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<c%d%d>-%f+%fj</c%d%d>\n",x+1,y+1,abs(pRegulator[index]->c_mat[x][y].Re()),pRegulator[index]->c_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>-%.15f+%.15fj</c%d%d>\n",x+1,y+1,abs(pRegulator[index]->c_mat[x][y].Re()),pRegulator[index]->c_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<c%d%d>-%f-%fj</c%d%d>\n",x+1,y+1,abs(pRegulator[index]->c_mat[x][y].Re()),abs(pRegulator[index]->c_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>-%.15f-%.15fj</c%d%d>\n",x+1,y+1,abs(pRegulator[index]->c_mat[x][y].Re()),abs(pRegulator[index]->c_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -1095,15 +1138,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pRegulator[index]->d_mat[x][y].Re() >= 0){
 						if(pRegulator[index]->d_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<d%d%d>+%f+%fj</d%d%d>\n",x+1,y+1,pRegulator[index]->d_mat[x][y].Re(),pRegulator[index]->d_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>+%.15f+%.15fj</d%d%d>\n",x+1,y+1,pRegulator[index]->d_mat[x][y].Re(),pRegulator[index]->d_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<d%d%d>+%f-%fj</d%d%d>\n",x+1,y+1,pRegulator[index]->d_mat[x][y].Re(),abs(pRegulator[index]->d_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>+%.15f-%.15fj</d%d%d>\n",x+1,y+1,pRegulator[index]->d_mat[x][y].Re(),abs(pRegulator[index]->d_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pRegulator[index]->d_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<d%d%d>-%f+%fj</d%d%d>\n",x+1,y+1,abs(pRegulator[index]->d_mat[x][y].Re()),pRegulator[index]->d_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>-%.15f+%.15fj</d%d%d>\n",x+1,y+1,abs(pRegulator[index]->d_mat[x][y].Re()),pRegulator[index]->d_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<d%d%d>-%f-%fj</d%d%d>\n",x+1,y+1,abs(pRegulator[index]->d_mat[x][y].Re()),abs(pRegulator[index]->d_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>-%.15f-%.15fj</d%d%d>\n",x+1,y+1,abs(pRegulator[index]->d_mat[x][y].Re()),abs(pRegulator[index]->d_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -1116,15 +1159,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pRegulator[index]->A_mat[x][y].Re() >= 0){
 						if(pRegulator[index]->A_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<A%d%d>+%f+%fj</A%d%d>\n",x+1,y+1,pRegulator[index]->A_mat[x][y].Re(),pRegulator[index]->A_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>+%.15f+%.15fj</A%d%d>\n",x+1,y+1,pRegulator[index]->A_mat[x][y].Re(),pRegulator[index]->A_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<A%d%d>+%f-%fj</A%d%d>\n",x+1,y+1,pRegulator[index]->A_mat[x][y].Re(),abs(pRegulator[index]->A_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>+%.15f-%.15fj</A%d%d>\n",x+1,y+1,pRegulator[index]->A_mat[x][y].Re(),abs(pRegulator[index]->A_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pRegulator[index]->A_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<A%d%d>-%f+%fj</A%d%d>\n",x+1,y+1,abs(pRegulator[index]->A_mat[x][y].Re()),pRegulator[index]->A_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>-%.15f+%.15fj</A%d%d>\n",x+1,y+1,abs(pRegulator[index]->A_mat[x][y].Re()),pRegulator[index]->A_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<A%d%d>-%f-%fj</A%d%d>\n",x+1,y+1,abs(pRegulator[index]->A_mat[x][y].Re()),abs(pRegulator[index]->A_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>-%.15f-%.15fj</A%d%d>\n",x+1,y+1,abs(pRegulator[index]->A_mat[x][y].Re()),abs(pRegulator[index]->A_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -1137,15 +1180,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pRegulator[index]->B_mat[x][y].Re() >= 0){
 						if(pRegulator[index]->B_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<B%d%d>+%f+%fj</B%d%d>\n",x+1,y+1,pRegulator[index]->B_mat[x][y].Re(),pRegulator[index]->B_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>+%.15f+%.15fj</B%d%d>\n",x+1,y+1,pRegulator[index]->B_mat[x][y].Re(),pRegulator[index]->B_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<B%d%d>+%f-%fj</B%d%d>\n",x+1,y+1,pRegulator[index]->B_mat[x][y].Re(),abs(pRegulator[index]->B_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>+%.15f-%.15fj</B%d%d>\n",x+1,y+1,pRegulator[index]->B_mat[x][y].Re(),abs(pRegulator[index]->B_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pRegulator[index]->B_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<B%d%d>-%f+%fj</B%d%d>\n",x+1,y+1,abs(pRegulator[index]->B_mat[x][y].Re()),pRegulator[index]->B_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>-%.15f+%.15fj</B%d%d>\n",x+1,y+1,abs(pRegulator[index]->B_mat[x][y].Re()),pRegulator[index]->B_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<B%d%d>-%f-%fj</B%d%d>\n",x+1,y+1,abs(pRegulator[index]->B_mat[x][y].Re()),abs(pRegulator[index]->B_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>-%.15f-%.15fj</B%d%d>\n",x+1,y+1,abs(pRegulator[index]->B_mat[x][y].Re()),abs(pRegulator[index]->B_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -1236,6 +1279,15 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<to_voltage>%f</to_voltage>\n",node_voltage->Mag());
 
 			//write the phases
+			if(pRelay[index]->phases == 0x0001){//A
+				fprintf(fn,"\t\t<phases>A</phases>\n");
+			}
+			if(pRelay[index]->phases == 0x0002){//B
+				fprintf(fn,"\t\t<phases>B</phases>\n");
+			}
+			if(pRelay[index]->phases == 0x0004){//C
+				fprintf(fn,"\t\t<phases>C</phases>\n");
+			}
 			if(pRelay[index]->phases == 0x0009){//AN
 				fprintf(fn,"\t\t<phases>AN</phases>\n");
 			}
@@ -1288,15 +1340,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pRelay[index]->a_mat[x][y].Re() >= 0){
 						if(pRelay[index]->a_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<a%d%d>+%f+%fj</a%d%d>\n",x+1,y+1,pRelay[index]->a_mat[x][y].Re(),pRelay[index]->a_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>+%.15f+%.15fj</a%d%d>\n",x+1,y+1,pRelay[index]->a_mat[x][y].Re(),pRelay[index]->a_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<a%d%d>+%f-%fj</a%d%d>\n",x+1,y+1,pRelay[index]->a_mat[x][y].Re(),abs(pRelay[index]->a_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>+%.15f-%.15fj</a%d%d>\n",x+1,y+1,pRelay[index]->a_mat[x][y].Re(),abs(pRelay[index]->a_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pRelay[index]->a_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<a%d%d>-%f+%fj</a%d%d>\n",x+1,y+1,abs(pRelay[index]->a_mat[x][y].Re()),pRelay[index]->a_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>-%.15f+%.15fj</a%d%d>\n",x+1,y+1,abs(pRelay[index]->a_mat[x][y].Re()),pRelay[index]->a_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<a%d%d>-%f-%fj</a%d%d>\n",x+1,y+1,abs(pRelay[index]->a_mat[x][y].Re()),abs(pRelay[index]->a_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>-%.15f-%.15fj</a%d%d>\n",x+1,y+1,abs(pRelay[index]->a_mat[x][y].Re()),abs(pRelay[index]->a_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -1309,15 +1361,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pRelay[index]->b_mat[x][y].Re() >= 0){
 						if(pRelay[index]->b_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<b%d%d>+%f+%fj</b%d%d>\n",x+1,y+1,pRelay[index]->b_mat[x][y].Re(),pRelay[index]->b_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>+%.15f+%.15fj</b%d%d>\n",x+1,y+1,pRelay[index]->b_mat[x][y].Re(),pRelay[index]->b_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<b%d%d>+%f-%fj</b%d%d>\n",x+1,y+1,pRelay[index]->b_mat[x][y].Re(),abs(pRelay[index]->b_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>+%.15f-%.15fj</b%d%d>\n",x+1,y+1,pRelay[index]->b_mat[x][y].Re(),abs(pRelay[index]->b_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pRelay[index]->b_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<b%d%d>-%f+%fj</b%d%d>\n",x+1,y+1,abs(pRelay[index]->b_mat[x][y].Re()),pRelay[index]->b_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>-%.15f+%.15fj</b%d%d>\n",x+1,y+1,abs(pRelay[index]->b_mat[x][y].Re()),pRelay[index]->b_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<b%d%d>-%f-%fj</b%d%d>\n",x+1,y+1,abs(pRelay[index]->b_mat[x][y].Re()),abs(pRelay[index]->b_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>-%.15f-%.15fj</b%d%d>\n",x+1,y+1,abs(pRelay[index]->b_mat[x][y].Re()),abs(pRelay[index]->b_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -1330,15 +1382,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pRelay[index]->c_mat[x][y].Re() >= 0){
 						if(pRelay[index]->c_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<c%d%d>+%f+%fj</c%d%d>\n",x+1,y+1,pRelay[index]->c_mat[x][y].Re(),pRelay[index]->c_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>+%.15f+%.15fj</c%d%d>\n",x+1,y+1,pRelay[index]->c_mat[x][y].Re(),pRelay[index]->c_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<c%d%d>+%f-%fj</c%d%d>\n",x+1,y+1,pRelay[index]->c_mat[x][y].Re(),abs(pRelay[index]->c_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>+%.15f-%.15fj</c%d%d>\n",x+1,y+1,pRelay[index]->c_mat[x][y].Re(),abs(pRelay[index]->c_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pRelay[index]->c_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<c%d%d>-%f+%fj</c%d%d>\n",x+1,y+1,abs(pRelay[index]->c_mat[x][y].Re()),pRelay[index]->c_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>-%.15f+%.15fj</c%d%d>\n",x+1,y+1,abs(pRelay[index]->c_mat[x][y].Re()),pRelay[index]->c_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<c%d%d>-%f-%fj</c%d%d>\n",x+1,y+1,abs(pRelay[index]->c_mat[x][y].Re()),abs(pRelay[index]->c_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>-%.15f-%.15fj</c%d%d>\n",x+1,y+1,abs(pRelay[index]->c_mat[x][y].Re()),abs(pRelay[index]->c_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -1351,15 +1403,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pRelay[index]->d_mat[x][y].Re() >= 0){
 						if(pRelay[index]->d_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<d%d%d>+%f+%fj</d%d%d>\n",x+1,y+1,pRelay[index]->d_mat[x][y].Re(),pRelay[index]->d_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>+%.15f+%.15fj</d%d%d>\n",x+1,y+1,pRelay[index]->d_mat[x][y].Re(),pRelay[index]->d_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<d%d%d>+%f-%fj</d%d%d>\n",x+1,y+1,pRelay[index]->d_mat[x][y].Re(),abs(pRelay[index]->d_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>+%.15f-%.15fj</d%d%d>\n",x+1,y+1,pRelay[index]->d_mat[x][y].Re(),abs(pRelay[index]->d_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pRelay[index]->d_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<d%d%d>-%f+%fj</d%d%d>\n",x+1,y+1,abs(pRelay[index]->d_mat[x][y].Re()),pRelay[index]->d_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>-%.15f+%.15fj</d%d%d>\n",x+1,y+1,abs(pRelay[index]->d_mat[x][y].Re()),pRelay[index]->d_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<d%d%d>-%f-%fj</d%d%d>\n",x+1,y+1,abs(pRelay[index]->d_mat[x][y].Re()),abs(pRelay[index]->d_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>-%.15f-%.15fj</d%d%d>\n",x+1,y+1,abs(pRelay[index]->d_mat[x][y].Re()),abs(pRelay[index]->d_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -1372,15 +1424,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pRelay[index]->A_mat[x][y].Re() >= 0){
 						if(pRelay[index]->A_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<A%d%d>+%f+%fj</A%d%d>\n",x+1,y+1,pRelay[index]->A_mat[x][y].Re(),pRelay[index]->A_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>+%.15f+%.15fj</A%d%d>\n",x+1,y+1,pRelay[index]->A_mat[x][y].Re(),pRelay[index]->A_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<A%d%d>+%f-%fj</A%d%d>\n",x+1,y+1,pRelay[index]->A_mat[x][y].Re(),abs(pRelay[index]->A_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>+%.15f-%.15fj</A%d%d>\n",x+1,y+1,pRelay[index]->A_mat[x][y].Re(),abs(pRelay[index]->A_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pRelay[index]->A_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<A%d%d>-%f+%fj</A%d%d>\n",x+1,y+1,abs(pRelay[index]->A_mat[x][y].Re()),pRelay[index]->A_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>-%.15f+%.15fj</A%d%d>\n",x+1,y+1,abs(pRelay[index]->A_mat[x][y].Re()),pRelay[index]->A_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<A%d%d>-%f-%fj</A%d%d>\n",x+1,y+1,abs(pRelay[index]->A_mat[x][y].Re()),abs(pRelay[index]->A_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>-%.15f-%.15fj</A%d%d>\n",x+1,y+1,abs(pRelay[index]->A_mat[x][y].Re()),abs(pRelay[index]->A_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -1393,15 +1445,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pRelay[index]->B_mat[x][y].Re() >= 0){
 						if(pRelay[index]->B_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<B%d%d>+%f+%fj</B%d%d>\n",x+1,y+1,pRelay[index]->B_mat[x][y].Re(),pRelay[index]->B_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>+%.15f+%.15fj</B%d%d>\n",x+1,y+1,pRelay[index]->B_mat[x][y].Re(),pRelay[index]->B_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<B%d%d>+%f-%fj</B%d%d>\n",x+1,y+1,pRelay[index]->B_mat[x][y].Re(),abs(pRelay[index]->B_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>+%.15f-%.15fj</B%d%d>\n",x+1,y+1,pRelay[index]->B_mat[x][y].Re(),abs(pRelay[index]->B_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pRelay[index]->B_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<B%d%d>-%f+%fj</B%d%d>\n",x+1,y+1,abs(pRelay[index]->B_mat[x][y].Re()),pRelay[index]->B_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>-%.15f+%.15fj</B%d%d>\n",x+1,y+1,abs(pRelay[index]->B_mat[x][y].Re()),pRelay[index]->B_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<B%d%d>-%f-%fj</B%d%d>\n",x+1,y+1,abs(pRelay[index]->B_mat[x][y].Re()),abs(pRelay[index]->B_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>-%.15f-%.15fj</B%d%d>\n",x+1,y+1,abs(pRelay[index]->B_mat[x][y].Re()),abs(pRelay[index]->B_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -1492,6 +1544,15 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<to_voltage>%f</to_voltage>\n",node_voltage->Mag());
 
 			//write the phases
+			if(pSectionalizer[index]->phases == 0x0001){//A
+				fprintf(fn,"\t\t<phases>A</phases>\n");
+			}
+			if(pSectionalizer[index]->phases == 0x0002){//B
+				fprintf(fn,"\t\t<phases>B</phases>\n");
+			}
+			if(pSectionalizer[index]->phases == 0x0004){//C
+				fprintf(fn,"\t\t<phases>C</phases>\n");
+			}
 			if(pSectionalizer[index]->phases == 0x0009){//AN
 				fprintf(fn,"\t\t<phases>AN</phases>\n");
 			}
@@ -1544,15 +1605,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pSectionalizer[index]->a_mat[x][y].Re() >= 0){
 						if(pSectionalizer[index]->a_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<a%d%d>+%f+%fj</a%d%d>\n",x+1,y+1,pSectionalizer[index]->a_mat[x][y].Re(),pSectionalizer[index]->a_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>+%.15f+%.15fj</a%d%d>\n",x+1,y+1,pSectionalizer[index]->a_mat[x][y].Re(),pSectionalizer[index]->a_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<a%d%d>+%f-%fj</a%d%d>\n",x+1,y+1,pSectionalizer[index]->a_mat[x][y].Re(),abs(pSectionalizer[index]->a_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>+%.15f-%.15fj</a%d%d>\n",x+1,y+1,pSectionalizer[index]->a_mat[x][y].Re(),abs(pSectionalizer[index]->a_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pSectionalizer[index]->a_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<a%d%d>-%f+%fj</a%d%d>\n",x+1,y+1,abs(pSectionalizer[index]->a_mat[x][y].Re()),pSectionalizer[index]->a_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>-%.15f+%.15fj</a%d%d>\n",x+1,y+1,abs(pSectionalizer[index]->a_mat[x][y].Re()),pSectionalizer[index]->a_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<a%d%d>-%f-%fj</a%d%d>\n",x+1,y+1,abs(pSectionalizer[index]->a_mat[x][y].Re()),abs(pSectionalizer[index]->a_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>-%.15f-%.15fj</a%d%d>\n",x+1,y+1,abs(pSectionalizer[index]->a_mat[x][y].Re()),abs(pSectionalizer[index]->a_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -1565,15 +1626,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pSectionalizer[index]->b_mat[x][y].Re() >= 0){
 						if(pSectionalizer[index]->b_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<b%d%d>+%f+%fj</b%d%d>\n",x+1,y+1,pSectionalizer[index]->b_mat[x][y].Re(),pSectionalizer[index]->b_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>+%.15f+%.15fj</b%d%d>\n",x+1,y+1,pSectionalizer[index]->b_mat[x][y].Re(),pSectionalizer[index]->b_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<b%d%d>+%f-%fj</b%d%d>\n",x+1,y+1,pSectionalizer[index]->b_mat[x][y].Re(),abs(pSectionalizer[index]->b_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>+%.15f-%.15fj</b%d%d>\n",x+1,y+1,pSectionalizer[index]->b_mat[x][y].Re(),abs(pSectionalizer[index]->b_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pSectionalizer[index]->b_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<b%d%d>-%f+%fj</b%d%d>\n",x+1,y+1,abs(pSectionalizer[index]->b_mat[x][y].Re()),pSectionalizer[index]->b_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>-%.15f+%.15fj</b%d%d>\n",x+1,y+1,abs(pSectionalizer[index]->b_mat[x][y].Re()),pSectionalizer[index]->b_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<b%d%d>-%f-%fj</b%d%d>\n",x+1,y+1,abs(pSectionalizer[index]->b_mat[x][y].Re()),abs(pSectionalizer[index]->b_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>-%.15f-%.15fj</b%d%d>\n",x+1,y+1,abs(pSectionalizer[index]->b_mat[x][y].Re()),abs(pSectionalizer[index]->b_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -1586,15 +1647,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pSectionalizer[index]->c_mat[x][y].Re() >= 0){
 						if(pSectionalizer[index]->c_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<c%d%d>+%f+%fj</c%d%d>\n",x+1,y+1,pSectionalizer[index]->c_mat[x][y].Re(),pSectionalizer[index]->c_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>+%.15f+%.15fj</c%d%d>\n",x+1,y+1,pSectionalizer[index]->c_mat[x][y].Re(),pSectionalizer[index]->c_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<c%d%d>+%f-%fj</c%d%d>\n",x+1,y+1,pSectionalizer[index]->c_mat[x][y].Re(),abs(pSectionalizer[index]->c_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>+%.15f-%.15fj</c%d%d>\n",x+1,y+1,pSectionalizer[index]->c_mat[x][y].Re(),abs(pSectionalizer[index]->c_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pSectionalizer[index]->c_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<c%d%d>-%f+%fj</c%d%d>\n",x+1,y+1,abs(pSectionalizer[index]->c_mat[x][y].Re()),pSectionalizer[index]->c_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>-%.15f+%.15fj</c%d%d>\n",x+1,y+1,abs(pSectionalizer[index]->c_mat[x][y].Re()),pSectionalizer[index]->c_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<c%d%d>-%f-%fj</c%d%d>\n",x+1,y+1,abs(pSectionalizer[index]->c_mat[x][y].Re()),abs(pSectionalizer[index]->c_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>-%.15f-%.15fj</c%d%d>\n",x+1,y+1,abs(pSectionalizer[index]->c_mat[x][y].Re()),abs(pSectionalizer[index]->c_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -1607,15 +1668,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pSectionalizer[index]->d_mat[x][y].Re() >= 0){
 						if(pSectionalizer[index]->d_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<d%d%d>+%f+%fj</d%d%d>\n",x+1,y+1,pSectionalizer[index]->d_mat[x][y].Re(),pSectionalizer[index]->d_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>+%.15f+%.15fj</d%d%d>\n",x+1,y+1,pSectionalizer[index]->d_mat[x][y].Re(),pSectionalizer[index]->d_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<d%d%d>+%f-%fj</d%d%d>\n",x+1,y+1,pSectionalizer[index]->d_mat[x][y].Re(),abs(pSectionalizer[index]->d_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>+%.15f-%.15fj</d%d%d>\n",x+1,y+1,pSectionalizer[index]->d_mat[x][y].Re(),abs(pSectionalizer[index]->d_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pSectionalizer[index]->d_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<d%d%d>-%f+%fj</d%d%d>\n",x+1,y+1,abs(pSectionalizer[index]->d_mat[x][y].Re()),pSectionalizer[index]->d_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>-%.15f+%.15fj</d%d%d>\n",x+1,y+1,abs(pSectionalizer[index]->d_mat[x][y].Re()),pSectionalizer[index]->d_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<d%d%d>-%f-%fj</d%d%d>\n",x+1,y+1,abs(pSectionalizer[index]->d_mat[x][y].Re()),abs(pSectionalizer[index]->d_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>-%.15f-%.15fj</d%d%d>\n",x+1,y+1,abs(pSectionalizer[index]->d_mat[x][y].Re()),abs(pSectionalizer[index]->d_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -1628,15 +1689,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pSectionalizer[index]->A_mat[x][y].Re() >= 0){
 						if(pSectionalizer[index]->A_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<A%d%d>+%f+%fj</A%d%d>\n",x+1,y+1,pSectionalizer[index]->A_mat[x][y].Re(),pSectionalizer[index]->A_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>+%.15f+%.15fj</A%d%d>\n",x+1,y+1,pSectionalizer[index]->A_mat[x][y].Re(),pSectionalizer[index]->A_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<A%d%d>+%f-%fj</A%d%d>\n",x+1,y+1,pSectionalizer[index]->A_mat[x][y].Re(),abs(pSectionalizer[index]->A_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>+%.15f-%.15fj</A%d%d>\n",x+1,y+1,pSectionalizer[index]->A_mat[x][y].Re(),abs(pSectionalizer[index]->A_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pSectionalizer[index]->A_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<A%d%d>-%f+%fj</A%d%d>\n",x+1,y+1,abs(pSectionalizer[index]->A_mat[x][y].Re()),pSectionalizer[index]->A_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>-%.15f+%.15fj</A%d%d>\n",x+1,y+1,abs(pSectionalizer[index]->A_mat[x][y].Re()),pSectionalizer[index]->A_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<A%d%d>-%f-%fj</A%d%d>\n",x+1,y+1,abs(pSectionalizer[index]->A_mat[x][y].Re()),abs(pSectionalizer[index]->A_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>-%.15f-%.15fj</A%d%d>\n",x+1,y+1,abs(pSectionalizer[index]->A_mat[x][y].Re()),abs(pSectionalizer[index]->A_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -1649,15 +1710,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pSectionalizer[index]->B_mat[x][y].Re() >= 0){
 						if(pSectionalizer[index]->B_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<B%d%d>+%f+%fj</B%d%d>\n",x+1,y+1,pSectionalizer[index]->B_mat[x][y].Re(),pSectionalizer[index]->B_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>+%.15f+%.15fj</B%d%d>\n",x+1,y+1,pSectionalizer[index]->B_mat[x][y].Re(),pSectionalizer[index]->B_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<B%d%d>+%f-%fj</B%d%d>\n",x+1,y+1,pSectionalizer[index]->B_mat[x][y].Re(),abs(pSectionalizer[index]->B_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>+%.15f-%.15fj</B%d%d>\n",x+1,y+1,pSectionalizer[index]->B_mat[x][y].Re(),abs(pSectionalizer[index]->B_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pSectionalizer[index]->B_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<B%d%d>-%f+%fj</B%d%d>\n",x+1,y+1,abs(pSectionalizer[index]->B_mat[x][y].Re()),pSectionalizer[index]->B_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>-%.15f+%.15fj</B%d%d>\n",x+1,y+1,abs(pSectionalizer[index]->B_mat[x][y].Re()),pSectionalizer[index]->B_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<B%d%d>-%f-%fj</B%d%d>\n",x+1,y+1,abs(pSectionalizer[index]->B_mat[x][y].Re()),abs(pSectionalizer[index]->B_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>-%.15f-%.15fj</B%d%d>\n",x+1,y+1,abs(pSectionalizer[index]->B_mat[x][y].Re()),abs(pSectionalizer[index]->B_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -1748,6 +1809,15 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<to_voltage>%f</to_voltage>\n",node_voltage->Mag());
 
 			//write the phases
+			if(pSeriesReactor[index]->phases == 0x0001){//A
+				fprintf(fn,"\t\t<phases>A</phases>\n");
+			}
+			if(pSeriesReactor[index]->phases == 0x0002){//B
+				fprintf(fn,"\t\t<phases>B</phases>\n");
+			}
+			if(pSeriesReactor[index]->phases == 0x0004){//C
+				fprintf(fn,"\t\t<phases>C</phases>\n");
+			}
 			if(pSeriesReactor[index]->phases == 0x0009){//AN
 				fprintf(fn,"\t\t<phases>AN</phases>\n");
 			}
@@ -1800,15 +1870,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pSeriesReactor[index]->a_mat[x][y].Re() >= 0){
 						if(pSeriesReactor[index]->a_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<a%d%d>+%f+%fj</a%d%d>\n",x+1,y+1,pSeriesReactor[index]->a_mat[x][y].Re(),pSeriesReactor[index]->a_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>+%.15f+%.15fj</a%d%d>\n",x+1,y+1,pSeriesReactor[index]->a_mat[x][y].Re(),pSeriesReactor[index]->a_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<a%d%d>+%f-%fj</a%d%d>\n",x+1,y+1,pSeriesReactor[index]->a_mat[x][y].Re(),abs(pSeriesReactor[index]->a_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>+%.15f-%.15fj</a%d%d>\n",x+1,y+1,pSeriesReactor[index]->a_mat[x][y].Re(),abs(pSeriesReactor[index]->a_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pSeriesReactor[index]->a_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<a%d%d>-%f+%fj</a%d%d>\n",x+1,y+1,abs(pSeriesReactor[index]->a_mat[x][y].Re()),pSeriesReactor[index]->a_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>-%.15f+%.15fj</a%d%d>\n",x+1,y+1,abs(pSeriesReactor[index]->a_mat[x][y].Re()),pSeriesReactor[index]->a_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<a%d%d>-%f-%fj</a%d%d>\n",x+1,y+1,abs(pSeriesReactor[index]->a_mat[x][y].Re()),abs(pSeriesReactor[index]->a_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>-%.15f-%.15fj</a%d%d>\n",x+1,y+1,abs(pSeriesReactor[index]->a_mat[x][y].Re()),abs(pSeriesReactor[index]->a_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -1821,15 +1891,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pSeriesReactor[index]->b_mat[x][y].Re() >= 0){
 						if(pSeriesReactor[index]->b_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<b%d%d>+%f+%fj</b%d%d>\n",x+1,y+1,pSeriesReactor[index]->b_mat[x][y].Re(),pSeriesReactor[index]->b_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>+%.15f+%.15fj</b%d%d>\n",x+1,y+1,pSeriesReactor[index]->b_mat[x][y].Re(),pSeriesReactor[index]->b_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<b%d%d>+%f-%fj</b%d%d>\n",x+1,y+1,pSeriesReactor[index]->b_mat[x][y].Re(),abs(pSeriesReactor[index]->b_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>+%.15f-%.15fj</b%d%d>\n",x+1,y+1,pSeriesReactor[index]->b_mat[x][y].Re(),abs(pSeriesReactor[index]->b_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pSeriesReactor[index]->b_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<b%d%d>-%f+%fj</b%d%d>\n",x+1,y+1,abs(pSeriesReactor[index]->b_mat[x][y].Re()),pSeriesReactor[index]->b_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>-%.15f+%.15fj</b%d%d>\n",x+1,y+1,abs(pSeriesReactor[index]->b_mat[x][y].Re()),pSeriesReactor[index]->b_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<b%d%d>-%f-%fj</b%d%d>\n",x+1,y+1,abs(pSeriesReactor[index]->b_mat[x][y].Re()),abs(pSeriesReactor[index]->b_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>-%.15f-%.15fj</b%d%d>\n",x+1,y+1,abs(pSeriesReactor[index]->b_mat[x][y].Re()),abs(pSeriesReactor[index]->b_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -1842,15 +1912,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pSeriesReactor[index]->c_mat[x][y].Re() >= 0){
 						if(pSeriesReactor[index]->c_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<c%d%d>+%f+%fj</c%d%d>\n",x+1,y+1,pSeriesReactor[index]->c_mat[x][y].Re(),pSeriesReactor[index]->c_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>+%.15f+%.15fj</c%d%d>\n",x+1,y+1,pSeriesReactor[index]->c_mat[x][y].Re(),pSeriesReactor[index]->c_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<c%d%d>+%f-%fj</c%d%d>\n",x+1,y+1,pSeriesReactor[index]->c_mat[x][y].Re(),abs(pSeriesReactor[index]->c_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>+%.15f-%.15fj</c%d%d>\n",x+1,y+1,pSeriesReactor[index]->c_mat[x][y].Re(),abs(pSeriesReactor[index]->c_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pSeriesReactor[index]->c_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<c%d%d>-%f+%fj</c%d%d>\n",x+1,y+1,abs(pSeriesReactor[index]->c_mat[x][y].Re()),pSeriesReactor[index]->c_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>-%.15f+%.15fj</c%d%d>\n",x+1,y+1,abs(pSeriesReactor[index]->c_mat[x][y].Re()),pSeriesReactor[index]->c_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<c%d%d>-%f-%fj</c%d%d>\n",x+1,y+1,abs(pSeriesReactor[index]->c_mat[x][y].Re()),abs(pSeriesReactor[index]->c_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>-%.15f-%.15fj</c%d%d>\n",x+1,y+1,abs(pSeriesReactor[index]->c_mat[x][y].Re()),abs(pSeriesReactor[index]->c_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -1863,15 +1933,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pSeriesReactor[index]->d_mat[x][y].Re() >= 0){
 						if(pSeriesReactor[index]->d_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<d%d%d>+%f+%fj</d%d%d>\n",x+1,y+1,pSeriesReactor[index]->d_mat[x][y].Re(),pSeriesReactor[index]->d_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>+%.15f+%.15fj</d%d%d>\n",x+1,y+1,pSeriesReactor[index]->d_mat[x][y].Re(),pSeriesReactor[index]->d_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<d%d%d>+%f-%fj</d%d%d>\n",x+1,y+1,pSeriesReactor[index]->d_mat[x][y].Re(),abs(pSeriesReactor[index]->d_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>+%.15f-%.15fj</d%d%d>\n",x+1,y+1,pSeriesReactor[index]->d_mat[x][y].Re(),abs(pSeriesReactor[index]->d_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pSeriesReactor[index]->d_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<d%d%d>-%f+%fj</d%d%d>\n",x+1,y+1,abs(pSeriesReactor[index]->d_mat[x][y].Re()),pSeriesReactor[index]->d_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>-%.15f+%.15fj</d%d%d>\n",x+1,y+1,abs(pSeriesReactor[index]->d_mat[x][y].Re()),pSeriesReactor[index]->d_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<d%d%d>-%f-%fj</d%d%d>\n",x+1,y+1,abs(pSeriesReactor[index]->d_mat[x][y].Re()),abs(pSeriesReactor[index]->d_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>-%.15f-%.15fj</d%d%d>\n",x+1,y+1,abs(pSeriesReactor[index]->d_mat[x][y].Re()),abs(pSeriesReactor[index]->d_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -1884,15 +1954,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pSeriesReactor[index]->A_mat[x][y].Re() >= 0){
 						if(pSeriesReactor[index]->A_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<A%d%d>+%f+%fj</A%d%d>\n",x+1,y+1,pSeriesReactor[index]->A_mat[x][y].Re(),pSeriesReactor[index]->A_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>+%.15f+%.15fj</A%d%d>\n",x+1,y+1,pSeriesReactor[index]->A_mat[x][y].Re(),pSeriesReactor[index]->A_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<A%d%d>+%f-%fj</A%d%d>\n",x+1,y+1,pSeriesReactor[index]->A_mat[x][y].Re(),abs(pSeriesReactor[index]->A_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>+%.15f-%.15fj</A%d%d>\n",x+1,y+1,pSeriesReactor[index]->A_mat[x][y].Re(),abs(pSeriesReactor[index]->A_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pSeriesReactor[index]->A_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<A%d%d>-%f+%fj</A%d%d>\n",x+1,y+1,abs(pSeriesReactor[index]->A_mat[x][y].Re()),pSeriesReactor[index]->A_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>-%.15f+%.15fj</A%d%d>\n",x+1,y+1,abs(pSeriesReactor[index]->A_mat[x][y].Re()),pSeriesReactor[index]->A_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<A%d%d>-%f-%fj</A%d%d>\n",x+1,y+1,abs(pSeriesReactor[index]->A_mat[x][y].Re()),abs(pSeriesReactor[index]->A_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>-%.15f-%.15fj</A%d%d>\n",x+1,y+1,abs(pSeriesReactor[index]->A_mat[x][y].Re()),abs(pSeriesReactor[index]->A_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -1905,15 +1975,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pSeriesReactor[index]->B_mat[x][y].Re() >= 0){
 						if(pSeriesReactor[index]->B_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<B%d%d>+%f+%fj</B%d%d>\n",x+1,y+1,pSeriesReactor[index]->B_mat[x][y].Re(),pSeriesReactor[index]->B_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>+%.15f+%.15fj</B%d%d>\n",x+1,y+1,pSeriesReactor[index]->B_mat[x][y].Re(),pSeriesReactor[index]->B_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<B%d%d>+%f-%fj</B%d%d>\n",x+1,y+1,pSeriesReactor[index]->B_mat[x][y].Re(),abs(pSeriesReactor[index]->B_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>+%.15f-%.15fj</B%d%d>\n",x+1,y+1,pSeriesReactor[index]->B_mat[x][y].Re(),abs(pSeriesReactor[index]->B_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pSeriesReactor[index]->B_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<B%d%d>-%f+%fj</B%d%d>\n",x+1,y+1,abs(pSeriesReactor[index]->B_mat[x][y].Re()),pSeriesReactor[index]->B_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>-%.15f+%.15fj</B%d%d>\n",x+1,y+1,abs(pSeriesReactor[index]->B_mat[x][y].Re()),pSeriesReactor[index]->B_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<B%d%d>-%f-%fj</B%d%d>\n",x+1,y+1,abs(pSeriesReactor[index]->B_mat[x][y].Re()),abs(pSeriesReactor[index]->B_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>-%.15f-%.15fj</B%d%d>\n",x+1,y+1,abs(pSeriesReactor[index]->B_mat[x][y].Re()),abs(pSeriesReactor[index]->B_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -1929,7 +1999,7 @@ int impedance_dump::dump(TIMESTAMP t)
 	index = 0;
 	//write switches
 	if(switches != NULL){
-		pSwitch = (link_object **)gl_malloc(switches->hit_count*sizeof(link_object*));
+		pSwitch = (switch_object **)gl_malloc(switches->hit_count*sizeof(switch_object*));
 		if(pSwitch == NULL){
 			gl_error("Failed to allocate fuse array.");
 			return TS_NEVER;
@@ -1938,13 +2008,14 @@ int impedance_dump::dump(TIMESTAMP t)
 			if(index >= switches->hit_count){
 				break;
 			}
-			pSwitch[index] = OBJECTDATA(obj,link_object);
+			pSwitch[index] = OBJECTDATA(obj,switch_object);
 			if(pSwitch[index] == NULL){
 				gl_error("Unable to map object as a link object.");
 				return 0;
 			}
 
 			//write the switch
+			if (pSwitch[index]->phase_A_state==1) {
 			fprintf(fn,"\t<switch>\n");
 
 			//write the name
@@ -2004,6 +2075,15 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<to_voltage>%f</to_voltage>\n",node_voltage->Mag());
 
 			//write the phases
+			if(pSwitch[index]->phases == 0x0001){//A
+				fprintf(fn,"\t\t<phases>A</phases>\n");
+			}
+			if(pSwitch[index]->phases == 0x0002){//B
+				fprintf(fn,"\t\t<phases>B</phases>\n");
+			}
+			if(pSwitch[index]->phases == 0x0004){//C
+				fprintf(fn,"\t\t<phases>C</phases>\n");
+			}
 			if(pSwitch[index]->phases == 0x0009){//AN
 				fprintf(fn,"\t\t<phases>AN</phases>\n");
 			}
@@ -2056,15 +2136,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pSwitch[index]->a_mat[x][y].Re() >= 0){
 						if(pSwitch[index]->a_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<a%d%d>+%f+%fj</a%d%d>\n",x+1,y+1,pSwitch[index]->a_mat[x][y].Re(),pSwitch[index]->a_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>+%.15f+%.15fj</a%d%d>\n",x+1,y+1,pSwitch[index]->a_mat[x][y].Re(),pSwitch[index]->a_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<a%d%d>+%f-%fj</a%d%d>\n",x+1,y+1,pSwitch[index]->a_mat[x][y].Re(),abs(pSwitch[index]->a_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>+%.15f-%.15fj</a%d%d>\n",x+1,y+1,pSwitch[index]->a_mat[x][y].Re(),abs(pSwitch[index]->a_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pSwitch[index]->a_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<a%d%d>-%f+%fj</a%d%d>\n",x+1,y+1,abs(pSwitch[index]->a_mat[x][y].Re()),pSwitch[index]->a_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>-%.15f+%.15fj</a%d%d>\n",x+1,y+1,abs(pSwitch[index]->a_mat[x][y].Re()),pSwitch[index]->a_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<a%d%d>-%f-%fj</a%d%d>\n",x+1,y+1,abs(pSwitch[index]->a_mat[x][y].Re()),abs(pSwitch[index]->a_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>-%.15f-%.15fj</a%d%d>\n",x+1,y+1,abs(pSwitch[index]->a_mat[x][y].Re()),abs(pSwitch[index]->a_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -2077,15 +2157,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pSwitch[index]->b_mat[x][y].Re() >= 0){
 						if(pSwitch[index]->b_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<b%d%d>+%f+%fj</b%d%d>\n",x+1,y+1,pSwitch[index]->b_mat[x][y].Re(),pSwitch[index]->b_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>+%.15f+%.15fj</b%d%d>\n",x+1,y+1,pSwitch[index]->b_mat[x][y].Re(),pSwitch[index]->b_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<b%d%d>+%f-%fj</b%d%d>\n",x+1,y+1,pSwitch[index]->b_mat[x][y].Re(),abs(pSwitch[index]->b_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>+%.15f-%.15fj</b%d%d>\n",x+1,y+1,pSwitch[index]->b_mat[x][y].Re(),abs(pSwitch[index]->b_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pSwitch[index]->b_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<b%d%d>-%f+%fj</b%d%d>\n",x+1,y+1,abs(pSwitch[index]->b_mat[x][y].Re()),pSwitch[index]->b_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>-%.15f+%.15fj</b%d%d>\n",x+1,y+1,abs(pSwitch[index]->b_mat[x][y].Re()),pSwitch[index]->b_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<b%d%d>-%f-%fj</b%d%d>\n",x+1,y+1,abs(pSwitch[index]->b_mat[x][y].Re()),abs(pSwitch[index]->b_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>-%.15f-%.15fj</b%d%d>\n",x+1,y+1,abs(pSwitch[index]->b_mat[x][y].Re()),abs(pSwitch[index]->b_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -2098,15 +2178,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pSwitch[index]->c_mat[x][y].Re() >= 0){
 						if(pSwitch[index]->c_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<c%d%d>+%f+%fj</c%d%d>\n",x+1,y+1,pSwitch[index]->c_mat[x][y].Re(),pSwitch[index]->c_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>+%.15f+%.15fj</c%d%d>\n",x+1,y+1,pSwitch[index]->c_mat[x][y].Re(),pSwitch[index]->c_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<c%d%d>+%f-%fj</c%d%d>\n",x+1,y+1,pSwitch[index]->c_mat[x][y].Re(),abs(pSwitch[index]->c_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>+%.15f-%.15fj</c%d%d>\n",x+1,y+1,pSwitch[index]->c_mat[x][y].Re(),abs(pSwitch[index]->c_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pSwitch[index]->c_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<c%d%d>-%f+%fj</c%d%d>\n",x+1,y+1,abs(pSwitch[index]->c_mat[x][y].Re()),pSwitch[index]->c_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>-%.15f+%.15fj</c%d%d>\n",x+1,y+1,abs(pSwitch[index]->c_mat[x][y].Re()),pSwitch[index]->c_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<c%d%d>-%f-%fj</c%d%d>\n",x+1,y+1,abs(pSwitch[index]->c_mat[x][y].Re()),abs(pSwitch[index]->c_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>-%.15f-%.15fj</c%d%d>\n",x+1,y+1,abs(pSwitch[index]->c_mat[x][y].Re()),abs(pSwitch[index]->c_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -2119,15 +2199,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pSwitch[index]->d_mat[x][y].Re() >= 0){
 						if(pSwitch[index]->d_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<d%d%d>+%f+%fj</d%d%d>\n",x+1,y+1,pSwitch[index]->d_mat[x][y].Re(),pSwitch[index]->d_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>+%.15f+%.15fj</d%d%d>\n",x+1,y+1,pSwitch[index]->d_mat[x][y].Re(),pSwitch[index]->d_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<d%d%d>+%f-%fj</d%d%d>\n",x+1,y+1,pSwitch[index]->d_mat[x][y].Re(),abs(pSwitch[index]->d_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>+%.15f-%.15fj</d%d%d>\n",x+1,y+1,pSwitch[index]->d_mat[x][y].Re(),abs(pSwitch[index]->d_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pSwitch[index]->d_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<d%d%d>-%f+%fj</d%d%d>\n",x+1,y+1,abs(pSwitch[index]->d_mat[x][y].Re()),pSwitch[index]->d_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>-%.15f+%.15fj</d%d%d>\n",x+1,y+1,abs(pSwitch[index]->d_mat[x][y].Re()),pSwitch[index]->d_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<d%d%d>-%f-%fj</d%d%d>\n",x+1,y+1,abs(pSwitch[index]->d_mat[x][y].Re()),abs(pSwitch[index]->d_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>-%.15f-%.15fj</d%d%d>\n",x+1,y+1,abs(pSwitch[index]->d_mat[x][y].Re()),abs(pSwitch[index]->d_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -2140,15 +2220,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pSwitch[index]->A_mat[x][y].Re() >= 0){
 						if(pSwitch[index]->A_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<A%d%d>+%f+%fj</A%d%d>\n",x+1,y+1,pSwitch[index]->A_mat[x][y].Re(),pSwitch[index]->A_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>+%.15f+%.15fj</A%d%d>\n",x+1,y+1,pSwitch[index]->A_mat[x][y].Re(),pSwitch[index]->A_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<A%d%d>+%f-%fj</A%d%d>\n",x+1,y+1,pSwitch[index]->A_mat[x][y].Re(),abs(pSwitch[index]->A_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>+%.15f-%.15fj</A%d%d>\n",x+1,y+1,pSwitch[index]->A_mat[x][y].Re(),abs(pSwitch[index]->A_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pSwitch[index]->A_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<A%d%d>-%f+%fj</A%d%d>\n",x+1,y+1,abs(pSwitch[index]->A_mat[x][y].Re()),pSwitch[index]->A_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>-%.15f+%.15fj</A%d%d>\n",x+1,y+1,abs(pSwitch[index]->A_mat[x][y].Re()),pSwitch[index]->A_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<A%d%d>-%f-%fj</A%d%d>\n",x+1,y+1,abs(pSwitch[index]->A_mat[x][y].Re()),abs(pSwitch[index]->A_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>-%.15f-%.15fj</A%d%d>\n",x+1,y+1,abs(pSwitch[index]->A_mat[x][y].Re()),abs(pSwitch[index]->A_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -2161,15 +2241,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pSwitch[index]->B_mat[x][y].Re() >= 0){
 						if(pSwitch[index]->B_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<B%d%d>+%f+%fj</B%d%d>\n",x+1,y+1,pSwitch[index]->B_mat[x][y].Re(),pSwitch[index]->B_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>+%.15f+%.15fj</B%d%d>\n",x+1,y+1,pSwitch[index]->B_mat[x][y].Re(),pSwitch[index]->B_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<B%d%d>+%f-%fj</B%d%d>\n",x+1,y+1,pSwitch[index]->B_mat[x][y].Re(),abs(pSwitch[index]->B_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>+%.15f-%.15fj</B%d%d>\n",x+1,y+1,pSwitch[index]->B_mat[x][y].Re(),abs(pSwitch[index]->B_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pSwitch[index]->B_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<B%d%d>-%f+%fj</B%d%d>\n",x+1,y+1,abs(pSwitch[index]->B_mat[x][y].Re()),pSwitch[index]->B_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>-%.15f+%.15fj</B%d%d>\n",x+1,y+1,abs(pSwitch[index]->B_mat[x][y].Re()),pSwitch[index]->B_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<B%d%d>-%f-%fj</B%d%d>\n",x+1,y+1,abs(pSwitch[index]->B_mat[x][y].Re()),abs(pSwitch[index]->B_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>-%.15f-%.15fj</B%d%d>\n",x+1,y+1,abs(pSwitch[index]->B_mat[x][y].Re()),abs(pSwitch[index]->B_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -2179,6 +2259,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t</switch>\n");
 			
 			++index;
+			}
 		}
 	}
 	
@@ -2229,38 +2310,57 @@ int impedance_dump::dump(TIMESTAMP t)
 			}
 
 			//write the from node's voltage
-			if(pTransformer[index]->has_phase(PHASE_A)){
-				node_voltage = get_complex(pTransformer[index]->from,"voltage_A");
-			} else if(pTransformer[index]->has_phase(PHASE_B)){
-				node_voltage = get_complex(pTransformer[index]->from,"voltage_B");
-			} else if(pTransformer[index]->has_phase(PHASE_C)){
-				node_voltage = get_complex(pTransformer[index]->from,"voltage_C");
-			}
+			
+				if(pTransformer[index]->has_phase(PHASE_A)){
+					node_voltage = get_complex(pTransformer[index]->from,"voltage_A");
+				} else if(pTransformer[index]->has_phase(PHASE_B)){
+					node_voltage = get_complex(pTransformer[index]->from,"voltage_B");
+				} else if(pTransformer[index]->has_phase(PHASE_C)){
+					node_voltage = get_complex(pTransformer[index]->from,"voltage_C");
+				}
+			
 
 			if(node_voltage == NULL){
-				gl_error("From node has no voltage.");
+				gl_error("From node %s has no voltage.",pTransformer[index]->from->name);
 				return 0;
 			}
 
 			fprintf(fn,"\t\t<from_voltage>%f</from_voltage>\n",node_voltage->Mag());
 
-			//write the to node's voltage
-			if(pTransformer[index]->has_phase(PHASE_A)){
-				node_voltage = get_complex(pTransformer[index]->to,"voltage_A");
-			} else if(pTransformer[index]->has_phase(PHASE_B)){
-				node_voltage = get_complex(pTransformer[index]->to,"voltage_B");
-			} else if(pTransformer[index]->has_phase(PHASE_C)){
-				node_voltage = get_complex(pTransformer[index]->to,"voltage_C");
+			//write the to node's 
+			if(pTransformer[index]->SpecialLnk == SPLITPHASE) {
+				node_voltage = get_complex(pTransformer[index]->to,"voltage_12");
+			} else {
+				if(pTransformer[index]->has_phase(PHASE_A)){
+					node_voltage = get_complex(pTransformer[index]->to,"voltage_A");
+				} else if(pTransformer[index]->has_phase(PHASE_B)){
+					node_voltage = get_complex(pTransformer[index]->to,"voltage_B");
+				} else if(pTransformer[index]->has_phase(PHASE_C)){
+					node_voltage = get_complex(pTransformer[index]->to,"voltage_C");
+				}
 			}
 
 			if(node_voltage == NULL){
-				gl_error("From node has no voltage.");
+				gl_error("To node %s has no voltage.",pTransformer[index]->to->name);
 				return 0;
 			}
 
 			fprintf(fn,"\t\t<to_voltage>%f</to_voltage>\n",node_voltage->Mag());
 
+			//write the transformer configuration
+			//xfmrconfig=gl_get_property(pTransformer[index]->config,"connect_type");
+			fprintf(fn,"\t\t<xfmr_config>%u</xfmr_config>\n",pTransformer[index]->config->connect_type);
+			
 			//write the phases
+			if(pTransformer[index]->phases == 0x0001){//A
+				fprintf(fn,"\t\t<phases>A</phases>\n");
+			}
+			if(pTransformer[index]->phases == 0x0002){//B
+				fprintf(fn,"\t\t<phases>B</phases>\n");
+			}
+			if(pTransformer[index]->phases == 0x0004){//C
+				fprintf(fn,"\t\t<phases>C</phases>\n");
+			}
 			if(pTransformer[index]->phases == 0x0009){//AN
 				fprintf(fn,"\t\t<phases>AN</phases>\n");
 			}
@@ -2307,21 +2407,34 @@ int impedance_dump::dump(TIMESTAMP t)
 				fprintf(fn,"\t\t<phases>ABCD</phases>\n");
 			}
 
+			//write power rating
+			if(pTransformer[index]->config->kVA_rating!=NULL){
+				fprintf(fn,"\t\t<power_rating>%.6f</power_rating>\n",pTransformer[index]->config->kVA_rating);
+			}
+
+
+			//write impedance
+			if(pTransformer[index]->config->impedance.Re()!=NULL){
+				fprintf(fn,"\t\t<resistance>%.6f</resistance>\n",pTransformer[index]->config->impedance.Re());
+			}
+			if(pTransformer[index]->config->impedance.Im()!=NULL){
+				fprintf(fn,"\t\t<reactance>%.6f</reactance>\n",pTransformer[index]->config->impedance.Im());
+			}
 			//write a_mat
 			fprintf(fn,"\t\t<a_matrix>\n");
 			for(x = 0; x < 3; x++){
 				for(y = 0; y < 3; y++){
 					if(pTransformer[index]->a_mat[x][y].Re() >= 0){
 						if(pTransformer[index]->a_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<a%d%d>+%f+%fj</a%d%d>\n",x+1,y+1,pTransformer[index]->a_mat[x][y].Re(),pTransformer[index]->a_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>+%.15f+%.15fj</a%d%d>\n",x+1,y+1,pTransformer[index]->a_mat[x][y].Re(),pTransformer[index]->a_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<a%d%d>+%f-%fj</a%d%d>\n",x+1,y+1,pTransformer[index]->a_mat[x][y].Re(),abs(pTransformer[index]->a_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>+%.15f-%.15fj</a%d%d>\n",x+1,y+1,pTransformer[index]->a_mat[x][y].Re(),abs(pTransformer[index]->a_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pTransformer[index]->a_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<a%d%d>-%f+%fj</a%d%d>\n",x+1,y+1,abs(pTransformer[index]->a_mat[x][y].Re()),pTransformer[index]->a_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>-%.15f+%.15fj</a%d%d>\n",x+1,y+1,abs(pTransformer[index]->a_mat[x][y].Re()),pTransformer[index]->a_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<a%d%d>-%f-%fj</a%d%d>\n",x+1,y+1,abs(pTransformer[index]->a_mat[x][y].Re()),abs(pTransformer[index]->a_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>-%.15f-%.15fj</a%d%d>\n",x+1,y+1,abs(pTransformer[index]->a_mat[x][y].Re()),abs(pTransformer[index]->a_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -2334,15 +2447,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pTransformer[index]->b_mat[x][y].Re() >= 0){
 						if(pTransformer[index]->b_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<b%d%d>+%f+%fj</b%d%d>\n",x+1,y+1,pTransformer[index]->b_mat[x][y].Re(),pTransformer[index]->b_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>+%.15f+%.15fj</b%d%d>\n",x+1,y+1,pTransformer[index]->b_mat[x][y].Re(),pTransformer[index]->b_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<b%d%d>+%f-%fj</b%d%d>\n",x+1,y+1,pTransformer[index]->b_mat[x][y].Re(),abs(pTransformer[index]->b_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>+%.15f-%.15fj</b%d%d>\n",x+1,y+1,pTransformer[index]->b_mat[x][y].Re(),abs(pTransformer[index]->b_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pTransformer[index]->b_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<b%d%d>-%f+%fj</b%d%d>\n",x+1,y+1,abs(pTransformer[index]->b_mat[x][y].Re()),pTransformer[index]->b_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>-%.15f+%.15fj</b%d%d>\n",x+1,y+1,abs(pTransformer[index]->b_mat[x][y].Re()),pTransformer[index]->b_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<b%d%d>-%f-%fj</b%d%d>\n",x+1,y+1,abs(pTransformer[index]->b_mat[x][y].Re()),abs(pTransformer[index]->b_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>-%.15f-%.15fj</b%d%d>\n",x+1,y+1,abs(pTransformer[index]->b_mat[x][y].Re()),abs(pTransformer[index]->b_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -2355,15 +2468,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pTransformer[index]->c_mat[x][y].Re() >= 0){
 						if(pTransformer[index]->c_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<c%d%d>+%f+%fj</c%d%d>\n",x+1,y+1,pTransformer[index]->c_mat[x][y].Re(),pTransformer[index]->c_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>+%.15f+%.15fj</c%d%d>\n",x+1,y+1,pTransformer[index]->c_mat[x][y].Re(),pTransformer[index]->c_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<c%d%d>+%f-%fj</c%d%d>\n",x+1,y+1,pTransformer[index]->c_mat[x][y].Re(),abs(pTransformer[index]->c_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>+%.15f-%.15fj</c%d%d>\n",x+1,y+1,pTransformer[index]->c_mat[x][y].Re(),abs(pTransformer[index]->c_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pTransformer[index]->c_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<c%d%d>-%f+%fj</c%d%d>\n",x+1,y+1,abs(pTransformer[index]->c_mat[x][y].Re()),pTransformer[index]->c_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>-%.15f+%.15fj</c%d%d>\n",x+1,y+1,abs(pTransformer[index]->c_mat[x][y].Re()),pTransformer[index]->c_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<c%d%d>-%f-%fj</c%d%d>\n",x+1,y+1,abs(pTransformer[index]->c_mat[x][y].Re()),abs(pTransformer[index]->c_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>-%.15f-%.15fj</c%d%d>\n",x+1,y+1,abs(pTransformer[index]->c_mat[x][y].Re()),abs(pTransformer[index]->c_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -2376,15 +2489,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pTransformer[index]->d_mat[x][y].Re() >= 0){
 						if(pTransformer[index]->d_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<d%d%d>+%f+%fj</d%d%d>\n",x+1,y+1,pTransformer[index]->d_mat[x][y].Re(),pTransformer[index]->d_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>+%.15f+%.15fj</d%d%d>\n",x+1,y+1,pTransformer[index]->d_mat[x][y].Re(),pTransformer[index]->d_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<d%d%d>+%f-%fj</d%d%d>\n",x+1,y+1,pTransformer[index]->d_mat[x][y].Re(),abs(pTransformer[index]->d_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>+%.15f-%.15fj</d%d%d>\n",x+1,y+1,pTransformer[index]->d_mat[x][y].Re(),abs(pTransformer[index]->d_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pTransformer[index]->d_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<d%d%d>-%f+%fj</d%d%d>\n",x+1,y+1,abs(pTransformer[index]->d_mat[x][y].Re()),pTransformer[index]->d_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>-%.15f+%.15fj</d%d%d>\n",x+1,y+1,abs(pTransformer[index]->d_mat[x][y].Re()),pTransformer[index]->d_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<d%d%d>-%f-%fj</d%d%d>\n",x+1,y+1,abs(pTransformer[index]->d_mat[x][y].Re()),abs(pTransformer[index]->d_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>-%.15f-%.15fj</d%d%d>\n",x+1,y+1,abs(pTransformer[index]->d_mat[x][y].Re()),abs(pTransformer[index]->d_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -2397,15 +2510,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pTransformer[index]->A_mat[x][y].Re() >= 0){
 						if(pTransformer[index]->A_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<A%d%d>+%f+%fj</A%d%d>\n",x+1,y+1,pTransformer[index]->A_mat[x][y].Re(),pTransformer[index]->A_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>+%.15f+%.15fj</A%d%d>\n",x+1,y+1,pTransformer[index]->A_mat[x][y].Re(),pTransformer[index]->A_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<A%d%d>+%f-%fj</A%d%d>\n",x+1,y+1,pTransformer[index]->A_mat[x][y].Re(),abs(pTransformer[index]->A_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>+%.15f-%.15fj</A%d%d>\n",x+1,y+1,pTransformer[index]->A_mat[x][y].Re(),abs(pTransformer[index]->A_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pTransformer[index]->A_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<A%d%d>-%f+%fj</A%d%d>\n",x+1,y+1,abs(pTransformer[index]->A_mat[x][y].Re()),pTransformer[index]->A_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>-%.15f+%.15fj</A%d%d>\n",x+1,y+1,abs(pTransformer[index]->A_mat[x][y].Re()),pTransformer[index]->A_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<A%d%d>-%f-%fj</A%d%d>\n",x+1,y+1,abs(pTransformer[index]->A_mat[x][y].Re()),abs(pTransformer[index]->A_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>-%.15f-%.15fj</A%d%d>\n",x+1,y+1,abs(pTransformer[index]->A_mat[x][y].Re()),abs(pTransformer[index]->A_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -2418,15 +2531,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pTransformer[index]->B_mat[x][y].Re() >= 0){
 						if(pTransformer[index]->B_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<B%d%d>+%f+%fj</B%d%d>\n",x+1,y+1,pTransformer[index]->B_mat[x][y].Re(),pTransformer[index]->B_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>+%.15f+%.15fj</B%d%d>\n",x+1,y+1,pTransformer[index]->B_mat[x][y].Re(),pTransformer[index]->B_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<B%d%d>+%f-%fj</B%d%d>\n",x+1,y+1,pTransformer[index]->B_mat[x][y].Re(),abs(pTransformer[index]->B_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>+%.15f-%.15fj</B%d%d>\n",x+1,y+1,pTransformer[index]->B_mat[x][y].Re(),abs(pTransformer[index]->B_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pTransformer[index]->B_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<B%d%d>-%f+%fj</B%d%d>\n",x+1,y+1,abs(pTransformer[index]->B_mat[x][y].Re()),pTransformer[index]->B_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>-%.15f+%.15fj</B%d%d>\n",x+1,y+1,abs(pTransformer[index]->B_mat[x][y].Re()),pTransformer[index]->B_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<B%d%d>-%f-%fj</B%d%d>\n",x+1,y+1,abs(pTransformer[index]->B_mat[x][y].Re()),abs(pTransformer[index]->B_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>-%.15f-%.15fj</B%d%d>\n",x+1,y+1,abs(pTransformer[index]->B_mat[x][y].Re()),abs(pTransformer[index]->B_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -2491,6 +2604,15 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<to_voltage>%f</to_voltage>\n",120);
 
 			//write the phases
+			if(pTpLine[index]->phases == 0x0001){//A
+				fprintf(fn,"\t\t<phases>A</phases>\n");
+			}
+			if(pTpLine[index]->phases == 0x0002){//B
+				fprintf(fn,"\t\t<phases>B</phases>\n");
+			}
+			if(pTpLine[index]->phases == 0x0004){//C
+				fprintf(fn,"\t\t<phases>C</phases>\n");
+			}
 			if(pTpLine[index]->phases == 0x0009){//AN
 				fprintf(fn,"\t\t<phases>AN</phases>\n");
 			}
@@ -2546,15 +2668,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pTpLine[index]->a_mat[x][y].Re() >= 0){
 						if(pTpLine[index]->a_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<a%d%d>+%f+%fj</a%d%d>\n",x+1,y+1,pTpLine[index]->a_mat[x][y].Re(),pTpLine[index]->a_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>+%.15f+%.15fj</a%d%d>\n",x+1,y+1,pTpLine[index]->a_mat[x][y].Re(),pTpLine[index]->a_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<a%d%d>+%f-%fj</a%d%d>\n",x+1,y+1,pTpLine[index]->a_mat[x][y].Re(),abs(pTpLine[index]->a_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>+%.15f-%.15fj</a%d%d>\n",x+1,y+1,pTpLine[index]->a_mat[x][y].Re(),abs(pTpLine[index]->a_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pTpLine[index]->a_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<a%d%d>-%f+%fj</a%d%d>\n",x+1,y+1,abs(pTpLine[index]->a_mat[x][y].Re()),pTpLine[index]->a_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>-%.15f+%.15fj</a%d%d>\n",x+1,y+1,abs(pTpLine[index]->a_mat[x][y].Re()),pTpLine[index]->a_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<a%d%d>-%f-%fj</a%d%d>\n",x+1,y+1,abs(pTpLine[index]->a_mat[x][y].Re()),abs(pTpLine[index]->a_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>-%.15f-%.15fj</a%d%d>\n",x+1,y+1,abs(pTpLine[index]->a_mat[x][y].Re()),abs(pTpLine[index]->a_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -2567,15 +2689,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pTpLine[index]->b_mat[x][y].Re() >= 0){
 						if(pTpLine[index]->b_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<b%d%d>+%f+%fj</b%d%d>\n",x+1,y+1,pTpLine[index]->b_mat[x][y].Re(),pTpLine[index]->b_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>+%.15f+%.15fj</b%d%d>\n",x+1,y+1,pTpLine[index]->b_mat[x][y].Re(),pTpLine[index]->b_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<b%d%d>+%f-%fj</b%d%d>\n",x+1,y+1,pTpLine[index]->b_mat[x][y].Re(),abs(pTpLine[index]->b_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>+%.15f-%.15fj</b%d%d>\n",x+1,y+1,pTpLine[index]->b_mat[x][y].Re(),abs(pTpLine[index]->b_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pTpLine[index]->b_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<b%d%d>-%f+%fj</b%d%d>\n",x+1,y+1,abs(pTpLine[index]->b_mat[x][y].Re()),pTpLine[index]->b_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>-%.15f+%.15fj</b%d%d>\n",x+1,y+1,abs(pTpLine[index]->b_mat[x][y].Re()),pTpLine[index]->b_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<b%d%d>-%f-%fj</b%d%d>\n",x+1,y+1,abs(pTpLine[index]->b_mat[x][y].Re()),abs(pTpLine[index]->b_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>-%.15f-%.15fj</b%d%d>\n",x+1,y+1,abs(pTpLine[index]->b_mat[x][y].Re()),abs(pTpLine[index]->b_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -2588,15 +2710,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pTpLine[index]->c_mat[x][y].Re() >= 0){
 						if(pTpLine[index]->c_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<c%d%d>+%f+%fj</c%d%d>\n",x+1,y+1,pTpLine[index]->c_mat[x][y].Re(),pTpLine[index]->c_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>+%.15f+%.15fj</c%d%d>\n",x+1,y+1,pTpLine[index]->c_mat[x][y].Re(),pTpLine[index]->c_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<c%d%d>+%f-%fj</c%d%d>\n",x+1,y+1,pTpLine[index]->c_mat[x][y].Re(),abs(pTpLine[index]->c_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>+%.15f-%.15fj</c%d%d>\n",x+1,y+1,pTpLine[index]->c_mat[x][y].Re(),abs(pTpLine[index]->c_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pTpLine[index]->c_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<c%d%d>-%f+%fj</c%d%d>\n",x+1,y+1,abs(pTpLine[index]->c_mat[x][y].Re()),pTpLine[index]->c_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>-%.15f+%.15fj</c%d%d>\n",x+1,y+1,abs(pTpLine[index]->c_mat[x][y].Re()),pTpLine[index]->c_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<c%d%d>-%f-%fj</c%d%d>\n",x+1,y+1,abs(pTpLine[index]->c_mat[x][y].Re()),abs(pTpLine[index]->c_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>-%.15f-%.15fj</c%d%d>\n",x+1,y+1,abs(pTpLine[index]->c_mat[x][y].Re()),abs(pTpLine[index]->c_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -2609,15 +2731,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pTpLine[index]->d_mat[x][y].Re() >= 0){
 						if(pTpLine[index]->d_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<d%d%d>+%f+%fj</d%d%d>\n",x+1,y+1,pTpLine[index]->d_mat[x][y].Re(),pTpLine[index]->d_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>+%.15f+%.15fj</d%d%d>\n",x+1,y+1,pTpLine[index]->d_mat[x][y].Re(),pTpLine[index]->d_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<d%d%d>+%f-%fj</d%d%d>\n",x+1,y+1,pTpLine[index]->d_mat[x][y].Re(),abs(pTpLine[index]->d_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>+%.15f-%.15fj</d%d%d>\n",x+1,y+1,pTpLine[index]->d_mat[x][y].Re(),abs(pTpLine[index]->d_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pTpLine[index]->d_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<d%d%d>-%f+%fj</d%d%d>\n",x+1,y+1,abs(pTpLine[index]->d_mat[x][y].Re()),pTpLine[index]->d_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>-%.15f+%.15fj</d%d%d>\n",x+1,y+1,abs(pTpLine[index]->d_mat[x][y].Re()),pTpLine[index]->d_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<d%d%d>-%f-%fj</d%d%d>\n",x+1,y+1,abs(pTpLine[index]->d_mat[x][y].Re()),abs(pTpLine[index]->d_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>-%.15f-%.15fj</d%d%d>\n",x+1,y+1,abs(pTpLine[index]->d_mat[x][y].Re()),abs(pTpLine[index]->d_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -2630,15 +2752,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pTpLine[index]->A_mat[x][y].Re() >= 0){
 						if(pTpLine[index]->A_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<A%d%d>+%f+%fj</A%d%d>\n",x+1,y+1,pTpLine[index]->A_mat[x][y].Re(),pTpLine[index]->A_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>+%.15f+%.15fj</A%d%d>\n",x+1,y+1,pTpLine[index]->A_mat[x][y].Re(),pTpLine[index]->A_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<A%d%d>+%f-%fj</A%d%d>\n",x+1,y+1,pTpLine[index]->A_mat[x][y].Re(),abs(pTpLine[index]->A_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>+%.15f-%.15fj</A%d%d>\n",x+1,y+1,pTpLine[index]->A_mat[x][y].Re(),abs(pTpLine[index]->A_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pTpLine[index]->A_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<A%d%d>-%f+%fj</A%d%d>\n",x+1,y+1,abs(pTpLine[index]->A_mat[x][y].Re()),pTpLine[index]->A_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>-%.15f+%.15fj</A%d%d>\n",x+1,y+1,abs(pTpLine[index]->A_mat[x][y].Re()),pTpLine[index]->A_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<A%d%d>-%f-%fj</A%d%d>\n",x+1,y+1,abs(pTpLine[index]->A_mat[x][y].Re()),abs(pTpLine[index]->A_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>-%.15f-%.15fj</A%d%d>\n",x+1,y+1,abs(pTpLine[index]->A_mat[x][y].Re()),abs(pTpLine[index]->A_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -2651,15 +2773,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pTpLine[index]->B_mat[x][y].Re() >= 0){
 						if(pTpLine[index]->B_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<B%d%d>+%f+%fj</B%d%d>\n",x+1,y+1,pTpLine[index]->B_mat[x][y].Re(),pTpLine[index]->B_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>+%.15f+%.15fj</B%d%d>\n",x+1,y+1,pTpLine[index]->B_mat[x][y].Re(),pTpLine[index]->B_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<B%d%d>+%f-%fj</B%d%d>\n",x+1,y+1,pTpLine[index]->B_mat[x][y].Re(),abs(pTpLine[index]->B_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>+%.15f-%.15fj</B%d%d>\n",x+1,y+1,pTpLine[index]->B_mat[x][y].Re(),abs(pTpLine[index]->B_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pTpLine[index]->B_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<B%d%d>-%f+%fj</B%d%d>\n",x+1,y+1,abs(pTpLine[index]->B_mat[x][y].Re()),pTpLine[index]->B_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>-%.15f+%.15fj</B%d%d>\n",x+1,y+1,abs(pTpLine[index]->B_mat[x][y].Re()),pTpLine[index]->B_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<B%d%d>-%f-%fj</B%d%d>\n",x+1,y+1,abs(pTpLine[index]->B_mat[x][y].Re()),abs(pTpLine[index]->B_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>-%.15f-%.15fj</B%d%d>\n",x+1,y+1,abs(pTpLine[index]->B_mat[x][y].Re()),abs(pTpLine[index]->B_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -2673,7 +2795,7 @@ int impedance_dump::dump(TIMESTAMP t)
 	}
 	
 	index = 0;
-	//write the undergound_lines
+	//write the underground_lines
 	if(uglines != NULL){
 		pUgLine = (line **)gl_malloc(uglines->hit_count*sizeof(line*));
 		if(pUgLine == NULL){
@@ -2690,8 +2812,8 @@ int impedance_dump::dump(TIMESTAMP t)
 				return 0;
 			}
 
-			//write the undergound_line
-			fprintf(fn,"\t<undergound_line>\n");
+			//write the underground_line
+			fprintf(fn,"\t<underground_line>\n");
 
 			//write the name
 			if(obj->name[0] != 0){
@@ -2750,6 +2872,15 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<to_voltage>%f</to_voltage>\n",node_voltage->Mag());
 
 			//write the phases
+			if(pUgLine[index]->phases == 0x0001){//A
+				fprintf(fn,"\t\t<phases>A</phases>\n");
+			}
+			if(pUgLine[index]->phases == 0x0002){//B
+				fprintf(fn,"\t\t<phases>B</phases>\n");
+			}
+			if(pUgLine[index]->phases == 0x0004){//C
+				fprintf(fn,"\t\t<phases>C</phases>\n");
+			}
 			if(pUgLine[index]->phases == 0x0009){//AN
 				fprintf(fn,"\t\t<phases>AN</phases>\n");
 			}
@@ -2805,15 +2936,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pUgLine[index]->a_mat[x][y].Re() >= 0){
 						if(pUgLine[index]->a_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<a%d%d>+%f+%fj</a%d%d>\n",x+1,y+1,pUgLine[index]->a_mat[x][y].Re(),pUgLine[index]->a_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>+%.15f+%.15fj</a%d%d>\n",x+1,y+1,pUgLine[index]->a_mat[x][y].Re(),pUgLine[index]->a_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<a%d%d>+%f-%fj</a%d%d>\n",x+1,y+1,pUgLine[index]->a_mat[x][y].Re(),abs(pUgLine[index]->a_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>+%.15f-%.15fj</a%d%d>\n",x+1,y+1,pUgLine[index]->a_mat[x][y].Re(),abs(pUgLine[index]->a_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pUgLine[index]->a_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<a%d%d>-%f+%fj</a%d%d>\n",x+1,y+1,abs(pUgLine[index]->a_mat[x][y].Re()),pUgLine[index]->a_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>-%.15f+%.15fj</a%d%d>\n",x+1,y+1,abs(pUgLine[index]->a_mat[x][y].Re()),pUgLine[index]->a_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<a%d%d>-%f-%fj</a%d%d>\n",x+1,y+1,abs(pUgLine[index]->a_mat[x][y].Re()),abs(pUgLine[index]->a_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<a%d%d>-%.15f-%.15fj</a%d%d>\n",x+1,y+1,abs(pUgLine[index]->a_mat[x][y].Re()),abs(pUgLine[index]->a_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -2826,15 +2957,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pUgLine[index]->b_mat[x][y].Re() >= 0){
 						if(pUgLine[index]->b_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<b%d%d>+%f+%fj</b%d%d>\n",x+1,y+1,pUgLine[index]->b_mat[x][y].Re(),pUgLine[index]->b_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>+%.15f+%.15fj</b%d%d>\n",x+1,y+1,pUgLine[index]->b_mat[x][y].Re(),pUgLine[index]->b_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<b%d%d>+%f-%fj</b%d%d>\n",x+1,y+1,pUgLine[index]->b_mat[x][y].Re(),abs(pUgLine[index]->b_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>+%.15f-%.15fj</b%d%d>\n",x+1,y+1,pUgLine[index]->b_mat[x][y].Re(),abs(pUgLine[index]->b_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pUgLine[index]->b_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<b%d%d>-%f+%fj</b%d%d>\n",x+1,y+1,abs(pUgLine[index]->b_mat[x][y].Re()),pUgLine[index]->b_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>-%.15f+%.15fj</b%d%d>\n",x+1,y+1,abs(pUgLine[index]->b_mat[x][y].Re()),pUgLine[index]->b_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<b%d%d>-%f-%fj</b%d%d>\n",x+1,y+1,abs(pUgLine[index]->b_mat[x][y].Re()),abs(pUgLine[index]->b_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<b%d%d>-%.15f-%.15fj</b%d%d>\n",x+1,y+1,abs(pUgLine[index]->b_mat[x][y].Re()),abs(pUgLine[index]->b_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -2847,15 +2978,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pUgLine[index]->c_mat[x][y].Re() >= 0){
 						if(pUgLine[index]->c_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<c%d%d>+%f+%fj</c%d%d>\n",x+1,y+1,pUgLine[index]->c_mat[x][y].Re(),pUgLine[index]->c_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>+%.15f+%.15fj</c%d%d>\n",x+1,y+1,pUgLine[index]->c_mat[x][y].Re(),pUgLine[index]->c_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<c%d%d>+%f-%fj</c%d%d>\n",x+1,y+1,pUgLine[index]->c_mat[x][y].Re(),abs(pUgLine[index]->c_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>+%.15f-%.15fj</c%d%d>\n",x+1,y+1,pUgLine[index]->c_mat[x][y].Re(),abs(pUgLine[index]->c_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pUgLine[index]->c_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<c%d%d>-%f+%fj</c%d%d>\n",x+1,y+1,abs(pUgLine[index]->c_mat[x][y].Re()),pUgLine[index]->c_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>-%.15f+%.15fj</c%d%d>\n",x+1,y+1,abs(pUgLine[index]->c_mat[x][y].Re()),pUgLine[index]->c_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<c%d%d>-%f-%fj</c%d%d>\n",x+1,y+1,abs(pUgLine[index]->c_mat[x][y].Re()),abs(pUgLine[index]->c_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<c%d%d>-%.15f-%.15fj</c%d%d>\n",x+1,y+1,abs(pUgLine[index]->c_mat[x][y].Re()),abs(pUgLine[index]->c_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -2868,15 +2999,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pUgLine[index]->d_mat[x][y].Re() >= 0){
 						if(pUgLine[index]->d_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<d%d%d>+%f+%fj</d%d%d>\n",x+1,y+1,pUgLine[index]->d_mat[x][y].Re(),pUgLine[index]->d_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>+%.15f+%.15fj</d%d%d>\n",x+1,y+1,pUgLine[index]->d_mat[x][y].Re(),pUgLine[index]->d_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<d%d%d>+%f-%fj</d%d%d>\n",x+1,y+1,pUgLine[index]->d_mat[x][y].Re(),abs(pUgLine[index]->d_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>+%.15f-%.15fj</d%d%d>\n",x+1,y+1,pUgLine[index]->d_mat[x][y].Re(),abs(pUgLine[index]->d_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pUgLine[index]->d_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<d%d%d>-%f+%fj</d%d%d>\n",x+1,y+1,abs(pUgLine[index]->d_mat[x][y].Re()),pUgLine[index]->d_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>-%.15f+%.15fj</d%d%d>\n",x+1,y+1,abs(pUgLine[index]->d_mat[x][y].Re()),pUgLine[index]->d_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<d%d%d>-%f-%fj</d%d%d>\n",x+1,y+1,abs(pUgLine[index]->d_mat[x][y].Re()),abs(pUgLine[index]->d_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<d%d%d>-%.15f-%.15fj</d%d%d>\n",x+1,y+1,abs(pUgLine[index]->d_mat[x][y].Re()),abs(pUgLine[index]->d_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -2889,15 +3020,15 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pUgLine[index]->A_mat[x][y].Re() >= 0){
 						if(pUgLine[index]->A_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<A%d%d>+%f+%fj</A%d%d>\n",x+1,y+1,pUgLine[index]->A_mat[x][y].Re(),pUgLine[index]->A_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>+%.15f+%.15fj</A%d%d>\n",x+1,y+1,pUgLine[index]->A_mat[x][y].Re(),pUgLine[index]->A_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<A%d%d>+%f-%fj</A%d%d>\n",x+1,y+1,pUgLine[index]->A_mat[x][y].Re(),abs(pUgLine[index]->A_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>+%.15f-%.15fj</A%d%d>\n",x+1,y+1,pUgLine[index]->A_mat[x][y].Re(),abs(pUgLine[index]->A_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pUgLine[index]->A_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<A%d%d>-%f+%fj</A%d%d>\n",x+1,y+1,abs(pUgLine[index]->A_mat[x][y].Re()),pUgLine[index]->A_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>-%.15f+%.15fj</A%d%d>\n",x+1,y+1,abs(pUgLine[index]->A_mat[x][y].Re()),pUgLine[index]->A_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<A%d%d>-%f-%fj</A%d%d>\n",x+1,y+1,abs(pUgLine[index]->A_mat[x][y].Re()),abs(pUgLine[index]->A_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<A%d%d>-%.15f-%.15fj</A%d%d>\n",x+1,y+1,abs(pUgLine[index]->A_mat[x][y].Re()),abs(pUgLine[index]->A_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
@@ -2910,22 +3041,128 @@ int impedance_dump::dump(TIMESTAMP t)
 				for(y = 0; y < 3; y++){
 					if(pUgLine[index]->B_mat[x][y].Re() >= 0){
 						if(pUgLine[index]->B_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<B%d%d>+%f+%fj</B%d%d>\n",x+1,y+1,pUgLine[index]->B_mat[x][y].Re(),pUgLine[index]->B_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>+%.15f+%.15fj</B%d%d>\n",x+1,y+1,pUgLine[index]->B_mat[x][y].Re(),pUgLine[index]->B_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<B%d%d>+%f-%fj</B%d%d>\n",x+1,y+1,pUgLine[index]->B_mat[x][y].Re(),abs(pUgLine[index]->B_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>+%.15f-%.15fj</B%d%d>\n",x+1,y+1,pUgLine[index]->B_mat[x][y].Re(),abs(pUgLine[index]->B_mat[x][y].Im()),x+1,y+1);
 						}
 					} else {
 						if(pUgLine[index]->B_mat[x][y].Im() >= 0){
-							fprintf(fn,"\t\t\t<B%d%d>-%f+%fj</B%d%d>\n",x+1,y+1,abs(pUgLine[index]->B_mat[x][y].Re()),pUgLine[index]->B_mat[x][y].Im(),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>-%.15f+%.15fj</B%d%d>\n",x+1,y+1,abs(pUgLine[index]->B_mat[x][y].Re()),pUgLine[index]->B_mat[x][y].Im(),x+1,y+1);
 						} else {
-							fprintf(fn,"\t\t\t<B%d%d>-%f-%fj</B%d%d>\n",x+1,y+1,abs(pUgLine[index]->B_mat[x][y].Re()),abs(pUgLine[index]->B_mat[x][y].Im()),x+1,y+1);
+							fprintf(fn,"\t\t\t<B%d%d>-%.15f-%.15fj</B%d%d>\n",x+1,y+1,abs(pUgLine[index]->B_mat[x][y].Re()),abs(pUgLine[index]->B_mat[x][y].Im()),x+1,y+1);
 						}
 					}
 				}
 			}
 			fprintf(fn,"\t\t</B_matrix>\n");
 
-			fprintf(fn,"\t</undergound_line>\n");
+			fprintf(fn,"\t</underground_line>\n");
+			
+			++index;
+		}
+	}
+
+	index=0;
+	//write capacitor
+	if(capacitors != NULL){
+		pCapacitor = (capacitor **)gl_malloc(capacitors->hit_count*sizeof(capacitor*));
+		if(pCapacitor == NULL){
+			gl_error("Failed to allocate fuse array.");
+			return TS_NEVER;
+		}
+		while(obj = gl_find_next(capacitors,obj)){
+			if(index >= capacitors->hit_count){
+				break;
+			}
+			pCapacitor[index] = OBJECTDATA(obj,capacitor);
+			if(pCapacitor[index] == NULL){
+				gl_error("Unable to map object as a link object.");
+				return 0;
+			}
+
+			//write the capacitor
+			fprintf(fn,"\t<capacitor>\n");
+
+			//write the name
+			if(obj->name[0] != 0){
+				fprintf(fn,"\t\t<name>%s</name>\n",obj->name);
+			} else {
+				fprintf(fn,"\t\t<name>NA</name>\n");
+			}
+
+			//write the id
+			fprintf(fn,"\t\t<id>cap:%d</id>\n",obj->id);
+
+
+			//write the bus name
+			if(obj->parent->name[0] != 0){
+				fprintf(fn,"\t\t<node>%s:%s</node>\n",pCapacitor[index]->pclass->name,obj->parent->name);
+			} else {
+				fprintf(fn,"\t\t<node>%s:%d</node>\n",pCapacitor[index]->pclass->name,obj->parent->id);
+			}
+			
+
+			//write the phases
+			if(pCapacitor[index]->phases == 0x0001){//A
+				fprintf(fn,"\t\t<phases>A</phases>\n");
+			}
+			if(pCapacitor[index]->phases == 0x0002){//B
+				fprintf(fn,"\t\t<phases>B</phases>\n");
+			}
+			if(pCapacitor[index]->phases == 0x0004){//C
+				fprintf(fn,"\t\t<phases>C</phases>\n");
+			}
+			if(pCapacitor[index]->phases == 0x0009){//AN
+				fprintf(fn,"\t\t<phases>AN</phases>\n");
+			}
+			if(pCapacitor[index]->phases == 0x000a){//BN
+				fprintf(fn,"\t\t<phases>BN</phases>\n");
+			}
+			if(pCapacitor[index]->phases == 0x000c){//CN
+				fprintf(fn,"\t\t<phases>CN</phases>\n");
+			}
+			if(pCapacitor[index]->phases == 0x0071){//AS
+				fprintf(fn,"\t\t<phases>AS</phases>\n");
+			}
+			if(pCapacitor[index]->phases == 0x0072){//BS
+				fprintf(fn,"\t\t<phases>BS</phases>\n");
+			}
+			if(pCapacitor[index]->phases == 0x0074){//CS
+				fprintf(fn,"\t\t<phases>CS</phases>\n");
+			}
+			if(pCapacitor[index]->phases == 0x0003){//AB
+				fprintf(fn,"\t\t<phases>AB</phases>\n");
+			}
+			if(pCapacitor[index]->phases == 0x0006){//BC
+				fprintf(fn,"\t\t<phases>BC</phases>\n");
+			}
+			if(pCapacitor[index]->phases == 0x0005){//AC
+				fprintf(fn,"\t\t<phases>AC</phases>\n");
+			}
+			if(pCapacitor[index]->phases == 0x000b){//ABN
+				fprintf(fn,"\t\t<phases>ABN</phases>\n");
+			}
+			if(pCapacitor[index]->phases == 0x000e){//BCN
+				fprintf(fn,"\t\t<phases>BCN</phases>\n");
+			}
+			if(pCapacitor[index]->phases == 0x000d){//ACN
+				fprintf(fn,"\t\t<phases>ACN</phases>\n");
+			}
+			if(pCapacitor[index]->phases == 0x0007){//ABC
+				fprintf(fn,"\t\t<phases>ABC</phases>\n");
+			}
+			if(pCapacitor[index]->phases == 0x000f){//ABCN
+				fprintf(fn,"\t\t<phases>ABCN</phases>\n");
+			}
+			if(pCapacitor[index]->phases == 0x0107){//ABCD
+				fprintf(fn,"\t\t<phases>ABCD</phases>\n");
+			}
+
+			fprintf(fn,"\t\t<QA>%f</QA>\n",pCapacitor[index]->capacitor_A);
+			fprintf(fn,"\t\t<QB>%f</QB>\n",pCapacitor[index]->capacitor_B);
+			fprintf(fn,"\t\t<QC>%f</QC>\n",pCapacitor[index]->capacitor_C);
+
+			fprintf(fn,"\t</capacitor>\n");
 			
 			++index;
 		}
