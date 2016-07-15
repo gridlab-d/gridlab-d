@@ -18,6 +18,8 @@
 
 #if defined WIN32
 #include <io.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #else
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -542,6 +544,135 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	return last_module;
 }
 
+#ifdef WIN32
+#include <winnt.h>
+static bool _checkimg(const char *fname)
+{
+	FILE *fh = fopen(fname,"r");
+	if ( fh!=NULL )
+	{
+		struct _IMAGE_DOS_HEADER dh;
+		// access DLL image
+		fclose(fh);
+	}
+	return true;
+}
+#endif
+
+static void _module_list (char *path)
+{
+	struct stat info;
+	static int count = 0;
+	int gsrm = global_suppress_repeat_messages;
+#ifdef WIN32
+	char search[1024];
+	HANDLE hFind;
+	WIN32_FIND_DATA sFind;
+#else
+	DIR *dir;
+	struct dirent *ent;
+#endif
+	if(path == NULL){
+		return;
+	}
+	/* access directory */
+	if ( stat(path,&info)!=0 )
+		return;
+	
+	/* write header if necessary */
+	if ( (count++%25) == 0 )
+	{
+		output_message("Module name              Version Location");
+		output_message("------------------------ ------- ----------------------------------------");
+	}
+
+	/* open directory */
+#ifdef WIN32
+	sprintf(search,"%s\\*.dll",path);
+	hFind=FindFirstFile(search,&sFind);
+	if ( hFind==INVALID_HANDLE_VALUE )
+		return;
+	do {
+#else
+	if ( (dir=opendir(path))!=NULL )
+#endif
+
+	/* iterate files list */
+		char fname[1024];
+		char *ext;
+		void *hLib = NULL;
+		int *pMajor = NULL, *pMinor = NULL;
+		LIBINIT init = NULL;
+		global_suppress_repeat_messages = 0;
+#ifdef WIN32
+		strcpy(fname,sFind.cFileName);
+#else
+		// TODO Posix version
+		/* isolate DLL files only */
+		ext = strrchr(fname,'.');
+		if ( ext==NULL ) continue; /* no extension */
+		if ( stricmp(ext,".dll")!=0 ) continue; /* not the right extension */
+
+#endif
+		/* check image */
+		if ( !_checkimg(fname) ) continue;
+
+		/* access DLL */
+		hLib = DLLOAD(fname);
+		if ( hLib==NULL ) continue;
+		if ( DLSYM(hLib,"init")==NULL ) continue;
+		pMajor = (int*)DLSYM(hLib, "major");
+		pMinor = (int*)DLSYM(hLib, "minor");
+		if ( pMajor==NULL || pMinor==NULL ) continue;
+
+
+		/* TODO print info */
+		output_message("%-24.24s %5d.%d %s", fname, *pMajor, *pMinor, path);
+#ifdef WIN32
+		global_suppress_repeat_messages = gsrm;
+	} while ( FindNextFile(hFind,&sFind) );
+	FindClose(hFind);
+#else
+	// TODO close directory
+#endif
+}
+
+void module_list(void)
+{
+	char *glpath = getenv("GLPATH");
+	char *gridlabd = getenv("GRIDLABD");
+	char *tokPath = NULL;
+	char *tokPathPtr = NULL;
+#ifdef WIN32
+	char *pathDelim = ";";
+#else
+	char *pathDelim = ":";
+#endif
+
+	_module_list(global_workdir);
+	_module_list(global_execdir);
+	if(glpath != NULL){
+		char *glPath = malloc(sizeof(char) * (unsigned)strlen(glpath));
+		strncpy(glPath, glpath, (unsigned)strlen(glpath));
+		tokPath = strtok_r(glPath, pathDelim, &tokPathPtr);
+		while (tokPath != NULL){
+			_module_list(tokPath);
+			tokPath = strtok_r(NULL, pathDelim, &tokPathPtr);
+		}
+		tokPathPtr = NULL;
+		free(glPath);
+	}
+	if(gridlabd != NULL){
+		char *gridLabD = malloc(sizeof(char) * (unsigned)strlen(gridlabd));
+		strncpy(gridLabD, gridlabd, (unsigned)strlen(gridlabd));
+		tokPath = strtok_r(gridLabD, pathDelim, &tokPathPtr);
+		while (tokPath != NULL){
+			_module_list(tokPath);
+			tokPath = strtok_r(NULL, pathDelim, &tokPathPtr);
+		}
+		free(gridLabD);
+	}
+}
 int module_setvar(MODULE *mod, const char *varname, char *value)
 {
 	char modvarname[1024];

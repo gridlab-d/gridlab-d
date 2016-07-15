@@ -606,6 +606,11 @@ static int modhelp(int argc, char *argv[])
 	}
 	return 1;
 }
+static int modlist(int arvc, char *argv[])
+{
+	module_list();
+	return 1;
+}
 static int modtest(int argc, char *argv[])
 {
 	if (argc>1)
@@ -1259,6 +1264,7 @@ static CMDARG main[] = {
 	{"help",		"h",		help,		NULL, "Displays command line help" },
 	{"info",		NULL,		info,		"<subject>", "Obtain online help regarding <subject>"},
 	{"modhelp",		NULL,		modhelp,	"module[:class]", "Display structure of a class or all classes in a module" },
+	{"modlist",		NULL,		modlist,	NULL, "Display list of available modules"},
 	{"example",		NULL,		example,	"module:class", "Display an example of an instance of the class after init" },
 	{"mclassdef",		NULL,		mclassdef,	"module:class", "Generate Matlab classdef of an instance of the class after init" },
 
