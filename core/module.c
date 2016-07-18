@@ -594,7 +594,9 @@ static void _module_list (char *path)
 		return;
 	do {
 #else
-	if ( (dir=opendir(path))!=NULL )
+	if ( (dir=opendir(path))==NULL )
+		return;
+	while((ent = readdir(dir)) != NULL) {
 #endif
 
 	/* iterate files list */
@@ -606,17 +608,16 @@ static void _module_list (char *path)
 		global_suppress_repeat_messages = 0;
 #ifdef WIN32
 		strcpy(fname,sFind.cFileName);
-#else
-		// TODO Posix version
-		/* isolate DLL files only */
-		ext = strrchr(fname,'.');
-		if ( ext==NULL ) continue; /* no extension */
-		if ( stricmp(ext,".dll")!=0 ) continue; /* not the right extension */
-
-#endif
 		/* check image */
 		if ( !_checkimg(fname) ) continue;
-
+#else
+		// TODO Posix version
+		/* isolate so files only */
+		strcpy(fname, ent->d_name);
+		ext = strrchr(fname,'.');
+		if ( ext==NULL ) continue; /* no extension */
+		if ( strcmp(ext,".so")!=0 ) continue; /* not the right extension */
+#endif
 		/* access DLL */
 		hLib = DLLOAD(fname);
 		if ( hLib==NULL ) continue;
@@ -625,7 +626,6 @@ static void _module_list (char *path)
 		pMinor = (int*)DLSYM(hLib, "minor");
 		if ( pMajor==NULL || pMinor==NULL ) continue;
 
-
 		/* TODO print info */
 		output_message("%-24.24s %5d.%d %s", fname, *pMajor, *pMinor, path);
 #ifdef WIN32
@@ -633,7 +633,8 @@ static void _module_list (char *path)
 	} while ( FindNextFile(hFind,&sFind) );
 	FindClose(hFind);
 #else
-	// TODO close directory
+	}
+	closedir(dir);
 #endif
 }
 
