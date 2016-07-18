@@ -211,7 +211,7 @@ TIMESTAMP collector::commit(TIMESTAMP t0, TIMESTAMP t1)
 		int n;
 		for ( n=0 ; n<n_aggregates ; n++ )
 			eos += sprintf(buffer+eos,",`%s`",names[n]);
-		eos += sprintf(buffer+eos,") VALUES (from_unixtime(%lli)",gl_globalclock);
+		eos += sprintf(buffer+eos,") VALUES (from_unixtime(%lli)",db->convert_to_dbtime(gl_globalclock));
 		for ( n=0 ; n<n_aggregates ; n++ )
 			eos += sprintf(buffer+eos,",%g",list[n].get_value());
 		sprintf(buffer+eos,"%s",")");

@@ -64,6 +64,8 @@ public:
 	GL_STRING(char1024,on_sync);
 	GL_STRING(char1024,on_term);
 	GL_ATOMIC(double,sync_interval);
+	GL_ATOMIC(int32,tz_offset);
+	GL_ATOMIC(bool,uses_dst);
 
 	// mysql handle
 private:
@@ -109,6 +111,9 @@ public:
 	char *get_sqltype(gld_property &p);
 	char *get_sqldata(char *buffer, size_t size, gld_property &p, double scale=1.0);
 	bool get_sqlbind(MYSQL_BIND &value,gld_property &target, my_bool *error=NULL);
+
+	TIMESTAMP convert_from_dbtime(TIMESTAMP);
+	TIMESTAMP convert_to_dbtime(TIMESTAMP);
 };
 
 EXTERN database *last_database INIT(NULL);

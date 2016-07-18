@@ -127,7 +127,8 @@ int player::init(OBJECT *parent)
 
 	// run the main query
 	gld_clock start;
-	data = db->select("SELECT t,`%s` FROM `%s` WHERE t>=from_unixtime(%llu) ORDER BY id",get_property(),get_table(),start.get_localtimestamp());
+	data = db->select("SELECT t,`%s` FROM `%s` WHERE t>=from_unixtime(%llu) ORDER BY id",
+		get_property(),get_table(),db->convert_to_dbtime(start.get_timestamp()));
 	if ( data==NULL )
 		return 0; // no data
 	n_rows = mysql_num_rows(data);
@@ -142,7 +143,7 @@ int player::init(OBJECT *parent)
 
 	// get the time of the next data item (assume in first column)
 	gld_clock next(row[0]);
-	next_t = next.get_timestamp();
+	next_t = db->convert_from_dbtime(next.get_timestamp());
 	gl_verbose("%s: row %d, %s='%s', %s='%s'", get_name(), row_num, fields[0].name, row[0], fields[1].name, row[1]);
 	return 1;
 }
@@ -158,7 +159,7 @@ int player::precommit(TIMESTAMP t0)
 		row_num++;
 		gl_verbose("%s: row %d, %s='%s', %s='%s'", get_name(), row_num, fields[0].name, row[0], fields[1].name, row[1]);
 		gld_clock next(row[0]);
-		next_t = next.get_timestamp();
+		next_t = db->convert_from_dbtime(next.get_timestamp());
 	}
 	return 1;
 }

@@ -68,6 +68,8 @@ database::database(MODULE *module)
 			PT_char1024,"on_sync",get_on_sync_offset(),PT_ACCESS,PA_PUBLIC,PT_DESCRIPTION,"SQL script to run when synchronizing",
 			PT_char1024,"on_term",get_on_term_offset(),PT_ACCESS,PA_PUBLIC,PT_DESCRIPTION,"SQL script to run when terminating",
 			PT_double,"sync_interval[s]",get_sync_interval_offset(),PT_ACCESS,PA_PUBLIC,PT_DESCRIPTION,"interval at which on_sync is called",
+			PT_int32,"tz_offset",get_tz_offset_offset(),PT_ACCESS,PA_PUBLIC,PT_DESCRIPTION,"timezone offset used by timestamp in the database",
+			PT_bool,"uses_dst",get_uses_dst_offset(),PT_ACCESS,PA_PUBLIC,PT_DESCRIPTION,"timestamps in database include summer time offsets",
 			NULL)<1){
 				char msg[256];
 				sprintf(msg, "unable to publish properties in %s",__FILE__);
@@ -101,6 +103,19 @@ int database::create(void)
 
 int database::init(OBJECT *parent)
 {
+	// initialize the client
+	mysql_client = mysql_init(mysql_client);
+	if ( mysql_client==NULL )
+	{
+		errno = ENOENT;
+		return NULL;
+	}
+
+	// set options
+	my_bool report_truncate = false;
+	if ( mysql_options(mysql_client,MYSQL_REPORT_DATA_TRUNCATION,&report_truncate)!=0 )
+		gl_warning("unable to disable data truncation reporting in mysql");
+
 	gld_string flags = get_clientflags_property().get_string();
 	
 	gl_verbose("mysql_connect(hostname='%s',username='%s',password='%s',schema='%s',port=%u,socketname='%s',clientflags=0x%016llx[%s])",
@@ -580,6 +595,20 @@ size_t database::backup(char *file)
 		delete [] tables[n];
 	delete[] tables;
 	return nrows;
+}
+
+TIMESTAMP database::convert_to_dbtime(TIMESTAMP ts)
+{
+	// incoming timestamp is UTC -- convert it to db time by adding offset and dst
+	gld_clock dt(ts);
+	return ts + tz_offset + ( uses_dst&&dt.get_is_dst() ? 3600 : 0);
+}
+
+TIMESTAMP database::convert_from_dbtime(TIMESTAMP ts)
+{
+	// imcoming timestamp is dbtime -- convert it to UTC be subtracting offset and dst
+	gld_clock dt(ts);
+	return ts - tz_offset - ( uses_dst&&dt.get_is_dst() ? 3600 : 0);
 }
 
 #endif // HAVE_MYSQL

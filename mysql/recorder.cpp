@@ -204,13 +204,13 @@ int recorder::init(OBJECT *parent)
 	}
 	else if ( mysql_stmt_prepare(insert,statement,len)!=0 )
 	{
-		gl_warning("insert statement '%s' prepare failed (error='%s'), using slowing 'INSERT' method", statement, mysql_stmt_error(insert));
+		gl_warning("insert statement '%s' prepare failed (error='%s'), using slow 'INSERT' method", statement, mysql_stmt_error(insert));
 		mysql_stmt_close(insert);
 		insert = NULL;
 	}
 	else if ( mysql_stmt_bind_param(insert,&value)!=0 )
 	{
-		gl_warning("insert statement '%s' bind failed (error='%s'), using slowing 'INSERT' method", statement, mysql_stmt_error(insert));
+		gl_warning("insert statement '%s' bind failed (error='%s'), using slow 'INSERT' method", statement, mysql_stmt_error(insert));
 		mysql_stmt_close(insert);
 		insert = NULL;
 	}
@@ -305,16 +305,16 @@ Insert:
 				if ( target.is_double() )
 				{
 					db->query("INSERT INTO `%s` (t, `%s`) VALUES (from_unixtime('%"FMT_INT64"d'), '%.8g')",
-						get_table(), (const char*)field, gl_globalclock, real);
+						get_table(), (const char*)field, db->convert_to_dbtime(gl_globalclock), real);
 				}
 				else if ( target.is_integer() )
 				{
 					db->query("INSERT INTO `%s` (t, `%s`) VALUES (from_unixtime('%"FMT_INT64"d'), '%lli')",
-						get_table(), (const char*)field, gl_globalclock, integer);
+						get_table(), (const char*)field, db->convert_to_dbtime(gl_globalclock), integer);
 				}
 				else
 					db->query("INSERT INTO `%s` (t, `%s`) VALUES (from_unixtime('%"FMT_INT64"d'), '%s')",
-						get_table(), (const char*)field, gl_globalclock, (const char*)string);
+						get_table(), (const char*)field, db->convert_to_dbtime(gl_globalclock), (const char*)string);
 			}
 
 			// check limit
