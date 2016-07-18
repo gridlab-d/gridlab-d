@@ -2024,6 +2024,62 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				}
 				VA_Efficiency += battery_power_out.Mag();
 			} else {
+				
+				if (V1 == -2) {
+				V1 = 0.97;
+				}
+				if (V2 == -2) {
+					V2 = 0.99;
+				}
+				if (V3 == -2) {
+					V3 = 1.01;
+				}
+				if (V4 == -2) {
+					V4 = 1.03;
+				}
+				if (Q1 == -2) {
+					Q1 = 0.50;
+				}
+				if (Q2 == -2) {
+					Q2 = 0.0;
+				}
+				if (Q3 == -2) {
+					Q3 = 0.0;
+				}
+				if (Q4 == -2) {
+					Q4 = -0.50;
+				}
+				if (V1 > V2 || V2 > V3 || V3 > V4) {
+					gl_error("inverter::init(): The curve was not constructed properly. V1 <= V2 <= V3 <= V4 must be true.");
+					return 0;
+				}
+				if (Q1 < Q2 || Q2 < Q3 || Q3 < Q4) {
+					gl_error("inverter::init(): The curve was not constructed properly. Q1 >= Q2 >= Q3 >= Q4 must be true.");
+					return 0;
+				}
+				if (V_base == 0) {
+					gl_error("inverter::init(): The base voltage must be greater than 0.");
+					return 0;
+				}
+				if (V2 != V1) {
+					m12 = (Q2 - Q1) / (V2 - V1);
+				} else {
+					m12 = 0;
+				}
+				if (V3 != V2) {
+					m23 = (Q3 - Q2) / (V3 - V2);
+				} else {
+					m23 = 0;
+				}
+				if (V4 != V3) {
+					m34 = (Q4 - Q3) / (V4 - V3);
+				} else {
+					m34 = 0;
+				}
+				b12 = Q1 - (m12 * V1);
+				b23 = Q2 - (m23 * V2);
+				b34 = Q3 - (m34 * V3);
+
 				//Compute power in - supposedly DC, but since it's complex, we'll be proper (other models may need fixing)
 				VA_In = V_In * ~ I_In;
 				//Determine how to efficiency weight it
