@@ -832,11 +832,11 @@ struct s_loadshape_core {
 };
 
 typedef enum {
-        EUMT_MOTOR_A, /**< 3ph induction motors driving constant torque loads */
-        EUMT_MOTOR_B, /**< induction motors driving high inertia speed-squares torque loads */
-        EUMT_MOTOR_C, /**< induction motors driving low inertia loads speed-squared torque loads */
-        EUMT_MOTOR_D, /**< 1ph induction motors driving constant torque loads */
-        _EUMT_COUNT, /* must be last */
+    EUMT_MOTOR_A, /**< 3ph induction motors driving constant torque loads */
+    EUMT_MOTOR_B, /**< induction motors driving high inertia speed-squares torque loads */
+    EUMT_MOTOR_C, /**< induction motors driving low inertia loads speed-squared torque loads */
+    EUMT_MOTOR_D, /**< 1ph induction motors driving constant torque loads */
+    _EUMT_COUNT, /* must be last */
 } EUMOTORTYPE;
 typedef enum {
     EUET_ELECTRONIC_A, /**< simple power electronics (no backfeed) */
@@ -860,49 +860,49 @@ typedef struct s_electronic {
     double v_start;             /**< load "start" voltage (pu) */
 } EUELECTRONIC;
 typedef struct s_enduse {
-        /* the output value must be first for transform to stream */
-        /* meter values */
-        complex total;                          /* total power in kW */
-        complex energy;                         /* total energy in kWh */
-        complex demand;                         /* maximum power in kW (can be reset) */
+    /* the output value must be first for transform to stream */
+    /* meter values */
+    complex total;                          /* total power in kW */
+    complex energy;                         /* total energy in kWh */
+    complex demand;                         /* maximum power in kW (can be reset) */
 
-        /* circuit configuration */
-        set config;                                     /* end-use configuration */
-        double breaker_amps;            /* breaker limit (if any) */
+    /* circuit configuration */
+    set config;                                     /* end-use configuration */
+    double breaker_amps;            /* breaker limit (if any) */
 
-        /* zip values */
-        complex admittance;                     /* constant impedance oprtion of load in kW */
-        complex current;                        /* constant current portion of load in kW */
-        complex power;                          /* constant power portion of load in kW */
+    /* zip values */
+    complex admittance;                     /* constant impedance oprtion of load in kW */
+    complex current;                        /* constant current portion of load in kW */
+    complex power;                          /* constant power portion of load in kW */
 
-        /* composite load data */
-        EUMOTOR motor[_EUMT_COUNT];                             /* motor loads (A-D) */
-        EUELECTRONIC electronic[_EUET_COUNT];   /* electronic loads (S/D) */
+    /* composite load data */
+    EUMOTOR motor[_EUMT_COUNT];                             /* motor loads (A-D) */
+    EUELECTRONIC electronic[_EUET_COUNT];   /* electronic loads (S/D) */
 
-        /* loading */
-        double impedance_fraction;      /* constant impedance fraction (pu load) */
-        double current_fraction;        /* constant current fraction (pu load) */
-        double power_fraction;          /* constant power fraction (pu load)*/
-        double power_factor;            /* power factor */
-        double voltage_factor;          /* voltage factor (pu nominal) */
+    /* loading */
+    double impedance_fraction;      /* constant impedance fraction (pu load) */
+    double current_fraction;        /* constant current fraction (pu load) */
+    double power_fraction;          /* constant power fraction (pu load)*/
+    double power_factor;            /* power factor */
+    double voltage_factor;          /* voltage factor (pu nominal) */
 
-        /* heat */
-        double heatgain;                        /* internal heat from load (Btu/h) */
-        double cumulative_heatgain;  /* internal cumulative heat gain from load (Btu) */
-        double heatgain_fraction;       /* fraction of power that goes to internal heat (pu Btu/h) */
+    /* heat */
+    double heatgain;                        /* internal heat from load (Btu/h) */
+    double cumulative_heatgain;  /* internal cumulative heat gain from load (Btu) */
+    double heatgain_fraction;       /* fraction of power that goes to internal heat (pu Btu/h) */
 
-        /* misc info */
-        char *name;
-        loadshape *shape;
-        TIMESTAMP t_last;                       /* last time of update */
+    /* misc info */
+    char *name;
+    loadshape *shape;
+    TIMESTAMP t_last;                       /* last time of update */
 
-        // added for backward compatibility with res ENDUSELOAD
-        // @todo these are obsolete and must be retrofitted with the above values
-        struct s_object_list *end_obj;
+    // added for backward compatibility with res ENDUSELOAD
+    // @todo these are obsolete and must be retrofitted with the above values
+    struct s_object_list *end_obj;
 
-        struct s_enduse *next;
+    struct s_enduse *next;
 #ifdef _DEBUG
-        unsigned int magic;
+    unsigned int magic;
 #endif
 } enduse;
 
