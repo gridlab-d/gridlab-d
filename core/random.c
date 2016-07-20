@@ -76,7 +76,9 @@ static unsigned int *ur_state = NULL;
 
 unsigned entropy_source(void)
 {
-	return (unsigned)(getpid()*time(NULL));
+	struct timeval t;
+	gettimeofday(&t,NULL);
+	return (unsigned)(getpid()*t.tv_usec);
 }
 
 int random_init(void)
