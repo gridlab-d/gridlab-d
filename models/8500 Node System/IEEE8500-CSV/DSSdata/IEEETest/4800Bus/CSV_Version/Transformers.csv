@@ -1,0 +1,3 @@
+# HV/MV Substation connected Delta/grounded-wye
+Name, phases, bus1, bus2, kV_pri, kV_sec, MVA, Conn_pri, Conn_sec, %XHL, %RHL
+HVMV_Sub, 3, HVMV_Sub_HSB, regxfmr_HVMV_Sub_LSB, 115, 12.47, 27.5, Delta, Wye, 15.51, 1.344  

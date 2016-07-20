@@ -1,0 +1,16 @@
+# Capacitor Definitions
+# Capacitors are controlled single phase, so must be defined as single phase capacitors
+Name, Bus, Phase, kV, kvar, numphases, connection
+CAPBank2A, R20185, A, 7.2, 300, 1, wye
+CAPBank2B, R20185, B, 7.2, 300, 1, wye
+CAPBank2C, R20185, C, 7.2, 300, 1, wye
+CAPBank1A, R42247, A, 7.2, 300, 1, wye
+CAPBank1B, R42247, B, 7.2, 300, 1, wye
+CAPBank1C, R42247, C, 7.2, 300, 1, wye
+CAPBank0A, R42246, A, 7.2, 400, 1, wye
+CAPBank0B, R42246, B, 7.2, 400, 1, wye
+CAPBank0C, R42246, C, 7.2, 400, 1, wye
+CAPBank3, R18242, ABC, 12.47112, 900, 3, wye
+
+
+

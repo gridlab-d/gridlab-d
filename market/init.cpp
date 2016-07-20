@@ -15,6 +15,7 @@
 #include "double_controller.h"
 #include "stub_bidder.h"
 #include "generator_controller.h"
+#include "supervisory_control.h"
 
 double bid_offset = 0.0001;
 
@@ -35,6 +36,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new double_controller(module);
 	new stub_bidder(module);
 	new generator_controller(module);
+	new supervisory_control(module);
 
 	/*** DO NOT EDIT NEXT LINE ***/
 	//NEWCLASS

@@ -1,0 +1,1 @@
+gridlabd IEEE_8500node_whouses_FBS_DR1.glm > DR1_output.txt 2>&1

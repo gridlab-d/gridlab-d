@@ -29,7 +29,54 @@
 
 #define TSTAT_PRECISION 0.01
 #define HEIGHT_PRECISION 0.01
-
+/*
+#define RUN_WH_FC FC_FUNC (run_wh, RUN_WH)
+#ifdef __cplusplus
+extern "C"  // prevent C++ name mangling
+#endif
+void RUN_WH_FC (
+        int *op_mode,
+        double *sim_time,
+        int *large_bins,
+        int *small_bins,
+        double *heater_h,
+		double *heater_D,
+        int *dr_signal,
+        double *sensor_pos,
+        double *heater_q,
+        double *heater_size,
+		double *heat_lost_rate,
+        double *water_rho,
+        double *water_k0,
+        double *water_alpha,
+        double *water_cv,
+        double *temp_amb,
+		double *hum_amb,
+        double *temp_in,
+        double *temp_set,
+        double *temp_db,
+        double *comp_power,
+        double *comp_off,
+		double *low_amb_lim,
+        double *up_amb_lim,
+        double *water_low_lim,
+        double *mode_3_off,
+        double *t_db,
+        double *t_wb,
+		double *upper_elem_off,
+        double *v_flow_threshold,
+        double *v_flow,
+        double *init_tank_temp,
+        double *lowerf,
+        double *upperf,
+		int *ncomp,
+        int *nheat,
+        int *heat_up,
+        double *ca,
+        double *power,
+        double *COP,
+        double *energy);
+*/
 //////////////////////////////////////////////////////////////////////////
 // waterheater CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
@@ -54,12 +101,19 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module){
 			PT_double,"tank_volume[gal]",PADDR(tank_volume), PT_DESCRIPTION, "the volume of water in the tank when it is full",
 			PT_double,"tank_UA[Btu*h/degF]",PADDR(tank_UA), PT_DESCRIPTION, "the UA of the tank (surface area divided by R-value)",
 			PT_double,"tank_diameter[ft]",PADDR(tank_diameter), PT_DESCRIPTION, "the diameter of the water heater tank",
+			PT_double,"tank_height[ft]",PADDR(tank_height), PT_DESCRIPTION, "the height of the water heater tank",
 			PT_double,"water_demand[gpm]",PADDR(water_demand), PT_DESCRIPTION, "the hot water draw from the water heater",
 			PT_double,"heating_element_capacity[kW]",PADDR(heating_element_capacity), PT_DESCRIPTION,  "the power of the heating element",
 			PT_double,"inlet_water_temperature[degF]",PADDR(Tinlet), PT_DESCRIPTION,  "the inlet temperature of the water tank",
+			PT_enumeration,"waterheater_model",PADDR(current_model), PT_DESCRIPTION, "the water heater model to use",
+				PT_KEYWORD,"ONEZNODE",(enumeration)ONENODE,
+				PT_KEYWORD,"TWONODE",(enumeration)TWONODE,
+				PT_KEYWORD,"FORTRAN",(enumeration)FORTRAN,
+				PT_KEYWORD,"NONE",(enumeration)NONE,
 			PT_enumeration,"heat_mode",PADDR(heat_mode), PT_DESCRIPTION, "the energy source for heating the water heater",
 				PT_KEYWORD,"ELECTRIC",(enumeration)ELECTRIC,
 				PT_KEYWORD,"GASHEAT",(enumeration)GASHEAT,
+				PT_KEYWORD,"HEAT_PUMP",(enumeration)HEAT_PUMP,
 			PT_enumeration,"location",PADDR(location), PT_DESCRIPTION, "whether the water heater is inside or outside",
 				PT_KEYWORD,"INSIDE",(enumeration)INSIDE,
 				PT_KEYWORD,"GARAGE",(enumeration)GARAGE,
@@ -74,6 +128,28 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module){
 			PT_double,"is_waterheater_on",PADDR(is_waterheater_on),PT_DESCRIPTION, "simple logic output to determine state of waterheater (1-on, 0-off)",
 			PT_double,"gas_fan_power[kW]",PADDR(gas_fan_power),PT_DESCRIPTION, "load of a running gas waterheater",
 			PT_double,"gas_standby_power[kW]",PADDR(gas_standby_power),PT_DESCRIPTION, "load of a gas waterheater in standby",
+			PT_double,"heat_pump_coefficient_of_performance[Btu/kWh]",PADDR(HP_COP),PT_DESCRIPTION, "current COP of the water heater pump - currently calculated internally and not an input",
+			PT_double,"Tcontrol[degF]",PADDR(Tcontrol), PT_DESCRIPTION, "in heat pump operation, defines the blended temperature used for turning on and off HP - currently calculated internally and not an input",
+			PT_enumeration,"current_tank_status",PADDR(current_tank_state),
+				PT_KEYWORD,"FULL",(enumeration)FULL,
+				PT_KEYWORD,"PARTIAL",(enumeration)PARTIAL,
+				PT_KEYWORD,"EMPTY",(enumeration)EMPTY,
+			//published variables for fortran water heater
+			PT_double, "dr_signal", PADDR(dr_signal), PT_DESCRIPTION, "the on/off signal to send to the fortran waterheater model",
+			PT_double, "COP", PADDR(fwh_cop_current), PT_DESCRIPTION, "the cop of the fortran heat pump water heater model.",
+			PT_double, "operating_mode", PADDR(operating_mode), PT_DESCRIPTION, "the operating mode the fortran water heater should be using.",
+			PT_double, "fortran_sim_time[s]", PADDR(simulation_time), PT_DESCRIPTION, "the amount of time the fortran model should simulate.",
+			PT_double, "waterheater_power[kW]", PADDR(fwh_power_now), PT_DESCRIPTION, "the current power draw from the fortran water heater.",
+			PT_enumeration,"load_state",PADDR(load_state),
+				PT_KEYWORD,"DEPLETING",(enumeration)DEPLETING,
+				PT_KEYWORD,"RECOVERING",(enumeration)RECOVERING,
+				PT_KEYWORD,"STABLE",(enumeration)STABLE,	
+			PT_double,"actual_voltage",PADDR(actual_voltage),PT_ACCESS,PA_HIDDEN,
+			PT_double,"nominal_voltage",PADDR(nominal_voltage),PT_ACCESS,PA_HIDDEN,
+			PT_enumeration,"re_override",PADDR(re_override), PT_DESCRIPTION, "the override setting for the water heater",
+				PT_KEYWORD,"OV_ON",(enumeration)OV_ON,
+				PT_KEYWORD,"OV_NORMAL",(enumeration)OV_NORMAL,
+				PT_KEYWORD,"OV_OFF",(enumeration)OV_OFF,
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
 	}
@@ -88,9 +164,10 @@ int waterheater::create()
 	int res = residential_enduse::create();
 
 	// initialize public values
-	tank_volume = 50.0;
+	tank_volume = 0.0;
 	tank_UA = 0.0;
-	tank_diameter	= 1.5;  // All heaters are 1.5-ft wide for now...
+	tank_diameter	= 0;
+	tank_height = 0;
 	Tinlet = 60.0;		// default set here, but published by the model for users to set this value
 	water_demand = 0.0;	// in gpm
 	heating_element_capacity = 0.0;
@@ -136,6 +213,7 @@ int waterheater::create()
 	gas_fan_power = -1.0;
 	gas_standby_power = -1.0;
 
+	dr_signal = 1;
 	return res;
 
 }
@@ -145,6 +223,9 @@ int waterheater::create()
 int waterheater::init(OBJECT *parent)
 {
 	OBJECT *hdr = OBJECTHDR(this);
+
+	nominal_voltage = 240.0; //@TODO:  Determine if this should be published or how we want to obtain this from the equipment/network
+	actual_voltage = nominal_voltage;
 	
 	if(parent != NULL){
 		if((parent->flags & OF_INIT) != OF_INIT){
@@ -158,10 +239,17 @@ int waterheater::init(OBJECT *parent)
 
 	static double sTair = 74;
 	static double sTout = 68;
+	static double sRH = 0.05;
+
+	if(current_model == FORTRAN){
+		tank_setpoint = 126.05;
+		thermostat_deadband = 4.05;
+	}
 
 	if(parent){
 		pTair = gl_get_double_by_name(parent, "air_temperature");
 		pTout = gl_get_double_by_name(parent, "outdoor_temperature");
+		pRH = gl_get_double_by_name(parent,"outdoor_rh");
 	}
 
 	if(pTair == 0){
@@ -172,92 +260,176 @@ int waterheater::init(OBJECT *parent)
 		pTout = &sTout;
 		gl_warning("waterheater parent lacks \'outside_temperature\' property, using default");
 	}
+	if(pRH == 0){
+		pRH = &sTout;
+		gl_warning("waterheater parent lacks \'outside_temperature\' property, using default");
+	}
 
 	/* sanity checks */
 	/* initialize water tank volume */
 	if(tank_volume <= 0.0){
-//		tank_volume = 5*floor((1.0/5.0)*gl_random_uniform(0.90, 1.10) * 50.0 * (pHouse->get_floor_area() /2000.0));  // [gal]
-		if (tank_volume > 100.0)
-			tank_volume = 100.0;		
-		else if (tank_volume < 20.0) 
-			tank_volume = 20.0;
+		if (tank_diameter <= 0) {
+			if (tank_height <= 0) {
+				// None of the parameters were set, so defaulting to a standard size
+				gl_warning( "waterheater::init() : tank volume, diameter, and height were not specified, defaulting to 50 gallons and 3.78 ft");
+
+				tank_volume   = 50;				
+				tank_height   = 3.782; // was the old default for a 1.5 ft diameter
+				tank_diameter = 2 * sqrt( tank_volume * (1/GALPCF) / (pi * tank_height) );
+				area 		  = (pi * pow(tank_diameter,2))/4;
+			} else {
+				// Only height was set, so defaulting to a standard gallon size
+				gl_warning( "waterheater::init() : tank volume and diameter were not specified, defaulting to 50 gallons");
+
+				tank_volume   = 50;
+				tank_diameter = 2 * sqrt( tank_volume * (1/GALPCF) / (pi * tank_height) );
+				area 		  = (pi * pow(tank_diameter,2))/4;
+			}
+		} else {
+			if (tank_height <= 0) {
+				// Only tank diameter was set, so defaulting to a standard size
+				gl_warning( "waterheater::init() : tank volume and height were not specified, defaulting to 50 gallons");
+
+				tank_volume   = 50;				
+				area 		  = (pi * pow(tank_diameter,2))/4;
+				tank_height   = tank_volume/GALPCF / area;
+			} else {
+				// Tank volume was not set, so calculating size
+				gl_verbose( "waterheater::init() : tank volume was not specified, calculating from height and diameter");
+				
+				area 		  = (pi * pow(tank_diameter,2))/4;
+				tank_volume   = area * tank_height * GALPCF;
+			}
+		}		
 	} else {
 		if (tank_volume > 100.0 || tank_volume < 20.0){
 			gl_error("watertank volume of %f outside the volume bounds of 20 to 100 gallons.", tank_volume);
 			/*	TROUBLESHOOT
-				All waterheaters must be set between 40 and 100 gallons.  Most waterheaters are assumed to be 50 gallon tanks.
+				All waterheaters must be set between 20 and 100 gallons.  Most waterheaters are assumed to be 50 gallon tanks.
 			*/
+		}
+
+		if (tank_height <= 0) {
+			if (tank_diameter <= 0) {
+				// Only tank volume was set, set defaulting to a standard size
+				gl_warning( "waterheater::init() : height and diameter were not specified, defaulting to 3.78 ft");
+		
+				tank_height   = 3.782; // was the old default for a 1.5 ft diameter
+				tank_diameter = 2 * sqrt( tank_volume * (1/GALPCF) / (pi * tank_height) );
+				area 		  = (pi * pow(tank_diameter,2))/4;
+			} else {
+				// Tank height was not set, so calculating size
+				gl_verbose( "waterheater::init() : tank height was not specified, calculating from volume and diameter");
+				
+				area 		  = (pi * pow(tank_diameter,2))/4;
+				tank_height	  = tank_volume/GALPCF / area;
+			}
+		} else {
+			if (tank_diameter <= 0) {
+				// Tank volume and height were set, so calculating diameter
+				gl_verbose( "waterheater::init() : diameter was not specified, calculating from volume and height");
+		
+				tank_diameter = 2 * sqrt( tank_volume * (1/GALPCF) / (pi * tank_height) );
+				area 		  = (pi * pow(tank_diameter,2))/4;
+			} else {
+				// All parameters were set, so lets make sure they make sense
+				double temp_tank_diameter;
+				temp_tank_diameter = 2 * sqrt( tank_volume * (1/GALPCF) / (pi * tank_height) );
+
+				if ( abs(temp_tank_diameter - tank_diameter) > 0.05 ) {
+					gl_error( "waterheater::init() : tank volume, diameter, and height were all set, but did not agree with each other.  Please unspecify one variable to be calculated.");
+					/*  TROUBLESHOOT
+						The three variables, tank_volume, tank_diameter, and height are geometrically dependent.  The values given are
+						not properly dependent ( volume = pi * (diameter/2)^2 * height ) to a relative precision of 0.05 feet in the
+						calculation of the tank_diameter.  Please check calculations or un-specify one of the variables.
+					*/
+				}
+				else {
+					area 		  = (pi * pow(tank_diameter,2))/4;
+				}
+			}
 		}
 	}
 
+	Cw = tank_volume/GALPCF * RHOWATER * Cp;  // [Btu/F]
+
+	if (height <= 0) {
+		gl_verbose("waterheater::init() : setting initial height to tank height.");
+		height = tank_height;
+	} else if (height > tank_height) {
+		gl_warning("waterheater::init() : height of water column was set to value greater than tank height. setting initial height to tank height.");
+		height = tank_height;
+	}
 	if (tank_setpoint<90 || tank_setpoint>160)
 		gl_error("watertank thermostat is set to %f and is outside the bounds of 90 to 160 degrees Fahrenheit (32.2 - 71.1 Celsius).", tank_setpoint);
 		/*	TROUBLESHOOT
 			All waterheaters must be set between 90 degF and 160 degF.
+		*/
 
 	/* initialize water tank deadband */
 	if (thermostat_deadband>10 || thermostat_deadband < 0.0)
 		GL_THROW("watertank deadband of %f is outside accepted bounds of 0 to 10 degrees (5.6 degC).", thermostat_deadband);
+	if(current_model != FORTRAN){
+		// initial tank UA
+		if (tank_UA <= 0.0)
+			GL_THROW("Tank UA value is negative.");
 
-	// initial tank UA
-	if (tank_UA <= 0.0)
-		GL_THROW("Tank UA value is negative.");
-		
 
-	// Set heating element capacity if not provided by the user
-	if (heating_element_capacity <= 0.0)
-	{
-		if (tank_volume >= 50)
-			heating_element_capacity = 4.500;
-		else 
+		// Set heating element capacity if not provided by the user
+		if (heating_element_capacity <= 0.0)
 		{
-			// Smaller tanks can be either 3200, 3500, or 4500...
-			double randVal = gl_random_uniform(RNGSTATE,0,1);
-			if (randVal < 0.33)
-				heating_element_capacity = 3.200;
-			else if (randVal < 0.67)
-				heating_element_capacity = 3.500;
-			else
+			if (heat_mode == HEAT_PUMP) {
+				heating_element_capacity = 1; //Will be re-calculated later
+			} else if (tank_volume >= 50)
 				heating_element_capacity = 4.500;
+			else {
+				// Smaller tanks can be either 3200, 3500, or 4500...
+				double randVal = gl_random_uniform(RNGSTATE,0,1);
+				if (randVal < 0.33)
+					heating_element_capacity = 3.200;
+				else if (randVal < 0.67)
+					heating_element_capacity = 3.500;
+				else
+					heating_element_capacity = 4.500;
+			}
+		}
+
+		// set gas electric loads, if not provided by the user
+		if(0 > gas_fan_power){
+			gas_fan_power = heating_element_capacity * 0.01;
+		}
+
+		if(0 > gas_standby_power){
+			gas_standby_power = 0.0; // some units consume 3-5W
 		}
 	}
-
-	// set gas electric loads, if not provided by the user
-	if(0 > gas_fan_power){
-		gas_fan_power = heating_element_capacity * 0.01;
-	}
-
-	if(0 > gas_standby_power){
-		gas_standby_power = 0.0; // some units consume 3-5W
-	}
-
 	// Other initial conditions
 
 	if(Tw < Tinlet){ // uninit'ed temperature
 		Tw = gl_random_uniform(RNGSTATE,tank_setpoint - thermostat_deadband, tank_setpoint + thermostat_deadband);
 	}
-	current_model = NONE;
-	load_state = STABLE;
 
-	// initial demand
-	Tset_curtail	= tank_setpoint - thermostat_deadband/2 - 10;  // Allow T to drop only 10 degrees below lower cut-in T...
+	if(current_model != FORTRAN){
+		current_model = NONE;
+		load_state = STABLE;
 
-	// Setup derived characteristics...
-	area 		= (pi * pow(tank_diameter,2))/4;
-	height 		= tank_volume/GALPCF / area;
-	Cw 			= tank_volume/GALPCF * RHOWATER * Cp;  // [Btu/F]
+		// initial demand
+		Tset_curtail	= tank_setpoint - thermostat_deadband/2 - 10;  // Allow T to drop only 10 degrees below lower cut-in T...
 
-	h = height;
 
-	// initial water temperature
-	if(h == 0){
-		// discharged
-		Tlower = Tinlet;
-		Tupper = Tinlet + TSTAT_PRECISION;
-	} else {
-		Tlower = Tinlet;
+
+		h = height;
+
+		// initial water temperature
+		if(h == 0){
+			// discharged
+			Tlower = Tinlet;
+			Tupper = Tinlet + TSTAT_PRECISION;
+		} else {
+			Tlower = Tinlet;
+		}
 	}
-
+	Tcontrol = Tw;
 	/* schedule checks */
 	switch(shape.type){
 		case MT_UNKNOWN:
@@ -320,6 +492,120 @@ int waterheater::init(OBJECT *parent)
 			GL_THROW("waterheater load shape has an unknown state!");
 			break;
 	}
+
+	if(current_model == FORTRAN){
+		if(simulation_time <= 0){
+			GL_THROW("The simulation time for the fortran water heater model must be greater than 0.");
+		}
+		fwh_sim_time = gl_globalclock;
+		ncomp = 0;
+		nheat[0] = nheat[1] = 0;
+		heat_up = 0; /* false */
+		fwh_energy = 0.0;
+
+		if(tank_volume == 40){
+			thermal_conductivity = 1.80;
+			convective_coefficient = 0.0024;
+			water_density = 1000.0;
+			water_heat_capacity = 4181.3;
+			h = 1.1;
+			tank_diameter = 0.3568;
+			sensor_position[0] = 0.92;
+			sensor_position[1] = 0.4;
+			heater_element_power[0] = 4200.0;
+			heater_element_power[1] = 2000.0;
+			heater_size[0] = heater_size[1] = 0.01;
+			heater_element_position[0] = heater_element_position[1] = 0.2;
+			tank_heat_loss_rate = 3.5;
+			temp_set[0] = temp_set[1] = 51.37;
+			thermostat_deadband = 0.75;
+			inlet_water_flow_threshold = 0.0;
+			compressor_power_capacity = 750.0;
+			compressor_activation_temp_offset = 9.0;
+			lowest_ambient_temperature_limit = 45.0;
+			highest_ambient_temperature_limit = 109.0;
+			lowest_water_temperature_limit = 58.0;
+			activation_temperature_offset = 5.0;
+			ambient_air_dry_bulb_temp = 67.5; //not used
+			ambient_air_wet_bulb_temp = 57.0; //not used
+			upper_element_activation_temp_offset = 18.0;
+			upper_fraction = 0.83;
+			lower_fraction = 0.20;
+			coarse_tank_grid = 12;
+			fine_tank_grid = 12;
+		} else if(tank_volume == 80){
+			if(operating_mode == 3){//electric resistance wh
+				thermal_conductivity = 0.58;
+				convective_coefficient = 0.0024;
+				water_density = 1000;
+				water_heat_capacity = 4181.3;
+				h = 1.524;
+				tank_diameter = 0.508;
+				sensor_position[0] = 0.92;
+				sensor_position[1] = 0.4;
+				heater_element_power[0] = 3900.0;
+				heater_element_power[1] = 3900.0;
+				heater_size[0] = 0.01;
+				heater_size[1] = 0.01;
+				heater_element_position[0] = 1.143;
+				heater_element_position[1] = 0.254;
+				tank_heat_loss_rate = 3.35;
+				temp_set[0] = temp_set[1] = 51.67;
+				thermostat_deadband = 0.75;
+				inlet_water_flow_threshold = 0.0;
+				compressor_power_capacity = 750.0;
+				compressor_activation_temp_offset = 9.0;
+				lowest_ambient_temperature_limit = 45.0;
+				highest_ambient_temperature_limit = 109.0;
+				lowest_water_temperature_limit = 58.0;
+				activation_temperature_offset = 5.0;
+				ambient_air_dry_bulb_temp = 67.5; //not used
+				ambient_air_wet_bulb_temp = 57.0; //not used
+				upper_element_activation_temp_offset = 18.0;
+				upper_fraction = 0.83;
+				lower_fraction = 0.20;
+				coarse_tank_grid = 12;
+				fine_tank_grid = 12;
+			} else { //heat pump wh
+				thermal_conductivity = 0.58;
+				convective_coefficient = 0.0024;
+				water_density = 1000;
+				water_heat_capacity = 4181.3;
+				h = 1.4732;
+				tank_diameter = 0.5;
+				sensor_position[0] = 1.2277;
+				sensor_position[1] = 0.4911;
+				heater_element_power[0] = 4200.0;
+				heater_element_power[1] = 2000.0;
+				heater_size[0] = 0.0106;
+				heater_size[1] = 0.01;
+				heater_element_position[0] = heater_element_position[1] = 0.2;
+				tank_heat_loss_rate = 3.9;
+				temp_set[0] = temp_set[1] = 51.67;
+				thermostat_deadband = 2.25;
+				inlet_water_flow_threshold = 0.0;
+				compressor_power_capacity = 750.0;
+				compressor_activation_temp_offset = 9.0;
+				lowest_ambient_temperature_limit = 45.0;
+				highest_ambient_temperature_limit = 109.0;
+				lowest_water_temperature_limit = 58.0;
+				activation_temperature_offset = 5.0;
+				ambient_air_dry_bulb_temp = 67.5; //not used
+				ambient_air_wet_bulb_temp = 57.0; //not used
+				upper_element_activation_temp_offset = 18.0;
+				upper_fraction = 0.83;
+				lower_fraction = 0.20;
+				coarse_tank_grid = 12;
+				fine_tank_grid = 12;
+			}
+			for( int i = 0; i < coarse_tank_grid*fine_tank_grid; i++){
+				init_tank_temp[i] = (Tw - 32.0) * (5.0 / 9.0);
+				tank_water_temp[i] = init_tank_temp[i];
+			}
+		} else {
+			GL_THROW("Invalide tank volume for the fortran water heater_model. Valid volumes are 40 or 80 gallons.");
+		}
+	}
 	return residential_enduse::init(parent);
 }
 
@@ -333,7 +619,8 @@ void waterheater::thermostat(TIMESTAMP t0, TIMESTAMP t1){
 	Ton  = tank_setpoint - thermostat_deadband/2;
 	Toff = tank_setpoint + thermostat_deadband/2;
 
-	switch(tank_state()){
+	enumeration tank_status = tank_state();
+	switch(tank_status){
 		case FULL:
 			if(Tw-TSTAT_PRECISION < Ton){
 				heat_needed = TRUE;
@@ -344,6 +631,18 @@ void waterheater::thermostat(TIMESTAMP t0, TIMESTAMP t1){
 			}
 			break;
 		case PARTIAL:
+			if (heat_mode == HEAT_PUMP) {
+				if(Tcontrol-TSTAT_PRECISION < Ton){
+					heat_needed = TRUE;
+				} else if (Tcontrol+TSTAT_PRECISION > Toff){
+					heat_needed = FALSE;
+				} else {
+					; // no change
+				}
+			} else {
+				heat_needed = TRUE; // if we aren't full, fill 'er up!
+			}
+			break;
 		case EMPTY:
 			heat_needed = TRUE; // if we aren't full, fill 'er up!
 			break;
@@ -362,8 +661,18 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 	double nHours = (gl_tohours(t1) - gl_tohours(t0))/TS_SECOND;
 	OBJECT *my = OBJECTHDR(this);
 
-	// update temperature and height
-	update_T_and_or_h(nHours);
+	DATETIME t_next;
+	gl_localtime(t1,&t_next);
+	
+	if (t_next.day > 7 ) {
+		if (t_next.hour >= 8) {
+				double temp = 2;
+		}
+	}
+	if(current_model != FORTRAN){
+		// update temperature and height
+		update_T_and_or_h(nHours);
+	}
 
 	if(Tw > 212.0){
 		//GL_THROW("the waterheater is boiling!");
@@ -450,13 +759,15 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	double internal_gain = 0.0;
 	double nHours = (gl_tohours(t1) - gl_tohours(t0))/TS_SECOND;
 	double Tamb = get_Tambient(location);
-
+	int i = 0;
 	// use re_override to control heat_needed state
 	// runs after thermostat() but before "the usual" calculations
-	if(re_override == OV_ON){
-		heat_needed = TRUE;
-	} else if(re_override == OV_OFF){
-		heat_needed = FALSE;
+	if(current_model != FORTRAN){
+		if(re_override == OV_ON){
+			heat_needed = TRUE;
+		} else if(re_override == OV_OFF){
+			heat_needed = FALSE;
+		}
 	}
 
 	if(Tw > 212.0 - thermostat_deadband){ // if it's trying boil, turn it off!
@@ -470,35 +781,120 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	// Now find our current temperatures and boundary height...
 	// And compute the time to the next transition...
 	//Adjusted because shapers go on sync, not presync
-
-	set_time_to_transition();
-
+	if(current_model != FORTRAN){
+		set_time_to_transition();
+	}
 	// determine internal gains
 	if (location == INSIDE){
 		if(this->current_model == ONENODE){
 			internal_gain = tank_UA * (Tw - get_Tambient(location));
+			//Subtract Heat drawn in from Heat pump
+			if(heat_mode == HEAT_PUMP){
+				internal_gain -= (actual_kW() * (HP_COP - 1) * BTUPHPKW);
+			}
 		} else if(this->current_model == TWONODE){
 			internal_gain = tank_UA * (Tw - Tamb) * h / height;
 			internal_gain += tank_UA * (Tlower - Tamb) * (1 - h / height);
+			//Subtract heat drawn in from heat pump
+			if(heat_mode == HEAT_PUMP){
+				internal_gain -= (actual_kW() * (HP_COP - 1) * BTUPHPKW);
+			}
+		} else {
+			internal_gain = 0;
 		}
 	} else {
 		internal_gain = 0;
 	}
 
-	// determine the power used
-	if (heat_needed == TRUE){
-		/* power_kw */ load.total = (heat_mode == GASHEAT ? gas_fan_power : heating_element_capacity);
-		is_waterheater_on = 1;
-	} else {
-		/* power_kw */ load.total = (heat_mode == GASHEAT ? gas_standby_power : 0.0);
-		is_waterheater_on = 0;
+	if(current_model == FORTRAN){
+		if(t1 == fwh_sim_time){//update power, cop, water temperature, and heat gain from the fortran water heater model and tell the model to simulate again.
+			fwh_cop_current = fwh_cop;
+			fwh_power_now = fwh_power/1000;
+			if(operating_mode == 3){
+				Tw = (tank_water_temp[143] * (9.0 / 5.0)) + 32.0;
+			} else {
+				Tw = (tank_water_temp[119] * (9.0 / 5.0)) + 32.0;
+			}
+			ambient_temp = (Tamb - 32.0) * (5.0 / 9.0);
+			ambient_rh = *pRH/100;
+			int dr_sig = (int)dr_signal;
+			int op_mode = (int)operating_mode;
+			double sim_time = simulation_time/3600.0;
+			double t_in = (Tinlet - 32.0) * (5.0 / 9.0);
+			for(i = 0; i < coarse_tank_grid*fine_tank_grid; i++){
+				init_tank_temp[i] = tank_water_temp[i];
+			}
+			if(location == INSIDE){
+				for(i = 0; i < coarse_tank_grid * fine_tank_grid; i++){
+					internal_gain += (tank_heat_loss_rate * (((init_tank_temp[i] * (9.0 / 5.0)) + 32.0) - Tamb)) / (coarse_tank_grid*fine_tank_grid);
+				}
+				load.heatgain = internal_gain;
+			}
+           /* RUN_WH_FC(
+                    &op_mode,
+                    &sim_time,
+                    &coarse_tank_grid,
+					&fine_tank_grid,
+                    &h,
+                    &tank_diameter,
+                    &dr_sig,
+					sensor_position,
+                    heater_element_power,
+                    heater_size,
+					&tank_heat_loss_rate,
+                    &water_density,
+                    &thermal_conductivity,
+					&convective_coefficient,
+                    &water_heat_capacity,
+                    &ambient_temp,
+                    &ambient_rh,
+					&t_in,
+                    temp_set,
+                    &thermostat_deadband,
+                    &compressor_power_capacity,
+					&compressor_activation_temp_offset,
+                    &lowest_ambient_temperature_limit,
+					&highest_ambient_temperature_limit,
+                    &lowest_water_temperature_limit,
+					&activation_temperature_offset,
+                    &ambient_air_dry_bulb_temp,
+                    &ambient_air_wet_bulb_temp,
+					&upper_element_activation_temp_offset,
+                    &inlet_water_flow_threshold,
+                    &water_demand,
+					init_tank_temp,
+                    &lower_fraction,
+                    &upper_fraction,
+                    &ncomp,
+					nheat,
+                    &heat_up,
+                    tank_water_temp,
+                    &fwh_power,
+					&fwh_cop,
+					&fwh_energy);*/
+            load.total = complex(fwh_energy/(1000*simulation_time), 0);
+            fwh_energy = 0;
+			fwh_sim_time = t1+ (TIMESTAMP)simulation_time;
+		}
+	}
+	if(current_model != FORTRAN){
+		// determine the power used
+		if (heat_needed == TRUE){
+			/* power_kw */ load.total = (heat_mode == GASHEAT ? gas_fan_power : heating_element_capacity);
+			is_waterheater_on = 1;
+		} else {
+			/* power_kw */ load.total = (heat_mode == GASHEAT ? gas_standby_power : 0.0);
+			is_waterheater_on = 0;
+		}
 	}
 
 	//load.total = load.power = /* power_kw */ load.power;
 	load.power = load.total * load.power_fraction;
 	load.admittance = load.total * load.impedance_fraction;
 	load.current = load.total * load.current_fraction;
-	load.heatgain = internal_gain;
+	if(current_model != FORTRAN){
+		load.heatgain = internal_gain;
+	}
 
 	waterheater_actual_power = load.power + (load.current + load.admittance * load.voltage_factor )* load.voltage_factor;
 	actual_load = waterheater_actual_power.Re();
@@ -512,18 +908,25 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 		power_state = PS_OFF;
 
 //	gl_enduse_sync(&(residential_enduse::load),t1);
-
-	if(re_override == OV_NORMAL){
-		if (time_to_transition >= (1.0/3600.0))	// 0.0167 represents one second
-		{
-			TIMESTAMP t_to_trans = (TIMESTAMP)(t1+time_to_transition*3600.0/TS_SECOND);
-			return -(t_to_trans); // negative means soft transition
+	if(current_model != FORTRAN){
+		if(re_override == OV_NORMAL){
+			if (time_to_transition >= (1.0/3600.0))	// 0.0167 represents one second
+			{
+				TIMESTAMP t_to_trans = (TIMESTAMP)(t1+time_to_transition*3600.0/TS_SECOND);
+				return -(t_to_trans); // negative means soft transition
+			}
+			// less than one second means never
+			else
+				return TS_NEVER;
+		} else {
+			return TS_NEVER; // keep running until the forced state ends
 		}
-		// less than one second means never
-		else
-			return TS_NEVER; 
 	} else {
-		return TS_NEVER; // keep running until the forced state ends
+		if(fwh_sim_time < t2){
+			return fwh_sim_time;
+		} else {
+			return t2;
+		}
 	}
 }
 
@@ -599,6 +1002,15 @@ enumeration waterheater::set_current_model_and_load_state(void)
 	load_state = STABLE;		// by default
 
 	enumeration tank_status = tank_state();
+	current_tank_state = tank_status;
+
+	if (tank_status == FULL) {
+		Tcontrol = Tw;
+	} else if (tank_status == PARTIAL) { 
+		Tcontrol = (h*Tw + (height-h)*Tinlet) / height;
+	} else {
+		Tcontrol = Tw;
+	}
 
 	switch(tank_status) 
 	{
@@ -643,13 +1055,53 @@ enumeration waterheater::set_current_model_and_load_state(void)
 				// overriding the plc code ignoring thermostat logic
 				// heating will always be on while in two zone model
 				bool cur_heat_needed = heat_needed;
-				heat_needed = TRUE;
+				if (heat_mode == HEAT_PUMP) {
+					if(Tcontrol-TSTAT_PRECISION < Ton){
+						heat_needed = TRUE;
+					} else if (Tcontrol+TSTAT_PRECISION > Toff){
+						heat_needed = FALSE;
+					} else {
+						; // no change
+					}
+				} else {
+					// overriding the plc code ignoring thermostat logic
+					// heating will always be on while in two zone model					
+					heat_needed = TRUE;					
+				}
+
 				double dhdt_full_temp = dhdt(height);
-				if (re_override == OV_OFF)
+				
+				if (dhdt_full_temp < 0)
+				{
+					if (heat_mode == HEAT_PUMP) {
+						if (heat_needed == TRUE) {
+							current_model = TWONODE;
+							load_state = DEPLETING;
+						} else {
+							current_model = ONENODE;
+							load_state = DEPLETING;
+						}
+					} else {
+						current_model = TWONODE;
+						load_state = DEPLETING;
+					}
+				}
+				else
 				{
 					current_model = ONENODE;
+					
+					heat_needed = cur_heat_needed;
+					load_state = heat_needed ? RECOVERING : DEPLETING;
+				}
+
+				if (re_override == OV_OFF)
+				{
 					load_state = DEPLETING;
 					heat_needed = FALSE;
+					if (water_demand > 0 || h < (tank_height-HEIGHT_PRECISION))
+						current_model = TWONODE;
+					else
+						current_model = ONENODE;
 				}
 				else if (dhdt_full_temp < 0)
 				{
@@ -668,28 +1120,79 @@ enumeration waterheater::set_current_model_and_load_state(void)
 			{
 				current_model = ONENODE;
 				load_state = RECOVERING;
+
+				if (re_override == OV_OFF)
+				{
+					heat_needed = FALSE;
+					load_state = DEPLETING;
+				}
 			}
-			else
+			else {
 				load_state = STABLE;
+
+				if (re_override == OV_OFF)
+					heat_needed = FALSE;
+			}
 			break;
 
 		case PARTIAL:
-			// We're definitely in 2-zone mode.  We have to watch for the
-			// case where h's movement stalls out...
-			current_model = TWONODE;
-			// overriding the plc code ignoring thermostat logic
-			// heating will always be on while in two zone model
-			heat_needed = TRUE;
+			if (heat_mode == HEAT_PUMP) {
+				if(Tcontrol-TSTAT_PRECISION < Ton || heat_needed == TRUE){
+					heat_needed = TRUE;
+					current_model = TWONODE;
+				} else if (Tcontrol+TSTAT_PRECISION > Toff){
+					heat_needed = FALSE;
+					current_model = ONENODE;
+				} else {
+				; // no change
+				}
 
-			if (dhdt_now < 0 && (dhdt_now * dhdt_empty) >= 0)
-				load_state = DEPLETING;
-			else if (dhdt_now > 0 && (dhdt_now * dhdt_full) >= 0) 
-				load_state = RECOVERING;
-			else 
-			{
-				// dhdt_now is 0, so nothing's happening...
-				current_model = NONE;
-				load_state = STABLE;
+				if (dhdt_now < 0 && (dhdt_now * dhdt_empty) >= 0)
+					load_state = DEPLETING;
+				else if (dhdt_now > 0 && (dhdt_now * dhdt_full) >= 0) 
+					load_state = RECOVERING;
+				else 
+				{
+					// dhdt_now is 0, so nothing's happening...
+					current_model = ONENODE;
+					load_state = STABLE;
+				}
+
+				if (re_override == OV_OFF)
+				{
+					heat_needed = FALSE;
+					if (water_demand > 0 || h < (tank_height-HEIGHT_PRECISION))
+						current_model = TWONODE;
+					else
+						current_model = ONENODE;
+				}
+			} else {
+				// We're definitely in 2-zone mode.  We have to watch for the
+				// case where h's movement stalls out...
+				current_model = TWONODE;
+				// overriding the plc code ignoring thermostat logic
+				// heating will always be on while in two zone model
+				heat_needed = TRUE;
+
+				if (dhdt_now < 0 && (dhdt_now * dhdt_empty) >= 0)
+					load_state = DEPLETING;
+				else if (dhdt_now > 0 && (dhdt_now * dhdt_full) >= 0) 
+					load_state = RECOVERING;
+				else 
+				{
+					// dhdt_now is 0, so nothing's happening...
+					current_model = NONE;
+					load_state = STABLE;
+				}
+
+				if (re_override == OV_OFF)
+				{
+					heat_needed = FALSE;
+					if (water_demand > 0 || h < (tank_height-HEIGHT_PRECISION))
+						current_model = TWONODE;
+					else
+						current_model = ONENODE;
+				}
 			}
 			break;
 	}
@@ -812,7 +1315,14 @@ double waterheater::dhdt(double h)
     if (c1 <= ROUNDOFF)
         return 0.0; //Possible only when /*Tupper*/ Tw and Tlower are very close, and the difference is negligible
 
-	const double cA = -mdot / (RHOWATER * area) + (actual_kW() * BTUPHPKW + tank_UA * (get_Tambient(location) - Tlower)) / c1;
+	double cA;
+	if (heat_mode == HEAT_PUMP) {
+		// @TODO: These values were created from HPWH project; need to make them more accessible
+		HP_COP = (1.04 + (1.21 - 1.04) * (get_Tambient(location) - 50) / (70 - 50)) * (5.259 - 0.0255 * Tw);
+		cA = -mdot / (RHOWATER * area) + (actual_kW() * BTUPHPKW * HP_COP + tank_UA * (get_Tambient(location) - Tlower)) / c1;
+	} else {
+		cA = -mdot / (RHOWATER * area) + (actual_kW() * BTUPHPKW + tank_UA * (get_Tambient(location) - Tlower)) / c1;
+	}
 	const double cb = (tank_UA / height) * (/*Tupper*/ Tw - Tlower) / c1;
 
 	// Returns the rate of change of 'h'
@@ -822,7 +1332,6 @@ double waterheater::dhdt(double h)
 double waterheater::actual_kW(void)
 {
 	OBJECT *obj = OBJECTHDR(this);
-	const double nominal_voltage = 240.0; //@TODO:  Determine if this should be published or how we want to obtain this from the equipment/network
     static int trip_counter = 0;
 
 	// calculate rated heat capacity adjusted for the current line voltage
@@ -831,11 +1340,11 @@ double waterheater::actual_kW(void)
 		if(heat_mode == GASHEAT){
 			return heating_element_capacity; /* gas heating is voltage independent. */
 		}
-		const double actual_voltage = pCircuit ? pCircuit->pV->Mag() : nominal_voltage;
+		actual_voltage = pCircuit ? pCircuit->pV->Mag() : nominal_voltage;
         if (actual_voltage > 2.0*nominal_voltage)
         {
             if (trip_counter++ > 10)
-				GL_THROW("Water heater line voltage for waterheater:%d is too high, exceeds twice nominal voltage.",obj->id);
+				gl_error("Water heater line voltage for waterheater:%d is too high, exceeds twice nominal voltage.",obj->id);
 			/*	TROUBLESHOOT
 				The waterheater is receiving twice the nominal voltage consistantly, or about 480V on what
 				should be a 240V circuit.  Please sanity check your powerflow model as it feeds to the
@@ -844,7 +1353,16 @@ double waterheater::actual_kW(void)
             else
                 return 0.0;         // @TODO:  This condition should trip the breaker with a counter
         }
-		double test = heating_element_capacity * (actual_voltage*actual_voltage) / (nominal_voltage*nominal_voltage);
+		double test;
+		if (heat_mode == ELECTRIC) {
+			test = heating_element_capacity * (actual_voltage*actual_voltage) / (nominal_voltage*nominal_voltage);
+		} else { 
+			// @TODO: We don't have a voltage dependence for the heat pump yet...but we should
+			//   Using variables from HPWH project...should be pulled out at some point
+			heating_element_capacity = (1.09 + (1.17 - 1.09) * (get_Tambient(location) - 50) / (70 - 50)) * (0.379 + 0.00364 * Tw);
+			test = heating_element_capacity;
+		}
+
 		return test;
     }
 	else
@@ -858,7 +1376,14 @@ inline double waterheater::new_time_1node(double T0, double T1)
     if (Cw <= ROUNDOFF)
         return -1.0;
 
-	const double c1 = ((actual_kW()*BTUPHPKW + tank_UA * get_Tambient(location)) + mdot_Cp*Tinlet) / Cw;
+	double c1;
+	if (heat_mode == HEAT_PUMP) {
+		// @TODO: These values were created from HPWH project; need to make them more accessible
+		HP_COP = (1.04 + (1.21 - 1.04) * (get_Tambient(location) - 50) / (70 - 50)) * (5.259 - 0.0255 * Tw);
+		c1 = ((actual_kW()*BTUPHPKW*HP_COP + tank_UA * get_Tambient(location)) + mdot_Cp*Tinlet) / Cw;
+	} else {
+		c1 = ((actual_kW()*BTUPHPKW + tank_UA * get_Tambient(location)) + mdot_Cp*Tinlet) / Cw;
+	}
 	const double c2 = -(tank_UA + mdot_Cp) / Cw;
 
     if (fabs(c1 + c2*T1) <= ROUNDOFF || fabs(c1 + c2*T0) <= ROUNDOFF || fabs(c2) <= ROUNDOFF)
@@ -878,7 +1403,14 @@ inline double waterheater::new_temp_1node(double T0, double delta_t)
         return T0;
 
 	const double c1 = (tank_UA + mdot_Cp) / Cw;
-	const double c2 = (actual_kW()*BTUPHPKW + mdot_Cp*Tinlet + tank_UA*get_Tambient(location)) / (tank_UA + mdot_Cp);
+	double c2;
+	if (heat_mode == HEAT_PUMP) {
+		// @TODO: These values were created from HPWH project; need to make them more accessible
+		HP_COP = (1.04 + (1.21 - 1.04) * (get_Tambient(location) - 50) / (70 - 50)) * (5.259 - 0.0255 * Tw);
+		c2 = (actual_kW()*BTUPHPKW*HP_COP + mdot_Cp*Tinlet + tank_UA*get_Tambient(location)) / (tank_UA + mdot_Cp);
+	} else {
+		c2 = (actual_kW()*BTUPHPKW + mdot_Cp*Tinlet + tank_UA*get_Tambient(location)) / (tank_UA + mdot_Cp);
+	}
 
 //	return  c2 - (c2 + T0) * exp(c1 * delta_t);	// [F]
 	return  c2 - (c2 - T0) * exp(-c1 * delta_t);	// [F]
@@ -918,7 +1450,14 @@ inline double waterheater::new_h_2zone(double h0, double delta_t)
 //		throw MODEL_NOT_2ZONE;
 		
 //	#define CWATER		(0.9994)		// BTU/lb/F
-	const double cA = -mdot / (RHOWATER * area) + (actual_kW()*BTUPHPKW + tank_UA * (get_Tambient(location) - Tlower)) / c1;
+	double cA;
+	if (heat_mode == HEAT_PUMP) {
+		// @TODO: These values were created from HPWH project; need to make them more accessible
+		HP_COP = (1.04 + (1.21 - 1.04) * (get_Tambient(location) - 50) / (70 - 50)) * (5.259 - 0.0255 * Tw);
+		cA = -mdot / (RHOWATER * area) + (actual_kW()*BTUPHPKW*HP_COP + tank_UA * (get_Tambient(location) - Tlower)) / c1;
+	} else {
+		cA = -mdot / (RHOWATER * area) + (actual_kW()*BTUPHPKW + tank_UA * (get_Tambient(location) - Tlower)) / c1;
+	}
 	// lbm/hr / lb/ft + kW * Btu.h/kW + 
 	const double cb = (tank_UA / height) * (/*Tupper*/ Tw - Tlower) / c1;
 

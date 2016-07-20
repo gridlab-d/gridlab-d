@@ -33,6 +33,7 @@ public:
 		CM_PROBOFF=5,	// probabilistic shut-off
 		CM_ELASTICITY_MODEL=6, //For the elasticity model to work
 		CM_DLC=7,
+		CM_PFC=8,
 	} CONTROLMODE;
 	enumeration control_mode;
 	typedef enum {
@@ -167,13 +168,66 @@ public:
 	TIMESTAMP starttime;
 	TIMESTAMP returnTime;
 
+	int trigger_time_under;
+	int trigger_time_over;
+	int release_time_under;
+	int release_time_over;
+	double release_freq_under;
+	double release_freq_over;
+	int time_in_trigger_under;
+	int time_in_trigger_over;
+	int time_in_release_under;
+	int time_in_release_over;
+	double trigger_freq_under;
+	double trigger_freq_over;
+	double frequency;
+	typedef enum {
+		OVER_FREQUENCY=0,
+		UNDER_FREQUENCY=1,
+		OVER_UNDER_FREQUENCY=2,
+	} PFCMODE;
+	enumeration PFC_mode;	
+	typedef enum {
+		FREE=0,
+		TRIGGERED_OFF=1,
+		TRIGGERED_ON=2,
+		FORCED_OFF=3,	
+		FORCED_ON=4,
+		RELEASED_OFF=5,
+		RELEASED_ON=6,
+	} PFCSTATE;
+	enumeration PFC_state;
+	int state_observed;					///< binary output value
+	void *state_observed_addr;			///< binary output value addr
+	PROPERTY *state_observed_prop;		///< binary output property
+	char32 state_observed_propname;		///< binary output property name
+	char32 power_observed_propname;
+	TIMESTAMP supervisor_next_run;
+	int bid_delay;
+	supervisory_control *market;
+	double voltage_lockout;
+	int voltage_lockout_state;
+	int voltage_lockout_time;
+	int time_in_voltage_lockout;
+	BIDINFO controller_bid;
 private:
+	void fetch_double(double **prop, char *name, OBJECT *parent);
+	void fetch_int(int **prop, char *name, OBJECT *parent);
 	int calc_ramp(TIMESTAMP t0, TIMESTAMP t1);
 	int calc_dutycycle(TIMESTAMP t0, TIMESTAMP t1);
 	int calc_proboff(TIMESTAMP t0, TIMESTAMP t1);
 	int calc_elasticity(TIMESTAMP t0, TIMESTAMP t1);	
 	int calc_dlc(TIMESTAMP t0, TIMESTAMP t1);
+	int calc_pfc(TIMESTAMP t0, TIMESTAMP t1);
 	int orig_setpoint;
+	double *supervisorPeriod;
+	int *supervisorMarketId;
+	double *stateParent;
+	double *powerParent;
+	double *ratedPowerParent;
+	double powerParentConverted;
+	double *voltageParent;
+	double *nomVoltageParent;
 	int64 last_cycle;
 };
 

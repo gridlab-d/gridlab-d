@@ -1,0 +1,14 @@
+# voltage regulator definitions
+Name, Bus1,  Phase, Bus2, Phase, Vreg, PTratio, CTrating, Band, R, X
+FEEDER_REGA, regxfmr_HVMV_Sub_LSB, A,  _HVMV_Sub_LSB, A, 126.5, 60, 0, 2, 0, 0
+FEEDER_REGB, regxfmr_HVMV_Sub_LSB, B,  _HVMV_Sub_LSB, B, 126.5, 60, 0, 2, 0, 0
+FEEDER_REGC, regxfmr_HVMV_Sub_LSB, C,  _HVMV_Sub_LSB, C, 126.5, 60, 0, 2, 0, 0
+VREG2_A, regxfmr_190-8593, A, 190-8593, A, 125, 60, 0, 2, 0, 0   
+VREG2_B, regxfmr_190-8593, B, 190-8593, B, 125, 60, 0, 2, 0, 0   
+VREG2_C, regxfmr_190-8593, C, 190-8593, C, 125, 60, 0, 2, 0, 0   
+VREG3_A, regxfmr_190-8581, A, 190-8581, A, 125, 60, 0, 2, 0, 0   
+VREG3_B, regxfmr_190-8581, B, 190-8581, B, 125, 60, 0, 2, 0, 0   
+VREG3_C, regxfmr_190-8581, C, 190-8581, C, 125, 60, 0, 2, 0, 0   
+VREG4_A, regxfmr_190-7361, A, 190-7361, A, 125, 60, 0, 2, 0, 0   
+VREG4_B, regxfmr_190-7361, B, 190-7361, B, 125, 60, 0, 2, 0, 0   
+VREG4_C, regxfmr_190-7361, C, 190-7361, C, 125, 60, 0, 2, 0, 0   

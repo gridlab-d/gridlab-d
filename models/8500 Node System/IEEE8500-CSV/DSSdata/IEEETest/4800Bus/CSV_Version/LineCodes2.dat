@@ -1,0 +1,931 @@
+# Line impedances defined by matrix values (in ohms)
+#--- Linecodes file generated from OpenDSS Show LINECONSTANTS command
+#--- Frequency = 60 Hz, Earth resistivity = 100 ohm-m
+
+[Linecode]
+name=3PH-Connector 
+nphases=3 
+r1=1  
+r0=1 
+x1=1      
+x0=1      
+c1=0     
+c0=0   
+units=km    
+
+[Linecode]
+name=1PH-Connector 
+nphases=1 
+r1=1  
+r0=1 
+x1=1      
+x0=1      
+c1=0     
+c0=0   
+units=km    
+
+[Linecode]
+name=3P_1/0_AXNJ_DB         
+nphases=3 
+r1=0.551156 
+x1=0.200765 
+r0=1.350357 
+x0=0.426882  
+c1=48.6655390619471  
+c0=48.6655390619471  
+units=km  
+
+[Linecode
+name=1P_1/0_AXNJ_DB         
+nphases=1 
+r1=0.958962 
+x1=0.541276 
+r0=0.958962 
+x0=0.541276  
+c1=25.9234833984413  
+c0=25.9234833984413  
+units=km 
+
+[Linecode]
+name=1ph-x4_acsrx4_acsr 
+nphases=1  
+units=km
+[Rmatrix]
+1.67466  
+[Xmatrix]
+0.93456  
+[Cmatrix]
+6.32285  
+
+[Linecode]
+name=1ph-xx4_acsr4_acsr 
+nphases=1  
+units=km
+[Rmatrix]
+1.67466  
+[Xmatrix]
+0.93456  
+[Cmatrix]
+6.32285  
+
+[Linecode]
+name=1ph-x2_acsrx2_acsr 
+nphases=1  
+units=km
+[Rmatrix]
+1.1223  
+[Xmatrix]
+0.896365  
+[Cmatrix]
+6.49582  
+
+[Linecode]
+name=1ph-x4_acsrx4_wpal 
+nphases=1  
+units=km
+[Rmatrix]
+1.67723  
+[Xmatrix]
+0.932411  
+[Cmatrix]
+6.32285  
+
+[Linecode]
+name=3ph_h-4_acsr4_acsr4_acsr4_acsr 
+nphases=3  
+units=km
+[Rmatrix]
+1.6834  
+0.138324  1.67686  
+0.142669  0.139294  1.68543  
+[Xmatrix]
+0.9273  
+0.432623  0.932728  
+0.412253  0.450469  0.925637  
+[Cmatrix]
+7.60098  
+-1.99751  7.88811  
+-1.66797  -2.32489  7.78037  
+
+[Linecode]
+name=3ph_h-2/0_acsr2/0_acsr2/0_acsr2_acsr 
+nphases=3  
+units=km
+[Rmatrix]
+0.66087  
+0.137499  0.653999  
+0.142066  0.138518  0.663007  
+[Xmatrix]
+0.869947  
+0.388579  0.878528  
+0.366115  0.405953  0.8673  
+[Cmatrix]
+8.3452  
+-2.31601  8.72099  
+-1.91256  -2.71715  8.57671  
+
+[Linecode]
+name=1ph-4_wpalxx2_wpal 
+nphases=1  
+units=km
+[Rmatrix]
+1.63092  
+[Xmatrix]
+0.861221  
+[Cmatrix]
+6.32285  
+
+[Linecode]
+name=3ph_h-4_acsr2_acsr2_acsr4_wpal 
+nphases=3  
+units=km
+[Rmatrix]
+1.68626  
+0.141078  1.12824  
+0.145566  0.14208  1.1371  
+[Xmatrix]
+0.924966  
+0.430359  0.933765  
+0.409898  0.448185  0.926495  
+[Cmatrix]
+7.63018  
+-2.04889  8.18434  
+-1.70374  -2.48649  8.06911  
+
+[Linecode]
+name=1ph-4_acsrxx4_acsr 
+nphases=1  
+units=km
+[Rmatrix]
+1.67466  
+[Xmatrix]
+0.93456  
+[Cmatrix]
+6.32285  
+
+[Linecode]
+name=3ph_h-4_acsr4_acsr4_acsr4_wpal 
+nphases=3  
+units=km
+[Rmatrix]
+1.68626  
+0.141078  1.6795  
+0.145566  0.14208  1.68836  
+[Xmatrix]
+0.924966  
+0.430359  0.930531  
+0.409898  0.448185  0.923261  
+[Cmatrix]
+7.60098  
+-1.99751  7.88811  
+-1.66797  -2.32489  7.78037  
+
+[Linecode]
+name=1ph-2_acsrxx2_acsr 
+nphases=1  
+units=km
+[Rmatrix]
+1.1223  
+[Xmatrix]
+0.896365  
+[Cmatrix]
+6.49582  
+
+[Linecode]
+name=1ph-4_wpalxx4_acsr 
+nphases=1  
+units=km
+[Rmatrix]
+1.63124  
+[Xmatrix]
+0.898979  
+[Cmatrix]
+6.32285  
+
+[Linecode]
+name=3ph_h-397_acsr397_acsr397_acsr2/0_acsr 
+nphases=3  
+units=km
+[Rmatrix]
+0.270019  
+0.109951  0.264634  
+0.113538  0.110747  0.271698  
+[Xmatrix]
+0.695974  
+0.33351  0.708729  
+0.308271  0.350259  0.692021  
+[Cmatrix]
+9.13606  
+-2.66777  9.62226  
+-2.17646  -3.15664  9.43197  
+
+[Linecode]
+name=1ph-2_acsrxx4_acsr 
+nphases=1  
+units=km
+[Rmatrix]
+1.12339  
+[Xmatrix]
+0.937794  
+[Cmatrix]
+6.49582  
+
+[Linecode]
+name=1ph-xx2_acsr2_acsr 
+nphases=1  
+units=km
+[Rmatrix]
+1.1223  
+[Xmatrix]
+0.896365  
+[Cmatrix]
+6.49582  
+
+[Linecode]
+name=1ph-xx4_wpal4_wpal 
+nphases=1  
+units=km
+[Rmatrix]
+1.63382  
+[Xmatrix]
+0.89683  
+[Cmatrix]
+6.32285  
+
+[Linecode]
+name=1ph-x4_wpalx4_wpal 
+nphases=1  
+units=km
+[Rmatrix]
+1.63382  
+[Xmatrix]
+0.89683  
+[Cmatrix]
+6.32285  
+
+[Linecode]
+name=1ph-xx4_wpal4_acsr 
+nphases=1  
+units=km
+[Rmatrix]
+1.63124  
+[Xmatrix]
+0.898979  
+[Cmatrix]
+6.32285  
+
+[Linecode]
+name=1ph-x2_acsrx1/0_tpx 
+nphases=1  
+units=km
+[Rmatrix]
+1.03207  
+[Xmatrix]
+0.801436  
+[Cmatrix]
+6.49582  
+
+[Linecode]
+name=1ph-4_acsrxx4_wpal 
+nphases=1  
+units=km
+[Rmatrix]
+1.67723  
+[Xmatrix]
+0.932411  
+[Cmatrix]
+6.32285  
+
+[Linecode]
+name=1ph-xx4_acsr1/0_tpx 
+nphases=1  
+units=km
+[Rmatrix]
+1.58334  
+[Xmatrix]
+0.798203  
+[Cmatrix]
+6.32285  
+
+[Linecode]
+name=3ph_h-4_wpal4_wpal4_wpal4_acsr 
+nphases=3  
+units=km
+[Rmatrix]
+1.63999  
+0.138324  1.63344  
+0.142669  0.139294  1.64202  
+[Xmatrix]
+0.891719  
+0.432623  0.897146  
+0.412253  0.450469  0.890056  
+[Cmatrix]
+7.60098  
+-1.99751  7.88811  
+-1.66797  -2.32489  7.78037  
+
+[Linecode]
+name=1ph-x4_wpalx4_acsr 
+nphases=1  
+units=km
+[Rmatrix]
+1.63124  
+[Xmatrix]
+0.898979  
+[Cmatrix]
+6.32285  
+
+[Linecode]
+name=1ph-4_wpalxx4_wpal 
+nphases=1  
+units=km
+[Rmatrix]
+1.63382  
+[Xmatrix]
+0.89683  
+[Cmatrix]
+6.32285  
+
+[Linecode]
+name=3ph_h-4_wpal4_wpal4_wpal4_wpal 
+nphases=3  
+units=km
+[Rmatrix]
+1.64285  
+0.141078  1.63609  
+0.145566  0.14208  1.64495  
+[Xmatrix]
+0.889385  
+0.430359  0.89495  
+0.409898  0.448185  0.88768  
+[Cmatrix]
+7.60098  
+-1.99751  7.88811  
+-1.66797  -2.32489  7.78037  
+
+[Linecode]
+name=3ph_h-2_acsr2_acsr2_acsr2_acsr 
+nphases=3  
+units=km
+[Rmatrix]
+1.13148  
+0.137499  1.12461  
+0.142066  0.138518  1.13362  
+[Xmatrix]
+0.884886  
+0.388579  0.893467  
+0.366115  0.405953  0.882239  
+[Cmatrix]
+7.8835  
+-2.11691  8.2026  
+-1.7603  -2.4713  8.08174  
+
+[Linecode]
+name=1ph-4_acsrxx1/0_tpx 
+nphases=1  
+units=km
+[Rmatrix]
+1.58334  
+[Xmatrix]
+0.798203  
+[Cmatrix]
+6.32285  
+
+[Linecode]
+name=3ph_h-4_acsr2_acsr2_acsr4_acsr 
+nphases=3  
+units=km
+[Rmatrix]
+1.6834  
+0.138324  1.12559  
+0.142669  0.139294  1.13417  
+[Xmatrix]
+0.9273  
+0.432623  0.935962  
+0.412253  0.450469  0.928871  
+[Cmatrix]
+7.63018  
+-2.04889  8.18434  
+-1.70374  -2.48649  8.06911  
+
+[Linecode]
+name=1ph-xx4_acsr4_wpal 
+nphases=1  
+units=km
+[Rmatrix]
+1.67723  
+[Xmatrix]
+0.932411  
+[Cmatrix]
+6.32285  
+
+[Linecode]
+name=1ph-4_acsrxx2_acsr 
+nphases=1  
+units=km
+[Rmatrix]
+1.67357  
+[Xmatrix]
+0.893131  
+[Cmatrix]
+6.32285  
+
+[Linecode]
+name=1ph-x4_wpalx1/0_tpx 
+nphases=1  
+units=km
+[Rmatrix]
+1.53992  
+[Xmatrix]
+0.762621  
+[Cmatrix]
+6.32285  
+
+[Linecode]
+name=1ph-xx4_acsr1/0_acsr 
+nphases=1  
+units=km
+[Rmatrix]
+1.65698  
+[Xmatrix]
+0.855269  
+[Cmatrix]
+6.32285  
+
+[Linecode]
+name=1ph-2_acsrxx4_wpal 
+nphases=1  
+units=km
+[Rmatrix]
+1.12597  
+[Xmatrix]
+0.935645  
+[Cmatrix]
+6.49582  
+
+[Linecode]
+name=1ph-xx2/0_acsr1/0_tpx 
+nphases=1  
+units=km
+[Rmatrix]
+0.561461  
+[Xmatrix]
+0.786498  
+[Cmatrix]
+6.76998  
+
+[Linecode]
+name=2ph_h-2_acsrx2_acsr2_acsr 
+nphases=2  
+units=km
+[Rmatrix]
+1.13148  
+0.142066  1.13362  
+[Xmatrix]
+0.884886  
+0.366115  0.882239  
+[Cmatrix]
+7.33718  
+-2.39809  7.33718  
+
+[Linecode]
+name=1ph-2_wpalxx2_wpal 
+nphases=1  
+units=km
+[Rmatrix]
+1.16232  
+[Xmatrix]
+0.900036  
+[Cmatrix]
+6.49582  
+
+[Linecode]
+name=1ph-2_acsrxx4/0_tpx 
+nphases=1  
+units=km
+[Rmatrix]
+1.07236  
+[Xmatrix]
+0.807978  
+[Cmatrix]
+6.49582  
+
+[Linecode]
+name=3ph_h-397_acsr397_acsr397_acsr4_wpal 
+nphases=3  
+units=km
+[Rmatrix]
+0.301838  
+0.141078  0.295078  
+0.145566  0.14208  0.303936  
+[Xmatrix]
+0.796484  
+0.430359  0.802049  
+0.409898  0.448185  0.794778  
+[Cmatrix]
+9.13606  
+-2.66777  9.62226  
+-2.17646  -3.15664  9.43197  
+
+[Linecode]
+name=3ph_h-397_acsr397_acsr397_acsr397_acsr 
+nphases=3  
+units=km
+[Rmatrix]
+0.214162  
+0.0557957  0.212131  
+0.0571636  0.0560892  0.214801  
+[Xmatrix]
+0.634957  
+0.27487  0.652375  
+0.246528  0.29092  0.629544  
+[Cmatrix]
+9.13606  
+-2.66777  9.62226  
+-2.17646  -3.15664  9.43197  
+
+[Linecode]
+name=1ph-xx2_acsr1/0_tpx 
+nphases=1  
+units=km
+[Rmatrix]
+1.03207  
+[Xmatrix]
+0.801436  
+[Cmatrix]
+6.49582  
+
+[Linecode]
+name=1ph-x4_acsrx2_wpal 
+nphases=1  
+units=km
+[Rmatrix]
+1.67434  
+[Xmatrix]
+0.896802  
+[Cmatrix]
+6.32285  
+
+[Linecode]
+name=1ph-x4_acsrx4_dpx 
+nphases=1  
+units=km
+[Rmatrix]
+1.6773  
+[Xmatrix]
+0.932059  
+[Cmatrix]
+6.32285  
+
+[Linecode]
+name=3ph_h-2_acsr2_acsr4_acsr4_acsr 
+nphases=3  
+units=km
+[Rmatrix]
+1.13214  
+0.138324  1.12559  
+0.142669  0.139294  1.68543  
+[Xmatrix]
+0.930534  
+0.432623  0.935962  
+0.412253  0.450469  0.925637  
+[Cmatrix]
+7.87088  
+-2.13463  8.17773  
+-1.70236  -2.38996  7.81573  
+
+[Linecode]
+name=1ph-4_wpalxx1/0_tpx 
+nphases=1  
+units=km
+[Rmatrix]
+1.53992  
+[Xmatrix]
+0.762621  
+[Cmatrix]
+6.32285  
+
+[Linecode]
+name=1ph-x4_acsrx1/0_tpx 
+nphases=1  
+units=km
+[Rmatrix]
+1.58334  
+[Xmatrix]
+0.798203  
+[Cmatrix]
+6.32285  
+
+[Linecode]
+name=1ph-4_acsrxx1/0_3w_cs 
+nphases=1  
+units=km
+[Rmatrix]
+1.66186  
+[Xmatrix]
+0.844051  
+[Cmatrix]
+6.32285  
+
+[Linecode]
+name=1ph-x2_acsrx4_acsr 
+nphases=1  
+units=km
+[Rmatrix]
+1.12339  
+[Xmatrix]
+0.937794  
+[Cmatrix]
+6.49582  
+
+[Linecode]
+name=1ph-x2_acsrx1/0_3w_cs 
+nphases=1  
+units=km
+[Rmatrix]
+1.11059  
+[Xmatrix]
+0.847285  
+[Cmatrix]
+6.49582  
+
+[Linecode]
+name=3ph_h-2/0_acsr2/0_acsr2/0_acsr2/0_acsr 
+nphases=3  
+units=km
+[Rmatrix]
+0.63257  
+0.109951  0.627184  
+0.113538  0.110747  0.634249  
+[Xmatrix]
+0.812752  
+0.33351  0.825507  
+0.308271  0.350259  0.808799  
+[Cmatrix]
+8.3452  
+-2.31601  8.72099  
+-1.91256  -2.71715  8.57671  
+
+[Linecode]
+name=1ph-2_acsrxx1/0_tpx 
+nphases=1  
+units=km
+[Rmatrix]
+1.03207  
+[Xmatrix]
+0.801436  
+[Cmatrix]
+6.49582  
+
+[Linecode]
+name=3ph_h-4_wpal4_wpal4_wpal1/0_tpx 
+nphases=3  
+units=km
+[Rmatrix]
+1.54119  
+0.0423582  1.54023  
+0.043017  0.0424921  1.5415  
+[Xmatrix]
+0.740322  
+0.286955  0.756994  
+0.259106  0.303117  0.73514  
+[Cmatrix]
+7.60098  
+-1.99751  7.88811  
+-1.66797  -2.32489  7.78037  
+
+[Linecode]
+name=1ph-x4_wpalx2_acsr 
+nphases=1  
+units=km
+[Rmatrix]
+1.63015  
+[Xmatrix]
+0.85755  
+[Cmatrix]
+6.32285  
+
+[Linecode]
+name=3ph_h-2/0_acsr2/0_acsr2/0_acsr2_wpal 
+nphases=3  
+units=km
+[Rmatrix]
+0.661672  
+0.138291  0.654779  
+0.142872  0.139313  0.663816  
+[Xmatrix]
+0.874001  
+0.392488  0.882296  
+0.370214  0.409905  0.871444  
+[Cmatrix]
+8.3452  
+-2.31601  8.72099  
+-1.91256  -2.71715  8.57671  
+
+[Linecode]
+name=1ph-xx4_acsr2_acsr 
+nphases=1  
+units=km
+[Rmatrix]
+1.67357  
+[Xmatrix]
+0.893131  
+[Cmatrix]
+6.32285  
+
+[Linecode]
+name=1ph-x4_acsrx4_tpx 
+nphases=1  
+units=km
+[Rmatrix]
+1.6773  
+[Xmatrix]
+0.932059  
+[Cmatrix]
+6.32285  
+
+[Linecode]
+name=3ph_h-4_acsr4_acsr4_acsr4_tpx 
+nphases=3  
+units=km
+[Rmatrix]
+1.68634  
+0.141153  1.67957  
+0.145647  0.142157  1.68844  
+[Xmatrix]
+0.92458  
+0.429986  0.930171  
+0.409508  0.447808  0.922866  
+[Cmatrix]
+7.60098  
+-1.99751  7.88811  
+-1.66797  -2.32489  7.78037  
+
+[Linecode]
+name=1ph-4_acsrxx6_wpal 
+nphases=1  
+units=km
+[Rmatrix]
+1.66227  
+[Xmatrix]
+0.967202  
+[Cmatrix]
+6.32285  
+
+[Linecode]
+name=1ph-xx4_acsr4_tpx 
+nphases=1  
+units=km
+[Rmatrix]
+1.6773  
+[Xmatrix]
+0.932059  
+[Cmatrix]
+6.32285  
+
+[Linecode]
+name=3ph_h-397_acsr397_acsr397_acsr2/0_wpal 
+nphases=3  
+units=km
+[Rmatrix]
+0.270019  
+0.109951  0.264634  
+0.113538  0.110747  0.271698  
+[Xmatrix]
+0.695974  
+0.33351  0.708729  
+0.308271  0.350259  0.692021  
+[Cmatrix]
+9.13606  
+-2.66777  9.62226  
+-2.17646  -3.15664  9.43197  
+
+[Linecode]
+name=1ph-2/0_acsrxx2_acsr 
+nphases=1  
+units=km
+[Rmatrix]
+0.651691  
+[Xmatrix]
+0.881426  
+[Cmatrix]
+6.76998  
+
+[Linecode]
+name=3ph_h-2/0_acsr2/0_acsr2/0_acsr4_acsr 
+nphases=3  
+units=km
+[Rmatrix]
+0.661525  
+0.138324  0.654981  
+0.142669  0.139294  0.663555  
+[Xmatrix]
+0.915595  
+0.432623  0.921023  
+0.412253  0.450469  0.913932  
+[Cmatrix]
+8.3452  
+-2.31601  8.72099  
+-1.91256  -2.71715  8.57671  
+
+[Linecode]
+name=1ph-xx4_wpal1/0_tpx 
+nphases=1  
+units=km
+[Rmatrix]
+1.53992  
+[Xmatrix]
+0.762621  
+[Cmatrix]
+6.32285  
+
+[Linecode]
+name=1ph-xx6_wpal6_wpal 
+nphases=1  
+units=km
+[Rmatrix]
+2.50305  
+[Xmatrix]
+0.974922  
+[Cmatrix]
+6.1596  
+
+[Linecode]
+name=1ph-x2_acsrx4_tpx 
+nphases=1  
+units=km
+[Rmatrix]
+1.12603  
+[Xmatrix]
+0.935293  
+[Cmatrix]
+6.49582  
+
+[Linecode]
+name=3ph_h-4_acsr4_acsr4_acsr2_wpal 
+nphases=3  
+units=km
+[Rmatrix]
+1.68355  
+0.138291  1.67665  
+0.142872  0.139313  1.68569  
+[Xmatrix]
+0.885706  
+0.392488  0.894001  
+0.370214  0.409905  0.883149  
+[Cmatrix]
+7.60098  
+-1.99751  7.88811  
+-1.66797  -2.32489  7.78037  
+
+[Linecode]
+name=1ph-x4_acsrx1/0_3w_cs 
+nphases=1  
+units=km
+[Rmatrix]
+1.66186  
+[Xmatrix]
+0.844051  
+[Cmatrix]
+6.32285  
+
+[Linecode]
+name=1ph-xx2_acsr4_dpx 
+nphases=1  
+units=km
+[Rmatrix]
+1.12603  
+[Xmatrix]
+0.935293  
+[Cmatrix]
+6.49582  
+
+[Linecode]
+name=750_Triplex  
+nphases=2 
+units=kft    ! ohms per 1000 ft
+[Rmatrix]
+  0.04974733   0.02342157 
+  0.02342157   0.04974733 
+[Xmatrix]
+  0.02782436   0.00669472 
+  0.00669472   0.02782436 
+[Cmatrix]
+  3.00000000  -2.40000000 
+ -2.40000000   3.00000000 
+
+
+[Linecode]
+name=4/0Triplex 
+nphases=2 
+units=kft      !  ohms per 1000 ft
+[Rmatrix]
+  0.40995115   0.11809509 
+  0.11809509   0.40995115
+[Xmatrix]
+  0.16681819   0.12759250 
+  0.12759250   0.16681819 
+[Cmatrix]
+  3.00000000  -2.40000000 
+ -2.40000000   3.00000000 
+

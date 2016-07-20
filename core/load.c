@@ -725,13 +725,14 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 				ifs_off+=strlen(lptr->file)+13;
 			}
 			if (write_file(fp,"/* automatically generated from GridLAB-D */\n\n"
-					"int major=0, minor=0;\n\n"
+					"int gld_major=%d, gld_minor=%d;\n\n"
 					"%s\n\n"
 					"#include <gridlabd.h>\n\n"
 					"%s"
 					"CALLBACKS *callback = NULL;\n"
 					"static CLASS *myclass = NULL;\n"
 					"static int setup_class(CLASS *);\n\n",
+					REV_MAJOR, REV_MINOR,
 					include_file_str,
 					global_getvar("use_msvc",tbuf,63)!=NULL
 					?

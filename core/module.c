@@ -451,8 +451,8 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 
 	/* connect the module's exported data & functions */
 	mod->hLib = (void*)hLib;
-	pMajor = (int*)DLSYM(hLib, "major");
-	pMinor = (int*)DLSYM(hLib, "minor");
+	pMajor = (int*)DLSYM(hLib, "gld_major");
+	pMinor = (int*)DLSYM(hLib, "gld_minor");
 	mod->major = pMajor?*pMajor:0;
 	mod->minor = pMinor?*pMinor:0;
 	mod->import_file = (int(*)(const char*))DLSYM(hLib,"import_file");
@@ -477,6 +477,13 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	mod->term = (void(*)(void))DLSYM(hLib,"term");
 	strcpy(mod->name,file);
 	mod->next = NULL;
+
+	/* check the module version before trying to initialize */
+	if ( mod->major!=REV_MAJOR || mod->minor!=REV_MINOR )
+	{
+		output_error("Module version %d.%d mismatch from core version %d.%d", mod->major, mod->minor, REV_MAJOR, REV_MINOR);
+		return NULL;
+	}
 
 	/* call the initialization function */
 	errno = 0;

@@ -139,8 +139,8 @@ int transformer::init(OBJECT *parent)
 		SpecialLnk = WYEWYE;
 
 	//Populate limits - emergency and continuous are the same - moved above the init so the internal check works
-	link_rating[0] = config->kVA_rating;
-	link_rating[1] = config->kVA_rating;
+	link_rating[0][0] = config->kVA_rating;
+	link_rating[1][0] = config->kVA_rating;
 
 	link_object::init(parent);
 	OBJECT *obj = OBJECTHDR(this);

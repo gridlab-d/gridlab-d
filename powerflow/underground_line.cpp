@@ -179,12 +179,17 @@ int underground_line::init(OBJECT *parent)
 					temp_rating_emergency = *temp_rating_value;
 				}
 			}
+
+			//Populate link array
+			if (index < 3)
+			{
+				link_rating[0][index] = temp_rating_continuous;
+				link_rating[1][index] = temp_rating_emergency;
+			}
 		}//End Phase valid
 	}//End FOR
 
-	//Populate link array
-	link_rating[0] = temp_rating_continuous;
-	link_rating[1] = temp_rating_emergency;
+
 
 	return result;
 }

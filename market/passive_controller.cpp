@@ -138,6 +138,36 @@ passive_controller::passive_controller(MODULE *mod)
 			PT_bool,"pool_pump_model",PADDR(pool_pump_model),PT_DESCRIPTION,"Boolean flag for turning on the pool pump version of the DUTYCYCLE control",
 			PT_double,"base_duty_cycle",PADDR(base_duty_cycle),PT_DESCRIPTION,"This is the duty cycle before modification due to the price signal",
 
+			// Primary Frequency Control implementation
+			PT_int32,"trigger_time_under_frequency",PADDR(trigger_time_under),PT_DESCRIPTION,"Time to stay in triggered off state in seconds",
+			PT_int32,"trigger_time_over_frequency",PADDR(trigger_time_over),PT_DESCRIPTION,"Time to stay in triggered on state in seconds",
+			PT_int32,"release_time_under_frequency",PADDR(release_time_under),PT_DESCRIPTION,"Time to stay in released on state in seconds",
+			PT_int32,"release_time_over_frequency",PADDR(release_time_over),PT_DESCRIPTION,"Time to stay in released off state in seconds",
+			PT_double,"release_point_under_frequency",PADDR(release_freq_under),PT_DESCRIPTION,"Frequency value for releasing GFA in under frequency mode",
+			PT_double,"release_point_over_frequency",PADDR(release_freq_over),PT_DESCRIPTION,"Frequency value for releasing GFA in over frequency mode",
+			PT_double,"trigger_point_under_frequency",PADDR(trigger_freq_under),PT_DESCRIPTION,"Frequency value for triggereing GFA in under frequency mode",
+			PT_double,"trigger_point_over_frequency",PADDR(trigger_freq_over),PT_DESCRIPTION,"Frequency value for triggereing GFA in over frequency mode",
+			PT_double,"frequency",PADDR(frequency),PT_DESCRIPTION,"Frequency value",
+			PT_enumeration,"PFC_mode",PADDR(PFC_mode),PT_DESCRIPTION,"operation mode of the primary frequency controller",
+				PT_KEYWORD,"OVER_FREQUENCY",(enumeration)OVER_FREQUENCY,
+				PT_KEYWORD,"UNDER_FREQUENCY",(enumeration)UNDER_FREQUENCY,
+				PT_KEYWORD,"OVER_UNDER_FREQUENCY",(enumeration)OVER_UNDER_FREQUENCY,
+			PT_enumeration,"PFC_state",PADDR(PFC_state),PT_DESCRIPTION,"State of the primary frequency controller",
+				PT_KEYWORD,"FREE",(enumeration)FREE,
+				PT_KEYWORD,"TRIGGERED_OFF",(enumeration)TRIGGERED_OFF,
+				PT_KEYWORD,"TRIGGERED_ON",(enumeration)TRIGGERED_ON,
+				PT_KEYWORD,"FORCED_OFF",(enumeration)FORCED_OFF,
+				PT_KEYWORD,"FORCED_ON",(enumeration)FORCED_ON,
+				PT_KEYWORD,"RELEASED_OFF",(enumeration)RELEASED_OFF,
+				PT_KEYWORD,"RELEASED_ON",(enumeration)RELEASED_ON,
+			PT_char32,"state_observed",PADDR(state_observed_propname),PT_DESCRIPTION,"the name of the observed state property in the parent object",
+			PT_char32,"power_observed",PADDR(power_observed_propname),PT_DESCRIPTION,"the name of the observed state property in the parent object",
+			PT_int32,"output_observed",PADDR(state_observed),
+			PT_int32,"bid_delay",PADDR(bid_delay), PT_DESCRIPTION,"time the controller will bid in advance before clearing",
+			PT_double,"voltage_lockout[%]",PADDR(voltage_lockout),PT_DESCRIPTION,"lockout primary frequency control if voltage is deviating % from nominal",
+			PT_double,"voltage_lockout_time[s]",PADDR(time_in_voltage_lockout),PT_DESCRIPTION,"voltage lockout period",
+			PT_int32,"voltage_lockout_state",PADDR(voltage_lockout_state),PT_DESCRIPTION,"value to determine if water heater is in voltage lockout",
+
 			// probabilistic control inputs
 			PT_enumeration, "distribution_type",PADDR(distribution_type),
 				PT_KEYWORD, "NORMAL", (enumeration)PDT_NORMAL,
@@ -161,6 +191,7 @@ passive_controller::passive_controller(MODULE *mod)
 				PT_KEYWORD,"PROBABILITY_OFF",(enumeration)CM_PROBOFF,
 				PT_KEYWORD,"ELASTICITY_MODEL",(enumeration)CM_ELASTICITY_MODEL,
 				PT_KEYWORD,"DIRECT_LOAD_CONTROL",(enumeration)CM_DLC,
+				PT_KEYWORD,"PRIMARY_FREQUENCY_CONTROL",(enumeration)CM_PFC,
 			PT_enumeration,"dlc_mode",PADDR(dlc_mode),PT_DESCRIPTION,"the control mode to use in conjunction with DIRECT_LOAD_CONTROL",
 				PT_KEYWORD,"OFF",(enumeration)DLC_OFF,PT_DESCRIPTION,"this mode is designed to override standard behavior and turn off the load",
 				PT_KEYWORD,"CYCLING",(enumeration)DLC_CYCLING,PT_DESCRIPTION,"this mode is roughly designed to force cycle an AC unit",
@@ -171,6 +202,38 @@ passive_controller::passive_controller(MODULE *mod)
 				GL_THROW("unable to publish properties in %s",__FILE__);
 		}
 		memset(this,0,sizeof(passive_controller));
+	}
+}
+
+void passive_controller::fetch_double(double **prop, char *name, OBJECT *parent){
+	OBJECT *hdr = OBJECTHDR(this);
+	*prop = gl_get_double_by_name(parent, name);
+	if(*prop == NULL){
+		char tname[32];
+		char *namestr = (hdr->name ? hdr->name : tname);
+		char msg[256];
+		sprintf(tname, "passive_controller:%i", hdr->id);
+		if(*name == NULL)
+			sprintf(msg, "%s: passive_controller unable to find property: name is NULL", namestr);
+		else
+			sprintf(msg, "%s: passive_controller unable to find %s", namestr, name);
+		throw(msg);
+	}
+}
+
+void passive_controller::fetch_int(int **prop, char *name, OBJECT *parent){
+	OBJECT *hdr = OBJECTHDR(this);
+	*prop = gl_get_int32_by_name(parent, name);
+	if(*prop == NULL){
+		char tname[32];
+		char *namestr = (hdr->name ? hdr->name : tname);
+		char msg[256];
+		sprintf(tname, "passive_controller:%i", hdr->id);
+		if(*name == NULL)
+			sprintf(msg, "%s: passive_controller unable to find property: name is NULL", namestr);
+		else
+			sprintf(msg, "%s: passive_controller unable to find %s", namestr, name);
+		throw(msg);
 	}
 }
 
@@ -237,7 +300,7 @@ int passive_controller::init(OBJECT *parent){
 		}
 		
 		// output_setpoint
-		if (control_mode != this->CM_PROBOFF && control_mode != this->CM_ELASTICITY_MODEL && control_mode != this->CM_DLC)
+		if (control_mode != this->CM_PROBOFF && control_mode != this->CM_ELASTICITY_MODEL && control_mode != this->CM_DLC && control_mode != this->CM_PFC)
 		{
 			if(output_setpoint_propname[0] == 0 && output_setpoint_propname[0] == 0){
 				GL_THROW("passive_controller has no output properties");
@@ -253,12 +316,14 @@ int passive_controller::init(OBJECT *parent){
 		}
 	}
 
-	if (pool_pump_model == false && control_mode != CM_ELASTICITY_MODEL && control_mode != CM_DLC)
+	if (pool_pump_model == false && control_mode != CM_ELASTICITY_MODEL && control_mode != CM_DLC && control_mode != CM_PFC)
 		gl_set_dependent(hdr, expectation_object);
-	gl_set_dependent(hdr, observation_object);
-
-	if(observation_object == NULL){
-		GL_THROW("passive_controller observation_object object is undefined, and can not function");
+	
+	if (control_mode != CM_PFC || (control_mode == CM_PFC && observation_object != 0)){
+		gl_set_dependent(hdr, observation_object);
+		if(observation_object == NULL){
+			GL_THROW("passive_controller observation_object object is undefined, and can not function");
+		}
 	}
 	
 	//
@@ -293,6 +358,69 @@ int passive_controller::init(OBJECT *parent){
 				cycle_on = floor(cycle_on + 0.5);
 			}
 		}
+	}
+
+	if (control_mode == CM_PFC)
+	{
+		if(state_observed_propname[0] != 0){
+			state_observed_prop = gl_get_property(parent, state_observed_propname);
+			if(state_observed_prop == NULL){
+				GL_THROW("passive_controller parent \"%s\" does not contain property \"%s\"", 
+					(parent->name ? parent->name : "anon"), state_observed_propname.get_string());
+			}
+			state_observed_addr = (void *)((unsigned int64)parent + sizeof(OBJECT) + (unsigned int64)state_observed_prop->addr);
+		}
+		else
+			GL_THROW("Please set state_observed property");
+
+		if (time_in_voltage_lockout <= 0) {
+			time_in_voltage_lockout = 60;
+		}
+		voltage_lockout_time = 0;
+
+		if (observation_object != 0) { // we have a supervisor
+			// get the period from the supervisor
+			fetch_double(&supervisorPeriod, "period", observation_object);
+			supervisor_next_run = gl_globalclock + *supervisorPeriod;
+			// get the market_id of the supervisor
+			fetch_int(&supervisorMarketId, "market_id", observation_object);
+			// get the state of the parent
+			fetch_double(&stateParent, state_observed_propname, parent);
+			// get the power consumed by the parent
+			fetch_double(&powerParent, power_observed_propname, parent);
+			// get the rated power consumed by the parent
+			fetch_double(&ratedPowerParent, "heating_element_capacity", parent);			
+			// cheating a little to get the unit of supervisor
+			market = OBJECTDATA(observation_object, supervisory_control);
+		}
+
+		if (voltage_lockout != 0 || observation_object != 0) { //we need to check the voltage of the parent 
+			//get the voltage from parent
+			fetch_double(&voltageParent, "actual_voltage", parent);
+			//get the nominal voltage from parent
+			fetch_double(&nomVoltageParent, "nominal_voltage", parent);
+		}
+		
+		PFC_state = FREE; // set water heaters as free to move
+		frequency = 60; // maybe change to something the user sets
+		output_state = 0; // water heater can changes acoording to internal dynamics
+		time_in_trigger_under = 0;
+		time_in_trigger_over = 0;
+		time_in_release_under = 0;
+		time_in_release_over = 0;
+
+		if (trigger_time_under < 1)
+			GL_THROW("Please set trigger time for under frequency to a minimum of 1 seconds.");
+		if (trigger_time_over < 1)
+			GL_THROW("Please set trigger time for over frequency to a minimum of 1 seconds.");
+		if (release_time_under < 1)
+			GL_THROW("Please set release time for under frequency to a minimum of 1 seconds.");
+		if (release_time_over < 1)
+			GL_THROW("Please set release time for over frequency to a minimum of 1 seconds.");
+		if (release_freq_under <= 0)
+			GL_THROW("Please set release frequency time for under frequency to a valid number");
+		if (release_freq_over <= 0)
+			GL_THROW("Please set release frequency time for over frequency to a valid number");
 	}
 
 	if(dPeriod == 0.0){
@@ -544,6 +672,10 @@ int passive_controller::isa(char *classname)
 
 TIMESTAMP passive_controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 
+	return TS_NEVER;
+}
+
+TIMESTAMP passive_controller::sync(TIMESTAMP t0, TIMESTAMP t1){	
 	if(first_run == 0 && starttime == 0){
 		starttime = t0;
 	} else {
@@ -553,7 +685,8 @@ TIMESTAMP passive_controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 	// determine output based on control mode
 	if(last_cycle == 0 || t1 >= last_cycle + period || period == 0){
 		last_cycle = t1; // advance cycle time
-			// get observations
+		
+		// get observations
 		if(observation_addr != 0){
 			observation = *(double *)observation_addr;
 		} else {
@@ -606,44 +739,9 @@ TIMESTAMP passive_controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 					GL_THROW("error occured when handling the elasticity model control mode");
 				}
 				break;
-			default:
-				GL_THROW("passive_controller has entered an invalid control mode");
-				break;
-		}
-
-		// determine if input is chained first
-		if(output_setpoint_addr != 0){
-			*(double *)output_setpoint_addr = output_setpoint;
-		}
-		if(output_state_addr != 0){
-			*(int *)output_state_addr = output_state;
-		}
-	}
-	return (period > 0 ? last_cycle+period : TS_NEVER);
-}
-
-TIMESTAMP passive_controller::sync(TIMESTAMP t0, TIMESTAMP t1){
-#if 0
-	// determine output based on control mode
-	if(t1 <= last_cycle + period || period == 0){
-		last_cycle = t1; // advance cycle time
-		switch(control_mode){
-			case CM_NONE:
-				// no control ~ let it slide
-				break;
-			case CM_RAMP:
-				if(calc_ramp(t0, t1) != 0){
-					GL_THROW("error occured when handling the ramp control mode");
-				}
-				break;
-			case CM_PROBOFF:
-				if(calc_proboff(t0, t1) != 0){
-					GL_THROW("error occured when handling the probabilistic cutoff control mode");
-				}
-				break;
-			case CM_DUTYCYCLE:
-				if(calc_dutycycle(t0, t1) != 0){
-					GL_THROW("error occured when handling the duty cycle control mode");
+			case CM_PFC:
+				if(calc_pfc(t0, t1) != 0){
+					GL_THROW("error occured when handling the PFC control mode");
 				}
 				break;
 			default:
@@ -660,14 +758,55 @@ TIMESTAMP passive_controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		}
 	}
 	return (period > 0 ? last_cycle+period : TS_NEVER);
-#endif
-
-	return TS_NEVER;
-
 }
 
 TIMESTAMP passive_controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
-	return TS_NEVER;
+	OBJECT *hdr = OBJECTHDR(this);
+	char ctrname[1024];
+	char spvrname[1024];
+	
+
+	if (control_mode == CM_PFC && observation_object != 0) { // we have a supervisor
+		if (t1 == supervisor_next_run - bid_delay) { // time to submit state and power to supervisor
+			
+			if (*stateParent == 0) { //water heater is off and we need to bid rated power instead of actual power
+				powerParentConverted = *ratedPowerParent;	
+			}
+			else {
+				powerParentConverted = *powerParent;
+			}
+			if(0 != strcmp(market->unit, "")){
+				if(0 == gl_convert("kW", market->unit, &powerParentConverted)){
+					gl_error("unable to convert bid units from 'kW' to '%s'", market->unit.get_string());
+					return TS_INVALID;
+				}
+			}
+
+			//double voltage_deviation = fabs(1-(*voltageParent / *nomVoltageParent));
+			double voltage_deviation = (*voltageParent / *nomVoltageParent) - 1;
+			controller_bid.bid_accepted = true;
+			controller_bid.bid_id = (int64)hdr->id;
+			controller_bid.market_id = (int64)*supervisorMarketId;
+			controller_bid.price = voltage_deviation;
+			controller_bid.quantity = powerParentConverted;
+			controller_bid.rebid = false;
+			if(*stateParent > 0) {
+				controller_bid.state = BS_ON;
+			} else {
+				controller_bid.state = BS_OFF;
+			}
+			submit_bid_state((char *)gl_name(hdr, ctrname, 1024),(char *)gl_name(observation_object, spvrname, 1024), "submit_bid_state", "supervisor", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+			controller_bid.rebid = true;
+			if(!controller_bid.bid_accepted) {
+				return TS_INVALID;
+			}
+			supervisor_next_run += (TIMESTAMP) *supervisorPeriod; // calculate next time supervisor will clear
+		}
+		return supervisor_next_run - (TIMESTAMP) bid_delay;
+	}
+	else {
+		return TS_NEVER;	
+	}
 }
 
 int passive_controller::calc_elasticity(TIMESTAMP t0, TIMESTAMP t1){
@@ -1365,6 +1504,123 @@ int passive_controller::calc_proboff(TIMESTAMP t0, TIMESTAMP t1){
 		output_state = 0; //Normal
 	}
 
+	return 0;
+}
+
+int passive_controller::calc_pfc(TIMESTAMP t0, TIMESTAMP t1){
+	OBJECT *hdr = OBJECTHDR(this);
+	double direction = -1;
+		
+	if(output_state_addr != 0){ 
+		output_state = *(int *)output_state_addr; // keep water heater in previous state
+	} else {
+		output_state = 0; // Normal operation of water heater 
+	}
+
+	if(state_observed_addr != 0){
+		state_observed = *(double *)state_observed_addr; // get the state of the parent
+	} else {
+		state_observed = 0;
+	}
+
+	if (PFC_state == FREE){
+		time_in_trigger_under = time_in_trigger_over = t1; //reset the timers for triggering the device
+		if (frequency < trigger_freq_under && (PFC_mode == OVER_UNDER_FREQUENCY || PFC_mode == UNDER_FREQUENCY)){
+			PFC_state = TRIGGERED_OFF;
+		}
+		else if (frequency > trigger_freq_over && (PFC_mode == OVER_UNDER_FREQUENCY || PFC_mode == OVER_FREQUENCY)){
+			PFC_state = TRIGGERED_ON;
+		}
+	}
+	else if (PFC_state == TRIGGERED_OFF){
+		if (t1 >= time_in_trigger_under + trigger_time_under){
+			PFC_state = FORCED_OFF;
+		}
+		else if (frequency >= trigger_freq_under){
+			PFC_state = FREE;
+		}
+	}
+	else if (PFC_state == TRIGGERED_ON){
+		if (t1 >= time_in_trigger_over + trigger_time_over){
+			PFC_state = FORCED_ON;
+		}
+		else if (frequency >= trigger_freq_over){
+			PFC_state = FREE;
+		}
+	}
+	else if (PFC_state == FORCED_OFF){
+		time_in_release_under = t1; //reset timer for releasing device
+		if (frequency > release_freq_under){
+			PFC_state = RELEASED_OFF;
+		}
+	}
+	else if (PFC_state == FORCED_ON){
+		time_in_release_over = t1; //reset timer for releasing device
+		if (frequency < release_freq_over){
+			PFC_state = RELEASED_ON;
+		}
+	}
+	else if (PFC_state == RELEASED_OFF){
+		if (t1 >= time_in_release_under + release_time_under){
+			PFC_state = FREE;
+		}
+		else if (frequency <= release_freq_under){
+			PFC_state = FORCED_OFF;
+		}
+	}
+	else if (PFC_state == RELEASED_ON){
+		if (t1 >= time_in_release_over + release_time_over){
+			PFC_state = FREE;
+		}
+		else if (frequency >= release_freq_over){
+			PFC_state = FORCED_ON;
+		}
+	}
+	else {
+		GL_THROW("water heater in an unknown state");
+	}
+
+	//determine if we need to force the water heater into a specific state
+	if (PFC_state == FREE || PFC_state == TRIGGERED_OFF || PFC_state == TRIGGERED_ON) {
+		output_state = 0; //water heater neutral
+	}
+	else if (PFC_state == FORCED_OFF || PFC_state == RELEASED_OFF) {
+		output_state = -1; //water heater forced off
+	}
+	else if (PFC_state == FORCED_ON || PFC_state == RELEASED_ON) {
+		output_state = 1; //water heater forced on 
+	}
+	else {
+		GL_THROW("water heater in an unknown state");
+	}
+
+	if (voltage_lockout_time+time_in_voltage_lockout > t1) {
+		// we are still in voltage lockout
+		output_state = 0; //water heater neutral
+	}
+	else {
+		if (voltage_lockout != 0 && ((*voltageParent / *nomVoltageParent) > (1+voltage_lockout / 100) || (*voltageParent / *nomVoltageParent) < (1-voltage_lockout / 100))) { 
+			gl_debug("voltage problems on %s Voltage (%.2f) Voltage PU (%.2f) \n",hdr->name,*voltageParent,(*voltageParent / *nomVoltageParent));
+			voltage_lockout_time = t1;
+			output_state = 0; //water heater neutral
+			voltage_lockout_state = 1;
+		}
+		else {
+			voltage_lockout_state = 0;
+		}
+	}
+
+	//determine if we need to set the water heater to neutral due to local voltage issues
+//	if (voltage_lockout != 0 && ((*voltageParent / *nomVoltageParent) > (1+voltage_lockout / 100) || (*voltageParent / *nomVoltageParent) < (1-voltage_lockout / 100))) { 
+//		gl_debug("voltage problems on %s Voltage (%.2f) Voltage PU (%.2f) \n",hdr->name,*voltageParent,(*voltageParent / *nomVoltageParent));
+//		voltage_lockout_time = t1;
+//		output_state = 0; //water heater neutral
+//		voltage_lockout_state = 1;
+//	}
+//	else {
+//		voltage_lockout_state = 0;
+//	}
+  
 	return 0;
 }
 

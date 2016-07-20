@@ -1,0 +1,14 @@
+# Capacitor Control Definitions
+# these controls monitor one phase of the specified line and control one phase of the associated capacitor bank
+Name, Capacitor, MonitoredElement, ElementTerminal, Type, ptration, ctratio, ONsetting, OFFsetting, VoltOverride, Vmin, Vmax
+CAPBank2A_Con, CAPBank2A, line.CAP_1A, 1, kvar, 1, 1, 150, -225, Y, 7110, 7740 
+CAPBank2B_Con, CAPBank2B, line.CAP_1B, 1, kvar, 1, 1, 150, -225, Y, 7110, 7740 
+CAPBank2C_Con, CAPBank2C, line.CAP_1C, 1, kvar, 1, 1, 150, -225, Y, 7110, 7740 
+CAPBank1A_Con, CAPBank1A, line.CAP_2A, 1, kvar, 1, 1, 150, -225, Y, 7110, 7740 
+CAPBank1B_Con, CAPBank1B, line.CAP_2B, 1, kvar, 1, 1, 150, -225, Y, 7110, 7740 
+CAPBank1C_Con, CAPBank1C, line.CAP_2C, 1, kvar, 1, 1, 150, -225, Y, 7110, 7740 
+CAPBank0A_Con, CAPBank0A, line.CAP_3A, 1, kvar, 1, 1, 200, -300, Y, 7110, 7740 
+CAPBank0B_Con, CAPBank0B, line.CAP_3B, 1, kvar, 1, 1, 200, -300, Y, 7110, 7740 
+CAPBank0C_Con, CAPBank0C, line.CAP_3C, 1, kvar, 1, 1, 200, -300, Y, 7110, 7740 
+
+

@@ -3,6 +3,7 @@
 #include "market.h"
 #include "auction.h"
 #include "stubauction.h"
+#include "supervisory_control.h"
 
 #ifndef _market_bid_h_
 #define _market_bid_h_
@@ -45,6 +46,7 @@ typedef struct s_bid BID;
 /** Bid structure for markets */
 EXPORT void submit_bid_state(char *from, char *to, char *function_name, char *function_class, void *bidding_buffer, size_t bid_len);
 
+EXPORT int64 submit_bid(OBJECT *obj, OBJECT *from, double quantity, double price, KEY bid_id);
 
 void translate_bid(BIDDEF &biddef, KEY key);
 void write_bid(KEY &key, int64 market, int64 bid, BIDTYPE type);

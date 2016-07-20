@@ -1,3 +1,5 @@
+//Extra include - lets the odd "new" constructor call be used, without having to do it kludgy-manual way
+#include <iostream>
 #include "violation_recorder.h"
 
 CLASS *violation_recorder::oclass = NULL;
@@ -177,7 +179,6 @@ int violation_recorder::init(OBJECT *obj){
 
 int violation_recorder::make_object_list(int type, char * s_grp, vobjlist *q_obj_list){
 	OBJECT *gr_obj = 0;
-	vobjlist *t_objlist;
 	//FINDLIST *items = gl_find_objects(FL_GROUP, s_grp);
 	FINDLIST *items = gl_find_objects(FL_NEW, type, SAME, s_grp, FT_END);
 	if(0 == items){
@@ -215,10 +216,8 @@ int violation_recorder::make_object_list(int type, char * s_grp, vobjlist *q_obj
 // admittedly, this could be made more efficient with less looping...
 int violation_recorder::assoc_meter_w_xfrmr_node(vobjlist *meter_list, vobjlist *xfrmr_list, vobjlist *node_list){
 	vobjlist *meter, *xfrmr, *node, *node1, *node2;
-	OBJECT *mtr_obj;
 	PROPERTY *p_ptr;
-	char name[128], to[128], from[128];
-	int offset;
+	char to[128], from[128];
 	bool found;
 //
 //	// for whatever reason, using FL_GROUP and 'module=powerflow' doesn't work, so we do it the other way
@@ -294,12 +293,7 @@ int violation_recorder::assoc_meter_w_xfrmr_node(vobjlist *meter_list, vobjlist 
 // node is a bit of a misnomer; it is really a link object that we want
 int violation_recorder::find_substation_node(char256 node_name, vobjlist *node_list){
 
-	vobjlist *node;
-	OBJECT *obj;
-	PROPERTY *p_ptr;
-	enumeration *bustype;
 	char256 name;
-	int offset;
 
 	if (0 != node_name[0]) {
 		OBJECT *obj = gl_get_object(node_name);
@@ -460,10 +454,6 @@ int violation_recorder::check_violations(TIMESTAMP t1) {
 int violation_recorder::check_violation_1(TIMESTAMP t1) {
 //	gl_output("VIOLATION 1");
 	vobjlist *curr = 0;
-	PROPERTY *p_ptr;
-	double voltage, nominal, pu;
-	char *char_value;
-	char objname[128];
 
 	check_xfrmr_thermal_limit(t1, xfrmr_obj_list, xfrmr_list_v1, XFMR, xfrmr_thermal_limit_upper, xfrmr_thermal_limit_lower);
 	check_line_thermal_limit(t1, ohl_obj_list, ohl_list_v1, OHLN, line_thermal_limit_upper, line_thermal_limit_lower);
@@ -477,12 +467,9 @@ int violation_recorder::check_violation_1(TIMESTAMP t1) {
 int violation_recorder::check_line_thermal_limit(TIMESTAMP t1, vobjlist *list, uniqueList *uniq_list, int type, double upper_bound, double lower_bound) {
 
 	vobjlist *curr = 0;
-	PROPERTY *p_ptr;
-	double voltage, nominal, nominalA, nominalB, nominalC, pu;
-	char *char_value;
+	double nominal, nominalA, nominalB, nominalC;
 	char objname[128];
 	double retval;
-	char prop[128];
 
 	for(curr = list; curr != 0; curr = curr->next){
 		if (curr->obj == 0) continue;
@@ -595,12 +582,9 @@ int violation_recorder::check_line_thermal_limit(TIMESTAMP t1, vobjlist *list, u
 int violation_recorder::check_xfrmr_thermal_limit(TIMESTAMP t1, vobjlist *list, uniqueList *uniq_list, int type, double upper_bound, double lower_bound) {
 
 	vobjlist *curr = 0;
-	PROPERTY *p_ptr;
-	double voltage, nominal, pu;
-	char *char_value;
+	double nominal;
 	char objname[128];
 	double retval;
-	char prop[128];
 
 	for(curr = list; curr != 0; curr = curr->next){
 		if (curr->obj == 0) continue;
@@ -654,8 +638,7 @@ int violation_recorder::check_violation_2(TIMESTAMP t1) {
 //	gl_output("VIOLATION 2");
 	vobjlist *curr = 0;
 	PROPERTY *p_ptr;
-	double voltage, nominal;
-	char *char_value;
+	double nominal;
 	char objname[128];
 	int c = 0;
 	double node_upper_bound = node_instantaneous_voltage_limit_upper;
@@ -751,9 +734,7 @@ int violation_recorder::check_violation_3(TIMESTAMP t1) {
 //	gl_output("VIOLATION 3");
 	vobjlist *curr = 0;
 	PROPERTY *p_ptr;
-	set *phases;
-	double voltage, nominal;
-	char *char_value;
+	double nominal;
 	char objname[128];
 	int c = 0;
 	double node_upper_bound = node_continuous_voltage_limit_upper;
@@ -844,7 +825,6 @@ int violation_recorder::check_reverse_flow_violation(TIMESTAMP t1, int violation
 
 	double nominal = 1.;
 	PROPERTY *p_ptr;
-	double value, pu;
 	set *directions;
 	p_ptr = gl_get_property(link_monitor_obj, "flow_direction");
 	if (p_ptr == NULL)
@@ -877,9 +857,6 @@ int violation_recorder::check_reverse_flow_violation(TIMESTAMP t1, int violation
 int violation_recorder::check_violation_6(TIMESTAMP t1) {
 //	gl_output("VIOLATION 6");
 	vobjlist *curr = 0;
-	PROPERTY *p_ptr;
-	double voltage;
-	char *char_value;
 	char objname[128];
 	double upper_bound = inverter_v_chng_per_interval_upper_bound;
 	double lower_bound = inverter_v_chng_per_interval_lower_bound;
@@ -928,9 +905,7 @@ int violation_recorder::check_violation_7(TIMESTAMP t1) {
 //	gl_output("VIOLATION 7");
 	vobjlist *curr = 0;
 	PROPERTY *p_ptr;
-	set *phases;
 	double meter_voltage, meter_nominal, xfrmr_voltage, xfrmr_nominal, pu;
-	char *char_value;
 	char metername[128];
 	char xfrmrname[128];
 	double pu_upper_bound = secondary_dist_voltage_rise_upper_limit;
@@ -1090,8 +1065,6 @@ int violation_recorder::check_violation_8(TIMESTAMP t1) {
 
 	double nominal = 1.;
 	PROPERTY *p_ptr;
-	double value, pu;
-	set *directions;
 	p_ptr = gl_get_property(link_monitor_obj, "power_in");
 
 	if (p_ptr == NULL)
@@ -1148,7 +1121,7 @@ complex violation_recorder::get_observed_complex_value(OBJECT *curr, PROPERTY *p
 
 int violation_recorder::fails_static_condition (OBJECT *curr, char *prop_name, double upper_bound, double lower_bound, double normalization_value, double *retval) {
 	PROPERTY *p_ptr;
-	double value, pu;
+	double value;
 	p_ptr = gl_get_property(curr, prop_name);
 	if (p_ptr == NULL)
 		return 0;

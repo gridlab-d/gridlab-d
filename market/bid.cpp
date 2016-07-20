@@ -1,5 +1,17 @@
 #include "bid.h"
 
+EXPORT int64 submit_bid(OBJECT *obj, OBJECT *from, double quantity, double price, KEY bid_id)
+{
+	char biddername[64];
+	if(obj->oclass == supervisory_control::oclass){
+		supervisory_control *mkt = OBJECTDATA(obj,supervisory_control);
+		return mkt->submit(from,quantity,price,bid_id);
+	}
+	else	{
+		gl_error("%s submitted a bid to an object that is not an auction", gl_name(from,biddername,sizeof(biddername)));
+		return -1;
+	}
+}
 EXPORT void submit_bid_state(char *from, char *to, char *function_name, char *function_class, void *bidding_buffer, size_t bid_len)//(char *obj, char *from, double quantity, double price, unsigned int is_on, KEY bid_id)
 {
 	char biddername[64];
@@ -9,7 +21,7 @@ EXPORT void submit_bid_state(char *from, char *to, char *function_name, char *fu
 	if( strncmp(function_name, "submit_bid_state", 16)== 0){
 		obj = gl_get_object(to);
 		if( obj == NULL){
-			gl_error("bid::submit_bid_state: No auction object exists with given name %s.", to);
+			gl_error("bid::submit_bid_state: No market object exists with given name %s.", to);
 			bidding_info->bid_accepted = false;
 		}
 
@@ -30,6 +42,19 @@ EXPORT void submit_bid_state(char *from, char *to, char *function_name, char *fu
 		} else if(obj->oclass == stubauction::oclass){
 			gl_error("bid::submit_bid_state: market object is not an auction object.");
 			bidding_info->bid_accepted = false;
+	} else if(obj->oclass == supervisory_control::oclass){
+		supervisory_control *mkt = OBJECTDATA(obj,supervisory_control);
+		OBJECT *fObj = NULL;
+		int is_on = 0;
+		fObj = gl_get_object(from);
+		if(fObj == NULL) {
+			gl_error("bid::submit_bid_state: No market object exists with given name %s.", from);
+			bidding_info->bid_accepted = false;
+		}
+		if(bidding_info->state == BS_ON){
+			is_on = 1;
+		}
+		rv = mkt->submit(fObj,bidding_info->quantity,bidding_info->price,bidding_info->market_id,is_on);
 		} else {
 			gl_error("bid::submit_bid_state: market object is not an auction object.");
 			bidding_info->bid_accepted = false;

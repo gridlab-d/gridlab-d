@@ -20,6 +20,7 @@ public:
 	typedef enum {
 		ONENODE,	///< tank model uses a single zone
 		TWONODE,	///< tank model uses two zones
+		FORTRAN, ///< uses the fortran tank model.
 		NONE,		///< tank model zoning isn't defined
 	} WHMODEL;	///< tank model currently in use
 	typedef enum {
@@ -38,7 +39,8 @@ public:
 	} WHQSTATE; ///<
 	typedef enum {
 		ELECTRIC,	///< tank heats with an electric resistance element
-		GASHEAT		///< tank heats with natural gas
+		GASHEAT,	///< tank heats with natural gas
+		HEAT_PUMP   ///< tank heats with a heat pump (currently ignores all electric coil usage)
 	} HEATMODE;		///<
 
 	// One of our main return values...
@@ -49,6 +51,7 @@ public:
 	double Tinlet;					///< default will be set to 60 degF
 	enumeration location;			///< location of tank (inside or garage) [enum]
 	enumeration heat_mode;				///< method of heating the water (gas or electric) [enum]
+	enumeration current_tank_state;
 
 	// Characteristics calculated from basics at creation...
 	double area;					///< tank cross-sectional area [ft^2]
@@ -66,6 +69,7 @@ public:
 	double Twater;					///< temperature of whole tank (for 1-node model) [F]
 	double Tw;						///< water temperature [F]
 	double Tw_old;					///< previous water temperature, for internal_gains
+	double Tcontrol;
 
 	// Convenience values (some pre-computed here and there for efficiency)...
 	bool heat_needed;				///< need to maintain this bit of state because of Tstat deadband...
@@ -74,6 +78,7 @@ public:
 	double tank_volume;					///< tank size [gal]
 	double tank_UA;						///< tank UA [BTU/hr-F]
 	double tank_diameter;				///< tank diameter [ft]
+	double tank_height;					///< tank height [ft]
 	double water_demand;				///< water draw rate [gpm]
 	double water_demand_old;			///< previous water demand, needed for temperature change (reflects heat loss from hot water draw)
 	double heating_element_capacity;	///< rated Q of (each) heating element, input in W, converted to[Btu/hr]
@@ -81,14 +86,71 @@ public:
 	double thermostat_deadband;			///< deadband around Tset (half above, half below) [F]
 	double *pTair;
 	double *pTout;
-
+	double *pRH;
+	double HP_COP;						///< coefficient of performance for heat pump; currently calculated
 	double gas_fan_power;		///< fan power draw when a gas waterheater is burning fuel
 	double gas_standby_power;	///< standby power draw when a gas waterheater is NOT burning fuel
 
+	double nominal_voltage; 
 	double actual_load;
+	double actual_voltage;
 	double prev_load;
 	complex waterheater_actual_power;	///< the actual power draw of the object after accounting for voltage
+//	Fortran water heater parameters
+public:
+	double dr_signal;				//dr_signal
+	double simulation_time;		//sim_time
+	double fwh_cop_current;	//COP
+	double operating_mode;			//op_mode
+
+public:
+	// Tank physical parameters
+	double sensor_position[2];									//sensor_pos
+	double heater_element_power[2];						//heater_q
+	double heater_size[2];											//heater_size
+	double heater_element_position[2];						//heater_pos
+	double upper_element_activation_temp_offset;		//upper_elem_off
+	double compressor_power_capacity;					//comp_power
+	double compressor_activation_temp_offset;			// comp_off
+	double tank_heat_loss_rate;									//heat_loss_rate
+	double upper_fraction;											//upperf
+	double lower_fraction;											//lowerf
+
+	// Water_related_parameters
+	double thermal_conductivity;		//water_k0
+	double convective_coefficient;		//water_alpha
+	double water_heat_capacity;			//water_cv
+	double water_density;					//water_rho
+
+	// Simulation parameters
+	double lowest_ambient_temperature_limit;	//low_amb_lim
+	double highest_ambient_temperature_limit;	//up_amb_lim
+	double lowest_water_temperature_limit;		//water_low_lim
+	double activation_temperature_offset;			//mode_3_off
+	double ambient_air_dry_bulb_temp;				//t_db
+	double ambient_air_wet_bulb_temp;				//t_wb
+	double temp_set[2];										//temp_set
+	int coarse_tank_grid;								//large_bins
+	int fine_tank_grid;									//small_bins
+	int ncomp;
+	int nheat[2];
+    int heat_up;
+	double init_tank_temp[144];
+
+	// Time variable input parameters
+	double ambient_temp;						//temp_amb
+	double inlet_water_flow;					//v_flow
+	double inlet_water_flow_threshold;	//v_flow_threshold
+	double ambient_rh;							//hum_amb
 	
+	// Output variables
+	double fwh_power;						//power
+	double fwh_power_now;
+	double tank_water_temp[144];		//ca
+	double fwh_cop;								//COP
+	double fwh_energy;
+
+	TIMESTAMP fwh_sim_time;
 
 public:
 	static CLASS *oclass, *pclass;
