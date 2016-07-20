@@ -1756,21 +1756,45 @@ private: // data
 
 public: // constructors/casts
 	/// Construct a key word
-	inline gld_keyword(void) { throw "gld_keyword constructor not permitted"; };
+	inline gld_keyword(KEYWORD &key) { core=key; };
 	/// Cast to a keyword pointer
 	inline operator KEYWORD* (void) { return &core; };
+	inline operator const char* (void) { return core.name; };
+	inline operator long unsigned int (void) { return core.value;};
 
 public: // read accessors
 	/// Get the name of a keyword
-	inline char* get_name(void) { return core.name; };
+	inline const char* get_name(void) { return core.name; };
 	/// Get the bit pattern for the keyword
-	inline unsigned int64 get_value(void) { return core.value; };
+	inline long unsigned int get_value(void) { return core.value; };
+	inline enumeration get_enumeration_value(void) { return (enumeration)get_value(); };
+	inline set get_set_value(void) { return (set)get_value(); };
 
 public: // write accessors
+	inline int compare(const char *name) { return strcmp(name,core.name); };
+	inline bool operator == (const char *name) { return compare(name)==0; };
+	inline bool operator <= (const char *name) { return compare(name)<=0; };
+	inline bool operator >= (const char *name) { return compare(name)>=0; };
+	inline bool operator < (const char *name) { return compare(name)<0; };
+	inline bool operator > (const char *name) { return compare(name)>0; };
+	inline bool operator != (const char *name) { return compare(name)!=0; };
+	inline int compare(long unsigned int value) { return value<(long unsigned int)core.value ? -1 : ( value>core.value ? +1 : 0 ); };
+	inline bool operator == (long unsigned int value) { return compare(value)==0; };
+	inline bool operator <= (long unsigned int value) { return compare(value)<=0; };
+	inline bool operator >= (long unsigned int value) { return compare(value)>=0; };
+	inline bool operator < (long unsigned int value) { return compare(value)<0; };
+	inline bool operator > (long unsigned int value) { return compare(value)>0; };
+	inline bool operator != (long unsigned int value) { return compare(value)!=0; };
 
 public: // iterators
 	/// Get the next keyword (NULL if last)
 	inline gld_keyword* get_next(void) { return (gld_keyword*)core.next; };
+	template <class T> inline gld_keyword* find(T value)
+	{
+		if ( compare(value)==0 ) return this;
+		if ( get_next()==NULL ) return NULL;
+		return get_next()->find(value);
+	};
 };
 
 
@@ -2046,48 +2070,29 @@ public: // special operations
 	inline bool is_complex(void) { if(pstruct.prop->ptype == PT_complex) return true; return false;}
 	inline bool is_double(void) { switch(pstruct.prop->ptype) { case PT_double: case PT_random: case PT_enduse: case PT_loadshape: return true; default: return false;} };
 	inline bool is_integer(void) { switch(pstruct.prop->ptype) { case PT_int16: case PT_int32: case PT_int64: return true; default: return false;} };
-	inline bool is_enumeration(void)
-	{
-		if(pstruct.prop->ptype == PT_enumeration)
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	}
-	inline bool is_character(void)
-	{
-		switch(pstruct.prop->ptype)
-		{
-		case PT_char8:
-			return true;
-		case PT_char32:
-			return true;
-		case PT_char256:
-			return true;
-		case PT_char1024:
-			return true;
-		default:
-			return false;
-		}
-	}
+	inline bool is_enumeration(void) { return pstruct.prop->ptype==PT_enumeration; };
+	inline bool is_set(void) { return pstruct.prop->ptype==PT_set; };
+	inline bool is_character(void) { switch(pstruct.prop->ptype) { case PT_char8: case PT_char32: case PT_char256: case PT_char1024: return true; default: return false;} };
+	inline bool is_random(void) { return pstruct.prop->ptype==PT_random; };
+	inline bool is_enduse(void) { return pstruct.prop->ptype==PT_enduse; };
+	inline bool is_loadshape(void) { return pstruct.prop->ptype==PT_loadshape; };
+	inline bool is_double_array(void) { return pstruct.prop->ptype==PT_double_array; };
+	inline bool is_complex_array(void) { return pstruct.prop->ptype==PT_complex_array; };
+
+	// TODO these need to use throw instead of returning overloaded values
 	inline double get_double(void) { errno=0; switch(pstruct.prop->ptype) { case PT_double: case PT_random: case PT_enduse: case PT_loadshape: return has_part() ? get_part() : *(double*)get_addr(); default: errno=EINVAL; return NaN;} };
 	inline int64 get_integer(void) { errno=0; switch(pstruct.prop->ptype) { case PT_int16: return (int64)*(int16*)get_addr(); case PT_int32: return (int64)*(int32*)get_addr(); case PT_int64: return *(int64*)get_addr(); default: errno=EINVAL; return 0;} };
+	inline enumeration get_enumeration(void) { if ( pstruct.prop->ptype == PT_enumeration ) return *(enumeration*)get_addr(); exception("get_enumeration() called on a property that is not an enumeration"); };
+	inline set get_set(void) { if ( pstruct.prop->ptype == PT_set ) return *(set*)get_addr(); exception("get_set() called on a property that is not a set"); };
 	template <class T> inline void getp(T &value) { ::rlock(&obj->lock); value = *(T*)get_addr(); ::runlock(&obj->lock); };
 	template <class T> inline void setp(T &value) { ::wlock(&obj->lock); *(T*)get_addr()=value; ::wunlock(&obj->lock); };
 	template <class T> inline void getp(T &value, gld_rlock&) { value = *(T*)get_addr(); };
 	template <class T> inline void getp(T &value, gld_wlock&) { value = *(T*)get_addr(); };
 	template <class T> inline void setp(T &value, gld_wlock&) { *(T*)get_addr()=value; };
-	inline gld_keyword* find_keyword(unsigned long value) { gld_keyword*k=get_first_keyword();while(k && k->get_value()!=value) {k=k->get_next();} return k; }; // TODO
-	inline gld_keyword* find_keyword(char *name) 
-	{ 
-		gld_keyword *k = get_first_keyword();
-		while ( k && strcmp(k->get_name(),name)!=0 ) 
-			k=k->get_next();
-		return k; 
-	};
+	inline void setp(enumeration value) { ::wlock(&obj->lock); *(enumeration*)get_addr()=value; ::wunlock(&obj->lock); };
+	inline void setp(set value) { ::wlock(&obj->lock); *(set*)get_addr()=value; ::wunlock(&obj->lock); };
+	inline gld_keyword* find_keyword(unsigned long value) { return get_first_keyword()->find(value); };
+	inline gld_keyword* find_keyword(const char *name) { return get_first_keyword()->find(name); };
 	inline bool compare(char *op, char *a, char *b=NULL, char *p=NULL) 
 	{ 
 		PROPERTYCOMPAREOP n = callback->properties.get_compare_op(pstruct.prop->ptype,op); 

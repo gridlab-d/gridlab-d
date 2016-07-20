@@ -1364,7 +1364,7 @@ int passive_controller::calc_dlc(TIMESTAMP t0, TIMESTAMP t1){
 				double rand_test = gl_random_uniform(RNGSTATE,0.0,1.0);
 				if (rand_test < cycle_off/(cycle_on+cycle_off))
 				{
-					output_state = -1;  // turn off the load
+					output_state = 2;  // turn off the load
 					period = (TIMESTAMP) ceil(rand_test * cycle_off);
 				}
 				else
@@ -1377,7 +1377,7 @@ int passive_controller::calc_dlc(TIMESTAMP t0, TIMESTAMP t1){
 			{
 				if (output_state == 0) // we're in normal, so switch to off
 				{
-					output_state = -1;  // turn off the load
+					output_state = 2;  // turn off the load
 					period = (TIMESTAMP) cycle_off;
 				}
 				else
@@ -1430,7 +1430,7 @@ int passive_controller::calc_dutycycle(TIMESTAMP t0, TIMESTAMP t1){
 		else if (observation >= secondTierPrice) // we're in high TOU
 		{
 			if (output_state == 1)
-				output_state = -1; // turn off the override and let the pool pump recover
+				output_state = 2; // turn off the override and let the pool pump recover
 			else if (output_state == 0) // we're back to normal operation
 			{
 				double hour_ratio = (double) secondTierHours / (firstTierHours + secondTierHours);
@@ -1441,7 +1441,7 @@ int passive_controller::calc_dutycycle(TIMESTAMP t0, TIMESTAMP t1){
 		else // we're in low TOU
 		{
 			if (output_state == 1)
-				output_state = -1; // turn off the override and let the pool pump recover
+				output_state = 2; // turn off the override and let the pool pump recover
 			else if (output_state == 0) // we're back to normal operation
 			{
 				double hour_ratio = (double) firstTierHours / (firstTierHours + secondTierHours);
@@ -1472,7 +1472,7 @@ int passive_controller::calc_proboff(TIMESTAMP t0, TIMESTAMP t1){
 			// erf_in = (x-mean) / (var^2 * sqrt(2))
 			if(obs_stdev < bid_offset){ // short circuit
 				if(observation > expectation){
-					output_state = -1;
+					output_state = 2;
 					prob_off = 1.0;
 				} else {
 					output_state = 0;
@@ -1499,7 +1499,7 @@ int passive_controller::calc_proboff(TIMESTAMP t0, TIMESTAMP t1){
 	}
 	r = gl_random_uniform(RNGSTATE,0.0,1.0);
 	if(r < prob_off){
-		output_state = -1; // off?
+		output_state = 2; // off?
 	} else {
 		output_state = 0; //Normal
 	}
@@ -1585,7 +1585,7 @@ int passive_controller::calc_pfc(TIMESTAMP t0, TIMESTAMP t1){
 		output_state = 0; //water heater neutral
 	}
 	else if (PFC_state == FORCED_OFF || PFC_state == RELEASED_OFF) {
-		output_state = -1; //water heater forced off
+		output_state = 2; //water heater forced off
 	}
 	else if (PFC_state == FORCED_ON || PFC_state == RELEASED_ON) {
 		output_state = 1; //water heater forced on 

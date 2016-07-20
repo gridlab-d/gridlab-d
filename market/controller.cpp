@@ -648,12 +648,20 @@ int controller::init(OBJECT *parent){
 
 	if(state[0] != 0){
 		// grab state pointer
-		pState = gl_get_enum_by_name(parent, state);
-		last_pState = 0;
-		if(pState == 0){
-			gl_error("state property name \'%s\' is not published by parent class", state);
+		powerstate_prop = gld_property(parent,state); // pState = gl_get_enum_by_name(parent, state);
+		if ( !powerstate_prop.is_valid() )
+		{
+			gl_error("state property name '%s' is not published by parent object '%s'", state, get_object(parent)->get_name());
 			return 0;
 		}
+		PS_OFF = powerstate_prop.find_keyword("OFF");
+		PS_ON = powerstate_prop.find_keyword("ON");
+		PS_UNKNOWN = powerstate_prop.find_keyword("UNKNOWN");
+		if ( PS_OFF==NULL || PS_ON==NULL || PS_UNKNOWN==NULL )
+		{
+			gl_error("state property '%s' of object '%s' does not published all required keywords OFF, ON, and UNKNOWN", state,get_object(parent)->get_name());
+		}
+		last_pState = *PS_UNKNOWN;
 	}
 
 	if(heating_state[0] != 0){
@@ -674,12 +682,22 @@ int controller::init(OBJECT *parent){
 		}
 	}
 	// get override, if set
-	if(re_override[0] != 0){
-		pOverride = gl_get_enum_by_name(parent, re_override);
-	}
-	if((pOverride == 0) && (use_override == OU_ON)){
-		gl_error("use_override is ON but no valid override property name is given");
-		return 0;
+	if ( re_override[0] != 0 )
+	{
+		override_prop = gld_property(parent, re_override);
+		if ( !override_prop.is_valid() )
+		{
+			gl_error("use_override property '%s' is not found in object '%s'", (const char*)re_override, get_object(parent)->get_name());
+			return 0;
+		}
+		OV_OFF = override_prop.find_keyword("OFF");
+		OV_ON = override_prop.find_keyword("ON");
+		OV_NORMAL = override_prop.find_keyword("NORMAL");
+		if ( OV_OFF==NULL || OV_ON==NULL || OV_NORMAL==NULL )
+		{
+			gl_error("the use_override property '%s' does not define the expected enumeration keywords NORMAL, ON, and OFF");
+			return 0;
+		}
 	}
 
 	if(control_mode == CN_RAMP){
@@ -887,17 +905,20 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 	}
 
 	/* short circuit if the state variable doesn't change during the specified interval */
+	enumeration ps = -1; // ps==-1 means the powerstate is not found -- -1 should never be used
+	if ( powerstate_prop.is_valid() )
+		powerstate_prop.getp(ps);
 	if((t1 < next_run) && (*pMarketId == lastmkt_id)){
 		if(t1 <= next_run - bid_delay){
 			if(use_predictive_bidding == TRUE && ((control_mode == CN_RAMP && last_setpoint != setpoint0) || (control_mode == CN_DOUBLE_RAMP && (last_heating_setpoint != heating_setpoint0 || last_cooling_setpoint != cooling_setpoint0)))) {
-				;
+				; // do nothing
 			} else {// check to see if we have changed states
-				if(pState == 0){
+				if ( !powerstate_prop.is_valid() ) {
 					if(control_mode == CN_DEV_LEVEL)
 						return fast_reg_run;
 					else
 						return next_run;
-				} else if(*pState == last_pState){
+				} else if ( ps==last_pState ) { // *pState == last_pState)
 					if(control_mode == CN_DEV_LEVEL)
 						return fast_reg_run;
 					else
@@ -919,9 +940,9 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				if(use_predictive_bidding == TRUE && (control_mode == CN_DEV_LEVEL && last_setpoint != setpoint0)) {
 					;
 				} else {// check to see if we have changed states
-					if(pState == 0){
+					if(!powerstate_prop.is_valid()){
 						return fast_reg_run;
-					} else if(*pState == last_pState){
+					} else if(ps==last_pState){
 						return fast_reg_run;
 					}
 				}
@@ -965,12 +986,14 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				set_temp = setpoint0 + deadband_shift*shift_direction;
 			}
 
-			if((use_override == OU_ON) && (pOverride != 0)){
-				if(clear_price <= last_p){
+			if ( use_override==OU_ON && override_prop.is_valid() )
+			{
+				if ( clear_price<=last_p )
+				{
 					// if we're willing to pay as much as, or for more than the offered price, then run.
-					*pOverride = 1;
+					override_prop.setp(OV_ON->get_enumeration_value()); // *pOverride = 1;
 				} else {
-					*pOverride = -1;
+					override_prop.setp(OV_OFF->get_enumeration_value()); // *pOverride = -1;
 				}
 			}
 
@@ -987,14 +1010,17 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		
 		if(dir > 0){
 			if(use_predictive_bidding == TRUE){
-				if(*pState == 0 && *pMonitor > (max - deadband_shift)){
+				if ( ps == *PS_OFF && *pMonitor > (max - deadband_shift)){
 					bid = *pPriceCap;
-				} else if(*pState != 0 && *pMonitor < (min + deadband_shift)){
+				}
+				else if ( ps != *PS_OFF && *pMonitor < (min + deadband_shift)){
 					bid = 0.0;
 					no_bid = 1;
-				} else if(*pState != 0 && *pMonitor > max){
+				}
+				else if ( ps != *PS_OFF && *pMonitor > max){
 					bid = *pPriceCap;
-				} else if(*pState == 0 && *pMonitor < min){
+				}
+				else if ( ps == *PS_OFF && *pMonitor < min){
 					bid = 0.0;
 					no_bid = 1;
 				}
@@ -1008,14 +1034,21 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			}
 		} else if(dir < 0){
 			if(use_predictive_bidding == TRUE){
-				if(*pState == 0 && *pMonitor < (min + deadband_shift)){
+				if ( ps==*PS_OFF && *pMonitor < (min + deadband_shift) )
+				{
 					bid = *pPriceCap;
-				} else if(*pState != 0 && *pMonitor > (max - deadband_shift)){
+				}
+				else if ( ps != *PS_OFF && *pMonitor > (max - deadband_shift) )
+				{
 					bid = 0.0;
 					no_bid = 1;
-				} else if(*pState != 0 && *pMonitor < min){
+				}
+				else if ( ps != *PS_OFF && *pMonitor < min)
+				{
 					bid = *pPriceCap;
-				} else if(*pState == 0 && *pMonitor > max){
+				}
+				else if ( ps == *PS_OFF && *pMonitor > max)
+				{
 					bid = 0.0;
 					no_bid = 1;
 				}
@@ -1031,9 +1064,13 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			if(use_predictive_bidding == TRUE){
 				if(direction == 0.0) {
 					gl_error("the variable direction did not get set correctly.");
-				} else if((*pMonitor > max + deadband_shift || (*pState != 0 && *pMonitor > min - deadband_shift)) && direction > 0){
+				}
+				else if ( (*pMonitor > max + deadband_shift || (ps != *PS_OFF && *pMonitor > min - deadband_shift)) && direction > 0 )
+				{
 					bid = *pPriceCap;
-				} else if((*pMonitor < min - deadband_shift || (*pState != 0 && *pMonitor < max + deadband_shift)) && direction < 0){
+				}
+				else if ( (*pMonitor < min - deadband_shift || ( ps != *PS_OFF && *pMonitor < max + deadband_shift)) && direction < 0 )
+				{
 					bid = *pPriceCap;
 				} else {
 					bid = 0.0;
@@ -1089,8 +1126,8 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			controller_bid.market_id = lastmkt_id;
 			controller_bid.price = last_p;
 			controller_bid.quantity = -last_q;
-			if(pState != 0){
-				if (*pState > 0) {
+			if( powerstate_prop.is_valid() ){
+				if ( ps == *PS_ON ) {
 					controller_bid.state = BS_ON;
 				} else {
 					controller_bid.state = BS_OFF;
@@ -1225,14 +1262,14 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 
 		if(dir > 0){
 			if(use_predictive_bidding == TRUE){
-				if(*pState == 0 && *pMonitor > (max - deadband_shift)){
+				if(ps == *PS_OFF && *pMonitor > (max - deadband_shift)){
 					bid = *pPriceCap;
-				} else if(*pState != 0 && *pMonitor < (min + deadband_shift)){
+				} else if(ps != *PS_OFF && *pMonitor < (min + deadband_shift)){
 					bid = 0.0;
 					no_bid = 1;
-				} else if(*pState != 0 && *pMonitor > max){
+				} else if(ps != *PS_OFF && *pMonitor > max){
 					bid = *pPriceCap;
-				} else if(*pState == 0 && *pMonitor < min){
+				} else if(ps == *PS_OFF && *pMonitor < min){
 					bid = 0.0;
 					no_bid = 1;
 				}
@@ -1246,14 +1283,14 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			}
 		} else if(dir < 0){
 			if(use_predictive_bidding == TRUE){
-				if(*pState == 0 && *pMonitor < (min + deadband_shift)){
+				if(ps == *PS_OFF && *pMonitor < (min + deadband_shift)){
 					bid = *pPriceCap;
-				} else if(*pState != 0 && *pMonitor > (max - deadband_shift)){
+				} else if(ps != *PS_OFF && *pMonitor > (max - deadband_shift)){
 					bid = 0.0;
 					no_bid = 1;
-				} else if(*pState != 0 && *pMonitor < min){
+				} else if(ps != *PS_OFF && *pMonitor < min){
 					bid = *pPriceCap;
-				} else if(*pState == 0 && *pMonitor > max){
+				} else if(ps == *PS_OFF && *pMonitor > max){
 					bid = 0.0;
 					no_bid = 1;
 				}
@@ -1269,9 +1306,9 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			if(use_predictive_bidding == TRUE){
 				if(direction == 0.0) {
 					gl_error("the variable direction did not get set correctly.");
-				} else if((*pMonitor > max + deadband_shift || (*pState != 0 && *pMonitor > min - deadband_shift)) && direction > 0){
+				} else if((*pMonitor > max + deadband_shift || (ps != *PS_OFF && *pMonitor > min - deadband_shift)) && direction > 0){
 					bid = *pPriceCap;
-				} else if((*pMonitor < min - deadband_shift || (*pState != 0 && *pMonitor < max + deadband_shift)) && direction < 0){
+				} else if((*pMonitor < min - deadband_shift || (ps != *PS_OFF && *pMonitor < max + deadband_shift)) && direction < 0){
 					bid = *pPriceCap;
 				} else {
 					bid = 0.0;
@@ -1320,7 +1357,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			last_p = bid;
 			last_q = *pDemand;
 			
-			if(*pState == 1){
+			if(ps == *PS_ON){
 				if(0 != strcmp(market_unit2, "")){
 					if(0 == gl_convert("kW", market_unit2, &(last_q))){
 						gl_error("unable to convert bid units from 'kW' to '%s'", market_unit2);
@@ -1356,7 +1393,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 						return TS_INVALID;
 					}
 				}
-			} else if (*pState == 0) {
+			} else if (ps == *PS_OFF) {
 				if(0 != strcmp(market_unit, "")){
 					if(0 == gl_convert("kW", market_unit, &(last_q))){
 						gl_error("unable to convert bid units from 'kW' to '%s'", market_unit);
@@ -1504,23 +1541,32 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			if((use_override == OU_ON)){
 				if(last_q != 0.0){
 					if(clear_price == last_p && clear_price != *pPriceCap){
-						if(*pMarginMode == AM_DENY){
-							*pOverride = -1;
+						if ( *pMarginMode==AM_DENY )
+						{
+							override_prop.setp(OV_OFF->get_enumeration_value()); // *pOverride = -1;
 						} else if(*pMarginMode == AM_PROB){
 							double r = gl_random_uniform(RNGSTATE,0, 1.0);
-							if(r < *pMarginalFraction){
-								*pOverride = 1;
-							} else {
-								*pOverride = -1;
+							if ( r<*pMarginalFraction )
+							{
+								override_prop.setp(OV_ON->get_enumeration_value()); // *pOverride = 1;
+							}
+							else
+							{
+								override_prop.setp(OV_OFF->get_enumeration_value()); // *pOverride = -1;
 							}
 						}
-					} else if(*pClearedPrice <= last_p){
-						*pOverride = 1;
-					} else {
-						*pOverride = -1;
+					} else if ( *pClearedPrice<=last_p )
+					{
+						override_prop.setp(OV_ON->get_enumeration_value()); // *pOverride = 1;
 					}
-				} else { // equality
-					*pOverride = 0; // 'normal operation'
+					else
+					{
+						override_prop.setp(OV_OFF->get_enumeration_value()); // *pOverride = -1;
+					}
+				}
+				else // last_q==0
+				{
+					override_prop.setp(OV_NORMAL->get_enumeration_value()); // *pOverride = 0; // 'normal operation'
 				}
 			}
 
@@ -1599,8 +1645,8 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		controller_bid.quantity = -last_q;
 
 		if(last_q > 0.001){
-			if(pState != 0){
-				if (*pState > 0) {
+			if( powerstate_prop.is_valid() ){
+				if ( ps == *PS_ON ) {
 					controller_bid.state = BS_ON;
 				} else {
 					controller_bid.state = BS_OFF;
@@ -1618,14 +1664,14 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		}
 		else
 		{
-			if (last_pState != *pState)
+			if (last_pState != ps)
 			{
 				KEY bid = (KEY)(lastmkt_id == *pMarketId ? lastbid_id : -1);
 				double my_bid = -*pPriceCap;
-				if (*pState != 0)
+				if ( ps != *PS_OFF  )
 					my_bid = last_p;
 
-				if (*pState > 0) {
+				if ( ps == *PS_ON ) {
 					controller_bid.state = BS_ON;
 				} else {
 					controller_bid.state = BS_OFF;
@@ -1639,8 +1685,8 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		}
 	}
 
-	if (pState != 0)
-		last_pState = *pState;
+	if ( powerstate_prop.is_valid() )
+		last_pState = ps;
 
 	char timebuf[128];
 	gl_printtime(t1,timebuf,127);
@@ -1721,7 +1767,7 @@ int controller::dev_level_ctrl(TIMESTAMP t0, TIMESTAMP t1){
 	// Not sure if this is needed, but lets clean up the Override signal if we are entering a new market
 	//  We'll catch the new signal one reg signal too late for now
 	if(((t1-last_run) % int(dPeriod)) == 0) {
-		*pOverride = 0; 
+		override_prop.setp(OV_NORMAL->get_enumeration_value());
 		last_override = 0;
 	}
 	// If engaged and during the first pass, check to see if we should override
@@ -1735,7 +1781,7 @@ int controller::dev_level_ctrl(TIMESTAMP t0, TIMESTAMP t1){
 					P_ON_init = P_ON;
 					delta_u = fast_reg_signal*P_ON_init;		
 					locked = 0;
-					*pOverride = 0;
+					override_prop.setp(OV_NORMAL->get_enumeration_value());
 					last_override = 0;
 					u_last = (1+fast_reg_signal)*P_ON_init;
 				}
@@ -1756,18 +1802,18 @@ int controller::dev_level_ctrl(TIMESTAMP t0, TIMESTAMP t1){
 						r1 = gl_random_uniform(RNGSTATE,0, 1.0);
 
 						if(r1 < mu0){
-							*pOverride = 1;
+							override_prop.setp(OV_ON->get_enumeration_value());
 							locked = 1;
 						} 
 						else {
 							if (use_override == OU_ON)
-								*pOverride = -1; //keep it in the OFF position
+								override_prop.setp(OV_OFF->get_enumeration_value()); //keep it in the OFF position
 							else
-								*pOverride = 0;	 //else operate normally is probably not needed
+								override_prop.setp(OV_NORMAL->get_enumeration_value());	 //else operate normally is probably not needed
 						}
 					}
 					else if (use_override == OU_ON) {
-						*pOverride = 1; //keep it in the ON position
+						override_prop.setp(OV_ON->get_enumeration_value()); //keep it in the ON position
 					}
 				}
 				// Ensure that it stays in the position we have decided on
@@ -1779,9 +1825,9 @@ int controller::dev_level_ctrl(TIMESTAMP t0, TIMESTAMP t1){
 						mu1 = 0;
 					if (use_override == OU_ON) {
 						if (locked == 1)
-							*pOverride = 1; //keep it in the ON position
+							override_prop.setp(OV_ON->get_enumeration_value()); //keep it in the ON position
 						else
-							*pOverride = -1; //keep it in the OFF position
+							override_prop.setp(OV_OFF->get_enumeration_value()); //keep it in the OFF position
 					}
 				}
 				// If we are part of the ON->OFF market
@@ -1796,17 +1842,17 @@ int controller::dev_level_ctrl(TIMESTAMP t0, TIMESTAMP t1){
 						r1 = gl_random_uniform(RNGSTATE,0, 1.0);
 
 						if(r1 < mu1){
-							*pOverride = -1;
+							override_prop.setp(OV_OFF->get_enumeration_value());
 							locked = 1;
 						} else {
 							if (use_override == OU_ON)
-								*pOverride = 1; // keep it in the ON position
+								override_prop.setp(OV_ON->get_enumeration_value()); // keep it in the ON position
 							else
-								*pOverride = 0;	// operate normally is probably not needed
+								override_prop.setp(OV_NORMAL->get_enumeration_value());	// operate normally is probably not needed
 						}	
 					}
 					else if (use_override == OU_ON) {
-						*pOverride = -1; //keep it in the OFF position
+						override_prop.setp(OV_OFF->get_enumeration_value()); //keep it in the OFF position
 					}
 				}
 				else if (last_market == 1) {
@@ -1817,18 +1863,18 @@ int controller::dev_level_ctrl(TIMESTAMP t0, TIMESTAMP t1){
 						mu1 = 0;
 					if (use_override == OU_ON) {
 						if (locked == 1)
-							*pOverride = -1; //keep it in the OFF position
+							override_prop.setp(OV_OFF->get_enumeration_value()); //keep it in the OFF position
 						else
-							*pOverride = 1; //keep it in the ON position
+							override_prop.setp(OV_ON->get_enumeration_value()); //keep it in the ON position
 					}
 				}
 				else {
 					mu0 = 0;
 					mu1 = 0;
-					*pOverride = 0;
+					override_prop.setp(OV_NORMAL->get_enumeration_value());
 				}
 
-				last_override = *pOverride;
+				last_override = override_prop.get_integer();
 
 				P_OFFLOCK = P_OFFLOCK + mu1*P_ON;			
 				P_ON = (1-mu1)*P_ON;
@@ -1836,11 +1882,11 @@ int controller::dev_level_ctrl(TIMESTAMP t0, TIMESTAMP t1){
 				P_OFF = (1-mu0)*P_OFF; 
 			}
 			else {
-				*pOverride = last_override;
+				override_prop.setp(last_override);
 			}
 		}
 		else {
-			*pOverride = last_override;
+			override_prop.setp(last_override);
 		}
 	}
 	return 0;

@@ -40,13 +40,13 @@ residential_enduse::residential_enduse(MODULE *mod)
 			PT_loadshape,"shape",PADDR(shape),
 			PT_enduse,"",PADDR(load),
 			PT_enumeration,"override",PADDR(re_override),
-				PT_KEYWORD,"ON",(enumeration)OV_ON,
 				PT_KEYWORD,"NORMAL",(enumeration)OV_NORMAL,
+				PT_KEYWORD,"ON",(enumeration)OV_ON,
 				PT_KEYWORD,"OFF",(enumeration)OV_OFF,
 			PT_enumeration, "power_state", PADDR(power_state),
-				PT_KEYWORD, "UNKNOWN", (enumeration)PS_UNKNOWN,
 				PT_KEYWORD, "OFF", (enumeration)PS_OFF,
 				PT_KEYWORD, "ON", (enumeration)PS_ON,
+				PT_KEYWORD, "UNKNOWN", (enumeration)PS_UNKNOWN,
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 			/* TROUBLESHOOT
 				The registration for the residential_enduse properties failed.   This is usually caused

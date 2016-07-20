@@ -153,7 +153,8 @@ private:
 	double *pMarginalFraction;
 	double *pAvg2;	//Second Market
 	double *pStd2;	//Second Market
-	enumeration *pState;
+	gld_property powerstate_prop;
+	gld_keyword *PS_OFF, *PS_ON, *PS_UNKNOWN;
 	enumeration last_pState;
 	void cheat();
 	void fetch_double(double **prop, char *name, OBJECT *parent);
@@ -203,7 +204,8 @@ private:
 	FUNCTIONADDR submit;
 	FUNCTIONADDR submit2;
 
-	enumeration *pOverride;
+	gld_property override_prop;
+	gld_keyword *OV_NORMAL, *OV_ON, *OV_OFF;
 	enumeration *pOverride2;
 	int64 *pMarketId;
 	int64 *pMarketId2;

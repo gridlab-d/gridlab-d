@@ -12,15 +12,15 @@
 #include "residential.h"
 
 typedef enum {
-	OV_ON = 1,
 	OV_NORMAL = 0,
-	OV_OFF = -1,
+	OV_ON = 1,
+	OV_OFF = 2,
 } OVERRIDE;
 
 typedef enum {
-	PS_UNKNOWN=-1,
 	PS_OFF=0,
-	PS_ON=1
+	PS_ON=1,
+	PS_UNKNOWN=2,
 } POWERSTATE;
 
 class residential_enduse : public gld_object
