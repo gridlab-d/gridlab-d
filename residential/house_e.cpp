@@ -311,6 +311,12 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"thermal_storage_present",PADDR(thermal_storage_present),PT_DESCRIPTION,"logic statement for determining if energy storage is present",
 			PT_double,"thermal_storage_in_use",PADDR(thermal_storage_inuse),PT_DESCRIPTION,"logic statement for determining if energy storage is being utilized",
 
+			PT_enumeration,"thermostat_mode",PADDR(thermostat_mode),PT_DESCRIPTION,"tells the thermostat whether it is even allowed to heat or cool the house.",
+				PT_KEYWORD, "OFF", (enumeration)TM_OFF,
+				PT_KEYWORD, "AUTO", (enumeration)TM_AUTO,
+				PT_KEYWORD, "HEAT", (enumeration)TM_HEAT,
+				PT_KEYWORD, "COOL", (enumeration)TM_COOL,
+
 			PT_set,"system_type",PADDR(system_type),PT_DESCRIPTION,"heating/cooling system type/options",
 				PT_KEYWORD, "NONE", (set)ST_NONE,
 				PT_KEYWORD, "GAS",	(set)ST_GAS,
@@ -707,7 +713,7 @@ int house_e::create()
 	window_c = 1;
 	window_temp_delta = 5; 
 	last_temperature = 75;
-
+	thermostat_mode = TM_AUTO;
 	return result;
 }
 
@@ -2367,37 +2373,40 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 	/* dt2 is for the next thermal event ... avoid calculating the next time to a given
 		temperature until the cycle time has elapse.
 	 */
-	
-	if(thermostat_off_cycle_time == -1 && thermostat_on_cycle_time == -1){
-		// this is always false if thermostat_cycle_time == 0
-		if(t < thermostat_last_cycle_time + thermostat_cycle_time){
-			dt2 = (double)(thermostat_last_cycle_time + thermostat_cycle_time);
-		} else {
-			dt2 = e2solve(k1,r1,k2,r2,Teq-Tevent)*3600.0;
-		}
-	} else if(thermostat_off_cycle_time >= 0 && thermostat_on_cycle_time >= 0){
-		if(thermostat_last_off_cycle_time > thermostat_last_on_cycle_time){
-			if(t < thermostat_last_off_cycle_time + thermostat_off_cycle_time){
-				dt2 = (double)(thermostat_last_off_cycle_time + thermostat_off_cycle_time);
-			} else {
-				dt2 = e2solve(k1,r1,k2,r2,Teq-Tevent)*3600;
-			}
-		} else if(thermostat_last_off_cycle_time < thermostat_last_on_cycle_time){
-			if(t < thermostat_last_on_cycle_time + thermostat_on_cycle_time){
-				dt2 = (double)(thermostat_last_on_cycle_time + thermostat_on_cycle_time);
-			} else {
-				dt2 = e2solve(k1,r1,k2,r2,Teq-Tevent)*3600;
-			}
-		} else {
+	if(re_override == OV_NORMAL){
+		if(thermostat_off_cycle_time == -1 && thermostat_on_cycle_time == -1){
+			// this is always false if thermostat_cycle_time == 0
 			if(t < thermostat_last_cycle_time + thermostat_cycle_time){
 				dt2 = (double)(thermostat_last_cycle_time + thermostat_cycle_time);
 			} else {
-				dt2 = e2solve(k1,r1,k2,r2,Teq-Tevent)*3600;
+				dt2 = e2solve(k1,r1,k2,r2,Teq-Tevent)*3600.0;
 			}
+		} else if(thermostat_off_cycle_time >= 0 && thermostat_on_cycle_time >= 0){
+			if(thermostat_last_off_cycle_time > thermostat_last_on_cycle_time){
+				if(t < thermostat_last_off_cycle_time + thermostat_off_cycle_time){
+					dt2 = (double)(thermostat_last_off_cycle_time + thermostat_off_cycle_time);
+				} else {
+					dt2 = e2solve(k1,r1,k2,r2,Teq-Tevent)*3600;
+				}
+			} else if(thermostat_last_off_cycle_time < thermostat_last_on_cycle_time){
+				if(t < thermostat_last_on_cycle_time + thermostat_on_cycle_time){
+					dt2 = (double)(thermostat_last_on_cycle_time + thermostat_on_cycle_time);
+				} else {
+					dt2 = e2solve(k1,r1,k2,r2,Teq-Tevent)*3600;
+				}
+			} else {
+				if(t < thermostat_last_cycle_time + thermostat_cycle_time){
+					dt2 = (double)(thermostat_last_cycle_time + thermostat_cycle_time);
+				} else {
+					dt2 = e2solve(k1,r1,k2,r2,Teq-Tevent)*3600;
+				}
+			}
+		} else {
+			gl_error("Both the thermostat_off_cycle_time and the thermostat_on_cycle_time must be greater than zero.");
+			return TS_INVALID;
 		}
 	} else {
-		gl_error("Both the thermostat_off_cycle_time and the thermostat_on_cycle_time must be greater than zero.");
-		return TS_INVALID;
+		dt2 = TS_NEVER;
 	}
 
 	// if no solution is found or it has already occurred
@@ -2664,26 +2673,54 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 		switch(system_mode) {
 		case SM_HEAT:
 			/* if (aux deadband OR timer tripped) AND below aux lockout, go auxiliary */
-			if(re_override != OV_ON){
-				if ( auxiliary_system_type != AT_NONE	 && 
-					((auxiliary_strategy & AX_DEADBAND	 && Tair < TauxOn)
-					 || (auxiliary_strategy & AX_TIMER	 && t0 >= thermostat_last_cycle_time + aux_heat_time_delay))
-					 || (auxiliary_strategy & AX_LOCKOUT && *pTout <= aux_heat_temp_lockout)
-					){
-					last_system_mode = system_mode = SM_AUX;
-					power_state = PS_ON;
-					thermostat_last_cycle_time = t1;
-				} else if(Tair > TheatOff - terr/2){
+			if(thermostat_mode == TM_HEAT || thermostat_mode == TM_AUTO){ //heating is allowed
+				if(re_override == OV_NORMAL){
+					if ( auxiliary_system_type != AT_NONE	 && 
+						((auxiliary_strategy & AX_DEADBAND	 && Tair < TauxOn)
+						 || (auxiliary_strategy & AX_TIMER	 && t0 >= thermostat_last_cycle_time + aux_heat_time_delay))
+						 || (auxiliary_strategy & AX_LOCKOUT && *pTout <= aux_heat_temp_lockout)
+						){
+						last_system_mode = system_mode = SM_AUX;
+						power_state = PS_ON;
+						thermostat_last_cycle_time = t1;
+					} else if(Tair > TheatOff - terr/2){
+						system_mode = SM_OFF;
+						power_state = PS_OFF;
+						thermostat_last_cycle_time = t1;
+						thermostat_last_off_cycle_time = t1;
+						turned_off = true;
+					}
+				} else if(re_override == OV_OFF){
 					system_mode = SM_OFF;
 					power_state = PS_OFF;
 					thermostat_last_cycle_time = t1;
 					thermostat_last_off_cycle_time = t1;
 					turned_off = true;
 				}
+			} else { //heating is not allowed
+				system_mode = SM_OFF;
+				power_state = PS_OFF;
+				thermostat_last_cycle_time = t1;
+				thermostat_last_off_cycle_time = t1;
+				turned_off = true;
 			}
 			break;
 		case SM_AUX:
-			if(Tair > TheatOff - terr/2 && re_override != OV_ON){
+			if(thermostat_mode == TM_HEAT || thermostat_mode == TM_AUTO){ //heating is allowed
+				if((Tair > TheatOff - terr/2 && re_override == OV_NORMAL) || (re_override == OV_OFF)){
+					system_mode = SM_OFF;
+					power_state = PS_OFF;
+					thermostat_last_cycle_time = t1;
+					thermostat_last_off_cycle_time = t1;
+					turned_off = true;
+				} else if(re_override == OV_OFF){
+					system_mode = SM_OFF;
+					power_state = PS_OFF;
+					thermostat_last_cycle_time = t1;
+					thermostat_last_off_cycle_time = t1;
+					turned_off = true;
+				}
+			} else { //heating is not allowed
 				system_mode = SM_OFF;
 				power_state = PS_OFF;
 				thermostat_last_cycle_time = t1;
@@ -2692,7 +2729,15 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 			}
 			break;
 		case SM_COOL:
-			if(Tair < TcoolOff - terr/2 && re_override != OV_ON){
+			if(thermostat_mode == TM_COOL || thermostat_mode == TM_AUTO){ //cooling is allowed
+				if((Tair < TcoolOff - terr/2 && re_override == OV_NORMAL) || (re_override == OV_OFF)){
+					system_mode = SM_OFF;
+					power_state = PS_OFF;
+					thermostat_last_cycle_time = t1;
+					thermostat_last_off_cycle_time = t1;
+					turned_off = true;
+				}
+			} else { //cooling is not allowed
 				system_mode = SM_OFF;
 				power_state = PS_OFF;
 				thermostat_last_cycle_time = t1;
@@ -2701,9 +2746,7 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 			}
 			break;
 		case SM_OFF:
-			if((Tair > TcoolOn - terr/2) &&
-//				(system_type&ST_AC))
-				(cooling_system_type != CT_NONE ))
+			if((Tair > TcoolOn - terr/2) && (cooling_system_type != CT_NONE) && (thermostat_mode == TM_AUTO || thermostat_mode == TM_COOL))
 			{
 				last_system_mode = system_mode = SM_COOL;
 				power_state = PS_ON;
@@ -2711,7 +2754,7 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 				thermostat_last_on_cycle_time = t1;
 				turned_on = true;
 			}
-			else if(Tair < TheatOn - terr/2)
+			else if(Tair < TheatOn - terr/2 && (thermostat_mode == TM_AUTO || thermostat_mode == TM_HEAT))
 			{
 				//if (outside_temperature < aux_cutin_temperature)
 				if (Tair < TauxOn && 

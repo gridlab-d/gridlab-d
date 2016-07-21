@@ -125,6 +125,7 @@ public:
 	char32 cooling_state;
 	char32 deadband;
 	char32 re_override;
+	char32 thermostat_state;
 
 	double setpoint0;
 	double heating_setpoint0;
@@ -183,6 +184,7 @@ private:
 	double *pCoolingLoad;
 	enumeration *pHeatingState;
 	enumeration *pCoolingState;
+	enumeration *pThermostatState;
 	double *pAuxState;
 	double *pHeatState;
 	double *pCoolState;

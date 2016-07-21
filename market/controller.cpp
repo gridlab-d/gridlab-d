@@ -130,6 +130,7 @@ controller::controller(MODULE *module){
 			PT_double, "cool_min", PADDR(cool_min),
 #endif
 			PT_int32, "bid_delay", PADDR(bid_delay),
+			PT_char32, "thermostat_state", PADDR(thermostat_state), PT_DESCRIPTION, "The name of the thermostat state property within the object being controlled",
 			// PROXY PROPERTIES
 			PT_double, "proxy_average", PADDR(proxy_avg),
 			PT_double, "proxy_standard_deviation", PADDR(proxy_std),
@@ -600,7 +601,15 @@ int controller::init(OBJECT *parent){
 		controller_bid.bid_id = bid_id;
 	}
 	controller_bid2.bid_id = controller_bid.bid_id;
-
+	if(thermostat_state[0] == 0){
+		pThermostatState = NULL;
+	} else {
+		pThermostatState = gl_get_enum_by_name(parent, thermostat_state);
+		if(pThermostatState == 0){
+			gl_error("thermostat state property name \'%s\' is not published by parent class.", (char *)&thermostat_state);
+			return 0;
+		}
+	}
 	if(dir == 0){
 		double high = ramp_high * range_high;
 		double low = ramp_low * range_low;
@@ -698,6 +707,9 @@ int controller::init(OBJECT *parent){
 			gl_error("the use_override property '%s' does not define the expected enumeration keywords NORMAL, ON, and OFF");
 			return 0;
 		}
+	}
+	if(use_override == OU_ON && bid_delay <= 0){
+		bid_delay = 1;
 	}
 
 	if(control_mode == CN_RAMP){
@@ -866,6 +878,11 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 		previous_mode = thermostat_mode;
 	else
 		previous_mode = TM_OFF;
+	if(override_prop.is_valid()){
+		if(use_override == OU_OFF && override_prop.get_enumeration() != 0){
+			override_prop.setp(OV_NORMAL->get_enumeration_value());
+		}
+	}
 
 	return TS_NEVER;
 }
@@ -912,6 +929,8 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		if(t1 <= next_run - bid_delay){
 			if(use_predictive_bidding == TRUE && ((control_mode == CN_RAMP && last_setpoint != setpoint0) || (control_mode == CN_DOUBLE_RAMP && (last_heating_setpoint != heating_setpoint0 || last_cooling_setpoint != cooling_setpoint0)))) {
 				; // do nothing
+			} else if(use_override == OU_ON && t1 == next_run - bid_delay){
+				;
 			} else {// check to see if we have changed states
 				if ( !powerstate_prop.is_valid() ) {
 					if(control_mode == CN_DEV_LEVEL)
@@ -1566,7 +1585,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				}
 				else // last_q==0
 				{
-					override_prop.setp(OV_NORMAL->get_enumeration_value()); // *pOverride = 0; // 'normal operation'
+					override_prop.setp(OV_OFF->get_enumeration_value()); // *pOverride = 0; // 'normal operation'
 				}
 			}
 
@@ -1591,12 +1610,12 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		last_q = 0.0;
 		
 		// We have to cool
-		if(*pMonitor > cool_max){
+		if(*pMonitor > cool_max && (pThermostatState == NULL || *pThermostatState == 1 || *pThermostatState == 3)){
 			last_p = *pPriceCap;
 			last_q = *pCoolingDemand;
 		}
 		// We have to heat
-		else if(*pMonitor < heat_min){
+		else if(*pMonitor < heat_min && (pThermostatState == NULL || *pThermostatState == 1 || *pThermostatState == 2)){
 			last_p = *pPriceCap;
 			last_q = *pHeatingDemand;
 		}
@@ -1606,7 +1625,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			last_q = 0.0;
 		}
 		// We might heat, if the price is right
-		else if(*pMonitor <= heat_max && *pMonitor >= heat_min){
+		else if(*pMonitor <= heat_max && *pMonitor >= heat_min && (pThermostatState == NULL || *pThermostatState == 1 || *pThermostatState == 2)){
 			double ramp, range;
 			ramp = (*pMonitor > heating_setpoint0 ? heat_ramp_high : heat_ramp_low);
 			range = (*pMonitor > heating_setpoint0 ? heat_range_high : heat_range_low);
@@ -1618,7 +1637,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			last_q = *pHeatingDemand;
 		}
 		// We might cool, if the price is right
-		else if(*pMonitor <= cool_max && *pMonitor >= cool_min){
+		else if(*pMonitor <= cool_max && *pMonitor >= cool_min && (pThermostatState == NULL || *pThermostatState == 1 || *pThermostatState == 3)){
 			double ramp, range;
 			ramp = (*pMonitor > cooling_setpoint0 ? cool_ramp_high : cool_ramp_low);
 			range = (*pMonitor > cooling_setpoint0 ? cool_range_high : cool_range_low);

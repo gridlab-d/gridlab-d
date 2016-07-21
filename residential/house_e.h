@@ -400,6 +400,14 @@ public:
 
 	double is_AUX_on,is_HEAT_on,is_COOL_on;	// A logic statement so that the population dynamics of the AC can be observed with collectors.
 
+	typedef enum {
+		TM_OFF = 0,
+		TM_AUTO = 1,
+		TM_HEAT = 2,
+		TM_COOL = 3,
+	}THERMOSTATMODE;
+	enumeration thermostat_mode;
+
 private:
 	TIMESTAMP simulation_beginning_time;
 	void set_thermal_integrity();
