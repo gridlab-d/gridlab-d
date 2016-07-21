@@ -8,7 +8,7 @@ CC = $(PTHREAD_CC)
 CXX = $(PTHREAD_CXX)
 
 AM_CPPFLAGS =
-AM_CPPFLAGS += -I$(top_srcdir)/core
+AM_CPPFLAGS += -I$(top_srcdir)/gldcore
 AM_CPPFLAGS += $(GLD_CPPFLAGS)
 
 AM_CFLAGS =
@@ -53,11 +53,11 @@ include commercial/Makefile.mk
 #include comm/Makefile.mk
 include connection/Makefile.mk
 #include control/Makefile.mk
-include core/link/engine/Makefile.mk
-include core/link/matlab/Makefile.mk
-include core/Makefile.mk
-include core/rt/Makefile.mk
-include core/solvers/Makefile.mk
+include gldcore/link/engine/Makefile.mk
+include gldcore/link/matlab/Makefile.mk
+include gldcore/Makefile.mk
+include gldcore/rt/Makefile.mk
+include gldcore/solvers/Makefile.mk
 #include debug/Makefile.mk
 include generators/Makefile.mk
 include market/Makefile.mk
@@ -104,8 +104,8 @@ EXTRA_DIST += $(top_srcdir)/gridlabd.spec
 EXTRA_DIST += $(top_srcdir)/README-LINUX
 EXTRA_DIST += $(top_srcdir)/README-MACOSX
 EXTRA_DIST += $(top_srcdir)/Resources/Background.png
-EXTRA_DIST += $(top_srcdir)/Resources/GridLAB-D.pmdoc/01core-contents.xml
-EXTRA_DIST += $(top_srcdir)/Resources/GridLAB-D.pmdoc/01core.xml
+EXTRA_DIST += $(top_srcdir)/Resources/GridLAB-D.pmdoc/01gldcore-contents.xml
+EXTRA_DIST += $(top_srcdir)/Resources/GridLAB-D.pmdoc/01gldcore.xml
 EXTRA_DIST += $(top_srcdir)/Resources/GridLAB-D.pmdoc/02climate-contents.xml
 EXTRA_DIST += $(top_srcdir)/Resources/GridLAB-D.pmdoc/02climate.xml
 EXTRA_DIST += $(top_srcdir)/Resources/GridLAB-D.pmdoc/03libxerces-contents.xml
@@ -138,7 +138,7 @@ EXTRA_DIST += $(top_srcdir)/models/WA-Yakima.tmy2
 EXTRA_DIST += $(top_srcdir)/models/waterheater_example.glm
 EXTRA_DIST += $(top_srcdir)/models/weather.csv
 EXTRA_DIST += $(top_srcdir)/models/wind_turbine_example.glm
-EXTRA_DIST += $(top_srcdir)/core/gridlabd.htm
+EXTRA_DIST += $(top_srcdir)/gldcore/gridlabd.htm
 pkgdata_DATA += $(top_srcdir)/models/climate_csvreader_example.glm
 pkgdata_DATA += $(top_srcdir)/models/collector_example.glm
 pkgdata_DATA += $(top_srcdir)/models/diesel_deltamode_load_player_A.csv
@@ -160,7 +160,7 @@ pkgdata_DATA += $(top_srcdir)/models/WA-Yakima.tmy2
 pkgdata_DATA += $(top_srcdir)/models/waterheater_example.glm
 pkgdata_DATA += $(top_srcdir)/models/weather.csv
 pkgdata_DATA += $(top_srcdir)/models/wind_turbine_example.glm
-pkgdata_DATA += $(top_srcdir)/core/gridlabd.htm
+pkgdata_DATA += $(top_srcdir)/gldcore/gridlabd.htm
 
 if MISSING_XERCES
 all-local:
@@ -246,12 +246,12 @@ $(scratchdir)/.xerces.stamp: third_party/$(XERCES_TARNAME).tar.gz
 
 $(scratchdir)/pkg: $(scratchdir)/.xerces.stamp distdir
 	test ! -e $@ || rm -rf $@
-	test -d $@/core || mkdir -p $@/core
-	cd $(distdir) && ./configure --with-xerces=$(CURDIR)/$(scratchdir)/$(XERCES_TARNAME) && make install DESTDIR=$(CURDIR)/$@/core
+	test -d $@/gldcore || mkdir -p $@/gldcore
+	cd $(distdir) && ./configure --with-xerces=$(CURDIR)/$(scratchdir)/$(XERCES_TARNAME) && make install DESTDIR=$(CURDIR)/$@/gldcore
 	cd $@ && mkdir -p climate-data/usr/lib/gridlabd devel/usr/lib/gridlabd libxerces-c/usr/lib
-	mv $@/core/usr/lib/gridlabd/*.zip $@/climate-data/usr/lib/gridlabd/
-	mv $@/core/usr/include $@/devel/usr/include
-	mv $@/core/usr/lib/gridlabd/*.la $@/devel/usr/lib/gridlabd/
+	mv $@/gldcore/usr/lib/gridlabd/*.zip $@/climate-data/usr/lib/gridlabd/
+	mv $@/gldcore/usr/include $@/devel/usr/include
+	mv $@/gldcore/usr/lib/gridlabd/*.la $@/devel/usr/lib/gridlabd/
 	cp $(scratchdir)/$(XERCES_TARNAME)/lib/libxerces-c.* $@/libxerces-c/usr/lib/
 	$(am__remove_distdir)
 

@@ -23,8 +23,8 @@ m4_define([svnversion], sbuild_m4_esyscmd_s([build-aux/version.sh --svn]))
 
 AC_PREREQ([2.63])
 AC_INIT([GridLAB-D], pkgversion, [gridlabd@pnnl.gov], [gridlabd])
-AC_CONFIG_SRCDIR([core/aggregate.c])
-AC_CONFIG_HEADER([core/config.h])
+AC_CONFIG_SRCDIR([gldcore/aggregate.c])
+AC_CONFIG_HEADER([gldcore/config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([build-aux])
 
@@ -597,7 +597,7 @@ AC_SUBST([MYSQL_LIBS])
 
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([gridlabd.spec])
-AC_CONFIG_FILES([core/gridlabd], [chmod +x core/gridlabd])
+AC_CONFIG_FILES([gldcore/gridlabd], [chmod +x gldcore/gridlabd])
 AC_OUTPUT
 
 BINDIR=`eval echo $(eval echo $bindir)`

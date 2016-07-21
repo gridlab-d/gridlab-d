@@ -14,7 +14,7 @@
 #endif
 
 #ifndef BUILDNUM
-#error("core/build.h was not updated properly (BUILDNUM is missing) - try deleting it and rebuilding again")
+#error("gldcore/build.h was not updated properly (BUILDNUM is missing) - try deleting it and rebuilding again")
 #ifdef BUILD
 #undef BUILD
 #endif
@@ -22,7 +22,7 @@
 #endif
 
 #ifndef REV_YEAR
-#error("core/build.h was not updated properly (REV_YEAR is missing) - try deleting it and rebuilding again")
+#error("gldcore/build.h was not updated properly (REV_YEAR is missing) - try deleting it and rebuilding again")
 #endif
 
 const char *version_copyright(void)

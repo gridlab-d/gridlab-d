@@ -53,12 +53,12 @@ if [ -f VERSION ]; then
 		echo "ERROR: VERSION doesn't specified release version info"
 	elif [ ! -f REV ]; then
 		echo "ERROR: REV file not found; this release is faulty"
-	elif [ -f core/version.h ]; then
+	elif [ -f gldcore/version.h ]; then
 		. ./REV
 		if [ -z "$BUILD" ]; then
 			echo "ERROR: REV file does not specify BUILD"
 		else
-			echo -n "Updating core/version.h with VERSION info... "
+			echo -n "Updating gldcore/version.h with VERSION info... "
 			echo "/* automatically created by $0 */" >.tmp.$$
 			echo "" >>.tmp.$$
 			echo "#ifndef _GRIDLABD_VERSION_H" >>.tmp.$$
@@ -77,12 +77,12 @@ if [ -f VERSION ]; then
 			echo "#define BRANCH \"$NAME\"" >>.tmp.$$
 			echo "" >>.tmp.$$
 			echo "#endif" >>.tmp.$$
-#			grep BRANCH core/version.h >>.tmp.$$
-			mv .tmp.$$ core/version.h
+#			grep BRANCH gldcore/version.h >>.tmp.$$
+			mv .tmp.$$ gldcore/version.h
 			echo "done"
 		fi
 	else
-		echo "ERROR: core/version.h not found and couldn't be updated"
+		echo "ERROR: gldcore/version.h not found and couldn't be updated"
 	fi	
 fi
 

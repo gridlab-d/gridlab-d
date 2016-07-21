@@ -1,4 +1,4 @@
-/** $Id$
+/** $Id: cmdarg.c 5518 2016-07-15 00:55:28Z andyfisher $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file cmdarg.c
 	@addtogroup cmdarg Command-line arguments

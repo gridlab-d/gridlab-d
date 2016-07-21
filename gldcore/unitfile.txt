@@ -1,0 +1,202 @@
+; $Id: unitfile.txt 4738 2014-07-03 00:55:39Z dchassin $
+; Copyright (C) Battelle Memorial Institute, 2007
+; This file is distributed under the same terms as GridLAB-D
+;
+; The unit manager loads a unit description file implemented in unitfile.txt.  
+; The file describes each unit available as a function of fundamental physical constants, basic SI units, or a derivation of other units.
+; Physical Constants and Basic Units
+;
+; The physical constants for c (speed of light in meters per second), 
+;  e (charge of an electron in Coulombs), 
+;  h (Plank's constant in kilogram meters squared per second),
+;  k (Boltzman's constant in kilogram meters squared per second squared Kelvin),
+;  m (rest mass of an electron in kilograms), and
+;  s (price of gold in 1990 in US dollars per kilogram)
+;  are defined as follows:
+;   #c=2.997925e8
+;   #e=1.602189246e-19
+;   #h=6.62617636e-34
+;   #k=1.38066244e-23
+;   #m=9.10953447e-31
+;   #s=1.233270e4
+;
+; The basic SI units are defined as follows:
+;	unit=0,0,0,0,0,0,1,0,16
+;	m=-1,0,1,0,-1,0,4.121487e01,0,7
+;	kg=0,0,0,0,1,0,1.09775094e30,0,10
+;	sec=-2,0,1,0,-1,0,1.235591e10,0,7
+;	A=2,1,-1,0,1,0,5.051397e08,0,7
+;	K=2,0,0,-1,1,0,1.686358e00,0,7
+;	cd=4,0,-1,0,2,0,1.447328E+00,0,7
+;
+; Derived units may be specified as follows:
+;  R=0.55555556 K
+;  C=K-273.14
+;  F=R-459.65
+;  g=0.001 kg
+;  N=1 m*kg/sec^2
+;  Pa=N/m^2
+;  J=N*m
+;
+
+; Physical and Financial Constants
+#c=2.997925e8 ; speed of light (m/s)
+#e=1.602189246e-19 ; electron charge (C)
+#h=6.62617636e-34 ; Plank's constant (kg.m.m/s)
+#k=1.38066244e-23 ; Boltzman's constant (kg.m.m/s.s.K)
+#m=9.10953447e-31 ; electron rest mass (kg)
+#s=1.233270e4 ; average price of gold in 1990 ($/kg - 383.59$/oz)
+
+; Scalars (these are as of build 1069)
+*Y=24
+*Z=21
+*E=18
+*P=15
+*T=12
+*G=9
+*M=6
+*k=3
+*h=2
+*da=1
+*d=-1
+*c=-2
+*m=-3
+*u=-6
+*n=-9
+*p=-12
+*f=-15
+*a=-18
+*z=-21
+*y=-24
+
+; unit
+unit=0,0,0,0,0,0,1,0,16
+
+; dimensionless
+ratio=1 unit
+%=0.01 unit
+pu=1/unit
+/%=1/%
+
+
+; Basic SI
+m=-1,0,1,0,-1,0,4.121487e01,0,7
+g=0,0,0,0,1,0,1.09775094e27,0,10
+s=-2,0,1,0,-1,0,1.235591e10,0,7
+A=2,1,-1,0,1,0,5.051397e08,0,7
+K=2,0,0,-1,1,0,1.686358e00,0,7
+cd=4,0,-1,0,2,0,1.447328E+00,0,7
+1990$=0,0,0,0,1,1,1.097751e30,0,7
+
+; Angular measures
+pi=3.1415926536
+rad=0.159155 unit
+deg=0.0027777778 unit
+grad=0.0025 unit
+quad=0.25 unit
+sr=0.5 rad
+
+; Derived SI
+R=0.55555556 K
+degC=K-273.14
+degF=R-459.65
+N=1 m*kg/s^2
+Pa=N/m^2
+J=N*m
+
+; Currency
+1975$=0.42 1990$
+1980$=1.60 1990$
+1985$=0.83 1990$
+1995$=1.00 1990$
+1996$=1.01 1990$
+$=1.00 1996$
+CA$=0.85 $
+
+; Time
+min=60 s
+h=60 min
+day=24 h
+wk=7 day
+yr=365 day
+syr=365.24 day
+
+; Length
+in=0.0254 m
+ft=12 in
+yd=3 ft
+mile=5280 ft
+
+; Area
+sf=ft^2
+sy=yd^2
+
+; Volume
+cf=ft^3
+cy=yd^3
+gal=0.0037854118 m^3
+l=0.001 m^3
+
+; Mass
+lb=0.453592909436 kg
+tonne=1000 kg
+
+; Velocity
+mph=1 mile/h
+fps=1 ft/s
+fpm=1 ft/min
+mps=1 m/s
+
+; Flow rates
+gps=1 gal/s
+gpm=1 gal/min
+gph=1 gal/h
+cfm=1 ft^3/min
+ach=1/h
+
+; Frequency
+Hz=1/s
+
+; EM units
+W=J/s
+Wh=1 W*h
+Btu=0.293 W*h
+ton=12000 Btu/h ; ton cooling
+tons=1 ton*s ; ton.second cooling
+tonh=1 ton*h ; ton.hour cooling
+hp=746 W ; horsepower
+V=W/A ; Volt
+C=A*s ; Coulomb
+F=C/V ; Farad
+Ohm=V/A ; resistance
+H=Ohm*s ; Henry
+VA=V*A	; Volt-Amp
+VAr=1 V*A	; Volt-Amp reactive
+VAh=1 VA*h
+Wb=J/A ; Weber
+lm=cd*sr ; lumen
+lx=lm/m^2 ; lux
+Bq=1/s ; Becquerel
+Gy=J/kg ; Grey
+Sv=J/kg ; Sievert
+S=1/Ohm ; Siemens
+
+; data
+b=1 unit ; 1 bit
+B=8 b ; 1 byte
+
+; pressure
+bar=100000 Pa
+psi=6894.757293178 Pa
+atm=98066.5 Pa
+inHg=3376.85 Pa ; at 60degF
+inH2O=248.843 Pa ; at 60degF
+
+; Custom
+EER=Btu/Wh
+; ccf=1000 Btu ; this conflict with centi-cubic-feet (ccf)
+therm=100000 Btu
+
+; temporary bad definitions to keep things moving along 
+; @todo get rid of bad unit definitions
+ohm=Ohm ; should be capitalized but often isn't
