@@ -9,6 +9,9 @@
 #ifndef _inverter_H
 #define _inverter_H
 
+#include <utility>		//for pair<> in Volt/VAr schedule
+#include <vector>		//for list<> in Volt/VAr schedule
+#include <string> //Ab add
 #include <stdarg.h>
 #include "gridlabd.h"
 #include "power_electronics.h"
@@ -46,6 +49,7 @@ public:
 	double soc_reserve; // the battery reserve in pu
 	double p_rated; // the power rating of the inverter per phase
 	double bp_rated; // the power rating on the DC side
+	double f_nominal;
 	double inv_eta; // the inverter's efficiency
 	double V_Set_A;
 	double V_Set_B;
@@ -114,7 +118,7 @@ public:
 	enumeration inverter_manufacturer; //known manufacturer to set some presets else use variables themselves for custom inverter.
 
 	//properties for four quadrant control modes
-	enum FOUR_QUADRANT_CONTROL_MODE {FQM_NONE=0,FQM_CONSTANT_PQ=1,FQM_CONSTANT_PF=2,FQM_CONSTANT_V=3,FQM_VOLT_VAR=4,FQM_LOAD_FOLLOWING=5, FQM_GENERIC_DROOP=6, FQM_GROUP_LF=7};
+	enum FOUR_QUADRANT_CONTROL_MODE {FQM_NONE=0,FQM_CONSTANT_PQ=1,FQM_CONSTANT_PF=2,FQM_CONSTANT_V=3,FQM_VOLT_VAR=4,FQM_LOAD_FOLLOWING=5, FQM_GENERIC_DROOP=6, FQM_GROUP_LF=7, FQM_VOLT_VAR_FREQ_PWR=8};
 	enumeration four_quadrant_control_mode;
 
 	double excess_input_power;		//Variable tracking excess power on the input that is not placed to the output
@@ -169,7 +173,15 @@ public:
 	TIMESTAMP allowed_vv_action;
 	TIMESTAMP last_vv_check;
 	bool vv_operation;
-
+	//properties for four quadrant volt/var frequency power mode
+	bool disable_volt_var_if_no_input_power;		//if true turn off Volt/VAr behavior when no input power (i.e. at night for a solar system)
+	double delay_time;				//delay time time between seeing a voltage value and responding with appropiate VAr setting (seconds)
+	double max_var_slew_rate;		//maximum rate at which inverter can change its VAr output (VAr/second) *not sure if this is defined anywhere else i.e. power electronics classes
+	double max_pwr_slew_rate;		//maximum rate at which inverter can change its power output for frequency regulation (W/second) *not sure if this is defined anywhere else i.e. power electronics classes
+	char volt_var_sched[1024];		//user input Volt/VAr Schedule
+	char freq_pwr_sched[1024];		//user input freq-power Schedule
+	std::vector<std::pair<double,double> > VoltVArSched;  //Volt/VAr schedule -- i realize I'm using goofball data types, what would be the GridLABD-esque way of implementing this data type? 
+	std::vector<std::pair<double,double> > freq_pwrSched; //freq-power schedule -- i realize I'm using goofball data types, what would be the GridLABD-esque way of implementing this data type? 
 private:
 	//load following variables
 	FUNCTIONADDR powerCalc;				//Address for power_calculate in link object, if it is a link

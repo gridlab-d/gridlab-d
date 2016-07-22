@@ -51,6 +51,7 @@ inverter::inverter(MODULE *module)
 				PT_KEYWORD,"CONSTANT_PF",(enumeration)FQM_CONSTANT_PF,
 				//PT_KEYWORD,"CONSTANT_V",FQM_CONSTANT_V,	//Not implemented yet
 				PT_KEYWORD,"VOLT_VAR",(enumeration)FQM_VOLT_VAR,
+				PT_KEYWORD,"VOLT_VAR_FREQ_PWR",FQM_VOLT_VAR_FREQ_PWR, //Ab add : mode
 				PT_KEYWORD,"LOAD_FOLLOWING",(enumeration)FQM_LOAD_FOLLOWING,
 				PT_KEYWORD,"GROUP_LOAD_FOLLOWING",(enumeration)FQM_GROUP_LF,
 
@@ -96,6 +97,7 @@ inverter::inverter(MODULE *module)
 			PT_double, "soc_reserve[pu]", PADDR(soc_reserve), PT_DESCRIPTION, "FOUR QUADRANT MODEL: The reserve state of charge of an attached battery for islanding cases",
 			PT_double, "power_factor[unit]", PADDR(power_factor),  PT_DESCRIPTION, "FOUR QUADRANT MODEL: The power factor used for CONSTANT_PF control mode",
 			PT_bool,"islanded_state", PADDR(islanded),  PT_DESCRIPTION, "FOUR QUADRANT MODEL: Boolean used to let control modes to act under island conditions",
+			PT_double, "nominal_frequency[Hz]", PADDR(f_nominal),
 
 			PT_set, "phases", PADDR(phases),  PT_DESCRIPTION, "The phases the inverter is attached to",
 				PT_KEYWORD, "A",(set)PHASE_A,
@@ -141,7 +143,13 @@ inverter::inverter(MODULE *module)
 			
 			//Common parameters for power-factor regulation approaches
 			PT_double,"pf_reg_activate_lockout_time[s]", PADDR(pf_reg_activate_lockout_time), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Mandatory pause between the deactivation of power-factor regulation and it reactivation",
-
+			//Ab add : VOLT_VAR_PWR_FREQ parameters
+			PT_bool, "disable_volt_var_if_no_input_power", PADDR(disable_volt_var_if_no_input_power),
+			PT_double, "delay_time[s]", PADDR(delay_time),
+			PT_double, "max_var_slew_rate[VAr/s]", PADDR(max_var_slew_rate),
+			PT_double, "max_pwr_slew_rate[W/s]", PADDR(max_pwr_slew_rate),
+			PT_char1024, "volt_var_sched", PADDR(volt_var_sched),
+			PT_char1024, "freq_pwr_sched", PADDR(freq_pwr_sched),
 			//Group load-following (and power factor regulation) parameters
 			PT_double,"charge_threshold[W]", PADDR(charge_threshold), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Level at which all inverters in the group will begin charging attached batteries. Regulated minimum load level.",
 			PT_double,"discharge_threshold[W]", PADDR(discharge_threshold), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Level at which all inverters in the group will begin discharging attached batteries. Regulated maximum load level.",
@@ -184,6 +192,14 @@ int inverter::create(void)
 	internal_losses = 0;
 	C_Storage_In = 0;
 	power_factor = 1;
+	
+	//Ab add : default values for four quadrant Volt-VAr mode
+	disable_volt_var_if_no_input_power = false;	//Volt-VAr mode always on by default
+	delay_time = -1;					        //delay time between seeing a voltage value and responding with appropiate VAr setting, set -1 to flag as unspecified, will reset to 0 by default
+	max_var_slew_rate = 0;				        //maximum rate at which inverter can change its VAr output (VArs/second) set 0 to flag unspecified, will reset to huge value by default
+	volt_var_sched[0] = '\0';			        //initialize Volt-VAr input as zero length string
+	freq_pwr_sched[0] = '\0';                   //initialize freq-PdeliveredLimit input as zero length string
+	//end Ab add
 	
 	// Default values for power electronics settings
 	Rated_kW = 10;		//< nominal power in kW
@@ -282,6 +298,7 @@ int inverter::create(void)
 	charge_lockout_time = 0.0;	//Charge and discharge default to no delay
 	discharge_lockout_time = 0.0;
 	b_soc = -1;
+	f_nominal = 60;
 	first_run = true;				//First time we run, we are the first run (by definition)
 
 	// Volt Var Parameters
@@ -316,6 +333,8 @@ int inverter::init(OBJECT *parent)
 	static complex default_line123_voltage[3], default_line1_current[3];
 	static int default_meter_status;	//Not really a good place to do this, but keep consistent
 	int i;
+	std::string tempV, tempQ, tempf, tempP;
+	std::string VoltVArSchedInput, freq_pwrSchedInput;
 	
 	// find parent meter or triplex_meter, if not defined, use default voltages, and if
 	// the parent is not a meter throw an exception
@@ -586,6 +605,132 @@ int inverter::init(OBJECT *parent)
 			}
 			break;
 		case FOUR_QUADRANT:
+			//begin Ab add
+
+			if (inv_eta==0){
+				efficiency = 0.9;	//Unclear why this is split in 4-quadrant, but not adjusting for fear of breakage
+				gl_warning("Efficiency unspecified - defaulted to %f for this inverter type",efficiency); //defined above
+			}
+			if(inv_eta == 0){
+				inv_eta = 0.9;} 
+			else if(inv_eta < 0){
+				inv_eta = 0.9;
+				gl_warning("Inverter efficiency must be positive--using default value");
+			}
+			
+			if(p_rated == 0){
+				p_rated = 25000;
+				//throw("Inverter must have a nonzero power rating.");
+				gl_warning("Inverter must have a nonzero power rating--using default value");
+			} 
+			
+			//Ab : p_rated per phase
+			if(number_of_phases_out == 1){
+				bp_rated = p_rated/inv_eta;} 
+			else if(number_of_phases_out == 2){
+				bp_rated = 2*p_rated/inv_eta;} 
+			else if(number_of_phases_out == 3){
+				bp_rated = 3*p_rated/inv_eta;
+			}
+			//Ab : p_rated per phase; p_max for entire inverter	
+			if(use_multipoint_efficiency == FALSE){ 
+				if(p_max == -1){
+					p_max = bp_rated*inv_eta;
+				}
+			} 
+			
+			if(four_quadrant_control_mode == FQM_VOLT_VAR_FREQ_PWR)
+			{	//Volt_VAr init
+				if (delay_time < 0)	{
+					delay_time = 0.0;
+					gl_warning("Delay time for Volt/VAr mode unspecified or negative. Setting to default of %f", delay_time);
+				}
+				if (max_var_slew_rate <= 0)	{
+					max_var_slew_rate = -1.0;		//negative values of max_var_slew_rate disable that setting and place no restrictions on inverter VAr slew rate
+					gl_warning("Maximum VAr slew rate for Volt-VAr mode unspecified, negative or zero. Disabling");
+				}
+				if (max_pwr_slew_rate <= 0)	{
+					max_pwr_slew_rate = -1.0;		//negative values of max_pwr_slew_rate disable that setting and place no restrictions on inverter power slew rate
+					gl_warning("Maximum output power slew rate for freq-power mode unspecified, negative or zero. Disabling");
+				}
+				
+				//checks for Volt-VAr schedule
+				VoltVArSchedInput = volt_var_sched;
+				gl_warning(VoltVArSchedInput.c_str());
+				if(VoltVArSchedInput.length() == 0)	{
+					VoltVArSched.push_back(std::make_pair (119.5,0));	
+					//put two random things on the schedule with Q values of zero, all scheduled Qs will then be zero
+					VoltVArSched.push_back(std::make_pair (120.5,0));
+					gl_warning("Volt/VAr schedule unspecified. Setting inverter for constant power factor of 1.0");
+				}
+				else
+				{
+					//parse user input string to produce volt/var schedule
+					int cntr = 0;
+					//std::string tempV = "";
+					tempV = "";
+					tempQ = "";
+					for(int i = 0; i < VoltVArSchedInput.length(); i++)	{
+						if(VoltVArSchedInput[i] != ',')	{
+							if(cntr % 2 == 0)
+								tempV += VoltVArSchedInput[i];
+							else
+								tempQ += VoltVArSchedInput[i];
+						}
+						else
+						{					
+							if(cntr % 2 == 1){
+								VoltVArSched.push_back(std::make_pair (atof(tempV.c_str()),atof(tempQ.c_str())));
+								tempQ = "";
+								tempV = "";
+							}
+							cntr++;
+						}
+					}
+					if(cntr % 2 == 1)
+						VoltVArSched.push_back(std::make_pair (atof(tempV.c_str()),atof(tempQ.c_str())));
+				} //end VoltVArSchedInput
+				
+					
+				//checks for freq-power schedule
+				freq_pwrSchedInput = freq_pwr_sched;
+				gl_warning(freq_pwrSchedInput.c_str());
+				if(freq_pwrSchedInput.length() == 0)	{
+					freq_pwrSched.push_back(std::make_pair (f_nominal*0.9,0));	
+					//make both power values equal to zero, then all scheduled powers will be zero
+					freq_pwrSched.push_back(std::make_pair (f_nominal*1.1,0));
+					gl_warning("Frequency-Power schedule unspecified. Setting power for frequency regulation to zero.");
+				}
+				else
+				{
+					//parse user input string to produce freq-PabsorbedLimit schedule
+					int cntr = 0;
+					tempf = "";
+					tempP = "";
+					for(int i = 0; i < freq_pwrSchedInput.length(); i++)	{
+						if(freq_pwrSchedInput[i] != ',')	{
+							if(cntr % 2 == 0)
+								tempf += freq_pwrSchedInput[i];
+							else
+								tempP += freq_pwrSchedInput[i];
+						}
+						else
+						{					
+							if(cntr % 2 == 1) {
+								freq_pwrSched.push_back(std::make_pair (atof(tempf.c_str()),atof(tempP.c_str())));
+								tempf = "";
+								tempP = "";
+							}
+							cntr++;
+						}
+					}
+					if(cntr % 2 == 1)
+						freq_pwrSched.push_back(std::make_pair (atof(tempf.c_str()),atof(tempP.c_str())));
+				} //end freq_pwrSchedInput
+				
+			} //end VOLT_VAR_FREQ_PWR control mode
+			//end Ab add
+			
 			if(four_quadrant_control_mode == FQM_LOAD_FOLLOWING || pf_reg == INCLUDED || four_quadrant_control_mode == FQM_GROUP_LF )
 			{
 				//Make sure we have an appropriate object to look at, if null, steal our parent
@@ -790,6 +935,7 @@ int inverter::init(OBJECT *parent)
 				//Defaulted else, must be okay
 			}//End FOUR_QUADRANT checks
 
+			/* Ab moved from here to beginning of four_quadrant case
 			if (inv_eta==0)
 			{
 				efficiency = 0.9;	//Unclear why this is split in 4-quadrant, but not adjusting for fear of breakage
@@ -814,10 +960,11 @@ int inverter::init(OBJECT *parent)
 			} else if(number_of_phases_out == 3){
 				bp_rated = 3*p_rated/inv_eta;
 			}
-			if(use_multipoint_efficiency == FALSE)
+			if(use_multipoint_efficiency == FALSE){ 
 				if(p_max == -1){
 					p_max = bp_rated*inv_eta;
 				}
+			} */	
 			break;
 		default:
 			//Never supposed to really get here
@@ -1967,7 +2114,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 		else	//FOUR_QUADRANT code
 		{
 			//FOUR_QUADRANT model (originally written for NAS/CES, altered for PV)
-			double VA_Efficiency, temp_PF, temp_QVal;
+			double VA_Efficiency, temp_PF, temp_QVal, P_in, net_eff; //Ab added last two
 			complex temp_VA;
 			complex battery_power_out = complex(0,0);
 			if (four_quadrant_control_mode != FQM_VOLT_VAR) {
@@ -1993,6 +2140,10 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				{
 					//Normal scaling
 					VA_Efficiency = VA_In.Re() * efficiency * internal_losses * frequency_losses;
+					//Ab add
+					P_in = fabs(VA_In.Re());
+					net_eff = efficiency * internal_losses * frequency_losses;
+					//end Ab add
 				}
 				else
 				{
@@ -2000,6 +2151,10 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					if(VA_In.Mag() <= p_so)
 					{
 						VA_Efficiency = 0.0;	//Nope, no output
+						//Ab add
+						P_in = 0;
+						net_eff = 0;
+						//end Ab add
 					}
 					else	//Yes, apply effiency change
 					{
@@ -2020,6 +2175,10 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 						//Apply this to the output
 						VA_Efficiency = (((p_max/(C1-C2))-C3*(C1-C2))*(VA_In.Re()-C2)+C3*(VA_In.Re()-C2)*(VA_In.Re()-C2))*internal_losses*frequency_losses;
+						//Ab add
+						P_in = fabs(VA_In.Re());
+						net_eff = fabs(VA_Efficiency / P_in);
+						//end Ab add
 					}
 				}
 				VA_Efficiency += battery_power_out.Mag();
@@ -2245,6 +2404,48 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 			{
 				VA_Out = -lf_dispatch_power;	//Place the expected dispatch power into the output
 			}
+				else if (four_quadrant_control_mode == FQM_VOLT_VAR_FREQ_PWR) {
+					// start Ab add
+					// Jason Bank, jason.bank@nrel.gov		8/26/2013
+					// use voltage control input with lookup table values to determine what Qo should be then update Po according to:
+					// Po = (Pi * eff) - Qo * (1 - eff)/eff		Inverter real output power including conversion losses for generating Qo
+					// Ab note Jason originally only had Po = (Pi * eff) - Qo * (1 - eff); actually think losses should be proportional to S, but will leave for later
+					
+					//TODO : add lookup for power for frequency regulation Pout_fr
+					
+					if((VA_In.Re() == 0.0) && (disable_volt_var_if_no_input_power == true))		
+						VA_Out = complex(0,0);
+					else
+					{
+						//currently only compares to the phase A inverter AC voltage, 
+						//TODO: need to address for non-3phase inv? include support for a remote voltage input?
+					
+						double Qo = VoltVArSched.back().second;			//set the scheduled Q for highest voltage range, handles the last case with the loop below (will be overwritten if needed)
+						double prevV = 0;								//setup for first loop iter to handle lowest voltage range
+						double prevQ = VoltVArSched.front().second;		//setup for first loop iter to handle lowest voltage range
+						for (size_t i = 0; i < VoltVArSched.size(); i++)
+						{	//iterate over all specified voltage ranges, find where current voltage value lies and set Qo as linear interpolation between endpoints
+							if(phaseA_V_Out.Mag() <= VoltVArSched[i].first) {
+								double m = (VoltVArSched[i].second - prevQ)/(VoltVArSched[i].first - prevV);
+								double b = VoltVArSched[i].second - (m * VoltVArSched[i].first);
+								Qo = m * phaseA_V_Out.Mag() + b;
+								break;
+							}
+							prevV = VoltVArSched[i].first;
+							prevQ = VoltVArSched[i].second;
+						}
+	
+						double Po = (P_in * net_eff) - fabs(Qo) * (1 - net_eff)/net_eff;
+
+						if(VA_In.Re() < 0.0)
+							VA_Out = complex(Po,-Qo);	//Qo sign convention backwards from what i was expecting			
+						else
+							VA_Out = complex(-Po,-Qo);	//Qo sign convention backwards from what i was expecting
+					}
+				
+					//TODO: should VA_Out be checked against inverter power rating? if exceeds clip it? clip to preserve reactive power set point or to preserve real output power?
+					// end Ab add
+				}//end VOLT_VAR_FREQ_PWR mode
 
 			//Execution of power-factor regulation output of inverter that will get included in power-flow solution
 			if ((pf_reg == INCLUDED) || (pf_reg == INCLUDED_ALT))

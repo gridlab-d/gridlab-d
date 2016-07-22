@@ -38,7 +38,9 @@ Make sure symlinked sed is the first instance of sed in the path
       % which sed
 
 If /usr/local/bin/sed is not the response, put /usr/local/bin first in the path
+you can do this temporarily using:
       % export PATH=/usr/local/bin:$PATH
+or permanently by editing the file /etc/paths
 
 If you are building from a source distribution you must first run:
 
@@ -57,17 +59,34 @@ If you are using the powerflow module, you will need to build SuperLU:
       % tar xvf SuperLU*.tar
       % cd SuperLU_3.1
 
-and follow the build instructions in the README file.  Note that you will
-have to set the path to the library in make.inc by hand. 	
+Generally you simply follow the build instructions in the README file. In
+addition you need to edit superLU's make.inc file as follows:
+  -- Change SuperLUroot to point to your unzipped SuperLU_3.1 directory.
+  -- (optional) To use the MacOSX optimized BLAS library (for highest 
+      performance), replace the existing BLASLIB line with:
+        BLASDEF = -DUSE_VENDOR_BLAS
+        BLASLIB = -framework Accelerate
+Once everything is setup actually build SuperLU using:
+      % make 
 
-You may get an error at the end regarding ldconfig--ignore it.  Then you
-may configure and build
+You may get an error at the end regarding ldconfig--ignore it.  
 
-      % cd ..
+Finally change back to the main code directory, configure and build
+
+      % cd ../..
       % ./configure
       % make 
 
-Build GridLAB-D from the makefiles provided in the distribution, which will
+Note: If you encounter "can't create output" errors, you may have permissions
+problems in one of the many include or library directors (some hidden). If this
+happens you may have to change the folders back to being owned by your user
+account using:
+      % sudo chown -R YOUR_USER_NAME *
+Run this from your main code directory to include all subfolders. The sloppier
+alternative is to use sudo when running make.
+
+
+This builds GridLAB-D from the makefiles provided in the distribution, and will
 create targets in the same directory as the input source.  Libraries are
 created using libtool which outputs libraries in a directory named '.libs' in
 the input's source directory.  Use 'make install' to install GridLAB-D on the
