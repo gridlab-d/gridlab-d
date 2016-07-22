@@ -638,6 +638,7 @@ int climate::init(OBJECT *parent)
 
 
 	if (cloud_model != CM_NONE) {
+		gl_warning("This cloud model places a large burden on computational resources. Patience and/or a more capable computer may be required.");
 		init_cloud_pattern();
 		//write_out_cloud_pattern('C');
 		convert_to_binary_cloud();
