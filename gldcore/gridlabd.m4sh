@@ -12,8 +12,8 @@ pkglibdir="$libdir/@PACKAGE@"
 HAS_MINGW="@HAS_MINGW@"
 
 BINPATH=`dirname $0`
-AS_IF([test "x$BINPATH" != "x$exec_prefix"],
-    [AS_ECHO(["running gridlabd from outside installation exec_prefix"])])
+AS_IF([test "x$BINPATH" != "x$bindir"],
+    [AS_ECHO(["running gridlabd binary $0 from outside installation prefix $exec_prefix"])])
 
 AS_IF([test "x$GLPATH" = x],
     [export GLPATH="$pkglibdir:$pkgdatadir"],
