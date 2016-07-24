@@ -1,0 +1,3 @@
+#!/bin/bash
+tar -C /usr/local --exclude '.??*' -c -f $PWD/$(gridlabd --version | sed -e 's/ /_/g').tar bin/gridlabd bin/gridlabd.bin include/gridlabd lib/gridlabd share/gridlabd share/doc/gridlabd 
+
