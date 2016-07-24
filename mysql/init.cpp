@@ -64,6 +64,11 @@ EXPORT void term(void)
 #include "gridlabd.h"
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
+	if (set_callback(fntable)==NULL)
+	{
+		errno = EINVAL;
+		return NULL;
+	}
 	gl_error("mysql module was built on a system without mysql libraries");
 	return NULL;
 }
