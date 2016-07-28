@@ -139,6 +139,7 @@ EXTRA_DIST += $(top_srcdir)/models/waterheater_example.glm
 EXTRA_DIST += $(top_srcdir)/models/weather.csv
 EXTRA_DIST += $(top_srcdir)/models/wind_turbine_example.glm
 EXTRA_DIST += $(top_srcdir)/gldcore/gridlabd.htm
+EXTRA_DIST += $(top_srcdir)/utilities/build_number
 pkgdata_DATA += $(top_srcdir)/models/climate_csvreader_example.glm
 pkgdata_DATA += $(top_srcdir)/models/collector_example.glm
 pkgdata_DATA += $(top_srcdir)/models/diesel_deltamode_load_player_A.csv
@@ -248,11 +249,11 @@ $(scratchdir)/pkg: $(scratchdir)/.xerces.stamp distdir
 	test ! -e $@ || rm -rf $@
 	test -d $@/gldcore || mkdir -p $@/gldcore
 	cd $(distdir) && ./configure --with-xerces=$(CURDIR)/$(scratchdir)/$(XERCES_TARNAME) && make install DESTDIR=$(CURDIR)/$@/gldcore
-	cd $@ && mkdir -p climate-data/usr/lib/gridlabd devel/usr/lib/gridlabd libxerces-c/usr/lib
-	mv $@/gldcore/usr/lib/gridlabd/*.zip $@/climate-data/usr/lib/gridlabd/
-	mv $@/gldcore/usr/include $@/devel/usr/include
-	mv $@/gldcore/usr/lib/gridlabd/*.la $@/devel/usr/lib/gridlabd/
-	cp $(scratchdir)/$(XERCES_TARNAME)/lib/libxerces-c.* $@/libxerces-c/usr/lib/
+	cd $@ && mkdir -p climate-data/usr/local/lib/gridlabd devel/usr/local/lib/gridlabd libxerces-c/usr/lib
+#	mv $@/gldcore/usr/lib/gridlabd/*.zip $@/climate-data/usr/lib/gridlabd/
+	mv $@/gldcore/usr/local/include $@/devel/usr/local/include
+	mv $@/gldcore/usr/local/lib/gridlabd/*.la $@/devel/usr/local/lib/gridlabd/
+	cp $(scratchdir)/$(XERCES_TARNAME)/src/.libs/libxerces-c.* $@/libxerces-c/usr/lib/
 	$(am__remove_distdir)
 
 $(scratchdir)/$(PACKAGE_TARNAME).mpkg: $(scratchdir)/pkg
@@ -274,7 +275,7 @@ $(distdir).dmg: $(scratchdir)/$(PACKAGE_TARNAME).dmg
 
 clean-dist-osx:
 	-test ! -d $(scratchdir)/mnt || hdiutil detach $(scratchdir)/mnt
-	-rm -rf $(scratchdir)
+#	-rm -rf $(scratchdir)
 
 # Build a .mpkg installer package for Mac OS X
 dist-osx:

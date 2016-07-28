@@ -47,6 +47,7 @@ connection_connection_la_SOURCES += connection/fncs_msg.h
 endif
 connection_connection_la_SOURCES += connection/transport.cpp
 connection_connection_la_SOURCES += connection/transport.h
+connection_connection_la_SOURCES += connection/message.h
 connection_connection_la_SOURCES += connection/varmap.cpp
 connection_connection_la_SOURCES += connection/varmap.h
 connection_connection_la_SOURCES += connection/init.cpp

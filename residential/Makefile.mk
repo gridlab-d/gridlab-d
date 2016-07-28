@@ -44,6 +44,7 @@ residential_residential_la_SOURCES += residential/refrigerator.h
 residential_residential_la_SOURCES += residential/residential_enduse.cpp
 residential_residential_la_SOURCES += residential/residential_enduse.h
 residential_residential_la_SOURCES += residential/residential.h
+residential_residential_la_SOURCES += residential/rbsa2014.h
 residential_residential_la_SOURCES += residential/solvers.cpp
 residential_residential_la_SOURCES += residential/solvers.h
 residential_residential_la_SOURCES += residential/thermal_storage.cpp
