@@ -971,6 +971,12 @@ static int pkill(int argc, char *argv[])
 		return CMDERR;
 	}
 }
+static int plist(int argc, char *argv[])
+{
+	sched_init(1);
+	sched_print(0);
+	return 0;
+}
 static int pcontrol(int argc, char *argv[])
 {
 	sched_init(1);
@@ -1289,6 +1295,7 @@ static CMDARG main[] = {
 	{"pclear",		NULL,	clearmap,		NULL, "Clears the process map of defunct jobs" },
 	{"pcontrol",	NULL,	pcontrol,		NULL, "Enters process controller" },
 	{"pkill",		NULL,	pkill,			"<procnum>", "Kills a run on a processor" },
+	{"plist",		NULL,	plist,			NULL, "List runs on processes" },
 	{"pstatus",		NULL,	pstatus,		NULL, "Prints the process list" },
 	{"redirect",	NULL,	redirect,		"<stream>[:<file>]", "Redirects an output to stream to a file (or null)" },
 	{"server_portnum", "P", server_portnum, NULL, "Sets the server port number (default is 6267)" },
