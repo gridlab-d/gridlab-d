@@ -56,6 +56,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	gl_global_create("powerflow::require_voltage_control", PT_bool,&require_voltage_control,NULL);
 	gl_global_create("powerflow::geographic_degree",PT_double,&geographic_degree,NULL);
 	gl_global_create("powerflow::fault_impedance",PT_complex,&fault_Z,NULL);
+	gl_global_create("powerflow::ground_impedance",PT_complex,&ground_Z,NULL);
 	gl_global_create("powerflow::warning_underfrequency",PT_double,&warning_underfrequency,NULL);
 	gl_global_create("powerflow::warning_overfrequency",PT_double,&warning_overfrequency,NULL);
 	gl_global_create("powerflow::warning_undervoltage",PT_double,&warning_undervoltage,NULL);
@@ -67,10 +68,19 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		PT_KEYWORD,"GS",SM_GS,
 		PT_KEYWORD,"NR",SM_NR,
 		NULL);
+	gl_global_create("powerflow::NR_matrix_file",PT_char256,&MDFileName,NULL);
+	gl_global_create("powerflow::NR_matrix_output_interval",PT_enumeration,&NRMatDumpMethod,
+		PT_KEYWORD,"NEVER",MD_NONE,
+		PT_KEYWORD,"ONCE",MD_ONCE,
+		PT_KEYWORD,"PER_CALL",MD_PERCALL,
+		PT_KEYWORD,"ALL",MD_ALL,
+		NULL);
+	gl_global_create("powerflow::NR_matrix_output_references",PT_bool,&NRMatReferences,NULL);
 	gl_global_create("powerflow::line_capacitance",PT_bool,&use_line_cap,NULL);
 	gl_global_create("powerflow::line_limits",PT_bool,&use_link_limits,NULL);
 	gl_global_create("powerflow::lu_solver",PT_char256,&LUSolverName,NULL);
 	gl_global_create("powerflow::NR_iteration_limit",PT_int64,&NR_iteration_limit,NULL);
+	gl_global_create("powerflow::NR_deltamode_iteration_limit",PT_int64,&NR_delta_iteration_limit,NULL);
 	gl_global_create("powerflow::NR_superLU_procs",PT_int32,&NR_superLU_procs,NULL);
 	gl_global_create("powerflow::default_maximum_voltage_error",PT_double,&default_maximum_voltage_error,NULL);
 	gl_global_create("powerflow::default_maximum_power_error",PT_double,&default_maximum_power_error,NULL);
@@ -85,6 +95,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	gl_global_create("powerflow::default_resistance",PT_double,&default_resistance,NULL);
 	gl_global_create("powerflow::enable_inrush",PT_bool,&enable_inrush_calculations,PT_DESCRIPTION,"Flag to enable in-rush calculations for lines and transformers in deltamode",NULL);
 	gl_global_create("powerflow::low_voltage_impedance_level",PT_double,&impedance_conversion_low_pu,PT_DESCRIPTION,"Lower limit of voltage (in per-unit) at which all load types are converted to impedance for in-rush calculations",NULL);
+	gl_global_create("powerflow::enable_mesh_fault_current",PT_bool,&enable_mesh_fault_current,PT_DESCRIPTION,"Flag to enable mesh-based fault current calculations",NULL);
 
 	// register each object class by creating the default instance
 	new powerflow_object(module);
@@ -237,7 +248,14 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 	bool bad_computation=false;
 	NRSOLVERMODE powerflow_type;
 	int64 pf_result;
-	
+	int64 simple_iter_test, limit_minus_one;
+	bool error_state;
+
+	//Set up iteration variables
+	simple_iter_test = 0;
+	limit_minus_one = NR_delta_iteration_limit - 1;
+	error_state = false;
+
 	//See if this is the first instance -- if so, update the timestep (if in-rush enabled)
 	if (deltatimestep_running < 0.0)
 	{
@@ -248,118 +266,145 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 
 	if (enable_subsecond_models == true)
 	{
-		//Do the preliminary pass, in case we're needed
-		//Loop through the object list and call the updates - loop forward, otherwise parent/child code doesn't work right
-		for (curr_object_number=0; curr_object_number<pwr_object_count; curr_object_number++)
+		while (simple_iter_test < NR_delta_iteration_limit)	//Simple iteration capability
 		{
-			//See if we're in service or not
-			if ((delta_objects[curr_object_number]->in_svc_double <= gl_globaldeltaclock) && (delta_objects[curr_object_number]->out_svc_double >= gl_globaldeltaclock))
+			//Do the preliminary pass, in case we're needed
+			//Loop through the object list and call the updates - loop forward, otherwise parent/child code doesn't work right
+			for (curr_object_number=0; curr_object_number<pwr_object_count; curr_object_number++)
 			{
-				if (delta_functions[curr_object_number] != NULL)
+				//See if we're in service or not
+				if ((delta_objects[curr_object_number]->in_svc_double <= gl_globaldeltaclock) && (delta_objects[curr_object_number]->out_svc_double >= gl_globaldeltaclock))
 				{
-					//Call the actual function
-					function_status = ((SIMULATIONMODE (*)(OBJECT *, unsigned int64, unsigned long, unsigned int, bool))(*delta_functions[curr_object_number]))(delta_objects[curr_object_number],delta_time,dt,iteration_count_val,false);
+					if (delta_functions[curr_object_number] != NULL)
+					{
+						//Call the actual function
+						function_status = ((SIMULATIONMODE (*)(OBJECT *, unsigned int64, unsigned long, unsigned int, bool))(*delta_functions[curr_object_number]))(delta_objects[curr_object_number],delta_time,dt,iteration_count_val,false);
+					}
+					else	//No functional call for this, skip it
+					{
+						function_status = SM_EVENT;	//Just put something here, mainly for error checks
+					}
 				}
-				else	//No functional call for this, skip it
+				else //Not in service - just pass
+					function_status = SM_DELTA;
+
+				//Just make sure we didn't error 
+				if (function_status == (int)SM_ERROR)
 				{
-					function_status = SM_EVENT;	//Just put something here, mainly for error checks
+					gl_error("Powerflow object:%s - deltamode function returned an error!",delta_objects[curr_object_number]->name);
+					// Defined below
+
+					error_state = true;
+					break;
 				}
+				//Default else, we were okay, so onwards and upwards!
 			}
-			else //Not in service - just pass
-				function_status = SM_DELTA;
 
-			//Just make sure we didn't error 
-			if (function_status == (int)SM_ERROR)
-			{
-				gl_error("Powerflow object:%s - deltamode function returned an error!",delta_objects[curr_object_number]->name);
-				// Defined below
+			//Call dynamic powerflow (start of either predictor or correct set)
+			powerflow_type = PF_DYNCALC;
 
-				return SM_ERROR;
+			//Put in try/catch, since GL_THROWs inside solver_nr tend to be a little upsetting
+			try {
+				//Call solver_nr
+				pf_result = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &NR_powerflow, powerflow_type, NULL, &bad_computation);
 			}
-			//Default else, we were okay, so onwards and upwards!
-		}
-
-		//Call dynamic powerflow (start of either predictor or correct set)
-		powerflow_type = PF_DYNCALC;
-
-		//Put in try/catch, since GL_THROWs inside solver_nr tend to be a little upsetting
-		try {
-			//Call solver_nr
-			pf_result = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &NR_powerflow, powerflow_type, &bad_computation);
-		}
-		catch (const char *msg)
-		{
-			gl_error("powerflow:interupdate - solver_nr call: %s", msg);
-			return SM_ERROR;
-		}
-		catch (...)
-		{
-			gl_error("powerflow:interupdate - solver_nr call: unknown exception");
-			return SM_ERROR;
-		}
-		
-		//De-flag any changes that may be in progress
-		NR_admit_change = false;
-
-		//Check the status
-		if (bad_computation==true)
-		{
-			gl_error("Newton-Raphson method is unable to converge the dynamic powerflow to a solution at this operation point");
-			/*  TROUBLESHOOT
-			Newton-Raphson has failed to complete even a single iteration on the dynamic powerflow.
-			This is an indication that the method will not solve the system and may have a singularity
-			or other ill-favored condition in the system matrices.
-			*/
-			return SM_ERROR;
-		}
-		else if (pf_result<0)	//Failure to converge - this is a failure in dynamic mode for now
-		{
-			gl_error("Newton-Raphson failed to converge the dynamic powerflow, sticking at same iteration.");
-			/*  TROUBLESHOOT
-			Newton-Raphson failed to converge the dynamic powerflow in the number of iterations
-			specified in NR_iteration_limit.  It will try again (if the global iteration limit
-			has not been reached).
-			*/
-			return SM_ERROR;
-		}
-
-		//Loop through the object list and call the updates - loop forward for SWING first, to replicate "postsync"-like order
-		for (curr_object_number=0; curr_object_number<pwr_object_count; curr_object_number++)
-		{
-			//See if we're in service or not
-			if ((delta_objects[curr_object_number]->in_svc_double <= gl_globaldeltaclock) && (delta_objects[curr_object_number]->out_svc_double >= gl_globaldeltaclock))
+			catch (const char *msg)
 			{
-				if (delta_functions[curr_object_number] != NULL)
-				{
-					//Call the actual function
-					function_status = ((SIMULATIONMODE (*)(OBJECT *, unsigned int64, unsigned long, unsigned int, bool))(*delta_functions[curr_object_number]))(delta_objects[curr_object_number],delta_time,dt,iteration_count_val,true);
-				}
-				else	//Doesn't have a function, either intentionally, or "lack of supportly"
-				{
-					function_status = SM_EVENT;	//No function present, just assume we only like events
-				}
+				gl_error("powerflow:interupdate - solver_nr call: %s", msg);
+				error_state = true;
+				break;
 			}
-			else //Not in service - just pass
-				function_status = SM_EVENT;
-
-			//Determine what our return is
-			if (function_status == SM_DELTA)
-				event_driven = false;
-			else if (function_status == SM_DELTA_ITER)
+			catch (...)
 			{
-				event_driven = false;
-				delta_iter = true;
+				gl_error("powerflow:interupdate - solver_nr call: unknown exception");
+				error_state = true;
+				break;
 			}
-			else if (function_status == SM_ERROR)
+			
+			//De-flag any changes that may be in progress
+			NR_admit_change = false;
+
+			//Check the status
+			if (bad_computation==true)
 			{
-				gl_error("Powerflow object:%s - deltamode function returned an error!",delta_objects[curr_object_number]->name);
+				gl_error("Newton-Raphson method is unable to converge the dynamic powerflow to a solution at this operation point");
 				/*  TROUBLESHOOT
-				While performing a deltamode update, one object returned an error code.  Check to see if the object itself provided
-				more details and try again.  If the error persists, please submit your code and a bug report via the trac website.
+				Newton-Raphson has failed to complete even a single iteration on the dynamic powerflow.
+				This is an indication that the method will not solve the system and may have a singularity
+				or other ill-favored condition in the system matrices.
 				*/
-				return SM_ERROR;
+				error_state = true;
+				break;
 			}
-			//Default else, we're in SM_EVENT, so no flag change needed
+			else if ((pf_result<0) && (simple_iter_test == limit_minus_one))	//Failure to converge - this is a failure in dynamic mode for now
+			{
+				gl_error("Newton-Raphson failed to converge the dynamic powerflow, sticking at same iteration.");
+				/*  TROUBLESHOOT
+				Newton-Raphson failed to converge the dynamic powerflow in the number of iterations
+				specified in NR_iteration_limit.  It will try again (if the global iteration limit
+				has not been reached).
+				*/
+
+				error_state = true;
+				break;
+			}
+
+			//Loop through the object list and call the updates - loop forward for SWING first, to replicate "postsync"-like order
+			for (curr_object_number=0; curr_object_number<pwr_object_count; curr_object_number++)
+			{
+				//See if we're in service or not
+				if ((delta_objects[curr_object_number]->in_svc_double <= gl_globaldeltaclock) && (delta_objects[curr_object_number]->out_svc_double >= gl_globaldeltaclock))
+				{
+					if (delta_functions[curr_object_number] != NULL)
+					{
+						//Call the actual function
+						function_status = ((SIMULATIONMODE (*)(OBJECT *, unsigned int64, unsigned long, unsigned int, bool))(*delta_functions[curr_object_number]))(delta_objects[curr_object_number],delta_time,dt,iteration_count_val,true);
+					}
+					else	//Doesn't have a function, either intentionally, or "lack of supportly"
+					{
+						function_status = SM_EVENT;	//No function present, just assume we only like events
+					}
+				}
+				else //Not in service - just pass
+					function_status = SM_EVENT;
+
+				//Determine what our return is
+				if (function_status == SM_DELTA)
+					event_driven = false;
+				else if (function_status == SM_DELTA_ITER)
+				{
+					event_driven = false;
+					delta_iter = true;
+				}
+				else if (function_status == SM_ERROR)
+				{
+					gl_error("Powerflow object:%s - deltamode function returned an error!",delta_objects[curr_object_number]->name);
+					/*  TROUBLESHOOT
+					While performing a deltamode update, one object returned an error code.  Check to see if the object itself provided
+					more details and try again.  If the error persists, please submit your code and a bug report via the trac website.
+					*/
+					error_state = true;
+					break;
+				}
+				//Default else, we're in SM_EVENT, so no flag change needed
+			}
+
+			//Check and see if we should even consider reiterating or not
+			if (pf_result < 0)
+			{
+				//Increment the iteration counter
+				simple_iter_test++;
+			}
+			else
+			{
+				break;	//Theoretically done
+			}
+		}//End iteration while
+
+		//See if we got out here due to an error
+		if (error_state == true)
+		{
+			return SM_ERROR;
 		}
 				
 		//Determine how to exit - event or delta driven

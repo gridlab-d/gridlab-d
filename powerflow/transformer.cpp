@@ -54,6 +54,13 @@ transformer::transformer(MODULE *mod) : link_object(mod)
 			PT_bool, "use_thermal_model", PADDR(use_thermal_model),PT_DESCRIPTION,"boolean to enable use of thermal model",
 			PT_double, "transformer_replacement_count", PADDR(transformer_replacements), PT_DESCRIPTION,"counter of the number times the transformer has been replaced due to lifetime failure",
 			PT_double, "aging_granularity[s]", PADDR(aging_step),PT_DESCRIPTION,"maximum timestep before updating thermal and aging model in seconds",
+			//************** TODO -- Figure out if this makes sense to publish it like this *************************/
+			PT_double, "phase_A_primary_flux_value[Wb]", PADDR(flux_vals_inst[0]), PT_DESCRIPTION, "instantaneous magnetic flux in phase A on the primary side of the transformer during saturation calculations",
+			PT_double, "phase_B_primary_flux_value[Wb]", PADDR(flux_vals_inst[1]), PT_DESCRIPTION, "instantaneous magnetic flux in phase B on the primary side of the transformer during saturation calculations",
+			PT_double, "phase_C_primary_flux_value[Wb]", PADDR(flux_vals_inst[2]), PT_DESCRIPTION, "instantaneous magnetic flux in phase C on the primary side of the transformer during saturation calculations",
+			PT_double, "phase_A_secondary_flux_value[Wb]", PADDR(flux_vals_inst[3]), PT_DESCRIPTION, "instantaneous magnetic flux in phase A on the secondary side of the transformer during saturation calculations",
+			PT_double, "phase_B_secondary_flux_value[Wb]", PADDR(flux_vals_inst[4]), PT_DESCRIPTION, "instantaneous magnetic flux in phase B on the secondary side of the transformer during saturation calculations",
+			PT_double, "phase_C_secondary_flux_value[Wb]", PADDR(flux_vals_inst[5]), PT_DESCRIPTION, "instantaneous magnetic flux in phase C on the secondary side of the transformer during saturation calculations",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 			if (gl_publish_function(oclass,"power_calculation",(FUNCTIONADDR)power_calculation)==NULL)
@@ -62,6 +69,12 @@ transformer::transformer(MODULE *mod) : link_object(mod)
 			//Publish deltamode functions
 			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
 				GL_THROW("Unable to publish transformer deltamode function");
+
+			//Publish in-rush functions
+			if (gl_publish_function(oclass,	"recalc_transformer_matrices", (FUNCTIONADDR)recalc_transformer_mat)==NULL)
+				GL_THROW("Unable to publish transformer in-rush update function");
+			if (gl_publish_function(oclass,	"recalc_deltamode_saturation", (FUNCTIONADDR)recalc_deltamode_saturation)==NULL)
+				GL_THROW("Unable to publish transformer in-rush powerflow update function");
 
 			//Publish restoration-related function (current update)
 			if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
@@ -82,6 +95,19 @@ int transformer::create()
 	configuration = NULL;
 	ptheta_A = NULL;
 	transformer_replacements = 0;
+	phi_base_Pri = 0.0;
+	phi_base_Sec = 0.0;
+	I_base_Pri = 0.0;
+	I_base_Sec = 0.0;
+
+	//Flux values
+	flux_vals_inst[0] = 0.0;
+	flux_vals_inst[1] = 0.0;
+	flux_vals_inst[2] = 0.0;
+	flux_vals_inst[3] = 0.0;
+	flux_vals_inst[4] = 0.0;
+	flux_vals_inst[5] = 0.0;
+
 	return result;
 }
 
@@ -103,6 +129,8 @@ void transformer::fetch_double(double **prop, char *name, OBJECT *parent){
 
 int transformer::init(OBJECT *parent)
 {
+	int idex;
+
 	if (!configuration)
 		GL_THROW("no transformer configuration specified.");
 		/*  TROUBLESHOOT
@@ -241,6 +269,144 @@ int transformer::init(OBJECT *parent)
 			{
 				complex Izt = complex(1,0) / zt;
 				
+				//In-rush capability stuff -- allocations
+				if (enable_inrush_calculations == true)
+				{
+					//"Main" allocation is done in link.cpp -- this depends on where we want windings, so done here
+					//"Main" allocation already done, via link::init above
+
+					//Allocate current calculating "base admittance"
+					YBase_Full = (complex *)gl_malloc(36*sizeof(complex));
+
+					//Check it
+					if (YBase_Full == NULL)
+					{
+						GL_THROW("Transformer:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
+						/*  TROUBLESHOOT
+						While attempting to allocate memory for a transformer object to dynamics-required in-rush calculation
+						terms, an error occurred.  Please try again.  If the error persists, please submit your code and
+						a bug report to the ticketing system.
+						*/
+					}
+
+					//Zero it, for giggles
+					for (idex=0; idex<36; idex++)
+					{
+						YBase_Full[idex] = complex(0.0,0.0);
+					}
+
+					//Determine which winding matrices to allocate for magnetization
+					if ((config->magnetization_location == config->PRI_MAG) || (config->magnetization_location == config->BOTH_MAG))	//Primary needed (from)
+					{
+						//Allocate the terms -- Main transformer -- from-size magnetic
+						LinkHistTermCf = (complex *)gl_malloc(6*sizeof(complex));
+
+						//Check it
+						if (LinkHistTermCf == NULL)
+						{
+							GL_THROW("Transformer:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
+							//Defined above
+						}
+
+						//Zero everything, to be safe
+						LinkHistTermCf[0] = complex(0.0,0.0);
+						LinkHistTermCf[1] = complex(0.0,0.0);
+						LinkHistTermCf[2] = complex(0.0,0.0);
+						LinkHistTermCf[3] = complex(0.0,0.0);
+						LinkHistTermCf[4] = complex(0.0,0.0);
+						LinkHistTermCf[5] = complex(0.0,0.0);
+
+						//Allocate "primary" shunt for magnetization
+						YBase_Pri = (complex *)gl_malloc(9*sizeof(complex));
+
+						//Check it
+						if (YBase_Pri == NULL)
+						{
+							GL_THROW("Transformer:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
+							//Defined above
+						}
+
+						//Zero it
+						for (idex=0; idex<9; idex++)
+						{
+							YBase_Pri[idex] = complex(0.0,0.0);
+						}
+					}
+					else
+					{
+						//Null it, for good measure (should be done already)
+						LinkHistTermCf = NULL;
+						YBase_Pri = NULL;
+					}
+
+					if ((config->magnetization_location == config->SEC_MAG) || (config->magnetization_location == config->BOTH_MAG))	//Secondary needed (to)
+					{
+						//Allocate the terms -- Main transformer -- to-side magnetic
+						LinkHistTermCt = (complex *)gl_malloc(6*sizeof(complex));
+
+						//Check it
+						if (LinkHistTermCt == NULL)
+						{
+							GL_THROW("Transformer:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
+							//Defined above
+						}
+
+						//Zero everything, to be safe
+						LinkHistTermCt[0] = complex(0.0,0.0);
+						LinkHistTermCt[1] = complex(0.0,0.0);
+						LinkHistTermCt[2] = complex(0.0,0.0);
+						LinkHistTermCt[3] = complex(0.0,0.0);
+						LinkHistTermCt[4] = complex(0.0,0.0);
+						LinkHistTermCt[5] = complex(0.0,0.0);
+
+						//Allocate "primary" shunt for magnetization
+						YBase_Sec = (complex *)gl_malloc(9*sizeof(complex));
+
+						//Check it
+						if (YBase_Sec == NULL)
+						{
+							GL_THROW("Transformer:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
+							//Defined above
+						}
+
+						//Zero it
+						for (idex=0; idex<9; idex++)
+						{
+							YBase_Sec[idex] = complex(0.0,0.0);
+						}
+					}
+					else
+					{
+						//Null it, for good measure (should be done already)
+						LinkHistTermCt = NULL;
+						YBase_Sec = NULL;
+					}
+
+					//See if saturation is enabled
+					if (config->model_inrush_saturation == true)
+					{
+						//Allocate it - stacked of curr/hist
+						hphi = (complex *)gl_malloc(12*sizeof(complex));
+
+						//Make sure it worked
+						if (hphi == NULL)
+						{
+							GL_THROW("Transformer:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
+							//Defined above
+						}
+
+						//Zero it, for good measure
+						for (idex=0; idex<12; idex++)
+						{
+							hphi[idex] = complex(0.0,0.0);
+						}
+					}
+					else	//Null it, to be safe
+					{
+						hphi = NULL;
+					}
+				}//End in-rush allocations
+
 				//Pre-inverted
 				if (has_phase(PHASE_A))
 					//b_mat[0][0] = (zc - zt) / ((zc + zt) * zt);
@@ -281,8 +447,6 @@ int transformer::init(OBJECT *parent)
 					A_mat[2][2] = complex(nt,0);//* (zc) / (zc + zt);
 					c_mat[2][2] = nt;
 				}
-
-
 			}
 			else 
 			{
@@ -1105,6 +1269,669 @@ TIMESTAMP transformer::postsync(TIMESTAMP t0)
 		return link_object::postsync(t0);
 	}
 }
+
+//Transformer update function -- for deltamode in-rush capabilities
+//Updates:
+//ahrlstore - 6x6
+//bhrlstore - 6x6
+//ahmstore - 6x3
+//bhmstore - 6x3
+//YBase_Full - 6x6
+//YBase_Pri - 3x3
+//YBase_Sec - 3x3
+//From_Y, To_Y, YSfrom, YSto
+int transformer::transformer_inrush_mat_update(void)
+{
+	int idex_val, jdex_val;
+	double Np, Ns, Rd, Xd, XM, Rprim, Xprim, Lprim;
+	complex Zprim[8][8], ZMprim[8][8],zp_trafo[8][8],zhp_trafo[8][8],zmp_trafo[8][8],zmhp_trafo[8][8];
+	complex zh_trafo[8][8], zmh_trafo[8][8];
+	complex temp_mat[8][8], yp_trafo[8][8], y_trafo[8][8], ym_trafo[8][8], temp_store_mat[8][8];
+	complex aval_mat[8][8], avaltran_mat[8][8];
+	complex temp_mat_small[6][6], temp_other_mat_small[6][6];
+	complex Zo;
+	double A_sat, B_sat, C_sat;
+	complex work_val_cplex;
+	OBJECT *obj = OBJECTHDR(this);
+
+	//Set neutral impedance, arbitrarily
+	Zo = 1e8;
+	
+	//Zero all the matrices, for good measure
+	for (idex_val=0; idex_val<8; idex_val++)
+	{
+		for (jdex_val=0; jdex_val<8; jdex_val++)
+		{
+			Zprim[idex_val][jdex_val] = complex(0.0,0.0);
+			ZMprim[idex_val][jdex_val] = complex(0.0,0.0);
+			zp_trafo[idex_val][jdex_val] = complex(0.0,0.0);
+			zhp_trafo[idex_val][jdex_val] = complex(0.0,0.0);
+			zmp_trafo[idex_val][jdex_val] = complex(0.0,0.0);
+			zmhp_trafo[idex_val][jdex_val] = complex(0.0,0.0);
+			zh_trafo[idex_val][jdex_val] = complex(0.0,0.0);
+			zmh_trafo[idex_val][jdex_val] = complex(0.0,0.0);
+			temp_mat[idex_val][jdex_val] = complex(0.0,0.0);
+			yp_trafo[idex_val][jdex_val] = complex(0.0,0.0);
+			y_trafo[idex_val][jdex_val] = complex(0.0,0.0);
+			ym_trafo[idex_val][jdex_val] = complex(0.0,0.0);
+			temp_store_mat[idex_val][jdex_val] = complex(0.0,0.0);
+			aval_mat[idex_val][jdex_val] = complex(0.0,0.0);
+			avaltran_mat[idex_val][jdex_val] = complex(0.0,0.0);
+		}
+	}
+
+	//Do the smaller ones
+	for (idex_val=0; idex_val<6; idex_val++)
+	{
+		for (jdex_val=0; jdex_val<6; jdex_val++)
+		{
+			temp_mat_small[idex_val][jdex_val] = complex(0.0,0.0);
+			temp_other_mat_small[idex_val][jdex_val] = complex(0.0,0.0);
+		}
+	}
+
+	//Get the voltage levels
+	Np = config->V_primary/sqrt(3.0);
+	Ns = config->V_secondary/sqrt(3.0);
+
+	//Get base impedance values
+	Rd = config->impedance.Re()*config->V_secondary*config->V_secondary/(config->kVA_rating*1000.0);
+	Xd = config->impedance.Im()*config->V_secondary*config->V_secondary/(config->kVA_rating*1000.0*2.0);	//Where'd this /2 come from?  Fixed in later version!?!
+	XM = config->V_secondary*config->V_secondary/(config->kVA_rating*1000.0*config->IM_pu)-Xd;
+
+	//******************** DEBUG NOTE - these may need to be moved, depending on where I populate things
+	//Compute saturation constants
+	A_phi = complex((deltatimestep_running * 2.0 * config->TD_val),0.0)/complex((4.0*config->TD_val+deltatimestep_running),(4.0*PI*nominal_frequency*config->TD_val*deltatimestep_running));
+
+	//Form B coefficient -- numerator
+	B_phi = complex((4.0*config->TD_val-deltatimestep_running),(-4.0*PI*nominal_frequency*config->TD_val*deltatimestep_running));
+
+		//Denominator
+		work_val_cplex=complex((4.0*config->TD_val+deltatimestep_running),4.0*PI*nominal_frequency*config->TD_val*deltatimestep_running);
+
+		//Combine
+		B_phi = B_phi/work_val_cplex;
+
+	//Compute D_sat term
+		A_sat = config->LA_pu/(config->phiK_pu*config->phiK_pu);
+		B_sat = (config->LA_pu*config->IM_pu - config->phiM_pu)/config->phiK_pu;
+		C_sat = config->IM_pu*(config->LA_pu*config->IM_pu - config->phiM_pu + config->phiK_pu);
+		D_sat = (-1.0*B_sat - sqrt((B_sat*B_sat - 4.0*A_sat*C_sat)))/(2.0*A_sat);
+
+	//Compute the base values for saturation
+	if (config->model_inrush_saturation == true)
+	{
+		//Calculate values
+		phi_base_Pri = config->V_primary / (sqrt(3.0) * 2.0 * PI * nominal_frequency);
+		I_base_Pri = (config->kVA_rating*1000.0) / (sqrt(3.0) * config->V_primary);
+
+		phi_base_Sec = config->V_secondary / (sqrt(3.0) * 2.0 * PI * nominal_frequency);
+		I_base_Sec = (config->kVA_rating*1000.0) / (sqrt(3.0) * config->V_secondary);
+	}//Saturation enabled
+	else	//set to 0, so they cause problems if anyone uses them
+	{
+		phi_base_Pri = 0.0;
+		phi_base_Sec = 0.0;
+		I_base_Pri = 0.0;
+		I_base_Sec = 0.0;
+	}
+
+	//Form the primitive impedance -- note that these are 4-wire versions
+	// XM is set to 1e9 for these cases, arbitrarily (factored in later)
+	/************* Check for nonsense math (cancellations) */
+	Zprim[0][0] = complex((Rd*(Np/Ns)*(Np/Ns)),(Xd*(Np/Ns)*(Np/Ns) + (Np*Np)/(Ns*Ns)*1e+9));
+	Zprim[1][1] = Zprim[0][0];
+	Zprim[2][2] = Zprim[0][0];
+	Zprim[3][3] = 1e8;
+
+	Zprim[4][4] = complex(Rd,(Xd + 1e+9));
+	Zprim[5][5] = Zprim[4][4];
+	Zprim[6][6] = Zprim[4][4];
+	Zprim[7][7] = 1e8;
+
+	Zprim[0][4] = complex(0.0,(Np/Ns*1e+9));
+	Zprim[1][5] = Zprim[0][4];
+	Zprim[2][6] = Zprim[0][4];
+	Zprim[4][0] = Zprim[0][4];
+	Zprim[5][1] = Zprim[0][4];
+	Zprim[6][2] = Zprim[0][4];
+
+	//Magnetization
+	ZMprim[0][0] = complex(0.0,((Np*Np)/(Ns*Ns)*XM));
+	ZMprim[1][1] = ZMprim[0][0];
+	ZMprim[2][2] = ZMprim[0][0];
+	ZMprim[3][3] = 1e8;
+
+	ZMprim[4][4] = complex(0.0,XM);
+	ZMprim[5][5] = ZMprim[4][4];
+	ZMprim[6][6] = ZMprim[4][4];
+	ZMprim[7][7] = 1e8;
+
+	//See if we're in deltamode running -- if not, just do "normal" matrices
+	if (deltatimestep_running>0)
+	{
+		//Loop through and adjust elements to "new matrices"
+		for (idex_val=0; idex_val<8; idex_val++)
+		{
+			for (jdex_val=0; jdex_val<8; jdex_val++)
+			{
+				//Extract base values from normal primitive
+				Rprim = Zprim[idex_val][jdex_val].Re();
+				Xprim = Zprim[idex_val][jdex_val].Im();
+				Lprim = Xprim/(2*PI*nominal_frequency);
+
+				//Put them into the new matrices
+				zp_trafo[idex_val][jdex_val] = complex((Rprim+(2.0*Lprim/deltatimestep_running)),Xprim);
+				zhp_trafo[idex_val][jdex_val] = complex((Rprim-(2.0*Lprim/deltatimestep_running)),Xprim);
+
+				//Extract base values from magnetization primitive
+				Rprim = ZMprim[idex_val][jdex_val].Re();
+				Xprim = ZMprim[idex_val][jdex_val].Im();
+				Lprim = Xprim/(2*PI*nominal_frequency);
+
+				//Put them into the new matrices
+				zmp_trafo[idex_val][jdex_val] = complex((Rprim+(2.0*Lprim/deltatimestep_running)),Xprim);
+				zmhp_trafo[idex_val][jdex_val] = complex((Rprim-(2.0*Lprim/deltatimestep_running)),Xprim);
+			}
+		}
+
+		//Form the incident A matrix and it's transpose	-- [1 0 0 -1; etc] type form
+		for (idex_val=0; idex_val<8; idex_val++)
+		{
+			aval_mat[idex_val][idex_val] = complex(1.0,0.0);
+			avaltran_mat[idex_val][idex_val] = complex(1.0,0.0);
+		}
+		aval_mat[0][3] = aval_mat[1][3] = aval_mat[2][3] = complex(-1.0,0.0);
+		aval_mat[4][7] = aval_mat[5][7] = aval_mat[6][7] = complex(-1.0,0.0);
+
+		avaltran_mat[3][0] = avaltran_mat[3][1] = avaltran_mat[3][2] = complex(-1.0,0.0);
+		avaltran_mat[7][4] = avaltran_mat[7][5] = avaltran_mat[7][6] = complex(-1.0,0.0);
+		
+		//Form y_trafo - A'(inv(zp_trafo)A
+		lu_matrix_inverse(&zp_trafo[0][0],&temp_mat[0][0],8);	//inv(zp_trafo)
+		lmatrix_mult(&avaltran_mat[0][0],&temp_mat[0][0],&temp_store_mat[0][0],8);	//A'*inv
+		lmatrix_mult(&temp_store_mat[0][0],&aval_mat[0][0],&y_trafo[0][0],8);		//above*A
+
+		//Store out the appropriate portion for current calculations (only 3x3 portions)
+		for (idex_val=0; idex_val<3; idex_val++)	
+		{
+			for (jdex_val=0; jdex_val<3; jdex_val++)
+			{
+				YBase_Full[idex_val*6+jdex_val] = y_trafo[idex_val][jdex_val];			//Top-left 3x3
+				YBase_Full[idex_val*6+jdex_val+3] = y_trafo[idex_val][jdex_val+4];		//Top-right 3x3
+				YBase_Full[idex_val*6+jdex_val+18] = y_trafo[idex_val+4][jdex_val];		//Bottom-left 3x3
+				YBase_Full[idex_val*6+jdex_val+21] = y_trafo[idex_val+4][jdex_val+4];	//Bottom-right 3x3
+			}
+		}
+
+		//Form zh_trafo (yhp_trafo and yh_trafo only used in here, so skip)
+		//zh_trafo = inv(A'(inv_zhp_trafo)A)
+		lu_matrix_inverse(&zhp_trafo[0][0],&temp_mat[0][0],8);	//inv(zhp_trafo)
+		lmatrix_mult(&avaltran_mat[0][0],&temp_mat[0][0],&temp_store_mat[0][0],8);	//A'*inv
+		lmatrix_mult(&temp_store_mat[0][0],&aval_mat[0][0],&temp_mat[0][0],8);		//inv*A
+		lu_matrix_inverse(&temp_mat[0][0],&zh_trafo[0][0],8);	//inv(above)
+
+		//*********** DEBUG
+		//zh_trafo is quite a bit off - not sure if it matters (no sat seems to work)
+
+		//Form ah term for the transformer
+			//zh_trafo*y_trafo
+			lmatrix_mult(&zh_trafo[0][0],&y_trafo[0][0],&temp_mat[0][0],8);
+
+			//above - eye(8)
+			for (idex_val=0; idex_val<8; idex_val++)
+			{
+				temp_mat[idex_val][idex_val] -= 1.0;
+			}
+
+			//above * y_trafo for aht
+			lmatrix_mult(&y_trafo[0][0],&temp_mat[0][0],&temp_store_mat[0][0],8);
+
+			//Extract the 3x3 portions
+			for (idex_val=0; idex_val<3; idex_val++)	
+			{
+				for (jdex_val=0; jdex_val<3; jdex_val++)
+				{
+					ahrlstore[idex_val*6+jdex_val] = temp_store_mat[idex_val][jdex_val];		//Top-left 3x3
+					ahrlstore[idex_val*6+jdex_val+3] = temp_store_mat[idex_val][jdex_val+4];	//Top-right 3x3
+					ahrlstore[idex_val*6+jdex_val+18] = temp_store_mat[idex_val+4][jdex_val];	//Bottom-left 3x3
+					ahrlstore[idex_val*6+jdex_val+21] = temp_store_mat[idex_val+4][jdex_val+4];	//Bottom-right 3x3
+				}
+			}
+
+		//Form bh term for transformer - y_trafo*zh_trafo = bht
+			lmatrix_mult(&y_trafo[0][0],&zh_trafo[0][0],&temp_store_mat[0][0],8);
+
+			//Extract the 3x3 portions
+			for (idex_val=0; idex_val<3; idex_val++)	
+			{
+				for (jdex_val=0; jdex_val<3; jdex_val++)
+				{
+					bhrlstore[idex_val*6+jdex_val] = temp_store_mat[idex_val][jdex_val];		//Top-left 3x3
+					bhrlstore[idex_val*6+jdex_val+3] = temp_store_mat[idex_val][jdex_val+4];	//Top-right 3x3
+					bhrlstore[idex_val*6+jdex_val+18] = temp_store_mat[idex_val+4][jdex_val];	//Bottom-left 3x3
+					bhrlstore[idex_val*6+jdex_val+21] = temp_store_mat[idex_val+4][jdex_val+4];	//Bottom-right 3x3
+				}
+			}
+
+		//Create admittance matrix of zmp_trafo -- becomes the current calcuation?, and other portions
+		//Form ym_trafo - A'(inv(zmp_trafo)A
+		lu_matrix_inverse(&zmp_trafo[0][0],&temp_mat[0][0],8);	//inv(zmp_trafo)
+		lmatrix_mult(&avaltran_mat[0][0],&temp_mat[0][0],&temp_store_mat[0][0],8);	//A'*inv
+		lmatrix_mult(&temp_store_mat[0][0],&aval_mat[0][0],&ym_trafo[0][0],8);		//above*A
+
+		//Gets stored below
+
+		//Form zmh_trafo (ymhp_trafo and ymh_trafo only used in here, so skip making them)
+		//zmh_trafo = inv(A'(inv_zmhp_trafo)A)
+		lu_matrix_inverse(&zmhp_trafo[0][0],&temp_mat[0][0],8);	//inv(zmhp_trafo)
+		lmatrix_mult(&avaltran_mat[0][0],&temp_mat[0][0],&temp_store_mat[0][0],8);	//A'*inv
+		lmatrix_mult(&temp_store_mat[0][0],&aval_mat[0][0],&temp_mat[0][0],8);		//inv*A
+		lu_matrix_inverse(&temp_mat[0][0],&zmh_trafo[0][0],8);	//inv(above)
+
+		//Form the history terms for magnetization
+		//Form ah term for the transformer
+			//zmh_trafo*ym_trafo
+			lmatrix_mult(&zmh_trafo[0][0],&ym_trafo[0][0],&temp_mat[0][0],8);
+
+			//above - eye(8)
+			for (idex_val=0; idex_val<8; idex_val++)
+			{
+				temp_mat[idex_val][idex_val] -= 1.0;
+			}
+
+			//above * ym_trafo for amht
+			lmatrix_mult(&ym_trafo[0][0],&temp_mat[0][0],&temp_store_mat[0][0],8);
+
+			//Extract the 3x3 portions
+			for (idex_val=0; idex_val<3; idex_val++)	
+			{
+				for (jdex_val=0; jdex_val<3; jdex_val++)			//Stacked funny - 6x3 matrix
+				{
+					ahmstore[idex_val*3+jdex_val] = temp_store_mat[idex_val][jdex_val];			//Top-left 3x3
+					ahmstore[idex_val*3+jdex_val+9] = temp_store_mat[idex_val+4][jdex_val+4];	//Bottom-right 3x3
+				}
+			}
+
+		//Form bh term for transformer mag - ym_trafo*zmh_trafo = bmht
+			lmatrix_mult(&ym_trafo[0][0],&zmh_trafo[0][0],&temp_store_mat[0][0],8);
+
+			//Extract the 3x3 portions
+			for (idex_val=0; idex_val<3; idex_val++)	
+			{
+				for (jdex_val=0; jdex_val<3; jdex_val++)		//Same funny stack - 6x3 matrix
+				{
+					bhmstore[idex_val*3+jdex_val] = temp_store_mat[idex_val][jdex_val];			//Top-left 3x3
+					bhmstore[idex_val*3+jdex_val+9] = temp_store_mat[idex_val+4][jdex_val+4];	//Bottom-right 3x3
+				}
+			}
+	}//End deltamode running
+	else	//Not deltamode, just form up some "normal" matrices
+	{
+		//Subset the impedance matrix
+		for (idex_val=0; idex_val<3; idex_val++)	
+		{
+			for (jdex_val=0; jdex_val<3; jdex_val++)
+			{
+				temp_mat_small[idex_val][jdex_val] = Zprim[idex_val][jdex_val];			//Top-left 3x3
+				temp_mat_small[idex_val][jdex_val+3] = Zprim[idex_val][jdex_val+4];		//Top-right 3x3
+				temp_mat_small[idex_val+3][jdex_val] = Zprim[idex_val+4][jdex_val];		//Bottom-left 3x3
+				temp_mat_small[idex_val+3][jdex_val+3] = Zprim[idex_val+4][jdex_val+4];		//Bottom-right 3x3
+			}
+		}
+
+		//Create the base admittance
+		lu_matrix_inverse(&temp_mat_small[0][0],YBase_Full,6);
+
+		//Subset the magnetic impdeance matrix
+		for (idex_val=0; idex_val<3; idex_val++)	
+		{
+			for (jdex_val=0; jdex_val<3; jdex_val++)
+			{
+				temp_mat_small[idex_val][jdex_val] = ZMprim[idex_val][jdex_val];			//Top-left 3x3
+				temp_mat_small[idex_val][jdex_val+3] = ZMprim[idex_val][jdex_val+4];		//Top-right 3x3
+				temp_mat_small[idex_val+3][jdex_val] = ZMprim[idex_val+4][jdex_val];		//Bottom-left 3x3
+				temp_mat_small[idex_val+3][jdex_val+3] = ZMprim[idex_val+4][jdex_val+4];	//Bottom-right 3x3
+			}
+		}
+
+		//Create the base admittance
+		lu_matrix_inverse(&temp_mat_small[0][0],&temp_other_mat_small[0][0],6);
+
+		//Now put them back into the 8x8, just for convenience of the code below
+		for (idex_val=0; idex_val<3; idex_val++)	
+		{
+			for (jdex_val=0; jdex_val<3; jdex_val++)
+			{
+				ym_trafo[idex_val][jdex_val] = temp_other_mat_small[idex_val][jdex_val];			//Top-left 3x3
+				ym_trafo[idex_val][jdex_val+4] = temp_other_mat_small[idex_val][jdex_val+3];		//Top-right 3x3
+				ym_trafo[idex_val+4][jdex_val] = temp_other_mat_small[idex_val+3][jdex_val];		//Bottom-left 3x3
+				ym_trafo[idex_val+4][jdex_val+4] = temp_other_mat_small[idex_val+3][jdex_val+3];	//Bottom-right 3x3
+			}
+		}
+
+		//Zero others?
+	}
+
+	//Form up the base admittance -- it's the same for all different magnetization portions
+	//YSfrom -- upper left
+	for (idex_val=0; idex_val<3; idex_val++)
+	{
+		for (jdex_val=0; jdex_val<3; jdex_val++)
+		{
+			YSfrom[idex_val*3+jdex_val] = YBase_Full[idex_val*6+jdex_val];
+		}
+	}
+
+	//From_Y - upper right - always includes both base and magnetization
+	for (idex_val=0; idex_val<3; idex_val++)
+	{
+		for (jdex_val=0; jdex_val<3; jdex_val++)
+		{
+			From_Y[idex_val][jdex_val] = -YBase_Full[idex_val*6+jdex_val+3] - ym_trafo[idex_val][jdex_val+4];
+		}
+	}
+
+	//To_Y - lower left - always includes both base and magnetization
+	for (idex_val=0; idex_val<3; idex_val++)
+	{
+		for (jdex_val=0; jdex_val<3; jdex_val++)
+		{
+			To_Y[idex_val][jdex_val] = -YBase_Full[idex_val*6+jdex_val+18] - ym_trafo[idex_val+4][jdex_val];
+		}
+	}
+
+	//YSto - lower right
+	for (idex_val=0; idex_val<3; idex_val++)
+	{
+		for (jdex_val=0; jdex_val<3; jdex_val++)
+		{
+			YSto[idex_val*3+jdex_val] = YBase_Full[idex_val*6+jdex_val+21];
+		}
+	}
+
+	//Now populate the admittance matrices, based on the connections - /*********** Check Both to see if correct? *************/
+	if ((config->magnetization_location == config->PRI_MAG) || (config->magnetization_location == config->BOTH_MAG))	//Primary or both
+	{
+		//YSfrom -- upper left - also add to primary shunt value
+		for (idex_val=0; idex_val<3; idex_val++)
+		{
+			for (jdex_val=0; jdex_val<3; jdex_val++)
+			{
+				YSfrom[idex_val*3+jdex_val] += ym_trafo[idex_val][jdex_val];
+				YBase_Pri[idex_val*3+jdex_val] = ym_trafo[idex_val][jdex_val];
+			}
+		}
+	}//End primary magnetization
+
+	if ((config->magnetization_location == config->SEC_MAG) || (config->magnetization_location == config->BOTH_MAG))	//Secondary or both
+	{
+		//YSto - lower right - also add to secondary shunt value
+		for (idex_val=0; idex_val<3; idex_val++)
+		{
+			for (jdex_val=0; jdex_val<3; jdex_val++)
+			{
+				YSto[idex_val*3+jdex_val] += ym_trafo[idex_val+4][jdex_val+4];
+				YBase_Sec[idex_val*3+jdex_val] = ym_trafo[idex_val+4][jdex_val+4];
+			}
+		}
+	}//End secondary magnetization
+	//Default else - no mag, so just base admittance
+
+	return 1;
+}
+
+//Function to do saturation updates (if needed) during powerflow
+int transformer::transformer_saturation_update(bool *deltaIsat)
+{
+	OBJECT *obj = OBJECTHDR(this);
+	int index_loop;
+	complex work_values_voltages[6], phi_values[6];
+	double phi_mag, phi_ang, angle_offset, imag_phi_value, imag_phi_value_pu;
+	double Isat_pu_imag_full, Isat_pu_imag, curr_delta_timestep_val, temp_double;
+	complex Isat_pu, Isat_diff;
+	double diff_val, max_diff, global_time_dbl_val;
+	TIMESTAMP global_time_int_val;
+
+	if ((config->connect_type == config->WYE_WYE) && (enable_inrush_calculations==true) && (config->model_inrush_saturation == true))
+	{
+		//See if we're in "init mode" or some form of "skip"
+		if (deltaIsat == NULL)	//Init mode
+		{
+			//Allocate the storage matrix - 12 always (just zero others)
+			saturation_calculated_vals = (complex *)gl_malloc(12*sizeof(complex));
+
+			//Make sure it worked
+			if (saturation_calculated_vals == NULL)
+			{
+				GL_THROW("Transformer:%d %s failed to allocate memory for inrush saturation tracking",obj->id,obj->name ? obj->name : "Unnamed");
+				/*  TROUBLESHOOT
+				While attempting to allocate the tracking and calculation matrices for the inrush
+				saturation terms, an error was encountered.  Please try again.  If the error persists,
+				please submit your code and a bug report via the ticketing website.
+				*/
+			}
+
+			//Initialize it, for giggles
+			for (index_loop=0; index_loop<12; index_loop++)
+			{
+				saturation_calculated_vals[index_loop] = complex(0.0,0.0);
+			}
+
+			//Check the winding type
+			//1 = primary, 2 = secondary, 3 = both
+			if (config->magnetization_location == config->PRI_MAG)
+			{
+				return 1;
+			}
+			else if (config->magnetization_location == config->SEC_MAG)
+			{
+				return 2;
+			}
+			else if (config->magnetization_location == config->BOTH_MAG)
+			{
+				return 3;
+			}
+			else	//Somehow we're flagged for saturation, but have no winding set
+			{
+				gl_warning("transformer:%d %s is set to model saturation, but has no magnetization location",obj->id,obj->name ? obj->name : "Unnamed");
+				/*  TROUBLESHOOT
+				While attempting to initialize a transformer for inrush saturation calculations, it was noticed that
+				no magentization location was specified.  No saturation can be modeled in this case.  Please specify
+				a winding to include the magnetization on with the magnetization_location of the transformer_configuration
+				object.
+				*/
+
+				//return a "not needed" flag -- no sense calling this if it does nothing
+				return -1;
+			}
+		}//End "init" routine
+		else	//Actually do the update
+		{
+			//Get the current timestep - deltamode
+			curr_delta_timestep_val = gl_globaldeltaclock;
+
+			//Get current "whole" timestamp
+			global_time_int_val = gl_globalclock;
+			global_time_dbl_val = (double)(global_time_int_val);
+
+			//Zero the difference too
+			max_diff = 0.0;
+
+			//Copy in the voltages, and zero other things
+			work_values_voltages[0] = NR_busdata[NR_branchdata[NR_branch_reference].from].V[0];
+			work_values_voltages[1] = NR_busdata[NR_branchdata[NR_branch_reference].from].V[1];
+			work_values_voltages[2] = NR_busdata[NR_branchdata[NR_branch_reference].from].V[2];
+			work_values_voltages[3] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[0];
+			work_values_voltages[4] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[1];
+			work_values_voltages[5] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[2];
+
+			//Calculate phi value - phi = A_phi*voltage + hphi
+			//Also copy the "saturation history" terms
+			for (index_loop = 0; index_loop < 6; index_loop++)
+			{
+				phi_values[index_loop] = A_phi*work_values_voltages[index_loop] + hphi[index_loop];
+				saturation_calculated_vals[index_loop+6] = saturation_calculated_vals[index_loop];
+			}
+
+			//Apparently reference time matters - sin gets very erratic for POSIX-style "large posterior" times
+			//************* TODO ************** Note that this will be influenced by the incidence of the sinusoidal wave
+			//********************************* This means it will need to "accumulate" the frequency error for non-nominal sets
+
+			//Compute offset -- same for all cases
+			angle_offset = 2.0*PI*nominal_frequency*(curr_delta_timestep_val-global_time_dbl_val);
+
+			//Determine what to saturation -- check windings
+			if ((config->magnetization_location == config->PRI_MAG) || (config->magnetization_location == config->BOTH_MAG))
+			{
+				//Loop
+				for (index_loop=0; index_loop<3; index_loop++)
+				{
+					//Extract values
+					phi_mag = phi_values[index_loop].Mag();
+					phi_ang = phi_values[index_loop].Arg();
+
+					//Compute imaginary projection
+					imag_phi_value = (phi_mag*sin(phi_ang + angle_offset));
+
+
+					//Make the flux projection for storage
+					flux_vals_inst[index_loop] = imag_phi_value;
+
+					//"abs" it
+					if (imag_phi_value <0)
+					{
+						imag_phi_value = -imag_phi_value;
+					}
+
+					//Make pu
+					imag_phi_value_pu = imag_phi_value / phi_base_Pri;
+
+					//Calculate a the saturation impacts
+					//Isat_pu_imag_full=(sqrt((imag_phi_value_pu-phiK_pu)^2+4*D_sat*LA_pu)+imag_phi_value_pu-phiK_pu)/(2*LA_pu)-D_sat/phiK_pu;
+					temp_double = imag_phi_value_pu-config->phiK_pu;
+					Isat_pu_imag_full = temp_double*temp_double + 4.0*D_sat*config->LA_pu; //Part for sqrt
+					temp_double = sqrt(Isat_pu_imag_full);
+					temp_double += imag_phi_value_pu - config->phiK_pu;	//sqrt + imag_phivalue_pu - phiK_pu
+					Isat_pu_imag_full = temp_double / (2.0 * config->LA_pu);	// /2*LA_pu
+					temp_double = D_sat / config->phiK_pu;	//D_sat/phiK_pu
+					Isat_pu_imag_full -= temp_double;
+
+					//Check and see if it saturated
+					if (imag_phi_value_pu <= config->phiM_pu)
+					{
+						Isat_pu_imag = 0.0;
+					}
+					else
+					{
+						Isat_pu_imag = Isat_pu_imag_full - config->IM_pu;
+					}
+
+					//Convert it back to per-unit complex form - magnitude in next block
+					Isat_pu = complex(cos(phi_ang),sin(phi_ang));
+
+					//Store the saturation value
+					saturation_calculated_vals[index_loop] = Isat_pu * (Isat_pu_imag * I_base_Pri);
+
+					//Compute the difference from the old
+					Isat_diff = saturation_calculated_vals[index_loop] - saturation_calculated_vals[index_loop+6];
+					diff_val = Isat_diff.Mag();
+
+					//Check to see if it is bigger
+					if (diff_val > max_diff)
+					{
+						max_diff = diff_val;
+					}
+
+					//Post appropriately to node values
+					NR_busdata[NR_branchdata[NR_branch_reference].from].BusSatTerm[index_loop] += saturation_calculated_vals[index_loop] - saturation_calculated_vals[index_loop+6];
+				}//End loop
+			}//Primary done
+
+			if ((config->magnetization_location == config->SEC_MAG) || (config->magnetization_location == config->BOTH_MAG))
+			{
+				//Loop
+				for (index_loop=3; index_loop<6; index_loop++)
+				{
+					//Extract values
+					phi_mag = phi_values[index_loop].Mag();
+					phi_ang = phi_values[index_loop].Arg();
+
+					//Compute imaginary projection
+					imag_phi_value = (phi_mag*sin(phi_ang + angle_offset));
+
+					//"abs" it
+					if (imag_phi_value <0)
+					{
+						imag_phi_value = -imag_phi_value;
+					}
+
+					//Make pu
+					imag_phi_value_pu = imag_phi_value / phi_base_Sec;
+
+					//Calculate a the saturation impacts
+					//Isat_pu_imag_full=(sqrt((imag_phi_value_pu-phiK_pu)^2+4*D_sat*LA_pu)+imag_phi_value_pu-phiK_pu)/(2*LA_pu)-D_sat/phiK_pu;
+					temp_double = imag_phi_value_pu-config->phiK_pu;
+					Isat_pu_imag_full = temp_double*temp_double + 4.0*D_sat*config->LA_pu; //Part for sqrt
+					temp_double = sqrt(Isat_pu_imag_full);
+					temp_double += imag_phi_value_pu - config->phiK_pu;	//sqrt + imag_phivalue_pu - phiK_pu
+					Isat_pu_imag_full = temp_double / (2.0 * config->LA_pu);	// /2*LA_pu
+					temp_double = D_sat / config->phiK_pu;	//D_sat/phiK_pu
+					Isat_pu_imag_full -= temp_double;
+
+					//Check and see if it saturated
+					if (imag_phi_value_pu <= config->phiM_pu)
+					{
+						Isat_pu_imag = 0.0;
+					}
+					else
+					{
+						Isat_pu_imag = Isat_pu_imag_full - config->IM_pu;
+					}
+
+					//Convert it back to per-unit complex form - magnitude in next block
+					Isat_pu = complex(cos(phi_ang),sin(phi_ang));
+
+					//Store the saturation value
+					saturation_calculated_vals[index_loop] = Isat_pu * (Isat_pu_imag * I_base_Sec);
+
+					//Compute the difference from the old
+					Isat_diff = saturation_calculated_vals[index_loop] - saturation_calculated_vals[index_loop+6];
+					diff_val = Isat_diff.Mag();
+
+					//Check to see if it is bigger
+					if (diff_val > max_diff)
+					{
+						max_diff = diff_val;
+					}
+
+					//Post appropriately to node values
+					NR_busdata[NR_branchdata[NR_branch_reference].to].BusSatTerm[index_loop-3] += saturation_calculated_vals[index_loop] - saturation_calculated_vals[index_loop+6];
+				}//End loop
+			}
+
+			//Check for a reiteration
+			if (max_diff > inrush_tol_value)	//Technically voltage, but meh
+			{
+				//See if it is set already
+				if (*deltaIsat == false)	//Nope, set it
+				{
+					*deltaIsat = true;
+				}
+				//Default else - ignore it
+			}
+			//Default else converged
+
+			//Return successful update
+			return 1;
+		}
+	}//End proper transformer type and in-rush enabled
+	else	//Not supported, assume this was called in init/presynch - special flag
+	{
+		return -1;
+	}
+}
+
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE: transformer
 //////////////////////////////////////////////////////////////////////////
@@ -1200,6 +2027,20 @@ EXPORT void power_calculation(OBJECT *thisobj)
 {
 	transformer *transformerobj = OBJECTDATA(thisobj,transformer);
 	transformerobj->calculate_power();
+}
+
+EXPORT int recalc_transformer_mat(OBJECT *obj)
+{
+	int result;
+	result = OBJECTDATA(obj,transformer)->transformer_inrush_mat_update();
+	return result;
+}
+
+EXPORT int recalc_deltamode_saturation(OBJECT *obj,bool *deltaIsat)
+{
+	int result;
+	result = OBJECTDATA(obj,transformer)->transformer_saturation_update(deltaIsat);
+	return result;
 }
 
 EXPORT int isa_transformer(OBJECT *obj, char *classname)

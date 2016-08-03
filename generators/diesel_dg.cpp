@@ -174,7 +174,7 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_double,"Vterm_min[pu]",PADDR(Min_Ef),PT_DESCRIPTION,"Lower voltage limit for super-second (p.u.)",
 
 			//State variables - SEXS
-			PT_double,"vset[pu]",PADDR(curr_state.avr.vset),PT_DESCRIPTION,"Exciter voltage set point state variable",
+			PT_double,"vset[pu]",PADDR(next_state.avr.vset),PT_DESCRIPTION,"Exciter voltage set point variable",	//Put into next state so deltamode catches it right
 			PT_double,"bias",PADDR(curr_state.avr.bias),PT_DESCRIPTION,"Exciter bias state variable",
 			PT_double,"xe",PADDR(curr_state.avr.xe),PT_DESCRIPTION,"Exciter state variable",
 			PT_double,"xb",PADDR(curr_state.avr.xb),PT_DESCRIPTION,"Exciter state variable",
@@ -183,7 +183,9 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_enumeration,"Governor_type",PADDR(Governor_type),PT_DESCRIPTION,"Governor model for dynamics-capable implementation",
 				PT_KEYWORD,"NO_GOV",(enumeration)NO_GOV,PT_DESCRIPTION,"No exciter",
 				PT_KEYWORD,"DEGOV1",(enumeration)DEGOV1,PT_DESCRIPTION,"DEGOV1 Woodward Diesel Governor",
-				PT_KEYWORD,"GAST",(enumeration)GAST,PT_DESCRIPTION,"GAST Gas Turbine Governor", // gastflag
+				PT_KEYWORD,"GAST",(enumeration)GAST,PT_DESCRIPTION,"GAST Gas Turbine Governor",
+				PT_KEYWORD,"GGOV1_OLD",(enumeration)GGOV1_OLD,PT_DESCRIPTION,"Older GGOV1 Governor Model",
+				PT_KEYWORD,"GGOV1",(enumeration)GGOV1,PT_DESCRIPTION,"GGOV1 Governor Model",
 
 			//Governor properties (DEGOV1)
 			PT_double,"DEGOV1_R[pu]",PADDR(gov_degov1_R),PT_DESCRIPTION,"Governor droop constant (p.u.)",
@@ -222,6 +224,93 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_double,"GAST_x2",PADDR(curr_state.gov_gast.x2),PT_DESCRIPTION,"Governor electric box state variable",
 			PT_double,"GAST_x3",PADDR(curr_state.gov_gast.x3),PT_DESCRIPTION,"Governor electric box state variable",
 			PT_double,"GAST_throttle",PADDR(curr_state.gov_gast.throttle),PT_DESCRIPTION,"Governor electric box state variable",
+
+			//Governor properties (GGOV1 and GGOV1_OLD)
+			PT_double,"GGOV1_R[pu]",PADDR(gov_ggv1_r),PT_DESCRIPTION,"Permanent droop, p.u.",
+			PT_int32,"GGOV1_Rselect",PADDR(gov_ggv1_rselect),PT_DESCRIPTION,"Feedback signal for droop, = 1 selected electrical power, = 0 none (isochronous governor), = -1 fuel valve stroke ( true stroke),= -2 governor output ( requested stroke)",
+			PT_double,"GGOV1_Tpelec[s]",PADDR(gov_ggv1_Tpelec),PT_DESCRIPTION,"Electrical power transducer time constant, sec. (>0.)",
+			PT_double,"GGOV1_maxerr",PADDR(gov_ggv1_maxerr),PT_DESCRIPTION,"Maximum value for speed error signal",
+			PT_double,"GGOV1_minerr",PADDR(gov_ggv1_minerr),PT_DESCRIPTION,"Minimum value for speed error signal",
+			PT_double,"GGOV1_Kpgov",PADDR(gov_ggv1_Kpgov),PT_DESCRIPTION,"Governor proportional gain",
+			PT_double,"GGOV1_Kigov",PADDR(gov_ggv1_Kigov),PT_DESCRIPTION,"Governor integral gain",
+			PT_double,"GGOV1_Kdgov",PADDR(gov_ggv1_Kdgov),PT_DESCRIPTION,"Governor derivative gain",
+			PT_double,"GGOV1_Tdgov[s]",PADDR(gov_ggv1_Tdgov),PT_DESCRIPTION,"Governor derivative controller time constant, sec.",
+			PT_double,"GGOV1_vmax",PADDR(gov_ggv1_vmax),PT_DESCRIPTION,"Maximum valve position limit",
+			PT_double,"GGOV1_vmin",PADDR(gov_ggv1_vmin),PT_DESCRIPTION,"Minimum valve position limit",
+			PT_double,"GGOV1_Tact",PADDR(gov_ggv1_Tact),PT_DESCRIPTION,"Actuator time constant",
+			PT_double,"GGOV1_Kturb",PADDR(gov_ggv1_Kturb),PT_DESCRIPTION,"Turbine gain (>0.)",
+			PT_double,"GGOV1_wfnl[pu]",PADDR(gov_ggv1_wfnl),PT_DESCRIPTION,"No load fuel flow, p.u",
+			PT_double,"GGOV1_Tb[s]",PADDR(gov_ggv1_Tb),PT_DESCRIPTION,"Turbine lag time constant, sec. (>0.)",
+			PT_double,"GGOV1_Tc[s]",PADDR(gov_ggv1_Tc),PT_DESCRIPTION,"Turbine lead time constant, sec.",
+			PT_int32,"GGOV1_Fuel_lag",PADDR(gov_ggv1_Flag),PT_DESCRIPTION,"Switch for fuel source characteristic, = 0 for fuel flow independent of speed, = 1 fuel flow proportional to speed",
+			PT_double,"GGOV1_Teng",PADDR(gov_ggv1_Teng),PT_DESCRIPTION,"Transport lag time constant for diesel engine",
+			PT_double,"GGOV1_Tfload",PADDR(gov_ggv1_Tfload),PT_DESCRIPTION,"Load Limiter time constant, sec. (>0.)",
+			PT_double,"GGOV1_Kpload",PADDR(gov_ggv1_Kpload),PT_DESCRIPTION,"Load limiter proportional gain for PI controller",
+			PT_double,"GGOV1_Kiload",PADDR(gov_ggv1_Kiload),PT_DESCRIPTION,"Load limiter integral gain for PI controller",
+			PT_double,"GGOV1_Ldref[pu]",PADDR(gov_ggv1_Ldref),PT_DESCRIPTION,"Load limiter reference value p.u.",
+			PT_double,"GGOV1_Dm[pu]",PADDR(gov_ggv1_Dm),PT_DESCRIPTION,"Speed sensitivity coefficient, p.u.",
+			PT_double,"GGOV1_ropen[pu/s]",PADDR(gov_ggv1_ropen),PT_DESCRIPTION,"Maximum valve opening rate, p.u./sec.",
+			PT_double,"GGOV1_rclose[pu/s]",PADDR(gov_ggv1_rclose),PT_DESCRIPTION,"Minimum valve closing rate, p.u./sec.",
+			PT_double,"GGOV1_Kimw",PADDR(gov_ggv1_Kimw),PT_DESCRIPTION,"Power controller (reset) gain",
+			PT_double,"GGOV1_Pmwset[MW]",PADDR(gov_ggv1_Pmwset),PT_DESCRIPTION,"Power controller setpoint, MW",
+			PT_double,"GGOV1_aset[pu/s]",PADDR(gov_ggv1_aset),PT_DESCRIPTION,"Acceleration limiter setpoint, p.u. / sec.",
+			PT_double,"GGOV1_Ka",PADDR(gov_ggv1_Ka),PT_DESCRIPTION,"Acceleration limiter Gain",
+			PT_double,"GGOV1_Ta[s]",PADDR(gov_ggv1_Ta),PT_DESCRIPTION,"Acceleration limiter time constant, sec. (>0.)",
+			PT_double,"GGOV1_db",PADDR(gov_ggv1_db),PT_DESCRIPTION,"Speed governor dead band",
+			PT_double,"GGOV1_Tsa[s]",PADDR(gov_ggv1_Tsa),PT_DESCRIPTION,"Temperature detection lead time constant, sec.",
+			PT_double,"GGOV1_Tsb[s]",PADDR(gov_ggv1_Tsb),PT_DESCRIPTION,"Temperature detection lag time constant, sec.",
+//			PT_double,"GGOV1_rup",PADDR(gov_ggv1_rup),PT_DESCRIPTION,"Maximum rate of load limit increase",
+//			PT_double,"GGOV1_rdown",PADDR(gov_ggv1_rdown),PT_DESCRIPTION,"Maximum rate of load limit decrease",
+
+			//GGOV1 "enable/disable" variables - to give some better control over low value select
+			PT_bool,"GGOV1_Load_Limit_enable",PADDR(gov_ggv1_fsrt_enable),PT_DESCRIPTION,"Enables/disables load limiter (fsrt) of low-value-select",
+			PT_bool,"GGOV1_Acceleration_Limit_enable",PADDR(gov_ggv1_fsra_enable),PT_DESCRIPTION,"Enables/disables acceleration limiter (fsra) of low-value-select",
+			PT_bool,"GGOV1_PID_enable",PADDR(gov_ggv1_fsrn_enable),PT_DESCRIPTION,"Enables/disables PID controller (fsrn) of low-value-select",
+
+			//GGOV1 state variables
+			PT_double,"GGOV1_fsrt",PADDR(curr_state.gov_ggov1.fsrt),PT_DESCRIPTION,"Load limiter block input to low-value-select",
+			PT_double,"GGOV1_fsra",PADDR(curr_state.gov_ggov1.fsra),PT_DESCRIPTION,"Acceleration limiter block input to low-value-select",
+			PT_double,"GGOV1_fsrn",PADDR(curr_state.gov_ggov1.fsrn),PT_DESCRIPTION,"PID block input to low-value-select",
+			PT_double,"GGOV1_speed_error[pu]",PADDR(curr_state.gov_ggov1.werror),PT_DESCRIPTION,"Speed difference in per-unit for input to PID controller",
+
+			//All state variables
+			PT_double,"GGOV1_x1",PADDR(curr_state.gov_ggov1.x1),
+			PT_double,"GGOV1_x2",PADDR(curr_state.gov_ggov1.x2),
+			PT_double,"GGOV1_x2a",PADDR(curr_state.gov_ggov1.x2a),
+			PT_double,"GGOV1_x3",PADDR(curr_state.gov_ggov1.x3),
+			PT_double,"GGOV1_x3a",PADDR(curr_state.gov_ggov1.x3a),
+			PT_double,"GGOV1_x4",PADDR(curr_state.gov_ggov1.x4),
+			PT_double,"GGOV1_x4a",PADDR(curr_state.gov_ggov1.x4a),
+			PT_double,"GGOV1_x4b",PADDR(curr_state.gov_ggov1.x4b),
+			PT_double,"GGOV1_x5",PADDR(curr_state.gov_ggov1.x5),
+			PT_double,"GGOV1_x5a",PADDR(curr_state.gov_ggov1.x5a),
+			PT_double,"GGOV1_x5b",PADDR(curr_state.gov_ggov1.x5b),
+			PT_double,"GGOV1_x6",PADDR(curr_state.gov_ggov1.x6),
+			PT_double,"GGOV1_x7",PADDR(curr_state.gov_ggov1.x7),
+			PT_double,"GGOV1_x7a",PADDR(curr_state.gov_ggov1.x7a),
+			PT_double,"GGOV1_x8",PADDR(curr_state.gov_ggov1.x8),
+			PT_double,"GGOV1_x8a",PADDR(curr_state.gov_ggov1.x8a),
+			PT_double,"GGOV1_x9",PADDR(curr_state.gov_ggov1.x9),
+			PT_double,"GGOV1_x9a",PADDR(curr_state.gov_ggov1.x9a),
+			PT_double,"GGOV1_x10",PADDR(curr_state.gov_ggov1.x10),
+			PT_double,"GGOV1_x10a",PADDR(curr_state.gov_ggov1.x10a),
+			PT_double,"GGOV1_x10b",PADDR(curr_state.gov_ggov1.x10b),
+			PT_double,"GGOV1_ValveStroke",PADDR(curr_state.gov_ggov1.ValveStroke),
+			PT_double,"GGOV1_FuelFlow",PADDR(curr_state.gov_ggov1.FuelFlow),
+			PT_double,"GGOV1_GovOutPut",PADDR(curr_state.gov_ggov1.GovOutPut),
+			PT_double,"GGOV1_RselectValue",PADDR(curr_state.gov_ggov1.RselectValue),
+			PT_double,"GGOV1_fsrtNoLim",PADDR(curr_state.gov_ggov1.fsrtNoLim),
+			PT_double,"GGOV1_err2",PADDR(curr_state.gov_ggov1.err2),
+			PT_double,"GGOV1_err2a",PADDR(curr_state.gov_ggov1.err2a),
+			PT_double,"GGOV1_err3",PADDR(curr_state.gov_ggov1.err3),
+			PT_double,"GGOV1_err4",PADDR(curr_state.gov_ggov1.err4),
+			PT_double,"GGOV1_err7",PADDR(curr_state.gov_ggov1.err7),
+			PT_double,"GGOV1_LowValSelect1",PADDR(curr_state.gov_ggov1.LowValSelect1),
+			PT_double,"GGOV1_LowValSelect",PADDR(curr_state.gov_ggov1.LowValSelect),
+
+			//GGOV1 state variables, but could be manipulated (post-delta init)
+			PT_double,"GGOV1_wref[pu]",PADDR(curr_state.gov_ggov1.wref),PT_DESCRIPTION,"Frequency set point for GGOV1 - may be overwritten internally",
+			PT_double,"GGOV1_pref[pu]",PADDR(curr_state.gov_ggov1.Pref),PT_DESCRIPTION,"Power out reference point for GGOV1 - may be overwritten internally",
 
 			PT_set, "phases", PADDR(phases), PT_DESCRIPTION, "Specifies which phases to connect to - currently not supported and assumes three-phase connection",
 				PT_KEYWORD, "A",(set)PHASE_A,
@@ -375,7 +464,50 @@ int diesel_dg::create(void)
 	gov_gast_KT=2;
 	gov_gast_VMAX=1.05;
 	gov_gast_VMIN=-0.05;
+	
+	//GGOV1 Governor defaults
+	gov_ggv1_r = 0.04;
+	gov_ggv1_rselect = 1;
+	gov_ggv1_Tpelec = 1.0;
+	gov_ggv1_maxerr = 0.05;
+	gov_ggv1_minerr = -0.05;
+	gov_ggv1_Kpgov = 0.8;
+	gov_ggv1_Kigov = 0.2;
+	gov_ggv1_Kdgov = 0.0;
+	gov_ggv1_Tdgov = 1.0;
+	gov_ggv1_vmax = 1.0;
+	gov_ggv1_vmin = 0.15;
+	gov_ggv1_Tact = 0.5;
+	gov_ggv1_Kturb = 1.5;
+	gov_ggv1_wfnl = 0.2;
+	gov_ggv1_Tb = 0.1;
+	gov_ggv1_Tc = 0.0;
+	gov_ggv1_Flag = 1;
+	gov_ggv1_Teng = 0.0;
+	gov_ggv1_Tfload = 3.0;
+	gov_ggv1_Kpload = 2.0;
+	gov_ggv1_Kiload = 0.67;
+	gov_ggv1_Ldref = 1.0;
+	gov_ggv1_Dm = 0.0;
+	gov_ggv1_ropen = 0.10;
+	gov_ggv1_rclose = -0.1;
+	gov_ggv1_Kimw = 0.002;
+	gov_ggv1_Pmwset = 3.0;
+	gov_ggv1_aset = 0.01;
+	gov_ggv1_Ka = 10.0;
+	gov_ggv1_Ta = 0.1;
+	gov_ggv1_db = 0.0;
+	gov_ggv1_Tsa = 4.0;
+	gov_ggv1_Tsb = 5.0;
+	//gov_ggv1_rup = 99.0;
+	//gov_ggv1_rdown = -99.0;
 
+	//By default, all paths enabled
+	gov_ggv1_fsrt_enable = true;
+	gov_ggv1_fsra_enable = true;
+	gov_ggv1_fsrn_enable = true;
+
+	//Other deltamode-variables
 	bus_admittance_mat = NULL;
 	full_bus_admittance_mat = NULL;
 	PGenerated = NULL;
@@ -404,10 +536,14 @@ int diesel_dg::create(void)
 	Rr = 0.0;
 
 	torque_delay = NULL;
+	x5a_delayed = NULL;
 	torque_delay_len = 0;
+	x5a_delayed_len = 0;
 
 	torque_delay_write_pos = 0;
 	torque_delay_read_pos = 0;
+	x5a_delayed_write_pos = 0;
+	x5a_delayed_read_pos = 0;
 
 	//Initialize desired frequency to 60 Hz
 	curr_state.omega = 2*PI*60.0;
@@ -633,6 +769,17 @@ int diesel_dg::init(OBJECT *parent)
 	}//End not dynamic init checks
 	else	//Must be dynamic!
 	{
+		//Make sure our parent is delta enabled!
+		if ((parent->flags & OF_DELTAMODE) != OF_DELTAMODE)
+		{
+			GL_THROW("diesel_dg:%s - The parented object does not have deltamode flags enabled.",obj->name?obj->name:"unnamed");
+			/*  TROUBLESHOOT
+			The parent object for the diesel_dg object does not appear to be flagged for deltamode.  This could cause serious problems
+			when it tries to update.  Please either enable deltamode in the parented object, or select a different operating mode for the
+			diesel_dg object.
+			*/
+		}
+
 		//Check rated power
 		if (Rated_VA<=0.0)
 		{
@@ -862,6 +1009,18 @@ int diesel_dg::init(OBJECT *parent)
 
 			gen_object_count++;	//Increment the counter
 		}
+	}//End deltamode inclusive
+	else	//Not enabled for this model
+	{
+		if (enable_subsecond_models == true)
+		{
+			gl_warning("diesel_dg:%d %s - Deltamode is enabled for the module, but not this generator!",obj->id,(obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			The diesel_dg is not flagged for deltamode operations, yet deltamode simulations are enabled for the overall system.  When deltamode
+			triggers, this generator may no longer contribute to the system, until event-driven mode resumes.  This could cause issues with the simulation.
+			It is recommended all objects that support deltamode enable it.
+			*/
+		}
 	}
 
 	return 1;
@@ -902,46 +1061,8 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 		{
 			if (((gen_object_current == -1) || (delta_objects==NULL)) && (enable_subsecond_models == true))
 			{
-				//Allocate the deltamode object array
-				delta_objects = (OBJECT**)gl_malloc(gen_object_count*sizeof(OBJECT*));
-
-				//Make sure it worked
-				if (delta_objects == NULL)
-				{
-					GL_THROW("Failed to allocate deltamode objects array for generators module!");
-					/*  TROUBLESHOOT
-					While attempting to create a reference array for generator module deltamode-enabled
-					objects, an error was encountered.  Please try again.  If the error persists, please
-					submit your code and a bug report via the trac website.
-					*/
-				}
-
-				//Allocate the function reference list as well
-				delta_functions = (FUNCTIONADDR*)gl_malloc(gen_object_count*sizeof(FUNCTIONADDR));
-
-				//Make sure it worked
-				if (delta_functions == NULL)
-				{
-					GL_THROW("Failed to allocate deltamode objects function array for generators module!");
-					/*  TROUBLESHOOT
-					While attempting to create a reference array for generator module deltamode-enabled
-					objects, an error was encountered.  Please try again.  If the error persists, please
-					submit your code and a bug report via the trac website.
-					*/
-				}
-
-				//Allocate the function reference list for postupdate as well
-				post_delta_functions = (FUNCTIONADDR*)gl_malloc(gen_object_count*sizeof(FUNCTIONADDR));
-
-				//Make sure it worked
-				if (post_delta_functions == NULL)
-				{
-					GL_THROW("Failed to allocate deltamode objects function array for generators module!");
-					//Defined above
-				}
-
-				//Initialize index
-				gen_object_current = 0;
+				//Call the allocation routine
+				allocate_deltamode_arrays();
 			}
 
 			//Check limits of the array
@@ -1312,7 +1433,7 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 				if ((voltage_mag_curr>Max_Ef) || (voltage_mag_curr<Min_Ef))
 				{
 					//See where the value is
-					vdiff = temp_voltage_val[0].Mag()/voltage_base - curr_state.avr.vset;
+					vdiff = temp_voltage_val[0].Mag()/voltage_base - next_state.avr.vset;
 
 					//Figure out Q difference
 					reactive_diff = (YS1_Full.Im()*(vdiff*voltage_base)*voltage_base)/3.0;
@@ -1509,9 +1630,11 @@ void diesel_dg::convert_abc_to_pn0(complex *Xabc, complex *Xpn0)
 SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
 	unsigned char pass_mod;
+	unsigned int loop_index;
 	double temp_double;
 	double deltat, deltath;
 	double omega_pu;
+	double x5a_now;
 	complex temp_rotation;
 	complex temp_complex[3];
 	complex temp_current_val[3];
@@ -1560,11 +1683,65 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 
 			//Initialize index variables
 			torque_delay_write_pos = torque_delay_len-1;	//Write at the end of the array first (-1)
-			torque_delay_read_pos;	//Read at beginning
+			torque_delay_read_pos = 0;	//Read at beginning
 		}//End DEGOV1 type
 
 		//Initialize dynamics
 		init_dynamics(&curr_state);
+
+		//GGOV1 delay stuff has to go after the init, since it needs a value to initalize
+		if ((Governor_type == GGOV1) || (Governor_type == GGOV1_OLD)) 
+		{
+			//See if we need to free first
+			if (x5a_delayed!=NULL)
+			{
+				gl_free(x5a_delayed);	//Free it up
+			}
+
+			if (gov_ggv1_Teng > 0)
+			{
+				//Figure out how big the new array needs to be - Make it one lo
+				x5a_delayed_len=(unsigned int)(gov_ggv1_Teng*DT_SECOND/dt);
+
+				//See if there's any leftovers
+				temp_double = gov_ggv1_Teng-(double)(x5a_delayed_len*dt)/(double)DT_SECOND;
+
+				if (temp_double > 0.0)	//Means bigger, +1 it
+					x5a_delayed_len += 1;
+				//Default else - it's either just right, or negative (meaning we should be 1 bigger already)
+
+				//Now set it up
+				x5a_delayed = (double *)gl_malloc(x5a_delayed_len*sizeof(double));
+
+				//Make sure it worked
+				if (x5a_delayed == NULL)
+				{
+					gl_error("diesel_dg: failed to allocate to allocate the delayed x5a array for Governor!");
+					/*  TROUBLESHOOT
+					The diesel_dg object failed to allocate the memory needed for the delayed x5a array inside
+					the governor control.  Please try again.  If the error persists, please submit your code
+					and a bug report via the trac website.
+					*/
+					return SM_ERROR;
+				}
+
+				//Initialize index variables
+				x5a_delayed_write_pos = x5a_delayed_len-1;	//Write at the end of the array first (-1)
+				x5a_delayed_read_pos = 0;	//Read at beginning
+
+				//Initialize the values
+				for (loop_index=0; loop_index<x5a_delayed_len; loop_index++)
+				{
+					x5a_delayed[loop_index] = curr_state.gov_ggov1.x5a;
+				}
+			}//End delay array initialization
+			else //No delay
+			{
+				x5a_delayed = NULL;	//Just in case
+				x5a_delayed_write_pos = -1;	//These should cause access violations or something, if they get used
+				x5a_delayed_read_pos = -1;
+			}//End no delay in Teng
+		}//End GGOV1 type
 
 		//Initialize rotor variable
 		prev_rotor_speed_val = curr_state.omega;
@@ -1589,6 +1766,23 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 			if (torque_delay_write_pos >= torque_delay_len)
 				torque_delay_write_pos = 0;
 		}//End DEGOV1 first pass handling
+		else if ((Governor_type == GGOV1) || (Governor_type == GGOV1_OLD))
+		{
+			if (gov_ggv1_Teng > 0)
+			{
+				//Increment positions
+				x5a_delayed_write_pos++;
+				x5a_delayed_read_pos++;
+
+				//Check for wrapping
+				if (x5a_delayed_read_pos >= x5a_delayed_len)
+					x5a_delayed_read_pos = 0;
+
+				if (x5a_delayed_write_pos >= x5a_delayed_len)
+					x5a_delayed_write_pos = 0;
+			}
+			//Default else -- no delay, so nothing needs to be set
+		}//End GGOV1 first pass handling
 	}//End first pass of new timestep
 
 	//See what we're on, for tracking
@@ -1614,7 +1808,7 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 		next_state.pwr_electric = curr_state.pwr_electric;
 
 		//Call dynamics
-		apply_dynamics(&curr_state,&predictor_vals);
+		apply_dynamics(&curr_state,&predictor_vals,deltat);
 
 		//Apply prediction update
 		next_state.Flux1d = curr_state.Flux1d + predictor_vals.Flux1d*deltat;
@@ -1644,12 +1838,239 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 			next_state.gov_degov1.x5 = curr_state.gov_degov1.x5 + predictor_vals.gov_degov1.x5*deltat;
 			next_state.gov_degov1.x6 = curr_state.gov_degov1.x6 + predictor_vals.gov_degov1.x6*deltat;
 		}//End DEGOV1 update
-		if (Governor_type == GAST)
+		else if (Governor_type == GAST)
 		{
 			next_state.gov_gast.x1 = curr_state.gov_gast.x1 + predictor_vals.gov_gast.x1*deltat;
 			next_state.gov_gast.x2 = curr_state.gov_gast.x2 + predictor_vals.gov_gast.x2*deltat;
 			next_state.gov_gast.x3 = curr_state.gov_gast.x3 + predictor_vals.gov_gast.x3*deltat;
 		}//End GAST update
+		else if ((Governor_type == GGOV1) || (Governor_type == GGOV1_OLD))
+		{
+			//Main params
+			next_state.gov_ggov1.x1 = curr_state.gov_ggov1.x1 + predictor_vals.gov_ggov1.x1*deltat;
+			next_state.gov_ggov1.x2a = curr_state.gov_ggov1.x2a + predictor_vals.gov_ggov1.x2a*deltat;
+			next_state.gov_ggov1.x3 = curr_state.gov_ggov1.x3 + predictor_vals.gov_ggov1.x3*deltat;
+			next_state.gov_ggov1.x4 = curr_state.gov_ggov1.x4 + predictor_vals.gov_ggov1.x4*deltat;
+			next_state.gov_ggov1.x5b = curr_state.gov_ggov1.x5b + predictor_vals.gov_ggov1.x5b*deltat;
+			next_state.gov_ggov1.x6 = curr_state.gov_ggov1.x6 + predictor_vals.gov_ggov1.x6*deltat;
+			next_state.gov_ggov1.x7 = curr_state.gov_ggov1.x7 + predictor_vals.gov_ggov1.x7*deltat;
+			next_state.gov_ggov1.x8a = curr_state.gov_ggov1.x8a + predictor_vals.gov_ggov1.x8a*deltat;
+			next_state.gov_ggov1.x9a = curr_state.gov_ggov1.x9a + predictor_vals.gov_ggov1.x9a*deltat;
+			next_state.gov_ggov1.x10b = curr_state.gov_ggov1.x10b + predictor_vals.gov_ggov1.x10b*deltat;
+
+			//Update algebraic variables of GGOV1
+			//8 - Supervisory load control
+			if (next_state.gov_ggov1.x8a > (1.1*gov_ggv1_r))
+			{
+				next_state.gov_ggov1.x8 = 1.1 * gov_ggv1_r;
+			}
+			else if (next_state.gov_ggov1.x8a < (-1.1*gov_ggv1_r))
+			{
+				next_state.gov_ggov1.x8 = -1.1 * gov_ggv1_r;
+			}
+			else
+			{
+				next_state.gov_ggov1.x8 = next_state.gov_ggov1.x8a;
+			}
+
+			//4 - Turbine actuator
+			next_state.gov_ggov1.ValveStroke = next_state.gov_ggov1.x4;
+			if (gov_ggv1_Flag == 0)
+			{
+				next_state.gov_ggov1.FuelFlow = next_state.gov_ggov1.ValveStroke * 1.0;
+			}
+			else if (gov_ggv1_Flag == 1)
+			{
+				next_state.gov_ggov1.FuelFlow = next_state.gov_ggov1.ValveStroke*next_state.omega/omega_ref;
+			}
+			else
+			{
+				gl_error("wrong ggv1_flag");
+				return SM_ERROR;
+			}
+
+			//2 - Governor differntial control
+			next_state.gov_ggov1.GovOutPut = curr_state.gov_ggov1.GovOutPut;
+			//Rselect switch
+			if (gov_ggv1_rselect == 1)
+			{
+				next_state.gov_ggov1.RselectValue = next_state.gov_ggov1.x1;
+			}
+			else if (gov_ggv1_rselect == -1)
+			{
+				next_state.gov_ggov1.RselectValue = next_state.gov_ggov1.ValveStroke;
+			}
+			else if (gov_ggv1_rselect == -2)
+			{
+				next_state.gov_ggov1.RselectValue = next_state.gov_ggov1.GovOutPut;
+			}
+			else if (gov_ggv1_rselect == 0)
+			{
+				next_state.gov_ggov1.RselectValue = 0.0;
+			}
+			else
+			{
+				gl_error("wrong ggv1_rselect parameter");
+				return SM_ERROR;
+			}
+
+			//Error deadband
+			//Assign GovOutPut latest value (for use in closed loop)
+			//Only needed in predictor updates
+			next_state.gov_ggov1.werror = next_state.omega/omega_ref - next_state.gov_ggov1.wref;
+			next_state.gov_ggov1.err2a = next_state.gov_ggov1.Pref + next_state.gov_ggov1.x8 - next_state.gov_ggov1.werror - gov_ggv1_r*next_state.gov_ggov1.RselectValue;
+
+			if (next_state.gov_ggov1.err2a > gov_ggv1_maxerr)
+			{
+				next_state.gov_ggov1.err2 = gov_ggv1_maxerr;
+			}
+			else if (next_state.gov_ggov1.err2a < gov_ggv1_minerr)
+			{
+				next_state.gov_ggov1.err2 = gov_ggv1_minerr;
+			}
+			else if ((next_state.gov_ggov1.err2a <= gov_ggv1_db) && (next_state.gov_ggov1.err2a >= -gov_ggv1_db))
+			{
+				next_state.gov_ggov1.err2 = 0.0;
+			}
+			else
+			{
+				if (next_state.gov_ggov1.err2a > 0.0)
+				{
+					next_state.gov_ggov1.err2 = (gov_ggv1_maxerr/(gov_ggv1_maxerr-gov_ggv1_db))*next_state.gov_ggov1.err2a - (gov_ggv1_maxerr*gov_ggv1_db/(gov_ggv1_maxerr-gov_ggv1_db));
+				}
+				else if (next_state.gov_ggov1.err2a < 0.0)
+				{
+					next_state.gov_ggov1.err2 = (gov_ggv1_minerr/(gov_ggv1_minerr+gov_ggv1_db))*next_state.gov_ggov1.err2a + (gov_ggv1_minerr*gov_ggv1_db/(gov_ggv1_minerr+gov_ggv1_db));
+				}
+			}
+			next_state.gov_ggov1.x2 = gov_ggv1_Kpgov/gov_ggv1_Tdgov*(next_state.gov_ggov1.err2 - next_state.gov_ggov1.x2a);
+
+			//3 - Governor integral control
+			if ((Governor_type == GGOV1_OLD) || ((Governor_type == GGOV1) && (gov_ggv1_Kpgov == 0.0)))	//Old implementation, or "disabled" new
+			{
+				next_state.gov_ggov1.x3a = gov_ggv1_Kigov*next_state.gov_ggov1.err2;
+			}
+			else	//Newer version
+			{
+				next_state.gov_ggov1.err3 = next_state.gov_ggov1.GovOutPut - next_state.gov_ggov1.x3;
+				next_state.gov_ggov1.x3a = gov_ggv1_Kigov/gov_ggv1_Kpgov*next_state.gov_ggov1.err3;
+			}			
+			
+			next_state.gov_ggov1.fsrn = next_state.gov_ggov1.x2 + gov_ggv1_Kpgov*next_state.gov_ggov1.err2 + next_state.gov_ggov1.x3;
+
+			//5 - Turbine LL
+			x5a_now = gov_ggv1_Kturb*(next_state.gov_ggov1.FuelFlow - gov_ggv1_wfnl);
+
+			if (gov_ggv1_Teng > 0)
+			{
+				//Update the stored value
+				x5a_delayed[x5a_delayed_write_pos] = x5a_now;
+
+				//Assign the oldest value
+				next_state.gov_ggov1.x5a = x5a_delayed[x5a_delayed_read_pos];
+			}
+			else	//Zero length
+			{
+				//Just assign in
+				next_state.gov_ggov1.x5a = x5a_now;
+			}
+			next_state.gov_ggov1.x5 = (1.0 - gov_ggv1_Tc/gov_ggv1_Tb)*next_state.gov_ggov1.x5b + gov_ggv1_Tc/gov_ggv1_Tb*next_state.gov_ggov1.x5a;
+			if (gov_ggv1_Dm > 0.0)
+			{
+				//Mechanical power update
+				next_state.pwr_mech = Rated_VA*(next_state.gov_ggov1.x5 - gov_ggv1_Dm*(next_state.omega/omega_ref - next_state.gov_ggov1.wref));
+			}
+			else
+			{
+				//Mechanical power update
+				next_state.pwr_mech = Rated_VA*(next_state.gov_ggov1.x5);
+			}
+			//Translate this into the torque model
+			next_state.torque_mech = next_state.pwr_mech / next_state.omega;
+
+			//10 - Temp detection LL
+			if (gov_ggv1_Dm < 0.0)
+			{
+				next_state.gov_ggov1.x10a = next_state.gov_ggov1.FuelFlow * pow((next_state.omega/omega_ref),gov_ggv1_Dm);
+			}
+			else
+			{
+				next_state.gov_ggov1.x10a = next_state.gov_ggov1.FuelFlow;
+			}
+			next_state.gov_ggov1.x10 = (1.0 - gov_ggv1_Tsa/gov_ggv1_Tsb)*next_state.gov_ggov1.x10b + gov_ggv1_Tsa/gov_ggv1_Tsb*next_state.gov_ggov1.x10a;
+
+			//7 - Turbine load integral control
+			next_state.gov_ggov1.err7 = next_state.gov_ggov1.GovOutPut - next_state.gov_ggov1.x7;
+			if (gov_ggv1_Kpload > 0.0)
+			{
+				next_state.gov_ggov1.x7a = gov_ggv1_Kiload/gov_ggv1_Kpload*next_state.gov_ggov1.err7;
+			}
+			else
+			{
+				next_state.gov_ggov1.x7a = gov_ggv1_Kiload*next_state.gov_ggov1.err7;
+			}
+			next_state.gov_ggov1.fsrtNoLim = next_state.gov_ggov1.x7 + gov_ggv1_Kpload*(-1.0 * next_state.gov_ggov1.x6 + gov_ggv1_Ldref*(gov_ggv1_Ldref/gov_ggv1_Kturb+gov_ggv1_wfnl));
+			if (next_state.gov_ggov1.fsrtNoLim > 1.0)
+			{
+				next_state.gov_ggov1.fsrt = 1.0;
+			}
+			else
+			{
+				next_state.gov_ggov1.fsrt = next_state.gov_ggov1.fsrtNoLim;
+			}
+
+			//9 - Acceleration control
+			next_state.gov_ggov1.x9 = 1.0/gov_ggv1_Ta*((next_state.omega/omega_ref - next_state.gov_ggov1.wref) - next_state.gov_ggov1.x9a);
+			next_state.gov_ggov1.fsra = gov_ggv1_Ka*deltat*(gov_ggv1_aset - next_state.gov_ggov1.x9) + next_state.gov_ggov1.GovOutPut;
+
+			//Pre-empt the low-value select, if needed
+			if (gov_ggv1_fsrt_enable == false)
+			{
+				next_state.gov_ggov1.fsrt = 99999999.0;	//Big value
+			}
+
+			if (gov_ggv1_fsra_enable == false)
+			{
+				next_state.gov_ggov1.fsra = 99999999.0;	//Big value
+			}
+
+			if (gov_ggv1_fsrn_enable == false)
+			{
+				next_state.gov_ggov1.fsrn = 99999999.0;	//Big value
+			}
+
+			//Low value select
+			if (next_state.gov_ggov1.fsrt < next_state.gov_ggov1.fsrn)
+			{
+				next_state.gov_ggov1.LowValSelect1 = next_state.gov_ggov1.fsrt;
+			}
+			else
+			{
+				next_state.gov_ggov1.LowValSelect1 = next_state.gov_ggov1.fsrn;
+			}
+
+			if (next_state.gov_ggov1.fsra < next_state.gov_ggov1.LowValSelect1)
+			{
+				next_state.gov_ggov1.LowValSelect = next_state.gov_ggov1.fsra;
+			}
+			else
+			{
+				next_state.gov_ggov1.LowValSelect = next_state.gov_ggov1.LowValSelect1;
+			}
+
+			if (next_state.gov_ggov1.LowValSelect > gov_ggv1_vmax)
+			{
+				next_state.gov_ggov1.GovOutPut = gov_ggv1_vmax;
+			}
+			else if (next_state.gov_ggov1.LowValSelect < gov_ggv1_vmin)
+			{
+				next_state.gov_ggov1.GovOutPut = gov_ggv1_vmin;
+			}
+			else
+			{
+				next_state.gov_ggov1.GovOutPut = next_state.gov_ggov1.LowValSelect;
+			}
+		}//End GGOV1 update
 		//Default else - no updates because no governor
 
 		//Exciter updates
@@ -1673,7 +2094,7 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 	else	//Corrector pass
 	{
 		//Call dynamics
-		apply_dynamics(&next_state,&corrector_vals);
+		apply_dynamics(&next_state,&corrector_vals,deltat);
 
 		//Reconcile updates update
 		next_state.Flux1d = curr_state.Flux1d + (predictor_vals.Flux1d + corrector_vals.Flux1d)*deltath;
@@ -1703,12 +2124,237 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 			next_state.gov_degov1.x5 = curr_state.gov_degov1.x5 + (predictor_vals.gov_degov1.x5 + corrector_vals.gov_degov1.x5)*deltath;
 			next_state.gov_degov1.x6 = curr_state.gov_degov1.x6 + (predictor_vals.gov_degov1.x6 + corrector_vals.gov_degov1.x6)*deltath;
 		}//End DEGOV1 update
-		if (Governor_type == GAST)
+		else if (Governor_type == GAST)
 		{
 			next_state.gov_gast.x1 = curr_state.gov_gast.x1 + (predictor_vals.gov_gast.x1 + corrector_vals.gov_gast.x1)*deltath;
 			next_state.gov_gast.x2 = curr_state.gov_gast.x2 + (predictor_vals.gov_gast.x2 + corrector_vals.gov_gast.x2)*deltath;
 			next_state.gov_gast.x3 = curr_state.gov_gast.x3 + (predictor_vals.gov_gast.x3 + corrector_vals.gov_gast.x3)*deltath;
 		}//End GAST update
+		else if ((Governor_type == GGOV1) || (Governor_type == GGOV1_OLD))
+		{
+			//Main params
+			next_state.gov_ggov1.x1 = curr_state.gov_ggov1.x1 + (predictor_vals.gov_ggov1.x1 + corrector_vals.gov_ggov1.x1)*deltath;
+			next_state.gov_ggov1.x2a = curr_state.gov_ggov1.x2a + (predictor_vals.gov_ggov1.x2a + corrector_vals.gov_ggov1.x2a)*deltath;
+			next_state.gov_ggov1.x3 = curr_state.gov_ggov1.x3 + (predictor_vals.gov_ggov1.x3 + corrector_vals.gov_ggov1.x3)*deltath;
+			next_state.gov_ggov1.x4 = curr_state.gov_ggov1.x4 + (predictor_vals.gov_ggov1.x4 + corrector_vals.gov_ggov1.x4)*deltath;
+			next_state.gov_ggov1.x5b = curr_state.gov_ggov1.x5b + (predictor_vals.gov_ggov1.x5b + corrector_vals.gov_ggov1.x5b)*deltath;
+			next_state.gov_ggov1.x6 = curr_state.gov_ggov1.x6 + (predictor_vals.gov_ggov1.x6 + corrector_vals.gov_ggov1.x6)*deltath;
+			next_state.gov_ggov1.x7 = curr_state.gov_ggov1.x7 + (predictor_vals.gov_ggov1.x7 + corrector_vals.gov_ggov1.x7)*deltath;
+			next_state.gov_ggov1.x8a = curr_state.gov_ggov1.x8a + (predictor_vals.gov_ggov1.x8a + corrector_vals.gov_ggov1.x8a)*deltath;
+			next_state.gov_ggov1.x9a = curr_state.gov_ggov1.x9a + (predictor_vals.gov_ggov1.x9a + corrector_vals.gov_ggov1.x9a)*deltath;
+			next_state.gov_ggov1.x10b = curr_state.gov_ggov1.x10b + (predictor_vals.gov_ggov1.x10b + corrector_vals.gov_ggov1.x10b)*deltath;
+
+			//Update algebraic variables of GGOV1
+			//8 - Supervisory load control
+			if (next_state.gov_ggov1.x8a > (1.1*gov_ggv1_r))
+			{
+				next_state.gov_ggov1.x8 = 1.1 * gov_ggv1_r;
+			}
+			else if (next_state.gov_ggov1.x8a < (-1.1*gov_ggv1_r))
+			{
+				next_state.gov_ggov1.x8 = -1.1 * gov_ggv1_r;
+			}
+			else
+			{
+				next_state.gov_ggov1.x8 = next_state.gov_ggov1.x8a;
+			}
+
+			//4 - Turbine actuator
+			next_state.gov_ggov1.ValveStroke = next_state.gov_ggov1.x4;
+			if (gov_ggv1_Flag == 0)
+			{
+				next_state.gov_ggov1.FuelFlow = next_state.gov_ggov1.ValveStroke * 1.0;
+			}
+			else if (gov_ggv1_Flag == 1)
+			{
+				next_state.gov_ggov1.FuelFlow = next_state.gov_ggov1.ValveStroke*next_state.omega/omega_ref;
+			}
+			else
+			{
+				gl_error("wrong ggv1_flag");
+				return SM_ERROR;
+			}
+
+			//2 - Governor differntial control
+			//Earlier comment says the below only happens in predictor
+			//next_state.gov_ggov1.GovOutPut = curr_state.gov_ggov1.GovOutPut;
+			//Rselect switch
+			if (gov_ggv1_rselect == 1)
+			{
+				next_state.gov_ggov1.RselectValue = next_state.gov_ggov1.x1;
+			}
+			else if (gov_ggv1_rselect == -1)
+			{
+				next_state.gov_ggov1.RselectValue = next_state.gov_ggov1.ValveStroke;
+			}
+			else if (gov_ggv1_rselect == -2)
+			{
+				next_state.gov_ggov1.RselectValue = next_state.gov_ggov1.GovOutPut;
+			}
+			else if (gov_ggv1_rselect == 0)
+			{
+				next_state.gov_ggov1.RselectValue = 0.0;
+			}
+			else
+			{
+				gl_error("wrong ggv1_rselect parameter");
+				return SM_ERROR;
+			}
+
+			//Error deadband
+			next_state.gov_ggov1.werror = next_state.omega/omega_ref - next_state.gov_ggov1.wref;
+			next_state.gov_ggov1.err2a = next_state.gov_ggov1.Pref + next_state.gov_ggov1.x8 - next_state.gov_ggov1.werror - gov_ggv1_r*next_state.gov_ggov1.RselectValue;
+			if (next_state.gov_ggov1.err2a > gov_ggv1_maxerr)
+			{
+				next_state.gov_ggov1.err2 = gov_ggv1_maxerr;
+			}
+			else if (next_state.gov_ggov1.err2a < gov_ggv1_minerr)
+			{
+				next_state.gov_ggov1.err2 = gov_ggv1_minerr;
+			}
+			else if ((next_state.gov_ggov1.err2a <= gov_ggv1_db) && (next_state.gov_ggov1.err2a >= -gov_ggv1_db))
+			{
+				next_state.gov_ggov1.err2 = 0.0;
+			}
+			else
+			{
+				if (next_state.gov_ggov1.err2a > 0.0)
+				{
+					next_state.gov_ggov1.err2 = (gov_ggv1_maxerr/(gov_ggv1_maxerr-gov_ggv1_db))*next_state.gov_ggov1.err2a - (gov_ggv1_maxerr*gov_ggv1_db/(gov_ggv1_maxerr-gov_ggv1_db));
+				}
+				else if (next_state.gov_ggov1.err2a < 0.0)
+				{
+					next_state.gov_ggov1.err2 = (gov_ggv1_minerr/(gov_ggv1_minerr+gov_ggv1_db))*next_state.gov_ggov1.err2a + (gov_ggv1_minerr*gov_ggv1_db/(gov_ggv1_minerr+gov_ggv1_db));
+				}
+			}
+			next_state.gov_ggov1.x2 = gov_ggv1_Kpgov/gov_ggv1_Tdgov*(next_state.gov_ggov1.err2 - next_state.gov_ggov1.x2a);
+
+			//3 - Governor integral control
+			if ((Governor_type == GGOV1_OLD) || ((Governor_type == GGOV1) && (gov_ggv1_Kpgov == 0.0)))	//Old implementation, or "disabled" new
+			{
+				next_state.gov_ggov1.x3a = gov_ggv1_Kigov*next_state.gov_ggov1.err2;
+			}
+			else
+			{
+				next_state.gov_ggov1.err3 = next_state.gov_ggov1.GovOutPut - next_state.gov_ggov1.x3;
+				next_state.gov_ggov1.x3a = gov_ggv1_Kigov/gov_ggv1_Kpgov*next_state.gov_ggov1.err3;
+			}
+			next_state.gov_ggov1.fsrn = next_state.gov_ggov1.x2 + gov_ggv1_Kpgov*next_state.gov_ggov1.err2 + next_state.gov_ggov1.x3;
+
+			//5 - Turbine LL
+			x5a_now = gov_ggv1_Kturb*(next_state.gov_ggov1.FuelFlow - gov_ggv1_wfnl);
+
+			if (gov_ggv1_Teng > 0)
+			{
+				//Update the stored value
+				x5a_delayed[x5a_delayed_write_pos] = x5a_now;
+
+				//Assign the oldest value
+				next_state.gov_ggov1.x5a = x5a_delayed[x5a_delayed_read_pos];
+			}
+			else	//Zero length
+			{
+				//Just assign in
+				next_state.gov_ggov1.x5a = x5a_now;
+			}
+			next_state.gov_ggov1.x5 = (1.0 - gov_ggv1_Tc/gov_ggv1_Tb)*next_state.gov_ggov1.x5b + gov_ggv1_Tc/gov_ggv1_Tb*next_state.gov_ggov1.x5a;
+			if (gov_ggv1_Dm > 0.0)
+			{
+				//Mechanical power update
+				next_state.pwr_mech = Rated_VA*(next_state.gov_ggov1.x5 - gov_ggv1_Dm*(next_state.omega/omega_ref - next_state.gov_ggov1.wref));
+			}
+			else
+			{
+				//Mechanical power update
+				next_state.pwr_mech = Rated_VA*(next_state.gov_ggov1.x5);
+			}
+			//Translate this into the torque model
+			next_state.torque_mech = next_state.pwr_mech / next_state.omega;
+
+			//10 - Temp detection LL
+			if (gov_ggv1_Dm < 0.0)
+			{
+				next_state.gov_ggov1.x10a = next_state.gov_ggov1.FuelFlow * pow((next_state.omega/omega_ref),gov_ggv1_Dm);
+			}
+			else
+			{
+				next_state.gov_ggov1.x10a = next_state.gov_ggov1.FuelFlow;
+			}
+			next_state.gov_ggov1.x10 = (1.0 - gov_ggv1_Tsa/gov_ggv1_Tsb)*next_state.gov_ggov1.x10b + gov_ggv1_Tsa/gov_ggv1_Tsb*next_state.gov_ggov1.x10a;
+
+			//7 - Turbine load integral control
+			next_state.gov_ggov1.err7 = next_state.gov_ggov1.GovOutPut - next_state.gov_ggov1.x7;
+			if (gov_ggv1_Kpload > 0.0)
+			{
+				next_state.gov_ggov1.x7a = gov_ggv1_Kiload/gov_ggv1_Kpload*next_state.gov_ggov1.err7;
+			}
+			else
+			{
+				next_state.gov_ggov1.x7a = gov_ggv1_Kiload*next_state.gov_ggov1.err7;
+			}
+			next_state.gov_ggov1.fsrtNoLim = next_state.gov_ggov1.x7 + gov_ggv1_Kpload*(-1.0 * next_state.gov_ggov1.x6 + gov_ggv1_Ldref*(gov_ggv1_Ldref/gov_ggv1_Kturb+gov_ggv1_wfnl));
+			if (next_state.gov_ggov1.fsrtNoLim > 1.0)
+			{
+				next_state.gov_ggov1.fsrt = 1.0;
+			}
+			else
+			{
+				next_state.gov_ggov1.fsrt = next_state.gov_ggov1.fsrtNoLim;
+			}
+
+			//9 - Acceleration control
+			next_state.gov_ggov1.x9 = 1.0/gov_ggv1_Ta*((next_state.omega/omega_ref - next_state.gov_ggov1.wref) - next_state.gov_ggov1.x9a);
+			next_state.gov_ggov1.fsra = gov_ggv1_Ka*deltat*(gov_ggv1_aset - next_state.gov_ggov1.x9) + next_state.gov_ggov1.GovOutPut;
+
+			//Pre-empt the low-value select, if needed
+			if (gov_ggv1_fsrt_enable == false)
+			{
+				next_state.gov_ggov1.fsrt = 99999999.0;	//Big value
+			}
+
+			if (gov_ggv1_fsra_enable == false)
+			{
+				next_state.gov_ggov1.fsra = 99999999.0;	//Big value
+			}
+
+			if (gov_ggv1_fsrn_enable == false)
+			{
+				next_state.gov_ggov1.fsrn = 99999999.0;	//Big value
+			}
+
+			//Low value select
+			if (next_state.gov_ggov1.fsrt < next_state.gov_ggov1.fsrn)
+			{
+				next_state.gov_ggov1.LowValSelect1 = next_state.gov_ggov1.fsrt;
+			}
+			else
+			{
+				next_state.gov_ggov1.LowValSelect1 = next_state.gov_ggov1.fsrn;
+			}
+
+			if (next_state.gov_ggov1.fsra < next_state.gov_ggov1.LowValSelect1)
+			{
+				next_state.gov_ggov1.LowValSelect = next_state.gov_ggov1.fsra;
+			}
+			else
+			{
+				next_state.gov_ggov1.LowValSelect = next_state.gov_ggov1.LowValSelect1;
+			}
+
+			if (next_state.gov_ggov1.LowValSelect > gov_ggv1_vmax)
+			{
+				next_state.gov_ggov1.GovOutPut = gov_ggv1_vmax;
+			}
+			else if (next_state.gov_ggov1.LowValSelect < gov_ggv1_vmin)
+			{
+				next_state.gov_ggov1.GovOutPut = gov_ggv1_vmin;
+			}
+			else
+			{
+				next_state.gov_ggov1.GovOutPut = next_state.gov_ggov1.LowValSelect;
+			}
+		}//End GGOV1 update
+
 		//Default else - no updates because no governor
 
 		//Exciter updates
@@ -1720,7 +2366,7 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 		//Default else - no updates because no exciter
 
 		//Nab per-unit omega, while we're at it
-	    omega_pu = curr_state.omega/omega_ref;
+		omega_pu = next_state.omega/omega_ref;
 
 		//Update generator current injection (technically is done "before" next powerflow)
 		IGenerated[0] = next_state.EintVal[0]*YS1*omega_pu;
@@ -1798,14 +2444,14 @@ STATUS diesel_dg::post_deltaupdate(complex *useful_value, unsigned int mode_pass
 //Returns a SUCCESS/FAIL
 //curr_time is the current states/information
 //curr_delta is the calculated differentials
-STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta)
+STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, double deltaT)
 {
 	complex current_pu[3];
 	complex Ipn0[3];
 	complex temp_complex;
 	double omega_pu;
 	double temp_double_1, temp_double_2, temp_double_3, delomega, x0; 
-	double torquenow;
+	double torquenow, x5a_now;
 
 	//Convert current as well
 	current_pu[0] = (IGenerated[0] - generator_admittance[0][0]*pCircuit_V[0] - generator_admittance[0][1]*pCircuit_V[1] - generator_admittance[0][2]*pCircuit_V[2])/current_base;
@@ -1841,8 +2487,6 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta)
 	temp_double_1 -=damping*(curr_time->omega-omega_ref)/omega_ref;
 
 	curr_time->pwr_mech = curr_time->torque_mech*curr_time->omega;
-
-	
 
 	temp_double_2 = omega_ref/(2.0*inertia);
 
@@ -1922,17 +2566,7 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta)
 			curr_delta->gov_degov1.x4 = 0;
 		}
 	}//End Woodward updates
-	else	//No governor - zero stuff for paranoia reasons
-	{
-		curr_delta->gov_degov1.throttle = 0.0;
-		curr_delta->gov_degov1.x1 = 0.0;
-		curr_delta->gov_degov1.x2 = 0.0;
-		curr_delta->gov_degov1.x4 = 0.0;
-		curr_delta->gov_degov1.x5 = 0.0;
-		curr_delta->gov_degov1.x6 = 0.0;
-	}//End no DEGOV1
-	//Governor updates, if relevant
-	if (Governor_type == GAST)	//Gast Turbine Governor
+	else if (Governor_type == GAST)	//Gast Turbine Governor
 	{
 		//Governor actuator updates - threshold first
 		if (curr_time->gov_gast.x1 > gov_gast_VMAX)
@@ -1976,14 +2610,246 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta)
 			curr_delta->gov_gast.x1 = 0;
 		}
 	}//End GAST updates
-	else	//No governor - zero stuff for paranoia reasons
+	else if ((Governor_type == GGOV1) || (Governor_type == GGOV1_OLD))
 	{
-		curr_delta->gov_gast.throttle = 0.0;
-		curr_delta->gov_gast.x1 = 0.0;
-		curr_delta->gov_gast.x2 = 0.0;
-		curr_delta->gov_gast.x3 = 0.0;
-	}//End no governor
+		//1 - Pelec measurement
+		curr_delta->gov_ggov1.x1 = 1.0/gov_ggv1_Tpelec*(curr_time->pwr_electric.Re() / Rated_VA - curr_time->gov_ggov1.x1);
 
+		//8 - Supervisory load control
+		if (curr_time->gov_ggov1.x8a > (1.1 * gov_ggv1_r))
+		{
+			curr_time->gov_ggov1.x8 = 1.1 * gov_ggv1_r;
+			curr_delta->gov_ggov1.x8a = 0.0;
+		}
+		else if (curr_time->gov_ggov1.x8a < (-1.1 * gov_ggv1_r))
+		{
+			curr_time->gov_ggov1.x8 = -1.1 * gov_ggv1_r;
+			curr_delta->gov_ggov1.x8a = 0.0;
+		}
+		else
+		{
+			curr_delta->gov_ggov1.x8a = gov_ggv1_Kimw*(gov_ggv1_Pmwset/Rated_VA - curr_time->gov_ggov1.x1);
+			curr_time->gov_ggov1.x8 = curr_time->gov_ggov1.x8a;
+		}
+
+		//2 - governor differntial control
+		//Rselect switch
+		if (gov_ggv1_rselect == 1)
+		{
+			curr_time->gov_ggov1.RselectValue = curr_time->gov_ggov1.x1;
+		}
+		else if (gov_ggv1_rselect == -1)
+		{
+			curr_time->gov_ggov1.RselectValue = curr_time->gov_ggov1.ValveStroke;
+		}
+		else if (gov_ggv1_rselect == -2)
+		{
+			curr_time->gov_ggov1.RselectValue = curr_time->gov_ggov1.GovOutPut;
+		}
+		else if (gov_ggv1_rselect == 0)
+		{
+			curr_time->gov_ggov1.RselectValue = 0.0;
+		}
+		else
+		{
+			gl_error("Wrong ggv1_rselect parameter");
+			return FAILED;
+		}
+		
+		//Error deadband
+		curr_time->gov_ggov1.werror = curr_time->omega/omega_ref - curr_time->gov_ggov1.wref;
+		curr_time->gov_ggov1.err2a = curr_time->gov_ggov1.Pref + curr_time->gov_ggov1.x8 - curr_time->gov_ggov1.werror - gov_ggv1_r*curr_time->gov_ggov1.RselectValue;
+		if (curr_time->gov_ggov1.err2a > gov_ggv1_maxerr)
+		{
+			curr_time->gov_ggov1.err2 = gov_ggv1_maxerr;
+		}
+		else if (curr_time->gov_ggov1.err2a < gov_ggv1_minerr)
+		{
+			curr_time->gov_ggov1.err2 = gov_ggv1_minerr;
+		}
+		else if ((curr_time->gov_ggov1.err2a <= gov_ggv1_db) && (curr_time->gov_ggov1.err2a >= -gov_ggv1_db))
+		{
+			curr_time->gov_ggov1.err2 = 0.0;
+		}
+		else
+		{
+			if (curr_time->gov_ggov1.err2a > 0.0)
+			{
+				curr_time->gov_ggov1.err2 = (gov_ggv1_maxerr/(gov_ggv1_maxerr-gov_ggv1_db))*curr_time->gov_ggov1.err2a - (gov_ggv1_maxerr*gov_ggv1_db/(gov_ggv1_maxerr-gov_ggv1_db));
+			}
+			else if (curr_time->gov_ggov1.err2a < 0.0)
+			{
+				curr_time->gov_ggov1.err2 = (gov_ggv1_minerr/(gov_ggv1_minerr+gov_ggv1_db))*curr_time->gov_ggov1.err2a + (gov_ggv1_minerr*gov_ggv1_db/(gov_ggv1_minerr+gov_ggv1_db));
+			}
+		}
+		curr_delta->gov_ggov1.x2a = 1.0/gov_ggv1_Tdgov*(curr_time->gov_ggov1.err2 - curr_time->gov_ggov1.x2a);
+		curr_time->gov_ggov1.x2 = gov_ggv1_Kpgov/gov_ggv1_Tdgov*(curr_time->gov_ggov1.err2 - curr_time->gov_ggov1.x2a);
+
+		//Governor integral control
+		//See which specific GGOV1 we are
+		if ((Governor_type == GGOV1_OLD) || ((Governor_type == GGOV1) && (gov_ggv1_Kpgov == 0.0)))	//Old implementation, or "disabled" new
+		{
+			curr_time->gov_ggov1.x3a = gov_ggv1_Kigov*curr_time->gov_ggov1.err2;
+		}
+		else
+		{
+			curr_time->gov_ggov1.err3 = curr_time->gov_ggov1.GovOutPut - curr_time->gov_ggov1.x3;
+			curr_time->gov_ggov1.x3a = gov_ggv1_Kigov/gov_ggv1_Kpgov*curr_time->gov_ggov1.err3;
+		}
+
+		curr_delta->gov_ggov1.x3 = curr_time->gov_ggov1.x3a;
+		curr_time->gov_ggov1.fsrn = curr_time->gov_ggov1.x2 + gov_ggv1_Kpgov*curr_time->gov_ggov1.err2 + curr_time->gov_ggov1.x3;
+
+		//4 - Turbine actuator
+		curr_time->gov_ggov1.err4 = curr_time->gov_ggov1.GovOutPut - curr_time->gov_ggov1.x4;
+		curr_time->gov_ggov1.x4a = 1.0/gov_ggv1_Tact*curr_time->gov_ggov1.err4;
+		if (curr_time->gov_ggov1.x4a > gov_ggv1_ropen)
+		{
+			curr_time->gov_ggov1.x4b = gov_ggv1_ropen;
+		}
+		else if (curr_time->gov_ggov1.x4a < gov_ggv1_rclose)
+		{
+			curr_time->gov_ggov1.x4b = gov_ggv1_rclose;
+		}
+		else
+		{
+			curr_time->gov_ggov1.x4b = curr_time->gov_ggov1.x4a;
+		}
+		curr_delta->gov_ggov1.x4 = curr_time->gov_ggov1.x4b;
+		curr_time->gov_ggov1.ValveStroke = curr_time->gov_ggov1.x4;
+		if (gov_ggv1_Flag == 0)
+		{
+			curr_time->gov_ggov1.FuelFlow = curr_time->gov_ggov1.ValveStroke * 1.0;
+		}
+		else if (gov_ggv1_Flag == 1)
+		{
+			curr_time->gov_ggov1.FuelFlow = curr_time->gov_ggov1.ValveStroke * curr_time->omega / omega_ref;
+		}
+		else
+		{
+			gl_error("wrong ggv1_Flag");
+			return FAILED;
+		}
+
+		//5 - Turbine LL
+		x5a_now = gov_ggv1_Kturb*(curr_time->gov_ggov1.FuelFlow - gov_ggv1_wfnl);
+
+		//Check on the delay
+		if (gov_ggv1_Teng > 0)
+		{
+			//Store the value
+			x5a_delayed[x5a_delayed_write_pos] = x5a_now;
+
+			//Read the delayed value
+			curr_time->gov_ggov1.x5a = x5a_delayed[x5a_delayed_read_pos];
+		}
+		else
+		{
+			curr_time->gov_ggov1.x5a = x5a_now;
+		}
+		curr_delta->gov_ggov1.x5b = 1.0/gov_ggv1_Tb*(curr_time->gov_ggov1.x5a - curr_time->gov_ggov1.x5b);
+		curr_time->gov_ggov1.x5 = (1.0 - gov_ggv1_Tc/gov_ggv1_Tb)*curr_time->gov_ggov1.x5b + gov_ggv1_Tc/gov_ggv1_Tb*curr_time->gov_ggov1.x5a;
+		if (gov_ggv1_Dm > 0.0)	//Mechanical power set
+		{
+			curr_time->pwr_mech = Rated_VA*(curr_time->gov_ggov1.x5 - gov_ggv1_Dm*(curr_time->omega/omega_ref - curr_time->gov_ggov1.wref));
+		}
+		else
+		{
+			curr_time->pwr_mech = Rated_VA*curr_time->gov_ggov1.x5;
+		}
+		//Translate this into the torque model
+		curr_time->torque_mech = curr_time->pwr_mech / curr_time->omega;		
+
+		//10 - Temp detection LL
+		if (gov_ggv1_Dm < 0.0)
+		{
+			curr_time->gov_ggov1.x10a = curr_time->gov_ggov1.FuelFlow * pow((curr_time->omega/omega_ref),gov_ggv1_Dm);
+		}
+		else
+		{
+			curr_time->gov_ggov1.x10a = curr_time->gov_ggov1.FuelFlow;
+		}
+		curr_delta->gov_ggov1.x10b = 1.0/gov_ggv1_Tsb*(curr_time->gov_ggov1.x10a - curr_time->gov_ggov1.x10b);
+		curr_time->gov_ggov1.x10 = (1.0 - gov_ggv1_Tsa/gov_ggv1_Tsb)*curr_time->gov_ggov1.x10b + gov_ggv1_Tsa/gov_ggv1_Tsb*curr_time->gov_ggov1.x10a;
+
+		//6 - Turbine Load Limiter
+		curr_delta->gov_ggov1.x6 = 1.0/gov_ggv1_Tfload*(curr_time->gov_ggov1.x10 - curr_time->gov_ggov1.x6);
+
+		//7 - Turbine Load Integral Control
+		curr_time->gov_ggov1.err7 = curr_time->gov_ggov1.GovOutPut - curr_time->gov_ggov1.x7;
+		if (gov_ggv1_Kpload > 0.0)
+		{
+			curr_time->gov_ggov1.x7a = gov_ggv1_Kiload/gov_ggv1_Kpload*curr_time->gov_ggov1.err7;
+		}
+		else
+		{
+			curr_time->gov_ggov1.x7a = gov_ggv1_Kiload*curr_time->gov_ggov1.err7;
+		}
+		curr_delta->gov_ggov1.x7 = curr_time->gov_ggov1.x7a;
+		curr_time->gov_ggov1.fsrtNoLim = curr_time->gov_ggov1.x7 + gov_ggv1_Kpload*(-1.0 * curr_time->gov_ggov1.x6 + gov_ggv1_Ldref*(gov_ggv1_Ldref/gov_ggv1_Kturb+gov_ggv1_wfnl));
+		if (curr_time->gov_ggov1.fsrtNoLim > 1.0)
+		{
+			curr_time->gov_ggov1.fsrt = 1.0;
+		}
+		else
+		{
+			curr_time->gov_ggov1.fsrt = curr_time->gov_ggov1.fsrtNoLim;
+		}
+
+		//9 - Acceleration control
+		curr_delta->gov_ggov1.x9a = 1.0/gov_ggv1_Ta*((curr_time->omega/omega_ref - curr_time->gov_ggov1.wref) - curr_time->gov_ggov1.x9a);
+		curr_time->gov_ggov1.x9 = 1.0/gov_ggv1_Ta*((curr_time->omega/omega_ref - curr_time->gov_ggov1.wref) - curr_time->gov_ggov1.x9a);
+		curr_time->gov_ggov1.fsra = gov_ggv1_Ka*deltaT*(gov_ggv1_aset - curr_time->gov_ggov1.x9) + curr_time->gov_ggov1.GovOutPut;
+
+		//Pre-empt the low-value select, if needed
+		if (gov_ggv1_fsrt_enable == false)
+		{
+			curr_time->gov_ggov1.fsrt = 99999999.0;	//Big value
+		}
+
+		if (gov_ggv1_fsra_enable == false)
+		{
+			curr_time->gov_ggov1.fsra = 99999999.0;	//Big value
+		}
+
+		if (gov_ggv1_fsrn_enable == false)
+		{
+			curr_time->gov_ggov1.fsrn = 99999999.0;	//Big value
+		}
+
+		//Low value select
+		if (curr_time->gov_ggov1.fsrt < curr_time->gov_ggov1.fsrn)
+		{
+			curr_time->gov_ggov1.LowValSelect1 = curr_time->gov_ggov1.fsrt;
+		}
+		else
+		{
+			curr_time->gov_ggov1.LowValSelect1 = curr_time->gov_ggov1.fsrn;
+		}
+
+		if (curr_time->gov_ggov1.fsra < curr_time->gov_ggov1.LowValSelect1)
+		{
+			curr_time->gov_ggov1.LowValSelect = curr_time->gov_ggov1.fsra;
+		}
+		else
+		{
+			curr_time->gov_ggov1.LowValSelect = curr_time->gov_ggov1.LowValSelect1;
+		}
+
+		if (curr_time->gov_ggov1.LowValSelect > gov_ggv1_vmax)
+		{
+			curr_time->gov_ggov1.GovOutPut = gov_ggv1_vmax;
+		}
+		else if (curr_time->gov_ggov1.LowValSelect < gov_ggv1_vmin)
+		{
+			curr_time->gov_ggov1.GovOutPut = gov_ggv1_vmin;
+		}
+		else
+		{
+			curr_time->gov_ggov1.GovOutPut = curr_time->gov_ggov1.LowValSelect;
+		}
+	}//End GGOV1 updates
+	//Default else - no governor to update
 
 	//AVR updates, if relevant
 	if (Exciter_type == SEXS)
@@ -2134,15 +3000,140 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 			torque_delay[index_val] = curr_time->gov_degov1.throttle;
 		}
 	}//End DEGOV1 initialization
-	if (Governor_type == GAST)
+	else if (Governor_type == GAST)
 	{
 		curr_time->gov_gast.x1 = curr_time->torque_mech/(Rated_VA/omega_ref);
 		curr_time->gov_gast.x2 = curr_time->torque_mech/(Rated_VA/omega_ref);
 		curr_time->gov_gast.x3 = curr_time->torque_mech/(Rated_VA/omega_ref);
 		curr_time->gov_gast.throttle = curr_time->torque_mech/(Rated_VA/omega_ref); //Init to Tmech
 	}//End GAST initialization
-	//Default else - no initialization
+	else if ((Governor_type == GGOV1) || (Governor_type == GGOV1_OLD))
+	{
+		curr_time->gov_ggov1.wref = curr_time->omega/omega_ref;
 
+		if (gov_ggv1_Dm > 0.0)
+		{
+			curr_time->gov_ggov1.x5 = curr_time->pwr_mech/Rated_VA + gov_ggv1_Dm*(curr_time->omega/omega_ref - curr_time->gov_ggov1.wref);
+		}
+		else
+		{
+			curr_time->gov_ggov1.x5 = curr_time->pwr_mech / Rated_VA;
+		}
+		//Translate this into the torque model
+		curr_time->torque_mech = curr_time->pwr_mech / curr_time->omega;		
+
+		curr_time->gov_ggov1.x5b = curr_time->gov_ggov1.x5;
+		curr_time->gov_ggov1.x5a = curr_time->gov_ggov1.x5b;
+		curr_time->gov_ggov1.FuelFlow = curr_time->gov_ggov1.x5/gov_ggv1_Kturb + gov_ggv1_wfnl;
+
+		if (gov_ggv1_Flag == 0)
+		{
+			curr_time->gov_ggov1.ValveStroke = curr_time->gov_ggov1.FuelFlow;
+		}
+		else if (gov_ggv1_Flag == 1)
+		{
+			curr_time->gov_ggov1.ValveStroke = curr_time->gov_ggov1.FuelFlow/(curr_time->omega/omega_ref);
+		}
+		else
+		{
+			/****** COMMENTS/TROUBLESHOOT *****/
+			gl_error("wrong ggv1_Flag");
+			return FAILED;
+		}
+
+		curr_time->gov_ggov1.x4 = curr_time->gov_ggov1.ValveStroke;
+		curr_time->gov_ggov1.GovOutPut = curr_time->gov_ggov1.ValveStroke;
+		curr_time->gov_ggov1.x3 = curr_time->gov_ggov1.GovOutPut;
+		curr_time->gov_ggov1.x7 = curr_time->gov_ggov1.GovOutPut;
+		curr_time->gov_ggov1.fsrn = curr_time->gov_ggov1.GovOutPut;
+		curr_time->gov_ggov1.fsra = curr_time->gov_ggov1.GovOutPut;
+		curr_time->gov_ggov1.x1 = curr_time->pwr_electric.Re() / Rated_VA;
+
+		if (gov_ggv1_rselect == 1)
+		{
+			curr_time->gov_ggov1.RselectValue = curr_time->gov_ggov1.x1;
+		}
+		else if (gov_ggv1_rselect == -1)
+		{
+			curr_time->gov_ggov1.RselectValue = curr_time->gov_ggov1.ValveStroke;
+		}
+		else if (gov_ggv1_rselect == -2)
+		{
+			curr_time->gov_ggov1.RselectValue = curr_time->gov_ggov1.GovOutPut;
+		}
+		else if (gov_ggv1_rselect == 0)
+		{
+			curr_time->gov_ggov1.RselectValue = 0.0;
+		}
+		else
+		{
+			gl_error("wrong ggv1_rselect parameter");
+			return FAILED;
+		}
+
+		gov_ggv1_Pmwset = Rated_VA*curr_time->gov_ggov1.x1;
+		curr_time->gov_ggov1.x8a = 0.0;
+		curr_time->gov_ggov1.x8 = curr_time->gov_ggov1.x8a;
+		curr_time->gov_ggov1.err2a = 0.0;
+		curr_time->gov_ggov1.werror = curr_time->omega/omega_ref - curr_time->gov_ggov1.wref;
+		curr_time->gov_ggov1.Pref = curr_time->gov_ggov1.err2a - curr_time->gov_ggov1.x8 + curr_time->gov_ggov1.werror + gov_ggv1_r*curr_time->gov_ggov1.RselectValue;
+		
+		if (curr_time->gov_ggov1.err2a > gov_ggv1_maxerr)
+		{
+			curr_time->gov_ggov1.err2 = gov_ggv1_maxerr;
+		}
+		else if (curr_time->gov_ggov1.err2a < gov_ggv1_minerr)
+		{
+			curr_time->gov_ggov1.err2 = gov_ggv1_minerr;
+		}
+		else if ((curr_time->gov_ggov1.err2a <= gov_ggv1_db) && (curr_time->gov_ggov1.err2a >= -gov_ggv1_db))
+		{
+			curr_time->gov_ggov1.err2 = 0.0;
+		}
+		else
+		{
+			if (curr_time->gov_ggov1.err2a > 0)
+			{
+				curr_time->gov_ggov1.err2 = (gov_ggv1_maxerr/(gov_ggv1_maxerr - gov_ggv1_db))*curr_time->gov_ggov1.err2a - (gov_ggv1_maxerr*gov_ggv1_db/(gov_ggv1_maxerr-gov_ggv1_db));
+			}
+			else if (curr_time->gov_ggov1.err2a < 0)
+			{
+				curr_time->gov_ggov1.err2 = (gov_ggv1_minerr/(gov_ggv1_minerr + gov_ggv1_db))*curr_time->gov_ggov1.err2a + (gov_ggv1_minerr*gov_ggv1_db/(gov_ggv1_minerr+gov_ggv1_db));
+			}
+			//**** What happens when it is zero!?!?!? ****/
+		}
+
+		curr_time->gov_ggov1.x2a = curr_time->gov_ggov1.err2;
+		curr_time->gov_ggov1.x2 = gov_ggv1_Kpgov/gov_ggv1_Tdgov*(curr_time->gov_ggov1.err2 - curr_time->gov_ggov1.x2a);
+		curr_time->gov_ggov1.x7 = curr_time->gov_ggov1.GovOutPut;
+
+		if (gov_ggv1_Dm < 0.0)
+		{
+			curr_time->gov_ggov1.x10a = curr_time->gov_ggov1.FuelFlow * pow((curr_time->omega/omega_ref),gov_ggv1_Dm);
+		}
+		else
+		{
+			curr_time->gov_ggov1.x10a = curr_time->gov_ggov1.FuelFlow;
+		}
+		curr_time->gov_ggov1.x10b = curr_time->gov_ggov1.x10a;
+		curr_time->gov_ggov1.x10 = (1.0 - gov_ggv1_Tsa/gov_ggv1_Tsb)*curr_time->gov_ggov1.x10b + gov_ggv1_Tsa/gov_ggv1_Tsb*curr_time->gov_ggov1.x10a;
+		curr_time->gov_ggov1.x6 = curr_time->gov_ggov1.x10;
+		
+		curr_time->gov_ggov1.x7 = curr_time->gov_ggov1.GovOutPut;
+		curr_time->gov_ggov1.err7 = 0.0;
+		if (gov_ggv1_Kpload > 0.0)
+		{
+			curr_time->gov_ggov1.x7a = gov_ggv1_Kiload / gov_ggv1_Kpload * curr_time->gov_ggov1.err7;
+		}
+		else
+		{
+			curr_time->gov_ggov1.x7a = gov_ggv1_Kiload * curr_time->gov_ggov1.err7;
+		}
+
+		curr_time->gov_ggov1.x9a = curr_time->omega/omega_ref - curr_time->gov_ggov1.wref;
+		curr_time->gov_ggov1.x9 = 1.0 / gov_ggv1_Ta * ((curr_time->omega/omega_ref - curr_time->gov_ggov1.wref) - curr_time->gov_ggov1.x9a);
+	}//End GGOV1 initialization
+	//Default else - no initialization
 
 	//AVR/Exciter initialization
 	if (Exciter_type == SEXS)

@@ -544,8 +544,40 @@ double meter::process_bill(TIMESTAMP t1){
 //Module-level call
 SIMULATIONMODE meter::inter_deltaupdate_meter(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
 {
-	//unsigned char pass_mod;
+	unsigned char pass_mod;
 	OBJECT *hdr = OBJECTHDR(this);
+	double deltat, deltatimedbl;
+	STATUS return_status_val;
+
+	//Create delta_t variable
+	deltat = (double)dt/(double)DT_SECOND;
+
+	//Update time tracking variable - mostly for GFA functionality calls
+	if (iteration_count_val == 0)	//Only update timestamp tracker on first iteration
+	{
+		//Get decimal timestamp value
+		deltatimedbl = (double)delta_time/(double)DT_SECOND; 
+
+		//Update tracking variable
+		prev_time_dbl = (double)gl_globalclock + deltatimedbl;
+	}
+
+	//Initialization items
+	if ((delta_time==0) && (iteration_count_val==0) && (interupdate_pos == false))	//First run of new delta call
+	{
+		//Initialize dynamics
+		init_freq_dynamics(&curr_state);
+	}//End first pass and timestep of deltamode (initial condition stuff)
+
+	//Perform the GFA update, if enabled
+	if ((GFA_enable == true) && (iteration_count_val == 0) && (interupdate_pos == false))	//Always just do on the first pass
+	{
+		//Do the checks
+		GFA_Update_time = perform_GFA_checks(deltat);
+	}
+
+	//See what we're on, for tracking
+	pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
 
 	if (interupdate_pos == false)	//Before powerflow call
 	{
@@ -558,7 +590,7 @@ SIMULATIONMODE meter::inter_deltaupdate_meter(unsigned int64 delta_time, unsigne
 			meter_interrupted_secondary = false;
 
 		//Call presync-equivalent items
-		NR_node_presync_fxn();
+		NR_node_presync_fxn(0);
 
 		//Meter sync objects
 		BOTH_meter_sync_fxn();
@@ -572,6 +604,19 @@ SIMULATIONMODE meter::inter_deltaupdate_meter(unsigned int64 delta_time, unsigne
 	{
 		//Perform postsync-like updates on the values
 		BOTH_node_postsync_fxn(hdr);
+
+		//Frequency measurement stuff
+		if (fmeas_type != FM_NONE)
+		{
+			return_status_val = calc_freq_dynamics(deltat,pass_mod);
+
+			//Check it
+			if (return_status_val == FAILED)
+			{
+				return SM_ERROR;
+			}
+		}//End frequency measurement desired
+		//Default else -- don't calculate it
 
 		//Perform postsync meter functions -- doesn't do energy right now
 		measured_voltage[0] = voltageA;
@@ -604,9 +649,28 @@ SIMULATIONMODE meter::inter_deltaupdate_meter(unsigned int64 delta_time, unsigne
 		if (measured_real_power > measured_demand) 
 			measured_demand = measured_real_power;
 
+		//See if GFA functionality is required, since it may require iterations or "continance"
+		if (GFA_enable == true)
+		{
+			//See if our return is value
+			if ((GFA_Update_time > 0.0) && (GFA_Update_time < 1.7))
+			{
+				//Force us to stay
+				return SM_DELTA;
+			}
+			else	//Just return whatever we were going to do
+			{
+				return SM_EVENT;
+			}
+		}
+		else	//Normal mode
+		{
+			return SM_EVENT;
+		}
+
 		//No control required at this time - powerflow defers to the whims of other modules
 		//Code below implements predictor/corrector-type logic, even though it effectively does nothing
-		return SM_EVENT;
+		//return SM_EVENT;
 
 		////Do deltamode-related logic
 		//if (bustype==SWING)	//We're the SWING bus, control our destiny (which is really controlled elsewhere)

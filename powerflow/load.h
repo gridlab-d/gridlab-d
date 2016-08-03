@@ -15,6 +15,7 @@ public:
 	static CLASS *pclass;
 private:
 	complex prev_shunt[3];
+
 public:
 	complex measured_voltage_A;	///< measured voltage
 	complex measured_voltage_B;
@@ -45,6 +46,7 @@ public:
 	int init(OBJECT *parent);
 	
 	void load_update_fxn(bool fault_mode);
+	void load_delete_update_fxn(void);
 	SIMULATIONMODE inter_deltaupdate_load(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
 	load(MODULE *mod);

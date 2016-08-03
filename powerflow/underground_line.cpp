@@ -536,6 +536,7 @@ void underground_line::recalc(void)
 		#undef Z_GMR
 		#undef Z_GMRCN
 		#undef Z_DIST
+		#undef Z_GMR_S
 		
 		if (not_TS_CN == false){			
 			if (is_CN_ug_line == true) {

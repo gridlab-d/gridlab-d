@@ -1,4 +1,4 @@
-/** $Id: powerflow_object.h 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id: powerflow_object.h 1182 2008-12-22 22:08:36Z dchassin $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file powerflow.h
 	@addtogroup powerflow_object
@@ -85,6 +85,11 @@
 /* Note: Only define solution modes that are known to ALL objects.
    Add object specific modes to the appropriate objects 
    */
+
+//Node flags - added to powerflow_object for convenience (just #defines)
+#define NF_NONE			0x0000	///< flag indicates node has no special conditions */
+#define NF_HASSOURCE	0x0001	///< flag indicates node has a source for voltage */
+#define NF_ISSOURCE		0x0002	///< flag indicates node has a source connected directly to it */
 
 class powerflow_object : public gld_object
 {

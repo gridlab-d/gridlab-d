@@ -12,10 +12,12 @@ typedef struct  {
 	int type;				///< bus type (0=PQ, 1=PV, 2=SWING)
 	unsigned char phases;	///< Phases property - used for construction of matrices (skip bad entries) - [Split Phase | House present | To side of SPCT | Diff Phase Child | D | A | B | C]
 	unsigned char origphases;	///< Original phases property - follows same format - used to save what object's original capabilities
+	set *busflag;			///< Pointer to busflags property - mainly used for reliability checks
 	complex *V;				///< bus voltage
 	complex *S;				///< constant power
 	complex *Y;				///< constant admittance (impedance loads)
 	complex *I;				///< constant current
+	complex *prerot_I;		///< pre-rotated current (deltamode)
 	complex *S_dy;			///< constant power -- explicit delta/wye values
 	complex *Y_dy;			///< constant admittance -- explicit delta/wye values
 	complex *I_dy;			///< constant current -- explicit delta/wye values
@@ -29,9 +31,11 @@ typedef struct  {
 	double PL[3];			///< real power component of total bus load
 	double QL[3];			///< reactive power component of total bus load
 	bool *dynamics_enabled;	///< Flag indicating this particular node has a dynamics contribution function
+	bool swing_functions_enabled;	///< Flag indicating if this particular node is a swing node, and if so, if it is behaving "all swingy"
 	complex *PGenTotal;		///< Total output of any generation at this node - lumped for now for dynamics
 	complex *DynCurrent;	///< Dynamics current portions - used as storage/tracking for generator dynamics
 	complex *BusHistTerm;	///< History term pointer for in-rush-based calculations
+	complex *BusSatTerm;	///< Saturation term pointer for in-rush-based transformer calculations - separate for ease
 	double volt_base;		///< voltage basis
     double mva_base;		/// MVA basis
 	double Jacob_A[3];		// Element a in equation (37), which is used to update the Jacobian matrix at each iteration
@@ -63,6 +67,7 @@ typedef struct {
 	complex *If_from;		///< 3 phase fault currents on the from side
 	complex *If_to;			///< 3 phase fault currents on the to side 
 	FUNCTIONADDR limit_check;	////< Link to overload checking function (calculate_overlimit_link) -- restoration related
+	FUNCTIONADDR ExtraDeltaModeFunc;	///< Link to extra functions of deltamode -- notably, transformer saturation
 } BRANCHDATA;
 
 typedef struct Y_NR{
@@ -122,8 +127,14 @@ typedef struct {
 	Y_NR *Y_diag_fixed;					///Y_diag_fixed store the row,column and value of fixed diagonal elements of 6n*6n Y_NR matrix. No PV bus is included.
 	Y_NR *Y_diag_update;				///Y_diag_update store the row,column and value of updated diagonal elements of 6n*6n Y_NR matrix at each iteration. No PV bus is included.
 	SPARSE *Y_Amatrix;					///Y_Amatrix store all the elements of Amatrix in equation AX=B;
-	Y_NR *Y_Work_Amatrix;				///Temporary storage version of Y_Amatrix
 } NR_SOLVER_STRUCT;
+
+//Mesh-fault-related structure - passing information
+typedef struct {
+	complex *z_matrix;			/// Matrix for the impedance of that value
+	int NodeRefNum;				/// Reference node for the node to calculate the impedance at
+	int return_code;			/// Special return codes for impedance check -- 0 = non-descript failure, 1 = success, 2 = unsupported solver
+} NR_MESHFAULT_IMPEDANCE;
 
 //Function prototypes for external solver interface
 //void *ext_solver_init(void *ext_array);
@@ -131,6 +142,6 @@ typedef struct {
 //int ext_solver_solve(void *ext_array, NR_SOLVER_VARS *system_info_vars, unsigned int rowcount, unsigned int colcount);
 //void ext_solver_destroy(void *ext_array, bool new_iteration);
 
-int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count, BRANCHDATA *branch, NR_SOLVER_STRUCT *powerflow_values, NRSOLVERMODE powerflow_type ,bool *bad_computations);
+int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count, BRANCHDATA *branch, NR_SOLVER_STRUCT *powerflow_values, NRSOLVERMODE powerflow_type , NR_MESHFAULT_IMPEDANCE *mesh_imped_vals, bool *bad_computations);
 
 #endif

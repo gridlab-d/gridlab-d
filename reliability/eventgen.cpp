@@ -182,11 +182,9 @@ int eventgen::init(OBJECT *parent)
 		to be at least 1 minimum timestep long.  This may alter your results, so please plan appropriately.
 		*/
 	}
-	//Extract starting time - for comparision
-	gl_global_getvar("clock",temp_buff,sizeof(temp_buff));
 
-	//Convert it
-	globStartTimeVal = gl_parsetime(temp_buff);
+	//Get simulation start time
+	globStartTimeVal = gl_globalclock;
 
 	//If a minimum timestep is present, make sure things are set appropriately
 	if (off_nominal_time == true)
@@ -591,7 +589,7 @@ int eventgen::init(OBJECT *parent)
 	}	//End randomized fault mode
 
 	//Check simultaneous fault value
-	if ((max_simult_faults == -1) || (max_simult_faults > 1))	//infinite or more than 1
+	if (((max_simult_faults == -1) || (max_simult_faults > 1)) && (metrics_obj != NULL))	//infinite or more than 1 - and metrics are on, so we care
 	{
 		gl_warning("event_gen:%s has the ability to generate more than 1 simultaneous fault - metrics may not be accurate",hdr->name);
 		/*  TROUBLESHOOT

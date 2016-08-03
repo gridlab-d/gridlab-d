@@ -568,7 +568,7 @@ SIMULATIONMODE triplex_load::inter_deltaupdate_triplex_load(unsigned int64 delta
 		BOTH_triplex_node_presync_fxn();
 
 		//Call node presync-equivalent items
-		NR_node_presync_fxn();
+		NR_node_presync_fxn(0);
 
 		//Triplex_load-specific sync calls
 			//See if we're reliability-enabled

@@ -1,4 +1,4 @@
-// $Id: transformer.h 4738 2014-07-03 00:55:39Z dchassin $
+// $Id: transformer.h 1182 2008-12-22 22:08:36Z dchassin $
 //	Copyright (C) 2008 Battelle Memorial Institute
 
 #ifndef _TRANSFORMER_H
@@ -49,6 +49,9 @@ public:
 	TIMESTAMP return_at;
 	double last_temp;
 
+	int transformer_inrush_mat_update(void);
+	int transformer_saturation_update(bool *deltaIsat);
+	double flux_vals_inst[6];		//Flux values for transformer when saturation is enabled
 
 	transformer_configuration *config;
 
@@ -66,6 +69,12 @@ public:
 private:
 	TIMESTAMP simulation_start_time;
 	void fetch_double(double **prop, char *name, OBJECT *parent);
+	double phi_base_Pri;
+	double phi_base_Sec;
+	double I_base_Pri;
+	double I_base_Sec;
 };
 EXPORT void power_calculation(OBJECT *thisobj);
+EXPORT int recalc_transformer_mat(OBJECT *obj);
+EXPORT int recalc_deltamode_saturation(OBJECT *obj,bool *deltaIsat);
 #endif // _TRANSFORMER_H

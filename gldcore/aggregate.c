@@ -57,9 +57,9 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 	UNIT *from_unit = NULL, *to_unit = NULL;
 	double scale = 1.0;
 
-	if (sscanf(aggregator,"%8[A-Za-z0-9_](%256[][A-Za-z0-9_.^])",aggrop,aggrval)!=2 &&
+	if (sscanf(aggregator," %8[A-Za-z0-9_](%256[][A-Za-z0-9_.^])",aggrop,aggrval)!=2 &&
 		(flags|=AF_ABS,
-		sscanf(aggregator,"%8[A-Za-z0-9_]|%256[][A-Za-z0-9_.^]|",aggrop,aggrval)!=2 
+		sscanf(aggregator," %8[A-Za-z0-9_]|%256[][A-Za-z0-9_.^]|",aggrop,aggrval)!=2 
 		))
 	{
 		output_error("aggregate group '%s' is not valid", aggregator);

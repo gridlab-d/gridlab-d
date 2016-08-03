@@ -3299,7 +3299,7 @@ int restoration::runPowerFlow(void)
 
 		//Copied, more or less, from node.cpp call to solver_nr
 		//Call the powerflow routine
-		PFresult = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &NR_powerflow, powerflow_type, &bad_computation);
+		PFresult = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &NR_powerflow, powerflow_type, NULL, &bad_computation);
 
 		//De-flag the change - otherwise will cause un-neccesary reallocs
 		NR_admit_change = false;

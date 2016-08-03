@@ -30,6 +30,12 @@ void print_matrix(complex mat[3][3]);
 
 typedef enum {SM_FBS=0, SM_GS=1, SM_NR=2} SOLVERMETHOD;		/**< powerflow solver methodology */
 typedef enum {MM_SUPERLU=0, MM_EXTERN=1} MATRIXSOLVERMETHOD;	/**< NR matrix solver methodlogy */
+typedef enum {
+	MD_NONE=0,			///< No matrix dump desired
+	MD_ONCE=1,			///< Single matrix dump desired
+	MD_PERCALL=2,		///< Matrix dump every call desired
+	MD_ALL=3			///< Matrix dump on every iteration desired
+} MATRIXDUMPMETHOD;
 
 typedef enum {
 	LS_OPEN=0,			///< defines that that link is open
@@ -48,6 +54,9 @@ typedef struct s_ext_fxn {
 GLOBAL char256 LUSolverName INIT("");				/**< filename for external LU solver */
 GLOBAL EXT_LU_FXN_CALLS LUSolverFcns;				/**< links to external LU solver functions */
 GLOBAL SOLVERMETHOD solver_method INIT(SM_FBS);		/**< powerflow solver methodology */
+GLOBAL char256 MDFileName INIT("");					/**< filename for matrix dump */
+GLOBAL MATRIXDUMPMETHOD NRMatDumpMethod INIT(MD_NONE);	/**< NR-based matrix output method */
+GLOBAL bool NRMatReferences INIT(false);			/**< Flag to indicate if the decoding information for the matrix is dumped - row/col to bus */
 GLOBAL bool use_line_cap INIT(false);				/**< Flag to include line capacitance quantities */
 GLOBAL bool use_link_limits INIT(true);				/**< Flag to include line/transformer ratings and provide a warning if exceeded */
 GLOBAL MATRIXSOLVERMETHOD matrix_solver_method INIT(MM_SUPERLU);	/**< Newton-Raphson uses superLU as the default solver */
@@ -64,6 +73,8 @@ GLOBAL bool NR_admit_change INIT(true);				/**< Newton-Raphson admittance matrix
 GLOBAL int NR_superLU_procs INIT(1);				/**< Newton-Raphson related - superLU MT processor count to request - separate from thread_count */
 GLOBAL TIMESTAMP NR_retval INIT(TS_NEVER);			/**< Newton-Raphson current return value - if t0 objects know we aren't going anywhere */
 GLOBAL OBJECT *NR_swing_bus INIT(NULL);				/**< Newton-Raphson swing bus */
+GLOBAL int NR_swing_bus_reference INIT(-1);			/**< Newton-Raphson swing bus index reference in NR_busdata */
+GLOBAL int64 NR_delta_iteration_limit INIT(10);		/**< Newton-Raphson iteration limit (per deltamode timestep) */
 GLOBAL bool FBS_swing_set INIT(false);				/**< Forward-Back Sweep swing assignment variable */
 GLOBAL bool show_matrix_values INIT(false);			/**< flag to enable dumping matrix calculations as they occur */
 GLOBAL double primary_voltage_ratio INIT(60.0);		/**< primary voltage ratio (@todo explain primary_voltage_ratio in powerflow (ticket #131) */
@@ -76,6 +87,7 @@ GLOBAL double warning_voltageangle INIT(2.0);		/**< voltage angle (over link) ab
 GLOBAL bool require_voltage_control INIT(false);	/**< flag to enable voltage control source requirement */
 GLOBAL double geographic_degree INIT(0.0);			/**< topological degree factor */
 GLOBAL complex fault_Z INIT(complex(1e-6,0));		/**< fault impedance */
+GLOBAL complex ground_Z INIT(complex(1e-6,0));		/**< ground impedance */
 GLOBAL double default_maximum_voltage_error INIT(1e-6);	/**< default sync voltage convergence limit [puV] */
 GLOBAL double default_maximum_power_error INIT(0.0001);	/**< default power convergence limit for multirun */
 GLOBAL OBJECT *restoration_object INIT(NULL);		/**< restoration object of the system */
@@ -103,6 +115,9 @@ GLOBAL double default_resistance INIT(1e-4);		/**< sets the default resistance f
 GLOBAL bool enable_inrush_calculations INIT(false);	/**< Flag to enable in-rush calculations in deltamode */
 GLOBAL double impedance_conversion_low_pu INIT(0.7);	/** Lower PU voltage level to convert all loads to impedance */
 GLOBAL double deltatimestep_running INIT(-1.0);			/** Value of the current deltamode simulation - used for integration method in in-rush */
+
+//Mesh fault current stuff
+GLOBAL bool enable_mesh_fault_current INIT(false);	/** Flag to enable mesh-based fault current calculations */
 
 // Deltamode stuff
 void schedule_deltamode_start(TIMESTAMP tstart);	/* Anticipated time for a deltamode start, even if it is now */

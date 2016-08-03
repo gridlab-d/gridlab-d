@@ -19,8 +19,10 @@ EXPORT SIMULATIONMODE interupdate_node(OBJECT *obj, unsigned int64 delta_time, u
 #define I_Z(Z, V) ((V) / (Z))     // Current injection - constant impedance load
 #define I_I(I) (I)                // Current injection - constant current load
 
-#define NF_NONE			0x0000	///< flag indicates node has no special conditions */
-#define NF_HASSOURCE	0x0001	///< flag indicates node has a source for voltage */
+//Moved the following to powerflow_object.h, since they are just #defines
+//#define NF_NONE			0x0000	///< flag indicates node has no special conditions */
+//#define NF_HASSOURCE	0x0001	///< flag indicates node has a source for voltage */
+//#define NF_ISSOURCE		0x0002	///< flag indicates node has a source connected directly to it */
 
 // these are only valid when PHASE_S is not set
 #define voltageA voltage[0]		/// phase A voltage to ground
@@ -79,13 +81,24 @@ typedef enum {
 	METER_NODE=2		///< We're a meter
 } DYN_NODE_TYPE;		/// Defition for deltamode calls
 
+//Frequency measurement variable structure
+typedef struct {
+	double x[3]; 		     //integrator state variable
+	double anglemeas[3];	 //angle measurement
+	double fmeas[3];		 //frequency measurement
+	double average_freq;	//Average of the three-phased frequencies
+	double sinangmeas[3];	 //sin of bus voltage angle
+	double cosangmeas[3];	 //cos of bus voltage angle
+} FREQM_STATES;
+
+
 class node : public powerflow_object
 {
 private:
 	complex last_voltage[3];		///< voltage at last pass
 	complex current_inj[3];			///< current injection (total of current+shunt+power)
 	TIMESTAMP prev_NTime;			///< Previous timestep - used for propogating child properties
-	complex last_child_power[3][3];	///< Previous power values - used for child object propogation
+	complex last_child_power[4][3];	///< Previous power values - used for child object propogation
 	complex last_child_power_dy[6][3];	///< Previous power values joint - used for child object propogation
 	complex last_child_current12;	///< Previous current value - used for child object propogation (namely triplex)
 	bool deltamode_inclusive;		///< Flag for deltamode functionality, just to prevent having to mask the flags
@@ -97,6 +110,20 @@ private:
 	complex *LoadHistTermL;			///< Pointer for array used to store load history value for deltamode-based in-rush computations -- Inductive terms
 	complex *LoadHistTermC;			///< Pointer for array used to store load history value for deltamode-based in-rush computations -- Shunt capacitance terms
 
+	//Frequently measurement variables
+	FREQM_STATES curr_state;		//Current state of all vari
+	FREQM_STATES next_state;
+	FREQM_STATES prev_state;
+	FREQM_STATES store_state;
+	FREQM_STATES predictor_vals;	//Predictor pass values of variables
+	FREQM_STATES corrector_vals;	//Corrector pass values of variables
+	double freq_omega_ref;			//Reference frequency for measurements
+
+	double freq_violation_time_total;		//Keeps track of how long the device has been in a frequency violation, to see if it needs to disconnect or not
+	double volt_violation_time_total;		//Keeps track of how long the device has been in a voltage violation, to see if it needs to disconnect or not
+	double out_of_violation_time_total;		//Tracking variable to see how long we've been "outside of bad conditions"
+	double prev_time_dbl;					//Tracking variable for GFA functionality
+	double GFA_Update_time;
 public:
 	double frequency;			///< frequency (only valid on reference bus) */
 	object reference_bus;		///< reference bus from which frequency is defined */
@@ -109,7 +136,8 @@ public:
 	enum {
 		PQ=0,		/**< defines an uncontrolled bus */
 		PV=1,		/**< defines a constrained voltage controlled bus */
-		SWING=2		/**< defines an unconstrained voltage controlled bus */
+		SWING=2,	/**< defines an unconstrained voltage controlled bus */
+		SWING_PQ=3	/**< defines a bus that is an unconstrained voltage controlled bus, unless another exists on the system. */
 	};
 	enumeration bustype;
 	enum {	NOMINAL=1,		///< bus voltage is nominal
@@ -127,6 +155,25 @@ public:
 	double previous_uptime;		///< Variable for storing last total uptime
 	double current_uptime;		///< Variable for storing current uptime
 
+	//Frequency measurement capabilities
+	enum {FM_NONE=1, FM_SIMPLE=2, FM_PLL=3};
+	enumeration fmeas_type;
+
+	double freq_sfm_T;	//Transducer time constant
+	double freq_pll_Kp;	//Proportional gain of PLL frequency measurement
+	double freq_pll_Ki;	//Integration gain of PLL frequency measurement
+
+	//GFA functionality
+	bool GFA_enable;
+	double GFA_freq_low_trip;
+	double GFA_freq_high_trip;
+	double GFA_voltage_low_trip;
+	double GFA_voltage_high_trip;
+	double GFA_reconnect_time;
+	double GFA_freq_disconnect_time;
+	double GFA_volt_disconnect_time;
+	bool GFA_status;
+
 	SUBNODETYPE SubNode;
 	set busflags;			///< node flags (see NF_*)
 	set busphasesIn;		///< phase check flags for "reconvergent" lines (input)
@@ -137,6 +184,7 @@ public:
 	complex voltage[3];		/// bus voltage to ground
 	complex voltaged[3];	/// bus voltage differences
 	complex current[3];		/// bus current injection (positive = in)
+	complex pre_rotated_current[3];	/// bus current that has been rotated already for deltamode (direct post to powerflow)
 	complex power[3];		/// bus power injection (positive = in)
 	complex shunt[3];		/// bus shunt admittance 
 	complex current_dy[6];	/// bus current injection (positive = in), explicitly specify delta and wye portions
@@ -181,9 +229,16 @@ public:
 	SIMULATIONMODE inter_deltaupdate_node(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
 	//Functionalized portions for deltamode calls -- allows updates
-	void NR_node_presync_fxn(void);
+	TIMESTAMP NR_node_presync_fxn(TIMESTAMP t0_val);
 	void NR_node_sync_fxn(OBJECT *obj);
 	void BOTH_node_postsync_fxn(OBJECT *obj);
+	OBJECT *NR_master_swing_search(char *node_type_value,bool main_swing);
+
+	void apply_interim_freq_dynamics(FREQM_STATES *curr_time, FREQM_STATES *curr_delta, double deltat, unsigned char pass_mod);
+	void init_freq_dynamics(FREQM_STATES *curr_time);
+	STATUS calc_freq_dynamics(double deltat, unsigned char pass_mod);
+
+	double perform_GFA_checks(double timestepvalue);
 
 	bool current_accumulated;
 
@@ -197,6 +252,7 @@ public:
 	friend class substation; //needs access to current_inj
 	friend class triplex_meter; // needs access to current_inj
 	friend class load;			// Needs access to deltamode_inclusive
+	friend class capacitor;		// Needs access to deltamode stuff
 	friend class fuse;			// needs access to current_inj
 	friend class frequency_gen;	// needs access to current_inj
 

@@ -138,21 +138,39 @@ public:
 	// Fault current calculation functions
 	void fault_current_calc(complex C[7][7], unsigned int removed_phase, double fault_type); // function traces up from fault to swing bus summing up the link objects' impedances
 											  // then calculates the fault current then passes that value back down to the faulted link objects.
-
+	void mesh_fault_current_calc(complex Zth[3][3],complex CV[3][3],complex CI[3][3],complex *VSth,double fault_type);
 	SIMULATIONMODE inter_deltaupdate_link(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
 private:
 	bool deltamode_inclusive;
 	bool inrush_computations_needed;	///< Flag for in-rush computations to determine when an exit from deltamode would be allowed
 	double inrush_vdiffmag_prev[3];		///< Tracking variable to determine when in-rush has run its course and inrush_computations_needed can be deflagged
+	double deltamode_prev_time;	///< Tracking variable to tell when new deltamode timesteps have occurred (in-rush)
+
+public:
 	complex *ahrlstore;			///< Pointer for array used to store line history constant ahrl -- associated with inductance
 	complex *bhrlstore;			///< Pointer for array used to store line history constant bhrl -- associated with inductance
+	complex *ahmstore;			///< Pointer for array used to store magnetic history constant ahtr -- associated with transformers
+	complex *bhmstore;			///< Pointer for array used to store magnetic history constant bhtr -- associated with transformers
 	double *chrcstore;			///< Pointer for array used to store line history constant chrc -- associated with capacitance
 	complex *LinkCapShuntTerm;	///< Pointer for array used to store line history shunt capacitance term -- associated with getting currents out of the in-rush later
 	complex *LinkHistTermL;		///< Pointer for array used to store line history value for deltamode-based in-rush computations -- Inductive terms
-	complex *LinkHistTermCf;	///< Pointer for array used to store line history value for deltamode-based in-rush computations -- Shunt capacitance "from" terms
-	complex *LinkHistTermCt;	///< Pointer for array used to store line history value for deltamode-based in-rush computations -- Shunt capacitance "to" terms
-	double deltamode_prev_time;	///< Tracking variable to tell when new deltamode timesteps have occurred (in-rush)
+	complex *LinkHistTermCf;	///< Pointer for array used to store line history value for deltamode-based in-rush computations -- Shunt capacitance or transformer "from" terms
+	complex *LinkHistTermCt;	///< Pointer for array used to store line history value for deltamode-based in-rush computations -- Shunt capacitance or transformer "to" terms
+	complex *YBase_Full;		///< Pointer for array used to store "base admittance" for deltamode-based in-rush compuations -- Transformer in-rush
+	complex *YBase_Pri;			///< Pointer for array used to store "base primary admittance" for deltamode-based in-rush computations -- Transformer in-rush
+	complex *YBase_Sec;			///< Pointer for array used to store "base secondary admittance" for deltamode-based in-rush computations -- Transformer in-rush
+
+	//******************* MOVE THESE? *******************************/
+	//Saturation-based items -- probably need to be moved, but putting here since me=lazy
+	double D_sat;
+	complex A_phi;				
+	complex B_phi;
+	complex *hphi;	//History term for phi
+	complex *saturation_calculated_vals;
+
+	//******************** Create a function from solver_nr to calculate Isat
+
 };
 
 //Macros

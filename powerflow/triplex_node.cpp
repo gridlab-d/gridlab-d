@@ -35,8 +35,10 @@ triplex_node::triplex_node(MODULE *mod) : node(mod)
 				PT_KEYWORD, "PQ", (enumeration)PQ,
 				PT_KEYWORD, "PV", (enumeration)PV,
 				PT_KEYWORD, "SWING", (enumeration)SWING,
+				PT_KEYWORD, "SWING_PQ", (enumeration)SWING_PQ,
 			PT_set, "busflags", PADDR(busflags),PT_DESCRIPTION,"flag indicates node has a source for voltage, i.e. connects to the swing node",
 				PT_KEYWORD, "HASSOURCE", (set)NF_HASSOURCE,
+				PT_KEYWORD, "ISSOURCE", (set)NF_ISSOURCE,
 			PT_object, "reference_bus", PADDR(reference_bus),PT_DESCRIPTION,"reference bus from which frequency is defined",
 			PT_double,"maximum_voltage_error[V]",PADDR(maximum_voltage_error),PT_DESCRIPTION,"convergence voltage limit or convergence criteria",
 
@@ -58,15 +60,18 @@ triplex_node::triplex_node(MODULE *mod) : node(mod)
 			PT_complex, "current_12[A]", PADDR(current12),PT_DESCRIPTION,"constant current load on phase 1 to 2",
 			PT_double, "current_12_real[A]", PADDR(current12.Re()),PT_DESCRIPTION,"constant current load on phase 1 to 2, real",
 			PT_double, "current_12_reac[A]", PADDR(current12.Im()),PT_DESCRIPTION,"constant current load on phase 1 to 2, imag",
-			PT_complex, "residential_nominal_current_1[A]", PADDR(nom_res_curr[0]),PT_DESCRIPTION,"posted current on phase 1 from a residential object, if attached",
-			PT_complex, "residential_nominal_current_2[A]", PADDR(nom_res_curr[1]),PT_DESCRIPTION,"posted current on phase 2 from a residential object, if attached",
-			PT_complex, "residential_nominal_current_12[A]", PADDR(nom_res_curr[2]),PT_DESCRIPTION,"posted current on phase 1 to 2 from a residential object, if attached",
-			PT_double, "residential_nominal_current_1_real[A]", PADDR(nom_res_curr[0].Re()),PT_DESCRIPTION,"posted current on phase 1, real, from a residential object, if attached",
-			PT_double, "residential_nominal_current_1_imag[A]", PADDR(nom_res_curr[0].Im()),PT_DESCRIPTION,"posted current on phase 1, imag, from a residential object, if attached",
-			PT_double, "residential_nominal_current_2_real[A]", PADDR(nom_res_curr[1].Re()),PT_DESCRIPTION,"posted current on phase 2, real, from a residential object, if attached",
-			PT_double, "residential_nominal_current_2_imag[A]", PADDR(nom_res_curr[1].Im()),PT_DESCRIPTION,"posted current on phase 2, imag, from a residential object, if attached",
-			PT_double, "residential_nominal_current_12_real[A]", PADDR(nom_res_curr[2].Re()),PT_DESCRIPTION,"posted current on phase 1 to 2, real, from a residential object, if attached",
-			PT_double, "residential_nominal_current_12_imag[A]", PADDR(nom_res_curr[2].Im()),PT_DESCRIPTION,"posted current on phase 1 to 2, imag, from a residential object, if attached",
+
+			PT_complex, "prerotated_current_12[A]", PADDR(pre_rotated_current[2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality - bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
+
+			PT_complex, "residential_nominal_current_1[A]", PADDR(nom_res_curr[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase 1 from a residential object, if attached",
+			PT_complex, "residential_nominal_current_2[A]", PADDR(nom_res_curr[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase 2 from a residential object, if attached",
+			PT_complex, "residential_nominal_current_12[A]", PADDR(nom_res_curr[2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase 1 to 2 from a residential object, if attached",
+			PT_double, "residential_nominal_current_1_real[A]", PADDR(nom_res_curr[0].Re()),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase 1, real, from a residential object, if attached",
+			PT_double, "residential_nominal_current_1_imag[A]", PADDR(nom_res_curr[0].Im()),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase 1, imag, from a residential object, if attached",
+			PT_double, "residential_nominal_current_2_real[A]", PADDR(nom_res_curr[1].Re()),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase 2, real, from a residential object, if attached",
+			PT_double, "residential_nominal_current_2_imag[A]", PADDR(nom_res_curr[1].Im()),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase 2, imag, from a residential object, if attached",
+			PT_double, "residential_nominal_current_12_real[A]", PADDR(nom_res_curr[2].Re()),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase 1 to 2, real, from a residential object, if attached",
+			PT_double, "residential_nominal_current_12_imag[A]", PADDR(nom_res_curr[2].Im()),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase 1 to 2, imag, from a residential object, if attached",
 			PT_complex, "power_1[VA]", PADDR(power1),PT_DESCRIPTION,"constant power on phase 1 (120V)",
 			PT_complex, "power_2[VA]", PADDR(power2),PT_DESCRIPTION,"constant power on phase 2 (120V)",
 			PT_complex, "power_12[VA]", PADDR(power12),PT_DESCRIPTION,"constant power on phase 1 to 2 (240V)",
@@ -210,7 +215,7 @@ SIMULATIONMODE triplex_node::inter_deltaupdate_triplex_node(unsigned int64 delta
 		BOTH_triplex_node_presync_fxn();
 
 		//Call node presync-equivalent items
-		NR_node_presync_fxn();
+		NR_node_presync_fxn(0);
 
 		//Call sync-equivalent of triplex portion first
 		BOTH_triplex_node_sync_fxn();

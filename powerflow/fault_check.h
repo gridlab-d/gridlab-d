@@ -19,24 +19,16 @@ public:
 			ALLT=2			//Runs fault_check on every iteration
 			} FCSTATE;
 
-	typedef struct s_obj_supp_check {
-		unsigned char phases_altered;
-		unsigned char fault_phases;
-		int altering_object;
-		s_obj_supp_check *next;
-	};	//Structure for tracking how objects have been removed
-
 	unsigned int **Supported_Nodes;			//Nodes with source support (connected to swing somehow)
 	char *Alteration_Nodes;					//Similar to Supported_Nodes, but used to track alteration progression (namely, has the side been handled)
 	char *Alteration_Links;					//Similar to Supported_Nodes, but used to track alteration progression in links
 	unsigned char *valid_phases;			//Nodes with source support, specific to individual phases (hex mapped) -- used for mesh-based check
-	s_obj_supp_check *Altered_Node_Track;	//Structure for tracking node alterations, mainly for restoration operations
-	s_obj_supp_check *Altered_Link_Track;	//Structure for tracking link alterations, mainly for restoration operations
 
 	enumeration fcheck_state;		//Mode variable
 	char1024 output_filename;		//File name to output unconnected bus values
 	bool reliability_mode;			//Flag for reliability implementation
 	bool reliability_search_mode;	//Flag for how the object removal search occurs - basically assuming radial versus not
+	bool grid_association_mode;		//Flag to see if fault_check should be checking for multiple grids, or just go on the "master swing" idea
 	bool full_print_output;			//Flag to determine if both supported and unsupported nodes get written to the output file
 	OBJECT *rel_eventgen;			//Eventgen object in reliability - allows "unscheduled" faults
 
@@ -57,19 +49,21 @@ public:
 	void allocate_alterations_values(bool reliability_mode_bool);		//Function to allocate the various memory items associated with reliability
 	bool output_check_supported_mesh(void);								//Function to check and see if anything is unsupported and set overall flag (file outputs)
 
-	void altered_device_add(s_obj_supp_check *base_item, int fault_cause, unsigned char phases_alter, unsigned char phases_fault);
-	bool altered_device_search(s_obj_supp_check *base_item, int fault_case, unsigned char phases_fault, unsigned char *phases_alter, bool remove_mode);
-
 	void support_search_links(int node_int, int node_start, bool impact_mode);	//Function to check connectivity and support of nodes and remove/restore components as necessary
 	void support_search_links_mesh(int baselink_int, bool impact_mode);			//Function to parse bus list and remove anything that isn't supported (mesh systems)
 	void momentary_activation(int node_int);									//Function to progress down a branch and flag momentary outages
 	void special_object_alteration_handle(int branch_idx);						//Functionalized special device alteration code
+
+	void reset_associated_grid(void);										//Function to reset/allocate "grid association" array
+	void associate_grids(void);												//Function to look for the various swing nodes in the system, then associate the grids
+	void search_associated_grids(unsigned int node_int, int grid_counter);	//Function to perform the "grid association" and populate the array
 
 	TIMESTAMP sync(TIMESTAMP t0);
 
 private:
 	TIMESTAMP prev_time;	//Previous timestamp - mainly for intialization
 	FUNCTIONADDR restoration_fxn;	// Function address for restoration object reconfiguration call
+	int *associated_grid;	//Array for assignment of nodes to different "main connection" points
 };
 
 EXPORT int powerflow_alterations(OBJECT *thisobj, int baselink,bool rest_mode);

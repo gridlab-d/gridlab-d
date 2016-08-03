@@ -1,0 +1,136 @@
+//Simple 4 node system
+//Mainly here to test if the NR matrix output ever causes issues
+//Just executes -- assumes that any issue will cause a failure
+
+clock {
+	timezone EST+5EDT;
+	starttime '2000-01-01 0:00:00';
+	stoptime '2000-01-01 0:00:05';
+}
+
+module tape;
+module powerflow {
+	solver_method NR;
+	NR_matrix_file "newfileout.txt";
+	NR_matrix_output_interval PER_CALL;
+	NR_matrix_output_references true;
+};
+
+object overhead_line_conductor {
+	name olc100;
+	geometric_mean_radius 0.0244;
+	resistance 0.306;
+}
+
+object overhead_line_conductor {
+	name olc101;
+	geometric_mean_radius 0.00814;
+	resistance 0.592;
+}
+
+object line_spacing {
+	name ls200;
+	distance_AB 2.5;
+	distance_BC 4.5;
+	distance_AC 7.0;
+	distance_AN 5.656854;
+	distance_BN 4.272002;
+	distance_CN 5.0;
+}
+
+object line_configuration {
+	name lc300;
+	conductor_A olc100;
+	conductor_B olc100;
+	conductor_C olc100;
+	conductor_N olc101;
+	spacing ls200;
+}
+
+object transformer_configuration {
+	name tc400;
+	connect_type 1;
+	power_rating 6000;
+	powerA_rating 2000;
+	powerB_rating 2000;
+	powerC_rating 2000;
+	primary_voltage 12470;
+	secondary_voltage 4160;
+	resistance 0.01;
+	reactance 0.06;
+}
+
+object node {
+	name node1;
+	phases "ABCN";
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	bustype SWING;
+	nominal_voltage 7199.558;
+}
+
+//Superfluous recorder - just moves us forward to test the "per-call" flag
+object recorder {
+	parent node1;
+	name junk_rec_1;
+	property voltage_A;
+	interval 1;
+	file swing_voltage_A.csv;
+}
+
+object overhead_line {
+	name ohl12;
+	phases "ABCN";
+	from node1;
+	to node2;
+	length 2000;
+	configuration lc300;
+}
+
+object node {
+	name node2;
+	phases "ABCN";
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7199.558;
+}
+
+object transformer {
+	name xformer23;
+	phases "ABCN";
+	from node2;
+	to node3;
+	configuration tc400;
+}
+
+object node {
+	name node3;
+	phases "ABCN";
+	voltage_A +2401.777+0.000j;
+	voltage_B -1200.889-2080.000j;
+	voltage_C -1200.889+2080.000j;
+	nominal_voltage 2401.777;
+}
+
+object overhead_line {
+	name ohl34;
+	phases "ABCN";
+	from node3;
+	to load4;
+	length 2500;
+	configuration lc300;
+}
+
+object load {
+	name load4;
+	phases "ABCN";
+	voltage_A +2401.777+0.000j;
+	voltage_B -1200.889-2080.000j;
+	voltage_C -1200.889+2080.000j;
+	constant_power_A +1800000.000+871779.789j;
+	constant_power_B +1800000.000+871779.789j;
+	constant_power_C +1800000.000+871779.789j;
+	nominal_voltage 2401.777;
+}

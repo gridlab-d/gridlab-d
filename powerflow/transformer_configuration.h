@@ -1,4 +1,4 @@
-// $Id: transformer_configuration.h 4738 2014-07-03 00:55:39Z dchassin $
+// $Id: transformer_configuration.h 1182 2008-12-22 22:08:36Z dchassin $
 //	Copyright (C) 2008 Battelle Memorial Institute
 
 #ifndef _TRANSFORMERCONFIGURATION_H
@@ -43,6 +43,16 @@ public:
 	double dtheta_TO_R;			// top-oil hottest-spot rise over ambient temperature at rated load, degrees C.
 	double dtheta_H_AR;			// winding hottest-spot rise over ambient temperature at rated load, degrees C.
 	double installed_insulation_life;	//the normal lifetime of the transformer insulation at rated load, hours.
+
+	//In-rush/saturation parameters
+	enum {NO_MAG=0,PRI_MAG=1,SEC_MAG=2,BOTH_MAG=3};
+	enumeration magnetization_location;
+	bool model_inrush_saturation;
+	double LA_pu;
+	double phiK_pu;
+	double phiM_pu;
+	double IM_pu;
+	double TD_val;
 
 	transformer_configuration(MODULE *mod);
 	inline transformer_configuration(CLASS *cl=oclass):powerflow_library(cl){};

@@ -26,6 +26,7 @@
 Generic in-rush notes here 
 --------------------------
 What about P/C relationships for history terms, how handle?
+Initialization after returning to service?
 
 ***********************************************************************
 */
@@ -35,10 +36,6 @@ What about P/C relationships for history terms, how handle?
 #include "solver_nr.h"
 
 #define MT // this enables multithreaded SuperLU
-
-//#define NR_MATRIX_OUT	//This directive enables a text file dump of the sparse-formatted admittance matrix - useful for debugging
-//#define NR_VOLTAGE_PORTION_OUT	//This directive also enables the voltages to be appended to the admittance matrix dump - debugging and requires NR_MATRIX_OUT to be set
-//#define NR_REFERENCES_OUT		//This directive also enables a row-range association per node appended to the admittance matrix dump - debugging and requires NR_MATRIX_OUT to be set
 
 #ifdef MT
 #include <pdsp_defs.h>	//superLU_MT 
@@ -59,28 +56,88 @@ SuperMatrix A_LU,B_LU;
 //External solver global
 void *ext_solver_glob_vars;
 
+//Initialize the sparse notation
 void sparse_init(SPARSE* sm, int nels, int ncols)
-				{
-	sm->cols = (SP_E**)calloc(ncols, sizeof(SP_E*));
-	sm->llheap = (SP_E*)calloc(nels, sizeof(SP_E));
+{
+	int indexval;
+	
+	//Allocate the column pointer GLD heap
+	sm->cols = (SP_E**)gl_malloc(ncols*sizeof(SP_E*));
+
+	//Check it
+	if (sm->cols == NULL)
+	{
+		GL_THROW("NR: Sparse matrix allocation failed");
+		/*  TROUBLESHOOT
+		While attempting to allocate space for one of the sparse matrix variables, an error was encountered.
+		Please try again.  If the error persists, please submit your code and a bug report via the ticketing system.
+		*/
+	}
+	else	//Zero it, for giggles
+	{
+		for (indexval=0; indexval<ncols; indexval++)
+		{
+			sm->cols[indexval] = NULL;
+		}
+	}
+
+	//Allocate the elements on the GLD heap
+	sm->llheap = (SP_E*)gl_malloc(nels*sizeof(SP_E));
+
+	//Check it
+	if (sm->llheap == NULL)
+	{
+		GL_THROW("NR: Sparse matrix allocation failed");
+		//Defined above
+	}
+	else	//Zero it, for giggles
+	{
+		for (indexval=0; indexval<nels; indexval++)
+		{
+			sm->llheap[indexval].next = NULL;
+			sm->llheap[indexval].row_ind = -1;	//Invalid, so it gets upset if we use this (intentional)
+			sm->llheap[indexval].value = 0.0;
+		}
+	}
+
+	//Init others
 	sm->llptr = 0;
 	sm->ncols = ncols;
 }
 
+//Free up/clear the sparse allocations
 void sparse_clear(SPARSE* sm)
 {
-	free(sm->llheap);
-	free(sm->cols);
+	//Clear them up
+	gl_free(sm->llheap);
+	gl_free(sm->cols);
+
+	//Null them, because I'm paranoid
+	sm->llheap = NULL;
+	sm->cols = NULL;
+
+	//Zero the last one
 	sm->ncols = 0;
-				}
+}
 
 void sparse_reset(SPARSE* sm, int ncols)
 {
-	sm->ncols = ncols;
-	memset(sm->cols, 0, ncols * sizeof(SP_E*));
-	sm->llptr = 0;
-			}
+	int indexval;
 
+	//Set the size
+	sm->ncols = ncols;
+
+	//Do brute force way, for paranoia
+	for (indexval=0; indexval<ncols; indexval++)
+	{
+		sm->cols[indexval] = NULL;
+	}
+	
+	//Set the location pointer
+	sm->llptr = 0;
+}
+
+//Add in new elements to the sparse notation
 inline void sparse_add(SPARSE* sm, int row, int col, double value)
 {
 	SP_E* insertion_point = sm->cols[col];
@@ -142,10 +199,14 @@ void sparse_tonr(SPARSE* sm, NR_SOLVER_VARS *matrices_LU)
 	//traverse each linked list, which are in order, and copy values into new array
 	unsigned int rowidx = 0;
 	unsigned int colidx = 0;
+	unsigned int i;
+	SP_E* LL_pointer;
+
 	matrices_LU->cols_LU[0] = 0;
-	for(unsigned int i = 0; i < sm->ncols; i++)
+	LL_pointer = NULL;
+	for(i = 0; i < sm->ncols; i++)
 	{
-		SP_E* LL_pointer = sm->cols[i];
+		LL_pointer = sm->cols[i];
 		if(LL_pointer != NULL)
 		{
 			matrices_LU->cols_LU[colidx++] = rowidx;
@@ -167,16 +228,23 @@ void sparse_tonr(SPARSE* sm, NR_SOLVER_VARS *matrices_LU)
 	n>0 to indicate success after n interations, or 
 	n<0 to indicate failure after n iterations
  **/
-int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count, BRANCHDATA *branch, NR_SOLVER_STRUCT *powerflow_values, NRSOLVERMODE powerflow_type ,bool *bad_computations)
+int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count, BRANCHDATA *branch, NR_SOLVER_STRUCT *powerflow_values, NRSOLVERMODE powerflow_type , NR_MESHFAULT_IMPEDANCE *mesh_imped_vals, bool *bad_computations)
 {
 	//Internal iteration counter - just NR limits
 	int64 Iteration;
+
+	//File pointer for debug outputs
+	FILE *FPoutVal;
 
 	//A matrix size variable
 	unsigned int size_Amatrix;
 
 	//Voltage mismatch tracking variable
 	double Maxmismatch;
+
+	//Saturation mismatch tracking variable
+	bool SaturationMismatchPresent;
+	int func_result_val;
 
 	//Phase collapser variable
 	unsigned char phase_worka, phase_workb, phase_workc, phase_workd, phase_worke;
@@ -194,6 +262,9 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 	//Working matrix for admittance collapsing/determinations
 	complex tempY[3][3];
+
+	//Working matrix for mesh fault impedance storage, prior to "reconstruction"
+	double temp_z_store[6][6];
 
 	//Miscellaneous flag variables
 	bool Full_Mat_A, Full_Mat_B, proceed_flag;
@@ -246,10 +317,11 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	int nnz, info;
 	unsigned int m,n;
 	double *sol_LU;
-	
-	//New sparse matrix format variables
-	unsigned int sparse_row, sparse_col;
-	double sparse_value;
+
+	//Spare notation variable - for output
+	SP_E *temp_element;
+	int row, col;
+	double value;
 	
 #ifndef MT
 	superlu_options_t options;	//Additional variables for sequential superLU
@@ -260,25 +332,39 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	*bad_computations = false;
 
 	//Determine special circumstances of SWING bus -- do we want it to truly participate right
-	if (powerflow_type != PF_NORMAL)	//Not normal
+	if (powerflow_type != PF_NORMAL)
 	{
-		//Master Swing is always assumed to be bus zero
-		if ((bus[0].full_Y == NULL) || ((bus[0].full_Y != NULL) && (bus[0].DynCurrent == NULL)))
+		if (powerflow_type == PF_DYNCALC)	//Parse the list -- anything that is a swing and a generator, deflag it out of principle (and to make it work right)
 		{
-			//Set variables
+			//Set the master swing flag
+			swing_is_a_swing = false;
+
+			//Check the buses
+			for (indexer=0; indexer<bus_count; indexer++)
+			{
+				//See if we're a swing-flagged bus
+				if ((bus[indexer].type > 1) && (bus[indexer].swing_functions_enabled == true))
+				{
+					//See if we're "generator ready"
+					if ((*bus[indexer].dynamics_enabled==true) && (bus[indexer].full_Y != NULL) && (bus[indexer].DynCurrent != NULL))
+					{
+						//Deflag us back to "PQ" status
+						bus[indexer].swing_functions_enabled = false;
+					}
+				}
+				//Default else -- normal bus
+			}//End bus traversion loop
+		}//Handle running dynamics differently
+		else	//Must be PF_DYNINIT
+		{
+			//Flag us as true, initially
 			swing_is_a_swing = true;
 		}
-		else	//We have a generator attached, proceed like "normal"
-		{
-			//Set the dynamics variable appropriately
-			if (powerflow_type != PF_DYNCALC)
-				swing_is_a_swing = true;		//First pass of "initial dynamics" treat this as swing
-			else
-				swing_is_a_swing = false;		//Dynamics solutions (and after first pass of "initial dynamics") swing bus becomes PQ
-		}
+	}//End not normal
+	else	//Must be normal
+	{
+		swing_is_a_swing = true;	//Flag as a swing, even though this shouldn't do anything
 	}
-	else
-		swing_is_a_swing = true;	//Normal powerflow, we're always a true SWING
 
 	//Populate aval, if necessary
 	if (powerflow_type == PF_DYNINIT)
@@ -2007,6 +2093,9 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		}//End bus parse for fixed diagonal
 	}//End admittance update
 
+	//Reset saturation checks
+	SaturationMismatchPresent = false;
+
 	//Calculate the system load - this is the specified power of the system
 	for (Iteration=0; Iteration<NR_iteration_limit; Iteration++)
 	{
@@ -2367,6 +2456,10 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				temp_current[1] = bus[indexer].I[1];
 				temp_current[2] = *bus[indexer].extra_var;	//Current12 is not part of the standard current array
 
+				//Add in deltamode unrotated, if necessary
+				if ((bus[indexer].prerot_I[2] != 0.0) && (*bus[indexer].dynamics_enabled == true))
+					temp_current[2] += bus[indexer].prerot_I[2];
+
 				//Now add in power contributions
 				temp_current[0] += bus[indexer].V[0] == 0.0 ? 0.0 : ~(bus[indexer].S[0]/bus[indexer].V[0]);
 				temp_current[1] += bus[indexer].V[1] == 0.0 ? 0.0 : ~(bus[indexer].S[1]/bus[indexer].V[1]);
@@ -2457,6 +2550,16 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					{
 						adjusted_constant_current[2] = 0.0;
 					}
+
+					//Testing - do adjustments for unrotated current
+					if (bus[indexer].prerot_I[0] != 0.0)
+						adjusted_constant_current[0] += bus[indexer].prerot_I[0];
+
+					if (bus[indexer].prerot_I[1] != 0.0)
+						adjusted_constant_current[1] += bus[indexer].prerot_I[1];
+
+					if (bus[indexer].prerot_I[2] != 0.0)
+						adjusted_constant_current[2] += bus[indexer].prerot_I[2];
 
 					//See if we have any "different children"
 					if ((bus[indexer].phases & 0x10) == 0x10)
@@ -3233,7 +3336,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					}//End branch traversion
 
 					//Determine how we are posting this update
-					if ((bus[indexer].type == 2) && swing_is_a_swing)	//SWING bus is different (when it really is a SWING bus)
+					if ((bus[indexer].type > 1) && (bus[indexer].swing_functions_enabled == true))	//SWING bus is different (when it really is a SWING bus)
 					{
 						if ((powerflow_type == PF_DYNINIT) && (bus[indexer].full_Y != NULL) && (bus[indexer].DynCurrent != NULL))
 						{
@@ -3250,7 +3353,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							}
 						}//End PF_DYNINIT SWING traversion
 
-						//Must be normal run, since DYNRUN should have swing_is_a_swing deflagged
+						//Must be normal run, since DYNRUN should have swing capabilities deflagged
 						//Normal run - zero it - should already be zerod, but let's be paranoid for now
 						powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + jindex] = 0.0;
 						powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc + jindex] = 0.0;
@@ -3505,7 +3608,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					}//end intermediate current for each phase column
 
 					//Determine how we are posting this update
-					if ((bus[indexer].type == 2) && swing_is_a_swing)	//SWING bus is different (when it really is a SWING bus)
+					if ((bus[indexer].type > 1) && (bus[indexer].swing_functions_enabled == true))	//SWING bus is different (when it really is a SWING bus)
 					{
 						if ((powerflow_type == PF_DYNINIT) && (bus[indexer].full_Y != NULL) && (bus[indexer].DynCurrent != NULL))
 						{
@@ -3554,6 +3657,8 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + jindex] = 0.0;
 							powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc + jindex] = 0.0;
 						}
+
+						//Saturation skipped for "swing is a swing" case, since it doesn't affect the admittance (no need to offset)
 					}//End SWING bus cases
 					else	//PQ bus or SWING masquerading as a PQ
 					{
@@ -3575,6 +3680,13 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 								powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc+ powerflow_values->BA_diag[indexer].size + jindex] = (tempPbus * work_vals_double_1 + tempQbus * work_vals_double_2)/ (work_vals_double_0) - tempIcalcReal ; // equation(7), Real part of deltaI, left hand side of equation (11)
 								powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc + jindex] = (tempPbus * work_vals_double_2 - tempQbus * work_vals_double_1)/ (work_vals_double_0) - tempIcalcImag; // Imaginary part of deltaI, left hand side of equation (11)
 							}
+
+							//Accumulate in any saturation current values as well, while we're here
+							if (NR_busdata[indexer].BusSatTerm != NULL)
+							{
+								powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc+ powerflow_values->BA_diag[indexer].size + jindex] -= NR_busdata[indexer].BusSatTerm[jindex].Re();
+								powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc + jindex] -= NR_busdata[indexer].BusSatTerm[jindex].Im();
+							}
 						}
 						else
 						{
@@ -3587,6 +3699,13 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							{
            						powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + jindex] = 0.0;
 								powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc + jindex] = 0.0;
+							}
+
+							//Accumulate in any saturation current values as well, while we're here
+							if (NR_busdata[indexer].BusSatTerm != NULL)
+							{
+								powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc+ powerflow_values->BA_diag[indexer].size + jindex] -= NR_busdata[indexer].BusSatTerm[jindex].Re();
+								powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc + jindex] -= NR_busdata[indexer].BusSatTerm[jindex].Im();
 							}
 						}
 					}//End normal bus handling
@@ -3626,7 +3745,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 						}//End SWING is still swing, otherwise should just accumulate what it had
 
 						//Don't get added in as part of "normal swing" routine
-						if ((bus[indexer].type == 0) || ((bus[indexer].type==2) && (swing_is_a_swing==false)))
+						if ((bus[indexer].type == 0) || ((bus[indexer].type>1) && (bus[indexer].swing_functions_enabled == false)))
 						{
 							//Add these into the system - added because "generation"
        						powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[0].Re();		//Phase A
@@ -4029,6 +4148,10 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				temp_current[1] = bus[indexer].I[1];
 				temp_current[2] = *bus[indexer].extra_var; //current12 is not part of the standard current array
 
+				//Add in deltamode unrotated, if necessary
+				if ((bus[indexer].prerot_I[2] != 0.0) && (*bus[indexer].dynamics_enabled == true))
+					temp_current[2] += bus[indexer].prerot_I[2];
+
 				//Now add in power contributions
 				temp_current[0] += bus[indexer].V[0] == 0.0 ? 0.0 : ~(bus[indexer].S[0]/bus[indexer].V[0]);
 				temp_current[1] += bus[indexer].V[1] == 0.0 ? 0.0 : ~(bus[indexer].S[1]/bus[indexer].V[1]);
@@ -4137,6 +4260,15 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					{
 						adjusted_constant_current[2] = 0.0;
 					}
+
+					if (bus[indexer].prerot_I[0] != 0.0)
+						adjusted_constant_current[0] += bus[indexer].prerot_I[0];
+
+					if (bus[indexer].prerot_I[1] != 0.0)
+						adjusted_constant_current[1] += bus[indexer].prerot_I[1];
+
+					if (bus[indexer].prerot_I[2] != 0.0)
+						adjusted_constant_current[2] += bus[indexer].prerot_I[2];
 
 					//See if we have any "different children"
 					if ((bus[indexer].phases & 0x10) == 0x10)
@@ -4842,7 +4974,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 		for (jindexer=0; jindexer<bus_count; jindexer++)	//Parse through bus list
 		{
-			if ((bus[jindexer].type == 2) && swing_is_a_swing)	//Swing bus - and we aren't ignoring it
+			if ((bus[jindexer].type > 1) && (bus[jindexer].swing_functions_enabled == true))	//Swing bus - and we aren't ignoring it
 			{
 				for (jindex=0; jindex<powerflow_values->BA_diag[jindexer].size; jindex++)
 				{
@@ -4868,7 +5000,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				}//End swing bus traversion
 			}//End swing bus
 
-			if ((bus[jindexer].type == 0) || ((bus[jindexer].type == 2) && swing_is_a_swing==false))	//Only do on PQ (or SWING masquerading as PQ)
+			if ((bus[jindexer].type == 0) || ((bus[jindexer].type > 1) && bus[jindexer].swing_functions_enabled == false))	//Only do on PQ (or SWING masquerading as PQ)
 			{
 				for (jindex=0; jindex<powerflow_values->BA_diag[jindexer].size; jindex++)
 				{
@@ -4915,11 +5047,13 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		if (powerflow_values->Y_Amatrix == NULL)
 		{
 			powerflow_values->Y_Amatrix = (SPARSE*) gl_malloc(sizeof(SPARSE));
-			sparse_init(powerflow_values->Y_Amatrix, size_Amatrix, 6*NR_bus_count);
 
 			//Make sure it worked
 			if (powerflow_values->Y_Amatrix == NULL)
 				GL_THROW("NR: Failed to allocate memory for one of the necessary matrices");
+
+			//Initiliaze it
+			sparse_init(powerflow_values->Y_Amatrix, size_Amatrix, 6*NR_bus_count);
 		}
 		else if (powerflow_values->NR_realloc_needed)	//If one of the above changed, we changed too
 		{
@@ -4928,43 +5062,123 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 			//Create a new 
 			sparse_init(powerflow_values->Y_Amatrix, size_Amatrix, 6*NR_bus_count);
-		} else {
+		}
+		else
+		{
+			//Just clear it out
 			sparse_reset(powerflow_values->Y_Amatrix, 6*NR_bus_count);
 		}
 
 		//integrate off diagonal components
 		for (indexer=0; indexer<powerflow_values->size_offdiag_PQ*2; indexer++)
 		{
-			sparse_row = powerflow_values->Y_offdiag_PQ[indexer].row_ind;
-			sparse_col = powerflow_values->Y_offdiag_PQ[indexer].col_ind;
-			sparse_value = powerflow_values->Y_offdiag_PQ[indexer].Y_value;
-			sparse_add(powerflow_values->Y_Amatrix, sparse_row, sparse_col, sparse_value);
+			row = powerflow_values->Y_offdiag_PQ[indexer].row_ind;
+			col = powerflow_values->Y_offdiag_PQ[indexer].col_ind;
+			value = powerflow_values->Y_offdiag_PQ[indexer].Y_value;
+			sparse_add(powerflow_values->Y_Amatrix, row, col, value);
 		}
 
 		//Integrate fixed portions of diagonal components
 		for (indexer=powerflow_values->size_offdiag_PQ*2; indexer< (powerflow_values->size_offdiag_PQ*2 + powerflow_values->size_diag_fixed*2); indexer++)
 		{
-			sparse_row = powerflow_values->Y_diag_fixed[indexer - powerflow_values->size_offdiag_PQ*2 ].row_ind;
-			sparse_col = powerflow_values->Y_diag_fixed[indexer - powerflow_values->size_offdiag_PQ*2 ].col_ind;
-			sparse_value = powerflow_values->Y_diag_fixed[indexer - powerflow_values->size_offdiag_PQ*2 ].Y_value;
-			sparse_add(powerflow_values->Y_Amatrix, sparse_row, sparse_col, sparse_value);
+			row = powerflow_values->Y_diag_fixed[indexer - powerflow_values->size_offdiag_PQ*2 ].row_ind;
+			col = powerflow_values->Y_diag_fixed[indexer - powerflow_values->size_offdiag_PQ*2 ].col_ind;
+			value = powerflow_values->Y_diag_fixed[indexer - powerflow_values->size_offdiag_PQ*2 ].Y_value;
+			sparse_add(powerflow_values->Y_Amatrix, row, col, value);
 		}
 
 		//Integrate the variable portions of the diagonal components
 		for (indexer=powerflow_values->size_offdiag_PQ*2 + powerflow_values->size_diag_fixed*2; indexer< size_Amatrix; indexer++)
 		{
-			sparse_row = powerflow_values->Y_diag_update[indexer - powerflow_values->size_offdiag_PQ*2 - powerflow_values->size_diag_fixed*2].row_ind;
-			sparse_col = powerflow_values->Y_diag_update[indexer - powerflow_values->size_offdiag_PQ*2 - powerflow_values->size_diag_fixed*2].col_ind;
-			sparse_value = powerflow_values->Y_diag_update[indexer - powerflow_values->size_offdiag_PQ*2 - powerflow_values->size_diag_fixed*2].Y_value;
-			sparse_add(powerflow_values->Y_Amatrix, sparse_row, sparse_col, sparse_value);
+			row = powerflow_values->Y_diag_update[indexer - powerflow_values->size_offdiag_PQ*2 - powerflow_values->size_diag_fixed*2].row_ind;
+			col = powerflow_values->Y_diag_update[indexer - powerflow_values->size_offdiag_PQ*2 - powerflow_values->size_diag_fixed*2].col_ind;
+			value = powerflow_values->Y_diag_update[indexer - powerflow_values->size_offdiag_PQ*2 - powerflow_values->size_diag_fixed*2].Y_value;
+			sparse_add(powerflow_values->Y_Amatrix, row, col, value);
 		}
 
-#ifdef NR_MATRIX_OUT
-		//Debugging code to export the sparse matrix values - useful for debugging issues, but needs preprocessor declaration
-		
-		//Unsupported at this time -- in 3.2+ code
-		gl_warning("sparse matrix dump not currently implemented");
-#endif
+		//See if we want to dump out the matrix values
+		if (NRMatDumpMethod != MD_NONE)
+		{
+			//Code to export the sparse matrix values - useful for debugging issues
+
+			//Check our frequency
+			if ((NRMatDumpMethod == MD_ALL) || ((NRMatDumpMethod != MD_ALL) && (Iteration == 0)))
+			{
+				//Open the text file - append now
+				FPoutVal=fopen(MDFileName,"at");
+
+				//See if we wanted references - Only do this once per call, regardless (keeps file size down)
+				if ((NRMatReferences == true) && (Iteration == 0))
+				{
+					//Print the index information
+					fprintf(FPoutVal,"Matrix Index information for this call - start,stop,name\n");
+
+					for (indexer=0; indexer<bus_count; indexer++)
+					{
+						//Extract the start/stop indices
+						jindexer = 2*bus[indexer].Matrix_Loc;
+						kindexer = jindexer + 2*powerflow_values->BA_diag[indexer].size - 1;
+
+						//Print them out
+						fprintf(FPoutVal,"%d,%d,%s\n",jindexer,kindexer,bus[indexer].name);
+					}
+
+					//Add in a blank line so it looks pretty
+					fprintf(FPoutVal,"\n");
+				}//End print the references
+
+				//Print the simulation time and iteration number
+				fprintf(FPoutVal,"Timestamp: %lld - Iteration %lld\n",gl_globalclock,Iteration);
+
+				//Print size - for parsing ease
+				fprintf(FPoutVal,"Matrix Information - non-zero element count = %d\n",size_Amatrix);
+				
+				//Print the values - printed as "row index, column index, value"
+				//This particular output is after they have been column sorted for the algorithm
+				//Header
+				fprintf(FPoutVal,"Matrix Information - row, column, value\n");
+
+				//Null temp variable
+				temp_element = NULL;
+
+				//Loop through the columns, extracting starting point each time
+				for (jindexer=0; jindexer<powerflow_values->Y_Amatrix->ncols; jindexer++)
+				{
+					//Extract the column starting point
+					temp_element = powerflow_values->Y_Amatrix->cols[jindexer];
+
+					//Check for nulling
+					if (temp_element != NULL)
+					{
+						//Print this value
+						fprintf(FPoutVal,"%d,%d,%f\n",temp_element->row_ind,jindexer,temp_element->value);
+
+						//Loop
+						while (temp_element->next != NULL)
+						{
+							//Get next element
+							temp_element = temp_element->next;
+
+							//Repeat the print
+							fprintf(FPoutVal,"%d,%d,%f\n",temp_element->row_ind,jindexer,temp_element->value);
+						}
+					}
+					//If it is null, go next.  Implies we have an invalid matrix size, but that may be what we're looking for
+				}//End sparse matrix traversion for dump
+
+				//Print an extra line, so it looks nice for ALL/PERCALL
+				fprintf(FPoutVal,"\n");
+
+				//Close the file, we're done with it
+				fclose(FPoutVal);
+
+				//See if we were a "ONCE" - if so, deflag us
+				if (NRMatDumpMethod == MD_ONCE)
+				{
+					NRMatDumpMethod = MD_NONE;	//Flag to do no more
+				}
+			}//End Actual output
+		}//End matrix dump desired
 
 		///* Initialize parameters. */
 		m = 2*powerflow_values->total_variables;
@@ -5156,10 +5370,15 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		sparse_tonr(powerflow_values->Y_Amatrix, &matrices_LU);
 		matrices_LU.cols_LU[n] = nnz ;// number of non-zeros;
 
-		for (temp_index_c=0;temp_index_c<m;temp_index_c++)
-		{ 
-			matrices_LU.rhs_LU[temp_index_c] = powerflow_values->deltaI_NR[temp_index_c];
+		//Determine how to populate the rhs vector
+		if (mesh_imped_vals == NULL)	//Normal powerflow, copy in the values
+		{
+			for (temp_index_c=0;temp_index_c<m;temp_index_c++)
+			{ 
+				matrices_LU.rhs_LU[temp_index_c] = powerflow_values->deltaI_NR[temp_index_c];
+			}
 		}
+		//Default else -- it is NULL - zero it and "populate it" below
 
 		if (matrix_solver_method==MM_SUPERLU)
 		{
@@ -5177,27 +5396,279 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			Bstore->lda = m;
 			Bstore->nzval = matrices_LU.rhs_LU;
 
+			//See how to call the function - if normal mode or not
+			if (mesh_imped_vals != NULL)
+			{
+				//Start with "failure" option on the structure
+				mesh_imped_vals->return_code = 0;
+
+				//Determine the base index (error check)
+				if (mesh_imped_vals->NodeRefNum > 0)
+				{
+					tempa = 2*bus[mesh_imped_vals->NodeRefNum].Matrix_Loc;	//These are already separated into real/imag, so the base is 2x
+				}
+				else	//Error
+				{
+					gl_error("solver_nr: Node reference for mesh fault calculation was invalid -- it may be a child");
+					/*  TROUBLESHOOT
+					While attempting to compute the equivalent impedance at a mesh faulted node, an invalid node reference
+					was found.  This is likely an internal error to the code -- submit your code and a bug report via the
+					tracking website.
+					*/
+
+					//Set the flags
+					mesh_imped_vals->return_code = 0;
+					*bad_computations = true;
+
+					//Return a 0 to flag
+					return 0;
+				}
+
+				//Determine our phasing size - what entries to pull - double for the complex notation
+				temp_size = 2*powerflow_values->BA_diag[mesh_imped_vals->NodeRefNum].size;
+
+				//Check for error - size of zero
+				if (temp_size == 0)
+				{
+					gl_error("solver_nr: Mesh fault impedance extract failed - invalid node");
+					/*  TROUBLESHOOT
+					While attempting to extract the mesh fault impedance value, a node with either
+					invalid phasing or no phases (already removed) was somehow flagged.  Please check
+					your file and try again.  If the error persists, please submit your code
+					and a bug report via the ticketing system.
+					*/
+
+					//Flags
+					*bad_computations = true;
+					mesh_imped_vals->return_code = 0;
+
+					//Exit
+					return 0;
+				}
+				//Default else -- okay
+
+				//Clear out the output matrix first -- assumes it is 3x3, regardless
+				for (jindex=0; jindex<9; jindex++)
+				{
+					mesh_imped_vals->z_matrix[jindex] = complex(0.0,0.0);
+				}
+
+				//Zero the double matrix - the big storage (6x6 - re & im split)
+				for (jindex=0; jindex<6; jindex++)
+				{
+					for (kindex=0; kindex<6; kindex++)
+					{
+						temp_z_store[jindex][kindex] = 0.0;
+					}
+				}
+
+				//Overall loop - for number of phases
+				for (kindex=0; kindex<temp_size; kindex++)
+				{
+
+					//Start by zeroing the "solution" vector
+					for (temp_index_c=0;temp_index_c<m;temp_index_c++)
+					{ 
+						matrices_LU.rhs_LU[temp_index_c] = 0.0;
+					}
+
+					//"Identity"-ize the real part of the current index
+					matrices_LU.rhs_LU[tempa + kindex] = 1.0;
+
+					//Do a solution to get this entry (copied from below - includes "destructors"
 #ifdef MT
-			//superLU_MT commands
+					//superLU_MT commands
 
-			//Populate perm_c
-			get_perm_c(1, &A_LU, perm_c);
+					//Populate perm_c
+					get_perm_c(1, &A_LU, perm_c);
 
-			//Solve the system
-			pdgssv(NR_superLU_procs, &A_LU, perm_c, perm_r, &L_LU, &U_LU, &B_LU, &info);
+					//Solve the system 
+					pdgssv(NR_superLU_procs, &A_LU, perm_c, perm_r, &L_LU, &U_LU, &B_LU, &info);
+
+					/* De-allocate storage - superLU matrix types must be destroyed at every iteration, otherwise they balloon fast (65 MB norma becomes 1.5 GB) */
+					//superLU_MT commands
+					Destroy_SuperNode_SCP(&L_LU);
+					Destroy_CompCol_NCP(&U_LU);
 #else
-			//sequential superLU
+					//sequential superLU
 
-			StatInit ( &stat );
+					StatInit ( &stat );
 
-			// solve the system
-			dgssv(&options, &A_LU, perm_c, perm_r, &L_LU, &U_LU, &B_LU, &stat, &info);
+					// solve the system
+					dgssv(&options, &A_LU, perm_c, perm_r, &L_LU, &U_LU, &B_LU, &stat, &info);
+
+					/* De-allocate storage - superLU matrix types must be destroyed at every iteration, otherwise they balloon fast (65 MB norma becomes 1.5 GB) */
+					//sequential superLU commands
+					Destroy_SuperNode_Matrix( &L_LU );
+					Destroy_CompCol_Matrix( &U_LU );
+					StatFree ( &stat );
+#endif
+					//Crude superLU checks - see if it is mission accomplished or not
+					if (info != 0)	//Failed inversion, for various reasons
+					{
+						gl_error("solver_nr: superLU failed mesh fault matrix inversion with code %d",info);
+						/*  TROUBLESHOOT
+						superLU failed to invert the equivalent impedance matrix for the mesh fault calculation
+						method.  Please try again and make sure your system is valid.  If the error persists, please
+						submit your code and a bug report via the ticketing system.
+						*/
+
+						//Flag as bad
+						*bad_computations = true;
+						mesh_imped_vals->return_code = 0;
+
+						//Exit
+						return 0;
+					}
+					//Default else, must have converged!
+
+					//Map up the solution vector
+					sol_LU = (double*) ((DNformat*) B_LU.Store)->nzval;
+
+					//Extract out this column into the temporary matrix
+					for (jindex=0; jindex<temp_size; jindex++)
+					{
+						temp_z_store[jindex][kindex] = sol_LU[tempa+jindex];
+					}
+				}//End "phase loop" - impedance components are ready
+
+				//Extract the values - do with a massive case/switch, just because
+				switch(bus[mesh_imped_vals->NodeRefNum].phases & 0x07) {
+					case 0x01:	//C
+						{
+							mesh_imped_vals->z_matrix[8] = complex(temp_z_store[1][0],temp_z_store[1][1]);
+							break;
+						}
+					case 0x02:	//B
+						{
+							mesh_imped_vals->z_matrix[4] = complex(temp_z_store[1][0],temp_z_store[1][1]);
+							break;
+						}
+					case 0x03:	//BC
+						{
+							//BB and BC portion
+							mesh_imped_vals->z_matrix[4] = complex(temp_z_store[2][0],temp_z_store[2][2]);
+							mesh_imped_vals->z_matrix[5] = complex(temp_z_store[2][1],temp_z_store[2][3]);
+
+							//CB and CC portion
+							mesh_imped_vals->z_matrix[7] = complex(temp_z_store[3][0],temp_z_store[3][2]);
+							mesh_imped_vals->z_matrix[8] = complex(temp_z_store[3][1],temp_z_store[3][3]);
+							break;
+						}
+					case 0x04:	//A
+						{
+							mesh_imped_vals->z_matrix[0] = complex(temp_z_store[1][0],temp_z_store[1][1]);
+							break;
+						}
+					case 0x05:	//AC
+						{
+							//AA and AC portion
+							mesh_imped_vals->z_matrix[0] = complex(temp_z_store[2][0],temp_z_store[2][2]);
+							mesh_imped_vals->z_matrix[2] = complex(temp_z_store[2][1],temp_z_store[2][3]);
+
+							//CA and CC portion
+							mesh_imped_vals->z_matrix[6] = complex(temp_z_store[3][0],temp_z_store[3][2]);
+							mesh_imped_vals->z_matrix[8] = complex(temp_z_store[3][1],temp_z_store[3][3]);
+							break;
+						}
+					case 0x06:	//AB
+						{
+							//AA and AB portion
+							mesh_imped_vals->z_matrix[0] = complex(temp_z_store[2][0],temp_z_store[2][2]);
+							mesh_imped_vals->z_matrix[1] = complex(temp_z_store[2][1],temp_z_store[2][3]);
+
+							//BA and BB portion
+							mesh_imped_vals->z_matrix[3] = complex(temp_z_store[3][0],temp_z_store[3][2]);
+							mesh_imped_vals->z_matrix[4] = complex(temp_z_store[3][1],temp_z_store[3][3]);
+							break;
+						}
+					case 0x07:	//ABC
+						{
+							//A row
+							mesh_imped_vals->z_matrix[0] = complex(temp_z_store[3][0],temp_z_store[3][3]);
+							mesh_imped_vals->z_matrix[1] = complex(temp_z_store[3][1],temp_z_store[3][4]);
+							mesh_imped_vals->z_matrix[2] = complex(temp_z_store[3][2],temp_z_store[3][5]);
+
+							//B row
+							mesh_imped_vals->z_matrix[3] = complex(temp_z_store[4][0],temp_z_store[4][3]);
+							mesh_imped_vals->z_matrix[4] = complex(temp_z_store[4][1],temp_z_store[4][4]);
+							mesh_imped_vals->z_matrix[5] = complex(temp_z_store[4][2],temp_z_store[4][5]);
+
+							//C row
+							mesh_imped_vals->z_matrix[6] = complex(temp_z_store[5][0],temp_z_store[5][3]);
+							mesh_imped_vals->z_matrix[7] = complex(temp_z_store[5][1],temp_z_store[5][4]);
+							mesh_imped_vals->z_matrix[8] = complex(temp_z_store[5][2],temp_z_store[5][5]);
+							break;
+						}
+					default:	//Not sure how we got here
+						{
+							gl_error("solver_nr: Mesh fault impedance extract failed - invalid node");
+							//Defined above, same message
+
+							//Flags
+							*bad_computations = true;
+							mesh_imped_vals->return_code = 0;
+
+							//Exit
+							return 0;
+						}
+				}//end phase switch/case
+
+				//Flag as success
+				*bad_computations = false;
+				mesh_imped_vals->return_code = 1;
+
+				//Exit
+				return 1;	//Non-zero, so success (manual checks outside though)
+			}//End "just mesh impedance calculations"
+			else	//Nulled, "normal" powerflow
+			{
+#ifdef MT
+				//superLU_MT commands
+
+				//Populate perm_c
+				get_perm_c(1, &A_LU, perm_c);
+
+				//Solve the system
+				pdgssv(NR_superLU_procs, &A_LU, perm_c, perm_r, &L_LU, &U_LU, &B_LU, &info);
+#else
+				//sequential superLU
+
+				StatInit ( &stat );
+
+				// solve the system
+				dgssv(&options, &A_LU, perm_c, perm_r, &L_LU, &U_LU, &B_LU, &stat, &info);
 #endif
 
-			sol_LU = (double*) ((DNformat*) B_LU.Store)->nzval;
+				sol_LU = (double*) ((DNformat*) B_LU.Store)->nzval;
+			}
 		}
 		else if (matrix_solver_method==MM_EXTERN)
 		{
+			//General error check right now -- mesh fault current may not work properly
+			if (mesh_imped_vals != NULL)
+			{
+				gl_error("solver_nr: Mesh impedance attempted from unsupported LU solver");
+				/* TROUBLESHOOT
+				The mesh fault current impedance "pull" was selected, but for the external LU
+				solver.  This is unsupported at this time.  To use the mesh fault current capabilities,
+				please use the superLU solver.
+				*/
+
+				//Set return code
+				mesh_imped_vals->return_code = 2;
+
+				//Perform the clean up - external LU destructor routing
+				((void (*)(void *, bool))(LUSolverFcns.ext_destroy))(ext_solver_glob_vars,newiter);
+
+				//Flag bad computations, just because
+				*bad_computations = true;
+
+				//Exit
+				return 0;
+			}
+			//Default else -- not mesh fault mode, so go like normal
+
 			//Call the solver
 			info = ((int (*)(void *,NR_SOLVER_VARS *, unsigned int, unsigned int))(LUSolverFcns.ext_solve))(ext_solver_glob_vars,&matrices_LU,n,1);
 
@@ -5223,7 +5694,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		for (indexer=0; indexer<bus_count; indexer++)
 		{
 			//Avoid swing bus updates on normal runs
-			if ((bus[indexer].type == 0) || ((bus[indexer].type == 2) && (swing_is_a_swing==false)))
+			if ((bus[indexer].type == 0) || ((bus[indexer].type > 1) && (bus[indexer].swing_functions_enabled == false)))
 			{
 				//Figure out the offset we need to be for each phase
 				if ((bus[indexer].phases & 0x80) == 0x80)	//Split phase
@@ -5340,121 +5811,41 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			}
 		}//End bus traversion
 
-		//Further debug stuff
-#ifdef NR_MATRIX_OUT
-		
-#if defined(NR_VOLTAGE_PORTION_OUT) || defined(NR_REFERENCES_OUT)
-		//Open the text file again
-		FILE *FPoutValue=fopen("matrixinfoout.txt","at");
-#endif
-
-#ifdef NR_VOLTAGE_PORTION_OUT
-
-		//Print voltage information
-		fprintf(FPoutValue,"\nVoltage Information - row,value\n");
-
-		for (indexer=0; indexer<bus_count; indexer++)
+		//Perform saturation current update/convergence check
+		//******************** FIGURE OUT HOW TO DO THIS BETTER - This is very inefficient!***********************//
+		if ((enable_inrush_calculations == true) && (deltatimestep_running > 0))	//Don't even both with this if inrush not on
 		{
-			//Figure out the offset we need to be for each phase
-			if ((bus[indexer].phases & 0x80) == 0x80)	//Split phase
+			//Start out assuming the convergence is true (reiter is false)
+			SaturationMismatchPresent = false;
+
+			//Loop through all branches -- inefficient, but meh
+			for (indexer=0; indexer<branch_count; indexer++)
 			{
-				fprintf(FPoutValue,"%d,%f\n",2*bus[indexer].Matrix_Loc,bus[indexer].V[0].Re());
-				fprintf(FPoutValue,"%d,%f\n",(2*bus[indexer].Matrix_Loc+1),bus[indexer].V[1].Re());
-				fprintf(FPoutValue,"%d,%f\n",(2*bus[indexer].Matrix_Loc+2),bus[indexer].V[0].Im());
-				fprintf(FPoutValue,"%d,%f\n",(2*bus[indexer].Matrix_Loc+3),bus[indexer].V[1].Im());
-			}//end split phase update
-			else										//Not split phase
-			{
-				for (jindex=0; jindex<powerflow_values->BA_diag[indexer].size; jindex++)	//parse through the phases
+				//See if the function exists
+				if (branch[indexer].ExtraDeltaModeFunc != NULL)
 				{
-					switch(bus[indexer].phases & 0x07) {
-						case 0x01:	//C
-							{
-								temp_index=0;
-								temp_index_b=2;
-								break;
-							}
-						case 0x02:	//B
-							{
-								temp_index=0;
-								temp_index_b=1;
-								break;
-							}
-						case 0x03:	//BC
-							{
-								if (jindex==0)	//B
-								{
-									temp_index=0;
-									temp_index_b=1;
-								}
-								else			//C
-								{
-									temp_index=1;
-									temp_index_b=2;
-								}
+					//Call the function
+					func_result_val = ((int (*)(OBJECT *,bool *))(*branch[indexer].ExtraDeltaModeFunc))(branch[indexer].obj,&SaturationMismatchPresent);
 
-								break;
-							}
-						case 0x04:	//A
-							{
-								temp_index=0;
-								temp_index_b=0;
-								break;
-							}
-						case 0x05:	//AC
-							{
-								if (jindex==0)	//A
-								{
-									temp_index=0;
-									temp_index_b=0;
-								}
-								else			//C
-								{
-									temp_index=1;
-									temp_index_b=2;
-								}
-								break;
-							}
-						case 0x06:	//AB
-						case 0x07:	//ABC
-							{
-								temp_index = jindex;
-								temp_index_b = jindex;
-								break;
-							}
-					}//end phase switch/case
+					//Make sure it worked
+					if (func_result_val != 1)
+					{
+						GL_THROW("Extra delta update failed for device %s",branch[indexer].name ? branch[indexer].name : "Unnamed");
+						/*  TROUBLESHOOT
+						While attempting to perform the extra deltamode update, something failed.  Please try again.
+						If the error persists, please submit your code and a bug report via the ticketing system.
+						*/
+					}
+					//Default else -- it worked, keep going
+				}
+				//Default else - is NULL
+			}//End inefficient branch traversion
+		}//End in-rush and deltamode running
 
-					fprintf(FPoutValue,"%d,%f\n",(2*bus[indexer].Matrix_Loc+temp_index),bus[indexer].V[temp_index_b].Re());
-					fprintf(FPoutValue,"%d,%f\n",(2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size+temp_index),bus[indexer].V[temp_index_b].Im());
-
-				}//End For loop for phase traversion
-			}//End not split phase update
-		}//End bus traversion
-#endif
-
-#ifdef NR_REFERENCES_OUT
-		//Print the index information
-		fprintf(FPoutValue,"\nMatrix Index information - start,stop,name\n");
-
-		for (indexer=0; indexer<bus_count; indexer++)
-		{
-			jindexer = 2*bus[indexer].Matrix_Loc;
-			kindexer = jindexer + 2*powerflow_values->BA_diag[indexer].size - 1;
-
-
-			fprintf(FPoutValue,"%d,%d,%s\n",jindexer,kindexer,bus[indexer].name);
-		}
-#endif
-
-#if defined(NR_VOLTAGE_PORTION_OUT) || defined(NR_REFERENCES_OUT)
-		//Close the file, we're done with it
-		fclose(FPoutValue);
-#endif
-
-#endif	//End NR_MATIRX_OUT
+		//Further debug stuff
 
 		//Additional checks for special modes - only needs to happen in first dynamics powerflow
-		if ((powerflow_type == PF_DYNINIT) && (bus[0].full_Y != NULL) && (bus[0].DynCurrent != NULL))	//Builds on assumption index 0 is MASTER swing
+		if (powerflow_type == PF_DYNINIT)
 		{
 			//See what "mode" we're in
 			if (!newiter)	//Overall powerflow has converged
@@ -5464,11 +5855,30 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					//Give a verbose message, just cause
 					gl_verbose("NR_Solver: swing bus failed balancing criteria - making it a PQ for future dynamics");
 
-					//Nope, are we still in the right mode
-					if (swing_is_a_swing)	//Still a swing bus
+					//See if we're still swing_is_a_swing mode
+					if (swing_is_a_swing == true)
 					{
-						swing_is_a_swing=false;	//Now effectively a PQ bus
-						newiter = true;			//Flag for a reiteration
+						//Deflag us
+						swing_is_a_swing = false;
+
+						//Loop through and deflag appropriate swing buses
+						for (indexer=0; indexer<bus_count; indexer++)
+						{
+							//See if we're a swing-flagged bus
+							if ((bus[indexer].type > 1) && (bus[indexer].swing_functions_enabled == true))
+							{
+								//See if we're "generator ready"
+								if ((*bus[indexer].dynamics_enabled==true) && (bus[indexer].full_Y != NULL) && (bus[indexer].DynCurrent != NULL))
+								{
+									//Deflag us back to "PQ" status
+									bus[indexer].swing_functions_enabled = false;
+
+									//Force a reiteration
+									newiter=true;
+								}
+							}
+							//Default else -- normal bus
+						}//End bus traversion loop
 					}
 					//Default else - if we're out of symmetry bounds, but already hit close, good enough
 				}
@@ -5476,6 +5886,14 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			}
 			//Default else - still need to iterate
 		}//End special convergence criterion
+
+		//Check Saturation mismatch 
+		if (SaturationMismatchPresent == true)
+		{
+			//Force a reiter
+			newiter = true;
+		}
+		//Default else -- either no saturation, or it has converged - leave it be
 
 		//Turn off reallocation flag no matter what
 		powerflow_values->NR_realloc_needed = false;

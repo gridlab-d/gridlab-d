@@ -397,6 +397,10 @@ TIMESTAMP load::sync(TIMESTAMP t0)
 {
 	//bool all_three_phases;
 	bool fault_mode;
+	TIMESTAMP tresults_val, result;
+
+	//Initialize time
+	tresults_val = TS_NEVER;
 
 	//See if we're reliability-enabled
 	if (fault_check_object == NULL)
@@ -404,11 +408,29 @@ TIMESTAMP load::sync(TIMESTAMP t0)
 	else
 		fault_mode = true;
 
-	//Functionalized so deltamode can parttake
-	load_update_fxn(fault_mode);
+	//Call the GFA-type functionality, if appropriate
+	if (GFA_enable == true)
+	{
+		//See if we're enabled - just skipping the load update should be enough, if we are not
+		if (GFA_status == true)
+		{
+			//Functionalized so deltamode can parttake
+			load_update_fxn(fault_mode);
+		}
+		else
+		{
+			//Remove any load contributions
+			load_delete_update_fxn();
+		}
+	}
+	else	//GFA checks are not enabled
+	{
+		//Functionalized so deltamode can parttake
+		load_update_fxn(fault_mode);
+	}
 
 	//Must be at the bottom, or the new values will be calculated after the fact
-	TIMESTAMP result = node::sync(t0);
+	result = node::sync(t0);
 
 	return result;
 }
@@ -433,7 +455,7 @@ TIMESTAMP load::postsync(TIMESTAMP t0)
 //Here primarily so deltamode players can actually influence things
 void load::load_update_fxn(bool fault_mode)
 {
-	bool all_three_phases;
+	bool all_three_phases, transf_from_stdy_state;
 	complex intermed_impedance[3];
 	complex intermed_impedance_dy[6];
 	int index_var;
@@ -2299,7 +2321,7 @@ void load::load_update_fxn(bool fault_mode)
 	//Defaulted else -- either already done, or not needed
 
 	//In-rush update information - incorporate the latest "impedance" values
-	//Put at bottom to insure it gets the "converted impedance final result"
+	//Put at bottom to ensure it gets the "converted impedance final result"
 	//Deltamode catch and check
 	//if ((deltatimestep_running > 0) && (enable_inrush_calculations == true))
 	if (enable_inrush_calculations == true)
@@ -2312,58 +2334,207 @@ void load::load_update_fxn(bool fault_mode)
 			//Set flag
 			require_inrush_update = true;
 
-			//See if we're a different timestep
+			//See if we're a different timestep (update is in node.cpp postsync function)
 			if (curr_delta_time != prev_delta_time)
 			{
 				//Loop through the phases for the updates
 				for (index_var=0; index_var<3; index_var++)
 				{
-					//Check and see what type of load this is -- Phase A
-					if (shunt[index_var].Im()>0.0)	//Capacitve
+					//Start, assuming "normal"
+					transf_from_stdy_state = false;
+
+					//See which mode we should go into
+					if (prev_delta_time < 0)	//Came from steady state, let's see our status
 					{
-						//Zero all inductive terms, just because
-						LoadHistTermL[index_var] = complex(0.0,0.0);
-						LoadHistTermL[index_var+3] = complex(0.0,0.0);
-
-						//Update capacitive history terms
-						LoadHistTermC[index_var+3] = LoadHistTermC[index_var];
-
-						//Calculate the updated history terms - hrcf = chrc*vfromprev - hrcfprev
-						LoadHistTermC[index_var] = NR_busdata[NR_node_reference].V[index_var] * chrcloadstore[index_var] -
-												   LoadHistTermC[index_var+3];
-					}
-					else if (shunt[index_var].Im()<0.0) //Inductive
-					{
-						//Zero all capacitive terms, just because
-						LoadHistTermC[index_var] = complex(0.0,0.0);
-						LoadHistTermC[index_var+3] = complex(0.0,0.0);
-
-						//Update inductive history terms
-						LoadHistTermL[index_var+3] = LoadHistTermL[index_var];
-
-						//Calculate the updated history terms - hrl = ahrl*vprev-bhrl*hrlprev
-						//Cheating references to voltages
-						//Do a parent check
+						//Check phase voltage value - if it is non-zero, assume we were running
+						//Adjust for childed nodes
 						if ((SubNode != CHILD) && (SubNode != DIFF_CHILD))
 						{
-							LoadHistTermL[index_var] = NR_busdata[NR_node_reference].V[index_var] * ahrlloadstore[index_var] -
-													   bhrlloadstore[index_var] * LoadHistTermL[index_var+3];
+							if (NR_busdata[NR_node_reference].V[index_var].Mag() > 0.0)
+							{
+								transf_from_stdy_state = true;
+							}
+							//Default else, leave false
 						}
-						else	//Childed, steal our parent's values
+						else	//Childed - get parent values
 						{
-							LoadHistTermL[index_var] = NR_busdata[*NR_subnode_reference].V[index_var] * ahrlloadstore[index_var] -
-													   bhrlloadstore[index_var] * LoadHistTermL[index_var+3];
+							if (NR_busdata[*NR_subnode_reference].V[index_var].Mag() > 0.0)
+							{
+								transf_from_stdy_state = true;
+							}
+							//Default else, leave false
 						}
 					}
-					else	//Must be zero -- purely resistive, or something
-					{
-						//Zero everything on principle
-						LoadHistTermL[index_var] = complex(0.0,0.0);
-						LoadHistTermL[index_var+3] = complex(0.0,0.0);
+					//Default else, already were running, so unneeded
 
-						LoadHistTermC[index_var] = complex(0.0,0.0);
-						LoadHistTermC[index_var+3] = complex(0.0,0.0);
-					}
+					//See if we came from steady state
+					if (transf_from_stdy_state == true)
+					{
+						//Check and see what type of load this is -- Phase A
+						if (shunt[index_var].Im()>0.0)	//Capacitve
+						{
+							//Zero all inductive terms, just because
+							LoadHistTermL[index_var] = complex(0.0,0.0);
+							LoadHistTermL[index_var+3] = complex(0.0,0.0);
+
+							//Zero the two inductive constant terms
+							ahrlloadstore[index_var] = complex(0.0,0.0);
+							bhrlloadstore[index_var] = complex(0.0,0.0);
+
+							//Update capacitive history terms
+							LoadHistTermC[index_var+3] = LoadHistTermC[index_var];
+
+							//Code from below -- transition in needs an update first
+							//Extract the imaginary part (should be only part) and de-phasor it - Yshunt/(2*pi*f)*2/dt
+							workingvalue = shunt[index_var].Im() / (PI * current_frequency * deltatimestep_running);
+
+							//Create chrcstore while we're in here
+							chrcloadstore[index_var] = 2.0 * workingvalue;
+
+							//End of copy from below
+
+							//Calculate the updated history terms - hrcf = chrc*vfromprev/2.0
+							//Do a parent check
+							if ((SubNode != CHILD) && (SubNode != DIFF_CHILD))
+							{
+								LoadHistTermC[index_var] = NR_busdata[NR_node_reference].V[index_var] * chrcloadstore[index_var] / complex(2.0,0.0);
+							}
+							else	//Childed - get parent values
+							{
+								LoadHistTermC[index_var] = NR_busdata[*NR_subnode_reference].V[index_var] * chrcloadstore[index_var] / complex(2.0,0.0);
+							}
+						}
+						else if (shunt[index_var].Im()<0.0) //Inductive
+						{
+							//Zero all capacitive terms, just because
+							LoadHistTermC[index_var] = complex(0.0,0.0);
+							LoadHistTermC[index_var+3] = complex(0.0,0.0);
+
+							//Zero the capacitive term
+							chrcloadstore[index_var] = complex(0.0,0.0);
+
+							//Update inductive history terms
+							LoadHistTermL[index_var+3] = LoadHistTermL[index_var];
+
+							//Copied from below - update
+							//Form the equivalent impedance value
+							working_impedance_value = complex(1.0,0.0) / shunt[index_var];
+
+							//Extract the imaginary part (should be only part) and de-phasor it - Yimped/(2*pi*f)*2/dt
+							workingvalue = working_impedance_value.Im() / (PI * current_frequency * deltatimestep_running);
+
+							//Put into the other working matrix (zh)
+							working_data_value = working_impedance_value - complex(workingvalue,0.0);
+
+							//Put back into "real" impedance value to make Y (Znew)
+							working_impedance_value += complex(workingvalue,0.0);
+
+							//Make it an admittance again, for the update - Y
+							if (working_impedance_value.IsZero() != true)
+							{
+								working_admittance_value = complex(1.0,0.0) / working_impedance_value;
+							}
+							else
+							{
+								working_admittance_value = complex(0.0,0.0);
+							}
+
+							//Form the bhrl term - Y*Zh = bhrl
+							bhrlloadstore[index_var] = working_admittance_value * working_data_value;
+
+							//Compute the ahrl term - Y(Zh*Y - I)
+							ahrlloadstore[index_var] = working_admittance_value*(working_data_value * working_admittance_value - complex(1.0,0.0));
+
+							//End copy of above
+
+							//Calculate the updated history terms - hrl = inv((1+bhrl))*ahrl*vprev
+							//Cheating references to voltages
+							//Do a parent check
+							if ((SubNode != CHILD) && (SubNode != DIFF_CHILD))
+							{
+								LoadHistTermL[index_var] = NR_busdata[NR_node_reference].V[index_var] * ahrlloadstore[index_var] /
+														   (complex(1.0,0.0) + bhrlloadstore[index_var]);
+							}
+							else	//Childed, steal our parent's values
+							{
+								LoadHistTermL[index_var] = NR_busdata[*NR_subnode_reference].V[index_var] * ahrlloadstore[index_var] /
+														   (complex(1.0,0.0) + bhrlloadstore[index_var]);
+							}
+						}
+						else	//Must be zero -- purely resistive, or something
+						{
+							//Zero both sets of terms
+							ahrlloadstore[index_var] = complex(0.0,0.0);
+							bhrlloadstore[index_var] = complex(0.0,0.0);
+
+							chrcloadstore[index_var] = complex(0.0,0.0);
+
+							//Zero everything on principle
+							LoadHistTermL[index_var] = complex(0.0,0.0);
+							LoadHistTermL[index_var+3] = complex(0.0,0.0);
+
+							LoadHistTermC[index_var] = complex(0.0,0.0);
+							LoadHistTermC[index_var+3] = complex(0.0,0.0);
+						}
+					}//End transitioned from steady state
+					else	//Normal update
+					{
+						//Check and see what type of load this is -- Phase A
+						if (shunt[index_var].Im()>0.0)	//Capacitve
+						{
+							//Zero all inductive terms, just because
+							LoadHistTermL[index_var] = complex(0.0,0.0);
+							LoadHistTermL[index_var+3] = complex(0.0,0.0);
+
+							//Update capacitive history terms
+							LoadHistTermC[index_var+3] = LoadHistTermC[index_var];
+
+							//Calculate the updated history terms - hrcf = chrc*vfromprev - hrcfprev
+							//Do a parent check
+							if ((SubNode != CHILD) && (SubNode != DIFF_CHILD))
+							{
+								LoadHistTermC[index_var] = NR_busdata[NR_node_reference].V[index_var] * chrcloadstore[index_var] -
+														   LoadHistTermC[index_var+3];
+							}
+							else	//Childed - get parent values
+							{
+								LoadHistTermC[index_var] = NR_busdata[*NR_subnode_reference].V[index_var] * chrcloadstore[index_var] -
+														   LoadHistTermC[index_var+3];
+							}
+						}
+						else if (shunt[index_var].Im()<0.0) //Inductive
+						{
+							//Zero all capacitive terms, just because
+							LoadHistTermC[index_var] = complex(0.0,0.0);
+							LoadHistTermC[index_var+3] = complex(0.0,0.0);
+
+							//Update inductive history terms
+							LoadHistTermL[index_var+3] = LoadHistTermL[index_var];
+
+							//Calculate the updated history terms - hrl = ahrl*vprev-bhrl*hrlprev
+							//Cheating references to voltages
+							//Do a parent check
+							if ((SubNode != CHILD) && (SubNode != DIFF_CHILD))
+							{
+								LoadHistTermL[index_var] = NR_busdata[NR_node_reference].V[index_var] * ahrlloadstore[index_var] -
+														   bhrlloadstore[index_var] * LoadHistTermL[index_var+3];
+							}
+							else	//Childed, steal our parent's values
+							{
+								LoadHistTermL[index_var] = NR_busdata[*NR_subnode_reference].V[index_var] * ahrlloadstore[index_var] -
+														   bhrlloadstore[index_var] * LoadHistTermL[index_var+3];
+							}
+						}
+						else	//Must be zero -- purely resistive, or something
+						{
+							//Zero everything on principle
+							LoadHistTermL[index_var] = complex(0.0,0.0);
+							LoadHistTermL[index_var+3] = complex(0.0,0.0);
+
+							LoadHistTermC[index_var] = complex(0.0,0.0);
+							LoadHistTermC[index_var+3] = complex(0.0,0.0);
+						}
+					}//End normal update (deltamode running or we started "off"
 
 					//See if we're a parented load or not
 					if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
@@ -2533,6 +2704,44 @@ void load::load_update_fxn(bool fault_mode)
 	//Default else -- no update needed
 }
 
+//Function to appropriately zero load - make sure we don't get too heavy handed
+void load::load_delete_update_fxn(void)
+{
+	int index_var;
+
+	if ((solver_method!=SM_FBS) && ((SubNode==PARENT) || (SubNode==DIFF_PARENT)))	//Need to do something slightly different with GS/NR and parented load
+	{													//associated with change due to player methods
+		if (SubNode != PARENT)	//Normal parent gets one routine
+		{
+			//Loop and clear
+			for (index_var=0; index_var<3; index_var++)
+			{
+				shunt[index_var] = complex(0.0,0.0);
+				power[index_var] = complex(0.0,0.0);
+				current[index_var] = complex(0.0,0.0);
+			}
+		}
+	}
+	else
+	{
+		//Loop and clear
+		for (index_var=0; index_var<3; index_var++)
+		{
+			shunt[index_var] = complex(0.0,0.0);
+			power[index_var] = complex(0.0,0.0);
+			current[index_var] = complex(0.0,0.0);
+		}
+
+		//Now do again for the explicit connections
+		for (index_var=0; index_var<6; index_var++)
+		{
+			shunt_dy[index_var] = complex(0.0,0.0);
+			power_dy[index_var] = complex(0.0,0.0);
+			current_dy[index_var] = complex(0.0,0.0);
+		}
+	}
+}
+
 //Notify function
 //NOTE: The NR-based notify stuff may no longer be needed after NR is "flattened", since it will
 //      effectively be like FBS at that point.
@@ -2629,9 +2838,41 @@ int load::notify(int update_mode, PROPERTY *prop, char *value)
 //Module-level call
 SIMULATIONMODE load::inter_deltaupdate_load(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
 {
-	//unsigned char pass_mod;
+	unsigned char pass_mod;
 	OBJECT *hdr = OBJECTHDR(this);
 	bool fault_mode;
+	double deltat, deltatimedbl;
+	STATUS return_status_val;
+
+	//Create delta_t variable
+	deltat = (double)dt/(double)DT_SECOND;
+
+	//Initialization items
+	if ((delta_time==0) && (iteration_count_val==0) && (interupdate_pos == false))	//First run of new delta call
+	{
+		//Initialize dynamics
+		init_freq_dynamics(&curr_state);
+	}//End first pass and timestep of deltamode (initial condition stuff)
+
+	//Update time tracking variable - mostly for GFA functionality calls
+	if (iteration_count_val == 0)	//Only update timestamp tracker on first iteration
+	{
+		//Get decimal timestamp value
+		deltatimedbl = (double)delta_time/(double)DT_SECOND; 
+
+		//Update tracking variable
+		prev_time_dbl = (double)gl_globalclock + deltatimedbl;
+	}
+	
+	//Perform the GFA update, if enabled
+	if ((GFA_enable == true) && (iteration_count_val == 0) && (interupdate_pos == false))	//Always just do on the first pass
+	{
+		//Do the checks
+		GFA_Update_time = perform_GFA_checks(deltat);
+	}
+
+	//See what we're on, for tracking
+	pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
 
 	if (interupdate_pos == false)	//Before powerflow call
 	{
@@ -2644,16 +2885,34 @@ SIMULATIONMODE load::inter_deltaupdate_load(unsigned int64 delta_time, unsigned 
 		}
 
 		//Call presync-equivalent items
-		NR_node_presync_fxn();
+		NR_node_presync_fxn(0);
 
 		//See if we're reliability-enabled
 		if (fault_check_object == NULL)
 			fault_mode = false;
 		else
 			fault_mode = true;
-
-		//Functionalized so deltamode can parttake
-		load_update_fxn(fault_mode);
+		
+		//See if GFA functionality is enabled
+		if (GFA_enable == true)
+		{
+			//See if we're enabled - just skipping the load update should be enough, if we are not
+			if (GFA_status == true)
+			{
+				//Functionalized so deltamode can parttake
+				load_update_fxn(fault_mode);
+			}
+			else
+			{
+				//Remove any load contributions
+				load_delete_update_fxn();
+			}
+		}
+		else	//No GFA checks - go like normal
+		{
+			//Functionalized so deltamode can parttake
+			load_update_fxn(fault_mode);
+		}
 
 		//Call sync-equivalent items (solver occurs at end of sync)
 		NR_node_sync_fxn(hdr);
@@ -2665,6 +2924,19 @@ SIMULATIONMODE load::inter_deltaupdate_load(unsigned int64 delta_time, unsigned 
 		//Perform postsync-like updates on the values
 		BOTH_node_postsync_fxn(hdr);
 
+		//Frequency measurement stuff
+		if (fmeas_type != FM_NONE)
+		{
+			return_status_val = calc_freq_dynamics(deltat,pass_mod);
+
+			//Check it
+			if (return_status_val == FAILED)
+			{
+				return SM_ERROR;
+			}
+		}//End frequency measurement desired
+		//Default else -- don't calculate it
+
 		//Postsync load items - measurement population
 		measured_voltage_A.SetPolar(voltageA.Mag(),voltageA.Arg());  //Used for testing and xml output
 		measured_voltage_B.SetPolar(voltageB.Mag(),voltageB.Arg());
@@ -2673,9 +2945,29 @@ SIMULATIONMODE load::inter_deltaupdate_load(unsigned int64 delta_time, unsigned 
 		measured_voltage_BC = measured_voltage_B-measured_voltage_C;
 		measured_voltage_CA = measured_voltage_C-measured_voltage_A;
 
+		//See if GFA functionality is required, since it may require iterations or "continance"
+		if (GFA_enable == true)
+		{
+			//See if our return is value
+			if ((GFA_Update_time > 0.0) && (GFA_Update_time < 1.7))
+			{
+				//Force us to stay
+				return SM_DELTA;
+			}
+			else	//Just return whatever we were going to do
+			{
+				return SM_EVENT;
+			}
+		}
+		else	//Normal mode
+		{
+			return SM_EVENT;
+		}
+
+
 		//No control required at this time - powerflow defers to the whims of other modules
 		//Code below implements predictor/corrector-type logic, even though it effectively does nothing
-		return SM_EVENT;
+		//return SM_EVENT;
 
 		////Do deltamode-related logic
 		//if (bustype==SWING)	//We're the SWING bus, control our destiny (which is really controlled elsewhere)
@@ -2702,6 +2994,7 @@ SIMULATIONMODE load::inter_deltaupdate_load(unsigned int64 delta_time, unsigned 
 		//}
 	}
 }
+
 
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE: load

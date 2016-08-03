@@ -17,18 +17,60 @@
 #include "power_electronics.h"
 #include "generators.h"
 
+EXPORT STATUS preupdate_inverter(OBJECT *obj,TIMESTAMP t0, unsigned int64 delta_time);
+EXPORT SIMULATIONMODE interupdate_inverter(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
+EXPORT STATUS postupdate_inverter(OBJECT *obj, complex *useful_value, unsigned int mode_pass);
+
+//Alternative PI version Dynamic control Inverter state variable structure
+typedef struct {
+	double Pout[3];		///< The real power output
+	double Qout[3];		///< The reactive power output
+	double ed[3];			///< The error in real power output
+	double eq[3];			///< The error in reactive power output
+	double ded[3];		///< The change in real power error
+	double deq[3];		///< The change in reactive power error
+	double md[3];			///< The d axis current modulator of the inverter
+	double mq[3];			///< The q axis current modulator of the inverter
+	double dmd[3];			///< The change in d axis current modulator of the inverter
+	double dmq[3];			///< The change in q axis current modulator of the inverter
+	complex Idq[3];			///< The dq axis current output of the inverter
+	complex Iac[3];	///< The AC current out of the inverter terminals
+} INV_STATE;
+
+//Simple PID controller
+typedef struct {
+	complex error[3];
+	complex mod_vals[3];
+	complex integrator_vals[3];
+	complex derror[3];
+	complex current_vals_ref[3];	//Reference-framed current values
+	complex current_vals[3];		//Unrotated "powerflow-postable" current values
+	complex current_set_raw[3];	//Actual current value
+	complex current_set[3];		//Current rotated to common reference frame
+	double reference_angle[3];	//Reference angle tracking
+	double max_error_val;
+	double phase_Pref;
+	double phase_Qref;
+	double I_in;
+} PID_INV_VARS;
+
 //inverter extends power_electronics
 class inverter: public power_electronics
 {
 private:
-	bool IterationToggle;	///< Iteration toggle device - retains NR "pass" functionality
-	bool first_run;		///< Flag for first run of the diesel_dg object - eliminates t0==0 dependence
+	bool deltamode_inclusive; 	//Boolean for deltamode calls - pulled from object flags
+	bool first_sync_delta_enabled;
+	char first_iter_counter;
+	INV_STATE pred_state;	///< The predictor state of the inverter in delamode
 protected:
 	/* TODO: put unpublished but inherited variables */
 public:
+	INV_STATE curr_state; ///< The current state of the inverter in deltamode
 	enum INVERTER_TYPE {TWO_PULSE=0, SIX_PULSE=1, TWELVE_PULSE=2, PWM=3, FOUR_QUADRANT = 4};
 	enumeration inverter_type_v;
 	enum GENERATOR_STATUS {OFFLINE=1, ONLINE=2};
+	enum DYNAMIC_MODE {PID_CONTROLLER=0, PI_CONTROLLER=1};
+	enumeration inverter_dyn_mode;
 	enumeration gen_status_v;
 	//INVERTER_TYPE inverter_type_choice;
 	complex V_In; // V_in (DC)
@@ -40,7 +82,6 @@ public:
 	enum PF_REG_STATUS {REGULATING = 1, IDLING = 2} pf_reg_status;
 	enum LOAD_FOLLOW_STATUS {IDLE=0, DISCHARGE=1, CHARGE=2} load_follow_status;	//Status variable for what the load_following mode is doing
 
-	
 	complex VA_Out;
 	double P_Out;  // P_Out and Q_Out are set by the user as set values to output in CONSTANT_PQ mode
 	double Q_Out;
@@ -70,6 +111,7 @@ public:
 
 	complex *pCircuit_V;		//< pointer to the three voltages on three lines
 	complex *pLine_I;			//< pointer to the three current on three lines
+	complex *pLine_unrotI;		//< pointer to the three-phase, unrotated current
 	complex *pLine12;			//< used in triplex metering
 	complex *pPower;			//< pointer to the three power loads on three lines
 	complex *pPower12;			//< used in triplex metering
@@ -78,8 +120,18 @@ public:
 	double output_frequency;
 	double frequency_losses;
 	
+	//Deltamode PID-controller implementation
+	double kpd;			///< The proportional gain for the d axis modulation
+	double kpq;			///< The proportional gain for the q axis modulation
+	double kid;			///< The integrator gain for the d axis modulation
+	double kiq;			///< The integrator gain for the q axis modulation
+	double kdd;			///< The differentiator gain for the d-axis modulation
+	double kdq;			///< The differentiator gain for the q-axis modulation
+	PID_INV_VARS prev_PID_state;	///< Previous timestep values
+	PID_INV_VARS curr_PID_state;	///< Current timestep values
 
-	
+	double Pref;
+	double Qref;
 
 	complex phaseA_I_Out_prev;      // current
 	complex phaseB_I_Out_prev;
@@ -144,7 +196,7 @@ public:
 	double pf_reg_low;				//Lower limit for power factor regulation - if above, just leave it be (don't regulator)
 	
 	double pf_reg_activate_lockout_time; //Mandatory pause between the deactivation of power-factor regulation and it reactivation
-	
+
 	//Properties for group load-following
 	double charge_threshold;		//Level at which all inverters in the group will begin charging attached batteries. Regulated minimum load level.
 	double discharge_threshold;		//Level at which all inverters in the group will begin discharging attached batteries. Regulated maximum load level.
@@ -152,6 +204,8 @@ public:
 	double group_max_discharge_rate;		//Sum of the discharge rates of the inverters involved in the group load-following.
 	double group_rated_power;		//Sum of the inverter power ratings of the inverters involved in the group power-factor regulation.
 	
+	double inverter_convergence_criterion; //The convergence criteria for the dynamic inverter to exit deltamode
+
 	//VoltVar Control Parameters
 	double V_base;
 	double V1;
@@ -173,6 +227,46 @@ public:
 	TIMESTAMP allowed_vv_action;
 	TIMESTAMP last_vv_check;
 	bool vv_operation;
+
+	//1547 variables
+	bool enable_1547_compliance;	//Flag to enable IEEE 1547-2003 condition checking
+	double reconnect_time;			//Time after a 1547 violation clears before we reconnect
+	bool inverter_1547_status;		//Flag to indicate if we are online, or "curtailed" due to 1547 mapping
+
+	enum IEEE_1547_STATUS {IEEE_NONE=0, IEEE1547=1, IEEE1547A=2};
+	enumeration ieee_1547_version;
+
+	//1547(a) frequency
+	double over_freq_high_band_setpoint;	//OF2 set point for IEEE 1547a
+	double over_freq_high_band_delay;		//OF2 clearing time for IEEE1547a
+	double over_freq_high_band_viol_time;	//OF2 violation accumulator
+	double over_freq_low_band_setpoint;		//OF1 set point for IEEE 1547a
+	double over_freq_low_band_delay;		//OF1 clearing time for IEEE 1547a
+	double over_freq_low_band_viol_time;	//OF1 violation accumulator
+	double under_freq_high_band_setpoint;	//UF2 set point for IEEE 1547a
+	double under_freq_high_band_delay;		//UF2 clearing time for IEEE1547a
+	double under_freq_high_band_viol_time;	//UF2 violation accumulator
+	double under_freq_low_band_setpoint;	//UF1 set point for IEEE 1547a
+	double under_freq_low_band_delay;		//UF1 clearing time for IEEE 1547a
+	double under_freq_low_band_viol_time;	//UF1 violation accumulator
+
+	//1547 voltage(a) voltage
+	double under_voltage_lowest_voltage_setpoint;	//Lowest voltage threshold for undervoltage
+	double under_voltage_middle_voltage_setpoint;	//Middle-lowest voltage threshold for undervoltage
+	double under_voltage_high_voltage_setpoint;		//High value of low voltage threshold for undervoltage
+	double over_voltage_low_setpoint;				//Lowest voltage value for overvoltage
+	double over_voltage_high_setpoint;				//High voltage value for overvoltage
+	double under_voltage_lowest_delay;				//Lowest voltage clearing time for undervoltage
+	double under_voltage_middle_delay;				//Middle-lowest voltage clearing time for undervoltage
+	double under_voltage_high_delay;				//Highest voltage clearing time for undervoltage
+	double over_voltage_low_delay;					//Lowest voltage clearing time for overvoltage
+	double over_voltage_high_delay;					//Highest voltage clearing time for overvoltage
+	double under_voltage_lowest_viol_time;			//Lowest low voltage threshold violation accumulator
+	double under_voltage_middle_viol_time;			//Middle low voltage threshold violation accumulator
+	double under_voltage_high_viol_time;			//Highest low voltage threshold violation accumulator
+	double over_voltage_low_viol_time;				//Lowest high voltage threshold violation accumulator
+	double over_voltage_high_viol_time;				//Highest high voltage threshold violation accumulator
+
 	//properties for four quadrant volt/var frequency power mode
 	bool disable_volt_var_if_no_input_power;		//if true turn off Volt/VAr behavior when no input power (i.e. at night for a solar system)
 	double delay_time;				//delay time time between seeing a voltage value and responding with appropiate VAr setting (seconds)
@@ -197,7 +291,18 @@ private:
 	TIMESTAMP pf_reg_next_update_time;	//TIMESTAMP of next dispatching change allowed
 
 	TIMESTAMP prev_time;				//Tracking variable for previous "new time" run
+	double prev_time_dbl;				//Tracking variable for 1547 checks
 
+	complex last_I_Out[3];
+	complex I_Out[3];
+	double last_I_In;
+
+	//1547 variables
+	double out_of_violation_time_total;	//Tracking variable to see how long we've been "outside of bad conditions" to re-enable the inverter
+	double *freq_pointer;				//Pointer to frequency value for checking 1547 compliance
+	double node_nominal_voltage;		//Nominal voltage for per-unit-izing for 1547 checks
+
+	void update_control_references(void);
 public:
 	/* required implementations */
 	bool *get_bool(OBJECT *obj, char *name);
@@ -207,13 +312,20 @@ public:
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
+	STATUS pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time);
+	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
+	STATUS post_deltaupdate(complex *useful_value, unsigned int mode_pass);
 	int *get_enum(OBJECT *obj, char *name);
+	double perform_1547_checks(double timestepvalue);
 public:
 	static CLASS *oclass;
 	static inverter *defaults;
 	static CLASS *plcass;
 	complex *get_complex(OBJECT *obj, char *name);
 	double *get_double(OBJECT *obj, char *name);
+	complex complex_exp(double angle);
+	STATUS init_PI_dynamics(INV_STATE *curr_time);
+	STATUS init_PID_dynamics(void);
 #ifdef OPTIONAL
 	static CLASS *pclass; /**< defines the parent class */
 	TIMESTAMPP plc(TIMESTAMP t0, TIMESTAMP t1); /**< defines the default PLC code */

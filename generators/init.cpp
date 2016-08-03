@@ -91,6 +91,77 @@ void schedule_deltamode_start(TIMESTAMP tstart)
 	}
 }
 
+//Function for allocating various module-level deltamode arrays
+//Consolidated it doesn't have to be changed everywhere
+void allocate_deltamode_arrays(void)
+{
+	int obj_idx;
+
+	if ((gen_object_current == -1) || (delta_objects==NULL))
+	{
+		//Allocate the deltamode object array
+		delta_objects = (OBJECT**)gl_malloc(gen_object_count*sizeof(OBJECT*));
+
+		//Make sure it worked
+		if (delta_objects == NULL)
+		{
+			GL_THROW("Failed to allocate deltamode objects array for generators module!");
+			/*  TROUBLESHOOT
+			While attempting to create a reference array for generator module deltamode-enabled
+			objects, an error was encountered.  Please try again.  If the error persists, please
+			submit your code and a bug report via the trac website.
+			*/
+		}
+
+		//Allocate the function reference list as well
+		delta_functions = (FUNCTIONADDR*)gl_malloc(gen_object_count*sizeof(FUNCTIONADDR));
+
+		//Make sure it worked
+		if (delta_functions == NULL)
+		{
+			GL_THROW("Failed to allocate deltamode objects function array for generators module!");
+			/*  TROUBLESHOOT
+			While attempting to create a reference array for generator module deltamode-enabled
+			objects, an error was encountered.  Please try again.  If the error persists, please
+			submit your code and a bug report via the trac website.
+			*/
+		}
+
+		//Allocate the function reference list for postupdate as well
+		post_delta_functions = (FUNCTIONADDR*)gl_malloc(gen_object_count*sizeof(FUNCTIONADDR));
+
+		//Make sure it worked
+		if (post_delta_functions == NULL)
+		{
+			GL_THROW("Failed to allocate deltamode objects function array for generators module!");
+			//Defined above
+		}
+
+		//And allocate the preupdate function list too, just because
+		delta_preupdate_functions = (FUNCTIONADDR*)gl_malloc(gen_object_count*sizeof(FUNCTIONADDR));
+
+		//Make sure it worked
+		if (delta_preupdate_functions == NULL)
+		{
+			GL_THROW("Failed to allocate deltamode objects function array for generators module!");
+			//Defined above
+		}
+
+		//Null all of these, just for a baseline
+		for (obj_idx=0; obj_idx<gen_object_count; obj_idx++)
+		{
+			delta_objects[obj_idx] = NULL;
+			delta_functions[obj_idx] = NULL;
+			post_delta_functions[obj_idx] = NULL;
+			delta_preupdate_functions[obj_idx] = NULL;
+		}
+
+		//Initialize index
+		gen_object_current = 0;
+	}
+	//Default else, we're done, just exit
+}
+
 //deltamode_desired function
 //Module-level call to determine when the next object expects
 //to enter deltamode, even if it is now.
@@ -133,6 +204,9 @@ EXPORT unsigned long deltamode_desired(int *flags)
 //deltamode simulation stepsize
 EXPORT unsigned long preupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 {
+	int curr_object_number;
+	STATUS status_value;
+
 	if (enable_subsecond_models == true)
 	{
 		if (deltamode_timestep_publish<=0.0)
@@ -149,6 +223,31 @@ EXPORT unsigned long preupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 		{
 			//Cast in the published value
 			deltamode_timestep = (unsigned long)(deltamode_timestep_publish+0.5);
+
+
+			//Perform other preupdate functionality, as needed
+			//Loop through the object list and call the pre-update functions
+			for (curr_object_number=0; curr_object_number<gen_object_count; curr_object_number++)
+			{
+				//See if it has a function
+				if (delta_preupdate_functions[curr_object_number] != NULL)
+				{
+					//Call the function
+					status_value = ((STATUS (*)(OBJECT *, TIMESTAMP, unsigned int64))(*delta_preupdate_functions[curr_object_number]))(delta_objects[curr_object_number],t0,dt);
+
+					//Make sure we passed
+					if (status_value != SUCCESS)
+					{
+						GL_THROW("generators - object:%d %s failed to run the object-level preupdate function",delta_objects[curr_object_number]->id,(delta_objects[curr_object_number]->name ? delta_objects[curr_object_number]->name : "Unnamed"));
+						/*  TROUBLESHOOT
+						While attempting to call a preupdate function for a generator deltamode object, an error occurred.
+						Please look to the console output for more details.
+						*/
+					}
+					//Default else - it must have worked
+				}
+				//Default else - not one, so skip
+			}
 
 			//Return it
 			return deltamode_timestep;

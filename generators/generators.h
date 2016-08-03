@@ -37,6 +37,7 @@ GLOBAL bool enable_subsecond_models INIT(false); /* normally not operating in de
 GLOBAL unsigned long deltamode_timestep INIT(10000000); /* 10 ms timestep */
 GLOBAL double deltamode_timestep_publish INIT(10000000.0); /* 10 ms timestep */
 GLOBAL OBJECT **delta_objects INIT(NULL);				/* Array pointer objects that need deltamode interupdate calls */
+GLOBAL FUNCTIONADDR *delta_preupdate_functions INIT(NULL);	/* Array pointer functions for objects that need deltamode preupdate calls */
 GLOBAL FUNCTIONADDR *delta_functions INIT(NULL);			/* Array pointer functions for objects that need deltamode interupdate calls */
 GLOBAL FUNCTIONADDR *post_delta_functions INIT(NULL);		/* Array pointer functions for objects that need deltamode postupdate calls */
 GLOBAL int gen_object_count INIT(0);		/* deltamode object count */
@@ -47,6 +48,7 @@ GLOBAL double deltamode_endtime_dbl INIT(TSNVRDBL);		/* Tracking variable to see
 GLOBAL TIMESTAMP deltamode_supersec_endtime INIT(TS_NEVER);	/* Tracking variable to indicate the "floored" time of detamode_endtime */
 
 void schedule_deltamode_start(TIMESTAMP tstart);	/* Anticipated time for a deltamode start, even if it is now */
+void allocate_deltamode_arrays(void);				/* Overall function to allocate deltamode capabilities - rather than having to edit everything */
 
 /*** DO NOT DELETE THE NEXT LINE ***/
 //NEWCLASS

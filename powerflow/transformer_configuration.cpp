@@ -1,4 +1,4 @@
-/** $Id: transformer_configuration.cpp 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id: transformer_configuration.cpp 1182 2008-12-22 22:08:36Z dchassin $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file transformer_configuration.cpp
 	@addtogroup transformer_configuration Transformer Configuration
@@ -102,6 +102,19 @@ transformer_configuration::transformer_configuration(MODULE *mod) : powerflow_li
 			PT_double, "reactance_resistance_ratio", PADDR(RX),PT_DESCRIPTION,"the reactance to resistance ratio (X/R)",
 			PT_double, "installed_insulation_life[h]", PADDR(installed_insulation_life),PT_DESCRIPTION,"the normal lifetime of the transformer insulation at rated load, hours",
 
+			//In-rush/saturation parameters
+			PT_enumeration,"magnetization_location",PADDR(magnetization_location),PT_DESCRIPTION,"winding to place magnetization influence for in-rush calculations",
+				PT_KEYWORD,"NONE",(enumeration)NO_MAG,
+				PT_KEYWORD,"PRIMARY",(enumeration)PRI_MAG,
+				PT_KEYWORD,"SECONDARY",(enumeration)SEC_MAG,
+				PT_KEYWORD,"BOTH",(enumeration)BOTH_MAG,
+			PT_bool, "inrush_saturation_enabled", PADDR(model_inrush_saturation), PT_DESCRIPTION,"flag to include saturation effects during inrush calculations",
+			PT_double, "L_A[pu]", PADDR(LA_pu), PT_DESCRIPTION,"Air core inductance of transformer",
+			PT_double, "phi_K[pu]", PADDR(phiK_pu), PT_DESCRIPTION,"Knee flux value where the air core inductance interstes the flux axis of the saturation curve",
+			PT_double, "phi_M[pu]", PADDR(phiM_pu), PT_DESCRIPTION,"Peak magnetization flux at rated voltage of the saturation curve",
+			PT_double, "I_M[pu]", PADDR(IM_pu), PT_DESCRIPTION,"Peak magnetization current at rated voltage of the saturation curve",
+			PT_double, "T_D", PADDR(TD_val), PT_DESCRIPTION, "Inrush decay time constant for inrush current",
+
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
 }
@@ -126,6 +139,17 @@ int transformer_configuration::create(void)
 	shunt_impedance = complex(999999999,999999999);			//Very large number for infinity to approximate lossless
 	no_load_loss = full_load_loss = 0.0;
 	RX = 4.5;
+
+	magnetization_location = NO_MAG;
+	IM_pu = 0.01;
+	model_inrush_saturation = false;	//Off, by default
+
+	//Default saturation parameters from paper
+	LA_pu = 0.2;
+	phiK_pu = 1.17;
+	phiM_pu = 1.0;
+	TD_val = 0.5;
+
 	return result;
 }
 

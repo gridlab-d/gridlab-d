@@ -46,6 +46,49 @@ typedef struct {
 	double throttle;		//governor actuator output
 } GOV_GAST_VARS;
 
+//GGOV1 state variable structure
+typedef struct {
+	double wref;
+	double Pref;
+	double werror;
+	double x1;
+	double x2;
+	double x2a;
+	double x3;
+	double x3a;
+	double x4;
+	double x4a;
+	double x4b;
+	double x5;
+	double x5a;
+	double x5b;
+	double x6;
+	double x7;
+	double x7a;
+	double x8;
+	double x8a;
+	double x9;
+	double x9a;
+	double x10;
+	double x10a;
+	double x10b;
+	double ValveStroke;
+	double FuelFlow;
+	double GovOutPut;
+	double RselectValue;
+	double fsrn;
+	double fsrtNoLim;
+	double fsrt;
+	double fsra;
+	double err2;
+	double err2a;
+	double err3;
+	double err4;
+	double err7;
+	double LowValSelect1;
+	double LowValSelect;
+} GOV_GGOV1_VARS;
+
 //Machine state variable structure
 typedef struct {
 	double rotor_angle;			//Rotor angle of machine
@@ -62,7 +105,8 @@ typedef struct {
 	double torque_mech;			//Mechanical torque of generator
 	double torque_elec;			//electrical torque of generator
 	GOV_DEGOV1_VARS gov_degov1;	//DEGOV1 Governor state variables
-	GOV_GAST_VARS gov_gast;		//GAST Governor state variables // gastflag
+	GOV_GAST_VARS gov_gast;		//GAST Governor state variables
+	GOV_GGOV1_VARS gov_ggov1;	//GGOV1 governor state variables
 	AVR_VARS avr;				//Automatic Voltage Regulator state variables
 } MAC_STATES;
 
@@ -93,9 +137,13 @@ private:
 	complex YS1_Full;					//Positive sequence admittance - full Ybus value
 	double Rr;							//Rotor resistance term - derived
 	double *torque_delay;				//Buffer of delayed governor torques
+	double *x5a_delayed;					//Buffer of delayed x5a variables (ggov1)
 	unsigned int torque_delay_len;		//Length of the torque delay buffer
 	unsigned int torque_delay_write_pos;//Indexing variable for writing the torque_delay_buffer
 	unsigned int torque_delay_read_pos;	//Indexing variable for reading torque_delay_buffer
+	unsigned int x5a_delayed_len;		//Length of the torque delay buffer
+	unsigned int x5a_delayed_write_pos;//Indexing variable for writing the torque_delay_buffer
+	unsigned int x5a_delayed_read_pos;	//Indexing variable for reading torque_delay_buffer
 	double prev_rotor_speed_val;		//Previous value of rotor speed - used for delta-exiting convergence check
 	complex last_power_output[3];		//Tracking variable for previous power output - used to do super-second frequency adjustments
 	TIMESTAMP prev_time;				//Tracking variable for previous "new time" run
@@ -124,8 +172,13 @@ public:
 	enum {NO_EXC=1, SEXS};
 	enumeration Exciter_type;
 	//gastflag
-	enum {NO_GOV=1, DEGOV1, GAST};
+	enum {NO_GOV=1, DEGOV1=2, GAST=3, GGOV1_OLD=4, GGOV1=5};
 	enumeration Governor_type;
+
+	//Enable/Disable low-value select blocks
+	bool gov_ggv1_fsrt_enable;	//Enables/disables top fsrt of low-value-select (load limiter)
+	bool gov_ggv1_fsra_enable;	//Enables/disables middle fsra of low-value select (acceleration limiter)
+	bool gov_ggv1_fsrn_enable;	//Enables/disables lower fsrn of low-value select (normal PID controller)
 
 	//Diesel engine inputs
 	complex AMx[3][3];			//Impedance matrix for Synchronous Generator
@@ -247,7 +300,6 @@ public:
 	double gov_degov1_TMIN;				//Governor actuator lower limit (p.u.)
 	double gov_degov1_TD;				//Governor combustion delay (s)
 
-	//gastflag
 	//Governor properties (GAST)
 	double gov_gast_R;				//Governor droop constant (p.u.)
 	double gov_gast_T1;				//Governor electric control box time constant (s)
@@ -258,6 +310,43 @@ public:
 	double gov_gast_VMAX;			//Governor actuator upper limit (p.u.)
 	double gov_gast_VMIN;			//Governor actuator lower limit (p.u.)
 //	double gov_gast_TD;				//Governor combustion delay (s)
+
+	//Governor properties (GGOV1)
+	double gov_ggv1_r;				//Permanent droop, p.u.
+	unsigned int gov_ggv1_rselect; 	//Feedback signal for droop, = 1 selected electrical power, = 0 none (isochronous governor), = -1 fuel valve stroke ( true stroke),= -2 governor output ( requested stroke)
+	double gov_ggv1_Tpelec;			//Electrical power transducer time constant, sec. (>0.)
+	double gov_ggv1_maxerr;			//Maximum value for speed error signal
+	double gov_ggv1_minerr;			//Minimum value for speed error signal
+	double gov_ggv1_Kpgov;			//Governor proportional gain
+	double gov_ggv1_Kigov;			//Governor integral gain
+	double gov_ggv1_Kdgov;			//Governor derivative gain
+	double gov_ggv1_Tdgov;			//Governor derivative controller time constant, sec.
+	double gov_ggv1_vmax;			//Maximum valve position limit
+	double gov_ggv1_vmin;			//Minimum valve position limit
+	double gov_ggv1_Tact;			//Actuator time constant
+	double gov_ggv1_Kturb;			//Turbine gain (>0.)
+	double gov_ggv1_wfnl;			//No load fuel flow, p.u
+	double gov_ggv1_Tb;				//Turbine lag time constant, sec. (>0.)
+	double gov_ggv1_Tc;				//Turbine lead time constant, sec.
+	unsigned int gov_ggv1_Flag;		//Switch for fuel source characteristic, = 0 for fuel flow independent of speed, = 1 fuel flow proportional to speed
+	double gov_ggv1_Teng;			//Transport lag time constant for diesel engine
+	double gov_ggv1_Tfload;			//Load Limiter time constant, sec. (>0.)
+	double gov_ggv1_Kpload;			//Load limiter proportional gain for PI controller
+	double gov_ggv1_Kiload;			//Load limiter integral gain for PI controller
+	double gov_ggv1_Ldref;			//Load limiter reference value p.u.
+	double gov_ggv1_Dm;				//Speed sensitivity coefficient, p.u.
+	double gov_ggv1_ropen;			//Maximum valve opening rate, p.u./sec.
+	double gov_ggv1_rclose;			//Minimum valve closing rate, p.u./sec.
+	double gov_ggv1_Kimw;			//Power controller (reset) gain
+	double gov_ggv1_Pmwset;			//Power controller setpoint, MW
+	double gov_ggv1_aset;			//Acceleration limiter setpoint, p.u. / sec.
+	double gov_ggv1_Ka;				//Acceleration limiter Gain
+	double gov_ggv1_Ta;				//Acceleration limiter time constant, sec. (>0.)
+	double gov_ggv1_db;				//Speed governor dead band
+	double gov_ggv1_Tsa;			//Temperature detection lead time constant, sec.
+	double gov_ggv1_Tsb;			//Temperature detection lag time constant, sec.
+	//double gov_ggv1_rup;				//Maximum rate of load limit increase
+	//double gov_ggv1_rdown;			//Maximum rate of load limit decrease
 
 	set phases;	/**< device phases (see PHASE codes) */
 
@@ -280,7 +369,7 @@ public:
 	void convert_Ypn0_to_Yabc(complex Y0, complex Y1, complex Y2, complex *Yabcmat);
 	void convert_pn0_to_abc(complex *Xpn0, complex *Xabc);
 	void convert_abc_to_pn0(complex *Xabc, complex *Xpn0);
-	STATUS apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta);
+	STATUS apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, double deltaT);
 	STATUS init_dynamics(MAC_STATES *curr_time);
 	complex complex_exp(double angle);
 

@@ -6,9 +6,6 @@
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
-#include <iostream>
-
-using namespace std;
 
 #include "fault_check.h"
 
@@ -38,6 +35,7 @@ fault_check::fault_check(MODULE *mod) : powerflow_object(mod)
 			PT_bool,"reliability_mode",PADDR(reliability_mode),PT_DESCRIPTION,"General flag indicating if fault_check is operating under faulting or restoration mode -- reliability set this",
 			PT_bool,"strictly_radial",PADDR(reliability_search_mode),PT_DESCRIPTION,"Flag to indicate if a system is known to be strictly radial -- uses radial assumptions for reliability alterations",
 			PT_bool,"full_output_file",PADDR(full_print_output),PT_DESCRIPTION,"Flag to indicate if the output_filename report contains both supported and unsupported nodes -- if false, just does unsupported",
+			PT_bool,"grid_association",PADDR(grid_association_mode),PT_DESCRIPTION,"Flag to indicate if multiple, distinct grids are allowed in a GLM, or if anything not attached to the master swing is removed",
 			PT_object,"eventgen_object",PADDR(rel_eventgen),PT_DESCRIPTION,"Link to generic eventgen object to handle unexpected faults",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 			if (gl_publish_function(oclass,"reliability_alterations",(FUNCTIONADDR)powerflow_alterations)==NULL)
@@ -70,6 +68,10 @@ int fault_check::create(void)
 	rel_eventgen = NULL;		//No object linked by default
 
 	restoration_fxn = NULL;		//No restoration function mapped by default
+
+	associated_grid = NULL;	//Null the array
+
+	grid_association_mode = false;	//By default, we go to normal "Highlander" grid (there can be only one!)
 
 	return result;
 }
@@ -128,6 +130,21 @@ int fault_check::init(OBJECT *parent)
 	{
 		FPoint = fopen(output_filename,"wt");
 		fclose(FPoint);
+	}
+
+	//See if grid association is on - if so, force teh mesh searching method
+	if (grid_association_mode == true)
+	{
+		if (reliability_search_mode == true)
+		{
+			gl_warning("fault_check:%s was forced into meshed search mode due to multiple grids being desired",obj->name ? obj->name : "Unnamed");
+			/*  TROUBLESHOOT
+			While starting up a fault_check object, the grid_association flag was set.  This flag requires the meshed topology checking routines
+			to be active, so that capability was enabled.  If this is undesired, please deactivate grid_association capability.
+			*/
+
+			reliability_search_mode = false;
+		}
 	}
 
 	//Set powerflow global flag for checking things
@@ -259,8 +276,28 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 		}
 		else	//Mesh, maybe
 		{
-			//Call the connectivity check
-			support_check_mesh(0);
+			//Do the grid association check (if needed)
+			if (grid_association_mode == true)
+			{
+				associate_grids();
+			}
+
+			//Overall check -- catches the first run, but we'll keep it here anyways
+			//Internal check, for random "islands"
+			if (NR_curr_bus != NR_bus_count)
+			{
+				GL_THROW("fault_check: Incomplete initialization detected - this will cause issues");
+				/*  TROUBLESHOOT
+				The fault_check object's topology checking routine tried to run, but detected a system that
+				was not completely initialized.  Look for other output message relating to completely isolated
+				and unconnected nodes.  These must be fixed (and islanded via a switch) before the system can proceed.
+				*/
+			}
+			else	//Populated, onward!
+			{
+				//Call the connectivity check
+				support_check_mesh(0);
+			}
 
 			//If the first run and we just ran, see if anything started "bad"
 			if (prev_time == 0)
@@ -401,49 +438,108 @@ void fault_check::search_links(int node_int)
 void fault_check::search_links_mesh(int node_int)
 {
 	unsigned int index, device_value, node_value;
-	unsigned char temp_phases;
+	unsigned char temp_phases, temp_compare_phases;
 
-	//Loop through our connected nodes
-	for (index=0; index<NR_busdata[node_int].Link_Table_Size; index++)
+	//Check our entry mode -- if grid association mode, do this as a recursion
+	if (grid_association_mode == false)	//Nope, do "normally"
 	{
-		//Pull link index -- just for readabiiity
-		device_value = NR_busdata[node_int].Link_Table[index];
-
-		//Get our opposite end reference
-		if (node_int == NR_branchdata[device_value].from)
+		//Loop through our connected nodes
+		for (index=0; index<NR_busdata[node_int].Link_Table_Size; index++)
 		{
-			//Extract our index
-			node_value = NR_branchdata[device_value].to;
-		}
-		else	//Must be the TO side, so check from
-		{
-			//Extract our index
-			node_value = NR_branchdata[device_value].from;
-		}
+			//Pull link index -- just for readabiiity
+			device_value = NR_busdata[node_int].Link_Table[index];
 
-		//Get initial phasing information - the ones that are available
-		temp_phases = NR_branchdata[device_value].phases;
-
-		//See if either end has any valid phases
-		if ((valid_phases[node_int] != 0x00) || (valid_phases[node_value] != 0x00))
-		{
-			//Are we a switch
-			if ((NR_branchdata[device_value].lnk_type == 2) || (NR_branchdata[device_value].lnk_type == 5) || (NR_branchdata[device_value].lnk_type == 6))
+			//Get our opposite end reference
+			if (node_int == NR_branchdata[device_value].from)
 			{
-				if (*NR_branchdata[device_value].status == 1)
+				//Extract our index
+				node_value = NR_branchdata[device_value].to;
+			}
+			else	//Must be the TO side, so check from
+			{
+				//Extract our index
+				node_value = NR_branchdata[device_value].from;
+			}
+
+			//Get initial phasing information - the ones that are available
+			temp_phases = NR_branchdata[device_value].phases;
+
+			//See if either end has any valid phases
+			if ((valid_phases[node_int] != 0x00) || (valid_phases[node_value] != 0x00))
+			{
+				//Are we a switch
+				if ((NR_branchdata[device_value].lnk_type == 2) || (NR_branchdata[device_value].lnk_type == 5) || (NR_branchdata[device_value].lnk_type == 6))
+				{
+					if (*NR_branchdata[device_value].status == 1)
+					{
+						temp_phases |= NR_branchdata[device_value].origphases & 0x07;
+					}
+				}
+				else
 				{
 					temp_phases |= NR_branchdata[device_value].origphases & 0x07;
 				}
 			}
-			else
-			{
-				temp_phases |= NR_branchdata[device_value].origphases & 0x07;
-			}
-		}
 
-		//Populate the phase information
-		valid_phases[node_value] |= (valid_phases[node_int] & temp_phases);
-	}//End of node link table traversion
+			//Populate the phase information
+			valid_phases[node_value] |= (valid_phases[node_int] & temp_phases);
+		}//End of node link table traversion
+	}//End not grid association mode
+	else	//Grid association mode
+	{
+		//Loop through our connected nodes
+		for (index=0; index<NR_busdata[node_int].Link_Table_Size; index++)
+		{
+			//Pull link index -- just for readabiiity
+			device_value = NR_busdata[node_int].Link_Table[index];
+
+			//Get our opposite end reference
+			if (node_int == NR_branchdata[device_value].from)
+			{
+				//Extract our index
+				node_value = NR_branchdata[device_value].to;
+			}
+			else	//Must be the TO side, so check from
+			{
+				//Extract our index
+				node_value = NR_branchdata[device_value].from;
+			}
+
+			//Get initial phasing information - the ones that are available
+			temp_phases = NR_branchdata[device_value].phases;
+
+			//See if either end has any valid phases
+			if ((valid_phases[node_int] != 0x00) || (valid_phases[node_value] != 0x00))
+			{
+				//Are we a switch
+				if ((NR_branchdata[device_value].lnk_type == 2) || (NR_branchdata[device_value].lnk_type == 5) || (NR_branchdata[device_value].lnk_type == 6))
+				{
+					if (*NR_branchdata[device_value].status == 1)
+					{
+						temp_phases |= NR_branchdata[device_value].origphases & 0x07;
+					}
+				}
+				else
+				{
+					temp_phases |= NR_branchdata[device_value].origphases & 0x07;
+				}
+			}
+
+			//Check our "contributions" against the other end - use this to determine recursion
+			temp_compare_phases = (valid_phases[node_value] | (valid_phases[node_int] & temp_phases));
+
+			//See if it is the same
+			if (valid_phases[node_value] != temp_compare_phases)
+			{
+				//Populate the phase information - store what we just did (no point doing twice)
+				valid_phases[node_value] = temp_compare_phases;
+
+				//Recurse in, do this node now
+				search_links_mesh(node_value);
+			}
+			//Default else -- they match, so don't bother
+		}//End of node link table traversion
+	}//End grid association mode
 }
 
 void fault_check::support_check(int swing_node_int)
@@ -475,17 +571,42 @@ void fault_check::support_check_mesh(int swing_node_int)
 	//Reset the node status list
 	reset_support_check();
 
-	//Swing node has support - if the phase exists (changed for complete faults)
-	valid_phases[swing_node_int] = NR_busdata[swing_node_int].phases & 0x07;
-
-	//Call the node link-erator (node support check) - call it on the swing, the details are handled inside
-	//Supports possibly meshed topology - brute force method
-	for (indexa=0; indexa<NR_bus_count; indexa++)
+	if (grid_association_mode == false)	//Not needing to do grid association, use normal, inefficient method
 	{
-		for (indexb=0; indexb<NR_bus_count; indexb++)
+		//Swing node has support - if the phase exists (changed for complete faults)
+		valid_phases[swing_node_int] = NR_busdata[swing_node_int].phases & 0x07;
+
+		//Call the node link-erator (node support check) - call it on the swing, the details are handled inside
+		//Supports possibly meshed topology - brute force method
+		for (indexa=0; indexa<NR_bus_count; indexa++)
 		{
-			//Call the search link on individual nodes
-			search_links_mesh(indexb);
+			for (indexb=0; indexb<NR_bus_count; indexb++)
+			{
+				//Call the search link on individual nodes
+				search_links_mesh(indexb);
+			}
+		}
+	}
+	else	//Grid association mode, do slightly different
+	{
+		//Traverse the whole bus list, just in case (since may be altered in the future)
+		for (indexa=0; indexa<NR_bus_count; indexa++)
+		{
+			//See if we're a SWING node
+			if ((NR_busdata[indexa].type == 2) || ((NR_busdata[indexa].type == 3) && (NR_busdata[indexa].swing_functions_enabled == true)) || ((*NR_busdata[indexa].busflag & NF_ISSOURCE) == NF_ISSOURCE))	//SWING node, of some form
+			{
+				//Check and see if we've apparently been "sourced" before
+				if ((NR_busdata[indexa].phases & 0x07) != valid_phases[indexa])	//We don't match, so something came to us, but not the other way
+				{
+					//Extract our phases
+					valid_phases[indexa] |= (NR_busdata[indexa].phases & 0x07);
+
+					//Call the support check
+					search_links_mesh(indexa);
+				}
+				//Default else -- we were already handled
+			}
+			//Default else -- not a swing
 		}
 	}
 }
@@ -543,6 +664,7 @@ void fault_check::write_output_file(TIMESTAMP tval, double tval_delta)
 	bool deltamodeflag;
 	char phase_outs;
 	char deltaprint_buffer[64];
+	FILE *FPOutput;
 
 	//Do a deltamode check - fault check is not really privy to what mode we're in -- it doesn't care
 	if (tval == 0)	//Deltamode flag
@@ -554,8 +676,14 @@ void fault_check::write_output_file(TIMESTAMP tval, double tval_delta)
 		deltamodeflag=false;
 	}
 
+	//Perform the grid association again, since things may have adjusted since the last one
+	if ((full_print_output == true) && (grid_association_mode == true))
+	{
+		associate_grids();
+	}
+
 	//open the file
-	FILE *FPOutput = fopen(output_filename,"at");
+	FPOutput = fopen(output_filename,"at");
 
 	for (index=0; index<NR_bus_count; index++)	//Loop through all bus values - find the unsupported section
 	{
@@ -661,7 +789,6 @@ void fault_check::write_output_file(TIMESTAMP tval, double tval_delta)
 
 			if (phase_outs != 0x00)	//Supported
 			{
-
 				//See if the header's been written
 				if (headerwritten == false)
 				{
@@ -686,7 +813,7 @@ void fault_check::write_output_file(TIMESTAMP tval, double tval_delta)
 				}
 				else if (supportheaderwritten == false)	//Tiemstamp written, but not second header
 				{
-					fprintf(FPOutput,"Supported Nodes\n");
+					fprintf(FPOutput,"\nSupported Nodes\n");
 					supportheaderwritten = true;	//Flag intermediate as written too
 				}
 
@@ -694,37 +821,107 @@ void fault_check::write_output_file(TIMESTAMP tval, double tval_delta)
 				switch (phase_outs) {
 					case 0x01:	//Only C
 						{
-							fprintf(FPOutput,"Phase C on node %s\n",NR_busdata[index].name);
+							fprintf(FPOutput,"Phase C on node %s",NR_busdata[index].name);
+							
+							//Print extra information, if needed
+							if (grid_association_mode == true)
+							{
+								fprintf(FPOutput," - Island %d\n",(associated_grid[index]+1));
+							}
+							else
+							{
+								fprintf(FPOutput,"\n");
+							}
 							break;
 						}
 					case 0x02:	//Only B
 						{
-							fprintf(FPOutput,"Phase B on node %s\n",NR_busdata[index].name);
+							fprintf(FPOutput,"Phase B on node %s",NR_busdata[index].name);
+							
+							//Print extra information, if needed
+							if (grid_association_mode == true)
+							{
+								fprintf(FPOutput," - Island %d\n",(associated_grid[index]+1));
+							}
+							else
+							{
+								fprintf(FPOutput,"\n");
+							}
 							break;
 						}
 					case 0x03:	//B and C supported
 						{
-							fprintf(FPOutput,"Phases B and C on node %s\n",NR_busdata[index].name);
+							fprintf(FPOutput,"Phases B and C on node %s",NR_busdata[index].name);
+							
+							//Print extra information, if needed
+							if (grid_association_mode == true)
+							{
+								fprintf(FPOutput," - Island %d\n",(associated_grid[index]+1));
+							}
+							else
+							{
+								fprintf(FPOutput,"\n");
+							}
 							break;
 						}
 					case 0x04:	//Only A
 						{
-							fprintf(FPOutput,"Phase A on node %s\n",NR_busdata[index].name);
+							fprintf(FPOutput,"Phase A on node %s",NR_busdata[index].name);
+							
+							//Print extra information, if needed
+							if (grid_association_mode == true)
+							{
+								fprintf(FPOutput," - Island %d\n",(associated_grid[index]+1));
+							}
+							else
+							{
+								fprintf(FPOutput,"\n");
+							}
 							break;
 						}
 					case 0x05:	//A and C supported
 						{
-							fprintf(FPOutput,"Phases A and C on node %s\n",NR_busdata[index].name);
+							fprintf(FPOutput,"Phases A and C on node %s",NR_busdata[index].name);
+							
+							//Print extra information, if needed
+							if (grid_association_mode == true)
+							{
+								fprintf(FPOutput," - Island %d\n",(associated_grid[index]+1));
+							}
+							else
+							{
+								fprintf(FPOutput,"\n");
+							}
 							break;
 						}
 					case 0x06:	//A and B supported
 						{
-							fprintf(FPOutput,"Phases A and B on node %s\n",NR_busdata[index].name);
+							fprintf(FPOutput,"Phases A and B on node %s",NR_busdata[index].name);
+							
+							//Print extra information, if needed
+							if (grid_association_mode == true)
+							{
+								fprintf(FPOutput," - Island %d\n",(associated_grid[index]+1));
+							}
+							else
+							{
+								fprintf(FPOutput,"\n");
+							}
 							break;
 						}
 					case 0x07:	//All three supported
 						{
-							fprintf(FPOutput,"Phases A, B, and C on node %s\n",NR_busdata[index].name);
+							fprintf(FPOutput,"Phases A, B, and C on node %s",NR_busdata[index].name);
+							
+							//Print extra information, if needed
+							if (grid_association_mode == true)
+							{
+								fprintf(FPOutput," - Island %d\n",(associated_grid[index]+1));
+							}
+							else
+							{
+								fprintf(FPOutput,"\n");
+							}
 							break;
 						}
 					default:	//How'd we get here?
@@ -760,7 +957,7 @@ void fault_check::support_check_alterations(int baselink_int, bool rest_mode)
 	}
 
 	//Check the mode
-	if (reliability_search_mode == true)	//Strickly radial assumption, continue as always
+	if (reliability_search_mode == true)	//Strictly radial assumption, continue as always
 	{
 		//See if the "faulting branch" is the swing node
 		if ((baselink_int == -99) || (baselink_int == -77))	//Swing or initial-type fault
@@ -831,6 +1028,12 @@ void fault_check::support_check_alterations(int baselink_int, bool rest_mode)
 
 		//Reset the alteration matrix
 		reset_alterations_check();
+
+		//Do the grid association check (if needed)
+		if (grid_association_mode == true)
+		{
+			associate_grids();
+		}
 
 		//Call a support check -- reset handled inside
 		//Always assumed to NOT be in "restoration object" mode
@@ -1228,175 +1431,6 @@ void fault_check::special_object_alteration_handle(int branch_idx)
 	}//End "normal" reliability operations
 }
 
-//Functionalized entry to find end of linked-list and add entry in
-void fault_check::altered_device_add(s_obj_supp_check *base_item, int fault_cause, unsigned char phases_alter, unsigned char phases_fault)
-{
-	s_obj_supp_check *temp_check, *temp_check_new;
-
-	//See if we're the first one or not
-	if ((base_item->next == NULL) && (base_item->altering_object == -9999))
-	{
-		//Just add us in -- already allocated, so not needed
-		base_item->altering_object = fault_cause;
-		base_item->phases_altered = phases_alter;
-		base_item->fault_phases = phases_fault;
-	}
-	else	//Find the end!
-	{
-		//Copy pointer
-		temp_check = base_item;
-
-		//Progress
-		while (temp_check->next != NULL)
-		{
-			temp_check = temp_check->next;
-		}
-
-		//Found the null, create a new one
-		temp_check_new = (s_obj_supp_check*)gl_malloc(sizeof(s_obj_supp_check));
-
-		//Make sure it worked
-		if (temp_check_new == NULL)
-		{
-			GL_THROW("Failed to allocate storage location for new faulting location");
-			/*  TROUBLESHOOT
-			While attempting to allocate a new entry of the faulting device list, an error
-			was encountered.  Please try again.  If the error persists, please post your model
-			and any relevant details to the trac system.
-			*/
-		}
-
-		//Store the details
-		temp_check_new->altering_object = fault_cause;
-		temp_check_new->phases_altered = phases_alter;
-		temp_check_new->fault_phases = phases_fault;
-		temp_check_new->next = NULL;
-
-		//Link us in
-		temp_check->next = temp_check_new;
-	}
-}
-
-//Functionalized entry to see if a particular fault record is part of this entry
-//If appropriately flagged, will remove it too
-//Special flags in for "started broken" (-77) checks
-bool fault_check::altered_device_search(s_obj_supp_check *base_item, int fault_case, unsigned char phases_fault, unsigned char *phases_alter, bool remove_mode)
-{
-	bool ignore_phases;
-	s_obj_supp_check *temp_check_prev, *temp_check_next;
-
-	if (phases_fault == 0xFF)
-	{
-		ignore_phases = true;		//Special mode - extract what the "fault" was
-	}
-	else
-	{
-		ignore_phases = false;	//Normal mode, just check us
-	}
-
-	//See if there's more than one entry
-	if (base_item->next == NULL)	//Single entry, so it better be us
-	{
-		if (((base_item->altering_object == fault_case) || (base_item->altering_object == -77)) && ((base_item->fault_phases == phases_fault) || ignore_phases))	//Match!
-		{
-			//Export our alteration
-			*phases_alter = base_item->phases_altered;
-
-			if (remove_mode == true)	//Clean us up
-			{
-				//Deflag everything
-				base_item->altering_object = -9999;
-				base_item->phases_altered = 0;
-				base_item->fault_phases = 0x00;
-
-			}
-			//Default else -- don't do anything
-
-			//Success!
-			return true;
-		}
-		else	//No match, indicate as much
-		{
-			return false;
-		}
-	}//End only the base entry
-	else	//More than one -- transition the list
-	{
-		//See if we're the first one
-		if (((base_item->altering_object == fault_case) || (base_item->altering_object == -77)) && ((base_item->fault_phases == phases_fault) || ignore_phases))	//We are
-		{
-			//Export values
-			*phases_alter = base_item->phases_altered;
-
-			//Check for alteration modes
-			if (remove_mode == true)	//Clean us out
-			{
-				//Get our next object
-				temp_check_next = base_item->next;
-
-				//Copy our values
-				base_item->altering_object = temp_check_next->altering_object;
-				base_item->phases_altered = temp_check_next->phases_altered;
-				base_item->fault_phases = temp_check_next->fault_phases;
-				base_item->next = temp_check_next->next;
-
-				//Now free up the next item
-				gl_free(temp_check_next);
-			}
-			//Defaulted else -- nothing to do 
-
-			//Return that it was found
-			return true;
-		}//End first entry matches
-		else	//Nope, proceed in
-		{
-			//Copy us
-			temp_check_prev = base_item;
-
-			//Progress inward
-			while (temp_check_prev->next != NULL)
-			{
-				//Extract us
-				temp_check_next = temp_check_prev->next;
-
-				//Check us
-				if (((temp_check_next->altering_object == fault_case) || (temp_check_next->altering_object == -77)) && ((temp_check_next->fault_phases == phases_fault) || ignore_phases))	//Found it
-				{
-					//Export items
-					*phases_alter = temp_check_next->phases_altered;
-
-					//See if we're removing it or not
-					if (remove_mode == true)	//Remove is
-					{
-						//Update our referrer to the next update
-						temp_check_prev->next = temp_check_next->next;
-
-						//Remove us
-						gl_free(temp_check_next);
-					}
-					//default else, don't do anything
-
-					//Indicate it was found
-					return true;
-				}
-				else	//Not found, next
-				{
-					temp_check_prev = temp_check_next;
-				}
-			}
-
-			//If we made it this far out, we completely progressed and didn't find it, return false
-			return false;
-		}//End not first entry traversion
-
-		//Blocking -- should never get here, but if we did, we failed
-		return false;
-	}//End more than one object
-
-	//If we made it this far, we failed -- not found in here -- should never get here
-	return false;
-}
-
 //Recursive function to traverse powerflow and alter phases as necessary
 //Based on search_links code from above
 void fault_check::support_search_links(int node_int, int node_start, bool impact_mode)
@@ -1762,7 +1796,6 @@ void fault_check::allocate_alterations_values(bool reliability_mode_bool)
 	}//End allocations actually needed
 }
 
-
 //Function to progress downwards and flag momentary interruptions
 void fault_check::momentary_activation(int node_int)
 {
@@ -1840,6 +1873,169 @@ bool fault_check::output_check_supported_mesh(void)
 	return false;
 }
 
+//Multiple grid checking items - allocate/reset array
+void fault_check::reset_associated_grid(void)
+{
+	unsigned int indexval;
+
+	//Check to see if we're allocated first
+	if (associated_grid == NULL)
+	{
+		//Allocate it - one for each bus
+		associated_grid = (int *)gl_malloc(NR_bus_count*sizeof(int));
+
+		//Check to see if it worked
+		if (associated_grid == NULL)
+		{
+			GL_THROW("fault_check: failed to allocate array for tracking individual grids");
+			/*  TROUBLESHOOT
+			While attempting to allocate an array used to track which nodes are associated with which grid,
+			an error occurred.  Please try again.  If the error persists, please submit your code and a bug
+			report via the ticketing system.
+			*/
+		}
+	}
+
+	//Zero it
+	for (indexval=0; indexval<NR_bus_count; indexval++)
+	{
+		associated_grid[indexval] = -1;	//Starts as "not associated"
+	}
+}
+
+//Multiple grid checking items - search for SWING nodes as the search entry points, then populate
+void fault_check::associate_grids(void)
+{
+	unsigned int indexval;
+	int grid_counter;
+
+	//Call the reset/allocation routine
+	reset_associated_grid();
+
+	//Set the counter
+	grid_counter = 0;
+
+	//Parse the busdata list to find these - enter as we go
+	//Do a full traverse, since this may swap to "just has a source" later
+	for (indexval=0; indexval<NR_bus_count; indexval++)
+	{
+		//See if we're a SWING node
+		if (NR_busdata[indexval].type == 2)	//SWING bus
+		{
+			//See if we're already flagged
+			if (associated_grid[indexval] == -1)	//We're still unparsed
+			{
+				//Call the associater routine
+				search_associated_grids(indexval,grid_counter);
+
+				//Increment the counter, when we're done
+				grid_counter++;
+			}
+			//Default else, we've already been hit, skip out
+		}
+		//Default else, keep going to look for one
+	}
+
+	//Second loop - SWING_PQ check
+	//********* TODO: Better/more efficient way to do this!?!? **********/
+	for (indexval=0; indexval<NR_bus_count; indexval++)
+	{
+		//See if we're a SWING_PQ node
+		if (NR_busdata[indexval].type == 3)	//SWING_PQ bus
+		{
+			//See if we're already flagged
+			if (associated_grid[indexval] == -1)	//We're still unparsed
+			{
+				//Flag us as a swing - to be safe
+				NR_busdata[indexval].swing_functions_enabled = true;
+
+				//Call the associater routine
+				search_associated_grids(indexval,grid_counter);
+
+				//Increment the counter, when we're done
+				grid_counter++;
+			}
+			else	//Deflag us as a swing
+			{
+				NR_busdata[indexval].swing_functions_enabled = false;
+			}
+			//Default else, we've already been hit, skip out
+		}
+		//Default else, keep going to look for one
+	}
+
+	//Third loop -- look for NF_ISSOURCE flags - anything attached to this, should be active
+	for (indexval=0; indexval<NR_bus_count; indexval++)
+	{
+		//See if we're a source-flagged node
+		if ((*NR_busdata[indexval].busflag & NF_ISSOURCE) == NF_ISSOURCE)	//Source flagged
+		{
+			//See if we're already flagged
+			if (associated_grid[indexval] == -1)	//We're still unparsed
+			{
+				//Call the associater routine
+				search_associated_grids(indexval,grid_counter);
+
+				//Increment the counter, when we're done
+				grid_counter++;
+			}
+			//Default else, we've already been hit, skip out
+		}
+		//Default else, keep going to look for one
+	}
+
+	//Another loop for just "NF_ISSOURCE" flags??
+}
+
+//Multiple grid checking items - the actual crawler
+//This is recursively called
+void fault_check::search_associated_grids(unsigned int node_int, int grid_counter)
+{
+	unsigned int index;
+	int node_ref;
+
+	//Loop through the connection table for this node
+	for (index=0; index<NR_busdata[node_int].Link_Table_Size; index++)
+	{
+		//See which end of the link we are
+		if (NR_branchdata[NR_busdata[node_int].Link_Table[index]].from == node_int)	//From end
+		{
+			//Set the node-ref - must be other end
+			node_ref = NR_branchdata[NR_busdata[node_int].Link_Table[index]].to;
+		}
+		else	//Must be the to-end
+		{
+			//Set the node-ref, it must be us
+			node_ref = NR_branchdata[NR_busdata[node_int].Link_Table[index]].from;
+		}
+
+		//We're theoretically coming from a "powered node", so see if it has any phase alignment to proceed
+		//Only do "in service" items, so go on current phases, not original phases
+		if (((NR_busdata[node_int].phases & 0x07) & (NR_branchdata[NR_busdata[node_int].Link_Table[index]].phases & 0x07)) != 0x00)
+		{
+			//See if the other side has been handled
+			if (associated_grid[node_ref] == -1)
+			{
+				//Set the appropriate side
+				associated_grid[node_ref] = grid_counter;
+
+				//Recurse in
+				search_associated_grids(node_ref,grid_counter);
+			}
+			else if (associated_grid[node_ref] != grid_counter)
+			{
+				GL_THROW("fault_check: duplicate grid assignment on node %s!",NR_busdata[node_ref].name);
+				/*  TROUBLESHOOT
+				While mapping the associated grid/swing node for a system, a condition was encountered where
+				a node tried to belong to two different systems.  This should not have occurred.  Please submit
+				your code and a bug report via the ticketing system.
+				*/
+			}
+			//Default else -- already handled as this grid
+		}
+		//Default else, not a match, so next
+	}
+}
 
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE: fault_check
@@ -2018,7 +2214,7 @@ EXPORT double handle_sectionalizer(OBJECT *thisobj, int sectionalizer_number)
 					node_val = NR_branchdata[branch_val].from;
 
 					//Make sure the from node isn't a SWING - if it is, we're done
-					if (NR_busdata[node_val].type == 2)
+					if ((NR_busdata[node_val].type == 2) || ((NR_busdata[node_val].type == 3) && (NR_busdata[node_val].swing_functions_enabled == true)))
 					{
 						result_val = -1.0;		//Flag that a swing was found - failure :(
 						loop_complete = true;	//No more looping

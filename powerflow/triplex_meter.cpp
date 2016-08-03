@@ -492,7 +492,7 @@ SIMULATIONMODE triplex_meter::inter_deltaupdate_triplex_meter(unsigned int64 del
 		BOTH_triplex_node_presync_fxn();
 
 		//Call node presync-equivalent items
-		NR_node_presync_fxn();
+		NR_node_presync_fxn(0);
 
 		//Triplex-meter specific sync items
 			//Reliability check
