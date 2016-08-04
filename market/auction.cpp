@@ -172,7 +172,7 @@ auction::auction(MODULE *module)
 			PT_double, "past_market.cap_ref_unrep", PADDR(past_frame.cap_ref_unrep),
 
 			PT_enumeration, "margin_mode", PADDR(margin_mode),
-				PT_KEYWORD, "NORMAL", 0,
+				PT_KEYWORD, "NORMAL", (enumeration)AM_NONE,
 				PT_KEYWORD, "DENY", (enumeration)AM_DENY,
 				PT_KEYWORD, "PROB", (enumeration)AM_PROB,
 			PT_int32, "warmup", PADDR(warmup),
