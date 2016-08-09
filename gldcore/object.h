@@ -153,7 +153,6 @@ typedef struct s_callbacks {
 		void (*clear)(struct s_findlist*);
 	} find;
 	PROPERTY *(*find_property)(CLASS *, PROPERTYNAME);
-	/* void *(*malloc)(unsigned int); */
 	void *(*malloc)(size_t);
 	void (*free)(void*);
 	struct {

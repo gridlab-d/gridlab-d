@@ -282,7 +282,7 @@ static int debug(int argc, char *argv[])
 static int debugger(int argc, char *argv[])
 {
 	global_debug_mode = 1;
-	global_debug_output = !global_debug_output;
+	global_debug_output = 1;
 	return 0;
 }
 static int dumpall(int argc, char *argv[])

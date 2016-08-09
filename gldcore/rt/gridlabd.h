@@ -1009,6 +1009,85 @@ typedef struct s_property_specs { /**<	the property type conversion specificatio
 	// @todo for greater generality this should be implemented as a linked list
 } PROPERTYSPEC;
 
+/* data structure to bind a variable with a property definition */
+typedef struct s_variable {
+	void *addr;
+	PROPERTY *prop;
+} GLDVAR;
+
+/* prototype of external transform function */
+typedef int (*TRANSFORMFUNCTION)(int,GLDVAR*,int,GLDVAR*);
+
+/* list of supported transform sources */
+typedef enum {
+	XS_UNKNOWN	= 0x00,
+	XS_DOUBLE	= 0x01,
+	XS_COMPLEX	= 0x02,
+	XS_LOADSHAPE= 0x04,
+	XS_ENDUSE	= 0x08,
+	XS_SCHEDULE = 0x10,
+	XS_ALL		= 0x1f,
+} TRANSFORMSOURCE;
+
+/* list of supported transform function types */
+typedef enum {
+	XT_LINEAR	= 0x00,
+	XT_EXTERNAL = 0x01,
+//	XT_DIFF		= 0x02, ///< transform is a finite difference
+//	XT_SUM		= 0x03, ///< transform is a discrete sum
+	XT_FILTER	= 0x04, ///< transform is a discrete-time filter
+} TRANSFORMFUNCTIONTYPE;
+
+/****************************************************************
+ * Transfer function implementation
+ ****************************************************************/
+
+typedef struct s_transferfunction {
+	char name[64];		///< transfer function name
+	char domain[4];		///< domain variable name
+	double timestep;	///< timestep (seconds)
+	double timeskew;	///< timeskew (seconds)
+	unsigned int n;		///< denominator order
+	double *a;			///< denominator coefficients
+	unsigned int m;		///< numerator order
+	double *b;			///< numerator coefficients
+	struct s_transferfunction *next;
+} TRANSFERFUNCTION;
+
+/* transform data structure */
+typedef struct s_transform {
+	double *source;	///< source vector of the function input
+	TRANSFORMSOURCE source_type; ///< data type of source
+	struct s_object_list *target_obj; ///< object of the target
+	struct s_property_map *target_prop; ///< property of the target
+	TRANSFORMFUNCTIONTYPE function_type; ///< function type (linear, external, etc.)
+	union {
+		struct { // used only by linear transforms
+			void *source_addr; ///< pointer to the source
+			SCHEDULE *source_schedule; ///< schedule associated with the source
+			double *target; ///< target of the function output
+			double scale; ///< scalar (linear transform only)
+			double bias; ///< constant (linear transform only)
+		};
+		struct { // used only by external transforms
+			TRANSFORMFUNCTION function; /// function pointer
+			int retval; /// last return value
+			int nlhs; /// number of lhs values
+			GLDVAR *plhs; /// vector of lhs value pointers
+			int nrhs; /// number of rhs values
+			GLDVAR *prhs; /// vector of rhs value pointers
+		};
+		struct { // used only by filter transforms
+			TRANSFERFUNCTION *tf; ///< transfer function
+			double *u; ///< u vector
+			double *y; ///< y vector
+			double *x; ///< x vector
+			TIMESTAMP t2; ///< next sample time
+		};
+	};
+	struct s_transform *next; ///* next item in linked list
+} TRANSFORM;
+
 typedef struct s_callbacks {
 	TIMESTAMP *global_clock;
 	double *global_delta_curr_clock;
@@ -1029,6 +1108,7 @@ typedef struct s_callbacks {
 	int (*loadmethod)(CLASS*,char*,int (*call)(OBJECT*,char*));
 	CLASS *(*class_getfirst)(void);
 	CLASS *(*class_getname)(char*);
+	PROPERTY *(*class_add_extended_property)(CLASS *,char *,PROPERTYTYPE,char *);
 	struct {
 		FUNCTION *(*define)(CLASS*,FUNCTIONNAME,FUNCTIONADDR);
 		FUNCTIONADDR (*get)(char*,char*);
@@ -1053,6 +1133,7 @@ typedef struct s_callbacks {
 		int (*set_value_by_type)(PROPERTYTYPE,void *data,char *);
 		bool (*compare_basic)(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void* x, void* a, void* b, char *part);
 		PROPERTYCOMPAREOP (*get_compare_op)(PROPERTYTYPE ptype, char *opstr);
+		double (*get_part)(OBJECT*,PROPERTY*,char*);
 		PROPERTYSPEC *(*get_spec)(PROPERTYTYPE ptype);
 	} properties;
 	struct {
@@ -1074,6 +1155,7 @@ typedef struct s_callbacks {
 		void *(*getvar)(MODULE *module, char *varname);
 		MODULE *(*getfirst)(void);
 		int (*depends)(char *name, unsigned char major, unsigned char minor, unsigned short build);
+		const char *(*find_transform_function)(TRANSFORMFUNCTION function);
 	} module;
 	struct {
 		double (*uniform)(unsigned int *rng, double a, double b);
@@ -1160,6 +1242,7 @@ typedef struct s_callbacks {
 	} convert;
 	MODULE *(*module_find)(char *name);
 	OBJECT *(*get_object)(char *name);
+	OBJECT *(*object_find_by_id)(OBJECTNUM);
 	int (*name_object)(OBJECT *obj, char *buffer, int len);
 	int (*get_oflags)(KEYWORD **extflags);
 	unsigned int (*object_count)(void);
@@ -1169,6 +1252,7 @@ typedef struct s_callbacks {
 		double (*value)(SCHEDULE *sch, SCHEDULEINDEX index);
 		int32 (*dtnext)(SCHEDULE *sch, SCHEDULEINDEX index);
 		SCHEDULE *(*find)(char *name);
+		SCHEDULE *(*getfirst)(void);
 	} schedule;
 	struct {
 		int (*create)(loadshape *s);
@@ -1214,6 +1298,24 @@ typedef struct s_callbacks {
 		void (*read)(char *url, int maxlen);
 		void (*free)(void *result);
 	} http;
+	struct {
+		TRANSFORM *(*getnext)(TRANSFORM*);
+		int (*add_linear)(TRANSFORMSOURCE,double*,void*,double,double,OBJECT*,PROPERTY*,SCHEDULE*);
+		int (*add_external)(OBJECT*,PROPERTY*,const char*,OBJECT*,PROPERTY*);
+		int64 (*apply)(TIMESTAMP,TRANSFORM*,double*);
+	} transform;
+	struct {
+		randomvar *(*getnext)(randomvar*);
+		size_t (*getspec)(char *, size_t, const randomvar *);
+	} randomvar;
+	struct {
+		unsigned int (*major)(void);
+		unsigned int (*minor)(void);
+		unsigned int (*patch)(void);
+		unsigned int (*build)(void);
+		const char * (*branch)(void);
+	} version;
+	long unsigned int magic; /* used to check structure alignment */
 } CALLBACKS; /**< core callback function table */
 
 extern CALLBACKS *callback;

@@ -490,29 +490,27 @@ static char *setup_class(CLASS *oclass)
 	static char buffer[65536] = "";
 	int len = 0;
 	/* no longer needed now that property extension works */
-#ifdef NEVER
 	PROPERTY *prop;
 	len += sprintf(buffer+len,"\tOBJECT obj; obj.oclass = oclass; %s *t = (%s*)((&obj)+1);\n",oclass->name,oclass->name);
-	//len += sprintf(buffer+len,"\tif (callback->define_map(oclass,\n");
 	len += sprintf(buffer+len,"\toclass->size = sizeof(%s);\n", oclass->name);
+//	len += sprintf(buffer+len,"\tif (callback->define_map(oclass,\n");
 	for (prop=oclass->pmap; prop!=NULL; prop=prop->next)
 	{
 		len += sprintf(buffer+len,"\t(*(callback->properties.get_property))(&obj,\"%s\",NULL)->addr = (PROPERTYADDR)((char*)&(t->%s) - (char*)t);\n",prop->name,prop->name);
-		if (prop->unit==NULL)
-			len += sprintf(buffer+len,"\t\tPT_%s,\"%s\",(char*)&(t->%s)-(char*)t,\n",
-				class_get_property_typename(prop->ptype),prop->name,prop->name);
-		else
-			len += sprintf(buffer+len,"\t\tPT_%s,\"%s[%s]\",(char*)&(t->%s)-char(*)t,\n",
-				class_get_property_typename(prop->ptype),prop->name,prop->unit->name,prop->name);
-		if (prop->keywords)
-		{
-			KEYWORD *key;
-			for (key=prop->keywords; key!=NULL; key=key->next)
-				len += sprintf(buffer+len, "\t\t\tPT_KEYWORD, \"%s\", %d,\n", key->name, key->value);
-		}
+//		if (prop->unit==NULL)
+//			len += sprintf(buffer+len,"\t\tPT_%s,\"%s\",(char*)&(t->%s)-(char*)t,\n",
+//				class_get_property_typename(prop->ptype),prop->name,prop->name);
+//		else
+//			len += sprintf(buffer+len,"\t\tPT_%s,\"%s[%s]\",(char*)&(t->%s)-char(*)t,\n",
+//				class_get_property_typename(prop->ptype),prop->name,prop->unit->name,prop->name);
+//		if (prop->keywords)
+//		{
+//			KEYWORD *key;
+//			for (key=prop->keywords; key!=NULL; key=key->next)
+//				len += sprintf(buffer+len, "\t\t\tPT_KEYWORD, \"%s\", %d,\n", key->name, key->value);
+//		}
 	}
-#endif
-	//len += sprintf(buffer+len,"\t\tNULL)<1) throw(\"unable to publish properties in class %s\");\n", oclass->name);
+//	len += sprintf(buffer+len,"\t\tNULL)<1) throw(\"unable to publish properties in class %s\");\n", oclass->name);
 	len += sprintf(buffer+len,"\t/* begin init block */\n%s\n\t/* end init block */\n",init_block);
 	return buffer;
 }
@@ -799,7 +797,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 					errno = EINVAL;
 					return FAILED;
 				}
-				if ( !(global_gdb||global_gdb_window) && getenv("GRIDLABD_DEBUG")==NULL )
+				if ( !global_debug_output )
 					unlink(cfile);
 
 
@@ -824,7 +822,8 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 					exec("%s '%s'", tbuf, afile);
 				}
 
-				unlink(ofile);
+				if ( !global_debug_output )
+					unlink(ofile);
 			}
 			else
 			{
@@ -885,7 +884,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 		oclass->module = mod;
 
 		/* start debugger if requested */
-		if (global_gdb || global_gdb_window)
+		if ( global_gdb || global_gdb_window )
 		{
 			if (global_debug_mode)
 				output_debug("using gdb requires GLD debugger be disabled");
