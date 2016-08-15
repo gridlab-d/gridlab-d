@@ -316,7 +316,7 @@ unsigned int class_get_count(void)
 char *class_get_property_typename(PROPERTYTYPE type) /**< the property type */
 {
 	if (type<=_PT_FIRST || type>=_PT_LAST)
-		return "##UNDEF##";
+		return "//UNDEF//";
 	else
 		return property_type[type].name;
 }
@@ -327,7 +327,7 @@ char *class_get_property_typename(PROPERTYTYPE type) /**< the property type */
 char *class_get_property_typexsdname(PROPERTYTYPE type) /**< the property type */
 {
 	if (type<=_PT_FIRST || type>=_PT_LAST)
-		return "##UNDEF##";
+		return "//UNDEF//";
 	else
 		return property_type[type].xsdname;
 }
@@ -866,7 +866,7 @@ int class_define_map(CLASS *oclass, /**< the object class */
 				char tcode[32];
 				char *ptypestr=class_get_property_typename(proptype);
 				sprintf(tcode,"%d",proptype);
-				if (strcmp(ptypestr,"##UNDEF##")==0)
+				if (strcmp(ptypestr,"//UNDEF//")==0)
 					ptypestr = tcode;
 				errno = EINVAL;
 				output_error("class_define_map(oclass='%s',...): unrecognized extended property (PROPERTYTYPE=%s)", oclass->name, ptypestr?ptypestr:tcode);
@@ -1080,8 +1080,8 @@ FUNCTIONADDR class_get_function(char *classname, char *functionname)
 int class_saveall(FILE *fp) /**< a pointer to the stream FILE structure */
 {
 	unsigned count=0;
-	count += fprintf(fp,"\n########################################################\n");
-	count += fprintf(fp,"# classes\n");
+	count += fprintf(fp,"\n////////////////////////////////////////////////////////\n");
+	count += fprintf(fp,"// classes\n");
 	{	CLASS	*oclass;
 		for (oclass=class_get_first_class(); oclass!=NULL; oclass=oclass->next)
 		{
@@ -1089,14 +1089,19 @@ int class_saveall(FILE *fp) /**< a pointer to the stream FILE structure */
 			FUNCTION *func;
 			count += fprintf(fp,"class %s {\n",oclass->name);
 			if (oclass->parent)
-				count += fprintf(fp,"\tparent %s;\n", oclass->parent->name);
+				count += fprintf(fp,"#ifdef INCLUDE_PARENT_CLASS\n\tparent %s;\n#endif\n", oclass->parent->name);
 			for (func=oclass->fmap; func!=NULL && func->oclass==oclass; func=func->next)
-				count += fprintf(fp, "\tfunction %s();\n", func->name);
+				count += fprintf(fp, "#ifdef INCLUDE_FUNCTIONS\n\tfunction %s();\n#endif\n", func->name);
 			for (prop=oclass->pmap; prop!=NULL && prop->oclass==oclass; prop=prop->next)
 			{
-				char *propname = class_get_property_typename(prop->ptype);
-				if (propname!=NULL)
-					count += fprintf(fp,"\t%s %s;\n", propname, prop->name);
+				char *ptype = class_get_property_typename(prop->ptype);
+				if ( ptype != NULL )
+				{
+					if ( strchr(prop->name,'.') == NULL )
+						count += fprintf(fp,"\t%s %s;\n", ptype, prop->name);
+					else
+						count += fprintf(fp,"#ifdef INCLUDE_DOTTED_PROPERTIES\t%s %s;\n#endif\n", ptype, prop->name);
+				}
 			}
 			count += fprintf(fp,"}\n");
 		}

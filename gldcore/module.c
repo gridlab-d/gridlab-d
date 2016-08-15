@@ -734,9 +734,10 @@ int module_saveall(FILE *fp)
 	MODULE *mod;
 	int count=0;
 	CLASS *oclass = NULL;
-	char32 varname;
-	count += fprintf(fp,"\n########################################################\n");
-	count += fprintf(fp,"# modules\n");
+	char varname[1024];
+	char buffer[1024];
+	count += fprintf(fp,"\n////////////////////////////////////////////////////////\n");
+	count += fprintf(fp,"// modules\n");
 	for (mod=first_module; mod!=NULL; mod=mod->next)
 	{
 		varname[0] = '\0';
@@ -751,11 +752,9 @@ int module_saveall(FILE *fp)
 				count += fprintf(fp,"\tclass %s;\n",oclass->name);
 		}
 
-		while (module_getvar(mod,varname,NULL,0))
+		while (module_getvar(mod,varname,buffer,sizeof(buffer)))
 		{
-			char32 value;
-			if (module_getvar(mod,varname,value,sizeof(value)))
-				count += fprintf(fp,"\t%s %s;\n",varname,value);
+			count += fprintf(fp,"\t%s %s;\n",varname,buffer);
 		}
 		count += fprintf(fp,"}\n");
 	}

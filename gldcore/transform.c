@@ -461,3 +461,19 @@ TIMESTAMP transform_syncall(TIMESTAMP t1, TRANSFORMSOURCE source)
 	transform_synctime += (clock_t)exec_clock() - start;
 	return t2;
 }
+
+int transform_saveall(FILE *fp)
+{
+	int count = 0;
+	TRANSFORM *xform;
+	for (xform=schedule_xformlist; xform!=NULL; xform=xform->next)
+	{
+		// TODO write conversion from transform/filter to string definition
+		OBJECT *obj = xform->target_obj;
+		PROPERTY *prop = xform->target_prop;
+		char name[1024];
+		object_name(obj,name,sizeof(name));
+		count += fprintf(fp,"#warning transform to %s.%s was not saved\n", name, prop->name);
+	}
+	return count;
+}

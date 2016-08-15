@@ -1413,3 +1413,11 @@ void schedule_dump(SCHEDULE *sch, char *file, char *mode)
 	fclose(fp);
 }
 
+int schedule_saveall(FILE *fp)
+{
+	int count = fprintf(fp,"%s\n","// schedules");
+	SCHEDULE *sch;
+	for (sch=schedule_list; sch!=NULL; sch=sch->next)
+		count += fprintf(fp,"schedule %s {\n%s\n}\n", sch->name, sch->definition);
+	return count;
+}

@@ -345,7 +345,7 @@ OBJECT *object_create_single(CLASS *oclass){ /**< the class of the object */
 	obj->rng_state = randwarn(NULL);
 	obj->heartbeat = 0;
 
-	for (prop=obj->oclass->pmap; prop!=NULL; prop=(prop->next?prop->next:(prop->oclass->parent?prop->oclass->parent->pmap:NULL)))
+	for ( prop=obj->oclass->pmap; prop!=NULL; prop=(prop->next?prop->next:(prop->oclass->parent?prop->oclass->parent->pmap:NULL)))
 		property_create(prop,(void*)((char *)(obj+1)+(int64)(prop->addr)));
 	
 	if(first_object == NULL){
@@ -1793,42 +1793,68 @@ int object_saveall(FILE *fp) /**< the stream to write to */
 	unsigned count = 0;
 	char buffer[1024];
 
-	count += fprintf(fp, "\n########################################################\n");
-	count += fprintf(fp, "# objects\n");
+	count += fprintf(fp, "\n////////////////////////////////////////////////////////\n");
+	count += fprintf(fp, "// objects\n");
 	{
 		OBJECT *obj;
-		for (obj = first_object; obj != NULL; obj = obj->next){
+		for (obj = first_object; obj != NULL; obj = obj->next)
+		{
+			PROPERTYACCESS access=PA_PUBLIC;
 			PROPERTY *prop = NULL;
 			char32 oname = "(unidentified)";
-			count += fprintf(fp, "object %s:%d {\n", obj->oclass->name, obj->id);
+			if ( obj->oclass->name )
+				count += fprintf(fp, "object %s:%d {\n", obj->oclass->name, obj->id);
 
 			/* dump internal properties */
-			if(obj->parent != NULL){
-				convert_from_object(oname, sizeof(oname), &obj->parent, NULL);
-				count += fprintf(fp, "\tparent %s;\n", oname);
-			} else {
-				count += fprintf(fp,"\troot;\n");
+			if ( obj->parent != NULL )
+			{
+				if ( obj->parent->name != NULL )
+					count += fprintf(fp, "\tparent %s;\n", obj->parent->name);
+				else
+					count += fprintf(fp, "\tparent %s:%d;\n", obj->parent->oclass->name, obj->parent->id);
+			}
+			else
+			{
+				count += fprintf(fp,"#ifdef INCLUDE_ROOT\n\troot;\n#endif\n");
 			}
 			count += fprintf(fp, "\trank %d;\n", obj->rank);
-			if(obj->name != NULL){
+			if ( obj->name != NULL )
 				count += fprintf(fp, "\tname %s;\n", obj->name);
-			}
-			count += fprintf(fp,"\tclock %s;\n", convert_from_timestamp(obj->clock, buffer, sizeof(buffer)) > 0 ? buffer : "(invalid)");
-			if(!isnan(obj->latitude)){
+			if ( convert_from_timestamp(obj->clock, buffer, sizeof(buffer)) )
+				count += fprintf(fp,"\tclock %s;\n",  buffer);
+			if ( !isnan(obj->latitude) )
 				count += fprintf(fp, "\tlatitude %s;\n", convert_from_latitude(obj->latitude, buffer, sizeof(buffer)) ? buffer : "(invalid)");
-			}
-			if(!isnan(obj->longitude)){
+			if ( !isnan(obj->longitude) )
 				count += fprintf(fp, "\tlongitude %s;\n", convert_from_longitude(obj->longitude, buffer, sizeof(buffer)) ? buffer : "(invalid)");
-			}
-			count += fprintf(fp, "\tflags %s;\n", convert_from_set(buffer, sizeof(buffer), &(obj->flags), object_flag_property()) ? buffer : "(invalid)");
+			if ( convert_from_set(buffer, sizeof(buffer), &(obj->flags), object_flag_property()) > 0 )
+				count += fprintf(fp, "\tflags %s;\n",  buffer);
+			else
+				count += fprintf(fp, "\tflags %lld;\n", obj->flags);
 
 			/* dump properties */
-			for(prop = obj->oclass->pmap; prop != NULL && prop->oclass == obj->oclass; prop = prop->next){
-				char *value = object_property_to_string(obj, prop->name, buffer, 1023);
-				if(value != NULL){
-					count += fprintf(fp, "\t%s %s;\n", prop->name, value);
+			for ( prop=obj->oclass->pmap; prop!=NULL; prop=(prop->next?prop->next:(prop->oclass->parent?prop->oclass->parent->pmap:NULL)) )
+			{
+				if ( object_property_to_string(obj, prop->name, buffer, sizeof(buffer)) != NULL )
+				{
+					if ( prop->access != access )
+					{
+						if ( access != PA_PUBLIC )
+							count += fprintf(fp, "#endif\n");
+						if ( prop->access == PA_REFERENCE)
+							count += fprintf(fp, "#ifdef INCLUDE_REFERENCE\n");
+						else if ( prop->access == PA_PROTECTED )
+							count += fprintf(fp, "#ifdef INCLUDE_PROTECTED\n");
+						else if ( prop->access == PA_PRIVATE )
+							count += fprintf(fp, "#ifdef INCLUDE_PRIVATE\n");
+						else if ( prop->access == PA_HIDDEN )
+							count += fprintf(fp, "#ifdef INCLUDE_HIDDEN\n");
+						access = prop->access;
+					}
+					count += fprintf(fp, "\t%s %s;\n", prop->name, buffer);
 				}
 			}
+			if ( access != PA_PUBLIC )
+				count += fprintf(fp, "#endif\n");
 			count += fprintf(fp,"}\n");
 		}
 	}
@@ -2223,8 +2249,7 @@ static OBJECTTREE *object_tree_add(OBJECT *obj, OBJECTNAME name){
  */
 static OBJECTTREE **findin_tree(OBJECTTREE *tree, OBJECTNAME name)
 {
-	OBJECTTREE **temptree = NULL;
-
+	static OBJECTTREE **temptree = NULL;
 	if(tree == NULL){
 		return NULL;
 	} else {

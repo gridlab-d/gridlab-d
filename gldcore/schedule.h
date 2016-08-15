@@ -112,6 +112,7 @@ void schedule_dump(SCHEDULE *sch, char *file, char *mode);
 void schedule_dumpall(char *file);
 int schedule_createwait(void);
 SCHEDULE *schedule_getfirst(void);
+int schedule_saveall(FILE *fp);
 
 #ifdef __cplusplus
 }

@@ -12,10 +12,12 @@
 #include "save.h"
 #include "exec.h"
 #include "gui.h"
+#include "schedule.h"
+#include "transform.h"
 
 #define DEFAULT_FORMAT "gld"
 
-static int savetxt(char *filename, FILE *fp);
+static int saveglm(char *filename, FILE *fp);
 static int savexml(char *filename, FILE *fp);
 static int savexml_strict(char *filename, FILE *fp);
 
@@ -27,8 +29,7 @@ int saveall(char *filename)
 		char *format;
 		int (*save)(char*,FILE*);
 	} map[] = {
-		{"txt", savetxt},
-		{"gld", savetxt},
+		{"glm", saveglm},
 		//{"xml", savexml_strict},
 		{"xml", savexml},
 	};
@@ -81,64 +82,80 @@ int saveall(char *filename)
 	return FAILED;
 }
 
-int savetxt(char *filename,FILE *fp)
+int saveglm(char *filename,FILE *fp)
 {
 	unsigned int count = 0;
 	time_t now = time(NULL);
 	char buffer[1024];
 
-	count += fprintf(fp,"########################################################\n");
-	count += fprintf(fp,"# BEGIN");
-	count += fprintf(fp,"\n########################################################\n");
-	count += fprintf(fp,"# filename... %s\n", filename);
-	count += fprintf(fp,"# workdir.... %s\n", global_workdir);
-	count += fprintf(fp,"# command.... %s\n", global_command_line);
-	count += fprintf(fp,"# created.... %s", asctime(localtime(&now)));
-	count += fprintf(fp,"# user....... %s\n", 
+	count += fprintf(fp,"////////////////////////////////////////////////////////\n");
+	count += fprintf(fp,"// BEGIN");
+	count += fprintf(fp,"\n////////////////////////////////////////////////////////\n");
+	count += fprintf(fp,"// filename... %s\n", filename);
+	count += fprintf(fp,"// workdir.... %s\n", global_workdir);
+	count += fprintf(fp,"// command.... %s\n", global_command_line);
+	count += fprintf(fp,"// created.... %s", asctime(localtime(&now)));
+	count += fprintf(fp,"// user....... %s\n",
 #ifdef WIN32
 		getenv("USERNAME")
 #else
 		getenv("USER")
 #endif
 		);
-	count += fprintf(fp,"# host....... %s\n", 
+	count += fprintf(fp,"// host....... %s\n",
 #ifdef WIN32
 		getenv("COMPUTERNAME")
 #else
 		getenv("HOSTNAME")
 #endif
 		);
-	count += fprintf(fp,"# classes.... %d\n", class_get_count());
-	count += fprintf(fp,"# objects.... %d\n", object_get_count());
+	count += fprintf(fp,"// modules.... %d\n", module_getcount());
+	count += fprintf(fp,"// classes.... %d\n", class_get_count());
+	count += fprintf(fp,"// objects.... %d\n", object_get_count());
+
+	// loader flags
+	count += fprintf(fp,"\n// flags to enable GLM definitions not supported by standard GLM loader");
+	count += fprintf(fp,"//#define INCLUDE_PARENT_CLASS=TRUE // class inheritance definitions\n");
+	count += fprintf(fp,"//#define INCLUDE_FUNCTIONS=TRUE // class function definitions\n");
+	count += fprintf(fp,"//#define INCLUDE_ROOT=TRUE // object root definitions\n");
+	count += fprintf(fp,"//#define INCLUDE_REFERENCE=TRUE // reference property definitions\n");
+	count += fprintf(fp,"//#define INCLUDE_PROTECTED=TRUE // protected property definitions\n");
+	count += fprintf(fp,"//#define INCLUDE_PRIVATE=TRUE // private property definitions\n");
+	count += fprintf(fp,"//#define INCLUDE_HIDDEN=TRUE // hidden property definitions\n");
 
 	/* save gui, if any */
 	if (gui_get_root()!=NULL)
 	{
-		count += fprintf(fp,"\n########################################################\n");
+		count += fprintf(fp,"\n////////////////////////////////////////////////////////\n");
 		count += fprintf(fp,"\n# GUI\n");
 		count += (int)gui_glm_write_all(fp);
 		count += fprintf(fp,"\n");
 	}
 
 	/* save clock */
-		count += fprintf(fp,"\n########################################################\n");
-		count += fprintf(fp,"\n# CLOCK\n");
+		count += fprintf(fp,"\n////////////////////////////////////////////////////////\n");
+		count += fprintf(fp,"\n// CLOCK\n");
 	count += fprintf(fp,"clock {\n");
-	count += fprintf(fp,"\ttick 1e%+d;\n",TS_SCALE);
+//	count += fprintf(fp,"\ttick 1e%+d;\n",TS_SCALE);
 	count += fprintf(fp,"\ttimezone %s;\n", timestamp_current_timezone());
-	count += fprintf(fp,"\ttimestamp %s;\n", convert_from_timestamp(global_clock,buffer,sizeof(buffer))>0?buffer:"(invalid)");
-	if (getenv("TZ"))
-		count += fprintf(fp,"\ttimezone %s;\n", getenv("TZ"));
+	if ( convert_from_timestamp(global_starttime,buffer,sizeof(buffer))>0 )
+		count += fprintf(fp,"\tstarttime '%s';\n", buffer);
+	if ( convert_from_timestamp(global_stoptime,buffer,sizeof(buffer))>0 )
+		count += fprintf(fp,"\tstoptime '%s';\n", buffer);
+//	if (getenv("TZ"))
+//		count += fprintf(fp,"\ttimezone %s;\n", getenv("TZ"));
 	count += fprintf(fp,"}\n");
 
 	/* save parts */
-	module_saveall(fp);
-	class_saveall(fp);
-	object_saveall(fp);
+	count += module_saveall(fp);
+	count += class_saveall(fp);
+	count += schedule_saveall(fp);
+	count += transform_saveall(fp);
+	count += object_saveall(fp);
 
-	count += fprintf(fp,"\n########################################################\n");
-	count += fprintf(fp,"# END");
-	count += fprintf(fp,"\n########################################################\n");
+	count += fprintf(fp,"\n////////////////////////////////////////////////////////\n");
+	count += fprintf(fp,"// END");
+	count += fprintf(fp,"\n////////////////////////////////////////////////////////\n");
 	if (fp!=stdout)
 		fclose(fp);
 	return count;
@@ -166,9 +183,10 @@ int savexml_strict(char *filename,FILE *fp)
 		while ((global=global_getnext(global))!=NULL)
 		{
 			/* ignore module globals */
-			if (strchr(global->prop->name,':'))
+			if ( strchr(global->prop->name,':') )
 				continue;
-			count += fprintf(fp,"\t<%s>%s</%s>\n", global->prop->name, global_getvar(global->prop->name,buffer,sizeof(buffer))==NULL?"[error]":buffer,global->prop->name);
+			if ( global_getvar(global->prop->name,buffer,sizeof(buffer)) )
+				count += fprintf(fp,"\t<%s>%s</%s>\n", global->prop->name, buffer, global->prop->name);
 		}
 		count += fprintf(fp,"\t<timezone>%s</timezone>\n", timestamp_current_timezone());
 
@@ -253,8 +271,10 @@ int savexml_strict(char *filename,FILE *fp)
 						count += fprintf(fp,"\t\t\t<%s>\n",oclass->name);
 						count += fprintf(fp,"\t\t\t\t<id>%d</id>\n",obj->id);
 						count += fprintf(fp,"\t\t\t\t<rank>%d</rank>\n",obj->rank);
-						if (isfinite(obj->latitude)) count += fprintf(fp,"\t\t\t\t<latitude>%.6f</latitude>\n",obj->latitude);
-						if (isfinite(obj->longitude)) count += fprintf(fp,"\t\t\t\t<longitude>%.6f</longitude>\n",obj->longitude);
+						if ( isfinite(obj->latitude) && convert_from_latitude(obj->latitude,buffer,sizeof(buffer)) > 0 )
+							count += fprintf(fp,"\t\t\t\t<latitude>%s</latitude>\n",buffer);
+						if ( isfinite(obj->longitude) && convert_from_longitude(obj->longitude,buffer,sizeof(buffer)) > 0 )
+							count += fprintf(fp,"\t\t\t\t<longitude>%s</longitude>\n",buffer);
 						strcpy(buffer,"NEVER");
 						if (obj->in_svc==TS_NEVER || (obj->in_svc>0 && local_datetime(obj->in_svc,&dt) && strdatetime(&dt,buffer,sizeof(buffer))>0)) 
 							count += fprintf(fp,"\t\t\t\t<in_svc>%s</in_svc>\n",buffer);
@@ -274,7 +294,7 @@ int savexml_strict(char *filename,FILE *fp)
 						if (obj->name!=NULL) 
 							count += fprintf(fp,"\t\t\t\t<name>%s</name>\n",obj->name);
 						else
-							count += fprintf(fp,"\t\t\t\t<name>(%s:%d)</name>\n",obj->oclass->name,obj->id);
+							count += fprintf(fp,"\t\t\t\t<name>%s:%d</name>\n",obj->oclass->name,obj->id);
 						for (pclass=oclass; pclass!=NULL; pclass=pclass->parent)
 						{
 							for (prop=pclass->pmap; prop!=NULL && prop->oclass==pclass->pmap->oclass; prop=prop->next)
