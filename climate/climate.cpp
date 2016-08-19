@@ -317,18 +317,13 @@ int tmy2_reader::open(const char *file){
 				temp_long_hem[0] = 'E';
 			}
 
-			lat_minutes = (lat_degrees_temp-(long)lat_degrees_temp)*1000;
-			long_minutes = (long_degrees_temp-(long)long_degrees_temp)*1000;
-			lat_degrees = abs((long)lat_degrees_temp);
-			long_degrees = abs((long)long_degrees_temp);
-
-			//double frac_degrees, degrees;
-			//frac_degrees = modf(lat_degrees_temp, &degrees);
-			//lat_minutes =  fabs(round(frac_degrees*60));
-			//lat_degrees = fabs((long)lat_degrees_temp);
-			//frac_degrees = modf(long_degrees_temp, &degrees);
-			//long_minutes = fabs(round(frac_degrees*60));
-			//long_degrees = fabs((long)long_degrees_temp);
+			double frac_degrees, degrees;
+			frac_degrees = modf(lat_degrees_temp, &degrees);
+			lat_minutes =  fabs(round(frac_degrees*60));
+			lat_degrees = fabs((long)lat_degrees_temp);
+			frac_degrees = modf(long_degrees_temp, &degrees);
+			long_minutes = fabs(round(frac_degrees*60));
+			long_degrees = fabs((long)long_degrees_temp);
 		}
 		//See if latitude needs negation
 		if ((strcmp(temp_lat_hem,"S")==0) || (strcmp(temp_lat_hem,"s")==0))

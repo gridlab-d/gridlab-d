@@ -38,7 +38,7 @@ object climate {
 		in '2006-01-12 15:00:00';
 		out '2006-01-12 15:59:00';
 		status ASSERT_TRUE;
-		value 7.06063;
+		value 7.81646;
 		within 0.001;
 	};
 	object double_assert {
