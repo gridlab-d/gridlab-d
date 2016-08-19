@@ -42,6 +42,8 @@ double surface_angles[] = {
 	-135,	// NW
 };
 
+bool is_TMY2 = 0;
+
 //Cloud pattern constants
 //The off-screen pattern size is affected by the following two constants.
 // These have been set under the assumption of a max wind speed (after altitude adjustment to 1000m)
@@ -263,6 +265,7 @@ int tmy2_reader::open(const char *file){
 
 	//std::string filenameis;
 	//filenameis = file;
+	is_TMY2 = 0;
 	std::string s = file;
 	std::string delimiter = ".";
 	size_t pos = 0;
@@ -288,6 +291,8 @@ int tmy2_reader::open(const char *file){
 
 		if (s == "tmy2") {
 			sscan_rv = sscanf(buf,"%*s %75s %3s %d %c %d %d %c %d %d %d",data_city,data_state,&tz_offset,temp_lat_hem,&lat_degrees,&lat_minutes,temp_long_hem,&long_degrees,&long_minutes,&elevation);
+      //gl_warning("Daylight saving time (DST) is not handled correctly when using TMY2 datasets; please use TMY3 for DST-corrected weather data.");
+			is_TMY2 = 1;
 		}
 		else if (s == "tmy3") {
 			sscan_rv = sscanf(buf,"%*[^','],%[^','],%[^','],%[^','],%[^','],%[^','],%s",data_city,data_state,tz,tlad,tlod,el);			
@@ -295,6 +300,7 @@ int tmy2_reader::open(const char *file){
 			lat_degrees_temp  = atof(tlad);
 			long_degrees_temp = atof(tlod);
 			elevation         = atoi(el);
+
 
 			tz_offset = (int) tz_offset_temp;			
 			if (lat_degrees_temp < 0) {
@@ -315,6 +321,14 @@ int tmy2_reader::open(const char *file){
 			long_minutes = (long_degrees_temp-(long)long_degrees_temp)*1000;
 			lat_degrees = abs((long)lat_degrees_temp);
 			long_degrees = abs((long)long_degrees_temp);
+
+			//double frac_degrees, degrees;
+			//frac_degrees = modf(lat_degrees_temp, &degrees);
+			//lat_minutes =  fabs(round(frac_degrees*60));
+			//lat_degrees = fabs((long)lat_degrees_temp);
+			//frac_degrees = modf(long_degrees_temp, &degrees);
+			//long_minutes = fabs(round(frac_degrees*60));
+			//long_degrees = fabs((long)long_degrees_temp);
 		}
 		//See if latitude needs negation
 		if ((strcmp(temp_lat_hem,"S")==0) || (strcmp(temp_lat_hem,"s")==0))
@@ -327,7 +341,6 @@ int tmy2_reader::open(const char *file){
 		{
 			long_degrees=-long_degrees;
 		}
-
 		return sscan_rv;
 	} else {
 		gl_error("tmy2_reader::open() -- first fgets read nothing");
@@ -363,6 +376,7 @@ int tmy2_reader::next()
 */
 int tmy2_reader::header_info(char* city, char* state, int* degrees, int* minutes, int* long_deg, int* long_min)
 {
+
 	if(city) strcpy(city,data_city); /* potential buffer overflow */
 	if(state) strcpy(state,data_state); /* potential buffer overflow */
 	if(degrees) *degrees = lat_degrees;
@@ -527,6 +541,7 @@ climate::climate(MODULE *module)
 		if (gl_publish_variable(oclass,
 			PT_double,"solar_elevation",PADDR(solar_elevation), //sjin: publish solar elevation variable
 			PT_double,"solar_azimuth",PADDR(solar_azimuth), //sjin: publish solar azimuth variable
+			PT_double,"solar_zenith",PADDR(solar_zenith),
 			PT_char32, "city", PADDR(city),
 			PT_char1024,"tmyfile",PADDR(tmyfile),
 			PT_double,"temperature[degF]",PADDR(temperature),
@@ -687,6 +702,7 @@ int climate::init(OBJECT *parent)
 			obj->latitude = reader->latitude;
 			obj->longitude = reader->longitude;
 
+
 			//CSV Reader validity check
 			if (fabs(obj->latitude) > 90)
 			{
@@ -757,7 +773,6 @@ int climate::init(OBJECT *parent)
 	else
 		set_longitude((double)long_deg + (((double)long_min) / 60));
 
-	//Generic check for TMY files
 	if (fabs(obj->latitude) > 90)
 	{
 		gl_error("climate:%s - Latitude is outside +/-90!",obj->name);
@@ -769,7 +784,6 @@ int climate::init(OBJECT *parent)
 		*/
 		return 0;
 	}
-
 	if (fabs(obj->longitude) > 180)
 	{
 		gl_error("climate:%s - Longitude is outside +/-180!",obj->name);
@@ -855,7 +869,8 @@ int climate::init(OBJECT *parent)
 			tmy[hoy].tot_sky_cov = tot_sky_cov;
 			tmy[hoy].opq_sky_cov = opq_sky_cov;
 
-			// calculate the solar radiation - hour on here may need a -1 application (hour-1) - unsure how TMYs really code things
+			// TMY are summarized values for the preceding hour. To accurately calculate the solar time we need to start from
+			//    the beginning of the hour and advance through it. Thus, we subtract 1 from the TMY timestamp.
 			double sol_time = sa->solar_time((double)hour,doy,RAD(tz_meridian),RAD(get_longitude()));
 			double sol_rad = 0.0;
 
@@ -1946,11 +1961,18 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 		int localres = gl_localtime(t0,&ts);
 		int hoy;
 		double now, hoy0, hoy1, hoy2;
+
 		if(localres == 0){
 			GL_THROW("climate::sync -- unable to resolve localtime!");
 		}
 		int doy = sa->day_of_yr(ts.month,ts.day);
 		hoy = (doy - 1) * 24 + (ts.hour);
+
+		//Shifts TMY3 data to account for DST
+		gld_clock present(t0);
+		//if (present.get_is_dst() && !is_TMY2){
+		//	hoy = hoy - 1;
+		//}
 		switch(interpolate){
 			case CI_NONE:
 				temperature = (tmy[hoy].temp);
@@ -2104,7 +2126,6 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 				GL_THROW("climate::sync -- unrecognized interpolation mode!");
 		}
 		update_forecasts(t0);
-
 		if (cloud_model == CM_CUMULUS) {
 			if (prev_NTime != t0 ){
 				double p = pressure*0.1; // in millibars, convert to kPa
@@ -2122,8 +2143,10 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 
 			return t0 + 60;
 		}
+
 		return -(t0+(3600*TS_SECOND-t0%(3600 *TS_SECOND))); /// negative means soft event
 	}
+
 	return TS_NEVER;
 }
 

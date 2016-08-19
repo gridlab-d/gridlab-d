@@ -26,6 +26,14 @@ object climate {
 		within 0.001;
 	};
 	object double_assert {
+		target "solar_zenith";
+		in '2001-06-01 18:00:00';
+		out '2001-06-01 18:59:00';
+		status ASSERT_TRUE;
+		value 1.46326;
+		within 0.001;
+	};
+	object double_assert {
 		target "temperature";
 		in '2001-02-20 23:00:00';
 		out '2001-02-20 23:59:00';
