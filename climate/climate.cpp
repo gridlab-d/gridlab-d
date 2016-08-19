@@ -291,7 +291,7 @@ int tmy2_reader::open(const char *file){
 
 		if (s == "tmy2") {
 			sscan_rv = sscanf(buf,"%*s %75s %3s %d %c %d %d %c %d %d %d",data_city,data_state,&tz_offset,temp_lat_hem,&lat_degrees,&lat_minutes,temp_long_hem,&long_degrees,&long_minutes,&elevation);
-      //gl_warning("Daylight saving time (DST) is not handled correctly when using TMY2 datasets; please use TMY3 for DST-corrected weather data.");
+      gl_warning("Daylight saving time (DST) is not handled correctly when using TMY2 datasets; please use TMY3 for DST-corrected weather data.");
 			is_TMY2 = 1;
 		}
 		else if (s == "tmy3") {
@@ -1970,9 +1970,9 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 
 		//Shifts TMY3 data to account for DST
 		gld_clock present(t0);
-		//if (present.get_is_dst() && !is_TMY2){
-		//	hoy = hoy - 1;
-		//}
+		if (present.get_is_dst() && !is_TMY2){
+			hoy = hoy - 1;
+		}
 		switch(interpolate){
 			case CI_NONE:
 				temperature = (tmy[hoy].temp);
