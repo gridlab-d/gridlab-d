@@ -864,8 +864,11 @@ int climate::init(OBJECT *parent)
 			tmy[hoy].tot_sky_cov = tot_sky_cov;
 			tmy[hoy].opq_sky_cov = opq_sky_cov;
 
-			// TMY are summarized values for the preceding hour. To accurately calculate the solar time we need to start from
-			//    the beginning of the hour and advance through it. Thus, we subtract 1 from the TMY timestamp.
+
+    //  		gld_clock present(t0);
+		//if (present.get_is_dst() && !is_TMY2){
+		//	hoy = hoy - 1;
+		//}
 			double sol_time = sa->solar_time((double)hour,doy,RAD(tz_meridian),RAD(get_longitude()));
 			double sol_rad = 0.0;
 
@@ -1947,6 +1950,7 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 			/* TMY2 solar radiation data is in Watt-hours per square meter. */
 			solar_flux[c_point] = sol_rad;
 		}
+
 		return rv;
 	}
 
@@ -1963,10 +1967,19 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 		int doy = sa->day_of_yr(ts.month,ts.day);
 		hoy = (doy - 1) * 24 + (ts.hour);
 
-		//Shifts TMY3 data to account for DST
+		//Shifts TMY3 data
+		//One hour shift accounts for DST (if applicable)
+		//One hour shift as TMY are summarized values for the preceding hour. To accurately calculate the solar time
+		//    we need to start from the beginning of the hour and advance through it.
 		gld_clock present(t0);
-		if (present.get_is_dst() && !is_TMY2){
-			hoy = hoy - 1;
+		if (!is_TMY2){
+			if (present.get_is_dst())
+				hoy = hoy - 2;
+			else
+				hoy = hoy - 1;
+		}
+		if (hoy < 0){ //Taking care of the wrap-around at the year boundary.
+			hoy = hoy + 8760;
 		}
 		switch(interpolate){
 			case CI_NONE:
