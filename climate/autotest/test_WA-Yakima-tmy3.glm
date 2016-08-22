@@ -38,7 +38,7 @@ object climate {
 		in '2006-01-12 15:00:00';
 		out '2006-01-12 15:59:00';
 		status ASSERT_TRUE;
-		value 7.81646;
+		value 16.5561;
 		within 0.001;
 	};
 	object double_assert {
@@ -46,7 +46,7 @@ object climate {
 		in '2006-05-03 10:00:00';
 		out '2006-05-03 10:59:00';
 		status ASSERT_TRUE;
-		value 7.80386;
+		value 6.78192;
 		within 0.001;
 	};
 	object double_assert {
@@ -54,7 +54,7 @@ object climate {
 		in '2006-03-30 11:00:00';
 		out '2006-03-30 11:59:00';
 		status ASSERT_TRUE;
-		value 63.3599;
+		value 59.0863;
 		within 0.001;
 	};
 	object double_assert {
@@ -78,7 +78,7 @@ object climate {
 		in '2006-10-31 03:00:00';
 		out '2006-10-31 03:59:00';
 		status ASSERT_TRUE;
-		value 4.69757;
+		value 6.9345;
 		within 0.001;
 	};
 	object double_assert {
@@ -86,13 +86,13 @@ object climate {
 		in '2006-04-26 20:00:00';
 		out '2006-04-26 20:59:00';
 		status ASSERT_TRUE;
-		value 50;
+		value 120;
 		within 0.001;
 	};
 	object double_assert {
 		target "solar_horiz";
-		in '2006-06-09 05:00:00';
-		out '2006-06-09 05:59:00';
+		in '2006-06-09 06:00:00';
+		out '2006-06-09 06:59:00';
 		status ASSERT_TRUE;
 		value 0.464515;
 		within 0.001;
