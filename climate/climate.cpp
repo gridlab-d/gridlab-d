@@ -1,3 +1,4 @@
+/** $Id: climate.cpp 4738 2014-07-03 00:55:39Z dchassin $
 /** $Id: climate.cpp 1182 2008-12-22 22:08:36Z dchassin $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file climate.cpp
@@ -42,8 +43,6 @@ double surface_angles[] = {
 	-135,	// NW
 };
 
-bool is_TMY2 = 0;
-
 //Cloud pattern constants
 //The off-screen pattern size is affected by the following two constants.
 // These have been set under the assumption of a max wind speed (after altitude adjustment to 1000m)
@@ -54,9 +53,9 @@ bool is_TMY2 = 0;
 
 //EDITME
 const int CLOUD_TILE_SIZE = 512;
-const int PIXEL_EDGE_SIZE = 20; //Pixel size in meters
+const int PIXEL_EDGE_SIZE = 20; //Pixel size example: 10m per edge, 100 m^2 area.
 const double KM_PER_DEG = 111.32;
-const double EMPTY_VALUE = -999;
+const long EMPTY_VALUE = -999;
 const int ALPHA = 100; //Determines the distance between the shading layers of the normalized patterns.
 						//Smaller values lead to a larger distance between shading layers and greater variation within a cloud, closer to continuous.
 						//Larger values lead to a smaller distance between shading layers and less variation within a cloud, closer to binary.
@@ -265,7 +264,6 @@ int tmy2_reader::open(const char *file){
 
 	//std::string filenameis;
 	//filenameis = file;
-	is_TMY2 = 0;
 	std::string s = file;
 	std::string delimiter = ".";
 	size_t pos = 0;
@@ -291,8 +289,6 @@ int tmy2_reader::open(const char *file){
 
 		if (s == "tmy2") {
 			sscan_rv = sscanf(buf,"%*s %75s %3s %d %c %d %d %c %d %d %d",data_city,data_state,&tz_offset,temp_lat_hem,&lat_degrees,&lat_minutes,temp_long_hem,&long_degrees,&long_minutes,&elevation);
-      gl_warning("Daylight saving time (DST) is not handled correctly when using TMY2 datasets; please use TMY3 for DST-corrected weather data.");
-			is_TMY2 = 1;
 		}
 		else if (s == "tmy3") {
 			sscan_rv = sscanf(buf,"%*[^','],%[^','],%[^','],%[^','],%[^','],%[^','],%s",data_city,data_state,tz,tlad,tlod,el);			
@@ -300,7 +296,6 @@ int tmy2_reader::open(const char *file){
 			lat_degrees_temp  = atof(tlad);
 			long_degrees_temp = atof(tlod);
 			elevation         = atoi(el);
-
 
 			tz_offset = (int) tz_offset_temp;			
 			if (lat_degrees_temp < 0) {
@@ -317,13 +312,10 @@ int tmy2_reader::open(const char *file){
 				temp_long_hem[0] = 'E';
 			}
 
-			double frac_degrees, degrees;
-			frac_degrees = modf(lat_degrees_temp, &degrees);
-			lat_minutes =  fabs(round(frac_degrees*60));
-			lat_degrees = fabs((long)lat_degrees_temp);
-			frac_degrees = modf(long_degrees_temp, &degrees);
-			long_minutes = fabs(round(frac_degrees*60));
-			long_degrees = fabs((long)long_degrees_temp);
+			lat_minutes = (lat_degrees_temp-(long)lat_degrees_temp)*1000;
+			long_minutes = (long_degrees_temp-(long)long_degrees_temp)*1000;
+			lat_degrees = abs((long)lat_degrees_temp);
+			long_degrees = abs((long)long_degrees_temp);
 		}
 		//See if latitude needs negation
 		if ((strcmp(temp_lat_hem,"S")==0) || (strcmp(temp_lat_hem,"s")==0))
@@ -336,6 +328,7 @@ int tmy2_reader::open(const char *file){
 		{
 			long_degrees=-long_degrees;
 		}
+
 		return sscan_rv;
 	} else {
 		gl_error("tmy2_reader::open() -- first fgets read nothing");
@@ -371,7 +364,6 @@ int tmy2_reader::next()
 */
 int tmy2_reader::header_info(char* city, char* state, int* degrees, int* minutes, int* long_deg, int* long_min)
 {
-
 	if(city) strcpy(city,data_city); /* potential buffer overflow */
 	if(state) strcpy(state,data_state); /* potential buffer overflow */
 	if(degrees) *degrees = lat_degrees;
@@ -417,24 +409,23 @@ int tmy2_reader::read_data(double *dnr, double *dhr, double *ghr, double *tdb, d
 		//hour = &t_hr;
 		rct_ymd = sscanf(t_ymd,"%d/%d/%*d",month,day);
 		rct_hm = sscanf(t_hm,"%d:%*d",hour);
-                tmp_extra_ghr = atoi(t_ehr);
+		tmp_extra_ghr = atoi(t_ehr);
 		tmp_extra_dni = atoi(t_dni);
 		tmp_ghr = atoi(t_ghr);
 		tmp_dnr = atoi(t_dnr);
 		tmp_dhr = atoi(t_dhr);
-                tmp_tot_sky_cov = atoi(t_tkc);
-                tmp_opq_sky_cov = atoi(t_osc);
+		tmp_tot_sky_cov = atoi(t_tkc);
+		tmp_opq_sky_cov = atoi(t_osc);
 		tmp_tdb = (int)(atof(t_tdb)*10); //Since for TMY3, measurement is 1/10. So we are multiplying this by 10 to avoid code changes later on. tmp_tdb is now scaled same as TMY2 value
-                //tmp_tdb = tmp_tdb*10.0; //Since for TMY3, measurement is 1/10. So we are multiplying this by 10 to avoid code changes later on. tmp_tdb is now scaled same as TMY2 value
 		tmp_rh = atoi(t_rh);
 		tmp_press = atoi(t_press);
-                tmp_wd = atoi(t_wd);
+		tmp_wd = atoi(t_wd);
 		tmp_ws = (int)(atof(t_ws)*10);
 		tmp_precip = (int)(atof(t_precip)*10);//converting from centimeters to millimeters
-                //tmp_precip = tmp_precip*10; //converting from centimeters to millimeters
 		tmp_sf = atoi(t_sf);		
 		rct = rct+1;
 		tmp_sf = 0; //tmy3 doesnt have this field (snow depth). so set to 0
+
 	}
 	else {
 	//rct = sscanf(buf, "%*2s%2d%2d%2d%*4s%4d%4d%*2s%4d%*2s%4d%*34s%4d%*8s%3d%*2s%4d%*7s%3d%*25s%3d%*7s%3d",month,day,hour,&tmp_extra_dni,&tmp_ghr,&tmp_dnr,&tmp_dhr,&tmp_tdb,&tmp_rh,&tmp_press,&tmp_ws,&tmp_precip,&tmp_sf);
@@ -536,7 +527,6 @@ climate::climate(MODULE *module)
 		if (gl_publish_variable(oclass,
 			PT_double,"solar_elevation",PADDR(solar_elevation), //sjin: publish solar elevation variable
 			PT_double,"solar_azimuth",PADDR(solar_azimuth), //sjin: publish solar azimuth variable
-			PT_double,"solar_zenith",PADDR(solar_zenith),
 			PT_char32, "city", PADDR(city),
 			PT_char1024,"tmyfile",PADDR(tmyfile),
 			PT_double,"temperature[degF]",PADDR(temperature),
@@ -577,6 +567,7 @@ climate::climate(MODULE *module)
 			PT_enumeration,"cloud_model",PADDR(cloud_model),PT_DESCRIPTION,"the cloud model to use",
 				PT_KEYWORD,"NONE",(enumeration)CM_NONE,
 				PT_KEYWORD,"CUMULUS",(enumeration)CM_CUMULUS,
+			PT_double,"opq_sky_cov[pu]",PADDR(opq_sky_cov),
 			PT_double,"cloud_opacity[pu]",PADDR(cloud_opacity),
 			PT_double,"cloud_reflectivity[pu]",PADDR(cloud_reflectivity),
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
@@ -697,7 +688,6 @@ int climate::init(OBJECT *parent)
 			obj->latitude = reader->latitude;
 			obj->longitude = reader->longitude;
 
-
 			//CSV Reader validity check
 			if (fabs(obj->latitude) > 90)
 			{
@@ -768,6 +758,7 @@ int climate::init(OBJECT *parent)
 	else
 		set_longitude((double)long_deg + (((double)long_min) / 60));
 
+	//Generic check for TMY files
 	if (fabs(obj->latitude) > 90)
 	{
 		gl_error("climate:%s - Latitude is outside +/-90!",obj->name);
@@ -779,6 +770,7 @@ int climate::init(OBJECT *parent)
 		*/
 		return 0;
 	}
+
 	if (fabs(obj->longitude) > 180)
 	{
 		gl_error("climate:%s - Longitude is outside +/-180!",obj->name);
@@ -864,11 +856,7 @@ int climate::init(OBJECT *parent)
 			tmy[hoy].tot_sky_cov = tot_sky_cov;
 			tmy[hoy].opq_sky_cov = opq_sky_cov;
 
-
-    //  		gld_clock present(t0);
-		//if (present.get_is_dst() && !is_TMY2){
-		//	hoy = hoy - 1;
-		//}
+			// calculate the solar radiation - hour on here may need a -1 application (hour-1) - unsure how TMYs really code things
 			double sol_time = sa->solar_time((double)hour,doy,RAD(tz_meridian),RAD(get_longitude()));
 			double sol_rad = 0.0;
 
@@ -957,7 +945,7 @@ int climate::get_solar_for_location(double latitude, double longitude, double *d
 			f = cloud * (1.-cloud_opacity);
 			//retval = get_binary_cloud_value_for_location(latitude, longitude, &cloud); //Binary cloud pattern evaluation
 			//f = cloud ? 1.-cloud_opacity : 1.;
-			*direct = f*global_attenuation*get_global_horizontal_extra(); 
+			*direct = f*global_attenuation*get_global_horizontal_extra();
 			*diffuse = get_solar_diffuse();
 			*global = (*direct)*std::max(cos(get_solar_zenith()),0.0) + *diffuse;
 			break;
@@ -1051,7 +1039,6 @@ void climate::init_cloud_pattern() {
 	}
 
 	//Initializing array to EMPTY_VALUE
-  //TDH: trivially parallelizable
 	for (int i = 0; i < cloud_pattern_size; i++ ){
 			for (int j = 0; j < cloud_pattern_size; j++){
 				cloud_pattern[i][j] = EMPTY_VALUE;
@@ -1288,7 +1275,7 @@ double climate::convert_to_binary_cloud(){
 
 
 
-    //TDH: trivially parallelizable
+
 	 if (1){ //Once the GLD core linkage is working use: (last_binary_conversion_time < t1){
 		 double cloud_pattern_max = cloud_pattern[CLOUD_TILE_SIZE][CLOUD_TILE_SIZE];
 		 double cloud_pattern_min = cloud_pattern[CLOUD_TILE_SIZE][CLOUD_TILE_SIZE];
@@ -1347,7 +1334,6 @@ double climate::convert_to_binary_cloud(){
 
 		 cut_elevation -= step_size; //Above loop is exited with cut_evelation pre-incremented; correcting.
 
-      //TDH: trivially parallelizable
 		 //Converting cloud_pattern to binary_cloud_pattern
 		 for (int i = 0; i < cloud_pattern_size; i++){
 			 for (int j = 0; j < cloud_pattern_size; j++){
@@ -1369,53 +1355,47 @@ double climate::convert_to_binary_cloud(){
 void climate::convert_to_fuzzy_cloud( double cut_elevation, int num_fuzzy_layers, double alpha){
 
 	double shade_step_size = 1.0/alpha;
-  
-  //TDH: trivially parallelizable
+
 	if (cut_elevation == EMPTY_VALUE){ //Initialization call uses EMPTY_VALUE as the cut elevation.
 		//Resizing fuzzy cloud pattern
-		fuzzy_cloud_pattern.resize(1);
-		for (int i = 0; i < 1; ++i){
+		fuzzy_cloud_pattern.resize(num_fuzzy_layers);
+		for (int i = 0; i < num_fuzzy_layers; ++i){
 			fuzzy_cloud_pattern[i].resize(cloud_pattern_size);
 			for(int j = 0; j < cloud_pattern_size; j++){
 				fuzzy_cloud_pattern[i][j].resize(cloud_pattern_size);
 			}
 		}
-    
-    //TDH: trivially parallelizable
+
 		//Initializing fuzzy cloud pattern
-		for (int i = 0; i < 1; i++){
+		for (int i = 0; i < num_fuzzy_layers; i++){
 			for (int j = 0; j < cloud_pattern_size; j++){
 				for (int k = 0; k < cloud_pattern_size; k++){
+					fuzzy_cloud_pattern[i][j][k] = 0;
+				 }
+			 }
+		 }
+	}
+
+	//Filling in fuzzy pattern with random values
+	for (int i = 0; i < num_fuzzy_layers; i++){
+		double rand_upper = ((double)(i+1)/(double)num_fuzzy_layers)*cut_elevation;
+		double rand_lower = (((double)(i+1)-1)/(double)num_fuzzy_layers)*cut_elevation;
+		for (int j = 0; j < cloud_pattern_size; j++){
+			for (int k = 0; k < cloud_pattern_size; k++){
+				double value4 = cloud_pattern[j][k];
+				if (binary_cloud_pattern[j][k] == 0.0 &&
+						normalized_cloud_pattern[j][k] <= cut_elevation - ((i+1)*shade_step_size) &&
+						normalized_cloud_pattern[j][k] != EMPTY_VALUE){ //Areas with 0 in the binary pattern are cloudy
+					fuzzy_cloud_pattern[i][j][k] =  gl_random_uniform(RNGSTATE,rand_lower, rand_upper);
+				}else { //EMPTY_VALUES get coerced into 0.
 					fuzzy_cloud_pattern[i][j][k] = 0;
 				}
 			}
 		}
 	}
 
-  //TDH: trivially parallelizable
-	//Filling in fuzzy pattern with random values
-	for (int i = 0; i < num_fuzzy_layers; i++){
-		double rand_upper = ((double)(i+1)/(double)num_fuzzy_layers)*cut_elevation;
-		double rand_lower = (((double)(i+1)-1)/(double)num_fuzzy_layers)*cut_elevation;
-		for (int j = 0; j < cloud_pattern_size; j++){
-			for (int kk = 0; kk < cloud_pattern_size; kk++){
-				double binary = binary_cloud_pattern[j][kk];
-				double normalized = normalized_cloud_pattern[j][kk];
-				double fuzzy = fuzzy_cloud_pattern[0][j][kk];
-				if (binary_cloud_pattern[j][kk] == 0.0 && normalized_cloud_pattern[j][kk] != EMPTY_VALUE && fuzzy_cloud_pattern[0][j][kk] != EMPTY_VALUE){ //Areas with 0 in the binary pattern are cloudy
-					if (normalized_cloud_pattern[j][kk] <= cut_elevation - ((i+1)*shade_step_size)){ //only values below the cut elevation accumulate
-						fuzzy_cloud_pattern[0][j][kk] = gl_random_uniform(RNGSTATE,rand_lower, rand_upper)  + fuzzy_cloud_pattern[0][j][kk];
-						fuzzy = fuzzy_cloud_pattern[0][j][kk];
-					}
-				}else { //EMPTY_VALUES get coerced into 0.
-					fuzzy_cloud_pattern[0][j][kk] = 0;
-				}
-			}
-		}
-	}
-
 	//write_out_cloud_pattern('F');
-/*	//Summing fuzzy cloud pattern through the fuzzy layers
+	//Summing fuzzy cloud pattern through the fuzzy layers
 	for (int i = 1; i < num_fuzzy_layers; i++){
 		for (int j = 0; j < cloud_pattern_size; j++){
 			for (int k = 0; k < cloud_pattern_size; k++){
@@ -1424,9 +1404,8 @@ void climate::convert_to_fuzzy_cloud( double cut_elevation, int num_fuzzy_layers
 			}
 		}
 	}
-*/
+
 	//write_out_cloud_pattern('F');
-  //TDH: trivially parallelizable
 	//Normalizing fuzzy pattern
 	double max_value = fuzzy_cloud_pattern[0][0][0];
 	double min_value = fuzzy_cloud_pattern[0][0][0];
@@ -1444,16 +1423,16 @@ void climate::convert_to_fuzzy_cloud( double cut_elevation, int num_fuzzy_layers
 	double range = max_value - min_value;
 	if (range != 0){
 		for (int j = 0; j < cloud_pattern_size; j++){
-			for (int kk = 0; kk < cloud_pattern_size; kk++){
-				double value = (fuzzy_cloud_pattern[0][j][kk] - min_value)/range;
-				fuzzy_cloud_pattern[0][j][kk] = value;
+			for (int k = 0; k < cloud_pattern_size; k++){
+				double value = (fuzzy_cloud_pattern[0][j][k] - min_value)/range;
+				fuzzy_cloud_pattern[0][j][k] = value;
 			}
 		}
 	}else{
 		//Do we need to to anything if the pattern is uniform?
 	}
 
-	//TDH: trivially parallelizable
+	///
 	//Put EMPTY_VALUEs back in before calling it good.
 	for (int j = 0; j < cloud_pattern_size; j++){
 		for (int k = 0; k < cloud_pattern_size; k++){
@@ -1529,8 +1508,7 @@ void climate::trim_pattern_edge( char rebuilt_edge){
 	if (rebuilt_edge == 'W' || rebuilt_edge == 'E'){
 		//Checking for boundary at southern edge of pattern.
 		//Check three regions in areas south of on-screen: W, center, and E
-		//TDH: trivially parallelizable - all three of these loops
-    for (i = 0; i < CLOUD_TILE_SIZE; i++){
+		for (i = 0; i < CLOUD_TILE_SIZE; i++){
 			if (cloud_pattern[i][10] != EMPTY_VALUE){
 				min_edge_1 = i;
 				break;
@@ -1550,7 +1528,6 @@ void climate::trim_pattern_edge( char rebuilt_edge){
 		}
 		min_edge = std::max(min_edge_1,min_edge_2);
 		min_edge = std::max(min_edge,min_edge_3);
-
 
 
 		//Checking for boundary at northern edge of pattern
@@ -1576,7 +1553,6 @@ void climate::trim_pattern_edge( char rebuilt_edge){
 		max_edge = std::min(max_edge,max_edge_3);
 
 		//Trimming pattern
-    //TDH: trivially parallelizable
 		for(j = 0; j < cloud_pattern_size; j++){
 			for(i = 0; i < min_edge; i++){
 				cloud_pattern[i][j] = EMPTY_VALUE;
@@ -1590,7 +1566,6 @@ void climate::trim_pattern_edge( char rebuilt_edge){
 		//Checking for boundary at western edge of pattern.
 		//Check three regions in areas south of on-screen: S, center, and N
 		//write_out_cloud_pattern('C');
-    //TDH: trivially parallelizable - all three of these loops
 		for (j = 0; j < CLOUD_TILE_SIZE; j++){
 			if (cloud_pattern[10][j] != EMPTY_VALUE){
 				min_edge_1 = j;
@@ -1635,7 +1610,6 @@ void climate::trim_pattern_edge( char rebuilt_edge){
 		max_edge = std::min(max_edge,max_edge_3);
 
 		//Trimming pattern
-    //TDH: trivially parallelizable
 		for(i = 0; i < cloud_pattern_size; i++){
 			for(j = 0; j < min_edge; j++){
 				cloud_pattern[i][j] = EMPTY_VALUE;
@@ -1654,7 +1628,6 @@ void climate::erase_off_screen_pattern( char edge_to_erase){
 	int col_min = 0;
 	int row_min = 0;
 
-  //TDH: trivially parallelizable - all four of these loops
 	if (edge_to_erase == 'W'){
 		col_min = 0;
 		row_min = 0;
@@ -1937,7 +1910,7 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 	if(t0 > TS_ZERO && reader_type == RT_CSV){
 		gld_clock now(t0);
 		csv_reader *cr = OBJECTDATA(reader,csv_reader);
-		rv = cr->get_data(t0, &temperature, &humidity, &solar_direct, &solar_diffuse, &solar_global, &wind_speed, &rainfall, &snowdepth, &pressure);
+		rv = cr->get_data(t0, &temperature, &humidity, &solar_direct, &solar_diffuse, &solar_global, &wind_speed,&wind_dir, &opq_sky_cov, &rainfall, &snowdepth, &pressure);
 		// calculate the solar radiation
 		double sol_time = sa->solar_time((double)now.get_hour()+now.get_minute()/60.0+now.get_second()/3600.0 + (now.get_is_dst() ? -1:0),now.get_yearday(),RAD(tz_meridian),RAD(reader->longitude));
 		double sol_rad = 0.0;
@@ -1950,7 +1923,6 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 			/* TMY2 solar radiation data is in Watt-hours per square meter. */
 			solar_flux[c_point] = sol_rad;
 		}
-
 		return rv;
 	}
 
@@ -1960,27 +1932,11 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 		int localres = gl_localtime(t0,&ts);
 		int hoy;
 		double now, hoy0, hoy1, hoy2;
-
 		if(localres == 0){
 			GL_THROW("climate::sync -- unable to resolve localtime!");
 		}
 		int doy = sa->day_of_yr(ts.month,ts.day);
 		hoy = (doy - 1) * 24 + (ts.hour);
-
-		//Shifts TMY3 data
-		//One hour shift accounts for DST (if applicable)
-		//One hour shift as TMY are summarized values for the preceding hour. To accurately calculate the solar time
-		//    we need to start from the beginning of the hour and advance through it.
-		gld_clock present(t0);
-		if (!is_TMY2){
-			if (present.get_is_dst())
-				hoy = hoy - 2;
-			else
-				hoy = hoy - 1;
-		}
-		if (hoy < 0){ //Taking care of the wrap-around at the year boundary.
-			hoy = hoy + 8760;
-		}
 		switch(interpolate){
 			case CI_NONE:
 				temperature = (tmy[hoy].temp);
@@ -2134,6 +2090,7 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 				GL_THROW("climate::sync -- unrecognized interpolation mode!");
 		}
 		update_forecasts(t0);
+
 		if (cloud_model == CM_CUMULUS) {
 			if (prev_NTime != t0 ){
 				double p = pressure*0.1; // in millibars, convert to kPa
@@ -2151,10 +2108,8 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 
 			return t0 + 60;
 		}
-
 		return -(t0+(3600*TS_SECOND-t0%(3600 *TS_SECOND))); /// negative means soft event
 	}
-
 	return TS_NEVER;
 }
 

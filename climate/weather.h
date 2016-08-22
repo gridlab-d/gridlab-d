@@ -26,6 +26,8 @@ public:
 	double solar_diff;
 	double solar_global;
 	double wind_speed;
+	double wind_dir;
+	double opq_sky_cov;
 	double rainfall;
 	double snowdepth;
 	double pressure;
