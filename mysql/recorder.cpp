@@ -101,7 +101,10 @@ int recorder::init(OBJECT *parent)
 		exception("parent is not set");
 	target.set_object(get_parent());
 	char propname[64]="", propunit[64]="";
-	switch ( sscanf(get_property(),"%[^[][%[^]]",propname,propunit) ) {
+	if ( strchr(get_property(),',')!=NULL )
+		gl_warning("only first field in mysql recorder '%s' property list '%s' is used; additional fields are ignored", (const char*)get_name(), (const char*)get_property());
+
+	switch ( sscanf(get_property(),"%[A-Za-z0-9_.][%[^]]",propname,propunit) ) {
 	case 2:
 		if ( !unit.set_unit(propunit) )
 			exception("property '%s' has an invalid unit", get_property());
