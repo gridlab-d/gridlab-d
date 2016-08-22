@@ -247,9 +247,9 @@ char *database::get_sqltype(gld_property &prop)
 		return "CHAR(32)";
 	case PT_enumeration:
 	case PT_char256:
-		return "CHAR(256)";
+		return "TEXT(256)";
 	case PT_char1024:
-		return "CHAR(1024)";
+		return "TEXT(1024)";
 	case PT_complex:
 		return "CHAR(40)";
 	case PT_set:
@@ -301,7 +301,39 @@ char *database::get_sqldata(char *buffer, size_t size, gld_property &prop, doubl
 			return buffer;
 		}
 	}
-	return prop.to_string(buffer,size) ? buffer : NULL;
+	char tmp[65536];
+	if ( prop.to_string(tmp,sizeof(tmp))<size )
+		sprintf(buffer,"'%s'",tmp);
+	else
+		strcpy(buffer,"NULL");
+	return buffer;
+}
+
+char *database::get_sqldata(char *buffer, size_t size, gld_property &prop, gld_unit *unit)
+{
+	switch ( prop.get_type() ) {
+	case PT_double:
+	case PT_random:
+	case PT_loadshape:
+	case PT_enduse:
+		if ( unit!=NULL && unit->is_valid() && prop.get_unit()!=unit )
+		{
+			double value = prop.get_double((UNIT*)unit);
+			if ( isnan(value) )
+				sprintf(buffer,"%s","NULL");
+			else
+				sprintf(buffer,"%g",value);
+		}
+		else
+			sprintf(buffer,"%g",prop.get_double());
+		return buffer;
+	}
+	char tmp[65536];
+	if ( prop.to_string(tmp,sizeof(tmp))<size )
+		sprintf(buffer,"'%s'",tmp);
+	else
+		strcpy(buffer,"NULL");
+	return buffer;
 }
 
 bool database::query(char *fmt,...)
@@ -313,6 +345,7 @@ bool database::query(char *fmt,...)
 	va_end(ptr);
 
 	// query mysql
+	gl_debug("%s->query[%s]", get_name(), command);
 	if ( mysql_query(mysql,command)!=0 )
 		exception("%s->query[%s] failed - %s", get_name(), command, mysql_error(mysql));
 	else if ( get_options()&DBO_SHOWQUERY )

@@ -5,6 +5,7 @@
 
 #ifdef HAVE_MYSQL
 
+#include <time.h>
 #include "database.h"
 
 EXPORT_CREATE(recorder);
@@ -13,6 +14,22 @@ EXPORT_COMMIT(recorder);
 
 CLASS *recorder::oclass = NULL;
 recorder *recorder::defaults = NULL;
+using namespace std;
+
+vector<string> split(char* str, const char* delim)
+{
+    char* saveptr;
+    char* token = strtok_r(str,delim,&saveptr);
+
+    vector<string> result;
+
+    while(token != NULL)
+    {
+        result.push_back(token);
+        token = strtok_r(NULL,delim,&saveptr);
+    }
+    return result;
+}
 
 recorder::recorder(MODULE *module)
 {
@@ -36,8 +53,8 @@ recorder::recorder(MODULE *module)
 			PT_double,"interval[s]",get_interval_offset(),PT_DESCRIPTION,"sampling interval",
 			PT_object,"connection",get_connection_offset(),PT_DESCRIPTION,"database connection",
 			PT_set,"options",get_options_offset(),PT_DESCRIPTION,"SQL options",
-				PT_KEYWORD,"PURGE",(int64)MO_DROPTABLES,PT_DESCRIPTION,"flag to drop tables before creation",
-				PT_KEYWORD,"UNITS",(int64)MO_USEUNITS,PT_DESCRIPTION,"include units in column names",
+				PT_KEYWORD,"PURGE",(set)MO_DROPTABLES,PT_DESCRIPTION,"flag to drop tables before creation",
+				PT_KEYWORD,"UNITS",(set)MO_USEUNITS,PT_DESCRIPTION,"include units in column names",
 			NULL)<1){
 				char msg[256];
 				sprintf(msg, "unable to publish properties in %s",__FILE__);
@@ -52,6 +69,8 @@ int recorder::create(void)
 {
 	memcpy(this,defaults,sizeof(*this));
 	db = last_database;
+	strcpy(datetime_fieldname,"t");
+	strcpy(recordid_fieldname,"id");
 	return 1; /* return 1 on success, 0 on failure */
 }
 
@@ -96,38 +115,56 @@ int recorder::init(OBJECT *parent)
 			exception("mode '%s' is not valid for a recorder", (const char*)mode);
 	}
 
-	// connect the target property
-	if ( get_parent()==NULL )
-		exception("parent is not set");
-	target.set_object(get_parent());
-	char propname[64]="", propunit[64]="";
-	if ( strchr(get_property(),',')!=NULL )
-		gl_warning("only first field in mysql recorder '%s' property list '%s' is used; additional fields are ignored", (const char*)get_name(), (const char*)get_property());
-
-	switch ( sscanf(get_property(),"%[A-Za-z0-9_.][%[^]]",propname,propunit) ) {
-	case 2:
-		if ( !unit.set_unit(propunit) )
-			exception("property '%s' has an invalid unit", get_property());
-		// drop through
-	case 1:
-		strncpy(field,propname,sizeof(field)-1);
-		target.set_property(propname);
-		scale = 1.0;
-		if ( unit.is_valid() && target.get_unit()!=NULL )
+	// connect the target properties
+	vector<string> property_specs = split(get_property(), ", \t;");
+	char property_list[65536]="";
+	for ( size_t n = 0 ; n < property_specs.size() ; n++ )
+	{
+		char buffer[1024];
+		strcpy(buffer,(const char*)property_specs[n].c_str());
+		vector<string> spec = split(buffer,"[]");
+		if ( spec.size()>0 )
 		{
-			target.get_unit()->convert(unit,scale);
-			sprintf(field,"%s[%s]",propname,propunit);
+			strcpy(buffer,(const char*)spec[0].c_str());
+			gld_property prop;
+			if ( get_parent()==NULL )
+				prop = gld_property(buffer);
+			else
+				prop = gld_property(get_parent(),buffer);
+			if ( prop.get_object()==NULL )
+			{
+				if ( get_parent()==NULL )
+					exception("parent object is not set");
+				prop = gld_property(get_parent(),buffer);
+			}
+			if ( !prop.is_valid() )
+				exception("property %s is not valid", buffer);
+
+			property_target.push_back(prop);
+			gl_debug("adding field from property '%s'", buffer);
+			double scale = 1.0;
+			gld_unit unit;
+			if ( spec.size()>1 )
+			{
+				char buffer[1024];
+				strcpy(buffer,(const char*)spec[1].c_str());
+				unit = gld_unit(buffer);
+			}
+			else if ( prop.get_unit()!=NULL && (options&MO_USEUNITS) )
+				unit = *prop.get_unit();
+			property_unit.push_back(unit);
+			n_properties++;
+			char tmp[128];
+			if ( unit.is_valid() )
+				sprintf(tmp,"`%s[%s]` %s, ", prop.get_name(), unit.get_name(), db->get_sqltype(prop));
+			else
+				sprintf(tmp,"`%s` %s, ", prop.get_name(), db->get_sqltype(prop));
+			strcat(property_list,tmp);
 		}
-		else if ( propunit[0]=='\0' && options&MO_USEUNITS && target.get_unit() )
-			sprintf(field,"%s[%s]",propname,target.get_unit()->get_name());
-		break;
-	default:
-		exception("property '%s' is not valid", get_property());
-		break;
 	}
 
 	// check for table existence and create if not found
-	if ( target.is_valid() )
+	if ( n_properties>0 )
 	{
 		// drop table if exists and drop specified
 		if ( db->table_exists(get_table()) )
@@ -142,12 +179,16 @@ int recorder::init(OBJECT *parent)
 			if ( !(options&MO_NOCREATE) )
 			{
 				if ( !db->query("CREATE TABLE IF NOT EXISTS `%s` ("
-					"id INT AUTO_INCREMENT PRIMARY KEY, "
-					"t TIMESTAMP, "
-					"`%s` %s, "
-					"INDEX i_t (t) "
+					"`%s` INT AUTO_INCREMENT PRIMARY KEY, "
+					"`%s` TIMESTAMP, "
+					"%s"
+					"INDEX `i_%s` (`%s`) "
 					")", 
-					get_table(), (const char*)field, db->get_sqltype(target)) )
+					get_table(),
+					(const char*)recordid_fieldname,
+					(const char*)datetime_fieldname,
+					property_list,
+					(const char*)datetime_fieldname, (const char*)datetime_fieldname))
 					exception("unable to create table '%s' in schema '%s'", get_table(), db->get_schema());
 				else
 					gl_verbose("table %s created ok", get_table());
@@ -167,7 +208,7 @@ int recorder::init(OBJECT *parent)
 	}
 	else
 	{
-		exception("property '%s' is not valid", get_property());
+		exception("no properties specified");
 		return 0;
 	}
 
@@ -184,38 +225,11 @@ int recorder::init(OBJECT *parent)
 		// read trigger condition
 		if ( sscanf(trigger,"%[<>=!]%s",compare_op,compare_val)==2 )
 		{
-			// rescale comparison value if necessary
-			if ( scale!=1.0 )
-				sprintf(compare_val,"%g",atof(compare_val)/scale);
-
 			// enable trigger and suspend data collection
 			trigger_on=true;
 			enabled=false;
+			gl_debug("%s: trigger '%s' enabled", get_name(), get_trigger());
 		}
-	}
-
-	// prepare insert statement
-	char statement[1024];
-	int len = sprintf(statement,"INSERT INTO `%s` (`%s`) VALUES ('?')", get_table(), (const char*)field);
-	gl_verbose("preparing statement '%s'", statement);
-	insert = mysql_stmt_init(db->get_handle());
-	if ( !db->get_sqlbind(value,target,&stmt_error) )
-	{
-		gl_warning("unable to bind target '%s'", target.get_name());
-		mysql_stmt_close(insert);
-		insert = NULL;
-	}
-	else if ( mysql_stmt_prepare(insert,statement,len)!=0 )
-	{
-		gl_warning("insert statement '%s' prepare failed (error='%s'), using slow 'INSERT' method", statement, mysql_stmt_error(insert));
-		mysql_stmt_close(insert);
-		insert = NULL;
-	}
-	else if ( mysql_stmt_bind_param(insert,&value)!=0 )
-	{
-		gl_warning("insert statement '%s' bind failed (error='%s'), using slow 'INSERT' method", statement, mysql_stmt_error(insert));
-		mysql_stmt_close(insert);
-		insert = NULL;
 	}
 
 	return 1;
@@ -238,97 +252,56 @@ TIMESTAMP recorder::commit(TIMESTAMP t0, TIMESTAMP t1)
 	if ( trigger_on )
 	{
 		// trigger condition
-		if ( target.compare(compare_op,compare_val) )
+		if ( property_target[0].compare(compare_op,compare_val) )
 		{
 			// disable trigger and enable data collection
 			trigger_on = false;
 			enabled = true;
 		}
-#ifdef _DEBUG
+	}
+	else if ( trigger[0]=='\0' )
+		enabled = true;
+
+	// check sampling interval
+	gl_debug("%s: interval=%.0f, clock=%lld", get_name(), interval, gl_globalclock);
+	if ( interval>0 )
+	{
+		if ( gl_globalclock%((TIMESTAMP)interval)!=0 )
+			return TS_NEVER;
 		else
-		{
-			char buffer[1024];
-			target.to_string(buffer,sizeof(buffer));
-			gl_verbose("trigger %s.%s not activated - '%s %s %s' did not pass", get_name(), get_property(), buffer, compare_op,compare_val);
-		}
-#endif
+			gl_verbose("%s: sampling time has arrived", get_name());
 	}
 
 	// collect data
 	if ( enabled )
 	{
-		// convert data
-		bool have_data = false;
-		if ( target.is_double() )
-		{
-			real = target.get_double()*scale;
-			gl_verbose("%s sampling: %s=%g", get_name(), target.get_name(), real);
-			have_data = true;
-		}
-		else if ( target.is_integer() ) 
-		{
-			integer = target.get_integer();
-			gl_verbose("%s sampling: %s=%lli", get_name(), target.get_name(), integer);
-			have_data = true;
-		}
-		else if ( db->get_sqldata(string,sizeof(string)-1,target) )
-		{
-			gl_verbose("%s sampling: %s='%s'", get_name(), target.get_name(), (const char*)string);
-			have_data = true;
-		}
-		else
-		{
-			gl_verbose("%s sampling: unable to sample %s", get_name(), target.get_name());
-			have_data = false;
-		}
 
-		if ( have_data )
+		char fieldlist[65536] = "", valuelist[65536] = "";
+		size_t fieldlen=0, valuelen = 0;
+		for ( size_t n = 0 ; n < property_target.size() ; n++ )
 		{
-			// use prepared statement if possible
-			if ( insert )
-			{
-				if ( mysql_stmt_execute(insert)!=0 || stmt_error || mysql_stmt_affected_rows(insert)==0 )
-				{
-					int64 n = mysql_stmt_affected_rows(insert);
-					gl_warning("unable to execute insert statement for target '%s' (%s) - reverting to slower INSERT", target.get_name(), mysql_stmt_error(insert));
-					mysql_stmt_close(insert);
-					insert = NULL;
-
-					// if insert totally failed to add the row
-					if ( n==0 )
-						goto Insert;
-				}
-			}
-
-			// use slower INSERT statement
+			char buffer[1024] = "NULL";
+			if ( property_unit[n].is_valid() )
+				fieldlen += sprintf(fieldlist+fieldlen,", `%s[%s]`", property_target[n].get_name(), property_unit[n].get_name());
 			else
-			{
-Insert:
-				// send data
-				if ( target.is_double() )
-				{
-					db->query("INSERT INTO `%s` (t, `%s`) VALUES (from_unixtime('%"FMT_INT64"d'), '%.8g')",
-						get_table(), (const char*)field, db->convert_to_dbtime(gl_globalclock), real);
-				}
-				else if ( target.is_integer() )
-				{
-					db->query("INSERT INTO `%s` (t, `%s`) VALUES (from_unixtime('%"FMT_INT64"d'), '%lli')",
-						get_table(), (const char*)field, db->convert_to_dbtime(gl_globalclock), integer);
-				}
-				else
-					db->query("INSERT INTO `%s` (t, `%s`) VALUES (from_unixtime('%"FMT_INT64"d'), '%s')",
-						get_table(), (const char*)field, db->convert_to_dbtime(gl_globalclock), (const char*)string);
-			}
+				fieldlen += sprintf(fieldlist+fieldlen,", `%s`", property_target[n].get_name());
+			db->get_sqldata(buffer, sizeof(buffer), property_target[n], &property_unit[n]);
+			valuelen += sprintf(valuelist+valuelen,", %s", buffer);
+		}
+		db->query("INSERT INTO `%s` (`%s`%s) VALUES (from_unixtime('%"FMT_INT64"d')%s)",
+			get_table(), (const char*)datetime_fieldname, fieldlist, db->convert_to_dbtime(gl_globalclock),  valuelist);
 
-			// check limit
-			if ( get_limit()>0 && db->get_last_index()>=get_limit() )
-			{
-				// shut off recorder
-				enabled=false;
-				gl_verbose("table '%s' size limit %d reached", get_table(), get_limit());
-			}
+
+		// check limit
+		if ( get_limit()>0 && db->get_last_index()>=get_limit() )
+		{
+			// shut off recorder
+			enabled=false;
+			gl_verbose("table '%s' size limit %d reached", get_table(), get_limit());
 		}
 	}
+	else
+		gl_debug("%s: sampling is not enabled", get_name());
 	
 	return TS_NEVER;
 }

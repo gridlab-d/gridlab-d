@@ -10,6 +10,9 @@
 #define MO_USEUNITS		0x0002	// add units to column names
 #define MO_NOCREATE		0x0004	// do not automatically create tables
 
+#include <string>
+#include <vector>
+
 class recorder : public gld_object {
 public:
 	GL_STRING(char1024,property);
@@ -20,22 +23,17 @@ public:
 	GL_ATOMIC(double,interval);
 	GL_ATOMIC(object,connection);
 	GL_ATOMIC(set,options);
+	GL_ATOMIC(char32,datetime_fieldname);
+	GL_ATOMIC(char32,recordid_fieldname);
 private:
 	bool enabled;
-	gld_property target;
-	gld_unit unit;
-	char256 field;
-	double scale;
 	database *db;
-	MYSQL_STMT *insert;
-	MYSQL_BIND value;
-	double real;
-	int64 integer;
-	char1024 string;
-	my_bool stmt_error;
 	bool trigger_on;
 	char compare_op[16];
 	char compare_val[32];
+	size_t n_properties;
+	std::vector<gld_property> property_target;
+	std::vector<gld_unit> property_unit;
 public:
 	inline bool get_trigger_on(void) { return trigger_on; };
 	inline bool get_enabled(void) { return enabled; };
