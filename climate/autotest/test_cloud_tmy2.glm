@@ -89,7 +89,7 @@ object solar {
 	SOLAR_POWER_MODEL FLATPLATE;
 	latitude 46.626490;
 	longitude -120.511097;
-		object double_assert {
+	object double_assert {
 		target Insolation;
 		within 0.01;
 		object player {
