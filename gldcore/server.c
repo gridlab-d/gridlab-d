@@ -423,6 +423,7 @@ static void http_mime(HTTPCNX *http, char *path)
 	} map[] = {
 		{".png","image/png"},
 		{".js","text/javascript"},
+		{".kml","text/kml"},
 	};
 	int n;
 	for ( n=0 ; n<sizeof(map)/sizeof(map[0]) ; n++ )
@@ -576,27 +577,69 @@ int http_xml_request(HTTPCNX *http,char *uri)
 			return 0;
 		}
 
-		/* post the current value */
-		if ( !object_get_value_by_name(obj,arg2,buffer,sizeof(buffer)) )
+		if ( strcmp(arg2,"*")==0 )
 		{
-			output_error("object '%s' property '%s' not found", arg1, arg2);
-			return 0;
-		}
+			PROPERTY *prop;
+			char buffer[1024];
+			http_format(http,"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n");
+			http_format(http,"<properties>\n");
+#define PROPERTY(N,F,V) http_format(http,"\t<property>\n\t\t<name>"N"</name>\n\t\t<value>"F"</value>\n\t</property>\n", V)
+			PROPERTY("id","%d",obj->id);
+			PROPERTY("class","%s",obj->oclass->name);
+			if ( obj->name ) PROPERTY("name","%s",object_name(obj,buffer,sizeof(buffer)));
+			if ( strlen(obj->groupid)>0 ) PROPERTY("groupid","%s",obj->groupid);
+			if ( obj->parent ) PROPERTY("parent","%s",object_name(obj->parent,buffer,sizeof(buffer)));
+			PROPERTY("rank","%d",obj->rank);
+			PROPERTY("clock","%lld",obj->clock);
+			if ( obj->valid_to < TS_NEVER ) PROPERTY("valid_to","%lld",obj->valid_to);
+			if ( obj->schedule_skew ) PROPERTY("schedule_skew","%lld",obj->schedule_skew);
+			if ( !isnan(obj->latitude) ) PROPERTY("latitude","%.6f",obj->latitude);
+			if ( !isnan(obj->longitude) ) PROPERTY("longitude","%.6f",obj->longitude);
+			if ( obj->in_svc > TS_ZERO ) {
+				PROPERTY("in_svc","%lld",obj->in_svc);
+				if ( obj->in_svc_micro > 0 ) PROPERTY("in_svc_micro","%f",obj->in_svc_micro);
+			}
+			if ( obj->out_svc< TS_NEVER )
+			{
+				PROPERTY("out_svc","%lld",obj->out_svc);
+				if ( obj->out_svc_micro > 0 ) PROPERTY("out_svc_micro","%f",obj->out_svc_micro);
+			}
+			if ( obj->heartbeat > 0 ) PROPERTY("heartbeat","%lld",obj->heartbeat);
+			if ( obj->flags > 0 ) PROPERTY("flags","0x%lx",obj->flags);
 
-		/* assignment, if any */
-		if ( value && !object_set_value_by_name(obj,arg2,value) )
+			for ( prop=obj->oclass->pmap; prop!=NULL; prop=(prop->next?prop->next:(prop->oclass->parent?prop->oclass->parent->pmap:NULL)) )
+			{
+				http_format(http,"\t<property>\n\t\t<name>%s</name>\n",prop->name);
+				http_format(http,"\t\t<value>%s</value>\n\t</property>\n",object_get_value_by_name(obj,prop->name,buffer,sizeof(buffer))>0?buffer:"");
+			}
+#undef PROPERTY
+			http_format(http,"</properties\n");
+		}
+		else
 		{
-			output_error("cannot set object '%s' property '%s' to '%s'", arg1, arg2, value);
-			return 0;
-		}
 
-		/* post the response */
-		http_format(http,"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<property>\n");
-		http_format(http,"\t<object>%s</object>\n", arg1);
-		http_format(http,"\t<name>%s</name>\n", arg2);
-		http_format(http,"\t<value>%s</value>\n", http_unquote(buffer));
-		/* TODO add property type info */
-		http_format(http,"</property>\n");
+			/* post the current value */
+			if ( !object_get_value_by_name(obj,arg2,buffer,sizeof(buffer)) )
+			{
+				output_error("object '%s' property '%s' not found", arg1, arg2);
+				return 0;
+			}
+
+			/* assignment, if any */
+			if ( value && !object_set_value_by_name(obj,arg2,value) )
+			{
+				output_error("cannot set object '%s' property '%s' to '%s'", arg1, arg2, value);
+				return 0;
+			}
+
+			/* post the response */
+			http_format(http,"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n");
+			http_format(http,"<property>\n\t<object>%s</object>\n", arg1);
+			http_format(http,"\t<name>%s</name>\n", arg2);
+			http_format(http,"\t<value>%s</value>\n", http_unquote(buffer));
+			/* TODO add property type info */
+			http_format(http,"</property>\n");
+		}
 		http_type(http,"text/xml");
 		return 1;
 
@@ -1124,6 +1167,7 @@ int http_kml_request(HTTPCNX *http, char *action)
 {
 //	static long long lock;
 //	wlock(&lock);
+	http_type(http,"text/kml");
 	kml_dump(action);
 //	wunlock(&lock);
 	return http_copy(http,"KML",action);
