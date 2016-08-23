@@ -72,16 +72,16 @@ int kml_document(FILE *fp)
 			else if (openclass==NULL)
 			{
 				kml_write("  <Folder><name>Class %s</name>\n", oclass->name);
-				kml_write("    <description>Module %s",oclass->module->name);
-				if (oclass->module->minor!=0 || oclass->module->major!=0)
+				kml_write("    <description>Module %s",oclass->module ? oclass->module->name : "(runtime)");
+				if ( oclass->module!=NULL )
 					kml_write(" (V%d.%02d)",oclass->module->major,oclass->module->minor);
-				kml_write("</description>\n",oclass->module->name);
+				kml_write("</description>\n");
 				openclass=oclass;
 			}			
 
 			/* module overrides KML output */
 			mod = (MODULE*)(obj->oclass->module);
-			if (mod->kmldump!=NULL)
+			if (mod!=NULL && mod->kmldump!=NULL)
 				(*(mod->kmldump))(kml_write,obj);
 			else if (has_location)
 			{

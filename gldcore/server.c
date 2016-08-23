@@ -1117,6 +1117,17 @@ int http_get_rt(HTTPCNX *http,char *uri)
 	return http_copy(http,"runtime",fullpath);
 }
 
+/** Collect a KML documnent
+    @returns non-zero on success, 0 on failure (errno set)
+ **/
+int http_kml_request(HTTPCNX *http, char *action)
+{
+//	static long long lock;
+//	wlock(&lock);
+	kml_dump(action);
+//	wunlock(&lock);
+	return http_copy(http,"KML",action);
+}
 /** Process an incoming action request
 	@returns non-zero on success, 0 on failure (errno set)
  **/
@@ -1305,6 +1316,7 @@ void *http_response(void *ptr)
 				{"/r/",			http_run_r,				HTTP_OK, HTTP_NOTFOUND},
 				{"/scilab/",	http_run_scilab,		HTTP_OK, HTTP_NOTFOUND},
 				{"/octave/",	http_run_octave,		HTTP_OK, HTTP_NOTFOUND},
+				{"/kml/", 		http_kml_request,		HTTP_OK, HTTP_NOTFOUND},
 			};
 			int n;
 			for ( n=0 ; n<sizeof(map)/sizeof(map[0]) ; n++ )
@@ -1317,32 +1329,12 @@ void *http_response(void *ptr)
 					else
 						http_status(http,map[n].failure);
 					http_send(http);
-					goto Next;
+					break;
 				}
 			}
 		}
-		/* deprecated XML usage */
-		if (strncmp(uri,"/",1)==0 )
-		{
-			if ( http_xml_request(http,uri+1) )
-			{	
-				output_warning("deprecate XML usage in request '%s'", uri);
-				http_status(http,HTTP_OK);
-			}
-			else
-				http_status(http,HTTP_NOTFOUND);
-			http_send(http);
-		}
-		else 
-		{
-			http_status(http,HTTP_NOTFOUND);
-			http_format(http,HTTP_NOTFOUND);
-			http_type(http,"text/html");
-			http_send(http);
-		}
 
 		/* keep-alive not desired*/
-Next:
 		if (connection && stricmp(connection,"close")==0)
 			break;
 	}
