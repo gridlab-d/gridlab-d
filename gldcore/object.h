@@ -72,6 +72,7 @@ typedef struct s_object_list {
 	char32 groupid;
 	struct s_object_list *next; /**< next object in list */
 	struct s_object_list *parent; /**< object's parent; determines rank */
+	unsigned int child_count; /**< number of object that have this object as a parent */
 	OBJECTRANK rank; /**< object's rank */
 	TIMESTAMP clock; /**< object's private clock */
 	TIMESTAMP valid_to;	/**< object's valid-until time */
@@ -340,6 +341,7 @@ TIMESTAMP object_commit(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2);
 STATUS object_finalize(OBJECT *obj);
 int object_set_dependent(OBJECT *obj, OBJECT *dependent);
 int object_set_parent(OBJECT *obj, OBJECT *parent);
+unsigned int object_get_child_count(OBJECT *obj);
 void *object_get_addr(OBJECT *obj, char *name);
 PROPERTY *object_get_property(OBJECT *obj, PROPERTYNAME name, PROPERTYSTRUCT *part);
 PROPERTY *object_prop_in_class(OBJECT *obj, PROPERTY *prop);

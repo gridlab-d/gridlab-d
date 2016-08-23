@@ -707,6 +707,7 @@ struct s_object_list {
 	char32 groupid;
 	OBJECT *next; /**< next object in list */
 	OBJECT *parent; /**< object's parent; determines rank */
+	unsigned int child_count; /**< number of object that have this object as a parent */
 	OBJECTRANK rank; /**< object's rank */
 	TIMESTAMP clock; /**< object's private clock */
 	TIMESTAMP valid_to;	/**< object's valid-until time */

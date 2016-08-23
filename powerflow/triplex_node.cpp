@@ -132,16 +132,16 @@ int triplex_node::create(void)
 
 int triplex_node::init(OBJECT *parent)
 {
-	if ( !(has_phase(PHASE_S)) )
-	{
-		OBJECT *obj = OBJECTHDR(this);
-		gl_warning("Init() triplex_node (name:%s, id:%d): Phases specified did not include phase S. Adding phase S.", obj->name,obj->id);
-		/* TROUBLESHOOT
-		Triplex nodes and meters require a single phase and a phase S component (for split-phase).
-		This particular triplex object did not include it, so it is being added.
-		*/
-		phases = (phases | PHASE_S);
-	}
+//	if ( !(has_phase(PHASE_S)) )
+//	{
+//		OBJECT *obj = OBJECTHDR(this);
+//		gl_warning("Init() triplex_node (name:%s, id:%d): Phases specified did not include phase S. Adding phase S.", obj->name,obj->id);
+//		/* TROUBLESHOOT
+//		Triplex nodes and meters require a single phase and a phase S component (for split-phase).
+//		This particular triplex object did not include it, so it is being added.
+//		*/
+//		phases = (phases | PHASE_S);
+//	}
 	if ((pub_shunt[0] == 0) && (impedance[0] != 0))
 		shunt[0] = complex(1.0,0)/impedance[0];
 

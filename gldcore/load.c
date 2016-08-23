@@ -1009,12 +1009,30 @@ static int resolve_object(UNRESOLVED *item, char *filename)
 	OBJECT *obj;
 	char classname[65];
 	char propname[65];
+	char target[256];
 	OBJECTNUM id = 0;
 	char op[2];
 	char star;
 
 	if(0 == strcmp(item->id, "root"))
 		obj = NULL;
+	else if (sscanf(item->id,"childless:%[^=]=%s",propname,target))
+	{
+		for ( obj = object_get_first() ; obj != NULL ; obj = object_get_next(obj) )
+		{
+			char value[1024];
+			if ( object_get_child_count(obj)==0 && object_get_value_by_name(obj,propname,value,sizeof(value))!=NULL && strcmp(value,target)==0 )
+			{
+				object_set_parent(*(OBJECT**)(item->ref),obj);
+				break;
+			}
+		}
+		if ( obj==NULL )
+		{
+			output_error_raw("%s(%d): no childless objects found in %s=%s (parent unresolved)", filename, item->line, propname, target);
+			return FAILED;
+		}
+	}
 	else if (sscanf(item->id,"%64[^.].%64[^:]:",classname,propname)==2)
 	{
 		char *value = strchr(item->id,':');
@@ -3958,6 +3976,8 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 			OBJECT *subobj=NULL;
 			current_object = obj; /* object context */
 			current_module = obj->oclass->module; /* module context */
+			char targetprop[1024];
+			char targetvalue[1024];
 			if (prop!=NULL && prop->ptype==PT_object && TERM(object_block(HERE,NULL,&subobj)))
 			{
 				char objname[64];
@@ -3967,6 +3987,51 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				else
 				{
 					output_error_raw("%s(%d): unable to link subobject to property '%s'", filename, linenum,propname);
+					REJECT;
+				}
+			}
+			else if ( prop==NULL && strcmp(propname,"parent")==0
+					&& (WHITE,LITERAL("childless")) && (WHITE,LITERAL(":"))
+					&& (WHITE,TERM(name(HERE,targetprop,sizeof(targetprop))))
+					&& (WHITE,LITERAL("="))
+					&& (WHITE,TERM(dashed_name(HERE,targetvalue,sizeof(targetvalue)))) )
+			{
+				OBJECT *target;
+				for ( target = object_get_first() ; target != NULL ; target = object_get_next(target) )
+				{
+					char value[1024];
+					if ( object_get_child_count(target)==0 && object_get_value_by_name(target,targetprop,value,sizeof(value))!=NULL && strcmp(value,targetvalue)==0 )
+					{
+						object_set_parent(obj,target);
+						break;
+					}
+				}
+				if ( obj==NULL )
+				{
+					output_error_raw("%s(%d): no childless objects found in %s=%s (immediate)", filename, linenum, targetprop, targetvalue);
+					REJECT;
+				}
+				else
+				{
+					ACCEPT;
+				}
+			}
+			else if (prop!=NULL && LITERAL("inherit"))
+			{
+				char value[1024];
+				if ( obj->parent==NULL )
+				{
+					output_error_raw("%s(%d): cannot inherit from an parent that hasn't been resolved yet or isn't specified", filename, linenum);
+					REJECT;
+				}
+				else if ( object_get_value_by_name(obj->parent,propname,value,sizeof(value))==NULL )
+				{
+					output_error_raw("%s(%d): unable to get value of inherit property '%s'", filename, linenum, propname);
+					REJECT;
+				}
+				if ( object_set_value_by_name(obj,propname,value)<=0 )
+				{
+					output_error_raw("%s(%d): unable to set value of inherit property '%s'", filename, linenum, propname);
 					REJECT;
 				}
 			}

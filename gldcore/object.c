@@ -330,6 +330,7 @@ OBJECT *object_create_single(CLASS *oclass){ /**< the class of the object */
 	obj->next = NULL;
 	obj->name = NULL;
 	obj->parent = NULL;
+	obj->child_count = 0;
 	obj->rank = 0;
 	obj->clock = 0;
 	obj->latitude = QNAN;
@@ -1337,9 +1338,15 @@ int object_set_parent(OBJECT *obj, /**< the object to set */
 		return -1;
 	}
 	obj->parent = parent;
+	obj->child_count++;
 	if(parent!=NULL)
 		return set_rank(parent,obj->rank,NULL);
 	return obj->rank;
+}
+
+unsigned int object_get_child_count(OBJECT *obj)
+{
+	return obj->child_count;
 }
 
 /** Set the dependent of an object.  This increases
