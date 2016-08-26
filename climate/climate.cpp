@@ -991,7 +991,7 @@ int climate::get_fuzzy_cloud_value_for_location(double latitude, double longitud
 	double value = fuzzy_cloud_pattern[0][pixel_x][pixel_y];
 	*cloud = fuzzy_cloud_pattern[0][pixel_x][pixel_y];
 	//Debugging and validation
-	write_out_cloud_pattern('F');
+//	write_out_cloud_pattern('F');
 //	write_out_cloud_pattern('B');
 //	gl_output("%i,%f,%f,%i,%i,%f", prev_NTime, latitude, longitude, pixel_x, pixel_y,*cloud); //fuzzy clouds
 //	gl_output("%f,%i,%f,%i", latitude, pixel_x, longitude, pixel_y);
@@ -2136,7 +2136,7 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 			double Pa = 1.; // e^-(alpha*M)
 			double PRPA = 1.041-0.15*sqrt((p*0.00949)/M);
 			global_attenuation = std::max(0.0,(PRPA-aw)*Pa);
-			update_cloud_pattern(dt);
+			update_cloud_pattern(t0 - prev_NTime);
 			prev_NTime = t0;
 		}
 
