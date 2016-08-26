@@ -25,6 +25,7 @@ public:
 	double solar_dir;
 	double solar_diff;
 	double solar_global;
+  double global_horizontal_extra;
 	double wind_speed;
 	double wind_dir;
 	double opq_sky_cov;

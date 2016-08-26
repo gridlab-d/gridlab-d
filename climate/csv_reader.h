@@ -68,8 +68,8 @@ public:
 	enumeration status;
 
 	int open(const char *file);
-	TIMESTAMP get_data(TIMESTAMP t0, double *temp, double *humid, double *direct, double *diffuse, double *global, double *wind, double *winddir, double *opaque, double *rain, double *snow, double *pressure);
-	TIMESTAMP get_data(TIMESTAMP t0, double *temp, double *humid, double *direct, double *diffuse, double *global, double *wind, double *rain, double *snow, double *pressure);
+	TIMESTAMP get_data(TIMESTAMP t0, double *temp, double *humid, double *direct, double *diffuse, double *global, double *extra_global, double *wind, double *winddir, double *opaque, double *rain, double *snow, double *pressure);
+	TIMESTAMP get_data(TIMESTAMP t0, double *temp, double *humid, double *direct, double *diffuse, double *global, double *extra_global, double *wind, double *rain, double *snow, double *pressure);
 };
 #endif
 

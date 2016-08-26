@@ -31,6 +31,7 @@ weather::weather(MODULE *module){
 			PT_double,"solar_diff[W/sf]",PADDR(solar_diff),
 			PT_double,"solar_diffuse[W/sf]",PADDR(solar_diff),
 			PT_double,"solar_global[W/sf]",PADDR(solar_global),
+      PT_double,"global_horizontal_extra[W/sf]",PADDR(global_horizontal_extra),
 			PT_double,"wind_speed[mph]", PADDR(wind_speed),
 			PT_double,"wind_dir[deg]", PADDR(wind_dir),
 			PT_double,"opq_sky_cov[pu]",PADDR(opq_sky_cov),

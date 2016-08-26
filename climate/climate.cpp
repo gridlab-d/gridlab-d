@@ -544,6 +544,7 @@ climate::climate(MODULE *module)
 			PT_double,"solar_direct[W/sf]",PADDR(solar_direct),
 			PT_double,"solar_diffuse[W/sf]",PADDR(solar_diffuse),
 			PT_double,"solar_global[W/sf]",PADDR(solar_global),
+			PT_double,"extraterrestrial_global_horizontal[W/sf]",PADDR(global_horizontal_extra),
 			PT_double,"extraterrestrial_direct_normal[W/sf]",PADDR(direct_normal_extra),
 			PT_double,"pressure[mbar]",PADDR(pressure),
 			PT_double,"wind_speed[m/s]", PADDR(wind_speed),
@@ -947,12 +948,17 @@ int climate::get_solar_for_location(double latitude, double longitude, double *d
 	//int cloud = 0; //binary cloud
 	double cloud = 0; //fuzzy cloud
 	double f;
+	double test;
+	double sol_z;
+
 	switch (get_cloud_model()) {
 		case CM_CUMULUS:
 			retval = get_fuzzy_cloud_value_for_location(latitude, longitude, &cloud); //Fuzzy cloud pattern evaluation
 			f = cloud * (1.-cloud_opacity);
 			//retval = get_binary_cloud_value_for_location(latitude, longitude, &cloud); //Binary cloud pattern evaluation
 			//f = cloud ? 1.-cloud_opacity : 1.;
+			test = get_global_horizontal_extra();
+			sol_z = get_solar_zenith();
 			*direct = f*global_attenuation*get_global_horizontal_extra();
 			*diffuse = get_solar_diffuse();
 			*global = (*direct)*std::max(cos(get_solar_zenith()),0.0) + *diffuse;
@@ -985,7 +991,7 @@ int climate::get_fuzzy_cloud_value_for_location(double latitude, double longitud
 	double value = fuzzy_cloud_pattern[0][pixel_x][pixel_y];
 	*cloud = fuzzy_cloud_pattern[0][pixel_x][pixel_y];
 	//Debugging and validation
-	//write_out_cloud_pattern('C');
+	write_out_cloud_pattern('F');
 //	write_out_cloud_pattern('B');
 //	gl_output("%i,%f,%f,%i,%i,%f", prev_NTime, latitude, longitude, pixel_x, pixel_y,*cloud); //fuzzy clouds
 //	gl_output("%f,%i,%f,%i", latitude, pixel_x, longitude, pixel_y);
@@ -1282,84 +1288,76 @@ double climate::convert_to_binary_cloud(){
 	//TIMESTAMP t1 = obj->clock;
 
 
-
-
-
-	 if (1){ //Once the GLD core linkage is working use: (last_binary_conversion_time < t1){
-   //TDH: trivially parallelizable
-		 double cloud_pattern_max = cloud_pattern[CLOUD_TILE_SIZE][CLOUD_TILE_SIZE];
-		 double cloud_pattern_min = cloud_pattern[CLOUD_TILE_SIZE][CLOUD_TILE_SIZE];
-		 //Finding max and min value
-		 for (int i = 0; i < cloud_pattern_size; i++){
-		 	for (int j = 0; j < cloud_pattern_size; j++){
-		 		if (cloud_pattern[i][j] != EMPTY_VALUE){
-					if (cloud_pattern[i][j] > cloud_pattern_max){
-						cloud_pattern_max = cloud_pattern[i][j];
-					}
-					if (cloud_pattern[i][j] < cloud_pattern_min){
-						cloud_pattern_min = cloud_pattern[i][j];
-					}
-		 		}
-		 	}
-		 }
-
-		 double cloud_pattern_range = cloud_pattern_max - cloud_pattern_min;
-		 double cut_elevation = cloud_pattern_min;
-		 int running_count = 0;
-		 double measured_coverage = 0;
-		 double step_size = 0;
-		 double max_cut_elevation = cloud_pattern_max;
-		 double min_cut_elevation = cloud_pattern_min;
-
-		 //Creating normalized cloud pattern
-		 for (int i = 0; i < cloud_pattern_size; i++){
-		 	for (int j = 0; j < cloud_pattern_size; j++){
-		 		if (cloud_pattern[i][j] != EMPTY_VALUE){
-		 			normalized_cloud_pattern[i][j] = (cloud_pattern[i][j] - cloud_pattern_min)/cloud_pattern_range;
-		 		}
-		 	}
-		 }
-
-		 do{
-			 running_count = 0;
-			 for (int i = CLOUD_TILE_SIZE; i < CLOUD_TILE_SIZE + on_screen_size; i++){
-				 for (int j = CLOUD_TILE_SIZE; j < CLOUD_TILE_SIZE + on_screen_size; j++){
-					 if (normalized_cloud_pattern[i][j] != EMPTY_VALUE && normalized_cloud_pattern[i][j] <= cut_elevation){//Values less than cut elevation are clouds
-						 running_count++;
-					 }
-				 }
-			 }
-			 measured_coverage = double(running_count)/(on_screen_size * on_screen_size); //Factor, range [0 1]
-
-			 //Calculating next cut elevation.
-			 if (measured_coverage > (opaque_sky_value + search_tolerance)){
-				 max_cut_elevation = cut_elevation;
-				 step_size = (max_cut_elevation - min_cut_elevation)/-2;
-			 }else if (measured_coverage < (opaque_sky_value - search_tolerance)){
-				 min_cut_elevation = cut_elevation;
-				 step_size = (max_cut_elevation - min_cut_elevation)/2;
-			 }
-			 cut_elevation += step_size;
-		 } while (measured_coverage < (opaque_sky_value - search_tolerance) || measured_coverage > (opaque_sky_value + search_tolerance));
-
-		 cut_elevation -= step_size; //Above loop is exited with cut_evelation pre-incremented; correcting.
-
-		 //Converting cloud_pattern to binary_cloud_pattern
-     //TDH: trivially parallelizable
-		 for (int i = 0; i < cloud_pattern_size; i++){
-			 for (int j = 0; j < cloud_pattern_size; j++){
-				 if (normalized_cloud_pattern[i][j] == EMPTY_VALUE) {
-					 binary_cloud_pattern[i][j] = EMPTY_VALUE;
-				 }else if (normalized_cloud_pattern[i][j] <= cut_elevation){
-					 binary_cloud_pattern[i][j] = 0; //Cloud
-				 }else if (normalized_cloud_pattern[i][j] > cut_elevation){
-					 binary_cloud_pattern[i][j] = 1; //Blue sky
-				 }
-			 }
-		 }
-		 return cut_elevation;
-
+	//TDH: trivially parallelizable
+	 double cloud_pattern_max = cloud_pattern[CLOUD_TILE_SIZE][CLOUD_TILE_SIZE];
+	 double cloud_pattern_min = cloud_pattern[CLOUD_TILE_SIZE][CLOUD_TILE_SIZE];
+	 //Finding max and min value
+	 for (int i = 0; i < cloud_pattern_size; i++){
+		for (int j = 0; j < cloud_pattern_size; j++){
+			if (cloud_pattern[i][j] != EMPTY_VALUE){
+				if (cloud_pattern[i][j] > cloud_pattern_max){
+					cloud_pattern_max = cloud_pattern[i][j];
+				}
+				if (cloud_pattern[i][j] < cloud_pattern_min){
+					cloud_pattern_min = cloud_pattern[i][j];
+				}
+			}
+		}
 	 }
+
+	 double cloud_pattern_range = cloud_pattern_max - cloud_pattern_min;
+	 double cut_elevation = cloud_pattern_min;
+	 int running_count = 0;
+	 double measured_coverage = 0;
+	 double step_size = 0;
+	 double max_cut_elevation = cloud_pattern_max;
+	 double min_cut_elevation = cloud_pattern_min;
+
+	 //Creating normalized cloud pattern
+	 for (int i = 0; i < cloud_pattern_size; i++){
+		for (int j = 0; j < cloud_pattern_size; j++){
+			if (cloud_pattern[i][j] != EMPTY_VALUE){
+				normalized_cloud_pattern[i][j] = (cloud_pattern[i][j] - cloud_pattern_min)/cloud_pattern_range;
+			}
+		}
+	 }
+
+	 do{
+		 cut_elevation += step_size;
+		 running_count = 0;
+		 for (int i = CLOUD_TILE_SIZE; i < CLOUD_TILE_SIZE + on_screen_size; i++){
+			 for (int j = CLOUD_TILE_SIZE; j < CLOUD_TILE_SIZE + on_screen_size; j++){
+				 if (normalized_cloud_pattern[i][j] != EMPTY_VALUE && normalized_cloud_pattern[i][j] <= cut_elevation){//Values less than cut elevation are clouds
+					 running_count++;
+				 }
+			 }
+		 }
+		 measured_coverage = double(running_count)/(on_screen_size * on_screen_size); //Factor, range [0 1]
+
+		 //Calculating next cut elevation.
+		 if (measured_coverage > (opaque_sky_value + search_tolerance)){
+			 max_cut_elevation = cut_elevation;
+			 step_size = (max_cut_elevation - min_cut_elevation)/-2;
+		 }else if (measured_coverage < (opaque_sky_value - search_tolerance)){
+			 min_cut_elevation = cut_elevation;
+			 step_size = (max_cut_elevation - min_cut_elevation)/2;
+		 }
+	 } while (measured_coverage < (opaque_sky_value - search_tolerance) || measured_coverage > (opaque_sky_value + search_tolerance));
+
+	 //Converting cloud_pattern to binary_cloud_pattern
+ //TDH: trivially parallelizable
+	 for (int i = 0; i < cloud_pattern_size; i++){
+		 for (int j = 0; j < cloud_pattern_size; j++){
+			 if (normalized_cloud_pattern[i][j] == EMPTY_VALUE) {
+				 binary_cloud_pattern[i][j] = EMPTY_VALUE;
+			 }else if (normalized_cloud_pattern[i][j] <= cut_elevation){
+				 binary_cloud_pattern[i][j] = 0; //Cloud
+			 }else if (normalized_cloud_pattern[i][j] > cut_elevation){
+				 binary_cloud_pattern[i][j] = 1; //Blue sky
+			 }
+		 }
+	 }
+	 return cut_elevation;
 
 }
 
@@ -1396,16 +1394,20 @@ void climate::convert_to_fuzzy_cloud( double cut_elevation, int num_fuzzy_layers
 		double rand_lower = (((double)(i+1)-1)/(double)num_fuzzy_layers)*cut_elevation;
 		for (int j = 0; j < cloud_pattern_size; j++){
 			for (int kk = 0; kk < cloud_pattern_size; kk++){
-				double binary = binary_cloud_pattern[j][kk];
-				double normalized = normalized_cloud_pattern[j][kk];
-				double fuzzy = fuzzy_cloud_pattern[0][j][kk];
-				if (binary_cloud_pattern[j][kk] == 0.0 && normalized_cloud_pattern[j][kk] != EMPTY_VALUE && fuzzy_cloud_pattern[0][j][kk] != EMPTY_VALUE){ //Areas with 0 in the binary pattern are cloudy
-					if (normalized_cloud_pattern[j][kk] <= cut_elevation - ((i+1)*shade_step_size)){ //only values below the cut elevation accumulate
-						fuzzy_cloud_pattern[0][j][kk] = gl_random_uniform(RNGSTATE,rand_lower, rand_upper)  + fuzzy_cloud_pattern[0][j][kk];
-						fuzzy = fuzzy_cloud_pattern[0][j][kk];
+				if (get_opq_sky_cov() == 1){ //Fully opaque sky doesn't need any fuzzification.
+					fuzzy_cloud_pattern[0][j][kk] = 1;
+				}else {
+					double binary = binary_cloud_pattern[j][kk];
+					double normalized = normalized_cloud_pattern[j][kk];
+					double fuzzy = fuzzy_cloud_pattern[0][j][kk];
+					if (binary_cloud_pattern[j][kk] == 0.0 && normalized_cloud_pattern[j][kk] != EMPTY_VALUE && fuzzy_cloud_pattern[0][j][kk] != EMPTY_VALUE){ //Areas with 0 in the binary pattern are cloudy
+						if (normalized_cloud_pattern[j][kk] <= cut_elevation - ((i+1)*shade_step_size)){ //only values below the cut elevation accumulate
+							fuzzy_cloud_pattern[0][j][kk] = gl_random_uniform(RNGSTATE,rand_lower, rand_upper)  + fuzzy_cloud_pattern[0][j][kk];
+							fuzzy = fuzzy_cloud_pattern[0][j][kk];
+						}
+					}else { //EMPTY_VALUES get coerced into 0.
+						fuzzy_cloud_pattern[0][j][kk] = 0;
 					}
-				}else { //EMPTY_VALUES get coerced into 0.
-					fuzzy_cloud_pattern[0][j][kk] = 0;
 				}
 			}
 		}
@@ -1913,18 +1915,25 @@ void climate::update_forecasts(TIMESTAMP t0)
 #endif
 }
 
+
 TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 {
-	TIMESTAMP rv = 0;
+	TIMESTAMP csv_rv = 0;
+	TIMESTAMP tmy_rv = 0;
+	TIMESTAMP cloud_rv = 0;
+	DATETIME dt;
 
 	// TODO: need to read the cloud stuff from the csv file
 	// changes appear to be limited to weather.h, weather.cpp, csv_reader.h, csv_reader.cpp
 	if(t0 > TS_ZERO && reader_type == RT_CSV){
 		gld_clock now(t0);
 		csv_reader *cr = OBJECTDATA(reader,csv_reader);
-		rv = cr->get_data(t0, &temperature, &humidity, &solar_direct, &solar_diffuse, &solar_global, &wind_speed,&wind_dir, &opq_sky_cov, &rainfall, &snowdepth, &pressure);
+		csv_rv = cr->get_data(t0, &temperature, &humidity, &solar_direct, &solar_diffuse, &solar_global, &global_horizontal_extra, &wind_speed,&wind_dir, &opq_sky_cov, &rainfall, &snowdepth, &pressure);
 		// calculate the solar radiation
 		double sol_time = sa->solar_time((double)now.get_hour()+now.get_minute()/60.0+now.get_second()/3600.0 + (now.get_is_dst() ? -1:0),now.get_yearday(),RAD(tz_meridian),RAD(reader->longitude));
+		gl_localtime(t0, &dt);
+		short day_of_yr = sa->day_of_yr(dt.month,dt.day);
+		solar_zenith = sa->zenith(day_of_yr, RAD(reader->latitude), sol_time);
 		double sol_rad = 0.0;
 
 		for(COMPASS_PTS c_point = CP_H; c_point < CP_LAST;c_point=COMPASS_PTS(c_point+1)){
@@ -1935,7 +1944,6 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 			/* TMY2 solar radiation data is in Watt-hours per square meter. */
 			solar_flux[c_point] = sol_rad;
 		}
-		return rv;
 	}
 
 	if (t0>TS_ZERO && tmy!=NULL)
@@ -2116,27 +2124,48 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 				GL_THROW("climate::sync -- unrecognized interpolation mode!");
 		}
 		update_forecasts(t0);
-
-		if (cloud_model == CM_CUMULUS) {
-			if (prev_NTime != t0 ){
-				double p = pressure*0.1; // in millibars, convert to kPa
-				double Z = solar_zenith;
-				double M = (p/3545.5)*sqrt(1224. * pow(cos(Z),2.) + 1.);
-				double u = 3.75; // average of 3 and 4.5
-				double aw = 0.077*pow(u/M,0.3);
-				double Pa = 1.; // e^-(alpha*M)
-				double PRPA = 1.041-0.15*sqrt((p*0.00949)/M);
-				global_attenuation = std::max(0.0,(PRPA-aw)*Pa);
-				TIMESTAMP dt = t0 - prev_NTime;
-				update_cloud_pattern(dt);
-				prev_NTime = t0;
-			}
-
-			return t0 + 60;
-		}
-		return -(t0+(3600*TS_SECOND-t0%(3600 *TS_SECOND))); /// negative means soft event
+		tmy_rv = -(t0+(3600*TS_SECOND-t0%(3600 *TS_SECOND))); /// negative means soft event
 	}
-	return TS_NEVER;
+	if (cloud_model == CM_CUMULUS) {
+		if (prev_NTime != t0 ){
+			double p = pressure*0.1; // in millibars, convert to kPa
+			double Z = solar_zenith;
+			double M = (p/3545.5)*sqrt(1224. * pow(cos(Z),2.) + 1.);
+			double u = 3.75; // average of 3 and 4.5
+			double aw = 0.077*pow(u/M,0.3);
+			double Pa = 1.; // e^-(alpha*M)
+			double PRPA = 1.041-0.15*sqrt((p*0.00949)/M);
+			global_attenuation = std::max(0.0,(PRPA-aw)*Pa);
+			update_cloud_pattern(dt);
+			prev_NTime = t0;
+		}
+
+		cloud_rv = t0 + 60;
+	}
+
+	//Extra logic to return the correct timestamp based on the weather data source and the use of the cloud model.
+	if (t0 <= TS_ZERO)
+		return TS_NEVER;
+	else if (cloud_model == CM_NONE)
+		if (reader_type == RT_CSV)
+			return csv_rv;
+		else if (tmy!=NULL)
+			return tmy_rv;
+		else
+			return TS_NEVER;
+	else
+		if (reader_type == RT_CSV)
+			if (cloud_rv <= fabs(csv_rv))
+				return cloud_rv;
+			else
+				return 	csv_rv;
+		else
+			if (cloud_rv <= fabs(tmy_rv))
+				return cloud_rv;
+			else
+				return tmy_rv;
+
+
 }
 
 /**@}**/

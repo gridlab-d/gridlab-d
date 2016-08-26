@@ -397,7 +397,7 @@ int csv_reader::read_line(char *line, int linenum){
 	return 1;
 }
 
-TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double *direct, double *diffuse, double *global, double *wind,double *winddir, double *opaque, double *rain, double *snow, double *pressure){
+TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double *direct, double *diffuse, double *global, double *extra_global,  double *wind,double *winddir, double *opaque, double *rain, double *snow, double *pressure){
 	DATETIME now, then;
 //	TIMESTAMP until;
 	int next_year = 0;
@@ -473,6 +473,7 @@ TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double
 			*direct = samples[index]->solar_dir;
 			*diffuse = samples[index]->solar_diff;
 			*global = samples[index]->solar_global;
+			*extra_global = samples[index]->global_horizontal_extra;
 			*wind = samples[index]->wind_speed;
       *winddir = samples[index]->wind_dir;
 			*opaque = samples[index]-> opq_sky_cov;
@@ -485,6 +486,7 @@ TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double
 			*direct = samples[sample_ct - 1]->solar_dir;
 			*diffuse = samples[sample_ct - 1]->solar_diff;
 			*global = samples[sample_ct - 1]->solar_global;
+			*extra_global = samples[sample_ct - 1]->global_horizontal_extra;
 			*wind = samples[sample_ct - 1]->wind_speed;
       *winddir = samples[sample_ct - 1]->wind_dir;
 			*opaque = samples[sample_ct - 1]-> opq_sky_cov;
@@ -548,6 +550,7 @@ TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double
 	*direct = samples[index]->solar_dir;
 	*diffuse = samples[index]->solar_diff;
 	*global = samples[index]->solar_global;
+	*extra_global = samples[index]->global_horizontal_extra;
 	*wind = samples[index]->wind_speed;
   *winddir = samples[index]->wind_dir;
 	*opaque = samples[index]->opq_sky_cov;
