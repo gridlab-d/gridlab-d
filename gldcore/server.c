@@ -170,11 +170,12 @@ Done:
 /** Start accepting incoming connections on the designated server socket
 	@returns SUCCESS/FAILED status code
  **/
+#define DEFAULT_PORTNUM 6267
 static pthread_t thread;
 STATUS server_startup(int argc, char *argv[])
 {
 	static int started = 0;
-	int portNumber = global_server_portnum;
+	int portNumber = global_server_portnum==0 ? DEFAULT_PORTNUM : global_server_portnum;
 	SOCKET sockfd;
 	struct sockaddr_in serv_addr;
 #ifdef WIN32
@@ -221,9 +222,9 @@ Retry:
 	serv_addr.sin_port = htons(portNumber);
 
 	/* bind socket to server address */
-	if (bind(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0)
+	if ( bind(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0 )
 	{
-		if (portNumber<global_server_portnum+1000)
+		if ( global_server_portnum == 0 && portNumber < (DEFAULT_PORTNUM+1000) )
 		{
 			portNumber++;
 			output_warning("server port not available, trying port %d...", portNumber);
@@ -517,6 +518,87 @@ void http_decode(char *buffer)
 	}
 	*out='\0';
 	strcpy(buffer,result);
+}
+
+/** Process an incoming raw data request
+ * @returns non-zero on success, 0 on failure (errno set)
+ */
+int http_raw_request(HTTPCNX *http, char *uri)
+{
+	char arg1[1024]="", arg2[1024]="";
+	int nargs = sscanf(uri,"%1023[^/=\r\n]/%1023[^\r\n=]",arg1,arg2);
+	char *value = strchr(uri,'=');
+	char buffer[1024]="";
+	OBJECT *obj=NULL;
+	char *id;
+
+	/* value */
+	if (value) *value++;
+
+	/* decode %.. */
+	http_decode(arg1);
+	http_decode(arg2);
+	if (value) http_decode(value);
+
+	/* process request */
+	switch (nargs) {
+
+	/* get global variable */
+	case 1:
+
+		/* find the variable */
+		if (global_getvar(arg1,buffer,sizeof(buffer))==NULL)
+		{
+			output_error("global variable '%s' not found", arg1);
+			return 0;
+		}
+
+		/* assignment, if any */
+		if (value) global_setvar(arg1,value);
+
+		/* post the response */
+		http_format(http,"%s", http_unquote(buffer));
+		http_type(http,"text/plain");
+		return 1;
+
+	/* get object property */
+	case 2:
+
+		/* find the object */
+		id = strchr(arg1,':');
+		if ( id==NULL )
+			obj = object_find_name(arg1);
+		else
+			obj = object_find_by_id(atoi(id+1));
+		if ( obj==NULL )
+		{
+			output_error("object '%s' not found", arg1);
+			return 0;
+		}
+
+		/* post the current value */
+		if ( !object_get_value_by_name(obj,arg2,buffer,sizeof(buffer)) )
+		{
+			output_error("object '%s' property '%s' not found", arg1, arg2);
+			return 0;
+		}
+
+		/* assignment, if any */
+		if ( value && !object_set_value_by_name(obj,arg2,value) )
+		{
+			output_error("cannot set object '%s' property '%s' to '%s'", arg1, arg2, value);
+			return 0;
+		}
+
+		/* post the response */
+		http_format(http,"%s", http_unquote(buffer));
+		http_type(http,"text/plain");
+		return 1;
+
+	default:
+		return 0;
+	}
+	return 0;
 }
 
 /** Process an incoming XML data request
@@ -1348,6 +1430,7 @@ void *http_response(void *ptr)
 				/* this is the map of recognize request types */
 				{"/control/",	http_control_request,	HTTP_ACCEPTED, HTTP_NOTFOUND},
 				{"/open/",		http_open_request,		HTTP_ACCEPTED, HTTP_NOTFOUND},
+				{"/raw/",		http_raw_request,		HTTP_OK, HTTP_NOTFOUND},
 				{"/xml/",		http_xml_request,		HTTP_OK, HTTP_NOTFOUND},
 				{"/gui/",		http_gui_request,		HTTP_OK, HTTP_NOTFOUND},
 				{"/output/",	http_output_request,	HTTP_OK, HTTP_NOTFOUND},
@@ -1373,14 +1456,17 @@ void *http_response(void *ptr)
 					else
 						http_status(http,map[n].failure);
 					http_send(http);
-					break;
+
+					/* keep-alive not desired*/
+					if (connection && stricmp(connection,"close")==0)
+						break;
+					else
+						continue;
 				}
 			}
+			break;
 		}
 
-		/* keep-alive not desired*/
-		if (connection && stricmp(connection,"close")==0)
-			break;
 	}
 	http_close(http);
 	output_verbose("socket %d closed",http->s);

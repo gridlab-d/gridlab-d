@@ -179,7 +179,7 @@ static struct s_varmap {
 	{"compileonly",PT_bool, &global_compileonly, PA_PROTECTED, "compile only enable flag"},
 	{"relax_naming_rules",PT_bool,&global_relax_naming_rules, PA_PUBLIC, "relax object naming rules enable flag"},
 	{"browser", PT_char1024, &global_browser, PA_PUBLIC, "browser selection"},
-	{"server_portnum",PT_int32,&global_server_portnum, PA_PUBLIC, "server port number"},
+	{"server_portnum",PT_int32,&global_server_portnum, PA_PUBLIC, "server port number (default is find first open starting at 6267)"},
 	{"server_quit_on_close",PT_bool,&global_server_quit_on_close, PA_PUBLIC, "server quit on connection closed enable flag"},
 	{"autoclean",PT_bool,&global_autoclean, PA_PUBLIC, "autoclean enable flag"},
 	{"technology_readiness_level", PT_enumeration, &technology_readiness_level, PA_PUBLIC, "technology readiness level", trl_keys},
