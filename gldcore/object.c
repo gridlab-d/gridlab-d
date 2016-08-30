@@ -2018,7 +2018,7 @@ int convert_from_longitude(double v, void *buffer, size_t bufsize){
 	double r = fabs(v)-d;
 	double m = floor(r*60);
 	double s = (r - (double)m/60.0)*3600;
-	char ns = (v >= 0) ? 'W' : 'E';
+	char ns = (v < 0) ? 'W' : 'E';
 
 	if ( isnan(v) )
 		return 0;
@@ -2075,18 +2075,18 @@ double convert_to_longitude(char *buffer)
 		if ( v<0 )
 		{
 			v = -v;
-			ew = 'E';
+			ew = 'W';
 		}
 		else
-			ew = 'W';
+			ew = 'E';
 	}
 	else
 		return QNAN;
 	if ( v >= 0.0 || v <= 180.0 )
 	{
 		switch ( ew ) {
-		case 'W': return v;
-		case 'E': return -v;
+		case 'W': return -v;
+		case 'E': return v;
 		default: return QNAN;
 		}
 	}
