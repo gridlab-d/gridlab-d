@@ -2018,7 +2018,7 @@ int convert_from_longitude(double v, void *buffer, size_t bufsize){
 	double r = fabs(v)-d;
 	double m = floor(r*60);
 	double s = (r - (double)m/60.0)*3600;
-	char ns = (v < 0) ? 'W' : 'E';
+	char ns = (v >= 0) ? 'W' : 'E';
 
 	if ( isnan(v) )
 		return 0;
