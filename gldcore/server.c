@@ -150,16 +150,6 @@ static void *server_routine(void *arg)
 			else
 				gui_wait_status(0);
 		}
-#ifdef NEVER
-		{
-			handleRequest(newsockfd);
-#ifdef WIN32
-			closesocket(newsockfd);
-#else
-			close(newsockfd);
-#endif
-		}
-#endif
 	}
 	output_verbose("server shutdown");
 Done:
@@ -181,6 +171,7 @@ STATUS server_startup(int argc, char *argv[])
 #ifdef WIN32
 	static WSADATA wsaData;
 #endif
+	void *result = NULL;
 
 	if (started)
 		return SUCCESS;
@@ -247,7 +238,12 @@ Retry:
 	output_verbose("server listening to port %d", portNumber);
 	global_server_portnum = portNumber;
 
-	/* start the server thread */
+	/* join the old thread and wait if it hasn't finished yet */
+	if ( started ) {
+		pthread_join(thread,&result);
+	}
+
+	/* start the new thread */
 	if (pthread_create(&thread,NULL,server_routine,(void*)sockfd))
 	{
 		output_error("server thread startup failed: %s",strerror(GetLastError()));
@@ -1305,6 +1301,11 @@ int http_control_request(HTTPCNX *http, char *action)
 	{
 		output_message("server shutdown by client");
 		exit(XC_SUCCESS);
+	}
+	else if ( strcmp(action,"stop")==0 )
+	{
+		output_message("main loop stopped");
+		global_stoptime = global_clock;
 	}
 	return 0;
 }
