@@ -269,13 +269,20 @@ double SolarAngles::azimuth(
     double sol_time     // solar time (decimal hours)
 )
 {
+
     double hr_ang = -(15.0 * PI_OVER_180)*(sol_time-12.0); // morning +, afternoon -
 
     double decl = declination(day_of_yr);
 
 	double alpha = (90.0 * PI_OVER_180) - latitude + decl;
 
-    return acos( (sin(decl)*cos(latitude) - cos(decl)*sin(latitude)*cos(hr_ang))/cos(alpha) );
+	double rs = (sin(decl)*cos(latitude) - cos(decl)*sin(latitude)*cos(hr_ang))/cos(alpha);
+	if(rs > 1.0) {
+		rs = 1.0;
+	} else if(rs < -1.0) {
+		rs = -1.0;
+	}
+    return acos( rs );
 }
 
 //Most additions below here are from the NREL Solar Position algorithm 2.0

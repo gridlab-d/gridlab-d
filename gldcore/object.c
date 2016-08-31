@@ -2075,18 +2075,18 @@ double convert_to_longitude(char *buffer)
 		if ( v<0 )
 		{
 			v = -v;
-			ew = 'W';
+			ew = 'E';
 		}
 		else
-			ew = 'E';
+			ew = 'W';
 	}
 	else
 		return QNAN;
 	if ( v >= 0.0 || v <= 180.0 )
 	{
 		switch ( ew ) {
-		case 'W': return -v;
-		case 'E': return v;
+		case 'W': return v;
+		case 'E': return -v;
 		default: return QNAN;
 		}
 	}
