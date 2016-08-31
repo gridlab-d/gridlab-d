@@ -734,6 +734,136 @@ int http_xml_request(HTTPCNX *http,char *uri)
 	return 0;
 }
 
+/** Process an incoming JSON data request
+	@returns non-zero on success, 0 on failure (errno set)
+ **/
+int http_json_request(HTTPCNX *http,char *uri)
+{
+	char arg1[1024]="", arg2[1024]="";
+	int nargs = sscanf(uri,"%1023[^/=\r\n]/%1023[^\r\n=]",arg1,arg2);
+	char *value = strchr(uri,'=');
+	char buffer[1024]="";
+	OBJECT *obj=NULL;
+	char *id;
+
+	/* value */
+	if (value) *value++;
+
+	/* decode %.. */
+	http_decode(arg1);
+	http_decode(arg2);
+	if (value) http_decode(value);
+
+	/* process request */
+	switch (nargs) {
+
+	/* get global variable */
+	case 1:
+
+		/* find the variable */
+		if (global_getvar(arg1,buffer,sizeof(buffer))==NULL)
+		{
+			http_format(http,"{error: \"globalvar not found\", query: \"%s\"}\n", arg1);
+			http_type(http,"text/json");
+			return 1;
+		}
+
+		/* assignment, if any */
+		if (value) global_setvar(arg1,value);
+
+		/* post the response */
+		http_format(http,"{\"%s\": \"%s\"}\n",
+			arg1, http_unquote(buffer));
+		http_type(http,"text/json");
+		return 1;
+
+	/* get object property */
+	case 2:
+
+		/* find the object */
+		id = strchr(arg1,':');
+		if ( id==NULL )
+			obj = object_find_name(arg1);
+		else
+			obj = object_find_by_id(atoi(id+1));
+		if ( obj==NULL )
+		{
+			http_format(http,"{error: \"object not found\", query: \"%s\"}\n", arg1);
+			http_type(http,"text/json");
+			return 1;
+		}
+
+		if ( strcmp(arg2,"*")==0 )
+		{
+			PROPERTY *prop;
+			char buffer[1024];
+			http_format(http,"[");
+#define PROPERTY(N,F,V) http_format(http,"\n\t\""N"\": \""F"\",", V)
+			PROPERTY("id","%d",obj->id);
+			PROPERTY("class","%s",obj->oclass->name);
+			if ( obj->name ) PROPERTY("name","%s",object_name(obj,buffer,sizeof(buffer)));
+			if ( strlen(obj->groupid)>0 ) PROPERTY("groupid","%s",obj->groupid);
+			if ( obj->parent ) PROPERTY("parent","%s",object_name(obj->parent,buffer,sizeof(buffer)));
+			PROPERTY("rank","%d",obj->rank);
+			PROPERTY("clock","%lld",obj->clock);
+			if ( obj->valid_to < TS_NEVER ) PROPERTY("valid_to","%lld",obj->valid_to);
+			if ( obj->schedule_skew ) PROPERTY("schedule_skew","%lld",obj->schedule_skew);
+			if ( !isnan(obj->latitude) ) PROPERTY("latitude","%.6f",obj->latitude);
+			if ( !isnan(obj->longitude) ) PROPERTY("longitude","%.6f",obj->longitude);
+			if ( obj->in_svc > TS_ZERO ) {
+				PROPERTY("in_svc","%lld",obj->in_svc);
+				if ( obj->in_svc_micro > 0 ) PROPERTY("in_svc_micro","%f",obj->in_svc_micro);
+			}
+			if ( obj->out_svc< TS_NEVER )
+			{
+				PROPERTY("out_svc","%lld",obj->out_svc);
+				if ( obj->out_svc_micro > 0 ) PROPERTY("out_svc_micro","%f",obj->out_svc_micro);
+			}
+			if ( obj->heartbeat > 0 ) PROPERTY("heartbeat","%lld",obj->heartbeat);
+			if ( obj->flags > 0 ) PROPERTY("flags","0x%lx",obj->flags);
+
+			for ( prop=obj->oclass->pmap; prop!=NULL; prop=(prop->next?prop->next:(prop->oclass->parent?prop->oclass->parent->pmap:NULL)) )
+			{
+				if ( prop!=obj->oclass->pmap) http_format(http,"%s\n",",");
+				http_format(http,"\t\"%s\": \"%s\"",prop->name,object_get_value_by_name(obj,prop->name,buffer,sizeof(buffer))>0?buffer:"");
+			}
+#undef PROPERTY
+			http_format(http,"\n\t]\n");
+		}
+		else
+		{
+
+			/* post the current value */
+			if ( !object_get_value_by_name(obj,arg2,buffer,sizeof(buffer)) )
+			{
+				http_format(http,"{error: \"property not found\", object: \"%s\", property: \"%s\"}\n", arg1,arg2);
+				http_type(http,"text/json");
+				return 1;
+			}
+
+			/* assignment, if any */
+			if ( value && !object_set_value_by_name(obj,arg2,value) )
+			{
+				http_format(http,"{error: \"property write failed\", object: \"%s\", property: \"%s\", value: \"%s\"}\n", arg1,arg2,value);
+				http_type(http,"text/json");
+				return 1;
+			}
+
+			/* post the response */
+			http_format(http,"{\tobject: \"%s\", \n", arg1);
+			http_format(http,"\tname: \"%s\", \n", arg2);
+			/* TODO add property type info */
+			http_format(http,"\tvalue: \"%s\"\n}\n", http_unquote(buffer));
+		}
+		http_type(http,"text/json");
+		return 1;
+
+	default:
+		return 0;
+	}
+	return 0;
+}
+
 /** Process an incoming GUI request
 	@returns non-zero on success, 0 on failure (errno set)
  **/
@@ -1452,6 +1582,7 @@ void *http_response(void *ptr)
 				{"/scilab/",	http_run_scilab,		HTTP_OK, HTTP_NOTFOUND},
 				{"/octave/",	http_run_octave,		HTTP_OK, HTTP_NOTFOUND},
 				{"/kml/", 		http_kml_request,		HTTP_OK, HTTP_NOTFOUND},
+				{"/json/",		http_json_request,	HTTP_OK, HTTP_NOTFOUND},
 			};
 			int n;
 			for ( n=0 ; n<sizeof(map)/sizeof(map[0]) ; n++ )
