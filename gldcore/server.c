@@ -691,7 +691,7 @@ int http_xml_request(HTTPCNX *http,char *uri)
 				http_format(http,"\t\t<value>%s</value>\n\t</property>\n",object_get_value_by_name(obj,prop->name,buffer,sizeof(buffer))>0?buffer:"");
 			}
 #undef PROPERTY
-			http_format(http,"</properties\n");
+			http_format(http,"</properties>\n");
 		}
 		else
 		{
