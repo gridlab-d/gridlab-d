@@ -120,6 +120,8 @@ static void *server_routine(void *arg)
 	started = 1;
 	sockfd = (SOCKET)arg;
 	// repeat forever..
+	static int active = 0;
+	void *result = NULL;
 	while (!shutdown_server)
 	{
 		struct sockaddr_in cli_addr;
@@ -143,12 +145,15 @@ static void *server_routine(void *arg)
 			output_verbose("accepting incoming connection from on port %d",cli_addr.sin_port);
 #endif
 
+			if ( !active )
+				pthread_join(thread_id,&result);
 			if ( pthread_create(&thread_id,NULL, http_response,(void*)newsockfd)!=0 )
 				output_error("unable to start http response thread");
 			if (global_server_quit_on_close)
 				shutdown_now();
 			else
 				gui_wait_status(0);
+			active = 1;
 		}
 	}
 	output_verbose("server shutdown");
@@ -165,6 +170,7 @@ static pthread_t thread;
 STATUS server_startup(int argc, char *argv[])
 {
 	static int started = 0;
+	int enable = 1;
 	int portNumber = global_server_portnum==0 ? DEFAULT_PORTNUM : global_server_portnum;
 	SOCKET sockfd;
 	struct sockaddr_in serv_addr;
@@ -192,7 +198,8 @@ STATUS server_startup(int argc, char *argv[])
 		return FAILED;
 	}
 	atexit(shutdown_now);
-
+	if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable)) < 0)
+		output_error("setsockopt(SO_REUSEADDR) failed: %s", strerror(GetLastError()));
 	memset(&serv_addr,0,sizeof(serv_addr));
 
 Retry:
