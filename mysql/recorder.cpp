@@ -55,6 +55,9 @@ recorder::recorder(MODULE *module)
 			PT_set,"options",get_options_offset(),PT_DESCRIPTION,"SQL options",
 				PT_KEYWORD,"PURGE",(set)MO_DROPTABLES,PT_DESCRIPTION,"flag to drop tables before creation",
 				PT_KEYWORD,"UNITS",(set)MO_USEUNITS,PT_DESCRIPTION,"include units in column names",
+			PT_char32,"datetime_fieldname",get_datetime_fieldname_offset(),PT_DESCRIPTION,"name of date-time field",
+			PT_char32,"recordid_fieldname",get_recordid_fieldname_offset(),PT_DESCRIPTION,"name of record-id field",
+			PT_char1024,"header_fieldnames",get_header_fieldnames_offset(),PT_DESCRIPTION,"name of header fields to include",
 			NULL)<1){
 				char msg[256];
 				sprintf(msg, "unable to publish properties in %s",__FILE__);
@@ -161,6 +164,50 @@ int recorder::init(OBJECT *parent)
 				sprintf(tmp,"`%s` %s, ", prop.get_name(), db->get_sqltype(prop));
 			strcat(property_list,tmp);
 		}
+	}
+
+	// get header fields
+	if ( strlen(header_fieldnames)>0 )
+	{
+		if ( get_parent()==NULL )
+			exception("cannot find header fields without a parent");
+		char buffer[1024];
+		strcpy(buffer,header_fieldnames);
+		vector<string> header_specs = split(buffer, ",");
+		size_t header_pos = 0;
+		for ( size_t n = 0 ; n < header_specs.size() ; n++ )
+		{
+			if ( header_specs[n].compare("name")==0 )
+			{
+				header_pos += sprintf(header_data+header_pos,",'%s'",get_parent()->get_name());
+				strcat(property_list,"name CHAR(64), index i_name (name), ");
+			}
+			else if ( header_specs[n].compare("class")==0 )
+			{
+				header_pos += sprintf(header_data+header_pos,",'%s'",get_parent()->get_oclass()->get_name());
+				strcat(property_list,"class CHAR(32), index i_class (class), ");
+			}
+			else if ( header_specs[n].compare("latitude")==0 )
+			{
+				if ( isnan(get_parent()->get_latitude()) )
+					header_pos += sprintf(header_data+header_pos,",%s","NULL");
+				else
+					header_pos += sprintf(header_data+header_pos,",%.6f",get_parent()->get_latitude());
+				strcat(property_list,"latitude DOUBLE, index i_latitude (latitude), ");
+			}
+			else if ( header_specs[n].compare("longitude")==0 )
+			{
+				if ( isnan(get_parent()->get_longitude()) )
+					header_pos += sprintf(header_data+header_pos,",%s","NULL");
+				else
+					header_pos += sprintf(header_data+header_pos,",%.6f",get_parent()->get_oclass()->get_name());
+				strcat(property_list,"longitude DOUBLE, index i_longitude (longitude), ");
+			}
+			else
+				exception("header field %s does not exist",(const char*)header_specs[n].c_str());
+		}
+		gl_verbose("header_fieldname=[%s]", (const char*)header_fieldnames);
+		gl_verbose("header_fielddata=[%s]", header_data);
 	}
 
 	// check for table existence and create if not found
@@ -275,16 +322,21 @@ TIMESTAMP recorder::commit(TIMESTAMP t0, TIMESTAMP t1)
 	// collect data
 	if ( enabled )
 	{
-
+		gl_debug("header_fieldname=[%s]", (const char*)header_fieldnames);
+		gl_debug("header_fielddata=[%s]", header_data);
 		char fieldlist[65536] = "", valuelist[65536] = "";
-		size_t fieldlen=0, valuelen = 0;
+		size_t fieldlen = 0;
+		if ( header_fieldnames[0]!='\0' )
+			fieldlen = sprintf(fieldlist,",%s",(const char*)header_fieldnames);
+		strcpy(valuelist,header_data);
+		size_t valuelen = strlen(valuelist);
 		for ( size_t n = 0 ; n < property_target.size() ; n++ )
 		{
 			char buffer[1024] = "NULL";
 			if ( property_unit[n].is_valid() )
-				fieldlen += sprintf(fieldlist+fieldlen,", `%s[%s]`", property_target[n].get_name(), property_unit[n].get_name());
+				fieldlen += sprintf(fieldlist+fieldlen,",`%s[%s]`", property_target[n].get_name(), property_unit[n].get_name());
 			else
-				fieldlen += sprintf(fieldlist+fieldlen,", `%s`", property_target[n].get_name());
+				fieldlen += sprintf(fieldlist+fieldlen,",`%s`", property_target[n].get_name());
 			db->get_sqldata(buffer, sizeof(buffer), property_target[n], &property_unit[n]);
 			valuelen += sprintf(valuelist+valuelen,", %s", buffer);
 		}

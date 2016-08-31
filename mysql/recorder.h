@@ -25,6 +25,7 @@ public:
 	GL_ATOMIC(set,options);
 	GL_ATOMIC(char32,datetime_fieldname);
 	GL_ATOMIC(char32,recordid_fieldname);
+	GL_ATOMIC(char1024,header_fieldnames);
 private:
 	bool enabled;
 	database *db;
@@ -34,6 +35,7 @@ private:
 	size_t n_properties;
 	std::vector<gld_property> property_target;
 	std::vector<gld_unit> property_unit;
+	char header_data[1024];
 public:
 	inline bool get_trigger_on(void) { return trigger_on; };
 	inline bool get_enabled(void) { return enabled; };
