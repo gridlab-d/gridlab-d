@@ -434,26 +434,35 @@ TIMESTAMP transform_syncall(TIMESTAMP t1, TRANSFORMSOURCE source)
 	TRANSFORM *xform;
 	clock_t start = (clock_t)exec_clock();
 	TIMESTAMP t2 = TS_NEVER;
+	TIMESTAMP tskew, tSkewSince, tSkewNext, t;
 
 	/* process the schedule transformations */
 	for (xform=schedule_xformlist; xform!=NULL; xform=xform->next)
 	{	
 		if (xform->source_type&source){
 			if((xform->source_type == XS_SCHEDULE) && (xform->target_obj->schedule_skew != 0)){
-				TIMESTAMP t = t1 - xform->target_obj->schedule_skew; // subtract so the +12 is 'twelve seconds later', not earlier
-				if((t < xform->source_schedule->since) || (t >= xform->source_schedule->next_t)){
-					SCHEDULEINDEX index = schedule_index(xform->source_schedule,t);
+			    tskew = t1 - xform->target_obj->schedule_skew; // subtract so the +12 is 'twelve seconds later', not earlier
+
+				if((tskew <= xform->source_schedule->since) || (tskew >= xform->source_schedule->next_t)){
+					SCHEDULEINDEX index = schedule_index(xform->source_schedule,tskew);
 					double value = schedule_value(xform->source_schedule,index);
-					TIMESTAMP t = transform_apply(t1,xform,&value);
+					t = transform_apply(t1,xform,&value);
 					if ( t<t2 ) t2=t;
 				} 
 				else 
 				{
-					TIMESTAMP t = transform_apply(t1,xform,NULL);
+					t = transform_apply(t1,xform,NULL);
 					if ( t<t2 ) t2=t;
 				}
+				tSkewSince = xform->source_schedule->since + xform->target_obj->schedule_skew;
+				tSkewNext = xform->source_schedule->next_t + xform->target_obj->schedule_skew;
+				if(t1 < tSkewSince) {
+					if( tSkewSince < t2 ) t2 = tSkewSince;
+				} else if( t1 >= tSkewSince && t1 < tSkewNext ) {
+					if( tSkewNext < t2 ) t2 = tSkewNext;
+				}
 			} else {
-				TIMESTAMP t = transform_apply(t1,xform,NULL);
+				t = transform_apply(t1,xform,NULL);
 				if ( t<t2 ) t2=t;
 			}
 		}

@@ -1041,7 +1041,10 @@ TIMESTAMP schedule_sync(SCHEDULE *sch, /**< the schedule that is to be synchroni
 			if ( dtnext==0 )
 				output_debug("schedule_sync(SCHEDULE *sch={name: '%s',...}, TIMESTAMP t=%"FMT_INT64"d) has a dtnext==0", sch->name, t);
 #endif
-			if(sch->value != value){
+			if(sch->value != value){//This will not update sch->since to the starttime if value == 0 at the starttime.
+				sch->since = t;
+			}
+			if(sch->since == TS_ZERO){//This is the value of sch->since at starttime so we should update it to starttime.
 				sch->since = t;
 			}
 			sch->value = value;
