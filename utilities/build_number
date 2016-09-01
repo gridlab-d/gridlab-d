@@ -12,19 +12,22 @@
 #    updated, then all the status flags are merged and 
 #    appended to the BRANCH with a colon separator
 # 
-new=`svn info $1 | sed -ne 's/^Last Changed Rev: //p'`
-dir=`svn info $1 | sed -ne 's/^URL: //p' | sed -ne 's:^.*gridlab-d/code/::p'`
-mod=$(echo `svn -q status $1 | cut -c1-7 | sort -u` | sed -e 's/ //g')
-branch="$dir${mod:+:}$mod"
+cd $1
+declare -i new
+declare -i rs
+new=`git log --max-count=1 --pretty=format:"%ad" --date=raw | sed -ne 's/ [\+\-][0-9]\{4\}$//p'`
+rs=${new}/86400
+dir=`git status --porcelain -sbuno | sed -ne 's/^## //p'`
+branch="${dir}:$rs"
 if test -f $2 ; then 
 	oldnum=`cat $2 | sed -ne 's/^#define BUILDNUM //p'`
 	oldbranch=`cat $2 | sed -ne 's/^#define BRANCH //p' | sed -e 's/\"//g'`
 else 
 	oldnum=0
 fi 
-if test -z "$oldnum" -o "$new" -ne "$oldnum" -o -z "$oldbranch" -o "$oldbranch" != "$branch" ; then 
+if test -z "$oldnum" -o "$rs" -ne "$oldnum" -o -z "$oldbranch" -o "$oldbranch" != "$branch" ; then 
 	echo "Updating $2: revision $new ($branch)"
-	echo "#define BUILDNUM $new" > $2
+	echo "#define BUILDNUM $rs" > $2
 	if test "${dir:0:6}" != "branch" -o ! -z "$mod" ; then 
 		echo "#define BRANCH \"$branch\"" >> $2
 	fi

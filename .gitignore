@@ -1,0 +1,99 @@
+# http://www.gnu.org/software/automake
+
+Makefile.in
+
+# http://www.gnu.org/software/autoconf
+/autom4te.cache
+/autoscan.log
+/autoscan-*.log
+/aclocal.m4
+build-aux/ar-lib
+build-aux/compile
+build-aux/config.guess
+build-aux/config.sub
+build-aux/depcomp
+gldcore/config.h.in
+gldcore/config.h
+/configure.scan
+build-aux/install-sh
+build-aux/ltmain.sh
+build-aux/missing
+gldcore/stamp-h1
+
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+*.bin
+
+# Object files
+*.ko
+*.elf
+
+# Shared objects (inc. Windows DLLs)
+*.so.*
+
+# Executables
+*.i*86
+*.x86_64
+*.hex
+
+# Debug files
+*.dSYM/
+*.su
+
+.autotools
+.cproject
+.project
+.settings/
+Makefile
+*/.deps/
+*/*/*/.deps/
+*/*/.deps/
+config.log
+config.status
+configure
+gldcore/gridlabd
+gridlabd.spec
+libtool
+m4/libtool.m4
+m4/ltoptions.m4
+m4/ltsugar.m4
+m4/ltversion.m4
+m4/lt~obsolete.m4
+m4/lt-obsolete.m4
+*/.dirstamp
+gldcore/build.h
+gldcore/config.h.in~
+*/*/*/.dirstamp
+*/*/.dirstamp
+gridlabd.bin
+install/
