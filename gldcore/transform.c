@@ -445,7 +445,7 @@ TIMESTAMP transform_syncall(TIMESTAMP t1, TRANSFORMSOURCE source)
 			    SCHEDULEINDEX index = schedule_index(xform->source_schedule,tskew);
 			    int32 dtnext = schedule_dtnext(xform->source_schedule,index)*60;
 			    double value = schedule_value(xform->source_schedule,index);
-			    t = (dtnext == 0 ? TS_NEVER : t1 + dtnext - t1 % 60);
+			    t = (dtnext == 0 ? TS_NEVER : t1 + dtnext - (tskew % 60));
 			    if ( t < t2 ) t2 = t;
 				if((tskew <= xform->source_schedule->since) || (tskew >= xform->source_schedule->next_t)){
 					t = transform_apply(t1,xform,&value);
