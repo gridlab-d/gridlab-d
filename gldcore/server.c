@@ -145,7 +145,7 @@ static void *server_routine(void *arg)
 			output_verbose("accepting incoming connection from on port %d",cli_addr.sin_port);
 #endif
 
-			if ( !active )
+			if ( active )
 				pthread_join(thread_id,&result);
 			if ( pthread_create(&thread_id,NULL, http_response,(void*)newsockfd)!=0 )
 				output_error("unable to start http response thread");
@@ -820,12 +820,25 @@ int http_json_request(HTTPCNX *http,char *uri)
 				if ( obj->out_svc_micro > 0 ) PROPERTY("out_svc_micro","%f",obj->out_svc_micro);
 			}
 			if ( obj->heartbeat > 0 ) PROPERTY("heartbeat","%lld",obj->heartbeat);
-			if ( obj->flags > 0 ) PROPERTY("flags","0x%lx",obj->flags);
+			PROPERTY("flags","0x%lx",obj->flags);
 
 			for ( prop=obj->oclass->pmap; prop!=NULL; prop=(prop->next?prop->next:(prop->oclass->parent?prop->oclass->parent->pmap:NULL)) )
 			{
 				if ( prop!=obj->oclass->pmap) http_format(http,"%s\n",",");
-				http_format(http,"\t\"%s\": \"%s\"",prop->name,object_get_value_by_name(obj,prop->name,buffer,sizeof(buffer))>0?buffer:"");
+				else http_format(http,"%s","\n");
+				if ( object_get_value_by_name(obj,prop->name,buffer,sizeof(buffer))>0 )
+				{
+					if ( buffer[0]=='"' )
+						http_format(http,"\t\"%s\": %s",prop->name,buffer);
+					else
+						http_format(http,"\t\"%s\": \"%s\"",prop->name,buffer);
+				}
+				else
+				{
+					http_format(http,"{error: \"unable to get property value\", object: \"%s\", property: \"%s\"}\n", arg1,arg2);
+					http_type(http,"text/json");
+					return 1;
+				}
 			}
 #undef PROPERTY
 			http_format(http,"\n\t]\n");
@@ -1536,7 +1549,7 @@ void *http_response(void *ptr)
 				}
 			}
 		}
-		output_verbose("%s (host='%s', len=%d)",http->query,host?host:"???",content_length);
+		output_verbose("%s (host='%s', len=%d, keep-alive=%d)",http->query,host?host:"???",content_length, keep_alive);
 
 		/* reject anything but a GET */
 		if (stricmp(method,"GET")!=0)
