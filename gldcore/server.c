@@ -798,7 +798,7 @@ int http_json_request(HTTPCNX *http,char *uri)
 			PROPERTY *prop;
 			char buffer[1024];
 			http_format(http,"[");
-#define PROPERTY(N,F,V) http_format(http,"\n\t\""N"\": \""F"\",", V)
+#define PROPERTY(N,F,V) http_format(http,"\n\t{\""N"\": \""F"\"},", V)
 			PROPERTY("id","%d",obj->id);
 			PROPERTY("class","%s",obj->oclass->name);
 			if ( obj->name ) PROPERTY("name","%s",object_name(obj,buffer,sizeof(buffer)));
