@@ -827,12 +827,7 @@ int http_json_request(HTTPCNX *http,char *uri)
 				if ( prop!=obj->oclass->pmap) http_format(http,"%s\n",",");
 				else http_format(http,"%s","\n");
 				if ( object_get_value_by_name(obj,prop->name,buffer,sizeof(buffer))>0 )
-				{
-					if ( buffer[0]=='"' )
-						http_format(http,"\t\"%s\": %s",prop->name,buffer);
-					else
-						http_format(http,"\t\"%s\": \"%s\"",prop->name,buffer);
-				}
+					http_format(http,"\t{\"%s\": \"%s\"}",prop->name,http_unquote(buffer));
 				else
 				{
 					http_format(http,"{error: \"unable to get property value\", object: \"%s\", property: \"%s\"}\n", arg1,arg2);
