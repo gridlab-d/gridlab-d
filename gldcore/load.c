@@ -5750,6 +5750,40 @@ static int script_directive(PARSER)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
+static int modify_directive(PARSER)
+{
+	START;
+	if ( WHITE,LITERAL("modify") )
+	{
+		char oname[64], pname[64], ovalue[1024];
+		if ( (WHITE,TERM(name(HERE,oname,sizeof(oname)))) && LITERAL(".") && TERM(name(HERE,pname,sizeof(pname))) && (WHITE,TERM(value(HERE,ovalue,sizeof(ovalue)))) && LITERAL(";") )
+		{
+			OBJECT *obj = object_find_name(oname);
+			if ( obj )
+			{
+				if ( object_set_value_by_name(obj,pname,ovalue)<0 )
+				{
+					output_error_raw("%s(%d): modify property '%s' of object '%s' couldn't not be set to '%' ", filename, linenum, pname, oname, ovalue);
+					REJECT;
+				}
+				else
+				{
+					ACCEPT;
+				}
+			}
+			else
+			{
+				output_error_raw("%s(%d): modify object '%s' not found", filename, linenum, oname);
+				REJECT;
+			}
+		}
+	}
+	else
+		REJECT;
+	DONE;
+}
+
+////////////////////////////////////////////////////////////////////////////////////
 
 static int gridlabd_file(PARSER)
 {
@@ -5772,6 +5806,7 @@ static int gridlabd_file(PARSER)
 	OR if TERM(global_declaration(HERE)) {ACCEPT; DONE; }
 	OR if TERM(link_declaration(HERE)) { ACCEPT; DONE; }
 	OR if TERM(script_directive(HERE)) { ACCEPT; DONE; }
+	OR if TERM(modify_directive(HERE)) { ACCEPT; DONE; }
 	OR if (*(HERE)=='\0') {ACCEPT; DONE;}
 	else REJECT;
 	DONE;
