@@ -97,3 +97,7 @@ gldcore/config.h.in~
 */*/.dirstamp
 gridlabd.bin
 install/
+*/autotest/*/
+*/*/*/autotest/*/
+validate.txt
+.libs/
