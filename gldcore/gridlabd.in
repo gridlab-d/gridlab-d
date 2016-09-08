@@ -1,5 +1,5 @@
 #! /bin/sh
-# Generated from gridlabd.m4sh by GNU Autoconf 2.69.
+# Generated from gridlabd.m4sh by GNU Autoconf 2.68.
 ## -------------------- ##
 ## M4sh Initialization. ##
 ## -------------------- ##
@@ -157,8 +157,7 @@ if ( set x; as_fn_ret_success y && test x = \"\$1\" ); then :
 else
   exitcode=1; echo positional parameters were not saved.
 fi
-test x\$exitcode = x0 || exit 1
-test -x / || exit 1"
+test x\$exitcode = x0 || exit 1"
   as_suggested=""
   if (eval "$as_required") 2>/dev/null; then :
   as_have_required=yes
@@ -197,25 +196,21 @@ IFS=$as_save_IFS
 
 
       if test "x$CONFIG_SHELL" != x; then :
-  export CONFIG_SHELL
-             # We cannot yet assume a decent shell, so we have to provide a
-# neutralization value for shells without unset; and this also
-# works around shells that cannot unset nonexistent variables.
-# Preserve -v and -x to the replacement shell.
-BASH_ENV=/dev/null
-ENV=/dev/null
-(unset BASH_ENV) >/dev/null 2>&1 && unset BASH_ENV ENV
-case $- in # ((((
-  *v*x* | *x*v* ) as_opts=-vx ;;
-  *v* ) as_opts=-v ;;
-  *x* ) as_opts=-x ;;
-  * ) as_opts= ;;
-esac
-exec $CONFIG_SHELL $as_opts "$as_myself" ${1+"$@"}
-# Admittedly, this is quite paranoid, since all the known shells bail
-# out after a failed `exec'.
-$as_echo "$0: could not re-execute with $CONFIG_SHELL" >&2
-exit 255
+  # We cannot yet assume a decent shell, so we have to provide a
+	# neutralization value for shells without unset; and this also
+	# works around shells that cannot unset nonexistent variables.
+	# Preserve -v and -x to the replacement shell.
+	BASH_ENV=/dev/null
+	ENV=/dev/null
+	(unset BASH_ENV) >/dev/null 2>&1 && unset BASH_ENV ENV
+	export CONFIG_SHELL
+	case $- in # ((((
+	  *v*x* | *x*v* ) as_opts=-vx ;;
+	  *v* ) as_opts=-v ;;
+	  *x* ) as_opts=-x ;;
+	  * ) as_opts= ;;
+	esac
+	exec "$CONFIG_SHELL" $as_opts "$as_myself" ${1+"$@"}
 fi
 
     if test x$as_have_required = xno; then :
@@ -266,11 +261,6 @@ libdir="@libdir@"
 pkglibdir="$libdir/@PACKAGE@"
 HAS_MINGW="@HAS_MINGW@"
 
-BINPATH=`dirname $0`
-if test "x$BINPATH" != "x$bindir"; then :
-  $as_echo "running gridlabd binary $0 from outside installation prefix $exec_prefix"
-fi
-
 if test "x$GLPATH" = x; then :
   export GLPATH="$pkglibdir:$pkgdatadir"
 else
@@ -278,7 +268,7 @@ else
 fi
 
 if test "x$TERM" = "xcygwin"; then :
-  export CXXFLAGS="-I${pkgdatadir/#\/usr/${WD//\\//}..} $CXXFLAGS"
+  export CXXFLAGS="-I${pkgdatadir} $CXXFLAGS"
 else
   export CXXFLAGS="-I$pkgdatadir $CXXFLAGS"
 fi
