@@ -3121,36 +3121,32 @@ int link_object::kmldump(int (*stream)(const char*,...))
 	stream("      <description>\n");
 	stream("        <![CDATA[\n");
 	stream("          <TABLE><TR>\n");
-	stream("<TR><TD WIDTH=\"25%\">%s&nbsp;%d<HR></TD><TH WIDTH=\"25%\" ALIGN=CENTER>Phase A<HR></TH><TH WIDTH=\"25%\" ALIGN=CENTER>Phase B<HR></TH><TH WIDTH=\"25%\" ALIGN=CENTER>Phase C<HR></TH></TR>\n", obj->oclass->name, obj->id);
+	stream("<TR><TD WIDTH=\"25%\">&nbsp;<HR></TD>"
+			"<TH WIDTH=\"25%\" COLSPAN=2 ALIGN=CENTER>Phase A<HR></TH>"
+			"<TH WIDTH=\"25%\" COLSPAN=2 ALIGN=CENTER>Phase B<HR></TH>"
+			"<TH WIDTH=\"25%\" COLSPAN=2 ALIGN=CENTER>Phase C<HR></TH>"
+			"</TR>\n");
 
 	// values
 	node *pFrom = OBJECTDATA(from,node);
 	node *pTo = OBJECTDATA(to,node);
-	double vscale = primary_voltage_ratio*sqrt((double) 3.0)/(double) 1000.0;
-	complex loss[3];
+	int phase[3] = {has_phase(PHASE_A),has_phase(PHASE_B),has_phase(PHASE_C)};
 	complex flow[3];
 	complex current[3];
-	complex in[3] = {pFrom->voltageA/B_mat[0][0], pFrom->voltageB/B_mat[1][1], pFrom->voltageC/B_mat[2][2]};
-	complex out[3] = {pTo->voltageA/B_mat[0][0], pTo->voltageB/B_mat[1][1], pTo->voltageC/B_mat[2][2]};
-	complex Vfrom[3] = {pFrom->voltageA, pFrom->voltageB, pFrom->voltageC};
-	complex Vto[3] = {pTo->voltageA,pTo->voltageB,pTo->voltageC};
-	int phase[3] = {has_phase(PHASE_A),has_phase(PHASE_B),has_phase(PHASE_C)};
 	int i;
 	for (i=0; i<3; i++)
 	{
 		if (phase[i])
 		{
-			if (Vfrom[i].Re() > Vto[i].Re())
+			if ( indiv_power_in[i].Mag() > indiv_power_out[i].Mag() )
 			{
-				flow[i] = out[i]*Vto[i]*vscale;
-				loss[i] = in[i]*Vfrom[i]*vscale - flow[i];
-				current[i] = out[i];
+				flow[i] = indiv_power_out[i]/1000;
+				current[i] = current_out[i];
 			}
 			else
 			{
-				flow[i] = in[i]*Vfrom[i]*vscale;
-				loss[i] = out[i]*Vto[i]*vscale - flow[i];
-				current[i] = in[i];
+				flow[i] = indiv_power_in[i]/1000;
+				current[i] = current_in[i];
 			}
 		}
 	}
@@ -3160,10 +3156,20 @@ int link_object::kmldump(int (*stream)(const char*,...))
 	for (i=0; i<3; i++)
 	{
 		if (phase[i])
-			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">%.3f&nbsp;&nbsp;kW&nbsp;&nbsp;<BR>%.3f&nbsp;&nbsp;kVAR</TD>\n",
-				flow[i].Re(), flow[i].Im());
+			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.1f</NOBR></TD><TD ALIGN=LEFT>kW</TD>",
+				flow[i].Re());
 		else
-			stream("<TD></TD>\n");
+			stream("<TD>&nbsp;</TD>");
+	}
+	stream("</TR>");
+	stream("<TR><TH ALIGN=LEFT>&nbsp;</TH>");
+	for (i=0; i<3; i++)
+	{
+		if (phase[i])
+			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.1f</NOBR></TD><TD ALIGN=LEFT>kVAR</TD>",
+				flow[i].Im());
+		else
+			stream("<TD>&nbsp;</TD>");
 	}
 	stream("</TR>");
 
@@ -3172,10 +3178,10 @@ int link_object::kmldump(int (*stream)(const char*,...))
 	for (i=0; i<3; i++)
 	{
 		if (phase[i])
-			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">%.3f&nbsp;&nbsp;Amps</TD>\n",
+			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.1f</NOBR></TD><TD ALIGN=LEFT>A</TD>\n",
 				current[i].Mag());
 		else
-			stream("<TD></TD>\n");
+			stream("<TD>&nbsp;</TD>\n");
 	}
 	stream("</TR>");
 
@@ -3184,12 +3190,23 @@ int link_object::kmldump(int (*stream)(const char*,...))
 	for (i=0; i<3; i++)
 	{
 		if (phase[i])
-			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">%.2f&nbsp;&nbsp;&nbsp;%%P&nbsp;&nbsp;<BR>%.2f&nbsp;&nbsp;&nbsp;%%Q&nbsp;&nbsp;</TD>\n",
-				loss[i].Re()/flow[i].Re()*100,loss[i].Im()/flow[i].Im()*100);
+			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.1f</NOBR></TD><TD ALIGN=LEFT>kW</TD>\n",
+					indiv_power_loss[i].Re()/1000);
 		else
-			stream("<TD></TD>\n");
+			stream("<TD>&nbsp;</TD>\n");
 	}
 	stream("</TR>");
+	stream("<TR><TH ALIGN=LEFT>&nbsp;</TH>");
+	for (i=0; i<3; i++)
+	{
+		if (phase[i])
+			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.1f</NOBR></TD><TD ALIGN=LEFT>kVAR</TD>\n",
+					indiv_power_loss[i].Im()/1000);
+		else
+			stream("<TD>&nbsp;</TD>\n");
+	}
+	stream("</TR>");
+
 	stream("</TABLE>\n");
 	stream("        ]]>\n");
 	stream("      </description>\n");

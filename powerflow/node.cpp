@@ -2758,33 +2758,53 @@ int node::kmldump(int (*stream)(const char*,...))
 	stream("<description>\n");
 	stream("<![CDATA[\n");
 	stream("<TABLE>\n");
-	stream("<TR><TD WIDTH=\"25%\">%s&nbsp;%d<HR></TD><TH WIDTH=\"25%\" ALIGN=CENTER>Phase A<HR></TH><TH WIDTH=\"25%\" ALIGN=CENTER>Phase B<HR></TH><TH WIDTH=\"25%\" ALIGN=CENTER>Phase C<HR></TH></TR>\n", obj->oclass->name, obj->id);
+	stream("<TR><TD WIDTH=\"10%\">&nbsp;<HR></TD>"
+			"<TH WIDTH=\"30%\" COLSPAN=2 ALIGN=CENTER><NOBR>Phase A</NOBR><HR></TH>"
+			"<TH WIDTH=\"30%\" COLSPAN=2 ALIGN=CENTER><NOBR>Phase B</NOBR><HR></TH>"
+			"<TH WIDTH=\"30%\" COLSPAN=2 ALIGN=CENTER><NOBR>Phase C</NOBR><HR></TH></TR>\n");
+
+	int phase[3] = {has_phase(PHASE_A),has_phase(PHASE_B),has_phase(PHASE_C)};
 
 	// voltages
 	stream("<TR><TH ALIGN=LEFT>Voltage</TH>");
-	double vscale = primary_voltage_ratio*sqrt((double) 3.0)/(double) 1000.0;
-	if (has_phase(PHASE_A))
-		stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">%.3f&nbsp;kV&nbsp;&nbsp;<BR>%.3f&nbsp;deg&nbsp;</TD>",
-			voltageA.Mag()*vscale,voltageA.Arg()*180/3.1416);
-	else
-		stream("<TD></TD>");
-	if (has_phase(PHASE_B))
-		stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">%.3f&nbsp;kV&nbsp;&nbsp;<BR>%.3f&nbsp;deg&nbsp;</TD>",
-			voltageB.Mag()*vscale,voltageB.Arg()*180/3.1416);
-	else
-		stream("<TD></TD>");
-	if (has_phase(PHASE_C))
-		stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">%.3f&nbsp;kV&nbsp;&nbsp;<BR>%.3f&nbsp;deg&nbsp;</TD>",
-			voltageC.Mag()*vscale,voltageC.Arg()*180/3.1416);
-	else
-		stream("<TD></TD>");
-
-	// supply
-	/// @todo complete KML implement of supply (ticket #133)
-
-	// demand
-	// Removed due to "erroneous" linking problem (headers) - add in with supply, if needed
+	for ( int i = 0 ; i<sizeof(phase)/sizeof(phase[0]) ; i++ )
+	{
+		if ( phase[i] )
+			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.3f</NOBR></TD><TD ALIGN=LEFT>kV</TD>", voltageA.Mag()/1000);
+		else
+			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">&mdash;</TD><TD>&nbsp;</TD>");
+	}
 	stream("</TR>\n");
+	stream("<TR><TH ALIGN=LEFT>&nbsp</TH>");
+	for ( int i = 0 ; i<sizeof(phase)/sizeof(phase[0]) ; i++ )
+	{
+		if ( phase[i] )
+			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.3f</NOBR></TD><TD ALIGN=LEFT>&deg;</TD>", voltageA.Arg()*180/3.1416);
+		else
+			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">&mdash;</TD><TD>&nbsp;</TD>");
+	}
+	stream("</TR>\n");
+
+	// power
+	stream("<TR><TH ALIGN=LEFT>Power</TH>");
+	for ( int i = 0 ; i<sizeof(phase)/sizeof(phase[0]) ; i++ )
+	{
+		if ( phase[i] )
+			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.3f</NOBR></TD><TD ALIGN=LEFT>kW</TD>", power[i].Re()/1000);
+		else
+			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">&mdash;</TD><TD>&nbsp;</TD>");
+	}
+	stream("</TR>\n");
+	stream("<TR><TH ALIGN=LEFT>&nbsp</TH>");
+	for ( int i = 0 ; i<sizeof(phase)/sizeof(phase[0]) ; i++ )
+	{
+		if ( phase[i] )
+			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.3f</NOBR></TD><TD ALIGN=LEFT>kVAR</TD>", power[i].Im()/1000);
+		else
+			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">&mdash;</TD><TD>&nbsp;</TD>");
+	}
+	stream("</TR>\n");
+
 	stream("</TABLE>\n");
 	stream("]]>\n");
 	stream("</description>\n");
