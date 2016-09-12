@@ -6392,12 +6392,16 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			return FALSE;
 		}
 		value = global_getvar(var, buffer, 63);
-		if (value==NULL)
-		{
-			output_error_raw("%s(%d): %s is not defined", filename,linenum,var);
-			strcpy(line,"\n");
-			return FALSE;
-		}
+//		if (value==NULL)
+//		{
+//			output_error_raw("%s(%d): %s is not defined", filename,linenum,var);
+//			strcpy(line,"\n");
+//			return FALSE;
+//		}
+		if ( value != NULL )
+			output_warning("%s(%d): use of deprecated #if syntax - use '#if{%s}...' instead of '#if %s...'", filename, linenum, var, var);
+		else
+			value = var;
 		if (strcmp(op,"<")==0) { if (!(strcmp(value,val)<0)) suppress|=(1<<nesting); }
 		else if (strcmp(op,">")==0) { if (!(strcmp(value,val)>0)) suppress|=(1<<nesting); }
 		else if (strcmp(op,">=")==0) { if (!(strcmp(value,val)>=0)) suppress|=(1<<nesting); }

@@ -1,0 +1,10 @@
+#set suppress_repeat_messages=FALSE
+#define TEST=1
+#if TEST==1
+#print deprecated use passed
+#endif
+
+#if ${TEST}==1
+#print correct use passed
+#endif
+
