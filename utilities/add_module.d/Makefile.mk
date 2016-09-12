@@ -5,10 +5,12 @@ MODULENAME_la_CPPFLAGS = $(AM_CPPFLAGS)
 
 MODULENAME_la_LDFLAGS =
 MODULENAME_la_LDFLAGS = $(AM_LDFLAGS)
+MODULENAME_la_LDFLAGS += -module -no-undefined -avoid-version -version-info %MAJOR%:%MINOR%:0
 
 MODULENAME_la_LIBADD =
 
 MODULENAME_la_SOURCES =
-MODULENAME_la_SOURCES += init.cpp
 MODULENAME_la_SOURCES += main.cpp
-MODULENAME_la_SOURCES += MODULENAME.h
+
+uninstall-hook:
+	-rmdir $(DESTDIR)$(pkglibdir)

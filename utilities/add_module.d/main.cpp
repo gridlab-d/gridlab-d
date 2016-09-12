@@ -1,76 +1,43 @@
-/** $Id: main.cpp 4738 2014-07-03 00:55:39Z dchassin $
-	@file init.cpp
-	@defgroup MODULENAME Module template
-	@ingroups modules
-
-	Module templates are available to help programmers
-	create new modules.  In a shell, type the following
-	command:
-	<verbatim>
-	linux% add_module NAME
-	</verbatim>
-	
-	You must be in the source folder to this.
-
-	You can then add a class using the add_class command.
-
- @{ 
- **/
-
-/* TODO: replace the above Doxygen comments with your documentation */
-
-/* DO NOT EDIT THE NEXT LINE 
-MODULE:MODULENAME
- */
+// $Id: main.cpp 1182 2008-12-22 22:08:36Z dchassin $
+//	Copyright (C) 2008 Battelle Memorial Institute
 
 #define DLMAIN
 
-/* TODO: set the major and minor numbers (0 is ignored) */
-#define MAJOR 0
-#define MINOR 0
-
-#include <stdlib.h>
 #include "gridlabd.h"
 
-EXPORT int do_kill(void*);
+#include <stdlib.h>
+#include <stdio.h>
+#include <errno.h>
+#include <math.h>
+#include "gridlabd.h"
 
-EXPORT int major=MAJOR, minor=MINOR;
+//NEWCLASSINC
 
-#ifdef WIN32
-#define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
-#include <windows.h>
-
-BOOL APIENTRY DllMain( HANDLE hModule, 
-                       DWORD  ul_reason_for_call, 
-                       LPVOID
-					 )
+EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
-    switch (ul_reason_for_call)
+	if (set_callback(fntable)==NULL)
 	{
-		case DLL_PROCESS_ATTACH:
-		case DLL_THREAD_ATTACH:
-			break;
-		case DLL_THREAD_DETACH:
-		case DLL_PROCESS_DETACH:
-			do_kill(hModule);
-			break;
-    }
-    return TRUE;
+		errno = EINVAL;
+		return NULL;
+	}
+
+#ifdef OPTIONAL
+	/* TODO: publish global variables (see class_define_map() for details) */
+	gl_global_create(char *name, ..., NULL);
+	/* TODO: use gl_global_setvar, gl_global_getvar, and gl_global_find for access */
+#endif
+
+	/*** DO NOT EDIT NEXT LINE ***/
+	//NEWCLASSDEF
+	
+	/* always return the first class registered */
+	/* TODO this module will not compile until a class has been defined */
+	return CLASSNAME::oclass;
 }
 
-#else // !WIN32
 
-CDECL int dllinit() __attribute__((constructor));
-CDECL int dllkill() __attribute__((destructor));
-
-CDECL int dllinit()
+CDECL int do_kill()
 {
+	/* if global memory needs to be released, this is a good time to do it */
 	return 0;
 }
-
-CDECL int dllkill() {
-	do_kill(NULL);
-}
-
-#endif // !WIN32
-/**@}*/

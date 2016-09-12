@@ -1,48 +1,117 @@
 #!/bin/bash
-# $Id: add_module,v 1.3 2008/02/12 18:58:18 d3g637 Exp $
 #
-# Add GridLAB-D modules to the current directory
+# Run this script to create a new module
 #
 
-if [ $# -eq 0 ]; then
-	echo "Syntax: $(basename $0) <mod1> <mod2> ... <modN>"
-	exit 1
-elif [ ! -d core -o ! -f core/gridlabd.h ]; then
-	echo "The current directory doesn't look like a GridlabD source folder"
-	exit 2
-fi
+VARLIST=MAJOR MINOR MODULENAME
+MAJOR=3
+MINOR=0
 
-while [ $# -gt 0 ]; do
-	MODULENAME="$1"
-	shift
+echo "WARNING: this script does not work for V$MAJOR.$MINOR"
 
-	if [ -d $MODULENAME ]; then
-		echo "Module $MODULENAME already exists"
-		continue
-	fi
-
-	echo "Creating module directory $MODULENAME..."
-	mkdir $MODULENAME
-
-	echo "Creating files..."
-	for F in $0.d/*.*; do
-		FN=$(basename $F)
-		if [ "$FN" == "CVS" ]; then
-			continue;
+# confirm [VARNAME [DEFAULT]]
+function confirm() (
+	while [ true ]; do
+		echo ""
+		if [ -z "$2" ]; then
+			read -p "$1? "
+		else
+			read -p "$1? [$2] "
 		fi
-		if [ $FN == "MODULENAME.h" ]; then
-			FN=$MODULENAME.h
+		if [ -z "$REPLY" -a ! -z "$2" ]; then
+			REPLY="$2"
 		fi
-		echo "  $FN..."
-		sed -e "s/MODULENAME/$MODULENAME/g" <$F >$MODULENAME/$FN
+		case "$REPLY" in
+		( Y | YES | y | yes ) exit 0;;
+		( N | NO | n | no ) exit 1;;
+		esac
+		echo "ERROR: you must answer with yes or no."
 	done
+)
 
-	echo "Adding module to configure.ac..."	
-	sed -e "s:AC_CONFIG_FILES(\[./Makefile:AC_CONFIG_FILES(\[./Makefile $MODULENAME/Makefile:" <configure.ac >.configure.ac
-	if [ -s .configure.ac ]; then
-		mv .configure.ac configure.ac
+# getguid [VARNAME]
+function getguid() {
+	if [ -z "$1" ]; then
+		REPLY=$(uuidgen)
 	else
-		echo "ERROR: edit of configure.ac failed"
-		exit 1
+		eval "$1=$(uuidgen)"
 	fi
+}
+
+# getstring PROMPT PATTERN [VARNAME [DEFAULT [CALL]]]
+function getstring() {
+	unset REPLY
+	while [ -z "$REPLY" ]; do
+		echo ""
+		if [ -z "$4" ]; then
+			read -p "$1: "
+		else
+			read -p "$1: [$4] "
+		fi
+		if [ -z "$REPLY" -a ! -z "$4" ]; then
+			REPLY="$4"
+		fi
+		CHECK=$(echo $REPLY|sed -e 's/['"$2"']//g')
+		if [ ! -z "$CHECK" ]; then
+			echo "ERROR: module name must use [$2] characters only"
+			unset REPLY
+		fi
+		if [ ! -z "$5" ]; then
+			if ( ! eval $5 $REPLY ); then
+				unset REPLY
+			fi
+		fi
+	done
+	unset CHECK
+	if [ ! -z "$3" ]; then
+		eval "$3='$REPLY'"
+	fi
+}
+
+function checkpath () (
+	if [ -d $* ]; then
+		echo "ERROR: $* exists"
+		exit 1
+	else
+		exit 0
+	fi
+)
+
+OK=no
+while [ "$OK" != "yes" ]; do 
+	getstring 'Repository' '-a-zA-Z0-9:_./' SVN ${SVN:-https://gridlab-d.svn.sourceforge.net/svnroot/gridlab-d}
+	getstring 'Working path' '-a-z_ 0-9A-Z/' WORKDIR $(pwd)
+	getstring 'Ticket number' '0-9' TICKETID $TICKETID
+	getstring 'Module name' 'a-z' MODULENAME $MODULENAME '' checkpath
+	getstring 'Globals (space separated)' 'a-zA-Z0-9_ ' GLOBALS "$GLOBALS"
+	getstring 'Classes (space separated)' 'a-z_ ' CLASSES "$CLASSES"
+
+	echo ""
+	echo "Summary of inputs"
+	echo "================="
+	echo "  Repository........ $SVN"
+	echo "  Working path...... $WORKDIR"
+	echo "  Ticket number..... $TICKETID"
+	echo "  Module name....... $MODULENAME"
+	echo "  Globals........... $GLOBALS"
+	echo "  Classes........... $CLASSES"
+	
+	if confirm 'Ok' Y; then
+		OK=yes
+	fi
+
+	echo "Creating module $MODULENAME..."
+	mkdir $MODULENAME
+	for FILE in $(ls $0.d); do
+		cp $0.d/$FILE /tmp/$$
+		for VAR in $VARLIST; do
+			VAL=$(eval \$$VAR)
+			cat /tmp/$$ | sed -E 's/%'$VAR'%/'$VAL'/g' >/tmp/$$.$VAR
+			mv /tmp/$$.VAR /tmp/$$
+		done
+		echo "Creating $MODULENAME/$FILE..."
+		mv /tmp/$$ $MODULENAME/$FILE
+	done
+	echo "Done"
 done
+
