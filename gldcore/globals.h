@@ -312,6 +312,7 @@ GLOBAL bool global_bigranks INIT(true); /**< enable non-recursive set_rank funct
 GLOBAL char1024 global_svnroot INIT("http://gridlab-d.svn.sourceforge.net/svnroot/gridlab-d");
 GLOBAL char1024 global_wget_options INIT("maxsize:100MB;update:newer"); /**< maximum size of wget request */
 
+GLOBAL bool global_reinclude INIT(false); /**< allow the same include file to be included multiple times */
 #ifdef __cplusplus
 }
 #endif

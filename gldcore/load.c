@@ -6083,7 +6083,7 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 	
 	for (list = include_list; list != NULL; list = list->next)
 	{
-		if (strcmp(incname, list->file) == 0)
+		if (strcmp(incname, list->file) == 0 && !global_reinclude )
 		{
 			output_error_raw("%s(%d): include file has already been included", incname, _linenum);
 			return 0;
