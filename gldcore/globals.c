@@ -227,6 +227,7 @@ static struct s_varmap {
 	{"exename", PT_char1024, &global_execname, PA_REFERENCE, "argv[0] value"},
 	{"wget_options", PT_char1024, &global_wget_options, PA_PUBLIC, "wget options"},
 	{"svnroot", PT_char1024, &global_svnroot, PA_PUBLIC, "svnroot"},
+	{"allow_reinclude", PT_bool, &global_reinclude, PA_PUBLIC, "allow the same include file to be included multiple times"},
 	/* add new global variables here */
 };
 
