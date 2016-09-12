@@ -6438,6 +6438,23 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		}
 		while(isspace((unsigned char)(*term)))
 			++term;
+		if ( sscanf(term,"using(%[^)])",value)==1 )
+		{
+			char *token, tmp[1024], *string=tmp;
+			strcpy(tmp,value);
+			while ( (token=strsep(&string, ",")) != NULL)
+			{
+				int old_strictnames = global_strictnames;
+				global_strictnames = FALSE;
+				if ( global_setvar(token)==FAILED )
+					output_error_raw("%s(%d): unabled to set global %s", filename, linenum, token);
+				global_strictnames = old_strictnames;
+				global_reinclude = TRUE; // must enable reinclude for this to work more than once
+			}
+			term+=strlen(value)+7;
+		}
+		while(isspace((unsigned char)(*term)))
+			++term;
 		if (sscanf(term,"\"%[^\"]\"",value)==1)
 		{
 			char *start=line;
@@ -6461,7 +6478,9 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 				line+=len; size-=len;
 				return size>0;
 			}
-		} else if(sscanf(term, "<%[^>]>", value) == 1){
+		}
+		else if (sscanf(term, "<%[^>]>", value) == 1)
+		{
 			/* C include file */
 			output_verbose("added C include for \"%s\"", value);
 			append_code("#include <%s>\n",value);
@@ -6523,7 +6542,9 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		}
 		else
 		{
-			output_error_raw("%s(%d): #include failed",filename,linenum);
+			char *eol = term+strlen(term)-1;
+			if ( *eol == '\n' ) *eol = '\0';
+			output_error_raw("%s(%d): '#include %s' failed",filename,linenum, term);
 			strcpy(line,"\n");
 			return FALSE;
 		}
