@@ -33,6 +33,7 @@ public:
 	{ 
 		wlock(); 
 		n_scanned += a.get_scanned();
+		n_found += a.get_nfound();
 		n_tested += a.get_tested();
 		n_passed += a.get_passed();
 		n_files += a.get_nfiles(); 
@@ -58,6 +59,7 @@ public:
 	void inc_passed() { wlock(); n_passed++; wunlock(); };
 private:
 	// files
+	unsigned int n_found; // number of files found
 	unsigned int n_files; // number of tests completed
 	unsigned int n_success; // unexpected successes
 	unsigned int n_failed; // unexpected failures
@@ -70,12 +72,14 @@ private:
 	void runlock(void) { ::runlock(&_lock); };
 public:
 public:
+	unsinged int get_nfound(void) {return n_found; };
 	unsigned int get_nfiles(void) { return n_files; };
 	unsigned int get_nsuccess(void) { return n_success; };
 	unsigned int get_nfailed(void) { return n_failed; };
 	unsigned int get_nexceptions(void) { return n_exceptions; };
 	unsigned int get_naccess(void) { return n_access; };
-	void inc_files(const char *name) 
+	void add_nfound(unsigned int n=1) { n_found += n; };
+	inline void inc_files(const char *name)
 	{
 		if ( global_debug_mode || global_verbose_mode )
 			output_debug("processing %s", name); 
@@ -593,10 +597,10 @@ static void sortlist(void)
 /* popped item must be freed after no longer needed */
 static DIRLIST *popdir(void)
 {
-	rlock(&dirlock);
+	wlock(&dirlock);
 	DIRLIST *item = dirstack;
 	if ( dirstack ) dirstack = dirstack->next;
-	runlock(&dirlock);
+	wunlock(&dirlock);
 	output_debug("pulling %s from process stack", item->name);
 	return item;
 }
@@ -804,14 +808,15 @@ int validate(int argc, char *argv[])
 	
 	if ( global_validateoptions&VO_RPTDIR ) 
 		report_newtable("DIRECTORY SCAN RESULTS");
-	process_dir(global_workdir);
+	final.add_nfound(process_dir(global_workdir));
 	sortlist();
+	output_debug("%d files found", final.get_nfound());
 	
 	if ( global_validateoptions&VO_RPTGLM )
 		report_newtable("FILE TEST RESULTS");
 	int n_procs = global_threadcount;
 	if ( n_procs==0 ) n_procs = processor_count();
-	n_procs = min(final.get_tested(),(unsigned)n_procs);
+	n_procs = min(final.get_nfound(),(unsigned)n_procs);
 	pthread_t *pid = new pthread_t[n_procs];
 	output_debug("starting validation with cmdargs '%s' using %d threads", validate_cmdargs, n_procs);
 	for ( i=0 ; i<n_procs ; i++ )

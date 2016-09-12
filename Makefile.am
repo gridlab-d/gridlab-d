@@ -72,6 +72,7 @@ include residential/Makefile.mk
 include tape_file/Makefile.mk
 include tape/Makefile.mk
 include tape_plot/Makefile.mk
+include example/Makefile.mk
 
 # we combine the sources in CBLAS and superLU_MT in a single Makefile fragment
 include third_party/superLU_MT/Makefile_combined.mk
