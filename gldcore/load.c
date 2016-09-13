@@ -6779,6 +6779,30 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			return FALSE;
 		}
 	}
+	else if (strncmp(line,MACRO "debug",6)==0)
+	{
+		char *term = strchr(line+8,' ');
+		char value[1024];
+		if (term==NULL)
+		{
+			output_error_raw("%s(%d): %sdebug missing message text",filename,linenum,MACRO);
+			strcpy(line,"\n");
+			return FALSE;
+		}
+		//if (sscanf(term+1,"%[^\n\r]",value)==1)
+		strcpy(value, strip_right_white(term+1));
+		if(1){
+			output_debug("%s(%d): %s", filename, linenum, value);
+			strcpy(line,"\n");
+			return TRUE;
+		}
+		else
+		{
+			output_error_raw("%s(%d): %swarning missing expression",filename,linenum,MACRO);
+			strcpy(line,"\n");
+			return FALSE;
+		}
+	}
 	else if (strncmp(line,MACRO "system",7)==0)
 	{
 		char *term = strchr(line+7,' ');

@@ -256,6 +256,7 @@ public:
 	friend class fuse;			// needs access to current_inj
 	friend class frequency_gen;	// needs access to current_inj
 
+	static int kmlinit(int (*stream)(const char*,...));
 	int kmldump(int (*stream)(const char*,...));
 };
 

@@ -62,6 +62,8 @@ int kml_document(FILE *fp)
 		for (obj=object_get_first(); obj!=NULL; obj=obj->next)
 		{
 			int has_location = !(isnan(obj->latitude) || isnan(obj->longitude));
+			if ( !has_location )
+				continue;
 			MODULE *mod;
 
 			/* class does not match current object */
@@ -83,7 +85,7 @@ int kml_document(FILE *fp)
 			mod = (MODULE*)(obj->oclass->module);
 			if (mod!=NULL && mod->kmldump!=NULL)
 				(*(mod->kmldump))(kml_write,obj);
-			else if (has_location)
+			else
 			{
 				/* basic KML output of published variables */
 				PROPERTY *prop;

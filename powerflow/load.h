@@ -56,6 +56,7 @@ public:
 	inline load(CLASS *cl=oclass):node(cl){};
 	int isa(char *classname);
 	int notify(int update_mode, PROPERTY *prop, char *value);
+	int kmldata(int (*stream)(const char*,...));
 };
 
 #endif // _LOAD_H

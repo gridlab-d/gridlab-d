@@ -87,6 +87,7 @@ public:
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync(TIMESTAMP t0);
 	int isa(char *classname);
+	int kmldata(int (*stream)(const char*,...));
 };
 
 #endif // _METER_H

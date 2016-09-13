@@ -121,6 +121,7 @@ public:
 	bool is_frequency_nominal();
 	bool is_voltage_nominal();
 
+	static int kmlinit(int (*stream)(const char*,...));
 	int kmldump(int (*stream)(const char*,...));
 	//Current injection calculation function - so it can be called remotely
 	int CurrentCalculation(int nodecall);

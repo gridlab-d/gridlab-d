@@ -941,8 +941,8 @@ int http_copy(HTTPCNX *http, char *context, char *source)
 		fclose(fp);
 		return 0;
 	}
-	http_write(http,buffer,len);
 	http_mime(http,source);
+	http_write(http,buffer,len);
 	free(buffer);
 	fclose(fp);
 	return 1;
@@ -1390,10 +1390,19 @@ int http_kml_request(HTTPCNX *http, char *action)
 {
 //	static long long lock;
 //	wlock(&lock);
+	char *p = strchr(action,'?');
 	http_type(http,"text/kml");
-	kml_dump(action);
+	if ( p==NULL )
+	{	kml_dump(action); // simple dump of everything
+		return http_copy(http,"KML",action);
+	}
+	else
+	{
+		char *query = p+1; // now "property=value"
+		*p='\0'; // action is now the target object name
+		http_format(http,"%s","TODO");
+	}
 //	wunlock(&lock);
-	return http_copy(http,"KML",action);
 }
 /** Process an incoming action request
 	@returns non-zero on success, 0 on failure (errno set)
@@ -1523,8 +1532,7 @@ void *http_response(void *ptr)
 		if (sscanf(request,"%s %s %s",method,uri,version)!=3)
 		{
 			http_status(http,HTTP_BADREQUEST);
-			http_format(http,HTTP_BADREQUEST);
-			http_type(http,"text/html");
+			output_error("request [%s] is bad", request);
 			http_send(http);
 			break;
 		}
@@ -1550,9 +1558,8 @@ void *http_response(void *ptr)
 		if (stricmp(method,"GET")!=0)
 		{
 			http_status(http,HTTP_METHODNOTALLOWED);
-			http_format(http,HTTP_METHODNOTALLOWED);
-			http_type(http,"text/html");
 			/* technically, we should add an Allow entry to the response header */
+			output_error("request [%s %s %s]: '%s' is not an allowed method", method, uri, version, method);
 			http_send(http);
 			break;
 		}
@@ -1590,7 +1597,7 @@ void *http_response(void *ptr)
 				{"/scilab/",	http_run_scilab,		HTTP_OK, HTTP_NOTFOUND},
 				{"/octave/",	http_run_octave,		HTTP_OK, HTTP_NOTFOUND},
 				{"/kml/", 		http_kml_request,		HTTP_OK, HTTP_NOTFOUND},
-				{"/json/",		http_json_request,	HTTP_OK, HTTP_NOTFOUND},
+				{"/json/",		http_json_request,		HTTP_OK, HTTP_NOTFOUND},
 			};
 			int n;
 			for ( n=0 ; n<sizeof(map)/sizeof(map[0]) ; n++ )

@@ -76,6 +76,7 @@ public:
 	inline capacitor(CLASS *cl=oclass):node(cl){};
 	int init(OBJECT *parent);
 	int isa(char *classname);
+	int kmldata(int (*stream)(const char*,...));
 	
 private:
 	complex cap_value[3];		// Capacitor values translated to admittance
