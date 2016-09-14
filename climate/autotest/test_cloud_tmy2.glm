@@ -7,7 +7,7 @@
 clock {
 	timezone PST+8PDT;
 	timestamp '2000-04-24 10:00:00';
-	stoptime '2000-04-24 10:29:59';
+	stoptime '2000-04-24 10:09:59';
 }
 
 module tape;
