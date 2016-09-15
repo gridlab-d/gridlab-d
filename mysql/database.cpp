@@ -27,6 +27,7 @@ CLASS *database::oclass = NULL;
 database *database::defaults = NULL;
 database *database::first = NULL;
 database *database::last = NULL;
+database *database::last_used = NULL;
 
 database::database(MODULE *module)
 {
@@ -214,8 +215,22 @@ TIMESTAMP database::commit(TIMESTAMP t0, TIMESTAMP t1)
 	return TS_NEVER;
 }
 
+void database::check_schema(void)
+{
+	if ( last_used!=this )
+	{
+		char command[1024];
+		sprintf(command,"USE `%s`",get_schema());
+		if ( mysql_query(mysql,command)!=0 )
+			exception("%s->query[%s] failed - %s", get_name(), command, mysql_error(mysql));
+		else if ( get_options()&DBO_SHOWQUERY )
+			gl_verbose("%s->query[%s] ok", get_name(), command);
+		last_used = this;
+	}
+}
 bool database::table_exists(char *t)
 {
+	check_schema();
 	if ( query("SHOW TABLES LIKE '%s'", t) )
 	{
 		MYSQL_RES *res = mysql_store_result(mysql);
@@ -346,6 +361,7 @@ bool database::query(char *fmt,...)
 
 	// query mysql
 	gl_debug("%s->query[%s]", get_name(), command);
+	check_schema();
 	if ( mysql_query(mysql,command)!=0 )
 		exception("%s->query[%s] failed - %s", get_name(), command, mysql_error(mysql));
 	else if ( get_options()&DBO_SHOWQUERY )
@@ -362,6 +378,7 @@ MYSQL_RES *database::select(char *fmt,...)
 	vsnprintf(command,sizeof(command),fmt,ptr);
 
 	// query mysql
+	check_schema();
 	if ( mysql_query(mysql,command)!=0 )
 		exception("%s->select[%s] query failed - %s", get_name(), command, mysql_error(mysql));
 	else if ( get_options()&DBO_SHOWQUERY )
@@ -485,6 +502,7 @@ size_t database::dump(char *table, char *file, unsigned long options)
 	if ( fp==NULL ) return -1;
 
 	// request data
+	check_schema();
 	MYSQL_RES *result = select("SELECT * FROM `%s`", table, file);
 	if ( result==NULL )
 	{
@@ -596,6 +614,7 @@ size_t database::backup(char *file)
 		exception("unable to backup of '%s' to '%s' - OVERWRITE not specified but file exists",get_schema(),file);
 
 	// get list of tables
+	check_schema();
 	MYSQL_RES *res = select("SHOW TABLES");
 	if ( res==NULL )
 	{
