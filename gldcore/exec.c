@@ -822,7 +822,7 @@ static STATUS init_all(void)
 			{
 				OBJECT **bigger;
 				int size = ( max_object_heartbeats==0 ? 256 : (max_object_heartbeats*2) );
-				bigger = malloc(size);
+				bigger = (OBJECT**)malloc(size*sizeof(OBJECT*));
 				if ( bigger==NULL )
 				{
 					output_error("unsufficient memory to allocate hearbeat object list");
@@ -830,7 +830,7 @@ static STATUS init_all(void)
 				}
 				if ( max_object_heartbeats>0 )
 				{
-					memcpy(bigger,object_heartbeats,max_object_heartbeats*sizeof(OBJECT));
+					memcpy(bigger,object_heartbeats,max_object_heartbeats*sizeof(OBJECT*));
 					free(object_heartbeats);
 				}
 				object_heartbeats = bigger;
