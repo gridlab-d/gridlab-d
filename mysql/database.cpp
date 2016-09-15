@@ -221,10 +221,7 @@ void database::check_schema(void)
 	{
 		char command[1024];
 		sprintf(command,"USE `%s`",get_schema());
-		if ( mysql_query(mysql,command)!=0 )
-			exception("%s->query[%s] failed - %s", get_name(), command, mysql_error(mysql));
-		else if ( get_options()&DBO_SHOWQUERY )
-			gl_verbose("%s->query[%s] ok", get_name(), command);
+		mysql_query(mysql,command);
 		last_used = this;
 	}
 }
