@@ -171,6 +171,7 @@ static struct s_varmap {
 	{"maximum_synctime",PT_int32, &global_maximum_synctime, PA_PUBLIC, "maximum sync time for deltamode"},
 	{"run_realtime",PT_bool, &global_run_realtime, PA_PUBLIC, "realtime enable flag"},
 	{"enter_realtime",PT_timestamp, &global_enter_realtime, PA_PUBLIC, "timestamp to transition to realtime mode"},
+	{"realtime_metric",PT_double, &global_realtime_metric, PA_REFERENCE, "realtime performance metric (0=worst, 1=best)"},
 	{"no_deprecate",PT_bool, &global_suppress_deprecated_messages, PA_PUBLIC, "suppress deprecated usage message enable flag"},
 #ifdef _DEBUG
 	{"sync_dumpfile",PT_char1024, &global_sync_dumpfile, PA_PUBLIC, "sync event dump file name"},

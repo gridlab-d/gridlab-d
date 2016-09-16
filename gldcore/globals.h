@@ -167,6 +167,7 @@ GLOBAL int global_suppress_deprecated_messages INIT(0); /**< flag to suppress ou
 
 GLOBAL int global_run_realtime INIT(0); /**< flag to force simulator into realtime mode */
 GLOBAL TIMESTAMP global_enter_realtime INIT(TS_NEVER); /**< The simulation transitions from simtime to realtime at this timestep */
+GLOBAL double global_realtime_metric INIT(0); /**< realtime performance metric (0=poor, 1=great) */
 
 #ifdef _DEBUG
 GLOBAL char global_sync_dumpfile[1024] INIT(""); /**< enable sync event dump file */
