@@ -158,7 +158,7 @@ function XMLSend(request)
         xml = new XMLHttpRequest();
     else if ( window.ActiveXObject )
         xml = new ActiveXObject("Microsoft.XMLHTTP");
-    xml.open("GET",request,false);
+    xml.open("GET",encodeURL(request),false);
     xml.send();
     return xml;
 }
