@@ -701,13 +701,79 @@ int http_xml_request(HTTPCNX *http,char *uri)
 			http_format(http,"</properties>\n");
 		}
 		else
-		{
-
-			/* post the current value */
-			if ( !object_get_value_by_name(obj,arg2,buffer,sizeof(buffer)) )
+		{	/* get the unit (if any) */
+			char *uname = strchr(arg2,'[');
+			if ( uname!=NULL )
 			{
-				output_error("object '%s' property '%s' not found", arg1, arg2);
-				return 0;
+				UNIT *unit;
+				PROPERTY *prop;
+				double rvalue;
+				complex cvalue;
+				char *p = strchr(uname,']');
+				if ( p!=NULL ) *p='\0';
+				else {
+					output_error("object '%s' property '%s' unit spec in incomplete or invalid", arg1, arg2);
+					return 0;
+				}
+				*uname++ = '\0';
+				unit = unit_find(uname);
+				if ( unit==NULL )
+				{
+					output_error("object '%s' property '%s' unit '%s' not found", arg1, arg2, uname);
+					return 0;
+				}
+				prop = object_get_property(obj,arg2,NULL);
+				if ( prop==NULL )
+				{
+					output_error("object '%s' property '%s' not found", arg1, arg2);
+					return 0;
+				}
+				if ( prop->unit==NULL )
+				{
+					output_error("object '%s' property '%s' has no units", arg1, arg2);
+					return 0;
+				}
+				if ( prop->ptype==PT_complex )
+				{
+					cvalue = *object_get_complex_quick(obj,prop);
+					if ( !unit_convert_complex(prop->unit,unit,&cvalue) )
+					{
+						output_error("object '%s' property '%s' conversion from '%s' to '%s' failed", arg1, arg2, prop->unit->name, unit);
+						return 0;
+					}
+					switch ( cvalue.f ) {
+					case 'I':
+						sprintf(buffer,"%g%+gi %s",cvalue.r,cvalue.i,uname);
+					case 'J':
+						sprintf(buffer,"%g%+gj %s",cvalue.r,cvalue.i,uname);
+					case 'A':
+						sprintf(buffer,"%g%+gd %s",complex_get_mag(cvalue),complex_get_arg(cvalue)*180/PI,uname);
+					case 'R':
+						sprintf(buffer,"%g%+gd %s",complex_get_mag(cvalue),complex_get_arg(cvalue),uname);
+						break;
+					default:
+						output_error("object '%s' property '%s' has no units", arg1, arg2);
+						return 0;
+					}
+				}
+				else
+				{
+					rvalue = *object_get_double_quick(obj,prop);
+					if ( !unit_convert_ex(prop->unit,unit,&rvalue) )
+					{
+						output_error("object '%s' property '%s' conversion from '%s' to '%s' failed", arg1, arg2, prop->unit->name, unit);
+						return 0;
+					}
+					sprintf(buffer,"%g %s",rvalue,uname);
+				}
+			}
+			else {
+				/* get the current value */
+				if ( !object_get_value_by_name(obj,arg2,buffer,sizeof(buffer)) )
+				{
+					output_error("object '%s' property '%s' not found", arg1, arg2);
+					return 0;
+				}
 			}
 
 			/* assignment, if any */
@@ -1398,9 +1464,23 @@ int http_kml_request(HTTPCNX *http, char *action)
 	}
 	else
 	{
-		char *query = p+1; // now "property=value"
+		char buffer[1024];
+		char *propname = p+1; // now "property=value"
+		OBJECT *obj;
 		*p='\0'; // action is now the target object name
-		http_format(http,"%s","TODO");
+		obj = object_find_name(action);
+		if ( obj==NULL )
+		{
+			http_status(http,HTTP_NOTACCEPTABLE);
+			return 0;
+		}
+		p = strchr(propname,"=");
+		object_get_value_by_name(obj,propname,buffer,sizeof(buffer));
+		if ( p!=NULL )
+		{	// set the value
+			object_set_value_by_name(obj,propname,p+1);
+		}
+		return http_format(http,"%s",buffer);
 	}
 //	wunlock(&lock);
 }
