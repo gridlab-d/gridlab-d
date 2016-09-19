@@ -606,7 +606,7 @@ int climate::create(void)
 	strcpy(tmyfile,"");
 	temperature = 59.0;
 	temperature_raw = 15.0;
-	humidity = 75.0;
+	humidity = 0.75;
 	rainfall = 0.0;
 	snowdepth = 0.0;
 	ground_reflectivity = 0.3;
