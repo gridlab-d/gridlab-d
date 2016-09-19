@@ -63,12 +63,13 @@ function click_action(obj)
     update(document.location + "?" + obj.name + "=" + obj.value + "");
 }
 
-var hostname = "localhost";
-var portnum = 6267;
-var mls = null;
-var monitor = null;
-var monitor_time = 5000;
-var callback = null;
+hostname = '<<<hostname>>>';
+portnum = <<<server_portnum>>>;
+mls = null;
+monitor = null;
+monitor_time = 5000;
+callback = null;
+
 function GLDConnect(server,refresh_time)
 {
     specs = server.split(":");
@@ -158,7 +159,9 @@ function XMLSend(request)
         xml = new XMLHttpRequest();
     else if ( window.ActiveXObject )
         xml = new ActiveXObject("Microsoft.XMLHTTP");
-    xml.open("GET",encodeURL(request),false);
+    if ( request==null )
+    	return null;
+    xml.open("GET",encodeURI(request),false);
     xml.send();
     return xml;
 }
@@ -193,6 +196,8 @@ function GLDGetValue(doc,tag)
 }
 function GLDGetGlobal(name)
 {
+	if ( hostname==null || portnum==null )
+		return "(no server/port)";
     doc = XMLGet("http://"+hostname+":"+portnum+"/xml/"+name);
     return GLDGetValue(doc,"globalvar");
 }

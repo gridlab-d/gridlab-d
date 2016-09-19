@@ -284,6 +284,7 @@ typedef struct s_httpcnx {
 	char *status;
 	char *type;
 	SOCKET s;
+	bool cooked;
 } HTTPCNX;
 
 /** Create an HTTPCNX connection handle
@@ -383,6 +384,50 @@ static void http_send(HTTPCNX *http)
 		send_data(http->s,http->buffer,http->len);
 	http->len = 0;
 }
+/** Cook the contents of the HTTPCNX message buffer **/
+static size_t http_rewrite(char *out, char *in, size_t len)
+{
+	char name[64], *n;
+	size_t count = 0;
+	enum {RAW, COOKED} state = RAW;
+	for ( size_t i = 0 ; i < len ; i++ )
+	{
+		if ( state==RAW )
+		{
+			if ( in[i]=='<' && in[i+1]=='<' && in[i+2]=='<' )
+			{
+				i += 2;
+				state = COOKED;
+				memset(name,0,sizeof(name));
+				n = name;
+			}
+			else
+				out[count++] = in[i];
+		}
+		else if ( state==COOKED )
+		{
+			if ( in[i]=='>' && in[i+1]=='>' && in[i+2]=='>' )
+			{
+				char buffer[1024];
+				if ( global_getvar(name,buffer,sizeof(buffer))==NULL )
+				{
+					output_error("http_rewrite(): '%s' not found", name);
+				}
+				else
+				{
+					strcpy(out+count,buffer);
+					count += strlen(buffer);
+				}
+				i += 2;
+				state = RAW;
+			}
+			else
+				*n++ = in[i];
+		}
+	}
+	return count;
+}
+
 /** Write the contents of the HTTPCNX message buffer **/
 static void http_write(HTTPCNX *http, char *data, size_t len)
 {
@@ -403,7 +448,15 @@ static void http_write(HTTPCNX *http, char *data, size_t len)
 		free(old);
 		old = NULL;
 	}
-	memcpy(http->buffer+http->len,data,len);
+	if ( http->cooked )
+	{
+		char *tmp = (char*)malloc(len*2);
+		len = http_rewrite(tmp,data,len);
+		memcpy(http->buffer+http->len,tmp,len);
+		free(tmp);
+	}
+	else
+		memcpy(http->buffer+http->len,data,len);
 	http->len += len;
 }
 /** Close the HTTPCNX connection after sending content **/
@@ -1017,10 +1070,11 @@ int filelength(int fd)
 /** Copy the content of a file to the client
 	@returns the number of bytes sent
  **/
-int http_copy(HTTPCNX *http, char *context, char *source)
+int http_copy(HTTPCNX *http, char *context, char *source, int cook)
 {
 	char *buffer;
 	size_t len;
+	int old_cooked;
 	FILE *fp = fopen(source,"rb");
 	if (fp==NULL)
 	{
@@ -1055,7 +1109,10 @@ int http_copy(HTTPCNX *http, char *context, char *source)
 		return 0;
 	}
 	http_mime(http,source);
+	old_cooked = http->cooked;
+	http->cooked = cook;
 	http_write(http,buffer,len);
+	http->cooked = old_cooked;
 	free(buffer);
 	fclose(fp);
 	return 1;
@@ -1072,7 +1129,7 @@ int http_output_request(HTTPCNX *http,char *uri)
 	if (*(fullpath+strlen(fullpath)-1)!='/' || *(fullpath+strlen(fullpath)-1)!='\\' )
 		strcat(fullpath,"/");
 	strcat(fullpath,uri);
-	return http_copy(http,"file",fullpath);
+	return http_copy(http,"file",fullpath,false);
 }
 
 /** Process an incoming Java request
@@ -1129,7 +1186,7 @@ int http_run_java(HTTPCNX *http,char *uri)
 	}
 
 	/* copy output to http */
-	return http_copy(http,"Java",output);
+	return http_copy(http,"Java",output,true);
 }
 
 /** Process an incoming Perl data request
@@ -1187,7 +1244,7 @@ int http_run_perl(HTTPCNX *http,char *uri)
 	}
 
 	/* copy output to http */
-	return http_copy(http,"Perl",output);
+	return http_copy(http,"Perl",output,true);
 }
 
 /** Process an incoming Python data request
@@ -1244,7 +1301,7 @@ int http_run_python(HTTPCNX *http,char *uri)
 	}
 
 	/* copy output to http */
-	return http_copy(http,"Python",output);
+	return http_copy(http,"Python",output,true);
 }
 
 /** Process an incoming R data request
@@ -1305,7 +1362,7 @@ int http_run_r(HTTPCNX *http,char *uri)
 	}
 
 	/* copy output to http */
-	return http_copy(http,"R",output);
+	return http_copy(http,"R",output,true);
 }
 
 /** Process an incoming Scilab data request
@@ -1362,7 +1419,7 @@ int http_run_scilab(HTTPCNX *http,char *uri)
 	}
 
 	/* copy output to http */
-	return http_copy(http,"Scilab",output);
+	return http_copy(http,"Scilab",output,true);
 }
 
 /** Process an incoming Octave data request
@@ -1419,7 +1476,7 @@ int http_run_octave(HTTPCNX *http,char *uri)
 	}
 
 	/* copy output to http */
-	return http_copy(http,"Octave",output);
+	return http_copy(http,"Octave",output,true);
 }
 
 /** Process an incoming Gnuplot data request
@@ -1479,7 +1536,7 @@ int http_run_gnuplot(HTTPCNX *http,char *uri)
 	}
 
 	/* copy output to http */
-	return http_copy(http,"gnuplot",output);
+	return http_copy(http,"gnuplot",output,true);
 }
 
 /** Process an incoming runtime file request
@@ -1493,7 +1550,21 @@ int http_get_rt(HTTPCNX *http,char *uri)
 		output_error("runtime file '%s' couldn't be located in GLPATH='%s'", uri,getenv("GLPATH"));
 		return 0;
 	}
-	return http_copy(http,"runtime",fullpath);
+	return http_copy(http,"runtime",fullpath,true);
+}
+
+/** Process an incoming runtime file request
+	@returns non-zero on success, 0 on failure (errno set)
+ **/
+int http_get_rb(HTTPCNX *http,char *uri)
+{
+	char fullpath[1024];
+	if (!find_file(uri,NULL,R_OK,fullpath,sizeof(fullpath)))
+	{
+		output_error("binary file '%s' couldn't be located in GLPATH='%s'", uri,getenv("GLPATH"));
+		return 0;
+	}
+	return http_copy(http,"runtime",fullpath,false);
 }
 
 /** Collect a KML documnent
@@ -1507,7 +1578,7 @@ int http_kml_request(HTTPCNX *http, char *action)
 	http_type(http,"text/kml");
 	if ( p==NULL )
 	{	kml_dump(action); // simple dump of everything
-		return http_copy(http,"KML",action);
+		return http_copy(http,"KML",action,false);
 	}
 	else
 	{
@@ -1612,7 +1683,7 @@ int http_favicon(HTTPCNX *http)
 		output_error("file 'favicon.ico' not found", fullpath);
 		return 0;
 	}
-	return http_copy(http,"icon",fullpath);
+	return http_copy(http,"icon",fullpath,false);
 }
 
 /** Process an incoming request
@@ -1716,6 +1787,7 @@ void *http_response(void *ptr)
 				{"/output/",	http_output_request,	HTTP_OK, HTTP_NOTFOUND},
 				{"/action/",	http_action_request,	HTTP_ACCEPTED,HTTP_NOTFOUND},
 				{"/rt/",		http_get_rt,			HTTP_OK, HTTP_NOTFOUND},
+				{"/rb/",		http_get_rb,			HTTP_OK, HTTP_NOTFOUND},
 				{"/perl/",		http_run_perl,			HTTP_OK, HTTP_NOTFOUND},
 				{"/gnuplot/",	http_run_gnuplot,		HTTP_OK, HTTP_NOTFOUND},
 				{"/java/",		http_run_java,			HTTP_OK, HTTP_NOTFOUND},
