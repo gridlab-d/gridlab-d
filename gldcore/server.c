@@ -753,50 +753,56 @@ int http_xml_request(HTTPCNX *http,char *uri)
 				}
 				if ( prop->unit==NULL )
 				{
-					output_error("object '%s' property '%s' has no units", arg1, arg2);
+					output_error("class '%s' property '%s' has no units", obj->oclass->name, prop->name);
 					return 0;
 				}
 
 				/* handle complex numbers */
 				if ( prop->ptype==PT_complex )
 				{
-					double a1,a2;
 					cvalue = *object_get_complex_quick(obj,prop);
 					if ( !unit_convert_complex(prop->unit,unit,&cvalue) )
 					{
 						output_error("object '%s' property '%s' conversion from '%s' to '%s' failed", arg1, arg2, prop->unit->name, unit);
 						return 0;
 					}
-					switch ( cvalue.f ) {
-					case 'I':
-						sprintf(fmt,"%%.%s%%+%si %%s",spec,spec);
-						a1 = cvalue.r;
-						a2 = cvalue.i;
+					switch ( spec[2]=='\0' ? cvalue.f : spec[2] ) {
+					case I: // i-notation
+						sprintf(fmt,"%%.%c%c%%+.%c%ci %%s",spec[0],spec[1],spec[0],spec[1]);
+						sprintf(buffer,fmt,cvalue.r,cvalue.i,uname);
 						break;
-					case 'J':
-						sprintf(fmt,"%%.%s%%+%sj %%s",spec,spec);
-						a1 = cvalue.r;
-						a2 = cvalue.i;
+					case J: // j-notation
+						sprintf(fmt,"%%.%c%c%%+.%c%cj %%s",spec[0],spec[1],spec[0],spec[1]);
+						sprintf(buffer,fmt,cvalue.r,cvalue.i,uname);
 						break;
-					case 'A':
-						sprintf(fmt,"%%.%s%%+%sd %%s",spec,spec);
-						a1 = complex_get_mag(cvalue);
-						a2 = complex_get_arg(cvalue)*180/PI;
+					case A: // degrees
+						sprintf(fmt,"%%.%c%c%%+.%c%cd %%s",spec[0],spec[1],spec[0],spec[1]);
+						sprintf(buffer,fmt,complex_get_mag(cvalue),complex_get_arg(cvalue)*180/PI,uname);
 						break;
-					case 'R':
-						sprintf(fmt,"%%.%s%%+%sr %%s",spec,spec);
-						a1 = complex_get_mag(cvalue);
-						a2 = complex_get_arg(cvalue);
+					case R: // radians
+						sprintf(fmt,"%%.%c%c%%+.%c%cr %%s",spec[0],spec[1],spec[0],spec[1]);
+						sprintf(buffer,fmt,complex_get_mag(cvalue),complex_get_arg(cvalue),uname);
+						break;
+					case 'M': // magnitude only
+						sprintf(fmt,"%%.%c%c %%s",spec[0],spec[1]);
+						sprintf(buffer,fmt,complex_get_mag(cvalue),uname);
+						break;
+					case 'D': // angle only in degrees
+						sprintf(fmt,"%%.%c%c deg",spec[0],spec[1]);
+						sprintf(buffer,fmt,complex_get_arg(cvalue)*180/PI,uname);
+						break;
+					case 'R': // angle only in radians
+						sprintf(fmt,"%%.%c%c rad",spec[0],spec[1]);
+						sprintf(buffer,fmt,complex_get_arg(cvalue),uname);
 						break;
 					default:
-						output_error("object '%s' property '%s' has no units", arg1, arg2);
+						output_error("object '%s' property '%s' complex angle notation '%c' is not valid", arg1, arg2, spec[2]=='\0' ? cvalue.f : spec[3]);
 						return 0;
 					}
-					sprintf(buffer,fmt,a1,a2,uname);
 				}
 				else /* handle doubles */
 				{
-					sprintf(fmt,"%%.%s %%s",spec);
+					sprintf(fmt,"%%.%c%c %%s",spec[0],spec[1]);
 					rvalue = *object_get_double_quick(obj,prop);
 					if ( !unit_convert_ex(prop->unit,unit,&rvalue) )
 					{
