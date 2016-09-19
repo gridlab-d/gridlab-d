@@ -710,6 +710,8 @@ int http_xml_request(HTTPCNX *http,char *uri)
 				double rvalue;
 				complex cvalue;
 				char *spec = NULL;
+				int prec = 4;
+				char fmt[64];
 
 				/* find the end of the unit definition */
 				char *p = strchr(uname,']');
@@ -724,6 +726,15 @@ int http_xml_request(HTTPCNX *http,char *uri)
 				spec = strchr(uname,',');
 				if ( spec!=NULL )
 					*spec++ = '\0';
+				else
+					spec = "4g";
+
+				/* check spec for conformance */
+				if ( strchr("0123456789",spec[0])==NULL || strchr("aAfFgGeE",spec[1])==NULL )
+				{
+					output_error("object '%s' property '%s' unit format '%s' is invalid (must be [0-9][aAeEfFgG])", arg1, arg2, spec);
+					return 0;
+				}
 
 				/* get the unit */
 				unit = unit_find(uname);
@@ -756,46 +767,43 @@ int http_xml_request(HTTPCNX *http,char *uri)
 						output_error("object '%s' property '%s' conversion from '%s' to '%s' failed", arg1, arg2, prop->unit->name, unit);
 						return 0;
 					}
-					if ( spec == NULL ) {
-						switch ( cvalue.f ) {
-						case 'I':
-							spec = "%g%+gi %s";
-							a1 = cvalue.r;
-							a2 = cvalue.i;
-							break;
-						case 'J':
-							spec = "%g%+gj %s";
-							a1 = cvalue.r;
-							a2 = cvalue.i;
-							break;
-						case 'A':
-							spec = "%g%+gd %s";
-							a1 = complex_get_mag(cvalue);
-							a2 = complex_get_arg(cvalue)*180/PI;
-							break;
-						case 'R':
-							spec = "%g%+gr %s";
-							a1 = complex_get_mag(cvalue);
-							a2 = complex_get_arg(cvalue);
-							break;
-						default:
-							output_error("object '%s' property '%s' has no units", arg1, arg2);
-							return 0;
-						}
+					switch ( cvalue.f ) {
+					case 'I':
+						sprintf(fmt,"%%.%s%%+%si %%s",spec,spec);
+						a1 = cvalue.r;
+						a2 = cvalue.i;
+						break;
+					case 'J':
+						sprintf(fmt,"%%.%s%%+%sj %%s",spec,spec);
+						a1 = cvalue.r;
+						a2 = cvalue.i;
+						break;
+					case 'A':
+						sprintf(fmt,"%%.%s%%+%sd %%s",spec,spec);
+						a1 = complex_get_mag(cvalue);
+						a2 = complex_get_arg(cvalue)*180/PI;
+						break;
+					case 'R':
+						sprintf(fmt,"%%.%s%%+%sr %%s",spec,spec);
+						a1 = complex_get_mag(cvalue);
+						a2 = complex_get_arg(cvalue);
+						break;
+					default:
+						output_error("object '%s' property '%s' has no units", arg1, arg2);
+						return 0;
 					}
-					sprintf(buffer,spec,a1,a2,uname);
+					sprintf(buffer,fmt,a1,a2,uname);
 				}
 				else /* handle doubles */
 				{
-					if ( spec == NULL )
-						spec = "%g %s";
+					sprintf(fmt,"%%.%s %%s",spec);
 					rvalue = *object_get_double_quick(obj,prop);
 					if ( !unit_convert_ex(prop->unit,unit,&rvalue) )
 					{
 						output_error("object '%s' property '%s' conversion from '%s' to '%s' failed", arg1, arg2, prop->unit->name, unit);
 						return 0;
 					}
-					sprintf(buffer,spec,rvalue,uname);
+					sprintf(buffer,fmt,rvalue,uname);
 				}
 			}
 			else {
