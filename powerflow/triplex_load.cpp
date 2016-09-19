@@ -66,9 +66,9 @@ triplex_load::triplex_load(MODULE *mod) : triplex_node(mod)
 			PT_double, "constant_impedance_1_reac[Ohm]", PADDR(constant_impedance[0].Im()),PT_DESCRIPTION,"constant impedance load on phase 1, imaginary only, specified as Ohms",
 			PT_double, "constant_impedance_2_reac[Ohm]", PADDR(constant_impedance[1].Im()),PT_DESCRIPTION,"constant impedance load on phase 2, imaginary only, specified as Ohms",
 			PT_double, "constant_impedance_12_reac[Ohm]", PADDR(constant_impedance[2].Im()),PT_DESCRIPTION,"constant impedance load on phase 12, imaginary only, specified as Ohms",
-			PT_complex,	"measured_voltage_1",PADDR(measured_voltage_1),PT_DESCRIPTION,"current measured voltage on phase 1",
-			PT_complex,	"measured_voltage_2",PADDR(measured_voltage_2),PT_DESCRIPTION,"current measured voltage on phase 2",
-			PT_complex,	"measured_voltage_12",PADDR(measured_voltage_12),PT_DESCRIPTION,"current measured voltage on phase 12",
+			PT_complex,	"measured_voltage_1[V]",PADDR(measured_voltage_1),PT_DESCRIPTION,"measured voltage on phase 1",
+			PT_complex,	"measured_voltage_2[V]",PADDR(measured_voltage_2),PT_DESCRIPTION,"measured voltage on phase 2",
+			PT_complex,	"measured_voltage_12[V]",PADDR(measured_voltage_12),PT_DESCRIPTION,"measured voltage on phase 12",
 
 			// This allows the user to set a base power on each phase, and specify the power as a function
 			// of ZIP and pf for each phase (similar to zipload).  This will override the constant values
