@@ -390,7 +390,8 @@ static size_t http_rewrite(char *out, char *in, size_t len)
 	char name[64], *n;
 	size_t count = 0;
 	enum {RAW, COOKED} state = RAW;
-	for ( size_t i = 0 ; i < len ; i++ )
+	size_t i;
+	for ( i = 0 ; i < len ; i++ )
 	{
 		if ( state==RAW )
 		{
