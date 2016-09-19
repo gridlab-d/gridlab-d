@@ -428,6 +428,8 @@ static void http_mime(HTTPCNX *http, char *path)
 		{".png","image/png"},
 		{".js","text/javascript"},
 		{".kml","text/kml"},
+		{".htm","text/html"},
+		{".ico","image/x-icon"},
 	};
 	int n;
 	for ( n=0 ; n<sizeof(map)/sizeof(map[0]) ; n++ )
