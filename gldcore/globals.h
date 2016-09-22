@@ -180,6 +180,7 @@ GLOBAL int global_compileonly INIT(0); /**< flag to enable compile-only option (
 
 GLOBAL int global_server_portnum INIT(0); /**< port used in server mode (6267 was assigned by IANA Dec 2010) */
 GLOBAL char global_server_inaddr[1024] INIT(""); /**< interface address to bind server to */
+GLOBAL char global_client_allowed[1024] INIT(""); /**< internet address from which clients can be accepted */
 GLOBAL char global_browser[1024] /**< default browser to use for GUI */
 #ifdef WIN32
 	INIT("iexplore"); 

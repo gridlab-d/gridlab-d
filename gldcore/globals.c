@@ -182,6 +182,7 @@ static struct s_varmap {
 	{"browser", PT_char1024, &global_browser, PA_PUBLIC, "browser selection"},
 	{"server_portnum",PT_int32,&global_server_portnum, PA_PUBLIC, "server port number (default is find first open starting at 6267)"},
 	{"server_quit_on_close",PT_bool,&global_server_quit_on_close, PA_PUBLIC, "server quit on connection closed enable flag"},
+	{"client_allowed",PT_char1024,&global_client_allowed, PA_PUBLIC,"clients from which to accept connecdtions"},
 	{"autoclean",PT_bool,&global_autoclean, PA_PUBLIC, "autoclean enable flag"},
 	{"technology_readiness_level", PT_enumeration, &technology_readiness_level, PA_PUBLIC, "technology readiness level", trl_keys},
 	{"show_progress",PT_bool,&global_show_progress,PA_PUBLIC, "show progress enable flag"},

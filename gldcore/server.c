@@ -103,6 +103,10 @@ static size_t recv_data(SOCKET s,char *buffer, size_t len)
 #endif
 }
 
+int client_allowed(char *saddr)
+{
+	return strncmp(saddr,global_client_allowed,strlen(global_client_allowed))==0;
+}
 /** Main server wait loop 
     @returns a pointer to the status flag
  **/
@@ -139,12 +143,14 @@ static void *server_routine(void *arg)
 		}
 		else if ((int)newsockfd > 0)
 		{
-#ifdef WIN32
-			output_verbose("accepting incoming connection from %d.%d.%d.%d on port %d", cli_addr.sin_addr.S_un.S_un_b.s_b1,cli_addr.sin_addr.S_un.S_un_b.s_b2,cli_addr.sin_addr.S_un.S_un_b.s_b3,cli_addr.sin_addr.S_un.S_un_b.s_b4,cli_addr.sin_port);
-#else
-			output_verbose("accepting incoming connection from on port %d",cli_addr.sin_port);
-#endif
-
+			char *saddr = inet_ntoa(cli_addr.sin_addr);
+			if ( !client_allowed(saddr) )
+			{
+				output_error("denying connection from %s on port %d",saddr, cli_addr.sin_port);
+				close(newsockfd);
+				continue;
+			}
+			output_verbose("accepting connection from %s on port %d",saddr, cli_addr.sin_port);
 			if ( active )
 				pthread_join(thread_id,&result);
 			if ( pthread_create(&thread_id,NULL, http_response,(void*)newsockfd)!=0 )
