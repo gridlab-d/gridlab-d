@@ -3814,6 +3814,13 @@ static int property_ref(PARSER, TRANSFORMSOURCE *xstype, void **ref, OBJECT *fro
 				*xstype = XS_ENDUSE;
 				ACCEPT;
 			}
+			else if ( prop->ptype==PT_random )
+			{
+				randomvar *rv = (void*)object_get_addr(obj,pname);
+				*ref = &(rv->value);
+				*xstype = XS_RANDOMVAR;
+				ACCEPT;
+			}
 			else
 			{
 				output_error_raw("%s(%d): transform '%s.%s' does not reference a double or a double container like a loadshape", filename, linenum, oname,pname);
