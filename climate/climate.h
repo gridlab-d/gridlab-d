@@ -185,6 +185,15 @@ class climate : public gld_object {
 	GL_ATOMIC(double,solar_global); ///< global solar flux (W/sf)
 	GL_ATOMIC(double,solar_direct); ///< direct solar flux (W/sf)
 	GL_ATOMIC(double,solar_diffuse); ///< diffuse solar flux (W/sf)
+	GL_ATOMIC(double,solar_cloud_global); //< READ ONLY: global solar flux after modification by the cloud model(W/sf)
+	GL_ATOMIC(double,solar_cloud_direct); ///< READ ONLY; direct solar flux after modification by the cloud modelW/sf)
+	GL_ATOMIC(double,solar_cloud_diffuse); ///< READ ONLY: diffuse solar flux after modification by the cloud model(W/sf)
+	GL_ATOMIC(double,cloud_alpha); //Determines the distance between the shading layers of the normalized patterns.
+											//Smaller values lead to a larger distance between shading layers and greater variation within a cloud, closer to continuous.
+											//Larger values lead to a smaller distance between shading layers and less variation within a cloud, closer to binary.
+											//Minimum value is num_cloud_layers.
+	GL_ATOMIC(double,cloud_num_layers); //Higher number of layers makes for the possibility of wispier clouds.
+	GL_ATOMIC(double,cloud_aerosol_transmissivity); //Attenuation factor of no-cloud (clear-sky) radiation due to aerosols
 	GL_ATOMIC(double,ground_reflectivity); // flux reflectivity of ground (W/sf)
 	GL_STRUCT(CLIMATERECORD,record); ///< record values (low,low_day,high,high_day,solar)
 	GL_ATOMIC(double,rainfall); ///< rainfall rate (in/h)
@@ -209,6 +218,7 @@ class climate : public gld_object {
 	GL_ATOMIC(double,opq_sky_cov);
 	GL_ATOMIC(double,cloud_opacity);
 	GL_ATOMIC(double,cloud_reflectivity);
+	GL_ATOMIC(double,cloud_speed_factor);
 	GL_ATOMIC(enumeration,cloud_model);
 
 	// data not shared with classes in this module (no locks needed)
@@ -247,7 +257,7 @@ private:
 	int MAX_LON_INDEX;
 	double MIN_LON;
 	double MAX_LON;
-	double global_attenuation;
+	double global_transmissivity;
 public:
 	climate(MODULE *module);
 	int create(void);

@@ -93,6 +93,10 @@
 #include <math.h>
 #include "link.h"
 #include "node.h"
+#include "meter.h"
+#include "regulator.h"
+#include "triplex_meter.h"
+#include "switch_object.h"
 
 CLASS* link_object::oclass = NULL;
 CLASS* link_object::pclass = NULL;
@@ -825,6 +829,10 @@ int link_object::init(OBJECT *parent)
 		//Try to map the function.  If it fails, just assume it has no frequency dependence
 		link_recalc_fxn = (FUNCTIONADDR)(gl_get_function(obj,"recalc_distribution_line"));
 	}
+
+	// KML support
+	set_latitude((from->latitude+to->latitude)/2);
+	set_longitude((from->longitude+to->longitude)/2);
 
 	return 1;
 }
@@ -3108,11 +3116,33 @@ TIMESTAMP link_object::postsync(TIMESTAMP t0)
 	return TRET;
 }
 
+int link_object::kmlinit(int (*stream)(const char*,...))
+{
+	// TODO: move line styles into line objects
+	stream("<Style id=\"overhead_line_r\"><LineStyle><color>7f00ffff</color><width>4</width></LineStyle><PolyStyle><color>7fff0000</color></PolyStyle></Style>\n");
+	stream("<Style id=\"overhead_line_g\"><LineStyle><color>7f00ffff</color><width>4</width></LineStyle><PolyStyle><color>7f00ff00</color></PolyStyle></Style>\n");
+	stream("<Style id=\"overhead_line_b\"><LineStyle><color>7f00ffff</color><width>4</width></LineStyle><PolyStyle><color>7f0000ff</color></PolyStyle></Style>\n");
+	stream("<Style id=\"overhead_line_k\"><LineStyle><color>7f00ffff</color><width>4</width></LineStyle><PolyStyle><color>7f000000</color></PolyStyle></Style>\n");
+	stream("<Style id=\"underground_line_r\"><LineStyle><color>3f00ffff</color><width>4</width></LineStyle><PolyStyle><color>3fff0000</color></PolyStyle></Style>\n");
+	stream("<Style id=\"underground_line_g\"><LineStyle><color>3f00ffff</color><width>4</width></LineStyle><PolyStyle><color>3f00ff00</color></PolyStyle></Style>\n");
+	stream("<Style id=\"underground_line_b\"><LineStyle><color>3f00ffff</color><width>4</width></LineStyle><PolyStyle><color>3f0000ff</color></PolyStyle></Style>\n");
+	stream("<Style id=\"underground_line_k\"><LineStyle><color>3f00ffff</color><width>4</width></LineStyle><PolyStyle><color>3f000000</color></PolyStyle></Style>\n");
+
+	gld_global host("hostname");
+	gld_global port("server_portnum");
+#define STYLE(X) stream("<Style id=\"" #X "_g\"><IconStyle><Icon><href>http://%s:%u/rt/" #X "_g.png</href></Icon></IconStyle></Style>\n", (const char*)host.get_string(), port.get_int32());\
+		stream("<Style id=\"" #X "_r\"><IconStyle><Icon><href>http://%s:%u/rt/" #X "_r.png</href></Icon></IconStyle></Style>\n", (const char*)host.get_string(), port.get_int32());\
+		stream("<Style id=\"" #X "_b\"><IconStyle><Icon><href>http://%s:%u/rt/" #X "_b.png</href></Icon></IconStyle></Style>\n", (const char*)host.get_string(), port.get_int32());\
+		stream("<Style id=\"" #X "_k\"><IconStyle><Icon><href>http://%s:%u/rt/" #X "_k.png</href></Icon></IconStyle></Style>\n", (const char*)host.get_string(), port.get_int32());
+	STYLE(regulator);
+	STYLE(switch);
+	STYLE(transformer);
+	return 0;
+}
+
 int link_object::kmldump(int (*stream)(const char*,...))
 {
 	OBJECT *obj = OBJECTHDR(this);
-	if (isnan(from->latitude) || isnan(to->latitude) || isnan(from->longitude) || isnan(to->longitude))
-		return 0;
 	stream("    <Placemark>\n");
 	if (obj->name)
 		stream("      <name>%s</name>\n", obj->name);
@@ -3121,105 +3151,124 @@ int link_object::kmldump(int (*stream)(const char*,...))
 	stream("      <description>\n");
 	stream("        <![CDATA[\n");
 	stream("          <TABLE><TR>\n");
-	stream("<TR><TD WIDTH=\"25%\">&nbsp;<HR></TD>"
-			"<TH WIDTH=\"25%\" COLSPAN=2 ALIGN=CENTER>Phase A<HR></TH>"
-			"<TH WIDTH=\"25%\" COLSPAN=2 ALIGN=CENTER>Phase B<HR></TH>"
-			"<TH WIDTH=\"25%\" COLSPAN=2 ALIGN=CENTER>Phase C<HR></TH>"
-			"</TR>\n");
+	stream("<CAPTION>%s #%d</CAPTION>\n<TR><TD WIDTH=\"25%\" ALIGN=CENTER>Property<HR></TD>"
+			"<TH WIDTH=\"25%\" COLSPAN=2 ALIGN=CENTER><NOBR>Phase A</NOBR><HR></TH>"
+			"<TH WIDTH=\"25%\" COLSPAN=2 ALIGN=CENTER><NOBR>Phase B</NOBR><HR></TH>"
+			"<TH WIDTH=\"25%\" COLSPAN=2 ALIGN=CENTER><NOBR>Phase C</NOBR><HR></TH></TR>\n", get_oclass()->get_name(), get_id());
 
-	// values
-	node *pFrom = OBJECTDATA(from,node);
-	node *pTo = OBJECTDATA(to,node);
-	int phase[3] = {has_phase(PHASE_A),has_phase(PHASE_B),has_phase(PHASE_C)};
-	complex flow[3];
-	complex current[3];
-	int i;
-	for (i=0; i<3; i++)
+	int status = 2; // green
+#define HANDLE_EX(X,Y)if ( gl_object_isa(my(),Y) ) status = ((X*)this)->kmldata(stream); else
+#define HANDLE(X) HANDLE_EX(X,#X)
+	HANDLE_EX(switch_object,"switch")
+	HANDLE(regulator)
+	HANDLE(triplex_meter)
+	HANDLE(meter)
 	{
-		if (phase[i])
+		// values
+		node *pFrom = OBJECTDATA(from,node);
+		node *pTo = OBJECTDATA(to,node);
+		int phase[3] = {has_phase(PHASE_A),has_phase(PHASE_B),has_phase(PHASE_C)};
+		complex flow[3];
+		complex current[3];
+		int i;
+		for (i=0; i<3; i++)
 		{
-			if ( indiv_power_in[i].Mag() > indiv_power_out[i].Mag() )
+			if (phase[i])
 			{
-				flow[i] = indiv_power_out[i]/1000;
-				current[i] = current_out[i];
-			}
-			else
-			{
-				flow[i] = indiv_power_in[i]/1000;
-				current[i] = current_in[i];
+				if ( indiv_power_in[i].Mag() > indiv_power_out[i].Mag() )
+				{
+					flow[i] = indiv_power_out[i]/1000;
+					current[i] = current_out[i];
+				}
+				else
+				{
+					flow[i] = indiv_power_in[i]/1000;
+					current[i] = current_in[i];
+				}
 			}
 		}
-	}
 
-	// flow
-	stream("<TR><TH ALIGN=LEFT>Flow</TH>");
-	for (i=0; i<3; i++)
-	{
-		if (phase[i])
-			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.1f</NOBR></TD><TD ALIGN=LEFT>kW</TD>",
-				flow[i].Re());
-		else
-			stream("<TD>&nbsp;</TD>");
-	}
-	stream("</TR>");
-	stream("<TR><TH ALIGN=LEFT>&nbsp;</TH>");
-	for (i=0; i<3; i++)
-	{
-		if (phase[i])
-			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.1f</NOBR></TD><TD ALIGN=LEFT>kVAR</TD>",
-				flow[i].Im());
-		else
-			stream("<TD>&nbsp;</TD>");
-	}
-	stream("</TR>");
+		// flow
+		stream("<TR><TH ALIGN=LEFT>Flow</TH>");
+		for (i=0; i<3; i++)
+		{
+			if (phase[i])
+				stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.1f</NOBR></TD><TD ALIGN=LEFT>kW</TD>",
+					flow[i].Re());
+			else
+				stream("<TD>&nbsp;</TD>");
+		}
+		stream("</TR>");
+		stream("<TR><TH ALIGN=LEFT>&nbsp;</TH>");
+		for (i=0; i<3; i++)
+		{
+			if (phase[i])
+				stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.1f</NOBR></TD><TD ALIGN=LEFT>kVAR</TD>",
+					flow[i].Im());
+			else
+				stream("<TD>&nbsp;</TD>");
+		}
+		stream("</TR>");
 
-	// current
-	stream("<TR><TH ALIGN=LEFT>Current</TH>");
-	for (i=0; i<3; i++)
-	{
-		if (phase[i])
-			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.1f</NOBR></TD><TD ALIGN=LEFT>A</TD>\n",
-				current[i].Mag());
-		else
-			stream("<TD>&nbsp;</TD>\n");
-	}
-	stream("</TR>");
+		// current
+		stream("<TR><TH ALIGN=LEFT>Current</TH>");
+		for (i=0; i<3; i++)
+		{
+			if (phase[i])
+				stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.1f</NOBR></TD><TD ALIGN=LEFT>A</TD>\n",
+					current[i].Mag());
+			else
+				stream("<TD>&nbsp;</TD>\n");
+		}
+		stream("</TR>");
 
-	// loss
-	stream("<TR><TH ALIGN=LEFT>Loss</TH>");
-	for (i=0; i<3; i++)
-	{
-		if (phase[i])
-			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.1f</NOBR></TD><TD ALIGN=LEFT>kW</TD>\n",
-					indiv_power_loss[i].Re()/1000);
-		else
-			stream("<TD>&nbsp;</TD>\n");
+		// loss
+		stream("<TR><TH ALIGN=LEFT>Loss</TH>");
+		for (i=0; i<3; i++)
+		{
+			if (phase[i])
+				stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.1f</NOBR></TD><TD ALIGN=LEFT>kW</TD>\n",
+						indiv_power_loss[i].Re()/1000);
+			else
+				stream("<TD>&nbsp;</TD>\n");
+		}
+		stream("</TR>");
+		stream("<TR><TH ALIGN=LEFT>&nbsp;</TH>");
+		for (i=0; i<3; i++)
+		{
+			if (phase[i])
+				stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.1f</NOBR></TD><TD ALIGN=LEFT>kVAR</TD>\n",
+						indiv_power_loss[i].Im()/1000);
+			else
+				stream("<TD>&nbsp;</TD>\n");
+		}
+		stream("</TR>");
+
 	}
-	stream("</TR>");
-	stream("<TR><TH ALIGN=LEFT>&nbsp;</TH>");
-	for (i=0; i<3; i++)
-	{
-		if (phase[i])
-			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.1f</NOBR></TD><TD ALIGN=LEFT>kVAR</TD>\n",
-					indiv_power_loss[i].Im()/1000);
-		else
-			stream("<TD>&nbsp;</TD>\n");
-	}
-	stream("</TR>");
 
 	stream("</TABLE>\n");
 	stream("        ]]>\n");
 	stream("      </description>\n");
-	stream("      <styleUrl>#%s</styleUrl>>\n",obj->oclass->name);
-	stream("      <coordinates>%f,%f</coordinates>\n",
-		(from->longitude+to->longitude)/2,(from->latitude+to->latitude)/2);
-	stream("      <LineString>\n");			
-	stream("        <extrude>0</extrude>\n");
-	stream("        <tessellate>0</tessellate>\n");
-	stream("        <altitudeMode>relative</altitudeMode>\n");
-	stream("        <coordinates>%f,%f,50 %f,%f,50</coordinates>\n",
-		from->longitude,from->latitude,to->longitude,to->latitude);
-	stream("      </LineString>\n");			
+	if ( fabs(from->latitude-to->latitude)<1e-4 && fabs(from->longitude-to->longitude)<1e-4 )
+	{
+		stream("<styleUrl>#%s_g</styleUrl>>\n",obj->oclass->name);
+		stream("<Point>\n");
+		stream("<coordinates>%f,%f</coordinates>\n",get_longitude(),get_latitude());
+		stream("</Point>\n");
+	}
+	else
+	{
+		stream("      <styleUrl>#%s_g</styleUrl>>\n",obj->oclass->name);
+		stream("      <coordinates>%f,%f</coordinates>\n", (from->longitude+to->longitude)/2,(from->latitude+to->latitude)/2);
+		stream("      <LineString>\n");
+		stream("        <extrude>0</extrude>\n");
+		stream("        <tessellate>0</tessellate>\n");
+		stream("        <altitudeMode>relative</altitudeMode>\n");
+		stream("        <coordinates>%f,%f,50 %f,%f,50</coordinates>\n", // TODO read line height from object library
+			from->longitude,from->latitude,to->longitude,to->latitude);
+		stream("      </LineString>\n");
+	}
+
 	stream("    </Placemark>\n");
 	return 0;
 }

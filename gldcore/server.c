@@ -103,6 +103,10 @@ static size_t recv_data(SOCKET s,char *buffer, size_t len)
 #endif
 }
 
+int client_allowed(char *saddr)
+{
+	return strncmp(saddr,global_client_allowed,strlen(global_client_allowed))==0;
+}
 /** Main server wait loop 
     @returns a pointer to the status flag
  **/
@@ -139,12 +143,14 @@ static void *server_routine(void *arg)
 		}
 		else if ((int)newsockfd > 0)
 		{
-#ifdef WIN32
-			output_verbose("accepting incoming connection from %d.%d.%d.%d on port %d", cli_addr.sin_addr.S_un.S_un_b.s_b1,cli_addr.sin_addr.S_un.S_un_b.s_b2,cli_addr.sin_addr.S_un.S_un_b.s_b3,cli_addr.sin_addr.S_un.S_un_b.s_b4,cli_addr.sin_port);
-#else
-			output_verbose("accepting incoming connection from on port %d",cli_addr.sin_port);
-#endif
-
+			char *saddr = inet_ntoa(cli_addr.sin_addr);
+			if ( !client_allowed(saddr) )
+			{
+				output_error("denying connection from %s on port %d",saddr, cli_addr.sin_port);
+				close(newsockfd);
+				continue;
+			}
+			output_verbose("accepting connection from %s on port %d",saddr, cli_addr.sin_port);
 			if ( active )
 				pthread_join(thread_id,&result);
 			if ( pthread_create(&thread_id,NULL, http_response,(void*)newsockfd)!=0 )
@@ -284,6 +290,7 @@ typedef struct s_httpcnx {
 	char *status;
 	char *type;
 	SOCKET s;
+	bool cooked;
 } HTTPCNX;
 
 /** Create an HTTPCNX connection handle
@@ -383,6 +390,51 @@ static void http_send(HTTPCNX *http)
 		send_data(http->s,http->buffer,http->len);
 	http->len = 0;
 }
+/** Cook the contents of the HTTPCNX message buffer **/
+static size_t http_rewrite(char *out, char *in, size_t len)
+{
+	char name[64], *n;
+	size_t count = 0;
+	enum {RAW, COOKED} state = RAW;
+	size_t i;
+	for ( i = 0 ; i < len ; i++ )
+	{
+		if ( state==RAW )
+		{
+			if ( in[i]=='<' && in[i+1]=='<' && in[i+2]=='<' )
+			{
+				i += 2;
+				state = COOKED;
+				memset(name,0,sizeof(name));
+				n = name;
+			}
+			else
+				out[count++] = in[i];
+		}
+		else if ( state==COOKED )
+		{
+			if ( in[i]=='>' && in[i+1]=='>' && in[i+2]=='>' )
+			{
+				char buffer[1024];
+				if ( global_getvar(name,buffer,sizeof(buffer))==NULL )
+				{
+					output_error("http_rewrite(): '%s' not found", name);
+				}
+				else
+				{
+					strcpy(out+count,buffer);
+					count += strlen(buffer);
+				}
+				i += 2;
+				state = RAW;
+			}
+			else
+				*n++ = in[i];
+		}
+	}
+	return count;
+}
+
 /** Write the contents of the HTTPCNX message buffer **/
 static void http_write(HTTPCNX *http, char *data, size_t len)
 {
@@ -403,7 +455,15 @@ static void http_write(HTTPCNX *http, char *data, size_t len)
 		free(old);
 		old = NULL;
 	}
-	memcpy(http->buffer+http->len,data,len);
+	if ( http->cooked )
+	{
+		char *tmp = (char*)malloc(len*2);
+		len = http_rewrite(tmp,data,len);
+		memcpy(http->buffer+http->len,tmp,len);
+		free(tmp);
+	}
+	else
+		memcpy(http->buffer+http->len,data,len);
 	http->len += len;
 }
 /** Close the HTTPCNX connection after sending content **/
@@ -428,6 +488,8 @@ static void http_mime(HTTPCNX *http, char *path)
 		{".png","image/png"},
 		{".js","text/javascript"},
 		{".kml","text/kml"},
+		{".htm","text/html"},
+		{".ico","image/x-icon"},
 	};
 	int n;
 	for ( n=0 ; n<sizeof(map)/sizeof(map[0]) ; n++ )
@@ -701,13 +763,124 @@ int http_xml_request(HTTPCNX *http,char *uri)
 			http_format(http,"</properties>\n");
 		}
 		else
-		{
-
-			/* post the current value */
-			if ( !object_get_value_by_name(obj,arg2,buffer,sizeof(buffer)) )
+		{	/* get the unit (if any) */
+			char *uname = strchr(arg2,'[');
+			if ( uname!=NULL )
 			{
-				output_error("object '%s' property '%s' not found", arg1, arg2);
-				return 0;
+				UNIT *unit;
+				PROPERTY *prop;
+				double rvalue;
+				complex cvalue;
+				char *spec = NULL;
+				int prec = 4;
+				char fmt[64];
+
+				/* find the end of the unit definition */
+				char *p = strchr(uname,']');
+				if ( p!=NULL ) *p='\0';
+				else {
+					output_error("object '%s' property '%s' unit spec in incomplete or invalid", arg1, arg2);
+					return 0;
+				}
+				*uname++ = '\0';
+
+				/* find the format specs */
+				spec = strchr(uname,',');
+				if ( spec!=NULL )
+					*spec++ = '\0';
+				else
+					spec = "4g";
+
+				/* check spec for conformance */
+				if ( strchr("0123456789",spec[0])==NULL || strchr("aAfFgGeE",spec[1])==NULL )
+				{
+					output_error("object '%s' property '%s' unit format '%s' is invalid (must be [0-9][aAeEfFgG])", arg1, arg2, spec);
+					return 0;
+				}
+
+				/* get the unit */
+				unit = unit_find(uname);
+				if ( unit==NULL )
+				{
+					output_error("object '%s' property '%s' unit '%s' not found", arg1, arg2, uname);
+					return 0;
+				}
+
+				/* get the property */
+				prop = object_get_property(obj,arg2,NULL);
+				if ( prop==NULL )
+				{
+					output_error("object '%s' property '%s' not found", arg1, arg2);
+					return 0;
+				}
+				if ( prop->unit==NULL )
+				{
+					output_error("class '%s' property '%s' has no units", obj->oclass->name, prop->name);
+					return 0;
+				}
+
+				/* handle complex numbers */
+				if ( prop->ptype==PT_complex )
+				{
+					cvalue = *object_get_complex_quick(obj,prop);
+					if ( !unit_convert_complex(prop->unit,unit,&cvalue) )
+					{
+						output_error("object '%s' property '%s' conversion from '%s' to '%s' failed", arg1, arg2, prop->unit->name, unit);
+						return 0;
+					}
+					switch ( spec[2]=='\0' ? cvalue.f : spec[2] ) {
+					case I: // i-notation
+						sprintf(fmt,"%%.%c%c%%+.%c%ci %%s",spec[0],spec[1],spec[0],spec[1]);
+						sprintf(buffer,fmt,cvalue.r,cvalue.i,uname);
+						break;
+					case J: // j-notation
+						sprintf(fmt,"%%.%c%c%%+.%c%cj %%s",spec[0],spec[1],spec[0],spec[1]);
+						sprintf(buffer,fmt,cvalue.r,cvalue.i,uname);
+						break;
+					case A: // degrees
+						sprintf(fmt,"%%.%c%c%%+.%c%cd %%s",spec[0],spec[1],spec[0],spec[1]);
+						sprintf(buffer,fmt,complex_get_mag(cvalue),complex_get_arg(cvalue)*180/PI,uname);
+						break;
+					case R: // radians
+						sprintf(fmt,"%%.%c%c%%+.%c%cr %%s",spec[0],spec[1],spec[0],spec[1]);
+						sprintf(buffer,fmt,complex_get_mag(cvalue),complex_get_arg(cvalue),uname);
+						break;
+					case 'M': // magnitude only
+						sprintf(fmt,"%%.%c%c %%s",spec[0],spec[1]);
+						sprintf(buffer,fmt,complex_get_mag(cvalue),uname);
+						break;
+					case 'D': // angle only in degrees
+						sprintf(fmt,"%%.%c%c deg",spec[0],spec[1]);
+						sprintf(buffer,fmt,complex_get_arg(cvalue)*180/PI,uname);
+						break;
+					case 'R': // angle only in radians
+						sprintf(fmt,"%%.%c%c rad",spec[0],spec[1]);
+						sprintf(buffer,fmt,complex_get_arg(cvalue),uname);
+						break;
+					default:
+						output_error("object '%s' property '%s' complex angle notation '%c' is not valid", arg1, arg2, spec[2]=='\0' ? cvalue.f : spec[3]);
+						return 0;
+					}
+				}
+				else /* handle doubles */
+				{
+					sprintf(fmt,"%%.%c%c %%s",spec[0],spec[1]);
+					rvalue = *object_get_double_quick(obj,prop);
+					if ( !unit_convert_ex(prop->unit,unit,&rvalue) )
+					{
+						output_error("object '%s' property '%s' conversion from '%s' to '%s' failed", arg1, arg2, prop->unit->name, unit);
+						return 0;
+					}
+					sprintf(buffer,fmt,rvalue,uname);
+				}
+			}
+			else {
+				/* get the current value */
+				if ( !object_get_value_by_name(obj,arg2,buffer,sizeof(buffer)) )
+				{
+					output_error("object '%s' property '%s' not found", arg1, arg2);
+					return 0;
+				}
 			}
 
 			/* assignment, if any */
@@ -904,10 +1077,11 @@ int filelength(int fd)
 /** Copy the content of a file to the client
 	@returns the number of bytes sent
  **/
-int http_copy(HTTPCNX *http, char *context, char *source)
+int http_copy(HTTPCNX *http, char *context, char *source, int cook)
 {
 	char *buffer;
 	size_t len;
+	int old_cooked;
 	FILE *fp = fopen(source,"rb");
 	if (fp==NULL)
 	{
@@ -941,8 +1115,11 @@ int http_copy(HTTPCNX *http, char *context, char *source)
 		fclose(fp);
 		return 0;
 	}
-	http_write(http,buffer,len);
 	http_mime(http,source);
+	old_cooked = http->cooked;
+	http->cooked = cook;
+	http_write(http,buffer,len);
+	http->cooked = old_cooked;
 	free(buffer);
 	fclose(fp);
 	return 1;
@@ -959,7 +1136,7 @@ int http_output_request(HTTPCNX *http,char *uri)
 	if (*(fullpath+strlen(fullpath)-1)!='/' || *(fullpath+strlen(fullpath)-1)!='\\' )
 		strcat(fullpath,"/");
 	strcat(fullpath,uri);
-	return http_copy(http,"file",fullpath);
+	return http_copy(http,"file",fullpath,false);
 }
 
 /** Process an incoming Java request
@@ -1016,7 +1193,7 @@ int http_run_java(HTTPCNX *http,char *uri)
 	}
 
 	/* copy output to http */
-	return http_copy(http,"Java",output);
+	return http_copy(http,"Java",output,true);
 }
 
 /** Process an incoming Perl data request
@@ -1074,7 +1251,7 @@ int http_run_perl(HTTPCNX *http,char *uri)
 	}
 
 	/* copy output to http */
-	return http_copy(http,"Perl",output);
+	return http_copy(http,"Perl",output,true);
 }
 
 /** Process an incoming Python data request
@@ -1131,7 +1308,7 @@ int http_run_python(HTTPCNX *http,char *uri)
 	}
 
 	/* copy output to http */
-	return http_copy(http,"Python",output);
+	return http_copy(http,"Python",output,true);
 }
 
 /** Process an incoming R data request
@@ -1192,7 +1369,7 @@ int http_run_r(HTTPCNX *http,char *uri)
 	}
 
 	/* copy output to http */
-	return http_copy(http,"R",output);
+	return http_copy(http,"R",output,true);
 }
 
 /** Process an incoming Scilab data request
@@ -1249,7 +1426,7 @@ int http_run_scilab(HTTPCNX *http,char *uri)
 	}
 
 	/* copy output to http */
-	return http_copy(http,"Scilab",output);
+	return http_copy(http,"Scilab",output,true);
 }
 
 /** Process an incoming Octave data request
@@ -1306,7 +1483,7 @@ int http_run_octave(HTTPCNX *http,char *uri)
 	}
 
 	/* copy output to http */
-	return http_copy(http,"Octave",output);
+	return http_copy(http,"Octave",output,true);
 }
 
 /** Process an incoming Gnuplot data request
@@ -1366,7 +1543,7 @@ int http_run_gnuplot(HTTPCNX *http,char *uri)
 	}
 
 	/* copy output to http */
-	return http_copy(http,"gnuplot",output);
+	return http_copy(http,"gnuplot",output,true);
 }
 
 /** Process an incoming runtime file request
@@ -1380,7 +1557,21 @@ int http_get_rt(HTTPCNX *http,char *uri)
 		output_error("runtime file '%s' couldn't be located in GLPATH='%s'", uri,getenv("GLPATH"));
 		return 0;
 	}
-	return http_copy(http,"runtime",fullpath);
+	return http_copy(http,"runtime",fullpath,true);
+}
+
+/** Process an incoming runtime file request
+	@returns non-zero on success, 0 on failure (errno set)
+ **/
+int http_get_rb(HTTPCNX *http,char *uri)
+{
+	char fullpath[1024];
+	if (!find_file(uri,NULL,R_OK,fullpath,sizeof(fullpath)))
+	{
+		output_error("binary file '%s' couldn't be located in GLPATH='%s'", uri,getenv("GLPATH"));
+		return 0;
+	}
+	return http_copy(http,"runtime",fullpath,false);
 }
 
 /** Collect a KML documnent
@@ -1390,10 +1581,33 @@ int http_kml_request(HTTPCNX *http, char *action)
 {
 //	static long long lock;
 //	wlock(&lock);
+	char *p = strchr(action,'?');
 	http_type(http,"text/kml");
-	kml_dump(action);
+	if ( p==NULL )
+	{	kml_dump(action); // simple dump of everything
+		return http_copy(http,"KML",action,false);
+	}
+	else
+	{
+		char buffer[1024];
+		char *propname = p+1; // now "property=value"
+		OBJECT *obj;
+		*p='\0'; // action is now the target object name
+		obj = object_find_name(action);
+		if ( obj==NULL )
+		{
+			http_status(http,HTTP_NOTACCEPTABLE);
+			return 0;
+		}
+		p = strchr(propname,"=");
+		object_get_value_by_name(obj,propname,buffer,sizeof(buffer));
+		if ( p!=NULL )
+		{	// set the value
+			object_set_value_by_name(obj,propname,p+1);
+		}
+		return http_format(http,"%s",buffer);
+	}
 //	wunlock(&lock);
-	return http_copy(http,"KML",action);
 }
 /** Process an incoming action request
 	@returns non-zero on success, 0 on failure (errno set)
@@ -1476,7 +1690,7 @@ int http_favicon(HTTPCNX *http)
 		output_error("file 'favicon.ico' not found", fullpath);
 		return 0;
 	}
-	return http_copy(http,"icon",fullpath);
+	return http_copy(http,"icon",fullpath,false);
 }
 
 /** Process an incoming request
@@ -1523,8 +1737,7 @@ void *http_response(void *ptr)
 		if (sscanf(request,"%s %s %s",method,uri,version)!=3)
 		{
 			http_status(http,HTTP_BADREQUEST);
-			http_format(http,HTTP_BADREQUEST);
-			http_type(http,"text/html");
+			output_error("request [%s] is bad", request);
 			http_send(http);
 			break;
 		}
@@ -1550,9 +1763,8 @@ void *http_response(void *ptr)
 		if (stricmp(method,"GET")!=0)
 		{
 			http_status(http,HTTP_METHODNOTALLOWED);
-			http_format(http,HTTP_METHODNOTALLOWED);
-			http_type(http,"text/html");
 			/* technically, we should add an Allow entry to the response header */
+			output_error("request [%s %s %s]: '%s' is not an allowed method", method, uri, version, method);
 			http_send(http);
 			break;
 		}
@@ -1582,6 +1794,7 @@ void *http_response(void *ptr)
 				{"/output/",	http_output_request,	HTTP_OK, HTTP_NOTFOUND},
 				{"/action/",	http_action_request,	HTTP_ACCEPTED,HTTP_NOTFOUND},
 				{"/rt/",		http_get_rt,			HTTP_OK, HTTP_NOTFOUND},
+				{"/rb/",		http_get_rb,			HTTP_OK, HTTP_NOTFOUND},
 				{"/perl/",		http_run_perl,			HTTP_OK, HTTP_NOTFOUND},
 				{"/gnuplot/",	http_run_gnuplot,		HTTP_OK, HTTP_NOTFOUND},
 				{"/java/",		http_run_java,			HTTP_OK, HTTP_NOTFOUND},
@@ -1590,7 +1803,7 @@ void *http_response(void *ptr)
 				{"/scilab/",	http_run_scilab,		HTTP_OK, HTTP_NOTFOUND},
 				{"/octave/",	http_run_octave,		HTTP_OK, HTTP_NOTFOUND},
 				{"/kml/", 		http_kml_request,		HTTP_OK, HTTP_NOTFOUND},
-				{"/json/",		http_json_request,	HTTP_OK, HTTP_NOTFOUND},
+				{"/json/",		http_json_request,		HTTP_OK, HTTP_NOTFOUND},
 			};
 			int n;
 			for ( n=0 ; n<sizeof(map)/sizeof(map[0]) ; n++ )

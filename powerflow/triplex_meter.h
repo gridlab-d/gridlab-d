@@ -80,7 +80,7 @@ public:
 	int isa(char *classname);
 
 	SIMULATIONMODE inter_deltaupdate_triplex_meter(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
+	int kmldata(int (*stream)(const char*,...));
 };
 
 #endif // _TRIPLEXMETER_H
-
