@@ -9,7 +9,7 @@
 <script language=javascript>
 var server = GLDGetDialogServer(window);
 var args = GLDGetDialogArgs(window);
-if ( server!=null ) GLDConnect(server.hostname,server.portnum);
+if ( server!=null ) GLDConnect(server.hostname + ':' + server.portnum);
 function open_eula()
 {
     window.open("eula.htm","eula","height=600,width=500,resizable=no,toolbar=no,status=no");
@@ -24,7 +24,7 @@ function open_eula()
     document.writeln(version);
 </script>
 </H1>
-Copyright (C) 2011, Battelle Memorial Institute<BR>
+Copyright (C) 2016, Battelle Memorial Institute<BR>
 All Rights Reserved<BR/><BR />
 <script language="javascript">
     if ( server==null )

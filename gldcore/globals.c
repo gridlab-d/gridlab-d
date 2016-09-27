@@ -171,6 +171,7 @@ static struct s_varmap {
 	{"maximum_synctime",PT_int32, &global_maximum_synctime, PA_PUBLIC, "maximum sync time for deltamode"},
 	{"run_realtime",PT_bool, &global_run_realtime, PA_PUBLIC, "realtime enable flag"},
 	{"enter_realtime",PT_timestamp, &global_enter_realtime, PA_PUBLIC, "timestamp to transition to realtime mode"},
+	{"realtime_metric",PT_double, &global_realtime_metric, PA_REFERENCE, "realtime performance metric (0=worst, 1=best)"},
 	{"no_deprecate",PT_bool, &global_suppress_deprecated_messages, PA_PUBLIC, "suppress deprecated usage message enable flag"},
 #ifdef _DEBUG
 	{"sync_dumpfile",PT_char1024, &global_sync_dumpfile, PA_PUBLIC, "sync event dump file name"},
@@ -181,6 +182,7 @@ static struct s_varmap {
 	{"browser", PT_char1024, &global_browser, PA_PUBLIC, "browser selection"},
 	{"server_portnum",PT_int32,&global_server_portnum, PA_PUBLIC, "server port number (default is find first open starting at 6267)"},
 	{"server_quit_on_close",PT_bool,&global_server_quit_on_close, PA_PUBLIC, "server quit on connection closed enable flag"},
+	{"client_allowed",PT_char1024,&global_client_allowed, PA_PUBLIC,"clients from which to accept connecdtions"},
 	{"autoclean",PT_bool,&global_autoclean, PA_PUBLIC, "autoclean enable flag"},
 	{"technology_readiness_level", PT_enumeration, &technology_readiness_level, PA_PUBLIC, "technology readiness level", trl_keys},
 	{"show_progress",PT_bool,&global_show_progress,PA_PUBLIC, "show progress enable flag"},
