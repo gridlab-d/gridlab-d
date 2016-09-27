@@ -736,4 +736,3 @@ int triplex_meter::kmldata(int (*stream)(const char*,...))
 }
 
 /**@}**/
->>>>>>> trunk
