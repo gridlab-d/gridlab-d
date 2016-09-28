@@ -59,7 +59,9 @@
 #endif
 
 #if !defined(HAVE_CONFIG_H) || defined(HAVE_MALLOC_H)
+#ifndef XCODE
 #include <malloc.h>
+#endif
 #endif
 
 #if HAVE_SCHED_H

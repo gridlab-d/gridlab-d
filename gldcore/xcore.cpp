@@ -1,6 +1,7 @@
 /* xcore.cpp
  *
  */
+#ifndef XCODE
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -135,3 +136,4 @@ extern "C" int xstart(void)
 	return 1;
 }
 
+#endif

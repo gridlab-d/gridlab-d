@@ -343,7 +343,7 @@ double arg(complex *x)
 double aggregate_value(AGGREGATION *aggr) /**< the aggregation to perform */
 {
 	OBJECT *obj;
-	double numerator=0, denominator=0, secondary=0, third=0, fourth=0;
+	double numerator=0, denominator=0, secondary=0;
 	double scale = (aggr->punit ? aggr->scale : 1.0);
 
 	/* non-constant groups need search program rerun */
