@@ -17,7 +17,7 @@ declare -i new
 declare -i rs
 new=`git log --max-count=1 --pretty=format:"%ad" --date=raw | sed -ne 's/ [\+\-][0-9]\{4\}$//p'`
 rs=${new}/86400
-dir=`git status --porcelain -sbuno | sed -ne 's/^## //p'`
+dir=`git status --porcelain -sbuno | sed -ne 's/^## //;s/\.\.\..*$//p'`
 branch="${dir}:$rs"
 if test -f $2 ; then 
 	oldnum=`cat $2 | sed -ne 's/^#define BUILDNUM //p'`
