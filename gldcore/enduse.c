@@ -391,32 +391,6 @@ TIMESTAMP enduse_syncall(TIMESTAMP t1)
 	return t2;*/
 }
 
-int convert_from_enduse(char *string,int size,void *data, PROPERTY *prop)
-{
-/*
-	loadshape *shape;
-	complex power;
-	complex energy;
-	complex demand;
-	double impedance_fraction;
-	double current_fraction;
-	double power_fraction;
-	double power_factor;
-	struct s_enduse *next;
-*/
-	enduse *e = (enduse*)data;
-	int len = 0;
-#define OUTPUT_NZ(X) if (e->X!=0) len+=sprintf(string+len,"%s" #X ": %f", len>0?"; ":"", e->X)
-#define OUTPUT(X) len+=sprintf(string+len,"%s"#X": %f", len>0?"; ":"", e->X);
-	OUTPUT_NZ(impedance_fraction);
-	OUTPUT_NZ(current_fraction);
-	OUTPUT_NZ(power_fraction);
-	OUTPUT(power_factor);
-	OUTPUT(power.r);
-	OUTPUT_NZ(power.i);
-	return len;
-}
-
 int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 {
 	enduse *this=NULL; // temporary enduse structure used for mapping variables
@@ -450,32 +424,20 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 
 	// publish the enduse load itself
 	PROPERTY *prop = property_malloc(PT_enduse,oclass,strcmp(prefix,"")==0?"load":prefix,struct_address,NULL);
+	PROPERTY *sub = NULL;
+	char lastname[64];
 	prop->description = "the enduse load description";
 	prop->flags = 0;
 	class_add_property(oclass,prop);
 
 	for (p=prop_list;p<prop_list+sizeof(prop_list)/sizeof(prop_list[0]);p++)
 	{
-		char name[256], lastname[256];
-
-		if(prefix == NULL || strcmp(prefix,"")==0)
-		{
-			strcpy(name,p->name);
-		}
-		else
-		{
-			//strcpy(name,prefix);
-			//strcat(name, ".");
-			//strcat(name, p->name);
-			sprintf(name,"%s.%s",prefix,p->name);
-		}
-
 		if (p->type<_PT_LAST)
 		{
-			prop = property_malloc(p->type,oclass,name,p->addr+(int64)struct_address,NULL);
-			prop->description = p->description;
-			prop->flags = p->flags;
-			class_add_property(oclass,prop);
+			sub = property_malloc(p->type,oclass,p->name,p->addr+(int64)struct_address,NULL);
+			sub->description = p->description;
+			sub->flags = p->flags;
+			class_add_substructure_member(prop,sub);
 			result++;
 		}
 		else if (last==NULL)
@@ -490,7 +452,7 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 		else if (p->type==PT_KEYWORD) {
 			switch (last->type) {
 			case PT_enumeration:
-				if (!class_define_enumeration_member(oclass,lastname,p->name,p->type))
+				if (!class_add_enumeration_member(sub,p->name,p->type))
 				{
 					output_error("unable to publish enumeration member '%s' of enduse '%s'", p->name,last->name);
 					/* TROUBLESHOOT
@@ -501,7 +463,7 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 				}
 				break;
 			case PT_set:
-				if (!class_define_set_member(oclass,lastname,p->name,(int64)p->addr))
+				if (!class_add_set_member(sub,p->name,(int64)p->addr))
 				{
 					output_error("unable to publish set member '%s' of enduse '%s'", p->name,last->name);
 					/* TROUBLESHOOT
@@ -532,10 +494,36 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 		}
 
 		last = p;
-		strcpy(lastname,name);
+		strcpy(lastname,p->name);
 	}
 
 	return result;
+}
+
+int convert_from_enduse(char *string,int size,void *data, PROPERTY *prop)
+{
+/*
+	loadshape *shape;
+	complex power;
+	complex energy;
+	complex demand;
+	double impedance_fraction;
+	double current_fraction;
+	double power_fraction;
+	double power_factor;
+	struct s_enduse *next;
+*/
+	enduse *e = (enduse*)data;
+	int len = 0;
+#define OUTPUT_NZ(X) if (e->X!=0) len+=sprintf(string+len,"%s" #X ": %f", len>0?"; ":"", e->X)
+#define OUTPUT(X) len+=sprintf(string+len,"%s"#X": %f", len>0?"; ":"", e->X);
+	OUTPUT_NZ(impedance_fraction);
+	OUTPUT_NZ(current_fraction);
+	OUTPUT_NZ(power_fraction);
+	OUTPUT(power_factor);
+	OUTPUT(power.r);
+	OUTPUT_NZ(power.i);
+	return len;
 }
 
 int convert_to_enduse(char *string, void *data, PROPERTY *prop)

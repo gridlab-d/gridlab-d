@@ -553,6 +553,7 @@ struct s_property_map {
 	KEYWORD *keywords; /**< keyword list, if any; \p NULL if none (only for set and enumeration types)*/
 	char *description; /**< description of property */
 	PROPERTY *next; /**< next property in property list */
+	struct s_property_map *substruct; /**< sub structure of property */
 	PROPERTYFLAGS flags; /**< property flags (e.g., PF_RECALC) */
 	FUNCTIONADDR notify;
 	bool notify_override;

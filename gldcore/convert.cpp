@@ -1234,7 +1234,9 @@ int convert_from_struct(char *buffer, size_t len, void *data, PROPERTY *prop)
 		char name[64], value[1024];
 		while ( isspace(*item) ) item++;
 		if ( *item=='}' ) return len;
-		if ( sscanf(item,"%s %[^\n]",name,value)!=2 )
+		if ( sscanf(item,"%s \"%[^\"]",name,value)!=2
+			&& sscanf(item,"%s '%[^']",name,value)!=2
+			&& sscanf(item,"%s %[^;]",name,value)!=2 )
 			return -len;
 		PROPERTY *prop;
 		for ( prop=structure ; prop!=NULL ; prop=prop->next )
@@ -1247,9 +1249,15 @@ int convert_from_struct(char *buffer, size_t len, void *data, PROPERTY *prop)
 				break;
 			}
 		}
-		if ( prop==NULL ) return -len;
+		if ( prop==NULL )
+		{
+			PROPERTYSPEC *spec = property_getspec(structure->ptype);
+			output_error("member '%s' does not exist in %s '%s'",
+				name, spec->name, structure->name);
+			return -len;
+		}
 	}
-	return -len;
+	return len;
 }
 
 /**@}**/

@@ -176,30 +176,26 @@ PROPERTY *class_find_property_rec(CLASS *oclass,
 static PROPERTY *find_header_property(CLASS *oclass, 
                                       PROPERTYNAME name)
 {
+	/* TODO */
 	PROPERTY *prop = NULL;
 	return prop;
 }
 
-/** Find the named property in the class
 
-	@return a pointer to the PROPERTY, or \p NULL if the property is not found.
- **/
-PROPERTY *class_find_property(CLASS *oclass,     /**< the object class */
-                              PROPERTYNAME name) /**< the property name */
+PROPERTY *find_property(PROPERTY *prop, char *name)
 {
-	PROPERTY *prop = find_header_property(oclass,name);
-	if ( prop ) return prop;
+	char root[64];
+	char member[64];
+	int has_member = (sscanf(name,"%[^.].%s",root,member)>1);
+	CLASS *oclass = prop ? prop->oclass : NULL;
 
-	if(oclass == NULL)
-		return NULL;
-
-	for (prop=oclass->pmap; prop!=NULL && prop->oclass==oclass; prop=prop->next)
+	for ( ; prop!=NULL && prop->oclass==oclass ; prop=prop->next )
 	{
-		if (strcmp(name,prop->name)==0)
+		if ( strcmp(root,prop->name)==0 )
 		{
 			if (prop->flags&PF_DEPRECATED && !(prop->flags&PF_DEPRECATED_NONOTICE) && !global_suppress_deprecated_messages)
 			{
-				output_warning("class_find_property(CLASS *oclass='%s', PROPERTYNAME name='%s': property is deprecated", oclass->name, name);
+				output_warning("class_find_property(CLASS *oclass='%s', PROPERTYNAME name='%s': property is deprecated", oclass->name, root);
 				/* TROUBLESHOOT
 					You have done a search on a property that has been flagged as deprecated and will most likely not be supported soon.
 					Correct the usage of this property to get rid of this message.
@@ -207,22 +203,28 @@ PROPERTY *class_find_property(CLASS *oclass,     /**< the object class */
 				if (global_suppress_repeat_messages)
 					prop->flags |= ~PF_DEPRECATED_NONOTICE;
 			}
-			return prop;
+			break;
 		}
 	}
-	if (oclass->parent==oclass)
-	{
-		output_error("class_find_property(oclass='%s', name='%s') causes an infinite class inheritance loop", oclass->name, name);
-		/*	TROUBLESHOOT
-			A class has somehow specified itself as a parent class, either directly or indirectly.
-			This means there is a problem with the module that publishes the class.
-		 */
-		return NULL;
-	}
-	else if (oclass->parent!=NULL)
-		return class_find_property_rec(oclass->parent,name, oclass);
-	else
-		return NULL;
+	if ( prop!=NULL && prop->oclass==oclass && prop->substruct!=NULL && has_member )
+		prop = find_property(prop->substruct,member);
+	return prop;
+}
+
+/** Find the named property in the class
+
+	@return a pointer to the PROPERTY, or \p NULL if the property is not found.
+ **/
+PROPERTY *class_find_property(CLASS *oclass,		/**< the object class */
+							  PROPERTYNAME name)	/**< the property name */
+{
+	PROPERTY *prop = find_header_property(oclass,name);
+	if ( prop ) return prop;
+	prop = find_property(oclass->pmap,name);
+	if ( prop ) return prop;
+	if ( oclass->parent!=oclass && oclass->parent!=NULL )
+		prop = class_find_property(oclass->parent,name);
+	return prop;
 }
 
 /** Add a property to a class
@@ -237,6 +239,17 @@ void class_add_property(CLASS *oclass,  /**< the class to which the property is 
 		oclass->pmap = prop;
 	else
 		last->next = prop;
+}
+
+void class_add_substruct_member(PROPERTY *prop, PROPERTY *sub)
+{
+	PROPERTY *last = prop->substruct;
+	if ( last!=NULL && last->next!=NULL )
+		last = last->next;
+	if ( last==NULL )
+		prop->substruct = sub;
+	else
+		last->next = sub;
 }
 
 /** Add an extended property to a class 
@@ -984,6 +997,10 @@ int class_define_enumeration_member(CLASS *oclass, /**< pointer to the class whi
                                     enumeration value) /**< enum value to associate with the name */
 {
 	PROPERTY *prop = class_find_property(oclass,property_name);
+	return class_add_enumeration_member(prop,member,value);
+}
+int class_add_enumeration_member(PROPERTY *prop, char *member, enumeration value)
+{
 	KEYWORD *key = (KEYWORD*)malloc(sizeof(KEYWORD));
 	if (prop==NULL || key==NULL) return 0;
 	key->next = prop->keywords;
@@ -1001,6 +1018,10 @@ int class_define_set_member(CLASS *oclass, /**< pointer to the class which imple
                             unsigned int64 value) /**< set value to associate with the name */
 {
 	PROPERTY *prop = class_find_property(oclass,property_name);
+	return class_add_set_member(prop,member,value);
+}
+int class_add_set_member(PROPERTY *prop,char *member,unsigned int64 value)
+{
 	KEYWORD *key = (KEYWORD*)malloc(sizeof(KEYWORD));
 	if (prop==NULL || key==NULL) return 0;
 	if (prop->keywords==NULL)

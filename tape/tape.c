@@ -367,6 +367,13 @@ EXPORT int check(void)
 	return errcount;
 }
 
+EXPORT unsigned int stream(int flags, STREAMCALLBACK stream)
+{
+	size_t count = stream("TAPE",4,TRUE,"TAPE");
+	count += stream("/TAPE",4,TRUE,"/TAPE");
+	return count;
+}
+
 /* DELTA MODE SUPPORT */
 /*
 	Delta mode is supported by maintaining a list of recorders that are enabled

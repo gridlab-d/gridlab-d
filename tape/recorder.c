@@ -509,6 +509,7 @@ PROPERTY *link_properties(struct recorder *rec, OBJECT *obj, char *property_list
 		
 		/* branch: test to see if we're trying to split up a complex property */
 		/* must occur w/ *cpart=0 before gl_get_property in order to properly reformat the property name string */
+#if MAJOR<3
 		cpart = strchr(item, '.');
 		if(cpart != NULL){
 			if(strcmp("imag", cpart+1) == 0){
@@ -521,7 +522,7 @@ PROPERTY *link_properties(struct recorder *rec, OBJECT *obj, char *property_list
 				;
 			}
 		}
-
+#endif
 		target = gl_get_property(obj,item,NULL);
 
 		if (prop!=NULL && target!=NULL)

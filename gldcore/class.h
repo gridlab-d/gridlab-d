@@ -164,6 +164,10 @@ int class_define_type(CLASS *oclass, DELEGATEDTYPE *delegation, ...);
 int class_add_loadmethod(CLASS *oclass, char *name, int (*call)(void*,char*));
 LOADMETHOD *class_get_loadmethod(CLASS *oclass,char *name);
 
+int class_add_enumeration_member(PROPERTY *prop,char *member,enumeration value);
+int class_add_set_member(PROPERTY *prop,char *member,unsigned int64 value);
+void class_add_struct_member(PROPERTY *prop, PROPERTY *sub);
+
 #ifdef __cplusplus
 }
 #endif
