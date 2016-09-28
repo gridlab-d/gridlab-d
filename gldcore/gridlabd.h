@@ -1914,6 +1914,7 @@ protected: // header write accessors (no locking)
 	inline void set_flags(unsigned long flags) { my()->flags=flags; };
 	inline void set_flags_bits(unsigned long bits) { my()->flags|=bits; };
 	inline void unset_flags_bits(unsigned long bits) { my()->flags&=~bits; };
+	inline void set_validto(TIMESTAMP t) { my()->valid_to=t; };
 
 protected: // locking (self)
 	inline void rlock(void) { ::rlock(&my()->lock); };

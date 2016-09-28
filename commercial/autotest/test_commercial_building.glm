@@ -1,0 +1,10 @@
+module tape;
+module commercial;
+object building {
+	n_zones 15;
+	object recorder {
+		property Tair;
+		file test_commercial_building_Tair.csv;
+		interval 0;
+	};
+}

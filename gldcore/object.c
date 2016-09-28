@@ -1409,6 +1409,46 @@ void object_profile(OBJECT *obj, OBJECTPROFILEITEM pass, clock_t t)
 	}
 }
 
+void event_trace(EVENTTRACE et, OBJECT *obj, TIMESTAMP t0, TIMESTAMP t1)
+{
+	if ( (et&global_eventtrace)==et )
+	{
+		char *ename = NULL;
+		switch ( et ) {
+		case ET_INIT      : ename = "INIT";      break;
+		case ET_PRECOMMIT : ename = "PRECOMMIT"; break;
+		case ET_PRESYNC   : ename = "PRESYNC";   break;
+		case ET_SYNC      : ename = "SYNC";      break;
+		case ET_POSTSYNC  : ename = "POSTSYNC";  break;
+		case ET_COMMIT    : ename = "COMMIT";	 break;
+		case ET_FINALIZE  : ename = "FINALIZE";  break;
+		case ET_HEARTBEAT : ename = "HEARTBEAT"; break;
+		default: break;
+		}
+		if ( ename!=NULL )
+		{
+			char oname[64] = "???";
+			if ( obj->name==NULL )
+				sprintf(oname,"(%s:%d)",obj->oclass->name,obj->id);
+			else
+				sprintf(oname,"%s",obj->name);
+
+			if ( strncmp(oname,global_eventtrace_filter,strlen(global_eventtrace_filter))==0 )
+			{
+				int old = global_suppress_repeat_messages;
+				char dt0[64] = "???";
+				char dt1[64] = "???";
+				convert_from_timestamp(t0,dt0,sizeof(dt0));
+				convert_from_timestamp(t1,dt1,sizeof(dt1));
+
+				global_suppress_repeat_messages = false;
+				output_message("  event_trace %-10s : %-32s [ %s -> %s ]", ename,oname,dt0,dt1);
+				global_suppress_repeat_messages = old;
+			}
+		}
+	}
+}
+
 TIMESTAMP _object_sync(OBJECT *obj, /**< the object to synchronize */
 					  TIMESTAMP ts, /**< the desire clock to sync to */
 					  PASSCONFIG pass) /**< the pass configuration */
@@ -1514,6 +1554,12 @@ TIMESTAMP object_sync(OBJECT *obj, /**< the object to synchronize */
 		default: break;
 		}
 	}
+	switch (pass) {
+	case PC_PRETOPDOWN: event_trace(ET_PRESYNC,obj,ts,t2); break;
+	case PC_BOTTOMUP:  event_trace(ET_SYNC,obj,ts,t2); break;
+	case PC_POSTTOPDOWN: event_trace(ET_POSTSYNC,obj,ts,t2); break;
+	default: break;
+	}
 	if ( global_debug_output>0 )
 	{
 		const char *passname[]={"NOSYNC","PRESYNC","SYNC","INVALID","POSTSYNC"};
@@ -1529,11 +1575,12 @@ TIMESTAMP object_heartbeat(OBJECT *obj)
 	clock_t t = (clock_t)exec_clock();
 	TIMESTAMP t1 = obj->oclass->heartbeat ? obj->oclass->heartbeat(obj) : TS_NEVER;
 	object_profile(obj,OPI_HEARTBEAT,t);
-		if ( global_debug_output>0 )
-		{
-			char dt[64]="(invalid)"; convert_from_timestamp(absolute_timestamp(t1),dt,sizeof(dt));
-			output_debug("object %s:%d heartbeat -> %s %s", obj->oclass->name, obj->id, is_soft_timestamp(t1)?"(SOFT)":"(HARD)", dt);
-		}
+	event_trace(ET_HEARTBEAT,obj,global_clock,t1);
+	if ( global_debug_output>0 )
+	{
+		char dt[64]="(invalid)"; convert_from_timestamp(absolute_timestamp(t1),dt,sizeof(dt));
+		output_debug("object %s:%d heartbeat -> %s %s", obj->oclass->name, obj->id, is_soft_timestamp(t1)?"(SOFT)":"(HARD)", dt);
+	}
 	return t1;
 }
 
@@ -1550,6 +1597,7 @@ int object_init(OBJECT *obj) /**< the object to initialize */
 	if(obj->oclass->init != NULL)
 		rv = (int)(*(obj->oclass->init))(obj, obj->parent);
 	object_profile(obj,OPI_INIT,t);
+	event_trace(ET_INIT,obj,global_starttime,global_stoptime);
 	if ( global_debug_output>0 )
 		output_debug("object %s:%d init -> %s", obj->oclass->name, obj->id, rv?"ok":"failed");
 	return rv;
@@ -1575,8 +1623,9 @@ STATUS object_precommit(OBJECT *obj, TIMESTAMP t1)
 		rv = SUCCESS;
 	}
 	object_profile(obj,OPI_PRECOMMIT,t);
-		if ( global_debug_output>0 )
-			output_debug("object %s:%d precommit -> %s", obj->oclass->name, obj->id, rv?"ok":"failed");
+	event_trace(ET_PRECOMMIT,obj,global_clock,t1);
+	if ( global_debug_output>0 )
+		output_debug("object %s:%d precommit -> %s", obj->oclass->name, obj->id, rv?"ok":"failed");
 	return rv;
 }
 
@@ -1591,6 +1640,7 @@ TIMESTAMP object_commit(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 		rv =TS_NEVER;
 	} 
 	object_profile(obj,OPI_COMMIT,t);
+	event_trace(ET_COMMIT,obj,t2,rv);
 	if ( global_debug_output>0 )
 	{
 		char dt[64]="(invalid)"; convert_from_timestamp(absolute_timestamp(rv),dt,sizeof(dt));
@@ -1616,6 +1666,7 @@ STATUS object_finalize(OBJECT *obj)
 		rv = SUCCESS;
 	}
 	object_profile(obj,OPI_FINALIZE,t);
+	event_trace(ET_FINALIZE,obj,global_clock,global_stoptime);
 	if ( global_debug_output>0 )
 	{
 		output_debug("object %s:%d finalize -> %s", obj->oclass->name, obj->id, rv?"ok":"failed");

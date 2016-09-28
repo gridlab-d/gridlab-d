@@ -598,7 +598,7 @@ public:
 	inline size_t get_max(void) { return max; };
 	inline void set_max(size_t size) 
 	{
-		if ( size<=max ) throw "cannot shrink double_array";
+		if ( size<=max ) throw "cannot shrink complex_array";
 		size_t r;
 		complex ***z = (complex***)malloc(sizeof(complex**)*size);
 		// create new rows
@@ -607,7 +607,7 @@ public:
 			if ( x[r]!=NULL )
 			{
 				complex **y = (complex**)malloc(sizeof(complex*)*size);
-				if ( y==NULL ) throw "unable to expand double_array";
+				if ( y==NULL ) throw "unable to expand complex_array";
 				memcpy(y,x[r],sizeof(complex*)*max);
 				memset(y+max,0,sizeof(complex*)*(size-max));
 				free(x[r]);
@@ -649,7 +649,7 @@ public:
 		}
 		if (m<=c) m=c+1; 
 	};
-	inline void check_valid(size_t r, size_t c=0) { if ( !is_valid(r,c) ) throw "double_array col/row spec is invalid"; };
+	inline void check_valid(size_t r, size_t c=0) { if ( !is_valid(r,c) ) throw "complex_array col/row spec is invalid"; };
 	inline bool is_valid(size_t r, size_t c=0) { return r<n && c<m; };
 	inline bool is_nan(size_t r, size_t c=0) 
 	{

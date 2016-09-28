@@ -1,0 +1,27 @@
+// test_building_1node.glm
+// 
+// Trivial 1-node building test
+//
+
+#set event_trace=ALL
+#set event_trace_filter=T
+
+clock {
+	starttime '2000-01-01 0:00:00';
+	stoptime '2000-01-02 0:00:00';
+}
+
+module commercial;
+
+global double Tout 50;
+global double NONE 0;
+global double OFF 1;
+
+object building {
+	name Test1;
+	N 2;
+	U " 0.1 0.1 ; 0.1 0.1 ";
+	C " NaN 1000 ";
+	T " Tout 72 ";
+	Ts "NONE OFF";
+};

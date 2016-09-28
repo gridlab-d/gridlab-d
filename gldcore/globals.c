@@ -105,6 +105,18 @@ static KEYWORD sm_keys[] = {
 	{"DELTA_ITER", SM_DELTA_ITER, sm_keys+4},
 	{"ERROR", SM_ERROR, NULL},
 };
+static KEYWORD et_keys[] = {
+	{"NONE", ET_NONE, et_keys+1},
+	{"INIT", ET_INIT, et_keys+2},
+	{"PRECOMMIT", ET_PRECOMMIT, et_keys+3},
+	{"PRESYNC", ET_PRESYNC, et_keys+4},
+	{"SYNC", ET_SYNC, et_keys+5},
+	{"POSTSYNC", ET_POSTSYNC, et_keys+6},
+	{"COMMIT", ET_COMMIT, et_keys+7},
+	{"FINALIZE", ET_FINALIZE, et_keys+8},
+	{"HEARTBEAT", ET_HEARTBEAT, et_keys+9},
+	{"ALL", ET_ALL, NULL},
+}
 
 static struct s_varmap {
 	char *name;
@@ -230,6 +242,8 @@ static struct s_varmap {
 	{"wget_options", PT_char1024, &global_wget_options, PA_PUBLIC, "wget options"},
 	{"svnroot", PT_char1024, &global_svnroot, PA_PUBLIC, "svnroot"},
 	{"allow_reinclude", PT_bool, &global_reinclude, PA_PUBLIC, "allow the same include file to be included multiple times"},
+	{"event_trace", PT_set, &global_eventtrace, PA_PUBLIC, "enables event tracing", et_keys},
+	{"event_trace_filter", PT_char1024, &global_eventtrace_filter, PA_PUBLIC, "object name filter for event trace"},
 	/* add new global variables here */
 };
 

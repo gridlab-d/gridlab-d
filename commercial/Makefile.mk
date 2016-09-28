@@ -19,3 +19,5 @@ commercial_commercial_la_SOURCES += commercial/office.cpp
 commercial_commercial_la_SOURCES += commercial/office.h
 commercial_commercial_la_SOURCES += commercial/solvers.cpp
 commercial_commercial_la_SOURCES += commercial/solvers.h
+commercial_commercial_la_SOURCES += commercial/building.cpp
+commercial_commercial_la_SOURCES += commercial/building.h

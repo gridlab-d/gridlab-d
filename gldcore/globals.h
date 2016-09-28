@@ -310,6 +310,22 @@ GLOBAL char1024 global_sanitizeindex INIT(".txt"); /**< sanitize index file spec
 GLOBAL char32 global_sanitizeoffset INIT(""); /**< sanitize lat/lon offset */
 
 GLOBAL bool global_run_powerworld INIT(false);
+
+typedef enum {
+	ET_NONE			= 0x00, /**< no event debug reports */
+	ET_INIT			= 0x01, /**< init debug reports */
+	ET_PRECOMMIT	= 0x02, /**< precommit debug reports */
+	ET_PRESYNC		= 0x04, /**< presync debug reports */
+	ET_SYNC			= 0x08, /**< sync debug reports */
+	ET_POSTSYNC		= 0x10, /**< postsync debug reports */
+	ET_COMMIT		= 0x20, /**< commit debug reports */
+	ET_FINALIZE		= 0x40, /**< finalize debug reports */
+	ET_HEARTBEAT    = 0x80, /**< heartbeat debug reports */
+	ET_ALL			= 0x7f, /**< all sync debug report */
+} EVENTTRACE;
+GLOBAL set global_eventtrace INIT(ET_NONE); /**< event debug reports */
+GLOBAL char1024 global_eventtrace_filter INIT(""); /**< event trace object name filter */
+
 GLOBAL bool global_bigranks INIT(true); /**< enable non-recursive set_rank function (good for very deep models) */
 GLOBAL char1024 global_svnroot INIT("http://gridlab-d.svn.sourceforge.net/svnroot/gridlab-d");
 GLOBAL char1024 global_wget_options INIT("maxsize:100MB;update:newer"); /**< maximum size of wget request */

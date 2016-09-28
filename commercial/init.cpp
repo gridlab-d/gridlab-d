@@ -9,6 +9,7 @@
 
 #include "office.h"
 #include "multizone.h"
+#include "building.h"
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
@@ -24,6 +25,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 
 	new office(module);
 	new multizone(module); 
+	new building(module);
 
 	/* always return the first class registered */
 	return office::oclass;

@@ -969,7 +969,7 @@ int convert_to_double_array(const char *buffer, void *data, PROPERTY *prop)
 			}
 			else if ( strnicmp(p,"NAN",3)==0 ) /* NULL value */
 			{
-				a->grow_to(row,col);
+				a->grow_to(row+1,col+1);
 				a->clr_at(row,col);
 				col++;
 			}
