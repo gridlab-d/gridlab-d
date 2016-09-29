@@ -66,6 +66,7 @@ public:
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 
 private:
+	static evcharger_det *defaults;
 	TIMESTAMP glob_min_timestep;	///< Variable for storing minimum timestep value - if it exists 
 	bool off_nominal_time;			///< Flag to indicate a minimum timestep is present
 

@@ -172,6 +172,7 @@ gridlabd_bin_LDADD =
 gridlabd_bin_LDADD += $(XERCES_LIB)
 gridlabd_bin_LDADD += $(CURSES_LIB)
 gridlabd_bin_LDADD += -ldl
+gridlabd_bin_LDADD += transactional_memory/libtm.la
 
 gridlabd_bin_SOURCES =
 gridlabd_bin_SOURCES += $(GLD_SOURCES_PLACE_HOLDER)

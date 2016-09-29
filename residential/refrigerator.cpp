@@ -103,7 +103,7 @@ refrigerator::refrigerator(MODULE *module) : residential_enduse(module)
 			PT_int32,"FF_Door_Openings",PADDR(FF_Door_Openings),
 			PT_int32,"door_opening_energy",PADDR(door_opening_energy),
 			PT_int32,"door_opening_power",PADDR(door_opening_power),
-			PT_double,"DO_Thershold",PADDR(DO_Thershold),
+			PT_double,"DO_Threshold",PADDR(DO_Threshold),
 			PT_double,"dr_mode_double",PADDR(dr_mode_double),
 			PT_double,"energy_needed",PADDR(energy_needed),	
 			PT_double,"energy_used",PADDR(energy_used),	
@@ -217,7 +217,7 @@ int refrigerator::init(OBJECT *parent)
 
 	if(ice_making_probability==0) ice_making_probability=0.02; //watt
 	
-	if(DO_Thershold==0) DO_Thershold=24; 	
+	if(DO_Threshold==0) DO_Threshold=24;
 	if(long_compressor_cycle_threshold==0) long_compressor_cycle_threshold=0.05;
 
 	if(FF_Door_Openings==0) FF_Door_Openings=0;
@@ -418,7 +418,7 @@ double refrigerator::update_refrigerator_state(double dt0,TIMESTAMP t1)
 			door_to_open = false;
 		}	
 
-		check_DO = FF_Door_Openings%DO_Thershold;
+		check_DO = FF_Door_Openings%DO_Threshold;
 
 		if(check_DO==0){ 	
 			no_of_defrost++;

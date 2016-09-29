@@ -15,6 +15,7 @@
 #include "enduse.h"
 #include "loadshape.h"
 #include "residential_enduse.h"
+#include "transactional_memory/tm_module_link.h"
 
 typedef struct s_implicit_enduse {
 	enduse load;

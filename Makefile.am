@@ -9,6 +9,7 @@ CXX = $(PTHREAD_CXX)
 
 AM_CPPFLAGS =
 AM_CPPFLAGS += -I$(top_srcdir)/gldcore
+AM_CPPFLAGS += -I$(top_srcdir)/transactional_memory
 AM_CPPFLAGS += $(GLD_CPPFLAGS)
 
 AM_CFLAGS =
@@ -46,6 +47,7 @@ dist_doc_DATA =
 
 # we're using non-recursive Make
 # include Makefile fragments instead of using SUBDIRS
+include transactional_memory/Makefile.mk
 include assert/Makefile.mk
 include climate/Makefile.mk
 include commercial/Makefile.mk

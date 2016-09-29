@@ -2461,28 +2461,31 @@ TIMESTAMP house_e::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	OBJECT *obj = OBJECTHDR(this);
 
 	// compute line currents and post to meter
-	if (obj->parent != NULL)
-		wlock(obj->parent);
+	/*if (obj->parent != NULL)
+		wlock(obj->parent);*/
 
 	//Post accumulations up to parent meter/node
 	//Update power
-	pPower[0] -= load_values[0][0];
+	scheduleSubtractTransaction(pPower,load_values[0],3);
+	/*pPower[0] -= load_values[0][0];
 	pPower[1] -= load_values[0][1];
-	pPower[2] -= load_values[0][2];
+	pPower[2] -= load_values[0][2];*/
 	
 	//Current
-	pLine_I[0] -= load_values[1][0];
+	scheduleSubtractTransaction(pLine_I, load_values[1], 3);
+	/*pLine_I[0] -= load_values[1][0];
 	pLine_I[1] -= load_values[1][1];
-	pLine_I[2] -= load_values[1][2];
+	pLine_I[2] -= load_values[1][2];*/
 	//Neutral not handled in here, since it was always zero anyways
 
 	//Admittance
-	pShunt[0] -= load_values[2][0];
+	scheduleSubtractTransaction(pShunt, load_values[2], 3);
+	/*pShunt[0] -= load_values[2][0];
 	pShunt[1] -= load_values[2][1];
-	pShunt[2] -= load_values[2][2];
+	pShunt[2] -= load_values[2][2];*/
 
-	if (obj->parent != NULL)
-		wunlock(obj->parent);
+	/*if (obj->parent != NULL)
+		wunlock(obj->parent);*/
 
 	return TS_NEVER;
 }
@@ -2947,25 +2950,28 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 	total_load = total.total.Mag();
 
 	// compute line currents and post to meter
-	if (obj->parent != NULL)
-		wlock(obj->parent);
+	/*if (obj->parent != NULL)
+		wlock(obj->parent);*/
 
 	//Post accumulations up to parent meter/node
 	//Update power
-	pPower[0] += load_values[0][0];
+	scheduleAdditionTransaction(pPower, load_values[0], 3);
+	/*pPower[0] += load_values[0][0];
 	pPower[1] += load_values[0][1];
-	pPower[2] += load_values[0][2];
+	pPower[2] += load_values[0][2];*/
 	
 	//Current
-	pLine_I[0] += load_values[1][0];
+	scheduleAdditionTransaction(pLine_I, load_values[1], 3);
+	/*pLine_I[0] += load_values[1][0];
 	pLine_I[1] += load_values[1][1];
-	pLine_I[2] += load_values[1][2];
+	pLine_I[2] += load_values[1][2];*/
 	//Neutral assumed 0, since it was anyways
 
 	//Admittance
-	pShunt[0] += load_values[2][0];
+	scheduleAdditionTransaction(pShunt, load_values[2], 3);
+	/*pShunt[0] += load_values[2][0];
 	pShunt[1] += load_values[2][1];
-	pShunt[2] += load_values[2][2];
+	pShunt[2] += load_values[2][2];*/
 
 	if (obj->parent != NULL)
 		wunlock(obj->parent);

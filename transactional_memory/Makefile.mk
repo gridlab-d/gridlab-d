@@ -1,0 +1,18 @@
+pkglib_LTLIBRARIES += transactional_memory/libtm.la
+
+transactional_memory_libtm_la_CPPFLAGS =
+transactional_memory_libtm_la_CPPFLAGS += $(AM_CPPFLAGS)
+
+transactional_memory_libtm_la_LDFLAGS =
+transactional_memory_libtm_la_LDFLAGS += $(AM_LDFLAGS)
+
+
+transactional_memory_libtm_la_SOURCES =
+transactional_memory_libtm_la_SOURCES += transactional_memory/transactionmanager.h
+transactional_memory_libtm_la_SOURCES += transactional_memory/transactionmanager.cpp
+transactional_memory_libtm_la_SOURCES += transactional_memory/transaction.h
+transactional_memory_libtm_la_SOURCES += transactional_memory/transaction.cpp
+transactional_memory_libtm_la_SOURCES += transactional_memory/tm_core_link.h
+transactional_memory_libtm_la_SOURCES += transactional_memory/tm_core_link.cpp
+transactional_memory_libtm_la_SOURCES += transactional_memory/directcommit.h
+transactional_memory_libtm_la_SOURCES += transactional_memory/directcommit.cpp

@@ -18,9 +18,10 @@ public:
 	double circuit_split;		///< -1=100% negative, 0=balanced, +1=100% positive
 	double installed_power;		///< installed wattage [W] (default = random normal between 700W and 1200W)
 	double standby_power;		///< standby power [W] (usually 10W)
-	enum {	OFF=0,					///< microwave is off
+	typedef enum {	OFF=0,					///< microwave is off
 			ON=1,					///< microwave is on
-	} state;					///< microwave state
+	};
+	enumeration state;///< microwave state
 	double cycle_time;
 private:
 	double runtime;				///< current runtime (expected time in ON state)

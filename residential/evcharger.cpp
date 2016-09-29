@@ -379,8 +379,11 @@ int evcharger::init(OBJECT *parent)
 	}
 
 	// load demand profile
-	if (strcmp(demand_profile,"")!=0)
-		pDemand = get_demand_profile(demand_profile);
+	if (strcmp(demand_profile.get_string(),"")!=0){
+		//Note this grabs a pointer to a structure containing data grabbed from a .csv file whose name is contained in demand_profile.
+		//The structure is EVDEMAND which should never be touched by another object besides this one evcharger.
+		pDemand = get_demand_profile((char)demand_profile.get_string());
+	}
 	
 	retval = residential_enduse::init(parent);
 

@@ -13,6 +13,7 @@
 //////////////////////////////////////////////////////////////////////////
 CLASS* evcharger_det::oclass = NULL;
 CLASS* evcharger_det::pclass = NULL;
+evcharger_det *evcharger_det::defaults = NULL;
 
 evcharger_det::evcharger_det(MODULE *module) : residential_enduse(module)
 {

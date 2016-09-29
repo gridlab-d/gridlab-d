@@ -43,12 +43,12 @@ microwave::microwave(MODULE *module) : residential_enduse(module)
 			PT_double,"standby_power[kW]",PADDR(standby_power),PT_DESCRIPTION,"standby microwave power draw (unshaped only)",
 			PT_double,"circuit_split",PADDR(circuit_split),
 			PT_enumeration,"state",PADDR(state),PT_DESCRIPTION,"on/off state of the microwave",
-				PT_KEYWORD,"OFF",OFF,
-				PT_KEYWORD,"ON",ON,
+				PT_KEYWORD,"OFF",(enumeration)OFF,
+				PT_KEYWORD,"ON",(enumeration)ON,
 			
 			PT_double,"cycle_length[s]",PADDR(cycle_time),PT_DESCRIPTION,"length of the combined on/off cycle between uses",
-			PT_double,"runtime[s]",PADDR(runtime),PT_DESCRIPTION,"",
-			PT_double,"state_time[s]",PADDR(state_time),PT_DESCRIPTION,"",
+			PT_double,"runtime[s]",PADDR(runtime),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"",
+			PT_double,"state_time[s]",PADDR(state_time),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"",
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
 	}

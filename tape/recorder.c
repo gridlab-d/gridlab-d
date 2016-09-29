@@ -485,7 +485,8 @@ PROPERTY *link_properties(struct recorder *rec, OBJECT *obj, char *property_list
 	int64 cid = -1;
 
 	strcpy(list,property_list); /* avoid destroying orginal list */
-	for (item=strtok(list,","); item!=NULL; item=strtok(NULL,","))
+	char *reptr;
+	for (item=strtok_r(list,",",&reptr); item!=NULL; item=strtok_r(NULL,",",&reptr))
 	{
 		
 		prop = NULL;

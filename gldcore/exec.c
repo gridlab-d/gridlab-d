@@ -135,6 +135,7 @@
 #include "save.h"
 
 #include "pthread.h"
+#include "transactional_memory/tm_core_link.h"
 
 /** Set/get exit code **/
 int exec_setexitcode(int xc)
@@ -1879,6 +1880,7 @@ STATUS exec_start(void)
 		return SUCCESS;
 
 	//sjin: GetMachineCycleCount
+	initTransactionManager(global_threadcount);
 	cstart = (clock_t)exec_clock();
 
 	/* main loop exception handler */
@@ -2102,7 +2104,8 @@ STATUS exec_start(void)
 
 							// Only create threadpool for each object rank list at the first iteration. 
 							// Reuse the threadppol of each object rank list at all other iterations.
-							if (setTP == true) { 
+							if (setTP == true) {
+								output_warning("Multi-thread mode is under development, results might not be correct.");
 								incr = (int)ceil((float) n_obj / global_threadcount);
 								// if the number of objects is less than or equal to the number of threads, each thread process one object 
 								if (incr <= 1) {
@@ -2167,6 +2170,7 @@ STATUS exec_start(void)
 								pthread_cond_wait(&done[iObjRankList],&donelock[iObjRankList]);
 							// unlock done count
 							pthread_mutex_unlock(&donelock[iObjRankList]);
+							commitTransactions();//commit changes
 						}
 
 						for (j = 0; j < thread_data->count; j++) {

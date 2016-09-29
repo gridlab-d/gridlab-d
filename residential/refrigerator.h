@@ -58,7 +58,7 @@ public:
 	int32 DO_random_opening;
 	
 	int32 FF_Door_Openings;
-	int DO_Thershold;
+	int DO_Threshold;
 	int last_dr_mode;
 	double defrostDelayed;
 	double compressor_defrost_time;
