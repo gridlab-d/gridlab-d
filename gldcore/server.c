@@ -301,7 +301,7 @@ static HTTPCNX *http_create(SOCKET s)
 	HTTPCNX *http = (HTTPCNX*)malloc(sizeof(HTTPCNX));
 	memset(http,0,sizeof(HTTPCNX));
 	http->s = s;
-	http->max = 4096;
+	http->max = 65536;
 	http->buffer = malloc(http->max);
 	return http;
 }
@@ -438,7 +438,7 @@ static size_t http_rewrite(char *out, char *in, size_t len)
 /** Write the contents of the HTTPCNX message buffer **/
 static void http_write(HTTPCNX *http, char *data, size_t len)
 {
-	if (http->len+len>=http->max)
+	if (http->len+len*2>=http->max)
 	{
 		/* extend buffer */
 		void *old = http->buffer;
