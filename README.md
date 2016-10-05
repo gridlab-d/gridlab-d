@@ -14,7 +14,7 @@ Download the source code, build, install and validate (you will need autotools)
   
 >  host% export PATH=~/bin:$PATH
   
->  host$ gridlabd --validate
+>  host% gridlabd --validate
   
 ## Windows build
 
