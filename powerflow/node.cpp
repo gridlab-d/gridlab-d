@@ -55,6 +55,9 @@
 #include "solver_nr.h"
 #include "node.h"
 #include "link.h"
+#include "capacitor.h"
+#include "load.h"
+#include "triplex_meter.h"
 
 //Library imports items - for external LU solver - stolen from somewhere else in GridLAB-D (tape, I believe)
 #if defined(WIN32) && !defined(__MINGW32__)
@@ -2745,71 +2748,106 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 	return RetValue;
 }
 
+int node::kmlinit(int (*stream)(const char*,...))
+{
+	gld_global host("hostname");
+	gld_global port("server_portnum");
+#define STYLE(X) stream("<Style id=\"" #X "_g\"><IconStyle><Icon><href>http://%s:%u/rt/" #X "_g.png</href></Icon></IconStyle></Style>\n", (const char*)host.get_string(), port.get_int32());\
+		stream("<Style id=\"" #X "_r\"><IconStyle><Icon><href>http://%s:%u/rt/" #X "_r.png</href></Icon></IconStyle></Style>\n", (const char*)host.get_string(), port.get_int32());\
+		stream("<Style id=\"" #X "_b\"><IconStyle><Icon><href>http://%s:%u/rt/" #X "_b.png</href></Icon></IconStyle></Style>\n", (const char*)host.get_string(), port.get_int32());\
+		stream("<Style id=\"" #X "_k\"><IconStyle><Icon><href>http://%s:%u/rt/" #X "_k.png</href></Icon></IconStyle></Style>\n", (const char*)host.get_string(), port.get_int32());
+	STYLE(node);
+	STYLE(capacitor);
+	STYLE(load);
+	STYLE(triplex_meter);
+
+	return 0;
+}
 int node::kmldump(int (*stream)(const char*,...))
 {
 	OBJECT *obj = OBJECTHDR(this);
-	if (isnan(obj->latitude) || isnan(obj->longitude))
+	if (isnan(get_latitude()) || isnan(get_longitude()))
 		return 0;
 	stream("<Placemark>\n");
-	if (obj->name)
-		stream("<name>%s</name>\n", obj->name, obj->oclass->name, obj->id);
-	else
-		stream("<name>%s %d</name>\n", obj->oclass->name, obj->id);
+	stream("<name>%s</name>\n", get_name() );
 	stream("<description>\n");
 	stream("<![CDATA[\n");
 	stream("<TABLE>\n");
-	stream("<TR><TD WIDTH=\"10%\">&nbsp;<HR></TD>"
-			"<TH WIDTH=\"30%\" COLSPAN=2 ALIGN=CENTER><NOBR>Phase A</NOBR><HR></TH>"
-			"<TH WIDTH=\"30%\" COLSPAN=2 ALIGN=CENTER><NOBR>Phase B</NOBR><HR></TH>"
-			"<TH WIDTH=\"30%\" COLSPAN=2 ALIGN=CENTER><NOBR>Phase C</NOBR><HR></TH></TR>\n");
 
-	int phase[3] = {has_phase(PHASE_A),has_phase(PHASE_B),has_phase(PHASE_C)};
+	char status_code[]="kbgr";
+	int status = 2; // green
+	if ( gl_object_isa(my(),"triplex_meter") )
+	{
+		// TODO use triplex_node to get to triplex_meter
+		status = ((triplex_meter*)this)->kmldata(stream);
+	}
+	else
+	{
+		stream("<CAPTION>%s #%d</CAPTION>\n<TR><TH WIDTH=\"25%\" ALIGN=CENTER>Property<HR></TH>"
+				"<TH WIDTH=\"25%\" COLSPAN=2 ALIGN=CENTER><NOBR>Phase A</NOBR><HR></TH>"
+				"<TH WIDTH=\"25%\" COLSPAN=2 ALIGN=CENTER><NOBR>Phase B</NOBR><HR></TH>"
+				"<TH WIDTH=\"25%\" COLSPAN=2 ALIGN=CENTER><NOBR>Phase C</NOBR><HR></TH></TR>\n", get_oclass()->get_name(), get_id());
 
-	// voltages
-	stream("<TR><TH ALIGN=LEFT>Voltage</TH>");
-	for ( int i = 0 ; i<sizeof(phase)/sizeof(phase[0]) ; i++ )
-	{
-		if ( phase[i] )
-			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.3f</NOBR></TD><TD ALIGN=LEFT>kV</TD>", voltageA.Mag()/1000);
-		else
-			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">&mdash;</TD><TD>&nbsp;</TD>");
-	}
-	stream("</TR>\n");
-	stream("<TR><TH ALIGN=LEFT>&nbsp</TH>");
-	for ( int i = 0 ; i<sizeof(phase)/sizeof(phase[0]) ; i++ )
-	{
-		if ( phase[i] )
-			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.3f</NOBR></TD><TD ALIGN=LEFT>&deg;</TD>", voltageA.Arg()*180/3.1416);
-		else
-			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">&mdash;</TD><TD>&nbsp;</TD>");
-	}
-	stream("</TR>\n");
+		int phase[3] = {has_phase(PHASE_A),has_phase(PHASE_B),has_phase(PHASE_C)};
+		double basis[3] = {0,240,120};
 
-	// power
-	stream("<TR><TH ALIGN=LEFT>Power</TH>");
-	for ( int i = 0 ; i<sizeof(phase)/sizeof(phase[0]) ; i++ )
-	{
-		if ( phase[i] )
-			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.3f</NOBR></TD><TD ALIGN=LEFT>kW</TD>", power[i].Re()/1000);
-		else
-			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">&mdash;</TD><TD>&nbsp;</TD>");
-	}
-	stream("</TR>\n");
-	stream("<TR><TH ALIGN=LEFT>&nbsp</TH>");
-	for ( int i = 0 ; i<sizeof(phase)/sizeof(phase[0]) ; i++ )
-	{
-		if ( phase[i] )
-			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.3f</NOBR></TD><TD ALIGN=LEFT>kVAR</TD>", power[i].Im()/1000);
-		else
-			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">&mdash;</TD><TD>&nbsp;</TD>");
-	}
-	stream("</TR>\n");
+		// voltages
+		stream("<TR><TH ALIGN=LEFT>Voltage</TH>");
+		for ( int i = 0 ; i<sizeof(phase)/sizeof(phase[0]) ; i++ )
+		{
+			if ( phase[i] )
+			{
+				stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.3f</NOBR></TD><TD ALIGN=LEFT>kV</TD>", voltage[i].Mag()/1000);
+				if ( status>0 && voltage[i].Mag() <= 0.5*nominal_voltage ) status = 0; // black
+				else if ( status==2 && voltage[i].Mag() < 0.95*nominal_voltage ) status = 1; // blue
+				else if ( status==2 && voltage[i].Mag() > 1.05*nominal_voltage ) status = 3; // red
+			}
+			else
+				stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">&mdash;</TD><TD>&nbsp;</TD>");
+		}
+		stream("</TR>\n");
+		stream("<TR><TH ALIGN=LEFT>&nbsp</TH>");
+		for ( int i = 0 ; i<sizeof(phase)/sizeof(phase[0]) ; i++ )
+		{
+			if ( phase[i] )
+				stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.3f</NOBR></TD><TD ALIGN=LEFT>&deg;</TD>", voltage[i].Arg()*180/3.1416 - basis[i]);
+			else
+				stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">&mdash;</TD><TD>&nbsp;</TD>");
+		}
+		stream("</TR>\n");
 
+	#define HANDLE_EX(X,Y)if ( gl_object_isa(my(),Y) ) ((X*)this)->kmldata(stream); else
+	#define HANDLE(X) HANDLE_EX(X,#X)
+		HANDLE(load)
+		HANDLE(capacitor)
+		{
+			// power
+			stream("<TR><TH ALIGN=LEFT>Power</TH>");
+			for ( int i = 0 ; i<sizeof(phase)/sizeof(phase[0]) ; i++ )
+			{
+				if ( phase[i] )
+					stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.3f</NOBR></TD><TD ALIGN=LEFT>kW</TD>", power[i].Re()/1000);
+				else
+					stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">&mdash;</TD><TD>&nbsp;</TD>");
+			}
+			stream("</TR>\n");
+			stream("<TR><TH ALIGN=LEFT>&nbsp</TH>");
+			for ( int i = 0 ; i<sizeof(phase)/sizeof(phase[0]) ; i++ )
+			{
+				if ( phase[i] )
+					stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.3f</NOBR></TD><TD ALIGN=LEFT>kVAR</TD>", power[i].Im()/1000);
+				else
+					stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">&mdash;</TD><TD>&nbsp;</TD>");
+			}
+			stream("</TR>\n");
+		}
+	}
 	stream("</TABLE>\n");
 	stream("]]>\n");
 	stream("</description>\n");
+	stream("<styleUrl>#%s_%c</styleUrl>\n",obj->oclass->name, status_code[status]);
 	stream("<Point>\n");
-	stream("<coordinates>%f,%f</coordinates>\n",obj->longitude,obj->latitude);
+	stream("<coordinates>%f,%f</coordinates>\n",get_longitude(),get_latitude());
 	stream("</Point>\n");
 	stream("</Placemark>\n");
 	return 0;
