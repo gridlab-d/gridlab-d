@@ -26,3 +26,8 @@ for details.
 
 You can setup Eclipse as your GridLAB-D modeling editor.  See 
 http://gridlab-d.sourceforge.net/wiki/index.php/Eclipse for details.
+
+# Online Documentation
+
+The manuals for GridLAB-D are online at 
+http://gridlab-d.sourceforge.net/wiki/index.php/Main_Page
