@@ -1,20 +1,28 @@
-Getting Started with GridLAB-D 
+# Installing from source
 
-1) Before running GridLAB-D, ensure that the GLPATH system variable was created
-during installation. The GLPATH variable should point to the folder containing
-the GridLAB-D libraries and support files: 
-<installPath>lib
-<installPath>etc 
+Download the source code, build, install and validate (you will need autotools)
 
-After installation, the location of the GridLAB-D executable should also have
-been added to the PATH system variable.
-<installPath>bin
+>  host% git clone git@code.stanford.edu:/gridlabd/gridlabd source
+  
+>  host% cd source
+  
+>  host% autoreconf -isf
+  
+>  host% ./configure --enable-silent-rules --prefix=$HOME 'CXXFLAGS=-w' 'CFLAGS=-w'
+  
+>  host% make install
+  
+>  host% export PATH=~/bin:$PATH
+  
+>  host$ gridlabd --validate
+  
+## Windows build
 
-2) GridLAB-D is run as a console application. To view all command-line
-parameters, open a command window and type the following command. 
-"gridlabd.exe -h"
+Windows users will need to install cygwin to enable building using autotools.
+See http://gridlab-d.sourceforge.net/wiki/index.php/MinGW/Eclipse_Installation
+for details.
 
-You can access a command window from the Start Menu:
-Start->Programs->GridLAB-D->GridLAB-D Console
+## Eclipse Editor Setup
 
-For information on the sample models, see samples/README.
+You can setup Eclipse as your GridLAB-D modeling editor.  See 
+http://gridlab-d.sourceforge.net/wiki/index.php/Eclipse for details.
