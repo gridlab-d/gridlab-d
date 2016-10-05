@@ -3099,4 +3099,45 @@ EXPORT SIMULATIONMODE interupdate_load(OBJECT *obj, unsigned int64 delta_time, u
 	}
 }
 
+int load::kmldata(int (*stream)(const char*,...))
+{
+	int phase[3] = {has_phase(PHASE_A),has_phase(PHASE_B),has_phase(PHASE_C)};
+
+	// impedance demand
+	stream("<TR><TH ALIGN=LEFT>Z</TH>");
+	for ( int i = 0 ; i<sizeof(phase)/sizeof(phase[0]) ; i++ )
+	{
+		if ( phase[i] )
+			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.3f</NOBR></TD><TD ALIGN=LEFT>kVA</TD>", constant_impedance[i].Mag()/1000);
+		else
+			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">&mdash;</TD><TD>&nbsp;</TD>");
+	}
+	stream("</TR>\n");
+
+	// current demand
+	stream("<TR><TH ALIGN=LEFT>I</TH>");
+	for ( int i = 0 ; i<sizeof(phase)/sizeof(phase[0]) ; i++ )
+	{
+		if ( phase[i] )
+			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.3f</NOBR></TD><TD ALIGN=LEFT>kVA</TD>", constant_current[i].Mag()/1000);
+		else
+			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">&mdash;</TD><TD>&nbsp;</TD>");
+	}
+	stream("</TR>\n");
+
+	// power demand
+	stream("<TR><TH ALIGN=LEFT>P</TH>");
+	for ( int i = 0 ; i<sizeof(phase)/sizeof(phase[0]) ; i++ )
+	{
+		if ( phase[i] )
+			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.3f</NOBR></TD><TD ALIGN=LEFT>kVA</TD>", constant_power[i].Mag()/1000);
+		else
+			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">&mdash;</TD><TD>&nbsp;</TD>");
+	}
+	stream("</TR>\n");
+
+	return 0;
+}
+
+
 /**@}*/

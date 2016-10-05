@@ -167,6 +167,7 @@ GLOBAL int global_suppress_deprecated_messages INIT(0); /**< flag to suppress ou
 
 GLOBAL int global_run_realtime INIT(0); /**< flag to force simulator into realtime mode */
 GLOBAL TIMESTAMP global_enter_realtime INIT(TS_NEVER); /**< The simulation transitions from simtime to realtime at this timestep */
+GLOBAL double global_realtime_metric INIT(0); /**< realtime performance metric (0=poor, 1=great) */
 
 #ifdef _DEBUG
 GLOBAL char global_sync_dumpfile[1024] INIT(""); /**< enable sync event dump file */
@@ -179,6 +180,7 @@ GLOBAL int global_compileonly INIT(0); /**< flag to enable compile-only option (
 
 GLOBAL int global_server_portnum INIT(0); /**< port used in server mode (6267 was assigned by IANA Dec 2010) */
 GLOBAL char global_server_inaddr[1024] INIT(""); /**< interface address to bind server to */
+GLOBAL char global_client_allowed[1024] INIT(""); /**< internet address from which clients can be accepted */
 GLOBAL char global_browser[1024] /**< default browser to use for GUI */
 #ifdef WIN32
 	INIT("iexplore"); 
