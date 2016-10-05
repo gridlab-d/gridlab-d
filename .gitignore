@@ -101,3 +101,5 @@ install/
 */*/*/autotest/*/
 validate.txt
 .libs/
+.*.swp
+

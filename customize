@@ -1,0 +1,80 @@
+#!/bin/bash
+
+CUSTOMFILE="custom.mk"
+
+function help_syntax ()
+{
+	echo "Syntax: $(basename $0) <command> [<options> ...]"
+}
+
+function help ()
+{
+	help_syntax
+	echo "
+	add <module>             Add <module> to $CUSTOMFILE
+	delete <module>          Delete <module> from $CUSTOMFILE
+	enable <module>          Enable <module> in $CUSTOMFILE
+	disable <module>         Disable <module> in $CUSTOMFILE
+        status [<pattern> [...]] Display status of modules matching <pattern>
+"
+}
+
+function add ()
+{
+	F="$1/Makefile.mk"
+	if [ -z "$(grep $F $CUSTOMFILE)" ]; then
+		if [ -f $F ]; then
+			echo "include $F" >>$CUSTOMFILE
+		else
+			echo "module $1 is not a valid module (missing $F)"
+		fi
+	else
+		echo "$1 is already listed in $CUSTOMFILE"
+	fi
+}
+
+function delete ()
+{
+	F="$1/Makefile.mk"
+	if [ -z "$(grep $F $CUSTOMFILE)" ]; then
+		if [ -f $F ]; then
+			echo "module $1 is not listed in $CUSTOMFILE"
+		else
+			echo "module $1 is not a valid module (missing $F)"
+		fi
+	else
+		T=".tmp$$"
+		grep -v $F $CUSTOMFILE >$T
+		mv $T $CUSTOMFILE
+	fi
+}
+
+function enable ()
+{
+	echo "$(basename $0): enable is todo"
+}
+
+function disable ()
+{
+	echo "$(basename $0): disable is todo"
+}
+
+function status ()
+{
+	echo Enabled: $(grep '^include' <$CUSTOMFILE | sed -e 's/include //g;s:/Makefile.mk::g')
+	echo Disabled: $(grep '^#include' <$CUSTOMFILE | sed -e 's/#include //g;s:/Makefile.mk::g')
+}
+
+
+if [ $# -eq 0 ]; then
+	help_syntax
+else
+	case $1 in
+	(help|add|delete|enable|disable|status)
+		$*
+		;;
+	(*)
+		echo "$(basename $0): $1 is not a valid command"
+		;;
+	esac
+fi
