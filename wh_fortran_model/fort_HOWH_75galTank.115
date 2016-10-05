@@ -1,0 +1,62 @@
+# ================================================================================================================================================
+# Copyright (C) 2013, Battelle Memorial Institute
+# Written by Laurentiu Dan Marinovici, Pacific Northwest National Laboratory
+# Modified and developed from the initial PDE model from Zhijie Xu ("Modeling of Electric Water Heaters for Demand Response: a Baseline PDE Model")
+# Last modified: 03/07/2014
+# =================================================================================================================================================
+	# Set this flag to let simulator know whether the actual experimental data is going to be used or not
+Use experimental data file                                                                      1    ! use_exp_data
+Input data file name                                 2014_01_14_HPWH_HPWH_1min_Day_1_No_schedule.csv    ! filename
+Experiment sample time (seconds)                                                               60    ! exp_sample_time
+	# Operating modes: 1 = Efficiency mode; 2 = Hybrid mode; 3 = Electric only mode
+Operating mode (1, 2, or 3)                                                                     2    ! op_mode
+	# Water Heater parameters
+Water Thermal Conductivity (W/(mK))					                     0.58    ! water_k0 1.8 0.58
+Convective Coefficient (W/K^2)						                   0.0024    ! water_alpha 0.0024
+Water Density (Kg/m^3)							                     1000    ! water_rho
+Water Heat Capacity (J/(KgK))						                   4181.3    ! water_cv
+Water Heater Height (m) and Diameter (m)			                       1.4732 0.5    ! heater_h, heater_D 1.397 0.5207
+	# In the case of the heat pump water heater Voltex PHPT-80 from AOSmith, the position of the sensors are known to be at approximately at 1/3 and 5/6 from the bottom, 		respectively. To make it more general though, we have to enter the acutal positions here manually to cover for the models that are not so specific.
+Heater Sensor Position (m)				         	            1.2277 0.4911    ! sensor_pos(i)
+	# Based on the original paper model for the ER water heater, the heating elements are 200mm below the sensor position
+	# The third element corresponding to each heating element is actually the relative position to the sensor; the actual position in the tank for
+	# the heating elements are calculated in the input function
+Heater Element Power (W), Size(m), and Position(m)                  4200 0.0106 0.2 2000 0.01 0.2    ! heater_q, heater_size, heater_pos for upper and lower heating elements
+# Water Heater Thermal Conductance (W/K/m^2)		                                     0.50    ! heater_k 0.9711
+Tank Heat Loss Rate (BTU/hrF)                                                                 3.9    ! heat_loss_rate (will be transformed into W/K in the input file, such that heater_k can be calculated there in W/K/m^2
+	# Ambient temperature is set based on
+	# 1st value = 0 - ambient temperature is read from the experimental data in CSV file
+	#           = 1 - ambient temperature is constant and given in this file as the second value on the line
+Ambient Temperature (K)							                  0 19.72    ! const_temp_amb (will end up being a vector containing the same constant value for each time sample, if 1; if 0, the air temperature is going to be read from a CSV file with 1-minute data and mapped to match the simulation time samples) ! should be the same as ambient air dry bulb temperature 67.5F
+Ambient Humidity Ratio                                                                       0.05    ! hum_amb
+	# Inlet water temperature is set based on
+	# 1st value = 0 - temperature is read from the experimental data in CSV file
+	#           = 1 - temperature is constant and given in this file as the second value on the line
+Inlet Water Temperature (K)						                    1  25    ! temp_in in deg Celsius (14.44C = 58F) (will end up being a vector containing the same constant value for each time sample, if 1; if 0, the inlet water temperature is going to be read from a CSV file with 1-minute data and mapped to match the simulation time samples)
+Setting Temperature (K)						                      51.67 51.67    ! temp_set in deg Celsius (57.22C = 135F) (51.67C = 125F) (54.44C = 130F)
+Temperature Deadband (K)						                        0    ! temp_db
+	# The next line is related to the water draws:
+	# 1st value = 0 - drawing profile is read from a text file in lbs/hour, as initially set up by the ER water heater PDE simulation
+	#           = 1 - drawing profile is read from the CSV file with experimental data, in GPM
+	#          >= 2 - drawing profile is given in this input file as a sequence of n >= 2 start time, and time, and rate in kg/s
+	# 2nd value = rate threshold, used only when 1st value = 0
+Heating Behavior (Start Time,End Time,Rate(Kg/s))	                1 0.0 0 0.06 0.185 1 1.06 0.185 2 2.06 0.185 3 3.06 0.185 4 4.06 0.185 5 5.06 0.185 ! nseg, v_flow_threshold, t_start, t_end, v_flow 0.185
+# Heating Behavior (Start Time,End Time,Rate(Kg/s))	                1 0.9 0 0.06 0 ! nseg, v_flow_threshold, t_start, t_end, v_flow
+	# Simulation parameters
+Simulation Time (Hours)						                               24    ! sim_time
+	# Compressor parameters
+Compressor Power Capacity (W)                                                                 750    ! comp_power
+Compressor Activation Temperature Offset (F)                                                    9    ! comp_off
+Lowest Ambient Temperature Limit (F)                                                           45    ! low_amb_lim
+Highest Ambient Temperature Limit (F)                                                         109    ! up_amb_lim
+Lowest Water Temperature Limit (F)                                                             58    ! water_low_lim
+Activation Temperature Offset (F) (Electric only mode)                                          5    ! mode_3_off
+Ambient Air Dry Bulb Temperature (F)                                                         67.5    ! t_db
+Ambient Air Wet Bulb Temperature (F)                                                           57    ! t_wb
+Upper Element Activation Temperature Offset (F)                                                18    ! upper_elem_off
+	# Initial water temperature is set based on
+	# 1st value = 0 - temperature is read from the experimental data in CSV file
+	#           = 1 - temperature is constant and given in this file as at 6 different levels in the tank
+Initial Tank Water Temperature (C)                          0 57.22 57.22 57.22 57.22 57.22 57.22    ! init_tank_temp in deg Celsius (135F = 57.22C); 6 different temperature levels within the tank at initial time; if the first value is 1, then these 6 temperature levels are read from the following enumeration; if the first value is 0, then these levels are read from the experimental data file as the first values in the temperature results corresponding to the 1in, 12in, 23in, 34in, 45in, and 56in from the bottom.
+Upper fraction                                                                               0.83    ! this is the upper fraction of the tank used in calculating the tank temperature; this is pretty much fixed to a sixth from the top (5 sixths from the bottom)
+Lower fraction                                                                               0.20    ! this is the lower fraction of the tank used in calculating the tank temperature; this is what we tweak
