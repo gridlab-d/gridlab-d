@@ -1983,9 +1983,35 @@ static int expression(PARSER, double *pValue, UNIT **unit, OBJECT *obj){
 			} else {
 				REJECT;
 			}
+		} else if ( TERM(name(HERE,oname,sizeof(oname))) && LITERAL(".") && TERM(name(HERE,tname,sizeof(tname))))
+		{
+			OBJECT *nobj = object_find_name(oname);
+			if ( nobj == NULL )
+			{
+				output_error_raw("%s(%d): object not found (object must already exist): %s.%s", filename,linenum, oname, tname);
+				REJECT;
+			}
+			double *valptr = object_get_double_by_name(nobj, tname);
+			if ( strcmp(tname,"latitude")==0 )
+			{
+				valptr = &(obj->latitude);
+			}
+			else if ( strcmp(tname,"longitude")==0 )
+			{
+				valptr = &(obj->longitude);
+			}
+			else if (valptr == NULL)
+			{
+				output_error_raw("%s(%d): invalid property: %s.%s", filename,linenum, oname, tname);
+				REJECT;
+			}
+			ACCEPT;
+			if WHITE ACCEPT;
+			rpn_stk[rpn_i].op = 0;
+			rpn_stk[rpn_i].val = *valptr;
+			++rpn_sz;
+			++rpn_i;
 		} else if ((LITERAL("$") || LITERAL("this.")) && TERM(name(HERE,tname,sizeof(tname)))){
-			/* TODO: support non-this object name references. would need to delay processing of expr
-			 * with unrecognized object names. -d3p988 */
 			double *valptr = object_get_double_by_name(obj, tname);
 			if(valptr == NULL){
 				output_error_raw("%s(%d): invalid property: %s.%s", filename,linenum, obj->oclass->name, tname);
@@ -2330,8 +2356,16 @@ int time_value_datetimezone(PARSER, TIMESTAMP *t)
 
 double load_latitude(char *buffer)
 {
+	char oname[128], pname[128];
 	double v = convert_to_latitude(buffer);
-	if ( isnan(v) && ( strcmp(buffer,"")!=0 || stricmp(buffer, "none")!=0 ) )
+	if ( sscanf(buffer,"(%[^.].%[^)])",oname,pname)==2 && strcmp(pname,"latitude")==0 )
+	{
+		OBJECT *obj = object_find_name(oname);
+		if ( obj==NULL )
+			output_error_raw("%s(%d): '%s' does not refer to an existing object", filename,linenum,buffer);
+		return obj->latitude;
+	}
+	else if ( isnan(v) && ( strcmp(buffer,"")!=0 || stricmp(buffer, "none")!=0 ) )
 		output_error_raw("%s(%d): '%s' is not a valid latitude", filename,linenum,buffer);
 	else
 		output_debug("%s(%d): latitude is converted to %lf", filename, linenum, v);
@@ -2340,8 +2374,16 @@ double load_latitude(char *buffer)
 
 double load_longitude(char *buffer)
 {
+	char oname[128], pname[128];
 	double v = convert_to_longitude(buffer);
-	if ( isnan(v) && ( strcmp(buffer,"")!=0 || stricmp(buffer, "none")!=0 ) )
+	if ( sscanf(buffer,"(%[^.].%[^)])",oname,pname)==2 && strcmp(pname,"longitude")==0 )
+	{
+		OBJECT *obj = object_find_name(oname);
+		if ( obj==NULL )
+			output_error_raw("%s(%d): '%s' does not refer to an existing object", filename,linenum,buffer);
+		return obj->longitude;
+	}
+	else if ( isnan(v) && ( strcmp(buffer,"")!=0 || stricmp(buffer, "none")!=0 ) )
 		output_error_raw("%s(%d): '%s' is not a valid longitude", filename,linenum,buffer);
 	else
 		output_debug("%s(%d): longitude is convert to %lf", filename, linenum, v);
@@ -3770,6 +3812,13 @@ static int property_ref(PARSER, TRANSFORMSOURCE *xstype, void **ref, OBJECT *fro
 				enduse *eu = (void*)object_get_addr(obj,pname);
 				*ref = &(eu->total.r);
 				*xstype = XS_ENDUSE;
+				ACCEPT;
+			}
+			else if ( prop->ptype==PT_random )
+			{
+				randomvar *rv = (void*)object_get_addr(obj,pname);
+				*ref = &(rv->value);
+				*xstype = XS_RANDOMVAR;
 				ACCEPT;
 			}
 			else
@@ -6268,6 +6317,36 @@ void* start_process(const char *cmd)
 	return threadlist;
 }
 
+#ifdef WIN32
+/* TODO: move this to a better place */
+char *strsep(char **from, const char *delim) {
+    char *s, *dp, *ret;
+
+    if ((s = *from) == NULL)
+        return NULL;
+
+    ret = s;
+    while (*s != '\0') {
+        /* loop until the end of s, checking against each delimiting character,
+         * if we find a delimiter set **s to '\0' and return our previous token
+         * to the user. */
+        dp = (char *)delim;
+        while (*dp != '\0') {
+            if (*s == *dp) {
+                *s = '\0';
+                *from = s + 1;
+                return ret;
+            }
+            dp++;
+        }
+        s++;
+    }
+    /* end of string case */
+    *from = NULL;
+    return ret;
+}
+#endif
+
 /** @return TRUE/SUCCESS for a successful macro read, FALSE/FAILED on parse error (which halts the loader) */
 static int process_macro(char *line, int size, char *_filename, int linenum)
 {
@@ -6727,6 +6806,30 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		strcpy(value, strip_right_white(term+1));
 		if(1){
 			output_warning("%s(%d): %s", filename, linenum, value);
+			strcpy(line,"\n");
+			return TRUE;
+		}
+		else
+		{
+			output_error_raw("%s(%d): %swarning missing expression",filename,linenum,MACRO);
+			strcpy(line,"\n");
+			return FALSE;
+		}
+	}
+	else if (strncmp(line,MACRO "debug",6)==0)
+	{
+		char *term = strchr(line+8,' ');
+		char value[1024];
+		if (term==NULL)
+		{
+			output_error_raw("%s(%d): %sdebug missing message text",filename,linenum,MACRO);
+			strcpy(line,"\n");
+			return FALSE;
+		}
+		//if (sscanf(term+1,"%[^\n\r]",value)==1)
+		strcpy(value, strip_right_white(term+1));
+		if(1){
+			output_debug("%s(%d): %s", filename, linenum, value);
 			strcpy(line,"\n");
 			return TRUE;
 		}

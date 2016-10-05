@@ -78,6 +78,7 @@ private:
 	database *next;
 	static database *first;
 	static database *last;
+	static database *last_used;
 public:
 	static inline database *get_first(void) { return first; };
 	inline database *get_next(void) { return next; }
@@ -112,6 +113,7 @@ public:
 	char *get_sqldata(char *buffer, size_t size, gld_property &p, double scale=1.0);
 	char *get_sqldata(char *buffer, size_t size, gld_property &p, gld_unit *unit=NULL);
 	bool get_sqlbind(MYSQL_BIND &value,gld_property &target, my_bool *error=NULL);
+	void check_schema();
 
 	TIMESTAMP convert_from_dbtime(TIMESTAMP);
 	TIMESTAMP convert_to_dbtime(TIMESTAMP);

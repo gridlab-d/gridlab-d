@@ -679,4 +679,60 @@ EXPORT SIMULATIONMODE interupdate_triplex_meter(OBJECT *obj, unsigned int64 delt
 		return status;
 	}
 }
+
+int triplex_meter::kmldata(int (*stream)(const char*,...))
+{
+	int phase[3] = {has_phase(PHASE_A),has_phase(PHASE_B),has_phase(PHASE_C)};
+
+	// TODO: this voltage and power breakdown should go in triplex_node
+	double basis = has_phase(PHASE_A) ? 0 : ( has_phase(PHASE_B) ? 240 : has_phase(PHASE_C) ? 120 : 0 );
+	stream("<CAPTION>%s #%d</CAPTION>\n", get_oclass()->get_name(), get_id());
+	stream("<TR>"
+			"<TH WIDTH=\"25%\" ALIGN=CENTER>Property<HR></TH>\n"
+			"<TH WIDTH=\"25%\" COLSPAN=2 ALIGN=CENTER><NOBR>Line 1</NOBR><HR></TH>\n"
+			"<TH WIDTH=\"25%\" COLSPAN=2 ALIGN=CENTER><NOBR>Line 2</NOBR><HR></TH>\n"
+			"<TH WIDTH=\"25%\" COLSPAN=2 ALIGN=CENTER><NOBR>Neutral</NOBR><HR></TH>\n"
+			"</TR>\n");
+
+	// voltages
+	stream("<TR><TH ALIGN=LEFT>Voltage</TH>\n");
+	stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.3f</NOBR></TD><TD ALIGN=LEFT>kV</TD>\n", measured_voltage[0].Mag()/1000);
+	stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.3f</NOBR></TD><TD ALIGN=LEFT>kV</TD>\n", measured_voltage[1].Mag()/1000);
+	stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.3f</NOBR></TD><TD ALIGN=LEFT>kV</TD>\n", measured_voltage[2].Mag()/1000);
+	stream("</TR>\n");
+	stream("<TR><TH ALIGN=LEFT>&nbsp</TH>\n");
+	stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.3f</NOBR></TD><TD ALIGN=LEFT>&deg;</TD>\n", measured_voltage[0].Arg()*180/3.1416 - basis);
+	stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.3f</NOBR></TD><TD ALIGN=LEFT>&deg;</TD>\n", measured_voltage[1].Arg()*180/3.1416 - basis);
+	stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.3f</NOBR></TD><TD ALIGN=LEFT>&deg;</TD>\n", measured_voltage[2].Arg()*180/3.1416);
+	stream("</TR>\n");
+
+	// power
+	stream("<TR><TH ALIGN=LEFT>Power</TH>\n");
+	stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.3f</NOBR</TD><TD ALIGN=LEFT>kW</TD>\n", indiv_measured_power[0].Re()/1000);
+	stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.3f</NOBR</TD><TD ALIGN=LEFT>kW</TD>\n", indiv_measured_power[1].Re()/1000);
+	stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.3f</NOBR</TD><TD ALIGN=LEFT>kW</TD>\n", indiv_measured_power[2].Re()/1000);
+	stream("</TR>\n");
+	stream("<TR><TH ALIGN=LEFT>Power</TH>\n");
+	stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.3f</NOBR</TD><TD ALIGN=LEFT>kVAR</TD>\n", indiv_measured_power[0].Im()/1000);
+	stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.3f</NOBR</TD><TD ALIGN=LEFT>kVAR</TD>\n", indiv_measured_power[1].Im()/1000);
+	stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.3f</NOBR</TD><TD ALIGN=LEFT>kVAR</TD>\n", indiv_measured_power[2].Im()/1000);
+	stream("</TR>\n");
+
+	// power
+	stream("<TR><TH>&nbsp;</TH><TH ALIGN=CENTER COLSPAN=6>Total<HR/></TH></TR>");
+	stream("<TR><TH ALIGN=LEFT>Power</TH>\n");
+	stream("<TD ALIGN=CENTER COLSPAN=6 STYLE=\"font-family:courier;\"><NOBR>%.3f&nbsp;kW</NOBR</TD>\n", measured_real_power/1000);
+	stream("</TR>\n");
+
+	// energy
+	stream("<TR><TH ALIGN=LEFT>Energy</TH>");
+	stream("<TD ALIGN=CENTER COLSPAN=6 STYLE=\"font-family:courier;\"><NOBR>%.3f&nbsp;kWh</NOBR</TD>\n", measured_real_energy/1000);
+	stream("</TR>\n");
+
+	if ( voltage12.Mag()/2<0.5*nominal_voltage ) return 0; // black
+	if ( voltage12.Mag()/2<0.95*nominal_voltage ) return 1; // blue
+	if ( voltage12.Mag()/2>1.05*nominal_voltage ) return 3; // red
+	return 2; // green
+}
+
 /**@}**/

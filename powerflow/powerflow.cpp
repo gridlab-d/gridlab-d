@@ -48,28 +48,10 @@ void print_matrix(complex mat[3][3])
 
 EXPORT int kmldump(int (*stream)(const char*,...), OBJECT *obj)
 {
-
 	if (obj==NULL) /* dump document styles */
 	{
-		/* line styles */
-		stream("<Style id=\"overhead_line\">\n"
-			" <LineStyle>\n"
-			"  <color>7f00ffff</color>\n"
-			"  <width>4</width>\n"
-			" </LineStyle>\n"
-			" <PolyStyle>\n"
-			"  <color>7f00ff00</color>\n"
-			" </PolyStyle>\n"
-			"</Style>\n");
-		stream("<Style id=\"underground_line\">\n"
-			" <LineStyle>\n"
-			"  <color>3f00ffff</color>\n"
-			"  <width>4</width>\n"
-			" </LineStyle>\n"
-			" <PolyStyle>\n"
-			"  <color>3f00ff00</color>\n"
-			" </PolyStyle>\n"
-			"</Style>\n");
+		node::kmlinit(stream);
+		link_object::kmlinit(stream);
 		return 0;
 	}
 	else if (gl_object_isa(obj,"node"))
@@ -77,6 +59,7 @@ EXPORT int kmldump(int (*stream)(const char*,...), OBJECT *obj)
 	else if (gl_object_isa(obj,"link"))
 		return OBJECTDATA(obj,link_object)->kmldump(stream);
 	else
+		// TODO: triplex_node
 		return 0; 
 }
 

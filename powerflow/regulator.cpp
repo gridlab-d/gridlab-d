@@ -1363,5 +1363,49 @@ void regulator::get_monitored_voltage()
 	}
 }
 
+int regulator::kmldata(int (*stream)(const char*,...))
+{
+	int phase[3] = {has_phase(PHASE_A),has_phase(PHASE_B),has_phase(PHASE_C)};
+
+	// tap position
+	stream("<TR><TH ALIGN=LEFT>Tap position</TH>");
+	for ( int i = 0 ; i<sizeof(phase)/sizeof(phase[0]) ; i++ )
+	{
+		if ( phase[i] )
+			stream("<TD ALIGN=CENTER COLSPAN=2 STYLE=\"font-family:courier;\"><NOBR>%d</NOBR></TD>", tap[i]);
+		else
+			stream("<TD ALIGN=CENTER COLSPAN=2 STYLE=\"font-family:courier;\">&mdash;</TD>");
+	}
+	stream("</TR>\n");
+
+	// control input
+	gld_global run_realtime("run_realtime");
+	gld_global server("hostname");
+	gld_global port("server_portnum");
+	if ( run_realtime.get_bool() )
+	{
+		stream("<TR><TH ALIGN=LEFT>Raise to</TH>");
+		for ( int i = 0 ; i<sizeof(phase)/sizeof(phase[0]) ; i++ )
+		{
+			if ( phase[i] )
+				stream("<TD ALIGN=CENTER COLSPAN=2 STYLE=\"font-family:courier;\"><FORM ACTION=\"http://%s:%d/kml/%s\" METHOD=GET><INPUT TYPE=SUBMIT NAME=\"tap_%c\" VALUE=\"%d\" /></FORM></TD>",
+						(const char*)server.get_string(), port.get_int16(), (const char*)get_name(), 'A'+i, tap[i]+1);
+			else
+				stream("<TD ALIGN=CENTER COLSPAN=2 STYLE=\"font-family:courier;\">&mdash;</TD>");
+		}
+		stream("</TR>\n");
+		stream("<TR><TH ALIGN=LEFT>Lower to</TH>");
+		for ( int i = 0 ; i<sizeof(phase)/sizeof(phase[0]) ; i++ )
+		{
+			if ( phase[i] )
+				stream("<TD ALIGN=CENTER COLSPAN=2 STYLE=\"font-family:courier;\"><FORM ACTION=\"http://%s:%d/kml/%s\" METHOD=GET><INPUT TYPE=SUBMIT NAME=\"tap_%c\" VALUE=\"%d\" /></FORM></TD>",
+						(const char*)server.get_string(), port.get_int16(), (const char*)get_name(), 'A'+i, tap[i]-1);
+			else
+				stream("<TD ALIGN=CENTER COLSPAN=2 STYLE=\"font-family:courier;\">&mdash;</TD>");
+		}
+		stream("</TR>\n");
+	}
+	return 2;
+}
 
 /**@}*/

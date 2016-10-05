@@ -121,6 +121,7 @@ public:
 	bool is_frequency_nominal();
 	bool is_voltage_nominal();
 
+	static int kmlinit(int (*stream)(const char*,...));
 	int kmldump(int (*stream)(const char*,...));
 	//Current injection calculation function - so it can be called remotely
 	int CurrentCalculation(int nodecall);
@@ -187,4 +188,3 @@ void forward_sub(complex *l, complex *b, complex *z, int size_val); //backwards 
 void back_sub(complex *u, complex *z, complex *x, int size_val); // forwards substitution algorithm for a generic square system
 void lu_matrix_inverse(complex *input_mat, complex *output_mat, int size_val);	//matrix inversion calculated by LU decomp method
 #endif // _LINK_H
-
