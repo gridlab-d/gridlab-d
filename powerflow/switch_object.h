@@ -59,6 +59,7 @@ public:
 	enumeration phase_C_state;				///< Defines the current state of the phase C switch
 
 	double switch_resistance;
+	int kmldata(int (*stream)(const char*,...));
 private:
 	OBJECT **eventgen_obj;					//Reliability variable - link to eventgen object
 	FUNCTIONADDR event_schedule;			//Reliability variable - links to "add_event" function in eventgen

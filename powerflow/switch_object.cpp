@@ -1784,4 +1784,41 @@ EXPORT SIMULATIONMODE interupdate_switch(OBJECT *obj, unsigned int64 delta_time,
 		return status;
 	}
 }
+
+int switch_object::kmldata(int (*stream)(const char*,...))
+{
+	int phase[3] = {has_phase(PHASE_A),has_phase(PHASE_B),has_phase(PHASE_C)};
+	enumeration state[3] = {phase_A_state, phase_B_state, phase_C_state};
+
+	// switch state
+	stream("<TR><TH ALIGN=LEFT>Status</TH>");
+	for ( int i = 0 ; i<sizeof(phase)/sizeof(phase[0]) ; i++ )
+	{
+		if ( phase[i] )
+			stream("<TD ALIGN=CENTER COLSPAN=2 STYLE=\"font-family:courier;\"><NOBR>%s</NOBR></TD>", state[i]?"CLOSED":"OPEN");
+		else
+			stream("<TD ALIGN=CENTER COLSPAN=2 STYLE=\"font-family:courier;\">&mdash;</TD>");
+	}
+	stream("</TR>\n");
+
+	// control input
+	gld_global run_realtime("run_realtime");
+	gld_global server("hostname");
+	gld_global port("server_portnum");
+	if ( run_realtime.get_bool() )
+	{
+		stream("<TR><TH ALIGN=LEFT>Control</TH>");
+		for ( int i = 0 ; i<sizeof(phase)/sizeof(phase[0]) ; i++ )
+		{
+			if ( phase[i] )
+				stream("<TD ALIGN=CENTER COLSPAN=2 STYLE=\"font-family:courier;\"><FORM ACTION=\"http://%s:%d/kml/%s\" METHOD=GET><INPUT TYPE=SUBMIT NAME=\"switchA\" VALUE=\"%s\" /></FORM></TD>",
+						(const char*)server.get_string(), port.get_int16(), (const char*)get_name(), state[i] ? "OPEN" : "CLOSE");
+			else
+				stream("<TD ALIGN=CENTER COLSPAN=2 STYLE=\"font-family:courier;\">&mdash;</TD>");
+		}
+		stream("</TR>\n");
+	}
+	return 2;
+}
+
 /**@}**/

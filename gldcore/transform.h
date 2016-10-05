@@ -23,6 +23,7 @@ typedef enum {
 	XS_LOADSHAPE= 0x04, 
 	XS_ENDUSE	= 0x08, 
 	XS_SCHEDULE = 0x10,
+	XS_RANDOMVAR = 0x20,
 	XS_ALL		= 0x1f,
 } TRANSFORMSOURCE;
 

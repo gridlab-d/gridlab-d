@@ -781,4 +781,29 @@ EXPORT SIMULATIONMODE interupdate_meter(OBJECT *obj, unsigned int64 delta_time, 
 	}
 }
 
+int meter::kmldata(int (*stream)(const char*,...))
+{
+	int phase[3] = {has_phase(PHASE_A),has_phase(PHASE_B),has_phase(PHASE_C)};
+	double basis[3] = {0,240,120};
+
+	// power
+	stream("<TR><TH ALIGN=LEFT>Power</TH>");
+	for ( int i = 0 ; i<sizeof(phase)/sizeof(phase[0]) ; i++ )
+	{
+		if ( phase[i] )
+			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\"><NOBR>%.3f</NOBR></TD><TD ALIGN=LEFT>kVA</TD>", indiv_measured_power[i].Mag()/1000);
+		else
+			stream("<TD ALIGN=RIGHT STYLE=\"font-family:courier;\">&mdash;</TD><TD>&nbsp;</TD>");
+	}
+	stream("</TR>\n");
+
+	// energy
+	stream("<TR><TH ALIGN=LEFT>Energy</TH>");
+	stream("<TD ALIGN=RIGHT COLSPAN=3 STYLE=\"font-family:courier;\"><NOBR>%.3f kWh</NOBR></TD>", measured_real_energy/1000);
+	stream("<TD ALIGN=RIGHT COLSPAN=3 STYLE=\"font-family:courier;\"><NOBR>%.3f kVARh</NOBR></TD>", measured_reactive_energy/1000);
+	stream("</TR>\n");
+
+	return 0;
+}
+
 /**@}**/

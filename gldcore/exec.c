@@ -822,7 +822,7 @@ static STATUS init_all(void)
 			{
 				OBJECT **bigger;
 				int size = ( max_object_heartbeats==0 ? 256 : (max_object_heartbeats*2) );
-				bigger = malloc(size);
+				bigger = (OBJECT**)malloc(size*sizeof(OBJECT*));
 				if ( bigger==NULL )
 				{
 					output_error("unsufficient memory to allocate hearbeat object list");
@@ -830,7 +830,7 @@ static STATUS init_all(void)
 				}
 				if ( max_object_heartbeats>0 )
 				{
-					memcpy(bigger,object_heartbeats,max_object_heartbeats*sizeof(OBJECT));
+					memcpy(bigger,object_heartbeats,max_object_heartbeats*sizeof(OBJECT*));
 					free(object_heartbeats);
 				}
 				object_heartbeats = bigger;
@@ -1905,6 +1905,7 @@ STATUS exec_start(void)
 
 			if (global_run_realtime>0 && iteration_counter>0)
 			{
+				double metric=0;
 #ifdef WIN32
 				struct timeb tv;
 				ftime(&tv);
@@ -1912,6 +1913,7 @@ STATUS exec_start(void)
 				{
 					output_verbose("waiting %d msec", 1000-tv.millitm);
 					Sleep(1000-tv.millitm );
+					metric = (1000-tv.millitm)/1000.0;
 					global_clock += global_run_realtime;
 				}
 				else
@@ -1923,11 +1925,14 @@ STATUS exec_start(void)
 				{
 					output_verbose("waiting %d usec", 1000000-tv.tv_usec);
 					usleep(1000000-tv.tv_usec);
+					metric = (1000000-tv.tv_usec)/1000000.0;
 					global_clock += global_run_realtime;
 				}
 				else
 					output_error("simulation failed to keep up with real time");
 #endif
+#define IIR 0.9 /* about 30s for 95% unit step response */
+				global_realtime_metric = global_realtime_metric*IIR + metric*(1-IIR);
 				exec_sync_reset(NULL);
 				exec_sync_set(NULL,global_clock);
 				output_verbose("realtime clock advancing to %d", (int)global_clock);
