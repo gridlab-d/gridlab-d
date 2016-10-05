@@ -29,4 +29,14 @@
 *.x86_64 binary
 *.hex binary
 *.su binary
-*.dSYM/
+*.dSYM binary
+*.jar binary
+*.aps binary
+*.png binary
+*.jpg binary
+*.PNG binary
+*.zip binary
+*.ppt binary
+*.ncb binary
+*.pdf binary
+*.tar.gz binary
