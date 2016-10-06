@@ -230,7 +230,7 @@ clean-wc:
 check-local validate: 
 	gridlabd --validate
 
-distdir = $(PACKAGE)_$(VERSION)
+#distdir = $(PACKAGE)_$(VERSION)
 scratchdir = scratch
 XERCES_TARNAME = xerces-c-3.1.1
 XERCESCROOT = $(CURDIR)/$(scratchdir)/$(XERCES_TARNAME)

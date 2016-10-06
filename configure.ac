@@ -473,6 +473,27 @@ AC_SUBST([GLD_CPPFLAGS])
 AC_LANG_POP([C++])
 
 ###############################################################################
+# F90 compiler
+###############################################################################
+AC_MSG_NOTICE
+AC_MSG_NOTICE([F90 compiler])
+AC_MSG_NOTICE
+
+AC_PROG_FC
+AC_PROG_FC_C_O
+AC_FC_SRCEXT([f90])
+AC_FC_LIBRARY_LDFLAGS
+AC_FC_DUMMY_MAIN
+AC_FC_WRAPPERS
+AC_FC_FREEFORM
+m4_ifdef([AC_FC_LINE_LENGTH], [AC_FC_LINE_LENGTH])
+
+AS_IF([test "x$debug" = "true"], [GLD_FCFLAGS="$GLD_FCFLAGS -g"])
+GLD_FCFLAGS="$GLD_FCFLAGS -O$optimization"
+
+AC_SUBST([GLD_FCFLAGS])
+
+###############################################################################
 # Libtool
 ###############################################################################
 AC_MSG_NOTICE

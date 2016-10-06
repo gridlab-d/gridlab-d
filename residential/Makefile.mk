@@ -6,7 +6,7 @@ residential_residential_la_CPPFLAGS += $(AM_CPPFLAGS)
 residential_residential_la_LDFLAGS =
 residential_residential_la_LDFLAGS += $(AM_LDFLAGS)
 
-residential_residential_la_LIBADD = -ldl
+residential_residential_la_LIBADD = -ldl $(FCLIBS)
 
 residential_residential_la_SOURCES =
 residential_residential_la_SOURCES += residential/appliance.cpp
@@ -55,3 +55,5 @@ residential_residential_la_SOURCES += residential/zipload.cpp
 residential_residential_la_SOURCES += residential/zipload.h
 residential_residential_la_SOURCES += residential/elcap1990.h
 residential_residential_la_SOURCES += residential/elcap2010.h
+residential_residential_la_SOURCES += wh_fortran_model/run_wh.f90
+residential_residential_la_SOURCES += wh_fortran_model/wh_control_logic.f90
