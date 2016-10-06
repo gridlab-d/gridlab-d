@@ -1,1 +1,42 @@
+# Set default line endings for text files to be lf
 * text eol=lf
+
+# Denote all files that are truly binary and should not be modified
+*.d binary
+*.slo binary
+*.lo binary
+*.o binary
+*.obj binary
+*.gch binary
+*.pch binary
+*.so binary
+*.dylib binary
+*.dll binary
+*.mod binary
+*.smod binary
+*.lai binary
+*.la binary
+*.a binary
+*.lib binary
+*.exe binary
+*.out binary
+*.app binary
+*.bin binary
+*.ko binary
+*.elf binary
+*.so.* binary
+*.i*86 binary
+*.x86_64 binary
+*.hex binary
+*.su binary
+*.dSYM binary
+*.jar binary
+*.aps binary
+*.png binary
+*.jpg binary
+*.PNG binary
+*.zip binary
+*.ppt binary
+*.ncb binary
+*.pdf binary
+*.tar.gz binary

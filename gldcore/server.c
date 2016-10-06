@@ -301,7 +301,7 @@ static HTTPCNX *http_create(SOCKET s)
 	HTTPCNX *http = (HTTPCNX*)malloc(sizeof(HTTPCNX));
 	memset(http,0,sizeof(HTTPCNX));
 	http->s = s;
-	http->max = 4096;
+	http->max = 65536;
 	http->buffer = malloc(http->max);
 	return http;
 }
