@@ -40,3 +40,7 @@
 *.ncb binary
 *.pdf binary
 *.tar.gz binary
+*.docx binary
+*.doc binary
+*.xls binary
+*.xlsx binary
