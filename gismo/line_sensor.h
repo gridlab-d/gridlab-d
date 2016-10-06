@@ -1,14 +1,11 @@
-/** $Id: line_sensor.h 4738 2014-07-03 00:55:39Z dchassin $
-
- General purpose line_sensor objects
-
- **/
+// line_sensor.h
+// Copyright (C) 2016, Stanford University
+// Author: David P. Chassin (dchassin@slac.stanford.edu)
 
 #ifndef _LINESENSOR_H
 #define _LINESENSOR_H
 
-#include "gridlabd.h"
-#include "../powerflow/powerflow_object.h"
+#include "gismo.h"
 
 class line_sensor : public gld_object {
 public:

@@ -3,14 +3,7 @@
 
 #define DLMAIN
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
-
-#include "gridlabd.h"
-
-#include "line_sensor.h"
+#include "gismo.h"
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
@@ -21,6 +14,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	}
 
 	new line_sensor(module);
+	new switch_coordinator(module);
 
 	/* always return the first class registered */
 	return line_sensor::oclass;

@@ -1,46 +1,43 @@
-/** $Id: switch_coordinator.cpp 4738 2014-07-03 00:55:39Z dchassin $
+// switch_coordinator.cpp
+// Copyright (C) 2016, Stanford University
+// Author: David P. Chassin (dchassin@slac.stanford.edu)
+//
+// switch_coordinator - General purpose switch_coordinator objects
+//
+// == Synopsis ==
+//
+//   object switch_coordinator {
+//     status {IDLE, ARMED, ACTIVE};
+//     connect <name1>;
+//     connect <name2>;
+//     ...
+//     armed [<name1>|<name2>|...];
+//   }
+//
+// Description
+// -----------
+//
+// Use 'connect' to add switches to the list of switches coordinated by the object.  Up to 64 switches can
+// be coordinated. Each connected switch can be armed by setting the 'armed' object using the switch's name.
+// Once all the armed switches have be set, use 'status' to activate the switching scheme.
+//
+// See also
+// --------
+// * powerflow
+// ** switch
+//
 
-switch_coordinator - General purpose switch_coordinator objects
-
-== Synopsis ==
-
-  object switch_coordinator {
-    status {IDLE, ARMED, ACTIVE};
-    connect <name1>;
-    connect <name2>;
-    ...
-    armed [<name1>|<name2>|...];
-  }
-
-Description
------------
-
-Use 'connect' to add switches to the list of switches coordinated by the object.  Up to 64 switches can
-be coordinated. Each connected switch can be armed by setting the 'armed' object using the switch's name.
-Once all the armed switches have be set, use 'status' to activate the switching scheme.
-
-See also
---------
-* powerflow
-** switch
-
- **/
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
-#include <complex.h>
-
-#include "switch_coordinator.h"
+#include "gismo.h"
 
 EXPORT_CREATE(switch_coordinator);
 EXPORT_INIT(switch_coordinator);
 EXPORT_PRECOMMIT(switch_coordinator);
 EXPORT_SYNC(switch_coordinator);
 EXPORT_COMMIT(switch_coordinator);
-EXPORT_NOTIFY_PROP(switch_coordinator,status);
+EXPORT_NOTIFY_PROP(switch_coordinator,armed);
 EXPORT_LOADMETHOD(switch_coordinator,connect);
+EXPORT_LOADMETHOD(switch_coordinator,arm);
+EXPORT_LOADMETHOD(switch_coordinator,disarm);
 
 CLASS *switch_coordinator::oclass = NULL;
 switch_coordinator *switch_coordinator::defaults = NULL;
@@ -69,7 +66,10 @@ switch_coordinator::switch_coordinator(MODULE *module)
 				sprintf(msg, "unable to publish properties in %s",__FILE__);
 				throw msg;
 		}
-
+#define PUBLISH_METHOD(X) if ( !gl_publish_loadmethod(oclass,#X,loadmethod_switch_coordinator_##X) ) throw "gismo/switch_coordinator::switch_coordinator(MODULE*): unable to publish "#X" method";
+		PUBLISH_METHOD(connect)
+		PUBLISH_METHOD(arm)
+		PUBLISH_METHOD(disarm)
 		memset(this,0,sizeof(switch_coordinator));
 	}
 }
@@ -122,6 +122,40 @@ int switch_coordinator::connect(char *name)
 	return 1;
 }
 
+int switch_coordinator::arm(char *name)
+{
+	gld_property prop(this,"armed");
+	gld_keyword *key;
+	for ( key = prop.get_first_keyword() ; key->get_next()!=NULL ; key = key->get_next() )
+	{
+		if ( *key==name )
+		{
+			armed |= key->get_set_value();
+			notify_armed();
+			return 1;
+		}
+	}
+	error("unable to arm '%s', no such device connected", name);
+	return 0;
+}
+
+int switch_coordinator::disarm(char *name)
+{
+	gld_property prop(this,"armed");
+	gld_keyword *key;
+	for ( key = prop.get_first_keyword() ; key->get_next()!=NULL ; key = key->get_next() )
+	{
+		if ( *key==name )
+		{
+			armed &= ~key->get_set_value();
+			notify_armed();
+			return 1;
+		}
+	}
+	error("unable to disarm '%s', no such device connected", name);
+	return 0;
+}
+
 int switch_coordinator::init(OBJECT *parent)
 {
 	return 1;
@@ -165,12 +199,13 @@ TIMESTAMP switch_coordinator::commit(TIMESTAMP t1, TIMESTAMP t2)
 	return TS_NEVER;
 }
 
-int switch_coordinator::notify_status(char *value)
+int switch_coordinator::notify_armed(char *value)
 {
-	if ( status == SCS_IDLE )
-	{
+	if ( armed == 0 ) // disarm regardless of status
+		status = SCS_IDLE;
+	else if ( status == SCS_IDLE) // arm only if idle
 		status = SCS_ARMED;
-	}
+	// active state isn't affected by arming
 	return 1;
 }
 	

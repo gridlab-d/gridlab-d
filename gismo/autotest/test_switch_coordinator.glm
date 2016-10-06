@@ -1,0 +1,89 @@
+// gismo/test_switch_coordinator.glm
+// Copyright (C) 2016, Stanford University
+// Author: DP Chassin (dchassin@slac.stanford.edu)
+
+#set suppress_repeat_messages=false
+
+clock
+{
+	timezone UTC0;						//Local timezone for the simulation
+	starttime '2011-01-01 00:00:00'; 	//Start time in the local timezone 
+	stoptime '2011-01-02 00:00:00';		//Stop time in the local timezone
+}
+
+module powerflow {
+	solver_method NR;
+}
+
+// switches
+global int32 SEQ_ID 0;
+object switch {
+	name switch_1;
+	phases AN;
+	from source;
+	to sink_1;
+}
+object switch {
+	name switch_2;
+	phases BN;
+	from source;
+	to sink_2;
+}
+object switch {
+	name switch_3;
+	phases CN;
+	from source;
+	to sink_3;
+}
+object switch {
+	name switch_4;
+	phases ABCN;
+	from source;
+	to sink_4;
+}
+
+// nodes
+object meter {
+	name source;
+	nominal_voltage 2400;
+	voltage_A 2400 V;
+	voltage_B 2400+120d V;
+	voltage_C 2400-120d V;
+	phases ABC;
+	bustype SWING;
+}
+
+object meter {
+	name sink_1;
+	nominal_voltage 2400;
+	phases AN;
+}
+
+object meter {
+	name sink_2;
+	nominal_voltage 2400;
+	phases BN;
+}
+
+object meter {
+	name sink_3;
+	nominal_voltage 2400;
+	phases CN;
+}
+
+object meter {
+	name sink_4;
+	nominal_voltage 2400;
+	phases ABCN;
+}
+
+module gismo;
+object switch_coordinator {
+	connect switch_1;
+	connect switch_2;
+	connect switch_3;
+	connect switch_4;
+	armed switch_1|switch_2|switch_3|switch_3;
+}
+
+module tape;

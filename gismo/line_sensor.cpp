@@ -1,18 +1,12 @@
-/** $Id: line_sensor.cpp 4738 2014-07-03 00:55:39Z dchassin $
+// line_sensor.cpp
+// Copyright (C) 2016, Stanford University
+// Author: David P. Chassin (dchassin@slac.stanford.edu)
+//
+//   General purpose line_sensor objects
+//
+//
 
-   General purpose line_sensor objects
-
- **/
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
-#include <complex.h>
-
-#include "../powerflow/line.h"
-#include "../powerflow/node.h"
-#include "line_sensor.h"
+#include "gismo.h"
 
 EXPORT_CREATE(line_sensor);
 EXPORT_INIT(line_sensor);

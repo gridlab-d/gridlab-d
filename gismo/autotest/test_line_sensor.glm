@@ -1,4 +1,6 @@
 // gismo/test_line_sensor.glm
+// Copyright (C) 2016, Stanford University
+// Author: DP Chassin (dchassin@slac.stanford.edu)
 
 #set suppress_repeat_messages=false
 module gismo;

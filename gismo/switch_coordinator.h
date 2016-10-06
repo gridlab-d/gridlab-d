@@ -1,14 +1,11 @@
-/** $Id: line_sensor.h 4738 2014-07-03 00:55:39Z dchassin $
-
- Switch coordinator
-
- **/
+// line_sensor.h
+// Copyright (C) 2016, Stanford University
+// Author: David P. Chassin (dchassin@slac.stanford.edu)
 
 #ifndef _SWITCHCOORDINATOR_H
 #define _SWITCHCOORDINATOR_H
 
-#include "gridlabd.h"
-#include "../powerflow/switch_object.h"
+#include "gismo.h"
 
 class switch_coordinator : public gld_object {
 public:
@@ -30,8 +27,10 @@ public:
 	inline TIMESTAMP postsync(TIMESTAMP t1) { return TS_NEVER; };
 	inline TIMESTAMP sync(TIMESTAMP t1) { return TS_NEVER; };
 	TIMESTAMP commit(TIMESTAMP t1, TIMESTAMP t2);
-	int notify_status(char *value);
+	int notify_armed(char *value=NULL);
 	int connect(char *name);
+	int arm(char *name);
+	int disarm(char *name);
 
 public:
 	static CLASS *oclass;
