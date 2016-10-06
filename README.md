@@ -29,5 +29,5 @@ http://gridlab-d.sourceforge.net/wiki/index.php/Eclipse for details.
 
 # Online Documentation
 
-The manuals for GridLAB-D are online at 
-http://gridlab-d.sourceforge.net/wiki/index.php/Main_Page
+The primary manuals for GridLAB-D are online at Main Page for GridLAB-D (http://gridlab-d.sourceforge.net/wiki/index.php/Main_Page).
+Documentation of local projects can be found on this project's wiki (https://code.stanford.edu/gridlabd/gridlabd/wikis/home).
