@@ -187,6 +187,11 @@ int recorder::init(OBJECT *parent)
 				header_pos += sprintf(header_data+header_pos,",'%s'",get_parent()->get_oclass()->get_name());
 				strcat(property_list,"class CHAR(32), index i_class (class), ");
 			}
+			else if ( header_specs[n].compare("group")==0 )
+			{
+				header_pos += sprintf(header_data+header_pos,",'%s'",get_parent()->get_groupid());
+				strcat(property_list,"class CHAR(32), index i_group (group), ");
+			}
 			else if ( header_specs[n].compare("latitude")==0 )
 			{
 				if ( isnan(get_parent()->get_latitude()) )
