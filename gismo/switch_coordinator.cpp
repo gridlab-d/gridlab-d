@@ -111,6 +111,7 @@ int switch_coordinator::connect(char *name)
 		next->next = NULL;
 		((KEYWORD*)last)->next = next;
 		n_switches++;
+		verbose("added switch '%s' to arming list", name);
 		return 1;
 	}
 	else
@@ -132,6 +133,7 @@ int switch_coordinator::arm(char *name)
 		{
 			armed |= key->get_set_value();
 			notify_armed();
+			verbose("arming switch '%s'",name);
 			return 1;
 		}
 	}
@@ -148,6 +150,7 @@ int switch_coordinator::disarm(char *name)
 		if ( *key==name )
 		{
 			armed &= ~key->get_set_value();
+			verbose("disarming switch '%s'",name);
 			notify_armed();
 			return 1;
 		}
@@ -169,7 +172,10 @@ int switch_coordinator::precommit(TIMESTAMP t1)
 		states = armed;
 		unsigned int n;
 		for ( n = 0 ; n < 64 ; n++ )
+		{
+			verbose("recording state of '%s'", (const char*)index[n]->get_name());
 			states ^= ( index[n]->get_enumeration()==switch_object::OPEN ? 0 : 1<<n ); 
+		}
 	}
 	return 1;
 }
@@ -183,7 +189,10 @@ TIMESTAMP switch_coordinator::presync(TIMESTAMP t1)
 		for ( n = 0 ; n < 64 ; n++ )
 		{
 			if ( armed&(1<<n) )
+			{
+				verbose("changing state of '%s'", (const char*)index[n]->get_name());
 				index[n]->setp(states&(1<<n)?(enumeration)(switch_object::CLOSED):(enumeration)(switch_object::OPEN));
+			}
 		}
 	}
 	return TS_NEVER;
@@ -195,6 +204,7 @@ TIMESTAMP switch_coordinator::commit(TIMESTAMP t1, TIMESTAMP t2)
 	{
 		armed = 0;
 		status = SCS_IDLE;
+		verbose("switching done--changing status to IDLE");
 	}
 	return TS_NEVER;
 }
@@ -202,9 +212,15 @@ TIMESTAMP switch_coordinator::commit(TIMESTAMP t1, TIMESTAMP t2)
 int switch_coordinator::notify_armed(char *value)
 {
 	if ( armed == 0 ) // disarm regardless of status
+	{
+		verbose("nothing armed--changing status to IDLE");
 		status = SCS_IDLE;
+	}
 	else if ( status == SCS_IDLE) // arm only if idle
+	{
+		verbose("first switch armed--changing status to ARMED");
 		status = SCS_ARMED;
+	}
 	// active state isn't affected by arming
 	return 1;
 }

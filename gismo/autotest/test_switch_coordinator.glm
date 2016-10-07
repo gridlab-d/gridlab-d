@@ -8,7 +8,7 @@ clock
 {
 	timezone UTC0;						//Local timezone for the simulation
 	starttime '2011-01-01 00:00:00'; 	//Start time in the local timezone 
-	stoptime '2011-01-02 00:00:00';		//Stop time in the local timezone
+	stoptime '2011-01-01 00:02:00';		//Stop time in the local timezone
 }
 
 module powerflow {
@@ -79,11 +79,51 @@ object meter {
 
 module gismo;
 object switch_coordinator {
+	name controller_1;
 	connect switch_1;
 	connect switch_2;
 	connect switch_3;
 	connect switch_4;
-	armed switch_1|switch_2|switch_3|switch_3;
 }
 
 module tape;
+object recorder {
+	parent controller_1;
+	property status,armed;
+	file controller_1.csv;
+	interval 1;
+}
+object recorder {
+	parent switch_1;
+	property status;
+	file switch_1.csv;
+	interval 1;
+}
+object recorder {
+	parent switch_2;
+	property status;
+	file switch_2.csv;
+	interval 1;
+}
+object recorder {
+	parent switch_3;
+	property status;
+	file switch_3.csv;
+	interval 1;
+}
+object recorder {
+	parent switch_4;
+	property status;
+	file switch_4.csv;
+	interval 1;
+}
+object player {
+	parent controller_1;
+	property armed;
+	file controller_1_armed.csv;
+}
+object player {
+	parent controller_1;
+	property status;
+	file controller_1_status.csv;
+}
