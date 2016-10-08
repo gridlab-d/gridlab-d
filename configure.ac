@@ -52,7 +52,6 @@ AC_SUBST(PACKAGE_BRANCH, pkgbranch)
 AC_SUBST(PACKAGE_REVISION, svnversion)
 
 AM_SILENT_RULES([yes])
-AC_PREFIX_DEFAULT ($HOME)
 
 AC_ARG_ENABLE([debug],
     [AS_HELP_STRING([--enable-debug],
