@@ -9,6 +9,13 @@
 
 dnl m4 magic from Eric Blake <e...@byu.net>
 dnl autoconf 2.63 does not have m4_esyscmd_s
+m4_define([m4_chomp_all],
+[m4_format([[%.*s]], m4_bregexp(m4_translit([[$1]], [
+/], [/ ]), [/*$]), [$1])])  
+
+m4_define([m4_esyscmd_s], [m4_chomp_all(m4_esyscmd([$1]))])     
+
+
 m4_define([sbuild_m4_chomp],
 [m4_format([[%.*s]], m4_bregexp(m4_translit([$1], [
 ]]m4_dquote(_m4_defn([m4_cr_all]))[, [/]]m4_format([%255s], [])[),
