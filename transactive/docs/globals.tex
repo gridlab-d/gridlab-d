@@ -1,0 +1,33 @@
+\chapter{Global Variables}
+
+The module uses global variables to specify certain properties of the system that apply for all time throughout the simulation.
+
+\section{Nominal Frequency}
+
+The nominal system frequency is derived from the rated angular velocity of the bulk power sytsem in mechanical radians per second, or $\omega_0$ \cite{kundur1994}. The module global variable is published as \texttt{transactive::nominal\_frequency[Hz]} and is defined as $f_0 = \omega_0/2\pi$. By default the value is 60.0 Hz.
+
+\section{Maximum Frequency}
+
+The maximum frequency is defined as the frequency above which the system is considered to be operating outside normal conditions.  Depending on the value of the frequency bounds this condition will ignored, or result in a warning message, or terminate the simulation. The module global variable is published as \texttt{transactive::maximum\_frequency[Hz]}. By default the value is 63.0 Hz.
+
+\section{Minimum Frequency}
+
+The minimum frequency is defined as the frequency below which the system is considered to be operating outside normal conditions.  Depending on the value of the frequency bounds this condition will ignored, or result in a warning message, or terminate the simulation. The module global variable is published as \texttt{transactive::minimum\_frequency[Hz]}. By default the value is 57.0 Hz.
+
+\section{Frequency Bounds}
+
+The frequency bounds define how the simulation responds to a frequency outside the minimum/maximum frequency limits.  When the frequency bounds value is set to \textbf{NONE} the condition is ignored.  When the frequency bounds value is set to \textbf{SOFT} the condition results in a warning message. When the frequency bounds value is set to \textbf{HARD} the condition results in termination of the simulation. The default frequency bounds value is \textbf{SOFT}.
+
+\textbf{Note:} The frequency bounds check is done during the \texttt{commit} phase of the \texttt{interconnection} object.
+
+\section{Debugging Globals}
+
+Some globals are only available in the debugging version of the transactive module.
+
+\begin{description}
+
+\item[char1024 solver\_check]: Specifies the file name to which a matlab solution check script is dumped.  
+
+\item[enumeration trace\_message]: Specifies which inter-class messages are traced during the simulation. Valid values are \textbf{NONE}, \textbf{INTERCONNECTION}, \textbf{CONTROLAREA}, and \textbf{ALL}.
+
+\end{description}

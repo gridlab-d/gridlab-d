@@ -1,0 +1,117 @@
+\chapter{Interconnection}
+
+The purpose of the interconnection object is to compute the system frequency based on the swing equation \cite{kundur1994}
+\begin{equation} \label{eq:swing}
+	\ddt \Delta \bar f_r = \frac{1}{2H} \left( P_G - P_L - K_D \Delta \bar f_r \right)
+\end{equation}
+where 
+
+\begin{description}
+
+\item $\Delta \bar f_r = \Delta \omega_r / \omega_0$ is the fractional change in frequency of the system, per unit of nominal frequency $f_0$,
+
+\item $H$ is the inertial constant of the system, in seconds, 
+
+\item $P_G$ and $P_L$ are the power input (generation) and output (load) on the system, respectively, in Watts, and 
+
+\item $K_D$ is the damping coefficient, in \hilight{units?}.
+
+\end{description}
+
+\section{Properties}
+
+\subsection{Public variables}
+
+\begin{description}
+
+\item[double frequency (Hz)] is the system frequency at the current time.  The frequency is updated during the \texttt{postsync} phase based on the \texttt{inertia}, \texttt{damping}, \texttt{supply}, \texttt{demand}, relative frequency \texttt{fr}.
+
+\item[capacity (double MW)] is the total system rated power at the current time. This quantity is the sum of all the rated powers of all generating units online. The \texttt{rated\_va} must be updated each \texttt{sync} by all units in the system using the \texttt{update} pseudo-variable.
+
+\item[inertia (double MJ)] is the total system kinetic energy.  This quantity is the sum of all the kinetic energy in all the rotating machines (both generation and load, if any). The \texttt{inertia} must be updated each \texttt{sync} by all units in the system using the \texttt{update} pseudo-variable.
+
+\item[damping (double \hilight{units?})] \hilight{TODO}
+
+\item[supply (double MW)] is the total power input to the system.  This quantity is the sum of all the power inputs from all generators.  The \texttt{supply} must be updated each \texttt{sync} by all generating units in the system using the \texttt{update} pseudo-variable.
+
+\item[demand (double MW)] is the total power output from the system. This quantity is the sum of all power outputs from all loads.  The \texttt{demand} must be updated each \texttt{sync} by all load units in the system using the \texttt{update} pseudo-variable.
+
+\end{description}
+
+\subsection{Private variables}
+
+\begin{description}
+\item[f0 (double Hz)] is the frequency of the system when the clock was last updated.
+\item[fr (double pu)] is the relative fractional frequency change per unit of nominal frequency \texttt{f0}
+\end{description}
+
+\subsection{Pseudo variables}
+
+\begin{description}
+\item[update (int64)] is used to accept incoming updates from control areas. The value of \texttt{update} is count of updates received since the presync event. 
+\end{description}
+
+\section{Processing}
+
+\subsection{Initialization}
+
+Initialization of an interconnection object can by initiated at any time during the simulation initalization sequence.  Therefore it is possible that an interconnection can be initialized before the control areas have been initialized.  If no control areas are found, the interconnection must defer initialization until all the interties and control areas are registered.  If after 2 retries no control areas are found, the interconnection cannot be initalized and initialization must fail.
+
+The interconnection frequency is normal initialized to the nominal frequency.  However it can be initialized to an off-nominal value, which would initiated an immediate transient response when the clock starts.  A warning is displayed when this occurs.
+
+The system damping is verified to ensure that it is not negative.  If damping is negative an exception is reported and the simulation is stopped.
+
+If the number of interties is non-zero, the interconnection load the flow solver that will be used to compute tie line flows when supply or demand changes.  Each control area and tie lines is added to the solver's node and line lists, respectively.
+
+When the solver is initialized the interconnection clock is initialized and the initial flow solution is computed.
+
+\subsection{Precommit}
+
+The internal variables $f_0$ and $f_r$ are updated such that
+\begin{equation}
+	f_0 = frequency
+\end{equation}
+and
+\begin{equation}
+	f_r = \frac{frequency}{nominal\_frequency} - 1
+\end{equation}
+
+The \texttt{precommit} process does not affect the clock but the clock value is recorded so that the delta time can be later computed.
+
+\subsection{Presync}
+
+The accumulators are reset to zero prior to the beginning of the \texttt{sync} process.  These include \texttt{update}, \texttt{inertia}, \texttt{capacity}, \texttt{supply}, and \texttt{demand}.
+
+The \texttt{presync} process does not affect the clock.
+
+\subsection{Postsync}
+
+The flow solution is updated. 
+
+The frequency is updated using \refeq{swing}. The \texttt{supply} and \texttt{demand} values are checked to ensure they are both positive.
+
+The next update time is computed based on the time needed to observe a 0.001 Hz change in frequency as follows
+\begin{equation}
+	\Delta t = \frac{0.001}{|\Delta \bar f_r|}
+\end{equation}
+If the $\Delta \bar f_r<10^{-9}$ the clock is not affected.
+
+
+\subsection{Commit}
+
+The frequency bounds are checked and if any violations are found, the appropriate error handling if performed, as follows
+
+\begin{center} \begin{tabular}{cccc}
+Bound broken & \texttt{frequency\_bounds} & Message & Return status \\
+\hline
+No	& \texttt{NONE|SOFT|HARD} & (none) & Continue \\
+Yes & \texttt{NONE} & (none) & Continue \\
+Yes & \texttt{SOFT} & Warning & Continue \\
+Yes & \texttt{HARD} & Error & Halt
+\end{tabular} \end{center}
+
+\section{Messages}
+
+Control area status update messages are formatted as \\
+\texttt{AS E=<$kinetic\ energy$ (MJ)> R=<$rated\ power$ (MW)> ...} \\
+\texttt{...G=<$input\ power$ (MW)> L=<$output\ power$ (MW)>} 

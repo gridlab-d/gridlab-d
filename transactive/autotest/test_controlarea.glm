@@ -1,0 +1,149 @@
+#define LOSS=0.05
+#define NOISE=0.0
+module transactive {
+	// solver_check "solver_check.m"; // dumps solver check script for matlab
+	frequency_bounds HARD;
+	trace_message NONE; // INTERCONNECTION|CONTROLAREA|ALL
+}
+module tape;
+#set suppress_repeat_messages=FALSE
+
+clock {
+	timezone PST+8PDT;
+	starttime '2015-01-01 0:00:00 PST';
+	stoptime '2015-01-08 0:00:00 PDT';
+}
+
+class load {
+	randomvar noise;
+};
+
+object interconnection {
+	object controlarea {
+		name area1;
+		schedule (650/(1-${LOSS}));
+		bias 1000;
+		object recorder {
+			property supply,demand,schedule,actual,inertia,capacity,bias,ace;
+			interval -1;
+			file test_controlarea1_ace.csv;
+		};
+		object generator {
+			inertia 10000;
+			capacity 1000;
+			actual (650/(1-${LOSS}));
+			control_gain 1;
+			max_ramp 10 MW/min;
+			min_ramp -10 MW/min;
+			object recorder {
+				property actual;
+				interval -1;
+				file test_generator1_actual.csv;
+			};
+		};
+	};
+	object controlarea {
+		name area2;
+		schedule -500;
+		object recorder {
+			property supply,demand,schedule,actual,inertia,capacity,bias,ace;
+			interval -1;
+			file test_controlarea2_ace.csv;
+		};
+		object load {
+			inertia 1000;
+			capacity 1000;
+			noise "type:normal(0,10); refresh:60; min:-50; max:50";
+			actual this.noise*${NOISE} + 500;
+		};
+	};
+	object controlarea {
+		name area3;
+		schedule -100;
+		object recorder {
+			property supply,demand,schedule,actual,inertia,capacity,bias,ace;
+			interval -1;
+			file test_controlarea3_ace.csv;
+		};
+		object load {
+			inertia 1000;
+			capacity 1000;
+			noise "type:normal(0,2); refresh:60; min:-10; max:10";
+			actual this.noise*${NOISE} + 100;
+		};
+	};
+	object controlarea {
+		name area4;
+		schedule -50;
+		object recorder {
+			property supply,demand,schedule,actual,inertia,capacity,bias,ace;
+			interval -1;
+			file test_controlarea4_ace.csv;
+		};
+		object load {
+			inertia 500;
+			capacity 500;
+			noise "type:normal(0,1); refresh:60; min:-5; max:5";
+			actual this.noise*${NOISE} + 50;
+		};
+	};
+	object intertie {
+		from area1;
+		to area2;
+		loss ${LOSS};
+		object recorder {
+			property flow;
+			interval -1;
+			file test_intertie1_flow.csv;
+		};
+	};
+	object intertie {
+		from area2;
+		to area3;
+		loss ${LOSS};
+		capacity 10000;
+		object recorder {
+			property flow;
+			interval -1;
+			file test_intertie2_flow.csv;
+		};
+	};
+	object intertie {
+		from area1;
+		to area3;
+		loss ${LOSS};
+		capacity 10000;
+		object recorder {
+			property flow;
+			interval -1;
+			file test_intertie3_flow.csv;
+		};
+	};
+	object intertie {
+		from area2;
+		to area4;
+		loss ${LOSS};
+		capacity 10000;
+		object recorder {
+			property flow;
+			interval -1;
+			file test_intertie4_flow.csv;
+		};
+	};
+	object intertie {
+		from area3;
+		to area4;
+		loss ${LOSS};
+		capacity 10000;
+		object recorder {
+			property flow;
+			interval -1;
+			file test_intertie5_flow.csv;
+		};
+	};
+	object recorder {
+		property inertia,capacity,supply,demand,frequency;
+		interval -1;
+		file test_controlarea_interconnection.csv;
+	};
+}

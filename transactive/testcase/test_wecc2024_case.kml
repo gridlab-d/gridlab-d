@@ -1,0 +1,3074 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://earth.google.com/kml/2.2">
+  <Document>
+    <name>test_wecc2024_case.glm</name>
+    <description>GridLAB-D results for 2000-01-01 00:00:57 PST</description>
+    <Style id="interconnection_mark_OK">
+      <IconStyle>
+        <Icon>
+          <href>http://gridlabd.me.uvic.ca/kml/icons/transactive/interconnection_mark_OK.png</href>
+        </Icon>
+    </IconStyle>
+  </Style>
+    <Style id="interconnection_mark_OVERCAPACITY">
+      <IconStyle>
+        <Icon>
+          <href>http://gridlabd.me.uvic.ca/kml/icons/transactive/interconnection_mark_OVERCAPACITY.png</href>
+        </Icon>
+    </IconStyle>
+  </Style>
+    <Style id="interconnection_mark_OVERFREQUENCY">
+      <IconStyle>
+        <Icon>
+          <href>http://gridlabd.me.uvic.ca/kml/icons/transactive/interconnection_mark_OVERFREQUENCY.png</href>
+        </Icon>
+    </IconStyle>
+  </Style>
+    <Style id="interconnection_mark_UNDERFREQUENCY">
+      <IconStyle>
+        <Icon>
+          <href>http://gridlabd.me.uvic.ca/kml/icons/transactive/interconnection_mark_UNDERFREQUENCY.png</href>
+        </Icon>
+    </IconStyle>
+  </Style>
+    <Style id="interconnection_mark_BLACKOUT">
+      <IconStyle>
+        <Icon>
+          <href>http://gridlabd.me.uvic.ca/kml/icons/transactive/interconnection_mark_BLACKOUT.png</href>
+        </Icon>
+    </IconStyle>
+  </Style>
+    <Style id="controlarea_mark_OK">
+      <IconStyle>
+        <Icon>
+          <href>http://gridlabd.me.uvic.ca/kml/icons/transactive/controlarea_mark_OK.png</href>
+        </Icon>
+    </IconStyle>
+  </Style>
+    <Style id="controlarea_mark_OVERCAPACITY">
+      <IconStyle>
+        <Icon>
+          <href>http://gridlabd.me.uvic.ca/kml/icons/transactive/controlarea_mark_OVERCAPACITY.png</href>
+        </Icon>
+    </IconStyle>
+  </Style>
+    <Style id="controlarea_mark_CONSTRAINED">
+      <IconStyle>
+        <Icon>
+          <href>http://gridlabd.me.uvic.ca/kml/icons/transactive/controlarea_mark_CONSTRAINED.png</href>
+        </Icon>
+    </IconStyle>
+  </Style>
+    <Style id="controlarea_mark_ISLAND">
+      <IconStyle>
+        <Icon>
+          <href>http://gridlabd.me.uvic.ca/kml/icons/transactive/controlarea_mark_ISLAND.png</href>
+        </Icon>
+    </IconStyle>
+  </Style>
+    <Style id="controlarea_mark_UNSCHEDULED">
+      <IconStyle>
+        <Icon>
+          <href>http://gridlabd.me.uvic.ca/kml/icons/transactive/controlarea_mark_UNSCHEDULED.png</href>
+        </Icon>
+    </IconStyle>
+  </Style>
+    <Style id="controlarea_mark_BLACKOUT">
+      <IconStyle>
+        <Icon>
+          <href>http://gridlabd.me.uvic.ca/kml/icons/transactive/controlarea_mark_BLACKOUT.png</href>
+        </Icon>
+    </IconStyle>
+  </Style>
+    <Style id="intertie_mark_OFFLINE">
+      <IconStyle>
+        <Icon>
+          <href>http://gridlabd.me.uvic.ca/kml/icons/transactive/intertie_mark_OFFLINE.png</href>
+        </Icon>
+    </IconStyle>
+  </Style>
+    <Style id="intertie_mark_CONSTRAINED">
+      <IconStyle>
+        <Icon>
+          <href>http://gridlabd.me.uvic.ca/kml/icons/transactive/intertie_mark_CONSTRAINED.png</href>
+        </Icon>
+    </IconStyle>
+  </Style>
+    <Style id="intertie_mark_UNCONSTRAINED">
+      <IconStyle>
+        <Icon>
+          <href>http://gridlabd.me.uvic.ca/kml/icons/transactive/intertie_mark_UNCONSTRAINED.png</href>
+        </Icon>
+    </IconStyle>
+  </Style>
+    <Style id="intertie_mark_OVERLIMIT">
+      <IconStyle>
+        <Icon>
+          <href>http://gridlabd.me.uvic.ca/kml/icons/transactive/intertie_mark_OVERLIMIT.png</href>
+        </Icon>
+    </IconStyle>
+  </Style>
+    <Style id="intertie_mark_NOFLOW">
+      <IconStyle>
+        <Icon>
+          <href>http://gridlabd.me.uvic.ca/kml/icons/transactive/intertie_mark_NOFLOW.png</href>
+        </Icon>
+    </IconStyle>
+  </Style>
+    <Style id="intertie_path_OFFLINE">
+      <LineStyle>
+        <color>7d000000</color>
+        <width>10</width>
+      </LineStyle>
+    </Style>
+    <Style id="intertie_path_CONSTRAINED">
+      <LineStyle>
+        <color>7d00ffff</color>
+        <width>10</width>
+      </LineStyle>
+    </Style>
+    <Style id="intertie_path_UNCONSTRAINED">
+      <LineStyle>
+        <color>7d00ff00</color>
+        <width>10</width>
+      </LineStyle>
+    </Style>
+    <Style id="intertie_path_OVERLIMIT">
+      <LineStyle>
+        <color>7d0000ff</color>
+        <width>10</width>
+      </LineStyle>
+    </Style>
+    <Style id="intertie_path_NOFLOW">
+      <LineStyle>
+        <color>7dff0000</color>
+        <width>10</width>
+      </LineStyle>
+    </Style>
+<Folder><name>WECC2024</name>
+<Placemark>
+  <name>Interconnection</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+    <caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNDERFREQUENCY</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WECC2024_frequency.png"  ONCLICK="window.open('WECC2024_frequency.png');">Frequency</A></TH><TD ALIGN=RIGHT>+56.984 Hz</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WECC2024_capacity.png"  ONCLICK="window.open('WECC2024_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WECC2024_supply.png"  ONCLICK="window.open('WECC2024_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WECC2024_demand.png"  ONCLICK="window.open('WECC2024_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+85208.5 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WECC2024_losses.png"  ONCLICK="window.open('WECC2024_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+2667.77 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WECC2024_imbalance.png"  ONCLICK="window.open('WECC2024_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-87876.3 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WECC2024_inertia.png"  ONCLICK="window.open('WECC2024_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+852085 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WECC2024_damping.png"  ONCLICK="window.open('WECC2024_damping.png');">Damping</A></TH><TD ALIGN=RIGHT>+1 MW/Hz</TD></TR>
+    </TABLE>]]></description>
+  <styleUrl>#interconnection_mark_UNDERFREQUENCY</styleUrl>
+  <Point>
+    <coordinates>-111.902500,40.771400</coordinates>
+  </Point>
+</Placemark>
+  <Folder><name>Control areas</name>
+<Placemark>
+  <name>VEA</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>ISLAND</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="VEA_actual.png"  ONCLICK="window.open('VEA_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>-2.30825 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="VEA_schedule.png"  ONCLICK="window.open('VEA_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="VEA_capacity.png"  ONCLICK="window.open('VEA_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="VEA_supply.png"  ONCLICK="window.open('VEA_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="VEA_demand.png"  ONCLICK="window.open('VEA_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+63.668 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="VEA_losses.png"  ONCLICK="window.open('VEA_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+2.86767 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="VEA_imbalance.png"  ONCLICK="window.open('VEA_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-64.2274 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="VEA_inertia.png"  ONCLICK="window.open('VEA_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+636.68 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="VEA_bias.png"  ONCLICK="window.open('VEA_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+166.166 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_ISLAND</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-116.000556,36.205278,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>BPAT</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>ISLAND</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="BPAT_actual.png"  ONCLICK="window.open('BPAT_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>-0.759253 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="BPAT_schedule.png"  ONCLICK="window.open('BPAT_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="BPAT_capacity.png"  ONCLICK="window.open('BPAT_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="BPAT_supply.png"  ONCLICK="window.open('BPAT_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="BPAT_demand.png"  ONCLICK="window.open('BPAT_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+4207.96 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="BPAT_losses.png"  ONCLICK="window.open('BPAT_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+105.005 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="BPAT_imbalance.png"  ONCLICK="window.open('BPAT_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-4312.21 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="BPAT_inertia.png"  ONCLICK="window.open('BPAT_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+42079.6 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="BPAT_bias.png"  ONCLICK="window.open('BPAT_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+10918.2 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_ISLAND</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-121.928056,45.166389,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>WAUW</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>OK</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WAUW_actual.png"  ONCLICK="window.open('WAUW_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>+0.578885 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WAUW_schedule.png"  ONCLICK="window.open('WAUW_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WAUW_capacity.png"  ONCLICK="window.open('WAUW_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WAUW_supply.png"  ONCLICK="window.open('WAUW_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WAUW_demand.png"  ONCLICK="window.open('WAUW_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+53.0086 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WAUW_losses.png"  ONCLICK="window.open('WAUW_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+0.99513 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WAUW_imbalance.png"  ONCLICK="window.open('WAUW_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-54.5826 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WAUW_inertia.png"  ONCLICK="window.open('WAUW_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+530.086 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WAUW_bias.png"  ONCLICK="window.open('WAUW_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+137.291 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_OK</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-104.175556,48.731944,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>WACM</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>OK</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WACM_actual.png"  ONCLICK="window.open('WACM_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>+7.334 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WACM_schedule.png"  ONCLICK="window.open('WACM_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WACM_capacity.png"  ONCLICK="window.open('WACM_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WACM_supply.png"  ONCLICK="window.open('WACM_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WACM_demand.png"  ONCLICK="window.open('WACM_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+2045.77 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WACM_losses.png"  ONCLICK="window.open('WACM_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+46.7561 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WACM_imbalance.png"  ONCLICK="window.open('WACM_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-2099.86 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WACM_inertia.png"  ONCLICK="window.open('WACM_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+20457.7 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WACM_bias.png"  ONCLICK="window.open('WACM_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+5304.83 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_OK</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-105.137222,40.707222,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>WALC</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>OK</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WALC_actual.png"  ONCLICK="window.open('WALC_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>+972.997 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WALC_schedule.png"  ONCLICK="window.open('WALC_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WALC_capacity.png"  ONCLICK="window.open('WALC_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WALC_supply.png"  ONCLICK="window.open('WALC_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WALC_demand.png"  ONCLICK="window.open('WALC_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+772.156 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WALC_losses.png"  ONCLICK="window.open('WALC_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+27.3922 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WALC_imbalance.png"  ONCLICK="window.open('WALC_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-1772.55 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WALC_inertia.png"  ONCLICK="window.open('WALC_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+7721.56 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="WALC_bias.png"  ONCLICK="window.open('WALC_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+2009.64 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_OK</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-110.586667,36.034444,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>TPWR</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>ISLAND</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="TPWR_actual.png"  ONCLICK="window.open('TPWR_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>-0.253851 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="TPWR_schedule.png"  ONCLICK="window.open('TPWR_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="TPWR_capacity.png"  ONCLICK="window.open('TPWR_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="TPWR_supply.png"  ONCLICK="window.open('TPWR_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="TPWR_demand.png"  ONCLICK="window.open('TPWR_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+401.761 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="TPWR_losses.png"  ONCLICK="window.open('TPWR_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+10.1264 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="TPWR_imbalance.png"  ONCLICK="window.open('TPWR_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-411.634 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="TPWR_inertia.png"  ONCLICK="window.open('TPWR_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+4017.61 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="TPWR_bias.png"  ONCLICK="window.open('TPWR_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+1042.51 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_ISLAND</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-122.433333,47.137222,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>TIDC</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>ISLAND</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="TIDC_actual.png"  ONCLICK="window.open('TIDC_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>-11.0484 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="TIDC_schedule.png"  ONCLICK="window.open('TIDC_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="TIDC_capacity.png"  ONCLICK="window.open('TIDC_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="TIDC_supply.png"  ONCLICK="window.open('TIDC_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="TIDC_demand.png"  ONCLICK="window.open('TIDC_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+341.044 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="TIDC_losses.png"  ONCLICK="window.open('TIDC_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+14.6284 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="TIDC_imbalance.png"  ONCLICK="window.open('TIDC_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-344.624 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="TIDC_inertia.png"  ONCLICK="window.open('TIDC_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+3410.44 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="TIDC_bias.png"  ONCLICK="window.open('TIDC_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+889.529 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_ISLAND</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-121.868611,37.488611,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>TEPC</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>ISLAND</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="TEPC_actual.png"  ONCLICK="window.open('TEPC_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>-16.5069 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="TEPC_schedule.png"  ONCLICK="window.open('TEPC_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="TEPC_capacity.png"  ONCLICK="window.open('TEPC_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="TEPC_supply.png"  ONCLICK="window.open('TEPC_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="TEPC_demand.png"  ONCLICK="window.open('TEPC_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+1310.68 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="TEPC_losses.png"  ONCLICK="window.open('TEPC_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+41.7727 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="TEPC_imbalance.png"  ONCLICK="window.open('TEPC_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-1335.95 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="TEPC_inertia.png"  ONCLICK="window.open('TEPC_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+13106.8 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="TEPC_bias.png"  ONCLICK="window.open('TEPC_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+3407.65 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_ISLAND</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-111.969167,32.220833,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>SRP</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>ISLAND</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="SRP_actual.png"  ONCLICK="window.open('SRP_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>-136.093 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="SRP_schedule.png"  ONCLICK="window.open('SRP_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="SRP_capacity.png"  ONCLICK="window.open('SRP_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="SRP_supply.png"  ONCLICK="window.open('SRP_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="SRP_demand.png"  ONCLICK="window.open('SRP_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+4249.65 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="SRP_losses.png"  ONCLICK="window.open('SRP_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+181.401 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="SRP_imbalance.png"  ONCLICK="window.open('SRP_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-4294.96 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="SRP_inertia.png"  ONCLICK="window.open('SRP_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+42496.5 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="SRP_bias.png"  ONCLICK="window.open('SRP_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+11083.5 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_ISLAND</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-112.694722,33.422778,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>SPPC</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>ISLAND</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="SPPC_actual.png"  ONCLICK="window.open('SPPC_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>-2.32392 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="SPPC_schedule.png"  ONCLICK="window.open('SPPC_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="SPPC_capacity.png"  ONCLICK="window.open('SPPC_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="SPPC_supply.png"  ONCLICK="window.open('SPPC_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="SPPC_demand.png"  ONCLICK="window.open('SPPC_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+1109.07 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="SPPC_losses.png"  ONCLICK="window.open('SPPC_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+28.8569 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="SPPC_imbalance.png"  ONCLICK="window.open('SPPC_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-1135.6 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="SPPC_inertia.png"  ONCLICK="window.open('SPPC_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+11090.7 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="SPPC_bias.png"  ONCLICK="window.open('SPPC_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+2878.56 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_ISLAND</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-118.722778,41.979722,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>SCL</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>OK</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="SCL_actual.png"  ONCLICK="window.open('SCL_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>+1.42813 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="SCL_schedule.png"  ONCLICK="window.open('SCL_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="SCL_capacity.png"  ONCLICK="window.open('SCL_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="SCL_supply.png"  ONCLICK="window.open('SCL_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="SCL_demand.png"  ONCLICK="window.open('SCL_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+699.644 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="SCL_losses.png"  ONCLICK="window.open('SCL_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+16.5942 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="SCL_imbalance.png"  ONCLICK="window.open('SCL_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-717.666 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="SCL_inertia.png"  ONCLICK="window.open('SCL_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+6996.44 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="SCL_bias.png"  ONCLICK="window.open('SCL_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+1814.68 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_OK</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-122.341389,48.700278,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>PSEI</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>OK</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PSEI_actual.png"  ONCLICK="window.open('PSEI_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>+7.54078 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PSEI_schedule.png"  ONCLICK="window.open('PSEI_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PSEI_capacity.png"  ONCLICK="window.open('PSEI_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PSEI_supply.png"  ONCLICK="window.open('PSEI_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PSEI_demand.png"  ONCLICK="window.open('PSEI_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+1712.26 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PSEI_losses.png"  ONCLICK="window.open('PSEI_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+38.358 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PSEI_imbalance.png"  ONCLICK="window.open('PSEI_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-1758.16 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PSEI_inertia.png"  ONCLICK="window.open('PSEI_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+17122.6 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PSEI_bias.png"  ONCLICK="window.open('PSEI_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+4439.43 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_OK</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-121.693056,47.070278,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>PSCO</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>ISLAND</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PSCO_actual.png"  ONCLICK="window.open('PSCO_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>-19.9905 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PSCO_schedule.png"  ONCLICK="window.open('PSCO_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PSCO_capacity.png"  ONCLICK="window.open('PSCO_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PSCO_supply.png"  ONCLICK="window.open('PSCO_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PSCO_demand.png"  ONCLICK="window.open('PSCO_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+3769.12 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PSCO_losses.png"  ONCLICK="window.open('PSCO_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+104.808 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PSCO_imbalance.png"  ONCLICK="window.open('PSCO_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-3853.94 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PSCO_inertia.png"  ONCLICK="window.open('PSCO_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+37691.2 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PSCO_bias.png"  ONCLICK="window.open('PSCO_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+9787.75 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_ISLAND</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-105.003611,40.721389,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>PNM</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>ISLAND</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PNM_actual.png"  ONCLICK="window.open('PNM_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>-2.74414 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PNM_schedule.png"  ONCLICK="window.open('PNM_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PNM_capacity.png"  ONCLICK="window.open('PNM_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PNM_supply.png"  ONCLICK="window.open('PNM_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PNM_demand.png"  ONCLICK="window.open('PNM_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+1289.3 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PNM_losses.png"  ONCLICK="window.open('PNM_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+33.5734 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PNM_imbalance.png"  ONCLICK="window.open('PNM_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-1320.13 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PNM_inertia.png"  ONCLICK="window.open('PNM_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+12893 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PNM_bias.png"  ONCLICK="window.open('PNM_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+3346.37 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_ISLAND</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-107.632778,35.121111,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>PGE</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>ISLAND</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PGE_actual.png"  ONCLICK="window.open('PGE_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>-22.4007 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PGE_schedule.png"  ONCLICK="window.open('PGE_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PGE_capacity.png"  ONCLICK="window.open('PGE_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PGE_supply.png"  ONCLICK="window.open('PGE_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PGE_demand.png"  ONCLICK="window.open('PGE_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+2018.9 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PGE_losses.png"  ONCLICK="window.open('PGE_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+62.6505 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PGE_imbalance.png"  ONCLICK="window.open('PGE_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-2059.15 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PGE_inertia.png"  ONCLICK="window.open('PGE_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+20189 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PGE_bias.png"  ONCLICK="window.open('PGE_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+5247.65 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_ISLAND</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-120.915833,46.826111,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>PAWY</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>OK</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PAWY_actual.png"  ONCLICK="window.open('PAWY_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>+10.9498 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PAWY_schedule.png"  ONCLICK="window.open('PAWY_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PAWY_capacity.png"  ONCLICK="window.open('PAWY_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PAWY_supply.png"  ONCLICK="window.open('PAWY_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PAWY_demand.png"  ONCLICK="window.open('PAWY_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+511.743 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PAWY_losses.png"  ONCLICK="window.open('PAWY_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+6.62144 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PAWY_imbalance.png"  ONCLICK="window.open('PAWY_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-529.314 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PAWY_inertia.png"  ONCLICK="window.open('PAWY_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+5117.43 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PAWY_bias.png"  ONCLICK="window.open('PAWY_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+1323.14 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_OK</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-111.537778,42.809167,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>PAUT</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>ISLAND</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PAUT_actual.png"  ONCLICK="window.open('PAUT_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>-27.2044 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PAUT_schedule.png"  ONCLICK="window.open('PAUT_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PAUT_capacity.png"  ONCLICK="window.open('PAUT_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PAUT_supply.png"  ONCLICK="window.open('PAUT_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PAUT_demand.png"  ONCLICK="window.open('PAUT_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+3210.94 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PAUT_losses.png"  ONCLICK="window.open('PAUT_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+94.9571 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PAUT_imbalance.png"  ONCLICK="window.open('PAUT_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-3278.69 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PAUT_inertia.png"  ONCLICK="window.open('PAUT_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+32109.4 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PAUT_bias.png"  ONCLICK="window.open('PAUT_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+8342.53 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_ISLAND</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-112.886667,41.575000,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>PAID</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>ISLAND</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PAID_actual.png"  ONCLICK="window.open('PAID_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>-1.84542 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PAID_schedule.png"  ONCLICK="window.open('PAID_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PAID_capacity.png"  ONCLICK="window.open('PAID_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PAID_supply.png"  ONCLICK="window.open('PAID_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PAID_demand.png"  ONCLICK="window.open('PAID_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+360.593 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PAID_losses.png"  ONCLICK="window.open('PAID_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+9.98951 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PAID_imbalance.png"  ONCLICK="window.open('PAID_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-368.737 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PAID_inertia.png"  ONCLICK="window.open('PAID_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+3605.93 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PAID_bias.png"  ONCLICK="window.open('PAID_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+936.367 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_ISLAND</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-112.131111,43.412500,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>PACW</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>ISLAND</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PACW_actual.png"  ONCLICK="window.open('PACW_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>-18.8567 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PACW_schedule.png"  ONCLICK="window.open('PACW_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PACW_capacity.png"  ONCLICK="window.open('PACW_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PACW_supply.png"  ONCLICK="window.open('PACW_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PACW_demand.png"  ONCLICK="window.open('PACW_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+1978.36 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PACW_losses.png"  ONCLICK="window.open('PACW_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+59.6673 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PACW_imbalance.png"  ONCLICK="window.open('PACW_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-2019.17 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PACW_inertia.png"  ONCLICK="window.open('PACW_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+19783.6 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="PACW_bias.png"  ONCLICK="window.open('PACW_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+5140.97 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_ISLAND</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-123.577778,46.522222,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>NWMT</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>OK</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="NWMT_actual.png"  ONCLICK="window.open('NWMT_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>+2.59243 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="NWMT_schedule.png"  ONCLICK="window.open('NWMT_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="NWMT_capacity.png"  ONCLICK="window.open('NWMT_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="NWMT_supply.png"  ONCLICK="window.open('NWMT_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="NWMT_demand.png"  ONCLICK="window.open('NWMT_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+818.895 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="NWMT_losses.png"  ONCLICK="window.open('NWMT_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+18.9058 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="NWMT_imbalance.png"  ONCLICK="window.open('NWMT_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-840.393 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="NWMT_inertia.png"  ONCLICK="window.open('NWMT_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+8188.95 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="NWMT_bias.png"  ONCLICK="window.open('NWMT_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+2123.6 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_OK</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-109.581944,46.778333,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>NEVP</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>ISLAND</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="NEVP_actual.png"  ONCLICK="window.open('NEVP_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>-113.098 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="NEVP_schedule.png"  ONCLICK="window.open('NEVP_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="NEVP_capacity.png"  ONCLICK="window.open('NEVP_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="NEVP_supply.png"  ONCLICK="window.open('NEVP_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="NEVP_demand.png"  ONCLICK="window.open('NEVP_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+3119.73 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="NEVP_losses.png"  ONCLICK="window.open('NEVP_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+140.516 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="NEVP_imbalance.png"  ONCLICK="window.open('NEVP_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-3147.15 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="NEVP_inertia.png"  ONCLICK="window.open('NEVP_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+31197.3 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="NEVP_bias.png"  ONCLICK="window.open('NEVP_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+8142.12 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_ISLAND</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-115.122500,36.213889,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>LDWP</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>ISLAND</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="LDWP_actual.png"  ONCLICK="window.open('LDWP_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>-14.307 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="LDWP_schedule.png"  ONCLICK="window.open('LDWP_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="LDWP_capacity.png"  ONCLICK="window.open('LDWP_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="LDWP_supply.png"  ONCLICK="window.open('LDWP_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="LDWP_demand.png"  ONCLICK="window.open('LDWP_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+3147.38 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="LDWP_losses.png"  ONCLICK="window.open('LDWP_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+86.1941 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="LDWP_imbalance.png"  ONCLICK="window.open('LDWP_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-3219.27 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="LDWP_inertia.png"  ONCLICK="window.open('LDWP_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+31473.8 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="LDWP_bias.png"  ONCLICK="window.open('LDWP_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+8172.17 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_ISLAND</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-118.426944,34.244722,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>IPTV</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>ISLAND</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IPTV_actual.png"  ONCLICK="window.open('IPTV_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>-21.6293 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IPTV_schedule.png"  ONCLICK="window.open('IPTV_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IPTV_capacity.png"  ONCLICK="window.open('IPTV_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IPTV_supply.png"  ONCLICK="window.open('IPTV_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IPTV_demand.png"  ONCLICK="window.open('IPTV_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+1105.41 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IPTV_losses.png"  ONCLICK="window.open('IPTV_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+39.5162 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IPTV_imbalance.png"  ONCLICK="window.open('IPTV_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-1123.3 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IPTV_inertia.png"  ONCLICK="window.open('IPTV_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+11054.1 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IPTV_bias.png"  ONCLICK="window.open('IPTV_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+2877.21 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_ISLAND</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-116.208333,44.618889,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>IPMV</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>ISLAND</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IPMV_actual.png"  ONCLICK="window.open('IPMV_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>-11.3469 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IPMV_schedule.png"  ONCLICK="window.open('IPMV_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IPMV_capacity.png"  ONCLICK="window.open('IPMV_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IPMV_supply.png"  ONCLICK="window.open('IPMV_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IPMV_demand.png"  ONCLICK="window.open('IPMV_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+533.588 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IPMV_losses.png"  ONCLICK="window.open('IPMV_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+19.5784 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IPMV_imbalance.png"  ONCLICK="window.open('IPMV_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-541.819 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IPMV_inertia.png"  ONCLICK="window.open('IPMV_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+5335.88 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IPMV_bias.png"  ONCLICK="window.open('IPMV_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+1389.23 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_ISLAND</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-115.518611,43.724167,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>IPFE</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>ISLAND</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IPFE_actual.png"  ONCLICK="window.open('IPFE_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>-0.327763 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IPFE_schedule.png"  ONCLICK="window.open('IPFE_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IPFE_capacity.png"  ONCLICK="window.open('IPFE_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IPFE_supply.png"  ONCLICK="window.open('IPFE_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IPFE_demand.png"  ONCLICK="window.open('IPFE_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+217.404 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IPFE_losses.png"  ONCLICK="window.open('IPFE_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+5.58598 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IPFE_imbalance.png"  ONCLICK="window.open('IPFE_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-222.662 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IPFE_inertia.png"  ONCLICK="window.open('IPFE_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+2174.04 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IPFE_bias.png"  ONCLICK="window.open('IPFE_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+564.212 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_ISLAND</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-117.630278,44.621111,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>IID</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>ISLAND</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IID_actual.png"  ONCLICK="window.open('IID_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>-15.7475 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IID_schedule.png"  ONCLICK="window.open('IID_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IID_capacity.png"  ONCLICK="window.open('IID_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IID_supply.png"  ONCLICK="window.open('IID_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IID_demand.png"  ONCLICK="window.open('IID_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+493.24 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IID_losses.png"  ONCLICK="window.open('IID_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+21.0278 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IID_imbalance.png"  ONCLICK="window.open('IID_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-498.52 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IID_inertia.png"  ONCLICK="window.open('IID_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+4932.4 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="IID_bias.png"  ONCLICK="window.open('IID_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+1286.4 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_ISLAND</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-116.566944,33.864722,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>GCPD</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>ISLAND</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="GCPD_actual.png"  ONCLICK="window.open('GCPD_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>-1.2686 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="GCPD_schedule.png"  ONCLICK="window.open('GCPD_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="GCPD_capacity.png"  ONCLICK="window.open('GCPD_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="GCPD_supply.png"  ONCLICK="window.open('GCPD_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="GCPD_demand.png"  ONCLICK="window.open('GCPD_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+388.631 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="GCPD_losses.png"  ONCLICK="window.open('GCPD_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+10.3652 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="GCPD_imbalance.png"  ONCLICK="window.open('GCPD_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-397.728 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="GCPD_inertia.png"  ONCLICK="window.open('GCPD_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+3886.31 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="GCPD_bias.png"  ONCLICK="window.open('GCPD_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+1008.87 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_ISLAND</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-120.553056,47.320556,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>EPE</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>ISLAND</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="EPE_actual.png"  ONCLICK="window.open('EPE_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>-12.1583 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="EPE_schedule.png"  ONCLICK="window.open('EPE_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="EPE_capacity.png"  ONCLICK="window.open('EPE_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="EPE_supply.png"  ONCLICK="window.open('EPE_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="EPE_demand.png"  ONCLICK="window.open('EPE_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+975.04 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="EPE_losses.png"  ONCLICK="window.open('EPE_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+31.0014 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="EPE_imbalance.png"  ONCLICK="window.open('EPE_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-993.883 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="EPE_inertia.png"  ONCLICK="window.open('EPE_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+9750.4 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="EPE_bias.png"  ONCLICK="window.open('EPE_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+2534.95 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_ISLAND</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-106.485556,32.775833,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>DOPD</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>ISLAND</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="DOPD_actual.png"  ONCLICK="window.open('DOPD_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>-0.39877 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="DOPD_schedule.png"  ONCLICK="window.open('DOPD_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="DOPD_capacity.png"  ONCLICK="window.open('DOPD_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="DOPD_supply.png"  ONCLICK="window.open('DOPD_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="DOPD_demand.png"  ONCLICK="window.open('DOPD_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+168.124 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="DOPD_losses.png"  ONCLICK="window.open('DOPD_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+4.40031 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="DOPD_imbalance.png"  ONCLICK="window.open('DOPD_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-172.126 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="DOPD_inertia.png"  ONCLICK="window.open('DOPD_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+1681.24 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="DOPD_bias.png"  ONCLICK="window.open('DOPD_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+436.38 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_ISLAND</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-120.312500,47.421944,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>CISD</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>ISLAND</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CISD_actual.png"  ONCLICK="window.open('CISD_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>-52.0634 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CISD_schedule.png"  ONCLICK="window.open('CISD_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CISD_capacity.png"  ONCLICK="window.open('CISD_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CISD_supply.png"  ONCLICK="window.open('CISD_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CISD_demand.png"  ONCLICK="window.open('CISD_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+2444.64 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CISD_losses.png"  ONCLICK="window.open('CISD_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+89.7476 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CISD_imbalance.png"  ONCLICK="window.open('CISD_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-2482.32 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CISD_inertia.png"  ONCLICK="window.open('CISD_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+24446.4 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CISD_bias.png"  ONCLICK="window.open('CISD_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+6364.79 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_ISLAND</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-117.160000,33.824167,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>CISC</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>ISLAND</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CISC_actual.png"  ONCLICK="window.open('CISC_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>-332.435 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CISC_schedule.png"  ONCLICK="window.open('CISC_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CISC_capacity.png"  ONCLICK="window.open('CISC_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CISC_supply.png"  ONCLICK="window.open('CISC_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CISC_demand.png"  ONCLICK="window.open('CISC_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+12194.1 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CISC_losses.png"  ONCLICK="window.open('CISC_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+488.191 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CISC_imbalance.png"  ONCLICK="window.open('CISC_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-12349.9 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CISC_inertia.png"  ONCLICK="window.open('CISC_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+121941 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CISC_bias.png"  ONCLICK="window.open('CISC_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+31778.9 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_ISLAND</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-118.704444,34.654444,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>CIPV</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>ISLAND</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CIPV_actual.png"  ONCLICK="window.open('CIPV_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>-116.072 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CIPV_schedule.png"  ONCLICK="window.open('CIPV_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CIPV_capacity.png"  ONCLICK="window.open('CIPV_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CIPV_supply.png"  ONCLICK="window.open('CIPV_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CIPV_demand.png"  ONCLICK="window.open('CIPV_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+6481.42 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CIPV_losses.png"  ONCLICK="window.open('CIPV_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+225.728 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CIPV_imbalance.png"  ONCLICK="window.open('CIPV_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-6591.08 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CIPV_inertia.png"  ONCLICK="window.open('CIPV_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+64814.2 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CIPV_bias.png"  ONCLICK="window.open('CIPV_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+16865.6 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_ISLAND</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-121.298056,38.023611,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>CIPB</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>ISLAND</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CIPB_actual.png"  ONCLICK="window.open('CIPB_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>-45.3165 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CIPB_schedule.png"  ONCLICK="window.open('CIPB_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CIPB_capacity.png"  ONCLICK="window.open('CIPB_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CIPB_supply.png"  ONCLICK="window.open('CIPB_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CIPB_demand.png"  ONCLICK="window.open('CIPB_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+4345.36 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CIPB_losses.png"  ONCLICK="window.open('CIPB_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+133.229 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CIPB_imbalance.png"  ONCLICK="window.open('CIPB_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-4433.27 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CIPB_inertia.png"  ONCLICK="window.open('CIPB_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+43453.6 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CIPB_bias.png"  ONCLICK="window.open('CIPB_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+11293.5 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_ISLAND</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-121.298056,38.023611,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>CHPD</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>OK</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CHPD_actual.png"  ONCLICK="window.open('CHPD_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>+3.09054 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CHPD_schedule.png"  ONCLICK="window.open('CHPD_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CHPD_capacity.png"  ONCLICK="window.open('CHPD_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CHPD_supply.png"  ONCLICK="window.open('CHPD_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CHPD_demand.png"  ONCLICK="window.open('CHPD_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+184.404 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CHPD_losses.png"  ONCLICK="window.open('CHPD_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+2.86195 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CHPD_imbalance.png"  ONCLICK="window.open('CHPD_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-190.356 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CHPD_inertia.png"  ONCLICK="window.open('CHPD_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+1844.04 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CHPD_bias.png"  ONCLICK="window.open('CHPD_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+477.148 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_OK</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-120.000833,48.839167,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>CFE</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>ISLAND</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CFE_actual.png"  ONCLICK="window.open('CFE_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>-28.2794 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CFE_schedule.png"  ONCLICK="window.open('CFE_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CFE_capacity.png"  ONCLICK="window.open('CFE_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CFE_supply.png"  ONCLICK="window.open('CFE_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CFE_demand.png"  ONCLICK="window.open('CFE_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+1821.68 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CFE_losses.png"  ONCLICK="window.open('CFE_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+61.0245 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CFE_imbalance.png"  ONCLICK="window.open('CFE_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-1854.43 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CFE_inertia.png"  ONCLICK="window.open('CFE_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+18216.8 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="CFE_bias.png"  ONCLICK="window.open('CFE_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+4738.44 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_ISLAND</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-117.077778,32.380556,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>BCHA</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>OK</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="BCHA_actual.png"  ONCLICK="window.open('BCHA_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>+35.2763 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="BCHA_schedule.png"  ONCLICK="window.open('BCHA_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="BCHA_capacity.png"  ONCLICK="window.open('BCHA_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="BCHA_supply.png"  ONCLICK="window.open('BCHA_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="BCHA_demand.png"  ONCLICK="window.open('BCHA_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+3786.46 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="BCHA_losses.png"  ONCLICK="window.open('BCHA_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+74.4645 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="BCHA_imbalance.png"  ONCLICK="window.open('BCHA_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-3896.2 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="BCHA_inertia.png"  ONCLICK="window.open('BCHA_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+37864.6 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="BCHA_bias.png"  ONCLICK="window.open('BCHA_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+9809.43 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_OK</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-123.956944,49.228056,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>BANC</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>ISLAND</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="BANC_actual.png"  ONCLICK="window.open('BANC_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>-68.8378 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="BANC_schedule.png"  ONCLICK="window.open('BANC_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="BANC_capacity.png"  ONCLICK="window.open('BANC_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="BANC_supply.png"  ONCLICK="window.open('BANC_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="BANC_demand.png"  ONCLICK="window.open('BANC_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+2117.28 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="BANC_losses.png"  ONCLICK="window.open('BANC_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+90.9541 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="BANC_imbalance.png"  ONCLICK="window.open('BANC_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-2139.4 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="BANC_inertia.png"  ONCLICK="window.open('BANC_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+21172.8 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="BANC_bias.png"  ONCLICK="window.open('BANC_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+5522.5 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_ISLAND</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-121.476667,39.550000,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>AZPS</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>ISLAND</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="AZPS_actual.png"  ONCLICK="window.open('AZPS_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>-5.42398 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="AZPS_schedule.png"  ONCLICK="window.open('AZPS_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="AZPS_capacity.png"  ONCLICK="window.open('AZPS_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="AZPS_supply.png"  ONCLICK="window.open('AZPS_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="AZPS_demand.png"  ONCLICK="window.open('AZPS_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+3589.38 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="AZPS_losses.png"  ONCLICK="window.open('AZPS_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+92.2255 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="AZPS_imbalance.png"  ONCLICK="window.open('AZPS_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-3676.18 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="AZPS_inertia.png"  ONCLICK="window.open('AZPS_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+35893.8 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="AZPS_bias.png"  ONCLICK="window.open('AZPS_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+9315.23 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_ISLAND</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-112.021667,33.455000,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>AVA</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>ISLAND</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="AVA_actual.png"  ONCLICK="window.open('AVA_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>-6.90792 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="AVA_schedule.png"  ONCLICK="window.open('AVA_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="AVA_capacity.png"  ONCLICK="window.open('AVA_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="AVA_supply.png"  ONCLICK="window.open('AVA_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="AVA_demand.png"  ONCLICK="window.open('AVA_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+1255.55 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="AVA_losses.png"  ONCLICK="window.open('AVA_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+35.0512 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="AVA_imbalance.png"  ONCLICK="window.open('AVA_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-1283.69 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="AVA_inertia.png"  ONCLICK="window.open('AVA_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+12555.5 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="AVA_bias.png"  ONCLICK="window.open('AVA_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+3260.53 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_ISLAND</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-117.388611,48.673333,100</coordinates>
+  </Point>
+</Placemark>
+<Placemark>
+  <name>AESO</name>
+  <description>
+<![CDATA[<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>2000-01-01 00:00:57 PST</caption>    <TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>OK</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="AESO_actual.png"  ONCLICK="window.open('AESO_actual.png');">Actual</A></TH><TD ALIGN=RIGHT>+66.1665 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="AESO_schedule.png"  ONCLICK="window.open('AESO_schedule.png');">Schedule</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="AESO_capacity.png"  ONCLICK="window.open('AESO_capacity.png');">Capacity</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="AESO_supply.png"  ONCLICK="window.open('AESO_supply.png');">Supply</A></TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="AESO_demand.png"  ONCLICK="window.open('AESO_demand.png');">Demand</A></TH><TD ALIGN=RIGHT>+5915.2 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="AESO_losses.png"  ONCLICK="window.open('AESO_losses.png');">Losses</A></TH><TD ALIGN=RIGHT>+110.177 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="AESO_imbalance.png"  ONCLICK="window.open('AESO_imbalance.png');">Imbalance</A></TH><TD ALIGN=RIGHT>-6091.54 MW</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="AESO_inertia.png"  ONCLICK="window.open('AESO_inertia.png');">Inertia</A></TH><TD ALIGN=RIGHT>+59152 MJ</TD></TR>
+    <TR><TH ALIGN=LEFT><A HREF="AESO_bias.png"  ONCLICK="window.open('AESO_bias.png');">Bias</A></TH><TD ALIGN=RIGHT>+15319.6 MW/Hz</TD></TR>
+  </TABLE>]]></description>
+  <styleUrl>#controlarea_mark_OK</styleUrl>
+  <Point>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-114.069167,51.065556,100</coordinates>
+  </Point>
+</Placemark>
+  </Folder>
+  <Folder><name>Interties</name>
+<Placemark>
+  <name>WAUW --&gt;- WACM</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>WAUW-WACM 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+390.4 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+14.9117 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-104.175556,48.731944,100 -105.137222,40.707222,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>VEA --&gt;- WALC</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>VEA-WALC 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+120 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+57.8494 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-116.000556,36.205278,100 -110.586667,36.034444,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>WACM --&gt;- WALC</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>WACM-WALC 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+1012 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+64.3408 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-105.137222,40.707222,100 -110.586667,36.034444,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>BPAT -&lt;-- TPWR</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>BPAT-TPWR 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+81572.7 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-6.85451 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-121.928056,45.166389,100 -122.433333,47.137222,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>WALC -&lt;-- TEPC</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>WALC-TEPC 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+2943 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-63.0687 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-110.586667,36.034444,100 -111.969167,32.220833,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>WALC -&lt;-- SRP</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>WALC-SRP 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+6701.8 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-92.581 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-110.586667,36.034444,100 -112.694722,33.422778,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>TEPC -&lt;-- SRP</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>TEPC-SRP 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+8365 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-29.5123 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-111.969167,32.220833,100 -112.694722,33.422778,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>BPAT --&gt;- SPPC</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>BPAT-SPPC 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+367.7 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+0.868815 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-121.928056,45.166389,100 -118.722778,41.979722,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>BPAT -&lt;-- SCL</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>BPAT-SCL 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+9025.3 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-3.04616 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-121.928056,45.166389,100 -122.341389,48.700278,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>TPWR --&gt;- SCL</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>TPWR-SCL 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+158 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+3.80836 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-122.433333,47.137222,100 -122.341389,48.700278,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>BPAT -&lt;-- PSEI</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>BPAT-PSEI 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+30148.2 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-2.02666 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-121.928056,45.166389,100 -121.693056,47.070278,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>TPWR --&gt;- PSEI</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>TPWR-PSEI 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+699 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+4.82785 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-122.433333,47.137222,100 -121.693056,47.070278,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>SCL --&gt;- PSEI</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>SCL-PSEI 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+2112 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+1.01949 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-122.341389,48.700278,100 -121.693056,47.070278,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>WACM -&lt;-- PSCO</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>WACM-PSCO 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+29078.6 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-6.94602 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-105.137222,40.707222,100 -105.003611,40.721389,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>WACM --&gt;- PNM</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>WACM-PNM 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+600 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+6.09849 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-105.137222,40.707222,100 -107.632778,35.121111,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>WALC -&lt;-- PNM</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>WALC-PNM 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+1275 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-58.2423 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-110.586667,36.034444,100 -107.632778,35.121111,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>TEPC --&gt;- PNM</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>TEPC-PNM 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+2002 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+4.82642 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-111.969167,32.220833,100 -107.632778,35.121111,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>PSCO --&gt;- PNM</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>PSCO-PNM 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+359 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+13.0445 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-105.003611,40.721389,100 -107.632778,35.121111,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>BPAT -&lt;-- PGE</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>BPAT-PGE 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+35357.6 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-12.1417 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-121.928056,45.166389,100 -120.915833,46.826111,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>TPWR -&lt;-- PGE</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>TPWR-PGE 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+3159 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-5.2872 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-122.433333,47.137222,100 -120.915833,46.826111,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>WACM -&lt;-- PAWY</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>WACM-PAWY 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+8516.8 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-21.744 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-105.137222,40.707222,100 -111.537778,42.809167,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>WACM -&lt;-- PAUT</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>WACM-PAUT 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+2660 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-17.2336 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-105.137222,40.707222,100 -112.886667,41.575000,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>WALC -&lt;-- PAUT</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>WALC-PAUT 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+386.8 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-81.5744 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-110.586667,36.034444,100 -112.886667,41.575000,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>SPPC --&gt;- PAUT</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>SPPC-PAUT 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+717 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+33.1612 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-118.722778,41.979722,100 -112.886667,41.575000,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>PAWY --&gt;- PAUT</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>PAWY-PAUT 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+4754 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+4.51044 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-111.537778,42.809167,100 -112.886667,41.575000,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>PAWY -&lt;-- PAID</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>PAWY-PAID 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+5975 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-10.1456 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-111.537778,42.809167,100 -112.131111,43.412500,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>PAUT -&lt;-- PAID</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>PAUT-PAID 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+11208.1 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-14.6561 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-112.886667,41.575000,100 -112.131111,43.412500,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>BPAT -&lt;-- PACW</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>BPAT-PACW 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+24443.2 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-19.4475 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-121.928056,45.166389,100 -123.577778,46.522222,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>TPWR -&lt;-- PACW</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>TPWR-PACW 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+3078.9 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-12.593 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-122.433333,47.137222,100 -123.577778,46.522222,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>PGE -&lt;-- PACW</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>PGE-PACW 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+4568.6 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-7.30577 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-120.915833,46.826111,100 -123.577778,46.522222,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>BPAT --&gt;- NWMT</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>BPAT-NWMT 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+11740.3 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+20.8613 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-121.928056,45.166389,100 -109.581944,46.778333,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>WAUW -&lt;-- NWMT</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>WAUW-NWMT 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+1847.4 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-15.4906 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-104.175556,48.731944,100 -109.581944,46.778333,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>TPWR --&gt;- NWMT</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>TPWR-NWMT 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+391.7 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+27.7158 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-122.433333,47.137222,100 -109.581944,46.778333,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>PAWY -&lt;-- NWMT</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>PAWY-NWMT 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+629 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-8.65828 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-111.537778,42.809167,100 -109.581944,46.778333,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>PAID --&gt;- NWMT</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>PAID-NWMT 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+579 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+1.48733 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-112.131111,43.412500,100 -109.581944,46.778333,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>VEA -&lt;-- NEVP</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>VEA-NEVP 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+1167.6 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-36.5177 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-116.000556,36.205278,100 -115.122500,36.213889,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>WALC -&lt;-- NEVP</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>WALC-NEVP 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+1112.1 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-94.3671 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-110.586667,36.034444,100 -115.122500,36.213889,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>SPPC --&gt;- NEVP</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>SPPC-NEVP 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+2873 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+20.3685 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-118.722778,41.979722,100 -115.122500,36.213889,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>PAUT -&lt;-- NEVP</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>PAUT-NEVP 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+330 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-12.7927 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-112.886667,41.575000,100 -115.122500,36.213889,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>BPAT --&gt;- LDWP</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>BPAT-LDWP 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+3100 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+27.2512 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-121.928056,45.166389,100 -118.426944,34.244722,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>WALC -&lt;-- LDWP</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>WALC-LDWP 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+435 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-88.3532 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-110.586667,36.034444,100 -118.426944,34.244722,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>SPPC --&gt;- LDWP</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>SPPC-LDWP 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+402 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+26.3824 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-118.722778,41.979722,100 -118.426944,34.244722,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>PAUT -&lt;-- LDWP</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>PAUT-LDWP 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+1200 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-6.77885 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-112.886667,41.575000,100 -118.426944,34.244722,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>NEVP --&gt;- LDWP</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>NEVP-LDWP 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+3962.6 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+6.01388 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-115.122500,36.213889,100 -118.426944,34.244722,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>BPAT -&lt;-- IPTV</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>BPAT-IPTV 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+623.8 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-7.27429 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-121.928056,45.166389,100 -116.208333,44.618889,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>PGE --&gt;- IPTV</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>PGE-IPTV 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+2686 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+4.86743 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-120.915833,46.826111,100 -116.208333,44.618889,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>PACW --&gt;- IPTV</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>PACW-IPTV 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+3595.7 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+12.1732 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-123.577778,46.522222,100 -116.208333,44.618889,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>SPPC --&gt;- IPMV</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>SPPC-IPMV 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+3948.6 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+2.31637 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-118.722778,41.979722,100 -115.518611,43.724167,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>PAID -&lt;-- IPMV</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>PAID-IPMV 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+2598 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-16.1888 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-112.131111,43.412500,100 -115.518611,43.724167,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>IPTV --&gt;- IPMV</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>IPTV-IPMV 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+9633.2 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+10.4595 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-116.208333,44.618889,100 -115.518611,43.724167,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>PAWY -&lt;-- IPFE</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>PAWY-IPFE 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+1406 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-18.4004 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-111.537778,42.809167,100 -117.630278,44.621111,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>PAID -&lt;-- IPFE</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>PAID-IPFE 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+11536.4 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-8.2548 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-112.131111,43.412500,100 -117.630278,44.621111,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>IPTV --&gt;- IPFE</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>IPTV-IPFE 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+1645.7 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+18.3935 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-116.208333,44.618889,100 -117.630278,44.621111,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>IPMV --&gt;- IPFE</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>IPMV-IPFE 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+6410.4 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+7.93399 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-115.518611,43.724167,100 -117.630278,44.621111,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>WALC -&lt;-- IID</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>WALC-IID 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+330 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-86.3832 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-110.586667,36.034444,100 -116.566944,33.864722,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>BPAT -&lt;-- GCPD</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>BPAT-GCPD 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+7467.3 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-6.17548 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-121.928056,45.166389,100 -120.553056,47.320556,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>TPWR --&gt;- GCPD</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>TPWR-GCPD 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+673.6 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+0.67903 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-122.433333,47.137222,100 -120.553056,47.320556,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>PSEI -&lt;-- GCPD</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>PSEI-GCPD 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+1082 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-4.14882 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-121.693056,47.070278,100 -120.553056,47.320556,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>PACW --&gt;- GCPD</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>PACW-GCPD 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+609 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+13.272 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-123.577778,46.522222,100 -120.553056,47.320556,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>TEPC -&lt;-- EPE</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>TEPC-EPE 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+1856.1 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-3.66594 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-111.969167,32.220833,100 -106.485556,32.775833,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>PNM -&lt;-- EPE</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>PNM-EPE 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+4353.5 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-8.49236 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-107.632778,35.121111,100 -106.485556,32.775833,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>BPAT -&lt;-- DOPD</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>BPAT-DOPD 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+4413.2 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-2.72406 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-121.928056,45.166389,100 -120.312500,47.421944,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>GCPD --&gt;- DOPD</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>GCPD-DOPD 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+348.4 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+3.45142 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-120.553056,47.320556,100 -120.312500,47.421944,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>IID -&lt;-- CISD</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>IID-CISD 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+702 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-34.0374 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-116.566944,33.864722,100 -117.160000,33.824167,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>WALC -&lt;-- CISC</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>WALC-CISC 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+664 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-128.086 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-110.586667,36.034444,100 -118.704444,34.654444,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>SPPC -&lt;-- CISC</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>SPPC-CISC 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+65.8 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-13.3503 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-118.722778,41.979722,100 -118.704444,34.654444,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>NEVP -&lt;-- CISC</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>NEVP-CISC 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+15708.6 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-33.7188 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-115.122500,36.213889,100 -118.704444,34.654444,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>LDWP -&lt;-- CISC</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>LDWP-CISC 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+10030 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-39.7327 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-118.426944,34.244722,100 -118.704444,34.654444,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>IID -&lt;-- CISC</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>IID-CISC 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+1176.8 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-41.7027 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-116.566944,33.864722,100 -118.704444,34.654444,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>CISD -&lt;-- CISC</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>CISD-CISC 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+4104 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-7.66538 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-117.160000,33.824167,100 -118.704444,34.654444,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>TIDC --&gt;- CIPV</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>TIDC-CIPV 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+2031.5 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+14.3791 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-121.868611,37.488611,100 -121.298056,38.023611,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>SPPC -&lt;-- CIPV</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>SPPC-CIPV 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+408 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-65.6854 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-118.722778,41.979722,100 -121.298056,38.023611,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>PACW -&lt;-- CIPV</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>PACW-CIPV 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+125 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-45.3691 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-123.577778,46.522222,100 -121.298056,38.023611,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>CISC -&lt;-- CIPV</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>CISC-CIPV 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+7622.8 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-52.3351 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-118.704444,34.654444,100 -121.298056,38.023611,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>CIPV -&lt;-- CIPB</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>CIPV-CIPB 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+20056.3 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-45.3165 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-121.298056,38.023611,100 -121.298056,38.023611,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>BPAT -&lt;-- CHPD</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>BPAT-CHPD 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+3218.8 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-1.59794 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-121.928056,45.166389,100 -120.000833,48.839167,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>PSEI --&gt;- CHPD</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>PSEI-CHPD 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+652.4 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+0.428721 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-121.693056,47.070278,100 -120.000833,48.839167,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>DOPD --&gt;- CHPD</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>DOPD-CHPD 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+1043.6 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+1.12612 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-120.312500,47.421944,100 -120.000833,48.839167,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>CISD -&lt;-- CFE</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>CISD-CFE 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+1797 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-28.2794 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-117.160000,33.824167,100 -117.077778,32.380556,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>BPAT --&gt;- BCHA</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>BPAT-BCHA 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+7084 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+52.5268 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-121.928056,45.166389,100 -123.956944,49.228056,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>TIDC -&lt;-- BANC</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>TIDC-BANC 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+4825.1 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-3.33067 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-121.868611,37.488611,100 -121.476667,39.550000,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>CIPV -&lt;-- BANC</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>CIPV-BANC 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+16104.6 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-17.7098 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-121.298056,38.023611,100 -121.476667,39.550000,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>WACM -&lt;-- AZPS</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>WACM-AZPS 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+140 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-16.9379 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-105.137222,40.707222,100 -112.021667,33.455000,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>WALC -&lt;-- AZPS</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>WALC-AZPS 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+16051.9 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-81.2787 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-110.586667,36.034444,100 -112.021667,33.455000,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>TEPC -&lt;-- AZPS</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>TEPC-AZPS 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+4492 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-18.21 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-111.969167,32.220833,100 -112.021667,33.455000,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>SRP --&gt;- AZPS</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>SRP-AZPS 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+40921.5 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+11.3023 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-112.694722,33.422778,100 -112.021667,33.455000,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>PNM -&lt;-- AZPS</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>PNM-AZPS 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+3896.1 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-23.0364 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-107.632778,35.121111,100 -112.021667,33.455000,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>PAUT --&gt;- AZPS</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>PAUT-AZPS 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+1026 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+0.295702 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-112.886667,41.575000,100 -112.021667,33.455000,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>LDWP --&gt;- AZPS</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>LDWP-AZPS 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+1905 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+7.07455 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-118.426944,34.244722,100 -112.021667,33.455000,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>IID --&gt;- AZPS</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>IID-AZPS 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+135.5 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+5.10448 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-116.566944,33.864722,100 -112.021667,33.455000,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>CISD --&gt;- AZPS</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>CISD-AZPS 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+1109 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+39.1418 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-117.160000,33.824167,100 -112.021667,33.455000,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>CISC --&gt;- AZPS</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>CISC-AZPS 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+1645.4 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+46.8072 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-118.704444,34.654444,100 -112.021667,33.455000,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>BPAT -&lt;-- AVA</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>BPAT-AVA 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+17602.2 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-4.73158 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-121.928056,45.166389,100 -117.388611,48.673333,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>TPWR --&gt;- AVA</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>TPWR-AVA 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+477.4 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+2.12294 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-122.433333,47.137222,100 -117.388611,48.673333,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>SCL -&lt;-- AVA</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>SCL-AVA 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+176.1 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-1.68542 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-122.341389,48.700278,100 -117.388611,48.673333,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>PGE --&gt;- AVA</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>PGE-AVA 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+362 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+7.41014 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-120.915833,46.826111,100 -117.388611,48.673333,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>PACW --&gt;- AVA</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>PACW-AVA 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+1111 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+14.7159 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-123.577778,46.522222,100 -117.388611,48.673333,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>NWMT -&lt;-- AVA</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>NWMT-AVA 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+284 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-25.5929 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-109.581944,46.778333,100 -117.388611,48.673333,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>IPTV --&gt;- AVA</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>IPTV-AVA 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+702.3 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+2.54271 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-116.208333,44.618889,100 -117.388611,48.673333,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>GCPD --&gt;- AVA</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>GCPD-AVA 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+1143.2 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+1.44391 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-120.553056,47.320556,100 -117.388611,48.673333,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>CHPD -&lt;-- AVA</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>CHPD-AVA 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+92.2 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>-3.13364 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-120.000833,48.839167,100 -117.388611,48.673333,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>NWMT --&gt;- AESO</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>NWMT-AESO 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+450 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+48.916 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-109.581944,46.778333,100 -114.069167,51.065556,100</coordinates>
+  </LineString>
+</Placemark>
+<Placemark>
+  <name>BCHA --&gt;- AESO</name>
+  <description>
+<![CDATA[
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=3 STYLE="font-size:10;">
+<caption>BCHA-AESO 2000-01-01 00:00:57 PST</caption><TR><TH ALIGN=LEFT>Status</TH><TD ALIGN=RIGHT>UNCONSTRAINED</TD></TR>
+<TR><TH ALIGN=LEFT>Capacity</TH><TD ALIGN=RIGHT>+2919.9 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Flow</TH><TD ALIGN=RIGHT>+17.2505 MW</TD></TR>
+<TR><TH ALIGN=LEFT>Losses</TH><TD ALIGN=RIGHT>+0 MW</TD></TR>
+</TABLE>
+    ]]>
+      </description>
+  <styleUrl>#intertie_path_UNCONSTRAINED</styleUrl>
+  <LineString>
+    <extrude>0</extrude>
+    <tessellate>1</tessellate>
+    <altitudeMode>relative</altitudeMode>
+    <coordinates>-123.956944,49.228056,100 -114.069167,51.065556,100</coordinates>
+  </LineString>
+</Placemark>
+  </Folder>
+</Folder>
+  </Document>
+</kml>

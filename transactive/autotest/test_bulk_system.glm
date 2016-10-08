@@ -1,0 +1,232 @@
+// $Id: test_bulk_system.glm 5080 2015-02-02 04:56:13Z dchassin $ 
+//
+// Large-scale bulk system test
+//
+
+// US controlareas to include in model (0=none, 1=single area, 2=multiple areas)
+#define US=1
+
+module transactive {
+	verbose_options NONE;
+	allow_constraint_violations INTERTIE;
+	trace_messages NONE;
+};
+
+clock {
+	timezone PST+8PDT;
+	starttime '2015-01-01 0:00:00 PST';
+	stoptime '2015-01-02 0:00:00 PDT';
+}
+
+object interconnection {
+	name BC;
+	initialize STEADY;
+	initial_balancing_unit LM_G1;
+	latitude 52N;
+	longitude 120W;
+
+	//////////////////////////////////////////////////////////////////////////////
+	object controlarea {
+		name PR;
+		latitude 55N30;
+		longitude 124W40;
+		object load {
+			name PR_L1;
+			capacity 200;
+			actual 100;
+			inertia 1000;
+		};
+		object generator {
+			name PR_G1;
+			capacity 3430;
+			actual 2650;
+			inertia 34300;
+			control_gain 1.0;
+		};
+	};
+
+	//////////////////////////////////////////////////////////////////////////////
+	object controlarea {
+		name VI;
+		latitude 49N30;
+		longitude 125W30;
+		object load {
+			name VI_L1;
+			capacity 3000;
+			actual 2000;
+			inertia 30000;
+		};
+		object generator {
+			name VI_G1;
+			capacity 500;
+			actual 482;
+			inertia 5000;
+			control_gain 1.0;
+		};
+	};
+
+	//////////////////////////////////////////////////////////////////////////////
+	object controlarea {
+		name LM;
+		latitude 50N0;
+		longitude 123W0;
+		object load {
+			name LM_L1;
+			capacity 10000;
+			actual 6000;
+			inertia 60000;
+		};
+		object generator {
+			name LM_G1;
+			capacity 2500;
+#if US==0
+			actual 1855;
+#else
+			actual 2069;
+#endif
+			inertia 25000;
+			control_gain 1.0;
+		};
+	};
+
+	//////////////////////////////////////////////////////////////////////////////
+	object controlarea {
+		name CR;
+		latitude 50N30;
+		longitude 118W30;
+		object load {
+			name CR_L1;
+			capacity 1000;
+			actual 500;
+			inertia 5000;
+		};
+		object generator {
+			name CR_G1;
+			capacity 5200;
+			actual 3991;
+			inertia 52000;
+			control_gain 1.0;
+		};
+	};
+
+	//////////////////////////////////////////////////////////////////////////////
+	object controlarea {
+		name AB;
+		latitude 52N0;
+		longitude 113W0;
+		object load {
+			name AB_L1;
+			capacity 10000;
+			actual 8000;
+			inertia 80000;
+		};
+		object generator {
+			name AB_G1;
+			capacity 10000;
+			actual 8115;
+			inertia 100000;
+			control_gain 1.0;
+		};
+	};
+
+#if US==1
+	//////////////////////////////////////////////////////////////////////////////
+	object controlarea {
+		name US;
+		latitude 47N0;
+		longitude 118W0;
+		object load {
+			name US_L1;
+			capacity 200000;
+			actual 160000;
+			inertia 1600000;
+		};
+		object generator {
+			name US_G1;
+			capacity 200000;
+			actual 159727;
+			inertia 2000000;
+			control_gain 1.0;
+		};
+	};
+#else
+	object controlarea {
+		name NW;
+	};
+	object controlarea {
+		name MC;
+	};	
+	object controlarea {
+		name MT;
+	};	
+	object controlarea {
+		name NC;
+	};	
+	object controlarea {
+		name UT;
+	};	
+	object controlarea {
+		name CO;
+	};	
+	object controlarea {
+		name SC;
+	};	
+	object controlarea {
+		name NV;
+	};	
+	object controlarea {
+		name SW;
+	};	
+	object controlarea {
+		name MX;
+	};	
+#endif
+
+	//////////////////////////////////////////////////////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////
+	object intertie {
+		name PR_LM;
+		from PR;
+		to LM;
+		capacity 5000;
+		loss 0.05;
+	};
+	object intertie {
+		name CR_LM;
+		from CR;
+		to LM;
+		capacity 5000;
+		loss 0.05;
+	};
+	object intertie {
+		name LM_VI;
+		from LM;
+		to VI;
+		capacity 3000;
+		loss 0.05;
+	};
+	object intertie {
+		name AB_CR;
+		from AB;
+		to CR;
+		capacity 500;
+		loss 0.05;
+	};
+#if US==1
+	object intertie {
+		name US_LM;
+		from US;
+		to LM;
+		capacity 1000;
+		loss 0.05;
+	};
+	object intertie {
+		name US_AB;
+		from US;
+		to AB;
+		capacity 1000;
+		loss 0.05;
+		status OFFLINE;
+	};
+#endif
+}

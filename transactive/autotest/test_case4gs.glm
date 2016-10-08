@@ -1,0 +1,110 @@
+// $Id$ 
+//
+// Matpower case4gs
+//
+
+module transactive {
+	verbose_options NONE;
+	allow_constraint_violations INTERTIE;
+	trace_messages NONE;
+	frequency_bounds HARD;
+};
+
+object interconnection {
+	name case4gs;
+	initialize STEADY;
+	initial_balancing_unit G4;
+	latitude 52N;
+	longitude 120W;
+
+	//////////////////////////////////////////////////////////////////////////////
+	object controlarea {
+		name B1;
+		latitude 55N30;
+		longitude 124W40;
+		object load {
+			name L1;
+			capacity 100;
+			actual 50.5;
+			inertia 500;
+		};
+	};
+
+	//////////////////////////////////////////////////////////////////////////////
+	object controlarea {
+		name B2;
+		latitude 50N0;
+		longitude 123W0;
+		object load {
+			name L2;
+			capacity 200;
+			actual 170;
+			inertia 1700;
+		};
+	};
+
+	//////////////////////////////////////////////////////////////////////////////
+	object controlarea {
+		name B3;
+		latitude 52N0;
+		longitude 113W0;
+		object load {
+			name L3;
+			capacity 250;
+			actual 200;
+			inertia 2000;
+		};
+	};
+
+	//////////////////////////////////////////////////////////////////////////////
+	object controlarea {
+		name B4;
+		latitude 50N30;
+		longitude 118W30;
+		object load {
+			name L4;
+			capacity 100;
+			actual 80;
+			inertia 800;
+		};
+		object generator {
+			name G4;
+			capacity 500;
+			actual 509.7;
+			inertia 5000;
+			control_gain 1.0;
+		};
+	};
+
+	//////////////////////////////////////////////////////////////////////////////
+	object intertie {
+		from B1;
+		to B2;
+		capacity 5000;
+		loss 0.0018;
+	};
+	object intertie {
+		from B1;
+		to B3;
+		capacity 5000;
+		loss 0.0087;
+	};
+	object intertie {
+		from B2;
+		to B4;
+		capacity 5000;
+		loss 0.0173;
+	};
+	object intertie {
+		from B3;
+		to B4;
+		capacity 5000;
+		loss 0.0242;
+	};
+	object intertie {
+		from B1;
+		to B4;
+		capacity 5000;
+		loss 0.0154;
+	};
+}

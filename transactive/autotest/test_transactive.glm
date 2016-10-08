@@ -1,0 +1,7 @@
+module transactive {
+	nominal_frequency 60 Hz;
+}
+
+object interconnection {
+}
+	

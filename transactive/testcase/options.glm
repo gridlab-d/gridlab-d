@@ -1,0 +1,10 @@
+#set kmlfile=test_wecc2024_case.kml
+module tape;
+module transactive {
+	verbose_options NONE;
+	allow_constraint_violations INTERTIE;
+	trace_messages NONE;
+	frequency_bounds HARD;
+    frequency_resolution 0.00001 Hz;
+    droop_control 5%;
+};

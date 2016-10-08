@@ -1,0 +1,36 @@
+\chapter*{Appendix A - Flow Solver}
+
+The tieline flows are calculated by constructing a graph matrix $A$ and solving for the flow $F$ on the $M=N(N-1)/2$ possible lines for the net powers $P$ at the $N$ nodes.  The minimum flow solution is
+\begin{equation}
+	F = P A^{-1}
+\end{equation}
+where $A^{-1}$ is the Moore-Penrose pseudo-inverse and the matrix $A_{M\times N}$ formed by assigning the value 1 to each column $n$ for each node connected the by line $m$, if it exists. The net power vector is $P=[p_1,p_2,\cdots,p_N]$. The line connectivity vector is $C=[l_{1,2}, l_{1,3}, \cdots, l_{1,N}, l_{2,3}, l_{2,4}, \cdots, l_{2,N}, \cdots, l_{N-1,N}]$ indicates which of all possible lines are in service. If line losses are considered, the value assigned to each line is $1-\lambda$ where $\lambda$ is the fractional loss. 
+The line flow vector is $F=[f_1,f_2,\cdots,f_M]$. The following Matlab code illustrates the method for a random graph.
+
+\begin{framed}
+\begin{verbatim}
+N = 6;                    % number of nodes
+L = N*(N-1)/2;            % number of possible lines
+rho = 0.9;                % probability of having a line
+P = randn(1,N);           % random net power
+C = rand(1,L);            % random connectivity variate
+r = 0.95;                 % fractional line admittance
+A = zeros(L,N);           % empty graph matrix
+l = 1;                    % line index
+for n=1:N                 % for each node
+    for m=(n+1):N         % for each remaining node
+        if C(l)<rho       % variate exceeds probability
+            A(l,n) = r;   % set from node of line
+            A(l,m) = r;   % set to node of line
+        end
+        l = l+1;          % increment line index
+    end
+end
+P                         % net powers
+A                         % graph
+F = P*pinv(A)             % flows
+R = sum(F*A - P)          % significant residual indicates non-spanning graph
+\end{verbatim}
+\end{framed}
+
+\hilight{Describe alternate loss calculation method.}

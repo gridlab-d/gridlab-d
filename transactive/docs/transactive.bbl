@@ -1,0 +1,39 @@
+\begin{thebibliography}{1}
+
+\bibitem{hammerstrom2007}
+D.J.~Hammerstrom et~al.
+\newblock Pacific {Northwest} {GridWise} testbed demonstration projects: {Part
+  I}. {Olympic Peninsula} project.
+\newblock Technical Report 17167, Pacific Northwest National Laboratory,
+  Richland WA, October 2007.
+
+\bibitem{widergren2014}
+S.E.~Widergren et~al.
+\newblock {AEP Ohio gridSMART} demonstration project real-time pricing
+  demonstration analysis.
+\newblock Technical Report 23192, Pacific Northwest National Laboratory, March
+  2014.
+
+\bibitem{pnnl2014}
+K.~Subbarao et~al.
+\newblock Transactive control and coordination of distributed assets for
+  ancillary services: Controls, markets and simulations.
+\newblock Technical Report number not available, Pacific Northwest National
+  Laboratory, November 2014.
+
+\bibitem{chassin2014b}
+D.~P. Chassin.
+\newblock New residential thermostat for transactive systems, 2014.
+
+\bibitem{kundur1994}
+P.~Kundur.
+\newblock {\em Power System Stability and Control}.
+\newblock McGraw-Hill, 1994.
+
+\bibitem{nerc2011}
+NERC.
+\newblock Balancing and frequency control.
+\newblock Technical report, North American Electricity Reliability Corporation,
+  January 2011.
+
+\end{thebibliography}

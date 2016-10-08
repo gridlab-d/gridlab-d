@@ -1,0 +1,32 @@
+\documentclass[12pt,letterpaper]{report}
+\input{packages}
+
+\title{GridLAB-D Transactive Control Module\\\ \\* * * W O R K I N G \quad C O P Y * * *}
+\author{David P. Chassin\\Copyright \copyright\ 2014\\All Rights Reserved}
+
+\begin{document}
+
+ \maketitle
+
+\input{abstract}
+
+\tableofcontents
+
+\part{Module}
+	\input{design}
+	\input{globals}
+
+\part{Classes}
+	\input{interconnection}
+	\input{controlarea}
+
+\part{Validation}
+	\input{testing}
+
+\part{Appendices}
+	\input{solver}
+	
+\bibliographystyle{unsrt} 
+\bibliography{references}
+
+\end{document}

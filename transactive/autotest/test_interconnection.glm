@@ -1,0 +1,24 @@
+module transactive;
+module tape;
+#set suppress_repeat_messages=FALSE
+
+clock {
+	timezone PST+8PDT;
+	starttime '2015-01-01 0:00:00 PST';
+	stoptime '2015-01-02 0:00:00 PDT';
+}
+
+object interconnection {
+	demand 125 GW;
+	capacity 250 GW;
+	inertia 1250 MJ;
+	object player {
+		property supply;
+		file ../test_interconnection_supply.csv;
+	};
+	object recorder {
+		property frequency;
+		interval -1;
+		file test_interconnection_frequency.csv;
+	};
+}

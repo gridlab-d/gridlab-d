@@ -1,0 +1,39 @@
+\contentsline {part}{I\hspace {1em}Module}{3}
+\contentsline {chapter}{\numberline {1}Design}{4}
+\contentsline {section}{\numberline {1.1}Background}{4}
+\contentsline {section}{\numberline {1.2}Research Objectives}{7}
+\contentsline {section}{\numberline {1.3}Simulation Requirements}{8}
+\contentsline {section}{\numberline {1.4}Structure}{8}
+\contentsline {chapter}{\numberline {2}Global Variables}{10}
+\contentsline {section}{\numberline {2.1}Nominal Frequency}{10}
+\contentsline {section}{\numberline {2.2}Maximum Frequency}{10}
+\contentsline {section}{\numberline {2.3}Minimum Frequency}{10}
+\contentsline {section}{\numberline {2.4}Frequency Bounds}{10}
+\contentsline {part}{II\hspace {1em}Classes}{11}
+\contentsline {chapter}{\numberline {3}Interconnection}{12}
+\contentsline {section}{\numberline {3.1}Properties}{12}
+\contentsline {subsection}{\numberline {3.1.1}Public variables}{12}
+\contentsline {subsection}{\numberline {3.1.2}Private variables}{13}
+\contentsline {subsection}{\numberline {3.1.3}Pseudo variables}{13}
+\contentsline {section}{\numberline {3.2}Processing}{13}
+\contentsline {subsection}{\numberline {3.2.1}Initialization}{13}
+\contentsline {subsection}{\numberline {3.2.2}Precommit}{13}
+\contentsline {subsection}{\numberline {3.2.3}Presync}{14}
+\contentsline {subsection}{\numberline {3.2.4}Postsync}{14}
+\contentsline {subsection}{\numberline {3.2.5}Commit}{14}
+\contentsline {section}{\numberline {3.3}Messages}{14}
+\contentsline {chapter}{\numberline {4}Control Area}{15}
+\contentsline {section}{\numberline {4.1}Properties}{15}
+\contentsline {subsection}{\numberline {4.1.1}Public Variables}{15}
+\contentsline {subsection}{\numberline {4.1.2}Pseudo Variables}{16}
+\contentsline {section}{\numberline {4.2}Processing}{16}
+\contentsline {subsection}{\numberline {4.2.1}Presync}{16}
+\contentsline {subsection}{\numberline {4.2.2}Sync}{16}
+\contentsline {subsection}{\numberline {4.2.3}Postsync}{16}
+\contentsline {section}{\numberline {4.3}Messages}{16}
+\contentsline {subsection}{\numberline {4.3.1}Generator status (GS)}{16}
+\contentsline {subsection}{\numberline {4.3.2}Generator capability (GC)}{16}
+\contentsline {part}{III\hspace {1em}Validation}{17}
+\contentsline {chapter}{\numberline {5}Testing}{18}
+\contentsline {section}{\numberline {5.1}Interconnection}{18}
+\contentsline {part}{IV\hspace {1em}Appendices}{19}

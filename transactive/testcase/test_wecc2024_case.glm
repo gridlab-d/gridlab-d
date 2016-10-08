@@ -1,0 +1,2868 @@
+// generated automatically by update_glm on 22-Jun-2015 17:04:55
+
+#include "options.glm"
+
+script on_term start "test_wecc2024_case.kml";
+
+clock {
+	timezone PST+8PDT;
+	starttime '2000-01-01 00:00:00 PST';
+	stoptime '2000-01-01 01:00:00 PST';
+}
+
+object interconnection {
+    name WECC2024;
+    initialize STEADY;
+    initial_balancing_unit WALC_G;
+    latitude 40.7714N;
+    longitude 111.9025W;
+    damping 1.0;
+    frequency 60;
+};
+object controlarea:75 {
+    name AESO;
+    parent WECC2024;
+    internal_losses 1.8626 %;
+    latitude 51N3:56;
+    longitude 114W4:9;
+    object load {
+        name AESO_L;
+        capacity 13443.6 MW;
+        actual 10754.9 MW;
+        inertia 107549 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file AESO_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name AESO_G;
+        capacity 13694 MW;
+        actual 10955.2 MW;
+        inertia 109552 MJ;
+        schedule 10955.2 MW;
+        control_gain 0.5;
+        frequency_deadband 0.036 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file AESO_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file AESO.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:76 {
+    name AVA;
+    parent WECC2024;
+    internal_losses 2.7917 %;
+    latitude 48N40:24;
+    longitude 117W23:19;
+    object load {
+        name AVA_L;
+        capacity 2853.51 MW;
+        actual 2282.81 MW;
+        inertia 22828.1 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file AVA_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name AVA_G;
+        capacity 2933.17 MW;
+        actual 2346.54 MW;
+        inertia 23465.4 MJ;
+        schedule 2346.54 MW;
+        control_gain 0.5;
+        frequency_deadband 0.018 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file AVA_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file AVA.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:77 {
+    name AZPS;
+    parent WECC2024;
+    internal_losses 2.5694 %;
+    latitude 33N27:18;
+    longitude 112W1:18;
+    object load {
+        name AZPS_L;
+        capacity 8157.68 MW;
+        actual 6526.14 MW;
+        inertia 65261.4 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file AZPS_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name AZPS_G;
+        capacity 8367.28 MW;
+        actual 6693.83 MW;
+        inertia 66938.3 MJ;
+        schedule 6693.83 MW;
+        control_gain 0.5;
+        frequency_deadband 0.012 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file AZPS_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file AZPS.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:79 {
+    name BANC;
+    parent WECC2024;
+    internal_losses 4.2958 %;
+    latitude 39N33:0;
+    longitude 121W28:36;
+    object load {
+        name BANC_L;
+        capacity 4812 MW;
+        actual 3849.6 MW;
+        inertia 38496 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file BANC_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name BANC_G;
+        capacity 5018.71 MW;
+        actual 4014.97 MW;
+        inertia 40149.7 MJ;
+        schedule 4014.97 MW;
+        control_gain 0.5;
+        frequency_deadband 0.009 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file BANC_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file BANC.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:80 {
+    name BCHA;
+    parent WECC2024;
+    internal_losses 1.9666 %;
+    latitude 49N13:41;
+    longitude 123W57:25;
+    object load {
+        name BCHA_L;
+        capacity 8605.61 MW;
+        actual 6884.48 MW;
+        inertia 68844.8 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file BCHA_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name BCHA_G;
+        capacity 8774.84 MW;
+        actual 7019.87 MW;
+        inertia 70198.7 MJ;
+        schedule 7019.87 MW;
+        control_gain 0.5;
+        frequency_deadband 0.0072 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file BCHA_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file BCHA.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:82 {
+    name CFE;
+    parent WECC2024;
+    internal_losses 3.3499 %;
+    latitude 32N22:50;
+    longitude 117W4:40;
+    object load {
+        name CFE_L;
+        capacity 4140.18 MW;
+        actual 3312.15 MW;
+        inertia 33121.5 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file CFE_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name CFE_G;
+        capacity 4278.88 MW;
+        actual 3423.1 MW;
+        inertia 34231 MJ;
+        schedule 3423.1 MW;
+        control_gain 0.5;
+        frequency_deadband 0.006 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file CFE_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file CFE.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:83 {
+    name CHPD;
+    parent WECC2024;
+    internal_losses 1.552 %;
+    latitude 48N50:21;
+    longitude 120W0:3;
+    object load {
+        name CHPD_L;
+        capacity 419.1 MW;
+        actual 335.28 MW;
+        inertia 3352.8 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file CHPD_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name CHPD_G;
+        capacity 425.604 MW;
+        actual 340.484 MW;
+        inertia 3404.84 MJ;
+        schedule 340.484 MW;
+        control_gain 0.5;
+        frequency_deadband 0.00514286 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file CHPD_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file CHPD.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:84 {
+    name CIPB;
+    parent WECC2024;
+    internal_losses 3.066 %;
+    latitude 38N1:25;
+    longitude 121W17:53;
+    object load {
+        name CIPB_L;
+        capacity 9875.82 MW;
+        actual 7900.66 MW;
+        inertia 79006.6 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file CIPB_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name CIPB_G;
+        capacity 10178.6 MW;
+        actual 8142.89 MW;
+        inertia 81428.9 MJ;
+        schedule 8142.89 MW;
+        control_gain 0.5;
+        frequency_deadband 0.0045 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file CIPB_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file CIPB.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:85 {
+    name CIPV;
+    parent WECC2024;
+    internal_losses 3.4827 %;
+    latitude 38N1:25;
+    longitude 121W17:53;
+    object load {
+        name CIPV_L;
+        capacity 14730.5 MW;
+        actual 11784.4 MW;
+        inertia 117844 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file CIPV_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name CIPV_G;
+        capacity 15243.5 MW;
+        actual 12194.8 MW;
+        inertia 121948 MJ;
+        schedule 12194.8 MW;
+        control_gain 0.5;
+        frequency_deadband 0.004 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file CIPV_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file CIPV.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:86 {
+    name CISC;
+    parent WECC2024;
+    internal_losses 4.0035 %;
+    latitude 34N39:16;
+    longitude 118W42:16;
+    object load {
+        name CISC_L;
+        capacity 27713.8 MW;
+        actual 22171.1 MW;
+        inertia 221711 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file CISC_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name CISC_G;
+        capacity 28823.3 MW;
+        actual 23058.7 MW;
+        inertia 230587 MJ;
+        schedule 23058.7 MW;
+        control_gain 0.5;
+        frequency_deadband 0.0036 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file CISC_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file CISC.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:87 {
+    name CISD;
+    parent WECC2024;
+    internal_losses 3.6712 %;
+    latitude 33N49:27;
+    longitude 117W9:36;
+    object load {
+        name CISD_L;
+        capacity 5556 MW;
+        actual 4444.8 MW;
+        inertia 44448 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file CISD_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name CISD_G;
+        capacity 5759.97 MW;
+        actual 4607.98 MW;
+        inertia 46079.8 MJ;
+        schedule 4607.98 MW;
+        control_gain 0.5;
+        frequency_deadband 0.00327273 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file CISD_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file CISD.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:89 {
+    name DOPD;
+    parent WECC2024;
+    internal_losses 2.6173 %;
+    latitude 47N25:19;
+    longitude 120W18:45;
+    object load {
+        name DOPD_L;
+        capacity 382.1 MW;
+        actual 305.68 MW;
+        inertia 3056.8 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file DOPD_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name DOPD_G;
+        capacity 392.101 MW;
+        actual 313.681 MW;
+        inertia 3136.81 MJ;
+        schedule 313.681 MW;
+        control_gain 0.5;
+        frequency_deadband 0.003 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file DOPD_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file DOPD.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:90 {
+    name EPE;
+    parent WECC2024;
+    internal_losses 3.1795 %;
+    latitude 32N46:33;
+    longitude 106W29:8;
+    object load {
+        name EPE_L;
+        capacity 2216 MW;
+        actual 1772.8 MW;
+        inertia 17728 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file EPE_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name EPE_G;
+        capacity 2286.46 MW;
+        actual 1829.17 MW;
+        inertia 18291.7 MJ;
+        schedule 1829.17 MW;
+        control_gain 0.5;
+        frequency_deadband 0.00276923 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file EPE_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file EPE.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:91 {
+    name GCPD;
+    parent WECC2024;
+    internal_losses 2.6671 %;
+    latitude 47N19:14;
+    longitude 120W33:11;
+    object load {
+        name GCPD_L;
+        capacity 883.251 MW;
+        actual 706.601 MW;
+        inertia 7066.01 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file GCPD_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name GCPD_G;
+        capacity 906.808 MW;
+        actual 725.447 MW;
+        inertia 7254.47 MJ;
+        schedule 725.447 MW;
+        control_gain 0.5;
+        frequency_deadband 0.00257143 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file GCPD_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file GCPD.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:96 {
+    name IID;
+    parent WECC2024;
+    internal_losses 4.2632 %;
+    latitude 33N51:53;
+    longitude 116W34:1;
+    object load {
+        name IID_L;
+        capacity 1121 MW;
+        actual 896.8 MW;
+        inertia 8968 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file IID_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name IID_G;
+        capacity 1168.79 MW;
+        actual 935.032 MW;
+        inertia 9350.32 MJ;
+        schedule 935.032 MW;
+        control_gain 0.5;
+        frequency_deadband 0.0024 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file IID_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file IID.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:97 {
+    name IPFE;
+    parent WECC2024;
+    internal_losses 2.5694 %;
+    latitude 44N37:16;
+    longitude 117W37:49;
+    object load {
+        name IPFE_L;
+        capacity 494.1 MW;
+        actual 395.28 MW;
+        inertia 3952.8 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file IPFE_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name IPFE_G;
+        capacity 506.795 MW;
+        actual 405.436 MW;
+        inertia 4054.36 MJ;
+        schedule 405.436 MW;
+        control_gain 0.5;
+        frequency_deadband 0.00225 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file IPFE_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file IPFE.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:98 {
+    name IPMV;
+    parent WECC2024;
+    internal_losses 3.6692 %;
+    latitude 43N43:27;
+    longitude 115W31:7;
+    object load {
+        name IPMV_L;
+        capacity 1212.7 MW;
+        actual 970.16 MW;
+        inertia 9701.6 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file IPMV_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name IPMV_G;
+        capacity 1257.2 MW;
+        actual 1005.76 MW;
+        inertia 10057.6 MJ;
+        schedule 1005.76 MW;
+        control_gain 0.5;
+        frequency_deadband 0.00211765 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file IPMV_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file IPMV.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:99 {
+    name IPTV;
+    parent WECC2024;
+    internal_losses 3.5748 %;
+    latitude 44N37:8;
+    longitude 116W12:30;
+    object load {
+        name IPTV_L;
+        capacity 2512.3 MW;
+        actual 2009.84 MW;
+        inertia 20098.4 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file IPTV_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name IPTV_G;
+        capacity 2602.11 MW;
+        actual 2081.69 MW;
+        inertia 20816.9 MJ;
+        schedule 2081.69 MW;
+        control_gain 0.5;
+        frequency_deadband 0.002 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file IPTV_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file IPTV.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:100 {
+    name LDWP;
+    parent WECC2024;
+    internal_losses 2.7386 %;
+    latitude 34N14:41;
+    longitude 118W25:37;
+    object load {
+        name LDWP_L;
+        capacity 7153.12 MW;
+        actual 5722.5 MW;
+        inertia 57225 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file LDWP_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name LDWP_G;
+        capacity 7349.02 MW;
+        actual 5879.21 MW;
+        inertia 58792.1 MJ;
+        schedule 5879.21 MW;
+        control_gain 0.5;
+        frequency_deadband 0.00189474 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file LDWP_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file LDWP.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:101 {
+    name NEVP;
+    parent WECC2024;
+    internal_losses 4.5041 %;
+    latitude 36N12:50;
+    longitude 115W7:21;
+    object load {
+        name NEVP_L;
+        capacity 7090.3 MW;
+        actual 5672.24 MW;
+        inertia 56722.4 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file NEVP_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name NEVP_G;
+        capacity 7409.65 MW;
+        actual 5927.72 MW;
+        inertia 59277.2 MJ;
+        schedule 5927.72 MW;
+        control_gain 0.5;
+        frequency_deadband 0.0018 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file NEVP_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file NEVP.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:102 {
+    name NWMT;
+    parent WECC2024;
+    internal_losses 2.3087 %;
+    latitude 46N46:42;
+    longitude 109W34:55;
+    object load {
+        name NWMT_L;
+        capacity 1861.13 MW;
+        actual 1488.9 MW;
+        inertia 14889 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file NWMT_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name NWMT_G;
+        capacity 1904.1 MW;
+        actual 1523.28 MW;
+        inertia 15232.8 MJ;
+        schedule 1523.28 MW;
+        control_gain 0.5;
+        frequency_deadband 0.00171429 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file NWMT_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file NWMT.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:103 {
+    name PACW;
+    parent WECC2024;
+    internal_losses 3.016 %;
+    latitude 46N31:20;
+    longitude 123W34:40;
+    object load {
+        name PACW_L;
+        capacity 4496.26 MW;
+        actual 3597.01 MW;
+        inertia 35970.1 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file PACW_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name PACW_G;
+        capacity 4631.87 MW;
+        actual 3705.5 MW;
+        inertia 37055 MJ;
+        schedule 3705.5 MW;
+        control_gain 0.5;
+        frequency_deadband 0.00163636 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file PACW_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file PACW.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:104 {
+    name PAID;
+    parent WECC2024;
+    internal_losses 2.7703 %;
+    latitude 43N24:45;
+    longitude 112W7:52;
+    object load {
+        name PAID_L;
+        capacity 819.529 MW;
+        actual 655.623 MW;
+        inertia 6556.23 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file PAID_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name PAID_G;
+        capacity 842.232 MW;
+        actual 673.786 MW;
+        inertia 6737.86 MJ;
+        schedule 673.786 MW;
+        control_gain 0.5;
+        frequency_deadband 0.00156522 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file PAID_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file PAID.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:105 {
+    name PAUT;
+    parent WECC2024;
+    internal_losses 2.9573 %;
+    latitude 41N34:30;
+    longitude 112W53:12;
+    object load {
+        name PAUT_L;
+        capacity 7297.58 MW;
+        actual 5838.07 MW;
+        inertia 58380.7 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file PAUT_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name PAUT_G;
+        capacity 7513.39 MW;
+        actual 6010.71 MW;
+        inertia 60107.1 MJ;
+        schedule 6010.71 MW;
+        control_gain 0.5;
+        frequency_deadband 0.0015 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file PAUT_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file PAUT.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:106 {
+    name PAWY;
+    parent WECC2024;
+    internal_losses 1.2939 %;
+    latitude 42N48:33;
+    longitude 111W32:16;
+    object load {
+        name PAWY_L;
+        capacity 1163.05 MW;
+        actual 930.441 MW;
+        inertia 9304.41 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file PAWY_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name PAWY_G;
+        capacity 1178.1 MW;
+        actual 942.48 MW;
+        inertia 9424.8 MJ;
+        schedule 942.48 MW;
+        control_gain 0.5;
+        frequency_deadband 0.00144 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file PAWY_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file PAWY.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:107 {
+    name PGE;
+    parent WECC2024;
+    internal_losses 3.1032 %;
+    latitude 46N49:34;
+    longitude 120W54:57;
+    object load {
+        name PGE_L;
+        capacity 4588.4 MW;
+        actual 3670.72 MW;
+        inertia 36707.2 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file PGE_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name PGE_G;
+        capacity 4730.79 MW;
+        actual 3784.63 MW;
+        inertia 37846.3 MJ;
+        schedule 3784.63 MW;
+        control_gain 0.5;
+        frequency_deadband 0.00138462 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file PGE_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file PGE.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:108 {
+    name PNM;
+    parent WECC2024;
+    internal_losses 2.604 %;
+    latitude 35N7:16;
+    longitude 107W37:58;
+    object load {
+        name PNM_L;
+        capacity 2930.23 MW;
+        actual 2344.19 MW;
+        inertia 23441.9 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file PNM_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name PNM_G;
+        capacity 3006.54 MW;
+        actual 2405.23 MW;
+        inertia 24052.3 MJ;
+        schedule 2405.23 MW;
+        control_gain 0.5;
+        frequency_deadband 0.00133333 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file PNM_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file PNM.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:109 {
+    name PSCO;
+    parent WECC2024;
+    internal_losses 2.7807 %;
+    latitude 40N43:17;
+    longitude 105W0:13;
+    object load {
+        name PSCO_L;
+        capacity 8566.19 MW;
+        actual 6852.95 MW;
+        inertia 68529.5 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file PSCO_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name PSCO_G;
+        capacity 8804.39 MW;
+        actual 7043.51 MW;
+        inertia 70435.1 MJ;
+        schedule 7043.51 MW;
+        control_gain 0.5;
+        frequency_deadband 0.00128571 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file PSCO_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file PSCO.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:110 {
+    name PSEI;
+    parent WECC2024;
+    internal_losses 2.2402 %;
+    latitude 47N4:13;
+    longitude 121W41:35;
+    object load {
+        name PSEI_L;
+        capacity 3891.5 MW;
+        actual 3113.2 MW;
+        inertia 31132 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file PSEI_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name PSEI_G;
+        capacity 3978.68 MW;
+        actual 3182.94 MW;
+        inertia 31829.4 MJ;
+        schedule 3182.94 MW;
+        control_gain 0.5;
+        frequency_deadband 0.00124138 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file PSEI_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file PSEI.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:111 {
+    name SCL;
+    parent WECC2024;
+    internal_losses 2.3718 %;
+    latitude 48N42:1;
+    longitude 122W20:29;
+    object load {
+        name SCL_L;
+        capacity 1590.1 MW;
+        actual 1272.08 MW;
+        inertia 12720.8 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file SCL_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name SCL_G;
+        capacity 1627.81 MW;
+        actual 1302.25 MW;
+        inertia 13022.5 MJ;
+        schedule 1302.25 MW;
+        control_gain 0.5;
+        frequency_deadband 0.0012 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file SCL_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file SCL.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:112 {
+    name SPPC;
+    parent WECC2024;
+    internal_losses 2.6019 %;
+    latitude 41N58:47;
+    longitude 118W43:22;
+    object load {
+        name SPPC_L;
+        capacity 2520.62 MW;
+        actual 2016.49 MW;
+        inertia 20164.9 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file SPPC_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name SPPC_G;
+        capacity 2586.2 MW;
+        actual 2068.96 MW;
+        inertia 20689.6 MJ;
+        schedule 2068.96 MW;
+        control_gain 0.5;
+        frequency_deadband 0.00116129 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file SPPC_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file SPPC.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:113 {
+    name SRP;
+    parent WECC2024;
+    internal_losses 4.2686 %;
+    latitude 33N25:22;
+    longitude 112W41:41;
+    object load {
+        name SRP_L;
+        capacity 9658.3 MW;
+        actual 7726.64 MW;
+        inertia 77266.4 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file SRP_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name SRP_G;
+        capacity 10070.6 MW;
+        actual 8056.46 MW;
+        inertia 80564.6 MJ;
+        schedule 8056.46 MW;
+        control_gain 0.5;
+        frequency_deadband 0.001125 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file SRP_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file SRP.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:114 {
+    name TEPC;
+    parent WECC2024;
+    internal_losses 3.1871 %;
+    latitude 32N13:15;
+    longitude 111W58:9;
+    object load {
+        name TEPC_L;
+        capacity 2978.82 MW;
+        actual 2383.06 MW;
+        inertia 23830.6 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file TEPC_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name TEPC_G;
+        capacity 3073.76 MW;
+        actual 2459.01 MW;
+        inertia 24590.1 MJ;
+        schedule 2459.01 MW;
+        control_gain 0.5;
+        frequency_deadband 0.00109091 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file TEPC_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file TEPC.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:115 {
+    name TIDC;
+    parent WECC2024;
+    internal_losses 4.2893 %;
+    latitude 37N29:19;
+    longitude 121W52:7;
+    object load {
+        name TIDC_L;
+        capacity 775.1 MW;
+        actual 620.08 MW;
+        inertia 6200.8 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file TIDC_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name TIDC_G;
+        capacity 808.346 MW;
+        actual 646.677 MW;
+        inertia 6466.77 MJ;
+        schedule 646.677 MW;
+        control_gain 0.5;
+        frequency_deadband 0.00105882 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file TIDC_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file TIDC.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:116 {
+    name TPWR;
+    parent WECC2024;
+    internal_losses 2.5205 %;
+    latitude 47N8:14;
+    longitude 122W26:0;
+    object load {
+        name TPWR_L;
+        capacity 913.094 MW;
+        actual 730.475 MW;
+        inertia 7304.75 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file TPWR_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name TPWR_G;
+        capacity 936.109 MW;
+        actual 748.887 MW;
+        inertia 7488.87 MJ;
+        schedule 748.887 MW;
+        control_gain 0.5;
+        frequency_deadband 0.00102857 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file TPWR_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file TPWR.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:117 {
+    name WALC;
+    parent WECC2024;
+    internal_losses 3.5475 %;
+    latitude 36N2:4;
+    longitude 110W35:12;
+    object load {
+        name WALC_L;
+        capacity 1754.9 MW;
+        actual 1403.92 MW;
+        inertia 14039.2 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file WALC_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name WALC_G;
+        capacity 1817.16 MW;
+        actual 453.724 MW;
+        inertia 4537.24 MJ;
+        schedule 453.724 MW;
+        control_gain 0.5;
+        frequency_deadband 0.001 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file WALC_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file WALC.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:118 {
+    name WACM;
+    parent WECC2024;
+    internal_losses 2.2855 %;
+    latitude 40N42:26;
+    longitude 105W8:14;
+    object load {
+        name WACM_L;
+        capacity 4649.48 MW;
+        actual 3719.58 MW;
+        inertia 37195.8 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file WACM_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name WACM_G;
+        capacity 4755.74 MW;
+        actual 3804.59 MW;
+        inertia 38045.9 MJ;
+        schedule 3804.59 MW;
+        control_gain 0.5;
+        frequency_deadband 0.000972973 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file WACM_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file WACM.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:120 {
+    name WAUW;
+    parent WECC2024;
+    internal_losses 1.8773 %;
+    latitude 48N43:55;
+    longitude 104W10:32;
+    object load {
+        name WAUW_L;
+        capacity 120.474 MW;
+        actual 96.3792 MW;
+        inertia 963.792 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file WAUW_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name WAUW_G;
+        capacity 122.736 MW;
+        actual 98.1885 MW;
+        inertia 981.885 MJ;
+        schedule 98.1885 MW;
+        control_gain 0.5;
+        frequency_deadband 0.000947368 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file WAUW_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file WAUW.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:122 {
+    name BPAT;
+    parent WECC2024;
+    internal_losses 2.4954 %;
+    latitude 45N9:59;
+    longitude 121W55:41;
+    object load {
+        name BPAT_L;
+        capacity 9563.54 MW;
+        actual 7650.83 MW;
+        inertia 76508.3 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file BPAT_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name BPAT_G;
+        capacity 9802.19 MW;
+        actual 7841.75 MW;
+        inertia 78417.5 MJ;
+        schedule 7841.75 MW;
+        control_gain 0.5;
+        frequency_deadband 0.000923077 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file BPAT_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file BPAT.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:123 {
+    name VEA;
+    parent WECC2024;
+    internal_losses 4.5041 %;
+    latitude 36N12:19;
+    longitude 116W0:2;
+    object load {
+        name VEA_L;
+        capacity 144.7 MW;
+        actual 115.76 MW;
+        inertia 1157.6 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file VEA_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name VEA_G;
+        capacity 151.217 MW;
+        actual 120.974 MW;
+        inertia 1209.74 MJ;
+        schedule 120.974 MW;
+        control_gain 0.5;
+        frequency_deadband 0.0009 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file VEA_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file VEA.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:124 {
+    name TH_PV;
+    parent WECC2024;
+    internal_losses 0 %;
+    object load {
+        name TH_PV_L;
+        capacity 0 MW;
+        actual 0 MW;
+        inertia 0 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file TH_PV_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name TH_PV_G;
+        capacity 0 MW;
+        actual 0 MW;
+        inertia 0 MJ;
+        schedule 0 MW;
+        control_gain 0.5;
+        frequency_deadband 0.000878049 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file TH_PV_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file TH_PV.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:125 {
+    name TH_Mead;
+    parent WECC2024;
+    internal_losses 0 %;
+    object load {
+        name TH_Mead_L;
+        capacity 0 MW;
+        actual 0 MW;
+        inertia 0 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file TH_Mead_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name TH_Mead_G;
+        capacity 0 MW;
+        actual 0 MW;
+        inertia 0 MJ;
+        schedule 0 MW;
+        control_gain 0.5;
+        frequency_deadband 0.000857143 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file TH_Mead_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file TH_Mead.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object controlarea:126 {
+    name TH_Malin;
+    parent WECC2024;
+    internal_losses 0 %;
+    object load {
+        name TH_Malin_L;
+        capacity 0 MW;
+        actual 0 MW;
+        inertia 0 MJ;
+        ufls " 59.2 0.10 ; 58.8 0.15 ; 58.0 0.20 ";
+        control_flags UFLS;
+        X " 0 ; 0 ";
+        A "0.7 0.6 ; 0.3 0.4";
+        B "0.003 ; 0.007";
+        C "1 0";
+        D "0";
+        U "parent.ace";
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ],A,X,B,Y,Y,D;
+            file TH_Malin_L.csv;
+            interval 4;
+        };
+    };
+    object generator {
+        name TH_Malin_G;
+        capacity 0 MW;
+        actual 0 MW;
+        inertia 0 MJ;
+        schedule 0 MW;
+        control_gain 0.5;
+        frequency_deadband 0.000837209 Hz;
+        control_flags DROOP|AGC;
+        object recorder {
+            property capacity[GW],schedule[GW],actual[GW],inertia[GJ];
+            file TH_Malin_G.csv;
+            interval 4;
+        };
+    };
+    object recorder {
+        property actual[GW],schedule[GW],capacity[GW],supply[GW],demand[GW],losses[MW],inertia[GJ],bias[MW/Hz],imbalance[MW],ace[MW];
+        file TH_Malin.csv;
+        interval 4;
+    };
+    schedule 0;
+};
+object recorder {
+    parent WECC2024;
+    property capacity[GW],supply[GW],demand[GW],losses[MW],imbalance[GW],inertia[GJ],frequency[Hz];
+    file WECC2024.csv;
+    interval 4;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:80;
+    to controlarea:75;
+    capacity 2919.9;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:102;
+    to controlarea:75;
+    capacity 450;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:83;
+    to controlarea:76;
+    capacity 92.2;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:91;
+    to controlarea:76;
+    capacity 1143.2;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:99;
+    to controlarea:76;
+    capacity 702.3;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:102;
+    to controlarea:76;
+    capacity 284;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:103;
+    to controlarea:76;
+    capacity 1111;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:107;
+    to controlarea:76;
+    capacity 362;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:111;
+    to controlarea:76;
+    capacity 176.1;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:116;
+    to controlarea:76;
+    capacity 477.4;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:122;
+    to controlarea:76;
+    capacity 17602.2;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:86;
+    to controlarea:77;
+    capacity 1645.4;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:87;
+    to controlarea:77;
+    capacity 1109;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:96;
+    to controlarea:77;
+    capacity 135.5;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:100;
+    to controlarea:77;
+    capacity 1905;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:105;
+    to controlarea:77;
+    capacity 1026;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:108;
+    to controlarea:77;
+    capacity 3896.1;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:113;
+    to controlarea:77;
+    capacity 40921.5;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:114;
+    to controlarea:77;
+    capacity 4492;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:117;
+    to controlarea:77;
+    capacity 16051.9;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:118;
+    to controlarea:77;
+    capacity 140;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:124;
+    to controlarea:77;
+    capacity 12990.2002;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:85;
+    to controlarea:79;
+    capacity 16104.6002;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:115;
+    to controlarea:79;
+    capacity 4825.1;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:126;
+    to controlarea:79;
+    capacity 2338;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:122;
+    to controlarea:80;
+    capacity 7084.0002;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:87;
+    to controlarea:82;
+    capacity 1797;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:89;
+    to controlarea:83;
+    capacity 1043.6;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:110;
+    to controlarea:83;
+    capacity 652.4;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:122;
+    to controlarea:83;
+    capacity 3218.8;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:85;
+    to controlarea:84;
+    capacity 20056.3;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:86;
+    to controlarea:85;
+    capacity 7622.7999;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:103;
+    to controlarea:85;
+    capacity 125;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:112;
+    to controlarea:85;
+    capacity 408;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:115;
+    to controlarea:85;
+    capacity 2031.5;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:126;
+    to controlarea:85;
+    capacity 3896.8;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:87;
+    to controlarea:86;
+    capacity 4104;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:96;
+    to controlarea:86;
+    capacity 1176.8;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:100;
+    to controlarea:86;
+    capacity 10030;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:101;
+    to controlarea:86;
+    capacity 15708.6001;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:112;
+    to controlarea:86;
+    capacity 65.8;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:117;
+    to controlarea:86;
+    capacity 664;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:124;
+    to controlarea:86;
+    capacity 2338;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:125;
+    to controlarea:86;
+    capacity 2693;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:96;
+    to controlarea:87;
+    capacity 702;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:124;
+    to controlarea:87;
+    capacity 4484;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:91;
+    to controlarea:89;
+    capacity 348.4;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:122;
+    to controlarea:89;
+    capacity 4413.2;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:108;
+    to controlarea:90;
+    capacity 4353.5;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:114;
+    to controlarea:90;
+    capacity 1856.1;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:103;
+    to controlarea:91;
+    capacity 609;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:110;
+    to controlarea:91;
+    capacity 1082;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:116;
+    to controlarea:91;
+    capacity 673.6;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:122;
+    to controlarea:91;
+    capacity 7467.3001;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:117;
+    to controlarea:96;
+    capacity 330;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:98;
+    to controlarea:97;
+    capacity 6410.3999;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:99;
+    to controlarea:97;
+    capacity 1645.7;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:104;
+    to controlarea:97;
+    capacity 11536.4001;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:106;
+    to controlarea:97;
+    capacity 1406;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:99;
+    to controlarea:98;
+    capacity 9633.2;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:104;
+    to controlarea:98;
+    capacity 2598;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:112;
+    to controlarea:98;
+    capacity 3948.6;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:103;
+    to controlarea:99;
+    capacity 3595.7;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:107;
+    to controlarea:99;
+    capacity 2686;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:122;
+    to controlarea:99;
+    capacity 623.8;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:101;
+    to controlarea:100;
+    capacity 3962.6;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:105;
+    to controlarea:100;
+    capacity 1200;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:112;
+    to controlarea:100;
+    capacity 402;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:117;
+    to controlarea:100;
+    capacity 435;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:122;
+    to controlarea:100;
+    capacity 3100;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:125;
+    to controlarea:100;
+    capacity 3764.6;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:105;
+    to controlarea:101;
+    capacity 330;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:112;
+    to controlarea:101;
+    capacity 2873;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:117;
+    to controlarea:101;
+    capacity 1112.1;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:123;
+    to controlarea:101;
+    capacity 1167.6;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:125;
+    to controlarea:101;
+    capacity 6521.9;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:104;
+    to controlarea:102;
+    capacity 579;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:106;
+    to controlarea:102;
+    capacity 629;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:116;
+    to controlarea:102;
+    capacity 391.7;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:120;
+    to controlarea:102;
+    capacity 1847.4;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:122;
+    to controlarea:102;
+    capacity 11740.2998;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:107;
+    to controlarea:103;
+    capacity 4568.6;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:116;
+    to controlarea:103;
+    capacity 3078.9;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:122;
+    to controlarea:103;
+    capacity 24443.2;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:126;
+    to controlarea:103;
+    capacity 4443;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:105;
+    to controlarea:104;
+    capacity 11208.1;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:106;
+    to controlarea:104;
+    capacity 5975;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:106;
+    to controlarea:105;
+    capacity 4754;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:112;
+    to controlarea:105;
+    capacity 717;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:117;
+    to controlarea:105;
+    capacity 386.8;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:118;
+    to controlarea:105;
+    capacity 2660;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:118;
+    to controlarea:106;
+    capacity 8516.8;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:116;
+    to controlarea:107;
+    capacity 3159;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:122;
+    to controlarea:107;
+    capacity 35357.6002;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:109;
+    to controlarea:108;
+    capacity 359;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:114;
+    to controlarea:108;
+    capacity 2002;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:117;
+    to controlarea:108;
+    capacity 1275;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:118;
+    to controlarea:108;
+    capacity 600;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:118;
+    to controlarea:109;
+    capacity 29078.5998;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:111;
+    to controlarea:110;
+    capacity 2112;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:116;
+    to controlarea:110;
+    capacity 699;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:122;
+    to controlarea:110;
+    capacity 30148.2;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:116;
+    to controlarea:111;
+    capacity 158;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:122;
+    to controlarea:111;
+    capacity 9025.3;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:122;
+    to controlarea:112;
+    capacity 367.7;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:114;
+    to controlarea:113;
+    capacity 8365;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:117;
+    to controlarea:113;
+    capacity 6701.8;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:124;
+    to controlarea:113;
+    capacity 6928;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:125;
+    to controlarea:113;
+    capacity 1905.3;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:117;
+    to controlarea:114;
+    capacity 2943;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:122;
+    to controlarea:116;
+    capacity 81572.7009;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:126;
+    to controlarea:116;
+    capacity 2078.5;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:118;
+    to controlarea:117;
+    capacity 1012;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:123;
+    to controlarea:117;
+    capacity 120;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:125;
+    to controlarea:117;
+    capacity 1306;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:120;
+    to controlarea:118;
+    capacity 390.4;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:126;
+    to controlarea:122;
+    capacity 5195.7;
+    loss 0.0;
+};
+object intertie {
+    parent WECC2024;
+    from controlarea:125;
+    to controlarea:123;
+    capacity 570.4;
+    loss 0.0;
+};

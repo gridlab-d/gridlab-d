@@ -44,19 +44,38 @@ function delete ()
 		fi
 	else
 		T=".tmp$$"
-		grep -v $F $CUSTOMFILE >$T
-		mv $T $CUSTOMFILE
+		grep -v $F $CUSTOMFILE >$T && mv $T $CUSTOMFILE
 	fi
 }
 
 function enable ()
 {
-	echo "$(basename $0): enable is todo"
+	F="$1/Makefile.mk"
+	if [ -z "$(grep $F $CUSTOMFILE)" ]; then
+		if [ -f $F ]; then
+			echo "module $1 is not listed in $CUSTOMFILE"
+		else
+			echo "module $1 is not a valid module (missing $F)"
+		fi
+	else
+		T=".tmp$$"
+		sed -e "1,\$s:^#include $F:include $F:" < $CUSTOMFILE >$T && mv $T $CUSTOMFILE
+	fi
 }
 
 function disable ()
 {
-	echo "$(basename $0): disable is todo"
+	F="$1/Makefile.mk"
+	if [ -z "$(grep $F $CUSTOMFILE)" ]; then
+		if [ -f $F ]; then
+			echo "module $1 is not listed in $CUSTOMFILE"
+		else
+			echo "module $1 is not a valid module (missing $F)"
+		fi
+	else
+		T=".tmp$$"
+		sed -e "1,\$s:^include $F:#include $F:" < $CUSTOMFILE >$T && mv $T $CUSTOMFILE
+	fi
 }
 
 function status ()

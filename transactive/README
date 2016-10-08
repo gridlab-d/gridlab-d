@@ -1,0 +1,63 @@
+NOTES FOR TRANSACTIVE MODULE
+============================
+
+Revision: $Revision: 5071 $
+Revision date: $Date: 2015-01-31 07:11:13 -0800 (Sat, 31 Jan 2015) $
+Last edit by: $Author: dchassin $
+
+Contributors
+------------
+
+The transactive module was designed and built by David Chassin (UVic-ME/PNNL) 
+and Sahand Behboodi Kalhori (UVic-ME).
+
+Linking MATLAB
+--------------
+
+The transactive module requires MATLAB to build.  You must set the environment 
+variable MATLAB to the path for your most recent install of MATLAB.  This is
+required before you can build the transactive module. If you have not set the
+variable correctly you will set an error like
+
+linalg.cpp(15) : fatal error C1083: Cannot open include file: 'matrix.h': No 
+such file or directory
+
+To set the environment variable on your system, open the [Start Menu] and 
+right-click on [Computer]. Select [Properties] and click on [Advanced 
+Settings]. You should see the "System Properties" dialog.  Select [Environment
+Variables] to bring up the dialog to edit environment variables.
+
+Click [New] and enter the following:
+
+Variable name:  [MATLAB                              ]
+Variable value: [C:\Program Files\MATLAB\<version>   ]
+
+where <version> is the most recent version of Matlab you have installed.  If
+your path is different, you must adjust the value accordingly. The folder you
+enter must at least contain the standard Matlab "extern" folder for GridLAB-D
+to build correctly.
+
+When you are done click [Ok] as needed to close and save your changes.  You 
+must log out and log in again for this change to take effect.
+
+Running with MATLAB
+-------------------
+
+If you get an error such as "missing libeng.lib" when you run GridLAB-D using
+the transactive module, this means that your PATH environment does not include
+the MATLAB library folder.  Using the method for linking MATLAB described
+above, you must add your MATLAB platform library folder to your system's PATH 
+environment. When in the [Environment Variables] dialog select PATH and click 
+[Edit]:
+
+Variable name: PATH
+Variable value: [<existing path>;C:\Program Files\MATLAB\<version>\bin\<platform>]
+
+where <existing path> is the path already defined (don't alter it), <version>
+is the most recent version of MATLAB installed on your system, and <platform>
+is either "win32" or "win64" depending on which platform you are building in
+Visual Studio.
+
+
+
+

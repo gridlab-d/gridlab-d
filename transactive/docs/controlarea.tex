@@ -1,0 +1,68 @@
+\chapter{Control Area}
+
+The purpose of the control area object is to compute the area control error and dispatch generation.  The area control error is computed as \cite{nerc2011}
+\begin{equation}
+	ace = (I_A - I_S) - B ( f - f_s)
+\end{equation}
+where
+\begin{description}
+
+\item $I_A$ and $I_S$ are the net actual and scheduled net interchange in the control area, respectively, in Watts,
+
+\item $B$ is the balance authority frequency bias in MW/Hz,
+
+\item $f$ is the frequency of the system, in Hz, and
+
+\item $f_s$ is the scheduled frequency, in Hz.
+
+\end{description}
+
+\section{Properties}
+
+
+\subsection{Public Variables}
+
+\begin{description}
+
+\item[inertia (double MJ)] is the total inertia of generators and loads in the control area.
+\item[capacity (double MW)] is the total capacity of generators in the control area.
+\item[supply (double MW)] is the actual generation supply in the control area.
+\item[demand (double MW)] is the actual load demand in the control area.
+\item[schedule (double MW)] is the total scheduled intertie exchange with adjacent control areas.
+\item[intertie (double MW)] is the total actual intertie exchange with adjacent control areas.
+\item[ace (double MW)] is the computed area control error.
+\item[bias (double MW/Hz)] is the control area frequency bias.
+
+\end{description}
+
+\subsection{Pseudo Variables}
+
+\begin{description}
+\item[update (int64)] is the pseudo variable for receiving messages from generators, loads, and interties. The value represents a count of incoming messages received since the last presync event.
+\end{description}
+
+\section{Processing}
+
+\subsection{Presync}
+
+The accumulators are reset to zero prior to the beginning of the sync process.  These include \texttt{update}, \texttt{inertia}, \texttt{capacity}, \texttt{supply}, and \texttt{demand}.
+
+\subsection{Sync}
+
+The total generation capacity, inertia, supply and load demand values updates are sent to the interconnection using an area status (\texttt{AS}) message.
+
+\subsection{Postsync}
+
+\hilight{TODO}
+
+\section{Messages}
+
+\subsection{Generator status (GS)}
+Generator status update messages are formatted as follows \\
+\texttt{GS E=<$kinetic\ energy$ (MJ)> R=<$rated\ power$ (MW)> P=<$output\ power$ (MW)>}
+
+\subsection{Generator capability (GC)}
+Generator capability  update messages are formatted as follows \\
+\texttt{GC M=<$maximum\ power$ (MW)> N=<$minimum\ power$ (MW)> ...} \\
+\texttt{...F=<$fixed\ cost$ (\$/h)> V=<$variable\ cost$ (\$/MW.h)> ...} \\ 
+\texttt{...U=<$maximum\ ramp-up\ rate$ (MW/s)> D=<$maximum\ ramp-down\ rate$ (MW/s)>}
