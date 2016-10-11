@@ -17,9 +17,9 @@ m4_define([sbuild_m4_esyscmd_s],
 [sbuild_m4_chomp(m4_esyscmd([$1]))])
 
 dnl GridLAB-D version information
-m4_define([pkgversion], m4_esyscmd_s([build-aux/version.sh --version]))
-m4_define([pkgbranch],  m4_esyscmd_s([build-aux/version.sh --branch]))
-m4_define([svnversion], m4_esyscmd_s([build-aux/version.sh --svn]))
+m4_define([pkgversion], sbuild_m4_esyscmd_s([build-aux/version.sh --version]))
+m4_define([pkgbranch],  sbuild_m4_esyscmd_s([build-aux/version.sh --branch]))
+m4_define([svnversion], sbuild_m4_esyscmd_s([build-aux/version.sh --svn]))
 
 AC_PREREQ([2.63])
 AC_INIT([GridLAB-D], pkgversion, [gridlabd@pnnl.gov], [gridlabd])
