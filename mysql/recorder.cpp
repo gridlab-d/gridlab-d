@@ -196,7 +196,7 @@ int recorder::init(OBJECT *parent)
 			else if ( header_specs[n].compare("groupid")==0 )
 			{
 				header_pos += sprintf(header_data+header_pos,",'%s'",get_parent()->get_groupid());
-				strcat(property_list,"class CHAR(32), index i_groupid (groupid), ");
+				strcat(property_list,"groupid CHAR(32), index i_groupid (groupid), ");
 				if ( db->query_ex("ALTER TABLE `%s` ADD COLUMN `groupid` CHAR(32);", get_table(), get_parent()->get_name()) )
 					warning("automatically added missing header field 'groupid' to '%s'", get_table());
 			}
