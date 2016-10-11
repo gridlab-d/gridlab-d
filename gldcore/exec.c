@@ -325,7 +325,7 @@ static STATUS setup_ranks(void)
 	return SUCCESS;
 }
 
-char *simtime(void)
+const char *simtime(void)
 {
 	static char buffer[64];
 	return convert_from_timestamp(global_clock,buffer,sizeof(buffer))>0?buffer:"(invalid)";

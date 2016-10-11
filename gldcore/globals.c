@@ -310,7 +310,7 @@ STATUS global_init(void)
 /** Find a global variable
 	@return a pointer to the GLOBALVAR struct if found, NULL if not found
  **/
-GLOBALVAR *global_find(char *name) /**< name of global variable to find */
+GLOBALVAR *global_find(const char *name) /**< name of global variable to find */
 {
 	GLOBALVAR *var = NULL;
 	if ( name==NULL ) /* get first global in list */
@@ -351,7 +351,7 @@ GLOBALVAR *global_getnext(GLOBALVAR *previous){ /**< a pointer to the previous v
 	@todo this does not support module globals but needs to (no ticket)
 
  **/
-GLOBALVAR *global_create(char *name, ...){
+GLOBALVAR *global_create(const char *name, ...){
 	va_list arg;
 	PROPERTY *prop = NULL, *lastprop = NULL;
 	PROPERTYTYPE proptype;
@@ -375,7 +375,7 @@ GLOBALVAR *global_create(char *name, ...){
 	
 	if(var == NULL){
 		errno = ENOMEM;
-		throw_exception("global_create(char *name='%s',...): unable to allocate memory for global variable", name);
+		throw_exception("global_create(const char *name='%s',...): unable to allocate memory for global variable", name);
 		/* TROUBLESHOOT
 			There is insufficient memory to allocate for the global variable.  Try freeing up memory and try again.
 		 */
@@ -391,13 +391,13 @@ GLOBALVAR *global_create(char *name, ...){
 	while ((proptype = va_arg(arg,PROPERTYTYPE)) != 0){
 		if(proptype > _PT_LAST){
 			if(prop == NULL){
-				throw_exception("global_create(char *name='%s',...): property keyword not specified after an enumeration property definition", name);
+				throw_exception("global_create(const char *name='%s',...): property keyword not specified after an enumeration property definition", name);
 			} else if(proptype == PT_KEYWORD && prop->ptype == PT_enumeration) {
 				char *keyword = va_arg(arg, char *);
 				int32 keyvalue = va_arg(arg, int32);
 				KEYWORD *key = (KEYWORD *)malloc(sizeof(KEYWORD));
 				if(key == NULL){
-					throw_exception("global_create(char *name='%s',...): property keyword could not be stored", name);
+					throw_exception("global_create(const char *name='%s',...): property keyword could not be stored", name);
 					/* TROUBLESHOOT
 						The memory needed to store the property's keyword is not available.  Try freeing up memory and try again.
 					 */
@@ -411,7 +411,7 @@ GLOBALVAR *global_create(char *name, ...){
 				unsigned int64 keyvalue = va_arg(arg, int64); /* uchars are promoted to int by GCC */
 				KEYWORD *key = (KEYWORD *)malloc(sizeof(KEYWORD));
 				if(key == NULL){
-					throw_exception("global_create(char *name='%s',...): property keyword could not be stored", name);
+					throw_exception("global_create(const char *name='%s',...): property keyword could not be stored", name);
 					/* TROUBLESHOOT
 						The memory needed to store the property's keyword is not available.  Try freeing up memory and try again.
 					 */
@@ -432,7 +432,7 @@ GLOBALVAR *global_create(char *name, ...){
 						break;
 					default:
 						errno = EINVAL;
-						throw_exception("global_create(char *name='%s',...): unrecognized property access code (PROPERTYACCESS=%d)", name, pa);
+						throw_exception("global_create(const char *name='%s',...): unrecognized property access code (PROPERTYACCESS=%d)", name, pa);
 						/* TROUBLESHOOT
 							The specific property access code is not recognized.  Correct the access code and try again.
 						 */
@@ -444,7 +444,7 @@ GLOBALVAR *global_create(char *name, ...){
 					if (prop->size > 0){
 						prop->addr = (PROPERTYADDR)malloc(prop->size * property_size(prop));
 					} else {
-						throw_exception("global_create(char *name='%s',...): property size must be greater than 0 to allocate memory", name);
+						throw_exception("global_create(const char *name='%s',...): property size must be greater than 0 to allocate memory", name);
 						/* TROUBLESHOOT
 							The size of the property must be positive.
 						 */
@@ -453,7 +453,7 @@ GLOBALVAR *global_create(char *name, ...){
 			} else if(proptype == PT_UNITS){
 				char *unitspec = va_arg(arg, char *);
 				if((prop->unit = unit_find(unitspec)) == NULL){
-					output_warning("global_create(char *name='%s',...): property %s unit '%s' is not recognized",name, prop->name,unitspec);
+					output_warning("global_create(const char *name='%s',...): property %s unit '%s' is not recognized",name, prop->name,unitspec);
 					/* TROUBLESHOOT
 						The property definition uses a unit that is not found.  Check the unit and try again.  
 						If you wish to define a new unit, try adding it to <code>.../etc/unitfile.txt</code>.
@@ -464,7 +464,7 @@ GLOBALVAR *global_create(char *name, ...){
 			} else if (proptype == PT_DEPRECATED) {
 				prop->flags |= PF_DEPRECATED;
 			} else {
-				throw_exception("global_create(char *name='%s',...): property extension code not recognized (PROPERTYTYPE=%d)", name, proptype);
+				throw_exception("global_create(const char *name='%s',...): property extension code not recognized (PROPERTYTYPE=%d)", name, proptype);
 				/* TROUBLESHOOT
 					The property extension code used is not valid.  This is probably a bug and should be reported.
 				 */
@@ -473,7 +473,7 @@ GLOBALVAR *global_create(char *name, ...){
 
 			PROPERTYADDR addr = va_arg(arg,PROPERTYADDR);
 			if(strlen(name) >= sizeof(prop->name)){
-				throw_exception("global_create(char *name='%s',...): property name '%s' is too big to store", name, name);
+				throw_exception("global_create(const char *name='%s',...): property name '%s' is too big to store", name, name);
 				/* TROUBLESHOOT
 					The property name cannot be longer than the size of the internal buffer used to store it (currently this is 63 characters).
 					Use a shorter name and try again.
@@ -482,7 +482,7 @@ GLOBALVAR *global_create(char *name, ...){
 
 			prop = property_malloc(proptype,NULL,name,addr,NULL);
 			if (prop==NULL)
-				throw_exception("global_create(char *name='%s',...): property '%s' could not be stored", name, name);
+				throw_exception("global_create(const char *name='%s',...): property '%s' could not be stored", name, name);
 			if (var->prop==NULL)
 				var->prop = prop;
 
@@ -520,7 +520,7 @@ GLOBALVAR *global_create(char *name, ...){
 	and the second argument is read as a pointer to a string the contains
 	the new value.
  **/
-STATUS global_setvar(char *def, ...) /**< the definition */
+STATUS global_setvar(const char *def, ...) /**< the definition */
 {
 	char name[65]="", value[1024]="";
 	if (sscanf(def,"%[^=]=%[^\r\n]",name,value)<2)
@@ -534,7 +534,7 @@ STATUS global_setvar(char *def, ...) /**< the definition */
 		{
 			strncpy(value,v,sizeof(value));
 			if (strcmp(value,v)!=0)
-				output_error("global_setvar(char *name='%s',...): value is too long to store");
+				output_error("global_setvar(const char *name='%s',...): value is too long to store");
 				/* TROUBLESHOOT
 					An attempt to set a global variable failed because the value of the variable
 					was too long.
@@ -706,12 +706,12 @@ char *global_seq(char *buffer, int size, char *name)
 	}
 }
 
-int global_isdefined(char *name)
+int global_isdefined(const char *name)
 {
 	return global_find(name)!=NULL;
 }
 
-int parameter_expansion(char *buffer, int size, char *spec)
+int parameter_expansion(const char *buffer, int size, char *spec)
 {
 	char name[64], value[64], pattern[64], op[64], string[64]="", yes[1024]="1", no[1024]="0";
 	int offset, length;
@@ -923,7 +923,7 @@ int parameter_expansion(char *buffer, int size, char *spec)
 
 	This function searches global, user-defined, and module variables for a match.
 **/
-char *global_getvar(char *name, char *buffer, int size)
+char *global_getvar(const char *name, char *buffer, int size)
 {
 	char temp[1024];
 	int len = 0;

@@ -98,7 +98,7 @@ void delete_exception_handler(EXCEPTIONHANDLER *ptr) /**< a pointer to the excep
 
 /** Throw an exception
  **/
-void throw_exception(char *format, /**< the format string */
+void throw_exception(const char *format, /**< the format string */
 					 ...) /**< the parameters of the message */
 {
 	char buffer[1024];
@@ -131,7 +131,7 @@ void throw_exception(char *format, /**< the format string */
 /** Retrieves the message of the most recently thrown exception
 	@return a \e char* pointer to the message
  **/
-char *exception_msg(void)
+const char *exception_msg(void)
 {
 	return handlers->msg;
 }

@@ -59,11 +59,11 @@ typedef int EXITCODE;
 
 STATUS global_init(void);
 GLOBALVAR *global_getnext(GLOBALVAR *previous);
-GLOBALVAR *global_find(char *name);
-GLOBALVAR *global_create(char *name, ...);
-STATUS global_setvar(char *def,...);
-char *global_getvar(char *name, char *buffer, int size);
-int global_isdefined(char *name);
+GLOBALVAR *global_find(const char *name);
+GLOBALVAR *global_create(const char *name, ...);
+STATUS global_setvar(const char *def,...);
+char *global_getvar(const char *name, char *buffer, int size);
+int global_isdefined(const char *name);
 void global_dump(void);
 size_t global_getcount(void);
 

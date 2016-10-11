@@ -249,7 +249,7 @@ bool property_compare_basic(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void *x, v
 	}
 }
 
-PROPERTYTYPE property_get_type(char *name)
+PROPERTYTYPE property_get_type(const char *name)
 {
 	PROPERTYTYPE ptype;
 	for ( ptype = _PT_FIRST+1 ; ptype<_PT_LAST ; ptype++ )
@@ -274,7 +274,7 @@ double property_get_part(OBJECT *obj, PROPERTY *prop, char *part)
 /*********************************************************
  * PROPERTY PARTS
  *********************************************************/
-double complex_get_part(void *x, char *name)
+double complex_get_part(void *x, const char *name)
 {
 	complex *c = (complex*)x;
 	if ( strcmp(name,"real")==0) return c->r;

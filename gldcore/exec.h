@@ -30,7 +30,7 @@ extern "C" {
 #endif
 int exec_init(void);
 STATUS exec_start(void);
-char *simtime(void);
+const char *simtime(void);
 STATUS t_setup_ranks(void);
 INDEX **exec_getranks(void);
 void exec_sleep(unsigned int usec);

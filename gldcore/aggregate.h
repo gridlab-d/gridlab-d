@@ -32,7 +32,7 @@ typedef struct s_aggregate {
 extern "C" {
 #endif
 
-AGGREGATION *aggregate_mkgroup(char *aggregator, char *group_expression);
+AGGREGATION *aggregate_mkgroup(const char *aggregator, const char *group_expression);
 double aggregate_value(AGGREGATION *aggregate);
 
 #ifdef __cplusplus

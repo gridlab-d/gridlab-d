@@ -949,7 +949,7 @@ typedef struct s_property_specs { /**<	the property type conversion specificatio
 		PROPERTYCOMPAREFUNCTION* fn;
 		int trinary;
 	} compare[_TCOP_LAST]; /**< the list of comparison operators available for this type */
-	double (*get_part)(void*,char *name); /**< the function to get a part of a property */
+	double (*get_part)(void*,const char *name); /**< the function to get a part of a property */
 	// @todo for greater generality this should be implemented as a linked list
 } PROPERTYSPEC;
 
@@ -966,7 +966,7 @@ size_t property_minimum_buffersize(PROPERTY *);
 int property_create(PROPERTY *, void *);
 bool property_compare_basic(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void *x, void *a, void *b, char *part);
 PROPERTYCOMPAREOP property_compare_op(PROPERTYTYPE ptype, char *opstr);
-PROPERTYTYPE property_get_type(char *name);
+PROPERTYTYPE property_get_type(const char *name);
 double property_get_part(struct s_object_list *obj, PROPERTY *prop, char *part);
 
 /* double array */

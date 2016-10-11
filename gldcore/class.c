@@ -243,9 +243,9 @@ void class_add_property(CLASS *oclass,  /**< the class to which the property is 
     @return the property pointer
  **/
 PROPERTY *class_add_extended_property(CLASS *oclass,      /**< the class to which the property is to be added */
-                                      char *name,         /**< the name of the property */
+                                      const char *name,         /**< the name of the property */
                                       PROPERTYTYPE ptype, /**< the type of the property */
-                                      char *unit)         /**< the unit of the property */
+                                      const char *unit)         /**< the unit of the property */
 {
 	PROPERTY *prop = malloc(sizeof(PROPERTY));
 	UNIT *pUnit = NULL;
@@ -253,7 +253,7 @@ PROPERTY *class_add_extended_property(CLASS *oclass,      /**< the class to whic
 	TRY {
 		if (unit)
 			pUnit = unit_find(unit);
-	} CATCH (char *msg) {
+	} CATCH (const char *msg) {
 		// will get picked up later
 	} ENDCATCH;
 
@@ -336,7 +336,7 @@ char *class_get_property_typexsdname(PROPERTYTYPE type) /**< the property type *
 /** Get the type of a property from its \p name
 	@return the property type
  **/
-PROPERTYTYPE class_get_propertytype_from_typename(char *name) /**< a string containing the name of the property type */
+PROPERTYTYPE class_get_propertytype_from_typename(const char *name) /**< a string containing the name of the property type */
 {
 	int i;
 	for (i=0; i<sizeof(property_type)/sizeof(property_type[0]); i++)
@@ -352,7 +352,7 @@ PROPERTYTYPE class_get_propertytype_from_typename(char *name) /**< a string cont
  **/
 int class_string_to_propertytype(PROPERTYTYPE type, 
                                  void *addr, 
-                                 char *value)
+                                 const char *value)
 {
 	if (type > _PT_FIRST && type < _PT_LAST)
 		return (*property_type[type].string_to_data)(value,addr,NULL);
@@ -365,7 +365,7 @@ int class_string_to_propertytype(PROPERTYTYPE type,
  **/
 int class_string_to_property(PROPERTY *prop, /**< the type of the property at the \p addr */
                              void *addr,     /**< the address of the property's data */
-                             char *value)    /**< the string from which the data is read */
+                             const char *value)    /**< the string from which the data is read */
 {
 	if (prop->ptype > _PT_FIRST && prop->ptype < _PT_LAST)
 		return (*property_type[prop->ptype].string_to_data)(value,addr,prop);
@@ -495,7 +495,7 @@ CLASS *class_get_first_class(void)
 	@return a pointer to the class registered to that module
 	having that \p name, or \p NULL if no match found.
  **/
-CLASS *class_get_class_from_classname_in_module(char *name, MODULE *mod){
+CLASS *class_get_class_from_classname_in_module(const char *name, MODULE *mod){
 	CLASS *oclass = NULL;
 	if(name == NULL) return NULL;
 	if(mod == NULL) return NULL;
@@ -567,7 +567,7 @@ size_t class_get_extendedcount(CLASS *oclass)
 	@return a pointer to the class having that \p name,
 	or \p NULL if no match found.
  **/
-CLASS *class_get_class_from_classname(char *name) /**< a pointer to a \p NULL -terminated string containing the class name */
+CLASS *class_get_class_from_classname(const char *name) /**< a pointer to a \p NULL -terminated string containing the class name */
 {
 	CLASS *oclass = NULL;
 	MODULE *mod = NULL;
@@ -979,8 +979,8 @@ Error:
 	@return 0 on failure, 1 on success
  **/
 int class_define_enumeration_member(CLASS *oclass, /**< pointer to the class which implements the enumeration */
-                                    char *property_name, /**< property name of the enumeration */
-                                    char *member, /**< member name to define */
+                                    const char *property_name, /**< property name of the enumeration */
+                                    const char *member, /**< member name to define */
                                     enumeration value) /**< enum value to associate with the name */
 {
 	PROPERTY *prop = class_find_property(oclass,property_name);
@@ -996,8 +996,8 @@ int class_define_enumeration_member(CLASS *oclass, /**< pointer to the class whi
 /** Define a set member
  **/
 int class_define_set_member(CLASS *oclass, /**< pointer to the class which implements the set */
-                            char *property_name, /**< property name of the set */
-                            char *member, /**< member name to define */
+                            const char *property_name, /**< property name of the set */
+                            const char *member, /**< member name to define */
                             unsigned int64 value) /**< set value to associate with the name */
 {
 	PROPERTY *prop = class_find_property(oclass,property_name);
@@ -1061,7 +1061,7 @@ FUNCTION *class_define_function(CLASS *oclass, FUNCTIONNAME functionname, FUNCTI
 
 /* Get the entry point of a class function
  */
-FUNCTIONADDR class_get_function(char *classname, char *functionname)
+FUNCTIONADDR class_get_function(const char *classname, const char *functionname)
 {
 	CLASS *oclass = class_get_class_from_classname(classname);
 	FUNCTION *func;
@@ -1210,7 +1210,7 @@ void class_profiles(void)
 	data type to be implemented, including enumerations, sets, and special objects.
  **/
 DELEGATEDTYPE *class_register_type(CLASS *oclass, /**< the object class */
-                                   char *type, /**< the property type */
+                                   const char *type, /**< the property type */
                                    int (*from_string)(void*,char*), /**< the converter from string to data */
                                    int (*to_string)(void*,char*,int)) /**< the converter from data to string */
 {
@@ -1270,7 +1270,7 @@ static int check = 0;  /* there must be a better way to do this, but this works.
  **/
 static int buffer_write(char *buffer, /**< buffer into which string is written */
                         size_t len,   /**< size of the buffer into which the string is written */
-                        char *format, /**< format of string to write into buffer, followed by the variable arguments */
+                        const char *format, /**< format of string to write into buffer, followed by the variable arguments */
                         ...)
 {
 	char temp[1025];

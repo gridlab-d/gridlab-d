@@ -38,8 +38,8 @@
 /** This function builds an collection of objects into an aggregation.  
 	The aggregation can be run using aggregate_value(AGGREGATION*)
  **/
-AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,std,sum,prod,mbe,mean,var,skew,kur,count,gamma) */
-							   char *group_expression) /**< grouping rule; see find_mkpgm(char *)*/
+AGGREGATION *aggregate_mkgroup(const char *aggregator, /**< aggregator (min,max,avg,std,sum,prod,mbe,mean,var,skew,kur,count,gamma) */
+							   const char *group_expression) /**< grouping rule; see find_mkpgm(char *)*/
 {
 	AGGREGATOR op = AGGR_NOP;
 	AGGREGATION *result=NULL;

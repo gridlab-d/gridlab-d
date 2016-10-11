@@ -37,8 +37,8 @@ extern "C" {
 
 	EXCEPTIONHANDLER *create_exception_handler();
 	void delete_exception_handler(EXCEPTIONHANDLER *ptr);
-	void throw_exception(char *msg, ...);
-	char *exception_msg(void);
+	void throw_exception(const char *msg, ...);
+	const char *exception_msg(void);
 
 #ifdef __cplusplus
 }

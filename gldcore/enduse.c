@@ -25,7 +25,7 @@
 static enduse *enduse_list = NULL;
 static unsigned int n_enduses = 0;
 
-double enduse_get_part(void *x, char *name)
+double enduse_get_part(void *x, const char *name)
 {
 	enduse *e = (enduse*)x;
 #define _DO_DOUBLE(X,Y) if ( strcmp(name,Y)==0) return e->X;
@@ -417,7 +417,7 @@ int convert_from_enduse(char *string,int size,void *data, PROPERTY *prop)
 	return len;
 }
 
-int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
+int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, const char *prefix)
 {
 	enduse *this=NULL; // temporary enduse structure used for mapping variables
 	int result = 0;
@@ -538,7 +538,7 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 	return result;
 }
 
-int convert_to_enduse(char *string, void *data, PROPERTY *prop)
+int convert_to_enduse(const char *string, void *data, PROPERTY *prop)
 {
 	enduse *e = (enduse*)data;
 	char buffer[1024];

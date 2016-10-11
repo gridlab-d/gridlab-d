@@ -77,9 +77,9 @@ struct s_object_list *find_first(FINDLIST *list);
 struct s_object_list *find_next(FINDLIST *list, struct s_object_list *obj);
 int find_makearray(FINDLIST *list, struct s_object_list ***objs);
 FINDLIST *find_runpgm(FINDLIST *list, FINDPGM *pgm);
-FINDPGM *find_mkpgm(char *search);
+FINDPGM *find_mkpgm(const char *search);
 PGMCONSTFLAGS find_pgmconstants(FINDPGM *pgm);
-char *find_file(char *name, char *path, int mode, char *buffer, int len);
+const char *find_file(const char *name, const char *path, int mode, char *buffer, int len);
 FINDPGM *find_make_invariant(FINDPGM *pgm, int mode);
 
 #ifdef __cplusplus
@@ -101,11 +101,11 @@ typedef struct s_objlist {
 extern "C" {
 #endif
 
-OBJLIST *objlist_create(CLASS *oclass, PROPERTY *match_property, char *match_part, char *match_op, void *match_value1, void *match_value2);
-OBJLIST *objlist_search(char *group);
+OBJLIST *objlist_create(CLASS *oclass, PROPERTY *match_property, const char *match_part, const char *match_op, void *match_value1, void *match_value2);
+OBJLIST *objlist_search(const char *group);
 void objlist_destroy(OBJLIST *list);
-size_t objlist_add(OBJLIST *list, PROPERTY *match_property, char *match_part, char *match_op, void *match_value1, void *match_value2);
-size_t objlist_del(OBJLIST *list, PROPERTY *match_property, char *match_part, char *match_op, void *match_value1, void *match_value2);
+size_t objlist_add(OBJLIST *list, PROPERTY *match_property, const char *match_part, const char *match_op, void *match_value1, void *match_value2);
+size_t objlist_del(OBJLIST *list, PROPERTY *match_property, const char *match_part, const char *match_op, void *match_value1, void *match_value2);
 size_t objlist_size(OBJLIST *list);
 struct s_object_list *objlist_get(OBJLIST *list,size_t n);
 int objlist_apply(OBJLIST *list, void *arg, int (*function)(struct s_object_list *,void *,int pos));
