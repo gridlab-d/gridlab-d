@@ -163,6 +163,8 @@ int recorder::init(OBJECT *parent)
 			else
 				sprintf(tmp,"`%s` %s, ", prop.get_name(), db->get_sqltype(prop));
 			strcat(property_list,tmp);
+			if ( db->query_ex("ALTER TABLE `%s` ADD COLUMN `%s` %s;", get_table(), prop.get_name(), db->get_sqltype(prop)) )
+				warning("automatically added missing column '%s' as '%s' to '%s'", prop.get_name(), db->get_sqltype(prop), get_table());
 		}
 	}
 
@@ -181,32 +183,42 @@ int recorder::init(OBJECT *parent)
 			{
 				header_pos += sprintf(header_data+header_pos,",'%s'",get_parent()->get_name());
 				strcat(property_list,"name CHAR(64), index i_name (name), ");
+				if ( db->query_ex("ALTER TABLE `%s` ADD COLUMN `name` CHAR(64);", get_table(), get_parent()->get_name()) )
+					warning("automatically added missing header field 'name' to '%s'", get_table());
 			}
 			else if ( header_specs[n].compare("class")==0 )
 			{
 				header_pos += sprintf(header_data+header_pos,",'%s'",get_parent()->get_oclass()->get_name());
 				strcat(property_list,"class CHAR(32), index i_class (class), ");
+				if ( db->query_ex("ALTER TABLE `%s` ADD COLUMN `class` CHAR(32);", get_table(), get_parent()->get_name()) )
+					warning("automatically added missing header field 'class' to '%s'", get_table());
 			}
-			else if ( header_specs[n].compare("group")==0 )
+			else if ( header_specs[n].compare("groupid")==0 )
 			{
 				header_pos += sprintf(header_data+header_pos,",'%s'",get_parent()->get_groupid());
-				strcat(property_list,"class CHAR(32), index i_group (group), ");
+				strcat(property_list,"class CHAR(32), index i_groupid (groupid), ");
+				if ( db->query_ex("ALTER TABLE `%s` ADD COLUMN `groupid` CHAR(32);", get_table(), get_parent()->get_name()) )
+					warning("automatically added missing header field 'groupid' to '%s'", get_table());
 			}
 			else if ( header_specs[n].compare("latitude")==0 )
 			{
 				if ( isnan(get_parent()->get_latitude()) )
 					header_pos += sprintf(header_data+header_pos,",%s","NULL");
 				else
-					header_pos += sprintf(header_data+header_pos,",%.6f",get_parent()->get_latitude());
+					header_pos += sprintf(header_data+header_pos,",%.6f", get_parent()->get_latitude());
 				strcat(property_list,"latitude DOUBLE, index i_latitude (latitude), ");
+				if ( db->query_ex("ALTER TABLE `%s` ADD COLUMN `latitude` DOUBLE;", get_table(), get_parent()->get_name()) )
+					warning("automatically added missing header field 'latitude' to '%s'", get_table());
 			}
 			else if ( header_specs[n].compare("longitude")==0 )
 			{
 				if ( isnan(get_parent()->get_longitude()) )
 					header_pos += sprintf(header_data+header_pos,",%s","NULL");
 				else
-					header_pos += sprintf(header_data+header_pos,",%.6f",get_parent()->get_oclass()->get_name());
+					header_pos += sprintf(header_data+header_pos,",%.6f", get_parent()->get_oclass()->get_name());
 				strcat(property_list,"longitude DOUBLE, index i_longitude (longitude), ");
+				if ( db->query_ex("ALTER TABLE `%s` ADD COLUMN `longitude` DOUBLE;", get_table(), get_parent()->get_name()) )
+					warning("automatically added missing header field 'longitude' to '%s'", get_table());
 			}
 			else
 				exception("header field %s does not exist",(const char*)header_specs[n].c_str());

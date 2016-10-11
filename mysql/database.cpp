@@ -367,6 +367,20 @@ bool database::query(char *fmt,...)
 	return true;
 }
 
+bool database::query_ex(char *fmt,...)
+{
+	char command[1024];
+	va_list ptr;
+	va_start(ptr,fmt);
+	vsnprintf(command,sizeof(command),fmt,ptr);
+	va_end(ptr);
+
+	// query mysql
+	gl_debug("%s->query_ex[%s]", get_name(), command);
+	check_schema();
+	return mysql_query(mysql,command) ? false : true;
+}
+
 MYSQL_RES *database::select(char *fmt,...)
 {
 	char command[1024];
