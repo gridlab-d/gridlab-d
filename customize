@@ -15,7 +15,8 @@ function help ()
 	delete <module>          Delete <module> from $CUSTOMFILE
 	enable <module>          Enable <module> in $CUSTOMFILE
 	disable <module>         Disable <module> in $CUSTOMFILE
-        status [<pattern> [...]] Display status of modules matching <pattern>
+	status                   Display status of modules matching <pattern>
+	sync_validate            Add/remove validate.no files according to custom.mk
 "
 }
 
@@ -30,6 +31,7 @@ function add ()
 		fi
 	else
 		echo "$1 is already listed in $CUSTOMFILE"
+		sync_validate
 	fi
 }
 
@@ -44,33 +46,73 @@ function delete ()
 		fi
 	else
 		T=".tmp$$"
-		grep -v $F $CUSTOMFILE >$T
-		mv $T $CUSTOMFILE
+		grep -v $F $CUSTOMFILE >$T && mv $T $CUSTOMFILE
 	fi
 }
 
 function enable ()
 {
-	echo "$(basename $0): enable is todo"
+	F="$1/Makefile.mk"
+	if [ -z "$(grep $F $CUSTOMFILE)" ]; then
+		if [ -f $F ]; then
+			echo "module $1 is not listed in $CUSTOMFILE"
+		else
+			echo "module $1 is not a valid module (missing $F)"
+		fi
+	else
+		T=".tmp$$"
+		sed -e "1,\$s:^#include $F:include $F:" < $CUSTOMFILE >$T && mv $T $CUSTOMFILE
+		sync_validate
+	fi
 }
 
 function disable ()
 {
-	echo "$(basename $0): disable is todo"
+	F="$1/Makefile.mk"
+	if [ -z "$(grep $F $CUSTOMFILE)" ]; then
+		if [ -f $F ]; then
+			echo "module $1 is not listed in $CUSTOMFILE"
+		else
+			echo "module $1 is not a valid module (missing $F)"
+		fi
+	else
+		T=".tmp$$"
+		sed -e "1,\$s:^include $F:#include $F:" < $CUSTOMFILE >$T && mv $T $CUSTOMFILE
+		sync_validate
+	fi
 }
 
 function status ()
 {
-	echo Enabled: $(grep '^include' <$CUSTOMFILE | sed -e 's/include //g;s:/Makefile.mk::g')
-	echo Disabled: $(grep '^#include' <$CUSTOMFILE | sed -e 's/#include //g;s:/Makefile.mk::g')
+	ENABLED=$(grep '^include' <$CUSTOMFILE | sed -e 's/include //g;s:/Makefile.mk::g')
+	DISABLED=$(grep '^#include' <$CUSTOMFILE | sed -e 's/#include //g;s:/Makefile.mk::g')
+	echo Enabled: $ENABLED
+	echo Disabled: $DISABLED
 }
 
+function sync_validate ()
+{
+	ENABLED=$(grep '^include' <$CUSTOMFILE | sed -e 's/include //g;s:/Makefile.mk::g')
+	DISABLED=$(grep '^#include' <$CUSTOMFILE | sed -e 's/#include //g;s:/Makefile.mk::g')
+	for F in $ENABLED; do
+		if [ -f $F/validate.no ]; then
+			echo -n "removing $F/validate.no..."
+			rm $F/validate.no && echo "ok"
+		fi
+	done
+	for F in $DISABLED; do
+		if [ ! -f $F/validate.no ]; then
+			echo -n "adding $F/validate.no..."
+			echo "$*: $(date)" > $F/validate.no && echo "ok"
+		fi
+	done
+}
 
 if [ $# -eq 0 ]; then
 	help_syntax
 else
 	case $1 in
-	(help|add|delete|enable|disable|status)
+	(help|add|delete|enable|disable|status|sync_validate)
 		$*
 		;;
 	(*)
