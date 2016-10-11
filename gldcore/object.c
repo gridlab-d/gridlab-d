@@ -971,6 +971,19 @@ static int set_header_value(OBJECT *obj, char *name, char *value)
 			return SUCCESS;
 		}
 	}
+	else if ( strcmp(name,"groupid")==0 )
+	{
+		if ( strlen(value)<sizeof(obj->groupid) )
+		{
+			strcpy(obj->groupid,value);
+			return SUCCESS;
+		}
+		else
+		{
+			output_error("object %s:%d groupid '%s' is too long (max=%d)", obj->oclass->name, obj->id, value, sizeof(obj->groupid));
+			return FAILED;
+		}
+	}
 	else {
 		output_error("object %s:%d called set_header_value() for invalid field '%s'", obj->oclass->name, obj->id, name);
 		/*	TROUBLESHOOT
