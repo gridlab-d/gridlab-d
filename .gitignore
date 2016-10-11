@@ -103,3 +103,4 @@ validate.txt
 .libs/
 .*.swp
 
+/.DS_Store
