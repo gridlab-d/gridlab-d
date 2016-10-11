@@ -1,0 +1,75 @@
+// gismo/test_switch_coordinator.glm
+// Copyright (C) 2016, Stanford University
+// Author: DP Chassin (dchassin@slac.stanford.edu)
+
+#set suppress_repeat_messages=false
+//#set verbose=TRUE
+//#set debug=TRUE
+
+clock
+{
+	timezone UTC0;						//Local timezone for the simulation
+	starttime '2011-01-01 00:00:00'; 	//Start time in the local timezone 
+	stoptime '2011-01-01 00:00:15';		//Stop time in the local timezone
+}
+
+module powerflow {
+	solver_method NR;
+	convergence_error_handling IGNORE;
+}
+module tape;
+
+// nodes
+object meter {
+	name swing;
+	nominal_voltage 2400;
+	voltage_A 2400 V;
+	voltage_B 2400+120d V;
+	voltage_C 2400-120d V;
+	phases ABC;
+	bustype SWING;
+}
+
+// loads
+global int32 SEQ_LOAD 0;
+object meter:..4 {
+	name `load_{SEQ_LOAD:INC}`;
+	nominal_voltage 2400;
+	phases ABCN;
+}
+
+global int32 SEQ_SWITCH 0;
+object switch:..4 {
+	name `switch_{SEQ_SWITCH:INC}`;
+	phases ABCN;
+	from swing;
+	to `load_{SEQ_SWITCH}`;
+	object recorder {
+		property status;
+		file `switch_{SEQ_SWITCH}.csv`;
+		interval -1;
+	};
+}
+
+module gismo;
+object switch_coordinator {
+	name controller_1;
+	connect switch_1;
+	connect switch_2;
+	connect switch_3;
+	connect switch_4;
+	object player {
+		property armed;
+		file controller_1_armed.csv;
+	};
+	object player {
+		property status;
+		file controller_1_status.csv;
+	};
+	object recorder {
+		property status,armed;
+		file controller_1.csv;
+		interval -1;
+	};
+}
+
