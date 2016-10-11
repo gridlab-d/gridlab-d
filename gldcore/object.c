@@ -1517,8 +1517,8 @@ TIMESTAMP object_sync(OBJECT *obj, /**< the object to synchronize */
 	if ( global_debug_output>0 )
 	{
 		const char *passname[]={"NOSYNC","PRESYNC","SYNC","INVALID","POSTSYNC"};
-		char dt1[64]="(invalid)"; convert_from_timestamp(absolute_timestamp(ts),dt1,sizeof(dt1));
-		char dt2[64]="(invalid)"; convert_from_timestamp(absolute_timestamp(t2),dt2,sizeof(dt2));
+		char dt1[64]="(invalid)"; if ( ts!=TS_INVALID ) convert_from_timestamp(absolute_timestamp(ts),dt1,sizeof(dt1)); else strcpy(dt1,"ERROR");
+		char dt2[64]="(invalid)"; if ( t2!=TS_INVALID ) convert_from_timestamp(absolute_timestamp(t2),dt2,sizeof(dt2)); else strcpy(dt2,"ERROR");
 		output_debug("object %s:%d pass %s sync to %s -> %s %s", obj->oclass->name, obj->id, pass<0||pass>4?"(invalid)":passname[pass], dt1, is_soft_timestamp(t2)?"SOFT":"HARD", dt2);
 	}
 	return t2;
@@ -1575,8 +1575,8 @@ STATUS object_precommit(OBJECT *obj, TIMESTAMP t1)
 		rv = SUCCESS;
 	}
 	object_profile(obj,OPI_PRECOMMIT,t);
-		if ( global_debug_output>0 )
-			output_debug("object %s:%d precommit -> %s", obj->oclass->name, obj->id, rv?"ok":"failed");
+	if ( global_debug_output>0 )
+		output_debug("object %s:%d precommit -> %s", obj->oclass->name, obj->id, rv?"ok":"failed");
 	return rv;
 }
 
@@ -1593,7 +1593,7 @@ TIMESTAMP object_commit(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 	object_profile(obj,OPI_COMMIT,t);
 	if ( global_debug_output>0 )
 	{
-		char dt[64]="(invalid)"; convert_from_timestamp(absolute_timestamp(rv),dt,sizeof(dt));
+		char dt[64]="(invalid)"; if ( rv!=TS_INVALID ) convert_from_timestamp(absolute_timestamp(rv),dt,sizeof(dt)); else strcpy(dt,"ERROR");
 		output_debug("object %s:%d commit -> %s %s", obj->oclass->name, obj->id, is_soft_timestamp(rv)?"SOFT":"HARD", dt);
 	}
 	return rv;
