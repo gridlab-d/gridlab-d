@@ -95,6 +95,8 @@ double timestamp_get_part(void *x, char *name);
 TIMESTAMP earliest_timestamp(TIMESTAMP t, ...);
 TIMESTAMP absolute_timestamp(TIMESTAMP t);
 int is_soft_timestamp(TIMESTAMP t);
+TIMESTAMP soften_timestamp(TIMESTAMP t);
+TIMESTAMP harden_timestamp(TIMESTAMP t);
 
 #ifdef __cplusplus
 }

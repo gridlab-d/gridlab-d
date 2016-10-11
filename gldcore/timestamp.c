@@ -1379,4 +1379,16 @@ int is_soft_timestamp(TIMESTAMP t)
 	return t>=-TS_MAX && t<0 ? 1 : 0;
 }
 
+TIMESTAMP soften_timestamp(TIMESTAMP t)
+{
+	if ( t>0 && t<TS_NEVER ) return -t;
+	else return t;
+}
+
+TIMESTAMP harden_timestamp(TIMESTAMP t)
+{
+	if ( -t>0 && -t<TS_NEVER ) return -t;
+	else return t;
+}
+
 /**@}*/

@@ -133,6 +133,7 @@
 #include "test.h"
 #include "link.h"
 #include "save.h"
+#include "fsm.h"
 
 #include "pthread.h"
 
@@ -811,6 +812,10 @@ static STATUS init_all(void)
 	errno = EINVAL;
 	if ( rv==FAILED) return FAILED;
 
+	/* initial stat machines */
+	if ( fsm_initall()==FAILED )
+		return FAILED;
+
 	/* collect heartbeat objects */
 	for ( obj=object_get_first(); obj!=NULL ; obj=obj->next )
 	{
@@ -1255,7 +1260,7 @@ TIMESTAMP sync_heartbeats(void)
 /* this function synchronizes all internal behaviors */
 TIMESTAMP syncall_internals(TIMESTAMP t1)
 {
-	TIMESTAMP h1, h2, s1, s2, s3, s4, s5, s6, se, sa;
+	TIMESTAMP h1, h2, s1, s2, s3, s4, s5, s6, s7, se, sa;
 
 	/* external link must be first */
 	h1 = link_syncall(t1);
@@ -1267,12 +1272,13 @@ TIMESTAMP syncall_internals(TIMESTAMP t1)
 	s3 = loadshape_syncall(t1);
 	s4 = transform_syncall(t1,XS_SCHEDULE|XS_LOADSHAPE);
 	s5 = enduse_syncall(t1);
+	s6 = fsm_syncall(t1);
 
 	/* heartbeats go last */
-	s6 = sync_heartbeats();
+	s7 = sync_heartbeats();
 
 	/* earliest soft event */
-	se = absolute_timestamp(earliest_timestamp(s1,s2,s3,s4,s5,s6,TS_ZERO));
+	se = absolute_timestamp(earliest_timestamp(s1,s2,s3,s4,s5,s6,s7,TS_ZERO));
 
 	/* final event */
 	sa = earliest_timestamp(h1,h2,se!=TS_NEVER?-se:TS_NEVER,TS_ZERO);

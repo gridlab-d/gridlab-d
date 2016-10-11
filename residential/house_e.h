@@ -54,6 +54,19 @@ typedef enum {
 	IES_RBSA2014	= 2,	///< implicit enduse data source is RBSA 2014
 } IMPLICITENDUSESOURCE; ///< values for implicit_enduse_source enumeration
 
+typedef struct s_plumbinglink {
+	OBJECT *obj;
+	double *gpm;
+	double *temp;
+	double *tdrop;
+} PLUMBINGLINK;
+#define MAXSINKS 3
+typedef struct s_plumbing {
+	PLUMBINGLINK source;
+	unsigned short n_sinks;
+	PLUMBINGLINK sink[MAXSINKS];
+} PLUMBING;
+
 //Solar quadrant definitions
 #define NO_SOLAR	0x0000
 #define HORIZONTAL	0x0001
@@ -425,6 +438,9 @@ private:
 	bool heat_start;
 
 	complex load_values[3][3];	//Power, Current, and impedance (admittance) load accumulators for
+
+	// plumbing model
+	PLUMBING plumbing;
 
 public:
 	int error_flag;

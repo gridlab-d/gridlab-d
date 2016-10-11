@@ -1128,7 +1128,7 @@ int convert_to_complex_array(const char *buffer, void *data, PROPERTY *prop)
 				a->set_at(row,col,c);
 				col++;
 			}
-			else if ( sscanf(value,"%[^.].%[^; \t]",objectname,propertyname)==2 ) /* object property */
+			else if ( sscanf(value,"%[^.].%[^,; \t]",objectname,propertyname)==2 ) /* object property */
 			{
 				OBJECT *obj = object_find_name(objectname);
 				PROPERTY *prop;
@@ -1152,7 +1152,7 @@ int convert_to_complex_array(const char *buffer, void *data, PROPERTY *prop)
 				}
 				col++;
 			}
-			else if ( sscanf(value,"%[^; \t]",propertyname)==1 ) /* object property */
+			else if ( sscanf(value,"%[^,; \t]",propertyname)==1 ) /* object property */
 			{
 				GLOBALVAR *var = global_find(propertyname);
 				if ( var==NULL )

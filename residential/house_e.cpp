@@ -1686,6 +1686,41 @@ CIRCUIT *house_e::attach(OBJECT *obj, ///< object to attach
 	// @todo get data on residential breaker lifetimes (residential, low priority)
 	c->tripsleft = 100;
 
+	// connect plumbing
+	OBJECT *attach_obj = OBJECTHDR((void*)pLoad);
+	if ( gl_object_isa(attach_obj,"waterheater") )
+	{
+		plumbing.source.obj = attach_obj;
+		plumbing.source.gpm = (double*)gl_get_addr(attach_obj,"water_demand");
+		if ( plumbing.source.gpm==NULL )
+			gl_warning("house_e: unable to find waterheater water_demand");
+		plumbing.source.temp = (double*)gl_get_addr(attach_obj,"temperature");
+		if ( plumbing.source.temp==NULL )
+			gl_warning("house_e: unable to find waterheater temperature");
+		plumbing.source.tdrop = (double*)gl_get_addr(attach_obj,"tdrop");
+		if ( plumbing.source.tdrop!=NULL && *(plumbing.source.tdrop)<0 )
+			gl_warning("house_e: source temperature drop must not be negative");
+	}
+	else if ( gl_object_isa(attach_obj,"dishwasher") || gl_object_isa(attach_obj,"clotheswasher") )
+	{
+		if ( plumbing.n_sinks<MAXSINKS )
+		{
+			plumbing.sink[plumbing.n_sinks].obj = obj;
+			plumbing.sink[plumbing.n_sinks].gpm = (double*)gl_get_addr(attach_obj,"hotwater_demand");
+			if ( plumbing.sink[plumbing.n_sinks].gpm==NULL )
+				gl_warning("house_e: unable to find appliance gpm");
+				plumbing.sink[plumbing.n_sinks].temp = (double*)gl_get_addr(attach_obj,"hotwater_temperature");
+			if ( plumbing.sink[plumbing.n_sinks].temp==NULL )
+				gl_warning("house_e: unable to find appliance temperature");
+			plumbing.sink[plumbing.n_sinks].tdrop = (double*)gl_get_addr(attach_obj,"hotwater_temperature_drop");
+			if ( plumbing.sink[plumbing.n_sinks].tdrop!=NULL && *(plumbing.sink[plumbing.n_sinks].tdrop)<0 )
+				gl_warning("house_e: source temperature drop must not be negative");
+				plumbing.n_sinks++;
+		}
+		else
+			gl_warning("house_e: unable to attach more plumbing sinks"); // TODO better warning message
+	}
+
 	return c;
 }
 
@@ -2310,6 +2345,26 @@ TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1)
 		if ((c->pLoad->voltage_factor > 1.06 || c->pLoad->voltage_factor < 0.88) && (ANSI_voltage_check==true))
 			gl_warning("%s - %s:%d is outside of ANSI standards (voltage = %.0f percent of nominal 120/240)", obj->name, obj->oclass->name,obj->id,c->pLoad->voltage_factor*100);
 	}
+
+	// update plumbing model for connected appliances
+	unsigned short sink;
+	if ( plumbing.source.gpm!=NULL )
+	{
+		*(plumbing.source.gpm) = 0.0; // clear gpm accumulator
+		for ( sink=0 ; sink<plumbing.n_sinks ; sink++ )
+		{
+			// increment gpm
+			if ( plumbing.sink[sink].gpm!=NULL && plumbing.source.gpm!=NULL )
+				*(plumbing.source.gpm) += *(plumbing.sink[sink].gpm);
+
+			// compute outlet temperature
+			if ( plumbing.sink[sink].temp!=NULL && plumbing.sink[sink].tdrop!=NULL && plumbing.source.temp!=NULL )
+				*(plumbing.sink[sink].temp) = *(plumbing.source.temp)
+					- (plumbing.source.tdrop!=NULL ? *(plumbing.source.tdrop) : 0.0)
+					- (plumbing.sink[sink].tdrop!=NULL ? *(plumbing.sink[sink].tdrop) : 0.0);
+		}
+	}
+
 	return TS_NEVER;
 }
 

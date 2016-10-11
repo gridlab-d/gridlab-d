@@ -26,8 +26,11 @@
 #include "compare.h"
 #include "stream.h"
 #include "exec.h"
+#include "fsm.h"
 
 /* IMPORTANT: this list must match PROPERTYTYPE enum in property.h */
+#define SIZEVARIES 0
+#define SIZEUNKNOWN ((unsigned int)-1)
 PROPERTYSPEC property_type[_PT_LAST] = {
 	{"void", "string", 0, 0, convert_from_void,convert_to_void},
 	{"double", "decimal", sizeof(double), 24, convert_from_double,convert_to_double,NULL,stream_double,{TCOPS(double)},},
@@ -42,16 +45,17 @@ PROPERTYSPEC property_type[_PT_LAST] = {
 	{"char256", "string", sizeof(char256), 256, convert_from_char256,convert_to_char256,NULL,NULL,{TCOPS(string)},},
 	{"char1024", "string", sizeof(char1024), 1024, convert_from_char1024,convert_to_char1024,NULL,NULL,{TCOPS(string)},},
 	{"object", "string", sizeof(OBJECT*), sizeof(OBJECTNAME), convert_from_object,convert_to_object,NULL,NULL,{TCOPB(object)},object_get_part},
-	{"delegated", "string", (unsigned int)-1, 0, convert_from_delegated, convert_to_delegated},
+	{"delegated", "string", SIZEUNKNOWN, SIZEVARIES, convert_from_delegated, convert_to_delegated},
 	{"bool", "string", sizeof(bool), 6, convert_from_boolean, convert_to_boolean,NULL,NULL,{TCOPB(bool)},},
 	{"timestamp", "string", sizeof(int64), 24, convert_from_timestamp_stub, convert_to_timestamp_stub,NULL,NULL,{TCOPS(uint64)},timestamp_get_part},
-	{"double_array", "string", sizeof(double_array), 0, convert_from_double_array, convert_to_double_array,double_array_create,NULL,{TCNONE},double_array_get_part},
-	{"complex_array", "string", sizeof(complex_array), 0, convert_from_complex_array, convert_to_complex_array,complex_array_create,NULL,{TCNONE},complex_array_get_part},
+	{"double_array", "string", sizeof(double_array), SIZEVARIES, convert_from_double_array, convert_to_double_array,double_array_create,NULL,{TCNONE},double_array_get_part},
+	{"complex_array", "string", sizeof(complex_array), SIZEVARIES, convert_from_complex_array, convert_to_complex_array,complex_array_create,NULL,{TCNONE},complex_array_get_part},
 	{"real", "decimal", sizeof(real), 24, convert_from_real, convert_to_real},
 	{"float", "decimal", sizeof(float), 24, convert_from_float, convert_to_float},
-	{"loadshape", "string", sizeof(loadshape), 0, convert_from_loadshape, convert_to_loadshape, loadshape_create,NULL,{TCOPS(double)},},
-	{"enduse", "string", sizeof(enduse), 0, convert_from_enduse, convert_to_enduse, enduse_create,NULL,{TCOPS(double)},enduse_get_part},
+	{"loadshape", "string", sizeof(loadshape), SIZEVARIES, convert_from_loadshape, convert_to_loadshape, loadshape_create,NULL,{TCOPS(double)},},
+	{"enduse", "string", sizeof(enduse), SIZEVARIES, convert_from_enduse, convert_to_enduse, enduse_create,NULL,{TCOPS(double)},enduse_get_part},
 	{"randomvar", "string", sizeof(randomvar), 24, convert_from_randomvar, convert_to_randomvar, randomvar_create,NULL,{TCOPS(double)},random_get_part},
+	{"statemachine","string",sizeof(statemachine), SIZEVARIES, convert_from_fsm, convert_to_fsm,fsm_create, NULL,{TCOPS(string)},},
 };
 
 PROPERTYSPEC *property_getspec(PROPERTYTYPE ptype)
@@ -189,12 +193,12 @@ uint32 property_size_by_type(PROPERTYTYPE type)
 	return property_type[type].size;
 }
 
-int property_create(PROPERTY *prop, void *addr)
+int property_create(PROPERTY *prop, void *addr, void *context)
 {
 	if (prop && prop->ptype>_PT_FIRST && prop->ptype<_PT_LAST)
 	{
 		if (property_type[prop->ptype].create)
-			return property_type[prop->ptype].create(addr);
+			return property_type[prop->ptype].create(addr,context);
 		//memset(addr,0,(prop->size==0?1:prop->size)*property_type[prop->ptype].size);
 		memset(addr,0,property_type[prop->ptype].size);
 		return 1;
@@ -388,6 +392,37 @@ double complex_array_get_part(void *x, char *name)
 	return QNAN;
 }
 
+int property_get_keyword_value(PROPERTY *prop, char *name, uint64 *value)
+{
+	KEYWORD *key;
+	for ( key=prop->keywords ; key!=NULL ; key=key->next )
+	{
+		if ( strcmp(name,key->name)==0 )
+		{
+			*value = key->value;
+			return 1;
+		}
+	}
+	return 0;
+}
 
+int property_get_keyword_name(PROPERTY *prop, uint64 value, char *buffer, size_t len)
+{
+	KEYWORD *key;
+	for ( key=prop->keywords ; key!=NULL ; key=key->next )
+	{
+		if ( value==key->value )
+		{
+			if ( strlen(key->name)<len )
+			{
+				strcpy(buffer,key->name);
+				return 1;
+			}
+			else
+				return 0;
+		}
+	}
+	return 0;
+}
 
 // EOF

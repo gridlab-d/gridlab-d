@@ -26,8 +26,8 @@ typedef enum {
 class residential_enduse : public gld_object
 {
 public:
+	enduse load;	// load data must be first so that any object can determine what is attaching to it
 	CIRCUIT *pCircuit;	// pointer to circuit data
-	enduse load;	// load data
 	loadshape shape;
 	enumeration re_override;
 	enumeration power_state;

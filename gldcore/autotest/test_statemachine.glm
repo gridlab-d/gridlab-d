@@ -1,0 +1,53 @@
+// $Id: test_statemachine.glm$
+//
+// Author: dchassin
+// Created: 2014-11-19
+//
+module residential;
+module tape;
+
+clock {
+	timezone PST+8PDT;
+	starttime '2000-01-01 00:00:00 PST';
+	stoptime '2000-01-02 00:00:00 PST';
+}
+
+// add test properties to house
+class house {
+	enumeration {OFF=0,ON=1} mode;
+	randomvar x;
+	randomvar y;
+	statemachine fsm;
+}
+
+//#load house_fsm.cpp
+
+// Test machine definition
+//
+// Input variables:
+//   x is N(mu=0, sigma=1) updated every 3 seconds
+//   y is U(min=0, max=1) updated every 5 seconds
+//
+// Transition rules:
+//   OFF->ON when x<0 and y<0.1
+//   ON->OFF when x>y and runtime<45s
+//   ON->OFF when x>0 and runtime>120s
+//
+// Refractory times:
+//   OFF holds for 1 minute
+//   ON holds for 0.5 minute
+//
+object house {
+	x "type:normal(0,1); refresh:3s";
+	y "type:uniform(0,1); refresh:5s";
+	// Alternative for internal state machine (slow but simple)
+	fsm "state:mode; rule:OFF->ON=x<0,y<0.1; rule:ON->OFF=$timer<45,x>y; rule:ON->OFF=$timer>120,x>0; hold:OFF=1 min; hold:ON=0.5 min;";
+	// Alternatives using external DLL for state machine (very fast, very flexible)
+	//	fsm "external: house_fsm/test_machine; lhs:mode; rhs:x,y"; // syntax for specified external CPP source file name
+	//	fsm "external: test_machine; lhs:mode; rhs:x,y"; // syntax for automatic external library file name
+	object recorder {
+		property x,y,mode,fsm;
+		interval -1;
+		file "test_statemachine.csv";
+	};
+}

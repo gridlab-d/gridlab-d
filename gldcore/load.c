@@ -6903,6 +6903,20 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		strcpy(line,"\n");
 		return cmdarg_runoption(value)>=0;
 	}
+	else if ( strncmp(line,MACRO "load",5)==0 )
+	{
+		char *term = strchr(line+5,' ');
+		char value[1024];
+		if (term==NULL)
+		{
+			output_error_raw("%s(%d): %sload missing source file name",filename,linenum,MACRO);
+			strcpy(line,"\n");
+			return FALSE;
+		}
+		strcpy(value, strip_right_white(term+1));
+		strcpy(line,"\n");
+		return module_link(value)==0?FALSE:TRUE;
+	}
 	else if ( strncmp(line,MACRO "wget",5)==0 )
 	{
 		char url[1024], file[1024];

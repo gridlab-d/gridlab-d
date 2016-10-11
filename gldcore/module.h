@@ -106,6 +106,8 @@ extern "C" {
 	void module_termall(void);
 	MODULE *module_get_next(MODULE*);
 
+	int module_link(char *file);
+
 #ifdef __cplusplus
 }
 #endif

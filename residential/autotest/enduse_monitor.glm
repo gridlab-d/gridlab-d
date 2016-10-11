@@ -1,0 +1,71 @@
+// enduse_monitoring.glm
+// 
+// Supports enduse monitoring by inspecting the house panel circuits
+
+class enduse_monitor {
+    char1024 filename;
+    intrinsic create(object parent)
+    {
+        sprintf(filename,"enduse_%d.csv",my->id);
+        return SUCCESS;
+    };
+    intrinsic init(object parent)
+    {
+        OBJECT *weather = (OBJECT*)gl_get_addr(my->parent,"weather");
+        PANEL *panel = (PANEL*)((char*)weather+sizeof(OBJECT*));
+        CIRCUIT *circuit;
+        if ( parent==NULL || strcmp(parent->oclass->name,"house")!=0 )
+        {
+            gl_error("parent is not a house");
+            return FAILED;
+        }
+        fp = fopen(filename,"w");
+        if ( fp==NULL )
+        {
+            gl_error("unable to open enduse monitoring output file '%s'", filename);
+            return FAILED;
+        }
+        fprintf(fp,"# file...... %s\n# date...... \n# user...... \n# host...... \n# target.... \n"
+		"# trigger... \n# interval.. 3600\n# limit..... \n# timestamp",filename);
+        for ( circuit=panel->circuits ; circuit!=NULL ; circuit = circuit->next )
+        {
+            enduse *load = circuit->pLoad;
+            fprintf(fp,",%s",load->name);
+            load->energy = 0;
+        }
+        fprintf(fp,"%s","\n");
+        return SUCCESS;
+    };
+    intrinsic commit(TIMESTAMP t0, TIMESTAMP t1)
+    {
+        if ( t1%3600==0 )
+        {
+            // panel is not published but it follows weather, which is published
+            OBJECT *weather = (OBJECT*)gl_get_addr(my->parent,"weather");
+            char buffer[256]="INVALID";
+            PANEL *panel = (PANEL*)((char*)weather+sizeof(OBJECT*));
+            CIRCUIT *circuit;
+            struct tm *ts=localtime(&t1);
+            fprintf(fp,"%04d-%02d-%02d %02d:%02d:%02d PST",
+                ts->tm_year+1900,ts->tm_mon+1,ts->tm_mday,
+                ts->tm_hour,ts->tm_min,ts->tm_sec
+                );
+            for ( circuit=panel->circuits ; circuit!=NULL ; circuit = circuit->next )
+            {
+                enduse *load = circuit->pLoad;
+                double diff = load->energy.Re() - energy[circuit->id];
+                fprintf(fp,",%g",diff);
+                energy[circuit->id] = load->energy.Re();            
+            }
+            fprintf(fp,"%s","\n");
+        }
+        return 3600*((t1/3600)+1);
+    };
+    intrinsic finalize()
+    {
+        fclose(fp);
+        return SUCCESS;
+    };
+    private FILE *fp;
+    private double energy[32];
+}

@@ -1,0 +1,70 @@
+// $Id: test_statemachine.glm$
+//
+// Author: dchassin
+// Created: 2014-11-19
+//
+module residential {
+	implicit_enduses NONE;
+}
+module tape;
+module generators;
+module powerflow;
+
+clock {
+	timezone PST+8PDT;
+	starttime '2000-01-01 00:00:00 PST';
+	stoptime '2000-01-05 00:00:00 PST';
+}
+
+object triplex_meter{
+	phases AS;
+	nominal_voltage 120V;
+
+	//object player {
+	//	property nominal_voltage;
+	//	//runs 3 cycles: for 110V 120V and 130V;
+	//};
+	
+	object recorder {
+		file meterNet.csv;
+		interval -1;
+		property measured_demand, measured_real_power, measured_reactive_power;
+	};
+	object house {
+
+		object waterheater {
+			tank_volume 50.0 gal;
+			tank_diameter 1.5 ft; 
+			inlet_water_temperature 60.0 degF;
+			location GARAGE;
+			heat_mode ELECTRIC;
+			tank_setpoint random.normal(130,10);
+			thermostat_deadband (1+ random.normal(2,1));
+			tank_UA random.normal(2.0, 0.2);
+			heating_element_capacity 4500 W;
+		};
+		
+		object ZIPload{
+			heatgain_fraction 0.9;
+			power_pf 1.000;
+			current_pf 1.000;
+			impedance_pf 1.000;
+			impedance_fraction 0.3000;
+			current_fraction 0.3000;
+			power_fraction 0.4000;
+		
+		};
+		
+		
+		object dishwasher {
+			washmode 0; // quick
+			drymode 1; // heat
+			
+			object recorder {
+				property state_queue, controlmode, state_machine, load.power, load.current, load.demand, load.total, load.admittance; 
+				interval -1;
+				file "test_statemachine_dishwasher.csv";
+			};
+		};
+	};
+}

@@ -1,134 +1,108 @@
-/** $Id: clotheswasher.h 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id: dishwasher.h 4738 2014-07-03 00:55:39Z dchassin $
 	Copyright (C) 2008 Battelle Memorial Institute
-	@file clotheswasher.h
-	@addtogroup clotheswasher
+	@file dishwasher.h
+	@addtogroup dishwasher
 	@ingroup residential
 
  @{
  **/
 
-#ifndef _clotheswasher_H
-#define _clotheswasher_H
+#ifndef _CLOTHESWASHER_H
+#define _CLOTHESWASHER_H
 
+#include "gridlabd.h"
 #include "residential.h"
 #include "residential_enduse.h"
+#include "fsm.h"
+
+#define CW_OFF 0x00
+#define CW_CONTROL 0x01
+#define CW_MOTOR 0x02
+#define CW_HEAT 0x04
+#define CW_STALL 0x08
+#define CW_PHASE1 0x10
+#define CW_PHASE2 0x20
+#define CW_PHASE3 0x30
 
 class clotheswasher : public residential_enduse
 {
-public:
-	double circuit_split;				///< -1=100% negative, 0=balanced, +1=100% positive
-	double motor_power;					///< installed clotheswasher motor power [W] (default = random uniform between 500 - 750 W)
-	double enduse_demand;				///< amount of demand added per hour (units/hr)
-	double enduse_queue;				///< accumulated demand (units)
-	double cycle_duration;				///< typical cycle runtime (s)
-	double cycle_time;					///< remaining time in main cycle (s)
-	double state_time;					///< remaining time in current state (s)
-	double stall_voltage;				///< voltage at which the motor stalls
-	double start_voltage;				///< voltage at which motor can start
-	complex stall_impedance;			///< impedance of motor when stalled
-	double trip_delay;					///< stalled time before thermal trip
-	double reset_delay;					///< trip time before thermal reset and restart
-	double heat_fraction;				///< internal gain fraction of installed power
-	TIMESTAMP time_state;				///< time in current state
-	bool starttime;
 	typedef enum {
-		STOPPED=0,						///< motor is stopped
-		RUNNING=1,						///< motor is running
-		STALLED=2,						///< motor is stalled
-		TRIPPED=3,						///< motor is tripped
-		PREWASH=4,
-		WASH=5,
-		SPIN1=6,
-		SPIN2=7,
-		SPIN3=8,
-		SPIN4=9
-	};
-	enumeration state;							///< control state
+		HOTWASH		= 0x00,
+		WARMWASH	= 0x01,
+		COLDWASH    = 0x02;
+	} CLOTHESWASHERWASHTEMP;
+	typedef enum {
+		HOTRINSE	= 0x00,
+		WARMRINSE	= 0x01,
+		COLDRINSE   = 0x02;
+	} CLOTHESWASHERRINSETEMP;
+	typedef enum {
+		QUICK	= 0x00,
+		NORMAL	= 0x01,
+		HEAVY	= 0x02,
+	} CLOTHESWASHERMODE;
+	typedef enum {
+		OFF,
+		CONTROLSTART,
+		PUMPWASHLOWHEATCOLD,
+		PUMPWASHLOWHEATWARM,
+		PUMPWASHLOWHEATHOT,
+		WASHAGITATION,
+		PUMPWASHMEDIUM,
+		CONTROLRINSE,
+		PUMPRINSELOWHEATCOLD,
+		PUMPRINSELOWHEATWARM,
+		PUMPRINSELOWHEATHOT,
+		RINSEAGITATION,
+		PUMPRINSEMEDIUM,
+		POSTRINSEAGITATION,
+		CONTROLRINSEHIGH,
+		PUMPRINSEHIGH,
+		POSTRINSEHIGHAGITATION,
+		CONTROLEND,
+	} CLOTHESWASHERSTATE;
+
+	//TOFIX
+public:
+	GL_BITFLAGS(enumeration,controlmode); ///< controller mode
+	GL_STRUCT(double_array,state_duration); ///< state duration
+	GL_STRUCT(complex_array,state_power); ///< power for each state
+	GL_STRUCT(double_array,state_heatgain); ///< heatgain for each state
+	GL_STRUCT(statemachine,state_machine); ///< state machine rules
+	GL_BITFLAGS(enumeration,washtemp); ///< dry option selector
+	GL_BITFLAGS(enumeration,rinsetemp); ///< wash option selector
+	GL_BITFLAGS(enumeration,washmode); ///< wash option selector
+	GL_STRUCT(complex,pump_power); ///< power used by pump
+	GL_STRUCT(complex,coil_power_wet); ///< power used by coils when wet (100C)
+	//GL_STRUCT(complex,coil_power_dry); ///< power used by coils when dry (>>100C)
+	GL_STRUCT(complex,control_power); ///< power used by controller
+	GL_ATOMIC(double,state_queue); ///< accumulated demand (units)
+	GL_ATOMIC(double,demand_rate); ///< dish load accumulation rate (units/day)
+	GL_ATOMIC(double,hotwater_demand); ///< hotwater consumption (gpm)
+	GL_ATOMIC(double,hotwater_temperature); ///< hotwater temperature (degF)
+	GL_ATOMIC(double,hotwater_temperature_drop); ///< hotwater temperature drop from plumbing bus (degF)
+	GL_STRUCT(double_array,state_setpoint); ///< temperature setpoints for each state
+private:
+	size_t n_states; ///< number states defined in controlmode
 
 public:
 	static CLASS *oclass, *pclass;
 	static clotheswasher *defaults;
-
-	double Is_on;
-
-	bool new_running_state;
-	bool critical_cycle;
-	double clothesWasherPower;
-	double normal_perc;
-	double perm_press_perc;
-
-	double NORMAL_PREWASH_POWER;
-	double NORMAL_WASH_POWER;
-	double NORMAL_SPIN_LOW_POWER;	
-	double NORMAL_SPIN_MEDIUM_POWER;	
-	double NORMAL_SPIN_HIGH_POWER;	
-	double NORMAL_SMALLWASH_POWER;	
-
-	double NORMAL_PREWASH_ENERGY;
-	double NORMAL_WASH_ENERGY;
-	double NORMAL_SPIN_LOW_ENERGY;	
-	double NORMAL_SPIN_MEDIUM_ENERGY;	
-	double NORMAL_SPIN_HIGH_ENERGY;	
-	double NORMAL_SMALLWASH_ENERGY;	
-
-	double PERMPRESS_PREWASH_POWER;
-	double PERMPRESS_WASH_POWER;
-	double PERMPRESS_SPIN_LOW_POWER;	
-	double PERMPRESS_SPIN_MEDIUM_POWER;	
-	double PERMPRESS_SPIN_HIGH_POWER;	
-	double PERMPRESS_SMALLWASH_POWER;	
-
-	double PERMPRESS_PREWASH_ENERGY;
-	double PERMPRESS_WASH_ENERGY;
-	double PERMPRESS_SPIN_LOW_ENERGY;	
-	double PERMPRESS_SPIN_MEDIUM_ENERGY;	
-	double PERMPRESS_SPIN_HIGH_ENERGY;	
-	double PERMPRESS_SMALLWASH_ENERGY;
-
-	double GENTLE_PREWASH_POWER;
-	double GENTLE_WASH_POWER;
-	double GENTLE_SPIN_LOW_POWER;	
-	double GENTLE_SPIN_MEDIUM_POWER;	
-	double GENTLE_SPIN_HIGH_POWER;	
-	double GENTLE_SMALLWASH_POWER;	
-
-	double GENTLE_PREWASH_ENERGY;
-	double GENTLE_WASH_ENERGY;
-	double GENTLE_SPIN_LOW_ENERGY;	
-	double GENTLE_SPIN_MEDIUM_ENERGY;	
-	double GENTLE_SPIN_HIGH_ENERGY;	
-	double GENTLE_SMALLWASH_ENERGY;
-
-	double queue_min;
-	double queue_max;
-
-	double clotheswasher_run_prob;
-
-	enum {  SPIN_LOW=0,						///< low power spin
-			SPIN_MEDIUM=1,					///< medium power spin
-			SPIN_HIGH=2,					///< high power spin
-			SPIN_WASH=3,							///< wash mode
-			SMALLWASH=4,					///< small wash modes in between
-	};
-	enumeration spin_mode;
-
-	enum {  NORMAL=0,						///< Normal wash
-			PERM_PRESS=1,					///< Permenant press wash
-			GENTLE=2,						///< Gentle wash
-	};
-	enumeration wash_mode;
 
 	clotheswasher(MODULE *module);
 	~clotheswasher();
 	int create();
 	int init(OBJECT *parent);
 	int isa(char *classname);
-	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
-	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
-	double update_state(double dt);		///< updates the load struct and returns the time until expected state change
+	TIMESTAMP last_t;
 
+	int precommit(TIMESTAMP t1);
+	TIMESTAMP sync(TIMESTAMP t1);
+	inline TIMESTAMP presync(TIMESTAMP t1);
+	inline TIMESTAMP postsync(TIMESTAMP t1) { return TS_NEVER;};
+	double update_state(double dt); //, TIMESTAMP t1=0);		///< updates the load struct and returns the time until expected state change
 };
 
-#endif // _clotheswasher_H
+#endif // _CLOTHESWASHER_H
 
 /**@}**/

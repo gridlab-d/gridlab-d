@@ -2091,10 +2091,10 @@ public: // special operations
 	inline set get_set(void) { if ( pstruct.prop->ptype == PT_set ) return *(set*)get_addr(); exception("get_set() called on a property that is not a set"); };
 	inline gld_object* get_objectref(void) { if ( is_objectref() ) return ::get_object(*(OBJECT**)get_addr()); else return NULL; };
 	template <class T> inline void getp(T &value) { ::rlock(&obj->lock); value = *(T*)get_addr(); ::runlock(&obj->lock); };
-	template <class T> inline void setp(T &value) { ::wlock(&obj->lock); *(T*)get_addr()=value; ::wunlock(&obj->lock); };
+	template <class T> inline void setp(T value) { ::wlock(&obj->lock); *(T*)get_addr()=value; ::wunlock(&obj->lock); };
 	template <class T> inline void getp(T &value, gld_rlock&) { value = *(T*)get_addr(); };
 	template <class T> inline void getp(T &value, gld_wlock&) { value = *(T*)get_addr(); };
-	template <class T> inline void setp(T &value, gld_wlock&) { *(T*)get_addr()=value; };
+	template <class T> inline void setp(T value, gld_wlock&) { *(T*)get_addr()=value; };
 	inline void setp(enumeration value) { ::wlock(&obj->lock); *(enumeration*)get_addr()=value; ::wunlock(&obj->lock); };
 	inline void setp(set value) { ::wlock(&obj->lock); *(set*)get_addr()=value; ::wunlock(&obj->lock); };
 	inline gld_keyword* find_keyword(unsigned long value) { return get_first_keyword()->find(value); };

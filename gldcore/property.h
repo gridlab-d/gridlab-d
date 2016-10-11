@@ -837,6 +837,7 @@ typedef enum {_PT_FIRST=-1,
 	PT_loadshape,	/**< Loadshapes are state machines driven by schedules */
 	PT_enduse,		/**< Enduse load data */
 	PT_random,		/**< Randomized number */
+	PT_statemachine, /**< State machine */
 	/* add new property types here - don't forget to add them also to rt/gridlabd.h and property.c */
 #ifdef USE_TRIPLETS
 	PT_triple, /**< triplet of doubles (not supported) */
@@ -941,7 +942,7 @@ typedef struct s_property_specs { /**<	the property type conversion specificatio
 	unsigned int csize; /**< the minimum size of a converted instance (not including '\0' or unit, 0 means a call to property_minimum_buffersize() is necessary) */ 
 	int (*data_to_string)(char *,int,void*,PROPERTY*); /**< the function to convert from data to a string */
 	int (*string_to_data)(const char *,void*,PROPERTY*); /**< the function to convert from a string to data */
-	int (*create)(void*); /**< the function used to create the property, if any */
+	int (*create)(void*,void*); /**< the function used to create the property, if any */
 	size_t (*stream)(FILE*,int,void*,PROPERTY*); /**< the function to read data from a stream */
 	struct {
 		PROPERTYCOMPAREOP op;
@@ -963,7 +964,7 @@ PROPERTY *property_malloc(PROPERTYTYPE, CLASS *, char *, void *, DELEGATEDTYPE *
 uint32 property_size(PROPERTY *);
 uint32 property_size_by_type(PROPERTYTYPE);
 size_t property_minimum_buffersize(PROPERTY *);
-int property_create(PROPERTY *, void *);
+int property_create(PROPERTY *, void *, void *context);
 bool property_compare_basic(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void *x, void *a, void *b, char *part);
 PROPERTYCOMPAREOP property_compare_op(PROPERTYTYPE ptype, char *opstr);
 PROPERTYTYPE property_get_type(char *name);
@@ -982,6 +983,9 @@ complex *get_complex_array_value(complex_array*,unsigned int n, unsigned int m);
 void set_complex_array_value(complex_array*,unsigned int n, unsigned int m, complex *x);
 complex *get_complex_array_ref(complex_array*,unsigned int n, unsigned int m);
 double complex_array_get_part(void *x, char *name);
+
+int property_get_keyword_value(PROPERTY *prop, char *name, uint64 *value);
+int property_get_keyword_name(PROPERTY *prop, uint64 value, char *buffer, size_t len);
 
 #ifdef __cplusplus
 }
