@@ -863,6 +863,14 @@ int http_xml_request(HTTPCNX *http,char *uri)
 						sprintf(fmt,"%%.%c%c rad",spec[0],spec[1]);
 						sprintf(buffer,fmt,complex_get_arg(cvalue),uname);
 						break;
+					case 'X': // real part only
+						sprintf(fmt,"%%.%c%c %%s",spec[0],spec[1]);
+						sprintf(buffer,fmt,cvalue.r,cvalue.i,uname);
+						break;
+					case 'Y': // imaginary part only
+						sprintf(fmt,"%%.%c%c %%s",spec[0],spec[1]);
+						sprintf(buffer,fmt,cvalue.r,cvalue.i,uname);
+						break;
 					default:
 						output_error("object '%s' property '%s' complex angle notation '%c' is not valid", arg1, arg2, spec[2]=='\0' ? cvalue.f : spec[3]);
 						return 0;
@@ -942,7 +950,7 @@ int http_json_request(HTTPCNX *http,char *uri)
 		/* find the variable */
 		if (global_getvar(arg1,buffer,sizeof(buffer))==NULL)
 		{
-			http_format(http,"{error: \"globalvar not found\", query: \"%s\"}\n", arg1);
+			http_format(http,"{\"error\": \"globalvar not found\", query: \"%s\"}\n", arg1);
 			http_type(http,"text/json");
 			return 1;
 		}
@@ -967,7 +975,7 @@ int http_json_request(HTTPCNX *http,char *uri)
 			obj = object_find_by_id(atoi(id+1));
 		if ( obj==NULL )
 		{
-			http_format(http,"{error: \"object not found\", query: \"%s\"}\n", arg1);
+			http_format(http,"{\"error\": \"object not found\", query: \"%s\"}\n", arg1);
 			http_type(http,"text/json");
 			return 1;
 		}
@@ -1009,7 +1017,7 @@ int http_json_request(HTTPCNX *http,char *uri)
 					http_format(http,"\t{\"%s\": \"%s\"}",prop->name,http_unquote(buffer));
 				else
 				{
-					http_format(http,"{error: \"unable to get property value\", object: \"%s\", property: \"%s\"}\n", arg1,arg2);
+					http_format(http,"{\"error\" : \"unable to get property value\", object: \"%s\", property: \"%s\"}\n", arg1,arg2);
 					http_type(http,"text/json");
 					return 1;
 				}
@@ -1023,7 +1031,7 @@ int http_json_request(HTTPCNX *http,char *uri)
 			/* post the current value */
 			if ( !object_get_value_by_name(obj,arg2,buffer,sizeof(buffer)) )
 			{
-				http_format(http,"{error: \"property not found\", object: \"%s\", property: \"%s\"}\n", arg1,arg2);
+				http_format(http,"{\"error\": \"property not found\", object: \"%s\", property: \"%s\"}\n", arg1,arg2);
 				http_type(http,"text/json");
 				return 1;
 			}
@@ -1031,16 +1039,16 @@ int http_json_request(HTTPCNX *http,char *uri)
 			/* assignment, if any */
 			if ( value && !object_set_value_by_name(obj,arg2,value) )
 			{
-				http_format(http,"{error: \"property write failed\", object: \"%s\", property: \"%s\", value: \"%s\"}\n", arg1,arg2,value);
+				http_format(http,"{\"error\": \"property write failed\", object: \"%s\", property: \"%s\", value: \"%s\"}\n", arg1,arg2,value);
 				http_type(http,"text/json");
 				return 1;
 			}
 
 			/* post the response */
-			http_format(http,"{\tobject: \"%s\", \n", arg1);
-			http_format(http,"\tname: \"%s\", \n", arg2);
+			http_format(http,"{\t\"object\" : \"%s\", \n", arg1);
+			http_format(http,"\t\"name\" : \"%s\", \n", arg2);
 			/* TODO add property type info */
-			http_format(http,"\tvalue: \"%s\"\n}\n", http_unquote(buffer));
+			http_format(http,"\t\"value\" : \"%s\"\n}\n", http_unquote(buffer));
 		}
 		http_type(http,"text/json");
 		return 1;
