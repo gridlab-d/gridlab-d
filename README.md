@@ -1,21 +1,19 @@
+The repository is only for building and installing GridLAB-D from source.  The 
+installers for released versions are available at http://sourceforge.net/projects/gridlab-d/files/.
+
 # Installing from source
 
 Download the source code, build, install and validate (you will need autotools)
+```
+  host% git clone git@code.stanford.edu:/gridlabd/gridlabd source
+  host% cd source
+  host% autoreconf -isf
+  host% ./configure --enable-silent-rules --prefix=$HOME 'CXXFLAGS=-w' 'CFLAGS=-w'
+  host% make install
+  host% export PATH=~/bin:$PATH
+  host% gridlabd --validate
+```
 
->  host% git clone git@code.stanford.edu:/gridlabd/gridlabd source
-  
->  host% cd source
-  
->  host% autoreconf -isf
-  
->  host% ./configure --enable-silent-rules --prefix=$HOME 'CXXFLAGS=-w' 'CFLAGS=-w'
-  
->  host% make install
-  
->  host% export PATH=~/bin:$PATH
-  
->  host% gridlabd --validate
-  
 ## Windows build
 
 Windows users will need to install cygwin to enable building using autotools.
