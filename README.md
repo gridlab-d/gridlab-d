@@ -1,3 +1,6 @@
+The repository is only for building and installing GridLAB-D from source.  The 
+installers for released versions are available at http://sourceforge.net/projects/gridlab-d/files/.
+
 # Installing from source
 
 Download the source code, build, install and validate (you will need autotools)
