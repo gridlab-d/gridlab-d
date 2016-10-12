@@ -9,7 +9,7 @@
 
 class switch_coordinator : public gld_object {
 public:
-	enum {SCS_IDLE=0, SCS_ARMED=1, SCS_ACTIVE=2} SWITCHCOORDINATIONSTATUS;
+	enum {SCS_IDLE=0, SCS_ARMED=1, SCS_TOGGLE=2, SCS_DIRECT=3} SWITCHCOORDINATIONSTATUS;
 public:
 	GL_ATOMIC(enumeration,status);
 	GL_ATOMIC(set,armed);

@@ -7,7 +7,7 @@
 // == Synopsis ==
 //
 //   object switch_coordinator {
-//     status {IDLE, ARMED, ACTIVE};
+//     status {IDLE, ARMED, TOGGLE, DIRECT};
 //     connect <name1>;
 //     connect <name2>;
 //     ...
@@ -58,7 +58,8 @@ switch_coordinator::switch_coordinator(MODULE *module)
 			PT_enumeration,"status",get_status_offset(), PT_DESCRIPTION,"switch coordination status",
 				PT_KEYWORD, "IDLE", (enumeration)SCS_IDLE,
 				PT_KEYWORD, "ARMED", (enumeration)SCS_ARMED,
-				PT_KEYWORD, "ACTIVE", (enumeration)SCS_ACTIVE,
+				PT_KEYWORD, "TOGGLE", (enumeration)SCS_TOGGLE,
+				PT_KEYWORD, "DIRECT", (enumeration)SCS_DIRECT,
 			PT_set,"armed",get_armed_offset(), PT_DESCRIPTION,"set of armed switches",
 				PT_KEYWORD, "NONE", (set)0,
 			NULL)<1){
@@ -181,7 +182,7 @@ int switch_coordinator::init(OBJECT *parent)
 int switch_coordinator::precommit(TIMESTAMP t1)
 {
 	debug("switch_coordinator::precommit(TIMESTAMP t1='%s')", (const char*)gld_clock(t1).get_string());
-	if ( status==SCS_ACTIVE )
+	if ( status==SCS_TOGGLE )
 	{
 		// record the initial state of the armed switches
 		states = armed;
@@ -199,9 +200,9 @@ int switch_coordinator::precommit(TIMESTAMP t1)
 TIMESTAMP switch_coordinator::sync(TIMESTAMP t1)
 {
 	debug("switch_coordinator::sync(TIMESTAMP t1='%s')", (const char*)gld_clock(t1).get_string());
-	if ( status==SCS_ACTIVE )
+	if ( status==SCS_TOGGLE )
 	{
-		verbose("activating scheme with armed=%s)", (const char*)get_armed_property().get_string());
+		verbose("activating toggle scheme with armed=%s)", (const char*)get_armed_property().get_string());
 		// set state of armed devices
 		unsigned int n;
 		for ( n = 0 ; n < n_switches ; n++ )
@@ -213,6 +214,17 @@ TIMESTAMP switch_coordinator::sync(TIMESTAMP t1)
 			}
 		}
 	}
+	else if ( status==SCS_DIRECT )
+	{
+		verbose("activating direct scheme with armed=%s)", (const char*)get_armed_property().get_string());
+		// set state of armed devices
+		unsigned int n;
+		for ( n = 0 ; n < n_switches ; n++ )
+		{
+			verbose("setting state for index[%d]='%s.%s' = %s", n, (const char*)get_armed_property().get_string(), (const char*)index[n]->get_name(), armed&(1<<n) ? "CLOSED" : "OPEN" );
+			index[n]->setp((armed&(1<<n)) ? ((enumeration)(switch_object::CLOSED)) : ((enumeration)(switch_object::OPEN)) );
+		}
+	}
 	else
 		verbose("no action, status=%s", (const char*)get_status_property().get_string());
 	debug("switch_coordinator::sync(TIMESTAMP t1='%s') -> TS_NEVER", (const char*)gld_clock(t1).get_string());
@@ -222,7 +234,7 @@ TIMESTAMP switch_coordinator::sync(TIMESTAMP t1)
 TIMESTAMP switch_coordinator::commit(TIMESTAMP t1, TIMESTAMP t2)
 {
 	debug("switch_coordinator::commit(TIMESTAMP t1='%s', TIMESTAMP t2='%s')", (const char*)gld_clock(t1).get_string(), (const char*)gld_clock(t2).get_string());
-	if ( status==SCS_ACTIVE )
+	if ( status==SCS_TOGGLE || status==SCS_DIRECT )
 	{
 		armed = 0;
 		status = SCS_IDLE;
