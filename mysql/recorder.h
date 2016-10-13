@@ -36,6 +36,7 @@ private:
 	std::vector<gld_property> property_target;
 	std::vector<gld_unit> property_unit;
 	char header_data[1024];
+	char *oldvalues;
 public:
 	inline bool get_trigger_on(void) { return trigger_on; };
 	inline bool get_enabled(void) { return enabled; };

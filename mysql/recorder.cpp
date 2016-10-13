@@ -144,7 +144,7 @@ int recorder::init(OBJECT *parent)
 				exception("property %s is not valid", buffer);
 
 			property_target.push_back(prop);
-			gl_debug("adding field from property '%s'", buffer);
+			debug("adding field from property '%s'", buffer);
 			double scale = 1.0;
 			gld_unit unit;
 			if ( spec.size()>1 )
@@ -279,7 +279,11 @@ int recorder::init(OBJECT *parent)
 	// set heartbeat
 	if ( interval>0 )
 	{
-		set_heartbeat((TIMESTAMP)interval);
+		set_heartbeat((TIMESTAMP)fabs(interval));
+		enabled = true;
+	}
+	else if ( interval<0 )
+	{
 		enabled = true;
 	}
 
@@ -292,9 +296,18 @@ int recorder::init(OBJECT *parent)
 			// enable trigger and suspend data collection
 			trigger_on=true;
 			enabled=false;
-			gl_debug("%s: trigger '%s' enabled", get_name(), get_trigger());
+			debug("%s: trigger '%s' enabled", get_name(), get_trigger());
 		}
 	}
+
+	// diff sampling only
+	if ( interval<0 )
+	{
+		oldvalues = (char*)malloc(65536);
+		strcpy(oldvalues,"");
+	}
+	else
+		oldvalues = NULL;
 
 	return 1;
 }
@@ -302,6 +315,7 @@ int recorder::init(OBJECT *parent)
 EXPORT TIMESTAMP heartbeat_recorder(OBJECT *obj)
 {
 	recorder *my = OBJECTDATA(obj,recorder);
+	if ( my->get_interval() < 0 ) return TS_NEVER;
 	if ( !my->get_trigger_on() && !my->get_enabled() ) return TS_NEVER;
 	obj->clock = gl_globalclock;
 	TIMESTAMP dt = (TIMESTAMP)my->get_interval();
@@ -327,10 +341,10 @@ TIMESTAMP recorder::commit(TIMESTAMP t0, TIMESTAMP t1)
 		enabled = true;
 
 	// check sampling interval
-	gl_debug("%s: interval=%.0f, clock=%lld", get_name(), interval, gl_globalclock);
-	if ( interval>0 )
+	debug("%s: interval=%.0f, clock=%lld", get_name(), interval, gl_globalclock);
+	if ( interval!=0 )
 	{
-		if ( gl_globalclock%((TIMESTAMP)interval)!=0 )
+		if ( gl_globalclock%((TIMESTAMP)fabs(interval))!=0 )
 			return TS_NEVER;
 		else
 			gl_verbose("%s: sampling time has arrived", get_name());
@@ -339,8 +353,8 @@ TIMESTAMP recorder::commit(TIMESTAMP t0, TIMESTAMP t1)
 	// collect data
 	if ( enabled )
 	{
-		gl_debug("header_fieldname=[%s]", (const char*)header_fieldnames);
-		gl_debug("header_fielddata=[%s]", header_data);
+		debug("header_fieldname=[%s]", (const char*)header_fieldnames);
+		debug("header_fielddata=[%s]", header_data);
 		char fieldlist[65536] = "", valuelist[65536] = "";
 		size_t fieldlen = 0;
 		if ( header_fieldnames[0]!='\0' )
@@ -357,6 +371,19 @@ TIMESTAMP recorder::commit(TIMESTAMP t0, TIMESTAMP t1)
 			db->get_sqldata(buffer, sizeof(buffer), property_target[n], &property_unit[n]);
 			valuelen += sprintf(valuelist+valuelen,", %s", buffer);
 		}
+		if ( oldvalues )
+		{
+			if ( strcmp(oldvalues,valuelist)==0 )
+			{
+				debug("diff sampling--no change to [%s]",oldvalues+1);
+				return TS_NEVER;
+			}
+			else
+			{
+				debug("diff sampling--recording change from [%s] to [%s]",oldvalues+1,valuelist+1);
+				strcpy(oldvalues,valuelist);
+			}
+		}
 		db->query("INSERT INTO `%s` (`%s`%s) VALUES (from_unixtime('%"FMT_INT64"d')%s)",
 			get_table(), (const char*)datetime_fieldname, fieldlist, db->convert_to_dbtime(gl_globalclock),  valuelist);
 
@@ -370,7 +397,7 @@ TIMESTAMP recorder::commit(TIMESTAMP t0, TIMESTAMP t1)
 		}
 	}
 	else
-		gl_debug("%s: sampling is not enabled", get_name());
+		debug("%s: sampling is not enabled", get_name());
 	
 	return TS_NEVER;
 }
