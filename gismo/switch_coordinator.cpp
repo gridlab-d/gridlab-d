@@ -175,7 +175,7 @@ int switch_coordinator::disarm(char *name)
 
 int switch_coordinator::init(OBJECT *parent)
 {
-	debug("switch_coordinator::init(OBJECT *parent=%s) -> %s", parent ? (const char*)get_object(parent)->get_name() : "(none)");
+	debug("switch_coordinator::init(OBJECT *parent=%s) -> 1", parent ? (const char*)get_object(parent)->get_name() : "(none)");
 	return 1;
 }
 
