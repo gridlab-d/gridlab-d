@@ -13,23 +13,26 @@
 #    appended to the BRANCH with a colon separator
 # 
 cd $1
-declare -i new
-declare -i rs
-new=`git log --max-count=1 --pretty=format:"%ad" --date=raw | sed -ne 's/ [\+\-][0-9]\{4\}$//p'`
-rs=${new}/86400
-dir=`git status --porcelain -sbuno | sed -ne 's/^## //;s/\.\.\..*$//p'`
-branch="${dir}:$rs"
+declare -i rev
+declare -i num
+dir=`git remote -v | grep "(fetch)" | sed -n 's/^.*@//; 1s/:.*$//p'`
+new=`git log -n 1 | sed -n '1s/^commit //p' | cut -c1-6`
+mod=`git status -s | cut -c1-3 | sort -u | sed 's/ //g'`
+num=`git log --max-count=1 --pretty=format:"%ad" --date=raw | sed -ne 's/ [\+\-][0-9]\{4\}$//p'`
+rev=$((${num}/86400))
+branch="${dir}:${new}${mod:+:}${mod}"
 if test -f $2 ; then 
 	oldnum=`cat $2 | sed -ne 's/^#define BUILDNUM //p'`
 	oldbranch=`cat $2 | sed -ne 's/^#define BRANCH //p' | sed -e 's/\"//g'`
 else 
 	oldnum=0
 fi 
-if test -z "$oldnum" -o "$rs" -ne "$oldnum" -o -z "$oldbranch" -o "$oldbranch" != "$branch" ; then 
-	echo "Updating $2: revision $new ($branch)"
-	echo "#define BUILDNUM $rs" > $2
+if test -z "$oldnum" -o "$rev" -ne "$oldnum" -o -z "$oldbranch" -o "$oldbranch" != "$branch" ; then 
+	echo "Updating $2: revision $rev ($branch)"
+	echo "#define BUILDNUM $rev" > $2
 	if test "${dir:0:6}" != "branch" -o ! -z "$mod" ; then 
 		echo "#define BRANCH \"$branch\"" >> $2
 	fi
 	echo "#define REV_YEAR $(date +%Y)" >> $2
 fi
+cd -
