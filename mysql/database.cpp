@@ -258,6 +258,7 @@ char *database::get_sqltype(gld_property &prop)
 	case PT_char32:
 		return "CHAR(32)";
 	case PT_enumeration:
+		// TODO replace with ENUM('value1','value2',...);
 	case PT_char256:
 		return "TEXT(256)";
 	case PT_char1024:
@@ -265,7 +266,8 @@ char *database::get_sqltype(gld_property &prop)
 	case PT_complex:
 		return "CHAR(40)";
 	case PT_set:
-		return "LARGETEXT";
+		// TODO replace with SET('value1','value2',...);
+		return "TEXT";
 	case PT_bool:
 		return "CHAR(1)";
 	case PT_timestamp:
