@@ -1,35 +1,42 @@
-# $Id$
 #
 # Syntax: build_number <top_srcdir> <path-to-core/build.h>
 #
 # Updates the header file $2 by looking at the SVN info and
 # status in the folder $1.  Specifically:
 #
-# 1) BUILDNUM is set to the "Last Changed Rev" number
+# 1) BUILDNUM is set to the day since 1/1/1970 on which the
+#    build was completed.
 #
-# 2) BRANCH is set to the code tree name (e.g., trunk, 
-#    branch/X.Y, ticket/Z).  If the working copy is not 
-#    updated, then all the status flags are merged and 
-#    appended to the BRANCH with a colon separator
-# 
+# 2) BRANCH is set to the source commit.  When building a
+#    locally modified version the branch will be set to
+#    <user>@<host>:<path>:<commit>.  When building an
+#    unmodified fetch from a server, the branch will be
+#    set to <server>:<path>:<commit>.
 cd $1
-declare -i new
-declare -i rs
-new=`git log --max-count=1 --pretty=format:"%ad" --date=raw | sed -ne 's/ [\+\-][0-9]\{4\}$//p'`
-rs=${new}/86400
-dir=`git status --porcelain -sbuno | sed -ne 's/^## //;s/\.\.\..*$//p'`
-branch="${dir}:$rs"
+declare -i rev
+declare -i num
+dir=`git remote -v | grep "(fetch)" | sed -n 's/^.*\t//; $s/ .*$//p'`
+new=`git log -n 1 | sed -n '1s/^commit //p' | cut -c1-8`
+mod=`git status -s | cut -c1-3 | sort -u | sed 's/ //g'`
+num=`git log --max-count=1 --pretty=format:"%ad" --date=raw | sed -ne 's/ [\+\-][0-9]\{4\}$//p'`
+rev=$((${num}/86400))
+if [ -z "${mod}" ]; then
+	branch="${dir}:${new}"
+else
+	branch="${USER}@$(hostname):${PWD/${HOME}\//}:$new"
+fi
 if test -f $2 ; then 
 	oldnum=`cat $2 | sed -ne 's/^#define BUILDNUM //p'`
 	oldbranch=`cat $2 | sed -ne 's/^#define BRANCH //p' | sed -e 's/\"//g'`
 else 
 	oldnum=0
 fi 
-if test -z "$oldnum" -o "$rs" -ne "$oldnum" -o -z "$oldbranch" -o "$oldbranch" != "$branch" ; then 
-	echo "Updating $2: revision $new ($branch)"
-	echo "#define BUILDNUM $rs" > $2
+if test -z "$oldnum" -o "$rev" -ne "$oldnum" -o -z "$oldbranch" -o "$oldbranch" != "$branch" ; then 
+	echo "Updating $2: revision $rev ($branch)"
+	echo "#define BUILDNUM $rev" > $2
 	if test "${dir:0:6}" != "branch" -o ! -z "$mod" ; then 
 		echo "#define BRANCH \"$branch\"" >> $2
 	fi
 	echo "#define REV_YEAR $(date +%Y)" >> $2
 fi
+cd -

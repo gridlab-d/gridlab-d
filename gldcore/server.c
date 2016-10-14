@@ -390,8 +390,8 @@ static void http_send(HTTPCNX *http)
 		send_data(http->s,http->buffer,http->len);
 	http->len = 0;
 }
-/** Cook the contents of the HTTPCNX message buffer **/
-static size_t http_rewrite(char *out, char *in, size_t len)
+/** Cook the contents of the HTTPCNX message buffer, if limit==0 returns only bytes needed to store result */
+static size_t http_rewrite(char *out, char *in, size_t len, size_t limit)
 {
 	char name[64], *n;
 	size_t count = 0;
@@ -409,7 +409,10 @@ static size_t http_rewrite(char *out, char *in, size_t len)
 				n = name;
 			}
 			else
-				out[count++] = in[i];
+			{	if ( count<limit )
+					out[count] = in[i];
+				count++;
+			}
 		}
 		else if ( state==COOKED )
 		{
@@ -422,7 +425,9 @@ static size_t http_rewrite(char *out, char *in, size_t len)
 				}
 				else
 				{
-					strcpy(out+count,buffer);
+					int vlen = strlen(buffer);
+					if ( count+vlen < limit )
+						strcpy(out+count,buffer);
 					count += strlen(buffer);
 				}
 				i += 2;
@@ -438,7 +443,14 @@ static size_t http_rewrite(char *out, char *in, size_t len)
 /** Write the contents of the HTTPCNX message buffer **/
 static void http_write(HTTPCNX *http, char *data, size_t len)
 {
-	if (http->len+len*2>=http->max)
+	char *tmp = NULL;
+	if ( http->cooked )
+	{
+		size_t need = http_rewrite(tmp,data,len,0);
+		tmp = (char*)malloc(need*2+1);
+		len = http_rewrite(tmp,data,len,need*2);
+	}
+	if (http->len+len>=http->max)
 	{
 		/* extend buffer */
 		void *old = http->buffer;
@@ -453,19 +465,13 @@ static void http_write(HTTPCNX *http, char *data, size_t len)
 		http->buffer = malloc(http->max);
 		memcpy(http->buffer,old,http->len);
 		free(old);
-		old = NULL;
 	}
-	if ( http->cooked )
-	{
-		char *tmp = (char*)malloc(len*2);
-		len = http_rewrite(tmp,data,len);
-		memcpy(http->buffer+http->len,tmp,len);
+	memcpy(http->buffer+http->len,tmp?tmp:data,len);
+	if ( tmp )
 		free(tmp);
-	}
-	else
-		memcpy(http->buffer+http->len,data,len);
 	http->len += len;
 }
+
 /** Close the HTTPCNX connection after sending content **/
 static void http_close(HTTPCNX *http)
 {
