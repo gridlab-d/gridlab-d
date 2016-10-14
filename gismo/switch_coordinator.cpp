@@ -209,7 +209,7 @@ TIMESTAMP switch_coordinator::sync(TIMESTAMP t1)
 		{
 			if ( armed&(1<<n) )
 			{
-				verbose("changing state for index[%d]='%s.%s'", n, (const char*)get_armed_property().get_string(), (const char*)index[n]->get_name());
+				verbose("changing state for index[%d]='%s.%s'", n, (const char*)index[n]->get_object()->name, (const char*)index[n]->get_name());
 				index[n]->setp((states&(1<<n)) ? ((enumeration)(switch_object::CLOSED)) : ((enumeration)(switch_object::OPEN)) );
 			}
 		}
@@ -221,8 +221,13 @@ TIMESTAMP switch_coordinator::sync(TIMESTAMP t1)
 		unsigned int n;
 		for ( n = 0 ; n < n_switches ; n++ )
 		{
-			verbose("setting state for index[%d]='%s.%s' = %s", n, (const char*)get_armed_property().get_string(), (const char*)index[n]->get_name(), armed&(1<<n) ? "CLOSED" : "OPEN" );
-			index[n]->setp((armed&(1<<n)) ? ((enumeration)(switch_object::CLOSED)) : ((enumeration)(switch_object::OPEN)) );
+			enumeration old_state = index[n]->get_enumeration();
+			enumeration new_state = (armed&(1<<n)) ? switch_object::CLOSED : switch_object::OPEN;
+			if ( old_state != new_state )
+			{
+				verbose("setting state for index[%d]='%s.%s' = %s -> %s", n, (const char*)index[n]->get_object()->name, (const char*)index[n]->get_name(), old_state==switch_object::CLOSED ? "CLOSED" : "OPEN" , new_state==switch_object::CLOSED ? "CLOSED" : "OPEN" );
+				index[n]->setp(new_state);
+			}
 		}
 	}
 	else
