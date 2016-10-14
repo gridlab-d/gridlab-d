@@ -4,13 +4,14 @@
 # Updates the header file $2 by looking at the SVN info and
 # status in the folder $1.  Specifically:
 #
-# 1) BUILDNUM is set to the "Last Changed Rev" number
+# 1) BUILDNUM is set to the day since 1/1/1970 on which the
+#    build was completed.
 #
-# 2) BRANCH is set to the code tree name (e.g., trunk, 
-#    branch/X.Y, ticket/Z).  If the working copy is not 
-#    updated, then all the status flags are merged and 
-#    appended to the BRANCH with a colon separator
-# 
+# 2) BRANCH is set to the source commit.  When building a
+#    locally modified version the branch will be set to
+#    <user>@<host>:<path>:<commit>.  When building an
+#    unmodified fetch from a server, the branch will be
+#    set to <server>:<path>:<commit>.
 cd $1
 declare -i rev
 declare -i num
