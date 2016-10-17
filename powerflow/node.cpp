@@ -55,6 +55,8 @@
 #include "solver_nr.h"
 #include "node.h"
 #include "link.h"
+
+//See if these can be unwound, not a fan of the cross-linking here:
 #include "capacitor.h"
 #include "load.h"
 #include "triplex_meter.h"
@@ -165,18 +167,18 @@ node::node(MODULE *mod) : powerflow_object(mod)
 				PT_KEYWORD,"SIMPLE",(enumeration)FM_SIMPLE,PT_DESCRIPTION,"Simplified frequency measurement",
 				PT_KEYWORD,"PLL",(enumeration)FM_PLL,PT_DESCRIPTION,"PLL frequency measurement",
 
-			PT_double,"sfm_T[s]",PADDR(freq_sfm_T),PT_DESCRIPTION,"Transducer time constant for simplified frequency measurement (seconds)",
+			PT_double,"sfm_Tf[s]",PADDR(freq_sfm_Tf),PT_DESCRIPTION,"Transducer time constant for simplified frequency measurement (seconds)",
 			PT_double,"pll_Kp[pu]",PADDR(freq_pll_Kp),PT_DESCRIPTION,"Proportional gain of PLL frequency measurement",
 			PT_double,"pll_Ki[pu]",PADDR(freq_pll_Ki),PT_DESCRIPTION,"Integration gain of PLL frequency measurement",
 
 			//Frequency measurement output variables
-			PT_double,"measured_angle_A[rad]", PADDR(curr_state.anglemeas[0]),PT_DESCRIPTION,"bus angle measurement, phase A",
-			PT_double,"measured_frequency_A[Hz]", PADDR(curr_state.fmeas[0]),PT_DESCRIPTION,"frequency measurement, phase A",
-			PT_double,"measured_angle_B[rad]", PADDR(curr_state.anglemeas[1]),PT_DESCRIPTION,"bus angle measurement, phase B",
-			PT_double,"measured_frequency_B[Hz]", PADDR(curr_state.fmeas[1]),PT_DESCRIPTION,"frequency measurement, phase B",
-			PT_double,"measured_angle_C[rad]", PADDR(curr_state.anglemeas[2]),PT_DESCRIPTION,"bus angle measurement, phase C",
-			PT_double,"measured_frequency_C[Hz]", PADDR(curr_state.fmeas[2]),PT_DESCRIPTION,"frequency measurement, phase C",
-			PT_double,"measured_frequency[Hz]", PADDR(curr_state.average_freq), PT_DESCRIPTION, "frequency measurement - average of present phases",
+			PT_double,"measured_angle_A[rad]", PADDR(curr_freq_state.anglemeas[0]),PT_DESCRIPTION,"bus angle measurement, phase A",
+			PT_double,"measured_frequency_A[Hz]", PADDR(curr_freq_state.fmeas[0]),PT_DESCRIPTION,"frequency measurement, phase A",
+			PT_double,"measured_angle_B[rad]", PADDR(curr_freq_state.anglemeas[1]),PT_DESCRIPTION,"bus angle measurement, phase B",
+			PT_double,"measured_frequency_B[Hz]", PADDR(curr_freq_state.fmeas[1]),PT_DESCRIPTION,"frequency measurement, phase B",
+			PT_double,"measured_angle_C[rad]", PADDR(curr_freq_state.anglemeas[2]),PT_DESCRIPTION,"bus angle measurement, phase C",
+			PT_double,"measured_frequency_C[Hz]", PADDR(curr_freq_state.fmeas[2]),PT_DESCRIPTION,"frequency measurement, phase C",
+			PT_double,"measured_frequency[Hz]", PADDR(curr_freq_state.average_freq), PT_DESCRIPTION, "frequency measurement - average of present phases",
 
 			PT_enumeration, "service_status", PADDR(service_status),PT_DESCRIPTION,"In and out of service flag",
 				PT_KEYWORD, "IN_SERVICE", (enumeration)ND_IN_SERVICE,
@@ -297,15 +299,15 @@ int node::create(void)
 
 	fmeas_type = FM_NONE;			//By default, no frequency measurement occurs
 	freq_omega_ref=0.0;
-	freq_sfm_T=0.01;
+	freq_sfm_Tf=0.01;
 	freq_pll_Kp=10;
 	freq_pll_Ki=100;
 
 	//Set default values
-	curr_state.fmeas[0] = nominal_frequency;
-	curr_state.fmeas[1] = nominal_frequency;
-	curr_state.fmeas[2] = nominal_frequency;
-	curr_state.average_freq = nominal_frequency;
+	curr_freq_state.fmeas[0] = nominal_frequency;
+	curr_freq_state.fmeas[1] = nominal_frequency;
+	curr_freq_state.fmeas[2] = nominal_frequency;
+	curr_freq_state.average_freq = nominal_frequency;
 
 	//GFA functionality - put in node, in case it needs to be added
 	GFA_enable = false;			//disabled, by default
@@ -3719,29 +3721,39 @@ int node::NR_current_update(bool postpass, bool parentcall)
 //Module-level call
 SIMULATIONMODE node::inter_deltaupdate_node(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
 {
-	unsigned char pass_mod;
+	//unsigned char pass_mod;
 	double deltat, deltatimedbl;
 	OBJECT *hdr = OBJECTHDR(this);
 	STATUS return_status_val;
+
+	////See what we're on, for tracking
+	//pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
 
 	//Create delta_t variable
 	deltat = (double)dt/(double)DT_SECOND;
 
 	//Update time tracking variable - mostly for GFA functionality calls
-	if (iteration_count_val == 0)	//Only update timestamp tracker on first iteration
+	if ((iteration_count_val==0) && (interupdate_pos == false)) //Only update timestamp tracker on first iteration
 	{
 		//Get decimal timestamp value
 		deltatimedbl = (double)delta_time/(double)DT_SECOND; 
 
 		//Update tracking variable
 		prev_time_dbl = (double)gl_globalclock + deltatimedbl;
+
+		//Update frequency calculation values (if needed)
+		if (fmeas_type != FM_NONE)
+		{
+			//Copy the tracker value
+			memcpy(&prev_freq_state,&curr_freq_state,sizeof(FREQM_STATES));
+		}
 	}
 
 	//Initialization items
-	if ((delta_time==0) && (iteration_count_val==0) && (interupdate_pos == false))	//First run of new delta call
+	if ((delta_time==0) && (iteration_count_val==0) && (interupdate_pos == false) && (fmeas_type != FM_NONE))	//First run of new delta call
 	{
 		//Initialize dynamics
-		init_freq_dynamics(&curr_state);
+		init_freq_dynamics();
 	}//End first pass and timestep of deltamode (initial condition stuff)
 
 	//Perform the GFA update, if enabled
@@ -3750,9 +3762,6 @@ SIMULATIONMODE node::inter_deltaupdate_node(unsigned int64 delta_time, unsigned 
 		//Do the checks
 		GFA_Update_time = perform_GFA_checks(deltat);
 	}
-
-	//See what we're on, for tracking
-	pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
 
 	//Determine what to run
 	if (interupdate_pos == false)	//Before powerflow call
@@ -3764,7 +3773,8 @@ SIMULATIONMODE node::inter_deltaupdate_node(unsigned int64 delta_time, unsigned 
 		NR_node_sync_fxn(hdr);
 
 		return SM_DELTA;	//Just return something other than SM_ERROR for this call
-	}
+
+	}//End Before NR solver (or inclusive)
 	else	//After the call
 	{
 		//Perform postsync-like updates on the values
@@ -3773,7 +3783,7 @@ SIMULATIONMODE node::inter_deltaupdate_node(unsigned int64 delta_time, unsigned 
 		//Frequency measurement stuff
 		if (fmeas_type != FM_NONE)
 		{
-			return_status_val = calc_freq_dynamics(deltat,pass_mod);
+			return_status_val = calc_freq_dynamics(deltat);
 
 			//Check it
 			if (return_status_val == FAILED)
@@ -3829,422 +3839,317 @@ SIMULATIONMODE node::inter_deltaupdate_node(unsigned int64 delta_time, unsigned 
 		//	return SM_EVENT;	//Normal nodes want event mode all the time here - SWING bus will
 		//						//control the reiteration process for pred/corr steps
 		//}
-	}
+	}//End "After NR solver" branch
 }
 
 //Performs the frequency measurement calculations in a nice, compact form
 //for easy copy-paste
-STATUS node::calc_freq_dynamics(double deltat, unsigned char pass_mod)
+STATUS node::calc_freq_dynamics(double deltat)
 {
 	unsigned char phase_conf, phase_mask;
 	unsigned int indexval;
-	double deltath;
+	double dfmeasdt, errorval, deltaom, dxdt, fbus;
 	STATUS return_status;
+	bool is_triplex_node;
 
 	//Init for success
 	return_status = SUCCESS;
 
-	//Calculate half-step
-	deltath = deltat/2.0;
-
 	//Extract the phases
-	//TODO: - Simple fix - fix this for triplex, when we support it
 	if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
 	{
-		phase_conf=NR_busdata[NR_node_reference].phases & 0x07;
+		if ((NR_busdata[NR_node_reference].phases & 0x80) == 0x80)
+		{
+			phase_conf = 0x80;
+			is_triplex_node = true;
+		}
+		else
+		{
+			phase_conf=NR_busdata[NR_node_reference].phases & 0x07;
+			is_triplex_node = false;
+		}
 	}
 	else	//It is a child - look at parent
 	{
-		phase_conf=NR_busdata[*NR_subnode_reference].phases & 0x07;
+		if ((NR_busdata[*NR_subnode_reference].phases & 0x80) == 0x80)
+		{
+			phase_conf = 0x80;
+			is_triplex_node = true;
+		}
+		else
+		{
+			phase_conf=NR_busdata[*NR_subnode_reference].phases & 0x07;
+			is_triplex_node = false;
+		}
 	}
 
-	if (pass_mod==0)	//Predictor pass
+	//Pull voltage updates
+	for (indexval=0; indexval<3; indexval++)
 	{
-		//Call dynamics
-		apply_interim_freq_dynamics(&curr_state,&predictor_vals,deltat,pass_mod);
-
-		//Apply prediction update
-		/**************** TODO - Make Triplex work here **************************/
-		if (fmeas_type == FM_SIMPLE)
+		if (is_triplex_node == true)
 		{
-			//Loop through the phases
-			for (indexval=0; indexval<3; indexval++)
-			{
-				//Get the mask
-				phase_mask = (1 << (2 - indexval));
-
-				//Check and see if it exists
-				if ((phase_conf & phase_mask) == phase_mask)
-				{
-					next_state.fmeas[indexval] = curr_state.fmeas[indexval] + predictor_vals.fmeas[indexval]*deltat;
-				}
-				else	//It does not
-				{
-					next_state.fmeas[indexval] = 0;
-				}
-			}//End phase FOR
-		}//End simple frequency measurement update
-		else if (fmeas_type == FM_PLL)
-		{
-			//Loop through the phases
-			for (indexval=0; indexval<3; indexval++)
-			{
-				//Get the mask
-				phase_mask = (1 << (2 - indexval));
-
-				//Check and see if it exists
-				if ((phase_conf & phase_mask) == phase_mask)
-				{
-					next_state.x[indexval] = curr_state.x[indexval] + predictor_vals.x[indexval]*deltat;
-					next_state.anglemeas[indexval] = curr_state.anglemeas[indexval] + predictor_vals.anglemeas[indexval]*deltat;
-					// PLL outputs
-					next_state.fmeas[indexval]=(predictor_vals.anglemeas[indexval]+freq_omega_ref)/(2*PI);
-					next_state.sinangmeas[indexval]=sin(next_state.anglemeas[indexval]);
-					next_state.cosangmeas[indexval]=cos(next_state.anglemeas[indexval]);
-				}
-				else	//Phase no exist
-				{
-					next_state.x[indexval] = 0.0;
-					next_state.anglemeas[indexval] = 0.0;
-					// PLL outputs
-					next_state.fmeas[indexval]=0.0;
-					next_state.sinangmeas[indexval]=0.0;
-					next_state.cosangmeas[indexval]=0.0;
-				}
-			}//End phase FOR
+			phase_mask = 0x80;
 		}
-		//Default else - no updates because no frequency measurement
-
-		//return SM_DELTA_ITER;	//Reiterate - to get us to corrector pass
-	}
-	else	//Corrector pass
-	{
-		//Call dynamics
-		apply_interim_freq_dynamics(&next_state,&corrector_vals,deltat,pass_mod);
-
-		//Apply corrector update
-		if (fmeas_type == FM_SIMPLE)
+		else	//three-phase, of some sort
 		{
-			//Loop through the phases
-			for (indexval=0; indexval<3; indexval++)
-			{
-				//Get the mask
-				phase_mask = (1 << (2 - indexval));
-
-				//Check the phase
-				if ((phase_conf & phase_mask) == phase_mask)
-				{
-					next_state.fmeas[indexval] = curr_state.fmeas[indexval] + (predictor_vals.fmeas[indexval]+corrector_vals.fmeas[indexval])*deltath;
-				}
-				else // not here
-				{
-					next_state.fmeas[indexval] = 0.0;
-				}
-			}//End phase FOR
-		}//End simple frequency measurement update
-		else if (fmeas_type == FM_PLL)
-		{
-			//Loop through the phases
-			for (indexval=0; indexval<3; indexval++)
-			{
-				//Get the mask
-				phase_mask = (1 << (2 - indexval));
-
-				//Check the phase
-				if ((phase_conf & phase_mask) == phase_mask)
-				{
-					next_state.x[indexval] = curr_state.x[indexval] + (predictor_vals.x[indexval]+corrector_vals.x[indexval])*deltath;
-					next_state.anglemeas[indexval] = curr_state.anglemeas[indexval] + (predictor_vals.anglemeas[2]+corrector_vals.anglemeas[indexval])*deltath;
-					// PLL outputs
-					next_state.fmeas[indexval]=((predictor_vals.anglemeas[indexval]+corrector_vals.anglemeas[indexval])/2+freq_omega_ref)/(2*PI);
-					next_state.sinangmeas[indexval]=sin(next_state.anglemeas[indexval]);
-					next_state.cosangmeas[indexval]=cos(next_state.anglemeas[indexval]);
-				}
-				else // not this phase
-				{
-					next_state.x[indexval] = 0.0;
-					next_state.anglemeas[indexval] = 0.0;
-					// PLL outputs
-					next_state.fmeas[indexval]=0.0;
-					next_state.sinangmeas[indexval]=0.0;
-					next_state.cosangmeas[indexval]=0.0;
-				}
-			}//End phase traversion
+			//Get the mask
+			phase_mask = (1 << (2 - indexval));
 		}
-		//Default else - no updates because no frequency measurement
-		
-		//Copy everything back into curr_state, since we'll be back there
-		memcpy(&curr_state,&next_state,sizeof(FREQM_STATES));
 
-		//Update the "average" frequency value
-		switch(phase_conf) {
-			case 0x00:	//No phases (we've been faulted out
+		//Check the phase
+		if ((phase_conf & phase_mask) == phase_mask)
+		{
+			//See what our reference is - steal parent voltages
+			if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+			{
+				if (is_triplex_node == true)
 				{
-					curr_state.average_freq = 0.0;
-					break;	//Just get us outta here
+					if (indexval < 2)
+					{
+						curr_freq_state.voltage_val[indexval]=NR_busdata[NR_node_reference].V[indexval];
+					}
+					else	//Must be 2
+					{
+						curr_freq_state.voltage_val[indexval]=NR_busdata[NR_node_reference].V[0] + NR_busdata[NR_node_reference].V[1];
+					}
 				}
-			case 0x01:	//Only C
+				else
 				{
-					curr_state.average_freq = curr_state.fmeas[2];
-					break;
+					curr_freq_state.voltage_val[indexval]=NR_busdata[NR_node_reference].V[indexval];
 				}
-			case 0x02:	//Only B
+			}
+			else	//It is a child - look at parent
+			{
+				if (is_triplex_node == true)
 				{
-					curr_state.average_freq = curr_state.fmeas[1];
-					break;
+					curr_freq_state.voltage_val[indexval]=NR_busdata[*NR_subnode_reference].V[indexval];
 				}
-			case 0x03:	//B & C
+				else
 				{
-					curr_state.average_freq = (curr_state.fmeas[1] + curr_state.fmeas[2]) / 2.0;
-					break;
+					curr_freq_state.voltage_val[indexval]=NR_busdata[*NR_subnode_reference].V[0] + NR_busdata[*NR_subnode_reference].V[1];
 				}
-			case 0x04:	//Only A
-				{
-					curr_state.average_freq = curr_state.fmeas[0];
-					break;
-				}
-			case 0x05:	//A & C
-				{
-					curr_state.average_freq = (curr_state.fmeas[0] + curr_state.fmeas[2]) / 2.0;
-					break;
-				}
-			case 0x06:	//A & B
-				{
-					curr_state.average_freq = (curr_state.fmeas[0] + curr_state.fmeas[1]) / 2.0;
-					break;
-				}
-			case 0x07:	//ABC
-				{
-					curr_state.average_freq = (curr_state.fmeas[0] + curr_state.fmeas[1] + curr_state.fmeas[2]) / 3.0;
-					break;
-				}
-			default:	//How'd we get here?
-				{
-					gl_error("Node frequency update: unknown state encountered");
-					/*  TROUBLESHOOT
-					While running the frequency/angle estimation routine for a node object, it somehow entered an unknown state.
-					Please try again.  If the error persists, please submit your GLM and a bug report via the ticketing system.
-					*/
+			}
 
-					return_status = FAILED;
+			//Extract the angle
+			curr_freq_state.anglemeas[indexval] = curr_freq_state.voltage_val[indexval].Arg();
 
+			//Perform update
+			if (fmeas_type == FM_SIMPLE)
+			{
+				fbus = ((curr_freq_state.anglemeas[indexval] - prev_freq_state.anglemeas[indexval])/deltat + freq_omega_ref) / (2.0 * PI);
+				dfmeasdt = (fbus - prev_freq_state.fmeas[indexval]) / freq_sfm_Tf;
+				curr_freq_state.fmeas[indexval] = prev_freq_state.fmeas[indexval] + dfmeasdt*deltat;
+			}
+			else if (fmeas_type == FM_PLL)
+			{
+				//Compute error - make sure isn't zero - if it is, ignore this
+				if (prev_freq_state.voltage_val[indexval].Mag() > 0.0)
+				{
+					errorval = prev_freq_state.voltage_val[indexval].Re()*prev_freq_state.sinangmeas[indexval];
+					errorval -= prev_freq_state.voltage_val[indexval].Im()*prev_freq_state.cosangmeas[indexval];
+					errorval /= prev_freq_state.voltage_val[indexval].Mag();
+					errorval *= -1.0;
+				}
+				else
+				{
+					errorval = 0.0;
+				}
+
+				deltaom = freq_pll_Kp * errorval + prev_freq_state.x[indexval];
+				dxdt = freq_pll_Ki * errorval;
+
+				//Updates
+				curr_freq_state.fmeas[indexval] = (freq_omega_ref + deltaom) / (2.0 * PI);
+				curr_freq_state.x[indexval] = prev_freq_state.x[indexval] + dxdt*deltat;
+				curr_freq_state.anglemeas[indexval] = prev_freq_state.anglemeas[indexval] + deltaom*deltat;
+
+				//Update trig values
+				curr_freq_state.sinangmeas[indexval] = sin(curr_freq_state.anglemeas[indexval]);
+				curr_freq_state.cosangmeas[indexval] = cos(curr_freq_state.anglemeas[indexval]);
+			}
+			//Default else -- other method (or not a valid method)
+		}//End valid phase
+		else	//Not a valid phase
+		{
+			curr_freq_state.fmeas[indexval] = 0.0;
+		}
+	}//End phase loop
+
+	//Update the "average" frequency value
+	switch(phase_conf) {
+		case 0x00:	//No phases (we've been faulted out
+			{
+				curr_freq_state.average_freq = 0.0;
+				break;	//Just get us outta here
+			}
+		case 0x01:	//Only C
+			{
+				curr_freq_state.average_freq = curr_freq_state.fmeas[2];
 				break;
-				}
-		}	//switch end
+			}
+		case 0x02:	//Only B
+			{
+				curr_freq_state.average_freq = curr_freq_state.fmeas[1];
+				break;
+			}
+		case 0x03:	//B & C
+			{
+				curr_freq_state.average_freq = (curr_freq_state.fmeas[1] + curr_freq_state.fmeas[2]) / 2.0;
+				break;
+			}
+		case 0x04:	//Only A
+			{
+				curr_freq_state.average_freq = curr_freq_state.fmeas[0];
+				break;
+			}
+		case 0x05:	//A & C
+			{
+				curr_freq_state.average_freq = (curr_freq_state.fmeas[0] + curr_freq_state.fmeas[2]) / 2.0;
+				break;
+			}
+		case 0x06:	//A & B
+			{
+				curr_freq_state.average_freq = (curr_freq_state.fmeas[0] + curr_freq_state.fmeas[1]) / 2.0;
+				break;
+			}
+		case 0x07:	//ABC
+			{
+				curr_freq_state.average_freq = (curr_freq_state.fmeas[0] + curr_freq_state.fmeas[1] + curr_freq_state.fmeas[2]) / 3.0;
+				break;
+			}
+		case 0x80:	//Triplex stuff
+			{
+				curr_freq_state.average_freq = curr_freq_state.fmeas[2];	//Just take the 12 value, for now
+				break;
+			}
+		default:	//How'd we get here?
+			{
+				gl_error("Node frequency update: unknown state encountered");
+				/*  TROUBLESHOOT
+				While running the frequency/angle estimation routine for a node object, it somehow entered an unknown state.
+				Please try again.  If the error persists, please submit your GLM and a bug report via the ticketing system.
+				*/
 
-	}//End corrector pass
+				return_status = FAILED;
+
+			break;
+			}
+	}	//switch end
 
 	return return_status;
-}
-
-//Applies dynamic equations for predictor/corrector sets
-//Functionalized since they are identical
-//curr_time is the current states/information
-//curr_delta is the calculated differentials
-void node::apply_interim_freq_dynamics(FREQM_STATES *curr_time, FREQM_STATES *curr_delta, double deltat, unsigned char pass_mod)
-{
-	unsigned char phase_conf, phase_mask;
-	int indexval;
-	
-	//Variables
-	double angle_val;
-	double angle_val_previous;
-	double f_val;
-	double pllerror_val;
-	double Deltaomegameas_val;
-	double omegameas_val;
-
-	//Get the node's phases
-	if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
-	{
-		phase_conf=NR_busdata[NR_node_reference].phases;
-	}
-	else	//It is a child - look at parent
-	{
-		phase_conf=NR_busdata[*NR_subnode_reference].phases;
-	}
-	
-	//Simple frequency measurement updates, if relevant
-	if (fmeas_type == FM_SIMPLE)
-	{
-		//Loop through and do a phase check
-		for (indexval=0; indexval<3; indexval++)
-		{
-			//Get the mask
-			phase_mask = (1 << (2 - indexval));
-
-			//Check and see if it exists
-			if ((phase_conf & phase_mask) == phase_mask)
-			{
-				//Get the current voltage angle
-				angle_val = voltage[indexval].Arg();
-				curr_time->anglemeas[indexval]=angle_val;
-				
-				//store the current angle and get the previous one
-				angle_val_previous = prev_state.anglemeas[indexval]; // prev_state change (create new one)
-				if (pass_mod==0)	//Predictor pass
-				{
-					prev_state.anglemeas[indexval] = store_state.anglemeas[indexval]; 
-					store_state.anglemeas[indexval]=angle_val;
-				}
-				// calculate the frequency
-				f_val= ((angle_val-angle_val_previous)/deltat+freq_omega_ref)/(2*PI); // omega_ref parameter
-				
-				// unfold if there is a 2*PI jump
-				if ((angle_val-angle_val_previous)>6)
-				{
-					f_val= ((angle_val-angle_val_previous-2*PI)/deltat+freq_omega_ref)/(2*PI);
-				}
-				if ((angle_val-angle_val_previous)<-6)
-				{
-					f_val= ((angle_val-angle_val_previous+2*PI)/deltat+freq_omega_ref)/(2*PI);
-				}
-
-				// Update frequency measurement update (1st order transducer)
-				curr_delta->fmeas[indexval]=(f_val-curr_time->fmeas[indexval])/freq_sfm_T;
-			}
-			else //Phase doesn't exit
-			{
-				curr_delta->fmeas[indexval] = 0.0;
-			}
-		}//End phase FOR
-	}//End Simple frequency measurement updates
-	else if (fmeas_type == FM_PLL)	// Frequency measurement by PLL
-	{
-		//Loop through and do a phase check
-		for (indexval=0; indexval<3; indexval++)
-		{
-			//Get the mask
-			phase_mask = (1 << (2 - indexval));
-
-			// PI input, or PLL error
-			//Check and see if it exists
-			if ((phase_conf & phase_mask) == phase_mask)
-			{
-				pllerror_val=-(voltage[indexval].Re() * curr_time->sinangmeas[indexval] - voltage[indexval].Im() * curr_time->cosangmeas[indexval])/voltage[indexval].Mag();
-				// PI output
-				Deltaomegameas_val=freq_pll_Kp * pllerror_val+curr_time->x[indexval];
-				// Electrical omega measured
-				omegameas_val=Deltaomegameas_val+freq_omega_ref;
-				// Update integrator state
-				curr_delta->x[indexval]=freq_pll_Ki*pllerror_val;
-				// Update angle measurement
-				curr_delta->anglemeas[indexval]=Deltaomegameas_val;
-			}
-			else // Phase not present
-			{
-				curr_delta->x[indexval] = 0.0;
-				curr_delta->anglemeas[indexval] = 0.0;
-			}
-		}//End phase FOR
-	}//End PLL
-	else // no frequency measurement
-	{
-		//Loop through and zero them
-		for (indexval=0; indexval<3; indexval++)
-		{
-			curr_delta->fmeas[indexval] = 0.0;
-			curr_delta->x[indexval] = 0.0;
-			curr_delta->anglemeas[indexval] = 0.0;
-		}//End phase FOR
-
-	}//End no frequency measurement dynamics
 }
 
 //Initializes dynamic equations for first entry
 //Returns a SUCCESS/FAIL
 //curr_time is the initial states/information
-void node::init_freq_dynamics(FREQM_STATES *curr_time)
+void node::init_freq_dynamics(void)
 {
-	complex voltage_pu[3];
-	complex current_pu[3];
-	complex Vpn0[3];
-	complex Ipn0[3];
-	complex temp_complex_1, temp_complex_2;
-	double angle_val[3];
 	unsigned char phase_conf, phase_mask;
 	int indexval;
+	bool is_triplex_node;
 
-	//Get the phasing information
+	//Extract the phases
 	if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
-		phase_conf=NR_busdata[NR_node_reference].phases;
+	{
+		if ((NR_busdata[NR_node_reference].phases & 0x80) == 0x80)
+		{
+			phase_conf = 0x80;
+			is_triplex_node = true;
+		}
+		else
+		{
+			phase_conf=NR_busdata[NR_node_reference].phases & 0x07;
+			is_triplex_node = false;
+		}
+	}
 	else	//It is a child - look at parent
-		phase_conf=NR_busdata[*NR_subnode_reference].phases;
+	{
+		if ((NR_busdata[*NR_subnode_reference].phases & 0x80) == 0x80)
+		{
+			phase_conf = 0x80;
+			is_triplex_node = true;
+		}
+		else
+		{
+			phase_conf=NR_busdata[*NR_subnode_reference].phases & 0x07;
+			is_triplex_node = false;
+		}
+	}
 
-	//Loop through phase initializations
-	//Loop through and do a phase check
+	//Pull voltage updates
 	for (indexval=0; indexval<3; indexval++)
 	{
-		//Get the mask
-		phase_mask = (1 << (2 - indexval));
+		if (is_triplex_node == true)
+		{
+			phase_mask = 0x80;
+		}
+		else	//three-phase, of some sort
+		{
+			//Get the mask
+			phase_mask = (1 << (2 - indexval));
+		}
 
-		//Check and see if it exists
+		//Check the phase
 		if ((phase_conf & phase_mask) == phase_mask)
 		{
-			//Get the current voltage angle
-			angle_val[indexval] = voltage[indexval].Arg(); 
-			prev_state.anglemeas[indexval] = angle_val[indexval];
+			//See what our reference is - steal parent voltages
+			if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+			{
+				if (is_triplex_node == true)
+				{
+					if (indexval < 2)
+					{
+						prev_freq_state.voltage_val[indexval]=NR_busdata[NR_node_reference].V[indexval];
+					}
+					else	//Must be 2
+					{
+						prev_freq_state.voltage_val[indexval]=NR_busdata[NR_node_reference].V[0] + NR_busdata[NR_node_reference].V[1];
+					}
+				}
+				else
+				{
+					prev_freq_state.voltage_val[indexval]=NR_busdata[NR_node_reference].V[indexval];
+				}
+			}
+			else	//It is a child - look at parent
+			{
+				if (is_triplex_node == true)
+				{
+					prev_freq_state.voltage_val[indexval]=NR_busdata[*NR_subnode_reference].V[indexval];
+				}
+				else
+				{
+					prev_freq_state.voltage_val[indexval]=NR_busdata[*NR_subnode_reference].V[0] + NR_busdata[*NR_subnode_reference].V[1];
+				}
+			}
+
+			//Populate the angle
+			prev_freq_state.anglemeas[indexval] = prev_freq_state.voltage_val[indexval].Arg();
+			
+			//Assume "current" start
+			prev_freq_state.fmeas[indexval] = current_frequency;
+
+			//Populate other fields, if necessary
+			if (fmeas_type == FM_PLL)
+			{
+				prev_freq_state.sinangmeas[indexval] = sin(prev_freq_state.anglemeas[indexval]);
+				prev_freq_state.cosangmeas[indexval] = cos(prev_freq_state.anglemeas[indexval]);
+			}
+		}//End valid phase
+		else	//Not a valid phase, just zero it all
+		{
+			prev_freq_state.voltage_val[indexval] = complex(0.0,0.0);
+			prev_freq_state.x[indexval] = 0.0;
+			prev_freq_state.anglemeas[indexval] = 0.0;
+			prev_freq_state.fmeas[indexval] = 0.0;
+			prev_freq_state.average_freq = current_frequency;
+			prev_freq_state.sinangmeas[indexval] = 0.0;
+			prev_freq_state.cosangmeas[indexval] = 0.0;
 		}
-		else // not there
-		{
-			angle_val[indexval] = 0.0;
-			prev_state.anglemeas[indexval] = 0.0;
-		}
-	}//End phase FOR
+	}//End FOR loop
 
-	//frequency measurement initialization
-	if (fmeas_type == FM_SIMPLE)
-	{
-		//Loop through and do a phase check
-		for (indexval=0; indexval<3; indexval++)
-		{
-			//Get the mask
-			phase_mask = (1 << (2 - indexval));
-
-			//Check and see if it exists
-			if ((phase_conf & phase_mask) == phase_mask)
-			{
-				curr_time->fmeas[indexval] = freq_omega_ref/(2*PI);
-				curr_time->anglemeas[indexval] = angle_val[indexval];
-			}
-			else // no phase
-			{
-				curr_time->fmeas[indexval] = 0.0;
-				curr_time->anglemeas[indexval] = 0.0;
-			}
-		}//End phase FOR
-	}//End simple frequency measurement update
-	else if (fmeas_type == FM_PLL)
-	{
-		//Loop through and do a phase check
-		for (indexval=0; indexval<3; indexval++)
-		{
-			//Get the mask
-			phase_mask = (1 << (2 - indexval));
-
-			//Check and see if it exists
-			if ((phase_conf & phase_mask) == phase_mask)
-			{
-				curr_time->x[indexval] = 0;
-				curr_time->anglemeas[indexval] = angle_val[indexval];
-				curr_time->fmeas[indexval] = freq_omega_ref/(2*PI);
-				curr_time->sinangmeas[indexval]=sin(curr_time->anglemeas[indexval]);
-				curr_time->cosangmeas[indexval]=cos(curr_time->anglemeas[indexval]);
-			}
-			else // no phase present
-			{
-				curr_time->x[indexval] = 0;
-				curr_time->anglemeas[indexval] = 0.0;
-				curr_time->fmeas[indexval] = 0.0;
-				curr_time->sinangmeas[indexval] = 0.0;
-				curr_time->cosangmeas[indexval] = 0.0;
-			}
-		}//End phase FOR
-	}//End PLL init
-	//Default else - no updates because no frequency measurement
-
-	//Replicate curr_state into next
-	memcpy(&next_state,&curr_state,sizeof(FREQM_STATES));
+	//Copy into current, since we may have already just done this
+	memcpy(&curr_freq_state,&prev_freq_state,sizeof(FREQM_STATES));
 }
 
 //Function to perform the GFA-type responses
@@ -4273,7 +4178,7 @@ double node::perform_GFA_checks(double timestepvalue)
 	}
 
 	//Perform frequency check
-	if ((curr_state.average_freq > GFA_freq_high_trip) || (curr_state.average_freq < GFA_freq_low_trip))
+	if ((curr_freq_state.average_freq > GFA_freq_high_trip) || (curr_freq_state.average_freq < GFA_freq_low_trip))
 	{
 		//Flag it
 		frequency_violation = true;
@@ -4285,7 +4190,7 @@ double node::perform_GFA_checks(double timestepvalue)
 		out_of_violation_time_total = 0.0;
 
 		//Check the times - split out
-		if (curr_state.average_freq > GFA_freq_high_trip)
+		if (curr_freq_state.average_freq > GFA_freq_high_trip)
 		{
 			if (freq_violation_time_total >= GFA_freq_disconnect_time)
 			{
@@ -4298,7 +4203,7 @@ double node::perform_GFA_checks(double timestepvalue)
 				return_time_freq = GFA_freq_disconnect_time - freq_violation_time_total;
 			}
 		}
-		else if (curr_state.average_freq < GFA_freq_low_trip)
+		else if (curr_freq_state.average_freq < GFA_freq_low_trip)
 		{
 			if (freq_violation_time_total >= GFA_freq_disconnect_time)
 			{

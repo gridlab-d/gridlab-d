@@ -19,7 +19,6 @@ EXPORT STATUS postupdate_diesel_dg(OBJECT *obj, complex *useful_value, unsigned 
 
 //AVR state variable structure
 typedef struct {
-	double vset;			//p.u. voltage set point
 	double bias;			//Bias term of avr
 	double xe;				//State variable
 	double xb;				//State variable for transient gain reduction
@@ -27,7 +26,6 @@ typedef struct {
 
 //GOV_DEGOV1 state variable structure
 typedef struct {
-	double wref;			//Current reference frequency (p.u.)
 	double x1;				//Electric box state variable
 	double x2;				//Electric box state variable
 	double x4;				//Actuator state variable
@@ -39,7 +37,6 @@ typedef struct {
 // gastflag
 //GOV_GAST state variable structure
 typedef struct {
-	double wref;			//Current reference frequency (p.u.)
 	double x1;				//Electric box state variable 
 	double x2;				//Electric box state variable
 	double x3;				//Temp limiter state variable
@@ -48,8 +45,6 @@ typedef struct {
 
 //GGOV1 state variable structure
 typedef struct {
-	double wref;
-	double Pref;
 	double werror;
 	double x1;
 	double x2;
@@ -109,6 +104,14 @@ typedef struct {
 	GOV_GGOV1_VARS gov_ggov1;	//GGOV1 governor state variables
 	AVR_VARS avr;				//Automatic Voltage Regulator state variables
 } MAC_STATES;
+
+//Set-point/adjustable variables
+typedef struct {
+	double wref;	//Reference frequency/bias for generator object (governor)
+	double vset;	//Reference per-unit voltage/bias for generator object (AVR)
+	double Pref;	//Reference real power output/bias (per-unit) for generator object (governor)
+	double Qref;	//Reference reactive power output/bias (per-unit) for generator object (AVR)
+} MAC_INPUTS;
 
 class diesel_dg : public gld_object
 {
@@ -278,6 +281,8 @@ public:
 	double Ta;				//Armature short-circuit time constant (s)
 	complex X0;				//Zero sequence impedance (p.u.)
 	complex X2;				//Negative sequence impedance (p.u.)
+
+	MAC_INPUTS gen_base_set_vals;	//Base set points for the various control objects 
 
 	//AVR properties (Simplified Exciter System (SEXS) - Industry acronym, I swear)
 	double exc_KA;				//Exciter gain (p.u.)

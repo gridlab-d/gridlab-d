@@ -1,4 +1,4 @@
-/** $Id: gridlabd.h 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id$
     Copyright (C) 2008 Battelle Memorial Institute
 	@file rt/gridlabd.h
 	@defgroup runtime Runtime Class API
@@ -633,7 +633,6 @@ typedef struct s_loadmethod {
 	int (*call)(void*,char*);
 	struct s_loadmethod *next;
 } LOADMETHOD;
-
 typedef enum {CLASSVALID=0xc44d822e} CLASSMAGIC; ///< this is used to uniquely identify class structure
 
 struct s_class_list {
@@ -707,7 +706,6 @@ struct s_object_list {
 	char32 groupid;
 	OBJECT *next; /**< next object in list */
 	OBJECT *parent; /**< object's parent; determines rank */
-	unsigned int child_count; /**< number of object that have this object as a parent */
 	OBJECTRANK rank; /**< object's rank */
 	TIMESTAMP clock; /**< object's private clock */
 	TIMESTAMP valid_to;	/**< object's valid-until time */
@@ -833,11 +831,11 @@ struct s_loadshape_core {
 };
 
 typedef enum {
-    EUMT_MOTOR_A, /**< 3ph induction motors driving constant torque loads */
-    EUMT_MOTOR_B, /**< induction motors driving high inertia speed-squares torque loads */
-    EUMT_MOTOR_C, /**< induction motors driving low inertia loads speed-squared torque loads */
-    EUMT_MOTOR_D, /**< 1ph induction motors driving constant torque loads */
-    _EUMT_COUNT, /* must be last */
+	EUMT_MOTOR_A, /**< 3ph induction motors driving constant torque loads */
+	EUMT_MOTOR_B, /**< induction motors driving high inertia speed-squares torque loads */
+	EUMT_MOTOR_C, /**< induction motors driving low inertia loads speed-squared torque loads */
+	EUMT_MOTOR_D, /**< 1ph induction motors driving constant torque loads */
+	_EUMT_COUNT, /* must be last */
 } EUMOTORTYPE;
 typedef enum {
     EUET_ELECTRONIC_A, /**< simple power electronics (no backfeed) */
@@ -845,67 +843,66 @@ typedef enum {
     _EUET_COUNT, /* must be last */
 } EUELECTRONICTYPE;
 typedef struct s_motor {
-    complex power;              /**< motor power when running */
-    complex impedance;  /**< motor impedance when stalled */
-    double inertia;             /**< motor inertia in seconds */
-    double v_stall;             /**< motor stall voltage (pu) */
-    double v_start;             /**< motor start voltage (pu) */
-    double v_trip;              /**< motor trip voltage (pu) */
-    double t_trip;              /**< motor thermal trip time in seconds */
+    complex power;		/**< motor power when running */
+    complex impedance;	/**< motor impedance when stalled */
+    double inertia;		/**< motor inertia in seconds */
+    double v_stall;		/**< motor stall voltage (pu) */
+    double v_start;		/**< motor start voltage (pu) */
+    double v_trip;		/**< motor trip voltage (pu) */
+    double t_trip;		/**< motor thermal trip time in seconds */
     /* TODO add slip data (0 for synchronous motors) */
 } EUMOTOR;
 typedef struct s_electronic {
-    complex power;              /**< load power when running */
-    double inertia;             /**< load "inertia" */
-    double v_trip;              /**< load "trip" voltage (pu) */
-    double v_start;             /**< load "start" voltage (pu) */
+    complex power;		/**< load power when running */
+    double inertia;		/**< load "inertia" */
+    double v_trip;		/**< load "trip" voltage (pu) */
+    double v_start;		/**< load "start" voltage (pu) */
 } EUELECTRONIC;
+
 typedef struct s_enduse {
-    /* the output value must be first for transform to stream */
-    /* meter values */
-    complex total;                          /* total power in kW */
-    complex energy;                         /* total energy in kWh */
-    complex demand;                         /* maximum power in kW (can be reset) */
+	/* the output value must be first for transform to stream */
+	/* meter values */
+	complex total;				/* total power in kW */
+	complex energy;				/* total energy in kWh */
+	complex demand;				/* maximum power in kW (can be reset) */
 
-    /* circuit configuration */
-    set config;                                     /* end-use configuration */
-    double breaker_amps;            /* breaker limit (if any) */
+	/* circuit configuration */	
+	set config;					/* end-use configuration */
+	double breaker_amps;		/* breaker limit (if any) */
 
-    /* zip values */
-    complex admittance;                     /* constant impedance oprtion of load in kW */
-    complex current;                        /* constant current portion of load in kW */
-    complex power;                          /* constant power portion of load in kW */
+	/* zip values */
+	complex admittance;			/* constant impedance oprtion of load in kW */
+	complex current;			/* constant current portion of load in kW */
+	complex power;				/* constant power portion of load in kW */
 
-    /* composite load data */
-    EUMOTOR motor[_EUMT_COUNT];                             /* motor loads (A-D) */
-    EUELECTRONIC electronic[_EUET_COUNT];   /* electronic loads (S/D) */
+	/* composite load data */
+	EUMOTOR motor[_EUMT_COUNT];				/* motor loads (A-D) */
+	EUELECTRONIC electronic[_EUET_COUNT];	/* electronic loads (S/D) */
 
-    /* loading */
-    double impedance_fraction;      /* constant impedance fraction (pu load) */
-    double current_fraction;        /* constant current fraction (pu load) */
-    double power_fraction;          /* constant power fraction (pu load)*/
-    double power_factor;            /* power factor */
-    double voltage_factor;          /* voltage factor (pu nominal) */
+	/* loading */
+	double impedance_fraction;	/* constant impedance fraction (pu load) */
+	double current_fraction;	/* constant current fraction (pu load) */
+	double power_fraction;		/* constant power fraction (pu load)*/
+	double power_factor;		/* power factor */
+	double voltage_factor;		/* voltage factor (pu nominal) */
 
-    /* heat */
-    double heatgain;                        /* internal heat from load (Btu/h) */
-    double cumulative_heatgain;  /* internal cumulative heat gain from load (Btu) */
-    double heatgain_fraction;       /* fraction of power that goes to internal heat (pu Btu/h) */
+	/* heat */
+	double heatgain;			/* internal heat from load (Btu/h) */
+	double cumulative_heatgain;  /* internal cumulative heat gain from load (Btu) */ 
+	double heatgain_fraction;	/* fraction of power that goes to internal heat (pu Btu/h) */
 
-    /* misc info */
-    char *name;
-    loadshape *shape;
-    TIMESTAMP t_last;                       /* last time of update */
+	/* misc info */
+	char *name;
+	loadshape *shape;
+	TIMESTAMP t_last;			/* last time of update */
 
-    // added for backward compatibility with res ENDUSELOAD
-    // @todo these are obsolete and must be retrofitted with the above values
-    struct s_object_list *end_obj;
+	// added for backward compatibility with res ENDUSELOAD
+	// @todo these are obsolete and must be retrofitted with the above values
+	struct s_object_list *end_obj;
 
-    struct s_enduse *next;
-#ifdef _DEBUG
-    unsigned int magic;
-#endif
+        struct s_enduse *next;
 } enduse;
+
 
 /* object flags */
 #define OF_NONE		0x0000 /**< Object flag; none set */
@@ -986,108 +983,6 @@ typedef enum {
 	TCOP_NOP,
 	TCOP_ERR=-1
 } PROPERTYCOMPAREOP;
-typedef int PROPERTYCOMPAREFUNCTION(void*,void*,void*);
-
-typedef struct s_property_specs { /**<	the property type conversion specifications.
-																It is critical that the order of entries in this list must match 
-																the order of entries in the enumeration #PROPERTYTYPE 
-													  **/
-	char *name; /**< the property type name */
-	char *xsdname;
-	unsigned int size; /**< the size of 1 instance */
-	unsigned int csize; /**< the minimum size of a converted instance (not including '\0' or unit, 0 means a call to property_minimum_buffersize() is necessary) */ 
-	int (*data_to_string)(char *,int,void*,PROPERTY*); /**< the function to convert from data to a string */
-	int (*string_to_data)(const char *,void*,PROPERTY*); /**< the function to convert from a string to data */
-	int (*create)(void*); /**< the function used to create the property, if any */
-	size_t (*stream)(FILE*,int,void*,PROPERTY*); /**< the function to read data from a stream */
-	struct {
-		PROPERTYCOMPAREOP op;
-		char str[16];
-		PROPERTYCOMPAREFUNCTION* fn;
-		int trinary;
-	} compare[_TCOP_LAST]; /**< the list of comparison operators available for this type */
-	double (*get_part)(void*,char *name); /**< the function to get a part of a property */
-	// @todo for greater generality this should be implemented as a linked list
-} PROPERTYSPEC;
-
-/* data structure to bind a variable with a property definition */
-typedef struct s_variable {
-	void *addr;
-	PROPERTY *prop;
-} GLDVAR;
-
-/* prototype of external transform function */
-typedef int (*TRANSFORMFUNCTION)(int,GLDVAR*,int,GLDVAR*);
-
-/* list of supported transform sources */
-typedef enum {
-	XS_UNKNOWN	= 0x00,
-	XS_DOUBLE	= 0x01,
-	XS_COMPLEX	= 0x02,
-	XS_LOADSHAPE= 0x04,
-	XS_ENDUSE	= 0x08,
-	XS_SCHEDULE = 0x10,
-	XS_ALL		= 0x1f,
-} TRANSFORMSOURCE;
-
-/* list of supported transform function types */
-typedef enum {
-	XT_LINEAR	= 0x00,
-	XT_EXTERNAL = 0x01,
-//	XT_DIFF		= 0x02, ///< transform is a finite difference
-//	XT_SUM		= 0x03, ///< transform is a discrete sum
-	XT_FILTER	= 0x04, ///< transform is a discrete-time filter
-} TRANSFORMFUNCTIONTYPE;
-
-/****************************************************************
- * Transfer function implementation
- ****************************************************************/
-
-typedef struct s_transferfunction {
-	char name[64];		///< transfer function name
-	char domain[4];		///< domain variable name
-	double timestep;	///< timestep (seconds)
-	double timeskew;	///< timeskew (seconds)
-	unsigned int n;		///< denominator order
-	double *a;			///< denominator coefficients
-	unsigned int m;		///< numerator order
-	double *b;			///< numerator coefficients
-	struct s_transferfunction *next;
-} TRANSFERFUNCTION;
-
-/* transform data structure */
-typedef struct s_transform {
-	double *source;	///< source vector of the function input
-	TRANSFORMSOURCE source_type; ///< data type of source
-	struct s_object_list *target_obj; ///< object of the target
-	struct s_property_map *target_prop; ///< property of the target
-	TRANSFORMFUNCTIONTYPE function_type; ///< function type (linear, external, etc.)
-	union {
-		struct { // used only by linear transforms
-			void *source_addr; ///< pointer to the source
-			SCHEDULE *source_schedule; ///< schedule associated with the source
-			double *target; ///< target of the function output
-			double scale; ///< scalar (linear transform only)
-			double bias; ///< constant (linear transform only)
-		};
-		struct { // used only by external transforms
-			TRANSFORMFUNCTION function; /// function pointer
-			int retval; /// last return value
-			int nlhs; /// number of lhs values
-			GLDVAR *plhs; /// vector of lhs value pointers
-			int nrhs; /// number of rhs values
-			GLDVAR *prhs; /// vector of rhs value pointers
-		};
-		struct { // used only by filter transforms
-			TRANSFERFUNCTION *tf; ///< transfer function
-			double *u; ///< u vector
-			double *y; ///< y vector
-			double *x; ///< x vector
-			TIMESTAMP t2; ///< next sample time
-		};
-	};
-	struct s_transform *next; ///* next item in linked list
-} TRANSFORM;
 
 typedef struct s_callbacks {
 	TIMESTAMP *global_clock;
@@ -1109,7 +1004,6 @@ typedef struct s_callbacks {
 	int (*loadmethod)(CLASS*,char*,int (*call)(OBJECT*,char*));
 	CLASS *(*class_getfirst)(void);
 	CLASS *(*class_getname)(char*);
-	PROPERTY *(*class_add_extended_property)(CLASS *,char *,PROPERTYTYPE,char *);
 	struct {
 		FUNCTION *(*define)(CLASS*,FUNCTIONNAME,FUNCTIONADDR);
 		FUNCTIONADDR (*get)(char*,char*);
@@ -1134,8 +1028,6 @@ typedef struct s_callbacks {
 		int (*set_value_by_type)(PROPERTYTYPE,void *data,char *);
 		bool (*compare_basic)(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void* x, void* a, void* b, char *part);
 		PROPERTYCOMPAREOP (*get_compare_op)(PROPERTYTYPE ptype, char *opstr);
-		double (*get_part)(OBJECT*,PROPERTY*,char*);
-		PROPERTYSPEC *(*get_spec)(PROPERTYTYPE ptype);
 	} properties;
 	struct {
 		struct s_findlist *(*objects)(struct s_findlist *,...);
@@ -1156,7 +1048,6 @@ typedef struct s_callbacks {
 		void *(*getvar)(MODULE *module, char *varname);
 		MODULE *(*getfirst)(void);
 		int (*depends)(char *name, unsigned char major, unsigned char minor, unsigned short build);
-		const char *(*find_transform_function)(TRANSFORMFUNCTION function);
 	} module;
 	struct {
 		double (*uniform)(unsigned int *rng, double a, double b);
@@ -1186,6 +1077,7 @@ typedef struct s_callbacks {
 		double (*timestamp_to_minutes)(TIMESTAMP t);
 		double (*timestamp_to_seconds)(TIMESTAMP t);
 		int (*local_datetime)(TIMESTAMP ts, DATETIME *dt);
+		int (*local_datetime_delta)(double ts, DATETIME *dt);
 		TIMESTAMP (*convert_to_timestamp)(char *value);
 		TIMESTAMP (*convert_to_timestamp_delta)(const char *value, unsigned int *nanoseconds, double *dbl_time_value);
 		int (*convert_from_timestamp)(TIMESTAMP ts, char *buffer, int size);
@@ -1214,7 +1106,6 @@ typedef struct s_callbacks {
 		char *(*find_file)(char *name, char *path, int mode);
 	} file;
 	struct s_objvar_struct {
-		bool *(*bool_var)(OBJECT *obj, PROPERTY *prop);
 		complex *(*complex_var)(OBJECT *obj, PROPERTY *prop);
 		enumeration *(*enum_var)(OBJECT *obj, PROPERTY *prop);
 		set *(*set_var)(OBJECT *obj, PROPERTY *prop);
@@ -1226,7 +1117,6 @@ typedef struct s_callbacks {
 		OBJECT *(*object_var)(OBJECT *obj, PROPERTY *prop);
 	} objvar;
 	struct s_objvar_name_struct {
-		bool *(*bool_var)(OBJECT *obj, char *name);
 		complex *(*complex_var)(OBJECT *obj, char *name);
 		enumeration *(*enum_var)(OBJECT *obj, char *name);
 		set *(*set_var)(OBJECT *obj, char *name);
@@ -1235,7 +1125,6 @@ typedef struct s_callbacks {
 		int64 *(*int64_var)(OBJECT *obj, char *name);
 		double *(*double_var)(OBJECT *obj, char *name);
 		char *(*string_var)(OBJECT *obj, char *name);
-		OBJECT *(*object_var)(OBJECT *obj, char *name);
 	} objvarname;
 	struct {
 		int (*string_to_property)(PROPERTY *prop, void *addr, char *value);
@@ -1243,7 +1132,6 @@ typedef struct s_callbacks {
 	} convert;
 	MODULE *(*module_find)(char *name);
 	OBJECT *(*get_object)(char *name);
-	OBJECT *(*object_find_by_id)(OBJECTNUM);
 	int (*name_object)(OBJECT *obj, char *buffer, int len);
 	int (*get_oflags)(KEYWORD **extflags);
 	unsigned int (*object_count)(void);
@@ -1253,7 +1141,6 @@ typedef struct s_callbacks {
 		double (*value)(SCHEDULE *sch, SCHEDULEINDEX index);
 		int32 (*dtnext)(SCHEDULE *sch, SCHEDULEINDEX index);
 		SCHEDULE *(*find)(char *name);
-		SCHEDULE *(*getfirst)(void);
 	} schedule;
 	struct {
 		int (*create)(loadshape *s);
@@ -1299,24 +1186,6 @@ typedef struct s_callbacks {
 		void (*read)(char *url, int maxlen);
 		void (*free)(void *result);
 	} http;
-	struct {
-		TRANSFORM *(*getnext)(TRANSFORM*);
-		int (*add_linear)(TRANSFORMSOURCE,double*,void*,double,double,OBJECT*,PROPERTY*,SCHEDULE*);
-		int (*add_external)(OBJECT*,PROPERTY*,const char*,OBJECT*,PROPERTY*);
-		int64 (*apply)(TIMESTAMP,TRANSFORM*,double*);
-	} transform;
-	struct {
-		randomvar *(*getnext)(randomvar*);
-		size_t (*getspec)(char *, size_t, const randomvar *);
-	} randomvar;
-	struct {
-		unsigned int (*major)(void);
-		unsigned int (*minor)(void);
-		unsigned int (*patch)(void);
-		unsigned int (*build)(void);
-		const char * (*branch)(void);
-	} version;
-	long unsigned int magic; /* used to check structure alignment */
 } CALLBACKS; /**< core callback function table */
 
 extern CALLBACKS *callback;
@@ -1453,6 +1322,7 @@ inline double gl_random_rayleigh(double a) { return callback->random.rayleigh(NU
 
 inline bool gl_object_isa(OBJECT *obj, char *type) { return callback->object_isa(obj,type)==1;};
 inline DATETIME *gl_localtime(TIMESTAMP ts,DATETIME *dt) { return callback->time.local_datetime(ts,dt)?dt:NULL;};
+inline DATETIME *gl_localtime_delta(double ts,DATETIME *dt) { return callback->time.local_datetime_delta(ts,dt)?dt:NULL;};
 inline TIMESTAMP gl_mkdatetime(DATETIME *dt) { return callback->time.mkdatetime(dt);};
 inline TIMESTAMP gl_mkdatetime(short year, short month, short day, short hour=0, short minute=0, short second=0, char *tz=NULL, unsigned int nsec=0)
 {
@@ -1570,9 +1440,9 @@ private:
 	unsigned int *refs; /** reference count **/
 	double ***x; /** pointer to 2D array of pointers to double values */
 	unsigned char *f; /** pointer to array of flags: bit0=byref, */
-	const char *name;
 	friend class double_vector;
 private:
+	const char *name;
 	inline void exception(const char *msg,...) const
 	{ 
 		static char buf[1024]; 
@@ -1703,14 +1573,12 @@ public:
 			size_t i;
 			for ( i=0 ; i<n ; i++ )
 			{
+				if ( x[n]==NULL ) continue;
 				double **y = (double**)malloc(sizeof(double*)*c);
-				if ( x[i]!=NULL )
-				{
-					memcpy(y,x[i],sizeof(double**)*m);
-					free(x[i]);
-				}
+				memcpy(y,x[n],sizeof(double**)*m);
 				memset(y+m,0,sizeof(double**)*(c-m));
-				x[i] = y;
+				free(x[n]);
+				x[n] = y;
 			}
 			m=c;
 		}
@@ -2013,33 +1881,5 @@ public:
 			y[r] = my(r,c);
 	}
 };
-///////////////////////////////////////////////////////////////////////////////////
-// Extended runtime API for 3.0
-#define GLAPI3 // enable gl class to support extended API
-class gl_core {
-private:
-	OBJECT *my;
-public:
-	inline gl_core(OBJECT*obj) : my(obj) {};
-public:
-	inline void error(char *fmt,...)
-	{
-		char buffer[1024];
-		char tmp[256];
-		va_list ptr;
-		va_start(ptr,fmt);
-		vsprintf(buffer,fmt,ptr);
-		(*callback->output_error)("%s: %s", gl_name(my,tmp,sizeof(tmp)),buffer);
-		va_end(ptr);
-	};
-	inline void warning(char *fmt,...)
-	{
-		char buffer[1024];
-		char tmp[256];
-		va_list ptr;
-		va_start(ptr,fmt);
-		vsprintf(buffer,fmt,ptr);
-		(*callback->output_warning)("%s: %s", gl_name(my,tmp,sizeof(tmp)),buffer);
-		va_end(ptr);
-	};};
+
 /**@}**/

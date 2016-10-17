@@ -79,6 +79,7 @@ public:
 	complex read_I_out[3];  ///< published current flow out of link (w.r.t to node)
 	complex If_in[3];		///< fault current flowing in 
 	complex If_out[3];		///< fault current flowing out
+	complex Vf_out[3];
 	complex power_in;		///< power flow in (w.r.t from node)
 	complex power_out;		///< power flow out (w.r.t to node)
 	complex power_loss;		///< power losses 
@@ -188,3 +189,4 @@ void forward_sub(complex *l, complex *b, complex *z, int size_val); //backwards 
 void back_sub(complex *u, complex *z, complex *x, int size_val); // forwards substitution algorithm for a generic square system
 void lu_matrix_inverse(complex *input_mat, complex *output_mat, int size_val);	//matrix inversion calculated by LU decomp method
 #endif // _LINK_H
+

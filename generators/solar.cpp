@@ -141,6 +141,10 @@ solar::solar(MODULE *module)
 				PT_KEYWORD, "S",(set)PHASE_S,
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
+		//Deltamode linkage
+		if (gl_publish_function(oclass,	"interupdate_gen_object", (FUNCTIONADDR)interupdate_solar)==NULL)
+			GL_THROW("Unable to publish solar deltamode function");
+
 		defaults = this;
 		memset(this,0,sizeof(solar));
 
@@ -205,6 +209,10 @@ int solar::create(void)
 
 	//Null out the function pointers
 	calc_solar_radiation = NULL;
+
+	//Deltamode flags
+	deltamode_inclusive = false;
+	first_sync_delta_enabled = false;
 
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -613,7 +621,7 @@ int solar::init(OBJECT *parent)
 		*/
 
 		if(Max_P == 0) {
-			gl_warning("init(): Rated_kVA or {area or rated insolation or efficiency} were not specified or specified as zero.  Leads to maximum power output of 0.");
+			gl_warning("init(): Rated_kVA or {area or rated insolation or effiency} were not specified or specified as zero.  Leads to maximum power output of 0.");
 			/* TROUBLESHOOT
 			The relationship between power output and other physical variables is described by Rated_kVA = Rated_Insolation * efficiency * area. Since Rated_kVA
 			was not specified and this equation leads to a value of zero, the output of the model is likely to be no power at all times.
@@ -765,6 +773,64 @@ int solar::init(OBJECT *parent)
 		*/
 	}
 
+	//Set the deltamode flag, if desired
+	if ((obj->flags & OF_DELTAMODE) == OF_DELTAMODE)
+	{
+		deltamode_inclusive = true;	//Set the flag and off we go
+	}
+
+	if (deltamode_inclusive == true)
+	{
+		//Check global, for giggles
+		if (enable_subsecond_models!=true)
+		{
+			gl_warning("solar:%s indicates it wants to run deltamode, but the module-level flag is not set!",obj->name?obj->name:"unnamed");
+			/*  TROUBLESHOOT
+			The solar object has the deltamode_inclusive flag set, but not the module-level enable_subsecond_models flag.  The generator
+			will not simulate any dynamics this way.
+			*/
+		}
+		else
+		{
+			gen_object_count++;	//Increment the counter
+			first_sync_delta_enabled = true;
+		}
+
+		//Make sure our parent is an inverter and deltamode enabled (otherwise this is dumb)
+		if (gl_object_isa(parent,"inverter","generators"))
+		{
+			//Make sure our parent has the flag set
+			if ((parent->flags & OF_DELTAMODE) != OF_DELTAMODE)
+			{
+				GL_THROW("solar:%d %s is attached to an inverter, but that inverter is not set up for deltamode",obj->id, (obj->name ? obj->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				The solar object is not parented to a deltamode-enabled inverter.  There is really no reason to have the solar object deltamode-enabled,
+				so this should be fixed.
+				*/
+			}
+			//Default else, all is well
+		}//Not a proper parent
+		else
+		{
+			GL_THROW("solar:%d %s is not parented to an inverter -- deltamode operations do not support this",obj->id, (obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			The solar object is not parented to an inverter.  Deltamode only supports it being parented to a deltamode-enabled inverter.
+			*/
+		}
+	}//End deltamode inclusive
+	else	//This particular model isn't enabled
+	{
+		if (enable_subsecond_models == true)
+		{
+			gl_warning("solar:%d %s - Deltamode is enabled for the module, but not this solar array!",obj->id,(obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			The solar array is not flagged for deltamode operations, yet deltamode simulations are enabled for the overall system.  When deltamode
+			triggers, this array may no longer contribute to the system, until event-driven mode resumes.  This could cause issues with the simulation.
+			It is recommended all objects that support deltamode enable it.
+			*/
+		}
+	}
+
 	return climate_result; /* return 1 on success, 0 on failure */
 }
 
@@ -792,6 +858,64 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 		of 0 to 1.  Please set it back within this range and try again.
 		*/
 	}
+
+	if (first_sync_delta_enabled == true)	//Deltamode first pass
+	{
+		//TODO: LOCKING!
+		if ((deltamode_inclusive == true) && (enable_subsecond_models == true))	//We want deltamode - see if it's populated yet
+		{
+			if ((gen_object_current == -1) || (delta_objects==NULL))
+			{
+				//Call the allocation routine
+				allocate_deltamode_arrays();
+			}
+
+			//Check limits of the array
+			if (gen_object_current>=gen_object_count)
+			{
+				GL_THROW("Too many objects tried to populate deltamode objects array in the generators module!");
+				/*  TROUBLESHOOT
+				While attempting to populate a reference array of deltamode-enabled objects for the generator
+				module, an attempt was made to write beyond the allocated array space.  Please try again.  If the
+				error persists, please submit a bug report and your code via the trac website.
+				*/
+			}
+
+			//Add us into the list
+			delta_objects[gen_object_current] = obj;
+
+			//Map up the function for interupdate
+			delta_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"interupdate_gen_object"));
+
+			//Make sure it worked
+			if (delta_functions[gen_object_current] == NULL)
+			{
+				GL_THROW("Failure to map deltamode function for device:%s",obj->name);
+				/*  TROUBLESHOOT
+				Attempts to map up the interupdate function of a specific device failed.  Please try again and ensure
+				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
+				trac website.
+				*/
+			}
+
+			//Map up the function for postupdate
+			post_delta_functions[gen_object_current] = NULL; //No post-update function for us
+
+			//Map up the function for preupdate
+			delta_preupdate_functions[gen_object_current] = NULL;
+
+			//Update pointer
+			gen_object_current++;
+
+			//Flag us as complete
+			first_sync_delta_enabled = false;
+		}//End deltamode specials - first pass
+		else	//Somehow, we got here and deltamode isn't properly enabled...odd, just deflag us
+		{
+			first_sync_delta_enabled = false;
+		}
+	}//End first delta timestep
+	//default else - either not deltamode, or not the first timestep
 
 	if (solar_model_tilt != PLAYERVAL)
 	{
@@ -944,6 +1068,36 @@ complex *solar::get_complex(OBJECT *obj, char *name)
 	return (complex*)GETADDR(obj,p);
 }
 
+//Deltamode interupdate function -- basically call sync
+//Module-level call
+SIMULATIONMODE solar::inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
+{
+	double deltat, deltatimedbl, currentDBLtime;
+	TIMESTAMP time_passin_value, ret_value;
+
+	//Get timestep value
+	deltat = (double)dt/(double)DT_SECOND;
+
+	if (iteration_count_val == 0)	//Only update timestamp tracker on first iteration
+	{
+		//Get decimal timestamp value
+		deltatimedbl = (double)delta_time/(double)DT_SECOND; 
+
+		//Update tracking variable
+		currentDBLtime = (double)gl_globalclock + deltatimedbl;
+
+		//Cast it back
+		time_passin_value = (TIMESTAMP)currentDBLtime;
+
+		//Just call sync with a nonsense secondary variable -- doesn't hurt anything in this case
+		//Don't care about the return value either
+		ret_value = sync(time_passin_value,TS_NEVER);
+	}
+	
+	//Solar object never drives anything, so it's always ready to leave
+	return SM_EVENT;
+}
+
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////
@@ -1003,3 +1157,21 @@ EXPORT TIMESTAMP sync_solar(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 	SYNC_CATCHALL(solar);
 	return t2;
 }
+
+//DELTAMODE Linkage
+EXPORT SIMULATIONMODE interupdate_solar(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
+{
+	solar *my = OBJECTDATA(obj,solar);
+	SIMULATIONMODE status = SM_ERROR;
+	try
+	{
+		status = my->inter_deltaupdate(delta_time,dt,iteration_count_val);
+		return status;
+	}
+	catch (char *msg)
+	{
+		gl_error("interupdate_solar(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
+		return status;
+	}
+}
+

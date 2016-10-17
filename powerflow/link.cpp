@@ -93,10 +93,13 @@
 #include <math.h>
 #include "link.h"
 #include "node.h"
+
+//More stuff to try and separate when time permits
 #include "meter.h"
 #include "regulator.h"
 #include "triplex_meter.h"
 #include "switch_object.h"
+
 
 CLASS* link_object::oclass = NULL;
 CLASS* link_object::pclass = NULL;
@@ -149,6 +152,11 @@ link_object::link_object(MODULE *mod) : powerflow_object(mod)
 			PT_complex, "fault_current_out_A[A]", PADDR(If_out[0]),PT_DESCRIPTION,"fault current flowing out, phase A",
 			PT_complex, "fault_current_out_B[A]", PADDR(If_out[1]),PT_DESCRIPTION,"fault current flowing out, phase B",
 			PT_complex, "fault_current_out_C[A]", PADDR(If_out[2]),PT_DESCRIPTION,"fault current flowing out, phase C",
+
+			PT_complex, "fault_voltage_A[A]", PADDR(Vf_out[0]),PT_DESCRIPTION,"fault voltage, phase A",
+			PT_complex, "fault_voltage_B[A]", PADDR(Vf_out[1]),PT_DESCRIPTION,"fault voltage, phase B",
+			PT_complex, "fault_voltage_C[A]", PADDR(Vf_out[2]),PT_DESCRIPTION,"fault voltage, phase C",
+				
 			PT_set, "flow_direction", PADDR(flow_direction),PT_DESCRIPTION,"flag used for describing direction of the flow of power",
 				PT_KEYWORD, "UNKNOWN", (set)FD_UNKNOWN,
 				PT_KEYWORD, "AF", (set)FD_A_NORMAL,
@@ -12491,14 +12499,17 @@ void link_object::mesh_fault_current_calc(complex Zth[3][3],complex CV[3][3],com
 				//Populate fault current into the output
                                 if (fault_type == 111) {
 					If_out[0] = IVf[0];
+					Vf_out[0] = IVf[1];
 					//Assume lines for now -- input is the same (transformers will be different)
 					If_in[0] = If_out[0];
 				} else if (fault_type == 211) {
 					If_out[1] = IVf[0];
+					Vf_out[1] = IVf[1];
 					//Assume lines for now -- input is the same (transformers will be different)
 					If_in[1] = If_out[1];
 				} else if (fault_type == 311) {
 					If_out[2] = IVf[0];
+					Vf_out[2] = IVf[1];
 					//Assume lines for now -- input is the same (transformers will be different)
 					If_in[2] = If_out[2];
 				}
@@ -12571,7 +12582,8 @@ void link_object::mesh_fault_current_calc(complex Zth[3][3],complex CV[3][3],com
 					{
 						If_out[0] = IVf[0];
 						If_out[1] = IVf[1];
-
+						Vf_out[0] = IVf[2];
+						Vf_out[1] = IVf[3];
 						//Assume lines for now -- input is the same (transformers will be different)
 						If_in[0] = If_out[0];
 						If_in[1] = If_out[1];
@@ -12580,7 +12592,8 @@ void link_object::mesh_fault_current_calc(complex Zth[3][3],complex CV[3][3],com
 					{
 						If_out[1] = IVf[0];
 						If_out[2] = IVf[1];
-
+						Vf_out[1] = IVf[2];
+						Vf_out[2] = IVf[3];
 						//Assume lines for now -- input is the same (transformers will be different)
 						If_in[1] = If_out[1];
 						If_in[2] = If_out[2];
@@ -12589,7 +12602,8 @@ void link_object::mesh_fault_current_calc(complex Zth[3][3],complex CV[3][3],com
 					{
 						If_out[0] = IVf[0];
 						If_out[2] = IVf[1];
-
+						Vf_out[0] = IVf[2];
+						Vf_out[2] = IVf[3];
 						//Assume lines for now -- input is the same (transformers will be different)
 						If_in[0] = If_out[0];
 						If_in[2] = If_out[2];
@@ -12656,7 +12670,9 @@ void link_object::mesh_fault_current_calc(complex Zth[3][3],complex CV[3][3],com
 				If_out[0] = IVf[0];
 				If_out[1] = IVf[1];
 				If_out[2] = IVf[2];
-
+				Vf_out[0] = IVf[3];
+				Vf_out[1] = IVf[4];
+				Vf_out[2] = IVf[5];
 				//Assume lines for now -- input is the same (transformers will be different)
 				If_in[0] = If_out[0];
 				If_in[1] = If_out[1];
@@ -13644,4 +13660,3 @@ void lu_matrix_inverse(complex *input_mat, complex *output_mat, int size_val)
 
 
 /**@}*/
-

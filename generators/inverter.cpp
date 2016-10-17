@@ -2975,7 +2975,15 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					last_power[3] = -VA_Out;
 
 					//Post the value
-					I_Out[0] = ~(VA_Out / *pCircuit_V);
+					if (pCircuit_V[0].Mag() > 0.0)
+					{
+						I_Out[0] = ~(VA_Out / *pCircuit_V);
+					}
+					else
+					{
+						I_Out[0] = complex(0.0,0.0);
+					}
+
 					if (deltamode_inclusive == true)
 					{
 						last_current[3] = -I_Out[0];
@@ -2994,7 +3002,16 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					if ( (phases & 0x01) == 0x01 ) // has phase A
 					{
 						last_power[0] = temp_VA;	//Store last power
-						I_Out[0] = ~(-temp_VA / pCircuit_V[0]);
+
+						if (pCircuit_V[0].Mag() > 0.0)
+						{
+							I_Out[0] = ~(-temp_VA / pCircuit_V[0]);
+						}
+						else
+						{
+							I_Out[0] = complex(0.0,0.0);
+						}
+
 						if (deltamode_inclusive == true)
 						{
 							last_current[0] = -I_Out[0];
@@ -3009,7 +3026,16 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					if ( (phases & 0x02) == 0x02 ) // has phase B
 					{
 						last_power[1] = temp_VA;	//Store last power
-						I_Out[1] = ~(-temp_VA / pCircuit_V[1]);
+
+						if (pCircuit_V[1].Mag() > 0.0)
+						{
+							I_Out[1] = ~(-temp_VA / pCircuit_V[1]);
+						}
+						else
+						{
+							I_Out[1] = complex(0.0,0.0);
+						}
+
 						if (deltamode_inclusive == true)
 						{
 							last_current[1] = -I_Out[1];
@@ -3024,7 +3050,16 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					if ( (phases & 0x04) == 0x04 ) // has phase C
 					{
 						last_power[2] = temp_VA;	//Store last power
-						I_Out[2] = ~(-temp_VA / pCircuit_V[2]);
+
+						if (pCircuit_V[2].Mag() > 0.0)
+						{
+							I_Out[2] = ~(-temp_VA / pCircuit_V[2]);
+						}
+						else
+						{
+							I_Out[2] = complex(0.0,0.0);
+						}
+
 						if (deltamode_inclusive == true)
 						{
 							last_current[2] = -I_Out[2];
@@ -3092,26 +3127,55 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					p_in = power_A.Re() / inv_eta;
 					last_power[3] = -power_A;
 					*pPower += last_power[3];
-					I_Out[0] = ~(VA_Out / *pCircuit_V);
+
+					if (pCircuit_V[0].Mag() > 0.0)
+					{
+						I_Out[0] = ~(VA_Out / *pCircuit_V);
+					}
+					else
+					{
+						I_Out[0] = complex(0.0,0.0);
+					}
 				} else {
 					p_in = 0;
 					if ((phases & 0x01) == 0x01) {
 						p_in += power_A.Re()/inv_eta;
 						last_power[0] = -power_A;
 						pPower[0] += last_power[0];
-						I_Out[0] = ~(VA_Out / *pCircuit_V);
+						if (pCircuit_V[0].Mag() > 0.0)
+						{
+							I_Out[0] = ~(VA_Out / *pCircuit_V);
+						}
+						else
+						{
+							I_Out[0] = complex(0.0,0.0);
+						}
 					}
 					if ((phases & 0x02) == 0x02) {
 						p_in += power_B.Re()/inv_eta;
 						last_power[1] = -power_B;
 						pPower[1] += last_power[1];
-						I_Out[1] = ~(VA_Out / *pCircuit_V);
+						if (pCircuit_V[0].Mag() > 0.0)	//This looks wrong, but it is right, since pCircuit_V is directly to the voltage
+						{
+							I_Out[1] = ~(VA_Out / *pCircuit_V);
+						}
+						else
+						{
+							I_Out[1] = complex(0.0,0.0);
+						}
 					}
 					if ((phases & 0x04) == 0x04) {
 						p_in += power_C.Re()/inv_eta;
 						last_power[2] = -power_C;
 						pPower[2] += last_power[2];
-						I_Out[2] = ~(VA_Out / *pCircuit_V);
+						if (pCircuit_V[0].Mag() > 0.0)	//This looks wrong, but it is right, since pCircuit_V is directly to the voltage
+						{
+							I_Out[2] = ~(VA_Out / *pCircuit_V);
+						}
+						else
+						{
+							I_Out[2] = complex(0.0,0.0);
+						}
 					}
 				}
 			}
@@ -4222,10 +4286,20 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 					if((phases & 0x10) == 0x10) {
 						curr_state.Pout[0] = VA_Out.Re();
 						curr_state.Qout[0] = VA_Out.Im();
-						curr_state.ed[0] = ((~(complex(Pref, Qref)/(*pCircuit_V))) - (~(complex(curr_state.Pout[0],curr_state.Qout[0])/(*pCircuit_V)))).Re();
+						if (pCircuit_V[0].Mag() > 0.0)
+						{
+							curr_state.ed[0] = ((~(complex(Pref, Qref)/(*pCircuit_V))) - (~(complex(curr_state.Pout[0],curr_state.Qout[0])/(*pCircuit_V)))).Re();
+							curr_state.eq[0] = ((~(complex(Pref, Qref)/(*pCircuit_V))) - (~(complex(curr_state.Pout[0],curr_state.Qout[0])/(*pCircuit_V)))).Im();
+						}
+						else
+						{
+							curr_state.ed[0] = 0.0;
+							curr_state.eq[0] = 0.0;
+						}
+
 						curr_state.ded[0] = curr_state.ed[0] / deltat;
 						curr_state.dmd[0] = (kpd * curr_state.ded[0]) + (kid * curr_state.ed[0]);
-						curr_state.eq[0] = ((~(complex(Pref, Qref)/(*pCircuit_V))) - (~(complex(curr_state.Pout[0],curr_state.Qout[0])/(*pCircuit_V)))).Im();
+
 						curr_state.deq[0] = curr_state.eq[0] / deltat;
 						curr_state.dmq[0] = (kpq * curr_state.deq[0]) + (kiq * curr_state.eq[0]);
 						if(fabs(curr_state.ded[0]) <= inverter_convergence_criterion && fabs(curr_state.deq[0]) <= inverter_convergence_criterion) {
@@ -4238,10 +4312,20 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 						for(i = 0; i < 3; i++) {
 							curr_state.Pout[i] = VA_Out.Re() / 3.0;
 							curr_state.Qout[i] = VA_Out.Im() / 3.0;
-							curr_state.ed[i] = ((~(complex(Pref/3.0, Qref/3.0)/(pCircuit_V[i]))) - (~(complex(curr_state.Pout[i],curr_state.Qout[i])/(pCircuit_V[i])))).Re();
+							if (pCircuit_V[i].Mag() > 0.0)
+							{
+								curr_state.ed[i] = ((~(complex(Pref/3.0, Qref/3.0)/(pCircuit_V[i]))) - (~(complex(curr_state.Pout[i],curr_state.Qout[i])/(pCircuit_V[i])))).Re();
+								curr_state.eq[i] = ((~(complex(Pref/3.0, Qref/3.0)/(pCircuit_V[i]))) - (~(complex(curr_state.Pout[i],curr_state.Qout[i])/(pCircuit_V[i])))).Im();
+							}
+							else
+							{
+								curr_state.ed[i] = 0.0;
+								curr_state.eq[i] = 0.0;
+							}
+
 							curr_state.ded[i] = curr_state.ed[i] / deltat;
 							curr_state.dmd[i] = (kpd * curr_state.ded[i]) + (kid * curr_state.ed[i]);
-							curr_state.eq[i] = ((~(complex(Pref/3.0, Qref/3.0)/(pCircuit_V[i]))) - (~(complex(curr_state.Pout[i],curr_state.Qout[i])/(pCircuit_V[i])))).Im();
+							
 							curr_state.deq[i] = curr_state.eq[i] / deltat;
 							curr_state.dmq[i] = (kpq * curr_state.deq[i]) + (kiq * curr_state.eq[i]);
 							if(fabs(curr_state.ded[i]) <= inverter_convergence_criterion && fabs(curr_state.deq[i]) <= inverter_convergence_criterion && simmode_return_value != SM_DELTA) {
@@ -4283,12 +4367,22 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 				if ((phases & 0x10) == 0x10) {
 					pred_state.Pout[0] = (*pCircuit_V * ~(pred_state.Iac[0])).Re();
 					pred_state.Qout[0] = (*pCircuit_V * ~(pred_state.Iac[0])).Im();
-					pred_state.ed[0] = ((~(complex(Pref, Qref)/(*pCircuit_V))) - (~(complex(pred_state.Pout[0],pred_state.Qout[0])/(*pCircuit_V)))).Re();
+					if (pCircuit_V[0].Mag() > 0.0)
+					{
+						pred_state.ed[0] = ((~(complex(Pref, Qref)/(*pCircuit_V))) - (~(complex(pred_state.Pout[0],pred_state.Qout[0])/(*pCircuit_V)))).Re();
+						pred_state.eq[0] = ((~(complex(Pref, Qref)/(*pCircuit_V))) - (~(complex(pred_state.Pout[0],pred_state.Qout[0])/(*pCircuit_V)))).Im();
+					}
+					else
+					{
+						pred_state.ed[0] = 0.0;
+						pred_state.eq[0] = 0.0;
+					}
+
 					pred_state.ded[0] = (pred_state.ed[0] - curr_state.ed[0]) / deltat;
 					pred_state.dmd[0] = (kpd * pred_state.ded[0]) + (kid * pred_state.ed[0]);
 					curr_state.md[0] = curr_state.md[0] + ((curr_state.dmd[0] + pred_state.dmd[0]) * deltat) / 2.0;
 					curr_state.Idq[0].SetReal(curr_state.md[0] * I_In.Re());
-					pred_state.eq[0] = ((~(complex(Pref, Qref)/(*pCircuit_V))) - (~(complex(pred_state.Pout[0],pred_state.Qout[0])/(*pCircuit_V)))).Im();
+
 					pred_state.deq[0] = (pred_state.eq[0] - curr_state.eq[0]) / deltat;
 					pred_state.dmq[0] = (kpq * pred_state.deq[0]) + (kiq * pred_state.eq[0]);
 					curr_state.mq[0] = curr_state.mq[0] + ((curr_state.dmq[0] + pred_state.dmq[0]) * deltat) / 2.0;
@@ -4302,12 +4396,22 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 					for(i = 0; i < 3; i++) {
 						pred_state.Pout[i] = (pCircuit_V[i] * ~(pred_state.Iac[i])).Re();
 						pred_state.Qout[i] = (pCircuit_V[i] * ~(pred_state.Iac[i])).Im();
-						pred_state.ed[i] = ((~(complex(Pref/3.0, Qref/3.0)/(pCircuit_V[i]))) - (~(complex(pred_state.Pout[i],pred_state.Qout[i])/(pCircuit_V[i])))).Re();
+						if (pCircuit_V[i].Mag() > 0.0)
+						{
+							pred_state.ed[i] = ((~(complex(Pref/3.0, Qref/3.0)/(pCircuit_V[i]))) - (~(complex(pred_state.Pout[i],pred_state.Qout[i])/(pCircuit_V[i])))).Re();
+							pred_state.eq[i] = ((~(complex(Pref/3.0, Qref/3.0)/(pCircuit_V[i]))) - (~(complex(pred_state.Pout[i],pred_state.Qout[i])/(pCircuit_V[i])))).Im();
+						}
+						else
+						{
+							pred_state.ed[i] = 0.0;
+							pred_state.eq[i] = 0.0;
+						}
+
 						pred_state.ded[i] = (pred_state.ed[i] - curr_state.ed[i]) / deltat;
 						pred_state.dmd[i] = (kpd * pred_state.ded[i]) + (kid * pred_state.ed[i]);
 						curr_state.md[i] = curr_state.md[i] + ((curr_state.dmd[i] + pred_state.dmd[i]) * deltat) / 2.0;
 						curr_state.Idq[i].SetReal(curr_state.md[i] * I_In.Re());
-						pred_state.eq[i] = ((~(complex(Pref/3.0, Qref/3.0)/(pCircuit_V[i]))) - (~(complex(pred_state.Pout[i],pred_state.Qout[i])/(pCircuit_V[i])))).Im();
+						
 						pred_state.deq[i] = (pred_state.eq[i] - curr_state.eq[i]) / deltat;
 						pred_state.dmq[i] = (kpq * pred_state.deq[i]) + (kiq * pred_state.eq[i]);
 						curr_state.mq[i] = curr_state.mq[i] + ((curr_state.dmq[i] + pred_state.dmq[i]) * deltat) / 2.0;
@@ -4326,12 +4430,22 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 					prev_error = curr_state.ed[0];
 					curr_state.Pout[0] = VA_Out.Re();
 					curr_state.Qout[0] = VA_Out.Im();
-					curr_state.ed[0] = ((~(complex(Pref, Qref)/(*pCircuit_V))) - (~(complex(curr_state.Pout[0],curr_state.Qout[0])/(*pCircuit_V)))).Re();
+					if (pCircuit_V[0].Mag() > 0.0)
+					{
+						curr_state.ed[0] = ((~(complex(Pref, Qref)/(*pCircuit_V))) - (~(complex(curr_state.Pout[0],curr_state.Qout[0])/(*pCircuit_V)))).Re();
+						curr_state.eq[0] = ((~(complex(Pref, Qref)/(*pCircuit_V))) - (~(complex(curr_state.Pout[0],curr_state.Qout[0])/(*pCircuit_V)))).Im();
+					}
+					else
+					{
+						curr_state.ed[0] = 0.0;
+						curr_state.eq[0] = 0.0;
+					}
+
 					curr_state.ded[0] = (curr_state.ed[0] - prev_error) / deltat;
 					curr_state.dmd[0] = (kpd * curr_state.ded[0]) + (kid * curr_state.ed[0]);
 
 					prev_error = curr_state.eq[0];
-					curr_state.eq[0] = ((~(complex(Pref, Qref)/(*pCircuit_V))) - (~(complex(curr_state.Pout[0],curr_state.Qout[0])/(*pCircuit_V)))).Im();
+
 					curr_state.deq[0] = (curr_state.eq[0] - prev_error) / deltat;
 					curr_state.dmq[0] = (kpq * curr_state.deq[0]) + (kiq * curr_state.eq[0]);
 					if(fabs(curr_state.ded[0]) <= inverter_convergence_criterion && fabs(curr_state.deq[0]) <= inverter_convergence_criterion) {
@@ -4345,11 +4459,22 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 						curr_state.Pout[i] = VA_Out.Re() / 3.0;
 						curr_state.Qout[i] = VA_Out.Im() / 3.0;
 						prev_error = curr_state.ed[i];
-						curr_state.ed[i] = ((~(complex(Pref/3.0, Qref/3.0)/(pCircuit_V[i]))) - (~(complex(curr_state.Pout[i],curr_state.Qout[i])/(pCircuit_V[i])))).Re();
+
+						if (pCircuit_V[i].Mag() > 0.0)
+						{
+							curr_state.ed[i] = ((~(complex(Pref/3.0, Qref/3.0)/(pCircuit_V[i]))) - (~(complex(curr_state.Pout[i],curr_state.Qout[i])/(pCircuit_V[i])))).Re();
+							curr_state.eq[i] = ((~(complex(Pref/3.0, Qref/3.0)/(pCircuit_V[i]))) - (~(complex(curr_state.Pout[i],curr_state.Qout[i])/(pCircuit_V[i])))).Im();
+						}
+						else
+						{
+							curr_state.ed[i] = 0.0;
+							curr_state.eq[i] = 0.0;
+						}
+
 						curr_state.ded[i] = (curr_state.ed[i] - prev_error) / deltat;
 						curr_state.dmd[i] = (kpd * curr_state.ded[i]) + (kid * curr_state.ed[i]);
 						prev_error = curr_state.eq[i];
-						curr_state.eq[i] = ((~(complex(Pref/3.0, Qref/3.0)/(pCircuit_V[i]))) - (~(complex(curr_state.Pout[i],curr_state.Qout[i])/(pCircuit_V[i])))).Im();
+
 						curr_state.deq[i] = (curr_state.eq[i] - prev_error) / deltat;
 						curr_state.dmq[i] = (kpq * curr_state.deq[i]) + (kiq * curr_state.eq[i]);
 						if(fabs(curr_state.ded[i]) <= inverter_convergence_criterion && fabs(curr_state.deq[i]) <= inverter_convergence_criterion && simmode_return_value != SM_DELTA) {
@@ -4411,8 +4536,15 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 			//Determine our path to update
 			if ((phases & 0x10) == 0x10)	//Triplex
 			{
-				//Determine the current set point - unrotated
-				curr_PID_state.current_set_raw[0] = ~(work_power_vals / pCircuit_V[0]);
+				if (pCircuit_V[0].Mag() > 0.0)
+				{
+					//Determine the current set point - unrotated
+					curr_PID_state.current_set_raw[0] = ~(work_power_vals / pCircuit_V[0]);
+				}
+				else //Only you can prevent #IND
+				{
+					curr_PID_state.current_set_raw[0] = complex(0.0,0.0);
+				}
 
 				//Find the current angle
 				curr_PID_state.reference_angle[0] = pCircuit_V[0].Arg();
@@ -4460,8 +4592,15 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 				//Compute the current current values
 				for (indexval=0; indexval<3; indexval++)
 				{
-					//Determine the current set point - unrotated
-					curr_PID_state.current_set_raw[indexval] = ~(work_power_vals / pCircuit_V[indexval]);
+					if (pCircuit_V[indexval].Mag() > 0.0)
+					{
+						//Determine the current set point - unrotated
+						curr_PID_state.current_set_raw[indexval] = ~(work_power_vals / pCircuit_V[indexval]);
+					}
+					else //Only you can prevent #IND
+					{
+						curr_PID_state.current_set_raw[indexval] = complex(0.0,0.0);
+					}
 
 					//Find the current angle
 					curr_PID_state.reference_angle[indexval] = pCircuit_V[indexval].Arg();
@@ -4715,8 +4854,15 @@ STATUS inverter::init_PID_dynamics(void)
 		//Populate the initial "reference angle"
 		curr_PID_state.reference_angle[0] = pCircuit_V[0].Arg();
 
-		//Calculate the current set-point -- should be the same
-		curr_PID_state.current_set_raw[0] = ~(complex(curr_PID_state.phase_Pref,curr_PID_state.phase_Qref)/pCircuit_V[0]);
+		if (pCircuit_V[0].Mag() > 0.0)
+		{
+			//Calculate the current set-point -- should be the same
+			curr_PID_state.current_set_raw[0] = ~(complex(curr_PID_state.phase_Pref,curr_PID_state.phase_Qref)/pCircuit_V[0]);
+		}
+		else //Only you can prevent #IND
+		{
+			curr_PID_state.current_set_raw[0] = complex(0.0,0.0);
+		}
 
 		//Rotate it
 		curr_PID_state.current_set[0] = curr_PID_state.current_set_raw[0] * complex_exp(-1.0 * curr_PID_state.reference_angle[0]);
@@ -4751,8 +4897,16 @@ STATUS inverter::init_PID_dynamics(void)
 			//Populate the initial "reference angle"
 			curr_PID_state.reference_angle[indexx] = pCircuit_V[indexx].Arg();
 
-			//Calculate the current set-point -- should be the same
-			curr_PID_state.current_set_raw[indexx] = ~(complex(curr_PID_state.phase_Pref,curr_PID_state.phase_Qref)/pCircuit_V[indexx]);
+
+			if (pCircuit_V[indexx].Mag() > 0.0)
+			{
+				//Calculate the current set-point -- should be the same
+				curr_PID_state.current_set_raw[indexx] = ~(complex(curr_PID_state.phase_Pref,curr_PID_state.phase_Qref)/pCircuit_V[indexx]);
+			}
+			else //Only you can prevent #IND
+			{
+				curr_PID_state.current_set_raw[indexx] = complex(0.0,0.0);
+			}
 
 			//Rotate it
 			curr_PID_state.current_set[indexx] = curr_PID_state.current_set_raw[indexx] * complex_exp(-1.0 * curr_PID_state.reference_angle[indexx]);

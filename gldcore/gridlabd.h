@@ -888,6 +888,12 @@ inline bool *gl_get_bool(OBJECT *obj, /**< object to set dependency */
  **/
 #define gl_localtime (*callback->time.local_datetime)
 
+/** Convert a timestamp to a local date/time structure
+	Use this if it is a double precision time (deltamode)
+	@see local_datetime()
+ **/
+#define gl_localtime_delta (*callback->time.local_datetime_delta)
+
 #ifdef __cplusplus
 inline int gl_getweekday(TIMESTAMP t)
 {

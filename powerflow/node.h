@@ -83,6 +83,7 @@ typedef enum {
 
 //Frequency measurement variable structure
 typedef struct {
+	complex voltage_val[3];	//Voltage values stored - used for "prev" version
 	double x[3]; 		     //integrator state variable
 	double anglemeas[3];	 //angle measurement
 	double fmeas[3];		 //frequency measurement
@@ -111,12 +112,8 @@ private:
 	complex *LoadHistTermC;			///< Pointer for array used to store load history value for deltamode-based in-rush computations -- Shunt capacitance terms
 
 	//Frequently measurement variables
-	FREQM_STATES curr_state;		//Current state of all vari
-	FREQM_STATES next_state;
-	FREQM_STATES prev_state;
-	FREQM_STATES store_state;
-	FREQM_STATES predictor_vals;	//Predictor pass values of variables
-	FREQM_STATES corrector_vals;	//Corrector pass values of variables
+	FREQM_STATES curr_freq_state;		//Current state of all vari
+	FREQM_STATES prev_freq_state;
 	double freq_omega_ref;			//Reference frequency for measurements
 
 	double freq_violation_time_total;		//Keeps track of how long the device has been in a frequency violation, to see if it needs to disconnect or not
@@ -159,7 +156,7 @@ public:
 	enum {FM_NONE=1, FM_SIMPLE=2, FM_PLL=3};
 	enumeration fmeas_type;
 
-	double freq_sfm_T;	//Transducer time constant
+	double freq_sfm_Tf;	//Transducer time constant
 	double freq_pll_Kp;	//Proportional gain of PLL frequency measurement
 	double freq_pll_Ki;	//Integration gain of PLL frequency measurement
 
@@ -234,9 +231,8 @@ public:
 	void BOTH_node_postsync_fxn(OBJECT *obj);
 	OBJECT *NR_master_swing_search(char *node_type_value,bool main_swing);
 
-	void apply_interim_freq_dynamics(FREQM_STATES *curr_time, FREQM_STATES *curr_delta, double deltat, unsigned char pass_mod);
-	void init_freq_dynamics(FREQM_STATES *curr_time);
-	STATUS calc_freq_dynamics(double deltat, unsigned char pass_mod);
+	void init_freq_dynamics(void);
+	STATUS calc_freq_dynamics(double deltat);
 
 	double perform_GFA_checks(double timestepvalue);
 
@@ -250,14 +246,18 @@ public:
 	friend class link_object;
 	friend class meter;	// needs access to current_inj
 	friend class substation; //needs access to current_inj
+	friend class triplex_node;	// Needs access to deltamode stuff
 	friend class triplex_meter; // needs access to current_inj
+	friend class triplex_load;	// Needs access to deltamode stuff
 	friend class load;			// Needs access to deltamode_inclusive
 	friend class capacitor;		// Needs access to deltamode stuff
 	friend class fuse;			// needs access to current_inj
 	friend class frequency_gen;	// needs access to current_inj
+	friend class motor;	// needs access to curr_state
 
 	static int kmlinit(int (*stream)(const char*,...));
 	int kmldump(int (*stream)(const char*,...));
 };
 
 #endif // _NODE_H
+
