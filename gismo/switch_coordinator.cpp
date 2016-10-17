@@ -252,21 +252,10 @@ TIMESTAMP switch_coordinator::commit(TIMESTAMP t1, TIMESTAMP t2)
 int switch_coordinator::postnotify(PROPERTY *prop, char *value)
 {
 	debug("switch_coordinator::notify(PROPERTY *prop='%s', char *value='%s')", prop->name, value);
-	if ( prop==get_armed_property() )
+	if ( status==SCS_IDLE )
 	{
-		if ( armed == 0 ) // disarm regardless of status
-		{
-			verbose("nothing armed--changing status to IDLE");
-			status = SCS_IDLE;
-		}
-		else if ( status == SCS_IDLE) // arm only if idle
-		{
-			verbose("first switch armed--changing status to ARMED");
-			status = SCS_ARMED;
-		}
-		// active state isn't affected by arming
-		else
-			verbose("arming '%s' has no effect (armed=%s, status=%s)", value, (const char*)get_armed_property().get_string(), (const char*)get_status_property().get_string());
+		verbose("first switch armed--changing status to ARMED");
+		status = SCS_ARMED;
 	}
 	debug("switch_coordinator::notify(PROPERTY *prop='%s', char *value='%s') -> 1", prop->name, value);
 	return 1;
