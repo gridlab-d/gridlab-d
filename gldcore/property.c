@@ -52,6 +52,7 @@ PROPERTYSPEC property_type[_PT_LAST] = {
 	{"loadshape", "string", sizeof(loadshape), 0, convert_from_loadshape, convert_to_loadshape, loadshape_create,NULL,{TCOPS(double)},},
 	{"enduse", "string", sizeof(enduse), 0, convert_from_enduse, convert_to_enduse, enduse_create,NULL,{TCOPS(double)},enduse_get_part},
 	{"randomvar", "string", sizeof(randomvar), 24, convert_from_randomvar, convert_to_randomvar, randomvar_create,NULL,{TCOPS(double)},random_get_part},
+	{"method","string", -1, 0, convert_from_method,convert_to_method},
 };
 
 PROPERTYSPEC *property_getspec(PROPERTYTYPE ptype)
@@ -195,8 +196,8 @@ int property_create(PROPERTY *prop, void *addr)
 	{
 		if (property_type[prop->ptype].create)
 			return property_type[prop->ptype].create(addr);
-		//memset(addr,0,(prop->size==0?1:prop->size)*property_type[prop->ptype].size);
-		memset(addr,0,property_type[prop->ptype].size);
+		if ( (int)property_type[prop->ptype].size>0 )
+			memset(addr,0,property_type[prop->ptype].size);
 		return 1;
 	}
 	else

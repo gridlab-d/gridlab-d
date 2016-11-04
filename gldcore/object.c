@@ -1398,11 +1398,12 @@ char *object_property_to_string(OBJECT *obj, char *name, char *buffer, int sz)
 		return NULL;
 	}
 	addr = GETADDR(obj,prop); /* warning: cast from pointer to integer of different size */
-	if(prop->ptype==PT_delegated)
-		return prop->delegation->to_string(addr,buffer,sz)?buffer:NULL;
-	else if(class_property_to_string(prop,addr,buffer,sz))
+	if ( prop->ptype == PT_delegated )
 	{
-		
+		return prop->delegation->to_string(addr,buffer,sz) ? buffer : NULL;
+	}
+	else if ( class_property_to_string(prop,addr,buffer,sz) )
+	{
 		return buffer;
 	}
 	else
