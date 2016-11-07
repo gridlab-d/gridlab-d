@@ -42,6 +42,8 @@
 #include "schedule.h"
 #include "exec.h"
 
+SET_MYCONTEXT(DMC_LOADSHAPE)
+
 static loadshape *loadshape_list = NULL;
 static unsigned int n_shapes = 0;
 
@@ -72,7 +74,7 @@ static void sync_pulsed(loadshape *ls, double dt)
 			/* turn load on */
 			ls->q = 1;
 #ifdef _DEBUG
-			output_debug("loadshape %s: turns on", ls->schedule->name);
+			IN_MYCONTEXT output_debug("loadshape %s: turns on", ls->schedule->name);
 #endif
 			goto TurnOn;
 		}
@@ -110,7 +112,7 @@ TurnOff:
 			/* turn the load off */
 			ls->q = 0;
 #ifdef _DEBUG
-			output_debug("loadshape %s: turns off", ls->schedule->name);
+			IN_MYCONTEXT output_debug("loadshape %s: turns off", ls->schedule->name);
 #endif
 			goto TurnOff;
 		}
@@ -156,7 +158,7 @@ static void sync_modulated(loadshape *ls, double dt)
 		{
 			ls->q = 1;
 #ifdef _DEBUG
-			output_debug("loadshape %s: turns on", ls->schedule->name);
+			IN_MYCONTEXT output_debug("loadshape %s: turns on", ls->schedule->name);
 #endif
 			goto TurnOn;
 		}
@@ -227,7 +229,7 @@ TurnOff:
 		{
 			ls->q = 0;
 #ifdef _DEBUG
-			output_debug("loadshape %s: turns off", ls->schedule->name);
+			IN_MYCONTEXT output_debug("loadshape %s: turns off", ls->schedule->name);
 #endif
 			goto TurnOff;
 		}
@@ -805,7 +807,7 @@ TIMESTAMP loadshape_sync(loadshape *ls, TIMESTAMP t1)
 #ifdef _DEBUG
 			{
 				char buf[64];
-				output_debug("schedule %s: value = %5.3f, q = %5.3f, r = %+5.3f, t2 = '%s'", ls->schedule->name, ls->schedule->value, ls->q, ls->r, convert_from_timestamp(ls->t2,buf,sizeof(buf))?buf:"(error)");
+				IN_MYCONTEXT output_debug("schedule %s: value = %5.3f, q = %5.3f, r = %+5.3f, t2 = '%s'", ls->schedule->name, ls->schedule->value, ls->q, ls->r, convert_from_timestamp(ls->t2,buf,sizeof(buf))?buf:"(error)");
 			}
 #endif
 			/* choose sooner of schedule change or state change */
@@ -858,8 +860,8 @@ TIMESTAMP loadshape_sync(loadshape *ls, TIMESTAMP t1)
 		}
 	}
 #ifdef _DEBUG
-//	output_debug("loadshape %s: load = %.3f", ls->schedule->name, ls->load);
-//	output_debug("loadshape %s: t2-t1 = %d", ls->schedule->name, ls->t2 - global_clock);
+//	IN_MYCONTEXT output_debug("loadshape %s: load = %.3f", ls->schedule->name, ls->load);
+//	IN_MYCONTEXT output_debug("loadshape %s: t2-t1 = %d", ls->schedule->name, ls->t2 - global_clock);
 #endif
 	ls->t0 = t1;
 	return ls->t2>0?ls->t2:TS_NEVER;
@@ -951,7 +953,7 @@ TIMESTAMP loadshape_syncall(TIMESTAMP t1)
 		loadshape *s;
 		int n_items, ln=0;
 
-		output_debug("loadshape_syncall setting up for %d shapes", n_shapes);
+		IN_MYCONTEXT output_debug("loadshape_syncall setting up for %d shapes", n_shapes);
 
 		// determine needed threads
 		n_threads_ls = global_threadcount;
@@ -971,8 +973,8 @@ TIMESTAMP loadshape_syncall(TIMESTAMP t1)
 			if (n_threads_ls*n_items<n_shapes) // not enough slots yet
 				n_threads_ls++; // add one underused threads
 
-			output_debug("loadshape_syncall is using %d of %d available threads", n_threads_ls, global_threadcount);
-			output_debug("loadshape_syncall is assigning %d shapes per thread", n_items);
+			IN_MYCONTEXT output_debug("loadshape_syncall is using %d of %d available threads", n_threads_ls, global_threadcount);
+			IN_MYCONTEXT output_debug("loadshape_syncall is assigning %d shapes per thread", n_items);
 
 			// allocate thread list
 			thread_ls = (LOADSHAPESYNCDATA*)malloc(sizeof(LOADSHAPESYNCDATA)*n_threads_ls);
@@ -1047,7 +1049,7 @@ TIMESTAMP loadshape_syncall(TIMESTAMP t1)
 			///printf("thread_ls.ok=%d\n",thread_ls->ok);
 			pthread_cond_wait(&done_ls,&donelock_ls);
 		}
-		output_debug("passed donecount==0 condition");
+		IN_MYCONTEXT output_debug("passed donecount==0 condition");
 
 		// unlock done count
 		pthread_mutex_unlock(&donelock_ls);
@@ -1628,7 +1630,7 @@ int loadshape_test(void)
 	}
 	else
 	{
-		output_verbose("%d loadshape tests completed with no errors--see test.txt for details",ok);
+		IN_MYCONTEXT output_verbose("%d loadshape tests completed with no errors--see test.txt for details",ok);
 		output_test("loadshapetest: %d loadshape tests completed, %d errors found",ok,errorcount);
 	}
 	output_test("END: loadshape tests");

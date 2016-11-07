@@ -8,6 +8,7 @@
 #include "http_client.h"
 #include "server.h"
 
+SET_MYCONTEXT(DMC_HTTPCLIENT)
 
 HTTP* hopen(char *url, int maxlen)
 {
@@ -82,7 +83,7 @@ HTTP* hopen(char *url, int maxlen)
 
 	/* format/send request */
 	len = sprintf(request,"GET %s HTTP/1.1\r\nHost: %s:80\r\nUser-Agent: GridLAB-D/%d.%d\r\nConnection: close\r\n\r\n",filespec,hostname,REV_MAJOR,REV_MINOR);
-	output_debug("sending HTTP message \n%s", request);
+	IN_MYCONTEXT output_debug("sending HTTP message \n%s", request);
 	if ( send(http->sd,request,len,0)<len )
 	{
 		output_error("hopen(char *url='%s', maxlen=%d): unable to send request", url, maxlen);
@@ -96,7 +97,7 @@ HTTP* hopen(char *url, int maxlen)
 		len = recv(http->sd,http->buf+http->len,(int)(maxlen-http->len),0x00);
 		if ( len==0 )
 		{
-			output_debug("hopen(char *url='%s', maxlen=%d): connection closed", url, maxlen);
+			IN_MYCONTEXT output_debug("hopen(char *url='%s', maxlen=%d): connection closed", url, maxlen);
 		}
 		else if ( len<0 )
 		{
@@ -111,9 +112,13 @@ HTTP* hopen(char *url, int maxlen)
 	} while ( len>0 );
 
 	if ( http->len>0 )
-		output_debug("received HTTP message \n%s", http->buf);
+	{
+		IN_MYCONTEXT output_debug("received HTTP message \n%s", http->buf);
+	}
 	else
-		output_debug("no HTTP response received");
+	{
+		IN_MYCONTEXT output_debug("no HTTP response received");
+	}
 	return http;
 Error:
 #ifdef WIN32
@@ -279,7 +284,7 @@ const char * http_get_header_data(HTTPRESULT *result, const char* param)
 
 unsigned int http_get_status(HTTPRESULT *result)
 {
-	output_debug("http_get_status(): '%s'", result->header.data+9);
+	IN_MYCONTEXT output_debug("http_get_status(): '%s'", result->header.data+9);
 	return atoi(result->header.data+9);
 }
 
@@ -347,9 +352,9 @@ void http_get_options(void)
 		}
 	}
 	if ( strcmp(wget_cachedir,"-")==0 ) strcpy(wget_cachedir,global_workdir);
-	output_debug("wget_option maxsize = %d", wget_maxsize);
-	output_debug("wget_option update = %d", wget_update);
-	output_debug("wget_option cachedir = '%s'", wget_cachedir);
+	IN_MYCONTEXT output_debug("wget_option maxsize = %d", wget_maxsize);
+	IN_MYCONTEXT output_debug("wget_option update = %d", wget_update);
+	IN_MYCONTEXT output_debug("wget_option cachedir = '%s'", wget_cachedir);
 	/** @todo read options from global_wget_options */
 }
 
@@ -362,7 +367,7 @@ time_t http_read_datetime(const char *timestamp)
 	if ( timestamp==NULL ) return 0;
 	if ( sscanf(timestamp,"%*[A-Za-z], %d %3s %d %d:%d:%d %15s", &dt.tm_mday, month, &dt.tm_year, &dt.tm_hour, &dt.tm_min, &dt.tm_sec, tzone)!=7 )
 	{
-		output_debug("http_read_datetime(const char *timestamp='%s'): unable to parse string", timestamp);
+		IN_MYCONTEXT output_debug("http_read_datetime(const char *timestamp='%s'): unable to parse string", timestamp);
 		return 0;
 	}
 	dt.tm_year -= 1900;
@@ -373,7 +378,7 @@ time_t http_read_datetime(const char *timestamp)
 	}
 	if ( dt.tm_mon==12 )
 	{
-		output_debug("http_read_datetime(const char *timestamp='%s'): month not recognized", timestamp);
+		IN_MYCONTEXT output_debug("http_read_datetime(const char *timestamp='%s'): month not recognized", timestamp);
 		return 0;
 	}
 	else
@@ -406,14 +411,14 @@ int http_saveas(char *url, char *file)
 		size_t len = (cl?atoi(cl):0);
 		FILE *fp;
 
-		output_debug("URL '%s' save as '%s'...", url, file);
-		output_debug("  result status: %d", status);
-		output_debug("  result length: %d", len);
-		output_debug("  result last modified: %s", ctime(&modtime));
+		IN_MYCONTEXT output_debug("URL '%s' save as '%s'...", url, file);
+		IN_MYCONTEXT output_debug("  result status: %d", status);
+		IN_MYCONTEXT output_debug("  result length: %d", len);
+		IN_MYCONTEXT output_debug("  result last modified: %s", ctime(&modtime));
 
 		modtime = http_read_datetime(http_get_header_data(result,"Last-Modified"));
 // TODO finish update test
-//		output_debug("  file mtime: %s", ctime(&st.st_mtime));
+//		IN_MYCONTEXT output_debug("  file mtime: %s", ctime(&st.st_mtime));
 //		if ( wget_update==WU_NEVER && st.st_mtime>0 && st.st_mtime>modtime )
 //			return 1;
 	
@@ -428,9 +433,13 @@ int http_saveas(char *url, char *file)
 		else
 		{
 			if ( result->header.size+result->body.size<len )
+			{
 				output_warning("URL '%s' is larger than maxsize %d", url, wget_maxsize);
+			}
 			else
-				output_verbose("URL '%s' saved to '%s' ok", url,file);
+			{
+				IN_MYCONTEXT output_verbose("URL '%s' saved to '%s' ok", url,file);
+			}
 			fwrite(result->body.data,1,result->body.size,fp);
 			fclose(fp);
 			return 1;

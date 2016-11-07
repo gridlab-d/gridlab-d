@@ -1,5 +1,8 @@
 #include "interpolate.h"
 #include "output.h"
+#include "globals.h"
+
+SET_MYCONTEXT(DMC_INTERPOLATE)
 
 double interpolate_linear(double t, double x0, double y0, double x1, double y1){
 	return y0 + (t - x0) * (y1 - y0) / (x1 - x0);

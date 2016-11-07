@@ -26,6 +26,8 @@
 
 #include "load_xml_handle.h"
 
+SET_MYCONTEXT(DMC_XML)
+
 #ifdef __cplusplus
 extern "C" {
 	int loadall_xml(char *file);
@@ -50,7 +52,7 @@ int loadall_xml(char *filename){
 		XMLPlatformUtils::Initialize();
 	} catch(const XMLException& /*toCatch*/){
 		output_error("Load_XML: Xerces Initialization failed.");
-		output_debug(" * something really spectacularly nasty happened inside Xerces and outside our control.");
+		IN_MYCONTEXT output_debug(" * something really spectacularly nasty happened inside Xerces and outside our control.");
 		return 0;
 	}
 

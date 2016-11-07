@@ -12,6 +12,9 @@
 #include <pthread.h>
 
 #include "output.h"
+#include "globals.h"
+
+SET_MYCONTEXT(DMC_XCORE)
 
 static Display *dsp = NULL;
 static Window win;

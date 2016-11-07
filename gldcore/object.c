@@ -43,6 +43,8 @@
 #include "threadpool.h"
 #include "exec.h"
 
+SET_MYCONTEXT(DMC_OBJECT)
+
 /* object list */
 static OBJECTNUM next_object_id = 0;
 static OBJECTNUM deleted_object_count = 0;
@@ -1533,7 +1535,7 @@ TIMESTAMP object_sync(OBJECT *obj, /**< the object to synchronize */
 		const char *passname[]={"NOSYNC","PRESYNC","SYNC","INVALID","POSTSYNC"};
 		char dt1[64]="(invalid)"; if ( ts!=TS_INVALID ) convert_from_timestamp(absolute_timestamp(ts),dt1,sizeof(dt1)); else strcpy(dt1,"ERROR");
 		char dt2[64]="(invalid)"; if ( t2!=TS_INVALID ) convert_from_timestamp(absolute_timestamp(t2),dt2,sizeof(dt2)); else strcpy(dt2,"ERROR");
-		output_debug("object %s:%d pass %s sync to %s -> %s %s", obj->oclass->name, obj->id, pass<0||pass>4?"(invalid)":passname[pass], dt1, is_soft_timestamp(t2)?"SOFT":"HARD", dt2);
+		IN_MYCONTEXT output_debug("object %s:%d pass %s sync to %s -> %s %s", obj->oclass->name, obj->id, pass<0||pass>4?"(invalid)":passname[pass], dt1, is_soft_timestamp(t2)?"SOFT":"HARD", dt2);
 	}
 	return t2;
 }
@@ -1546,7 +1548,7 @@ TIMESTAMP object_heartbeat(OBJECT *obj)
 		if ( global_debug_output>0 )
 		{
 			char dt[64]="(invalid)"; convert_from_timestamp(absolute_timestamp(t1),dt,sizeof(dt));
-			output_debug("object %s:%d heartbeat -> %s %s", obj->oclass->name, obj->id, is_soft_timestamp(t1)?"(SOFT)":"(HARD)", dt);
+			IN_MYCONTEXT output_debug("object %s:%d heartbeat -> %s %s", obj->oclass->name, obj->id, is_soft_timestamp(t1)?"(SOFT)":"(HARD)", dt);
 		}
 	return t1;
 }
@@ -1565,7 +1567,9 @@ int object_init(OBJECT *obj) /**< the object to initialize */
 		rv = (int)(*(obj->oclass->init))(obj, obj->parent);
 	object_profile(obj,OPI_INIT,t);
 	if ( global_debug_output>0 )
-		output_debug("object %s:%d init -> %s", obj->oclass->name, obj->id, rv?"ok":"failed");
+	{
+		IN_MYCONTEXT output_debug("object %s:%d init -> %s", obj->oclass->name, obj->id, rv?"ok":"failed");
+	}
 	return rv;
 }
 
@@ -1590,7 +1594,9 @@ STATUS object_precommit(OBJECT *obj, TIMESTAMP t1)
 	}
 	object_profile(obj,OPI_PRECOMMIT,t);
 	if ( global_debug_output>0 )
-		output_debug("object %s:%d precommit -> %s", obj->oclass->name, obj->id, rv?"ok":"failed");
+	{
+		IN_MYCONTEXT output_debug("object %s:%d precommit -> %s", obj->oclass->name, obj->id, rv?"ok":"failed");
+	}
 	return rv;
 }
 
@@ -1608,7 +1614,7 @@ TIMESTAMP object_commit(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 	if ( global_debug_output>0 )
 	{
 		char dt[64]="(invalid)"; if ( rv!=TS_INVALID ) convert_from_timestamp(absolute_timestamp(rv),dt,sizeof(dt)); else strcpy(dt,"ERROR");
-		output_debug("object %s:%d commit -> %s %s", obj->oclass->name, obj->id, is_soft_timestamp(rv)?"SOFT":"HARD", dt);
+		IN_MYCONTEXT output_debug("object %s:%d commit -> %s %s", obj->oclass->name, obj->id, is_soft_timestamp(rv)?"SOFT":"HARD", dt);
 	}
 	return rv;
 }
@@ -1632,7 +1638,7 @@ STATUS object_finalize(OBJECT *obj)
 	object_profile(obj,OPI_FINALIZE,t);
 	if ( global_debug_output>0 )
 	{
-		output_debug("object %s:%d finalize -> %s", obj->oclass->name, obj->id, rv?"ok":"failed");
+		IN_MYCONTEXT output_debug("object %s:%d finalize -> %s", obj->oclass->name, obj->id, rv?"ok":"failed");
 	}
 	return rv;
 }
@@ -1766,7 +1772,7 @@ int object_save(char *buffer, int size, OBJECT *obj)
 	CLASS *pclass;
 	int count = sprintf(temp,"object %s:%d {\n\n\t// header properties\n", obj->oclass->name, obj->id);
 
-	output_debug("saving object %s:%d", obj->oclass->name, obj->id);
+	IN_MYCONTEXT output_debug("saving object %s:%d", obj->oclass->name, obj->id);
 
 	/* dump header properties */
 	if(obj->parent != NULL){

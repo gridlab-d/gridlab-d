@@ -39,6 +39,8 @@
 
 #include "gui.h"
 
+SET_MYCONTEXT(DMC_SERVER)
+
 #define MAXSTR		1024		// maximum string length
 
 static int shutdown_server = 0; /**< flag to stop accepting incoming connections */
@@ -52,7 +54,7 @@ SOCKET sockfd = (SOCKET)0; /**< socket on which incomming connections are accept
  **/
 static void shutdown_now(void)
 {
-	output_verbose("server shutdown on exit in progress...");
+	IN_MYCONTEXT output_verbose("server shutdown on exit in progress...");
 	exec_setexitcode(XC_SVRKLL);
 	shutdown_server = 1;
 	if (sockfd!=(SOCKET)0)
@@ -63,7 +65,7 @@ static void shutdown_now(void)
 #endif
 	sockfd = (SOCKET)0;
 	gui_wait_status(GUIACT_HALT);
-	output_verbose("server shutdown on exit done");
+	IN_MYCONTEXT output_verbose("server shutdown on exit done");
 }
 
 #ifndef WIN32
@@ -150,7 +152,7 @@ static void *server_routine(void *arg)
 				close(newsockfd);
 				continue;
 			}
-			output_verbose("accepting connection from %s on port %d",saddr, cli_addr.sin_port);
+			IN_MYCONTEXT output_verbose("accepting connection from %s on port %d",saddr, cli_addr.sin_port);
 			if ( active )
 				pthread_join(thread_id,&result);
 			if ( pthread_create(&thread_id,NULL, http_response,(void*)newsockfd)!=0 )
@@ -162,7 +164,7 @@ static void *server_routine(void *arg)
 			active = 1;
 		}
 	}
-	output_verbose("server shutdown");
+	IN_MYCONTEXT output_verbose("server shutdown");
 Done:
 	started = 0;
 	return (void*)&status;
@@ -189,7 +191,7 @@ STATUS server_startup(int argc, char *argv[])
 		return SUCCESS;
 
 #ifdef WIN32
-	output_debug("starting WS2");
+	IN_MYCONTEXT output_debug("starting WS2");
 	if (WSAStartup(MAKEWORD(2,0),&wsaData)!=0)
 	{
 		output_error("socket library initialization failed: %s",strerror(GetLastError()));
@@ -242,13 +244,13 @@ Retry:
 		return FAILED;
 	}
 #ifdef WIN32
-	output_verbose("bind ok to %d.%d.%d.%d",serv_addr.sin_addr.S_un.S_un_b.s_b1,serv_addr.sin_addr.S_un.S_un_b.s_b2,serv_addr.sin_addr.S_un.S_un_b.s_b3,serv_addr.sin_addr.S_un.S_un_b.s_b4);
+	IN_MYCONTEXT output_verbose("bind ok to %d.%d.%d.%d",serv_addr.sin_addr.S_un.S_un_b.s_b1,serv_addr.sin_addr.S_un.S_un_b.s_b2,serv_addr.sin_addr.S_un.S_un_b.s_b3,serv_addr.sin_addr.S_un.S_un_b.s_b4);
 #else
-	output_verbose("bind ok to address");
+	IN_MYCONTEXT output_verbose("bind ok to address");
 #endif	
 	/* listen for connection */
 	listen(sockfd,5);
-	output_verbose("server listening to port %d", portNumber);
+	IN_MYCONTEXT output_verbose("server listening to port %d", portNumber);
 	global_server_portnum = portNumber;
 
 	/* join the old thread and wait if it hasn't finished yet */
@@ -377,7 +379,7 @@ static void http_send(HTTPCNX *http)
 	char header[4096];
 	int len=0;
 	len += sprintf(header+len, "HTTP/1.1 %s", http->status?http->status:HTTP_INTERNALSERVERERROR);
-	output_verbose("%s (len=%d, mime=%s)",header,http->len,http->type?http->type:"none");
+	IN_MYCONTEXT output_verbose("%s (len=%d, mime=%s)",header,http->len,http->type?http->type:"none");
 	len += sprintf(header+len, "\nContent-Length: %d\n", http->len);
 	if (http->type && http->type[0]!='\0')
 		len += sprintf(header+len, "Content-Type: %s\n", http->type);
@@ -1191,7 +1193,7 @@ int http_run_java(HTTPCNX *http,char *uri)
 	*jar = '\0'; sprintf(output,"%s.%s",uri,ext); *jar='.';
 
 	/* run gnuplot */
-	output_verbose("%s", command);
+	IN_MYCONTEXT output_verbose("%s", command);
 	if ((rc=system(command))!=0)
 	{
 		switch (rc)
@@ -1249,7 +1251,7 @@ int http_run_perl(HTTPCNX *http,char *uri)
 	*pl = '\0'; sprintf(output,"%s.%s",uri,ext); *pl='.';
 
 	/* run gnuplot */
-	output_verbose("%s", command);
+	IN_MYCONTEXT output_verbose("%s", command);
 	if ((rc=system(command))!=0)
 	{
 		switch (rc)
@@ -1306,7 +1308,7 @@ int http_run_python(HTTPCNX *http,char *uri)
 	*py = '\0'; sprintf(output,"%s.%s",uri,ext); *py='.';
 
 	/* run gnuplot */
-	output_verbose("%s", command);
+	IN_MYCONTEXT output_verbose("%s", command);
 	if ((rc=system(command))!=0)
 	{
 		switch (rc)
@@ -1367,7 +1369,7 @@ int http_run_r(HTTPCNX *http,char *uri)
 	*r = '\0'; sprintf(output,"%s.%s",uri,ext); *r='.';
 
 	/* run gnuplot */
-	output_verbose("%s", command);
+	IN_MYCONTEXT output_verbose("%s", command);
 	if ((rc=system(command))!=0)
 	{
 		switch (rc)
@@ -1424,7 +1426,7 @@ int http_run_scilab(HTTPCNX *http,char *uri)
 	*sce = '\0'; sprintf(output,"%s.%s",uri,ext); *sce='.';
 
 	/* run gnuplot */
-	output_verbose("%s", command);
+	IN_MYCONTEXT output_verbose("%s", command);
 	if ((rc=system(command))!=0)
 	{
 		switch (rc)
@@ -1481,7 +1483,7 @@ int http_run_octave(HTTPCNX *http,char *uri)
 	*m = '\0'; sprintf(output,"%s.%s",uri,ext); *m='.';
 
 	/* run gnuplot */
-	output_verbose("%s", command);
+	IN_MYCONTEXT output_verbose("%s", command);
 	if ((rc=system(command))!=0)
 	{
 		switch (rc)
@@ -1541,7 +1543,7 @@ int http_run_gnuplot(HTTPCNX *http,char *uri)
 	*plt = '\0'; sprintf(output,"%s.%s",uri,ext); *plt='.';
 
 	/* run gnuplot */
-	output_verbose("%s", command);
+	IN_MYCONTEXT output_verbose("%s", command);
 	if ((rc=system(command))!=0)
 	{
 		switch (rc)
@@ -1771,7 +1773,7 @@ void *http_response(void *ptr)
 				}
 			}
 		}
-		output_verbose("%s (host='%s', len=%d, keep-alive=%d)",http->query,host?host:"???",content_length, keep_alive);
+		IN_MYCONTEXT output_verbose("%s (host='%s', len=%d, keep-alive=%d)",http->query,host?host:"???",content_length, keep_alive);
 
 		/* reject anything but a GET */
 		if (stricmp(method,"GET")!=0)
@@ -1843,7 +1845,7 @@ void *http_response(void *ptr)
 
 	}
 	http_close(http);
-	output_verbose("socket %d closed",http->s);
+	IN_MYCONTEXT output_verbose("socket %d closed",http->s);
 	return 0;
 }
 

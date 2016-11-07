@@ -25,6 +25,8 @@
 #include "xcore.h"
 #include "gui.h"
 
+SET_MYCONTEXT(DMC_ENVIRONMENT)
+
 /** Starts the environment selected by the global_environment variable
  **/
 STATUS environment_start(int argc, /**< the number of arguments to pass to the environment */
@@ -60,7 +62,9 @@ STATUS environment_start(int argc, /**< the number of arguments to pass to the e
 						Follow the guidance for that message and try again.
 					 */
 				else
-					output_debug("dump to '%s' complete", global_dumpfile);
+				{
+					IN_MYCONTEXT output_debug("dump to '%s' complete", global_dumpfile);
+				}
 			}
 			return FAILED;
 		}
@@ -68,13 +72,13 @@ STATUS environment_start(int argc, /**< the number of arguments to pass to the e
 	}
 	else if (strcmp(global_environment,"matlab")==0)
 	{
-		output_verbose("starting Matlab");
+		IN_MYCONTEXT output_verbose("starting Matlab");
 		return matlab_startup(argc,argv);
 	}
 	else if (strcmp(global_environment,"server")==0)
 	{
 		// server only mode (no GUI)
-		output_verbose("starting server");
+		IN_MYCONTEXT output_verbose("starting server");
 		if (server_startup(argc,argv))
 			return exec_start();
 		else
@@ -88,7 +92,7 @@ STATUS environment_start(int argc, /**< the number of arguments to pass to the e
 	else if (strcmp(global_environment,"gui")==0)
 	{
 UseGui:
-		output_verbose("starting server");
+		IN_MYCONTEXT output_verbose("starting server");
 		if (server_startup(argc,argv) && gui_startup(argc,argv))
 		{
 			STATUS result = exec_start();

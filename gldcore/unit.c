@@ -89,6 +89,8 @@
 #include "find.h"
 #include "lock.h"
 
+SET_MYCONTEXT(DMC_UNIT)
+
 /* fundamental physical/economic constants */
 static double c = 2.997925e8;		/**< m/s */
 static double e = 1.602189246e-19;	/**< C */
@@ -601,7 +603,7 @@ void unit_init(void)
 			An error occured while reading the unit file.
 		*/
 	} else {
-		output_verbose("%s loaded ok", filepath);
+		IN_MYCONTEXT output_verbose("%s loaded ok", filepath);
 	}
 
 	/* done */
@@ -852,7 +854,7 @@ int unit_test(void)
 		}
 	}
 	output_test("END: %d units tested", n);
-	output_verbose("units tested: %d ok, %d failed (see '%s' for details).", succeeded, failed, global_testoutputfile);
+	IN_MYCONTEXT output_verbose("units tested: %d ok, %d failed (see '%s' for details).", succeeded, failed, global_testoutputfile);
 	return failed;
 }
 

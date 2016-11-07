@@ -22,6 +22,8 @@
 #include "module.h"
 #include "timestamp.h"
 
+SET_MYCONTEXT(DMC_FIND)
+
 static FINDTYPE invar_types[] = {FT_ID, FT_SIZE, FT_CLASS, FT_PARENT, FT_RANK, FT_NAME, FT_LAT, FT_LONG, FT_INSVC, FT_OUTSVC, FT_MODULE, FT_ISA, 0};
 
 static int compare_int(int64 a, FINDOP op, int64 b)

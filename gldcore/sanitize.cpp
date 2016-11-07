@@ -8,6 +8,8 @@
 #include "sanitize.h"
 #include "globals.h"
 
+SET_MYCONTEXT(DMC_SANITIZE)
+
 typedef struct s_safename {
 	char *name;
 	char *old;

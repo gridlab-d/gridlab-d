@@ -87,6 +87,8 @@
 
 #include "matlab.h"
 
+SET_MYCONTEXT(DMC_MODULE)
+
 int get_exe_path(char *buf, int len, void *mod){	/* void for GetModuleFileName, a windows func */
 	int rv = 0, i = 0;
 	if(buf == NULL)
@@ -139,7 +141,7 @@ void dlload_error(const char *filename)
 #else
 	char *error = "unknown error";
 #endif
-	output_debug("%s: %s (LD_LIBRARY_PATH=%s)", filename, error,getenv("LD_LIBRARY_PATH"));
+	IN_MYCONTEXT output_debug("%s: %s (LD_LIBRARY_PATH=%s)", filename, error,getenv("LD_LIBRARY_PATH"));
 #if defined WIN32 && ! defined __MINGW32__
 	if (result)
 		LocalFree(error);
@@ -276,18 +278,18 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	if (getenv("LD_LIBRARY_PATH")==NULL)
 	{
 		putenv("LD_LIBRARY_PATH=.");
-		output_verbose("Setting default LD_LIBRARY_DEFAULT to current directory");
+		IN_MYCONTEXT output_verbose("Setting default LD_LIBRARY_DEFAULT to current directory");
 	}
 #endif
 
 	if (mod!=NULL)
 	{
-		output_verbose("%s(%d): module '%s' already loaded", __FILE__, __LINE__, file);
+		IN_MYCONTEXT output_verbose("%s(%d): module '%s' already loaded", __FILE__, __LINE__, file);
 		return mod;
 	}
 	else
 	{
-		output_verbose("%s(%d): module '%s' not yet loaded", __FILE__, __LINE__, file);
+		IN_MYCONTEXT output_verbose("%s(%d): module '%s' not yet loaded", __FILE__, __LINE__, file);
 	}
 
 	/* check for foreign modules */
@@ -362,19 +364,21 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	mod = (MODULE *)malloc(sizeof(MODULE));
 	if (mod==NULL)
 	{
-		output_verbose("%s(%d): module '%s' memory allocation failed", __FILE__, __LINE__, file);
+		IN_MYCONTEXT output_verbose("%s(%d): module '%s' memory allocation failed", __FILE__, __LINE__, file);
 		errno=ENOMEM;
 		return NULL;
 	}
 	else
-		output_verbose("%s(%d): module '%s' memory allocated", __FILE__, __LINE__, file);
+	{
+		IN_MYCONTEXT output_verbose("%s(%d): module '%s' memory allocated", __FILE__, __LINE__, file);
+	}
 
 	/* locate the module */
 	snprintf(pathname, sizeof(pathname), "%s" DLEXT, file);
 
 	if(find_file(pathname, NULL, X_OK|R_OK, tpath,sizeof(tpath)) == NULL)
 	{
-		output_verbose("unable to locate %s in GLPATH, using library loader instead", pathname);
+		IN_MYCONTEXT output_verbose("unable to locate %s in GLPATH, using library loader instead", pathname);
 		strncpy(tpath,pathname,sizeof(tpath));
 	}
 	else
@@ -391,7 +395,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 			strcpy(tpath,buffer);
 		}
 #endif
-		output_verbose("full path to library '%s' is '%s'", file, tpath);
+		IN_MYCONTEXT output_verbose("full path to library '%s' is '%s'", file, tpath);
 	}
 
 	/* convert path delims based on OS preference */
@@ -420,7 +424,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 		}
 #else
 		output_error("%s(%d): module '%s' load failed - %s", __FILE__, __LINE__, file, dlerror());
-		output_debug("%s(%d): path to module is '%s'", __FILE__, __LINE__, tpath);
+		IN_MYCONTEXT output_debug("%s(%d): path to module is '%s'", __FILE__, __LINE__, tpath);
 #endif
 		dlload_error(pathname);
 		errno = ENOENT;
@@ -430,7 +434,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	}
 	else
 	{
-		output_verbose("%s(%d): module '%s' loaded ok", __FILE__, __LINE__, file);
+		IN_MYCONTEXT output_verbose("%s(%d): module '%s' loaded ok", __FILE__, __LINE__, file);
 	}
 
 	/* get the initialization function */
@@ -446,7 +450,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	}
 	else
 	{
-		output_verbose("%s(%d): module '%s' exports init()", __FILE__, __LINE__, file);
+		IN_MYCONTEXT output_verbose("%s(%d): module '%s' exports init()", __FILE__, __LINE__, file);
 	}
 
 	/* connect the module's exported data & functions */
@@ -526,8 +530,12 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 				return NULL;
 			}
 			else
+			{
 				if(!map[i].optional)
-					output_verbose("%s(%d): module '%s' intrinsic %s found", __FILE__, __LINE__, file, fname);
+				{
+					IN_MYCONTEXT output_verbose("%s(%d): module '%s' intrinsic %s found", __FILE__, __LINE__, file, fname);
+				}
+			}
 		}
 	}
 
@@ -1142,9 +1150,12 @@ static int execf(char *format, /**< format string  */
 	vsprintf(command,format,ptr); /* note the lack of check on buffer overrun */
 	va_end(ptr);
 	if (cc_verbose || global_verbose_mode ) output_message(command);
-	else output_debug("command: %s",command);
+	else
+	{
+		IN_MYCONTEXT output_debug("command: %s",command);
+	}
 	rc = system(command);
-	output_debug("return code=%d",rc);
+	IN_MYCONTEXT output_debug("return code=%d",rc);
 	return rc;
 }
 
@@ -1305,9 +1316,13 @@ static int add_external_function(char *fctname, char *libname, void *lib)
 			strcpy(item->fname,fctname);
 		}
 		if ( item->call )
-			output_debug("external function '%s' added from library '%s' (lib=%8x)", item->fname, libname, (int64)lib);
+		{
+			IN_MYCONTEXT output_debug("external function '%s' added from library '%s' (lib=%8x)", item->fname, libname, (int64)lib);
+		}
 		else
+		{
 			output_warning("external function '%s' not found in library '%s'", fctname, libname);
+		}
 		return 1;
 	}
 	else
@@ -1355,7 +1370,7 @@ int module_load_function_list(char *libname, char *fnclist)
 		output_error("unable to load external library '%s': %s (errno=%d)", libpath, error, errno);
 		return 0;
 	}
-	output_debug("loaded external function library '%s' ok",libname);
+	IN_MYCONTEXT output_debug("loaded external function library '%s' ok",libname);
 
 	/* map the functions */
 	for ( s=fnclist; *s!='\0' ; s++ )
@@ -1557,7 +1572,7 @@ pid_t sched_get_procid()
 		output_warning("proc_map %x, myproc not assigned", process_map, sched_get_cpuid(0));
 		return 0;
 	}
-	output_debug("proc_map %x, myproc %ui", process_map, sched_get_cpuid(0));
+	IN_MYCONTEXT output_debug("proc_map %x, myproc %ui", process_map, sched_get_cpuid(0));
 	return process_map[cpuid].pid;
 }
 
@@ -1937,7 +1952,7 @@ void sched_init(int readonly)
 	if(has_run == 0){
 		has_run = 1;
 	} else {
-		output_verbose("sched_init(): second call, short-circuiting gracefully");
+		IN_MYCONTEXT output_verbose("sched_init(): second call, short-circuiting gracefully");
 		return;
 	}
 
@@ -2016,7 +2031,7 @@ void sched_init(int readonly)
 	if(has_run == 0){
 		has_run = 1;
 	} else {
-		output_verbose("sched_init(): second call, short-circuiting gracefully");
+		IN_MYCONTEXT output_verbose("sched_init(): second call, short-circuiting gracefully");
 		return;
 	}
 

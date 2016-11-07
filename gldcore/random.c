@@ -32,6 +32,8 @@
 #include "platform.h"
 #include "exec.h"
 
+SET_MYCONTEXT(DMC_RANDOM)
+
 #ifdef WIN32
 #define finite _finite
 #include <process.h>
@@ -1116,7 +1118,7 @@ int random_test(void)
 	}
 	else
 	{
-		output_verbose("%d random distributions tests completed with no errors--see test.txt for details",ok);
+		IN_MYCONTEXT output_verbose("%d random distributions tests completed with no errors--see test.txt for details",ok);
 		output_test("randtest: %d random distributions tests completed, %d errors found",ok,errorcount);
 	}
 	output_test("END: random distributions tests");

@@ -18,6 +18,8 @@
 #include "stream.h"
 #include "random.h"
 
+SET_MYCONTEXT(DMC_CLASS)
+
 #if defined(WIN32) && !defined(__MINGW32__)
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 #define _WIN32_WINNT 0x0400
@@ -449,7 +451,7 @@ CLASS *class_register(MODULE *module,        /**< the module that implements the
 			 */
 			return NULL;
 		} else {
-			output_verbose("module %s is registering a 2nd class %s, previous one in module %s", module->name, name, oclass->module->name);
+			IN_MYCONTEXT output_verbose("module %s is registering a 2nd class %s, previous one in module %s", module->name, name, oclass->module->name);
 		}
 	}
 	if (strlen(name)>=sizeof(oclass->name) )
@@ -478,7 +480,7 @@ CLASS *class_register(MODULE *module,        /**< the module that implements the
 	else
 		last_class->next = oclass;
 	last_class = oclass;
-	output_verbose("class %s registered ok", name);
+	IN_MYCONTEXT output_verbose("class %s registered ok", name);
 	return oclass;
 }
 
@@ -580,7 +582,7 @@ CLASS *class_get_class_from_classname(char *name) /**< a pointer to a \p NULL -t
 		++ptr;
 		mod = module_find(temp);
 		if(mod == NULL){
-			output_verbose("could not search for '%s.%s', module not loaded", name, ptr);
+			IN_MYCONTEXT output_verbose("could not search for '%s.%s', module not loaded", name, ptr);
 			return NULL;
 		}
 		for (oclass=first_class; oclass!=NULL; oclass=oclass->next)

@@ -19,6 +19,8 @@
 #include "class.h"
 #include "object.h"
 
+SET_MYCONTEXT(DMC_MATLAB)
+
 STATUS matlab_startup(int argc, char *argv)
 {
 	if (system("matlab -r gl")==0)

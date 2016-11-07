@@ -57,6 +57,8 @@
 #include "exception.h"
 #include "output.h"
 
+SET_MYCONTEXT(DMC_EXCEPTION)
+
 EXCEPTIONHANDLER *handlers = NULL;
 
 /** Creates an exception handler for use in a try block 

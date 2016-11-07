@@ -1283,6 +1283,14 @@ static unsigned long _nan[] = { 0xffffffff, 0x7fffffff, };
 
 #ifdef __cplusplus
 
+#define MMF_NONE 0
+#define MMF_QUIET OF_QUIET
+#define MMF_DEBUG OF_DEBUG
+#define MMF_VERBOSE OF_VERBOSE
+#define MMF_WARNING OF_WARNING
+#define MMF_ALL (OF_QUIET|OF_DEBUG|OF_VERBOSE|OF_WARNING)
+extern set module_message_flags;
+
 /**************************************************************************************
  * GRIDLABD BASE CLASSES (Version 3.0 and later)
  * @defgroup gridlabd_h_classes Module API Classes
@@ -1963,11 +1971,10 @@ public: // iterators
 
 public: // exceptions
 	inline void exception(const char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); throw (const char*)buf;};
-	inline void error(const char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_error("%s",buf);};
-	inline void warning(const char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_warning("%s",buf);};
-	inline void verbose(const char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_verbose("%s",buf);};
-	inline void debug(const char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_debug("%s",buf);};
-};
+       inline void error(const char *msg, ...) { static char buf[1024]; if ( module_message_flags&MMF_QUIET || get_flags(OF_QUIET) ) return; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_error("%s",buf);};
+       inline void warning(const char *msg, ...) { static char buf[1024]; if ( !module_message_flags&MMF_WARNING || !get_flags(OF_WARNING) ) return; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_warning("%s",buf);};
+       inline void verbose(const char *msg, ...) { static char buf[1024]; if ( !module_message_flags&MMF_VERBOSE || !get_flags(OF_VERBOSE) ) return; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_verbose("%s",buf);};
+       inline void debug(const char *msg, ...) { static char buf[1024]; if ( !module_message_flags&MMF_DEBUG || !get_flags(OF_DEBUG) ) return; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_debug("%s",buf);};};
 /// Create a gld_object from an OBJECT
 static inline gld_object* get_object(OBJECT*obj)
 {
@@ -2291,26 +2298,38 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef DLMAIN
+
 EXPORT int do_kill(void*);
+
+set module_message_flags = MMF_ALL;
+
 #ifdef WIN32
+
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 EXPORT int gld_major=MAJOR, gld_minor=MINOR; 
 BOOL APIENTRY DllMain(HANDLE h, DWORD r) { if (r==DLL_PROCESS_DETACH) do_kill(h); return TRUE; }
+
 #else // !WIN32
+
 CDECL int gld_major=MAJOR, gld_minor=MINOR; 
 CDECL int dllinit() __attribute__((constructor));
 CDECL int dllkill() __attribute__((destructor));
 CDECL int dllinit() { return 0; }
 CDECL int dllkill() { do_kill(NULL); }
+
 #endif // !WIN32
+
 #elif defined CONSOLE
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif
 #include "console.h"
+
 #endif // DLMAIN
+
+#define INIT_MMF(M) gl_global_create(#M "::message_flags",PT_set,&module_message_flags,PT_DESCRIPTION,"module message control flags",NULL);
 
 #define EXPORT_CREATE_C(X,C) EXPORT int create_##X(OBJECT **obj, OBJECT *parent) \
 {	try { *obj = gl_create_object(C::oclass); \
