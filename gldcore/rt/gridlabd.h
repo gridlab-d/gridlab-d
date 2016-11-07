@@ -729,7 +729,7 @@ struct s_object_list {
 	unsigned int lock; /**< object lock */
 	unsigned int rng_state; /**< random number generator state */
 	TIMESTAMP heartbeat; /**< heartbeat call interval (in sim-seconds) */
-	uint32 flags; /**< object flags */
+	uint64 flags; /**< object flags */
 	/* IMPORTANT: flags must be last */
 }; /**< Object header structure */
 
@@ -922,6 +922,10 @@ typedef struct s_enduse {
 #define OF_DEFERRED	0x0080	/**< Object flag; indicates that the object started to be initialized, but requested deferral */
 #define OF_INIT		0x0100	/**< Object flag; indicates that the object has been successfully initialized */
 #define OF_RERANK	0x4000 /**< Internal use only */
+#define OF_QUIET		0x00010000  /**< Object flag; disables error messages from the object */
+#define OF_WARNING		0x00020000  /**< Object flag; enables warning messages from the object */
+#define OF_DEBUG		0x00040000  /**< Object flag; enables debug messages from the object */
+#define OF_VERBOSE		0x00080000  /**< Object flag; enables verbose messages from the object */
 
 /******************************************************************************
  * Memory locking support

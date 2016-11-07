@@ -61,7 +61,11 @@ KEYWORD oflags[] = {
 	{"LOCKED", OF_LOCKED, oflags + 3},
 	{"RERANKED", OF_RERANK, oflags + 4},
 	{"RECALC", OF_RECALC, oflags + 5},
-	{"DELTAMODE", OF_DELTAMODE, NULL},
+	{"DELTAMODE", OF_DELTAMODE, oflags + 6},
+	{"QUIET", OF_QUIET, oflags + 7},
+	{"WARNING", OF_WARNING, oflags + 8},
+	{"VERBOSE", OF_VERBOSE, oflags + 9},
+	{"DEBUG", OF_DEBUG, NULL},
 };
 
 /* WARNING: untested. -d3p988 30 Jan 08 */

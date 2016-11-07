@@ -29,6 +29,8 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 
 	Socket::init();
 
+	INIT_MMF(connection);
+
 	gl_global_create("connection::security",PT_enumeration,&connection_security,
 		PT_DESCRIPTION, "default connection security level",
 		PT_KEYWORD, "NONE", (enumeration)CS_NONE,

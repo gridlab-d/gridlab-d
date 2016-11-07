@@ -49,6 +49,8 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		return NULL;
 	}
 
+	INIT_MMF(powerflow);
+
 	/* exported globals */
 	gl_global_create("powerflow::show_matrix_values",PT_bool,&show_matrix_values,NULL);
 	gl_global_create("powerflow::primary_voltage_ratio",PT_double,&primary_voltage_ratio,NULL);

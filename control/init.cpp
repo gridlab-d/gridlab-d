@@ -18,6 +18,8 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		return NULL;
 	}
 
+	INIT_MMF(control);
+
 	new ss_model(module);
 
 	/* always return the first class registered */

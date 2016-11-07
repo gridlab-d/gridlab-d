@@ -1919,7 +1919,7 @@ public: // header read accessors (no locking)
 	inline unsigned int get_lock(void) { return my()->lock; };
 	inline unsigned int get_rng_state(void) { return my()->rng_state; };
 	inline TIMESTAMP get_heartbeat(void) { return my()->heartbeat; };
-	inline unsigned long get_flags(unsigned long mask=0xffffffff) { return (my()->flags)&mask; };
+	inline uint64 get_flags(uint64 mask=0xffffffffffffffff) { return (my()->flags)&mask; };
 
 protected: // header write accessors (no locking)
 	inline void set_clock(TIMESTAMP ts=0) { my()->clock=(ts?ts:gl_globalclock); };
@@ -1927,9 +1927,9 @@ protected: // header write accessors (no locking)
 	inline void set_forecast(FORECAST *fs) { my()->forecast=fs; };
 	inline void set_latitude(double x) { my()->latitude=x; };
 	inline void set_longitude(double x) { my()->longitude=x; };
-	inline void set_flags(unsigned long flags) { my()->flags=flags; };
-	inline void set_flags_bits(unsigned long bits) { my()->flags|=bits; };
-	inline void unset_flags_bits(unsigned long bits) { my()->flags&=~bits; };
+	inline void set_flags(uint64 flags) { my()->flags=flags; };
+	inline void set_flags_bits(uint64 bits) { my()->flags|=bits; };
+	inline void unset_flags_bits(uint64 bits) { my()->flags&=~bits; };
 
 protected: // locking (self)
 	inline void rlock(void) { ::rlock(&my()->lock); };
@@ -1971,10 +1971,10 @@ public: // iterators
 
 public: // exceptions
 	inline void exception(const char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); throw (const char*)buf;};
-       inline void error(const char *msg, ...) { static char buf[1024]; if ( module_message_flags&MMF_QUIET || get_flags(OF_QUIET) ) return; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_error("%s",buf);};
-       inline void warning(const char *msg, ...) { static char buf[1024]; if ( !module_message_flags&MMF_WARNING || !get_flags(OF_WARNING) ) return; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_warning("%s",buf);};
-       inline void verbose(const char *msg, ...) { static char buf[1024]; if ( !module_message_flags&MMF_VERBOSE || !get_flags(OF_VERBOSE) ) return; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_verbose("%s",buf);};
-       inline void debug(const char *msg, ...) { static char buf[1024]; if ( !module_message_flags&MMF_DEBUG || !get_flags(OF_DEBUG) ) return; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_debug("%s",buf);};};
+	inline void error(const char *msg, ...) { static char buf[1024]; if ( get_flags(OF_QUIET) ) return; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_error("%s",buf);};
+	inline void warning(const char *msg, ...) { static char buf[1024]; if ( !get_flags(OF_WARNING) ) return; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_warning("%s",buf);};
+	inline void verbose(const char *msg, ...) { static char buf[1024]; if ( !get_flags(OF_VERBOSE) ) return; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_verbose("%s",buf);};
+	inline void debug(const char *msg, ...) { static char buf[1024]; if ( !get_flags(OF_DEBUG) ) return; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_debug("%s",buf);};};
 /// Create a gld_object from an OBJECT
 static inline gld_object* get_object(OBJECT*obj)
 {
@@ -2329,12 +2329,20 @@ CDECL int dllkill() { do_kill(NULL); }
 
 #endif // DLMAIN
 
-#define INIT_MMF(M) gl_global_create(#M "::message_flags",PT_set,&module_message_flags,PT_DESCRIPTION,"module message control flags",NULL);
-
+#define INIT_MMF(M) { \
+	static KEYWORD mmf_keys[] = { \
+		{"QUIET",MMF_QUIET,mmf_keys+1}, \
+		{"WARNING",MMF_WARNING,mmf_keys+2}, \
+		{"DEBUG",MMF_DEBUG,mmf_keys+3}, \
+		{"VERBOSE",MMF_VERBOSE,NULL}, \
+	}; \
+	GLOBALVAR *var = gl_global_create(#M "::message_flags",PT_set,&module_message_flags,PT_DESCRIPTION,"module message control flags",NULL); \
+	var->prop->keywords = mmf_keys; \
+}
 #define EXPORT_CREATE_C(X,C) EXPORT int create_##X(OBJECT **obj, OBJECT *parent) \
 {	try { *obj = gl_create_object(C::oclass); \
 	if ( *obj != NULL ) { C *my = OBJECTDATA(*obj,C); \
-		gl_set_parent(*obj,parent); return my->create(); \
+		gl_set_parent(*obj,parent); (*obj)->flags|=module_message_flags; printf("object %d: module flags (%d bits) = 0x%llx, house flags (%d bits) = 0x%llx\n", (*obj)->id, sizeof(module_message_flags)*8, module_message_flags, sizeof((*obj)->flags)*8, (*obj)->flags); return my->create(); \
 	} else return 0; } CREATE_CATCHALL(X); }
 /// Implement class create export
 #define EXPORT_CREATE(X) EXPORT_CREATE_C(X,X)

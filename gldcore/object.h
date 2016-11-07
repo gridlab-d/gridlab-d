@@ -94,7 +94,7 @@ typedef struct s_object_list {
 	unsigned int lock; /**< object lock */
 	unsigned int rng_state; /**< random number generator state */
 	TIMESTAMP heartbeat; /**< heartbeat call interval (in sim-seconds) */
-	uint32 flags; /**< object flags */
+	uint64 flags; /**< object flags */
 	/* IMPORTANT: flags must be last */
 } OBJECT; /**< Object header structure */
 

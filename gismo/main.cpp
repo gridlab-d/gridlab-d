@@ -13,6 +13,8 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		return NULL;
 	}
 
+	INIT_MMF(gismo);
+
 	new line_sensor(module);
 	new switch_coordinator(module);
 

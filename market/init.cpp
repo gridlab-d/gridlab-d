@@ -27,6 +27,8 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		return NULL;
 	}
 
+	INIT_MMF(market);
+
 	gl_global_create("market::bid_offset",PT_double,&bid_offset,PT_UNITS,"$",PT_DESCRIPTION,"the bid offset value that prevents bids from being wrongly triggered",NULL);
 
 	new auction(module);
