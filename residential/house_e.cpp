@@ -716,8 +716,8 @@ int house_e::create()
 	thermostat_mode = TM_AUTO;
 
 //	printf("module flags = 0x%llx, house flags = 0x%llx\n", module_message_flags, OBJECTHDR(this)->flags);
-	verbose("creating house_e");
-	debug("created house_e");
+//	verbose("creating house_e");
+//	debug("created house_e");
 	return result;
 }
 

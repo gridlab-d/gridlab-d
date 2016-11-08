@@ -2342,7 +2342,7 @@ CDECL int dllkill() { do_kill(NULL); }
 #define EXPORT_CREATE_C(X,C) EXPORT int create_##X(OBJECT **obj, OBJECT *parent) \
 {	try { *obj = gl_create_object(C::oclass); \
 	if ( *obj != NULL ) { C *my = OBJECTDATA(*obj,C); \
-		gl_set_parent(*obj,parent); (*obj)->flags|=module_message_flags; printf("object %d: module flags (%d bits) = 0x%llx, house flags (%d bits) = 0x%llx\n", (*obj)->id, sizeof(module_message_flags)*8, module_message_flags, sizeof((*obj)->flags)*8, (*obj)->flags); return my->create(); \
+		gl_set_parent(*obj,parent); (*obj)->flags|=module_message_flags; return my->create(); \
 	} else return 0; } CREATE_CATCHALL(X); }
 /// Implement class create export
 #define EXPORT_CREATE(X) EXPORT_CREATE_C(X,X)
