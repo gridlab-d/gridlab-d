@@ -309,6 +309,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	//Miscellaneous working variable
 	double work_vals_double_0, work_vals_double_1,work_vals_double_2,work_vals_double_3,work_vals_double_4;
 	char work_vals_char_0;
+	Y_NR *output_store_diag_matrix;
 
 	//SuperLU variables
 	SuperMatrix L_LU,U_LU;
@@ -330,6 +331,9 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 	//Ensure bad computations flag is set first
 	*bad_computations = false;
+
+	//Null some working pointers
+	output_store_diag_matrix = NULL;
 
 	//Determine special circumstances of SWING bus -- do we want it to truly participate right
 	if (powerflow_type != PF_NORMAL)
@@ -4950,6 +4954,32 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 			//Update maximum size
 			powerflow_values->max_size_diag_update = size_diag_update;
+
+			//If we're doing the full output dump, grab that too (should only be first pass)
+			if (NRMatDumpMethod == MD_FULL_ONCE)
+			{
+				//Double check it first though
+				if (output_store_diag_matrix == NULL)
+				{
+					//Allocate it
+					output_store_diag_matrix = (Y_NR *)gl_malloc((4*size_diag_update) * sizeof(Y_NR));
+
+					//Make sure it worked
+					if (output_store_diag_matrix == NULL)
+						GL_THROW("NR: Failed to allocate memory for one of the necessary matrices");
+						//Defined elsewhere
+				}
+				else
+				{
+					//Fail here, just because we should never get here
+					GL_THROW("NR: Output dump matrix already allocated");
+					/*  TROUBLESHOOT
+					An attempt to allocate a matrix associated with the output dump of the powerflow
+					was already found to be allocated.  This should only happen once and indicates an error
+					with the program.  Please submit your GLM and a bug report via the ticketing system.
+					*/
+				}
+			}//End full matrix dump out check
 		}
 		else if (size_diag_update > powerflow_values->max_size_diag_update)	//We've exceeded our limits
 		{
@@ -4981,21 +5011,49 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					powerflow_values->Y_diag_update[indexer].row_ind = 2*bus[jindexer].Matrix_Loc + jindex;
 					powerflow_values->Y_diag_update[indexer].col_ind = powerflow_values->Y_diag_update[indexer].row_ind;
 					powerflow_values->Y_diag_update[indexer].Y_value = 1e10; // swing bus gets large admittance
+
+					if (NRMatDumpMethod == MD_FULL_ONCE)	//If full dump out, store these values separately
+					{
+						output_store_diag_matrix[indexer].row_ind = powerflow_values->Y_diag_update[indexer].row_ind;
+						output_store_diag_matrix[indexer].col_ind = powerflow_values->Y_diag_update[indexer].col_ind;
+						output_store_diag_matrix[indexer].Y_value = powerflow_values->Y_diag_update[indexer].Y_value;
+					}
 					indexer += 1;
 
 					powerflow_values->Y_diag_update[indexer].row_ind = 2*bus[jindexer].Matrix_Loc + jindex;
 					powerflow_values->Y_diag_update[indexer].col_ind = powerflow_values->Y_diag_update[indexer].row_ind + powerflow_values->BA_diag[jindexer].size;
 					powerflow_values->Y_diag_update[indexer].Y_value = (powerflow_values->BA_diag[jindexer].Y[jindex][jindex]).Re();	//Normal admittance portion
+
+					if (NRMatDumpMethod == MD_FULL_ONCE)	//If full dump out, store these values separately
+					{
+						output_store_diag_matrix[indexer].row_ind = powerflow_values->Y_diag_update[indexer].row_ind;
+						output_store_diag_matrix[indexer].col_ind = powerflow_values->Y_diag_update[indexer].col_ind;
+						output_store_diag_matrix[indexer].Y_value = powerflow_values->Y_diag_update[indexer].Y_value;
+					}
 					indexer += 1;
 
 					powerflow_values->Y_diag_update[indexer].row_ind = 2*bus[jindexer].Matrix_Loc + jindex + powerflow_values->BA_diag[jindexer].size;
 					powerflow_values->Y_diag_update[indexer].col_ind = powerflow_values->Y_diag_update[indexer].row_ind - powerflow_values->BA_diag[jindexer].size;
 					powerflow_values->Y_diag_update[indexer].Y_value = (powerflow_values->BA_diag[jindexer].Y[jindex][jindex]).Re();	//Normal admittance portion
+
+					if (NRMatDumpMethod == MD_FULL_ONCE)	//If full dump out, store these values separately
+					{
+						output_store_diag_matrix[indexer].row_ind = powerflow_values->Y_diag_update[indexer].row_ind;
+						output_store_diag_matrix[indexer].col_ind = powerflow_values->Y_diag_update[indexer].col_ind;
+						output_store_diag_matrix[indexer].Y_value = powerflow_values->Y_diag_update[indexer].Y_value;
+					}
 					indexer += 1;
 
 					powerflow_values->Y_diag_update[indexer].row_ind = 2*bus[jindexer].Matrix_Loc + jindex + powerflow_values->BA_diag[jindexer].size;
 					powerflow_values->Y_diag_update[indexer].col_ind = powerflow_values->Y_diag_update[indexer].row_ind;
 					powerflow_values->Y_diag_update[indexer].Y_value = 1e10; // swing bus gets large admittance
+
+					if (NRMatDumpMethod == MD_FULL_ONCE)	//If full dump out, store these values separately
+					{
+						output_store_diag_matrix[indexer].row_ind = powerflow_values->Y_diag_update[indexer].row_ind;
+						output_store_diag_matrix[indexer].col_ind = powerflow_values->Y_diag_update[indexer].col_ind;
+						output_store_diag_matrix[indexer].Y_value = powerflow_values->Y_diag_update[indexer].Y_value;
+					}
 					indexer += 1;
 				}//End swing bus traversion
 			}//End swing bus
@@ -5007,21 +5065,49 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					powerflow_values->Y_diag_update[indexer].row_ind = 2*bus[jindexer].Matrix_Loc + jindex;
 					powerflow_values->Y_diag_update[indexer].col_ind = powerflow_values->Y_diag_update[indexer].row_ind;
 					powerflow_values->Y_diag_update[indexer].Y_value = (powerflow_values->BA_diag[jindexer].Y[jindex][jindex]).Im() + bus[jindexer].Jacob_A[jindex]; // Equation(14)
+
+					if (NRMatDumpMethod == MD_FULL_ONCE)	//If full dump out, store these values separately
+					{
+						output_store_diag_matrix[indexer].row_ind = powerflow_values->Y_diag_update[indexer].row_ind;
+						output_store_diag_matrix[indexer].col_ind = powerflow_values->Y_diag_update[indexer].col_ind;
+						output_store_diag_matrix[indexer].Y_value = powerflow_values->Y_diag_update[indexer].Y_value;
+					}
 					indexer += 1;
 					
 					powerflow_values->Y_diag_update[indexer].row_ind = 2*bus[jindexer].Matrix_Loc + jindex;
 					powerflow_values->Y_diag_update[indexer].col_ind = powerflow_values->Y_diag_update[indexer].row_ind + powerflow_values->BA_diag[jindexer].size;
 					powerflow_values->Y_diag_update[indexer].Y_value = (powerflow_values->BA_diag[jindexer].Y[jindex][jindex]).Re() + bus[jindexer].Jacob_B[jindex]; // Equation(15)
+
+					if (NRMatDumpMethod == MD_FULL_ONCE)	//If full dump out, store these values separately
+					{
+						output_store_diag_matrix[indexer].row_ind = powerflow_values->Y_diag_update[indexer].row_ind;
+						output_store_diag_matrix[indexer].col_ind = powerflow_values->Y_diag_update[indexer].col_ind;
+						output_store_diag_matrix[indexer].Y_value = powerflow_values->Y_diag_update[indexer].Y_value;
+					}
 					indexer += 1;
 					
 					powerflow_values->Y_diag_update[indexer].row_ind = 2*bus[jindexer].Matrix_Loc + jindex + powerflow_values->BA_diag[jindexer].size;
 					powerflow_values->Y_diag_update[indexer].col_ind = 2*bus[jindexer].Matrix_Loc + jindex;
 					powerflow_values->Y_diag_update[indexer].Y_value = (powerflow_values->BA_diag[jindexer].Y[jindex][jindex]).Re() + bus[jindexer].Jacob_C[jindex]; // Equation(16)
+
+					if (NRMatDumpMethod == MD_FULL_ONCE)	//If full dump out, store these values separately
+					{
+						output_store_diag_matrix[indexer].row_ind = powerflow_values->Y_diag_update[indexer].row_ind;
+						output_store_diag_matrix[indexer].col_ind = powerflow_values->Y_diag_update[indexer].col_ind;
+						output_store_diag_matrix[indexer].Y_value = powerflow_values->Y_diag_update[indexer].Y_value;
+					}
 					indexer += 1;
 					
 					powerflow_values->Y_diag_update[indexer].row_ind = 2*bus[jindexer].Matrix_Loc + jindex + powerflow_values->BA_diag[jindexer].size;
 					powerflow_values->Y_diag_update[indexer].col_ind = powerflow_values->Y_diag_update[indexer].row_ind;
 					powerflow_values->Y_diag_update[indexer].Y_value = -(powerflow_values->BA_diag[jindexer].Y[jindex][jindex]).Im() + bus[jindexer].Jacob_D[jindex]; // Equation(17)
+
+					if (NRMatDumpMethod == MD_FULL_ONCE)	//If full dump out, store these values separately
+					{
+						output_store_diag_matrix[indexer].row_ind = powerflow_values->Y_diag_update[indexer].row_ind;
+						output_store_diag_matrix[indexer].col_ind = powerflow_values->Y_diag_update[indexer].col_ind;
+						output_store_diag_matrix[indexer].Y_value = powerflow_values->Y_diag_update[indexer].Y_value;
+					}
 					indexer += 1;
 				}//end PQ phase traversion
 			}//End PQ bus
@@ -5069,6 +5155,19 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			sparse_reset(powerflow_values->Y_Amatrix, 6*NR_bus_count);
 		}
 
+		//Check and see if we're a full-dump
+		if (NRMatDumpMethod == MD_FULL_ONCE)
+		{
+			//Open the file
+			FPoutVal = fopen(MDFileName,"at");
+
+			//Write out the header information
+			fprintf(FPoutVal,"Matrix information coded as: row, column, value\n");
+
+			//Write section header
+			fprintf(FPoutVal,"\nFixed Portions of Admittance:\nFixed portion off-diagonal non-zero elements: %d\n",(powerflow_values->size_offdiag_PQ*2));
+		}//End full-once output dump
+
 		//integrate off diagonal components
 		for (indexer=0; indexer<powerflow_values->size_offdiag_PQ*2; indexer++)
 		{
@@ -5076,6 +5175,20 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			col = powerflow_values->Y_offdiag_PQ[indexer].col_ind;
 			value = powerflow_values->Y_offdiag_PQ[indexer].Y_value;
 			sparse_add(powerflow_values->Y_Amatrix, row, col, value);
+
+			//See if we need to dump
+			if (NRMatDumpMethod == MD_FULL_ONCE)
+			{
+				//File handle should already be open
+				fprintf(FPoutVal,"%d,%d,%f\n",row,col,value);
+			}
+		}
+
+		//Separator
+		if (NRMatDumpMethod == MD_FULL_ONCE)
+		{
+			//File handle should already be open
+			fprintf(FPoutVal,"\nFixed portion diagonal non-zero elements: %d\n",(powerflow_values->size_diag_fixed*2));
 		}
 
 		//Integrate fixed portions of diagonal components
@@ -5085,7 +5198,192 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			col = powerflow_values->Y_diag_fixed[indexer - powerflow_values->size_offdiag_PQ*2 ].col_ind;
 			value = powerflow_values->Y_diag_fixed[indexer - powerflow_values->size_offdiag_PQ*2 ].Y_value;
 			sparse_add(powerflow_values->Y_Amatrix, row, col, value);
+
+			//See if we need to dump
+			if (NRMatDumpMethod == MD_FULL_ONCE)
+			{
+				//File handle should already be open
+				fprintf(FPoutVal,"%d,%d,%f\n",row,col,value);
+			}
 		}
+
+		//For the remainder of the items
+		if (NRMatDumpMethod == MD_FULL_ONCE)
+		{
+			//Get the size of this update
+			tempa = size_Amatrix - (powerflow_values->size_diag_fixed*2) - (powerflow_values->size_offdiag_PQ*2);
+
+			//File handle should already be open
+			fprintf(FPoutVal,"\nFixed portion diagonal under load updates non-zero elements: %d\n",tempa);
+
+			//Do effectively what is below on the variable portions, but without the load-modifier part
+			for (indexer=0; indexer<tempa; indexer++)
+			{
+				//Extract information
+				row = output_store_diag_matrix[indexer].row_ind;
+				col = output_store_diag_matrix[indexer].col_ind;
+				value = output_store_diag_matrix[indexer].Y_value;
+
+				//Write it
+				fprintf(FPoutVal,"%d,%d,%f\n",row,col,value);
+			}
+
+			//Dump the location references -- do this no matter what in this case (ignore flag)
+			//Print the index information
+			fprintf(FPoutVal,"\nMatrix Index information for this call - start,stop,name\n");
+
+			for (indexer=0; indexer<bus_count; indexer++)
+			{
+				//Extract the start/stop indices
+				jindexer = 2*bus[indexer].Matrix_Loc;
+				kindexer = jindexer + 2*powerflow_values->BA_diag[indexer].size - 1;
+
+				//Print them out
+				fprintf(FPoutVal,"%d,%d,%s\n",jindexer,kindexer,bus[indexer].name);
+			}
+
+			//Add in next header information
+			fprintf(FPoutVal,"\nNodal information for the system\n");
+			fprintf(FPoutVal,"Note that currents are pre-rotated to their base, not the current voltage\n");
+			fprintf(FPoutVal,"Also note that differently-connected children and simultaneous Delta-Wye loads are not supported\n");
+			fprintf(FPoutVal,"name,nominal_voltage,phases,Voltage_A/1,Voltage_B/2,Voltage_C/N,Power_A/1,Power_B/2,Power_C/12,Shunt_A/1,Shunt_B/2,Shunt_C/12,Current_A/1,Current_B/2,Current_C/12,house_current_1,house_current_2,house_current_12\n");
+
+			//While we're in here, write the node/load information
+			for (indexer=0; indexer<bus_count; indexer++)
+			{
+				//Name/Voltage
+				fprintf(FPoutVal,"%s,%f,",bus[indexer].name,bus[indexer].volt_base);
+
+				if ((bus[indexer].phases & 0x80) == 0x80)	//Triplex
+				{
+					//figure out which case we are
+					switch(bus[indexer].phases & 0x07) {
+						case 0x00:
+							fprintf(FPoutVal,"-S");
+							break;
+						case 0x01:
+							fprintf(FPoutVal,"CS");
+							break;
+						case 0x02:
+							fprintf(FPoutVal,"BS");
+							break;
+						case 0x04:
+							fprintf(FPoutVal,"AS");
+							break;
+						default:
+							{
+								GL_THROW("NR Out: invalid triplex phase detected");
+								/*  TROUBLESHOOT
+								While outputting a triplex-connected object, an invalid phase
+								combination was encountered.  Please submit your code and an
+								error report via the ticketing system.
+								 */
+							}
+					}//End case
+				}//End Triplex
+				else	//"Normal"
+				{
+					switch(bus[indexer].phases & 0x07) {
+						case 0x00:
+							{
+								fprintf(FPoutVal,"-");
+								break;
+							}
+						case 0x01:	//C
+							{
+								fprintf(FPoutVal,"C");
+								break;
+							}
+						case 0x02:	//B
+							{
+								fprintf(FPoutVal,"B");
+								break;
+							}
+						case 0x03:	//BC
+							{
+								fprintf(FPoutVal,"BC");
+								break;
+							}
+						case 0x04:	//A
+							{
+								fprintf(FPoutVal,"A");
+								break;
+							}
+						case 0x05:	//AC
+							{
+								fprintf(FPoutVal,"AC");
+								break;
+							}
+						case 0x06:	//AB
+							{
+								fprintf(FPoutVal,"AB");
+								break;
+							}
+						case 0x07:	//ABC
+							{
+								fprintf(FPoutVal,"ABC");
+								break;
+							}
+						default:
+							{
+								GL_THROW("NR Out: invalid phase combination detected");
+								/*  TROUBLESHOOT
+								While outputting a three-phase object, an invalid phase
+								combination was encountered.  Please submit your code and an
+								error report via the ticketing system.
+								 */
+							}
+					}//end case
+				}//End "normal else"
+
+				//Print a "D" if it is delta-connected
+				if ((bus[indexer].phases & 0x08) == 0x08)
+					fprintf(FPoutVal,"D,");
+				else
+					fprintf(FPoutVal,",");
+
+				//Print the voltages - effectively the same for everyone
+				fprintf(FPoutVal,"%+f%+fj,%+f%+fj,%+f%+fj,",bus[indexer].V[0].Re(),bus[indexer].V[0].Im(),bus[indexer].V[1].Re(),bus[indexer].V[1].Im(),bus[indexer].V[2].Re(),bus[indexer].V[2].Im());
+
+				//Print Power Values
+				fprintf(FPoutVal,"%+f%+fj,%+f%+fj,%+f%+fj,",bus[indexer].S[0].Re(),bus[indexer].S[0].Im(),bus[indexer].S[1].Re(),bus[indexer].S[1].Im(),bus[indexer].S[2].Re(),bus[indexer].S[2].Im());
+
+				//Print shunt values
+				fprintf(FPoutVal,"%+f%+fj,%+f%+fj,%+f%+fj,",bus[indexer].Y[0].Re(),bus[indexer].Y[0].Im(),bus[indexer].Y[1].Re(),bus[indexer].Y[1].Im(),bus[indexer].Y[2].Re(),bus[indexer].Y[2].Im());
+
+				//Print current values
+				if ((bus[indexer].phases & 0x80) == 0x80)
+				{
+					//Triplex - get 12
+					fprintf(FPoutVal,"%+f%+fj,%+f%+fj,%+f%+fj,",bus[indexer].I[0].Re(),bus[indexer].I[0].Im(),bus[indexer].I[1].Re(),bus[indexer].I[1].Im(),bus[indexer].extra_var[0].Re(),bus[indexer].extra_var[0].Im());
+				}
+				else	//"Normal"
+				{
+					//Triplex - get 12
+					fprintf(FPoutVal,"%+f%+fj,%+f%+fj,%+f%+fj,",bus[indexer].I[0].Re(),bus[indexer].I[0].Im(),bus[indexer].I[1].Re(),bus[indexer].I[1].Im(),bus[indexer].I[2].Re(),bus[indexer].I[2].Im());
+				}
+
+				//Extra - hase a house?
+				if ((bus[indexer].phases & 0x40) == 0x40)
+				{
+					fprintf(FPoutVal,"%+f%+fj,%+f%+fj,%+f%+fj\n",bus[indexer].house_var[0].Re(),bus[indexer].house_var[0].Im(),bus[indexer].house_var[1].Re(),bus[indexer].house_var[1].Im(),bus[indexer].house_var[2].Re(),bus[indexer].house_var[2].Im());
+				}
+				else	//Nope, just zero it
+				{
+					fprintf(FPoutVal,"0.0,0.0,0.0\n");
+				}
+			}//End Bus For
+
+
+			//Now that all of that is written, close the file handle
+			fclose(FPoutVal);
+
+			//And deflag us
+			NRMatDumpMethod = MD_NONE;
+
+			//Free up this pointer, since we no longer need it
+
+		}//End MD_FULL_ONCE final dump
 
 		//Integrate the variable portions of the diagonal components
 		for (indexer=powerflow_values->size_offdiag_PQ*2 + powerflow_values->size_diag_fixed*2; indexer< size_Amatrix; indexer++)

@@ -74,6 +74,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		PT_KEYWORD,"ONCE",MD_ONCE,
 		PT_KEYWORD,"PER_CALL",MD_PERCALL,
 		PT_KEYWORD,"ALL",MD_ALL,
+		PT_KEYWORD,"FULL_ONCE",MD_FULL_ONCE,
 		NULL);
 	gl_global_create("powerflow::NR_matrix_output_references",PT_bool,&NRMatReferences,NULL);
 	gl_global_create("powerflow::line_capacitance",PT_bool,&use_line_cap,NULL);

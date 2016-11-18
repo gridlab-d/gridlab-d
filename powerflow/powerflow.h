@@ -34,7 +34,8 @@ typedef enum {
 	MD_NONE=0,			///< No matrix dump desired
 	MD_ONCE=1,			///< Single matrix dump desired
 	MD_PERCALL=2,		///< Matrix dump every call desired
-	MD_ALL=3			///< Matrix dump on every iteration desired
+	MD_ALL=3,			///< Matrix dump on every iteration desired
+	MD_FULL_ONCE=4		///< Single output, but does all material for external powerflow
 } MATRIXDUMPMETHOD;
 
 typedef enum {
