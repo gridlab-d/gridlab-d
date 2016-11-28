@@ -161,12 +161,15 @@ link_object::link_object(MODULE *mod) : powerflow_object(mod)
 				PT_KEYWORD, "CR", (set)FD_C_REVERSE,
 				PT_KEYWORD, "CN", (set)FD_C_NONE,
 			PT_double, "mean_repair_time[s]",PADDR(mean_repair_time), PT_DESCRIPTION, "Time after a fault clears for the object to be back in service",
-			PT_double, "continuous_rating_A[A]", PADDR(link_rating[0][0]), PT_DESCRIPTION, "Continuous rating for phase A of this link object (set individual line segments)",
-			PT_double, "continuous_rating_B[A]", PADDR(link_rating[0][1]), PT_DESCRIPTION, "Continuous rating for phase B of this link object (set individual line segments)",
-			PT_double, "continuous_rating_C[A]", PADDR(link_rating[0][2]), PT_DESCRIPTION, "Continuous rating for phase C of this link object (set individual line segments)",
-			PT_double, "emergency_rating_A[A]", PADDR(link_rating[1][0]), PT_DESCRIPTION, "Emergency rating for phase A of this link object (set individual line segments)",
-			PT_double, "emergency_rating_B[A]", PADDR(link_rating[1][1]), PT_DESCRIPTION, "Emergency rating for phase B of this link object (set individual line segments)",
-			PT_double, "emergency_rating_C[A]", PADDR(link_rating[1][2]), PT_DESCRIPTION, "Emergency rating for phase C of this link object (set individual line segments)",
+			PT_double, "continuous_rating_A[VA]", PADDR(link_rating[0][0]), PT_DESCRIPTION, "Continuous rating for phase A of this link object (set individual line segments)",
+			PT_double, "continuous_rating_B[VA]", PADDR(link_rating[0][1]), PT_DESCRIPTION, "Continuous rating for phase B of this link object (set individual line segments)",
+			PT_double, "continuous_rating_C[VA]", PADDR(link_rating[0][2]), PT_DESCRIPTION, "Continuous rating for phase C of this link object (set individual line segments)",
+			PT_double, "emergency_rating_A[VA]", PADDR(link_rating[1][0]), PT_DESCRIPTION, "Emergency rating for phase A of this link object (set individual line segments)",
+			PT_double, "emergency_rating_B[VA]", PADDR(link_rating[1][1]), PT_DESCRIPTION, "Emergency rating for phase B of this link object (set individual line segments)",
+			PT_double, "emergency_rating_C[VA]", PADDR(link_rating[1][2]), PT_DESCRIPTION, "Emergency rating for phase C of this link object (set individual line segments)",
+			PT_double, "link_load_A[%]", PADDR(link_load[0]), PT_DESCRIPTION, "Current loading for phase A of link object (read-only)",
+			PT_double, "link_load_B[%]", PADDR(link_load[1]), PT_DESCRIPTION, "Current loading for phase B of link object (read-only)",
+			PT_double, "link_load_C[%]", PADDR(link_load[2]), PT_DESCRIPTION, "Current loading for phase C of link object (read-only)",
 			PT_double, "inrush_convergence_value[V]", PADDR(inrush_tol_value), PT_DESCRIPTION, "Tolerance, as change in line voltage drop between iterations, for deltamode in-rush completion",
 			NULL) < 1 && errno) GL_THROW("unable to publish link properties in %s",__FILE__);
 
@@ -217,10 +220,10 @@ int link_object::create(void)
 
 	current_in[0] = current_in[1] = current_in[2] = complex(0,0);
 
-	link_limits[0][0] = link_limits[0][1] = link_limits[0][2] = link_limits[1][0] = link_limits[1][1] = link_limits[1][2] = 0;
+	link_limits[0][0] = link_limits[0][1] = link_limits[0][2] = link_limits[1][0] = link_limits[1][1] = link_limits[1][2] = NULL;
+	link_rating[0][0] = link_rating[0][1] = link_rating[0][2] = link_rating[1][0] = link_rating[1][1] = link_rating[1][2] = -1; // we assign -1 as a default. This will be overridden by the actual values from connected links!
 	
-	link_rating[0][0] = link_rating[0][1] = link_rating[0][2] = 1000;	//Replicates current defaults of line objects
-	link_rating[1][0] = link_rating[1][1] = link_rating[1][2] = 2000;
+	link_load[0] = link_load[1] = link_load[2] = -1;
 
 	check_link_limits = false;
 
@@ -487,8 +490,12 @@ int link_object::init(OBJECT *parent)
 
 	/* no nominal voltage */
 	if (nominal_voltage==0)
-		throw "nominal voltage is not specified";
-
+	{
+		GL_THROW("nominal voltage of from node is not specified for line: %d - %s",obj->id,obj->name);
+		/*  TROUBLESHOOT
+		Nominal voltage is not specified for the links from node. Please specify the nominal voltage.
+		*/
+	}
 	/* record this link on the nodes' incidence counts */
 	OBJECTDATA(from,node)->k++;
 	OBJECTDATA(to,node)->k++;
@@ -499,6 +506,7 @@ int link_object::init(OBJECT *parent)
 		//See what kind of link we are - if not in this list, ignore it
 		if (gl_object_isa(obj,"transformer","powerflow") || gl_object_isa(obj,"underground_line","powerflow") || gl_object_isa(obj,"overhead_line","powerflow") || gl_object_isa(obj,"triplex_line","powerflow"))	//Default line or xformer
 		{
+
 			//link us to local property (individual object populate)
 			link_limits[0][0] = &link_rating[0][0];
 			link_limits[0][1] = &link_rating[0][1];
@@ -2788,22 +2796,74 @@ void link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 		//See what we are - if we're a transformer, we're looking at power
 		if ((SpecialLnk != NORMAL) && (SpecialLnk != SWITCH) && (SpecialLnk != REGULATOR))
 		{
-			//Check power - rating is in kVA - just use power_out (tends to be a little more accurate
-			temp_power_check = power_out.Mag() / 1000.0;
+			//Check individual currents (line ratings in Amps)
+			if (has_phase(PHASE_A)) {
+				//Check power - rating is in VA - just use power_out (tends to be a little more accurate
+				temp_power_check = indiv_power_out[0].Mag();
 
-			if (temp_power_check > *link_limits[0][0])
-			{
-				//Exceeded rating - no emergency ratings for transformers, at this time
-				gl_warning("transformer:%s is at %.2f%% of its rated power value",OBJECTHDR(this)->name,(temp_power_check/(*link_limits[0][0])*100.0));
-				/*  TROUBLESHOOT
-				The total power passing through a transformer is above its kVA rating.
-				*/
+				// Check how loaded the link is
+				link_load[0] = (temp_power_check/(*link_limits[0][0])*100.0);
 
-				//Add in the value
-				*over_limit_value = (temp_power_check - (power_out.Mag()/1000.0))*1000.0;
+				if (temp_power_check > *link_limits[0][0])
+				{
+					//Exceeded rating - no emergency ratings for transformers, at this time
+					gl_warning("transformer:%s is at %.2f%% of its rated power value on phase A!",OBJECTHDR(this)->name,(temp_power_check/(*link_limits[0][0])*100.0));
+					/*  TROUBLESHOOT
+					The total power passing through a transformer is above its kVA rating.
+					*/
 
-				//Flag as over
-				*over_limits = true;
+					//Add in the value
+					*over_limit_value += temp_power_check - *link_limits[0][0];
+
+					//Flag as over
+					*over_limits = true;
+				}
+			}
+
+			if (has_phase(PHASE_B)) {
+				//Check power - rating is in VA - just use power_out (tends to be a little more accurate
+				temp_power_check = indiv_power_out[1].Mag();
+
+				// Check how loaded the link is
+				link_load[1] = (temp_power_check/(*link_limits[0][1])*100.0);
+
+				if (temp_power_check > *link_limits[0][1])
+				{
+					//Exceeded rating - no emergency ratings for transformers, at this time
+					gl_warning("transformer:%s is at %.2f%% of its rated power value on phase B!",OBJECTHDR(this)->name,(temp_power_check/(*link_limits[0][1])*100.0));
+					/*  TROUBLESHOOT
+					The total power passing through a transformer is above its kVA rating.
+					*/
+
+					//Add in the value
+					*over_limit_value += temp_power_check - *link_limits[0][1];
+
+					//Flag as over
+					*over_limits = true;
+				}
+			}
+
+			if (has_phase(PHASE_C)) {
+				//Check power - rating is in VA - just use power_out (tends to be a little more accurate
+				temp_power_check = indiv_power_out[2].Mag();
+
+				// Check how loaded the link is
+				link_load[2] = (temp_power_check/(*link_limits[0][2])*100.0);
+
+				if (temp_power_check > *link_limits[0][2])
+				{
+					//Exceeded rating - no emergency ratings for transformers, at this time
+					gl_warning("transformer:%s is at %.2f%% of its rated power value on phase C!",OBJECTHDR(this)->name,(temp_power_check/(*link_limits[0][2])*100.0));
+					/*  TROUBLESHOOT
+					The total power passing through a transformer is above its kVA rating.
+					*/
+
+					//Add in the value
+					*over_limit_value += temp_power_check - *link_limits[0][2];
+
+					//Flag as over
+					*over_limits = true;
+				}
 			}
 		}//End transformers
 		else	//Must be a line - that's the only other option right now
@@ -2811,72 +2871,58 @@ void link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 			//Make sure it isn't triplex first
 			if (has_phase(PHASE_S))
 			{
-				if (read_I_out[0].Mag() > *link_limits[0][0])
+				// Check how loaded the link is
+				link_load[0] = (indiv_power_out[0].Mag()/(*link_limits[0][0])*100.0);
+				link_load[1] = (indiv_power_out[1].Mag()/(*link_limits[0][1])*100.0);
+
+				if (indiv_power_out[0].Mag() > *link_limits[0][0])
 				{
 					//Exceeded continuous - check emergency
-					if (read_I_out[0].Mag() > *link_limits[1][0])
+					if (indiv_power_out[0].Mag() > *link_limits[1][0])
 					{
 						//Exceeded emergency
-						gl_warning("Line:%s is at %.2f%% of its emergency rating on phase 1!",OBJECTHDR(this)->name,(read_I_out[0].Mag()/(*link_limits[1][0])*100.0));
+						gl_warning("Line:%s is at %.2f%% of its emergency rating on phase 1!",OBJECTHDR(this)->name,(indiv_power_out[0].Mag()/(*link_limits[1][0])*100.0));
 						/*  TROUBLESHOOT
 						Phase 1 on the line has exceeded the emergency rating associated with it.
 						*/
 					}
 					else	//Just continuous exceed
 					{
-						gl_warning("Line:%s is at %.2f%% of its continuous rating on phase 1!",OBJECTHDR(this)->name,(read_I_out[0].Mag()/(*link_limits[0][0])*100.0));
+						gl_warning("Line:%s is at %.2f%% of its continuous rating on phase 1!",OBJECTHDR(this)->name,(indiv_power_out[0].Mag()/(*link_limits[0][0])*100.0));
 						/*  TROUBLESHOOT
 						Phase 1 on the line has exceeded the continuous rating associated with it.
 						*/
 					}
 
-					//Get this as a power value, for accumulation
-					nTo = OBJECTDATA(to,node);
-
-					//Find "overcurrent"
-					temp_current_diff = read_I_out[0].Mag() - *link_limits[0][0];
-
-					//Compute the power - crude, but meh
-					temp_power_check = (nTo->voltage[0].Mag())*temp_current_diff;
-
-					//Accumulate it
-					*over_limit_value += temp_power_check;
+					//Add in the value
+					*over_limit_value += indiv_power_out[0].Mag() - *link_limits[0][0];
 
 					//Flag as over
 					*over_limits = true;
 
 				}//End Phase 1 check
 
-				if (read_I_out[1].Mag() > *link_limits[0][1])
+				if (indiv_power_out[1].Mag() > *link_limits[0][1])
 				{
 					//Exceeded continuous - check emergency
-					if (read_I_out[1].Mag() > *link_limits[1][1])
+					if (indiv_power_out[1].Mag() > *link_limits[1][1])
 					{
 						//Exceeded emergency
-						gl_warning("Line:%s is at %.2f%% of its emergency rating on phase 2!",OBJECTHDR(this)->name,(read_I_out[1].Mag()/(*link_limits[1][1])*100.0));
+						gl_warning("Line:%s is at %.2f%% of its emergency rating on phase 2!",OBJECTHDR(this)->name,(indiv_power_out[1].Mag()/(*link_limits[1][1])*100.0));
 						/*  TROUBLESHOOT
 						Phase 1 on the line has exceeded the emergency rating associated with it.
 						*/
 					}
 					else	//Just continuous exceed
 					{
-						gl_warning("Line:%s is at %.2f%% of its continuous rating on phase 2!",OBJECTHDR(this)->name,(read_I_out[1].Mag()/(*link_limits[0][1])*100.0));
+						gl_warning("Line:%s is at %.2f%% of its continuous rating on phase 2!",OBJECTHDR(this)->name,(indiv_power_out[1].Mag()/(*link_limits[0][1])*100.0));
 						/*  TROUBLESHOOT
 						Phase 1 on the line has exceeded the continuous rating associated with it.
 						*/
 					}
 
-					//Get this as a power value, for accumulation
-					nTo = OBJECTDATA(to,node);
-
-					//Find "overcurrent"
-					temp_current_diff = read_I_out[1].Mag() - *link_limits[0][1];
-
-					//Compute the power - crude, but meh
-					temp_power_check = (nTo->voltage[1].Mag())*temp_current_diff;
-
-					//Accumulate it
-					*over_limit_value += temp_power_check;
+					//Add in the value
+					*over_limit_value += indiv_power_out[1].Mag() - *link_limits[0][1];
 
 					//Flag as over
 					*over_limits = true;
@@ -2885,39 +2931,33 @@ void link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 			}//End triplex line check
 			else	//"Normal" line
 			{
-				//Check individual currents (line ratings in Amps)
+				//Check individual line ratings
 				if (has_phase(PHASE_A))
 				{
-					if (read_I_out[0].Mag() > *link_limits[0][0])
+					// Check how loaded the link is
+					link_load[0] = (indiv_power_out[0].Mag()/(*link_limits[0][0])*100.0);
+
+					if (indiv_power_out[0].Mag() > *link_limits[0][0])
 					{
 						//Exceeded continuous - check emergency
-						if (read_I_out[0].Mag() > *link_limits[1][0])
+						if (indiv_power_out[0].Mag() > *link_limits[1][0])
 						{
 							//Exceeded emergency
-							gl_warning("Line:%s is at %.2f%% of its emergency rating on phase A!",OBJECTHDR(this)->name,(read_I_out[0].Mag()/(*link_limits[1][0])*100.0));
+							gl_warning("Line:%s is at %.2f%% of its emergency rating on phase A!",OBJECTHDR(this)->name,(indiv_power_out[0].Mag()/(*link_limits[1][0])*100.0));
 							/*  TROUBLESHOOT
 							Phase A on the line has exceeded the emergency rating associated with it.
 							*/
 						}
 						else	//Just continuous exceed
 						{
-							gl_warning("Line:%s is at %.2f%% of its continuous rating on phase A!",OBJECTHDR(this)->name,(read_I_out[0].Mag()/(*link_limits[0][0])*100.0));
+							gl_warning("Line:%s is at %.2f%% of its continuous rating on phase A!",OBJECTHDR(this)->name,(indiv_power_out[0].Mag()/(*link_limits[0][0])*100.0));
 							/*  TROUBLESHOOT
 							Phase A on the line has exceeded the continuous rating associated with it.
 							*/
 						}
 
-						//Get this as a power value, for accumulation
-						nTo = OBJECTDATA(to,node);
-
-						//Find "overcurrent"
-						temp_current_diff = read_I_out[0].Mag() - *link_limits[0][0];
-
-						//Compute the power - crude, but meh
-						temp_power_check = (nTo->voltage[0].Mag())*temp_current_diff;
-
-						//Accumulate it
-						*over_limit_value += temp_power_check;
+						//Add in the value
+						*over_limit_value += indiv_power_out[0].Mag() - *link_limits[0][0];
 
 						//Flag as over
 						*over_limits = true;
@@ -2927,36 +2967,30 @@ void link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 
 				if (has_phase(PHASE_B))
 				{
-					if (read_I_out[1].Mag() > *link_limits[0][1])
+					// Check how loaded the link is
+					link_load[1] = (indiv_power_out[1].Mag()/(*link_limits[0][1])*100.0);
+
+					if (indiv_power_out[1].Mag() > *link_limits[0][1])
 					{
 						//Exceeded continuous - check emergency
-						if (read_I_out[1].Mag() > *link_limits[1][1])
+						if (indiv_power_out[1].Mag() > *link_limits[1][1])
 						{
 							//Exceeded emergency
-							gl_warning("Line:%s is at %.2f%% of its emergency rating on phase B!",OBJECTHDR(this)->name,(read_I_out[1].Mag()/(*link_limits[1][1])*100.0));
+							gl_warning("Line:%s is at %.2f%% of its emergency rating on phase B!",OBJECTHDR(this)->name,(indiv_power_out[1].Mag()/(*link_limits[1][1])*100.0));
 							/*  TROUBLESHOOT
 							Phase B on the line has exceeded the emergency rating associated with it.
 							*/
 						}
 						else	//Just continuous exceed
 						{
-							gl_warning("Line:%s is at %.2f%% of its continuous rating on phase B!",OBJECTHDR(this)->name,(read_I_out[1].Mag()/(*link_limits[0][1])*100.0));
+							gl_warning("Line:%s is at %.2f%% of its continuous rating on phase B!",OBJECTHDR(this)->name,(indiv_power_out[1].Mag()/(*link_limits[0][1])*100.0));
 							/*  TROUBLESHOOT
 							Phase B on the line has exceeded the continuous rating associated with it.
 							*/
 						}
 
-						//Get this as a power value, for accumulation
-						nTo = OBJECTDATA(to,node);
-
-						//Find "overcurrent"
-						temp_current_diff = read_I_out[1].Mag() - *link_limits[0][1];
-
-						//Compute the power - crude, but meh
-						temp_power_check = (nTo->voltage[1].Mag())*temp_current_diff;
-
-						//Accumulate it
-						*over_limit_value += temp_power_check;
+						//Add in the value
+						*over_limit_value += indiv_power_out[1].Mag() - *link_limits[0][1];
 
 						//Flag as over
 						*over_limits = true;
@@ -2966,36 +3000,30 @@ void link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 
 				if (has_phase(PHASE_C))
 				{
-					if (read_I_out[2].Mag() > *link_limits[0][2])
+					// Check how loaded the link is
+					link_load[2] = (indiv_power_out[2].Mag()/(*link_limits[0][2])*100.0);
+
+					if (indiv_power_out[2].Mag() > *link_limits[0][2])
 					{
 						//Exceeded continuous - check emergency
-						if (read_I_out[2].Mag() > *link_limits[1][2])
+						if (indiv_power_out[2].Mag() > *link_limits[1][2])
 						{
 							//Exceeded emergency
-							gl_warning("Line:%s is at %.2f%% of its emergency rating on phase C!",OBJECTHDR(this)->name,(read_I_out[2].Mag()/(*link_limits[1][2])*100.0));
+							gl_warning("Line:%s is at %.2f%% of its emergency rating on phase C!",OBJECTHDR(this)->name,(indiv_power_out[2].Mag()/(*link_limits[1][2])*100.0));
 							/*  TROUBLESHOOT
 							Phase C on the line has exceeded the emergency rating associated with it.
 							*/
 						}
 						else	//Just continuous exceed
 						{
-							gl_warning("Line:%s is at %.2f%% of its continuous rating on phase C!",OBJECTHDR(this)->name,(read_I_out[2].Mag()/(*link_limits[0][2])*100.0));
+							gl_warning("Line:%s is at %.2f%% of its continuous rating on phase C!",OBJECTHDR(this)->name,(indiv_power_out[2].Mag()/(*link_limits[0][2])*100.0));
 							/*  TROUBLESHOOT
 							Phase C on the line has exceeded the continuous rating associated with it.
 							*/
 						}
 
-						//Get this as a power value, for accumulation
-						nTo = OBJECTDATA(to,node);
-
-						//Find "overcurrent"
-						temp_current_diff = read_I_out[2].Mag() - *link_limits[0][2];
-
-						//Compute the power - crude, but meh
-						temp_power_check = (nTo->voltage[2].Mag())*temp_current_diff;
-
-						//Accumulate it
-						*over_limit_value += temp_power_check;
+						//Add in the value
+						*over_limit_value += indiv_power_out[2].Mag() - *link_limits[0][2];
 
 						//Flag as over
 						*over_limits = true;
