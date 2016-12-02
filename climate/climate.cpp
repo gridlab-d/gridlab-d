@@ -1027,7 +1027,7 @@ int climate::get_binary_cloud_value_for_location(double latitude, double longitu
 }
 
 int climate::get_fuzzy_cloud_value_for_location(double latitude, double longitude, double *cloud) {
-	//m_cloud_pattern('F');
+	//write_out_cloud_pattern('F');
 	int pixel_x = floor(gl_lerp(latitude, MIN_LAT, MIN_LAT_INDEX, MAX_LAT, MAX_LAT_INDEX));
 	int pixel_y = floor(gl_lerp(longitude, MIN_LON, MIN_LON_INDEX, MAX_LON, MAX_LON_INDEX));
 	double value = fuzzy_cloud_pattern[0][pixel_x][pixel_y];
