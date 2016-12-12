@@ -1,0 +1,181 @@
+//Simple feeder to test childed triplex nodes and to see if houses
+//are populating/propagating properly
+//Test is theoretically identical between FBS and NR
+//Test the three triplex meters individually, because
+
+clock {
+	timezone EST+5EDT;
+	starttime '2009-07-01 04:00:00';
+	stoptime '2009-07-01 05:00:00';
+}
+
+#set minimum_timestep=60;
+//#set profiler=1;
+
+//#define recorder_filename="data_triplex_parent_test"
+
+module tape;
+module assert;
+module residential {
+	implicit_enduses NONE;
+};
+module powerflow {
+	solver_method NR;
+};
+
+
+object triplex_line_conductor {     
+	name triplex_4/0 AA;    
+	resistance 0.48;     
+	geometric_mean_radius 0.0158;     
+}       
+
+object triplex_line_configuration {     
+	name triplex_line_configuration_1;     
+	conductor_1 triplex_4/0 AA;    
+	conductor_2 triplex_4/0 AA;    
+	conductor_N triplex_4/0 AA;    
+	insulation_thickness 0.08;     
+	diameter 0.522;     
+}         
+
+object triplex_meter {     
+	name trip_swing;     
+	phases CS;     
+	bustype SWING;
+	nominal_voltage 120;
+	// object recorder {
+		// property "measured_power";
+		// interval -1;
+		// file ${recorder_filename}_swingbus_out.csv;
+	// };
+	object complex_assert {
+		target measured_power;
+		within 0.1;
+		object player {
+			property value;
+			file ../data_triplex_parent_test_swingbus.csv;
+		};
+	};
+}
+
+object triplex_line {
+	groupid Triplex_Line;
+	phases CS;
+	from trip_swing;
+	to trip_parent_meter;
+	length 10;
+	configuration triplex_line_configuration_1;
+}
+object triplex_meter {
+	name trip_parent_meter;
+	phases CS;
+	nominal_voltage 120;
+	// object recorder {
+		// property "measured_power";
+		// interval -1;
+		// file ${recorder_filename}_parentbus_out.csv;
+	// };
+	object complex_assert {
+		target measured_power;
+		within 0.1;
+		object player {
+			property value;
+			file ../data_triplex_parent_test_parentbus.csv;
+		};
+	};
+}
+
+object triplex_meter {
+	name house_meter;
+	parent trip_parent_meter;
+	phases CS;
+	nominal_voltage 120;
+	// object recorder {
+		// property "measured_power";
+		// interval -1;
+		// file ${recorder_filename}_housebus_out.csv;
+	// };
+	object complex_assert {
+		target measured_power;
+		within 0.1;
+		object player {
+			property value;
+			file ../data_triplex_parent_test_housebus.csv;
+		};
+	};
+}
+
+object house {
+	name house_load_thinger;
+	parent house_meter;
+	schedule_skew -2658;
+	floor_area 2227;
+	number_of_stories 2;
+	ceiling_height 10;
+	over_sizing_factor 0.2;
+	//Thermal integrity -> Single Family 1
+	Rroof 13.92;
+	Rwall 9.14;
+	Rfloor 8.47;
+	glazing_layers 1;
+	glass_type 1;
+	glazing_treatment 1;
+	window_frame 1;
+	Rdoors 3.37;
+	airchange_per_hour 0.79;
+	cooling_COP 2.7;
+	air_temperature 68.87;
+	mass_temperature 68.87;
+	total_thermal_mass_per_floor_area 2.981;
+	heating_system_type HEAT_PUMP;
+	heating_COP 2.7;
+	cooling_system_type ELECTRIC;
+	auxiliary_strategy DEADBAND;
+	auxiliary_system_type ELECTRIC;
+	motor_model BASIC;
+	motor_efficiency AVERAGE;
+	breaker_amps 1000;
+	hvac_breaker_rating 1000;
+	cooling_setpoint 78.93;
+	heating_setpoint 67.59;
+	object ZIPload {
+		name house2_resp_load;
+		// Responsive load
+		//schedule_skew -2658;
+		base_power 1.5;
+		heatgain_fraction 0.900;
+		power_pf 0.9;
+		current_pf -0.9;
+		impedance_pf 0.8;
+		impedance_fraction 0.200000;
+		current_fraction 0.400000;
+		power_fraction 0.400000;
+	};
+	object ZIPload {
+		name house2_unresp_load;
+		// Unresponsive load
+		schedule_skew -2658;
+		base_power 1.05;
+		heatgain_fraction 0.900;
+		power_pf 0.9;
+		current_pf 0.8;
+		impedance_pf -0.95;
+		impedance_fraction 0.200000;
+		current_fraction 0.400000;
+		power_fraction 0.400000;
+	};
+	object waterheater {
+		name house_2_wh;
+		schedule_skew 3884;
+		heating_element_capacity 5.5 kW;
+		tank_setpoint 134.0;
+		temperature 132;
+		thermostat_deadband 5.8;
+		location INSIDE;
+		tank_UA 4.0;
+		demand 1.01;
+		tank_volume 20;
+	};
+}
+

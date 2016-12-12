@@ -3340,6 +3340,7 @@ int node::NR_current_update(bool postpass, bool parentcall)
 	complex temp_current_inj[3];
 	complex delta_shunt[3];
 	complex delta_current[3];
+	complex house_pres_current[3];
 
 	//Don't do anything if we've already been "updated"
 	if (current_accumulated==false)
@@ -3563,14 +3564,14 @@ int node::NR_current_update(bool postpass, bool parentcall)
 				temp_store[2].SetPolar(1.0,vdel.Arg());		//Pull phase of V12
 
 				//Update these current contributions
-				temp_val[0] = nom_res_curr[0]/(~temp_store[0]);		//Just denominator conjugated to keep math right (rest was conjugated in house)
-				temp_val[1] = nom_res_curr[1]/(~temp_store[1]);
-				temp_val[2] = nom_res_curr[2]/(~temp_store[2]);
+				house_pres_current[0] = nom_res_curr[0]/(~temp_store[0]);		//Just denominator conjugated to keep math right (rest was conjugated in house)
+				house_pres_current[1] = nom_res_curr[1]/(~temp_store[1]);
+				house_pres_current[2] = nom_res_curr[2]/(~temp_store[2]);
 
 				//Now add it into the current contributions
-				temp_current[0] += temp_val[0];
-				temp_current[1] += temp_val[1];
-				temp_current[2] += temp_val[2];
+				temp_current[0] += house_pres_current[0];
+				temp_current[1] += house_pres_current[1];
+				temp_current[2] += house_pres_current[2];
 			}//End house-attached splitphase
 
 			//Last, but not least, admittance/impedance contributions
@@ -3652,6 +3653,14 @@ int node::NR_current_update(bool postpass, bool parentcall)
 				ParLoadObj->current_inj[0] += temp_current_inj[0];	//This ensures link-related injections are not counted
 				ParLoadObj->current_inj[1] += temp_current_inj[1];
 				ParLoadObj->current_inj[2] += temp_current_inj[2];
+
+				//See if we have a house - if we do, we're inadvertently biasing our parent
+				if (house_present)
+				{
+					//Remove the line_12 current appropriately
+					ParLoadObj->current_inj[0] -= house_pres_current[0] + house_pres_current[2];
+					ParLoadObj->current_inj[1] -= -house_pres_current[1] - house_pres_current[2];
+				}
 			}
 
 			//Update our accumulator as well, otherwise things break
