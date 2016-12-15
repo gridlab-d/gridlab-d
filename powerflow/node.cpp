@@ -1371,7 +1371,20 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 		phase_to_check = (phases & (~(PHASE_D | PHASE_N)));
 		
 		//See if everything has a source
-		if (((phase_to_check & busphasesIn) != phase_to_check) && (busphasesIn != 0))	//Phase mismatch (and not top level node)
+		if (((phase_to_check & busphasesIn) != phase_to_check) && (busphasesIn != 0) && (solver_method != SM_NR))	//Phase mismatch (and not top level node)
+		{
+			GL_THROW("node:%d (%s) has more phases leaving than entering",obj->id,obj->name);
+			/* TROUBLESHOOT
+			A node has more phases present than it has sources coming in.  Under the Forward-Back sweep algorithm,
+			the system should be strictly radial.  This scenario implies either a meshed system or unconnected
+			phases between the from and to nodes of a connected line.  Please adjust the phases appropriately.  Also
+			be sure no open switches are the sole connection for a phase, else this will fail as well.  In a few NR
+			circumstances, this can also be seen if the "from" and "to" nodes are in reverse order - the "from" node
+			of a link object should be nearest the SWING node, or the node with the most phases - this error check
+			will be updated in future versions.
+			*/
+		}
+		if (((phase_to_check & (busphasesIn | busphasesOut) != phase_to_check) && (busphasesIn != 0 && busphasesOut != 0) && (solver_method == SM_NR)))
 		{
 			GL_THROW("node:%d (%s) has more phases leaving than entering",obj->id,obj->name);
 			/* TROUBLESHOOT
