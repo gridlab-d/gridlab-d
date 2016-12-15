@@ -593,6 +593,134 @@ void http_decode(char *buffer)
 	strcpy(buffer,result);
 }
 
+int get_value_with_unit(OBJECT *obj, char *arg1, char *arg2, char *buffer, size_t len)
+{
+	char *uname = strchr(arg2,'[');
+	if ( uname!=NULL )
+	{
+		UNIT *unit;
+		PROPERTY *prop;
+		double rvalue;
+		complex cvalue;
+		char *spec = NULL;
+		int prec = 4;
+		char fmt[64];
+
+		/* find the end of the unit definition */
+		char *p = strchr(uname,']');
+		if ( p!=NULL ) *p='\0';
+		else {
+			output_error("object '%s' property '%s' unit spec in incomplete or invalid", arg1, arg2);
+			return 0;
+		}
+		*uname++ = '\0';
+
+		/* find the format specs */
+		spec = strchr(uname,',');
+		if ( spec!=NULL )
+			*spec++ = '\0';
+		else
+			spec = "4g";
+
+		/* check spec for conformance */
+		if ( strchr("0123456789",spec[0])==NULL || strchr("aAfFgGeE",spec[1])==NULL )
+		{
+			output_error("object '%s' property '%s' unit format '%s' is invalid (must be [0-9][aAeEfFgG])", arg1, arg2, spec);
+			return 0;
+		}
+
+		/* get the unit */
+		unit = unit_find(uname);
+		if ( unit==NULL )
+		{
+			output_error("object '%s' property '%s' unit '%s' not found", arg1, arg2, uname);
+			return 0;
+		}
+
+		/* get the property */
+		prop = object_get_property(obj,arg2,NULL);
+		if ( prop==NULL )
+		{
+			output_error("object '%s' property '%s' not found", arg1, arg2);
+			return 0;
+		}
+		if ( prop->unit==NULL )
+		{
+			output_error("class '%s' property '%s' has no units", obj->oclass->name, prop->name);
+			return 0;
+		}
+
+		/* handle complex numbers */
+		if ( prop->ptype==PT_complex )
+		{
+			cvalue = *object_get_complex_quick(obj,prop);
+			if ( !unit_convert_complex(prop->unit,unit,&cvalue) )
+			{
+				output_error("object '%s' property '%s' conversion from '%s' to '%s' failed", arg1, arg2, prop->unit->name, unit);
+				return 0;
+			}
+			switch ( spec[2]=='\0' ? cvalue.f : spec[2] ) {
+			case I: // i-notation
+				sprintf(fmt,"%%.%c%c%%+.%c%ci %%s",spec[0],spec[1],spec[0],spec[1]);
+				sprintf(buffer,fmt,cvalue.r,cvalue.i,uname);
+				break;
+			case J: // j-notation
+				sprintf(fmt,"%%.%c%c%%+.%c%cj %%s",spec[0],spec[1],spec[0],spec[1]);
+				sprintf(buffer,fmt,cvalue.r,cvalue.i,uname);
+				break;
+			case A: // degrees
+				sprintf(fmt,"%%.%c%c%%+.%c%cd %%s",spec[0],spec[1],spec[0],spec[1]);
+				sprintf(buffer,fmt,complex_get_mag(cvalue),complex_get_arg(cvalue)*180/PI,uname);
+				break;
+			case R: // radians
+				sprintf(fmt,"%%.%c%c%%+.%c%cr %%s",spec[0],spec[1],spec[0],spec[1]);
+				sprintf(buffer,fmt,complex_get_mag(cvalue),complex_get_arg(cvalue),uname);
+				break;
+			case 'M': // magnitude only
+				sprintf(fmt,"%%.%c%c %%s",spec[0],spec[1]);
+				sprintf(buffer,fmt,complex_get_mag(cvalue),uname);
+				break;
+			case 'D': // angle only in degrees
+				sprintf(fmt,"%%.%c%c deg",spec[0],spec[1]);
+				sprintf(buffer,fmt,complex_get_arg(cvalue)*180/PI,uname);
+				break;
+			case 'R': // angle only in radians
+				sprintf(fmt,"%%.%c%c rad",spec[0],spec[1]);
+				sprintf(buffer,fmt,complex_get_arg(cvalue),uname);
+				break;
+			case 'X': // real part only
+				sprintf(fmt,"%%.%c%c %%s",spec[0],spec[1]);
+				sprintf(buffer,fmt,cvalue.r,cvalue.i,uname);
+				break;
+			case 'Y': // imaginary part only
+				sprintf(fmt,"%%.%c%c %%s",spec[0],spec[1]);
+				sprintf(buffer,fmt,cvalue.r,cvalue.i,uname);
+				break;
+			default:
+				output_error("object '%s' property '%s' complex angle notation '%c' is not valid", arg1, arg2, spec[2]=='\0' ? cvalue.f : spec[3]);
+				return 0;
+			}
+		}
+		else /* handle doubles */
+		{
+			sprintf(fmt,"%%.%c%c %%s",spec[0],spec[1]);
+			rvalue = *object_get_double_quick(obj,prop);
+			if ( !unit_convert_ex(prop->unit,unit,&rvalue) )
+			{
+				output_error("object '%s' property '%s' conversion from '%s' to '%s' failed", arg1, arg2, prop->unit->name, unit);
+				return 0;
+			}
+			sprintf(buffer,fmt,rvalue,uname);
+		}
+	}
+	else if ( !object_get_value_by_name(obj,arg2,buffer,sizeof(buffer)) )
+	{
+		output_error("object '%s' property '%s' not found", arg1, arg2);
+		return 0;
+	}
+	return strlen(buffer);
+}
+
 /** Process an incoming raw data request
  * @returns non-zero on success, 0 on failure (errno set)
  */
@@ -650,7 +778,7 @@ int http_raw_request(HTTPCNX *http, char *uri)
 		}
 
 		/* post the current value */
-		if ( !object_get_value_by_name(obj,arg2,buffer,sizeof(buffer)) )
+		if ( !get_value_with_unit(obj,arg1,arg2,buffer,sizeof(buffer)) )
 		{
 			output_error("object '%s' property '%s' not found", arg1, arg2);
 			return 0;
@@ -772,139 +900,8 @@ int http_xml_request(HTTPCNX *http,char *uri)
 		}
 		else
 		{	/* get the unit (if any) */
-			char *uname = strchr(arg2,'[');
-			if ( uname!=NULL )
-			{
-				UNIT *unit;
-				PROPERTY *prop;
-				double rvalue;
-				complex cvalue;
-				char *spec = NULL;
-				int prec = 4;
-				char fmt[64];
-
-				/* find the end of the unit definition */
-				char *p = strchr(uname,']');
-				if ( p!=NULL ) *p='\0';
-				else {
-					output_error("object '%s' property '%s' unit spec in incomplete or invalid", arg1, arg2);
-					return 0;
-				}
-				*uname++ = '\0';
-
-				/* find the format specs */
-				spec = strchr(uname,',');
-				if ( spec!=NULL )
-					*spec++ = '\0';
-				else
-					spec = "4g";
-
-				/* check spec for conformance */
-				if ( strchr("0123456789",spec[0])==NULL || strchr("aAfFgGeE",spec[1])==NULL )
-				{
-					output_error("object '%s' property '%s' unit format '%s' is invalid (must be [0-9][aAeEfFgG])", arg1, arg2, spec);
-					return 0;
-				}
-
-				/* get the unit */
-				unit = unit_find(uname);
-				if ( unit==NULL )
-				{
-					output_error("object '%s' property '%s' unit '%s' not found", arg1, arg2, uname);
-					return 0;
-				}
-
-				/* get the property */
-				prop = object_get_property(obj,arg2,NULL);
-				if ( prop==NULL )
-				{
-					output_error("object '%s' property '%s' not found", arg1, arg2);
-					return 0;
-				}
-				if ( prop->unit==NULL )
-				{
-					output_error("class '%s' property '%s' has no units", obj->oclass->name, prop->name);
-					return 0;
-				}
-
-				/* handle complex numbers */
-				if ( prop->ptype==PT_complex )
-				{
-					cvalue = *object_get_complex_quick(obj,prop);
-					if ( !unit_convert_complex(prop->unit,unit,&cvalue) )
-					{
-						output_error("object '%s' property '%s' conversion from '%s' to '%s' failed", arg1, arg2, prop->unit->name, unit);
-						return 0;
-					}
-					switch ( spec[2]=='\0' ? cvalue.f : spec[2] ) {
-					case I: // i-notation
-						sprintf(fmt,"%%.%c%c%%+.%c%ci %%s",spec[0],spec[1],spec[0],spec[1]);
-						sprintf(buffer,fmt,cvalue.r,cvalue.i,uname);
-						break;
-					case J: // j-notation
-						sprintf(fmt,"%%.%c%c%%+.%c%cj %%s",spec[0],spec[1],spec[0],spec[1]);
-						sprintf(buffer,fmt,cvalue.r,cvalue.i,uname);
-						break;
-					case A: // degrees
-						sprintf(fmt,"%%.%c%c%%+.%c%cd %%s",spec[0],spec[1],spec[0],spec[1]);
-						sprintf(buffer,fmt,complex_get_mag(cvalue),complex_get_arg(cvalue)*180/PI,uname);
-						break;
-					case R: // radians
-						sprintf(fmt,"%%.%c%c%%+.%c%cr %%s",spec[0],spec[1],spec[0],spec[1]);
-						sprintf(buffer,fmt,complex_get_mag(cvalue),complex_get_arg(cvalue),uname);
-						break;
-					case 'M': // magnitude only
-						sprintf(fmt,"%%.%c%c %%s",spec[0],spec[1]);
-						sprintf(buffer,fmt,complex_get_mag(cvalue),uname);
-						break;
-					case 'D': // angle only in degrees
-						sprintf(fmt,"%%.%c%c deg",spec[0],spec[1]);
-						sprintf(buffer,fmt,complex_get_arg(cvalue)*180/PI,uname);
-						break;
-					case 'R': // angle only in radians
-						sprintf(fmt,"%%.%c%c rad",spec[0],spec[1]);
-						sprintf(buffer,fmt,complex_get_arg(cvalue),uname);
-						break;
-					case 'X': // real part only
-						sprintf(fmt,"%%.%c%c %%s",spec[0],spec[1]);
-						sprintf(buffer,fmt,cvalue.r,cvalue.i,uname);
-						break;
-					case 'Y': // imaginary part only
-						sprintf(fmt,"%%.%c%c %%s",spec[0],spec[1]);
-						sprintf(buffer,fmt,cvalue.r,cvalue.i,uname);
-						break;
-					default:
-						output_error("object '%s' property '%s' complex angle notation '%c' is not valid", arg1, arg2, spec[2]=='\0' ? cvalue.f : spec[3]);
-						return 0;
-					}
-				}
-				else /* handle doubles */
-				{
-					sprintf(fmt,"%%.%c%c %%s",spec[0],spec[1]);
-					rvalue = *object_get_double_quick(obj,prop);
-					if ( !unit_convert_ex(prop->unit,unit,&rvalue) )
-					{
-						output_error("object '%s' property '%s' conversion from '%s' to '%s' failed", arg1, arg2, prop->unit->name, unit);
-						return 0;
-					}
-					sprintf(buffer,fmt,rvalue,uname);
-				}
-			}
-			else {
-				/* get the current value */
-				if ( !object_get_value_by_name(obj,arg2,buffer,sizeof(buffer)) )
-				{
-					output_error("object '%s' property '%s' not found", arg1, arg2);
-					return 0;
-				}
-			}
-
-			/* assignment, if any */
-			if ( value && !object_set_value_by_name(obj,arg2,value) )
-			{
-				output_error("cannot set object '%s' property '%s' to '%s'", arg1, arg2, value);
+			if ( !get_value_with_unit(obj,arg1,arg2,buffer,sizeof(buffer)) )
 				return 0;
-			}
 
 			/* post the response */
 			http_format(http,"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n");
@@ -1029,9 +1026,7 @@ int http_json_request(HTTPCNX *http,char *uri)
 		}
 		else
 		{
-
-			/* post the current value */
-			if ( !object_get_value_by_name(obj,arg2,buffer,sizeof(buffer)) )
+			if ( !get_value_with_unit(obj,arg1,arg2,buffer,sizeof(buffer)) )
 			{
 				http_format(http,"{\"error\": \"property not found\", object: \"%s\", property: \"%s\"}\n", arg1,arg2);
 				http_type(http,"text/json");
