@@ -1,0 +1,487 @@
+clock {
+	timezone PST+8PDT;
+	timestamp '2000-01-01 0:00:00';
+	stoptime '2000-01-01 0:00:01';
+}
+
+#set relax_naming_rules=1
+#set profiler=1
+
+module powerflow {
+	solver_method NR;
+}
+
+
+object capacitor {
+  name cap:cap2;
+  parent 611;
+  phases CN;
+  cap_nominal_voltage 2400.00;
+  capacitor_C 100000;
+}
+object capacitor {
+  name cap:cap1;
+  parent 675;
+  phases ABCN;
+  cap_nominal_voltage 2401.78;
+  capacitor_A 200000;
+  capacitor_B 200000;
+  capacitor_C 200000;
+}
+
+
+
+
+
+object line_configuration {
+  name line_configuration:mtx607:A;
+  z11 1.34254+0.512414j;
+  c11 2.80001;
+}
+object line_configuration {
+  name line_configuration:mtx607:B;
+  z22 1.34254+0.512414j;
+  c22 2.80001;
+}
+object line_configuration {
+  name line_configuration:mtx607:C;
+  z33 1.34254+0.512414j;
+  c33 2.80001;
+}
+
+object line_configuration {
+  name line_configuration:mtx606:ABC;
+  z11 0.798222+0.446312j;
+  c11 2.80001;
+  z12 0.319209+0.0328009j;
+  c12 -0.600002;
+  z21 0.319209+0.0328009j;
+  c21 -0.600002;
+  z22 0.789122+0.404111j;
+  c22 2.80001;
+  z31 0.284908-0.0143004j;
+  c31 -0.600002;
+  z13 0.284908-0.0143004j;
+  c13 -0.600002;
+  z32 0.319209+0.0328009j;
+  c32 -0.600002;
+  z23 0.319209+0.0328009j;
+  c23 -0.600002;
+  z33 0.798222+0.446312j;
+  c33 2.80001;
+}
+
+object line_configuration {
+  name line_configuration:mtx605:A;
+  z11 1.32924+1.34754j;
+  c11 2.80001;
+}
+object line_configuration {
+  name line_configuration:mtx605:B;
+  z22 1.32924+1.34754j;
+  c22 2.80001;
+}
+object line_configuration {
+  name line_configuration:mtx605:C;
+  z33 1.32924+1.34754j;
+  c33 2.80001;
+}
+
+object line_configuration {
+  name line_configuration:mtx604:AB;
+  z11 1.32384+1.35694j;
+  c11 2.80001;
+  z12 0.206606+0.459113j;
+  c12 -0.600002;
+  z21 0.206606+0.459113j;
+  c21 -0.600002;
+  z22 1.32944+1.34714j;
+  c22 2.80001;
+}
+object line_configuration {
+  name line_configuration:mtx604:BC;
+  z22 1.32384+1.35694j;
+  c22 2.80001;
+  z23 0.206606+0.459113j;
+  c23 -0.600002;
+  z32 0.206606+0.459113j;
+  c32 -0.600002;
+  z33 1.32944+1.34714j;
+  c33 2.80001;
+}
+object line_configuration {
+  name line_configuration:mtx604:AC;
+  z11 1.32384+1.35694j;
+  c11 2.80001;
+  z13 0.206606+0.459113j;
+  c13 -0.600002;
+  z31 0.206606+0.459113j;
+  c31 -0.600002;
+  z33 1.32944+1.34714j;
+  c33 2.80001;
+}
+
+object line_configuration {
+  name line_configuration:mtx603:AB;
+  z11 1.32384+1.35694j;
+  c11 2.80001;
+  z12 0.206606+0.459113j;
+  c12 -0.600002;
+  z21 0.206606+0.459113j;
+  c21 -0.600002;
+  z22 1.32944+1.34714j;
+  c22 2.80001;
+}
+object line_configuration {
+  name line_configuration:mtx603:BC;
+  z22 1.32384+1.35694j;
+  c22 2.80001;
+  z23 0.206606+0.459113j;
+  c23 -0.600002;
+  z32 0.206606+0.459113j;
+  c32 -0.600002;
+  z33 1.32944+1.34714j;
+  c33 2.80001;
+}
+object line_configuration {
+  name line_configuration:mtx603:AC;
+  z11 1.32384+1.35694j;
+  c11 2.80001;
+  z13 0.206606+0.459113j;
+  c13 -0.600002;
+  z31 0.206606+0.459113j;
+  c31 -0.600002;
+  z33 1.32944+1.34714j;
+  c33 2.80001;
+}
+
+object line_configuration {
+  name line_configuration:mtx602:ABC;
+  z11 0.752621+1.18143j;
+  c11 2.80001;
+  z12 0.153504+0.384911j;
+  c12 -0.600002;
+  z21 0.153504+0.384911j;
+  c21 -0.600002;
+  z22 0.747520+1.19833j;
+  c22 2.80001;
+  z31 0.156004+0.501714j;
+  c31 -0.600002;
+  z13 0.156004+0.501714j;
+  c13 -0.600002;
+  z32 0.158004+0.423612j;
+  c32 -0.600002;
+  z23 0.158004+0.423612j;
+  c23 -0.600002;
+  z33 0.743620+1.21123j;
+  c33 2.80001;
+}
+
+object line_configuration {
+  name line_configuration:mtx601:ABC;
+  z11 0.346509+1.01793j;
+  c11 2.80001;
+  z12 0.153504+0.384911j;
+  c12 -0.600002;
+  z21 0.153504+0.384911j;
+  c21 -0.600002;
+  z22 0.337509+1.04783j;
+  c22 2.80001;
+  z31 0.158004+0.423612j;
+  c31 -0.600002;
+  z13 0.158004+0.423612j;
+  c13 -0.600002;
+  z32 0.156004+0.501714j;
+  c32 -0.600002;
+  z23 0.156004+0.501714j;
+  c23 -0.600002;
+  z33 0.341409+1.03483j;
+  c33 2.80001;
+}
+
+
+object overhead_line {
+  name line:671680;
+  phases ABC;
+  from 680;
+  to 671;
+  length 1000.00;
+  configuration line_configuration:mtx601:ABC;
+}
+object overhead_line {
+  name line:650632;
+  phases ABC;
+  from rg60;
+  to 632;
+  length 2000.00;
+  configuration line_configuration:mtx601:ABC;
+}
+object overhead_line {
+  name line:684611;
+  phases C;
+  from 684;
+  to 611;
+  length 300.000;
+  configuration line_configuration:mtx605:C;
+}
+object overhead_line {
+  name line:645646;
+  phases BC;
+  from 645;
+  to 646;
+  length 300.000;
+  configuration line_configuration:mtx603:BC;
+}
+object overhead_line {
+  name line:632633;
+  phases ABC;
+  from 632;
+  to 633;
+  length 500.000;
+  configuration line_configuration:mtx602:ABC;
+}
+object overhead_line {
+  name line:632670;
+  phases ABC;
+  from 632;
+  to 670;
+  length 667.000;
+  configuration line_configuration:mtx601:ABC;
+}
+object overhead_line {
+  name line:632645;
+  phases BC;
+  from 632;
+  to 645;
+  length 500.000;
+  configuration line_configuration:mtx603:BC;
+}
+object overhead_line {
+  name line:671684;
+  phases AC;
+  from 684;
+  to 671;
+  length 300.000;
+  configuration line_configuration:mtx604:AC;
+}
+object overhead_line {
+  name line:692675;
+  phases ABC;
+  from 692;
+  to 675;
+  length 500.000;
+  configuration line_configuration:mtx606:ABC;
+}
+object overhead_line {
+  name line:684652;
+  phases A;
+  from 652;
+  to 684;
+  length 800.000;
+  configuration line_configuration:mtx607:A;
+}
+object overhead_line {
+  name line:670671;
+  phases ABC;
+  from 670;
+  to 671;
+  length 1333.00;
+  configuration line_configuration:mtx601:ABC;
+}
+
+object transformer_configuration {
+  name xfcode:cimxfmrcode_reg3;
+  connect_type SINGLE_PHASE;
+  primary_voltage 2400.00;
+  secondary_voltage 2400.00;
+  power_rating 1.66600e+06;
+  resistance 0.000100000;
+  reactance 0.000100000;
+}
+object transformer_configuration {
+  name xfcode:cimxfmrcode_reg2;
+  connect_type SINGLE_PHASE;
+  primary_voltage 2400.00;
+  secondary_voltage 2400.00;
+  power_rating 1.66600e+06;
+  resistance 0.000100000;
+  reactance 0.000100000;
+}
+object transformer_configuration {
+  name xfcode:cimxfmrcode_reg1;
+  connect_type SINGLE_PHASE;
+  primary_voltage 2400.00;
+  secondary_voltage 2400.00;
+  power_rating 1.66600e+06;
+  resistance 0.000100000;
+  reactance 0.000100000;
+}
+
+object transformer_configuration {
+  name xfconfig:xfm1;
+  connect_type WYE_WYE;
+  primary_voltage 4160.00;
+  secondary_voltage 480.000;
+  power_rating 500000;
+  resistance 0.0110000;
+  reactance 0.0200000;
+}
+object transformer {
+  name xf:xfm1;
+  configuration xfconfig:xfm1;
+  from 633;
+  to 634;
+  phases ABCN;
+}
+
+object regulator_configuration {
+  name regulator_configuration:Reg;
+  connect_type WYE_WYE;
+  band_center 2440.00;
+  band_width 40.0000;
+  time_delay 15.0000;
+  raise_taps 16;
+  lower_taps 16;
+  current_transducer_ratio 700.000;
+  power_transducer_ratio 20.0000;
+  tap_pos_A 10;
+  compensator_r_setting_A 3.00000;
+  compensator_x_setting_A 9.00000;
+  tap_pos_B 8;
+  compensator_r_setting_B 3.00000;
+  compensator_x_setting_B 9.00000;
+  tap_pos_C 11;
+  compensator_r_setting_C 3.00000;
+  compensator_x_setting_C 9.00000;
+}
+object regulator {
+  name regulator:Reg;
+  from 650;
+  to rg60;
+  phases ABCN;
+  configuration regulator_configuration:Reg;
+}
+
+object transformer_configuration {
+  name xfconfig:sub3;
+  connect_type DELTA_GWYE;
+  primary_voltage 115000;
+  secondary_voltage 4160.00;
+  power_rating 5.00000e+06;
+  resistance 1.00000e-05;
+  reactance 0.000100000;
+// ***** too many windings for GridLAB-D *****
+}
+object transformer {
+  name xf:sub3;
+  configuration xfconfig:sub3;
+  from sourcebus;
+  to 650;
+  phases ABCN;
+}
+
+
+object node {
+  bustype SWING;
+  name sourcebus;
+  phases ABCN;
+  nominal_voltage 66395.3;
+}
+object node {
+  name 680;
+  phases ABCN;
+  nominal_voltage 2401.78;
+}
+object load {
+  name 670;
+  phases ABCN;
+  nominal_voltage 2401.78;
+  constant_power_A 17000.0+10000.0j;
+  constant_power_B 66000.0+38000.0j;
+  constant_power_C 117000+68000.0j;
+}
+object load {
+  name 692;
+  phases ABCD;
+  nominal_voltage 2401.78;
+  constant_current_C 19.0567+92.7331j;
+}
+object node {
+  name 650z;
+  phases ABCN;
+  nominal_voltage 7621.02;
+}
+object load {
+  name 671;
+  phases ABCD;
+  nominal_voltage 2401.78;
+  constant_power_A 385000+220000j;
+  constant_power_B 385000+220000j;
+  constant_power_C 385000+220000j;
+}
+object node {
+  name 650;
+  phases ABCN;
+  nominal_voltage 2401.78;
+}
+object node {
+  name 684;
+  phases ACN;
+  nominal_voltage 2401.78;
+}
+object load {
+  name 652;
+  phases AN;
+  nominal_voltage 2401.78;
+  constant_impedance_A 31.0501+20.8618j;
+}
+object load {
+  name 675;
+  phases ABCN;
+  nominal_voltage 2401.78;
+  constant_power_A 485000+190000j;
+  constant_power_B 68000.0+60000.0j;
+  constant_power_C 290000+212000j;
+}
+object node {
+  name 632;
+  phases ABCN;
+  nominal_voltage 2401.78;
+}
+object node {
+  name 633;
+  phases ABCN;
+  nominal_voltage 2401.78;
+}
+object load {
+  name 611;
+  phases CN;
+  nominal_voltage 2401.78;
+  constant_current_C -6.54431+77.9524j;
+}
+object load {
+  name 634;
+  phases ABCN;
+  nominal_voltage 277.128;
+  constant_power_C 120000+90000.0j;
+}
+object load {
+  name 645;
+  phases BCN;
+  nominal_voltage 2401.78;
+  constant_power_B 170000+125000j;
+}
+object load {
+  name 646;
+  phases BCD;
+  nominal_voltage 2401.78;
+  constant_impedance_B 18.8664+10.8277j;
+}
+object node {
+  name rg60;
+  phases ABCN;
+  nominal_voltage 2401.78;
+}
+
+// total load = 3.46600e+06 W
+// buscoords ieee13_busxy.glm
