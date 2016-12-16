@@ -1876,7 +1876,7 @@ public: // iterators
 	inline void set_##X(char *str) { get_##X##_property().from_string(str); }; \
 
 /// Define a method property
-#define GL_METHOD(C,X) public: int X(char *buffer, size_t len); \
+#define GL_METHOD(C,X) public: int X(char *buffer, size_t len=0); \
 	static inline size_t get_##X##_offset(void) { return (size_t)method_##C##_##X; }; \
 	inline int get_##X(char *buffer, size_t len) { return X(buffer,len); }; \
 	inline int set_##X(char *buffer) { return X(buffer,0); }
@@ -2139,6 +2139,8 @@ public: // special operations
 	{ 
 		return callback->properties.compare_basic(pstruct.prop->ptype,(PROPERTYCOMPAREOP)op,get_addr(),a,b,NULL);
 	};
+	inline int call(char *buffer, size_t len) { return (*(pstruct.prop->method))(obj+1,buffer,len); };
+	inline int call(const char *buffer) { return (*(pstruct.prop->method))(obj+1,(char*)buffer,0); };
 
 public: // iterators
 	inline bool is_last(void) { return pstruct.prop==NULL || pstruct.prop->next==NULL || pstruct.prop->oclass!=pstruct.prop->next->oclass; };
