@@ -729,7 +729,7 @@ struct s_object_list {
 	unsigned int lock; /**< object lock */
 	unsigned int rng_state; /**< random number generator state */
 	TIMESTAMP heartbeat; /**< heartbeat call interval (in sim-seconds) */
-	unsigned long long flags; /**< object flags */
+	unsigned int64 flags; /**< object flags */
 	/* IMPORTANT: flags must be last */
 }; /**< Object header structure */
 
