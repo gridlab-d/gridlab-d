@@ -13,7 +13,7 @@ clock {
 
 object house {
 	object player {
-		property heating_setpoint;
+		property heating_setpoint, cooling_setpoint;
 		file "../exercise_2_1_1.player";
 		loop 27;
 	};
