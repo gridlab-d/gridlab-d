@@ -979,12 +979,19 @@ int http_json_request(HTTPCNX *http,char *uri)
 			return 1;
 		}
 
-		if ( strcmp(arg2,"*")==0 )
+		if ( arg2[0]=='*' )
 		{
+			bool use_tuple = strcmp(arg2,"*")==0 || strcmp(arg2,"*[tuple]")==0;
+			if ( !use_tuple && strcmp(arg2,"*[dict]")!=0 )
+			{
+				http_format(http,"{\"error\": \"invalid '*' query format\", query: \"%s\"}\n", arg2);
+				http_type(http,"text/json");
+				return 1;
+			}
 			PROPERTY *prop;
 			char buffer[1024];
-			http_format(http,"[");
-#define PROPERTY(N,F,V) http_format(http,"\n\t{\""N"\": \""F"\"},", V)
+			if ( use_tuple ) http_format(http,"["); else http_format(http,"{");
+#define PROPERTY(N,F,V) {if ( use_tuple ) http_format(http,"\n\t{\""N"\": \""F"\"},", V); else http_format(http," \""N"\": \""F"\",", V);}
 			PROPERTY("id","%d",obj->id);
 			PROPERTY("class","%s",obj->oclass->name);
 			if ( obj->name ) PROPERTY("name","%s",object_name(obj,buffer,sizeof(buffer)));
@@ -1010,10 +1017,21 @@ int http_json_request(HTTPCNX *http,char *uri)
 
 			for ( prop=obj->oclass->pmap; prop!=NULL; prop=(prop->next?prop->next:(prop->oclass->parent?prop->oclass->parent->pmap:NULL)) )
 			{
-				if ( prop!=obj->oclass->pmap) http_format(http,"%s\n",",");
-				else http_format(http,"%s","\n");
+				if ( prop!=obj->oclass->pmap)
+				{
+					if ( use_tuple ) http_format(http,"%s\n",","); else http_format(http,"%s ",",");
+				}
+				else
+				{
+					if ( use_tuple ) http_format(http,"%s","\n");
+				}
 				if ( object_get_value_by_name(obj,prop->name,buffer,sizeof(buffer))>0 )
-					http_format(http,"\t{\"%s\": \"%s\"}",prop->name,http_unquote(buffer));
+				{
+					if ( use_tuple )
+						http_format(http,"\t{\"%s\": \"%s\"}",prop->name,http_unquote(buffer));
+					else
+						http_format(http,"\"%s\": \"%s\"",prop->name,http_unquote(buffer));
+				}
 				else
 				{
 					http_format(http,"{\"error\" : \"unable to get property value\", object: \"%s\", property: \"%s\"}\n", arg1,arg2);
@@ -1022,7 +1040,7 @@ int http_json_request(HTTPCNX *http,char *uri)
 				}
 			}
 #undef PROPERTY
-			http_format(http,"\n\t]\n");
+			if ( use_tuple ) http_format(http,"\n\t]\n"); else http_format(http,"}\n");
 		}
 		else
 		{
