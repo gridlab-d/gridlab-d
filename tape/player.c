@@ -142,7 +142,8 @@ int player_write_properties(struct player *my, OBJECT *obj, PROPERTY *prop, cons
 	memcpy(bufcpy, buffer, sizeof(char1024));
 	char *next;
 	char *token = strtok_s(bufcpy, delim, &next);
-	for (PROPERTY *p=prop; p!=NULL; p=p->next)
+	PROPERTY *p=NULL;
+	for (p=prop; p!=NULL; p=p->next)
 	{
 		if (token == NULL)
 		{
