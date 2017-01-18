@@ -181,30 +181,12 @@ void triplex_line::recalc(void)
 		gl_warning("Using a 2x2 z-matrix, instead of geometric values, is an under-determined system. Ground and/or neutral currents will be incorrect.");
 	
 		complex miles = complex(length/5280,0);
-		if (solver_method == SM_FBS)
+		if ((solver_method == SM_FBS) || (solver_method == SM_NR))
 		{
 			b_mat[0][0] = B_mat[0][0] = line_config->impedance11 * miles;
 			b_mat[0][1] = B_mat[0][1] = line_config->impedance12 * miles;
 			b_mat[1][0] = B_mat[1][0] = line_config->impedance21 * miles;
 			b_mat[1][1] = B_mat[1][1] = line_config->impedance22 * miles; 
-			b_mat[2][0] = B_mat[2][0] = complex(0,0);
-			b_mat[2][1] = B_mat[2][1] = complex(0,0);
-			b_mat[2][2] = B_mat[2][2] = complex(0,0);
-			b_mat[0][2] = B_mat[0][2] = complex(0,0);
-			b_mat[1][2] = B_mat[1][2] = complex(0,0);
-
-			tn[0] = 0;
-			tn[1] = 0;
-			tn[2] = 0;
-		}
-		else if (solver_method == SM_NR)
-		{
-			complex temp_value = complex(1,0) / (line_config->impedance11 * line_config->impedance22 - line_config->impedance12 * line_config->impedance21 );
-
-			b_mat[0][0] = B_mat[0][0] = complex(1,0) / miles * line_config->impedance22 * temp_value;
-			b_mat[0][1] = B_mat[0][1] = complex(-1,0) / miles * line_config->impedance12 * temp_value;
-			b_mat[1][0] = B_mat[1][0] = complex(-1,0) / miles * line_config->impedance21 * temp_value;
-			b_mat[1][1] = B_mat[1][1] = complex(1,0) / miles * line_config->impedance11 * temp_value;
 			b_mat[2][0] = B_mat[2][0] = complex(0,0);
 			b_mat[2][1] = B_mat[2][1] = complex(0,0);
 			b_mat[2][2] = B_mat[2][2] = complex(0,0);
@@ -291,7 +273,7 @@ void triplex_line::recalc(void)
 		zp13 = complex(freq_coeff_real,0.0) + complex(0.0,freq_coeff_imag) * (log(1/D13) + freq_additive_term);
 		zp23 = complex(freq_coeff_real,0.0) + complex(0.0,freq_coeff_imag) * (log(1/D23) + freq_additive_term);
 		
-		if (solver_method==SM_FBS)
+		if ((solver_method==SM_FBS) || (solver_method==SM_NR))
 		{
 			zs[0][0] = zp11-((zp13*zp13)/zp33);
 			zs[0][1] = zp12-((zp13*zp23)/zp33);
@@ -303,65 +285,24 @@ void triplex_line::recalc(void)
 			zs[2][1] = complex(0,0);
 			zs[2][0] = complex(0,0);
 		}
-		else if (solver_method==SM_GS)
-		{
-			zs[0][0] = zp11;
-			zs[0][1] = zp12;
-			zs[0][2] = zp13;
-			zs[1][0] = zp12;
-			zs[1][1] = zp22;
-			zs[1][2] = zp23;
-			zs[2][0] = zp13;
-			zs[2][1] = zp23;
-			zs[2][2] = zp33;
-
-		}
-		else if (solver_method==SM_NR)
-		{
-			//Inverted
-			complex tempval = (-zp11*zp33*zp22+zp11*zp23*zp23+zp13*zp13*zp22+zp12*zp12*zp33-complex(2.0,0)*zp12*zp13*zp23);
-
-			zs[0][0] = -(zp22*zp33-zp23*zp23)/tempval;
-			zs[0][1] = (-zp12*zp33+zp13*zp23)/tempval;
-			zs[1][0] = -(-zp12*zp33+zp13*zp23)/tempval;
-			zs[1][1] = -(-zp11*zp33+zp13*zp13)/tempval;
-
-			zs[0][2] = 0.0;
-			zs[1][2] = 0.0;
-			zs[2][2] = 0.0;
-			zs[2][1] = 0.0;
-			zs[2][0] = 0.0;
-		}
 		else
 		{
-			throw "unsupported solver method";
+			GL_THROW("triplex_line:unsupported solver method");
+			/*  TROUBLESHOOT
+			While computing the impedance values for a triplex_line, an invalid solver method was used.
+			Please use only the supported solvers (FBS and NR), or adjust the triplex_line code to accommodate
+			your new method.
+			*/
 		}
 
 		
-		
-		if (solver_method==SM_FBS) {
-			tn[0] = -zp13/zp33;
-			tn[1] = -zp23/zp33;
-			tn[2] = 0;
+		//No solver check here -- NR and FBS are the same, and if it is something else, it should have failed above
+		tn[0] = -zp13/zp33;
+		tn[1] = -zp23/zp33;
+		tn[2] = 0;
 
-			multiply(length/5280.0,zs,b_mat); // Length comes in ft, convert to miles.
-			multiply(length/5280.0,zs,B_mat);
-		}
-		else if (solver_method == SM_GS)
-		{
-			multiply(length/5280.0,zs,b_mat); // Length comes in ft, convert to miles.
-			multiply(length/5280.0,zs,B_mat);
-		}
-		else if (solver_method == SM_NR)
-		{
-			//Copied from SM_FBS - used for extra current flow (not used in any powerflow convergence calculations)
-			tn[0] = -zp13/zp33;
-			tn[1] = -zp23/zp33;
-			tn[2] = 0;
-
-			multiply(1/(length/5280.0),zs,b_mat); // Length comes in ft, convert to miles.
-			multiply(1/(length/5280.0),zs,B_mat); // We're in admittance form now, so multiply by 1/L.
-		}
+		multiply(length/5280.0,zs,b_mat); // Length comes in ft, convert to miles.
+		multiply(length/5280.0,zs,B_mat);
 	}
 	
 	//Check for negative resistance in the line's impedance matrix
