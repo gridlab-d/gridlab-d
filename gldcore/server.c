@@ -662,27 +662,27 @@ int get_value_with_unit(OBJECT *obj, char *arg1, char *arg2, char *buffer, size_
 			switch ( spec[2]=='\0' ? cvalue.f : spec[2] ) {
 			case I: // i-notation
 				sprintf(fmt,"%%.%c%c%%+.%c%ci %%s",spec[0],spec[1],spec[0],spec[1]);
-				sprintf(buffer,fmt,cvalue.r,cvalue.i,uname);
+				snprintf(buffer,len,fmt,cvalue.r,cvalue.i,uname);
 				break;
 			case J: // j-notation
 				sprintf(fmt,"%%.%c%c%%+.%c%cj %%s",spec[0],spec[1],spec[0],spec[1]);
-				sprintf(buffer,fmt,cvalue.r,cvalue.i,uname);
+				snprintf(buffer,len,fmt,cvalue.r,cvalue.i,uname);
 				break;
 			case A: // degrees
 				sprintf(fmt,"%%.%c%c%%+.%c%cd %%s",spec[0],spec[1],spec[0],spec[1]);
-				sprintf(buffer,fmt,complex_get_mag(cvalue),complex_get_arg(cvalue)*180/PI,uname);
+				snprintf(buffer,len,fmt,complex_get_mag(cvalue),complex_get_arg(cvalue)*180/PI,uname);
 				break;
 			case R: // radians
 				sprintf(fmt,"%%.%c%c%%+.%c%cr %%s",spec[0],spec[1],spec[0],spec[1]);
-				sprintf(buffer,fmt,complex_get_mag(cvalue),complex_get_arg(cvalue),uname);
+				snprintf(buffer,len,fmt,complex_get_mag(cvalue),complex_get_arg(cvalue),uname);
 				break;
 			case 'M': // magnitude only
 				sprintf(fmt,"%%.%c%c %%s",spec[0],spec[1]);
-				sprintf(buffer,fmt,complex_get_mag(cvalue),uname);
+				snprintf(buffer,len,fmt,complex_get_mag(cvalue),uname);
 				break;
 			case 'D': // angle only in degrees
 				sprintf(fmt,"%%.%c%c deg",spec[0],spec[1]);
-				sprintf(buffer,fmt,complex_get_arg(cvalue)*180/PI,uname);
+				snprintf(buffer,len,fmt,complex_get_arg(cvalue)*180/PI,uname);
 				break;
 			case 'R': // angle only in radians
 				sprintf(fmt,"%%.%c%c rad",spec[0],spec[1]);
@@ -713,7 +713,7 @@ int get_value_with_unit(OBJECT *obj, char *arg1, char *arg2, char *buffer, size_
 			sprintf(buffer,fmt,rvalue,uname);
 		}
 	}
-	else if ( !object_get_value_by_name(obj,arg2,buffer,sizeof(buffer)) )
+	else if ( !object_get_value_by_name(obj,arg2,buffer,len) )
 	{
 		output_error("object '%s' property '%s' not found", arg1, arg2);
 		return 0;
@@ -899,7 +899,10 @@ int http_xml_request(HTTPCNX *http,char *uri)
 			http_format(http,"</properties>\n");
 		}
 		else
-		{	/* get the unit (if any) */
+		{	
+			PROPERTY *prop = object_get_property(obj, arg2, NULL);
+			PROPERTYSPEC *spec = prop ? property_getspec(prop->ptype) : NULL;
+			/* get the unit (if any) */
 			if ( !get_value_with_unit(obj,arg1,arg2,buffer,sizeof(buffer)) )
 				return 0;
 
@@ -908,7 +911,7 @@ int http_xml_request(HTTPCNX *http,char *uri)
 			http_format(http,"<property>\n\t<object>%s</object>\n", arg1);
 			http_format(http,"\t<name>%s</name>\n", arg2);
 			http_format(http,"\t<value>%s</value>\n", http_unquote(buffer));
-			/* TODO add property type info */
+			if ( spec!=NULL ) http_format(http,"\t<type>%s</type>\n", spec->name);
 			http_format(http,"</property>\n");
 		}
 		http_type(http,"text/xml");
@@ -1044,6 +1047,8 @@ int http_json_request(HTTPCNX *http,char *uri)
 		}
 		else
 		{
+			PROPERTY *prop = object_get_property(obj, arg2, NULL);
+			PROPERTYSPEC *spec = prop ? property_getspec(prop->ptype) : NULL;
 			if ( !get_value_with_unit(obj,arg1,arg2,buffer,sizeof(buffer)) )
 			{
 				http_format(http,"{\"error\": \"property not found\", object: \"%s\", property: \"%s\"}\n", arg1,arg2);
@@ -1062,7 +1067,8 @@ int http_json_request(HTTPCNX *http,char *uri)
 			/* post the response */
 			http_format(http,"{\t\"object\" : \"%s\", \n", arg1);
 			http_format(http,"\t\"name\" : \"%s\", \n", arg2);
-			/* TODO add property type info */
+			if ( spec!=NULL ) 
+				http_format(http,"\t\"type\" : \"%s\", \n", spec->name);
 			http_format(http,"\t\"value\" : \"%s\"\n}\n", http_unquote(buffer));
 		}
 		http_type(http,"text/json");
