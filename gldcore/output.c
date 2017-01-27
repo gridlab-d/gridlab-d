@@ -740,7 +740,7 @@ int output_progress()
 	}
 	else if (global_keep_progress)
 		res = output_message("%sProcessing %s...", prefix, ts);
-	else
+	else if (global_show_progress)
 	{
 		static int len=0;
 		int i=len, slen = (int)strlen(ts)+15;
