@@ -2141,6 +2141,14 @@ public: // special operations
 	};
 	inline int call(char *buffer, size_t len) { return (*(pstruct.prop->method))(obj+1,buffer,len); };
 	inline int call(const char *buffer) { return (*(pstruct.prop->method))(obj+1,(char*)buffer,0); };
+	inline int callf(const char *format,...) {
+		va_list ptr;
+		va_start(ptr,format);
+		char buffer[1024];
+		vsprintf(buffer,format,ptr);
+		va_end(ptr);
+		return call((const char*)buffer);
+	};
 
 public: // iterators
 	inline bool is_last(void) { return pstruct.prop==NULL || pstruct.prop->next==NULL || pstruct.prop->oclass!=pstruct.prop->next->oclass; };
