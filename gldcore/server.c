@@ -690,11 +690,11 @@ int get_value_with_unit(OBJECT *obj, char *arg1, char *arg2, char *buffer, size_
 				break;
 			case 'X': // real part only
 				sprintf(fmt,"%%.%c%c %%s",spec[0],spec[1]);
-				sprintf(buffer,fmt,cvalue.r,cvalue.i,uname);
+				sprintf(buffer,fmt,cvalue.r,uname);
 				break;
 			case 'Y': // imaginary part only
 				sprintf(fmt,"%%.%c%c %%s",spec[0],spec[1]);
-				sprintf(buffer,fmt,cvalue.r,cvalue.i,uname);
+				sprintf(buffer,fmt,cvalue.i,uname);
 				break;
 			default:
 				output_error("object '%s' property '%s' complex angle notation '%c' is not valid", arg1, arg2, spec[2]=='\0' ? cvalue.f : spec[3]);
