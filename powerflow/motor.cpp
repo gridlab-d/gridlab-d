@@ -69,9 +69,12 @@ motor::motor(MODULE *mod):node(mod)
 				PT_KEYWORD,"STALLED",(enumeration)statusSTALLED,
 				PT_KEYWORD,"TRIPPED",(enumeration)statusTRIPPED,
 				PT_KEYWORD,"OFF",(enumeration)statusOFF,
-			PT_enumeration,"motor_override",PADDR(motor_override),PT_DESCRIPTION,"override funtion to dictate if motor is turned off or on",
+			PT_enumeration,"motor_override",PADDR(motor_override),PT_DESCRIPTION,"override function to dictate if motor is turned off or on",
 				PT_KEYWORD,"ON",(enumeration)overrideON,
 				PT_KEYWORD,"OFF",(enumeration)overrideOFF,
+			PT_enumeration,"motor_operation_type",PADDR(motor_op_mode),PT_DESCRIPTION,"current operation type of the motor - deltamode related",
+				PT_KEYWORD,"SINGLE-PHASE",(enumeration)modeSPIM,
+				PT_KEYWORD,"THREE-PHASE",(enumeration)modeTPIM,
 
 			// These model parameters are published as hidden
 			PT_double, "wb[rad/s]", PADDR(wb),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"base speed",
@@ -91,6 +94,8 @@ motor::motor(MODULE *mod):node(mod)
 			PT_bool, "motor_trip", PADDR(motor_trip),PT_DESCRIPTION,"boolean variable to check if motor is tripped",
 			PT_double, "trip", PADDR(trip),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"current time in tripped state",
 			PT_double, "reconnect", PADDR(reconnect),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"current time since motor was tripped",
+
+			//**** YUAN'S THREE-PHASE INDUCTION MOTOR VARIABLES COULD GO HERE ****//
 
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
@@ -154,11 +159,18 @@ int motor::create()
     Telec = 0; 
     wr = 0;
 
+    //Mode initialization
+    motor_op_mode = modeSPIM;
+
+    /************ YUAN ***************/
+    //Three-phase induction motor parameters would go here
+
 	return result;
 }
 
 int motor::init(OBJECT *parent)
 {
+	OBJECT *obj = OBJECTHDR(this);
 	int result = node::init(parent);
 
 	Ibase = Pbase/nominal_voltage; 
@@ -176,26 +188,43 @@ int motor::init(OBJECT *parent)
 	num_phases = num_phases+has_phase(PHASE_C);
 	
 	// error out if we have more than one phase
-	if (num_phases > 1) {
-		GL_THROW("More than one phase is specified for a single phase motor");	
+	if (num_phases == 1)
+	{
+		motor_op_mode = modeSPIM;
+	}
+	else if (num_phases == 3)
+	{
+		motor_op_mode = modeTPIM;
+	}
+	else
+	{
+		GL_THROW("motor:%s -- only single-phase or three-phase motors are support",(obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		The motor only supports single-phase and three-phase motors at this time.  Please use one of these connection types.
+		*/
 	}
 
 	// determine the specific phase this motor is connected to
-	// ----------- TO DO!!!!! ------------------
-	// --- Implement support for split phase 
-	// --- Support 3-phase motors            
+	// --- @TODO: Implement support for split phase
 
-	if (has_phase(PHASE_A)) {
-		connected_phase = 0;	
+	if (motor_op_mode == modeSPIM)
+	{
+		if (has_phase(PHASE_A)) {
+			connected_phase = 0;
+		}
+		if (has_phase(PHASE_B)) {
+			connected_phase = 1;
+		}
+		if (has_phase(PHASE_C)) {
+			connected_phase = 2;
+		}
 	}
-	if (has_phase(PHASE_B)) {
-		connected_phase = 1;	
-	}
-	if (has_phase(PHASE_C)) {
-		connected_phase = 2;	
+	else	//Three-phase diagnostics
+	{
+		/***** YUAN ********/
+		//Any error checking or initial coding would go here
 	}
 
-	OBJECT *obj = OBJECTHDR(this);
 	return result;
 }
 
@@ -221,41 +250,44 @@ TIMESTAMP motor::presync(TIMESTAMP t0, TIMESTAMP t1)
 
 TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	if (t1 == 946713696) {
-		double a;
-		a = 1;
-	}
-	
 	// update voltage and frequency
 	updateFreqVolt();
 
-	if((double)t1 == last_cycle) { // if time did not advance, load old values
-		SPIMreinitializeVars();
-	}
-	else if((double)t1 > last_cycle){ // time advanced, time to update varibles	
-		SPIMupdateVars();
-	}
-	else {
-		gl_error("current time is less than previous time");
-	}
+	if (motor_op_mode == modeSPIM)
+	{
+		if((double)t1 == last_cycle) { // if time did not advance, load old values
+			SPIMreinitializeVars();
+		}
+		else if((double)t1 > last_cycle){ // time advanced, time to update varibles
+			SPIMupdateVars();
+		}
+		else {
+			gl_error("current time is less than previous time");
+		}
 
-	// update protection
-	SPIMUpdateProtection(delta_cycle);
+		// update protection
+		SPIMUpdateProtection(delta_cycle);
 
-	if (motor_override == overrideON && ws > 1 && Vs.Mag() > 0.1 && motor_trip == 0) { // motor is currently connected and grid conditions are not "collapsed"
-		// run the steady state solver
-		SPIMSteadyState(t1);
+		if (motor_override == overrideON && ws > 1 && Vs.Mag() > 0.1 && motor_trip == 0) { // motor is currently connected and grid conditions are not "collapsed"
+			// run the steady state solver
+			SPIMSteadyState(t1);
 
-		// update current draw
-		current[connected_phase] = Is*Ibase;
+			// update current draw
+			current[connected_phase] = Is*Ibase;
+		}
+		else { // motor is currently disconnected
+			current[connected_phase] = 0;
+			SPIMStateOFF();
+		}
+
+		// update motor status
+		SPIMUpdateMotorStatus();
 	}
-	else { // motor is currently disconnected
-		current[connected_phase] = 0;
-		SPIMStateOFF();
+	else	//Must be three-phase
+	{
+		/**** YUAN ****/
+		//Three-phase steady-state code would go here
 	}
-
-	// update motor status
-	SPIMUpdateMotorStatus();
 
 	//Must be at the bottom, or the new values will be calculated after the fact
 	TIMESTAMP result = node::sync(t1);
@@ -264,15 +296,32 @@ TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 		last_cycle = (double)t1;
 	}
 
-	// figure out if we need to enter delta mode on the next pass 
-	if ((Vs.Mag() < DM_volt_trig || wr < DM_speed_trig) && deltamode_inclusive)
+	// figure out if we need to enter delta mode on the next pass
+	if (motor_op_mode == modeSPIM)
 	{
-		schedule_deltamode_start(t1);
-		return t1;
+		if ((Vs.Mag() < DM_volt_trig || wr < DM_speed_trig) && deltamode_inclusive)
+		{
+			schedule_deltamode_start(t1);
+			return t1;
+		}
+		else
+		{
+			return result;
+		}
 	}
-	else 
+	else	//Must be three-phase
 	{
-		return result;
+		/******* YUAN ********/
+		//This may need to be updated for three-phase
+		if ((Vs.Mag() < DM_volt_trig || wr < DM_speed_trig) && deltamode_inclusive)
+		{
+			schedule_deltamode_start(t1);
+			return t1;
+		}
+		else
+		{
+			return result;
+		}
 	}
 }
 
@@ -317,16 +366,24 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 			init_freq_dynamics();
 		}
 
-		// update voltage and frequency
-		updateFreqVolt();
+		if (motor_op_mode == modeSPIM)
+		{
+			// update voltage and frequency
+			updateFreqVolt();
 
-		// update previous values for the model
-		SPIMupdateVars();
+			// update previous values for the model
+			SPIMupdateVars();
 
-		SPIMSteadyState(curr_delta_time);
+			SPIMSteadyState(curr_delta_time);
 
-		// update motor status
-		SPIMUpdateMotorStatus();
+			// update motor status
+			SPIMUpdateMotorStatus();
+		}
+		else	//Three-phase
+		{
+			/******* YUAN *********/
+			//This would be where the three-phase deltamode/dynamic code would go -- first run/deltamode initialization stuff
+		}
 
 	}//End first pass and timestep of deltamode (initial condition stuff)
 
@@ -340,40 +397,48 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 			updateFreqVolt();
 		}
 
-		// if deltaTime is not small enough we will run into problems
-		if (deltaTime > 0.0003) {
-			gl_warning("Delta time for the SPIM model needs to be lower than 0.0003 seconds");
-		}
+		if (motor_op_mode == modeSPIM)
+		{
+			// if deltaTime is not small enough we will run into problems
+			if (deltaTime > 0.0003) {
+				gl_warning("Delta time for the SPIM model needs to be lower than 0.0003 seconds");
+			}
 
-		if(curr_delta_time == last_cycle) { // if time did not advance, load old values
-			SPIMreinitializeVars();
-		}
-		else if(curr_delta_time > last_cycle){ // time advanced, time to update varibles	
-			SPIMupdateVars();
-		}
-		else {
-			gl_error("current time is less than previous time");
-		}
+			if(curr_delta_time == last_cycle) { // if time did not advance, load old values
+				SPIMreinitializeVars();
+			}
+			else if(curr_delta_time > last_cycle){ // time advanced, time to update varibles
+				SPIMupdateVars();
+			}
+			else {
+				gl_error("current time is less than previous time");
+			}
 
-		// update protection
-		if (delta_time>0) {
-			SPIMUpdateProtection(deltaTime);
-		}
+			// update protection
+			if (delta_time>0) {
+				SPIMUpdateProtection(deltaTime);
+			}
 
-		if (motor_override == overrideON && ws > 1 && Vs.Mag() > 0.1 && motor_trip == 0) { // motor is currently connected and grid conditions are not "collapsed"
-			// run the dynamic solver
-			SPIMDynamic(curr_delta_time, deltaTime);
+			if (motor_override == overrideON && ws > 1 && Vs.Mag() > 0.1 && motor_trip == 0) { // motor is currently connected and grid conditions are not "collapsed"
+				// run the dynamic solver
+				SPIMDynamic(curr_delta_time, deltaTime);
 
-			// update current draw
-			current[connected_phase] = Is*Ibase;
-		}
-		else { // motor is currently disconnected
-			current[connected_phase] = 0;
-			SPIMStateOFF();
-		}
+				// update current draw
+				current[connected_phase] = Is*Ibase;
+			}
+			else { // motor is currently disconnected
+				current[connected_phase] = 0;
+				SPIMStateOFF();
+			}
 
-		// update motor status
-		SPIMUpdateMotorStatus();
+			// update motor status
+			SPIMUpdateMotorStatus();
+		}
+		else 	//Must be three-phase
+		{
+			/*************** YUAN ***********************/
+			//This is where other three-phase code would go (predictor step?)
+		}
 
 		//Call sync-equivalent items (solver occurs at end of sync)
 		NR_node_sync_fxn(hdr);
@@ -402,13 +467,31 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 		}//End frequency measurement desired
 		//Default else -- don't calculate it
 
-		// figure out if we need to exit delta mode on the next pass 
-		if (Vs.Mag() > DM_volt_exit && wr > DM_speed_exit)
+		if (motor_op_mode == modeSPIM)
 		{
-			return SM_EVENT;
-		}
+			// figure out if we need to exit delta mode on the next pass
+			if (Vs.Mag() > DM_volt_exit && wr > DM_speed_exit)
+			{
+				return SM_EVENT;
+			}
+
+			//Default - stay in deltamode
 			return SM_DELTA;
 		}
+		else	//Must be three-phase
+		{
+			/**** YUAN *****/
+			//This may need to be revisited - check to see if it should stay in deltamode or not
+			// figure out if we need to exit delta mode on the next pass
+			if (Vs.Mag() > DM_volt_exit && wr > DM_speed_exit)
+			{
+				return SM_EVENT;
+			}
+
+			//Default - stay in deltamode
+			return SM_DELTA;
+		}
+	}
 }
 
 // function to update motor frequency and voltage

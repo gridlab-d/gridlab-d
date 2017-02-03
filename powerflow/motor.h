@@ -78,6 +78,11 @@ private:
 	} MOTOR_OVERRIDE;		
 	enumeration motor_override;
 
+	typedef enum {
+		modeSPIM=0,		///<Single-phase induction motor
+		modeTPIM=1		///<Three-phase induction motor
+	} MOTOR_OPERATION_MODE;
+	enumeration motor_op_mode;
 
 	double trip;
 	double reconnect;
