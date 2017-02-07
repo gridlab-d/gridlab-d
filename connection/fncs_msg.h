@@ -17,6 +17,9 @@
 #include<vector>
 #include <string>
 #include <fstream>
+#include <sstream>
+#include <iostream>
+#include <json/json.h>
 using namespace std;
 
 class fncs_msg;
@@ -44,6 +47,12 @@ typedef enum {
 	FT_INTEGER,
 	FT_STRING,
 } FNCSTYPE;
+
+typedef enum {
+	MT_GENERAL,
+	MT_JSON
+} MESSAGETYPE;
+
 typedef struct _fncslist {
 	FNCSTYPE type;
 	char tag[32];
@@ -76,6 +85,7 @@ private:
 	// TODO add other properties here as needed.
 
 public:
+	enumeration message_type;
 	// required implementations
 	fncs_msg(MODULE*);
 	int create(void);
@@ -112,7 +122,7 @@ public:
 	static FNCSLIST *find(FNCSLIST *list, const char *tag);
 	static char *get(FNCSLIST *list, const char *tag);
 	static void destroy(FNCSLIST *list);
-
+	Json::Value json_config;
 public:
 	// special variables for GridLAB-D classes
 	static CLASS *oclass;

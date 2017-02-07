@@ -1,6 +1,7 @@
 pkglib_LTLIBRARIES += connection/connection.la
 
 connection_connection_la_CPPFLAGS =
+connection_connection_la_CPPFLAGS += -I$(top_srcdir)/third_party/superLU_MT
 connection_connection_la_CPPFLAGS += $(AM_CPPFLAGS)
 if HAVE_FNCS
 connection_connection_la_CPPFLAGS += $(FNCS_CPPFLAGS)

@@ -59,6 +59,9 @@ fncs_msg::fncs_msg(MODULE *module)
 	defaults = this;
 	if (gl_publish_variable(oclass,
 		PT_double, "version", get_version_offset(), PT_DESCRIPTION, "fncs_msg version",
+		PT_enumeration, "message_type", PADDR(message_type), PT_DESCRIPTION, "set the type of message format you wish to construct",
+			PT_KEYWORD, "GENERAL", enumeration(MT_GENERAL), PT_DESCRIPTION, "use this for sending a general fncs topic/value pair",
+			PT_KEYWORD, "JSON", enumeration(MT_JSON), PT_DESCRIPTION, "use this for wanting to send a bundled json formatted message in a single topic",
 		// TODO add published properties here
 		NULL)<1)
 			throw "connection/fncs_msg::fncs_msg(MODULE*): unable to publish properties of connection:fncs_msg";
@@ -76,6 +79,7 @@ fncs_msg::fncs_msg(MODULE *module)
 
 int fncs_msg::create(){
 	version = 1.0;
+	message_type = MT_GENERAL;
 	add_clock_update((void *)this,clocks_update);
 	register_object_interupdate((void *)this, dInterupdate);
 	register_object_deltaclockupdate((void *)this, dClockupdate);
@@ -200,47 +204,60 @@ int fncs_msg::configure(char *value)
 
 		ifile.open(configFile, ifstream::in);
 		if (ifile.good()) {
-			while (!ifile.eof()) {
-				memset(buf, '\0', 1024);// clear the buffer
-				ifile.getline(buf, 1024);// place the line in the buffer
-				confLine = string(buf);
-				if (confLine.find("publish") != string::npos){
-					gl_verbose("fncs_msg.configure(): processing line: %s", confLine.c_str());
-					value = confLine.substr(confLine.find("publish") + 9, confLine.length() - confLine.find("publish") - 9 - 2);
-					strcpy(cval, value.c_str());
-					rv = publish(&cval[0]);
-					if (rv == 0) {
-						return 0;
-					}
-				} else if (confLine.find("subscribe") != string::npos) {
-					gl_verbose("fncs_msg.configure(): processing line: %s", confLine.c_str());
-					value = confLine.substr(confLine.find("subscribe") + 11, confLine.length() - confLine.find("subscribe") - 11 - 2);
-					strcpy(cval, value.c_str());
-					rv = subscribe(&cval[0]);
-					if (rv == 0) {
-						return 0;
-					}
-				} else if (confLine.find("route") != string::npos) {
-					gl_verbose("fncs_msg.configure(): processing line: %s", confLine.c_str());
-					value = confLine.substr(confLine.find("route") + 7, confLine.length() - confLine.find("route") - 7 - 2);
-					strcpy(cval, value.c_str());
-					rv = route(&cval[0]);
-					if (rv == 0) {
-						return 0;
-					}
-				} else if (confLine.find("option") != string::npos) {
-					gl_verbose("fncs_msg.configure(): processing line: %s", confLine.c_str());
-					value = confLine.substr(confLine.find("option") + 8, confLine.length() - confLine.find("option") - 8 - 2);
-					strcpy(cval, value.c_str());
-					rv = option(&cval[0]);
-					if (rv == 0) {
-						return 0;
+			if (message_type == MT_GENERAL) {
+				while (!ifile.eof()) {
+					memset(buf, '\0', 1024);// clear the buffer
+					ifile.getline(buf, 1024);// place the line in the buffer
+					confLine = string(buf);
+					if (confLine.find("publish") != string::npos){
+						gl_verbose("fncs_msg.configure(): processing line: %s", confLine.c_str());
+						value = confLine.substr(confLine.find("publish") + 9, confLine.length() - confLine.find("publish") - 9 - 2);
+						strcpy(cval, value.c_str());
+						rv = publish(&cval[0]);
+						if (rv == 0) {
+							return 0;
+						}
+					} else if (confLine.find("subscribe") != string::npos) {
+						gl_verbose("fncs_msg.configure(): processing line: %s", confLine.c_str());
+						value = confLine.substr(confLine.find("subscribe") + 11, confLine.length() - confLine.find("subscribe") - 11 - 2);
+						strcpy(cval, value.c_str());
+						rv = subscribe(&cval[0]);
+						if (rv == 0) {
+							return 0;
+						}
+					} else if (confLine.find("route") != string::npos) {
+						gl_verbose("fncs_msg.configure(): processing line: %s", confLine.c_str());
+						value = confLine.substr(confLine.find("route") + 7, confLine.length() - confLine.find("route") - 7 - 2);
+						strcpy(cval, value.c_str());
+						rv = route(&cval[0]);
+						if (rv == 0) {
+							return 0;
+						}
+					} else if (confLine.find("option") != string::npos) {
+						gl_verbose("fncs_msg.configure(): processing line: %s", confLine.c_str());
+						value = confLine.substr(confLine.find("option") + 8, confLine.length() - confLine.find("option") - 8 - 2);
+						strcpy(cval, value.c_str());
+						rv = option(&cval[0]);
+						if (rv == 0) {
+							return 0;
+						}
 					}
 				}
+			} else if (message_type == MT_JSON) {
+				stringstream json_config_stream = "";
+				string json_config_line;
+				string json_config_string;
+				Json::Reader json_reader;
+				while (ifile >> json_config_line) { //Place the entire contents of the file into a stringstream
+					json_config_stream << json_config_line << "\n";
+				}
+				json_config_string = json_config_stream.str();
+				json_reader.parse(json_config_string, json_config);
 			}
 		} else {
 			gl_error("fncs_msg::configure(): failed to open the configuration file %s", configFile.get_string());
 			rv = 0;
+		}
 		}
 	}
 	return rv;
