@@ -1,0 +1,174 @@
+//This file tests the operation of a cooling controller 
+//in double ramp mode with deadband resolution 
+//in a responsive market and a matching period
+//Since the averages and standard deviations in the controller
+//are not published properties, the only way to check if these
+//values are correct is to check whether the calculated bidding
+//prices are correct (this calculation uses these values)
+
+//#set tmp=../test_markets_controller_cooling_deadband_matching_period
+//#setenv GRIDLABD=../../../core
+
+#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
+
+module market;
+module tape;
+module assert;
+module climate;
+module powerflow;
+module residential {
+	implicit_enduses NONE;
+}
+
+clock {
+	timezone PST+8PDT;
+	starttime '2001-06-25 14:00:00';
+	stoptime '2001-06-25 16:00:00';
+}
+
+schedule seller_prices {
+	0-14 14 * * * 100;
+	15-29 14 * * * 10;
+	30-44 14 * * * 25;
+	45-59 14 * * * 112;
+	0-14 15 * * * 49.5;
+	15-29 15 * * * 49.8;
+	30-44 15 * * * 50.2;
+	45-59 15 * * * 77;
+	* 16 * * * 82;
+}
+
+schedule controller_bids {
+	0-14 14 * * * 100;
+	15-29 14 * * * 55;
+	30-44 14 * * * 19.2211;
+	45-59 14 * * * 115.501;
+	0-14 15 * * * 99.7825;
+	15-29 15 * * * 49.5186;
+	30-44 15 * * * 50.2134;
+	45-59 15 * * * 73.2296;
+	* 16 * * * 81.0208;
+}
+
+schedule cooling_setpoints {
+	0-14 14 * * * 70;
+	15-29 14 * * * 70;
+	30-44 14 * * * 72.5;
+	45-59 14 * * * 72.5;
+	0-14 15 * * * 68.6667;
+	15-29 15 * * * 72.5;
+	30-44 15 * * * 72.5;
+	45-59 15 * * * 72.5;
+	* 16 * * * 72.5;
+}
+
+object climate {
+	name "Yakima WA";
+	tmyfile "WA-Yakima.tmy2";
+}
+
+class auction {
+	double current_price_mean_30min;
+	double current_price_stdev_30min;
+}
+
+object auction {
+	name Market_1;
+	unit kW;
+	period 900;
+	verbose TRUE;
+	special_mode BUYERS_ONLY;
+	fixed_price seller_prices*1;
+	warmup 0;
+	init_price 100;
+	init_stdev 0;
+	object multi_recorder {
+		//property hvac_control:bid_price,current_market.clearing_price,current_market.clearing_quantity,current_market.clearing_type,current_market.marginal_quantity,current_price_mean_30min,current_price_stdev_30min;
+		property house1:air_temperature,house1:heating_setpoint,house1:cooling_setpoint,hvac_control:bid_price,current_market.clearing_price,house1:system_mode,hvac_control:bid_quantity,current_market.clearing_quantity;
+		file "test_markets_controller_cooling_deadband_matching_period_output.csv";
+		interval 90;
+		limit 168;
+	};
+	//copy and paste the following into an empty column,then drag down to apply to entire column:
+	//cooling_range_low(put into column R): =IF(ABS(L10)+ABS(M10)+N10>F10-G10,((G10+M10)+(F10+L10))/2+N10/2-F10,L10)
+	//intermediate(put into column Q): =IF(H10=0,F10,IF(C10>D10,F10+(C10-D10)*ABS(J10)/(I10*H10),F10+(C10-D10)*ABS(L10)/(K10*H10)))
+	//cooling_setpoint: =IF(Q10<F10+R10,F10+R10,IF(Q10>F10+J10,F10+J10,Q10))
+	object multi_recorder {
+		property hvac_control:bid_price,current_market.clearing_price,current_price_mean_30min,house1:air_temperature,hvac_control:cooling_base_setpoint,hvac_control:heating_base_setpoint,current_price_stdev_30min,hvac_control:cooling_ramp_high,hvac_control:cooling_range_high,hvac_control:cooling_ramp_low,hvac_control:cooling_range_low,hvac_control:heating_range_high,house1:thermostat_deadband,house1:cooling_setpoint;
+		file "calculate_cooling_setpoint.csv";
+		interval 900;
+		limit 168;
+	};
+	//put the following into cell K10 into the calculate_bid_price file and drag down to check if bid prices are calculated correctly:
+	//=IF(OR(C10<D10+O10,C10>D10+I10),IF(C10<D10+O10,0,IF(C10>D10+I10,9999,INVALID)),IF(C10<D10,IF(H10=0,0,B10+((C10-D10)*E10*G10)/ABS(H10)),IF(I10=0,0,B10+((C10-D10)*F10*G10)/ABS(I10))))
+	//cooling_range_low(put in column O): =IF(ABS(H10)+ABS(K10)+L10>D10-J10,((D10+H10)+(J10+K10))/2+L10/2-D10,I10)
+	object multi_recorder {
+		property current_price_mean_30min,house1:air_temperature,hvac_control:cooling_base_setpoint,hvac_control:cooling_ramp_low,hvac_control:cooling_ramp_high,current_price_stdev_30min,hvac_control:cooling_range_low,hvac_control:cooling_range_high,hvac_control:heating_base_setpoint,hvac_control:heating_range_high,house1:thermostat_deadband,hvac_control:bid_price;
+		file "test_markets_controller_cooling_deadband_matching_period_calculate_bid_price.csv";
+		interval 900;
+		limit 4320;
+	};
+	//recorder to fix the timestep so values will stay constant
+	object recorder {
+		interval 1;
+		property period;
+	};
+}
+
+object triplex_meter {
+	phases AS;
+	nominal_voltage 120;
+	object house {
+		name house1;
+		weather "Yakima WA";
+		cooling_setpoint 70;
+		heating_setpoint 65;
+		air_temperature 72;
+		object controller {
+			name hvac_control;
+			market Market_1;
+			bid_mode ON;
+			control_mode DOUBLE_RAMP;
+			resolve_mode DEADBAND;
+			heating_base_setpoint 65;
+			cooling_base_setpoint 70;
+			period 900;
+			average_target current_price_mean_30min;
+			standard_deviation_target current_price_stdev_30min;
+			target air_temperature;
+			heating_setpoint heating_setpoint;
+			heating_demand heating_demand;
+			cooling_setpoint cooling_setpoint;
+			cooling_demand cooling_demand;
+			deadband thermostat_deadband;
+			total total_load;
+			load hvac_load;
+			heating_range_high 4;
+			heating_range_low -5;
+			heating_ramp_high -2;
+			heating_ramp_low -2;
+			cooling_range_high 5;
+			cooling_range_low -4;
+			cooling_ramp_high 2;
+			cooling_ramp_low 3;
+			
+			object multi_recorder {
+				//property heating_base_setpoint,cooling_base_setpoint,simple_mode,period,setpoint,target,base_setpoint,control_mode,resolve_mode,demand,load,total,range_low,range_high,ramp_low,ramp_high,bid_mode,bid_price,bid_quantity,set_temp,house1:power_state,house1:cooling_demand,house1:cooling_setpoint,house1:air_temperature,house1:system_mode,average_target,standard_deviation_target,house1:hvac_load,house1:outdoor_temperature,house1:thermostat_deadband;
+				property heating_base_setpoint,cooling_base_setpoint,house1:heating_setpoint,house1:cooling_setpoint,heating_ramp_low,heating_ramp_high,heating_range_low,heating_range_high,cooling_ramp_low,cooling_ramp_high,cooling_range_low,cooling_range_high;
+				file "check_defaults_output3.csv";
+				interval 900;
+				limit 4320;
+			};
+			object double_assert {
+				value controller_bids*1;
+				target "bid_price";
+				within 1e-3;
+			};
+		};
+		object double_assert {
+			value cooling_setpoints*1;
+			target cooling_setpoint;
+			within 1e-3;
+		};
+	};
+}

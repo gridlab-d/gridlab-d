@@ -1,0 +1,179 @@
+// $Id: subsecond_diesel_generator_example.glm 4738 2014-07-03 00:55:39Z dchassin $
+// Basic deltamode example using the diesel generator model.
+
+#set suppress_repeat_messages=0
+#set profiler=1
+#set dateformat=US
+#define rotor_convergence=0.0001
+
+//Deltamode declarations - global values
+#set deltamode_timestep=100000000		//100 ms
+#set deltamode_maximumtime=60000000000	//1 minute
+#set deltamode_iteration_limit=10		//Iteration limit
+
+clock {
+	timezone "PST+8PDT";
+	starttime '2001-01-01 00:00:00 PST';
+	stoptime '2001-01-01 00:00:40 PST';
+}
+
+module tape;
+module powerflow {
+	enable_subsecond_models true;
+	deltamode_timestep 10000000;	//10 ms
+	solver_method NR;
+};
+module generators {
+	enable_subsecond_models TRUE;
+	deltamode_timestep 10000000;	//Initial value - dictates how we want the models to run
+}
+
+//Reference line type
+object line_configuration {
+	name OHL_config;
+	z11 0.3465+1.0179j;	//Ohms/mile
+	z12 0.1560+0.5017j;
+	z13 0.1580+0.4236j;
+	z21 0.1560+0.5017j;
+	z22 0.3375+1.0478j;
+	z23 0.1535+0.3849j;
+	z31 0.1580+0.4236j;
+	z32 0.1535+0.3849j;
+	z33 0.3414+1.0348j;
+}
+
+//Power system
+object meter {
+	phases ABC;
+	name BUS_1;
+	nominal_voltage 8660.254;
+	flags DELTAMODE;
+	object recorder {
+		file bus_1_output_recorder.csv;
+		property voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag;
+		flags DELTAMODE;
+		//interval -1;
+		interval 1;
+	};
+}
+
+object meter {
+	phases ABC;
+	name BUS_2;
+	nominal_voltage 8660.254;
+	bustype SWING;
+	flags DELTAMODE;
+	object recorder {
+		file bus_2_output_recorder.csv;
+		property voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag;
+		flags DELTAMODE;
+		interval 1;
+	};
+}
+
+object diesel_dg {
+	parent BUS_1;
+	name Gen_Bus_1;
+	Rated_V 15000.0;
+	flags DELTAMODE;
+	Gen_type DYN_SYNCHRONOUS;
+	Exciter_type SEXS;
+	Governor_type DEGOV1;
+	rotor_speed_convergence ${rotor_convergence};
+	//temp properties - sync with example
+	power_out_A 437500.0+287500.0j;
+	power_out_B 375000.0+287500.0j;
+	power_out_C 412500.0+287500.0j;
+	Governor_type NO_GOV;
+	Exciter_type SEXS;
+	Governor_type DEGOV1;
+	object recorder {
+		property rotor_speed,rotor_angle,flux1d,flux2q,EpRotated,VintRotated,Eint_A,Eint_B,Eint_C,Irotated,pwr_electric.real,pwr_electric.imag,pwr_mech;
+		flags DELTAMODE;
+		//interval -1;
+		interval 1;
+		file "Gen_1_Speed.csv";
+	};
+}
+	
+object diesel_dg {
+	parent BUS_2;
+	name Gen_Bus_2;
+	Rated_V 15000.0;
+	flags DELTAMODE;
+	Gen_type DYN_SYNCHRONOUS;
+	rotor_speed_convergence ${rotor_convergence};
+	//temp properties - sync with example
+	power_out_A 437500.0+287500.0j;
+	power_out_B 375000.0+287500.0j;
+	power_out_C 412500.0+287500.0j;
+	Exciter_type NO_EXC;
+	Governor_type NO_GOV;
+	object recorder {
+		property rotor_speed,rotor_angle,flux1d,flux2q,EpRotated,VintRotated,Eint_A,Eint_B,Eint_C,Irotated,pwr_electric.real,pwr_electric.imag,pwr_mech;
+		flags DELTAMODE;
+		//interval -1;
+		interval 1;
+		file "Gen_2_Speed.csv";
+	};
+}
+
+
+object load {
+	phases ABC;
+	name LOAD_1;
+	nominal_voltage 8660.254;
+	constant_power_A 875000.0+575000.0j;
+	constant_power_B 750000.0+575000.0j;
+	constant_power_C 825000.0+575000.0j;
+	flags DELTAMODE;
+	object player {
+		file diesel_deltamode_load_player_A.csv;
+		property constant_power_A;
+		flags DELTAMODE;
+	};
+	object player {
+		file diesel_deltamode_load_player_B.csv;
+		property constant_power_B;
+		flags DELTAMODE;
+	};
+	object player {
+		file diesel_deltamode_load_player_C.csv;
+		property constant_power_C;
+		flags DELTAMODE;
+	};
+	object recorder {
+		file load_output_recorder.csv;
+		property "voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag,constant_power_A.real,constant_power_A.imag,constant_power_B.real,constant_power_B.imag,constant_power_C.real,constant_power_C.imag";
+		flags DELTAMODE;
+		interval -1;
+	};
+}
+
+//Create overhead lines
+object overhead_line {
+	phases ABC;
+	name BUS_1_to_BUS_2;
+	from BUS_1;
+	to BUS_2;
+	length 3500.0 ft;
+	configuration OHL_config;
+}
+
+object overhead_line {
+	phases ABC;
+	name BUS_1_to_LOAD_1;
+	from BUS_1;
+	to LOAD_1;
+	length 1000.0 ft;
+	configuration OHL_config;
+}
+
+object overhead_line {
+	phases ABC;
+	name BUS_2_to_LOAD_1;
+	from BUS_2;
+	to LOAD_1;
+	length 2500.0 ft;
+	configuration OHL_config;
+}

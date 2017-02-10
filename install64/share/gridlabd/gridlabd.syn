@@ -1,0 +1,511 @@
+; TextPad syntax definitions for GridLAB-D 2.x GLM Files
+; Copyright (C) 2008-2009, Battelle Memorial Institute
+; Derived from C/C++ definitions by Helios Software Solutions
+
+C=1
+
+[Syntax]
+Namespace1 = 6
+IgnoreCase = No
+KeyWordLength =
+BracketChars = {[()]}
+OperatorChars = -+*/<>!~%^&|=
+PreprocStart = #
+SyntaxStart =
+SyntaxEnd =
+HexPrefix = 0x
+CommentStart = /*
+CommentEnd = */
+CommentStartAlt =
+CommentEndAlt =
+SingleComment = //
+SingleCommentCol =
+SingleCommentAlt =
+SingleCommentColAlt =
+SingleCommentEsc =
+StringsSpanLines = No
+StringStart = "
+StringEnd = "
+StringAlt = `
+StringEsc = \
+CharStart = '
+CharEnd = '
+CharEsc = \
+
+[Preprocessor keywords]
+#set
+#print
+#warning
+#error
+#define
+#else
+#endif
+#error
+#if
+#elif
+#ifdef
+#ifndef
+#import
+#include
+
+; GridLAB-D keywords
+[Keywords 1]
+clock
+module
+class
+object
+root
+parent
+PI
+E
+I
+J
+A
+TS_TPS
+TS_REALNOW
+TS_SIMNOW
+TS_ZERO
+TS_INIT
+TS_MAX
+TS_NEVER
+MINYEAR
+MAXYEAR
+
+; GridLAB-D data types
+[Keywords 2]
+complex
+real
+TIMESTAMP
+char1024
+char256
+char32
+char8
+int8
+int16
+int32
+enumeration
+timestamp
+object
+set
+triplet
+triplex
+PROPERTYTYPE
+PT_void
+PT_double
+PT_complex
+PT_enumeration
+PT_set
+PT_int16
+PT_int32
+PT_int64
+PT_char8
+PT_char32
+PT_char256
+PT_char1024
+PT_object
+PT_delegated
+PT_bool
+PT_timestamp
+PT_double_array
+PT_complex_array
+PT_object_array
+PT_float
+PT_real
+PT_triple
+PT_triplex
+PT_AGGREGATE
+PT_KEYWORD
+PT_ACCESS
+PT_SIZE
+PT_FLAGS
+PT_INHERIT
+PT_UNITS
+CLASSNAME
+OBJECTRANK
+OBJECTSIZE
+OBJECTNUM
+OBJECTNAME
+OBJECTTYPE
+FUNCTIONNAME
+PROPERTYADDR
+PROPERTYNAME
+PROPERTYACCESS
+PA_PUBLIC
+PA_REFERENCE
+PA_PROTECTED
+PA_PRIVATE
+PASSCONFIG
+PC_NOSYNC
+PC_PRETOPDOWN
+PC_BOTTOMUP
+PC_POSTTOPDOWN
+PC_FORCE_NAME
+PC_PARENT_OVERRIDE_OMIT
+PC_UNSAFE_OVERRIDE_OMIT
+GLOBALVAR
+NOTIFYMODULE
+NM_PREUPDATE
+NM_POSTUPDATE
+NM_RESET
+EXCEPTIONHANDLER
+KEYWORD
+PROPERTYFLAGS
+PF_RECALC
+PF_CHARSET
+UNIT
+DELEGATEDTYPE
+MODULE
+CLASSMAGIC
+FULLNAME
+NAMESPACE
+DATETIME
+RANDOMTYPE
+RT_INVALID
+RT_DEGENERATE
+RT_UNIFORM
+RT_NORMAL
+RT_LOGNORMAL
+RT_BERNOULLI
+RT_PARETO
+RT_EXPONENTIAL
+RT_SAMPLED
+RT_RAYLEIGH
+RT_WEIBULL
+CALLBACKS
+
+; GridLAB-D functions
+[Keywords 3]
+gl_timestamp
+gl_seconds
+gl_minutes
+gl_hours
+gl_days
+gl_weeks
+gl_verbose
+gl_output
+gl_warning
+gl_error
+gl_debug
+gl_testmsg
+gl_globalclock
+gl_name
+gl_throw
+gl_global_getvar
+gl_get_addr
+gl_get_value
+gl_get_function
+gl_random_uniform
+gl_random_degenerate
+gl_random_normal
+gl_random_lognormal
+gl_random_bernoulli
+gl_random_pareto
+gl_random_exponential
+gl_random_sampled
+gl_random_rayleigh
+gl_random_weibull
+gl_random_beta
+gl_random_gamma
+gl_localtime
+gl_strftime
+trace
+
+; C/C++ keywords
+[Keywords 4]
+typedef
+static
+goto
+return
+sizeof
+break
+continue
+if
+else
+for
+do
+while
+switch
+case
+default
+entry
+auto
+extern
+register
+static
+volatile
+new
+delete
+true
+false
+inline
+private
+protected
+public
+try
+throw
+catch
+virtual
+
+; C/C++ data types
+[Keywords 5]
+int
+char
+float
+double 
+struct 
+union
+long
+short
+unsigned
+signed
+bool
+
+; C/C++ functions
+[Keywords 6]
+; C library
+; assert.h
+assert
+; ctype.h
+isalnum
+isalpha
+iscntrl
+isdigit
+isgraph
+islower
+isprint
+ispunct
+isspace
+isupper
+isxdigit
+tolower
+toupper
+; errno.h
+EDOM
+ERANGE
+errno
+; float.h
+FLT_RADIX
+FLT_MANT_DIG
+DBL_MANT_DIG
+LDBL_MANT_DIG
+FLT_DIG
+DBL_DIG
+LDBL_DIG
+FLT_MIN_EXP
+DBL_MIN_EXP
+LDBL_MIN_EXP
+FLT_MIN_10_EXP
+DBL_MIN_10_EXP
+LDBL_MIN_10_EXP
+FLT_MAX_EXP
+DBL_MAX_EXP
+LDBL_MAX_EXP
+FLT_MAX_10_EXP
+DBL_MAX_10_EXP
+LDBL_MAX_10_EXP
+FLT_MAX
+DBL_MAX
+LDBL_MAX
+FLT_EPSILON
+DBL_EPSILON
+LDBL_EPSILON
+FLT_MIN
+DBL_MIN
+LDBL_MIN
+; limits.h
+CHAR_BIT
+SCHAR_MIN
+SCHAR_MAX
+UCHAR_MAX
+CHAR_MIN
+CHAR_MAX
+MB_LEN_MAX
+SHRT_MIN
+SHRT_MAX
+USHRT_MAX
+INT_MIN
+INT_MAX
+UINT_MAX
+LONG_MIN
+LONG_MAX
+ULONG_MAX
+; locale.h
+lconv
+NULL
+LC_ALL
+LC_COLLATE
+LC_CTYPE
+LC_MONETARY
+LC_NUMERIC
+LC_TIME
+localeconv
+setlocale
+; math.h
+HUGE_VAL 
+acos
+asin
+atan
+atan2
+ceil
+cos
+cosh
+exp
+fabs
+floor
+fmod
+frexp
+ldexp
+log
+log10
+modf
+pow
+sin
+sinh
+sqrt
+tan
+tanh
+; setjmp.h
+setjmp
+longtmp
+jmp_buf
+; signal.h
+SIG_DFL
+SIG_ERR
+SIG_IGN
+SIGABRT
+SIGFPE
+SIGILL
+SIGINT
+SIGSEGV
+SIGTERM
+signal
+raise
+sig_atomic_t
+; stdarg.h
+va_start
+va_arg
+va_end
+va_list
+; stddef.h
+offsetof
+ptrdiff_t
+size_t
+wchar_t
+; stdio.h
+_IOFBF
+_IOLBF
+_IONBF
+BUFSIZ
+EOF
+FOPEN_MAX
+FILENAME_MAX
+L_tmpnam
+SEEK_CUR
+SEEK_END
+SEEK_SET
+TMP_MAX
+stderr
+stdin
+stdout
+clearerr
+fclose
+feof
+ferror
+fflush
+fgetpos
+fopen
+fread
+freopen
+fseek
+fsetpos
+ftell
+fwrite
+remove
+rename
+rewind
+setbuf
+setvbuf
+fprintf
+fscanf
+tmpfile
+tmpnam
+printf
+scanf
+sprintf
+sscanf
+vfprintf
+vprintf
+vsprintf
+fgetc
+fgets
+fputc
+fputs
+getc
+getchar
+gets
+putc
+putchar
+puts
+ungetc
+perror   
+FILE
+fpos_t
+; stdlib.h
+EXIT_FAILURE
+EXIT_SUCCESS
+RAND_MAX
+MB_CUR_MAX
+div_t
+ldiv_t
+abort
+abs
+atexit
+atof
+atoi
+atol
+bsearch
+calloc
+div
+exit
+free
+getenv
+labs
+ldiv
+malloc
+mblen
+mbstowcs
+mbtowc
+qsort
+rand
+realloc
+srand
+strtod
+strtol
+strtoul
+system
+wcstombs
+wctomb
+; string.h
+memchr
+memcmp
+memcpy
+memmove
+memset
+strcat
+strncat
+strchr
+strcmp
+strncmp
+strcoll
+strcpy
+strncpy
+strcspn
+strerror
+strlen
+strpbrk
+strrchr
+strspn
+strstr
+strtok
+strxfrm
+; C++ library

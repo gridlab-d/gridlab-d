@@ -1,0 +1,195 @@
+// Test that waterheater is coming on when temperature drops below T_on and turning off when temperature reaches T_off. 
+
+#set profiler=1;
+#set pauseatexit=1;
+clock {
+     //timezone PST+8PDT;
+	 timezone PST8;
+     starttime '2009-01-01 00:00:00';
+     stoptime '2009-01-02 00:00:00';
+}
+
+module tape;
+module climate;
+module residential;
+module assert;
+module powerflow {
+     solver_method NR;
+     NR_iteration_limit 50;
+};
+
+schedule daily_use {
+     * * * * * 0.00;  
+}
+
+schedule heating4 {
+     //Winter
+    * 0-5 * 1-4,11-12 * 0;
+    0-14 6 * 1-4,11-12 * 0;
+    15-59 6 * 1-4,11-12 * 1;
+    * 7-21 * 1-4,11-12 * 1;
+    * 22-23 * 1-4,11-12 * 0;
+
+     //Summer
+     * * * 5-10 * -4;
+}
+schedule cooling8 {
+     //Summer
+    * 0-6 * 5-10 * 0;
+    0-14 7 * 5-10 * 0;
+    15-59 7 * 5-10 * 1;
+    * 8-13 * 5-10 * 2;
+    0-44 14 * 5-10 * 2;
+    45-59 14 * 5-10 * 1;
+    * 15-22 * 5-10 * 2;
+    0-29 23 * 5-10 * 1;
+    30-59 23 * 5-10 * 0;
+
+     //Winter
+     * * * 1-4,11-12 * 4;
+}
+
+object climate {
+     name "WA-Yakima";
+     tmyfile "WA-Yakima.tmy2";
+	 interpolate NONE;
+};
+
+object triplex_meter {
+	name trip_swing;
+	bustype SWING;
+	phases AS;
+	nominal_voltage 120.0;
+}
+
+object triplex_meter {
+	name trip_fixed_meter;
+	parent trip_swing;
+	phases AS;
+	nominal_voltage 120.0;
+}
+
+object house {
+//Load Classification -> Residential5 2
+	name house1;
+	parent trip_fixed_meter;
+	glass_type 1;
+	auxiliary_system_type ELECTRIC;
+	cooling_COP 2.79;
+	hvac_breaker_rating 1000;
+	cooling_system_type ELECTRIC;
+	mass_temperature 71.47;
+	auxiliary_strategy DEADBAND;
+	air_temperature 71.47;
+	heating_COP 2.8;
+	heating_setpoint heating4*1.96+66.53;
+	motor_efficiency VERY_GOOD;
+	heating_system_type HEAT_PUMP;
+	glazing_layers 1;
+	total_thermal_mass_per_floor_area 3.697;
+	glazing_treatment 1;
+	Rdoors 1.97;
+	groupid Residential;
+	schedule_skew -4739;
+	window_frame 1;
+	floor_area 947;
+	number_of_stories 1;
+	Rwall 10.07;
+	cooling_setpoint cooling8*1.96+75.35;
+	Rfloor 11.42;
+	airchange_per_hour 0.79;
+	Rroof 14.19;
+	window_wall_ratio 0.15;
+	ceiling_height 8;
+	breaker_amps 1000;
+	over_sizing_factor -0.3;
+	motor_model BASIC;
+	
+	object waterheater {
+		name w1;
+		heating_element_capacity 4.0 kW;
+		thermostat_deadband 4;
+		demand daily_use*1;
+		tank_setpoint 120;
+		temperature 121;
+		tank_volume 20;
+		location INSIDE;
+		tank_UA 3.3;
+		object recorder {
+			file "waterheater1.csv";
+			property tank_setpoint,thermostat_deadband,temperature,height,demand,is_waterheater_on,actual_load,previous_load;
+			interval -1;
+			limit 2880;
+		};
+};
+ };
+object multi_recorder {
+		file "multirecorder.csv";
+		property house1:air_temperature,w1:temperature,w1:height,w1:demand,w1:is_waterheater_on,w1:actual_load,w1:tank_UA;
+		interval 300;
+		limit 288;
+};
+
+//Misc objects - prevent rank issue
+object triplex_line_conductor {     
+      name triplex_4/0 AA;    
+      resistance 0.48;     
+      geometric_mean_radius 0.0158;     
+}       
+
+object triplex_line_configuration {     
+      name triplex_line_configuration_1;     
+      conductor_1 triplex_4/0 AA;    
+      conductor_2 triplex_4/0 AA;    
+      conductor_N triplex_4/0 AA;    
+      insulation_thickness 0.08;     
+      diameter 0.522;     
+}       
+
+object underground_line_conductor {     
+      name underground_line_conductor_2;     
+      //name 1000 AAC (Conc);   
+      rating.summer.continuous 488.0;     
+      outer_diameter 2.15;     
+      conductor_gmr 0.0371 ft;    
+      conductor_diameter 1.152;     
+      conductor_resistance 0.091872;     
+      neutral_gmr 0.0842565914341201 ft;    
+      neutral_resistance 5.3856;     
+      neutral_diameter 0.1019;     
+      neutral_strands 20.0;     
+      shield_gmr 0.00;     
+      shield_resistance 0.00;     
+}       
+
+object underground_line_conductor {     
+      name underground_line_conductor_3;     
+      //name 2 AL (Conc);   
+      rating.summer.continuous 112.0;     
+      outer_diameter 1.09;     
+      conductor_gmr 0.0088 ft;    
+      conductor_diameter 0.292;     
+      conductor_resistance 1.38336;     
+      neutral_gmr 0.0348162687755351 ft;    
+      neutral_resistance 13.5696;     
+      neutral_diameter 0.0641;     
+      neutral_strands 6.0;     
+      shield_gmr 0.00;     
+      shield_resistance 0.00;     
+}       
+
+object underground_line_conductor {     
+      name underground_line_conductor_4;     
+      //name 1000 AAC (Tape);   
+      rating.summer.continuous 775.0;     
+      outer_diameter 1.87;     
+      conductor_gmr 0.0371 ft;    
+      conductor_diameter 1.15;     
+      conductor_resistance 0.0222;     
+      neutral_gmr 0.0732739718442675 ft;    
+      neutral_resistance 0.05;     
+      neutral_diameter 0.102;     
+      neutral_strands 20.0;     
+      shield_gmr 0.00;     
+      shield_resistance 0.00;     
+}       

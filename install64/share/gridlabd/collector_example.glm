@@ -1,0 +1,20 @@
+// this file demonstrates how to use a collector object to gather the average, standard deviation, max and mean air temperature from 100 house objects.
+
+clock {
+	timezone PST+8PDT;
+	starttime '2005-01-01 00:00:00 PST';
+	stoptime '2005-01-08 00:00:00 PST';  //one week
+}
+
+module residential;
+object house:..100 {//generates 100 house objects with default settings
+}
+module tape;
+
+object collector {
+	file collector_example.csv;
+	group "class=house";
+	property "avg(air_temperature),std(air_temperature),max(air_temperature),min(air_temperature)";
+	interval 3600;
+	limit 768;
+}

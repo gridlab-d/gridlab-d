@@ -1,0 +1,499 @@
+//This file tests that means and standard
+//deviations are calculated correctly for
+//a market with passive controllers with
+//matching periods
+
+//Bidding period: 3600s
+//Buyer 1, bid: 9999, quantity: 1, period: 3600s
+//Expected clearing prices: see schedule
+//Expected clearing quantities: see schedule
+
+
+
+#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
+
+module market;
+module tape;
+module assert;
+module powerflow;
+module residential {
+	implicit_enduses NONE;
+}
+
+clock {
+	timezone PST+8PDT;
+	starttime '2001-01-01 00:00:00';
+	stoptime '2001-01-03 23:00:00';
+}
+
+schedule clearing_prices {
+	* 0-5 * * * 20;
+	* 6-11 * * * 40;
+	* 12-17 * * * 60;
+	* 18-23 * * * 80;
+}
+
+schedule averages {
+	* 0 1 * * 20.0000;
+	* 1 1 * * 20.0000;
+	* 2 1 * * 20.0000;
+	* 3 1 * * 20.0000;
+	* 4 1 * * 20.0000;
+	* 5 1 * * 20.0000;
+	* 6 1 * * 21.6667;
+	* 7 1 * * 23.3333;
+	* 8 1 * * 25.0000;
+	* 9 1 * * 26.6667;
+	* 10 1 * * 28.3333;
+	* 11 1 * * 30.0000;
+	* 12 1 * * 33.3333;
+	* 13 1 * * 36.6667;
+	* 14 1 * * 40.0000;
+	* 15 1 * * 43.3333;
+	* 16 1 * * 46.6667;
+	* 17 1 * * 50.0000;
+	* 18 1 * * 53.3333;
+	* 19 1 * * 56.6667;
+	* 20 1 * * 60.0000;
+	* 21 1 * * 63.3333;
+	* 22 1 * * 66.6667;
+	* 23 1 * * 70.0000;
+	* 0 2 * * 66.6667;
+	* 1 2 * * 63.3333;
+	* 2 2 * * 60.0000;
+	* 3 2 * * 56.6667;
+	* 4 2 * * 53.3333;
+	* 5 2 * * 50.0000;
+	* 6 2 * * 46.6667;
+	* 7 2 * * 43.3333;
+	* 8 2 * * 40.0000;
+	* 9 2 * * 36.6667;
+	* 10 2 * * 33.3333;
+	* 11 2 * * 30.0000;
+	* 12 2 * * 33.3333;
+	* 13 2 * * 36.6667;
+	* 14 2 * * 40.0000;
+	* 15 2 * * 43.3333;
+	* 16 2 * * 46.6667;
+	* 17 2 * * 50.0000;
+	* 18 2 * * 53.3333;
+	* 19 2 * * 56.6667;
+	* 20 2 * * 60.0000;
+	* 21 2 * * 63.3333;
+	* 22 2 * * 66.6667;
+	* 23 2 * * 70.0000;
+	* 0 3 * * 66.6667;
+	* 1 3 * * 63.3333;
+	* 2 3 * * 60.0000;
+	* 3 3 * * 56.6667;
+	* 4 3 * * 53.3333;
+	* 5 3 * * 50.0000;
+	* 6 3 * * 46.6667;
+	* 7 3 * * 43.3333;
+	* 8 3 * * 40.0000;
+	* 9 3 * * 36.6667;
+	* 10 3 * * 33.3333;
+	* 11 3 * * 30.0000;
+	* 12 3 * * 33.3333;
+	* 13 3 * * 36.6667;
+	* 14 3 * * 40.0000;
+	* 15 3 * * 43.3333;
+	* 16 3 * * 46.6667;
+	* 17 3 * * 50.0000;
+	* 18 3 * * 53.3333;
+	* 19 3 * * 56.6667;
+	* 20 3 * * 60.0000;
+	* 21 3 * * 63.3333;
+	* 22 3 * * 66.6667;
+	* 23 3 * * 70.0000;
+}
+
+schedule standard_deviations {
+	* 0 1 * * 0.0000;
+	* 1 1 * * 0.0000;
+	* 2 1 * * 0.0000;
+	* 3 1 * * 0.0000;
+	* 4 1 * * 0.0000;
+	* 5 1 * * 0.0000;
+	* 6 1 * * 0.0000;
+	* 7 1 * * 0.0000;
+	* 8 1 * * 0.0000;
+	* 9 1 * * 0.0000;
+	* 10 1 * * 0.0000;
+	* 11 1 * * 0.0000;
+	* 12 1 * * 12.4722;
+	* 13 1 * * 13.7437;
+	* 14 1 * * 14.1421;
+	* 15 1 * * 13.7437;
+	* 16 1 * * 12.4722;
+	* 17 1 * * 10.0000;
+	* 18 1 * * 12.4722;
+	* 19 1 * * 13.7437;
+	* 20 1 * * 14.1421;
+	* 21 1 * * 13.7437;
+	* 22 1 * * 12.4722;
+	* 23 1 * * 10.0000;
+	* 0 2 * * 16.9967;
+	* 1 2 * * 21.3437;
+	* 2 2 * * 24.4949;
+	* 3 2 * * 26.8742;
+	* 4 2 * * 28.6744;
+	* 5 2 * * 30.0000;
+	* 6 2 * * 28.6744;
+	* 7 2 * * 26.8742;
+	* 8 2 * * 24.4949;
+	* 9 2 * * 21.3437;
+	* 10 2 * * 16.9967;
+	* 11 2 * * 10.0000;
+	* 12 2 * * 12.4722;
+	* 13 2 * * 13.7437;
+	* 14 2 * * 14.1421;
+	* 15 2 * * 13.7437;
+	* 16 2 * * 12.4722;
+	* 17 2 * * 10.0000;
+	* 18 2 * * 12.4722;
+	* 19 2 * * 13.7437;
+	* 20 2 * * 14.1421;
+	* 21 2 * * 13.7437;
+	* 22 2 * * 12.4722;
+	* 23 2 * * 10.0000;
+	* 0 3 * * 16.9967;
+	* 1 3 * * 21.3437;
+	* 2 3 * * 24.4949;
+	* 3 3 * * 26.8742;
+	* 4 3 * * 28.6744;
+	* 5 3 * * 30.0000;
+	* 6 3 * * 28.6744;
+	* 7 3 * * 26.8742;
+	* 8 3 * * 24.4949;
+	* 9 3 * * 21.3437;
+	* 10 3 * * 16.9967;
+	* 11 3 * * 10.0000;
+	* 12 3 * * 12.4722;
+	* 13 3 * * 13.7437;
+	* 14 3 * * 14.1421;
+	* 15 3 * * 13.7437;
+	* 16 3 * * 12.4722;
+	* 17 3 * * 10.0000;
+	* 18 3 * * 12.4722;
+	* 19 3 * * 13.7437;
+	* 20 3 * * 14.1421;
+	* 21 3 * * 13.7437;
+	* 22 3 * * 12.4722;
+	* 23 3 * * 10.0000;
+}
+
+schedule cooling_setpoints {
+	* 0 1 * * 78.0000;
+	* 1 1 * * 78.0000;
+	* 2 1 * * 78.0000;
+	* 3 1 * * 78.0000;
+	* 4 1 * * 78.0000;
+	* 5 1 * * 78.0000;
+	* 6 1 * * 78.0000; //should be 78
+	* 7 1 * * 78.0000; //should be 78
+	* 8 1 * * 78.0000; //should be 78
+	* 9 1 * * 78.0000; //should be 78
+	* 10 1 * * 78.0000; //should be 78
+	* 11 1 * * 78.0000; //should be 78
+	* 12 1 * * 83.0000;
+	* 13 1 * * 82.2444;
+	* 14 1 * * 81.5355;
+	* 15 1 * * 81.0317;
+	* 16 1 * * 80.6726;
+	* 17 1 * * 80.5000;
+	* 18 1 * * 83.0000;
+	* 19 1 * * 82.2444;
+	* 20 1 * * 81.5355;
+	* 21 1 * * 81.0317;
+	* 22 1 * * 80.6726;
+	* 23 1 * * 80.5000;
+	* 0 2 * * 76.1696;
+	* 1 2 * * 76.6465;
+	* 2 2 * * 76.9113;
+	* 3 2 * * 77.0904;
+	* 4 2 * * 77.2250;
+	* 5 2 * * 77.3333;
+	* 6 2 * * 77.8450;
+	* 7 2 * * 77.9173;
+	* 8 2 * * 78.0000;
+	* 9 2 * * 78.3904;
+	* 10 2 * * 78.9806;
+	* 11 2 * * 80.5000;
+	* 12 2 * * 83.0000;
+	* 13 2 * * 82.2444;
+	* 14 2 * * 81.5355;
+	* 15 2 * * 81.0317;
+	* 16 2 * * 80.6726;
+	* 17 2 * * 80.5000;
+	* 18 2 * * 83.0000;
+	* 19 2 * * 82.2444;
+	* 20 2 * * 81.5355;
+	* 21 2 * * 81.0317;
+	* 22 2 * * 80.6726;
+	* 23 2 * * 80.5000;
+	* 0 3 * * 76.1696;
+	* 1 3 * * 76.6465;
+	* 2 3 * * 76.9113;
+	* 3 3 * * 77.0904;
+	* 4 3 * * 77.2250;
+	* 5 3 * * 77.3333;
+	* 6 3 * * 77.8450;
+	* 7 3 * * 77.9173;
+	* 8 3 * * 78.0000;
+	* 9 3 * * 78.3904;
+	* 10 3 * * 78.9806;
+	* 11 3 * * 80.5000;
+	* 12 3 * * 83.0000;
+	* 13 3 * * 82.2444;
+	* 14 3 * * 81.5355;
+	* 15 3 * * 81.0317;
+	* 16 3 * * 80.6726;
+	* 17 3 * * 80.5000;
+	* 18 3 * * 83.0000;
+	* 19 3 * * 82.2444;
+	* 20 3 * * 81.5355;
+	* 21 3 * * 81.0317;
+	* 22 3 * * 80.6726;
+	* 23 3 * * 80.5000;
+}
+
+schedule heating_setpoints {
+	* 0 1 * * 62.0000;
+	* 1 1 * * 62.0000;
+	* 2 1 * * 62.0000;
+	* 3 1 * * 62.0000;
+	* 4 1 * * 62.0000;
+	* 5 1 * * 62.0000;
+	* 6 1 * * 62.0000; //should be 62
+	* 7 1 * * 62.0000; //should be 62
+	* 8 1 * * 62.0000; //should be 62
+	* 9 1 * * 62.0000; //should be 62
+	* 10 1 * * 62.0000; //should be 62
+	* 11 1 * * 62.0000; //should be 62
+	* 12 1 * * 55.0000;
+	* 13 1 * * 55.0000;
+	* 14 1 * * 55.0000;
+	* 15 1 * * 55.0000;
+	* 16 1 * * 55.0000;
+	* 17 1 * * 55.0000;
+	* 18 1 * * 55.0000;
+	* 19 1 * * 55.0000;
+	* 20 1 * * 55.0000;
+	* 21 1 * * 55.0000;
+	* 22 1 * * 55.0000;
+	* 23 1 * * 55.0000;
+	* 0 2 * * 71.1521;
+	* 1 2 * * 68.7675;
+	* 2 2 * * 67.4433;
+	* 3 2 * * 66.5479;
+	* 4 2 * * 65.8749;
+	* 5 2 * * 65.3333;
+	* 6 2 * * 62.7750;
+	* 7 2 * * 62.4134;
+	* 8 2 * * 62.0000;
+	* 9 2 * * 60.9068;
+	* 10 2 * * 59.2544;
+	* 11 2 * * 55.0000;
+	* 12 2 * * 55.0000;
+	* 13 2 * * 55.0000;
+	* 14 2 * * 55.0000;
+	* 15 2 * * 55.0000;
+	* 16 2 * * 55.0000;
+	* 17 2 * * 55.0000;
+	* 18 2 * * 55.0000;
+	* 19 2 * * 55.0000;
+	* 20 2 * * 55.0000;
+	* 21 2 * * 55.0000;
+	* 22 2 * * 55.0000;
+	* 23 2 * * 55.0000;
+	* 0 3 * * 71.1521;
+	* 1 3 * * 68.7675;
+	* 2 3 * * 67.4433;
+	* 3 3 * * 66.5479;
+	* 4 3 * * 65.8749;
+	* 5 3 * * 65.3333;
+	* 6 3 * * 62.7750;
+	* 7 3 * * 62.4134;
+	* 8 3 * * 62.0000;
+	* 9 3 * * 60.9068;
+	* 10 3 * * 59.2544;
+	* 11 3 * * 55.0000;
+	* 12 3 * * 55.0000;
+	* 13 3 * * 55.0000;
+	* 14 3 * * 55.0000;
+	* 15 3 * * 55.0000;
+	* 16 3 * * 55.0000;
+	* 17 3 * * 55.0000;
+	* 18 3 * * 55.0000;
+	* 19 3 * * 55.0000;
+	* 20 3 * * 55.0000;
+	* 21 3 * * 55.0000;
+	* 22 3 * * 55.0000;
+	* 23 3 * * 55.0000;
+}
+
+class auction {
+	double current_price_mean_12h;
+	double current_price_stdev_12h;
+}
+
+object auction {
+	name Market_1;
+
+	unit MWh;
+	period 3600;
+	verbose TRUE;
+	special_mode BUYERS_ONLY;
+	fixed_price clearing_prices*1;
+	warmup 0;
+	init_price 20;
+	init_stdev 1e-6;
+	object multi_recorder {
+		property current_market.clearing_price,current_market.clearing_quantity,current_price_mean_12h,current_price_stdev_12h,current_market.clearing_type,current_market.marginal_quantity;
+		file "test_market_passive_controller_RAMP_mode_matching_period_output.csv";
+		interval 3600;
+		limit 168;
+	};
+	object double_assert {
+		in '2001-01-01 01:00:00';
+		value clearing_prices*1;
+		within 1e-4;
+		target "current_market.clearing_price";
+	};
+	object double_assert {
+		in '2001-01-01 01:00:00';
+		value 1;
+		within 1e-5;
+		target "current_market.clearing_quantity";
+	};
+	object double_assert {
+		in '2001-01-01 01:00:00';
+		value averages*1;
+		within 1e-4;
+		target "current_price_mean_12h";
+	};
+	object double_assert {
+		in '2001-01-01 01:00:00';
+		value standard_deviations*1;
+		within 1e-4;
+		target "current_price_stdev_12h";
+	};
+	object enum_assert {
+		in '2001-01-01 01:00:00';
+		value 4;
+		target "current_market.clearing_type";
+	};
+	object double_assert {
+		in '2001-01-01 01:00:00';
+		value 0;
+		target "current_market.marginal_quantity";
+		within 1e-5;
+	};
+}
+
+object triplex_meter {
+	phases AS;
+	nominal_voltage 120;
+	object house {
+		cooling_setpoint 75;
+		object passive_controller {
+			name cool_control;
+			period 3600;
+			base_setpoint 78;
+			control_mode RAMP;
+			expectation_object Market_1;
+			expectation_property current_price_mean_12h;
+			setpoint cooling_setpoint;
+			observation_object Market_1;
+			observation_property current_market.clearing_price;
+			stdev_observation_property current_price_stdev_12h;
+			range_low -2;
+			range_high 5;
+			ramp_low 3;
+			ramp_high 2;
+			object double_assert {
+				in '2001-01-01 01:00:00';
+				value clearing_prices*1;
+				target "observation";
+				within 1e-4;
+			};
+			object double_assert {
+				in '2001-01-01 01:00:00';
+				value averages*1;
+				target "expectation";
+				within 1e-4;
+			};
+			object double_assert {
+				in '2001-01-01 01:00:00';
+				value standard_deviations*1;
+				target "stdev_observation";
+				within 1e-4;
+			};
+			object double_assert {
+				in '2001-01-01 01:00:00';
+				value cooling_setpoints*1;
+				target "output_setpoint";
+				within 1e-4;
+			};
+		};
+		heating_setpoint 65;
+		object passive_controller {
+			name heat_control;
+			period 3600;
+			base_setpoint 62;
+			control_mode RAMP;
+			expectation_object Market_1;
+			expectation_property current_price_mean_12h;
+			setpoint heating_setpoint;
+			observation_object Market_1;
+			observation_property current_market.clearing_price;
+			stdev_observation_property current_price_stdev_12h;
+			range_low -7;
+			range_high 10;
+			ramp_low -1;
+			ramp_high -3;
+			object double_assert {
+				in '2001-01-01 01:00:00';
+				value clearing_prices*1;
+				target "observation";
+				within 1e-4;
+			};
+			object double_assert {
+				in '2001-01-01 01:00:00';
+				value averages*1;
+				target "expectation";
+				within 1e-4;
+			};
+			object double_assert {
+				in '2001-01-01 01:00:00';
+				value standard_deviations*1;
+				target "stdev_observation";
+				within 1e-4;
+			};
+			object double_assert {
+				in '2001-01-01 01:00:00';
+				value heating_setpoints*1;
+				target "output_setpoint";
+				within 1e-4;
+			};
+		};
+		object multi_recorder {
+			property cooling_setpoint,cool_control:expectation,cool_control:observation,cool_control:stdev_observation,cool_control:range_low,cool_control:range_high,cool_control:ramp_low,cool_control:ramp_high,heating_setpoint,heat_control:expectation,heat_control:observation,heat_control:stdev_observation,heat_control:range_low,heat_control:range_high,heat_control:ramp_low,heat_control:ramp_high;
+			file "test_market_passive_controller_RAMP_mode_matching_period_output2.csv";
+			interval 3600;
+			limit 276;
+		};
+	};
+}
+
+object stub_bidder {
+	name buyer1;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 9999;
+	quantity 1;
+	count 10000;
+}
+

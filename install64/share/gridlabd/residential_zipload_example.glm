@@ -1,0 +1,99 @@
+// test_zipload_pow_en_hg.glm tests to see if power, energy, and heatgain is being properly calculated in zipload.cpp and passed to the house.
+// The file contains a triplex meter with a single house attached to it.
+// The house contains a single zipload object and the house's HVAC system is turned off
+
+#set minimum_timestep=3600;
+module residential{
+	implicit_enduses NONE;
+}
+module tape;
+module assert;
+module powerflow;
+
+clock{
+	timezone PST+8PDT;
+	starttime '2001-01-01 00:00:00';
+	stoptime '2001-01-02 00:00:00';
+}
+
+object triplex_meter{
+	nominal_voltage 120;
+	phases AS;
+	object house{
+		system_mode OFF;
+		auxiliary_strategy NONE;
+		heating_system_type NONE;
+		cooling_system_type NONE;
+		auxiliary_system_type NONE;
+		air_temperature 60;
+		mass_temperature 60;
+		object ZIPload{
+			heat_fraction 0.8;
+			base_power 1;		//base real power is 1 kW 
+			power_pf -0.9;
+			power_fraction .25;
+			current_pf .85;
+			current_fraction .25;
+			impedance_pf 1;
+			impedance_fraction .5;
+			object complex_assert{
+				target "power";
+				once ONCE_FALSE;
+				value 1+0.033856i;
+				within 0.000001;
+			};
+			object complex_assert{
+				target "energy";
+				in '2001-01-02 00:00:00';
+				once ONCE_TRUE;
+				value 24+0.812533i;
+				within 0.000001;
+			};
+			object double_assert{
+				target "heatgain";
+				once ONCE_FALSE;
+				value 2729.6;
+				within 0.01;
+			};
+		};
+		object complex_assert{
+			target "panel.power";
+			once ONCE_FALSE;
+			value 1+0.033856i;
+			within 0.000001;
+		};
+		object complex_assert{
+			target "panel.energy";
+			in '2001-01-02 00:00:00';
+			once ONCE_TRUE;
+			value 24+0.812533i;
+			within 0.000001;
+		};
+		object double_assert{
+			target "internal_gain";
+			once ONCE_FALSE;
+			value 2729.6;
+			within 0.01;
+		};
+	};
+	object complex_assert{
+		target "measured_power";
+		once ONCE_FALSE;
+		value 1000.573+1.939d;
+		within 0.001;
+	};
+	object double_assert{
+		target "measured_real_energy";
+		in '2001-01-02 00:00:00';
+		once ONCE_TRUE;
+		value 24000;
+		within 0.000001;
+	};
+	object double_assert{
+		target "measured_reactive_energy";
+		in '2001-01-02 00:00:00';
+		once ONCE_TRUE;
+		value 812.533401;
+		within 0.000001;
+	};
+}

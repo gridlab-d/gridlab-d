@@ -1,0 +1,40 @@
+//This file demostrates how to use the csvreader object to input user defined weather data into the climate module
+//weather.csv is a user generated file containing weather data that is separate from this glm file.
+
+clock {
+	timezone PST+8PDT;
+	timestamp '2001-01-01 0:00:00';
+	stoptime '2001-01-02 0:00:00';
+}
+
+module tape;
+module climate;
+module residential {
+	implicit_enduses NONE;
+};
+
+object csv_reader{
+	name CsvReader;
+	filename weather.csv;
+};
+
+object climate{
+	name MyClimate;
+	tmyfile weather.csv;
+	reader CsvReader;
+	object recorder {
+		file climate_out.csv;
+		interval 3600;
+		limit 120;
+		property temperature,humidity;
+	};
+};
+
+object house {
+     object recorder {
+          	file house_out.csv;
+          	interval 3600;
+          	limit 24;
+          	property outdoor_temperature,outdoor_rh;
+     };
+}
