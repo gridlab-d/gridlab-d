@@ -1,0 +1,69 @@
+// gui example 3
+
+#define AVG_SF=2500
+#define STD_SF=500
+#set verbose=1
+
+clock {
+	timezone PST8PDT;
+	starttime '2001-01-01 0:00:00 PST';
+}
+
+module residential {
+	implicit_enduses LIGHTS;
+}
+
+gui {
+	title value "GUI Example 3";
+	row {
+		text value "End-uses enabled";
+		span { size 3; check global residential::implicit_enduses; }
+	}
+	row {
+		text value "Mean floor area";
+		span { size 3; input global AVG_SF; }
+	}
+	row {
+		text value "Stdev floor area";
+		span { size 3; input global STD_SF; }
+	}
+	span {
+		size 3;
+		group {
+			graph {
+				source "data.csv";
+				width 640;
+				height 480;
+				gnuplot {
+					set terminal png size 640,480 
+					set title "Energy use"
+					set output 'data.csv.png'
+					set datafile separator ","
+					set xdata time
+					set key below
+					set timefmt "%Y-%m-%d %H:%M:%S"
+					set format x "%H:%M"
+					set xlabel "${starttime}"
+					set ylabel "Energy (kWh)"
+					plot 'data.csv' using 1:2 with lines title 'House 1'
+				}
+			}
+			browse {
+				source "data.csv";
+				height 32;
+				width 40;
+			}
+			table {
+				source "data.csv";
+				height 10;
+				options "rules=all border=0 cellpadding=5";
+			}
+		}
+	}
+}
+
+#print "Floor area is ${AVG_SF} +/- ${STD_SF} sf"
+
+object house:..10 {
+	floor_area random.normal(${AVG_SF},${STD_SF});
+}

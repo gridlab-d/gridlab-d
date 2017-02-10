@@ -1,0 +1,18 @@
+
+#set signal_timeout=15000
+
+module climate;
+module tape;
+
+object climate {
+	name station;
+	temperature 105;
+	humidity 15%;
+	object recorder{
+		name mls_slave;
+		file slave.csv;
+		property temperature,humidity;
+		interval 2400;
+		limit 24;
+	};
+}

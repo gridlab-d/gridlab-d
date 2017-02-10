@@ -1,0 +1,43 @@
+// $Id: memory_tape.glm 4738 2014-07-03 00:55:39Z dchassin $
+// Copyright (C) 2008 Battelle Memorial Institute
+// test to verify proper operation of memory tapes
+// 
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	timezone EST+5EDT;
+}
+
+module powerflow;
+module tape;
+
+object triplex_meter:0 {
+	parent triplex_node:1;
+	name "Meter 1";
+	phases "AS";
+	nominal_voltage 120.0 V;
+	voltage_1 120 V;
+	voltage_N 0 V;
+	voltage_2 120 V;
+}
+
+object triplex_node:1 {
+	name triplex_node:1;
+	phases "AS";
+	nominal_voltage 120.0 V;
+}
+
+object player:2 {
+	parent triplex_node:1;
+	property voltage_1;
+	file player_1.csv;
+	loop 10;
+}
+
+object recorder:3 {
+	parent triplex_meter:0;
+	property measured_voltage_1;
+	file recorder_1.csv;
+	limit 40;
+	interval 3600 s;
+}

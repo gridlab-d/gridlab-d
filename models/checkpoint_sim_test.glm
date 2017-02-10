@@ -1,0 +1,28 @@
+// $Id: checkpoint_sim_test.glm 4738 2014-07-03 00:55:39Z dchassin $
+// Copyright (C) 2008 Battelle Memorial Institute
+//
+// This model tests the checkpoint system by saving 
+// a checkpoint file every 28 days of simulation
+//
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	timezone EST+5EDT;
+}
+#set checkpoint_type=SIM
+#set checkpoint_interval=2419200
+
+module tape;
+module residential;
+
+object house:..10 {
+	floor_area 2500;
+}
+
+object collector {
+	group class=house;
+	property sum(air_temperature);
+	file "tair.csv";
+	interval 3600;
+	limit 8760;
+};

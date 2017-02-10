@@ -1,0 +1,27 @@
+// random_builtin.glm
+//
+// Test builtin random properties
+//
+
+clock {
+	timezone PST+8PDT;
+	starttime '2001-01-01 0:00:00 PDT';
+	stoptime '2002-01-01 0:00:00 PDT';
+}
+module climate;
+module tape;
+
+class climate {
+	randomvar clouds;
+} 
+
+object climate {
+	clouds "type:weibull(0.5,0.5); min:0.0; max:1.0; refresh:1h;";
+	object recorder {
+		property clouds;
+		interval 600;
+		file "random_builtin.csv";
+	};
+}
+
+	

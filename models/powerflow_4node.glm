@@ -1,0 +1,104 @@
+////////////////////////////////////////////////////////// BEGIN////////////////////////////////////////////////////////
+// filename... powerflow_4node.glm 
+
+clock { 
+	 timestamp '2000-01-01 0:00:00';
+	 timezone EST+5EDT;
+}
+
+////////////////////////////////////////////////////////
+// modules
+module powerflow;
+
+// 336,400 26/7
+object overhead_line_conductor:100 {
+	name PhaseCond;
+	geometric_mean_radius 0.0244 ft;
+	resistance 0.306;
+//	diameter 0.721 in;
+}
+
+// 4/0 6/1 ACSR
+object overhead_line_conductor:101 {
+	name NeutralCond;
+	geometric_mean_radius 0.00814 ft;
+	resistance 0.592;
+//	diameter 0.563 in;
+}
+
+// Line Spacing
+object line_spacing:200 {
+	name LineSpacing;
+	distance_AB 2.5;
+	distance_BC 4.5;
+	distance_AC 7.0;
+	distance_AN 5.656;
+	distance_BN 4.272;
+	distance_CN 5.0;
+}
+
+// Line Configuration
+object line_configuration:1 {
+	name LineConf;
+	conductor_A PhaseCond;
+	conductor_B PhaseCond;
+	conductor_C PhaseCond;
+	conductor_N NeutralCond;
+	spacing LineSpacing;
+}
+
+object overhead_line {
+	name Line1;
+	phases "ABCN";
+	from Node1;
+	to Node2;
+	length 2000 ft;
+	configuration LineConf;
+	nominal_voltage 124.0;
+}
+
+object overhead_line {
+	name Line2;
+	phases "ABCN";
+	from Node3;
+	to Node4;
+	length 2500 ft;
+	configuration LineConf;
+	nominal_voltage 124.0;
+}
+
+object node {
+	name Node1;
+	phases "ABCN";
+	nominal_voltage 124.0;
+	//phaseA_V 124.0+0.0j;
+	//phaseB_V -62-107.38715006927j;
+	//phaseC_V -62+107.38715006927j;
+}
+
+object node {
+	name Node2;
+	phases "ABCN";
+	nominal_voltage 124.0;
+	//phaseA_V 124.0+0.0j;
+	//phaseB_V -62-107.38715006927j;
+	//phaseC_V -62+107.38715006927j;
+}
+
+object node {
+	name Node3;
+	phases "ABCN";
+	nominal_voltage 124.0;
+	//phaseA_V 124.0+0.0j;
+	//phaseB_V -62-107.38715006927j;
+	//phaseC_V -62+107.38715006927j;
+}
+
+object node {
+	name Node4;
+	phases "ABCN";
+	nominal_voltage 124.0;
+	//phaseA_V 124.0+0.0j;
+	//phaseB_V -62-107.38715006927j;
+	//phaseC_V -62+107.38715006927j;
+}

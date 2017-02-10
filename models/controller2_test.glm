@@ -1,0 +1,44 @@
+clock {
+	timezone "CST+6CDT";
+	timestamp '2001-01-01 0:00:00';
+	stoptime '2001-06-29 0:00:00';
+}
+
+module market;
+module residential;
+module tape;
+
+object stubauction {
+	name TheAuctionHouse;
+	period 300s;
+	last.P 10;
+	next.P 10;
+	object player{
+		file "prices.player";
+		loop 150;
+		property next.P;
+	};
+}
+
+object waterheater{
+	name TheHeater;
+	object passive_controller {
+		name TheBrains;
+		sensitivity 2.0;
+		control_mode PROBABILITY_OFF;
+		expectation_obj TheAuctionHouse;
+		expectation_prop avg24;
+		setpoint_prop tank_setpoint;
+		state_prop override;
+		observation_obj TheAuctionHouse;
+		observation_prop next.P;
+		mean_observation_prop avg24;
+		stdev_observation_prop std24;
+		object recorder{
+			file cont_out.csv;
+			interval 300;
+			limit 1000;
+			property output_state,prob_off,observation,mean_observation,stdev_observation;
+		};
+	};
+}

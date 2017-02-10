@@ -1,0 +1,68 @@
+// GUI example 1
+//
+gui {
+	title global modelname;
+	span {
+		size 2;
+		group {
+			title link House1:name;
+			row { // first row
+				text value "Floor area:";
+				input {
+					link House1:floor_area;
+					unit "sf";
+				}
+			}
+			row { // second row
+				text value "Heating type:";
+				select link House1:heating_system_type;
+			}
+			row { // third row
+				text value "System mode: ";
+				radio link House1:system_mode;
+			}
+			row { // fourth row
+				text value "Envelope integrity";
+				radio link House1:thermal_integrity_level;
+			}
+			row {
+				text value "File name:";
+				span {
+					size 2;
+					input global modelname;
+					action save;
+					action load;
+				}
+			}
+		}
+	}
+	row {
+		text value "Appliances";
+		select {
+			global residential::implicit_enduses;
+			size 5;
+		}
+	}
+	span {
+		size 2;
+		group {
+			title value "Simulation control";
+			action restart;
+			action run;
+			action pause;
+			action stop;
+		}
+	}
+	status value "Ready";
+}
+
+module residential {
+	implicit_enduses LIGHTS;
+}
+
+object house {
+	name "House1";
+	floor_area 200 m^2;
+	thermal_integrity_level GOOD;
+	system_mode OFF;
+}

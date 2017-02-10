@@ -1,0 +1,54 @@
+// office.txt
+// depends: test.tmy
+//
+// This benchmark test create 1000 commercial buildings
+// with no objects inside them.  It plays a simple 6 hr
+// weather tape that is not connected.  The result
+// should be a test of the system ability to exploit
+// the implicit parallelism of the model.  The more
+// processors are used, the faster the simulation 
+// should run.
+//
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	timezone PST+8PDT;
+}
+
+module climate;
+object climate {
+	tmyfile LosAngeles.tmy2;
+}
+
+module commercial;
+object office:..10 {
+	occupancy 0;
+	floor_area 10000 m^2;
+	floor_height 2 m;
+	exterior_ua 10000 Btu/degF/h;
+	interior_ua 100000 Btu/degF/h;
+	interior_mass  1000 Btu/degF;
+	glazing.south 3000 sf;
+	glazing.coefficient 0.5;
+	
+	hvac.cooling.balance_temperature 60 degF;
+	hvac.cooling.capacity -1200000 Btu/h;
+	hvac.cooling.design_temperature 110 degF;
+	
+	hvac.heating.balance_temperature 50 degF;
+	hvac.heating.capacity 1500000 Btu/h;
+	hvac.heating.design_temperature 0 degF;
+	
+	rank 1;
+}
+
+module tape;
+object collector {
+	group class=office;
+	property sum(power.mag);
+	interval 300;
+	file office_power.csv;
+	limit 8760;
+}
+
+	

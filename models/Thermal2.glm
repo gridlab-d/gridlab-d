@@ -1,0 +1,236 @@
+// $id$
+//	Copyright (C) 2008 Battelle Memorial Institute
+
+// 4 Node Feeder: Unbalanced step-down grY-grY
+
+////////////////////////////////////////////////////////
+// BEGIN
+////////////////////////////////////////////////////////
+
+clock {
+	timestamp '1999-12-28 0:00:00';
+	stoptime '2000-01-02 0:00:00';
+	timezone EST+5EDT;
+}
+
+//#set threadcount=1
+#set savefile=savefile.xml
+module tape;
+
+module climate;
+module residential {
+	implicit_enduses NONE;
+};
+
+//object csv_reader{
+//	name CsvReader;
+//	filename weather.csv;
+//};
+
+object climate{
+	name MyClimate;
+//	tmyfile weather.csv;
+//	reader CsvReader;
+};
+
+// House 2
+object house {
+     name house_2;
+     
+     air_temperature 60;//random.uniform(50,100);  // Uniform distribution from 50 to 100
+     mass_temperature 60;
+     
+     aspect_ratio 1.5;
+     floor_area 2000.00 sf;
+     ceiling_height 8.0;
+     Rroof 50;
+     Rwall 20;
+     Rfloor 30;
+     Rwindows 3;
+     Rdoors 2;
+ 
+     heating_system_type RESISTANCE;
+     cooling_system_type NONE;
+     fan_type ONE_SPEED;
+     
+     thermostat_deadband 2 degF;
+     air_heat_fraction 0;
+     mass_heat_coeff 1000;
+     mass_heat_capacity 5000;
+     window_shading 0.2;
+}
+object house{
+	name HouseWithAluminumFrames;
+	window_frame ALUMINUM;
+	}
+object house{
+	name HouseWithThermalBreakFrames;
+	window_frame THERMAL_BREAK;
+	}
+object house{
+	name HouseWithInsulatedFrames;
+	window_frame INSULATED;
+	}
+object house{
+	name HouseWithWoodFrames;
+	window_frame WOOD;
+	}
+object house{
+	name HouseWithNoFrames;
+	window_frame NONE;
+	}
+object house{
+	name HouseWithClearWindows;
+	glazing_treatment CLEAR;
+}
+object house{
+	name HouseWithAbsWindows;
+	glazing_treatment ABS;
+}
+object house{
+	name HouseWithReflectiveWindows;
+	glazing_treatment REFL;
+}
+object house{
+	name HouseWithLowSWindows;
+	glazing_treatment LOW_S;
+}
+object house{
+	name HouseWithHighSWindows;
+	glazing_treatment HIGH_S;
+}
+
+object house{
+	name HouseWithJustGasOld;
+	system_type GAS;
+}
+
+object house{
+	name HouseWithJustGasNew;
+	heating_system_type GAS;
+	cooling_system_type NONE;
+	auxiliary_system_type NONE;
+}
+
+object house {
+	name HouseWithBothOld;
+	system_type AIRCONDITIONING|FORCEDAIR;
+}
+
+object house{
+	name HouseWithBothNew;
+	heating_system_type HEAT_PUMP;
+	cooling_system_type ELECTRIC;
+	auxiliary_system_type ELECTRIC;
+	auxiliary_strategy DEADBAND;
+}
+
+object house {
+	name HouseWithTwoSpeedOld;
+	system_type AIRCONDITIONING|TWOSTAGE;
+}
+
+object house{
+	name HouseWithTwoSpeedNew;
+	heating_system_type HEAT_PUMP;
+	cooling_system_type ELECTRIC;
+	fan_type TWO_SPEED;
+	auxiliary_system_type ELECTRIC;
+	auxiliary_strategy DEADBAND;
+}
+
+object house{
+	name HouseWithBaseboardOld;
+	system_type RESISTIVE;
+}
+
+object house{
+	name HouseWithBaseboardNew;
+	heating_system_type RESISTANCE;
+	cooling_system_type NONE;
+	auxiliary_system_type NONE;
+	fan_type NONE;
+}
+
+object house{
+	name HouseWithElecHeatOld;
+	system_type RESISTIVE|FORCEDAIR;
+}
+
+object house{
+	name HouseWithElecHeatNew;
+	heating_system_type RESISTANCE;
+	cooling_system_type NONE;
+	auxiliary_system_type NONE;
+	fan_type ONE_SPEED;
+}
+
+object house{
+	name HouseWithAuxTimer;
+	heating_system_type HEAT_PUMP;
+	cooling_system_type ELECTRIC;
+	auxiliary_system_type ELECTRIC;
+	auxiliary_strategy TIMER;
+}
+
+object house{
+	name HouseWithAuxDeadband;
+	heating_system_type HEAT_PUMP;
+	cooling_system_type ELECTRIC;
+	auxiliary_system_type ELECTRIC;
+	auxiliary_strategy DEADBAND;
+}
+
+object house{
+	name HouseWithAuxTimerLockout;
+	heating_system_type HEAT_PUMP;
+	cooling_system_type ELECTRIC;
+	auxiliary_system_type ELECTRIC;
+	auxiliary_strategy TIMER|LOCKOUT;
+}
+
+object house{
+	name HouseWithDeadbandLockout;
+	heating_system_type HEAT_PUMP;
+	cooling_system_type ELECTRIC;
+	auxiliary_system_type ELECTRIC;
+	auxiliary_strategy DEADBAND|LOCKOUT;
+}
+
+object house{
+	name HouseWithTimerDeadbandLockout;
+	heating_system_type HEAT_PUMP;
+	cooling_system_type ELECTRIC;
+	auxiliary_system_type ELECTRIC;
+	auxiliary_strategy DEADBAND|LOCKOUT|TIMER;
+}
+
+object house{
+	name HouseWithNoIntegrity;
+	thermal_integrity_level VERY_LITTLE;
+}
+
+object house{
+	name HouseWithLittleIntegrity;
+	thermal_integrity_level LITTLE;
+}
+object house{
+	name HouseWithSubnormalIntegrity;
+	thermal_integrity_level BELOW_NORMAL;
+}
+object house{
+	name HouseWithNormalIntegrity;
+	thermal_integrity_level NORMAL;
+}
+object house{
+	name HouseWithSupernormalIntegrity;
+	thermal_integrity_level ABOVE_NORMAL;
+}
+object house{
+	name HouseWithGoodIntegrity;
+	thermal_integrity_level GOOD;
+}
+object house{
+	name HouseWithVeryGoodIntegrity;
+	thermal_integrity_level VERY_GOOD;
+}

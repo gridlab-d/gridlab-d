@@ -1,0 +1,68 @@
+////////////////////////////////////////////////////////
+// BEGIN
+////////////////////////////////////////////////////////
+// filename... -
+// workdir.... ..\VS2005 (the tape files .glt should be kept there until the tape module is updated)
+// command.... --warn --verbose --test
+// created.... Fri Feb 16 09:08:39 2007
+// user....... d3j168
+// classes.... 4
+// objects.... 5
+clock {
+	timestamp '2000-01-01 0:00:00';
+	timezone PST+8PDT;
+}
+
+////////////////////////////////////////////////////////
+// modules
+module tape;
+module climate;
+module residential;
+
+////////////////////////////////////////////////////////
+
+object climate {
+	tmyfile CA-Los_angeles.tmy2;
+}
+
+object house:1 {
+	floor_area random.normal(1500,300) sf;
+	heating_setpoint 70.0 degF;
+	cooling_setpoint 76.0 degF;
+	thermostat_deadband 1.0 degF;
+	
+}
+
+object waterheater:5 {
+	parent house:1;
+	tank_setpoint 135.0 degF;
+	thermostat_deadband 10 degF;
+}
+
+object player{
+	parent waterheater:5;
+	property water_demand;
+	file hotwaterDemand.glt;
+	loop 100;
+}
+
+object recorder{
+	parent waterheater:5;
+	property temperature;
+	file kgrecorder.txt;
+	interval 0;
+	limit 10000;
+	}
+
+object recorder{
+	parent house:1;
+	property air_temperature;
+	file kgrecorder-htemp.txt;
+	interval 0;
+	limit 10000;
+	}
+
+
+////////////////////////////////////////////////////////
+// END
+////////////////////////////////////////////////////////

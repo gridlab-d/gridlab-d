@@ -1,0 +1,45 @@
+// $Id: test.glm 4738 2014-07-03 00:55:39Z dchassin $
+//	Copyright (C) 2008 Battelle Memorial Institute
+//
+// Tape test
+// - shaper generates a 24 hour saw tooth
+// - player generates an 8 hour saw tooth
+// - recorder collect 8760 hours
+
+#set include="../../core"
+// #include "../../core/rt/msvc_debugger.glm"
+module tape;
+
+clock {
+	timezone EST+5EDT;
+	starttime '2000-01-01 00:00:00 EST';
+}
+
+class test {
+	double saw24;
+	double saw8;
+	intrinsic create(object parent)
+	{
+		return SUCCESS;
+	};
+};
+
+object test {
+	name Test;
+	object shaper {
+		file "test.shaper";
+		group "class=test";
+		property "saw24";
+	};
+	object player {
+		file "test.player";
+		property "saw8";
+	};
+	object recorder {
+		file "test.csv";
+		property "saw8,saw24";
+		limit 8760;
+	};
+};
+
+

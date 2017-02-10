@@ -1,0 +1,133 @@
+// $Id: histogramtest.glm 4738 2014-07-03 00:55:39Z dchassin $
+//	Copyright (C) 2008 Battelle Memorial Institute
+//
+// Tape test
+// - shaper generates a 24 hour saw tooth
+// - player generates an 8 hour saw tooth
+// - recorder collect 8760 hours
+
+module tape;
+module powerflow;
+
+clock {
+	timezone EST+5EDT;
+	starttime '2000-01-01 00:00:00 EST';
+}
+
+object node:1 {
+	phases A;
+	voltage_A 2400+0i;
+	nominal_voltage 2400;
+}
+
+object node:2 {
+	phases A;
+	voltage_A 2600+0i;
+	nominal_voltage 2400;
+}
+object node:3 {
+	phases A;
+	voltage_A 2800+0i;
+	nominal_voltage 2400;
+}
+object node:4 {
+	phases A;
+	voltage_A 3000+0i;
+	nominal_voltage 2400;
+}
+object node:5 {
+	phases A;
+	voltage_A 3200+0i;
+	nominal_voltage 2400;
+}
+object node:6 {
+	phases A;
+	voltage_A 3400+0i;
+	nominal_voltage 2400;
+}
+object node:7 {
+	phases A;
+	voltage_A 3600+0i;
+	nominal_voltage 2400;
+}
+object node:8 {
+	phases A;
+	voltage_A 3800+0i;
+	nominal_voltage 2400;
+}
+object node:9 {
+	phases A;
+	voltage_A 4000+0i;
+	nominal_voltage 2400;
+}
+object node:10 {
+	phases A;
+	voltage_A 4200+0i;
+	nominal_voltage 2400;
+}
+
+object node:11 {
+	phases A;
+	voltage_A 4400+0i;
+	nominal_voltage 2400;
+}
+
+object node:12 {
+	phases A;
+	voltage_A 4600+0i;
+	nominal_voltage 2400;
+}
+object node:13 {
+	phases A;
+	voltage_A 4800+0i;
+	nominal_voltage 2400;
+}
+object node:14 {
+	phases A;
+	voltage_A 2400+0i;
+	nominal_voltage 2400;
+}
+object node:15 {
+	phases A;
+	voltage_A 2600+0i;
+	nominal_voltage 2400;
+}
+object node:16 {
+	phases A;
+	voltage_A 2800+0i;
+	nominal_voltage 2400;
+}
+object node:17 {
+	phases A;
+	voltage_A 3000+0i;
+	nominal_voltage 2400;
+}
+object node:18 {
+	phases A;
+	voltage_A 3200+0i;
+	nominal_voltage 2400;
+}
+object node:19 {
+	phases A;
+	voltage_A 3400+0i;
+	nominal_voltage 2400;
+}
+object node:20 {
+	phases A;
+	voltage_A 3600+0i;
+	nominal_voltage 2400;
+}
+
+object histogram{
+	name hist_test;
+	filename hist_test.csv;
+	//min 2400.0;
+	//max 4800.0;
+	//bin_count 12;
+	bins "2000-3000,2600-3400, [3000-4000], (3000 .. 4000), ..3600, ..4800";
+	limit 1;
+	samplerate 10;
+	countrate 10;
+	group class=node;
+	property voltage_A.mag;
+}

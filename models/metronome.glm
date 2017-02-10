@@ -1,0 +1,92 @@
+// $Id: metronome.glm 4738 2014-07-03 00:55:39Z dchassin $
+// Copyright (C) 2008 Battelle Memorial Institute
+// This example was original conceived by Matt Hauer
+// and implemented as a runtime class by David Chassin
+// 
+// By default this requires that -D include=<gridlabd folder> 
+// be given on command line so that rt/gridlabd.h can be found/
+
+class metronome {
+	enumeration {TIC=0, TOC=1} sound;
+	timestamp lasttime;
+	double rate[s];
+	int16 count;
+
+	intrinsic create(object parent)
+	{
+		sound = TIC;
+		lasttime = TS_REALNOW;
+		rate = 0.0;
+		count = 0;
+		return SUCCESS;
+	};
+
+	intrinsic init(object parent)
+	{
+		printf("%s: rate = %f, count = %hd\n", my->name, rate, count);
+		if (rate<=0)
+		{
+			gl_throw("rate must be positive");
+			return FAILED;
+		}
+		else if (count<=0)
+		{
+			gl_throw("count must be positive");
+			return FAILED;
+		}
+		else
+			return SUCCESS;
+	};
+
+	intrinsic sync(timestamp t0, timestamp t1)
+	{
+		timestamp nexttime = gl_timestamp(gl_seconds(lasttime)+rate);
+		if (count<=0)
+			return TS_NEVER;
+		if (t1 == nexttime)
+		{
+			sound = (sound==TIC) ? TOC: TIC;
+			lasttime = nexttime;
+			--count;
+		}
+		else if (t1 > nexttime)
+		{
+			gl_throw("state change missed by %f seconds", gl_seconds(t1-nexttime));
+		}
+		return gl_timestamp(gl_seconds(lasttime)+rate);
+	};
+
+};
+
+object metronome {
+	name mt20;
+	rate 20;
+	count 100;
+};
+
+object metronome {
+	name mt25;
+	rate 25;
+	count 100;
+};
+
+
+// DATA COLLECTION
+module tape;
+
+object recorder {
+	parent mt20;
+	file mt20.csv;
+	property sound;
+	interval -1;
+	limit 100;
+};
+
+object recorder {
+	parent mt25;
+	file mt25.csv;
+	property sound;
+	interval -1;
+	limit 100;
+};
+

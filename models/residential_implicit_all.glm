@@ -1,0 +1,27 @@
+// $Id: residential_implicit_all.glm 4738 2014-07-03 00:55:39Z dchassin $
+// Copyright (C) 2008 Battelle Memorial Institute
+
+clock {
+	timezone EST+5EDT;
+	starttime '2010-01-01 0:00:00';
+	stoptime '2010-02-01 0:00:00';
+}
+
+module tape;
+module residential;
+
+#set profiler=1
+#set iteration_limit=10
+//#set environment="server"
+//#set pauseat='2010-01-01 12:00:00'
+
+object house:..100 {
+	floor_area random.normal(1500,300);
+}
+object collector {
+	group "class=house";
+	property avg(air_temperature);
+	file "house.csv";
+	interval 3600;
+	limit 24;
+};

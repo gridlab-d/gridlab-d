@@ -1,0 +1,48 @@
+// $Id: residential_meter.glm 4738 2014-07-03 00:55:39Z dchassin $
+// Copyright (C) 2008 Battelle Memorial Institute
+//
+// test to verify proper operation of single phase meter
+// and house power distribution panel
+// 
+
+clock {
+	timezone EST+5EDT;
+	timestamp '2000-01-01 0:00:00';
+}
+
+module powerflow;
+module climate;
+module residential;
+module tape;
+
+object triplex_meter:0 {
+	name "Meter 1";
+	voltage_1 120 V;
+	voltage_N 0 V;
+	voltage_2 120 V;
+	nominal_voltage 120.0;
+	phases AS;
+}
+
+object house:1 {
+	parent "Meter 1";
+	latitude "48N";
+	longitude "125W";
+}
+
+object lights:2 {
+	type FLUORESCENT;
+	parent house:1;
+	installed_power 1.23 kW;
+}
+
+object lights:3 {
+	type INCANDESCENT;
+	parent house:1;
+	installed_power 5 kW; // this is intended to trip the circuit breaker
+}
+
+object climate:4 {
+	name "Test city";
+}
+

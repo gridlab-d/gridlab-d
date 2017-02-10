@@ -1,0 +1,52 @@
+// simple optimization test
+// problem is a quadratic minimization problem
+// it should solve in a single iteration
+
+#set tmp=.
+#set verbose=1
+#set profiler=1
+#define include=../../core
+
+module optimize;
+
+class quadratic {
+	double y;
+	double x;
+	double a;
+	double b;
+	double c;
+	intrinsic create(object parent)
+	{
+		return 1;
+	};
+	intrinsic init(object parent)
+	{
+		double mx = -b/a/2;
+		gl_verbose("minimum y=%.2f expected at x=%.2f", (a*mx+b)*mx+c, mx);
+		return 1;
+	};
+	intrinsic sync(TIMESTAMP t0, TIMESTAMP t1)
+	{
+		double dy = 2*a*x+b;
+		y = (a*x + b)*x + c;
+		gl_verbose("function y(%.4f)  = %.2f",x,y);
+		gl_verbose("function y'(%.4f) = %.2f",x,dy);
+		return TS_NEVER;
+	};
+}
+
+object quadratic {
+	name quadratic;
+	a -2;
+	b 0.25;
+	c 0.89;
+	x 0.52;
+}
+
+object simple {
+	objective "quadratic.y";
+	variable "quadratic.x";
+	constraint "quadratic.y>1.0";
+	delta 0.001;
+	epsilon 0.00001;
+}

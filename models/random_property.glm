@@ -1,0 +1,29 @@
+//test_core_random_property examines  whether the random property generates a random number from the proper distribution.
+
+module residential {
+	implicit_enduses NONE;
+}
+module tape;
+
+clock{
+	timezone PST+8PDT;
+	starttime '2000-01-01 0:00:00';
+	stoptime '2000-01-01 0:00:10';
+}
+
+class house {
+	randomvar uniform_rv;
+}
+
+object house:..3 {
+	groupid random_house;
+	uniform_rv "type:uniform(0,1)";
+}
+
+object collector {
+	group "class=house AND groupid=random_house";
+	property avg(uniform_rv);
+	file random_property.csv;
+	limit 10;
+	interval 1;
+}

@@ -1,0 +1,67 @@
+// gui example 3
+
+#set verbose=1
+#set server_quit_on_close=0
+#set run_realtime=0
+#define dt=600
+
+#define AVG_SF=2500
+#define STD_SF=500
+#define NHOUSES=10
+#define STATE=Washington
+#define CITY=Seattle
+#define START="2001-01-01 0:00:00 PST"
+#define STOP="2001-01-07 0:00:00 PST"
+
+gui {
+	page {
+		source "gui_example_4-1.html";
+		wait "continue";
+	}
+}
+
+clock {
+	timezone PST8PDT;
+	starttime ${START};
+	stoptime ${STOP};
+}
+
+module tape {
+	csv_data_only 1;
+	csv_keep_clean 1;
+}
+
+module climate;
+object climate {
+	tmyfile "${STATE}/${CITY}.tmy2";
+	interpolate QUADRATIC;
+	object recorder {
+		property "temperature";
+		file "outdoor.csv";
+		interval ${dt};
+	};
+}
+
+module residential {
+	implicit_enduses LIGHTS;
+}
+
+object house:..${NHOUSES} {
+	floor_area random.normal(${AVG_SF},${STD_SF});
+	cooling_setpoint 72;
+	heating_setpoint 68;
+}
+
+object collector {
+	group "class=house";
+	property "avg(air_temperature)";
+	interval ${dt};
+	file "indoor.csv";
+}
+
+gui {
+	page {
+		source "gui_example_4.html";
+		hold;
+	}
+}
