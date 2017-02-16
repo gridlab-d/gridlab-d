@@ -7,9 +7,9 @@
 #define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
 
 clock {
-	timezone EST+5EDT;
 	timestamp '2000-01-01 0:00:00';
-	stoptime '2000-01-02 1:00:00';
+	stoptime '2000-01-01 1:00:00';
+	timezone EST+8EDT;
 }
 
 module tape;
@@ -618,7 +618,7 @@ object transformer {
 	phases AS; 
 	from node:634; 
 	to trip_node2; 
-	configuration AS_config634;
+	configuration AS_config;
 }
 
 object transformer {
@@ -626,7 +626,7 @@ object transformer {
 	phases BS; 
 	from node:634; 
 	to trip_node3; 
-	configuration BS_config634;
+	configuration BS_config;
 }
 
 object transformer {
@@ -634,7 +634,7 @@ object transformer {
 	phases CS; 
 	from node:634; 
 	to trip_node4; 
-	configuration CS_config634;
+	configuration CS_config;
 }
 
 object transformer {
@@ -1113,36 +1113,6 @@ object transformer_configuration {
 	impedance 0.006+0.0136j;
 }
 
-object transformer_configuration {
-	name AS_config634;
-	connect_type SINGLE_PHASE_CENTER_TAPPED;
-	install_type POLETOP;
-	powerA_rating 75;
-	primary_voltage 277.128;
-	secondary_voltage 120.000;
-	impedance 0.006+0.0136j;
-}
-
-object transformer_configuration {
-	name BS_config634;
-	connect_type SINGLE_PHASE_CENTER_TAPPED;
-	install_type POLETOP;
-	powerB_rating 75;
-	primary_voltage 277.128;
-	secondary_voltage 120.000;
-	impedance 0.006+0.0136j;
-}
-
-object transformer_configuration {
-	name CS_config634;
-	connect_type SINGLE_PHASE_CENTER_TAPPED;
-	install_type POLETOP;
-	powerC_rating 75;
-	primary_voltage 277.128;
-	secondary_voltage 120.000;
-	impedance 0.006+0.0136j;
-}
-
 object capacitor {
 	phases ABCN;
 	name CAP1;
@@ -1188,7 +1158,7 @@ object capacitor {
 // Regulator
 object regulator_configuration:6506321 {
 	connect_type WYE_WYE;
-	band_center 2360.000;
+	band_center 2000.000;
 	band_width 80.0;
 	time_delay 0.0;
 	dwell_time 0.0;
@@ -1529,4 +1499,5 @@ object multi_recorder {
 	property trip_meter1:measured_real_power,trip_meter2:measured_real_power,trip_meter3:measured_real_power,trip_meter4:measured_real_power,trip_meter5:measured_real_power,trip_meter6:measured_real_power,trip_meter7:measured_real_power,trip_meter8:measured_real_power,trip_meter9:measured_real_power,trip_meter10:measured_real_power,trip_meter11:measured_real_power,trip_meter12:measured_real_power,trip_meter13:measured_real_power,trip_meter14:measured_real_power,trip_meter15:measured_real_power;
 	file "IEEE_13_Node_With_Houses.csv";
 	interval 60;
+	limit 60;
 }
