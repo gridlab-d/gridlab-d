@@ -495,6 +495,12 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 		gl_global_create("residential::aux_cutin_temperature[degF]",PT_double,&aux_cutin_temperature,
 			PT_DESCRIPTION, "the outdoor air temperature below which AUX heating is used",
 			NULL);
+
+		if (gl_publish_function(oclass,	"interupdate_res_object", (FUNCTIONADDR)interupdate_house_e)==NULL)
+			GL_THROW("Unable to publish house_e deltamode function");
+		if (gl_publish_function(oclass,	"postupdate_res_object", (FUNCTIONADDR)postupdate_house_e)==NULL)
+			GL_THROW("Unable to publish house_e deltamode function");
+
 }
 
 int house_e::create() 
@@ -714,6 +720,11 @@ int house_e::create()
 	window_temp_delta = 5; 
 	last_temperature = 75;
 	thermostat_mode = TM_AUTO;
+
+	//Deltamode variables
+	deltamode_inclusive = false;	//By default, don't be included in deltamode simulations
+	deltamode_registered = false;
+
 	return result;
 }
 
@@ -1195,6 +1206,11 @@ and internal gain variables.
 
 int house_e::init(OBJECT *parent)
 {
+	//Deltamode globals
+	extern bool enable_subsecond_models;
+	extern int res_object_count;
+	extern bool all_house_delta;
+
 	if(parent != NULL){
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
@@ -1609,6 +1625,51 @@ int house_e::init(OBJECT *parent)
 		fan_heatgain_fraction = 1;
 	} else {
 		fan_heatgain_fraction = 0;
+	}
+
+	//"Cheating" function for compatibility with older models -- enables all houses to be deltamode-ready
+	if ((all_house_delta == true) && (enable_subsecond_models==true))
+	{
+		obj->flags |= OF_DELTAMODE;
+	}
+
+	//Set the deltamode flag, if desired
+	if ((obj->flags & OF_DELTAMODE) == OF_DELTAMODE)
+	{
+		deltamode_inclusive = true;	//Set the flag and off we go
+	}
+
+	//See if we desire a deltamode update (module-level)
+	if (deltamode_inclusive)
+	{
+		//Check global, for giggles
+		if (enable_subsecond_models!=true)
+		{
+			gl_warning("house_e:%s indicates it wants to run deltamode, but the module-level flag is not set!",obj->name?obj->name:"unnamed");
+			/*  TROUBLESHOOT
+			The house_e object has the deltamode_inclusive flag set, but not the module-level enable_subsecond_models flag.  The house
+			will not simulate any dynamics this way.
+			*/
+
+			//Deflag us
+			deltamode_inclusive = false;
+		}
+		else
+		{
+			res_object_count++;	//Increment the counter
+		}
+	}//End deltamode inclusive
+	else	//Not enabled for this model
+	{
+		if (enable_subsecond_models == true)
+		{
+			gl_warning("house_e:%d %s - Deltamode is enabled for the module, but not this house!",obj->id,(obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			The house is not flagged for deltamode operations, yet deltamode simulations are enabled for the overall system.  When deltamode
+			triggers, this house may no longer contribute to the system, until event-driven mode resumes.  This could cause issues with the simulation.
+			It is recommended all objects that support deltamode enable it.
+			*/
+		}
 	}
 
 	return 1;
@@ -2186,6 +2247,14 @@ TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1)
 	CIRCUIT *c;
 	extern bool ANSI_voltage_check;
 
+	extern bool enable_subsecond_models;
+	extern OBJECT **delta_objects;
+	extern FUNCTIONADDR *delta_functions;
+	extern FUNCTIONADDR *post_delta_functions;
+	extern int res_object_count;
+	extern int res_object_current;
+	extern void allocate_deltamode_arrays(void);
+
 	//Zero the accumulator
 	load_values[0][0] = load_values[0][1] = load_values[0][2] = 0.0;
 	load_values[1][0] = load_values[1][1] = load_values[1][2] = 0.0;
@@ -2310,6 +2379,70 @@ TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1)
 		if ((c->pLoad->voltage_factor > 1.06 || c->pLoad->voltage_factor < 0.88) && (ANSI_voltage_check==true))
 			gl_warning("%s - %s:%d is outside of ANSI standards (voltage = %.0f percent of nominal 120/240)", obj->name, obj->oclass->name,obj->id,c->pLoad->voltage_factor*100);
 	}
+
+	//First run allocation - handles overall residential allocation as well
+	if (deltamode_inclusive == true)	//Only call if deltamode is even enabled
+	{
+		//Overall call -- only do this on the first run
+		if (deltamode_registered == false)
+		{
+			if ((res_object_current == -1) && (delta_objects==NULL) && (enable_subsecond_models==true))
+			{
+				//Call the allocation routine
+				allocate_deltamode_arrays();
+			}
+
+			//Check limits of the array
+			if (res_object_current>=res_object_count)
+			{
+				GL_THROW("Too many objects tried to populate deltamode objects array in the residential module!");
+				/*  TROUBLESHOOT
+				While attempting to populate a reference array of deltamode-enabled objects for the residential
+				module, an attempt was made to write beyond the allocated array space.  Please try again.  If the
+				error persists, please submit a bug report and your code via the trac website.
+				*/
+			}
+
+			//Add us into the list
+			delta_objects[res_object_current] = obj;
+
+			//Map up the function for interupdate
+			delta_functions[res_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"interupdate_res_object"));
+
+			//Make sure it worked
+			if (delta_functions[res_object_current] == NULL)
+			{
+				GL_THROW("Failure to map deltamode function for device:%s",obj->name);
+				/*  TROUBLESHOOT
+				Attempts to map up the interupdate function of a specific device failed.  Please try again and ensure
+				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
+				trac website.
+				*/
+			}
+
+			//Map up the function for postupdate
+			post_delta_functions[res_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"postupdate_res_object"));
+
+			//Make sure it worked
+			if (post_delta_functions[res_object_current] == NULL)
+			{
+				GL_THROW("Failure to map post-deltamode function for device:%s",obj->name);
+				/*  TROUBLESHOOT
+				Attempts to map up the postupdate function of a specific device failed.  Please try again and ensure
+				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
+				trac website.
+				*/
+			}
+
+			//Update pointer
+			res_object_current++;
+
+			//Deflag us
+			deltamode_registered = true;
+
+		}//End first timestep runs
+	}//End Deltamode code
+
 	return TS_NEVER;
 }
 
@@ -3069,6 +3202,87 @@ int *house_e::get_enum(OBJECT *obj, char *name)
 }
 
 //////////////////////////////////////////////////////////////////////////
+// IMPLEMENTATION OF DELTA MODE
+//////////////////////////////////////////////////////////////////////////
+//Module-level call
+SIMULATIONMODE house_e::inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
+{
+	OBJECT *obj = OBJECTHDR(this);
+
+	//Right now, houses don't really support deltamode.  This is a half-kludge to get them to play
+	//nice with powerflow.  When they did support it, that code would go here.
+
+	//On the very first run -- re-accumulate everything
+	if ((iteration_count_val == 0) && (delta_time == 0))
+	{
+		//Basically replicate the panel posting from sync, right now
+		// compute line currents and post to meter
+		if (obj->parent != NULL)
+			wlock(obj->parent);
+
+		//Post accumulations up to parent meter/node
+		//Update power
+		pPower[0] += load_values[0][0];
+		pPower[1] += load_values[0][1];
+		pPower[2] += load_values[0][2];
+
+		//Current
+		pLine_I[0] += load_values[1][0];
+		pLine_I[1] += load_values[1][1];
+		pLine_I[2] += load_values[1][2];
+		//Neutral assumed 0, since it was anyways
+
+		//Admittance
+		pShunt[0] += load_values[2][0];
+		pShunt[1] += load_values[2][1];
+		pShunt[2] += load_values[2][2];
+
+		if (obj->parent != NULL)
+			wunlock(obj->parent);
+	}
+	//Default else -- just proceed
+
+	//Always ready to go back to event mode
+	return SM_EVENT;
+}
+
+//Module-level post update call
+STATUS house_e::post_deltaupdate(void)
+{
+	OBJECT *obj = OBJECTHDR(this);
+
+	//Right now, basically undo what was done in interupdate.  When houses properly support
+	//dynamics, we'll revisit how this interaction occurs (get node to zero accumulators or something)
+
+	//Basically replicate the panel posting from sync, right now
+	// compute line currents and post to meter
+	if (obj->parent != NULL)
+		wlock(obj->parent);
+
+	//Post accumulations up to parent meter/node
+	//Update power
+	pPower[0] -= load_values[0][0];
+	pPower[1] -= load_values[0][1];
+	pPower[2] -= load_values[0][2];
+
+	//Current
+	pLine_I[0] -= load_values[1][0];
+	pLine_I[1] -= load_values[1][1];
+	pLine_I[2] -= load_values[1][2];
+	//Neutral assumed 0, since it was anyways
+
+	//Admittance
+	pShunt[0] -= load_values[2][0];
+	pShunt[1] -= load_values[2][1];
+	pShunt[2] -= load_values[2][2];
+
+	if (obj->parent != NULL)
+		wunlock(obj->parent);
+
+	return SUCCESS;	//Always succeeds right now
+}
+
+//////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////
 
@@ -3152,6 +3366,39 @@ EXPORT TIMESTAMP plc_house(OBJECT *obj, TIMESTAMP t0)
 
 	house_e *my = OBJECTDATA(obj,house_e);
 	return my->sync_thermostat(obj->clock, t0);
+}
+
+//Deltamode exposed functions
+EXPORT SIMULATIONMODE interupdate_house_e(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
+{
+	house_e *my = OBJECTDATA(obj,house_e);
+	SIMULATIONMODE status = SM_ERROR;
+	try
+	{
+		status = my->inter_deltaupdate(delta_time,dt,iteration_count_val);
+		return status;
+	}
+	catch (char *msg)
+	{
+		gl_error("interupdate_house_e(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
+		return status;
+	}
+}
+
+EXPORT STATUS postupdate_house_e(OBJECT *obj)
+{
+	house_e *my = OBJECTDATA(obj,house_e);
+	STATUS status = FAILED;
+	try
+	{
+		status = my->post_deltaupdate();
+		return status;
+	}
+	catch (char *msg)
+	{
+		gl_error("postupdate_house_e(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
+		return status;
+	}
 }
 
 /**@}**/

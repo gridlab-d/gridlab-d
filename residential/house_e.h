@@ -62,6 +62,9 @@ typedef enum {
 #define SOUTH		0x0008
 #define WEST		0x0010
 
+EXPORT SIMULATIONMODE interupdate_house_e(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
+EXPORT STATUS postupdate_house_e(OBJECT *obj);
+
 class house_e : public residential_enduse { /*inherits due to HVAC being a load */
 public:
 	object weather; ///< reference to the climate
@@ -425,6 +428,8 @@ private:
 	bool heat_start;
 
 	complex load_values[3][3];	//Power, Current, and impedance (admittance) load accumulators for
+	bool deltamode_inclusive;	//Boolean for deltamode calls - pulled from object flags
+	bool deltamode_registered;	//Boolean for deltamode registration -- basically a "first run" flag
 
 public:
 	int error_flag;
@@ -451,6 +456,9 @@ public:
 
 	CIRCUIT *attach(OBJECT *obj, double limit, int is220=false, enduse *pEnduse=NULL);
 	void attach_implicit_enduses(void);
+
+	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
+	STATUS post_deltaupdate(void);
 
 // access methods
 public:
