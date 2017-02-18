@@ -322,6 +322,12 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 	/* new violation_recorder() */
 	new_violation_recorder(module);
 
+	/* new metrics_collector() */
+	new_metrics_collector(module);
+
+	/* new metrics_collector_writer() */
+	new_metrics_collector_writer(module);
+
 #if 0
 	new_loadshape(module);
 #endif // zero
