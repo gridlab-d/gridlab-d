@@ -252,7 +252,17 @@ int fncs_msg::configure(char *value)
 					json_config_stream << json_config_line << "\n";
 				}
 				json_config_string = json_config_stream.str();
-				json_reader.parse(json_config_string, json_config);
+				json_reader.parse(json_config_string, publish_json_config);
+
+				// allocate the publish gl_property vector here, based on the json_config, renke
+				//vjson_publish_gld_property.clear();
+
+				rv = publish_fncsjson_link();
+				if (rv == 0) {
+					return 0;
+				}
+
+
 			}
 		} else {
 			gl_error("fncs_msg::configure(): failed to open the configuration file %s", configFile.get_string());
@@ -323,46 +333,94 @@ int fncs_msg::init(OBJECT *parent){
 			}
 		}
 	}
+
 	if(defer == true){
 		gl_verbose("fncs_msg::init(): %s is defering initialization.", obj->name);
 		return 2;
 	}
+
+	// resolve all the json_configure gl_properties for publishing json style string, renke
+	// TODO
+	vjson_publish_gld_property.clear();
+	int nsize = vjson_publish_gld_property_name.size();
+	gld_property *gldpro_obj;
+	for (int isize=0 ; isize<nsize ; isize++){
+		gldpro_obj = new gld_property(vjson_publish_gld_property_name[isize].c_str());
+		if ( gldpro_obj->is_valid() ){
+			gl_debug("connection: local variable '%s' resolved OK, object id %d",
+					vjson_publish_gld_property_name[isize].c_str(), gldpro_obj->get_object()->id);
+			vjson_publish_gld_property.push_back(gldpro_obj);
+		}
+		else {
+			gl_error("connection: local variable '%s' cannot be resolved", vjson_publish_gld_property_name[isize].c_str());
+		}
+	}
+
+	for (int isize=0 ; isize<nsize ; isize++){
+		vObj = vjson_publish_gld_property[isize]->get_object();
+		if((vObj->flags & OF_INIT) != OF_INIT){
+			defer = true;
+		}
+	}
+
+	if(defer == true){
+		gl_verbose("fncs_msg::init(): %s is defering initialization.", obj->name);
+		return 2;
+	}
+
+
 	//create zpl file for registering with fncs
-	zplfile << "name = " << simName << endl;
-	zplfile << "time_delta = 1000000000ns" << endl; //TODO: minimum timestep needs to take into account deltamode steps eventually.
-	zplfile << "broker = tcp://" << *hostname << ":" << *port << endl;
-	zplfile << "values" << endl;
-	for(n = 1; n < 14; n++){
-		if( n >= 1 && n <= 13){
-			for(pMap = vmap[n]->getfirst(); pMap != NULL; pMap = pMap->next){
-				if(pMap->dir == DXD_READ){
-					uniqueTopic = true;
-					for(i = 0; i < inVariableTopics.size(); i++){
-						if((*inFunctionTopics)[i].compare(string(pMap->remote_name)) == 0){
-							uniqueTopic = false;
+	if (message_type == MT_GENERAL){
+		zplfile << "name = " << simName << endl;
+		zplfile << "time_delta = 1000000000ns" << endl; //TODO: minimum timestep needs to take into account deltamode steps eventually.
+		zplfile << "broker = tcp://" << *hostname << ":" << *port << endl;
+		zplfile << "values" << endl;
+		for(n = 1; n < 14; n++){
+			if( n >= 1 && n <= 13){
+				for(pMap = vmap[n]->getfirst(); pMap != NULL; pMap = pMap->next){
+					if(pMap->dir == DXD_READ){
+						uniqueTopic = true;
+						for(i = 0; i < inVariableTopics.size(); i++){
+							if((*inFunctionTopics)[i].compare(string(pMap->remote_name)) == 0){
+								uniqueTopic = false;
+							}
 						}
-					}
-					if(uniqueTopic == true){
-						inFunctionTopics->push_back(string(pMap->remote_name));
-						if( pMap->obj->to_string(&defaultBuf[0], 1024 ) < 0){
-							dft = "NA";
-						} else {
-							dft = string(defaultBuf);
+						if(uniqueTopic == true){
+							inFunctionTopics->push_back(string(pMap->remote_name));
+							if( pMap->obj->to_string(&defaultBuf[0], 1024 ) < 0){
+								dft = "NA";
+							} else {
+								dft = string(defaultBuf);
+							}
+							zplfile << "    " << string(pMap->remote_name) << endl;
+							zplfile << "        topic = " << string(pMap->remote_name) << endl;
+							if(dft.empty() != true){
+								zplfile << "        default = " << dft << endl;
+							}
+							if(type.empty() != true){
+								zplfile << "        type = " << type << endl;
+							}
+							zplfile << "        list = false" << endl;
 						}
-						zplfile << "    " << string(pMap->remote_name) << endl;
-						zplfile << "        topic = " << string(pMap->remote_name) << endl;
-						if(dft.empty() != true){
-							zplfile << "        default = " << dft << endl;
-						}
-						if(type.empty() != true){
-							zplfile << "        type = " << type << endl;
-						}
-						zplfile << "        list = false" << endl;
 					}
 				}
 			}
 		}
 	}
+	//for subscribe with the json styple string value, write the zpl file, for data from GridAppD, renke
+	else if (message_type == MT_JSON){
+		zplfile << "name = " << simName << endl;
+		zplfile << "time_delta = 1000000000ns" << endl; //TODO: minimum timestep needs to take into account deltamode steps eventually.
+		zplfile << "broker = tcp://" << *hostname << ":" << *port << endl;
+		zplfile << "values" << endl;
+		zplfile << "    " << "GridAPPD/fncs_input" << endl;
+		zplfile << "        topic = " << "GridAPPD/fncs_input" << endl;
+		zplfile << "        default = " << "{}" << endl;
+		zplfile << "        type = " << "JSON" << endl;
+		zplfile << "        list = false" << endl;
+
+	}
+
 	//get a string vector of the unique function subscriptions
 	for(relay = first_fncsfunction; relay != NULL; relay = relay->next){
 		if(relay->drtn == DXD_READ){
@@ -404,6 +462,18 @@ int fncs_msg::precommit(TIMESTAMP t1){
 	if(result == 0){
 		return result;
 	}
+
+
+	// read precommit json variables from GridAPPD, renke
+	//TODO
+	// put else to check the message type
+	result = subscribeJsonVariables();
+	if(result == 0){
+		return result;
+	}
+	// in the above function, need to consider the gl_property resolve problem??? //renke
+	// yes, throw a warning inside subscribejsonvariables();
+
 	return 1;
 }
 
@@ -437,6 +507,7 @@ TIMESTAMP fncs_msg::plc(TIMESTAMP t1){
 
 TIMESTAMP fncs_msg::sync(TIMESTAMP t1){
 	int result = 0;
+	TIMESTAMP t2;
 	result = publishVariables(vmap[6]);
 	if(result == 0){
 		return TS_INVALID;
@@ -446,7 +517,13 @@ TIMESTAMP fncs_msg::sync(TIMESTAMP t1){
 	if(result == 0){
 		return TS_INVALID;
 	}
-	return TS_NEVER;
+
+	if (message_type == MT_GENERAL)
+		return TS_NEVER;
+	else if (message_type == MT_JSON){
+		t2=t1+1;
+		return t2;
+	}
 }
 
 TIMESTAMP fncs_msg::postsync(TIMESTAMP t1){
@@ -469,7 +546,16 @@ TIMESTAMP fncs_msg::commit(TIMESTAMP t0, TIMESTAMP t1){
 	if(result == 0){
 		return TS_INVALID;
 	}
+
+	// publish json_configure variables, renke
+	// TODO
+	result = publishJsonVariables();
+	if(result == 0){
+		return TS_INVALID;
+	}
+
 	//read commit variables from cache
+	// put a if to check the message_type
 	result = subscribeVariables(vmap[8]);
 	if(result == 0){
 		return TS_INVALID;
@@ -971,6 +1057,229 @@ int fncs_msg::subscribeVariables(varmap *rmap){
 			}
 		}
 	}
+	return 1;
+}
+
+int fncs_msg::publishJsonVariables( )  //Renke add
+{
+	gld_property *gldpro_obj;
+
+	int nvecsize = vjson_publish_gld_property.size();
+	int vecidx = 0;
+
+	//need to clean the Json publish data first!!
+	publish_json_data.clear();
+
+	for (Json::ValueIterator it = publish_json_config.begin(); it != publish_json_config.end(); it++) {
+
+		const string gldObjectName = it.name();
+		const string gldPropertyName;
+		string gldObjpropertyName;
+		string gldObjpropertyNamefromvector;
+
+		int nsize = publish_json_config[gldObjectName].size();
+		for (int isize=0; isize<nsize ; isize++) {
+			gldPropertyName = publish_json_config[gldObjectName][isize];
+			gldObjpropertyName = gldObjectName + ".";
+			gldObjpropertyName = gldObjpropertyName + gldPropertyName;
+			gldObjpropertyNamefromvector = vjson_publish_gld_property_name[vecidx];
+			gldpro_obj = vjson_publish_gld_property[vecidx];
+
+
+			//compare string name to make sure everything consistent
+			if ( gldObjpropertyNamefromvector==gldObjpropertyName) {
+				if (vecidx<nvecsize){
+					//write data to the publish_json_data
+					if ( gldpro_obj->is_double()) {
+						double dtmp = gldpro_obj->get_double();
+						publish_json_data[gldObjectName][gldObjpropertyName]=dtmp;
+						gl_verbose("fncs_msg::publishJsonVariables(): publishing gld_property: %s, value: %f \n",
+									gldObjpropertyName.c_str(), dtmp );
+					}
+					else if ( gldpro_obj->is_integer()) {
+						int itmp = gldpro_obj->get_integer();
+						publish_json_data[gldObjectName][gldObjpropertyName]=itmp;
+						gl_verbose("fncs_msg::publishJsonVariables(): publishing gld_property: %s, value: %d \n",
+									gldObjpropertyName.c_str(), itmp );
+						}
+					else if ( gldpro_obj->is_character()) {
+						char *ctmp = new char;
+						gldpro_obj->getp(ctmp);
+						string stmp = ctmp;
+						publish_json_data[gldObjectName][gldObjpropertyName]=stmp;
+						gl_verbose("fncs_msg::publishJsonVariables(): publishing gld_property: %s, value: %s \n",
+									gldObjpropertyName.c_str(), ctmp );
+					}
+					else if ( gldpro_obj->is_complex()) {
+						//change from complex to string
+						string stmp = "";
+						char *buffer;
+						if( gldpro_obj->to_string(&buffer[0], 1023 ) >= 0){
+
+							stmp = string(buffer);
+						}
+						gl_verbose("fncs_msg::publishJsonVariables(): publishing gld_property: %s, value: %s \n",
+									gldObjpropertyName.c_str(), stmp.c_str() );
+					}
+					else {
+						gl_verbose("fncs_msg::publishJsonVariables(): the type of the gld_property: %s is not correct! \n",
+								gldObjpropertyName.c_str() );
+					}
+
+				}
+				else {
+					gl_verbose("fncs_msg::publishJsonVariables(): publish index not correct: %d <> %d \n", vecidx, nvecsize);
+				}
+
+			}
+			else {
+				gl_verbose("fncs_msg::publishJsonVariables(): property name does not match: %s <> %s \n", gldObjpropertyName.c_str(),
+						gldObjpropertyNamefromvector.c_str());
+
+			}
+			vecidx++;
+
+		}
+
+	} // end of first level loop, ValueIterator it
+
+	// write publish_json_data to a string and publish it through fncs API
+	Json::FastWriter jsonwriter;
+	string pubjsonstr;
+	pubjsonstr = jsonwriter.write(publish_json_data);
+	string skey = "";
+
+	OBJECT *obj = OBJECTHDR(this);
+	char buffer[1024] = "";
+	string simName = string(gl_name(obj, buffer, 1023));
+	skey = simName + "/";
+	skey = skey + "fncs_output";
+
+#if HAVE_FNCS
+	fncs::publish(skey, pubjsonstr);
+#endif
+
+	return 1;
+}
+
+int fncs_msg::subscribeJsonVariables( ) //Renke add
+{
+	// in this function, need to consider the gl_property resolve problem //renke
+	// yes, throw a warning inside subscribejsonvariables(); and return a 0
+	string value = "";
+#if HAVE_FNCS
+	value = fncs::get_value(string("GridAPPD/fncs_input"));
+#endif
+
+	if(value.empty() == false){
+		Json::Reader json_reader;
+		json_reader.parse(value, subscribe_json_data);
+
+		for (Json::ValueIterator it = subscribe_json_data.begin(); it != subscribe_json_data.end(); it++) {
+
+			const string gldObjectName = it.name();
+
+
+			double dtmp;
+			int itmp;
+			string stmp;
+			char * cstmp;
+			//complex ctmp;
+
+			for (Json::ValueIterator it1 = subscribe_json_data[it.name()].begin();
+					it1 != subscribe_json_data[it.name()].end(); it1++){
+
+				const string gldPropertyName = it1.name();
+				string gldObjpropertyName = gldObjectName + ".";
+				gldObjpropertyName = gldObjpropertyName + gldPropertyName;
+				gld_property *gldpro_obj;
+				gldpro_obj = new gld_property(gldObjpropertyName.c_str());
+				if ( gldpro_obj->is_valid() ){
+					gl_debug("connection: local variable '%s' resolved OK, object id %d",
+							gldObjpropertyName.c_str(), gldpro_obj->get_object()->id);
+
+					//get the value of the property
+					Json::Value sub_value = subscribe_json_data[gldObjectName][gldPropertyName];
+
+					//check the type of property and jason value need to be the same
+					if ( sub_value.isInt() && gldpro_obj->is_integer() ){
+						itmp = sub_value.asInt();
+						gldpro_obj->setp(itmp);
+						gl_verbose("fncs_msg::subscribeJsonVariables(): %s is set value with int: %d \n",
+								gldObjpropertyName.c_str(), itmp);
+
+					}
+					else if ( sub_value.isDouble()&& gldpro_obj->is_double()){
+						dtmp = sub_value.asDouble()();
+						gldpro_obj->setp(dtmp);
+						gl_verbose("fncs_msg::subscribeJsonVariables(): %s is set value with double: %f \n",
+								gldObjpropertyName.c_str(), dtmp);
+
+					}
+					else if (sub_value.isString() && gldpro_obj->is_complex()){
+						//gldpro_obj->from_string(sub_value.c_str());
+					}
+					else if (sub_value.isString() && gldpro_obj->is_character()){
+						stmp = sub_value.asString();
+						cstmp = stmp.c_str();
+						gldpro_obj->setp(cstmp);
+						gl_verbose("fncs_msg::subscribeJsonVariables(): %s is set value with double: %s \n",
+								gldObjpropertyName.c_str(), stmp.c_str());
+
+					}
+					else {
+						gl_warning("fncs_msg::fncs json subscribe: fncs type does not match property type: ",
+								gldObjpropertyName.c_str());
+
+					}
+
+				}  // end of check whether gldpro_obj is valid
+				else {
+					gl_error("connection: local variable '%s' cannot be resolved", gldObjpropertyName.c_str());
+				}
+
+			} // end of second level for loop, ValueIterator it1
+
+		} // end of first level for loop, ValueIterator it
+
+	}  // end of if(value.empty() == false)
+
+	return 1;
+}
+
+int fncs_msg::publish_fncsjson_link()  //Renke add
+{
+	// check whether the json configure has content
+	if (publish_json_config.isNull()) {
+		gl_warning(" publish json configure is empty!!! \n");
+		return 1;
+	}
+
+	vjson_publish_gld_property_name.clear();
+
+	for (Json::ValueIterator it = publish_json_config.begin(); it != publish_json_config.end(); it++) {
+
+		const string gldObjectName = it.name();
+		const string gldPropertyName;
+		string gldObjpropertyName;
+
+		int nsize = publish_json_config[gldObjectName].size();
+		for (int isize=0; isize<nsize ; isize++) {
+			gldPropertyName = publish_json_config[gldObjectName][isize];
+			gldObjpropertyName = gldObjectName + ".";
+			gldObjpropertyName = gldObjpropertyName + gldPropertyName;
+			gl_verbose("fncs_msg.configure(): processing json configure publish properties: %s \n", gldObjpropertyName.c_str());
+			vjson_publish_gld_property_name.push_back(gldObjpropertyName);
+
+		}
+
+	}
+
+	return 1;
+}
+
+int fncs_msg::subscribe_fncsjson_link()  //Renke add
+{
 	return 1;
 }
 

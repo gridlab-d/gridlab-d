@@ -108,6 +108,10 @@ public:
 	void incoming_fncs_function(void);
 	int publishVariables(varmap *wmap);
 	int subscribeVariables(varmap *rmap);
+	int publishJsonVariables( );   //Renke add
+	int subscribeJsonVariables( );  //Renke add
+	int publish_fncsjson_link();  //Renke add
+	int subscribe_fncsjson_link();  //Renke add
 	char simulationName[1024];
 	void term(TIMESTAMP t1);
 	int fncs_link(char *value, COMMUNICATIONTYPE comtype);
@@ -122,7 +126,13 @@ public:
 	static FNCSLIST *find(FNCSLIST *list, const char *tag);
 	static char *get(FNCSLIST *list, const char *tag);
 	static void destroy(FNCSLIST *list);
-	Json::Value json_config;
+	Json::Value publish_json_config;  //add by Renke
+	Json::Value publish_json_data;    //add by Renke
+	Json::Value subscribe_json_data;  //add by Renke
+	string publish_json_key; //add by Renke
+	string subscribe_json_key; //add by Renke
+	vector <string> vjson_publish_gld_property_name;
+	vector <gld_property*> vjson_publish_gld_property;
 public:
 	// special variables for GridLAB-D classes
 	static CLASS *oclass;
