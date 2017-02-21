@@ -1,6 +1,7 @@
 #!/bin/bash
 
 CUSTOMFILE="custom.mk"
+CONFIGURE="configure.opt"
 
 function help_syntax ()
 {
@@ -17,6 +18,7 @@ function help ()
 	disable <module>         Disable <module> in $CUSTOMFILE
 	status                   Display status of modules matching <pattern>
 	sync_validate            Add/remove validate.no files according to custom.mk
+	configure [<options>]    Manage ./configure script
 "
 }
 
@@ -108,11 +110,98 @@ function sync_validate ()
 	done
 }
 
+function configure ()
+{
+	if [ $# -eq 0 ]; then
+		if [ -f $CONFIGURE ]; then
+			eval "./configure $(sed 's/$/ /' < $CONFIGURE | tr -d '\n')"
+		else
+			echo "configure.opt not found"
+		fi
+	elif [ $1 == "status" ]; then
+		cat $CONFIGURE
+	elif [ $1 == "silent" ]; then
+		if [ $# -eq 1 ]; then
+			if [ -z "$(grep '^--enable-silent-rules' $CONFIGURE)" ]; then
+				echo "silent rules are disabled"
+			else
+				echo "silent rules are enabled"
+			fi
+		elif [ $2 == "enable" ]; then
+			if [ -z "$(grep '^--enable-silent-rules' $CONFIGURE)" ]; then
+				echo '--enable-silent-rules' >> $CONFIGURE
+			fi
+		elif [ $2 == "disable" ]; then
+			grep -v '^--enable-silent-rules' $CONFIGURE > $CONFIGURE.$$
+			mv $CONFIGURE.$$ $CONFIGURE
+		else
+			echo "error: '$2' is not a valid silent option"
+		fi
+	elif [ $1 == "prefix" ]; then
+		if [ $# -eq 1 ]; then
+			grep '^--prefix=' $CONFIGURE
+		elif [ $2 == "clear" ]; then
+			grep -v '^--prefix=' $CONFIGURE > $CONFIGURE.$$
+			mv $CONFIGURE.$$ $CONFIGURE
+		else
+			grep -v '^--prefix=' $CONFIGURE > $CONFIGURE.$$
+			echo "--prefix=$2" >> $CONFIGURE.$$
+			mv $CONFIGURE.$$ $CONFIGURE
+		fi
+	elif [ $1 == "flags" ]; then
+		if [ $# -eq 1 ]; then
+			grep 'FLAGS=' $CONFIGURE
+		elif [ $2 == "clear" ]; then
+			grep -v 'FLAGS=' $CONFIGURE > $CONFIGURE.$$
+			mv $CONFIGURE.$$ $CONFIGURE
+		else
+			shift
+			grep -v 'FLAGS=' $CONFIGURE > $CONFIGURE.$$
+			echo "'CXXFLAGS=$*'" >> $CONFIGURE.$$
+			echo "'CFLAGS=$*'" >> $CONFIGURE.$$
+			mv $CONFIGURE.$$ $CONFIGURE
+		fi
+	elif [ $1 == "mysql" ]; then
+		if [ $# -eq 1 ]; then
+			grep '^--with-mysql=' $CONFIGURE
+		elif [ $2 == "clear" ]; then
+			grep -v '^--with-mysql=' $CONFIGURE > $CONFIGURE.$$
+			mv $CONFIGURE.$$ $CONFIGURE
+		else
+			grep -v '^--with-mysql=' $CONFIGURE > $CONFIGURE.$$
+			echo "--with-mysql=$2" >> $CONFIGURE.$$
+			mv $CONFIGURE.$$ $CONFIGURE
+		fi
+	elif [ $1 == "matlab" ]; then
+		if [ $# -eq 1 ]; then
+			grep '^--with-matlab=' $CONFIGURE
+		elif [ $2 == "clear" ]; then
+			grep -v '^--with-matlab=' $CONFIGURE > $CONFIGURE.$$
+			mv $CONFIGURE.$$ $CONFIGURE
+		else
+			grep -v '^--with-matlab=' $CONFIGURE > $CONFIGURE.$$
+			echo "--with-matlab=$2" >> $CONFIGURE.$$
+			mv $CONFIGURE.$$ $CONFIGURE
+		fi
+	elif [ $1 == "help" ]; then
+		echo "Configure syntax:"
+		echo "  configure                           Run configure script"
+		echo "  configure status                    Show configuration options"
+		echo "  configure silent [enable|disable]   Enable/disable silent rules"
+		echo "  configure prefix [<path>|clear]     Set/clear prefix path"
+		echo "  configure flags [<flags>|clear]     Set/clear build CXXFLAGS and CFLAGS"
+		echo "  configure mysql [<path>|clear]      Set/clear mysql path"
+		echo "  configure matlab [<path>|clear]     Set/clear matlab path"    
+	else 
+		echo "configure syntax error"
+	fi
+}
+
 if [ $# -eq 0 ]; then
 	help_syntax
 else
 	case $1 in
-	(help|add|delete|enable|disable|status|sync_validate)
+	(help|add|delete|enable|disable|status|sync_validate|configure)
 		$*
 		;;
 	(*)
