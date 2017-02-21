@@ -184,6 +184,12 @@ int metrics_collector::init(OBJECT *parent){
 			No link objects were found in your .glm file. In this way, there is no losses calculated.
 			*/
 		}
+		if (parent->name != NULL) {
+			metrics_Output["Parent_name"] = parent->name;
+		}
+		else {
+			metrics_Output["Parent_name"] = "Swing Bus Meter";
+		}
 	}
 
 	// Check valid metrics_collector output interval

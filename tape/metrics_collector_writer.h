@@ -55,6 +55,11 @@ private:
 	Json::Value metrics_writer_inverters;	// Final output dictionary for inverters
 	Json::Value metrics_writer_feeder_information;	// Final output dictionary for feeder_information
 
+	Json::Value ary_triplex_meters;  // array storage for triplex_meter (billing meter) metrics
+	Json::Value ary_houses;          // array storage for house (and water heater) metrics
+	Json::Value ary_inverters;       // array storage for inverter metrics
+	Json::Value ary_feeders;         // array storage for feeder information metrics
+
 	char256 filename_triplex_meter;
 	char256 filename_inverter;
 	char256 filename_house;
