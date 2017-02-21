@@ -953,6 +953,7 @@ static int clearmap(int argc, char *argv[])
 static int pstatus(int argc, char *argv[])
 {
 	sched_init(1);
+	global_autoclean = 0;
 	sched_print(0);
 	return 0;
 }
@@ -978,6 +979,7 @@ static int pkill(int argc, char *argv[])
 static int plist(int argc, char *argv[])
 {
 	sched_init(1);
+	global_autoclean = 0;
 	sched_print(0);
 	return 0;
 }
