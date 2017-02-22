@@ -1579,13 +1579,25 @@ pid_t sched_get_procid()
 void sched_lock(unsigned short proc)
 {
 	if ( process_map )
+	{
+		output_debug("module.c:sched_lock(): enter lock[%d]=%d", proc, process_map[proc].lock);
 		wlock(&process_map[proc].lock);
+		output_debug("module.c:sched_lock(): exit  lock[%d]=%d", proc, process_map[proc].lock);
+	}
+	else
+		output_warning("module.c:sched_lock(): process_map does not exist");
 }
 
 void sched_unlock(unsigned short proc)
 {
 	if ( process_map )
+	{
+		output_debug("module.c:sched_unlock(): enter lock[%d]=%d", proc, process_map[proc].lock);
 		wunlock(&process_map[proc].lock);
+		output_debug("module.c:sched_unlock(): exit  lock[%d]=%d", proc, process_map[proc].lock);
+	}
+	else
+		output_warning("module.c:sched_lock(): process_map does not exist");
 }
 
 /** update the process info **/
@@ -1608,7 +1620,7 @@ int sched_isdefunct(pid_t pid)
 {
 	/* signal 0 only checks process existence */
 	if(pid != 0)
-		return kill(pid,0)==-1;
+		return kill(pid,0)==-1 && errno!=EPERM;
 	else
 		return 0;
 }
@@ -1623,6 +1635,7 @@ void sched_finish(void)
 	{
 		int n = my_proc->list[t];
 		sched_lock(n);
+		output_debug("module.c:sched_finish(): process_map[n].state <- DONE", n);
 		process_map[n].status = MLS_DONE;
 		sched_unlock(n);
 	}
@@ -1640,6 +1653,7 @@ void sched_clear(void)
 			if (sched_isdefunct(process_map[n].pid) )
 			{
 				sched_lock(n);
+				output_debug("module.c:sched_clear(): process_map[n].pid <- 0", n);
 				process_map[n].pid = 0;
 				sched_unlock(n);
 			}
@@ -1865,6 +1879,8 @@ MYPROCINFO *sched_allocate_procs(unsigned int n_threads, pid_t pid)
 	my_proc = malloc(sizeof(MYPROCINFO));
 	my_proc->list = malloc(sizeof(unsigned short)*n_threads);
 	my_proc->n_procs = n_threads;
+	if ( n_threads==0 )
+		output_message("module.c:sched_allocate_procs(): n_threads is zero");
 	for ( t=0 ; t<(int)n_threads ; t++ )
 	{
 		int n;
@@ -1882,6 +1898,7 @@ MYPROCINFO *sched_allocate_procs(unsigned int n_threads, pid_t pid)
 		}
 		my_proc->list[t] = n;
 		process_map[n].pid = pid;
+		output_debug("module.c/sched_allocate_procs(): assigned processor %d to pid %d\n", n, pid);
 		strncpy(process_map[n].model,global_modelname,sizeof(process_map[n].model)-1);
 		process_map[n].start = time(NULL);
 		sched_unlock(n);
@@ -1984,12 +2001,12 @@ void sched_init(int readonly)
 		return;
 	}
 
+	/* readonly means don't record this job */
+	if ( readonly ) return;
+
 	/* automatic cleanup of defunct jobs */
 	if ( global_autoclean )
 		sched_clear();
-
-	/* readonly means don't record this job */
-	if ( readonly ) return;
 
 	/* find an available processor */
 	my_proc = sched_allocate_procs(global_threadcount,pid);
@@ -2019,6 +2036,7 @@ void sched_init(int readonly)
 	pid_t pid = getpid();
 	int shmid;
 	int n;
+	output_debug("shmkey = %d", (int)shmkey);
 
 	/* get total number of processors */
 #ifndef DYN_PROC_AFFINITY
