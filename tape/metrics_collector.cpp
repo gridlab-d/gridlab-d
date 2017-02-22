@@ -427,6 +427,7 @@ int metrics_collector::init(OBJECT *parent){
 
 	// Initialize tracking variables
 	curr_index = 0;
+    last_index = 0;
 
 	// Update time variables
 	last_write = gl_globalclock;
@@ -439,37 +440,42 @@ TIMESTAMP metrics_collector::postsync(TIMESTAMP t0, TIMESTAMP t1){
 
 	// recalculate next_time, since we know commit() will fire
 	if(next_write <= t1){
-		interval_write = true;
-		last_write = t1;
-		next_write = t1 + interval_length;
+		interval_write = true;  // actually done below, in commit
+//		last_write = t1;
+//		next_write = t1 + interval_length;
 	}
 
 //	// Return to the next write interval
 //	return next_write;
 	// Force to return to 1 sec later
-	return t1+1;
+	return t1+1;  // TODO: this does not fire commit 1s later, if minstep is 60s
 }
 
 int metrics_collector::commit(TIMESTAMP t1){
 	OBJECT *obj = OBJECTHDR(this);
 
+    // read the parameters for each time step
+    if(0 == read_line(obj)){
+        gl_error("metrics_collector::commit(): error when reading the values");
+        return 0;
+    }
+
 	// if periodic interval, check for write
 	if(interval_write){
-		if (curr_index != 0) {
-			gl_error("metrics_collector::commit(): error when trying to write accumulated output during one interval, however curr_index indicates values are not completely obtained");
-			return 0;
-		}
+        last_write = t1;
+        next_write = t1 + interval_length;
+        // obsolete because we don't wrap curr_index in the call to read_line
+        // TODO - replace with a different check
+//		if (curr_index != 0) {
+//			gl_error("metrics_collector::commit(): error when trying to write accumulated output during one interval, however curr_index indicates values are not completely obtained");
+//			return 0;
+//		}
 		if(0 == write_line(t1, obj)){
 			gl_error("metrics_collector::commit(): error when writing the values to JSON format");
 			return 0;
 		}
 		interval_write = false;
-	}
-
-	// read the parameters for each time step
-	if(0 == read_line(obj)){
-		gl_error("metrics_collector::commit(): error when reading the values");
-		return 0;
+        last_index = 0;  // TODO - we need to have array[0] = array[299], or circular queue
 	}
 
 	return 1;
@@ -482,6 +488,7 @@ int metrics_collector::read_line(OBJECT *obj){
 
 	// synch curr_index to the simulator time
 	curr_index = gl_globalclock - last_write;
+    if (curr_index > last_index) --curr_index;
 
 	// Check curr_index value
 	if (curr_index < 0 || curr_index >= interval_length) {
