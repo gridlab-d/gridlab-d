@@ -38,9 +38,6 @@ public:
 
 public:
 	double interval_length_dbl;			//Metrics output interval length
-	TIMESTAMP next_time;
-	TIMESTAMP dt;
-	TIMESTAMP last_t;
 
 	friend class metrics_collector_writer;
 
@@ -49,6 +46,7 @@ private:
 	int read_line(OBJECT *obj);
 	int write_line(TIMESTAMP, OBJECT *obj);
 
+	void interpolate(double array[], int idx1, int idx2, double val2);
 	double findMax(double array[], int size);
 	double findMin(double array[], int size);
 	double findAverage(double array[], int size);
@@ -59,14 +57,8 @@ private:
 	FILE *rec_file;
 	FINDLIST *items;
 	PROPERTY *prop_ptr;
-	int obj_count;
-	int write_count;
-	TIMESTAMP next_write;
-	TIMESTAMP last_write;
-	TIMESTAMP last_flush;
-	TIMESTAMP write_interval;
-	TIMESTAMP flush_interval;
-	int32 write_ct;
+	TIMESTAMP next_write; // on global clock, different by interval_length
+	TIMESTAMP last_write; // touched only in init and postsync
 	TAPESTATUS tape_status; // TS_INIT/OPEN/DONE/ERROR
 	char *prev_line_buffer;
 	char *line_buffer;
@@ -103,12 +95,10 @@ private:
 	double *real_power_loss_array;		//array storing real power losses for the whole feeder
 	double *reactive_power_loss_array;		//array storing real power losses for the whole feeder
 
-	int interval_length;			//integer averaging length (seconds)
+	int interval_length;	  // integer averaging length (seconds); also size of arrays
 
-	TIMESTAMP perform_average_time;	//Timestamp to perform the average
-	TIMESTAMP last_update_time;		//Last time array updated
-	int curr_avg_pos_index;			//Index for current position of averaging array
-
+	int curr_index;	// Index [0..interval_length-1] for current position of averaging array
+	int last_index; // value of curr_index at the last read_line call; may need to interpolate
 };
 
 #endif // C++

@@ -424,7 +424,7 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 			string key = metrics_Output_temp["Parent_name"].asString();
 			inverter_objects[key] = ary_inverters;
 		} // End of recording metrics_collector data attached to one inverter
-		else if (strcmp(temp_metrics_collector->parent_string, "meter") == 0) {
+		else if (strcmp(temp_metrics_collector->parent_string, "swingbus") == 0) {
 			metrics_Output_temp = temp_metrics_collector->metrics_Output;
 			int idx = 0;
 			ary_feeders[idx++] = metrics_Output_temp["min_feeder_real_power"];

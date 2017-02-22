@@ -60,9 +60,7 @@ int metrics_collector::create(){
 
 	// Interval related
 	interval_length = -1;
-	perform_average_time = 0;
-	last_update_time = 0;
-	curr_avg_pos_index = 0;
+	curr_index = last_index = 0;
 	interval_length_dbl=-1.0;
 
 
@@ -76,12 +74,17 @@ int metrics_collector::init(OBJECT *parent){
 
 	int temp = strcmp(parent->oclass->name,"triplex_meter") != 0;
 	// Find parent, if not defined, or if the parent is not a triplex_meter/house/inverter, throw an exception
-	if	((parent != NULL && strcmp(parent->oclass->name,"triplex_meter") != 0) && (parent != NULL && strcmp(parent->oclass->name,"house") != 0) && (parent != NULL && strcmp(parent->oclass->name,"waterheater") != 0) && (parent != NULL && strcmp(parent->oclass->name,"inverter") != 0) && (parent != NULL && strcmp(parent->oclass->name,"meter") != 0))
+	if	((parent != NULL && strcmp(parent->oclass->name,"triplex_meter") != 0)
+			  && (parent != NULL && strcmp(parent->oclass->name,"house") != 0) 
+			 && (parent != NULL && strcmp(parent->oclass->name,"waterheater") != 0) 
+			 && (parent != NULL && strcmp(parent->oclass->name,"inverter") != 0) 
+			 && (parent != NULL && strcmp(parent->oclass->name,"substation") != 0) 
+			 && (parent != NULL && strcmp(parent->oclass->name,"meter") != 0))
 	{
-		gl_error("metrics_collector must have a triplex meter or house or waterheater or inverter or Swing-bus meter as it's parent");
+		gl_error("metrics_collector must have a triplex meter, house, waterheater, inverter, substation or swing-bus as its parent");
 		/*  TROUBLESHOOT
 		Check the parent object of the metrics_collector. The metrics_collector is only able to be childed via a
-		triplex meter or a house or a waterheater or an inverter or a swing-bus meter when connecting into powerflow systems.
+		triplex meter or a house or a waterheater or an inverter or a swing-bus when connecting into powerflow systems.
 		*/
 		return 0;
 	}
@@ -151,9 +154,10 @@ int metrics_collector::init(OBJECT *parent){
 		}
 	}
 	// If its parent is a meter - this is only allowed for the Swing-bus type meter
-	else if (parent != NULL && gl_object_isa(parent,"meter"))
+	// TODO: we need to support non-triplex billing meters as well
+	else if (parent != NULL && (gl_object_isa(parent,"meter") || gl_object_isa(parent,"substation")))
 	{
-		parent_string = "meter";
+		parent_string = "swingbus";
 
 		// Obtain the parent data
 		//Map the flag
@@ -171,11 +175,11 @@ int metrics_collector::init(OBJECT *parent){
 		enumeration *meter_bustype = (enumeration*)GETADDR(parent,pval);
 		// Check if the parent meter is a swing bus (2) or not
 		if (*meter_bustype != 2) {
-			gl_error("If a metrics_collector is attached to a meter, it must be a SWING bus meter");
+			gl_error("If a metrics_collector is attached to a meter or substation, it must be a SWING bus");
 			return 0;
 		}
 
-		// In this work, only when a metrics_collector is attached to a swing-bus meter, the feeder losses are recorded
+		// In this work, only when a metrics_collector is attached to a swing-bus, the feeder losses are recorded
 		// Find all the link objects for collecting loss values
 		link_objects = gl_find_objects(FL_NEW,FT_MODULE,SAME,"powerflow",FT_END); //find all link objects
 		if(link_objects == NULL){
@@ -188,7 +192,7 @@ int metrics_collector::init(OBJECT *parent){
 			metrics_Output["Parent_name"] = parent->name;
 		}
 		else {
-			metrics_Output["Parent_name"] = "Swing Bus Meter";
+			metrics_Output["Parent_name"] = "Swing Bus Metrics";
 		}
 	}
 
@@ -265,13 +269,13 @@ int metrics_collector::init(OBJECT *parent){
 		}
 
 		// Initialize the array
-		for (curr_avg_pos_index=0; curr_avg_pos_index<interval_length; curr_avg_pos_index++)
+		for (curr_index=0; curr_index<interval_length; curr_index++)
 		{
-			real_power_array[curr_avg_pos_index] = 0.0;
-			reactive_power_array[curr_avg_pos_index] = 0.0;
-			voltage_mag_array[curr_avg_pos_index] = 0.0;
-			voltage_average_mag_array[curr_avg_pos_index] = 0.0;
-			voltage_unbalance_array[curr_avg_pos_index] = 0.0;
+			real_power_array[curr_index] = 0.0;
+			reactive_power_array[curr_index] = 0.0;
+			voltage_mag_array[curr_index] = 0.0;
+			voltage_average_mag_array[curr_index] = 0.0;
+			voltage_unbalance_array[curr_index] = 0.0;
 		}
 
 	}
@@ -314,11 +318,11 @@ int metrics_collector::init(OBJECT *parent){
 		}
 
 		// Initialize the array
-		for (curr_avg_pos_index=0; curr_avg_pos_index<interval_length; curr_avg_pos_index++)
+		for (curr_index=0; curr_index<interval_length; curr_index++)
 		{
-			total_load_array[curr_avg_pos_index] = 0.0;
-			hvac_load_array[curr_avg_pos_index] = 0.0;
-			air_temperature_array[curr_avg_pos_index] = 0.0;
+			total_load_array[curr_index] = 0.0;
+			hvac_load_array[curr_index] = 0.0;
+			air_temperature_array[curr_index] = 0.0;
 		}
 	}
 	// If parent is waterheater
@@ -362,7 +366,7 @@ int metrics_collector::init(OBJECT *parent){
 		}
 	}
 	// If parent is meter
-	else if (strcmp(parent_string, "meter") == 0) {
+	else if (strcmp(parent_string, "swingbus") == 0) {
 		// Allocate real power array
 		real_power_array = (double *)gl_malloc(interval_length*sizeof(double));
 		// Check
@@ -412,7 +416,7 @@ int metrics_collector::init(OBJECT *parent){
 	}
 	// else not possible come to this step
 	else {
-		gl_error("metrics_collector must have a triplex meter or house or waterheater or inverter or swing-bus meter as it's parent");
+		gl_error("metrics_collector must have a triplex meter or house or waterheater or inverter or swing-bus as it's parent");
 		/*  TROUBLESHOOT
 		Check the parent object of the metrics_collector. The metrics_collector is only able to be childed via a
 		triplex meter or a house or an inverter when connecting into powerflow systems.
@@ -422,7 +426,7 @@ int metrics_collector::init(OBJECT *parent){
 
 
 	// Initialize tracking variables
-	curr_avg_pos_index = 0;
+	curr_index = 0;
 
 	// Update time variables
 	last_write = gl_globalclock;
@@ -451,8 +455,8 @@ int metrics_collector::commit(TIMESTAMP t1){
 
 	// if periodic interval, check for write
 	if(interval_write){
-		if (curr_avg_pos_index != 0) {
-			gl_error("metrics_collector::commit(): error when trying to write accumulated output during one interval, however curr_avg_pos_index indicates values are not completely obtained");
+		if (curr_index != 0) {
+			gl_error("metrics_collector::commit(): error when trying to write accumulated output during one interval, however curr_index indicates values are not completely obtained");
 			return 0;
 		}
 		if(0 == write_line(t1, obj)){
@@ -476,9 +480,12 @@ int metrics_collector::commit(TIMESTAMP t1){
  **/
 int metrics_collector::read_line(OBJECT *obj){
 
-	// Check curr_avg_pos_index value
-	if (curr_avg_pos_index < 0 || curr_avg_pos_index >= interval_length) {
-		gl_error("metrics_collector::curr_avg_pos_index value exceeds the limit");
+	// synch curr_index to the simulator time
+	curr_index = gl_globalclock - last_write;
+
+	// Check curr_index value
+	if (curr_index < 0 || curr_index >= interval_length) {
+		gl_error("metrics_collector::curr_index value exceeds the limit");
 		return 0;
 	}
 
@@ -487,9 +494,9 @@ int metrics_collector::read_line(OBJECT *obj){
 
 		// Get power values
 		double realPower = *gl_get_double_by_name(obj->parent, "measured_real_power");
-		real_power_array[curr_avg_pos_index] = realPower;
 		double reactivePower = *gl_get_double_by_name(obj->parent, "measured_reactive_power");
-		reactive_power_array[curr_avg_pos_index] = reactivePower;
+		interpolate (real_power_array, last_index, curr_index, realPower);
+		interpolate (reactive_power_array, last_index, curr_index, reactivePower);
 
 		// Get bill value
 		price_parent = *gl_get_double_by_name(obj->parent, "price");
@@ -499,70 +506,45 @@ int metrics_collector::read_line(OBJECT *obj){
 		double v2 = *gl_get_double_by_name(obj->parent, "voltage_2"); // property of triplex_node: bus voltage, phase 2 to ground
 		double v12 = *gl_get_double_by_name(obj->parent, "voltage_12"); // property of triplex_node: bus voltage, phase 1 to 2
 
-		voltage_mag_array[curr_avg_pos_index] = fabs(v12);
-		voltage_average_mag_array[curr_avg_pos_index] = fabs(v12/2);
-		voltage_unbalance_array[curr_avg_pos_index] = fabs((v1 - v2)/(v12/2));
-
-		// Update index value
-		curr_avg_pos_index++;
-		if (curr_avg_pos_index == interval_length) {
-			curr_avg_pos_index = 0; // Reset index to 0 for the next interval records
-		}
+		interpolate (voltage_mag_array, last_index, curr_index, fabs(v12));
+		interpolate (voltage_average_mag_array, last_index, curr_index, fabs(v12/2));
+		interpolate (voltage_unbalance_array, last_index, curr_index, fabs((v1 - v2)/(v12/2)));
 	}
 	// If parent is house
 	else if (strcmp(parent_string, "house") == 0) {
 		// Get load values
 		double totalload = *gl_get_double_by_name(obj->parent, "total_load");
-		total_load_array[curr_avg_pos_index] = totalload;
+		interpolate (total_load_array, last_index, curr_index, totalload);
 		double hvacload = *gl_get_double_by_name(obj->parent, "hvac_load");
-		hvac_load_array[curr_avg_pos_index] = hvacload;
+		interpolate (hvac_load_array, last_index, curr_index, hvacload);
 		// Get air temperature values
 		double airTemperature = *gl_get_double_by_name(obj->parent, "air_temperature");
-		air_temperature_array[curr_avg_pos_index] = airTemperature;
-
-		// Update index value
-		curr_avg_pos_index++;
-		if (curr_avg_pos_index == interval_length) {
-			curr_avg_pos_index = 0; // Reset index to 0 for the next interval records
-		}
+		interpolate (air_temperature_array, last_index, curr_index, airTemperature);
 	}
 	// If parent is waterheater
 	else if (strcmp(parent_string, "waterheater") == 0) {
 		// Get load values
 		double actualload = *gl_get_double_by_name(obj->parent, "actual_load");
-		actual_load_array[curr_avg_pos_index] = actualload;
-		// Update index value
-		curr_avg_pos_index++;
-		if (curr_avg_pos_index == interval_length) {
-			curr_avg_pos_index = 0; // Reset index to 0 for the next interval records
-		}
-
+		interpolate (actual_load_array, last_index, curr_index, actualload);
 	}
 	// If parent is inverter
 	else if (strcmp(parent_string, "inverter") == 0) {
 		// Get VA_Out values
 		complex VAOut = *gl_get_complex_by_name(obj->parent, "VA_Out");
-		real_power_array[curr_avg_pos_index] = (double)VAOut.Re();
-		reactive_power_array[curr_avg_pos_index] = (double)VAOut.Im();
-		// Update index value
-		curr_avg_pos_index++;
-		if (curr_avg_pos_index == interval_length) {
-			curr_avg_pos_index = 0; // Reset index to 0 for the next interval records
-		}
-
+		interpolate (real_power_array, last_index, curr_index, (double)VAOut.Re());
+		interpolate (reactive_power_array, last_index, curr_index, (double)VAOut.Im());
 	}
 	// If parent is meter
-	else if (strcmp(parent_string, "meter") == 0) {
+	else if (strcmp(parent_string, "swingbus") == 0) {
 		// Get VAfeeder values
-		complex VAfeeder = *gl_get_complex_by_name(obj->parent, "measured_power");
-		real_power_array[curr_avg_pos_index] = (double)VAfeeder.Re();
-		reactive_power_array[curr_avg_pos_index] = (double)VAfeeder.Im();
-		// Update index value
-		curr_avg_pos_index++;
-		if (curr_avg_pos_index == interval_length) {
-			curr_avg_pos_index = 0; // Reset index to 0 for the next interval records
+		complex VAfeeder;
+		if (gl_object_isa(obj->parent,"substation")) {
+			VAfeeder = *gl_get_complex_by_name(obj->parent, "distribution_load");
+		} else {
+			VAfeeder = *gl_get_complex_by_name(obj->parent, "measured_power");
 		}
-
+		interpolate (real_power_array, last_index, curr_index, (double)VAfeeder.Re());
+		interpolate (reactive_power_array, last_index, curr_index, (double)VAfeeder.Im());
 		// Get feeder loss values
 		// Losses calculation
 		int index = 0;
@@ -599,20 +581,25 @@ int metrics_collector::read_line(OBJECT *obj){
 			index++;
 		}
 		// Put the loss value into the array
-		real_power_loss_array[curr_avg_pos_index] = (double)lossesSum.Re();
-		reactive_power_loss_array[curr_avg_pos_index] = (double)lossesSum.Im();
-
+		interpolate (real_power_loss_array, last_index, curr_index, (double)lossesSum.Re());
+		interpolate (reactive_power_loss_array, last_index, curr_index, (double)lossesSum.Im());
 	}
 	// else not possible come to this step
 	else {
-		gl_error("metrics_collector must have a triplex meter or house or waterheater or inverter or swing-bus meter as it's parent");
+		gl_error("metrics_collector must have a triplex meter or house or waterheater or inverter or swing-bus as it's parent");
 		/*  TROUBLESHOOT
 		Check the parent object of the metrics_collector. The metrics_collector is only able to be childed via a
-		triplex meter or a house or a waterheater or an inverter or a swing-bus meter when connecting into powerflow systems.
+		triplex meter or a house or a waterheater or an inverter or a swing-bus when connecting into powerflow systems.
 		*/
 		return 0;
 	}
 
+
+	// Update index value
+	last_index = curr_index;
+	if (curr_index == interval_length) {
+		curr_index = 0; // Reset index to 0 for the next interval records
+	}
 	return 1;
 }
 
@@ -740,7 +727,7 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 
 	}
 	// If parent is meter
-	else if (strcmp(parent_string, "meter") == 0) {
+	else if (strcmp(parent_string, "swingbus") == 0) {
 		// Rearranging the arrays of data, and put into the dictionary
 		// real power data
 		metrics_Output["min_feeder_real_power"] = findMin(real_power_array, interval_length);
@@ -769,6 +756,21 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 	}
 
 	return 1;
+}
+
+void metrics_collector::interpolate(double array[], int idx1, int idx2, double val2)
+{
+	array[idx2] = val2;
+	int steps = idx2 - idx1;
+	if (steps > 1) {
+		double val1 = array[idx1];
+		double dVal = (val2 - val1) / steps;
+		for (int i = idx1 + 1; i < idx2; i++)
+		{
+			val1 += dVal;
+			array[i] = val1;
+		}
+	}
 }
 
 double metrics_collector::findMax(double array[], int length) {
