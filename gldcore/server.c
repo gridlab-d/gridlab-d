@@ -1861,7 +1861,7 @@ void *http_response(void *ptr)
 			}
 			break;
 		}
-
+		break;
 	}
 	http_close(http);
 	IN_MYCONTEXT output_verbose("socket %d closed",http->s);
