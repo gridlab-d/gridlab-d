@@ -318,12 +318,12 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 			ary_triplex_meters[idx++] = metrics_Output_temp["reactive_energy"];
 			// TODO - what about the fixed charge?
 			ary_triplex_meters[idx++] = metrics_Output_temp["real_energy"].asDouble() * temp_metrics_collector->price_parent / 1000; // Price unit given is $/kWh
-			ary_triplex_meters[idx++] = metrics_Output_temp["min_voltage"];
-			ary_triplex_meters[idx++] = metrics_Output_temp["max_voltage"];
-			ary_triplex_meters[idx++] = metrics_Output_temp["avg_voltage"];
 			ary_triplex_meters[idx++] = metrics_Output_temp["min_voltage_average"];
 			ary_triplex_meters[idx++] = metrics_Output_temp["max_voltage_average"];
 			ary_triplex_meters[idx++] = metrics_Output_temp["avg_voltage_average"];
+			ary_triplex_meters[idx++] = metrics_Output_temp["min_voltage"];
+			ary_triplex_meters[idx++] = metrics_Output_temp["max_voltage"];
+			ary_triplex_meters[idx++] = metrics_Output_temp["avg_voltage"];
 			ary_triplex_meters[idx++] = metrics_Output_temp["min_voltage_unbalance"];
 			ary_triplex_meters[idx++] = metrics_Output_temp["max_voltage_unbalance"];
 			ary_triplex_meters[idx++] = metrics_Output_temp["avg_voltage_unbalance"];
