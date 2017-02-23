@@ -706,6 +706,21 @@ char *global_now(char *buffer, int size)
 		return NULL;
 	}
 }
+char *global_today(char *buffer, int size)
+{
+	if ( size>32 )
+	{
+		time_t now = time(NULL);
+		struct tm *tmbuf = gmtime(&now);
+		strftime(buffer,size,"%Y-%m-%d %H:%M:%S UTC",tmbuf);
+		return buffer;
+	}
+	else
+	{
+		output_error("global_today(...): buffer too small");
+		return NULL;
+	}
+}
 char *global_true(char *buffer, int size)
 {
 	if ( size>1 )
@@ -992,6 +1007,7 @@ char *global_getvar(char *name, char *buffer, int size)
 	} map[] = {
 		{"GUID",global_guid},
 		{"NOW",global_now},
+		{"TODAY",global_today},
 		{"RUN",global_run},
 #if defined WIN32
 		{"WINDOWS",global_true},
