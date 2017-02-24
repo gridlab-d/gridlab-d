@@ -1,0 +1,18 @@
+module transactive;
+#set suppress_repeat_messages=0
+object house {
+	UA 500 Btu/degF/h;
+	CA 1000 Btu/degF;
+	UM 5000 Btu/degF/h;
+	CM 10000 Btu/degF;
+	QH 18000 Btu/h;
+	QC 36000 Btu/h;
+	QI 18000 Btu/h;
+	TA 72 degF;
+	
+	name house_1;
+	object agent {
+		name agent_1;
+		sell "house_1: 10kW @ 20$/MWh at 1478291100s for 300s";
+	};
+}
