@@ -19,8 +19,10 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
-#include <json/json.h>
+//#include <json/json.h>
+#include "../third_party/jsonCpp/json/json.h"
 using namespace std;
+//using namespace Json;
 
 class fncs_msg;
 
@@ -50,7 +52,8 @@ typedef enum {
 
 typedef enum {
 	MT_GENERAL,
-	MT_JSON
+	MT_JSON,
+	MT_JSON_SB
 } MESSAGETYPE;
 
 typedef struct _fncslist {

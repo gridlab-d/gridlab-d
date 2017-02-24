@@ -1,7 +1,8 @@
 pkglib_LTLIBRARIES += connection/connection.la
 
 connection_connection_la_CPPFLAGS =
-connection_connection_la_CPPFLAGS += -I$(top_srcdir)/third_party/superLU_MT
+#connection_connection_la_CPPFLAGS += -I$(top_srcdir)/third_party/superLU_MT
+#connection_connection_la_CPPFLAGS += -I$(top_srcdir)/third_party/jsonCpp
 connection_connection_la_CPPFLAGS += $(AM_CPPFLAGS)
 if HAVE_FNCS
 connection_connection_la_CPPFLAGS += $(FNCS_CPPFLAGS)
@@ -53,3 +54,6 @@ connection_connection_la_SOURCES += connection/varmap.cpp
 connection_connection_la_SOURCES += connection/varmap.h
 connection_connection_la_SOURCES += connection/init.cpp
 connection_connection_la_SOURCES += connection/main.cpp
+connection_connection_la_SOURCES += third_party/jsonCpp/jsoncpp.cpp
+connection_connection_la_SOURCES += third_party/jsonCpp/json/json.h
+connection_connection_la_SOURCES += third_party/jsonCpp/json/json-forwards.h 

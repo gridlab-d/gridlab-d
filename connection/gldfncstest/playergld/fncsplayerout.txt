@@ -1,0 +1,12 @@
+#nanoseconds	topic	value
+1000000000	MatlabSim/busVoltage	76786-8545.48j
+2000000000	MatlabSim/busVoltage	77786-8545.48j
+3000000000	MatlabSim/busVoltage	78786-8545.48j
+4000000000	MatlabSim/busVoltage	79786-8545.48j
+5000000000	MatlabSim/busVoltage	80789-8549.48j
+6000000000	MatlabSim/busVoltage	79786-8545.48j
+7000000000	MatlabSim/busVoltage	78786-8545.48j
+8000000000	MatlabSim/busVoltage	77786-8545.48j
+9000000000	MatlabSim/busVoltage	76786-8545.48j
+10000000000	MatlabSim/busVoltage	77786-8545.48j
+11000000000	MatlabSim/busVoltage	79786-8545.48j
