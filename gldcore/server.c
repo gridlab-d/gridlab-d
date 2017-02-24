@@ -495,9 +495,11 @@ static void http_mime(HTTPCNX *http, char *path)
 	} map[] = {
 		{".png","image/png"},
 		{".js","text/javascript"},
-		{".kml","text/kml"},
+		{".kml","application/vnd.google-earth.kml+xml"},
 		{".htm","text/html"},
 		{".ico","image/x-icon"},
+		{".txt","text/plain"},
+		{".log","text/plain"},
 	};
 	int n;
 	for ( n=0 ; n<sizeof(map)/sizeof(map[0]) ; n++ )
