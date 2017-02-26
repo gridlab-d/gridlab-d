@@ -72,43 +72,63 @@ int metrics_collector::init(OBJECT *parent){
 	OBJECT *obj = OBJECTHDR(this);
 	Json::Value paramters;
 
-	int temp = strcmp(parent->oclass->name,"triplex_meter") != 0;
-	// Find parent, if not defined, or if the parent is not a triplex_meter/house/inverter, throw an exception
-	if	((parent != NULL && strcmp(parent->oclass->name,"triplex_meter") != 0)
-			  && (parent != NULL && strcmp(parent->oclass->name,"house") != 0) 
-			 && (parent != NULL && strcmp(parent->oclass->name,"waterheater") != 0) 
-			 && (parent != NULL && strcmp(parent->oclass->name,"inverter") != 0) 
-			 && (parent != NULL && strcmp(parent->oclass->name,"substation") != 0) 
-			 && (parent != NULL && strcmp(parent->oclass->name,"meter") != 0))
+//	int temp = strcmp(parent->oclass->name,"triplex_meter") != 0;
+	if (parent == NULL)
 	{
-		gl_error("metrics_collector must have a triplex meter, house, waterheater, inverter, substation or swing-bus as its parent");
+		gl_error("metrics_collector must have a parent (triplex meter, house, waterheater, inverter, substation, or meter)");
 		/*  TROUBLESHOOT
-		Check the parent object of the metrics_collector. The metrics_collector is only able to be childed via a
-		triplex meter or a house or a waterheater or an inverter or a swing-bus when connecting into powerflow systems.
+		Check the parent object of the metrics_collector.
+		*/
+		return 0;
+	}
+	parent_string = "";
+	// Find parent, if not defined, or if the parent is not a triplex_meter/house/inverter, throw an exception
+	if (gl_object_isa(parent,"triplex_meter"))	{
+		parent_string = "triplex_meter";
+	} else if (gl_object_isa(parent,"house")) {
+		parent_string = "house";
+	} else if (gl_object_isa(parent,"waterheater")) {
+		parent_string = "waterheater";
+	} else if (gl_object_isa(parent,"inverter")) {
+		parent_string = "inverter";
+	} else if (gl_object_isa(parent,"substation")) {  // must be a swing bus
+		PROPERTY *pval = gl_get_property(parent,"bustype");
+		if ((pval==NULL) || (pval->ptype!=PT_enumeration))
+		{
+			GL_THROW("metrics_collector:%s failed to map bustype variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
+			/*  TROUBLESHOOT
+			While attempting to set up the deltamode interfaces and calculations with powerflow, the required interface could not be mapped.
+			Please check your GLM and try again.  If the error persists, please submit a trac ticket with your code.
+			*/
+		}
+		//Map to the intermediate
+		enumeration *meter_bustype = (enumeration*)GETADDR(parent,pval);
+		// Check if the parent meter is a swing bus (2) or not
+		if (*meter_bustype != 2) {
+			gl_error("If a metrics_collector is attached to a substation, it must be a SWING bus");
+			return 0;
+		}
+		parent_string = "swingbus";
+	} else if (gl_object_isa(parent,"meter")) {
+		parent_string = "meter"; // unless it's a swing bus
+		PROPERTY *pval = gl_get_property(parent,"bustype");
+		if ((pval!=NULL) && (pval->ptype==PT_enumeration))
+		{
+			enumeration *meter_bustype = (enumeration*)GETADDR(parent,pval);
+			if (*meter_bustype == 2) {
+				parent_string = "swingbus";
+			}
+		}
+	} else {
+		gl_error("metrics_collector allows only these parents: triplex meter, house, waterheater, inverter, substation, or meter");
+		/*  TROUBLESHOOT
+		Check the parent object of the metrics_collector.
 		*/
 		return 0;
 	}
 
-	// If its parent is a triplex_meter
-	if (parent!=NULL && gl_object_isa(parent,"triplex_meter"))
+	if (strcmp(parent_string, "triplex_meter") == 0)
 	{
-		parent_string = "triplex_meter";
-
-		// Create the JSON dictionary for the outputs
-		metrics_Output["Parent_id"] = parent->id;
-		if (parent->name != NULL) {
-			metrics_Output["Parent_name"] = parent->name;
-		}
-		else {
-			metrics_Output["Parent_name"] = "No name given";
-		}
-
-	}
-	// If its parent is a house
-	else if (parent!=NULL && gl_object_isa(parent,"house"))
-	{
-		parent_string = "house";
-
 		// Create the JSON dictionary for the outputs
 		metrics_Output["Parent_id"] = parent->id;
 		if (parent->name != NULL) {
@@ -118,11 +138,29 @@ int metrics_collector::init(OBJECT *parent){
 			metrics_Output["Parent_name"] = "No name given";
 		}
 	}
-	// If its parent is a waterheater
-	else if (parent!=NULL && gl_object_isa(parent,"waterheater"))
+	else if (strcmp(parent_string, "meter") == 0)
 	{
-		parent_string = "waterheater";
-
+		metrics_Output["Parent_id"] = parent->id;
+		if (parent->name != NULL) {
+			metrics_Output["Parent_name"] = parent->name;
+		}
+		else {
+			metrics_Output["Parent_name"] = "No name given";
+		}
+	} 
+	else if (strcmp(parent_string, "house") == 0)
+	{
+		// Create the JSON dictionary for the outputs
+		metrics_Output["Parent_id"] = parent->id;
+		if (parent->name != NULL) {
+			metrics_Output["Parent_name"] = parent->name;
+		}
+		else {
+			metrics_Output["Parent_name"] = "No name given";
+		}
+	}
+	else if (strcmp(parent_string, "waterheater") == 0)
+	{
 		// Create the JSON dictionary for the outputs
 		metrics_Output["Parent_id"] = parent->parent->id; // For waterheater, write its outputs inside the house object
 		if (parent->parent->name != NULL) {
@@ -137,13 +175,9 @@ int metrics_collector::init(OBJECT *parent){
 		sprintf(tname, "%i", parent->id);
 		char *namestr = (parent->name ? parent->name : tname);
 		sprintf(waterheaterName, "waterheater_%s_actual_load", namestr);
-
 	}
-	// If its parent is a inverter
-	else if (parent!=NULL && gl_object_isa(parent,"inverter"))
+	else if (strcmp(parent_string, "inverter") == 0)
 	{
-		parent_string = "inverter";
-
 		// Create the JSON dictionary for the outputs
 		metrics_Output["Parent_id"] = parent->id;
 		if (parent->name != NULL) {
@@ -155,30 +189,8 @@ int metrics_collector::init(OBJECT *parent){
 	}
 	// If its parent is a meter - this is only allowed for the Swing-bus type meter
 	// TODO: we need to support non-triplex billing meters as well
-	else if (parent != NULL && (gl_object_isa(parent,"meter") || gl_object_isa(parent,"substation")))
+	else if (strcmp(parent_string, "swingbus") == 0)
 	{
-		parent_string = "swingbus";
-
-		// Obtain the parent data
-		//Map the flag
-		PROPERTY *pval = gl_get_property(parent,"bustype");
-		//Check it
-		if ((pval==NULL) || (pval->ptype!=PT_enumeration))
-		{
-			GL_THROW("metrics_collector:%s failed to map bustype variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
-			/*  TROUBLESHOOT
-			While attempting to set up the deltamode interfaces and calculations with powerflow, the required interface could not be mapped.
-			Please check your GLM and try again.  If the error persists, please submit a trac ticket with your code.
-			*/
-		}
-		//Map to the intermediate
-		enumeration *meter_bustype = (enumeration*)GETADDR(parent,pval);
-		// Check if the parent meter is a swing bus (2) or not
-		if (*meter_bustype != 2) {
-			gl_error("If a metrics_collector is attached to a meter or substation, it must be a SWING bus");
-			return 0;
-		}
-
 		// In this work, only when a metrics_collector is attached to a swing-bus, the feeder losses are recorded
 		// Find all the link objects for collecting loss values
 		link_objects = gl_find_objects(FL_NEW,FT_MODULE,SAME,"powerflow",FT_END); //find all link objects
@@ -207,7 +219,7 @@ int metrics_collector::init(OBJECT *parent){
 	}
 
 	// Allocate the arrays based on the parent type
-	if (strcmp(parent_string, "triplex_meter") == 0) {
+	if ((strcmp(parent_string, "triplex_meter") == 0) || (strcmp(parent_string, "meter") == 0)) {
 		// Allocate real power array
 		real_power_array = (double *)gl_malloc(interval_length*sizeof(double));
 		// Check
@@ -416,7 +428,7 @@ int metrics_collector::init(OBJECT *parent){
 	}
 	// else not possible come to this step
 	else {
-		gl_error("metrics_collector must have a triplex meter or house or waterheater or inverter or swing-bus as it's parent");
+		gl_error("metrics_collector must have a triplex meter, meter, house, waterheater, inverter or swing-bus as its parent");
 		/*  TROUBLESHOOT
 		Check the parent object of the metrics_collector. The metrics_collector is only able to be childed via a
 		triplex meter or a house or an inverter when connecting into powerflow systems.
@@ -427,7 +439,7 @@ int metrics_collector::init(OBJECT *parent){
 
 	// Initialize tracking variables
 	curr_index = 0;
-    last_index = 0;
+  last_index = 0;
 
 	// Update time variables
 	last_write = gl_globalclock;
@@ -496,9 +508,7 @@ int metrics_collector::read_line(OBJECT *obj){
 		return 0;
 	}
 
-	// If parent is triplex_meter
 	if (strcmp(parent_string, "triplex_meter") == 0) {
-
 		// Get power values
 		double realPower = *gl_get_double_by_name(obj->parent, "measured_real_power");
 		double reactivePower = *gl_get_double_by_name(obj->parent, "measured_reactive_power");
@@ -517,8 +527,33 @@ int metrics_collector::read_line(OBJECT *obj){
 		interpolate (voltage_average_mag_array, last_index, curr_index, fabs(v12/2));
 		interpolate (voltage_unbalance_array, last_index, curr_index, fabs((v1 - v2)/(v12/2)));
 	}
-	// If parent is house
-	else if (strcmp(parent_string, "house") == 0) {
+	else if (strcmp(parent_string, "meter") == 0)
+	{
+		double realPower = *gl_get_double_by_name(obj->parent, "measured_real_power");
+		double reactivePower = *gl_get_double_by_name(obj->parent, "measured_reactive_power");
+		interpolate (real_power_array, last_index, curr_index, realPower);
+		interpolate (reactive_power_array, last_index, curr_index, reactivePower);
+
+		price_parent = *gl_get_double_by_name(obj->parent, "price");
+
+		// TODO: assuming these are three-phase loads; this is the only difference with triplex meters 
+		double va = fabs (*gl_get_double_by_name(obj->parent, "voltage_A"));   
+		double vb = fabs (*gl_get_double_by_name(obj->parent, "voltage_B"));   
+		double vc = fabs (*gl_get_double_by_name(obj->parent, "voltage_C"));
+		double vavg = (va + vb + vc) / 3.0;
+		double vmin = va;
+		double vmax = va;
+		if (vb < vmin) vmin = vb;
+		if (vb > vmax) vmax = vb;
+		if (vc < vmin) vmin = vc;
+		if (vc > vmax) vmax = vc;
+
+		interpolate (voltage_mag_array, last_index, curr_index, vavg * sqrt (3.0));
+		interpolate (voltage_average_mag_array, last_index, curr_index, vavg);
+		interpolate (voltage_unbalance_array, last_index, curr_index, (vmax - vmin)/vavg);
+	} 
+	else if (strcmp(parent_string, "house") == 0)
+	{
 		// Get load values
 		double totalload = *gl_get_double_by_name(obj->parent, "total_load");
 		interpolate (total_load_array, last_index, curr_index, totalload);
@@ -528,20 +563,17 @@ int metrics_collector::read_line(OBJECT *obj){
 		double airTemperature = *gl_get_double_by_name(obj->parent, "air_temperature");
 		interpolate (air_temperature_array, last_index, curr_index, airTemperature);
 	}
-	// If parent is waterheater
 	else if (strcmp(parent_string, "waterheater") == 0) {
 		// Get load values
 		double actualload = *gl_get_double_by_name(obj->parent, "actual_load");
 		interpolate (actual_load_array, last_index, curr_index, actualload);
 	}
-	// If parent is inverter
 	else if (strcmp(parent_string, "inverter") == 0) {
 		// Get VA_Out values
 		complex VAOut = *gl_get_complex_by_name(obj->parent, "VA_Out");
 		interpolate (real_power_array, last_index, curr_index, (double)VAOut.Re());
 		interpolate (reactive_power_array, last_index, curr_index, (double)VAOut.Im());
 	}
-	// If parent is meter
 	else if (strcmp(parent_string, "swingbus") == 0) {
 		// Get VAfeeder values
 		complex VAfeeder;
@@ -621,7 +653,7 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 	char time_str[64];
 	DATETIME dt;
 
-	if (strcmp(parent_string, "triplex_meter") == 0) {
+	if ((strcmp(parent_string, "triplex_meter") == 0) || (strcmp(parent_string, "meter") == 0)) {
 		// Rearranging the arrays of data, and put into the dictionary
 		// Real power data
 		metrics_Output["min_real_power"] = findMin(real_power_array, interval_length);
@@ -639,7 +671,7 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		metrics_Output["real_energy"] = findAverage(real_power_array, interval_length) * interval_write / 3600;
 		metrics_Output["reactive_energy"] = findAverage(reactive_power_array, interval_length) * interval_write / 3600;
 
-		// Bill
+		// Bill - TODO?
 
 		// Phase 1 to 2 voltage data
 		metrics_Output["min_voltage"] = findMin(voltage_mag_array, interval_length);
@@ -718,7 +750,6 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		metrics_Output["median_waterheater_actual_load"] = findMedian(actual_load_array, interval_length);
 
 	}
-	// If parent is inverter
 	else if (strcmp(parent_string, "inverter") == 0) {
 		// Rearranging the arrays of data, and put into the dictionary
 		// real power data
@@ -733,7 +764,6 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		metrics_Output["median_inverter_reactive_power"] = findMedian(reactive_power_array, interval_length);
 
 	}
-	// If parent is meter
 	else if (strcmp(parent_string, "swingbus") == 0) {
 		// Rearranging the arrays of data, and put into the dictionary
 		// real power data

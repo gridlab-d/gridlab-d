@@ -8,9 +8,6 @@
 #include "metrics_collector_writer.h"
 
 CLASS *metrics_collector_writer::oclass = NULL;
-//CLASS *metrics_collector_writer::pclass = NULL;
-//metrics_collector_writer *metrics_collector_writer::defaults = NULL;
-
 
 void new_metrics_collector_writer(MODULE *mod){
 	new metrics_collector_writer(mod);
@@ -60,9 +57,9 @@ int metrics_collector_writer::init(OBJECT *parent){
 		*/
 	}
 
-	// Write seperate json files for triplex_meters, inverters, houses, substation_meter:
-	filename_triplex_meter = "triplex_meter_";
-	strcat(filename_triplex_meter, filename);
+	// Write seperate json files for meters, triplex_meters, inverters, houses, substation_meter:
+	filename_billing_meter = "billing_meter_";
+	strcat(filename_billing_meter, filename);
 	filename_inverter = "inverter_";
 	strcat(filename_inverter, filename);
 	filename_house = "house_";
@@ -134,7 +131,7 @@ int metrics_collector_writer::init(OBJECT *parent){
 
 	// Write start time for each metrics
 	metrics_writer_Output["StartTime"] = time_str;
-	metrics_writer_triplex_meters["StartTime"] = time_str;
+	metrics_writer_billing_meters["StartTime"] = time_str;
 	metrics_writer_houses["StartTime"] = time_str;
 	metrics_writer_inverters["StartTime"] = time_str;
 	metrics_writer_feeder_information["StartTime"] = time_str;
@@ -173,8 +170,8 @@ int metrics_collector_writer::init(OBJECT *parent){
 	jsn["index"] = idx++; jsn["units"] = "";  meta["below_RangeB_Count"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "s"; meta["below_10_percent_NormVol_Duration"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "";  meta["below_10_percent_NormVol_Count"] = jsn;
-	metrics_writer_triplex_meters["Metadata"] = meta;
-	ary_triplex_meters.resize(idx);
+	metrics_writer_billing_meters["Metadata"] = meta;
+	ary_billing_meters.resize(idx);
 
 	meta.clear();
 	idx = 0;
@@ -278,7 +275,7 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 	Json::Value metrics_writer_Output_time;
 	Json::Value metrics_writer_Output_data;
 	// metrics JSON value
-	Json::Value triplex_meter_objects;
+	Json::Value billing_meter_objects;
 	Json::Value house_objects;
 	Json::Value inverter_objects;
 	Json::Value feeder_information;
@@ -303,43 +300,44 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 		}
 
 		// Check each metrics_collector parent type
-		if (strcmp(temp_metrics_collector->parent_string, "triplex_meter") == 0) {
+		if ((strcmp(temp_metrics_collector->parent_string, "triplex_meter") == 0) ||
+				(strcmp(temp_metrics_collector->parent_string, "meter") == 0)) {
 			metrics_Output_temp = temp_metrics_collector->metrics_Output;
 			int idx = 0;
-			ary_triplex_meters[idx++] = metrics_Output_temp["min_real_power"];
-			ary_triplex_meters[idx++] = metrics_Output_temp["max_real_power"];
-			ary_triplex_meters[idx++] = metrics_Output_temp["avg_real_power"];
-			ary_triplex_meters[idx++] = metrics_Output_temp["median_real_power"];
-			ary_triplex_meters[idx++] = metrics_Output_temp["min_reactive_power"];
-			ary_triplex_meters[idx++] = metrics_Output_temp["max_reactive_power"];
-			ary_triplex_meters[idx++] = metrics_Output_temp["avg_reactive_power"];
-			ary_triplex_meters[idx++] = metrics_Output_temp["median_reactive_power"];
-			ary_triplex_meters[idx++] = metrics_Output_temp["real_energy"];
-			ary_triplex_meters[idx++] = metrics_Output_temp["reactive_energy"];
-			// TODO - what about the fixed charge?
-			ary_triplex_meters[idx++] = metrics_Output_temp["real_energy"].asDouble() * temp_metrics_collector->price_parent / 1000; // Price unit given is $/kWh
-			ary_triplex_meters[idx++] = metrics_Output_temp["min_voltage_average"];
-			ary_triplex_meters[idx++] = metrics_Output_temp["max_voltage_average"];
-			ary_triplex_meters[idx++] = metrics_Output_temp["avg_voltage_average"];
-			ary_triplex_meters[idx++] = metrics_Output_temp["min_voltage"];
-			ary_triplex_meters[idx++] = metrics_Output_temp["max_voltage"];
-			ary_triplex_meters[idx++] = metrics_Output_temp["avg_voltage"];
-			ary_triplex_meters[idx++] = metrics_Output_temp["min_voltage_unbalance"];
-			ary_triplex_meters[idx++] = metrics_Output_temp["max_voltage_unbalance"];
-			ary_triplex_meters[idx++] = metrics_Output_temp["avg_voltage_unbalance"];
-			ary_triplex_meters[idx++] = metrics_Output_temp["above_RangeA_Duration"];
-			ary_triplex_meters[idx++] = metrics_Output_temp["above_RangeA_Count"];
-			ary_triplex_meters[idx++] = metrics_Output_temp["below_RangeA_Duration"];
-			ary_triplex_meters[idx++] = metrics_Output_temp["below_RangeA_Count"];
-			ary_triplex_meters[idx++] = metrics_Output_temp["above_RangeB_Duration"];
-			ary_triplex_meters[idx++] = metrics_Output_temp["above_RangeB_Count"];
-			ary_triplex_meters[idx++] = metrics_Output_temp["below_RangeB_Duration"];
-			ary_triplex_meters[idx++] = metrics_Output_temp["below_RangeB_Count"];
-			ary_triplex_meters[idx++] = metrics_Output_temp["below_10_percent_NormVol_Duration"];
-			ary_triplex_meters[idx++] = metrics_Output_temp["below_10_percent_NormVol_Count"];
+			ary_billing_meters[idx++] = metrics_Output_temp["min_real_power"];
+			ary_billing_meters[idx++] = metrics_Output_temp["max_real_power"];
+			ary_billing_meters[idx++] = metrics_Output_temp["avg_real_power"];
+			ary_billing_meters[idx++] = metrics_Output_temp["median_real_power"];
+			ary_billing_meters[idx++] = metrics_Output_temp["min_reactive_power"];
+			ary_billing_meters[idx++] = metrics_Output_temp["max_reactive_power"];
+			ary_billing_meters[idx++] = metrics_Output_temp["avg_reactive_power"];
+			ary_billing_meters[idx++] = metrics_Output_temp["median_reactive_power"];
+			ary_billing_meters[idx++] = metrics_Output_temp["real_energy"];
+			ary_billing_meters[idx++] = metrics_Output_temp["reactive_energy"];
+			// TODO - verify the fixed charge is included
+			ary_billing_meters[idx++] = metrics_Output_temp["real_energy"].asDouble() * temp_metrics_collector->price_parent / 1000; // Price unit given is $/kWh
+			ary_billing_meters[idx++] = metrics_Output_temp["min_voltage_average"];
+			ary_billing_meters[idx++] = metrics_Output_temp["max_voltage_average"];
+			ary_billing_meters[idx++] = metrics_Output_temp["avg_voltage_average"];
+			ary_billing_meters[idx++] = metrics_Output_temp["min_voltage"];
+			ary_billing_meters[idx++] = metrics_Output_temp["max_voltage"];
+			ary_billing_meters[idx++] = metrics_Output_temp["avg_voltage"];
+			ary_billing_meters[idx++] = metrics_Output_temp["min_voltage_unbalance"];
+			ary_billing_meters[idx++] = metrics_Output_temp["max_voltage_unbalance"];
+			ary_billing_meters[idx++] = metrics_Output_temp["avg_voltage_unbalance"];
+			ary_billing_meters[idx++] = metrics_Output_temp["above_RangeA_Duration"];
+			ary_billing_meters[idx++] = metrics_Output_temp["above_RangeA_Count"];
+			ary_billing_meters[idx++] = metrics_Output_temp["below_RangeA_Duration"];
+			ary_billing_meters[idx++] = metrics_Output_temp["below_RangeA_Count"];
+			ary_billing_meters[idx++] = metrics_Output_temp["above_RangeB_Duration"];
+			ary_billing_meters[idx++] = metrics_Output_temp["above_RangeB_Count"];
+			ary_billing_meters[idx++] = metrics_Output_temp["below_RangeB_Duration"];
+			ary_billing_meters[idx++] = metrics_Output_temp["below_RangeB_Count"];
+			ary_billing_meters[idx++] = metrics_Output_temp["below_10_percent_NormVol_Duration"];
+			ary_billing_meters[idx++] = metrics_Output_temp["below_10_percent_NormVol_Count"];
 			string key = metrics_Output_temp["Parent_name"].asString();
-			triplex_meter_objects[key] = ary_triplex_meters;
-		} // End of recording metrics_collector data attached to one triplex_meter
+			billing_meter_objects[key] = ary_billing_meters;
+		} // End of recording metrics_collector data attached to one triplex_meter or primary meter
 		else if (strcmp(temp_metrics_collector->parent_string, "house") == 0) {
 			metrics_Output_temp = temp_metrics_collector->metrics_Output;
 			string key = metrics_Output_temp["Parent_name"].asString();
@@ -453,7 +451,7 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 
 
 	// Rewrite the metrics to be seperate 2-d ones
-	metrics_writer_triplex_meters[time_str] = triplex_meter_objects;
+	metrics_writer_billing_meters[time_str] = billing_meter_objects;
 	metrics_writer_houses[time_str] = house_objects;
 	metrics_writer_inverters[time_str] = inverter_objects;
 	metrics_writer_feeder_information[time_str] = feeder_information;
@@ -466,9 +464,9 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 		ofstream out_file;
 
 		// Write seperate JSON files for each object
-		// triplex_meter
-		out_file.open (filename_triplex_meter);
-		out_file << writer.write(metrics_writer_triplex_meters) <<  endl;
+		// triplex_meter and primary billing meter
+		out_file.open (filename_billing_meter);
+		out_file << writer.write(metrics_writer_billing_meters) <<  endl;
 		out_file.close();
 		// house
 		out_file.open (filename_house);
