@@ -1,4 +1,0 @@
-{ 
-  "l671": ["constant_power_A", "constant_power_B","constant_power_C"],
-  "regconfig6506321":["tap_pos_A","tap_pos_B","tap_pos_C","regulation","time_delay"]
-}

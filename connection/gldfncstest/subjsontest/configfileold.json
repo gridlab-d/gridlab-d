@@ -1,4 +1,0 @@
-{ 
-  "ROOT": ["positive_sequence_voltage.real", "positive_sequence_voltage.imag", "distribution_load.real", "distribution_load.imag"],
-  "n650":["voltage_A.real", "voltage_A.imag"]
-}
