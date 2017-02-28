@@ -31,6 +31,16 @@ private:
 	complex complex_exp(double angle);
 	int invertMatrix(complex TF[16], complex ITF[16]);
 
+	//************** Begin_Yuan's TPIM model ********************//
+	void TPIMupdateVars(); // function to update the previous values for the motor model
+	void TPIMUpdateMotorStatus(); // function to update the status of the motor
+	void TPIMStateOFF(); // function to ensure that internal model states are zeros when the motor is OFF
+	void TPIMreinitializeVars(); // function to reinitialize values for the motor model
+//	void TPIMUpdateProtection(double delta_time); // function to update the protection of the motor
+	void TPIMSteadyState(TIMESTAMP t1); // steady state model for the TPIM motor
+	void TPIMDynamic(double curr_delta_time, double dTime); // dynamic phasor model for the TPIM motor
+	//************** End_Yuan's TPIM model ********************//
+
 	double delta_cycle;
 	double Pbase;
 	double Ibase;
@@ -123,6 +133,54 @@ private:
 	complex Vs;
 	double ws;
 	int connected_phase;
+
+	//************** Begin_Yuan's TPIM model ********************//
+	double rs;
+	double rr;
+	double lm;
+	double PbTPIM;
+	double IbTPIM; // base current for TPIM model
+	double lls;
+	double llr;
+	double Hs;
+	double TL;
+	double Kfric;
+	complex phips;
+	complex phins_cj;
+	complex phipr;
+	complex phinr_cj;
+	double omgr0;
+	complex Ias;
+	complex Ibs;
+	complex Ics;
+	complex Smt;
+	double Te;
+	complex Vas;
+	complex Vbs;
+	complex Vcs;
+	complex Ips;
+	complex Ipr;
+	complex Ins_cj;
+	complex Inr_cj;
+	double Ls;
+	double Lr;
+	double sigma1;
+	double sigma2;
+	double wref;
+	double wsyn;
+
+	complex phips_prev;
+	complex phins_cj_prev;
+	complex phipr_prev;
+	complex phinr_cj_prev;
+	double omgr0_prev;
+	complex Ips_prev;
+	complex Ipr_prev;
+	complex Ins_cj_prev;
+	complex Inr_cj_prev;
+
+	//************** End_Yuan's TPIM model ********************//
+
 
 public:
 	int create(void);
