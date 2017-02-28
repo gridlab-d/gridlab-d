@@ -138,11 +138,9 @@ private:
 	double rs;
 	double rr;
 	double lm;
-	double PbTPIM;
 	double IbTPIM; // base current for TPIM model
 	double lls;
 	double llr;
-	double Hs;
 	double TL;
 	double Kfric;
 	complex phips;
@@ -154,7 +152,6 @@ private:
 	complex Ibs;
 	complex Ics;
 	complex Smt;
-	double Te;
 	complex Vas;
 	complex Vbs;
 	complex Vcs;

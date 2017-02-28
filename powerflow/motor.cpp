@@ -97,13 +97,11 @@ motor::motor(MODULE *mod):node(mod)
 
 			//**** YUAN'S THREE-PHASE INDUCTION MOTOR VARIABLES COULD GO HERE ****//
 			//************** Begin_Yuan's TPIM model ********************//
-			PT_double, "base_power[W]", PADDR(PbTPIM),PT_DESCRIPTION,"base power",
 			PT_double, "rs[pu]", PADDR(rs),PT_DESCRIPTION,"stator resistance",
 			PT_double, "rr[pu]", PADDR(rr),PT_DESCRIPTION,"rotor resistance",
 			PT_double, "lm[pu]", PADDR(lm),PT_DESCRIPTION,"magnetizing reactance",
 			PT_double, "lls[pu]", PADDR(lls),PT_DESCRIPTION,"stator leakage reactance",
 			PT_double, "llr[pu]", PADDR(llr),PT_DESCRIPTION,"rotor leakage reactance",
-			PT_double, "H[s]", PADDR(Hs),PT_DESCRIPTION,"inertia constant",
 			PT_double, "mechanical_Load_torque", PADDR(TL),PT_DESCRIPTION,"mechanical load torque applied to the motor",
 			PT_double, "friction_coefficient", PADDR(Kfric),PT_DESCRIPTION,"coefficient of speed-dependent torque",
 			// share declarations of interation_count, DM_volt_trig_per, DM_speed_trig_per, DM_volt_exit_per, DM_speed_exit_per, speed_error with SPIM model
@@ -125,7 +123,6 @@ motor::motor(MODULE *mod):node(mod)
 			PT_complex, "Ibs", PADDR(Ibs),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"motor phase-b stator current",
 			PT_complex, "Ics", PADDR(Ics),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"motor phase-c stator current",
 			PT_complex, "Smt", PADDR(Smt),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"motor complex power",
-			PT_double, "electrical_torque", PADDR(Te),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"motor electrical torque",
 			PT_complex, "Vas", PADDR(Vas),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"motor phase-a stator-to-ground voltage",
 			PT_complex, "Vbs", PADDR(Vbs),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"motor phase-b stator-to-ground voltage",
 			PT_complex, "Vcs", PADDR(Vcs),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"motor phase-c stator-to-ground voltage",
@@ -216,8 +213,10 @@ int motor::create()
     lm = 3.0;  // pu
     rr = 0.005;  // pu
     llr = 0.08;  // pu
-    PbTPIM = 3000; // W
-    Hs = 0.1;  // s
+
+    //************* Parameters are for 3000 W motor - reconciled variable with SPIM - figure out how to trigger this
+    //PbTPIM = 3000; // W
+    //Hs = 0.1;  // s	-- this needs to be reconciled as well
     Kfric = 0.0;  // pu
 	TL = 0.95;  // pu
 	phips = complex(0,0); // pu
@@ -229,7 +228,6 @@ int motor::create()
 	Ibs = complex(0,0); // pu
 	Ics = complex(0,0); // pu
 	Smt = complex(0,0); // VA
-	Te = 0.0; // pu
 	Vas = complex(0,0); // pu
 	Vbs = complex(0,0); // pu
 	Vcs = complex(0,0); // pu
@@ -263,7 +261,7 @@ int motor::init(OBJECT *parent)
 	DM_speed_exit = (DM_speed_exit_per*wb)/100;
 
 	//************** Begin_Yuan's TPIM model ********************//
-	IbTPIM = PbTPIM / nominal_voltage / 3.0;  // A, I guess nominal_voltage is line-to-ground here, right ?
+	IbTPIM = Pbase / nominal_voltage / 3.0;  // A, I guess nominal_voltage is line-to-ground here, right ?
 	Ls = lls + lm; // pu
 	Lr = llr + lm; // pu
 	sigma1 = Ls - lm * lm / Lr; // pu
@@ -1072,11 +1070,11 @@ void motor::TPIMSteadyState(TIMESTAMP t1) {
             Ipr = (phipr - phips * lm / Ls) / sigma2;  // pu
             Ins_cj = (phins_cj - phinr_cj * lm / Lr) / sigma1; // pu
             Inr_cj = (phinr_cj - phins_cj * lm / Ls) / sigma2; // pu
-            Te = (~phips * Ips + ~phins_cj * Ins_cj).Im() ;  // pu
+            Telec = (~phips * Ips + ~phins_cj * Ins_cj).Im() ;  // pu
 
-            // iteratively compute speed increment to make sure Te matches TL during steady state mode
-            // if it does not match, then update current and Te using new omgr0
-            omgr0_delta = ( Te - TL ) / interation_count;
+            // iteratively compute speed increment to make sure Telec matches TL during steady state mode
+            // if it does not match, then update current and Telec using new omgr0
+            omgr0_delta = ( Telec - TL ) / interation_count;
 
 			//update the rotor speed
 			if (omgr0 + omgr0_delta > 0) {
@@ -1092,7 +1090,7 @@ void motor::TPIMSteadyState(TIMESTAMP t1) {
         Ibs = alpha * alpha * Ips + alpha * ~Ins_cj ; // pu
         Ics = alpha * Ips + alpha * alpha * ~Ins_cj ; // pu
 
-		Smt = (Vap * ~Ips + Van * Ins_cj) * PbTPIM; // VA
+		Smt = (Vap * ~Ips + Van * Ins_cj) * Pbase; // VA
 
 }
 //************** End_Yuan's TPIM model ********************//
@@ -1207,7 +1205,7 @@ void motor::TPIMDynamic(double curr_delta_time, double dTime) {
     dphins_cj_prev_dt = ( ~Van + B2p * phins_cj_prev + D2p * phinr_cj_prev ) * wb; // pu/s
     dphipr_prev_dt  =  ( C3p * phipr_prev + A3p * phips_prev ) * wb; // pu/s
     dphinr_cj_prev_dt = ( D4p * phinr_cj_prev  + B4p * phins_cj_prev ) * wb; // pu/s
-    domgr0_prev_dt =  ( (~phips_prev * Ips_prev + ~phins_cj_prev * Ins_cj_prev).Im() - TL - Kfric * omgr0_prev ) / (2.0 * Hs); // pu/s
+    domgr0_prev_dt =  ( (~phips_prev * Ips_prev + ~phins_cj_prev * Ins_cj_prev).Im() - TL - Kfric * omgr0_prev ) / (2.0 * H); // pu/s
 
 
     // predictor step 3 - integrate for predicted state variable
@@ -1246,7 +1244,7 @@ void motor::TPIMDynamic(double curr_delta_time, double dTime) {
     dphins_cj_dt = ( ~Van + B2c * phins_cj + D2c * phinr_cj ) * wb ;
     dphipr_dt  =  ( C3c * phipr + A3c * phips ) * wb;
     dphinr_cj_dt = ( D4c * phinr_cj  + B4c * phins_cj ) * wb;
-    domgr0_dt =  1.0/(2.0 * Hs) * ( (~phips * Ips + ~phins_cj * Ins_cj).Im() - TL - Kfric * omgr0 );
+    domgr0_dt =  1.0/(2.0 * H) * ( (~phips * Ips + ~phins_cj * Ins_cj).Im() - TL - Kfric * omgr0 );
 
     // corrector step 3 - integrate
     phips = phips_prev +  (dphips_prev_dt + dphips_dt) * dTime/2.0;
@@ -1264,14 +1262,14 @@ void motor::TPIMDynamic(double curr_delta_time, double dTime) {
     Ipr = (phipr - phips * lm / Ls) / sigma2;  // pu
     Ins_cj = (phins_cj - phinr_cj * lm / Lr) / sigma1; // pu
     Inr_cj = (phinr_cj - phins_cj * lm / Ls) / sigma2; // pu
-    Te = (~phips * Ips + ~phins_cj * Ins_cj).Im() ;  // pu
+    Telec = (~phips * Ips + ~phins_cj * Ins_cj).Im() ;  // pu
 
 	// update system current and power equations
     Ias = Ips + ~Ins_cj ;// pu
     Ibs = alpha * alpha * Ips + alpha * ~Ins_cj ; // pu
     Ics = alpha * Ips + alpha * alpha * ~Ins_cj ; // pu
 
-	Smt = (Vap * ~Ips + Van * Ins_cj) * PbTPIM; // VA
+	Smt = (Vap * ~Ips + Van * Ins_cj) * Pbase; // VA
 
 }
 //************** End_Yuan's TPIM model ********************//
