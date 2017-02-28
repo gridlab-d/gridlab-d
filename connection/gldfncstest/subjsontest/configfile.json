@@ -1,0 +1,3 @@
+{ 
+  "substation_config": ["primary_voltage", "secondary_voltage"]
+}

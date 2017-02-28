@@ -1,5 +1,5 @@
 name = tracer										# name of the simulator
-time_delta = 500ms
+time_delta = 1000ms
 broker = tcp://localhost:5570
 # list of things this simulator subscribes to
 values                      						# list of subscriptions

@@ -388,8 +388,8 @@ object substation {
 	 
 	object fncs_msg {
 		  name GLD1;
-                  message_type JSON;
-                 configure configfile.json;
+                  message_type JSON_SB;
+                 configure configfilenew2.json;
                  // configure configfileold.json;
          // publish "postsync:ROOT.distribution_load -> distribution_load";
 		  //publish "postsync:ROOT.distribution_load.imag -> distribution_loadQ";
@@ -398,13 +398,13 @@ object substation {
      };
 
 	 
-    // object recorder {
-    //      property positive_sequence_voltage.real, positive_sequence_voltage.imag, voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag;
-    //	  interval 1;
-    //      limit 100000000;
+     object recorder {
+          property positive_sequence_voltage.real, positive_sequence_voltage.imag, voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag;
+	  interval 1;
+          limit 100000000;
           //flags DELTAMODE;
-//	  file Voltage_substation.csv;
-//     };
+	  file Voltage_substation.csv;
+     };
      object recorder {
           property distribution_load.real, distribution_load.imag;
 	  interval 1;

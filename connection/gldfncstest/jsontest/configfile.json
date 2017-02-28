@@ -1,3 +1,4 @@
-{ 
-  "substation_config": ["primary_voltage", "secondary_voltage"]
+{
+ "ROOT": ["nominal_voltage","distribution_load","positive_sequence_voltage"],
+ "regconfig6506321":["tap_pos_A","tap_pos_B","tap_pos_C","regulation","time_delay"] 
 }

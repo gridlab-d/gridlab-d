@@ -6,7 +6,7 @@ echo $PATH
 
 #export PATH
 
-fncs_broker 3  &
+fncs_broker 2  &
 
 #cd ~/FNCS-GLD-TESTCASE/gldfncs/fncs/tracer
 
@@ -18,8 +18,6 @@ fncs_broker 3  &
 #gridlabd  IEEE_Dynamic_2gen_GLD3_nogen_jsonpub.glm > glmpub.out &
 
 fncs_player_anon 12s fncsplayerout.txt &
-
-fncs_tracer 12s the_trace_file_output.out &
 
 #gridlabd IEEE_Dynamic_2gen_GLD3_nogen_jsonsub.glm &
 
