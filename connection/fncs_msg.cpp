@@ -62,7 +62,7 @@ fncs_msg::fncs_msg(MODULE *module)
 		PT_enumeration, "message_type", PADDR(message_type), PT_DESCRIPTION, "set the type of message format you wish to construct",
 			PT_KEYWORD, "GENERAL", enumeration(MT_GENERAL), PT_DESCRIPTION, "use this for sending a general fncs topic/value pair",
 			PT_KEYWORD, "JSON", enumeration(MT_JSON), PT_DESCRIPTION, "use this for wanting to send a bundled json formatted message in a single topic",
-			PT_KEYWORD, "JSON_SB", enumeration(MT_JSON_SB), PT_DESCRIPTION, "use this for wanting to subsribe a bundled json formatted message in a single topic",
+			// PT_KEYWORD, "JSON_SB", enumeration(MT_JSON_SB), PT_DESCRIPTION, "use this for wanting to subsribe a bundled json formatted message in a single topic",
 		// TODO add published properties here
 		NULL)<1)
 			throw "connection/fncs_msg::fncs_msg(MODULE*): unable to publish properties of connection:fncs_msg";
@@ -279,10 +279,12 @@ int fncs_msg::configure(char *value)
 					return 0;
 				}
 			}
-		}else if(message_type == MT_JSON_SB){
-			rv = 1;
+		}
+		//else if(message_type == MT_JSON_SB){
+		//	rv = 1;
 
-		}else {
+		//}
+		else {
 			gl_error("fncs_msg::configure(): failed to open the configuration file %s \n", configFile.get_string());
 			rv = 0;
 		} // end of if (ifile.good())
@@ -441,23 +443,23 @@ int fncs_msg::init(OBJECT *parent){
 		}
 	}
 	//for subscribe with the json styple string value, write the zpl file, for data from GridAppD, renke
-	else if (message_type == MT_JSON){
+	//else if (message_type == MT_JSON){
 
-		gl_warning("entering fncs_msg::init()\n"); //renke debug
+	//	gl_warning("entering fncs_msg::init()\n"); //renke debug
 
-		zplfile << "name = " << simName << endl;
-		zplfile << "time_delta = 1000000000ns" << endl; //TODO: minimum timestep needs to take into account deltamode steps eventually.
-		zplfile << "broker = tcp://" << *hostname << ":" << *port << endl;
-		zplfile << "values" << endl;
+	//	zplfile << "name = " << simName << endl;
+	//	zplfile << "time_delta = 1000000000ns" << endl; //TODO: minimum timestep needs to take into account deltamode steps eventually.
+	//	zplfile << "broker = tcp://" << *hostname << ":" << *port << endl;
+	//	zplfile << "values" << endl;
 		//zplfile << "    " << "GridAPPD/fncs_input" << endl;
 		//zplfile << "        topic = " << "GridAPPD/fncs_input" << endl;
 		//zplfile << "        default = " << "{}" << endl;
 		//zplfile << "        type = " << "JSON" << endl;
 		//zplfile << "        list = false" << endl;
 
-	}
+	//}
 
-	else if (message_type == MT_JSON_SB){
+	else if (message_type == MT_JSON){
 
 			gl_warning("entering fncs_msg::init()\n"); //renke debug
 
@@ -524,7 +526,7 @@ int fncs_msg::precommit(TIMESTAMP t1){
 	// read precommit json variables from GridAPPD, renke
 	//TODO
 	// put else to check the message type
-	else if (message_type == MT_JSON_SB)
+	else if (message_type == MT_JSON)
 	{
 		result = subscribeJsonVariables();
 		if(result == 0){
@@ -589,7 +591,7 @@ TIMESTAMP fncs_msg::sync(TIMESTAMP t1){
 
 	if (message_type == MT_GENERAL)
 		return TS_NEVER;
-	else if (message_type == MT_JSON || message_type == MT_JSON_SB){
+	else if (message_type == MT_JSON ){
 		t2=t1+1;
 		return t2;
 	}
