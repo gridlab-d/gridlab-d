@@ -53,7 +53,6 @@ typedef enum {
 typedef enum {
 	MT_GENERAL,
 	MT_JSON,
-	//MT_JSON_SB
 } MESSAGETYPE;
 
 typedef struct _fncslist {

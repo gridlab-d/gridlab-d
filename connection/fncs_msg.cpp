@@ -197,8 +197,6 @@ int fncs_msg::option(char *value){
 
 int fncs_msg::configure(char *value)
 {
-	gl_warning("entering fncs_msg::configure()\n"); //renke debug
-
 	int rv = 1;
 	strcpy(configFile, value);
 	if (strcmp(configFile, "") != 0) {
@@ -364,7 +362,7 @@ int fncs_msg::init(OBJECT *parent){
 
 	// resolve all the json_configure gl_properties for publishing json style string, renke
 	// TODO
-	gl_warning("before resolve all json objects, defer: %d \n", defer);
+	// gl_warning("before resolve all json objects, defer: %d \n", defer);
 
 	vjson_publish_gld_property.clear();
 	int nsize = vjson_publish_gld_property_name.size();
@@ -377,7 +375,7 @@ int fncs_msg::init(OBJECT *parent){
 		gldpro_obj = new gld_property(buf);
 
 		if ( gldpro_obj->is_valid() ){
-			gl_warning("connection: local variable '%s' resolved OK, object id %d",
+			gl_verbose("connection: local variable '%s' resolved OK, object id %d",
 					vjson_publish_gld_property_name[isize].c_str(), gldpro_obj->get_object()->id); //renke debug
 			vjson_publish_gld_property.push_back(gldpro_obj);
 		}
@@ -387,19 +385,19 @@ int fncs_msg::init(OBJECT *parent){
 	}
 
 	int ngldprosize = vjson_publish_gld_property.size();
-	gl_warning("ncs_msg::init(): vjson_publish_gld_property size: %d \n", ngldprosize);
+	gl_verbose("ncs_msg::init(): vjson_publish_gld_property size: %d \n", ngldprosize);
 
 	for (int isize=0 ; isize<ngldprosize ; isize++){
 		vObj = vjson_publish_gld_property[isize]->get_object();
 		if((vObj->flags & OF_INIT) != OF_INIT){
-			gl_warning("%d, ncs_msg::init(): vjson_publish_gld_property %s not initialzied!:  \n", isize,
+			gl_warning("%d, ncs_msg::init(): vjson_publish_gld_property %s not initialized!:  \n", isize,
 					vjson_publish_gld_property_name[isize].c_str());
 			defer = true;
 		}
 	}
 
 	if(defer == true){
-		gl_warning("fncs_msg::init(): %s is defering initialization.", obj->name);
+		gl_warning("fncs_msg::init(): %s is deferring initialization.", obj->name);
 		return 2;
 	}
 
@@ -442,23 +440,6 @@ int fncs_msg::init(OBJECT *parent){
 			}
 		}
 	}
-	//for subscribe with the json styple string value, write the zpl file, for data from GridAppD, renke
-	//else if (message_type == MT_JSON){
-
-	//	gl_warning("entering fncs_msg::init()\n"); //renke debug
-
-	//	zplfile << "name = " << simName << endl;
-	//	zplfile << "time_delta = 1000000000ns" << endl; //TODO: minimum timestep needs to take into account deltamode steps eventually.
-	//	zplfile << "broker = tcp://" << *hostname << ":" << *port << endl;
-	//	zplfile << "values" << endl;
-		//zplfile << "    " << "GridAPPD/fncs_input" << endl;
-		//zplfile << "        topic = " << "GridAPPD/fncs_input" << endl;
-		//zplfile << "        default = " << "{}" << endl;
-		//zplfile << "        type = " << "JSON" << endl;
-		//zplfile << "        list = false" << endl;
-
-	//}
-
 	else if (message_type == MT_JSON){
 
 			gl_warning("entering fncs_msg::init()\n"); //renke debug
@@ -467,8 +448,8 @@ int fncs_msg::init(OBJECT *parent){
 			zplfile << "time_delta = 1000000000ns" << endl; //TODO: minimum timestep needs to take into account deltamode steps eventually.
 			zplfile << "broker = tcp://" << *hostname << ":" << *port << endl;
 			zplfile << "values" << endl;
-			zplfile << "    " << "GridAPPD/fncs_input" << endl;
-			zplfile << "        topic = " << "GridAPPD/fncs_input" << endl;
+			zplfile << "    " << "GridAPPSD/fncs_input" << endl;
+			zplfile << "        topic = " << "GridAPPSD/fncs_input" << endl;
 			zplfile << "        default = " << "{}" << endl;
 			zplfile << "        type = " << "JSON" << endl;
 			zplfile << "        list = false" << endl;
@@ -504,44 +485,36 @@ int fncs_msg::init(OBJECT *parent){
 
 int fncs_msg::precommit(TIMESTAMP t1){
 	int result = 0;
-	//gl_warning("entering fncs_msg::precommit()"); //renke debug
 
 	if (message_type == MT_GENERAL){
 
-	//process external function calls
-	incoming_fncs_function();
-	//publish precommit variables
-	result = publishVariables(vmap[4]);
-	if(result == 0){
-		return result;
+		//process external function calls
+		incoming_fncs_function();
+		//publish precommit variables
+		result = publishVariables(vmap[4]);
+		if(result == 0){
+			return result;
+		}
+		//read precommit variables from cache
+		result = subscribeVariables(vmap[4]);
+		if(result == 0){
+			return result;
+		}
 	}
-	//read precommit variables from cache
-	result = subscribeVariables(vmap[4]);
-	if(result == 0){
-		return result;
-	}
-	}
-
-
-	// read precommit json variables from GridAPPD, renke
+	// read precommit json variables from GridAPPSD, renke
 	//TODO
-	// put else to check the message type
 	else if (message_type == MT_JSON)
 	{
 		result = subscribeJsonVariables();
 		if(result == 0){
 			return result;
 		}
-	// in the above function, need to consider the gl_property resolve problem??? //renke
-	// yes, throw a warning inside subscribejsonvariables();
 	}
 
 	return 1;
 }
 
 TIMESTAMP fncs_msg::presync(TIMESTAMP t1){
-
-	//gl_warning("entering fncs_msg::presync()"); //renke debug
 
 	int result = 0;
 	result = publishVariables(vmap[5]);
@@ -558,8 +531,6 @@ TIMESTAMP fncs_msg::presync(TIMESTAMP t1){
 
 TIMESTAMP fncs_msg::plc(TIMESTAMP t1){
 
-	//gl_warning("entering fncs_msg::plc()"); //renke debug
-
 	int result = 0;
 	result = publishVariables(vmap[12]);
 	if(result == 0){
@@ -574,8 +545,6 @@ TIMESTAMP fncs_msg::plc(TIMESTAMP t1){
 }
 
 TIMESTAMP fncs_msg::sync(TIMESTAMP t1){
-
-	//gl_warning("entering fncs_msg::sync()"); //renke debug
 
 	int result = 0;
 	TIMESTAMP t2;
@@ -599,9 +568,6 @@ TIMESTAMP fncs_msg::sync(TIMESTAMP t1){
 
 TIMESTAMP fncs_msg::postsync(TIMESTAMP t1){
 
-	//gl_warning("entering fncs_msg::postsync()"); //renke debug
-
-
 	int result = 0;
 	result = publishVariables(vmap[7]);
 	if(result == 0){
@@ -616,8 +582,6 @@ TIMESTAMP fncs_msg::postsync(TIMESTAMP t1){
 }
 
 TIMESTAMP fncs_msg::commit(TIMESTAMP t0, TIMESTAMP t1){
-
-	//gl_warning("entering fncs_msg::commit()"); //renke debug
 
 	int result = 0;
 	result = publishVariables(vmap[8]);
@@ -646,8 +610,6 @@ TIMESTAMP fncs_msg::commit(TIMESTAMP t0, TIMESTAMP t1){
 
 int fncs_msg::prenotify(PROPERTY* p,char* v){
 
-	//gl_warning("entering fncs_msg::prenotify()"); //renke debug
-
 	int result = 0;
 	//publish prenotify variables
 	result = publishVariables(vmap[9]);
@@ -663,8 +625,6 @@ int fncs_msg::prenotify(PROPERTY* p,char* v){
 }
 
 int fncs_msg::postnotify(PROPERTY* p,char* v){
-
-	//gl_warning("entering fncs_msg::postnotify()"); //renke debug
 
 	int result = 0;
 	//publish postnotify variables
@@ -1149,16 +1109,14 @@ int fncs_msg::subscribeVariables(varmap *rmap){
 
 int fncs_msg::publishJsonVariables( )  //Renke add
 {
-	//gl_warning("entering fncs_msg::publishJsonVariables()"); //renke debug
-
 	gld_property *gldpro_obj;
 
 	int nvecsize = vjson_publish_gld_property.size();
 	int nvecsizeproname = vjson_publish_gld_property_name.size();
 	int vecidx = 0;
 
-	//gl_warning("entering fncs_msg::publishJsonVariables(): vjson_publish_gld_property_name size: %d \n", nvecsizeproname);
-	//gl_warning("entering fncs_msg::publishJsonVariables(): vjson_publish_gld_property size: %d \n", nvecsize);
+	//gl_verbose("entering fncs_msg::publishJsonVariables(): vjson_publish_gld_property_name size: %d \n", nvecsizeproname);
+	//gl_verbose("entering fncs_msg::publishJsonVariables(): vjson_publish_gld_property size: %d \n", nvecsize);
 
 	//need to clean the Json publish data first!!
 	publish_json_data.clear();
@@ -1172,16 +1130,16 @@ int fncs_msg::publishJsonVariables( )  //Renke add
 
 		int nsize = publish_json_config[gldObjectName].size();
 
-		//gl_warning("entering fncs_msg::publishJsonVariables(): gldObjectName: %s, nsize: %d \n", gldObjectName.c_str(), nsize);
+		//gl_verbose("entering fncs_msg::publishJsonVariables(): gldObjectName: %s, nsize: %d \n", gldObjectName.c_str(), nsize);
 
 		for (int isize=0; isize<nsize ; isize++) {
 
-			//gl_warning("fncs_msg::publishJsonVariables(): gldObjectName: %s, isize: %d \n",
+			//gl_verbose("fncs_msg::publishJsonVariables(): gldObjectName: %s, isize: %d \n",
 					//gldObjectName.c_str(), isize); //renke debug
 
 			gldPropertyName = publish_json_config[gldObjectName][isize].asString();
 
-			//gl_warning("fncs_msg::publishJsonVariables(): gldObjectName: %s, isize: %d, property name from json config: %s \n",
+			//gl_verbose("fncs_msg::publishJsonVariables(): gldObjectName: %s, isize: %d, property name from json config: %s \n",
 								//gldObjectName.c_str(), isize, gldPropertyName.c_str()); //renke debug
 
 			gldObjpropertyName = gldObjectName + ".";
@@ -1189,14 +1147,14 @@ int fncs_msg::publishJsonVariables( )  //Renke add
 			gldObjpropertyNamefromvector = vjson_publish_gld_property_name[vecidx];
 			gldpro_obj = vjson_publish_gld_property[vecidx];
 
-			//gl_warning("ncs_msg::publishJsonVariables(), debug check purpose 1 \n"); // renke debug
+			//gl_verbose("ncs_msg::publishJsonVariables(), debug check purpose 1 \n"); // renke debug
+
 			//compare string name to make sure everything consistent
 			if ( gldObjpropertyNamefromvector==gldObjpropertyName) {
 				if (vecidx<nvecsize){
 
-					//gl_warning("ncs_msg::publishJsonVariables(), debug check purpose 2 \n"); // renke debug
 					//if ( gldpro_obj->is_valid() ){
-						//gl_warning("connection: local variable '%s' OK, object id %d",
+						//gl_verbose("connection: local variable '%s' OK, object id %d",
 								//gldObjpropertyName.c_str(), gldpro_obj->get_object()->id); //renke debug
 
 					//}
@@ -1204,22 +1162,19 @@ int fncs_msg::publishJsonVariables( )  //Renke add
 					//write data to the publish_json_data
 					if ( gldpro_obj->is_double()) {
 
-						//gl_warning("ncs_msg::publishJsonVariables(), double debug check purpose 3 \n");
-
-						//gl_warning("fncs_msg::publishJsonVariables(): gldObjectName: %s, isize: %d, property name from json config: %s type double \n",
+						//gl_verbose("fncs_msg::publishJsonVariables(): gldObjectName: %s, isize: %d, property name from json config: %s type double \n",
 								//gldObjectName.c_str(), isize, gldPropertyName.c_str()); //renke debug
 
 						double dtmp = gldpro_obj->get_double();
 
-						//gl_warning("fncs_msg::publishJsonVariables() Value: gldObjectName: %s, isize: %d, property name from json config: %s type double, value :%f \n",
+						//gl_verbose("fncs_msg::publishJsonVariables() Value: gldObjectName: %s, isize: %d, property name from json config: %s type double, value :%f \n",
 														//gldObjectName.c_str(), isize, gldPropertyName.c_str(), dtmp); //renke debug
 
 						publish_json_data[gldObjectName][gldPropertyName]=dtmp;
-						gl_warning("fncs_msg::publishJsonVariables() value: publishing gld_property: %s, value: %f \n",
+						gl_verbose("fncs_msg::publishJsonVariables() value: publishing gld_property: %s, value: %f \n",
 									gldObjpropertyName.c_str(), dtmp ); //renke debug
 					}
 					else if ( gldpro_obj->is_integer()) {
-						//gl_warning("ncs_msg::publishJsonVariables(), integer debug check purpose 3 \n");
 
 						int itmp = gldpro_obj->get_integer();
 						publish_json_data[gldObjectName][gldPropertyName]=itmp;
@@ -1227,7 +1182,6 @@ int fncs_msg::publishJsonVariables( )  //Renke add
 									gldObjpropertyName.c_str(), itmp );
 						}
 					else if ( gldpro_obj->is_character()) {
-						//gl_warning("ncs_msg::publishJsonVariables(), character debug check purpose 3 \n");
 
 						char *ctmp = new char;
 						gldpro_obj->getp(ctmp);
@@ -1237,47 +1191,43 @@ int fncs_msg::publishJsonVariables( )  //Renke add
 									gldObjpropertyName.c_str(), ctmp );
 					}
 					else if ( gldpro_obj->is_complex()) {
-						//gl_warning("ncs_msg::publishJsonVariables(), complex debug check purpose 3 \n");
 
 						//change from complex to string
 
 						//complex ctmp;
 						char chartmp[1024];
-						//ctmp = gldpro_obj->get_complex();
+
 						gldpro_obj->to_string(chartmp, 1024);
-
-						//gl_warning("ncs_msg::publishJsonVariables(), complex debug check purpose 4 \n"); //renke debug
-
-						//if (ctmp.Im()>=0.0) {
-						//	sprintf(chartmp, "%10.f + j%10.f", ctmp.Re(), ctmp.Im());
-						//}
-						//else {
-						//	sprintf(chartmp, "%10.f - j%10.f", ctmp.Re(), -ctmp.Im());
-						//}
 
 						string stmp = string(chartmp);
 						stmp = "complextype:"+stmp;
 
 						publish_json_data[gldObjectName][gldPropertyName]=stmp;
-						gl_warning ("fncs_msg::publishJsonVariables() value: publishing gld_property: %s, value: %s \n",
+						gl_verbose ("fncs_msg::publishJsonVariables() value: publishing gld_property: %s, value: %s \n",
 									gldObjpropertyName.c_str(), stmp.c_str() ); //renke debug
 					}
 					else {
 						//gl_warning("ncs_msg::publishJsonVariables(), other type debug check purpose 3 \n");
 
-						gl_warning("fncs_msg::publishJsonVariables(): the type of the gld_property: %s is not correct! \n",
+						gl_error("fncs_msg::publishJsonVariables(): the type of the gld_property: %s is not correct! \n",
 								gldObjpropertyName.c_str() );
+
+						return 0;
 					}
 
 				}
 				else {
-					gl_warning("fncs_msg::publishJsonVariables(): publish index not correct: %d <> %d \n", vecidx, nvecsize);
+					gl_error("fncs_msg::publishJsonVariables(): publish index not correct: %d <> %d \n", vecidx, nvecsize);
+
+					return 0;
 				}
 
 			}
 			else {
-				gl_warning("fncs_msg::publishJsonVariables(): property name does not match: %s <> %s \n", gldObjpropertyName.c_str(),
+				gl_error("fncs_msg::publishJsonVariables(): property name does not match: %s <> %s \n", gldObjpropertyName.c_str(),
 						gldObjpropertyNamefromvector.c_str());
+
+				return 0;
 
 			}
 			vecidx++;
@@ -1294,8 +1244,7 @@ int fncs_msg::publishJsonVariables( )  //Renke add
 
 	OBJECT *obj = OBJECTHDR(this);
 	char buffer[1024] = "";
-	//string simName = string(gl_name(obj, buffer, 1023));
-	//skey = simName + "/";
+
 	skey = "fncs_output";
 
 	gl_warning("fncs_msg::publishJsonVariables() fncs_publish: key: %s value %s \n", skey.c_str(),
@@ -1311,10 +1260,11 @@ int fncs_msg::publishJsonVariables( )  //Renke add
 int fncs_msg::subscribeJsonVariables( ) //Renke add
 {
 	// in this function, need to consider the gl_property resolve problem //renke
-	// yes, throw a warning inside subscribejsonvariables(); and return a 0
+	// throw a warning inside subscribejsonvariables(); and return a 0
+
 	string value = "";
 #if HAVE_FNCS
-	value = fncs::get_value(string("GridAPPD/fncs_input"));
+	value = fncs::get_value(string("GridAPPSD/fncs_input"));
 #endif
 
 	gl_warning("fncs_msg::subscribeJsonVariables(), reading json data as string: %s", value.c_str());
@@ -1326,13 +1276,10 @@ int fncs_msg::subscribeJsonVariables( ) //Renke add
 		for (Json::ValueIterator it = subscribe_json_data.begin(); it != subscribe_json_data.end(); it++) {
 
 			const string gldObjectName = it.name();
-
-
 			double dtmp;
 			int itmp;
 			string stmp;
 			const char * cstmp;
-			//complex ctmp;
 
 			for (Json::ValueIterator it1 = subscribe_json_data[it.name()].begin();
 					it1 != subscribe_json_data[it.name()].end(); it1++){
@@ -1347,17 +1294,17 @@ int fncs_msg::subscribeJsonVariables( ) //Renke add
 				strcpy(buf, expr);
 				gldpro_obj = new gld_property(buf);
 
-				//gl_warning("fncs_msg::subscribeJsonVariables(): %s is get from json data \n",
+				//gl_verbose("fncs_msg::subscribeJsonVariables(): %s is get from json data \n",
 												//gldObjpropertyName.c_str());
 
 				if ( gldpro_obj->is_valid() ){
-					//gl_warning("connection: local variable '%s' resolved OK, object id %d",
+					//gl_verbose("connection: local variable '%s' resolved OK, object id %d",
 							//gldObjpropertyName.c_str(), gldpro_obj->get_object()->id);
 
 					//get the value of the property
 					Json::Value sub_value = subscribe_json_data[gldObjectName][gldPropertyName];
 
-					//check the type of property and jason value need to be the same
+					//check the type of property and json value need to be the same
 					if ( sub_value.isInt() && gldpro_obj->is_integer() ){
 						itmp = sub_value.asInt();
 						gldpro_obj->setp(itmp);
@@ -1380,7 +1327,8 @@ int fncs_msg::subscribeJsonVariables( ) //Renke add
 						if(subvaluestring.empty() == false){
 							size_t iPos=subvaluestring.find("complextype:");
 							if (iPos<0){
-								gl_warning("fncs_msg::subscribeJsonVariables(): complex value not correct!!!");
+								gl_warning("fncs_msg::subscribeJsonVariables(): %s, complex value: %s not correct!!! \n",
+										gldObjpropertyName.c_str(), subvaluestring.c_str() );
 							}
 							string stmp = subvaluestring.substr(iPos+12);
 							strncpy(valueBuf, stmp.c_str(), 1023);
@@ -1399,14 +1347,16 @@ int fncs_msg::subscribeJsonVariables( ) //Renke add
 
 					}
 					else {
-						gl_warning("fncs_msg::fncs json subscribe: fncs type does not match property type: ",
+						gl_error("fncs_msg::fncs json subscribe: fncs type does not match property type: ",
 								gldObjpropertyName.c_str());
+						return 0;
 
 					}
 
-				}  // end of check whether gldpro_obj is valid
+				}  // end of the if condition to check whether gldpro_obj is valid
 				else {
 					gl_error("connection: local variable '%s' cannot be resolved", gldObjpropertyName.c_str());
+					return 0;
 				}
 
 			} // end of second level for loop, ValueIterator it1
@@ -1420,8 +1370,6 @@ int fncs_msg::subscribeJsonVariables( ) //Renke add
 
 int fncs_msg::publish_fncsjson_link()  //Renke add
 {
-	gl_warning("entering fncs_msg::publish_fncsjson_link()\n"); //renke debug
-
 	// check whether the json configure has content
 	if (publish_json_config.isNull()) {
 		gl_warning(" publish json configure is empty!!! \n");
@@ -1438,13 +1386,13 @@ int fncs_msg::publish_fncsjson_link()  //Renke add
 
 		int nsize = publish_json_config[gldObjectName].size();
 
-		//gl_warning("fncs_msg.publish_fncsjson_link(): gldObjectName: %s, nsize: %d . \n", gldObjectName.c_str(), nsize); //renke debug
+		//gl_verbose("fncs_msg.publish_fncsjson_link(): gldObjectName: %s, nsize: %d . \n", gldObjectName.c_str(), nsize); //renke debug
 
 		for (int isize=0; isize<nsize ; isize++) {
 			gldPropertyName = publish_json_config[gldObjectName][isize].asString();
 			gldObjpropertyName = gldObjectName + ".";
 			gldObjpropertyName = gldObjpropertyName + gldPropertyName;
-			//gl_warning("fncs_msg.publish_fncsjson_link(): processing json configure publish properties: %s \n",
+			//gl_verbose("fncs_msg.publish_fncsjson_link(): processing json configure publish properties: %s \n",
 					//gldObjpropertyName.c_str());  //renke debug
 			vjson_publish_gld_property_name.push_back(gldObjpropertyName);
 
