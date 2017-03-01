@@ -432,6 +432,12 @@ TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 	{
 		if ((Vs.Mag() < DM_volt_trig || wr < DM_speed_trig) && deltamode_inclusive)
 		{
+			// we should not enter delta mode if the motor is tripped or not close to reconnect
+			if (motor_trip == 1 && reconnect < reconnect_time-1) {
+				return result;
+			}
+
+			// we are not tripped and the motor needs to enter delta mode to capture the dynamics
 			schedule_deltamode_start(t1);
 			return t1;
 		}
@@ -664,6 +670,10 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 			// figure out if we need to exit delta mode on the next pass
 			if (Vs.Mag() > DM_volt_exit && wr > DM_speed_exit)
 			{
+				// we return to steady state if the voltage and speed is good
+				return SM_EVENT;
+			} else if (motor_trip == 1 && reconnect < reconnect_time-1) {
+				// we return to steady state if the motor is tripped
 				return SM_EVENT;
 			}
 
