@@ -75,6 +75,7 @@ include tape_plot/Makefile.mk
 
 # we combine the sources in CBLAS and superLU_MT in a single Makefile fragment
 include third_party/superLU_MT/Makefile_combined.mk
+include third_party/jsonCpp/Makefile.mk
 #include third_party/CBLAS/Makefile.mk
 #include third_party/superLU_MT/Makefile.mk
 
