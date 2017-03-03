@@ -241,7 +241,7 @@ int transformer::init(OBJECT *parent)
 				{
 					A_mat[0][0] = zc_baseA / ((zt_baseA + zc_baseA) * complex(nt,0));//1/nt_a;
 					a_mat[0][0] = complex(nt,0) * (zt_baseA + zc_baseA)/zc_baseA;//nt_a;
-					b_mat[0][0] = complex(nt_a,0) * zt_a;
+					b_mat[0][0] = complex(nt_a,0) *zt_a;//* zt_baseA;//zt_a;
 					d_mat[0][0] = 1/nt;//(zc + zt_a) / (complex(nt_a,0) * zc);
 					//A_mat[0][0] = (zc - zt_a) / ( complex(nt_a,0) * (zc + zt_a));
 					//a_mat[0][0] = complex(1,0) / A_mat[0][0];
@@ -254,7 +254,7 @@ int transformer::init(OBJECT *parent)
 				{
 					A_mat[1][1] = zc_baseB / ((zt_baseB + zc_baseB) * complex(nt,0));//1/nt_b;
 					a_mat[1][1] = complex(nt,0) * (zt_baseB + zc_baseB)/zc_baseB;//nt_b;
-					b_mat[1][1] = complex(nt_b,0) * zt_b;
+					b_mat[1][1] = complex(nt_b,0) * zt_b;//zt_baseB;
 					d_mat[1][1] = 1/nt;//(zc + zt_b) / (complex(nt_b,0) * zc);
 					//A_mat[1][1] = (zc - zt_b) / ( complex(nt_b,0) * (zc + zt_b));
 					//a_mat[1][1] = complex(1,0) / A_mat[1][1];
@@ -266,7 +266,7 @@ int transformer::init(OBJECT *parent)
 				{
 					A_mat[2][2] = zc_baseC / ((zt_baseC + zc_baseC) * complex(nt,0));//1/nt_c;
 					a_mat[2][2] = complex(nt,0) * (zt_baseC + zc_baseC)/zc_baseC;//nt_c;
-					b_mat[2][2] = complex(nt_c,0) * zt_c;
+					b_mat[2][2] = complex(nt_c,0) *zt_c;//* zt_baseC;
 					d_mat[2][2] = 1/nt;//(zc + zt_c) / (complex(nt_c,0) * zc);
 					//A_mat[2][2] = (zc - zt_c) / ( complex(nt_c,0) * (zc + zt_c));
 					//a_mat[2][2] = complex(1,0) / A_mat[2][2];
@@ -1366,7 +1366,7 @@ int transformer::transformer_inrush_mat_update(void)
 
 	//Get base impedance values
 	Rd = config->impedance.Re()*config->V_secondary*config->V_secondary/(config->kVA_rating*1000.0);
-	Xd = config->impedance.Im()*config->V_secondary*config->V_secondary/(config->kVA_rating*1000.0*2.0);	//Where'd this /2 come from?  Fixed in later version!?!
+	Xd = config->impedance.Im()*config->V_secondary*config->V_secondary/(config->kVA_rating*1000.0);//ptm *2.0);	//Where'd this /2 come from?  Fixed in later version!?!
 	XM = config->V_secondary*config->V_secondary/(config->kVA_rating*1000.0*config->IM_pu)-Xd;
 
 	//******************** DEBUG NOTE - these may need to be moved, depending on where I populate things
