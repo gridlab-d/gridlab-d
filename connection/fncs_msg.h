@@ -19,8 +19,8 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
-//#include <json/json.h>
-#include "../third_party/jsonCpp/json/json.h"
+#include <json/json.h>
+//#include "../third_party/jsonCpp/json/json.h"
 using namespace std;
 //using namespace Json;
 
@@ -113,7 +113,6 @@ public:
 	int publishJsonVariables( );   //Renke add
 	int subscribeJsonVariables( );  //Renke add
 	int publish_fncsjson_link();  //Renke add
-	int subscribe_fncsjson_link();  //Renke add
 	char simulationName[1024];
 	void term(TIMESTAMP t1);
 	int fncs_link(char *value, COMMUNICATIONTYPE comtype);

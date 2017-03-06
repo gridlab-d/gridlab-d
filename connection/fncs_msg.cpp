@@ -261,14 +261,12 @@ int fncs_msg::configure(char *value)
 				gl_verbose("fncs_msg::configure(): json string read from configure file: %s .\n", json_config_string.c_str()); //renke debug
 				json_reader.parse(json_config_string, publish_json_config);
 
-				// allocate the publish gl_property vector here, based on the json_config, renke
-				//vjson_publish_gld_property.clear();
-
 				//test code start
-				Json::FastWriter jsonwriter;
-				string pubjsonstr;
-				pubjsonstr = jsonwriter.write(publish_json_config);
-				gl_verbose("fncs_msg::configure(): string from publish_json_config: %s .\n", pubjsonstr.c_str()); //renke debug
+
+				//Json::FastWriter jsonwriter;
+				//string pubjsonstr;
+				//pubjsonstr = jsonwriter.write(publish_json_config);
+				//gl_verbose("fncs_msg::configure(): string from publish_json_config: %s .\n", pubjsonstr.c_str()); //renke debug
 
 				//test code end
 
@@ -296,6 +294,7 @@ void send_die(void)
 	//need to check the exit code. send die with an error exit code.
 	int a;
 	a = 0;
+
 	gld_global exitCode("exit_code");
 	if(exitCode.get_int16() != 0){
 		fncs::die();
@@ -381,6 +380,7 @@ int fncs_msg::init(OBJECT *parent){
 		}
 		else {
 			gl_error("connection: local variable '%s' cannot be resolved", vjson_publish_gld_property_name[isize].c_str());
+			return 0;
 		}
 	}
 
@@ -442,15 +442,15 @@ int fncs_msg::init(OBJECT *parent){
 	}
 	else if (message_type == MT_JSON){
 
-			gl_warning("entering fncs_msg::init()\n"); //renke debug
+			string default_json_str = string("{\"")+simName+string("\":{}}");
 
 			zplfile << "name = " << simName << endl;
 			zplfile << "time_delta = 1000000000ns" << endl; //TODO: minimum timestep needs to take into account deltamode steps eventually.
 			zplfile << "broker = tcp://" << *hostname << ":" << *port << endl;
 			zplfile << "values" << endl;
-			zplfile << "    " << "GridAPPSD/fncs_input" << endl;
-			zplfile << "        topic = " << "GridAPPSD/fncs_input" << endl;
-			zplfile << "        default = " << "{}" << endl;
+			zplfile << "    " << simName <<"/fncs_input" << endl;
+			zplfile << "        topic = " << simName << "/fncs_input" << endl;
+			zplfile << "        default = " << default_json_str << endl;
 			zplfile << "        type = " << "JSON" << endl;
 			zplfile << "        list = false" << endl;
 
@@ -794,6 +794,12 @@ TIMESTAMP fncs_msg::clk_update(TIMESTAMP t1)
 }
 
 int fncs_msg::finalize(){
+
+	int nvecsize = vjson_publish_gld_property.size();
+	for (int isize=0 ; isize<nvecsize ; isize++){
+	   delete vjson_publish_gld_property[isize];
+	}
+
 	return 1;
 }
 
@@ -1115,6 +1121,11 @@ int fncs_msg::publishJsonVariables( )  //Renke add
 	int nvecsizeproname = vjson_publish_gld_property_name.size();
 	int vecidx = 0;
 
+	OBJECT *obj = OBJECTHDR(this);
+	char buffer[1024] = "";
+	string simName = string(gl_name(obj, buffer, 1023));
+	//simName = simName+"/fncs_output";
+
 	//gl_verbose("entering fncs_msg::publishJsonVariables(): vjson_publish_gld_property_name size: %d \n", nvecsizeproname);
 	//gl_verbose("entering fncs_msg::publishJsonVariables(): vjson_publish_gld_property size: %d \n", nvecsize);
 
@@ -1170,44 +1181,32 @@ int fncs_msg::publishJsonVariables( )  //Renke add
 						//gl_verbose("fncs_msg::publishJsonVariables() Value: gldObjectName: %s, isize: %d, property name from json config: %s type double, value :%f \n",
 														//gldObjectName.c_str(), isize, gldPropertyName.c_str(), dtmp); //renke debug
 
-						publish_json_data[gldObjectName][gldPropertyName]=dtmp;
+						publish_json_data[simName][gldObjectName][gldPropertyName]=dtmp;
 						gl_verbose("fncs_msg::publishJsonVariables() value: publishing gld_property: %s, value: %f \n",
 									gldObjpropertyName.c_str(), dtmp ); //renke debug
 					}
 					else if ( gldpro_obj->is_integer()) {
 
 						int itmp = gldpro_obj->get_integer();
-						publish_json_data[gldObjectName][gldPropertyName]=itmp;
+						publish_json_data[simName][gldObjectName][gldPropertyName]=itmp;
 						gl_verbose("fncs_msg::publishJsonVariables() value: publishing gld_property: %s, value: %d \n",
 									gldObjpropertyName.c_str(), itmp );
 						}
-					else if ( gldpro_obj->is_character()) {
+					else if ( gldpro_obj->is_character() || gldpro_obj->is_enumeration() || gldpro_obj->is_complex()) {
 
-						char *ctmp = new char;
-						gldpro_obj->getp(ctmp);
-						string stmp = ctmp;
-						publish_json_data[gldObjectName][gldPropertyName]=stmp;
-						gl_verbose("fncs_msg::publishJsonVariables() value: publishing gld_property: %s, value: %s \n",
-									gldObjpropertyName.c_str(), ctmp );
-					}
-					else if ( gldpro_obj->is_complex()) {
+						//change from char*, enumeration, or complex to string
 
-						//change from complex to string
-
-						//complex ctmp;
 						char chartmp[1024];
 
 						gldpro_obj->to_string(chartmp, 1024);
 
 						string stmp = string(chartmp);
-						stmp = "complextype:"+stmp;
 
-						publish_json_data[gldObjectName][gldPropertyName]=stmp;
+						publish_json_data[simName][gldObjectName][gldPropertyName]=stmp;
 						gl_verbose ("fncs_msg::publishJsonVariables() value: publishing gld_property: %s, value: %s \n",
 									gldObjpropertyName.c_str(), stmp.c_str() ); //renke debug
 					}
 					else {
-						//gl_warning("ncs_msg::publishJsonVariables(), other type debug check purpose 3 \n");
 
 						gl_error("fncs_msg::publishJsonVariables(): the type of the gld_property: %s is not correct! \n",
 								gldObjpropertyName.c_str() );
@@ -1242,12 +1241,9 @@ int fncs_msg::publishJsonVariables( )  //Renke add
 	pubjsonstr = jsonwriter.write(publish_json_data);
 	string skey = "";
 
-	OBJECT *obj = OBJECTHDR(this);
-	char buffer[1024] = "";
-
 	skey = "fncs_output";
 
-	gl_warning("fncs_msg::publishJsonVariables() fncs_publish: key: %s value %s \n", skey.c_str(),
+	gl_verbose("fncs_msg::publishJsonVariables() fncs_publish: key: %s value %s \n", skey.c_str(),
 							pubjsonstr.c_str());
 
 #if HAVE_FNCS
@@ -1263,15 +1259,34 @@ int fncs_msg::subscribeJsonVariables( ) //Renke add
 	// throw a warning inside subscribejsonvariables(); and return a 0
 
 	string value = "";
+	OBJECT *obj = OBJECTHDR(this);
+	char buffer[1024] = "";
+	string simName = string(gl_name(obj, buffer, 1023));
+	string skey = simName+"/fncs_input";
+
 #if HAVE_FNCS
-	value = fncs::get_value(string("GridAPPSD/fncs_input"));
+	value = fncs::get_value(skey);
 #endif
 
-	gl_warning("fncs_msg::subscribeJsonVariables(), reading json data as string: %s", value.c_str());
+	gl_verbose("fncs_msg::subscribeJsonVariables(), skey: %s, reading json data as string: %s", skey.c_str(), value.c_str());
 
 	if(value.empty() == false){
+
+		Json::Value subscribe_json_data_full;
+
 		Json::Reader json_reader;
-		json_reader.parse(value, subscribe_json_data);
+		json_reader.parse(value, subscribe_json_data_full);
+
+		//use isMember to check the simName is in the subscribe_json_data_full
+		if (!subscribe_json_data_full.isMember(simName.c_str())){
+			gl_error("fncs_msg::subscribeJsonVariables(), the simName: %s is not a member in the subscribed json data!! \n",
+					simName.c_str());
+			return 0;
+
+		}else {
+			subscribe_json_data = subscribe_json_data_full[simName];
+		}
+
 
 		for (Json::ValueIterator it = subscribe_json_data.begin(); it != subscribe_json_data.end(); it++) {
 
@@ -1308,55 +1323,45 @@ int fncs_msg::subscribeJsonVariables( ) //Renke add
 					if ( sub_value.isInt() && gldpro_obj->is_integer() ){
 						itmp = sub_value.asInt();
 						gldpro_obj->setp(itmp);
-						gl_warning("fncs_msg::subscribeJsonVariables(): %s is set value with int: %d \n",
+						gl_verbose("fncs_msg::subscribeJsonVariables(): %s is set value with int: %d \n",
 								gldObjpropertyName.c_str(), itmp);
 
 					}
 					else if ( sub_value.isDouble()&& gldpro_obj->is_double()){
 						dtmp = sub_value.asDouble();
 						gldpro_obj->setp(dtmp);
-						gl_warning("fncs_msg::subscribeJsonVariables(): %s is set value with double: %f \n",
+						gl_verbose("fncs_msg::subscribeJsonVariables(): %s is set value with double: %f \n",
 								gldObjpropertyName.c_str(), dtmp);
 
 					}
-					else if (sub_value.isString() && gldpro_obj->is_complex()){
-						//gldpro_obj->from_string(sub_value.c_str());
+					//if the gl_property type is char*, enumeration, or complex number
+					else if ( sub_value.isString() &&
+							(gldpro_obj->is_complex() || gldpro_obj->is_character() || gldpro_obj->is_enumeration()) ){
+
 						char valueBuf[1024] = "";
 						string subvaluestring = sub_value.asString();
 
 						if(subvaluestring.empty() == false){
-							size_t iPos=subvaluestring.find("complextype:");
-							if (iPos<0){
-								gl_warning("fncs_msg::subscribeJsonVariables(): %s, complex value: %s not correct!!! \n",
-										gldObjpropertyName.c_str(), subvaluestring.c_str() );
-							}
-							string stmp = subvaluestring.substr(iPos+12);
-							strncpy(valueBuf, stmp.c_str(), 1023);
-
+							strncpy(valueBuf, subvaluestring.c_str(), 1023);
 							gldpro_obj->from_string(valueBuf);
 						}
-						gl_warning("fncs_msg::subscribeJsonVariables(): %s is set value with complex type: %s \n",
-													gldObjpropertyName.c_str(), stmp.c_str());
-					}
-					else if (sub_value.isString() && gldpro_obj->is_character()){
-						stmp = sub_value.asString();
-						cstmp = stmp.c_str();
-						gldpro_obj->setp(cstmp);
-						gl_warning("fncs_msg::subscribeJsonVariables(): %s is set value with string: %s \n",
-								gldObjpropertyName.c_str(), stmp.c_str());
-
+						gl_verbose("fncs_msg::subscribeJsonVariables(): %s is set value with : %s \n",
+													gldObjpropertyName.c_str(), subvaluestring.c_str());
 					}
 					else {
 						gl_error("fncs_msg::fncs json subscribe: fncs type does not match property type: ",
 								gldObjpropertyName.c_str());
+						delete gldpro_obj;
 						return 0;
-
 					}
 
+					delete gldpro_obj;
 				}  // end of the if condition to check whether gldpro_obj is valid
 				else {
 					gl_error("connection: local variable '%s' cannot be resolved", gldObjpropertyName.c_str());
+					delete gldpro_obj;
 					return 0;
+
 				}
 
 			} // end of second level for loop, ValueIterator it1
@@ -1400,11 +1405,6 @@ int fncs_msg::publish_fncsjson_link()  //Renke add
 
 	}
 
-	return 1;
-}
-
-int fncs_msg::subscribe_fncsjson_link()  //Renke add
-{
 	return 1;
 }
 

@@ -6,7 +6,12 @@ echo $PATH
 
 #export PATH
 
-fncs_broker 3  &
+#export FNCS_LOG_LEVEL=DEBUG4
+#export FNCS_LOG_STDOUT=yes
+
+#rm -f *.out
+
+fncs_broker 3 >& test_broker.out &
 
 #cd ~/FNCS-GLD-TESTCASE/gldfncs/fncs/tracer
 
@@ -17,9 +22,9 @@ fncs_broker 3  &
 
 #gridlabd  IEEE_Dynamic_2gen_GLD3_nogen_jsonpub.glm > glmpub.out &
 
-fncs_player_anon 12s fncsplayerout.txt &
+fncs_player_anon 12s fncsplayerout.txt >& test_player.out &
 
-fncs_tracer 12s the_trace_file_output.out &
+fncs_tracer 12s the_trace_file_output.out >& test_tracer.out &
 
 #gridlabd IEEE_Dynamic_2gen_GLD3_nogen_jsonsub.glm &
 
