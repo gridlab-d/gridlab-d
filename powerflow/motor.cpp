@@ -69,6 +69,7 @@ motor::motor(MODULE *mod):node(mod)
 				PT_KEYWORD,"STALLED",(enumeration)statusSTALLED,
 				PT_KEYWORD,"TRIPPED",(enumeration)statusTRIPPED,
 				PT_KEYWORD,"OFF",(enumeration)statusOFF,
+			PT_int32,"motor_status_number",PADDR(motor_status),PT_DESCRIPTION,"the current status of the motor as an integer",
 			PT_enumeration,"motor_override",PADDR(motor_override),PT_DESCRIPTION,"override function to dictate if motor is turned off or on",
 				PT_KEYWORD,"ON",(enumeration)overrideON,
 				PT_KEYWORD,"OFF",(enumeration)overrideOFF,
