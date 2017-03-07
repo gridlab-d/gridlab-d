@@ -1279,9 +1279,9 @@ int fncs_msg::subscribeJsonVariables( ) //Renke add
 
 		//use isMember to check the simName is in the subscribe_json_data_full
 		if (!subscribe_json_data_full.isMember(simName.c_str())){
-			gl_error("fncs_msg::subscribeJsonVariables(), the simName: %s is not a member in the subscribed json data!! \n",
+			gl_warning("fncs_msg::subscribeJsonVariables(), the simName: %s is not a member in the subscribed json data!! \n",
 					simName.c_str());
-			return 0;
+			return 1;
 
 		}else {
 			subscribe_json_data = subscribe_json_data_full[simName];
