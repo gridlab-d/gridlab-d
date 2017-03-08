@@ -140,6 +140,11 @@ diesel_dg::diesel_dg(MODULE *module)
 
 			//Convergence criterion for exiting deltamode - just on rotor_speed for now
 			PT_double,"rotor_speed_convergence[rad]",PADDR(rotor_speed_convergence_criterion),PT_DESCRIPTION,"Convergence criterion on rotor speed used to determine when to exit deltamode",
+			PT_double,"voltage_convergence[V]",PADDR(voltage_convergence_criterion),PT_DESCRIPTION,"Convergence criterion for voltage changes (if exciter present) to determine when to exit deltamode",
+
+			//Which to enable
+			PT_bool,"rotor_speed_convergence_enabled",PADDR(apply_rotor_speed_convergence),PT_DESCRIPTION,"Uses rotor_speed_convergence to determine if an exit of deltamode is needed",
+			PT_bool,"voltage_magnitude_convergence_enabled",PADDR(apply_voltage_mag_convergence),PT_DESCRIPTION,"Uses voltage_convergence to determine if an exit of deltamode is needed - only works if an exciter is present",
 
 			//State outputs
 			PT_double,"rotor_angle[rad]",PADDR(curr_state.rotor_angle),PT_DESCRIPTION,"rotor angle state variable",
@@ -430,7 +435,7 @@ int diesel_dg::create(void)
 	X0=complex(0.005,0.05);
 	X2=complex(0.0072,0.2540);
 
-	//Input variables are initalized to -99 (since pu) - if left there, the dynamics initalization gets them
+	//Input variables are initialized to -99 (since pu) - if left there, the dynamics initialization gets them
 	gen_base_set_vals.wref = -99.0;
 	gen_base_set_vals.vset = -99.0;
 	gen_base_set_vals.Pref = -99.0;
@@ -526,9 +531,19 @@ int diesel_dg::create(void)
 	power_val[1] = 0.0;
 	power_val[2] = 0.0;
 
-	//Rotor convegence becomes 0.1 rad
+	//Rotor convergence becomes 0.1 rad
 	rotor_speed_convergence_criterion = 0.1;
 	prev_rotor_speed_val = 0.0;
+
+	//Voltage convergence
+	voltage_convergence_criterion = 0.5;
+	prev_voltage_val[0] = 0.0;
+	prev_voltage_val[1] = 0.0;
+	prev_voltage_val[2] = 0.0;
+
+	//By default, only speed convergence is on
+	apply_rotor_speed_convergence = true;
+	apply_voltage_mag_convergence = false;
 
 	//Working variable zeroing
 	power_base = 0.0;
@@ -919,26 +934,64 @@ int diesel_dg::init(OBJECT *parent)
 			power_val[2] = complex(0.5*power_base,0.0);
 		}
 
-		//Check if the convergence criterion is proper
-		if (rotor_speed_convergence_criterion<0.0)
+		if (apply_rotor_speed_convergence == true)
 		{
-			gl_warning("diesel_dg:%s - rotor_speed_convergence is less than zero - negating",obj->name?obj->name:"unnamed");
-			/*  TROUBLESHOOT
-			The value specified for deltamode convergence, rotor_speed_convergence, is a negative value.
-			It has been made positive.
-			*/
+			//Check if the convergence criterion is proper
+			if (rotor_speed_convergence_criterion<0.0)
+			{
+				gl_warning("diesel_dg:%s - rotor_speed_convergence is less than zero - negating",obj->name?obj->name:"unnamed");
+				/*  TROUBLESHOOT
+				The value specified for deltamode convergence, rotor_speed_convergence, is a negative value.
+				It has been made positive.
+				*/
 
-			rotor_speed_convergence_criterion = -rotor_speed_convergence_criterion;
+				rotor_speed_convergence_criterion = -rotor_speed_convergence_criterion;
+			}
+			else if (rotor_speed_convergence_criterion==0.0)
+			{
+				gl_warning("diesel_dg:%s - rotor_speed_convergence is zero - it may never exit deltamode!",obj->name?obj->name:"unnamed");
+				/*  TROUBLESHOOT
+				A zero value has been specified as the deltamode convergence criterion for rotor speed.  This is an incredibly tight
+				tolerance and may result in the system never converging and exiting deltamode.
+				*/
+			}
+			//defaulted else, must be okay (well, at the very least, not completely wrong)
 		}
-		else if (rotor_speed_convergence_criterion==0.0)
+
+		//Check voltage convergence criterion as well
+		if (apply_voltage_mag_convergence == true)
 		{
-			gl_warning("diesel_dg:%s - rotor_speed_convergence is zero - it may never exit deltamode!",obj->name?obj->name:"unnamed");
-			/*  TROUBLESHOOT
-			A zero value has been specified as the deltamode convergence criterion for rotor speed.  This is an incredibly tight
-			tolerance and may result in the system never converging and exiting deltamode.
-			*/
+			//See if the exciter is enabled
+			if (Exciter_type == NO_EXC)
+			{
+				gl_warning("diesel_dg:%s - voltage convergence is enabled, but no exciter is present",(obj->name ? obj->name : "unnamed"));
+				/*  TROUBLESHOOT
+				While performing simple checks on the voltage convergence criterion, no exciter is turned on.  This convergence check
+				does nothing in this situation -- it requires an exciter to function
+				*/
+			}
+
+			//Check if the convergence criterion is proper
+			if (voltage_convergence_criterion<0.0)
+			{
+				gl_warning("diesel_dg:%s - voltage_convergence is less than zero - negating",obj->name?obj->name:"unnamed");
+				/*  TROUBLESHOOT
+				The value specified for deltamode convergence, voltage_convergence, is a negative value.
+				It has been made positive.
+				*/
+
+				voltage_convergence_criterion = -voltage_convergence_criterion;
+			}
+			else if (voltage_convergence_criterion==0.0)
+			{
+				gl_warning("diesel_dg:%s - voltage_convergence is zero - it may never exit deltamode!",obj->name?obj->name:"unnamed");
+				/*  TROUBLESHOOT
+				A zero value has been specified as the deltamode convergence criterion for voltage magnitude.  This is an incredibly tight
+				tolerance and may result in the system never converging and exiting deltamode.
+				*/
+			}
+			//defaulted else, must be okay (well, at the very least, not completely wrong)
 		}
-		//defaulted else, must be okay (well, at the very least, not completely wrong)
 
 		//Make sure min is above zero
 		if ((Min_Ef<=0.0) && (Exciter_type != NO_EXC))
@@ -1636,7 +1689,7 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 {
 	unsigned char pass_mod;
 	unsigned int loop_index;
-	double temp_double;
+	double temp_double, temp_mag_val, temp_mag_diff;
 	double deltat, deltath;
 	double omega_pu;
 	double x5a_now;
@@ -2394,22 +2447,64 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 			*mapped_freq_variable = curr_state.omega/(2.0*PI);
 		}
 
-		//Determine our desired state - if rotor speed is settled, exit
-		if (temp_double<=rotor_speed_convergence_criterion)
+		//See what to check to determine if an exit is needed
+		if (apply_rotor_speed_convergence == true)
 		{
-			//Ready to leave Delta mode
-			return SM_EVENT;
+			//Determine our desired state - if rotor speed is settled, exit
+			if (temp_double<=rotor_speed_convergence_criterion)
+			{
+				//Ready to leave Delta mode
+				return SM_EVENT;
+			}
+			else	//Not "converged" -- I would like to do another update
+			{
+				return SM_DELTA;	//Next delta update
+									//Could theoretically request a reiteration, but we're not allowing that right now
+			}
 		}
-		else	//Not "converged" -- I would like to do another update
+
+		//Only check voltage if an exciter is present
+		if ((apply_voltage_mag_convergence == true) && (Exciter_type != NO_EXC))
 		{
-			return SM_DELTA;	//Next delta update
-								//Could theoretically request a reiteration, but we're not allowing that right now
+			//Figure out the maximum voltage difference
+			temp_double = 0.0;
+
+			//Loop through the phases - built on the assumption of three-phase
+			for (loop_index=0; loop_index<3; loop_index++)
+			{
+				temp_mag_val = pCircuit_V[loop_index].Mag();
+				temp_mag_diff = fabs(temp_mag_val - prev_voltage_val[loop_index]);
+
+				//See if it is bigger or not
+				if (temp_mag_diff > temp_double)
+				{
+					temp_double = temp_mag_diff;
+				}
+
+				//Store the updated tracking value
+				prev_voltage_val[loop_index] = temp_mag_val;
+			}
+
+			//See if we need to reiterate or not
+			if (temp_double<=voltage_convergence_criterion)
+			{
+				//Ready to leave Delta mode
+				return SM_EVENT;
+			}
+			else	//Not "converged" -- I would like to do another update
+			{
+				return SM_DELTA;	//Next delta update
+									//Could theoretically request a reiteration, but we're not allowing that right now
+			}
 		}
+
+		//Default else - no checks asked for, just bounce back to event
+		return SM_EVENT;
 	}//End corrector pass
 }
 
 //Module-level post update call
-//useful_value is a pointer to a passed in complex valu
+//useful_value is a pointer to a passed in complex value
 //mode_pass 0 is the accumulation call
 //mode_pass 1 is the "update our frequency" call
 STATUS diesel_dg::post_deltaupdate(complex *useful_value, unsigned int mode_pass)

@@ -148,6 +148,7 @@ private:
 	unsigned int x5a_delayed_write_pos;//Indexing variable for writing the torque_delay_buffer
 	unsigned int x5a_delayed_read_pos;	//Indexing variable for reading torque_delay_buffer
 	double prev_rotor_speed_val;		//Previous value of rotor speed - used for delta-exiting convergence check
+	double prev_voltage_val[3];			//Previous value of voltage magnitude - used for delta-exiting convergence check
 	complex last_power_output[3];		//Tracking variable for previous power output - used to do super-second frequency adjustments
 	TIMESTAMP prev_time;				//Tracking variable for previous "new time" run
 	double prev_time_dbl;				//Tracking variable for previous "new time" run -- deltamode capable
@@ -257,8 +258,13 @@ public:
 	complex EfB;
 	complex EfC;
 
-	//Convergence criteria (ion right now)
+	//Convergence criteria
 	double rotor_speed_convergence_criterion;
+	double voltage_convergence_criterion;
+
+	//Which convergence to apply
+	bool apply_rotor_speed_convergence;
+	bool apply_voltage_mag_convergence;
 
 	//Dynamics-capable synchronous generator inputs
 	double omega_ref;		//Nominal frequency
