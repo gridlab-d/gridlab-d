@@ -518,10 +518,10 @@ int metrics_collector::read_line(OBJECT *obj){
 		// Get bill value
 		price_parent = *gl_get_double_by_name(obj->parent, "price");
 
-		// Get voltage values
-		double v1 = *gl_get_double_by_name(obj->parent, "voltage_1"); // property of triplex_node: bus voltage, phase 1 to ground
-		double v2 = *gl_get_double_by_name(obj->parent, "voltage_2"); // property of triplex_node: bus voltage, phase 2 to ground
-		double v12 = *gl_get_double_by_name(obj->parent, "voltage_12"); // property of triplex_node: bus voltage, phase 1 to 2
+		// Get voltage values, s1 to ground, s2 to ground, s1 to s2
+		double v1 = (*gl_get_complex_by_name(obj->parent, "voltage_1")).Mag();  
+		double v2 = (*gl_get_complex_by_name(obj->parent, "voltage_2")).Mag();  
+		double v12 = (*gl_get_complex_by_name(obj->parent, "voltage_12")).Mag();
 
 		interpolate (voltage_mag_array, last_index, curr_index, fabs(v12));
 		interpolate (voltage_average_mag_array, last_index, curr_index, fabs(v12/2));
@@ -536,10 +536,10 @@ int metrics_collector::read_line(OBJECT *obj){
 
 		price_parent = *gl_get_double_by_name(obj->parent, "price");
 
-		// TODO: assuming these are three-phase loads; this is the only difference with triplex meters 
-		double va = fabs (*gl_get_double_by_name(obj->parent, "voltage_A"));   
-		double vb = fabs (*gl_get_double_by_name(obj->parent, "voltage_B"));   
-		double vc = fabs (*gl_get_double_by_name(obj->parent, "voltage_C"));
+		// assuming these are three-phase loads; this is the only difference with triplex meters 
+		double va = (*gl_get_complex_by_name(obj->parent, "voltage_A")).Mag();   
+		double vb = (*gl_get_complex_by_name(obj->parent, "voltage_B")).Mag();   
+		double vc = (*gl_get_complex_by_name(obj->parent, "voltage_C")).Mag();
 		double vavg = (va + vb + vc) / 3.0;
 		double vmin = va;
 		double vmax = va;
@@ -547,8 +547,12 @@ int metrics_collector::read_line(OBJECT *obj){
 		if (vb > vmax) vmax = vb;
 		if (vc < vmin) vmin = vc;
 		if (vc > vmax) vmax = vc;
+		double vab = (*gl_get_complex_by_name(obj->parent, "voltage_AB")).Mag();   
+		double vbc = (*gl_get_complex_by_name(obj->parent, "voltage_BC")).Mag();   
+		double vca = (*gl_get_complex_by_name(obj->parent, "voltage_CA")).Mag();
+		double vll = (vab + vbc + vca) / 3.0;
 
-		interpolate (voltage_mag_array, last_index, curr_index, vavg * sqrt (3.0));
+		interpolate (voltage_mag_array, last_index, curr_index, vll);
 		interpolate (voltage_average_mag_array, last_index, curr_index, vavg);
 		interpolate (voltage_unbalance_array, last_index, curr_index, (vmax - vmin)/vavg);
 	} 
