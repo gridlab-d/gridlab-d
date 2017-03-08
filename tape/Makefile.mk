@@ -1,12 +1,15 @@
 pkglib_LTLIBRARIES += tape/tape.la
 
 tape_tape_la_CPPFLAGS =
+tape_tape_la_CPPFLAGS += -I$(top_srcdir)/third_party/jsonCpp
 tape_tape_la_CPPFLAGS += $(AM_CPPFLAGS)
 
 tape_tape_la_LDFLAGS =
 tape_tape_la_LDFLAGS += $(AM_LDFLAGS)
 
-tape_tape_la_LIBADD = -ldl
+tape_tape_la_LIBADD =
+tape_tape_la_LIBADD += third_party/jsonCpp/libjsoncpp.la
+tape_tape_la_LIBADD += -ldl
 
 tape_tape_la_SOURCES =
 tape_tape_la_SOURCES += tape/collector.c
@@ -35,6 +38,3 @@ tape_tape_la_SOURCES += tape/recorder.c
 tape_tape_la_SOURCES += tape/shaper.c
 tape_tape_la_SOURCES += tape/tape.c
 tape_tape_la_SOURCES += tape/tape.h
-tape_tape_la_SOURCES += tape/jsoncpp.cpp
-tape_tape_la_SOURCES += tape/json/json.h
-tape_tape_la_SOURCES += tape/json/json-forwards.h
