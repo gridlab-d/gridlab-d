@@ -322,6 +322,12 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 	/* new violation_recorder() */
 	new_violation_recorder(module);
 
+	/* new metrics_collector() */
+	new_metrics_collector(module);
+
+	/* new metrics_collector_writer() */
+	new_metrics_collector_writer(module);
+
 #if 0
 	new_loadshape(module);
 #endif // zero
@@ -520,6 +526,52 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 				/* Behave similar to "supersecond" players */
 				while ( t<=clock_val )
 				{
+					/* Check to make sure we've be initialized -- if a deltamode timestep is first, it may be before this was initialized */
+					if (my->target == NULL)	/* Not set yet */
+					{
+						/* Make sure we actually opened the file (this part is new - paranoia check */
+						if (my->status != TS_OPEN)
+						{
+							gl_error("deltamode player: player \"%s\" has not been opened yet!",obj->name?obj->name:"(anon)");
+							/*  TROUBLESHOOT
+							While attempting to start a player with a deltamode timestep, it was found the player hasn't been opened yet.
+							Please submit your code and a bug report via the issue system.  To work around this, put a non-deltamode timestep
+							at the beginning of your player file
+							*/
+
+							/* Set our status, just in case */
+							my->status = TS_ERROR;
+
+							return SM_ERROR;
+						}
+
+						/* Code copied from player sync */
+						my->target = player_link_properties(my, obj->parent, my->property);
+
+						/* Make sure it worked */
+						if (my->target==NULL){
+							gl_error("deltamode player: Unable to find property \"%s\" in object %s", my->property, obj->name?obj->name:"(anon)");
+							/*  TROUBLESHOOT
+							While attempting to link up the property of a player in deltamode, the property could not be found.  Make sure the object
+							exists and has the specified property and try again.
+							*/
+							my->status = TS_ERROR;
+							return SM_ERROR;
+						}
+
+						/* Do an initialization of it */
+						if (my->target!=NULL)
+						{
+							OBJECT *target = obj->parent ? obj->parent : obj; /* target myself if no parent */
+							player_write_properties(my, target, my->target, my->next.value);
+						}
+
+						/* Copy the current value into our "tracking" variable */
+						my->delta_track.ns = my->next.ns;
+						my->delta_track.ts = my->next.ts;
+						memcpy(my->delta_track.value,my->next.value,sizeof(char1024));
+					}/* Target not already set */
+
 					gl_set_value(obj->parent,GETADDR(obj->parent,my->target),my->next.value,my->target); /* pointer => int64 */
 
 					/* read the next value */
@@ -546,6 +598,12 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 						mode = SM_DELTA;
 				}
 			}/*End not TS_NEVER */
+			else	/* Player is done - set the flag variables, just to prevent some other issues in sync_player */
+			{
+				/* These prevent the code on player.c:488 from overwriting with an older value */
+				my->delta_track.ns = 0;
+				my->delta_track.ts = TS_NEVER;
+			}
 		}
 		/* Default else - not in service */
 	}
