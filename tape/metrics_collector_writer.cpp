@@ -281,7 +281,7 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 	Json::Value feeder_information;
 
 	// Write Time -> represents the time from the StartTime
-	metrics_writer_Output_time["Time"] = t1 - startTime; // in seconds
+	metrics_writer_Output_time["Time"] = (Json::Int64)(t1 - startTime); // in seconds
 	int writeTime = t1 - startTime; // in seconds
 	sprintf(time_str, "%d", writeTime);
 
