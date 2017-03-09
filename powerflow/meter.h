@@ -16,7 +16,9 @@ public:
 	complex measured_voltageD[3];	///< measured voltage - Line-to-Line
 	complex measured_current[3];	///< measured current
 	double measured_real_energy;	///< metered real energy consumption
+	double measured_real_energy_delta;	///< metered real energy consumption since last time step
 	double measured_reactive_energy;///< metered reactive energy consumption
+	double measured_reactive_energy_delta;///< metered reactive energy consumption since last time step
 	complex measured_power;			///< metered power
 	double measured_demand;			///< metered demand (peak of power)
 	double measured_real_power;		///< metered real power
