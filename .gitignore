@@ -102,3 +102,4 @@ install/
 validate.txt
 .libs/
 third_party/xerces*/*
+*.xcbkptlist
