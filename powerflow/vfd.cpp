@@ -11,7 +11,7 @@
 #include <numeric>
 
 #include "vfd.h"
-EXPORT_SYNC(vfd);
+
 //initialize pointers
 CLASS* vfd::oclass = NULL;
 CLASS* vfd::pclass = NULL;
@@ -26,7 +26,7 @@ vfd::vfd(MODULE *mod) : link_object(mod)
 	{
 		pclass = link_object::oclass;
 		
-		oclass = gl_register_class(mod,"vfd",sizeof(vfd),PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
+		oclass = gl_register_class(mod,"vfd",sizeof(vfd),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class vfd";
 		else
@@ -73,6 +73,11 @@ vfd::vfd(MODULE *mod) : link_object(mod)
 		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
 			GL_THROW("Unable to publish vfd deltamode function");
 
+		//Publish restoration-related function (current update)
+		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
+			GL_THROW("Unable to publish vfd external power calculation function");
+		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+			GL_THROW("Unable to publish vfd external power limit calculation function");
     }
 }
 
@@ -297,6 +302,11 @@ void vfd::vfdCoreCalculations(double currFrequencyVal, double settleTime, double
 	calc_volt_in[0] = fNode->voltage[0]/3.0;//powerInElectrical/~(fNode->current[0]);
 	calc_volt_in[1] = fNode->voltage[1]/3.0;//powerInElectrical/~(fNode->current[0]);
 	calc_volt_in[2] = fNode->voltage[2]/3.0;//powerInElectrical/~(fNode->current[0]);
+}
+
+TIMESTAMP vfd::presync(TIMESTAMP t0)
+{
+	return link_object::presync(t0);
 }
 
 TIMESTAMP vfd::sync(TIMESTAMP t0)
@@ -524,10 +534,16 @@ EXPORT int create_vfd(OBJECT **obj, OBJECT *parent)
 		}
 		else
 			return 0;
-	} 
+	}
 	CREATE_CATCHALL(vfd);
 }
 
+/**
+* Object initialization is called once after all object have been created
+*
+* @param obj a pointer to this object
+* @return 1 on success, 0 on error
+*/
 EXPORT int init_vfd(OBJECT *obj)
 {
 	try {
@@ -537,60 +553,36 @@ EXPORT int init_vfd(OBJECT *obj)
 	INIT_CATCHALL(vfd);
 }
 
-//Commit timestep - after all iterations are done
-/*
-EXPORT TIMESTAMP commit_vfd(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
+/**
+* Sync is called when the clock needs to advance on the bottom-up pass (PC_BOTTOMUP)
+*
+* @param obj the object we are sync'ing
+* @param t0 this objects current timestamp
+* @param pass the current pass for this sync call
+* @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
+*/
+EXPORT TIMESTAMP sync_vfd(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	vfd *fsr = OBJECTDATA(obj,vfd);
 	try
 	{
-		if (solver_method==SM_FBS)
-		{
-			link_object *plink = OBJECTDATA(obj,link_object);
-			plink->calculate_power();
-			
-			return (fsr->vfd_state(obj->parent) ? TS_NEVER : 0);
+		vfd *pObj = OBJECTDATA(obj,vfd);
+		TIMESTAMP t1 = TS_NEVER;
+		switch (pass) {
+		case PC_PRETOPDOWN:
+			return pObj->presync(t0);
+		case PC_BOTTOMUP:
+			return pObj->sync(t0);
+		case PC_POSTTOPDOWN:
+			t1 = pObj->postsync(t0);
+			obj->clock = t0;
+			return t1;
+		default:
+			throw "invalid pass request";
 		}
-		else
-			return TS_NEVER;
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s (vfd:%d): %s", fsr->get_name(), fsr->get_id(), msg);
-		return 0; 
-	}
+	SYNC_CATCHALL(vfd);
 }
-*/
 
-// EXPORT TIMESTAMP sync_vfd(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
-// {
-	// try {
-		// vfd *pObj = OBJECTDATA(obj,vfd);
-		// TIMESTAMP t1 = TS_NEVER;
-		// switch (pass) {
-		// case PC_PRETOPDOWN:
-			// return pObj->presync(t0);
-		// case PC_BOTTOMUP:
-			// return pObj->sync(t0);
-		// case PC_POSTTOPDOWN:
-			// t1 = pObj->postsync(t0);
-			// obj->clock = t0;
-			// return t1;
-		// default:
-			// throw "invalid pass request";
-		// }
-	// }
-	// SYNC_CATCHALL(vfd);
-// }
-
-/**
-* Allows the core to discover whether obj is a subtype of this class.
-*
-* @param obj a pointer to this object
-* @param classname the name of the object the core is testing
-*
-* @return true (1) if obj is a subtype of this class
-*/
 EXPORT int isa_vfd(OBJECT *obj, char *classname)
 {
 	return OBJECTDATA(obj,vfd)->isa(classname);
