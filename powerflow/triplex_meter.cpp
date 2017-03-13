@@ -145,7 +145,7 @@ int triplex_meter::create()
 	measured_real_energy = measured_reactive_energy = 0;
 	measured_real_energy_delta = measured_reactive_energy_delta = 0;
     last_measured_real_energy = last_measured_reactive_energy =0;
-    measure_energy_delta_timestep = 0;
+    measure_energy_delta_timestep = 900;
     last_delta_timestamp = 0;
 	measured_power = 0;
 	measured_demand = 0;
@@ -350,12 +350,14 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		measured_demand=measured_real_power;
 
     // Delta energy cacluation
-    if ((measure_energy_delta_timestep == 0) || ((last_delta_timestamp + measure_energy_delta_timestep == t0) && (t1 != t0))){
+    DATETIME t;
+	gl_localtime(t1,&t);
+    int current_minute = t.minute;
+    if ((current_minute % int(measure_energy_delta_timestep/60) == 0) && (t1 != t0)) { //((measure_energy_delta_timestep == 0) || ((last_delta_timestamp + measure_energy_delta_timestep == t0) && (t1 != t0))){
         measured_real_energy_delta = measured_real_energy - last_measured_real_energy;
         measured_reactive_energy_delta = measured_reactive_energy - last_measured_reactive_energy;
         last_measured_real_energy = measured_real_energy;
         last_measured_reactive_energy = measured_reactive_energy;
-        last_delta_timestamp = t0;
     }
 
 
