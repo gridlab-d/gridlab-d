@@ -500,6 +500,8 @@ static void http_mime(HTTPCNX *http, char *path)
 		{".ico","image/x-icon"},
 		{".txt","text/plain"},
 		{".log","text/plain"},
+		{".glm","text/plain"},
+		{".php","text/plain"},
 	};
 	int n;
 	for ( n=0 ; n<sizeof(map)/sizeof(map[0]) ; n++ )
@@ -1114,7 +1116,7 @@ int filelength(int fd)
 /** Copy the content of a file to the client
 	@returns the number of bytes sent
  **/
-int http_copy(HTTPCNX *http, char *context, char *source, int cook)
+int http_copy(HTTPCNX *http, char *context, char *source, int cook, size_t pos)
 {
 	char *buffer;
 	size_t len;
@@ -1125,16 +1127,21 @@ int http_copy(HTTPCNX *http, char *context, char *source, int cook)
 		output_error("unable to find %s output '%s': %s", context, source, strerror(errno));
 		return 0;
 	}
-	len = filelength(fileno(fp));
+	if ( pos >= 0 )
+		fseek(fp,pos,SEEK_SET);
+	else
+		pos = 0;
+	len = filelength(fileno(fp)) - pos;
 	if (len<0)
 	{
 		output_error("%s output '%s' not accessible", context, source);
 		fclose(fp);
 		return 0;
 	}
-	if (len==0)
+	if ( len == 0 )
 	{
-		output_warning("%s output '%s' is empty", context, source);
+		http_mime(http,source);
+		http_write(http,"",0);
 		fclose(fp);
 		return 1;
 	}
@@ -1145,7 +1152,7 @@ int http_copy(HTTPCNX *http, char *context, char *source, int cook)
 		fclose(fp);
 		return 0;
 	}
-	if (fread(buffer,1,len,fp)<=0)
+	if (fread(buffer,1,len,fp)<0)
 	{
 		output_error("%s output '%s' read failed", context, source);
 		free(buffer);
@@ -1173,7 +1180,7 @@ int http_output_request(HTTPCNX *http,char *uri)
 	if (*(fullpath+strlen(fullpath)-1)!='/' || *(fullpath+strlen(fullpath)-1)!='\\' )
 		strcat(fullpath,"/");
 	strcat(fullpath,uri);
-	return http_copy(http,"file",fullpath,false);
+	return http_copy(http,"file",fullpath,false,0);
 }
 
 /** Process an incoming Java request
@@ -1230,7 +1237,7 @@ int http_run_java(HTTPCNX *http,char *uri)
 	}
 
 	/* copy output to http */
-	return http_copy(http,"Java",output,true);
+	return http_copy(http,"Java",output,true,0);
 }
 
 /** Process an incoming Perl data request
@@ -1288,7 +1295,7 @@ int http_run_perl(HTTPCNX *http,char *uri)
 	}
 
 	/* copy output to http */
-	return http_copy(http,"Perl",output,true);
+	return http_copy(http,"Perl",output,true,0);
 }
 
 /** Process an incoming Python data request
@@ -1345,7 +1352,7 @@ int http_run_python(HTTPCNX *http,char *uri)
 	}
 
 	/* copy output to http */
-	return http_copy(http,"Python",output,true);
+	return http_copy(http,"Python",output,true,0);
 }
 
 /** Process an incoming R data request
@@ -1406,7 +1413,7 @@ int http_run_r(HTTPCNX *http,char *uri)
 	}
 
 	/* copy output to http */
-	return http_copy(http,"R",output,true);
+	return http_copy(http,"R",output,true,0);
 }
 
 /** Process an incoming Scilab data request
@@ -1463,7 +1470,7 @@ int http_run_scilab(HTTPCNX *http,char *uri)
 	}
 
 	/* copy output to http */
-	return http_copy(http,"Scilab",output,true);
+	return http_copy(http,"Scilab",output,true,0);
 }
 
 /** Process an incoming Octave data request
@@ -1520,7 +1527,7 @@ int http_run_octave(HTTPCNX *http,char *uri)
 	}
 
 	/* copy output to http */
-	return http_copy(http,"Octave",output,true);
+	return http_copy(http,"Octave",output,true,0);
 }
 
 /** Process an incoming Gnuplot data request
@@ -1580,7 +1587,7 @@ int http_run_gnuplot(HTTPCNX *http,char *uri)
 	}
 
 	/* copy output to http */
-	return http_copy(http,"gnuplot",output,true);
+	return http_copy(http,"gnuplot",output,true,0);
 }
 
 /** Process an incoming runtime file request
@@ -1589,12 +1596,16 @@ int http_run_gnuplot(HTTPCNX *http,char *uri)
 int http_get_rt(HTTPCNX *http,char *uri)
 {
 	char fullpath[1024];
-	if (!find_file(uri,NULL,R_OK,fullpath,sizeof(fullpath)))
+	char filename[1024];
+	size_t pos = 0;
+	if ( sscanf(uri,"%1023[^:]:%d",filename,&pos)==0 )
+		strncpy(filename,uri,sizeof(filename)-1);
+	if (!find_file(filename,NULL,R_OK,fullpath,sizeof(fullpath)))
 	{
-		output_error("runtime file '%s' couldn't be located in GLPATH='%s'", uri,getenv("GLPATH"));
+		output_error("runtime file '%s' couldn't be located in GLPATH='%s'", filename,getenv("GLPATH"));
 		return 0;
 	}
-	return http_copy(http,"runtime",fullpath,true);
+	return http_copy(http,"runtime",fullpath,true,pos);
 }
 
 /** Process an incoming runtime file request
@@ -1608,7 +1619,7 @@ int http_get_rb(HTTPCNX *http,char *uri)
 		output_error("binary file '%s' couldn't be located in GLPATH='%s'", uri,getenv("GLPATH"));
 		return 0;
 	}
-	return http_copy(http,"runtime",fullpath,false);
+	return http_copy(http,"runtime",fullpath,false,0);
 }
 
 /** Collect a KML documnent
@@ -1622,7 +1633,7 @@ int http_kml_request(HTTPCNX *http, char *action)
 	http_type(http,"text/kml");
 	if ( p==NULL )
 	{	kml_dump(action); // simple dump of everything
-		return http_copy(http,"KML",action,false);
+		return http_copy(http,"KML",action,false,0);
 	}
 	else
 	{
@@ -1727,7 +1738,7 @@ int http_favicon(HTTPCNX *http)
 		output_error("file 'favicon.ico' not found", fullpath);
 		return 0;
 	}
-	return http_copy(http,"icon",fullpath,false);
+	return http_copy(http,"icon",fullpath,false,0);
 }
 
 /** Process an incoming request
