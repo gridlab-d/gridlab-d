@@ -112,6 +112,8 @@ int vfd::create()
 	prevDesiredFreq = 0.0;
 	prev_current[0] = prev_current[1] = prev_current[2] = complex(0.0,0.0);
 	
+	//Flag this as a VFD
+	SpecialLnk=VFD;
 	
 	return result;
 }

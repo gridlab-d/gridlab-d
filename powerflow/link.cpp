@@ -1616,7 +1616,7 @@ void link_object::NR_link_presync_fxn(void)
 				Y[jindex][kindex] = 0.0;
 
 		// compute admittance - invert b matrix - special circumstances given different methods
-		if ((SpecialLnk!=NORMAL) && (SpecialLnk!=SPLITPHASE))
+		if ((SpecialLnk!=NORMAL) && (SpecialLnk!=SPLITPHASE) && (SpecialLnk!=VFD))
 		{
 			;	//Just skip over all of this nonsense
 		}
@@ -1780,7 +1780,7 @@ void link_object::NR_link_presync_fxn(void)
 					*/
 								
 			}
-			else if ((SpecialLnk==SWITCH) || (SpecialLnk==REGULATOR))
+			else if ((SpecialLnk==SWITCH) || (SpecialLnk==REGULATOR) || (SpecialLnk==VFD))
 			{
 				;	//More nothingness (all handled inside switch/regulator itself)
 			}

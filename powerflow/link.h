@@ -20,7 +20,8 @@ typedef enum {
 		SPLITPHASE=3,		///< defines the link is a split-phase transformer
 		SWITCH=4,			///< defines the link is a switch
 		DELTADELTA=5,		///< defines the link is a delta-delta transformer - for power operations
-		WYEWYE=6			///< defines the link is a Wye-wye transformer, mainly to allow triggering for unity turns ratios
+		WYEWYE=6,			///< defines the link is a Wye-wye transformer, mainly to allow triggering for unity turns ratios
+		VFD=7				///< defines the link is a VFD device (basically skip admittance)
 } SPECIAL_LINK;
 
 // flow directions (see link_object::flow_direction)
