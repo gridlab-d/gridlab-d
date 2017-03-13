@@ -2453,8 +2453,12 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 			//Determine our desired state - if rotor speed is settled, exit
 			if (temp_double<=rotor_speed_convergence_criterion)
 			{
-				//Ready to leave Delta mode
-				return SM_EVENT;
+				if (apply_voltage_mag_convergence == false)
+				{
+					//Ready to leave Delta mode
+					return SM_EVENT;
+				}
+				//Default else - let it execute the code below
 			}
 			else	//Not "converged" -- I would like to do another update
 			{
@@ -2466,7 +2470,7 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 		//Only check voltage if an exciter is present
 		if ((apply_voltage_mag_convergence == true) && (Exciter_type != NO_EXC))
 		{
-			//Figure out the maximum voltage difference
+			//Figure out the maximum voltage difference - reset the tracker
 			temp_double = 0.0;
 
 			//Loop through the phases - built on the assumption of three-phase

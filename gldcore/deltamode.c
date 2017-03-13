@@ -246,7 +246,7 @@ DT delta_update(void)
 	clock_t t = clock();
 	DT seconds_advance, timestep;
 	DELTAT temp_time;
-	unsigned int delta_iteration_remaining, delta_iteration_count;
+	unsigned int delta_iteration_remaining, delta_iteration_count, delta_forced_iteration;
 	SIMULATIONMODE interupdate_mode, interupdate_mode_result, clockupdate_result;
 	int n;
 	double dbl_stop_time;
@@ -270,6 +270,9 @@ DT delta_update(void)
 
 	/* Do the same with the current "timestamp" */
 	dbl_curr_clk_time = (double)global_clock;
+
+	/* Initialize the forced "post-update" timestep variable */
+	delta_forced_iteration = global_deltamode_forced_extra_timesteps;
 
 	/* process updates until mode is switched or 1 hour elapses */
 	for ( global_deltaclock=0; global_deltaclock<global_deltamode_maximumtime; global_deltaclock+=timestep )
@@ -404,10 +407,27 @@ DT delta_update(void)
 
 		if ( interupdate_mode==SM_EVENT )
 		{
-			/* no module wants deltamode to continue any further */
-			break;
+			/* See how we need to update - if the forced update is lower, exit*/
+			if (delta_forced_iteration < 1)
+			{
+				/* no module wants deltamode to continue any further */
+				break;
+			}
+			else
+			{
+				/* Decrement the tracker variable */
+				delta_forced_iteration--;
+
+				/* Normal continue - next delta timestep -- allows global overrides to still take place */
+			}
 		}
-	}
+		else if (interupdate_mode == SM_DELTA)
+		{
+			/* Refresh the forced counter */
+			delta_forced_iteration = global_deltamode_forced_extra_timesteps;
+		}
+		/* Others - Must be an error? */
+	}/* End of delta timestep run */
 
 	/* profile */
 	if ( profile.t_min==0 || timestep<profile.t_min ) profile.t_min = timestep;
