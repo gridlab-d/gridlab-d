@@ -208,6 +208,8 @@ node::node(MODULE *mod) : powerflow_object(mod)
 				GL_THROW("Unable to publish node deltamode function");
 			if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
 				GL_THROW("Unable to publish node deltamode function");
+			if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==NULL)
+				GL_THROW("Unable to publish node VFD attachment function");
     
 	}
 }
@@ -321,6 +323,11 @@ int node::create(void)
 	GFA_status = true;
 	prev_time_dbl = 0.0;				//Tracking variable
 	GFA_Update_time = 0.0;
+
+	//VFD-related additional functionality
+	VFD_attached = false;	//Not connected to a VFD
+	VFD_updating_function = NULL;	//Make sure is set empty
+	VFD_object = NULL;	//Make empty
 
 	return result;
 }
@@ -1880,6 +1887,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 void node::NR_node_sync_fxn(OBJECT *obj)
 {
 	int loop_index_var;
+	STATUS fxn_ret_value;
 
 	//Reliability check - sets and removes voltages (theory being previous answer better than starting at 0)
 	unsigned char phase_checks_var;
@@ -2196,6 +2204,24 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 			last_child_power[3][2] = pre_rotated_current[2];
 
 		}//End differently connected child
+
+		//Call the VFD update, if we need it
+		//Note -- this basically precludes childed nodes from working, which is acceptable (programmer says so)
+		if (VFD_attached == true)
+		{
+			//Call the function - make the VFD move us along
+			fxn_ret_value = ((STATUS (*)(OBJECT *))(*VFD_updating_function))(VFD_object);
+
+			//Check the return value
+			if (fxn_ret_value == FAILED)
+			{
+				GL_THROW("node:%d - %s -- Failed VFD updating function",obj->id,(obj->name ? obj->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				While attempting to call the VFD current injection function, an error occurred.  Please try again.
+				If the error persists, please submit an issue.
+				*/
+			}
+		}
 	}//end not uninitialized
 }
 
@@ -4418,6 +4444,37 @@ double node::perform_GFA_checks(double timestepvalue)
 	}
 }
 
+//VFD linking/mapping function
+STATUS node::link_VFD_functions(OBJECT *linkVFD)
+{
+	OBJECT *obj = OBJECTHDR(this);
+
+	//Set the VFD object
+	VFD_object = linkVFD;
+
+	//Try mapping the VFD current injection function
+	VFD_updating_function = (FUNCTIONADDR)(gl_get_function(linkVFD,"vfd_current_injection_update"));
+
+	//Make sure it worked
+	if (VFD_updating_function == NULL)
+	{
+		gl_warning("Failure to map VFD current injection update for device:%s",(obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		Attempts to map a function for the proper VFD updates did not work.  Please try again, making sure
+		this node is connected to a VFD properly.  If the error persists, please submit an issue ticket.
+		*/
+
+		//Fail us
+		return FAILED;
+	}
+
+	//Flag us as successful
+	VFD_attached = true;
+
+	//Always succeed, if we made it this far
+	return SUCCESS;
+}
+
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF OTHER EXPORT FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
@@ -4437,6 +4494,15 @@ EXPORT int notify_node(OBJECT *obj, int update_mode, PROPERTY *prop, char *value
 	rv = n->notify(update_mode, prop, value);
 	
 	return rv;
+}
+
+//Exported function for attaching this to a VFD - basically sets a flag and maps a function
+EXPORT STATUS attach_vfd_to_node(OBJECT *obj,OBJECT *calledVFD)
+{
+	node *nodeObj = OBJECTDATA(obj,node);
+
+	//Call the function
+	return nodeObj->link_VFD_functions(calledVFD);
 }
 
 //Deltamode export

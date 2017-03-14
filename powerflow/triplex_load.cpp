@@ -104,6 +104,9 @@ triplex_load::triplex_load(MODULE *mod) : triplex_node(mod)
 				GL_THROW("Unable to publish triplex_load deltamode function");
 			if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
 				GL_THROW("Unable to publish triplex_load deltamode function");
+			if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==NULL)
+				GL_THROW("Unable to publish triplex_load VFD attachment function");
+
     }
 }
 

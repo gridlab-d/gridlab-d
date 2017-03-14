@@ -11,6 +11,8 @@
 #include "link.h"
 #include "node.h"
 
+EXPORT STATUS current_injection_update_VFD(OBJECT *obj);
+
 class vfd : public link_object
 {
 public:
@@ -35,6 +37,7 @@ public:
 	void initialParameters(void);
 	void vfdCoreCalculations(double currFrequencyVal, double settleTime, double phasorVal[3], node *tNode, node *fNode, double currEfficiency, complex prev_current[3]);
 	complex complex_exp(double angle);
+	STATUS VFD_current_injection(void);
 	
 public:
 	double ratedRPM;

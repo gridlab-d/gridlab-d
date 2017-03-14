@@ -78,6 +78,8 @@ vfd::vfd(MODULE *mod) : link_object(mod)
 			GL_THROW("Unable to publish vfd external power calculation function");
 		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
 			GL_THROW("Unable to publish vfd external power limit calculation function");
+		if (gl_publish_function(oclass,	"vfd_current_injection_update", (FUNCTIONADDR)current_injection_update_VFD)==NULL)
+			GL_THROW("Unable to publish vfd external current injection calculation function");
     }
 }
 
@@ -131,6 +133,8 @@ int vfd::init(OBJECT *parent)
 	fNode=OBJECTDATA(from,node);
 	tNode=OBJECTDATA(to,node);
 	OBJECT *obj = OBJECTHDR(this);
+	FUNCTIONADDR temp_fxn;
+	STATUS temp_status_val;
 
 	int result = link_object::init(parent);
 
@@ -192,6 +196,28 @@ int vfd::init(OBJECT *parent)
 	VbyF = voltageLLRating/nominal_output_frequency;  	//This is 7.6 v/hz for 460v motor
 	HPbyF = 100/nominal_output_frequency; 				//max HP percentage/max frequency
 
+	//Map our "TO" node as a proper VFD
+	temp_fxn = (FUNCTIONADDR)(gl_get_function(to,"attach_vfd_to_pwr_object"));
+
+	//Make sure it worked
+	if (temp_fxn == NULL)
+	{
+		GL_THROW("VFD:%d - %s -- Failed to map TO-node flag function",obj->id,(obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to update the flagging on the "TO" node to reflect being attached to a VFD, an error occurred.
+		Please try again.  If the error persists, please submit an issue
+		*/
+	}
+
+	//Now call the function
+	temp_status_val = ((STATUS (*)(OBJECT *,OBJECT *))(*temp_fxn))(to,obj);
+
+	//Make sure it worked
+	if (temp_status_val == FAILED)
+	{
+		GL_THROW("VFD:%d - %s -- Failed to map TO-node flag function",obj->id,(obj->name ? obj->name : "Unnamed"));
+		//Defined above - use the same function
+	}
 	
 	return result;
 }
@@ -511,6 +537,24 @@ int vfd::alloc_freq_arrays(double delta_t_val)
 	}
 }
 
+//Function to perform the current update - called by a node object, after they've updated (so current is accurate)
+STATUS vfd::VFD_current_injection(void)
+{
+	//Call any current-injection update functions here
+	//This gets called near the end of SYNC, after the TO object has done it's current update
+	//May need to "undo" this in POSTSYNC
+
+	return SUCCESS;	//Change this, if there's a chance of failure
+}
+
+
+//Exposed function - external call to current injection
+EXPORT STATUS current_injection_update_VFD(OBJECT *obj)
+{
+	vfd *vfdObj = OBJECTDATA(obj,vfd);
+
+	return vfdObj->VFD_current_injection();
+}
 
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE: vfd

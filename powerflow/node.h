@@ -9,10 +9,11 @@
 
 #include "powerflow.h"
 
-//Deltamode funcitons
+//Deltamode functions
 EXPORT complex *delta_linkage(OBJECT *obj, unsigned char mapvar);
 EXPORT STATUS delta_frequency_node(OBJECT *obj, complex *powerval, complex *freqpowerval);
 EXPORT SIMULATIONMODE interupdate_node(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
+EXPORT STATUS attach_vfd_to_node(OBJECT *obj,OBJECT *calledVFD);
 
 #define I_INJ(V, S, Z, I) (I_S(S, V) + ((Z.IsFinite()) ? I_Z(Z, V) : complex(0.0)) + I_I(I))
 #define I_S(S, V) (~((S) / (V)))  // Current injection - constant power load
@@ -79,7 +80,7 @@ typedef enum {
 	NORMAL_NODE=0,		///< We're a plain-old-ugly node
 	LOAD_NODE=1,		///< We're a load
 	METER_NODE=2		///< We're a meter
-} DYN_NODE_TYPE;		/// Defition for deltamode calls
+} DYN_NODE_TYPE;		/// Definition for deltamode calls
 
 //Frequency measurement variable structure
 typedef struct {
@@ -121,6 +122,11 @@ private:
 	double out_of_violation_time_total;		//Tracking variable to see how long we've been "outside of bad conditions"
 	double prev_time_dbl;					//Tracking variable for GFA functionality
 	double GFA_Update_time;
+
+	//VFD-related items
+	bool VFD_attached;						///< Flag to indicate this is on the to-side of a VFD link
+	FUNCTIONADDR VFD_updating_function;		///< Address for VFD updating function, if it is present
+	OBJECT *VFD_object;						///< Object pointer for the VFD - for later function calls
 public:
 	double frequency;			///< frequency (only valid on reference bus) */
 	object reference_bus;		///< reference bus from which frequency is defined */
@@ -235,6 +241,8 @@ public:
 	STATUS calc_freq_dynamics(double deltat);
 
 	double perform_GFA_checks(double timestepvalue);
+
+	STATUS link_VFD_functions(OBJECT *linkVFD);
 
 	bool current_accumulated;
 
