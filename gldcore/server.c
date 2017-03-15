@@ -738,7 +738,7 @@ int http_raw_request(HTTPCNX *http, char *uri)
 	char *id;
 
 	/* value */
-	if (value) *value++;
+	if (value) value++;
 
 	/* decode %.. */
 	http_decode(arg1);
@@ -819,7 +819,7 @@ int http_xml_request(HTTPCNX *http,char *uri)
 	char *id;
 
 	/* value */
-	if (value) *value++;
+	if (value) value++;
 
 	/* decode %.. */
 	http_decode(arg1);
@@ -909,6 +909,13 @@ int http_xml_request(HTTPCNX *http,char *uri)
 			/* get the unit (if any) */
 			if ( !get_value_with_unit(obj,arg1,arg2,buffer,sizeof(buffer)) )
 				return 0;
+
+			/* assignment, if any */
+			if ( value && !object_set_value_by_name(obj,arg2,value) )
+			{
+				output_error("cannot set object '%s' property '%s' to '%s'", arg1, arg2, value);
+				return 0;
+			}
 
 			/* post the response */
 			http_format(http,"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n");
