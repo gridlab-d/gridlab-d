@@ -11,6 +11,7 @@
 #include <fstream>
 #include <string.h>
 #include <algorithm>
+#include <cmath>
 using namespace std;
 
 CLASS *metrics_collector::oclass = NULL;
@@ -57,6 +58,7 @@ int metrics_collector::create(){
 	voltage_mag_array = NULL;
 	voltage_average_mag_array = NULL;
 	voltage_unbalance_array = NULL;
+	last_vol_val = -1.0; // give initial value as negative one
 
 	// Interval related
 	interval_length = -1;
@@ -444,6 +446,8 @@ int metrics_collector::init(OBJECT *parent){
 	// Update time variables
 	last_write = gl_globalclock;
 	next_write = gl_globalclock + interval_length;
+	// Record the starting time
+	start_time = gl_globalclock;
 
 	return 1;
 }
@@ -515,13 +519,18 @@ int metrics_collector::read_line(OBJECT *obj){
 		interpolate (real_power_array, last_index, curr_index, realPower);
 		interpolate (reactive_power_array, last_index, curr_index, reactivePower);
 
-		// Get bill value
+		// Get bill value, price unit given in triplex_meter is [$/kWh]
 		price_parent = *gl_get_double_by_name(obj->parent, "price");
 
 		// Get voltage values, s1 to ground, s2 to ground, s1 to s2
 		double v1 = (*gl_get_complex_by_name(obj->parent, "voltage_1")).Mag();  
 		double v2 = (*gl_get_complex_by_name(obj->parent, "voltage_2")).Mag();  
 		double v12 = (*gl_get_complex_by_name(obj->parent, "voltage_12")).Mag();
+
+		// If it is at the starting time, record the voltage for violation analysis
+		if (start_time == gl_globalclock) {
+			last_vol_val = fabs(v12);
+		}
 
 		interpolate (voltage_mag_array, last_index, curr_index, fabs(v12));
 		interpolate (voltage_average_mag_array, last_index, curr_index, fabs(v12/2));
@@ -534,6 +543,7 @@ int metrics_collector::read_line(OBJECT *obj){
 		interpolate (real_power_array, last_index, curr_index, realPower);
 		interpolate (reactive_power_array, last_index, curr_index, reactivePower);
 
+		// Get bill value, price unit given is [$/kWh]
 		price_parent = *gl_get_double_by_name(obj->parent, "price");
 
 		// assuming these are three-phase loads; this is the only difference with triplex meters 
@@ -551,6 +561,11 @@ int metrics_collector::read_line(OBJECT *obj){
 		double vbc = (*gl_get_complex_by_name(obj->parent, "voltage_BC")).Mag();   
 		double vca = (*gl_get_complex_by_name(obj->parent, "voltage_CA")).Mag();
 		double vll = (vab + vbc + vca) / 3.0;
+
+		// If it is at the starting time, record the voltage for violation analysis
+		if (start_time == gl_globalclock) {
+			last_vol_val = vll;
+		}
 
 		interpolate (voltage_mag_array, last_index, curr_index, vll);
 		interpolate (voltage_average_mag_array, last_index, curr_index, vavg);
@@ -676,6 +691,7 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		metrics_Output["reactive_energy"] = findAverage(reactive_power_array, interval_length) * interval_write / 3600;
 
 		// Bill - TODO?
+		metrics_Output["bill"] = metrics_Output["real_energy"].asDouble() * price_parent / 1000; // price unit given is [$/kWh]
 
 		// Phase 1 to 2 voltage data
 		metrics_Output["min_voltage"] = findMin(voltage_mag_array, interval_length);
@@ -694,32 +710,35 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 
 		// Voltage above/below ANSI C84 A/B Range
 		double normVol = *gl_get_double_by_name(obj->parent, "nominal_voltage");
-		double aboveRangeA = normVol* 1.05;
-		double belowRangeA = normVol* 0.95;
-		double aboveRangeB = normVol* 1.058;
-		double belowRangeB = normVol* 0.917;
+		double aboveRangeA = normVol* 1.05 * (std::sqrt(3));
+		double belowRangeA = normVol* 0.95 * (std::sqrt(3));
+		double aboveRangeB = normVol* 1.058 * (std::sqrt(3));
+		double belowRangeB = normVol* 0.917 * (std::sqrt(3));
 		// Voltage above Range A
-		struct vol_violation vol_Vio = findOutLimit(voltage_mag_array, true, aboveRangeA, interval_length);
+		struct vol_violation vol_Vio = findOutLimit(last_vol_val, voltage_mag_array, true, aboveRangeA, interval_length);
 		metrics_Output["above_RangeA_Duration"] = vol_Vio.durationViolation;
 		metrics_Output["above_RangeA_Count"] = vol_Vio.countViolation;
 		// Voltage below Range A
-		vol_Vio = findOutLimit(voltage_mag_array, false, belowRangeA, interval_length);
+		vol_Vio = findOutLimit(last_vol_val, voltage_mag_array, false, belowRangeA, interval_length);
 		metrics_Output["below_RangeA_Duration"] = vol_Vio.durationViolation;
 		metrics_Output["below_RangeA_Count"] = vol_Vio.countViolation;
 		// Voltage above Range B
-		vol_Vio = findOutLimit(voltage_mag_array, true, aboveRangeB, interval_length);
+		vol_Vio = findOutLimit(last_vol_val, voltage_mag_array, true, aboveRangeB, interval_length);
 		metrics_Output["above_RangeB_Duration"] = vol_Vio.durationViolation;
 		metrics_Output["above_RangeB_Count"] = vol_Vio.countViolation;
 		// Voltage below Range B
-		vol_Vio = findOutLimit(voltage_mag_array, false, belowRangeB, interval_length);
+		vol_Vio = findOutLimit(last_vol_val, voltage_mag_array, false, belowRangeB, interval_length);
 		metrics_Output["below_RangeB_Duration"] = vol_Vio.durationViolation;
 		metrics_Output["below_RangeB_Count"] = vol_Vio.countViolation;
 
 		// Voltage below 10% of the norminal voltage rating
 		double belowNorVol10 = normVol * 0.1;
-		vol_Vio = findOutLimit(voltage_mag_array, false, belowNorVol10, interval_length);
+		vol_Vio = findOutLimit(last_vol_val, voltage_mag_array, false, belowNorVol10, interval_length);
 		metrics_Output["below_10_percent_NormVol_Duration"] = vol_Vio.durationViolation;
 		metrics_Output["below_10_percent_NormVol_Count"] = vol_Vio.countViolation;
+
+		// Update the lastVol value based on this metrics interval value
+		last_vol_val = voltage_mag_array[interval_length - 1];
 
 	}
 	// If parent is house
@@ -793,7 +812,6 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		metrics_Output["max_feeder_reactive_power_loss"] = findMax(reactive_power_loss_array, interval_length);
 		metrics_Output["avg_feeder_reactive_power_loss"] = findAverage(reactive_power_loss_array, interval_length);
 		metrics_Output["median_feeder_reactive_power_loss"] = findMedian(reactive_power_loss_array, interval_length);
-
 	}
 
 	return 1;
@@ -860,7 +878,7 @@ double metrics_collector::findMedian(double array[], int length) {
 	return median;
 }
 
-vol_violation metrics_collector::findOutLimit(double array[], bool checkAbove, double limitVal, int length) {
+vol_violation metrics_collector::findOutLimit(double lastVol, double array[], bool checkAbove, double limitVal, int length) {
 	struct vol_violation result;
 	int count = 0;
 	double durationTime = 0.0;
@@ -940,6 +958,21 @@ vol_violation metrics_collector::findOutLimit(double array[], bool checkAbove, d
 		}
 	}
 
+	// Check the voltage value at the end of last metrics collector interval
+	if (lastVol >= 0) {
+		if ((lastVol < limitVal && array[0] > limitVal) || (lastVol > limitVal && array[0] < limitVal)){
+			count++;
+			durationTime += 0.5;
+		}
+		else if (lastVol > limitVal && array[0] > limitVal) {
+			durationTime++;  // add the duration without count
+		}
+		else if (array[0] == limitVal && lastVol != limitVal) {
+			durationTime++;  // count the duration
+			count++;
+		}
+	}
+
 	// Update the time steps array with the count size
 	if (checkAbove) {
 		result.countViolation = count;
@@ -947,7 +980,7 @@ vol_violation metrics_collector::findOutLimit(double array[], bool checkAbove, d
 	}
 	else {
 		result.countViolation = count;
-		result.durationViolation = (length - 1) - durationTime;
+		result.durationViolation = (length) - durationTime;
 	}
 
 	return result;

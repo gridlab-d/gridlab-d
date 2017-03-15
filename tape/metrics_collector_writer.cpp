@@ -315,7 +315,7 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 			ary_billing_meters[idx++] = metrics_Output_temp["real_energy"];
 			ary_billing_meters[idx++] = metrics_Output_temp["reactive_energy"];
 			// TODO - verify the fixed charge is included
-			ary_billing_meters[idx++] = metrics_Output_temp["real_energy"].asDouble() * temp_metrics_collector->price_parent / 1000; // Price unit given is $/kWh
+			ary_billing_meters[idx++] = metrics_Output_temp["bill"]; // Price unit given is $/kWh
 			ary_billing_meters[idx++] = metrics_Output_temp["min_voltage_average"];
 			ary_billing_meters[idx++] = metrics_Output_temp["max_voltage_average"];
 			ary_billing_meters[idx++] = metrics_Output_temp["avg_voltage_average"];
@@ -335,6 +335,7 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 			ary_billing_meters[idx++] = metrics_Output_temp["below_RangeB_Count"];
 			ary_billing_meters[idx++] = metrics_Output_temp["below_10_percent_NormVol_Duration"];
 			ary_billing_meters[idx++] = metrics_Output_temp["below_10_percent_NormVol_Count"];
+
 			string key = metrics_Output_temp["Parent_name"].asString();
 			billing_meter_objects[key] = ary_billing_meters;
 		} // End of recording metrics_collector data attached to one triplex_meter or primary meter
