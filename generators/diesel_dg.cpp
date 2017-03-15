@@ -576,6 +576,8 @@ int diesel_dg::create(void)
 	prev_time = 0;
 	prev_time_dbl = 0.0;
 
+	is_isochronous_gen = false;	//By default, we're a normal "ugly" generator
+
 	return 1; /* return 1 on success, 0 on failure */
 }
 
@@ -956,7 +958,48 @@ int diesel_dg::init(OBJECT *parent)
 				*/
 			}
 			//defaulted else, must be okay (well, at the very least, not completely wrong)
-		}
+
+			//See if we're an isochronous generator too -- that will be used for deltamode convergence
+			switch(Governor_type) {
+				case NO_GOV:	//No governor
+					{
+						break;	//Just get us outta here
+					}
+				case DEGOV1:
+					{
+						//See if the droop is set appropriately
+						if (gov_degov1_R == 0.0)
+						{
+							is_isochronous_gen = true;
+						}
+						break;
+					}
+				case GAST:
+					{
+						//See if we're an isoch
+						if (gov_gast_R == 0.0)
+						{
+							is_isochronous_gen = true;
+						}
+						break;
+					}
+				case GGOV1_OLD:	//GGOV1_OLD uses the same parameter space as GGOV1
+				case GGOV1:
+					{
+						//See if it is set up as a proper isochronous
+						if ((gov_ggv1_r == 0.0) && (gov_ggv1_rselect==0))
+						{
+							is_isochronous_gen = true;
+						}
+						break;
+					}
+				default:	//How'd we get here?
+					{
+						//Could put an error here, but just skip out -- just means we're not an isoch, no matter what
+						break;
+					}
+				}	//switch end
+		}//Rotor speed check end
 
 		//Check voltage convergence criterion as well
 		if (apply_voltage_mag_convergence == true)
@@ -2453,12 +2496,37 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 			//Determine our desired state - if rotor speed is settled, exit
 			if (temp_double<=rotor_speed_convergence_criterion)
 			{
-				if (apply_voltage_mag_convergence == false)
+				//See if we're an isochronous generator and check that
+				if (is_isochronous_gen == true)
 				{
-					//Ready to leave Delta mode
-					return SM_EVENT;
-				}
-				//Default else - let it execute the code below
+					//Compute the difference from nominal
+					temp_double = fabs(curr_state.omega - omega_ref);
+
+					//Check it - use same convergence criterion
+					if (temp_double<=rotor_speed_convergence_criterion)
+					{
+						//See if the voltage check needs to happen
+						if (apply_voltage_mag_convergence == false)
+						{
+							//Ready to leave Delta mode
+							return SM_EVENT;
+						}
+						//Default else - let voltage check happen
+					}
+					else	//Not converged - stay in deltamode
+					{
+						return SM_DELTA;
+					}
+				}//End is an isochronous generator
+				else	//Normal generator
+				{
+					if (apply_voltage_mag_convergence == false)
+					{
+						//Ready to leave Delta mode
+						return SM_EVENT;
+					}
+					//Default else - let it execute the code below
+				}//End normal generator
 			}
 			else	//Not "converged" -- I would like to do another update
 			{

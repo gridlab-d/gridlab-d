@@ -121,6 +121,7 @@ private:
 	complex *pLine_I; ///< pointer to the three current on three lines
 
 	bool first_run;		///< Flag for first run of the diesel_dg object - eliminates t0==0 dependence
+	bool is_isochronous_gen;	///< Flag to indicate if we're isochronous, mostly to help keep us in deltamode
 
 	//Internal synchronous machine variables
 	complex *bus_admittance_mat;		//Link to bus raw self-admittance value - grants 3x3 access instead of diagonal
