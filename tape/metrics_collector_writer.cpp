@@ -187,6 +187,8 @@ int metrics_collector_writer::init(OBJECT *parent){
 	jsn["index"] = idx++; jsn["units"] = "degF"; meta["air_temperature_max"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "degF"; meta["air_temperature_avg"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "degF"; meta["air_temperature_median"] = jsn;
+	jsn["index"] = idx++; jsn["units"] = "degF"; meta["air_temperature_deviation_cooling"] = jsn;
+	jsn["index"] = idx++; jsn["units"] = "degF"; meta["air_temperature_deviation_heating"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "kW"; meta["waterheater_load_min"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "kW"; meta["waterheater_load_max"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "kW"; meta["waterheater_load_avg"] = jsn;
@@ -357,6 +359,8 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 				house_objects[key][idx++] = metrics_Output_temp["max_house_air_temperature"];
 				house_objects[key][idx++] = metrics_Output_temp["avg_house_air_temperature"];
 				house_objects[key][idx++] = metrics_Output_temp["median_house_air_temperature"];
+				house_objects[key][idx++] = metrics_Output_temp["avg_house_air_temperature_deviation_cooling"];
+				house_objects[key][idx++] = metrics_Output_temp["avg_house_air_temperature_deviation_heating"];
 				// leave the earlier waterheater metric values untouched
 			} else { // insert a new house with zero waterheater metric values
 				int idx = 0;
@@ -372,6 +376,8 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 				ary_houses[idx++] = metrics_Output_temp["max_house_air_temperature"];
 				ary_houses[idx++] = metrics_Output_temp["avg_house_air_temperature"];
 				ary_houses[idx++] = metrics_Output_temp["median_house_air_temperature"];
+				ary_houses[idx++] = metrics_Output_temp["avg_house_air_temperature_deviation_cooling"];
+				ary_houses[idx++] = metrics_Output_temp["avg_house_air_temperature_deviation_heating"];
 				ary_houses[idx++] = 0.0;
 				ary_houses[idx++] = 0.0;
 				ary_houses[idx++] = 0.0;
@@ -383,13 +389,15 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 			metrics_Output_temp = temp_metrics_collector->metrics_Output;
 			string key = metrics_Output_temp["Parent_name"].asString();
 			if (house_objects.isMember(key)) { // already made this house
-				int idx = 12; // start of the waterheater metrics - TODO speedups
+				int idx = 14; // start of the waterheater metrics - TODO speedups
 				house_objects[key][idx++] = metrics_Output_temp["min_waterheater_actual_load"];
 				house_objects[key][idx++] = metrics_Output_temp["max_waterheater_actual_load"];
 				house_objects[key][idx++] = metrics_Output_temp["avg_waterheater_actual_load"];
 				house_objects[key][idx++] = metrics_Output_temp["median_waterheater_actual_load"];
 			} else { // make a new house, but with only the waterheater metrics non-zero
 				int idx = 0;
+				ary_houses[idx++] = 0.0;
+				ary_houses[idx++] = 0.0;
 				ary_houses[idx++] = 0.0;
 				ary_houses[idx++] = 0.0;
 				ary_houses[idx++] = 0.0;

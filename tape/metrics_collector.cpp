@@ -319,12 +319,36 @@ int metrics_collector::init(OBJECT *parent){
 			*/
 		}
 
-		// Allocate hvac_load array
+		// Allocate air temperature array
 		air_temperature_array = (double *)gl_malloc(interval_length*sizeof(double));
 		// Check
 		if (air_temperature_array == NULL)
 		{
 			GL_THROW("metrics_collector %d::init(): Failed to allocated air_temperature array",obj->id);
+			/*  TROUBLESHOOT
+			While attempting to allocate the array, an error was encountered.
+			Please try again.  If the error persists, please submit a bug report via the Trac system.
+			*/
+		}
+
+		// Allocate air temperature deviation from cooling setpointarray
+		air_temperature_deviation_cooling_array = (double *)gl_malloc(interval_length*sizeof(double));
+		// Check
+		if (air_temperature_deviation_cooling_array == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocated air_temperature_deviation_cooling_array array",obj->id);
+			/*  TROUBLESHOOT
+			While attempting to allocate the array, an error was encountered.
+			Please try again.  If the error persists, please submit a bug report via the Trac system.
+			*/
+		}
+
+		// Allocate air temperature deviation from heating setpointarray
+		air_temperature_deviation_heating_array = (double *)gl_malloc(interval_length*sizeof(double));
+		// Check
+		if (air_temperature_deviation_heating_array == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocated air_temperature_deviation_heating_array array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -337,6 +361,8 @@ int metrics_collector::init(OBJECT *parent){
 			total_load_array[curr_index] = 0.0;
 			hvac_load_array[curr_index] = 0.0;
 			air_temperature_array[curr_index] = 0.0;
+			air_temperature_deviation_cooling_array[curr_index] = 0.0;
+			air_temperature_deviation_heating_array[curr_index] = 0.0;
 		}
 	}
 	// If parent is waterheater
@@ -581,6 +607,13 @@ int metrics_collector::read_line(OBJECT *obj){
 		// Get air temperature values
 		double airTemperature = *gl_get_double_by_name(obj->parent, "air_temperature");
 		interpolate (air_temperature_array, last_index, curr_index, airTemperature);
+		// Get air temperature deviation from house cooling setpoint
+		double cooling_setpoint = *gl_get_double_by_name(obj->parent, "cooling_setpoint");
+		interpolate (air_temperature_deviation_cooling_array, last_index, curr_index, airTemperature - cooling_setpoint);
+		// Get air temperature deviation from house cooling setpoint
+		double heating_setpoint = *gl_get_double_by_name(obj->parent, "heating_setpoint");
+		interpolate (air_temperature_deviation_cooling_array, last_index, curr_index, airTemperature - heating_setpoint);
+
 	}
 	else if (strcmp(parent_string, "waterheater") == 0) {
 		// Get load values
@@ -761,6 +794,8 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		metrics_Output["max_house_air_temperature"] = findMax(air_temperature_array, interval_length);
 		metrics_Output["avg_house_air_temperature"] = findAverage(air_temperature_array, interval_length);
 		metrics_Output["median_house_air_temperature"] = findMedian(air_temperature_array, interval_length);
+		metrics_Output["avg_house_air_temperature_deviation_cooling"] = findAverage(air_temperature_deviation_cooling_array, interval_length);
+		metrics_Output["avg_house_air_temperature_deviation_heating"] = findAverage(air_temperature_deviation_heating_array, interval_length);
 
 	}
 	// If parent is waterheater

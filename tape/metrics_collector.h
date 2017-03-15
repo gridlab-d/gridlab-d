@@ -83,6 +83,8 @@ private:
 	double *total_load_array; 		//array storing total_load measured at the house
 	double *hvac_load_array; 		//array storing hvac_load measured at the house
 	double *air_temperature_array; 		//array storing air_temperature measured at the house
+	double *air_temperature_deviation_cooling_array;	// array storing air_temperature deviation from the cooling setpoint
+	double *air_temperature_deviation_heating_array;	// array storing air_temperature deviation from the heating setpoint
 
 	// Parameters related to waterheater object
 	double *actual_load_array; 		//array storing actual_load measured at the house
