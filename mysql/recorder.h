@@ -9,6 +9,7 @@
 #define MO_DROPTABLES	0x0001	// drop tables option flag
 #define MO_USEUNITS		0x0002	// add units to column names
 #define MO_NOCREATE		0x0004	// do not automatically create tables
+#define MO_NOADD		0x0008	// do not automatically add missing columns
 
 #include <string>
 #include <vector>
