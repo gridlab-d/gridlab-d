@@ -19,6 +19,14 @@ private:
 	complex ITF[16];
 	double last_cycle;
 	double curr_delta_time;
+	bool triplex_connected;
+
+	typedef enum {
+		TPNconnected1N=0,		///< Connected 120 V L1 to neutral
+		TPNconnected2N=1,		///< Connected 120 V L2 to neutral
+		TPNconnected12=2		///< Connected 240 V L1 to L2
+	} MOTOR_TRIPLEX_CONNECTION;
+	enumeration triplex_connection_type;
 
 	void SPIMupdateVars(); // function to update the previous values for the motor model
 	void updateFreqVolt(); // function to update frequency and voltage for the motor

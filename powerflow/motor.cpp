@@ -76,6 +76,10 @@ motor::motor(MODULE *mod):node(mod)
 			PT_enumeration,"motor_operation_type",PADDR(motor_op_mode),PT_DESCRIPTION,"current operation type of the motor - deltamode related",
 				PT_KEYWORD,"SINGLE-PHASE",(enumeration)modeSPIM,
 				PT_KEYWORD,"THREE-PHASE",(enumeration)modeTPIM,
+			PT_enumeration,"triplex_connection_type",PADDR(triplex_connection_type),PT_DESCRIPTION,"Describes how the motor will connect to the triplex devices",
+				PT_KEYWORD,"TRIPLEX_1N",(enumeration)TPNconnected1N,
+				PT_KEYWORD,"TRIPLEX_2N",(enumeration)TPNconnected2N,
+				PT_KEYWORD,"TRIPLEX_12",(enumeration)TPNconnected12,
 
 			// These model parameters are published as hidden
 			PT_double, "wb[rad/s]", PADDR(wb),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"base speed",
@@ -247,6 +251,9 @@ int motor::create()
 
     //************** End_Yuan's TPIM model ********************//
 
+	triplex_connected = false;	//By default, not connected to triplex
+	triplex_connection_type = TPNconnected12;	//If it does end up being triplex, we default it to L1-L2
+
 	return result;
 }
 
@@ -254,23 +261,6 @@ int motor::init(OBJECT *parent)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	int result = node::init(parent);
-
-	Ibase = Pbase/nominal_voltage; 
-	wb=2*PI*nominal_frequency;
-	cap_run_speed = (cap_run_speed_percentage*wb)/100;
-	DM_volt_trig = (DM_volt_trig_per)/100;
-	DM_speed_trig = (DM_speed_trig_per*wb)/100;
-	DM_volt_exit = (DM_volt_exit_per)/100;
-	DM_speed_exit = (DM_speed_exit_per*wb)/100;
-
-	//************** Begin_Yuan's TPIM model ********************//
-	IbTPIM = Pbase / nominal_voltage / 3.0;  // A, I guess nominal_voltage is line-to-ground here, right ?
-	Ls = lls + lm; // pu
-	Lr = llr + lm; // pu
-	sigma1 = Ls - lm * lm / Lr; // pu
-	sigma2 = Lr - lm * lm / Ls; // pu
-	omgr0 = sqrt(TL); // pu
-	//************** End_Yuan's TPIM model ********************//
 
 	// Check what phases are connected on this motor
 	double num_phases = 0;
@@ -300,14 +290,25 @@ int motor::init(OBJECT *parent)
 
 	if (motor_op_mode == modeSPIM)
 	{
-		if (has_phase(PHASE_A)) {
-			connected_phase = 0;
+		if (has_phase(PHASE_S))
+		{
+			connected_phase = -1;		//Arbitrary
+			triplex_connected = true;	//Flag us as triplex
 		}
-		if (has_phase(PHASE_B)) {
-			connected_phase = 1;
-		}
-		if (has_phase(PHASE_C)) {
-			connected_phase = 2;
+		else	//Three-phase
+		{
+			//Affirm the triplex flag is not set
+			triplex_connected = false;
+
+			if (has_phase(PHASE_A)) {
+				connected_phase = 0;
+			}
+			if (has_phase(PHASE_B)) {
+				connected_phase = 1;
+			}
+			if (has_phase(PHASE_C)) {
+				connected_phase = 2;
+			}
 		}
 	}
 	else	//Three-phase diagnostics
@@ -321,6 +322,31 @@ int motor::init(OBJECT *parent)
 		//************** End_Yuan's TPIM model ********************//
 
 	}
+
+	//Parameters
+	if ((triplex_connected == true) && (triplex_connection_type == TPNconnected12))
+	{
+		Ibase = Pbase/(2.0*nominal_voltage);	//To reflect LL connection
+	}
+	else	//"Three-phase" or "normal" triplex
+	{
+		Ibase = Pbase/nominal_voltage;
+	}
+	wb=2*PI*nominal_frequency;
+	cap_run_speed = (cap_run_speed_percentage*wb)/100;
+	DM_volt_trig = (DM_volt_trig_per)/100;
+	DM_speed_trig = (DM_speed_trig_per*wb)/100;
+	DM_volt_exit = (DM_volt_exit_per)/100;
+	DM_speed_exit = (DM_speed_exit_per*wb)/100;
+
+	//************** Begin_Yuan's TPIM model ********************//
+	IbTPIM = Pbase / nominal_voltage / 3.0;  // A, I guess nominal_voltage is line-to-ground here, right ?
+	Ls = lls + lm; // pu
+	Lr = llr + lm; // pu
+	sigma1 = Ls - lm * lm / Lr; // pu
+	sigma2 = Lr - lm * lm / Ls; // pu
+	omgr0 = sqrt(TL); // pu
+	//************** End_Yuan's TPIM model ********************//
 
 	return result;
 }
@@ -370,11 +396,52 @@ TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 			SPIMSteadyState(t1);
 
 			// update current draw
-			current[connected_phase] = Is*Ibase;
+			if (triplex_connected==true)
+			{
+				//See which type of triplex
+				if (triplex_connection_type == TPNconnected1N)
+				{
+					current[0] = Is*Ibase;
+				}
+				else if (triplex_connection_type == TPNconnected2N)
+				{
+					current[1] = Is*Ibase;
+				}
+				else	//Assume it is 12 now
+				{
+					current12 = Is*Ibase;
+				}
+			}
+			else	//"Three-phase" connection
+			{
+				current[connected_phase] = Is*Ibase;
+			}
 		}
 		else { // motor is currently disconnected
-			current[connected_phase] = 0;
-			SPIMStateOFF();
+			if (triplex_connected==true)
+			{
+				//See which type of triplex
+				if (triplex_connection_type == TPNconnected1N)
+				{
+					current[0] = complex(0.0,0.0);
+				}
+				else if (triplex_connection_type == TPNconnected2N)
+				{
+					current[1] = complex(0.0,0.0);
+				}
+				else	//Assume it is 12 now
+				{
+					current12 = complex(0.0,0.0);
+				}
+
+				//Set off
+				SPIMStateOFF();
+			}
+			else	//"Three-phase" connection
+			{
+				current[connected_phase] = 0;
+				SPIMStateOFF();
+			}
 		}
 
 		// update motor status
@@ -389,7 +456,7 @@ TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 		if((double)t1 == last_cycle) { // if time did not advance, load old values
 			TPIMreinitializeVars();
 		}
-		else if((double)t1 > last_cycle){ // time advanced, time to update varibles
+		else if((double)t1 > last_cycle){ // time advanced, time to update variables
 			TPIMupdateVars();
 		}
 		else {
@@ -581,11 +648,52 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 				SPIMDynamic(curr_delta_time, deltaTime);
 
 				// update current draw
-				current[connected_phase] = Is*Ibase;
+				if (triplex_connected == true)
+				{
+					//See which type of triplex
+					if (triplex_connection_type == TPNconnected1N)
+					{
+						current[0] = Is*Ibase;
+					}
+					else if (triplex_connection_type == TPNconnected2N)
+					{
+						current[1] = Is*Ibase;
+					}
+					else	//Assume it is 12 now
+					{
+						current12 = Is*Ibase;
+					}
+				}
+				else	//"Three-phase" connection
+				{
+					current[connected_phase] = Is*Ibase;
+				}
 			}
 			else { // motor is currently disconnected
-				current[connected_phase] = 0;
-				SPIMStateOFF();
+				if (triplex_connected == true)
+				{
+					//See which type of triplex
+					if (triplex_connection_type == TPNconnected1N)
+					{
+						current[0] = complex(0.0,0.0);
+					}
+					else if (triplex_connection_type == TPNconnected2N)
+					{
+						current[1] = complex(0.0,0.0);
+					}
+					else	//Assume it is 12 now
+					{
+						current12 = complex(0.0,0.0);
+					}
+
+					//Set off
+					SPIMStateOFF();
+				}
+				else	//"Three-phase" connection
+				{
+					current[connected_phase] = 0;
+					SPIMStateOFF();
+				}
 			}
 
 			// update motor status
@@ -711,13 +819,57 @@ void motor::updateFreqVolt() {
 		if ( (SubNode == CHILD) || (SubNode == DIFF_CHILD) ) // if we have a parent, reference the voltage and frequency of the parent
 		{
 			node *parNode = OBJECTDATA(SubNodeParent,node);
-			Vs = parNode->voltage[connected_phase]/parNode->nominal_voltage;
-			ws = parNode->curr_freq_state.fmeas[connected_phase]*2*PI;
+			if (triplex_connected == true)
+			{
+				//See which type of triplex
+				if (triplex_connection_type == TPNconnected1N)
+				{
+					Vs = parNode->voltage[0]/parNode->nominal_voltage;
+					ws = parNode->curr_freq_state.fmeas[0]*2*PI;
+				}
+				else if (triplex_connection_type == TPNconnected2N)
+				{
+					Vs = parNode->voltage[1]/parNode->nominal_voltage;
+					ws = parNode->curr_freq_state.fmeas[1]*2*PI;
+				}
+				else	//Assume it is 12 now
+				{
+					Vs = parNode->voltaged[0]/(2.0*parNode->nominal_voltage);	//To reflect LL connection
+					ws = parNode->curr_freq_state.fmeas[0]*2*PI;
+				}
+			}
+			else	//"Three-phase" connection
+			{
+				Vs = parNode->voltage[connected_phase]/parNode->nominal_voltage;
+				ws = parNode->curr_freq_state.fmeas[connected_phase]*2*PI;
+			}
 		}
 		else // No parent, use our own voltage
 		{
-			Vs = voltage[connected_phase]/nominal_voltage;
-			ws = curr_freq_state.fmeas[connected_phase]*2*PI;
+			if (triplex_connected == true)
+			{
+				//See which type of triplex
+				if (triplex_connection_type == TPNconnected1N)
+				{
+					Vs = voltage[0]/nominal_voltage;
+					ws = curr_freq_state.fmeas[0]*2*PI;
+				}
+				else if (triplex_connection_type == TPNconnected2N)
+				{
+					Vs = voltage[1]/nominal_voltage;
+					ws = curr_freq_state.fmeas[1]*2*PI;
+				}
+				else	//Assume it is 12 now
+				{
+					Vs = voltaged[0]/(2.0*nominal_voltage);	//To reflect LL connection
+					ws = curr_freq_state.fmeas[0]*2*PI;
+				}
+			}
+			else 	//"Three-phase" connection
+			{
+				Vs = voltage[connected_phase]/nominal_voltage;
+				ws = curr_freq_state.fmeas[connected_phase]*2*PI;
+			}
 		}
 	}
 	//************** Begin_Yuan's TPIM model ********************//
