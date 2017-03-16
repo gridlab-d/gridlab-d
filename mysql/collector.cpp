@@ -168,7 +168,8 @@ int collector::init(OBJECT *parent)
 	// check row count
 	else 
 	{
-		if ( db->select("SELECT count(*) FROM `%s`", get_table())==NULL )
+		if ( db->select("SELECT max(id) FROM `%s`", get_table())==NULL
+				&& db->select("SELECT count(*) FROM `%s`", get_table())==NULL )
 			exception("unable to get row count of table '%s'", get_table());
 
 		gl_verbose("table '%s' ok", get_table());
