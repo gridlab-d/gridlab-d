@@ -35,7 +35,7 @@ public:
 
 	int alloc_freq_arrays(double delta_t_val);
 	void initialParameters(void);
-	void vfdCoreCalculations(double currFrequencyVal, double settleTime, double phasorVal[3], node *tNode, node *fNode, double currEfficiency, complex prev_current[3]);
+	void vfdCoreCalculations(void);
 	complex complex_exp(double angle);
 	STATUS VFD_current_injection(void);
 	
@@ -55,11 +55,12 @@ public:
 	double driveFrequency;
 	complex calc_current_in[3];
 	complex currentOut[3];
-	complex calc_volt_in[3];
 	complex settleVoltOut[3];
 
 private:
 	//Variable objects that are only used internally
+	node *fNode;
+	node *tNode;
 	double *settleFreq;
 	double prevDesiredFreq;
 	double *freqArray;
@@ -75,6 +76,7 @@ private:
 	double phasorVal[3];
 	int curr_array_position;
 	complex prev_current[3];
+	double currSetFreq;
 
 };
 

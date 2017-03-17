@@ -53,11 +53,7 @@ vfd::vfd(MODULE *mod) : link_object(mod)
 			
 			PT_complex, "current_in_a [A]", PADDR(calc_current_in[0]), PT_DESCRIPTION, "Phase A input current to VFD",
 			PT_complex, "current_in_b [A]", PADDR(calc_current_in[1]), PT_DESCRIPTION, "Phase B input current to VFD",
-			PT_complex, "current_in_c [A]", PADDR(calc_current_in[2]), PT_DESCRIPTION, "Phase C input current to VFD",
-			
-			PT_complex, "voltage_in_a [A]", PADDR(calc_volt_in[0]), PT_DESCRIPTION, "Phase A input voltage to VFD",
-			PT_complex, "voltage_in_b [A]", PADDR(calc_volt_in[1]), PT_DESCRIPTION, "Phase B input voltage to VFD",
-			PT_complex, "voltage_in_c [A]", PADDR(calc_volt_in[2]), PT_DESCRIPTION, "Phase C input voltage to VFD",			
+			PT_complex, "current_in_c [A]", PADDR(calc_current_in[2]), PT_DESCRIPTION, "Phase C input current to VFD",		
 			
 			PT_complex, "current_out_a [A]", PADDR(currentOut[0]), PT_DESCRIPTION, "Phase A output current of VFD",
 			PT_complex, "current_out_b [A]", PADDR(currentOut[1]), PT_DESCRIPTION, "Phase B output current of VFD",
@@ -128,8 +124,6 @@ int vfd::create()
 */
 int vfd::init(OBJECT *parent)
 {
-	node *fNode;
-	node *tNode;
 	fNode=OBJECTDATA(from,node);
 	tNode=OBJECTDATA(to,node);
 	OBJECT *obj = OBJECTHDR(this);
@@ -271,9 +265,9 @@ void vfd::initialParameters()
 	}
 }
 
-void vfd::vfdCoreCalculations(double currFrequencyVal, double settleTime, double phasorVal[3], node *tNode, node *fNode, double currEfficiency, complex prev_current[3])
+void vfd::vfdCoreCalculations()
 {
-	settleVolt = VbyF*currFrequencyVal; // since the speed didnot change, prevDesiredFreq would be equal to driveFrequency
+	settleVolt = VbyF*currSetFreq; // since the speed didnot change, prevDesiredFreq would be equal to driveFrequency
 	
 	if (settleVolt <= 0)
 	{
@@ -290,9 +284,9 @@ void vfd::vfdCoreCalculations(double currFrequencyVal, double settleTime, double
 		*/
 	}
 	
-	phasorVal[0] = phasorVal[0] + ((2*PI*currFrequencyVal*settleTime) - (nominal_output_radian_freq*settleTime));
-	phasorVal[1] = phasorVal[1] + ((2*PI*currFrequencyVal*settleTime) - (nominal_output_radian_freq*settleTime));
-	phasorVal[2] = phasorVal[2] + ((2*PI*currFrequencyVal*settleTime) - (nominal_output_radian_freq*settleTime));
+	phasorVal[0] = phasorVal[0] + ((2*PI*currSetFreq*settleTime) - (nominal_output_radian_freq*settleTime));
+	phasorVal[1] = phasorVal[1] + ((2*PI*currSetFreq*settleTime) - (nominal_output_radian_freq*settleTime));
+	phasorVal[2] = phasorVal[2] + ((2*PI*currSetFreq*settleTime) - (nominal_output_radian_freq*settleTime));
 
 	settleVoltOut[0] = complex(settleVolt,0)*complex_exp(phasorVal[0]);
 	settleVoltOut[1] = complex(settleVolt,0)*complex_exp(phasorVal[1]);
@@ -326,10 +320,6 @@ void vfd::vfdCoreCalculations(double currFrequencyVal, double settleTime, double
 	calc_current_in[0] = fNode->current[0];
 	calc_current_in[1] = fNode->current[1];
 	calc_current_in[2] = fNode->current[2];
-	
-	calc_volt_in[0] = fNode->voltage[0]/3.0;//powerInElectrical/~(fNode->current[0]);
-	calc_volt_in[1] = fNode->voltage[1]/3.0;//powerInElectrical/~(fNode->current[0]);
-	calc_volt_in[2] = fNode->voltage[2]/3.0;//powerInElectrical/~(fNode->current[0]);
 }
 
 TIMESTAMP vfd::presync(TIMESTAMP t0)
@@ -339,8 +329,6 @@ TIMESTAMP vfd::presync(TIMESTAMP t0)
 
 TIMESTAMP vfd::sync(TIMESTAMP t0)
 {
-	node *fNode;
-	node *tNode;
 	fNode=OBJECTDATA(from,node);
 	tNode=OBJECTDATA(to,node);
 
@@ -348,91 +336,7 @@ TIMESTAMP vfd::sync(TIMESTAMP t0)
 	TIMESTAMP t2;
 	
 	t2 = link_object::sync(t0);
-	
 	//Put VFD logic function here
-	int temp_idx;
-	double meanFreqArray, startFrequency, currSetFreq;
-	
-	phasorVal[0] = 0;
-	phasorVal[1] = (2*PI)/3;
-	phasorVal[2] = -(2*PI)/3;
-	
-	initialParameters();
-	
-	/*
-	vfdState = 0      ===> VFD Started - starting state 
-			 = 1      ===> Steady state
-			 = 2      ===> VFD is running - speed change state
-	*/
-		
-	if (prevDesiredFreq == 0.0)
-	{
-		vfdState = 0; //starting state
-		startFrequency = 3;
-		settleTime = 0;
-	}
-	else if ((prevDesiredFreq != 0.0) && (prevDesiredFreq != driveFrequency))
-	{
-		vfdState = 1; //speed change state
-		startFrequency = prevDesiredFreq; //Now that the frequency is changed, the starting frequency would be the exact last instance of previous stable frequency
-	
-		if (prevDesiredFreq <=0.0)
-		{
-			GL_THROW("At this point, Previous frequency = %d should be positive", prevDesiredFreq);
-			/*  TROUBLESHOOT
-			This would almost never happen but if it does for reasons yet to know. Lets catch it.
-			*/
-		}
-		
-	}
-	else if ((prevDesiredFreq != 0.0) && (prevDesiredFreq == driveFrequency)) //In case the drive frequency doesnt change (i.e., the speed is constant/doesn't change)
-	{
-		vfdState = 2; //steady state
-		settleTime = settleTime+1;			
-		//settleTime.push_back(settleTime.back()+1);// MATLAB equivalent is settleTime = [settleTime settleTime(end)+1]; %increment the time by 1 second - remember this simulation time is in seconds?
-		
-		if ((prevDesiredFreq <=0.0)|| (driveFrequency <= 0))
-		{
-			GL_THROW("VFD's previous frequency = %d and VFD's current Frequency = %d must be positive", prevDesiredFreq, driveFrequency);
-			/*  TROUBLESHOOT
-			This would almost never happen but if it does for reasons yet to know. Lets catch it.
-			*/
-		}
-		prevDesiredFreq = driveFrequency;
-		vfdCoreCalculations(driveFrequency, settleTime, phasorVal, tNode, fNode, currEfficiency, prev_current);
-
-		//Update the tracking variables
-		prev_current[0] = calc_current_in[0];
-		prev_current[1] = calc_current_in[1];
-		prev_current[2] = calc_current_in[2];
-	}
-	
-	if ((vfdState == 0) || (vfdState == 1)) //VFD started or changing speed.
-	{
-		for (curr_array_position = 0; curr_array_position <stableTime; curr_array_position++)
-		{
-			settleFreq[curr_array_position] = startFrequency;
-		}
-		
-		for (curr_array_position = 0; curr_array_position <stableTime; curr_array_position++)
-		{
-			settleFreq[curr_array_position] = driveFrequency;
-			for (temp_idx=0; temp_idx<stableTime; temp_idx++)
-			{
-				meanFreqArray += settleFreq[temp_idx];
-			}
-			meanFreqArray /= (double)stableTime;
-			settleFreq[curr_array_position] = roundf(meanFreqArray* 1000) / 1000;
-			settleTime = settleTime+1;
-			currSetFreq = settleFreq[curr_array_position];
-			vfdCoreCalculations(currSetFreq, settleTime, phasorVal, tNode, fNode, currEfficiency, prev_current);
-			prev_current[0] = calc_current_in[0];
-			prev_current[1] = calc_current_in[1];
-			prev_current[2] = calc_current_in[2];
-		}
-		prevDesiredFreq = settleFreq[curr_array_position];
-		settleFreq = NULL;
-	}	
 	
 	return TS_NEVER;
 }
@@ -543,6 +447,92 @@ STATUS vfd::VFD_current_injection(void)
 	//Call any current-injection update functions here
 	//This gets called near the end of SYNC, after the TO object has done it's current update
 	//May need to "undo" this in POSTSYNC
+	
+	//Put VFD logic function here
+	int temp_idx;
+	double meanFreqArray, startFrequency;
+	
+	phasorVal[0] = 0;
+	phasorVal[1] = (2*PI)/3;
+	phasorVal[2] = -(2*PI)/3;
+	
+	initialParameters();
+	
+	/*
+	vfdState = 0      ===> VFD Started - starting state 
+			 = 1      ===> Steady state
+			 = 2      ===> VFD is running - speed change state
+	*/
+		
+	if (prevDesiredFreq == 0.0)
+	{
+		vfdState = 0; //starting state
+		startFrequency = 3;
+		settleTime = 0;
+	}
+	else if ((prevDesiredFreq != 0.0) && (prevDesiredFreq != driveFrequency))
+	{
+		vfdState = 1; //speed change state
+		startFrequency = prevDesiredFreq; //Now that the frequency is changed, the starting frequency would be the exact last instance of previous stable frequency
+	
+		if (prevDesiredFreq <=0.0)
+		{
+			GL_THROW("At this point, Previous frequency = %d should be positive", prevDesiredFreq);
+			/*  TROUBLESHOOT
+			This would almost never happen but if it does for reasons yet to know. Lets catch it.
+			*/
+		}
+		
+	}
+	else if ((prevDesiredFreq != 0.0) && (prevDesiredFreq == driveFrequency)) //In case the drive frequency doesnt change (i.e., the speed is constant/doesn't change)
+	{
+		vfdState = 2; //steady state
+		settleTime = settleTime+1;			
+		//settleTime.push_back(settleTime.back()+1);// MATLAB equivalent is settleTime = [settleTime settleTime(end)+1]; %increment the time by 1 second - remember this simulation time is in seconds?
+		
+		if ((prevDesiredFreq <=0.0)|| (driveFrequency <= 0))
+		{
+			GL_THROW("VFD's previous frequency = %d and VFD's current Frequency = %d must be positive", prevDesiredFreq, driveFrequency);
+			/*  TROUBLESHOOT
+			This would almost never happen but if it does for reasons yet to know. Lets catch it.
+			*/
+		}
+		prevDesiredFreq = driveFrequency;
+		currSetFreq = driveFrequency;
+		vfdCoreCalculations();
+
+		//Update the tracking variables
+		prev_current[0] = calc_current_in[0];
+		prev_current[1] = calc_current_in[1];
+		prev_current[2] = calc_current_in[2];
+	}
+	
+	if ((vfdState == 0) || (vfdState == 1)) //VFD started or changing speed.
+	{
+		for (curr_array_position = 0; curr_array_position <stableTime; curr_array_position++)
+		{
+			settleFreq[curr_array_position] = startFrequency;
+		}
+		
+		for (curr_array_position = 0; curr_array_position <stableTime; curr_array_position++)
+		{
+			settleFreq[curr_array_position] = driveFrequency;
+			for (temp_idx=0; temp_idx<stableTime; temp_idx++)
+			{
+				meanFreqArray += settleFreq[temp_idx];
+			}
+			meanFreqArray /= (double)stableTime;
+			settleFreq[curr_array_position] = roundf(meanFreqArray* 1000) / 1000;
+			settleTime = settleTime+1;
+			currSetFreq = settleFreq[curr_array_position];
+			vfdCoreCalculations();
+			prev_current[0] = calc_current_in[0];
+			prev_current[1] = calc_current_in[1];
+			prev_current[2] = calc_current_in[2];
+		}
+		prevDesiredFreq = settleFreq[curr_array_position];
+		settleFreq = NULL;
+	}	
 
 	return SUCCESS;	//Change this, if there's a chance of failure
 }
