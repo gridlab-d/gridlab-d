@@ -33,6 +33,8 @@
 #include "random.h"
 #include "exec.h"
 
+SET_MYCONTEXT(DMC_INSTANCE)
+
 clock_t instance_synctime = 0;
 
 // only used for passing control between slaveproc and main threads
@@ -63,7 +65,7 @@ void printcontent(unsigned char *data, size_t len){
 		if(str[2*i+1] > 57)
 			str[2*i+1] += 39;
 	}
-	output_debug("content = %s", str);
+	IN_MYCONTEXT output_debug("content = %s", str);
 #endif
 }
 
@@ -132,7 +134,7 @@ void *instance_runproc_socket(void *ptr){
 
 	while(running){
 		rv = recv(inst->sockfd, inst->buffer, (int)(inst->buffer_size), 0);
-//		output_debug("%d = recv(%d, %x, %d, 0)", rv, inst->sockfd, inst->buffer, inst->buffer_size);
+//		IN_MYCONTEXT output_debug("%d = recv(%d, %x, %d, 0)", rv, inst->sockfd, inst->buffer, inst->buffer_size);
 		if(0 == rv){
 			output_error("instance_runproc_socket(): socket was closed before receiving data");
 			running = 0;
@@ -146,13 +148,13 @@ void *instance_runproc_socket(void *ptr){
 //			wlock(&inst->has_data_lock);
 			inst->has_data += 1;
 //			wunlock(&inst->has_data_lock);
-			//output_debug("instance_runproc_socket(): found "MSG_DATA);
-			//output_debug("instance_runproc_socket(): recv'd %d bytes", rv);
+			//IN_MYCONTEXT output_debug("instance_runproc_socket(): found "MSG_DATA);
+			//IN_MYCONTEXT output_debug("instance_runproc_socket(): recv'd %d bytes", rv);
 		} else if(0 == memcmp(inst->buffer, MSG_ERR, strlen(MSG_ERR))){
 			output_error("instance_runproc_socket(): slave indicated an error occured"); // error occured
 			running = 0;
 		} else if(0 == memcmp(inst->buffer, MSG_DONE, strlen(MSG_DONE))){
-			output_verbose("instance_runproc_socket(): slave indicated run completion"); // other side is done and is closing down
+			IN_MYCONTEXT output_verbose("instance_runproc_socket(): slave indicated run completion"); // other side is done and is closing down
 			running = 0;
 		} else {
 			// stdio message
@@ -162,16 +164,16 @@ void *instance_runproc_socket(void *ptr){
 		memcpy(inst->message->data_buffer, inst->buffer+strlen(MSG_DATA)+sizeof(MESSAGE), inst->prop_size);
 
 		/* copy to inst->somewhere */
-		//output_debug("i_rp_s(): waiting to send broadcast %d", inst->sock_signal);
+		//IN_MYCONTEXT output_debug("i_rp_s(): waiting to send broadcast %d", inst->sock_signal);
 		//pthread_mutex_lock(&inst->wait_lock);
 //		pthread_mutex_lock(&inst->sock_lock);
 //		pthread_cond_wait(&inst->wait_signal, &inst->wait_lock);
 //		pthread_cond_wait(&inst->wait_signal, &inst->sock_lock);
-		output_debug("inst %d sending signal 0x%x", inst->id, &(inst->sock_signal));
+		IN_MYCONTEXT output_debug("inst %d sending signal 0x%x", inst->id, &(inst->sock_signal));
 		pthread_cond_broadcast(&(inst->sock_signal));
 //		pthread_mutex_unlock(&inst->wait_lock);
 		pthread_mutex_unlock(&inst->sock_lock);
-		//output_debug("i_rp_s(): sending broadcast %d", inst->sock_signal);
+		//IN_MYCONTEXT output_debug("i_rp_s(): sending broadcast %d", inst->sock_signal);
 		
 		
 	}
@@ -206,7 +208,7 @@ void *instance_runproc(void *ptr)
 #ifdef WIN32
 			/* run new instance */
 			sprintf(cmd,"%s/gridlabd %s %s --slave %s:%"FMT_INT64"x %s &", global_execdir, global_verbose_mode?"--verbose":"", global_debug_output?"--debug":"", global_hostname,inst->cacheid, inst->model);
-			output_verbose("starting new instance with command '%s'", cmd);
+			IN_MYCONTEXT output_verbose("starting new instance with command '%s'", cmd);
 			rc = system(cmd);
 			break;
 #else
@@ -231,7 +233,7 @@ void *instance_runproc(void *ptr)
 	}
 
 	/* instance exited */
-	output_verbose("instance for model '%s' terminated with exit code %d (%s)",inst->model, rc, rc<0?strerror(errno):"gridlabd error"); 
+	IN_MYCONTEXT output_verbose("instance for model '%s' terminated with exit code %d (%s)",inst->model, rc, rc<0?strerror(errno):"gridlabd error");
 	instances_exited++;
 
 	return (void*)rc;
@@ -267,7 +269,7 @@ instance *instance_create(char *host)
 	inst->next = instance_list;
 	instance_list = inst;
 
-	output_verbose("defining new instance on %s", host);
+	IN_MYCONTEXT output_verbose("defining new instance on %s", host);
 
 	return inst;
 }
@@ -320,7 +322,7 @@ int instance_master_wait_mmap(instance *inst){
 			output_error("slave %d wait abandoned", inst->id);
 			break;
 		case WAIT_OBJECT_0:
-			output_debug("slave %d wait completed", inst->id);
+			IN_MYCONTEXT output_debug("slave %d wait completed", inst->id);
 			status = 1;
 			break;
 		case WAIT_TIMEOUT:
@@ -356,16 +358,16 @@ int instance_master_wait_socket(instance *inst){
 		pthread_mutex_lock(&inst->sock_lock);
 		if(inst->has_data > 0){ // maybe 'while' this?
 //			wunlock(&inst->has_data_lock);
-			output_debug("instance_master_wait_socket(): already has data for %d", inst->id);
+			IN_MYCONTEXT output_debug("instance_master_wait_socket(): already has data for %d", inst->id);
 		} else {
 			//wunlock(&inst->has_data_lock);
-			//output_debug("instance_master_wait_socket(): requesting unwait on %d", inst->sock_signal);
-			output_debug("instance_master_wait_socket(): inst %d waiting on %x", inst->id, &inst->sock_signal);
+			//IN_MYCONTEXT output_debug("instance_master_wait_socket(): requesting unwait on %d", inst->sock_signal);
+			IN_MYCONTEXT output_debug("instance_master_wait_socket(): inst %d waiting on %x", inst->id, &inst->sock_signal);
 			//pthread_cond_broadcast(&inst->wait_signal);
 			
 //			pthread_mutex_lock(&inst->sock_lock);
 //			pthread_cond_broadcast(&inst->wait_signal);
-			output_debug("inst %d waiting on signal 0x%x", inst->id, &(inst->sock_signal));
+			IN_MYCONTEXT output_debug("inst %d waiting on signal 0x%x", inst->id, &(inst->sock_signal));
 			pthread_cond_wait(&inst->sock_signal, &inst->sock_lock);
 			pthread_mutex_unlock(&inst->sock_lock);
 			
@@ -375,7 +377,7 @@ int instance_master_wait_socket(instance *inst){
 //		wunlock(&inst->has_data_lock);
 		pthread_mutex_unlock(&inst->sock_lock);
 	} else {
-		output_debug("instance_master_wait_socket(): no socket mutexes");
+		IN_MYCONTEXT output_debug("instance_master_wait_socket(): no socket mutexes");
 		return 0;
 	}
 	return 1;
@@ -391,7 +393,7 @@ int instance_master_wait(void)
 
 	for ( inst=instance_list ; inst!=NULL ; inst=inst->next )
 	{
-		output_verbose("master waiting on slave %d", inst->id);
+		IN_MYCONTEXT output_verbose("master waiting on slave %d", inst->id);
 #ifdef WIN32
 		if(inst->cnxtype == CI_MMAP){
 			status = instance_master_wait_mmap(inst);
@@ -404,9 +406,9 @@ int instance_master_wait(void)
 		}
 		if(status == 0)
 			break;
-//		output_verbose("slave %d resumed with t2=%lli (%x)", inst->id, inst->cache->ts, (&inst->cache->ts-inst->cache));
+//		IN_MYCONTEXT output_verbose("slave %d resumed with t2=%lli (%x)", inst->id, inst->cache->ts, (&inst->cache->ts-inst->cache));
 	}
-	output_verbose("master resuming");
+	IN_MYCONTEXT output_verbose("master resuming");
 	return status;
 }
 
@@ -416,7 +418,7 @@ void instance_master_done_mmap(instance *inst){
 		output_error("instance_master_done_mmap(): null inst pointer");
 		return;
 	}
-	//output_verbose("master signaling slave %d with timestamp %lli", inst->id, inst->cache->ts);
+	//IN_MYCONTEXT output_verbose("master signaling slave %d with timestamp %lli", inst->id, inst->cache->ts);
 	
 	
 #ifdef WIN32
@@ -450,10 +452,10 @@ void instance_master_done_socket(instance *inst){
 	offset += *(inst->message->data_size);
 
 	// send
-	//output_debug("imds(): sending %d bytes", offset);
+	//IN_MYCONTEXT output_debug("imds(): sending %d bytes", offset);
 	rv = send(inst->sockfd, inst->buffer, offset, 0);
 	printcontent(inst->buffer, rv);
-	//output_debug("%d = send(%d, %x, %d, 0)", rv, inst->sockfd, inst->buffer, offset);
+	//IN_MYCONTEXT output_debug("%d = send(%d, %x, %d, 0)", rv, inst->sockfd, inst->buffer, offset);
 	if(0 == rv){
 		// socket closed
 		output_error("instance_master_done_socket(): inst %d closed its socket", inst->id);
@@ -473,7 +475,7 @@ void instance_master_done(TIMESTAMP t1)
 	instance *inst;
 	for ( inst=instance_list ; inst!=NULL ; inst=inst->next )
 	{
-		//output_debug("master setting slave %d controller c->ts from %lli to t1 %lli", inst->cache->id, inst->cache->ts, t1);
+		//IN_MYCONTEXT output_debug("master setting slave %d controller c->ts from %lli to t1 %lli", inst->cache->id, inst->cache->ts, t1);
 		// needs to be done in instance_write_slave, this is too late
 		inst->cache->ts = t1;
 		switch(inst->cnxtype){
@@ -589,7 +591,7 @@ STATUS instance_init(instance *inst)
 	//	initialize cache
 	inst->cache->id = inst->id = instances_count;
 
-	//output_verbose("inst_init(): slave %d cache at %x, ts at %x", instances_count, inst->cache, &(inst->cache->ts));
+	//IN_MYCONTEXT output_verbose("inst_init(): slave %d cache at %x, ts at %x", instances_count, inst->cache, &(inst->cache->ts));
 
 	// write property lists
 	// properties are written into the buffer as "obj1.prop1,obj2.prop2 obj3.prop3,obj4.prop4\0".
@@ -627,7 +629,7 @@ STATUS instance_init(instance *inst)
 		return FAILED;
 	}
 
-	output_verbose("instance_init(): started instance for slave %d", inst->id);
+	IN_MYCONTEXT output_verbose("instance_init(): started instance for slave %d", inst->id);
 	instances_count++;
 	return SUCCESS;
 }
@@ -646,7 +648,7 @@ STATUS instance_initall(void)
 	if ( instance_list ) 
 	{
 		global_multirun_mode = MRM_MASTER;
-		output_verbose("entering multirun mode");
+		IN_MYCONTEXT output_verbose("entering multirun mode");
 		output_prefix_enable();
 		pthread_mutex_lock(&mls_inst_lock);
 		pthread_cond_wait(&mls_inst_signal, &mls_inst_lock);
@@ -685,7 +687,7 @@ STATUS instance_write_slave(instance *inst)
 	/* update buffer header */
 
 	/* write output to instance */
-	//output_verbose("master writing links for inst %d", inst->id);
+	//IN_MYCONTEXT output_verbose("master writing links for inst %d", inst->id);
 	for ( lnk=inst->write ; lnk!=NULL ; lnk=lnk->next ){
 		res = linkage_master_to_slave(0, lnk);
 		if(FAILED == res){
@@ -693,7 +695,7 @@ STATUS instance_write_slave(instance *inst)
 			return FAILED;
 		}
 	}
-	//output_verbose("copying %d bytes from %x to %x (%lli)", inst->cachesize, inst->cache, inst->buffer, inst->cache->ts);
+	//IN_MYCONTEXT output_verbose("copying %d bytes from %x to %x (%lli)", inst->cachesize, inst->cache, inst->buffer, inst->cache->ts);
 	memcpy(inst->buffer, inst->cache, inst->cachesize);
 	printcontent(inst->buffer, (int)inst->cachesize);
 	return SUCCESS;
@@ -716,7 +718,7 @@ TIMESTAMP instance_read_slave(instance *inst)
 //	printcontent(inst->buffer, (int)inst->cachesize);
 	t2 = inst->cache->ts;
 
-	//output_debug("master reading links for inst %d", inst->id);
+	//IN_MYCONTEXT output_debug("master reading links for inst %d", inst->id);
 	/* @todo read input from instance */
 	for ( lnk=inst->read ; lnk!=NULL ; lnk=lnk->next ){
 		res = linkage_slave_to_master(0, lnk);
@@ -752,7 +754,7 @@ TIMESTAMP instance_syncall(TIMESTAMP t1)
 		/* check to see if an instance was lost */
 		if ( instances_exited>0 )
 		{
-			output_debug("%d instance exit detected, stopping main loop", instances_exited);
+			IN_MYCONTEXT output_debug("%d instance exit detected, stopping main loop", instances_exited);
 	
 			/* tell main too to stop */
 			return TS_INVALID;
@@ -783,7 +785,7 @@ TIMESTAMP instance_syncall(TIMESTAMP t1)
 			}
 		}
 	
-		output_debug("instance sync time is %"FMT_INT64"d", t2);
+		IN_MYCONTEXT output_debug("instance sync time is %"FMT_INT64"d", t2);
 		instance_synctime += (clock_t)exec_clock() - ts;
 		return t2;
 	}

@@ -34,6 +34,8 @@
 #include "kill.h"
 #include "threadpool.h"
 
+SET_MYCONTEXT(DMC_MAIN)
+
 #if defined WIN32 && _DEBUG 
 /** Implements a pause on exit capability for Windows consoles
  **/
@@ -107,8 +109,8 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	/* set thread count equal to processor count if not passed on command-line */
 	if (global_threadcount == 0)
 		global_threadcount = processor_count();
-	output_verbose("detected %d processor(s)", processor_count());
-	output_verbose("using %d helper thread(s)", global_threadcount);
+	IN_MYCONTEXT output_verbose("detected %d processor(s)", processor_count());
+	IN_MYCONTEXT output_verbose("using %d helper thread(s)", global_threadcount);
 
 	/* process command line arguments */
 	if (cmdarg_load(argc,argv)==FAILED)
@@ -132,7 +134,7 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	if (global_threadcount == 0)
 	{
 		global_threadcount = processor_count();
-		output_verbose("using %d helper thread(s)", global_threadcount);
+		IN_MYCONTEXT output_verbose("using %d helper thread(s)", global_threadcount);
 	}
 
 	/* see if newer version is available */
@@ -160,7 +162,7 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 #define getpid _getpid
 #endif
 		fprintf(fp,"%d\n",getpid());
-		output_verbose("process id %d written to %s", getpid(), global_pidfile);
+		IN_MYCONTEXT output_verbose("process id %d written to %s", getpid(), global_pidfile);
 		fclose(fp);
 		atexit(delete_pidfile);
 	}
@@ -172,8 +174,8 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 #endif
 	
 	/* start the processing environment */
-	output_verbose("load time: %d sec", realtime_runtime());
-	output_verbose("starting up %s environment", global_environment);
+	IN_MYCONTEXT output_verbose("load time: %d sec", realtime_runtime());
+	IN_MYCONTEXT output_verbose("starting up %s environment", global_environment);
 	if (environment_start(argc,argv)==FAILED)
 	{
 		output_fatal("environment startup failed: %s", strerror(errno));
@@ -196,7 +198,7 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	/* do module dumps */
 	if (global_dumpall!=FALSE)
 	{
-		output_verbose("dumping module data");
+		IN_MYCONTEXT output_verbose("dumping module data");
 		module_dumpall();
 	}
 
@@ -208,7 +210,7 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	module_termall();
 
 	/* wrap up */
-	output_verbose("shutdown complete");
+	IN_MYCONTEXT output_verbose("shutdown complete");
 
 	/* profile results */
 	if (global_profiler)
@@ -227,17 +229,18 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 
 	/* if pause enabled */
 #ifndef WIN32
-        if (global_pauseatexit) {
-                output_verbose("pausing at exit");
+	if (global_pauseatexit)
+	{
+		IN_MYCONTEXT output_verbose("pausing at exit");
 		while (true) {
-                        sleep(5);
-                }
-        }
+			sleep(5);
+		}
+	}
 #endif
 
 	/* compute elapsed runtime */
-	output_verbose("elapsed runtime %d seconds", realtime_runtime());
-	output_verbose("exit code %d", exec_getexitcode());
+	IN_MYCONTEXT output_verbose("elapsed runtime %d seconds", realtime_runtime());
+	IN_MYCONTEXT output_verbose("exit code %d", exec_getexitcode());
 	exit(exec_getexitcode());
 }
 

@@ -43,6 +43,8 @@
 #include "threadpool.h"
 #include "exec.h"
 
+SET_MYCONTEXT(DMC_OBJECT)
+
 /* object list */
 static OBJECTNUM next_object_id = 0;
 static OBJECTNUM deleted_object_count = 0;
@@ -59,7 +61,11 @@ KEYWORD oflags[] = {
 	{"LOCKED", OF_LOCKED, oflags + 3},
 	{"RERANKED", OF_RERANK, oflags + 4},
 	{"RECALC", OF_RECALC, oflags + 5},
-	{"DELTAMODE", OF_DELTAMODE, NULL},
+	{"DELTAMODE", OF_DELTAMODE, oflags + 6},
+	{"QUIET", OF_QUIET, oflags + 7},
+	{"WARNING", OF_WARNING, oflags + 8},
+	{"VERBOSE", OF_VERBOSE, oflags + 9},
+	{"DEBUG", OF_DEBUG, NULL},
 };
 
 /* WARNING: untested. -d3p988 30 Jan 08 */
@@ -971,6 +977,19 @@ static int set_header_value(OBJECT *obj, char *name, char *value)
 			return SUCCESS;
 		}
 	}
+	else if ( strcmp(name,"groupid")==0 )
+	{
+		if ( strlen(value)<sizeof(obj->groupid) )
+		{
+			strcpy(obj->groupid,value);
+			return SUCCESS;
+		}
+		else
+		{
+			output_error("object %s:%d groupid '%s' is too long (max=%d)", obj->oclass->name, obj->id, value, sizeof(obj->groupid));
+			return FAILED;
+		}
+	}
 	else {
 		output_error("object %s:%d called set_header_value() for invalid field '%s'", obj->oclass->name, obj->id, name);
 		/*	TROUBLESHOOT
@@ -1385,11 +1404,12 @@ char *object_property_to_string(OBJECT *obj, char *name, char *buffer, int sz)
 		return NULL;
 	}
 	addr = GETADDR(obj,prop); /* warning: cast from pointer to integer of different size */
-	if(prop->ptype==PT_delegated)
-		return prop->delegation->to_string(addr,buffer,sz)?buffer:NULL;
-	else if(class_property_to_string(prop,addr,buffer,sz))
+	if ( prop->ptype == PT_delegated )
 	{
-		
+		return prop->delegation->to_string(addr,buffer,sz) ? buffer : NULL;
+	}
+	else if ( class_property_to_string(prop,addr,buffer,sz) )
+	{
 		return buffer;
 	}
 	else
@@ -1517,9 +1537,9 @@ TIMESTAMP object_sync(OBJECT *obj, /**< the object to synchronize */
 	if ( global_debug_output>0 )
 	{
 		const char *passname[]={"NOSYNC","PRESYNC","SYNC","INVALID","POSTSYNC"};
-		char dt1[64]="(invalid)"; convert_from_timestamp(absolute_timestamp(ts),dt1,sizeof(dt1));
-		char dt2[64]="(invalid)"; convert_from_timestamp(absolute_timestamp(t2),dt2,sizeof(dt2));
-		output_debug("object %s:%d pass %s sync to %s -> %s %s", obj->oclass->name, obj->id, pass<0||pass>4?"(invalid)":passname[pass], dt1, is_soft_timestamp(t2)?"SOFT":"HARD", dt2);
+		char dt1[64]="(invalid)"; if ( ts!=TS_INVALID ) convert_from_timestamp(absolute_timestamp(ts),dt1,sizeof(dt1)); else strcpy(dt1,"ERROR");
+		char dt2[64]="(invalid)"; if ( t2!=TS_INVALID ) convert_from_timestamp(absolute_timestamp(t2),dt2,sizeof(dt2)); else strcpy(dt2,"ERROR");
+		IN_MYCONTEXT output_debug("object %s:%d pass %s sync to %s -> %s %s", obj->oclass->name, obj->id, pass<0||pass>4?"(invalid)":passname[pass], dt1, is_soft_timestamp(t2)?"SOFT":"HARD", dt2);
 	}
 	return t2;
 }
@@ -1532,7 +1552,7 @@ TIMESTAMP object_heartbeat(OBJECT *obj)
 		if ( global_debug_output>0 )
 		{
 			char dt[64]="(invalid)"; convert_from_timestamp(absolute_timestamp(t1),dt,sizeof(dt));
-			output_debug("object %s:%d heartbeat -> %s %s", obj->oclass->name, obj->id, is_soft_timestamp(t1)?"(SOFT)":"(HARD)", dt);
+			IN_MYCONTEXT output_debug("object %s:%d heartbeat -> %s %s", obj->oclass->name, obj->id, is_soft_timestamp(t1)?"(SOFT)":"(HARD)", dt);
 		}
 	return t1;
 }
@@ -1551,7 +1571,9 @@ int object_init(OBJECT *obj) /**< the object to initialize */
 		rv = (int)(*(obj->oclass->init))(obj, obj->parent);
 	object_profile(obj,OPI_INIT,t);
 	if ( global_debug_output>0 )
-		output_debug("object %s:%d init -> %s", obj->oclass->name, obj->id, rv?"ok":"failed");
+	{
+		IN_MYCONTEXT output_debug("object %s:%d init -> %s", obj->oclass->name, obj->id, rv?"ok":"failed");
+	}
 	return rv;
 }
 
@@ -1575,8 +1597,10 @@ STATUS object_precommit(OBJECT *obj, TIMESTAMP t1)
 		rv = SUCCESS;
 	}
 	object_profile(obj,OPI_PRECOMMIT,t);
-		if ( global_debug_output>0 )
-			output_debug("object %s:%d precommit -> %s", obj->oclass->name, obj->id, rv?"ok":"failed");
+	if ( global_debug_output>0 )
+	{
+		IN_MYCONTEXT output_debug("object %s:%d precommit -> %s", obj->oclass->name, obj->id, rv?"ok":"failed");
+	}
 	return rv;
 }
 
@@ -1593,8 +1617,8 @@ TIMESTAMP object_commit(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 	object_profile(obj,OPI_COMMIT,t);
 	if ( global_debug_output>0 )
 	{
-		char dt[64]="(invalid)"; convert_from_timestamp(absolute_timestamp(rv),dt,sizeof(dt));
-		output_debug("object %s:%d commit -> %s %s", obj->oclass->name, obj->id, is_soft_timestamp(rv)?"SOFT":"HARD", dt);
+		char dt[64]="(invalid)"; if ( rv!=TS_INVALID ) convert_from_timestamp(absolute_timestamp(rv),dt,sizeof(dt)); else strcpy(dt,"ERROR");
+		IN_MYCONTEXT output_debug("object %s:%d commit -> %s %s", obj->oclass->name, obj->id, is_soft_timestamp(rv)?"SOFT":"HARD", dt);
 	}
 	return rv;
 }
@@ -1618,7 +1642,7 @@ STATUS object_finalize(OBJECT *obj)
 	object_profile(obj,OPI_FINALIZE,t);
 	if ( global_debug_output>0 )
 	{
-		output_debug("object %s:%d finalize -> %s", obj->oclass->name, obj->id, rv?"ok":"failed");
+		IN_MYCONTEXT output_debug("object %s:%d finalize -> %s", obj->oclass->name, obj->id, rv?"ok":"failed");
 	}
 	return rv;
 }
@@ -1752,7 +1776,7 @@ int object_save(char *buffer, int size, OBJECT *obj)
 	CLASS *pclass;
 	int count = sprintf(temp,"object %s:%d {\n\n\t// header properties\n", obj->oclass->name, obj->id);
 
-	output_debug("saving object %s:%d", obj->oclass->name, obj->id);
+	IN_MYCONTEXT output_debug("saving object %s:%d", obj->oclass->name, obj->id);
 
 	/* dump header properties */
 	if(obj->parent != NULL){

@@ -15,6 +15,8 @@
 #include "schedule.h"
 #include "transform.h"
 
+SET_MYCONTEXT(DMC_LOAD)
+
 #define DEFAULT_FORMAT "gld"
 
 static int saveglm(char *filename, FILE *fp);

@@ -10,6 +10,8 @@
 
 #include "link.h"
 
+SET_MYCONTEXT(DMC_LINK)
+
 #if defined WIN32 && ! defined __MINGW32__
 	#define _WIN32_WINNT 0x0400
 	#undef int64 // wtypes.h also used int64
@@ -119,13 +121,13 @@ int link_create(char *file)
 /* initialize modules */
 int link_initall(void)
 {
-	output_debug("link_initall(): link startup in progress...");
+	IN_MYCONTEXT output_debug("link_initall(): link startup in progress...");
 	glxlink *mod;
 	for ( mod=glxlink::get_first() ; mod!=NULL ; mod=mod->get_next() )
 	{
 		LINKLIST *item;
 
-		output_debug("link_initall(): setting up %s link", mod->get_target());
+		IN_MYCONTEXT output_debug("link_initall(): setting up %s link", mod->get_target());
 
 		// set default global list (if needed)
 		if ( mod->get_globals()==NULL )
@@ -252,7 +254,7 @@ int link_initall(void)
 			return 0;
 		}
 	}
-	output_debug("link_initall(): link startup done ok");
+	IN_MYCONTEXT output_debug("link_initall(): link startup done ok");
 	atexit((void(*)(void))link_termall);
 	return 1;
 }
@@ -275,7 +277,7 @@ int link_termall(void)
 	glxlink *mod;
 	for ( mod=glxlink::get_first() ; mod!=NULL ; mod=mod->get_next() )
 	{
-		output_debug("link_initall(): terminating %s link...",mod->get_target());
+		IN_MYCONTEXT output_debug("link_initall(): terminating %s link...",mod->get_target());
 		if ( !mod->do_term() ) ok = false;
 	}
 	return ok;
@@ -301,7 +303,7 @@ glxlink::glxlink(char *filename)
 	FILE *fp = fopen(filename,"rt");
 	if ( fp==NULL )
 		throw "file open failed";
-	output_debug("opened link '%s'", filename);
+	IN_MYCONTEXT output_debug("opened link '%s'", filename);
 
 	char line[1024];
 	int linenum=0;
@@ -312,7 +314,7 @@ glxlink::glxlink(char *filename)
 		char tag[64], data[1024]="";
 		if ( sscanf(line,"%s %[^\r\n]",tag,data)>0 )
 		{
-			output_debug("%s(%d): %s %s", filename, linenum, tag,data);
+			IN_MYCONTEXT output_debug("%s(%d): %s %s", filename, linenum, tag,data);
 			if ( settag!=NULL )
 			{
 				if ( strcmp(tag,"global")==0 )
@@ -354,7 +356,9 @@ glxlink::glxlink(char *filename)
 	first = this;
 
 	if ( ok )
-		output_verbose("link '%s' ok", filename);
+	{
+		IN_MYCONTEXT output_verbose("link '%s' ok", filename);
+	}
 	else
 		throw "cannot establish link";
 }

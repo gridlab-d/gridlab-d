@@ -39,6 +39,8 @@
 
 #include "gui.h"
 
+SET_MYCONTEXT(DMC_SERVER)
+
 #define MAXSTR		1024		// maximum string length
 
 static int shutdown_server = 0; /**< flag to stop accepting incoming connections */
@@ -52,7 +54,7 @@ SOCKET sockfd = (SOCKET)0; /**< socket on which incomming connections are accept
  **/
 static void shutdown_now(void)
 {
-	output_verbose("server shutdown on exit in progress...");
+	IN_MYCONTEXT output_verbose("server shutdown on exit in progress...");
 	exec_setexitcode(XC_SVRKLL);
 	shutdown_server = 1;
 	if (sockfd!=(SOCKET)0)
@@ -63,7 +65,7 @@ static void shutdown_now(void)
 #endif
 	sockfd = (SOCKET)0;
 	gui_wait_status(GUIACT_HALT);
-	output_verbose("server shutdown on exit done");
+	IN_MYCONTEXT output_verbose("server shutdown on exit done");
 }
 
 #ifndef WIN32
@@ -150,7 +152,7 @@ static void *server_routine(void *arg)
 				close(newsockfd);
 				continue;
 			}
-			output_verbose("accepting connection from %s on port %d",saddr, cli_addr.sin_port);
+			IN_MYCONTEXT output_verbose("accepting connection from %s on port %d",saddr, cli_addr.sin_port);
 			if ( active )
 				pthread_join(thread_id,&result);
 			if ( pthread_create(&thread_id,NULL, http_response,(void*)newsockfd)!=0 )
@@ -162,7 +164,7 @@ static void *server_routine(void *arg)
 			active = 1;
 		}
 	}
-	output_verbose("server shutdown");
+	IN_MYCONTEXT output_verbose("server shutdown");
 Done:
 	started = 0;
 	return (void*)&status;
@@ -189,7 +191,7 @@ STATUS server_startup(int argc, char *argv[])
 		return SUCCESS;
 
 #ifdef WIN32
-	output_debug("starting WS2");
+	IN_MYCONTEXT output_debug("starting WS2");
 	if (WSAStartup(MAKEWORD(2,0),&wsaData)!=0)
 	{
 		output_error("socket library initialization failed: %s",strerror(GetLastError()));
@@ -242,13 +244,13 @@ Retry:
 		return FAILED;
 	}
 #ifdef WIN32
-	output_verbose("bind ok to %d.%d.%d.%d",serv_addr.sin_addr.S_un.S_un_b.s_b1,serv_addr.sin_addr.S_un.S_un_b.s_b2,serv_addr.sin_addr.S_un.S_un_b.s_b3,serv_addr.sin_addr.S_un.S_un_b.s_b4);
+	IN_MYCONTEXT output_verbose("bind ok to %d.%d.%d.%d",serv_addr.sin_addr.S_un.S_un_b.s_b1,serv_addr.sin_addr.S_un.S_un_b.s_b2,serv_addr.sin_addr.S_un.S_un_b.s_b3,serv_addr.sin_addr.S_un.S_un_b.s_b4);
 #else
-	output_verbose("bind ok to address");
+	IN_MYCONTEXT output_verbose("bind ok to address");
 #endif	
 	/* listen for connection */
 	listen(sockfd,5);
-	output_verbose("server listening to port %d", portNumber);
+	IN_MYCONTEXT output_verbose("server listening to port %d", portNumber);
 	global_server_portnum = portNumber;
 
 	/* join the old thread and wait if it hasn't finished yet */
@@ -377,7 +379,7 @@ static void http_send(HTTPCNX *http)
 	char header[4096];
 	int len=0;
 	len += sprintf(header+len, "HTTP/1.1 %s", http->status?http->status:HTTP_INTERNALSERVERERROR);
-	output_verbose("%s (len=%d, mime=%s)",header,http->len,http->type?http->type:"none");
+	IN_MYCONTEXT output_verbose("%s (len=%d, mime=%s)",header,http->len,http->type?http->type:"none");
 	len += sprintf(header+len, "\nContent-Length: %d\n", http->len);
 	if (http->type && http->type[0]!='\0')
 		len += sprintf(header+len, "Content-Type: %s\n", http->type);
@@ -493,9 +495,13 @@ static void http_mime(HTTPCNX *http, char *path)
 	} map[] = {
 		{".png","image/png"},
 		{".js","text/javascript"},
-		{".kml","text/kml"},
+		{".kml","application/vnd.google-earth.kml+xml"},
 		{".htm","text/html"},
 		{".ico","image/x-icon"},
+		{".txt","text/plain"},
+		{".log","text/plain"},
+		{".glm","text/plain"},
+		{".php","text/plain"},
 	};
 	int n;
 	for ( n=0 ; n<sizeof(map)/sizeof(map[0]) ; n++ )
@@ -591,6 +597,134 @@ void http_decode(char *buffer)
 	strcpy(buffer,result);
 }
 
+int get_value_with_unit(OBJECT *obj, char *arg1, char *arg2, char *buffer, size_t len)
+{
+	char *uname = strchr(arg2,'[');
+	if ( uname!=NULL )
+	{
+		UNIT *unit;
+		PROPERTY *prop;
+		double rvalue;
+		complex cvalue;
+		char *spec = NULL;
+		int prec = 4;
+		char fmt[64];
+
+		/* find the end of the unit definition */
+		char *p = strchr(uname,']');
+		if ( p!=NULL ) *p='\0';
+		else {
+			output_error("object '%s' property '%s' unit spec in incomplete or invalid", arg1, arg2);
+			return 0;
+		}
+		*uname++ = '\0';
+
+		/* find the format specs */
+		spec = strchr(uname,',');
+		if ( spec!=NULL )
+			*spec++ = '\0';
+		else
+			spec = "4g";
+
+		/* check spec for conformance */
+		if ( strchr("0123456789",spec[0])==NULL || strchr("aAfFgGeE",spec[1])==NULL )
+		{
+			output_error("object '%s' property '%s' unit format '%s' is invalid (must be [0-9][aAeEfFgG])", arg1, arg2, spec);
+			return 0;
+		}
+
+		/* get the unit */
+		unit = unit_find(uname);
+		if ( unit==NULL )
+		{
+			output_error("object '%s' property '%s' unit '%s' not found", arg1, arg2, uname);
+			return 0;
+		}
+
+		/* get the property */
+		prop = object_get_property(obj,arg2,NULL);
+		if ( prop==NULL )
+		{
+			output_error("object '%s' property '%s' not found", arg1, arg2);
+			return 0;
+		}
+		if ( prop->unit==NULL )
+		{
+			output_error("class '%s' property '%s' has no units", obj->oclass->name, prop->name);
+			return 0;
+		}
+
+		/* handle complex numbers */
+		if ( prop->ptype==PT_complex )
+		{
+			cvalue = *object_get_complex_quick(obj,prop);
+			if ( !unit_convert_complex(prop->unit,unit,&cvalue) )
+			{
+				output_error("object '%s' property '%s' conversion from '%s' to '%s' failed", arg1, arg2, prop->unit->name, unit);
+				return 0;
+			}
+			switch ( spec[2]=='\0' ? cvalue.f : spec[2] ) {
+			case I: // i-notation
+				sprintf(fmt,"%%.%c%c%%+.%c%ci %%s",spec[0],spec[1],spec[0],spec[1]);
+				snprintf(buffer,len,fmt,cvalue.r,cvalue.i,uname);
+				break;
+			case J: // j-notation
+				sprintf(fmt,"%%.%c%c%%+.%c%cj %%s",spec[0],spec[1],spec[0],spec[1]);
+				snprintf(buffer,len,fmt,cvalue.r,cvalue.i,uname);
+				break;
+			case A: // degrees
+				sprintf(fmt,"%%.%c%c%%+.%c%cd %%s",spec[0],spec[1],spec[0],spec[1]);
+				snprintf(buffer,len,fmt,complex_get_mag(cvalue),complex_get_arg(cvalue)*180/PI,uname);
+				break;
+			case R: // radians
+				sprintf(fmt,"%%.%c%c%%+.%c%cr %%s",spec[0],spec[1],spec[0],spec[1]);
+				snprintf(buffer,len,fmt,complex_get_mag(cvalue),complex_get_arg(cvalue),uname);
+				break;
+			case 'M': // magnitude only
+				sprintf(fmt,"%%.%c%c %%s",spec[0],spec[1]);
+				snprintf(buffer,len,fmt,complex_get_mag(cvalue),uname);
+				break;
+			case 'D': // angle only in degrees
+				sprintf(fmt,"%%.%c%c deg",spec[0],spec[1]);
+				snprintf(buffer,len,fmt,complex_get_arg(cvalue)*180/PI,uname);
+				break;
+			case 'R': // angle only in radians
+				sprintf(fmt,"%%.%c%c rad",spec[0],spec[1]);
+				sprintf(buffer,fmt,complex_get_arg(cvalue),uname);
+				break;
+			case 'X': // real part only
+				sprintf(fmt,"%%.%c%c %%s",spec[0],spec[1]);
+				sprintf(buffer,fmt,cvalue.r,uname);
+				break;
+			case 'Y': // imaginary part only
+				sprintf(fmt,"%%.%c%c %%s",spec[0],spec[1]);
+				sprintf(buffer,fmt,cvalue.i,uname);
+				break;
+			default:
+				output_error("object '%s' property '%s' complex angle notation '%c' is not valid", arg1, arg2, spec[2]=='\0' ? cvalue.f : spec[3]);
+				return 0;
+			}
+		}
+		else /* handle doubles */
+		{
+			sprintf(fmt,"%%.%c%c %%s",spec[0],spec[1]);
+			rvalue = *object_get_double_quick(obj,prop);
+			if ( !unit_convert_ex(prop->unit,unit,&rvalue) )
+			{
+				output_error("object '%s' property '%s' conversion from '%s' to '%s' failed", arg1, arg2, prop->unit->name, unit);
+				return 0;
+			}
+			sprintf(buffer,fmt,rvalue,uname);
+		}
+	}
+	else if ( !object_get_value_by_name(obj,arg2,buffer,len) )
+	{
+		output_error("object '%s' property '%s' not found", arg1, arg2);
+		return 0;
+	}
+	return strlen(buffer);
+}
+
 /** Process an incoming raw data request
  * @returns non-zero on success, 0 on failure (errno set)
  */
@@ -604,7 +738,7 @@ int http_raw_request(HTTPCNX *http, char *uri)
 	char *id;
 
 	/* value */
-	if (value) *value++;
+	if (value) value++;
 
 	/* decode %.. */
 	http_decode(arg1);
@@ -648,7 +782,7 @@ int http_raw_request(HTTPCNX *http, char *uri)
 		}
 
 		/* post the current value */
-		if ( !object_get_value_by_name(obj,arg2,buffer,sizeof(buffer)) )
+		if ( !get_value_with_unit(obj,arg1,arg2,buffer,sizeof(buffer)) )
 		{
 			output_error("object '%s' property '%s' not found", arg1, arg2);
 			return 0;
@@ -685,7 +819,7 @@ int http_xml_request(HTTPCNX *http,char *uri)
 	char *id;
 
 	/* value */
-	if (value) *value++;
+	if (value) value++;
 
 	/* decode %.. */
 	http_decode(arg1);
@@ -769,125 +903,12 @@ int http_xml_request(HTTPCNX *http,char *uri)
 			http_format(http,"</properties>\n");
 		}
 		else
-		{	/* get the unit (if any) */
-			char *uname = strchr(arg2,'[');
-			if ( uname!=NULL )
-			{
-				UNIT *unit;
-				PROPERTY *prop;
-				double rvalue;
-				complex cvalue;
-				char *spec = NULL;
-				int prec = 4;
-				char fmt[64];
-
-				/* find the end of the unit definition */
-				char *p = strchr(uname,']');
-				if ( p!=NULL ) *p='\0';
-				else {
-					output_error("object '%s' property '%s' unit spec in incomplete or invalid", arg1, arg2);
-					return 0;
-				}
-				*uname++ = '\0';
-
-				/* find the format specs */
-				spec = strchr(uname,',');
-				if ( spec!=NULL )
-					*spec++ = '\0';
-				else
-					spec = "4g";
-
-				/* check spec for conformance */
-				if ( strchr("0123456789",spec[0])==NULL || strchr("aAfFgGeE",spec[1])==NULL )
-				{
-					output_error("object '%s' property '%s' unit format '%s' is invalid (must be [0-9][aAeEfFgG])", arg1, arg2, spec);
-					return 0;
-				}
-
-				/* get the unit */
-				unit = unit_find(uname);
-				if ( unit==NULL )
-				{
-					output_error("object '%s' property '%s' unit '%s' not found", arg1, arg2, uname);
-					return 0;
-				}
-
-				/* get the property */
-				prop = object_get_property(obj,arg2,NULL);
-				if ( prop==NULL )
-				{
-					output_error("object '%s' property '%s' not found", arg1, arg2);
-					return 0;
-				}
-				if ( prop->unit==NULL )
-				{
-					output_error("class '%s' property '%s' has no units", obj->oclass->name, prop->name);
-					return 0;
-				}
-
-				/* handle complex numbers */
-				if ( prop->ptype==PT_complex )
-				{
-					cvalue = *object_get_complex_quick(obj,prop);
-					if ( !unit_convert_complex(prop->unit,unit,&cvalue) )
-					{
-						output_error("object '%s' property '%s' conversion from '%s' to '%s' failed", arg1, arg2, prop->unit->name, unit);
-						return 0;
-					}
-					switch ( spec[2]=='\0' ? cvalue.f : spec[2] ) {
-					case I: // i-notation
-						sprintf(fmt,"%%.%c%c%%+.%c%ci %%s",spec[0],spec[1],spec[0],spec[1]);
-						sprintf(buffer,fmt,cvalue.r,cvalue.i,uname);
-						break;
-					case J: // j-notation
-						sprintf(fmt,"%%.%c%c%%+.%c%cj %%s",spec[0],spec[1],spec[0],spec[1]);
-						sprintf(buffer,fmt,cvalue.r,cvalue.i,uname);
-						break;
-					case A: // degrees
-						sprintf(fmt,"%%.%c%c%%+.%c%cd %%s",spec[0],spec[1],spec[0],spec[1]);
-						sprintf(buffer,fmt,complex_get_mag(cvalue),complex_get_arg(cvalue)*180/PI,uname);
-						break;
-					case R: // radians
-						sprintf(fmt,"%%.%c%c%%+.%c%cr %%s",spec[0],spec[1],spec[0],spec[1]);
-						sprintf(buffer,fmt,complex_get_mag(cvalue),complex_get_arg(cvalue),uname);
-						break;
-					case 'M': // magnitude only
-						sprintf(fmt,"%%.%c%c %%s",spec[0],spec[1]);
-						sprintf(buffer,fmt,complex_get_mag(cvalue),uname);
-						break;
-					case 'D': // angle only in degrees
-						sprintf(fmt,"%%.%c%c deg",spec[0],spec[1]);
-						sprintf(buffer,fmt,complex_get_arg(cvalue)*180/PI,uname);
-						break;
-					case 'R': // angle only in radians
-						sprintf(fmt,"%%.%c%c rad",spec[0],spec[1]);
-						sprintf(buffer,fmt,complex_get_arg(cvalue),uname);
-						break;
-					default:
-						output_error("object '%s' property '%s' complex angle notation '%c' is not valid", arg1, arg2, spec[2]=='\0' ? cvalue.f : spec[3]);
-						return 0;
-					}
-				}
-				else /* handle doubles */
-				{
-					sprintf(fmt,"%%.%c%c %%s",spec[0],spec[1]);
-					rvalue = *object_get_double_quick(obj,prop);
-					if ( !unit_convert_ex(prop->unit,unit,&rvalue) )
-					{
-						output_error("object '%s' property '%s' conversion from '%s' to '%s' failed", arg1, arg2, prop->unit->name, unit);
-						return 0;
-					}
-					sprintf(buffer,fmt,rvalue,uname);
-				}
-			}
-			else {
-				/* get the current value */
-				if ( !object_get_value_by_name(obj,arg2,buffer,sizeof(buffer)) )
-				{
-					output_error("object '%s' property '%s' not found", arg1, arg2);
-					return 0;
-				}
-			}
+		{	
+			PROPERTY *prop = object_get_property(obj, arg2, NULL);
+			PROPERTYSPEC *spec = prop ? property_getspec(prop->ptype) : NULL;
+			/* get the unit (if any) */
+			if ( !get_value_with_unit(obj,arg1,arg2,buffer,sizeof(buffer)) )
+				return 0;
 
 			/* assignment, if any */
 			if ( value && !object_set_value_by_name(obj,arg2,value) )
@@ -901,7 +922,7 @@ int http_xml_request(HTTPCNX *http,char *uri)
 			http_format(http,"<property>\n\t<object>%s</object>\n", arg1);
 			http_format(http,"\t<name>%s</name>\n", arg2);
 			http_format(http,"\t<value>%s</value>\n", http_unquote(buffer));
-			/* TODO add property type info */
+			if ( spec!=NULL ) http_format(http,"\t<type>%s</type>\n", spec->name);
 			http_format(http,"</property>\n");
 		}
 		http_type(http,"text/xml");
@@ -942,7 +963,7 @@ int http_json_request(HTTPCNX *http,char *uri)
 		/* find the variable */
 		if (global_getvar(arg1,buffer,sizeof(buffer))==NULL)
 		{
-			http_format(http,"{error: \"globalvar not found\", query: \"%s\"}\n", arg1);
+			http_format(http,"{\"error\": \"globalvar not found\", query: \"%s\"}\n", arg1);
 			http_type(http,"text/json");
 			return 1;
 		}
@@ -967,17 +988,24 @@ int http_json_request(HTTPCNX *http,char *uri)
 			obj = object_find_by_id(atoi(id+1));
 		if ( obj==NULL )
 		{
-			http_format(http,"{error: \"object not found\", query: \"%s\"}\n", arg1);
+			http_format(http,"{\"error\": \"object not found\", query: \"%s\"}\n", arg1);
 			http_type(http,"text/json");
 			return 1;
 		}
 
-		if ( strcmp(arg2,"*")==0 )
+		if ( arg2[0]=='*' )
 		{
+			bool use_tuple = strcmp(arg2,"*")==0 || strcmp(arg2,"*[tuple]")==0;
+			if ( !use_tuple && strcmp(arg2,"*[dict]")!=0 )
+			{
+				http_format(http,"{\"error\": \"invalid '*' query format\", query: \"%s\"}\n", arg2);
+				http_type(http,"text/json");
+				return 1;
+			}
 			PROPERTY *prop;
 			char buffer[1024];
-			http_format(http,"[");
-#define PROPERTY(N,F,V) http_format(http,"\n\t{\""N"\": \""F"\"},", V)
+			if ( use_tuple ) http_format(http,"["); else http_format(http,"{");
+#define PROPERTY(N,F,V) {if ( use_tuple ) http_format(http,"\n\t{\""N"\": \""F"\"},", V); else http_format(http," \""N"\": \""F"\",", V);}
 			PROPERTY("id","%d",obj->id);
 			PROPERTY("class","%s",obj->oclass->name);
 			if ( obj->name ) PROPERTY("name","%s",object_name(obj,buffer,sizeof(buffer)));
@@ -1003,27 +1031,38 @@ int http_json_request(HTTPCNX *http,char *uri)
 
 			for ( prop=obj->oclass->pmap; prop!=NULL; prop=(prop->next?prop->next:(prop->oclass->parent?prop->oclass->parent->pmap:NULL)) )
 			{
-				if ( prop!=obj->oclass->pmap) http_format(http,"%s\n",",");
-				else http_format(http,"%s","\n");
-				if ( object_get_value_by_name(obj,prop->name,buffer,sizeof(buffer))>0 )
-					http_format(http,"\t{\"%s\": \"%s\"}",prop->name,http_unquote(buffer));
+				if ( prop!=obj->oclass->pmap)
+				{
+					if ( use_tuple ) http_format(http,"%s\n",","); else http_format(http,"%s ",",");
+				}
 				else
 				{
-					http_format(http,"{error: \"unable to get property value\", object: \"%s\", property: \"%s\"}\n", arg1,arg2);
+					if ( use_tuple ) http_format(http,"%s","\n");
+				}
+				if ( object_get_value_by_name(obj,prop->name,buffer,sizeof(buffer))>0 )
+				{
+					if ( use_tuple )
+						http_format(http,"\t{\"%s\": \"%s\"}",prop->name,http_unquote(buffer));
+					else
+						http_format(http,"\"%s\": \"%s\"",prop->name,http_unquote(buffer));
+				}
+				else
+				{
+					http_format(http,"{\"error\" : \"unable to get property value\", object: \"%s\", property: \"%s\"}\n", arg1,arg2);
 					http_type(http,"text/json");
 					return 1;
 				}
 			}
 #undef PROPERTY
-			http_format(http,"\n\t]\n");
+			if ( use_tuple ) http_format(http,"\n\t]\n"); else http_format(http,"}\n");
 		}
 		else
 		{
-
-			/* post the current value */
-			if ( !object_get_value_by_name(obj,arg2,buffer,sizeof(buffer)) )
+			PROPERTY *prop = object_get_property(obj, arg2, NULL);
+			PROPERTYSPEC *spec = prop ? property_getspec(prop->ptype) : NULL;
+			if ( !get_value_with_unit(obj,arg1,arg2,buffer,sizeof(buffer)) )
 			{
-				http_format(http,"{error: \"property not found\", object: \"%s\", property: \"%s\"}\n", arg1,arg2);
+				http_format(http,"{\"error\": \"property not found\", object: \"%s\", property: \"%s\"}\n", arg1,arg2);
 				http_type(http,"text/json");
 				return 1;
 			}
@@ -1031,16 +1070,17 @@ int http_json_request(HTTPCNX *http,char *uri)
 			/* assignment, if any */
 			if ( value && !object_set_value_by_name(obj,arg2,value) )
 			{
-				http_format(http,"{error: \"property write failed\", object: \"%s\", property: \"%s\", value: \"%s\"}\n", arg1,arg2,value);
+				http_format(http,"{\"error\": \"property write failed\", object: \"%s\", property: \"%s\", value: \"%s\"}\n", arg1,arg2,value);
 				http_type(http,"text/json");
 				return 1;
 			}
 
 			/* post the response */
-			http_format(http,"{\tobject: \"%s\", \n", arg1);
-			http_format(http,"\tname: \"%s\", \n", arg2);
-			/* TODO add property type info */
-			http_format(http,"\tvalue: \"%s\"\n}\n", http_unquote(buffer));
+			http_format(http,"{\t\"object\" : \"%s\", \n", arg1);
+			http_format(http,"\t\"name\" : \"%s\", \n", arg2);
+			if ( spec!=NULL ) 
+				http_format(http,"\t\"type\" : \"%s\", \n", spec->name);
+			http_format(http,"\t\"value\" : \"%s\"\n}\n", http_unquote(buffer));
 		}
 		http_type(http,"text/json");
 		return 1;
@@ -1083,7 +1123,7 @@ int filelength(int fd)
 /** Copy the content of a file to the client
 	@returns the number of bytes sent
  **/
-int http_copy(HTTPCNX *http, char *context, char *source, int cook)
+int http_copy(HTTPCNX *http, char *context, char *source, int cook, size_t pos)
 {
 	char *buffer;
 	size_t len;
@@ -1094,16 +1134,21 @@ int http_copy(HTTPCNX *http, char *context, char *source, int cook)
 		output_error("unable to find %s output '%s': %s", context, source, strerror(errno));
 		return 0;
 	}
-	len = filelength(fileno(fp));
+	if ( pos >= 0 )
+		fseek(fp,pos,SEEK_SET);
+	else
+		pos = 0;
+	len = filelength(fileno(fp)) - pos;
 	if (len<0)
 	{
 		output_error("%s output '%s' not accessible", context, source);
 		fclose(fp);
 		return 0;
 	}
-	if (len==0)
+	if ( len == 0 )
 	{
-		output_warning("%s output '%s' is empty", context, source);
+		http_mime(http,source);
+		http_write(http,"",0);
 		fclose(fp);
 		return 1;
 	}
@@ -1114,7 +1159,7 @@ int http_copy(HTTPCNX *http, char *context, char *source, int cook)
 		fclose(fp);
 		return 0;
 	}
-	if (fread(buffer,1,len,fp)<=0)
+	if (fread(buffer,1,len,fp)<0)
 	{
 		output_error("%s output '%s' read failed", context, source);
 		free(buffer);
@@ -1142,7 +1187,7 @@ int http_output_request(HTTPCNX *http,char *uri)
 	if (*(fullpath+strlen(fullpath)-1)!='/' || *(fullpath+strlen(fullpath)-1)!='\\' )
 		strcat(fullpath,"/");
 	strcat(fullpath,uri);
-	return http_copy(http,"file",fullpath,false);
+	return http_copy(http,"file",fullpath,false,0);
 }
 
 /** Process an incoming Java request
@@ -1183,7 +1228,7 @@ int http_run_java(HTTPCNX *http,char *uri)
 	*jar = '\0'; sprintf(output,"%s.%s",uri,ext); *jar='.';
 
 	/* run gnuplot */
-	output_verbose("%s", command);
+	IN_MYCONTEXT output_verbose("%s", command);
 	if ((rc=system(command))!=0)
 	{
 		switch (rc)
@@ -1199,7 +1244,7 @@ int http_run_java(HTTPCNX *http,char *uri)
 	}
 
 	/* copy output to http */
-	return http_copy(http,"Java",output,true);
+	return http_copy(http,"Java",output,true,0);
 }
 
 /** Process an incoming Perl data request
@@ -1241,7 +1286,7 @@ int http_run_perl(HTTPCNX *http,char *uri)
 	*pl = '\0'; sprintf(output,"%s.%s",uri,ext); *pl='.';
 
 	/* run gnuplot */
-	output_verbose("%s", command);
+	IN_MYCONTEXT output_verbose("%s", command);
 	if ((rc=system(command))!=0)
 	{
 		switch (rc)
@@ -1257,7 +1302,7 @@ int http_run_perl(HTTPCNX *http,char *uri)
 	}
 
 	/* copy output to http */
-	return http_copy(http,"Perl",output,true);
+	return http_copy(http,"Perl",output,true,0);
 }
 
 /** Process an incoming Python data request
@@ -1298,7 +1343,7 @@ int http_run_python(HTTPCNX *http,char *uri)
 	*py = '\0'; sprintf(output,"%s.%s",uri,ext); *py='.';
 
 	/* run gnuplot */
-	output_verbose("%s", command);
+	IN_MYCONTEXT output_verbose("%s", command);
 	if ((rc=system(command))!=0)
 	{
 		switch (rc)
@@ -1314,7 +1359,7 @@ int http_run_python(HTTPCNX *http,char *uri)
 	}
 
 	/* copy output to http */
-	return http_copy(http,"Python",output,true);
+	return http_copy(http,"Python",output,true,0);
 }
 
 /** Process an incoming R data request
@@ -1359,7 +1404,7 @@ int http_run_r(HTTPCNX *http,char *uri)
 	*r = '\0'; sprintf(output,"%s.%s",uri,ext); *r='.';
 
 	/* run gnuplot */
-	output_verbose("%s", command);
+	IN_MYCONTEXT output_verbose("%s", command);
 	if ((rc=system(command))!=0)
 	{
 		switch (rc)
@@ -1375,7 +1420,7 @@ int http_run_r(HTTPCNX *http,char *uri)
 	}
 
 	/* copy output to http */
-	return http_copy(http,"R",output,true);
+	return http_copy(http,"R",output,true,0);
 }
 
 /** Process an incoming Scilab data request
@@ -1416,7 +1461,7 @@ int http_run_scilab(HTTPCNX *http,char *uri)
 	*sce = '\0'; sprintf(output,"%s.%s",uri,ext); *sce='.';
 
 	/* run gnuplot */
-	output_verbose("%s", command);
+	IN_MYCONTEXT output_verbose("%s", command);
 	if ((rc=system(command))!=0)
 	{
 		switch (rc)
@@ -1432,7 +1477,7 @@ int http_run_scilab(HTTPCNX *http,char *uri)
 	}
 
 	/* copy output to http */
-	return http_copy(http,"Scilab",output,true);
+	return http_copy(http,"Scilab",output,true,0);
 }
 
 /** Process an incoming Octave data request
@@ -1473,7 +1518,7 @@ int http_run_octave(HTTPCNX *http,char *uri)
 	*m = '\0'; sprintf(output,"%s.%s",uri,ext); *m='.';
 
 	/* run gnuplot */
-	output_verbose("%s", command);
+	IN_MYCONTEXT output_verbose("%s", command);
 	if ((rc=system(command))!=0)
 	{
 		switch (rc)
@@ -1489,7 +1534,7 @@ int http_run_octave(HTTPCNX *http,char *uri)
 	}
 
 	/* copy output to http */
-	return http_copy(http,"Octave",output,true);
+	return http_copy(http,"Octave",output,true,0);
 }
 
 /** Process an incoming Gnuplot data request
@@ -1533,7 +1578,7 @@ int http_run_gnuplot(HTTPCNX *http,char *uri)
 	*plt = '\0'; sprintf(output,"%s.%s",uri,ext); *plt='.';
 
 	/* run gnuplot */
-	output_verbose("%s", command);
+	IN_MYCONTEXT output_verbose("%s", command);
 	if ((rc=system(command))!=0)
 	{
 		switch (rc)
@@ -1549,7 +1594,7 @@ int http_run_gnuplot(HTTPCNX *http,char *uri)
 	}
 
 	/* copy output to http */
-	return http_copy(http,"gnuplot",output,true);
+	return http_copy(http,"gnuplot",output,true,0);
 }
 
 /** Process an incoming runtime file request
@@ -1558,12 +1603,16 @@ int http_run_gnuplot(HTTPCNX *http,char *uri)
 int http_get_rt(HTTPCNX *http,char *uri)
 {
 	char fullpath[1024];
-	if (!find_file(uri,NULL,R_OK,fullpath,sizeof(fullpath)))
+	char filename[1024];
+	size_t pos = 0;
+	if ( sscanf(uri,"%1023[^:]:%d",filename,&pos)==0 )
+		strncpy(filename,uri,sizeof(filename)-1);
+	if (!find_file(filename,NULL,R_OK,fullpath,sizeof(fullpath)))
 	{
-		output_error("runtime file '%s' couldn't be located in GLPATH='%s'", uri,getenv("GLPATH"));
+		output_error("runtime file '%s' couldn't be located in GLPATH='%s'", filename,getenv("GLPATH"));
 		return 0;
 	}
-	return http_copy(http,"runtime",fullpath,true);
+	return http_copy(http,"runtime",fullpath,true,pos);
 }
 
 /** Process an incoming runtime file request
@@ -1577,7 +1626,7 @@ int http_get_rb(HTTPCNX *http,char *uri)
 		output_error("binary file '%s' couldn't be located in GLPATH='%s'", uri,getenv("GLPATH"));
 		return 0;
 	}
-	return http_copy(http,"runtime",fullpath,false);
+	return http_copy(http,"runtime",fullpath,false,0);
 }
 
 /** Collect a KML documnent
@@ -1591,7 +1640,7 @@ int http_kml_request(HTTPCNX *http, char *action)
 	http_type(http,"text/kml");
 	if ( p==NULL )
 	{	kml_dump(action); // simple dump of everything
-		return http_copy(http,"KML",action,false);
+		return http_copy(http,"KML",action,false,0);
 	}
 	else
 	{
@@ -1696,7 +1745,7 @@ int http_favicon(HTTPCNX *http)
 		output_error("file 'favicon.ico' not found", fullpath);
 		return 0;
 	}
-	return http_copy(http,"icon",fullpath,false);
+	return http_copy(http,"icon",fullpath,false,0);
 }
 
 /** Process an incoming request
@@ -1763,7 +1812,7 @@ void *http_response(void *ptr)
 				}
 			}
 		}
-		output_verbose("%s (host='%s', len=%d, keep-alive=%d)",http->query,host?host:"???",content_length, keep_alive);
+		IN_MYCONTEXT output_verbose("%s (host='%s', len=%d, keep-alive=%d)",http->query,host?host:"???",content_length, keep_alive);
 
 		/* reject anything but a GET */
 		if (stricmp(method,"GET")!=0)
@@ -1832,10 +1881,10 @@ void *http_response(void *ptr)
 			}
 			break;
 		}
-
+		break;
 	}
 	http_close(http);
-	output_verbose("socket %d closed",http->s);
+	IN_MYCONTEXT output_verbose("socket %d closed",http->s);
 	return 0;
 }
 

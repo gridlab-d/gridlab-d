@@ -41,6 +41,8 @@
 #include "lock.h"
 #include "module.h"
 
+SET_MYCONTEXT(DMC_STREAM)
+
 static unsigned long output_lock = 0;
 static char buffer[65536];
 #define CHECK 0xcdcd
@@ -52,11 +54,11 @@ void output_prefix_enable(void)
 {
 	unsigned short cpuid, procid;
 	sched_init(0);
-	output_debug("reading cpuid()");
+	IN_MYCONTEXT output_debug("reading cpuid()");
 	cpuid = sched_get_cpuid(0);
-	output_debug("reading procid()");
+	IN_MYCONTEXT output_debug("reading procid()");
 	procid = sched_get_procid();
-	output_debug("sprintf'ing m/s name");
+	IN_MYCONTEXT output_debug("sprintf'ing m/s name");
 	switch ( global_multirun_mode ) {
 	case MRM_STANDALONE:
 		sprintf(prefix,"-%02d(%05d): ", cpuid, procid);
@@ -72,7 +74,7 @@ void output_prefix_enable(void)
 	default:
 		break;
 	}
-	output_debug("exiting output_prefix_enable");
+	IN_MYCONTEXT output_debug("exiting output_prefix_enable");
 }
 
 /** output_redirect() changes where output message are sent 
@@ -738,7 +740,7 @@ int output_progress()
 	}
 	else if (global_keep_progress)
 		res = output_message("%sProcessing %s...", prefix, ts);
-	else
+	else if (global_show_progress)
 	{
 		static int len=0;
 		int i=len, slen = (int)strlen(ts)+15;

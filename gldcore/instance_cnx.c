@@ -1,5 +1,7 @@
 #include "instance_cnx.h"
 
+SET_MYCONTEXT(DMC_INSTANCE)
+
 //extern pthread_mutex_t inst_sock_lock;
 extern pthread_cond_t inst_sock_signal;
 extern int sock_created;
@@ -36,7 +38,7 @@ STATUS instance_cnx_mmap(instance *inst){
 			}
 			else
 			{
-				output_debug("cache '%s' created for instance '%s'", cachename, inst->model);
+				IN_MYCONTEXT output_debug("cache '%s' created for instance '%s'", cachename, inst->model);
 			}
 		}
 		else
@@ -50,16 +52,16 @@ STATUS instance_cnx_mmap(instance *inst){
 			output_error("unable to map view of cache '%s' for instance '%s' already in use", cachename, inst->model);
 			return FAILED;
 		}
-		output_debug("cache '%s' map view for model '%s' ok", cachename, inst->model);
-		output_debug("resulting handle is %x", inst->buffer);
+		IN_MYCONTEXT output_debug("cache '%s' map view for model '%s' ok", cachename, inst->model);
+		IN_MYCONTEXT output_debug("resulting handle is %x", inst->buffer);
 		/* initialize slave instance cache */
 		//message_init(inst->cache,inst->cachesize,true); // I know this isn't needed here -MH
 		
-		output_verbose("slave %d assigned to '%s'", inst->id, inst->model);
-		output_debug("slave %d cache size is %d of %d bytes allocated", inst->id, inst->cache->usize, inst->cache->asize);
+		IN_MYCONTEXT output_verbose("slave %d assigned to '%s'", inst->id, inst->model);
+		IN_MYCONTEXT output_debug("slave %d cache size is %d of %d bytes allocated", inst->id, inst->cache->usize, inst->cache->asize);
 
 		/* copy existing message buffer to cache */
-		output_debug("copying %d bytes from %x to %x", inst->cachesize, inst->cache, inst->buffer);
+		IN_MYCONTEXT output_debug("copying %d bytes from %x to %x", inst->cachesize, inst->cache, inst->buffer);
 		memcpy(inst->buffer, inst->cache, inst->cachesize);
 
 		/* setup master signalling event */
@@ -72,7 +74,7 @@ STATUS instance_cnx_mmap(instance *inst){
 		}
 		else
 		{
-			output_debug("created event signal '%s' for slave%d ", eventname, inst->id);
+			IN_MYCONTEXT output_debug("created event signal '%s' for slave%d ", eventname, inst->id);
 		}
 
 		/* setup slave signalling event */
@@ -85,7 +87,7 @@ STATUS instance_cnx_mmap(instance *inst){
 		}
 		else
 		{
-			output_debug("created event signal '%s' for slave %d", eventname, inst->id);
+			IN_MYCONTEXT output_debug("created event signal '%s' for slave %d", eventname, inst->id);
 		}
 		return SUCCESS;
 #else
@@ -142,7 +144,7 @@ STATUS instance_cnx_socket(instance *inst){
 	}
 	// create socket
 #ifdef WIN32
-	output_debug("starting WS2");
+	IN_MYCONTEXT output_debug("starting WS2");
 	if (WSAStartup(MAKEWORD(2,0),&wsaData)!=0)
 	{
 		output_error("instance_cnx_socket(): socket library initialization failed: %s",strerror(GetLastError()));
@@ -172,14 +174,14 @@ STATUS instance_cnx_socket(instance *inst){
 	// send HS_SYN
 	sprintf(sendcmd, HS_SYN);
 	rv = send(outsockfd, sendcmd, 1+(int)strlen(HS_SYN), 0);
-	output_debug("%d = send(%d, %x, %d, 0)", rv, outsockfd, sendcmd, 1+strlen(HS_SYN));
+	IN_MYCONTEXT output_debug("%d = send(%d, %x, %d, 0)", rv, outsockfd, sendcmd, 1+strlen(HS_SYN));
 	if(1 > rv){
 		output_error("instance_cnx_socket(): error sending handshake");
 		return FAILED;
 	}
 	// recv HS_ACK
 	rv = (int)recv(outsockfd, sendcmd, 1024, 0);
-	output_debug("%d = recv(%d, %x, 1024, 0)", rv, outsockfd, sendcmd);
+	IN_MYCONTEXT output_debug("%d = recv(%d, %x, 1024, 0)", rv, outsockfd, sendcmd);
 	if(0 > rv){
 		output_error("instance_cnx_socket(): error receiving handshake response");
 		return FAILED;
@@ -233,7 +235,7 @@ STATUS instance_cnx_socket(instance *inst){
 	}
 	
 	inst->return_port = ntohs(((struct sockaddr_in *)(&ss))->sin_port);
-	output_debug("instance_cnx_socket(): callback listening on port %d", inst->return_port);
+	IN_MYCONTEXT output_debug("instance_cnx_socket(): callback listening on port %d", inst->return_port);
 
 	// build command
 	// HS_CMD dir file r_port cacheid profile relax debug verbose warn quiet avlbalance
@@ -249,7 +251,7 @@ STATUS instance_cnx_socket(instance *inst){
 		global_warn_mode ? blank : args[4],
 		global_quiet_mode ? args[5] : blank,
 		global_no_balance ? args[6] : blank);
-	output_debug("cmdstr(%d): %s", rv, sendcmd);
+	IN_MYCONTEXT output_debug("cmdstr(%d): %s", rv, sendcmd);
 
 	// send command
 	// "execdir/bin/gridlabd slaveX.glm --verbose --debug --slave my.hostname.gov:6767"
@@ -257,7 +259,7 @@ STATUS instance_cnx_socket(instance *inst){
 	// ** inst->model contains the file name
 	// ** input files not currently recognized
 	rv = send(outsockfd, sendcmd, 1+(int)strlen(sendcmd), 0);
-	output_debug("%d = send(%d, %x, %d, 0)", rv, outsockfd, sendcmd, 1+strlen(sendcmd));
+	IN_MYCONTEXT output_debug("%d = send(%d, %x, %d, 0)", rv, outsockfd, sendcmd, 1+strlen(sendcmd));
 	if(1 > rv){
 		output_error("instance_cnx_socket(): error sending command");
 		closesocket(outsockfd);
@@ -286,7 +288,7 @@ STATUS instance_cnx_socket(instance *inst){
 	timer.tv_sec = global_signal_timeout/1000;
 	timer.tv_usec = global_signal_timeout%1000;
 
-	output_debug("timer: %d.%d", timer.tv_sec, timer.tv_usec);
+	IN_MYCONTEXT output_debug("timer: %d.%d", timer.tv_sec, timer.tv_usec);
 
 	FD_ZERO(&callback_fdset);
 	FD_SET(insockfd, &callback_fdset);
@@ -331,7 +333,7 @@ STATUS instance_cnx_socket(instance *inst){
 
 	// receive call-back handshake
 	rv = recv(inst->sockfd, cmd, 1024, 0);
-	output_debug("%d = recv(%d, %x, 1024, 0)", rv, inst->sockfd, cmd);
+	IN_MYCONTEXT output_debug("%d = recv(%d, %x, 1024, 0)", rv, inst->sockfd, cmd);
 	if(rv < 0){
 		// error
 		output_error("instance_cnx_socket(): callback handshake recv() error");
@@ -363,8 +365,8 @@ STATUS instance_cnx_socket(instance *inst){
 	}
 	if(check_id != inst->cacheid){
 		output_error("instance_cnx_socket(): callback id mismatch");
-		output_debug(" local: "FMT_INT64"d", inst->cacheid);
-		output_debug(" input: "FMT_INT64"d", check_id);
+		IN_MYCONTEXT output_debug(" local: "FMT_INT64"d", inst->cacheid);
+		IN_MYCONTEXT output_debug(" input: "FMT_INT64"d", check_id);
 		send(inst->sockfd, rsp, (int)strlen(rsp), 0);
 		closesocket(inst->sockfd);
 		return FAILED;
@@ -373,7 +375,7 @@ STATUS instance_cnx_socket(instance *inst){
 	// respond to handshake with HS_RSP
 	strcpy(cmd, HS_RSP);
 	rv = send(inst->sockfd, cmd, (int)strlen(cmd), 0);
-	output_debug("%d = send(%d, %x, %d, 0)", rv, inst->sockfd, cmd, strlen(cmd));
+	IN_MYCONTEXT output_debug("%d = send(%d, %x, %d, 0)", rv, inst->sockfd, cmd, strlen(cmd));
 	if(0 == rv){
 		output_error("instance_cnx_socket(): socket closed before slave handshake response send");
 		closesocket(inst->sockfd);
@@ -391,13 +393,13 @@ STATUS instance_cnx_socket(instance *inst){
 	pickle.prop_size = (int16)(inst->prop_size);
 	pickle.id = inst->id;
 	pickle.ts = global_clock;
-	output_debug("pickle: %"FMT_INT64"d %d %d %d %d %"FMT_INT64, pickle.cacheid, pickle.cachesize, pickle.name_size, pickle.prop_size, pickle.id, pickle.ts);
+	IN_MYCONTEXT output_debug("pickle: %"FMT_INT64"d %d %d %d %d %"FMT_INT64, pickle.cacheid, pickle.cachesize, pickle.name_size, pickle.prop_size, pickle.id, pickle.ts);
 	// send instance struct
 	memset(cmd, 0, sizeof(cmd));
 	memcpy(cmd, MSG_INST, strlen(MSG_INST));
 	memcpy(cmd+strlen(MSG_INST), &pickle, sizeof(pickle));
 	rv = send(inst->sockfd, cmd, (int)(strlen(MSG_INST)+sizeof(pickle)), 0);
-	output_debug("rv = send(%d, %x, %d, 0)", rv, inst->sockfd, cmd, strlen(MSG_INST)+sizeof(pickle));
+	IN_MYCONTEXT output_debug("rv = send(%d, %x, %d, 0)", rv, inst->sockfd, cmd, strlen(MSG_INST)+sizeof(pickle));
 	if(0 == rv){
 		output_error("instance_cnx_socket(): socket closed before slave handshake response send");
 		closesocket(inst->sockfd);
@@ -409,7 +411,7 @@ STATUS instance_cnx_socket(instance *inst){
 	}
 	// recv receipt of instance struct
 	rv = recv(inst->sockfd, cmd, 1024, 0);
-	output_debug("%d = recv(%d, %x, 1024, 0)", rv, inst->sockfd, cmd);
+	IN_MYCONTEXT output_debug("%d = recv(%d, %x, 1024, 0)", rv, inst->sockfd, cmd);
 	if(0 == rv){
 		output_error("instance_cnx_socket(): socket closed before recving instance receipt");
 		return FAILED;
@@ -431,7 +433,7 @@ STATUS instance_cnx_socket(instance *inst){
 	sendcmd[idx] = 0;
 
 	rv = send(inst->sockfd, sendcmd, (int)msg_link_sz + *(inst->message->name_size) + 1, 0);
-	output_debug("%d = send(%d, %x, %d, 0)", rv, inst->sockfd, sendcmd, (int)msg_link_sz + *(inst->message->name_size) + 1);
+	IN_MYCONTEXT output_debug("%d = send(%d, %x, %d, 0)", rv, inst->sockfd, sendcmd, (int)msg_link_sz + *(inst->message->name_size) + 1);
 	if(rv == -1){
 		output_error("instance_cnx_socket(): error sending linkage data");
 		return FAILED;
@@ -442,7 +444,7 @@ STATUS instance_cnx_socket(instance *inst){
 
 	// recv linkage receipt
 	rv = recv(inst->sockfd, cmd, 1024, 0);
-	output_debug("%d = recv(%d, %x, 1024, 0)", rv, inst->sockfd, cmd);
+	IN_MYCONTEXT output_debug("%d = recv(%d, %x, 1024, 0)", rv, inst->sockfd, cmd);
 	if(0 == rv){
 		output_error("instance_cnx_socket(): socket closed before recving linkage receipt");
 		return FAILED;
@@ -450,7 +452,7 @@ STATUS instance_cnx_socket(instance *inst){
 		output_error("instance_cnx_socket(): error recving linkage receipt");
 		return FAILED;
 	} else {
-		output_debug("i_cnx_s(): recv'ed %d from recv(%d, %x, 1024, 0)", rv, inst->sockfd, cmd);
+		IN_MYCONTEXT output_debug("i_cnx_s(): recv'ed %d from recv(%d, %x, 1024, 0)", rv, inst->sockfd, cmd);
 	}
 
 	sprintf(cmd, MSG_START);
@@ -462,7 +464,7 @@ STATUS instance_cnx_socket(instance *inst){
 		output_error("instance_cnx_socket(): socket closed before start message sent");
 		return FAILED;
 	} else {
-		output_debug("instance_cnx_socket(): sent start message");
+		IN_MYCONTEXT output_debug("instance_cnx_socket(): sent start message");
 	}
 	// recv initial linkage data
 	//	copy into buffer, deal with later
@@ -495,7 +497,7 @@ STATUS instance_cnx_socket(instance *inst){
 		return FAILED;
 	}
 
-	output_debug("end of instance_cnx_socket()");
+	IN_MYCONTEXT output_debug("end of instance_cnx_socket()");
 	return SUCCESS;
 }
 

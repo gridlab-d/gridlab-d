@@ -19,6 +19,8 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		return NULL;
 	}
 
+	INIT_MMF(rest);
+
 #ifdef OPTIONAL
 	/* TODO: publish global variables (see class_define_map() for details) */
 	  //gl_global_create(char *name, ..., NULL);

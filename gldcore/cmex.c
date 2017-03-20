@@ -37,6 +37,8 @@
 #include "convert.h"
 #include "find.h"
 
+SET_MYCONTEXT(DMC_MATLAB)
+
 #define MAXNAME 256
 #define MATLABDATETIME(X) ((double)(X)/TS_SECOND/86400 + 719529)
 
@@ -585,7 +587,7 @@ void cmex_module(int nlhs, mxArray *plhs[], /**< () */
 				if (module_getvar(mod,varname,buffer,sizeof(buffer)) && nFields<sizeof(fname)/sizeof(fname[0]))
 				{
 					double *pVal;
-					output_verbose("module variable %s = '%s'", varname, buffer);
+					IN_MYCONTEXT output_verbose("module variable %s = '%s'", varname, buffer);
 					value[nFields] = mxCreateDoubleMatrix(1,1,mxREAL);
 					pVal = mxGetPr(value[nFields]);
 					*pVal = atof(buffer);

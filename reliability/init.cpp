@@ -23,6 +23,8 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		return NULL;
 	}
 
+	INIT_MMF(reliability);
+
 	/* Publish external global variables */
 	gl_global_create("reliability::enable_subsecond_models", PT_bool, &enable_subsecond_models,PT_DESCRIPTION,"Flag to enable deltamode functionality in the reliability module",NULL);
 	gl_global_create("reliability::maximum_event_length",PT_double,&event_max_duration,PT_UNITS,"s",PT_DESCRIPTION,"Maximum duration of any faulting event",NULL);

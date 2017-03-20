@@ -1,0 +1,55 @@
+\documentclass[10pt,letterpaper]{article}
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+\usepackage[latin1]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage[all,cmtip]{xy}
+\usepackage{tikz}
+
+\author{David P. Chassin \\ SLAC National Accelerator Laboratory}
+\title{Transactive Module}
+
+\begin{document}
+\maketitle
+
+\section{Agent}
+
+There are three agent types as illustrated in Figure~\ref{fig:agents}.
+\begin{figure}[!h]
+	\centerline{\xymatrix{
+			Market 
+		&	Market 
+		&	Market
+	\\		
+		&	Broker \ar[ul] \ar[u] \ar[ur]
+		&	Broker \ar[u] \ar[l]
+	\\		Device \ar[uu] \ar[ur]
+		& 	Device \ar[u] \ar[ur]
+		&	Device \ar[u] \ar[l]
+	}}
+	\caption{Agent roles and relationships}
+	\label{fig:agents}
+\end{figure}
+
+Agents emit one or more of the of following messages to other agents.
+\begin{description}
+\item[Sell($Q$,$P$)] An agent is willing to supply the quantity $Q$ at or above the price $P$.
+\item[Buy($Q$,$P$)] An agent is willing to consume the quantity $Q$ at or below the price $P$.
+\item[Accept($Q$,$P$)] An agent accepts all or part of a $sell$ or $buy$.
+\end{description}
+
+\subsection{Market}
+
+Markets may only receive $sell$ and $buy$ messages. Markets cannot directly control hardware.
+
+\subsection{Broker}
+
+Brokers may both send and receive $sell$ and $buy$ messages. Brokers may also aggregate quantities.  Brokers cannot directly control hardware. 
+
+\subsection{Device}
+
+Devices may both send and receive $sell$ and $buy$ messages. Devices do not aggregate quantities. Devices are connected to controllable hardware.
+
+\end{document}

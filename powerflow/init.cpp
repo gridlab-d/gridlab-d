@@ -49,6 +49,8 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		return NULL;
 	}
 
+	INIT_MMF(powerflow);
+
 	/* exported globals */
 	gl_global_create("powerflow::show_matrix_values",PT_bool,&show_matrix_values,NULL);
 	gl_global_create("powerflow::primary_voltage_ratio",PT_double,&primary_voltage_ratio,NULL);
@@ -96,7 +98,11 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	gl_global_create("powerflow::enable_inrush",PT_bool,&enable_inrush_calculations,PT_DESCRIPTION,"Flag to enable in-rush calculations for lines and transformers in deltamode",NULL);
 	gl_global_create("powerflow::low_voltage_impedance_level",PT_double,&impedance_conversion_low_pu,PT_DESCRIPTION,"Lower limit of voltage (in per-unit) at which all load types are converted to impedance for in-rush calculations",NULL);
 	gl_global_create("powerflow::enable_mesh_fault_current",PT_bool,&enable_mesh_fault_current,PT_DESCRIPTION,"Flag to enable mesh-based fault current calculations",NULL);
-
+	gl_global_create("powerflow::convergence_error_handling",PT_enumeration,&convergence_error_handling,PT_DESCRIPTION,"Flag to handle convergence error",
+			PT_KEYWORD,"FATAL",CEH_FATAL,
+			PT_KEYWORD,"IGNORE",CEH_IGNORE,
+			PT_KEYWORD,"COLLAPSE",CEH_COLLAPSE,
+			NULL);
 	// register each object class by creating the default instance
 	new powerflow_object(module);
 	new powerflow_library(module);

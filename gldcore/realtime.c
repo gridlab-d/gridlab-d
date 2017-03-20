@@ -6,6 +6,10 @@
 #include <stdlib.h>
 #include <errno.h>
 #include "realtime.h"
+#include "output.h"
+#include "globals.h"
+
+SET_MYCONTEXT(DMC_REALTIME)
 
 time_t realtime_now(void)
 {

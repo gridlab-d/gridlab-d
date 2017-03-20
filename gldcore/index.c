@@ -15,6 +15,8 @@
 #include "output.h"
 #include "index.h"
 
+SET_MYCONTEXT(DMC_INDEX)
+
 static unsigned int next_index_id = 0;
 
 /** Create an index
@@ -42,7 +44,7 @@ INDEX *index_create(int first_ordinal, /**< the first ordinal */
 		index->first_ordinal = first_ordinal;
 		index->last_ordinal = last_ordinal;
 		memset(index->ordinal,0,sizeof(GLLIST*)*size);
-		output_verbose("creating index %d", index->id);
+		IN_MYCONTEXT output_verbose("creating index %d", index->id);
 	}
 	else
 	{
@@ -104,7 +106,7 @@ STATUS index_insert(INDEX *index,	/**< the index to which the item is added */
 			*/
 			return FAILED;
 		}
-		output_verbose("growing index %d to %d ordinals", index->id, newsize);
+		IN_MYCONTEXT output_verbose("growing index %d to %d ordinals", index->id, newsize);
 		memset(newblock,0,sizeof(GLLIST*)*newsize);
 		memcpy(newblock,index->ordinal,sizeof(GLLIST*)*oldsize);
 		free(index->ordinal);
@@ -133,7 +135,7 @@ void index_shuffle(INDEX *index)	/**< the index to shuffle */
 	int i, size = index->last_used - index->first_used;
 	for (i=0; i<size; i++)
 		list_shuffle(index->ordinal[i]);
-	output_verbose("shuffled %d lists in index %d", size, index->id);
+	IN_MYCONTEXT output_verbose("shuffled %d lists in index %d", size, index->id);
 }
 
 /**@}*/

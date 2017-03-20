@@ -24,6 +24,7 @@
 #include "lock.h"
 #include "threadpool.h"
 
+SET_MYCONTEXT(DMC_JOB)
 
 static bool clean = false; // set to true to force purge of test directories
 
@@ -144,9 +145,9 @@ static int vsystem(const char *fmt, ...)
 	va_start(ptr,fmt);
 	vsprintf(command,fmt,ptr);
 	va_end(ptr);
-	output_debug("calling system('%s')",command);
+	IN_MYCONTEXT output_debug("calling system('%s')",command);
 	int rc = system(command);
-	output_debug("system('%s') returns code %x", command, rc);
+	IN_MYCONTEXT output_debug("system('%s') returns code %x", command, rc);
 	return rc;
 }
 
@@ -156,7 +157,7 @@ static bool destroy_dir(char *name)
 	DIR *dirp = opendir(name);
 	if ( dirp==NULL ) return true; // directory does not exist
 	struct dirent *dp;
-	output_debug("destroying contents of '%s'", name);
+	IN_MYCONTEXT output_debug("destroying contents of '%s'", name);
 	while ( dirp!=NULL && (dp=readdir(dirp))!=NULL )
 	{
 		if ( strcmp(dp->d_name,".")!=0 && strcmp(dp->d_name,"..")!=0 )
@@ -170,7 +171,9 @@ static bool destroy_dir(char *name)
 				return false;
 			}
 			else
-				output_debug("deleted %s", dp->d_name);
+			{
+				IN_MYCONTEXT output_debug("deleted %s", dp->d_name);
+			}
 		}
 	}
 	closedir(dirp);
@@ -180,7 +183,7 @@ static bool destroy_dir(char *name)
 /** copyfile routine */
 static bool copyfile(char *from, char *to)
 {
-	output_debug("copying '%s' to '%s'", from, to);
+	IN_MYCONTEXT output_debug("copying '%s' to '%s'", from, to);
 	FILE *in = fopen(from,"r");
 	if ( in==NULL )
 	{
@@ -214,7 +217,7 @@ static bool copyfile(char *from, char *to)
 /** routine to run a validation test */
 static bool run_job(char *file, double *elapsed_time=NULL)
 {
-	output_debug("run_job(char *file='%s') starting", file);
+	IN_MYCONTEXT output_debug("run_job(char *file='%s') starting", file);
 
 	char dir[1024];
 	strcpy(dir,file);
@@ -249,7 +252,7 @@ static bool run_job(char *file, double *elapsed_time=NULL)
 		output_error("exit code %d received from %s", code, name);
 		return false;
 	}
-	output_debug("run_test(char *file='%s') done", file);
+	IN_MYCONTEXT output_debug("run_test(char *file='%s') done", file);
 	return true;
 }
 
@@ -262,7 +265,7 @@ static JOBLIST *jobstack = NULL;
 static unsigned int joblock = 0;
 static void pushjob(char *dir)
 {
-	output_debug("adding %s to job list", dir);
+	IN_MYCONTEXT output_debug("adding %s to job list", dir);
 	JOBLIST *item = (JOBLIST*)malloc(sizeof(JOBLIST));
 	strncpy(item->name,dir,sizeof(item->name)-1);
 	wlock(&joblock);
@@ -277,7 +280,7 @@ static JOBLIST *popjob(void)
 	JOBLIST *item = jobstack;
 	if ( jobstack ) jobstack = jobstack->next;
 	runlock(&joblock);
-	output_debug("pulling %s from job list", item->name);
+	IN_MYCONTEXT output_debug("pulling %s from job list", item->name);
 	return item;
 }
 
@@ -285,12 +288,12 @@ static int final_result = true;
 void *(run_job_proc)(void *arg)
 {
 	size_t id = (size_t)arg;
-	output_debug("starting run_test_proc id %d", id);
+	IN_MYCONTEXT output_debug("starting run_test_proc id %d", id);
 	JOBLIST *item;
 	bool passed = true;
 	while ( (item=popjob())!=NULL )
 	{
-		output_debug("process %d picked up '%s'", id, item->name);
+		IN_MYCONTEXT output_debug("process %d picked up '%s'", id, item->name);
 		double dt;
 		if ( !run_job(item->name,&dt) )
 			final_result = false;
@@ -302,7 +305,7 @@ void *(run_job_proc)(void *arg)
 static size_t process_dir(const char *path)
 {
 	size_t count = 0;
-	output_debug("processing job directory '%s'", path);
+	IN_MYCONTEXT output_debug("processing job directory '%s'", path);
 	struct dirent *dp;
 	DIR *dirp = opendir(path);
 	if ( dirp==NULL ) return 0; // nothing to do
@@ -355,15 +358,15 @@ extern "C" int job(int argc, char *argv[])
 	unsigned int n_procs = global_threadcount;
 	if ( n_procs==0 ) n_procs = processor_count();
 	pthread_t *pid = new pthread_t[n_procs];
-	output_debug("starting job with cmdargs '%s' using %d threads", job_cmdargs, n_procs);
+	IN_MYCONTEXT output_debug("starting job with cmdargs '%s' using %d threads", job_cmdargs, n_procs);
 	for ( i=0 ; i<min(count,n_procs) ; i++ )
 		pthread_create(&pid[i],NULL,run_job_proc,(void*)i);
 	void *rc;
-	output_debug("begin waiting process");
+	IN_MYCONTEXT output_debug("begin waiting process");
 	for ( i=0 ; i<min(count,n_procs) ; i++ )
 	{
 		pthread_join(pid[i],&rc);
-		output_debug("process %d done", i);
+		IN_MYCONTEXT output_debug("process %d done", i);
 	}
 	delete [] pid;
 
@@ -384,7 +387,7 @@ extern "C" int job(int argc, char *argv[])
 //	if ( global_getvar("mailto",mailto,sizeof(mailto))!=NULL 
 //		&& vsystem(MAILER " -s 'GridLAB-D Job Report' %s <%s", 
 //			count, mailto, report_file)==0 )
-//		output_verbose("Mail message send to %s",mailto);
+//		IN_MYCONTEXT output_verbose("Mail message send to %s",mailto);
 //	else
 //		output_error("Error sending notification to %s", mailto);
 #endif

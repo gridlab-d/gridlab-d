@@ -10,6 +10,10 @@
 #include <stdlib.h>
 #include <errno.h>
 #include "list.h"
+#include "output.h"
+#include "globals.h"
+
+SET_MYCONTEXT(DMC_LIST)
 
 /** Create a list item and attach it to a list
 	@return a pointer to the LISTITEM structure,

@@ -437,6 +437,7 @@ typedef enum {_PT_FIRST=-1,
 	PT_loadshape,	/**< Loadshapes are state machines driven by schedules */
 	PT_enduse,		/**< Enduse load data */
 	PT_random,		/**< Randomized number */
+	PT_method,		/**< Method interface */
 #ifdef USE_TRIPLETS
 	PT_triple, /**< triplet of doubles (not supported) */
 	PT_triplex, /**< triplet of complexes (not supported) */
@@ -540,6 +541,8 @@ typedef uint32 PROPERTYFLAGS;
 #define PF_RECALC	0x0001 /**< property has a recalc trigger (only works if recalc_<class> is exported) */
 #define PF_CHARSET	0x0002 /**< set supports single character keywords (avoids use of |) */
 
+typedef int (*METHODCALL)(void *obj, char *string, int size); /**< the function that read and writes a string */
+
 struct s_property_map {
 	CLASS *oclass; /**< class implementing the property */
 	PROPERTYNAME name; /**< property name */
@@ -548,13 +551,14 @@ struct s_property_map {
 	uint32 width; /**< property byte size, copied from array in class.c */
 	PROPERTYACCESS access; /**< property access flags */
 	UNIT *unit; /**< property unit, if any; \p NULL if none */
-	PROPERTYADDR addr; /**< property location, offset from OBJECT header */
+	PROPERTYADDR addr; /**< property location, offset from OBJECT header; OBJECT header itself for methods */
 	DELEGATEDTYPE *delegation; /**< property delegation, if any; \p NULL if none */
 	KEYWORD *keywords; /**< keyword list, if any; \p NULL if none (only for set and enumeration types)*/
 	char *description; /**< description of property */
 	PROPERTY *next; /**< next property in property list */
 	PROPERTYFLAGS flags; /**< property flags (e.g., PF_RECALC) */
 	FUNCTIONADDR notify;
+	METHODCALL method; /**< method call, addr must be 0 */
 	bool notify_override;
 }; /**< property definition item */
 
@@ -725,7 +729,7 @@ struct s_object_list {
 	unsigned int lock; /**< object lock */
 	unsigned int rng_state; /**< random number generator state */
 	TIMESTAMP heartbeat; /**< heartbeat call interval (in sim-seconds) */
-	uint32 flags; /**< object flags */
+	unsigned int64 flags; /**< object flags */
 	/* IMPORTANT: flags must be last */
 }; /**< Object header structure */
 
@@ -918,6 +922,10 @@ typedef struct s_enduse {
 #define OF_DEFERRED	0x0080	/**< Object flag; indicates that the object started to be initialized, but requested deferral */
 #define OF_INIT		0x0100	/**< Object flag; indicates that the object has been successfully initialized */
 #define OF_RERANK	0x4000 /**< Internal use only */
+#define OF_QUIET		0x00010000  /**< Object flag; disables error messages from the object */
+#define OF_WARNING		0x00020000  /**< Object flag; enables warning messages from the object */
+#define OF_DEBUG		0x00040000  /**< Object flag; enables debug messages from the object */
+#define OF_VERBOSE		0x00080000  /**< Object flag; enables verbose messages from the object */
 
 /******************************************************************************
  * Memory locking support

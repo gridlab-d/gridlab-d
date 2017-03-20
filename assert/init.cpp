@@ -22,6 +22,8 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		return NULL;
 	}
 
+	INIT_MMF(assert);
+
 	new g_assert(module);
 	new double_assert(module);
 	new complex_assert(module);

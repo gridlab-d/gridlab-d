@@ -14,6 +14,8 @@
 #include "test.h"
 #include "aggregate.h"
 
+SET_MYCONTEXT(DMC_TEST)
+
 typedef struct s_testlist {
 	char name[64];
 	TESTFUNCTION call;
@@ -53,7 +55,7 @@ int test_request(char *name)
 	TESTLIST *item;
 	MODULE *mod;
 
-	output_verbose("running test '%s'...",name);
+	IN_MYCONTEXT output_verbose("running test '%s'...",name);
 
 	/* try already list ones */
 	for ( item=test_list ; item!=NULL ; item=item->next )

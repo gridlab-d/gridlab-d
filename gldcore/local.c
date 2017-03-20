@@ -6,7 +6,10 @@
 #include <stdio.h>
 #include <string.h>
 #include "output.h"
+#include "globals.h"
 #include "local.h"
+
+SET_MYCONTEXT(DMC_LOCALE)
 
 #ifdef WIN32
 #define tzset _tzset

@@ -18,6 +18,8 @@
 #include "module.h"
 #include "exec.h"
 
+SET_MYCONTEXT(DMC_TRANSFORM)
+
 static TRANSFORM *schedule_xformlist=NULL;
 
 /****************************************************************
@@ -172,7 +174,7 @@ int transfer_function_add(char *name,		///< transfer function name
 			if ( c>0 ) count2++;
 			len +=c;
 		}
-		output_debug("defining transfer function %s(%s) = %s%s%s/%s%s%s, step=%.0fs, skew=%.0fs", name,domain,
+		IN_MYCONTEXT output_debug("defining transfer function %s(%s) = %s%s%s/%s%s%s, step=%.0fs, skew=%.0fs", name,domain,
 			count1>1?"(":"",num,count1>1?")":"",
 			count2>1?"(":"",den,count2>1?")":"",
 			timestep,timeskew);
@@ -256,7 +258,7 @@ int transform_add_filter(OBJECT *target_obj,		/* pointer to the target object (l
 
 	if ( global_debug_output )
 	{
-		output_debug("added filter '%s' from source '%s:%s' to target '%s:%s'", filter,
+		IN_MYCONTEXT output_debug("added filter '%s' from source '%s:%s' to target '%s:%s'", filter,
 			object_name(target_obj,buffer1,sizeof(buffer1)),target_prop->name,object_name(source_obj,buffer2,sizeof(buffer2)),source_prop->name);
 	}
 	return 1;
@@ -302,7 +304,7 @@ int transform_add_external(	OBJECT *target_obj,		/* pointer to the target object
 
 	xform->next = schedule_xformlist;
 	schedule_xformlist = xform;
-	output_debug("added external transform %s:%s <- %s(%s:%s)", object_name(target_obj,buffer1,sizeof(buffer1)),target_prop->name,function, object_name(source_obj,buffer2,sizeof(buffer2)),source_prop->name);
+	IN_MYCONTEXT output_debug("added external transform %s:%s <- %s(%s:%s)", object_name(target_obj,buffer1,sizeof(buffer1)),target_prop->name,function, object_name(source_obj,buffer2,sizeof(buffer2)),source_prop->name);
 	return 1;
 }
 int transform_add_linear(	TRANSFORMSOURCE stype,	/* specifies the type of source */
@@ -332,7 +334,7 @@ int transform_add_linear(	TRANSFORMSOURCE stype,	/* specifies the type of source
 	xform->function_type = XT_LINEAR;
 	xform->next = schedule_xformlist;
 	schedule_xformlist = xform;
-	output_debug("added linear transform %s:%s <- scale=%.3g, bias=%.3g", object_name(obj,buffer,sizeof(buffer)), prop->name, scale, bias);
+	IN_MYCONTEXT output_debug("added linear transform %s:%s <- scale=%.3g, bias=%.3g", object_name(obj,buffer,sizeof(buffer)), prop->name, scale, bias);
 	return 1;
 }
 
@@ -396,14 +398,14 @@ TIMESTAMP transform_apply(TIMESTAMP t1, TRANSFORM *xform, double *source)
 	switch (xform->function_type) {
 	case XT_LINEAR:
 #ifdef _DEBUG
-		output_debug("running linear transform for %s:%s", object_name(xform->target_obj,buffer,sizeof(buffer)), xform->target_prop->name);
+		IN_MYCONTEXT output_debug("running linear transform for %s:%s", object_name(xform->target_obj,buffer,sizeof(buffer)), xform->target_prop->name);
 #endif
 		cast_from_double(xform->target_prop->ptype, xform->target, (source?(*source):(*(xform->source))) * xform->scale + xform->bias);
 		t2 = TS_NEVER;
 		break;
 	case XT_EXTERNAL:
 #ifdef _DEBUG
-		output_debug("running external transform for %s:%s", object_name(xform->target_obj,buffer,sizeof(buffer)), xform->target_prop->name);
+		IN_MYCONTEXT output_debug("running external transform for %s:%s", object_name(xform->target_obj,buffer,sizeof(buffer)), xform->target_prop->name);
 #endif
 		xform->retval = (*xform->function)(xform->nlhs, xform->plhs, xform->nrhs, xform->prhs);
 		if ( xform->retval==-1 ) /* error */
@@ -415,7 +417,7 @@ TIMESTAMP transform_apply(TIMESTAMP t1, TRANSFORM *xform, double *source)
 		break;
 	case XT_FILTER:
 #ifdef _DEBUG
-		output_debug("running filter transform for %s:%s", object_name(xform->target_obj,buffer,sizeof(buffer)), xform->target_prop->name);
+		IN_MYCONTEXT output_debug("running filter transform for %s:%s", object_name(xform->target_obj,buffer,sizeof(buffer)), xform->target_prop->name);
 #endif
 		if ( xform->t2 <= t1 )
 			xform->t2 = apply_filter(xform->tf,xform->source,xform->x,xform->y,t1);
