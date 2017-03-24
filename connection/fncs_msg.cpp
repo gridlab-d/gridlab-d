@@ -1192,7 +1192,7 @@ int fncs_msg::publishJsonVariables( )  //Renke add
 						gl_verbose("fncs_msg::publishJsonVariables() value: publishing gld_property: %s, value: %d \n",
 									gldObjpropertyName.c_str(), itmp );
 						}
-					else if ( gldpro_obj->is_character() || gldpro_obj->is_enumeration() || gldpro_obj->is_complex()) {
+					else if ( gldpro_obj->is_character() || gldpro_obj->is_enumeration() || gldpro_obj->is_complex() || gldpro_obj->is_objectref()) {
 
 						//change from char*, enumeration, or complex to string
 
