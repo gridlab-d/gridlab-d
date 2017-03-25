@@ -1001,7 +1001,7 @@ int fncs_msg::publishVariables(varmap *wmap){
 						else
 						{
 							lst_cval = *((complex *)(mp->last_value));
-							if(fabs(cval.Mag() - lst_cval.Mag() > atof(mp->threshold))){
+							if(fabs(cval.Mag() - lst_cval.Mag()) > atof(mp->threshold)){
 								pub_value = true;
 								memcpy(mp->last_value, (void *)(&cval), sizeof(cval));
 							}
@@ -1018,7 +1018,7 @@ int fncs_msg::publishVariables(varmap *wmap){
 						else
 						{
 							lst_dval = *((double *)(mp->last_value));
-							if(fabs(dval - lst_dval > atof(mp->threshold))){
+							if(fabs(dval - lst_dval) > atof(mp->threshold)){
 								pub_value = true;
 								memcpy(mp->last_value, (void *)(&dval), sizeof(dval));
 							}
@@ -1035,7 +1035,7 @@ int fncs_msg::publishVariables(varmap *wmap){
 						else
 						{
 							lst_ival = *((int64 *)(mp->last_value));
-							if(fabs(ival - lst_ival > atof(mp->threshold))){
+							if(fabs(ival - lst_ival) > atof(mp->threshold)){
 								pub_value = true;
 								memcpy(mp->last_value, (void *)(&ival), sizeof(ival));
 							}
