@@ -36,6 +36,7 @@ extern "C" {
 	int random_init(void);
 	int random_test(void);
 	int randwarn(unsigned int *state);
+	void random_key(unsigned int64 *ptr, size_t len);
 	double randunit(unsigned int *state);
 	double random_degenerate(unsigned int *state, double a);
 	double random_uniform(unsigned int *state, double a, double b);

@@ -351,6 +351,7 @@ OBJECT *object_create_single(CLASS *oclass){ /**< the class of the object */
 	obj->flags = OF_NONE;
 	obj->rng_state = randwarn(NULL);
 	obj->heartbeat = 0;
+	random_key(obj->guid,sizeof(obj->guid)/sizeof(obj->guid[0]));
 
 	for ( prop=obj->oclass->pmap; prop!=NULL; prop=(prop->next?prop->next:(prop->oclass->parent?prop->oclass->parent->pmap:NULL)))
 		property_create(prop,(void*)((char *)(obj+1)+(int64)(prop->addr)));

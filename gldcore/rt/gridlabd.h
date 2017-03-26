@@ -729,8 +729,9 @@ struct s_object_list {
 	unsigned int lock; /**< object lock */
 	unsigned int rng_state; /**< random number generator state */
 	TIMESTAMP heartbeat; /**< heartbeat call interval (in sim-seconds) */
-	unsigned int64 flags; /**< object flags */
+	unsigned int64 guid; /**< globally unique identifier */
 	/* IMPORTANT: flags must be last */
+	unsigned int64 flags; /**< object flags */
 }; /**< Object header structure */
 
 struct s_function_map {

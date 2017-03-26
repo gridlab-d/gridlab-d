@@ -94,8 +94,9 @@ typedef struct s_object_list {
 	unsigned int lock; /**< object lock */
 	unsigned int rng_state; /**< random number generator state */
 	TIMESTAMP heartbeat; /**< heartbeat call interval (in sim-seconds) */
-	uint64 flags; /**< object flags */
+	uint64 guid[1]; /**< globally unique identifier */
 	/* IMPORTANT: flags must be last */
+	uint64 flags; /**< object flags */
 } OBJECT; /**< Object header structure */
 
 /* this is the callback table for modules

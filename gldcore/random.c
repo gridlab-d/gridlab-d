@@ -206,6 +206,24 @@ unsigned int64 random_id(void)
 	return rv;
 }
 
+/* generate a random key */
+void random_key(unsigned int64 *ptr, size_t len)
+{
+	static unsigned int state = 0;
+	int64 rv = 0;
+	if ( state == 0 ) state = (unsigned int)time(NULL);
+	while ( len-- > 0 )
+	{
+		unsigned int64 rv = 0;
+		rv = randwarn(&state);
+		rv = (rv<<15) ^ randwarn(&state);
+		rv = (rv<<15) ^ randwarn(&state);
+		rv = (rv<<15) ^ randwarn(&state);
+		rv = (rv<<3) ^ randwarn(&state);
+		*ptr++ = rv;
+	}
+}
+
 /* uniform distribution in range (0,1( */
 double randunit(unsigned int *state)
 {
