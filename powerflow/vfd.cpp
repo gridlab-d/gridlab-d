@@ -94,7 +94,7 @@ int vfd::create()
 	voltageLLRating = 480;
 	horsePowerRatedVFD = 75;
 	nominal_output_frequency = 60.0;
-	stableTime = 1.45;
+	stableTime = 0.03;//1.45;
 	
 	//Null the array pointers, just because
 	settleFreq = NULL;
@@ -313,13 +313,9 @@ void vfd::vfdCoreCalculations()
 	calc_current_in[2] = ~(powerInElectrical/fNode->voltage[2]/3.0);
 	
 	//Add to the load accumulator -- note, this could probably be done as a power load too
-	fNode->current[0] += calc_current_in[0] - prev_current[0];
+	fNode->current[0] += calc_current_in[0] - prev_current[0]; // fNode is current is zero. Not sure if this is what we want?
 	fNode->current[1] += calc_current_in[1] - prev_current[1];
 	fNode->current[2] += calc_current_in[2] - prev_current[2];
-	
-	calc_current_in[0] = fNode->current[0];
-	calc_current_in[1] = fNode->current[1];
-	calc_current_in[2] = fNode->current[2];
 }
 
 TIMESTAMP vfd::presync(TIMESTAMP t0)
@@ -451,6 +447,9 @@ STATUS vfd::VFD_current_injection(void)
 	//Put VFD logic function here
 	int temp_idx;
 	double meanFreqArray, startFrequency;
+	complex tempVal;
+	
+	tempVal = tNode->current[0];
 	
 	phasorVal[0] = 0;
 	phasorVal[1] = (2*PI)/3;
@@ -522,15 +521,19 @@ STATUS vfd::VFD_current_injection(void)
 				meanFreqArray += settleFreq[temp_idx];
 			}
 			meanFreqArray /= (double)stableTime;
-			settleFreq[curr_array_position] = roundf(meanFreqArray* 1000) / 1000;
+			
+			//settleFreq[curr_array_position] = roundf(meanFreqArray* 1000) / 1000;
+			//currSetFreq = settleFreq[curr_array_position];
+			currSetFreq = roundf(meanFreqArray* 1000) / 1000;
 			settleTime = settleTime+1;
-			currSetFreq = settleFreq[curr_array_position];
+			
 			vfdCoreCalculations();
+			meanFreqArray = 0;
 			prev_current[0] = calc_current_in[0];
 			prev_current[1] = calc_current_in[1];
 			prev_current[2] = calc_current_in[2];
 		}
-		prevDesiredFreq = settleFreq[curr_array_position];
+		prevDesiredFreq = currSetFreq;//settleFreq[curr_array_position];
 		settleFreq = NULL;
 	}	
 
