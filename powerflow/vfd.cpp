@@ -267,6 +267,12 @@ void vfd::initialParameters()
 
 void vfd::vfdCoreCalculations()
 {
+	/******************* COMMENTS FOR FRANK *********************
+	Changes made on 3/27/2017 at 10:15AM:
+	Added lines 275, lines 312 - 319; Commented lines 326 - 328
+	If you want to run this as prior to 3/27/2017 at 10:15AM: Comment lines 275, lines 312 - 319; Uncommented lines 326 - 328
+	*************************************************************/
+	complex currRat, lossCurr[3];
 	settleVolt = VbyF*currSetFreq; // since the speed didnot change, prevDesiredFreq would be equal to driveFrequency
 	
 	if (settleVolt <= 0)
@@ -303,14 +309,23 @@ void vfd::vfdCoreCalculations()
 	powerLosses = (powerOutElectrical*(100-currEfficiency))/currEfficiency;
 	powerInElectrical = powerOutElectrical + powerLosses;
 
+	currRat = powerLosses/powerOutElectrical;
+	lossCurr[0] = currRat*currentOut[0];
+	lossCurr[1] = currRat*currentOut[1];
+	lossCurr[2] = currRat*currentOut[2];
+	
+	calc_current_in[0] = currentOut[0]+lossCurr[0];
+	calc_current_in[1] = currentOut[1]+lossCurr[1];
+	calc_current_in[2] = currentOut[2]+lossCurr[2];
+	
 	/************* May have to think about this one -- also note, these are accumulators **********************/
 	/*** Added a divide by three here, since you're splitting it over three phases *********/
 	/**** Note - changed this -- P = VI*, so I = (P/V)*   *************/
 	
 	//Calculate current current
-	calc_current_in[0] = ~(powerInElectrical/fNode->voltage[0]/3.0);
-	calc_current_in[1] = ~(powerInElectrical/fNode->voltage[1]/3.0);
-	calc_current_in[2] = ~(powerInElectrical/fNode->voltage[2]/3.0);
+	// calc_current_in[0] = ~(powerInElectrical/fNode->voltage[0]/3.0);
+	// calc_current_in[1] = ~(powerInElectrical/fNode->voltage[1]/3.0);
+	// calc_current_in[2] = ~(powerInElectrical/fNode->voltage[2]/3.0);
 	
 	//Add to the load accumulator -- note, this could probably be done as a power load too
 	fNode->current[0] += calc_current_in[0] - prev_current[0]; // fNode is current is zero. Not sure if this is what we want?
