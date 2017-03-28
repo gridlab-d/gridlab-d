@@ -3494,7 +3494,11 @@ int link_object::CurrentCalculation(int nodecall)
 			else
 				ofnode = NULL;	//Ensure it's blanked
 
-			if ((SpecialLnk == DELTADELTA) || (SpecialLnk == WYEWYE))
+			if (SpecialLnk == VFD)
+			{
+				;	//Do nothing for now - handled elsewhere
+			}
+			else if ((SpecialLnk == DELTADELTA) || (SpecialLnk == WYEWYE))
 			{
 				//See if we're in deltamode and in-rush enabled
 				if ((deltatimestep_running > 0) && (enable_inrush_calculations == true) && (SpecialLnk == WYEWYE))

@@ -178,6 +178,7 @@ int vfd::init(OBJECT *parent)
 	//Create the rated torque
 	torqueRated = (horsePowerRatedVFD*5252)/ratedRPM;
 	
+	/******************** THIS ERROR NEEDS TO BE FIXED -- If Vout is similar to Vin, VLL will ALWAYS be higher  ******************/
 	if (voltageLLRating > fNode->voltage[0].Mag())
 	{
 		GL_THROW("vfd: The rated_vfd_line_to_Line_voltage = %d must be less than or equal to input voltage (voltage_in_a) = %d to the vfd",voltageLLRating,fNode->voltage[0].Mag());
@@ -273,6 +274,8 @@ void vfd::vfdCoreCalculations()
 	If you want to run this as prior to 3/27/2017 at 10:15AM: Comment lines 275, lines 312 - 319; Uncommented lines 326 - 328
 	*************************************************************/
 	complex currRat, lossCurr[3];
+	char index_val;
+	complex temp_power_val;
 	settleVolt = VbyF*currSetFreq; // since the speed didnot change, prevDesiredFreq would be equal to driveFrequency
 	
 	if (settleVolt <= 0)
@@ -290,10 +293,12 @@ void vfd::vfdCoreCalculations()
 		*/
 	}
 	
+	//Update the VFD output
 	phasorVal[0] = phasorVal[0] + ((2*PI*currSetFreq*settleTime) - (nominal_output_radian_freq*settleTime));
 	phasorVal[1] = phasorVal[1] + ((2*PI*currSetFreq*settleTime) - (nominal_output_radian_freq*settleTime));
 	phasorVal[2] = phasorVal[2] + ((2*PI*currSetFreq*settleTime) - (nominal_output_radian_freq*settleTime));
 
+	//Temporary variable
 	settleVoltOut[0] = complex(settleVolt,0)*complex_exp(phasorVal[0]);
 	settleVoltOut[1] = complex(settleVolt,0)*complex_exp(phasorVal[1]);
 	settleVoltOut[2] = complex(settleVolt,0)*complex_exp(phasorVal[2]);
@@ -305,32 +310,46 @@ void vfd::vfdCoreCalculations()
 	currentOut[1] = tNode->current[1];
 	currentOut[2] = tNode->current[2];
 
-	powerOutElectrical = settleVoltOut[0]*~currentOut[0];	
-	powerLosses = (powerOutElectrical*(100-currEfficiency))/currEfficiency;
-	powerInElectrical = powerOutElectrical + powerLosses;
+	//Accumulate the output power
+	powerOutElectrical = complex(0.0,0.0);
+	for (index_val=0; index_val<3; index_val++)
+	{
+		//Compute the phase power
+		temp_power_val = (tNode->voltage[index_val]*~currentOut[index_val]);
 
-	currRat = powerLosses/powerOutElectrical;
-	lossCurr[0] = currRat*currentOut[0];
-	lossCurr[1] = currRat*currentOut[1];
-	lossCurr[2] = currRat*currentOut[2];
+		powerOutElectrical += temp_power_val;
+
+		//For giggles, update our output power and current variables too
+		indiv_power_out[index_val] = temp_power_val;
+		current_out[index_val] = currentOut[index_val];
+	}
 	
-	calc_current_in[0] = currentOut[0]+lossCurr[0];
-	calc_current_in[1] = currentOut[1]+lossCurr[1];
-	calc_current_in[2] = currentOut[2]+lossCurr[2];
-	
-	/************* May have to think about this one -- also note, these are accumulators **********************/
-	/*** Added a divide by three here, since you're splitting it over three phases *********/
-	/**** Note - changed this -- P = VI*, so I = (P/V)*   *************/
-	
-	//Calculate current current
-	// calc_current_in[0] = ~(powerInElectrical/fNode->voltage[0]/3.0);
-	// calc_current_in[1] = ~(powerInElectrical/fNode->voltage[1]/3.0);
-	// calc_current_in[2] = ~(powerInElectrical/fNode->voltage[2]/3.0);
-	
-	//Add to the load accumulator -- note, this could probably be done as a power load too
-	fNode->current[0] += calc_current_in[0] - prev_current[0]; // fNode is current is zero. Not sure if this is what we want?
-	fNode->current[1] += calc_current_in[1] - prev_current[1];
-	fNode->current[2] += calc_current_in[2] - prev_current[2];
+	//Scale by the efficiency
+	powerInElectrical = powerOutElectrical*100.0/currEfficiency;
+	powerLosses = powerInElectrical - powerOutElectrical;
+
+	//Balance the power on the input, post it, and update the accumulator
+	for (index_val=0; index_val<3; index_val++)
+	{
+		//Compute the amount
+		calc_current_in[index_val] = ~(powerInElectrical/fNode->voltage[index_val]/3.0);
+
+		/****************** DESIGN NOTE -- Maybe this should be posted to power instead??? *********************/
+		//Post it
+		fNode->current[index_val] += calc_current_in[index_val] - prev_current[index_val];
+
+		//Update the tracking variable
+		prev_current[index_val] = calc_current_in[index_val];
+
+		//Push the new voltage out to the to node
+		tNode->voltage[index_val] = settleVoltOut[index_val];
+
+		//Update power values too, just because
+		indiv_power_in[index_val] = powerInElectrical / 3.0;
+
+		//And current input
+		current_in[index_val] = calc_current_in[index_val];
+	}
 }
 
 TIMESTAMP vfd::presync(TIMESTAMP t0)
@@ -514,11 +533,6 @@ STATUS vfd::VFD_current_injection(void)
 		prevDesiredFreq = driveFrequency;
 		currSetFreq = driveFrequency;
 		vfdCoreCalculations();
-
-		//Update the tracking variables
-		prev_current[0] = calc_current_in[0];
-		prev_current[1] = calc_current_in[1];
-		prev_current[2] = calc_current_in[2];
 	}
 	
 	if ((vfdState == 0) || (vfdState == 1)) //VFD started or changing speed.
@@ -544,9 +558,6 @@ STATUS vfd::VFD_current_injection(void)
 			
 			vfdCoreCalculations();
 			meanFreqArray = 0;
-			prev_current[0] = calc_current_in[0];
-			prev_current[1] = calc_current_in[1];
-			prev_current[2] = calc_current_in[2];
 		}
 		prevDesiredFreq = currSetFreq;//settleFreq[curr_array_position];
 		settleFreq = NULL;
