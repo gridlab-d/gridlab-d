@@ -61,7 +61,10 @@ meter::meter(MODULE *mod) : node(mod)
 		if (gl_publish_variable(oclass,
 			PT_INHERIT, "node",
 			PT_double, "measured_real_energy[Wh]", PADDR(measured_real_energy),PT_DESCRIPTION,"metered real energy consumption, cummalitive",
+            PT_double, "measured_real_energy_delta[Wh]", PADDR(measured_real_energy_delta),PT_DESCRIPTION,"delta in metered real energy consumption from last specified measured_energy_delta_timestep",
 			PT_double, "measured_reactive_energy[VAh]",PADDR(measured_reactive_energy),PT_DESCRIPTION,"metered reactive energy consumption, cummalitive",
+            PT_double, "measured_reactive_energy_delta[VAh]",PADDR(measured_reactive_energy_delta),PT_DESCRIPTION,"delta in metered reactive energy consumption from last specified measured_energy_delta_timestep",
+            PT_double, "measured_energy_delta_timestep[s]",PADDR(measured_energy_delta_timestep),PT_DESCRIPTION,"Period of timestep for real and reactive delta energy calculation",
 			PT_complex, "measured_power[VA]", PADDR(measured_power),PT_DESCRIPTION,"metered real power",
 			PT_complex, "measured_power_A[VA]", PADDR(indiv_measured_power[0]),PT_DESCRIPTION,"metered complex power on phase A",
 			PT_complex, "measured_power_B[VA]", PADDR(indiv_measured_power[1]),PT_DESCRIPTION,"metered complex power on phase B",
@@ -153,6 +156,9 @@ int meter::create()
 	measured_voltageD[0] = measured_voltageD[1] = measured_voltageD[2] = complex(0,0,A);
 	measured_current[0] = measured_current[1] = measured_current[2] = complex(0,0,J);
 	measured_real_energy = measured_reactive_energy = 0.0;
+    measured_real_energy_delta = measured_reactive_energy_delta = 0;
+    last_measured_real_energy = last_measured_reactive_energy = 0;
+    measured_energy_delta_timestep = -1;
 	measured_power = complex(0,0,J);
 	measured_demand = 0.0;
 	measured_real_power = 0.0;
@@ -298,6 +304,10 @@ TIMESTAMP meter::presync(TIMESTAMP t0)
 	//Reliability addition - if momentary flag set - clear it
 	if (meter_interrupted_secondary == true)
 		meter_interrupted_secondary = false;
+    
+    // Capturing first timestamp of simulation for use in delta energy measurements.
+    if (t0 != 0 && start_timestamp == 0)
+        start_timestamp = t0;
 
 	return node::presync(t0);
 }
@@ -409,6 +419,18 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 		if (measured_real_power > measured_demand) 
 			measured_demand = measured_real_power;
+        
+        // Delta energy cacluation
+        if (t0 == start_timestamp)
+            last_delta_timestamp = start_timestamp;
+
+        if ((t1 == last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) && (t1 != t0) && measured_energy_delta_timestep > 0) {
+            measured_real_energy_delta = measured_real_energy - last_measured_real_energy;
+            measured_reactive_energy_delta = measured_reactive_energy - last_measured_reactive_energy;
+            last_measured_real_energy = measured_real_energy;
+            last_measured_reactive_energy = measured_reactive_energy;
+            last_delta_timestamp = t1;
+        }
 
 		if (bill_mode == BM_UNIFORM || bill_mode == BM_TIERED)
 		{

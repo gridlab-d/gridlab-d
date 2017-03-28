@@ -1,6 +1,7 @@
 pkglib_LTLIBRARIES += connection/connection.la
 
 connection_connection_la_CPPFLAGS =
+connection_connection_la_CPPFLAGS += -I$(top_srcdir)/third_party/jsonCpp
 connection_connection_la_CPPFLAGS += $(AM_CPPFLAGS)
 if HAVE_FNCS
 connection_connection_la_CPPFLAGS += $(FNCS_CPPFLAGS)
@@ -13,6 +14,7 @@ connection_connection_la_LDFLAGS += $(FNCS_LDFLAGS)
 endif
 
 connection_connection_la_LIBADD = 
+connection_connection_la_LIBADD += third_party/jsonCpp/libjsoncpp.la
 if HAVE_FNCS
 connection_connection_la_LIBADD += $(FNCS_LIBS)
 endif
