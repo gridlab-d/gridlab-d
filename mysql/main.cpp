@@ -24,6 +24,7 @@ bool new_database = false; ///< flag to drop a database before using it (very da
 bool show_query = false; ///< flag to show queries when verbose is on
 bool no_create = false; ///< flag to not create tables when exporting data
 bool overwrite = true; ///< flag to not drop tables when exporting data
+bool use_graph = true; ///< flag to enable graph schema
 
 #else
 #include "gridlabd.h"
@@ -118,6 +119,10 @@ const char *process_command(const char *command)
 		{
 			overwrite = false;
 			state = PS_SCHEMA;
+		}
+		else if ( strcmp(token,"--graph")==0 )
+		{
+			use_graph = true;
 		}
 		else if ( token[0]=='-' )
 		{
@@ -1274,6 +1279,99 @@ bool export_schedules(MYSQL *mysql)
 	}
 	return true;
 }
+static bool export_graph_nodeattr(MYSQL *mysql, OBJECT *obj, CLASS *cls = NULL)
+{
+	PROPERTY *prop;
+	// default is object's class
+	if ( cls==NULL ) cls = obj->oclass;
+	// output parent class first
+	if ( cls->parent!=NULL && !export_graph_nodeattr(mysql,obj,cls->parent) ) return false;
+	for ( prop=cls->pmap ; prop!=NULL && prop->oclass==cls; prop=prop->next )
+	{
+		char value[1024], quoted[65536];
+		gld_property var(obj,prop);
+		if ( !var.get_access(PA_R|PA_S) ) continue; // ignore properties that not readable or saveable
+		TIMESTAMP ts;
+		if ( prop->ptype==PT_timestamp && (var.getp(ts),ts)==TS_ZERO )
+		{
+			strcpy(value,MYSQL_TS_ZERO);
+		}
+		else if ( prop->ptype==PT_object )
+		{
+			OBJECT **os = (OBJECT**)var.get_addr();
+			if ( os!=NULL && *os!=NULL && !query(mysql,"INSERT INTO `%s` (`from`,`to`,`type`) VALUES (%llu,%llu,'%s')", get_table_name("edge"), obj->guid[0], (*os)->id, prop->name) ) return false;
+			continue;
+		}
+		else
+		{
+			strcpy(value,var.get_string());
+		}
+		if ( strlen(value)>0 )
+		{
+			mysql_real_escape_string(mysql,quoted,value,strlen(value)); // protect SQL from contents
+			if ( !query(mysql,"INSERT INTO `%s` (`id`,`name`,`value`) VALUES (%llu,'%s','%s')", get_table_name("nodeattr"), obj->guid[0], prop->name, quoted) ) return false;
+		}
+	}
+	return true;
+}
+bool export_graph(MYSQL *mysql)
+{
+	if ( overwrite && !query(mysql,"DROP TABLE IF EXISTS `%s`", get_table_name("node")) )
+		return false;
+	if ( overwrite && !query(mysql,"DROP TABLE IF EXISTS `%s`", get_table_name("nodeattr")) )
+		return false;
+	if ( overwrite && !query(mysql,"DROP TABLE IF EXISTS `%s`", get_table_name("edge")) )
+		return false;
+	if ( overwrite && !query(mysql,"DROP TABLE IF EXISTS `%s`", get_table_name("edgeattr")) )
+		return false;
+	if ( !no_create && !query(mysql,"CREATE TABLE IF NOT EXISTS `%s` ("
+			"`id` BIGINT UNSIGNED NOT NULL, "
+			"`type` CHAR(64) NOT NULL, "
+			"PRIMARY KEY `i_id` (`id`), "
+			"KEY `i_type` (`type`)"
+			")", get_table_name("node")) )
+		return false;
+	if ( !no_create && !query(mysql,"CREATE TABLE IF NOT EXISTS `%s` ("
+			"`id` BIGINT UNSIGNED NOT NULL,"
+			"`name` CHAR(64) NOT NULL,"
+			"`value` CHAR(255) NOT NULL,"
+			"PRIMARY KEY (`id`,`name`),"
+			"KEY `i_name_value` (`name`,`value`)"
+			")", get_table_name("nodeattr")) )
+		return false;
+	if ( !no_create && !query(mysql,"CREATE TABLE IF NOT EXISTS `%s` ("
+			"`id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, "
+			"`from` BIGINT UNSIGNED NOT NULL, "
+			"`to` BIGINT UNSIGNED NOT NULL, "
+			"`type` CHAR(64) NOT NULL, "
+			"UNIQUE KEY `u_from_to_type` (`from`,`to`,`type`), "
+			"KEY `i_to_type` (`to`,`type`), "
+			"KEY `i_type` (`type`)"
+			")", get_table_name("edge")) )
+		return false;
+	if ( !no_create && !query(mysql,"CREATE TABLE IF NOT EXISTS `%s` ("
+			"`id` BIGINT UNSIGNED NOT NULL,"
+			"`name` CHAR(64) NOT NULL,"
+			"`value` CHAR(255) NOT NULL,"
+			"PRIMARY KEY (`id`,`name`),"
+			"KEY `i_name_value` (`name`,`value`)"
+			")", get_table_name("edgeattr")) )
+		return false;
+	for ( OBJECT *obj = gl_object_get_first(); obj!=NULL ; obj=obj->next )
+	{
+		CLASS *cls = obj->oclass;
+		if ( !query(mysql,"INSERT INTO `%s` (`id`,`type`) VALUES (%llu,'%s')", get_table_name("node"), obj->guid[0], obj->oclass->name) ) return false;
+		if ( obj->name && !query(mysql,"INSERT INTO `%s` (`id`,`name`,`value`) VALUES (%llu,'%s','%s')", get_table_name("nodeattr"), obj->guid[0], "name", obj->name) ) return false;
+		if ( obj->oclass->module && obj->oclass->module->name && !query(mysql,"INSERT INTO `%s` (`id`,`name`,`value`) VALUES (%llu,'%s','%s')", get_table_name("nodeattr"), obj->guid[0], "module", obj->oclass->module->name) ) return false;
+		if ( !isnan(obj->latitude) && !query(mysql,"INSERT INTO `%s` (`id`,`name`,`value`) VALUES (%llu,'%s',%g)", get_table_name("nodeattr"), obj->guid[0], "latitude", obj->latitude) ) return false;
+		if ( !isnan(obj->longitude) && !query(mysql,"INSERT INTO `%s` (`id`,`name`,`value`) VALUES (%llu,'%s',%g)", get_table_name("nodeattr"), obj->guid[0], "longitude", obj->longitude) ) return false;
+		if ( obj->in_svc<TS_NEVER && !query(mysql,"INSERT INTO `%s` (`id`,`name`,`value`) VALUES (%llu,'%s',%lld)", get_table_name("nodeattr"), obj->guid[0], "in_svc", obj->in_svc) ) return false;
+		if ( obj->out_svc<TS_NEVER && !query(mysql,"INSERT INTO `%s` (`id`,`name`,`value`) VALUES (%llu,'%s',%lld)", get_table_name("nodeattr"), obj->guid[0], "out_svc", obj->out_svc) ) return false;
+		if ( obj->parent && !query(mysql,"INSERT INTO `%s` (`from`,`to`,`type`) VALUES (%llu,%llu,'%s')",get_table_name("edge"), obj->guid[0], obj->parent->id, "parent") ) return false;
+		export_graph_nodeattr(mysql,obj);
+	}
+	return true;
+}
 EXPORT int export_file(char *info)
 {
 	if ( process_command(info)==NULL )
@@ -1281,13 +1379,22 @@ EXPORT int export_file(char *info)
 	MYSQL *mysql = get_connection(schema,true);
 	if ( mysql==NULL )
 		return 0;
-	int rc = export_modules(mysql)
+
+	int rc;
+	if ( use_graph )
+	{
+		rc = export_graph(mysql);
+	}
+	else
+	{
+		rc = export_modules(mysql)
 			&& export_globals(mysql)
 			&& export_classes(mysql)
 			&& export_objects(mysql)
 			&& export_properties(mysql)
 			&& export_transforms(mysql)
 			&& export_schedules(mysql);
+	}
 	mysql_close(mysql);
 	return rc;
 }
