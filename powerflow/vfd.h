@@ -61,6 +61,9 @@ private:
 	//Variable objects that are only used internally
 	node *fNode;
 	node *tNode;
+	double curr_time_value;
+	double stableTimeOrig;
+	double desiredFinalTime;
 	double *settleFreq;
 	double prevDesiredFreq;
 	double *freqArray;

@@ -39,29 +39,29 @@ vfd::vfd(MODULE *mod) : link_object(mod)
 			PT_double, "motor_poles", PADDR(motorPoles), PT_DESCRIPTION, "Number of Motor Poles. Default = 4",
 			PT_double, "rated_vfd_line_to_Line_voltage[V]", PADDR(voltageLLRating), PT_DESCRIPTION, "Line to Line Voltage - VFD Rated voltage. Default = 480V",
 			PT_double, "Desired_vfd_rpm", PADDR(desiredRPM), PT_DESCRIPTION, "Desired speed of the VFD In ROM. Default = 900 RPM",
-			PT_double, "rated_vfd_horse_power [hp]", PADDR(horsePowerRatedVFD), PT_DESCRIPTION, "Rated Horse Power of the VFD. Default = 75 HP",
+			PT_double, "rated_vfd_horse_power[hp]", PADDR(horsePowerRatedVFD), PT_DESCRIPTION, "Rated Horse Power of the VFD. Default = 75 HP",
 			PT_double, "nominal_output_frequency[Hz]", PADDR(nominal_output_frequency), PT_DESCRIPTION, "Nominal VFD output frequency. Default = 60 Hz",
 			
-			PT_double, "drive_frequency [Hz]", PADDR(driveFrequency), PT_DESCRIPTION, "Current VFD frequency based on the desired RPM",
+			PT_double, "drive_frequency[Hz]", PADDR(driveFrequency), PT_DESCRIPTION, "Current VFD frequency based on the desired RPM",
 			PT_double, "vfd_efficiency", PADDR(currEfficiency), PT_DESCRIPTION, "Current VFD efficiency based on the load/VFD output Horsepower",			
 			
-			PT_double, "stable_time [s]", PADDR(stableTime), PT_DESCRIPTION, "Time taken by the VFD to reach desired frequency (based on RPM). Default = 1.45 seconds",
+			PT_double, "stable_time[s]", PADDR(stableTime), PT_DESCRIPTION, "Time taken by the VFD to reach desired frequency (based on RPM). Default = 1.45 seconds",
 			PT_double, "settle_time", PADDR(settleTime), PT_DESCRIPTION, "Total number of steps/counts during the VFD operation.",
-			PT_double, "power_out_electrical [W]", PADDR(powerOutElectrical), PT_DESCRIPTION, "VFD output electrical power",
-			PT_double, "power_losses [W]", PADDR(powerLosses), PT_DESCRIPTION, "VFD electrical power losses",
-			PT_double, "power_in_electrical [W]", PADDR(powerInElectrical), PT_DESCRIPTION, "Input electrical power to VFD",
+			PT_double, "power_out_electrical[W]", PADDR(powerOutElectrical), PT_DESCRIPTION, "VFD output electrical power",
+			PT_double, "power_losses[W]", PADDR(powerLosses), PT_DESCRIPTION, "VFD electrical power losses",
+			PT_double, "power_in_electrical[W]", PADDR(powerInElectrical), PT_DESCRIPTION, "Input electrical power to VFD",
 			
-			PT_complex, "current_in_a [A]", PADDR(calc_current_in[0]), PT_DESCRIPTION, "Phase A input current to VFD",
-			PT_complex, "current_in_b [A]", PADDR(calc_current_in[1]), PT_DESCRIPTION, "Phase B input current to VFD",
-			PT_complex, "current_in_c [A]", PADDR(calc_current_in[2]), PT_DESCRIPTION, "Phase C input current to VFD",		
+			PT_complex, "current_in_a[A]", PADDR(calc_current_in[0]), PT_DESCRIPTION, "Phase A input current to VFD",
+			PT_complex, "current_in_b[A]", PADDR(calc_current_in[1]), PT_DESCRIPTION, "Phase B input current to VFD",
+			PT_complex, "current_in_c[A]", PADDR(calc_current_in[2]), PT_DESCRIPTION, "Phase C input current to VFD",		
 			
-			PT_complex, "current_out_a [A]", PADDR(currentOut[0]), PT_DESCRIPTION, "Phase A output current of VFD",
-			PT_complex, "current_out_b [A]", PADDR(currentOut[1]), PT_DESCRIPTION, "Phase B output current of VFD",
-			PT_complex, "current_out_c [A]", PADDR(currentOut[2]), PT_DESCRIPTION, "Phase C output current of VFD",			
+			PT_complex, "current_out_a[A]", PADDR(currentOut[0]), PT_DESCRIPTION, "Phase A output current of VFD",
+			PT_complex, "current_out_b[A]", PADDR(currentOut[1]), PT_DESCRIPTION, "Phase B output current of VFD",
+			PT_complex, "current_out_c[A]", PADDR(currentOut[2]), PT_DESCRIPTION, "Phase C output current of VFD",			
 			
-			PT_complex, "voltage_out_a [A]", PADDR(settleVoltOut[0]), PT_DESCRIPTION, "Phase A output voltage of VFD",
-			PT_complex, "voltage_out_b [A]", PADDR(settleVoltOut[1]), PT_DESCRIPTION, "Phase B output voltage of VFD",
-			PT_complex, "voltage_out_c [A]", PADDR(settleVoltOut[2]), PT_DESCRIPTION, "Phase C output voltage of VFD",				
+			PT_complex, "voltage_out_a[A]", PADDR(settleVoltOut[0]), PT_DESCRIPTION, "Phase A output voltage of VFD",
+			PT_complex, "voltage_out_b[A]", PADDR(settleVoltOut[1]), PT_DESCRIPTION, "Phase B output voltage of VFD",
+			PT_complex, "voltage_out_c[A]", PADDR(settleVoltOut[2]), PT_DESCRIPTION, "Phase C output voltage of VFD",				
 			
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
@@ -94,7 +94,8 @@ int vfd::create()
 	voltageLLRating = 480;
 	horsePowerRatedVFD = 75;
 	nominal_output_frequency = 60.0;
-	stableTime = 0.03;//1.45;
+	stableTime = 5;//1.45;
+	stableTimeOrig = stableTime;
 	
 	//Null the array pointers, just because
 	settleFreq = NULL;
@@ -150,8 +151,9 @@ int vfd::init(OBJECT *parent)
 		transients than expected, as well as more severe dynamic behavior.
 		*/
 	}
-	stableTime = (int) (100*stableTime+0.5); //rounding to an int
-	stayTime = (int) (0.0206*stableTime+0.5);
+	//stableTime = (int) (100*stableTime+0.5); //rounding to an int. *************************NIKHIL, UNCOMMENT THIS AFTER DEBUGGING*****************
+	
+	//stayTime = (int) (0.0206*stableTime+0.5);
 	//stayTime = roundf(0.0206*stableTime * 100)/100;
 	//stayTime = (int) stayTime+0.5; //rounding to an int
 
@@ -362,6 +364,8 @@ TIMESTAMP vfd::sync(TIMESTAMP t0)
 	fNode=OBJECTDATA(from,node);
 	tNode=OBJECTDATA(to,node);
 
+	curr_time_value = (double)t0;
+	
 	OBJECT *obj = OBJECTHDR(this);
 	TIMESTAMP t2;
 	
@@ -488,6 +492,11 @@ STATUS vfd::VFD_current_injection(void)
 	phasorVal[0] = 0;
 	phasorVal[1] = (2*PI)/3;
 	phasorVal[2] = -(2*PI)/3;
+
+	if (stableTimeOrig == stableTime)
+	{
+		desiredFinalTime = curr_time_value+stableTimeOrig;
+	}
 	
 	initialParameters();
 	
@@ -537,6 +546,51 @@ STATUS vfd::VFD_current_injection(void)
 	
 	if ((vfdState == 0) || (vfdState == 1)) //VFD started or changing speed.
 	{
+		if (curr_time_value <= desiredFinalTime)
+		{
+			if (stableTimeOrig == stableTime)
+			{
+				for (curr_array_position = 0; curr_array_position <stableTime; curr_array_position++)
+				{
+					settleFreq[curr_array_position] = startFrequency;
+				}	
+				settleFreq[0] = driveFrequency;
+			}
+			else if (stableTimeOrig > stableTime)
+			{
+				for (curr_array_position = 0; curr_array_position <stableTimeOrig-stableTime; curr_array_position++)
+				{
+					settleFreq[curr_array_position] = driveFrequency;
+				}
+			}
+			
+			for (temp_idx=0; temp_idx<stableTimeOrig; temp_idx++)
+			{
+				meanFreqArray += settleFreq[temp_idx];
+			}
+			meanFreqArray /= (double)stableTimeOrig;
+
+			currSetFreq = roundf(meanFreqArray* 1000) / 1000;
+			settleTime = settleTime+1;
+		
+			vfdCoreCalculations();
+			meanFreqArray = 0;
+			
+			//if (curr_time_value != prev_time_value)
+			//{
+				stableTime = stableTime-1;
+			//}
+
+			if (curr_time_value == desiredFinalTime)
+			{
+				prevDesiredFreq = currSetFreq;//settleFreq[curr_array_position];
+				settleFreq = NULL;
+				stableTime = stableTimeOrig;
+			}
+		}
+		
+		
+	/*
 		for (curr_array_position = 0; curr_array_position <stableTime; curr_array_position++)
 		{
 			settleFreq[curr_array_position] = startFrequency;
@@ -553,14 +607,16 @@ STATUS vfd::VFD_current_injection(void)
 			
 			//settleFreq[curr_array_position] = roundf(meanFreqArray* 1000) / 1000;
 			//currSetFreq = settleFreq[curr_array_position];
+			
 			currSetFreq = roundf(meanFreqArray* 1000) / 1000;
 			settleTime = settleTime+1;
-			
+		
 			vfdCoreCalculations();
 			meanFreqArray = 0;
 		}
 		prevDesiredFreq = currSetFreq;//settleFreq[curr_array_position];
 		settleFreq = NULL;
+	*/
 	}	
 
 	return SUCCESS;	//Change this, if there's a chance of failure
