@@ -369,10 +369,13 @@ int fncs_msg::init(OBJECT *parent){
 	for (int isize=0 ; isize<nsize ; isize++){
 		if(!vjson_publish_gld_property_name[isize]->is_header) {
 			const string gld_property_name = vjson_publish_gld_property_name[isize]->object_name + "." + vjson_publish_gld_property_name[isize]->object_property;
-			const char *expr = gld_property_name.c_str();
-			char *buf = new char[strlen(expr)+1];
-			strcpy(buf, expr);
-			vjson_publish_gld_property_name[isize]->prop = new gld_property(buf);
+			const char *expr1 = vjson_publish_gld_property_name[isize]->object_name.c_str();
+			const char *expr2 = vjson_publish_gld_property_name[isize]->object_property.c_str();
+			char *bufObj = new char[strlen(expr1)+1];
+			char *bufProp = new char[strlen(expr2)+1];
+			strcpy(bufObj, expr1);
+			strcpy(bufProp, expr2);
+			vjson_publish_gld_property_name[isize]->prop = new gld_property(bufObj,bufProp);
 
 			if ( vjson_publish_gld_property_name[isize]->prop->is_valid() ){
 				gl_verbose("connection: local variable '%s' resolved OK, object id %d",
@@ -1142,6 +1145,7 @@ int fncs_msg::publishJsonVariables( )  //Renke add
 	//need to clean the Json publish data first!!
 	publish_json_data.clear();
 	publish_json_data[simName];
+	stringstream complex_val;
 	for(int isize=0; isize<nsize; isize++) {
 		if(!publish_json_data[simName].isMember(vjson_publish_gld_property_name[isize]->object_name)){
 			publish_json_data[simName][vjson_publish_gld_property_name[isize]->object_name];
@@ -1150,9 +1154,25 @@ int fncs_msg::publishJsonVariables( )  //Renke add
 			gldpro_obj = vjson_publish_gld_property_name[isize]->prop;
 			if(gldpro_obj->is_double()) {
 				publish_json_data[simName][vjson_publish_gld_property_name[isize]->object_name][vjson_publish_gld_property_name[isize]->object_property] = gldpro_obj->get_double();
+			} else if (gldpro_obj->is_complex()) {
+				double real_part = gldpro_obj->get_part("real");
+				double imag_part =gldpro_obj->get_part("imag");
+				gld_unit *val_unit = gldpro_obj->get_unit();
+				complex_val.str(string());
+				complex_val << real_part;
+				if(imag_part >= 0){
+					complex_val << "+" << imag_part << "j";
+				} else {
+					complex_val << imag_part << "j";
+				}
+				if(val_unit->is_valid()){
+					string unit_name = string(val_unit->get_name());
+					complex_val << " " << unit_name;
+				}
+				publish_json_data[simName][vjson_publish_gld_property_name[isize]->object_name][vjson_publish_gld_property_name[isize]->object_property] = complex_val.str();
 			} else if (gldpro_obj->is_integer()) {
 				publish_json_data[simName][vjson_publish_gld_property_name[isize]->object_name][vjson_publish_gld_property_name[isize]->object_property] = (Json::Value::Int64)gldpro_obj->get_integer();
-			} else if (gldpro_obj->is_character() || gldpro_obj->is_enumeration() || gldpro_obj->is_complex() || gldpro_obj->is_objectref()) {
+			} else if (gldpro_obj->is_character() || gldpro_obj->is_enumeration() || gldpro_obj->is_complex() || gldpro_obj->is_objectref() || gldpro_obj->is_set()) {
 				char chtmp[1024];
 				gldpro_obj->to_string(chtmp, 1024);
 				publish_json_data[simName][vjson_publish_gld_property_name[isize]->object_name][vjson_publish_gld_property_name[isize]->object_property] = string((char *)chtmp);
@@ -1233,10 +1253,13 @@ int fncs_msg::subscribeJsonVariables( ) //Renke add
 				gldObjpropertyName = gldObjpropertyName + gldPropertyName;
 				gld_property *gldpro_obj;
 
-				const char *expr = gldObjpropertyName.c_str();
-				char *buf = new char[strlen(expr)+1];
-				strcpy(buf, expr);
-				gldpro_obj = new gld_property(buf);
+				const char *expr1 = gldObjectName.c_str();
+				const char *expr2 = gldPropertyName.c_str();
+				char *bufObj = new char[strlen(expr1)+1];
+				char *bufProp = new char[strlen(expr2)+1];
+				strcpy(bufObj, expr1);
+				strcpy(bufProp, expr2);
+				gldpro_obj = new gld_property(bufObj, bufProp);
 
 				//gl_verbose("fncs_msg::subscribeJsonVariables(): %s is get from json data \n",
 												//gldObjpropertyName.c_str());

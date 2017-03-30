@@ -296,7 +296,7 @@ void controller::cheat(){
 			heat_range_high = 5;
 			cool_ramp_low = 2;
 			cool_ramp_high = 2;
-			cool_range_low = 5;
+			cool_range_low = -5;
 			cool_range_high = 5;
 			break;
 		default:
