@@ -48,6 +48,7 @@ public:
 	double horsePowerRatedVFD;
 	double nominal_output_frequency;
 	double settleTime;
+	int vfdState;
 	complex powerOutElectrical;
 	complex powerLosses;
 	complex powerInElectrical;
@@ -62,6 +63,7 @@ private:
 	node *fNode;
 	node *tNode;
 	double curr_time_value;
+	double prev_time_value;
 	double stableTimeOrig;
 	double desiredFinalTime;
 	double *settleFreq;
@@ -71,7 +73,6 @@ private:
 	double torqueRated;
 	double VbyF;
 	double HPbyF;
-	int vfdState;
 	double stayTime;
 	double settleVolt;
 	bool force_array_realloc;

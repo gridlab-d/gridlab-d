@@ -38,7 +38,7 @@ vfd::vfd(MODULE *mod) : link_object(mod)
 			PT_double, "vfd_rated_speed[1/min]", PADDR(ratedRPM), PT_DESCRIPTION, "Rated speed of the VFD in RPM. Default = 1800 RPM",
 			PT_double, "motor_poles", PADDR(motorPoles), PT_DESCRIPTION, "Number of Motor Poles. Default = 4",
 			PT_double, "rated_vfd_line_to_Line_voltage[V]", PADDR(voltageLLRating), PT_DESCRIPTION, "Line to Line Voltage - VFD Rated voltage. Default = 480V",
-			PT_double, "Desired_vfd_rpm", PADDR(desiredRPM), PT_DESCRIPTION, "Desired speed of the VFD In ROM. Default = 900 RPM",
+			PT_double, "Desired_vfd_rpm", PADDR(desiredRPM), PT_DESCRIPTION, "Desired speed of the VFD In ROM. Default = 1800 RPM (max)",
 			PT_double, "rated_vfd_horse_power[hp]", PADDR(horsePowerRatedVFD), PT_DESCRIPTION, "Rated Horse Power of the VFD. Default = 75 HP",
 			PT_double, "nominal_output_frequency[Hz]", PADDR(nominal_output_frequency), PT_DESCRIPTION, "Nominal VFD output frequency. Default = 60 Hz",
 			
@@ -61,7 +61,10 @@ vfd::vfd(MODULE *mod) : link_object(mod)
 			
 			PT_complex, "voltage_out_a[A]", PADDR(settleVoltOut[0]), PT_DESCRIPTION, "Phase A output voltage of VFD",
 			PT_complex, "voltage_out_b[A]", PADDR(settleVoltOut[1]), PT_DESCRIPTION, "Phase B output voltage of VFD",
-			PT_complex, "voltage_out_c[A]", PADDR(settleVoltOut[2]), PT_DESCRIPTION, "Phase C output voltage of VFD",				
+			PT_complex, "voltage_out_c[A]", PADDR(settleVoltOut[2]), PT_DESCRIPTION, "Phase C output voltage of VFD",	
+
+			PT_complex, "vfd_state", PADDR(vfdState), PT_DESCRIPTION, "Current State of VFD (0 = VFD Starting State; 1 = VFD Speed Change State; 2 = VFD Steady State; 3 = VFD OFF State",	
+			
 			
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
@@ -89,7 +92,7 @@ int vfd::create()
 	int result = link_object::create();
 
 	ratedRPM   = 1800;
-	desiredRPM = 900;
+	desiredRPM = 1800;
 	motorPoles = 4;
 	voltageLLRating = 480;
 	horsePowerRatedVFD = 75;
@@ -543,8 +546,22 @@ STATUS vfd::VFD_current_injection(void)
 		currSetFreq = driveFrequency;
 		vfdCoreCalculations();
 	}
+	else if ((prevDesiredFreq != 0.0) && (driveFrequency==0))
+	{
+		vfdState = 3; //OFF State
+		startFrequency = prevDesiredFreq; //Now that the frequency is changed, the starting frequency would be the exact last instance of previous stable frequency
 	
-	if ((vfdState == 0) || (vfdState == 1)) //VFD started or changing speed.
+		if (prevDesiredFreq <=0.0)
+		{
+			GL_THROW("At this point, Previous frequency = %d should be positive", prevDesiredFreq);
+			/*  TROUBLESHOOT
+			This would almost never happen but if it does for reasons yet to know. Lets catch it.
+			*/
+		}
+		
+	}
+	
+	if ((vfdState == 0) || (vfdState == 1) || (vfdState == 3)) //VFD started or changing speed.
 	{
 		if (curr_time_value <= desiredFinalTime)
 		{
@@ -575,11 +592,11 @@ STATUS vfd::VFD_current_injection(void)
 		
 			vfdCoreCalculations();
 			meanFreqArray = 0;
-			
-			//if (curr_time_value != prev_time_value)
-			//{
+			prev_time_value = curr_time_value;
+			if (curr_time_value != prev_time_value)
+			{
 				stableTime = stableTime-1;
-			//}
+			}
 
 			if (curr_time_value == desiredFinalTime)
 			{
