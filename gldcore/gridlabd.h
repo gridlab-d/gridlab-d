@@ -2011,7 +2011,7 @@ public: // constructors/casts
 	inline gld_property(char *n) : obj(NULL), pstruct(nullpstruct)
 	{
 		char oname[256], vname[256];
-		if ( sscanf(n,"%[A-Za-z0-9_].%[A-Za-z0-9_.]",oname,vname)==2 )
+		if ( sscanf(n,"[A-Za-z0-9_].%[A-Za-z0-9_.]",oname,vname)==2 )
 		{
 			obj = callback->get_object(oname);
 			if ( obj )
@@ -2024,7 +2024,12 @@ public: // constructors/casts
 		pstruct.prop = (v?v->prop:NULL);  
 	};
 	inline gld_property(char *m, char *n) : obj(NULL), pstruct(nullpstruct) 
-	{ 
+	{
+		obj = callback->get_object(m);
+		if ( obj != NULL ) {
+			callback->properties.get_property(obj, n, &pstruct);
+			return;
+		} 
 		char1024 vn; 
 		sprintf(vn,"%s::%s",m,n); 
 		GLOBALVAR *v=callback->global.find(vn); 
