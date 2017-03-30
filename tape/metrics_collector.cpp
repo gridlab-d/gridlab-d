@@ -557,10 +557,12 @@ int metrics_collector::read_line(OBJECT *obj){
 		if (start_time == gl_globalclock) {
 			last_vol_val = fabs(v12);
 		}
+		// compliance with C84.1; unbalance defined as max deviation from average / average, here based on 1-N and 2-N
+		double vavg = 0.5 * (v1 + v2);
 
 		interpolate (voltage_mag_array, last_index, curr_index, fabs(v12));
-		interpolate (voltage_average_mag_array, last_index, curr_index, fabs(v12/2));
-		interpolate (voltage_unbalance_array, last_index, curr_index, fabs((v1 - v2)/(v12/2)));
+		interpolate (voltage_average_mag_array, last_index, curr_index, vavg);
+		interpolate (voltage_unbalance_array, last_index, curr_index, 0.5 * fabs(v1 - v2)/vavg);
 	}
 	else if (strcmp(parent_string, "meter") == 0)
 	{
@@ -587,15 +589,21 @@ int metrics_collector::read_line(OBJECT *obj){
 		double vbc = (*gl_get_complex_by_name(obj->parent, "voltage_BC")).Mag();   
 		double vca = (*gl_get_complex_by_name(obj->parent, "voltage_CA")).Mag();
 		double vll = (vab + vbc + vca) / 3.0;
+		// determine unbalance per C84.1
+		double vdev = fabs(vab - vll);
+		double vdev2 = fabs(vbc - vll);
+		double vdev3 = fabs(vca - vll);
+		if (vdev2 > vdev) vdev = vdev2;
+		if (vdev3 > vdev) vdev = vdev3;
 
 		// If it is at the starting time, record the voltage for violation analysis
 		if (start_time == gl_globalclock) {
 			last_vol_val = vll;
 		}
 
-		interpolate (voltage_mag_array, last_index, curr_index, vll);
-		interpolate (voltage_average_mag_array, last_index, curr_index, vavg);
-		interpolate (voltage_unbalance_array, last_index, curr_index, (vmax - vmin)/vavg);
+		interpolate (voltage_mag_array, last_index, curr_index, vll);  // Vll
+		interpolate (voltage_average_mag_array, last_index, curr_index, vavg);  // Vln
+		interpolate (voltage_unbalance_array, last_index, curr_index, vdev / vll); // max deviation from Vll / average Vll
 	} 
 	else if (strcmp(parent_string, "house") == 0)
 	{
