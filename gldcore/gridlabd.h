@@ -1919,7 +1919,7 @@ public: // header read accessors (no locking)
 	inline unsigned int get_lock(void) { return my()->lock; };
 	inline unsigned int get_rng_state(void) { return my()->rng_state; };
 	inline TIMESTAMP get_heartbeat(void) { return my()->heartbeat; };
-	inline unsigned int64* get_guid(void) { return my()->guid; };
+	inline uint64* get_guid(void) { return my()->guid; };
 	inline size_t get_guid_size(void) { OBJECT *_t=my(); return sizeof(_t->guid)/sizeof(_t->guid[0]); };
 	inline uint64 get_flags(uint64 mask=0xffffffffffffffff) { return (my()->flags)&mask; };
 
