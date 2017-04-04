@@ -48,7 +48,7 @@ vfd::vfd(MODULE *mod) : link_object(mod)
 			PT_double, "stable_time[s]", PADDR(stableTime), PT_DESCRIPTION, "Time taken by the VFD to reach desired frequency (based on RPM). Default = 1.45 seconds",
 			PT_double, "settle_time", PADDR(settleTime), PT_DESCRIPTION, "Total number of steps/counts during the VFD operation.",
 			PT_double, "power_out_electrical[W]", PADDR(powerOutElectrical), PT_DESCRIPTION, "VFD output electrical power",
-			PT_double, "power_losses[W]", PADDR(powerLosses), PT_DESCRIPTION, "VFD electrical power losses",
+			PT_double, "power_losses_VFD[W]", PADDR(powerLosses), PT_DESCRIPTION, "VFD electrical power losses",
 			PT_double, "power_in_electrical[W]", PADDR(powerInElectrical), PT_DESCRIPTION, "Input electrical power to VFD",
 			
 			PT_complex, "current_in_a[A]", PADDR(calc_current_in[0]), PT_DESCRIPTION, "Phase A input current to VFD",
