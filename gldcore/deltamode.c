@@ -419,6 +419,8 @@ DT delta_update(void)
 				delta_forced_iteration--;
 
 				/* Normal continue - next delta timestep -- allows global overrides to still take place */
+
+				output_verbose("delta_update(): Forced deltamode reiteration - %d left",delta_forced_iteration);
 			}
 		}
 		else if (interupdate_mode == SM_DELTA)
