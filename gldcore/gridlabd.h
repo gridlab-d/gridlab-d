@@ -2011,7 +2011,7 @@ public: // constructors/casts
 	inline gld_property(char *n) : obj(NULL), pstruct(nullpstruct)
 	{
 		char oname[256], vname[256];
-		if ( sscanf(n,"[A-Za-z0-9_].%[A-Za-z0-9_.]",oname,vname)==2 )
+		if ( sscanf(n,"%[A-Za-z0-9_].%[A-Za-z0-9_.]",oname,vname)==2 )
 		{
 			obj = callback->get_object(oname);
 			if ( obj )
