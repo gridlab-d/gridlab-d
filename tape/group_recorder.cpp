@@ -1,4 +1,7 @@
 #include "group_recorder.h"
+#include <sstream>
+
+
 
 CLASS *group_recorder::oclass = NULL;
 CLASS *group_recorder::pclass = NULL;
@@ -27,6 +30,7 @@ group_recorder::group_recorder(MODULE *mod){
 			PT_bool, "print_units", PADDR(print_units), PT_DESCRIPTION, "flag to append units to each written value, if applicable",
 			PT_char256, "property", PADDR(property_name), PT_DESCRIPTION, "property to record",
 			PT_int32, "limit", PADDR(limit), PT_DESCRIPTION, "the maximum number of lines to write to the file",
+            PT_bool, "format", PADDR(format), PT_DESCRIPTION, "determines whether output timestamp is formatted to be formatted as human-readable (default) or epoch",
 			PT_enumeration, "complex_part", PADDR(complex_part), PT_DESCRIPTION, "the complex part to record if complex properties are gathered",
 				PT_KEYWORD, "NONE", NONE,
 				PT_KEYWORD, "REAL", REAL,
@@ -95,6 +99,7 @@ int group_recorder::init(OBJECT *obj){
 	flush_interval = (int64)dFlush_interval;
 	
 	
+    
 	// build group
 	//	* invariant?
 	//	* non-empty set?
@@ -169,6 +174,7 @@ int group_recorder::init(OBJECT *obj){
 			itr->prop.unit = NULL;
 		}
 	}
+    
 
 	tape_status = TS_OPEN;
 	if(0 == write_header()){
@@ -519,23 +525,32 @@ int group_recorder::write_line(TIMESTAMP t1){
 	}
 
 	// write time_str
-	// recorder.c uses multiple formats, in the sense of "formatted or not".  This does not.
-	if(0 == gl_localtime(t1, &dt)){
-		gl_error("group_recorder::write_line(): error when converting the sync time");
-		/* TROUBLESHOOT
-			Unprintable timestamp.
-		 */
-		tape_status = TS_ERROR;
-		return 0;
-	}
-	if(0 == gl_strtime(&dt, time_str, sizeof(time_str) ) ){
-		gl_error("group_recorder::write_line(): error when writing the sync time as a string");
-		/* TROUBLESHOOT
-			Error printing the timestamp.
-		 */
-		tape_status = TS_ERROR;
-		return 0;
-	}
+	// Somebody else: recorder.c uses multiple formats, in the sense of "formatted or not".  This does not.
+    // TDH: It does now!
+    if (!format){
+        if(0 == gl_localtime(t1, &dt)){
+            gl_error("group_recorder::write_line(): error when converting the sync time");
+            /* TROUBLESHOOT
+                Unprintable timestamp.
+             */
+            tape_status = TS_ERROR;
+            return 0;
+        }
+        if(0 == gl_strtime(&dt, time_str, sizeof(time_str) ) ){
+            gl_error("group_recorder::write_line(): error when writing the sync time as a string");
+            /* TROUBLESHOOT
+                Error printing the timestamp.
+             */
+            tape_status = TS_ERROR;
+            return 0;
+        }
+    } else { //Just converting TIMESTAMP to char array
+        std::string number;
+        std::stringstream strstream;
+        strstream << (long long)t1;
+        strstream >> number;
+        strcpy(time_str, number.c_str());
+    }
 	// print line to file
 	if(0 >= fprintf(rec_file, "%s%s\n", time_str, line_buffer)){
 		gl_error("group_recorder::write_line(): error when writing to the output file");

@@ -242,6 +242,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 	PUBLISH_STRUCT(recorder,char32,xdata);
 	PUBLISH_STRUCT(recorder,char32,columns);
 	PUBLISH_STRUCT(recorder,int32,flush);
+    PUBLISH_STRUCT(recorder,bool,format);
 	
 	if(gl_publish_variable(recorder_class,
 		PT_double, "interval[s]", ((char*)&(my.dInterval) - (char *)&my),
@@ -279,6 +280,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 		PT_char1024, "plotcommands", ((char*)&(my.plotcommands) - (char *)&my),
 		PT_char32, "xdata", ((char*)&(my.xdata) - (char *)&my),
 		PT_char32, "columns", ((char*)&(my.columns) - (char *)&my),
+        PT_char32, "format", ((char*)&(my.format) - (char *)&my),
 		PT_enumeration, "output", ((char*)&(my.output) - (char *)&my),
 			PT_KEYWORD, "SCREEN", SCREEN,
 			PT_KEYWORD, "EPS",    EPS,
