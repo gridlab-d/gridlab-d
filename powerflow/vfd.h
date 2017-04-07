@@ -48,7 +48,15 @@ public:
 	double horsePowerRatedVFD;
 	double nominal_output_frequency;
 	double settleTime;
-	int vfdState;
+
+	enum {
+		VFD_STARTING=0,		/**< VFD is starting up */
+		VFD_CHANGING=1,		/**< VFD is changing frequency */
+		VFD_STEADY=2,	/**< VFD is in steady-state mode */
+		VFD_OFF=3	/**< VFD is off */
+	};
+	enumeration vfdState;
+
 	complex powerOutElectrical;
 	complex powerLosses;
 	complex powerInElectrical;

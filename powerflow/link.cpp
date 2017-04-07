@@ -4691,6 +4691,10 @@ void link_object::calculate_power()
 				indiv_power_out[1] = (a_mat[1][1].Re() == 0.0) ? 0.0 : t->voltage[1]*~current_out[1];
 				indiv_power_out[2] = (a_mat[2][2].Re() == 0.0) ? 0.0 : t->voltage[2]*~current_out[2];
 			}
+			else if (SpecialLnk == VFD)
+			{
+				;	//Do nothing, handled elsewhere
+			}
 			else
 			{
 				indiv_power_in[0] = f->voltage[0]*~current_in[0];

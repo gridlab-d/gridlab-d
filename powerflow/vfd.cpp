@@ -61,10 +61,13 @@ vfd::vfd(MODULE *mod) : link_object(mod)
 			
 			PT_complex, "voltage_out_a[A]", PADDR(settleVoltOut[0]), PT_DESCRIPTION, "Phase A output voltage of VFD",
 			PT_complex, "voltage_out_b[A]", PADDR(settleVoltOut[1]), PT_DESCRIPTION, "Phase B output voltage of VFD",
-			PT_complex, "voltage_out_c[A]", PADDR(settleVoltOut[2]), PT_DESCRIPTION, "Phase C output voltage of VFD",	
-
-			PT_complex, "vfd_state", PADDR(vfdState), PT_DESCRIPTION, "Current State of VFD (0 = VFD Starting State; 1 = VFD Speed Change State; 2 = VFD Steady State; 3 = VFD OFF State",	
+			PT_complex, "voltage_out_c[A]", PADDR(settleVoltOut[2]), PT_DESCRIPTION, "Phase C output voltage of VFD",
 			
+			PT_enumeration, "vfd_state", PADDR(vfdState), PT_DESCRIPTION, "Current state of the VFD",
+				PT_KEYWORD, "STARTING", (enumeration)VFD_STARTING,
+				PT_KEYWORD, "CHANGING", (enumeration)VFD_CHANGING,
+				PT_KEYWORD, "STEADY_STATE", (enumeration)VFD_STEADY,
+				PT_KEYWORD, "OFF", (enumeration)VFD_OFF,
 			
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
@@ -103,7 +106,7 @@ int vfd::create()
 	//Null the array pointers, just because
 	settleFreq = NULL;
 	settleFreq_length = 0;
-	vfdState = -1;
+	vfdState = VFD_OFF;
 	curr_array_position = 0;
 	freqArray = NULL;
 	force_array_realloc = false;
@@ -186,7 +189,7 @@ int vfd::init(OBJECT *parent)
 	/******************** THIS ERROR NEEDS TO BE FIXED -- If Vout is similar to Vin, VLL will ALWAYS be higher  ******************/
 	if (voltageLLRating > fNode->voltage[0].Mag())
 	{
-		GL_THROW("vfd: The rated_vfd_line_to_Line_voltage = %d must be less than or equal to input voltage (voltage_in_a) = %d to the vfd",voltageLLRating,fNode->voltage[0].Mag());
+		GL_THROW("vfd: The rated_vfd_line_to_Line_voltage = %f must be less than or equal to input voltage (voltage_in_a) = %f to the vfd",voltageLLRating,fNode->voltage[0].Mag());
 		/*  TROUBLESHOOT
 		The VFD output voltage value is greater than the input voltage to VFD. The VFD output voltage must be less than or equal to VFD input voltage value for the simulation to work
 		properly.
@@ -230,7 +233,7 @@ void vfd::initialParameters()
 	
 	if (driveFrequency < 6.67)
 	{
-		GL_THROW("Desired VFD Speed = %f should be greated than or equal to 200 RPM.", desiredRPM);
+		GL_THROW("Desired VFD Speed = %f should be greater than or equal to 200 RPM.", desiredRPM);
 		/*  TROUBLESHOOT
 		Starting frequency is 3Hz. Having a desired RPM at 200 would lead to ~6.6Hz of desired frequency. Although the VFD is not recommended to function at such low, the formulae will
 		at least do what they are supposed to.
@@ -258,7 +261,7 @@ void vfd::initialParameters()
 	}		
 	else
 	{
-		gl_warning("VFD output frequency = %d > nominal frequency = %d. Variable Torque mode results may be incorrect",driveFrequency, nominal_output_frequency);
+		gl_warning("VFD output frequency = %f > nominal frequency = %f. Variable Torque mode results may be incorrect",driveFrequency, nominal_output_frequency);
 		/*  TROUBLESHOOT
 		If the driveFrequency (which is nothing but the calculated VFD output frequency that is based on the desiredRPM) should be less than the nominal frequency for the VFD to function in
 		CONSTANT TORQUE MODE. Suggested to run the VFD in CONSTANT TORQUE mode as the VARIABLE TORQUE mode is not fully tested. Please change your input property (sesiredRPPM) values to the VFD.
@@ -285,14 +288,14 @@ void vfd::vfdCoreCalculations()
 	
 	if (settleVolt <= 0)
 	{
-		GL_THROW("Settling Voltage = %d should be positive", settleVolt);
+		GL_THROW("Settling Voltage = %f should be positive", settleVolt);
 		/*  TROUBLESHOOT
 		This would almost never happen. But in case if it happens for what-so-ever reasons, we have a catch.
 		*/
 	}
 	if (settleTime <=0)
 	{
-		GL_THROW("Settling Time = %d should be positive", settleTime);
+		GL_THROW("Settling Time = %f should be positive", settleTime);
 		/*  TROUBLESHOOT
 		This would almost never happen but if it does for reasons yet to know. Lets catch it.
 		*/
@@ -371,6 +374,9 @@ TIMESTAMP vfd::sync(TIMESTAMP t0)
 	
 	OBJECT *obj = OBJECTHDR(this);
 	TIMESTAMP t2;
+
+	if (t0 == 946702850)
+		t2 = TS_NEVER;
 	
 	t2 = link_object::sync(t0);
 	//Put VFD logic function here
@@ -502,27 +508,21 @@ STATUS vfd::VFD_current_injection(void)
 	}
 	
 	initialParameters();
-	
-	/*
-	vfdState = 0      ===> VFD Started - starting state 
-			 = 1      ===> Steady state
-			 = 2      ===> VFD is running - speed change state
-	*/
 		
 	if (prevDesiredFreq == 0.0)
 	{
-		vfdState = 0; //starting state
+		vfdState = VFD_STARTING; //starting state
 		startFrequency = 3;
 		settleTime = 0;
 	}
 	else if ((prevDesiredFreq != 0.0) && (prevDesiredFreq != driveFrequency))
 	{
-		vfdState = 1; //speed change state
+		vfdState = VFD_CHANGING; //speed change state
 		startFrequency = prevDesiredFreq; //Now that the frequency is changed, the starting frequency would be the exact last instance of previous stable frequency
 	
 		if (prevDesiredFreq <=0.0)
 		{
-			GL_THROW("At this point, Previous frequency = %d should be positive", prevDesiredFreq);
+			GL_THROW("At this point, Previous frequency = %f should be positive", prevDesiredFreq);
 			/*  TROUBLESHOOT
 			This would almost never happen but if it does for reasons yet to know. Lets catch it.
 			*/
@@ -531,13 +531,13 @@ STATUS vfd::VFD_current_injection(void)
 	}
 	else if ((prevDesiredFreq != 0.0) && (prevDesiredFreq == driveFrequency)) //In case the drive frequency doesnt change (i.e., the speed is constant/doesn't change)
 	{
-		vfdState = 2; //steady state
+		vfdState = VFD_STEADY; //steady state
 		settleTime = settleTime+1;			
 		//settleTime.push_back(settleTime.back()+1);// MATLAB equivalent is settleTime = [settleTime settleTime(end)+1]; %increment the time by 1 second - remember this simulation time is in seconds?
 		
 		if ((prevDesiredFreq <=0.0)|| (driveFrequency <= 0))
 		{
-			GL_THROW("VFD's previous frequency = %d and VFD's current Frequency = %d must be positive", prevDesiredFreq, driveFrequency);
+			GL_THROW("VFD's previous frequency = %f and VFD's current Frequency = %f must be positive", prevDesiredFreq, driveFrequency);
 			/*  TROUBLESHOOT
 			This would almost never happen but if it does for reasons yet to know. Lets catch it.
 			*/
@@ -548,12 +548,12 @@ STATUS vfd::VFD_current_injection(void)
 	}
 	else if ((prevDesiredFreq != 0.0) && (driveFrequency==0))
 	{
-		vfdState = 3; //OFF State
+		vfdState = VFD_OFF; //OFF State
 		startFrequency = prevDesiredFreq; //Now that the frequency is changed, the starting frequency would be the exact last instance of previous stable frequency
 	
 		if (prevDesiredFreq <=0.0)
 		{
-			GL_THROW("At this point, Previous frequency = %d should be positive", prevDesiredFreq);
+			GL_THROW("At this point, Previous frequency = %f should be positive", prevDesiredFreq);
 			/*  TROUBLESHOOT
 			This would almost never happen but if it does for reasons yet to know. Lets catch it.
 			*/
@@ -561,7 +561,7 @@ STATUS vfd::VFD_current_injection(void)
 		
 	}
 	
-	if ((vfdState == 0) || (vfdState == 1) || (vfdState == 3)) //VFD started or changing speed.
+	if ((vfdState == VFD_STARTING) || (vfdState == VFD_CHANGING) || (vfdState == VFD_OFF)) //VFD started or changing speed.
 	{
 		if (curr_time_value <= desiredFinalTime)
 		{
@@ -581,6 +581,9 @@ STATUS vfd::VFD_current_injection(void)
 				}
 			}
 			
+			//Zero the accumulator
+			meanFreqArray = 0.0;
+
 			for (temp_idx=0; temp_idx<stableTimeOrig; temp_idx++)
 			{
 				meanFreqArray += settleFreq[temp_idx];
