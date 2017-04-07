@@ -155,7 +155,7 @@ int transformer_configuration::create(void)
 
 int transformer_configuration::init(OBJECT *parent)
 {
-
+//	config = OBJECTDATA(configuration,transformer_configuration);
 	OBJECT *obj = OBJECTHDR(this);
 
 	// if aggregate rating is not set and 3 phase is specified
@@ -164,10 +164,27 @@ int transformer_configuration::init(OBJECT *parent)
 		// aggregate rating is some of phase ratings
 		kVA_rating = phaseA_kVA_rating+phaseB_kVA_rating+phaseC_kVA_rating;
 
-	// if none of the phase ratings are specified, then it implicitly 3 phase
-	if (phaseA_kVA_rating+phaseB_kVA_rating+phaseC_kVA_rating==0 && kVA_rating>0)
-		phaseA_kVA_rating = phaseB_kVA_rating = phaseC_kVA_rating = kVA_rating/3;
+	// if none of the phase ratings are specified, then it implicitly each gets 1/3rd
+	if (phaseA_kVA_rating+phaseB_kVA_rating+phaseC_kVA_rating==0 && kVA_rating>0){
+		if ((connect_type==WYE_WYE)||(connect_type==DELTA_DELTA)||(connect_type==DELTA_GWYE)){
+			gl_warning("Individual phase power rating not specified in transformer named %s. Using total power_rating divided by 3",obj->name);
+			phaseA_kVA_rating = phaseB_kVA_rating = phaseC_kVA_rating = kVA_rating/3;
+		}
+		if ((connect_type==SINGLE_PHASE)||(connect_type==SINGLE_PHASE_CENTER_TAPPED)){
+			GL_THROW("Single phase power rating is required in transformer %s",obj->name);
+		}
+		//if SINGLE_PHASE or SINGLE_PHASE_CENTER_TAPPED, and the phase rating for the connected single phase is not provided,
+		//it will error out during a check in transformer.cpp
+	}
 
+	if (phaseA_kVA_rating+phaseB_kVA_rating+phaseC_kVA_rating>0 && (phaseA_kVA_rating==0 || phaseB_kVA_rating==0 || phaseC_kVA_rating==0));{
+		if (connect_type==WYE_WYE){
+			gl_warning("Either provide individual phase power ratings for all connected phases or only overall power rating for WYE_WYE transformer configuration in %s",obj->name);
+		}
+		if (connect_type==DELTA_GWYE){
+			gl_warning("Either provide individual phase power ratings for all connected phases or only overall power rating for DELTA_GWYE transformer configuration in %s",obj->name);
+		}
+	}
 	// check connection type
 	if (connect_type==UNKNOWN)
 		GL_THROW("connection type not specified");
@@ -206,15 +223,18 @@ int transformer_configuration::init(OBJECT *parent)
 		By definition, kVA can only be a positive (or zero) number. But, for the sake of actual equipment,
 		we'll assume this can only be a positive number.  Please specify kVA_rating as a positive number.
 		*/
-	if (fabs((kVA_rating-phaseA_kVA_rating-phaseB_kVA_rating-phaseC_kVA_rating)/kVA_rating)>0.01)
-		GL_THROW("kVA rating mismatch across phases exceeds 1%");
-		/*  TROUBLESHOOT
-		Both the total kVA rating and the individual kVA phase ratings were set.  However, they differed by
-		more than 1%, leaving the model in a state of confusion.  Please check your kVA ratings and either
-		specify only the total rating (will evenly split rating between phases) or a by-phase rating.
-		*/
+	if ((phaseA_kVA_rating+phaseB_kVA_rating+phaseC_kVA_rating)>0 && kVA_rating >0){ // no point checking this if no individual kVA rating is specified
+		if (fabs((kVA_rating-phaseA_kVA_rating-phaseB_kVA_rating-phaseC_kVA_rating)/kVA_rating)>0.01){
+			GL_THROW("kVA rating mismatch across phases exceeds 1%");
+			/*  TROUBLESHOOT
+			Both the total kVA rating and the individual kVA phase ratings were set.  However, they differed by
+			more than 1%, leaving the model in a state of confusion.  Please check your kVA ratings and either
+			specify only the total rating (will evenly split rating between phases) or a by-phase rating.
+			*/
 
-	// check connection type and see if it support shunt or additional series impedance values
+		// check connection type and see if it support shunt or additional series impedance values
+		}
+	}
 	if (connect_type!=SINGLE_PHASE_CENTER_TAPPED)
 	{
 		if ((impedance1.Re() != 0.0 && impedance1.Im() != 0.0) || (impedance2.Re() != 0.0 && impedance2.Im() != 0.0))

@@ -23,7 +23,7 @@ clock{
 module assert;
 module tape; 
 module powerflow{ 
-     solver_method NR; 
+     solver_method FBS; 
       default_maximum_voltage_error 1e-6;
 }; 
 
@@ -17398,7 +17398,7 @@ object transformer_configuration:2944 {
      primary_voltage 22900.000 V; 
      secondary_voltage 480 V; 
      power_rating 100.0; 
-     powerA_rating 100.0; 
+//     powerA_rating 100.0; 
      resistance 0.00100; 
      reactance 0.00500; 
       shunt_impedance 496.060+540.795j;
@@ -17465,7 +17465,7 @@ object transformer_configuration:2949 {
      primary_voltage 22900.000 V; 
      secondary_voltage 480 V; 
      power_rating 75.0; 
-     powerC_rating 75.0; 
+//     powerC_rating 75.0; 
      resistance 0.00133; 
      reactance 0.00667; 
       shunt_impedance 443.910+438.504j;

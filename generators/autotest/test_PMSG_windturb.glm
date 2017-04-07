@@ -165,7 +165,7 @@ object transformer_configuration {
 	install_type PADMOUNT;                
 	primary_voltage 2401.7771 V;               
 	secondary_voltage 120 V;               
-	power_rating 25.0;                //KVA rating
+	powerA_rating 25.0;                //KVA rating
 	impedance 0.01924+0.08658j;                
 	shunt_impedance 409.8361+1844.2624j;                
 }   

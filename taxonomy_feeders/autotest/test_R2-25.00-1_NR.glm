@@ -10120,7 +10120,7 @@ object transformer_configuration:1612 {
      primary_voltage 24900.000 V; 
      secondary_voltage 480 V; 
      power_rating 10.0; 
-     powerC_rating 10.0; 
+    // powerC_rating 10.0; 
      resistance 0.01; 
      reactance 0.05; 
       shunt_impedance 308.320+280.971j;
@@ -10146,7 +10146,6 @@ object transformer_configuration:1614 {
      primary_voltage 24900.000 V; 
      secondary_voltage 480 V; 
      power_rating 25.0; 
-     powerC_rating 25.0; 
      resistance 0.00400; 
      reactance 0.02000; 
       shunt_impedance 339.610+386.891j;
@@ -10172,7 +10171,7 @@ object transformer_configuration:1616 {
      primary_voltage 24900.000 V; 
      secondary_voltage 480 V; 
      power_rating 100.0; 
-     powerC_rating 100.0; 
+     //powerC_rating 100.0; 
      resistance 0.00100; 
      reactance 0.00500; 
       shunt_impedance 496.060+521.057j;
@@ -10198,7 +10197,7 @@ object transformer_configuration:1618 {
      primary_voltage 24900.000 V; 
      secondary_voltage 480 V; 
      power_rating 25.0; 
-     powerB_rating 25.0; 
+     //powerB_rating 25.0; 
      resistance 0.00400; 
      reactance 0.02000; 
       shunt_impedance 339.610+346.436j;
@@ -10224,7 +10223,7 @@ object transformer_configuration:1620 {
      primary_voltage 24900.000 V; 
      secondary_voltage 480 V; 
      power_rating 10.0; 
-     powerC_rating 10.0; 
+     //powerC_rating 10.0; 
      resistance 0.01; 
      reactance 0.05; 
       shunt_impedance 308.320+289.415j;
@@ -10264,7 +10263,7 @@ object transformer_configuration:1623 {
      primary_voltage 24900.000 V; 
      secondary_voltage 480 V; 
      power_rating 62.5; 
-     powerC_rating 62.5; 
+     //powerC_rating 62.5; 
      resistance 0.00160; 
      reactance 0.00800; 
       shunt_impedance 417.835+433.637j;
@@ -10318,7 +10317,7 @@ object transformer_configuration:1627 {
      primary_voltage 24900.000 V; 
      secondary_voltage 480 V; 
      power_rating 50.0; 
-     powerC_rating 50.0; 
+     //powerC_rating 50.0; 
      resistance 0.00200; 
      reactance 0.01000; 
       shunt_impedance 391.760+432.405j;
@@ -10372,7 +10371,7 @@ object transformer_configuration:1631 {
      primary_voltage 24900.000 V; 
      secondary_voltage 480 V; 
      power_rating 87.5; 
-     powerC_rating 87.5; 
+     //powerC_rating 87.5; 
      resistance 0.00114; 
      reactance 0.00571; 
       shunt_impedance 469.985+472.476j;
@@ -10384,7 +10383,7 @@ object transformer_configuration:1632 {
      primary_voltage 24900.000 V; 
      secondary_voltage 480 V; 
      power_rating 75.0; 
-     powerA_rating 75.0; 
+     //powerA_rating 75.0; 
      resistance 0.00133; 
      reactance 0.00667; 
       shunt_impedance 443.910+436.013j;
@@ -10396,7 +10395,7 @@ object transformer_configuration:1633 {
      primary_voltage 24900.000 V; 
      secondary_voltage 480 V; 
      power_rating 87.5; 
-     powerC_rating 87.5; 
+     //powerC_rating 87.5; 
      resistance 0.00114; 
      reactance 0.00571; 
       shunt_impedance 469.985+553.289j;
@@ -10436,7 +10435,7 @@ object transformer_configuration:1636 {
      primary_voltage 24900.000 V; 
      secondary_voltage 480 V; 
      power_rating 75.0; 
-     powerC_rating 75.0; 
+     //powerC_rating 75.0; 
      resistance 0.00133; 
      reactance 0.00667; 
       shunt_impedance 443.910+551.797j;
@@ -10448,7 +10447,7 @@ object transformer_configuration:1637 {
      primary_voltage 24900.000 V; 
      secondary_voltage 480 V; 
      power_rating 50.0; 
-     powerC_rating 50.0; 
+     //powerC_rating 50.0; 
      resistance 0.00200; 
      reactance 0.01000; 
       shunt_impedance 391.760+373.290j;
@@ -10474,7 +10473,7 @@ object transformer_configuration:1639 {
      primary_voltage 24900.000 V; 
      secondary_voltage 480 V; 
      power_rating 62.5; 
-     powerC_rating 62.5; 
+     //powerC_rating 62.5; 
      resistance 0.00160; 
      reactance 0.00800; 
       shunt_impedance 417.835+366.589j;
@@ -10514,7 +10513,7 @@ object transformer_configuration:1642 {
      primary_voltage 24900.000 V; 
      secondary_voltage 480 V; 
      power_rating 15.0; 
-     powerC_rating 15.0; 
+     //powerC_rating 15.0; 
      resistance 0.00667; 
      reactance 0.03333; 
       shunt_impedance 318.750+293.269j;
@@ -10526,7 +10525,7 @@ object transformer_configuration:1643 {
      primary_voltage 24900.000 V; 
      secondary_voltage 480 V; 
      power_rating 15.0; 
-     powerC_rating 15.0; 
+     //powerC_rating 15.0; 
      resistance 0.00667; 
      reactance 0.03333; 
       shunt_impedance 318.750+336.822j;
