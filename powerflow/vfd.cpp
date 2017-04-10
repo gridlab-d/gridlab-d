@@ -231,12 +231,19 @@ void vfd::initialParameters()
 	
 	driveFrequency    = (desiredRPM*motorPoles)/120; //calculate the frequency per the RPM value
 	
-	if (driveFrequency < 6.67)
+	if ((driveFrequency > 6.67) && (driveFrequency < 6.67))
 	{
 		GL_THROW("Desired VFD Speed = %f should be greater than or equal to 200 RPM.", desiredRPM);
 		/*  TROUBLESHOOT
 		Starting frequency is 3Hz. Having a desired RPM at 200 would lead to ~6.6Hz of desired frequency. Although the VFD is not recommended to function at such low, the formulae will
 		at least do what they are supposed to.
+		*/
+	}
+	else if (driveFrequency == 0)
+	{
+		gl_warning("VFD is turned OFF");
+		/*  TROUBLESHOOT
+		This simply means VFD is turned OFF
 		*/
 	}
 	if (desiredRPM/ratedRPM <=0.75)
@@ -286,11 +293,18 @@ void vfd::vfdCoreCalculations()
 	complex temp_power_val;
 	settleVolt = VbyF*currSetFreq; // since the speed didnot change, prevDesiredFreq would be equal to driveFrequency
 	
-	if (settleVolt <= 0)
+	if (settleVolt < 0)
 	{
 		GL_THROW("Settling Voltage = %f should be positive", settleVolt);
 		/*  TROUBLESHOOT
 		This would almost never happen. But in case if it happens for what-so-ever reasons, we have a catch.
+		*/
+	}
+	else if (settleVolt == 0)
+	{
+		gl_warning("VFD is turned OFF");
+		/*  TROUBLESHOOT
+		This simply means VFD is turned OFF.
 		*/
 	}
 	if (settleTime <=0)
@@ -333,6 +347,11 @@ void vfd::vfdCoreCalculations()
 	}
 	
 	//Scale by the efficiency
+	if (vfdState == VFD_OFF)
+	{
+		powerOutElectrical = complex(0.0,0.0);
+	}
+	
 	powerInElectrical = powerOutElectrical*100.0/currEfficiency;
 	powerLosses = powerInElectrical - powerOutElectrical;
 
@@ -389,6 +408,7 @@ TIMESTAMP vfd::postsync(TIMESTAMP t0)
 	OBJECT *hdr = OBJECTHDR(this);
 	TIMESTAMP t1;
 
+	prev_time_value = curr_time_value;
 	//Normal link update
 	t1 = link_object::postsync(t0);
 		
@@ -509,13 +529,13 @@ STATUS vfd::VFD_current_injection(void)
 	
 	initialParameters();
 		
-	if (prevDesiredFreq == 0.0)
+	if ((prevDesiredFreq == 0.0) && (driveFrequency!=0))
 	{
 		vfdState = VFD_STARTING; //starting state
 		startFrequency = 3;
 		settleTime = 0;
 	}
-	else if ((prevDesiredFreq != 0.0) && (prevDesiredFreq != driveFrequency))
+	else if ((prevDesiredFreq != 0.0) && (driveFrequency != 0.0) && (prevDesiredFreq != driveFrequency))
 	{
 		vfdState = VFD_CHANGING; //speed change state
 		startFrequency = prevDesiredFreq; //Now that the frequency is changed, the starting frequency would be the exact last instance of previous stable frequency
@@ -546,22 +566,25 @@ STATUS vfd::VFD_current_injection(void)
 		currSetFreq = driveFrequency;
 		vfdCoreCalculations();
 	}
-	else if ((prevDesiredFreq != 0.0) && (driveFrequency==0))
+	else if (driveFrequency==0)
 	{
 		vfdState = VFD_OFF; //OFF State
-		startFrequency = prevDesiredFreq; //Now that the frequency is changed, the starting frequency would be the exact last instance of previous stable frequency
+		//startFrequency = prevDesiredFreq; //Now that the frequency is changed, the starting frequency would be the exact last instance of previous stable frequency
 	
-		if (prevDesiredFreq <=0.0)
+		if (prevDesiredFreq <0.0)
 		{
-			GL_THROW("At this point, Previous frequency = %f should be positive", prevDesiredFreq);
+			GL_THROW("Previous frequency = %f should be 0 in OFF state", prevDesiredFreq);
 			/*  TROUBLESHOOT
 			This would almost never happen but if it does for reasons yet to know. Lets catch it.
 			*/
 		}
+		prevDesiredFreq = driveFrequency;
+		currSetFreq = driveFrequency;
+		vfdCoreCalculations();
 		
 	}
 	
-	if ((vfdState == VFD_STARTING) || (vfdState == VFD_CHANGING) || (vfdState == VFD_OFF)) //VFD started or changing speed.
+	if ((vfdState == VFD_STARTING) || (vfdState == VFD_CHANGING)) //VFD started or changing speed.
 	{
 		if (curr_time_value <= desiredFinalTime)
 		{
@@ -595,7 +618,7 @@ STATUS vfd::VFD_current_injection(void)
 		
 			vfdCoreCalculations();
 			meanFreqArray = 0;
-			prev_time_value = curr_time_value;
+
 			if (curr_time_value != prev_time_value)
 			{
 				stableTime = stableTime-1;
@@ -604,7 +627,6 @@ STATUS vfd::VFD_current_injection(void)
 			if (curr_time_value == desiredFinalTime)
 			{
 				prevDesiredFreq = currSetFreq;//settleFreq[curr_array_position];
-				settleFreq = NULL;
 				stableTime = stableTimeOrig;
 			}
 		}
