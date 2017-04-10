@@ -95,10 +95,10 @@ object transformer_configuration {
 object transformer_configuration {
 	name tconfigspctB;
 	connect_type SINGLE_PHASE_CENTER_TAPPED;
-	power_rating 6000;
-	powerB_rating 6000;
-	primary_voltage 12470;
-	secondary_voltage 4160;
+//	power_rating 6000;
+	powerB_rating 2000;
+	primary_voltage 7200;//12470;
+	secondary_voltage 2400;//4160;
 	resistance 0.01;
 	reactance 0.06;
 }
@@ -106,8 +106,8 @@ object transformer_configuration {
 object transformer_configuration {
 	name tconfigyyspB;
 	connect_type SINGLE_PHASE;
-	power_rating 6000;
-	powerB_rating 6000;
+//	power_rating 6000;
+	powerB_rating 2000;
 	primary_voltage 12470;
 	secondary_voltage 4160;
 	resistance 0.01;
@@ -282,7 +282,7 @@ object transformer {
 	object complex_assert {
 		target power_losses;
 		within 0.5;
-		value 21759.1+130554j;
+		value 21762+130572j;//21759.1+130554j;
 	};
 }
 

@@ -19,7 +19,7 @@ clock{
 module assert;
 module tape; 
 module powerflow{ 
-     solver_method NR; 
+     solver_method FBS; 
       default_maximum_voltage_error 1e-6;
 }; 
 
@@ -6052,7 +6052,7 @@ object transformer_configuration:438 {
      primary_voltage 12470.000 V; 
      secondary_voltage 480 V; 
      power_rating 15.0; 
-     powerB_rating 15.0; 
+    // powerB_rating 15.0; 
      resistance 0.00667; 
      reactance 0.03333; 
       shunt_impedance 318.750+333.355j;
@@ -6064,7 +6064,7 @@ object transformer_configuration:439 {
      primary_voltage 12470.000 V; 
      secondary_voltage 480 V; 
      power_rating 15.0; 
-     powerA_rating 15.0; 
+     //powerA_rating 15.0; 
      resistance 0.00667; 
      reactance 0.03333; 
       shunt_impedance 318.750+304.680j;
@@ -6076,7 +6076,7 @@ object transformer_configuration:440 {
      primary_voltage 12470.000 V; 
      secondary_voltage 480 V; 
      power_rating 25.0; 
-     powerA_rating 25.0; 
+    // powerA_rating 25.0; 
      resistance 0.00400; 
      reactance 0.02000; 
       shunt_impedance 339.610+303.783j;
@@ -6088,7 +6088,7 @@ object transformer_configuration:441 {
      primary_voltage 12470.000 V; 
      secondary_voltage 480 V; 
      power_rating 5.0; 
-     powerB_rating 5.0; 
+    // powerB_rating 5.0; 
      resistance 0.01; 
      reactance 0.05; 
       shunt_impedance 297.890+293.255j;
@@ -6100,7 +6100,7 @@ object transformer_configuration:442 {
      primary_voltage 12470.000 V; 
      secondary_voltage 480 V; 
      power_rating 25.0; 
-     powerB_rating 25.0; 
+    // powerB_rating 25.0; 
      resistance 0.00400; 
      reactance 0.02000; 
       shunt_impedance 339.610+343.996j;
@@ -6112,7 +6112,7 @@ object transformer_configuration:443 {
      primary_voltage 12470.000 V; 
      secondary_voltage 480 V; 
      power_rating 10.0; 
-     powerB_rating 10.0; 
+     //powerB_rating 10.0; 
      resistance 0.01; 
      reactance 0.05; 
       shunt_impedance 308.320+324.027j;
@@ -6138,8 +6138,8 @@ object transformer_configuration:445 {
      primary_voltage 12470.000 V; 
      secondary_voltage 480 V; 
      power_rating 50.0; 
-     powerA_rating 25.0; 
-     powerB_rating 25.0; 
+    // powerA_rating 25.0; 
+    // powerB_rating 25.0; 
      resistance 0.00200; 
      reactance 0.01000; 
       shunt_impedance 391.760+373.842j;
@@ -6151,7 +6151,7 @@ object transformer_configuration:446 {
      primary_voltage 12470.000 V; 
      secondary_voltage 480 V; 
      power_rating 5.0; 
-     powerA_rating 5.0; 
+    // powerA_rating 5.0; 
      resistance 0.01; 
      reactance 0.05; 
       shunt_impedance 297.890+315.654j;
@@ -6191,7 +6191,7 @@ object transformer_configuration:449 {
      primary_voltage 12470.000 V; 
      secondary_voltage 480 V; 
      power_rating 25.0; 
-     powerC_rating 25.0; 
+    // powerC_rating 25.0; 
      resistance 0.00400; 
      reactance 0.02000; 
       shunt_impedance 339.610+336.560j;
@@ -6231,7 +6231,7 @@ object transformer_configuration:452 {
      primary_voltage 12470.000 V; 
      secondary_voltage 480 V; 
      power_rating 15.0; 
-     powerC_rating 15.0; 
+    // powerC_rating 15.0; 
      resistance 0.00667; 
      reactance 0.03333; 
       shunt_impedance 318.750+289.386j;
@@ -6257,9 +6257,9 @@ object transformer_configuration:454 {
      primary_voltage 12470.000 V; 
      secondary_voltage 480 V; 
      power_rating 10.0; 
-     powerA_rating 0.0; 
-     powerB_rating 0.0; 
-     powerC_rating 10.0; 
+    // powerA_rating 0.0; 
+    // powerB_rating 0.0; 
+    // powerC_rating 10.0; 
      resistance 0.01; 
      reactance 0.05; 
       shunt_impedance 308.320+278.684j;
