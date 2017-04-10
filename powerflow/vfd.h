@@ -71,6 +71,7 @@ private:
 	node *fNode;
 	node *tNode;
 	double curr_time_value;
+	double oldDriveFrequency;
 	double prev_time_value;
 	double stableTimeOrig;
 	double desiredFinalTime;

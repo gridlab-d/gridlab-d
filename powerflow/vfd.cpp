@@ -100,6 +100,7 @@ int vfd::create()
 	voltageLLRating = 480;
 	horsePowerRatedVFD = 75;
 	nominal_output_frequency = 60.0;
+	oldDriveFrequency = 0;
 	stableTime = 5;//1.45;
 	stableTimeOrig = stableTime;
 	
@@ -409,8 +410,10 @@ TIMESTAMP vfd::postsync(TIMESTAMP t0)
 	TIMESTAMP t1;
 
 	prev_time_value = curr_time_value;
+	oldDriveFrequency = driveFrequency;
 	//Normal link update
 	t1 = link_object::postsync(t0);
+	
 		
 	return t1;
 }
@@ -522,12 +525,17 @@ STATUS vfd::VFD_current_injection(void)
 	phasorVal[1] = (2*PI)/3;
 	phasorVal[2] = -(2*PI)/3;
 
+	initialParameters();
+	
+	if (oldDriveFrequency != driveFrequency)
+	{
+		stableTime = stableTimeOrig;
+	}
+	
 	if (stableTimeOrig == stableTime)
 	{
 		desiredFinalTime = curr_time_value+stableTimeOrig;
 	}
-	
-	initialParameters();
 		
 	if ((prevDesiredFreq == 0.0) && (driveFrequency!=0))
 	{
