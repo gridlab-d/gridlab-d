@@ -3692,7 +3692,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 			if (vv_operation) {
 				t2 = t1;
-				allowed_vv_action = (TIMESTAMP)floor((double)t1 + vv_lockout + 0.5);
+				allowed_vv_action = (TIMESTAMP)floor((double)t1 + vv_lockout);
 			}
 		}
 	}
