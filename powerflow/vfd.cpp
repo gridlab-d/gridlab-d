@@ -72,7 +72,7 @@ vfd::vfd(MODULE *mod) : link_object(mod)
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_vfd)==NULL)
 			GL_THROW("Unable to publish vfd deltamode function");
 
 		//Publish restoration-related function (current update)
@@ -165,8 +165,8 @@ int vfd::init(OBJECT *parent)
 	//stayTime = (int) stayTime+0.5; //rounding to an int
 
 	//Feeds in the current "stepping value", as well as assuming a global boolean is set
-	int status_val = alloc_freq_arrays(1.0);
-	if (status_val == 0)
+	STATUS status_val = alloc_freq_arrays(1.0);
+	if (status_val == FAILED)
 	{
 		GL_THROW("vfd:%d %s - Allocating the dynamic arrays for the frequency tracking failed",obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
@@ -431,8 +431,7 @@ complex vfd::complex_exp(double angle)
 }
 
 //Function to reallocate/allocate variable time arrays
-
-int vfd::alloc_freq_arrays(double delta_t_val)
+STATUS vfd::alloc_freq_arrays(double delta_t_val)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	int a_index;
@@ -473,7 +472,7 @@ int vfd::alloc_freq_arrays(double delta_t_val)
 			or one delta-timestep long. */
 			
 			
-			return 0;
+			return FAILED;
 		}
 		
 		//Allocate it
@@ -489,7 +488,7 @@ int vfd::alloc_freq_arrays(double delta_t_val)
 			an issue to the website. */
 			
 			
-			return 0;
+			return FAILED;
 		}
 		
 		//Zero it, just for giggles/paranoia
@@ -499,11 +498,11 @@ int vfd::alloc_freq_arrays(double delta_t_val)
 		}
 		
 		//Success
-		return 1;
+		return SUCCESS;
 	}
 	else //Already done and we weren't forced, so just assume we were called erroneously
 	{
-		return 1;
+		return SUCCESS;
 	}
 }
 
@@ -672,6 +671,58 @@ STATUS vfd::VFD_current_injection(void)
 	return SUCCESS;	//Change this, if there's a chance of failure
 }
 
+//Module-level deltamode call
+SIMULATIONMODE vfd::inter_deltaupdate_vfd(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
+{
+	double dt_value, deltatimedbl;
+	STATUS ret_value;
+
+	//See if we're the very first pass/etc
+	if ((delta_time == 0) && (iteration_count_val == 0) && (interupdate_pos == false))	//First deltamode call
+	{
+		//Compute the timestep as a double
+		dt_value = (double)dt/(double)DT_SECOND;
+
+		//Force it to update, just in case
+		force_array_realloc = true;
+
+		//Call the array allocation function
+		ret_value = alloc_freq_arrays(dt_value);
+
+		//Simple error check
+		if (ret_value == FAILED)
+		{
+			return SM_ERROR;
+		}
+	}
+
+	//Most of these items were copied from link.cpp's interupdate (need to replicate)
+	if (interupdate_pos == false)	//Before powerflow call
+	{
+		//Link presync stuff
+		NR_link_presync_fxn();
+
+		return SM_DELTA;	//Just return something other than SM_ERROR for this call
+	}
+	else	//After the call
+	{
+		//Update time tracking variable - is postsync in the main code, so putting it in an equivalent place here
+		if (iteration_count_val==0)	//Only update timestamp tracker on first iteration
+		{
+			//Get decimal timestamp value
+			deltatimedbl = (double)delta_time/(double)DT_SECOND;
+
+			//Update tracking variable
+			prev_time_value = (double)gl_globalclock + deltatimedbl;
+		}
+
+		//Call postsync
+		BOTH_link_postsync_fxn();
+
+		/********** Sri Nikhil -- how will VFDs want to behave with deltamode and time handling **********/
+		return SM_EVENT;	//VFD always just want out
+	}
+}//End module deltamode
 
 //Exposed function - external call to current injection
 EXPORT STATUS current_injection_update_VFD(OBJECT *obj)
@@ -757,6 +808,23 @@ EXPORT TIMESTAMP sync_vfd(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 EXPORT int isa_vfd(OBJECT *obj, char *classname)
 {
 	return OBJECTDATA(obj,vfd)->isa(classname);
+}
+
+//Deltamode export
+EXPORT SIMULATIONMODE interupdate_vfd(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
+{
+	vfd *my = OBJECTDATA(obj,vfd);
+	SIMULATIONMODE status = SM_ERROR;
+	try
+	{
+		status = my->inter_deltaupdate_vfd(delta_time,dt,iteration_count_val,interupdate_pos);
+		return status;
+	}
+	catch (char *msg)
+	{
+		gl_error("interupdate_link(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
+		return status;
+	}
 }
 
 /**@}*/

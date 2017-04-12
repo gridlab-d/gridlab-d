@@ -12,6 +12,7 @@
 #include "node.h"
 
 EXPORT STATUS current_injection_update_VFD(OBJECT *obj);
+EXPORT SIMULATIONMODE interupdate_vfd(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
 class vfd : public link_object
 {
@@ -33,12 +34,14 @@ public:
 	//class node *get_to(void) const;
 	//set get_flow(class node **from, class node **to) const; /* determine flow direction (return phases on which flow is reverse) */
 
-	int alloc_freq_arrays(double delta_t_val);
+	STATUS alloc_freq_arrays(double delta_t_val);
 	void initialParameters(void);
 	void vfdCoreCalculations(void);
 	complex complex_exp(double angle);
 	STATUS VFD_current_injection(void);
 	
+	SIMULATIONMODE inter_deltaupdate_vfd(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
+
 public:
 	double ratedRPM;
 	double motorPoles;
