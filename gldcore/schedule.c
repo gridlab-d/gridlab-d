@@ -276,7 +276,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 		}
 
 		/* load schedule based on weekday of Jan 1 */
-		for (calendar=0; calendar<14; calendar++) // don't do holidays (requires a special case that's not supported yet)
+		for (calendar=0; calendar<MAXCALENDARS; calendar++) // don't do holidays (requires a special case that's not supported yet)
 		{
 			unsigned int weekday = calendar%7;
 			unsigned int is_leapyear = (calendar>=7?1:0);
@@ -541,10 +541,10 @@ void *schedule_createproc(void *args)
 		/* construct the dtnext array */
 		unsigned char calendar;
 		int invariant = 1;
-		for (calendar=0; calendar<14; calendar++)
+		for (calendar=0; calendar<MAXCALENDARS; calendar++)
 		{
 			/* number of minutes that are indexed */
-			int t = sizeof(sch->dtnext[calendar])/sizeof(sch->dtnext[calendar][0])-1;
+			int t = MAXMINUTES-1;
 
 			/* assume that loopback results in a value change in 1 minute */
 			sch->dtnext[calendar][t] = 1; 
@@ -579,15 +579,19 @@ void *schedule_createproc(void *args)
 		}
 
 		/* special case for invariant schedule */
-		if (invariant)
-			memset(sch->dtnext,0,sizeof(sch->dtnext)); /* zero means never */
+		if (invariant) {
+			unsigned int cal;
+			for (cal=0; cal<MAXCALENDARS; cal++) {
+				memset(sch->dtnext[cal],0,sizeof(unsigned char)*MAXMINUTES); /* zero means never */
+			}
+		}
 
 		/* check for gaps in the schedule */
 		else
 		{
 			int ngaps = 0;
 			int ingap = 0;
-			for (calendar=0; calendar<14; calendar++)
+			for (calendar=0; calendar<MAXCALENDARS; calendar++)
 			{
 				int t;
 				for ( t=0; t<sizeof(sch->dtnext[calendar])/sizeof(sch->dtnext[calendar][0])-1; t++ )
@@ -773,12 +777,23 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 
 SCHEDULE *schedule_new(void)
 {
+	unsigned int cal;
+
 	/* create the schedule */
 	SCHEDULE *sch = (SCHEDULE*)malloc(sizeof(SCHEDULE));
 	if (sch==NULL) return NULL;
-
-	/* initialize */
 	memset(sch,0,sizeof(SCHEDULE));
+
+	for (cal=0; cal<MAXCALENDARS; cal++) {
+		sch->index[cal] = malloc(sizeof(unsigned char)*MAXMINUTES);
+		if (sch->index[cal]==NULL) return NULL;
+		memset(sch->index[cal],0,sizeof(unsigned char)*MAXMINUTES);
+
+		sch->dtnext[cal] = malloc(sizeof(unsigned char)*MAXMINUTES);
+		if (sch->dtnext[cal]==NULL) return NULL;
+		memset(sch->dtnext[cal],0,sizeof(unsigned char)*MAXMINUTES);
+	}
+
 #ifdef _DEBUG
 	sch->magic1 = sch->magic2 = SCHEDULE_MAGIC; 
 #endif
@@ -927,7 +942,7 @@ SCHEDULEINDEX schedule_index(SCHEDULE *sch, TIMESTAMP ts)
 	/* compute the minute of year */
 	min=(dt.yearday*24 + dt.hour)*60 + dt.minute;
 
-	if ( cal>=14 || min>=60*24*366 )
+	if ( cal>=MAXCALENDARS || min>=MAXMINUTES )
 		output_error("schedule_index(): timestamp %" FMT_INT64 "d has calendar %d minute %d which is invalid", ts, cal, min);
 
 	SET_CALENDAR(ref, cal);
@@ -945,7 +960,7 @@ double schedule_value(SCHEDULE *sch,		/**< the schedule to read */
 {
 	int32 cal = GET_CALENDAR(index);
 	int32 min = GET_MINUTE(index);
-	if ( cal>=14 || min>=60*24*366 )
+	if ( cal>=MAXCALENDARS || min>=MAXMINUTES )
 		output_error("schedule_index(): index %d has calendar %d minute %d which is invalid", index, cal, min);
 	return sch->data[sch->index[cal][min]];
 }
@@ -958,7 +973,7 @@ int32 schedule_dtnext(SCHEDULE *sch,			/**< the schedule to read */
 {
 	int32 cal = GET_CALENDAR(index);
 	int32 min = GET_MINUTE(index);
-	if ( cal>=14 || min>=60*24*366 )
+	if ( cal>=MAXCALENDARS || min>=MAXMINUTES )
 		output_error("schedule_dtnext(): index %d has calendar %d minute %d which is invalid", index, cal, min);
 	return sch->dtnext[cal][min];
 }
@@ -969,7 +984,7 @@ int32 schedule_duration(SCHEDULE *sch,			/**< the schedule to read */
 	int32 cal = GET_CALENDAR(index);
 	int32 min = GET_MINUTE(index);
 	int block;
-	if ( cal>=14 || min>=60*24*366 )
+	if ( cal>=MAXCALENDARS || min>=MAXMINUTES )
 		output_error("schedule_duration(): index %d has calendar %d minute %d which is invalid", index, cal, min);
 	block = (sch->index[cal][min]>>6)&MAXBLOCKS; // these change if MAXVALUES or MAXBLOCKS changes
 	return sch->minutes[block];
@@ -980,7 +995,7 @@ double schedule_weight(SCHEDULE *sch,			/**< the schedule to read */
 {
 	int32 cal = GET_CALENDAR(index);
 	int32 min = GET_MINUTE(index);
-	if ( cal>=14 || min>=60*24*366 )
+	if ( cal>=MAXCALENDARS || min>=MAXMINUTES )
 		output_error("schedule_weight(): index %d has calendar %d minute %d which is invalid", index, cal, min);
 	return sch->weight[sch->index[cal][min]];
 }
@@ -1355,7 +1370,7 @@ void schedule_dump(SCHEDULE *sch, char *file, char *mode)
 
 	fprintf(fp,"schedule %s { %s }\n", sch->name, sch->definition);
 	fprintf(fp,"sizeof(SCHEDULE) = %.3f MB\n", (double)sizeof(SCHEDULE)/1024/1024);
-	for (calendar=0; calendar<14; calendar++)
+	for (calendar=0; calendar<MAXCALENDARS; calendar++)
 	{
 		int year=0, month, y;
 		int daysinmonth[] = {31,((calendar&1)?29:28),31,30,31,30,31,31,30,31,30,31};
