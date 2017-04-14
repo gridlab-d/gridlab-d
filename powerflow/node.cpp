@@ -1584,6 +1584,16 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 						//Defined above
 					}
 
+					//Allocate the post update array
+					post_delta_functions = (FUNCTIONADDR*)gl_malloc(pwr_object_count*sizeof(FUNCTIONADDR));
+
+					//Make sure it worked
+					if (post_delta_functions == NULL)
+					{
+						GL_THROW("Failed to allocate deltamode objects function array for powerflow module!");
+						//Defined above
+					}
+
 					//Initialize index
 					pwr_object_current = 0;
 				}
@@ -1717,6 +1727,11 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 					//Defined above - assumes they exist in pairs
 				}
 			}
+
+			//Map up the post update, if we have one
+			post_delta_functions[temp_pwr_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"postupdate_pwr_object"));
+
+			//No null check, since this one just may not work (post update may not exist)
 
 			//Do any additional parent/child mappings for deltamode -- if necessary
 			if (((SubNode==CHILD) || (SubNode==DIFF_CHILD)) && (dynamic_norton==true))

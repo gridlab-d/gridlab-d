@@ -2532,6 +2532,11 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 				//Null out the frequency function - links don't do anything with it anyways
 				delta_freq_functions[temp_pwr_object_current] = NULL;
 
+				//Attempt to map up post-delta
+				post_delta_functions[temp_pwr_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"postupdate_pwr_object"));
+
+				//No null check, since this one just may not work (post update may not exist)
+
 				//See if we're an appropriate transformer and in-rush enabled
 				if ((enable_inrush_calculations == true) && (gl_object_isa(obj,"transformer","powerflow")))
 				{
