@@ -786,7 +786,7 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 			} else if (motor_trip == 1 && reconnect < reconnect_time-1) {
 				// we return to steady state if the motor is tripped
 				return SM_EVENT;
-			} else if (motor_status == statusOFF) {
+			} else if (motor_override == overrideOFF) {
 				//We're off at the moment, so assume back to event driven mode
 				return SM_EVENT;
 			}
