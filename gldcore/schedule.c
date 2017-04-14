@@ -175,17 +175,97 @@ int find_value_index (SCHEDULE *sch, /// schedule to search
 	return -1;
 }
 
+/* compiles a single dtnext array and report errors
+   returns 1 on success, 0 on failure */
+int schedule_compile_dtnext(SCHEDULE *sch, unsigned char calendar)
+{
+	/* construct the dtnext array */
+	int invariant = 1;
+
+	/* number of minutes that are indexed */
+	int t = MAXMINUTES-1;
+
+	/* assume that loopback results in a value change in 1 minute */
+	sch->dtnext[calendar][t] = 1;
+
+	/* scan backwards through time */
+	for (t--; t>=0; t--)
+	{
+		/* get this and the next index to values */
+		int index0 = sch->index[calendar][t];
+		int index1 = sch->index[calendar][t+1];
+
+		/* if the values are the same */
+		if (sch->data[index0]==sch->data[index1])
+		{
+			/* if we haven't reached the maximum delta-t (for unsigned char dtnext) */
+			if (sch->dtnext[calendar][t+1]<255)
+
+				/* add 1 minute to next values time */
+				sch->dtnext[calendar][t] = sch->dtnext[calendar][t+1] + 1;
+			else
+
+				/* start the time over at 1 minute (to next value) */
+				sch->dtnext[calendar][t] = 1;
+		}
+		else
+		{
+			/* start the time over at 1 minute (to next value) */
+			sch->dtnext[calendar][t] = 1;
+			invariant = 0;
+		}
+	}
+
+	/* special case for invariant schedule */
+	if (invariant) {
+		memset(sch->dtnext[calendar],0,sizeof(unsigned char)*MAXMINUTES); /* zero means never */
+	}
+
+	/* check for gaps in the schedule */
+	else
+	{
+		int ngaps = 0;
+		int ingap = 0;
+		{
+			int t;
+			for ( t=0; t<sizeof(sch->dtnext[calendar])/sizeof(sch->dtnext[calendar][0])-1; t++ )
+			{
+				if ( sch->dtnext[calendar][t] == 0 && !ingap)
+				{
+					int day = t/60/24;
+					int hour = t/60 - day*24;
+					int minute = t - hour*60 - day*24*60;
+					output_debug("schedule '%s' gap in calendar %d at day %d, hour %d, minute %d lasting %d minutes", sch->name, day, hour, minute);
+					ingap = 1;
+					ngaps++;
+				}
+				else if ( sch->dtnext[calendar][t] != 0 && ingap )
+					ingap = 0;
+			}
+		}
+		if (ngaps>0) {
+			output_error("schedule '%s' has %d gaps which may cause erroneous results", sch->name, ngaps);
+			/* TROUBLESHOOT
+		   The definition given the schedule has missing data that will cause time synchronization problems.
+		   Make sure that all the time covered by the schedule has values given.
+		   */
+			return 0;
+		}
+	}
+	return 1;
+}
+
 /* compiles a single schedule block and report errors
-   returns 1 on success, 0 on failure 
+   returns 1 on success, 0 on failure
  */
 
-int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
+int schedule_compile_block(SCHEDULE *sch, unsigned char block, char *blockname, char *blockdef)
 {
 	char *token = NULL;
 	unsigned int minute=0;
 
 	/* check block count */
-	if (sch->block>=MAXBLOCKS)
+	if (block>=MAXBLOCKS)
 	{
 		output_error("schedule_compile(SCHEDULE *sch='{name=%s, ...}') maximum number of blocks reached", sch->name);
 		/* TROUBLESHOOT
@@ -195,7 +275,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 	}
 
 	/* first index is always default value 0 */
-	sch->count[sch->block]=1;
+	sch->count[block]=1;
 	while ( (token=strtok(token==NULL?blockdef:NULL,";\r\n"))!=NULL )
 	{
 		struct {
@@ -213,7 +293,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 		}, *match;
 		unsigned int calendar;
 		double value=1.0; /* default value is 1.0 */
-		int ndx;
+		int ndx=-2;
 
 		/* remove leading whitespace */
 		while (isspace(*token)) token++;
@@ -246,19 +326,19 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 		}
 		else
 		{
-			if ((ndx=find_value_index(sch,sch->block,value))==-1)
+			if ((ndx=find_value_index(sch,block,value))==-1)
 			{	
-				ndx = sch->count[sch->block]++;
+				ndx = sch->count[block]++;
 				// bound checking
 				if(ndx > MAXVALUES-1)
 				{
-					output_error("schedule_compile(SCHEDULE *sch='{name=%s, ...}') maximum number of values reached in block %i", sch->name, sch->block);
+					output_error("schedule_compile(SCHEDULE *sch='{name=%s, ...}') maximum number of values reached in block %i", sch->name, block);
 					return 0;
 				}
-				sch->data[sch->block*MAXVALUES+ndx] = value;
+				sch->data[block*MAXVALUES+ndx] = value;
 			}
-			sch->sum[sch->block] += value;
-			sch->abs[sch->block] += (value<0?-value:value); // check to see if the value already exists in the value array, if so, don't ++index and use existing indexed value
+			sch->sum[block] += value;
+			sch->abs[block] += (value<0?-value:value); // check to see if the value already exists in the value array, if so, don't ++index and use existing indexed value
 		}
 
 		/* compile matching tables */
@@ -283,7 +363,11 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 			unsigned int calendar = weekday*2+is_leapyear;
 			unsigned int month;
 			unsigned int days[] = {31,(is_leapyear?29:28),31,30,31,30,31,31,30,31,30,31};
-			unsigned int n = sch->block*MAXVALUES + ndx;
+			unsigned int n = block*MAXVALUES + ndx;
+			if (ndx == -2) {
+				output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) internal index error", sch->name);
+				return 0;
+			}
 			minute = 0;
 			for (month=0; month<12; month++)
 			{
@@ -329,7 +413,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 									/* associate this time with the current value */
 									sch->index[calendar][minute] = n;
 									sch->weight[n]++;
-									sch->minutes[sch->block]++;
+									sch->minutes[block]++;
 
 								}
 							}
@@ -340,7 +424,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 			}
 		}
 	}
-	strcpy(sch->blockname[sch->block],blockname);
+	strcpy(sch->blockname[block],blockname);
 	return 1;
 }
 
@@ -362,7 +446,7 @@ int schedule_compile(SCHEDULE *sch)
 		/* remove leading whitespace */
 		while (isspace(*p)) p++;
 		strcpy(blockdef,p);
-		if (schedule_compile_block(sch,"*",blockdef))
+		if (schedule_compile_block(sch,sch->block,"*",blockdef))
 		{
 			sch->block++;
 			return 1;
@@ -484,7 +568,7 @@ int schedule_compile(SCHEDULE *sch)
 				state = CLOSE;
 				q = NULL;
 				p++;
-				if (schedule_compile_block(sch,blockname,blockdef))
+				if (schedule_compile_block(sch,sch->block,blockname,blockdef))
 					sch->block++;
 				else
 					return 0;
@@ -540,81 +624,9 @@ void *schedule_createproc(void *args)
 	{
 		/* construct the dtnext array */
 		unsigned char calendar;
-		int invariant = 1;
 		for (calendar=0; calendar<MAXCALENDARS; calendar++)
 		{
-			/* number of minutes that are indexed */
-			int t = MAXMINUTES-1;
-
-			/* assume that loopback results in a value change in 1 minute */
-			sch->dtnext[calendar][t] = 1; 
-
-			/* scan backwards through time */
-			for (t--; t>=0; t--)
-			{
-				/* get this and the next index to values */
-				int index0 = sch->index[calendar][t];
-				int index1 = sch->index[calendar][t+1];
-
-				/* if the values are the same */
-				if (sch->data[index0]==sch->data[index1])
-				{	
-					/* if we haven't reached the maximum delta-t (for unsigned char dtnext) */
-					if (sch->dtnext[calendar][t+1]<255)
-
-						/* add 1 minute to next values time */
-						sch->dtnext[calendar][t] = sch->dtnext[calendar][t+1] + 1;
-					else
-
-						/* start the time over at 1 minute (to next value) */
-						sch->dtnext[calendar][t] = 1;
-				}
-				else
-				{
-					/* start the time over at 1 minute (to next value) */
-					sch->dtnext[calendar][t] = 1;
-					invariant = 0;
-				}
-			}
-		}
-
-		/* special case for invariant schedule */
-		if (invariant) {
-			unsigned int cal;
-			for (cal=0; cal<MAXCALENDARS; cal++) {
-				memset(sch->dtnext[cal],0,sizeof(unsigned char)*MAXMINUTES); /* zero means never */
-			}
-		}
-
-		/* check for gaps in the schedule */
-		else
-		{
-			int ngaps = 0;
-			int ingap = 0;
-			for (calendar=0; calendar<MAXCALENDARS; calendar++)
-			{
-				int t;
-				for ( t=0; t<sizeof(sch->dtnext[calendar])/sizeof(sch->dtnext[calendar][0])-1; t++ )
-				{
-					if ( sch->dtnext[calendar][t] == 0 && !ingap)
-					{
-						int day = t/60/24;
-						int hour = t/60 - day*24;
-						int minute = t - hour*60 - day*24*60;
-						output_debug("schedule '%s' gap in calendar %d at day %d, hour %d, minute %d lasting %d minutes", sch->name, day, hour, minute);
-						ingap = 1;
-						ngaps++;
-					}
-					else if ( sch->dtnext[calendar][t] != 0 && ingap )
-						ingap = 0;
-				}
-			}
-			if (ngaps>0)
-				output_error("schedule '%s' has %d gaps which may cause erroneous results", sch->name, ngaps);
-				/* TROUBLESHOOT
-					The definition given the schedule has missing data that will cause time synchronization problems.
-					Make sure that all the time covered by the schedule has values given.
-				 */
+			schedule_compile_dtnext(sch, calendar);
 		}
 
 		/* normalize */
