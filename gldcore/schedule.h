@@ -65,6 +65,7 @@ struct s_schedule {
 	char *name;							/**< the name of the schedule */
 	char *definition;					/**< the definition string of the schedule */
 	char *blockname[MAXBLOCKS];			/**< the name of each block */
+	char *blockdef[MAXBLOCKS];			/**< the definition of each block */
 	unsigned char block;				/**< the last block used (4 max) */
 	unsigned char *index[MAXCALENDARS];	/**< the schedule index (enough room for all 14 annual calendars to 1 minute resolution) */
 	unsigned char *dtnext[MAXCALENDARS];/**< the time until the next schedule change (in minutes) */

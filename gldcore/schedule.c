@@ -298,26 +298,48 @@ int schedule_compile_block(SCHEDULE *sch, unsigned char block, char *blockname, 
 
 		/* remove leading whitespace */
 		while (isspace(*token)) token++;
-		if (strcmp(token,"")==0)
+
+		/* skip blank lines */
+		if (strcmp(token,"")==0) {
 			continue;
-		if ( strcmp(token,"nonzero")==0 )
+		}
+
+		/* check for normalization, etc */
+		if ( strcmp(token,"nonzero")==0 ) {
 			sch->flags |= SN_NONZERO;
-		else if ( strcmp(token,"positive")==0 )
+			continue;
+		}
+		else if ( strcmp(token,"positive")==0 ) {
 			sch->flags |= SN_POSITIVE;
-		else if ( strcmp(token,"boolean")==0 )
+			continue;
+		}
+		else if ( strcmp(token,"boolean")==0 ) {
 			sch->flags |= SN_BOOLEAN;
-		else if ( strcmp(token,"normal")==0 )
+			continue;
+		}
+		else if ( strcmp(token,"normal")==0 ) {
 			sch->flags |= SN_NORMAL;
-		else if ( strcmp(token,"weighted")==0 )
+			continue;
+		}
+		else if ( strcmp(token,"weighted")==0 ) {
 			sch->flags |= SN_NORMAL|SN_WEIGHTED;
-		else if ( strcmp(token,"absolute")==0 )
+			continue;
+		}
+		else if ( strcmp(token,"absolute")==0 ) {
 			sch->flags |= SN_NORMAL|SN_ABSOLUTE;
-		else if ( strcmp(token,"interpolated")==0 )
-		{
+			continue;
+		}
+		else if ( strcmp(token,"interpolated")==0 ) {
 			sch->flags |= SN_INTERPOLATED;
 			interpolated_schedules = TRUE;
+			continue;
 		}
-		else if (sscanf(token,"%s%*[ \t]%s%*[ \t]%s%*[ \t]%s%*[ \t]%s%*[ \t]%lf",matcher[0].pattern,matcher[1].pattern,matcher[2].pattern,matcher[3].pattern,matcher[4].pattern,&value)<5) /* value can be missing -> defaults to 1.0 */
+
+		/* at this point we assume a line that needs parsing */
+		/* value can be missing -> defaults to 1.0 */
+		if (sscanf(token,"%s%*[ \t]%s%*[ \t]%s%*[ \t]%s%*[ \t]%s%*[ \t]%lf",
+					matcher[0].pattern, matcher[1].pattern, matcher[2].pattern,
+					matcher[3].pattern, matcher[4].pattern, &value)<5)
 		{
 			output_error("schedule_compile(SCHEDULE *sch='{name=%s, ...}') ignored an invalid definition '%s'", sch->name, token);
 			/* TROUBLESHOOT
@@ -327,6 +349,7 @@ int schedule_compile_block(SCHEDULE *sch, unsigned char block, char *blockname, 
 		}
 		else
 		{
+			/* a valid line was scanned */
 			if ((ndx=find_value_index(sch,block,value))==-1)
 			{	
 				ndx = sch->count[block]++;
@@ -451,6 +474,11 @@ int schedule_compile(SCHEDULE *sch)
 		/* remove leading whitespace */
 		while (isspace(*p)) p++;
 		strcpy(blockdef,p);
+		sch->blockdef[sch->block] = strdup(p);
+		if (sch->blockdef[sch->block] == NULL) {
+			output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) insufficient memory for block definition", sch->name);
+			return 0;
+		}
 		if (schedule_compile_block(sch,sch->block,"*",blockdef))
 		{
 			sch->block++;
@@ -573,6 +601,11 @@ int schedule_compile(SCHEDULE *sch)
 				state = CLOSE;
 				q = NULL;
 				p++;
+				sch->blockdef[sch->block] = strdup(blockdef);
+				if (sch->blockdef[sch->block] == NULL) {
+					output_error("schedule %s: block %s insufficient memory for block definition", sch->name, blockname);
+					return 0;
+				}
 				if (schedule_compile_block(sch,sch->block,blockname,blockdef))
 					sch->block++;
 				else
@@ -836,6 +869,7 @@ void schedule_free(SCHEDULE *sch)
 	if (sch->definition) free(sch->definition);
 	for (i=0; i<MAXBLOCKS; i++) {
 		if (sch->blockname[i]) free(sch->blockname[i]);
+		if (sch->blockdef[i]) free(sch->blockdef[i]);
 	}
 	for (i=0; i<MAXCALENDARS; i++) {
 		if (sch->index[i]) free(sch->index[i]);
