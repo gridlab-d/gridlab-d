@@ -35,6 +35,8 @@
 #include "class.h"
 #include "timestamp.h"
 
+#define MAXNAME 64
+#define MAXDEFINITION 65536
 #define MAXCALENDARS 14
 #define MAXMINUTES (366*24*60)
 #define MAXBLOCKS 4
@@ -60,9 +62,9 @@ struct s_schedule {
 #ifdef _DEBUG
 	unsigned int magic1;	/* values between magic1 and magic2 should never change once compiled */
 #endif
-	char name[64];						/**< the name of the schedule */
-	char definition[65536];				/**< the definition string of the schedule */
-	char blockname[MAXBLOCKS][64];		/**< the name of each block */
+	char *name;							/**< the name of the schedule */
+	char *definition;					/**< the definition string of the schedule */
+	char *blockname[MAXBLOCKS];			/**< the name of each block */
 	unsigned char block;				/**< the last block used (4 max) */
 	unsigned char *index[MAXCALENDARS];	/**< the schedule index (enough room for all 14 annual calendars to 1 minute resolution) */
 	unsigned char *dtnext[MAXCALENDARS];/**< the time until the next schedule change (in minutes) */
@@ -101,6 +103,7 @@ SCHEDULE *schedule_getnext(SCHEDULE *sch);
 SCHEDULE *schedule_find_byname(char *name);
 SCHEDULE *schedule_create(char *name, char *definition);
 SCHEDULE *schedule_new(void);
+void schedule_free(SCHEDULE *sch);
 void schedule_add(SCHEDULE *sch);
 int schedule_validate(SCHEDULE *sch, int flags);
 int schedule_normalize(SCHEDULE *sch, int flags);

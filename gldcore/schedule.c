@@ -228,7 +228,8 @@ int schedule_compile_dtnext(SCHEDULE *sch, unsigned char calendar)
 		int ingap = 0;
 		{
 			int t;
-			for ( t=0; t<sizeof(sch->dtnext[calendar])/sizeof(sch->dtnext[calendar][0])-1; t++ )
+			int t_limit = MAXVALUES-1;
+			for ( t=0; t<t_limit; t++ )
 			{
 				if ( sch->dtnext[calendar][t] == 0 && !ingap)
 				{
@@ -424,7 +425,11 @@ int schedule_compile_block(SCHEDULE *sch, unsigned char block, char *blockname, 
 			}
 		}
 	}
-	strcpy(sch->blockname[block],blockname);
+	sch->blockname[block] = strdup(blockname);
+	if (sch->blockname[block] == NULL) {
+		output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) insufficient memory for block name", sch->name);
+		return 0;
+	}
 	return 1;
 }
 
@@ -434,8 +439,8 @@ int schedule_compile_block(SCHEDULE *sch, unsigned char block, char *blockname, 
 int schedule_compile(SCHEDULE *sch)
 {
 	char *p = sch->definition, *q = NULL;
-	char blockdef[65536];
-	char blockname[64];
+	char blockdef[MAXDEFINITION];
+	char blockname[MAXNAME];
 	enum {INIT, NAME, OPEN, BLOCK, CLOSE} state = INIT;
 	int comment=0;
 	
@@ -505,7 +510,7 @@ int schedule_compile(SCHEDULE *sch)
 			}
 			else /* valid text */
 			{
-				if (q<blockname+sizeof(blockname)-1)
+				if (q<blockname+MAXNAME-1)
 				{
 					*q++ = *p++;
 					*q = '\0';
@@ -575,14 +580,14 @@ int schedule_compile(SCHEDULE *sch)
 			}
 			else 
 			{
-				if (q<blockdef+sizeof(blockdef)-1)
+				if (q<blockdef+MAXDEFINITION-1)
 				{
 					*q++ = *p++;
 					*q = '\0';
 				}
 				else
 				{
-					output_error("schedule name is too long");
+					output_error("schedule %s: block %s definition is too long", sch->name, blockname);
 					/* TROUBLESHOOT
 						The definition given the schedule is too long to be used.  Use a definition that is less than 1024 characters and try again.
 					 */
@@ -730,26 +735,36 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 		return NULL;
 	}
 	output_debug("schedule '%s' uses %.1f MB of memory", name, sizeof(SCHEDULE)/1000000.0);
-	if (strlen(name)>=sizeof(sch->name))
+	if (strlen(name)>=MAXNAME)
 	{
 		output_error("schedule_create(char *name='%s', char *definition='%s') name too long)", name, definition);
 		/* TROUBLESHOOT
 			The name given the schedule is too long to be used.  Use a name that is less than 64 characters and try again.
 		 */
-		free(sch);
+		schedule_free(sch);
 		return NULL;
 	}
-	strcpy(sch->name,name);
-	if (strlen(definition)>=sizeof(sch->definition))
+	sch->name = strdup(name);
+	if (sch->name == NULL) {
+		output_error("schedule_create(char *name='%s', char *definition='%s') insufficient memory for name)", name, definition);
+		schedule_free(sch);
+		return NULL;
+	}
+	if (strlen(definition)>=MAXDEFINITION)
 	{
 		output_error("schedule_create(char *name='%s', char *definition='%s') definition too long)", name, definition);
 		/* TROUBLESHOOT
 			The definition given the schedule is too long to be used.  Use a definition that is less than 1024 characters and try again.
 		 */
-		free(sch);
+		schedule_free(sch);
 		return NULL;
 	}
-	strcpy(sch->definition,definition);
+	sch->definition = strdup(definition);
+	if (sch->definition == NULL) {
+		output_error("schedule_create(char *name='%s', char *definition='%s') insufficient memory for definition)", name, definition);
+		schedule_free(sch);
+		return NULL;
+	}
 
 	/* attach to schedule list */
 	schedule_add(sch);
@@ -765,7 +780,7 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 		else
 		{
 			/* error message should be given by schedule_compile */
-			free(sch);
+			schedule_free(sch);
 			sch = NULL;
 			return NULL;
 		}
@@ -813,6 +828,22 @@ SCHEDULE *schedule_new(void)
 	sch->next_t = TS_NEVER;
 	return sch;
 }
+
+void schedule_free(SCHEDULE *sch)
+{
+	unsigned char i;
+	if (sch->name) free(sch->name);
+	if (sch->definition) free(sch->definition);
+	for (i=0; i<MAXBLOCKS; i++) {
+		if (sch->blockname[i]) free(sch->blockname[i]);
+	}
+	for (i=0; i<MAXCALENDARS; i++) {
+		if (sch->index[i]) free(sch->index[i]);
+		if (sch->dtnext[i]) free(sch->dtnext[i]);
+	}
+	free(sch);
+}
+
 void schedule_add(SCHEDULE *sch)
 {
 	sch->next = schedule_list;
