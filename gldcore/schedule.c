@@ -869,16 +869,10 @@ void *schedule_createproc(void *args)
 	if (schedule_compile(sch))
 	{
 		unsigned char calendar;
-		/* lazily construct the index */
+		/* construct the dtnext array for valid calendars */
 		for (calendar=0; calendar<MAXCALENDARS; calendar++)
 		{
-			schedule_recompile(sch, calendar);
-		}
-
-		/* construct the dtnext array */
-		for (calendar=0; calendar<MAXCALENDARS; calendar++)
-		{
-			schedule_compile_dtnext(sch, calendar);
+			if (sch->dtnext[calendar] != 0) schedule_compile_dtnext(sch, calendar);
 		}
 
 		/* normalize */
@@ -1052,23 +1046,57 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 SCHEDULE *schedule_new(void)
 {
 	unsigned int cal;
+	unsigned int cal_lo;
+	unsigned int cal_hi;
+	DATETIME dt_starttime;
+	DATETIME dt_starttime_lo;
+	DATETIME dt_starttime_hi;
 
 	/* create the schedule */
 	SCHEDULE *sch = (SCHEDULE*)malloc(sizeof(SCHEDULE));
 	if (sch==NULL) return NULL;
 	memset(sch,0,sizeof(SCHEDULE));
 
-#if 0
-	for (cal=0; cal<MAXCALENDARS; cal++) {
-		sch->index[cal] = malloc(sizeof(unsigned char)*MAXMINUTES);
-		if (sch->index[cal]==NULL) return NULL;
-		memset(sch->index[cal],0,sizeof(unsigned char)*MAXMINUTES);
-
-		sch->dtnext[cal] = malloc(sizeof(unsigned char)*MAXMINUTES);
-		if (sch->dtnext[cal]==NULL) return NULL;
-		memset(sch->dtnext[cal],0,sizeof(unsigned char)*MAXMINUTES);
+	/* only allocate the initial calendar(s) */
+	TIMESTAMP ONE_WEEK = 604800;
+	if (!local_datetime(global_starttime, &dt_starttime)) {
+		throw_exception("schedule_new() unable to determine local starttime", global_starttime);
 	}
-#endif
+	if (!local_datetime(global_starttime-ONE_WEEK, &dt_starttime_lo)) {
+		throw_exception("schedule_new() unable to determine local starttime left skewed", global_starttime);
+	}
+	if (!local_datetime(global_starttime+ONE_WEEK, &dt_starttime_hi)) {
+		throw_exception("schedule_new() unable to determine local starttime right skewed", global_starttime);
+	}
+	cal = ((dt_starttime.weekday-dt_starttime.yearday+53*7)%7)*2 + ISLEAPYEAR(dt_starttime.year);
+	cal_lo = ((dt_starttime_lo.weekday-dt_starttime_lo.yearday+53*7)%7)*2 + ISLEAPYEAR(dt_starttime_lo.year);
+	cal_hi = ((dt_starttime_hi.weekday-dt_starttime_hi.yearday+53*7)%7)*2 + ISLEAPYEAR(dt_starttime_hi.year);
+
+	/* create the first calendar needed */
+	sch->index[cal] = malloc(sizeof(unsigned char)*MAXMINUTES);
+	if (sch->index[cal]==NULL) return NULL;
+	memset(sch->index[cal],0,sizeof(unsigned char)*MAXMINUTES);
+	sch->dtnext[cal] = malloc(sizeof(unsigned char)*MAXMINUTES);
+	if (sch->dtnext[cal]==NULL) return NULL;
+	memset(sch->dtnext[cal],0,sizeof(unsigned char)*MAXMINUTES);
+	/* create left skewed calendar, if needed */
+	if (cal_lo != cal) {
+		sch->index[cal_lo] = malloc(sizeof(unsigned char)*MAXMINUTES);
+		if (sch->index[cal_lo]==NULL) return NULL;
+		memset(sch->index[cal_lo],0,sizeof(unsigned char)*MAXMINUTES);
+		sch->dtnext[cal_lo] = malloc(sizeof(unsigned char)*MAXMINUTES);
+		if (sch->dtnext[cal_lo]==NULL) return NULL;
+		memset(sch->dtnext[cal_lo],0,sizeof(unsigned char)*MAXMINUTES);
+	}
+	/* create right skewed calendar, if needed */
+	if (cal_hi != cal) {
+		sch->index[cal_hi] = malloc(sizeof(unsigned char)*MAXMINUTES);
+		if (sch->index[cal_hi]==NULL) return NULL;
+		memset(sch->index[cal_hi],0,sizeof(unsigned char)*MAXMINUTES);
+		sch->dtnext[cal_hi] = malloc(sizeof(unsigned char)*MAXMINUTES);
+		if (sch->dtnext[cal_hi]==NULL) return NULL;
+		memset(sch->dtnext[cal_hi],0,sizeof(unsigned char)*MAXMINUTES);
+	}
 
 #ifdef _DEBUG
 	sch->magic1 = sch->magic2 = SCHEDULE_MAGIC; 
@@ -1240,6 +1268,11 @@ SCHEDULEINDEX schedule_index(SCHEDULE *sch, TIMESTAMP ts)
 
 	SET_CALENDAR(ref, cal);
 	SET_MINUTE(ref, min);
+
+	if ( sch->index[cal] == 0) {
+		schedule_recompile(sch, cal);
+		schedule_compile_dtnext(sch, cal);
+	}
 
 	/* got it */
 	return ref;
