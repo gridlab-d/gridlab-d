@@ -147,13 +147,13 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 				//Determine what our return is
 				if (function_status == SM_DELTA)
 				{
-					gl_verbose("Reliability object:%d - %s - requested a deltamode reiteration",delta_objects[curr_object_number]->id,(delta_objects[curr_object_number]->name ? delta_objects[curr_object_number]->name : "Unnamed"));
+					gl_verbose("Reliability object:%d - %s - requested deltamode to continue",delta_objects[curr_object_number]->id,(delta_objects[curr_object_number]->name ? delta_objects[curr_object_number]->name : "Unnamed"));
 
 					event_driven = false;
 				}
 				else if (function_status == SM_DELTA_ITER)
 				{
-					gl_verbose("Reliability object:%d - %s - requested deltamode to continue",delta_objects[curr_object_number]->id,(delta_objects[curr_object_number]->name ? delta_objects[curr_object_number]->name : "Unnamed"));
+					gl_verbose("Reliability object:%d - %s - requested a deltamode reiteration",delta_objects[curr_object_number]->id,(delta_objects[curr_object_number]->name ? delta_objects[curr_object_number]->name : "Unnamed"));
 
 					event_driven = false;
 					delta_iter = true;

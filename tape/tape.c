@@ -582,7 +582,10 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 					{
 						/* determine whether deltamode remains necessary */
 						if (my->next.ns!=0)
+						{
 							mode = SM_DELTA;
+							gl_verbose("Tape object:%d - %s - requested deltamode to continue",obj->id,(obj->name ? obj->name : "Unnamed"));
+						}
 					}
 				}/*End not TS_NEVER */
 			}

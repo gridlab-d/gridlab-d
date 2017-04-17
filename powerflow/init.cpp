@@ -373,13 +373,13 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 				//Determine what our return is
 				if (function_status == SM_DELTA)
 				{
-					gl_verbose("Powerflow object:%d - %s - requested a deltamode reiteration",delta_objects[curr_object_number]->id,(delta_objects[curr_object_number]->name ? delta_objects[curr_object_number]->name : "Unnamed"));
+					gl_verbose("Powerflow object:%d - %s - requested deltamode to continue",delta_objects[curr_object_number]->id,(delta_objects[curr_object_number]->name ? delta_objects[curr_object_number]->name : "Unnamed"));
 
 					event_driven = false;
 				}
 				else if (function_status == SM_DELTA_ITER)
 				{
-					gl_verbose("Powerflow object:%d - %s - requested deltamode to continue",delta_objects[curr_object_number]->id,(delta_objects[curr_object_number]->name ? delta_objects[curr_object_number]->name : "Unnamed"));
+					gl_verbose("Powerflow object:%d - %s - requested a deltamode reiteration",delta_objects[curr_object_number]->id,(delta_objects[curr_object_number]->name ? delta_objects[curr_object_number]->name : "Unnamed"));
 
 					event_driven = false;
 					delta_iter = true;
@@ -437,6 +437,10 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 //Return value is a SUCCESS/FAILURE
 EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 {
+	unsigned int64 seconds_advance, temp_time;
+	int curr_object_number;
+	STATUS function_status;
+
 	if (enable_subsecond_models == true)
 	{
 		//Final item of transitioning out is resetting the next timestep so a smaller one can take its place
@@ -444,11 +448,60 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 
 		//Deflag the timestep variable as well
 		deltatimestep_running = -1.0;
-		
+
+		//See how far we progressed - cast just in case (code pulled from core - so should align)
+		seconds_advance = (unsigned int64)(dt/DT_SECOND);
+
+		//See if it rounded
+		temp_time = dt - ((unsigned int64)(seconds_advance)*DT_SECOND);
+
+		//Store the "pre-incremented" seconds advance time - used to set object clocks
+		//so being the previous second is better for deltamode->supersecond transitions
+		deltamode_supersec_endtime = t0 + seconds_advance;
+
+		/* Determine if an increment is necessary */
+		if (temp_time != 0)
+			seconds_advance++;
+
+		//Update the tracking variable
+		deltamode_endtime = t0 + seconds_advance;
+		deltamode_endtime_dbl = (double)(t0) + ((double)(dt)/double(DT_SECOND));
+
+		//Loop through delta objects and update the execution times - at this point, mostly just a "call for the sake of a call" function
+		for (curr_object_number=0; curr_object_number<pwr_object_count; curr_object_number++)
+		{
+			//See if it has a post-update function
+			if (post_delta_functions[curr_object_number] != NULL)
+			{
+				//See if we're in service or not
+				if ((delta_objects[curr_object_number]->in_svc_double <= gl_globaldeltaclock) && (delta_objects[curr_object_number]->out_svc_double >= gl_globaldeltaclock))
+				{
+					//Call the actual function
+					function_status = ((STATUS (*)(OBJECT *))(*post_delta_functions[curr_object_number]))(delta_objects[curr_object_number]);
+				}
+				else //Not in service
+					function_status = SUCCESS;
+
+				//Make sure we worked
+				if (function_status == FAILED)
+				{
+					gl_error("Powerflow object:%s - failed post-deltamode update",delta_objects[curr_object_number]->name);
+					/*  TROUBLESHOOT
+					While calling the individual object post-deltamode calculations, an error occurred.  Please try again.
+					If the error persists, please submit your code and a bug report via the issues system.
+					*/
+					return FAILED;
+				}
+				//Default else - successful, keep going
+			}
+			//Default else -- we didn't have one, so just skip
+		}
+
+		//We always succeed from this, just because (unless we failed above)
 		return SUCCESS;
 	}
-	else	//Deltamode not wanted, just "succeed"
-	{
+	else	//Deltamode not needed -- no idea how we even got here
+	{	//Not sure how it would ever get here, but just jump out if that's the case
 		return SUCCESS;
 	}
 }
