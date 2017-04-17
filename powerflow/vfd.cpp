@@ -103,6 +103,14 @@ int vfd::create()
 	oldDriveFrequency = 0;
 	stableTime = 5;//1.45;
 	stableTimeOrig = stableTime;
+	if (deltatimestep_running < 0)
+	{
+		settleTime = 1;
+	}
+	else
+	{
+		settleTime = deltamode_timestep;
+	}
 	
 	//Null the array pointers, just because
 	settleFreq = NULL;
@@ -160,6 +168,18 @@ int vfd::init(OBJECT *parent)
 	}
 	//stableTime = (int) (100*stableTime+0.5); //rounding to an int. *************************NIKHIL, UNCOMMENT THIS AFTER DEBUGGING*****************
 	
+	if (deltatimestep_running < 0)
+	{
+		if (stableTime - (int) stableTime > 0.0)
+		{
+			stableTime = (int) (stableTime+1);
+		}	
+	}
+	//else if (deltatimestep_running > 0)
+	//{
+	//	stableTime = stableTime + deltamode_timestep;
+	//}
+		
 	//stayTime = (int) (0.0206*stableTime+0.5);
 	//stayTime = roundf(0.0206*stableTime * 100)/100;
 	//stayTime = (int) stayTime+0.5; //rounding to an int
@@ -540,7 +560,7 @@ STATUS vfd::VFD_current_injection(void)
 	{
 		vfdState = VFD_STARTING; //starting state
 		startFrequency = 3;
-		settleTime = 0;
+		//settleTime = 1;
 	}
 	else if ((prevDesiredFreq != 0.0) && (driveFrequency != 0.0) && (prevDesiredFreq != driveFrequency))
 	{
@@ -559,7 +579,6 @@ STATUS vfd::VFD_current_injection(void)
 	else if ((prevDesiredFreq != 0.0) && (prevDesiredFreq == driveFrequency)) //In case the drive frequency doesnt change (i.e., the speed is constant/doesn't change)
 	{
 		vfdState = VFD_STEADY; //steady state
-		settleTime = settleTime+1;			
 		//settleTime.push_back(settleTime.back()+1);// MATLAB equivalent is settleTime = [settleTime settleTime(end)+1]; %increment the time by 1 second - remember this simulation time is in seconds?
 		
 		if ((prevDesiredFreq <=0.0)|| (driveFrequency <= 0))
@@ -572,6 +591,14 @@ STATUS vfd::VFD_current_injection(void)
 		prevDesiredFreq = driveFrequency;
 		currSetFreq = driveFrequency;
 		vfdCoreCalculations();
+		if (deltatimestep_running < 0)
+		{
+			settleTime = settleTime+1;
+		}
+		else
+		{
+			settleTime = settleTime+deltamode_timestep;
+		}
 	}
 	else if (driveFrequency==0)
 	{
@@ -588,7 +615,14 @@ STATUS vfd::VFD_current_injection(void)
 		prevDesiredFreq = driveFrequency;
 		currSetFreq = driveFrequency;
 		vfdCoreCalculations();
-		
+		if (deltatimestep_running < 0)
+		{
+			settleTime = 1;
+		}
+		else
+		{
+			settleTime = deltamode_timestep;
+		}		
 	}
 	
 	if ((vfdState == VFD_STARTING) || (vfdState == VFD_CHANGING)) //VFD started or changing speed.
@@ -621,9 +655,15 @@ STATUS vfd::VFD_current_injection(void)
 			meanFreqArray /= (double)stableTimeOrig;
 
 			currSetFreq = roundf(meanFreqArray* 1000) / 1000;
-			settleTime = settleTime+1;
-		
 			vfdCoreCalculations();
+			if (deltatimestep_running < 0)
+			{
+				settleTime = settleTime+1;
+			}
+			else
+			{
+				settleTime = settleTime+deltamode_timestep;
+			}
 			meanFreqArray = 0;
 
 			if (curr_time_value != prev_time_value)
