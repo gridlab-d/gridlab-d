@@ -171,7 +171,7 @@ int transformer_configuration::init(OBJECT *parent)
 			phaseA_kVA_rating = phaseB_kVA_rating = phaseC_kVA_rating = kVA_rating/3;
 		}
 		if ((connect_type==SINGLE_PHASE)||(connect_type==SINGLE_PHASE_CENTER_TAPPED)){
-			GL_THROW("Single phase power rating not specified in transformer %s. Assigning total power_rating to single phase",obj->name);
+			gl_warning("Single phase power rating not specified in transformer %s. Assigning total power_rating to single phase",obj->name);
 			phaseA_kVA_rating = phaseB_kVA_rating = phaseC_kVA_rating = kVA_rating;
 		}
 		//if SINGLE_PHASE or SINGLE_PHASE_CENTER_TAPPED, and the phase rating for the connected single phase is not provided,
