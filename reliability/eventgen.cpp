@@ -28,6 +28,10 @@
 #include "gridlabd.h"
 #include "eventgen.h"
 
+#include <string.h>
+#include <iostream>
+using namespace::std;
+
 #define TSNVRDBL 9223372036854775808.0
 
 CLASS *eventgen::oclass = NULL;			/**< a pointer to the CLASS definition in GridLAB-D's core */
@@ -78,6 +82,8 @@ eventgen::eventgen(MODULE *module)
 			PT_char1024, "manual_outages", PADDR(manual_fault_list),
 			PT_double, "max_outage_length[s]", PADDR(max_outage_length_dbl),
 			PT_int32, "max_simultaneous_faults", PADDR(max_simult_faults),
+			PT_char256, "controlled_switch", PADDR(controlled_switch),PT_DESCRIPTION,"Name of a switch to manually fault/un-fault",
+			PT_int32, "switch_state", PADDR(switch_state),PT_DESCRIPTION,"Current state (1=closed, 0=open) for the controlled switch",
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 			if (gl_publish_function(oclass,	"add_event", (FUNCTIONADDR)add_event)==NULL)
 				GL_THROW("Unable to publish reliability event adding function");
@@ -92,6 +98,9 @@ int eventgen::create(void)
 	target_group[0] = '\0';
 	fault_type[0] = '\0';
 	manual_fault_list[0] = '\0';
+	controlled_switch[0] = '\0';
+	switch_state = 1;
+	last_switch_state = 1;
 
 	//Initial distributions set up for old reliability defaults
 	failure_dist = EXPONENTIAL;
@@ -644,6 +653,20 @@ TIMESTAMP eventgen::presync(TIMESTAMP t0, TIMESTAMP t1)
 	curr_time_interrupted = 0;
 	curr_time_interrupted_sec = 0;
 	diff_count_needed = false;
+
+	// look for events coming from FNCS
+	if (strlen(controlled_switch) > 0)	{
+		if (switch_state != last_switch_state) {
+			cout << "Switch " << controlled_switch << " changing status to " << switch_state << " at " << t0 << " going to " << t1 << endl;
+			OBJECT *swt = gl_get_object(controlled_switch);
+			if (switch_state == 1) { // closed
+				add_unhandled_event (swt, "SW-ABC", t0 - 50, 50, 24, true);
+			} else { // open
+				add_unhandled_event (swt, "SW-ABC", t0, TS_NEVER, -1, false);
+			}
+			last_switch_state = switch_state;
+		}
+	}
 
 	//Check if first run, if so, do some additional work
 	if (next_event_time==0)

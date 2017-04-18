@@ -242,6 +242,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 	PUBLISH_STRUCT(recorder,char32,xdata);
 	PUBLISH_STRUCT(recorder,char32,columns);
 	PUBLISH_STRUCT(recorder,int32,flush);
+    PUBLISH_STRUCT(recorder,bool,format);
 	
 	if(gl_publish_variable(recorder_class,
 		PT_double, "interval[s]", ((char*)&(my.dInterval) - (char *)&my),
@@ -279,6 +280,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 		PT_char1024, "plotcommands", ((char*)&(my.plotcommands) - (char *)&my),
 		PT_char32, "xdata", ((char*)&(my.xdata) - (char *)&my),
 		PT_char32, "columns", ((char*)&(my.columns) - (char *)&my),
+        PT_char32, "format", ((char*)&(my.format) - (char *)&my),
 		PT_enumeration, "output", ((char*)&(my.output) - (char *)&my),
 			PT_KEYWORD, "SCREEN", SCREEN,
 			PT_KEYWORD, "EPS",    EPS,
@@ -529,47 +531,62 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 					/* Check to make sure we've be initialized -- if a deltamode timestep is first, it may be before this was initialized */
 					if (my->target == NULL)	/* Not set yet */
 					{
-						/* Make sure we actually opened the file (this part is new - paranoia check */
+						/*  This fails on Mac builds under 4.0 for some odd reason.  Commenting code and putting an error for now.
+						Will be investigated further for 4.1 release.
+						*/
+
+						gl_error("deltamode player: player \"%s\" has a deltamode timestep starting it - please avoid this",(obj->name ? obj->name : "(anon)"));
+						/*  TROUBLESHOOT
+						Starting a player with a deltamode timestep causes segmentation faults.  A fix was developed, but still has issues with
+						certain platforms and must be investigated further.  For now, start all player files with non-deltamode timesteps.  This
+						issues is documented at #1001 on the GridLAB-D Git site, and it expected to be resolved in release 4.1.
+						*/
+
+						return SM_ERROR;
+
+						/* *** Commenting -- all existing comment braces turned to ***
+						*** Make sure we actually opened the file (this part is new - paranoia check ***
 						if (my->status != TS_OPEN)
 						{
 							gl_error("deltamode player: player \"%s\" has not been opened yet!",obj->name?obj->name:"(anon)");
-							/*  TROUBLESHOOT
+							***  TROUBLESHOOT
 							While attempting to start a player with a deltamode timestep, it was found the player hasn't been opened yet.
 							Please submit your code and a bug report via the issue system.  To work around this, put a non-deltamode timestep
 							at the beginning of your player file
-							*/
+							***
 
-							/* Set our status, just in case */
+							*** Set our status, just in case ***
 							my->status = TS_ERROR;
 
 							return SM_ERROR;
 						}
 
-						/* Code copied from player sync */
+						*** Code copied from player sync ***
 						my->target = player_link_properties(my, obj->parent, my->property);
 
-						/* Make sure it worked */
+						*** Make sure it worked ***
 						if (my->target==NULL){
 							gl_error("deltamode player: Unable to find property \"%s\" in object %s", my->property, obj->name?obj->name:"(anon)");
-							/*  TROUBLESHOOT
+							***  TROUBLESHOOT
 							While attempting to link up the property of a player in deltamode, the property could not be found.  Make sure the object
 							exists and has the specified property and try again.
-							*/
+							***
 							my->status = TS_ERROR;
 							return SM_ERROR;
 						}
 
-						/* Do an initialization of it */
+						*** Do an initialization of it ***
 						if (my->target!=NULL)
 						{
-							OBJECT *target = obj->parent ? obj->parent : obj; /* target myself if no parent */
+							OBJECT *target = obj->parent ? obj->parent : obj; *** target myself if no parent ***
 							player_write_properties(my, target, my->target, my->next.value);
 						}
 
-						/* Copy the current value into our "tracking" variable */
+						*** Copy the current value into our "tracking" variable ***
 						my->delta_track.ns = my->next.ns;
 						my->delta_track.ts = my->next.ts;
 						memcpy(my->delta_track.value,my->next.value,sizeof(char1024));
+						*/
 					}/* Target not already set */
 
 					gl_set_value(obj->parent,GETADDR(obj->parent,my->target),my->next.value,my->target); /* pointer => int64 */

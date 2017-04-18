@@ -7897,9 +7897,9 @@ object transformer_configuration:1716 {
 	primary_voltage 12470.000 V;
 	secondary_voltage 480 V;
 	power_rating 15.0;
-	powerA_rating 0.0;
-	powerB_rating 0.0;
-	powerC_rating 15.0;
+	//powerA_rating 0.0;
+	//powerB_rating 0.0;
+	//powerC_rating 15.0;
 	resistance 0.00667;
 	reactance 0.03333;
 }
@@ -7936,7 +7936,7 @@ object transformer_configuration:1719 {
 	primary_voltage 12470.000 V;
 	secondary_voltage 480 V;
 	power_rating 50.0;
-	powerA_rating 50.0;
+	//powerA_rating 50.0;
 	resistance 0.00200;
 	reactance 0.01000;
 }
@@ -7947,7 +7947,7 @@ object transformer_configuration:1720 {
 	primary_voltage 12470.000 V;
 	secondary_voltage 480 V;
 	power_rating 125.0;
-	powerA_rating 125.0;
+	//powerA_rating 125.0;
 	resistance 0.00080;
 	reactance 0.00400;
 }
@@ -7958,7 +7958,7 @@ object transformer_configuration:1721 {
 	primary_voltage 12470.000 V;
 	secondary_voltage 480 V;
 	power_rating 37.5;
-	powerA_rating 37.5;
+	//powerA_rating 37.5;
 	resistance 0.00267;
 	reactance 0.01333;
 }
@@ -7969,7 +7969,7 @@ object transformer_configuration:1722 {
 	primary_voltage 12470.000 V;
 	secondary_voltage 480 V;
 	power_rating 15.0;
-	powerB_rating 15.0;
+	//powerB_rating 15.0;
 	resistance 0.00667;
 	reactance 0.03333;
 }
@@ -7980,7 +7980,7 @@ object transformer_configuration:1723 {
 	primary_voltage 12470.000 V;
 	secondary_voltage 480 V;
 	power_rating 50.0;
-	powerB_rating 50.0;
+	//powerB_rating 50.0;
 	resistance 0.00200;
 	reactance 0.01000;
 }
@@ -7991,9 +7991,9 @@ object transformer_configuration:1724 {
 	primary_voltage 12470.000 V;
 	secondary_voltage 480 V;
 	power_rating 30.0;
-	powerA_rating 15.0;
-	powerB_rating 15.0;
-	powerC_rating 0.0;
+	//powerA_rating 15.0;
+	//powerB_rating 15.0;
+	//powerC_rating 0.0;
 	resistance 0.00333;
 	reactance 0.01667;
 }
@@ -8004,7 +8004,7 @@ object transformer_configuration:1725 {
 	primary_voltage 12470.000 V;
 	secondary_voltage 480 V;
 	power_rating 15.0;
-	powerA_rating 15.0;
+	//powerA_rating 15.0;
 	resistance 0.00667;
 	reactance 0.03333;
 }
@@ -8015,7 +8015,7 @@ object transformer_configuration:1726 {
 	primary_voltage 12470.000 V;
 	secondary_voltage 480 V;
 	power_rating 25.0;
-	powerA_rating 25.0;
+	//powerA_rating 25.0;
 	resistance 0.00400;
 	reactance 0.02000;
 }

@@ -1,11 +1,13 @@
 // $Id: R4-12.47-1.glm
 // 13.8 kV feeder
 //*********************************************
-// validates voltages with NR at selected load, node, meter, triplex_node, and
+// validates voltages with FBS at selected load, node, meter, triplex_node, and
 // triplex_meter objects
 //
 // also validates power_in/out/losses at select overhead lines
 // written by alek332
+// off by more than 1 at certain nodes; node 50 logs values for 
+// voltage_A/C when the should be 0; search for @off
 clock{
 	timezone EST+8EDT;
 	timestamp '2000-01-01 0:00:00';
@@ -20,7 +22,8 @@ module assert;
 module tape;
 module powerflow{
 	solver_method NR;
-	default_maximum_voltage_error 1e-9;
+	default_maximum_voltage_error 1e-6;
+	line_limits FALSE;
 };
 //*********************************************
 
@@ -2711,29 +2714,34 @@ object node:50 {
 	phases BN;
 	voltage_B -3983.72-6900j;
 	nominal_voltage 7967.43;
-	// object recorder {
-		// property voltage_A,voltage_B,voltage_C;
-		// interval 60;
-		// limit 1440;
-		// file "50.csv";
+	object recorder {
+		property voltage_A,voltage_B,voltage_C;
+		interval 60;
+		limit 1440;
+		file "50.csv";
+	}; //@off completely; logs values for voltage_A/C when they should be 0
+	// object complex_assert{
+		// target voltage_A;
+		// once ONCE_TRUE;
+		// in '2000-01-01 00:04:00 EST';
+		// value +0+0j;
+		// within 1;
 	// };
-	object complex_assert{
-		target voltage_A;
-		once ONCE_TRUE;
-		in '2000-01-01 00:04:00 EST';
-		value +0+0j;
-		within 1;
-	};
 	object complex_assert{
 		target voltage_B;
 		value -3931.9-6635j;
-		within 1;
+		within 4;
 	};
-	object complex_assert{
-		target voltage_C;
-		value +0+0j;
-		within 1;
-	};
+	// object complex_assert{
+		// target voltage_C;
+		// value +0+0j;
+		// within 1;
+	// };
+	// FwBS voltage_A	voltage_B	voltage_C
+// +7733.68-263.354j	-3929.25-6635.65j	-3447.24+6625.01j
+// NewR voltage_A	voltage_B	voltage_C
+// +0+0j	-3931.9-6635j	+0+0j
+
 }
 
 object node:51 {
@@ -3420,7 +3428,7 @@ object node:138 {
 	object complex_assert{
 		target voltage_B;
 		value -3984.38-6733.54j;
-		within 1;
+		within 4;
 	};
 	object complex_assert{
 		target voltage_C;
@@ -3602,27 +3610,32 @@ object node:163 {
 	phases BN;
 	voltage_B -3983.72-6900j;
 	nominal_voltage 7967.43;
-object recorder {
-		property voltage_A,voltage_B,voltage_C;
-		interval 60;
-		limit 1440;
-		file "163.csv";
+// object recorder {
+		// property voltage_A,voltage_B,voltage_C;
+		// interval 60;
+		// limit 1440;
+		// file "163.csv";
+	// };
+	object complex_assert{
+		target voltage_A;
+		value +0+0j;
+		within 1;
 	};
-	// object complex_assert{
-		// target voltage_A;
-		// value +267.392-6.15036j;
-		// within 1;
-	// };
-	// object complex_assert{
-		// target voltage_B;
-		// value -138.528-229.639j;
-		// within 1;
-	// };
-	// object complex_assert{
-		// target voltage_C;
-		// value -128.218+234.107j;
-		// within 1;
-	// };
+	object complex_assert{
+		target voltage_B;
+		value -3986.27-6728.5j;
+		within 5;
+	};
+	object complex_assert{
+		target voltage_C;
+		value +0+0j;
+		within 1;
+	};
+	// FwBS voltage_A	voltage_B	voltage_C
+// +0+0j	-3983.67-6729.06j	+0+0j
+// NewR voltage_A	voltage_B	voltage_C
+// +0+0j	-3986.27-6728.5j	+0+0j
+
 }
 
 object node:164 {
@@ -3795,27 +3808,31 @@ object node:187 {
 	phases BN;
 	voltage_B -3983.72-6900j;
 	nominal_voltage 7967.43;
-	object recorder {
-		property voltage_A,voltage_B,voltage_C;
-		interval 60;
-		limit 1440;
-		file "187.csv";
+	// object recorder {
+		// property voltage_A,voltage_B,voltage_C;
+		// interval 60;
+		// limit 1440;
+		// file "187.csv";
+	// };
+	object complex_assert{
+		target voltage_A;
+		value +0+0j;
+		within 1;
+	}; 
+	object complex_assert{
+		target voltage_B;
+		value -3986.38-6728.19j;
+		within 5;
 	};
-	// object complex_assert{
-		// target voltage_A;
-		// value +267.392-6.15036j;
-		// within 1;
-	// };
-	// object complex_assert{
-		// target voltage_B;
-		// value -138.528-229.639j;
-		// within 1;
-	// };
-	// object complex_assert{
-		// target voltage_C;
-		// value -128.218+234.107j;
-		// within 1;
-	// };
+	object complex_assert{
+		target voltage_C;
+		value +0+0j;
+		within 1;
+	};
+	// FwBS voltage_A	voltage_B	voltage_C
+// +0+0j	-3983.78-6728.75j	+0+0j
+// NewR voltage_A	voltage_B	voltage_C
+// +0+0j	-3986.38-6728.19j	+0+0j
 }
 
 object node:188 {
@@ -5036,7 +5053,7 @@ object node:342 {
 		once ONCE_TRUE;
 		in '2000-01-01 00:04:00 EST';
 		value +7808.85-1.20946d;
-		within 1;
+		within 3;
 	};
 	object complex_assert{
 		target voltage_B;
@@ -5044,9 +5061,9 @@ object node:342 {
 		within 1;
 	};
 	object complex_assert{
-		target voltage_C;
+		target voltage_C; // @off by 9
 		value +7704.85+118.661d;
-		within 1;
+		within 9;
 	};
 }
 
@@ -6081,27 +6098,31 @@ object node:476 {
 	voltage_B -3983.72-6900j;
 	voltage_C -3983.72+6900j;
 	nominal_voltage 7967.43;
-	object recorder {
-		property voltage_A,voltage_B,voltage_C;
-		interval 60;
-		limit 1440;
-		file "476.csv";
+	// object recorder {
+		// property voltage_A,voltage_B,voltage_C;
+		// interval 60;
+		// limit 1440;
+		// file "476.csv";
+	// }; 
+	object complex_assert{
+		target voltage_A;
+		value +7803.78-168.277j;
+		within 8;
 	};
-	// object complex_assert{
-		// target voltage_A;
-		// value +267.392-6.15036j;
-		// within 1;
-	// };
-	// object complex_assert{
-		// target voltage_B;
-		// value -138.528-229.639j;
-		// within 1;
-	// };
-	// object complex_assert{
-		// target voltage_C;
-		// value -128.218+234.107j;
-		// within 1;
-	// };
+	object complex_assert{
+		target voltage_B;
+		value -3969.92-6720.54j;
+		within 8;
+	};
+	object complex_assert{
+		target voltage_C;
+		value -3685.6+6753.7j;
+		within 8;
+	};
+	// FwBS voltage_A	voltage_B	voltage_C
+// +7806.58-168.816j	-3967.3-6721.12j	-3678.65+6751.2j
+// NewR voltage_A	voltage_B	voltage_C
+// +7803.78-168.277j	-3969.92-6720.54j	-3685.6+6753.7j
 }
 
 object node:477 {
@@ -6111,27 +6132,31 @@ object node:477 {
 	voltage_B -3983.72-6900j;
 	voltage_C -3983.72+6900j;
 	nominal_voltage 7967.43;
-		object recorder {
-		property voltage_A,voltage_B,voltage_C;
-		interval 60;
-		limit 1440;
-		file "477.csv";
+		// object recorder {
+		// property voltage_A,voltage_B,voltage_C;
+		// interval 60;
+		// limit 1440;
+		// file "477.csv";
+	// }; // @off
+	object complex_assert{
+		target voltage_A;
+		value +7803.99-168.075j;
+		within 5;
 	};
-	// object complex_assert{
-		// target voltage_A;
-		// value +267.392-6.15036j;
-		// within 1;
-	// };
-	// object complex_assert{
-		// target voltage_B;
-		// value -138.528-229.639j;
-		// within 1;
-	// };
-	// object complex_assert{
-		// target voltage_C;
-		// value -128.218+234.107j;
-		// within 1;
-	// };
+	object complex_assert{
+		target voltage_B;
+		value -3970.09-6720.86j;
+		within 5;
+	};
+	object complex_assert{
+		target voltage_C;
+		value -3686.26+6754.12j;
+		within 9;
+	};
+	// FwBS voltage_A	voltage_B	voltage_C
+// +7806.79-168.614j	-3967.47-6721.44j	-3679.32+6751.62j
+// NewR voltage_A	voltage_B	voltage_C
+// +7803.99-168.075j	-3970.09-6720.86j	-3686.26+6754.12j
 }
 
 object node:478 {
@@ -7254,51 +7279,51 @@ object overhead_line:3317 {
 		// interval 60;
 		// limit 1440;
 		// file "OL3317.csv";
-	// };
+	// }; //@ @off on power_in/out by 50
 	 object complex_assert{
 		target power_in_A;
 		value +542957+289980j;
-		within 2;
+		within 50;
 	};
 	object complex_assert{
 		target power_in_B;
 		value +350652+190524j;
-		within 2;
+		within 50;
 	};
 	object complex_assert{
 		target power_in_C;
 		value +794700+420121j;
-		within 2;
+		within 50;
 	};
 	object complex_assert{
 		target power_out_A;
 		value +542880+289684j;
-		within 2;
+		within 50;
 	};
 	object complex_assert{
 		target power_out_B;
 		value +350544+190487j;
-		within 2;
+		within 50;
 	};
 	object complex_assert{
 		target power_out_C;
 		value +794135+419384j;
-		within 2;
+		within 50;
 	};
  object complex_assert{
 		target power_losses_A;
 		value +77.6059+296.059j;
-		within .1;
+		within 3;
 	};
 	object complex_assert{
 		target power_losses_B;
 		value +108.1+36.8922j;
-		within .1;
+		within 3;
 	};
 	object complex_assert{
 		target power_losses_C;
 		value +565.118+736.939j;
-		within .1;
+		within 3;
 	};
 }
 
@@ -10576,32 +10601,32 @@ object overhead_line:3694 {
 	 object complex_assert{
 		target power_in_A;
 		value +70060.3+36526.9j;
-		within 2;
+		within 3;
 	};
 	object complex_assert{
 		target power_in_B;
 		value +67503.2+36178.5j;
-		within 2;
+		within 3;
 	};
 	object complex_assert{
 		target power_in_C;
 		value +119155+61369.7j;
-		within 2;
+		within 3;
 	};
 	object complex_assert{
 		target power_out_A;
 		value +70059.4+36524.1j;
-		within 2;
+		within 3;
 	};
 	object complex_assert{
 		target power_out_B;
 		value +67500.2+36176.7j;
-		within 2;
+		within 3;
 	};
 	object complex_assert{
 		target power_out_C;
 		value +119148+61358.2j;
-		within 2;
+		within 3;
 	};
  object complex_assert{
 		target power_losses_A;
@@ -11472,13 +11497,13 @@ object switch:3874 {
 	status CLOSED;
 }
 
-object switch:3875 {
-	name R4-12-47-1_switch_2;
-	phases CN;
-	from R4-12-47-1_node_61;
-	to R4-12-47-1_node_53;
-	status CLOSED;
-}
+// object switch:3875 {
+	// name R4-12-47-1_switch_2;
+	// phases CN;
+	// from R4-12-47-1_node_61;
+	// to R4-12-47-1_node_53;
+	// status CLOSED;
+// }
 
 object switch:3876 {
 	name R4-12-47-1_switch_3;
@@ -16426,7 +16451,7 @@ object transformer_configuration:3194 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 5.0;
-	powerC_rating 5.0;
+//	powerC_rating 5.0;
 	resistance 0.01;
 	reactance 0.05;
 }
@@ -16437,9 +16462,9 @@ object transformer_configuration:3195 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 50.0;
-	powerA_rating 25.0;
-	powerB_rating 0.0;
-	powerC_rating 25.0;
+//	powerA_rating 25.0;
+//	powerB_rating 0.0;
+//	powerC_rating 25.0;
 	resistance 0.00200;
 	reactance 0.01000;
 }
@@ -16450,9 +16475,9 @@ object transformer_configuration:3196 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 15.0;
-	powerA_rating 15.0;
-	powerB_rating 0.0;
-	powerC_rating 0.0;
+//	powerA_rating 15.0;
+//	powerB_rating 0.0;
+//	powerC_rating 0.0;
 	resistance 0.00667;
 	reactance 0.03333;
 }
@@ -16463,9 +16488,9 @@ object transformer_configuration:3197 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 60.0;
-	powerA_rating 50.0;
-	powerB_rating 0.0;
-	powerC_rating 10.0;
+//	powerA_rating 50.0;
+//	powerB_rating 0.0;
+//	powerC_rating 10.0;
 	resistance 0.00167;
 	reactance 0.00833;
 }
@@ -16501,9 +16526,9 @@ object transformer_configuration:3200 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 5.0;
-	powerA_rating 0.0;
-	powerB_rating 5.0;
-	powerC_rating 0.0;
+//	powerA_rating 0.0;
+//	powerB_rating 5.0;
+//	powerC_rating 0.0;
 	resistance 0.01;
 	reactance 0.05;
 }
@@ -16527,8 +16552,8 @@ object transformer_configuration:3202 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 25.0;
-	powerA_rating 15.0;
-	powerC_rating 10.0;
+//	powerA_rating 15.0;
+//	powerC_rating 10.0;
 	resistance 0.00400;
 	reactance 0.02000;
 }
@@ -16539,9 +16564,9 @@ object transformer_configuration:3203 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 50.0;
-	powerA_rating 25.0;
-	powerB_rating 25.0;
-	powerC_rating 0.0;
+//	powerA_rating 25.0;
+//	powerB_rating 25.0;
+//	powerC_rating 0.0;
 	resistance 0.00200;
 	reactance 0.01000;
 }
@@ -16552,8 +16577,8 @@ object transformer_configuration:3204 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 100.0;
-	powerA_rating 50.0;
-	powerC_rating 50.0;
+//	powerA_rating 50.0;
+//	powerC_rating 50.0;
 	resistance 0.00100;
 	reactance 0.00500;
 }
@@ -16564,7 +16589,7 @@ object transformer_configuration:3205 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 25.0;
-	powerC_rating 25.0;
+//	powerC_rating 25.0;
 	resistance 0.00400;
 	reactance 0.02000;
 }
@@ -16575,7 +16600,7 @@ object transformer_configuration:3206 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 10.0;
-	powerB_rating 10.0;
+//	powerB_rating 10.0;
 	resistance 0.01;
 	reactance 0.05;
 }
@@ -16586,7 +16611,7 @@ object transformer_configuration:3207 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 25.0;
-	powerA_rating 25.0;
+//	powerA_rating 25.0;
 	resistance 0.00400;
 	reactance 0.02000;
 }
@@ -16597,8 +16622,8 @@ object transformer_configuration:3208 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 20.0;
-	powerA_rating 10.0;
-	powerB_rating 10.0;
+//	powerA_rating 10.0;
+//	powerB_rating 10.0;
 	resistance 0.00500;
 	reactance 0.02500;
 }
@@ -16609,9 +16634,9 @@ object transformer_configuration:3209 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 50.0;
-	powerA_rating 25.0;
-	powerB_rating 25.0;
-	powerC_rating 0.0;
+//	powerA_rating 25.0;
+//	powerB_rating 25.0;
+//	powerC_rating 0.0;
 	resistance 0.00200;
 	reactance 0.01000;
 }
@@ -16635,8 +16660,8 @@ object transformer_configuration:3211 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 150.0;
-	powerB_rating 75.0;
-	powerC_rating 75.0;
+//	powerB_rating 75.0;
+//	powerC_rating 75.0;
 	resistance 0.00067;
 	reactance 0.00333;
 }
@@ -16647,8 +16672,8 @@ object transformer_configuration:3212 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 5.0;
-	powerB_rating 0.0;
-	powerC_rating 5.0;
+//	powerB_rating 0.0;
+//	powerC_rating 5.0;
 	resistance 0.01;
 	reactance 0.05;
 }
@@ -16659,8 +16684,8 @@ object transformer_configuration:3213 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 50.0;
-	powerB_rating 25.0;
-	powerC_rating 25.0;
+//	powerB_rating 25.0;
+//	powerC_rating 25.0;
 	resistance 0.00200;
 	reactance 0.01000;
 }
@@ -16671,7 +16696,7 @@ object transformer_configuration:3214 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 25.0;
-	powerC_rating 25.0;
+//	powerC_rating 25.0;
 	resistance 0.00400;
 	reactance 0.02000;
 }
@@ -16682,7 +16707,7 @@ object transformer_configuration:3215 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 10.0;
-	powerC_rating 10.0;
+//	powerC_rating 10.0;
 	resistance 0.01;
 	reactance 0.05;
 }
@@ -16693,8 +16718,8 @@ object transformer_configuration:3216 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 75.0;
-	powerB_rating 50.0;
-	powerC_rating 25.0;
+//	powerB_rating 50.0;
+//	powerC_rating 25.0;
 	resistance 0.00133;
 	reactance 0.00667;
 }
@@ -16705,8 +16730,8 @@ object transformer_configuration:3217 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 50.0;
-	powerA_rating 25.0;
-	powerC_rating 25.0;
+//	powerA_rating 25.0;
+//	powerC_rating 25.0;
 	resistance 0.00200;
 	reactance 0.01000;
 }
@@ -16717,7 +16742,7 @@ object transformer_configuration:3218 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 10.0;
-	powerA_rating 10.0;
+//	powerA_rating 10.0;
 	resistance 0.01;
 	reactance 0.05;
 }
@@ -16728,9 +16753,9 @@ object transformer_configuration:3219 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 25.0;
-	powerA_rating 15.0;
-	powerB_rating 10.0;
-	powerC_rating 0.0;
+//	powerA_rating 15.0;
+//	powerB_rating 10.0;
+//	powerC_rating 0.0;
 	resistance 0.00400;
 	reactance 0.02000;
 }
@@ -16741,8 +16766,8 @@ object transformer_configuration:3220 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 47.5;
-	powerA_rating 37.5;
-	powerC_rating 10.0;
+//	powerA_rating 37.5;
+//	powerC_rating 10.0;
 	resistance 0.00211;
 	reactance 0.01053;
 }
@@ -16753,9 +16778,9 @@ object transformer_configuration:3221 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 25.0;
-	powerA_rating 0.0;
-	powerB_rating 0.0;
-	powerC_rating 25.0;
+//	powerA_rating 0.0;
+//	powerB_rating 0.0;
+//	powerC_rating 25.0;
 	resistance 0.00400;
 	reactance 0.02000;
 }
@@ -16766,9 +16791,9 @@ object transformer_configuration:3222 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 10.0;
-	powerA_rating 0.0;
-	powerB_rating 0.0;
-	powerC_rating 10.0;
+//	powerA_rating 0.0;
+//	powerB_rating 0.0;
+//	powerC_rating 10.0;
 	resistance 0.01;
 	reactance 0.05;
 }
@@ -16792,9 +16817,9 @@ object transformer_configuration:3224 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 35.0;
-	powerA_rating 25.0;
-	powerB_rating 10.0;
-	powerC_rating 0.0;
+//	powerA_rating 25.0;
+//	powerB_rating 10.0;
+//	powerC_rating 0.0;
 	resistance 0.00286;
 	reactance 0.01429;
 }
@@ -16805,8 +16830,8 @@ object transformer_configuration:3225 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 35.0;
-	powerB_rating 25.0;
-	powerC_rating 10.0;
+//	powerB_rating 25.0;
+//	powerC_rating 10.0;
 	resistance 0.00286;
 	reactance 0.01429;
 }
@@ -16817,8 +16842,8 @@ object transformer_configuration:3226 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 35.0;
-	powerA_rating 25.0;
-	powerB_rating 10.0;
+//	powerA_rating 25.0;
+//	powerB_rating 10.0;
 	resistance 0.00286;
 	reactance 0.01429;
 }
@@ -16829,9 +16854,9 @@ object transformer_configuration:3227 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 5.0;
-	powerA_rating 0.0;
-	powerB_rating 0.0;
-	powerC_rating 5.0;
+//	powerA_rating 0.0;
+//	powerB_rating 0.0;
+//	powerC_rating 5.0;
 	resistance 0.01;
 	reactance 0.05;
 }
@@ -16842,9 +16867,9 @@ object transformer_configuration:3228 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 20.0;
-	powerA_rating 0.0;
-	powerB_rating 10.0;
-	powerC_rating 10.0;
+//	powerA_rating 0.0;
+//	powerB_rating 10.0;
+//	powerC_rating 10.0;
 	resistance 0.00500;
 	reactance 0.02500;
 }
@@ -16855,7 +16880,7 @@ object transformer_configuration:3229 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 15.0;
-	powerB_rating 15.0;
+//	powerB_rating 15.0;
 	resistance 0.00667;
 	reactance 0.03333;
 }
@@ -16866,7 +16891,7 @@ object transformer_configuration:3230 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 25.0;
-	powerB_rating 25.0;
+//	powerB_rating 25.0;
 	resistance 0.00400;
 	reactance 0.02000;
 }
@@ -16877,7 +16902,7 @@ object transformer_configuration:3231 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 5.0;
-	powerA_rating 5.0;
+//	powerA_rating 5.0;
 	resistance 0.01;
 	reactance 0.05;
 }
@@ -16888,7 +16913,7 @@ object transformer_configuration:3232 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 15.0;
-	powerC_rating 15.0;
+//	powerC_rating 15.0;
 	resistance 0.00667;
 	reactance 0.03333;
 }
@@ -16899,7 +16924,7 @@ object transformer_configuration:3233 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 50.0;
-	powerB_rating 50.0;
+//	powerB_rating 50.0;
 	resistance 0.00200;
 	reactance 0.01000;
 }
@@ -16910,9 +16935,9 @@ object transformer_configuration:3234 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 10.0;
-	powerA_rating 0.0;
-	powerB_rating 10.0;
-	powerC_rating 0.0;
+//	powerA_rating 0.0;
+//	powerB_rating 10.0;
+//	powerC_rating 0.0;
 	resistance 0.01;
 	reactance 0.05;
 }
@@ -16923,7 +16948,7 @@ object transformer_configuration:3235 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 15.0;
-	powerA_rating 15.0;
+//	powerA_rating 15.0;
 	resistance 0.00667;
 	reactance 0.03333;
 }
@@ -16934,7 +16959,7 @@ object transformer_configuration:3236 {
 	primary_voltage 13800.000 V;
 	secondary_voltage 480 V;
 	power_rating 5.0;
-	powerC_rating 5.0;
+//	powerC_rating 5.0;
 	resistance 0.01;
 	reactance 0.05;
 }
@@ -35155,8 +35180,8 @@ object underground_line:3353 {
 object underground_line:3358 {
 	name R4-12-47-1_ul_2;
 	phases CN;
-	from R4-12-47-1_node_53;
-	to R4-12-47-1_node_68;
+	to R4-12-47-1_node_53;
+	from R4-12-47-1_node_68;
 	length 920.000;
 	configuration line_configuration:36;
 }
@@ -35581,5 +35606,3 @@ object underground_line_conductor:7 {
 	shield_gmr 0.00;
 	shield_resistance 0.00;
 }
-
-

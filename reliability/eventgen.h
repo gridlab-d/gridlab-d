@@ -82,6 +82,7 @@ private:
 	double glob_min_timestep;			/**< Variable for storing minimum timestep value - if it exists */
 	bool off_nominal_time;				/**< Flag to indicate a minimum timestep is present */
 	bool deltamode_inclusive;			/**< Boolean for deltamode calls - pulled from object flags, but put here for convenience */
+	int last_switch_state;        /**< To add unhandled events only when the switch_state changes from its previous value */
 	
 	void do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type);	/**< Function to execute a status change on objects driven by event_gen */
 	void regen_events(TIMESTAMP t1_ts, double t1_dbl);				/**< Function to update time to next event on the system */
@@ -100,6 +101,8 @@ public:
 	int max_simult_faults;		/**< Number of simultaneous faults this event_gen object can induce */
 	int faults_in_prog;			/**< Number of faults currently induced by this event_gen object */
 	char1024 manual_fault_list;	/**< List for manual faulting */
+	char256 controlled_switch; /**< Name of a switch to manually fault/un-fault */
+	int switch_state; /**< Current state (1=closed, 0=open) for the controlled switch */
 	void gen_random_time(enumeration rand_dist_type, double param_1, double param_2, TIMESTAMP *event_time, unsigned int *event_nanoseconds, double *event_double);	//Random time function - easier to call this way
 	int add_unhandled_event(OBJECT *obj_to_fault, char *event_type, TIMESTAMP fail_time, TIMESTAMP rest_length, int implemented_fault, bool fault_state);	/**< Function to add unhandled event into the structure */
 	double *get_double(OBJECT *obj, char *name);	/**< Gets address of double - mainly for mean_repair_time */

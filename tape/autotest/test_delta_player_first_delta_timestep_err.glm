@@ -6,6 +6,9 @@
 //
 //"Assert" player could probably be the same player, but left as traditional type, just for further testing
 
+//Note that this is now an "error", mainly due to it failing on Mac platforms (bugfix/1001).  Once that code is uncommented in tape.c
+//and works on all platforms, this autotest can lose the "_err" extension.
+
 //#set pauseatexit=1
 
 clock {

@@ -23,7 +23,26 @@
 //#include "../third_party/jsonCpp/json/json.h"
 using namespace std;
 //using namespace Json;
-
+class JsonProperty {
+public:
+	JsonProperty(string objName, string objProp) {
+		object_name = objName;
+		object_property = objProp;
+		if(object_property.compare("parent") == 0){
+			is_header = true;
+		} else {
+			is_header = false;
+		}
+		prop = NULL;
+		obj = NULL;
+	}
+	string object_name;
+	string object_property;
+	string hdr_val;
+	bool is_header;
+	gld_property *prop;
+	OBJECT *obj;
+};
 class fncs_msg;
 
 ///< Function relays
@@ -132,8 +151,7 @@ public:
 	Json::Value subscribe_json_data;  //add by Renke
 	string publish_json_key; //add by Renke
 	string subscribe_json_key; //add by Renke
-	vector <string> vjson_publish_gld_property_name;
-	vector <gld_property*> vjson_publish_gld_property;
+	vector <JsonProperty*> vjson_publish_gld_property_name;
 public:
 	// special variables for GridLAB-D classes
 	static CLASS *oclass;

@@ -7235,7 +7235,7 @@ object transformer_configuration:1348 {
 	primary_voltage 12470.000 V;
 	secondary_voltage 480 V;
 	power_rating 50.0;
-	powerC_rating 50.0;
+//	powerC_rating 50.0;
 	resistance 0.00200;
 	reactance 0.01000;
 }
