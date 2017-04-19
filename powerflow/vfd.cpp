@@ -105,6 +105,7 @@ int vfd::create()
 	stableTimeOrig = stableTime;
 	stableTimeDelta = stableTime;
 	settleTime = 0;
+	timeFlag = 0;
 	
 	//Null the array pointers, just because
 	settleFreq = NULL;
@@ -549,10 +550,11 @@ STATUS vfd::VFD_current_injection(void)
 
 	initialParameters();
 	
-	if ((deltatimestep_running > 0) && (stableTime == stableTimeOrig))
+	if ((deltatimestep_running > 0) && (stableTime == stableTimeOrig) && (timeFlag == 0))
 	{
 		stableTime = (int) stableTime/deltatimestep_running;
 		stableTimeOrig = stableTime;
+		timeFlag = 1;
 	}
 	
 	if (oldDriveFrequency != driveFrequency)

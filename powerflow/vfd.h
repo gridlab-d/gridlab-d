@@ -78,6 +78,7 @@ private:
 	double prev_time_value;
 	double stableTimeOrig;
 	double stableTimeDelta;
+	int timeFlag;
 	double desiredFinalTime;
 	double *settleFreq;
 	double prevDesiredFreq;
