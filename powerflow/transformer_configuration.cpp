@@ -171,19 +171,16 @@ int transformer_configuration::init(OBJECT *parent)
 			phaseA_kVA_rating = phaseB_kVA_rating = phaseC_kVA_rating = kVA_rating/3;
 		}
 		if ((connect_type==SINGLE_PHASE)||(connect_type==SINGLE_PHASE_CENTER_TAPPED)){
-			GL_THROW("Single phase power rating is required in transformer %s",obj->name);
+			gl_warning("Single phase power rating not specified in transformer %s. Assigning total power_rating to single phase",obj->name);
+			phaseA_kVA_rating = phaseB_kVA_rating = phaseC_kVA_rating = kVA_rating;
 		}
 		//if SINGLE_PHASE or SINGLE_PHASE_CENTER_TAPPED, and the phase rating for the connected single phase is not provided,
 		//it will error out during a check in transformer.cpp
 	}
 
-	if (phaseA_kVA_rating+phaseB_kVA_rating+phaseC_kVA_rating>0 && (phaseA_kVA_rating==0 || phaseB_kVA_rating==0 || phaseC_kVA_rating==0));{
-		if (connect_type==WYE_WYE){
-			gl_warning("Either provide individual phase power ratings for all connected phases or only overall power rating for WYE_WYE transformer configuration in %s",obj->name);
-		}
-		if (connect_type==DELTA_GWYE){
-			gl_warning("Either provide individual phase power ratings for all connected phases or only overall power rating for DELTA_GWYE transformer configuration in %s",obj->name);
-		}
+	if (phaseA_kVA_rating+phaseB_kVA_rating+phaseC_kVA_rating>0 && (phaseA_kVA_rating==0 || phaseB_kVA_rating==0 || phaseC_kVA_rating==0)){
+		if ((connect_type==WYE_WYE)||(connect_type==DELTA_GWYE))
+			gl_warning("Either provide individual phase power ratings for all connected phases or only overall power rating for transformer %s",obj->name);
 	}
 	// check connection type
 	if (connect_type==UNKNOWN)
