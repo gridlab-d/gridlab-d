@@ -101,9 +101,9 @@ int vfd::create()
 	horsePowerRatedVFD = 75;
 	nominal_output_frequency = 60.0;
 	oldDriveFrequency = 0;
-	stableTime = 0.005;//5;//1.45;
-	stableTimeOrig = stableTime;
-	stableTimeDelta = stableTime;
+	stableTime = 5;//1.45;
+	stableTimeDelta = stableTime; //default initialization
+	stableTimeOrig = stableTime; //default initialization
 	settleTime = 0;
 	timeFlag = 0;
 	
@@ -163,6 +163,7 @@ int vfd::init(OBJECT *parent)
 	}
 	//stableTime = (int) (100*stableTime+0.5); //rounding to an int. *************************NIKHIL, UNCOMMENT THIS AFTER DEBUGGING*****************
 
+	stableTimeDelta = stableTime;
 	//set stabletime value
 	if (deltatimestep_running < 0)
 	{
