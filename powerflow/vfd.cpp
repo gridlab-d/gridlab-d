@@ -101,16 +101,10 @@ int vfd::create()
 	horsePowerRatedVFD = 75;
 	nominal_output_frequency = 60.0;
 	oldDriveFrequency = 0;
-	stableTime = 5;//1.45;
+	stableTime = 1.45;//5;//1.45;
 	stableTimeOrig = stableTime;
-	if (deltatimestep_running < 0)
-	{
-		settleTime = 1;
-	}
-	else
-	{
-		settleTime = deltamode_timestep;
-	}
+	stableTimeDelta = stableTime;
+	settleTime = 0;
 	
 	//Null the array pointers, just because
 	settleFreq = NULL;
@@ -167,18 +161,20 @@ int vfd::init(OBJECT *parent)
 		*/
 	}
 	//stableTime = (int) (100*stableTime+0.5); //rounding to an int. *************************NIKHIL, UNCOMMENT THIS AFTER DEBUGGING*****************
-	
+
+	//set stabletime value
 	if (deltatimestep_running < 0)
 	{
-		if (stableTime - (int) stableTime > 0.0)
+		if ((stableTime - (int) stableTime) > 0.0)
 		{
 			stableTime = (int) (stableTime+1);
 		}	
 	}
-	//else if (deltatimestep_running > 0)
-	//{
-	//	stableTime = stableTime + deltamode_timestep;
-	//}
+	// else if (deltatimestep_running > 0)
+	// {
+		// stableTime = (int) stableTime/deltatimestep_running;
+	// }
+	stableTimeOrig = stableTime;
 		
 	//stayTime = (int) (0.0206*stableTime+0.5);
 	//stayTime = roundf(0.0206*stableTime * 100)/100;
@@ -328,11 +324,18 @@ void vfd::vfdCoreCalculations()
 		This simply means VFD is turned OFF.
 		*/
 	}
-	if (settleTime <=0)
+	if (settleTime <0)
 	{
 		GL_THROW("Settling Time = %f should be positive", settleTime);
 		/*  TROUBLESHOOT
 		This would almost never happen but if it does for reasons yet to know. Lets catch it.
+		*/
+	}
+	else if (settleTime ==0)
+	{
+		gl_warning("Settling Time is 0. VFD must be turned OFF");
+		/*  TROUBLESHOOT
+		This simply means VFD is turned OFF.
 		*/
 	}
 	
@@ -546,6 +549,12 @@ STATUS vfd::VFD_current_injection(void)
 
 	initialParameters();
 	
+	if ((deltatimestep_running > 0) && (stableTime == stableTimeOrig))
+	{
+		stableTime = (int) stableTime/deltatimestep_running;
+		stableTimeOrig = stableTime;
+	}
+	
 	if (oldDriveFrequency != driveFrequency)
 	{
 		stableTime = stableTimeOrig;
@@ -553,7 +562,14 @@ STATUS vfd::VFD_current_injection(void)
 	
 	if (stableTimeOrig == stableTime)
 	{
-		desiredFinalTime = curr_time_value+stableTimeOrig;
+		if (deltatimestep_running > 0)
+		{
+			desiredFinalTime = curr_time_value+stableTimeDelta;	
+		}
+		else
+		{
+			desiredFinalTime = curr_time_value+stableTimeOrig;		
+		}
 	}
 		
 	if ((prevDesiredFreq == 0.0) && (driveFrequency!=0))
@@ -597,7 +613,7 @@ STATUS vfd::VFD_current_injection(void)
 		}
 		else
 		{
-			settleTime = settleTime+deltamode_timestep;
+			settleTime = settleTime+deltatimestep_running;
 		}
 	}
 	else if (driveFrequency==0)
@@ -617,11 +633,11 @@ STATUS vfd::VFD_current_injection(void)
 		vfdCoreCalculations();
 		if (deltatimestep_running < 0)
 		{
-			settleTime = 1;
+			settleTime = 0;
 		}
 		else
 		{
-			settleTime = deltamode_timestep;
+			settleTime = deltatimestep_running;
 		}		
 	}
 	
@@ -655,6 +671,19 @@ STATUS vfd::VFD_current_injection(void)
 			meanFreqArray /= (double)stableTimeOrig;
 
 			currSetFreq = roundf(meanFreqArray* 1000) / 1000;
+			
+			if (settleTime == 0) //since we are initiating at 0. at the very beginning start from 1st timevalue.
+			{
+				if (deltatimestep_running < 0)
+				{
+					settleTime = 1;
+				}
+				else
+				{
+					settleTime = deltatimestep_running;
+				}
+			}
+			
 			vfdCoreCalculations();
 			if (deltatimestep_running < 0)
 			{
@@ -662,7 +691,7 @@ STATUS vfd::VFD_current_injection(void)
 			}
 			else
 			{
-				settleTime = settleTime+deltamode_timestep;
+				settleTime = settleTime+deltatimestep_running;
 			}
 			meanFreqArray = 0;
 

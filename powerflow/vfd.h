@@ -77,6 +77,7 @@ private:
 	double oldDriveFrequency;
 	double prev_time_value;
 	double stableTimeOrig;
+	double stableTimeDelta;
 	double desiredFinalTime;
 	double *settleFreq;
 	double prevDesiredFreq;
