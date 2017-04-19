@@ -101,7 +101,7 @@ int vfd::create()
 	horsePowerRatedVFD = 75;
 	nominal_output_frequency = 60.0;
 	oldDriveFrequency = 0;
-	stableTime = 1.45;//5;//1.45;
+	stableTime = 0.005;//5;//1.45;
 	stableTimeOrig = stableTime;
 	stableTimeDelta = stableTime;
 	settleTime = 0;
@@ -552,7 +552,7 @@ STATUS vfd::VFD_current_injection(void)
 	
 	if ((deltatimestep_running > 0) && (stableTime == stableTimeOrig) && (timeFlag == 0))
 	{
-		stableTime = (int) stableTime/deltatimestep_running;
+		stableTime = (int) (stableTimeDelta/deltatimestep_running); //remmeber stableTime was rounded since the .glm starts in event driven default. For example: if stable time = 1.45, in event driven it is rounded to 2. We dont want the rounded value. We want the original value
 		stableTimeOrig = stableTime;
 		timeFlag = 1;
 	}
