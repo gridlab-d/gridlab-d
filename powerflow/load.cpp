@@ -209,6 +209,9 @@ int load::create(void)
 	//in-rush related zeroing
 	prev_shunt[0] = prev_shunt[1] = prev_shunt[2] = complex(0.0,0.0);
 
+	//ZIP fraction tracking
+	base_load_val_was_nonzero[0] = base_load_val_was_nonzero[1] = base_load_val_was_nonzero[2] = false;
+
     return res;
 }
 
@@ -477,6 +480,8 @@ void load::load_update_fxn(bool fault_mode)
 	{
 		if (base_power[index] != 0.0)
 		{
+			//Set the flag
+			base_load_val_was_nonzero[index] = true;
 
 			if (power_fraction[index] + current_fraction[index] + impedance_fraction[index] != 1.0)
 			{	
@@ -582,6 +587,16 @@ void load::load_update_fxn(bool fault_mode)
 			{
 				constant_impedance[index] = complex(0,0);
 			}
+		}
+		else if (base_load_val_was_nonzero[index] == true)	//Zero case, be sure to re-zero it
+		{
+			//zero all components
+			constant_power[index] = complex(0.0,0.0);
+			constant_current[index] = complex(0.0,0.0);
+			constant_impedance[index] = complex(0.0,0.0);
+
+			//Deflag us
+			base_load_val_was_nonzero[index] = false;
 		}
 	}
 
