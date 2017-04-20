@@ -358,6 +358,16 @@ DT delta_update(void)
 				return DT_INVALID;
 			}
 
+			if (global_deltamode_forced_always == true)
+			{
+				/* Override both returns, if SM_EVENT (all others okay) */
+				if (interupdate_mode_result == SM_EVENT)
+					interupdate_mode_result = SM_DELTA;
+
+				if (interupdate_mode == SM_EVENT)
+					interupdate_mode = SM_DELTA;
+			}
+
 			/* Now reconcile with object-level (if called) -- error is already handled */
 			if ((interupdate_mode_result != SM_EVENT) && (interupdate_mode == SM_EVENT))
 			{

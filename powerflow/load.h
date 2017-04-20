@@ -16,6 +16,8 @@ public:
 private:
 	complex prev_shunt[3];
 
+	bool base_load_val_was_nonzero[3];		///< Tracking variable to make ZIP-fraction loads check for zero conditions (but not already zeroed)
+
 public:
 	complex measured_voltage_A;	///< measured voltage
 	complex measured_voltage_B;

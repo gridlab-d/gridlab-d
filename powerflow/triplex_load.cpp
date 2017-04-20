@@ -129,6 +129,8 @@ int triplex_load::create(void)
 	impedance_pf[0] = impedance_pf[1] = impedance_pf[2] = 1;
 	load_class = LC_UNKNOWN;
 
+	base_load_val_was_nonzero[0] = base_load_val_was_nonzero[1] = base_load_val_was_nonzero[2] = false;	//Start deflagged
+
     return res;
 }
 
@@ -222,6 +224,10 @@ void triplex_load::triplex_load_update_fxn()
 	int index_var;
 
 	if(base_power[0] != 0.0){// Phase 1
+
+		//Set the flag
+		base_load_val_was_nonzero[0] = true;
+
 		if (power_fraction[0] + current_fraction[0] + impedance_fraction[0] != 1.0)
 		{	
 			power_fraction[0] = 1 - current_fraction[0] - impedance_fraction[0];
@@ -306,8 +312,22 @@ void triplex_load::triplex_load_update_fxn()
 			constant_impedance[0] = complex(0, 0);
 		}
 	}
+	else if (base_load_val_was_nonzero[0] == true)	//Zero case, be sure to re-zero it
+	{
+		//zero all components
+		constant_power[0] = complex(0.0,0.0);
+		constant_current[0] = complex(0.0,0.0);
+		constant_impedance[0] = complex(0.0,0.0);
+
+		//Deflag us
+		base_load_val_was_nonzero[0] = false;
+	}
 
 	if(base_power[1] != 0.0){// Phase 2
+
+		//Set the flag
+		base_load_val_was_nonzero[1] = true;
+
 		if (power_fraction[1] + current_fraction[1] + impedance_fraction[1] != 1.0)
 		{	
 			power_fraction[1] = 1 - current_fraction[1] - impedance_fraction[1];
@@ -390,8 +410,22 @@ void triplex_load::triplex_load_update_fxn()
 			constant_impedance[1] = complex(0, 0);
 		}
 	}
+	else if (base_load_val_was_nonzero[1] == true)	//Zero case, be sure to re-zero it
+	{
+		//zero all components
+		constant_power[1] = complex(0.0,0.0);
+		constant_current[1] = complex(0.0,0.0);
+		constant_impedance[1] = complex(0.0,0.0);
+
+		//Deflag us
+		base_load_val_was_nonzero[1] = false;
+	}
 
 	if(base_power[2] != 0.0){// Phase 12
+
+		//Set the flag
+		base_load_val_was_nonzero[2] = true;
+
 		if (power_fraction[2] + current_fraction[2] + impedance_fraction[2] != 1.0)
 		{	
 			power_fraction[2] = 1 - current_fraction[2] - impedance_fraction[2];
@@ -473,6 +507,16 @@ void triplex_load::triplex_load_update_fxn()
 		} else {
 			constant_impedance[2] = complex(0, 0);
 		}
+	}
+	else if (base_load_val_was_nonzero[2] == true)	//Zero case, be sure to re-zero it
+	{
+		//zero all components
+		constant_power[2] = complex(0.0,0.0);
+		constant_current[2] = complex(0.0,0.0);
+		constant_impedance[2] = complex(0.0,0.0);
+
+		//Deflag us
+		base_load_val_was_nonzero[2] = false;
 	}
 
 	//Apply any frequency dependencies, if relevant
