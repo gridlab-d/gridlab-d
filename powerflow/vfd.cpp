@@ -703,7 +703,7 @@ STATUS vfd::VFD_current_injection(void)
 				stableTime = stableTime-1;
 			}
 
-			if (curr_time_value == desiredFinalTime)
+			if (curr_time_value >= desiredFinalTime)
 			{
 				prevDesiredFreq = currSetFreq;//settleFreq[curr_array_position];
 				stableTime = stableTimeOrig;
@@ -771,13 +771,8 @@ SIMULATIONMODE vfd::inter_deltaupdate_vfd(unsigned int64 delta_time, unsigned lo
 	//Most of these items were copied from link.cpp's interupdate (need to replicate)
 	if (interupdate_pos == false)	//Before powerflow call
 	{
-		//Link presync stuff
+		//Link presync stuff	
 		NR_link_presync_fxn();
-
-		return SM_DELTA;	//Just return something other than SM_ERROR for this call
-	}
-	else	//After the call
-	{
 		//Update time tracking variable - is postsync in the main code, so putting it in an equivalent place here
 		if (iteration_count_val==0)	//Only update timestamp tracker on first iteration
 		{
@@ -785,14 +780,26 @@ SIMULATIONMODE vfd::inter_deltaupdate_vfd(unsigned int64 delta_time, unsigned lo
 			deltatimedbl = (double)delta_time/(double)DT_SECOND;
 
 			//Update tracking variable
-			prev_time_value = (double)gl_globalclock + deltatimedbl;
-		}
-
+			curr_time_value = (double)gl_globalclock + deltatimedbl;
+		}	
+		return SM_DELTA;	//Just return something other than SM_ERROR for this call
+	}
+	else	//After the call
+	{
+		prev_time_value = curr_time_value;
+		oldDriveFrequency = driveFrequency;
 		//Call postsync
 		BOTH_link_postsync_fxn();
 
 		/********** Sri Nikhil -- how will VFDs want to behave with deltamode and time handling **********/
-		return SM_EVENT;	//VFD always just want out
+		if ((curr_time_value >= desiredFinalTime) || (vfdState == VFD_OFF) || (vfdState == VFD_STEADY))
+		{
+			return SM_EVENT;	//VFD always just want out
+		}
+		else
+		{
+			return SM_DELTA;
+		}
 	}
 }//End module deltamode
 
