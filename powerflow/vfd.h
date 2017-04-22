@@ -13,6 +13,7 @@
 
 EXPORT STATUS current_injection_update_VFD(OBJECT *obj);
 EXPORT SIMULATIONMODE interupdate_vfd(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
+EXPORT STATUS postupdate_vfd(OBJECT *obj);
 
 class vfd : public link_object
 {
@@ -30,17 +31,13 @@ public:
 	inline vfd(CLASS *cl=oclass):link_object(cl){};
 	int isa(char *classname);
 
-	//class node *get_from(void) const;
-	//class node *get_to(void) const;
-	//set get_flow(class node **from, class node **to) const; /* determine flow direction (return phases on which flow is reverse) */
-
 	STATUS alloc_freq_arrays(double delta_t_val);
-	void initialParameters(void);
-	void vfdCoreCalculations(void);
+	void CheckParameters(void);
 	complex complex_exp(double angle);
 	STATUS VFD_current_injection(void);
 	
 	SIMULATIONMODE inter_deltaupdate_vfd(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
+	STATUS post_deltaupdate_vfd(void);
 
 public:
 	double ratedRPM;
@@ -53,49 +50,36 @@ public:
 	double settleTime;
 
 	enum {
-		VFD_STARTING=0,		/**< VFD is starting up */
+		VFD_OFF=0,			/**< VFD is off */
 		VFD_CHANGING=1,		/**< VFD is changing frequency */
-		VFD_STEADY=2,	/**< VFD is in steady-state mode */
-		VFD_OFF=3	/**< VFD is off */
+		VFD_STEADY=2	/**< VFD has reached desired frequency */
 	};
 	enumeration vfdState;
+	enumeration prev_vfdState;
 
-	complex powerOutElectrical;
-	complex powerLosses;
-	complex powerInElectrical;
 	double currEfficiency;
-	double driveFrequency;
-	complex calc_current_in[3];
-	complex currentOut[3];
-	complex settleVoltOut[3];
+	double desiredFrequency;
+	double currentFrequency;
 
 private:
-	//Variable objects that are only used internally
 	node *fNode;
 	node *tNode;
-	double curr_time_value;
-	double oldDriveFrequency;
-	double prev_time_value;
-	double stableTimeOrig;
-	double stableTimeDelta;
-	int timeFlag;
-	double desiredFinalTime;
+
 	double *settleFreq;
-	double prevDesiredFreq;
-	double *freqArray;
+	unsigned int settleFreq_length;
+	unsigned int curr_array_position;
+	bool force_array_realloc;
+
 	double nominal_output_radian_freq;
-	double torqueRated;
 	double VbyF;
 	double HPbyF;
-	double stayTime;
-	double settleVolt;
-	bool force_array_realloc;
-	unsigned int settleFreq_length;
-	double phasorVal[3];
-	int curr_array_position;
-	complex prev_current[3];
-	double currSetFreq;
 
+	double phasorVal[3];
+	complex prev_power[3];
+	double prev_desiredRPM;
+	double efficiency_coeffs[8];
+	double curr_time_value;
+	double prev_time_value;
 };
 
 #endif // VFD_H
