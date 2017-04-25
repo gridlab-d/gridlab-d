@@ -957,6 +957,9 @@ SIMULATIONMODE vfd::inter_deltaupdate_vfd(unsigned int64 delta_time, unsigned lo
 //Post update deltamode
 STATUS vfd::post_deltaupdate_vfd(void)
 {
+	//Force it as an update -- otherwise it just exits (which works, but technically has too large of an array)
+	force_array_realloc = true;
+
 	//Simply call a realloc of the array, back to steady state values
 	return alloc_freq_arrays(1.0);
 }
