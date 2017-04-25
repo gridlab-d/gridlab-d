@@ -193,6 +193,18 @@ int vfd::init(OBJECT *parent)
 		}
 	}//End voltage was specified
 
+	//Check the input voltage
+	temp_voltage_check = fNode->nominal_voltage - tNode->nominal_voltage;
+
+	if (temp_voltage_check < 0.0)
+	{
+		gl_warning("VFD:%d - %s - FROM node nominal_voltage is not equal to or greater than TO node nominal_voltage - implies DC-DC converter!e",obj->id,(obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		The from node nominal_voltage is less than the to node nominal_voltage.  This implies an internal DC-DC converter, which is not explicityly modeled.  Efficiency values
+		will not be accurate!
+		*/
+	}
+
 	//Check the nominal output frequency
 	if (nominal_output_frequency <= 0.0)
 	{
@@ -256,7 +268,7 @@ int vfd::init(OBJECT *parent)
 	//Compute derived variables
 
 	//Create constant radian output frequency, since this won't change
-	nominal_output_radian_freq = nominal_output_frequency*2.0*PI;
+	nominal_output_radian_freq = nominal_frequency*2.0*PI;
 
 	//Voltage to frequency relationship
 	VbyF = voltageLLRating/nominal_output_frequency;
@@ -378,6 +390,7 @@ STATUS vfd::VFD_current_injection(void)
 	complex settleVoltOut[3];
 	bool desiredChange;
 	int tdiff_value;
+	double diff_time_value;
 
 	//By default, no craziness has happened
 	desiredChange = false;
@@ -402,9 +415,13 @@ STATUS vfd::VFD_current_injection(void)
 		prev_desiredRPM = desiredRPM;
 	}
 
+
 	//Update frequency value, if needed
 	if (curr_time_value != prev_time_value)	//Updates only occur for new time steps
 	{
+		//Get the time difference
+		diff_time_value = curr_time_value - prev_time_value;
+
 		//See if we're in deltamode
 		if (deltatimestep_running > 0)
 		{
@@ -572,15 +589,18 @@ STATUS vfd::VFD_current_injection(void)
 		//Update tracking
 		prev_time_value = curr_time_value;
 
+		//Update the VFD phasor output, if appropriate
+		if (vfdState != VFD_OFF)
+		{
+			phasorVal[0] += (2*PI*currentFrequency - nominal_output_radian_freq)*diff_time_value;
+			phasorVal[1] += (2*PI*currentFrequency - nominal_output_radian_freq)*diff_time_value;
+			phasorVal[2] += (2*PI*currentFrequency - nominal_output_radian_freq)*diff_time_value;
+		}
+		//Default else -- if it is off, who cares?
 	}//End frequency value update
 
 	//Update output voltage magnitude
 	settleVolt = VbyF*currentFrequency;
-
-	//Update the VFD output
-	phasorVal[0] += (2*PI*currentFrequency - nominal_output_radian_freq)*curr_time_value;
-	phasorVal[1] += (2*PI*currentFrequency - nominal_output_radian_freq)*curr_time_value;
-	phasorVal[2] += (2*PI*currentFrequency - nominal_output_radian_freq)*curr_time_value;
 
 	//Temporary variable
 	settleVoltOut[0] = complex(settleVolt,0)*complex_exp(phasorVal[0]);
@@ -628,7 +648,7 @@ STATUS vfd::VFD_current_injection(void)
 		currEfficiency = 0.0;
 
 		//Loop and multiply
-		for (index_val=0; index_val<9; index_val++)
+		for (index_val=0; index_val<8; index_val++)
 		{
 			if (index_val == 0)
 			{
