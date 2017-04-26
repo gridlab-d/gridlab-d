@@ -177,7 +177,7 @@ int transformer_configuration::init(OBJECT *parent)
 		//it will error out during a check in transformer.cpp
 	}
 
-	if (phaseA_kVA_rating+phaseB_kVA_rating+phaseC_kVA_rating>0 && (phaseA_kVA_rating==0 || phaseB_kVA_rating==0 || phaseC_kVA_rating==0));{
+	if (phaseA_kVA_rating+phaseB_kVA_rating+phaseC_kVA_rating>0 && (phaseA_kVA_rating==0 || phaseA_kVA_rating==0 || phaseA_kVA_rating==0));{
 		if (connect_type==WYE_WYE){
 			gl_warning("Either provide individual phase power ratings for all connected phases or only overall power rating for WYE_WYE transformer configuration in %s",obj->name);
 		}
