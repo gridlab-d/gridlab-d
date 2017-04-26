@@ -165,7 +165,7 @@ int transformer_configuration::init(OBJECT *parent)
 		kVA_rating = phaseA_kVA_rating+phaseB_kVA_rating+phaseC_kVA_rating;
 
 	// if none of the phase ratings are specified, then it implicitly 3 phase
-	if (phaseA_kVA_rating+phaseB_kVA_rating+phaseC_kVA_rating==0 && kVA_rating>0) //ptm add warning here
+	if (phaseA_kVA_rating+phaseB_kVA_rating+phaseC_kVA_rating==0 && kVA_rating>0)
 		phaseA_kVA_rating = phaseB_kVA_rating = phaseC_kVA_rating = kVA_rating/3;
 
 	// check connection type

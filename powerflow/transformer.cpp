@@ -152,7 +152,7 @@ int transformer::init(OBJECT *parent)
 	double V_base,za_basehi,za_baselo,V_basehi;
 	double sa_base;
 	double nt, nt_a, nt_b, nt_c, inv_nt_a, inv_nt_b, inv_nt_c;
-	complex zt, zt_a, zt_b, zt_c, z0, z1, z2, zc,zt_baseA,zt_baseB,zt_baseC,zc_baseA,zc_baseB,zc_baseC;
+	complex zt, zt_a, zt_b, zt_c, z0, z1, z2, zc;
 	FINDLIST *climate_list = NULL;
 
 	config = OBJECTDATA(configuration,transformer_configuration);
@@ -177,15 +177,6 @@ int transformer::init(OBJECT *parent)
 	voltage_ratio = nt = config->V_primary / config->V_secondary;
 	zt = (config->impedance * V_base * V_base) / (config->kVA_rating * 1000.0);
 	zc =  complex(V_base * V_base,0) / (config->kVA_rating * 1000.0) * complex(config->shunt_impedance.Re(),0) * complex(0,config->shunt_impedance.Im()) / complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
-	//if (config->phaseA_kVA_rating )
-	//{
-		zt_baseA = (config->impedance * V_base * V_base) / (config->phaseA_kVA_rating * 1000.0); //config->kVA_rating
-		zt_baseB = (config->impedance * V_base * V_base) / (config->phaseB_kVA_rating * 1000.0);
-		zt_baseC = (config->impedance * V_base * V_base) / (config->phaseC_kVA_rating * 1000.0);
-		zc_baseA =  complex(V_base * V_base,0) / (config->phaseA_kVA_rating * 1000.0) * complex(config->shunt_impedance.Re(),0) * complex(0,config->shunt_impedance.Im()) / complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
-		zc_baseB =  complex(V_base * V_base,0) / (config->phaseB_kVA_rating * 1000.0) * complex(config->shunt_impedance.Re(),0) * complex(0,config->shunt_impedance.Im()) / complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
-		zc_baseC =  complex(V_base * V_base,0) / (config->phaseC_kVA_rating * 1000.0) * complex(config->shunt_impedance.Re(),0) * complex(0,config->shunt_impedance.Im()) / complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
-//	}
 
 	for (int i = 0; i < 3; i++) 
 	{
@@ -199,9 +190,9 @@ int transformer::init(OBJECT *parent)
 			if (has_phase(PHASE_A)) 
 			{
 				nt_a = nt;
-				zt_a = zt_baseA * nt_a;
+				zt_a = zt * nt_a;
 				inv_nt_a = 1 / nt_a;
-				c_mat[0][0] = complex(1,0) / ( complex(nt_a,0) * zc_baseA);
+				c_mat[0][0] = complex(1,0) / ( complex(nt_a,0) * zc);
 			} 
 			else 
 			{
@@ -212,9 +203,9 @@ int transformer::init(OBJECT *parent)
 			if (has_phase(PHASE_B)) 
 			{
 				nt_b = nt;
-				zt_b = zt_baseB * nt_b;
+				zt_b = zt * nt_b;
 				inv_nt_b = 1 / nt_b;
-				c_mat[1][1] = complex(1,0) / ( complex(nt_b,0) * zc_baseB);
+				c_mat[1][1] = complex(1,0) / ( complex(nt_b,0) * zc);
 			} 
 			else 
 			{
@@ -225,9 +216,9 @@ int transformer::init(OBJECT *parent)
 			if (has_phase(PHASE_C)) 
 			{
 				nt_c = nt;
-				zt_c = zt_baseC * nt_c;
+				zt_c = zt * nt_c;
 				inv_nt_c = 1 / nt_c;
-				c_mat[2][2] = complex(1,0) / ( complex(nt_c,0) * zc_baseC);
+				c_mat[2][2] = complex(1,0) / ( complex(nt_c,0) * zc);
 			} 
 			else 
 			{
@@ -239,8 +230,8 @@ int transformer::init(OBJECT *parent)
 			{
 				if (has_phase(PHASE_A)) 
 				{
-					A_mat[0][0] = zc_baseA / ((zt_baseA + zc_baseA) * complex(nt,0));//1/nt_a;
-					a_mat[0][0] = complex(nt,0) * (zt_baseA + zc_baseA)/zc_baseA;//nt_a;
+					A_mat[0][0] = zc / ((zt + zc) * complex(nt,0));//1/nt_a;
+					a_mat[0][0] = complex(nt,0) * (zt + zc)/zc;//nt_a;
 					b_mat[0][0] = complex(nt_a,0) * zt_a;
 					d_mat[0][0] = 1/nt;//(zc + zt_a) / (complex(nt_a,0) * zc);
 					//A_mat[0][0] = (zc - zt_a) / ( complex(nt_a,0) * (zc + zt_a));
@@ -252,8 +243,8 @@ int transformer::init(OBJECT *parent)
 
 				if (has_phase(PHASE_B))
 				{
-					A_mat[1][1] = zc_baseB / ((zt_baseB + zc_baseB) * complex(nt,0));//1/nt_b;
-					a_mat[1][1] = complex(nt,0) * (zt_baseB + zc_baseB)/zc_baseB;//nt_b;
+					A_mat[1][1] = zc / ((zt + zc) * complex(nt,0));//1/nt_b;
+					a_mat[1][1] = complex(nt,0) * (zt + zc)/zc;//nt_b;
 					b_mat[1][1] = complex(nt_b,0) * zt_b;
 					d_mat[1][1] = 1/nt;//(zc + zt_b) / (complex(nt_b,0) * zc);
 					//A_mat[1][1] = (zc - zt_b) / ( complex(nt_b,0) * (zc + zt_b));
@@ -264,8 +255,8 @@ int transformer::init(OBJECT *parent)
 
 				if (has_phase(PHASE_C))
 				{
-					A_mat[2][2] = zc_baseC / ((zt_baseC + zc_baseC) * complex(nt,0));//1/nt_c;
-					a_mat[2][2] = complex(nt,0) * (zt_baseC + zc_baseC)/zc_baseC;//nt_c;
+					A_mat[2][2] = zc / ((zt + zc) * complex(nt,0));//1/nt_c;
+					a_mat[2][2] = complex(nt,0) * (zt + zc)/zc;//nt_c;
 					b_mat[2][2] = complex(nt_c,0) * zt_c;
 					d_mat[2][2] = 1/nt;//(zc + zt_c) / (complex(nt_c,0) * zc);
 					//A_mat[2][2] = (zc - zt_c) / ( complex(nt_c,0) * (zc + zt_c));
@@ -276,9 +267,7 @@ int transformer::init(OBJECT *parent)
 			}
 			else if (solver_method==SM_NR)
 			{
-				complex Izt_baseA = complex(1,0) / zt_baseA; // ptm: change here?
-				complex Izt_baseB = complex(1,0) / zt_baseB;
-				complex Izt_baseC = complex(1,0) / zt_baseC;
+				complex Izt = complex(1,0) / zt;
 				
 				//In-rush capability stuff -- allocations
 				if (enable_inrush_calculations == true)
@@ -421,13 +410,13 @@ int transformer::init(OBJECT *parent)
 				//Pre-inverted
 				if (has_phase(PHASE_A))
 					//b_mat[0][0] = (zc - zt) / ((zc + zt) * zt);
-					b_mat[0][0] = complex(1,0) / zt_baseA;//(zc - zt) / ((zc + zt) * zt);
+					b_mat[0][0] = complex(1,0) / zt;//(zc - zt) / ((zc + zt) * zt);
 				if (has_phase(PHASE_B))
 					//b_mat[1][1] = (zc - zt) / ((zc + zt) * zt);
-					b_mat[1][1] = complex(1,0) / zt_baseB;//(zc - zt) / ((zc + zt) * zt);
+					b_mat[1][1] = complex(1,0) / zt;//(zc - zt) / ((zc + zt) * zt);
 				if (has_phase(PHASE_C))
 					//b_mat[2][2] = (zc - zt) / ((zc + zt) * zt);
-					b_mat[2][2] = complex(1,0) / zt_baseC;//(zc - zt) / ((zc + zt) * zt);
+					b_mat[2][2] = complex(1,0) / zt;//(zc - zt) / ((zc + zt) * zt);
 
 				//Other matrices
 				A_mat[0][1] = A_mat[0][2] = A_mat[1][0] = A_mat[1][2] = A_mat[2][0] = A_mat[2][1] = 0.0;
@@ -438,7 +427,7 @@ int transformer::init(OBJECT *parent)
 				{
 					//a_mat[0][0] = ( complex(nt,0) * (zc + zt)) / (zc - zt);
 					a_mat[0][0] = 0;
-					d_mat[0][0] = Izt_baseA / nt / nt;
+					d_mat[0][0] = Izt / nt / nt;
 					A_mat[0][0] = complex(nt,0);//* (zc) / (zc + zt);
 					c_mat[0][0] = nt;
 				}
@@ -446,7 +435,7 @@ int transformer::init(OBJECT *parent)
 				{
 					//a_mat[1][1] = ( complex(nt,0) * (zc + zt)) / (zc - zt);
 					a_mat[1][1] = 0;
-					d_mat[1][1] = Izt_baseB / nt / nt;
+					d_mat[1][1] = Izt / nt / nt;
 					A_mat[1][1] = complex(nt,0);// * (zc) / (zc + zt);
 					c_mat[1][1] = nt;
 				}
@@ -454,7 +443,7 @@ int transformer::init(OBJECT *parent)
 				{
 					//a_mat[2][2] = ( complex(nt,0) * (zc + zt)) / (zc - zt);
 					a_mat[2][2] = 0;
-					d_mat[2][2] = Izt_baseC / nt / nt;
+					d_mat[2][2] = Izt / nt / nt;
 					A_mat[2][2] = complex(nt,0);//* (zc) / (zc + zt);
 					c_mat[2][2] = nt;
 				}
@@ -469,9 +458,9 @@ int transformer::init(OBJECT *parent)
 				*/
 			}
 
-			B_mat[0][0] = zt_baseA*zc_baseA/(zt_baseA+zc_baseA);
-			B_mat[1][1] = zt_baseB*zc_baseB/(zt_baseB+zc_baseB);
-			B_mat[2][2] = zt_baseC*zc_baseC/(zt_baseC+zc_baseC);
+			B_mat[0][0] = zt*zc/(zt+zc);
+			B_mat[1][1] = zt*zc/(zt+zc);
+			B_mat[2][2] = zt*zc/(zt+zc);
 
 			break;
 		case transformer_configuration::DELTA_DELTA:
@@ -531,12 +520,8 @@ int transformer::init(OBJECT *parent)
 					a_mat[0][1] = a_mat[1][2] = a_mat[2][0] = -nt * 2.0 / 3.0;
 					a_mat[0][2] = a_mat[1][0] = a_mat[2][1] = -nt / 3.0;
 
-					b_mat[2][0] = zt_baseA * -nt * 2.0 / 3.0;
-					b_mat[0][1] = zt_baseB * -nt * 2.0 / 3.0;
-					b_mat[1][2] = zt_baseC * -nt * 2.0 / 3.0;
-					b_mat[1][0] = zt_baseA * -nt / 3.0;
-					b_mat[2][1] = zt_baseB * -nt / 3.0;
-					b_mat[0][2] = zt_baseC * -nt / 3.0;
+					b_mat[0][1] = b_mat[1][2] = b_mat[2][0] = zt * -nt * 2.0 / 3.0;    
+					b_mat[0][2] = b_mat[1][0] = b_mat[2][1] = zt * -nt / 3.0;    
 					
 					d_mat[0][0] = d_mat[1][1] = d_mat[2][2] = complex(1.0) / nt;
 					d_mat[0][1] = d_mat[1][2] = d_mat[2][0] = complex(-1.0) / nt;
@@ -544,9 +529,7 @@ int transformer::init(OBJECT *parent)
 					A_mat[0][0] = A_mat[1][1] = A_mat[2][2] = complex(1.0) / nt;
 					A_mat[0][2] = A_mat[1][0] = A_mat[2][1] = complex(-1.0) / nt;
 
-					B_mat[0][0] = zt_baseA;
-					B_mat[1][1] = zt_baseB;
-					B_mat[2][2] = zt_baseC;
+					B_mat[0][0] = B_mat[1][1] = B_mat[2][2] = zt;
 				}
 				else {//step up transformer
 					nt *= sqrt(3.0);
@@ -554,30 +537,21 @@ int transformer::init(OBJECT *parent)
 					a_mat[0][0] = a_mat[1][1] = a_mat[2][2] = nt * 2.0 / 3.0;
 					a_mat[0][1] = a_mat[1][2] = a_mat[2][0] = nt / 3.0;
 
-					b_mat[0][0] = zt_baseA * nt * 2.0 / 3.0;
-					b_mat[1][1] = zt_baseB * nt * 2.0 / 3.0;
-					b_mat[2][2] = zt_baseC * nt * 2.0 / 3.0;
-					b_mat[2][0] = zt_baseA * nt/ 3.0;
-					b_mat[0][1] = zt_baseB * nt/ 3.0;
-					b_mat[1][2] = zt_baseC * nt/ 3.0;
+					b_mat[0][0] = b_mat[1][1] = b_mat[2][2] = zt * nt * 2.0 / 3.0;    
+					b_mat[0][1] = b_mat[1][2] = b_mat[2][0] = zt * nt/ 3.0;    
 					
-
 					d_mat[0][0] = d_mat[1][1] = d_mat[2][2] = complex(1.0) / nt;
 					d_mat[0][2] = d_mat[1][0] = d_mat[2][1] = complex(-1.0) / nt;
 
 					A_mat[0][0] = A_mat[1][1] = A_mat[2][2] = complex(1.0) / nt;
 					A_mat[0][1] = A_mat[1][2] = A_mat[2][0] = complex(-1.0) / nt;
 
-					B_mat[0][0] = zt_baseA;
-					B_mat[1][1] = zt_baseB;
-					B_mat[2][2] = zt_baseC;
+					B_mat[0][0] = B_mat[1][1] = B_mat[2][2] = zt;
 				}
 			}
 			else if (solver_method==SM_NR)
 			{
-				complex Izt_baseA = complex(1.0,0) / zt_baseA;
-				complex Izt_baseB = complex(1.0,0) / zt_baseB;
-				complex Izt_baseC = complex(1.0,0) / zt_baseC;
+				complex Izt = complex(1.0,0) / zt;
 
 				complex alphaval = voltage_ratio * sqrt(3.0);
 
@@ -591,9 +565,7 @@ int transformer::init(OBJECT *parent)
 					c_mat[0][1] = c_mat[1][2] = c_mat[2][0] = 0.0;
 
 					//Y-based impedance model
-					b_mat[0][0] = Izt_baseA;
-					b_mat[1][1] = Izt_baseB;
-					b_mat[2][2] = Izt_baseC;
+					b_mat[0][0] = b_mat[1][1] = b_mat[2][2] = Izt;
 					b_mat[0][1] = b_mat[0][2] = b_mat[1][0] = 0.0;
 					b_mat[1][2] = b_mat[2][0] = b_mat[2][1] = 0.0;
 
@@ -617,9 +589,7 @@ int transformer::init(OBJECT *parent)
 					c_mat[0][2] = c_mat[1][0] = c_mat[2][1] = 0.0;
 
 					//Impedance matrix
-					b_mat[0][0] = Izt_baseA;
-					b_mat[1][1] = Izt_baseB;
-					b_mat[2][2] = Izt_baseC;
+					b_mat[0][0] = b_mat[1][1] = b_mat[2][2] = Izt;
 					b_mat[0][1] = b_mat[0][2] = b_mat[1][0] = 0.0;
 					b_mat[1][2] = b_mat[2][0] = b_mat[2][1] = 0.0;
 
@@ -831,7 +801,7 @@ int transformer::init(OBJECT *parent)
 				{
 					sa_base = config->phaseA_kVA_rating;
 					if (sa_base==0)	
-						GL_THROW("Split-phase transformer:%d trying to attach to phase A not defined in the configuration",obj->id);
+						GL_THROW("Split-phase tranformer:%d trying to attach to phase A not defined in the configuration",obj->id);
 						/*  TROUBLESHOOT
 						A single-phase, center-tapped transformer is attempting to attach to a system with phase A, while
 						its phase A is undefined.  Fix the appropriate link or define a new transformer configuration with
