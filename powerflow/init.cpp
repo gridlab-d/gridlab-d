@@ -279,8 +279,22 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 				{
 					if (delta_functions[curr_object_number] != NULL)
 					{
-						//Call the actual function
-						function_status = ((SIMULATIONMODE (*)(OBJECT *, unsigned int64, unsigned long, unsigned int, bool))(*delta_functions[curr_object_number]))(delta_objects[curr_object_number],delta_time,dt,iteration_count_val,false);
+						try {
+							//Call the actual function
+							function_status = ((SIMULATIONMODE (*)(OBJECT *, unsigned int64, unsigned long, unsigned int, bool))(*delta_functions[curr_object_number]))(delta_objects[curr_object_number],delta_time,dt,iteration_count_val,false);
+						}
+						catch (const char *msg)
+						{
+							gl_error("powerflow:interupdate - pre-pass function call: %s", msg);
+							error_state = true;
+							break;
+						}
+						catch (...)
+						{
+							gl_error("powerflow:interupdate - pre-pass function call: unknown exception");
+							error_state = true;
+							break;
+						}
 					}
 					else	//No functional call for this, skip it
 					{
@@ -359,8 +373,22 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 				{
 					if (delta_functions[curr_object_number] != NULL)
 					{
-						//Call the actual function
-						function_status = ((SIMULATIONMODE (*)(OBJECT *, unsigned int64, unsigned long, unsigned int, bool))(*delta_functions[curr_object_number]))(delta_objects[curr_object_number],delta_time,dt,iteration_count_val,true);
+						try {
+							//Call the actual function
+							function_status = ((SIMULATIONMODE (*)(OBJECT *, unsigned int64, unsigned long, unsigned int, bool))(*delta_functions[curr_object_number]))(delta_objects[curr_object_number],delta_time,dt,iteration_count_val,true);
+						}
+						catch (const char *msg)
+						{
+							gl_error("powerflow:interupdate - post-pass function call: %s", msg);
+							error_state = true;
+							break;
+						}
+						catch (...)
+						{
+							gl_error("powerflow:interupdate - post-pass function call: unknown exception");
+							error_state = true;
+							break;
+						}
 					}
 					else	//Doesn't have a function, either intentionally, or "lack of supportly"
 					{
