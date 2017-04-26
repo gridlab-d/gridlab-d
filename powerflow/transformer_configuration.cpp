@@ -165,12 +165,8 @@ int transformer_configuration::init(OBJECT *parent)
 		kVA_rating = phaseA_kVA_rating+phaseB_kVA_rating+phaseC_kVA_rating;
 
 	// if none of the phase ratings are specified, then it implicitly 3 phase
-	if (phaseA_kVA_rating+phaseB_kVA_rating+phaseC_kVA_rating==0 && kVA_rating>0){ //ptm add warning here
-		if ((connect_type==1)||(connect_type==2)||(connect_type==3)){
-		gl_warning("Individual phase power rating not specified. Assigning power_rating divided by 3");
-		}
+	if (phaseA_kVA_rating+phaseB_kVA_rating+phaseC_kVA_rating==0 && kVA_rating>0) //ptm add warning here
 		phaseA_kVA_rating = phaseB_kVA_rating = phaseC_kVA_rating = kVA_rating/3;
-	}
 
 	// check connection type
 	if (connect_type==UNKNOWN)
