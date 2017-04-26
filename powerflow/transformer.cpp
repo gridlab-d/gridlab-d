@@ -175,7 +175,7 @@ int transformer::init(OBJECT *parent)
 
 	V_base = config->V_secondary;
 	voltage_ratio = nt = config->V_primary / config->V_secondary;
-	zt = (config->impedance * 3 * V_base * V_base) / (config->kVA_rating * 1000.0); // V_base is VLN so converting it to VLL. Hence the 3
+	zt = (config->impedance * V_base * V_base) / (config->kVA_rating * 1000.0);
 	zc =  complex(V_base * V_base,0) / (config->kVA_rating * 1000.0) * complex(config->shunt_impedance.Re(),0) * complex(0,config->shunt_impedance.Im()) / complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
 	//if (config->phaseA_kVA_rating )
 	//{
