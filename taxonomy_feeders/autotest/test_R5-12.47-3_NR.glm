@@ -1,7 +1,7 @@
  // $Id: R5-12.47-3.glm
  // 13.8 kV feeder
  //*********************************************
- // validates voltages with FBS at selected load, node, meter, triplex_node, and
+ // validates voltages with NR at selected load, node, meter, triplex_node, and
 // triplex_meter objects
 //
 //
@@ -10,7 +10,6 @@
 //
 // written by alek332
 
-// off by 10-12 on several triplex nodes for NR vs FBS; search for @off
 clock{
 	timezone EST+8EDT;
 	timestamp '2000-01-01 0:00:00';
@@ -4488,7 +4487,7 @@ clock{
 		once ONCE_TRUE;
 		in '2000-01-01 00:03:00 EST';
 		target voltage_C;
-		value -105.671+226.098j;
+		value -105.671+225.098j;
 		within 1;
 	};
  }
@@ -6210,21 +6209,21 @@ clock{
 		once ONCE_TRUE;
 		in '2000-01-01 00:03:00 EST';
 		value +7696.29-163.363j;
-		within 6.5;
+		within 1;
 	};
 	object complex_assert{
 		once ONCE_TRUE;
 		in '2000-01-01 00:03:00 EST';
 		target voltage_B;
 		value -4036.75-6378.55j;
-		within 6.5;
+		within 1;
 	};
 	object complex_assert{
 		once ONCE_TRUE;
 		in '2000-01-01 00:03:00 EST';
 		target voltage_C;
 		value -3573.29+6735.36j;
-		within 6.5;
+		within 1;
 	};
  }
 
@@ -10707,7 +10706,7 @@ clock{
 		// interval 60;
 		// limit 1440;
 		// file "711.csv";
-	// }; // @off by 10
+	// };
 	object complex_assert{
 		target voltage_A;
 		once ONCE_TRUE;
@@ -10720,7 +10719,7 @@ clock{
 		in '2000-01-01 00:03:00 EST';
 		target voltage_B;
 		value -4001.12-5707.69j;
-		within 10;
+		within 1;
 	};
 	object complex_assert{
 		once ONCE_TRUE;
@@ -13661,7 +13660,7 @@ clock{
 		// interval 60;
 		// limit 1440;
 		// file "1109.csv";
-	// }; // @off by 11
+	// };
 	object complex_assert{
 		target voltage_A;
 		once ONCE_TRUE;
@@ -13674,7 +13673,7 @@ clock{
 		in '2000-01-01 00:03:00 EST';
 		target voltage_B;
 		value -3917.05-5648.21j;
-		within 11;
+		within 1;
 	};
 	object complex_assert{
 		once ONCE_TRUE;
@@ -16082,20 +16081,20 @@ clock{
 		// interval 60;
 		// limit 1440;
 		// file "1439.csv";
-	// }; // @off by 12
+	// };
 	object complex_assert{
 		target voltage_A;
 		once ONCE_TRUE;
 		in '2000-01-01 00:03:00 EST';
 		value +7406.36-1.72952d;
-		within 12;
+		within 1;
 	};
 	object complex_assert{
 		once ONCE_TRUE;
 		in '2000-01-01 00:03:00 EST';
 		target voltage_B;
 		value -4042.93-5187j;
-		within 12;
+		within 1;
 	};
 	object complex_assert{
 		once ONCE_TRUE;
@@ -39475,7 +39474,7 @@ clock{
       primary_voltage 13800.000 V;
       secondary_voltage 480 V;
       power_rating 10.0;
-//      powerA_rating 10.0;
+      powerA_rating 10.0;
       resistance 0.01;
       reactance 0.05;
       shunt_impedance 477.296+2589.316j;
@@ -39487,7 +39486,7 @@ clock{
       primary_voltage 13800.000 V;
       secondary_voltage 480 V;
       power_rating 25.0;
-//      powerA_rating 25.0;
+      powerA_rating 25.0;
       resistance 0.00400;
       reactance 0.02000;
       shunt_impedance 206.196+982.877j;
@@ -39499,8 +39498,8 @@ clock{
       primary_voltage 13800.000 V;
       secondary_voltage 480 V;
       power_rating 100.0;
-//      powerA_rating 50.0;
-//      powerC_rating 50.0;
+      powerA_rating 50.0;
+      powerC_rating 50.0;
       resistance 0.00100;
       reactance 0.00500;
       shunt_impedance 50.659+258.467j;
@@ -39512,7 +39511,7 @@ clock{
       primary_voltage 13800.000 V;
       secondary_voltage 480 V;
       power_rating 50.0;
-//      powerB_rating 50.0;
+      powerB_rating 50.0;
       resistance 0.00200;
       reactance 0.01000;
       shunt_impedance 97.862+487.771j;
@@ -39524,7 +39523,7 @@ clock{
       primary_voltage 13800.000 V;
       secondary_voltage 480 V;
       power_rating 50.0;
-//      powerB_rating 50.0;
+      powerB_rating 50.0;
       resistance 0.00200;
       reactance 0.01000;
       shunt_impedance 98.964+512.204j;
@@ -39578,7 +39577,7 @@ clock{
       primary_voltage 13800.000 V;
       secondary_voltage 480 V;
       power_rating 100.0;
-//      powerA_rating 100.0;
+      powerA_rating 100.0;
       resistance 0.00100;
       reactance 0.00500;
       shunt_impedance 50.466+251.961j;
@@ -39590,7 +39589,7 @@ clock{
       primary_voltage 13800.000 V;
       secondary_voltage 480 V;
       power_rating 25.0;
-//      powerB_rating 25.0;
+      powerB_rating 25.0;
       resistance 0.00400;
       reactance 0.02000;
       shunt_impedance 195.280+989.772j;
@@ -39602,7 +39601,7 @@ clock{
       primary_voltage 13800.000 V;
       secondary_voltage 480 V;
       power_rating 5.0;
-//      powerC_rating 5.0;
+      powerC_rating 5.0;
       resistance 0.01;
       reactance 0.05;
       shunt_impedance 496.820+2511.849j;
@@ -39614,7 +39613,7 @@ clock{
       primary_voltage 13800.000 V;
       secondary_voltage 480 V;
       power_rating 15.0;
-//      powerB_rating 15.0;
+      powerB_rating 15.0;
       resistance 0.00667;
       reactance 0.03333;
       shunt_impedance 334.769+1675.654j;
@@ -39626,7 +39625,7 @@ clock{
       primary_voltage 13800.000 V;
       secondary_voltage 480 V;
       power_rating 25.0;
-//      powerC_rating 25.0;
+      powerC_rating 25.0;
       resistance 0.00400;
       reactance 0.02000;
       shunt_impedance 196.270+1014.051j;
@@ -39638,7 +39637,7 @@ clock{
       primary_voltage 13800.000 V;
       secondary_voltage 480 V;
       power_rating 25.0;
-//      powerA_rating 25.0;
+      powerA_rating 25.0;
       resistance 0.00400;
       reactance 0.02000;
       shunt_impedance 205.249+995.030j;
@@ -39650,7 +39649,7 @@ clock{
       primary_voltage 13800.000 V;
       secondary_voltage 480 V;
       power_rating 5.0;
-//      powerB_rating 5.0;
+      powerB_rating 5.0;
       resistance 0.01;
       reactance 0.05;
       shunt_impedance 495.696+2531.553j;
@@ -39662,7 +39661,7 @@ clock{
       primary_voltage 13800.000 V;
       secondary_voltage 480 V;
       power_rating 50.0;
-//      powerA_rating 50.0;
+      powerA_rating 50.0;
       resistance 0.00200;
       reactance 0.01000;
       shunt_impedance 97.933+521.732j;
@@ -39674,7 +39673,7 @@ clock{
       primary_voltage 13800.000 V;
       secondary_voltage 480 V;
       power_rating 25.0;
-//      powerB_rating 25.0;
+      powerB_rating 25.0;
       resistance 0.00400;
       reactance 0.02000;
       shunt_impedance 196.062+1000.559j;
@@ -39686,7 +39685,7 @@ clock{
       primary_voltage 13800.000 V;
       secondary_voltage 480 V;
       power_rating 10.0;
-//      powerB_rating 10.0;
+      powerB_rating 10.0;
       resistance 0.01;
       reactance 0.05;
       shunt_impedance 490.207+2471.928j;
@@ -39698,7 +39697,7 @@ clock{
       primary_voltage 13800.000 V;
       secondary_voltage 480 V;
       power_rating 15.0;
-//      powerC_rating 15.0;
+      powerC_rating 15.0;
       resistance 0.00667;
       reactance 0.03333;
       shunt_impedance 332.200+1709.093j;
@@ -39710,7 +39709,7 @@ clock{
       primary_voltage 13800.000 V;
       secondary_voltage 480 V;
       power_rating 50.0;
-//      powerB_rating 50.0;
+      powerB_rating 50.0;
       resistance 0.00200;
       reactance 0.01000;
       shunt_impedance 98.975+499.598j;
@@ -39736,7 +39735,7 @@ clock{
       primary_voltage 13800.000 V;
       secondary_voltage 480 V;
       power_rating 25.0;
-//      powerC_rating 25.0;
+      powerC_rating 25.0;
       resistance 0.00400;
       reactance 0.02000;
       shunt_impedance 189.947+1014.119j;
@@ -39790,7 +39789,7 @@ clock{
       primary_voltage 13800.000 V;
       secondary_voltage 480 V;
       power_rating 10.0;
-//      powerC_rating 10.0;
+      powerC_rating 10.0;
       resistance 0.01;
       reactance 0.05;
       shunt_impedance 500.187+2543.167j;
@@ -39802,7 +39801,7 @@ clock{
       primary_voltage 13800.000 V;
       secondary_voltage 480 V;
       power_rating 5.0;
-//      powerA_rating 5.0;
+      powerA_rating 5.0;
       resistance 0.01;
       reactance 0.05;
       shunt_impedance 521.488+2543.467j;
@@ -39856,7 +39855,7 @@ clock{
       primary_voltage 13800.000 V;
       secondary_voltage 480 V;
       power_rating 5.0;
-//      powerB_rating 5.0;
+      powerB_rating 5.0;
       resistance 0.01;
       reactance 0.05;
       shunt_impedance 508.450+2524.369j;
@@ -39896,7 +39895,7 @@ clock{
       primary_voltage 13800.000 V;
       secondary_voltage 480 V;
       power_rating 10.0;
-//      powerB_rating 10.0;
+      powerB_rating 10.0;
       resistance 0.01;
       reactance 0.05;
       shunt_impedance 499.595+2471.710j;
@@ -39922,7 +39921,7 @@ clock{
       primary_voltage 13800.000 V;
       secondary_voltage 480 V;
       power_rating 15.0;
-//      powerA_rating 15.0;
+      powerA_rating 15.0;
       resistance 0.00667;
       reactance 0.03333;
       shunt_impedance 343.819+1750.002j;
@@ -39934,8 +39933,8 @@ clock{
       primary_voltage 13800.000 V;
       secondary_voltage 480 V;
       power_rating 10.0;
- //     powerA_rating 5.0;
- //     powerB_rating 5.0;
+      powerA_rating 5.0;
+      powerB_rating 5.0;
       resistance 0.01;
       reactance 0.05;
       shunt_impedance 499.500+2539.571j;
@@ -39975,8 +39974,8 @@ clock{
       primary_voltage 13800.000 V;
       secondary_voltage 480 V;
       power_rating 225.0;
-//      powerB_rating 175.0;
-//      powerC_rating 50.0;
+      powerB_rating 175.0;
+      powerC_rating 50.0;
       resistance 0.00044;
       reactance 0.00222;
       shunt_impedance 21.125+109.054j;
@@ -40043,7 +40042,7 @@ clock{
       primary_voltage 13800.000 V;
       secondary_voltage 480 V;
       power_rating 100.0;
-//      powerB_rating 100.0;
+      powerB_rating 100.0;
       resistance 0.00100;
       reactance 0.00500;
       shunt_impedance 48.407+242.138j;
@@ -40055,7 +40054,7 @@ clock{
       primary_voltage 13800.000 V;
       secondary_voltage 480 V;
       power_rating 100.0;
-//      powerC_rating 100.0;
+      powerC_rating 100.0;
       resistance 0.00100;
       reactance 0.00500;
       shunt_impedance 49.829+244.010j;

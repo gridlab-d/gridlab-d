@@ -181,18 +181,13 @@ int transformer::init(OBJECT *parent)
 	voltage_ratio = nt = config->V_primary / config->V_secondary;
 	zt = (config->impedance *V_base * V_base) / (config->kVA_rating * 1000.0); // still keeping this as it is used in DELTA_DELTA connect type
 	zc =  complex(V_base * V_base,0) / (config->kVA_rating * 1000.0) * complex(config->shunt_impedance.Re(),0) * complex(0,config->shunt_impedance.Im()) / complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
-	if (has_phase(PHASE_A)){
+
 		zt_baseA = (config->impedance * V_base * V_base) / (config->phaseA_kVA_rating * 1000.0); //config->kVA_rating
-		zc_baseA =  complex(V_base * V_base,0) / (config->phaseA_kVA_rating * 1000.0) * complex(config->shunt_impedance.Re(),0) * complex(0,config->shunt_impedance.Im()) / complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
-	}
-	if (has_phase(PHASE_B)){
 		zt_baseB = (config->impedance* V_base * V_base) / (config->phaseB_kVA_rating * 1000.0);
-		zc_baseB =  complex(V_base * V_base,0) / (config->phaseB_kVA_rating * 1000.0) * complex(config->shunt_impedance.Re(),0) * complex(0,config->shunt_impedance.Im()) / complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
-	}
-	if (has_phase(PHASE_C)){
 		zt_baseC = (config->impedance * V_base * V_base) / (config->phaseC_kVA_rating * 1000.0);
+		zc_baseA =  complex(V_base * V_base,0) / (config->phaseA_kVA_rating * 1000.0) * complex(config->shunt_impedance.Re(),0) * complex(0,config->shunt_impedance.Im()) / complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
+		zc_baseB =  complex(V_base * V_base,0) / (config->phaseB_kVA_rating * 1000.0) * complex(config->shunt_impedance.Re(),0) * complex(0,config->shunt_impedance.Im()) / complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
 		zc_baseC =  complex(V_base * V_base,0) / (config->phaseC_kVA_rating * 1000.0) * complex(config->shunt_impedance.Re(),0) * complex(0,config->shunt_impedance.Im()) / complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
-	}
 
 
 	for (int i = 0; i < 3; i++) 
