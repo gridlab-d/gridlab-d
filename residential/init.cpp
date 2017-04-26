@@ -350,7 +350,7 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 				//Make sure we worked
 				if (function_status == FAILED)
 				{
-					gl_error("Generator object:%s - failed post-deltamode update",delta_objects[curr_object_number]->name);
+					gl_error("Residential object:%s - failed post-deltamode update",delta_objects[curr_object_number]->name);
 					/*  TROUBLESHOOT
 					While calling the individual object post-deltamode calculations, an error occurred.  Please try again.
 					If the error persists, please submit your code and a bug report via the trac website.
