@@ -172,23 +172,24 @@ int transformer::init(OBJECT *parent)
 
 	link_object::init(parent);
 	OBJECT *obj = OBJECTHDR(this);
-
-	if ((config->connect_type == config->WYE_WYE) || (config->connect_type == config->DELTA_GWYE)|| (config->connect_type == config->SINGLE_PHASE))
-		V_base = (config->V_secondary)/ sqrt(3); // These configurations need to use VLN as V_base.
-	else //if DELTA_DELTA it should be VLL in glm; if SINGLE_PHASE_CENTER_TAPPED, it should be VLN already in the glm ; if adding a new transformer type, this might need to be thought through
+	if ((config->connect_type == config->WYE_WYE) || (config->connect_type == config->DELTA_GWYE))
+		V_base = (config->V_secondary)* sqrt(3); // V_base is VLN so converting it to VLL. Hence the 3
+	else
 		V_base = config->V_secondary;
 
-	voltage_ratio = nt = config->V_primary / config->V_secondary;
-	zt = (config->impedance *V_base * V_base) / (config->kVA_rating * 1000.0); // still keeping this as it is used in DELTA_DELTA connect type
-	zc =  complex(V_base * V_base,0) / (config->kVA_rating * 1000.0) * complex(config->shunt_impedance.Re(),0) * complex(0,config->shunt_impedance.Im()) / complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
 
+	voltage_ratio = nt = config->V_primary / config->V_secondary;
+	zt = (config->impedance * V_base * V_base) / (config->kVA_rating * 1000.0);
+	zc =  complex(V_base * V_base,0) / (config->kVA_rating * 1000.0) * complex(config->shunt_impedance.Re(),0) * complex(0,config->shunt_impedance.Im()) / complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
+	//if (config->phaseA_kVA_rating )
+	//{
 		zt_baseA = (config->impedance * V_base * V_base) / (config->phaseA_kVA_rating * 1000.0); //config->kVA_rating
-		zt_baseB = (config->impedance* V_base * V_base) / (config->phaseB_kVA_rating * 1000.0);
+		zt_baseB = (config->impedance * V_base * V_base) / (config->phaseB_kVA_rating * 1000.0);
 		zt_baseC = (config->impedance * V_base * V_base) / (config->phaseC_kVA_rating * 1000.0);
 		zc_baseA =  complex(V_base * V_base,0) / (config->phaseA_kVA_rating * 1000.0) * complex(config->shunt_impedance.Re(),0) * complex(0,config->shunt_impedance.Im()) / complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
 		zc_baseB =  complex(V_base * V_base,0) / (config->phaseB_kVA_rating * 1000.0) * complex(config->shunt_impedance.Re(),0) * complex(0,config->shunt_impedance.Im()) / complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
 		zc_baseC =  complex(V_base * V_base,0) / (config->phaseC_kVA_rating * 1000.0) * complex(config->shunt_impedance.Re(),0) * complex(0,config->shunt_impedance.Im()) / complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
-
+//	}
 
 	for (int i = 0; i < 3; i++) 
 	{
@@ -279,7 +280,7 @@ int transformer::init(OBJECT *parent)
 			}
 			else if (solver_method==SM_NR)
 			{
-				complex Izt_baseA = complex(1,0) / zt_baseA;
+				complex Izt_baseA = complex(1,0) / zt_baseA; // ptm: change here?
 				complex Izt_baseB = complex(1,0) / zt_baseB;
 				complex Izt_baseC = complex(1,0) / zt_baseC;
 				
@@ -472,9 +473,9 @@ int transformer::init(OBJECT *parent)
 				*/
 			}
 
-			if (has_phase(PHASE_A)) B_mat[0][0] = zt_baseA*zc_baseA/(zt_baseA+zc_baseA);
-			if (has_phase(PHASE_B)) B_mat[1][1] = zt_baseB*zc_baseB/(zt_baseB+zc_baseB);
-			if (has_phase(PHASE_C)) B_mat[2][2] = zt_baseC*zc_baseC/(zt_baseC+zc_baseC);
+			B_mat[0][0] = zt_baseA*zc_baseA/(zt_baseA+zc_baseA);
+			B_mat[1][1] = zt_baseB*zc_baseB/(zt_baseB+zc_baseB);
+			B_mat[2][2] = zt_baseC*zc_baseC/(zt_baseC+zc_baseC);
 
 			break;
 		case transformer_configuration::DELTA_DELTA:
@@ -1369,7 +1370,7 @@ int transformer::transformer_inrush_mat_update(void)
 
 	//Get base impedance values
 	Rd = config->impedance.Re()*config->V_secondary*config->V_secondary/(config->kVA_rating*1000.0);
-	Xd = config->impedance.Im()*config->V_secondary*config->V_secondary/(config->kVA_rating*1000.0);// *2.0);	//Where'd this /2 come from?  Fixed in later version!?!
+	Xd = config->impedance.Im()*config->V_secondary*config->V_secondary/(config->kVA_rating*1000.0);//ptm *2.0);	//Where'd this /2 come from?  Fixed in later version!?!
 	XM = config->V_secondary*config->V_secondary/(config->kVA_rating*1000.0*config->IM_pu)-Xd;
 
 	//******************** DEBUG NOTE - these may need to be moved, depending on where I populate things
