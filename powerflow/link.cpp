@@ -289,6 +289,16 @@ int link_object::init(OBJECT *parent)
 		mean_repair_time = 0.0;	//Set to zero by default
 	}
 
+	//Make sure they don't match -- odd test, but still needs to be done
+	if (from == to)
+	{
+		GL_THROW("link:%d - %s - FROM and TO objects are the same object!",obj->id,(obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		The from-node and to-node of a link are the same object. This is effectively a loop-back on itself and is not allowed.
+		Please choose a different from or to node.
+		*/
+	}
+
 	/* adjust ranks according to method in use */
 	switch (solver_method) {
 	case SM_FBS: /* forward backsweep method only */
