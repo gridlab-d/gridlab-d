@@ -232,17 +232,32 @@ EXPORT unsigned long preupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 				//See if it has a function
 				if (delta_preupdate_functions[curr_object_number] != NULL)
 				{
-					//Call the function
-					status_value = ((STATUS (*)(OBJECT *, TIMESTAMP, unsigned int64))(*delta_preupdate_functions[curr_object_number]))(delta_objects[curr_object_number],t0,dt);
+					//Try/catch for any GL_THROWs that may be called
+					try {
+						//Call the function
+						status_value = ((STATUS (*)(OBJECT *, TIMESTAMP, unsigned int64))(*delta_preupdate_functions[curr_object_number]))(delta_objects[curr_object_number],t0,dt);
+					}
+					catch (const char *msg)
+					{
+						gl_error("generators:preupdate function call: %s", msg);
+						status_value = FAILED;
+					}
+					catch (...)
+					{
+						gl_error("generators:preupdate function call: unknown exception");
+						status_value = FAILED;
+					}
 
 					//Make sure we passed
 					if (status_value != SUCCESS)
 					{
-						GL_THROW("generators - object:%d %s failed to run the object-level preupdate function",delta_objects[curr_object_number]->id,(delta_objects[curr_object_number]->name ? delta_objects[curr_object_number]->name : "Unnamed"));
+						gl_error("generators - object:%d %s failed to run the object-level preupdate function",delta_objects[curr_object_number]->id,(delta_objects[curr_object_number]->name ? delta_objects[curr_object_number]->name : "Unnamed"));
 						/*  TROUBLESHOOT
 						While attempting to call a preupdate function for a generator deltamode object, an error occurred.
 						Please look to the console output for more details.
 						*/
+
+						return DT_INVALID;
 					}
 					//Default else - it must have worked
 				}
@@ -278,8 +293,21 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 			//See if we're in service or not
 			if ((delta_objects[curr_object_number]->in_svc_double <= gl_globaldeltaclock) && (delta_objects[curr_object_number]->out_svc_double >= gl_globaldeltaclock))
 			{
-				//Call the actual function
-				function_status = ((SIMULATIONMODE (*)(OBJECT *, unsigned int64, unsigned long, unsigned int))(*delta_functions[curr_object_number]))(delta_objects[curr_object_number],delta_time,dt,iteration_count_val);
+				//Try/catch for any GL_THROWs that may be called
+				try {
+					//Call the actual function
+					function_status = ((SIMULATIONMODE (*)(OBJECT *, unsigned int64, unsigned long, unsigned int))(*delta_functions[curr_object_number]))(delta_objects[curr_object_number],delta_time,dt,iteration_count_val);
+				}
+				catch (const char *msg)
+				{
+					gl_error("generators:interupdate function call: %s", msg);
+					function_status = SM_ERROR;
+				}
+				catch (...)
+				{
+					gl_error("generators:interupdate function call: unknown exception");
+					function_status = SM_ERROR;
+				}
 			}
 			else //Not in service - off to event mode
 				function_status = SM_EVENT;
@@ -390,8 +418,21 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 				//See if we're in service or not
 				if ((delta_objects[curr_object_number]->in_svc_double <= gl_globaldeltaclock) && (delta_objects[curr_object_number]->out_svc_double >= gl_globaldeltaclock))
 				{
-					//Call the actual function
-					function_status = ((STATUS (*)(OBJECT *, complex *, unsigned int))(*post_delta_functions[curr_object_number]))(delta_objects[curr_object_number],&temp_complex,0);
+					//Try/catch for any GL_THROWs that may be called
+					try {
+						//Call the actual function
+						function_status = ((STATUS (*)(OBJECT *, complex *, unsigned int))(*post_delta_functions[curr_object_number]))(delta_objects[curr_object_number],&temp_complex,0);
+					}
+					catch (const char *msg)
+					{
+						gl_error("generators:postupdate function call: %s", msg);
+						function_status = FAILED;
+					}
+					catch (...)
+					{
+						gl_error("generators:postupdate function call: unknown exception");
+						function_status = FAILED;
+					}
 				}
 				else //Not in service
 					function_status = SUCCESS;

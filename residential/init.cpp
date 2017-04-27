@@ -273,8 +273,21 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 			//See if we're in service or not
 			if ((delta_objects[curr_object_number]->in_svc_double <= gl_globaldeltaclock) && (delta_objects[curr_object_number]->out_svc_double >= gl_globaldeltaclock))
 			{
-				//Call the actual function
-				function_status = ((SIMULATIONMODE (*)(OBJECT *, unsigned int64, unsigned long, unsigned int))(*delta_functions[curr_object_number]))(delta_objects[curr_object_number],delta_time,dt,iteration_count_val);
+				//Try/catch for any GL_THROWs that may be called
+				try {
+					//Call the actual function
+					function_status = ((SIMULATIONMODE (*)(OBJECT *, unsigned int64, unsigned long, unsigned int))(*delta_functions[curr_object_number]))(delta_objects[curr_object_number],delta_time,dt,iteration_count_val);
+				}
+				catch (const char *msg)
+				{
+					gl_error("residential:interupdate - pre-pass function call: %s", msg);
+					function_status = SM_ERROR;	//Flag as an error too
+				}
+				catch (...)
+				{
+					gl_error("residential:interupdate - pre-pass function call: unknown exception");
+					function_status = SM_ERROR;	//Flag as an error too
+				}
 			}
 			else //Not in service - off to event mode
 				function_status = SM_EVENT;
@@ -341,8 +354,21 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 				//See if we're in service or not
 				if ((delta_objects[curr_object_number]->in_svc_double <= gl_globaldeltaclock) && (delta_objects[curr_object_number]->out_svc_double >= gl_globaldeltaclock))
 				{
-					//Call the actual function
-					function_status = ((STATUS (*)(OBJECT *))(*post_delta_functions[curr_object_number]))(delta_objects[curr_object_number]);
+					//Try/catch for any GL_THROWs that may be called
+					try {
+						//Call the actual function
+						function_status = ((STATUS (*)(OBJECT *))(*post_delta_functions[curr_object_number]))(delta_objects[curr_object_number]);
+					}
+					catch (const char *msg)
+					{
+						gl_error("residential:postupdate function call: %s", msg);
+						function_status = FAILED;
+					}
+					catch (...)
+					{
+						gl_error("residential:postupdate function call: unknown exception");
+						function_status = FAILED;
+					}
 				}
 				else //Not in service
 					function_status = SUCCESS;

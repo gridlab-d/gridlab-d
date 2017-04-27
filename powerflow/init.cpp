@@ -279,6 +279,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 				{
 					if (delta_functions[curr_object_number] != NULL)
 					{
+						//Try/catch for any GL_THROWs that may be called
 						try {
 							//Call the actual function
 							function_status = ((SIMULATIONMODE (*)(OBJECT *, unsigned int64, unsigned long, unsigned int, bool))(*delta_functions[curr_object_number]))(delta_objects[curr_object_number],delta_time,dt,iteration_count_val,false);
@@ -287,13 +288,13 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 						{
 							gl_error("powerflow:interupdate - pre-pass function call: %s", msg);
 							error_state = true;
-							break;
+							function_status = SM_ERROR;	//Flag as an error too
 						}
 						catch (...)
 						{
 							gl_error("powerflow:interupdate - pre-pass function call: unknown exception");
 							error_state = true;
-							break;
+							function_status = SM_ERROR;	//Flag as an error too
 						}
 					}
 					else	//No functional call for this, skip it
@@ -305,7 +306,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 					function_status = SM_DELTA;
 
 				//Just make sure we didn't error 
-				if (function_status == (int)SM_ERROR)
+				if (function_status == SM_ERROR)
 				{
 					gl_error("Powerflow object:%s - deltamode function returned an error!",delta_objects[curr_object_number]->name);
 					// Defined below
@@ -314,6 +315,13 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 					break;
 				}
 				//Default else, we were okay, so onwards and upwards!
+			}
+
+			//Check for error states -- no sense trying to solve a powerflow if we're already angry
+			if ((error_state == true) || (function_status == SM_ERROR))
+			{
+				//Break out of this while
+				break;
 			}
 
 			//Call dynamic powerflow (start of either predictor or correct set)
@@ -328,13 +336,11 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 			{
 				gl_error("powerflow:interupdate - solver_nr call: %s", msg);
 				error_state = true;
-				break;
 			}
 			catch (...)
 			{
 				gl_error("powerflow:interupdate - solver_nr call: unknown exception");
 				error_state = true;
-				break;
 			}
 			
 			//De-flag any changes that may be in progress
@@ -364,6 +370,10 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 				error_state = true;
 				break;
 			}
+			else if (error_state == true)	//Some other, unspecified error
+			{
+				break;	//Get out of the while loop
+			}
 
 			//Loop through the object list and call the updates - loop forward for SWING first, to replicate "postsync"-like order
 			for (curr_object_number=0; curr_object_number<pwr_object_count; curr_object_number++)
@@ -373,6 +383,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 				{
 					if (delta_functions[curr_object_number] != NULL)
 					{
+						//Try/catch for any GL_THROWs that may be called
 						try {
 							//Call the actual function
 							function_status = ((SIMULATIONMODE (*)(OBJECT *, unsigned int64, unsigned long, unsigned int, bool))(*delta_functions[curr_object_number]))(delta_objects[curr_object_number],delta_time,dt,iteration_count_val,true);
@@ -381,13 +392,13 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 						{
 							gl_error("powerflow:interupdate - post-pass function call: %s", msg);
 							error_state = true;
-							break;
+							function_status = SM_ERROR;	//Flag as an error too
 						}
 						catch (...)
 						{
 							gl_error("powerflow:interupdate - post-pass function call: unknown exception");
 							error_state = true;
-							break;
+							function_status = SM_ERROR;	//Flag as an error too
 						}
 					}
 					else	//Doesn't have a function, either intentionally, or "lack of supportly"
@@ -425,8 +436,13 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 				//Default else, we're in SM_EVENT, so no flag change needed
 			}
 
-			//Check and see if we should even consider reiterating or not
-			if (pf_result < 0)
+			//Check for error states -- blocks the reiteration if something was already angry
+			if ((error_state == true) || (function_status == SM_ERROR))
+			{
+				//Break out of this while
+				break;
+			}
+			else if (pf_result < 0)	//Check and see if we should even consider reiterating or not
 			{
 				//Increment the iteration counter
 				simple_iter_test++;
@@ -438,7 +454,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 		}//End iteration while
 
 		//See if we got out here due to an error
-		if (error_state == true)
+		if ((error_state == true) || (function_status == SM_ERROR))
 		{
 			return SM_ERROR;
 		}
@@ -504,8 +520,21 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 				//See if we're in service or not
 				if ((delta_objects[curr_object_number]->in_svc_double <= gl_globaldeltaclock) && (delta_objects[curr_object_number]->out_svc_double >= gl_globaldeltaclock))
 				{
-					//Call the actual function
-					function_status = ((STATUS (*)(OBJECT *))(*post_delta_functions[curr_object_number]))(delta_objects[curr_object_number]);
+					//Try/catch for any GL_THROWs that may be called
+					try {
+						//Call the actual function
+						function_status = ((STATUS (*)(OBJECT *))(*post_delta_functions[curr_object_number]))(delta_objects[curr_object_number]);
+					}
+					catch (const char *msg)
+					{
+						gl_error("powerflow:postupdate function call: %s", msg);
+						function_status = FAILED;
+					}
+					catch (...)
+					{
+						gl_error("powerflow:postupdate function call: unknown exception");
+						function_status = FAILED;
+					}
 				}
 				else //Not in service
 					function_status = SUCCESS;
@@ -559,10 +588,23 @@ int delta_extra_function(unsigned int mode)
 				//See if the function actually exists
 				if (delta_freq_functions[curr_object_number] != NULL)
 				{
-					//Call the actual function
-					function_status = ((STATUS (*)(OBJECT *, complex *, complex *))(*delta_freq_functions[curr_object_number]))(delta_objects[curr_object_number],&accumulated_power,&accumulated_freqpower);
+					//Try/catch for any GL_THROWs that may be called
+					try {
+						//Call the actual function
+						function_status = ((STATUS (*)(OBJECT *, complex *, complex *))(*delta_freq_functions[curr_object_number]))(delta_objects[curr_object_number],&accumulated_power,&accumulated_freqpower);
+					}
+					catch (const char *msg)
+					{
+						gl_error("powerflow:delta_extra_function function call: %s", msg);
+						function_status = FAILED;
+					}
+					catch (...)
+					{
+						gl_error("powerflow:delta_extra_function function call: unknown exception");
+						function_status = FAILED;
+					}
 				}
-				else	//Doesn't exit, assume we succeeded
+				else	//Doesn't exist, assume we succeeded
 				{
 					function_status = SUCCESS;
 				}
@@ -578,7 +620,8 @@ int delta_extra_function(unsigned int mode)
 			return 0;
 	}
 	
-	return 1;	
+	//We always succeed from this, just because (unless we failed above)
+	return 1;
 }
 
 CDECL int do_kill()

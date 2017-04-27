@@ -120,21 +120,21 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			PT_object, "reference_bus", PADDR(reference_bus),PT_DESCRIPTION,"reference bus from which frequency is defined",
 			PT_double,"maximum_voltage_error[V]",PADDR(maximum_voltage_error),PT_DESCRIPTION,"convergence voltage limit or convergence criteria",
 
-			PT_complex, "voltage_A[V]", PADDR(voltageA),PT_DESCRIPTION,"bus voltage, Phase A to ground",
-			PT_complex, "voltage_B[V]", PADDR(voltageB),PT_DESCRIPTION,"bus voltage, Phase B to ground",
-			PT_complex, "voltage_C[V]", PADDR(voltageC),PT_DESCRIPTION,"bus voltage, Phase C to ground",
-			PT_complex, "voltage_AB[V]", PADDR(voltageAB),PT_DESCRIPTION,"line voltages, Phase AB",
-			PT_complex, "voltage_BC[V]", PADDR(voltageBC),PT_DESCRIPTION,"line voltages, Phase BC",
-			PT_complex, "voltage_CA[V]", PADDR(voltageCA),PT_DESCRIPTION,"line voltages, Phase CA",
-			PT_complex, "current_A[A]", PADDR(currentA),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), this an accumulator only, not a output or input variable",
-			PT_complex, "current_B[A]", PADDR(currentB),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), this an accumulator only, not a output or input variable",
-			PT_complex, "current_C[A]", PADDR(currentC),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), this an accumulator only, not a output or input variable",
-			PT_complex, "power_A[VA]", PADDR(powerA),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus power injection (in = positive), this an accumulator only, not a output or input variable",
-			PT_complex, "power_B[VA]", PADDR(powerB),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus power injection (in = positive), this an accumulator only, not a output or input variable",
-			PT_complex, "power_C[VA]", PADDR(powerC),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus power injection (in = positive), this an accumulator only, not a output or input variable",
-			PT_complex, "shunt_A[S]", PADDR(shuntA),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt admittance, this an accumulator only, not a output or input variable",
-			PT_complex, "shunt_B[S]", PADDR(shuntB),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt admittance, this an accumulator only, not a output or input variable",
-			PT_complex, "shunt_C[S]", PADDR(shuntC),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt admittance, this an accumulator only, not a output or input variable",
+			PT_complex, "voltage_A[V]", PADDR(voltage[0]),PT_DESCRIPTION,"bus voltage, Phase A to ground",
+			PT_complex, "voltage_B[V]", PADDR(voltage[1]),PT_DESCRIPTION,"bus voltage, Phase B to ground",
+			PT_complex, "voltage_C[V]", PADDR(voltage[2]),PT_DESCRIPTION,"bus voltage, Phase C to ground",
+			PT_complex, "voltage_AB[V]", PADDR(voltaged[0]),PT_DESCRIPTION,"line voltages, Phase AB",
+			PT_complex, "voltage_BC[V]", PADDR(voltaged[1]),PT_DESCRIPTION,"line voltages, Phase BC",
+			PT_complex, "voltage_CA[V]", PADDR(voltaged[2]),PT_DESCRIPTION,"line voltages, Phase CA",
+			PT_complex, "current_A[A]", PADDR(current[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "current_B[A]", PADDR(current[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "current_C[A]", PADDR(current[2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "power_A[VA]", PADDR(power[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus power injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "power_B[VA]", PADDR(power[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus power injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "power_C[VA]", PADDR(power[2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus power injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "shunt_A[S]", PADDR(shunt[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt admittance, this an accumulator only, not a output or input variable",
+			PT_complex, "shunt_B[S]", PADDR(shunt[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt admittance, this an accumulator only, not a output or input variable",
+			PT_complex, "shunt_C[S]", PADDR(shunt[2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt admittance, this an accumulator only, not a output or input variable",
 
 			PT_complex, "prerotated_current_A[A]", PADDR(pre_rotated_current[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality - bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
 			PT_complex, "prerotated_current_B[A]", PADDR(pre_rotated_current[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality - bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
@@ -2342,18 +2342,18 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		{   // 'Delta' connected load
 			
 			//Convert delta connected power to appropriate line current
-			delta_current[0]= (voltageAB.IsZero()) ? 0 : ~(powerA/voltageAB);
-			delta_current[1]= (voltageBC.IsZero()) ? 0 : ~(powerB/voltageBC);
-			delta_current[2]= (voltageCA.IsZero()) ? 0 : ~(powerC/voltageCA);
+			delta_current[0]= (voltaged[0].IsZero()) ? 0 : ~(power[0]/voltaged[0]);
+			delta_current[1]= (voltaged[1].IsZero()) ? 0 : ~(power[1]/voltaged[1]);
+			delta_current[2]= (voltaged[2].IsZero()) ? 0 : ~(power[2]/voltaged[2]);
 
 			power_current[0]=delta_current[0]-delta_current[2];
 			power_current[1]=delta_current[1]-delta_current[0];
 			power_current[2]=delta_current[2]-delta_current[1];
 
 			//Convert delta connected load to appropriate line current
-			delta_shunt[0] = voltageAB*shuntA;
-			delta_shunt[1] = voltageBC*shuntB;
-			delta_shunt[2] = voltageCA*shuntC;
+			delta_shunt[0] = voltaged[0]*shunt[0];
+			delta_shunt[1] = voltaged[1]*shunt[1];
+			delta_shunt[2] = voltaged[2]*shunt[2];
 
 			delta_shunt_curr[0] = delta_shunt[0]-delta_shunt[2];
 			delta_shunt_curr[1] = delta_shunt[1]-delta_shunt[0];
@@ -2412,9 +2412,9 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			}
 #else
 			complex d[] = {
-				(voltageA.IsZero() || (powerA.IsZero() && shuntA.IsZero())) ? currentA : currentA + ~(powerA/voltageA) + voltageA*shuntA,
-				(voltageB.IsZero() || (powerB.IsZero() && shuntB.IsZero())) ? currentB : currentB + ~(powerB/voltageB) + voltageB*shuntB,
-				(voltageC.IsZero() || (powerC.IsZero() && shuntC.IsZero())) ? currentC : currentC + ~(powerC/voltageC) + voltageC*shuntC,
+				(voltage[0].IsZero() || (power[0].IsZero() && shunt[0].IsZero())) ? current[0] : current[0] + ~(power[0]/voltage[0]) + voltage[0]*shunt[0],
+				(voltage[1].IsZero() || (power[1].IsZero() && shunt[1].IsZero())) ? current[1] : current[1] + ~(power[1]/voltage[1]) + voltage[1]*shunt[1],
+				(voltage[2].IsZero() || (power[2].IsZero() && shunt[2].IsZero())) ? current[2] : current[2] + ~(power[2]/voltage[2]) + voltage[2]*shunt[2],
 			};
 			current_inj[0] += d[0];
 			current_inj[1] += d[1];
