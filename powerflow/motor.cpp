@@ -401,20 +401,20 @@ TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 				//See which type of triplex
 				if (triplex_connection_type == TPNconnected1N)
 				{
-					current[0] = Is*Ibase;
+					pre_rotated_current[0] = Is*Ibase;
 				}
 				else if (triplex_connection_type == TPNconnected2N)
 				{
-					current[1] = Is*Ibase;
+					pre_rotated_current[1] = Is*Ibase;
 				}
 				else	//Assume it is 12 now
 				{
-					current12 = Is*Ibase;
+					pre_rotated_current[2] = Is*Ibase;
 				}
 			}
 			else	//"Three-phase" connection
 			{
-				current[connected_phase] = Is*Ibase;
+				pre_rotated_current[connected_phase] = Is*Ibase;
 			}
 		}
 		else { // motor is currently disconnected
@@ -423,15 +423,15 @@ TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 				//See which type of triplex
 				if (triplex_connection_type == TPNconnected1N)
 				{
-					current[0] = complex(0.0,0.0);
+					pre_rotated_current[0] = complex(0.0,0.0);
 				}
 				else if (triplex_connection_type == TPNconnected2N)
 				{
-					current[1] = complex(0.0,0.0);
+					pre_rotated_current[1] = complex(0.0,0.0);
 				}
 				else	//Assume it is 12 now
 				{
-					current12 = complex(0.0,0.0);
+					pre_rotated_current[2] = complex(0.0,0.0);
 				}
 
 				//Set off
@@ -439,7 +439,7 @@ TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 			else	//"Three-phase" connection
 			{
-				current[connected_phase] = 0;
+				pre_rotated_current[connected_phase] = 0;
 				SPIMStateOFF();
 			}
 		}
@@ -473,7 +473,7 @@ TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 			// run the steady state solver
 			TPIMSteadyState(t1);
 
-			// update current draw
+			// update current draw -- might need to be pre_rotated_current
 			current[0] = Ias*IbTPIM; // A
 			current[1] = Ibs*IbTPIM; // A
 			current[2] = Ics*IbTPIM; // A
@@ -653,20 +653,20 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 					//See which type of triplex
 					if (triplex_connection_type == TPNconnected1N)
 					{
-						current[0] = Is*Ibase;
+						pre_rotated_current[0] = Is*Ibase;
 					}
 					else if (triplex_connection_type == TPNconnected2N)
 					{
-						current[1] = Is*Ibase;
+						pre_rotated_current[1] = Is*Ibase;
 					}
 					else	//Assume it is 12 now
 					{
-						current12 = Is*Ibase;
+						pre_rotated_current[2] = Is*Ibase;
 					}
 				}
 				else	//"Three-phase" connection
 				{
-					current[connected_phase] = Is*Ibase;
+					pre_rotated_current[connected_phase] = Is*Ibase;
 				}
 			}
 			else { // motor is currently disconnected
@@ -675,15 +675,15 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 					//See which type of triplex
 					if (triplex_connection_type == TPNconnected1N)
 					{
-						current[0] = complex(0.0,0.0);
+						pre_rotated_current[0] = complex(0.0,0.0);
 					}
 					else if (triplex_connection_type == TPNconnected2N)
 					{
-						current[1] = complex(0.0,0.0);
+						pre_rotated_current[1] = complex(0.0,0.0);
 					}
 					else	//Assume it is 12 now
 					{
-						current12 = complex(0.0,0.0);
+						pre_rotated_current[2] = complex(0.0,0.0);
 					}
 
 					//Set off
@@ -691,7 +691,7 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 				}
 				else	//"Three-phase" connection
 				{
-					current[connected_phase] = 0;
+					pre_rotated_current[connected_phase] = 0;
 					SPIMStateOFF();
 				}
 			}
@@ -731,7 +731,7 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 				// run the dynamic solver
 				TPIMDynamic(curr_delta_time, deltaTime);
 
-				// update current draw
+				// update current draw -- pre_rotated_current
 				current[0] = Ias*IbTPIM; // A
 				current[1] = Ibs*IbTPIM; // A
 				current[2] = Ics*IbTPIM; // A
