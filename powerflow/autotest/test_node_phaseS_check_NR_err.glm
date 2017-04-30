@@ -1,0 +1,113 @@
+//  2 bus simple system
+// Simple system, meant to make sure triplex values (phases S) doesn't work
+// for normal nodes.
+
+clock {
+	timezone "PST+8PDT";
+	starttime '2001-01-01 00:00:00 PST';
+	stoptime '2001-01-01 00:01:00 PST';
+	
+}
+
+#set suppress_repeat_messages=1
+#set double_format=%+.12lg
+#set complex_format=%+.12lg%+.12lg%c
+
+module powerflow {
+	solver_method NR;
+}
+
+// Phase Conductor for 601: 556,500 26/7 ACSR
+object overhead_line_conductor {
+	name olc6010;
+	geometric_mean_radius 0.031300;
+	diameter 0.927 in;
+	resistance 0.185900;
+}
+
+// Phase Conductor for 602: 4/0 6/1 ACSR
+object overhead_line_conductor {
+	name olc6020;
+	geometric_mean_radius 0.00814;
+	diameter 0.56 in;
+	resistance 0.592000;
+}
+
+
+// Overhead line configurations
+object line_spacing {
+	name ls500601;	//With capacitance ability
+	distance_AB 2.5;
+	distance_AC 4.5;
+	distance_BC 7.0;
+	distance_BN 5.656854;
+	distance_AN 4.272002;
+	distance_CN 5.0;
+	distance_AE 28.0;
+	distance_BE 28.0;
+	distance_CE 28.0;
+	distance_NE 24.0;
+}
+
+object line_configuration {
+	name lc601;
+	conductor_A olc6010;
+	conductor_B olc6010;
+	conductor_C olc6010;
+	conductor_N olc6020;
+	spacing ls500601;
+}
+
+object transformer_configuration {
+    name "triplex_xformer_cfg";
+    connect_type SINGLE_PHASE_CENTER_TAPPED;
+    install_type POLETOP;
+    primary_voltage 7200.0V;
+    secondary_voltage 120.0V;
+    power_rating 150.0kVA;
+    powerB_rating 150.0kVA;
+    impedance 0.006000+0.013600j;
+    impedance1 0.012000+0.006800j;
+    impedance2 0.012000+0.006800j;
+    shunt_impedance 1728000+691200j;
+}
+
+object overhead_line {
+	phases "ABCN";
+	name node1_to_node2;
+	from node1;
+	to node2;
+	length 10.0 mile; //15.0 mile;
+	configuration lc601;
+}
+
+object transformer {
+	phases BS;
+	from node1;
+	to tpl_load2;
+	configuration triplex_xformer_cfg;
+}
+
+object meter {
+	name node1;
+	phases "ABCN";
+	bustype SWING;
+	voltage_A 2401.7771;
+	voltage_B -1200.8886-2080.000j;
+	voltage_C -1200.8886+2080.000j;
+	nominal_voltage 2401.7771;
+}
+
+object node {
+	name node2;
+	phases ABCN;
+	nominal_voltage 2401.7771;
+};
+
+//This should technically be wrong!
+//Note that loads already appear to have a check in them
+object meter {
+	name tpl_load2;
+	phases BS;
+	nominal_voltage 120.0;
+}
