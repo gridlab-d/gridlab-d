@@ -1,12 +1,3 @@
-# file...... ../data_load_volt_out_volt_B.csv
-# date...... Wed Apr 26 14:48:24 2017
-# user...... gour967
-# host...... (null)
-# target.... load 34
-# trigger... (none)
-# interval.. 1
-# limit..... 0
-# timestamp,voltage_B
 2017-03-28 00:00:00 PDT,+0+0j
 2017-03-28 00:00:01 PDT,-727.461-1260j
 2017-03-28 00:00:02 PDT,-1273.06-2205j

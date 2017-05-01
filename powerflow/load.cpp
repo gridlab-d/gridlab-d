@@ -474,7 +474,17 @@ void load::load_update_fxn(bool fault_mode)
 	complex working_impedance_value, working_data_value, working_admittance_value;
 	double workingvalue;
 	OBJECT *obj;
+	double baseangles[3];
 	node *temp_par_node = NULL;
+
+	//Set base angles for ZIP calculations below
+	//Note this assumption HAS to be done this way -- while the ZIP calculation below
+	//correctly rotates for deltamode, no other constant current values do, which means this one
+	//"correct" implementation breaks all the other assumptions.  Therefore, it has to be "stupidified"
+	//so it works with the auto-rotation and impedance-conversion code below
+	baseangles[0] = 0.0;
+	baseangles[1] = -2.0*PI/3.0;
+	baseangles[2] = 2.0*PI/3.0;
 
 	for (int index=0; index<3; index++)
 	{
@@ -549,7 +559,10 @@ void load::load_update_fxn(bool fault_mode)
 				
 				// Calculate then shift the constant current to use the posted voltage as the reference angle
 				temp_curr = ~complex(real_power,imag_power) / complex(nominal_voltage,0);
-				temp_angle = temp_curr.Arg() + voltage[index].Arg();
+
+				//This was "technically correct", but it will break everything else in the system - correcting
+				//temp_angle = temp_curr.Arg() + voltage[index].Arg();
+				temp_angle = temp_curr.Arg() + baseangles[index];
 				temp_curr.SetPolar(temp_curr.Mag(),temp_angle);
 
 				constant_current[index] = temp_curr;

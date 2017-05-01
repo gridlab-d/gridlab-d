@@ -151,37 +151,37 @@ object meter {
 	// object recorder {
 		// property "measured_current_A";
 		// interval 1;
-		// file ../data_currRecorderA.csv;
+		// file ../data_vfd_currRecorderA.csv;
 		// flags DELTAMODE;
 	// };
 	// object recorder {
 		// property "measured_current_B";
 		// interval 1;
-		// file ../data_currRecorderB.csv;
+		// file ../data_vfd_currRecorderB.csv;
 		// flags DELTAMODE;
 	// };
 	// object recorder {
 		// property "measured_current_C";
 		// interval 1;
-		// file ../data_currRecorderC.csv;
+		// file ../data_vfd_currRecorderC.csv;
 		// flags DELTAMODE;
 	// };
 	// object recorder {
 		// property "measured_power_A";
 		// interval 1;
-		// file ../data_powRecorderA.csv;
+		// file ../data_vfd_powRecorderA.csv;
 		// flags DELTAMODE;
 	// };
 	// object recorder {
 		// property "measured_power_B";
 		// interval 1;
-		// file ../data_powRecorderB.csv;
+		// file ../data_vfd_powRecorderB.csv;
 		// flags DELTAMODE;
 	// };
 	// object recorder {
 		// property "measured_power_C";
 		// interval 1;
-		// file ../data_powRecorderC.csv;
+		// file ../data_vfd_powRecorderC.csv;
 		// flags DELTAMODE;
 	// };
 /////////////////////////////////////////////////////////////////////////////////////////	
@@ -192,7 +192,7 @@ object meter {
 		object player {
 			flags DELTAMODE;
 			property value;
-			file ../data_currRecorderA.csv;
+			file ../data_vfd_currRecorderA.csv;
 		};	
 	};
 	object complex_assert {
@@ -202,7 +202,7 @@ object meter {
 		object player {
 			flags DELTAMODE;
 			property value;
-			file ../data_currRecorderB.csv;
+			file ../data_vfd_currRecorderB.csv;
 		};	
 	};
 	object complex_assert {
@@ -212,7 +212,7 @@ object meter {
 		object player {
 			flags DELTAMODE;
 			property value;
-			file ../data_currRecorderC.csv;
+			file ../data_vfd_currRecorderC.csv;
 		};	
 	};
 	object complex_assert {
@@ -222,7 +222,7 @@ object meter {
 		object player {
 			flags DELTAMODE;
 			property value;
-			file ../data_powRecorderA.csv;
+			file ../data_vfd_powRecorderA.csv;
 		};
 	};		
 	object complex_assert {
@@ -232,7 +232,7 @@ object meter {
 		object player {
 			flags DELTAMODE;
 			property value;
-			file ../data_powRecorderB.csv;
+			file ../data_vfd_powRecorderB.csv;
 		};	
 	};
 	object complex_assert {
@@ -242,7 +242,7 @@ object meter {
 		object player {
 			flags DELTAMODE;
 			property value;
-			file ../data_powRecorderC.csv;
+			file ../data_vfd_powRecorderC.csv;
 		};	
 	};
 }
@@ -254,7 +254,7 @@ object vfd {
 	stable_time 3.2;
 	object player {
 		property desired_motor_speed;
-		file ../data_speedPlayer_delta.player;
+		file ../data_vfd_speedPlayer_delta.player;
 		flags DELTAMODE;
 	};
 	//Desired_vfd_rpm 1800; 
@@ -458,7 +458,7 @@ object vfd {
 ////////////////////////////////////////////////////////////////////////////////////////////
 	// object recorder {
 		// property "desired_motor_speed,desired_output_frequency,current_output_frequency";
-		// file ../data_Desired_vfd_rpm.csv;
+		// file ../data_vfd_Desired_vfd_rpm.csv;
 		// interval 1;
 		// flags DELTAMODE;
 	// };	
@@ -499,19 +499,19 @@ object load { //675 {
 	// object recorder {
 		// property "voltage_A";
 		// interval 1;
-		// file ../data_load_volt_out_volt_A.csv;
+		// file ../data_vfd_load_volt_out_volt_A.csv;
 		// flags DELTAMODE;
 	// };
 	// object recorder {
 		// property "voltage_B";
 		// interval 1;
-		// file ../data_load_volt_out_volt_B.csv;
+		// file ../data_vfd_load_volt_out_volt_B.csv;
 		// flags DELTAMODE;
 	// };
 	// object recorder {
 		// property "voltage_C";
 		// interval 1;
-		// file ../data_load_volt_out_volt_C.csv;
+		// file ../data_vfd_load_volt_out_volt_C.csv;
 		// flags DELTAMODE;
 	// };
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -522,7 +522,7 @@ object load { //675 {
 		object player {
 			flags DELTAMODE;
 			property value;
-			file ../data_load_volt_out_volt_A.csv;
+			file ../data_vfd_load_volt_out_volt_A.csv;
 		};
 	};		
 	object complex_assert {
@@ -532,7 +532,7 @@ object load { //675 {
 		object player {
 			flags DELTAMODE;
 			property value;
-			file ../data_load_volt_out_volt_B.csv;
+			file ../data_vfd_load_volt_out_volt_B.csv;
 		};	
 	};
 	object complex_assert {
@@ -542,7 +542,7 @@ object load { //675 {
 		object player {
 			flags DELTAMODE;
 			property value;
-			file ../data_load_volt_out_volt_C.csv;
+			file ../data_vfd_load_volt_out_volt_C.csv;
 		};
 	};
 ///////////////////////////////////////////////////////////////////////////
@@ -561,7 +561,7 @@ object load { //675 {
 		// object player {
 			// flags DELTAMODE;
 			// property value;
-			// file ../data_measured_freq_value.csv;
+			// file ../data_vfd_measured_freq_value.csv;
 		// };
 	// };
 }

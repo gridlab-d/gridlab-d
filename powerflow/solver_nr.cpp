@@ -2457,6 +2457,8 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				temp_current[2] = *bus[indexer].extra_var;	//Current12 is not part of the standard current array
 
 				//Add in deltamode unrotated, if necessary
+				//Note that base currents are not rotationally-corrected here -- they are done inside the triplex objects already
+				//(except for house below)
 				if ((bus[indexer].prerot_I[2] != 0.0) && (*bus[indexer].dynamics_enabled == true))
 					temp_current[2] += bus[indexer].prerot_I[2];
 
@@ -4149,6 +4151,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				temp_current[2] = *bus[indexer].extra_var; //current12 is not part of the standard current array
 
 				//Add in deltamode unrotated, if necessary
+				//Same note as above.  With exception to house currents, rotational correction happened elsewhere (due to triplex being how it is)
 				if ((bus[indexer].prerot_I[2] != 0.0) && (*bus[indexer].dynamics_enabled == true))
 					temp_current[2] += bus[indexer].prerot_I[2];
 
