@@ -96,7 +96,7 @@ int regulator::init(OBJECT *parent)
 		an example: http://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=Power_Flow_Guide
 		*/
 
-	if (!gl_object_isa(configuration, "regulator_configuration"))
+	if (!gl_object_isa(configuration, "regulator_configuration","powerflow"))
 		throw "invalid regulator configuration";
 		/*  TROUBLESHOOT
 		An invalid regulator configuration was provided.  Ensure you have proper values in each field
