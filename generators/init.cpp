@@ -363,8 +363,6 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 	unsigned int64 seconds_advance, temp_time;
 	int curr_object_number;
 	STATUS function_status;
-	//int64 *func_address;
-	//int pflow_func_status;
 	complex temp_complex;
 	double *extracted_freq;
 

@@ -13,6 +13,8 @@
 EXPORT complex *delta_linkage(OBJECT *obj, unsigned char mapvar);
 EXPORT STATUS delta_frequency_node(OBJECT *obj, complex *powerval, complex *freqpowerval);
 EXPORT SIMULATIONMODE interupdate_node(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
+EXPORT STATUS swap_node_swing_status(OBJECT *obj, bool desired_status);
+EXPORT STATUS node_map_current_update_function(OBJECT *nodeObj, OBJECT *callObj);
 EXPORT STATUS attach_vfd_to_node(OBJECT *obj,OBJECT *calledVFD);
 
 #define I_INJ(V, S, Z, I) (I_S(S, V) + ((Z.IsFinite()) ? I_Z(Z, V) : complex(0.0)) + I_I(I))
@@ -201,7 +203,8 @@ public:
 	complex current12;		/// Used for phase 1-2 current injections in triplex
 	complex nom_res_curr[3];/// Used for the inclusion of nominal residential currents (for angle adjustments)
 	bool house_present;		/// Indicator flag for a house being attached (NR primarily)
-	bool dynamic_norton;	/// Norton-equivalent posting on this bus -- deltamode and generator ties
+	bool dynamic_norton;	/// Norton-equivalent posting on this bus -- deltamode and diesel generator ties
+	bool dynamic_generator;	/// Swing-type generator posting on this bus -- deltamode and other generator ties
 	complex *Triplex_Data;	/// Link to triplex line for extra current calculation information (NR)
 	complex *Extra_Data;	/// Link to extra data information (NR)
 	unsigned int NR_connected_links[2];	/// Counter for number of connected links in the system
@@ -250,6 +253,12 @@ public:
 	OBJECT *SubNodeParent;	/// Child node's original parent or child of parent
 	int NR_current_update(bool postpass, bool parentcall);
 	object TopologicalParent;	/// Child node's original parent as per the topological configuration in the GLM file
+
+	//NR bus status toggle function
+	STATUS NR_swap_swing_status(bool desired_status);
+
+	//Function to map "internal powerflow iteration" current injection updates
+	STATUS NR_map_current_update_function(OBJECT *callObj);
 
 	friend class link_object;
 	friend class meter;	// needs access to current_inj

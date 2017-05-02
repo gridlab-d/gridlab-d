@@ -124,11 +124,15 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 				GL_THROW("Unable to publish triplex_meter deltamode function");
 			if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
 				GL_THROW("Unable to publish triplex_meter deltamode function");
+			if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==NULL)
+				GL_THROW("Unable to publish triplex_meter swing-swapping function");
+			if (gl_publish_function(oclass,	"pwr_current_injection_update_map", (FUNCTIONADDR)node_map_current_update_function)==NULL)
+				GL_THROW("Unable to publish triplex_meter current injection update mapping function");
 			if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==NULL)
 				GL_THROW("Unable to publish triplex_meter VFD attachment function");
 
-                        // market price name
-                        gl_global_create("powerflow::market_price_name",PT_char1024,&market_price_name,NULL);
+			// market price name
+			gl_global_create("powerflow::market_price_name",PT_char1024,&market_price_name,NULL);
 		}
 }
 

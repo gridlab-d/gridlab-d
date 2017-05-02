@@ -187,9 +187,10 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			PT_double, "previous_uptime[min]", PADDR(previous_uptime),PT_DESCRIPTION,"Previous time between disconnects of node in minutes",
 			PT_double, "current_uptime[min]", PADDR(current_uptime),PT_DESCRIPTION,"Current time since last disconnect of node in minutes",
 			PT_bool, "Norton_dynamic", PADDR(dynamic_norton),PT_DESCRIPTION,"Flag to indicate a Norton-equivalent connection -- used for generators and deltamode",
+			PT_bool, "generator_dynamic", PADDR(dynamic_generator),PT_DESCRIPTION,"Flag to indicate a voltage-sourcing or swing-type generator is present -- used for generators and deltamode",
 
 			//GFA - stuff
-			PT_bool, "GFA_enable", PADDR(GFA_enable), PT_DESCRIPTION, "Disable/Enable Grid Friendly Applicance(TM)-type functionality",
+			PT_bool, "GFA_enable", PADDR(GFA_enable), PT_DESCRIPTION, "Disable/Enable Grid Friendly Appliance(TM)-type functionality",
 			PT_double, "GFA_freq_low_trip[Hz]", PADDR(GFA_freq_low_trip), PT_DESCRIPTION, "Low frequency trip point for Grid Friendly Appliance(TM)-type functionality",
 			PT_double, "GFA_freq_high_trip[Hz]", PADDR(GFA_freq_high_trip), PT_DESCRIPTION, "High frequency trip point for Grid Friendly Appliance(TM)-type functionality",
 			PT_double, "GFA_volt_low_trip[pu]", PADDR(GFA_voltage_low_trip), PT_DESCRIPTION, "Low voltage trip point for Grid Friendly Appliance(TM)-type functionality",
@@ -202,14 +203,18 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			PT_object, "topological_parent", PADDR(TopologicalParent),PT_DESCRIPTION,"topological parent as per GLM configuration",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
-			if (gl_publish_function(oclass,	"delta_linkage_node", (FUNCTIONADDR)delta_linkage)==NULL)
-				GL_THROW("Unable to publish node delta_linkage function");
-			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_node)==NULL)
-				GL_THROW("Unable to publish node deltamode function");
-			if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
-				GL_THROW("Unable to publish node deltamode function");
-			if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==NULL)
-				GL_THROW("Unable to publish node VFD attachment function");
+		if (gl_publish_function(oclass,	"delta_linkage_node", (FUNCTIONADDR)delta_linkage)==NULL)
+			GL_THROW("Unable to publish node delta_linkage function");
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_node)==NULL)
+			GL_THROW("Unable to publish node deltamode function");
+		if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
+			GL_THROW("Unable to publish node deltamode function");
+		if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==NULL)
+			GL_THROW("Unable to publish node swing-swapping function");
+		if (gl_publish_function(oclass,	"pwr_current_injection_update_map", (FUNCTIONADDR)node_map_current_update_function)==NULL)
+			GL_THROW("Unable to publish node current injection update mapping function");
+		if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==NULL)
+			GL_THROW("Unable to publish node VFD attachment function");
     
 	}
 }
@@ -298,6 +303,7 @@ int node::create(void)
 	current_accumulated = false;
 	deltamode_inclusive = false;	//Begin assuming we aren't delta-enabled
 	dynamic_norton = false;			//By default, no one needs the Norton equivalent posting
+	dynamic_generator = false;		//By default, we don't have any generator attached
 
 	fmeas_type = FM_NONE;			//By default, no frequency measurement occurs
 	freq_omega_ref=0.0;
@@ -1734,7 +1740,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			//No null check, since this one just may not work (post update may not exist)
 
 			//Do any additional parent/child mappings for deltamode -- if necessary
-			if (((SubNode==CHILD) || (SubNode==DIFF_CHILD)) && (dynamic_norton==true))
+			if (((SubNode==CHILD) || (SubNode==DIFF_CHILD)) && ((dynamic_norton==true) || (dynamic_generator==true)))
 			{
 				//Map our parent
 				temp_par_node = OBJECTDATA(SubNodeParent,node);
@@ -1749,49 +1755,65 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 					*/
 				}
 
-				//See if our parent has been allocated yet or not
-				if (temp_par_node->full_Y == NULL)
-				{
-					//Lock our parent
-					LOCK_OBJECT(SubNodeParent);
+				//Lock the parent for all of our shenanigans
+				LOCK_OBJECT(SubNodeParent);
 
+				//See if we're a Norton equivalent
+				if (dynamic_norton==true)
+				{
 					//Flag our parent, just to make sure things work properly
 					temp_par_node->dynamic_norton = true;
 
-					//Do allocations
-					temp_par_node->full_Y = (complex *)gl_malloc(9*sizeof(complex));
-
-					//Check it
-					if (temp_par_node->full_Y==NULL)
+					//See if our parent has been allocated yet or not
+					if (temp_par_node->full_Y == NULL)
 					{
-						GL_THROW("Node:%s failed to allocate space for the a deltamode variable",SubNodeParent->name);
-						/*  TROUBLESHOOT
-						While attempting to allocate memory for a dynamics-required (deltamode) variable, an error
-						occurred. Please try again.  If the error persists, please submit your code and a bug
-						report via the trac website.
-						*/
-					}
+						//Do allocations
+						temp_par_node->full_Y = (complex *)gl_malloc(9*sizeof(complex));
 
-					//Zero it, just to be safe (gens will accumulate into it)
-					temp_par_node->full_Y[0] = temp_par_node->full_Y[1] = temp_par_node->full_Y[2] = complex(0.0,0.0);
-					temp_par_node->full_Y[3] = temp_par_node->full_Y[4] = temp_par_node->full_Y[5] = complex(0.0,0.0);
-					temp_par_node->full_Y[6] = temp_par_node->full_Y[7] = temp_par_node->full_Y[8] = complex(0.0,0.0);
+						//Check it
+						if (temp_par_node->full_Y==NULL)
+						{
+							GL_THROW("Node:%s failed to allocate space for the a deltamode variable",SubNodeParent->name);
+							/*  TROUBLESHOOT
+							While attempting to allocate memory for a dynamics-required (deltamode) variable, an error
+							occurred. Please try again.  If the error persists, please submit your code and a bug
+							report via the trac website.
+							*/
+						}
 
-					//Allocate another matrix for admittance - this will have the full value
-					temp_par_node->full_Y_all = (complex *)gl_malloc(9*sizeof(complex));
+						//Zero it, just to be safe (gens will accumulate into it)
+						temp_par_node->full_Y[0] = temp_par_node->full_Y[1] = temp_par_node->full_Y[2] = complex(0.0,0.0);
+						temp_par_node->full_Y[3] = temp_par_node->full_Y[4] = temp_par_node->full_Y[5] = complex(0.0,0.0);
+						temp_par_node->full_Y[6] = temp_par_node->full_Y[7] = temp_par_node->full_Y[8] = complex(0.0,0.0);
 
-					//Check it
-					if (temp_par_node->full_Y_all==NULL)
-					{
-						GL_THROW("Node:%s failed to allocate space for the a deltamode variable",SubNodeParent->name);
-						//Defined above
-					}
+						//Allocate another matrix for admittance - this will have the full value
+						temp_par_node->full_Y_all = (complex *)gl_malloc(9*sizeof(complex));
 
-					//Zero it, just to be safe (gens will accumulate into it)
-					temp_par_node->full_Y_all[0] = temp_par_node->full_Y_all[1] = temp_par_node->full_Y_all[2] = complex(0.0,0.0);
-					temp_par_node->full_Y_all[3] = temp_par_node->full_Y_all[4] = temp_par_node->full_Y_all[5] = complex(0.0,0.0);
-					temp_par_node->full_Y_all[6] = temp_par_node->full_Y_all[7] = temp_par_node->full_Y_all[8] = complex(0.0,0.0);
+						//Check it
+						if (temp_par_node->full_Y_all==NULL)
+						{
+							GL_THROW("Node:%s failed to allocate space for the a deltamode variable",SubNodeParent->name);
+							//Defined above
+						}
 
+						//Zero it, just to be safe (gens will accumulate into it)
+						temp_par_node->full_Y_all[0] = temp_par_node->full_Y_all[1] = temp_par_node->full_Y_all[2] = complex(0.0,0.0);
+						temp_par_node->full_Y_all[3] = temp_par_node->full_Y_all[4] = temp_par_node->full_Y_all[5] = complex(0.0,0.0);
+						temp_par_node->full_Y_all[6] = temp_par_node->full_Y_all[7] = temp_par_node->full_Y_all[8] = complex(0.0,0.0);
+					}//End not allocated
+					//Default else -- it's already allocated
+				}//End Norton equivalent
+
+				//Now do the other variable
+				if (dynamic_generator==true)
+				{
+					//Flag our parent
+					temp_par_node->dynamic_generator = true;
+				}
+
+				//Check to see if the other variable is needed (both need it)
+				if (temp_par_node->DynVariable == NULL)
+				{
 					//Do the same for a dynamics contribution (just 4x1 for now for normal nodes)
 					//0-2 represent ABC current,3 represents overall power, 4 represents power frequency weighting,
 					//5 represents overall output power
@@ -1808,19 +1830,29 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 					//Zero them, for consistency
 					temp_par_node->DynVariable[0] = temp_par_node->DynVariable[1] = temp_par_node->DynVariable[2] = complex(0.0,0.0);
 					temp_par_node->DynVariable[3] = temp_par_node->DynVariable[4] = temp_par_node->DynVariable[5] = complex(0.0,0.0);
+				}//End allocate DynCurrent (and others)
+				//Default else -- already flagged
 
-					//Unlock our parent
-					UNLOCK_OBJECT(SubNodeParent);
+				//Unlock our parent
+				UNLOCK_OBJECT(SubNodeParent);
+
+				//Link the local pointers, as appropriate
+				if (dynamic_norton==true)
+				{
+					full_Y = temp_par_node->full_Y;
+					full_Y_all = temp_par_node->full_Y_all;
 				}
-				//Default else - it's mapped
+				else	//NULL the pointers, again, just because
+				{
+					full_Y = NULL;
+					full_Y_all = NULL;
+				}
 
-				//Link the local pointers
-				full_Y = temp_par_node->full_Y;
-				full_Y_all = temp_par_node->full_Y_all;
+				//Map the shared variable
 				DynVariable = temp_par_node->DynVariable;
 
 				//No need to do NR mappings - we don't get hit anyways
-			}//End child norton equivalent postings code
+			}//End child Norton equivalent/dynamic generator postings code
 		}//end deltamode allocations
 
 		//Call NR presync function
@@ -3291,49 +3323,73 @@ int node::NR_populate(void)
 	//Always null the saturation term -- if it is needed, the link will populate it
 	NR_busdata[NR_node_reference].BusSatTerm = NULL;
 
-	//Allocate full admittance matrix, if desired (for now, not) -- only if something has requested it
-	if ((deltamode_inclusive==true) && (dynamic_norton==true))
+	//Null the extra function pointer -- the individual object will call to populate this
+	NR_busdata[NR_node_reference].ExtraCurrentInjFunc = NULL;
+	NR_busdata[NR_node_reference].ExtraCurrentInjFuncObject = NULL;
+
+	//Allocate dynamic variables -- only if something has requested it
+	if ((deltamode_inclusive==true) && ((dynamic_norton==true) || (dynamic_generator==true)))
 	{
 		//Check our status - shouldn't be necessary, but let's be paranoid
 		if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))	//We're stand-alone or a parent
 		{
-			//Make sure no pesky children have already allocated us
-			if (full_Y == NULL)
+			//Only do admittance allocation if we're a Norton
+			if (dynamic_norton==true)
 			{
-				//Allocate it
-				full_Y = (complex *)gl_malloc(9*sizeof(complex));
-
-				//Check it
-				if (full_Y==NULL)
+				//Make sure no pesky children have already allocated us
+				if (full_Y == NULL)
 				{
-					GL_THROW("Node:%s failed to allocate space for the a deltamode variable",me->name);
-					/*  TROUBLESHOOT
-					While attempting to allocate memory for a dynamics-required (deltamode) variable, an error
-					occurred. Please try again.  If the error persists, please submit your code and a bug
-					report via the trac website.
-					*/
+					//Allocate it
+					full_Y = (complex *)gl_malloc(9*sizeof(complex));
+
+					//Check it
+					if (full_Y==NULL)
+					{
+						GL_THROW("Node:%s failed to allocate space for the a deltamode variable",me->name);
+						/*  TROUBLESHOOT
+						While attempting to allocate memory for a dynamics-required (deltamode) variable, an error
+						occurred. Please try again.  If the error persists, please submit your code and a bug
+						report via the trac website.
+						*/
+					}
+
+					//Zero it, just to be safe (gens will accumulate into it)
+					full_Y[0] = full_Y[1] = full_Y[2] = complex(0.0,0.0);
+					full_Y[3] = full_Y[4] = full_Y[5] = complex(0.0,0.0);
+					full_Y[6] = full_Y[7] = full_Y[8] = complex(0.0,0.0);
+
+					//Allocate another matrix for admittance - this will have the full value
+					full_Y_all = (complex *)gl_malloc(9*sizeof(complex));
+
+					//Check it
+					if (full_Y_all==NULL)
+					{
+						GL_THROW("Node:%s failed to allocate space for the a deltamode variable",me->name);
+						//Defined above
+					}
+
+					//Zero it, just to be safe (gens will accumulate into it)
+					full_Y_all[0] = full_Y_all[1] = full_Y_all[2] = complex(0.0,0.0);
+					full_Y_all[3] = full_Y_all[4] = full_Y_all[5] = complex(0.0,0.0);
+					full_Y_all[6] = full_Y_all[7] = full_Y_all[8] = complex(0.0,0.0);
 				}
-
-				//Zero it, just to be safe (gens will accumulate into it)
-				full_Y[0] = full_Y[1] = full_Y[2] = complex(0.0,0.0);
-				full_Y[3] = full_Y[4] = full_Y[5] = complex(0.0,0.0);
-				full_Y[6] = full_Y[7] = full_Y[8] = complex(0.0,0.0);
-
-				//Allocate another matrix for admittance - this will have the full value
-				full_Y_all = (complex *)gl_malloc(9*sizeof(complex));
-
-				//Check it
-				if (full_Y_all==NULL)
+				else	//Not needed, make sure we're nulled
 				{
-					GL_THROW("Node:%s failed to allocate space for the a deltamode variable",me->name);
-					//Defined above
+					full_Y_all = NULL;
 				}
+			}//End Norton equivalent needing admittance
+			else	//Null them out of paranoia
+			{
+				//Null this one too
+				full_Y = NULL;
 
-				//Zero it, just to be safe (gens will accumulate into it)
-				full_Y_all[0] = full_Y_all[1] = full_Y_all[2] = complex(0.0,0.0);
-				full_Y_all[3] = full_Y_all[4] = full_Y_all[5] = complex(0.0,0.0);
-				full_Y_all[6] = full_Y_all[7] = full_Y_all[8] = complex(0.0,0.0);
+				//Null it, just because
+				full_Y_all = NULL;
+			}
 
+			//Double check that the other variable hasn't been mapped already -- in case a non-Norton one did it
+			if (DynVariable == NULL)
+			{
 				//Do the same for a dynamics contribution (just 4x1 for now for normal nodes)
 				//0-2 represent ABC current,3 represents overall power, 4 represents power frequency weighting,
 				//5 represents overall output power
@@ -3351,6 +3407,7 @@ int node::NR_populate(void)
 				DynVariable[0] = DynVariable[1] = DynVariable[2] = complex(0.0,0.0);
 				DynVariable[3] = DynVariable[4] = DynVariable[5] = complex(0.0,0.0);
 			}
+			//Default else -- already allocated by a pesky child
 		}//End we're a parent
 
 		//Map all relevant variables to the NR structure
@@ -4637,6 +4694,146 @@ double node::perform_GFA_checks(double timestepvalue)
 	}
 }
 
+//Function to set a node's SWING status mid-simulation, without the SWING_PQ functionality
+STATUS node::NR_swap_swing_status(bool desired_status)
+{
+	OBJECT *hdr = OBJECTHDR(this);
+
+	//See if we're a child or not
+	if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+	{
+		//Make sure we're a SWING or SWING_PQ first
+		if (NR_busdata[NR_node_reference].type > 1)
+		{
+			//Just set us to our status -- it is assumed that if you did this, you know what you are doing
+			NR_busdata[NR_node_reference].swing_functions_enabled = desired_status;
+		}
+		else	//Indicate we're not one
+		{
+			gl_warning("node:%s - Not a SWING-capable bus, so no swing status swap changed",(hdr->name ? hdr->name : "unnamed"));
+			/*  TROUBLESHOOT
+			While attempting to swap a node from being a "swing node", it was tried on a node that was not already a SWING or SWING_PQ
+			node, which is not a valid attempt.
+			*/
+		}
+	}
+	else	//It is a child - look at parent
+	{
+		//Make sure we're a SWING or SWING_PQ first
+		if (NR_busdata[*NR_subnode_reference].type > 1)
+		{
+			//Just set us to our status -- it is assumed that if you did this, you know what you are doing
+			NR_busdata[*NR_subnode_reference].swing_functions_enabled = desired_status;
+		}
+		else	//Indicate we're not one
+		{
+			gl_warning("node:%s - Not a SWING-capable bus, so no swing status swap changed",(hdr->name ? hdr->name : "unnamed"));
+			//Defined above
+		}
+	}
+
+	//Always a success, we think
+	return SUCCESS;
+}
+
+//Function to perform a mapping of the "internal iteration" current injection update
+//Primarily used for deltamode and voltage-source inverters, but could be used in other places
+STATUS node::NR_map_current_update_function(OBJECT *callObj)
+{
+	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *phdr = NULL;
+
+	//Do a simple check -- if we're not in NR, this won't do anything anyways
+	if (solver_method == SM_NR)
+	{
+		//See if we're a pesky child
+		if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+		{
+			//Make sure no one has mapped us yet
+			if (NR_busdata[NR_node_reference].ExtraCurrentInjFunc == NULL)
+			{
+				//Map the function
+				NR_busdata[NR_node_reference].ExtraCurrentInjFunc = (FUNCTIONADDR)(gl_get_function(callObj,"current_injection_update"));
+
+				//Make sure it worked
+				if (NR_busdata[NR_node_reference].ExtraCurrentInjFunc == NULL)
+				{
+					gl_error("node:%d - %s - Failed to map current_injection_update from calling object:%d - %s",hdr->id,(hdr->name ? hdr->name : "Unnamed"),callObj->id,(callObj->name ? callObj->name : "Unnamed"));
+					/*  TROUBLESHOOT
+					The attached node was unable to find the exposed function "current_injection_update" on the calling object.  Be sure
+					it supports this functionality and try again.
+					*/
+
+					return FAILED;
+				}
+				//Default else -- it worked
+
+				//Store the object pointer too
+				NR_busdata[NR_node_reference].ExtraCurrentInjFuncObject = callObj;
+			}
+			else	//Already mapped
+			{
+				gl_error("node:%d - %s - Already has an extra current injection function mapped",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				An object attempted to map a current injection update function, but that node already has such a function mapped.  Only one
+				is allowed per node.  Note this includes any attachments to child nodes, since those end up on the parent object.
+				*/
+
+				return FAILED;
+			}//End already mapped
+		}
+		else	//Child - push this to the parent
+		{
+			//Map the parent - mostly just so we have a shorter variable name
+			phdr = NR_busdata[*NR_subnode_reference].obj;
+
+			//Make sure no one has mapped us yet
+			if (NR_busdata[*NR_subnode_reference].ExtraCurrentInjFunc == NULL)
+			{
+				//Map the function
+				NR_busdata[*NR_subnode_reference].ExtraCurrentInjFunc = (FUNCTIONADDR)(gl_get_function(callObj,"current_injection_update"));
+
+				//Make sure it worked
+				if (NR_busdata[*NR_subnode_reference].ExtraCurrentInjFunc == NULL)
+				{
+					gl_error("node:%d - %s - Failed to map current_injection_update from calling object:%d - %s",hdr->id,(hdr->name ? hdr->name : "Unnamed"),callObj->id,(callObj->name ? callObj->name : "Unnamed"));
+					//Defined above
+
+					return FAILED;
+				}
+				//Default else -- it worked
+
+				//Store the object pointer too
+				NR_busdata[*NR_subnode_reference].ExtraCurrentInjFuncObject = callObj;
+			}
+			else	//Already mapped
+			{
+				gl_error("node:%d - %s - Parent node:%d - %s - Already has an extra current injection function mapped",hdr->id,(hdr->name ? hdr->name : "Unnamed"),phdr->id,(phdr->name ? phdr->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				An object attempted to map a current injection update function to its parent, but that node already has such a function mapped.  Only one
+				is allowed per node.  Note this includes any attachments to child nodes, since those end up on the parent object.
+				*/
+
+				return FAILED;
+			}//End already mapped
+		}
+	}
+	else	//Other method
+	{
+		gl_warning("node:%d - %s - Attempted to map an NR-based function, but is not using an NR solver",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		An object just attempted to map a current injection update function that only works with the Newton-Raphson solver, but that
+		method is not being used.
+		*/
+
+		//Succeed, mostly because it just won't do anything
+		return SUCCESS;
+	}
+
+	//Theoretically only get here if we succeed a map
+	return SUCCESS;
+}
+
 //VFD linking/mapping function
 STATUS node::link_VFD_functions(OBJECT *linkVFD)
 {
@@ -4780,4 +4977,34 @@ EXPORT STATUS delta_frequency_node(OBJECT *obj, complex *powerval, complex *freq
 	return SUCCESS;
 }
 
+//Function to set a node as a SWING inside NR - basically converts a SWING to a PQ, without the SWING_PQ requirement
+EXPORT STATUS swap_node_swing_status(OBJECT *obj, bool desired_status)
+{
+	STATUS temp_status;
+
+	//Map the node
+	node *my = OBJECTDATA(obj,node);
+
+	//Call the function, where we can see our internals
+	temp_status = my->NR_swap_swing_status(desired_status);
+
+	//Return what the sub function said we were
+	return temp_status;
+}
+
+//Exposed function to map a "current injection update" routine from another object
+//Used primarily for deltamode and voltage-source inverters right now
+EXPORT STATUS node_map_current_update_function(OBJECT *nodeObj, OBJECT *callObj)
+{
+	STATUS temp_status;
+
+	//Map the node
+	node *my = OBJECTDATA(nodeObj,node);
+
+	//Call the mapping function
+	temp_status = my->NR_map_current_update_function(callObj);
+
+	//Return the value
+	return temp_status;
+}
 /**@}*/

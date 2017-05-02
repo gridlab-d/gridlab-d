@@ -246,6 +246,9 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	bool SaturationMismatchPresent;
 	int func_result_val;
 
+	//Generic status variable
+	STATUS call_return_status;
+
 	//Phase collapser variable
 	unsigned char phase_worka, phase_workb, phase_workc, phase_workd, phase_worke;
 
@@ -346,7 +349,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				if ((bus[indexer].type > 1) && (bus[indexer].swing_functions_enabled == true))
 				{
 					//See if we're "generator ready"
-					if ((*bus[indexer].dynamics_enabled==true) && (bus[indexer].full_Y != NULL) && (bus[indexer].DynCurrent != NULL))
+					if ((*bus[indexer].dynamics_enabled==true) && (bus[indexer].DynCurrent != NULL))
 					{
 						//Deflag us back to "PQ" status
 						bus[indexer].swing_functions_enabled = false;
@@ -398,7 +401,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 	if (NR_admit_change)	//If an admittance update was detected, fix it
 	{
-		//Build the diagnoal elements of the bus admittance matrix - this should only happen once no matter what
+		//Build the diagonal elements of the bus admittance matrix - this should only happen once no matter what
 		if (powerflow_values->BA_diag == NULL)
 		{
 			powerflow_values->BA_diag = (Bus_admit *)gl_malloc(bus_count *sizeof(Bus_admit));   //BA_diag store the location and value of diagonal elements of Bus Admittance matrix
@@ -3152,6 +3155,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			if ((powerflow_type == PF_DYNINIT) && (swing_is_a_swing==true))
 			{
 				//Secondary check - see if it is even needed - basically built around 3-phase right now
+				//Initializes the Norton equivalent item -- normal generators shoudln't need this
 				if ((*bus[indexer].dynamics_enabled==true) && (bus[indexer].full_Y != NULL) && (bus[indexer].DynCurrent != NULL))
 				{
 					//Form denominator term of Ii, since it won't change
@@ -3340,7 +3344,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					//Determine how we are posting this update
 					if ((bus[indexer].type > 1) && (bus[indexer].swing_functions_enabled == true))	//SWING bus is different (when it really is a SWING bus)
 					{
-						if ((powerflow_type == PF_DYNINIT) && (bus[indexer].full_Y != NULL) && (bus[indexer].DynCurrent != NULL))
+						if ((powerflow_type == PF_DYNINIT) && (bus[indexer].DynCurrent != NULL))	//We're a generator-type bus
 						{
 							//Compute the delta_I, just like below - but don't post it (still zero in calcs)
 							work_vals_double_3 = tempPbus - tempIcalcReal;
@@ -3612,39 +3616,71 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					//Determine how we are posting this update
 					if ((bus[indexer].type > 1) && (bus[indexer].swing_functions_enabled == true))	//SWING bus is different (when it really is a SWING bus)
 					{
-						if ((powerflow_type == PF_DYNINIT) && (bus[indexer].full_Y != NULL) && (bus[indexer].DynCurrent != NULL))
+						if ((powerflow_type == PF_DYNINIT) && (bus[indexer].DynCurrent != NULL))
 						{
-							//Compute our "power generated" value for this phase - conjugated in formation
-							temp_complex_2 = bus[indexer].V[jindex] * complex(tempIcalcReal,-tempIcalcImag);
-
-							if (Iteration>0)	//Only update SWING on subsequent passes
+							//See if we're a Norton-equivalent-based generator
+							if (bus[indexer].full_Y != NULL)
 							{
-								//Now add it into the "generation total" for the SWING
-								(*bus[indexer].PGenTotal) += temp_complex_2 - temp_complex_3/3.0; // both PT and QT = Ssource-Sysource = v conj(I) - v conj(ysource v)
-							}
+								//Compute our "power generated" value for this phase - conjugated in formation
+								temp_complex_2 = bus[indexer].V[jindex] * complex(tempIcalcReal,-tempIcalcImag);
+
+								if (Iteration>0)	//Only update SWING on subsequent passes
+								{
+									//Now add it into the "generation total" for the SWING
+									(*bus[indexer].PGenTotal) += temp_complex_2 - temp_complex_3/3.0; // both PT and QT = Ssource-Sysource = v conj(I) - v conj(ysource v)
+								}
+
+								//Compute the delta_I, just like below - but don't post it (still zero in calcs)
+								work_vals_double_0 = (bus[indexer].V[temp_index_b]).Mag()*(bus[indexer].V[temp_index_b]).Mag();
+
+								if (work_vals_double_0!=0)	//Only normal one (not square), but a zero is still a zero even after that
+								{
+									work_vals_double_1 = (bus[indexer].V[temp_index_b]).Re();
+									work_vals_double_2 = (bus[indexer].V[temp_index_b]).Im();
+									work_vals_double_3 = (tempPbus * work_vals_double_1 + tempQbus * work_vals_double_2)/ (work_vals_double_0) - tempIcalcReal; // equation(7), Real part of deltaI, left hand side of equation (11)
+									work_vals_double_4 = (tempPbus * work_vals_double_2 - tempQbus * work_vals_double_1)/ (work_vals_double_0) - tempIcalcImag; // Imaginary part of deltaI, left hand side of equation (11)
+
+									//Form a magnitude value - put in work_vals_double_0, since we're done with it
+									work_vals_double_0 = sqrt((work_vals_double_3*work_vals_double_3+work_vals_double_4*work_vals_double_4));
+								}
+								else	//Would give us a NAN, so it must be out of service or something (case from below - really shouldn't apply to SWING)
+								{
+									work_vals_double_0 = 0.0;	//Assumes "converged"
+								}
 								
-							//Compute the delta_I, just like below - but don't post it (still zero in calcs)
-							work_vals_double_0 = (bus[indexer].V[temp_index_b]).Mag()*(bus[indexer].V[temp_index_b]).Mag();
+								if (work_vals_double_0 > bus[indexer].max_volt_error)	//Failure check (defaults to voltage convergence for now)
+								{
+									swing_converged=false;
+								}
+							}//End Norton-equivalent SWING
+							else	//Other generator types
+							{
+								//Compute the delta_I, just like below - but don't post it (still zero in calcs)
+								work_vals_double_0 = (bus[indexer].V[temp_index_b]).Mag()*(bus[indexer].V[temp_index_b]).Mag();
 
-							if (work_vals_double_0!=0)	//Only normal one (not square), but a zero is still a zero even after that
-							{
-								work_vals_double_1 = (bus[indexer].V[temp_index_b]).Re();
-								work_vals_double_2 = (bus[indexer].V[temp_index_b]).Im();
-								work_vals_double_3 = (tempPbus * work_vals_double_1 + tempQbus * work_vals_double_2)/ (work_vals_double_0) - tempIcalcReal ; // equation(7), Real part of deltaI, left hand side of equation (11)
-								work_vals_double_4 = (tempPbus * work_vals_double_2 - tempQbus * work_vals_double_1)/ (work_vals_double_0) - tempIcalcImag; // Imaginary part of deltaI, left hand side of equation (11)
+								if (work_vals_double_0!=0)	//Only normal one (not square), but a zero is still a zero even after that
+								{
+									work_vals_double_1 = (bus[indexer].V[temp_index_b]).Re();
+									work_vals_double_2 = (bus[indexer].V[temp_index_b]).Im();
+									work_vals_double_3 = (tempPbus * work_vals_double_1 + tempQbus * work_vals_double_2)/ (work_vals_double_0) - tempIcalcReal; // equation(7), Real part of deltaI, left hand side of equation (11)
+									work_vals_double_4 = (tempPbus * work_vals_double_2 - tempQbus * work_vals_double_1)/ (work_vals_double_0) - tempIcalcImag; // Imaginary part of deltaI, left hand side of equation (11)
 
-								//Form a magnitude value - put in work_vals_double_0, since we're done with it
-								work_vals_double_0 = sqrt((work_vals_double_3*work_vals_double_3+work_vals_double_4*work_vals_double_4));
-							}
-							else	//Would give us a NAN, so it must be out of service or something (case from below - really shouldn't apply to SWING)
-							{
-           						work_vals_double_0 = 0.0;	//Assumes "converged"
-							}
-							
-							if (work_vals_double_0 > bus[indexer].max_volt_error)	//Failure check (defaults to voltage convergence for now)
-							{
-								swing_converged=false;
-							}
+									//Form a magnitude value - put in work_vals_double_0, since we're done with it
+									work_vals_double_0 = sqrt((work_vals_double_3*work_vals_double_3+work_vals_double_4*work_vals_double_4));
+								}
+								else	//Would give us a NAN, so it must be out of service or something (case from below - really shouldn't apply to SWING)
+								{
+									work_vals_double_0 = 0.0;	//Assumes "converged"
+								}
+
+								if (work_vals_double_0 > bus[indexer].max_volt_error)	//Failure check (defaults to voltage convergence for now)
+								{
+									swing_converged=false;
+								}
+
+								//Put this into DynCurrent for storage
+								bus[indexer].DynCurrent[jindex] = complex(tempIcalcReal,tempIcalcImag);
+							}//End other generator types
 						}//End PF_DYNINIT SWING traversion
 
 						//Effectively Zero out the components, regardless of normal run or not
@@ -3718,68 +3754,89 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			if (powerflow_type != PF_NORMAL)
 			{
 				//Secondary check - see if it is even needed - basically built around 3-phase right now (checks)
-				if ((*bus[indexer].dynamics_enabled==true) && (bus[indexer].full_Y != NULL) && (bus[indexer].DynCurrent != NULL))
+				if ((*bus[indexer].dynamics_enabled==true) && (bus[indexer].DynCurrent != NULL))
 				{
-					if ((bus[indexer].phases & 0x07) == 0x07)	//Make sure is three-phase
+					//See if we're a Norton-equivalent generator
+					if (bus[indexer].full_Y != NULL)
 					{
-						//Only update in particular mode - SWING bus values should still be treated as such
-						if ((swing_is_a_swing == true) && (powerflow_type == PF_DYNINIT))	//Really only true for PF_DYNINIT anyways
+						if ((bus[indexer].phases & 0x07) == 0x07)	//Make sure is three-phase
 						{
-							//Power should be all updated, now update current values
-							temp_complex_0 += complex((*bus[indexer].PGenTotal).Re(),-(*bus[indexer].PGenTotal).Im()); // total generated power injected congugated
-
-							//Compute Ii
-							if (temp_complex_1.Mag() > 0.0)	//Non zero
+							//Only update in particular mode - SWING bus values should still be treated as such
+							if ((swing_is_a_swing == true) && (powerflow_type == PF_DYNINIT))	//Really only true for PF_DYNINIT anyways
 							{
-								temp_complex_2 = temp_complex_0/temp_complex_1;	//Forms Ii
+								//Power should be all updated, now update current values
+								temp_complex_0 += complex((*bus[indexer].PGenTotal).Re(),-(*bus[indexer].PGenTotal).Im()); // total generated power injected congugated
 
-								//Now convert Ii to the individual phase amounts
-								bus[indexer].DynCurrent[0] = temp_complex_2;
-								bus[indexer].DynCurrent[1] = temp_complex_2*avalsq;
-								bus[indexer].DynCurrent[2] = temp_complex_2*aval;
+								//Compute Ii
+								if (temp_complex_1.Mag() > 0.0)	//Non zero
+								{
+									temp_complex_2 = temp_complex_0/temp_complex_1;	//Forms Ii
+
+									//Now convert Ii to the individual phase amounts
+									bus[indexer].DynCurrent[0] = temp_complex_2;
+									bus[indexer].DynCurrent[1] = temp_complex_2*avalsq;
+									bus[indexer].DynCurrent[2] = temp_complex_2*aval;
+								}
+								else	//Must make zero
+								{
+									bus[indexer].DynCurrent[0] = complex(0.0,0.0);
+									bus[indexer].DynCurrent[1] = complex(0.0,0.0);
+									bus[indexer].DynCurrent[2] = complex(0.0,0.0);
+								}
+							}//End SWING is still swing, otherwise should just accumulate what it had
+
+							//Don't get added in as part of "normal swing" routine
+							if ((bus[indexer].type == 0) || ((bus[indexer].type>1) && (bus[indexer].swing_functions_enabled == false)))
+							{
+								//Add these into the system - added because "generation"
+								powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[0].Re();		//Phase A
+								powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + 1] += bus[indexer].DynCurrent[1].Re();	//Phase B
+								powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + 2] += bus[indexer].DynCurrent[2].Re();	//Phase C
+
+								powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc] += bus[indexer].DynCurrent[0].Im();		//Phase A
+								powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc + 1] += bus[indexer].DynCurrent[1].Im();	//Phase B
+								powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc + 2] += bus[indexer].DynCurrent[2].Im();	//Phase C
 							}
-							else	//Must make zero
+							//Defaulted else - leave as they were
+						}//End three-phase
+						else	//Not three-phase at the moment
+						{
+							//See if we ever were (reliability call)
+							if ((bus[indexer].origphases & 0x07) == 0x07)
 							{
+								//Just zero it
 								bus[indexer].DynCurrent[0] = complex(0.0,0.0);
 								bus[indexer].DynCurrent[1] = complex(0.0,0.0);
 								bus[indexer].DynCurrent[2] = complex(0.0,0.0);
 							}
-						}//End SWING is still swing, otherwise should just accumulate what it had
-
+							else	//Never was, just fail out
+							{
+								GL_THROW("NR_solver: bus:%s has tried updating deltamode dynamics, but is not three-phase!",bus[indexer].name);
+								/*  TROUBLESHOOT
+								The NR_solver routine tried update a three-phase current value for a bus that is not
+								three phase.  At this time, the deltamode system only supports three-phase buses for
+								generator attachment.
+								*/
+							}
+						}
+					}//End Norton-equivalent call
+					else	//Must be another generator
+					{
+						//Replicate the injection from above -- assume three-phase right now
 						//Don't get added in as part of "normal swing" routine
 						if ((bus[indexer].type == 0) || ((bus[indexer].type>1) && (bus[indexer].swing_functions_enabled == false)))
 						{
 							//Add these into the system - added because "generation"
-       						powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[0].Re();		//Phase A
-       						powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + 1] += bus[indexer].DynCurrent[1].Re();	//Phase B
-       						powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + 2] += bus[indexer].DynCurrent[2].Re();	//Phase C
+							powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[0].Re();		//Phase A
+							powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + 1] += bus[indexer].DynCurrent[1].Re();	//Phase B
+							powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + 2] += bus[indexer].DynCurrent[2].Re();	//Phase C
 
 							powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc] += bus[indexer].DynCurrent[0].Im();		//Phase A
 							powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc + 1] += bus[indexer].DynCurrent[1].Im();	//Phase B
 							powerflow_values->deltaI_NR[2*bus[indexer].Matrix_Loc + 2] += bus[indexer].DynCurrent[2].Im();	//Phase C
 						}
-						//Defaulted else - leave as they were
-					}//End three-phase
-					else	//Not three-phase athe moment
-					{
-						//See if we ever were (reliability call)
-						if ((bus[indexer].origphases & 0x07) == 0x07)
-						{
-							//Just zero it
-							bus[indexer].DynCurrent[0] = complex(0.0,0.0);
-							bus[indexer].DynCurrent[1] = complex(0.0,0.0);
-							bus[indexer].DynCurrent[2] = complex(0.0,0.0);
-						}
-						else	//Never was, just fail out
-						{
-							GL_THROW("NR_solver: bus:%s has tried updating deltamode dyanmics, but is not three-phase!",bus[indexer].name);
-							/*  TROUBLESHOOT
-							The NR_solver routine tried update a three-phase current value for a bus that is not
-							three phase.  At this time, the deltamode system only supports three-phase buses for
-							generator attachment.
-							*/
-						}
-					}
+						//Defaulted else - leave as they were - if it is still a swing, this is all moot anyways
+					}//End other generator delta call
 				}//End extra current adds
 			}//End dynamic (generator postings)
 		}//End delta_I for each bus
@@ -5812,6 +5869,24 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			{
 				temp_index +=2*powerflow_values->BA_diag[indexer].size;	//Increment us for what this bus would have been had it not been a swing
 			}
+
+			//See if this particular bus has any "current injection update" requirements - semi-silly to do this for SWING-enabled buses, but makes the code more consistent
+			if ((bus[indexer].ExtraCurrentInjFunc != NULL) && ((bus[indexer].type == 0) || ((bus[indexer].type > 1) && (bus[indexer].swing_functions_enabled == false))))
+			{
+				//Call the function
+				call_return_status = ((STATUS (*)(OBJECT *))(*bus[indexer].ExtraCurrentInjFunc))(bus[indexer].ExtraCurrentInjFuncObject);
+
+				//Make sure it worked
+				if (call_return_status == FAILED)
+				{
+					GL_THROW("External current injection update failed for device %s",bus[indexer].ExtraCurrentInjFuncObject->name ? bus[indexer].ExtraCurrentInjFuncObject->name : "Unnamed");
+					/*  TROUBLESHOOT
+					While attempting to perform the external current injection update function call, something failed.  Please try again.
+					If the error persists, please submit your code and a bug report via the ticketing system.
+					*/
+				}
+				//Default else - it worked
+			}
 		}//End bus traversion
 
 		//Perform saturation current update/convergence check
@@ -5845,8 +5920,6 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			}//End inefficient branch traversion
 		}//End in-rush and deltamode running
 
-		//Further debug stuff
-
 		//Additional checks for special modes - only needs to happen in first dynamics powerflow
 		if (powerflow_type == PF_DYNINIT)
 		{
@@ -5871,7 +5944,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							if ((bus[indexer].type > 1) && (bus[indexer].swing_functions_enabled == true))
 							{
 								//See if we're "generator ready"
-								if ((*bus[indexer].dynamics_enabled==true) && (bus[indexer].full_Y != NULL) && (bus[indexer].DynCurrent != NULL))
+								if ((*bus[indexer].dynamics_enabled==true) && (bus[indexer].DynCurrent != NULL))
 								{
 									//Deflag us back to "PQ" status
 									bus[indexer].swing_functions_enabled = false;
