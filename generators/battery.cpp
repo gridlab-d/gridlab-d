@@ -143,6 +143,15 @@ battery::battery(MODULE *module)
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		defaults = this;
 		memset(this,0,sizeof(battery));
+
+		if (gl_publish_function(oclass,	"preupdate_battery_object", (FUNCTIONADDR)preupdate_battery)==NULL)
+			GL_THROW("Unable to publish battery deltamode function");
+		if (gl_publish_function(oclass,	"interupdate_battery_object", (FUNCTIONADDR)interupdate_battery)==NULL)
+			GL_THROW("Unable to publish battery deltamode function");
+		if (gl_publish_function(oclass,	"postupdate_battery_object", (FUNCTIONADDR)postupdate_battery)==NULL)
+			GL_THROW("Unable to publish battery deltamode function");
+
+
 		/* TODO: set the default values of all properties here */
 	}
 }
@@ -193,6 +202,11 @@ int battery::create(void)
 	b_soc_reserve = 0;
 	state_change_time = 0;
 	
+	first_run = true;
+	enableDelta = false;
+	state_change_time_delta = 0;
+	Pout_delta =  0;
+
 	/* TODO: set the context-free initial value of properties */
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -204,18 +218,53 @@ void battery::fetch_double(double **prop, char *name, OBJECT *parent){
 		char tname[32];
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
-		sprintf(tname, "inverter:%i", hdr->id);
+		sprintf(tname, "battery:%i", hdr->id);
 		if(*name == NULL)
-			sprintf(msg, "%s: inverter unable to find property: name is NULL", namestr);
+			sprintf(msg, "%s: battery unable to find property: name is NULL", namestr);
 		else
-			sprintf(msg, "%s: inverter unable to find %s", namestr, name);
+			sprintf(msg, "%s: battery unable to find %s", namestr, name);
 		throw(msg);
 	}
 }
+
+void battery::fetch_enumeration(enumeration **prop, char *name, OBJECT *parent){
+	OBJECT *hdr = OBJECTHDR(this);
+	*prop = gl_get_enum_by_name(parent, name);
+	if(*prop == NULL){
+		char tname[32];
+		char *namestr = (hdr->name ? hdr->name : tname);
+		char msg[256];
+		sprintf(tname, "battery:%i", hdr->id);
+		if(*name == NULL)
+			sprintf(msg, "%s: battery unable to find property: name is NULL", namestr);
+		else
+			sprintf(msg, "%s: battery unable to find %s", namestr, name);
+		throw(msg);
+	}
+}
+
+void battery::fetch_complex(complex **prop, char *name, OBJECT *parent){
+	OBJECT *hdr = OBJECTHDR(this);
+	*prop = gl_get_complex_by_name(parent, name);
+	if(*prop == NULL){
+		char tname[32];
+		char *namestr = (hdr->name ? hdr->name : tname);
+		char msg[256];
+		sprintf(tname, "battery:%i", hdr->id);
+		if(*name == NULL)
+			sprintf(msg, "%s: battery unable to find property: name is NULL", namestr);
+		else
+			sprintf(msg, "%s: battery unable to find %s", namestr, name);
+		throw(msg);
+	}
+}
+
+
 /* Object initialization is called once after all object have been created */
 int battery::init(OBJECT *parent)
 {
 	OBJECT *obj = OBJECTHDR(this);
+
 	if(parent != NULL){
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
@@ -223,6 +272,44 @@ int battery::init(OBJECT *parent)
 			return 2; // defer
 		}
 	}
+
+	//Set the deltamode flag, if desired
+	if ((obj->flags & OF_DELTAMODE) == OF_DELTAMODE)
+	{
+		deltamode_inclusive = true;	//Set the flag and off we go
+	}
+
+	//See if we desire a deltamode update (module-level)
+	if (deltamode_inclusive)
+	{
+		//Check global, for giggles
+		if (enable_subsecond_models!=true)
+		{
+			gl_warning("battery:%s indicates it wants to run deltamode, but the module-level flag is not set!",obj->name?obj->name:"unnamed");
+			/*  TROUBLESHOOT
+			The diesel_dg object has the deltamode_inclusive flag set, but not the module-level enable_subsecond_models flag.  The generator
+			will not simulate any dynamics this way.
+			*/
+		}
+		else
+		{
+			gen_object_count++;	//Increment the counter
+		}
+	}//End deltamode inclusive
+
+	else	//Not enabled for this model
+	{
+		if (enable_subsecond_models == true)
+		{
+			gl_warning("battery:%d %s - Deltamode is enabled for the module, but not this generator!",obj->id,(obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			The diesel_dg is not flagged for deltamode operations, yet deltamode simulations are enabled for the overall system.  When deltamode
+			triggers, this generator may no longer contribute to the system, until event-driven mode resumes.  This could cause issues with the simulation.
+			It is recommended all objects that support deltamode enable it.
+			*/
+		}
+	}
+
 	extern complex default_line_current[3];
 	extern complex default_line_voltage[3];
 	if(use_internal_battery_model == FALSE){
@@ -628,6 +715,17 @@ int battery::init(OBJECT *parent)
 		fetch_double(&pSoc,"battery_soc",parent);
 		fetch_double(&pBatteryLoad,"power_in",parent);
 		fetch_double(&pRatedPower,"rated_battery_power",parent);
+
+		// parent pointers that help delta mode implementation
+		fetch_enumeration(&pControlMode,"four_quadrant_control_mode",parent);
+		fetch_complex(&inverter_VA_Out,"VA_Out",parent);
+		fetch_double(&peff,"inverter_efficiency",parent);
+
+		// Enable battery delta mode flag if its parent control mode is FQM_CONSTANT_PQ
+		if (*pControlMode == 1 || *pControlMode == 9) {
+			enableDelta = true;
+		}
+
 	}
 
 	return 1; /* return 1 on success, 0 on failure */
@@ -726,6 +824,88 @@ TIMESTAMP battery::presync(TIMESTAMP t0, TIMESTAMP t1)
 /* Sync is called when the clock needs to advance on the bottom-up pass */
 TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
+
+	OBJECT *obj = OBJECTHDR(this);
+
+	//First run allocation
+	if (first_run == true)	//First run
+	{
+		//TODO: LOCKING!
+		if (deltamode_inclusive && enable_subsecond_models )	//We want deltamode - see if it's populated yet
+		{
+			if (((gen_object_current == -1) || (delta_objects==NULL)) && (enable_subsecond_models == true))
+			{
+				//Call the allocation routine
+				allocate_deltamode_arrays();
+			}
+
+			//Check limits of the array
+			if (gen_object_current>=gen_object_count)
+			{
+				GL_THROW("Too many objects tried to populate deltamode objects array in the generators module!");
+				/*  TROUBLESHOOT
+				While attempting to populate a reference array of deltamode-enabled objects for the generator
+				module, an attempt was made to write beyond the allocated array space.  Please try again.  If the
+				error persists, please submit a bug report and your code via the trac website.
+				*/
+			}
+
+			//Add us into the list
+			delta_objects[gen_object_current] = obj;
+
+			//Map up the function for interupdate
+			delta_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"interupdate_battery_object"));
+
+			//Make sure it worked
+			if (delta_functions[gen_object_current] == NULL)
+			{
+				GL_THROW("Failure to map deltamode function for device:%s",obj->name);
+				/*  TROUBLESHOOT
+				Attempts to map up the interupdate function of a specific device failed.  Please try again and ensure
+				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
+				trac website.
+				*/
+			}
+
+			//Map up the function for postupdate
+			post_delta_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"postupdate_battery_object"));
+
+			//Make sure it worked
+			if (post_delta_functions[gen_object_current] == NULL)
+			{
+				GL_THROW("Failure to map post-deltamode function for device:%s",obj->name);
+				/*  TROUBLESHOOT
+				Attempts to map up the postupdate function of a specific device failed.  Please try again and ensure
+				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
+				trac website.
+				*/
+			}
+
+			//Map up the function for preupdate
+			delta_preupdate_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"preupdate_battery_object"));
+
+			//Make sure it worked
+			if (delta_preupdate_functions[gen_object_current] == NULL)
+			{
+				GL_THROW("Failure to map pre-deltamode function for device:%s",obj->name);
+				/*  TROUBLESHOOT
+				Attempts to map up the preupdate function of a specific device failed.  Please try again and ensure
+				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
+				trac website.
+				*/
+			}
+
+			//Update pointer
+			gen_object_current++;
+
+		}//End deltamode specials - first pass
+		//Default else - no deltamode stuff
+
+		first_run = false;
+
+		return t1; //Force us to reiterate one
+	}//End first timestep
+
 	if(use_internal_battery_model == FALSE){
 		if (gen_mode_v == GM_POWER_DRIVEN || gen_mode_v == GM_POWER_VOLTAGE_HYBRID) 
 		{
@@ -1932,6 +2112,172 @@ TIMESTAMP battery::postsync(TIMESTAMP t0, TIMESTAMP t1)
 }
 
 //////////////////////////////////////////////////////////////////////////
+// IMPLEMENTATION OF DELTA MODE
+//////////////////////////////////////////////////////////////////////////
+
+//Preupdate
+STATUS battery::pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time)
+{
+	STATUS stat_val;
+	OBJECT *obj = OBJECTHDR(this);
+
+	// Battery delta mode operation is only when enableDelta is true
+	if (enableDelta == true) {
+
+	}
+	else {
+		// Do nothing for battery during delta mode - soc is not changed
+		gl_warning("battery:%s does not use internal_battery_model, or its parent inverter is not FQM_CONSTANT_PQ. No actions executed for this battery during delta mode",obj->name?obj->name:"unnamed");
+
+	}
+	//Just return a pass - not sure how we'd fail
+	return SUCCESS;
+}
+
+//Module-level call
+SIMULATIONMODE battery::inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
+{
+	SIMULATIONMODE simmode_return_value = SM_EVENT;
+
+	//Get timestep value
+	deltat = (double)dt/(double)DT_SECOND;
+
+	if(enableDelta == TRUE){
+
+		// Initialization - update the soc based on inverter output before entering the delta mode
+		if ((delta_time==0) && (iteration_count_val==0))	//First run of new delta call
+		{
+			// Update soc based on internal_battery_load value obtained before entering the delta mode
+			update_soc(delta_time);
+
+			// Then have to check the delta time step that the soc will be out of limit && update internal_battery_load
+			state_change_time_delta = check_state_change_time_delta(delta_time, dt);
+
+			simmode_return_value =  SM_DELTA_ITER; // iterate since inverter is doing so
+		}
+		// Need to update soc at iteration_count_val == 0, so that later at iteration_count_val == 1, inverter can check this soc value
+		else if ((delta_time != 0) && (iteration_count_val == 0)) {
+
+			// Update soc based on internal_battery_load value obtained previously
+			update_soc(delta_time);
+
+			simmode_return_value =  SM_DELTA_ITER;
+		}
+
+		// Based on the inverter output calculated at iteration_count_val == 1, update internal_battery_load value
+		else if ((delta_time != 0) && (iteration_count_val == 1)) {
+
+			// Check the delta time step that the soc will be out of limit && update internal_battery_load
+			state_change_time_delta = check_state_change_time_delta(delta_time, dt);
+
+			simmode_return_value = SM_DELTA_ITER; // iterate since inverter is doing so
+
+		}
+
+	} // End if enableDelta == true
+
+	// else: Do nothing for the battery during delta mode if it is not use_internal_battery_mode and its parent inverter is not PQ_CONSTANT
+
+	return simmode_return_value;
+
+}
+
+void battery::update_soc(unsigned int64 delta_time)
+{
+	b_soc_reserve = *pSocReserve;
+	if(battery_state == BS_DISCHARGING || battery_state == BS_CHARGING){
+		if(soc >= 0 && soc <= 1){
+			soc += (internal_battery_load*deltat/3600)/e_max;
+			internal_battery_load = 0;
+			if(soc <= 0){
+				battery_state = BS_EMPTY;
+				soc = 0;
+			} else if(soc >= 1){
+				battery_state = BS_FULL;
+				soc = 1;
+			} else if(soc <= b_soc_reserve && delta_time >= state_change_time_delta){
+				battery_state = BS_EMPTY;
+				soc = b_soc_reserve;
+			}
+		}
+	}
+	pre_soc = soc;
+	*pSoc = soc;
+}
+
+double battery::check_state_change_time_delta(unsigned int64 delta_time, unsigned long dt)
+{
+	double time_return;
+
+	// Update battery output based on true inverter output
+	if ((*inverter_VA_Out).Re() > 0.0)	//Discharging
+	{
+		Pout_delta = (*inverter_VA_Out).Re()/(*peff);
+	}
+	else if ((*inverter_VA_Out).Re() == 0.0)	//Idle
+	{
+		Pout_delta = 0.0;
+	}
+	else	//Must be positive, so charging
+	{
+		Pout_delta = (*inverter_VA_Out).Re()*(*peff);
+	}
+
+	// Use the battery output to calculate expected time reaching soc limit && update internal_battery_load
+	bat_load = -(Pout_delta);
+	p_max = *pRatedPower;
+	//figure out the the actual power coming out of the battery due to the battery load and the battery efficiency
+	if(bat_load != 0){
+		if(bat_load < 0 && battery_state != BS_EMPTY){
+			if(bat_load < -p_max){
+				gl_warning("battery_load is greater than rated. Setting to plate rating.");
+				bat_load = -p_max;
+			}
+			battery_state = BS_DISCHARGING;
+			p_br = p_max/pow(eta_rt,0.5);
+		} else if(bat_load > 0 && battery_state != BS_FULL){
+			if(bat_load > p_max){
+				gl_warning("battery_load is greater than rated. Setting to plate rating.");
+				bat_load = p_max;
+			}
+			battery_state = BS_CHARGING;
+			p_br = p_max*pow(eta_rt,0.5);
+		} else {
+			return TS_NEVER;
+		}
+		if(battery_type == LI_ION){
+			if(soc <= 1 && soc > 0.1){
+				v_oc = n_series*(((4.1-3.6)/0.9)*soc + (4.1-((4.1-3.6)/0.9)));//voltage curve for sony
+			} else if(soc <= 0.1 && soc >= 0){
+				v_oc = n_series*(((3.6-3.2)/0.1)*soc + 3.2);
+			}
+		} else if(battery_type == LEAD_ACID){
+			v_oc = v_max;// no voltage curve for LEAD_ACID using static voltage
+		} else {//unknown battery type
+			v_oc = v_max;
+		}
+		r_in = v_oc*v_oc*fabs(p_br-p_max)/(p_br*p_br);
+		v_t = (v_oc+pow((v_oc*v_oc+(4*bat_load*r_in)),0.5))/2;
+		internal_battery_load = v_oc*bat_load/v_t;
+		b_soc_reserve = *pSocReserve;
+		if(internal_battery_load < 0){
+			time_return = (delta_time) + (TIMESTAMP)ceil((b_soc_reserve-soc)*e_max*3600/internal_battery_load);
+		} else if(internal_battery_load > 0){
+			time_return = (delta_time) + (TIMESTAMP)ceil((1-soc)*e_max*3600/internal_battery_load);
+		}
+		return time_return;
+	}
+
+	return TS_NEVER;
+
+}
+
+STATUS battery::post_deltaupdate(complex *useful_value, unsigned int mode_pass)
+{
+	return SUCCESS;	//Always succeeds right now
+}
+
+//////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////
 
@@ -1989,4 +2335,53 @@ EXPORT TIMESTAMP sync_battery(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 	}
 	SYNC_CATCHALL(battery);
 	return t2;
+}
+
+EXPORT STATUS preupdate_battery(OBJECT *obj, TIMESTAMP t0, unsigned int64 delta_time)
+{
+	battery *my = OBJECTDATA(obj,battery);
+	STATUS status_output = FAILED;
+
+	try
+	{
+		status_output = my->pre_deltaupdate(t0,delta_time);
+		return status_output;
+	}
+	catch (char *msg)
+	{
+		gl_error("preupdate_battery(obj=%d;%s): %s",obj->id, (obj->name ? obj->name : "unnamed"), msg);
+		return status_output;
+	}
+}
+
+EXPORT SIMULATIONMODE interupdate_battery(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
+{
+	battery *my = OBJECTDATA(obj,battery);
+	SIMULATIONMODE status = SM_ERROR;
+	try
+	{
+		status = my->inter_deltaupdate(delta_time,dt,iteration_count_val);
+		return status;
+	}
+	catch (char *msg)
+	{
+		gl_error("interupdate_battery(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
+		return status;
+	}
+}
+
+EXPORT STATUS postupdate_battery(OBJECT *obj, complex *useful_value, unsigned int mode_pass)
+{
+	battery *my = OBJECTDATA(obj,battery);
+	STATUS status = FAILED;
+	try
+	{
+		status = my->post_deltaupdate(useful_value, mode_pass);
+		return status;
+	}
+	catch (char *msg)
+	{
+		gl_error("postupdate_battery(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
+		return status;
+	}
 }

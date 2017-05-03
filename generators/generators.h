@@ -62,6 +62,7 @@ void allocate_deltamode_arrays(void);				/* Overall function to allocate deltamo
 #include "rectifier.h"
 #include "solar.h"
 #include "central_dg_control.h"
+#include "controller_dg.h"
 
 #define UNKNOWN 0
 

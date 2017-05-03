@@ -28,7 +28,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	}
 
 	/* Publish external global variables */
-	gl_global_create("generators::enable_subsecond_models", PT_bool, &enable_subsecond_models,PT_DESCRIPTION,"Enable deltamode capabilities within the generators module",NULL);
+	gl_global_create("generators::enable_subsecond_models", PT_bool, &enable_subsecond_models,PT_DESCRIPTION,"Enable deltamode capabilities within the powerflow module",NULL);
 	gl_global_create("generators::deltamode_timestep", PT_double, &deltamode_timestep_publish,PT_UNITS,"ns",PT_DESCRIPTION,"Desired minimum timestep for deltamode-related simulations",NULL);
 
 	CLASS *first =
@@ -65,6 +65,9 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	NULL;
 
 	(new central_dg_control(module))->oclass;
+	NULL;
+
+	(new controller_dg(module))->oclass;
 	NULL;
 
 	/* always return the first class registered */
@@ -232,32 +235,17 @@ EXPORT unsigned long preupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 				//See if it has a function
 				if (delta_preupdate_functions[curr_object_number] != NULL)
 				{
-					//Try/catch for any GL_THROWs that may be called
-					try {
-						//Call the function
-						status_value = ((STATUS (*)(OBJECT *, TIMESTAMP, unsigned int64))(*delta_preupdate_functions[curr_object_number]))(delta_objects[curr_object_number],t0,dt);
-					}
-					catch (const char *msg)
-					{
-						gl_error("generators:preupdate function call: %s", msg);
-						status_value = FAILED;
-					}
-					catch (...)
-					{
-						gl_error("generators:preupdate function call: unknown exception");
-						status_value = FAILED;
-					}
+					//Call the function
+					status_value = ((STATUS (*)(OBJECT *, TIMESTAMP, unsigned int64))(*delta_preupdate_functions[curr_object_number]))(delta_objects[curr_object_number],t0,dt);
 
 					//Make sure we passed
 					if (status_value != SUCCESS)
 					{
-						gl_error("generators - object:%d %s failed to run the object-level preupdate function",delta_objects[curr_object_number]->id,(delta_objects[curr_object_number]->name ? delta_objects[curr_object_number]->name : "Unnamed"));
+						GL_THROW("generators - object:%d %s failed to run the object-level preupdate function",delta_objects[curr_object_number]->id,(delta_objects[curr_object_number]->name ? delta_objects[curr_object_number]->name : "Unnamed"));
 						/*  TROUBLESHOOT
 						While attempting to call a preupdate function for a generator deltamode object, an error occurred.
 						Please look to the console output for more details.
 						*/
-
-						return DT_INVALID;
 					}
 					//Default else - it must have worked
 				}
@@ -293,42 +281,23 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 			//See if we're in service or not
 			if ((delta_objects[curr_object_number]->in_svc_double <= gl_globaldeltaclock) && (delta_objects[curr_object_number]->out_svc_double >= gl_globaldeltaclock))
 			{
-				//Try/catch for any GL_THROWs that may be called
-				try {
-					//Call the actual function
-					function_status = ((SIMULATIONMODE (*)(OBJECT *, unsigned int64, unsigned long, unsigned int))(*delta_functions[curr_object_number]))(delta_objects[curr_object_number],delta_time,dt,iteration_count_val);
-				}
-				catch (const char *msg)
-				{
-					gl_error("generators:interupdate function call: %s", msg);
-					function_status = SM_ERROR;
-				}
-				catch (...)
-				{
-					gl_error("generators:interupdate function call: unknown exception");
-					function_status = SM_ERROR;
-				}
+				//Call the actual function
+				function_status = ((SIMULATIONMODE (*)(OBJECT *, unsigned int64, unsigned long, unsigned int))(*delta_functions[curr_object_number]))(delta_objects[curr_object_number],delta_time,dt,iteration_count_val);
 			}
 			else //Not in service - off to event mode
 				function_status = SM_EVENT;
 
 			//Determine what our return is
 			if (function_status == SM_DELTA)
-			{
-				gl_verbose("Generator object:%d - %s - requested deltamode to continue",delta_objects[curr_object_number]->id,(delta_objects[curr_object_number]->name ? delta_objects[curr_object_number]->name : "Unnamed"));
-
 				event_driven = false;
-			}
 			else if (function_status == SM_DELTA_ITER)
 			{
-				gl_verbose("Generator object:%d - %s - requested a deltamode reiteration",delta_objects[curr_object_number]->id,(delta_objects[curr_object_number]->name ? delta_objects[curr_object_number]->name : "Unnamed"));
-
 				event_driven = false;
 				delta_iter = true;
 			}
 			else if (function_status == SM_ERROR)
 			{
-				gl_error("Generator object:%d - %s - deltamode function returned an error!",delta_objects[curr_object_number]->id,(delta_objects[curr_object_number]->name ? delta_objects[curr_object_number]->name : "Unnamed"));
+				gl_error("Generator object:%s - deltamode function returned an error!",delta_objects[curr_object_number]->name);
 				/*  TROUBLESHOOT
 				While performing a deltamode update, one object returned an error code.  Check to see if the object itself provided
 				more details and try again.  If the error persists, please submit your code and a bug report via the trac website.
@@ -410,44 +379,27 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 		//Loop through delta objects and update the execution times and frequency values - only does "0" pass
 		for (curr_object_number=0; curr_object_number<gen_object_count; curr_object_number++)
 		{
-			//See if it has a post-update function
-			if (post_delta_functions[curr_object_number] != NULL)
-			{
-				//See if we're in service or not
-				if ((delta_objects[curr_object_number]->in_svc_double <= gl_globaldeltaclock) && (delta_objects[curr_object_number]->out_svc_double >= gl_globaldeltaclock))
-				{
-					//Try/catch for any GL_THROWs that may be called
-					try {
-						//Call the actual function
-						function_status = ((STATUS (*)(OBJECT *, complex *, unsigned int))(*post_delta_functions[curr_object_number]))(delta_objects[curr_object_number],&temp_complex,0);
-					}
-					catch (const char *msg)
-					{
-						gl_error("generators:postupdate function call: %s", msg);
-						function_status = FAILED;
-					}
-					catch (...)
-					{
-						gl_error("generators:postupdate function call: unknown exception");
-						function_status = FAILED;
-					}
-				}
-				else //Not in service
-					function_status = SUCCESS;
 
-				//Make sure we worked
-				if (function_status == FAILED)
-				{
-					gl_error("Generator object:%s - failed post-deltamode update",delta_objects[curr_object_number]->name);
-					/*  TROUBLESHOOT
-					While calling the individual object post-deltamode calculations, an error occurred.  Please try again.
-					If the error persists, please submit your code and a bug report via the trac website.
-					*/
-					return FAILED;
-				}
-				//Default else - successful, keep going
+			//See if we're in service or not
+			if ((delta_objects[curr_object_number]->in_svc_double <= gl_globaldeltaclock) && (delta_objects[curr_object_number]->out_svc_double >= gl_globaldeltaclock))
+			{
+				//Call the actual function
+				function_status = ((STATUS (*)(OBJECT *, complex *, unsigned int))(*post_delta_functions[curr_object_number]))(delta_objects[curr_object_number],&temp_complex,0);
 			}
-			//Default else -- we didn't have one, so just skip
+			else //Not in service
+				function_status = SUCCESS;
+
+			//Make sure we worked
+			if (function_status == FAILED)
+			{
+				gl_error("Generator object:%s - failed post-deltamode update",delta_objects[curr_object_number]->name);
+				/*  TROUBLESHOOT
+				While calling the individual object post-deltamode calculations, an error occurred.  Please try again.
+				If the error persists, please submit your code and a bug report via the trac website.
+				*/
+				return FAILED;
+			}
+			//Default else - successful, keep going
 		}
 
 		//We always succeed from this, just because (unless we failed above)

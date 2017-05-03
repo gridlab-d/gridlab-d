@@ -34,3 +34,5 @@ generators_generators_la_SOURCES += generators/solar.cpp
 generators_generators_la_SOURCES += generators/solar.h
 generators_generators_la_SOURCES += generators/windturb_dg.cpp
 generators_generators_la_SOURCES += generators/windturb_dg.h
+generators_generators_la_SOURCES += generators/controller_dg.cpp
+generators_generators_la_SOURCES += generators/controller_dg.h

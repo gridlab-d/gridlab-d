@@ -54,6 +54,7 @@ inverter::inverter(MODULE *module)
 				PT_KEYWORD,"VOLT_VAR_FREQ_PWR",FQM_VOLT_VAR_FREQ_PWR, //Ab add : mode
 				PT_KEYWORD,"LOAD_FOLLOWING",(enumeration)FQM_LOAD_FOLLOWING,
 				PT_KEYWORD,"GROUP_LOAD_FOLLOWING",(enumeration)FQM_GROUP_LF,
+				PT_KEYWORD,"VOLTAGE_SOURCE",(enumeration)FQM_VSI,
 
 			PT_enumeration,"pf_reg",PADDR(pf_reg), PT_DESCRIPTION, "Activate (or not) power factor regulation in four_quadrant_control_mode",
 				PT_KEYWORD,"INCLUDED",(enumeration)INCLUDED,
@@ -139,6 +140,27 @@ inverter::inverter(MODULE *module)
 			PT_complex, "IdqB", PADDR(curr_state.Idq[1]), PT_DESCRIPTION, "DELTAMODE: The dq-axis current for phase B.",
 			PT_complex, "IdqC", PADDR(curr_state.Idq[2]), PT_DESCRIPTION, "DELTAMODE: The dq-axis current for phase C.",			
 			
+			PT_double, "Tfreq_delay",PADDR(Tfreq_delay), PT_DESCRIPTION, "DELTAMODE: The time constant for delayed frequency seen by the inverter",
+			PT_bool, "inverter_droop_fp", PADDR(inverter_droop_fp),  PT_DESCRIPTION, "DELTAMODE: Boolean used to indicate whether inverter f/p droop is included or not",
+			PT_double, "R_fp",PADDR(R_fp), PT_DESCRIPTION, "DELTAMODE: The droop parameter of the f/p droop",
+
+			PT_double, "Tvol_delay",PADDR(Tvol_delay), PT_DESCRIPTION, "DELTAMODE: The time constant for delayed voltage seen by the inverter",
+			PT_bool, "inverter_droop_vq", PADDR(inverter_droop_vq),  PT_DESCRIPTION, "DELTAMODE: Boolean used to indicate whether inverter q/v droop is included or not",
+			PT_double, "R_vq",PADDR(R_vq), PT_DESCRIPTION, "DELTAMODE: The droop parameter of the v/q droop",
+
+			PT_double, "Tp_delay",PADDR(Tp_delay), PT_DESCRIPTION, "DELTAMODE: The time constant for delayed real power seen by the VSI droop controller",
+			PT_double, "Tq_delay",PADDR(Tq_delay), PT_DESCRIPTION, "DELTAMODE: The time constant for delayed reactive power seen by the VSI droop controller",
+
+			// Parameters for VSI mode
+			PT_complex,"VSI_Rfilter[pu]",PADDR(Rfilter),PT_DESCRIPTION,"VSI filter resistance (p.u.)",
+			PT_complex,"VSI_Xfilter[pu]",PADDR(Xfilter),PT_DESCRIPTION,"VSI filter inductance (p.u.)",
+			PT_enumeration,"VSI_mode",PADDR(VSI_mode), PT_DESCRIPTION, "VSI MODEL: Selects VSI mode for either isochronous or droop one",
+				PT_KEYWORD,"VSI_ISOCHRONOUS",(enumeration)VSI_ISOCHRONOUS,
+				PT_KEYWORD,"VSI_DROOP",(enumeration)VSI_DROOP,
+			PT_double, "VSI_freq",PADDR(VSI_freq), PT_DESCRIPTION, "VSI frequency",
+			PT_double, "ki_Vterminal", PADDR(ki_Vterminal), PT_DESCRIPTION, "DELTAMODE: The integrator gain for the VSI terminal voltage modulation",
+			PT_double, "kp_Vterminal", PADDR(kp_Vterminal), PT_DESCRIPTION, "DELTAMODE: The proportional gain for the VSI terminal voltage modulation",
+
 			//Selection method
 			PT_enumeration, "dynamic_model_mode", PADDR(inverter_dyn_mode), PT_DESCRIPTION, "DELTAMODE: Underlying model to use for deltamode control",
 				PT_KEYWORD, "PID", (enumeration)PID_CONTROLLER,
@@ -278,6 +300,12 @@ int inverter::create(void)
 	C_Storage_In = 0;
 	power_factor = 1;
 	
+	// Parameters needed for droop curve
+	freq_ref = 60;     // Set the frequency reference value as 60 HZ
+	Tfreq_delay = 0.0; // Arbitrary value defined for delay of frequency seen by the inverter
+	inverter_droop_fp = false; // By default there is no droop included for the inverter
+	R_fp = 0.0001; 		// Droop curve variable
+
 	//Ab add : default values for four quadrant Volt-VAr mode
 	disable_volt_var_if_no_input_power = false;	//Volt-VAr mode always on by default
 	delay_time = -1;					        //delay time between seeing a voltage value and responding with appropiate VAr setting, set -1 to flag as unspecified, will reset to 0 by default
@@ -389,8 +417,9 @@ int inverter::create(void)
 	// DELTA MODE 
 	////////////////////////////////////////////////////////
 	deltamode_inclusive = false;	//By default, don't be included in deltamode simulations
-
+	first_run = true;
 	inverter_convergence_criterion = 1e-3;
+	IGenerated = NULL;
 
 	//Default PID controller variables -- no output by default
 	kpd = 0.0;
@@ -463,6 +492,25 @@ int inverter::create(void)
 	Q4 = -2;
 	vv_lockout = -1;
 
+	// Feeder frequency
+	mapped_freq_variable = NULL;
+	VSI_freq = 60;	// Set default VSI frequency as 60 HZ
+
+	// Default values for VSI parameters
+	// Filter of voltage source inverter
+	Rfilter = 0.03; // in p.u.
+	Xfilter = 0.3; // in p.u.
+
+	// VSI mode is by default defined as the isochronous one
+	VSI_mode = VSI_ISOCHRONOUS;
+
+	//By default, e_source has not been initialized
+	VSI_esource_init = false;
+
+	// Initial values for voltage control parameters of isochronous VSI
+	ki_Vterminal = 0.01;
+	kp_Vterminal = 0.1;
+
 	/* TODO: set the context-free initial value of properties */
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -471,7 +519,17 @@ int inverter::create(void)
 int inverter::init(OBJECT *parent)
 {
 	OBJECT *obj = OBJECTHDR(this);
+	PROPERTY *pval;
+	bool *dyn_gen_posting;
 	double *temp_nominal_pointer;
+	unsigned iindex, jindex;
+	complex filter_impedance;
+	double *nominal_voltage;
+	double *ptemp_double;
+	double temp_double_high, temp_double_low, tdiff, ang_diff;
+	FINDLIST *batteries;
+	OBJECT *objBattery = NULL;
+	int index = 0;
 
 	if(parent != NULL){
 		if((parent->flags & OF_INIT) != OF_INIT){
@@ -509,6 +567,7 @@ int inverter::init(OBJECT *parent)
 			{&pLine_I,				"current_A"}, // assumes 2 and 3(N) follow immediately in memory
 			{&pPower,				"power_A"}, // assumes 2 and 3 follow immediately in memory
 			{&pLine_unrotI,			"prerotated_current_A"},
+			{&pMeter_I, 			"measured_current_A"},
 		};
 		/// @todo use triplex property mapping instead of assuming memory order for meter variables (residential, low priority) (ticket #139)
 	
@@ -566,6 +625,7 @@ int inverter::init(OBJECT *parent)
 			{&pPower,				"power_12"}, //assumes 2 and 1-2 follow immediately in memory
 			{&pLine_unrotI,			"prerotated_current_12"},	//maps current load 1-2 (prerotated) for triplex
 			/// @todo use triplex property mapping instead of assuming memory order for meter variables (residential, low priority) (ticket #139)
+			{&pMeter_I, 			"measured_current_A"},
 		};
 
 		// attach meter variables to each circuit
@@ -1428,7 +1488,7 @@ int inverter::init(OBJECT *parent)
 		allowed_vv_action = 0;
 		last_vv_check = 0;
 	}
-	
+
 	///////////////////////////////////////////////////////////////////////////
 	// DELTA MODE
 	///////////////////////////////////////////////////////////////////////////
@@ -1540,12 +1600,76 @@ int inverter::init(OBJECT *parent)
 			}
 		}
 		//Default else - don't do anything
+
+		//If we're a voltage sourced-inverter, map up our variables
+		if (four_quadrant_control_mode == FQM_VSI)
+		{
+			//Map the flag
+			pval = gl_get_property(parent,"Norton_dynamic");
+
+			//Check it
+			if ((pval==NULL) || (pval->ptype!=PT_bool))
+			{
+				GL_THROW("inverter:%s failed to map deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
+				/*  TROUBLESHOOT
+				While attempting to set up the deltamode interfaces and calculations with powerflow, the required interface could not be mapped.
+				Please check your GLM and try again.  If the error persists, please submit a trac ticket with your code.
+				*/
+			}
+
+			//Map to the intermediate
+			dyn_gen_posting = (bool*)GETADDR(parent,pval);
+
+			//Set the flag
+			*dyn_gen_posting = true;
+
+			// Obtain the Zbase of the system for calculating filter impedance
+			nominal_voltage = get_double(parent,"nominal_voltage");
+			Zbase = ((*nominal_voltage) * (*nominal_voltage))/p_rated;
+			filter_impedance = complex(1.0,0.0)/(complex(Rfilter,Xfilter) * Zbase);
+			for (iindex=0; iindex<3; iindex++)
+			{
+				for (jindex=0; jindex<3; jindex++)
+				{
+					if (iindex==jindex)
+					{
+						generator_admittance[iindex][jindex] = filter_impedance;
+					}
+					else
+					{
+						generator_admittance[iindex][jindex] = complex(0.0,0.0);
+					}
+				}
+			}
+
+			// Find if a battery is attached to VSI, if not, give warning
+			// Find all batteries
+			batteries = gl_find_objects(FL_NEW, FT_CLASS, SAME, "battery", FT_END);
+			if(batteries == NULL || batteries->hit_count == 0){
+				gl_warning("No battery objects were found, but the VSI object exists. Now assume the VSI is attached with infinite input power.");
+				/* TROUBLESHOOT
+				No battery object attached to VSI. In reality, a battery is required for VSI to output enough power.
+				*/
+			}
+			else {
+				while(objBattery = gl_find_next(batteries,objBattery)){
+					if(index >= batteries->hit_count){
+						gl_warning("VSI: %s does not find a battery attached to it. Now assume VSI: %s is attached with infinite input power.", (obj->name ? obj->name : "Unnamed"), (obj->name ? obj->name : "Unnamed"));
+						break;
+					}
+					if (strcmp(objBattery->parent->name, obj->name) == 0) {
+						break;
+					}
+					++index;
+				}
+			}
+		}//Other methods post directly to current, so they don't need this
 	}//End deltamode inclusive
 	else	//This particular model isn't enabled
 	{
 		if (enable_subsecond_models == true)
 		{
-			gl_warning("inverter:%d %s - Deltamode is enabled for the module, but not this inverter!",obj->id,(obj->name ? obj->name : "Unnamed"));
+			gl_warning("inverter:%d %s - Deltamode is enabled for the module, but not this inverter!",obj->id, (obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
 			The inverter is not flagged for deltamode operations, yet deltamode simulations are enabled for the overall system.  When deltamode
 			triggers, this inverter may no longer contribute to the system, until event-driven mode resumes.  This could cause issues with the simulation.
@@ -1554,11 +1678,41 @@ int inverter::init(OBJECT *parent)
 		}
 	}
 
+	// Check the bustype if the inverter parent
+	pval = gl_get_property(obj->parent,"bustype"); // Obtain VSI parent meter bustype
+
+	//Check it
+	if ((pval==NULL) || (pval->ptype!=PT_enumeration))
+	{
+		GL_THROW("metrics_collector:%s failed to map bustype variable from %s",obj->name?obj->name:"unnamed",obj->parent->name?obj->parent->name:"unnamed");
+		/*  TROUBLESHOOT
+		While attempting to set up the deltamode interfaces and calculations with powerflow, the required interface could not be mapped.
+		Please check your GLM and try again.  If the error persists, please submit a trac ticket with your code.
+		*/
+	}
+
+	//Map to the intermediate
+	VSI_bustype = (enumeration*)GETADDR(obj->parent,pval);
+
+	//Map the powerflow frequency
+	mapped_freq_variable = (double *)gl_get_module_var(gl_find_module("powerflow"),"current_frequency");
+	//Make sure it isn't empty
+	if (mapped_freq_variable == NULL)
+	{
+		GL_THROW("controller_dg:%s - Failed to map frequency checking variable from powerflow for deltamode",obj->name?obj->name:"unnamed");
+		//Defined above
+	}
+
 	//Set the timestep strackers
 	prev_time = gl_globalclock;
-	prev_time_dbl = (double)prev_time;
+	prev_time_dbl = (double)(prev_time);
 
+	// Record the starting time
+	start_time = gl_globalclock;
+
+	// Initialize parameters
 	VA_Out = complex(P_Out,Q_Out);
+	VA_Out_past = VA_Out;
 	//I_In = complex((VA_Out.Mag())/V_In.Mag(),0.0);
 	P_Out_t0 = P_Out;
 	Q_Out_t0 = Q_Out;
@@ -1566,6 +1720,7 @@ int inverter::init(OBJECT *parent)
 	I_Out[0] = complex(0);
 	I_Out[1] = complex(0);
 	I_Out[2] = complex(0);
+
 	return 1;
 	
 }
@@ -1862,10 +2017,13 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 			} //t1 != t0
 		}// End FQM_GROUP_LF
 		
-		if((deltamode_inclusive == true) && (enable_subsecond_models==true) && (t1 != t0) && (inverter_dyn_mode == PI_CONTROLLER)) {
-			last_I_In = I_In.Re();
-			for(int i = 0; i < 3; i++) {
-				last_I_Out[i] = I_Out[i];
+		if((deltamode_inclusive == true) && (enable_subsecond_models==true) && (inverter_dyn_mode == PI_CONTROLLER)) {
+			// Only execute at the first time step of simulation, or the first ieration of the next time steps
+			if ((t1 == start_time) || (t1 != t0)) {
+				last_I_In = I_In.Re();
+				for(int i = 0; i < 3; i++) {
+					last_I_Out[i] = I_Out[i];
+				}
 			}
 		}
 	}
@@ -1881,9 +2039,16 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 	double curr_ts_dbl, diff_dbl;
 	double ieee_1547_return_value;
 	TIMESTAMP new_ret_value;
+	FUNCTIONADDR test_fxn;
+	bool *gen_dynamic_flag;
+	STATUS fxn_return_status;
 	
 	complex rotate_value;
 	complex calculated_iO[3];
+
+	complex temp_current_val[3];
+	complex power_val[3];
+	complex temp_power_val[3];
 
 	//Assume always want TS_NEVER
 	tret_value = TS_NEVER;
@@ -1924,7 +2089,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//Very first run
 			if (first_iter_counter == 0)
 			{
-				if ((gen_object_current == -1) || (delta_objects==NULL))
+				if (((gen_object_current == -1) || (delta_objects==NULL)) && (enable_subsecond_models == true))
 				{
 					//Call the allocation routine
 					allocate_deltamode_arrays();
@@ -1974,7 +2139,6 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 				//Map up the function for postupdate
 				delta_preupdate_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"preupdate_gen_object"));
-
 				//Make sure it worked
 				if (delta_preupdate_functions[gen_object_current] == NULL)
 				{
@@ -1988,7 +2152,96 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 				//Update pointer
 				gen_object_current++;
-			}
+
+				//Voltage source inverter mapping
+				if (four_quadrant_control_mode == FQM_VSI)
+				{
+					//See if we're attached to a node-esque object
+					if (obj->parent != NULL)
+					{
+						if (gl_object_isa(obj->parent,"meter","powerflow") || gl_object_isa(obj->parent,"load","powerflow") || gl_object_isa(obj->parent,"node","powerflow") || gl_object_isa(obj->parent,"elec_frequency","powerflow"))
+						{
+							//Map the bus mappings
+							test_fxn = (FUNCTIONADDR)(gl_get_function(obj->parent,"delta_linkage_node"));
+
+							//See if it was located
+							if (test_fxn == NULL)
+							{
+								GL_THROW("Voltage source inverter:%s - failed to map bus admittance matrix from node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
+								/*  TROUBLESHOOT
+								While attempting to map the location of a bus interface point for the deltamode capabilities, an error was encountered.
+								Please try again.  If the error persists, please submit your code and a bug report via the trac website.
+								*/
+							}
+
+							//Map the value - bus admittance is 0
+							bus_admittance_mat = ((complex * (*)(OBJECT *, unsigned char))(*test_fxn))(obj->parent,0);
+
+							//See if it worked (should return NULL if the object wasn't "delta-compliant"
+							if (bus_admittance_mat==NULL)
+							{
+								GL_THROW("Voltage source inverter:%s - invalid reference passed from node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
+								/*  TROUBLESHOOT
+								While attempting to map a deltamode interface variable, an error occurred.  This could be due to the matrix not being
+								initialized correctly, or because the attached node is not flagged for deltamode.
+								*/
+							}
+
+							unsigned char jindex, kindex;
+
+							//Copy the contents in
+							for (jindex=0; jindex<3; jindex++)
+							{
+								for (kindex=0; kindex<3; kindex++)
+								{
+									bus_admittance_mat[3*jindex+kindex]+=generator_admittance[jindex][kindex];
+								}
+							}
+
+							//Map the value - PGenerated is 1
+							PGenerated = ((complex * (*)(OBJECT *, unsigned char))(*test_fxn))(obj->parent,1);
+
+							//See if it worked (should return NULL if the object wasn't "delta-compliant"
+							if (PGenerated==NULL)
+							{
+								GL_THROW("Voltage source inverter:%s - invalid reference passed from node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
+								//Defined above
+							}
+
+							//Accumulate and pass our starting power
+							*PGenerated = complex(P_Out, Q_Out);
+
+							//Map current "injection" - direct generator current
+							IGenerated = ((complex * (*)(OBJECT *, unsigned char))(*test_fxn))(obj->parent,2);
+
+							//See if it worked (should return NULL if the object wasn't "delta-compliant"
+							if (IGenerated==NULL)
+							{
+								GL_THROW("Voltage source inverter:%s - invalid reference passed from node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
+								//Defined above
+							}
+
+							//Map the value - full bus admittance is 3
+							full_bus_admittance_mat = ((complex * (*)(OBJECT *, unsigned char))(*test_fxn))(obj->parent,3);
+
+							//See if it worked (should return NULL if the object wasn't "delta-compliant"
+							if (full_bus_admittance_mat==NULL)
+							{
+								GL_THROW("Voltage source inverter:%s - invalid reference passed from node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
+								//Defined above
+							}
+						}//End parent is a node object
+						else	//Nope, so who knows what is going on - better fail, just to be safe
+						{
+							GL_THROW("Voltage source inverter:%s - invalid parent object:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
+							/*  TROUBLESHOOT
+							At this time, for proper dynamic functionality a diesel_dg object must be parented to a three-phase powerflow node
+							object (node, load, meter).  The parent object is not one of those objects.
+							*/
+						}
+					}//End non-null parent
+				}//End deltamode and VSI mode
+			}//End first iteration
 
 			//General counter to force an additional reiteration - help converge the current values
 			first_iter_counter++;
@@ -2748,12 +3001,17 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					VA_Out = complex(0.0,VA_Efficiency);
 				}
 			}
+
+			// For PQ constant mode, and the VSI droop mode, the PQ outputs in setady state will be matching given glm values
 			else if (four_quadrant_control_mode == FQM_CONSTANT_PQ)
 			{
+				// Give values to Pref and Qref so that they will not be zero monitored in steady state
+				Pref = P_Out;
+				Qref = Q_Out;
+
 				//Compute desired output - sign convention appears to be backwards
 				temp_VA = complex(P_Out,Q_Out);
 
-				
 				//Ensuring battery has capacity to charge or discharge as needed.
 				if ((b_soc >= 1.0) && (temp_VA.Re() < 0) && (b_soc != -1))	//Battery full and positive influx of real power
 				{
@@ -2818,6 +3076,114 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				}
 				//}
 			}
+			else if (four_quadrant_control_mode == FQM_VSI)
+			{
+				// VSI isochronous mode
+				if (VSI_mode == VSI_ISOCHRONOUS || VSI_mode == VSI_DROOP) {
+					//Calculate power based on measured terminal voltage and currents
+					if ((phases & 0x10) == 0x10) // split phase
+					{
+						//Update output power
+						//Get current injected
+						temp_current_val[0] = IGenerated[0] - generator_admittance[0][0]* (*pCircuit_V);
+
+						//Update power output variables, just so we can see what is going on
+						VA_Out = *pCircuit_V*~temp_current_val[0];
+
+					}
+					else	//Three phase variant
+					{
+						//Update output power
+						//Get current injected
+						temp_current_val[0] = (IGenerated[0] - generator_admittance[0][0]*pCircuit_V[0] - generator_admittance[0][1]*pCircuit_V[1] - generator_admittance[0][2]*pCircuit_V[2]);
+						temp_current_val[1] = (IGenerated[1] - generator_admittance[1][0]*pCircuit_V[0] - generator_admittance[1][1]*pCircuit_V[1] - generator_admittance[1][2]*pCircuit_V[2]);
+						temp_current_val[2] = (IGenerated[2] - generator_admittance[2][0]*pCircuit_V[0] - generator_admittance[2][1]*pCircuit_V[1] - generator_admittance[2][2]*pCircuit_V[2]);
+
+						//Update power output variables, just so we can see what is going on
+						power_val[0] = pCircuit_V[0]*~temp_current_val[0];
+						power_val[1] = pCircuit_V[1]*~temp_current_val[1];
+						power_val[2] = pCircuit_V[2]*~temp_current_val[2];
+
+						VA_Out = power_val[0] + power_val[1] + power_val[2];
+					}
+				}
+
+				// Check VA_Out values
+				temp_VA = VA_Out;
+
+				// For VSI, the VA_Out values are determined after the first time step of power flow
+				// Therefore, only set battery p values accordingly after that
+				if (first_run == true) {
+					p_in = 0;
+				}
+				else {
+					//Ensuring battery has capacity to charge or discharge as needed.
+					if ((b_soc >= 1.0) && (temp_VA.Re() < 0) && (b_soc != -1))	//Battery full and positive influx of real power
+					{
+						gl_warning("inverter:%s - battery full - no charging allowed",obj->name);
+						temp_VA.SetReal(0.0);	//Set to zero - reactive considerations may change this
+					}
+					else if ((b_soc <= soc_reserve) && (temp_VA.Re() > 0) && (b_soc != -1))	//Battery "empty" and attempting to extract real power
+					{
+						gl_warning("inverter:%s - battery at or below the SOC reserve - no discharging allowed",obj->name);
+						temp_VA.SetReal(0.0);	//Set output to zero - again, reactive considerations may change this
+					}
+
+					//Ensuring power rating of inverter is not exceeded.
+					if (fabs(temp_VA.Mag()) > p_max){ //Requested power output (P_Out, Q_Out) is greater than inverter rating
+						if (p_max > fabs(temp_VA.Re())) //Can we reduce the reactive power output and stay within the inverter rating?
+						{
+							//Determine the Q we can provide
+							temp_QVal = sqrt((p_max*p_max) - (temp_VA.Re()*temp_VA.Re()));
+
+							//Assign to output, negating signs as necessary (temp_VA already negated)
+							if (temp_VA.Im() < 0.0)	//Negative Q dispatch
+							{
+								VA_Out = complex(temp_VA.Re(),-temp_QVal);
+							}
+							else	//Positive Q dispatch
+							{
+								VA_Out = complex(temp_VA.Re(),temp_QVal);
+							}
+						}
+						else	//Inverter rated power is equal to or smaller than real power desired, give it all we can
+						{
+							//Maintain desired sign convention
+							if (temp_VA.Re() < 0.0)
+							{
+								VA_Out = complex(-p_max,0.0);
+							}
+							else	//Positive
+							{
+								VA_Out = complex(p_max,0.0);
+							}
+						}
+					}
+					else	//Doesn't exceed, assign it
+					{
+						VA_Out = temp_VA;
+					}
+
+					//Update values to represent what is being pulled (battery uses for SOC updates) - assumes only storage
+					//p_in used by battery - appears reversed to VA_Out
+					if (VA_Out.Re() > 0.0)	//Discharging
+					{
+						p_in = VA_Out.Re()/inv_eta;
+					}
+					else if (VA_Out.Re() == 0.0)	//Idle
+					{
+						p_in = 0.0;
+					}
+					else	//Must be positive, so charging
+					{
+						p_in = VA_Out.Re()*inv_eta;
+					}
+				}
+
+				// Set PQ referance values in event mode always the same as VA_Out for VSI
+				Pref = VA_Out.Re();
+				Qref = VA_Out.Im();
+			}
 			else if (four_quadrant_control_mode == FQM_LOAD_FOLLOWING)
 			{
 				VA_Out = -lf_dispatch_power;	//Place the expected dispatch power into the output
@@ -2826,48 +3192,48 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 			{
 				VA_Out = -lf_dispatch_power;	//Place the expected dispatch power into the output
 			}
-				else if (four_quadrant_control_mode == FQM_VOLT_VAR_FREQ_PWR) {
-					// start Ab add
-					// Jason Bank, jason.bank@nrel.gov		8/26/2013
-					// use voltage control input with lookup table values to determine what Qo should be then update Po according to:
-					// Po = (Pi * eff) - Qo * (1 - eff)/eff		Inverter real output power including conversion losses for generating Qo
-					// Ab note Jason originally only had Po = (Pi * eff) - Qo * (1 - eff); actually think losses should be proportional to S, but will leave for later
-					
-					//TODO : add lookup for power for frequency regulation Pout_fr
-					
-					if((VA_In.Re() == 0.0) && (disable_volt_var_if_no_input_power == true))		
-						VA_Out = complex(0,0);
-					else
-					{
-						//currently only compares to the phase A inverter AC voltage, 
-						//TODO: need to address for non-3phase inv? include support for a remote voltage input?
-					
-						double Qo = VoltVArSched.back().second;			//set the scheduled Q for highest voltage range, handles the last case with the loop below (will be overwritten if needed)
-						double prevV = 0;								//setup for first loop iter to handle lowest voltage range
-						double prevQ = VoltVArSched.front().second;		//setup for first loop iter to handle lowest voltage range
-						for (size_t i = 0; i < VoltVArSched.size(); i++)
-						{	//iterate over all specified voltage ranges, find where current voltage value lies and set Qo as linear interpolation between endpoints
-							if(phaseA_V_Out.Mag() <= VoltVArSched[i].first) {
-								double m = (VoltVArSched[i].second - prevQ)/(VoltVArSched[i].first - prevV);
-								double b = VoltVArSched[i].second - (m * VoltVArSched[i].first);
-								Qo = m * phaseA_V_Out.Mag() + b;
-								break;
-							}
-							prevV = VoltVArSched[i].first;
-							prevQ = VoltVArSched[i].second;
-						}
-	
-						double Po = (P_in * net_eff) - fabs(Qo) * (1 - net_eff)/net_eff;
+			else if (four_quadrant_control_mode == FQM_VOLT_VAR_FREQ_PWR) {
+				// start Ab add
+				// Jason Bank, jason.bank@nrel.gov		8/26/2013
+				// use voltage control input with lookup table values to determine what Qo should be then update Po according to:
+				// Po = (Pi * eff) - Qo * (1 - eff)/eff		Inverter real output power including conversion losses for generating Qo
+				// Ab note Jason originally only had Po = (Pi * eff) - Qo * (1 - eff); actually think losses should be proportional to S, but will leave for later
 
-						if(VA_In.Re() < 0.0)
-							VA_Out = complex(Po,-Qo);	//Qo sign convention backwards from what i was expecting			
-						else
-							VA_Out = complex(-Po,-Qo);	//Qo sign convention backwards from what i was expecting
+				//TODO : add lookup for power for frequency regulation P_Out_fr
+
+				if((VA_In.Re() == 0.0) && (disable_volt_var_if_no_input_power == true))
+					VA_Out = complex(0,0);
+				else
+				{
+					//currently only compares to the phase A inverter AC voltage,
+					//TODO: need to address for non-3phase inv? include support for a remote voltage input?
+
+					double Qo = VoltVArSched.back().second;			//set the scheduled Q for highest voltage range, handles the last case with the loop below (will be overwritten if needed)
+					double prevV = 0;								//setup for first loop iter to handle lowest voltage range
+					double prevQ = VoltVArSched.front().second;		//setup for first loop iter to handle lowest voltage range
+					for (size_t i = 0; i < VoltVArSched.size(); i++)
+					{	//iterate over all specified voltage ranges, find where current voltage value lies and set Qo as linear interpolation between endpoints
+						if(phaseA_V_Out.Mag() <= VoltVArSched[i].first) {
+							double m = (VoltVArSched[i].second - prevQ)/(VoltVArSched[i].first - prevV);
+							double b = VoltVArSched[i].second - (m * VoltVArSched[i].first);
+							Qo = m * phaseA_V_Out.Mag() + b;
+							break;
+						}
+						prevV = VoltVArSched[i].first;
+						prevQ = VoltVArSched[i].second;
 					}
-				
-					//TODO: should VA_Out be checked against inverter power rating? if exceeds clip it? clip to preserve reactive power set point or to preserve real output power?
-					// end Ab add
-				}//end VOLT_VAR_FREQ_PWR mode
+
+					double Po = (P_in * net_eff) - fabs(Qo) * (1 - net_eff)/net_eff;
+
+					if(VA_In.Re() < 0.0)
+						VA_Out = complex(Po,-Qo);	//Qo sign convention backwards from what i was expecting
+					else
+						VA_Out = complex(-Po,-Qo);	//Qo sign convention backwards from what i was expecting
+				}
+
+				//TODO: should VA_Out be checked against inverter power rating? if exceeds clip it? clip to preserve reactive power set point or to preserve real output power?
+				// end Ab add
+			}//end VOLT_VAR_FREQ_PWR mode
 
 			//Execution of power-factor regulation output of inverter that will get included in power-flow solution
 			if ((pf_reg == INCLUDED) || (pf_reg == INCLUDED_ALT))
@@ -2881,7 +3247,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//} else if(four_quadrant_control_mode == FQM_VOLT_VAR){
 			//	GL_THROW("VOLT_VAR mode is not supported at this time.");
 			//}
-			if (four_quadrant_control_mode != FQM_VOLT_VAR){
+			if (four_quadrant_control_mode != FQM_VOLT_VAR ){
 				//check to see if VA_Out is within rated absolute power rating
 				if(VA_Out.Mag() > p_max)
 				{
@@ -2963,114 +3329,205 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				}//End load following battery considerations
 
 				//Assign secondary outputs
-				if(four_quadrant_control_mode != FQM_CONSTANT_PQ){
+				if(four_quadrant_control_mode != FQM_CONSTANT_PQ && four_quadrant_control_mode != FQM_VSI){
 					P_Out = VA_Out.Re();
 					Q_Out = VA_Out.Im();
 				}
 
-				//Calculate power and post it
-				if ((phases & 0x10) == 0x10) // split phase
+				// For VSI droop mode, try to match the total PQ out with the glm values
+				if (four_quadrant_control_mode == FQM_VSI && VSI_mode == VSI_DROOP) {
+
+					//Only do updates if this is a new timestep
+					if ((prev_time < t1) && (first_run == false))
+					{
+						// Adjust VSI (not on SWING bus) current injection and e_source values only at the first iteration of each time step
+						if ((phases & 0x10) == 0x10) // split phase
+						{
+							if (*VSI_bustype != 2) {
+
+								//Compute desired output - sign convention appears to be backwards
+								complex temp_VA = complex(P_Out,Q_Out);
+
+								//Force the output power the same as glm pre-defined values
+								IGenerated[0] = ~(temp_VA/ (*pCircuit_V)) + generator_admittance[0][0]* (*pCircuit_V);
+
+								//Compute desired output - sign convention appears to be backwards
+								e_source[0] = IGenerated[0] * (complex(Rfilter,Xfilter) * Zbase);
+								V_angle[0] = (e_source[0]).Arg();  // Obtain the inverter source voltage phasor angle
+								V_mag[0] = e_source[0].Mag();
+							}
+						}
+						else {
+							// Adjust VSI (not on SWING bus) current injection and e_source values only at the first iteration of each time step
+							if (*VSI_bustype != 2) {
+
+								//Compute desired output - sign convention appears to be backwards
+								complex temp_VA = complex(P_Out,Q_Out);
+
+								//Update output power
+								//Get current injected
+								temp_current_val[0] = (IGenerated[0] - generator_admittance[0][0]*pCircuit_V[0] - generator_admittance[0][1]*pCircuit_V[1] - generator_admittance[0][2]*pCircuit_V[2]);
+								temp_current_val[1] = (IGenerated[1] - generator_admittance[1][0]*pCircuit_V[0] - generator_admittance[1][1]*pCircuit_V[1] - generator_admittance[1][2]*pCircuit_V[2]);
+								temp_current_val[2] = (IGenerated[2] - generator_admittance[2][0]*pCircuit_V[0] - generator_admittance[2][1]*pCircuit_V[1] - generator_admittance[2][2]*pCircuit_V[2]);
+
+								//Update power output variables, just so we can see what is going on
+								power_val[0] = pCircuit_V[0]*~temp_current_val[0];
+								power_val[1] = pCircuit_V[1]*~temp_current_val[1];
+								power_val[2] = pCircuit_V[2]*~temp_current_val[2];
+
+								VA_Out = power_val[0] + power_val[1] + power_val[2];
+
+								//Copy in value
+								temp_power_val[0] = power_val[0] + (temp_VA - VA_Out) / 3.0;
+								temp_power_val[1] = power_val[1] + (temp_VA - VA_Out) / 3.0;
+								temp_power_val[2] = power_val[2] + (temp_VA - VA_Out) / 3.0;
+
+								//Back out the current injection
+								temp_current_val[0] = ~(temp_power_val[0]/pCircuit_V[0]) + generator_admittance[0][0]*pCircuit_V[0] + generator_admittance[0][1]*pCircuit_V[1] + generator_admittance[0][2]*pCircuit_V[2];
+								temp_current_val[1] = ~(temp_power_val[1]/pCircuit_V[1]) + generator_admittance[1][0]*pCircuit_V[0] + generator_admittance[1][1]*pCircuit_V[1] + generator_admittance[1][2]*pCircuit_V[2];
+								temp_current_val[2] = ~(temp_power_val[2]/pCircuit_V[2]) + generator_admittance[2][0]*pCircuit_V[0] + generator_admittance[2][1]*pCircuit_V[1] + generator_admittance[2][2]*pCircuit_V[2];
+
+								//Apply and see what happens
+								IGenerated[0] = temp_current_val[0];
+								IGenerated[1] = temp_current_val[1];
+								IGenerated[2] = temp_current_val[2];
+
+								//Compute desired output - sign convention appears to be backwards
+								for (int i = 0; i < 3; i++) {
+									// Update e_source value for droop VSI based on updated current injection
+									e_source[i] = IGenerated[i] * (complex(Rfilter,Xfilter) * Zbase);
+									V_angle[i] = (e_source[i]).Arg();  // Obtain the inverter source voltage phasor angle
+									V_mag[i] = e_source[i].Mag();
+								}
+							}
+						}
+
+						//Update time
+						prev_time = t1;
+						prev_time_dbl = (double)(t1);
+
+						//Keep us here
+						tret_value = t1;
+					}
+				} // End adjusting droop mode VSI
+
+				else if (four_quadrant_control_mode != FQM_VSI)
 				{
-					//Update last_power variable
-					last_power[3] = -VA_Out;
+					//Calculate power and post it
+					if ((phases & 0x10) == 0x10) // split phase
+					{
+						//Update last_power variable
+						last_power[3] = -VA_Out;
 
-					//Post the value
-					if (pCircuit_V[0].Mag() > 0.0)
-					{
-						I_Out[0] = ~(VA_Out / *pCircuit_V);
-					}
-					else
-					{
-						I_Out[0] = complex(0.0,0.0);
-					}
-
-					if (deltamode_inclusive == true)
-					{
-						last_current[3] = -I_Out[0];
-						pLine_unrotI[0] += last_current[3];
-					}
-					else
-					{
-						*pPower +=last_power[3];
-					}
-				}
-				else	//Three phase variant
-				{
-					//Figure out amount that needs to be posted
-					temp_VA = -VA_Out/number_of_phases_out;
-
-					if ( (phases & 0x01) == 0x01 ) // has phase A
-					{
-						last_power[0] = temp_VA;	//Store last power
-
+						//Post the value
 						if (pCircuit_V[0].Mag() > 0.0)
 						{
-							I_Out[0] = ~(-temp_VA / pCircuit_V[0]);
+							I_Out[0] = ~(VA_Out / *pCircuit_V);
 						}
 						else
 						{
 							I_Out[0] = complex(0.0,0.0);
 						}
 
-						if (deltamode_inclusive == true)
-						{
-							last_current[0] = -I_Out[0];
-							pLine_unrotI[0] += last_current[0];
+						if (four_quadrant_control_mode != FQM_VSI) {
+							if (deltamode_inclusive == true)
+							{
+								last_current[3] = -I_Out[0];
+								pLine_unrotI[0] += last_current[3];
+							}
+							else
+							{
+								*pPower +=last_power[3];
+							}
 						}
-						else
-						{
-							pPower[0] += temp_VA;		//Post the current value
-						}
+						//FQM_VSI assumed
+						/****** TODO: Verify/Make generators work with triplex! ********/
 					}
-
-					if ( (phases & 0x02) == 0x02 ) // has phase B
+					else	//Three phase variant
 					{
-						last_power[1] = temp_VA;	//Store last power
+						//Figure out amount that needs to be posted
+						temp_VA = -VA_Out/number_of_phases_out;
 
-						if (pCircuit_V[1].Mag() > 0.0)
+						if ( (phases & 0x01) == 0x01 ) // has phase A
 						{
-							I_Out[1] = ~(-temp_VA / pCircuit_V[1]);
-						}
-						else
-						{
-							I_Out[1] = complex(0.0,0.0);
-						}
+							last_power[0] = temp_VA;	//Store last power
 
-						if (deltamode_inclusive == true)
-						{
-							last_current[1] = -I_Out[1];
-							pLine_unrotI[1] += last_current[1];
-						}
-						else
-						{
-							pPower[1] += temp_VA;		//Post the current value
-						}
-					}
+							if (pCircuit_V[0].Mag() > 0.0)
+							{
+								I_Out[0] = ~(-temp_VA / pCircuit_V[0]);
+							}
+							else
+							{
+								I_Out[0] = complex(0.0,0.0);
+							}
 
-					if ( (phases & 0x04) == 0x04 ) // has phase C
-					{
-						last_power[2] = temp_VA;	//Store last power
-
-						if (pCircuit_V[2].Mag() > 0.0)
-						{
-							I_Out[2] = ~(-temp_VA / pCircuit_V[2]);
-						}
-						else
-						{
-							I_Out[2] = complex(0.0,0.0);
+							if (four_quadrant_control_mode != FQM_VSI) {
+								if (deltamode_inclusive == true)
+								{
+									last_current[0] = -I_Out[0];
+									pLine_unrotI[0] += last_current[0];
+								}
+								else
+								{
+									pPower[0] += temp_VA;		//Post the current value
+								}
+							}
 						}
 
-						if (deltamode_inclusive == true)
+						if ( (phases & 0x02) == 0x02 ) // has phase B
 						{
-							last_current[2] = -I_Out[2];
-							pLine_unrotI[2] += last_current[2];
+							last_power[1] = temp_VA;	//Store last power
+
+							if (pCircuit_V[1].Mag() > 0.0)
+							{
+								I_Out[1] = ~(-temp_VA / pCircuit_V[1]);
+							}
+							else
+							{
+								I_Out[1] = complex(0.0,0.0);
+							}
+
+							if (four_quadrant_control_mode != FQM_VSI) {
+								if (deltamode_inclusive == true)
+								{
+									last_current[1] = -I_Out[1];
+									pLine_unrotI[1] += last_current[1];
+								}
+								else
+								{
+									pPower[1] += temp_VA;		//Post the current value
+								}
+
+							}
 						}
-						else
+
+						if ( (phases & 0x04) == 0x04 ) // has phase C
 						{
-							pPower[2] += temp_VA;		//Post the current value
+							last_power[2] = temp_VA;	//Store last power
+
+							if (pCircuit_V[2].Mag() > 0.0)
+							{
+								I_Out[2] = ~(-temp_VA / pCircuit_V[2]);
+							}
+							else
+							{
+								I_Out[2] = complex(0.0,0.0);
+							}
+
+							if (four_quadrant_control_mode != FQM_VSI) {
+								if (deltamode_inclusive == true)
+								{
+									last_current[2] = -I_Out[2];
+									pLine_unrotI[2] += last_current[2];
+								}
+								else
+								{
+									pPower[2] += temp_VA;		//Post the current value
+								}
+							}
 						}
-					}
-				}//End three-phase variant
+					} //End three-phase variant
+				}//End non-Volt Var Control mode
 			} else { // Volt Var Control mode
 				if (power_A.Mag() > p_rated ) {
 					if (power_A.Re() > p_rated) {
@@ -3182,6 +3639,16 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//Negate VA_Out, so it matches sign ideals
 			//VA_Out = -VA_Out;
 
+			// Check P_in (calcualted from V_In and I_In), and compared with p_in (calculated from VA_Out)
+			if (P_in < p_in) {
+				gl_warning("DC maximum power output is less than the real power output from the inverter. A higher DC power rating is recommended. Currently the VSI power output is not limited by the DC power output.");
+				/*  TROUBLESHOOT
+				DC maximum power output is less than the real power output from the inverter.
+				Although currently inverter does not adjust its power output based on teh DC limitations.
+				A higher DC power rating is recommended.
+				*/
+			}
+
 		}//End FOUR_QUADRANT mode
 	}
 	else
@@ -3255,6 +3722,8 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	double new_lf_dispatch_power, curr_power_val, diff_power_val;				
 	double new_pf_reg_distpatch_VAR, curr_real_power_val, curr_reactive_power_val, curr_pf, available_VA, new_Q_out, Q_out, Q_required, Q_available, Q_load;
 	double scaling_factor, Q_target;
+	complex temp_current_val[3];
+	complex power_val[3];
 
 	//Check and see if we need to redispatch
 	if ((inverter_type_v == FOUR_QUADRANT) && (four_quadrant_control_mode == FQM_LOAD_FOLLOWING) && (lf_dispatch_change_allowed==true))
@@ -4142,7 +4611,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 	else	//Must be four quadrant (load_following or otherwise)
 	{
-		if (four_quadrant_control_mode != FQM_VOLT_VAR) {
+		if (four_quadrant_control_mode != FQM_VOLT_VAR && four_quadrant_control_mode != FQM_VSI) {
 			if ((phases & 0x10) == 0x10)	//Triplex
 			{
 				if (deltamode_inclusive == true)
@@ -4170,6 +4639,63 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				}
 			}
 		}
+		//FQM_VSI mode doesn't need to "subtract post", since it is hidden from the XML
+		else if (four_quadrant_control_mode == FQM_VSI) {
+
+			// Update power values based on measured terminal voltage and currents
+			if ((phases & 0x10) == 0x10) // split phase
+			{
+				//Update output power
+				//Get current injected
+				temp_current_val[0] = IGenerated[0] - generator_admittance[0][0]* (*pCircuit_V);
+
+				//Update power output variables, just so we can see what is going on
+				VA_Out = *pCircuit_V*~temp_current_val[0];
+
+			}
+			else	//Three phase variant
+			{
+				//Update output power
+				//Get current injected
+				temp_current_val[0] = (IGenerated[0] - generator_admittance[0][0]*pCircuit_V[0] - generator_admittance[0][1]*pCircuit_V[1] - generator_admittance[0][2]*pCircuit_V[2]);
+				temp_current_val[1] = (IGenerated[1] - generator_admittance[1][0]*pCircuit_V[0] - generator_admittance[1][1]*pCircuit_V[1] - generator_admittance[1][2]*pCircuit_V[2]);
+				temp_current_val[2] = (IGenerated[2] - generator_admittance[2][0]*pCircuit_V[0] - generator_admittance[2][1]*pCircuit_V[1] - generator_admittance[2][2]*pCircuit_V[2]);
+
+				//Update power output variables, just so we can see what is going on
+				power_val[0] = pCircuit_V[0]*~temp_current_val[0];
+				power_val[1] = pCircuit_V[1]*~temp_current_val[1];
+				power_val[2] = pCircuit_V[2]*~temp_current_val[2];
+
+				VA_Out = power_val[0] + power_val[1] + power_val[2];
+			}
+
+			if (first_run == true)	//Final init items - namely deltamode supersecond exciter
+			{
+				// Only update after the first iteration of the power flow (VA_Out != 0.0 + j0.0)
+				if (IGenerated[0] != complex(0.0,0.0)) {
+					if (*VSI_bustype == 2 && VSI_mode == VSI_DROOP) {
+						P_Out = VA_Out.Re();
+						Q_Out = VA_Out.Im();
+						first_run = false;
+					}
+					else {
+						first_run = false;
+					}
+
+					if (VSI_esource_init == false) {
+						VSI_esource_init = true; // Finish initializing the VSI e_source after first power flow solutions
+					}
+				}
+			}
+			else {
+				// Check if VA_Out changes a lot
+			    if (fabs(VA_Out_past.Mag() - VA_Out.Mag()) > 1000) {
+			    	schedule_deltamode_start(t0);
+			    }
+			}
+
+		    VA_Out_past = VA_Out;
+		}
 	}
 	
 	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
@@ -4182,6 +4708,8 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 STATUS inverter::pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time)
 {
 	STATUS stat_val;
+	FUNCTIONADDR funadd = NULL;
+	OBJECT *hdr = OBJECTHDR(this);
 
 	//See which method we are
 	if (inverter_dyn_mode == PI_CONTROLLER)
@@ -4210,6 +4738,40 @@ STATUS inverter::pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time)
 		return FAILED;
 	}
 
+	if (four_quadrant_control_mode == FQM_VSI)
+	{
+		//If we're a voltage-source inverter, also swap our SWING bus, just because
+		//map the function
+		funadd = (FUNCTIONADDR)(gl_get_function(hdr->parent,"pwr_object_swing_swapper"));
+
+		//make sure it worked
+		if (funadd==NULL)
+		{
+			gl_error("inverter:%s -- Failed to find node swing swapper function",(hdr->name ? hdr->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			While attempting to map the function to change the swing status of the parent bus, the function could not be found.
+			Ensure the inverter is actually attached to something.  If the error persists, please submit your code and a bug report
+			via the ticketing/issues system.
+			*/
+
+			return FAILED;
+		}
+
+		//Call the swap
+		stat_val = ((STATUS (*)(OBJECT *, bool))(*funadd))(hdr->parent,false);
+
+		if (stat_val == 0)	//Failed :(
+		{
+			gl_error("Failed to swap SWING status of node:%s on inverter:%s",(hdr->parent->name ? hdr->parent->name : "Unnamed"),(hdr->name ? hdr->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			While attempting to handle special reliability actions on a "special" device (switch, recloser, etc.), the function required
+			failed to execute properly.  If the problem persists, please submit a bug report and your code to the trac website.
+			*/
+
+			return FAILED;
+		}
+	}
+
 	//Just return a pass - not sure how we'd fail
 	return SUCCESS;
 }
@@ -4217,22 +4779,30 @@ STATUS inverter::pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time)
 //Module-level call
 SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-	double deltat;
+	double deltat, deltath;
 	double deltatimedbl;
+	unsigned char pass_mod;
 	int indexval;
 	complex derror[3];
 	complex pid_out[3];
 	double temp_val_d, temp_val_q;
 	complex work_power_vals;
-	double prev_error;
+	double prev_error_ed;
+	double prev_error_eq;
 	bool deltaConverged = false;
 	int i;
 	double ieee_1547_double;
+	complex temp_current_val[3];
+	complex power_val[3];
 
 	SIMULATIONMODE simmode_return_value = SM_EVENT;
 
 	//Get timestep value
 	deltat = (double)dt/(double)DT_SECOND;
+	deltath = deltat/2.0;
+
+	// See what we're on, for tracking
+	pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
 
 	if (iteration_count_val == 0)	//Only update timestamp tracker on first iteration
 	{
@@ -4256,40 +4826,644 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 		//See which mode we're in
 		if (inverter_dyn_mode == PI_CONTROLLER)
 		{
-			//Initializate the state of the inverter
-			if (delta_time==0)	//First run of new delta call
-			{
-				if(iteration_count_val == 0) {
-					// //Initialize dynamics
-					// init_dynamics(&curr_state);
-					//Send Current Injection to parent
+			if (inverter_type_v == FOUR_QUADRANT && four_quadrant_control_mode == FQM_VSI) {
+
+				// Check tie delay values given for VSI droop settings
+				if ((delta_time==0) && (iteration_count_val==0))	//First run of new delta call
+				{
+					if (Tp_delay == 0 || Tp_delay < deltat) {
+						Tp_delay = deltat;
+					}
+
+					if (Tq_delay == 0 || Tq_delay < deltat) {
+						Tq_delay = deltat;
+					}
+				}
+
+				// Check pass
+				if (pass_mod==0)	// Predictor pass
+				{
+					// Caluclate injection current based on voltage soruce magtinude and angle obtained
 					if((phases & 0x10) == 0x10) {
-						//pLine_unrotI[0] += -curr_state.Iac[0];
-						I_Out[0]= curr_state.Iac[0];
+						//Update output power
+						//Get current injected
+						temp_current_val[0] = IGenerated[0] - generator_admittance[0][0]* (*pCircuit_V);
+
+						//Update power output variables, just so we can see what is going on
+						VA_Out = (*pCircuit_V) * ~temp_current_val[0];
+
+						// Calculate power differences between true power outputs,and the measured delayed power outputs of last delta time step (not last iteration)
+						curr_state.dp_mea_delayed = 1.0/Tp_delay*(VA_Out.Re() - curr_state.p_mea_delayed);
+						curr_state.dq_mea_delayed = 1.0/Tq_delay*(VA_Out.Im() - curr_state.q_mea_delayed);
+
+						// Calculate the measured delayed power output in this iteration
+						pred_state.p_mea_delayed = curr_state.p_mea_delayed + (deltat * curr_state.dp_mea_delayed);
+						pred_state.q_mea_delayed = curr_state.q_mea_delayed + (deltat * curr_state.dq_mea_delayed);
+
+						// VSI isochronous mode keeps the voltage angle constant always
+						if (VSI_mode == VSI_ISOCHRONOUS) {
+
+							// If it is an isochronous VSI
+							pred_state.dV_StateVal[0] = (V_mag_ref[0] - pCircuit_V[0].Mag()) * ki_Vterminal;
+							pred_state.V_StateVal[0] = curr_state.V_StateVal[0] + pred_state.dV_StateVal[0] * deltat;
+							pred_state.e_source_mag[0] = pred_state.V_StateVal[0] + pred_state.dV_StateVal[0] * kp_Vterminal / ki_Vterminal;
+							e_source[0] = complex(pred_state.e_source_mag[0] * cos(V_angle[0]), pred_state.e_source_mag[0] * sin(V_angle[0]));
+
+							// Thevenin voltage source to Norton current source convertion
+							IGenerated[0] = e_source[0]/(complex(Rfilter,Xfilter) * Zbase);
+						}
+
+						// VSI droop mode updates its e_source value based on PQ_Out and droop curve
+						else if (VSI_mode == VSI_DROOP) {
+
+							// Obtain the changes of frequency
+							double delta_f = (curr_state.p_mea_delayed - Pref) * (R_fp);
+							VSI_freq = freq_ref - delta_f;
+
+							// Calculate voltage source angle based on the droop curve
+							V_angle[0] = V_angle[0] - delta_f * 2 * PI * deltat;
+
+							// Calculate voltage source magnitude based on the droop curve
+							V_mag[0] = V_mag_ref[0] - (pred_state.q_mea_delayed - Qref) * (R_vq);
+
+							// Update e_source value
+							e_source[0] = complex(V_mag[0] * cos(V_angle[0]),V_mag[0] * sin(V_angle[0]));
+
+							// Thevenin voltage source to Norton current source convertion
+							IGenerated[0] = e_source[0]/(complex(Rfilter,Xfilter) * Zbase);
+						}
+					}
+
+					// Caluclate injection current based on voltage soruce magtinude and angle obtained
+					if((phases & 0x07) == 0x07) {
+						//Update output power
+						//Get current injected
+						temp_current_val[0] = (IGenerated[0] - generator_admittance[0][0]*pCircuit_V[0] - generator_admittance[0][1]*pCircuit_V[1] - generator_admittance[0][2]*pCircuit_V[2]);
+						temp_current_val[1] = (IGenerated[1] - generator_admittance[1][0]*pCircuit_V[0] - generator_admittance[1][1]*pCircuit_V[1] - generator_admittance[1][2]*pCircuit_V[2]);
+						temp_current_val[2] = (IGenerated[2] - generator_admittance[2][0]*pCircuit_V[0] - generator_admittance[2][1]*pCircuit_V[1] - generator_admittance[2][2]*pCircuit_V[2]);
+
+						//Update power output variables, just so we can see what is going on
+						power_val[0] = pCircuit_V[0]*~temp_current_val[0];
+						power_val[1] = pCircuit_V[1]*~temp_current_val[1];
+						power_val[2] = pCircuit_V[2]*~temp_current_val[2];
+
+						VA_Out = power_val[0] + power_val[1] + power_val[2];
+
+						// Calculate power differences between true power outputs,and the measured delayed power outputs of last delta time step (not last iteration)
+						curr_state.dp_mea_delayed = 1.0/Tp_delay*(VA_Out.Re() - curr_state.p_mea_delayed);
+						curr_state.dq_mea_delayed = 1.0/Tq_delay*(VA_Out.Im() - curr_state.q_mea_delayed);
+
+						// Calculate the measured delayed power output in this iteration
+						pred_state.p_mea_delayed = curr_state.p_mea_delayed + (deltat * curr_state.dp_mea_delayed);
+						pred_state.q_mea_delayed = curr_state.q_mea_delayed + (deltat * curr_state.dq_mea_delayed);
+
+						// VSI isochronous mode keeps the voltage angle constant always
+						if (VSI_mode == VSI_ISOCHRONOUS) {
+							// If it is an isochronous VSI
+							for(i = 0; i < 3; i++) {
+								pred_state.dV_StateVal[i] = (V_mag_ref[i] - pCircuit_V[i].Mag()) * ki_Vterminal;
+								pred_state.V_StateVal[i] = curr_state.V_StateVal[i] + pred_state.dV_StateVal[i] * deltat;
+								pred_state.e_source_mag[i] = pred_state.V_StateVal[i] + pred_state.dV_StateVal[i] * kp_Vterminal / ki_Vterminal;
+								e_source[i] = complex(pred_state.e_source_mag[i] * cos(V_angle[i]), pred_state.e_source_mag[i] * sin(V_angle[i]));
+								// Thevenin voltage source to Norton current source convertion
+								IGenerated[i] = e_source[i]/(complex(Rfilter,Xfilter) * Zbase);
+							}
+						}
+
+						// VSI droop mode updates its e_source value based on PQ_Out and droop curve
+						else if (VSI_mode == VSI_DROOP) {
+
+							// Obtain the changes of frequency
+							double delta_f = (curr_state.p_mea_delayed - Pref) * (R_fp);
+							VSI_freq = freq_ref - delta_f;
+
+							for(i = 0; i < 3; i++) {
+								// Calculate voltage source angle based on the droop curve
+								V_angle[i] = V_angle[i] - delta_f * 2 * PI * deltat;
+
+								// Calculate voltage source magnitude based on the droop curve
+								V_mag[i] = V_mag_ref[i] - (pred_state.q_mea_delayed - Qref) * (R_vq);
+
+								// Update e_source value
+								e_source[i] = complex(V_mag[i] * cos(V_angle[i]),V_mag[i] * sin(V_angle[i]));
+
+								// Thevenin voltage source to Norton current source convertion
+								IGenerated[i] = e_source[i]/(complex(Rfilter,Xfilter) * Zbase);
+							}
+						}
+					}
+
+					simmode_return_value = SM_DELTA_ITER;	//Reiterate - to get us to corrector pass
+				}
+				else	// Corrector pass
+				{
+					if((phases & 0x10) == 0x10) {
+
+						//Update output power
+						//Get current injected
+						temp_current_val[0] = IGenerated[0] - generator_admittance[0][0] * (*pCircuit_V);
+
+						//Update power output variables, just so we can see what is going on
+						VA_Out = (*pCircuit_V) * ~temp_current_val[0];
+
+						// Calculate power differences between true power outputs,and the measured delayed power outputs of this delta time step (not this iteration)
+						next_state.dp_mea_delayed = 1.0/Tp_delay*(VA_Out.Re() - curr_state.p_mea_delayed);
+						next_state.dq_mea_delayed = 1.0/Tq_delay*(VA_Out.Im() - curr_state.q_mea_delayed);
+
+						// Calculate the measured delayed power output in this iteration
+						next_state.p_mea_delayed = curr_state.p_mea_delayed + (deltat * next_state.dp_mea_delayed);
+						next_state.q_mea_delayed = curr_state.q_mea_delayed + (deltat * next_state.dq_mea_delayed);
+
+						// Update the system frequency
+						if (mapped_freq_variable!=NULL)
+						{
+							*mapped_freq_variable = VSI_freq;
+						}
+
+						if(fabs(next_state.dp_mea_delayed) <= (inverter_convergence_criterion / Tp_delay) && fabs(next_state.dq_mea_delayed) <= (inverter_convergence_criterion / Tp_delay)) {
+
+							simmode_return_value =  SM_EVENT;// we have reached steady state
+
+							return simmode_return_value;
+						}
+
+						if (VSI_mode == VSI_ISOCHRONOUS) {
+							next_state.dV_StateVal[0] = (V_mag_ref[0] - pCircuit_V[0].Mag()) * ki_Vterminal;
+							next_state.V_StateVal[0] = curr_state.V_StateVal[0] + (pred_state.dV_StateVal[0] + next_state.dV_StateVal[0])* (deltat / 2.0);
+							next_state.e_source_mag[0] = next_state.V_StateVal[0] + (pred_state.dV_StateVal[0] + next_state.dV_StateVal[0]) * 0.5 * kp_Vterminal / ki_Vterminal;
+							e_source[0] = complex(next_state.e_source_mag[0] * cos(V_angle[0]), next_state.e_source_mag[0] * sin(V_angle[0]));
+							// Thevenin voltage source to Norton current source convertion
+							IGenerated[0] = e_source[0]/(complex(Rfilter,Xfilter) * Zbase);
+						}
+
+						// VSI droop mode updates its e_source value based on PQ_Out and droop curve
+						else if (VSI_mode == VSI_DROOP) {
+
+							// Obtain the changes of frequency
+							double delta_f = (next_state.p_mea_delayed - Pref) * (R_fp);
+							VSI_freq = freq_ref - delta_f;
+
+							// Calculate voltage source angle based on the droop curve
+							V_angle[0] = V_angle[0] - delta_f * 2 * PI * deltat;
+
+							// Calculate voltage source magnitude based on the droop curve
+							V_mag[0] = V_mag_ref[0] - (next_state.q_mea_delayed - Qref) * (R_vq);
+
+							// Update e_source value
+							e_source[0] = complex(V_mag[0] * cos(V_angle[0]),V_mag[0] * sin(V_angle[0]));
+
+							// Thevenin voltage source to Norton current source convertion
+							IGenerated[0] = e_source[0]/(complex(Rfilter,Xfilter) * Zbase);
+						}
+					}
+
+					if((phases & 0x07) == 0x07) {
+
+						//Update output power
+						//Get current injected
+						temp_current_val[0] = (IGenerated[0] - generator_admittance[0][0]*pCircuit_V[0] - generator_admittance[0][1]*pCircuit_V[1] - generator_admittance[0][2]*pCircuit_V[2]);
+						temp_current_val[1] = (IGenerated[1] - generator_admittance[1][0]*pCircuit_V[0] - generator_admittance[1][1]*pCircuit_V[1] - generator_admittance[1][2]*pCircuit_V[2]);
+						temp_current_val[2] = (IGenerated[2] - generator_admittance[2][0]*pCircuit_V[0] - generator_admittance[2][1]*pCircuit_V[1] - generator_admittance[2][2]*pCircuit_V[2]);
+
+						//Update power output variables, just so we can see what is going on
+						power_val[0] = pCircuit_V[0]*~temp_current_val[0];
+						power_val[1] = pCircuit_V[1]*~temp_current_val[1];
+						power_val[2] = pCircuit_V[2]*~temp_current_val[2];
+
+						VA_Out = power_val[0] + power_val[1] + power_val[2];
+
+						// Calculate power differences between true power outputs,and the measured delayed power outputs of this delta time step (not this iteration)
+						next_state.dp_mea_delayed = 1.0/Tp_delay*(VA_Out.Re() - curr_state.p_mea_delayed);
+						next_state.dq_mea_delayed = 1.0/Tq_delay*(VA_Out.Im() - curr_state.q_mea_delayed);
+
+						// Calculate the measured delayed power output in this iteration
+						next_state.p_mea_delayed = curr_state.p_mea_delayed + (deltat * next_state.dp_mea_delayed);
+						next_state.q_mea_delayed = curr_state.q_mea_delayed + (deltat * next_state.dq_mea_delayed);
+
+						// Update the system frequency
+						if (mapped_freq_variable!=NULL)
+						{
+							*mapped_freq_variable = VSI_freq;
+						}
+
+						if(fabs(next_state.dp_mea_delayed) <= (inverter_convergence_criterion / Tp_delay) && fabs(next_state.dq_mea_delayed) <= (inverter_convergence_criterion / Tp_delay)) {
+
+							simmode_return_value =  SM_EVENT;// we have reached steady state
+
+							return simmode_return_value;
+						}
+
+						if (VSI_mode == VSI_ISOCHRONOUS) {
+							for(i = 0; i < 3; i++) {
+								next_state.dV_StateVal[i] = (V_mag_ref[i] - pCircuit_V[i].Mag()) * ki_Vterminal;
+								next_state.V_StateVal[i] = curr_state.V_StateVal[i] + (pred_state.dV_StateVal[i] + next_state.dV_StateVal[i])* (deltat / 2.0);
+								next_state.e_source_mag[i] = next_state.V_StateVal[i] + (pred_state.dV_StateVal[i] + next_state.dV_StateVal[i]) * 0.5 * kp_Vterminal / ki_Vterminal;
+								e_source[i] = complex(next_state.e_source_mag[i] * cos(V_angle[i]), next_state.e_source_mag[i] * sin(V_angle[i]));
+								// Thevenin voltage source to Norton current source convertion
+								IGenerated[i] = e_source[i]/(complex(Rfilter,Xfilter) * Zbase);
+							}
+						}
+
+						// VSI droop mode updates its e_source value based on PQ_Out and droop curve
+						else if (VSI_mode == VSI_DROOP) {
+
+							// Obtain the changes of frequency
+							double delta_f = (next_state.p_mea_delayed - Pref) * (R_fp);
+							VSI_freq = freq_ref - delta_f;
+
+							for(i = 0; i < 3; i++) {
+
+								// Calculate voltage source angle based on the droop curve
+								V_angle[i] = V_angle[i] - delta_f * 2 * PI * deltat;
+
+								// Calculate voltage source magnitude based on the droop curve
+								V_mag[i] = V_mag_ref[i] - (next_state.q_mea_delayed - Qref) * (R_vq);
+
+								// Update e_source value
+								e_source[i] = complex(V_mag[i] * cos(V_angle[i]),V_mag[i] * sin(V_angle[i]));
+
+								// Thevenin voltage source to Norton current source convertion
+								IGenerated[i] = e_source[i]/(complex(Rfilter,Xfilter) * Zbase);
+							}
+						}
+					}
+
+					// Copy everything back into curr_state, since we'll be back there
+					memcpy(&curr_state, &next_state, sizeof(INV_STATE));
+
+					simmode_return_value =  SM_DELTA;
+				}
+			}
+			else {
+				//Initializate the state of the inverter
+				if (delta_time==0)	//First run of new delta call
+				{
+					if(iteration_count_val == 0) {
+						// Set Tfreq_delay value if not defined in glm file
+						if (inverter_droop_fp) {
+							if (Tfreq_delay == 0) {
+								Tfreq_delay = deltat;
+							}
+						}
+						// Set Tvol_delay value if not defined in glm file
+						if (inverter_droop_vq) {
+							if (Tvol_delay == 0) {
+								Tvol_delay = deltat;
+							}
+						}
+
+						// If in CONSTANT_PQ mode for smooth transition, need to calculate current output based on constant PQ and changed terminal voltage
+						if (inverter_type_v == FOUR_QUADRANT && four_quadrant_control_mode == FQM_CONSTANT_PQ) {
+							if((phases & 0x10) == 0x10) {
+								// Find the steady state PQ output
+								curr_state.P_Out[0] = VA_Out.Re();
+								curr_state.Q_Out[0] = VA_Out.Im();
+								if (pCircuit_V[0].Mag() > 0.0)
+								{
+									pLine_unrotI[i] += curr_state.Iac[0];	// remove the previous current injection to the circuit
+									curr_state.Iac[0] = (~(complex(curr_state.P_Out[0],curr_state.Q_Out[0])/(*pCircuit_V)));
+									I_Out[0]= curr_state.Iac[0];
+									pLine_unrotI[i] += -curr_state.Iac[0]; // update the current injection to the circuit
+								}
+							}
+							if ((phases & 0x07) == 0x07) {
+								for(i = 0; i < 3; i++) {
+									curr_state.P_Out[i] = VA_Out.Re() / 3.0;
+									curr_state.Q_Out[i] = VA_Out.Im() / 3.0; // Q_Out for each phase is calculated seperately now above
+									if (pCircuit_V[i].Mag() > 0.0)
+									{
+										pLine_unrotI[i] += curr_state.Iac[i];	// remove the previous current injection to the circuit
+										curr_state.Iac[i] = ~(complex(curr_state.P_Out[i],curr_state.Q_Out[i])/(pCircuit_V[i]));
+										I_Out[0]= curr_state.Iac[0];
+										pLine_unrotI[i] += -curr_state.Iac[i]; // update the current injection to the circuit
+									}
+								}
+							}
+						} // end initialize I_Out based on constant PQ output and terminal voltages
+						// If not FQM_CONSTANT_PQ mode, keep current injection the same, will calculate PQ out based on I_Out and pCircuit_V in the later iteration
+						simmode_return_value =  SM_DELTA_ITER; // iterate so I know what my current power out is
+
+					} else if(iteration_count_val == 1) {
+
+						// Calculation for frequency deviation
+						if (inverter_droop_fp) {
+							curr_state.df_mea_delayed = 1.0/Tfreq_delay*(*mapped_freq_variable - curr_state.f_mea_delayed);
+						}
+						// Calculation for frequency deviation
+						if (inverter_droop_vq) {
+							if((phases & 0x10) == 0x10) {
+								curr_state.dV_mea_delayed[0] = 1.0/Tvol_delay*((*pCircuit_V).Mag() - curr_state.V_mea_delayed[0]);
+							}
+							if((phases & 0x07) == 0x07) {
+								curr_state.dV_mea_delayed[0] = 1.0/Tvol_delay*(pCircuit_V[0].Mag() - curr_state.V_mea_delayed[0]);
+								curr_state.dV_mea_delayed[1] = 1.0/Tvol_delay*(pCircuit_V[1].Mag() - curr_state.V_mea_delayed[1]);
+								curr_state.dV_mea_delayed[2] = 1.0/Tvol_delay*(pCircuit_V[2].Mag() - curr_state.V_mea_delayed[2]);
+							}
+						}
+
+						// Calculate my current power out - not used in CONSTANT_PQ mode for smooth transition
+						if (inverter_type_v == FOUR_QUADRANT && four_quadrant_control_mode != FQM_CONSTANT_PQ) {
+							if((phases & 0x10) == 0x10) {
+								VA_Out = *pCircuit_V * ~(I_Out[0]);
+								curr_state.Q_Out[0] = VA_Out.Im();
+							}
+							if((phases & 0x07) == 0x07) {
+								VA_Out = (pCircuit_V[0] * ~(I_Out[0]) + (pCircuit_V[1] * ~(I_Out[1])) + (pCircuit_V[2] * ~(I_Out[2])));
+								curr_state.Q_Out[0] = (pCircuit_V[0] * ~(I_Out[0])).Im();
+								curr_state.Q_Out[1] = (pCircuit_V[1] * ~(I_Out[1])).Im();
+								curr_state.Q_Out[2] = (pCircuit_V[2] * ~(I_Out[2])).Im();
+							}
+						}
+
+						//calculate my current errors
+						if((phases & 0x10) == 0x10) {
+							//PI controller for PQ reference deviation
+							curr_state.P_Out[0] = VA_Out.Re();
+	//						curr_state.Q_Out[0] = VA_Out.Im();
+							if (pCircuit_V[0].Mag() > 0.0)
+							{
+								curr_state.ed[0] = ((~(complex(Pref, Qref_PI[0])/(*pCircuit_V))) - (~(complex(curr_state.P_Out[0],curr_state.Q_Out[0])/(*pCircuit_V)))).Re();
+								curr_state.eq[0] = ((~(complex(Pref, Qref_PI[0])/(*pCircuit_V))) - (~(complex(curr_state.P_Out[0],curr_state.Q_Out[0])/(*pCircuit_V)))).Im();
+							}
+							else
+							{
+								curr_state.ed[0] = 0.0;
+								curr_state.eq[0] = 0.0;
+							}
+
+							curr_state.ded[0] = curr_state.ed[0] / deltat;
+							curr_state.dmd[0] = (kpd * curr_state.ded[0]) + (kid * curr_state.ed[0]);
+
+							curr_state.deq[0] = curr_state.eq[0] / deltat;
+							curr_state.dmq[0] = (kpq * curr_state.deq[0]) + (kiq * curr_state.eq[0]);
+							if(fabs(curr_state.ded[0]) <= inverter_convergence_criterion && fabs(curr_state.deq[0]) <= inverter_convergence_criterion) {
+								simmode_return_value =  SM_EVENT;// we have reached steady state
+							} else {
+								simmode_return_value =  SM_DELTA;
+							}
+						}
+						if((phases & 0x07) == 0x07) {
+							for(i = 0; i < 3; i++) {
+								curr_state.P_Out[i] = VA_Out.Re() / 3.0;
+	//							curr_state.Q_Out[i] = VA_Out.Im() / 3.0; // Q_Out for each phase is calculated seperately now above
+								if (pCircuit_V[i].Mag() > 0.0)
+								{
+									curr_state.ed[i] = ((~(complex(Pref/3.0, Qref_PI[i])/(pCircuit_V[i]))) - (~(complex(curr_state.P_Out[i],curr_state.Q_Out[i])/(pCircuit_V[i])))).Re();
+									curr_state.eq[i] = ((~(complex(Pref/3.0, Qref_PI[i])/(pCircuit_V[i]))) - (~(complex(curr_state.P_Out[i],curr_state.Q_Out[i])/(pCircuit_V[i])))).Im();
+								}
+								else
+								{
+									curr_state.ed[i] = 0.0;
+									curr_state.eq[i] = 0.0;
+								}
+
+								curr_state.ded[i] = curr_state.ed[i] / deltat;
+								curr_state.dmd[i] = (kpd * curr_state.ded[i]) + (kid * curr_state.ed[i]);
+
+								curr_state.deq[i] = curr_state.eq[i] / deltat;
+								curr_state.dmq[i] = (kpq * curr_state.deq[i]) + (kiq * curr_state.eq[i]);
+								if(fabs(curr_state.ded[i]) <= inverter_convergence_criterion && fabs(curr_state.deq[i]) <= inverter_convergence_criterion && simmode_return_value != SM_DELTA) {
+									simmode_return_value = SM_EVENT;// we have reached steady state
+								} else {
+									simmode_return_value = SM_DELTA;
+								}
+							}
+						}
+					}
+				} else if(iteration_count_val == 0) {
+					//Calculate the predictor state from the previous current state
+					// Frequency change and thereforely Pref change from p/f droop
+					if (inverter_droop_fp) {
+						pred_state.f_mea_delayed = curr_state.f_mea_delayed + (deltat * curr_state.df_mea_delayed);
+						// Calculate Pref based on the droop curve
+						double delta_Pref = (pred_state.f_mea_delayed - freq_ref) * (1 / R_fp);
+						Pref = Pref0 - delta_Pref;
+					}
+
+					// If terminal voltage changes, Qref for each phase is changed from p/f droop
+					if (inverter_droop_vq) {
+						// Calculate Qref based on the droop curve
+						if((phases & 0x10) == 0x10) {
+							pred_state.V_mea_delayed[0] = curr_state.V_mea_delayed[0] + (deltat * curr_state.dV_mea_delayed[0]);
+							double delta_Qref = (pred_state.V_mea_delayed[0] - V_ref[0]) * (1 / R_vq);
+							Qref_PI[0] = Qref0[0] - delta_Qref;
+						}
+						if((phases & 0x07) == 0x07) {
+							double delta_Qref[3];
+							for(i = 0; i < 3; i++) {
+								pred_state.V_mea_delayed[i] = curr_state.V_mea_delayed[i] + (deltat * curr_state.dV_mea_delayed[i]);
+								delta_Qref[i] = (pred_state.V_mea_delayed[i] - V_ref[i]) * (1 / R_vq);
+								Qref_PI[i] = Qref0[i] - delta_Qref[i];
+							}
+						}
+
+					}
+
+					// Power change and thereforely frequency and voltage magnitude change from droops
+					// PI controller parameters updates
+					if((phases & 0x10) == 0x10) {
+						pred_state.md[0] = curr_state.md[0] + (deltat * curr_state.dmd[0]);
+						pred_state.Idq[0].SetReal(pred_state.md[0] * I_In.Re());
+						pred_state.mq[0] = curr_state.mq[0] + (deltat * curr_state.dmq[0]);
+						pred_state.Idq[0].SetImag(pred_state.mq[0] * I_In.Re());
+						pred_state.Iac[0] = pred_state.Idq[0];
+
+						// Before updating pLine_unrotI and Iout, need to check inverter real power output:
+						// If not attached to the battery, need to check if real power < 0 or > rating
+						complex VA_Out_temp = *pCircuit_V * ~(pred_state.Iac[0]);
+						if ((b_soc == -1 && VA_Out_temp.Re() < 0) || Pref == 0) {
+							pred_state.Iac[0] =  0;
+						}
+
+						// Then continue update current
+						pLine_unrotI[0] += I_Out[0];
+						pLine_unrotI[0] += -pred_state.Iac[0];
+
 					}
 					if((phases & 0x07) == 0x07) {
-						for(int i = 0; i < 3; i++) {
-							//pLine_unrotI[i] += -curr_state.Iac[i];
+						for(i = 0; i < 3; i++) {
+							pred_state.md[i] = curr_state.md[i] + (deltat * curr_state.dmd[i]);
+							pred_state.Idq[i].SetReal(pred_state.md[i] * I_In.Re());
+							pred_state.mq[i] = curr_state.mq[i] + (deltat * curr_state.dmq[i]);
+							pred_state.Idq[i].SetImag(pred_state.mq[i] * I_In.Re());
+							pred_state.Iac[i] = pred_state.Idq[i];
+						}
+
+						// Before updating pLine_unrotI and Iout, need to check inverter real power output:
+						// If not attached to the battery, need to check if real power < 0 or > rating
+						complex VA_Out_temp = (pCircuit_V[0] * ~(pred_state.Iac[0])) + (pCircuit_V[1] * ~(pred_state.Iac[1])) + (pCircuit_V[2] * ~(pred_state.Iac[2]));
+						for (int i = 0; i< 3; i++) {
+							if ((b_soc == -1 && VA_Out_temp.Re() < 0) || Pref == 0) {
+								pred_state.Iac[i] = 0;
+							}
+							pLine_unrotI[i] += I_Out[i];
+							pLine_unrotI[i] += -pred_state.Iac[i];
+						}
+					}
+
+					//update the Pref and Qref values
+					update_control_references();
+					simmode_return_value =  SM_DELTA_ITER;
+				}
+				else if(iteration_count_val == 1)
+				{
+					// Calculate the corrector state
+
+					// Calculation for frequency deviation
+					if (inverter_droop_fp) {
+						pred_state.df_mea_delayed = 1.0/Tfreq_delay*(*mapped_freq_variable - pred_state.f_mea_delayed);
+						curr_state.f_mea_delayed = curr_state.f_mea_delayed + ((curr_state.df_mea_delayed + pred_state.df_mea_delayed) * deltat) / 2.0;
+						// Calculate Pref based on teh droop curve
+						double delta_Pref = (curr_state.f_mea_delayed - freq_ref) * (1 / R_fp);
+						Pref = Pref0 - delta_Pref;
+						// Update the Pref and Qref values
+						update_control_references();
+					}
+					// Calculation for voltage deviation
+					if (inverter_droop_vq) {
+						if((phases & 0x10) == 0x10) {
+							pred_state.dV_mea_delayed[0] = 1.0/Tvol_delay*((*pCircuit_V).Mag() - pred_state.V_mea_delayed[0]);
+							curr_state.V_mea_delayed[0] = curr_state.V_mea_delayed[0] + ((curr_state.dV_mea_delayed[0] + pred_state.dV_mea_delayed[0]) * deltat) / 2.0;
+							// Update Qref
+							double delta_Qref = (curr_state.V_mea_delayed[0] - V_ref[0]) * (1 / R_vq);
+							Qref_PI[0] = Qref0[0] - delta_Qref;
+						}
+						if((phases & 0x07) == 0x07) {
+							pred_state.dV_mea_delayed[0] = 1.0/Tvol_delay*(pCircuit_V[0].Mag() - pred_state.V_mea_delayed[0]);
+							pred_state.dV_mea_delayed[1] = 1.0/Tvol_delay*(pCircuit_V[1].Mag() - pred_state.V_mea_delayed[1]);
+							pred_state.dV_mea_delayed[2] = 1.0/Tvol_delay*(pCircuit_V[2].Mag() - pred_state.V_mea_delayed[2]);
+							// Update current state Vmeasured_delayed
+							curr_state.V_mea_delayed[0] = curr_state.V_mea_delayed[0] + ((curr_state.dV_mea_delayed[0] + pred_state.dV_mea_delayed[0]) * deltat) / 2.0;
+							curr_state.V_mea_delayed[1] = curr_state.V_mea_delayed[1] + ((curr_state.dV_mea_delayed[1] + pred_state.dV_mea_delayed[1]) * deltat) / 2.0;
+							curr_state.V_mea_delayed[2] = curr_state.V_mea_delayed[2] + ((curr_state.dV_mea_delayed[2] + pred_state.dV_mea_delayed[2]) * deltat) / 2.0;
+							// Update Qref for each phase
+							double delta_Qref[3];
+							for(i = 0; i < 3; i++) {
+								delta_Qref[i] = (curr_state.V_mea_delayed[i] - V_ref[i]) * (1 / R_vq);
+								Qref_PI[i] = Qref0[i] - delta_Qref[i];
+							}
+						}
+
+						// Update the Pref and Qref values
+						update_control_references();
+					}
+
+					// PI controller variables
+					if ((phases & 0x10) == 0x10) {
+						pred_state.P_Out[0] = (*pCircuit_V * ~(pred_state.Iac[0])).Re();
+						pred_state.Q_Out[0] = (*pCircuit_V * ~(pred_state.Iac[0])).Im();
+						if (pCircuit_V[0].Mag() > 0.0)
+						{
+							pred_state.ed[0] = ((~(complex(Pref, Qref_PI[0])/(*pCircuit_V))) - (~(complex(pred_state.P_Out[0],pred_state.Q_Out[0])/(*pCircuit_V)))).Re();
+							pred_state.eq[0] = ((~(complex(Pref, Qref_PI[0])/(*pCircuit_V))) - (~(complex(pred_state.P_Out[0],pred_state.Q_Out[0])/(*pCircuit_V)))).Im();
+						}
+						else
+						{
+							pred_state.ed[0] = 0.0;
+							pred_state.eq[0] = 0.0;
+						}
+
+						pred_state.ded[0] = (pred_state.ed[0] - curr_state.ed[0]) / deltat;
+						pred_state.dmd[0] = (kpd * pred_state.ded[0]) + (kid * pred_state.ed[0]);
+						curr_state.md[0] = curr_state.md[0] + ((curr_state.dmd[0] + pred_state.dmd[0]) * deltat) / 2.0;
+						curr_state.Idq[0].SetReal(curr_state.md[0] * I_In.Re());
+
+						pred_state.deq[0] = (pred_state.eq[0] - curr_state.eq[0]) / deltat;
+						pred_state.dmq[0] = (kpq * pred_state.deq[0]) + (kiq * pred_state.eq[0]);
+						curr_state.mq[0] = curr_state.mq[0] + ((curr_state.dmq[0] + pred_state.dmq[0]) * deltat) / 2.0;
+						curr_state.Idq[0].SetImag(curr_state.mq[0] * I_In.Re());
+						curr_state.Iac[0] = curr_state.Idq[0];
+
+						// Before updating pLine_unrotI and Iout, need to check inverter real power output:
+						// If not attached to the battery, need to check if real power < 0 or > rating
+						complex VA_Out_temp = *pCircuit_V * ~(curr_state.Iac[0]);
+						if ((b_soc == -1 && VA_Out_temp.Re() < 0) || Pref == 0) {
+							curr_state.Iac[0] =  0;
+						}
+
+						// Then continue update current
+						pLine_unrotI[0] += pred_state.Iac[0];
+						pLine_unrotI[0] += -curr_state.Iac[0];
+						I_Out[0] = curr_state.Iac[0];
+					}
+					if((phases & 0x07) == 0x07) {
+						for(i = 0; i < 3; i++) {
+							pred_state.P_Out[i] = (pCircuit_V[i] * ~(pred_state.Iac[i])).Re();
+							pred_state.Q_Out[i] = (pCircuit_V[i] * ~(pred_state.Iac[i])).Im();
+							if (Pref > 0) {
+								int stop_temp = 0;
+							}
+							if (pCircuit_V[i].Mag() > 0.0)
+							{
+								pred_state.ed[i] = ((~(complex(Pref/3.0, Qref_PI[i])/(pCircuit_V[i]))) - (~(complex(pred_state.P_Out[i],pred_state.Q_Out[i])/(pCircuit_V[i])))).Re();
+								pred_state.eq[i] = ((~(complex(Pref/3.0, Qref_PI[i])/(pCircuit_V[i]))) - (~(complex(pred_state.P_Out[i],pred_state.Q_Out[i])/(pCircuit_V[i])))).Im();
+							}
+							else
+							{
+								pred_state.ed[i] = 0.0;
+								pred_state.eq[i] = 0.0;
+							}
+
+							pred_state.ded[i] = (pred_state.ed[i] - curr_state.ed[i]) / deltat;
+							pred_state.dmd[i] = (kpd * pred_state.ded[i]) + (kid * pred_state.ed[i]);
+							curr_state.md[i] = curr_state.md[i] + ((curr_state.dmd[i] + pred_state.dmd[i]) * deltat) / 2.0;
+							curr_state.Idq[i].SetReal(curr_state.md[i] * I_In.Re());
+
+							pred_state.deq[i] = (pred_state.eq[i] - curr_state.eq[i]) / deltat;
+							pred_state.dmq[i] = (kpq * pred_state.deq[i]) + (kiq * pred_state.eq[i]);
+							curr_state.mq[i] = curr_state.mq[i] + ((curr_state.dmq[i] + pred_state.dmq[i]) * deltat) / 2.0;
+							curr_state.Idq[i].SetImag(curr_state.mq[i] * I_In.Re());
+							curr_state.Iac[i] = curr_state.Idq[i];
+						}
+
+						// Before updating pLine_unrotI and Iout, need to check inverter real power output:
+						// If not attached to the battery, need to check if real power < 0 or > rating
+						complex VA_Out_temp = (pCircuit_V[0] * ~(curr_state.Iac[0])) + (pCircuit_V[1] * ~(curr_state.Iac[1])) + (pCircuit_V[2] * ~(curr_state.Iac[2]));
+						for (int i = 0; i< 3; i++) {
+							if ((b_soc == -1 && VA_Out_temp.Re() < 0) || Pref == 0) {
+								curr_state.Iac[i] = 0;
+							}
+							pLine_unrotI[i] += pred_state.Iac[i];
+							pLine_unrotI[i] += -curr_state.Iac[i];
 							I_Out[i] = curr_state.Iac[i];
 						}
 					}
-					simmode_return_value =  SM_DELTA_ITER; // iterate so I know what my current power out is
-				} else if(iteration_count_val == 1) {
-					//calculate my current power out
+
+					// update the Pref and Qref values based on battery soc updated at iteration_count_val == 0
+					// Previously did not do this update here at iteration_count_val == 1
+					update_control_references();
+
+					simmode_return_value =  SM_DELTA_ITER;
+
+				} else if (iteration_count_val == 2) {
+					//calculate the corrector errors
+
+					// Calculation for frequency deviation
+					if (inverter_droop_fp) {
+						curr_state.df_mea_delayed = 1.0/Tfreq_delay*(*mapped_freq_variable - curr_state.f_mea_delayed);
+					}
+					// Calculation for frequency deviation
+					if (inverter_droop_vq) {
+						if((phases & 0x10) == 0x10) {
+							curr_state.dV_mea_delayed[0] = 1.0/Tvol_delay*((*pCircuit_V).Mag() - curr_state.V_mea_delayed[0]);
+						}
+						if((phases & 0x07) == 0x07) {
+							curr_state.dV_mea_delayed[0] = 1.0/Tvol_delay*(pCircuit_V[0].Mag() - curr_state.V_mea_delayed[0]);
+							curr_state.dV_mea_delayed[1] = 1.0/Tvol_delay*(pCircuit_V[1].Mag() - curr_state.V_mea_delayed[1]);
+							curr_state.dV_mea_delayed[2] = 1.0/Tvol_delay*(pCircuit_V[2].Mag() - curr_state.V_mea_delayed[2]);
+						}
+					}
+					// PI controller parameters updates
 					if((phases & 0x10) == 0x10) {
 						VA_Out = *pCircuit_V * ~(I_Out[0]);
-					}
-					if((phases & 0x07) == 0x07) {
-						VA_Out = (pCircuit_V[0] * ~(I_Out[0]) + (pCircuit_V[1] * ~(I_Out[1])) + (pCircuit_V[2] * ~(I_Out[2])));
-					}
-					//calculate my current errors
-					if((phases & 0x10) == 0x10) {
-						curr_state.Pout[0] = VA_Out.Re();
-						curr_state.Qout[0] = VA_Out.Im();
+						prev_error_ed = curr_state.ed[0];
+						prev_error_eq = curr_state.eq[0];
+						curr_state.P_Out[0] = VA_Out.Re();
+						curr_state.Q_Out[0] = VA_Out.Im();
 						if (pCircuit_V[0].Mag() > 0.0)
 						{
-							curr_state.ed[0] = ((~(complex(Pref, Qref)/(*pCircuit_V))) - (~(complex(curr_state.Pout[0],curr_state.Qout[0])/(*pCircuit_V)))).Re();
-							curr_state.eq[0] = ((~(complex(Pref, Qref)/(*pCircuit_V))) - (~(complex(curr_state.Pout[0],curr_state.Qout[0])/(*pCircuit_V)))).Im();
+							curr_state.ed[0] = ((~(complex(Pref, Qref_PI[0])/(*pCircuit_V))) - (~(complex(curr_state.P_Out[0],curr_state.Q_Out[0])/(*pCircuit_V)))).Re();
+							curr_state.eq[0] = ((~(complex(Pref, Qref_PI[0])/(*pCircuit_V))) - (~(complex(curr_state.P_Out[0],curr_state.Q_Out[0])/(*pCircuit_V)))).Im();
 						}
 						else
 						{
@@ -4297,25 +5471,30 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 							curr_state.eq[0] = 0.0;
 						}
 
-						curr_state.ded[0] = curr_state.ed[0] / deltat;
+						curr_state.ded[0] = (curr_state.ed[0] - prev_error_ed) / deltat;
 						curr_state.dmd[0] = (kpd * curr_state.ded[0]) + (kid * curr_state.ed[0]);
 
-						curr_state.deq[0] = curr_state.eq[0] / deltat;
+						curr_state.deq[0] = (curr_state.eq[0] - prev_error_eq) / deltat;
 						curr_state.dmq[0] = (kpq * curr_state.deq[0]) + (kiq * curr_state.eq[0]);
 						if(fabs(curr_state.ded[0]) <= inverter_convergence_criterion && fabs(curr_state.deq[0]) <= inverter_convergence_criterion) {
 							simmode_return_value =  SM_EVENT;// we have reached steady state
 						} else {
 							simmode_return_value =  SM_DELTA;
 						}
-					}
-					if((phases & 0x07) == 0x07) {
+					} else if ((phases & 0x07) == 0x07) {
+						VA_Out = (pCircuit_V[0] * ~(I_Out[0])) + (pCircuit_V[1] * ~(I_Out[1])) + (pCircuit_V[2] * ~(I_Out[2]));
 						for(i = 0; i < 3; i++) {
-							curr_state.Pout[i] = VA_Out.Re() / 3.0;
-							curr_state.Qout[i] = VA_Out.Im() / 3.0;
+	//						curr_state.P_Out[i] = VA_Out.Re() / 3.0;
+							curr_state.P_Out[i] = (pCircuit_V[i] * ~(I_Out[i])).Re();
+							curr_state.Q_Out[i] = (pCircuit_V[i] * ~(I_Out[i])).Im();
+	//						curr_state.Q_Out[i] = VA_Out.Im() / 3.0;
+							prev_error_ed = curr_state.ed[i];
+							prev_error_eq = curr_state.eq[i];
+
 							if (pCircuit_V[i].Mag() > 0.0)
 							{
-								curr_state.ed[i] = ((~(complex(Pref/3.0, Qref/3.0)/(pCircuit_V[i]))) - (~(complex(curr_state.Pout[i],curr_state.Qout[i])/(pCircuit_V[i])))).Re();
-								curr_state.eq[i] = ((~(complex(Pref/3.0, Qref/3.0)/(pCircuit_V[i]))) - (~(complex(curr_state.Pout[i],curr_state.Qout[i])/(pCircuit_V[i])))).Im();
+								curr_state.ed[i] = ((~(complex(Pref/3.0, Qref_PI[i])/(pCircuit_V[i]))) - (~(complex(curr_state.P_Out[i],curr_state.Q_Out[i])/(pCircuit_V[i])))).Re();
+								curr_state.eq[i] = ((~(complex(Pref/3.0, Qref_PI[i])/(pCircuit_V[i]))) - (~(complex(curr_state.P_Out[i],curr_state.Q_Out[i])/(pCircuit_V[i])))).Im();
 							}
 							else
 							{
@@ -4323,10 +5502,10 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 								curr_state.eq[i] = 0.0;
 							}
 
-							curr_state.ded[i] = curr_state.ed[i] / deltat;
+							curr_state.ded[i] = (curr_state.ed[i] - prev_error_ed) / deltat;
 							curr_state.dmd[i] = (kpd * curr_state.ded[i]) + (kid * curr_state.ed[i]);
-							
-							curr_state.deq[i] = curr_state.eq[i] / deltat;
+
+							curr_state.deq[i] = (curr_state.eq[i] - prev_error_eq) / deltat;
 							curr_state.dmq[i] = (kpq * curr_state.deq[i]) + (kiq * curr_state.eq[i]);
 							if(fabs(curr_state.ded[i]) <= inverter_convergence_criterion && fabs(curr_state.deq[i]) <= inverter_convergence_criterion && simmode_return_value != SM_DELTA) {
 								simmode_return_value = SM_EVENT;// we have reached steady state
@@ -4335,148 +5514,9 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 							}
 						}
 					}
-				}
-			} else if(iteration_count_val == 0) {
-				//Calculate the predictor state from the previous current state
-				if((phases & 0x10) == 0x10) {
-					pred_state.md[0] = curr_state.md[0] + (deltat * curr_state.dmd[0]);
-					pred_state.Idq[0].SetReal(pred_state.md[0] * I_In.Re());
-					pred_state.mq[0] = curr_state.mq[0] + (deltat * curr_state.dmq[0]);
-					pred_state.Idq[0].SetImag(pred_state.mq[0] * I_In.Re());
-					pred_state.Iac[0] = pred_state.Idq[0];
-					pLine_unrotI[0] += I_Out[0];
-					pLine_unrotI[0] += -pred_state.Iac[0];
-				}
-				if((phases & 0x07) == 0x07) {
+
+				} else if(iteration_count_val > 2) {
 					for(i = 0; i < 3; i++) {
-						pred_state.md[i] = curr_state.md[i] + (deltat * curr_state.dmd[i]);
-						pred_state.Idq[i].SetReal(pred_state.md[i] * I_In.Re());
-						pred_state.mq[i] = curr_state.mq[i] + (deltat * curr_state.dmq[i]);
-						pred_state.Idq[i].SetImag(pred_state.mq[i] * I_In.Re());
-						pred_state.Iac[i] = pred_state.Idq[i];
-						pLine_unrotI[i] += I_Out[i];
-						pLine_unrotI[i] += -pred_state.Iac[i];
-					}
-				}
-
-				//update the Pref and Qref values
-				update_control_references();
-				simmode_return_value =  SM_DELTA_ITER;
-			} else if(iteration_count_val == 1) {
-				//calculate the corrector state
-				if ((phases & 0x10) == 0x10) {
-					pred_state.Pout[0] = (*pCircuit_V * ~(pred_state.Iac[0])).Re();
-					pred_state.Qout[0] = (*pCircuit_V * ~(pred_state.Iac[0])).Im();
-					if (pCircuit_V[0].Mag() > 0.0)
-					{
-						pred_state.ed[0] = ((~(complex(Pref, Qref)/(*pCircuit_V))) - (~(complex(pred_state.Pout[0],pred_state.Qout[0])/(*pCircuit_V)))).Re();
-						pred_state.eq[0] = ((~(complex(Pref, Qref)/(*pCircuit_V))) - (~(complex(pred_state.Pout[0],pred_state.Qout[0])/(*pCircuit_V)))).Im();
-					}
-					else
-					{
-						pred_state.ed[0] = 0.0;
-						pred_state.eq[0] = 0.0;
-					}
-
-					pred_state.ded[0] = (pred_state.ed[0] - curr_state.ed[0]) / deltat;
-					pred_state.dmd[0] = (kpd * pred_state.ded[0]) + (kid * pred_state.ed[0]);
-					curr_state.md[0] = curr_state.md[0] + ((curr_state.dmd[0] + pred_state.dmd[0]) * deltat) / 2.0;
-					curr_state.Idq[0].SetReal(curr_state.md[0] * I_In.Re());
-
-					pred_state.deq[0] = (pred_state.eq[0] - curr_state.eq[0]) / deltat;
-					pred_state.dmq[0] = (kpq * pred_state.deq[0]) + (kiq * pred_state.eq[0]);
-					curr_state.mq[0] = curr_state.mq[0] + ((curr_state.dmq[0] + pred_state.dmq[0]) * deltat) / 2.0;
-					curr_state.Idq[0].SetImag(curr_state.mq[0] * I_In.Re());
-					curr_state.Iac[0] = curr_state.Idq[0];
-					pLine_unrotI[0] += pred_state.Iac[0];
-					pLine_unrotI[0] += -curr_state.Iac[0];
-					I_Out[0] = curr_state.Iac[0];
-				}
-				if((phases & 0x07) == 0x07) {
-					for(i = 0; i < 3; i++) {
-						pred_state.Pout[i] = (pCircuit_V[i] * ~(pred_state.Iac[i])).Re();
-						pred_state.Qout[i] = (pCircuit_V[i] * ~(pred_state.Iac[i])).Im();
-						if (pCircuit_V[i].Mag() > 0.0)
-						{
-							pred_state.ed[i] = ((~(complex(Pref/3.0, Qref/3.0)/(pCircuit_V[i]))) - (~(complex(pred_state.Pout[i],pred_state.Qout[i])/(pCircuit_V[i])))).Re();
-							pred_state.eq[i] = ((~(complex(Pref/3.0, Qref/3.0)/(pCircuit_V[i]))) - (~(complex(pred_state.Pout[i],pred_state.Qout[i])/(pCircuit_V[i])))).Im();
-						}
-						else
-						{
-							pred_state.ed[i] = 0.0;
-							pred_state.eq[i] = 0.0;
-						}
-
-						pred_state.ded[i] = (pred_state.ed[i] - curr_state.ed[i]) / deltat;
-						pred_state.dmd[i] = (kpd * pred_state.ded[i]) + (kid * pred_state.ed[i]);
-						curr_state.md[i] = curr_state.md[i] + ((curr_state.dmd[i] + pred_state.dmd[i]) * deltat) / 2.0;
-						curr_state.Idq[i].SetReal(curr_state.md[i] * I_In.Re());
-						
-						pred_state.deq[i] = (pred_state.eq[i] - curr_state.eq[i]) / deltat;
-						pred_state.dmq[i] = (kpq * pred_state.deq[i]) + (kiq * pred_state.eq[i]);
-						curr_state.mq[i] = curr_state.mq[i] + ((curr_state.dmq[i] + pred_state.dmq[i]) * deltat) / 2.0;
-						curr_state.Idq[i].SetImag(curr_state.mq[i] * I_In.Re());
-						curr_state.Iac[i] = curr_state.Idq[i];
-						pLine_unrotI[i] += pred_state.Iac[i];
-						pLine_unrotI[i] += -curr_state.Iac[i];
-						I_Out[i] = curr_state.Iac[i];
-					}
-				}
-				simmode_return_value =  SM_DELTA_ITER;
-			} else if (iteration_count_val == 2) {
-				//calculate the corrector errors
-				if((phases & 0x10) == 0x10) {
-					VA_Out = *pCircuit_V * ~(I_Out[0]);
-					prev_error = curr_state.ed[0];
-					curr_state.Pout[0] = VA_Out.Re();
-					curr_state.Qout[0] = VA_Out.Im();
-					if (pCircuit_V[0].Mag() > 0.0)
-					{
-						curr_state.ed[0] = ((~(complex(Pref, Qref)/(*pCircuit_V))) - (~(complex(curr_state.Pout[0],curr_state.Qout[0])/(*pCircuit_V)))).Re();
-						curr_state.eq[0] = ((~(complex(Pref, Qref)/(*pCircuit_V))) - (~(complex(curr_state.Pout[0],curr_state.Qout[0])/(*pCircuit_V)))).Im();
-					}
-					else
-					{
-						curr_state.ed[0] = 0.0;
-						curr_state.eq[0] = 0.0;
-					}
-
-					curr_state.ded[0] = (curr_state.ed[0] - prev_error) / deltat;
-					curr_state.dmd[0] = (kpd * curr_state.ded[0]) + (kid * curr_state.ed[0]);
-
-					prev_error = curr_state.eq[0];
-
-					curr_state.deq[0] = (curr_state.eq[0] - prev_error) / deltat;
-					curr_state.dmq[0] = (kpq * curr_state.deq[0]) + (kiq * curr_state.eq[0]);
-					if(fabs(curr_state.ded[0]) <= inverter_convergence_criterion && fabs(curr_state.deq[0]) <= inverter_convergence_criterion) {
-						simmode_return_value =  SM_EVENT;// we have reached steady state
-					} else {
-						simmode_return_value =  SM_DELTA;
-					}
-				} else if ((phases & 0x07) == 0x07) {
-					VA_Out = (pCircuit_V[0] * ~(I_Out[0])) + (pCircuit_V[1] * ~(I_Out[1])) + (pCircuit_V[2] * ~(I_Out[2]));
-					for(i = 0; i < 3; i++) {
-						curr_state.Pout[i] = VA_Out.Re() / 3.0;
-						curr_state.Qout[i] = VA_Out.Im() / 3.0;
-						prev_error = curr_state.ed[i];
-
-						if (pCircuit_V[i].Mag() > 0.0)
-						{
-							curr_state.ed[i] = ((~(complex(Pref/3.0, Qref/3.0)/(pCircuit_V[i]))) - (~(complex(curr_state.Pout[i],curr_state.Qout[i])/(pCircuit_V[i])))).Re();
-							curr_state.eq[i] = ((~(complex(Pref/3.0, Qref/3.0)/(pCircuit_V[i]))) - (~(complex(curr_state.Pout[i],curr_state.Qout[i])/(pCircuit_V[i])))).Im();
-						}
-						else
-						{
-							curr_state.ed[i] = 0.0;
-							curr_state.eq[i] = 0.0;
-						}
-
-						curr_state.ded[i] = (curr_state.ed[i] - prev_error) / deltat;
-						curr_state.dmd[i] = (kpd * curr_state.ded[i]) + (kid * curr_state.ed[i]);
-						prev_error = curr_state.eq[i];
-
-						curr_state.deq[i] = (curr_state.eq[i] - prev_error) / deltat;
-						curr_state.dmq[i] = (kpq * curr_state.deq[i]) + (kiq * curr_state.eq[i]);
 						if(fabs(curr_state.ded[i]) <= inverter_convergence_criterion && fabs(curr_state.deq[i]) <= inverter_convergence_criterion && simmode_return_value != SM_DELTA) {
 							simmode_return_value = SM_EVENT;// we have reached steady state
 						} else {
@@ -4484,18 +5524,10 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 						}
 					}
 				}
-			} else if(iteration_count_val > 2) {
-				for(i = 0; i < 3; i++) {
-					if(fabs(curr_state.ded[i]) <= inverter_convergence_criterion && fabs(curr_state.deq[i]) <= inverter_convergence_criterion && simmode_return_value != SM_DELTA) {
-						simmode_return_value = SM_EVENT;// we have reached steady state
-					} else {
-						simmode_return_value = SM_DELTA;
-					}
+				else
+				{
+					simmode_return_value =  SM_EVENT;
 				}
-			}
-			else
-			{
-				simmode_return_value =  SM_EVENT;
 			}
 		}
 		else if (inverter_dyn_mode == PID_CONTROLLER)
@@ -4667,18 +5699,42 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 		//Basically remove our contributions (if any) - similar to post-update
 		if (inverter_dyn_mode == PI_CONTROLLER)
 		{
-			if((phases & 0x10) == 0x10){
-				pLine_unrotI[0] += I_Out[0];
-				
-				//Zero the output trackers
-				I_Out[0] = complex(0.0,0.0);
-			} else if((phases & 0x07) == 0x07) {
-				pLine_unrotI[0] += I_Out[0];
-				pLine_unrotI[1] += I_Out[1];
-				pLine_unrotI[2] += I_Out[2];
+			if (four_quadrant_control_mode == FQM_VSI)	//VSI mode
+			{
+				if((phases & 0x10) == 0x10){
+					IGenerated[0] = complex(0.0,0.0);
 
-				//Zero the output trackers
-				I_Out[0] = I_Out[1] = I_Out[2] = complex(0.0,0.0);
+					//Zero the output trackers
+					I_Out[0] = complex(0.0,0.0);
+				}
+				else if((phases & 0x07) == 0x07)
+				{
+					IGenerated[0] = complex(0.0,0.0);
+					IGenerated[1] = complex(0.0,0.0);
+					IGenerated[2] = complex(0.0,0.0);
+
+					//Zero the output trackers
+					I_Out[0] = I_Out[1] = I_Out[2] = complex(0.0,0.0);
+				}
+
+
+				
+			}
+			else	//Other modes
+			{
+				if((phases & 0x10) == 0x10){
+					pLine_unrotI[0] += I_Out[0];
+
+					//Zero the output trackers
+					I_Out[0] = complex(0.0,0.0);
+				} else if((phases & 0x07) == 0x07) {
+					pLine_unrotI[0] += I_Out[0];
+					pLine_unrotI[1] += I_Out[1];
+					pLine_unrotI[2] += I_Out[2];
+
+					//Zero the output trackers
+					I_Out[0] = I_Out[1] = I_Out[2] = complex(0.0,0.0);
+				}
 			}
 		}
 		else if (inverter_dyn_mode == PID_CONTROLLER)
@@ -4731,14 +5787,31 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 STATUS inverter::post_deltaupdate(complex *useful_value, unsigned int mode_pass)
 {
+	complex temp_current_val[3];
+	complex power_val[3];
+
 	if (inverter_dyn_mode == PI_CONTROLLER)
 	{
-		if((phases & 0x10) == 0x10){
-			pLine_unrotI[0] += I_Out[0];
-		} else if((phases & 0x07) == 0x07) {
-			pLine_unrotI[0] += I_Out[0];
-			pLine_unrotI[1] += I_Out[1];
-			pLine_unrotI[2] += I_Out[2];
+		if (four_quadrant_control_mode != FQM_VSI) {
+			if((phases & 0x10) == 0x10){
+				pLine_unrotI[0] += I_Out[0];
+			} else if((phases & 0x07) == 0x07) {
+				pLine_unrotI[0] += I_Out[0];
+				pLine_unrotI[1] += I_Out[1];
+				pLine_unrotI[2] += I_Out[2];
+			}
+		}
+		else {
+
+			VA_Out_past = VA_Out; // Update VA_Out_past
+
+			if (VSI_mode == VSI_DROOP) {
+				//Do not need to update output power
+				// Update reference power values P_OUT and Q_OUT based on current VA outputs
+				P_Out = VA_Out.Re();
+				Q_Out = VA_Out.Im();
+
+			}
 		}
 	}
 	else if (inverter_dyn_mode == PID_CONTROLLER)
@@ -4762,54 +5835,172 @@ STATUS inverter::post_deltaupdate(complex *useful_value, unsigned int mode_pass)
 STATUS inverter::init_PI_dynamics(INV_STATE *curr_time)
 {
 	complex prev_Idq[3];
-	//Find the initial state of the inverter
-	//Find the initial error from a steady state modulation value
-	if((phases & 0x10) == 0x10) { //Single Phase
-		Pref = VA_Out.Re();
-		prev_Idq[0] = last_I_Out[0];
+	complex temp_current_val[3];
+	complex power_val[3];
 
-		if(last_I_In > 1e-9) {
-			curr_time->md[0] = prev_Idq[0].Re()/last_I_In;
-		} else {
-			curr_time->md[0] = 0.0;
-		}
-		curr_time->Idq[0].SetReal(curr_time->md[0] * I_In.Re());
-
-		Qref = VA_Out.Im();
-		if(last_I_In > 1e-9) {
-			curr_time->mq[0] = prev_Idq[0].Im()/last_I_In;
-		} else {
-			curr_time->mq[0] = 0.0;
-		}
-		curr_time->Idq[0].SetImag(curr_time->mq[0] * I_In.Re());
-		curr_time->Iac[0] = curr_time->Idq[0];
-
-		//Post the value
-		pLine_unrotI[0] += -curr_time->Iac[0];
-
-	} else if((phases & 0x07) == 0x07) { // Three Phase
-		Pref = VA_Out.Re();
-		Qref = VA_Out.Im();
-		for(int i = 0; i < 3; i++){
-
-			//Usually occurs in presync, but causes some dynamics issues
-			last_I_Out[i] = I_Out[i];
-
-			prev_Idq[i] = last_I_Out[i];
+	if (four_quadrant_control_mode != FQM_VSI)
+	{
+		//Find the initial state of the inverter
+		//Find the initial error from a steady state modulation value
+		if((phases & 0x10) == 0x10) { //Single Phase
+			Pref = VA_Out.Re();
+			Pref0 = Pref;
+			prev_Idq[0] = last_I_Out[0];
 
 			if(last_I_In > 1e-9) {
-				curr_time->md[i] = prev_Idq[i].Re()/last_I_In;
-				curr_time->mq[i] = prev_Idq[i].Im()/last_I_In;
+				curr_time->md[0] = prev_Idq[0].Re()/last_I_In;
 			} else {
-				curr_time->md[i] = 0.0;
-				curr_time->mq[i] = 0.0;
+				curr_time->md[0] = 0.0;
 			}
-			curr_time->Idq[i].SetReal(curr_time->md[i] * I_In.Re());
-			curr_time->Idq[i].SetImag(curr_time->mq[i] * I_In.Re());
-			curr_time->Iac[i] = curr_time->Idq[i];
+			curr_time->Idq[0].SetReal(curr_time->md[0] * I_In.Re());
 
-			pLine_unrotI[i] += -curr_time->Iac[i];
+			Qref = VA_Out.Im();
+			if(last_I_In > 1e-9) {
+				curr_time->mq[0] = prev_Idq[0].Im()/last_I_In;
+			} else {
+				curr_time->mq[0] = 0.0;
+			}
+			curr_time->Idq[0].SetImag(curr_time->mq[0] * I_In.Re());
+			curr_time->Iac[0] = curr_time->Idq[0];
+
+			//Post the value
+			if (four_quadrant_control_mode != FQM_VSI)
+			{
+				pLine_unrotI[0] += -curr_time->Iac[0];
+			}
+			else {
+				IGenerated[0] = -curr_time->Iac[0];
+			}
+
+		} else if((phases & 0x07) == 0x07) { // Three Phase
+			Pref = VA_Out.Re();
+			Qref = VA_Out.Im();
+			Pref0 = Pref;
+
+			for(int i = 0; i < 3; i++){
+
+				//Usually occurs in presync, but causes some dynamics issues
+				last_I_Out[i] = I_Out[i];
+
+				prev_Idq[i] = last_I_Out[i];
+
+				if(last_I_In > 1e-9) {
+					curr_time->md[i] = prev_Idq[i].Re()/last_I_In;
+					curr_time->mq[i] = prev_Idq[i].Im()/last_I_In;
+				} else {
+					curr_time->md[i] = 0.0;
+					curr_time->mq[i] = 0.0;
+				}
+				curr_time->Idq[i].SetReal(curr_time->md[i] * I_In.Re());
+				curr_time->Idq[i].SetImag(curr_time->mq[i] * I_In.Re());
+				curr_time->Iac[i] = curr_time->Idq[i];
+
+				//Post the value
+				if (four_quadrant_control_mode != FQM_VSI)
+				{
+					pLine_unrotI[i] += -curr_time->Iac[i];
+				}
+				else {
+					IGenerated[i] = -curr_time->Iac[i];
+				}
+			}
 		}
+
+		// Obtain original Qref values for each phase, so that each phase of voltage can be controlled seperately later
+		if((phases & 0x10) == 0x10) {
+			Qref0[0] = (*pCircuit_V * ~(I_Out[0])).Im();
+			Qref_PI[0] = Qref0[0];
+			Qref_PI[1] = 0;
+			Qref_PI[2] = 0;
+		}
+		if((phases & 0x07) == 0x07) {
+			Qref0[0] = (pCircuit_V[0] * ~(I_Out[0])).Im();
+			Qref0[1] = (pCircuit_V[1] * ~(I_Out[1])).Im();
+			Qref0[2] = (pCircuit_V[2] * ~(I_Out[2])).Im();
+			Qref_PI[0] = (pCircuit_V[0] * ~(I_Out[0])).Im();
+			Qref_PI[1] = (pCircuit_V[1] * ~(I_Out[1])).Im();
+			Qref_PI[2] = (pCircuit_V[2] * ~(I_Out[2])).Im();
+
+		}
+		// Delayed frequency initial value is given:
+		curr_time->f_mea_delayed = *mapped_freq_variable;
+
+		// Set Voltage initial value for v/q droop if adopted
+		if((phases & 0x10) == 0x10) {
+			curr_time->V_mea_delayed[0] = (*pCircuit_V).Mag();
+			V_ref[0] = (*pCircuit_V).Mag();
+		}
+		if((phases & 0x07) == 0x07) {
+			curr_time->V_mea_delayed[0] = pCircuit_V[0].Mag();
+			curr_time->V_mea_delayed[1] = pCircuit_V[1].Mag();
+			curr_time->V_mea_delayed[2] = pCircuit_V[2].Mag();
+			V_ref[0] = pCircuit_V[0].Mag();
+			V_ref[1] = pCircuit_V[1].Mag();
+			V_ref[2] = pCircuit_V[2].Mag();
+		}
+	}
+	else {
+		if((phases & 0x10) == 0x10) {
+			//Update output power
+			//Get current injected
+			temp_current_val[0] = IGenerated[0] - generator_admittance[0][0] * (*pCircuit_V);
+
+			//Update power output variables, just so we can see what is going on
+			VA_Out = pCircuit_V[0]*~temp_current_val[0];
+
+			e_source[0] = (IGenerated[0] * complex(Rfilter,Xfilter) * Zbase);
+			V_angle[0] = (e_source[0]).Arg();  // Obtain the inverter terminal voltage phasor angle
+			V_angle_past[0] = V_angle[0];
+
+			if (VSI_mode == VSI_DROOP) {
+				V_mag_ref[0] = e_source[0].Mag();	// record the e_source voltage magtitude for droop VSI mode since it is what we want to control
+				V_mag[0] = V_mag_ref[0];
+			}
+			else {
+				V_mag_ref[0] = pCircuit_V[0].Mag();	// record the terminal voltage magtitude for isochronous VSI mode since it is what we want to control
+				V_mag[0] = V_mag_ref[0];
+				curr_time->V_StateVal[0] = pCircuit_V[0].Mag();
+				curr_time->e_source_mag[0] = e_source[0].Mag();
+			}
+		}
+		if((phases & 0x07) == 0x07) {
+			//Update output power
+			//Get current injected
+			temp_current_val[0] = (IGenerated[0] - generator_admittance[0][0]*pCircuit_V[0] - generator_admittance[0][1]*pCircuit_V[1] - generator_admittance[0][2]*pCircuit_V[2]);
+			temp_current_val[1] = (IGenerated[1] - generator_admittance[1][0]*pCircuit_V[0] - generator_admittance[1][1]*pCircuit_V[1] - generator_admittance[1][2]*pCircuit_V[2]);
+			temp_current_val[2] = (IGenerated[2] - generator_admittance[2][0]*pCircuit_V[0] - generator_admittance[2][1]*pCircuit_V[1] - generator_admittance[2][2]*pCircuit_V[2]);
+
+			//Update power output variables, just so we can see what is going on
+			power_val[0] = pCircuit_V[0]*~temp_current_val[0];
+			power_val[1] = pCircuit_V[1]*~temp_current_val[1];
+			power_val[2] = pCircuit_V[2]*~temp_current_val[2];
+
+			VA_Out = power_val[0] + power_val[1] + power_val[2];
+
+			for (int i = 0; i < 3; i++) {
+				e_source[i] = (IGenerated[i] * complex(Rfilter,Xfilter) * Zbase);
+				V_angle[i] = (e_source[i]).Arg();  // Obtain the inverter terminal voltage phasor angle
+				V_angle_past[i] = V_angle[i];
+				if (VSI_mode == VSI_DROOP) {
+					V_mag_ref[i] = e_source[i].Mag();	// record the e_source voltage magtitude for droop VSI mode since it is what we want to control
+					V_mag[i] = V_mag_ref[i];
+				}
+				else {
+					V_mag_ref[i] = pCircuit_V[i].Mag();	// record the terminal voltage magtitude for isochronous VSI mode since it is what we want to control
+					V_mag[i] = V_mag_ref[i];
+					curr_time->V_StateVal[i] = pCircuit_V[i].Mag();
+					curr_time->e_source_mag[i] = e_source[i].Mag();
+				}
+			}
+		}
+
+		// Set measured real and reactive power initial value for VSI inverter
+		curr_time->p_mea_delayed = VA_Out.Re();
+		curr_time->q_mea_delayed = VA_Out.Im();
+		Pref = VA_Out.Re();
+		Qref = VA_Out.Im();
+
+		VA_Out_past = VA_Out;
 	}
 
 	return SUCCESS;	//Always succeeds for now, but could have error checks later
@@ -4936,6 +6127,7 @@ void inverter::update_control_references(void)
 	complex temp_VA, VA_Outref;
 	complex battery_power_out = complex(0,0);
 	OBJECT *obj = OBJECTHDR(this);
+	bool VA_changed = false; // A flag indicating whether VAref is changed due to limitations
 
 	//Compute power in - supposedly DC, but since it's complex, we'll be proper (other models may need fixing)
 	VA_In = V_In * ~ I_In;
@@ -5013,8 +6205,20 @@ void inverter::update_control_references(void)
 	}
 	else if (four_quadrant_control_mode == FQM_CONSTANT_PQ)
 	{
+		// If not attached to the battery, need to check if real power < 0 or > rating
+		if (b_soc == -1) {
+			if (Pref < 0) {
+				Pref = 0;
+			}
+		}
+
 		//Compute desired output - sign convention appears to be backwards
-		temp_VA = complex(P_Out,Q_Out);
+		if (PI_CONTROLLER) {
+			temp_VA = complex(Pref,Qref_PI[0]+Qref_PI[1]+Qref_PI[2]); // For PI control mode, Qref is seperated for each phase
+		}
+		else {
+			temp_VA = complex(Pref, Qref); // previously was set as P_out + jQ_out. Since P_Out and Q_Out are constant, not reflecting change of output
+		}
 
 
 		//Ensuring battery has capacity to charge or discharge as needed.
@@ -5022,15 +6226,18 @@ void inverter::update_control_references(void)
 		{
 			gl_warning("inverter:%s - battery full - no charging allowed",obj->name);
 			temp_VA.SetReal(0.0);	//Set to zero - reactive considerations may change this
+			VA_changed = true;
 		}
 		else if ((b_soc <= soc_reserve) && (temp_VA.Re() > 0) && (b_soc != -1))	//Battery "empty" and attempting to extract real power
 		{
 			gl_warning("inverter:%s - battery at or below the SOC reserve - no discharging allowed",obj->name);
 			temp_VA.SetReal(0.0);	//Set output to zero - again, reactive considerations may change this
+			VA_changed = true;
 		}
 
 		//Ensuring power rating of inverter is not exceeded.
-		if (fabs(temp_VA.Mag()) > p_max){ //Requested power output (P_Out, Q_Out) is greater than inverter rating
+		if (fabs(temp_VA.Mag()) > p_max ){ //Requested power output (P_Out, Q_Out) is greater than inverter rating
+			VA_changed = true;
 			if (p_max > fabs(temp_VA.Re())) //Can we reduce the reactive power output and stay within the inverter rating?
 			{
 				//Determine the Q we can provide
@@ -5084,6 +6291,7 @@ void inverter::update_control_references(void)
 	//check to see if VA_Outref is within rated absolute power rating
 	if(VA_Outref.Mag() > p_max)
 	{
+		VA_changed = true;
 		//Determine the excess, for use elsewhere - back out simple efficiencies
 		excess_input_power = (VA_Outref.Mag() - p_max)/(internal_losses*frequency_losses);
 
@@ -5125,6 +6333,20 @@ void inverter::update_control_references(void)
 	// update references
 	Pref = VA_Outref.Re();
 	Qref = VA_Outref.Im();
+
+	// Update Qref for PI control mode if VA_outref is changed due to limitations
+	if (VA_changed == true) {
+		if((phases & 0x10) == 0x10) {
+			Qref_PI[0] = VA_Outref.Im();
+			Qref_PI[1] = 0;
+			Qref_PI[2] = 0;
+		}
+		if((phases & 0x07) == 0x07) {
+			Qref_PI[0] = VA_Outref.Im()/3;
+			Qref_PI[1] = VA_Outref.Im()/3;
+			Qref_PI[2] = VA_Outref.Im()/3;
+		}
+	}
 }
 
 //Functionalized routine to perform the IEEE 1547-2003 checks
@@ -5648,7 +6870,7 @@ double inverter::getVar(double volt, double m, double b)
 	Q = (m * volt) + b;
 	return Q;
 }
-	
+
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////
@@ -5757,3 +6979,9 @@ EXPORT STATUS postupdate_inverter(OBJECT *obj, complex *useful_value, unsigned i
 		return status;
 	}
 }
+
+
+
+
+
+
