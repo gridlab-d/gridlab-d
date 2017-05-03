@@ -327,6 +327,21 @@ int node::init(OBJECT *parent)
 {
 	OBJECT *obj = OBJECTHDR(this);
 
+	//Put the phase_S check right on the top, since it will apply to both solvers
+	if (has_phase(PHASE_S))
+	{
+		//Make sure we're a valid class
+		if (!(gl_object_isa(obj,"triplex_node","powerflow") || gl_object_isa(obj,"triplex_meter","powerflow") || gl_object_isa(obj,"triplex_load","powerflow")))
+		{
+			GL_THROW("Object:%d - %s -- has a phase S, but is not triplex!",obj->id,(obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			A node-based object has an "S" in the phases, but is not a triplex_node, triplex_load, nor triplex_meter.  These are the only
+			objects that support this phase.  Please check your phases and try again.
+			*/
+		}
+		//Default else - implies it is one of these objects, and therefore can have a phase S
+	}
+
 	if (solver_method==SM_NR)
 	{
 		char ext_lib_file_name[1025];

@@ -789,6 +789,11 @@ TIMESTAMP fncs_msg::clk_update(TIMESTAMP t1)
 		return t1;
 	}
 	if(t1 > last_approved_fncs_time){
+		if(gl_globalclock == gl_globalstoptime){
+			return t1;
+		} else if (t1 > gl_globalstoptime && gl_globalclock < gl_globalstoptime){
+			t1 == gl_globalstoptime;
+		}
 #if HAVE_FNCS
 		fncs::time t = 0;
 		t = (fncs::time)((t1 - initial_sim_time)*1000000000);
@@ -1159,11 +1164,11 @@ int fncs_msg::publishJsonVariables( )  //Renke add
 				double imag_part =gldpro_obj->get_part("imag");
 				gld_unit *val_unit = gldpro_obj->get_unit();
 				complex_val.str(string());
-				complex_val << real_part;
+				complex_val << fixed << real_part;
 				if(imag_part >= 0){
-					complex_val << "+" << imag_part << "j";
+					complex_val << fixed << "+" << imag_part << "j";
 				} else {
-					complex_val << imag_part << "j";
+					complex_val << fixed << imag_part << "j";
 				}
 				if(val_unit->is_valid()){
 					string unit_name = string(val_unit->get_name());
