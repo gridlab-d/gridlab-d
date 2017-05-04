@@ -444,7 +444,7 @@ int diesel_dg::create(void)
 	X0=complex(0.005,0.05);
 	X2=complex(0.0072,0.2540);
 
-	//Input variables are initalized to -99 (since pu) - if left there, the dynamics initalization gets them
+	//Input variables are initialized to -99 (since pu) - if left there, the dynamics initialization gets them
 	gen_base_set_vals.wref = -99.0;
 	gen_base_set_vals.vset = -99.0;
 	gen_base_set_vals.Pref = -99.0;
@@ -540,7 +540,7 @@ int diesel_dg::create(void)
 	power_val[1] = 0.0;
 	power_val[2] = 0.0;
 
-	//Rotor convegence becomes 0.1 rad
+	//Rotor convergence becomes 0.1 rad
 	rotor_speed_convergence_criterion = 0.1;
 	prev_rotor_speed_val = 0.0;
 
