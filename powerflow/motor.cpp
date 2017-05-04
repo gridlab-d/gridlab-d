@@ -348,6 +348,7 @@ int motor::init(OBJECT *parent)
 	sigma1 = Ls - lm * lm / Lr; // pu
 	sigma2 = Lr - lm * lm / Ls; // pu
 	omgr0 = sqrt(TL); // pu
+	omgr0_prev = omgr0;
 	//************** End_Yuan's TPIM model ********************//
 
 	return result;
