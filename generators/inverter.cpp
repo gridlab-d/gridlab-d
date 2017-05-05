@@ -625,7 +625,7 @@ int inverter::init(OBJECT *parent)
 			{&pPower,				"power_12"}, //assumes 2 and 1-2 follow immediately in memory
 			{&pLine_unrotI,			"prerotated_current_12"},	//maps current load 1-2 (prerotated) for triplex
 			/// @todo use triplex property mapping instead of assuming memory order for meter variables (residential, low priority) (ticket #139)
-			{&pMeter_I, 			"measured_current_A"},
+			{&pMeter_I, 			"measured_voltage_1"},
 		};
 
 		// attach meter variables to each circuit
@@ -633,7 +633,7 @@ int inverter::init(OBJECT *parent)
 		{
 			if ((*(map[i].var) = get_complex(parent,map[i].varname))==NULL)
 			{
-				GL_THROW("%s (%s:%d) does not implement triplex_meter variable %s for %s (inverter:%d)", 
+				GL_THROW("%s (%s:%d) does not implement triplex_meter variable %s for %s (inverter:%d)",
 				/*	TROUBLESHOOT
 					The Inverter requires that the triplex_meter contains certain published properties in order to properly connect
 					the inverter to the triplex-meter.  If the triplex_meter does not contain those properties, GridLAB-D may
@@ -5140,6 +5140,21 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 								}
 							}
 						} // end initialize I_Out based on constant PQ output and terminal voltages
+						else {
+							// //Initialize dynamics
+							// init_dynamics(&curr_state);
+							//Send Current Injection to parent
+							if((phases & 0x10) == 0x10) {
+								//pLine_unrotI[0] += -curr_state.Iac[0];
+								I_Out[0]= curr_state.Iac[0];
+							}
+							if((phases & 0x07) == 0x07) {
+								for(int i = 0; i < 3; i++) {
+									//pLine_unrotI[i] += -curr_state.Iac[i];
+									I_Out[i] = curr_state.Iac[i];
+								}
+							}
+						}
 						// If not FQM_CONSTANT_PQ mode, keep current injection the same, will calculate PQ out based on I_Out and pCircuit_V in the later iteration
 						simmode_return_value =  SM_DELTA_ITER; // iterate so I know what my current power out is
 
@@ -5484,10 +5499,10 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 					} else if ((phases & 0x07) == 0x07) {
 						VA_Out = (pCircuit_V[0] * ~(I_Out[0])) + (pCircuit_V[1] * ~(I_Out[1])) + (pCircuit_V[2] * ~(I_Out[2]));
 						for(i = 0; i < 3; i++) {
-	//						curr_state.P_Out[i] = VA_Out.Re() / 3.0;
+//							curr_state.P_Out[i] = VA_Out.Re() / 3.0;
 							curr_state.P_Out[i] = (pCircuit_V[i] * ~(I_Out[i])).Re();
 							curr_state.Q_Out[i] = (pCircuit_V[i] * ~(I_Out[i])).Im();
-	//						curr_state.Q_Out[i] = VA_Out.Im() / 3.0;
+//							curr_state.Q_Out[i] = VA_Out.Im() / 3.0;
 							prev_error_ed = curr_state.ed[i];
 							prev_error_eq = curr_state.eq[i];
 

@@ -127,6 +127,7 @@ private:
 	complex *pLine_I; ///< pointer to the three current on three lines
 
 	bool first_run;		///< Flag for first run of the diesel_dg object - eliminates t0==0 dependence
+	bool is_isochronous_gen;	///< Flag to indicate if we're isochronous, mostly to help keep us in deltamode
 
 	//Internal synchronous machine variables
 	complex *bus_admittance_mat;		//Link to bus raw self-admittance value - grants 3x3 access instead of diagonal
@@ -154,6 +155,7 @@ private:
 	unsigned int x5a_delayed_write_pos;//Indexing variable for writing the torque_delay_buffer
 	unsigned int x5a_delayed_read_pos;	//Indexing variable for reading torque_delay_buffer
 	double prev_rotor_speed_val;		//Previous value of rotor speed - used for delta-exiting convergence check
+	double prev_voltage_val[3];			//Previous value of voltage magnitude - used for delta-exiting convergence check
 	complex last_power_output[3];		//Tracking variable for previous power output - used to do super-second frequency adjustments
 	TIMESTAMP prev_time;				//Tracking variable for previous "new time" run
 	double prev_time_dbl;				//Tracking variable for previous "new time" run -- deltamode capable
@@ -265,6 +267,11 @@ public:
 
 	//Convergence criteria (ion right now)
 	double rotor_speed_convergence_criterion;
+	double voltage_convergence_criterion;
+
+	//Which convergence to apply
+	bool apply_rotor_speed_convergence;
+	bool apply_voltage_mag_convergence;
 
 	//Dynamics-capable synchronous generator inputs
 	double omega_ref;		//Nominal frequency
