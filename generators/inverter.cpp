@@ -432,8 +432,8 @@ int inverter::create(void)
 	pLine_unrotI = NULL;
 	first_iter_counter = 0;
 	
-	//By default, assume we want the PID-based controller
-	inverter_dyn_mode = PID_CONTROLLER;
+	//By default, assume we want the PI-based controller
+	inverter_dyn_mode = PI_CONTROLLER;
 
 	//1547 parameters
 	enable_1547_compliance = false;		//1547 turned off, but default
@@ -6124,7 +6124,14 @@ STATUS inverter::init_PID_dynamics(void)
 			curr_PID_state.current_vals_ref[indexx] = complex(-1.0,0.0) * curr_PID_state.current_vals[indexx] * complex_exp(-1.0 * curr_PID_state.reference_angle[indexx]);
 
 			//Compute base modulation value - these are in the reference frame
-			curr_PID_state.mod_vals[indexx] = complex((curr_PID_state.current_vals_ref[indexx].Re() / curr_PID_state.I_in),(curr_PID_state.current_vals_ref[indexx].Im() / curr_PID_state.I_in));
+			if (curr_PID_state.I_in != 0.0)
+			{
+				curr_PID_state.mod_vals[indexx] = complex((curr_PID_state.current_vals_ref[indexx].Re() / curr_PID_state.I_in),(curr_PID_state.current_vals_ref[indexx].Im() / curr_PID_state.I_in));
+			}
+			else
+			{
+				curr_PID_state.mod_vals[indexx] = complex(0.0,0.0);
+			}
 
 			//Add in the last current too - PostSync removed it, so this will fix it for the logic in interupdate
 			pLine_unrotI[indexx] += last_current[indexx];
