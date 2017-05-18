@@ -114,7 +114,7 @@ object load {
 	constant_power_C +1800000.000+871779.789j;
 	nominal_voltage 2400;
 	object player {
-		property constant_power_A;
+		property constant_power_A, constant_power_B, constant_power_C;
 		file ../test_player_buffer.player;
 		loop 0;
 	};
@@ -123,6 +123,16 @@ object load {
 		value 20.12820806729023+79.78912749199718j;
 		within 0.001;
 	};
+	object complex_assert {
+		target constant_power_B;
+		value 21.12820806729023+79.78912749199718j;
+		within 0.001;
+	};
+	object complex_assert {
+		target constant_power_C;
+		value 22.12820806729023+79.78912749199718j;
+		within 0.001;
+	};		
 }
 
 

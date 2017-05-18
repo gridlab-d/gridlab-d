@@ -342,6 +342,21 @@ int node::init(OBJECT *parent)
 {
 	OBJECT *obj = OBJECTHDR(this);
 
+	//Put the phase_S check right on the top, since it will apply to both solvers
+	if (has_phase(PHASE_S))
+	{
+		//Make sure we're a valid class
+		if (!(gl_object_isa(obj,"triplex_node","powerflow") || gl_object_isa(obj,"triplex_meter","powerflow") || gl_object_isa(obj,"triplex_load","powerflow") || gl_object_isa(obj,"motor","powerflow")))
+		{
+			GL_THROW("Object:%d - %s -- has a phase S, but is not triplex!",obj->id,(obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			A node-based object has an "S" in the phases, but is not a triplex_node, triplex_load, nor triplex_meter.  These are the only
+			objects that support this phase.  Please check your phases and try again.
+			*/
+		}
+		//Default else - implies it is one of these objects, and therefore can have a phase S
+	}
+
 	if (solver_method==SM_NR)
 	{
 		char ext_lib_file_name[1025];
@@ -1386,7 +1401,20 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 		phase_to_check = (phases & (~(PHASE_D | PHASE_N)));
 		
 		//See if everything has a source
-		if (((phase_to_check & busphasesIn) != phase_to_check) && (busphasesIn != 0))	//Phase mismatch (and not top level node)
+		if (((phase_to_check & busphasesIn) != phase_to_check) && (busphasesIn != 0) && (solver_method != SM_NR))	//Phase mismatch (and not top level node)
+		{
+			GL_THROW("node:%d (%s) has more phases leaving than entering",obj->id,obj->name);
+			/* TROUBLESHOOT
+			A node has more phases present than it has sources coming in.  Under the Forward-Back sweep algorithm,
+			the system should be strictly radial.  This scenario implies either a meshed system or unconnected
+			phases between the from and to nodes of a connected line.  Please adjust the phases appropriately.  Also
+			be sure no open switches are the sole connection for a phase, else this will fail as well.  In a few NR
+			circumstances, this can also be seen if the "from" and "to" nodes are in reverse order - the "from" node
+			of a link object should be nearest the SWING node, or the node with the most phases - this error check
+			will be updated in future versions.
+			*/
+		}
+		if (((phase_to_check & (busphasesIn | busphasesOut) != phase_to_check) && (busphasesIn != 0 && busphasesOut != 0) && (solver_method == SM_NR)))
 		{
 			GL_THROW("node:%d (%s) has more phases leaving than entering",obj->id,obj->name);
 			/* TROUBLESHOOT
@@ -3445,6 +3473,7 @@ int node::NR_current_update(bool postpass, bool parentcall)
 	complex delta_current[3];
 	complex assumed_nominal_voltage[6];
 	double nominal_voltage_dval;
+	complex house_pres_current[3];
 
 	//Don't do anything if we've already been "updated"
 	if (current_accumulated==false)
@@ -3769,14 +3798,14 @@ int node::NR_current_update(bool postpass, bool parentcall)
 				temp_store[2].SetPolar(1.0,vdel.Arg());		//Pull phase of V12
 
 				//Update these current contributions
-				temp_val[0] = nom_res_curr[0]/(~temp_store[0]);		//Just denominator conjugated to keep math right (rest was conjugated in house)
-				temp_val[1] = nom_res_curr[1]/(~temp_store[1]);
-				temp_val[2] = nom_res_curr[2]/(~temp_store[2]);
+				house_pres_current[0] = nom_res_curr[0]/(~temp_store[0]);		//Just denominator conjugated to keep math right (rest was conjugated in house)
+				house_pres_current[1] = nom_res_curr[1]/(~temp_store[1]);
+				house_pres_current[2] = nom_res_curr[2]/(~temp_store[2]);
 
 				//Now add it into the current contributions
-				temp_current[0] += temp_val[0];
-				temp_current[1] += temp_val[1];
-				temp_current[2] += temp_val[2];
+				temp_current[0] += house_pres_current[0];
+				temp_current[1] += house_pres_current[1];
+				temp_current[2] += house_pres_current[2];
 			}//End house-attached splitphase
 
 			//Last, but not least, admittance/impedance contributions
@@ -3930,6 +3959,14 @@ int node::NR_current_update(bool postpass, bool parentcall)
 				ParLoadObj->current_inj[0] += temp_current_inj[0];	//This ensures link-related injections are not counted
 				ParLoadObj->current_inj[1] += temp_current_inj[1];
 				ParLoadObj->current_inj[2] += temp_current_inj[2];
+
+				//See if we have a house - if we do, we're inadvertently biasing our parent
+				if (house_present)
+				{
+					//Remove the line_12 current appropriately
+					ParLoadObj->current_inj[0] -= house_pres_current[0] + house_pres_current[2];
+					ParLoadObj->current_inj[1] -= -house_pres_current[1] - house_pres_current[2];
+				}
 			}
 
 			//Update our accumulator as well, otherwise things break

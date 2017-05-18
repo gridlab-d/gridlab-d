@@ -1,0 +1,120 @@
+//4 node feeder - modified to do a loopback (to test for failure)
+
+clock {
+	timezone EST+5EDT;
+	starttime '2000-01-01 0:00:00';
+	stoptime '2000-01-01 0:00:01';
+}
+
+module powerflow {
+	solver_method NR;
+}
+
+object overhead_line_conductor {
+	name olc100;
+	geometric_mean_radius 0.0244;
+	resistance 0.306;
+}
+
+object overhead_line_conductor {
+	name olc101;
+	geometric_mean_radius 0.00814;
+	resistance 0.592;
+}
+
+object line_spacing {
+	name ls200;
+	distance_AB 2.5;
+	distance_BC 4.5;
+	distance_AC 7.0;
+	distance_AN 5.656854;
+	distance_BN 4.272002;
+	distance_CN 5.0;
+}
+
+object line_configuration {
+	name lc300;
+	conductor_A olc100;
+	conductor_B olc100;
+	conductor_C olc100;
+	conductor_N olc101;
+	spacing ls200;
+}
+
+object transformer_configuration {
+	name tc400;
+	connect_type DELTA_DELTA;
+	power_rating 6000;
+	primary_voltage 12470;
+	secondary_voltage 24900;
+	resistance 0.01;
+	reactance 0.06;
+}
+
+object node {
+	name node1;
+	phases "ABCD";
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	bustype SWING;
+	nominal_voltage 7200;
+}
+
+object overhead_line {
+	name ohl12;
+	phases "ABCD";
+	from node1;
+	to node2;
+	length 2000;
+	configuration lc300;
+}
+
+object node {
+	name node2;
+	phases "ABCD";
+	nominal_voltage 7200;
+}
+
+object transformer {
+	name xform23;
+	phases "ABCD";
+	from node2;
+	to node3;
+	configuration tc400;
+}
+
+object node {
+	name node3;
+	phases "ABCD";
+	nominal_voltage 14376;
+}
+
+object overhead_line {
+	name ohl34;
+	phases "ABCD";
+	from node3;
+	to load4;
+	length 2500;
+	configuration lc300;
+}
+
+//This line should cause an error
+object overhead_line {
+	name ohl34_looped;
+	phases "ABCD";
+	from node3;
+	to node3;
+	length 2500;
+	configuration lc300;
+}
+
+object load {
+	name load4;
+	phases "ABCD";
+	constant_power_A +1275000.000+790174.031j;
+	constant_power_B +1800000.000+871779.789j;
+	constant_power_C +2375000.000+780624.750j;
+	nominal_voltage 14376;
+}
+

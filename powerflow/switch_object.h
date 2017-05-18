@@ -63,6 +63,7 @@ public:
 private:
 	OBJECT **eventgen_obj;					//Reliability variable - link to eventgen object
 	FUNCTIONADDR event_schedule;			//Reliability variable - links to "add_event" function in eventgen
+	FUNCTIONADDR fault_handle_call;			//Reliability-type variable - calls topology reconfiguration after switch changes state
 	bool event_schedule_map_attempt;		//Flag to see if we've tried to map the event_schedule variable, or not
 };
 

@@ -231,7 +231,7 @@ int load::init(OBJECT *parent)
 		GL_THROW("Load objects do not support triplex connections at this time!");
 		/*  TROUBLESHOOT
 		load objects are only designed to be added to the primary side of a distribution power flow.  To add loads
-		to the triplex side, please use the triplex_node object.
+		to the triplex side, please use the triplex_load object.
 		*/
 	}
 

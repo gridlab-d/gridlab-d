@@ -576,7 +576,7 @@ climate::climate(MODULE *module)
 				PT_KEYWORD,"CUMULUS",(enumeration)CM_CUMULUS,
 			PT_double,"cloud_opacity[pu]",PADDR(cloud_opacity),
 			PT_double,"opq_sky_cov[pu]",PADDR(opq_sky_cov),
-			PT_double,"cloud_reflectivity[pu]",PADDR(cloud_reflectivity),
+			//PT_double,"cloud_reflectivity[pu]",PADDR(cloud_reflectivity), //Unused in the cloud model at this time.
 			PT_double,"cloud_speed_factor[pu]",PADDR(cloud_speed_factor),
 			PT_double,"solar_cloud_direct[W/sf]",PADDR(solar_cloud_direct),
 			PT_double,"solar_cloud_diffuse[W/sf]",PADDR(solar_cloud_diffuse),
@@ -615,14 +615,14 @@ int climate::create(void)
 	//solar_flux = malloc(8 * sizeof(double));
 	solar_flux[0] = solar_flux[1] = solar_flux[2] = solar_flux[3] = solar_flux[4] = solar_flux[5] = solar_flux[6] = solar_flux[7] = solar_flux[8] = 0.0; // W/sf normal
 	//solar_flux_S = solar_flux_SE = solar_flux_SW = solar_flux_E = solar_flux_W = solar_flux_NE = solar_flux_NW = solar_flux_N = 0.0; // W/sf normal
-	cloud_opacity = 0.7; // b/c default transmissivity is 0.3!
-	cloud_speed_factor = 0.25;
-	cloud_reflectivity = 1.0; // very reflective!
+	cloud_opacity = 1.0;
+	cloud_speed_factor = 1;
+	//cloud_reflectivity = 1.0; // very reflective!
 	tmy = NULL;
 	cloud_model = CM_NONE;
 	cloud_num_layers = 40;
-	cloud_alpha = 200;
-	cloud_aerosol_transmissivity = 0.9;
+	cloud_alpha = 400;
+	cloud_aerosol_transmissivity = 0.95;
 	return 1;
 }
 
@@ -667,7 +667,7 @@ int climate::init(OBJECT *parent)
 			gl_warning("climate:%s - Cloud opacity must be no less than 0.0, setting to 0.0",obj->name);
 			cloud_opacity = 0.0;
 		}
-
+		/*
 		if (cloud_reflectivity > 1){
 			gl_warning("climate:%s - Cloud reflectivity must be no greater than 1.0, setting to 1.0",obj->name);
 			cloud_opacity = 1.0;
@@ -676,6 +676,7 @@ int climate::init(OBJECT *parent)
 			gl_warning("climate:%s - Cloud reflectivity must be no less than 0.0, setting to 0.0",obj->name);
 			cloud_opacity = 0.0;
 		}
+		*/
 		if (cloud_speed_factor < 0){
 			gl_warning("climate:%s - Cloud speed adjustment cannot be negative, setting to 1.0",obj->name);
 			cloud_speed_factor = 1.0;
@@ -689,8 +690,8 @@ int climate::init(OBJECT *parent)
 				cloud_aerosol_transmissivity = 0.9;
 		}
 		if (cloud_aerosol_transmissivity > 1){
-				gl_warning("climate:%s - Cloud model aerosol transmissivity must be less than or equal to 1, setting to default value of 0.9",obj->name);
-				cloud_aerosol_transmissivity = 0.9;
+				gl_warning("climate:%s - Cloud model aerosol transmissivity must be less than or equal to 1, setting to 1",obj->name);
+				cloud_aerosol_transmissivity = 1.0;
 		}
 		gl_warning("This cloud model places a large burden on computational resources. Patience and/or a more capable computer may be required.");
 		init_cloud_pattern();
@@ -972,7 +973,8 @@ int climate::get_solar_for_location(double latitude, double longitude, double *d
 	//int cloud = 0; //binary cloud
 	double cloud = 0; //fuzzy cloud
 	double f;
-	double test;
+	double ETR;
+	double ETRN;
 	double sol_z;
 	OBJECT *obj=OBJECTHDR(this);
 	DATETIME dt;
@@ -987,12 +989,18 @@ int climate::get_solar_for_location(double latitude, double longitude, double *d
 			f = 1 - (cloud * cloud_opacity); //f=1 -> clear view of sun, f=0 -> very dark cloud blocking view of sun.
 			//retval = get_binary_cloud_value_for_location(latitude, longitude, &cloud); //Binary cloud pattern evaluation
 			//f = cloud ? 1.-cloud_opacity : 1.;
-			test = get_global_horizontal_extra();
 			sol_z = get_solar_zenith();
+			ETRN = get_direct_normal_extra();
+			ETR = ETRN * cos(sol_z);
 			//std::cout << dt.month <<"," << dt.day <<"," << dt.hour <<"," << dt.minute <<"," << sol_z << std::endl;
-			*direct = f*(global_transmissivity*1)*get_global_horizontal_extra();
-			*diffuse = get_solar_diffuse();
-			*global = (*direct)*std::max(cos(get_solar_zenith()),0.0) + *diffuse;
+			if (sol_z > RAD(90)){ //When sun is below the horizon, DNI must be zero.
+        *direct = 0;
+      }else{
+        *direct = f*(global_transmissivity)*ETRN;
+      }
+			*diffuse = get_solar_diffuse();//(0.07 + 0.45*get_tot_sky_cov())*global_transmissivity*ETR;
+				//get_solar_diffuse();
+			*global = std::max((*direct)*std::max(cos(get_solar_zenith()),0.0) + *diffuse,0.0);
 			solar_cloud_direct = *direct;
 			solar_cloud_diffuse = *diffuse;
 			solar_cloud_global = *global;
@@ -1121,9 +1129,20 @@ void climate::update_cloud_pattern(TIMESTAMP delta_t) {
 
 	//Using European Wind Atlas terrain roughness class and length to translate TMY2 windspeed at 10m to
 	// cumulus cloud height, 1000m.
-	float roughness_class = 3; //Assumed. Slightly rural to suburban value.
-	double roughness_length = exp(log(10.0/3.0)*(roughness_class - 3.91249));
-	double windspeed = windspeed_tmy2 * log(1000/roughness_length)/log(10/roughness_length);
+	//float roughness_class = 3; //Assumed. Slightly rural to suburban value.
+	//double roughness_length = exp(log(10.0/3.0)*(roughness_class - 3.91249));
+	//double windspeed = windspeed_tmy2 * log(1000/roughness_length)/log(10/roughness_length);
+
+	//C. W. Hansen, J. S. Stein, and A. Ellis,
+	//“Simulation of One-Minute Power Output from Utility-Scale Photovoltaic Generation Systems,” SAND2011-5529, 2011.
+	// Shows distribution of wind speeds at cumulus cloud elevations based on weather balloon launches (pg. 18)
+	// A cursory inspection of the TMY3 measured wind speeds shows this is roughly consistent with histogram
+	// presented in the paper.
+	//
+	// As part of validation I found I was having to scale back the windspeed to roughly the same
+	// speeds as the original source data. (Thus the "cloud_speed_factor" parameter.)
+	// Removing windspeed adjustment and using source data as is.
+	double windspeed = windspeed_tmy2;
 
 	//Reformatting wind direction data
 	wind_direct = wind_direct -180;
@@ -1301,13 +1320,17 @@ void climate::update_cloud_pattern(TIMESTAMP delta_t) {
 		} else {
 			//Shouldn't be able to get here.
 		}
-
-		//Finding cloud outline shape
-		double cut_elevation = 0;
-		cut_elevation = convert_to_binary_cloud();
-		//write_out_cloud_pattern('B');
-		convert_to_fuzzy_cloud(cut_elevation, cloud_num_layers, cloud_alpha);
-		//write_out_cloud_pattern('F');
+		solar_zenith = get_solar_zenith();
+		if (solar_zenith < (110*PI/180)) { //Only do these things if the sun is above (or slightly below) the horizon).
+				//Fractal cloud pattern is preserved and shifted appropriately but since the sun is below the horizon
+				//  and the solar radiation on the surface is zero, we don't need to fully define the clouds.
+			//Finding cloud outline shape
+			double cut_elevation = 0;
+			cut_elevation = convert_to_binary_cloud();
+			//write_out_cloud_pattern('B');
+			convert_to_fuzzy_cloud(cut_elevation, cloud_num_layers, cloud_alpha);
+			//write_out_cloud_pattern('F');
+		}
 	}
 
 }
@@ -1316,15 +1339,19 @@ double climate::convert_to_binary_cloud(){
 	//Place-holder location.  Eventually needs to be driven by objects asking for updated
 	//  cloud values.  If the time since the last conversion is non-zero, this function needs
 	//  to run to generate the new binary value.
-	double opaque_sky_value = get_opq_sky_cov();
+	double cloud_value = get_opq_sky_cov(); //get_tot_sky_cov() or get_opq_sky_cov()
 
-	opaque_sky_value = opaque_sky_value * 2; //Trying to counteract the fuzzification process by artificially boosting the coverage.
-	if (opaque_sky_value > 1){
-		opaque_sky_value = 0.99;
-	}
-
-	if (opaque_sky_value == 1){
-		opaque_sky_value = 0.99;
+	/* TDH:
+	 * Trying to counteract the fuzzification process by artificially boosting the coverage.
+	 * This is a bit of a hack. The best way to handle this is to include the fuzzification process
+	 * in the elevation cut adjustment. This way, the percentage of the sky covered by opaque clouds
+	 * is ensured after the fuzzification has taken place. I've tested this and it REALLY slows things
+	 * down (in an already slow function). For now, this is what I've chosen to do because it more
+	 * or less works.
+	*/
+	cloud_value = cloud_value * 2.0;
+	if (cloud_value >= 1){
+		cloud_value = 0.99;
 	}
 
 
@@ -1381,14 +1408,14 @@ double climate::convert_to_binary_cloud(){
 		 measured_coverage = double(running_count)/(on_screen_size * on_screen_size); //Factor, range [0 1]
 
 		 //Calculating next cut elevation.
-		 if (measured_coverage > (opaque_sky_value + search_tolerance)){
+		 if (measured_coverage > (cloud_value + search_tolerance)){
 			 max_cut_elevation = cut_elevation;
 			 step_size = (max_cut_elevation - min_cut_elevation)/-2;
-		 }else if (measured_coverage < (opaque_sky_value - search_tolerance)){
+		 }else if (measured_coverage < (cloud_value - search_tolerance)){
 			 min_cut_elevation = cut_elevation;
 			 step_size = (max_cut_elevation - min_cut_elevation)/2;
 		 }
-	 } while (measured_coverage < (opaque_sky_value - search_tolerance) || measured_coverage > (opaque_sky_value + search_tolerance));
+	 } while (measured_coverage < (cloud_value - search_tolerance) || measured_coverage > (cloud_value + search_tolerance));
 
 	 //Converting cloud_pattern to binary_cloud_pattern
  //TDH: trivially parallelizable
@@ -1970,7 +1997,7 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 	if(t0 > TS_ZERO && reader_type == RT_CSV){
 		gld_clock now(t0);
 		csv_reader *cr = OBJECTDATA(reader,csv_reader);
-		csv_rv = cr->get_data(t0, &temperature, &humidity, &solar_direct, &solar_diffuse, &solar_global, &global_horizontal_extra, &wind_speed,&wind_dir, &opq_sky_cov, &rainfall, &snowdepth, &pressure);
+		csv_rv = cr->get_data(t0, &temperature, &humidity, &solar_direct, &solar_diffuse, &solar_global, &global_horizontal_extra, &wind_speed,&wind_dir, &opq_sky_cov, &tot_sky_cov, &rainfall, &snowdepth, &pressure);
 		// calculate the solar radiation
 		double sol_time = sa->solar_time((double)now.get_hour()+now.get_minute()/60.0+now.get_second()/3600.0 + (now.get_is_dst() ? -1:0),now.get_yearday(),RAD(tz_meridian),RAD(reader->longitude));
 		//std::cout << now.get_hour() << "," << now.get_minute() << "," << now.get_second() <<"," << now.get_is_dst() << "," << now.get_yearday() << "," << tz_meridian << "," << reader->longitude << std::endl;
@@ -2002,7 +2029,7 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 		}
 		int doy = sa->day_of_yr(ts.month,ts.day);
 		hoy = (doy - 1) * 24 + (ts.hour);
-    //Shifts TMY3 data
+		//Shifts TMY3 data
 		//One hour shift accounts for DST (if applicable)
 		//One hour shift as TMY are summarized values for the preceding hour. To accurately calculate the solar time
 		//    we need to start from the beginning of the hour and advance through it.
@@ -2175,11 +2202,11 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 		if (prev_NTime != t0 ){
 			double p = pressure*0.1; // in millibars, convert to kPa
 			double Z = solar_zenith;
-			double M = (p/3545.5)*sqrt(1224. * pow(cos(Z),2.) + 1.);
-			double u = 3.75; // average of 3 and 4.5
+			double M = 0.02857*sqrt((1224. * cos(Z) * cos(Z)) + 1.);
+			double u = 4.5; // generally in range of 3 to 4.5
 			double aw = 0.077*pow(u/M,0.3);
 			double Pa = cloud_aerosol_transmissivity; // e^-(alpha*M)
-			double PRPA = 1.041-0.15*sqrt((p*0.00949)/M);
+			double PRPA = 1.041-(0.15*sqrt(((p*0.00949)+0.051)/M));
 			global_transmissivity = std::max(0.0,(PRPA-aw)*Pa);
 			update_cloud_pattern(t0 - prev_NTime);
 			//write_out_cloud_pattern('F');

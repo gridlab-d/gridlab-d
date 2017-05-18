@@ -42,6 +42,7 @@ public:
 	char256 filename;
 	bool strict;
 	bool print_units;
+    bool format;
 	CPLPT complex_part;
 private:
 	int write_header();

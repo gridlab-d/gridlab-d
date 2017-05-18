@@ -35,6 +35,7 @@ weather::weather(MODULE *module){
 			PT_double,"wind_speed[mph]", PADDR(wind_speed),
 			PT_double,"wind_dir[deg]", PADDR(wind_dir),
 			PT_double,"opq_sky_cov[pu]",PADDR(opq_sky_cov),
+			PT_double,"tot_sky_cov[pu]",PADDR(tot_sky_cov),
 			PT_double,"rainfall[in/h]",PADDR(rainfall),
 			PT_double,"snowdepth[in]",PADDR(snowdepth),
 			PT_double,"pressure[mbar]",PADDR(pressure),

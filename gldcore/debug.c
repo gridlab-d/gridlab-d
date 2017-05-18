@@ -513,7 +513,7 @@ Retry:
 			sigint_caught=0;
 			fflush(stdout);
 		
-			gets(buffer);	/* "gets() is dangerous and should not be used" -gcc */
+			fgets(buffer, 1023, stdin);	/* "gets() is dangerous and should not be used" -gcc */
 			output_verbose("debug command '%s'", buffer);
 		}
 		else{ /* Load from file */

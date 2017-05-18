@@ -9,6 +9,13 @@
 
 dnl m4 magic from Eric Blake <e...@byu.net>
 dnl autoconf 2.63 does not have m4_esyscmd_s
+m4_define([m4_chomp_all],
+[m4_format([[%.*s]], m4_bregexp(m4_translit([[$1]], [
+/], [/ ]), [/*$]), [$1])])  
+
+m4_define([m4_esyscmd_s], [m4_chomp_all(m4_esyscmd([$1]))])     
+
+
 m4_define([sbuild_m4_chomp],
 [m4_format([[%.*s]], m4_bregexp(m4_translit([$1], [
 ]]m4_dquote(_m4_defn([m4_cr_all]))[, [/]]m4_format([%255s], [])[),
@@ -17,9 +24,9 @@ m4_define([sbuild_m4_esyscmd_s],
 [sbuild_m4_chomp(m4_esyscmd([$1]))])
 
 dnl GridLAB-D version information
-m4_define([pkgversion], m4_esyscmd_s([build-aux/version.sh --version]))
-m4_define([pkgbranch],  m4_esyscmd_s([build-aux/version.sh --branch]))
-m4_define([svnversion], m4_esyscmd_s([build-aux/version.sh --svn]))
+m4_define([pkgversion], sbuild_m4_esyscmd_s([build-aux/version.sh --version]))
+m4_define([pkgbranch],  sbuild_m4_esyscmd_s([build-aux/version.sh --branch]))
+m4_define([svnversion], sbuild_m4_esyscmd_s([build-aux/version.sh --svn]))
 
 AC_PREREQ([2.63])
 AC_INIT([GridLAB-D], pkgversion, [gridlabd@pnnl.gov], [gridlabd])
@@ -50,6 +57,8 @@ AC_CANONICAL_HOST
 AC_SUBST(PACKAGE_BASEVERSION, pkgversion)
 AC_SUBST(PACKAGE_BRANCH, pkgbranch)
 AC_SUBST(PACKAGE_REVISION, svnversion)
+
+AM_SILENT_RULES([yes])
 
 AC_ARG_ENABLE([debug],
     [AS_HELP_STRING([--enable-debug],

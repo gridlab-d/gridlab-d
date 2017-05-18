@@ -1,4 +1,5 @@
 #include "group_recorder.h"
+#include <sstream>
 
 CLASS *group_recorder::oclass = NULL;
 CLASS *group_recorder::pclass = NULL;
@@ -27,6 +28,7 @@ group_recorder::group_recorder(MODULE *mod){
 			PT_bool, "print_units", PADDR(print_units), PT_DESCRIPTION, "flag to append units to each written value, if applicable",
 			PT_char256, "property", PADDR(property_name), PT_DESCRIPTION, "property to record",
 			PT_int32, "limit", PADDR(limit), PT_DESCRIPTION, "the maximum number of lines to write to the file",
+            PT_bool, "format", PADDR(format), PT_DESCRIPTION, "determines whether output timestamp is formatted to be formatted as human-readable (default) or epoch",
 			PT_enumeration, "complex_part", PADDR(complex_part), PT_DESCRIPTION, "the complex part to record if complex properties are gathered",
 				PT_KEYWORD, "NONE", NONE,
 				PT_KEYWORD, "REAL", REAL,
@@ -100,7 +102,6 @@ int group_recorder::init(OBJECT *obj){
 
 	// all flush intervals are valid
 	flush_interval = (int64)dFlush_interval;
-	
 	
 	// build group
 	//	* invariant?
@@ -561,38 +562,54 @@ int group_recorder::write_line(TIMESTAMP t1, double t1dbl, bool deltacall){
 	}
 
 	// write time_str
-	// recorder.c uses multiple formats, in the sense of "formatted or not".  This does not.
-	if (deltacall==false)
+	// recorder.c uses multiple formats, in the sense of "formatted or not".  This has been fixed to match
+	if (format == false)
 	{
-		if(0 == gl_localtime(t1, &dt)){
-			gl_error("group_recorder::write_line(): error when converting the sync time");
+		if (deltacall==false)
+		{
+			if(0 == gl_localtime(t1, &dt))
+			{
+				gl_error("group_recorder::write_line(): error when converting the sync time");
+				/* TROUBLESHOOT
+					Unprintable timestamp.
+				 */
+				tape_status = TS_ERROR;
+				return 0;
+			}
+		}
+		else //delta call
+		{
+			if(0 == gl_localtime_delta(t1dbl, &dt))
+			{
+				gl_error("group_recorder::write_line(): error when converting the sync time");
+				/* TROUBLESHOOT
+					Unprintable timestamp.
+				 */
+				tape_status = TS_ERROR;
+				return 0;
+			}
+		}
+			
+		if(0 == gl_strtime(&dt, time_str, sizeof(time_str) ) )
+		{
+			gl_error("group_recorder::write_line(): error when writing the sync time as a string");
 			/* TROUBLESHOOT
-				Unprintable timestamp.
+				Error printing the timestamp.
 			 */
 			tape_status = TS_ERROR;
 			return 0;
 		}
 	}
-	else //delta call
+	else	//Just converting TIMESTAMP to char array
 	{
-		if(0 == gl_localtime_delta(t1dbl, &dt)){
-			gl_error("group_recorder::write_line(): error when converting the sync time");
-			/* TROUBLESHOOT
-				Unprintable timestamp.
-			 */
-			tape_status = TS_ERROR;
-			return 0;
-		}
+		// ************* TODO: This needs to be fixed for deltamode *****************//
+		std::string number;
+		std::stringstream strstream;
+		strstream << (long long)t1;
+		strstream >> number;
+		strcpy(time_str, number.c_str());
 	}
 
-	if(0 == gl_strtime(&dt, time_str, sizeof(time_str) ) ){
-		gl_error("group_recorder::write_line(): error when writing the sync time as a string");
-		/* TROUBLESHOOT
-			Error printing the timestamp.
-		 */
-		tape_status = TS_ERROR;
-		return 0;
-	}
 	// print line to file
 	if(0 >= fprintf(rec_file, "%s%s\n", time_str, line_buffer)){
 		gl_error("group_recorder::write_line(): error when writing to the output file");

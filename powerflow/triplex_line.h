@@ -17,6 +17,7 @@ public:
 	inline triplex_line(CLASS *cl=oclass):line(cl){};
 	int isa(char *classname);
 	int create(void);
+	void phase_conductor_checks(void);
 };
 
 EXPORT int recalc_triplex_line(OBJECT *obj);

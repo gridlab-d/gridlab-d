@@ -7,6 +7,8 @@
 #include "powerflow.h"
 #include "node.h"
 
+EXPORT SIMULATIONMODE interupdate_substation(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
+
 class substation : public node
 {
 protected:
@@ -22,7 +24,7 @@ public:
 	complex average_transmission_power_load;		///<the average constant power load to be posted directly to the pw_load object
 	complex average_transmission_impedance_load;	///<the average constant impedance load to be posted directly to the pw_load object
 	complex average_transmission_current_load;		///<the average constant current load to be posted directly to the pw_load object
-	complex average_distribution_load;				///<The average of the loads on all three phases at the substation object
+	complex distribution_load;				///<The total load of all three phases at the substation object
 	complex distribution_power_A;					
 	complex distribution_power_B;					
 	complex distribution_power_C;	
@@ -58,6 +60,7 @@ public:
 	void fetch_complex(complex **prop, char *name, OBJECT *parent);
 	void fetch_double(double **prop, char *name, OBJECT *parent);
 	int isa(char *classname);
+	SIMULATIONMODE inter_deltaupdate_substation(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 };
 
 #endif // _SUBSTATION_H

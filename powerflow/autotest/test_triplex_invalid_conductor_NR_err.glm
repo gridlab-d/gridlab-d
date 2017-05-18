@@ -1,0 +1,92 @@
+//  Simple 2 bus system
+// Tests to make sure invalid conductors in triplex are detected
+
+clock {
+	timezone "PST+8PDT";
+	starttime '2001-01-01 00:00:00 PST';
+	stoptime '2001-01-01 00:01:00 PST';
+	
+}
+
+#set suppress_repeat_messages=1
+
+module powerflow {
+	solver_method NR;
+}
+
+// Phase Conductor for 601: 556,500 26/7 ACSR
+object overhead_line_conductor {
+	name olc6010;
+	geometric_mean_radius 0.031300;
+	diameter 0.927 in;
+	resistance 0.185900;
+}
+
+// Phase Conductor for 602: 4/0 6/1 ACSR
+object overhead_line_conductor {
+	name olc6020;
+	geometric_mean_radius 0.00814;
+	diameter 0.56 in;
+	resistance 0.592000;
+}
+
+
+// Overhead line configurations
+object line_spacing {
+	name ls500601;	//With capacitance ability
+	distance_AB 2.5;
+	distance_AC 4.5;
+	distance_BC 7.0;
+	distance_BN 5.656854;
+	distance_AN 4.272002;
+	distance_CN 5.0;
+	distance_AE 28.0;
+	distance_BE 28.0;
+	distance_CE 28.0;
+	distance_NE 24.0;
+}
+
+object line_configuration {
+	name lc601;
+	conductor_A olc6010;
+	conductor_B olc6010;
+	conductor_C olc6010;
+	conductor_N olc6020;
+	spacing ls500601;
+}
+
+object triplex_line_conductor {
+	name AA_triplex;
+	resistance 0.97;
+	geometric_mean_radius 0.0111;
+}
+
+object triplex_line_configuration {
+	name triplex_config_obj;
+	conductor_1 olc6010;	//This is wrong
+	conductor_2 AA_triplex;
+	conductor_N AA_triplex;
+	insulation_thickness 0.08;
+	diameter 0.368;
+}
+
+object triplex_meter {
+	name node1;
+	phases "CS";
+	bustype SWING;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name node2;
+	phases CS;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	from node1;
+	to node2;
+	phases CS;
+	length 1000;
+	configuration triplex_config_obj;
+}
