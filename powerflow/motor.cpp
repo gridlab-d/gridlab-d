@@ -107,8 +107,11 @@ motor::motor(MODULE *mod):node(mod)
 			PT_double, "lm[pu]", PADDR(lm),PT_DESCRIPTION,"magnetizing reactance",
 			PT_double, "lls[pu]", PADDR(lls),PT_DESCRIPTION,"stator leakage reactance",
 			PT_double, "llr[pu]", PADDR(llr),PT_DESCRIPTION,"rotor leakage reactance",
-			PT_double, "mechanical_Load_torque", PADDR(TL),PT_DESCRIPTION,"mechanical load torque applied to the motor",
+			PT_double, "TPIM_rated_mechanical_Load_torque", PADDR(TLrated),PT_DESCRIPTION,"rated mechanical load torque applied to three-phase induction motor",
 			PT_double, "friction_coefficient", PADDR(Kfric),PT_DESCRIPTION,"coefficient of speed-dependent torque",
+			PT_enumeration,"TPIM_initial_status",PADDR(TPIM_initial_status),PT_DESCRIPTION,"initial status of three-phase induction motor: RUNNING or STATIONARY",
+				PT_KEYWORD,"RUNNING",(enumeration)initialRUNNING,
+				PT_KEYWORD,"STATIONARY",(enumeration)initialSTATIONARY,
 			// share declarations of interation_count, DM_volt_trig_per, DM_speed_trig_per, DM_volt_exit_per, DM_speed_exit_per, speed_error with SPIM model
 			// share declarations of motor_status, motor_override and motor_op_mode with SPIM model
 			// share declarations of motor_trip
@@ -124,6 +127,7 @@ motor::motor(MODULE *mod):node(mod)
 			PT_complex, "phipr", PADDR(phipr),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"positive sequence rotor flux",
 			PT_complex, "phinr_cj", PADDR(phinr_cj),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"conjugate of negative sequence rotor flux",
 			PT_double, "omgr0", PADDR(omgr0),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"dc component of rotor speed",
+			PT_double, "TL", PADDR(TL),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"actually applied mechanical torque",
 			PT_complex, "Ias", PADDR(Ias),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"motor phase-a stator current",
 			PT_complex, "Ibs", PADDR(Ibs),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"motor phase-b stator current",
 			PT_complex, "Ics", PADDR(Ics),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"motor phase-c stator current",
@@ -228,11 +232,12 @@ int motor::create()
     //Hs = 0.1;  // s	-- this needs to be reconciled as well
     Kfric = 0.0;  // pu
 	TL = 0.95;  // pu
+	TLrated = 0.95;  //pu
 	phips = complex(0,0); // pu
 	phins_cj = complex(0,0); // pu
 	phipr = complex(0,0); // pu
 	phinr_cj = complex(0,0); // pu
-	omgr0 = 0.0; // pu
+	omgr0 = 0.97; // pu
 	Ias = complex(0,0); // pu
 	Ibs = complex(0,0); // pu
 	Ics = complex(0,0); // pu
@@ -250,6 +255,7 @@ int motor::create()
 	sigma2 = 0.0; // pu
 	wref = 0.0; // pu
 	wsyn = 1.0; // pu
+	TPIM_initial_status = initialRUNNING;
 
     //************** End_Yuan's TPIM model ********************//
 
@@ -334,6 +340,7 @@ int motor::init(OBJECT *parent)
 	{
 		Ibase = Pbase/nominal_voltage;
 	}
+
 	wb=2*PI*nominal_frequency;
 	cap_run_speed = (cap_run_speed_percentage*wb)/100;
 	DM_volt_trig = (DM_volt_trig_per)/100;
@@ -347,7 +354,20 @@ int motor::init(OBJECT *parent)
 	Lr = llr + lm; // pu
 	sigma1 = Ls - lm * lm / Lr; // pu
 	sigma2 = Lr - lm * lm / Ls; // pu
-	omgr0 = sqrt(TL); // pu
+
+	if (motor_op_mode == modeTPIM && TPIM_initial_status == initialSTATIONARY){
+		DM_volt_trig_per = 110;  // percent
+		DM_speed_trig_per = 110;
+		DM_volt_exit_per = 110;
+		DM_speed_exit_per = 110;
+		omgr0 = 0.0; // pu
+		TL = 0.0;  // pu
+	}
+	else if (motor_op_mode == modeTPIM && TPIM_initial_status == initialRUNNING){
+		omgr0 = sqrt(TLrated); // pu
+		TL = TLrated;
+	}
+
 	omgr0_prev = omgr0;
 	//************** End_Yuan's TPIM model ********************//
 
@@ -467,7 +487,7 @@ TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 
 		// update protection
-		// TPIMUpdateProtection(delta_cycle);
+		TPIMUpdateProtection(delta_cycle);
 
 		if (motor_override == overrideON && wsyn > 0.1 &&  Vas.Mag() > 0.1 && Vbs.Mag() > 0.1 && Vcs.Mag() > 0.1 &&
 			motor_trip == 0) { // motor is currently connected and grid conditions are not "collapsed"
@@ -477,14 +497,14 @@ TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 			TPIMSteadyState(t1);
 
 			// update current draw -- might need to be pre_rotated_current
-			current[0] = Ias*IbTPIM; // A
-			current[1] = Ibs*IbTPIM; // A
-			current[2] = Ics*IbTPIM; // A
+			pre_rotated_current[0] = Ias*IbTPIM; // A
+			pre_rotated_current[1] = Ibs*IbTPIM; // A
+			pre_rotated_current[2] = Ics*IbTPIM; // A
 		}
 		else { // motor is currently disconnected
-			current[0] = 0; // A
-			current[1] = 0; // A
-			current[2] = 0; // A
+			pre_rotated_current[0] = 0; // A
+			pre_rotated_current[1] = 0; // A
+			pre_rotated_current[2] = 0; // A
 			TPIMStateOFF();
 		}
 
@@ -528,6 +548,12 @@ TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 				Vcs.Mag() < DM_volt_trig_per / 100 || omgr0 < DM_speed_trig_per / 100)
 				&& deltamode_inclusive)
 		{
+			// we should not enter delta mode if the motor is tripped or not close to reconnect
+			if (motor_trip == 1 && reconnect < reconnect_time-1) {
+				return result;
+			}
+
+			// we are not tripped and the motor needs to enter delta mode to capture the dynamics
 			schedule_deltamode_start(t1);
 			return t1;
 		}
@@ -724,10 +750,10 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 			}
 
 			// update protection
-/*			if (delta_time>0) {
-				SPIMUpdateProtection(deltaTime);
+			if (delta_time>0) {
+				TPIMUpdateProtection(deltaTime);
 			}
-*/
+
 
 			if (motor_override == overrideON && wsyn > 0.1 && Vas.Mag() > 0.1 && Vbs.Mag() > 0.1 && Vcs.Mag() > 0.1 &&
 					motor_trip == 0) { // motor is currently connected and grid conditions are not "collapsed"
@@ -735,14 +761,14 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 				TPIMDynamic(curr_delta_time, deltaTime);
 
 				// update current draw -- pre_rotated_current
-				current[0] = Ias*IbTPIM; // A
-				current[1] = Ibs*IbTPIM; // A
-				current[2] = Ics*IbTPIM; // A
+				pre_rotated_current[0] = Ias*IbTPIM; // A
+				pre_rotated_current[1] = Ibs*IbTPIM; // A
+				pre_rotated_current[2] = Ics*IbTPIM; // A
 			}
 			else { // motor is currently disconnected
-				current[0] = 0; // A
-				current[1] = 0; // A
-				current[2] = 0; // A;
+				pre_rotated_current[0] = 0; // A
+				pre_rotated_current[1] = 0; // A
+				pre_rotated_current[2] = 0; // A;
 				TPIMStateOFF();
 			}
 
@@ -805,10 +831,19 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 			//This may need to be revisited - check to see if it should stay in deltamode or not
 			// figure out if we need to exit delta mode on the next pass
 			if (Vas.Mag() > DM_volt_exit_per/100 && Vbs.Mag() > DM_volt_exit_per/100 && Vcs.Mag() > DM_volt_exit_per/100
-					&& omgr0 > DM_speed_exit_per)
+					&& omgr0 > DM_speed_exit_per/100)
 			{
 				return SM_EVENT;
 			}
+			else if (motor_trip == 1 && reconnect < reconnect_time-1) {
+				// we return to steady state if the motor is tripped
+				return SM_EVENT;
+			}
+			else if (motor_override == overrideOFF) {
+				//We're off at the moment, so assume back to event driven mode
+				return SM_EVENT;
+			}
+
 
 			//Default - stay in deltamode
 			return SM_DELTA;
@@ -934,6 +969,11 @@ void motor::TPIMupdateVars() {
 	Ipr_prev = Ipr;
 	Ins_cj_prev = Ins_cj;
 	Inr_cj_prev = Inr_cj;
+
+	reconnect_prev = reconnect;
+	motor_trip_prev = motor_trip;
+	trip_prev = trip;
+
 }
 //************** End_Yuan's TPIM model ********************//
 
@@ -970,6 +1010,11 @@ void motor::TPIMreinitializeVars() {
 	Ipr = Ipr_prev;
 	Ins_cj = Ins_cj_prev;
 	Inr_cj = Inr_cj_prev;
+
+	reconnect = reconnect_prev;
+	motor_trip = motor_trip_prev;
+	trip = trip_prev;
+
 }
 //************** End_Yuan's TPIM model ********************//
 
@@ -1035,6 +1080,36 @@ void motor::SPIMUpdateProtection(double delta_time) {
 		reconnect = 0;
 	}
 }
+
+//************** Begin_Yuan's TPIM model ********************//
+// function to update the protection of the motor
+void motor::TPIMUpdateProtection(double delta_time) {
+	if (motor_override == overrideON) {
+		if (omgr0 < 0.01 && motor_trip == 0 && wsyn > 0.1 && Vas.Mag() > 0.1 && Vbs.Mag() > 0.1 && Vcs.Mag() > 0.1) { // conditions for counting up the time trip timer
+			trip = trip + delta_time; // count up by the time since last pass
+		}
+		else if ( (omgr0 >= 0.01 && motor_trip == 0) || wsyn <= 0.1 || Vas.Mag() <= 0.1 || Vbs.Mag() <= 0.1 || Vcs.Mag() <= 0.1) { // conditions for counting down the time trip timer
+			trip = trip - (delta_time / (reconnect_time/trip_time)) < 0 ? 0 : trip - (delta_time / (reconnect_time/trip_time)); // count down by the time since last cycle scaled by the difference in trip and reconnect times
+		}
+	}
+	else { // motor is off so it is "cooling" down
+		trip = trip - (delta_time / (reconnect_time/trip_time)) < 0 ? 0 : trip - (delta_time / (reconnect_time/trip_time)); // count down by the time since last cycle scaled by the difference in trip and reconnect times
+	}
+
+	if (motor_trip == 1) {
+		reconnect = reconnect + delta_time; // count up by the time since last pass
+	}
+
+	if (trip >= trip_time) { // check if we should trip the motor
+		motor_trip = 1;
+		trip = 0;
+	}
+	if (reconnect >= reconnect_time) { // check if we should reconnect the motor
+		motor_trip = 0;
+		reconnect = 0;
+	}
+}
+//************** End_Yuan's TPIM model ********************//
 
 // function to ensure that internal model states are zeros when the motor is OFF
 void motor::SPIMStateOFF() {
@@ -1164,97 +1239,188 @@ void motor::TPIMSteadyState(TIMESTAMP t1) {
         Van = (Vas + alpha * alpha * Vbs + alpha * Vcs) / 3.0;
         // Vaz = 1.0/3.0 * (Vas + Vbs + Vcs);
 
-		while (fabs(omgr0_delta) > speed_error && count < interation_count) {
-			count++;
+        // printf("Enter steady state: \n");
+
+        if (TPIM_initial_status == initialRUNNING){
+
+			while (fabs(omgr0_delta) > speed_error && count < interation_count) {
+				count++;
+
+				// pre-calculate complex coefficients of the 4 linear equations associated with flux state variables
+				A1 = -(complex(0,1) * (wref + wsyn) + rs / sigma1) ;
+				B1 =  0.0 ;
+				C1 =  rs / sigma1 * lm / Lr ;
+				D1 =  0.0 ;
+				E1 = Vap ;
+
+				A2 = 0.0;
+				B2 = -(complex(0,1) * (wref - wsyn) + rs / sigma1) ;
+				C2 = 0.0 ;
+				D2 = rs / sigma1 * lm / Lr ;
+				E2 = ~Van ;  // Does ~ represent conjugate of complex ?
+
+				A3 = rr / sigma2 * lm / Ls ;
+				B3 =  0.0 ;
+				C3 =  -(complex(0,1) * (wref + wsyn - omgr0) + rr / sigma2) ;
+				D3 =  0.0 ;
+				E3 =  0.0 ;
+
+				A4 = 0.0 ;
+				B4 =  rr / sigma2 * lm / Ls ;
+				C4 = 0.0 ;
+				D4 = -(complex(0,1) * (wref - wsyn - omgr0) + rr / sigma2) ;
+				E4 =  0.0 ;
+
+				// solve the 4 linear equations to obtain 4 flux state variables
+				phips = (B1*C2*D3*E4 - B1*C2*D4*E3 - B1*C3*D2*E4 + B1*C3*D4*E2 + B1*C4*D2*E3
+					- B1*C4*D3*E2 - B2*C1*D3*E4 + B2*C1*D4*E3 + B2*C3*D1*E4 - B2*C3*D4*E1
+					- B2*C4*D1*E3 + B2*C4*D3*E1 + B3*C1*D2*E4 - B3*C1*D4*E2 - B3*C2*D1*E4
+					+ B3*C2*D4*E1 + B3*C4*D1*E2 - B3*C4*D2*E1 - B4*C1*D2*E3 + B4*C1*D3*E2
+					+ B4*C2*D1*E3 - B4*C2*D3*E1 - B4*C3*D1*E2 + B4*C3*D2*E1)/
+					(A1*B2*C3*D4 - A1*B2*C4*D3 - A1*B3*C2*D4 + A1*B3*C4*D2 + A1*B4*C2*D3 -
+					A1*B4*C3*D2 - A2*B1*C3*D4 + A2*B1*C4*D3 + A2*B3*C1*D4 - A2*B3*C4*D1 -
+					A2*B4*C1*D3 + A2*B4*C3*D1 + A3*B1*C2*D4 - A3*B1*C4*D2 - A3*B2*C1*D4 +
+					A3*B2*C4*D1 + A3*B4*C1*D2 - A3*B4*C2*D1 - A4*B1*C2*D3 + A4*B1*C3*D2 +
+					A4*B2*C1*D3 - A4*B2*C3*D1 - A4*B3*C1*D2 + A4*B3*C2*D1) ;
+
+				phins_cj =  -(A1*C2*D3*E4 - A1*C2*D4*E3 - A1*C3*D2*E4 + A1*C3*D4*E2 + A1*C4*D2*E3
+					- A1*C4*D3*E2 - A2*C1*D3*E4 + A2*C1*D4*E3 + A2*C3*D1*E4 - A2*C3*D4*E1
+					- A2*C4*D1*E3 + A2*C4*D3*E1 + A3*C1*D2*E4 - A3*C1*D4*E2 - A3*C2*D1*E4
+					+ A3*C2*D4*E1 + A3*C4*D1*E2 - A3*C4*D2*E1 - A4*C1*D2*E3 + A4*C1*D3*E2
+					+ A4*C2*D1*E3 - A4*C2*D3*E1 - A4*C3*D1*E2 + A4*C3*D2*E1)/
+					(A1*B2*C3*D4 - A1*B2*C4*D3 - A1*B3*C2*D4 + A1*B3*C4*D2 + A1*B4*C2*D3 -
+					A1*B4*C3*D2 - A2*B1*C3*D4 + A2*B1*C4*D3 + A2*B3*C1*D4 - A2*B3*C4*D1 -
+					A2*B4*C1*D3 + A2*B4*C3*D1 + A3*B1*C2*D4 - A3*B1*C4*D2 - A3*B2*C1*D4 +
+					A3*B2*C4*D1 + A3*B4*C1*D2 - A3*B4*C2*D1 - A4*B1*C2*D3 + A4*B1*C3*D2 +
+					A4*B2*C1*D3 - A4*B2*C3*D1 - A4*B3*C1*D2 + A4*B3*C2*D1) ;
+
+				phipr = (A1*B2*D3*E4 - A1*B2*D4*E3 - A1*B3*D2*E4 + A1*B3*D4*E2 + A1*B4*D2*E3
+					- A1*B4*D3*E2 - A2*B1*D3*E4 + A2*B1*D4*E3 + A2*B3*D1*E4 - A2*B3*D4*E1
+					- A2*B4*D1*E3 + A2*B4*D3*E1 + A3*B1*D2*E4 - A3*B1*D4*E2 - A3*B2*D1*E4
+					+ A3*B2*D4*E1 + A3*B4*D1*E2 - A3*B4*D2*E1 - A4*B1*D2*E3 + A4*B1*D3*E2
+					+ A4*B2*D1*E3 - A4*B2*D3*E1 - A4*B3*D1*E2 + A4*B3*D2*E1)/
+					(A1*B2*C3*D4 - A1*B2*C4*D3 - A1*B3*C2*D4 + A1*B3*C4*D2 + A1*B4*C2*D3 -
+					A1*B4*C3*D2 - A2*B1*C3*D4 + A2*B1*C4*D3 + A2*B3*C1*D4 - A2*B3*C4*D1 -
+					A2*B4*C1*D3 + A2*B4*C3*D1 + A3*B1*C2*D4 - A3*B1*C4*D2 - A3*B2*C1*D4 +
+					A3*B2*C4*D1 + A3*B4*C1*D2 - A3*B4*C2*D1 - A4*B1*C2*D3 + A4*B1*C3*D2 +
+					A4*B2*C1*D3 - A4*B2*C3*D1 - A4*B3*C1*D2 + A4*B3*C2*D1) ;
+
+				phinr_cj = -(A1*B2*C3*E4 - A1*B2*C4*E3 - A1*B3*C2*E4 + A1*B3*C4*E2 + A1*B4*C2*E3
+					- A1*B4*C3*E2 - A2*B1*C3*E4 + A2*B1*C4*E3 + A2*B3*C1*E4 - A2*B3*C4*E1
+					- A2*B4*C1*E3 + A2*B4*C3*E1 + A3*B1*C2*E4 - A3*B1*C4*E2 - A3*B2*C1*E4
+					+ A3*B2*C4*E1 + A3*B4*C1*E2 - A3*B4*C2*E1 - A4*B1*C2*E3 + A4*B1*C3*E2
+					+ A4*B2*C1*E3 - A4*B2*C3*E1 - A4*B3*C1*E2 + A4*B3*C2*E1)/
+					(A1*B2*C3*D4 - A1*B2*C4*D3 - A1*B3*C2*D4 + A1*B3*C4*D2 + A1*B4*C2*D3 -
+					A1*B4*C3*D2 - A2*B1*C3*D4 + A2*B1*C4*D3 + A2*B3*C1*D4 - A2*B3*C4*D1 -
+					A2*B4*C1*D3 + A2*B4*C3*D1 + A3*B1*C2*D4 - A3*B1*C4*D2 - A3*B2*C1*D4 +
+					A3*B2*C4*D1 + A3*B4*C1*D2 - A3*B4*C2*D1 - A4*B1*C2*D3 + A4*B1*C3*D2 +
+					A4*B2*C1*D3 - A4*B2*C3*D1 - A4*B3*C1*D2 + A4*B3*C2*D1) ;
+
+				Ips = (phips - phipr * lm / Lr) / sigma1;  // pu
+				Ipr = (phipr - phips * lm / Ls) / sigma2;  // pu
+				Ins_cj = (phins_cj - phinr_cj * lm / Lr) / sigma1; // pu
+				Inr_cj = (phinr_cj - phins_cj * lm / Ls) / sigma2; // pu
+				Telec = (~phips * Ips + ~phins_cj * Ins_cj).Im() ;  // pu
+
+				// iteratively compute speed increment to make sure Telec matches TL during steady state mode
+				// if it does not match, then update current and Telec using new omgr0
+				omgr0_delta = ( Telec - TL ) / interation_count;
+
+				// printf("omgr0 = %f, omgr0_delta = %f, Telec = %f, TL = %f \n", omgr0, omgr0_delta, Telec, TL);
+
+				//update the rotor speed to make sure electrical torque traces mechanical torque
+				if (omgr0 + omgr0_delta > 0) {
+					omgr0 = omgr0 + omgr0_delta;
+				}
+				else {
+					omgr0 = 0;
+				}
+
+			}  // End while
+
+        } // End if TPIM_initial_status == initialRUNNING
+
+        else // must be TPIM_initial_status == initialSTATIONARY
+        {
+        	omgr0 = 0.0;
+        	TL = 0.0;
 
 			// pre-calculate complex coefficients of the 4 linear equations associated with flux state variables
-            A1 = -(complex(0,1) * (wref + wsyn) + rs / sigma1) ;
-            B1 =  0.0 ;
-            C1 =  rs / sigma1 * lm / Lr ;
-            D1 =  0.0 ;
-            E1 = Vap ;
+			A1 = -(complex(0,1) * (wref + wsyn) + rs / sigma1) ;
+			B1 =  0.0 ;
+			C1 =  rs / sigma1 * lm / Lr ;
+			D1 =  0.0 ;
+			E1 = Vap ;
 
-            A2 = 0.0;
-            B2 = -(complex(0,1) * (wref - wsyn) + rs / sigma1) ;
-            C2 = 0.0 ;
-            D2 = rs / sigma1 * lm / Lr ;
-            E2 = ~Van ;  // Does ~ represent conjugate of complex ?
+			A2 = 0.0;
+			B2 = -(complex(0,1) * (wref - wsyn) + rs / sigma1) ;
+			C2 = 0.0 ;
+			D2 = rs / sigma1 * lm / Lr ;
+			E2 = ~Van ;  // Does ~ represent conjugate of complex ?
 
-            A3 = rr / sigma2 * lm / Ls ;
-            B3 =  0.0 ;
-            C3 =  -(complex(0,1) * (wref + wsyn - omgr0) + rr / sigma2) ;
-            D3 =  0.0 ;
-            E3 =  0.0 ;
+			A3 = rr / sigma2 * lm / Ls ;
+			B3 =  0.0 ;
+			C3 =  -(complex(0,1) * (wref + wsyn - omgr0) + rr / sigma2) ;
+			D3 =  0.0 ;
+			E3 =  0.0 ;
 
-            A4 = 0.0 ;
-            B4 =  rr / sigma2 * lm / Ls ;
-            C4 = 0.0 ;
-            D4 = -(complex(0,1) * (wref - wsyn - omgr0) + rr / sigma2) ;
-            E4 =  0.0 ;
+			A4 = 0.0 ;
+			B4 =  rr / sigma2 * lm / Ls ;
+			C4 = 0.0 ;
+			D4 = -(complex(0,1) * (wref - wsyn - omgr0) + rr / sigma2) ;
+			E4 =  0.0 ;
 
-            // solve the 4 linear equations to obtain 4 flux state variables
-            phips = (B1*C2*D3*E4 - B1*C2*D4*E3 - B1*C3*D2*E4 + B1*C3*D4*E2 + B1*C4*D2*E3
-                - B1*C4*D3*E2 - B2*C1*D3*E4 + B2*C1*D4*E3 + B2*C3*D1*E4 - B2*C3*D4*E1
-                - B2*C4*D1*E3 + B2*C4*D3*E1 + B3*C1*D2*E4 - B3*C1*D4*E2 - B3*C2*D1*E4
-                + B3*C2*D4*E1 + B3*C4*D1*E2 - B3*C4*D2*E1 - B4*C1*D2*E3 + B4*C1*D3*E2
-                + B4*C2*D1*E3 - B4*C2*D3*E1 - B4*C3*D1*E2 + B4*C3*D2*E1)/
-                (A1*B2*C3*D4 - A1*B2*C4*D3 - A1*B3*C2*D4 + A1*B3*C4*D2 + A1*B4*C2*D3 -
-                A1*B4*C3*D2 - A2*B1*C3*D4 + A2*B1*C4*D3 + A2*B3*C1*D4 - A2*B3*C4*D1 -
-                A2*B4*C1*D3 + A2*B4*C3*D1 + A3*B1*C2*D4 - A3*B1*C4*D2 - A3*B2*C1*D4 +
-                A3*B2*C4*D1 + A3*B4*C1*D2 - A3*B4*C2*D1 - A4*B1*C2*D3 + A4*B1*C3*D2 +
-                A4*B2*C1*D3 - A4*B2*C3*D1 - A4*B3*C1*D2 + A4*B3*C2*D1) ;
+			// solve the 4 linear equations to obtain 4 flux state variables
+			phips = (B1*C2*D3*E4 - B1*C2*D4*E3 - B1*C3*D2*E4 + B1*C3*D4*E2 + B1*C4*D2*E3
+				- B1*C4*D3*E2 - B2*C1*D3*E4 + B2*C1*D4*E3 + B2*C3*D1*E4 - B2*C3*D4*E1
+				- B2*C4*D1*E3 + B2*C4*D3*E1 + B3*C1*D2*E4 - B3*C1*D4*E2 - B3*C2*D1*E4
+				+ B3*C2*D4*E1 + B3*C4*D1*E2 - B3*C4*D2*E1 - B4*C1*D2*E3 + B4*C1*D3*E2
+				+ B4*C2*D1*E3 - B4*C2*D3*E1 - B4*C3*D1*E2 + B4*C3*D2*E1)/
+				(A1*B2*C3*D4 - A1*B2*C4*D3 - A1*B3*C2*D4 + A1*B3*C4*D2 + A1*B4*C2*D3 -
+				A1*B4*C3*D2 - A2*B1*C3*D4 + A2*B1*C4*D3 + A2*B3*C1*D4 - A2*B3*C4*D1 -
+				A2*B4*C1*D3 + A2*B4*C3*D1 + A3*B1*C2*D4 - A3*B1*C4*D2 - A3*B2*C1*D4 +
+				A3*B2*C4*D1 + A3*B4*C1*D2 - A3*B4*C2*D1 - A4*B1*C2*D3 + A4*B1*C3*D2 +
+				A4*B2*C1*D3 - A4*B2*C3*D1 - A4*B3*C1*D2 + A4*B3*C2*D1) ;
 
-            phins_cj =  -(A1*C2*D3*E4 - A1*C2*D4*E3 - A1*C3*D2*E4 + A1*C3*D4*E2 + A1*C4*D2*E3
-                - A1*C4*D3*E2 - A2*C1*D3*E4 + A2*C1*D4*E3 + A2*C3*D1*E4 - A2*C3*D4*E1
-                - A2*C4*D1*E3 + A2*C4*D3*E1 + A3*C1*D2*E4 - A3*C1*D4*E2 - A3*C2*D1*E4
-                + A3*C2*D4*E1 + A3*C4*D1*E2 - A3*C4*D2*E1 - A4*C1*D2*E3 + A4*C1*D3*E2
-                + A4*C2*D1*E3 - A4*C2*D3*E1 - A4*C3*D1*E2 + A4*C3*D2*E1)/
-                (A1*B2*C3*D4 - A1*B2*C4*D3 - A1*B3*C2*D4 + A1*B3*C4*D2 + A1*B4*C2*D3 -
-                A1*B4*C3*D2 - A2*B1*C3*D4 + A2*B1*C4*D3 + A2*B3*C1*D4 - A2*B3*C4*D1 -
-                A2*B4*C1*D3 + A2*B4*C3*D1 + A3*B1*C2*D4 - A3*B1*C4*D2 - A3*B2*C1*D4 +
-                A3*B2*C4*D1 + A3*B4*C1*D2 - A3*B4*C2*D1 - A4*B1*C2*D3 + A4*B1*C3*D2 +
-                A4*B2*C1*D3 - A4*B2*C3*D1 - A4*B3*C1*D2 + A4*B3*C2*D1) ;
+			phins_cj =  -(A1*C2*D3*E4 - A1*C2*D4*E3 - A1*C3*D2*E4 + A1*C3*D4*E2 + A1*C4*D2*E3
+				- A1*C4*D3*E2 - A2*C1*D3*E4 + A2*C1*D4*E3 + A2*C3*D1*E4 - A2*C3*D4*E1
+				- A2*C4*D1*E3 + A2*C4*D3*E1 + A3*C1*D2*E4 - A3*C1*D4*E2 - A3*C2*D1*E4
+				+ A3*C2*D4*E1 + A3*C4*D1*E2 - A3*C4*D2*E1 - A4*C1*D2*E3 + A4*C1*D3*E2
+				+ A4*C2*D1*E3 - A4*C2*D3*E1 - A4*C3*D1*E2 + A4*C3*D2*E1)/
+				(A1*B2*C3*D4 - A1*B2*C4*D3 - A1*B3*C2*D4 + A1*B3*C4*D2 + A1*B4*C2*D3 -
+				A1*B4*C3*D2 - A2*B1*C3*D4 + A2*B1*C4*D3 + A2*B3*C1*D4 - A2*B3*C4*D1 -
+				A2*B4*C1*D3 + A2*B4*C3*D1 + A3*B1*C2*D4 - A3*B1*C4*D2 - A3*B2*C1*D4 +
+				A3*B2*C4*D1 + A3*B4*C1*D2 - A3*B4*C2*D1 - A4*B1*C2*D3 + A4*B1*C3*D2 +
+				A4*B2*C1*D3 - A4*B2*C3*D1 - A4*B3*C1*D2 + A4*B3*C2*D1) ;
 
-            phipr = (A1*B2*D3*E4 - A1*B2*D4*E3 - A1*B3*D2*E4 + A1*B3*D4*E2 + A1*B4*D2*E3
-                - A1*B4*D3*E2 - A2*B1*D3*E4 + A2*B1*D4*E3 + A2*B3*D1*E4 - A2*B3*D4*E1
-                - A2*B4*D1*E3 + A2*B4*D3*E1 + A3*B1*D2*E4 - A3*B1*D4*E2 - A3*B2*D1*E4
-                + A3*B2*D4*E1 + A3*B4*D1*E2 - A3*B4*D2*E1 - A4*B1*D2*E3 + A4*B1*D3*E2
-                + A4*B2*D1*E3 - A4*B2*D3*E1 - A4*B3*D1*E2 + A4*B3*D2*E1)/
-                (A1*B2*C3*D4 - A1*B2*C4*D3 - A1*B3*C2*D4 + A1*B3*C4*D2 + A1*B4*C2*D3 -
-                A1*B4*C3*D2 - A2*B1*C3*D4 + A2*B1*C4*D3 + A2*B3*C1*D4 - A2*B3*C4*D1 -
-                A2*B4*C1*D3 + A2*B4*C3*D1 + A3*B1*C2*D4 - A3*B1*C4*D2 - A3*B2*C1*D4 +
-                A3*B2*C4*D1 + A3*B4*C1*D2 - A3*B4*C2*D1 - A4*B1*C2*D3 + A4*B1*C3*D2 +
-                A4*B2*C1*D3 - A4*B2*C3*D1 - A4*B3*C1*D2 + A4*B3*C2*D1) ;
+			phipr = (A1*B2*D3*E4 - A1*B2*D4*E3 - A1*B3*D2*E4 + A1*B3*D4*E2 + A1*B4*D2*E3
+				- A1*B4*D3*E2 - A2*B1*D3*E4 + A2*B1*D4*E3 + A2*B3*D1*E4 - A2*B3*D4*E1
+				- A2*B4*D1*E3 + A2*B4*D3*E1 + A3*B1*D2*E4 - A3*B1*D4*E2 - A3*B2*D1*E4
+				+ A3*B2*D4*E1 + A3*B4*D1*E2 - A3*B4*D2*E1 - A4*B1*D2*E3 + A4*B1*D3*E2
+				+ A4*B2*D1*E3 - A4*B2*D3*E1 - A4*B3*D1*E2 + A4*B3*D2*E1)/
+				(A1*B2*C3*D4 - A1*B2*C4*D3 - A1*B3*C2*D4 + A1*B3*C4*D2 + A1*B4*C2*D3 -
+				A1*B4*C3*D2 - A2*B1*C3*D4 + A2*B1*C4*D3 + A2*B3*C1*D4 - A2*B3*C4*D1 -
+				A2*B4*C1*D3 + A2*B4*C3*D1 + A3*B1*C2*D4 - A3*B1*C4*D2 - A3*B2*C1*D4 +
+				A3*B2*C4*D1 + A3*B4*C1*D2 - A3*B4*C2*D1 - A4*B1*C2*D3 + A4*B1*C3*D2 +
+				A4*B2*C1*D3 - A4*B2*C3*D1 - A4*B3*C1*D2 + A4*B3*C2*D1) ;
 
-            phinr_cj = -(A1*B2*C3*E4 - A1*B2*C4*E3 - A1*B3*C2*E4 + A1*B3*C4*E2 + A1*B4*C2*E3
-                - A1*B4*C3*E2 - A2*B1*C3*E4 + A2*B1*C4*E3 + A2*B3*C1*E4 - A2*B3*C4*E1
-                - A2*B4*C1*E3 + A2*B4*C3*E1 + A3*B1*C2*E4 - A3*B1*C4*E2 - A3*B2*C1*E4
-                + A3*B2*C4*E1 + A3*B4*C1*E2 - A3*B4*C2*E1 - A4*B1*C2*E3 + A4*B1*C3*E2
-                + A4*B2*C1*E3 - A4*B2*C3*E1 - A4*B3*C1*E2 + A4*B3*C2*E1)/
-                (A1*B2*C3*D4 - A1*B2*C4*D3 - A1*B3*C2*D4 + A1*B3*C4*D2 + A1*B4*C2*D3 -
-                A1*B4*C3*D2 - A2*B1*C3*D4 + A2*B1*C4*D3 + A2*B3*C1*D4 - A2*B3*C4*D1 -
-                A2*B4*C1*D3 + A2*B4*C3*D1 + A3*B1*C2*D4 - A3*B1*C4*D2 - A3*B2*C1*D4 +
-                A3*B2*C4*D1 + A3*B4*C1*D2 - A3*B4*C2*D1 - A4*B1*C2*D3 + A4*B1*C3*D2 +
-                A4*B2*C1*D3 - A4*B2*C3*D1 - A4*B3*C1*D2 + A4*B3*C2*D1) ;
+			phinr_cj = -(A1*B2*C3*E4 - A1*B2*C4*E3 - A1*B3*C2*E4 + A1*B3*C4*E2 + A1*B4*C2*E3
+				- A1*B4*C3*E2 - A2*B1*C3*E4 + A2*B1*C4*E3 + A2*B3*C1*E4 - A2*B3*C4*E1
+				- A2*B4*C1*E3 + A2*B4*C3*E1 + A3*B1*C2*E4 - A3*B1*C4*E2 - A3*B2*C1*E4
+				+ A3*B2*C4*E1 + A3*B4*C1*E2 - A3*B4*C2*E1 - A4*B1*C2*E3 + A4*B1*C3*E2
+				+ A4*B2*C1*E3 - A4*B2*C3*E1 - A4*B3*C1*E2 + A4*B3*C2*E1)/
+				(A1*B2*C3*D4 - A1*B2*C4*D3 - A1*B3*C2*D4 + A1*B3*C4*D2 + A1*B4*C2*D3 -
+				A1*B4*C3*D2 - A2*B1*C3*D4 + A2*B1*C4*D3 + A2*B3*C1*D4 - A2*B3*C4*D1 -
+				A2*B4*C1*D3 + A2*B4*C3*D1 + A3*B1*C2*D4 - A3*B1*C4*D2 - A3*B2*C1*D4 +
+				A3*B2*C4*D1 + A3*B4*C1*D2 - A3*B4*C2*D1 - A4*B1*C2*D3 + A4*B1*C3*D2 +
+				A4*B2*C1*D3 - A4*B2*C3*D1 - A4*B3*C1*D2 + A4*B3*C2*D1) ;
 
-            Ips = (phips - phipr * lm / Lr) / sigma1;  // pu
-            Ipr = (phipr - phips * lm / Ls) / sigma2;  // pu
-            Ins_cj = (phins_cj - phinr_cj * lm / Lr) / sigma1; // pu
-            Inr_cj = (phinr_cj - phins_cj * lm / Ls) / sigma2; // pu
-            Telec = (~phips * Ips + ~phins_cj * Ins_cj).Im() ;  // pu
-
-            // iteratively compute speed increment to make sure Telec matches TL during steady state mode
-            // if it does not match, then update current and Telec using new omgr0
-            omgr0_delta = ( Telec - TL ) / interation_count;
-
-			//update the rotor speed
-			if (omgr0 + omgr0_delta > 0) {
-				omgr0 = omgr0 + omgr0_delta;
-			}
-			else {
-				omgr0 = 0;
-			}
-		}
+			Ips = (phips - phipr * lm / Lr) / sigma1;  // pu
+			Ipr = (phipr - phips * lm / Ls) / sigma2;  // pu
+			Ins_cj = (phins_cj - phinr_cj * lm / Lr) / sigma1; // pu
+			Inr_cj = (phinr_cj - phins_cj * lm / Ls) / sigma2; // pu
+			Telec = (~phips * Ips + ~phins_cj * Ins_cj).Im() ;  // pu
+        }
 
 		// system current and power equations
         Ias = Ips + ~Ins_cj ;// pu
@@ -1356,6 +1522,11 @@ void motor::TPIMDynamic(double curr_delta_time, double dTime) {
     Van = (Vas + alpha * alpha * Vbs + alpha * Vcs) / 3.0;
 
     TPIMupdateVars();
+
+    // Apply mechanical torque
+    if(omgr0 >= 1.0){
+    	TL = TLrated;
+    }
 
     //*** Predictor Step ***//
     // predictor step 1 - calculate coefficients

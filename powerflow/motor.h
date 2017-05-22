@@ -44,7 +44,7 @@ private:
 	void TPIMUpdateMotorStatus(); // function to update the status of the motor
 	void TPIMStateOFF(); // function to ensure that internal model states are zeros when the motor is OFF
 	void TPIMreinitializeVars(); // function to reinitialize values for the motor model
-//	void TPIMUpdateProtection(double delta_time); // function to update the protection of the motor
+	void TPIMUpdateProtection(double delta_time); // function to update the protection of the motor
 	void TPIMSteadyState(TIMESTAMP t1); // steady state model for the TPIM motor
 	void TPIMDynamic(double curr_delta_time, double dTime); // dynamic phasor model for the TPIM motor
 	//************** End_Yuan's TPIM model ********************//
@@ -149,7 +149,8 @@ private:
 	double IbTPIM; // base current for TPIM model
 	double lls;
 	double llr;
-	double TL;
+	double TLrated; // rated mechanical torque applied to three phase induction motor
+	double TL;  // actually applied mechanical torque
 	double Kfric;
 	complex phips;
 	complex phins_cj;
@@ -183,6 +184,12 @@ private:
 	complex Ipr_prev;
 	complex Ins_cj_prev;
 	complex Inr_cj_prev;
+
+	typedef enum {
+		initialRUNNING=0,			///< Motor starts running from established speed and torque
+		initialSTATIONARY = 1			///< Motor starts up from zero speed and torque
+	} TPIM_INITIAL_STATUS;
+	enumeration TPIM_initial_status;
 
 	//************** End_Yuan's TPIM model ********************//
 
