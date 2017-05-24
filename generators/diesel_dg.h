@@ -134,8 +134,6 @@ private:
 	complex *full_bus_admittance_mat;	//Link to bus full self-admittance of Ybus form
 	complex *PGenerated;				//Link to bus PGenerated field - mainly used for SWING generator
 	complex *IGenerated;				//Link to direct current injections to powerflow at bus-level
-	complex *FreqPower;					//Link to bus "frequency-power weighted" accumulation
-	complex *TotalPower;				//Link to bus "accumulated power" - used for nominal frequency calculation
 	complex generator_admittance[3][3];	//Generator admittance matrix converted from sequence values
 	double power_base;					//Per-phase basis (divide by 3)
 	double voltage_base;				//Voltage p.u. base for analysis (converted from delta)

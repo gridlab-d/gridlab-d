@@ -536,8 +536,6 @@ int diesel_dg::create(void)
 	full_bus_admittance_mat = NULL;
 	PGenerated = NULL;
 	IGenerated = NULL;
-	FreqPower = NULL;
-	TotalPower = NULL;
 	Governor_type = NO_GOV;
 	Exciter_type = NO_EXC;
 
@@ -1338,26 +1336,6 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 					//See if it worked (should return NULL if the object wasn't "delta-compliant"
 					if (full_bus_admittance_mat==NULL)
-					{
-						GL_THROW("diesel_dg:%s - invalid reference passed from node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
-						//Defined above
-					}
-
-					//Map the Frequency-power weighting value
-					FreqPower = ((complex * (*)(OBJECT *, unsigned char))(*test_fxn))(obj->parent,4);
-
-					//See if it worked (should return NULL if the object wasn't "delta-compliant"
-					if (FreqPower==NULL)
-					{
-						GL_THROW("diesel_dg:%s - invalid reference passed from node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
-						//Defined above
-					}
-
-					//Map the total power weighting value
-					TotalPower = ((complex * (*)(OBJECT *, unsigned char))(*test_fxn))(obj->parent,5);
-
-					//See if it worked (should return NULL if the object wasn't "delta-compliant"
-					if (TotalPower==NULL)
 					{
 						GL_THROW("diesel_dg:%s - invalid reference passed from node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
 						//Defined above
@@ -3521,12 +3499,6 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 		}
 	}//End SEXS initialization
 	//Default else - no AVR/Exciter init
-
-
-	//Zero out our "parent" accumulators for final frequency
-	//May get zeroed out multiple times - better safe than sorry
-	*FreqPower = complex(0.0,0.0);
-	*TotalPower = complex(0.0,0.0);
 
 	return SUCCESS;	//Always succeeds for now, but could have error checks later
 }

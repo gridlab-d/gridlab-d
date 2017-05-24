@@ -4923,8 +4923,6 @@ EXPORT SIMULATIONMODE interupdate_node(OBJECT *obj, unsigned int64 delta_time, u
 //1 - PGenTotal - total amount of generation on that bus (for current gen)
 //2 - DeltaCurrents - currents calculated from updated powerflow solution
 //3 - full_Y_all - exposed Ybus self admittance area
-//4 - FreqPower - Frequeny-power weighting, for "nominal" update at end
-//5 - TotalPower - Accumulated power, but not powerflow derived (differs from PGenTotal above)
 EXPORT complex *delta_linkage(OBJECT *obj, unsigned char mapvar)
 {
 	complex *testval;
@@ -4945,14 +4943,6 @@ EXPORT complex *delta_linkage(OBJECT *obj, unsigned char mapvar)
 	else if (mapvar==3)	//Self admittance, but fully Y-bus form
 	{
 		testval = my->full_Y_all;
-	}
-	else if (mapvar==4)	//Frequency-power variable
-	{
-		testval = &(my->DynVariable[4]);
-	}
-	else if (mapvar==5)	//Total power variable
-	{
-		testval = &(my->DynVariable[5]);
 	}
 	else	//Unknown - fail out
 	{
