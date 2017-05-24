@@ -104,7 +104,6 @@ GLOBAL unsigned long deltamode_timestep INIT(10000000); /* deltamode timestep va
 GLOBAL double deltamode_timestep_publish INIT(10000000.0); /* deltamode module-published 10 ms timestep, at first -- module property version, to be converted*/
 GLOBAL OBJECT **delta_objects INIT(NULL);				/* Array pointer objects that need deltamode interupdate calls */
 GLOBAL FUNCTIONADDR *delta_functions INIT(NULL);	/* Array pointer functions for objects that need deltamode interupdate calls */
-GLOBAL FUNCTIONADDR *delta_freq_functions INIT(NULL);	/* Array pointer functions for objects that have "frequency" updates at end of deltamode */
 GLOBAL FUNCTIONADDR *post_delta_functions INIT(NULL);		/* Array pointer functions for objects that need deltamode postupdate calls */
 GLOBAL int pwr_object_count INIT(0);				/* deltamode object count */
 GLOBAL int pwr_object_current INIT(-1);				/* Index of current deltamode object */
@@ -115,7 +114,6 @@ GLOBAL TIMESTAMP deltamode_supersec_endtime INIT(TS_NEVER);	/* Tracking variable
 GLOBAL double current_frequency INIT(60.0);			/**< Current operating frequency of the system - used by deltamode stuff */
 GLOBAL bool master_frequency_update INIT(false);	/**< Whether a generator has designated itself "keeper of frequency" -- temporary deltamode override */
 GLOBAL bool enable_frequency_dependence INIT(false);	/**< Flag to enable frequency-based updates of impedance values, namely loads and lines */
-GLOBAL int64 deltamode_extra_function INIT(0);		/**< Kludge pointer to module-level function, so generators can call it */
 GLOBAL double default_resistance INIT(1e-4);		/**< sets the default resistance for safety devices */
 
 //In-rush deltamode stuff
@@ -128,7 +126,6 @@ GLOBAL bool enable_mesh_fault_current INIT(false);	/** Flag to enable mesh-based
 
 // Deltamode stuff
 void schedule_deltamode_start(TIMESTAMP tstart);	/* Anticipated time for a deltamode start, even if it is now */
-int delta_extra_function(unsigned int mode);
 
 /* used by many powerflow enums */
 #define UNKNOWN 0

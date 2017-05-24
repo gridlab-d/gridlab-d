@@ -1192,13 +1192,6 @@ int node::init(OBJECT *parent)
 		//Increment the counter for allocation
 		pwr_object_count++;
 
-		//If we're THE SWING, map the variable for the extra function as well
-		if (obj==NR_swing_bus)
-		{
-			//Assign the function variable for deltamode
-			deltamode_extra_function = (int64)(&(delta_extra_function));
-		}
-
 		//Check out parent and toss some warnings
 		if (TopologicalParent != NULL)
 		{
@@ -1608,16 +1601,6 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 						*/
 					}
 
-					//Allocate "frequency" function references
-					delta_freq_functions = (FUNCTIONADDR*)gl_malloc(pwr_object_count*sizeof(FUNCTIONADDR));
-
-					//Make sure it worked
-					if (delta_freq_functions == NULL)
-					{
-						GL_THROW("Failed to allocate deltamode objects function array for powerflow module!");
-						//Defined above
-					}
-
 					//Allocate the post update array
 					post_delta_functions = (FUNCTIONADDR*)gl_malloc(pwr_object_count*sizeof(FUNCTIONADDR));
 
@@ -1746,20 +1729,6 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 				does not support deltamode.  If the error persists and the object does, please submit your code and
 				a bug report via the trac website.
 				*/
-			}
-
-			//Map up the frequency function
-			delta_freq_functions[temp_pwr_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"delta_freq_pwr_object"));
-
-			//Make sure it worked
-			if (delta_freq_functions[temp_pwr_object_current] == NULL)
-			{
-				//Make sure we didn't already warn out -- it's an indication we're not delta-compliant and the "overall" flag is hitting us
-				if (delta_functions[temp_pwr_object_current] != NULL)
-				{
-					gl_warning("Failure to map deltamode function for devices:%s",obj->name);
-					//Defined above - assumes they exist in pairs
-				}
 			}
 
 			//Map up the post update, if we have one
