@@ -1,7 +1,0 @@
-libopfInitialize
-libopfInitializeWithHandlers
-libopfTerminate
-libopfPrintStackTrace
-libopfGetMcrID
-mlxOpf
-opf
