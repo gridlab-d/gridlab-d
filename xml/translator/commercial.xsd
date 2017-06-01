@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema targetNamespace="http://tempuri.org/XMLSchema.xsd" elementFormDefault="qualified" xmlns="http://tempuri.org/XMLSchema.xsd" xmlns:mstns="http://tempuri.org/XMLSchema.xsd" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:complexType name="Complex">
+    <xs:sequence>
+      <xs:element name="complex" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="Office">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="floorarea_sf" type="xs:double" />
+        <xs:element name="occupants_psf" type="xs:double" />
+        <xs:element name="occupancy_schedule" type="xs:string" />
+        <xs:element name="occupancy" type="xs:double" />
+        <xs:element name="cooling_design_temp_F" type="xs:double" />
+        <xs:element name="cooling_balance_temp_F" type="xs:double" />
+        <xs:element name="heating_design_temp_F" type="xs:double" />
+        <xs:element name="heating_balance_temp_F" type="xs:double" />
+        <xs:element name="desired_temp_F" type="xs:double" />
+        <xs:element name="energy_kwh" type="Complex" />
+        <xs:element name="power_kw" type="Complex" />
+        <xs:element name="cop" type="Cop" />
+        <xs:element name="UAw" type="xs:double" />
+        <xs:element name="UWm" type="xs:double" />
+        <xs:element name="Hm" type="xs:double" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="Cop">
+    <xs:simpleContent>
+      <xs:extension base="xs:double">
+        <xs:attribute name="cop0" type="xs:double" />
+        <xs:attribute name="cop1" type="xs:double" />
+        <xs:attribute name="cop2" type="xs:double" />
+        <xs:attribute name="cop3" type="xs:double" />
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+</xs:schema>

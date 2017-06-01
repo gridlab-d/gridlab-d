@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema targetNamespace="http://tempuri.org/XMLSchema.xsd" elementFormDefault="qualified" xmlns="http://tempuri.org/XMLSchema.xsd" xmlns:mstns="http://tempuri.org/XMLSchema.xsd" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="House">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="size" type="xs:double" />
+        <xs:element name="total_internal_gain" type="xs:double" />
+        <xs:element name="lights_heat_energy" type="xs:double" />
+        <xs:element name="range_heat_energy" type="xs:double" />
+        <xs:element name="occupant_load_heat_energy" type="xs:double" />
+        <xs:element name="plug_load_heat_energy" type="xs:double" />
+        <xs:element name="microwave_heat_energy" type="xs:double" />
+        <xs:element name="dishwasher_heat_energy" type="xs:double" />
+        <xs:element name="clotheswasher_heat_energy" type="xs:double" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Washer">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="circuit_split" type="xs:double" />
+        <xs:element name="installed_power" type="xs:double" />
+        <xs:element name="demand" type="xs:double" />
+        <xs:element name="power_demand" type="Complex" />
+        <xs:element name="kwh_meter" type="xs:double" />
+        <xs:element name="heat_loss" type="xs:double" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="Complex">
+    <xs:sequence>
+      <xs:element name="complex" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="Waterheater">
+    <xs:complexType>
+      <xs:sequence />
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Refrigerator">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="size" type="xs:double" />
+        <xs:element name="hys" type="xs:double" />
+        <xs:element name="UAr" type="xs:double" />
+        <xs:element name="UAf" type="xs:double" />
+        <xs:element name="Tair" type="xs:double" />
+        <xs:element name="Tout" type="xs:double" />
+        <xs:element name="Tset" type="xs:double" />
+        <xs:element name="Tcurtail" type="xs:double" />
+        <xs:element name="Cf" type="xs:double" />
+        <xs:element name="Qrated" type="xs:double" />
+        <xs:element name="Qr" type="xs:double" />
+        <xs:element name="Cfm" type="xs:double" />
+        <xs:element name="MWhmeter" type="xs:double" />
+        <xs:element name="MWavg" type="xs:double" />
+        <xs:element name="COPcoef" type="xs:double" />
+        <xs:element name="Qloss" type="xs:double" />
+        <xs:element name="CurtailTlimit" type="xs:double" />
+        <xs:element name="power_kw" type="Complex" />
+        <xs:element name="kwh_meter" type="xs:double" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Range">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="circuit_split" type="xs:double" />
+        <xs:element name="installed_power" type="xs:double" />
+        <xs:element name="demand" type="xs:double" />
+        <xs:element name="power_kw" type="Complex" />
+        <xs:element name="kwh_meter" type="xs:double" />
+        <xs:element name="internal_heat" type="xs:double" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Occupantload">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="number_of_occupants" type="xs:int" />
+        <xs:element name="occupancy_fraction" type="xs:double" />
+        <xs:element name="heatgain_per_person" type="xs:double" />
+        <xs:element name="total_occupant_load" type="xs:double" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Microwave">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="circuit_split" type="xs:double" />
+        <xs:element name="installed_power" type="xs:double" />
+        <xs:element name="power_kw" type="Complex" />
+        <xs:element name="kwh_meter" type="xs:double" />
+        <xs:element name="heat_fraction" type="xs:double" />
+        <xs:element name="internal_heat" type="xs:double" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Clotheswasher">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="circuit_split" type="xs:double" />
+        <xs:element name="installed_power" type="xs:double" />
+        <xs:element name="demand" type="xs:double" />
+        <xs:element name="power_kw" type="Complex" />
+        <xs:element name="kwh_meter" type="xs:double" />
+        <xs:element name="internal_heat" type="xs:double" />
+        <xs:element name="heat_fraction" type="xs:double" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Dishwasher">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="circuit_split" type="xs:double" />
+        <xs:element name="installed_power" type="xs:double" />
+        <xs:element name="demand" type="xs:double" />
+        <xs:element name="power_kw" type="Complex" />
+        <xs:element name="kwh_meter" type="xs:double" />
+        <xs:element name="internal_heat" type="xs:double" />
+        <xs:element name="heat_fraction" type="xs:double" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Meter">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="v12" type="Complex" />
+        <xs:element name="v23" type="Complex" />
+        <xs:element name="v13" type="Complex" />
+        <xs:element name="i1" type="Complex" />
+        <xs:element name="i2" type="Complex" />
+        <xs:element name="i3" type="Complex" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

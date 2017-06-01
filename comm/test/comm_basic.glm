@@ -1,0 +1,119 @@
+module tape;
+module market;
+module residential {
+	implicit_enduses NONE;
+};
+module climate;
+module comm;
+
+//#setenv path=c:/mingw/bin
+//#setenv INCLUDE=c:/mingw/include
+//#set include=C:\Projects\GLD_Nov_2010\trunk\core
+#set include=../../core/
+#set suppress_repeat_messages=0
+//#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
+//#set minimum_timestep=60;
+#set profiler=1;
+#set relax_naming_rules=1;
+#set randomseed=17657
+
+clock {
+	//timezone PST+8PDT;
+	timezone PST+8PDT;
+	starttime '2001-01-01 00:00:00';
+	stoptime '2001-01-05 00:00:00';
+}
+
+object climate{
+	name "Seattle WA";
+	tmyfile "WA-Seattle.tmy2";
+	interpolate QUADRATIC;
+}
+
+
+object network{
+	name house_network;
+	bandwidth 1024 kB/s;
+	queue_resolution REJECT;
+	latency_mode triangle;
+	//latency_period 1.6s;
+	latency_arg1 0.0;
+	latency_arg2 5.0;
+	object multi_recorder{
+		name net_rec;
+		file net_rec0.csv;
+		interval 0;
+		limit 10000;
+		property latency,bandwidth_used,house_nif:buffer,house_nif:send_rate_used,rdr_nif:buffer,rdr_nif:recv_rate_used;
+	};
+}
+
+object house {
+	name our_house;
+	floor_area 1800;
+	thermal_integrity_level 5;
+	heating_system_type RESISTANCE;
+	thermostat_deadband 2;
+	thermostat_cycle_time 120;
+	object network_interface{
+		name house_nif;
+		to house_network;
+		destination rdr_nif;
+		size 4608 B;
+		send_rate 1;
+		recv_rate 1;
+		duplex_mode TRANSMIT_ONLY;
+		update_rate 300;
+		send_mode INTERVAL;
+		property air_temperature;
+		buffer_size 8; // double
+	};
+}
+
+class house_reader{
+	double temp;
+	double temp2;
+	intrinsic create(object parent){
+		temp = 0.0;
+		return 1;
+	};
+	intrinsic init(object parent){
+		return 1;
+	};
+	intrinsic presync(TIMESTAMP t0, TIMESTAMP t1){
+		return TS_NEVER;
+	};
+	intrinsic sync(TIMESTAMP t0, TIMESTAMP t1){
+		return TS_NEVER;
+	};
+	intrinsic postsync(TIMESTAMP t0, TIMESTAMP t1){
+		return TS_NEVER;
+	};
+}
+
+object house_reader{
+	temp  0.0;
+	temp2 our_house.air_temperature;
+	object network_interface{
+		name rdr_nif;
+		to house_network;
+		duplex_mode RECEIVE_ONLY;
+		send_rate 1;
+		recv_rate 1;
+		property temp;
+	};
+	object multi_recorder{
+		name hr_rec;
+		file hr_rec.csv;
+		property temp,temp2,our_house:air_temperature;
+		limit 10000;
+		interval 300;
+	};
+	object multi_recorder{
+		name hr_rec0;
+		file hr_rec0.csv;
+		property temp,temp2,our_house:air_temperature;
+		limit 10000;
+		interval 0;
+	};
+}

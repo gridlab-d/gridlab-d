@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<!--__author__ = "Jimmy Du and Kyle Anderson"
+__copyright__ = "Copyright 2013, The GridSpice Project"
+__license__ = "BSD"
+__version__ = "1.0"
+__maintainer__ = ["Kyle Anderson", "Jimmy Du"]
+__email__ = ["kyle.anderson@stanford.edu", "jimmydu@stanford.edu"]
+__status__ = "Development" -->
+
+<html>
+  <head>
+    <title>GridSpice</title>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <style>
+      html, body, #map-canvas {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+      }
+    </style>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA1LhIFiY4pFfJ-oqtEA-6HcdoyMEaabc0&v=3&sensor=false"></script>
+    <script>
+    
+google.maps.visualRefresh = true;
+var map;
+
+var BASE_URL = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port;
+var IMAGES_URL = BASE_URL + '/gsimages';
+
+//Icons - Nodes
+var Icons = {};
+Icons.node = {
+    url: IMAGES_URL + '/node.png',
+    scaledSize: new google.maps.Size(32, 32)
+};
+Icons.triplex_node = {
+    url: IMAGES_URL + '/triplex_node.png',
+    scaledSize: new google.maps.Size(32, 32)
+};
+Icons.capacitor = {
+};
+Icons.load = {
+};
+Icons.meter = {
+    url: IMAGES_URL + '/meter.jpg',
+    scaledSize: new google.maps.Size(32, 32)
+};
+Icons.substation = {
+    url: IMAGES_URL + "/powersubstation.png",
+    scaledSize: new google.maps.Size(32, 32)
+};
+Icons.triplex_meter = {
+    url: IMAGES_URL + "/house.png",
+    scaledSize: new google.maps.Size(32, 32)
+};
+Icons.house = {
+};
+
+//Icons - Links
+Icons.regulator = {
+    url: IMAGES_URL + "/regulator.png",
+    scaledSize: new google.maps.Size(32, 32)
+};
+
+Icons.switch = {
+    url: IMAGES_URL + "/switch.png",
+    scaledSize: new google.maps.Size(32, 32)
+};
+
+Icons.transformer = {
+    url: IMAGES_URL + "/transformer.png",
+    scaledSize: new google.maps.Size(32, 32)
+};
+
+Icons.underground_line = {
+    url: IMAGES_URL + "/underground_line.png",
+    scaledSize: new google.maps.Size(32, 32)
+};
+
+Icons.overhead_line = {
+    url: IMAGES_URL + "/overhead_line.png",
+    scaledSize: new google.maps.Size(32, 32)
+};
+
+// Observed nodes
+var ObservedNodes = ['triplex_meter', 'triplex_node', 'capacitor', 'house', 'node', 'meter']
+var ObservedLinks = ['transformer', 'underground_line', 'overhead_line', 'regulator', 'switch', 'triplex_line']
+
+var markers = {};
+var typeToName = {};
+var labels = {};
+
+var Properties = {};
+Properties.triplex_meter = ['measured_voltage_1', 'measured_voltage_2'];
+
+function initialize() {
+  var mapOptions = {
+    zoom: 16,
+    center: new google.maps.LatLng(37.427962, -122.169667),
+    mapTypeId: google.maps.MapTypeId.ROADMAP
+  };
+
+  map = new google.maps.Map(document.getElementById('map-canvas'),
+      mapOptions);
+ 
+  // Retrieve initial objects
+  var xml = httpGet(BASE_URL + "/element_headers.xml");
+  var xmlElems = parseXmlString(xml);
+  var root = xmlElems.documentElement;
+  for (var i = 0; i < ObservedNodes.length; i+=1) {
+    var nodetype = ObservedNodes[i];
+    typeToName[nodetype] = [];
+    var children = root.getElementsByTagName(nodetype);
+    // Convert from xml to json object 
+    for (var j = 0; j < children.length; j+=1) {
+	var node = children[j];
+	var jsonMapObject = xmlToJSONMapNode(node,nodetype);
+        addNodeToMap(jsonMapObject, map);
+    }
+  }
+  for (var i = 0; i < ObservedLinks.length; i+=1) {
+    var linktype = ObservedLinks[i];
+    typeToName[linktype] = [];
+    var children = root.getElementsByTagName(linktype);
+    // Convert from xml to json
+    for (var j = 0; j < children.length; j+=1) {
+        var link = children[j];
+        var jsonMapObject = xmlToJSONMapLink(link,linktype);
+	addLinkToMap(jsonMapObject, map);
+    }
+  }
+  setHandlers();
+}
+
+function parseXmlString(xmlString) {
+  var xmlElems;
+  if (window.DOMParser)
+    {
+	parser=new DOMParser();
+  	xmlElems=parser.parseFromString(xmlString,"text/xml");
+    } 
+  else // Internet Explorer
+    {
+  	xmlElems=new ActiveXObject("Microsoft.XMLDOM");
+  	xmlElems.async=false;
+  	xmlElems.loadXML(xmlString); 
+    }
+  return xmlElems;
+}
+
+function xmlToJSONMapNode(xmlMapObject,type) {
+  jsonMapObject = {};
+  jsonMapObject.name = xmlMapObject.getElementsByTagName('name')[0].textContent;  
+  jsonMapObject.latitude = xmlMapObject.getElementsByTagName('latitude')[0].textContent;
+  jsonMapObject.longitude = xmlMapObject.getElementsByTagName('longitude')[0].textContent;
+  jsonMapObject.type = type;
+  return jsonMapObject;     		
+}
+
+function xmlToJSONMapLink(xmlMapObject,type) {
+  jsonMapObject = {};
+  jsonMapObject.name = xmlMapObject.getElementsByTagName('name')[0].textContent;
+  jsonMapObject.locations = [];
+  from = xmlMapObject.getElementsByTagName('from')[0].textContent;
+  fromMarker = markers[String(from)];
+  jsonMapObject.locations.push(fromMarker.position);
+  to = xmlMapObject.getElementsByTagName('to')[0].textContent;
+  toMarker = markers[String(to)];
+  jsonMapObject.locations.push(toMarker.position);
+  jsonMapObject.type = type;
+  return jsonMapObject;
+}
+
+function setHandlers() {
+  triplexMeters = typeToName['triplex_meter'];
+  for (var i = 0; i < triplexMeters.length; i+=1) 
+  {
+    attachInfoWindow(markers[triplexMeters[i]], ['measured_voltage_1', 'measured_voltage_2']); 
+  }
+}
+
+function addNodeToMap(elem, map) {
+  var newLocation =  new google.maps.LatLng(parseFloat(elem.latitude), parseFloat(elem.longitude));
+  var marker = new google.maps.Marker({
+    map:map,
+    draggable:false,
+    icon:Icons[elem.type],
+    title:elem.name,
+    position: newLocation,
+  });
+  markers[elem.name] = marker;
+  typeToName[elem.type].push(elem.name);
+}
+ 
+
+function addLinkToMap(link, map) {
+  var settings = {
+    path:link.locations,
+    title:link.name
+  };
+  iconImg = Icons[link.type];
+  var line = new google.maps.Polyline(settings);
+  line.setMap(map);
+
+  if (Icons[link.type] != undefined) {
+    var midLat = (link.locations[0].lat() + link.locations[1].lat()) / 2;
+    var midLong = (link.locations[0].lng() + link.locations[1].lng()) / 2;
+    linkElem = {'name': link.name, 'latitude': midLat, 'longitude': midLong, 'type': link.type};
+    addNodeToMap(linkElem, map); 
+  }
+}
+ 
+function httpGet(theUrl) {
+  var xmlHttp = null;
+  xmlHttp = new XMLHttpRequest();
+  xmlHttp.open( "GET", theUrl, false );
+  xmlHttp.send(null);
+  return xmlHttp.responseText;
+}
+
+function attachInfoWindow(marker) {
+  var infowindow = new google.maps.InfoWindow({
+    content: ""
+  });
+
+  labels[marker.title] = marker.title + ":";
+  google.maps.event.addListener(marker, 'click', function() {
+    infowindow.content = labels[marker.title];
+    infowindow.open(marker.get('map'), marker);
+  });
+}
+
+google.maps.event.addDomListener(window, 'load', initialize);
+
+    </script>
+  </head>
+  <body>
+    <div id="map-canvas"></div>
+  </body>
+</html>

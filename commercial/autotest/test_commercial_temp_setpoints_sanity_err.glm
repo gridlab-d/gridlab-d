@@ -1,0 +1,29 @@
+// makes sure sanity check of heating/cooling setpoints overlapping crashes simulation at appropriate times
+//
+// Payroll: d3y332
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	stoptime '2000-02-01 0:00:00';
+	timezone PST+8PDT;
+	
+}
+
+module commercial;
+module tape;
+
+
+object office {
+	floor_height 9 ft;
+	interior_mass 2000;
+	interior_ua 2;
+	exterior_ua 5;
+	floor_area 5000 sf;
+	hvac.cooling.capacity -25000; 
+	hvac.heating.capacity 25000;
+	heating_setpoint 70;
+	cooling_setpoint 70;
+	thermostat_deadband 1;
+	hvac.cooling.cop -3;
+	hvac.heating.cop 1.25;
+}
