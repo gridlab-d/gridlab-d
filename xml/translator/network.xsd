@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema targetNamespace="http://tempuri.org/XMLSchema.xsd" elementFormDefault="qualified" xmlns="http://tempuri.org/XMLSchema.xsd" xmlns:mstns="http://tempuri.org/XMLSchema.xsd" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:complexType name="Complex">
+    <xs:sequence>
+      <xs:element name="complex" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="Node">
+    <xs:sequence>
+      <xs:element name="V" type="Complex" />
+      <xs:element name="S" type="Complex" />
+      <xs:element name="G" type="xs:double" />
+      <xs:element name="B" type="xs:double" />
+      <xs:element name="Qmax_MVAR" type="xs:double" />
+      <xs:element name="Qmin_MVAR" type="xs:double" />
+      <xs:element name="Ntype">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="PQ" />
+            <xs:enumeration value="PV" />
+            <xs:enumeration value="SWING" />
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element name="bus_id" type="xs:int" />
+      <xs:element name="name" type="xs:string" />
+      <xs:element name="flow_area_num" type="xs:int" />
+      <xs:element name="loss_zone_num" type="xs:int" />
+      <xs:element name="base_kV" type="xs:double" />
+      <xs:element name="desired_kV" type="xs:double" />
+      <xs:element name="Vobs" type="Complex" />
+      <xs:element name="Vstdev" type="xs:double" />
+      <xs:element name="Ys" type="Complex" />
+      <xs:element name="YVs" type="Complex" />
+      <xs:element name="r2" type="xs:double" />
+      <xs:element name="n_obs" type="xs:unsignedShort" />
+      <xs:element name="Sr2" type="xs:double" />
+      <xs:element name="n_inj" type="xs:unsignedShort" />
+      <xs:element name="remote_bus_id" type="Node" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="Link">
+    <xs:sequence>
+      <xs:element name="Y" type="Complex" />
+      <xs:element name="I" type="Complex" />
+      <xs:element name="B" type="xs:double" />
+      <xs:element name="from" type="Node" />
+      <xs:element name="to" type="Node" />
+      <xs:element name="turns_ratio" type="xs:double" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="Complex_x0020_Tuple">
+    <xs:sequence>
+      <xs:element name="a" type="Complex" />
+      <xs:element name="b" type="Complex" />
+      <xs:element name="c" type="Complex" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="Meter">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="Node">
+          <xs:sequence>
+            <xs:element name="type">
+              <xs:simpleType>
+                <xs:restriction base="xs:string">
+                  <xs:enumeration value="MT_ONEPHASE" />
+                  <xs:enumeration value="MT_THREEPHASE" />
+                </xs:restriction>
+              </xs:simpleType>
+            </xs:element>
+            <xs:element name="meter_kWh" type="Complex" />
+            <xs:element name="demand_kW" type="Complex" />
+            <xs:element name="A_line" type="Complex_x0020_Tuple" />
+            <xs:element name="Y_line" type="Complex_x0020_Tuple" />
+            <xs:element name="S_line" type="Complex_x0020_Tuple" />
+          </xs:sequence>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Transformer">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="Link">
+          <xs:sequence>
+            <xs:element name="type">
+              <xs:simpleType>
+                <xs:restriction base="xs:string">
+                  <xs:enumeration value="TT_Y" />
+                  <xs:enumeration value="TT_DELTA" />
+                </xs:restriction>
+              </xs:simpleType>
+            </xs:element>
+            <xs:element name="Sbase" type="xs:double" />
+            <xs:element name="Vbase" type="xs:double" />
+            <xs:element name="Zpu" type="xs:double" />
+            <xs:element name="Vprimary" type="xs:double" />
+            <xs:element name="Vsecondary" type="xs:double" />
+          </xs:sequence>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Regulator">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="Link">
+          <xs:sequence>
+            <xs:element name="type">
+              <xs:simpleType>
+                <xs:restriction base="xs:string">
+                  <xs:enumeration value="RT_LTC" />
+                  <xs:enumeration value="RT_VR" />
+                </xs:restriction>
+              </xs:simpleType>
+            </xs:element>
+            <xs:element name="Vmax" type="xs:double" />
+            <xs:element name="Vmin" type="xs:double" />
+            <xs:element name="Vstep" type="xs:double" />
+            <xs:element name="CTLink" type="Link" />
+            <xs:element name="PTbus" type="Node" />
+            <xs:element name="TimeDelay" type="xs:double" />
+          </xs:sequence>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Relay">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="Link">
+          <xs:sequence>
+            <xs:element name="curve">
+              <xs:simpleType>
+                <xs:restriction base="xs:string">
+                  <xs:enumeration value="FC_U1" />
+                  <xs:enumeration value="FC_U2" />
+                  <xs:enumeration value="FC_U3" />
+                  <xs:enumeration value="FC_U4" />
+                  <xs:enumeration value="FC_U5" />
+                </xs:restriction>
+              </xs:simpleType>
+            </xs:element>
+            <xs:element name="TimeDial" type="xs:double" />
+            <xs:element name="SetCurrent" type="xs:double" />
+            <xs:element name="state">
+              <xs:simpleType>
+                <xs:restriction base="xs:string">
+                  <xs:enumeration value="FS_CLOSED" />
+                  <xs:enumeration value="FS_TRIPPED" />
+                  <xs:enumeration value="FS_RECLOSED" />
+                  <xs:enumeration value="FS_LOCKOUT" />
+                  <xs:enumeration value="FS_FAULT" />
+                </xs:restriction>
+              </xs:simpleType>
+            </xs:element>
+          </xs:sequence>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Fuse">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="Link">
+          <xs:sequence>
+            <xs:element name="TimeConstant" type="xs:double" />
+            <xs:element name="SetCurrent" type="xs:double" />
+            <xs:element name="SetBase" type="xs:double" />
+            <xs:element name="SetScale" type="xs:double" />
+            <xs:element name="SetCurve" type="xs:double" />
+            <xs:element name="TresetAvg" type="xs:double" />
+            <xs:element name="TresetStd" type="xs:double" />
+            <xs:element name="state">
+              <xs:simpleType>
+                <xs:restriction base="xs:string">
+                  <xs:enumeration value="FS_GOOD" />
+                  <xs:enumeration value="FS_BLOWN" />
+                  <xs:enumeration value="FS_FAULT" />
+                </xs:restriction>
+              </xs:simpleType>
+            </xs:element>
+          </xs:sequence>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Capbank">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="Link">
+          <xs:sequence>
+            <xs:element name="KVARrated" type="xs:double" />
+            <xs:element name="Vrated" type="xs:double" />
+            <xs:element name="state">
+              <xs:simpleType>
+                <xs:restriction base="xs:string">
+                  <xs:enumeration value="CAPS_IN" />
+                  <xs:enumeration value="CAPS_OUT" />
+                </xs:restriction>
+              </xs:simpleType>
+            </xs:element>
+            <xs:element name="CTlink" type="Link" />
+            <xs:element name="PTnode" type="Node" />
+            <xs:element name="VARopen" type="xs:double" />
+            <xs:element name="VARclose" type="xs:double" />
+            <xs:element name="Vopen" type="xs:double" />
+            <xs:element name="Vclose" type="xs:double" />
+          </xs:sequence>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

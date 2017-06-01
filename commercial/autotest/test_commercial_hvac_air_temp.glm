@@ -1,0 +1,38 @@
+// validates proper functioning of hvac by making sure inside air_temperature stays
+// within the thermostat setpoints; setpoints are 70/72 with .5 degF deadband
+
+// payroll: d3y332
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	stoptime '2000-02-01 0:00:00';
+	timezone PST+8PDT;
+}
+
+module commercial;
+module tape;
+module assert;
+
+
+object office {
+	floor_area 4000 sf;
+	floor_height 9 ft;
+	exterior_ua 2.0;
+	interior_ua 2.0;
+	interior_mass 2000;
+	heating_setpoint 70;
+	cooling_setpoint 72;
+	thermostat_deadband .5;
+	air_temperature 70;
+	object double_assert {
+		target "air_temperature";
+		within 1.6; 	
+		value 70;
+	};
+	object recorder {
+		file "commercial_hvac_usage.csv";
+		interval 3600;
+		limit 360;
+		property air_temperature,mass_temperature,hvac_mode,outdoor_temperature;
+	};
+}

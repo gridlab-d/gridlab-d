@@ -1,0 +1,36 @@
+// $Id: test_3in_1out.glm 4738 2014-07-03 00:55:39Z dchassin $
+
+clock {
+	timezone PST+8PDT;
+	starttime '2000-01-01 00:00:00 PST';
+	stoptime '2000-01-02 00:00:00 PST';
+}
+
+class test {
+	random x;
+	double u;
+	double y;
+};
+
+module tape;
+object test {
+	name test;
+	x "type:normal(0,1); integrate; refresh:1min";
+	object recorder {
+		file "test_w.csv";
+		property "x,u,y";
+		interval 60;
+	};
+}
+
+module control;
+
+object ss_model {
+	form OCF;
+	timestep 1 min;
+	Y "1 1";
+	U "1 1";
+	x "0 0";
+	u "test.x test.u";
+	y "test.y";
+}

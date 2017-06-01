@@ -1,0 +1,51 @@
+// validates commercial HVAC VENT load usage and mode; initial air temperature matches outside temp(59degF), 
+// with heating/cooling deadbands set around the (unchanging) interior and exterior temperature
+// occupancy set to 1 for all seven days of the week; OCCUPANCY IS BASED ON OLD SCHEDULING SYSTEM
+// (which doesn't take in the correct input); MAY NEED TO BE UPDATED ONCE THE SWITCH TO 
+// THE NEW SCHEDULING SYSTEM IS MADE; BASED ON OUTSIDE OFFICE TEMP OF 59degF;
+// CURRENTLY FAILS BECAUSE OCCUPANCY CAN'T BE SET TO 1 FOR ALL TIMES
+
+// payroll: d3y332
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	stoptime '2000-02-01 0:00:00';
+	timezone PST+8PDT;
+}
+
+module commercial;
+module tape;
+module assert;
+
+
+object office {
+	floor_area 4000 sf;
+	floor_height 9 ft;
+	exterior_ua 2.0;
+	interior_ua 2.0;
+	interior_mass 2000;
+	heating_setpoint 58;
+	cooling_setpoint 76;
+	thermostat_deadband .25;
+	air_temperature 59;
+	control.ventilation_fraction 0;
+	lights.capacity 100;
+	lights.fraction 1;
+	lights.power_factor 1;
+	schedule "0-6 0-23";
+	object complex_assert {
+		target "hvac.load";
+		value 0.4-0.04j;
+		within .0000001;
+	};
+	object enum_assert {
+		target "hvac_mode";
+		value 5; // HC_VENT
+	};
+	object recorder {
+		file "commercial_hvac_usage2.csv";
+		interval 3600;
+		limit 100;
+		property lights.load,outdoor_temperature,occupancy,control.ventilation_fraction,air_temperature,mass_temperature,hvac_mode,hvac.load;
+	};
+}

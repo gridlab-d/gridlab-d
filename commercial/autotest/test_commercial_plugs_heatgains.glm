@@ -1,0 +1,51 @@
+// validates proper calculation of plugs.heatgain property with a variable heatgain_fraction;
+// tape input file is generic_demand.glt;
+// plugs.fraction set to 1;plugs.power_factor set to .9 based on the following equation:
+
+// plugs.heatgain = plugs.load(Magnitude)*heatgain_fraction
+
+// payroll: d3y332
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	stoptime '2000-02-01 0:00:00';
+	timezone PST+8PDT;
+	
+}
+
+module commercial;
+module tape;
+module assert;
+
+
+object office {
+	floor_area 4000 sf;
+	floor_height 9 ft;
+	exterior_ua 2.0;
+	interior_ua 2.0;
+	interior_mass 2000;
+	heating_setpoint 70;
+	cooling_setpoint 89;
+	thermostat_deadband 4;
+	plugs.capacity 1000 W;
+	plugs.fraction 1;
+	plugs.power_factor .9;
+	object player {
+		file ../generic_demand.glt;
+		property plugs.heatgain_fraction;
+	};
+//	object double_assert {
+//		target "plugs.heatgain";
+//		within .1;
+//		object player {
+//			property value;
+//			file ../load_heatgain.player;
+//		};
+//	};
+	object recorder {
+		file "commercial_lights_usage.csv";
+		interval 3600;
+		limit 24;
+		property plugs.load,plugs.heatgain_fraction,plugs.heatgain;
+	};
+}

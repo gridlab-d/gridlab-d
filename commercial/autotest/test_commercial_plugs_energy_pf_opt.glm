@@ -1,0 +1,48 @@
+// validates proper calculation of plugs.energy property with a nozero power factor;
+// plugs.fraction set to 1; based on the following equation:
+// energy seems to be randomly distributed/accumulate within a specific range every hour;
+// this file may no always converge
+
+// plugs.energy = plugs.load*dt
+// dt = change in time
+
+// payroll: d3y332
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	stoptime '2000-02-01 0:00:00';
+	timezone PST+8PDT;
+}
+
+module commercial;
+module tape;
+module assert;
+
+
+object office {
+	floor_area 4000 sf;
+	floor_height 9 ft;
+	exterior_ua 2.0;
+	interior_ua 2.0;
+	interior_mass 2000;
+	heating_setpoint 70;
+	cooling_setpoint 89;
+	thermostat_deadband 4;
+	plugs.capacity 1000;
+	plugs.fraction 1;
+	plugs.power_factor .9;
+	object complex_assert {
+		target ../plugs.energy;
+		within 1300; 	// hourly energy consumption has significant variance;
+		object player { // this is the ballpark it should be in
+			property value;
+			file ../energy_pf.player;
+		};
+	};
+	object recorder {
+		file "commercial_lights_usage.csv";
+		interval 3600;
+		limit 23;
+		property plugs.fraction,plugs.load,plugs.energy;
+	};
+}

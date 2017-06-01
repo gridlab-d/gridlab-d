@@ -1,0 +1,1248 @@
+-----------------------------
+ Change history for MATPOWER
+-----------------------------
+
+Version:    4.0
+
+maintained by Ray Zimmerman <rz10@cornell.edu>
+
+MATPOWER
+$Id: CHANGES,v 1.111 2011/02/16 20:51:27 cvs Exp $
+Copyright (c) 1996-2011 by Power System Engineering Research Center (PSERC)
+See http://www.pserc.cornell.edu/matpower/ for more info.
+
+
+Changes since 4.0b5
+-------------------
+
+2/16/11
+    - Oops! Neglected to include Carlos as co-author on User's Manual.
+      Updated 4.0 distribution and web-site with corrected manual.pdf.
+      Sorry about that Carlos!
+
+2/7/11
+    - Released version 4.0.
+
+1/18/11
+    - Added 'quadprog_ls' option to have_fcn() to check for availability
+      of version of quadprog() with large scale solver.
+    - Modified qps_ot() to set default options based on capabilities
+      of version of Optimization Toolbox.
+
+12/16/10
+    - Fixed bug in qps_cplex() where an infeasible problem resulted
+      in a fatal error.
+    - Fixed bug in qps_mosek() where exit flag was indicating success
+      for infeasible solutions.
+    - Fixed bug in dcopf_solver() where an infeasible problem found
+      by CPLEX would result in a fatal error.
+
+
+Changes since 4.0b4
+-------------------
+
+12/13/10
+    - Released version 4.0b5.
+
+12/2/10
+    - Added to opf_setup() a better check on when specified generalized
+      cost parameters are compatible with DC OPF.
+    - Improved output of t_is(). Includes only elements violating
+      tolerance.
+
+11/30/10
+    - Fixed bug in opf_execute() related to automatic conversion of
+      single-block piecewise linear costs to linear polynomial costs.
+      Affected indexing of the Va, Vm, Pg and Qg portions of
+      results.x and raw.xr.
+
+11/24/10
+    - Added support for the MOSEK optimizer for large-scale linear and
+      quadratic programming. To use MOSEK for the DC OPF, set
+      OPF_ALG_DC = 600. Specific LP algorithms can be selected by
+      the MOSEK_LP_ALG option. Requires the Matlab interface for MOSEK,
+      available from http://www.mosek.com/.
+    - Added function qps_mosek() for solving QP and LP problems using
+      the common QP solver interface used in MATPOWER. The qps_matpower()
+      function also includes the option to use MOSEK.
+
+11/16/10
+    - Fixed bug in opf_setup() where indexing data for branch angle
+      difference limits was not being saved in the case of DC OPF.
+    - Added support for the IBM ILOG CPLEX optimizer for
+      large scale linear and quadratic programming. To use CPLEX
+      for the DC OPF, set OPF_ALG_DC = 500 and choose the specific
+      CPLEX solver using options CPLEX_LPMETHOD and CPLEX_QPMETHOD.
+      Requires the Matlab interface for CPLEX, available from
+      http://www.ibm.com/software/integration/optimization/cplex-optimizer/.
+    - Added function qps_cplex() for using CPLEX to solve QP and LP
+      problems using the common QP solver interface used in MATPOWER. The
+      qps_matpower() function also includes the option to use CPLEX.
+    
+11/9/10
+    - Fixed an indexing bug in dcopf_solver() affecting cases with a mix
+      of piecewise linear and polynomial costs (unless the polynomial
+      costs came after all of the pwl costs).
+
+10/12/10
+    - Performance optimization in opf_consfcn(). Assign sparse cols
+      then transpose instead of assigning sparse rows. Results in >2x
+      speed up for this function on case2935, ~10x on case42k.
+
+7/20/10
+    - Made some updates to extras/psse2matpower. Added/fixed some comments,
+      text output, switched to Parse::Text::parse_line for bus data to fix
+      problem caused by certain characters (e.g. / ,) in bus names. Fixed
+      error in switched shunt data (using data from wrong column). Modified
+      to no longer comment out isolated buses, since it doesn't remove
+      corresponding gens/branches.
+
+6/29/10
+    - Fixed bug in uopf(). Was not calling printpf() when called with no
+      output arguments. Thanks to V. Ravikumar Pandi.
+
+6/25/10
+    - Added makeJac(), a utility function to form the power flow Jacobian.
+    - Modified makeYbus() to allow for single MATPOWER case struct as input.
+    - Added load2disp() to convert fixed loads to dispatchable loads.
+
+6/1/10
+    - Added modcost() and tests for modcost() and totcost().
+
+
+Changes since 4.0b3
+-------------------
+
+5/21/10
+    - Released version 4.0b4.
+
+5/18/10
+    - Added support for the IPOPT interior point optimizer for
+      large scale non-linear optimization. Use OPF_ALG = 580
+      and OPF_ALG_DC = 400 for AC and DC OPF, respectively. Requires
+      the Matlab MEX interface for IPOPT, available from
+      https://projects.coin-or.org/Ipopt/.
+    
+5/13/10
+    - Modified input args for Hessian evaluation function for MIPS.
+      Requires cost_mult as 3rd argument.
+    - Added check for invalid gencost MODEL in opf_setup().
+
+5/5/10
+    - Added RETURN_RAW_DER option to control when OPF solver returns
+      constraint, Jacobian and objective function gradient and Hessian
+      information.
+
+5/4/10
+    - Refactored portions of opf() into opf_setup() and opf_execute().
+
+
+Changes since 4.0b2
+-------------------
+
+4/19/10
+    - Released version 4.0b3.
+    - Changed licensing to GNU General Public license. See LICENSE and
+      COPYING files for details.
+    - Added in extras sub-directory psse2matpower Perl script for
+      converting PSS/E data files to MATPOWER case files.
+
+4/6/10
+    - Added 'anon_fcns' to have_fcn() to check for anonymous function
+      capability to avoid direct MATLAB version checks in code.
+    - GNU Octave compatibility!  (tested with Octave 3.2.3)
+      Added 'octave' to have_fcn() to check when code is running under
+      Octave instead of MATLAB.
+
+3/23/09
+    - Fixed bug in smart market code that caused it to die for cases with
+      non-consecutive bus numbers.
+    - Removed consecutive-bus number requirement for scale_load() and
+      total_load() functions.
+
+
+Changes since 4.0b1
+-------------------
+
+3/19/10
+    - Released version 4.0b2.
+
+3/12/10
+    - Incorporated significant updates to User's Manual (docs/manual.pdf).
+
+3/10/10
+    - Added optional input arg to mpver() and other *ver() functions to
+      trigger return of entire version struct with Name, Version,
+      Release and Date (similar to MATLAB's ver() function).
+    - Massive help text update to more closely match MathWorks conventions;
+      function names in ALL CAPS, See also ..., Examples, etc.
+    - Added printing of MATPOWER and MIPS version lines to verbose output.
+
+2/23/10
+    - For @opf_model, deprecated get_var_N(), get_lin_N() and get_nln_N()
+      methods, replaced with single getN() method. Added compute_cost().
+    - Fixed per unit bug with reserve costs and prices in toggle_reserves().
+    - Added cost field to OPF results struct with final values of user-defined
+      costs, by named set.
+    - Added totalcost field to results.reserves for OPF with reserves case,
+      see toggle_reserves() and runopf_w_res().
+
+2/2/10
+    - Deprecated unused options SPARSE_QP and OUT_RAW.
+
+1/27/10
+    - Renamed functions used to compute AC OPF cost, constraints and
+      hessian, since they are used by more than fmincon:
+        costfmin --> opf_costfcn
+        consfmin --> opf_consfcn
+        hessfmin --> opf_hessfcn
+
+1/26/10
+    - Added OPF algorithm code to output of OPF in
+      results.raw.output.alg.
+
+1/25/10
+    - Switched to using qps_matpower() instead of mp_qp()/mp_lp()
+      for solving the DC OPF.
+    - Added new top-level wrapper function for MATPOWER's QP solver,
+      called qps_matpower(), with calling syntax similar to
+      quadprog() from the Optimization Toolbox, to replace mp_qp() and
+      mp_lp(). The main difference from the quadprog() API is that the
+      constraints are specified as l <= A*x <= u, instead of
+      A*x <= b and Aeq*x == beq. This new function allows for
+      algorithm specific input options, return of the final objective
+      function value and more detailed output reporting, such as the
+      history for the trajectory returned by MIPS. The old functions,
+      mp_qp() and mp_lp() are now simply wrappers around qps_matpower()
+      and have been deprecated.
+    - Added qps_bpmpd(), qps_mips() and qps_ot(), with interface that
+      matches qps_matpower() to handle implementation for BPMPD_MEX,
+      MIPS and Optimization Toolbox solvers, respectively.
+    - Fixed a bug that could result in incorrect multipliers on
+      variable bounds from the DC OPF with user-supplied linear
+      constraints.
+
+1/19/10
+    - Renamed the pure-MATLAB interior point solver from PDIPM to
+      MIPS (MATLAB Interior Point Solver).
+
+1/18/10
+    - Changed order of input args to pdipm(), added option for single
+      input struct (like fmincon), more documentation, all constraints
+      are now optional, returns exitflag = -1 for 'numerically failed',
+      output includes 'message' field, lambda only includes relevant
+      fields. Added tests for pdipm as standalone solver.
+
+1/12/10
+    - Added saving history of trajectory of obj, feascond, gradcond,
+      compcond, costcond, etc. for pdipm solver.
+      See results.raw.output.hist.
+
+
+Changes since 3.2
+-----------------
+
+12/24/09
+    - Released version 4.0b1.
+
+12/18/09
+    - Make OPF_ALG default to 540 then 560 (no 500 MINOPF) and
+      OPF_ALG_DC default to 200 (no 100 BPMPD_MEX).
+
+12/10/09
+    - Fixed a bug, where calling opf() directly with individual
+      input data matrices in version 2 format resulted in the matrices
+      being inadvertently run through a version 1 to version 2 format
+      conversion, stripping out generator capability curves, ramp
+      limits and branch angle difference limits before setting up and
+      running the OPF. The fix for this subtle bug involved changing
+      loadcase to not assume that an input struct without a 'version'
+      field is in version 1 format. It now checks the size of the gen
+      matrix to make the determination.
+
+12/8/09
+    - Misc cleanup based on mlint suggestions, including:
+        - Replaced | with || and & with && where appropriate.
+        - Removed unnecessary sprintf (and fprintf!?) calls from args
+          to error().
+        - Replaced j (=sqrt(-1)) with 1j for speed and robustness.
+        - Replaced unecessary brackets [] with parentheses.
+        - Made sure all calls to exist() have 2 args.
+        - more
+
+12/4/09
+    - Fixed bug in savecase for cases where A or N matrix is a single
+      row.
+
+11/4/09
+    - Removed unnecessary 'return' statement at end of all M-files. If
+      anything it should be an 'end' statement, but even that is
+      optional, so we just let functions get terminated by the
+      end-of-file or another function declaration.
+
+11/3/09
+    - Removed genform.m, runcomp.m and t/t_opf.m.
+    - Renamed compare.m to compare_case.m and updated it to work with
+      unsolved cases, solved PF	cases and solved OPF cases.
+
+10/9/09
+    - Added ability to specify interface flow limits (based on
+      DC model flows).
+
+7/10/09
+    - Removed 'sparse_qp' and 'sparse_lp' from have_fcn().
+    - Major speed-up in @opf_model/linear_constraints.m for
+      large problems (esp. DC OPF) and various other optimizations
+      from profiling code.
+
+7/7/09
+    - Fixed bug in opf.m introduced by automatic conversion of
+      single-block piecewise linear costs to linear polynomial costs.
+
+5/27/09
+    - Added total_load.m to provide convenient way to retreive the total
+      load for the entire system, a specific zone or bus with options to
+      include just fixed load, just dispatchable load, or both.
+
+5/19/09
+    - The results struct returned by power flow or optimal power flow
+      is now a strict superset of a MATPOWER case struct.
+    - Extended ext2int.m and int2ext.m to handle converting entire case
+      struct in a single call, storing the re-indexing info in the
+      struct, using it to reorder other data structures/fields,
+      execute callbacks to convert additional user data.
+    - Split userfcn callbacks into multiple stages. Currently there are
+      five: ext2int, formulation, int2ext, printpf, savecase.
+
+4/14/09
+    - Deprecated use of 'areas' data matrix. Removed it everywhere
+      possible without breaking backward compatibility with version 1
+      case files, which required it.
+    - INCOMPATIBLE CHANGE: Calling loadcase() with 5 output arguments
+      is now interpreted as ...
+          [baseMVA, bus, gen, branch, gencost] = loadcase(casefile)
+      ... instead of ...
+          [baseMVA, bus, gen, branch, info] = loadcase(casefile)
+
+3/25/09
+    - Added add_userfcn.m as to make it easy to add a new
+      userfcn to a case struct, whether or not it already
+      has any. Modified the fixed reserve example to use this.
+
+3/24/09
+    - Added step-controlled PDIPM variant (OPF_ALG = 565) of
+      AC OPF solver.
+
+3/19/09
+    - Added pdipm_qp() as a new QP/LP solver based on the
+      pure MATLAB PDIPM solver used for AC OPFs.
+    - Added option 'OPF_ALG_DC' and refactored some code to allow
+      the user to select the desired solver for DC OPF.
+    - Added code to opf.m to automatically convert single-block
+      piecewise linear costs to linear polynomial costs to reduce
+      the number of variables and constraints in the problem.
+
+3/17/09
+    - Numerous code optimizations based on profiling code, e.g.
+      changed all calls to spdiags() to equivalent call to sparse().
+
+3/13/09
+    - Added a pure MATLAB implementation of the PDIPM (primal-dual
+      interior point method) solver for the AC OPF. Now the default
+      solver (OPF_ALG = 560) if there are no optional MEX solvers
+      installed.
+    - Modified fmincopf, copf, lpopf and dcopf to allow branch
+      RATE_A = 0 or RATE_A > 1e10 to mean the branch is unconstrained
+      (not included at all in inequality constraints). TSPOPF solvers
+      already did this. Included in tests.
+
+3/11/09
+    - Allow userfcn to be an array, with elements processed in order.
+
+1/14/09
+    - New version of case39.m with some additional versions, created
+      from documented sources.
+
+7/3/08
+    - Added a top level program, runopf_w_res(), to solve an OPF with
+      fixed reserve requirements. This is a good example of how to use
+      the new userfcn mechanism to add vars, costs, constraints to an
+      OPF (see also toggle_reserves.m and t_case30_userfcns.m).
+    - Added option to return solution as a results struct to runpf,
+      runopf, runuopf, rundcpf, rundcopf, runduopf.
+    - Updated uopf.m so input/output args match opf.m.
+    - Added option ENFORCE_Q_LIMS = 2 for runpf to allow one-at-a-time
+      conversion of buses from PV to PQ for generator reactive power
+      limit violations.
+    - Fixed a (new) bug which caused the DC OPF solver to crash on
+      problems with only polynomial costs.
+    - Added userdata to opf_model object.
+
+6/10/08
+    - Added new way to specify user vars, constraints, costs via
+      userfcn for OPF.
+    - Added option to return OPF results in a struct.
+    - Added defaults for user cost params in fparm and H, making them
+      optional even when N and Cw are given.
+
+5/22/08
+    - Major refactorization of OPF implementation with shared code
+      for a generalized formulation that includes the DC opf as
+      well as the legacy solvers based on constr and LPconstr.
+    - Deprecated OPF_ALG values 100, 120, 140, 160, 200, 220, 240,
+      and 260 in favor of the new generalized formulation
+      equivalents 300, 320, 340 and 360.
+    - Removed options OPF_ALG_POLY, OPF_ALG_PWL and
+      OPF_POLY2PWL_PTS.
+
+5/2/08
+    - Move OPF input argument processing into opf_args.m, now
+      shared by opf.m, dcopf.m, fmincopf.m, mopf.m and tspopf.m.
+    - Rewrote the DC OPF to include generalized user constraints,
+      costs and extra vars (like AC formulation). Note, that if
+      A or N have enough columns for the AC formulation, opf.m
+      assumes they are for the AC OPF and strips out the extra
+      columns before passing to dcopf.m.
+    - Added the ability to read and save generalized OPF user
+      constraints, costs and var limits in case struct.
+    - Modified savecase.m to include saving of MU_ANGMIN, MU_ANGMAX
+      columns of branch matrix.
+
+3/13/08
+    - Added a function makeLODF.m to compute line outage distribution
+      factors.
+    - Added a function scale_load.m to scale load by zones.
+
+3/7/08
+    - Updated fmincopf and mpoption to work with version 4 of
+      Optimization Toolbox. Added option FMC_ALG for select between
+      fmincon's active set method and variations of the new
+      interior-point algorithm.
+    - Added functions to compute second derivatives of constraints
+      and cost (explicit Hessian evaluation) for use with
+      interior-point solvers, etc.
+    - INCOMPATIBLE CHANGE: dAbr_dV now gives partial derivatives
+      of the *squared* magnitudes of flows w.r.t. V, as opposed
+      to the magnitudes.
+    - Modified the implementation of all flow constraints for fmincon
+      (and constr) to use squared flow limits instead of absolute
+      value to correctly avoid div-by-zero errors in computing
+      gradients, and to prepare for implementing Hessian code.
+      Shadow prices still correspond to absolute value limits.
+    - Fixed bug in fmincon (and constr and LP) based OPF which
+      allowed an active power flow limit to be violated when using
+      OPF_FLOW_LIM = 1 (missing absolute value).
+
+3/3/08
+    - INCOMPATIBLE CHANGE: Changed input argument order for uopf
+      and added general linear constraints and generalized costs.
+
+1/10/08
+    - Significant speed improvements in makeYbus.m and makeBdc.m.
+
+
+Changes since 3.1b2
+-------------------
+
+9/21/07
+    - Released version 3.2.
+
+9/17/07
+    - Added option to cdf2matp.m to specify output case file version.
+
+9/7/07
+    - Fixed bug in pfsoln.m which caused incorrect value for Qg when
+      Qmin == Qmax for all generators at a bus in power flow solution.
+    - Added 5 larger scale (> 2000 bus) cases for Polish system.
+      Thanks to Roman Korab <roman.korab@polsl.pl>.
+    - Modified default OPF algorithm selection to use PDIPMOPF
+      if available and MINOPF is not. Order of precedence is now
+      500, 540, 520, 100/200.
+
+7/6/07
+    - Added ability in opf.m and fmincopf.m to specify initial value
+      and bounds on user variables via new input arguments z0, zl, zh.
+
+6/22/07
+    - INCOMPATIBLE CHANGE: Name of option 24 in mpoption change from
+      OPF_P_LINE_LIM to OPF_FLOW_LIM.
+    - Added option to use current magnitude instead of apparent power
+      for line flow limits. Set OPF_FLOW_LIM to 2.
+
+6/21/07
+    - INCOMPATIBLE CHANGE: Changed the sign convention used for
+      phase shifters to be consistent with PTI, PowerWorld, PSAT, etc.
+      E.g. A phase shift of 10 deg now means the voltage at the "to"
+      end is delayed by 10 degrees.
+
+6/15/07
+    - Added t_auction_pdipm.m and renamed t_auction.m to
+      t_auction_minopf.m.
+
+6/8/07
+    - Updated have_fcn.m to check for appropriate minimum versions of
+      MATLAB, for TSPOPF.
+
+6/7/07
+    - Modified printpf.m to correctly detect binding line limits when
+      a limit of 0 is taken to mean unconstrained.
+    - Fixed bugs in handling of multipliers for general PQ capability
+      curves in fmincopf.m (also in mopf.m and tspopf.m).
+    - Refactored t_opf.m into separate files for each solver.
+    - Modified opf.m, mpoption.m, mpver.m, have_fcn.m to include
+      support for TSPOPF, a new optional package of OPF solvers.
+
+9/29/06
+    - Added check to runpf.m for case where all gens hit Q limits when
+      ENFORCE_Q_LIMS is enabled.
+
+
+Changes since 3.1b1
+-------------------
+
+9/15/06
+    - Released version 3.1b2.
+
+9/12/06
+    - Added makePDFT.m which builds the DC PTDF matrix for a specified
+      slack distribution.
+
+8/16/06
+    - Added optional outputs xr, pimul to fmincopf and opf.m to make them
+      fully interchangeable with mopf.m.
+
+8/15/06
+    - Added branch angle difference constraints to general OPF formulation
+      in fmincopf.m (and mopf.m). These limits are specified by non-zero
+      values in the ANGMIN and/or ANGMAX columns of the branch matrix.
+      If limits are provided in the data, they are enforced by default.
+      This can be overridden by setting the 'OPF_IGNORE_ANG_LIM' option
+      to 1 using mpoption.
+    - Fixed (invisible) bug with multipliers of lower bounded linear
+      constraints in fmincopf.m.
+
+
+Changes since 3.0.0
+-------------------
+
+8/1/06
+    - Released version 3.1b1.
+
+4/28/06
+    - Fixed mpver.m so it will properly handle case where the Optimization
+      Toolbox is not installed.
+
+3/15/06
+    - INCOMPATIBLE CHANGE: Updated opf.m, fmincopf.m, costfmin.m, consfmin.m to
+      be able to be compatible with latest MINOPF. User supplied A matrix for
+      general linear constraints no longer includes columns for y variables
+      (helper vars for piecewise linear gen costs), and now requires columns
+      for all x (OPF) variables. Added generalized cost model and generator PQ
+      capability curves.
+    - Modified savecase.m to always save MAT files with -V6 under newer MATLAB
+      versions.
+    - Added a number of tests to t_opf.m for MINOPF and fmincopf for generalized
+      costs and additional linear constraints. Added test for fmincopf for
+      generator PQ capability curves.
+
+3/10/06
+    - Added baseKV data to case118.m from PSAP file 
+      <http://www.ee.washington.edu/research/pstca/pf118/ieee118psp.txt>.
+
+3/8/06
+   - Renamed col 5 of gencost from N to NCOST everywhere.
+
+10/14/05
+    - Updated version 2 case file format to modify generator PQ capability
+      curve specifications.
+    - Added hasPQcap.m and test for gen PQ capability curve in OPF.
+
+8/22/05
+    - Added OPF_IGNORE_ANG_LIM option to mpoption.m.
+
+8/5/05
+    - Modified identification of binding constraints in printpf.m. A
+      constraint is now considered to be binding if the tolerance is less
+      than or equal to OPF_VIOLATION tolerance -OR- if the corresponding
+      Kuhn-Tucker multiplier is non-zero. This allows binding generator
+      capability curves to be reported via multipliers on Pg and Qg limits.
+
+7/8/05
+    - Updated loadcase.m, savecase.m, idx_bus.m, idx_gen.m, caseformat.m
+      and tests for version 2 case file format, which includes piece-wise
+      linear generator capability curves, generator ramp rates and branch
+      angle difference limits.
+    
+
+Changes since 3.0b4
+-------------------
+
+2/14/05
+    - Released version 3.0.0.
+
+2/3/05
+    - In mp_lp.m and mp_qp.m, on Windows it now makes sure BPMPD_MEX is not
+      called in verbose mode which causes a MATLAB crash.
+
+
+Changes since 3.0b3
+-------------------
+
+1/28/05
+    - Released version 3.0b4.
+
+1/27/05
+    - Added case6ww.m and case4gs.m.
+    - Minor modifications to printpf.m to handle larger bus numbers.
+
+1/26/05
+    - Minor changes to uopf.m to make sure it plays nicely with dispatchable
+      loads.
+
+1/25/05
+    - Major updates to user manual.
+
+1/24/05
+    - Switched to using the new isload() to check for dispatchable load.
+    - For dispatchable loads, switched from using PG and QG to PMIN and either
+      QMIN (for inductive loads) or QMAX (for capacitive loads) to define the
+      constant power factor constraint. This prevents the power factor
+      information from being lost when it is dispatched to zero. If the initial
+      values of PG and QG are not consistent with the ratio defined by PMIN
+      and the appropriate Q limit it gives an error. This is to prevent a user
+      from unknowingly using a case file which would have defined a different
+      power factor constraint under previous versions of MATPOWER.
+      If both QMIN and QMAX are zero, it no longer includes the redundant
+      unity power factor constraint.
+
+1/20/05
+    - Updated printpf.m to display dispatchable loads and generators
+      separately. Reorganized the area summary section and corrected the net
+      exports value (subtracted half of tie-line loss) to make the numbers
+      add up correctly.
+
+1/18/05
+    - Added to runpf.m the ability to enforce generator reactive power limits
+      by allowing the voltage to deviate from the set-point. This option is
+      controlled by the new ENFORCE_Q_LIMS option, which is off by default.
+          (Thanks to Mu Lin of Lincoln University, New Zealand
+           whose contributions inspired this feature).
+    - Modified pfsoln.m to divide reactive power dispatch between multiple
+      generators at a bus in proportion to each gen's reactive power range,
+      as opposed to equally. This means that all generators at a bus will
+      reach their upper (or lower) limits simultaneously.
+    - Added generator status column to generator section of printpf.m output.
+      Fixed bugs where non-zero output of decommitted generators was displayed
+      and included in generation totals in generator and bus sections.
+
+1/14/05
+    - Moved some setting of MNS_* default options from opf.m to mopf.m.
+    - Eliminated unused output args in dcopf.m.
+    - Modified printpf.m to zero out reactive generator output for DC cases
+      and to use OPF_VIOLATION tolerance to detect binding constraints, as
+      opposed to non-zero Kuhn-Tucker multipliers.
+
+1/12/05
+    - Modified bpmpd portion of mp_qp.m and mp_lp.m to use default value for
+      TFEAS2 and eliminate variable limits which appear to be artificial
+      large values used to indicate free variables.
+
+1/4/05
+    - Fixed potential bug in dimensions of Yf and Yt created in makeYbus.m.
+
+12/17/04
+    - Added feasibility check to mp_lp.m and mp_qp.m to work around a
+      recently discovered bug in BPMPD_MEX 2.21 where it sometimes returns an
+      incorrect (infeasible) solution for a DC OPF problem. This bug has yet
+      to be encountered in any other context.
+
+12/13/04
+    - Added mpver.m to print version information.
+
+9/23/04
+    - Fixed bugs in cdf2matp.m which prevented it from working at all
+      when not specifying both input parameters and caused it to
+      sometimes not add the warnings at the end of the file.
+    - Fixed typo in name of lower bound input argument in opf.m. Only
+      affected those calling opf directly with extra linear constraints.
+
+
+Changes since 3.0b2
+-------------------
+
+9/20/04
+    - Released version 3.0b3.
+    - Generated clean versions of all included case files using latest
+      cdf2matp and savecase. Added documentation for source of data
+      for case files.
+    - More enhancements to cdf2matp.m. Adds comments at beginning, appends
+      conversion warnings as comments at end of file. Uses savecase.m to
+      save the data.
+    - Updated savecase.m to use %g instead of %f many places, correctly
+      handle multi-line comments, include headers for extra columns for
+      solved cases. Optionally returns filename with extension.
+
+9/17/04
+    - Fixed bug in grad_std.m, introduced in 3.0b2, which prevented constr
+      and LP-based OPF solvers from working for polynomial cost functions.
+
+9/15/04
+    - In cdf2matp.m, added input args, updated docs, switched to named
+      indexing of data matrices, new method for creating gen costs.
+    - Documentation fixes and additions from Pan Wei.
+
+
+Changes since 3.0b1
+-------------------
+
+9/7/04
+    - Released version 3.0b2.
+    - Added OPF_P_LINE_LIM option to mpoptions to use active power
+      instead of apparent power for line limits (thanks to Pan Wei
+      for the suggestion and some code).
+
+9/1/04
+    - Fixed bug in savecase.m introduced when making areas and gencost
+      optional.
+    - Updated opf_slvr.m with options for MINOS and fmincon.
+    - Removed option 15 OPF_NEQ from docs (not a user option). Removed option
+      52 VAR_LOAD_PF (unused, always behaves as if this option were 1).
+      Changed semantics and default value for option 51 SPARSE_QP. By default
+      (value = 1) it will use sparse matrices if a sparse QP/LP solver is
+      available and full matrices otherwise. Setting the value to 0
+      will force it to use full matrices even with a sparse-capable solver.
+    - Cleaned up checking for optional functionality, and fixed a bug
+      that would miss MEX files if there was an identically named directory
+      by adding have_fcn.m.
+      
+
+Changes since 2.0
+-----------------
+
+8/25/04
+    - Released version 3.0b1.
+
+8/24/04
+    - Made mpoption() throw an error if passed an invalid option name.
+
+8/23/04
+    - Added an fmincon based OPF solver for the generalized formulation
+      previously used by mopf (Carlos).
+    - Restructured opf.m so all OPF solvers have a similar API based
+      on the one from mopf.m (Carlos).
+    - Added some quick tests for runpf and runopf for each algorithm.
+
+8/13/04
+    - Renamed 'area' variable to 'areas' to avoid masking the built-in
+      function of the same name.
+    - Made OPF data matrices 'areas' and 'gencost' optional for running
+      simple power flow.
+
+7/15/04
+    - The loadcase function (and therefore all of the run* functions
+      now optionally accept a struct with the data matrices as fields
+      in place of the case file name.
+    - Added t subdirectory with various tests and testing tools.
+
+7/8/04
+    - Updated mp_lp.m and mp_qp.m to try linprog() and quadprog()
+      after trying bp, since lp() and qp() are no longer included
+      in the Optimization Toolbox as of version 3.
+
+7/7/04
+    - Removed case.m, added caseformat.m, made case9.m the default
+      case and fixed function names in other case files to avoid
+      use of reserved word 'case'.
+    - Fixed bugs in runcomp.m.
+
+6/23/04
+    - Fixed bug in newtonpf.m which caused algorithm to diverge when
+      the Newton step resulted in a negative voltage magnitude.
+
+4/17/03
+    - Changed uopf.m to use a dynamic programming approach. More
+      computationally expensive, but should find significanly better
+      results when there are many gens to shut down.
+    - Added mp_lp.m and mp_qp.m, equivalents to lp.m and qp.m,
+      respectively that call bpmpd if available. Modified LPrelax.m,
+      LPsetup.m and dcopf.m to call these new functions.
+
+4/14/03
+    - Fixed a bug in pfsoln.m which for cases with a single generator.
+
+10/23/02
+    - Fixed bus numbering bug in System Summary section of printpf.m.
+
+6/20/00
+    - Fixed a bug in printpf.m in the generator section, where
+      the generator was assumed to be off if it's real power
+      output was zero, even if the reactive output was non-zero.
+    - Modified printpf.m to print out lambdas in generation section
+      for generators that are shut down.
+
+6/8/00
+    - Modified cdf2matp.m so that Pd also includes any generation at
+      buses specified as PQ buses. Also modified identification of
+      generator buses to include only PV or reference buses. (Thanks
+      to Venkat)
+    - Modified cdf2matp.m so that it always treats the input values
+      for Gs and Bs as per unit values and converts them to actual
+      values expected by MATPOWER (Thanks to D. Devaraj)
+
+version 2.5b3
+11/9/99
+
+9/22/99
+    - Modified grad_*.m to return sparse matrices, unless using
+      constr.m or an LP/QP solver that doesn't handle sparse
+      matrices. Cleaned up sparse<->full conversions in LPconstr.m,
+      LPrelax.m, and LPsetup.m.
+
+9/21/99
+    - Undid a "bug fix" from 3/6/98 in makeYbus.m which zeros out
+      charging capacitance for transformers. Apparently some
+      transformer models actually have a non-zero charging parameter
+      when using the model used by MATPOWER (ideal transformer in
+      series with a PI model).
+    - Added loadcase.m which loads a MATPOWER case from an M-file
+      or from a MAT-file. Changed all of the run*.m files to use this
+      as the default way to load case files.
+    - Renamed print2mp.m to savecase.m and added the ability to
+      save a case as a MAT-file as well as an M-file.
+
+9/15/99
+    - Fixed opf.m so that it correctly uses the termination
+      tolerances in the MATPOWER options vector for constr.m.
+    - In previous versions, Pmin/Pmax constraints are relaxed by
+      10 * OPF_VIOLATION in opf.m to avoid falsely reporting a
+      binding Pmin/Pmax constraint in a case where a piece-wise linear
+      cost function has a corner point exactly at the limit. This
+      code was moved out of opf.m (and the standard MATPOWER
+      distribution) to smartmkt.m and the value was changed to
+      100 * OPF_VIOLATION.
+    - Modified opf.m so the MINOS-based solver uses OPF_VIOLATION
+      to set the value of MNS_FEASTOL and MNS_ROWTOL if they are
+      set to zero.
+
+9/9/99
+    - Included MINOS-based OPF with all of its options as
+      algorithm 500. (involved including 'area' in calls to opf.m
+      and uopf.m)
+    - Removed some unused lines from fun_ccv.m and grad_ccv.m.
+
+8/5/99
+    - Fixed a bug in the pfsoln.m in the distribution of Q among
+      generators at the same bus. Initially attempted to distribute
+      Q to generators proportional to each generators' Q "capacity".
+      To do this correctly requires special cases for generators
+      with QMIN equal to QMAX. For the sake of simplicity, we now
+      distribute Q equally among all generators at the bus.
+      Note: As before, the simple power flow does NO feasibility
+      checking.
+
+7/19/99
+    - Modified runuopf.m and uopf.m to handle DC opf. Added the
+      function runduopf.m which calls runuopf.m with the PF_DC flag
+      set to 1.
+    - Fixed size of 2nd order (all zero) coefficient of objective
+      for piecewise linear cost case in dcopf.m.
+
+7/16/99
+    - Added the flag QP_SPARSE to mpoption.m to indicate whether the
+      QP solver being used can accept sparse matrices. Also modified
+      dcopf.m to use this flag.
+    - Fixed handling of VERBOSE option in dcopf.m
+    - Added the flag PF_DC to mpoption.m to indicate whether the
+      power flow formulation to be used for power flow and optimal
+      power flow is a DC approximation or full AC representation.
+      Merged rundcpf.m with runpf.m and rundcopf.m with runopf.m
+      so that the appropriate solver will be used based on the
+      value of the PF_DC flag in the options. The functions rundcpf.m
+      and rundcopf.m were modified to simply call runpf.m and
+      runopf.m, respectively, with the PF_DC flag set to 1.
+
+7/15/99
+    - Changed the sign of the phase shifters in printpf.m to be
+      consistent with the bug fix to makeYbus.m made on 3/6/98.
+
+7/14/99
+    - Included four new m-files (makeBdc.m, dcopf.m, rundcpf.m,
+      and rundcopf.m) which implement a DC power flow and DC
+      optimal power flow algorithms.
+
+7/13/99
+    - Cleaned up variable names in makeYbus to avoid confusion.
+
+6/10/99
+    - Changed UOFP to UOPF in print statements uopf.m.
+
+6/3/99
+    - Modified print2mp.m overwrite instead of append to an
+      existing file.
+    - Fixed bug in cdf2matp.m to make it always correctly write
+      a text file output.
+
+version 2.5b2
+6/2/99
+    - Modified print2mp.m to include line flows and Lagrange
+      and Kuhn-Tucker multipliers in output if available.
+
+4/29/99
+    - Included a Gauss-Seidel power flow solver gausspf.m, and
+      made corresponding changes to runpf.m and mpoption.m.
+      Code contributed by Alberto Borghetti.
+
+4/28/99
+    - Modified newtonpf.m to handle cases with no PQ buses or no
+      PV buses under newer versions of MATLAB.
+
+2/25/99
+    - Fixed a bug in uopf.m which occurs when two (or more)
+      generators have positive decommitment indices but shutting
+      them down one at a time always results in increased system
+      cost. In this scenario, it would go into an infinite loop
+      of attempting to shut them down one by one.
+
+2/24/99
+    - Modified uopf.m to be able to handle the case where the
+      sum of the Pmin's is greater than the load. It shuts down
+      generators in order of decreasing average cost at Pmin
+      (breaking ties randomly) until this infeasibility is gone.
+
+2/16/99
+    - Fixed bug in pfsoln.m which caused crashes in MATLAB 5
+      for systems with no capacitors.
+    - Added print2mp.m, which can print out a MATPOWER case file
+      from the data matrices.
+    - Added to run*pf.m ability to save solved case.
+
+2/10/99
+    - Modified ext2int.m to allow for area matrix to be empty.
+
+12/3/98
+    - Changed pfsoln.m so that there is only one slack generator.
+      Instead of dividing the P between multiple gens at the
+      slack bus in proportion to capacity (this caused problems
+      for the LPconstr versions of the OPF), it now treats the
+      first generator at the slack bus as the only slack generator,
+      leaving the dispatch of the other gens at the bus unchanged.
+    - Added generator number to generation constraint printout and
+      branch number to branch data and branch flow limit printouts.
+
+12/2/98
+    - Changed printpf.m to print elapsed time and objective fcn
+      value even when OUT_SYS_SUM is turned off.
+    - Added code to LPconstr.m to explicitly zero out lambdas for
+      non-binding constraints.
+
+12/1/98
+    - Made modifications to ...
+        bustypes.m
+        fun_ccv.m
+        fun_std.m
+        grad_ccv.m
+        grad_std.m
+        LPeqslvr.m
+        makeSbus.m
+        opf.m
+        opfsoln.m
+        pfsoln.m
+        printpf.m    
+        runpf.m
+      ... to allow for multiple generators at each bus. For simple
+      power flow, the Q dispatch is divided between multiple gens
+      at a bus in proportion to each gen's Q capacity. Likewise
+      with P for multiple gens at the slack bus.
+
+10/29/98
+    - Fixed bug in uopf.m which caused it to crash when attempting
+      to restart a generator after more than 2 had been shut down.
+
+10/19/98
+    - Generalized definition of GEN_STATUS column of gen matrix
+      to allow for distinctions in the status of out-of-service
+      generators. The default values of 0 => out-of-service and
+      1 => in-service still work, but the logic has been changed
+      so that GEN_STATUS > 0 is now in-service and
+      GEN_STATUS <= 0 is now out-of-service, as opposed to
+      GEN_STATUS ~= 0 and GEN_STATUS == 0, respectively, which
+      was used previously. This allows for a GEN_STATUS of -1,
+      for example, to indicate a generator which is off-line
+      but could be brought on in case of an emergency.
+
+9/2/98
+    - Fixed bug in printpf.m which caused area exports to be
+      off slightly.
+
+9/1/98
+    - Fixed bug in printpf.m. Total intertie flow was double the
+      correct value.
+
+8/31/98
+    - Fixed bug which included line flow limits for out-of-service
+      lines in OPF.
+    - Modified pfsoln.m, opfsoln.m, printpf.m to zero out flow on
+      lines which are out-of-service (found by Ramazan Caglar).
+
+7/28/98
+    - Changed VAR and MVAR to VAr and MVAr everywhere in output.
+
+3/13/98
+    - Decreased the default value of LPC_TOL_X option to increase
+      solution quality.
+    - Modified fix of 2/10/98 to use a value based on the value of
+      the OPF_VIOLATION option.
+
+3/6/98
+    - Fixed 2 bugs in makeYbus.m. Phase shifters now shift the phase the
+      right direction, the line charging susceptance parameter is now
+      correctly ignored for transformer and phase shifters.
+
+3/3/98
+    - Fixed a bug fun_std.m which caused it to always compute 2nd order
+      derivatives. Now it only computes them when requested.
+
+2/10/98
+    - In previous versions, Pmin/Pmax constraints are relaxed by 1.0e-6
+      in opf.m to avoid falsely reporting a binding Pmin/Pmax constraint
+      in a case where a piece-wise linear cost function has a corner
+      point exactly at the limit. Changed the amount of relaxation to
+      1.0e-4 since the problem still occurred at times.
+
+1/29/98
+    - Changed the value of LPC_MAX_IT from 1000 to 400 to allow for
+      earlier detection of infeasible OPF.
+
+Changes since 1.0.1
+-------------------
+
+12/24/97
+    - Released version 2.0.
+
+12/19/97
+    - Fixed ambiguity in case file data and comments regarding lines
+      vs. transformers. Now a tap ratio of zero means that it's a line
+      and a non-zero tap ratio means that it's a transformer.
+    - Optimized formation of Ybus (and hence B matrices).
+
+12/18/97
+    - Implemented fast decoupled load flow.
+
+12/17/97
+    - Optimized formation of Jacobian matrix in newtonpf.m (significant
+      improvement for large systems under MATLAB 5).
+    
+12/16/97
+    - Fixed another bug in calculation of losses. Previous versions
+      did not take into account off-nominal taps for transformers.
+    - Fixed a bug in calculation of losses. Previous versions
+      included line charging injection in reactive line losses.
+    - Added ability to optionally return solution data from
+      run*.m functions.
+    - Added ability to optionally print results to a file.
+    - Added system and area summaries to printpf and modified to
+      handle the new printing options.
+
+12/12/97
+    - Consolidated printing into printpf.m, eliminated printopf.m.
+    - Removed QCCV method (standard formulation solves same problem,
+      but more efficiently).
+    - Removed OPF algorithms which use fixed generator voltages
+      (this can still be done by changing voltage limits in the
+      case file), renumbered OPF algorithms, removed CCV.m and
+      varVg.m.
+
+12/11/97
+    - Added 2 more levels of control of verbose output.
+    - Put all MATPOWER options into an options vector defined in
+      mpoption.m.
+
+12/10/97
+    - Incorporated new LP-based OPF routines and updated alg codes.
+    - Fixed a bug in the documentation in the case files regarding
+      the 4th column of gencost. For piece-wise linear cost functions
+      this value is the number of data points, not the number of
+      parameters (x and y for each point).
+    - Removed some m-files that are not used (usesOT.m, usesLP.m).
+    - Renamed some m-files (OTfungra.m to fg_names.m, OTSfun.m to
+      fun_std.m, OTgra.m to grad_std.m, OTCCVfun.m to fun_ccv.m,
+      OTCCVgra.m to grad_ccv.m).
+
+12/8/97
+    - Rewrote uopf.m to use a smarter decommitment strategy (see the
+      docs for the details of the new method). Removed ref, pv, pq
+      from the list of parameters passed in, since they were not used.
+
+11/19/97
+    - Fixed a bug in previous versions of uopf.m which returned
+      incorrect values for Pmin.
+
+10/28/97
+    - Increased maximum number of iterations for constr-based OPF.
+
+10/24/97
+    - Fixed a bug in previous versions which may result in incorrectly
+      reporting Pmin or Pmax limits to be binding, possibly with large
+      multipliers, if the piece-wise linear cost function has a corner
+      point exactly at Pmin or Pmax.
+
+10/22/97
+    - Added to OTSgra.m (renamed to grad_std.m in 2.0) the ability
+      to return the second derivatives of the objective function.
+
+9/24/97
+    - Fixed a bug in previous versions of runuopf.m which prevented it
+      from printing out the raw data needed for our Perl DB interface.
+
+9/23/97
+    - Fixed a bug in 1.1b1 in OTCCVgra.m (renamed to grad_ccv.m in 2.0)
+      which caused printing of warning message "Concatenation involves
+      an incommensurate empty array" under MATLAB 5.
+
+9/22/97
+    - Fixed a bug in 1.1b1 which prevented runuopf.m from running at all.
+      Wrong number of parameters to call opf.m.
+
+9/20/97
+    - Released version 1.1b1.
+
+9/19/97
+    - Modified the formulation of the OT-based OPF. The objective
+      function may now include costs for reactive power as well as
+      active power. In previous versions the reactive power variables
+      and reactive power balance equations for generator buses were
+      not included explicitly in the optimization as variables and
+      equality constraints. Generator reactive powers were computed
+      directly. Now they are included explicitly in the optimization.
+      Costs for Qg are specified in extra rows int gencost.
+
+
+Changes since 1.0
+-----------------
+
+9/20/97
+    - Released version 1.0.1.
+
+9/19/97
+    - Fixed a bug in 1.0 OTSgra.m and OTCCVgra.m (renamed to
+      grad_std and grad_ccv.m, respectively, in 2.0).m which used
+      incorrect coefficients to compute cost if specified as
+      polynomials of different degrees.
+
+9/18/97
+    - Fixed a bug in 1.0 in OTopf.m which caused the last equality
+      constraint (Q mismatch for last pq bus) to be treated as an
+      inequality constraint. It appears that this constraint was
+      normally binding (unless Qd was negative) in which case the
+      solution was still correct.
+    - Fixed a bug in 1.0 in runpf.m, initial voltage for generators
+      which were shut down were taken from gen(:, VG) rather
+      than bus(:, VM).
+    - Fixed a bug in 1.0 in varVg.m which caused Kuhn-Tucker
+      multipliers to print out in the wrong place for LP-based OPF.
+
+
+Changes since 6/25/97 Version
+-----------------------------
+
+9/17/97
+    - Released version 1.0 (first widely publicized release).
+    - added placeholders for LP-solvers that we can't re-distribute
+    - updated documentation
+
+9/12/97
+    - added ability to do pretty & ugly printing at the same time
+      also documented that ugly printing is for talking to our
+      our Perl database interface code
+    - included Deqiang (David) Gan's LP IEEE -> matpower data
+      conversion code
+    - included Deqiang (David) Gan's LP based opf code
+    - fixed LAM_Q bug, now computes correctly for generator buses
+    - fixed some bugs in totcost.m
+
+9/9/97
+    - removed PRICE from idx_gen
+
+9/4/97
+    - added code to convert from (possibly non-consecutive) external
+      bus numbering to consecutive internal bus numbering before
+      solving, and back to external before printing results
+    - replaced test*pf with run*pf which are now functions
+      taking the casefile name as a parameter (among other params)
+    - made changes necessary to handle new format of case file
+      (generator costs moved to gencost variable)
+
+
+Changes since I started keeping track
+-------------------------------------
+
+6/25/97
+    - made first public release (not widely publicized)
+    - documentation updates
+    - changed names of m-files to fit DOS 8.3 limitation
+        buildsbus.m     =>  makeSbus.m
+        buildybus.m     =>  makeYbus.m
+        idx_branch.m    =>  idx_brch.m
+        dSbranch_dV.m   =>  dSbr_dV.m
+        dAbranch_dV.m   =>  dAbr_dV.m
+        ucopfsoln.m     =>  uopfsoln.m
+        testucopf.m     =>  testuopf.m
+        ucopf.m         =>  uopf.m  (for naming consistency)
+    - changed copyright notice
+
+6/18/97
+    - modified ucopf.m to allow a generator to be turned back on if
+      shutting it off results in an infeasible (or at least
+      non-convergent) OPF, also changed the order of shutting down
+      generators which are dispatched at zero, now chooses one with
+      largest mu_Pmin     
+
+6/12/97
+    - fixed bug in printpf.m so it doesn't print PG & QG for gens that
+      have been shut down
+    - fixed bug in pfsoln.m to correctly compute the reference bus power
+      injection when generators have been shut down
+
+6/10/97
+    - fixed Vg initialization bug in testpf.m (not just testopf, etc)
+
+6/9/97
+    - fixed bug in PLCCV versions which set the initial values of the
+      cost variables wrong (used p.u. Pg instead of actual)
+    - made opfsoln.m copy generator voltages back to gen(:, VG)
+    - fixed bug in code which initializes generator voltages, it was
+      always setting the angle to zero, now it uses the value from the
+      case file
+
+6/3/97
+    - included opf variations which use cost variables constrained
+      by a piece-wise linear cost function (PLCCV = piece-wise linearly
+      constrained cost variables)
+
+6/2/97
+    - included opf variations which use cost variables constrained
+      by a quadratic cost function (QCCV = quadratically constrained
+      cost variables)
+    - included opf variation which allows generator voltage
+      magnitudes to vary
+    - fixed line in test*pf.m scripts which initializes V0 (I'd missed
+      the sqrt(-1) before
+
+4/16/97
+    - changed line 59 of ucopf.m from "return" to "break" to ensure
+      return values are correct
+
+4/14/97
+    - added some print statements to ucopf.m
+
+4/12/97
+    - reduced max iterations to 100 for constr in opf.m
+
+4/8/97
+    - modified opf.m, ucopf.m, testopf.m, testucopf.m to include
+      "success", a variable which indicates whether opf was solved
+      successfully or not
+
+4/7/97
+    - fixed bug in ucopf.m, assumed all generators are initially
+      available

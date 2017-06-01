@@ -1,0 +1,60 @@
+// validates commercial HVAC HEAT load usage and hvac HEAT mode turn-on;
+// initial air temperature set to 68.01 degF,with heating/cooling setpoints set to 70/73 
+// with a .1degF deadband lights added to supply internal heating gains occupancy set 
+// to 1 for all hours of all seven days of the week OCCUPANCY IS BASED ON OLD SCHEDULING 
+// SYSTEM (which doesn't take in the correct input) MAY NEED TO BE UPDATED ONCE THE SWITCH 
+// TO THE NEW SCHEDULING SYSTEM IS MADE; BASED ON OUTSIDE OFFICE TEMP OF 59degF
+// HEATING Qactive EQUATION WAS NOT MATCHING WIKI AT TIME OF TEST CREATION
+
+// payroll: d3y332
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	stoptime '2000-02-01 0:00:00';
+	timezone PST+8PDT;
+}
+
+#set stoptime=2000-01-01 0:00:56 PST
+
+module commercial;
+module tape;
+module assert;
+
+
+object office {
+	floor_area 4000 sf;
+	floor_height 9 ft;
+	exterior_ua 2.0;
+	interior_ua 2.0;
+	interior_mass 2000;
+	heating_setpoint 70;
+	cooling_setpoint 73;
+	hvac.cooling.cop -3;
+	hvac.heating.cop 1.25;
+	thermostat_deadband .1;
+	air_temperature 68.01;
+	control.ventilation_fraction 0;
+	lights.capacity 50;
+	lights.fraction 1;
+	lights.power_factor 1;
+	schedule "0-6 0-23";
+	object complex_assert {
+		target "hvac.load";
+		within .001;
+		value 53.8244+0j;
+		object player {
+			file ../office_hvac_ECON_assert.player;
+			property status;
+		};
+	};
+	object enum_assert {
+		target "hvac_mode";
+		value 1; //HC_HEAT
+	};
+	object recorder {
+		file "commercial_hvac_usage2.csv";
+		interval 1;
+		limit 2;
+		property lights.load,outdoor_temperature,occupancy,control.ventilation_fraction,air_temperature,mass_temperature,hvac_mode,hvac.load;
+	};
+}

@@ -1,0 +1,57 @@
+// validates commercial office internal enduse heating gains calculation; 25kW, 50kW of lights and an HVAC 
+// are run for 60s initial air temperature set to 90degF,with heating/cooling setpoints set to 70/73 
+// with a .1degF occupancy set to 1 for all hours of all seven days of the week; OCCUPANCY 
+// IS BASED ON OLD SCHEDULING SYSTEM (which doesn't take in the correct input) MAY NEED TO BE 
+// UPDATED ONCE THE SWITCH TO THE NEW SCHEDULING SYSTEM IS MADE; BASED ON OUTSIDE OFFICE TEMP OF 
+// 59degF
+
+// payroll: d3y332
+
+clock {
+	timezone PST+8PDT;
+	timestamp '2000-01-01 0:00:00';
+	stoptime '2000-02-01 0:00:00';
+}
+
+//#set stoptime=2000-01-01 0:00:08 PST
+
+module commercial;
+module tape;
+module assert;
+
+
+object office {
+	floor_area 4000 sf;
+	floor_height 9 ft;
+	exterior_ua 2.0;
+	interior_ua 2.0;
+	interior_mass 2000;
+	heating_setpoint 70;
+	cooling_setpoint 73;
+	thermostat_deadband .1;
+	air_temperature 71.5;
+	lights.capacity 50;
+	lights.fraction 1;
+	lights.heatgain_fraction 1;
+	lights.power_factor 1;
+	plugs.capacity 25;
+	plugs.fraction 1;
+	plugs.heatgain_fraction 1;
+	plugs.power_factor 1;
+	schedule "0-6 0-23";
+	object double_assert {
+		target "Qi";
+		within .001;
+		value 75;
+		object player {
+			file ../office_assert.player;
+			property status;
+		};
+	};
+	object recorder {
+		file "commercial_hvac_usage2.csv";
+		interval 1;
+		limit 60;
+		property plugs.heatgain,lights.heatgain,Qi;
+	};
+}

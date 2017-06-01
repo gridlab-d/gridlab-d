@@ -1,0 +1,412 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema targetNamespace="http://tempuri.org/XMLSchema.xsd" elementFormDefault="qualified" xmlns="http://tempuri.org/XMLSchema.xsd" xmlns:mstns="http://tempuri.org/XMLSchema.xsd" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:complexType name="Link">
+    <xs:sequence>
+      <xs:element name="segment" type="xs:unsignedInt" />
+      <xs:element name="node_a" type="xs:int" />
+      <xs:element name="node_b" type="xs:int" />
+      <xs:element name="length" type="xs:double" />
+      <xs:element name="obj_type" type="Link_x0020_Type">
+      </xs:element>
+      <xs:element name="configuration" type="xs:int" />
+      <xs:element name="phase" type="Phase_x0020_Combination">
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="Overhead_x0020_Line">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="Line">
+          <xs:sequence>
+            <xs:element name="type" type="xs:int" />
+            <xs:element name="cable_a" type="xs:int" />
+            <xs:element name="cable_b" type="xs:int" />
+            <xs:element name="cable_c" type="xs:int" />
+            <xs:element name="cable_n" type="xs:int" />
+            <xs:element name="spacing" type="xs:int" />
+          </xs:sequence>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+    <xs:unique name="overhead_spacing_key">
+      <xs:selector xpath="." />
+      <xs:field xpath="mstns:spacing" />
+    </xs:unique>
+    <xs:key name="Overhead_cable_a">
+      <xs:selector xpath="." />
+      <xs:field xpath="mstns:cable_a" />
+    </xs:key>
+    <xs:key name="overhead_cable_b">
+      <xs:selector xpath="." />
+      <xs:field xpath="mstns:cable_b" />
+    </xs:key>
+    <xs:key name="overhead_cable_c">
+      <xs:selector xpath="." />
+      <xs:field xpath="mstns:cable_c" />
+    </xs:key>
+    <xs:key name="overhead_cable_n">
+      <xs:selector xpath="." />
+      <xs:field xpath="mstns:cable_n" />
+    </xs:key>
+    <xs:key name="overhead_x0020_line_x0020_primary_x0020_type_x0020_key">
+      <xs:selector xpath="." />
+      <xs:field xpath="mstns:type" />
+    </xs:key>
+  </xs:element>
+  <xs:element name="Overhead_x0020_Line_x0020_Spacing">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element type="xs:int" name="type" />
+        <xs:element name="dad" type="xs:double" />
+        <xs:element name="dbc" type="xs:double" />
+        <xs:element name="dca" type="xs:double" />
+        <xs:element name="dan" type="xs:double" />
+        <xs:element name="dbn" type="xs:double" />
+        <xs:element name="dcn" type="xs:double" />
+      </xs:sequence>
+    </xs:complexType>
+    <xs:keyref name="Overhead_x0020_LineOverhead_x0020_Line_x0020_Spacing" refer="overhead_spacing_key">
+      <xs:selector xpath="." />
+      <xs:field xpath="mstns:type" />
+    </xs:keyref>
+    <xs:key name="Overhead_x005F_x0020_Line_x005F_x0020_primary_x0020_type_x0020_key">
+      <xs:selector xpath="." />
+      <xs:field xpath="mstns:type" />
+    </xs:key>
+  </xs:element>
+  <xs:element name="Overhead_x0020_Conductor">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="type" type="xs:int" />
+        <xs:element name="description" type="xs:string" />
+        <xs:element name="gmr" type="xs:double" />
+        <xs:element name="resistance" type="xs:double" />
+      </xs:sequence>
+    </xs:complexType>
+    <xs:keyref name="Overhead_x0020_LineOverhead_x0020_Conductor" refer="Overhead_cable_a">
+      <xs:selector xpath="." />
+      <xs:field xpath="mstns:type" />
+    </xs:keyref>
+    <xs:keyref name="Overhead_x0020_LineOverhead_x0020_Conductor1" refer="overhead_cable_b">
+      <xs:selector xpath="." />
+      <xs:field xpath="mstns:type" />
+    </xs:keyref>
+    <xs:keyref name="Overhead_x0020_LineOverhead_x0020_Conductor2" refer="overhead_cable_c">
+      <xs:selector xpath="." />
+      <xs:field xpath="mstns:type" />
+    </xs:keyref>
+    <xs:keyref name="Overhead_x0020_LineOverhead_x0020_Conductor3" refer="overhead_cable_n">
+      <xs:selector xpath="." />
+      <xs:field xpath="mstns:type" />
+    </xs:keyref>
+    <xs:key name="Overhead_x005F_x0020_primary_x0020_type_x0020_key">
+      <xs:selector xpath="." />
+      <xs:field xpath="mstns:type" />
+    </xs:key>
+  </xs:element>
+  <xs:element name="Underground_x0020_Line">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="Line">
+          <xs:sequence>
+            <xs:element name="type" type="xs:int" />
+            <xs:element name="cable_a" type="xs:int" />
+            <xs:element name="cable_b" type="xs:int" />
+            <xs:element name="cable_c" type="xs:int" />
+            <xs:element name="cable_n" type="xs:int" />
+            <xs:element name="spacing" type="xs:int" />
+          </xs:sequence>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+    <xs:unique name="underground_spacing">
+      <xs:selector xpath="." />
+      <xs:field xpath="mstns:spacing" />
+    </xs:unique>
+    <xs:key name="underground_cable_a">
+      <xs:selector xpath="." />
+      <xs:field xpath="mstns:cable_a" />
+    </xs:key>
+    <xs:key name="underground_cable_b">
+      <xs:selector xpath="." />
+      <xs:field xpath="mstns:cable_b" />
+    </xs:key>
+    <xs:key name="underground_cable_c">
+      <xs:selector xpath="." />
+      <xs:field xpath="mstns:cable_c" />
+    </xs:key>
+    <xs:key name="underground_cable_n">
+      <xs:selector xpath="." />
+      <xs:field xpath="mstns:cable_n" />
+    </xs:key>
+    <xs:key name="primary_x0020_underground_x0020_type_x0020_key">
+      <xs:selector xpath="." />
+      <xs:field xpath="mstns:type" />
+    </xs:key>
+  </xs:element>
+  <xs:element name="Underground_x0020_Line_x0020_Spacing">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element type="xs:int" name="type" />
+        <xs:element name="dad" type="xs:double" />
+        <xs:element name="dbc" type="xs:double" />
+        <xs:element name="dca" type="xs:double" />
+        <xs:element name="dan" type="xs:double" />
+        <xs:element name="dbn" type="xs:double" />
+        <xs:element name="dcn" type="xs:double" />
+      </xs:sequence>
+    </xs:complexType>
+    <xs:keyref name="Underground_x0020_LineUnderground_x0020_Line_x0020_Spacing" refer="underground_spacing">
+      <xs:selector xpath="." />
+      <xs:field xpath="mstns:type" />
+    </xs:keyref>
+    <xs:key name="Underground_x005F_x0020_Line_x005F_x0020__x0020_primary_x0020_type_x0020_key">
+      <xs:selector xpath="." />
+      <xs:field xpath="mstns:type" />
+    </xs:key>
+  </xs:element>
+  <xs:element name="Underground_x0020_Conductor">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="type" type="xs:int" />
+        <xs:element name="description" type="xs:string" />
+        <xs:element name="od" type="xs:double" />
+        <xs:element name="c_gmr" type="xs:double" />
+        <xs:element name="c_diameter" type="xs:double" />
+        <xs:element name="c_resistance" type="xs:double" />
+        <xs:element name="n_gmr" type="xs:double" />
+        <xs:element name="n_diameter" type="xs:double" />
+        <xs:element name="n_resistance" type="xs:double" />
+        <xs:element name="n_strands" type="xs:int" />
+        <xs:element name="t_gmr" type="xs:double" />
+        <xs:element name="t_resistance" type="xs:double" />
+      </xs:sequence>
+    </xs:complexType>
+    <xs:keyref name="Underground_x0020_LineUnderground_x0020_Conductor" refer="underground_cable_a">
+      <xs:selector xpath="." />
+      <xs:field xpath="mstns:type" />
+    </xs:keyref>
+    <xs:keyref name="Underground_x0020_LineUnderground_x0020_Conductor1" refer="underground_cable_b">
+      <xs:selector xpath="." />
+      <xs:field xpath="mstns:type" />
+    </xs:keyref>
+    <xs:keyref name="Underground_x0020_LineUnderground_x0020_Conductor2" refer="underground_cable_c">
+      <xs:selector xpath="." />
+      <xs:field xpath="mstns:type" />
+    </xs:keyref>
+    <xs:keyref name="Underground_x0020_LineUnderground_x0020_Conductor3" refer="underground_cable_n">
+      <xs:selector xpath="." />
+      <xs:field xpath="mstns:type" />
+    </xs:keyref>
+    <xs:key name="Underground_x005F_x0020__x0020_primary_x0020_type_x0020_key">
+      <xs:selector xpath="." />
+      <xs:field xpath="mstns:type" />
+    </xs:key>
+  </xs:element>
+  <xs:element name="Transformer">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="Link">
+          <xs:sequence>
+            <xs:element name="type" type="xs:int" />
+            <xs:element name="description" type="xs:string" />
+            <xs:element name="connection" type="Connection_x0020_Type">
+            </xs:element>
+            <xs:element name="v_high" type="xs:double" />
+            <xs:element name="v_low" type="xs:double" />
+            <xs:element name="kva" type="xs:double" />
+            <xs:element name="rpu" type="xs:double" />
+            <xs:element name="xpu" type="xs:double" />
+          </xs:sequence>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:simpleType name="Connection_x0020_Type">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Wye-Wye" />
+      <xs:enumeration value="Wye-Delta" />
+      <xs:enumeration value="Delta-Wye" />
+      <xs:enumeration value="Delta-Delta" />
+      <xs:enumeration value="A" />
+      <xs:enumeration value="B" />
+      <xs:enumeration value="C" />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="Phase">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="A" />
+      <xs:enumeration value="B" />
+      <xs:enumeration value="C" />
+      <xs:enumeration value="N" />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="Link_x0020_Type">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="REG" />
+      <xs:enumeration value="OL" />
+      <xs:enumeration value="XFMR" />
+      <xs:enumeration value="UG" />
+      <xs:enumeration value="SW" />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:element name="Regulator">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="Link">
+          <xs:sequence>
+            <xs:element name="type" type="xs:int" />
+            <xs:element name="description" type="xs:string" />
+            <xs:element name="configuration" type="Connection_x0020_Type" />
+            <xs:element name="band_center" type="xs:double" />
+            <xs:element name="band_width" type="xs:double" />
+            <xs:element name="time_delay" type="xs:double" />
+            <xs:element name="raise_taps" type="xs:double" />
+            <xs:element name="ct_ratio" type="xs:double" />
+            <xs:element name="pt_ratio" type="xs:double" />
+            <xs:element name="pt_node" type="xs:string" />
+            <xs:element name="Idc_r" type="xs:int" />
+            <xs:element name="Idc_x" type="xs:int" />
+            <xs:element name="ct_phase" type="Phase" />
+            <xs:element name="pt_phase" type="Phase" />
+            <xs:element name="regulation" type="xs:double" />
+            <xs:element name="v_high" type="xs:double" />
+            <xs:element name="v_low" type="xs:double" />
+            <xs:element name="lower_taps" type="xs:double" />
+          </xs:sequence>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="Node">
+    <xs:sequence>
+      <xs:element name="sync_v_limit" type="Complex" />
+      <xs:element name="phaseA_V" type="Complex" />
+      <xs:element name="phaseB_V" type="Complex" />
+      <xs:element type="Complex" name="phaseC_V" />
+      <xs:element name="Power" type="Power_x0020_Unit" />
+      <xs:element name="Impedence" type="Power_x0020_Unit" />
+      <xs:element name="Current" type="Power_x0020_Unit" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="Complex">
+    <xs:sequence>
+      <xs:element name="real" type="xs:int" />
+      <xs:element name="imaginary" type="xs:int" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="Power_x0020_Unit">
+    <xs:sequence>
+      <xs:element name="phaseA" type="Complex" />
+      <xs:element name="phaseB" type="Complex" />
+      <xs:element name="phaseC" type="Complex" />
+      <xs:element name="phaseAtoB" type="Complex" />
+      <xs:element name="phaseAtoC" type="Complex" />
+      <xs:element name="phaseBtoC" type="Complex" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="Capacitor">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="Node">
+          <xs:sequence>
+            <xs:element name="switch_state">
+              <xs:simpleType>
+                <xs:restriction base="xs:string">
+                  <xs:enumeration value="OPEN" />
+                  <xs:enumeration value="CLOSED" />
+                </xs:restriction>
+              </xs:simpleType>
+            </xs:element>
+            <xs:element name="q_node" type="Complex_x0020_Tuple" />
+            <xs:element name="b_node" type="Complex_x0020_Tuple" />
+            <xs:element name="q_cap" type="Complex_x0020_Tuple" />
+            <xs:element name="var_close" type="xs:double" />
+            <xs:element name="var_open" type="xs:double" />
+            <xs:element name="volt_close" type="xs:double" />
+            <xs:element name="volt_open" type="xs:double" />
+            <xs:element name="pt_ratio" type="xs:int" />
+            <xs:element name="pt_phase" type="Phase" />
+            <xs:element name="time_delay" type="xs:int" />
+            <xs:element name="time_to_change" type="xs:double" />
+            <xs:element name="control">
+              <xs:simpleType>
+                <xs:restriction base="xs:int">
+                  <xs:enumeration value="0" />
+                  <xs:enumeration value="1" />
+                  <xs:enumeration value="2" />
+                  <xs:enumeration value="3" />
+                </xs:restriction>
+              </xs:simpleType>
+            </xs:element>
+          </xs:sequence>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="Complex_x0020_Tuple">
+    <xs:sequence>
+      <xs:element name="a" type="Complex" />
+      <xs:element name="b" type="Complex" />
+      <xs:element name="c" type="Complex" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:simpleType name="Phase_x0020_Combination">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="A" />
+      <xs:enumeration value="B" />
+      <xs:enumeration value="C" />
+      <xs:enumeration value="N" />
+      <xs:enumeration value="AB" />
+      <xs:enumeration value="AC" />
+      <xs:enumeration value="BC" />
+      <xs:enumeration value="ABC" />
+      <xs:enumeration value="AN" />
+      <xs:enumeration value="BN" />
+      <xs:enumeration value="CN" />
+      <xs:enumeration value="ABN" />
+      <xs:enumeration value="ACN" />
+      <xs:enumeration value="BCN" />
+      <xs:enumeration value="ABCN" />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:complexType name="Switch">
+    <xs:complexContent>
+      <xs:extension base="Link">
+        <xs:sequence>
+          <xs:element name="time_to_change" type="xs:double" />
+          <xs:element name="status">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="OPEN" />
+                <xs:enumeration value="CLOSED" />
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:element>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:element name="Fuse">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="Switch">
+          <xs:sequence>
+            <xs:element name="time_curve" type="xs:int" />
+            <xs:element name="minimum_current_A" type="xs:double" />
+            <xs:element name="blow_time" type="xs:time" />
+          </xs:sequence>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="Line">
+    <xs:complexContent>
+      <xs:extension base="Link">
+        <xs:sequence>
+          <xs:element name="length" type="xs:double" />
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+</xs:schema>

@@ -1,0 +1,75 @@
+// validates commercial HVAC COOL load usage and hvac COOL mode turn-on;
+// initial air temperature set to 78 degF,with heating/cooling setpoints set to 70/73 
+// with a .1degF deadband lights added to supply internal heating gains occupancy set 
+// to 1 for all hours of all seven days of the week; outside temperature is set to 86.0 degF
+// by hour-long custom made tmy file generic.tmy2
+
+// WARNING: generic.tmy2 will cause simulation crash for any time past the 3598th second
+
+// OCCUPANCY IS BASED ON OLD SCHEDULING 
+// SYSTEM (which doesn't take in the correct input) MAY NEED TO BE UPDATED ONCE THE SWITCH 
+// TO THE NEW SCHEDULING SYSTEM IS MADE; BASED ON OUTSIDE OFFICE TEMP OF 59degF; TEST CURRENTLY
+// FAILS LOAD USAGE ASSERT BECAUSE DUMMY VALUE IS USED UNTIL HVAC COOL MODE Qactive CALCULATIONS
+// ARE STRAIGHTENED OUT
+
+// payroll: d3y332
+
+clock {
+	timestamp '2000-01-01 0:00:00';
+	stoptime '2000-02-01 0:00:00';
+	timezone PST+8PDT;
+}
+
+module commercial;
+module tape;
+module assert;
+module climate;
+
+object climate {
+	tmyfile ../generic.tmy2;
+	object recorder {
+		property temperature,solar_flux;
+		file "temp.csv";
+		interval 1;
+		limit 58;
+	};
+}
+
+object office {
+	floor_area 4000 sf;
+	floor_height 9 ft;
+	exterior_ua 2.0;
+	interior_ua 2.0;
+	interior_mass 2000;
+	hvac.cooling.cop -3;
+	hvac.heating.cop 1.25;
+	heating_setpoint 70;
+	cooling_setpoint 73;
+	thermostat_deadband .1;
+	air_temperature 78;
+	control.ventilation_fraction 0;
+	lights.capacity 50;
+	lights.fraction 1;
+	lights.power_factor 1;
+	schedule "0-6 0-23";
+	object complex_assert {
+		target "hvac.load";
+		within .001;
+		value 20.1072+j; // (dummy value); expected value unknown until HVAC COOL mode Qactive calculation is fixed
+		object player {
+			file ../office_hvac_ECON_assert.player;
+			property status;
+			loop 0;
+		};
+	};
+	object enum_assert { // passes correctly
+		target "hvac_mode";
+		value 3; //HC_COOL
+	};
+	object recorder {
+		file "commercial_hvac_usage2.csv";
+		interval 1;
+		limit 60;
+		property outdoor_temperature,occupancy,control.ventilation_fraction,air_temperature,mass_temperature,hvac_mode,hvac.load;
+	};
+}
