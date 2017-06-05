@@ -164,6 +164,15 @@ Source: "lib\gridlabd\tape_file.dll"; DestDir: "{app}\lib"; Flags: ignoreversion
 ;;Source: "lib\gridlabd\tape_memory.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\tape
 Source: "lib\gridlabd\tape_plot.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\tape
 Source: "..\third_party\dlfcn-win32-read-only\libdl.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\third_party
+Source: "C:\MinGW\msys\1.0\opt\windows_64\bin\libwinpthread-1.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\third_party
+Source: "C:\MinGW\msys\1.0\opt\windows_64\bin\libgcc_s_seh-1.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\third_party
+Source: "C:\MinGW\msys\1.0\opt\windows_64\bin\libstdc++-6.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\third_party
+Source: "..\LICENSE"; DestDir: "{app}\etc"; Flags: ignoreversion; Components: core
+Source: "..\license_libdl.txt"; DestDir: "{app}\etc"; Flags: ignoreversion; Components: modules\third_party
+Source: "..\license_libgcc.txt"; DestDir: "{app}\etc"; Flags: ignoreversion; Components: modules\third_party
+Source: "..\license_libstdc.txt"; DestDir: "{app}\etc"; Flags: ignoreversion; Components: modules\third_party
+Source: "..\license_libwinpthread-1.txt"; DestDir: "{app}\etc"; Flags: ignoreversion; Components: modules\third_party
+
 
 ;; sample files
 Source: "..\models\climate_csvreader_example.glm"; DestDir: "{app}\samples"
@@ -171,7 +180,6 @@ Source: "..\models\collector_example.glm"; DestDir: "{app}\samples"
 Source: "..\models\diesel_deltamode_load_player_A.csv"; DestDir: "{app}\samples"
 Source: "..\models\diesel_deltamode_load_player_B.csv"; DestDir: "{app}\samples"
 Source: "..\models\diesel_deltamode_load_player_C.csv"; DestDir: "{app}\samples"
-Source: "..\models\Four_quadrant_inverter_example.glm"; DestDir: "{app}\samples"
 Source: "..\models\house_HVAC_example.glm"; DestDir: "{app}\samples"
 Source: "..\models\IEEE_13_Node_Test_Feeder.glm"; DestDir: "{app}\samples"
 Source: "..\models\IEEE_13_Node_With_Houses.glm"; DestDir: "{app}\samples"
@@ -210,6 +218,7 @@ Source: "share\gridlabd\gridlabd.htm"; DestDir: "{app}"
 ;Source: network.dll; DestDir: {app}\lib; Flags: ignoreversion
 ;Source: sample.dll; DestDir: {app}\lib; Flags: ignoreversion
 ;Source: cppunit.dll; DestDir: {app}\bin; Flags: ignoreversion; Components: core
+;Source: "..\models\Four_quadrant_inverter_example.glm"; DestDir: "{app}\samples"
 
 ;Source: ..\..\..\models\powerflow_IEEE_4node.glm; DestDir: {app}\samples; Components: samples
 ;Source: ..\..\..\models\residential_loads.glm; DestDir: {app}\samples
