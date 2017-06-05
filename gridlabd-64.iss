@@ -151,7 +151,7 @@ Source: "share\gridlabd\tzinfo.txt"; DestDir: "{app}\etc"; Components: core
 Source: "share\gridlabd\unitfile.txt"; DestDir: "{app}\etc"; Components: core
 ;;Source: "xerces-c_3_1.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: core
 Source: "lib\gridlabd\climate.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\climate
-Source: "lib\gridlabd\commercial.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\commercial
+;Source: "lib\gridlabd\commercial.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\commercial
 Source: "lib\gridlabd\generators.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\generators
 Source: "lib\gridlabd\market.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\market
 ;Source: "mysql.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\mysql
