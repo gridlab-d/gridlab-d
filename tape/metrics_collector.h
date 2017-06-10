@@ -94,6 +94,9 @@ private:
 	// No new arrays defined for inverter object,
 	// since real_power_array and reactive_power_array have been defined for triplex_meter already
 
+	// Parameters related to capacitor and regulator objects
+	double *count_array;  // these _count member variables are doubles in capacitor.h and regulator.h
+
 	// Parameters related to Swing-bus meter object
 	FINDLIST *link_objects;
 	double *real_power_loss_array;		//array storing real power losses for the whole feeder

@@ -84,7 +84,7 @@ int metrics_collector::init(OBJECT *parent){
 		return 0;
 	}
 	parent_string = "";
-	// Find parent, if not defined, or if the parent is not a triplex_meter/house/inverter, throw an exception
+	// Find parent, if not defined, or if the parent is not a supported class, throw an exception
 	if (gl_object_isa(parent,"triplex_meter"))	{
 		parent_string = "triplex_meter";
 	} else if (gl_object_isa(parent,"house")) {
@@ -93,6 +93,10 @@ int metrics_collector::init(OBJECT *parent){
 		parent_string = "waterheater";
 	} else if (gl_object_isa(parent,"inverter")) {
 		parent_string = "inverter";
+	} else if (gl_object_isa(parent,"capacitor")) {
+		parent_string = "capacitor";
+	} else if (gl_object_isa(parent,"regulator")) {
+		parent_string = "regulator";
 	} else if (gl_object_isa(parent,"substation")) {  // must be a swing bus
 		PROPERTY *pval = gl_get_property(parent,"bustype");
 		if ((pval==NULL) || (pval->ptype!=PT_enumeration))
@@ -122,16 +126,16 @@ int metrics_collector::init(OBJECT *parent){
 			}
 		}
 	} else {
-		gl_error("metrics_collector allows only these parents: triplex meter, house, waterheater, inverter, substation, or meter");
+		gl_error("metrics_collector allows only these parents: triplex meter, house, waterheater, inverter, substation, meter, capacitor, regulator");
 		/*  TROUBLESHOOT
 		Check the parent object of the metrics_collector.
 		*/
 		return 0;
 	}
 
+	// Create the JSON dictionary for the outputs
 	if (strcmp(parent_string, "triplex_meter") == 0)
 	{
-		// Create the JSON dictionary for the outputs
 		metrics_Output["Parent_id"] = parent->id;
 		if (parent->name != NULL) {
 			metrics_Output["Parent_name"] = parent->name;
@@ -152,7 +156,6 @@ int metrics_collector::init(OBJECT *parent){
 	} 
 	else if (strcmp(parent_string, "house") == 0)
 	{
-		// Create the JSON dictionary for the outputs
 		metrics_Output["Parent_id"] = parent->id;
 		if (parent->name != NULL) {
 			metrics_Output["Parent_name"] = parent->name;
@@ -163,7 +166,6 @@ int metrics_collector::init(OBJECT *parent){
 	}
 	else if (strcmp(parent_string, "waterheater") == 0)
 	{
-		// Create the JSON dictionary for the outputs
 		metrics_Output["Parent_id"] = parent->parent->id; // For waterheater, write its outputs inside the house object
 		if (parent->parent->name != NULL) {
 			metrics_Output["Parent_name"] = parent->parent->name;
@@ -180,7 +182,26 @@ int metrics_collector::init(OBJECT *parent){
 	}
 	else if (strcmp(parent_string, "inverter") == 0)
 	{
-		// Create the JSON dictionary for the outputs
+		metrics_Output["Parent_id"] = parent->id;
+		if (parent->name != NULL) {
+			metrics_Output["Parent_name"] = parent->name;
+		}
+		else {
+			metrics_Output["Parent_name"] = "No name given";
+		}
+	}
+	else if (strcmp(parent_string, "capacitor") == 0)
+	{
+		metrics_Output["Parent_id"] = parent->id;
+		if (parent->name != NULL) {
+			metrics_Output["Parent_name"] = parent->name;
+		}
+		else {
+			metrics_Output["Parent_name"] = "No name given";
+		}
+	}
+	else if (strcmp(parent_string, "regulator") == 0)
+	{
 		metrics_Output["Parent_id"] = parent->id;
 		if (parent->name != NULL) {
 			metrics_Output["Parent_name"] = parent->name;
@@ -454,6 +475,19 @@ int metrics_collector::init(OBJECT *parent){
 			*/
 		}
 	}
+	else if ((strcmp(parent_string, "capacitor") == 0) || (strcmp(parent_string, "regulator") == 0)) {
+		count_array = (double *)gl_malloc(interval_length*sizeof(double));
+		// Check
+		if (count_array == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocated operation count array",obj->id);
+			/*  TROUBLESHOOT
+			While attempting to allocate the array, an error was encountered.
+			Please try again.  If the error persists, please submit a bug report via the Trac system.
+			*/
+		}
+		for (int i = 0; i < interval_length; i++) count_array[i] = 0.0;
+	}
 	// else not possible come to this step
 	else {
 		gl_error("metrics_collector must have a triplex meter, meter, house, waterheater, inverter or swing-bus as its parent");
@@ -517,7 +551,7 @@ int metrics_collector::commit(TIMESTAMP t1){
 			return 0;
 		}
 		interval_write = false;
-        last_index = 0;  // TODO - we need to have array[0] = array[299], or circular queue
+        last_index = 0;  // TODO - we need to have array[0] = array[299], or circular queue (temporarily wrap in write_line)
 	}
 
 	return 1;
@@ -618,10 +652,9 @@ int metrics_collector::read_line(OBJECT *obj){
 		// Get air temperature deviation from house cooling setpoint
 		double cooling_setpoint = *gl_get_double_by_name(obj->parent, "cooling_setpoint");
 		interpolate (air_temperature_deviation_cooling_array, last_index, curr_index, airTemperature - cooling_setpoint);
-		// Get air temperature deviation from house cooling setpoint
+		// Get air temperature deviation from house heating setpoint
 		double heating_setpoint = *gl_get_double_by_name(obj->parent, "heating_setpoint");
-		interpolate (air_temperature_deviation_cooling_array, last_index, curr_index, airTemperature - heating_setpoint);
-
+		interpolate (air_temperature_deviation_heating_array, last_index, curr_index, airTemperature - heating_setpoint);
 	}
 	else if (strcmp(parent_string, "waterheater") == 0) {
 		// Get load values
@@ -633,6 +666,16 @@ int metrics_collector::read_line(OBJECT *obj){
 		complex VAOut = *gl_get_complex_by_name(obj->parent, "VA_Out");
 		interpolate (real_power_array, last_index, curr_index, (double)VAOut.Re());
 		interpolate (reactive_power_array, last_index, curr_index, (double)VAOut.Im());
+	}
+	else if (strcmp(parent_string, "capacitor") == 0) {
+		double opcount = *gl_get_double_by_name(obj->parent, "cap_A_switch_count")
+			+ *gl_get_double_by_name(obj->parent, "cap_B_switch_count") + *gl_get_double_by_name(obj->parent, "cap_C_switch_count");
+		interpolate (count_array, last_index, curr_index, opcount);
+	}
+	else if (strcmp(parent_string, "regulator") == 0) {
+		double opcount = *gl_get_double_by_name(obj->parent, "tap_A_change_count")
+			+ *gl_get_double_by_name(obj->parent, "tap_B_change_count") + *gl_get_double_by_name(obj->parent, "tap_C_change_count");
+		interpolate (count_array, last_index, curr_index, opcount);
 	}
 	else if (strcmp(parent_string, "swingbus") == 0) {
 		// Get VAfeeder values
@@ -781,6 +824,12 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		// Update the lastVol value based on this metrics interval value
 		last_vol_val = voltage_mag_array[interval_length - 1];
 
+		// wrap the arrays for next collection interval (TODO circular queue)
+		real_power_array[0] = real_power_array[interval_length - 1];
+		reactive_power_array[0] = reactive_power_array[interval_length - 1];
+		voltage_mag_array[0] = voltage_mag_array[interval_length - 1];
+		voltage_average_mag_array[0] = voltage_average_mag_array[interval_length - 1];
+		voltage_unbalance_array[0] = voltage_unbalance_array[interval_length - 1];
 	}
 	// If parent is house
 	else if (strcmp(parent_string, "house") == 0) {
@@ -805,6 +854,12 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		metrics_Output["avg_house_air_temperature_deviation_cooling"] = findAverage(air_temperature_deviation_cooling_array, interval_length);
 		metrics_Output["avg_house_air_temperature_deviation_heating"] = findAverage(air_temperature_deviation_heating_array, interval_length);
 
+		// wrap the arrays for next collection interval (TODO circular queue)
+		total_load_array[0] = total_load_array[interval_length - 1];
+		hvac_load_array[0] = hvac_load_array[interval_length - 1];
+		air_temperature_array[0] = air_temperature_array[interval_length - 1];
+		air_temperature_deviation_cooling_array[0] = air_temperature_deviation_cooling_array[interval_length - 1];
+		air_temperature_deviation_heating_array[0] = air_temperature_deviation_heating_array[interval_length - 1];
 	}
 	// If parent is waterheater
 	else if (strcmp(parent_string, "waterheater") == 0) {
@@ -815,6 +870,8 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		metrics_Output["avg_waterheater_actual_load"] = findAverage(actual_load_array, interval_length);
 		metrics_Output["median_waterheater_actual_load"] = findMedian(actual_load_array, interval_length);
 
+		// wrap the arrays for next collection interval (TODO circular queue)
+		actual_load_array[0] = actual_load_array[interval_length - 1];
 	}
 	else if (strcmp(parent_string, "inverter") == 0) {
 		// Rearranging the arrays of data, and put into the dictionary
@@ -829,6 +886,14 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		metrics_Output["avg_inverter_reactive_power"] = findAverage(reactive_power_array, interval_length);
 		metrics_Output["median_inverter_reactive_power"] = findMedian(reactive_power_array, interval_length);
 
+		// wrap the arrays for next collection interval (TODO circular queue)
+		real_power_array[0] = real_power_array[interval_length - 1];
+		reactive_power_array[0] = reactive_power_array[interval_length - 1];
+	}
+	else if ((strcmp(parent_string, "capacitor") == 0) || (strcmp(parent_string, "regulator") == 0)) {
+		metrics_Output["operation_count"] = findMax(count_array, interval_length);
+		// wrap the arrays for next collection interval (TODO circular queue) 
+		count_array[0] = count_array[interval_length - 1];
 	}
 	else if (strcmp(parent_string, "swingbus") == 0) {
 		// Rearranging the arrays of data, and put into the dictionary
@@ -855,6 +920,12 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		metrics_Output["max_feeder_reactive_power_loss"] = findMax(reactive_power_loss_array, interval_length);
 		metrics_Output["avg_feeder_reactive_power_loss"] = findAverage(reactive_power_loss_array, interval_length);
 		metrics_Output["median_feeder_reactive_power_loss"] = findMedian(reactive_power_loss_array, interval_length);
+
+		// wrap the arrays for next collection interval (TODO circular queue)
+		real_power_array[0] = real_power_array[interval_length - 1];
+		reactive_power_array[0] = reactive_power_array[interval_length - 1];
+		real_power_loss_array[0] = real_power_loss_array[interval_length - 1];
+		reactive_power_loss_array[0] = reactive_power_loss_array[interval_length - 1];
 	}
 
 	return 1;
@@ -864,6 +935,7 @@ void metrics_collector::interpolate(double array[], int idx1, int idx2, double v
 {
 	array[idx2] = val2;
 	int steps = idx2 - idx1;
+
 	if (steps > 1) {
 		double val1 = array[idx1];
 		double dVal = (val2 - val1) / steps;

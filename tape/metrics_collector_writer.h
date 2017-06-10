@@ -54,16 +54,22 @@ private:
 	Json::Value metrics_writer_houses;	// Final output dictionary for houses
 	Json::Value metrics_writer_inverters;	// Final output dictionary for inverters
 	Json::Value metrics_writer_feeder_information;	// Final output dictionary for feeder_information
+	Json::Value metrics_writer_capacitors;
+	Json::Value metrics_writer_regulators;
 
 	Json::Value ary_billing_meters;  // array storage for billing meter metrics
 	Json::Value ary_houses;          // array storage for house (and water heater) metrics
 	Json::Value ary_inverters;       // array storage for inverter metrics
 	Json::Value ary_feeders;         // array storage for feeder information metrics
+	Json::Value ary_capacitors;
+	Json::Value ary_regulators;
 
 	char256 filename_billing_meter;
 	char256 filename_inverter;
 	char256 filename_house;
 	char256 filename_substation;
+	char256 filename_capacitor;
+	char256 filename_regulator;
 
 	FINDLIST *items;
 	PROPERTY *prop_ptr;
@@ -86,13 +92,6 @@ private:
 	char* parent_string;
 
 	FINDLIST *metrics_collectors;
-
-	// Parameters related to triplex_meter and billing meter objects
-	double *real_power_array;		//array storing real power measured at the meter or triplex_meter
-	double *reactive_power_array;		//array storing reactive power measured at the meter or triplex_meter
-	double *voltage_mag_array;		//array storing voltage12 or vLL measured at the meter or triplex_meter
-	double *voltage_average_mag_array;		//array storing voltage12/2 or vLN measured at the meter or triplex_meter
-	double *voltage_unbalance_array;		//array storing (voltage[0]-voltage[1])/(voltage12/2) measured at the triplex_meter, or (vmax - vmin)/vavg at the primary meter
 
 	int interval_length;			//integer averaging length (seconds)
 

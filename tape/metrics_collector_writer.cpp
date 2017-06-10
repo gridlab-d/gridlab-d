@@ -57,11 +57,15 @@ int metrics_collector_writer::init(OBJECT *parent){
 		*/
 	}
 
-	// Write seperate json files for meters, triplex_meters, inverters, houses, substation_meter:
+	// Write seperate json files for meters, triplex_meters, inverters, capacitors, regulators, houses, substation_meter:
 	filename_billing_meter = "billing_meter_";
 	strcat(filename_billing_meter, filename);
 	filename_inverter = "inverter_";
 	strcat(filename_inverter, filename);
+	filename_capacitor = "capacitor_";
+	strcat(filename_capacitor, filename);
+	filename_regulator = "regulator_";
+	strcat(filename_regulator, filename);
 	filename_house = "house_";
 	strcat(filename_house, filename);
 	filename_substation = "substation_";
@@ -134,6 +138,8 @@ int metrics_collector_writer::init(OBJECT *parent){
 	metrics_writer_billing_meters["StartTime"] = time_str;
 	metrics_writer_houses["StartTime"] = time_str;
 	metrics_writer_inverters["StartTime"] = time_str;
+	metrics_writer_capacitors["StartTime"] = time_str;
+	metrics_writer_regulators["StartTime"] = time_str;
 	metrics_writer_feeder_information["StartTime"] = time_str;
 
 	// Write metadata for each file; these indices MUST match assignments below
@@ -211,6 +217,18 @@ int metrics_collector_writer::init(OBJECT *parent){
 
 	meta.clear();
 	idx = 0;
+	jsn["index"] = idx++; jsn["units"] = ""; meta["operation_count"] = jsn;
+	metrics_writer_capacitors["Metadata"] = meta;
+	ary_capacitors.resize(idx);
+
+	meta.clear();
+	idx = 0;
+	jsn["index"] = idx++; jsn["units"] = ""; meta["operation_count"] = jsn;
+	metrics_writer_regulators["Metadata"] = meta;
+	ary_regulators.resize(idx);
+
+	meta.clear();
+	idx = 0;
 	jsn["index"] = idx++; jsn["units"] = "W"; meta["real_power_min"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "W"; meta["real_power_max"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "W"; meta["real_power_avg"] = jsn;
@@ -280,6 +298,8 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 	Json::Value billing_meter_objects;
 	Json::Value house_objects;
 	Json::Value inverter_objects;
+	Json::Value capacitor_objects;
+	Json::Value regulator_objects;
 	Json::Value feeder_information;
 
 	// Write Time -> represents the time from the StartTime
@@ -421,7 +441,7 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 			metrics_Output_temp = temp_metrics_collector->metrics_Output;
 			int idx = 0;
 			ary_inverters[idx++] = metrics_Output_temp["min_inverter_real_power"];
-			ary_inverters[idx++] = metrics_Output_temp["max_inverter_real_power"];
+			ary_inverters[idx++] = metrics_Output_temp["max_k_real_power"];
 			ary_inverters[idx++] = metrics_Output_temp["avg_inverter_real_power"];
 			ary_inverters[idx++] = metrics_Output_temp["median_inverter_real_power"];
 			ary_inverters[idx++] = metrics_Output_temp["min_inverter_reactive_power"];
@@ -431,6 +451,20 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 			string key = metrics_Output_temp["Parent_name"].asString();
 			inverter_objects[key] = ary_inverters;
 		} // End of recording metrics_collector data attached to one inverter
+		else if (strcmp(temp_metrics_collector->parent_string, "capacitor") == 0) {
+			metrics_Output_temp = temp_metrics_collector->metrics_Output;
+			int idx = 0;
+			ary_capacitors[idx++] = metrics_Output_temp["operation_count"];
+			string key = metrics_Output_temp["Parent_name"].asString();
+			capacitor_objects[key] = ary_capacitors;
+		}
+		else if (strcmp(temp_metrics_collector->parent_string, "regulator") == 0) {
+			metrics_Output_temp = temp_metrics_collector->metrics_Output;
+			int idx = 0;
+			ary_regulators[idx++] = metrics_Output_temp["operation_count"];
+			string key = metrics_Output_temp["Parent_name"].asString();
+			regulator_objects[key] = ary_regulators;
+		}
 		else if (strcmp(temp_metrics_collector->parent_string, "swingbus") == 0) {
 			metrics_Output_temp = temp_metrics_collector->metrics_Output;
 			int idx = 0;
@@ -463,6 +497,8 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 	metrics_writer_billing_meters[time_str] = billing_meter_objects;
 	metrics_writer_houses[time_str] = house_objects;
 	metrics_writer_inverters[time_str] = inverter_objects;
+	metrics_writer_capacitors[time_str] = capacitor_objects;
+	metrics_writer_regulators[time_str] = regulator_objects;
 	metrics_writer_feeder_information[time_str] = feeder_information;
 
 	if (final_write <= t1) {
@@ -473,19 +509,26 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 		ofstream out_file;
 
 		// Write seperate JSON files for each object
-		// triplex_meter and primary billing meter
 		out_file.open (filename_billing_meter);
 		out_file << writer.write(metrics_writer_billing_meters) <<  endl;
 		out_file.close();
-		// house
+
 		out_file.open (filename_house);
 		out_file << writer.write(metrics_writer_houses) <<  endl;
 		out_file.close();
-		// inverter
+
 		out_file.open (filename_inverter);
 		out_file << writer.write(metrics_writer_inverters) <<  endl;
 		out_file.close();
-		// feeder information
+
+		out_file.open (filename_capacitor);
+		out_file << writer.write(metrics_writer_capacitors) <<  endl;
+		out_file.close();
+
+		out_file.open (filename_regulator);
+		out_file << writer.write(metrics_writer_regulators) <<  endl;
+		out_file.close();
+
 		out_file.open (filename_substation);
 		out_file << writer.write(metrics_writer_feeder_information) <<  endl;
 		out_file.close();
