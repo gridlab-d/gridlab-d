@@ -724,6 +724,7 @@ int house_e::create()
 	//Deltamode variables
 	deltamode_inclusive = false;	//By default, don't be included in deltamode simulations
 	deltamode_registered = false;
+	default_frequency = 60.0;
 
 	return result;
 }
@@ -1249,6 +1250,10 @@ int house_e::init(OBJECT *parent)
 				GL_THROW("%s (%s:%d) does not implement triplex_meter variable %s for %s (house_e:%d)", 
 					parent->name?parent->name:"unnamed object", parent->oclass->name, parent->id, map[i].varname, obj->name?obj->name:"unnamed", obj->id);
 		}
+		pFrequency = new gld_property(parent, "measured_frequency");
+		if(!pFrequency->is_valid())
+			GL_THROW("%s (%s:%d) does not implement triplex_meter variable measured_frequency for %s (house_e:%d)",
+				parent->name?parent->name:"unnamed object", parent->oclass->name, parent->id, obj->name?obj->name:"unnamed", obj->id);
 
 		//Map to the triplex variable
 		pHouseConn = get_bool(parent,"house_present");
@@ -1288,6 +1293,7 @@ int house_e::init(OBJECT *parent)
 		*(map[1].var) = &default_line_current[0];
 		*(map[2].var) = &default_line_shunt[0];
 		*(map[3].var) = &default_line_power[0];
+		pFrequency = new gld_property(obj, "default_frequency");
 
 		//Attach the meter status
 		pMeterStatus = &default_meter_status;
@@ -1739,7 +1745,8 @@ CIRCUIT *house_e::attach(OBJECT *obj, ///< object to attach
 
 	// get voltage
 	c->pV = &(pCircuit_V[(int)c->type]);
-
+	// get frequency
+	c->pfrequency;
 	// close breaker
 	c->status = BRK_CLOSED;
 

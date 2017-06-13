@@ -77,6 +77,8 @@ public:
 	complex *pLine_I;						///< pointer to the three current on three lines
 	complex *pShunt;						///< pointer to shunt value on triplex parent
 	complex *pPower;						///< pointer to power value on triplex parent
+	gld_property *pFrequency;						///< pointer to frequency value on triplex parent
+	double default_frequency;
 	bool *pHouseConn;						///< Pointer to house_present variable on triplex parent
 	int *pMeterStatus;						///< Pointer to service_status variable on triplex parent
 	IMPLICITENDUSE *implicit_enduse_list;	///< implicit enduses
