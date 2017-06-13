@@ -248,7 +248,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Check
 		if (real_power_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated real power array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate real power array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -260,7 +260,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Check
 		if (reactive_power_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated reactive power array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate reactive power array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -272,7 +272,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Check
 		if (voltage_mag_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated phase 1-2 voltage array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate phase 1-2 voltage array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -284,7 +284,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Check
 		if (voltage_average_mag_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated average voltage array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate average voltage array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -296,7 +296,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Check
 		if (voltage_unbalance_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated voltage unbalance array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate voltage unbalance array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -321,7 +321,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Check
 		if (total_load_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated total_load array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate total_load array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -333,7 +333,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Check
 		if (hvac_load_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated hvac_load array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate hvac_load array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -345,7 +345,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Check
 		if (air_temperature_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated air_temperature array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate air_temperature array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -357,7 +357,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Check
 		if (air_temperature_deviation_cooling_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated air_temperature_deviation_cooling_array array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate air_temperature_deviation_cooling_array array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -369,7 +369,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Check
 		if (air_temperature_deviation_heating_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated air_temperature_deviation_heating_array array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate air_temperature_deviation_heating_array array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -393,7 +393,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Check
 		if (actual_load_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated actual_load array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate actual_load array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -407,7 +407,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Check
 		if (real_power_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated real power array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate real power array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -419,7 +419,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Check
 		if (reactive_power_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated reactive power array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate reactive power array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -433,7 +433,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Check
 		if (real_power_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated real power array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate real power array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -445,7 +445,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Check
 		if (reactive_power_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated reactive power array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate reactive power array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -456,7 +456,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Check
 		if (real_power_loss_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated real power loss array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate real power loss array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -468,7 +468,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Check
 		if (reactive_power_loss_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated reactive power loss array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate reactive power loss array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -480,7 +480,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Check
 		if (count_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated operation count array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate operation count array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -728,7 +728,7 @@ int metrics_collector::read_line(OBJECT *obj){
 	}
 	// else not possible come to this step
 	else {
-		gl_error("metrics_collector must have a triplex meter or house or waterheater or inverter or swing-bus as it's parent");
+		gl_error("metrics_collector must have a triplex meter, house, waterheater, inverter, swing-bus, capacitor or regulator as its parent");
 		/*  TROUBLESHOOT
 		Check the parent object of the metrics_collector. The metrics_collector is only able to be childed via a
 		triplex meter or a house or a waterheater or an inverter or a swing-bus when connecting into powerflow systems.

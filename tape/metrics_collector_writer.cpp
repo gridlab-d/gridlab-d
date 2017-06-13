@@ -441,7 +441,7 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 			metrics_Output_temp = temp_metrics_collector->metrics_Output;
 			int idx = 0;
 			ary_inverters[idx++] = metrics_Output_temp["min_inverter_real_power"];
-			ary_inverters[idx++] = metrics_Output_temp["max_k_real_power"];
+			ary_inverters[idx++] = metrics_Output_temp["max_inverter_real_power"];
 			ary_inverters[idx++] = metrics_Output_temp["avg_inverter_real_power"];
 			ary_inverters[idx++] = metrics_Output_temp["median_inverter_real_power"];
 			ary_inverters[idx++] = metrics_Output_temp["min_inverter_reactive_power"];
