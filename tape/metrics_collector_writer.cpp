@@ -152,12 +152,12 @@ int metrics_collector_writer::init(OBJECT *parent){
 	jsn["index"] = idx++; jsn["units"] = "Wh"; meta["real_energy"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "VARh"; meta["reactive_energy"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "USD"; meta["bill"] = jsn;
-	jsn["index"] = idx++; jsn["units"] = "V"; meta["voltage_min"] = jsn;
-	jsn["index"] = idx++; jsn["units"] = "V"; meta["voltage_max"] = jsn;
-	jsn["index"] = idx++; jsn["units"] = "V"; meta["voltage_avg"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "V"; meta["voltage12_min"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "V"; meta["voltage12_max"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "V"; meta["voltage12_avg"] = jsn;
+	jsn["index"] = idx++; jsn["units"] = "V"; meta["voltage_min"] = jsn;
+	jsn["index"] = idx++; jsn["units"] = "V"; meta["voltage_max"] = jsn;
+	jsn["index"] = idx++; jsn["units"] = "V"; meta["voltage_avg"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "V"; meta["voltage_unbalance_min"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "V"; meta["voltage_unbalance_max"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "V"; meta["voltage_unbalance_avg"] = jsn;
@@ -283,9 +283,8 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 	char time_str[64];
 	time_t now = time(NULL);
 	int index = 0;
-	// Temperary JSON Value
 
-	Json::Value metrics_Output_temp;
+	double *metrics;
 	Json::Value metrics_writer_Output_time;
 	Json::Value metrics_writer_Output_data;
 	// metrics JSON value
@@ -318,80 +317,79 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 		// Check each metrics_collector parent type
 		if ((strcmp(temp_metrics_collector->parent_string, "triplex_meter") == 0) ||
 				(strcmp(temp_metrics_collector->parent_string, "meter") == 0)) {
-			metrics_Output_temp = temp_metrics_collector->metrics_Output;
+			metrics = temp_metrics_collector->metrics;
 			int idx = 0;
-			ary_billing_meters[idx++] = metrics_Output_temp["min_real_power"];
-			ary_billing_meters[idx++] = metrics_Output_temp["max_real_power"];
-			ary_billing_meters[idx++] = metrics_Output_temp["avg_real_power"];
-			ary_billing_meters[idx++] = metrics_Output_temp["median_real_power"];
-			ary_billing_meters[idx++] = metrics_Output_temp["min_reactive_power"];
-			ary_billing_meters[idx++] = metrics_Output_temp["max_reactive_power"];
-			ary_billing_meters[idx++] = metrics_Output_temp["avg_reactive_power"];
-			ary_billing_meters[idx++] = metrics_Output_temp["median_reactive_power"];
-			ary_billing_meters[idx++] = metrics_Output_temp["real_energy"];
-			ary_billing_meters[idx++] = metrics_Output_temp["reactive_energy"];
+			ary_billing_meters[idx++] = metrics[MTR_MIN_REAL_POWER];
+			ary_billing_meters[idx++] = metrics[MTR_MAX_REAL_POWER];
+			ary_billing_meters[idx++] = metrics[MTR_AVG_REAL_POWER];
+			ary_billing_meters[idx++] = metrics[MTR_MED_REAL_POWER];
+			ary_billing_meters[idx++] = metrics[MTR_MIN_REAC_POWER];
+			ary_billing_meters[idx++] = metrics[MTR_MAX_REAC_POWER];
+			ary_billing_meters[idx++] = metrics[MTR_AVG_REAC_POWER];
+			ary_billing_meters[idx++] = metrics[MTR_MED_REAC_POWER];
+			ary_billing_meters[idx++] = metrics[MTR_REAL_ENERGY];
+			ary_billing_meters[idx++] = metrics[MTR_REAC_ENERGY];
 			// TODO - verify the fixed charge is included
-			ary_billing_meters[idx++] = metrics_Output_temp["bill"]; // Price unit given is $/kWh
-			ary_billing_meters[idx++] = metrics_Output_temp["min_voltage_average"];
-			ary_billing_meters[idx++] = metrics_Output_temp["max_voltage_average"];
-			ary_billing_meters[idx++] = metrics_Output_temp["avg_voltage_average"];
-			ary_billing_meters[idx++] = metrics_Output_temp["min_voltage"];
-			ary_billing_meters[idx++] = metrics_Output_temp["max_voltage"];
-			ary_billing_meters[idx++] = metrics_Output_temp["avg_voltage"];
-			ary_billing_meters[idx++] = metrics_Output_temp["min_voltage_unbalance"];
-			ary_billing_meters[idx++] = metrics_Output_temp["max_voltage_unbalance"];
-			ary_billing_meters[idx++] = metrics_Output_temp["avg_voltage_unbalance"];
-			ary_billing_meters[idx++] = metrics_Output_temp["above_RangeA_Duration"];
-			ary_billing_meters[idx++] = metrics_Output_temp["above_RangeA_Count"];
-			ary_billing_meters[idx++] = metrics_Output_temp["below_RangeA_Duration"];
-			ary_billing_meters[idx++] = metrics_Output_temp["below_RangeA_Count"];
-			ary_billing_meters[idx++] = metrics_Output_temp["above_RangeB_Duration"];
-			ary_billing_meters[idx++] = metrics_Output_temp["above_RangeB_Count"];
-			ary_billing_meters[idx++] = metrics_Output_temp["below_RangeB_Duration"];
-			ary_billing_meters[idx++] = metrics_Output_temp["below_RangeB_Count"];
-			ary_billing_meters[idx++] = metrics_Output_temp["below_10_percent_NormVol_Duration"];
-			ary_billing_meters[idx++] = metrics_Output_temp["below_10_percent_NormVol_Count"];
-
-			string key = metrics_Output_temp["Parent_name"].asString();
+			ary_billing_meters[idx++] = metrics[MTR_BILL]; // Price unit given is $/kWh
+			ary_billing_meters[idx++] = metrics[MTR_MIN_VLL];
+			ary_billing_meters[idx++] = metrics[MTR_MAX_VLL];
+			ary_billing_meters[idx++] = metrics[MTR_AVG_VLL];
+			ary_billing_meters[idx++] = metrics[MTR_MIN_VLN];
+			ary_billing_meters[idx++] = metrics[MTR_MAX_VLN];
+			ary_billing_meters[idx++] = metrics[MTR_AVG_VLN];
+			ary_billing_meters[idx++] = metrics[MTR_MIN_VUNB];
+			ary_billing_meters[idx++] = metrics[MTR_MAX_VUNB];
+			ary_billing_meters[idx++] = metrics[MTR_AVG_VUNB];
+			ary_billing_meters[idx++] = metrics[MTR_ABOVE_A_DUR];
+			ary_billing_meters[idx++] = metrics[MTR_ABOVE_A_CNT];
+			ary_billing_meters[idx++] = metrics[MTR_BELOW_A_DUR];
+			ary_billing_meters[idx++] = metrics[MTR_BELOW_A_CNT];
+			ary_billing_meters[idx++] = metrics[MTR_ABOVE_B_DUR];
+			ary_billing_meters[idx++] = metrics[MTR_ABOVE_B_CNT];
+			ary_billing_meters[idx++] = metrics[MTR_BELOW_B_DUR];
+			ary_billing_meters[idx++] = metrics[MTR_BELOW_B_CNT];
+			ary_billing_meters[idx++] = metrics[MTR_BELOW_10_DUR];
+			ary_billing_meters[idx++] = metrics[MTR_BELOW_10_CNT];
+			string key = temp_metrics_collector->parent_name;
 			billing_meter_objects[key] = ary_billing_meters;
 		} // End of recording metrics_collector data attached to one triplex_meter or primary meter
 		else if (strcmp(temp_metrics_collector->parent_string, "house") == 0) {
-			metrics_Output_temp = temp_metrics_collector->metrics_Output;
-			string key = metrics_Output_temp["Parent_name"].asString();
-			// Update an existing house object if an earlier waterheater created it
+			metrics = temp_metrics_collector->metrics;
+			string key = temp_metrics_collector->parent_name;
+			// Update an existing house object if an earlier waterheater created it (TODO - look for speedup)
 			if (house_objects.isMember(key)) {
-				int idx = 0; // TODO - look for speedup
-				house_objects[key][idx++] = metrics_Output_temp["min_house_total_load"];
-				house_objects[key][idx++] = metrics_Output_temp["max_house_total_load"];
-				house_objects[key][idx++] = metrics_Output_temp["avg_house_total_load"];
-				house_objects[key][idx++] = metrics_Output_temp["median_house_total_load"];
-				house_objects[key][idx++] = metrics_Output_temp["min_house_hvac_load"];
-				house_objects[key][idx++] = metrics_Output_temp["max_house_hvac_load"];
-				house_objects[key][idx++] = metrics_Output_temp["avg_house_hvac_load"];
-				house_objects[key][idx++] = metrics_Output_temp["median_house_hvac_load"];
-				house_objects[key][idx++] = metrics_Output_temp["min_house_air_temperature"];
-				house_objects[key][idx++] = metrics_Output_temp["max_house_air_temperature"];
-				house_objects[key][idx++] = metrics_Output_temp["avg_house_air_temperature"];
-				house_objects[key][idx++] = metrics_Output_temp["median_house_air_temperature"];
-				house_objects[key][idx++] = metrics_Output_temp["avg_house_air_temperature_deviation_cooling"];
-				house_objects[key][idx++] = metrics_Output_temp["avg_house_air_temperature_deviation_heating"];
+				int idx = 0;
+				house_objects[key][idx++] = metrics[HSE_MIN_TOTAL_LOAD];
+				house_objects[key][idx++] = metrics[HSE_MAX_TOTAL_LOAD];
+				house_objects[key][idx++] = metrics[HSE_AVG_TOTAL_LOAD];
+				house_objects[key][idx++] = metrics[HSE_MED_TOTAL_LOAD];
+				house_objects[key][idx++] = metrics[HSE_MIN_HVAC_LOAD];
+				house_objects[key][idx++] = metrics[HSE_MAX_HVAC_LOAD];
+				house_objects[key][idx++] = metrics[HSE_AVG_HVAC_LOAD];
+				house_objects[key][idx++] = metrics[HSE_MED_HVAC_LOAD];
+				house_objects[key][idx++] = metrics[HSE_MIN_AIR_TEMP];
+				house_objects[key][idx++] = metrics[HSE_MAX_AIR_TEMP];
+				house_objects[key][idx++] = metrics[HSE_AVG_AIR_TEMP];
+				house_objects[key][idx++] = metrics[HSE_MED_AIR_TEMP];
+				house_objects[key][idx++] = metrics[HSE_AVG_DEV_COOLING];
+				house_objects[key][idx++] = metrics[HSE_AVG_DEV_HEATING];
 				// leave the earlier waterheater metric values untouched
 			} else { // insert a new house with zero waterheater metric values
 				int idx = 0;
-				ary_houses[idx++] = metrics_Output_temp["min_house_total_load"];
-				ary_houses[idx++] = metrics_Output_temp["max_house_total_load"];
-				ary_houses[idx++] = metrics_Output_temp["avg_house_total_load"];
-				ary_houses[idx++] = metrics_Output_temp["median_house_total_load"];
-				ary_houses[idx++] = metrics_Output_temp["min_house_hvac_load"];
-				ary_houses[idx++] = metrics_Output_temp["max_house_hvac_load"];
-				ary_houses[idx++] = metrics_Output_temp["avg_house_hvac_load"];
-				ary_houses[idx++] = metrics_Output_temp["median_house_hvac_load"];
-				ary_houses[idx++] = metrics_Output_temp["min_house_air_temperature"];
-				ary_houses[idx++] = metrics_Output_temp["max_house_air_temperature"];
-				ary_houses[idx++] = metrics_Output_temp["avg_house_air_temperature"];
-				ary_houses[idx++] = metrics_Output_temp["median_house_air_temperature"];
-				ary_houses[idx++] = metrics_Output_temp["avg_house_air_temperature_deviation_cooling"];
-				ary_houses[idx++] = metrics_Output_temp["avg_house_air_temperature_deviation_heating"];
+				ary_houses[idx++] = metrics[HSE_MIN_TOTAL_LOAD];  
+				ary_houses[idx++] = metrics[HSE_MAX_TOTAL_LOAD];  
+				ary_houses[idx++] = metrics[HSE_AVG_TOTAL_LOAD];  
+				ary_houses[idx++] = metrics[HSE_MED_TOTAL_LOAD];  
+				ary_houses[idx++] = metrics[HSE_MIN_HVAC_LOAD];   
+				ary_houses[idx++] = metrics[HSE_MAX_HVAC_LOAD];   
+				ary_houses[idx++] = metrics[HSE_AVG_HVAC_LOAD];   
+				ary_houses[idx++] = metrics[HSE_MED_HVAC_LOAD];   
+				ary_houses[idx++] = metrics[HSE_MIN_AIR_TEMP];    
+				ary_houses[idx++] = metrics[HSE_MAX_AIR_TEMP];    
+				ary_houses[idx++] = metrics[HSE_AVG_AIR_TEMP];    
+				ary_houses[idx++] = metrics[HSE_MED_AIR_TEMP];    
+				ary_houses[idx++] = metrics[HSE_AVG_DEV_COOLING]; 
+				ary_houses[idx++] = metrics[HSE_AVG_DEV_HEATING]; 
 				ary_houses[idx++] = 0.0;
 				ary_houses[idx++] = 0.0;
 				ary_houses[idx++] = 0.0;
@@ -400,14 +398,14 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 			}
 		} // End of recording metrics_collector data attached to one house
 		else if (strcmp(temp_metrics_collector->parent_string, "waterheater") == 0) {
-			metrics_Output_temp = temp_metrics_collector->metrics_Output;
-			string key = metrics_Output_temp["Parent_name"].asString();
+			metrics = temp_metrics_collector->metrics;
+			string key = temp_metrics_collector->parent_name;
 			if (house_objects.isMember(key)) { // already made this house
-				int idx = 14; // start of the waterheater metrics - TODO speedups
-				house_objects[key][idx++] = metrics_Output_temp["min_waterheater_actual_load"];
-				house_objects[key][idx++] = metrics_Output_temp["max_waterheater_actual_load"];
-				house_objects[key][idx++] = metrics_Output_temp["avg_waterheater_actual_load"];
-				house_objects[key][idx++] = metrics_Output_temp["median_waterheater_actual_load"];
+				int idx = HSE_ARRAY_SIZE; // start of the waterheater metrics - TODO speedups
+				house_objects[key][idx++] = metrics[WH_MIN_ACTUAL_LOAD];
+				house_objects[key][idx++] = metrics[WH_MAX_ACTUAL_LOAD];
+				house_objects[key][idx++] = metrics[WH_AVG_ACTUAL_LOAD];
+				house_objects[key][idx++] = metrics[WH_MED_ACTUAL_LOAD];
 			} else { // make a new house, but with only the waterheater metrics non-zero
 				int idx = 0;
 				ary_houses[idx++] = 0.0;
@@ -424,63 +422,63 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 				ary_houses[idx++] = 0.0;
 				ary_houses[idx++] = 0.0;
 				ary_houses[idx++] = 0.0;
-				ary_houses[idx++] = metrics_Output_temp["min_waterheater_actual_load"];
-				ary_houses[idx++] = metrics_Output_temp["max_waterheater_actual_load"];
-				ary_houses[idx++] = metrics_Output_temp["avg_waterheater_actual_load"];
-				ary_houses[idx++] = metrics_Output_temp["median_waterheater_actual_load"];
+				ary_houses[idx++] = metrics[WH_MIN_ACTUAL_LOAD]; 
+				ary_houses[idx++] = metrics[WH_MAX_ACTUAL_LOAD]; 
+				ary_houses[idx++] = metrics[WH_AVG_ACTUAL_LOAD]; 
+				ary_houses[idx++] = metrics[WH_MED_ACTUAL_LOAD]; 
 				house_objects[key] = ary_houses;
 			}
 		} // End of recording metrics_collector data attached to one waterheater
 		else if (strcmp(temp_metrics_collector->parent_string, "inverter") == 0) {
-			metrics_Output_temp = temp_metrics_collector->metrics_Output;
+			metrics = temp_metrics_collector->metrics;
 			int idx = 0;
-			ary_inverters[idx++] = metrics_Output_temp["min_inverter_real_power"];
-			ary_inverters[idx++] = metrics_Output_temp["max_inverter_real_power"];
-			ary_inverters[idx++] = metrics_Output_temp["avg_inverter_real_power"];
-			ary_inverters[idx++] = metrics_Output_temp["median_inverter_real_power"];
-			ary_inverters[idx++] = metrics_Output_temp["min_inverter_reactive_power"];
-			ary_inverters[idx++] = metrics_Output_temp["max_inverter_reactive_power"];
-			ary_inverters[idx++] = metrics_Output_temp["avg_inverter_reactive_power"];
-			ary_inverters[idx++] = metrics_Output_temp["median_inverter_reactive_power"];
-			string key = metrics_Output_temp["Parent_name"].asString();
+			ary_inverters[idx++] = metrics[INV_MIN_REAL_POWER]; 
+			ary_inverters[idx++] = metrics[INV_MAX_REAL_POWER]; 
+			ary_inverters[idx++] = metrics[INV_AVG_REAL_POWER]; 
+			ary_inverters[idx++] = metrics[INV_MED_REAL_POWER]; 
+			ary_inverters[idx++] = metrics[INV_MIN_REAC_POWER]; 
+			ary_inverters[idx++] = metrics[INV_MAX_REAC_POWER]; 
+			ary_inverters[idx++] = metrics[INV_AVG_REAC_POWER]; 
+			ary_inverters[idx++] = metrics[INV_MED_REAC_POWER]; 
+			string key = temp_metrics_collector->parent_name;
 			inverter_objects[key] = ary_inverters;
 		} // End of recording metrics_collector data attached to one inverter
 		else if (strcmp(temp_metrics_collector->parent_string, "capacitor") == 0) {
-			metrics_Output_temp = temp_metrics_collector->metrics_Output;
+			metrics = temp_metrics_collector->metrics;
 			int idx = 0;
-			ary_capacitors[idx++] = metrics_Output_temp["operation_count"];
-			string key = metrics_Output_temp["Parent_name"].asString();
+			ary_capacitors[idx++] = metrics[CAP_OPERATION_CNT];
+			string key = temp_metrics_collector->parent_name;
 			capacitor_objects[key] = ary_capacitors;
 		}
 		else if (strcmp(temp_metrics_collector->parent_string, "regulator") == 0) {
-			metrics_Output_temp = temp_metrics_collector->metrics_Output;
+			metrics = temp_metrics_collector->metrics;
 			int idx = 0;
-			ary_regulators[idx++] = metrics_Output_temp["operation_count"];
-			string key = metrics_Output_temp["Parent_name"].asString();
+			ary_regulators[idx++] = metrics[REG_OPERATION_CNT];
+			string key = temp_metrics_collector->parent_name;
 			regulator_objects[key] = ary_regulators;
 		}
 		else if (strcmp(temp_metrics_collector->parent_string, "swingbus") == 0) {
-			metrics_Output_temp = temp_metrics_collector->metrics_Output;
+			metrics = temp_metrics_collector->metrics;
 			int idx = 0;
-			ary_feeders[idx++] = metrics_Output_temp["min_feeder_real_power"];
-			ary_feeders[idx++] = metrics_Output_temp["max_feeder_real_power"];
-			ary_feeders[idx++] = metrics_Output_temp["avg_feeder_real_power"];
-			ary_feeders[idx++] = metrics_Output_temp["median_feeder_real_power"];
-			ary_feeders[idx++] = metrics_Output_temp["min_feeder_reactive_power"];
-			ary_feeders[idx++] = metrics_Output_temp["max_feeder_reactive_power"];
-			ary_feeders[idx++] = metrics_Output_temp["avg_feeder_reactive_power"];
-			ary_feeders[idx++] = metrics_Output_temp["median_feeder_reactive_power"];
-			ary_feeders[idx++] = metrics_Output_temp["real_energy"];
-			ary_feeders[idx++] = metrics_Output_temp["reactive_energy"];
-			ary_feeders[idx++] = metrics_Output_temp["min_feeder_real_power_loss"];
-			ary_feeders[idx++] = metrics_Output_temp["max_feeder_real_power_loss"];
-			ary_feeders[idx++] = metrics_Output_temp["avg_feeder_real_power_loss"];
-			ary_feeders[idx++] = metrics_Output_temp["median_feeder_real_power_loss"];
-			ary_feeders[idx++] = metrics_Output_temp["min_feeder_reactive_power_loss"];
-			ary_feeders[idx++] = metrics_Output_temp["max_feeder_reactive_power_loss"];
-			ary_feeders[idx++] = metrics_Output_temp["avg_feeder_reactive_power_loss"];
-			ary_feeders[idx++] = metrics_Output_temp["median_feeder_reactive_power_loss"];
-			string key = metrics_Output_temp["Parent_name"].asString();
+			ary_feeders[idx++] = metrics[FDR_MIN_REAL_POWER];
+			ary_feeders[idx++] = metrics[FDR_MAX_REAL_POWER];
+			ary_feeders[idx++] = metrics[FDR_AVG_REAL_POWER];
+			ary_feeders[idx++] = metrics[FDR_MED_REAL_POWER];
+			ary_feeders[idx++] = metrics[FDR_MIN_REAC_POWER];
+			ary_feeders[idx++] = metrics[FDR_MAX_REAC_POWER];
+			ary_feeders[idx++] = metrics[FDR_AVG_REAC_POWER];
+			ary_feeders[idx++] = metrics[FDR_MED_REAC_POWER];
+			ary_feeders[idx++] = metrics[FDR_REAL_ENERGY];
+			ary_feeders[idx++] = metrics[FDR_REAC_ENERGY];
+			ary_feeders[idx++] = metrics[FDR_MIN_REAL_LOSS];
+			ary_feeders[idx++] = metrics[FDR_MAX_REAL_LOSS];
+			ary_feeders[idx++] = metrics[FDR_AVG_REAL_LOSS];
+			ary_feeders[idx++] = metrics[FDR_MED_REAL_LOSS];
+			ary_feeders[idx++] = metrics[FDR_MIN_REAC_LOSS];
+			ary_feeders[idx++] = metrics[FDR_MAX_REAC_LOSS];
+			ary_feeders[idx++] = metrics[FDR_AVG_REAC_LOSS];
+			ary_feeders[idx++] = metrics[FDR_MED_REAC_LOSS];
+			string key = temp_metrics_collector->parent_name;
 			feeder_information[key] = ary_feeders;
 		} // End of recording metrics_collector data attached to the swing-bus meter
 		index++;
