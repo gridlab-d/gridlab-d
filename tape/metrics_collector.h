@@ -76,7 +76,7 @@ private:
 	double *voltage_mag_array;		//array storing voltage12 measured at the triplex_meter
 	double *voltage_average_mag_array;		//array storing voltage12/2 measured at the triplex_meter
 	double *voltage_unbalance_array;		//array storing (voltage[0]-voltage[1])/(voltage12/2) measured at the triplex_meter
-	double price_parent; 			// Price of thr triplex_meter
+	double price_parent; 			// Price of the triplex_meter
 	double last_vol_val;			// variable that store the voltage value from last time step, to assist in voltage violation counts analysis
 
 	// Parameters related to houe object

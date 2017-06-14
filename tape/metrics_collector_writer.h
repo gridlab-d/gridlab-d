@@ -38,17 +38,12 @@ public:
 public:
 	char256 filename;
 	double interval_length_dbl;			//Metrics output interval length
-	TIMESTAMP next_time;
-	TIMESTAMP dt;
-	TIMESTAMP last_t;
 
 private:
 
 	int write_line(TIMESTAMP);
 
 private:
-	Json::Value metrics_writer_Output;	// Final output dictionary
-	Json::Value metrics_writer_metrics;	// Final output dictionary
 
 	Json::Value metrics_writer_billing_meters;	// Final output dictionary for triplex_meters and non-swing meters
 	Json::Value metrics_writer_houses;	// Final output dictionary for houses
@@ -71,22 +66,10 @@ private:
 	char256 filename_capacitor;
 	char256 filename_regulator;
 
-	FINDLIST *items;
-	PROPERTY *prop_ptr;
-	int obj_count;
-	int write_count;
 	TIMESTAMP startTime;
 	TIMESTAMP final_write;
 	TIMESTAMP next_write;
 	TIMESTAMP last_write;
-	TIMESTAMP last_flush;
-	TIMESTAMP write_interval;
-	TIMESTAMP flush_interval;
-	int32 write_ct;
-	TAPESTATUS tape_status; // TS_INIT/OPEN/DONE/ERROR
-	char *prev_line_buffer;
-	char *line_buffer;
-	size_t line_size;
 	bool interval_write;
 
 	char* parent_string;
@@ -94,13 +77,6 @@ private:
 	FINDLIST *metrics_collectors;
 
 	int interval_length;			//integer averaging length (seconds)
-
-	bool firstWrite;
-
-	TIMESTAMP perform_average_time;	//Timestamp to perform the average
-	TIMESTAMP last_update_time;		//Last time array updated
-	int curr_avg_pos_index;			//Index for current position of averaging array
-
 };
 
 #endif // C++
