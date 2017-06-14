@@ -60,8 +60,8 @@ int metrics_collector::create(){
 	hvac_load_array = NULL;
 	wh_load_array = NULL;
 	air_temperature_array = NULL;
-	air_temperature_deviation_cooling_array = NULL;
-	air_temperature_deviation_heating_array = NULL;
+	dev_cooling_array = NULL;
+	dev_heating_array = NULL;
 	count_array = NULL;
 	real_power_loss_array = NULL;
 	reactive_power_loss_array = NULL;
@@ -373,11 +373,11 @@ int metrics_collector::init(OBJECT *parent){
 		}
 
 		// Allocate air temperature deviation from cooling setpointarray
-		air_temperature_deviation_cooling_array = (double *)gl_malloc(interval_length*sizeof(double));
+		dev_cooling_array = (double *)gl_malloc(interval_length*sizeof(double));
 		// Check
-		if (air_temperature_deviation_cooling_array == NULL)
+		if (dev_cooling_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocate air_temperature_deviation_cooling_array array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate dev_cooling_array array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -385,11 +385,11 @@ int metrics_collector::init(OBJECT *parent){
 		}
 
 		// Allocate air temperature deviation from heating setpointarray
-		air_temperature_deviation_heating_array = (double *)gl_malloc(interval_length*sizeof(double));
+		dev_heating_array = (double *)gl_malloc(interval_length*sizeof(double));
 		// Check
-		if (air_temperature_deviation_heating_array == NULL)
+		if (dev_heating_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocate air_temperature_deviation_heating_array array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate dev_heating_array array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -402,8 +402,8 @@ int metrics_collector::init(OBJECT *parent){
 			total_load_array[curr_index] = 0.0;
 			hvac_load_array[curr_index] = 0.0;
 			air_temperature_array[curr_index] = 0.0;
-			air_temperature_deviation_cooling_array[curr_index] = 0.0;
-			air_temperature_deviation_heating_array[curr_index] = 0.0;
+			dev_cooling_array[curr_index] = 0.0;
+			dev_heating_array[curr_index] = 0.0;
 		}
 	}
 	// If parent is waterheater
@@ -671,10 +671,10 @@ int metrics_collector::read_line(OBJECT *obj){
 		interpolate (air_temperature_array, last_index, curr_index, airTemperature);
 		// Get air temperature deviation from house cooling setpoint
 		double cooling_setpoint = *gl_get_double_by_name(obj->parent, "cooling_setpoint");
-		interpolate (air_temperature_deviation_cooling_array, last_index, curr_index, airTemperature - cooling_setpoint);
+		interpolate (dev_cooling_array, last_index, curr_index, airTemperature - cooling_setpoint);
 		// Get air temperature deviation from house heating setpoint
 		double heating_setpoint = *gl_get_double_by_name(obj->parent, "heating_setpoint");
-		interpolate (air_temperature_deviation_heating_array, last_index, curr_index, airTemperature - heating_setpoint);
+		interpolate (dev_heating_array, last_index, curr_index, airTemperature - heating_setpoint);
 	}
 	else if (strcmp(parent_string, "waterheater") == 0) {
 		// Get load values
@@ -775,8 +775,11 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 	// Writing to JSON output file is executed in metrics_collector_writer object
 	char time_str[64];
 	DATETIME dt;
+	double svP, svQ, svPL, svQL, svHVAC, svTotal, svWH, svAir; // these are to wrap arrays that were passed to findMedian
 
 	if ((strcmp(parent_string, "triplex_meter") == 0) || (strcmp(parent_string, "meter") == 0)) {
+		svP = real_power_array[interval_length - 1];
+		svQ = reactive_power_array[interval_length - 1];
 		// Rearranging the arrays of data, and put into the dictionary
 		// Real power data
 		metrics[MTR_MIN_REAL_POWER] = findMin(real_power_array, interval_length);
@@ -845,14 +848,17 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		last_vol_val = voltage_vll_array[interval_length - 1];
 
 		// wrap the arrays for next collection interval (TODO circular queue)
-		real_power_array[0] = real_power_array[interval_length - 1];
-		reactive_power_array[0] = reactive_power_array[interval_length - 1];
+		real_power_array[0] = svP;
+		reactive_power_array[0] = svQ;
 		voltage_vll_array[0] = voltage_vll_array[interval_length - 1];
 		voltage_vln_array[0] = voltage_vln_array[interval_length - 1];
 		voltage_unbalance_array[0] = voltage_unbalance_array[interval_length - 1];
 	}
 	// If parent is house
 	else if (strcmp(parent_string, "house") == 0) {
+		svTotal = total_load_array[interval_length - 1];
+		svHVAC = hvac_load_array[interval_length - 1];
+		svAir = air_temperature_array[interval_length - 1];
 		// Rearranging the arrays of data, and put into the dictionary
 		// total_load data
 		metrics[HSE_MIN_TOTAL_LOAD] = findMin(total_load_array, interval_length);
@@ -871,18 +877,19 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		metrics[HSE_MAX_AIR_TEMP] = findMax(air_temperature_array, interval_length);
 		metrics[HSE_AVG_AIR_TEMP] = findAverage(air_temperature_array, interval_length);
 		metrics[HSE_MED_AIR_TEMP] = findMedian(air_temperature_array, interval_length);
-		metrics[HSE_AVG_DEV_COOLING] = findAverage(air_temperature_deviation_cooling_array, interval_length);
-		metrics[HSE_AVG_DEV_HEATING] = findAverage(air_temperature_deviation_heating_array, interval_length);
+		metrics[HSE_AVG_DEV_COOLING] = findAverage(dev_cooling_array, interval_length);
+		metrics[HSE_AVG_DEV_HEATING] = findAverage(dev_heating_array, interval_length);
 
 		// wrap the arrays for next collection interval (TODO circular queue)
-		total_load_array[0] = total_load_array[interval_length - 1];
-		hvac_load_array[0] = hvac_load_array[interval_length - 1];
-		air_temperature_array[0] = air_temperature_array[interval_length - 1];
-		air_temperature_deviation_cooling_array[0] = air_temperature_deviation_cooling_array[interval_length - 1];
-		air_temperature_deviation_heating_array[0] = air_temperature_deviation_heating_array[interval_length - 1];
+		total_load_array[0] = svTotal;
+		hvac_load_array[0] = svHVAC;
+		air_temperature_array[0] = svAir;
+		dev_cooling_array[0] = dev_cooling_array[interval_length - 1];
+		dev_heating_array[0] = dev_heating_array[interval_length - 1];
 	}
 	// If parent is waterheater
 	else if (strcmp(parent_string, "waterheater") == 0) {
+		svWH = wh_load_array[interval_length - 1];
 		// Rearranging the arrays of data, and put into the dictionary
 		// wh_load data
 		metrics[WH_MIN_ACTUAL_LOAD] = findMin(wh_load_array, interval_length);
@@ -891,9 +898,11 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		metrics[WH_MED_ACTUAL_LOAD] = findMedian(wh_load_array, interval_length);
 
 		// wrap the arrays for next collection interval (TODO circular queue)
-		wh_load_array[0] = wh_load_array[interval_length - 1];
+		wh_load_array[0] = svWH;
 	}
 	else if (strcmp(parent_string, "inverter") == 0) {
+		svP = real_power_array[interval_length - 1];
+		svQ = reactive_power_array[interval_length - 1];
 		// Rearranging the arrays of data, and put into the dictionary
 		// real power data
 		metrics[INV_MIN_REAL_POWER] = findMin(real_power_array, interval_length);
@@ -905,10 +914,9 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		metrics[INV_MAX_REAC_POWER] = findMax(reactive_power_array, interval_length);
 		metrics[INV_AVG_REAC_POWER] = findAverage(reactive_power_array, interval_length);
 		metrics[INV_MED_REAC_POWER] = findMedian(reactive_power_array, interval_length);
-
 		// wrap the arrays for next collection interval (TODO circular queue)
-		real_power_array[0] = real_power_array[interval_length - 1];
-		reactive_power_array[0] = reactive_power_array[interval_length - 1];
+		real_power_array[0] = svP;
+		reactive_power_array[0] = svQ;
 	}
 	else if (strcmp(parent_string, "capacitor") == 0) {
 		metrics[CAP_OPERATION_CNT] = findMax(count_array, interval_length);
@@ -921,6 +929,10 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		count_array[0] = count_array[interval_length - 1];
 	}
 	else if (strcmp(parent_string, "swingbus") == 0) {
+		svP = real_power_array[interval_length - 1];
+		svQ = reactive_power_array[interval_length - 1];
+		svPL = real_power_loss_array[interval_length - 1];
+		svQL = reactive_power_loss_array[interval_length - 1];
 		// real power data
 		metrics[FDR_MIN_REAL_POWER] = findMin(real_power_array, interval_length);
 		metrics[FDR_MAX_REAL_POWER] = findMax(real_power_array, interval_length);
@@ -946,10 +958,10 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		metrics[FDR_MED_REAC_LOSS] = findMedian(reactive_power_loss_array, interval_length);
 
 		// wrap the arrays for next collection interval (TODO circular queue)
-		real_power_array[0] = real_power_array[interval_length - 1];
-		reactive_power_array[0] = reactive_power_array[interval_length - 1];
-		real_power_loss_array[0] = real_power_loss_array[interval_length - 1];
-		reactive_power_loss_array[0] = reactive_power_loss_array[interval_length - 1];
+		real_power_array[0] = svP;
+		reactive_power_array[0] = svQ;
+		real_power_loss_array[0] = svPL;
+		reactive_power_loss_array[0] = svQL;
 	}
 
 	return 1;
@@ -1008,7 +1020,7 @@ double metrics_collector::findAverage(double array[], int length) {
 }
 
 double metrics_collector::findMedian(double array[], int length) {
-	double median;
+	double median = 0;
 
 	std::sort(&array[0], &array[length]);
 
