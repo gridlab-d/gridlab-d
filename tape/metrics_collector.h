@@ -143,15 +143,9 @@ private:
 	vol_violation findOutLimit(double lastVol, double array[], bool checkAbove, double limitVal, int size);
 
 private:
-	FILE *rec_file;
-	FINDLIST *items;
 	TIMESTAMP next_write; // on global clock, different by interval_length
 	TIMESTAMP last_write; // touched only in init and postsync
 	TIMESTAMP start_time; //Recording start time of simulation
-	TAPESTATUS tape_status; // TS_INIT/OPEN/DONE/ERROR
-	char *prev_line_buffer;
-	char *line_buffer;
-	size_t line_size;
 	bool interval_write;
 
 	char* parent_string;
@@ -171,8 +165,8 @@ private:
 	double *total_load_array; 		//array storing total_load measured at the house
 	double *hvac_load_array; 		//array storing hvac_load measured at the house
 	double *air_temperature_array; 		//array storing air_temperature measured at the house
-	double *air_temperature_deviation_cooling_array;	// array storing air_temperature deviation from the cooling setpoint
-	double *air_temperature_deviation_heating_array;	// array storing air_temperature deviation from the heating setpoint
+	double *dev_cooling_array;	// array storing air_temperature deviation from the cooling setpoint
+	double *dev_heating_array;	// array storing air_temperature deviation from the heating setpoint
 
 	// Parameters related to waterheater object
 	double *wh_load_array; 		//array storing actual_load measured at the house
