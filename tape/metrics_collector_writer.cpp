@@ -32,9 +32,6 @@ int metrics_collector_writer::isa(char *classname){
 }
 
 int metrics_collector_writer::create(){
-
-	firstWrite = true;
-
 	return 1;
 }
 
@@ -116,7 +113,6 @@ int metrics_collector_writer::init(OBJECT *parent){
 	next_write = gl_globalclock + interval_length;
 	final_write = gl_globalstoptime;
 
-	// Put starting time into the metrics_writer_Output dictionary
 	// Copied from recorder object
 	if(0 == gl_localtime(startTime, &dt)){
 		gl_error("metrics_collector_writer::init(): error when converting the starting time");
@@ -134,7 +130,6 @@ int metrics_collector_writer::init(OBJECT *parent){
 	}
 
 	// Write start time for each metrics
-	metrics_writer_Output["StartTime"] = time_str;
 	metrics_writer_billing_meters["StartTime"] = time_str;
 	metrics_writer_houses["StartTime"] = time_str;
 	metrics_writer_inverters["StartTime"] = time_str;
@@ -286,7 +281,6 @@ int metrics_collector_writer::commit(TIMESTAMP t1){
  **/
 int metrics_collector_writer::write_line(TIMESTAMP t1){
 	char time_str[64];
-	DATETIME dt;
 	time_t now = time(NULL);
 	int index = 0;
 	// Temperary JSON Value
