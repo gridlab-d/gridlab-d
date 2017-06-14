@@ -10,7 +10,7 @@
 
 #include "tape.h"
 #include "metrics_collector.h"
-//#include <json/json.h> //jsoncpp library
+#include <json/json.h> //jsoncpp library
 
 #include <iostream>
 #include <fstream>
