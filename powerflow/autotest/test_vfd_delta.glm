@@ -1,7 +1,7 @@
 //Modified file for VFD testing
 
 clock {
-	//timezone EST+5EDT;
+	timezone PST+8PDT;
 	starttime '2017-03-28 00:00:00';
 	stoptime '2017-03-28 00:01:36';
 }
