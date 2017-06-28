@@ -1155,6 +1155,14 @@ int diesel_dg::init(OBJECT *parent)
 		}
 	}
 
+	// Check if base set points for the various control objects are defined in glm file or not
+	if (gen_base_set_vals.vset < -90) {
+		Vset_defined = false;
+	}
+	else {
+		Vset_defined = true;
+	}
+
 	return 1;
 }//init ends here
 
@@ -3481,7 +3489,7 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 		curr_time->avr.xe = curr_time->Vfd;
 		curr_time->avr.xb = curr_time->avr.xe/exc_KA;
 
-		if (gen_base_set_vals.vset < -90.0)	//Should be -99
+		if (Vset_defined == false)	//Check flag Vset_defined instead, since may come into init_dynamics more than once
 		{
 			//Get average PU voltage
 			gen_base_set_vals.vset =  (voltage_pu[0].Mag() + voltage_pu[1].Mag() + voltage_pu[2].Mag())/3.0;

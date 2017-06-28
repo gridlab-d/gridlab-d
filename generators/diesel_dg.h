@@ -294,6 +294,7 @@ public:
 	complex X2;				//Negative sequence impedance (p.u.)
 
 	MAC_INPUTS gen_base_set_vals;	//Base set points for the various control objects
+	bool Vset_defined;				// Flag indicating whether Vset has been defined in glm file or not
 
 	//AVR properties (Simplified Exciter System (SEXS) - Industry acronym, I swear)
 	double exc_KA;				//Exciter gain (p.u.)
