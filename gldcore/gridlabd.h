@@ -853,7 +853,7 @@ inline bool *gl_get_bool(OBJECT *obj, /**< object to set dependency */
 
 #define gl_printtimedelta (*callback->time.convert_from_deltatime_timestamp)
 
-/** Convert a timestamp to a date/time structure
+/** Convert a date/time structure  to a timestamp
 	@see mkdatetime()
  **/
 #define gl_mktime (*callback->time.mkdatetime)

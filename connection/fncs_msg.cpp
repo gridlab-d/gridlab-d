@@ -62,7 +62,7 @@ fncs_msg::fncs_msg(MODULE *module)
 		PT_enumeration, "message_type", PADDR(message_type), PT_DESCRIPTION, "set the type of message format you wish to construct",
 			PT_KEYWORD, "GENERAL", enumeration(MT_GENERAL), PT_DESCRIPTION, "use this for sending a general fncs topic/value pair",
 			PT_KEYWORD, "JSON", enumeration(MT_JSON), PT_DESCRIPTION, "use this for wanting to send a bundled json formatted message in a single topic",
-			// PT_KEYWORD, "JSON_SB", enumeration(MT_JSON_SB), PT_DESCRIPTION, "use this for wanting to subsribe a bundled json formatted message in a single topic",
+		PT_bool, "include_timestamp", PADDR(include_timestamp), PT_DESCRIPTION, "boolean for includeing the timestamp at which the message was sent in the paylod",
 		// TODO add published properties here
 		NULL)<1)
 			throw "connection/fncs_msg::fncs_msg(MODULE*): unable to publish properties of connection:fncs_msg";
@@ -91,7 +91,7 @@ int fncs_msg::create(){
 	header_version = new string("");
 	hostname = new string("");
 	inFunctionTopics = new vector<string>();
-
+	include_timestamp = false;
 	return 1;
 }
 
@@ -996,6 +996,20 @@ int fncs_msg::publishVariables(varmap *wmap){
 	int64 lst_ival;
 	string lst_sval;
 	bool pub_value = false;
+	stringstream complex_val;
+	Json::Value timestamped_message;
+	TIMESTAMP current_timestamp = gl_globalclock;
+	DATETIME *current_datetime;
+	char current_time[64] = "";
+	if(gl_local_time(current_timestamp, current_datetime) == 0) {
+		gl_error("fncs_msg::publishVariables: unable to convert TIMESTAMP %d to DATETIME.", current_timestamp);
+		return 0;
+	}
+	if(gl_strtime(current_datetime, &current_time[0]), 31) == 0) {
+		gl_error("fncs_msg::publishVariables: unable to convert DATETIME to string.");
+		return 0;
+	}
+	timestamped_message["timestamp"] = string(current_time);
 	for(mp = wmap->getfirst(); mp != NULL; mp = mp->next){
 		pub_value = false;
 		if(mp->dir == DXD_WRITE){
@@ -1005,6 +1019,25 @@ int fncs_msg::publishVariables(varmap *wmap){
 				value = string(buffer);
 			}
 			if(value.empty() == false){
+				if(mp->obj->is_complex() == true)
+				{
+					double real_part = mp->obj->get_part("real");
+					double imag_part = mp->obj->get_part("imag");
+					gld_unit *val_unit = mp->obj->get_unit();
+					complex_val.str(string());
+					complex_val << fixed << real_part;
+					if(imag_part >= 0){
+						complex_val << fixed << "+" << imag_part << "j";
+					} else {
+						complex_val << fixed << imag_part << "j";
+					}
+					if(val_unit->is_valid()){
+						string unit_name = string(val_unit->get_name());
+						complex_val << " " << unit_name;
+					}
+					value = complex_val.str();
+				}
+				timestamped_message["value"] = value;
 				if(strcmp(mp->threshold,"") == 0)
 				{
 					pub_value = true;
@@ -1080,10 +1113,17 @@ int fncs_msg::publishVariables(varmap *wmap){
 				}
 				if(pub_value == true)
 				{
+					Json::FastWriter jsonwriter;
+					string pubjsonstr;
+					pubjsonstr = jsonwriter.write(timestamped_message);
 					if(mp->ctype == CT_PUBSUB){
 						key = string(mp->remote_name);
 #if HAVE_FNCS
-						fncs::publish(key, value);
+						if(!include_timestamp) {
+							fncs::publish(key, value);
+						} else {
+							fncs::publish(key, pubjsonstr);
+						}
 #endif
 					} else if(mp->ctype == CT_ROUTE){
 						memset(fromBuf,'\0',1024);
@@ -1101,7 +1141,11 @@ int fncs_msg::publishVariables(varmap *wmap){
 						to = string(toBuf);
 						key = string(keyBuf);
 #if HAVE_FNCS
-						fncs::route(from, to, key, value);
+						if(!include_timestamp) {
+							fncs::route(from, to, key, value);
+						} else {
+							fncs::route(from, to, key, pubjsonstr);
+						}
 #endif
 					}
 				}
@@ -1151,6 +1195,20 @@ int fncs_msg::publishJsonVariables( )  //Renke add
 	publish_json_data.clear();
 	publish_json_data[simName];
 	stringstream complex_val;
+	if(include_timestamp) {
+		TIMESTAMP current_timestamp = gl_globalclock;
+		DATETIME *current_datetime;
+		char current_time[64] = "";
+		if(gl_local_time(current_timestamp, current_datetime) == 0) {
+			gl_error("fncs_msg::publishVariables: unable to convert TIMESTAMP %d to DATETIME.", current_timestamp);
+			return 0;
+		}
+		if(gl_strtime(current_datetime, &current_time[0]), 31) == 0) {
+			gl_error("fncs_msg::publishVariables: unable to convert DATETIME to string.");
+			return 0;
+		}
+		publish_json_data["timestamp"] = string(current_time);
+	}
 	for(int isize=0; isize<nsize; isize++) {
 		if(!publish_json_data[simName].isMember(vjson_publish_gld_property_name[isize]->object_name)){
 			publish_json_data[simName][vjson_publish_gld_property_name[isize]->object_name];

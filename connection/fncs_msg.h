@@ -107,6 +107,7 @@ private:
 
 public:
 	enumeration message_type;
+	bool include_timestamp;
 	// required implementations
 	fncs_msg(MODULE*);
 	int create(void);
