@@ -25,6 +25,7 @@ bool show_query = false; ///< flag to show queries when verbose is on
 bool no_create = false; ///< flag to not create tables when exporting data
 bool overwrite = true; ///< flag to not drop tables when exporting data
 bool use_graph = true; ///< flag to enable graph schema
+bool use_guid = false; ///< flag to enable use of guid
 
 #else
 #include "gridlabd.h"
@@ -119,6 +120,10 @@ const char *process_command(const char *command)
 		{
 			overwrite = false;
 			state = PS_SCHEMA;
+		}
+		else if ( strcmp(token,"--guid")==0 )
+		{
+			use_guid = true;
 		}
 		else if ( strcmp(token,"--graph")==0 )
 		{
@@ -1299,7 +1304,10 @@ static bool export_graph_nodeattr(MYSQL *mysql, OBJECT *obj, CLASS *cls = NULL)
 		else if ( prop->ptype==PT_object )
 		{
 			OBJECT **os = (OBJECT**)var.get_addr();
-			if ( os!=NULL && *os!=NULL && !query(mysql,"INSERT INTO `%s` (`from`,`to`,`type`) VALUES (%llu,%llu,'%s')", get_table_name("edge"), obj->guid[0], (*os)->id, prop->name) ) return false;
+			if ( os!=NULL && *os!=NULL && !query(mysql,"INSERT INTO `%s` (`from`,`to`,`type`) VALUES (%llu,%llu,'%s')", get_table_name("edge"), 
+				use_guid ? obj->guid[0] : obj->id, 
+				use_guid ? (*os)->guid[0] : (*os)->id, 
+				prop->name) ) return false;
 			continue;
 		}
 		else
@@ -1309,7 +1317,9 @@ static bool export_graph_nodeattr(MYSQL *mysql, OBJECT *obj, CLASS *cls = NULL)
 		if ( strlen(value)>0 )
 		{
 			mysql_real_escape_string(mysql,quoted,value,strlen(value)); // protect SQL from contents
-			if ( !query(mysql,"INSERT INTO `%s` (`id`,`name`,`value`) VALUES (%llu,'%s','%s')", get_table_name("nodeattr"), obj->guid[0], prop->name, quoted) ) return false;
+			if ( !query(mysql,"INSERT INTO `%s` (`id`,`name`,`value`) VALUES (%llu,'%s','%s')", get_table_name("nodeattr"), 
+				use_guid ? obj->guid[0] : obj->id, 
+				prop->name, quoted) ) return false;
 		}
 	}
 	return true;
@@ -1360,14 +1370,16 @@ bool export_graph(MYSQL *mysql)
 	for ( OBJECT *obj = gl_object_get_first(); obj!=NULL ; obj=obj->next )
 	{
 		CLASS *cls = obj->oclass;
-		if ( !query(mysql,"INSERT INTO `%s` (`id`,`type`) VALUES (%llu,'%s')", get_table_name("node"), obj->guid[0], obj->oclass->name) ) return false;
-		if ( obj->name && !query(mysql,"INSERT INTO `%s` (`id`,`name`,`value`) VALUES (%llu,'%s','%s')", get_table_name("nodeattr"), obj->guid[0], "name", obj->name) ) return false;
-		if ( obj->oclass->module && obj->oclass->module->name && !query(mysql,"INSERT INTO `%s` (`id`,`name`,`value`) VALUES (%llu,'%s','%s')", get_table_name("nodeattr"), obj->guid[0], "module", obj->oclass->module->name) ) return false;
-		if ( !isnan(obj->latitude) && !query(mysql,"INSERT INTO `%s` (`id`,`name`,`value`) VALUES (%llu,'%s',%g)", get_table_name("nodeattr"), obj->guid[0], "latitude", obj->latitude) ) return false;
-		if ( !isnan(obj->longitude) && !query(mysql,"INSERT INTO `%s` (`id`,`name`,`value`) VALUES (%llu,'%s',%g)", get_table_name("nodeattr"), obj->guid[0], "longitude", obj->longitude) ) return false;
-		if ( obj->in_svc<TS_NEVER && !query(mysql,"INSERT INTO `%s` (`id`,`name`,`value`) VALUES (%llu,'%s',%lld)", get_table_name("nodeattr"), obj->guid[0], "in_svc", obj->in_svc) ) return false;
-		if ( obj->out_svc<TS_NEVER && !query(mysql,"INSERT INTO `%s` (`id`,`name`,`value`) VALUES (%llu,'%s',%lld)", get_table_name("nodeattr"), obj->guid[0], "out_svc", obj->out_svc) ) return false;
-		if ( obj->parent && !query(mysql,"INSERT INTO `%s` (`from`,`to`,`type`) VALUES (%llu,%llu,'%s')",get_table_name("edge"), obj->guid[0], obj->parent->id, "parent") ) return false;
+		if ( !query(mysql,"INSERT INTO `%s` (`id`,`type`) VALUES (%llu,'%s')", get_table_name("node"), 
+			use_guid ? obj->guid[0] : obj->id, obj->oclass->name) ) return false;
+		if ( obj->name && !query(mysql,"INSERT INTO `%s` (`id`,`name`,`value`) VALUES (%llu,'%s','%s')", get_table_name("nodeattr"), 
+			use_guid ? obj->guid[0] : obj->id, "name", obj->name) ) return false;
+		if ( obj->oclass->module && obj->oclass->module->name && !query(mysql,"INSERT INTO `%s` (`id`,`name`,`value`) VALUES (%llu,'%s','%s')", get_table_name("nodeattr"), use_guid ? obj->guid[0] : obj->id, "module", obj->oclass->module->name) ) return false;
+		if ( !isnan(obj->latitude) && !query(mysql,"INSERT INTO `%s` (`id`,`name`,`value`) VALUES (%llu,'%s',%g)", get_table_name("nodeattr"), use_guid ? obj->guid[0] : obj->id, "latitude", obj->latitude) ) return false;
+		if ( !isnan(obj->longitude) && !query(mysql,"INSERT INTO `%s` (`id`,`name`,`value`) VALUES (%llu,'%s',%g)", get_table_name("nodeattr"), use_guid ? obj->guid[0] : obj->id, "longitude", obj->longitude) ) return false;
+		if ( obj->in_svc<TS_NEVER && !query(mysql,"INSERT INTO `%s` (`id`,`name`,`value`) VALUES (%llu,'%s',%lld)", get_table_name("nodeattr"), use_guid ? obj->guid[0] : obj->id, "in_svc", obj->in_svc) ) return false;
+		if ( obj->out_svc<TS_NEVER && !query(mysql,"INSERT INTO `%s` (`id`,`name`,`value`) VALUES (%llu,'%s',%lld)", get_table_name("nodeattr"), use_guid ? obj->guid[0] : obj->id, "out_svc", obj->out_svc) ) return false;
+		if ( obj->parent && !query(mysql,"INSERT INTO `%s` (`from`,`to`,`type`) VALUES (%llu,%llu,'%s')",get_table_name("edge"), use_guid ? obj->guid[0] : obj->id, use_guid ? obj->parent->guid[0] : obj->parent->id, "parent") ) return false;
 		export_graph_nodeattr(mysql,obj);
 	}
 	return true;
