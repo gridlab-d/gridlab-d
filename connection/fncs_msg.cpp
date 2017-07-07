@@ -1001,11 +1001,11 @@ int fncs_msg::publishVariables(varmap *wmap){
 	TIMESTAMP current_timestamp = gl_globalclock;
 	DATETIME *current_datetime;
 	char current_time[64] = "";
-	if(gl_local_time(current_timestamp, current_datetime) == 0) {
+	if(gl_localtime(current_timestamp, current_datetime) == 0) {
 		gl_error("fncs_msg::publishVariables: unable to convert TIMESTAMP %d to DATETIME.", current_timestamp);
 		return 0;
 	}
-	if(gl_strtime(current_datetime, &current_time[0]), 31) == 0) {
+	if(gl_strtime(current_datetime, &current_time[0], 31) == 0) {
 		gl_error("fncs_msg::publishVariables: unable to convert DATETIME to string.");
 		return 0;
 	}
@@ -1199,12 +1199,12 @@ int fncs_msg::publishJsonVariables( )  //Renke add
 		TIMESTAMP current_timestamp = gl_globalclock;
 		DATETIME *current_datetime;
 		char current_time[64] = "";
-		if(gl_local_time(current_timestamp, current_datetime) == 0) {
-			gl_error("fncs_msg::publishVariables: unable to convert TIMESTAMP %d to DATETIME.", current_timestamp);
+		if(gl_localtime(current_timestamp, current_datetime) == 0) {
+			gl_error("fncs_msg::publishJsonVariables: unable to convert TIMESTAMP %d to DATETIME.", current_timestamp);
 			return 0;
 		}
-		if(gl_strtime(current_datetime, &current_time[0]), 31) == 0) {
-			gl_error("fncs_msg::publishVariables: unable to convert DATETIME to string.");
+		if(gl_strtime(current_datetime, &current_time[0], 31) == 0) {
+			gl_error("fncs_msg::publishJsonVariables: unable to convert DATETIME to string.");
 			return 0;
 		}
 		publish_json_data["timestamp"] = string(current_time);
