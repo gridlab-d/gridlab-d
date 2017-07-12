@@ -46,6 +46,7 @@ GLOBAL TIMESTAMP deltamode_starttime INIT(TS_NEVER);	/* Tracking variable for ne
 GLOBAL TIMESTAMP deltamode_endtime INIT(TS_NEVER);		/* Tracking variable to see when deltamode ended - so differential calculations don't get messed up */
 GLOBAL double deltamode_endtime_dbl INIT(TSNVRDBL);		/* Tracking variable to see when deltamode ended - double valued for explicit movement calculations */
 GLOBAL TIMESTAMP deltamode_supersec_endtime INIT(TS_NEVER);	/* Tracking variable to indicate the "floored" time of detamode_endtime */
+GLOBAL double deltatimestep_running INIT(-1.0);			/** Value of the current deltamode simulation - used primarily to tell if we're in deltamode or not for VSI */
 
 void schedule_deltamode_start(TIMESTAMP tstart);	/* Anticipated time for a deltamode start, even if it is now */
 void allocate_deltamode_arrays(void);				/* Overall function to allocate deltamode capabilities - rather than having to edit everything */

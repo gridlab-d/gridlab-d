@@ -257,16 +257,16 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 	limit_minus_one = NR_delta_iteration_limit - 1;
 	error_state = false;
 
-	//See if this is the first instance -- if so, update the timestep (if in-rush enabled)
-	if (deltatimestep_running < 0.0)
-	{
-		//Set the powerflow global -- technically the same as dt, but in double precision (less divides)
-		deltatimestep_running = (double)((double)dt/(double)DT_SECOND);
-	}
-	//Default else -- already set
-
 	if (enable_subsecond_models == true)
 	{
+		//See if this is the first instance -- if so, update the timestep (if in-rush enabled)
+		if (deltatimestep_running < 0.0)
+		{
+			//Set the powerflow global -- technically the same as dt, but in double precision (less divides)
+			deltatimestep_running = (double)((double)dt/(double)DT_SECOND);
+		}
+		//Default else -- already set
+
 		while (simple_iter_test < NR_delta_iteration_limit)	//Simple iteration capability
 		{
 			//Do the preliminary pass, in case we're needed

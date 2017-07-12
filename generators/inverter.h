@@ -94,6 +94,8 @@ private:
 	complex *PGenerated;				//Link to bus PGenerated field - mainly used for SWING generator
 	complex *IGenerated;				//Link to direct current injections to powerflow at bus-level
 	complex generator_admittance[3][3];	//Generator admittance matrix converted from sequence values
+	complex prev_VA_out[3];				//Previous state tracking variable for ramp-rate calculations
+	complex curr_VA_out[3];				//Current state tracking variable for ramp-rate calculations
 
 protected:
 	/* TODO: put unpublished but inherited variables */
@@ -199,6 +201,10 @@ public:
 	complex e_source[3]; 	  // Voltage source behind the filter
 	double Tp_delay;	  // Time delay for feeder real power changes seen by inverter droop control
 	double Tq_delay;	  // Time delay for feeder reactive power changes seen by inverter droop control
+
+	bool checkRampRate;		//Flag to enable ramp rate/slew rate checking
+	double rampUpRate;		//Maximum power increase rate
+	double rampDownRate;		//Maximum power decrease rate
 
 	complex phaseA_I_Out_prev;      // current
 	complex phaseB_I_Out_prev;
@@ -358,7 +364,8 @@ private:
 	TIMESTAMP pf_reg_next_update_time;	//TIMESTAMP of next dispatching change allowed
 
 	TIMESTAMP prev_time;				//Tracking variable for previous "new time" run
-	double prev_time_dbl;				//Tracking variable for 1547 checks
+	double prev_time_dbl;				//Tracking variable for 1547 checks and ramp rates
+	double event_deltat;				//Event-driven delta-t variable
 
 	TIMESTAMP start_time;				//Recording start time of simulation
 

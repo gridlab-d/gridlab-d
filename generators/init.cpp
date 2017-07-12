@@ -227,7 +227,6 @@ EXPORT unsigned long preupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 			//Cast in the published value
 			deltamode_timestep = (unsigned long)(deltamode_timestep_publish+0.5);
 
-
 			//Perform other preupdate functionality, as needed
 			//Loop through the object list and call the pre-update functions
 			for (curr_object_number=0; curr_object_number<gen_object_count; curr_object_number++)
@@ -275,6 +274,14 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 	
 	if (enable_subsecond_models == true)
 	{
+		//See if this is the first instance -- if so, update the timestep (if in-rush enabled)
+		if (deltatimestep_running < 0.0)
+		{
+			//Set the powerflow global -- technically the same as dt, but in double precision (less divides)
+			deltatimestep_running = (double)((double)dt/(double)DT_SECOND);
+		}
+		//Default else -- already set
+
 		//Loop through the object list and call the updates
 		for (curr_object_number=0; curr_object_number<gen_object_count; curr_object_number++)
 		{
@@ -339,6 +346,9 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 	{
 		//Final item of transitioning out is resetting the next timestep so a smaller one can take its place
 		deltamode_starttime = TS_NEVER;
+
+		//Deflag the timestep variable as well
+		deltatimestep_running = -1.0;
 
 		//See how far we progressed - cast just in case (code pulled from core - so should align)
 		seconds_advance = (unsigned int64)(dt/DT_SECOND);
