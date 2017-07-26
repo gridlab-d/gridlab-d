@@ -389,27 +389,31 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 		//Loop through delta objects and update the execution times and frequency values - only does "0" pass
 		for (curr_object_number=0; curr_object_number<gen_object_count; curr_object_number++)
 		{
-
-			//See if we're in service or not
-			if ((delta_objects[curr_object_number]->in_svc_double <= gl_globaldeltaclock) && (delta_objects[curr_object_number]->out_svc_double >= gl_globaldeltaclock))
+			//See if a post-update function even exists
+			if (post_delta_functions[curr_object_number] != NULL)
 			{
-				//Call the actual function
-				function_status = ((STATUS (*)(OBJECT *, complex *, unsigned int))(*post_delta_functions[curr_object_number]))(delta_objects[curr_object_number],&temp_complex,0);
-			}
-			else //Not in service
-				function_status = SUCCESS;
+				//See if we're in service or not
+				if ((delta_objects[curr_object_number]->in_svc_double <= gl_globaldeltaclock) && (delta_objects[curr_object_number]->out_svc_double >= gl_globaldeltaclock))
+				{
+					//Call the actual function
+					function_status = ((STATUS (*)(OBJECT *, complex *, unsigned int))(*post_delta_functions[curr_object_number]))(delta_objects[curr_object_number],&temp_complex,0);
+				}
+				else //Not in service
+					function_status = SUCCESS;
 
-			//Make sure we worked
-			if (function_status == FAILED)
-			{
-				gl_error("Generator object:%s - failed post-deltamode update",delta_objects[curr_object_number]->name);
-				/*  TROUBLESHOOT
-				While calling the individual object post-deltamode calculations, an error occurred.  Please try again.
-				If the error persists, please submit your code and a bug report via the trac website.
-				*/
-				return FAILED;
+				//Make sure we worked
+				if (function_status == FAILED)
+				{
+					gl_error("Generator object:%s - failed post-deltamode update",delta_objects[curr_object_number]->name);
+					/*  TROUBLESHOOT
+					While calling the individual object post-deltamode calculations, an error occurred.  Please try again.
+					If the error persists, please submit your code and a bug report via the trac website.
+					*/
+					return FAILED;
+				}
+				//Default else - successful, keep going
 			}
-			//Default else - successful, keep going
+			//Default else -- no function, so just keep going
 		}
 
 		//We always succeed from this, just because (unless we failed above)
