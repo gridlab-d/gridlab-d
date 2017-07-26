@@ -185,7 +185,7 @@ size_t udp::send(const char *msg, size_t len)
 	char temp[256];
 	int tlim = (int)ceil((double)timeout.tv_usec/1000.0) + (int)timeout.tv_sec;
 	if ( tlim>0 ) tlim=9; else if ( tlim<1 ) tlim=1;
-	sprintf(temp,"%-1d %-3d %-7d %-5.5s %-3.1f %-1d %-3d   ", 
+	sprintf(temp,"%-1d %-3d %-7lu %-5.5s %-3.1f %-1d %-3d   ", 
 		header_version, header_size, len, message_format, message_version, tlim, 0);
 	if ( len>1500-strlen(temp) )
 	{

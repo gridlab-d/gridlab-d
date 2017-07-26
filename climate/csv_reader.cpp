@@ -37,7 +37,7 @@ csv_reader::csv_reader(MODULE *module){
 	memset(this, 0, sizeof(csv_reader));
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,"csv_reader",sizeof(csv_reader),NULL);
+		oclass = gl_register_class(module,"csv_reader",sizeof(csv_reader),0);
 		if (gl_publish_variable(oclass,
 			PT_int32,"index",PADDR(index),PT_ACCESS,PA_REFERENCE,
 			PT_char32,"city_name",PADDR(city_name),
@@ -204,7 +204,7 @@ int csv_reader::read_prop(char *line){ // already pulled the '$' off the front
 //	}	
 	void *addr = (void *)((uint64)this + (uint64)prop->addr);
 	if(prop->ptype == PT_double){
-		if(1 != sscanf(valstr, "%lg", addr)){
+		if(1 != sscanf(valstr, "%lg",(double*) addr)){
 			gl_error("csv_reader::read_prop ~ unable to set property \'%s\' to \'%s\'", propstr, valstr);
 			/* TROUBLESHOOT
 				The double parser was not able to convert the property value into a number.  Please
@@ -332,7 +332,7 @@ int csv_reader::read_line(char *line, int linenum){
 			 // IMPORTANT NOTE: if DST is not handled properly by sample, don't try to fix
 			 // the problem here.  The weather class may need to be fixed so it uses UTC internally.
 		}
-		else if(sscanf(token, "%d:%d:%d:%d:%d", &sample->month, &sample->day, &sample->hour, &sample->minute, &sample->second) < 1){
+		else if(sscanf(token, "%hd:%hd:%hd:%hd:%hd", &sample->month, &sample->day, &sample->hour, &sample->minute, &sample->second) < 1){
 			gl_error("csv_reader::read_line ~ unable to read time string \'%s\' with default format", token);
 			/* TROUBLESHOOT
 				The input timestamp could not be parsed.  Verify that all time strings are formatted

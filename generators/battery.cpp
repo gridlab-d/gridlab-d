@@ -205,7 +205,7 @@ void battery::fetch_double(double **prop, char *name, OBJECT *parent){
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
 		sprintf(tname, "inverter:%i", hdr->id);
-		if(*name == NULL)
+		if(*name == 0)
 			sprintf(msg, "%s: inverter unable to find property: name is NULL", namestr);
 		else
 			sprintf(msg, "%s: inverter unable to find %s", namestr, name);

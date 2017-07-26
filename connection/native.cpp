@@ -121,8 +121,8 @@ native::native(MODULE *module)
 			throw "connection/native::native(MODULE*): unable to publish link method of connection:native";
 		if ( !gl_publish_loadmethod(oclass,"option",loadmethod_native_option) )
 			throw "connection/native::native(MODULE*): unable to publish option method of connection:native";
-		mode = NULL;
-		transport = NULL;
+		mode = 0;
+		transport = 0;
 		memset(map,0,sizeof(map));
 	}
 }
@@ -391,9 +391,9 @@ static size_t convert_to_hex(char *out, size_t max, const char *in, size_t len)
 static size_t convert_from_hex(void *buf, size_t len, const char *hex, size_t hexlen)
 {
 	char *p = (char*)buf;
-	char lo = NULL;
-	char hi = NULL;
-	char c = NULL;
+	char lo = 0;
+	char hi = 0;
+	char c = 0;
 	size_t n = 0;
 	for(n = 0; n < hexlen && *hex != '\0'; n += 2)
 	{

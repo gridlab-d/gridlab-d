@@ -24,7 +24,7 @@ public:
 			dishwasher_MOTOR_ONLY=5,						///< only the motor is running (air fluff)
 			dishwasher_CONTROL_ONLY=6,
 			dishwasher_HEATEDDRY_ONLY=7
-	};										///< control state
+	} DISHWASHER_MOTOR;										///< control state
 	enumeration state;
 
 

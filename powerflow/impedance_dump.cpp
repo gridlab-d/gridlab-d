@@ -2408,16 +2408,16 @@ int impedance_dump::dump(TIMESTAMP t)
 			}
 
 			//write power rating
-			if(pTransformer[index]->config->kVA_rating!=NULL){
+			if(pTransformer[index]->config->kVA_rating!=0){
 				fprintf(fn,"\t\t<power_rating>%.6f</power_rating>\n",pTransformer[index]->config->kVA_rating);
 			}
 
 
 			//write impedance
-			if(pTransformer[index]->config->impedance.Re()!=NULL){
+			if(pTransformer[index]->config->impedance.Re()!=0){
 				fprintf(fn,"\t\t<resistance>%.6f</resistance>\n",pTransformer[index]->config->impedance.Re());
 			}
-			if(pTransformer[index]->config->impedance.Im()!=NULL){
+			if(pTransformer[index]->config->impedance.Im()!=0){
 				fprintf(fn,"\t\t<reactance>%.6f</reactance>\n",pTransformer[index]->config->impedance.Im());
 			}
 			//write a_mat
@@ -2598,10 +2598,10 @@ int impedance_dump::dump(TIMESTAMP t)
 			}
 
 			//write the from node's voltage
-			fprintf(fn,"\t\t<from_voltage>%f</from_voltage>\n",120);
+			fprintf(fn,"\t\t<from_voltage>%d</from_voltage>\n",120);
 
 			//write the to node's voltage
-			fprintf(fn,"\t\t<to_voltage>%f</to_voltage>\n",120);
+			fprintf(fn,"\t\t<to_voltage>%d</to_voltage>\n",120);
 
 			//write the phases
 			if(pTpLine[index]->phases == 0x0001){//A

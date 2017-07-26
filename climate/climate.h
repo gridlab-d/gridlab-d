@@ -33,7 +33,7 @@ typedef enum{
 	CI_NONE = 0,
 	CI_LINEAR,
 	CI_QUADRATIC
-};
+} CI;
 
 typedef enum{
 	CM_NONE = 0,
@@ -172,7 +172,7 @@ typedef	enum {
 		RT_NONE,
 		RT_TMY2,
 		RT_CSV,
-};
+} RT;
 
 class climate : public gld_object {
 	

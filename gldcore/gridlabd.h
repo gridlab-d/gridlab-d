@@ -96,6 +96,8 @@
 #include "random.h"
 #define STREAM_MODULE
 #include "stream.h"
+#pragma GCC diagnostic ignored "-Wwrite-strings"
+
 
 #ifdef DLMAIN
 #define EXTERN

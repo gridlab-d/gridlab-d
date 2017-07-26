@@ -75,7 +75,7 @@ PROPERTY *player_link_properties(struct player *player, OBJECT *obj, char *prope
 
 		// everything that looks like a property name, then read units up to ]
 		while (isspace(*item)) item++;
-		if(2 == sscanf(item,"%[A-Za-z0-9_.][%[^]\n,\0]", pstr, ustr)){
+		if(2 == sscanf(item,"%[A-Za-z0-9_.][%[^]\n0]", pstr, ustr)){
 			unit = gl_find_unit(ustr);
 			if(unit == NULL){
 				gl_error("sync_player:%d: unable to find unit '%s' for property '%s'",obj->id, ustr,pstr);

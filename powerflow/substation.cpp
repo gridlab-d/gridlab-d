@@ -120,7 +120,7 @@ void substation::fetch_complex(complex **prop, char *name, OBJECT *parent){
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
 		sprintf(tname, "substation:%i", hdr->id);
-		if(*name == NULL)
+		if(*name == 0)
 			sprintf(msg, "%s: substation unable to find property: name is NULL", namestr);
 		else
 			sprintf(msg, "%s: substation unable to find %s", namestr, name);
@@ -136,7 +136,7 @@ void substation::fetch_double(double **prop, char *name, OBJECT *parent){
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
 		sprintf(tname, "substation:%i", hdr->id);
-		if(*name == NULL)
+		if(*name == 0)
 			sprintf(msg, "%s: substation unable to find property: name is NULL", namestr);
 		else
 			sprintf(msg, "%s: substation unable to find %s", namestr, name);
@@ -389,7 +389,7 @@ SIMULATIONMODE substation::inter_deltaupdate_substation(unsigned int64 delta_tim
 		//calculate the energy used
 		if(iteration_count_val == 0){
 			total_load = last_power_A.Re() + last_power_B.Re() + last_power_C.Re();
-			distribution_real_energy += total_load*dt/(3600*DT_SECOND);
+		distribution_real_energy += total_load*dt/(3600*DT_SECOND);
 		}
 		NR_node_presync_fxn(0);
 

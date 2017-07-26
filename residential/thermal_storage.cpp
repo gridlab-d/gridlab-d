@@ -169,7 +169,7 @@ int thermal_storage::init(OBJECT *parent)
 	thermal_storage_active = &house_lnk->thermal_storage_inuse;
 
 	//Check the cooling capacity
-	if (*design_cooling_capacity == NULL)
+	if (*design_cooling_capacity == 0)
 	{
 		gl_warning("\'design_cooling_capacity\' not specified in parent ~ default to 5 ton or 60,000 Btu/hr");
 		/* TROUBLESHOOT

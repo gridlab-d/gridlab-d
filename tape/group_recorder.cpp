@@ -361,7 +361,7 @@ int group_recorder::write_header(){
 	if(0 > fprintf(rec_file,"# group..... %s\n", group_def.get_string())){ return 0; }
 	if(0 > fprintf(rec_file,"# property.. %s\n", property_name.get_string())){ return 0; }
 	if(0 > fprintf(rec_file,"# limit..... %d\n", limit)){ return 0; }
-	if(0 > fprintf(rec_file,"# interval.. %d\n", write_interval)){ return 0; }
+	if(0 > fprintf(rec_file,"# interval.. %lld\n", write_interval)){ return 0; }
 
 	// write list of properties
 	if(0 > fprintf(rec_file, "# timestamp")){ return 0; }
