@@ -154,6 +154,14 @@ public:
 		ND_OUT_OF_SERVICE = 0, ///< out of service flag for nodes
 		ND_IN_SERVICE = 1,     ///< in service flag for nodes - default
 	};
+	enum {
+		GFA_NONE=0,		/**< Defines no trip reason */
+		GFA_UF=1,		/**< Defines under-frequency trip */
+		GFA_OF=2,		/**< Defines over-frequency trip */
+		GFA_UV=3,		/**< Defines under-voltage trip */
+		GFA_OV=4		/**< Defines over-voltage trip */
+	};
+	enumeration GFA_trip_method;
 	enumeration service_status;
 	double service_status_dbl;	///< double value for service - overrides the enumeration if set
 	TIMESTAMP last_disconnect;	///< Tracking variable for out of service times

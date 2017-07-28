@@ -340,6 +340,21 @@ public:
 	double over_voltage_low_viol_time;				//Lowest high voltage threshold violation accumulator
 	double over_voltage_high_viol_time;				//Highest high voltage threshold violation accumulator
 
+	typedef enum {
+		IEEE_1547_NONE=0,		/**< No trip reason */
+		IEEE_1547_HIGH_OF=1,	/**< High over-frequency level trip */
+		IEEE_1547_LOW_OF=2,		/**< Low over-frequency level trip */
+		IEEE_1547_HIGH_UF=3,	/**< High under-frequency level trip */
+		IEEE_1547_LOW_UF=4,		/**< Low under-frequency level trip */
+		IEEE_1547_LOWEST_UV=5,	/**< Lowest under-voltage level trip */
+		IEEE_1547_MIDDLE_UV=6,	/**< Middle under-voltage level trip */
+		IEEE_1547_HIGH_UV=7,	/**< High under-voltage level trip */
+		IEEE_1547_LOW_OV=8,		/**< Low over-voltage level trip */
+		IEEE_1547_HIGH_OV=9		/**< High over-voltage level trip */
+	};
+
+	enumeration ieee_1547_trip_method;
+
 	//properties for four quadrant volt/var frequency power mode
 	bool disable_volt_var_if_no_input_power;		//if true turn off Volt/VAr behavior when no input power (i.e. at night for a solar system)
 	double delay_time;				//delay time time between seeing a voltage value and responding with appropiate VAr setting (seconds)

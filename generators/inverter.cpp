@@ -204,6 +204,19 @@ inverter::inverter(MODULE *module)
 			PT_double,"over_voltage_low_disconnect_time[s]",PADDR(over_voltage_low_delay),PT_DESCRIPTION,"Lowest voltage clearing time for overvoltage",
 			PT_double,"over_voltage_high_disconnect_time[s]",PADDR(over_voltage_high_delay),PT_DESCRIPTION,"Highest voltage clearing time for overvoltage",
 
+			//1547 trip reason
+			PT_enumeration, "IEEE_1547_trip_method", PADDR(ieee_1547_trip_method), PT_DESCRIPTION, "DELTAMODE: Reason for IEEE 1547 disconnect - which threshold was hit",
+				PT_KEYWORD, "NONE",(enumeration)IEEE_1547_NONE, PT_DESCRIPTION, "No trip reason",
+				PT_KEYWORD, "OVER_FREQUENCY_HIGH",(enumeration)IEEE_1547_HIGH_OF, PT_DESCRIPTION, "High over-frequency level trip - OF2",
+				PT_KEYWORD, "OVER_FREQUENCY_LOW",(enumeration)IEEE_1547_LOW_OF, PT_DESCRIPTION, "Low over-frequency level trip - OF1",
+				PT_KEYWORD, "UNDER_FREQUENCY_HIGH",(enumeration)IEEE_1547_HIGH_UF, PT_DESCRIPTION, "High under-frequency level trip - UF2",
+				PT_KEYWORD, "UNDER_FREQUENCY_LOW",(enumeration)IEEE_1547_LOW_UF, PT_DESCRIPTION, "Low under-frequency level trip - UF1",
+				PT_KEYWORD, "UNDER_VOLTAGE_LOW",(enumeration)IEEE_1547_LOWEST_UV, PT_DESCRIPTION, "Lowest under-voltage level trip",
+				PT_KEYWORD, "UNDER_VOLTAGE_MID",(enumeration)IEEE_1547_MIDDLE_UV, PT_DESCRIPTION, "Middle under-voltage level trip",
+				PT_KEYWORD, "UNDER_VOLTAGE_HIGH",(enumeration)IEEE_1547_HIGH_UV, PT_DESCRIPTION, "High under-voltage level trip",
+				PT_KEYWORD, "OVER_VOLTAGE_LOW",(enumeration)IEEE_1547_LOW_OV, PT_DESCRIPTION, "Low over-voltage level trip",
+				PT_KEYWORD, "OVER_VOLTAGE_HIGH",(enumeration)IEEE_1547_HIGH_OV, PT_DESCRIPTION, "High over-voltage level trip",
+
 			PT_set, "phases", PADDR(phases),  PT_DESCRIPTION, "The phases the inverter is attached to",
 				PT_KEYWORD, "A",(set)PHASE_A,
 				PT_KEYWORD, "B",(set)PHASE_B,
@@ -453,6 +466,9 @@ int inverter::create(void)
 
 	//By default, assumed we want to use IEEE 1547a
 	ieee_1547_version = IEEE1547A;
+
+	//Flag us as no reason
+	ieee_1547_trip_method = IEEE_1547_NONE;
 
 	//1547a defaults for triggering - so people can change them - will get adjusted to 1547 in init, if desired
 	over_freq_high_band_setpoint = 62.0;	//OF2 set point for IEEE 1547a
@@ -6890,11 +6906,17 @@ double inverter::perform_1547_checks(double timestepvalue)
 			{
 				trigger_disconnect = true;
 				return_time_freq = reconnect_time;
+
+				//Flag us as high over-frequency violation
+				ieee_1547_trip_method = IEEE_1547_HIGH_OF;
 			}
 			else if (over_freq_low_band_viol_time >= over_freq_low_band_delay)	//Triggered existing band
 			{
 				trigger_disconnect = true;
 				return_time_freq = reconnect_time;
+
+				//Flag us as the low over-frequency violation
+				ieee_1547_trip_method = IEEE_1547_LOW_OF;
 			}
 			else
 			{
@@ -6925,11 +6947,17 @@ double inverter::perform_1547_checks(double timestepvalue)
 			{
 				trigger_disconnect = true;
 				return_time_freq = reconnect_time;
+
+				//Flag us as the low under-frequency violation
+				ieee_1547_trip_method = IEEE_1547_LOW_UF;
 			}
 			else if (under_freq_high_band_viol_time >= under_freq_high_band_delay)	//Other band trigger
 			{
 				trigger_disconnect = true;
 				return_time_freq = reconnect_time;
+
+				//Flag us as the high under-frequency violation
+				ieee_1547_trip_method = IEEE_1547_HIGH_UF;
 			}
 			else
 			{
@@ -6962,6 +6990,9 @@ double inverter::perform_1547_checks(double timestepvalue)
 			{
 				trigger_disconnect = true;
 				return_time_freq = reconnect_time;
+
+				//Flag us as the high under frequency violation
+				ieee_1547_trip_method = IEEE_1547_HIGH_UF;
 			}
 			else
 			{
@@ -6985,6 +7016,9 @@ double inverter::perform_1547_checks(double timestepvalue)
 			{
 				trigger_disconnect = true;
 				return_time_freq = reconnect_time;
+
+				//Flag us as the low over-frequency violation
+				ieee_1547_trip_method = IEEE_1547_LOW_OF;
 			}
 			else
 			{
@@ -7150,17 +7184,26 @@ double inverter::perform_1547_checks(double timestepvalue)
 			{
 				trigger_disconnect = true;
 				return_time_volt = reconnect_time;
+
+				//Flag us as the lowest under voltage violation
+				ieee_1547_trip_method = IEEE_1547_LOWEST_UV;
 			}
 			else if (under_voltage_middle_viol_time >= under_voltage_middle_delay)	//Check other ranges
 			{
 				trigger_disconnect = true;
 				return_time_volt = reconnect_time;
+
+				//Flag us as the middle under voltage violation
+				ieee_1547_trip_method = IEEE_1547_MIDDLE_UV;
 			}
 
 			else if (under_voltage_high_viol_time >= under_voltage_high_delay)
 			{
 				trigger_disconnect = true;
 				return_time_volt = reconnect_time;
+
+				//Flag us as the high under voltage violation
+				ieee_1547_trip_method = IEEE_1547_HIGH_UV;
 			}
 			else
 			{
@@ -7174,11 +7217,17 @@ double inverter::perform_1547_checks(double timestepvalue)
 			{
 				trigger_disconnect = true;
 				return_time_volt = reconnect_time;
+
+				//Flag us as the middle under voltage violation
+				ieee_1547_trip_method = IEEE_1547_MIDDLE_UV;
 			}
 			else if (under_voltage_high_viol_time >= under_voltage_high_delay)	//Check higher bands
 			{
 				trigger_disconnect = true;
 				return_time_volt = reconnect_time;
+
+				//Flag us as the high under voltage violation
+				ieee_1547_trip_method = IEEE_1547_HIGH_UV;
 			}
 			else
 			{
@@ -7192,6 +7241,9 @@ double inverter::perform_1547_checks(double timestepvalue)
 			{
 				trigger_disconnect = true;
 				return_time_volt = reconnect_time;
+
+				//Flag us as the high under voltage violation
+				ieee_1547_trip_method = IEEE_1547_HIGH_UV;
 			}
 			else
 			{
@@ -7205,6 +7257,9 @@ double inverter::perform_1547_checks(double timestepvalue)
 			{
 				trigger_disconnect = true;
 				return_time_volt = reconnect_time;
+
+				//Flag us as the low over voltage violation
+				ieee_1547_trip_method = IEEE_1547_LOW_OV;
 			}
 			else
 			{
@@ -7218,11 +7273,17 @@ double inverter::perform_1547_checks(double timestepvalue)
 			{
 				trigger_disconnect = true;
 				return_time_volt = reconnect_time;
+
+				//Flag us as the high over voltage violation
+				ieee_1547_trip_method = IEEE_1547_HIGH_OV;
 			}
 			else if (over_voltage_low_viol_time >= over_voltage_low_delay)	//Lower band overlap
 			{
 				trigger_disconnect = true;
 				return_time_volt = reconnect_time;
+
+				//Flag us as the low over voltage violation
+				ieee_1547_trip_method = IEEE_1547_LOW_OV;
 			}
 			else
 			{
@@ -7294,6 +7355,9 @@ double inverter::perform_1547_checks(double timestepvalue)
 			//Set us back into service
 			inverter_1547_status = true;
 
+			//Flag us as no reason
+			ieee_1547_trip_method = IEEE_1547_NONE;
+
 			//Implies no violations, so force return a -1.0
 			return -1.0;
 		}
@@ -7319,6 +7383,9 @@ double inverter::perform_1547_checks(double timestepvalue)
 		}
 		else
 		{
+			//Flag us as no reason
+			ieee_1547_trip_method = IEEE_1547_NONE;
+
 			//All is well, indicate as much
 			return return_value;
 		}
