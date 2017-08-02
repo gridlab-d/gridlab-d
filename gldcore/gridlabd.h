@@ -1475,6 +1475,10 @@ public: // read accessors
 	inline unsigned short get_second(void) { return dt.second; };
 	/// Get the nanosecond (0-999999)
 	inline unsigned int get_nanosecond(void) { return dt.nanosecond; };
+	/// Get the Unix Day Number (full days since the Unix Epoch)
+	inline unsigned int get_uday(void) { return dt.timestamp / 86400; };
+	/// Get the Julian Day Number
+	inline unsigned int get_jday(void) { return (dt.timestamp / 86400) + 2440587.5; };
 	/// Get the timezone spec
 	inline char* get_tz(void) { return dt.tz; };
 	/// Get the summer/daylight time flag
@@ -2038,7 +2042,12 @@ public: // constructors/casts
 		pstruct.prop = (v?v->prop:NULL);  
 	};
 	inline gld_property(char *m, char *n) : obj(NULL), pstruct(nullpstruct) 
-	{ 
+	{
+		obj = callback->get_object(m);
+		if ( obj != NULL ) {
+			callback->properties.get_property(obj, n, &pstruct);
+			return;
+		} 
 		char1024 vn; 
 		sprintf(vn,"%s::%s",m,n); 
 		GLOBALVAR *v=callback->global.find(vn); 

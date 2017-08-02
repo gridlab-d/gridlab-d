@@ -9,7 +9,7 @@
 
 #include "powerflow.h"
 
-//Deltamode funcitons
+//Deltamode functions
 EXPORT complex *delta_linkage(OBJECT *obj, unsigned char mapvar);
 EXPORT STATUS delta_frequency_node(OBJECT *obj, complex *powerval, complex *freqpowerval);
 EXPORT SIMULATIONMODE interupdate_node(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
@@ -79,7 +79,7 @@ typedef enum {
 	NORMAL_NODE=0,		///< We're a plain-old-ugly node
 	LOAD_NODE=1,		///< We're a load
 	METER_NODE=2		///< We're a meter
-} DYN_NODE_TYPE;		/// Defition for deltamode calls
+} DYN_NODE_TYPE;		/// Definition for deltamode calls
 
 //Frequency measurement variable structure
 typedef struct {

@@ -289,6 +289,16 @@ int link_object::init(OBJECT *parent)
 		mean_repair_time = 0.0;	//Set to zero by default
 	}
 
+	//Make sure they don't match -- odd test, but still needs to be done
+	if (from == to)
+	{
+		GL_THROW("link:%d - %s - FROM and TO objects are the same object!",obj->id,(obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		The from-node and to-node of a link are the same object. This is effectively a loop-back on itself and is not allowed.
+		Please choose a different from or to node.
+		*/
+	}
+
 	/* adjust ranks according to method in use */
 	switch (solver_method) {
 	case SM_FBS: /* forward backsweep method only */
@@ -1614,8 +1624,14 @@ void link_object::NR_link_presync_fxn(void)
 		}
 		else if (has_phase(PHASE_S)) //Triplexy
 		{
-			//Put it straight in
-			equalm(b_mat,Y);
+			//Find the determinant
+			complex detvalue = b_mat[0][0]*b_mat[1][1] - b_mat[0][1]*b_mat[1][0];
+
+			//Store the value/compute the inversion
+			Y[0][0] = b_mat[1][1] / detvalue;
+			Y[0][1] = b_mat[0][1] * -1.0 / detvalue;
+			Y[1][0] = b_mat[1][0] * -1.0 / detvalue;
+			Y[1][1] = b_mat[0][0] / detvalue;
 		}
 		else if ((SpecialLnk==NORMAL) && (require_inrush_update == true))
 		{
@@ -1949,103 +1965,120 @@ void link_object::NR_link_presync_fxn(void)
 
 			if (use_line_cap == true)	//Capacitance included
 			{
-				//Make "transfer matrices" admittance-less
-				equalm(Y,From_Y);
-				
-				//Zero out Y first, just in case - mainly if something above used it
-				for (jindex=0; jindex<3; jindex++)
+				if (has_phase(PHASE_S))	//Triplex exclusion
 				{
-					for (kindex=0; kindex<3; kindex++)
-					{
-						Y[jindex][kindex]=complex(0.0,0.0);
-					}
-				}
+					//Just copy the output directly in
+					equalm(Y,From_Y);
 
-				//Replicate the inversion, again, but with the "less modified" version - Stored from Yc=b_mat earlier
-				//Inversion sequence to get Y (admittance)
-				if (has_phase(PHASE_A) && !has_phase(PHASE_B) && !has_phase(PHASE_C)) //only A
-					Y[0][0] = complex(1.0) / b_mat[0][0];
-				else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //only B
-					Y[1][1] = complex(1.0) / b_mat[1][1];
-				else if (!has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //only C
-					Y[2][2] = complex(1.0) / b_mat[2][2];
-				else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //has A & C
-				{
-					complex detvalue = b_mat[0][0]*b_mat[2][2] - b_mat[0][2]*b_mat[2][0];
-
-					Y[0][0] = b_mat[2][2] / detvalue;
-					Y[0][2] = b_mat[0][2] * -1.0 / detvalue;
-					Y[2][0] = b_mat[2][0] * -1.0 / detvalue;
-					Y[2][2] = b_mat[0][0] / detvalue;
-				}
-				else if (has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //has A & B
-				{
-					complex detvalue = b_mat[0][0]*b_mat[1][1] - b_mat[0][1]*b_mat[1][0];
-
-					Y[0][0] = b_mat[1][1] / detvalue;
-					Y[0][1] = b_mat[0][1] * -1.0 / detvalue;
-					Y[1][0] = b_mat[1][0] * -1.0 / detvalue;
-					Y[1][1] = b_mat[0][0] / detvalue;
-				}
-				else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C))	//has B & C
-				{
-					complex detvalue = b_mat[1][1]*b_mat[2][2] - b_mat[1][2]*b_mat[2][1];
-
-					Y[1][1] = b_mat[2][2] / detvalue;
-					Y[1][2] = b_mat[1][2] * -1.0 / detvalue;
-					Y[2][1] = b_mat[2][1] * -1.0 / detvalue;
-					Y[2][2] = b_mat[1][1] / detvalue;
-				}
-				else if ((has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C)) || (has_phase(PHASE_D))) //has ABC or D (D=ABC)
-					inverse(b_mat,Y);
-
-				//Compute total self admittance - include line charging capacitance
-				//Basically undo a_mat = I + 1/2 Zabc*Yabc
-				equalm(a_mat,Ylinecharge);
-				Ylinecharge[0][0]-=1;
-				Ylinecharge[1][1]-=1;
-				Ylinecharge[2][2]-=1;
-				multiply(2.0,Ylinecharge,Ylefttemp);
-				multiply(Y,Ylefttemp,Ylinecharge);
-				
-				//Split back in half for application to each side
-				multiply(0.5,Ylinecharge,Ylefttemp);
-
-				//See how this is being handled
-				if ((enable_inrush_calculations == true) && (require_inrush_update == true))
-				{
-					//Update constant terms - shunt is the same for capacitance
+					//Do the same for the "shunt" term, even though it is the same here
 					for (jindex=0; jindex<3; jindex++)
 					{
 						for (kindex=0; kindex<3; kindex++)
 						{
-							//Extract the imaginary part (should be only part) and de-phasor it - Yshunt/(2*pi*f)*2/dt
-							workingvalue = Ylefttemp[jindex][kindex].Im() / (PI * current_frequency * deltatimestep_running);
-
-							//Put into the "shunt" matrix
-							Ylefttemp[jindex][kindex] += complex(workingvalue,0.0);
-
-							//Copy this value into the final storage matrix too
-							LinkCapShuntTerm[jindex*3+kindex] = Ylefttemp[jindex][kindex];
-
-							//Create chrcstore while we're in here
-							chrcstore[jindex*3+kindex] = 2.0 * workingvalue;
+							YSfrom[jindex*3+kindex]=Y[jindex][kindex];
 						}
 					}
-				}
-				//Defaulted else -- In-rush not enabled, just continue like normal
-
-				//Combine back into the full shunt term
-				addition(Ylefttemp,From_Y,Yc);
-
-				//Now parse into the new storage structure (manual to ensure things are placed right)
-				for (jindex=0; jindex<3; jindex++)
+				}//End triplex capacitance code
+				else	//Other lines
 				{
-					for (kindex=0; kindex<3; kindex++)
+					//Make "transfer matrices" admittance-less
+					equalm(Y,From_Y);
+
+					//Zero out Y first, just in case - mainly if something above used it
+					for (jindex=0; jindex<3; jindex++)
 					{
-						YSfrom[jindex*3+kindex]=Yc[jindex][kindex];
+						for (kindex=0; kindex<3; kindex++)
+						{
+							Y[jindex][kindex]=complex(0.0,0.0);
+						}
 					}
-				}
+
+					//Replicate the inversion, again, but with the "less modified" version - Stored from Yc=b_mat earlier
+					//Inversion sequence to get Y (admittance)
+					if (has_phase(PHASE_A) && !has_phase(PHASE_B) && !has_phase(PHASE_C)) //only A
+						Y[0][0] = complex(1.0) / b_mat[0][0];
+					else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //only B
+						Y[1][1] = complex(1.0) / b_mat[1][1];
+					else if (!has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //only C
+						Y[2][2] = complex(1.0) / b_mat[2][2];
+					else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //has A & C
+					{
+						complex detvalue = b_mat[0][0]*b_mat[2][2] - b_mat[0][2]*b_mat[2][0];
+
+						Y[0][0] = b_mat[2][2] / detvalue;
+						Y[0][2] = b_mat[0][2] * -1.0 / detvalue;
+						Y[2][0] = b_mat[2][0] * -1.0 / detvalue;
+						Y[2][2] = b_mat[0][0] / detvalue;
+					}
+					else if (has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //has A & B
+					{
+						complex detvalue = b_mat[0][0]*b_mat[1][1] - b_mat[0][1]*b_mat[1][0];
+
+						Y[0][0] = b_mat[1][1] / detvalue;
+						Y[0][1] = b_mat[0][1] * -1.0 / detvalue;
+						Y[1][0] = b_mat[1][0] * -1.0 / detvalue;
+						Y[1][1] = b_mat[0][0] / detvalue;
+					}
+					else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C))	//has B & C
+					{
+						complex detvalue = b_mat[1][1]*b_mat[2][2] - b_mat[1][2]*b_mat[2][1];
+
+						Y[1][1] = b_mat[2][2] / detvalue;
+						Y[1][2] = b_mat[1][2] * -1.0 / detvalue;
+						Y[2][1] = b_mat[2][1] * -1.0 / detvalue;
+						Y[2][2] = b_mat[1][1] / detvalue;
+					}
+					else if ((has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C)) || (has_phase(PHASE_D))) //has ABC or D (D=ABC)
+						inverse(b_mat,Y);
+
+					//Compute total self admittance - include line charging capacitance
+					//Basically undo a_mat = I + 1/2 Zabc*Yabc
+					equalm(a_mat,Ylinecharge);
+					Ylinecharge[0][0]-=1;
+					Ylinecharge[1][1]-=1;
+					Ylinecharge[2][2]-=1;
+					multiply(2.0,Ylinecharge,Ylefttemp);
+					multiply(Y,Ylefttemp,Ylinecharge);
+
+					//Split back in half for application to each side
+					multiply(0.5,Ylinecharge,Ylefttemp);
+
+					//See how this is being handled
+					if ((enable_inrush_calculations == true) && (require_inrush_update == true))
+					{
+						//Update constant terms - shunt is the same for capacitance
+						for (jindex=0; jindex<3; jindex++)
+						{
+							for (kindex=0; kindex<3; kindex++)
+							{
+								//Extract the imaginary part (should be only part) and de-phasor it - Yshunt/(2*pi*f)*2/dt
+								workingvalue = Ylefttemp[jindex][kindex].Im() / (PI * current_frequency * deltatimestep_running);
+
+								//Put into the "shunt" matrix
+								Ylefttemp[jindex][kindex] += complex(workingvalue,0.0);
+
+								//Copy this value into the final storage matrix too
+								LinkCapShuntTerm[jindex*3+kindex] = Ylefttemp[jindex][kindex];
+
+								//Create chrcstore while we're in here
+								chrcstore[jindex*3+kindex] = 2.0 * workingvalue;
+							}
+						}
+					}
+					//Defaulted else -- In-rush not enabled, just continue like normal
+
+					//Combine back into the full shunt term
+					addition(Ylefttemp,From_Y,Yc);
+
+					//Now parse into the new storage structure (manual to ensure things are placed right)
+					for (jindex=0; jindex<3; jindex++)
+					{
+						for (kindex=0; kindex<3; kindex++)
+						{
+							YSfrom[jindex*3+kindex]=Yc[jindex][kindex];
+						}
+					}
+				}//End non-triplex lines
 			}
 			else	//Normal execution
 			{

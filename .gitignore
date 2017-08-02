@@ -97,10 +97,12 @@ gldcore/config.h.in~
 */*/.dirstamp
 gridlabd.bin
 install/
+install64/
 */autotest/*/
 */*/*/autotest/*/
 validate.txt
 .libs/
 .*.swp
-
 /.DS_Store
+third_party/xerces*/*
+*.xcbkptlist

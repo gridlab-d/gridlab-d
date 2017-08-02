@@ -82,12 +82,12 @@ struct player {
 	struct {
 		TIMESTAMP ts;
 		int64 ns;
-		char256 value;
+		char1024 value;
 	} next;
 	struct {
 		TIMESTAMP ts;
 		TIMESTAMP ns;
-		char256 value;
+		char1024 value;
 	} delta_track;	/* Added for deltamode fixes */
 	PROPERTY *target;
 	TAPEOPS *ops;

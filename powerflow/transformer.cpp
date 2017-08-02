@@ -137,7 +137,7 @@ int transformer::init(OBJECT *parent)
 		A transformer configuration was not provided.  Please use object transformer_configuration
 		and define the necessary parameters of your transformer to continue.
 		*/
-	if (!gl_object_isa(configuration, "transformer_configuration"))
+	if (!gl_object_isa(configuration, "transformer_configuration","powerflow"))
 		GL_THROW("invalid transformer configuration");
 		/*  TROUBLESHOOT
 		An invalid transformer configuration was provided.  Ensure you have proper values in each field

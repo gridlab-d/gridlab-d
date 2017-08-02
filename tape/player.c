@@ -49,6 +49,114 @@ static OBJECT *last_player = NULL;
 
 extern TIMESTAMP delta_mode_needed;
 
+PROPERTY *player_link_properties(struct player *player, OBJECT *obj, char *property_list)
+{
+	char *item;
+	PROPERTY *first=NULL, *last=NULL;
+	UNIT *unit = NULL;
+	PROPERTY *prop;
+	PROPERTY *target;
+	char1024 list;
+	complex oblig;
+	double scale;
+	char256 pstr, ustr;
+	char *cpart = 0;
+	int64 cid = -1;
+
+	strcpy(list,property_list); /* avoid destroying orginal list */
+	for (item=strtok(list,","); item!=NULL; item=strtok(NULL,","))
+	{
+		prop = NULL;
+		target = NULL;
+		scale = 1.0;
+		unit = NULL;
+		cpart = 0;
+		cid = -1;
+
+		// everything that looks like a property name, then read units up to ]
+		while (isspace(*item)) item++;
+		if(2 == sscanf(item,"%[A-Za-z0-9_.][%[^]\n,\0]", pstr, ustr)){
+			unit = gl_find_unit(ustr);
+			if(unit == NULL){
+				gl_error("sync_player:%d: unable to find unit '%s' for property '%s'",obj->id, ustr,pstr);
+				return NULL;
+			}
+			item = pstr;
+		}
+		prop = (PROPERTY*)malloc(sizeof(PROPERTY));
+		
+		/* branch: test to see if we're trying to split up a complex property */
+		/* must occur w/ *cpart=0 before gl_get_property in order to properly reformat the property name string */
+		cpart = strchr(item, '.');
+		if(cpart != NULL){
+			if(strcmp("imag", cpart+1) == 0){
+				cid = (int)((int64)&(oblig.i) - (int64)&oblig);
+				*cpart = 0;
+			} else if(strcmp("real", cpart+1) == 0){
+				cid = (int)((int64)&(oblig.r) - (int64)&oblig);
+				*cpart = 0;
+			} else {
+				;
+			}
+		}
+
+		target = gl_get_property(obj,item,NULL);
+
+		if (prop!=NULL && target!=NULL)
+		{
+			if(unit != NULL && target->unit == NULL){
+				gl_error("sync_player:%d: property '%s' is unitless, ignoring unit conversion", obj->id, item);
+			}
+			else if(unit != NULL && 0 == gl_convert_ex(target->unit, unit, &scale))
+			{
+				gl_error("sync_player:%d: unable to convert property '%s' units to '%s'", obj->id, item, ustr);
+				return NULL;
+			}
+			if (first==NULL) first=prop; else last->next=prop;
+			last=prop;
+			memcpy(prop,target,sizeof(PROPERTY));
+			prop->unit = unit;
+			//if(unit == NULL && player->line_units == LU_ALL){
+			//	prop->unit = target->unit;
+			//}
+			prop->next = NULL;
+		}
+		else
+		{
+			gl_error("sync_player: property '%s' not found", item);
+			return NULL;
+		}
+		if(cid >= 0){ /* doing the complex part thing */
+			prop->ptype = PT_double;
+			(prop->addr) = (PROPERTYADDR)((int64)(prop->addr) + cid);
+		}
+	}
+	return first;
+}
+
+int player_write_properties(struct player *my, OBJECT *obj, PROPERTY *prop, const char *buffer)
+{
+	int count=0;
+	const char delim[] = ",\n\r\t";
+	char1024 bufcpy;
+	memcpy(bufcpy, buffer, sizeof(char1024));
+	char *next;
+	char *token = strtok_s(bufcpy, delim, &next);
+	PROPERTY *p=NULL;
+	for (p=prop; p!=NULL; p=p->next)
+	{
+		if (token == NULL)
+		{
+			gl_error("sync_player:%d: not enough values on line: %s", obj->id, buffer);
+			return count;
+		}		
+		gl_set_value(obj,GETADDR(obj,p),token,p);
+		count++;
+		token = strtok_s(NULL, delim, &next);
+	}
+	return count;
+}
+
 EXPORT int create_player(OBJECT **obj, OBJECT *parent)
 {
 	*obj = gl_create_object(player_class);
@@ -151,8 +259,8 @@ static void trim(char *str, char *to){
 
 TIMESTAMP player_read(OBJECT *obj)
 {
-	char buffer[256];
-	char timebuf[64], valbuf[256], tbuf[64];
+	char buffer[1024];
+	char timebuf[64], valbuf[1024], tbuf[64];
 	char tz[6];
 	int Y=0,m=0,d=0,H=0,M=0;
 	double S=0;
@@ -160,7 +268,7 @@ TIMESTAMP player_read(OBJECT *obj)
 	char unit[2];
 	TIMESTAMP t1;
 	char *result=NULL;
-	char256 value;
+	char1024 value;
 	int voff=0;
 
 	/* TODO move this to tape.c and make the variable available to all classes in tape */
@@ -179,9 +287,9 @@ Retry:
 	result = my->ops->read(my, buffer, sizeof(buffer));
 
 	memset(timebuf, 0, 64);
-	memset(valbuf, 0, 256);
+	memset(valbuf, 0, 1024);
 	memset(tbuf, 0, 64);
-	memset(value, 0, 256);
+	memset(value, 0, 1024);
 	memset(tz, 0, 6);
 	if (result==NULL)
 	{
@@ -202,7 +310,7 @@ Retry:
 	if (result[0]=='#' || result[0]=='\n') /* ignore comments and blank lines */
 		goto Retry;
 
-	if(sscanf(result, "%32[^,],%256[^\n\r;]", tbuf, valbuf) == 2){
+	if(sscanf(result, "%32[^,],%1024[^\n\r;]", tbuf, valbuf) == 2){
 		trim(tbuf, timebuf);
 		trim(valbuf, value);
 		if (sscanf(timebuf,"%d-%d-%d %d:%d:%lf %4s",&Y,&m,&d,&H,&M,&S, tz)==7){
@@ -357,7 +465,7 @@ EXPORT TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		&& my->next.ns==0 ) /* only use this method when not operating in subsecond mode */
 	{	/* post this value */
 		if (my->target==NULL)
-			my->target = gl_get_property(obj->parent,my->property,NULL);
+			my->target = player_link_properties(my, obj->parent, my->property);
 		if (my->target==NULL){
 			gl_error("sync_player: Unable to find property \"%s\" in object %s", my->property, obj->name?obj->name:"(anon)");
 			my->status = TS_ERROR;
@@ -365,13 +473,13 @@ EXPORT TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		if (my->target!=NULL)
 		{
 			OBJECT *target = obj->parent ? obj->parent : obj; /* target myself if no parent */
-			gl_set_value(target,GETADDR(target,my->target),my->next.value,my->target); /* pointer => int64 */
+			player_write_properties(my, target, my->target, my->next.value);
 		}
 		
 		/* Copy the current value into our "tracking" variable */
 		my->delta_track.ns = my->next.ns;
 		my->delta_track.ts = my->next.ts;
-		memcpy(my->delta_track.value,my->next.value,sizeof(char256));
+		memcpy(my->delta_track.value,my->next.value,sizeof(char1024));
 
 		t1 = player_read(obj);
 	}
@@ -380,7 +488,7 @@ EXPORT TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	if ((my->target!=NULL) && (my->delta_track.ts<t0) && (my->delta_track.ns!=0))
 	{
 		OBJECT *target = obj->parent ? obj->parent : obj; /* target myself if no parent */
-		gl_set_value(target,GETADDR(target,my->target),my->delta_track.value,my->target); /* pointer => int64 */
+		player_write_properties(my, target, my->target, my->delta_track.value);
 	}
 
 	/* Delta-mode catch - if we're not explicitly in delta mode and a nano-second values pops up, try to advance past it */
@@ -391,7 +499,7 @@ EXPORT TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 
 		/* Copied verbatim from above - just in case it still needs to be done - if a first timestep is a deltamode timestep */
 		if (my->target==NULL)
-			my->target = gl_get_property(obj->parent,my->property,NULL);
+			my->target = player_link_properties(my, obj->parent, my->property);
 		if (my->target==NULL){
 			gl_error("sync_player: Unable to find property \"%s\" in object %s", my->property, obj->name?obj->name:"(anon)");
 			my->status = TS_ERROR;
@@ -405,13 +513,13 @@ EXPORT TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			if ((my->target!=NULL) && (my->next.ts<t0))
 			{
 				OBJECT *target = obj->parent ? obj->parent : obj; /* target myself if no parent */
-				gl_set_value(target,GETADDR(target,my->target),my->next.value,my->target); /* pointer => int64 */
+				player_write_properties(my, target, my->target, my->next.value);
 			}
 
 			/* Copy the value into the tracking variable */
 			my->delta_track.ns = my->next.ns;
 			my->delta_track.ts = my->next.ts;
-			memcpy(my->delta_track.value,my->next.value,sizeof(char256));
+			memcpy(my->delta_track.value,my->next.value,sizeof(char1024));
 
 			/* Perform the update */
 			temp_t = player_read(obj);
@@ -432,13 +540,13 @@ EXPORT TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 				if ((my->target!=NULL) && (my->next.ts<t0))
 				{
 					OBJECT *target = obj->parent ? obj->parent : obj; /* target myself if no parent */
-					gl_set_value(target,GETADDR(target,my->target),my->next.value,my->target); /* pointer => int64 */
+					player_write_properties(my, target, my->target, my->next.value);			
 				}
 
 				/* Copy the value into the tracking variable */
 				my->delta_track.ns = my->next.ns;
 				my->delta_track.ts = my->next.ts;
-				memcpy(my->delta_track.value,my->next.value,sizeof(char256));
+				memcpy(my->delta_track.value,my->next.value,sizeof(char1024));
 
 				/* Perform the update */
 				temp_t = player_read(obj);
@@ -462,7 +570,7 @@ EXPORT TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			/* Copy the value into the tracking variable */
 			my->delta_track.ns = my->next.ns;
 			my->delta_track.ts = my->next.ts;
-			memcpy(my->delta_track.value,my->next.value,sizeof(char256));
+			memcpy(my->delta_track.value,my->next.value,sizeof(char1024));
 
 			/* Perform the update */
 			temp_t = player_read(obj);

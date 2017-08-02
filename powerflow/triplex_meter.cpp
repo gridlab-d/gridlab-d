@@ -65,7 +65,10 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 		if (gl_publish_variable(oclass,
 			PT_INHERIT, "triplex_node",
 			PT_double, "measured_real_energy[Wh]", PADDR(measured_real_energy),PT_DESCRIPTION,"metered real energy consumption",
+			PT_double, "measured_real_energy_delta[Wh]", PADDR(measured_real_energy_delta),PT_DESCRIPTION,"delta in metered real energy consumption from last specified measured_energy_delta_timestep",
 			PT_double, "measured_reactive_energy[VAh]",PADDR(measured_reactive_energy),PT_DESCRIPTION,"metered reactive energy consumption",
+			PT_double, "measured_reactive_energy_delta[VAh]",PADDR(measured_reactive_energy_delta),PT_DESCRIPTION,"delta in metered reactive energy consumption from last specified measured_energy_delta_timestep",
+            PT_double, "measured_energy_delta_timestep[s]",PADDR(measured_energy_delta_timestep),PT_DESCRIPTION,"Period of timestep for real and reactive delta energy calculation",
 			PT_complex, "measured_power[VA]", PADDR(measured_power),PT_DESCRIPTION,"metered power",
 			PT_complex, "indiv_measured_power_1[VA]", PADDR(indiv_measured_power[0]),PT_DESCRIPTION,"metered power, phase 1",
 			PT_complex, "indiv_measured_power_2[VA]", PADDR(indiv_measured_power[1]),PT_DESCRIPTION,"metered power, phase 2",
@@ -140,6 +143,11 @@ int triplex_meter::create()
 {
 	int result = triplex_node::create();
 	measured_real_energy = measured_reactive_energy = 0;
+	measured_real_energy_delta = measured_reactive_energy_delta = 0;
+    last_measured_real_energy = last_measured_reactive_energy = 0;
+    measured_energy_delta_timestep = -1;
+    start_timestamp = 0;
+    last_delta_timestamp = 0;
 	measured_power = 0;
 	measured_demand = 0;
 	last_t = dt = next_time = 0;
@@ -243,6 +251,10 @@ TIMESTAMP triplex_meter::presync(TIMESTAMP t0)
 	if (tpmeter_interrupted_secondary == true)
 		tpmeter_interrupted_secondary = false;
 
+    // Capturing first timestamp of simulation for use in delta energy measurements.
+    if (t0 != 0 && start_timestamp == 0)
+        start_timestamp = t0;
+
 	return triplex_node::presync(t0);
 }
 //Sync needed for reliability
@@ -342,6 +354,17 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	if (measured_real_power>measured_demand)
 		measured_demand=measured_real_power;
 
+    // Delta energy cacluation
+    if (t0 == start_timestamp)
+        last_delta_timestamp = start_timestamp;
+
+    if ((t1 == last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) && (t1 != t0) && measured_energy_delta_timestep > 0)  {
+        measured_real_energy_delta = measured_real_energy - last_measured_real_energy;
+        measured_reactive_energy_delta = measured_reactive_energy - last_measured_reactive_energy;
+        last_measured_real_energy = measured_real_energy;
+        last_measured_reactive_energy = measured_reactive_energy;
+        last_delta_timestamp = t1;
+    }
 
 
 	if (bill_mode == BM_UNIFORM || bill_mode == BM_TIERED)

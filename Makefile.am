@@ -71,6 +71,9 @@ include third_party/superLU_MT/Makefile_combined.mk
 
 # custom modules (see ./customize)
 include custom.mk
+include third_party/jsonCpp/Makefile.mk
+#include third_party/CBLAS/Makefile.mk
+#include third_party/superLU_MT/Makefile.mk
 
 # for doxygen commands
 include aminclude.mk
@@ -116,7 +119,7 @@ EXTRA_DIST += $(top_srcdir)/models/collector_example.glm
 EXTRA_DIST += $(top_srcdir)/models/diesel_deltamode_load_player_A.csv
 EXTRA_DIST += $(top_srcdir)/models/diesel_deltamode_load_player_B.csv
 EXTRA_DIST += $(top_srcdir)/models/diesel_deltamode_load_player_C.csv
-EXTRA_DIST += $(top_srcdir)/models/Four_quadrant_inverter_example.glm
+#EXTRA_DIST += $(top_srcdir)/models/Four_quadrant_inverter_example.glm
 EXTRA_DIST += $(top_srcdir)/models/house_HVAC_example.glm
 EXTRA_DIST += $(top_srcdir)/models/IEEE_13_Node_Test_Feeder.glm
 EXTRA_DIST += $(top_srcdir)/models/IEEE_13_Node_With_Houses.glm
@@ -139,7 +142,7 @@ pkgdata_DATA += $(top_srcdir)/models/collector_example.glm
 pkgdata_DATA += $(top_srcdir)/models/diesel_deltamode_load_player_A.csv
 pkgdata_DATA += $(top_srcdir)/models/diesel_deltamode_load_player_B.csv
 pkgdata_DATA += $(top_srcdir)/models/diesel_deltamode_load_player_C.csv
-pkgdata_DATA += $(top_srcdir)/models/Four_quadrant_inverter_example.glm
+#pkgdata_DATA += $(top_srcdir)/models/Four_quadrant_inverter_example.glm
 pkgdata_DATA += $(top_srcdir)/models/house_HVAC_example.glm
 pkgdata_DATA += $(top_srcdir)/models/IEEE_13_Node_Test_Feeder.glm
 pkgdata_DATA += $(top_srcdir)/models/IEEE_13_Node_With_Houses.glm

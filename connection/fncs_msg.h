@@ -17,8 +17,32 @@
 #include<vector>
 #include <string>
 #include <fstream>
+#include <sstream>
+#include <iostream>
+#include <json/json.h>
+//#include "../third_party/jsonCpp/json/json.h"
 using namespace std;
-
+//using namespace Json;
+class JsonProperty {
+public:
+	JsonProperty(string objName, string objProp) {
+		object_name = objName;
+		object_property = objProp;
+		if(object_property.compare("parent") == 0){
+			is_header = true;
+		} else {
+			is_header = false;
+		}
+		prop = NULL;
+		obj = NULL;
+	}
+	string object_name;
+	string object_property;
+	string hdr_val;
+	bool is_header;
+	gld_property *prop;
+	OBJECT *obj;
+};
 class fncs_msg;
 
 ///< Function relays
@@ -44,6 +68,12 @@ typedef enum {
 	FT_INTEGER,
 	FT_STRING,
 } FNCSTYPE;
+
+typedef enum {
+	MT_GENERAL,
+	MT_JSON,
+} MESSAGETYPE;
+
 typedef struct _fncslist {
 	FNCSTYPE type;
 	char tag[32];
@@ -76,6 +106,7 @@ private:
 	// TODO add other properties here as needed.
 
 public:
+	enumeration message_type;
 	// required implementations
 	fncs_msg(MODULE*);
 	int create(void);
@@ -98,6 +129,9 @@ public:
 	void incoming_fncs_function(void);
 	int publishVariables(varmap *wmap);
 	int subscribeVariables(varmap *rmap);
+	int publishJsonVariables( );   //Renke add
+	int subscribeJsonVariables( );  //Renke add
+	int publish_fncsjson_link();  //Renke add
 	char simulationName[1024];
 	void term(TIMESTAMP t1);
 	int fncs_link(char *value, COMMUNICATIONTYPE comtype);
@@ -112,7 +146,12 @@ public:
 	static FNCSLIST *find(FNCSLIST *list, const char *tag);
 	static char *get(FNCSLIST *list, const char *tag);
 	static void destroy(FNCSLIST *list);
-
+	Json::Value publish_json_config;  //add by Renke
+	Json::Value publish_json_data;    //add by Renke
+	Json::Value subscribe_json_data;  //add by Renke
+	string publish_json_key; //add by Renke
+	string subscribe_json_key; //add by Renke
+	vector <JsonProperty*> vjson_publish_gld_property_name;
 public:
 	// special variables for GridLAB-D classes
 	static CLASS *oclass;

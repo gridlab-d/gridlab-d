@@ -97,6 +97,7 @@ int switch_object::create()
 
 	event_schedule = NULL;
 	eventgen_obj = NULL;
+	fault_handle_call = NULL;
 	event_schedule_map_attempt = false;	//Haven't tried to map yet
 	
 	switch_resistance = -1.0;
@@ -738,6 +739,8 @@ void switch_object::switch_sync_function(void)
 {
 	unsigned char pres_status;
 	double phase_total, switch_total;
+	OBJECT *obj = OBJECTHDR(this);
+	int result_val;
 
 	pres_status = 0x00;	//Reset individual status indicator - assumes all start open
 
@@ -1054,16 +1057,41 @@ void switch_object::switch_sync_function(void)
 
 		prev_full_status = pres_status;	//Update the status flags
 	}//End of "Normal" operation
-	else	//Meshed fault checking -- phases are handled externally by link.cpp, just like other objects
+	else	//Meshed fault checking -- phases are handled externally by link.cpp, just like other objects, but only with an eventgen call
 	{
 		if (status != prev_status)
 		{
+			//Check and see if we've mapped the function first
+			if (fault_handle_call == NULL)
+			{
+				//Make sure a fault_check object exists
+				if (fault_check_object != NULL)
+				{
+					//Get the link
+					fault_handle_call = (FUNCTIONADDR)(gl_get_function(fault_check_object,"reliability_alterations"));
+
+					//Make sure it worked
+					if (fault_handle_call == NULL)
+					{
+						GL_THROW("switch:%d - %s - Failed to map the topology update function!",obj->id,(obj->name ? obj->name : "Unnamed"));
+						/*  TROUBLESHOOT
+						While attempting to map up the topology reconfigure function, an error was encountered.  Please try again.
+						If the error persists, please submit your file and an issue report.
+						*/
+					}
+				}
+				//Default else -- it will just fail
+			}
+			//Default else -- already mapped
+
 			//Loop through and handle phases appropriate
 			if (status == CLOSED)
 			{
 				//Check phases
 				if (has_phase(PHASE_A))
 				{
+					//Handle the phase - theoretically done elsewhere, but double check
+					NR_branchdata[NR_branch_reference].phases |= 0x04;
 					From_Y[0][0] = complex(1/switch_resistance,1/switch_resistance);
 					a_mat[0][0] = 1.0;
 					d_mat[0][0] = 1.0;
@@ -1071,6 +1099,7 @@ void switch_object::switch_sync_function(void)
 
 				if (has_phase(PHASE_B))
 				{
+					NR_branchdata[NR_branch_reference].phases |= 0x02;
 					From_Y[1][1] = complex(1/switch_resistance,1/switch_resistance);
 					a_mat[1][1] = 1.0;
 					d_mat[1][1] = 1.0;
@@ -1078,13 +1107,35 @@ void switch_object::switch_sync_function(void)
 
 				if (has_phase(PHASE_C))
 				{
+					NR_branchdata[NR_branch_reference].phases |= 0x01;
 					From_Y[2][2] = complex(1/switch_resistance,1/switch_resistance);
 					a_mat[2][2] = 1.0;
 					d_mat[2][2] = 1.0;
 				}
+
+				//Call the reconfiguration function
+				if (fault_handle_call != NULL)
+				{
+					//Call the topology update
+					result_val = ((int (*)(OBJECT *, int, bool))(*fault_handle_call))(fault_check_object,NR_branch_reference,true);
+
+					//Make sure it worked
+					if (result_val != 1)
+					{
+						GL_THROW("switch:%d - %s - Topology update fail!",obj->id,(obj->name ? obj->name : "Unnamed"));
+						/*  TROUBLESHOOT
+						While attempting to update the topology of the system after a switch action, an error occurred.
+						Please try again.  If the error persists, please submit your file and an issue report.
+						*/
+					}
+				}
+				//Default else -- not mapped
 			}
 			else	//Must be open
 			{
+				//Handle phases
+				NR_branchdata[NR_branch_reference].phases &= 0xF8;
+
 				//Zero it all, just because
 				From_Y[0][0] = complex(0.0,0.0);
 				From_Y[1][1] = complex(0.0,0.0);
@@ -1097,6 +1148,22 @@ void switch_object::switch_sync_function(void)
 				d_mat[0][0] = 0.0;
 				d_mat[1][1] = 0.0;
 				d_mat[2][2] = 0.0;
+
+				//Call the reconfiguration function
+				//Call the reconfiguration function
+				if (fault_handle_call != NULL)
+				{
+					//Call the topology update
+					result_val = ((int (*)(OBJECT *, int, bool))(*fault_handle_call))(fault_check_object,NR_branch_reference,false);
+
+					//Make sure it worked
+					if (result_val != 1)
+					{
+						GL_THROW("switch:%d - %s - Topology update fail!",obj->id,(obj->name ? obj->name : "Unnamed"));
+						//Defined above
+					}
+				}
+				//Default else -- not mapped
 			}
 
 			//Update status

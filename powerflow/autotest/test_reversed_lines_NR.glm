@@ -1,0 +1,293 @@
+//Simple feeder to test if reversing lines in a system still gives the same answer (but reversed current)
+//Basically will be two laterals, one with an "FBS-compatible" from/to structure, and another that has flipped from/to
+//nodes.  Answers should be identical between the two
+
+clock {
+	timezone EST+5EDT;
+	starttime '2001-01-01 00:00:00';
+	stoptime '2001-01-01 00:00:01';
+}
+
+#set profiler=1;
+
+module assert;
+module powerflow {
+	solver_method NR;
+};
+
+//Bring in the line configs - just use the 123-node
+#include "../data_configurations_delta_123node.glm";
+
+//Main SWING node
+object meter {
+	phases ABCN;
+	name swing_node;
+	bustype SWING;
+	nominal_voltage 2401.7771;
+}
+
+//Branch 1 - forward - nodes
+object node {
+	phases ABCN;
+	name forward_1;
+	nominal_voltage 2401.7771;
+}
+
+object node {
+	phases ABCN;
+	name forward_2;
+	nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	phases BS;
+	name forward_3;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	phases BS;
+	name forward_4;
+	nominal_voltage 120.0;
+}
+
+object triplex_load {
+	phases BS;
+	name forward_5;
+	constant_power_12 5000.0+1200.0j;
+	constant_power_2 120.0+60.0j;	//Unbalance it
+	nominal_voltage 120.0;
+}
+
+//Branch 1 - lines/transformers
+object overhead_line {
+	phases ABCN;
+	name swing_for_1;
+	from swing_node;
+	to forward_1;
+	length 500.0 ft;
+	configuration lc301;
+}
+
+object underground_line {
+	phases ABC;
+	name for_1_2;
+	from forward_1;
+	to forward_2;
+	length 1500.0 ft;
+	configuration lc312;
+}
+
+object transformer {
+	phases BS;
+	name for_2_3_trip;
+	from forward_2;
+	to forward_3;
+	configuration spct_config_B;
+}
+
+object triplex_line {
+	phases BS;
+	name for_3_4_trip;
+	from forward_3;
+	to forward_4;
+	length 200.0 ft;
+	configuration tplex_line_cfg;
+}
+
+object triplex_line {
+	phases BS;
+	name for_4_5_trip;
+	from forward_4;
+	to forward_5;
+	length 250.0 ft;
+	configuration tplex_line_cfg;
+}
+
+//Branch 2 - reversed (where applicable) - nodes
+object node {
+	phases ABCN;
+	name reverse_1;
+	nominal_voltage 2401.7771;
+}
+
+object node {
+	phases ABCN;
+	name reverse_2;
+	nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	phases BS;
+	name reverse_3;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	phases BS;
+	name reverse_4;
+	nominal_voltage 120.0;
+}
+
+object triplex_load {
+	phases BS;
+	name reverse_5;
+	constant_power_12 5000.0+1200.0j;
+	constant_power_2 120.0+60.0j;	//Unbalance it
+	nominal_voltage 120.0;
+}
+
+//Branch 1 - lines/transformers
+object overhead_line {
+	phases ABCN;
+	name swing_rev_1;
+	to swing_node;
+	from reverse_1;
+	length 500.0 ft;
+	configuration lc301;
+}
+
+object underground_line {
+	phases ABC;
+	name rev_1_2;
+	to reverse_1;
+	from reverse_2;
+	length 1500.0 ft;
+	configuration lc312;
+}
+
+object transformer {
+	phases BS;
+	name rev_2_3_trip;
+	from reverse_2;		//This can't be reversed, otherwise it isn't the right transformer!
+	to reverse_3;
+	configuration spct_config_B;
+}
+
+object triplex_line {
+	phases BS;
+	name rev_3_4_trip;
+	to reverse_3;
+	from reverse_4;
+	length 200.0 ft;
+	configuration tplex_line_cfg;
+}
+
+object triplex_line {
+	phases BS;
+	name rev_4_5_trip;
+	to reverse_4;
+	from reverse_5;
+	length 250.0 ft;
+	configuration tplex_line_cfg;
+}
+
+// //Outputs - pre-assert
+// object voltdump {
+	// filename voltage_answers.csv;
+// }
+
+// object currdump {
+	// filename current_answers.csv;
+// }
+
+//Asserts - use same values at parallel places
+//Just do at one three-phase and one triplex place
+//If something breaks, it should screw up the whole answer
+object complex_assert {
+	name for_1_assert_A;
+	parent forward_1;
+	target voltage_A;
+	value 2401.722583+0.099011j;
+	within 0.01;
+}
+
+object complex_assert {
+	name for_1_assert_B;
+	parent forward_1;
+	target voltage_B;
+	value -1200.981454-2079.771286j;
+	within 0.01;
+}
+
+object complex_assert {
+	name for_1_assert_C;
+	parent forward_1;
+	target voltage_C;
+	value -1200.930663+2080.087674j;
+	within 0.01;
+}
+
+object complex_assert {
+	name rev_1_assert_A;
+	parent reverse_1;
+	target voltage_A;
+	value 2401.722583+0.099011j;
+	within 0.01;
+}
+
+object complex_assert {
+	name rev_1_assert_B;
+	parent reverse_1;
+	target voltage_B;
+	value -1200.981454-2079.771286j;
+	within 0.01;
+}
+
+object complex_assert {
+	name rev_1_assert_C;
+	parent reverse_1;
+	target voltage_C;
+	value -1200.930663+2080.087674j;
+	within 0.01;
+}
+
+//Triplex
+object complex_assert {
+	name for_4_assert_1;
+	parent forward_4;
+	target voltage_1;
+	value -59.893969-103.389684j;
+	within 0.01;
+}
+
+object complex_assert {
+	name for_4_assert_2;
+	parent forward_4;
+	target voltage_2;
+	value -59.865508-103.338749j;
+	within 0.01;
+}
+
+object complex_assert {
+	name rev_4_assert_1;
+	parent reverse_4;
+	target voltage_1;
+	value -59.893969-103.389684j;
+	within 0.01;
+}
+
+object complex_assert {
+	name rev_4_assert_2;
+	parent reverse_4;
+	target voltage_2;
+	value -59.865508-103.338749j;
+	within 0.01;
+}
+
+//Check the current at the top branches, for giggles
+object complex_assert {
+	name forward_assert_line_B;
+	parent swing_for_1;
+	target current_in_B;
+	value -1.575179-1.637203j;
+	within 0.01;
+}
+
+object complex_assert {
+	name rev_assert_line_B;
+	parent swing_rev_1;
+	target current_in_B;
+	value 1.575179+1.637203j;	//Answer is negated here, because the line is technically backwards
+	within 0.01;
+}

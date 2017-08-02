@@ -63,7 +63,7 @@ substation::substation(MODULE *mod) : node(mod)
 			PT_complex, "transmission_level_constant_power_load[VA]", PADDR(average_transmission_power_load), PT_DESCRIPTION, "the average constant power load to be posted directly to the pw_load object.",
 			PT_complex, "transmission_level_constant_current_load[A]", PADDR(average_transmission_current_load), PT_DESCRIPTION, "the average constant current load at nominal voltage to be posted directly to the pw_load object.",
 			PT_complex, "transmission_level_constant_impedance_load[Ohm]", PADDR(average_transmission_impedance_load), PT_DESCRIPTION, "the average constant impedance load at nominal voltage to be posted directly to the pw_load object.",
-			PT_complex, "average_distribution_load[VA]", PADDR(average_distribution_load), PT_DESCRIPTION, "The average of the loads on all three phases at the substation object.",
+			PT_complex, "distribution_load[VA]", PADDR(distribution_load), PT_DESCRIPTION, "The total load of all three phases at the substation object.",
 			PT_complex, "distribution_power_A[VA]", PADDR(distribution_power_A),
 			PT_complex, "distribution_power_B[VA]", PADDR(distribution_power_B),
 			PT_complex, "distribution_power_C[VA]", PADDR(distribution_power_C),
@@ -79,7 +79,14 @@ substation::substation(MODULE *mod) : node(mod)
 			PT_double, "distribution_real_energy[Wh]", PADDR(distribution_real_energy),
 			//PT_double, "measured_reactive[kVar]", PADDR(measured_reactive), has not implemented yet
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
-		}
+		//Publish deltamode functions
+		if (gl_publish_function(oclass,	"delta_linkage_node", (FUNCTIONADDR)delta_linkage)==NULL)
+			GL_THROW("Unable to publish meter delta_linkage function");
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_substation)==NULL)
+			GL_THROW("Unable to publish meter deltamode function");
+		if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
+			GL_THROW("Unable to publish meter deltamode function");
+	}
 }
 
 int substation::isa(char *classname)
@@ -149,6 +156,19 @@ int substation::init(OBJECT *parent)
 		base_power = 100;//default gives a max power error of 1 VA.
 	}
 
+	//Check convergence-posting criterion
+	if (power_convergence_value<=0.0)
+	{
+		gl_warning("power_convergence_value not set - defaulting to 0.01 base_power");
+		/*  TROUBLESHOOT
+		A value was not specified for the convergence criterion required before posting an 
+		answer up to pw_load.  This value has defaulted to 1% of base_power.  If a different threshold
+		is desired, set it explicitly.
+		*/
+
+		power_convergence_value = 0.01*base_power;
+	}//End convergence value check
+
 	//Check to see if it has a parent (no sense to ISAs if it is empty)
 	if (parent != NULL)
 	{
@@ -197,19 +217,6 @@ int substation::init(OBJECT *parent)
 
 			//Flag us as pw_load connected
 			has_parent = 1;
-
-			//Check convergence-posting criterion
-			if (power_convergence_value<=0.0)
-			{
-				gl_warning("power_convergence_value not set - defaulting to 0.01 base_power");
-				/*  TROUBLESHOOT
-				A value was not specified for the convergence criterion required before posting an 
-				answer up to pw_load.  This value has defaulted to 1% of base_power.  If a different threshold
-				is desired, set it explicitly.
-				*/
-
-				power_convergence_value = 0.01*base_power;
-			}//End convergence value check
 		}
 		else	//Parent isn't a pw_load, so we just become a normal node - let it handle things
 		{
@@ -251,33 +258,11 @@ int substation::init(OBJECT *parent)
 	//Set up reference items if they are needed
 	if (has_parent != 2)	//Not a normal node
 	{
-		//set the reference phase number to shift the phase voltages appropriatly with the positive sequence voltage
-		if(reference_phase == R_PHASE_A){
-			reference_number.SetPolar(1,0);
-		} else if(reference_phase == R_PHASE_B){
-			reference_number.SetPolar(1,2*PI/3);
-		} else if(reference_phase == R_PHASE_C){
-			reference_number.SetPolar(1,-2*PI/3);
-		}
-
-		//create the sequence to phase transformation matrix
-		for(i=0; i<3; i++){
-			for(n=0; n<3; n++){
-				if((i==1 && n==1) || (i==2 && n==2)){
-					transformation_matrix[i][n].SetPolar(1,-2*PI/3);
-				} else if((i==2 && n==1) || (i==1 && n==2)){
-					transformation_matrix[i][n].SetPolar(1,2*PI/3);
-				} else {
-					transformation_matrix[i][n].SetPolar(1,0);
-				}
-			}
-		}
-
 		//New requirement to maintain positive sequence ability - three phases must be had, unless
 		//we're just a normal node.  Then, we don't care.
 		if (!has_phase(PHASE_A|PHASE_B|PHASE_C))
 		{
-			gl_error("substation needs have all three phases!");
+			gl_error("substation needs to have all three phases!");
 			/*  TROUBLESHOOT
 			To meet the requirements for sequence voltage conversions, the substation node must have all three
 			phases at the connection point.  If only a single phase or subset of full three phase is needed, those
@@ -285,18 +270,26 @@ int substation::init(OBJECT *parent)
 			*/
 			return 0;
 		}
+	}//End not a normal node
+	//set the reference phase number to shift the phase voltages appropriatly with the positive sequence voltage
+	if(reference_phase == R_PHASE_A){
+		reference_number.SetPolar(1,0);
+	} else if(reference_phase == R_PHASE_B){
+		reference_number.SetPolar(1,2*PI/3);
+	} else if(reference_phase == R_PHASE_C){
+		reference_number.SetPolar(1,-2*PI/3);
+	}
 
-		//TODO: Implement a check to make sure nominals match!
-
-		//Not sure if the below is needed or not anymore
-		if(has_phase(PHASE_A)){
-			volt_A.SetPolar(nominal_voltage,0);
-		}
-		if(has_phase(PHASE_B)){
-			volt_B.SetPolar(nominal_voltage,-PI*2/3);
-		}
-		if(has_phase(PHASE_C)){
-			volt_C.SetPolar(nominal_voltage,PI*2/3);
+	//create the sequence to phase transformation matrix
+	for(i=0; i<3; i++){
+		for(n=0; n<3; n++){
+			if((i==1 && n==1) || (i==2 && n==2)){
+				transformation_matrix[i][n].SetPolar(1,-2*PI/3);
+			} else if((i==2 && n==1) || (i==1 && n==2)){
+				transformation_matrix[i][n].SetPolar(1,2*PI/3);
+			} else {
+				transformation_matrix[i][n].SetPolar(1,0);
+			}
 		}
 	}//End not a normal node
 	
@@ -324,18 +317,20 @@ TIMESTAMP substation::sync(TIMESTAMP t0, TIMESTAMP t1)
 	double dist_power_B_diff = 0;
 	double dist_power_C_diff = 0;
 	//set up the phase voltages for the three different cases
-	if(has_parent == 1){//has a pw_load as a parent
-		seq_mat[1] = *pPositiveSequenceVoltage;
-		seq_mat[0] = 0.0;	//Force the other two to zero for now - just to make sure
-		seq_mat[2] = 0.0;
-	}
+	if((solver_method == SM_NR || solver_method == SM_FBS)){
+		if(has_parent == 1){//has a pw_load as a parent
+			seq_mat[1] = *pPositiveSequenceVoltage;
+			seq_mat[0] = 0.0;	//Force the other two to zero for now - just to make sure
+			seq_mat[2] = 0.0;
+		}
 
-	//Check to see if a sequence conversion needs to be done
-	if (has_parent != 2)
-	{
-		voltageA = (seq_mat[0] + seq_mat[1] + seq_mat[2]) * reference_number;
-		voltageB = (seq_mat[0] + transformation_matrix[1][1] * seq_mat[1] + transformation_matrix[1][2] * seq_mat[2]) * reference_number;
-		voltageC = (seq_mat[0] + transformation_matrix[2][1] * seq_mat[1] + transformation_matrix[2][2] * seq_mat[2]) * reference_number;
+		//Check to see if a sequence conversion needs to be done
+		if (seq_mat[0].Mag() != 0 || seq_mat[1].Mag() != 0 || seq_mat[2].Mag() != 0)
+		{
+			voltageA = (seq_mat[0] + seq_mat[1] + seq_mat[2]) * reference_number;
+			voltageB = (seq_mat[0] + transformation_matrix[1][1] * seq_mat[1] + transformation_matrix[1][2] * seq_mat[2]) * reference_number;
+			voltageC = (seq_mat[0] + transformation_matrix[2][1] * seq_mat[1] + transformation_matrix[2][2] * seq_mat[2]) * reference_number;
+		}
 	}
 
 	t2 = node::sync(t1);
@@ -354,6 +349,7 @@ TIMESTAMP substation::sync(TIMESTAMP t0, TIMESTAMP t1)
 		distribution_power_A = voltageA * (~current_inj[0]);
 		distribution_power_B = voltageB * (~current_inj[1]);
 		distribution_power_C = voltageC * (~current_inj[2]);
+		distribution_load = distribution_power_A + distribution_power_B + distribution_power_C;
 		dist_power_A_diff = distribution_power_A.Mag() - last_power_A.Mag();
 		dist_power_B_diff = distribution_power_B.Mag() - last_power_B.Mag();
 		dist_power_C_diff = distribution_power_C.Mag() - last_power_C.Mag();
@@ -378,6 +374,80 @@ TIMESTAMP substation::sync(TIMESTAMP t0, TIMESTAMP t1)
 		}//End is pw_load connected
 	}//End powerflow cycling check
 	return t2;
+}
+
+SIMULATIONMODE substation::inter_deltaupdate_substation(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
+{
+	double total_load;
+	OBJECT *obj = OBJECTHDR(this);
+	double dist_power_A_diff = 0;
+	double dist_power_B_diff = 0;
+	double dist_power_C_diff = 0;
+	if (interupdate_pos == false)	//Before powerflow call
+	{
+		//Call presync-equivalent items
+		//calculate the energy used
+		if(iteration_count_val == 0){
+			total_load = last_power_A.Re() + last_power_B.Re() + last_power_C.Re();
+			distribution_real_energy += total_load*dt/(3600*DT_SECOND);
+		}
+		NR_node_presync_fxn(0);
+
+		//Call sync-equivalent items (solver occurs at end of sync)
+		//set up the phase voltages for the three different cases
+		if((solver_method == SM_NR || solver_method == SM_FBS)){
+			if(has_parent == 1){//has a pw_load as a parent
+				seq_mat[1] = *pPositiveSequenceVoltage;
+				seq_mat[0] = 0.0;	//Force the other two to zero for now - just to make sure
+				seq_mat[2] = 0.0;
+			}
+
+			//Check to see if a sequence conversion needs to be done
+			if (seq_mat[0].Mag() != 0 || seq_mat[1].Mag() != 0 || seq_mat[2].Mag() != 0)
+			{
+				voltageA = (seq_mat[0] + seq_mat[1] + seq_mat[2]) * reference_number;
+				voltageB = (seq_mat[0] + transformation_matrix[1][1] * seq_mat[1] + transformation_matrix[1][2] * seq_mat[2]) * reference_number;
+				voltageC = (seq_mat[0] + transformation_matrix[2][1] * seq_mat[1] + transformation_matrix[2][2] * seq_mat[2]) * reference_number;
+			}
+		}
+		NR_node_sync_fxn(obj);
+		return SM_DELTA;	//Just return something other than SM_ERROR for this call
+	}
+	else	//After the call
+	{
+		//Perform postsync-like updates on the values
+		BOTH_node_postsync_fxn(obj);
+
+		if((solver_method == SM_NR && NR_admit_change == false) || solver_method == SM_FBS){
+			distribution_power_A = voltageA * (~current_inj[0]);
+			distribution_power_B = voltageB * (~current_inj[1]);
+			distribution_power_C = voltageC * (~current_inj[2]);
+			distribution_load = distribution_power_A + distribution_power_B + distribution_power_C;
+			dist_power_A_diff = distribution_power_A.Mag() - last_power_A.Mag();
+			dist_power_B_diff = distribution_power_B.Mag() - last_power_B.Mag();
+			dist_power_C_diff = distribution_power_C.Mag() - last_power_C.Mag();
+			last_power_A = distribution_power_A;
+			last_power_B = distribution_power_B;
+			last_power_C = distribution_power_C;
+
+			//Convergence check - only if pw_load connected
+			if (has_parent == 1)
+			{
+				if((fabs(dist_power_A_diff) + fabs(dist_power_B_diff) + fabs(dist_power_C_diff)) <= power_convergence_value)
+				{
+					//Built on three-phase assumption, otherwise sequence components method falls apart - convert these to all use nominal!
+					*pConstantCurrentLoad = ((~average_transmission_current_load) * (*pTransNominalVoltage)) / 1000000;
+					if(average_transmission_impedance_load.Mag() > 0){
+						*pConstantImpedanceLoad = (complex((*pTransNominalVoltage * (*pTransNominalVoltage))) / (~average_transmission_impedance_load) / 1000000);
+					} else {
+						*pConstantImpedanceLoad = 0;
+					}
+					*pConstantPowerLoad = (average_transmission_power_load + (distribution_power_A + distribution_power_B + distribution_power_C)) / 1000000;
+				}
+			}//End is pw_load connected
+		}//End powerflow cycling check
+		return SM_EVENT;
+	}
 }
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE
@@ -443,6 +513,23 @@ EXPORT int notify_substation(OBJECT *obj, int update_mode, PROPERTY *prop, char 
 	rv = n->notify(update_mode, prop, value);
 
 	return rv;
+}
+
+//Deltamode export
+EXPORT SIMULATIONMODE interupdate_substation(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
+{
+	substation *my = OBJECTDATA(obj,substation);
+	SIMULATIONMODE status = SM_ERROR;
+	try
+	{
+		status = my->inter_deltaupdate_substation(delta_time,dt,iteration_count_val,interupdate_pos);
+		return status;
+	}
+	catch (char *msg)
+	{
+		gl_error("interupdate_substation(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
+		return status;
+	}
 }
 
 /**@}**/

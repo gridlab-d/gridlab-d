@@ -16,7 +16,10 @@ public:
 	complex measured_voltageD[3];	///< measured voltage - Line-to-Line
 	complex measured_current[3];	///< measured current
 	double measured_real_energy;	///< metered real energy consumption
+	double measured_real_energy_delta;	///< metered real energy consumption over last interval
 	double measured_reactive_energy;///< metered reactive energy consumption
+	double measured_reactive_energy_delta;///< metered reactive energy consumption over last interval
+    double measured_energy_delta_timestep; // Period of timestep for real and reactive delta energy calculation
 	complex measured_power;			///< metered power
 	double measured_demand;			///< metered demand (peak of power)
 	double measured_real_power;		///< metered real power
@@ -74,6 +77,10 @@ public:
 
 private:
 	double previous_energy_total;  // Used to track what the meter reading was the previous month
+    double last_measured_real_energy;
+    double last_measured_reactive_energy;
+    TIMESTAMP last_delta_timestamp;
+    TIMESTAMP start_timestamp;
 
 public:
 	static CLASS *oclass;
