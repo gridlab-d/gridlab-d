@@ -201,6 +201,10 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_double,"P_CONSTANT_Pref[pu]", PADDR(gen_base_set_vals.Pref), PT_DESCRIPTION, "Pref input to governor controls (per-unit), if supported",
 			PT_double,"Exciter_Q_constant_Qref[pu]", PADDR(gen_base_set_vals.Qref), PT_DESCRIPTION, "Qref input to govornor or AVR controls (per-unit), if supported",
 
+			// If GGOV1 linear_pf non-linear droop mode is adopted
+			PT_double,"pf_droop_ki", PADDR(ki_Pconstant), PT_DESCRIPTION, "parameter of the integration control for GGOV1 linear_pf non-linear droop mode",
+			PT_double,"pf_droop_kp", PADDR(kp_Pconstant), PT_DESCRIPTION, "parameter of the proportional control for GGOV1 linear_pf non-linear droop mode",
+
 			//Properties for Governor of dynamics model
 			PT_enumeration,"Governor_type",PADDR(Governor_type),PT_DESCRIPTION,"Governor model for dynamics-capable implementation",
 				PT_KEYWORD,"NO_GOV",(enumeration)NO_GOV,PT_DESCRIPTION,"No exciter",
@@ -330,32 +334,18 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_double,"GGOV1_LowValSelect1",PADDR(curr_state.gov_ggov1.LowValSelect1),
 			PT_double,"GGOV1_LowValSelect",PADDR(curr_state.gov_ggov1.LowValSelect),
 
-			//P_CONSTANT mode properties
-			PT_double,"P_CONSTANT_Tpelec[s]",PADDR(pconstant_Tpelec),PT_DESCRIPTION,"Electrical power transducer time constant, sec. (>0.)",
-			PT_double,"P_CONSTANT_Tact",PADDR(pconstant_Tact),PT_DESCRIPTION,"Actuator time constant",
-			PT_double,"P_CONSTANT_Kturb",PADDR(pconstant_Kturb),PT_DESCRIPTION,"Turbine gain (>0.)",
-			PT_double,"P_CONSTANT_wfnl[pu]",PADDR(pconstant_wfnl),PT_DESCRIPTION,"No load fuel flow, p.u",
-			PT_double,"P_CONSTANT_Tb[s]",PADDR(pconstant_Tb),PT_DESCRIPTION,"Turbine lag time constant, sec. (>0.)",
-			PT_double,"P_CONSTANT_Tc[s]",PADDR(pconstant_Tc),PT_DESCRIPTION,"Turbine lead time constant, sec.",
-			PT_double,"P_CONSTANT_Teng",PADDR(pconstant_Teng),PT_DESCRIPTION,"Transport lag time constant for diesel engine",
-			PT_double,"P_CONSTANT_ropen[pu/s]",PADDR(pconstant_ropen),PT_DESCRIPTION,"Maximum valve opening rate, p.u./sec.",
-			PT_double,"P_CONSTANT_rclose[pu/s]",PADDR(pconstant_rclose),PT_DESCRIPTION,"Minimum valve closing rate, p.u./sec.",
-			PT_double,"P_CONSTANT_Kimw",PADDR(pconstant_Kimw),PT_DESCRIPTION,"Power controller (reset) gain",
+			PT_double_array, "pfCurve",get_pfCurve_offset(), PT_DESCRIPTION, "p/f non-linear droop curve that store p and f set points",
+			PT_double_array, "qvCurve",get_qvCurve_offset(), PT_DESCRIPTION, "q/v non-linear droop curve of three-phases that store q and v set points",
+			PT_bool,"nonlinear_pf", PADDR(nonlinear_pf),  PT_DESCRIPTION, "Boolean value indicating whether non-linear droop curve p/f is used or not",
+			PT_bool,"nonlinear_qv", PADDR(nonlinear_qv),  PT_DESCRIPTION, "Boolean value indicating whether non-linear droop curve q/v is used or not",
 
-			// P_CONSTANT mode state variables
-			PT_double,"P_CONSTANT_x1",PADDR(curr_state.gov_pconstant.x1),
-			PT_double,"P_CONSTANT_x4",PADDR(curr_state.gov_pconstant.x4),
-			PT_double,"GGOV1_x4a",PADDR(curr_state.gov_ggov1.x4a),
-			PT_double,"GGOV1_x4b",PADDR(curr_state.gov_ggov1.x4b),
-			PT_double,"P_CONSTANT_x5",PADDR(curr_state.gov_pconstant.x5),
-			PT_double,"P_CONSTANT_x5a",PADDR(curr_state.gov_pconstant.x5a),
-			PT_double,"P_CONSTANT_x5b",PADDR(curr_state.gov_pconstant.x5b),
-			PT_double,"P_CONSTANT_x5b",PADDR(curr_state.gov_pconstant.x_Pconstant),
-			PT_double,"GGOV1_err4",PADDR(curr_state.gov_ggov1.err4),
-			PT_double,"P_CONSTANT_ValveStroke",PADDR(curr_state.gov_pconstant.ValveStroke),
-			PT_double,"P_CONSTANT_FuelFlow",PADDR(curr_state.gov_pconstant.FuelFlow),
-			PT_double,"P_CONSTANT_GovOutPut",PADDR(curr_state.gov_pconstant.GovOutPut),
-
+			PT_bool,"fuelEmissionCal", PADDR(fuelEmissionCal),  PT_DESCRIPTION, "Boolean value indicating whether fuel and emission calculations are used or not",
+			PT_double,"outputEnergy",PADDR(outputEnergy),PT_DESCRIPTION,"Total energy(VAh) output from the generator",
+			PT_double,"FuelUse",PADDR(FuelUse),PT_DESCRIPTION,"Total fuel usage (gal) based on VA power output",
+			PT_double,"CO2_emission",PADDR(CO2_emission),PT_DESCRIPTION,"Total CO2 emissions (lbs) based on fule usage",
+			PT_double,"SOx_emission",PADDR(SOx_emission),PT_DESCRIPTION,"Total SOx emissions (lbs) based on fule usage",
+			PT_double,"NOx_emission",PADDR(NOx_emission),PT_DESCRIPTION,"Total NOx emissions (lbs) based on fule usage",
+			PT_double,"PM10_emission",PADDR(PM10_emission),PT_DESCRIPTION,"Total PM-10 emissions (lbs) based on fule usage",
 
 			PT_set, "phases", PADDR(phases), PT_DESCRIPTION, "Specifies which phases to connect to - currently not supported and assumes three-phase connection",
 				PT_KEYWORD, "A",(set)PHASE_A,
@@ -381,7 +371,7 @@ diesel_dg::diesel_dg(MODULE *module)
 /* Object creation is called once for each object that is created by the core */
 int diesel_dg::create(void) 
 {
-////Initialize tracking variables
+	////Initialize tracking variables
 
 	pf = 0.0;
 
@@ -553,19 +543,6 @@ int diesel_dg::create(void)
 	//gov_ggv1_rup = 99.0;
 	//gov_ggv1_rdown = -99.0;
 
-	//P_CONSTANT mode defaults
-	pconstant_Tpelec = 1.0;
-	pconstant_Tact = 0.5;
-	pconstant_Kturb = 1.5;
-	pconstant_wfnl = 0.2;
-	pconstant_Tb = 0.1;
-	pconstant_Tc = 0.0;
-	pconstant_Flag = 0;
-	pconstant_Teng = 0.0;
-	pconstant_ropen = 0.10;
-	pconstant_rclose = -0.1;
-	pconstant_Kimw = 0.002;
-
 	//By default, all paths enabled
 	gov_ggv1_fsrt_enable = true;
 	gov_ggv1_fsra_enable = true;
@@ -636,6 +613,19 @@ int diesel_dg::create(void)
 	Q_constant_mode = false;
 	ki_Qconstant = 1;
 	kp_Qconstant = 0;
+
+	last_time = 0;
+	fuelEmissionCal = false;
+	outputEnergy = 0.0;
+	FuelUse = 0.0;
+	CO2_emission = 0.0;
+	SOx_emission = 0.0;
+	NOx_emission = 0.0;
+	PM10_emission = 0.0;
+
+	// Set default nonlinear droop curve calculation as false
+	nonlinear_pf = false;
+	nonlinear_qv = false;
 
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -1195,6 +1185,14 @@ int diesel_dg::init(OBJECT *parent)
 		}
 	}
 
+	// Initialize fuel usage function based on Rated_VA value
+	/* For 1000 kVA generator, the fuel usage equation is:
+	 % x = load (kVA), y = fuel (gallon)
+	 % y = 0.067x + 5.2435
+	 */
+	dg_1000_a = 0.067;
+	dg_1000_b = 5.2435/1000 * (Rated_VA/1000);
+
 	// Check if base set points for the various control objects are defined in glm file or not
 	if (gen_base_set_vals.vset < -90) {
 		Vset_defined = false;
@@ -1683,6 +1681,7 @@ TIMESTAMP diesel_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	int ret_state;
 	OBJECT *obj = OBJECTHDR(this);
 	complex aval, avalsq;
+	TIMESTAMP dt;
 
 	TIMESTAMP t2 = TS_NEVER;
 
@@ -1693,6 +1692,34 @@ TIMESTAMP diesel_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		{
 			deltamode_endtime = TS_NEVER;
 			deltamode_endtime_dbl = TSNVRDBL;
+		}
+
+		// Update energy, fuel usage, and emissions for the past time step, before updating power output
+		if (fuelEmissionCal == true) {
+
+			if (first_run == true)
+			{
+				dt = 0;
+			}
+			else if (last_time == 0)
+			{
+				last_time = t1;
+				dt = 0;
+			}
+			else if (last_time < t1)
+			{
+				dt = t1 - last_time;
+				last_time = t1;
+			}
+			else
+				dt = 0;
+
+			outputEnergy += abs_complex(curr_state.pwr_electric/1000) * (double)dt / 3600;
+			FuelUse += (abs_complex(curr_state.pwr_electric/1000) * dg_1000_a + dg_1000_b) * (double)dt / 3600;
+			CO2_emission += (-6e-5 * pow(FuelUse, 3) + 0.0087 * pow(FuelUse, 2) - FuelUse * 0.3464 + 25.824) * (double)dt / 3600;
+			SOx_emission += (-5e-7 * pow(FuelUse, 2) + FuelUse * 0.0001 + 0.0206) * (double)dt / 3600;
+			NOx_emission += (6e-5 * pow(FuelUse, 2) - FuelUse * 0.0048 + 0.2551) * (double)dt / 3600;
+			PM10_emission += (-2e-9 * pow(FuelUse, 4) + 3e-7 * pow(FuelUse, 3) - 2e-5 * pow(FuelUse, 2) + FuelUse * 8e-5 + 0.0083) * (double)dt / 3600;
 		}
 
 		//Update output power
@@ -2017,11 +2044,22 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 		//Copy it into the "next" value as well, so it doesn't get overwritten funny when the transition occurs
 		next_state.pwr_electric = curr_state.pwr_electric;
 
+		// Update energy, fuel usage, and emissions for the past time step, before updating power output
+		if (fuelEmissionCal == true) {
+
+			outputEnergy += abs_complex(curr_state.pwr_electric/1000) * (double)deltat / 3600;
+			FuelUse += (abs_complex(curr_state.pwr_electric/1000) * dg_1000_a + dg_1000_b) * (double)deltat / 3600;
+			CO2_emission += (-6e-5 * pow(FuelUse, 3) + 0.0087 * pow(FuelUse, 2) - FuelUse * 0.3464 + 25.824) * (double)deltat / 3600;
+			SOx_emission += (-5e-7 * pow(FuelUse, 2) + FuelUse * 0.0001 + 0.0206) * (double)deltat / 3600;
+			NOx_emission += (6e-5 * pow(FuelUse, 2) - FuelUse * 0.0048 + 0.2551) * (double)deltat / 3600;
+			PM10_emission += (-2e-9 * pow(FuelUse, 4) + 3e-7 * pow(FuelUse, 3) - 2e-5 * pow(FuelUse, 2) + FuelUse * 8e-5 + 0.0083) * (double)deltat / 3600;
+		}
+
 		//Call dynamics
 		apply_dynamics(&curr_state,&predictor_vals,deltat);
 
 		//Apply prediction update
-		if (Q_constant_mode == true) {
+		if (Q_constant_mode == true || nonlinear_qv == true) {
 			next_state.avr.xfd = curr_state.avr.xfd + predictor_vals.avr.xfd*deltat;
 			next_state.Vfd = next_state.avr.xfd + predictor_vals.avr.xfd*(kp_Qconstant/ki_Qconstant);
 		}
@@ -2059,66 +2097,18 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 			next_state.gov_gast.x2 = curr_state.gov_gast.x2 + predictor_vals.gov_gast.x2*deltat;
 			next_state.gov_gast.x3 = curr_state.gov_gast.x3 + predictor_vals.gov_gast.x3*deltat;
 		}//End GAST update
-		else if (Governor_type == P_CONSTANT)
+		else if ((Governor_type == P_CONSTANT) || ((Governor_type == GGOV1) && (nonlinear_pf == true)))
 		{
-			//Main params
-			next_state.gov_pconstant.x1 = curr_state.gov_pconstant.x1 + predictor_vals.gov_pconstant.x1*deltat;
-			next_state.gov_pconstant.x4 = curr_state.gov_pconstant.x4 + predictor_vals.gov_pconstant.x4*deltat;
-			next_state.gov_pconstant.x5b = curr_state.gov_pconstant.x5b + predictor_vals.gov_pconstant.x5b*deltat;
-			next_state.gov_pconstant.x_Pconstant = curr_state.gov_pconstant.x_Pconstant + predictor_vals.gov_pconstant.x_Pconstant*deltat;
-			next_state.gov_pconstant.GovOutPut = next_state.gov_pconstant.x_Pconstant + (gen_base_set_vals.Pref - next_state.gov_pconstant.x1) * kp_Pconstant;
+			// Update x1 state variable
+			next_state.gov_ggov1.x1 = curr_state.gov_ggov1.x1 + predictor_vals.gov_ggov1.x1*deltat;
 
-			//Update algebraic variables
-			//4 - Turbine actuator
-			next_state.gov_pconstant.ValveStroke = next_state.gov_pconstant.x4;
-			if (pconstant_Flag == 0)
-			{
-				next_state.gov_pconstant.FuelFlow = next_state.gov_pconstant.ValveStroke * 1.0;
-			}
-			else if (pconstant_Flag == 1)
-			{
-				next_state.gov_pconstant.FuelFlow = next_state.gov_pconstant.ValveStroke*next_state.omega/omega_ref;
-			}
-			else
-			{
-				gl_error("wrong pconstant_Flag_flag");
-				return SM_ERROR;
-			}
-			//5 - Turbine LL
-			x5a_now = pconstant_Kturb*(next_state.gov_pconstant.FuelFlow - pconstant_wfnl);
-
-			if (pconstant_Teng > 0)
-			{
-				//Update the stored value
-				x5a_delayed[x5a_delayed_write_pos] = x5a_now;
-
-				//Assign the oldest value
-				next_state.gov_pconstant.x5a = x5a_delayed[x5a_delayed_read_pos];
-			}
-			else	//Zero length
-			{
-				//Just assign in
-				next_state.gov_pconstant.x5a = x5a_now;
-			}
-			next_state.gov_pconstant.x5 = (1.0 - pconstant_Tc/pconstant_Tb)*next_state.gov_pconstant.x5b + pconstant_Tc/pconstant_Tb*next_state.gov_pconstant.x5a;
-
-			//Mechanical power update
-			next_state.pwr_mech = Rated_VA*(next_state.gov_pconstant.x5);
+			// Update x_Pconstant state variable, and thus state varibale FuelFlow
+			next_state.gov_ggov1.x_Pconstant = curr_state.gov_ggov1.x_Pconstant + predictor_vals.gov_ggov1.x_Pconstant*deltat;
+//			next_state.pwr_mech = Rated_VA * (next_state.gov_ggov1.x_Pconstant + (gen_base_set_vals.Pref - next_state.pwr_electric.Re() / Rated_VA) * kp_Pconstant);
+			next_state.pwr_mech = Rated_VA * (next_state.gov_ggov1.x_Pconstant + (gen_base_set_vals.Pref - next_state.gov_ggov1.x1) * kp_Pconstant);
 
 			//Translate this into the torque model
 			next_state.torque_mech = next_state.pwr_mech / next_state.omega;
-
-
-//			// Update x1 state variable
-//			next_state.gov_ggov1.x1 = curr_state.gov_ggov1.x1 + predictor_vals.gov_ggov1.x1*deltat;
-
-//			// Update x_Pconstant state variable, and thus state varibale FuelFlow
-//			next_state.gov_ggov1.x_Pconstant = curr_state.gov_ggov1.x_Pconstant + predictor_vals.gov_ggov1.x_Pconstant*deltat;
-////			next_state.pwr_mech = Rated_VA * (next_state.gov_ggov1.x_Pconstant + (gen_base_set_vals.Pref - next_state.pwr_electric.Re() / Rated_VA) * kp_Pconstant);
-//			next_state.pwr_mech = Rated_VA * (next_state.gov_ggov1.x_Pconstant + (gen_base_set_vals.Pref - next_state.gov_ggov1.x1) * kp_Pconstant);
-//
-//			//Translate this into the torque model
-//			next_state.torque_mech = next_state.pwr_mech / next_state.omega;
 
 		}//End P_CONSTANT update
 		else if ((Governor_type == GGOV1) || (Governor_type == GGOV1_OLD))
@@ -2413,66 +2403,18 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 			next_state.gov_gast.x2 = curr_state.gov_gast.x2 + (predictor_vals.gov_gast.x2 + corrector_vals.gov_gast.x2)*deltath;
 			next_state.gov_gast.x3 = curr_state.gov_gast.x3 + (predictor_vals.gov_gast.x3 + corrector_vals.gov_gast.x3)*deltath;
 		}//End GAST update
-		else if (Governor_type == P_CONSTANT)
+		else if ((Governor_type == P_CONSTANT) || ((Governor_type == GGOV1) && (nonlinear_pf == true)))
 		{
-			//Main params
-			next_state.gov_pconstant.x1 = curr_state.gov_pconstant.x1 + (predictor_vals.gov_pconstant.x1 + corrector_vals.gov_pconstant.x1)*deltath;
-			next_state.gov_pconstant.x4 = curr_state.gov_pconstant.x4 + (predictor_vals.gov_pconstant.x4 + corrector_vals.gov_pconstant.x4)*deltath;
-			next_state.gov_pconstant.x5b = curr_state.gov_pconstant.x5b + (predictor_vals.gov_pconstant.x5b + corrector_vals.gov_pconstant.x5b)*deltath;
-			next_state.gov_pconstant.x_Pconstant = curr_state.gov_pconstant.x_Pconstant + (predictor_vals.gov_pconstant.x_Pconstant + corrector_vals.gov_pconstant.x_Pconstant)*deltath;
-			next_state.gov_pconstant.GovOutPut = next_state.gov_pconstant.x_Pconstant + (gen_base_set_vals.Pref - next_state.gov_pconstant.x1) * kp_Pconstant;
+			// Update x1 state varibale
+			next_state.gov_ggov1.x1 = curr_state.gov_ggov1.x1 + (predictor_vals.gov_ggov1.x1 + corrector_vals.gov_ggov1.x1)*deltath;
 
-			//Update algebraic variables
-			//4 - Turbine actuator
-			next_state.gov_pconstant.ValveStroke = next_state.gov_pconstant.x4;
-			if (pconstant_Flag == 0)
-			{
-				next_state.gov_pconstant.FuelFlow = next_state.gov_pconstant.ValveStroke * 1.0;
-			}
-			else if (pconstant_Flag == 1)
-			{
-				next_state.gov_pconstant.FuelFlow = next_state.gov_pconstant.ValveStroke*next_state.omega/omega_ref;
-			}
-			else
-			{
-				gl_error("wrong pconstant_flag");
-				return SM_ERROR;
-			}
-
-			//5 - Turbine LL
-			x5a_now = pconstant_Kturb*(next_state.gov_pconstant.FuelFlow - pconstant_wfnl);
-
-			if (pconstant_Teng > 0)
-			{
-				//Update the stored value
-				x5a_delayed[x5a_delayed_write_pos] = x5a_now;
-
-				//Assign the oldest value
-				next_state.gov_pconstant.x5a = x5a_delayed[x5a_delayed_read_pos];
-			}
-			else	//Zero length
-			{
-				//Just assign in
-				next_state.gov_pconstant.x5a = x5a_now;
-			}
-			next_state.gov_pconstant.x5 = (1.0 - pconstant_Tc/pconstant_Tb)*next_state.gov_pconstant.x5b + pconstant_Tc/pconstant_Tb*next_state.gov_pconstant.x5a;
-
-			//Mechanical power update
-			next_state.pwr_mech = Rated_VA*(next_state.gov_pconstant.x5);
+			// Update x_Pconstant state variable, and thus state varibale FuelFlow
+			next_state.gov_ggov1.x_Pconstant = curr_state.gov_ggov1.x_Pconstant + (predictor_vals.gov_ggov1.x_Pconstant + corrector_vals.gov_ggov1.x_Pconstant)*deltath;
+//			next_state.pwr_mech = Rated_VA * (next_state.gov_ggov1.x_Pconstant + (gen_base_set_vals.Pref - next_state.pwr_electric.Re() / Rated_VA) * kp_Pconstant);
+			next_state.pwr_mech = Rated_VA * (next_state.gov_ggov1.x_Pconstant + (gen_base_set_vals.Pref - next_state.gov_ggov1.x1) * kp_Pconstant);
 
 			//Translate this into the torque model
 			next_state.torque_mech = next_state.pwr_mech / next_state.omega;
-
-//			// Update x1 state varibale
-//			next_state.gov_ggov1.x1 = curr_state.gov_ggov1.x1 + (predictor_vals.gov_ggov1.x1 + corrector_vals.gov_ggov1.x1)*deltath;
-//
-//			// Update x_Pconstant state variable, and thus state varibale FuelFlow
-//			next_state.gov_ggov1.x_Pconstant = curr_state.gov_ggov1.x_Pconstant + (predictor_vals.gov_ggov1.x_Pconstant + corrector_vals.gov_ggov1.x_Pconstant)*deltath;
-////			next_state.pwr_mech = Rated_VA * (next_state.gov_ggov1.x_Pconstant + (gen_base_set_vals.Pref - next_state.pwr_electric.Re() / Rated_VA) * kp_Pconstant);
-//			next_state.pwr_mech = Rated_VA * (next_state.gov_ggov1.x_Pconstant + (gen_base_set_vals.Pref - next_state.gov_ggov1.x1) * kp_Pconstant);
-//
-//			//Translate this into the torque model
-//			next_state.torque_mech = next_state.pwr_mech / next_state.omega;
 
 		}// End P_CONSTANT mode corrector stage
 		else if ((Governor_type == GGOV1) || (Governor_type == GGOV1_OLD))
@@ -2870,6 +2812,7 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 	double temp_double_1, temp_double_2, temp_double_3, delomega, x0; 
 	double torquenow, x5a_now;
 	complex temp_current_val[3];
+	double res;
 
 	//Convert current as well
 	current_pu[0] = (IGenerated[0] - generator_admittance[0][0]*pCircuit_V[0] - generator_admittance[0][1]*pCircuit_V[1] - generator_admittance[0][2]*pCircuit_V[2])/current_base;
@@ -3039,71 +2982,37 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 		complex pwr_electric_dynamics = pCircuit_V[0]*~temp_current_val[0] + pCircuit_V[1]*~temp_current_val[1] + pCircuit_V[2]*~temp_current_val[2];
 
 		//1 - Pelec measurement
-		curr_delta->gov_pconstant.x1 = 1.0/pconstant_Tpelec*(pwr_electric_dynamics.Re() / Rated_VA - curr_time->gov_pconstant.x1);
+		curr_delta->gov_ggov1.x1 = 1.0/gov_ggv1_Tpelec*(pwr_electric_dynamics.Re() / Rated_VA - curr_time->gov_ggov1.x1);
 
 		// PI controller for P CONSTANT mode
-		double diff_Pelec = gen_base_set_vals.Pref - curr_time->gov_pconstant.x1;
+		double diff_Pelec = gen_base_set_vals.Pref - curr_time->gov_ggov1.x1;
 //		double diff_Pelec = gen_base_set_vals.Pref - pwr_electric_dynamics.Re() / Rated_VA;
-		curr_delta->gov_pconstant.x_Pconstant = diff_Pelec * ki_Pconstant;
-
-		//4 - Turbine actuator
-		curr_time->gov_pconstant.err4 = curr_time->gov_pconstant.GovOutPut - curr_time->gov_pconstant.x4;
-		curr_time->gov_pconstant.x4a = 1.0/pconstant_Tact*curr_time->gov_pconstant.err4;
-		if (curr_time->gov_pconstant.x4a > pconstant_ropen)
-		{
-			curr_time->gov_pconstant.x4b = pconstant_ropen;
-		}
-		else if (curr_time->gov_pconstant.x4a < pconstant_rclose)
-		{
-			curr_time->gov_pconstant.x4b = pconstant_rclose;
-		}
-		else
-		{
-			curr_time->gov_pconstant.x4b = curr_time->gov_pconstant.x4a;
-		}
-		curr_delta->gov_pconstant.x4 = curr_time->gov_pconstant.x4b;
-		curr_time->gov_pconstant.ValveStroke = curr_time->gov_pconstant.x4;
-		if (pconstant_Flag == 0)
-		{
-			curr_time->gov_pconstant.FuelFlow = curr_time->gov_pconstant.ValveStroke * 1.0;
-		}
-		else if (pconstant_Flag == 1)
-		{
-			curr_time->gov_pconstant.FuelFlow = curr_time->gov_pconstant.ValveStroke * curr_time->omega / omega_ref;
-		}
-		else
-		{
-			gl_error("wrong pconstant_Flag");
-			return FAILED;
-		}
-
-		// ---> Use the updated Fuelflow value to calculate final Pmech and Tmech output from the governor
-
-		//5 - Turbine LL
-		x5a_now = pconstant_Kturb*(curr_time->gov_pconstant.FuelFlow - pconstant_wfnl);
-
-		//Check on the delay
-		if (pconstant_Teng > 0)
-		{
-			//Store the value
-			x5a_delayed[x5a_delayed_write_pos] = x5a_now;
-
-			//Read the delayed value
-			curr_time->gov_pconstant.x5a = x5a_delayed[x5a_delayed_read_pos];
-		}
-		else
-		{
-			curr_time->gov_pconstant.x5a = x5a_now;
-		}
-		curr_delta->gov_pconstant.x5b = 1.0/pconstant_Tb*(curr_time->gov_pconstant.x5a - curr_time->gov_pconstant.x5b);
-		curr_time->gov_pconstant.x5 = (1.0 - pconstant_Tc/pconstant_Tb)*curr_time->gov_pconstant.x5b + pconstant_Tc/pconstant_Tb*curr_time->gov_pconstant.x5a;
-
-		curr_time->pwr_mech = Rated_VA*curr_time->gov_pconstant.x5;
-
-		//Translate this into the torque model
-		curr_time->torque_mech = curr_time->pwr_mech / curr_time->omega;
+		curr_delta->gov_ggov1.x_Pconstant = diff_Pelec * ki_Pconstant;
 
 	}//End P_CONSTANT updates
+	else if ((Governor_type == GGOV1) && (nonlinear_pf == true))
+	{
+		// Obtain the updated Pout value from teh given pfCurve
+		res = find(pfCurve.get_rows(), pfCurve.get_cols(), omega_pu, &pfCurve);
+		gen_base_set_vals.Pref = res;
+
+		// Set the updated P value as the new Pref, and follow the steps in P_CONSTANT mode
+		// Recalculate the Pelec output
+		// Compute the "present" electric power value before anything gets updated for the new timestep
+		temp_current_val[0] = (IGenerated[0] - generator_admittance[0][0]*pCircuit_V[0] - generator_admittance[0][1]*pCircuit_V[1] - generator_admittance[0][2]*pCircuit_V[2]);
+		temp_current_val[1] = (IGenerated[1] - generator_admittance[1][0]*pCircuit_V[0] - generator_admittance[1][1]*pCircuit_V[1] - generator_admittance[1][2]*pCircuit_V[2]);
+		temp_current_val[2] = (IGenerated[2] - generator_admittance[2][0]*pCircuit_V[0] - generator_admittance[2][1]*pCircuit_V[1] - generator_admittance[2][2]*pCircuit_V[2]);
+		//Update the output power variable
+		complex pwr_electric_dynamics = pCircuit_V[0]*~temp_current_val[0] + pCircuit_V[1]*~temp_current_val[1] + pCircuit_V[2]*~temp_current_val[2];
+
+		//1 - Pelec measurement
+		curr_delta->gov_ggov1.x1 = 1.0/gov_ggv1_Tpelec*(pwr_electric_dynamics.Re() / Rated_VA - curr_time->gov_ggov1.x1);
+
+		// PI controller used the same as in P_CONSTANT mode
+		double diff_Pelec = gen_base_set_vals.Pref - curr_time->gov_ggov1.x1;
+		curr_delta->gov_ggov1.x_Pconstant = diff_Pelec * ki_Pconstant;
+
+	}//End P_CONSTANT nonlinear droop curve updates
 	else if ((Governor_type == GGOV1) || (Governor_type == GGOV1_OLD))
 	{
 
@@ -3364,8 +3273,21 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 			//Get the average magnitude first
 			temp_double_1 = (pCircuit_V[0].Mag() + pCircuit_V[1].Mag() + pCircuit_V[2].Mag())/voltage_base/3.0;
 
-			//Calculate the difference from the desired set point
-			temp_double_2 = gen_base_set_vals.vset - temp_double_1;
+			// Obtain reactive power reference in p.u. from v/q droop
+			if (nonlinear_qv) {
+				res = find(qvCurve.get_rows(), qvCurve.get_cols(), temp_double_1, &qvCurve);
+				// Obtain reactive power output in p.u.
+				temp_double_1 = curr_time->pwr_electric.Im() / Rated_VA;
+
+				//Calculate the difference from the desired set point
+				temp_double_2 = res - temp_double_1;
+
+			}
+			// If droop curve is not given:
+			else {
+				temp_double_2 = gen_base_set_vals.vset - temp_double_1;
+			}
+
 		}
 
 		//First update variable
@@ -3390,7 +3312,7 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 		if (curr_time->avr.xe<=exc_EMIN)
 			curr_time->avr.xe = exc_EMIN;
 
-		if (Q_constant_mode == true) {
+		if (Q_constant_mode == true || nonlinear_qv == true) {
 			// Add PI control for the control of Q output
 			curr_delta->avr.xfd = curr_time->avr.xe*ki_Qconstant;
 		}
@@ -3528,47 +3450,10 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 		curr_time->gov_gast.x3 = curr_time->torque_mech/(Rated_VA/omega_ref);
 		curr_time->gov_gast.throttle = curr_time->torque_mech/(Rated_VA/omega_ref); //Init to Tmech
 	}//End GAST initialization
-	else if (Governor_type == P_CONSTANT)
+	else if (Governor_type == P_CONSTANT || ((Governor_type == GGOV1) && (nonlinear_pf == true)))
 	{
-		// Include the actuator and time delay part from GGOV01
-		if (gen_base_set_vals.wref < -90.0)	//Should be -99 if not set
-		{
-			gen_base_set_vals.wref = curr_time->omega/omega_ref;
-		}
-		//Default else -- already set, just ignore this
-
-		curr_time->gov_pconstant.x5 = curr_time->pwr_mech / Rated_VA;
-
-		//Translate this into the torque model
-		curr_time->torque_mech = curr_time->pwr_mech / curr_time->omega;
-
-		curr_time->gov_pconstant.x5b = curr_time->gov_pconstant.x5;
-		curr_time->gov_pconstant.x5a = curr_time->gov_pconstant.x5b;
-		curr_time->gov_pconstant.FuelFlow = curr_time->gov_pconstant.x5/gov_ggv1_Kturb + gov_ggv1_wfnl;
-
-		pconstant_Flag = 0; // Set fule flow independent of speed in P_CONSTANT mode
-
-		if (pconstant_Flag == 0)
-		{
-			curr_time->gov_pconstant.ValveStroke = curr_time->gov_pconstant.FuelFlow;
-		}
-		else if (pconstant_Flag == 1)
-		{
-			curr_time->gov_pconstant.ValveStroke = curr_time->gov_pconstant.FuelFlow/(curr_time->omega/omega_ref);
-		}
-		else
-		{
-			/****** COMMENTS/TROUBLESHOOT *****/
-			gl_error("wrong pconstant_Flag");
-			return FAILED;
-		}
-
-		curr_time->gov_pconstant.x4 = curr_time->gov_pconstant.ValveStroke;
-		curr_time->gov_pconstant.GovOutPut = curr_time->gov_pconstant.ValveStroke;
-		curr_time->gov_pconstant.x1 = curr_time->pwr_electric.Re() / Rated_VA;
-		curr_time->gov_pconstant.x_Pconstant = curr_time->gov_pconstant.GovOutPut; // Initial state value is the same as pwr_mech value
-
-	}//End P_CONSTANT initialization
+		curr_time->gov_ggov1.x_Pconstant = curr_time->pwr_mech / Rated_VA; // Initial state value is the same as pwr_mech value
+	}//End P_CONSTANT initialization and GGOV1 nonlinear_pf mode initialization
 	else if ((Governor_type == GGOV1) || (Governor_type == GGOV1_OLD))
 	{
 		if (gen_base_set_vals.wref < -90.0)	//Should be -99 if not set
@@ -3719,6 +3604,7 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 		curr_time->avr.xe = curr_time->Vfd;
 		curr_time->avr.xb = curr_time->avr.xe/exc_KA;
 
+//		if (gen_base_set_vals.vset < -90.0)	//Should be -99
 		if (Vset_defined == false)	//Check flag Vset_defined instead, since may come into init_dynamics more than once
 		{
 			//Get average PU voltage
@@ -3728,7 +3614,7 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 
 		// Define exciter bias value
 		// For Q_constant mode, set bias as 0, so that Qout will match Qref
-		if (Q_constant_mode == true) {
+		if (Q_constant_mode == true || nonlinear_qv == true) {
 			curr_time->avr.bias = 0;
 		}
 		// TODO: non-zero bias value results in differences between vset and Vout measured. Need to think about it.
@@ -3753,6 +3639,71 @@ complex diesel_dg::complex_exp(double angle)
 	return output_val;
 }
 
+// Function to find updated Pref/Qref value based on rotor speed/Vpos in nonlinear droop curve control
+double diesel_dg::find(int row, int col, double val, double_array *Curve)
+{
+	double setpointT, setpointF, droopVal;
+	int indFrom, indTo;
+	double result;
+
+	// Based on frequency value, Q value is determined
+	indFrom = 1; // Row index of frequency/voltage in double-array
+	indTo = 0;	 // Row index of P/Q in double-array
+
+	// Check the first item in the array
+	if (val <= Curve->get_at(indFrom, 0)) {
+		setpointT = Curve->get_at(indTo, 0);
+		setpointF = Curve->get_at(indFrom, 0);
+		if (Curve->get_at(indTo, 0) - Curve->get_at(indTo, 1) != 0) {
+			droopVal = (Curve->get_at(indFrom, 1) - Curve->get_at(indFrom, 0)) / (Curve->get_at(indTo, 0) - Curve->get_at(indTo, 1));
+			result = setpointT - (val - setpointF)/droopVal;
+		}
+		else {
+			result = Curve->get_at(indTo, 0);
+		}
+		return result;
+	}
+
+	// Check other points
+	for (int i = 1; i < col; ++i)
+	{
+		if (val < Curve->get_at(indFrom, i)) {
+			setpointT = Curve->get_at(indTo, i);
+			setpointF = Curve->get_at(indFrom, i);
+        	if (Curve->get_at(indTo, i-1) - Curve->get_at(indTo, i) != 0) {
+            	droopVal = (Curve->get_at(indFrom, i) - Curve->get_at(indFrom, i-1)) / (Curve->get_at(indTo, i-1) - Curve->get_at(indTo, i));
+            	result = setpointT - (val - setpointF)/droopVal;
+        	}
+        	else {
+        		result = Curve->get_at(indTo, i);
+        	}
+
+			return result;
+		}
+	}
+
+	// Since frequency/voltage is larger all the listed frequency/voltage setpoints, use the slope from the last two setpoints
+	setpointT = Curve->get_at(indTo, col-1);
+	setpointF = Curve->get_at(indFrom, col-1);
+	if (Curve->get_at(indTo, col-2) - Curve->get_at(indTo, col-1) != 0) {
+		droopVal = (Curve->get_at(indFrom, col-1) - Curve->get_at(indFrom, col-2)) / (Curve->get_at(indTo, col-2) - Curve->get_at(indTo, col-1));
+		result = setpointT - (val - setpointF)/droopVal;
+	}
+	else {
+		result = Curve->get_at(indTo, col-1);
+	}
+
+	return result;
+}
+
+// Function to calculate absolute values of complex
+double diesel_dg::abs_complex(complex val)
+{
+	double res;
+	res = sqrt(val.Re() * val.Re() + val.Im() * val.Im());
+
+	return res;
+}
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////

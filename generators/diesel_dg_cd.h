@@ -85,23 +85,10 @@ typedef struct {
 	double err7;
 	double LowValSelect1;
 	double LowValSelect;
-} GOV_GGOV1_VARS;
 
-// P_CONSTANT mode state variable structure
-typedef struct {
-	double x1;
-	double x4;
-	double x4a;
-	double x4b;
-	double x5;
-	double x5a;
-	double x5b;
-	double err4;
-	double ValveStroke;
-	double FuelFlow;
-	double GovOutPut;
-	double x_Pconstant;
-} GOV_P_CONSTANT_VARS;
+	double x_Pconstant;		// state varibale of Pconstant mode in GGOV1
+
+} GOV_GGOV1_VARS;
 
 //Machine state variable structure
 typedef struct {
@@ -121,7 +108,6 @@ typedef struct {
 	GOV_DEGOV1_VARS gov_degov1;	//DEGOV1 Governor state variables
 	GOV_GAST_VARS gov_gast;		//GAST Governor state variables
 	GOV_GGOV1_VARS gov_ggov1;	//GGOV1 governor state variables
-	GOV_P_CONSTANT_VARS gov_pconstant; //P_CONSTANT mode state variables
 	AVR_VARS avr;				//Automatic Voltage Regulator state variables
 } MAC_STATES;
 
@@ -308,7 +294,7 @@ public:
 	complex X2;				//Negative sequence impedance (p.u.)
 
 	MAC_INPUTS gen_base_set_vals;	//Base set points for the various control objects
-	bool Vset_defined;				// Flag indicating whether Vset has been defined in glm file or not
+	bool Vset_defined;
 
 	//AVR properties (Simplified Exciter System (SEXS) - Industry acronym, I swear)
 	double exc_KA;				//Exciter gain (p.u.)
@@ -389,19 +375,23 @@ public:
 
 	set phases;	/**< device phases (see PHASE codes) */
 
-	// P_CONSTANT mode properties
-	double pconstant_Tpelec;		//Electrical power transducer time constant, sec. (>0.)
-	double pconstant_Tact;			//Actuator time constant
-	double pconstant_Kturb;			//Turbine gain (>0.)
-	double pconstant_wfnl;			//No load fuel flow, p.u
-	double pconstant_Tb;			//Turbine lag time constant, sec. (>0.)
-	double pconstant_Tc;			//Turbine lead time constant, sec.
-	double pconstant_Teng;			//Transport lag time constant for diesel engine
-	double pconstant_ropen;			//Maximum valve opening rate, p.u./sec.
-	double pconstant_rclose;		//Minimum valve closing rate, p.u./sec.
-	double pconstant_Kimw;			//Power controller (reset) gain
-	unsigned int pconstant_Flag;	//Switch for fuel source characteristic, = 0 for fuel flow independent of speed, = 1 fuel flow proportional to speed
+	// non-linear droop curves stored in double-array
+	GL_STRUCT(double_array,pfCurve); // non-linear p/f droop curve: double array storing p and f set points
+	GL_STRUCT(double_array,qvCurve); // non-linear q/v droop curve: double array storing q and v set points
+	bool nonlinear_pf;		// boolean value indicating whether non-linear droop curve p/f is used or not
+	bool nonlinear_qv;		// boolean value indicating whether non-linear droop curve q/v is used or not
 
+	// Fuel useage and emmisions
+	bool fuelEmissionCal;		// Boolean value indicating whether calculation of fuel and emissions are enabled
+	double outputEnergy;		// Total energy(VAh) output from the generator
+	double FuelUse;				// Total fuel usage (gal) based on VA power output
+	double CO2_emission;		// Total CO2 emissions (lbs) based on fule usage
+	double SOx_emission;		// Total SOx emissions (lbs) based on fule usage
+	double NOx_emission;		// Total NOx emissions (lbs) based on fule usage
+	double PM10_emission;		// Total PM-10 emissions (lbs) based on fule usage
+	TIMESTAMP last_time;
+	double dg_1000_a = 0.067;	// Parameter to calculate fuel usage (gal)based on VA power output (for 1000 kVA rating dg)
+	double dg_1000_b = 6.5544;	// Parameter to calculate fuel usage (gal)based on VA power output (for 1000 kVA rating dg)
 
 public:
 	/* required implementations */
@@ -425,6 +415,8 @@ public:
 	STATUS apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, double deltaT);
 	STATUS init_dynamics(MAC_STATES *curr_time);
 	complex complex_exp(double angle);
+	double find(int row, int col, double val, double_array *Curve);
+	double abs_complex(complex val);
 
 	friend class controller_dg;
 

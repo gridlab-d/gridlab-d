@@ -96,8 +96,6 @@ private:
 	complex generator_admittance[3][3];	//Generator admittance matrix converted from sequence values
 	complex prev_VA_out[3];				//Previous state tracking variable for ramp-rate calculations
 	complex curr_VA_out[3];				//Current state tracking variable for ramp-rate calculations
-	double Pref_prev;					//Previous Pref value in the same time step for non-VSI ramp-rate calculations
-	double Qref_prev[3];				//Previous Qref value in the same time step for non-VSI ramp-rate calculations
 
 protected:
 	/* TODO: put unpublished but inherited variables */
@@ -204,12 +202,9 @@ public:
 	double Tp_delay;	  // Time delay for feeder real power changes seen by inverter droop control
 	double Tq_delay;	  // Time delay for feeder reactive power changes seen by inverter droop control
 
-	bool checkRampRate_real;		//Flag to enable ramp rate/slew rate checking for active power
-	double rampUpRate_real;		//Maximum power increase rate for active power
-	double rampDownRate_real;		//Maximum power decrease rate for active power
-	bool checkRampRate_reactive;	//Flag to enable ramp rate/slew rate checking for reactive power
-	double rampUpRate_reactive;		//Maximum power increase rate for reactive power
-	double rampDownRate_reactive;	//Maximum power decrease rate for reactive power
+	bool checkRampRate;		//Flag to enable ramp rate/slew rate checking
+	double rampUpRate;		//Maximum power increase rate
+	double rampDownRate;		//Maximum power decrease rate
 
 	complex phaseA_I_Out_prev;      // current
 	complex phaseB_I_Out_prev;
@@ -369,8 +364,7 @@ private:
 	TIMESTAMP pf_reg_next_update_time;	//TIMESTAMP of next dispatching change allowed
 
 	TIMESTAMP prev_time;				//Tracking variable for previous "new time" run
-	double prev_time_dbl;				//Tracking variable for 1547 checks and ramp rates
-	double event_deltat;				//Event-driven delta-t variable
+	double prev_time_dbl;				//Tracking variable for 1547 checks
 
 	TIMESTAMP start_time;				//Recording start time of simulation
 
