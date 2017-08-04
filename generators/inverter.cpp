@@ -166,8 +166,8 @@ inverter::inverter(MODULE *module)
 			PT_double, "max_ramp_up_real[W/s]", PADDR(rampUpRate_real), PT_DESCRIPTION, "DELTAMODE: The real power ramp up rate limit",
 			PT_double, "max_ramp_down_real[W/s]", PADDR(rampDownRate_real), PT_DESCRIPTION, "DELTAMODE: The real power ramp down rate limit",
 			PT_bool, "enable_ramp_rates_reactive", PADDR(checkRampRate_reactive),  PT_DESCRIPTION, "DELTAMODE: Boolean used to indicate whether inverter ramp rate is enforced or not",
-			PT_double, "max_ramp_up_reactive", PADDR(rampUpRate_reactive), PT_DESCRIPTION, "DELTAMODE: The reactive power ramp up rate limit",
-			PT_double, "max_ramp_down_reactive", PADDR(rampDownRate_reactive), PT_DESCRIPTION, "DELTAMODE: The reactive power ramp down rate limit",
+			PT_double, "max_ramp_up_reactive[VAr/s]", PADDR(rampUpRate_reactive), PT_DESCRIPTION, "DELTAMODE: The reactive power ramp up rate limit",
+			PT_double, "max_ramp_down_reactive[VAr/s]", PADDR(rampDownRate_reactive), PT_DESCRIPTION, "DELTAMODE: The reactive power ramp down rate limit",
 
 			//Selection method
 			PT_enumeration, "dynamic_model_mode", PADDR(inverter_dyn_mode), PT_DESCRIPTION, "DELTAMODE: Underlying model to use for deltamode control",
