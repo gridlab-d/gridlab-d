@@ -10,6 +10,7 @@ class player : public gld_object {
 public:
 	GL_STRING(char256,property);
 	GL_STRING(char1024,table);
+	GL_STRING(char1024,query);
 	GL_STRING(char32,mode);
 	GL_STRING(char8,filetype);
 	GL_ATOMIC(object,connection);

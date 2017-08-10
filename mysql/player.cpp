@@ -30,6 +30,7 @@ player::player(MODULE *module)
 		if (gl_publish_variable(oclass,
 			PT_char256,"property",get_property_offset(),PT_DESCRIPTION,"target property name",
 			PT_char1024,"table",get_table_offset(),PT_DESCRIPTION,"table name from which to read samples",
+			PT_char1024,"query",get_query_offset(),PT_DESCRIPTION,"query to use to obtain data from table",
 			PT_char1024,"file",get_table_offset(),PT_DESCRIPTION,"table name from which to read samples",
 			PT_char8,"filetype",get_filetype_offset(),PT_DESCRIPTION,"table type from which samples are read",
 			PT_char32,"mode",get_mode_offset(),PT_DESCRIPTION,"table output mode",
@@ -122,13 +123,16 @@ int player::init(OBJECT *parent)
 	// check for table existence and create if not found
 	if ( !target.is_valid() )
 		exception("target property '%s' is not valid", get_property());
-	if ( !db->table_exists(get_table()) )
+	if ( strcmp(get_table(),"")!=0 && !db->table_exists(get_table()) )
 		exception("table '%s' does not exist", get_table());
 
 	// run the main query
 	gld_clock start;
-	data = db->select("SELECT t,`%s` FROM `%s` WHERE t>=from_unixtime(%llu) ORDER BY id",
-		get_property(),get_table(),db->convert_to_dbtime(start.get_timestamp()));
+	if ( strcmp(get_query(),"")==0 )
+		data = db->select("SELECT t,`%s` FROM `%s` WHERE t>=from_unixtime(%llu) ORDER BY id",
+			get_property(),get_table(),db->convert_to_dbtime(start.get_timestamp()));
+	else
+		data = db->select(get_query());
 	if ( data==NULL )
 		return 0; // no data
 	n_rows = mysql_num_rows(data);
