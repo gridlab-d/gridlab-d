@@ -139,6 +139,8 @@ int player::init(OBJECT *parent)
 	n_fields = mysql_num_fields(data);
 	row_num = 0;
 	gl_verbose("%s: %d rows with %d fields found", get_name(), n_rows, n_fields);
+	if ( n_rows == 0 )
+		return 0; // no data
 
 	// fetch first row
 	row = mysql_fetch_row(data);
