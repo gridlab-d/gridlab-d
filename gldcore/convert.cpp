@@ -527,7 +527,7 @@ int convert_to_int32(const char *buffer, /**< a pointer to the string buffer */
 					    void *data, /**< a pointer to the data */
 					    PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
-	return sscanf(buffer,"%ld",data);
+	return sscanf(buffer,"%" SCNd32,data);
 }
 
 /** Convert from an \e int64
