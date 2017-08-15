@@ -962,7 +962,15 @@ bool capacitor::cap_sync_fxn(double time_value)
 	}//End in service
 	else //Out-of-service
 	{
-		switchA_state = switchB_state = switchC_state = OPEN;
+		//Reset all time-related variables, just because
+		//Prevent odd behavior when returning to service
+		time_to_change = time_delay;
+		dwell_time_left = dwell_time;
+		lockout_time_left_A = lockout_time;
+		lockout_time_left_B = lockout_time;
+		lockout_time_left_C = lockout_time;
+		last_time = time_value;
+
 		//Perform actual switching operation
 		if ((phases_connected & (PHASE_A)) == PHASE_A)
 			shunt[0] = complex(0.0);
