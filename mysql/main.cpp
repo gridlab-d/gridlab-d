@@ -1324,7 +1324,7 @@ static bool export_graph_nodeattr(MYSQL *mysql, OBJECT *obj, CLASS *cls = NULL)
 	}
 	return true;
 }
-bool export_graph(MYSQL *mysql)
+bool export_graph_transaction(MYSQL *mysql)
 {
 	if ( overwrite && !query(mysql,"DROP TABLE IF EXISTS `%s`", get_table_name("node")) )
 		return false;
@@ -1384,6 +1384,22 @@ bool export_graph(MYSQL *mysql)
 	}
 	return true;
 }
+bool export_graph(MYSQL *mysql)
+{
+	if ( !overwrite ) 
+		query(mysql,"START TRANSACTION");
+	if ( export_graph(mysql) )
+	{	
+		query(mysql,"COMMIT");
+		return true;
+	}
+	else
+	{
+		query(mysql,"ROLLBACK");
+		return false;
+	}
+}
+	
 EXPORT int export_file(char *info)
 {
 	if ( process_command(info)==NULL )
