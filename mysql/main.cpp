@@ -26,6 +26,7 @@ bool no_create = false; ///< flag to not create tables when exporting data
 bool overwrite = true; ///< flag to not drop tables when exporting data
 bool use_graph = true; ///< flag to enable graph schema
 bool use_guid = false; ///< flag to enable use of guid
+bool use_transaction = true; ///< flag to disable use of transactions
 
 #else
 #include "gridlabd.h"
@@ -128,6 +129,10 @@ const char *process_command(const char *command)
 		else if ( strcmp(token,"--graph")==0 )
 		{
 			use_graph = true;
+		}
+		else if ( strcmp(token,"--no_transaction")==0 )
+		{
+			use_transaction = false;
 		}
 		else if ( token[0]=='-' )
 		{
@@ -1326,6 +1331,25 @@ static bool export_graph_nodeattr(MYSQL *mysql, OBJECT *obj, CLASS *cls = NULL)
 }
 bool export_graph_transaction(MYSQL *mysql)
 {
+	for ( OBJECT *obj = gl_object_get_first(); obj!=NULL ; obj=obj->next )
+	{
+		CLASS *cls = obj->oclass;
+		if ( !query(mysql,"INSERT INTO `%s` (`id`,`type`) VALUES (%llu,'%s')", get_table_name("node"), 
+			use_guid ? obj->guid[0] : obj->id, obj->oclass->name) ) return false;
+		if ( obj->name && !query(mysql,"INSERT INTO `%s` (`id`,`name`,`value`) VALUES (%llu,'%s','%s')", get_table_name("nodeattr"), 
+			use_guid ? obj->guid[0] : obj->id, "name", obj->name) ) return false;
+		if ( obj->oclass->module && obj->oclass->module->name && !query(mysql,"INSERT INTO `%s` (`id`,`name`,`value`) VALUES (%llu,'%s','%s')", get_table_name("nodeattr"), use_guid ? obj->guid[0] : obj->id, "module", obj->oclass->module->name) ) return false;
+		if ( !isnan(obj->latitude) && !query(mysql,"INSERT INTO `%s` (`id`,`name`,`value`) VALUES (%llu,'%s',%g)", get_table_name("nodeattr"), use_guid ? obj->guid[0] : obj->id, "latitude", obj->latitude) ) return false;
+		if ( !isnan(obj->longitude) && !query(mysql,"INSERT INTO `%s` (`id`,`name`,`value`) VALUES (%llu,'%s',%g)", get_table_name("nodeattr"), use_guid ? obj->guid[0] : obj->id, "longitude", obj->longitude) ) return false;
+		if ( obj->in_svc<TS_NEVER && !query(mysql,"INSERT INTO `%s` (`id`,`name`,`value`) VALUES (%llu,'%s',%lld)", get_table_name("nodeattr"), use_guid ? obj->guid[0] : obj->id, "in_svc", obj->in_svc) ) return false;
+		if ( obj->out_svc<TS_NEVER && !query(mysql,"INSERT INTO `%s` (`id`,`name`,`value`) VALUES (%llu,'%s',%lld)", get_table_name("nodeattr"), use_guid ? obj->guid[0] : obj->id, "out_svc", obj->out_svc) ) return false;
+		if ( obj->parent && !query(mysql,"INSERT INTO `%s` (`from`,`to`,`type`) VALUES (%llu,%llu,'%s')",get_table_name("edge"), use_guid ? obj->guid[0] : obj->id, use_guid ? obj->parent->guid[0] : obj->parent->id, "parent") ) return false;
+		export_graph_nodeattr(mysql,obj);
+	}
+	return true;
+}
+bool export_graph(MYSQL *mysql)
+{
 	if ( overwrite && !query(mysql,"DROP TABLE IF EXISTS `%s`", get_table_name("node")) )
 		return false;
 	if ( overwrite && !query(mysql,"DROP TABLE IF EXISTS `%s`", get_table_name("nodeattr")) )
@@ -1367,28 +1391,12 @@ bool export_graph_transaction(MYSQL *mysql)
 			"KEY `i_name_value` (`name`,`value`)"
 			")", get_table_name("edgeattr")) )
 		return false;
-	for ( OBJECT *obj = gl_object_get_first(); obj!=NULL ; obj=obj->next )
-	{
-		CLASS *cls = obj->oclass;
-		if ( !query(mysql,"INSERT INTO `%s` (`id`,`type`) VALUES (%llu,'%s')", get_table_name("node"), 
-			use_guid ? obj->guid[0] : obj->id, obj->oclass->name) ) return false;
-		if ( obj->name && !query(mysql,"INSERT INTO `%s` (`id`,`name`,`value`) VALUES (%llu,'%s','%s')", get_table_name("nodeattr"), 
-			use_guid ? obj->guid[0] : obj->id, "name", obj->name) ) return false;
-		if ( obj->oclass->module && obj->oclass->module->name && !query(mysql,"INSERT INTO `%s` (`id`,`name`,`value`) VALUES (%llu,'%s','%s')", get_table_name("nodeattr"), use_guid ? obj->guid[0] : obj->id, "module", obj->oclass->module->name) ) return false;
-		if ( !isnan(obj->latitude) && !query(mysql,"INSERT INTO `%s` (`id`,`name`,`value`) VALUES (%llu,'%s',%g)", get_table_name("nodeattr"), use_guid ? obj->guid[0] : obj->id, "latitude", obj->latitude) ) return false;
-		if ( !isnan(obj->longitude) && !query(mysql,"INSERT INTO `%s` (`id`,`name`,`value`) VALUES (%llu,'%s',%g)", get_table_name("nodeattr"), use_guid ? obj->guid[0] : obj->id, "longitude", obj->longitude) ) return false;
-		if ( obj->in_svc<TS_NEVER && !query(mysql,"INSERT INTO `%s` (`id`,`name`,`value`) VALUES (%llu,'%s',%lld)", get_table_name("nodeattr"), use_guid ? obj->guid[0] : obj->id, "in_svc", obj->in_svc) ) return false;
-		if ( obj->out_svc<TS_NEVER && !query(mysql,"INSERT INTO `%s` (`id`,`name`,`value`) VALUES (%llu,'%s',%lld)", get_table_name("nodeattr"), use_guid ? obj->guid[0] : obj->id, "out_svc", obj->out_svc) ) return false;
-		if ( obj->parent && !query(mysql,"INSERT INTO `%s` (`from`,`to`,`type`) VALUES (%llu,%llu,'%s')",get_table_name("edge"), use_guid ? obj->guid[0] : obj->id, use_guid ? obj->parent->guid[0] : obj->parent->id, "parent") ) return false;
-		export_graph_nodeattr(mysql,obj);
-	}
-	return true;
-}
-bool export_graph(MYSQL *mysql)
-{
-	if ( !overwrite ) 
-		query(mysql,"START TRANSACTION");
-	if ( export_graph(mysql) )
+
+	if ( !use_transaction)
+		return export_graph_transaction(mysql);
+
+	query(mysql,"START TRANSACTION");
+	if ( export_graph_transaction(mysql) )
 	{	
 		query(mysql,"COMMIT");
 		return true;
