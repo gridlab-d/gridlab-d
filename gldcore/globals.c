@@ -288,6 +288,7 @@ static struct s_varmap {
 	{"svnroot", PT_char1024, &global_svnroot, PA_PUBLIC, "svnroot"},
 	{"allow_reinclude", PT_bool, &global_reinclude, PA_PUBLIC, "allow the same include file to be included multiple times"},
 	{"output_message_context", PT_set, &global_output_message_context, PA_PUBLIC, "control context from which debug messages are allowed", dmc_keys},
+	{"permissive_access", PT_int32, &global_permissive_access, PA_PUBLIC, "enable permissive property access"},
 	/* add new global variables here */
 };
 

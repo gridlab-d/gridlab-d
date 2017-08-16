@@ -373,6 +373,8 @@ typedef enum {
 } GLOBALMESSAGECONTEXT;
 GLOBAL set global_output_message_context INIT(DMC_ALL); /**< message context control variable */
 
+GLOBAL int32 global_permissive_access INIT(FALSE); /**< enable permission property access */
+
 #ifdef __cplusplus
 }
 #endif
