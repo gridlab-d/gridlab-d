@@ -4111,7 +4111,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				}
 				else if (object_set_complex_by_name(obj,propname,cval)==0)
 				{
-					output_error_raw("%s(%d): property %s of %s %s could not be set to '%g%+gi'", filename, linenum, propname, format_object(obj), cval.r, cval.i);
+					output_error_raw("%s(%d): property %s of %s %s could not be set to complex value '%g%+gi'", filename, linenum, propname, format_object(obj), cval.r, cval.i);
 					REJECT;
 				}
 				else
@@ -4126,7 +4126,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				}
 				else if (object_set_double_by_name(obj,propname,dval)==0)
 				{
-					output_error_raw("%s(%d): property %s of %s %s could not be set to '%g'", filename, linenum, propname, format_object(obj), dval);
+					output_error_raw("%s(%d): property %s of %s %s could not be set to expression evaluating to '%g'", filename, linenum, propname, format_object(obj), dval);
 					REJECT;
 				}
 				else
@@ -4141,7 +4141,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				}
 				else if (object_set_double_by_name(obj,propname,dval)==0)
 				{
-					output_error_raw("%s(%d): property %s of %s %s could not be set to '%g'", filename, linenum, propname, format_object(obj), dval);
+					output_error_raw("%s(%d): property %s of %s %s could not be set to double value '%g' having unit '%s'", filename, linenum, propname, format_object(obj), dval, unit->name);
 					REJECT;
 				}
 				else
@@ -4160,8 +4160,8 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				} else {
 					switch(prop->ptype){
 						case PT_int16:
-							ival16 = (int16)dval;
-							ival = rv = object_set_int16_by_name(obj, propname, ival16);
+							ival = ival16 = (int16)dval;
+							rv = object_set_int16_by_name(obj, propname, ival16);
 							break;
 						case PT_int32:
 							ival = ival32 = (int32)dval;
@@ -4176,7 +4176,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 							REJECT;
 					} /* end switch */
 					if(rv == 0){
-						output_error_raw("%s(%d): property %s of %s %s could not be set to '%g'", filename, linenum, propname, format_object(obj), ival);
+						output_error_raw("%s(%d): property %s of %s %s could not be set to integer '%lld'", filename, linenum, propname, format_object(obj), ival);
 						REJECT;
 					} else {
 						ACCEPT;
@@ -4184,7 +4184,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 #if 0
 				if (object_set_double_by_name(obj,propname,dval)==0)
 				{
-					output_message("%s(%d): property %s of %s %s could not be set to '%g'", filename, linenum, propname, format_object(obj), dval);
+					output_message("%s(%d): property %s of %s %s could not be set to unitless double '%g'", filename, linenum, propname, format_object(obj), dval);
 					REJECT;
 				} else {
 					ACCEPT;
@@ -4355,12 +4355,12 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 						obj->longitude = load_longitude(propval);
 						ACCEPT;
 					}
-					else if (strcmp(propname,"in")==0)
+					else if (strcmp(propname,"in")==0 || strcmp(propname,"in_svc")==0)
 					{
 						obj->in_svc = convert_to_timestamp_delta(propval,&obj->in_svc_micro,&obj->in_svc_double);
 						ACCEPT;
 					}
-					else if (strcmp(propname,"out")==0)
+					else if (strcmp(propname,"out")==0 || strcmp(propname,"out_svc")==0)
 					{
 						obj->out_svc = convert_to_timestamp_delta(propval,&obj->out_svc_micro,&obj->out_svc_double);
 						ACCEPT;
@@ -4402,6 +4402,19 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 						ACCEPT;
 						DONE;
 					}
+					else if ( strcmp(propname,"module")==0 )
+					{
+						if ( strcmp(propval,obj->oclass->module->name)!=0 )
+						{
+							output_error("%s(%d): module '%s' does not match module of class '%s.%s'",filename,linenum,propval,obj->oclass->module->name,obj->oclass->name);
+							REJECT;
+							DONE;
+						}
+						else
+						{
+							ACCEPT;
+						}
+					}
 					else
 					{
 						output_error_raw("%s(%d): property %s is not defined in class %s", filename, linenum, propname, oclass->name);
@@ -4423,7 +4436,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				}
 				else if (object_set_value_by_name(obj,propname,propval)==0)
 				{
-					output_error_raw("%s(%d): property %s of %s could not be set to '%s'", filename, linenum, propname, format_object(obj), propval);
+					output_error_raw("%s(%d): property %s of %s could not be set to value '%s'", filename, linenum, propname, format_object(obj), propval);
 					REJECT;
 				}
 				else
