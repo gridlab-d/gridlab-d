@@ -28,6 +28,18 @@ public:
 	complex tpmeter_power_consumption; ///< power consumed by meter operation
 	bool tpmeter_interrupted;		///< Reliability flag - goes active if the customer is in an "interrupted" state
 	bool tpmeter_interrupted_secondary;	///< Reliability flag - goes active if the customer is in a "secondary interrupted" state - i.e., momentary
+
+	//AMI-type funcitonality
+	complex average_interval_power;				///<Averaging interval output power for power12
+	complex average_interval_power1_power;		///<Averaging interval output power for power1
+	complex average_interval_power2_power;		///<Averaging interval output power for power2
+	double average_interval_voltage_mag;		///<Averaging interval output voltage12 magnitude
+	complex average_interval_voltage;			///<Averaging interval output voltage12
+	complex average_interval_voltage1;			///<Averaging interval output voltage1
+	complex average_interval_voltage2;			///<Averaging interval output voltage2
+
+	double interval_length_dbl;					///<Published interval length
+
 	TIMESTAMP next_time;
 	TIMESTAMP dt;
 	TIMESTAMP last_t;
@@ -71,7 +83,29 @@ private:
     double last_measured_real_energy;
     double last_measured_reactive_energy;
     TIMESTAMP last_delta_timestamp;
-    TIMESTAMP start_timestamp;
+	TIMESTAMP start_timestamp;
+	
+	//AMI-average-related code
+	complex *average_interval_power_array;				///<Averaging interval output power array for power12
+	complex *average_interval_power_power1_array;		///<Averaging interval output power array for power1
+	complex *average_interval_power_power2_array;		///<Averaging interval output power array for power2
+	double *average_interval_voltage_mag_array;		///<Averaging interval output voltage12 magnitude array
+	complex *average_interval_voltage_array;		///<Averaging interval output voltage12 array
+	complex *average_interval_voltage1_array;		///<Averaging interval output voltage array
+	complex *average_interval_voltage2_array;		///<Averaging interval output voltage array
+	double curr_voltage_mag_value;					///<Voltage12 magnitude value, captured at beginning
+	complex curr_voltage_value;						///<Voltage12 value, captured at beginning
+	complex curr_voltage1_value;					///<Voltage1 value, captured at beginning
+	complex curr_voltage2_value;					///<Voltage2 value, captured at beginning
+
+	int interval_length;			//integer averaging length -- size of the array
+	double prev_timestep_val;		//Tracking variable to see to help resize array in deltamode
+
+	//*** TODO: Functionalize these items, so deltamode can call them right *****!!!!
+
+	TIMESTAMP perform_average_time;	//Timestamp to perform the average
+	TIMESTAMP last_update_time;		//Last time array updated
+	int curr_avg_pos_index;			//Index for current position of averaging array
 
 public:
 	static CLASS *oclass;

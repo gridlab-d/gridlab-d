@@ -36,8 +36,6 @@ EXPORT int64 triplex_meter_reset(OBJECT *obj)
 	return 0;
 }
 
-static char1024 market_price_name = "current_market.clearing_price";
-
 //////////////////////////////////////////////////////////////////////////
 // triplex_meter CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
@@ -118,6 +116,21 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 			PT_double, "third_tier_price[$/kWh]", PADDR(tier_price[2]),PT_DESCRIPTION,"first tier price of energy greater than third tier energy",
 			PT_double, "third_tier_energy[kWh]", PADDR(tier_energy[2]),PT_DESCRIPTION,"price of energy on tier above second tier",
 
+			PT_double, "AMI_averaging_interval[s]", PADDR(interval_length_dbl),PT_DESCRIPTION,"Interval at which averages for AMI are updated",
+			PT_complex, "AMI_average_power[VA]", PADDR(average_interval_power),PT_DESCRIPTION,"Averaged complex power for power12 for AMI reporting interval",
+			PT_double, "AMI_average_real_power[W]", PADDR(average_interval_power.Re()),PT_DESCRIPTION,"Averaged real power for power12 for AMI reporting interval",
+			PT_double, "AMI_average_reactive_power[VAr]", PADDR(average_interval_power.Im()),PT_DESCRIPTION,"Averaged reactive power for power12 for AMI reporting interval",
+			PT_complex, "AMI_average_phase1_power[VA]", PADDR(average_interval_power1_power),PT_DESCRIPTION,"Averaged complex power for power1 for AMI reporting interval",
+			PT_double, "AMI_average_phase1_real_power[W]", PADDR(average_interval_power1_power.Re()),PT_DESCRIPTION,"Averaged real power for power1 for AMI reporting interval",
+			PT_double, "AMI_average_phase1_reactive_power[VAr]", PADDR(average_interval_power1_power.Im()),PT_DESCRIPTION,"Averaged reactive power for power1 for AMI reporting interval",
+			PT_complex, "AMI_average_phase2_power[VA]", PADDR(average_interval_power2_power),PT_DESCRIPTION,"Averaged complex power for power2 for AMI reporting interval",
+			PT_double, "AMI_average_phase2_real_power[W]", PADDR(average_interval_power2_power.Re()),PT_DESCRIPTION,"Averaged real power for power2 for AMI reporting interval",
+			PT_double, "AMI_average_phase2_reactive_power[VAr]", PADDR(average_interval_power2_power.Im()),PT_DESCRIPTION,"Averaged reactive power for power2 for AMI reporting interval",
+			PT_double, "AMI_average_voltage12_magnitude[V]", PADDR(average_interval_voltage_mag),PT_DESCRIPTION,"Averaged voltage12 magnitude for AMI reporting interval",
+			PT_complex, "AMI_average_voltage12[V]", PADDR(average_interval_voltage),PT_DESCRIPTION,"Averaged voltage12 for AMI reporting interval",
+			PT_complex, "AMI_average_voltage1[V]", PADDR(average_interval_voltage1),PT_DESCRIPTION,"Averaged voltage1 for AMI reporting interval",
+			PT_complex, "AMI_average_voltage2[V]", PADDR(average_interval_voltage2),PT_DESCRIPTION,"Averaged voltage2 for AMI reporting interval",
+
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 			//Deltamode functions
@@ -127,9 +140,6 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 				GL_THROW("Unable to publish triplex_meter deltamode function");
 			if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
 				GL_THROW("Unable to publish triplex_meter deltamode function");
-
-                        // market price name
-                        gl_global_create("powerflow::market_price_name",PT_char1024,&market_price_name,NULL);
 		}
 }
 
@@ -175,6 +185,31 @@ int triplex_meter::create()
 	tpmeter_interrupted = false;	//Assumes we start as "uninterrupted"
 	tpmeter_interrupted_secondary = false;	//Assumes start with no momentary interruptions
 
+	//AMI-type functionality
+	average_interval_power = complex(0.0,0.0);
+	average_interval_power1_power = complex(0.0,0.0);
+	average_interval_power2_power = complex(0.0,0.0);
+	average_interval_voltage_mag = 0.0;
+	average_interval_voltage = complex(0.0,0.0);
+	average_interval_voltage1 = complex(0.0,0.0);
+	average_interval_voltage2 = complex(0.0,0.0);
+
+	interval_length_dbl = -1.0;	//Flagged as off, by default
+
+	average_interval_power_array = NULL;
+	average_interval_power_power1_array = NULL;
+	average_interval_power_power2_array = NULL;
+	average_interval_voltage_mag_array = NULL;
+	average_interval_voltage_array = NULL;
+	average_interval_voltage1_array = NULL;
+	average_interval_voltage2_array = NULL;
+	curr_voltage_mag_value = 0.0;
+	curr_voltage_value = complex(0.0,0.0);
+	curr_voltage1_value = complex(0.0,0.0);
+	curr_voltage2_value = complex(0.0,0.0);
+
+	interval_length = -1;
+	prev_timestep_val = -1.0;
 
 	return result;
 }
@@ -198,6 +233,9 @@ int triplex_meter::init(OBJECT *parent)
 		}
 	}
 	check_prices();
+
+	//Update time tracking variable for AMI
+	last_update_time = gl_globalclock;	//Just update us for now - other variables will be handled in sub-functions
 
 	return triplex_node::init(parent);
 }

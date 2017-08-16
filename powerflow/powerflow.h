@@ -119,6 +119,9 @@ GLOBAL double deltatimestep_running INIT(-1.0);			/** Value of the current delta
 //Mesh fault current stuff
 GLOBAL bool enable_mesh_fault_current INIT(false);	/** Flag to enable mesh-based fault current calculations */
 
+//Market-based item -- moved from triplex_meter
+GLOBAL char1024 market_price_name INIT("current_market.clearing_price");
+
 // Deltamode stuff
 void schedule_deltamode_start(TIMESTAMP tstart);	/* Anticipated time for a deltamode start, even if it is now */
 int delta_extra_function(unsigned int mode);
