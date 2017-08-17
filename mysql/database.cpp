@@ -349,7 +349,18 @@ char *database::get_sqldata(char *buffer, size_t size, gld_property &prop, gld_u
 		strcpy(buffer,"NULL");
 	return buffer;
 }
-
+void database::start_transaction(void)
+{
+	mysql_autocommit(mysql,0);
+}
+void database::commit(void)
+{
+	mysql_commit(mysql);
+}
+void database::rollback(void)
+{
+	mysql_rollback(mysql);
+}
 bool database::query(char *fmt,...)
 {
 	char command[1024];
