@@ -1395,15 +1395,15 @@ bool export_graph(MYSQL *mysql)
 	if ( !use_transaction)
 		return export_graph_transaction(mysql);
 
-	query(mysql,"START TRANSACTION");
+	mysql_autocommit(mysql,0);
 	if ( export_graph_transaction(mysql) )
 	{	
-		query(mysql,"COMMIT");
+		mysql_commit(mysql);
 		return true;
 	}
 	else
 	{
-		query(mysql,"ROLLBACK");
+		mysql_rollback(mysql);
 		return false;
 	}
 }

@@ -118,6 +118,10 @@ public:
 
 	TIMESTAMP convert_from_dbtime(TIMESTAMP);
 	TIMESTAMP convert_to_dbtime(TIMESTAMP);
+
+	void start_transaction(void);
+	void commit(void);
+	void rollback(void);
 };
 
 EXTERN database *last_database INIT(NULL);
