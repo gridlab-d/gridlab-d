@@ -6256,7 +6256,7 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 	//include_list = this.next;
 
 	linenum = old_linenum;
-
+	fclose(fp);
 	return count;
 }
 
