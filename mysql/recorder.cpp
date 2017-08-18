@@ -158,14 +158,19 @@ int recorder::init(OBJECT *parent)
 				unit = *prop.get_unit();
 			property_unit.push_back(unit);
 			n_properties++;
+
+			char *sqltype = db->get_sqltype(prop);
+			if ( sqltype==NULL )
+				exception("property %s has an unknown SQL type", prop.get_name());
+
 			char tmp[128];
 			if ( unit.is_valid() )
-				sprintf(tmp,"`%s[%s]` %s, ", prop.get_name(), unit.get_name(), db->get_sqltype(prop));
+				sprintf(tmp,"`%s[%s]` %s, ", prop.get_name(), unit.get_name(), sqltype);
 			else
-				sprintf(tmp,"`%s` %s, ", prop.get_name(), db->get_sqltype(prop));
+				sprintf(tmp,"`%s` %s, ", prop.get_name(), sqltype);
 			strcat(property_list,tmp);
-			if ( (options&MO_NOADD)==0 && db->query_ex("ALTER TABLE `%s` ADD COLUMN `%s` %s;", get_table(), prop.get_name(), db->get_sqltype(prop)) )
-				warning("automatically added missing column '%s' as '%s' to '%s'", prop.get_name(), db->get_sqltype(prop), get_table());
+			if ( (options&MO_NOADD)==0 && db->query_ex("ALTER TABLE `%s` ADD COLUMN `%s` %s;", get_table(), prop.get_name(), sqltype) )
+				warning("automatically added missing column '%s' as '%s' to '%s'", prop.get_name(), sqltype, get_table());
 		}
 	}
 
