@@ -276,7 +276,7 @@ char *database::get_sqltype(gld_property &prop)
 	case PT_complex_array:
 		return "HUGETEXT";
 	case PT_object:
-		return CHAR(64);
+		return "CHAR(64)";
 	default:
 		return NULL;
 	}
