@@ -765,20 +765,19 @@ int convert_from_object(char *buffer, /**< pointer to the string buffer */
 
 	if (obj->name != NULL){
 		size_t a = strlen(obj->name);
-		size_t b = size - 1;
-		//if ((strlen(obj->name) != 0) && (strlen(obj->name) < (size_t)(size - 1))){
-		if((a != 0) && (a < b)){
+		if((a != 0) && (a+1 < size)){
 			strcat(buffer, obj->name);
-			return 1;
+			return (int)(a+1);
 		}
 	}
 
 	/* construct the object's name */
-	if (sprintf(temp,global_object_format,obj->oclass->name,obj->id)<size)
+	int a = sprintf(temp,global_object_format,obj->oclass->name,obj->id);
+	if ( a+1 < size )
 		strcat(buffer,temp);
 	else
 		return 0;
-	return 1;
+	return a+1;
 }
 
 /** Convert to an \e object
