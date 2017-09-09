@@ -6506,11 +6506,16 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			return FALSE;
 		}
 		value = global_getvar(var, buffer, 63);
-		if (value==NULL)
+		if ( value==NULL )
 		{
-			output_error_raw("%s(%d): %s is not defined", filename,linenum,var);
-			strcpy(line,"\n");
-			return FALSE;
+			if ( global_relax_undefined_if )
+				value = "";
+			else
+			{
+				output_error_raw("%s(%d): %s is not defined", filename,linenum,var);
+				strcpy(line,"\n");
+				return FALSE;
+			}
 		}
 		if (strcmp(op,"<")==0) { if (!(strcmp(value,val)<0)) suppress|=(1<<nesting); }
 		else if (strcmp(op,">")==0) { if (!(strcmp(value,val)>0)) suppress|=(1<<nesting); }

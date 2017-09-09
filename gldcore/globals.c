@@ -289,6 +289,7 @@ static struct s_varmap {
 	{"allow_reinclude", PT_bool, &global_reinclude, PA_PUBLIC, "allow the same include file to be included multiple times"},
 	{"output_message_context", PT_set, &global_output_message_context, PA_PUBLIC, "control context from which debug messages are allowed", dmc_keys},
 	{"permissive_access", PT_int32, &global_permissive_access, PA_PUBLIC, "enable permissive property access"},
+	{"relax_undefined_if", PT_bool, &global_relax_undefined_if, PA_PUBLIC, "allow #if macro to handle undefined global variable as empty strings"},
 	/* add new global variables here */
 };
 

@@ -316,6 +316,8 @@ GLOBAL char1024 global_wget_options INIT("maxsize:100MB;update:newer"); /**< max
 
 GLOBAL bool global_reinclude INIT(false); /**< allow the same include file to be included multiple times */
 
+GLOBAL bool global_relax_undefined_if INIT(false); /**< allow #if macro to handle undefined global variables */
+
 typedef enum {
 	DMC_MAIN		= 0x0000000000000001,
 	DMC_CMDARG		= 0x0000000000000002,
