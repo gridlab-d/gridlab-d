@@ -399,6 +399,22 @@ GLOBALVAR *global_getnext(GLOBALVAR *previous){ /**< a pointer to the previous v
 	}
 }
 
+/** Restores global varlist to a previous start position **/
+void global_restore(GLOBALVAR *pos)
+{
+	global_varlist = pos;
+}
+void global_push(char *name, char *value)
+{
+	GLOBALVAR *var = (GLOBALVAR *)malloc(sizeof(GLOBALVAR));
+	char *val = malloc(sizeof(char1024));
+	strcpy(val,value);
+	memset(var,0,sizeof(GLOBALVAR));
+	var->next = global_varlist;
+	var->prop = property_malloc(PT_char1024,NULL,name,val,NULL);
+	global_varlist = var;
+}
+
 /** Creates a user-defined global variable
 	@return a pointer to GLOBALVAR struct or NULL is failed
 
