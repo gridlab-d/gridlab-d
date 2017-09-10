@@ -38,9 +38,10 @@ typedef char FULLNAME[1024]; /** Full object name (including space name) */
 #define OF_INIT			0x00000100	/**< Object flag; indicates that the object has been successfully initialized */
 #define OF_RERANK		0x00004000	/**< Internal use only */
 #define OF_QUIET		0x00010000  /**< Object flag; disables error messages from the object */
-#define OF_WARNING		0x00020000  /**< Object flag; enables warning messages from the object */
-#define OF_DEBUG		0x00040000  /**< Object flag; enables debug messages from the object */
-#define OF_VERBOSE		0x00080000  /**< Object flag; enables verbose messages from the object */
+#define OF_WARNING		0x00020000  /**< Object flag; disables warning messages from the object */
+#define OF_DEBUG		0x00040000  /**< Object flag; disables debug messages from the object */
+#define OF_VERBOSE		0x00080000  /**< Object flag; disables verbose messages from the object */
+#define OF_SILENT		0x000f0000	/**< Object flag; disables all messages from the object */
 
 typedef struct s_namespace {
 	FULLNAME name;
