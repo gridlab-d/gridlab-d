@@ -476,7 +476,7 @@ int inverter::init(OBJECT *parent)
 	if(parent != NULL){
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
-			gl_verbose("inverter::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			verbose("init() deferring initialization");
 			return 2; // defer
 		}
 	}
@@ -731,7 +731,7 @@ int inverter::init(OBJECT *parent)
 			if (inv_eta==0)
 			{
 				efficiency = 0.8;
-				gl_warning("Efficiency unspecified - defaulted to %f for this inverter type",efficiency);
+				warning("inverter_efficiency unspecified--defaulted to %.2f for this inverter type",efficiency); //defined above
 				/*  TROUBLESHOOT
 				An inverter_efficiency value was not explicitly specified for this inverter.  A default
 				value was specified in its place.  If the default value is not acceptable, please explicitly
@@ -743,7 +743,7 @@ int inverter::init(OBJECT *parent)
 			if (inv_eta==0)
 			{
 				efficiency = 0.8;
-				gl_warning("Efficiency unspecified - defaulted to %f for this inverter type",efficiency);
+				warning("inverter_efficiency unspecified--defaulted to %.2f for this inverter type",efficiency); //defined above
 				//defined above
 			}
 			break;
@@ -751,7 +751,7 @@ int inverter::init(OBJECT *parent)
 			if (inv_eta==0)
 			{
 				efficiency = 0.8;
-				gl_warning("Efficiency unspecified - defaulted to %f for this inverter type",efficiency);
+				warning("inverter_efficiency unspecified--defaulted to %.2f for this inverter type",efficiency); //defined above
 				//defined above
 			}
 			break;
@@ -759,7 +759,7 @@ int inverter::init(OBJECT *parent)
 			if (inv_eta==0)
 			{
 				efficiency = 0.9;
-				gl_warning("Efficiency unspecified - defaulted to %f for this inverter type",efficiency);
+				warning("inverter_efficiency unspecified--defaulted to %.2f for this inverter type",efficiency); //defined above
 				//defined above
 			}
 			break;
@@ -768,19 +768,19 @@ int inverter::init(OBJECT *parent)
 
 			if (inv_eta==0){
 				efficiency = 0.9;	//Unclear why this is split in 4-quadrant, but not adjusting for fear of breakage
-				gl_warning("Efficiency unspecified - defaulted to %f for this inverter type",efficiency); //defined above
+				warning("inverter_efficiency unspecified--defaulted to %.2f for this inverter type",efficiency); //defined above
 			}
 			if(inv_eta == 0){
 				inv_eta = 0.9;} 
 			else if(inv_eta < 0){
 				inv_eta = 0.9;
-				gl_warning("Inverter efficiency must be positive--using default value");
+				warning("inverter_efficiency must be positive--defaulting to %.2f", inv_eta);
 			}
 			
 			if(p_rated == 0){
 				p_rated = 25000;
 				//throw("Inverter must have a nonzero power rating.");
-				gl_warning("Inverter must have a nonzero power rating--using default value");
+				warning("rated_power must be non-zero--defaulting to %.1f kW", p_rated/1000);
 			} 
 			
 			//Ab : p_rated per phase
@@ -802,15 +802,15 @@ int inverter::init(OBJECT *parent)
 			{	//Volt_VAr init
 				if (delay_time < 0)	{
 					delay_time = 0.0;
-					gl_warning("Delay time for Volt/VAr mode unspecified or negative. Setting to default of %f", delay_time);
+					warning("delay_time for Volt/VAr mode unspecified or negative--defaulting of %.3f s", delay_time);
 				}
 				if (max_var_slew_rate <= 0)	{
 					max_var_slew_rate = -1.0;		//negative values of max_var_slew_rate disable that setting and place no restrictions on inverter VAr slew rate
-					gl_warning("Maximum VAr slew rate for Volt-VAr mode unspecified, negative or zero. Disabling");
+					warning("max_var_slew_rate for Volt-VAr mode unspecified, negative or zero--disabling restrictions on VAr slew rate");
 				}
 				if (max_pwr_slew_rate <= 0)	{
 					max_pwr_slew_rate = -1.0;		//negative values of max_pwr_slew_rate disable that setting and place no restrictions on inverter power slew rate
-					gl_warning("Maximum output power slew rate for freq-power mode unspecified, negative or zero. Disabling");
+					warning("max_pwr_slew_rate for freq-power mode unspecified, negative or zero--disabling restrictions on power slew rate");
 				}
 				
 				//checks for Volt-VAr schedule
@@ -853,12 +853,12 @@ int inverter::init(OBJECT *parent)
 					
 				//checks for freq-power schedule
 				freq_pwrSchedInput = freq_pwr_sched;
-				gl_warning(freq_pwrSchedInput.c_str());
+				warning(freq_pwrSchedInput.c_str());
 				if(freq_pwrSchedInput.length() == 0)	{
 					freq_pwrSched.push_back(std::make_pair (f_nominal*0.9,0));	
 					//make both power values equal to zero, then all scheduled powers will be zero
 					freq_pwrSched.push_back(std::make_pair (f_nominal*1.1,0));
-					gl_warning("Frequency-Power schedule unspecified. Setting power for frequency regulation to zero.");
+					warning("Frequency-Power schedule unspecified. Setting power for frequency regulation to zero.");
 				}
 				else
 				{
@@ -899,7 +899,7 @@ int inverter::init(OBJECT *parent)
 					{
 						//Put the parent in there
 						sense_object = parent;
-						gl_warning("inverter:%s - sense_object not specified for LOAD_FOLLOWING and/or power-factor regulation - attempting to use parent object",obj->name);
+						warning("inverter:%s - sense_object not specified for LOAD_FOLLOWING and/or power-factor regulation - attempting to use parent object",obj->name);
 						/*  TROUBLESHOOT
 						The inverter is currently configured for LOAD_FOLLOWING mode, but did not have an appropriate
 						sense_object specified.  The inverter is therefore using the parented object as the expected
@@ -908,7 +908,7 @@ int inverter::init(OBJECT *parent)
 					}
 					else
 					{
-						gl_error("inverter:%s - LOAD_FOLLOWING and power-factor regulation will not work without a specified sense_object!",obj->name);
+						error("inverter:%s - LOAD_FOLLOWING and power-factor regulation will not work without a specified sense_object!",obj->name);
 						/*  TROUBLESHOOT
 						The inverter is currently configured for LOAD_FOLLOWING mode, but does not have
 						an appropriate sense_object specified.  Please specify a proper object and try again.
@@ -932,7 +932,7 @@ int inverter::init(OBJECT *parent)
 						//Make sure it worked
 						if (sense_power == NULL)
 						{
-							gl_error("inverter:%s - an error occurred while mapping the sense_object power measurement!",obj->name);
+							error("inverter:%s - an error occurred while mapping the sense_object power measurement!",obj->name);
 							/*  TROUBLEHSHOOT
 							While attempting to map the property defining measured power on the sense_object, an error was encountered.
 							Please try again.  If the error persists, please submit a bug report and your code via the trac website.
@@ -943,7 +943,7 @@ int inverter::init(OBJECT *parent)
 						//Random warning about ranks, if not our parent
 						if (sense_object != parent)
 						{
-							gl_warning("inverter:%s is LOAD_FOLLOWING and/or power-factor regulating based on a meter or triplex_meter, ensure the inverter is connected inline with that object!",obj->name);
+							warning("inverter:%s is LOAD_FOLLOWING and/or power-factor regulating based on a meter or triplex_meter, ensure the inverter is connected inline with that object!",obj->name);
 							/*  TROUBLESHOOT
 							The inverter operates in LOAD_FOLLOWING mode under the assumption the sense_object meter or triplex_meter is either attached to
 							the inverter, or directly upstream in the flow.  If this assumption is violated, the results may not be as expected.
@@ -952,7 +952,7 @@ int inverter::init(OBJECT *parent)
 					}
 					else	//loads/nodes/triplex_nodes not supported
 					{
-						gl_error("inverter:%s - sense_object is a node, but not a meter or triplex_meter!",obj->name);
+						error("inverter:%s - sense_object is a node, but not a meter or triplex_meter!",obj->name);
 						/*  TROUBLESHOOT
 						When in LOAD_FOLLOWING and the sense_object is a powerflow node, that powerflow object
 						must be a meter or a triplex_meter.  Please change your model and try again.
@@ -974,7 +974,7 @@ int inverter::init(OBJECT *parent)
 						//Make sure it worked
 						if (powerCalc==NULL)
 						{
-							gl_error("inverter:%s - inverter failed to map power calculation function of transformer!",obj->name);
+							error("inverter:%s - inverter failed to map power calculation function of transformer!",obj->name);
 							/*  TROUBLESHOOT
 							While attempting to link up the power_calculation function for the transformer specified in sense_object,
 							something went wrong.  Please try again.  If the error persists, please post your code and a bug report via
@@ -989,14 +989,14 @@ int inverter::init(OBJECT *parent)
 						//Make sure it worked
 						if (sense_power == NULL)
 						{
-							gl_error("inverter:%s - an error occurred while mapping the sense_object power measurement!",obj->name);
+							error("inverter:%s - an error occurred while mapping the sense_object power measurement!",obj->name);
 							//Defined above
 							return 0;
 						}
 					}
 					else	//Not valid
 					{
-						gl_error("inverter:%s - sense_object is a link, but not a transformer!",obj->name);
+						error("inverter:%s - sense_object is a link, but not a transformer!",obj->name);
 						/*  TROUBLESHOOT
 						When in LOAD_FOLLOWING and the sense_object is a powerflow link, that powerflow object
 						must be a transformer.  Please change your model and try again.
@@ -1007,7 +1007,7 @@ int inverter::init(OBJECT *parent)
 				}
 				else	//Not a link or a node, we don't know what to do!
 				{
-					gl_error("inverter:%s - sense_object is not a proper powerflow object!",obj->name);
+					error("inverter:%s - sense_object is not a proper powerflow object!",obj->name);
 					/*  TROUBLESHOOT
 					When in LOAD_FOLLOWING mode, the inverter requires an appropriate connection
 					to a powerflow object to sense the current load.  This can be either a meter,
@@ -1022,7 +1022,7 @@ int inverter::init(OBJECT *parent)
 					if (pf_reg_activate_lockout_time < 0)
 					{
 						pf_reg_activate_lockout_time = 60;
-						gl_warning("inverter:%s - pf_reg_activate_lockout_time is unassigned, using default value of 60s.",obj->name);
+						warning("inverter:%s - pf_reg_activate_lockout_time is unassigned, using default value of 60s.",obj->name);
 						/*  TROUBLESHOOT
 						The pf_reg_activate_lockout_time for the inverter is negative.  Negative lockout times
 						are not allowed inside the inverter.  Please correct the value and try again.
@@ -1032,7 +1032,7 @@ int inverter::init(OBJECT *parent)
 					else if (pf_reg_activate_lockout_time < 60)
 					{
 						pf_reg_activate_lockout_time = 1;
-						gl_warning("inverter:%s - a short pf_reg_activate_lockout_time may lead to inverter controller oscillations. Recommended time: > 60s",obj->name);
+						warning("inverter:%s - a short pf_reg_activate_lockout_time may lead to inverter controller oscillations. Recommended time: > 60s",obj->name);
 						/*  TROUBLESHOOT
 						The pf_reg_activate_lockout_time for the inverter is negative.  Negative lockout times
 						are not allowed inside the inverter.  Please correct the value and try again.
@@ -1042,7 +1042,7 @@ int inverter::init(OBJECT *parent)
 
 					else if (charge_lockout_time == 0.0)
 					{
-						gl_warning("inverter:%s - pf_reg_activate_lockout_time is zero, oscillations may occur",obj->name);
+						warning("inverter:%s - pf_reg_activate_lockout_time is zero, oscillations may occur",obj->name);
 						/*  TROUBLESHOOT
 						The value for pf_reg_activate_lockout_time is zero, which means there is no delay in new dispatch
 						operations.  This may result in excessive switching and iteration limits being hit.  If this is
@@ -1054,7 +1054,7 @@ int inverter::init(OBJECT *parent)
 				{
 					if (charge_lockout_time<0)
 					{
-						gl_error("inverter:%s - charge_lockout_time is negative!",obj->name);
+						error("inverter:%s - charge_lockout_time is negative!",obj->name);
 						/*  TROUBLESHOOT
 						The charge_lockout_time for the inverter is negative.  Negative lockout times
 						are not allowed inside the inverter.  Please correct the value and try again.
@@ -1063,7 +1063,7 @@ int inverter::init(OBJECT *parent)
 					}
 					else if (charge_lockout_time == 0.0)
 					{
-						gl_warning("inverter:%s - charge_lockout_time is zero, oscillations may occur",obj->name);
+						warning("inverter:%s - charge_lockout_time is zero, oscillations may occur",obj->name);
 						/*  TROUBLESHOOT
 						The value for charge_lockout_time is zero, which means there is no delay in new dispatch
 						operations.  This may result in excessive switching and iteration limits being hit.  If this is
@@ -1074,7 +1074,7 @@ int inverter::init(OBJECT *parent)
 
 					if (discharge_lockout_time<0)
 					{
-						gl_error("inverter:%s - discharge_lockout_time is negative!",obj->name);
+						error("inverter:%s - discharge_lockout_time is negative!",obj->name);
 						/*  TROUBLESHOOT
 						The discharge_lockout_time for the inverter is negative.  Negative lockout times
 						are not allowed inside the inverter.  Please correct the value and try again.
@@ -1083,7 +1083,7 @@ int inverter::init(OBJECT *parent)
 					}
 					else if (discharge_lockout_time == 0.0)
 					{
-						gl_warning("inverter:%s - discharge_lockout_time is zero, oscillations may occur",obj->name);
+						warning("inverter:%s - discharge_lockout_time is zero, oscillations may occur",obj->name);
 						/*  TROUBLESHOOT
 						The value for discharge_lockout_time is zero, which means there is no delay in new dispatch
 						operations.  This may result in excessive switching and iteration limits being hit.  If this is
@@ -1098,18 +1098,18 @@ int inverter::init(OBJECT *parent)
 			if (inv_eta==0)
 			{
 				efficiency = 0.9;	//Unclear why this is split in 4-quadrant, but not adjusting for fear of breakage
-				gl_warning("Efficiency unspecified - defaulted to %f for this inverter type",efficiency);
+				warning("Efficiency unspecified - defaulted to %f for this inverter type",efficiency);
 				//defined above
 			}
 			if(inv_eta == 0){
 				inv_eta = 0.9;
 			} else if(inv_eta < 0){
-				gl_warning("Inverter efficiency must be positive--using default value");
+				warning("Inverter efficiency must be positive--using default value");
 				inv_eta = 0.9;
 			}
 			if(p_rated == 0){
 				//throw("Inverter must have a nonzero power rating.");
-				gl_warning("Inverter must have a nonzero power rating--using default value");
+				warning("Inverter must have a nonzero power rating--using default value");
 				p_rated = 25000;
 			}
 			if(number_of_phases_out == 1){
@@ -1154,19 +1154,19 @@ int inverter::init(OBJECT *parent)
 		switch(inverter_manufacturer){//all manufacturer defaults use the CEC parameters
 			case NONE:
 				if(p_dco < 0){
-					gl_error("no maximum dc power was given for the inverter.");
+					error("no maximum dc power was given for the inverter.");
 					return 0;
 				}
 				if(v_dco < 0){
-					gl_error("no maximum dc voltage was given for the inverter.");
+					error("no maximum dc voltage was given for the inverter.");
 					return 0;
 				}
 				if(p_so < 0){
-					gl_error("no minimum dc power was given for the inverter.");
+					error("no minimum dc power was given for the inverter.");
 					return 0;
 				}
 				if(p_rated <= 0){
-					gl_error("no rated per phase power was given for the inverter.");
+					error("no rated per phase power was given for the inverter.");
 					return 0;
 				} else {
 					switch (number_of_phases_out)
@@ -1355,11 +1355,11 @@ int inverter::init(OBJECT *parent)
 				break;
 		}
 		if(p_max > p_dco){
-			gl_error("The maximum dc power into the inverter cannot be less than the maximum ac power out.");
+			error("The maximum dc power into the inverter cannot be less than the maximum ac power out.");
 			return 0;
 		}
 		if(p_so > p_dco){
-			gl_error("The maximum dc power into the inverter cannot be less than the minimum dc power.");
+			error("The maximum dc power into the inverter cannot be less than the minimum dc power.");
 			return 0;
 		}
 	}
@@ -1391,15 +1391,15 @@ int inverter::init(OBJECT *parent)
 			Q4 = -0.50;
 		}
 		if (V1 > V2 || V2 > V3 || V3 > V4) {
-			gl_error("inverter::init(): The curve was not constructed properly. V1 <= V2 <= V3 <= V4 must be true.");
+			error("inverter::init(): The curve was not constructed properly. V1 <= V2 <= V3 <= V4 must be true.");
 			return 0;
 		}
 		if (Q1 < Q2 || Q2 < Q3 || Q3 < Q4) {
-			gl_error("inverter::init(): The curve was not constructed properly. Q1 >= Q2 >= Q3 >= Q4 must be true.");
+			error("inverter::init(): The curve was not constructed properly. Q1 >= Q2 >= Q3 >= Q4 must be true.");
 			return 0;
 		}
 		if (V_base == 0) {
-			gl_error("inverter::init(): The base voltage must be greater than 0.");
+			error("inverter::init(): The base voltage must be greater than 0.");
 			return 0;
 		}
 		if (V2 != V1) {
@@ -1422,7 +1422,7 @@ int inverter::init(OBJECT *parent)
 		b34 = Q3 - (m34 * V3);
 
 		if (vv_lockout < 0.0) {
-			gl_warning("volt var control lockout is 0. Warning this may cause oscillating behavior.");
+			warning("volt var control lockout is 0. Warning this may cause oscillating behavior.");
 			vv_lockout = 0;
 		}
 		allowed_vv_action = 0;
@@ -1438,7 +1438,7 @@ int inverter::init(OBJECT *parent)
 		//Check global, for giggles
 		if (enable_subsecond_models!=true)
 		{
-			gl_warning("inverter:%s indicates it wants to run deltamode, but the module-level flag is not set!",obj->name?obj->name:"unnamed");
+			warning("inverter:%s indicates it wants to run deltamode, but the module-level flag is not set!",obj->name?obj->name:"unnamed");
 			/*  TROUBLESHOOT
 			The diesel_dg object has the deltamode_inclusive flag set, but not the module-level enable_subsecond_models flag.  The generator
 			will not simulate any dynamics this way.
@@ -1532,7 +1532,7 @@ int inverter::init(OBJECT *parent)
 				freq_pointer = NULL;
 				enable_1547_compliance = false;
 
-				gl_warning("Inverter:%d %s does not have a valid parent - 1547 checks have been disabled",obj->id,(obj->name ? obj->name : "Unnamed"));
+				warning("Inverter:%d %s does not have a valid parent - 1547 checks have been disabled",obj->id,(obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
 				The IEEE 1547-2003 checks for interconnection require a valid powerflow parent.  One was not detected, so
 				this functionality has been detected.
@@ -1545,7 +1545,7 @@ int inverter::init(OBJECT *parent)
 	{
 		if (enable_subsecond_models == true)
 		{
-			gl_warning("inverter:%d %s - Deltamode is enabled for the module, but not this inverter!",obj->id,(obj->name ? obj->name : "Unnamed"));
+			warning("inverter:%d %s - Deltamode is enabled for the module, but not this inverter!",obj->id,(obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
 			The inverter is not flagged for deltamode operations, yet deltamode simulations are enabled for the overall system.  When deltamode
 			triggers, this inverter may no longer contribute to the system, until event-driven mode resumes.  This could cause issues with the simulation.
@@ -1590,16 +1590,16 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 				if (pf_reg_activate == -2)
 				{
 					pf_reg_activate = 0.80;
-					gl_warning("inverter:%s - pf_reg_activate undefined, setting to default value of 0.80.",obj->name);
+					warning("inverter:%s - pf_reg_activate undefined, setting to default value of 0.80.",obj->name);
 				}
 				if (pf_reg_deactivate == -1)
 				{
 					pf_reg_deactivate = 0.95;
-					gl_warning("inverter:%s - pf_reg_deactivate undefined, setting to default value of 0.95.",obj->name);
+					warning("inverter:%s - pf_reg_deactivate undefined, setting to default value of 0.95.",obj->name);
 				}
 				if (pf_reg_deactivate >= 0.99)
 				{
-					gl_warning("inverter:%s - Very high values pf_reg_deactivate (~ 0.99) may lead to inverter control oscillation.",obj->name);
+					warning("inverter:%s - Very high values pf_reg_deactivate (~ 0.99) may lead to inverter control oscillation.",obj->name);
 				}
 				if (pf_reg_activate > pf_reg_deactivate)
 				{
@@ -1611,7 +1611,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 				}
 				if (pf_reg_activate == pf_reg_deactivate)
 				{
-					gl_warning("inverter:%s - pf_reg_activate and pf_reg_deactivate are equal - pf regluation may not behave properly and/or oscillate.",obj->name);;
+					warning("inverter:%s - pf_reg_activate and pf_reg_deactivate are equal - pf regluation may not behave properly and/or oscillate.",obj->name);;
 				}
 			}
 		}
@@ -1630,7 +1630,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 				if (pf_target_var == -2.0)
 				{
 					pf_target_var = 0.95;
-					gl_warning("inverter:%s - pf_target_var is undefined, setting to a default value of 0.95",obj->name ? obj->name : "Unnamed");
+					warning("inverter:%s - pf_target_var is undefined, setting to a default value of 0.95",obj->name ? obj->name : "Unnamed");
 					/*  TROUBLESHOOT
 					A value was not specified for pf_pf_target_var.  This has been arbitrarily set to 0.95 lagging (inductive).  If this is not acceptable,
 					please specify the desired power factor value.
@@ -1640,7 +1640,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 				if (pf_reg_high == -2.0)
 				{
 					pf_reg_high = -0.95;
-					gl_warning("inverter:%s - pf_reg_high is undefined, setting to a default value of -0.95",obj->name ? obj->name : "Unnamed");
+					warning("inverter:%s - pf_reg_high is undefined, setting to a default value of -0.95",obj->name ? obj->name : "Unnamed");
 					/*  TROUBLESHOOT
 					A value was not specified for pf_reg_high.  This has been arbitrarily set to 0.95 leading (capacitive).  If this is not acceptable,
 					please specify the desired power factor value.
@@ -1650,7 +1650,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 				if (pf_reg_low == -2.0)
 				{
 					pf_reg_low = 0.97;
-					gl_warning("inverter:%s - pf_reg_low is undefined, setting to a default value of 0.97",obj->name ? obj->name : "Unnamed");
+					warning("inverter:%s - pf_reg_low is undefined, setting to a default value of 0.97",obj->name ? obj->name : "Unnamed");
 					/*  TROUBLESHOOT
 					A value was not specified for pf_reg_low.  This has been arbitrarily set to 0.97 lagging (inductive).  If this is not acceptable,
 					please specify the desired power factor value.
@@ -1715,7 +1715,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 				}
 				else if (max_charge_rate == 0)
 				{
-					gl_warning("inverter:%s - max_charge_rate is zero",obj->name);
+					warning("inverter:%s - max_charge_rate is zero",obj->name);
 					/*  TROUBLESHOOT
 					The max_charge_rate for the inverter is currently zero.  This will result
 					in no charging action by the inverter.  If this is not desired, please specify a valid
@@ -1733,7 +1733,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 				}
 				else if (max_discharge_rate == 0)
 				{
-					gl_warning("inverter:%s - max_discharge_rate is zero",obj->name);
+					warning("inverter:%s - max_discharge_rate is zero",obj->name);
 					/*  TROUBLESHOOT
 					The max_discharge_rate for the inverter is currently zero.  This will result
 					in no discharging action by the inverter.  If this is not desired, please specify a valid
@@ -1752,7 +1752,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 				}
 				else if (charge_on_threshold == charge_off_threshold)
 				{
-					gl_warning("inverter:%s - charge_on_threshold and charge_off_threshold are equal - may not behave properly!",obj->name);
+					warning("inverter:%s - charge_on_threshold and charge_off_threshold are equal - may not behave properly!",obj->name);
 					/*  TROUBLESHOOT
 					For proper LOAD_FOLLOWING operation, charge_on_threshold and charge_off_threshold should specify a deadband for operation.
 					If equal, the inverter may not operate properly and the system may never solve properly.
@@ -1770,7 +1770,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 				}
 				else if (discharge_on_threshold == discharge_off_threshold)
 				{
-					gl_warning("inverter:%s - discharge_on_threshold and discharge_off_threshold are equal - may not behave properly!",obj->name);
+					warning("inverter:%s - discharge_on_threshold and discharge_off_threshold are equal - may not behave properly!",obj->name);
 					/*  TROUBLESHOOT
 					For proper LOAD_FOLLOWING operation, discharge_on_threshold and discharge_off_threshold should specify a deadband for operation.
 					If equal, the inverter may not operate properly and the system may never solve properly.
@@ -1780,7 +1780,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 				//Combination of the two
 				if (discharge_off_threshold <= charge_off_threshold)
 				{
-					gl_warning("inverter:%s - discharge_off_threshold should be larger than the charge_off_threshold",obj->name);
+					warning("inverter:%s - discharge_off_threshold should be larger than the charge_off_threshold",obj->name);
 					/*  TROUBLESHOOT
 					For proper LOAD_FOLLOWING operation, the deadband for the inverter should not overlap.  Please specify a larger
 					range for the discharge and charge bands of operation and try again.  If the bands do overlap, unexpected behavior may occur.
@@ -1819,7 +1819,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 				}
 				else if (max_charge_rate == 0)
 				{
-					gl_warning("inverter:%s - group_max_charge_rate is zero.",obj->name);
+					warning("inverter:%s - group_max_charge_rate is zero.",obj->name);
 				}
 
 				if (group_max_discharge_rate < 0)
@@ -1828,7 +1828,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 				}
 				else if (group_max_discharge_rate == 0)
 				{
-					gl_warning("inverter:%s - group_max_discharge_rate is zero",obj->name);
+					warning("inverter:%s - group_max_discharge_rate is zero",obj->name);
 				}
 
 				if (group_rated_power <= 0)
@@ -1850,14 +1850,14 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 
 				if (charge_threshold == discharge_threshold)
 				{
-					gl_warning("inverter:%s - charge_threshold and discharge_threshold are equal - not recommended, oscillations may occur.",obj->name);
+					warning("inverter:%s - charge_threshold and discharge_threshold are equal - not recommended, oscillations may occur.",obj->name);
 				}
 
 
 				//Combination of the two
 				if (discharge_threshold < charge_threshold)
 				{
-					gl_error("inverter:%s - discharge_threshold must be larger than the charge_threshold",obj->name);
+					error("inverter:%s - discharge_threshold must be larger than the charge_threshold",obj->name);
 				}
 			} //t1 != t0
 		}// End FQM_GROUP_LF
@@ -2083,7 +2083,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 							VA_Out = 0;
 						} else {
 							if(V_In > v_dco){
-								gl_warning("The dc voltage is greater than the specified maximum for the inverter. Efficiency model may be inaccurate.");
+								warning("The dc voltage is greater than the specified maximum for the inverter. Efficiency model may be inaccurate.");
 							}
 							C1 = p_dco*(1+c_1*(V_In.Re()-v_dco));
 							C2 = p_so*(1+c_2*(V_In.Re()-v_dco));
@@ -2207,7 +2207,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						}
 						else
 						{
-							gl_warning("None of the phases specified have voltages!");
+							warning("None of the phases specified have voltages!");
 							phaseA_I_Out = phaseB_I_Out = phaseC_I_Out = complex(0.0,0.0);
 						}
 						pLine_I[0] += -phaseA_I_Out;
@@ -2226,7 +2226,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					/* TROUBLESHOOT
 					This will be worked on at a later date and is not yet correctly implemented.
 					*/
-					gl_verbose("inverter sync: constant pq");
+					verbose("inverter sync: constant pq");
 					//TODO
 					//gather V_Out for each phase
 					//gather V_In (DC) from line -- can not gather V_In, for now set equal to V_Out
@@ -2321,8 +2321,8 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					V_In = filter_voltage_impact_source(I_In, V_In);
 					I_In = filter_current_impact_source(I_In, V_In);
 
-					gl_verbose("Inverter sync: V_In asked for by inverter is: (%f , %f)", V_In.Re(), V_In.Im());
-					gl_verbose("Inverter sync: I_In asked for by inverter is: (%f , %f)", I_In.Re(), I_In.Im());
+					verbose("Inverter sync: V_In asked for by inverter is: (%f , %f)", V_In.Re(), V_In.Im());
+					verbose("Inverter sync: I_In asked for by inverter is: (%f , %f)", I_In.Re(), I_In.Im());
 
 
 					pLine_I[0] += phaseA_I_Out;
@@ -2341,7 +2341,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					/* TROUBLESHOOT
 					This will be worked on at a later date and is not yet correctly implemented.
 					*/
-					gl_verbose("inverter sync: constant v");
+					verbose("inverter sync: constant v");
 					bool changed = false;
 					
 					//TODO
@@ -2472,7 +2472,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					I_In = VA_In / V_In;
 					I_In  = ~I_In;
 					
-					gl_verbose("Inverter sync: I_In asked for by inverter is: (%f , %f)", I_In.Re(), I_In.Im());
+					verbose("Inverter sync: I_In asked for by inverter is: (%f , %f)", I_In.Re(), I_In.Im());
 
 					V_In = filter_voltage_impact_source(I_In, V_In);
 					I_In = filter_current_impact_source(I_In, V_In);
@@ -2583,7 +2583,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						//Make sure voltage isn't too low
 						if(V_In.Mag() > v_dco)
 						{
-							gl_warning("The dc voltage is greater than the specified maximum for the inverter. Efficiency model may be inaccurate.");
+							warning("The dc voltage is greater than the specified maximum for the inverter. Efficiency model may be inaccurate.");
 							/*  TROUBLESHOOT
 							The DC voltage at the input to the inverter is less than the maximum voltage supported by the inverter.  As a result, the
 							multipoint efficiency model may not provide a proper result.
@@ -2631,15 +2631,15 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					Q4 = -0.50;
 				}
 				if (V1 > V2 || V2 > V3 || V3 > V4) {
-					gl_error("inverter::init(): The curve was not constructed properly. V1 <= V2 <= V3 <= V4 must be true.");
+					error("inverter::init(): The curve was not constructed properly. V1 <= V2 <= V3 <= V4 must be true.");
 					return 0;
 				}
 				if (Q1 < Q2 || Q2 < Q3 || Q3 < Q4) {
-					gl_error("inverter::init(): The curve was not constructed properly. Q1 >= Q2 >= Q3 >= Q4 must be true.");
+					error("inverter::init(): The curve was not constructed properly. Q1 >= Q2 >= Q3 >= Q4 must be true.");
 					return 0;
 				}
 				if (V_base == 0) {
-					gl_error("inverter::init(): The base voltage must be greater than 0.");
+					error("inverter::init(): The base voltage must be greater than 0.");
 					return 0;
 				}
 				if (V2 != V1) {
@@ -2681,7 +2681,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						//Make sure voltage isn't too low
 						if(V_In.Mag() > v_dco)
 						{
-							gl_warning("The dc voltage is greater than the specified maximum for the inverter. Efficiency model may be inaccurate.");
+							warning("The dc voltage is greater than the specified maximum for the inverter. Efficiency model may be inaccurate.");
 							/*  TROUBLESHOOT
 							The DC voltage at the input to the inverter is less than the maximum voltage supported by the inverter.  As a result, the
 							multipoint efficiency model may not provide a proper result.
@@ -2757,12 +2757,12 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				//Ensuring battery has capacity to charge or discharge as needed.
 				if ((b_soc >= 1.0) && (temp_VA.Re() < 0) && (b_soc != -1))	//Battery full and positive influx of real power
 				{
-					gl_warning("inverter:%s - battery full - no charging allowed",obj->name);
+					warning("inverter:%s - battery full - no charging allowed",obj->name);
 					temp_VA.SetReal(0.0);	//Set to zero - reactive considerations may change this
 				}
 				else if ((b_soc <= soc_reserve) && (temp_VA.Re() > 0) && (b_soc != -1))	//Battery "empty" and attempting to extract real power
 				{
-					gl_warning("inverter:%s - battery at or below the SOC reserve - no discharging allowed",obj->name);
+					warning("inverter:%s - battery at or below the SOC reserve - no discharging allowed",obj->name);
 					temp_VA.SetReal(0.0);	//Set output to zero - again, reactive considerations may change this
 				}
 
@@ -2929,7 +2929,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				{
 					if ((b_soc == 1.0) && (VA_Out.Re() < 0) && (b_soc != -1))	//Battery full and positive influx of real power
 					{
-						gl_warning("inverter:%s - battery full - no charging allowed",obj->name);
+						warning("inverter:%s - battery full - no charging allowed",obj->name);
 						/*  TROUBLESHOOT
 						In LOAD_FOLLOWING mode, a full battery status was encountered.  The inverter is unable
 						to sink any further energy, so consumption was set to zero.
@@ -2938,7 +2938,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					}
 					else if ((b_soc <= soc_reserve) && (VA_Out.Re() > 0) && (b_soc != -1))	//Battery "empty" and attempting to extract real power
 					{
-						gl_warning("inverter:%s - battery at or below the SOC reserve - no discharging allowed",obj->name);
+						warning("inverter:%s - battery at or below the SOC reserve - no discharging allowed",obj->name);
 						/*  TROUBLESHOOT
 						In LOAD_FOLLOWING mode, a empty or "in the SOC reserve margin" battery was encountered and attempted
 						to discharge.  The inverter is unable to extract any further power, so the output is set to zero.
@@ -3248,7 +3248,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			}//End Battery has room
 			else	//Battery full, no charging allowed
 			{
-				gl_verbose("inverter:%s - charge desired, but battery full!",obj->name);
+				verbose("inverter:%s - charge desired, but battery full!",obj->name);
 				/*  TROUBLESHOOT
 				An inverter in LOAD_FOLLOWING mode currently wants to charge the battery more, but the battery
 				is full.  Consider using a larger battery and trying again.
@@ -3277,7 +3277,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				}//End Battery has room
 				else	//Battery full, no charging allowed
 				{
-					gl_verbose("inverter:%s - charge desired, but battery full!",obj->name);
+					verbose("inverter:%s - charge desired, but battery full!",obj->name);
 					//Defined above
 
 					new_lf_status = IDLE;			//Can't do anything, so we're idle
@@ -3304,7 +3304,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				}
 				else	//At or below reserve, go to idle
 				{
-					gl_verbose("inverter:%s - discharge desired, but not enough battery capacity!",obj->name);
+					verbose("inverter:%s - discharge desired, but not enough battery capacity!",obj->name);
 					/*  TROUBLESHOOT
 					An inverter in LOAD_FOLLOWING mode currently wants to discharge the battery more, but the battery
 					is at or below the SOC reserve margin.  Consider using a larger battery and trying again.
@@ -3360,7 +3360,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 			else	//At or below reserve, go to idle
 			{
-				gl_verbose("inverter:%s - discharge desired, but not enough battery capacity!",obj->name);
+				verbose("inverter:%s - discharge desired, but not enough battery capacity!",obj->name);
 				//Defined above
 
 				new_lf_status = IDLE;			//Can't do anything, so we're idle
@@ -3491,7 +3491,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			}//End Battery has room
 			else	//Battery full, no charging allowed
 			{
-				gl_verbose("inverter:%s - charge desired, but battery full!",obj->name);
+				verbose("inverter:%s - charge desired, but battery full!",obj->name);
 				/*  TROUBLESHOOT
 				An inverter in LOAD_FOLLOWING mode currently wants to charge the battery more, but the battery
 				is full.  Consider using a larger battery and trying again.
@@ -3545,7 +3545,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 			else	//At or below reserve, go to idle
 			{
-				gl_verbose("inverter:%s - discharge desired, but not enough battery capacity!",obj->name);
+				verbose("inverter:%s - discharge desired, but not enough battery capacity!",obj->name);
 				//Defined above
 
 				new_lf_status = IDLE;			//Can't do anything, so we're idle
@@ -4137,7 +4137,7 @@ STATUS inverter::pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time)
 
 	if (stat_val != SUCCESS)
 	{
-		gl_error("Inverter failed pre_deltaupdate call");
+		error("Inverter failed pre_deltaupdate call");
 		/*  TROUBLESHOOT
 		While attempting to call the pre_deltaupdate portion of the inverter code, an error
 		was encountered.  Please submit your code and a bug report via the ticketing system.
@@ -4804,7 +4804,7 @@ void inverter::update_control_references(void)
 			//Make sure voltage isn't too low
 			if(V_In.Mag() > v_dco)
 			{
-				gl_warning("The dc voltage is greater than the specified maximum for the inverter. Efficiency model may be inaccurate.");
+				warning("The dc voltage is greater than the specified maximum for the inverter. Efficiency model may be inaccurate.");
 				/*  TROUBLESHOOT
 				The DC voltage at the input to the inverter is less than the maximum voltage supported by the inverter.  As a result, the
 				multipoint efficiency model may not provide a proper result.
@@ -4866,12 +4866,12 @@ void inverter::update_control_references(void)
 		//Ensuring battery has capacity to charge or discharge as needed.
 		if ((b_soc >= 1.0) && (temp_VA.Re() < 0) && (b_soc != -1))	//Battery full and positive influx of real power
 		{
-			gl_warning("inverter:%s - battery full - no charging allowed",obj->name);
+			warning("inverter:%s - battery full - no charging allowed",obj->name);
 			temp_VA.SetReal(0.0);	//Set to zero - reactive considerations may change this
 		}
 		else if ((b_soc <= soc_reserve) && (temp_VA.Re() > 0) && (b_soc != -1))	//Battery "empty" and attempting to extract real power
 		{
-			gl_warning("inverter:%s - battery at or below the SOC reserve - no discharging allowed",obj->name);
+			warning("inverter:%s - battery at or below the SOC reserve - no discharging allowed",obj->name);
 			temp_VA.SetReal(0.0);	//Set output to zero - again, reactive considerations may change this
 		}
 
@@ -5115,7 +5115,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 		}
 		else	//Not sure how we get here in this present logic arrangement - toss an error
 		{
-			gl_error("Inverter 1547 Checks - invalid  state!");
+			error("Inverter 1547 Checks - invalid  state!");
 			/*  TROUBLESHOOT
 			While performing the IEEE 1547-2003 frequency and voltage checks, an unknown state occurred.  Please
 			try again.  If the error persists, please submit you GLM and a bug report via the ticketing system.
@@ -5252,7 +5252,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 				}
 				else	//must not have tripped a time limit
 				{
-					gl_error("Inverter 1547 Checks - invalid state!");
+					error("Inverter 1547 Checks - invalid state!");
 					//Defined above
 				}
 			}//End of a violation occurred
@@ -5353,7 +5353,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 		}
 		else	//must not have tripped a time limit
 		{
-			gl_error("Inverter 1547 Checks - invalid state!");
+			error("Inverter 1547 Checks - invalid state!");
 			//Defined above
 		}
 	}//End of a violation occurred
