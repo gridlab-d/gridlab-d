@@ -792,7 +792,7 @@ TIMESTAMP fncs_msg::clk_update(TIMESTAMP t1)
 		if(gl_globalclock == gl_globalstoptime){
 			return t1;
 		} else if (t1 > gl_globalstoptime && gl_globalclock < gl_globalstoptime){
-			t1 == gl_globalstoptime;
+			t1 = gl_globalstoptime;
 		}
 #if HAVE_FNCS
 		fncs::time t = 0;
