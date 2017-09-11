@@ -114,6 +114,7 @@ static unsigned int n_threads = 0;
 static pthread_t thread_id;
 static void *server_routine(void *arg)
 {
+	pthread_detach(pthread_self());
 	static int status = 0;
 	static int started = 0;
 	if (started)
@@ -1698,6 +1699,7 @@ int http_favicon(HTTPCNX *http)
  **/
 void *http_response(void *ptr)
 {
+	pthread_detach(pthread_self());
 	SOCKET fd = (SOCKET)ptr;
 	HTTPCNX *http = http_create(fd);
 	size_t len;
