@@ -242,10 +242,11 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 	PUBLISH_STRUCT(recorder,char32,xdata);
 	PUBLISH_STRUCT(recorder,char32,columns);
 	PUBLISH_STRUCT(recorder,int32,flush);
-    PUBLISH_STRUCT(recorder,bool,format);
+	PUBLISH_STRUCT(recorder,bool,format);
 	
 	if(gl_publish_variable(recorder_class,
 		PT_double, "interval[s]", ((char*)&(my.dInterval) - (char *)&my),
+		PT_char256,"strftime_format",((char*)&(my.strftime_format) - (char*)&my),
 		PT_enumeration, "output", ((char*)&(my.output) - (char *)&my),
 			PT_KEYWORD, "SCREEN", SCREEN,
 			PT_KEYWORD, "EPS",    EPS,

@@ -404,9 +404,13 @@ static TIMESTAMP recorder_write(OBJECT *obj)
 	{
 		if (my->last.ts>TS_ZERO)
 		{
-			DATETIME dt;
-			gl_localtime(my->last.ts,&dt);
-			gl_strtime(&dt,ts,sizeof(ts));
+			time_t t = (time_t)(my->last.ts);
+			if ( my->strftime_format[0]==0 || strftime(ts,sizeof(ts),(char*)(my->strftime_format),localtime(&t))==0 )
+			{
+				DATETIME dt;
+				gl_localtime(my->last.ts,&dt);
+				gl_strtime(&dt,ts,sizeof(ts));
+			}
 		}
 		/* else leave INIT in the buffer */
 	}

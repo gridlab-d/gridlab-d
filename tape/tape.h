@@ -146,7 +146,7 @@ struct recorder {
 	FILE *multifp, *inputfp;
 	int16 multirun_ct;
 	char1024 multirun_header;
-	int16 format; /* 0=YYYY-MM-DD HH:MM:SS; 1=timestamp */
+	int16 format; /* 0=YYYY-MM-DD HH:MM:SS or strftime_format if non-zero; 1=timestamp */
 	double dInterval;
 	TIMESTAMP interval;
 	int32 limit;
@@ -179,6 +179,7 @@ struct recorder {
 	} last;
 	int32 samples;
 	PROPERTY *target;
+	char256 strftime_format;
 };
 /** @}
 	@addtogroup collector
