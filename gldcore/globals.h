@@ -66,6 +66,8 @@ char *global_getvar(char *name, char *buffer, int size);
 int global_isdefined(char *name);
 void global_dump(void);
 size_t global_getcount(void);
+void global_restore(GLOBALVAR *pos);
+void global_push(char *name, char *value);
 
 /* MAJOR and MINOR version */
 GLOBAL unsigned global_version_major INIT(REV_MAJOR); /**< The software's major version */
@@ -315,6 +317,8 @@ GLOBAL char1024 global_svnroot INIT("http://gridlab-d.svn.sourceforge.net/svnroo
 GLOBAL char1024 global_wget_options INIT("maxsize:100MB;update:newer"); /**< maximum size of wget request */
 
 GLOBAL bool global_reinclude INIT(false); /**< allow the same include file to be included multiple times */
+
+GLOBAL bool global_relax_undefined_if INIT(false); /**< allow #if macro to handle undefined global variables */
 
 typedef enum {
 	DMC_MAIN		= 0x0000000000000001,

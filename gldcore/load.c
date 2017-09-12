@@ -6506,11 +6506,16 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			return FALSE;
 		}
 		value = global_getvar(var, buffer, 63);
-		if (value==NULL)
+		if ( value==NULL )
 		{
-			output_error_raw("%s(%d): %s is not defined", filename,linenum,var);
-			strcpy(line,"\n");
-			return FALSE;
+			if ( global_relax_undefined_if )
+				value = "";
+			else
+			{
+				output_error_raw("%s(%d): %s is not defined", filename,linenum,var);
+				strcpy(line,"\n");
+				return FALSE;
+			}
 		}
 		if (strcmp(op,"<")==0) { if (!(strcmp(value,val)<0)) suppress|=(1<<nesting); }
 		else if (strcmp(op,">")==0) { if (!(strcmp(value,val)>0)) suppress|=(1<<nesting); }
@@ -6544,6 +6549,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		char *term = strchr(line+8,' ');
 		char value[1024];
 		char oldfile[1024];
+		GLOBALVAR *old_stack = NULL;
 		if (term==NULL)
 		{
 			output_error_raw("%s(%d): %sinclude macro missing term",filename,linenum,MACRO);
@@ -6555,14 +6561,15 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		if ( sscanf(term,"using(%[^)])",value)==1 )
 		{
 			char *token, tmp[1024], *string=tmp;
+			old_stack = global_getnext(NULL);
 			strcpy(tmp,value);
 			while ( (token=strsep(&string, ",")) != NULL)
 			{
-				int old_strictnames = global_strictnames;
-				global_strictnames = FALSE;
-				if ( global_setvar(token)==FAILED )
+				char var[1024], val[1024];
+				if ( sscanf(token,"%[^=]=%[^\n]",var,val)!=2 )
 					output_error_raw("%s(%d): unabled to set global %s", filename, linenum, token);
-				global_strictnames = old_strictnames;
+				else
+					global_push(var,val);
 				global_reinclude = TRUE; // must enable reinclude for this to work more than once
 			}
 			term+=strlen(value)+7;
@@ -6583,6 +6590,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 				output_error_raw("%s(%d): #include failed",filename,linenum);
 				include_fail = 1;
 				strcpy(line,"\n");
+				if ( old_stack ) global_restore(old_stack);
 				return FALSE;
 			}
 			else
@@ -6599,6 +6607,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			IN_MYCONTEXT output_verbose("added C include for \"%s\"", value);
 			append_code("#include <%s>\n",value);
 			strcpy(line,"\n");
+			if ( old_stack ) global_restore(old_stack);
 			return TRUE;
 		}
 		else if ( sscanf(term, "[%[^]]]", value)==1 )
@@ -6612,6 +6621,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			if ( http==NULL )
 			{
 				output_error("%s(%d): unable to include [%s]", filename, linenum, value);
+				if ( old_stack ) global_restore(old_stack);
 				return FALSE;
 			}
 			
@@ -6632,6 +6642,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 				if ( fp==NULL )
 				{
 					output_error("%s(%d): unable to write temp file '%s'", filename, linenum, tmpname);
+					if ( old_stack ) global_restore(old_stack);
 					return FALSE;
 				}
 				fwrite(http->body.data,1,http->body.size,fp);
@@ -6646,11 +6657,13 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			if ( len<0 )
 			{
 				output_error("%s(%d): unable to include load [%s] from temp file '%s'", filename, linenum, value,tmpname);
+				if ( old_stack ) global_restore(old_stack);
 				return FALSE;
 			}
 			else
 			{
 				sprintf(line+len,"@%s;%d\n",filename,linenum);
+				if ( old_stack ) global_restore(old_stack);
 				return TRUE;
 			}
 		}
@@ -6660,6 +6673,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			if ( *eol == '\n' ) *eol = '\0';
 			output_error_raw("%s(%d): '#include %s' failed",filename,linenum, term);
 			strcpy(line,"\n");
+			if ( old_stack ) global_restore(old_stack);
 			return FALSE;
 		}
 	}
