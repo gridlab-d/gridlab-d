@@ -57,7 +57,7 @@
 #define HSE_MED_AIR_TEMP    11
 #define HSE_AVG_DEV_COOLING 12
 #define HSE_AVG_DEV_HEATING 13
-#define HSE_ARRAY_SIZE      18
+#define HSE_ARRAY_SIZE      14
 
 #define WH_MIN_ACTUAL_LOAD  0
 #define WH_MAX_ACTUAL_LOAD  1
