@@ -489,12 +489,12 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				measured_reactive_min_voltageD_in_interval[0] = measured_voltageD[0].Im();
 				measured_reactive_min_voltageD_in_interval[1] = measured_voltageD[1].Im();
 				measured_reactive_min_voltageD_in_interval[2] = measured_voltageD[2].Im();
-				measured_avg_voltage_mag_in_interval[0] = voltageA.Re();
-				measured_avg_voltage_mag_in_interval[1] = voltageB.Re();
-				measured_avg_voltage_mag_in_interval[2] = voltageC.Re();
-				measured_avg_voltageD_mag_in_interval[0] = measured_voltageD[0].Re();
-				measured_avg_voltageD_mag_in_interval[1] = measured_voltageD[1].Re();
-				measured_avg_voltageD_mag_in_interval[2] = measured_voltageD[2].Re();
+				measured_avg_voltage_mag_in_interval[0] = voltageA.Mag();
+				measured_avg_voltage_mag_in_interval[1] = voltageB.Mag();
+				measured_avg_voltage_mag_in_interval[2] = voltageC.Mag();
+				measured_avg_voltageD_mag_in_interval[0] = measured_voltageD[0].Mag();
+				measured_avg_voltageD_mag_in_interval[1] = measured_voltageD[1].Mag();
+				measured_avg_voltageD_mag_in_interval[2] = measured_voltageD[2].Mag();
 				last_measured_voltage[0] = voltageA;
 				last_measured_voltage[1] = voltageB;
 				last_measured_voltage[2] = voltageC;
@@ -507,7 +507,7 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 
 
-			if ((t1 > last_delta_timestamp) && (t1 <= last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) && (t1 != t0)) {
+			if ((t1 > last_delta_timestamp) && (t1 < last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) && (t1 != t0)) {
 				if (voltage_avg_count <= 0) {
 					last_measured_max_voltage_mag[0] = voltageA;
 					last_measured_max_voltage_mag[1] = voltageB;
