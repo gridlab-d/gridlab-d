@@ -17,6 +17,38 @@ using namespace std;
 CLASS *metrics_collector::oclass = NULL;
 CLASS *metrics_collector::pclass = NULL;
 metrics_collector *metrics_collector::defaults = NULL;
+PROPERTY *metrics_collector::propTriplexNomV = NULL;
+PROPERTY *metrics_collector::propTriplexV1 = NULL;
+PROPERTY *metrics_collector::propTriplexV2 = NULL;
+PROPERTY *metrics_collector::propTriplexV12 = NULL;
+PROPERTY *metrics_collector::propTriplexPrice = NULL;
+PROPERTY *metrics_collector::propTriplexP = NULL;
+PROPERTY *metrics_collector::propTriplexQ = NULL;
+PROPERTY *metrics_collector::propMeterNomV = NULL;
+PROPERTY *metrics_collector::propMeterVa = NULL;
+PROPERTY *metrics_collector::propMeterVb = NULL;
+PROPERTY *metrics_collector::propMeterVc = NULL;
+PROPERTY *metrics_collector::propMeterVab = NULL;
+PROPERTY *metrics_collector::propMeterVbc = NULL;
+PROPERTY *metrics_collector::propMeterVca = NULL;
+PROPERTY *metrics_collector::propMeterPrice = NULL;
+PROPERTY *metrics_collector::propMeterP = NULL;
+PROPERTY *metrics_collector::propMeterQ = NULL;
+PROPERTY *metrics_collector::propHouseLoad = NULL;
+PROPERTY *metrics_collector::propHouseHVAC = NULL;
+PROPERTY *metrics_collector::propHouseAirTemp = NULL;
+PROPERTY *metrics_collector::propHouseCoolSet = NULL;
+PROPERTY *metrics_collector::propHouseHeatSet = NULL;
+PROPERTY *metrics_collector::propWaterLoad = NULL;
+PROPERTY *metrics_collector::propInverterS = NULL;
+PROPERTY *metrics_collector::propCapCountA = NULL;
+PROPERTY *metrics_collector::propCapCountB = NULL;
+PROPERTY *metrics_collector::propCapCountC = NULL;
+PROPERTY *metrics_collector::propRegCountA = NULL;
+PROPERTY *metrics_collector::propRegCountB = NULL;
+PROPERTY *metrics_collector::propRegCountC = NULL;
+PROPERTY *metrics_collector::propSwingSubLoad = NULL;
+PROPERTY *metrics_collector::propSwingMeterS = NULL;
 
 void new_metrics_collector(MODULE *mod){
 	new metrics_collector(mod);
@@ -24,22 +56,21 @@ void new_metrics_collector(MODULE *mod){
 
 metrics_collector::metrics_collector(MODULE *mod){
 	if(oclass == NULL)
-		{
+	{
 #ifdef _DEBUG
 		gl_debug("construction metrics_collector class");
 #endif
 		oclass = gl_register_class(mod,"metrics_collector",sizeof(metrics_collector), PC_POSTTOPDOWN);
-        if(oclass == NULL)
-            GL_THROW("unable to register object class implemented by %s",__FILE__);
+    if(oclass == NULL)
+      GL_THROW("unable to register object class implemented by %s",__FILE__);
 
-        if(gl_publish_variable(oclass,
-			PT_double, "interval[s]", PADDR(interval_length_dbl), PT_DESCRIPTION, "Interval at which the metrics_collector output is stored in JSON format",
-
-			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+    if(gl_publish_variable(oclass,
+			PT_double, "interval[s]", PADDR(interval_length_dbl), PT_DESCRIPTION, "Interval at which the metrics_collector output is stored in JSON format",NULL) < 1) 
+			GL_THROW("unable to publish properties in %s",__FILE__);
 
 		defaults = this;
 		memset(this, 0, sizeof(metrics_collector));
-    }
+  }
 }
 
 int metrics_collector::isa(char *classname){
@@ -50,7 +81,7 @@ int metrics_collector::create(){
 
 	memcpy(this, defaults, sizeof(metrics_collector));
 
-	// Give default values to parameters related to triplex_meter
+	time_array = NULL;
 	real_power_array = NULL;
 	reactive_power_array = NULL;
 	voltage_vll_array = NULL;
@@ -71,10 +102,50 @@ int metrics_collector::create(){
 
 	// Interval related
 	interval_length = -1;
-	curr_index = last_index = 0;
+	curr_index = 0;
 	interval_length_dbl=-1.0;
 
 	strcpy (parent_name, "No name given");
+
+	propTriplexNomV = NULL;
+	propTriplexV1 = NULL;
+	propTriplexV2 = NULL;
+	propTriplexV12 = NULL;
+	propTriplexPrice = NULL;
+	propTriplexP = NULL;
+	propTriplexQ = NULL;
+
+	propMeterNomV = NULL;
+	propMeterVa = NULL;
+	propMeterVb = NULL;
+	propMeterVc = NULL;
+	propMeterVab = NULL;
+	propMeterVbc = NULL;
+	propMeterVca = NULL;
+	propMeterPrice = NULL;
+	propMeterP = NULL;
+	propMeterQ = NULL;
+
+	propHouseLoad = NULL;
+	propHouseHVAC = NULL;
+	propHouseAirTemp = NULL;
+	propHouseCoolSet = NULL;
+	propHouseHeatSet = NULL;
+
+	propWaterLoad = NULL;
+
+	propInverterS = NULL;
+
+	propCapCountA = NULL;
+	propCapCountB = NULL;
+	propCapCountC = NULL;
+
+	propRegCountA = NULL;
+	propRegCountB = NULL;
+	propRegCountC = NULL;
+
+	propSwingSubLoad = NULL;
+	propSwingMeterS = NULL;
 
 	return 1;
 }
@@ -96,16 +167,36 @@ int metrics_collector::init(OBJECT *parent){
 	// Find parent, if not defined, or if the parent is not a supported class, throw an exception
 	if (gl_object_isa(parent,"triplex_meter"))	{
 		parent_string = "triplex_meter";
-	} else if (gl_object_isa(parent,"house")) {
+		if (propTriplexNomV == NULL) propTriplexNomV = gl_get_property (parent, "nominal_voltage");
+		if (propTriplexPrice == NULL) propTriplexPrice = gl_get_property (parent, "price");
+		if (propTriplexP == NULL) propTriplexP = gl_get_property (parent, "measured_real_power");
+		if (propTriplexQ == NULL) propTriplexQ = gl_get_property (parent, "measured_reactive_power");
+		if (propTriplexV1 == NULL) propTriplexV1 = gl_get_property (parent, "voltage_1");
+		if (propTriplexV2 == NULL) propTriplexV2 = gl_get_property (parent, "voltage_2");
+		if (propTriplexV12 == NULL) propTriplexV12 = gl_get_property (parent, "voltage_12");
+	} else if (gl_object_isa(parent, "house")) {
 		parent_string = "house";
+		if (propHouseLoad == NULL) propHouseLoad = gl_get_property (parent, "total_load");
+		if (propHouseHVAC == NULL) propHouseHVAC = gl_get_property (parent, "hvac_load");
+		if (propHouseAirTemp == NULL) propHouseAirTemp = gl_get_property (parent, "air_temperature");
+		if (propHouseCoolSet == NULL) propHouseCoolSet = gl_get_property (parent, "cooling_setpoint");
+		if (propHouseHeatSet == NULL) propHouseHeatSet = gl_get_property (parent, "heating_setpoint");
 	} else if (gl_object_isa(parent,"waterheater")) {
 		parent_string = "waterheater";
+		if (propWaterLoad == NULL) propWaterLoad = gl_get_property (parent, "actual_load");
 	} else if (gl_object_isa(parent,"inverter")) {
 		parent_string = "inverter";
+		if (propInverterS == NULL) propInverterS = gl_get_property (parent, "VA_Out");
 	} else if (gl_object_isa(parent,"capacitor")) {
 		parent_string = "capacitor";
+		if (propCapCountA == NULL) propCapCountA = gl_get_property (parent, "cap_A_switch_count");
+		if (propCapCountB == NULL) propCapCountB = gl_get_property (parent, "cap_B_switch_count");
+		if (propCapCountC == NULL) propCapCountC = gl_get_property (parent, "cap_C_switch_count");
 	} else if (gl_object_isa(parent,"regulator")) {
 		parent_string = "regulator";
+		if (propRegCountA == NULL) propRegCountA = gl_get_property (parent, "tap_A_change_count");
+		if (propRegCountB == NULL) propRegCountB = gl_get_property (parent, "tap_B_change_count");
+		if (propRegCountC == NULL) propRegCountC = gl_get_property (parent, "tap_C_change_count");
 	} else if (gl_object_isa(parent,"substation")) {  // must be a swing bus
 		PROPERTY *pval = gl_get_property(parent,"bustype");
 		if ((pval==NULL) || (pval->ptype!=PT_enumeration))
@@ -124,14 +215,26 @@ int metrics_collector::init(OBJECT *parent){
 			return 0;
 		}
 		parent_string = "swingbus";
+		if (propSwingSubLoad == NULL) propSwingSubLoad = gl_get_property (parent, "distribution_load");
 	} else if (gl_object_isa(parent,"meter")) {
 		parent_string = "meter"; // unless it's a swing bus
+		if (propMeterNomV == NULL) propMeterNomV = gl_get_property (parent, "nominal_voltage");
+		if (propMeterPrice == NULL) propMeterPrice = gl_get_property (parent, "price");
+		if (propMeterP == NULL) propMeterP = gl_get_property (parent, "measured_real_power");
+		if (propMeterQ == NULL) propMeterQ = gl_get_property (parent, "measured_reactive_power");
+		if (propMeterVa == NULL) propMeterVa = gl_get_property (parent, "voltage_A");
+		if (propMeterVb == NULL) propMeterVb = gl_get_property (parent, "voltage_B");
+		if (propMeterVc == NULL) propMeterVc = gl_get_property (parent, "voltage_C");
+		if (propMeterVab == NULL) propMeterVab = gl_get_property (parent, "voltage_AB");
+		if (propMeterVbc == NULL) propMeterVbc = gl_get_property (parent, "voltage_BC");
+		if (propMeterVca == NULL) propMeterVca = gl_get_property (parent, "voltage_CA");
 		PROPERTY *pval = gl_get_property(parent,"bustype");
 		if ((pval!=NULL) && (pval->ptype==PT_enumeration))
 		{
 			enumeration *meter_bustype = (enumeration*)GETADDR(parent,pval);
 			if (*meter_bustype == 2) {
 				parent_string = "swingbus";
+				if (propSwingMeterS == NULL) propSwingMeterS = gl_get_property (parent, "measured_power");
 			}
 		}
 	} else {
@@ -252,13 +355,24 @@ int metrics_collector::init(OBJECT *parent){
 	}
 
 	// Check valid metrics_collector output interval
-	interval_length = (int64)(interval_length_dbl);
+	interval_length = (TIMESTAMP)(interval_length_dbl);
 	if(interval_length <= 0){
 		gl_error("metrics_collector::init(): invalid interval of %i, must be greater than 0", interval_length);
 		/* TROUBLESHOOT
 			The metrics_collector interval must be a positive number of seconds.
 		*/
 		return 0;
+	}
+
+	// need the time sample points for every parent type
+	time_array = (TIMESTAMP *)gl_malloc(interval_length*sizeof(TIMESTAMP));
+	if (time_array == NULL)
+	{
+		GL_THROW("metrics_collector %d::init(): Failed to allocate time array",obj->id);
+		/*  TROUBLESHOOT
+		While attempting to allocate the array, an error was encountered.
+		Please try again.  If the error persists, please submit a bug report via the Trac system.
+		*/
 	}
 
 	// Allocate the arrays based on the parent type
@@ -521,7 +635,6 @@ int metrics_collector::init(OBJECT *parent){
 
 	// Initialize tracking variables
 	curr_index = 0;
-	last_index = 0;
 
 	// Update time variables
 	last_write = gl_globalclock;
@@ -532,46 +645,33 @@ int metrics_collector::init(OBJECT *parent){
 	return 1;
 }
 
-TIMESTAMP metrics_collector::postsync(TIMESTAMP t0, TIMESTAMP t1){
-
+TIMESTAMP metrics_collector::postsync(TIMESTAMP t0, TIMESTAMP t1) {
 	// recalculate next_time, since we know commit() will fire
-	if(next_write <= t1){
-		interval_write = true;  // actually done below, in commit
-//		last_write = t1;
-//		next_write = t1 + interval_length;
+	if (next_write <= t1) {
+		write_now = true;  // actually done below, in commit
 	}
-
-//	// Return to the next write interval
-//	return next_write;
-	// Force to return to 1 sec later
 	return t1+1;  // TODO: this does not fire commit 1s later, if minstep is 60s
 }
 
 int metrics_collector::commit(TIMESTAMP t1){
 	OBJECT *obj = OBJECTHDR(this);
 
-    // read the parameters for each time step
-    if(0 == read_line(obj)){
-        gl_error("metrics_collector::commit(): error when reading the values");
-        return 0;
-    }
+  // read the parameters for each time step
+  if(0 == read_line(obj)){
+		gl_error("metrics_collector::commit(): error when reading the values");
+    return 0;
+  }
 
 	// if periodic interval, check for write
-	if(interval_write){
-        last_write = t1;
-        next_write = t1 + interval_length;
-        // obsolete because we don't wrap curr_index in the call to read_line
-        // TODO - replace with a different check
-//		if (curr_index != 0) {
-//			gl_error("metrics_collector::commit(): error when trying to write accumulated output during one interval, however curr_index indicates values are not completely obtained");
-//			return 0;
-//		}
-		if(0 == write_line(t1, obj)){
+	if (write_now) {
+    last_write = t1;
+    next_write = t1 + interval_length;  // TODO - don't we actually want last_write + interval_length
+		if (0 == write_line(t1, obj)) {
 			gl_error("metrics_collector::commit(): error when writing the values to JSON format");
 			return 0;
 		}
-		interval_write = false;
-        last_index = 0;  // TODO - we need to have array[0] = array[299], or circular queue (temporarily wrap in write_line)
+		write_now = false;
+    curr_index = 0;  // TODO - reset the collection interval
 	}
 
 	return 1;
@@ -582,30 +682,20 @@ int metrics_collector::commit(TIMESTAMP t1){
  **/
 int metrics_collector::read_line(OBJECT *obj){
 
-	// synch curr_index to the simulator time
-	curr_index = gl_globalclock - last_write;
-    if (curr_index > last_index) --curr_index;
-
-	// Check curr_index value
-	if (curr_index < 0 || curr_index >= interval_length) {
-		gl_error("metrics_collector::curr_index value exceeds the limit");
-		return 0;
-	}
+	// save the actual simulator time
+	time_array[curr_index] = gl_globalclock;
 
 	if (strcmp(parent_string, "triplex_meter") == 0) {
-		// Get power values
-		double realPower = *gl_get_double_by_name(obj->parent, "measured_real_power");
-		double reactivePower = *gl_get_double_by_name(obj->parent, "measured_reactive_power");
-		interpolate (real_power_array, last_index, curr_index, realPower);
-		interpolate (reactive_power_array, last_index, curr_index, reactivePower);
+		real_power_array[curr_index]  = *gl_get_double(obj->parent, propTriplexP);
+		reactive_power_array[curr_index] = *gl_get_double(obj->parent, propTriplexQ);
 
 		// Get bill value, price unit given in triplex_meter is [$/kWh]
-		price_parent = *gl_get_double_by_name(obj->parent, "price");
+		price_parent = *gl_get_double(obj->parent, propTriplexPrice);
 
 		// Get voltage values, s1 to ground, s2 to ground, s1 to s2
-		double v1 = (*gl_get_complex_by_name(obj->parent, "voltage_1")).Mag();  
-		double v2 = (*gl_get_complex_by_name(obj->parent, "voltage_2")).Mag();  
-		double v12 = (*gl_get_complex_by_name(obj->parent, "voltage_12")).Mag();
+		double v1 = (*gl_get_complex(obj->parent, propTriplexV1)).Mag();  
+		double v2 = (*gl_get_complex(obj->parent, propTriplexV2)).Mag();  
+		double v12 = (*gl_get_complex(obj->parent, propTriplexV12)).Mag();
 
 		// If it is at the starting time, record the voltage for violation analysis
 		if (start_time == gl_globalclock) {
@@ -614,24 +704,22 @@ int metrics_collector::read_line(OBJECT *obj){
 		// compliance with C84.1; unbalance defined as max deviation from average / average, here based on 1-N and 2-N
 		double vavg = 0.5 * (v1 + v2);
 
-		interpolate (voltage_vll_array, last_index, curr_index, fabs(v12));
-		interpolate (voltage_vln_array, last_index, curr_index, vavg);
-		interpolate (voltage_unbalance_array, last_index, curr_index, 0.5 * fabs(v1 - v2)/vavg);
+		voltage_vll_array[curr_index] = fabs(v12);
+		voltage_vln_array[curr_index] = vavg;
+		voltage_unbalance_array[curr_index] =  0.5 * fabs(v1 - v2)/vavg;
 	}
 	else if (strcmp(parent_string, "meter") == 0)
 	{
-		double realPower = *gl_get_double_by_name(obj->parent, "measured_real_power");
-		double reactivePower = *gl_get_double_by_name(obj->parent, "measured_reactive_power");
-		interpolate (real_power_array, last_index, curr_index, realPower);
-		interpolate (reactive_power_array, last_index, curr_index, reactivePower);
+		real_power_array[curr_index] = *gl_get_double(obj->parent, propMeterP);
+		reactive_power_array[curr_index] = *gl_get_double(obj->parent, propMeterQ);
 
 		// Get bill value, price unit given is [$/kWh]
-		price_parent = *gl_get_double_by_name(obj->parent, "price");
+		price_parent = *gl_get_double(obj->parent, propMeterPrice);
 
 		// assuming these are three-phase loads; this is the only difference with triplex meters 
-		double va = (*gl_get_complex_by_name(obj->parent, "voltage_A")).Mag();   
-		double vb = (*gl_get_complex_by_name(obj->parent, "voltage_B")).Mag();   
-		double vc = (*gl_get_complex_by_name(obj->parent, "voltage_C")).Mag();
+		double va = (*gl_get_complex(obj->parent, propMeterVa)).Mag();   
+		double vb = (*gl_get_complex(obj->parent, propMeterVb)).Mag();   
+		double vc = (*gl_get_complex(obj->parent, propMeterVc)).Mag();
 		double vavg = (va + vb + vc) / 3.0;
 		double vmin = va;
 		double vmax = va;
@@ -639,9 +727,9 @@ int metrics_collector::read_line(OBJECT *obj){
 		if (vb > vmax) vmax = vb;
 		if (vc < vmin) vmin = vc;
 		if (vc > vmax) vmax = vc;
-		double vab = (*gl_get_complex_by_name(obj->parent, "voltage_AB")).Mag();   
-		double vbc = (*gl_get_complex_by_name(obj->parent, "voltage_BC")).Mag();   
-		double vca = (*gl_get_complex_by_name(obj->parent, "voltage_CA")).Mag();
+		double vab = (*gl_get_complex(obj->parent, propMeterVab)).Mag();   
+		double vbc = (*gl_get_complex(obj->parent, propMeterVbc)).Mag();   
+		double vca = (*gl_get_complex(obj->parent, propMeterVca)).Mag();
 		double vll = (vab + vbc + vca) / 3.0;
 		// determine unbalance per C84.1
 		double vdev = fabs(vab - vll);
@@ -655,58 +743,46 @@ int metrics_collector::read_line(OBJECT *obj){
 			last_vol_val = vll;
 		}
 
-		interpolate (voltage_vll_array, last_index, curr_index, vll);  // Vll
-		interpolate (voltage_vln_array, last_index, curr_index, vavg);  // Vln
-		interpolate (voltage_unbalance_array, last_index, curr_index, vdev / vll); // max deviation from Vll / average Vll
+		voltage_vll_array[curr_index] = vll;  // Vll
+		voltage_vln_array[curr_index] = vavg;  // Vln
+		voltage_unbalance_array[curr_index] = vdev / vll; // max deviation from Vll / average Vll
 	} 
 	else if (strcmp(parent_string, "house") == 0)
 	{
-		// Get load values
-		double totalload = *gl_get_double_by_name(obj->parent, "total_load");
-		interpolate (total_load_array, last_index, curr_index, totalload);
-		double hvacload = *gl_get_double_by_name(obj->parent, "hvac_load");
-		interpolate (hvac_load_array, last_index, curr_index, hvacload);
-		// Get air temperature values
-		double airTemperature = *gl_get_double_by_name(obj->parent, "air_temperature");
-		interpolate (air_temperature_array, last_index, curr_index, airTemperature);
-		// Get air temperature deviation from house cooling setpoint
-		double cooling_setpoint = *gl_get_double_by_name(obj->parent, "cooling_setpoint");
-		interpolate (dev_cooling_array, last_index, curr_index, airTemperature - cooling_setpoint);
-		// Get air temperature deviation from house heating setpoint
-		double heating_setpoint = *gl_get_double_by_name(obj->parent, "heating_setpoint");
-		interpolate (dev_heating_array, last_index, curr_index, airTemperature - heating_setpoint);
+		total_load_array[curr_index] = *gl_get_double(obj->parent, propHouseLoad);
+		hvac_load_array[curr_index] = *gl_get_double(obj->parent, propHouseHVAC);
+		air_temperature_array[curr_index] = *gl_get_double(obj->parent, propHouseAirTemp);
+		dev_cooling_array[curr_index] = *gl_get_double(obj->parent, propHouseCoolSet);
+		dev_heating_array[curr_index] = *gl_get_double(obj->parent, propHouseHeatSet);
 	}
 	else if (strcmp(parent_string, "waterheater") == 0) {
-		// Get load values
-		double actualload = *gl_get_double_by_name(obj->parent, "actual_load");
-		interpolate (wh_load_array, last_index, curr_index, actualload);
+		wh_load_array[curr_index] = *gl_get_double(obj->parent, propWaterLoad);
 	}
 	else if (strcmp(parent_string, "inverter") == 0) {
-		// Get VA_Out values
-		complex VAOut = *gl_get_complex_by_name(obj->parent, "VA_Out");
-		interpolate (real_power_array, last_index, curr_index, (double)VAOut.Re());
-		interpolate (reactive_power_array, last_index, curr_index, (double)VAOut.Im());
+		complex VAOut = *gl_get_complex(obj->parent, propInverterS);
+		real_power_array[curr_index] = (double)VAOut.Re();
+		reactive_power_array[curr_index] = (double)VAOut.Im();
 	}
 	else if (strcmp(parent_string, "capacitor") == 0) {
-		double opcount = *gl_get_double_by_name(obj->parent, "cap_A_switch_count")
-			+ *gl_get_double_by_name(obj->parent, "cap_B_switch_count") + *gl_get_double_by_name(obj->parent, "cap_C_switch_count");
-		interpolate (count_array, last_index, curr_index, opcount);
+		double opcount = *gl_get_double(obj->parent, propCapCountA)
+			+ *gl_get_double(obj->parent, propCapCountB) + *gl_get_double(obj->parent, propCapCountC);
+		count_array[curr_index] = opcount;
 	}
 	else if (strcmp(parent_string, "regulator") == 0) {
-		double opcount = *gl_get_double_by_name(obj->parent, "tap_A_change_count")
-			+ *gl_get_double_by_name(obj->parent, "tap_B_change_count") + *gl_get_double_by_name(obj->parent, "tap_C_change_count");
-		interpolate (count_array, last_index, curr_index, opcount);
+		double opcount = *gl_get_double(obj->parent, propRegCountA)
+			+ *gl_get_double(obj->parent, propRegCountB) + *gl_get_double(obj->parent, propRegCountC);
+		count_array[curr_index] = opcount;
 	}
 	else if (strcmp(parent_string, "swingbus") == 0) {
 		// Get VAfeeder values
 		complex VAfeeder;
 		if (gl_object_isa(obj->parent,"substation")) {
-			VAfeeder = *gl_get_complex_by_name(obj->parent, "distribution_load");
+			VAfeeder = *gl_get_complex(obj->parent, propSwingSubLoad);
 		} else {
-			VAfeeder = *gl_get_complex_by_name(obj->parent, "measured_power");
+			VAfeeder = *gl_get_complex(obj->parent, propSwingMeterS);
 		}
-		interpolate (real_power_array, last_index, curr_index, (double)VAfeeder.Re());
-		interpolate (reactive_power_array, last_index, curr_index, (double)VAfeeder.Im());
+		real_power_array[curr_index] = (double)VAfeeder.Re();
+		reactive_power_array[curr_index] = (double)VAfeeder.Im();
 		// Get feeder loss values
 		// Losses calculation
 		int index = 0;
@@ -743,8 +819,8 @@ int metrics_collector::read_line(OBJECT *obj){
 			index++;
 		}
 		// Put the loss value into the array
-		interpolate (real_power_loss_array, last_index, curr_index, (double)lossesSum.Re());
-		interpolate (reactive_power_loss_array, last_index, curr_index, (double)lossesSum.Im());
+		real_power_loss_array[curr_index] = (double)lossesSum.Re();
+		reactive_power_loss_array[curr_index] = (double)lossesSum.Im();
 	}
 	// else not possible come to this step
 	else {
@@ -758,9 +834,9 @@ int metrics_collector::read_line(OBJECT *obj){
 
 
 	// Update index value
-	last_index = curr_index;
+	++curr_index;
 	if (curr_index == interval_length) {
-		curr_index = 0; // Reset index to 0 for the next interval records
+		curr_index = 0; // TODO: this should throw an error
 	}
 	return 1;
 }
@@ -778,176 +854,181 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 	double svP, svQ, svPL, svQL, svHVAC, svTotal, svWH, svAir; // these are to wrap arrays that were passed to findMedian
 
 	if ((strcmp(parent_string, "triplex_meter") == 0) || (strcmp(parent_string, "meter") == 0)) {
-		svP = real_power_array[interval_length - 1];
-		svQ = reactive_power_array[interval_length - 1];
+		svP = real_power_array[curr_index - 1];
+		svQ = reactive_power_array[curr_index - 1];
 		// Rearranging the arrays of data, and put into the dictionary
 		// Real power data
-		metrics[MTR_MIN_REAL_POWER] = findMin(real_power_array, interval_length);
-		metrics[MTR_MAX_REAL_POWER] = findMax(real_power_array, interval_length);
-		metrics[MTR_AVG_REAL_POWER] = findAverage(real_power_array, interval_length);
+		metrics[MTR_MIN_REAL_POWER] = findMin(real_power_array, curr_index);
+		metrics[MTR_MAX_REAL_POWER] = findMax(real_power_array, curr_index);
+		metrics[MTR_AVG_REAL_POWER] = findAverage(real_power_array, curr_index);
 
 		// Reactive power data
-		metrics[MTR_MIN_REAC_POWER] = findMin(reactive_power_array, interval_length);
-		metrics[MTR_MAX_REAC_POWER] = findMax(reactive_power_array, interval_length);
-		metrics[MTR_AVG_REAC_POWER] = findAverage(reactive_power_array, interval_length);
+		metrics[MTR_MIN_REAC_POWER] = findMin(reactive_power_array, curr_index);
+		metrics[MTR_MAX_REAC_POWER] = findMax(reactive_power_array, curr_index);
+		metrics[MTR_AVG_REAC_POWER] = findAverage(reactive_power_array, curr_index);
 
 		// Energy data
-		metrics[MTR_REAL_ENERGY] = findAverage(real_power_array, interval_length) * interval_write / 3600;
-		metrics[MTR_REAC_ENERGY] = findAverage(reactive_power_array, interval_length) * interval_write / 3600;
+		metrics[MTR_REAL_ENERGY] = findAverage(real_power_array, curr_index) * interval_length / 3600;
+		metrics[MTR_REAC_ENERGY] = findAverage(reactive_power_array, curr_index) * interval_length / 3600;
 
 		// Bill - TODO?
 		metrics[MTR_BILL] = metrics[MTR_REAL_ENERGY] * price_parent / 1000; // price unit given is [$/kWh]
 
 		// Phase 1 to 2 voltage data
-		metrics[MTR_MIN_VLL] = findMin(voltage_vll_array, interval_length);
-		metrics[MTR_MAX_VLL] = findMax(voltage_vll_array, interval_length);
-		metrics[MTR_AVG_VLL] = findAverage(voltage_vll_array, interval_length);
+		metrics[MTR_MIN_VLL] = findMin(voltage_vll_array, curr_index);
+		metrics[MTR_MAX_VLL] = findMax(voltage_vll_array, curr_index);
+		metrics[MTR_AVG_VLL] = findAverage(voltage_vll_array, curr_index);
 
 		// Phase 1 to 2 average voltage data
-		metrics[MTR_MIN_VLN] = findMin(voltage_vln_array, interval_length);
-		metrics[MTR_MAX_VLN] = findMax(voltage_vln_array, interval_length);
-		metrics[MTR_AVG_VLN] = findAverage(voltage_vln_array, interval_length);
+		metrics[MTR_MIN_VLN] = findMin(voltage_vln_array, curr_index);
+		metrics[MTR_MAX_VLN] = findMax(voltage_vln_array, curr_index);
+		metrics[MTR_AVG_VLN] = findAverage(voltage_vln_array, curr_index);
 
 		// Voltage unbalance data
-		metrics[MTR_MIN_VUNB] = findMin(voltage_unbalance_array, interval_length);
-		metrics[MTR_MAX_VUNB] = findMax(voltage_unbalance_array, interval_length);
-		metrics[MTR_AVG_VUNB] = findAverage(voltage_unbalance_array, interval_length);
+		metrics[MTR_MIN_VUNB] = findMin(voltage_unbalance_array, curr_index);
+		metrics[MTR_MAX_VUNB] = findMax(voltage_unbalance_array, curr_index);
+		metrics[MTR_AVG_VUNB] = findAverage(voltage_unbalance_array, curr_index);
 
 		// Voltage above/below ANSI C84 A/B Range
-		double normVol = *gl_get_double_by_name(obj->parent, "nominal_voltage");
-		double aboveRangeA = normVol* 1.05 * (std::sqrt(3));
-		double belowRangeA = normVol* 0.95 * (std::sqrt(3));
-		double aboveRangeB = normVol* 1.058 * (std::sqrt(3));
-		double belowRangeB = normVol* 0.917 * (std::sqrt(3));
+		double normVol = 1.0;
+		if (strcmp(parent_string, "triplex_meter") == 0) {
+			normVol = *gl_get_double(obj->parent, propTriplexNomV);
+		} else {
+			normVol = *gl_get_double(obj->parent, propMeterNomV);
+		}
+		double aboveRangeA = normVol * 1.05 * (std::sqrt(3));
+		double belowRangeA = normVol * 0.95 * (std::sqrt(3));
+		double aboveRangeB = normVol * 1.058 * (std::sqrt(3));
+		double belowRangeB = normVol * 0.917 * (std::sqrt(3));
 		// Voltage above Range A
-		struct vol_violation vol_Vio = findOutLimit(last_vol_val, voltage_vll_array, true, aboveRangeA, interval_length);
+		struct vol_violation vol_Vio = findOutLimit(last_vol_val, voltage_vll_array, true, aboveRangeA, curr_index);
 		metrics[MTR_ABOVE_A_DUR] = vol_Vio.durationViolation;
 		metrics[MTR_ABOVE_A_CNT] = vol_Vio.countViolation;
 		// Voltage below Range A
-		vol_Vio = findOutLimit(last_vol_val, voltage_vll_array, false, belowRangeA, interval_length);
+		vol_Vio = findOutLimit(last_vol_val, voltage_vll_array, false, belowRangeA, curr_index);
 		metrics[MTR_BELOW_A_DUR] = vol_Vio.durationViolation;
 		metrics[MTR_BELOW_A_CNT] = vol_Vio.countViolation;
 		// Voltage above Range B
-		vol_Vio = findOutLimit(last_vol_val, voltage_vll_array, true, aboveRangeB, interval_length);
+		vol_Vio = findOutLimit(last_vol_val, voltage_vll_array, true, aboveRangeB, curr_index);
 		metrics[MTR_ABOVE_B_DUR] = vol_Vio.durationViolation;
 		metrics[MTR_ABOVE_B_CNT] = vol_Vio.countViolation;
 		// Voltage below Range B
-		vol_Vio = findOutLimit(last_vol_val, voltage_vll_array, false, belowRangeB, interval_length);
+		vol_Vio = findOutLimit(last_vol_val, voltage_vll_array, false, belowRangeB, curr_index);
 		metrics[MTR_BELOW_B_DUR] = vol_Vio.durationViolation;
 		metrics[MTR_BELOW_B_CNT] = vol_Vio.countViolation;
 
 		// Voltage below 10% of the norminal voltage rating
 		double belowNorVol10 = normVol * 0.1;
-		vol_Vio = findOutLimit(last_vol_val, voltage_vll_array, false, belowNorVol10, interval_length);
+		vol_Vio = findOutLimit(last_vol_val, voltage_vll_array, false, belowNorVol10, curr_index);
 		metrics[MTR_BELOW_10_DUR] = vol_Vio.durationViolation;
 		metrics[MTR_BELOW_10_CNT] = vol_Vio.countViolation;
 
 		// Update the lastVol value based on this metrics interval value
-		last_vol_val = voltage_vll_array[interval_length - 1];
+		last_vol_val = voltage_vll_array[curr_index - 1];
 
 		// wrap the arrays for next collection interval (TODO circular queue)
 		real_power_array[0] = svP;
 		reactive_power_array[0] = svQ;
-		voltage_vll_array[0] = voltage_vll_array[interval_length - 1];
-		voltage_vln_array[0] = voltage_vln_array[interval_length - 1];
-		voltage_unbalance_array[0] = voltage_unbalance_array[interval_length - 1];
+		voltage_vll_array[0] = voltage_vll_array[curr_index - 1];
+		voltage_vln_array[0] = voltage_vln_array[curr_index - 1];
+		voltage_unbalance_array[0] = voltage_unbalance_array[curr_index - 1];
 	}
 	// If parent is house
 	else if (strcmp(parent_string, "house") == 0) {
-		svTotal = total_load_array[interval_length - 1];
-		svHVAC = hvac_load_array[interval_length - 1];
-		svAir = air_temperature_array[interval_length - 1];
+		svTotal = total_load_array[curr_index - 1];
+		svHVAC = hvac_load_array[curr_index - 1];
+		svAir = air_temperature_array[curr_index - 1];
 		// Rearranging the arrays of data, and put into the dictionary
 		// total_load data
-		metrics[HSE_MIN_TOTAL_LOAD] = findMin(total_load_array, interval_length);
-		metrics[HSE_MAX_TOTAL_LOAD] = findMax(total_load_array, interval_length);
-		metrics[HSE_AVG_TOTAL_LOAD] = findAverage(total_load_array, interval_length);
+		metrics[HSE_MIN_TOTAL_LOAD] = findMin(total_load_array, curr_index);
+		metrics[HSE_MAX_TOTAL_LOAD] = findMax(total_load_array, curr_index);
+		metrics[HSE_AVG_TOTAL_LOAD] = findAverage(total_load_array, curr_index);
 
 		// hvac_load data
-		metrics[HSE_MIN_HVAC_LOAD] = findMin(hvac_load_array, interval_length);
-		metrics[HSE_MAX_HVAC_LOAD] = findMax(hvac_load_array, interval_length);
-		metrics[HSE_AVG_HVAC_LOAD] = findAverage(hvac_load_array, interval_length);
+		metrics[HSE_MIN_HVAC_LOAD] = findMin(hvac_load_array, curr_index);
+		metrics[HSE_MAX_HVAC_LOAD] = findMax(hvac_load_array, curr_index);
+		metrics[HSE_AVG_HVAC_LOAD] = findAverage(hvac_load_array, curr_index);
 
 		// air_temperature data
-		metrics[HSE_MIN_AIR_TEMP] = findMin(air_temperature_array, interval_length);
-		metrics[HSE_MAX_AIR_TEMP] = findMax(air_temperature_array, interval_length);
-		metrics[HSE_AVG_AIR_TEMP] = findAverage(air_temperature_array, interval_length);
-		metrics[HSE_AVG_DEV_COOLING] = findAverage(dev_cooling_array, interval_length);
-		metrics[HSE_AVG_DEV_HEATING] = findAverage(dev_heating_array, interval_length);
+		metrics[HSE_MIN_AIR_TEMP] = findMin(air_temperature_array, curr_index);
+		metrics[HSE_MAX_AIR_TEMP] = findMax(air_temperature_array, curr_index);
+		metrics[HSE_AVG_AIR_TEMP] = findAverage(air_temperature_array, curr_index);
+		metrics[HSE_AVG_DEV_COOLING] = findAverage(dev_cooling_array, curr_index);
+		metrics[HSE_AVG_DEV_HEATING] = findAverage(dev_heating_array, curr_index);
 
 		// wrap the arrays for next collection interval (TODO circular queue)
 		total_load_array[0] = svTotal;
 		hvac_load_array[0] = svHVAC;
 		air_temperature_array[0] = svAir;
-		dev_cooling_array[0] = dev_cooling_array[interval_length - 1];
-		dev_heating_array[0] = dev_heating_array[interval_length - 1];
+		dev_cooling_array[0] = dev_cooling_array[curr_index - 1];
+		dev_heating_array[0] = dev_heating_array[curr_index - 1];
 	}
 	// If parent is waterheater
 	else if (strcmp(parent_string, "waterheater") == 0) {
-		svWH = wh_load_array[interval_length - 1];
+		svWH = wh_load_array[curr_index - 1];
 		// Rearranging the arrays of data, and put into the dictionary
 		// wh_load data
-		metrics[WH_MIN_ACTUAL_LOAD] = findMin(wh_load_array, interval_length);
-		metrics[WH_MAX_ACTUAL_LOAD] = findMax(wh_load_array, interval_length);
-		metrics[WH_AVG_ACTUAL_LOAD] = findAverage(wh_load_array, interval_length);
+		metrics[WH_MIN_ACTUAL_LOAD] = findMin(wh_load_array, curr_index);
+		metrics[WH_MAX_ACTUAL_LOAD] = findMax(wh_load_array, curr_index);
+		metrics[WH_AVG_ACTUAL_LOAD] = findAverage(wh_load_array, curr_index);
 
 		// wrap the arrays for next collection interval (TODO circular queue)
 		wh_load_array[0] = svWH;
 	}
 	else if (strcmp(parent_string, "inverter") == 0) {
-		svP = real_power_array[interval_length - 1];
-		svQ = reactive_power_array[interval_length - 1];
+		svP = real_power_array[curr_index - 1];
+		svQ = reactive_power_array[curr_index - 1];
 		// Rearranging the arrays of data, and put into the dictionary
 		// real power data
-		metrics[INV_MIN_REAL_POWER] = findMin(real_power_array, interval_length);
-		metrics[INV_MAX_REAL_POWER] = findMax(real_power_array, interval_length);
-		metrics[INV_AVG_REAL_POWER] = findAverage(real_power_array, interval_length);
+		metrics[INV_MIN_REAL_POWER] = findMin(real_power_array, curr_index);
+		metrics[INV_MAX_REAL_POWER] = findMax(real_power_array, curr_index);
+		metrics[INV_AVG_REAL_POWER] = findAverage(real_power_array, curr_index);
 		// Reactive power data
-		metrics[INV_MIN_REAC_POWER] = findMin(reactive_power_array, interval_length);
-		metrics[INV_MAX_REAC_POWER] = findMax(reactive_power_array, interval_length);
-		metrics[INV_AVG_REAC_POWER] = findAverage(reactive_power_array, interval_length);
+		metrics[INV_MIN_REAC_POWER] = findMin(reactive_power_array, curr_index);
+		metrics[INV_MAX_REAC_POWER] = findMax(reactive_power_array, curr_index);
+		metrics[INV_AVG_REAC_POWER] = findAverage(reactive_power_array, curr_index);
 		// wrap the arrays for next collection interval (TODO circular queue)
 		real_power_array[0] = svP;
 		reactive_power_array[0] = svQ;
 	}
 	else if (strcmp(parent_string, "capacitor") == 0) {
-		metrics[CAP_OPERATION_CNT] = findMax(count_array, interval_length);
+		metrics[CAP_OPERATION_CNT] = findMax(count_array, curr_index);
 		// wrap the arrays for next collection interval (TODO circular queue) 
-		count_array[0] = count_array[interval_length - 1];
+		count_array[0] = count_array[curr_index - 1];
 	}
 	else if (strcmp(parent_string, "regulator") == 0) {
-		metrics[REG_OPERATION_CNT] = findMax(count_array, interval_length);
+		metrics[REG_OPERATION_CNT] = findMax(count_array, curr_index);
 		// wrap the arrays for next collection interval (TODO circular queue) 
-		count_array[0] = count_array[interval_length - 1];
+		count_array[0] = count_array[curr_index - 1];
 	}
 	else if (strcmp(parent_string, "swingbus") == 0) {
-		svP = real_power_array[interval_length - 1];
-		svQ = reactive_power_array[interval_length - 1];
-		svPL = real_power_loss_array[interval_length - 1];
-		svQL = reactive_power_loss_array[interval_length - 1];
+		svP = real_power_array[curr_index - 1];
+		svQ = reactive_power_array[curr_index - 1];
+		svPL = real_power_loss_array[curr_index - 1];
+		svQL = reactive_power_loss_array[curr_index - 1];
 		// real power data
-		metrics[FDR_MIN_REAL_POWER] = findMin(real_power_array, interval_length);
-		metrics[FDR_MAX_REAL_POWER] = findMax(real_power_array, interval_length);
-		metrics[FDR_AVG_REAL_POWER] = findAverage(real_power_array, interval_length);
-		metrics[FDR_MED_REAL_POWER] = findMedian(real_power_array, interval_length);
+		metrics[FDR_MIN_REAL_POWER] = findMin(real_power_array, curr_index);
+		metrics[FDR_MAX_REAL_POWER] = findMax(real_power_array, curr_index);
+		metrics[FDR_AVG_REAL_POWER] = findAverage(real_power_array, curr_index);
+		metrics[FDR_MED_REAL_POWER] = findMedian(real_power_array, curr_index);
 		// Reactive power data    
-		metrics[FDR_MIN_REAC_POWER] = findMin(reactive_power_array, interval_length);
-		metrics[FDR_MAX_REAC_POWER] = findMax(reactive_power_array, interval_length);
-		metrics[FDR_AVG_REAC_POWER] = findAverage(reactive_power_array, interval_length);
-		metrics[FDR_MED_REAC_POWER] = findMedian(reactive_power_array, interval_length);
+		metrics[FDR_MIN_REAC_POWER] = findMin(reactive_power_array, curr_index);
+		metrics[FDR_MAX_REAC_POWER] = findMax(reactive_power_array, curr_index);
+		metrics[FDR_AVG_REAC_POWER] = findAverage(reactive_power_array, curr_index);
+		metrics[FDR_MED_REAC_POWER] = findMedian(reactive_power_array, curr_index);
 		// Energy data
-		metrics[FDR_REAL_ENERGY] = findAverage(real_power_array, interval_length) * interval_write / 3600;
-		metrics[FDR_REAC_ENERGY] = findAverage(reactive_power_array, interval_length) * interval_write / 3600;
+		metrics[FDR_REAL_ENERGY] = findAverage(real_power_array, curr_index) * interval_length / 3600;
+		metrics[FDR_REAC_ENERGY] = findAverage(reactive_power_array, curr_index) * interval_length / 3600;
 		// real power loss data
-		metrics[FDR_MIN_REAL_LOSS] = findMin(real_power_loss_array, interval_length);
-		metrics[FDR_MAX_REAL_LOSS] = findMax(real_power_loss_array, interval_length);
-		metrics[FDR_AVG_REAL_LOSS] = findAverage(real_power_loss_array, interval_length);
-		metrics[FDR_MED_REAL_LOSS] = findMedian(real_power_loss_array, interval_length);
+		metrics[FDR_MIN_REAL_LOSS] = findMin(real_power_loss_array, curr_index);
+		metrics[FDR_MAX_REAL_LOSS] = findMax(real_power_loss_array, curr_index);
+		metrics[FDR_AVG_REAL_LOSS] = findAverage(real_power_loss_array, curr_index);
+		metrics[FDR_MED_REAL_LOSS] = findMedian(real_power_loss_array, curr_index);
 		// Reactive power data    
-		metrics[FDR_MIN_REAC_LOSS] = findMin(reactive_power_loss_array, interval_length);
-		metrics[FDR_MAX_REAC_LOSS] = findMax(reactive_power_loss_array, interval_length);
-		metrics[FDR_AVG_REAC_LOSS] = findAverage(reactive_power_loss_array, interval_length);
-		metrics[FDR_MED_REAC_LOSS] = findMedian(reactive_power_loss_array, interval_length);
+		metrics[FDR_MIN_REAC_LOSS] = findMin(reactive_power_loss_array, curr_index);
+		metrics[FDR_MAX_REAC_LOSS] = findMax(reactive_power_loss_array, curr_index);
+		metrics[FDR_AVG_REAC_LOSS] = findAverage(reactive_power_loss_array, curr_index);
+		metrics[FDR_MED_REAC_LOSS] = findMedian(reactive_power_loss_array, curr_index);
 
 		// wrap the arrays for next collection interval (TODO circular queue)
 		real_power_array[0] = svP;
@@ -1000,15 +1081,14 @@ double metrics_collector::findMin(double array[], int length) {
 }
 
 double metrics_collector::findAverage(double array[], int length) {
-	double avg = 0;
-
-	for (int i = 0; i < length; i++) {
-		avg += array[i];
+	if (length < 2) return array[0];
+	double sum = 0;
+	double tlen = time_array[length-1] - time_array[0];
+	for (int i = 1; i < length; i++) {
+		double dA = 0.5 * (array[i] + array[i-1]) * (time_array[i] - time_array[i-1]);
+		sum += dA;
 	}
-
-	avg = double(avg) / length;
-
-	return avg;
+	return sum / tlen;
 }
 
 double metrics_collector::findMedian(double array[], int length) {

@@ -134,11 +134,52 @@ private:
 	double findMedian(double array[], int size);
 	vol_violation findOutLimit(double lastVol, double array[], bool checkAbove, double limitVal, int size);
 
+	// saved class properties of my parent object
+	static PROPERTY *propTriplexNomV;
+	static PROPERTY *propTriplexV1;
+	static PROPERTY *propTriplexV2;
+	static PROPERTY *propTriplexV12;
+	static PROPERTY *propTriplexPrice;
+	static PROPERTY *propTriplexP;
+	static PROPERTY *propTriplexQ;
+
+	static PROPERTY *propMeterNomV;
+	static PROPERTY *propMeterVa;
+	static PROPERTY *propMeterVb;
+	static PROPERTY *propMeterVc;
+	static PROPERTY *propMeterVab;
+	static PROPERTY *propMeterVbc;
+	static PROPERTY *propMeterVca;
+	static PROPERTY *propMeterPrice;
+	static PROPERTY *propMeterP;
+	static PROPERTY *propMeterQ;
+
+	static PROPERTY *propHouseLoad;
+	static PROPERTY *propHouseHVAC;
+	static PROPERTY *propHouseAirTemp;
+	static PROPERTY *propHouseCoolSet;
+	static PROPERTY *propHouseHeatSet;
+
+	static PROPERTY *propWaterLoad;
+
+	static PROPERTY *propInverterS;
+
+	static PROPERTY *propCapCountA;
+	static PROPERTY *propCapCountB;
+	static PROPERTY *propCapCountC;
+
+	static PROPERTY *propRegCountA;
+	static PROPERTY *propRegCountB;
+	static PROPERTY *propRegCountC;
+
+	static PROPERTY *propSwingSubLoad;
+	static PROPERTY *propSwingMeterS;
+
 private:
 	TIMESTAMP next_write; // on global clock, different by interval_length
 	TIMESTAMP last_write; // touched only in init and postsync
 	TIMESTAMP start_time; //Recording start time of simulation
-	bool interval_write;
+	bool write_now;
 
 	char* parent_string;
 	char parent_name[256];
@@ -176,10 +217,10 @@ private:
 	double *real_power_loss_array;		//array storing real power losses for the whole feeder
 	double *reactive_power_loss_array;		//array storing real power losses for the whole feeder
 
-	int interval_length;	  // integer averaging length (seconds); also size of arrays
+	TIMESTAMP interval_length;	  // integer averaging length (seconds); also size of arrays
+	TIMESTAMP *time_array; // actual sample times
 
 	int curr_index;	// Index [0..interval_length-1] for current position of averaging array
-	int last_index; // value of curr_index at the last read_line call; may need to interpolate
 };
 
 #endif // C++
