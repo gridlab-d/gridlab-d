@@ -144,11 +144,9 @@ int metrics_collector_writer::init(OBJECT *parent){
 	jsn["index"] = idx++; jsn["units"] = "W"; meta["real_power_min"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "W"; meta["real_power_max"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "W"; meta["real_power_avg"] = jsn;
-	jsn["index"] = idx++; jsn["units"] = "W"; meta["real_power_median"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "VAR"; meta["reactive_power_min"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "VAR"; meta["reactive_power_max"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "VAR"; meta["reactive_power_avg"] = jsn;
-	jsn["index"] = idx++; jsn["units"] = "VAR"; meta["reactive_power_median"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "Wh"; meta["real_energy"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "VARh"; meta["reactive_energy"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "USD"; meta["bill"] = jsn;
@@ -179,21 +177,17 @@ int metrics_collector_writer::init(OBJECT *parent){
 	jsn["index"] = idx++; jsn["units"] = "kW"; meta["total_load_min"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "kW"; meta["total_load_max"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "kW"; meta["total_load_avg"] = jsn;
-	jsn["index"] = idx++; jsn["units"] = "kW"; meta["total_load_median"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "kW"; meta["hvac_load_min"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "kW"; meta["hvac_load_max"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "kW"; meta["hvac_load_avg"] = jsn;
-	jsn["index"] = idx++; jsn["units"] = "kW"; meta["hvac_load_median"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "degF"; meta["air_temperature_min"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "degF"; meta["air_temperature_max"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "degF"; meta["air_temperature_avg"] = jsn;
-	jsn["index"] = idx++; jsn["units"] = "degF"; meta["air_temperature_median"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "degF"; meta["air_temperature_deviation_cooling"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "degF"; meta["air_temperature_deviation_heating"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "kW"; meta["waterheater_load_min"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "kW"; meta["waterheater_load_max"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "kW"; meta["waterheater_load_avg"] = jsn;
-	jsn["index"] = idx++; jsn["units"] = "kW"; meta["waterheater_load_median"] = jsn;
 	metrics_writer_houses["Metadata"] = meta;
 	ary_houses.resize(idx);
 
@@ -202,11 +196,9 @@ int metrics_collector_writer::init(OBJECT *parent){
 	jsn["index"] = idx++; jsn["units"] = "W"; meta["real_power_min"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "W"; meta["real_power_max"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "W"; meta["real_power_avg"] = jsn;
-	jsn["index"] = idx++; jsn["units"] = "W"; meta["real_power_median"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "VAR"; meta["reactive_power_min"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "VAR"; meta["reactive_power_max"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "VAR"; meta["reactive_power_avg"] = jsn;
-	jsn["index"] = idx++; jsn["units"] = "VAR"; meta["reactive_power_median"] = jsn;
 	metrics_writer_inverters["Metadata"] = meta;
 	ary_inverters.resize(idx);
 
@@ -322,11 +314,9 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 			ary_billing_meters[idx++] = metrics[MTR_MIN_REAL_POWER];
 			ary_billing_meters[idx++] = metrics[MTR_MAX_REAL_POWER];
 			ary_billing_meters[idx++] = metrics[MTR_AVG_REAL_POWER];
-			ary_billing_meters[idx++] = metrics[MTR_MED_REAL_POWER];
 			ary_billing_meters[idx++] = metrics[MTR_MIN_REAC_POWER];
 			ary_billing_meters[idx++] = metrics[MTR_MAX_REAC_POWER];
 			ary_billing_meters[idx++] = metrics[MTR_AVG_REAC_POWER];
-			ary_billing_meters[idx++] = metrics[MTR_MED_REAC_POWER];
 			ary_billing_meters[idx++] = metrics[MTR_REAL_ENERGY];
 			ary_billing_meters[idx++] = metrics[MTR_REAC_ENERGY];
 			// TODO - verify the fixed charge is included
@@ -362,15 +352,12 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 				house_objects[key][idx++] = metrics[HSE_MIN_TOTAL_LOAD];
 				house_objects[key][idx++] = metrics[HSE_MAX_TOTAL_LOAD];
 				house_objects[key][idx++] = metrics[HSE_AVG_TOTAL_LOAD];
-				house_objects[key][idx++] = metrics[HSE_MED_TOTAL_LOAD];
 				house_objects[key][idx++] = metrics[HSE_MIN_HVAC_LOAD];
 				house_objects[key][idx++] = metrics[HSE_MAX_HVAC_LOAD];
 				house_objects[key][idx++] = metrics[HSE_AVG_HVAC_LOAD];
-				house_objects[key][idx++] = metrics[HSE_MED_HVAC_LOAD];
 				house_objects[key][idx++] = metrics[HSE_MIN_AIR_TEMP];
 				house_objects[key][idx++] = metrics[HSE_MAX_AIR_TEMP];
 				house_objects[key][idx++] = metrics[HSE_AVG_AIR_TEMP];
-				house_objects[key][idx++] = metrics[HSE_MED_AIR_TEMP];
 				house_objects[key][idx++] = metrics[HSE_AVG_DEV_COOLING];
 				house_objects[key][idx++] = metrics[HSE_AVG_DEV_HEATING];
 				// leave the earlier waterheater metric values untouched
@@ -379,21 +366,17 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 				ary_houses[idx++] = metrics[HSE_MIN_TOTAL_LOAD];  
 				ary_houses[idx++] = metrics[HSE_MAX_TOTAL_LOAD];  
 				ary_houses[idx++] = metrics[HSE_AVG_TOTAL_LOAD];  
-				ary_houses[idx++] = metrics[HSE_MED_TOTAL_LOAD];  
 				ary_houses[idx++] = metrics[HSE_MIN_HVAC_LOAD];   
 				ary_houses[idx++] = metrics[HSE_MAX_HVAC_LOAD];   
 				ary_houses[idx++] = metrics[HSE_AVG_HVAC_LOAD];   
-				ary_houses[idx++] = metrics[HSE_MED_HVAC_LOAD];   
 				ary_houses[idx++] = metrics[HSE_MIN_AIR_TEMP];    
 				ary_houses[idx++] = metrics[HSE_MAX_AIR_TEMP];    
 				ary_houses[idx++] = metrics[HSE_AVG_AIR_TEMP];    
-				ary_houses[idx++] = metrics[HSE_MED_AIR_TEMP];    
 				ary_houses[idx++] = metrics[HSE_AVG_DEV_COOLING]; 
-				ary_houses[idx++] = metrics[HSE_AVG_DEV_HEATING]; 
-				ary_houses[idx++] = 0.0;
-				ary_houses[idx++] = 0.0;
-				ary_houses[idx++] = 0.0;
-				ary_houses[idx++] = 0.0;
+				ary_houses[idx++] = metrics[HSE_AVG_DEV_HEATING];
+				for (int j = 0; j < WH_ARRAY_SIZE; j++) {
+					ary_houses[idx++] = 0.0;
+				}
 				house_objects[key] = ary_houses;
 			}
 		} // End of recording metrics_collector data attached to one house
@@ -405,27 +388,14 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 				house_objects[key][idx++] = metrics[WH_MIN_ACTUAL_LOAD];
 				house_objects[key][idx++] = metrics[WH_MAX_ACTUAL_LOAD];
 				house_objects[key][idx++] = metrics[WH_AVG_ACTUAL_LOAD];
-				house_objects[key][idx++] = metrics[WH_MED_ACTUAL_LOAD];
 			} else { // make a new house, but with only the waterheater metrics non-zero
 				int idx = 0;
-				ary_houses[idx++] = 0.0;
-				ary_houses[idx++] = 0.0;
-				ary_houses[idx++] = 0.0;
-				ary_houses[idx++] = 0.0;
-				ary_houses[idx++] = 0.0;
-				ary_houses[idx++] = 0.0;
-				ary_houses[idx++] = 0.0;
-				ary_houses[idx++] = 0.0;
-				ary_houses[idx++] = 0.0;
-				ary_houses[idx++] = 0.0;
-				ary_houses[idx++] = 0.0;
-				ary_houses[idx++] = 0.0;
-				ary_houses[idx++] = 0.0;
-				ary_houses[idx++] = 0.0;
+				for (int j = 0; j < HSE_ARRAY_SIZE; j++) {
+					ary_houses[idx++] = 0.0;
+				}
 				ary_houses[idx++] = metrics[WH_MIN_ACTUAL_LOAD]; 
 				ary_houses[idx++] = metrics[WH_MAX_ACTUAL_LOAD]; 
 				ary_houses[idx++] = metrics[WH_AVG_ACTUAL_LOAD]; 
-				ary_houses[idx++] = metrics[WH_MED_ACTUAL_LOAD]; 
 				house_objects[key] = ary_houses;
 			}
 		} // End of recording metrics_collector data attached to one waterheater
@@ -435,11 +405,9 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 			ary_inverters[idx++] = metrics[INV_MIN_REAL_POWER]; 
 			ary_inverters[idx++] = metrics[INV_MAX_REAL_POWER]; 
 			ary_inverters[idx++] = metrics[INV_AVG_REAL_POWER]; 
-			ary_inverters[idx++] = metrics[INV_MED_REAL_POWER]; 
 			ary_inverters[idx++] = metrics[INV_MIN_REAC_POWER]; 
 			ary_inverters[idx++] = metrics[INV_MAX_REAC_POWER]; 
 			ary_inverters[idx++] = metrics[INV_AVG_REAC_POWER]; 
-			ary_inverters[idx++] = metrics[INV_MED_REAC_POWER]; 
 			string key = temp_metrics_collector->parent_name;
 			inverter_objects[key] = ary_inverters;
 		} // End of recording metrics_collector data attached to one inverter

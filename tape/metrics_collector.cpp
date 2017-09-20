@@ -785,13 +785,11 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		metrics[MTR_MIN_REAL_POWER] = findMin(real_power_array, interval_length);
 		metrics[MTR_MAX_REAL_POWER] = findMax(real_power_array, interval_length);
 		metrics[MTR_AVG_REAL_POWER] = findAverage(real_power_array, interval_length);
-		metrics[MTR_MED_REAL_POWER] = findMedian(real_power_array, interval_length);
 
 		// Reactive power data
 		metrics[MTR_MIN_REAC_POWER] = findMin(reactive_power_array, interval_length);
 		metrics[MTR_MAX_REAC_POWER] = findMax(reactive_power_array, interval_length);
 		metrics[MTR_AVG_REAC_POWER] = findAverage(reactive_power_array, interval_length);
-		metrics[MTR_MED_REAC_POWER] = findMedian(reactive_power_array, interval_length);
 
 		// Energy data
 		metrics[MTR_REAL_ENERGY] = findAverage(real_power_array, interval_length) * interval_write / 3600;
@@ -864,19 +862,16 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		metrics[HSE_MIN_TOTAL_LOAD] = findMin(total_load_array, interval_length);
 		metrics[HSE_MAX_TOTAL_LOAD] = findMax(total_load_array, interval_length);
 		metrics[HSE_AVG_TOTAL_LOAD] = findAverage(total_load_array, interval_length);
-		metrics[HSE_MED_TOTAL_LOAD] = findMedian(total_load_array, interval_length);
 
 		// hvac_load data
 		metrics[HSE_MIN_HVAC_LOAD] = findMin(hvac_load_array, interval_length);
 		metrics[HSE_MAX_HVAC_LOAD] = findMax(hvac_load_array, interval_length);
 		metrics[HSE_AVG_HVAC_LOAD] = findAverage(hvac_load_array, interval_length);
-		metrics[HSE_MED_HVAC_LOAD] = findMedian(hvac_load_array, interval_length);
 
 		// air_temperature data
 		metrics[HSE_MIN_AIR_TEMP] = findMin(air_temperature_array, interval_length);
 		metrics[HSE_MAX_AIR_TEMP] = findMax(air_temperature_array, interval_length);
 		metrics[HSE_AVG_AIR_TEMP] = findAverage(air_temperature_array, interval_length);
-		metrics[HSE_MED_AIR_TEMP] = findMedian(air_temperature_array, interval_length);
 		metrics[HSE_AVG_DEV_COOLING] = findAverage(dev_cooling_array, interval_length);
 		metrics[HSE_AVG_DEV_HEATING] = findAverage(dev_heating_array, interval_length);
 
@@ -895,7 +890,6 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		metrics[WH_MIN_ACTUAL_LOAD] = findMin(wh_load_array, interval_length);
 		metrics[WH_MAX_ACTUAL_LOAD] = findMax(wh_load_array, interval_length);
 		metrics[WH_AVG_ACTUAL_LOAD] = findAverage(wh_load_array, interval_length);
-		metrics[WH_MED_ACTUAL_LOAD] = findMedian(wh_load_array, interval_length);
 
 		// wrap the arrays for next collection interval (TODO circular queue)
 		wh_load_array[0] = svWH;
@@ -908,12 +902,10 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		metrics[INV_MIN_REAL_POWER] = findMin(real_power_array, interval_length);
 		metrics[INV_MAX_REAL_POWER] = findMax(real_power_array, interval_length);
 		metrics[INV_AVG_REAL_POWER] = findAverage(real_power_array, interval_length);
-		metrics[INV_MED_REAL_POWER] = findMedian(real_power_array, interval_length);
 		// Reactive power data
 		metrics[INV_MIN_REAC_POWER] = findMin(reactive_power_array, interval_length);
 		metrics[INV_MAX_REAC_POWER] = findMax(reactive_power_array, interval_length);
 		metrics[INV_AVG_REAC_POWER] = findAverage(reactive_power_array, interval_length);
-		metrics[INV_MED_REAC_POWER] = findMedian(reactive_power_array, interval_length);
 		// wrap the arrays for next collection interval (TODO circular queue)
 		real_power_array[0] = svP;
 		reactive_power_array[0] = svQ;
