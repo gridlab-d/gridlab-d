@@ -127,8 +127,9 @@ private:
 	int read_line(OBJECT *obj);
 	int write_line(TIMESTAMP, OBJECT *obj);
 
-	void interpolate(double array[], int idx1, int idx2, double val2);
 	void copyHistories(int from, int to);
+    void interpolateHistories(int idx, TIMESTAMP t);
+    void interpolate(double array[], int idx, double denom, double top);
 	double findMax(double array[], int size);
 	double findMin(double array[], int size);
 	double findAverage(double array[], int size);

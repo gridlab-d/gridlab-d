@@ -836,6 +836,14 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 	char time_str[64];
 	DATETIME dt;
 
+    bool bOverran = false;
+    if (t1 > next_write) { // interpolate at the aggregation interval's actual end point
+        bOverran = true;
+        copyHistories (curr_index, curr_index + 1);
+        interpolateHistories (curr_index, next_write);
+        ++curr_index;
+    }
+
 	if ((strcmp(parent_string, "triplex_meter") == 0) || (strcmp(parent_string, "meter") == 0)) {
 		metrics[MTR_MIN_REAL_POWER] = findMin(real_power_array, curr_index);
 		metrics[MTR_MAX_REAL_POWER] = findMax(real_power_array, curr_index);
@@ -963,8 +971,14 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 	}
 
 	// wrap the arrays for next collection interval
-	copyHistories (curr_index - 1, 0);
-	curr_index = 1;
+    if (bOverran) {
+        copyHistories(curr_index - 1, 0);
+        copyHistories(curr_index, 1);
+        curr_index = 2;
+    } else {
+        copyHistories(curr_index - 1, 0);
+        curr_index = 1;
+    }
 
 	return 1;
 }
@@ -985,6 +999,30 @@ void metrics_collector::copyHistories (int from, int to) {
 	if (reactive_power_array) reactive_power_array[to] = reactive_power_array[from];
 	if (real_power_loss_array) real_power_loss_array[to] = real_power_loss_array[from];
 	if (reactive_power_loss_array) reactive_power_loss_array[to] = reactive_power_loss_array[from];
+}
+
+void metrics_collector::interpolate (double *a, int idx, double denom, double top) {
+    a[idx] = a[idx-1] + (a[idx+1] - a[idx-1]) * top / denom;
+}
+
+void metrics_collector::interpolateHistories (int idx, TIMESTAMP t) {
+	time_array[idx] = t;
+    double denom = time_array[idx+1] - time_array[idx-1];
+    double top = t - time_array[idx-1];
+	if (voltage_vll_array) interpolate (voltage_vll_array, idx, denom, top);
+	if (voltage_vln_array) interpolate (voltage_vln_array, idx, denom, top);
+	if (voltage_unbalance_array) interpolate (voltage_unbalance_array, idx, denom, top);
+	if (total_load_array) interpolate (total_load_array, idx, denom, top);
+	if (hvac_load_array) interpolate (hvac_load_array, idx, denom, top);
+	if (air_temperature_array) interpolate (air_temperature_array, idx, denom, top);
+	if (dev_cooling_array) interpolate (dev_cooling_array, idx, denom, top);
+	if (dev_heating_array) interpolate (dev_heating_array, idx, denom, top);
+	if (wh_load_array) interpolate (wh_load_array, idx, denom, top);
+	if (count_array) interpolate (count_array, idx, denom, top);
+	if (real_power_array) interpolate (real_power_array, idx, denom, top);
+	if (reactive_power_array) interpolate (reactive_power_array, idx, denom, top);
+	if (real_power_loss_array) interpolate (real_power_loss_array, idx, denom, top);
+	if (reactive_power_loss_array) interpolate (reactive_power_loss_array, idx, denom, top);
 }
 
 double metrics_collector::findMax(double array[], int length) {
@@ -1020,22 +1058,6 @@ double metrics_collector::findAverage(double array[], int length) {
 		sum += dA;
 	}
 	return sum / tlen;
-}
-
-void metrics_collector::interpolate(double array[], int idx1, int idx2, double val2)
-{
-	array[idx2] = val2;
-	int steps = idx2 - idx1;
-
-	if (steps > 1) {
-		double val1 = array[idx1];
-		double dVal = (val2 - val1) / steps;
-		for (int i = idx1 + 1; i < idx2; i++)
-		{
-			val1 += dVal;
-			array[i] = val1;
-		}
-	}
 }
 
 // helper class to find the median of a histogram, skipping explicit linear interpolation
