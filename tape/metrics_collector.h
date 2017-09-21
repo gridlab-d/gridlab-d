@@ -128,6 +128,7 @@ private:
 	int write_line(TIMESTAMP, OBJECT *obj);
 
 	void interpolate(double array[], int idx1, int idx2, double val2);
+	void copyHistories(int from, int to);
 	double findMax(double array[], int size);
 	double findMin(double array[], int size);
 	double findAverage(double array[], int size);
@@ -175,11 +176,12 @@ private:
 	static PROPERTY *propSwingSubLoad;
 	static PROPERTY *propSwingMeterS;
 
-private:
 	TIMESTAMP next_write; // on global clock, different by interval_length
 	TIMESTAMP last_write; // touched only in init and postsync
 	TIMESTAMP start_time; //Recording start time of simulation
 	bool write_now;
+	bool log_me;
+	static bool log_set;
 
 	char* parent_string;
 	char parent_name[256];
@@ -217,7 +219,8 @@ private:
 	double *real_power_loss_array;		//array storing real power losses for the whole feeder
 	double *reactive_power_loss_array;		//array storing real power losses for the whole feeder
 
-	TIMESTAMP interval_length;	  // integer averaging length (seconds); also size of arrays
+	TIMESTAMP interval_length;	  // integer averaging length (seconds)
+	int vector_length;     // padded interval_length to hold both endpoints
 	TIMESTAMP *time_array; // actual sample times
 
 	int curr_index;	// Index [0..interval_length-1] for current position of averaging array
