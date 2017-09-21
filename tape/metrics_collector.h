@@ -128,13 +128,13 @@ private:
 	int write_line(TIMESTAMP, OBJECT *obj);
 
 	void copyHistories(int from, int to);
-    void interpolateHistories(int idx, TIMESTAMP t);
-    void interpolate(double array[], int idx, double denom, double top);
+	void interpolateHistories(int idx, TIMESTAMP t);
+	void interpolate(double array[], int idx, double denom, double top);
 	double findMax(double array[], int size);
 	double findMin(double array[], int size);
 	double findAverage(double array[], int size);
 	double findMedian(double array[], int size);
-	vol_violation findOutLimit(double lastVol, double array[], bool checkAbove, double limitVal, int size);
+	vol_violation findOutLimit(bool firstCall, double array[], bool checkAbove, double limitVal, int size);
 
 	// saved class properties of my parent object
 	static PROPERTY *propTriplexNomV;
@@ -177,11 +177,12 @@ private:
 	static PROPERTY *propSwingSubLoad;
 	static PROPERTY *propSwingMeterS;
 
-	TIMESTAMP next_write; // on global clock, different by interval_length
-	TIMESTAMP last_write; // touched only in init and postsync
-	TIMESTAMP start_time; //Recording start time of simulation
+	TIMESTAMP next_write; // on global clock, increments by interval_length
+	TIMESTAMP start_time; // start time of simulation
 	bool write_now;
+	bool first_write;
 	bool log_me;
+	void log_to_console(char *msg, TIMESTAMP t);
 	static bool log_set;
 
 	char* parent_string;
@@ -195,7 +196,6 @@ private:
 	double *voltage_vln_array;		//array storing voltage12/2 measured at the triplex_meter
 	double *voltage_unbalance_array;		//array storing (voltage[0]-voltage[1])/(voltage12/2) measured at the triplex_meter
 	double price_parent; 			// Price of the triplex_meter
-	double last_vol_val;			// variable that store the voltage value from last time step, to assist in voltage violation counts analysis
 
 	// Parameters related to house object
 	double *total_load_array; 		//array storing total_load measured at the house
