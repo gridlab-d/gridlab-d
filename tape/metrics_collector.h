@@ -141,6 +141,7 @@ private:
 	static PROPERTY *propTriplexV1;
 	static PROPERTY *propTriplexV2;
 	static PROPERTY *propTriplexV12;
+	static PROPERTY *propTriplexBill;
 	static PROPERTY *propTriplexPrice;
 	static PROPERTY *propTriplexP;
 	static PROPERTY *propTriplexQ;
@@ -152,6 +153,7 @@ private:
 	static PROPERTY *propMeterVab;
 	static PROPERTY *propMeterVbc;
 	static PROPERTY *propMeterVca;
+	static PROPERTY *propMeterBill;
 	static PROPERTY *propMeterPrice;
 	static PROPERTY *propMeterP;
 	static PROPERTY *propMeterQ;
@@ -189,13 +191,14 @@ private:
 	char parent_name[256];
 	double *metrics; // depends on the parent class
 
-	// Parameters related to triplex_meter object
-	double *real_power_array;		//array storing real power measured at the triplex_meter
-	double *reactive_power_array;		//array storing reactive power measured at the triplex_meter
-	double *voltage_vll_array;		//array storing voltage12 measured at the triplex_meter
-	double *voltage_vln_array;		//array storing voltage12/2 measured at the triplex_meter
-	double *voltage_unbalance_array;		//array storing (voltage[0]-voltage[1])/(voltage12/2) measured at the triplex_meter
-	double price_parent; 			// Price of the triplex_meter
+	// Parameters related to triplex_meter and (billing) meter objects
+	double *real_power_array;		//array storing real power measured at the meter
+	double *reactive_power_array;		//array storing reactive power measured at the meter
+	double *voltage_vll_array;		//average line-to-line (or hot-to-hot) voltage at the meter
+	double *voltage_vln_array;		//average line-to-neutral (or hot-to-neutral) voltage at the meter
+	double *voltage_unbalance_array;		//array storing voltage unbalance per ANSI C84.1
+	double price_parent;
+	double bill_parent;
 
 	// Parameters related to house object
 	double *total_load_array; 		//array storing total_load measured at the house

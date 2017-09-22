@@ -24,6 +24,7 @@ PROPERTY *metrics_collector::propTriplexV1 = NULL;
 PROPERTY *metrics_collector::propTriplexV2 = NULL;
 PROPERTY *metrics_collector::propTriplexV12 = NULL;
 PROPERTY *metrics_collector::propTriplexPrice = NULL;
+PROPERTY *metrics_collector::propTriplexBill = NULL;
 PROPERTY *metrics_collector::propTriplexP = NULL;
 PROPERTY *metrics_collector::propTriplexQ = NULL;
 PROPERTY *metrics_collector::propMeterNomV = NULL;
@@ -34,6 +35,7 @@ PROPERTY *metrics_collector::propMeterVab = NULL;
 PROPERTY *metrics_collector::propMeterVbc = NULL;
 PROPERTY *metrics_collector::propMeterVca = NULL;
 PROPERTY *metrics_collector::propMeterPrice = NULL;
+PROPERTY *metrics_collector::propMeterBill = NULL;
 PROPERTY *metrics_collector::propMeterP = NULL;
 PROPERTY *metrics_collector::propMeterQ = NULL;
 PROPERTY *metrics_collector::propHouseLoad = NULL;
@@ -134,6 +136,7 @@ int metrics_collector::init(OBJECT *parent){
 		parent_string = "triplex_meter";
 		if (propTriplexNomV == NULL) propTriplexNomV = gl_get_property (parent, "nominal_voltage");
 		if (propTriplexPrice == NULL) propTriplexPrice = gl_get_property (parent, "price");
+		if (propTriplexBill == NULL) propTriplexBill = gl_get_property (parent, "monthly_bill");
 		if (propTriplexP == NULL) propTriplexP = gl_get_property (parent, "measured_real_power");
 		if (propTriplexQ == NULL) propTriplexQ = gl_get_property (parent, "measured_reactive_power");
 		if (propTriplexV1 == NULL) propTriplexV1 = gl_get_property (parent, "voltage_1");
@@ -188,6 +191,7 @@ int metrics_collector::init(OBJECT *parent){
 		parent_string = "meter"; // unless it's a swing bus
 		if (propMeterNomV == NULL) propMeterNomV = gl_get_property (parent, "nominal_voltage");
 		if (propMeterPrice == NULL) propMeterPrice = gl_get_property (parent, "price");
+		if (propMeterBill == NULL) propMeterBill = gl_get_property (parent, "monthly_bill");
 		if (propMeterP == NULL) propMeterP = gl_get_property (parent, "measured_real_power");
 		if (propMeterQ == NULL) propMeterQ = gl_get_property (parent, "measured_reactive_power");
 		if (propMeterVa == NULL) propMeterVa = gl_get_property (parent, "voltage_A");
@@ -651,6 +655,7 @@ int metrics_collector::read_line(OBJECT *obj){
 
 		// Get bill value, price unit given in triplex_meter is [$/kWh]
 		price_parent = *gl_get_double(obj->parent, propTriplexPrice);
+		bill_parent = *gl_get_double(obj->parent, propTriplexBill);
 
 		// Get voltage values, s1 to ground, s2 to ground, s1 to s2
 		double v1 = (*gl_get_complex(obj->parent, propTriplexV1)).Mag();  
@@ -671,6 +676,7 @@ int metrics_collector::read_line(OBJECT *obj){
 
 		// Get bill value, price unit given is [$/kWh]
 		price_parent = *gl_get_double(obj->parent, propMeterPrice);
+		bill_parent = *gl_get_double(obj->parent, propMeterBill);
 
 		// assuming these are three-phase loads; this is the only difference with triplex meters 
 		double va = (*gl_get_complex(obj->parent, propMeterVa)).Mag();   
@@ -830,8 +836,8 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		metrics[MTR_REAL_ENERGY] = findAverage(real_power_array, curr_index) * interval_length / 3600;
 		metrics[MTR_REAC_ENERGY] = findAverage(reactive_power_array, curr_index) * interval_length / 3600;
 
-		// Bill - TODO?
-		metrics[MTR_BILL] = metrics[MTR_REAL_ENERGY] * price_parent / 1000; // price unit given is [$/kWh]
+//		metrics[MTR_BILL] = metrics[MTR_REAL_ENERGY] * price_parent / 1000; // price unit given is [$/kWh]
+		metrics[MTR_BILL] = bill_parent;
 
 		metrics[MTR_MIN_VLL] = findMin(voltage_vll_array, curr_index);
 		metrics[MTR_MAX_VLL] = findMax(voltage_vll_array, curr_index);
