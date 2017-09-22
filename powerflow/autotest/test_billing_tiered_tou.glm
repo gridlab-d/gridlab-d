@@ -1,0 +1,194 @@
+// validates tiered triplex and meter billing with a monthly fee and TOU rates
+// based on Tucson Electric Power residential block-TOU rates, winter and summer
+
+// author mcde601
+
+
+clock {
+     timezone CST+6CDT;
+     starttime '2006-01-01 00:00:00';
+     stoptime '2006-06-30 00:00:00';
+}
+
+#set profiler=1;
+#set double_format=%+.12lg
+#set randomseed=10;
+#set minimum_timestep=60;
+#set relax_naming_rules=1
+
+module assert;
+module tape;
+module powerflow {
+     solver_method FBS;
+}
+
+// basic residential rate from www.tep.com/rates
+// #define TEPCO_MONTHLY_FEE=13.00
+// #define TEPCO_PRICE_0=0.102013 // 0-500 kwh
+// #define TEPCO_PRICE_1=0.117013 // 501-1000 kwh
+// #define TEPCO_PRICE_2=0.122513 // >1000 kwh
+// residential time-of-use rate from www.tep.com
+// winter peak hours are 6-9 a.m. and 6-9 p.m., Oct-Apr
+// summer peak hours are 3-7 p.m., May-Sep
+// only M-F, excluding 6 holidays not accounted for below
+// the holidays are Memorial, Indep, Labor, Thanksgiving, Xmas, New Years
+#define TEPCO_MONTHLY_FEE=10.00
+schedule TEPCO_PRICE_0 { // 0-500 kwh
+ *  6-8,18-20       * 10-4 1-5 0.104717;
+ *  0-5,9-17,21-23  * 10-4 1-5 0.097803;
+ *  *               * 10-4 6-0 0.097803;
+ *  15-18           *  5-9 1-5 0.138719;
+ *  0-14,19-23      *  5-9 1-5 0.098484;
+ *  *               *  5-9 6-0 0.098484;
+}
+schedule TEPCO_PRICE_1 { // 501-1000 kwh
+ *  6-8,18-20       * 10-4 1-5 0.113717;
+ *  0-5,9-17,21-23  * 10-4 1-5 0.106803;
+ *  *               * 10-4 6-0 0.106803;
+ *  15-18           *  5-9 1-5 0.147719;
+ *  0-14,19-23      *  5-9 1-5 0.107484;
+ *  *               *  5-9 6-0 0.107484;
+}
+schedule TEPCO_PRICE_2 { // >1000 kwh
+ *  6-8,18-20       * 10-4 1-5 0.119217;
+ *  0-5,9-17,21-23  * 10-4 1-5 0.112303;
+ *  *               * 10-4 6-0 0.112303;
+ *  15-18           *  5-9 1-5 0.153219;
+ *  0-14,19-23      *  5-9 1-5 0.112984;
+ *  *               *  5-9 6-0 0.112984;
+}
+
+object node {
+     bustype SWING;
+     name ROOT;
+     phases ABCN;
+     nominal_voltage 7200;
+}
+
+object overhead_line_conductor {
+      name CU_AL;
+      geometric_mean_radius 0.4 cm;
+      resistance 0.1 ohm/km;
+}
+
+object line_spacing {
+      name HORIZONTAL_ABCN;
+      distance_AB 4 ft;
+      distance_BC 4 ft;
+      distance_AC 4 ft;
+      distance_AN 6 ft;
+      distance_BN 6 ft;
+      distance_CN 6 ft;
+}
+
+object line_configuration {
+      name OHL_config;
+      conductor_A CU_AL;
+      conductor_B CU_AL;
+      conductor_C CU_AL;
+      conductor_N CU_AL;
+      spacing HORIZONTAL_ABCN;
+}
+
+object overhead_line {
+      phases ABCN;
+      from ROOT;
+      to transformer_meter;
+      length 25;
+      configuration OHL_config;
+      name ROOT_LINE;
+}
+
+object meter {
+  name transformer_meter;
+  phases ABCN;
+  nominal_voltage 7200;
+	bill_day 1;
+  monthly_fee ${TEPCO_MONTHLY_FEE};
+  bill_mode TIERED_TOU;
+  price TEPCO_PRICE_0;
+  first_tier_energy 500;
+  first_tier_price TEPCO_PRICE_1;
+  second_tier_energy 1000;
+  second_tier_price TEPCO_PRICE_2;
+	object double_assert{
+		target monthly_bill; // a winter month
+		value 383.71; // includes the primary load, triplex load and losses, plus tier effects
+		within .01;
+		once ONCE_TRUE;
+		in '2006-01-31 23:00:00 CST';
+	};
+	object double_assert{
+		target monthly_bill; // a summer month
+		value 399.39; // includes the primary load, triplex load and losses, plus tier effects
+		within .01;
+		once ONCE_TRUE;
+		in '2006-05-31 23:00:00 CST';
+	};
+}
+
+object load {
+	name primary_load;
+	parent transformer_meter;
+	nominal_voltage 7200.0;
+	constant_power_A 666.666666;
+	constant_power_B 666.666666;
+	constant_power_C 666.666666;
+}
+
+object transformer_configuration {
+     name default_transformer_A;
+     connect_type SINGLE_PHASE_CENTER_TAPPED;
+     install_type PADMOUNT;
+     primary_voltage 7200 V;
+     secondary_voltage 124 V;
+     power_rating 250.0;
+     powerA_rating 250.0;
+     impedance 0.015+0.0675j;
+     shunt_impedance 454.5455+2045.4548j;
+}
+
+object transformer {
+     name center_tap_transformer_A;
+     phases AS;
+     from transformer_meter;
+     to triplex_node_A;
+     configuration default_transformer_A;
+}
+
+object triplex_meter {
+	name triplex_node_A;
+	phases AS;
+	nominal_voltage 124.00;
+	bill_day 1;
+	power_1 500;
+	power_2 500;
+	power_12 1000;
+  monthly_fee ${TEPCO_MONTHLY_FEE};
+  bill_mode TIERED_TOU;
+  price TEPCO_PRICE_0;
+  first_tier_energy 500;
+  first_tier_price TEPCO_PRICE_1;
+  second_tier_energy 1000;
+  second_tier_price TEPCO_PRICE_2;
+	object recorder {
+		limit 7000;
+		interval 3600;
+		file tiered_tou_bills.csv; 
+		property measured_real_power,monthly_energy,monthly_bill,price;
+	};
+	object double_assert{
+		target monthly_bill; // a winter month
+		value 168.66;
+		within .01;
+		once ONCE_TRUE;
+		in '2006-01-31 23:00:00 CST';
+	};
+	object double_assert{
+		target monthly_bill; // a summer month
+		value 175.55;
+		within .01;
+		once ONCE_TRUE;
+		in '2006-05-31 23:00:00 CST';
+	};
+}
