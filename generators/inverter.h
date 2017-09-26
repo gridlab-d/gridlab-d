@@ -96,8 +96,8 @@ private:
 	complex generator_admittance[3][3];	//Generator admittance matrix converted from sequence values
 	complex prev_VA_out[3];				//Previous state tracking variable for ramp-rate calculations
 	complex curr_VA_out[3];				//Current state tracking variable for ramp-rate calculations
-	double Pref_prev;					//Previous Pref value in the same time step for non-VSI ramp-rate calculations
-	double Qref_prev[3];				//Previous Qref value in the same time step for non-VSI ramp-rate calculations
+	double Pref_prev;					//Previous Pref value in the same time step for non-VSI droop mode ramp-rate calculations
+	double Qref_prev[3];				//Previous Qref value in the same time step for non-VSI droop mode ramp-rate calculations
 
 protected:
 	/* TODO: put unpublished but inherited variables */
@@ -425,6 +425,7 @@ public:
 	double perform_1547_checks(double timestepvalue);
 	STATUS updateCurrInjection();
 	complex check_VA_Out(complex temp_VA, double p_max);
+	double getEff(double val);
 public:
 	static CLASS *oclass;
 	static inverter *defaults;

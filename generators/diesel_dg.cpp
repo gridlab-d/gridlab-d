@@ -187,6 +187,14 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_double,"bias",PADDR(curr_state.avr.bias),PT_DESCRIPTION,"Exciter bias state variable",
 			PT_double,"xe",PADDR(curr_state.avr.xe),PT_DESCRIPTION,"Exciter state variable",
 			PT_double,"xb",PADDR(curr_state.avr.xb),PT_DESCRIPTION,"Exciter state variable",
+//			PT_double,"xcvr",PADDR(curr_state.avr.x_cvr),PT_DESCRIPTION,"Exciter state variable",
+			PT_double,"x_cvr1",PADDR(curr_state.avr.x_cvr1),PT_DESCRIPTION,"Exciter state variable",
+			PT_double,"x_cvr2",PADDR(curr_state.avr.x_cvr2),PT_DESCRIPTION,"Exciter state variable",
+			PT_double,"Vref",PADDR(Vref),PT_DESCRIPTION,"Exciter CVR control voltage reference value",
+			//Properties for CVR mode
+			PT_enumeration,"CVR_mode",PADDR(CVRmode),PT_DESCRIPTION,"CVR mode in Exciter model",
+				PT_KEYWORD,"HighOrder",(enumeration)HighOrder,PT_DESCRIPTION,"High order control mode",
+				PT_KEYWORD,"Feedback",(enumeration)Feedback,PT_DESCRIPTION,"First order control mode with feedback loop",
 
 			// If P_constant delta mode is adopted
 			PT_double,"P_CONSTANT_ki", PADDR(ki_Pconstant), PT_DESCRIPTION, "parameter of the integration control for constant P mode",
@@ -200,6 +208,28 @@ diesel_dg::diesel_dg(MODULE *module)
 			// Set PQ reference again here with different names:
 			PT_double,"P_CONSTANT_Pref[pu]", PADDR(gen_base_set_vals.Pref), PT_DESCRIPTION, "Pref input to governor controls (per-unit), if supported",
 			PT_double,"Exciter_Q_constant_Qref[pu]", PADDR(gen_base_set_vals.Qref), PT_DESCRIPTION, "Qref input to govornor or AVR controls (per-unit), if supported",
+
+			// If CVR control is enabled
+			PT_bool, "CVR_enabled",PADDR(CVRenabled),PT_DESCRIPTION,"True if the CVR control is enabled in the exciter",
+			PT_double,"CVR_ki_cvr", PADDR(ki_cvr), PT_DESCRIPTION, "parameter of the integration control for CVR control",
+			PT_double,"CVR_kp_cvr", PADDR(kp_cvr), PT_DESCRIPTION, "parameter of the proportional control for CVR control",
+			PT_double,"CVR_kd_cvr", PADDR(kd_cvr), PT_DESCRIPTION, "parameter of the deviation control for CVR control",
+			PT_double,"CVR_kt_cvr", PADDR(kt_cvr), PT_DESCRIPTION, "parameter of the gain in feedback loop for CVR control",
+			PT_double,"CVR_kw_cvr", PADDR(kw_cvr), PT_DESCRIPTION, "parameter of the gain in feedback loop for CVR control",
+			PT_bool, "CVR_PI",PADDR(CVR_PI),PT_DESCRIPTION,"True if the PI controller is implemented in CVR control",
+			PT_bool, "CVR_PID",PADDR(CVR_PID),PT_DESCRIPTION,"True if the PID controller is implemented in CVR control",
+			PT_double,"vset_EMAX",PADDR(vset_EMAX),PT_DESCRIPTION,"Maximum Vset limit",
+			PT_double,"vset_EMIN",PADDR(vset_EMIN),PT_DESCRIPTION,"Minimum Vset limit",
+			PT_double,"CVR_Kd1", PADDR(Kd1), PT_DESCRIPTION, "parameter of the second order transfer function for CVR control",
+			PT_double,"CVR_Kd2", PADDR(Kd2), PT_DESCRIPTION, "parameter of the second order transfer function for CVR control",
+			PT_double,"CVR_Kd3", PADDR(Kd3), PT_DESCRIPTION, "parameter of the second order transfer function for CVR control",
+			PT_double,"CVR_Kn1", PADDR(Kn1), PT_DESCRIPTION, "parameter of the second order transfer function for CVR control",
+			PT_double,"CVR_Kn2", PADDR(Kn2), PT_DESCRIPTION, "parameter of the second order transfer function for CVR control",
+			PT_double,"vset_delta_MAX",PADDR(vset_delta_MAX),PT_DESCRIPTION,"Maximum delta Vset limit",
+			PT_double,"vset_delta_MIN",PADDR(vset_delta_MIN),PT_DESCRIPTION,"Minimum delta Vset limit",
+			PT_double,"vadd",PADDR(gen_base_set_vals.vadd),PT_DESCRIPTION,"Delta Vset",
+			PT_double,"vadd_a",PADDR(gen_base_set_vals.vadd_a),PT_DESCRIPTION,"Delta Vset before going into bound check",
+
 
 			//Properties for Governor of dynamics model
 			PT_enumeration,"Governor_type",PADDR(Governor_type),PT_DESCRIPTION,"Governor model for dynamics-capable implementation",
@@ -356,6 +386,20 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_double,"P_CONSTANT_FuelFlow",PADDR(curr_state.gov_pconstant.FuelFlow),
 			PT_double,"P_CONSTANT_GovOutPut",PADDR(curr_state.gov_pconstant.GovOutPut),
 
+			PT_bool,"fuelEmissionCal", PADDR(fuelEmissionCal),  PT_DESCRIPTION, "Boolean value indicating whether fuel and emission calculations are used or not",
+			PT_double,"outputEnergy",PADDR(outputEnergy),PT_DESCRIPTION,"Total energy(kWh) output from the generator",
+			PT_double,"FuelUse",PADDR(FuelUse),PT_DESCRIPTION,"Total fuel usage (gal) based on kW power output",
+			PT_double,"efficiency",PADDR(efficiency),PT_DESCRIPTION,"Total energy output per fuel usage (kWh/gal)",
+			PT_double,"CO2_emission",PADDR(CO2_emission),PT_DESCRIPTION,"Total CO2 emissions (lbs) based on fule usage",
+			PT_double,"SOx_emission",PADDR(SOx_emission),PT_DESCRIPTION,"Total SOx emissions (lbs) based on fule usage",
+			PT_double,"NOx_emission",PADDR(NOx_emission),PT_DESCRIPTION,"Total NOx emissions (lbs) based on fule usage",
+			PT_double,"PM10_emission",PADDR(PM10_emission),PT_DESCRIPTION,"Total PM-10 emissions (lbs) based on fule usage",
+
+			PT_double,"frequency_deviation",PADDR(frequency_deviation),PT_DESCRIPTION,"Frequency deviation of diesel_dg",
+			PT_double,"frequency_deviation_energy",PADDR(frequency_deviation_energy),PT_DESCRIPTION,"Frequency deviation accumulation of diesel_dg",
+			PT_double,"frequency_deviation_max",PADDR(frequency_deviation_max),PT_DESCRIPTION,"Frequency deviation of diesel_dg",
+			PT_double,"realPowerChange",PADDR(realPowerChange),PT_DESCRIPTION,"Real power output change of diesel_dg",
+			PT_double,"ratio_f_p",PADDR(ratio_f_p),PT_DESCRIPTION,"Ratio of frequency deviation to real power output change of diesel_dg",
 
 			PT_set, "phases", PADDR(phases), PT_DESCRIPTION, "Specifies which phases to connect to - currently not supported and assumes three-phase connection",
 				PT_KEYWORD, "A",(set)PHASE_A,
@@ -636,6 +680,37 @@ int diesel_dg::create(void)
 	Q_constant_mode = false;
 	ki_Qconstant = 1;
 	kp_Qconstant = 0;
+
+	CVRenabled = false;
+	ki_cvr = 0;
+	kp_cvr = 0;
+	kd_cvr = 0;
+	CVR_PI = false;
+	CVR_PID = false;
+	vset_EMAX = 1.05;
+	vset_EMIN = 0.95;
+
+	Kd1 = 1;
+	Kd2 = 1;
+	Kd3 = 1;
+	Kn1 = 0;
+	Kn2 = 0;
+	vset_delta_MAX = 99;
+	vset_delta_MIN = -99;
+
+	last_time = 0;
+	fuelEmissionCal = false;
+	outputEnergy = 0.0;
+	FuelUse = 0.0;
+	efficiency = 0.0;
+	CO2_emission = 0.0;
+	SOx_emission = 0.0;
+	NOx_emission = 0.0;
+	PM10_emission = 0.0;
+
+	pwr_electric_init = -1;
+	frequency_deviation_energy = 0;
+	frequency_deviation_max = 0;
 
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -1201,7 +1276,28 @@ int diesel_dg::init(OBJECT *parent)
 	}
 	else {
 		Vset_defined = true;
+		Vref = gen_base_set_vals.vset;
 	}
+
+	if (Kd1 == 0) {
+		if (Kd2 == 0) {
+			gl_warning("diesel_dg:%d %s - cannot set both Kd1 and Kd2 as 0 for the CVR conntrol! Have changed Kd2 to be 1",obj->id,(obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			The diesel_dg is not flagged for deltamode operations, yet deltamode simulations are enabled for the overall system.  When deltamode
+			triggers, this generator may no longer contribute to the system, until event-driven mode resumes.  This could cause issues with the simulation.
+			It is recommended all objects that support deltamode enable it.
+			*/
+		}
+		Kd2 = 1;
+	}
+
+	// Initialize fuel usage function based on Rated_VA value
+	/* For 1000 kVA generator, the fuel usage equation is:
+	 % x = load (kVA), y = fuel (gallon)
+	 % y = 0.067x + 5.2435
+	 */
+	dg_1000_a = 0.067;
+	dg_1000_b = 5.2435/1000 * (Rated_VA/1000);
 
 	return 1;
 }//init ends here
@@ -1639,6 +1735,7 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 					tret_value = t1;
 				}
 
+
 				if ((voltage_mag_curr>Max_Ef) || (voltage_mag_curr<Min_Ef))
 				{
 
@@ -1683,6 +1780,7 @@ TIMESTAMP diesel_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	int ret_state;
 	OBJECT *obj = OBJECTHDR(this);
 	complex aval, avalsq;
+	TIMESTAMP dt;
 
 	TIMESTAMP t2 = TS_NEVER;
 
@@ -1693,6 +1791,41 @@ TIMESTAMP diesel_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		{
 			deltamode_endtime = TS_NEVER;
 			deltamode_endtime_dbl = TSNVRDBL;
+		}
+
+		// Update energy, fuel usage, and emissions for the past time step, before updating power output
+		if (fuelEmissionCal == true) {
+
+			if (first_run == true)
+			{
+				dt = 0;
+			}
+			else if (last_time == 0)
+			{
+				last_time = t1;
+				dt = 0;
+			}
+			else if (last_time < t1)
+			{
+				dt = t1 - last_time;
+				last_time = t1;
+			}
+			else
+				dt = 0;
+
+			outputEnergy += fabs(curr_state.pwr_electric.Re()/1000) * (double)dt / 3600;
+			FuelUse += (fabs(curr_state.pwr_electric.Re()/1000) * dg_1000_a + dg_1000_b) * (double)dt / 3600;
+			if (FuelUse != 0) {
+				efficiency = outputEnergy/FuelUse;
+			}
+			CO2_emission += (-6e-5 * pow(FuelUse, 3) + 0.0087 * pow(FuelUse, 2) - FuelUse * 0.3464 + 25.824) * (double)dt / 3600;
+			SOx_emission += (-5e-7 * pow(FuelUse, 2) + FuelUse * 0.0001 + 0.0206) * (double)dt / 3600;
+			NOx_emission += (6e-5 * pow(FuelUse, 2) - FuelUse * 0.0048 + 0.2551) * (double)dt / 3600;
+			PM10_emission += (-2e-9 * pow(FuelUse, 4) + 3e-7 * pow(FuelUse, 3) - 2e-5 * pow(FuelUse, 2) + FuelUse * 8e-5 + 0.0083) * (double)dt / 3600;
+
+			if (pwr_electric_init <= 0) {
+				pwr_electric_init = curr_state.pwr_electric.Re();
+			}
 		}
 
 		//Update output power
@@ -2016,6 +2149,48 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 
 		//Copy it into the "next" value as well, so it doesn't get overwritten funny when the transition occurs
 		next_state.pwr_electric = curr_state.pwr_electric;
+
+		// Update energy, fuel usage, and emissions for the past time step, before updating power output
+		if (fuelEmissionCal == true) {
+
+			outputEnergy += fabs(curr_state.pwr_electric.Re()/1000) * (double)deltat / 3600;
+			FuelUse += (fabs(curr_state.pwr_electric.Re()/1000) * dg_1000_a + dg_1000_b) * (double)deltat / 3600;
+			if (FuelUse != 0) {
+				efficiency = outputEnergy/FuelUse;
+			}
+			CO2_emission += (-6e-5 * pow(FuelUse, 3) + 0.0087 * pow(FuelUse, 2) - FuelUse * 0.3464 + 25.824) * (double)deltat / 3600;
+			SOx_emission += (-5e-7 * pow(FuelUse, 2) + FuelUse * 0.0001 + 0.0206) * (double)deltat / 3600;
+			NOx_emission += (6e-5 * pow(FuelUse, 2) - FuelUse * 0.0048 + 0.2551) * (double)deltat / 3600;
+			PM10_emission += (-2e-9 * pow(FuelUse, 4) + 3e-7 * pow(FuelUse, 3) - 2e-5 * pow(FuelUse, 2) + FuelUse * 8e-5 + 0.0083) * (double)deltat / 3600;
+
+			// Frequency deviation calculation
+			frequency_deviation = (curr_state.omega - 2 * PI * 60)/(2 * PI * 60);
+			frequency_deviation_energy += fabs(frequency_deviation);
+
+			// Obtain maximum frequency deviation
+			if (frequency_deviation <= 0 && frequency_deviation_max <= 0) {
+				if (frequency_deviation < frequency_deviation_max) {
+					frequency_deviation_max = fabs(frequency_deviation);
+				}
+			}
+			else if (frequency_deviation >= 0 && frequency_deviation_max >= 0) {
+				if (frequency_deviation > frequency_deviation_max) {
+					frequency_deviation_max = fabs(frequency_deviation);
+				}
+			}
+			else if (frequency_deviation > 0 && frequency_deviation_max < 0) {
+				if (frequency_deviation > -frequency_deviation_max) {
+					frequency_deviation_max = fabs(frequency_deviation);
+				}
+			}
+			else if (frequency_deviation < 0 && frequency_deviation_max > 0) {
+				if (-frequency_deviation > frequency_deviation_max) {
+					frequency_deviation_max = fabs(-frequency_deviation);
+				}
+			}
+			realPowerChange = curr_state.pwr_electric.Re() - pwr_electric_init;
+			ratio_f_p = -frequency_deviation/(realPowerChange/Rated_VA);
+		}
 
 		//Call dynamics
 		apply_dynamics(&curr_state,&predictor_vals,deltat);
@@ -2354,6 +2529,79 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 		//Exciter updates
 		if (Exciter_type == SEXS)
 		{
+//			if (CVRenabled) {
+//				if (CVR_PI) {
+//					next_state.avr.x_cvr = curr_state.avr.x_cvr + predictor_vals.avr.x_cvr*deltat;
+//					gen_base_set_vals.vseta = Vref + next_state.avr.x_cvr + predictor_vals.avr.diff_f * kp_cvr;
+//				}
+//				else if (CVR_PID) {
+//					next_state.avr.x_cvr = curr_state.avr.x_cvr + predictor_vals.avr.x_cvr*deltat;
+//					next_state.avr.xerr_cvr = predictor_vals.avr.diff_f * kd_cvr;
+//					predictor_vals.avr.xerr_cvr = (next_state.avr.xerr_cvr - curr_state.avr.xerr_cvr) / deltat;
+//					gen_base_set_vals.vseta = Vref + next_state.avr.x_cvr + predictor_vals.avr.diff_f * kp_cvr + predictor_vals.avr.xerr_cvr;
+//				}
+//
+//				//Limit check
+// 				if (gen_base_set_vals.vseta >= vset_EMAX)
+//					gen_base_set_vals.vsetb = vset_EMAX;
+//
+//				if (gen_base_set_vals.vseta <= vset_EMIN)
+//					gen_base_set_vals.vsetb = vset_EMIN;
+//
+//				// Give value to vset
+//				gen_base_set_vals.vset = gen_base_set_vals.vsetb;
+//			}
+
+//			if (CVRenabled) {
+//				next_state.avr.xerr_cvr = predictor_vals.avr.diff_f * kd_cvr;
+//				predictor_vals.avr.xerr_cvr = (next_state.avr.xerr_cvr - curr_state.avr.xerr_cvr) / deltat;
+//				gen_base_set_vals.vadd = predictor_vals.avr.xerr_cvr + predictor_vals.avr.diff_f * kp_cvr;
+//			}
+
+			if (CVRenabled) {
+
+				// Implementation for high order CVR control
+				if (CVRmode == HighOrder) {
+					if (Kd1 != 0) {
+						next_state.avr.x_cvr1 = curr_state.avr.x_cvr1 + predictor_vals.avr.x_cvr1*deltat;
+						next_state.avr.x_cvr2 = curr_state.avr.x_cvr2 + predictor_vals.avr.x_cvr2*deltat;
+						gen_base_set_vals.vadd = (Kn1/Kd1) * next_state.avr.x_cvr1 + (Kn2/Kd1) * next_state.avr.x_cvr2 + kp_cvr * predictor_vals.avr.diff_f;
+					}
+					else {
+						next_state.avr.x_cvr1 = curr_state.avr.x_cvr1 + predictor_vals.avr.x_cvr1*deltat;
+						gen_base_set_vals.vadd = (Kn2/Kd2 - (Kd3 * Kn1)/(Kd2 * Kd2)) * next_state.avr.x_cvr1 + (kp_cvr + Kn1/Kd2) * predictor_vals.avr.diff_f;
+					}
+
+					//Limit check
+					if (gen_base_set_vals.vadd >= vset_delta_MAX)
+						gen_base_set_vals.vadd = vset_delta_MAX;
+
+					if (gen_base_set_vals.vadd <= vset_delta_MIN)
+						gen_base_set_vals.vadd = vset_delta_MIN;
+
+				}
+				// Implementation for first order CVR control with feedback loop
+				else if (CVRmode == Feedback) {
+					next_state.avr.x_cvr1 = curr_state.avr.x_cvr1 + predictor_vals.avr.x_cvr1*deltat;
+					gen_base_set_vals.vadd_a = kp_cvr * predictor_vals.avr.diff_f + next_state.avr.x_cvr1;
+
+					//Limit check
+					if (gen_base_set_vals.vadd_a >= vset_delta_MAX) {
+						gen_base_set_vals.vadd = vset_delta_MAX;
+					}
+					else if (gen_base_set_vals.vadd_a <= vset_delta_MIN) {
+						gen_base_set_vals.vadd = vset_delta_MIN;
+					}
+					else {
+						gen_base_set_vals.vadd = gen_base_set_vals.vadd_a;
+					}
+				}
+
+				// Give value to vset
+				gen_base_set_vals.vset = gen_base_set_vals.vadd + Vref;
+			}
+
+
 			next_state.avr.xe = curr_state.avr.xe + predictor_vals.avr.xe*deltat;
 			next_state.avr.xb = curr_state.avr.xb + predictor_vals.avr.xb*deltat;
 		}//End SEXS update
@@ -2706,6 +2954,80 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 		//Exciter updates
 		if (Exciter_type == SEXS)
 		{
+//			if (CVRenabled) {
+//				if (CVR_PI) {
+//					next_state.avr.x_cvr = curr_state.avr.x_cvr + (predictor_vals.avr.x_cvr + corrector_vals.avr.x_cvr)*deltath;
+//					gen_base_set_vals.vseta = Vref + next_state.avr.x_cvr + (predictor_vals.avr.diff_f + corrector_vals.avr.diff_f) * 0.5 * kp_cvr;
+//				}
+//				else if (CVR_PID) {
+//					next_state.avr.x_cvr = curr_state.avr.x_cvr + (predictor_vals.avr.x_cvr + corrector_vals.avr.x_cvr)*deltath;
+//					temp_double = (predictor_vals.avr.diff_f + corrector_vals.avr.diff_f) * 0.5;
+//					next_state.avr.xerr_cvr = temp_double * kd_cvr;
+//					corrector_vals.avr.xerr_cvr = (next_state.avr.xerr_cvr - curr_state.avr.xerr_cvr) / deltat;
+//					gen_base_set_vals.vseta = Vref + next_state.avr.x_cvr + temp_double * kp_cvr + corrector_vals.avr.xerr_cvr;
+//				}
+//
+//				//Limit check
+//				if (gen_base_set_vals.vseta >= vset_EMAX)
+//					gen_base_set_vals.vsetb = vset_EMAX;
+//
+//				if (gen_base_set_vals.vseta <= vset_EMIN)
+//					gen_base_set_vals.vsetb = vset_EMIN;
+//
+//				// Give value of vsetb to vset
+//				gen_base_set_vals.vset = gen_base_set_vals.vsetb;
+//			}
+
+//			if (CVRenabled) {
+//				temp_double = (predictor_vals.avr.diff_f + corrector_vals.avr.diff_f) * 0.5;
+//				next_state.avr.xerr_cvr = temp_double * kd_cvr;
+//				corrector_vals.avr.xerr_cvr = (next_state.avr.xerr_cvr - curr_state.avr.xerr_cvr) / deltat;
+//				gen_base_set_vals.vadd = corrector_vals.avr.xerr_cvr + temp_double * kp_cvr;
+//			}
+
+			if (CVRenabled) {
+
+				// Implementation for high order CVR control
+				if (CVRmode == HighOrder) {
+					if (Kd1 != 0) {
+						next_state.avr.x_cvr1 = curr_state.avr.x_cvr1 + (corrector_vals.avr.x_cvr1 + predictor_vals.avr.x_cvr1)*deltath;
+						next_state.avr.x_cvr2 = curr_state.avr.x_cvr2 + (corrector_vals.avr.x_cvr2 + predictor_vals.avr.x_cvr2)*deltath;
+						gen_base_set_vals.vadd = (Kn1/Kd1) * next_state.avr.x_cvr1 + (Kn2/Kd1) * next_state.avr.x_cvr2 + kp_cvr * (predictor_vals.avr.diff_f + corrector_vals.avr.diff_f) * 0.5;
+					}
+					else {
+						next_state.avr.x_cvr1 = curr_state.avr.x_cvr1 + (corrector_vals.avr.x_cvr1 + predictor_vals.avr.x_cvr1)*deltath;
+						gen_base_set_vals.vadd = (Kn2/Kd2 - (Kd3 * Kn1)/(Kd2 * Kd2)) * next_state.avr.x_cvr1 + (kp_cvr + Kn1/Kd2) * (predictor_vals.avr.diff_f + corrector_vals.avr.diff_f) * 0.5;
+					}
+
+					//Limit check
+					if (gen_base_set_vals.vadd >= vset_delta_MAX)
+						gen_base_set_vals.vadd = vset_delta_MAX;
+
+					if (gen_base_set_vals.vadd <= vset_delta_MIN)
+						gen_base_set_vals.vadd = vset_delta_MIN;
+
+				}
+				// Implementation for first order CVR control with feedback loop
+				else if (CVRmode == Feedback) {
+					next_state.avr.x_cvr1 = curr_state.avr.x_cvr1 + (corrector_vals.avr.x_cvr1 + predictor_vals.avr.x_cvr1)*deltath;
+					gen_base_set_vals.vadd_a = kp_cvr * (predictor_vals.avr.diff_f + corrector_vals.avr.diff_f) * 0.5 + next_state.avr.x_cvr1;
+
+					//Limit check
+					if (gen_base_set_vals.vadd_a >= vset_delta_MAX) {
+						gen_base_set_vals.vadd = vset_delta_MAX;
+					}
+					else if (gen_base_set_vals.vadd_a <= vset_delta_MIN) {
+						gen_base_set_vals.vadd = vset_delta_MIN;
+					}
+					else {
+						gen_base_set_vals.vadd = gen_base_set_vals.vadd_a;
+					}
+				}
+
+				// Give value to vset
+				gen_base_set_vals.vset = gen_base_set_vals.vadd + Vref;
+			}
+
 			next_state.avr.xe = curr_state.avr.xe + (predictor_vals.avr.xe + corrector_vals.avr.xe)*deltath;
 			next_state.avr.xb = curr_state.avr.xb + (predictor_vals.avr.xb + corrector_vals.avr.xb)*deltath;
 		}//End SEXS update
@@ -2870,6 +3192,7 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 	double temp_double_1, temp_double_2, temp_double_3, delomega, x0; 
 	double torquenow, x5a_now;
 	complex temp_current_val[3];
+	double diff_f, temp_Vfd;
 
 	//Convert current as well
 	current_pu[0] = (IGenerated[0] - generator_admittance[0][0]*pCircuit_V[0] - generator_admittance[0][1]*pCircuit_V[1] - generator_admittance[0][2]*pCircuit_V[2])/current_base;
@@ -3361,6 +3684,35 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 		}
 		else {
 
+//			// If CVR control is enabled, gen_base_set_vals.vset will be changed based on frequency deviation
+//			if (CVRenabled) {
+//				curr_delta->avr.diff_f = (omega_pu - 1.0);
+//				curr_delta->avr.x_cvr = (omega_pu - 1.0) * ki_cvr + (gen_base_set_vals.vsetb - gen_base_set_vals.vseta) * kt_cvr; // Same for PI and PID controller
+//			}
+
+			// If CVR control is enabled with second order transfer function
+			if (CVRenabled) {
+
+				curr_delta->avr.diff_f = (omega_pu - 1.0);
+
+				// Implementation for high order CVR control
+				if (CVRmode == HighOrder) {
+					if (Kd1 != 0) {
+						curr_delta->avr.x_cvr1 = curr_time->avr.x_cvr1 * (-Kd2/Kd1) + curr_time->avr.x_cvr2 * (-Kd3/Kd1) + curr_delta->avr.diff_f;
+						curr_delta->avr.x_cvr2 = curr_time->avr.x_cvr1;
+					}
+					else {
+						curr_delta->avr.x_cvr1 = curr_time->avr.x_cvr1 * (-Kd3/Kd2) + curr_delta->avr.diff_f;
+					}
+				}
+
+				// Implementation for first order CVR control with feedback loop
+				else if (CVRmode == Feedback) {
+					temp_double_1 = curr_delta->avr.diff_f * ki_cvr + (gen_base_set_vals.vadd - gen_base_set_vals.vadd_a) * kw_cvr;
+					curr_delta->avr.x_cvr1 = (temp_double_1 - curr_time->avr.x_cvr1 * Kd1)/Kd2;
+				}
+			}
+
 			//Get the average magnitude first
 			temp_double_1 = (pCircuit_V[0].Mag() + pCircuit_V[1].Mag() + pCircuit_V[2].Mag())/voltage_base/3.0;
 
@@ -3384,10 +3736,10 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 		}
 
 		//Limit check
-		if (curr_time->avr.xe>=exc_EMAX)
+		if (curr_time->avr.xe >= exc_EMAX)
 			curr_time->avr.xe = exc_EMAX;
 
-		if (curr_time->avr.xe<=exc_EMIN)
+		if (curr_time->avr.xe <= exc_EMIN)
 			curr_time->avr.xe = exc_EMIN;
 
 		if (Q_constant_mode == true) {
@@ -3395,8 +3747,34 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 			curr_delta->avr.xfd = curr_time->avr.xe*ki_Qconstant;
 		}
 		else {
+
 			//Apply update
 			curr_time->Vfd = curr_time->avr.xe;
+
+//			// If CVR control is enabled, field voltage will be affected by frequency deviation
+//			if (CVRenabled) {
+//
+//				// Obtain frequency deviation
+//				curr_delta->avr.diff_f = omega_pu - 1.0;
+//
+//				temp_Vfd = curr_time->avr.xe + gen_base_set_vals.vadd;
+//
+//				//Limit check
+//				if (temp_Vfd >= exc_EMAX)
+//					temp_Vfd = exc_EMAX;
+//
+//				if (temp_Vfd <= exc_EMIN)
+//					temp_Vfd = exc_EMIN;
+//
+//				//Apply update
+//				curr_time->Vfd = temp_Vfd;
+//
+//			}
+//			else {
+//
+//				//Apply update
+//				curr_time->Vfd = curr_time->avr.xe;
+//			}
 		}
 
 	}//End AVR update for SEXS exciter
@@ -3723,8 +4101,25 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 		{
 			//Get average PU voltage
 			gen_base_set_vals.vset =  (voltage_pu[0].Mag() + voltage_pu[1].Mag() + voltage_pu[2].Mag())/3.0;
+			Vref = gen_base_set_vals.vset; // Record the initial vset value
 		}
 		//Default else -- it is set, don't adjust it
+		gen_base_set_vals.vseta = gen_base_set_vals.vset;
+		gen_base_set_vals.vsetb = gen_base_set_vals.vset;
+
+		// Assign initial values to state variables ralated to CVR control if enabled
+//		if (CVRenabled == true) {
+////			curr_time->avr.x_cvr = 0;
+//			curr_time->avr.xerr_cvr = 0;
+//			gen_base_set_vals.vadd = 0;
+//		}
+
+		if (CVRenabled == true) {
+			curr_time->avr.x_cvr1 = 0;
+			curr_time->avr.x_cvr2 = 0;
+			gen_base_set_vals.vadd = 0;
+			gen_base_set_vals.vadd_a = 0;
+		}
 
 		// Define exciter bias value
 		// For Q_constant mode, set bias as 0, so that Qout will match Qref
@@ -3751,6 +4146,15 @@ complex diesel_dg::complex_exp(double angle)
 	output_val = complex(cos(angle),sin(angle));
 
 	return output_val;
+}
+
+// Function to calculate absolute values of complex
+double diesel_dg::abs_complex(complex val)
+{
+	double res;
+	res = sqrt(val.Re() * val.Re() + val.Im() * val.Im());
+
+	return res;
 }
 
 //////////////////////////////////////////////////////////////////////////

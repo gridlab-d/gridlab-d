@@ -1,0 +1,7 @@
+Reliability report for IEEE-123_Dynamic_controller.glm
+Number of customers = 9
+
+1366 metrics based around 1-minute base (outage-minutes)
+
+Events for year starting at 2001-08-01 13:00:00
+Annual Event #,Metric Interval Event #,Starting DateTime (YYYY-MM-DD hh:mm:ss),Ending DateTime (YYYY-MM-DD hh:mm:ss),Object type,Object Name,Inducing Object,"Protective" Device,Desired Fault type,Implemented Fault Type,Number customers affected,Secondary number of customers affected

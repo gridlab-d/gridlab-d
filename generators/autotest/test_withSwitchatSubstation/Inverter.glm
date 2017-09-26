@@ -1,0 +1,59 @@
+//////////////////////////////////// Inverter #1 M1/////////////////////////////////////////
+#set relax_naming_rules=1;
+
+object meter:1370 {
+     phases "ABCN";
+	 parent 60;//54;
+     name 1370;
+     flags DELTAMODE;
+     nominal_voltage 2401.7771;
+}
+
+//object recorder {
+//	parent 1370;
+//	property measured_real_power,measured_reactive_power,measured_current_A.real,measured_current_A.imag,measured_current_B.real,measured_current_B.imag,measured_current_C.real,measured_current_C.imag,voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag;
+//	interval 1;
+//	flags DELTAMODE;
+//	file Inverter_#1_MG1.csv;
+//};
+
+object inverter {
+	name const_pq_inv1;
+	parent 1370;
+	inverter_type FOUR_QUADRANT;
+	use_multipoint_efficiency FALSE;
+	four_quadrant_control_mode CONSTANT_PQ;
+	generator_status ONLINE;
+	inverter_efficiency 0.99;	
+
+	rated_power 300 kVA;
+	P_Out 200000;
+	Q_Out 100000;
+	V_In 1000+0j;
+	I_In 1000+0j;
+
+	flags DELTAMODE;
+	dynamic_model_mode PI;
+	inverter_convergence_criterion 0.001;
+	// PI controller parameters
+	kpd 0.001;
+	kid 0.09;
+	kpq 0.001;
+	kiq 0.09;
+	
+	// Droop curve parameters
+	inverter_droop_fp true;
+	Tfreq_delay 0.01; 
+	R_fp 0.000001;
+	
+	inverter_droop_vq false;
+	Tvol_delay 0.01; 
+	R_vq 0.005;
+
+	object recorder {
+		property V_In,I_In,VA_In, Pref, Qref, VA_Out.real, VA_Out.imag;
+		 file PV1_pq_output.csv;
+		 flags DELTAMODE;
+		 interval 1;
+	};
+};	

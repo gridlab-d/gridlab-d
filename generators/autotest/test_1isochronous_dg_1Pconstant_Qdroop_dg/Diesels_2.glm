@@ -1,0 +1,136 @@
+// DG #1 
+object diesel_dg {
+    flags DELTAMODE;
+	parent 50;
+	name Gen1;
+	
+	Rated_V 4156; //Line-to-Line value
+	Rated_VA 4000000; // Defaults to 10 MVA
+	Gen_type DYN_SYNCHRONOUS;
+	rotor_speed_convergence ${rotor_convergence};
+	
+	power_out_A 1+1j;
+	power_out_B 1+1j;
+	power_out_C 1+1j;
+	
+	Exciter_type SEXS;
+	Governor_type GGOV1;
+	
+	//Toggle low-value-select items
+	GGOV1_Load_Limit_enable false;
+	GGOV1_Acceleration_Limit_enable false;
+	GGOV1_PID_enable true;
+	
+	// //Default properties:
+	GGOV1_R 0.04; // Permanent droop, p.u.
+	GGOV1_Rselect 0; // Feedback signal for droop, = 1 selected electrical power, = 0 none (isochronous governor), = -1 fuel valve stroke ( true stroke),= -2 governor output ( requested stroke)
+	
+	GGOV1_Tpelec 1.0; // Electrical power transducer time constant, sec. (>0.)
+	GGOV1_maxerr 0.05;//0.05; // Maximum value for speed error signal
+	GGOV1_minerr -0.05;//-0.05; // Minimum value for speed error signal
+	GGOV1_Kpgov 5.0;// 0.8; // Governor proportional gain
+	GGOV1_Kigov 10.0;// 0.2; // Governor integral gain
+	GGOV1_Kdgov 0.0; // Governor derivative gain
+	GGOV1_Tdgov 1.0; // Governor derivative controller time constant, sec.
+	GGOV1_vmax 1.0;//1.0; // Maximum valve position limit
+	GGOV1_vmin 0.15; // Minimum valve position limit
+	GGOV1_Tact 0.05;//0.5; // Actuator time constant
+	GGOV1_Kturb 1.5; // Turbine gain (>0.)
+	GGOV1_wfnl 0.2;//0.2; // No load fuel flow, p.u
+	GGOV1_Tb 0.01;//0.1; // Turbine lag time constant, sec. (>0.)
+	GGOV1_Tc 0.2; // Turbine lead time constant, sec.
+	GGOV1_Fuel_lag 1; // Switch for fuel source characteristic, = 0 for fuel flow independent of speed, = 1 fuel flow proportional to speed
+	GGOV1_Teng 0.0; // Transport lag time constant for diesel engine
+	GGOV1_Tfload 3.0; // Load Limiter time constant, sec. (>0.)
+	GGOV1_Kpload 2.0; // Load limiter proportional gain for PI controller
+	GGOV1_Kiload 0.67; // Load limiter integral gain for PI controller
+	GGOV1_Ldref 1.0; // Load limiter reference value p.u.
+	GGOV1_Dm 0.0; // Speed sensitivity coefficient, p.u.
+	GGOV1_ropen 050; // Maximum valve opening rate, p.u./sec.
+	GGOV1_rclose -050; // Minimum valve closing rate, p.u./sec.
+	GGOV1_Kimw 0.0;//0.002; // Power controller (reset) gain
+	GGOV1_Pmwset 3000000; // Power controller setpoint, MW
+	GGOV1_aset 0.01; // Acceleration limiter setpoint, p.u./sec.
+	GGOV1_Ka 10.0; // Acceleration limiter Gain
+	GGOV1_Ta 0.1; // Acceleration limiter time constant, sec. (>0.)
+	GGOV1_db 0.0; // Speed governor dead band
+	GGOV1_Tsa 4.0; // Temperature detection lead time constant, sec.
+	GGOV1_Tsb 5.0; // Temperature detection lag time constant, sec.
+	
+	// object recorder {
+		// property rotor_speed,rotor_angle,flux1d,flux2q,EpRotated,VintRotated,Eint_A,Eint_B,Eint_C,Irotated,pwr_electric.real,pwr_electric.imag,pwr_mech,torque_mech,torque_elec;
+		// flags DELTAMODE;
+		// interval -1;
+		// //interval 1;
+		// file "Gen_1_Speed.csv";
+	// };
+	
+
+	// object recorder {
+		// property Pref;
+		// flags DELTAMODE;
+		// interval 1;
+		// file "Gen_1_Pref.csv";
+	// };
+}
+
+// DG #2 
+object diesel_dg {
+    flags DELTAMODE;
+	parent 8;
+	name Gen2;
+	
+	Rated_V 4156; //Line-to-Line value
+	Rated_VA 1000000; // Defaults to 10 MVA
+	Gen_type DYN_SYNCHRONOUS;
+	rotor_speed_convergence ${rotor_convergence};
+	
+	power_out_A 300000+100000j;
+	power_out_B 300000+100000j;
+	power_out_C 300000+100000j;
+	
+	Exciter_type SEXS;
+	Governor_type P_CONSTANT;
+	
+	// Actuator and time delay parameters for P_CONSTANT mode
+	// Actuator and time delay parameters for P_CONSTANT mode
+	P_CONSTANT_Tpelec 1.0; // Electrical power transducer time constant, sec. (>0.)
+	P_CONSTANT_Tact 0.05;//0.5; // Actuator time constant
+	P_CONSTANT_Kturb 1.5; // Turbine gain (>0.)
+	P_CONSTANT_wfnl 0.2;//0.2; // No load fuel flow, p.u
+	P_CONSTANT_Tb 0.01;//0.1; // Turbine lag time constant, sec. (>0.)
+	P_CONSTANT_Tc 0.2; // Turbine lead time constant, sec.
+	// P_CONSTANT_Fuel_lag 0; // Always 0 no matter how user defines it
+	P_CONSTANT_Teng 0.0; // Transport lag time constant for diesel engine
+	P_CONSTANT_ropen 050; // Maximum valve opening rate, p.u./sec.
+	P_CONSTANT_rclose -050; // Minimum valve closing rate, p.u./sec.
+	P_CONSTANT_Kimw 0.0;//0.002; // Power controller (reset) gain
+	
+	inertia 2.5;
+
+	P_CONSTANT_Pref 0.9; // Set P reference, p.u. 
+	P_CONSTANT_kp 0;  // ki for the PI controller implemented in P constant delta mode
+	P_CONSTANT_ki 0.05;  // kp for the PI controller implemented in P constant delta mode
+	
+	//Exciter_Q_constant_Qref 0.5; // Set Q reference, p.u. 
+	//Exciter_Q_constant_mode true; // Flag indicating whether the diesel generator exciter is operating based on Qref given
+	//Exciter_Q_constant_kp 0.01;  // ki for the PI controller implemented in Q constant delta mode
+	//Exciter_Q_constant_ki 0.05;  // kp for the PI controller implemented in Q constant delta mode
+	
+	// object recorder {
+		// property rotor_speed,rotor_angle,flux1d,flux2q,EpRotated,VintRotated,Eint_A,Eint_B,Eint_C,Irotated,pwr_electric.real,pwr_electric.imag,pwr_mech,torque_mech,torque_elec;
+		// flags DELTAMODE;
+		// interval -1;
+		// file "Gen_2_Speed.csv";
+	// };
+	
+	object assert {
+		target rotor_speed;
+		object player {
+			property value;
+			file "../constantP_diesel_dg_speed.csv";
+		};
+		within "0.1";
+	};	
+	
+}
