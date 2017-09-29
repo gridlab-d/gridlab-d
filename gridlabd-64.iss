@@ -16,9 +16,9 @@ AppVerName=GridLAB-D 4.0
 ;AppVerName=GridLAB-D 0.1 Debug
 ; --DEBUG--
 
-AppVersion=3.0
+AppVersion=4.0
 AppPublisher=Pacific Northwest National Laboratory, operated by Battelle
-AppCopyright=Copyright © 2004-2013 Battelle Memorial Institute
+AppCopyright=Copyright © 2004-2017 Battelle Memorial Institute
 AppPublisherURL=http://www.pnl.gov
 ;AppReadmeFile={app}\README.TXT
 ;AppSupportURL=http://gridlab.pnl.gov/support
