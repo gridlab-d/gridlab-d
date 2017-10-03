@@ -1,5 +1,0 @@
-Reliability report for 123_bus_feeder.glm
-Number of customers = 9
-
-1366 metrics based around 1-minute base (outage-minutes)
-
