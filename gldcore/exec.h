@@ -62,10 +62,12 @@ const char *exec_getexitcodestr(EXITCODE);
 int exec_add_createscript(const char *file);
 int exec_add_initscript(const char *file);
 int exec_add_syncscript(const char *file);
+int exec_add_commitscript(const char *file);
 int exec_add_termscript(const char *file);
 int exec_add_scriptexport(const char *file);
 EXITCODE exec_run_initscripts(void);
 EXITCODE exec_run_syncscripts(void);
+EXITCODE exec_run_commitscripts(void);
 EXITCODE exec_run_termscripts(void);
 
 int64 exec_clock(void);
