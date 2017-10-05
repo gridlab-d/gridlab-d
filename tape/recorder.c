@@ -27,6 +27,7 @@
 #include "tape.h"
 #include "file.h"
 #include "odbc.h"
+#include "polar_prop.h"
 
 #ifndef WIN32
 #define strtok_s strtok_r
@@ -483,6 +484,10 @@ PROPERTY *link_properties(struct recorder *rec, OBJECT *obj, char *property_list
 	char256 pstr, ustr;
 	char *cpart = 0;
 	int64 cid = -1;
+	int is_polar = 0;
+	int is_polar_mag = 0;
+	int is_polar_ang = 0;
+	int is_polar_arg = 0;
 
 	strcpy(list,property_list); /* avoid destroying orginal list */
 	for (item=strtok(list,","); item!=NULL; item=strtok(NULL,","))
@@ -494,6 +499,10 @@ PROPERTY *link_properties(struct recorder *rec, OBJECT *obj, char *property_list
 		unit = NULL;
 		cpart = 0;
 		cid = -1;
+		is_polar = 0;
+		is_polar_mag = 0;
+		is_polar_ang = 0;
+		is_polar_arg = 0;
 
 		// everything that looks like a property name, then read units up to ]
 		while (isspace(*item)) item++;
@@ -511,11 +520,23 @@ PROPERTY *link_properties(struct recorder *rec, OBJECT *obj, char *property_list
 		/* must occur w/ *cpart=0 before gl_get_property in order to properly reformat the property name string */
 		cpart = strchr(item, '.');
 		if(cpart != NULL){
-			if(strcmp("imag", cpart+1) == 0){
+			if((strcmp("imag", cpart+1) == 0) || (strcmp("img", cpart+1) == 0)){
 				cid = (int)((int64)&(oblig.i) - (int64)&oblig);
 				*cpart = 0;
 			} else if(strcmp("real", cpart+1) == 0){
 				cid = (int)((int64)&(oblig.r) - (int64)&oblig);
+				*cpart = 0;
+			} else if(strcmp("mag", cpart+1) == 0){
+				is_polar = 1;
+				is_polar_mag = 1;
+				*cpart = 0;
+			} else if(strcmp("ang", cpart+1) == 0){
+				is_polar = 1;
+				is_polar_ang = 1;
+				*cpart = 0;
+			} else if(strcmp("arg", cpart+1) == 0){
+				is_polar = 1;
+				is_polar_arg = 1;
 				*cpart = 0;
 			} else {
 				;
@@ -551,6 +572,25 @@ PROPERTY *link_properties(struct recorder *rec, OBJECT *obj, char *property_list
 		if(cid >= 0){ /* doing the complex part thing */
 			prop->ptype = PT_double;
 			(prop->addr) = (PROPERTYADDR)((int64)(prop->addr) + cid);
+		}
+		if(is_polar) {
+			/* locate the property copy */
+			polar_property_t *polar_prop = get_polar_property(item, prop);
+			if (is_polar_mag) {
+				prop->ptype = PT_double;
+				(prop->addr) = (PROPERTYADDR)((int64)(&(polar_prop->mag)));
+			}
+			else if (is_polar_ang) {
+				prop->ptype = PT_double;
+				(prop->addr) = (PROPERTYADDR)((int64)(&(polar_prop->ang)));
+			}
+			else if (is_polar_arg) {
+				prop->ptype = PT_double;
+				(prop->addr) = (PROPERTYADDR)((int64)(&(polar_prop->arg)));
+			}
+			else {
+				gl_error("recorder: is_polar failed");
+			}
 		}
 	}
 	return first;

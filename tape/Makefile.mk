@@ -33,6 +33,7 @@ tape_tape_la_SOURCES += tape/memory.h
 tape_tape_la_SOURCES += tape/multi_recorder.c
 tape_tape_la_SOURCES += tape/odbc.c
 tape_tape_la_SOURCES += tape/odbc.h
+tape_tape_la_SOURCES += tape/polar_prop.h
 tape_tape_la_SOURCES += tape/player.c
 tape_tape_la_SOURCES += tape/recorder.c
 tape_tape_la_SOURCES += tape/shaper.c
