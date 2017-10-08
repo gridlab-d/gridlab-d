@@ -1107,7 +1107,7 @@ int class_saveall(FILE *fp) /**< a pointer to the stream FILE structure */
 					if ( strchr(prop->name,'.') == NULL )
 						count += fprintf(fp,"\t%s %s;\n", ptype, prop->name);
 					else
-						count += fprintf(fp,"#ifdef INCLUDE_DOTTED_PROPERTIES\t%s %s;\n#endif\n", ptype, prop->name);
+						count += fprintf(fp,"#ifdef INCLUDE_DOTTED_PROPERTIES\n\t%s %s;\n#endif\n", ptype, prop->name);
 				}
 			}
 			count += fprintf(fp,"}\n");
