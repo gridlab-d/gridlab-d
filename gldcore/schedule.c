@@ -350,8 +350,8 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 int schedule_compile(SCHEDULE *sch)
 {
 	char *p = sch->definition, *q = NULL;
-	char blockdef[65536];
-	char blockname[64];
+	char blockdef[65536] = "";
+	char blockname[64] = "";
 	enum {INIT, NAME, OPEN, BLOCK, CLOSE} state = INIT;
 	int comment=0;
 	
