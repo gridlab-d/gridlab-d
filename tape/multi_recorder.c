@@ -684,18 +684,18 @@ RECORDER_MAP *link_multi_properties(OBJECT *obj, char *property_list)
 		}
 		if(is_polar) {
 			/* locate the property copy */
-			polar_property_t *polar_prop = get_polar_property(item, prop);
+			polar_property_t *polar_prop = get_polar_property(item, GETADDR(rmap->obj,&(rmap->prop)));
 			if (is_polar_mag) {
-				prop->ptype = PT_double;
-				(prop->addr) = (PROPERTYADDR)((int64)(&(polar_prop->mag)));
+				rmap->prop.ptype = PT_double;
+				(rmap->prop.addr) = POLARADDR(rmap->obj, &(polar_prop->mag));
 			}
 			else if (is_polar_ang) {
-				prop->ptype = PT_double;
-				(prop->addr) = (PROPERTYADDR)((int64)(&(polar_prop->ang)));
+				rmap->prop.ptype = PT_double;
+				(rmap->prop.addr) = POLARADDR(rmap->obj, &(polar_prop->ang));
 			}
 			else if (is_polar_arg) {
-				prop->ptype = PT_double;
-				(prop->addr) = (PROPERTYADDR)((int64)(&(polar_prop->arg)));
+				rmap->prop.ptype = PT_double;
+				(rmap->prop.addr) = POLARADDR(rmap->obj, &(polar_prop->arg));
 			}
 			else {
 				gl_error("recorder: is_polar failed");

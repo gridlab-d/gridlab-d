@@ -515,6 +515,10 @@ PROPERTY *link_properties(struct recorder *rec, OBJECT *obj, char *property_list
 			item = pstr;
 		}
 		prop = (PROPERTY*)malloc(sizeof(PROPERTY));
+		if (prop==NULL) {
+			gl_error("recorder: out of memory for property '%s'", item);
+			return NULL;
+		}
 		
 		/* branch: test to see if we're trying to split up a complex property */
 		/* must occur w/ *cpart=0 before gl_get_property in order to properly reformat the property name string */
@@ -545,7 +549,7 @@ PROPERTY *link_properties(struct recorder *rec, OBJECT *obj, char *property_list
 
 		target = gl_get_property(obj,item,NULL);
 
-		if (prop!=NULL && target!=NULL)
+		if (target!=NULL)
 		{
 			if(unit != NULL && target->unit == NULL){
 				gl_error("recorder:%d: property '%s' is unitless, ignoring unit conversion", obj->id, item);
@@ -575,18 +579,18 @@ PROPERTY *link_properties(struct recorder *rec, OBJECT *obj, char *property_list
 		}
 		if(is_polar) {
 			/* locate the property copy */
-			polar_property_t *polar_prop = get_polar_property(item, prop);
+			polar_property_t *polar_prop = get_polar_property(item, GETADDR(obj,prop));
 			if (is_polar_mag) {
 				prop->ptype = PT_double;
-				(prop->addr) = (PROPERTYADDR)((int64)(&(polar_prop->mag)));
+				(prop->addr) = POLARADDR(obj, &(polar_prop->mag));
 			}
 			else if (is_polar_ang) {
 				prop->ptype = PT_double;
-				(prop->addr) = (PROPERTYADDR)((int64)(&(polar_prop->ang)));
+				(prop->addr) = POLARADDR(obj, &(polar_prop->ang));
 			}
 			else if (is_polar_arg) {
 				prop->ptype = PT_double;
-				(prop->addr) = (PROPERTYADDR)((int64)(&(polar_prop->arg)));
+				(prop->addr) = POLARADDR(obj, &(polar_prop->arg));
 			}
 			else {
 				gl_error("recorder: is_polar failed");
