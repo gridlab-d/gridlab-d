@@ -6560,6 +6560,24 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		return TRUE;
 	}
 
+	/* macros that are short for other macros */
+	if ( strncmp(line,MACRO "insert",7)==0 )
+	{
+		char name[1024];
+		char values[1024]="";
+		if ( sscanf(line+7,"%*[ \t]%[^(](%[^)])",name,values)==0 )
+		{
+			output_error_raw("%s(%d): #insert syntax error -- name not found",filename,linenum);
+			return FALSE;
+		}
+		sprintf(line,"#include using(%s) \"%s.glm\"",values,name);
+		/* fall through to normal parsing of macros */
+	}
+	else /* add other macro macros here */
+	{
+		/* fall through to normal parsing of macros */
+	}
+
 	/* these macros can be suppressed */
 	if (strncmp(line,MACRO "include",8)==0)
 	{
