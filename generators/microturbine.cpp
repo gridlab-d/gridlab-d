@@ -212,12 +212,12 @@ int microturbine::init(OBJECT *parent)
 		char *varname;
 	} map[] = {
 		// local object name,	meter object name
-		{&pCircuit_V_A,			"phaseA_V_In"}, 
-		{&pCircuit_V_B,			"phaseB_V_In"}, 
-		{&pCircuit_V_C,			"phaseC_V_In"}, 
-		{&pLine_I_A,			"phaseA_I_In"}, 
-		{&pLine_I_B,			"phaseB_I_In"}, 
-		{&pLine_I_C,			"phaseC_I_In"}, 
+		{&pCircuit_V_A,			"voltage_A"}, 
+		{&pCircuit_V_B,			"voltage_B"}, 
+		{&pCircuit_V_C,			"voltage_C"}, 
+		{&pLine_I_A,			"current_A"}, 
+		{&pLine_I_B,			"current_B"}, 
+		{&pLine_I_C,			"current_C"}, 
 		/// @todo use triplex property mapping instead of assuming memory order for meter variables (residential, low priority) (ticket #139)
 	};
 	 
@@ -299,8 +299,16 @@ int microturbine::init(OBJECT *parent)
 complex *microturbine::get_complex(OBJECT *obj, char *name)
 {
 	PROPERTY *p = gl_get_property(obj,name);
-	if (p==NULL || p->ptype!=PT_complex)
-		return NULL;
+	if (p==NULL )
+	{	
+		gl_error("property %s is not found in meter %s", name, obj->name);
+		throw("get_complex(obj='%s', name='%s') failed",obj->name,name);
+	}
+	if ( p->ptype!=PT_complex)
+	{
+		gl_error("property %s is in meter %s is not complex", name, obj->name);
+		throw("get_complex(obj='%s', name='%s') failed",obj->name,name);
+	}
 	return (complex*)GETADDR(obj,p);
 }
 
