@@ -817,6 +817,10 @@ EXPORT TIMESTAMP sync_multi_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		}
 	}
 
+	/* update polar property values */
+	if (my->rmap != NULL) {
+		update_polar_properties();
+	}
 	/* update property value */
 	if ((my->rmap != NULL) && (my->interval == 0 || my->interval == -1)){	
 		if(read_multi_properties(my, obj->parent,my->rmap,buffer,sizeof(buffer))==0) // vestigal use of parent

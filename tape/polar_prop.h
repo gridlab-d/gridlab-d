@@ -7,6 +7,7 @@
  */
 typedef struct polar_property {
 	char *item;
+	PROPERTYADDR addr;
 	double mag;
 	double arg;
 	double ang;
@@ -35,11 +36,19 @@ static polar_property_t * find_polar_property(char *item) {
 
 static polar_property_t * get_polar_property(char *item, PROPERTYADDR addr) {
 	polar_property_t *polar = find_polar_property(item);
-	complex rect = *((complex*)addr);
-	polar->mag = complex_get_mag(rect);
-	polar->arg = complex_get_arg(rect);
-	polar->ang = polar->arg * 180/PI;
+	polar->addr = addr;
 	return polar;
+}
+
+static void update_polar_properties() {
+	polar_property_t *runner = polar_property_head;
+	while (NULL != runner) {
+		complex rect = *((complex*)runner->addr);
+		runner->mag = complex_get_mag(rect);
+		runner->arg = complex_get_arg(rect);
+		runner->ang = runner->arg * 180/PI;
+		runner = runner->next;
+	}
 }
 
 static void clear_polar_properties() {

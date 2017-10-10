@@ -706,6 +706,10 @@ EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		}
 	}
 
+	/* update polar property values */
+	if (my->target != NULL) {
+		update_polar_properties();
+	}
 	/* update property value */
 	if ((my->target != NULL) && (my->interval == 0 || my->interval == -1)){	
 		if(read_properties(my, obj->parent,my->target,buffer,sizeof(buffer))==0)
