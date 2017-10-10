@@ -6,6 +6,7 @@
  * properties to hold the converted values.
  */
 typedef struct polar_property {
+	char *name;
 	char *item;
 	PROPERTYADDR addr;
 	double mag;
@@ -16,17 +17,20 @@ typedef struct polar_property {
 
 static polar_property_t * polar_property_head = NULL;
 
-static polar_property_t * find_polar_property(char *item) {
+static polar_property_t * find_polar_property(OBJECT *obj, char *item) {
 	polar_property_t *runner = polar_property_head;
 	while (NULL != runner) {
-		if (strcmp(item, runner->item) == 0) {
-			break;
+		if (strcmp(obj->name, runner->name) == 0) {
+			if (strcmp(item, runner->item) == 0) {
+				break;
+			}
 		}
 		runner = runner->next;
 	}
 	/* if item not found, create new and prepend */
 	if (NULL == runner) {
 		runner = malloc(sizeof(polar_property_t));
+		runner->name = strdup(obj->name);
 		runner->item = strdup(item);
 		runner->next = polar_property_head;
 		polar_property_head = runner;
@@ -34,9 +38,9 @@ static polar_property_t * find_polar_property(char *item) {
 	return runner;
 }
 
-static polar_property_t * get_polar_property(char *item, PROPERTYADDR addr) {
-	polar_property_t *polar = find_polar_property(item);
-	polar->addr = addr;
+static polar_property_t * get_polar_property(OBJECT *obj, char *item, PROPERTY *prop) {
+	polar_property_t *polar = find_polar_property(obj, item);
+	polar->addr = GETADDR(obj, prop);
 	return polar;
 }
 
@@ -56,6 +60,7 @@ static void clear_polar_properties() {
 	while (NULL != runner) {
 		polar_property_t *deleteme = runner;
 		runner = runner->next;
+		free(deleteme->name);
 		free(deleteme->item);
 		free(deleteme);
 	}

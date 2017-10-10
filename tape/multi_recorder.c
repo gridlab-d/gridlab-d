@@ -684,7 +684,7 @@ RECORDER_MAP *link_multi_properties(OBJECT *obj, char *property_list)
 		}
 		if(is_polar) {
 			/* locate the property copy */
-			polar_property_t *polar_prop = get_polar_property(item, GETADDR(rmap->obj,&(rmap->prop)));
+			polar_property_t *polar_prop = get_polar_property(rmap->obj, item, &(rmap->prop));
 			if (is_polar_mag) {
 				rmap->prop.ptype = PT_double;
 				(rmap->prop.addr) = POLARADDR(rmap->obj, &(polar_prop->mag));

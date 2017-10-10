@@ -579,7 +579,7 @@ PROPERTY *link_properties(struct recorder *rec, OBJECT *obj, char *property_list
 		}
 		if(is_polar) {
 			/* locate the property copy */
-			polar_property_t *polar_prop = get_polar_property(item, GETADDR(obj,prop));
+			polar_property_t *polar_prop = get_polar_property(obj, item, prop);
 			if (is_polar_mag) {
 				prop->ptype = PT_double;
 				(prop->addr) = POLARADDR(obj, &(polar_prop->mag));
