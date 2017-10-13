@@ -785,7 +785,8 @@ int metrics_collector::read_line(OBJECT *obj){
 	// Update index value
 	++curr_index;
 	if (curr_index == vector_length) {
-		gl_error ("metrics_collector wrapped its buffer for aggregating data");
+		gl_error ("metrics_collector wrapped its buffer for aggregating data, %d %d %ld\n",
+							curr_index, vector_length, gl_globalclock);
 		/*  TROUBLESHOOT
 		The metrics_collector allocates a buffer large enough to cover its aggregation 
 		interval at 1-second time steps. Is the time step smaller than 1s? Program logic error?
@@ -966,7 +967,7 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		curr_index = 1;
 	}
 
-	next_write += interval_length;
+	next_write = min(next_write + interval_length, gl_globalstoptime);
 	first_write = false;
 
 	return 1;

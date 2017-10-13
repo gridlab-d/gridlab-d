@@ -246,10 +246,10 @@ TIMESTAMP metrics_collector_writer::postsync(TIMESTAMP t0, TIMESTAMP t1){
 	if(next_write <= t1){
 		interval_write = true;
 		last_write = t1;
-		next_write = t1 + interval_length;
+		next_write = min(t1 + interval_length, final_write);
 	}
 
-	// the interval recorders have already return'ed out, earlier in the sequence.
+	// the interval recorders have already returned t1+interval_length, earlier in the sequence.
 	return TS_NEVER;
 }
 
@@ -292,7 +292,9 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 	int writeTime = t1 - startTime; // in seconds
 	sprintf(time_str, "%d", writeTime);
 
-	// Go through each metrics_coolector object, and check its time interval given
+//	printf("write_line at %d seconds, final %ld, now %ld\n", writeTime, final_write, t1);
+
+	// Go through each metrics_collector object, and check its time interval given
 	OBJECT *obj = NULL;
 	while(obj = gl_find_next(metrics_collectors,obj)){
 		if(index >= metrics_collectors->hit_count){
@@ -453,7 +455,7 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 	}
 
 
-	// Rewrite the metrics to be seperate 2-d ones
+	// Rewrite the metrics to be separate 2-d ones
 	metrics_writer_billing_meters[time_str] = billing_meter_objects;
 	metrics_writer_houses[time_str] = house_objects;
 	metrics_writer_inverters[time_str] = inverter_objects;
