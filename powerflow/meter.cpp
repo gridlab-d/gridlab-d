@@ -34,6 +34,8 @@ EXPORT int64 meter_reset(OBJECT *obj)
 	return 0;
 }
 
+extern char1024 market_price_name;
+
 //////////////////////////////////////////////////////////////////////////
 // meter CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
@@ -200,9 +202,9 @@ int meter::init(OBJECT *parent)
 	char temp_buff[128];
 
 	if(power_market != 0){
-		price_prop = gl_get_property(power_market, "current_market.clearing_price");
+		price_prop = gl_get_property(power_market, market_price_name);
 		if(price_prop == 0){
-			GL_THROW("meter::power_market object \'%s\' does not publish \'current_market.clearing_price\'", (power_market->name ? power_market->name : "(anon)"));
+			GL_THROW("triplex_meter::power_market object \'%s\' does not publish \'%s\'", (power_market->name ? power_market->name : "(anon)"), (const char*)market_price_name);
 		}
 	}
 
