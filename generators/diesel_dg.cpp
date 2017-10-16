@@ -1261,10 +1261,10 @@ int diesel_dg::init(OBJECT *parent)
 	{
 		if (enable_subsecond_models == true)
 		{
-			gl_warning("diesel_dg:%d %s - Deltamode is enabled for the module, but not this generator!",obj->id,(obj->name ? obj->name : "Unnamed"));
+			GL_THROW("diesel_dg:%d %s - Deltamode is enabled for the module, but not this generator!",obj->id,(obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
-			The diesel_dg is not flagged for deltamode operations, yet deltamode simulations are enabled for the overall system.  When deltamode
-			triggers, this generator may no longer contribute to the system, until event-driven mode resumes.  This could cause issues with the simulation.
+			The diesel_dg is not flagged for deltamode operations, yet deltamode simulations are enabled for the overall system.  This will cause issues when
+			the simulation executes, due to missing variables.  It is recommend deltamode be enabled for this object, or a different operating mode utilized.
 			It is recommended all objects that support deltamode enable it.
 			*/
 		}
