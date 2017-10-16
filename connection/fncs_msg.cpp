@@ -995,6 +995,8 @@ int fncs_msg::publishVariables(varmap *wmap){
 	int64 ival;
 	int64 lst_ival;
 	string lst_sval;
+	bool bval;
+	bool lst_bval;
 	bool pub_value = false;
 	for(mp = wmap->getfirst(); mp != NULL; mp = mp->next){
 		pub_value = false;
@@ -1074,6 +1076,23 @@ int fncs_msg::publishVariables(varmap *wmap){
 							{
 								pub_value = true;
 								memcpy(mp->last_value, (void *)(&value), sizeof(value));
+							}
+						}
+					}
+					else if(mp->obj->is_bool() == true)
+					{
+						bval = *(bool *)mp->obj->get_addr();
+						if(mp->last_value == NULL)
+						{
+							pub_value = true;
+							mp->last_value = (void *)(new bool(bval));
+						}
+						else
+						{
+							lst_bval = *((bool *)(mp->last_value));
+							if(bval != lst_bval){
+								pub_value = true;
+								memcpy(mp->last_value, (void *)(&bval), sizeof(bval));
 							}
 						}
 					}
