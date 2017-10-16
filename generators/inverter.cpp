@@ -5820,7 +5820,8 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 						Pref_prev = Pref;
 						pred_state.f_mea_delayed = curr_state.f_mea_delayed + (deltat * curr_state.df_mea_delayed);
 						// Calculate Pref based on the droop curve
-						double delta_Pref = (pred_state.f_mea_delayed - freq_ref) * (1 / R_fp);
+//						double delta_Pref = (pred_state.f_mea_delayed - freq_ref) * (1 / R_fp);
+						double delta_Pref = ((pred_state.f_mea_delayed - freq_ref)/freq_ref) * (1 / R_fp) * p_rated;
 						power_diff_val = Pref_prev - (Pref0 - delta_Pref);
 						if (checkRampRate_real == true) {
 							if (power_diff_val > 0 && (power_diff_val > rampDownRate_real*3)) {
@@ -6051,7 +6052,8 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 						pred_state.df_mea_delayed = 1.0/Tfreq_delay*(*mapped_freq_variable - pred_state.f_mea_delayed);
 						curr_state.f_mea_delayed = curr_state.f_mea_delayed + ((curr_state.df_mea_delayed + pred_state.df_mea_delayed) * deltat) / 2.0;
 						// Calculate Pref based on teh droop curve
-						double delta_Pref = (curr_state.f_mea_delayed - freq_ref) * (1 / R_fp);
+//						double delta_Pref = (curr_state.f_mea_delayed - freq_ref) * (1 / R_fp);
+						double delta_Pref = ((curr_state.f_mea_delayed - freq_ref)/freq_ref) * (1 / R_fp) * p_rated;
 						power_diff_val = Pref_prev - (Pref0 - delta_Pref);
 						if (checkRampRate_real == true) {
 							if (power_diff_val > 0 && (power_diff_val > rampDownRate_real*3)) {
