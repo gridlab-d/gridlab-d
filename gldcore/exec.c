@@ -2265,6 +2265,13 @@ STATUS exec_start(void)
 				output_error("sync script(s) failed");
 				THROW("script synchronization failure");
 			}
+
+			/* run commit scripts, if any */
+			if ( exec_sync_get(NULL)!=global_clock && exec_run_commitscripts()!=XC_SUCCESS )
+			{
+				output_error("commit script(s) failed");
+				THROW("script commit failure");
+			}
 			
 			/* handle delta mode operation */
 			if ( global_simulation_mode==SM_DELTA && exec_sync_get(NULL)>=global_clock )
@@ -2962,6 +2969,7 @@ static int update_exports(void)
 SIMPLELIST *create_scripts = NULL;
 SIMPLELIST *init_scripts = NULL;
 SIMPLELIST *sync_scripts = NULL;
+SIMPLELIST *commit_scripts = NULL;
 SIMPLELIST *term_scripts = NULL;
 
 static int add_script(SIMPLELIST **list, const char *file)
@@ -3008,6 +3016,11 @@ int exec_add_syncscript(const char *file)
 	IN_MYCONTEXT output_debug("adding sync script '%s'", file);
 	return add_script(&sync_scripts,file);
 }
+int exec_add_commitscript(const char *file)
+{
+	IN_MYCONTEXT output_debug("adding commit script '%s'", file);
+	return add_script(&commit_scripts,file);
+}
 int exec_add_termscript(const char *file)
 {
 	IN_MYCONTEXT output_debug("adding term script '%s'", file);
@@ -3024,6 +3037,10 @@ int exec_run_initscripts(void)
 int exec_run_syncscripts(void)
 {
 	return run_scripts(sync_scripts);
+}
+int exec_run_commitscripts(void)
+{
+	return run_scripts(commit_scripts);
 }
 int exec_run_termscripts(void)
 {

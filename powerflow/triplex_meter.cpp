@@ -36,7 +36,7 @@ EXPORT int64 triplex_meter_reset(OBJECT *obj)
 	return 0;
 }
 
-static char1024 market_price_name = "current_market.clearing_price";
+char1024 market_price_name = "current_market.clearing_price";
 
 //////////////////////////////////////////////////////////////////////////
 // triplex_meter CLASS FUNCTIONS
