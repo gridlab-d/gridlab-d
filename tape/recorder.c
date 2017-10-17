@@ -616,6 +616,13 @@ int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buff
 	return count;
 }
 
+EXPORT int finalize_recorder(OBJECT *obj)
+{
+	struct recorder *my = OBJECTDATA(obj,struct recorder);
+	close_recorder(my);
+	return 1;
+}
+
 EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	struct recorder *my = OBJECTDATA(obj,struct recorder);
