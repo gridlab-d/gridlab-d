@@ -26,6 +26,10 @@
 
 SET_MYCONTEXT(DMC_JOB)
 
+#ifndef MIN
+#define MIN(X,Y) ((X)<(Y)?(X):(Y))
+#endif
+
 static bool clean = false; // set to true to force purge of test directories
 
 /* Windows implementation of opendir/readdir/closedir */
@@ -359,11 +363,11 @@ extern "C" int job(int argc, char *argv[])
 	if ( n_procs==0 ) n_procs = processor_count();
 	pthread_t *pid = new pthread_t[n_procs];
 	IN_MYCONTEXT output_debug("starting job with cmdargs '%s' using %d threads", job_cmdargs, n_procs);
-	for ( i=0 ; i<min(count,n_procs) ; i++ )
+	for ( i=0 ; i<MIN(count,n_procs) ; i++ )
 		pthread_create(&pid[i],NULL,run_job_proc,(void*)i);
 	void *rc;
 	IN_MYCONTEXT output_debug("begin waiting process");
-	for ( i=0 ; i<min(count,n_procs) ; i++ )
+	for ( i=0 ; i<MIN(count,n_procs) ; i++ )
 	{
 		pthread_join(pid[i],&rc);
 		IN_MYCONTEXT output_debug("process %d done", i);
