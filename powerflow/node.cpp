@@ -1441,7 +1441,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 	{
 		if (prev_NTime==0)	//First run, if we are a child, make sure no one linked us before we knew that
 		{
-			if (((SubNode == CHILD) || (SubNode == DIFF_CHILD)) && (NR_connected_links>0))
+			if (((SubNode == CHILD) || (SubNode == DIFF_CHILD)) && (NR_connected_links))
 			{
 				node *parNode = OBJECTDATA(SubNodeParent,node);
 

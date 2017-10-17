@@ -27,6 +27,10 @@
 
 SET_MYCONTEXT(DMC_VALIDATE)
 
+#ifndef MIN
+#define MIN(X,Y) ((X)<(Y)?(X):(Y))
+#endif
+
 /** validating result counter */
 class counters {
 public:
@@ -831,7 +835,7 @@ int validate(int argc, char *argv[])
 		report_newtable("FILE TEST RESULTS");
 	int n_procs = global_threadcount;
 	if ( n_procs==0 ) n_procs = processor_count();
-	n_procs = min(final.get_tested(),(unsigned)n_procs);
+	n_procs = MIN(final.get_tested(),(unsigned)n_procs);
 	pthread_t *pid = new pthread_t[n_procs];
 	IN_MYCONTEXT output_debug("starting validation with cmdargs '%s' using %d threads", validate_cmdargs, n_procs);
 	for ( i=0 ; i<n_procs ; i++ )
