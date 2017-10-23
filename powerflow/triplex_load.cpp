@@ -104,6 +104,13 @@ triplex_load::triplex_load(MODULE *mod) : triplex_node(mod)
 				GL_THROW("Unable to publish triplex_load deltamode function");
 			if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
 				GL_THROW("Unable to publish triplex_load deltamode function");
+			if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==NULL)
+				GL_THROW("Unable to publish triplex_load swing-swapping function");
+			if (gl_publish_function(oclass,	"pwr_current_injection_update_map", (FUNCTIONADDR)node_map_current_update_function)==NULL)
+				GL_THROW("Unable to publish triplex_load current injection update mapping function");
+			if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==NULL)
+				GL_THROW("Unable to publish triplex_load VFD attachment function");
+
     }
 }
 
@@ -173,17 +180,26 @@ TIMESTAMP triplex_load::presync(TIMESTAMP t0)
 
 TIMESTAMP triplex_load::sync(TIMESTAMP t0)
 {
-	//bool all_three_phases;
-	bool fault_mode;
-
-	//See if we're reliability-enabled
-	if (fault_check_object == NULL)
-		fault_mode = false;
-	else
-		fault_mode = true;
-
-	//Functionalized so deltamode can parttake
-	triplex_load_update_fxn();
+	//Call the GFA-type functionality, if appropriate
+	if (GFA_enable == true)
+	{
+		//See if we're enabled - just skipping the load update should be enough, if we are not
+		if (GFA_status == true)
+		{
+			//Functionalized so deltamode can parttake
+			triplex_load_update_fxn();
+		}
+		else
+		{
+			//Remove any load contributions
+			triplex_load_delete_update_fxn();
+		}
+	}
+	else	//GFA checks are not enabled
+	{
+		//Functionalized so deltamode can parttake
+		triplex_load_update_fxn();
+	}
 
 	//Must be at the bottom, or the new values will be calculated after the fact
 	TIMESTAMP result = triplex_node::sync(t0);
@@ -588,15 +604,87 @@ void triplex_load::triplex_load_update_fxn()
 	}
 }
 
+//Function to appropriately zero load - make sure we don't get too heavy handed
+void triplex_load::triplex_load_delete_update_fxn(void)
+{
+	int index_var;
+
+	if ((solver_method!=SM_FBS) && ((SubNode==PARENT) || (SubNode==DIFF_PARENT)))	//Need to do something slightly different with GS/NR and parented load
+	{													//associated with change due to player methods
+		if (SubNode != PARENT)	//Normal parent gets one routine
+		{
+			//Loop and clear
+			for (index_var=0; index_var<3; index_var++)
+			{
+				pub_shunt[index_var] = complex(0.0,0.0);
+				power[index_var] = complex(0.0,0.0);
+				current[index_var] = complex(0.0,0.0);
+			}
+
+			//Get the straggler
+			current12 = complex(0.0,0.0);
+		}
+	}
+	else
+	{
+		//Loop and clear
+		for (index_var=0; index_var<3; index_var++)
+		{
+			pub_shunt[index_var] = complex(0.0,0.0);
+			power[index_var] = complex(0.0,0.0);
+			current[index_var] = complex(0.0,0.0);
+		}
+
+		//Get the straggler
+		current12 = complex(0.0,0.0);
+	}
+}
+
+
+
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF DELTA MODE
 //////////////////////////////////////////////////////////////////////////
 //Module-level call
 SIMULATIONMODE triplex_load::inter_deltaupdate_triplex_load(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
 {
-	//unsigned char pass_mod;
 	OBJECT *hdr = OBJECTHDR(this);
-	bool fault_mode;
+	double deltat, deltatimedbl;
+	STATUS return_status_val;
+
+	//Create delta_t variable
+	deltat = (double)dt/(double)DT_SECOND;
+
+	//Update time tracking variable - mostly for GFA functionality calls
+	if ((iteration_count_val==0) && (interupdate_pos == false)) //Only update timestamp tracker on first iteration
+	{
+		//Get decimal timestamp value
+		deltatimedbl = (double)delta_time/(double)DT_SECOND; 
+
+		//Update tracking variable
+		prev_time_dbl = (double)gl_globalclock + deltatimedbl;
+
+		//Update frequency calculation values (if needed)
+		if (fmeas_type != FM_NONE)
+		{
+			//Copy the tracker value
+			memcpy(&prev_freq_state,&curr_freq_state,sizeof(FREQM_STATES));
+		}
+	}
+
+	//Initialization items
+	if ((delta_time==0) && (iteration_count_val==0) && (interupdate_pos == false) && (fmeas_type != FM_NONE))	//First run of new delta call
+	{
+		//Initialize dynamics
+		init_freq_dynamics();
+	}//End first pass and timestep of deltamode (initial condition stuff)
+
+	//Perform the GFA update, if enabled
+	if ((GFA_enable == true) && (iteration_count_val == 0) && (interupdate_pos == false))	//Always just do on the first pass
+	{
+		//Do the checks
+		GFA_Update_time = perform_GFA_checks(deltat);
+	}
 
 	if (interupdate_pos == false)	//Before powerflow call
 	{
@@ -614,15 +702,26 @@ SIMULATIONMODE triplex_load::inter_deltaupdate_triplex_load(unsigned int64 delta
 		//Call node presync-equivalent items
 		NR_node_presync_fxn(0);
 
-		//Triplex_load-specific sync calls
-			//See if we're reliability-enabled
-			if (fault_check_object == NULL)
-				fault_mode = false;
+		//See if GFA functionality is enabled
+		if (GFA_enable == true)
+		{
+			//See if we're enabled - just skipping the load update should be enough, if we are not
+			if (GFA_status == true)
+			{
+				//Functionalized so deltamode can parttake
+				triplex_load_update_fxn();
+			}
 			else
-				fault_mode = true;
-
+			{
+				//Remove any load contributions
+				triplex_load_delete_update_fxn();
+			}
+		}
+		else	//No GFA checks - go like normal
+		{
 			//Functionalized so deltamode can parttake
 			triplex_load_update_fxn();
+		}
 
 		//Call sync-equivalent of triplex portion first
 		BOTH_triplex_node_sync_fxn();
@@ -631,7 +730,8 @@ SIMULATIONMODE triplex_load::inter_deltaupdate_triplex_load(unsigned int64 delta
 		NR_node_sync_fxn(hdr);
 
 		return SM_DELTA;	//Just return something other than SM_ERROR for this call
-	}
+
+	}//End Before NR solver (or inclusive)
 	else	//After the call
 	{
 		//Perform node postsync-like updates on the values
@@ -642,33 +742,37 @@ SIMULATIONMODE triplex_load::inter_deltaupdate_triplex_load(unsigned int64 delta
 			measured_voltage_2.SetPolar(voltage2.Mag(),voltage2.Arg());
 			measured_voltage_12.SetPolar(voltage12.Mag(),voltage12.Arg());
 
-		//No control required at this time - powerflow defers to the whims of other modules
-		//Code below implements predictor/corrector-type logic, even though it effectively does nothing
-		return SM_EVENT;
+		//Frequency measurement stuff
+		if (fmeas_type != FM_NONE)
+		{
+			return_status_val = calc_freq_dynamics(deltat);
 
-		////Do deltamode-related logic
-		//if (bustype==SWING)	//We're the SWING bus, control our destiny (which is really controlled elsewhere)
-		//{
-		//	//See what we're on
-		//	pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
+			//Check it
+			if (return_status_val == FAILED)
+			{
+				return SM_ERROR;
+			}
+		}//End frequency measurement desired
+		//Default else -- don't calculate it
 
-		//	//Check pass
-		//	if (pass_mod==0)	//Predictor pass
-		//	{
-		//		return SM_DELTA_ITER;	//Reiterate - to get us to corrector pass
-		//	}
-		//	else	//Corrector pass
-		//	{
-		//		//As of right now, we're always ready to leave
-		//		//Other objects will dictate if we stay (powerflow is indifferent)
-		//		return SM_EVENT;
-		//	}//End corrector pass
-		//}//End SWING bus handling
-		//else	//Normal bus
-		//{
-		//	return SM_EVENT;	//Normal nodes want event mode all the time here - SWING bus will
-		//						//control the reiteration process for pred/corr steps
-		//}
+		//See if GFA functionality is required, since it may require iterations or "continance"
+		if (GFA_enable == true)
+		{
+			//See if our return is value
+			if ((GFA_Update_time > 0.0) && (GFA_Update_time < 1.7))
+			{
+				//Force us to stay
+				return SM_DELTA;
+			}
+			else	//Just return whatever we were going to do
+			{
+				return SM_EVENT;
+			}
+		}
+		else	//Normal mode
+		{
+			return SM_EVENT;
+		}
 	}
 }
 

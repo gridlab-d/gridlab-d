@@ -475,6 +475,7 @@ void underground_line::recalc(void)
 						Z(i, j) = Z_DIST(i, j);
 				}
 			}	
+			#undef Z_GMR_S	//Make the compiler happy
 		 } else {
                 // see example: 4.4
                 #define Z_GMR(i) (GMR(i) == 0.0 ? complex(0.0) : complex(freq_coeff_real + RES(i), freq_coeff_imag * (log(1.0 / GMR(i)) + freq_additive_term))) 

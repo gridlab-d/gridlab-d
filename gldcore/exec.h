@@ -47,7 +47,7 @@ int exec_run_createscripts(void);
 
 void exec_sync_reset(struct sync_data *d);
 void exec_sync_merge(struct sync_data *to, struct sync_data *from);
-void exec_sync_set(struct sync_data *d, TIMESTAMP t);
+void exec_sync_set(struct sync_data *d, TIMESTAMP t,bool deltaflag);
 TIMESTAMP exec_sync_get(struct sync_data *d);
 unsigned int exec_sync_getevents(struct sync_data *d);
 int exec_sync_ishard(struct sync_data *d);

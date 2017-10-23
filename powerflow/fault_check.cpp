@@ -1277,7 +1277,7 @@ void fault_check::special_object_alteration_handle(int branch_idx)
 		if (NR_branchdata[branch_idx].lnk_type == 2)
 		{
 			//Find this object
-			temp_obj = gl_get_object(NR_branchdata[branch_idx].name);
+			temp_obj = NR_branchdata[branch_idx].obj;
 
 			//Make sure it worked
 			if (temp_obj == NULL)
@@ -1319,7 +1319,7 @@ void fault_check::special_object_alteration_handle(int branch_idx)
 		else if (NR_branchdata[branch_idx].lnk_type == 3)	//See if we're a fuse
 		{
 			//Find this object
-			temp_obj = gl_get_object(NR_branchdata[branch_idx].name);
+			temp_obj = NR_branchdata[branch_idx].obj;
 
 			//Make sure it worked
 			if (temp_obj == NULL)
@@ -1361,7 +1361,7 @@ void fault_check::special_object_alteration_handle(int branch_idx)
 		else if (NR_branchdata[branch_idx].lnk_type == 6)	//Recloser
 		{
 			//Find this object
-			temp_obj = gl_get_object(NR_branchdata[branch_idx].name);
+			temp_obj = NR_branchdata[branch_idx].obj;
 
 			//Make sure it worked
 			if (temp_obj == NULL)
@@ -1396,7 +1396,7 @@ void fault_check::special_object_alteration_handle(int branch_idx)
 		else if (NR_branchdata[branch_idx].lnk_type == 5)	//Sectionalizer
 		{
 			//Find this object
-			temp_obj = gl_get_object(NR_branchdata[branch_idx].name);
+			temp_obj = NR_branchdata[branch_idx].obj;
 
 			//Make sure it worked
 			if (temp_obj == NULL)
@@ -1805,7 +1805,7 @@ void fault_check::momentary_activation(int node_int)
 	PROPERTY *pval;
 
 	//See if we are a meter or triplex meter
-	tmp_obj = gl_get_object(NR_busdata[node_int].name);
+	tmp_obj = NR_busdata[node_int].obj;
 
 	//Make sure it worked
 	if (tmp_obj == NULL)
@@ -2156,7 +2156,7 @@ EXPORT double handle_sectionalizer(OBJECT *thisobj, int sectionalizer_number)
 				if (NR_branchdata[branch_val].lnk_type == 6)
 				{
 					//Map the object
-					tmp_obj = gl_get_object(NR_branchdata[branch_val].name);
+					tmp_obj = NR_branchdata[branch_val].obj;
 
 					//Make sure it worked
 					if (tmp_obj == NULL)

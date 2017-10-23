@@ -20,11 +20,12 @@
 EXPORT STATUS preupdate_inverter(OBJECT *obj,TIMESTAMP t0, unsigned int64 delta_time);
 EXPORT SIMULATIONMODE interupdate_inverter(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 EXPORT STATUS postupdate_inverter(OBJECT *obj, complex *useful_value, unsigned int mode_pass);
+EXPORT STATUS inverter_NR_current_injection_update(OBJECT *obj);
 
 //Alternative PI version Dynamic control Inverter state variable structure
 typedef struct {
-	double Pout[3];		///< The real power output
-	double Qout[3];		///< The reactive power output
+	double P_Out[3];		///< The real power output
+	double Q_Out[3];		///< The reactive power output
 	double ed[3];			///< The error in real power output
 	double eq[3];			///< The error in reactive power output
 	double ded[3];		///< The change in real power error
@@ -35,6 +36,29 @@ typedef struct {
 	double dmq[3];			///< The change in q axis current modulator of the inverter
 	complex Idq[3];			///< The dq axis current output of the inverter
 	complex Iac[3];	///< The AC current out of the inverter terminals
+
+	// Terminal voltage state variable for VSI isochronous mode
+	double V_StateVal[3];	// Magnitude of the VSI terminal voltage
+	double dV_StateVal[3];	// Change in magnitude of the VSI terminal voltage
+	double e_source_mag[3];	// VSI e_source magnitude
+
+	// Frequency state variable for f/p droop
+	double f_mea_delayed; // Delay measured frequency value seen by the inverter
+	double df_mea_delayed; // The change of the frequency
+
+	// Voltage state variable for v/q droop
+	double V_mea_delayed[3]; // Delay measured terminal voltage values seen by the inverter
+	double dV_mea_delayed[3]; // The change of the terminal voltage values
+
+	// Real power state variable for f/p drrop in VSI inverter
+	double p_mea_delayed;
+	double dp_mea_delayed;
+
+	// Reactive power state variable for f/p drrop in VSI inverter
+	double q_mea_delayed;
+	double dq_mea_delayed;
+
+
 } INV_STATE;
 
 //Simple PID controller
@@ -62,6 +86,19 @@ private:
 	bool first_sync_delta_enabled;
 	char first_iter_counter;
 	INV_STATE pred_state;	///< The predictor state of the inverter in delamode
+	INV_STATE next_state;	///< The next state of the inverter in delamode
+	bool first_run;
+
+	complex *bus_admittance_mat;		//Link to bus raw self-admittance value - grants 3x3 access instead of diagonal
+	complex *full_bus_admittance_mat;	//Link to bus full self-admittance of Ybus form
+	complex *PGenerated;				//Link to bus PGenerated field - mainly used for SWING generator
+	complex *IGenerated;				//Link to direct current injections to powerflow at bus-level
+	complex generator_admittance[3][3];	//Generator admittance matrix converted from sequence values
+	complex prev_VA_out[3];				//Previous state tracking variable for ramp-rate calculations
+	complex curr_VA_out[3];				//Current state tracking variable for ramp-rate calculations
+	double Pref_prev;					//Previous Pref value in the same time step for non-VSI droop mode ramp-rate calculations
+	double Qref_prev[3];				//Previous Qref value in the same time step for non-VSI droop mode ramp-rate calculations
+
 protected:
 	/* TODO: put unpublished but inherited variables */
 public:
@@ -83,6 +120,7 @@ public:
 	enum LOAD_FOLLOW_STATUS {IDLE=0, DISCHARGE=1, CHARGE=2} load_follow_status;	//Status variable for what the load_following mode is doing
 
 	complex VA_Out;
+	complex VA_Out_past;
 	double P_Out;  // P_Out and Q_Out are set by the user as set values to output in CONSTANT_PQ mode
 	double Q_Out;
 	double p_in; // the power into the inverter from the DC side
@@ -117,6 +155,8 @@ public:
 	complex *pPower12;			//< used in triplex metering
 	int *pMeterStatus;			//< Pointer to service_status variable on parent
 
+	complex *pMeter_I;			//< pointer to the meter measured current on three lines
+
 	double output_frequency;
 	double frequency_losses;
 	
@@ -132,6 +172,44 @@ public:
 
 	double Pref;
 	double Qref;
+	double Qref_PI[3];    // Qref is set differently for each phase in PI control mode
+
+	double Tfreq_delay;    // Time delay for feeder frequency seen by inverter
+	double freq_ref; 	   // Frequency reference value
+	double Pref0; 		   //The initial Pref set before entering the delta mode
+	bool inverter_droop_fp;   // Boolean value indicating whether the f/p droop curve is included in the inverter or not
+	double R_fp;		   // f/p droop curve parameter
+
+	double Tvol_delay;    // Time delay for inverter terminal voltage seen by inverter
+	double V_ref[3]; 	   // Voltage reference values for three phases
+	double Qref0[3]; 		   //The initial Qref set before entering the delta mode
+	bool inverter_droop_vq;   // Boolean value indicating whether the v/q droop curve is included in the inverter or not
+	double R_vq;		   // f/p droop curve parameter
+
+	enumeration *VSI_bustype;	// Bus type of the inverter parent
+
+	// Parameters related to VSI mode
+	enum VSI_MODE {VSI_ISOCHRONOUS=0, VSI_DROOP=1};
+	enumeration VSI_mode;  //operating mode of the VSI
+	double VSI_freq;
+
+	double Zbase;			// Zbase of the inverter
+	double Rfilter;			// Resistance of filter
+	double Xfilter;			// Admittance of filter
+	double V_angle_past[3];       // Voltage angle  measured at inverter voltage source behind filter before entering the delta mode
+	double V_angle[3];       // Voltage angle measured at inverter voltage source beind filter after entering the delta mode
+	double V_mag_ref[3]; 			// Initial voltage magnitude of VSI terminal voltage, used as reference values
+	double V_mag[3]; 			// Voltage magnitude of the inverter voltage source
+	complex e_source[3]; 	  // Voltage source behind the filter
+	double Tp_delay;	  // Time delay for feeder real power changes seen by inverter droop control
+	double Tq_delay;	  // Time delay for feeder reactive power changes seen by inverter droop control
+
+	bool checkRampRate_real;		//Flag to enable ramp rate/slew rate checking for active power
+	double rampUpRate_real;		//Maximum power increase rate for active power
+	double rampDownRate_real;		//Maximum power decrease rate for active power
+	bool checkRampRate_reactive;	//Flag to enable ramp rate/slew rate checking for reactive power
+	double rampUpRate_reactive;		//Maximum power increase rate for reactive power
+	double rampDownRate_reactive;	//Maximum power decrease rate for reactive power
 
 	complex phaseA_I_Out_prev;      // current
 	complex phaseB_I_Out_prev;
@@ -170,7 +248,7 @@ public:
 	enumeration inverter_manufacturer; //known manufacturer to set some presets else use variables themselves for custom inverter.
 
 	//properties for four quadrant control modes
-	enum FOUR_QUADRANT_CONTROL_MODE {FQM_NONE=0,FQM_CONSTANT_PQ=1,FQM_CONSTANT_PF=2,FQM_CONSTANT_V=3,FQM_VOLT_VAR=4,FQM_LOAD_FOLLOWING=5, FQM_GENERIC_DROOP=6, FQM_GROUP_LF=7, FQM_VOLT_VAR_FREQ_PWR=8};
+	enum FOUR_QUADRANT_CONTROL_MODE {FQM_NONE=0,FQM_CONSTANT_PQ=1,FQM_CONSTANT_PF=2,FQM_CONSTANT_V=3,FQM_VOLT_VAR=4,FQM_LOAD_FOLLOWING=5, FQM_GENERIC_DROOP=6, FQM_GROUP_LF=7, FQM_VOLT_VAR_FREQ_PWR=8, FQM_VSI = 9};
 	enumeration four_quadrant_control_mode;
 
 	double excess_input_power;		//Variable tracking excess power on the input that is not placed to the output
@@ -267,6 +345,21 @@ public:
 	double over_voltage_low_viol_time;				//Lowest high voltage threshold violation accumulator
 	double over_voltage_high_viol_time;				//Highest high voltage threshold violation accumulator
 
+	typedef enum {
+		IEEE_1547_NONE=0,		/**< No trip reason */
+		IEEE_1547_HIGH_OF=1,	/**< High over-frequency level trip */
+		IEEE_1547_LOW_OF=2,		/**< Low over-frequency level trip */
+		IEEE_1547_HIGH_UF=3,	/**< High under-frequency level trip */
+		IEEE_1547_LOW_UF=4,		/**< Low under-frequency level trip */
+		IEEE_1547_LOWEST_UV=5,	/**< Lowest under-voltage level trip */
+		IEEE_1547_MIDDLE_UV=6,	/**< Middle under-voltage level trip */
+		IEEE_1547_HIGH_UV=7,	/**< High under-voltage level trip */
+		IEEE_1547_LOW_OV=8,		/**< Low over-voltage level trip */
+		IEEE_1547_HIGH_OV=9		/**< High over-voltage level trip */
+	};
+
+	enumeration ieee_1547_trip_method;
+
 	//properties for four quadrant volt/var frequency power mode
 	bool disable_volt_var_if_no_input_power;		//if true turn off Volt/VAr behavior when no input power (i.e. at night for a solar system)
 	double delay_time;				//delay time time between seeing a voltage value and responding with appropiate VAr setting (seconds)
@@ -291,7 +384,10 @@ private:
 	TIMESTAMP pf_reg_next_update_time;	//TIMESTAMP of next dispatching change allowed
 
 	TIMESTAMP prev_time;				//Tracking variable for previous "new time" run
-	double prev_time_dbl;				//Tracking variable for 1547 checks
+	double prev_time_dbl;				//Tracking variable for 1547 checks and ramp rates
+	double event_deltat;				//Event-driven delta-t variable
+
+	TIMESTAMP start_time;				//Recording start time of simulation
 
 	complex last_I_Out[3];
 	complex I_Out[3];
@@ -302,7 +398,17 @@ private:
 	double *freq_pointer;				//Pointer to frequency value for checking 1547 compliance
 	double node_nominal_voltage;		//Nominal voltage for per-unit-izing for 1547 checks
 
+	// Feeder frequency determined by the diesel generators
+	double *mapped_freq_variable;  //Mapping to frequency variable in powerflow module - deltamode updates
+
+	//VSI mode tracker - used to initialize current injection pre-deltamode
+	bool VSI_esource_init;
+
+	double ki_Vterminal;			///< The integrator gain for the VSI terminal voltage modulation
+	double kp_Vterminal;			///< The proportional gain for the VSI terminal voltage modulation
+
 	void update_control_references(void);
+
 public:
 	/* required implementations */
 	bool *get_bool(OBJECT *obj, char *name);
@@ -317,6 +423,9 @@ public:
 	STATUS post_deltaupdate(complex *useful_value, unsigned int mode_pass);
 	int *get_enum(OBJECT *obj, char *name);
 	double perform_1547_checks(double timestepvalue);
+	STATUS updateCurrInjection();
+	complex check_VA_Out(complex temp_VA, double p_max);
+	double getEff(double val);
 public:
 	static CLASS *oclass;
 	static inverter *defaults;

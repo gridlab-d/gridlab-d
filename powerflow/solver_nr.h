@@ -9,7 +9,7 @@
 #include "object.h"
 
 typedef struct  {
-	int type;				///< bus type (0=PQ, 1=PV, 2=SWING)
+	int type;				///< bus type (0=PQ, 1=PV, 2=SWING, 3=SWING_PQ)
 	unsigned char phases;	///< Phases property - used for construction of matrices (skip bad entries) - [Split Phase | House present | To side of SPCT | Diff Phase Child | D | A | B | C]
 	unsigned char origphases;	///< Original phases property - follows same format - used to save what object's original capabilities
 	set *busflag;			///< Pointer to busflags property - mainly used for reliability checks
@@ -46,6 +46,8 @@ typedef struct  {
 	double max_volt_error;	///< Maximum voltage error specified for that node
 	char *name;				///< original name
 	OBJECT *obj;			///< Link to original object header
+	FUNCTIONADDR ExtraCurrentInjFunc;	///< Link to extra functions of current injection updates -- mostly VSI current updates
+	OBJECT *ExtraCurrentInjFuncObject;	///< Link to the object that mapped the current injection function - needed for function calls
 } BUSDATA;
 
 typedef struct {
@@ -72,13 +74,13 @@ typedef struct {
 
 typedef struct Y_NR{
 	int row_ind;  ///< row location of the element in 6n*6n Y matrix in NR solver
-	int	col_ind;  ///< collumn location of the element in 6n*6n Y matrix in NR solver
+	int	col_ind;  ///< column location of the element in 6n*6n Y matrix in NR solver
     double Y_value; ///< value of the element in 6n*6n Y matrix in NR solver
 } Y_NR;
 
 typedef struct {
 	int row_ind;  ///< row location of the element in n*n bus admittance matrix in NR solver
-	int	col_ind;  ///< collumn location of the element in n*n bus admittance matrix in NR solver
+	int	col_ind;  ///< column location of the element in n*n bus admittance matrix in NR solver
     complex Y[3][3]; ///< complex value of elements in bus admittance matrix in NR solver
 	char size;		///< size of the admittance diagonal - assumed square, useful for smaller size
 } Bus_admit;
@@ -143,5 +145,6 @@ typedef struct {
 //void ext_solver_destroy(void *ext_array, bool new_iteration);
 
 int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count, BRANCHDATA *branch, NR_SOLVER_STRUCT *powerflow_values, NRSOLVERMODE powerflow_type , NR_MESHFAULT_IMPEDANCE *mesh_imped_vals, bool *bad_computations);
+void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT *powerflow_values, bool jacobian_pass);
 
 #endif

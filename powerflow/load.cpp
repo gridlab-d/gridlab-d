@@ -158,13 +158,19 @@ load::load(MODULE *mod) : node(mod)
 
          	NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
-			//Publish deltamode functions
-			if (gl_publish_function(oclass,	"delta_linkage_node", (FUNCTIONADDR)delta_linkage)==NULL)
-				GL_THROW("Unable to publish load delta_linkage function");
-			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_load)==NULL)
-				GL_THROW("Unable to publish load deltamode function");
-			if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
-				GL_THROW("Unable to publish load deltamode function");
+		//Publish deltamode functions
+		if (gl_publish_function(oclass,	"delta_linkage_node", (FUNCTIONADDR)delta_linkage)==NULL)
+			GL_THROW("Unable to publish load delta_linkage function");
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_load)==NULL)
+			GL_THROW("Unable to publish load deltamode function");
+		if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
+			GL_THROW("Unable to publish load deltamode function");
+		if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==NULL)
+			GL_THROW("Unable to publish load swing-swapping function");
+		if (gl_publish_function(oclass,	"pwr_current_injection_update_map", (FUNCTIONADDR)node_map_current_update_function)==NULL)
+			GL_THROW("Unable to publish load current injection update mapping function");
+		if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==NULL)
+			GL_THROW("Unable to publish load VFD attachment function");
     }
 }
 
@@ -472,7 +478,17 @@ void load::load_update_fxn(bool fault_mode)
 	complex working_impedance_value, working_data_value, working_admittance_value;
 	double workingvalue;
 	OBJECT *obj;
+	double baseangles[3];
 	node *temp_par_node = NULL;
+
+	//Set base angles for ZIP calculations below
+	//Note this assumption HAS to be done this way -- while the ZIP calculation below
+	//correctly rotates for deltamode, no other constant current values do, which means this one
+	//"correct" implementation breaks all the other assumptions.  Therefore, it has to be "stupidified"
+	//so it works with the auto-rotation and impedance-conversion code below
+	baseangles[0] = 0.0;
+	baseangles[1] = -2.0*PI/3.0;
+	baseangles[2] = 2.0*PI/3.0;
 
 	for (int index=0; index<3; index++)
 	{
@@ -547,7 +563,10 @@ void load::load_update_fxn(bool fault_mode)
 				
 				// Calculate then shift the constant current to use the posted voltage as the reference angle
 				temp_curr = ~complex(real_power,imag_power) / complex(nominal_voltage,0);
-				temp_angle = temp_curr.Arg() + voltage[index].Arg();
+
+				//This was "technically correct", but it will break everything else in the system - correcting
+				//temp_angle = temp_curr.Arg() + voltage[index].Arg();
+				temp_angle = temp_curr.Arg() + baseangles[index];
 				temp_curr.SetPolar(temp_curr.Mag(),temp_angle);
 
 				constant_current[index] = temp_curr;
@@ -2853,7 +2872,6 @@ int load::notify(int update_mode, PROPERTY *prop, char *value)
 //Module-level call
 SIMULATIONMODE load::inter_deltaupdate_load(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
 {
-	unsigned char pass_mod;
 	OBJECT *hdr = OBJECTHDR(this);
 	bool fault_mode;
 	double deltat, deltatimedbl;
@@ -2862,22 +2880,29 @@ SIMULATIONMODE load::inter_deltaupdate_load(unsigned int64 delta_time, unsigned 
 	//Create delta_t variable
 	deltat = (double)dt/(double)DT_SECOND;
 
-	//Initialization items
-	if ((delta_time==0) && (iteration_count_val==0) && (interupdate_pos == false))	//First run of new delta call
-	{
-		//Initialize dynamics
-		init_freq_dynamics(&curr_state);
-	}//End first pass and timestep of deltamode (initial condition stuff)
-
 	//Update time tracking variable - mostly for GFA functionality calls
-	if (iteration_count_val == 0)	//Only update timestamp tracker on first iteration
+	if ((iteration_count_val==0) && (interupdate_pos == false)) //Only update timestamp tracker on first iteration
 	{
 		//Get decimal timestamp value
 		deltatimedbl = (double)delta_time/(double)DT_SECOND; 
 
 		//Update tracking variable
 		prev_time_dbl = (double)gl_globalclock + deltatimedbl;
+
+		//Update frequency calculation values (if needed)
+		if (fmeas_type != FM_NONE)
+		{
+			//Copy the tracker value
+			memcpy(&prev_freq_state,&curr_freq_state,sizeof(FREQM_STATES));
+		}
 	}
+
+	//Initialization items
+	if ((delta_time==0) && (iteration_count_val==0) && (interupdate_pos == false) && (fmeas_type != FM_NONE))	//First run of new delta call
+	{
+		//Initialize dynamics
+		init_freq_dynamics();
+	}//End first pass and timestep of deltamode (initial condition stuff)
 	
 	//Perform the GFA update, if enabled
 	if ((GFA_enable == true) && (iteration_count_val == 0) && (interupdate_pos == false))	//Always just do on the first pass
@@ -2885,9 +2910,6 @@ SIMULATIONMODE load::inter_deltaupdate_load(unsigned int64 delta_time, unsigned 
 		//Do the checks
 		GFA_Update_time = perform_GFA_checks(deltat);
 	}
-
-	//See what we're on, for tracking
-	pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
 
 	if (interupdate_pos == false)	//Before powerflow call
 	{
@@ -2933,7 +2955,8 @@ SIMULATIONMODE load::inter_deltaupdate_load(unsigned int64 delta_time, unsigned 
 		NR_node_sync_fxn(hdr);
 
 		return SM_DELTA;	//Just return something other than SM_ERROR for this call
-	}
+
+	}//End Before NR solver (or inclusive)
 	else	//After the call
 	{
 		//Perform postsync-like updates on the values
@@ -2942,7 +2965,7 @@ SIMULATIONMODE load::inter_deltaupdate_load(unsigned int64 delta_time, unsigned 
 		//Frequency measurement stuff
 		if (fmeas_type != FM_NONE)
 		{
-			return_status_val = calc_freq_dynamics(deltat,pass_mod);
+			return_status_val = calc_freq_dynamics(deltat);
 
 			//Check it
 			if (return_status_val == FAILED)
@@ -2978,36 +3001,7 @@ SIMULATIONMODE load::inter_deltaupdate_load(unsigned int64 delta_time, unsigned 
 		{
 			return SM_EVENT;
 		}
-
-
-		//No control required at this time - powerflow defers to the whims of other modules
-		//Code below implements predictor/corrector-type logic, even though it effectively does nothing
-		//return SM_EVENT;
-
-		////Do deltamode-related logic
-		//if (bustype==SWING)	//We're the SWING bus, control our destiny (which is really controlled elsewhere)
-		//{
-		//	//See what we're on
-		//	pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
-
-		//	//Check pass
-		//	if (pass_mod==0)	//Predictor pass
-		//	{
-		//		return SM_DELTA_ITER;	//Reiterate - to get us to corrector pass
-		//	}
-		//	else	//Corrector pass
-		//	{
-		//		//As of right now, we're always ready to leave
-		//		//Other objects will dictate if we stay (powerflow is indifferent)
-		//		return SM_EVENT;
-		//	}//End corrector pass
-		//}//End SWING bus handling
-		//else	//Normal bus
-		//{
-		//	return SM_EVENT;	//Normal nodes want event mode all the time here - SWING bus will
-		//						//control the reiteration process for pred/corr steps
-		//}
-	}
+	}//End "After NR solver" branch
 }
 
 
@@ -3153,6 +3147,5 @@ int load::kmldata(int (*stream)(const char*,...))
 
 	return 0;
 }
-
 
 /**@}*/

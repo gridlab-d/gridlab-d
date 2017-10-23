@@ -39,8 +39,8 @@ voltdump::voltdump(MODULE *mod)
 			PT_char256,"file",PADDR(filename),PT_DESCRIPTION,"the file to dump the voltage data into", // added 2012-07-10, adds convenience
 			PT_int32,"runcount",PADDR(runcount),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the number of times the file has been written to",
 			PT_enumeration, "mode", PADDR(mode),PT_DESCRIPTION,"dumps the voltages in either polar or rectangular notation",
-				PT_KEYWORD, "rect", (enumeration)VDM_RECT,
-				PT_KEYWORD, "polar", (enumeration)VDM_POLAR,
+				PT_KEYWORD, "RECT", (enumeration)VDM_RECT,
+				PT_KEYWORD, "POLAR", (enumeration)VDM_POLAR,
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		
 	}

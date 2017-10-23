@@ -13,6 +13,9 @@
 EXPORT complex *delta_linkage(OBJECT *obj, unsigned char mapvar);
 EXPORT STATUS delta_frequency_node(OBJECT *obj, complex *powerval, complex *freqpowerval);
 EXPORT SIMULATIONMODE interupdate_node(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
+EXPORT STATUS swap_node_swing_status(OBJECT *obj, bool desired_status);
+EXPORT STATUS node_map_current_update_function(OBJECT *nodeObj, OBJECT *callObj);
+EXPORT STATUS attach_vfd_to_node(OBJECT *obj,OBJECT *calledVFD);
 
 #define I_INJ(V, S, Z, I) (I_S(S, V) + ((Z.IsFinite()) ? I_Z(Z, V) : complex(0.0)) + I_I(I))
 #define I_S(S, V) (~((S) / (V)))  // Current injection - constant power load
@@ -83,6 +86,7 @@ typedef enum {
 
 //Frequency measurement variable structure
 typedef struct {
+	complex voltage_val[3];	//Voltage values stored - used for "prev" version
 	double x[3]; 		     //integrator state variable
 	double anglemeas[3];	 //angle measurement
 	double fmeas[3];		 //frequency measurement
@@ -111,12 +115,8 @@ private:
 	complex *LoadHistTermC;			///< Pointer for array used to store load history value for deltamode-based in-rush computations -- Shunt capacitance terms
 
 	//Frequently measurement variables
-	FREQM_STATES curr_state;		//Current state of all vari
-	FREQM_STATES next_state;
-	FREQM_STATES prev_state;
-	FREQM_STATES store_state;
-	FREQM_STATES predictor_vals;	//Predictor pass values of variables
-	FREQM_STATES corrector_vals;	//Corrector pass values of variables
+	FREQM_STATES curr_freq_state;		//Current state of all vari
+	FREQM_STATES prev_freq_state;
 	double freq_omega_ref;			//Reference frequency for measurements
 
 	double freq_violation_time_total;		//Keeps track of how long the device has been in a frequency violation, to see if it needs to disconnect or not
@@ -124,6 +124,11 @@ private:
 	double out_of_violation_time_total;		//Tracking variable to see how long we've been "outside of bad conditions"
 	double prev_time_dbl;					//Tracking variable for GFA functionality
 	double GFA_Update_time;
+
+	//VFD-related items
+	bool VFD_attached;						///< Flag to indicate this is on the to-side of a VFD link
+	FUNCTIONADDR VFD_updating_function;		///< Address for VFD updating function, if it is present
+	OBJECT *VFD_object;						///< Object pointer for the VFD - for later function calls
 public:
 	double frequency;			///< frequency (only valid on reference bus) */
 	object reference_bus;		///< reference bus from which frequency is defined */
@@ -149,6 +154,14 @@ public:
 		ND_OUT_OF_SERVICE = 0, ///< out of service flag for nodes
 		ND_IN_SERVICE = 1,     ///< in service flag for nodes - default
 	};
+	enum {
+		GFA_NONE=0,		/**< Defines no trip reason */
+		GFA_UF=1,		/**< Defines under-frequency trip */
+		GFA_OF=2,		/**< Defines over-frequency trip */
+		GFA_UV=3,		/**< Defines under-voltage trip */
+		GFA_OV=4		/**< Defines over-voltage trip */
+	};
+	enumeration GFA_trip_method;
 	enumeration service_status;
 	double service_status_dbl;	///< double value for service - overrides the enumeration if set
 	TIMESTAMP last_disconnect;	///< Tracking variable for out of service times
@@ -159,7 +172,7 @@ public:
 	enum {FM_NONE=1, FM_SIMPLE=2, FM_PLL=3};
 	enumeration fmeas_type;
 
-	double freq_sfm_T;	//Transducer time constant
+	double freq_sfm_Tf;	//Transducer time constant
 	double freq_pll_Kp;	//Proportional gain of PLL frequency measurement
 	double freq_pll_Ki;	//Integration gain of PLL frequency measurement
 
@@ -198,7 +211,8 @@ public:
 	complex current12;		/// Used for phase 1-2 current injections in triplex
 	complex nom_res_curr[3];/// Used for the inclusion of nominal residential currents (for angle adjustments)
 	bool house_present;		/// Indicator flag for a house being attached (NR primarily)
-	bool dynamic_norton;	/// Norton-equivalent posting on this bus -- deltamode and generator ties
+	bool dynamic_norton;	/// Norton-equivalent posting on this bus -- deltamode and diesel generator ties
+	bool dynamic_generator;	/// Swing-type generator posting on this bus -- deltamode and other generator ties
 	complex *Triplex_Data;	/// Link to triplex line for extra current calculation information (NR)
 	complex *Extra_Data;	/// Link to extra data information (NR)
 	unsigned int NR_connected_links[2];	/// Counter for number of connected links in the system
@@ -234,11 +248,12 @@ public:
 	void BOTH_node_postsync_fxn(OBJECT *obj);
 	OBJECT *NR_master_swing_search(char *node_type_value,bool main_swing);
 
-	void apply_interim_freq_dynamics(FREQM_STATES *curr_time, FREQM_STATES *curr_delta, double deltat, unsigned char pass_mod);
-	void init_freq_dynamics(FREQM_STATES *curr_time);
-	STATUS calc_freq_dynamics(double deltat, unsigned char pass_mod);
+	void init_freq_dynamics(void);
+	STATUS calc_freq_dynamics(double deltat);
 
 	double perform_GFA_checks(double timestepvalue);
+
+	STATUS link_VFD_functions(OBJECT *linkVFD);
 
 	bool current_accumulated;
 
@@ -247,17 +262,27 @@ public:
 	int NR_current_update(bool postpass, bool parentcall);
 	object TopologicalParent;	/// Child node's original parent as per the topological configuration in the GLM file
 
+	//NR bus status toggle function
+	STATUS NR_swap_swing_status(bool desired_status);
+
+	//Function to map "internal powerflow iteration" current injection updates
+	STATUS NR_map_current_update_function(OBJECT *callObj);
+
 	friend class link_object;
 	friend class meter;	// needs access to current_inj
 	friend class substation; //needs access to current_inj
+	friend class triplex_node;	// Needs access to deltamode stuff
 	friend class triplex_meter; // needs access to current_inj
+	friend class triplex_load;	// Needs access to deltamode stuff
 	friend class load;			// Needs access to deltamode_inclusive
 	friend class capacitor;		// Needs access to deltamode stuff
 	friend class fuse;			// needs access to current_inj
 	friend class frequency_gen;	// needs access to current_inj
+	friend class motor;	// needs access to curr_state
 
 	static int kmlinit(int (*stream)(const char*,...));
 	int kmldump(int (*stream)(const char*,...));
 };
 
 #endif // _NODE_H
+

@@ -14,6 +14,10 @@
 #include "gridlabd.h"
 #include "energy_storage.h"
 
+EXPORT STATUS preupdate_battery(OBJECT *obj,TIMESTAMP t0, unsigned int64 delta_time);
+EXPORT SIMULATIONMODE interupdate_battery(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
+EXPORT STATUS postupdate_battery(OBJECT *obj, complex *useful_value, unsigned int mode_pass);
+
 
 class battery : public energy_storage
 {
@@ -31,6 +35,11 @@ private:
 	double v_t; // the terminal voltage as a function of soc and battery load.
 	double p_br;
 	//complex AMx[3][3];//generator impedance matrix
+
+	bool deltamode_inclusive;	   //Boolean for deltamode calls - pulled from object flags
+	bool first_run;
+	bool enableDelta; // is true only if battery is use_internal_battery_model, and its parent inverter is FQM_CONSTANT_PQ mode
+
 
 protected:
 	/* TODO: put unpublished but inherited variables */
@@ -133,12 +142,21 @@ public:
 	double *pSocReserve;
 	TIMESTAMP state_change_time;
 
+
 	//battery module parameters
 	double v_max; //the maximum DC voltage of the battery in V
 	double p_max; // the rated DC power the battery can supply or draw in W
 	double *pRatedPower;
 	double e_max; // the battery's internal capacity in Wh
 	double eta_rt; // the roundtrip efficiency of the battery at rated power.
+	enumeration *pControlMode; // parent inverter control mode
+	double *peff; // parent inverter efficiency
+	complex *inverter_VA_Out; // inverter AC power output
+
+	double deltat; // delta mode time interval in second
+	unsigned int64 state_change_time_delta;
+	double pre_soc; //store the soc value during iterations
+	double Pout_delta; //Power output from parent inverter
 
 public:
 	/* required implementations */
@@ -151,10 +169,19 @@ public:
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 
+	STATUS pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time);
+	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
+	STATUS post_deltaupdate(complex *useful_value, unsigned int mode_pass);
+	void update_soc(unsigned int64 delta_time);
+	double check_state_change_time_delta(unsigned int64 delta_time, unsigned long dt);
+
 	double calculate_efficiency(complex voltage, complex current);
 	complex *get_complex(OBJECT *obj, char *name);
 	complex calculate_v_terminal(complex v, complex i);
+
 	void fetch_double(double **prop, char *name, OBJECT *parent);
+	void fetch_enumeration(enumeration **prop, char *name, OBJECT *parent);
+	void fetch_complex(complex **prop, char *name, OBJECT *parent);
 
 public:
 	static CLASS *oclass;

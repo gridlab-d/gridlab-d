@@ -45,6 +45,7 @@ typedef struct s_circuit {
 	CIRCUITTYPE type;	///< circuit type
 	enduse *pLoad;	///< pointer to the load struct (ENDUSELOAD* in house_a, enduse* in house_e)
 	complex *pV; ///< pointer to circuit voltage
+	gld_property *pfrequency; ///< pointer to circuit frequency
 	double max_amps; ///< maximum breaker amps
 	int id; ///< circuit id
 	BREAKERSTATUS status; ///< breaker status

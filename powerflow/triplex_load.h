@@ -39,6 +39,7 @@ public:
 	int init(OBJECT *parent);
 	
 	void triplex_load_update_fxn(void);
+	void triplex_load_delete_update_fxn(void);
 
 	triplex_load(MODULE *mod);
 	TIMESTAMP sync(TIMESTAMP t0);

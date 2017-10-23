@@ -12,10 +12,13 @@
 #include <stdarg.h>
 #include "gridlabd.h"
 
+EXPORT SIMULATIONMODE interupdate_solar(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
+
 class solar : public gld_object
 {
 private:
-
+	bool deltamode_inclusive; 	//Boolean for deltamode calls - pulled from object flags
+	bool first_sync_delta_enabled;
 protected:
 
 public:
@@ -118,6 +121,8 @@ public:
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
+
+	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 
 	complex *get_complex(OBJECT *obj, char *name);
 public:

@@ -1,0 +1,218 @@
+//Small system to test dynamics with houses
+//Mostly makes sure a house value continues to work inside deltamode
+#set randomseed=250
+
+clock {
+     timezone PST+8PDT;
+     starttime '2009-01-01 00:00:00';
+     stoptime '2009-01-01 00:00:10';
+}
+
+module assert;
+module tape;
+module residential {
+     implicit_enduses NONE;
+	 enable_subsecond_models true;
+	 all_house_delta true;
+	 deltamode_timestep 100.0 ms;
+}
+module powerflow {
+    solver_method NR;
+    NR_iteration_limit 50;
+    enable_subsecond_models true;
+    all_powerflow_delta true;
+    enable_frequency_dependence true;
+    deltamode_timestep 0.2000 ms;
+    default_maximum_voltage_error 1e-9;
+};
+
+
+object triplex_line_conductor {
+     name "four_ought_triplex";
+     resistance 1.535;
+     geometric_mean_radius 0.0111;
+     rating.summer.emergency 315 A;
+     rating.summer.continuous 315 A;
+     rating.winter.emergency 315 A;
+     rating.winter.continuous 315 A;
+}
+
+object triplex_line_configuration {
+     name "four_ought_Triplex";
+     conductor_1 "four_ought_triplex";
+     conductor_2 "four_ought_triplex";
+     conductor_N "four_ought_triplex";
+     insulation_thickness 0.08;
+     diameter 0.368;
+}
+
+object transformer_configuration {
+	name "SPCTB";
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type POLETOP;
+	primary_voltage 7200.0V;
+	secondary_voltage 120.0V;
+	power_rating 20.0kVA;
+	powerB_rating 20.0kVA;
+	impedance 0.006000+0.013600j;
+	impedance1 0.012000+0.006800j;
+	impedance2 0.012000+0.006800j;
+	shunt_impedance 1728000+691200j;
+}
+
+object meter {
+	name REAL_SWING;
+	nominal_voltage 7200.0;
+	phases ABCN;
+	bustype SWING;
+}
+
+object complex_assert {
+	parent REAL_SWING;
+	flags DELTAMODE;
+	target measured_power_B;
+	value 9273.41-1174.35j;
+	within 0.1;
+}
+
+object player {
+	flags DELTAMODE;
+	parent REAL_SWING;
+	property nominal_voltage;
+	file ../data_Vtrigger_house.player;
+}
+
+// object recorder {
+	// parent REAL_SWING;
+	// flags DELTAMODE;
+	// property "measured_power_A.real,measured_power_A.imag,measured_power_B.real,measured_power_B.imag,measured_power_C.real,measured_power_C.imag";
+	// interval 1;
+	// file SWINGOUT_other_seed_b.csv;
+// }
+
+object transformer {
+	phases BS;
+	name swing_to_triplex;
+	from REAL_SWING;
+	to SWING_TRIP;
+	configuration SPCTB;
+}
+
+object triplex_meter {
+	name SWING_TRIP;
+	nominal_voltage 120.0;
+	phases BS;
+}
+
+object triplex_node {
+	name middle_node;
+	nominal_voltage 120.0;
+	phases BS;
+}
+
+object triplex_node {
+	name next_middle_node;
+	nominal_voltage 120.0;
+	phases BS;
+}
+
+
+object triplex_meter {
+	name house_node;
+	nominal_voltage 120;
+	phases BS;
+}
+
+//Lines
+object triplex_line {
+	phases BS;
+	name swing_trip_to_middle;
+	from SWING_TRIP;
+	to middle_node;
+	configuration "four_ought_Triplex";
+	length 50.0 ft;
+}
+
+object triplex_line {
+	phases BS;
+	name middle_to_next_middle;
+	from middle_node;
+	to next_middle_node;
+	configuration "four_ought_Triplex";
+	length 50.0 ft;
+}
+
+object triplex_line {
+	phases BS;
+	name next_middle_to_house;
+	from next_middle_node;
+	to house_node;
+	configuration "four_ought_Triplex";
+	length 50.0 ft;
+}
+
+object house {
+	parent house_node;
+	schedule_skew 6343;
+	name "SX3086079B_1_house";
+	floor_area 1925.4;
+	thermal_integrity_level 4;
+	hvac_power_factor 0.887;
+	cooling_setpoint 74.81;
+	heating_setpoint 68.97;
+	air_temperature 71.0;
+	auxiliary_system_type NONE;
+	heating_system_type RESISTANCE;
+	cooling_system_type ELECTRIC;
+
+	// Lights (OTHER)
+	object ZIPload {
+		schedule_skew 6343;
+		name "SX3086079B_1_lights";
+		base_power 2000.0 W;
+		power_fraction 0.584900;
+		impedance_fraction 0.408500;
+		current_fraction 0.006700;
+		power_pf -0.780000;
+		current_pf 0.420000;
+		impedance_pf -0.880000;
+	};
+
+	// Television (LCD)
+	object ZIPload {
+		name "house_tv";
+		base_power 1575.0 W;
+		power_fraction 0.998700;
+		impedance_fraction -0.038300;
+		current_fraction 0.039600;
+		power_pf -1.000000;
+		current_pf -0.540000;
+		impedance_pf 0.610000;
+	};
+
+	// Plug load (convenience loads)
+	object ZIPload {
+		name "house_plugs";
+		base_power 750 W;
+		power_fraction 0.100000;
+		impedance_fraction 0.800000;
+		current_fraction 0.100000;
+		power_pf 0.950000;
+		current_pf 0.950000;
+		impedance_pf 0.950000;
+	};
+
+	object waterheater {
+		name "house_water_heater";
+		location INSIDE;
+		tank_volume 44.496493;
+		tank_height 3.782;
+		tank_diameter 1.4151136138321891;
+		tank_UA 3.671447;
+		heating_element_capacity 4996.152152 W;
+		tank_setpoint 129.696079;
+		temperature 132.914168;
+		thermostat_deadband 5.254463;
+		water_demand 2.5;
+	};
+}

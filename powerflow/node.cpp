@@ -55,6 +55,8 @@
 #include "solver_nr.h"
 #include "node.h"
 #include "link.h"
+
+//See if these can be unwound, not a fan of the cross-linking here:
 #include "capacitor.h"
 #include "load.h"
 #include "triplex_meter.h"
@@ -118,21 +120,21 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			PT_object, "reference_bus", PADDR(reference_bus),PT_DESCRIPTION,"reference bus from which frequency is defined",
 			PT_double,"maximum_voltage_error[V]",PADDR(maximum_voltage_error),PT_DESCRIPTION,"convergence voltage limit or convergence criteria",
 
-			PT_complex, "voltage_A[V]", PADDR(voltageA),PT_DESCRIPTION,"bus voltage, Phase A to ground",
-			PT_complex, "voltage_B[V]", PADDR(voltageB),PT_DESCRIPTION,"bus voltage, Phase B to ground",
-			PT_complex, "voltage_C[V]", PADDR(voltageC),PT_DESCRIPTION,"bus voltage, Phase C to ground",
-			PT_complex, "voltage_AB[V]", PADDR(voltageAB),PT_DESCRIPTION,"line voltages, Phase AB",
-			PT_complex, "voltage_BC[V]", PADDR(voltageBC),PT_DESCRIPTION,"line voltages, Phase BC",
-			PT_complex, "voltage_CA[V]", PADDR(voltageCA),PT_DESCRIPTION,"line voltages, Phase CA",
-			PT_complex, "current_A[A]", PADDR(currentA),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), this an accumulator only, not a output or input variable",
-			PT_complex, "current_B[A]", PADDR(currentB),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), this an accumulator only, not a output or input variable",
-			PT_complex, "current_C[A]", PADDR(currentC),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), this an accumulator only, not a output or input variable",
-			PT_complex, "power_A[VA]", PADDR(powerA),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus power injection (in = positive), this an accumulator only, not a output or input variable",
-			PT_complex, "power_B[VA]", PADDR(powerB),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus power injection (in = positive), this an accumulator only, not a output or input variable",
-			PT_complex, "power_C[VA]", PADDR(powerC),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus power injection (in = positive), this an accumulator only, not a output or input variable",
-			PT_complex, "shunt_A[S]", PADDR(shuntA),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt admittance, this an accumulator only, not a output or input variable",
-			PT_complex, "shunt_B[S]", PADDR(shuntB),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt admittance, this an accumulator only, not a output or input variable",
-			PT_complex, "shunt_C[S]", PADDR(shuntC),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt admittance, this an accumulator only, not a output or input variable",
+			PT_complex, "voltage_A[V]", PADDR(voltage[0]),PT_DESCRIPTION,"bus voltage, Phase A to ground",
+			PT_complex, "voltage_B[V]", PADDR(voltage[1]),PT_DESCRIPTION,"bus voltage, Phase B to ground",
+			PT_complex, "voltage_C[V]", PADDR(voltage[2]),PT_DESCRIPTION,"bus voltage, Phase C to ground",
+			PT_complex, "voltage_AB[V]", PADDR(voltaged[0]),PT_DESCRIPTION,"line voltages, Phase AB",
+			PT_complex, "voltage_BC[V]", PADDR(voltaged[1]),PT_DESCRIPTION,"line voltages, Phase BC",
+			PT_complex, "voltage_CA[V]", PADDR(voltaged[2]),PT_DESCRIPTION,"line voltages, Phase CA",
+			PT_complex, "current_A[A]", PADDR(current[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "current_B[A]", PADDR(current[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "current_C[A]", PADDR(current[2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "power_A[VA]", PADDR(power[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus power injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "power_B[VA]", PADDR(power[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus power injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "power_C[VA]", PADDR(power[2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus power injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "shunt_A[S]", PADDR(shunt[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt admittance, this an accumulator only, not a output or input variable",
+			PT_complex, "shunt_B[S]", PADDR(shunt[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt admittance, this an accumulator only, not a output or input variable",
+			PT_complex, "shunt_C[S]", PADDR(shunt[2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt admittance, this an accumulator only, not a output or input variable",
 
 			PT_complex, "prerotated_current_A[A]", PADDR(pre_rotated_current[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality - bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
 			PT_complex, "prerotated_current_B[A]", PADDR(pre_rotated_current[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality - bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
@@ -165,18 +167,18 @@ node::node(MODULE *mod) : powerflow_object(mod)
 				PT_KEYWORD,"SIMPLE",(enumeration)FM_SIMPLE,PT_DESCRIPTION,"Simplified frequency measurement",
 				PT_KEYWORD,"PLL",(enumeration)FM_PLL,PT_DESCRIPTION,"PLL frequency measurement",
 
-			PT_double,"sfm_T[s]",PADDR(freq_sfm_T),PT_DESCRIPTION,"Transducer time constant for simplified frequency measurement (seconds)",
+			PT_double,"sfm_Tf[s]",PADDR(freq_sfm_Tf),PT_DESCRIPTION,"Transducer time constant for simplified frequency measurement (seconds)",
 			PT_double,"pll_Kp[pu]",PADDR(freq_pll_Kp),PT_DESCRIPTION,"Proportional gain of PLL frequency measurement",
 			PT_double,"pll_Ki[pu]",PADDR(freq_pll_Ki),PT_DESCRIPTION,"Integration gain of PLL frequency measurement",
 
 			//Frequency measurement output variables
-			PT_double,"measured_angle_A[rad]", PADDR(curr_state.anglemeas[0]),PT_DESCRIPTION,"bus angle measurement, phase A",
-			PT_double,"measured_frequency_A[Hz]", PADDR(curr_state.fmeas[0]),PT_DESCRIPTION,"frequency measurement, phase A",
-			PT_double,"measured_angle_B[rad]", PADDR(curr_state.anglemeas[1]),PT_DESCRIPTION,"bus angle measurement, phase B",
-			PT_double,"measured_frequency_B[Hz]", PADDR(curr_state.fmeas[1]),PT_DESCRIPTION,"frequency measurement, phase B",
-			PT_double,"measured_angle_C[rad]", PADDR(curr_state.anglemeas[2]),PT_DESCRIPTION,"bus angle measurement, phase C",
-			PT_double,"measured_frequency_C[Hz]", PADDR(curr_state.fmeas[2]),PT_DESCRIPTION,"frequency measurement, phase C",
-			PT_double,"measured_frequency[Hz]", PADDR(curr_state.average_freq), PT_DESCRIPTION, "frequency measurement - average of present phases",
+			PT_double,"measured_angle_A[rad]", PADDR(curr_freq_state.anglemeas[0]),PT_DESCRIPTION,"bus angle measurement, phase A",
+			PT_double,"measured_frequency_A[Hz]", PADDR(curr_freq_state.fmeas[0]),PT_DESCRIPTION,"frequency measurement, phase A",
+			PT_double,"measured_angle_B[rad]", PADDR(curr_freq_state.anglemeas[1]),PT_DESCRIPTION,"bus angle measurement, phase B",
+			PT_double,"measured_frequency_B[Hz]", PADDR(curr_freq_state.fmeas[1]),PT_DESCRIPTION,"frequency measurement, phase B",
+			PT_double,"measured_angle_C[rad]", PADDR(curr_freq_state.anglemeas[2]),PT_DESCRIPTION,"bus angle measurement, phase C",
+			PT_double,"measured_frequency_C[Hz]", PADDR(curr_freq_state.fmeas[2]),PT_DESCRIPTION,"frequency measurement, phase C",
+			PT_double,"measured_frequency[Hz]", PADDR(curr_freq_state.average_freq), PT_DESCRIPTION, "frequency measurement - average of present phases",
 
 			PT_enumeration, "service_status", PADDR(service_status),PT_DESCRIPTION,"In and out of service flag",
 				PT_KEYWORD, "IN_SERVICE", (enumeration)ND_IN_SERVICE,
@@ -185,9 +187,10 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			PT_double, "previous_uptime[min]", PADDR(previous_uptime),PT_DESCRIPTION,"Previous time between disconnects of node in minutes",
 			PT_double, "current_uptime[min]", PADDR(current_uptime),PT_DESCRIPTION,"Current time since last disconnect of node in minutes",
 			PT_bool, "Norton_dynamic", PADDR(dynamic_norton),PT_DESCRIPTION,"Flag to indicate a Norton-equivalent connection -- used for generators and deltamode",
+			PT_bool, "generator_dynamic", PADDR(dynamic_generator),PT_DESCRIPTION,"Flag to indicate a voltage-sourcing or swing-type generator is present -- used for generators and deltamode",
 
 			//GFA - stuff
-			PT_bool, "GFA_enable", PADDR(GFA_enable), PT_DESCRIPTION, "Disable/Enable Grid Friendly Applicance(TM)-type functionality",
+			PT_bool, "GFA_enable", PADDR(GFA_enable), PT_DESCRIPTION, "Disable/Enable Grid Friendly Appliance(TM)-type functionality",
 			PT_double, "GFA_freq_low_trip[Hz]", PADDR(GFA_freq_low_trip), PT_DESCRIPTION, "Low frequency trip point for Grid Friendly Appliance(TM)-type functionality",
 			PT_double, "GFA_freq_high_trip[Hz]", PADDR(GFA_freq_high_trip), PT_DESCRIPTION, "High frequency trip point for Grid Friendly Appliance(TM)-type functionality",
 			PT_double, "GFA_volt_low_trip[pu]", PADDR(GFA_voltage_low_trip), PT_DESCRIPTION, "Low voltage trip point for Grid Friendly Appliance(TM)-type functionality",
@@ -197,15 +200,28 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			PT_double, "GFA_volt_disconnect_time[s]", PADDR(GFA_volt_disconnect_time), PT_DESCRIPTION, "Voltage violation disconnect time for Grid Friendly Appliance(TM)-type functionality",
 			PT_bool, "GFA_status", PADDR(GFA_status), PT_DESCRIPTION, "Low frequency trip point for Grid Friendly Appliance(TM)-type functionality",
 
+			PT_enumeration, "GFA_trip_method", PADDR(GFA_trip_method), PT_DESCRIPTION, "Reason for GFA trip - what caused the GFA to activate",
+				PT_KEYWORD, "NONE", (enumeration)GFA_NONE, PT_DESCRIPTION, "No GFA trip",
+				PT_KEYWORD, "UNDER_FREQUENCY", (enumeration)GFA_UF, PT_DESCRIPTION, "GFA trip for under-frequency",
+				PT_KEYWORD, "OVER_FREQUENCY", (enumeration)GFA_OF, PT_DESCRIPTION, "GFA trip for over-frequency",
+				PT_KEYWORD, "UNDER_VOLTAGE", (enumeration)GFA_UV, PT_DESCRIPTION, "GFA trip for under-voltage",
+				PT_KEYWORD, "OVER_VOLTAGE", (enumeration)GFA_OV, PT_DESCRIPTION, "GFA trip for over-voltage",
+
 			PT_object, "topological_parent", PADDR(TopologicalParent),PT_DESCRIPTION,"topological parent as per GLM configuration",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
-			if (gl_publish_function(oclass,	"delta_linkage_node", (FUNCTIONADDR)delta_linkage)==NULL)
-				GL_THROW("Unable to publish node delta_linkage function");
-			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_node)==NULL)
-				GL_THROW("Unable to publish node deltamode function");
-			if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
-				GL_THROW("Unable to publish node deltamode function");
+		if (gl_publish_function(oclass,	"delta_linkage_node", (FUNCTIONADDR)delta_linkage)==NULL)
+			GL_THROW("Unable to publish node delta_linkage function");
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_node)==NULL)
+			GL_THROW("Unable to publish node deltamode function");
+		if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
+			GL_THROW("Unable to publish node deltamode function");
+		if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==NULL)
+			GL_THROW("Unable to publish node swing-swapping function");
+		if (gl_publish_function(oclass,	"pwr_current_injection_update_map", (FUNCTIONADDR)node_map_current_update_function)==NULL)
+			GL_THROW("Unable to publish node current injection update mapping function");
+		if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==NULL)
+			GL_THROW("Unable to publish node VFD attachment function");
     
 	}
 }
@@ -294,18 +310,19 @@ int node::create(void)
 	current_accumulated = false;
 	deltamode_inclusive = false;	//Begin assuming we aren't delta-enabled
 	dynamic_norton = false;			//By default, no one needs the Norton equivalent posting
+	dynamic_generator = false;		//By default, we don't have any generator attached
 
 	fmeas_type = FM_NONE;			//By default, no frequency measurement occurs
 	freq_omega_ref=0.0;
-	freq_sfm_T=0.01;
+	freq_sfm_Tf=0.01;
 	freq_pll_Kp=10;
 	freq_pll_Ki=100;
 
 	//Set default values
-	curr_state.fmeas[0] = nominal_frequency;
-	curr_state.fmeas[1] = nominal_frequency;
-	curr_state.fmeas[2] = nominal_frequency;
-	curr_state.average_freq = nominal_frequency;
+	curr_freq_state.fmeas[0] = nominal_frequency;
+	curr_freq_state.fmeas[1] = nominal_frequency;
+	curr_freq_state.fmeas[2] = nominal_frequency;
+	curr_freq_state.average_freq = nominal_frequency;
 
 	//GFA functionality - put in node, in case it needs to be added
 	GFA_enable = false;			//disabled, by default
@@ -319,6 +336,12 @@ int node::create(void)
 	GFA_status = true;
 	prev_time_dbl = 0.0;				//Tracking variable
 	GFA_Update_time = 0.0;
+	GFA_trip_method = GFA_NONE;		//By default, not tripped
+
+	//VFD-related additional functionality
+	VFD_attached = false;	//Not connected to a VFD
+	VFD_updating_function = NULL;	//Make sure is set empty
+	VFD_object = NULL;	//Make empty
 
 	return result;
 }
@@ -331,7 +354,7 @@ int node::init(OBJECT *parent)
 	if (has_phase(PHASE_S))
 	{
 		//Make sure we're a valid class
-		if (!(gl_object_isa(obj,"triplex_node","powerflow") || gl_object_isa(obj,"triplex_meter","powerflow") || gl_object_isa(obj,"triplex_load","powerflow")))
+		if (!(gl_object_isa(obj,"triplex_node","powerflow") || gl_object_isa(obj,"triplex_meter","powerflow") || gl_object_isa(obj,"triplex_load","powerflow") || gl_object_isa(obj,"motor","powerflow")))
 		{
 			GL_THROW("Object:%d - %s -- has a phase S, but is not triplex!",obj->id,(obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
@@ -1177,13 +1200,6 @@ int node::init(OBJECT *parent)
 		//Increment the counter for allocation
 		pwr_object_count++;
 
-		//If we're THE SWING, map the variable for the extra function as well
-		if (obj==NR_swing_bus)
-		{
-			//Assign the function variable for deltamode
-			deltamode_extra_function = (int64)(&(delta_extra_function));
-		}
-
 		//Check out parent and toss some warnings
 		if (TopologicalParent != NULL)
 		{
@@ -1593,11 +1609,11 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 						*/
 					}
 
-					//Allocate "frequency" function references
-					delta_freq_functions = (FUNCTIONADDR*)gl_malloc(pwr_object_count*sizeof(FUNCTIONADDR));
+					//Allocate the post update array
+					post_delta_functions = (FUNCTIONADDR*)gl_malloc(pwr_object_count*sizeof(FUNCTIONADDR));
 
 					//Make sure it worked
-					if (delta_freq_functions == NULL)
+					if (post_delta_functions == NULL)
 					{
 						GL_THROW("Failed to allocate deltamode objects function array for powerflow module!");
 						//Defined above
@@ -1723,22 +1739,13 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 				*/
 			}
 
-			//Map up the frequency function
-			delta_freq_functions[temp_pwr_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"delta_freq_pwr_object"));
+			//Map up the post update, if we have one
+			post_delta_functions[temp_pwr_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"postupdate_pwr_object"));
 
-			//Make sure it worked
-			if (delta_freq_functions[temp_pwr_object_current] == NULL)
-			{
-				//Make sure we didn't already warn out -- it's an indication we're not delta-compliant and the "overall" flag is hitting us
-				if (delta_functions[temp_pwr_object_current] != NULL)
-				{
-					gl_warning("Failure to map deltamode function for devices:%s",obj->name);
-					//Defined above - assumes they exist in pairs
-				}
-			}
+			//No null check, since this one just may not work (post update may not exist)
 
 			//Do any additional parent/child mappings for deltamode -- if necessary
-			if (((SubNode==CHILD) || (SubNode==DIFF_CHILD)) && (dynamic_norton==true))
+			if (((SubNode==CHILD) || (SubNode==DIFF_CHILD)) && ((dynamic_norton==true) || (dynamic_generator==true)))
 			{
 				//Map our parent
 				temp_par_node = OBJECTDATA(SubNodeParent,node);
@@ -1753,49 +1760,65 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 					*/
 				}
 
-				//See if our parent has been allocated yet or not
-				if (temp_par_node->full_Y == NULL)
-				{
-					//Lock our parent
-					LOCK_OBJECT(SubNodeParent);
+				//Lock the parent for all of our shenanigans
+				LOCK_OBJECT(SubNodeParent);
 
+				//See if we're a Norton equivalent
+				if (dynamic_norton==true)
+				{
 					//Flag our parent, just to make sure things work properly
 					temp_par_node->dynamic_norton = true;
 
-					//Do allocations
-					temp_par_node->full_Y = (complex *)gl_malloc(9*sizeof(complex));
-
-					//Check it
-					if (temp_par_node->full_Y==NULL)
+					//See if our parent has been allocated yet or not
+					if (temp_par_node->full_Y == NULL)
 					{
-						GL_THROW("Node:%s failed to allocate space for the a deltamode variable",SubNodeParent->name);
-						/*  TROUBLESHOOT
-						While attempting to allocate memory for a dynamics-required (deltamode) variable, an error
-						occurred. Please try again.  If the error persists, please submit your code and a bug
-						report via the trac website.
-						*/
-					}
+						//Do allocations
+						temp_par_node->full_Y = (complex *)gl_malloc(9*sizeof(complex));
 
-					//Zero it, just to be safe (gens will accumulate into it)
-					temp_par_node->full_Y[0] = temp_par_node->full_Y[1] = temp_par_node->full_Y[2] = complex(0.0,0.0);
-					temp_par_node->full_Y[3] = temp_par_node->full_Y[4] = temp_par_node->full_Y[5] = complex(0.0,0.0);
-					temp_par_node->full_Y[6] = temp_par_node->full_Y[7] = temp_par_node->full_Y[8] = complex(0.0,0.0);
+						//Check it
+						if (temp_par_node->full_Y==NULL)
+						{
+							GL_THROW("Node:%s failed to allocate space for the a deltamode variable",SubNodeParent->name);
+							/*  TROUBLESHOOT
+							While attempting to allocate memory for a dynamics-required (deltamode) variable, an error
+							occurred. Please try again.  If the error persists, please submit your code and a bug
+							report via the trac website.
+							*/
+						}
 
-					//Allocate another matrix for admittance - this will have the full value
-					temp_par_node->full_Y_all = (complex *)gl_malloc(9*sizeof(complex));
+						//Zero it, just to be safe (gens will accumulate into it)
+						temp_par_node->full_Y[0] = temp_par_node->full_Y[1] = temp_par_node->full_Y[2] = complex(0.0,0.0);
+						temp_par_node->full_Y[3] = temp_par_node->full_Y[4] = temp_par_node->full_Y[5] = complex(0.0,0.0);
+						temp_par_node->full_Y[6] = temp_par_node->full_Y[7] = temp_par_node->full_Y[8] = complex(0.0,0.0);
 
-					//Check it
-					if (temp_par_node->full_Y_all==NULL)
-					{
-						GL_THROW("Node:%s failed to allocate space for the a deltamode variable",SubNodeParent->name);
-						//Defined above
-					}
+						//Allocate another matrix for admittance - this will have the full value
+						temp_par_node->full_Y_all = (complex *)gl_malloc(9*sizeof(complex));
 
-					//Zero it, just to be safe (gens will accumulate into it)
-					temp_par_node->full_Y_all[0] = temp_par_node->full_Y_all[1] = temp_par_node->full_Y_all[2] = complex(0.0,0.0);
-					temp_par_node->full_Y_all[3] = temp_par_node->full_Y_all[4] = temp_par_node->full_Y_all[5] = complex(0.0,0.0);
-					temp_par_node->full_Y_all[6] = temp_par_node->full_Y_all[7] = temp_par_node->full_Y_all[8] = complex(0.0,0.0);
+						//Check it
+						if (temp_par_node->full_Y_all==NULL)
+						{
+							GL_THROW("Node:%s failed to allocate space for the a deltamode variable",SubNodeParent->name);
+							//Defined above
+						}
 
+						//Zero it, just to be safe (gens will accumulate into it)
+						temp_par_node->full_Y_all[0] = temp_par_node->full_Y_all[1] = temp_par_node->full_Y_all[2] = complex(0.0,0.0);
+						temp_par_node->full_Y_all[3] = temp_par_node->full_Y_all[4] = temp_par_node->full_Y_all[5] = complex(0.0,0.0);
+						temp_par_node->full_Y_all[6] = temp_par_node->full_Y_all[7] = temp_par_node->full_Y_all[8] = complex(0.0,0.0);
+					}//End not allocated
+					//Default else -- it's already allocated
+				}//End Norton equivalent
+
+				//Now do the other variable
+				if (dynamic_generator==true)
+				{
+					//Flag our parent
+					temp_par_node->dynamic_generator = true;
+				}
+
+				//Check to see if the other variable is needed (both need it)
+				if (temp_par_node->DynVariable == NULL)
+				{
 					//Do the same for a dynamics contribution (just 4x1 for now for normal nodes)
 					//0-2 represent ABC current,3 represents overall power, 4 represents power frequency weighting,
 					//5 represents overall output power
@@ -1812,19 +1835,29 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 					//Zero them, for consistency
 					temp_par_node->DynVariable[0] = temp_par_node->DynVariable[1] = temp_par_node->DynVariable[2] = complex(0.0,0.0);
 					temp_par_node->DynVariable[3] = temp_par_node->DynVariable[4] = temp_par_node->DynVariable[5] = complex(0.0,0.0);
+				}//End allocate DynCurrent (and others)
+				//Default else -- already flagged
 
-					//Unlock our parent
-					UNLOCK_OBJECT(SubNodeParent);
+				//Unlock our parent
+				UNLOCK_OBJECT(SubNodeParent);
+
+				//Link the local pointers, as appropriate
+				if (dynamic_norton==true)
+				{
+					full_Y = temp_par_node->full_Y;
+					full_Y_all = temp_par_node->full_Y_all;
 				}
-				//Default else - it's mapped
+				else	//NULL the pointers, again, just because
+				{
+					full_Y = NULL;
+					full_Y_all = NULL;
+				}
 
-				//Link the local pointers
-				full_Y = temp_par_node->full_Y;
-				full_Y_all = temp_par_node->full_Y_all;
+				//Map the shared variable
 				DynVariable = temp_par_node->DynVariable;
 
 				//No need to do NR mappings - we don't get hit anyways
-			}//End child norton equivalent postings code
+			}//End child Norton equivalent/dynamic generator postings code
 		}//end deltamode allocations
 
 		//Call NR presync function
@@ -1906,6 +1939,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 void node::NR_node_sync_fxn(OBJECT *obj)
 {
 	int loop_index_var;
+	STATUS fxn_ret_value;
 
 	//Reliability check - sets and removes voltages (theory being previous answer better than starting at 0)
 	unsigned char phase_checks_var;
@@ -2222,6 +2256,24 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 			last_child_power[3][2] = pre_rotated_current[2];
 
 		}//End differently connected child
+
+		//Call the VFD update, if we need it
+		//Note -- this basically precludes childed nodes from working, which is acceptable (programmer says so)
+		if (VFD_attached == true)
+		{
+			//Call the function - make the VFD move us along
+			fxn_ret_value = ((STATUS (*)(OBJECT *))(*VFD_updating_function))(VFD_object);
+
+			//Check the return value
+			if (fxn_ret_value == FAILED)
+			{
+				GL_THROW("node:%d - %s -- Failed VFD updating function",obj->id,(obj->name ? obj->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				While attempting to call the VFD current injection function, an error occurred.  Please try again.
+				If the error persists, please submit an issue.
+				*/
+			}
+		}
 	}//end not uninitialized
 }
 
@@ -2234,6 +2286,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 	complex delta_shunt[3];
 	complex delta_shunt_curr[3];
 	complex dy_curr_accum[3];
+	complex temp_current_val[3];
 	
 	//Generic time keeping variable - used for phase checks (GS does this explicitly below)
 	if (t0!=prev_NTime)
@@ -2327,18 +2380,18 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		{   // 'Delta' connected load
 			
 			//Convert delta connected power to appropriate line current
-			delta_current[0]= (voltageAB.IsZero()) ? 0 : ~(powerA/voltageAB);
-			delta_current[1]= (voltageBC.IsZero()) ? 0 : ~(powerB/voltageBC);
-			delta_current[2]= (voltageCA.IsZero()) ? 0 : ~(powerC/voltageCA);
+			delta_current[0]= (voltaged[0].IsZero()) ? 0 : ~(power[0]/voltaged[0]);
+			delta_current[1]= (voltaged[1].IsZero()) ? 0 : ~(power[1]/voltaged[1]);
+			delta_current[2]= (voltaged[2].IsZero()) ? 0 : ~(power[2]/voltaged[2]);
 
 			power_current[0]=delta_current[0]-delta_current[2];
 			power_current[1]=delta_current[1]-delta_current[0];
 			power_current[2]=delta_current[2]-delta_current[1];
 
 			//Convert delta connected load to appropriate line current
-			delta_shunt[0] = voltageAB*shuntA;
-			delta_shunt[1] = voltageBC*shuntB;
-			delta_shunt[2] = voltageCA*shuntC;
+			delta_shunt[0] = voltaged[0]*shunt[0];
+			delta_shunt[1] = voltaged[1]*shunt[1];
+			delta_shunt[2] = voltaged[2]*shunt[2];
 
 			delta_shunt_curr[0] = delta_shunt[0]-delta_shunt[2];
 			delta_shunt_curr[1] = delta_shunt[1]-delta_shunt[0];
@@ -2366,13 +2419,13 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 				}
 			}
 #else
-			complex d[] = {
-				delta_current[0] + power_current[0] + delta_shunt_curr[0],
-				delta_current[1] + power_current[1] + delta_shunt_curr[1],
-				delta_current[2] + power_current[2] + delta_shunt_curr[2]};
-			current_inj[0] += d[0];
-			current_inj[1] += d[1];
-			current_inj[2] += d[2];
+			temp_current_val[0] = delta_current[0] + power_current[0] + delta_shunt_curr[0];
+			temp_current_val[1] = delta_current[1] + power_current[1] + delta_shunt_curr[1];
+			temp_current_val[2] = delta_current[2] + power_current[2] + delta_shunt_curr[2];
+
+			current_inj[0] += temp_current_val[0];
+			current_inj[1] += temp_current_val[1];
+			current_inj[2] += temp_current_val[2];
 #endif
 		}
 		else 
@@ -2396,14 +2449,14 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 				}
 			}
 #else
-			complex d[] = {
-				(voltageA.IsZero() || (powerA.IsZero() && shuntA.IsZero())) ? currentA : currentA + ~(powerA/voltageA) + voltageA*shuntA,
-				(voltageB.IsZero() || (powerB.IsZero() && shuntB.IsZero())) ? currentB : currentB + ~(powerB/voltageB) + voltageB*shuntB,
-				(voltageC.IsZero() || (powerC.IsZero() && shuntC.IsZero())) ? currentC : currentC + ~(powerC/voltageC) + voltageC*shuntC,
-			};
-			current_inj[0] += d[0];
-			current_inj[1] += d[1];
-			current_inj[2] += d[2];
+
+			temp_current_val[0] = (voltage[0].IsZero() || (power[0].IsZero() && shunt[0].IsZero())) ? current[0] : current[0] + ~(power[0]/voltage[0]) + voltage[0]*shunt[0];
+			temp_current_val[1] = (voltage[1].IsZero() || (power[1].IsZero() && shunt[1].IsZero())) ? current[1] : current[1] + ~(power[1]/voltage[1]) + voltage[1]*shunt[1];
+			temp_current_val[2] = (voltage[2].IsZero() || (power[2].IsZero() && shunt[2].IsZero())) ? current[2] : current[2] + ~(power[2]/voltage[2]) + voltage[2]*shunt[2];
+
+			current_inj[0] += temp_current_val[0];
+			current_inj[1] += temp_current_val[1];
+			current_inj[2] += temp_current_val[2];
 #endif
 		}
 
@@ -3284,49 +3337,73 @@ int node::NR_populate(void)
 	//Always null the saturation term -- if it is needed, the link will populate it
 	NR_busdata[NR_node_reference].BusSatTerm = NULL;
 
-	//Allocate full admittance matrix, if desired (for now, not) -- only if something has requested it
-	if ((deltamode_inclusive==true) && (dynamic_norton==true))
+	//Null the extra function pointer -- the individual object will call to populate this
+	NR_busdata[NR_node_reference].ExtraCurrentInjFunc = NULL;
+	NR_busdata[NR_node_reference].ExtraCurrentInjFuncObject = NULL;
+
+	//Allocate dynamic variables -- only if something has requested it
+	if ((deltamode_inclusive==true) && ((dynamic_norton==true) || (dynamic_generator==true)))
 	{
 		//Check our status - shouldn't be necessary, but let's be paranoid
 		if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))	//We're stand-alone or a parent
 		{
-			//Make sure no pesky children have already allocated us
-			if (full_Y == NULL)
+			//Only do admittance allocation if we're a Norton
+			if (dynamic_norton==true)
 			{
-				//Allocate it
-				full_Y = (complex *)gl_malloc(9*sizeof(complex));
-
-				//Check it
-				if (full_Y==NULL)
+				//Make sure no pesky children have already allocated us
+				if (full_Y == NULL)
 				{
-					GL_THROW("Node:%s failed to allocate space for the a deltamode variable",me->name);
-					/*  TROUBLESHOOT
-					While attempting to allocate memory for a dynamics-required (deltamode) variable, an error
-					occurred. Please try again.  If the error persists, please submit your code and a bug
-					report via the trac website.
-					*/
+					//Allocate it
+					full_Y = (complex *)gl_malloc(9*sizeof(complex));
+
+					//Check it
+					if (full_Y==NULL)
+					{
+						GL_THROW("Node:%s failed to allocate space for the a deltamode variable",me->name);
+						/*  TROUBLESHOOT
+						While attempting to allocate memory for a dynamics-required (deltamode) variable, an error
+						occurred. Please try again.  If the error persists, please submit your code and a bug
+						report via the trac website.
+						*/
+					}
+
+					//Zero it, just to be safe (gens will accumulate into it)
+					full_Y[0] = full_Y[1] = full_Y[2] = complex(0.0,0.0);
+					full_Y[3] = full_Y[4] = full_Y[5] = complex(0.0,0.0);
+					full_Y[6] = full_Y[7] = full_Y[8] = complex(0.0,0.0);
+
+					//Allocate another matrix for admittance - this will have the full value
+					full_Y_all = (complex *)gl_malloc(9*sizeof(complex));
+
+					//Check it
+					if (full_Y_all==NULL)
+					{
+						GL_THROW("Node:%s failed to allocate space for the a deltamode variable",me->name);
+						//Defined above
+					}
+
+					//Zero it, just to be safe (gens will accumulate into it)
+					full_Y_all[0] = full_Y_all[1] = full_Y_all[2] = complex(0.0,0.0);
+					full_Y_all[3] = full_Y_all[4] = full_Y_all[5] = complex(0.0,0.0);
+					full_Y_all[6] = full_Y_all[7] = full_Y_all[8] = complex(0.0,0.0);
 				}
-
-				//Zero it, just to be safe (gens will accumulate into it)
-				full_Y[0] = full_Y[1] = full_Y[2] = complex(0.0,0.0);
-				full_Y[3] = full_Y[4] = full_Y[5] = complex(0.0,0.0);
-				full_Y[6] = full_Y[7] = full_Y[8] = complex(0.0,0.0);
-
-				//Allocate another matrix for admittance - this will have the full value
-				full_Y_all = (complex *)gl_malloc(9*sizeof(complex));
-
-				//Check it
-				if (full_Y_all==NULL)
+				else	//Not needed, make sure we're nulled
 				{
-					GL_THROW("Node:%s failed to allocate space for the a deltamode variable",me->name);
-					//Defined above
+					full_Y_all = NULL;
 				}
+			}//End Norton equivalent needing admittance
+			else	//Null them out of paranoia
+			{
+				//Null this one too
+				full_Y = NULL;
 
-				//Zero it, just to be safe (gens will accumulate into it)
-				full_Y_all[0] = full_Y_all[1] = full_Y_all[2] = complex(0.0,0.0);
-				full_Y_all[3] = full_Y_all[4] = full_Y_all[5] = complex(0.0,0.0);
-				full_Y_all[6] = full_Y_all[7] = full_Y_all[8] = complex(0.0,0.0);
+				//Null it, just because
+				full_Y_all = NULL;
+			}
 
+			//Double check that the other variable hasn't been mapped already -- in case a non-Norton one did it
+			if (DynVariable == NULL)
+			{
 				//Do the same for a dynamics contribution (just 4x1 for now for normal nodes)
 				//0-2 represent ABC current,3 represents overall power, 4 represents power frequency weighting,
 				//5 represents overall output power
@@ -3344,6 +3421,7 @@ int node::NR_populate(void)
 				DynVariable[0] = DynVariable[1] = DynVariable[2] = complex(0.0,0.0);
 				DynVariable[3] = DynVariable[4] = DynVariable[5] = complex(0.0,0.0);
 			}
+			//Default else -- already allocated by a pesky child
 		}//End we're a parent
 
 		//Map all relevant variables to the NR structure
@@ -3375,8 +3453,12 @@ int node::NR_current_update(bool postpass, bool parentcall)
 	int temp_result, loop_index;
 	OBJECT *obj = OBJECTHDR(this);
 	complex temp_current_inj[3];
+	complex temp_current_val[3];
+	complex adjusted_current_val[3];
 	complex delta_shunt[3];
 	complex delta_current[3];
+	complex assumed_nominal_voltage[6];
+	double nominal_voltage_dval;
 	complex house_pres_current[3];
 
 	//Don't do anything if we've already been "updated"
@@ -3546,27 +3628,82 @@ int node::NR_current_update(bool postpass, bool parentcall)
 		//Handle our "self" - do this in a "temporary fashion" for children problems
 		temp_current_inj[0] = temp_current_inj[1] = temp_current_inj[2] = complex(0.0,0.0);
 
+		//If deltamode - adjust these accumulations, since this is already done inside powerflow (so numbers match)
+		if (deltamode_inclusive == true)
+		{
+			//See if we're a triplex
+			if (has_phase(PHASE_S))
+			{
+				assumed_nominal_voltage[0].SetPolar(nominal_voltage,0.0);			//1
+				assumed_nominal_voltage[1].SetPolar(nominal_voltage,0.0);			//2
+				assumed_nominal_voltage[2] = assumed_nominal_voltage[0] + assumed_nominal_voltage[1];	//12
+				assumed_nominal_voltage[3] = complex(0.0,0.0);	//Not needed - zero for giggles
+				assumed_nominal_voltage[4] = complex(0.0,0.0);
+				assumed_nominal_voltage[5] = complex(0.0,0.0);
+
+				//Populate LL value
+				nominal_voltage_dval = 2.0 * nominal_voltage;
+			}
+			else //Standard fare
+			{
+				assumed_nominal_voltage[0].SetPolar(nominal_voltage,0.0);			//AN
+				assumed_nominal_voltage[1].SetPolar(nominal_voltage,(-2.0*PI/3.0));	//BN
+				assumed_nominal_voltage[2].SetPolar(nominal_voltage,(2.0*PI/3.0));	//CN
+				assumed_nominal_voltage[3] = assumed_nominal_voltage[0] - assumed_nominal_voltage[1];	//AB
+				assumed_nominal_voltage[4] = assumed_nominal_voltage[1] - assumed_nominal_voltage[2];	//BC
+				assumed_nominal_voltage[5] = assumed_nominal_voltage[2] - assumed_nominal_voltage[0];	//CA
+
+				//Populate LL value
+				nominal_voltage_dval = assumed_nominal_voltage[3].Mag();
+			}
+		}
+		//Default else - not deltamode, so don't care (don't even zero them)
+
 		if (has_phase(PHASE_D))	//Delta connection
 		{
 			//Convert delta connected impedance
-			delta_shunt[0] = voltageAB*shunt[0];
-			delta_shunt[1] = voltageBC*shunt[1];
-			delta_shunt[2] = voltageCA*shunt[2];
+			delta_shunt[0] = voltaged[0]*shunt[0];
+			delta_shunt[1] = voltaged[1]*shunt[1];
+			delta_shunt[2] = voltaged[2]*shunt[2];
 
 			//Convert delta connected power
-			delta_current[0]= (voltaged[0]==0) ? complex(0,0) : ~(power[0]/voltageAB);
-			delta_current[1]= (voltaged[1]==0) ? complex(0,0) : ~(power[1]/voltageBC);
-			delta_current[2]= (voltaged[2]==0) ? complex(0,0) : ~(power[2]/voltageCA);
+			delta_current[0]= (voltaged[0]==0) ? complex(0,0) : ~(power[0]/voltaged[0]);
+			delta_current[1]= (voltaged[1]==0) ? complex(0,0) : ~(power[1]/voltaged[1]);
+			delta_current[2]= (voltaged[2]==0) ? complex(0,0) : ~(power[2]/voltaged[2]);
 
-			complex d[] = {
-				delta_shunt[0]-delta_shunt[2] + delta_current[0]-delta_current[2] + current[0]-current[2],
-				delta_shunt[1]-delta_shunt[0] + delta_current[1]-delta_current[0] + current[1]-current[0],
-				delta_shunt[2]-delta_shunt[1] + delta_current[2]-delta_current[1] + current[2]-current[1],
-			};
+			//Adjust constant current values, if deltamode
+			if (deltamode_inclusive == true)
+			{
+				//Loop through the phases
+				for (loop_index=0; loop_index<3; loop_index++)
+				{
+					//Check existence of phases and adjust the currents appropriately
+					if (voltaged[loop_index] != 0.0)
+					{
+						adjusted_current_val[loop_index] =  ~((assumed_nominal_voltage[loop_index+3]*~current[loop_index]*voltaged[loop_index].Mag())/(voltaged[loop_index]*nominal_voltage_dval));
+					}
+					else
+					{
+						adjusted_current_val[loop_index] = complex(0.0,0.0);
+					}
+				}
+			}
+			else
+			{
+				//Standard approach
+				adjusted_current_val[0] = current[0];
+				adjusted_current_val[1] = current[1];
+				adjusted_current_val[2] = current[2];
+			}
 
-			temp_current_inj[0] = d[0];	
-			temp_current_inj[1] = d[1];
-			temp_current_inj[2] = d[2];
+			//Translate into a line current
+			temp_current_val[0] = delta_shunt[0]-delta_shunt[2] + delta_current[0]-delta_current[2] + adjusted_current_val[0]-adjusted_current_val[2];
+			temp_current_val[1] = delta_shunt[1]-delta_shunt[0] + delta_current[1]-delta_current[0] + adjusted_current_val[1]-adjusted_current_val[0];
+			temp_current_val[2] = delta_shunt[2]-delta_shunt[1] + delta_current[2]-delta_current[1] + adjusted_current_val[2]-adjusted_current_val[1];
+
+			temp_current_inj[0] = temp_current_val[0];
+			temp_current_inj[1] = temp_current_val[1];
+			temp_current_inj[2] = temp_current_val[2];
 		}
 		else if (has_phase(PHASE_S))	//Split phase node
 		{
@@ -3579,14 +3716,60 @@ int node::NR_current_update(bool postpass, bool parentcall)
 			vdel=voltage[0] + voltage[1];
 
 			//Find contributions
+			//Adjust constant current values, if deltamode
+			if (deltamode_inclusive == true)
+			{
+				//Check existence of phases and adjust the currents appropriately
+				//Phase 1
+				if (voltage[0] != 0.0)
+				{
+					adjusted_current_val[0] =  ~((assumed_nominal_voltage[0]*~current[0]*voltage[0].Mag())/(voltage[0]*nominal_voltage));
+				}
+				else
+				{
+					adjusted_current_val[0] = complex(0.0,0.0);
+				}
+
+				//Phase 2
+				if (voltage[1] != 0.0)
+				{
+					adjusted_current_val[1] =  ~((assumed_nominal_voltage[1]*~current[1]*voltage[1].Mag())/(voltage[1]*nominal_voltage));
+				}
+				else
+				{
+					adjusted_current_val[1] = complex(0.0,0.0);
+				}
+
+				//Phase 12
+				if (vdel != 0.0)
+				{
+					adjusted_current_val[2] =  ~((assumed_nominal_voltage[2]*~current12*vdel.Mag())/(vdel*nominal_voltage_dval));
+				}
+				else
+				{
+					adjusted_current_val[2] = complex(0.0,0.0);
+				}
+			}
+			else
+			{
+				//Standard approach
+				adjusted_current_val[0] = current[0];
+				adjusted_current_val[1] = current[1];
+				adjusted_current_val[2] = current12;	//current12 is not part of the standard current array
+			}
+
 			//Start with the currents (just put them in)
-			temp_current[0] = current[0];
-			temp_current[1] = current[1];
-			temp_current[2] = current12; //current12 is not part of the standard current array
+			temp_current[0] = adjusted_current_val[0];
+			temp_current[1] = adjusted_current_val[1];
+			temp_current[2] = adjusted_current_val[2];
 
 			//Add in the unrotated bit, if we're deltamode
 			if (deltamode_inclusive == true)
-				temp_current[2] += pre_rotated_current[2];
+			{
+				temp_current[0] += pre_rotated_current[0];	//1
+				temp_current[1] += pre_rotated_current[1];	//2
+				temp_current[2] += pre_rotated_current[2];	//12
+			}
 
 			//Now add in power contributions
 			temp_current[0] += voltage[0] == 0.0 ? 0.0 : ~(power[0]/voltage[0]);
@@ -3617,13 +3800,11 @@ int node::NR_current_update(bool postpass, bool parentcall)
 			temp_current[2] += shunt[2]*vdel;
 
 			//Convert 'em to line currents
-			complex d[] = {
-				temp_current[0] + temp_current[2],
-				-temp_current[1] - temp_current[2],
-			};
+			temp_current_val[0] = temp_current[0] + temp_current[2];
+			temp_current_val[1] = -temp_current[1] - temp_current[2];
 
-			temp_current_inj[0] = d[0];
-			temp_current_inj[1] = d[1];
+			temp_current_inj[0] = temp_current_val[0];
+			temp_current_inj[1] = temp_current_val[1];
 
 			//Get information
 			if ((Triplex_Data != NULL) && ((Triplex_Data[0] != 0.0) || (Triplex_Data[1] != 0.0)))
@@ -3641,17 +3822,41 @@ int node::NR_current_update(bool postpass, bool parentcall)
 		}
 		else					//Wye connection
 		{
-			complex d[] = {
-				//PQP needs power converted to current
-				//PQZ needs load currents calculated as well
-				//Update load current values if PQI
-				((voltage[0]==0) ? complex(0,0) : ~(power[0]/voltage[0])) + voltage[0]*shunt[0] + current[0] + pre_rotated_current[0],
-				((voltage[1]==0) ? complex(0,0) : ~(power[1]/voltage[1])) + voltage[1]*shunt[1] + current[1] + pre_rotated_current[1],
-				((voltage[2]==0) ? complex(0,0) : ~(power[2]/voltage[2])) + voltage[2]*shunt[2] + current[2] + pre_rotated_current[2],
-			};
-			temp_current_inj[0] = d[0];			
-			temp_current_inj[1] = d[1];
-			temp_current_inj[2] = d[2];
+			//Adjust constant current values, if deltamode
+			if (deltamode_inclusive == true)
+			{
+				//Loop through the phases
+				for (loop_index=0; loop_index<3; loop_index++)
+				{
+					//Check existence of phases and adjust the currents appropriately
+					if (voltage[loop_index] != 0.0)
+					{
+						adjusted_current_val[loop_index] =  ~((assumed_nominal_voltage[loop_index]*~current[loop_index]*voltage[loop_index].Mag())/(voltage[loop_index]*nominal_voltage));
+					}
+					else
+					{
+						adjusted_current_val[loop_index] = complex(0.0,0.0);
+					}
+				}
+			}
+			else
+			{
+				//Standard approach
+				adjusted_current_val[0] = current[0];
+				adjusted_current_val[1] = current[1];
+				adjusted_current_val[2] = current[2];
+			}
+
+			//PQP needs power converted to current
+			//PQZ needs load currents calculated as well
+			//Update load current values if PQI
+			temp_current_val[0] = ((voltage[0]==0) ? complex(0,0) : ~(power[0]/voltage[0])) + voltage[0]*shunt[0] + adjusted_current_val[0] + pre_rotated_current[0];
+			temp_current_val[1] = ((voltage[1]==0) ? complex(0,0) : ~(power[1]/voltage[1])) + voltage[1]*shunt[1] + adjusted_current_val[1] + pre_rotated_current[1];
+			temp_current_val[2] = ((voltage[2]==0) ? complex(0,0) : ~(power[2]/voltage[2])) + voltage[2]*shunt[2] + adjusted_current_val[2] + pre_rotated_current[2];
+
+			temp_current_inj[0] = temp_current_val[0];
+			temp_current_inj[1] = temp_current_val[1];
+			temp_current_inj[2] = temp_current_val[2];
 		}
 
 		//Explicit delta-wye portions (do both) -- make sure not triplex though
@@ -3669,15 +3874,65 @@ int node::NR_current_update(bool postpass, bool parentcall)
 			delta_current[1]= (voltaged[1]==0) ? complex(0,0) : ~(power_dy[1]/voltaged[1]);
 			delta_current[2]= (voltaged[2]==0) ? complex(0,0) : ~(power_dy[2]/voltaged[2]);
 
+			//Adjust constant current values of delta-connected, if deltamode
+			if (deltamode_inclusive == true)
+			{
+				//Loop through the phases
+				for (loop_index=0; loop_index<3; loop_index++)
+				{
+					//Check existence of phases and adjust the currents appropriately
+					if (voltaged[loop_index] != 0.0)
+					{
+						adjusted_current_val[loop_index] =  ~((assumed_nominal_voltage[loop_index+3]*~current_dy[loop_index]*voltaged[loop_index].Mag())/(voltaged[loop_index]*nominal_voltage_dval));
+					}
+					else
+					{
+						adjusted_current_val[loop_index] = complex(0.0,0.0);
+					}
+				}
+			}
+			else
+			{
+				//Standard approach
+				adjusted_current_val[0] = current_dy[0];
+				adjusted_current_val[1] = current_dy[1];
+				adjusted_current_val[2] = current_dy[2];
+			}
+
+
 			//Put into accumulator
-			temp_current_inj[0] += delta_shunt[0]-delta_shunt[2] + delta_current[0]-delta_current[2] + current_dy[0]-current_dy[2];
-			temp_current_inj[1] += delta_shunt[1]-delta_shunt[0] + delta_current[1]-delta_current[0] + current_dy[1]-current_dy[0];
-			temp_current_inj[2] += delta_shunt[2]-delta_shunt[1] + delta_current[2]-delta_current[1] + current_dy[2]-current_dy[1];
+			temp_current_inj[0] += delta_shunt[0]-delta_shunt[2] + delta_current[0]-delta_current[2] + adjusted_current_val[0]-adjusted_current_val[2];
+			temp_current_inj[1] += delta_shunt[1]-delta_shunt[0] + delta_current[1]-delta_current[0] + adjusted_current_val[1]-adjusted_current_val[0];
+			temp_current_inj[2] += delta_shunt[2]-delta_shunt[1] + delta_current[2]-delta_current[1] + adjusted_current_val[2]-adjusted_current_val[1];
+
+			//Adjust constant current values for Wye-connected, if deltamode
+			if (deltamode_inclusive == true)
+			{
+				//Loop through the phases
+				for (loop_index=0; loop_index<3; loop_index++)
+				{
+					if (voltage[loop_index] != 0.0)
+					{
+						adjusted_current_val[loop_index] =  ~((assumed_nominal_voltage[loop_index]*~current_dy[loop_index+3]*voltage[loop_index].Mag())/(voltage[loop_index]*nominal_voltage));
+					}
+					else
+					{
+						adjusted_current_val[loop_index] = complex(0.0,0.0);
+					}
+				}
+			}
+			else
+			{
+				//Standard approach
+				adjusted_current_val[0] = current_dy[3];
+				adjusted_current_val[1] = current_dy[4];
+				adjusted_current_val[2] = current_dy[5];
+			}
 
 			//Now put in Wye components
-			temp_current_inj[0] += ((voltage[0]==0) ? complex(0,0) : ~(power_dy[3]/voltage[0])) + voltage[0]*shunt_dy[3] + current_dy[3];
-			temp_current_inj[1] += ((voltage[1]==0) ? complex(0,0) : ~(power_dy[4]/voltage[1])) + voltage[1]*shunt_dy[4] + current_dy[4];
-			temp_current_inj[2] += ((voltage[2]==0) ? complex(0,0) : ~(power_dy[5]/voltage[2])) + voltage[2]*shunt_dy[5] + current_dy[5];
+			temp_current_inj[0] += ((voltage[0]==0) ? complex(0,0) : ~(power_dy[3]/voltage[0])) + voltage[0]*shunt_dy[3] + adjusted_current_val[0];
+			temp_current_inj[1] += ((voltage[1]==0) ? complex(0,0) : ~(power_dy[4]/voltage[1])) + voltage[1]*shunt_dy[4] + adjusted_current_val[1];
+			temp_current_inj[2] += ((voltage[2]==0) ? complex(0,0) : ~(power_dy[5]/voltage[2])) + voltage[2]*shunt_dy[5] + adjusted_current_val[2];
 		}//End both delta/wye
 
 		//If we are a child, apply our current injection directly up to our parent - links accumulate afterwards now because they bypass child relationships
@@ -3765,29 +4020,39 @@ int node::NR_current_update(bool postpass, bool parentcall)
 //Module-level call
 SIMULATIONMODE node::inter_deltaupdate_node(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
 {
-	unsigned char pass_mod;
+	//unsigned char pass_mod;
 	double deltat, deltatimedbl;
 	OBJECT *hdr = OBJECTHDR(this);
 	STATUS return_status_val;
+
+	////See what we're on, for tracking
+	//pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
 
 	//Create delta_t variable
 	deltat = (double)dt/(double)DT_SECOND;
 
 	//Update time tracking variable - mostly for GFA functionality calls
-	if (iteration_count_val == 0)	//Only update timestamp tracker on first iteration
+	if ((iteration_count_val==0) && (interupdate_pos == false)) //Only update timestamp tracker on first iteration
 	{
 		//Get decimal timestamp value
 		deltatimedbl = (double)delta_time/(double)DT_SECOND; 
 
 		//Update tracking variable
 		prev_time_dbl = (double)gl_globalclock + deltatimedbl;
+
+		//Update frequency calculation values (if needed)
+		if (fmeas_type != FM_NONE)
+		{
+			//Copy the tracker value
+			memcpy(&prev_freq_state,&curr_freq_state,sizeof(FREQM_STATES));
+		}
 	}
 
 	//Initialization items
-	if ((delta_time==0) && (iteration_count_val==0) && (interupdate_pos == false))	//First run of new delta call
+	if ((delta_time==0) && (iteration_count_val==0) && (interupdate_pos == false) && (fmeas_type != FM_NONE))	//First run of new delta call
 	{
 		//Initialize dynamics
-		init_freq_dynamics(&curr_state);
+		init_freq_dynamics();
 	}//End first pass and timestep of deltamode (initial condition stuff)
 
 	//Perform the GFA update, if enabled
@@ -3796,9 +4061,6 @@ SIMULATIONMODE node::inter_deltaupdate_node(unsigned int64 delta_time, unsigned 
 		//Do the checks
 		GFA_Update_time = perform_GFA_checks(deltat);
 	}
-
-	//See what we're on, for tracking
-	pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
 
 	//Determine what to run
 	if (interupdate_pos == false)	//Before powerflow call
@@ -3810,7 +4072,8 @@ SIMULATIONMODE node::inter_deltaupdate_node(unsigned int64 delta_time, unsigned 
 		NR_node_sync_fxn(hdr);
 
 		return SM_DELTA;	//Just return something other than SM_ERROR for this call
-	}
+
+	}//End Before NR solver (or inclusive)
 	else	//After the call
 	{
 		//Perform postsync-like updates on the values
@@ -3819,7 +4082,7 @@ SIMULATIONMODE node::inter_deltaupdate_node(unsigned int64 delta_time, unsigned 
 		//Frequency measurement stuff
 		if (fmeas_type != FM_NONE)
 		{
-			return_status_val = calc_freq_dynamics(deltat,pass_mod);
+			return_status_val = calc_freq_dynamics(deltat);
 
 			//Check it
 			if (return_status_val == FAILED)
@@ -3875,422 +4138,317 @@ SIMULATIONMODE node::inter_deltaupdate_node(unsigned int64 delta_time, unsigned 
 		//	return SM_EVENT;	//Normal nodes want event mode all the time here - SWING bus will
 		//						//control the reiteration process for pred/corr steps
 		//}
-	}
+	}//End "After NR solver" branch
 }
 
 //Performs the frequency measurement calculations in a nice, compact form
 //for easy copy-paste
-STATUS node::calc_freq_dynamics(double deltat, unsigned char pass_mod)
+STATUS node::calc_freq_dynamics(double deltat)
 {
 	unsigned char phase_conf, phase_mask;
 	unsigned int indexval;
-	double deltath;
+	double dfmeasdt, errorval, deltaom, dxdt, fbus;
 	STATUS return_status;
+	bool is_triplex_node;
 
 	//Init for success
 	return_status = SUCCESS;
 
-	//Calculate half-step
-	deltath = deltat/2.0;
-
 	//Extract the phases
-	//TODO: - Simple fix - fix this for triplex, when we support it
 	if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
 	{
-		phase_conf=NR_busdata[NR_node_reference].phases & 0x07;
+		if ((NR_busdata[NR_node_reference].phases & 0x80) == 0x80)
+		{
+			phase_conf = 0x80;
+			is_triplex_node = true;
+		}
+		else
+		{
+			phase_conf=NR_busdata[NR_node_reference].phases & 0x07;
+			is_triplex_node = false;
+		}
 	}
 	else	//It is a child - look at parent
 	{
-		phase_conf=NR_busdata[*NR_subnode_reference].phases & 0x07;
+		if ((NR_busdata[*NR_subnode_reference].phases & 0x80) == 0x80)
+		{
+			phase_conf = 0x80;
+			is_triplex_node = true;
+		}
+		else
+		{
+			phase_conf=NR_busdata[*NR_subnode_reference].phases & 0x07;
+			is_triplex_node = false;
+		}
 	}
 
-	if (pass_mod==0)	//Predictor pass
+	//Pull voltage updates
+	for (indexval=0; indexval<3; indexval++)
 	{
-		//Call dynamics
-		apply_interim_freq_dynamics(&curr_state,&predictor_vals,deltat,pass_mod);
-
-		//Apply prediction update
-		/**************** TODO - Make Triplex work here **************************/
-		if (fmeas_type == FM_SIMPLE)
+		if (is_triplex_node == true)
 		{
-			//Loop through the phases
-			for (indexval=0; indexval<3; indexval++)
-			{
-				//Get the mask
-				phase_mask = (1 << (2 - indexval));
-
-				//Check and see if it exists
-				if ((phase_conf & phase_mask) == phase_mask)
-				{
-					next_state.fmeas[indexval] = curr_state.fmeas[indexval] + predictor_vals.fmeas[indexval]*deltat;
-				}
-				else	//It does not
-				{
-					next_state.fmeas[indexval] = 0;
-				}
-			}//End phase FOR
-		}//End simple frequency measurement update
-		else if (fmeas_type == FM_PLL)
-		{
-			//Loop through the phases
-			for (indexval=0; indexval<3; indexval++)
-			{
-				//Get the mask
-				phase_mask = (1 << (2 - indexval));
-
-				//Check and see if it exists
-				if ((phase_conf & phase_mask) == phase_mask)
-				{
-					next_state.x[indexval] = curr_state.x[indexval] + predictor_vals.x[indexval]*deltat;
-					next_state.anglemeas[indexval] = curr_state.anglemeas[indexval] + predictor_vals.anglemeas[indexval]*deltat;
-					// PLL outputs
-					next_state.fmeas[indexval]=(predictor_vals.anglemeas[indexval]+freq_omega_ref)/(2*PI);
-					next_state.sinangmeas[indexval]=sin(next_state.anglemeas[indexval]);
-					next_state.cosangmeas[indexval]=cos(next_state.anglemeas[indexval]);
-				}
-				else	//Phase no exist
-				{
-					next_state.x[indexval] = 0.0;
-					next_state.anglemeas[indexval] = 0.0;
-					// PLL outputs
-					next_state.fmeas[indexval]=0.0;
-					next_state.sinangmeas[indexval]=0.0;
-					next_state.cosangmeas[indexval]=0.0;
-				}
-			}//End phase FOR
+			phase_mask = 0x80;
 		}
-		//Default else - no updates because no frequency measurement
-
-		//return SM_DELTA_ITER;	//Reiterate - to get us to corrector pass
-	}
-	else	//Corrector pass
-	{
-		//Call dynamics
-		apply_interim_freq_dynamics(&next_state,&corrector_vals,deltat,pass_mod);
-
-		//Apply corrector update
-		if (fmeas_type == FM_SIMPLE)
+		else	//three-phase, of some sort
 		{
-			//Loop through the phases
-			for (indexval=0; indexval<3; indexval++)
-			{
-				//Get the mask
-				phase_mask = (1 << (2 - indexval));
-
-				//Check the phase
-				if ((phase_conf & phase_mask) == phase_mask)
-				{
-					next_state.fmeas[indexval] = curr_state.fmeas[indexval] + (predictor_vals.fmeas[indexval]+corrector_vals.fmeas[indexval])*deltath;
-				}
-				else // not here
-				{
-					next_state.fmeas[indexval] = 0.0;
-				}
-			}//End phase FOR
-		}//End simple frequency measurement update
-		else if (fmeas_type == FM_PLL)
-		{
-			//Loop through the phases
-			for (indexval=0; indexval<3; indexval++)
-			{
-				//Get the mask
-				phase_mask = (1 << (2 - indexval));
-
-				//Check the phase
-				if ((phase_conf & phase_mask) == phase_mask)
-				{
-					next_state.x[indexval] = curr_state.x[indexval] + (predictor_vals.x[indexval]+corrector_vals.x[indexval])*deltath;
-					next_state.anglemeas[indexval] = curr_state.anglemeas[indexval] + (predictor_vals.anglemeas[2]+corrector_vals.anglemeas[indexval])*deltath;
-					// PLL outputs
-					next_state.fmeas[indexval]=((predictor_vals.anglemeas[indexval]+corrector_vals.anglemeas[indexval])/2+freq_omega_ref)/(2*PI);
-					next_state.sinangmeas[indexval]=sin(next_state.anglemeas[indexval]);
-					next_state.cosangmeas[indexval]=cos(next_state.anglemeas[indexval]);
-				}
-				else // not this phase
-				{
-					next_state.x[indexval] = 0.0;
-					next_state.anglemeas[indexval] = 0.0;
-					// PLL outputs
-					next_state.fmeas[indexval]=0.0;
-					next_state.sinangmeas[indexval]=0.0;
-					next_state.cosangmeas[indexval]=0.0;
-				}
-			}//End phase traversion
+			//Get the mask
+			phase_mask = (1 << (2 - indexval));
 		}
-		//Default else - no updates because no frequency measurement
-		
-		//Copy everything back into curr_state, since we'll be back there
-		memcpy(&curr_state,&next_state,sizeof(FREQM_STATES));
 
-		//Update the "average" frequency value
-		switch(phase_conf) {
-			case 0x00:	//No phases (we've been faulted out
+		//Check the phase
+		if ((phase_conf & phase_mask) == phase_mask)
+		{
+			//See what our reference is - steal parent voltages
+			if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+			{
+				if (is_triplex_node == true)
 				{
-					curr_state.average_freq = 0.0;
-					break;	//Just get us outta here
+					if (indexval < 2)
+					{
+						curr_freq_state.voltage_val[indexval]=NR_busdata[NR_node_reference].V[indexval];
+					}
+					else	//Must be 2
+					{
+						curr_freq_state.voltage_val[indexval]=NR_busdata[NR_node_reference].V[0] + NR_busdata[NR_node_reference].V[1];
+					}
 				}
-			case 0x01:	//Only C
+				else
 				{
-					curr_state.average_freq = curr_state.fmeas[2];
-					break;
+					curr_freq_state.voltage_val[indexval]=NR_busdata[NR_node_reference].V[indexval];
 				}
-			case 0x02:	//Only B
+			}
+			else	//It is a child - look at parent
+			{
+				if (is_triplex_node == true)
 				{
-					curr_state.average_freq = curr_state.fmeas[1];
-					break;
+					curr_freq_state.voltage_val[indexval]=NR_busdata[*NR_subnode_reference].V[indexval];
 				}
-			case 0x03:	//B & C
+				else
 				{
-					curr_state.average_freq = (curr_state.fmeas[1] + curr_state.fmeas[2]) / 2.0;
-					break;
+					curr_freq_state.voltage_val[indexval]=NR_busdata[*NR_subnode_reference].V[0] + NR_busdata[*NR_subnode_reference].V[1];
 				}
-			case 0x04:	//Only A
-				{
-					curr_state.average_freq = curr_state.fmeas[0];
-					break;
-				}
-			case 0x05:	//A & C
-				{
-					curr_state.average_freq = (curr_state.fmeas[0] + curr_state.fmeas[2]) / 2.0;
-					break;
-				}
-			case 0x06:	//A & B
-				{
-					curr_state.average_freq = (curr_state.fmeas[0] + curr_state.fmeas[1]) / 2.0;
-					break;
-				}
-			case 0x07:	//ABC
-				{
-					curr_state.average_freq = (curr_state.fmeas[0] + curr_state.fmeas[1] + curr_state.fmeas[2]) / 3.0;
-					break;
-				}
-			default:	//How'd we get here?
-				{
-					gl_error("Node frequency update: unknown state encountered");
-					/*  TROUBLESHOOT
-					While running the frequency/angle estimation routine for a node object, it somehow entered an unknown state.
-					Please try again.  If the error persists, please submit your GLM and a bug report via the ticketing system.
-					*/
+			}
 
-					return_status = FAILED;
+			//Extract the angle
+			curr_freq_state.anglemeas[indexval] = curr_freq_state.voltage_val[indexval].Arg();
 
+			//Perform update
+			if (fmeas_type == FM_SIMPLE)
+			{
+				fbus = ((curr_freq_state.anglemeas[indexval] - prev_freq_state.anglemeas[indexval])/deltat + freq_omega_ref) / (2.0 * PI);
+				dfmeasdt = (fbus - prev_freq_state.fmeas[indexval]) / freq_sfm_Tf;
+				curr_freq_state.fmeas[indexval] = prev_freq_state.fmeas[indexval] + dfmeasdt*deltat;
+			}
+			else if (fmeas_type == FM_PLL)
+			{
+				//Compute error - make sure isn't zero - if it is, ignore this
+				if (prev_freq_state.voltage_val[indexval].Mag() > 0.0)
+				{
+					errorval = prev_freq_state.voltage_val[indexval].Re()*prev_freq_state.sinangmeas[indexval];
+					errorval -= prev_freq_state.voltage_val[indexval].Im()*prev_freq_state.cosangmeas[indexval];
+					errorval /= prev_freq_state.voltage_val[indexval].Mag();
+					errorval *= -1.0;
+				}
+				else
+				{
+					errorval = 0.0;
+				}
+
+				deltaom = freq_pll_Kp * errorval + prev_freq_state.x[indexval];
+				dxdt = freq_pll_Ki * errorval;
+
+				//Updates
+				curr_freq_state.fmeas[indexval] = (freq_omega_ref + deltaom) / (2.0 * PI);
+				curr_freq_state.x[indexval] = prev_freq_state.x[indexval] + dxdt*deltat;
+				curr_freq_state.anglemeas[indexval] = prev_freq_state.anglemeas[indexval] + deltaom*deltat;
+
+				//Update trig values
+				curr_freq_state.sinangmeas[indexval] = sin(curr_freq_state.anglemeas[indexval]);
+				curr_freq_state.cosangmeas[indexval] = cos(curr_freq_state.anglemeas[indexval]);
+			}
+			//Default else -- other method (or not a valid method)
+		}//End valid phase
+		else	//Not a valid phase
+		{
+			curr_freq_state.fmeas[indexval] = 0.0;
+		}
+	}//End phase loop
+
+	//Update the "average" frequency value
+	switch(phase_conf) {
+		case 0x00:	//No phases (we've been faulted out
+			{
+				curr_freq_state.average_freq = 0.0;
+				break;	//Just get us outta here
+			}
+		case 0x01:	//Only C
+			{
+				curr_freq_state.average_freq = curr_freq_state.fmeas[2];
 				break;
-				}
-		}	//switch end
+			}
+		case 0x02:	//Only B
+			{
+				curr_freq_state.average_freq = curr_freq_state.fmeas[1];
+				break;
+			}
+		case 0x03:	//B & C
+			{
+				curr_freq_state.average_freq = (curr_freq_state.fmeas[1] + curr_freq_state.fmeas[2]) / 2.0;
+				break;
+			}
+		case 0x04:	//Only A
+			{
+				curr_freq_state.average_freq = curr_freq_state.fmeas[0];
+				break;
+			}
+		case 0x05:	//A & C
+			{
+				curr_freq_state.average_freq = (curr_freq_state.fmeas[0] + curr_freq_state.fmeas[2]) / 2.0;
+				break;
+			}
+		case 0x06:	//A & B
+			{
+				curr_freq_state.average_freq = (curr_freq_state.fmeas[0] + curr_freq_state.fmeas[1]) / 2.0;
+				break;
+			}
+		case 0x07:	//ABC
+			{
+				curr_freq_state.average_freq = (curr_freq_state.fmeas[0] + curr_freq_state.fmeas[1] + curr_freq_state.fmeas[2]) / 3.0;
+				break;
+			}
+		case 0x80:	//Triplex stuff
+			{
+				curr_freq_state.average_freq = curr_freq_state.fmeas[2];	//Just take the 12 value, for now
+				break;
+			}
+		default:	//How'd we get here?
+			{
+				gl_error("Node frequency update: unknown state encountered");
+				/*  TROUBLESHOOT
+				While running the frequency/angle estimation routine for a node object, it somehow entered an unknown state.
+				Please try again.  If the error persists, please submit your GLM and a bug report via the ticketing system.
+				*/
 
-	}//End corrector pass
+				return_status = FAILED;
+
+			break;
+			}
+	}	//switch end
 
 	return return_status;
-}
-
-//Applies dynamic equations for predictor/corrector sets
-//Functionalized since they are identical
-//curr_time is the current states/information
-//curr_delta is the calculated differentials
-void node::apply_interim_freq_dynamics(FREQM_STATES *curr_time, FREQM_STATES *curr_delta, double deltat, unsigned char pass_mod)
-{
-	unsigned char phase_conf, phase_mask;
-	int indexval;
-	
-	//Variables
-	double angle_val;
-	double angle_val_previous;
-	double f_val;
-	double pllerror_val;
-	double Deltaomegameas_val;
-	double omegameas_val;
-
-	//Get the node's phases
-	if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
-	{
-		phase_conf=NR_busdata[NR_node_reference].phases;
-	}
-	else	//It is a child - look at parent
-	{
-		phase_conf=NR_busdata[*NR_subnode_reference].phases;
-	}
-	
-	//Simple frequency measurement updates, if relevant
-	if (fmeas_type == FM_SIMPLE)
-	{
-		//Loop through and do a phase check
-		for (indexval=0; indexval<3; indexval++)
-		{
-			//Get the mask
-			phase_mask = (1 << (2 - indexval));
-
-			//Check and see if it exists
-			if ((phase_conf & phase_mask) == phase_mask)
-			{
-				//Get the current voltage angle
-				angle_val = voltage[indexval].Arg();
-				curr_time->anglemeas[indexval]=angle_val;
-				
-				//store the current angle and get the previous one
-				angle_val_previous = prev_state.anglemeas[indexval]; // prev_state change (create new one)
-				if (pass_mod==0)	//Predictor pass
-				{
-					prev_state.anglemeas[indexval] = store_state.anglemeas[indexval]; 
-					store_state.anglemeas[indexval]=angle_val;
-				}
-				// calculate the frequency
-				f_val= ((angle_val-angle_val_previous)/deltat+freq_omega_ref)/(2*PI); // omega_ref parameter
-				
-				// unfold if there is a 2*PI jump
-				if ((angle_val-angle_val_previous)>6)
-				{
-					f_val= ((angle_val-angle_val_previous-2*PI)/deltat+freq_omega_ref)/(2*PI);
-				}
-				if ((angle_val-angle_val_previous)<-6)
-				{
-					f_val= ((angle_val-angle_val_previous+2*PI)/deltat+freq_omega_ref)/(2*PI);
-				}
-
-				// Update frequency measurement update (1st order transducer)
-				curr_delta->fmeas[indexval]=(f_val-curr_time->fmeas[indexval])/freq_sfm_T;
-			}
-			else //Phase doesn't exit
-			{
-				curr_delta->fmeas[indexval] = 0.0;
-			}
-		}//End phase FOR
-	}//End Simple frequency measurement updates
-	else if (fmeas_type == FM_PLL)	// Frequency measurement by PLL
-	{
-		//Loop through and do a phase check
-		for (indexval=0; indexval<3; indexval++)
-		{
-			//Get the mask
-			phase_mask = (1 << (2 - indexval));
-
-			// PI input, or PLL error
-			//Check and see if it exists
-			if ((phase_conf & phase_mask) == phase_mask)
-			{
-				pllerror_val=-(voltage[indexval].Re() * curr_time->sinangmeas[indexval] - voltage[indexval].Im() * curr_time->cosangmeas[indexval])/voltage[indexval].Mag();
-				// PI output
-				Deltaomegameas_val=freq_pll_Kp * pllerror_val+curr_time->x[indexval];
-				// Electrical omega measured
-				omegameas_val=Deltaomegameas_val+freq_omega_ref;
-				// Update integrator state
-				curr_delta->x[indexval]=freq_pll_Ki*pllerror_val;
-				// Update angle measurement
-				curr_delta->anglemeas[indexval]=Deltaomegameas_val;
-			}
-			else // Phase not present
-			{
-				curr_delta->x[indexval] = 0.0;
-				curr_delta->anglemeas[indexval] = 0.0;
-			}
-		}//End phase FOR
-	}//End PLL
-	else // no frequency measurement
-	{
-		//Loop through and zero them
-		for (indexval=0; indexval<3; indexval++)
-		{
-			curr_delta->fmeas[indexval] = 0.0;
-			curr_delta->x[indexval] = 0.0;
-			curr_delta->anglemeas[indexval] = 0.0;
-		}//End phase FOR
-
-	}//End no frequency measurement dynamics
 }
 
 //Initializes dynamic equations for first entry
 //Returns a SUCCESS/FAIL
 //curr_time is the initial states/information
-void node::init_freq_dynamics(FREQM_STATES *curr_time)
+void node::init_freq_dynamics(void)
 {
-	complex voltage_pu[3];
-	complex current_pu[3];
-	complex Vpn0[3];
-	complex Ipn0[3];
-	complex temp_complex_1, temp_complex_2;
-	double angle_val[3];
 	unsigned char phase_conf, phase_mask;
 	int indexval;
+	bool is_triplex_node;
 
-	//Get the phasing information
+	//Extract the phases
 	if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
-		phase_conf=NR_busdata[NR_node_reference].phases;
+	{
+		if ((NR_busdata[NR_node_reference].phases & 0x80) == 0x80)
+		{
+			phase_conf = 0x80;
+			is_triplex_node = true;
+		}
+		else
+		{
+			phase_conf=NR_busdata[NR_node_reference].phases & 0x07;
+			is_triplex_node = false;
+		}
+	}
 	else	//It is a child - look at parent
-		phase_conf=NR_busdata[*NR_subnode_reference].phases;
+	{
+		if ((NR_busdata[*NR_subnode_reference].phases & 0x80) == 0x80)
+		{
+			phase_conf = 0x80;
+			is_triplex_node = true;
+		}
+		else
+		{
+			phase_conf=NR_busdata[*NR_subnode_reference].phases & 0x07;
+			is_triplex_node = false;
+		}
+	}
 
-	//Loop through phase initializations
-	//Loop through and do a phase check
+	//Pull voltage updates
 	for (indexval=0; indexval<3; indexval++)
 	{
-		//Get the mask
-		phase_mask = (1 << (2 - indexval));
+		if (is_triplex_node == true)
+		{
+			phase_mask = 0x80;
+		}
+		else	//three-phase, of some sort
+		{
+			//Get the mask
+			phase_mask = (1 << (2 - indexval));
+		}
 
-		//Check and see if it exists
+		//Check the phase
 		if ((phase_conf & phase_mask) == phase_mask)
 		{
-			//Get the current voltage angle
-			angle_val[indexval] = voltage[indexval].Arg(); 
-			prev_state.anglemeas[indexval] = angle_val[indexval];
+			//See what our reference is - steal parent voltages
+			if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+			{
+				if (is_triplex_node == true)
+				{
+					if (indexval < 2)
+					{
+						prev_freq_state.voltage_val[indexval]=NR_busdata[NR_node_reference].V[indexval];
+					}
+					else	//Must be 2
+					{
+						prev_freq_state.voltage_val[indexval]=NR_busdata[NR_node_reference].V[0] + NR_busdata[NR_node_reference].V[1];
+					}
+				}
+				else
+				{
+					prev_freq_state.voltage_val[indexval]=NR_busdata[NR_node_reference].V[indexval];
+				}
+			}
+			else	//It is a child - look at parent
+			{
+				if (is_triplex_node == true)
+				{
+					prev_freq_state.voltage_val[indexval]=NR_busdata[*NR_subnode_reference].V[indexval];
+				}
+				else
+				{
+					prev_freq_state.voltage_val[indexval]=NR_busdata[*NR_subnode_reference].V[0] + NR_busdata[*NR_subnode_reference].V[1];
+				}
+			}
+
+			//Populate the angle
+			prev_freq_state.anglemeas[indexval] = prev_freq_state.voltage_val[indexval].Arg();
+			
+			//Assume "current" start
+			prev_freq_state.fmeas[indexval] = current_frequency;
+
+			//Populate other fields, if necessary
+			if (fmeas_type == FM_PLL)
+			{
+				prev_freq_state.sinangmeas[indexval] = sin(prev_freq_state.anglemeas[indexval]);
+				prev_freq_state.cosangmeas[indexval] = cos(prev_freq_state.anglemeas[indexval]);
+			}
+		}//End valid phase
+		else	//Not a valid phase, just zero it all
+		{
+			prev_freq_state.voltage_val[indexval] = complex(0.0,0.0);
+			prev_freq_state.x[indexval] = 0.0;
+			prev_freq_state.anglemeas[indexval] = 0.0;
+			prev_freq_state.fmeas[indexval] = 0.0;
+			prev_freq_state.average_freq = current_frequency;
+			prev_freq_state.sinangmeas[indexval] = 0.0;
+			prev_freq_state.cosangmeas[indexval] = 0.0;
 		}
-		else // not there
-		{
-			angle_val[indexval] = 0.0;
-			prev_state.anglemeas[indexval] = 0.0;
-		}
-	}//End phase FOR
+	}//End FOR loop
 
-	//frequency measurement initialization
-	if (fmeas_type == FM_SIMPLE)
-	{
-		//Loop through and do a phase check
-		for (indexval=0; indexval<3; indexval++)
-		{
-			//Get the mask
-			phase_mask = (1 << (2 - indexval));
-
-			//Check and see if it exists
-			if ((phase_conf & phase_mask) == phase_mask)
-			{
-				curr_time->fmeas[indexval] = freq_omega_ref/(2*PI);
-				curr_time->anglemeas[indexval] = angle_val[indexval];
-			}
-			else // no phase
-			{
-				curr_time->fmeas[indexval] = 0.0;
-				curr_time->anglemeas[indexval] = 0.0;
-			}
-		}//End phase FOR
-	}//End simple frequency measurement update
-	else if (fmeas_type == FM_PLL)
-	{
-		//Loop through and do a phase check
-		for (indexval=0; indexval<3; indexval++)
-		{
-			//Get the mask
-			phase_mask = (1 << (2 - indexval));
-
-			//Check and see if it exists
-			if ((phase_conf & phase_mask) == phase_mask)
-			{
-				curr_time->x[indexval] = 0;
-				curr_time->anglemeas[indexval] = angle_val[indexval];
-				curr_time->fmeas[indexval] = freq_omega_ref/(2*PI);
-				curr_time->sinangmeas[indexval]=sin(curr_time->anglemeas[indexval]);
-				curr_time->cosangmeas[indexval]=cos(curr_time->anglemeas[indexval]);
-			}
-			else // no phase present
-			{
-				curr_time->x[indexval] = 0;
-				curr_time->anglemeas[indexval] = 0.0;
-				curr_time->fmeas[indexval] = 0.0;
-				curr_time->sinangmeas[indexval] = 0.0;
-				curr_time->cosangmeas[indexval] = 0.0;
-			}
-		}//End phase FOR
-	}//End PLL init
-	//Default else - no updates because no frequency measurement
-
-	//Replicate curr_state into next
-	memcpy(&next_state,&curr_state,sizeof(FREQM_STATES));
+	//Copy into current, since we may have already just done this
+	memcpy(&curr_freq_state,&prev_freq_state,sizeof(FREQM_STATES));
 }
 
 //Function to perform the GFA-type responses
@@ -4319,7 +4477,7 @@ double node::perform_GFA_checks(double timestepvalue)
 	}
 
 	//Perform frequency check
-	if ((curr_state.average_freq > GFA_freq_high_trip) || (curr_state.average_freq < GFA_freq_low_trip))
+	if ((curr_freq_state.average_freq > GFA_freq_high_trip) || (curr_freq_state.average_freq < GFA_freq_low_trip))
 	{
 		//Flag it
 		frequency_violation = true;
@@ -4331,12 +4489,15 @@ double node::perform_GFA_checks(double timestepvalue)
 		out_of_violation_time_total = 0.0;
 
 		//Check the times - split out
-		if (curr_state.average_freq > GFA_freq_high_trip)
+		if (curr_freq_state.average_freq > GFA_freq_high_trip)
 		{
 			if (freq_violation_time_total >= GFA_freq_disconnect_time)
 			{
 				trigger_disconnect = true;
 				return_time_freq = GFA_reconnect_time;
+
+				//Flag us as over frequency
+				GFA_trip_method = GFA_OF;
 			}
 			else
 			{
@@ -4344,12 +4505,15 @@ double node::perform_GFA_checks(double timestepvalue)
 				return_time_freq = GFA_freq_disconnect_time - freq_violation_time_total;
 			}
 		}
-		else if (curr_state.average_freq < GFA_freq_low_trip)
+		else if (curr_freq_state.average_freq < GFA_freq_low_trip)
 		{
 			if (freq_violation_time_total >= GFA_freq_disconnect_time)
 			{
 				trigger_disconnect = true;
 				return_time_freq = GFA_reconnect_time;
+
+				//Flag as under-frequency
+				GFA_trip_method = GFA_UF;
 			}
 			else
 			{
@@ -4441,6 +4605,9 @@ double node::perform_GFA_checks(double timestepvalue)
 					{
 						trigger_disconnect = true;
 						return_time_volt = GFA_reconnect_time;
+
+						//Flag us as under-voltage
+						GFA_trip_method = GFA_UV;
 					}
 					else
 					{
@@ -4454,6 +4621,9 @@ double node::perform_GFA_checks(double timestepvalue)
 					{
 						trigger_disconnect = true;
 						return_time_volt = GFA_reconnect_time;
+
+						//Flag us as over-voltage
+						GFA_trip_method = GFA_OV;
 					}
 					else
 					{
@@ -4528,6 +4698,9 @@ double node::perform_GFA_checks(double timestepvalue)
 			//Set us back into service
 			GFA_status = true;
 
+			//Reset us back to no violation
+			GFA_trip_method = GFA_NONE;
+
 			//Implies no violations, so force return a -1.0
 			return -1.0;
 		}
@@ -4553,10 +4726,184 @@ double node::perform_GFA_checks(double timestepvalue)
 		}
 		else
 		{
+			//Re-affirm we are not having any issues
+			GFA_trip_method = GFA_NONE;
+
 			//All is well, indicate as much
 			return return_value;
 		}
 	}
+}
+
+//Function to set a node's SWING status mid-simulation, without the SWING_PQ functionality
+STATUS node::NR_swap_swing_status(bool desired_status)
+{
+	OBJECT *hdr = OBJECTHDR(this);
+
+	//See if we're a child or not
+	if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+	{
+		//Make sure we're a SWING or SWING_PQ first
+		if (NR_busdata[NR_node_reference].type > 1)
+		{
+			//Just set us to our status -- it is assumed that if you did this, you know what you are doing
+			NR_busdata[NR_node_reference].swing_functions_enabled = desired_status;
+		}
+		else	//Indicate we're not one
+		{
+			gl_warning("node:%s - Not a SWING-capable bus, so no swing status swap changed",(hdr->name ? hdr->name : "unnamed"));
+			/*  TROUBLESHOOT
+			While attempting to swap a node from being a "swing node", it was tried on a node that was not already a SWING or SWING_PQ
+			node, which is not a valid attempt.
+			*/
+		}
+	}
+	else	//It is a child - look at parent
+	{
+		//Make sure we're a SWING or SWING_PQ first
+		if (NR_busdata[*NR_subnode_reference].type > 1)
+		{
+			//Just set us to our status -- it is assumed that if you did this, you know what you are doing
+			NR_busdata[*NR_subnode_reference].swing_functions_enabled = desired_status;
+		}
+		else	//Indicate we're not one
+		{
+			gl_warning("node:%s - Not a SWING-capable bus, so no swing status swap changed",(hdr->name ? hdr->name : "unnamed"));
+			//Defined above
+		}
+	}
+
+	//Always a success, we think
+	return SUCCESS;
+}
+
+//Function to perform a mapping of the "internal iteration" current injection update
+//Primarily used for deltamode and voltage-source inverters, but could be used in other places
+STATUS node::NR_map_current_update_function(OBJECT *callObj)
+{
+	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *phdr = NULL;
+
+	//Do a simple check -- if we're not in NR, this won't do anything anyways
+	if (solver_method == SM_NR)
+	{
+		//See if we're a pesky child
+		if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+		{
+			//Make sure no one has mapped us yet
+			if (NR_busdata[NR_node_reference].ExtraCurrentInjFunc == NULL)
+			{
+				//Map the function
+				NR_busdata[NR_node_reference].ExtraCurrentInjFunc = (FUNCTIONADDR)(gl_get_function(callObj,"current_injection_update"));
+
+				//Make sure it worked
+				if (NR_busdata[NR_node_reference].ExtraCurrentInjFunc == NULL)
+				{
+					gl_error("node:%d - %s - Failed to map current_injection_update from calling object:%d - %s",hdr->id,(hdr->name ? hdr->name : "Unnamed"),callObj->id,(callObj->name ? callObj->name : "Unnamed"));
+					/*  TROUBLESHOOT
+					The attached node was unable to find the exposed function "current_injection_update" on the calling object.  Be sure
+					it supports this functionality and try again.
+					*/
+
+					return FAILED;
+				}
+				//Default else -- it worked
+
+				//Store the object pointer too
+				NR_busdata[NR_node_reference].ExtraCurrentInjFuncObject = callObj;
+			}
+			else	//Already mapped
+			{
+				gl_error("node:%d - %s - Already has an extra current injection function mapped",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				An object attempted to map a current injection update function, but that node already has such a function mapped.  Only one
+				is allowed per node.  Note this includes any attachments to child nodes, since those end up on the parent object.
+				*/
+
+				return FAILED;
+			}//End already mapped
+		}
+		else	//Child - push this to the parent
+		{
+			//Map the parent - mostly just so we have a shorter variable name
+			phdr = NR_busdata[*NR_subnode_reference].obj;
+
+			//Make sure no one has mapped us yet
+			if (NR_busdata[*NR_subnode_reference].ExtraCurrentInjFunc == NULL)
+			{
+				//Map the function
+				NR_busdata[*NR_subnode_reference].ExtraCurrentInjFunc = (FUNCTIONADDR)(gl_get_function(callObj,"current_injection_update"));
+
+				//Make sure it worked
+				if (NR_busdata[*NR_subnode_reference].ExtraCurrentInjFunc == NULL)
+				{
+					gl_error("node:%d - %s - Failed to map current_injection_update from calling object:%d - %s",hdr->id,(hdr->name ? hdr->name : "Unnamed"),callObj->id,(callObj->name ? callObj->name : "Unnamed"));
+					//Defined above
+
+					return FAILED;
+				}
+				//Default else -- it worked
+
+				//Store the object pointer too
+				NR_busdata[*NR_subnode_reference].ExtraCurrentInjFuncObject = callObj;
+			}
+			else	//Already mapped
+			{
+				gl_error("node:%d - %s - Parent node:%d - %s - Already has an extra current injection function mapped",hdr->id,(hdr->name ? hdr->name : "Unnamed"),phdr->id,(phdr->name ? phdr->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				An object attempted to map a current injection update function to its parent, but that node already has such a function mapped.  Only one
+				is allowed per node.  Note this includes any attachments to child nodes, since those end up on the parent object.
+				*/
+
+				return FAILED;
+			}//End already mapped
+		}
+	}
+	else	//Other method
+	{
+		gl_warning("node:%d - %s - Attempted to map an NR-based function, but is not using an NR solver",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		An object just attempted to map a current injection update function that only works with the Newton-Raphson solver, but that
+		method is not being used.
+		*/
+
+		//Succeed, mostly because it just won't do anything
+		return SUCCESS;
+	}
+
+	//Theoretically only get here if we succeed a map
+	return SUCCESS;
+}
+
+//VFD linking/mapping function
+STATUS node::link_VFD_functions(OBJECT *linkVFD)
+{
+	OBJECT *obj = OBJECTHDR(this);
+
+	//Set the VFD object
+	VFD_object = linkVFD;
+
+	//Try mapping the VFD current injection function
+	VFD_updating_function = (FUNCTIONADDR)(gl_get_function(linkVFD,"vfd_current_injection_update"));
+
+	//Make sure it worked
+	if (VFD_updating_function == NULL)
+	{
+		gl_warning("Failure to map VFD current injection update for device:%s",(obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		Attempts to map a function for the proper VFD updates did not work.  Please try again, making sure
+		this node is connected to a VFD properly.  If the error persists, please submit an issue ticket.
+		*/
+
+		//Fail us
+		return FAILED;
+	}
+
+	//Flag us as successful
+	VFD_attached = true;
+
+	//Always succeed, if we made it this far
+	return SUCCESS;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -4578,6 +4925,15 @@ EXPORT int notify_node(OBJECT *obj, int update_mode, PROPERTY *prop, char *value
 	rv = n->notify(update_mode, prop, value);
 	
 	return rv;
+}
+
+//Exported function for attaching this to a VFD - basically sets a flag and maps a function
+EXPORT STATUS attach_vfd_to_node(OBJECT *obj,OBJECT *calledVFD)
+{
+	node *nodeObj = OBJECTDATA(obj,node);
+
+	//Call the function
+	return nodeObj->link_VFD_functions(calledVFD);
 }
 
 //Deltamode export
@@ -4602,8 +4958,6 @@ EXPORT SIMULATIONMODE interupdate_node(OBJECT *obj, unsigned int64 delta_time, u
 //1 - PGenTotal - total amount of generation on that bus (for current gen)
 //2 - DeltaCurrents - currents calculated from updated powerflow solution
 //3 - full_Y_all - exposed Ybus self admittance area
-//4 - FreqPower - Frequeny-power weighting, for "nominal" update at end
-//5 - TotalPower - Accumulated power, but not powerflow derived (differs from PGenTotal above)
 EXPORT complex *delta_linkage(OBJECT *obj, unsigned char mapvar)
 {
 	complex *testval;
@@ -4624,14 +4978,6 @@ EXPORT complex *delta_linkage(OBJECT *obj, unsigned char mapvar)
 	else if (mapvar==3)	//Self admittance, but fully Y-bus form
 	{
 		testval = my->full_Y_all;
-	}
-	else if (mapvar==4)	//Frequency-power variable
-	{
-		testval = &(my->DynVariable[4]);
-	}
-	else if (mapvar==5)	//Total power variable
-	{
-		testval = &(my->DynVariable[5]);
 	}
 	else	//Unknown - fail out
 	{
@@ -4662,4 +5008,34 @@ EXPORT STATUS delta_frequency_node(OBJECT *obj, complex *powerval, complex *freq
 	return SUCCESS;
 }
 
+//Function to set a node as a SWING inside NR - basically converts a SWING to a PQ, without the SWING_PQ requirement
+EXPORT STATUS swap_node_swing_status(OBJECT *obj, bool desired_status)
+{
+	STATUS temp_status;
+
+	//Map the node
+	node *my = OBJECTDATA(obj,node);
+
+	//Call the function, where we can see our internals
+	temp_status = my->NR_swap_swing_status(desired_status);
+
+	//Return what the sub function said we were
+	return temp_status;
+}
+
+//Exposed function to map a "current injection update" routine from another object
+//Used primarily for deltamode and voltage-source inverters right now
+EXPORT STATUS node_map_current_update_function(OBJECT *nodeObj, OBJECT *callObj)
+{
+	STATUS temp_status;
+
+	//Map the node
+	node *my = OBJECTDATA(nodeObj,node);
+
+	//Call the mapping function
+	temp_status = my->NR_map_current_update_function(callObj);
+
+	//Return the value
+	return temp_status;
+}
 /**@}*/
