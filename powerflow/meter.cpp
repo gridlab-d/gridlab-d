@@ -459,7 +459,7 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		if (measured_real_power > measured_demand) 
 			measured_demand = measured_real_power;
         
-        // Delta energy cacluation
+        // Delta energy calculation
 		if (measured_energy_delta_timestep > 0) {
 			if (t0 == start_timestamp) {
 				last_delta_timestamp = start_timestamp;
