@@ -1,0 +1,48 @@
+//Simple autotest to put great-grand-childed objects in reverse order to see if the deferred init works
+//Fixed as part of issues documented in #920
+//Mostly to make sure some pointer shell-game properly works (pointers were getting crossed and prematurely freed)
+//Simple "if it runs, it succeeded" autotest.  Prior to #920 fixes, it SEGFAULTed
+
+clock {
+	timezone PST+8PDT;
+	starttime '2000-01-01 00:00:00';
+	stoptime '2000-01-01 01:00:00';
+};
+
+module generators;
+module powerflow {
+	solver_method FBS;
+}
+
+object solar {
+	phases BN;
+	generator_mode SUPPLY_DRIVEN;
+	name imasolar;
+	parent imainverter;
+	area 325.0271;
+	generator_status ONLINE;
+	efficiency 0.2;
+	panel_type SINGLE_CRYSTAL_SILICON;
+}
+
+object inverter {
+	phases BN;
+	name imainverter;
+	parent imameter;
+	generator_status ONLINE;
+	inverter_type PWM;
+	power_factor 1.0;
+	generator_mode CONSTANT_PF;
+}
+
+object meter {
+	phases BN;
+	name imameter;
+	parent imanode;
+}
+
+object node {
+	phases BN;
+	name imanode;
+	nominal_voltage 7621.0235533;
+}

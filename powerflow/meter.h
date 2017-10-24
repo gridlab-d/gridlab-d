@@ -14,6 +14,16 @@ class meter : public node
 public:
 	complex measured_voltage[3];	///< measured voltage
 	complex measured_voltageD[3];	///< measured voltage - Line-to-Line
+	double measured_real_max_voltage_in_interval[3];	///< measured real max voltage in a time interval
+	double measured_real_max_voltageD_in_interval[3];	///< measured real max voltage in a time interval - Line-to-Line
+	double measured_real_min_voltage_in_interval[3];	///< measured real min voltage in a time interval
+	double measured_real_min_voltageD_in_interval[3];	///< measured real min voltage in a time interval - Line-to-Line
+	double measured_avg_voltage_mag_in_interval[3];	///< measured avg voltage magnitude in a time interval
+	double measured_avg_voltageD_mag_in_interval[3];	///< measured avg voltage magnitude in a time interval - Line-to-Line
+	double measured_reactive_max_voltage_in_interval[3];	///< measured reactive max voltage in a time interval
+	double measured_reactive_max_voltageD_in_interval[3];	///< measured reactive max voltage in a time interval - Line-to-Line
+	double measured_reactive_min_voltage_in_interval[3];	///< measured reactive min voltage in a time interval
+	double measured_reactive_min_voltageD_in_interval[3];	///< measured reactive min voltage in a time interval - Line-to-Line
 	complex measured_current[3];	///< measured current
 	double measured_real_energy;	///< metered real energy consumption
 	double measured_real_energy_delta;	///< metered real energy consumption over last interval
@@ -79,8 +89,18 @@ private:
 	double previous_energy_total;  // Used to track what the meter reading was the previous month
     double last_measured_real_energy;
     double last_measured_reactive_energy;
+    complex last_measured_max_voltage_mag[3];
+    complex last_measured_max_voltageD_mag[3];
+    complex last_measured_min_voltage_mag[3];
+    complex last_measured_min_voltageD_mag[3];
+    complex last_measured_voltage[3];
+    complex last_measured_voltageD[3];
+    double last_measured_avg_voltage_mag[3];
+    double last_measured_avg_voltageD_mag[3];
+    int voltage_avg_count;
     TIMESTAMP last_delta_timestamp;
     TIMESTAMP start_timestamp;
+    TIMESTAMP interval_dt;
 
 public:
 	static CLASS *oclass;
