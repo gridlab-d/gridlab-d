@@ -249,7 +249,11 @@ Retry:
 	IN_MYCONTEXT output_verbose("bind ok to address");
 #endif	
 	/* listen for connection */
-	listen(sockfd,5);
+	if ( listen(sockfd,5) < 0 )
+	{
+		output_error("socket listen failed: sockfd=%d, error='%s'", sockfd, strerror(GetLastError()));
+		return FAILED;
+	}
 	IN_MYCONTEXT output_verbose("server listening to port %d", portNumber);
 	global_server_portnum = portNumber;
 
