@@ -79,6 +79,7 @@ private:
 	static database *first;
 	static database *last;
 	static database *last_used;
+	char last_table_checked[1024];
 public:
 	static inline database *get_first(void) { return first; };
 	inline database *get_next(void) { return next; }

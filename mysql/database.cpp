@@ -227,6 +227,8 @@ void database::check_schema(void)
 }
 bool database::table_exists(char *t)
 {
+	if ( strcmp(t,last_table_checked)==0 )
+		return true;
 	check_schema();
 	if ( query("SHOW TABLES LIKE '%s'", t) )
 	{
@@ -235,6 +237,7 @@ bool database::table_exists(char *t)
 		{
 			int n = mysql_num_rows(res);
 			mysql_free_result(res);
+			strcpy(last_table_checked,t);
 			return n>0;
 		}
 	}
