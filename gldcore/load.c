@@ -6522,7 +6522,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			strcpy(line,"\n");
 			return FALSE;
 		}
-		value = global_getvar(var, buffer, 63);
+		value =  ( global_literal_if ? var : global_getvar(var, buffer, 63) );
 		if ( value==NULL )
 		{
 			if ( global_relax_undefined_if )
@@ -6799,33 +6799,24 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 	{
 		char *term = strchr(line+7,' ');
 		char value[1024];
+		STATUS result;
+		int oldstrict = global_strictnames;
 		if (term==NULL)
 		{
 			output_error_raw("%s(%d): %sdefine macro missing term",filename,linenum, MACRO);
 			strcpy(line,"\n");
 			return FALSE;
 		}
-		//if (sscanf(term+1,"%[^\n\r]",value)==1)
 		strcpy(value, strip_right_white(term+1));
-		if(1){
-			STATUS result;
-			int oldstrict = global_strictnames;
-			if (strchr(value,'=')==NULL)
-				strcat(value,"="); // void entry
-			global_strictnames = FALSE;
-			result = global_setvar(value,"\"\""); // extra "" is used in case value is term is empty string
-			global_strictnames = oldstrict;
-			if (result==FAILED)
-				output_error_raw("%s(%d): %sdefine term not found",filename,linenum,MACRO);
-			strcpy(line,"\n");
-			return result==SUCCESS;
-		}
-		else
-		{
-			output_error_raw("%s(%d): %sdefine missing expression",filename,linenum,MACRO);
-			strcpy(line,"\n");
-			return FALSE;
-		}
+		if (strchr(value,'=')==NULL)
+			strcat(value,"="); // void entry
+		global_strictnames = FALSE;
+		result = global_setvar(value,"\"\""); // extra "" is used in case value is term is empty string
+		global_strictnames = oldstrict;
+		if (result==FAILED)
+			output_error_raw("%s(%d): %sdefine term not found",filename,linenum,MACRO);
+		strcpy(line,"\n");
+		return result==SUCCESS;
 	}
 	else if (strncmp(line,MACRO "print",6)==0)
 	{
@@ -6837,19 +6828,25 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			strcpy(line,"\n");
 			return FALSE;
 		}
-		//if (sscanf(term+1,"%[^\n\r]",value)==1)
 		strcpy(value, strip_right_white(term+1));
-		if(1){
-			output_message("%s(%d): %s", filename, linenum, value);
-			strcpy(line,"\n");
-			return TRUE;
-		}
-		else
+		output_message("%s(%d): %s", filename, linenum, value);
+		strcpy(line,"\n");
+		return TRUE;
+	}
+	else if (strncmp(line,MACRO "verbose",6)==0)
+	{
+		char *term = strchr(line+6,' ');
+		char value[1024];
+		if (term==NULL)
 		{
-			output_error_raw("%s(%d): %sprint term not found",filename,linenum,MACRO);
+			output_error_raw("%s(%d): %sprint missing message text",filename,linenum,MACRO);
 			strcpy(line,"\n");
 			return FALSE;
 		}
+		strcpy(value, strip_right_white(term+1));
+		output_verbose("%s(%d): %s", filename, linenum, value);
+		strcpy(line,"\n");
+		return TRUE;
 	}
 	else if (strncmp(line,MACRO "error",6)==0)
 	{
@@ -6861,20 +6858,10 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			strcpy(line,"\n");
 			return FALSE;
 		}
-		//if (sscanf(term+1,"%[^\n\r]",value)==1)
 		strcpy(value, strip_right_white(term+1));
-		if(1){
-			//output_message("%s(%d): ERROR - %s", filename, linenum, value);
-			output_error_raw("%s(%d):\t%s", filename, linenum, value);
-			strcpy(line,"\n");
-			return FALSE;
-		}
-		else
-		{
-			output_error_raw("%s(%d): %serror missing message text",filename,linenum,MACRO);
-			strcpy(line,"\n");
-			return FALSE;
-		}
+		output_error_raw("%s(%d):\t%s", filename, linenum, value);
+		strcpy(line,"\n");
+		return FALSE;
 	}
 	else if (strncmp(line,MACRO "warning",8)==0)
 	{
@@ -6886,19 +6873,10 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			strcpy(line,"\n");
 			return FALSE;
 		}
-		//if (sscanf(term+1,"%[^\n\r]",value)==1)
 		strcpy(value, strip_right_white(term+1));
-		if(1){
-			output_warning("%s(%d): %s", filename, linenum, value);
-			strcpy(line,"\n");
-			return TRUE;
-		}
-		else
-		{
-			output_error_raw("%s(%d): %swarning missing expression",filename,linenum,MACRO);
-			strcpy(line,"\n");
-			return FALSE;
-		}
+		output_warning("%s(%d): %s", filename, linenum, value);
+		strcpy(line,"\n");
+		return TRUE;
 	}
 	else if (strncmp(line,MACRO "debug",6)==0)
 	{
@@ -6910,19 +6888,10 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			strcpy(line,"\n");
 			return FALSE;
 		}
-		//if (sscanf(term+1,"%[^\n\r]",value)==1)
 		strcpy(value, strip_right_white(term+1));
-		if(1){
-			IN_MYCONTEXT output_debug("%s(%d): %s", filename, linenum, value);
-			strcpy(line,"\n");
-			return TRUE;
-		}
-		else
-		{
-			output_error_raw("%s(%d): %swarning missing expression",filename,linenum,MACRO);
-			strcpy(line,"\n");
-			return FALSE;
-		}
+		IN_MYCONTEXT output_debug("%s(%d): %s", filename, linenum, value);
+		strcpy(line,"\n");
+		return TRUE;
 	}
 	else if (strncmp(line,MACRO "system",7)==0)
 	{

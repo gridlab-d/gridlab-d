@@ -292,6 +292,7 @@ static struct s_varmap {
 	{"output_message_context", PT_set, &global_output_message_context, PA_PUBLIC, "control context from which debug messages are allowed", dmc_keys},
 	{"permissive_access", PT_int32, &global_permissive_access, PA_PUBLIC, "enable permissive property access"},
 	{"relax_undefined_if", PT_bool, &global_relax_undefined_if, PA_PUBLIC, "allow #if macro to handle undefined global variable as empty strings"},
+	{"literal_if", PT_bool, &global_literal_if, PA_PUBLIC, "do not interpret lhs of #if macro as a variable name"},
 	/* add new global variables here */
 };
 
