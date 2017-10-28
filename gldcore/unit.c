@@ -521,7 +521,7 @@ void unit_init(void)
 	/* scan file */
 	while (!feof(fp) && !ferror(fp))
 	{
-		char buffer[1024], *p;
+		char buffer[1024]="", *p;
 		if (fgets(buffer, sizeof(buffer), fp) == NULL){
 			break;
 		}
@@ -535,12 +535,12 @@ void unit_init(void)
 
 		/* remove trailing whitespace */
 		p = buffer + strlen(buffer) - 1;
-		while (iswspace(*p) && p>buffer){
+		while ( p > buffer && isspace(*p) ){
 			*p-- = '\0';
 		}
 
 		/* ignore blank lines or lines starting with white space*/
-		if (buffer[0] == '\0' || iswspace(buffer[0])){
+		if (buffer[0] == '\0' || isspace(buffer[0])){
 			continue;
 		}
 		
