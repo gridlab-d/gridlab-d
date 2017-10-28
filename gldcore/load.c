@@ -1238,6 +1238,8 @@ static int resolve_list(UNRESOLVED *item)
 		free(item);
 		item=next;
 	}
+	if ( filename!=NULL )
+		free(filename);
 	return SUCCESS;
 }
 /*static*/ int load_resolve_all()
