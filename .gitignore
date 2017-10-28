@@ -106,3 +106,6 @@ validate.txt
 /.DS_Store
 third_party/xerces*/*
 *.xcbkptlist
+
+# gridlabd configuration control
+configure.opt
