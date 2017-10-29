@@ -140,8 +140,8 @@ static void *server_routine(void *arg)
 		if ((int)newsockfd<0 && errno!=EINTR)
 		{
 			status = GetLastError();
-			output_error("server accept error on fd=%d: code %d", sockfd, status);
-			goto Done;
+			output_warning("server accept failed on socket %d: code %d", sockfd, status);
+			//goto Done;
 		}
 		else if ((int)newsockfd > 0)
 		{
