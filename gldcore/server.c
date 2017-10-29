@@ -34,6 +34,7 @@
 #include "exec.h"
 #include "timestamp.h"
 #include "load.h"
+#include "find.h"
 
 #include "legal.h"
 
@@ -1095,6 +1096,31 @@ int http_json_request(HTTPCNX *http,char *uri)
 	return 0;
 }
 
+/** Process an incoming find request
+    @returns non-zero on success, 0 on failure (errno set)
+ **/
+int http_find_request(HTTPCNX *http,char *uri)
+{
+	FINDPGM *finder = find_mkpgm(uri);
+	FINDLIST *list;
+	OBJECT *obj;
+	if ( finder == NULL )
+		return 0;
+	list = find_runpgm(NULL,finder);
+	if ( list == NULL )
+		return 0;
+	http_format(http,"[\n");
+	for ( obj = find_first(list) ; obj != NULL ; obj = find_next(list,obj) )
+	{
+		if ( obj->name == NULL )
+			http_format(http,"\t{\"name\" : \"%s:%d\"},\n",obj->oclass->name,obj->id);
+		else
+			http_format(http,"\t{\"name\" : \"%s\"},\n",obj->name);
+	}
+	http_format(http,"\t]\n");
+	return 1;
+}
+
 /** Process an incoming GUI request
 	@returns non-zero on success, 0 on failure (errno set)
  **/
@@ -1863,6 +1889,7 @@ void *http_response(void *ptr)
 				{"/octave/",	http_run_octave,		HTTP_OK, HTTP_NOTFOUND},
 				{"/kml/", 		http_kml_request,		HTTP_OK, HTTP_NOTFOUND},
 				{"/json/",		http_json_request,		HTTP_OK, HTTP_NOTFOUND},
+				{"/find/",	http_find_request,	HTTP_OK, HTTP_NOTFOUND},
 			};
 			int n;
 			for ( n=0 ; n<sizeof(map)/sizeof(map[0]) ; n++ )
