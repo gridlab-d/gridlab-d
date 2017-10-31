@@ -1722,16 +1722,24 @@ int http_control_request(HTTPCNX *http, char *action)
 
 	if ( strcmp(action,"resume")==0 )
 	{
+		output_verbose("main loop resume");
 		exec_mls_resume(TS_NEVER);
 		return 1;
 	}
-	else if ( sscanf(action,"pauseat=%[-0-9%:A-Za-z]",buffer)==1 )
+	else if ( strcmp(action,"pause")==0 )
+	{
+		output_verbose("main loop pause");
+		exec_mls_resume(global_clock);
+		return 1;
+	}
+	else if ( sscanf(action,"pauseat=%[-0-9%:A-Za-z ]",buffer)==1 )
 	{
 		TIMESTAMP ts;
 		http_decode(buffer);
 		ts = convert_to_timestamp(buffer);
 		if ( ts!=TS_INVALID )
 		{
+			output_verbose("main loop pause at %s", buffer);
 			exec_mls_resume(ts);
 			return 1;
 		}
@@ -1743,12 +1751,12 @@ int http_control_request(HTTPCNX *http, char *action)
 	}
 	else if ( strcmp(action,"shutdown")==0 )
 	{
-		output_message("server shutdown by client");
+		output_verbose("server shutdown by client");
 		exit(XC_SUCCESS);
 	}
 	else if ( strcmp(action,"stop")==0 )
 	{
-		output_message("main loop stopped");
+		output_verbose("main loop stopped");
 		global_stoptime = global_clock;
 	}
 	return 0;
