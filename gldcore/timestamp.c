@@ -36,6 +36,8 @@
 #include "globals.h"
 #include "lock.h"
 
+SET_MYCONTEXT(DMC_TIME)
+
 #ifndef WIN32
 	#define _tzname tzname
 	#define _timezone timezone
@@ -828,7 +830,7 @@ void load_tzspecs(char *tz){
 	if(ferror(fp)){
 		output_error("%s(%d): %s", filepath, linenum, strerror(errno));
 	} else {
-		output_verbose("%s loaded ok", filepath);
+		IN_MYCONTEXT output_verbose("%s loaded ok", filepath);
 	}
 
 	fclose(fp);
@@ -1319,7 +1321,7 @@ int timestamp_test(void)
 	}
 	output_test("END: round robin test",steptxt);
 	output_test("END: daylight saving time tests for %d to %d", YEAR0, YEAR0+NYEARS);
-	output_verbose("daylight saving time tests: %d succeeded, %d failed (see '%s' for details)", succeeded, failed, global_testoutputfile);
+	IN_MYCONTEXT output_verbose("daylight saving time tests: %d succeeded, %d failed (see '%s' for details)", succeeded, failed, global_testoutputfile);
 	return failed;
 }
 

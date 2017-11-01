@@ -119,6 +119,10 @@ GLOBAL double deltatimestep_running INIT(-1.0);			/** Value of the current delta
 //Mesh fault current stuff
 GLOBAL bool enable_mesh_fault_current INIT(false);	/** Flag to enable mesh-based fault current calculations */
 
+// Convergence error handling
+typedef enum {CEH_FATAL=0, CEH_IGNORE=1, CEH_COLLAPSE=2} CONVERGENCEERRORHANDLING;
+GLOBAL enumeration convergence_error_handling INIT(CEH_FATAL); /** Flag to control how convergence errors are handled */
+
 // Deltamode stuff
 void schedule_deltamode_start(TIMESTAMP tstart);	/* Anticipated time for a deltamode start, even if it is now */
 int delta_extra_function(unsigned int mode);

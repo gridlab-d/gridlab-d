@@ -11,6 +11,9 @@
 #include "class.h"
 #include "object.h"
 
+SET_MYCONTEXT(DMC_STREAM)
+
+
 extern "C" {
 	struct s_stream {
 		STREAMCALL call;
@@ -206,7 +209,7 @@ size_t stream_compress(char *buf, size_t len)
 	// stream len confirmation code
 	if (fwrite(&count,sizeof(count),1,fp)<0) return -1; else count+=2;
 
-	output_debug("stream_compress(): %d kB -> %d kB (%.1f%%)", original/1000+1, count/1000+1, (double)count*100/(double)original);
+	IN_MYCONTEXT output_debug("stream_compress(): %d kB -> %d kB (%.1f%%)", original/1000+1, count/1000+1, (double)count*100/(double)original);
 	return count;
 }
 
@@ -519,7 +522,7 @@ size_t stream(FILE *fileptr,int opts)
 	stream_pos = 0;
 	fp = fileptr;
 	flags = opts;
-	output_debug("starting stream on file %d with options %x", fileno(fp), flags);
+	IN_MYCONTEXT output_debug("starting stream on file %d with options %x", fileno(fp), flags);
 	try {
 
 		// header
@@ -543,7 +546,7 @@ size_t stream(FILE *fileptr,int opts)
 		{	
 			s->call((int)flags,(STREAMCALLBACK)stream_callback);
 		}
-		output_debug("done processing stream on file %d with options %x", fileno(fp), flags);
+		IN_MYCONTEXT output_debug("done processing stream on file %d with options %x", fileno(fp), flags);
 		return stream_pos;
 	}
 	catch (const char *msg)

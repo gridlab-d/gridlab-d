@@ -19,6 +19,8 @@
 #include "server.h"
 #include "exec.h"
 
+SET_MYCONTEXT(DMC_GUI)
+
 static GUIENTITY *gui_root = NULL;
 static GUIENTITY *gui_last = NULL;
 
@@ -1051,7 +1053,9 @@ STATUS gui_startup(int argc, char *argv[])
 		return FAILED;
 	}
 	else
-		output_verbose("starting interface");
+	{
+		IN_MYCONTEXT output_verbose("starting interface");
+	}
 	started = 1;
 	return SUCCESS;
 }

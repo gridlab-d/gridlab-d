@@ -22,6 +22,8 @@
 #include "gridlabd.h"
 #include "exec.h"
 
+SET_MYCONTEXT(DMC_ENDUSE)
+
 static enduse *enduse_list = NULL;
 static unsigned int n_enduses = 0;
 
@@ -278,7 +280,7 @@ TIMESTAMP enduse_syncall(TIMESTAMP t1)
 		enduse *e;
 		int n_items, en = 0;
 
-		output_debug("enduse_syncall setting up for %d enduses", n_enduses);
+		IN_MYCONTEXT output_debug("enduse_syncall setting up for %d enduses", n_enduses);
 
 		// determine needed threads
 		n_threads_ed = global_threadcount;
@@ -298,8 +300,8 @@ TIMESTAMP enduse_syncall(TIMESTAMP t1)
 			if (n_threads_ed*n_items<n_enduses) // not enough slots yet
 				n_threads_ed++; // add one underused thread
 
-			output_debug("enduse_syncall is using %d of %d available threads", n_threads_ed,global_threadcount);
-			output_debug("enduse_syncall is assigning %d enduses per thread", n_items);
+			IN_MYCONTEXT output_debug("enduse_syncall is using %d of %d available threads", n_threads_ed,global_threadcount);
+			IN_MYCONTEXT output_debug("enduse_syncall is assigning %d enduses per thread", n_items);
 
 			// allocate thread list
 			thread_ed = (ENDUSESYNCDATA*)malloc(sizeof(ENDUSESYNCDATA)*n_threads_ed);
@@ -367,7 +369,7 @@ TIMESTAMP enduse_syncall(TIMESTAMP t1)
 		// begin wait 
 		while (donecount_ed>0)
 			pthread_cond_wait(&done_ed,&donelock_ed);
-		output_debug("passed donecount==0 condition");
+		IN_MYCONTEXT output_debug("passed donecount==0 condition");
 
 		// unclock done count
 		pthread_mutex_unlock(&donelock_ed);
@@ -643,7 +645,7 @@ int enduse_test(void)
 	}
 	else
 	{
-		output_verbose("%d enduse tests completed with no errors--see test.txt for details",ok);
+		IN_MYCONTEXT output_verbose("%d enduse tests completed with no errors--see test.txt for details",ok);
 		output_test("endusetest: %d schedule tests completed, %d errors found",ok,errorcount);
 	}
 	output_test("END: enduse tests");

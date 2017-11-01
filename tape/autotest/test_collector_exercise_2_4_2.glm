@@ -5,7 +5,7 @@ clock {
 }
 
 module residential;
-object house:..100 {
+object house:..10 {
 }
 module tape;
 

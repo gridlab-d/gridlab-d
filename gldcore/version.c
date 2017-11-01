@@ -9,6 +9,11 @@
 
 #include "build.h" // BRANCH will be defined automatically from the ticket
 
+#include "output.h"
+#include "globals.h"
+
+SET_MYCONTEXT(DMC_VERSION)
+
 #ifndef BRANCH
 #define BRANCH "Keeler" // update this from legal.h each time trunk is branched
 #endif

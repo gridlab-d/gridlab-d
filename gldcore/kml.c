@@ -24,6 +24,8 @@
 
 #include "kml.h"
 
+SET_MYCONTEXT(DMC_KML)
+
 FILE *kml = NULL;
 int kml_write(const char *fmt,...)
 {

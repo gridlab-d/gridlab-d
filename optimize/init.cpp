@@ -18,6 +18,8 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		return NULL;
 	}
 
+	INIT_MMF(optimize);
+
 	new simple(module);
 
 	/*** DO NOT EDIT NEXT LINE ***/

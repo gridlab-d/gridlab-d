@@ -714,6 +714,10 @@ int house_e::create()
 	window_temp_delta = 5; 
 	last_temperature = 75;
 	thermostat_mode = TM_AUTO;
+
+//	printf("module flags = 0x%llx, house flags = 0x%llx\n", module_message_flags, OBJECTHDR(this)->flags);
+//	verbose("creating house_e");
+//	debug("created house_e");
 	return result;
 }
 
@@ -3072,23 +3076,7 @@ int *house_e::get_enum(OBJECT *obj, char *name)
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////
 
-EXPORT int create_house(OBJECT **obj, OBJECT *parent)
-{
-	try
-	{
-		*obj = gl_create_object(house_e::oclass);
-		if (*obj!=NULL)
-		{
-			house_e *my = OBJECTDATA(*obj,house_e);;
-			gl_set_parent(*obj,parent);
-			my->create();
-			return 1;
-		}
-		else
-			return 0;
-	}
-	CREATE_CATCHALL(house);
-}
+EXPORT_CREATE_C(house,house_e);
 
 EXPORT int init_house(OBJECT *obj)
 {

@@ -2536,12 +2536,21 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 
 				if (bad_computation==true)
 				{
-					GL_THROW("Newton-Raphson method is unable to converge to a solution at this operation point");
-					/*  TROUBLESHOOT
-					Newton-Raphson has failed to complete even a single iteration on the powerflow.  This is an indication
-					that the method will not solve the system and may have a singularity or other ill-favored condition in the
-					system matrices.
-					*/
+					switch ( convergence_error_handling ) {
+					case CEH_IGNORE:
+						warning("Newton-Raphson method is unable to converge to a solution at this operation point");
+						NR_retval = t1; // TODO assumed voltage collapse (which is not actually correct, but it can be useful)
+						break;
+					case CEH_COLLAPSE:
+						error("convergence_error_handling==COLLAPSE is not yet supported");
+					case CEH_FATAL:
+						GL_THROW("Newton-Raphson method is unable to converge to a solution at this operation point");
+						/*  TROUBLESHOOT
+						Newton-Raphson has failed to complete even a single iteration on the powerflow.  This is an indication
+						that the method will not solve the system and may have a singularity or other ill-favored condition in the
+						system matrices.
+						*/
+					}
 				}
 				else if (result<0)	//Failure to converge, but we just let it stay where we are for now
 				{
@@ -2780,10 +2789,10 @@ int node::kmlinit(int (*stream)(const char*,...))
 {
 	gld_global host("hostname");
 	gld_global port("server_portnum");
-#define STYLE(X) stream("<Style id=\"" #X "_g\"><IconStyle><Icon><href>http://%s:%u/rt/" #X "_g.png</href></Icon></IconStyle></Style>\n", (const char*)host.get_string(), port.get_int32());\
-		stream("<Style id=\"" #X "_r\"><IconStyle><Icon><href>http://%s:%u/rt/" #X "_r.png</href></Icon></IconStyle></Style>\n", (const char*)host.get_string(), port.get_int32());\
-		stream("<Style id=\"" #X "_b\"><IconStyle><Icon><href>http://%s:%u/rt/" #X "_b.png</href></Icon></IconStyle></Style>\n", (const char*)host.get_string(), port.get_int32());\
-		stream("<Style id=\"" #X "_k\"><IconStyle><Icon><href>http://%s:%u/rt/" #X "_k.png</href></Icon></IconStyle></Style>\n", (const char*)host.get_string(), port.get_int32());
+#define STYLE(X) stream("<Style id=\"" #X "_g\"><IconStyle><Icon><href>http://%s:%u/rb/" #X "_g.png</href></Icon></IconStyle></Style>\n", (const char*)host.get_string(), port.get_int32());\
+		stream("<Style id=\"" #X "_r\"><IconStyle><Icon><href>http://%s:%u/rb/" #X "_r.png</href></Icon></IconStyle></Style>\n", (const char*)host.get_string(), port.get_int32());\
+		stream("<Style id=\"" #X "_b\"><IconStyle><Icon><href>http://%s:%u/rb/" #X "_b.png</href></Icon></IconStyle></Style>\n", (const char*)host.get_string(), port.get_int32());\
+		stream("<Style id=\"" #X "_k\"><IconStyle><Icon><href>http://%s:%u/rb/" #X "_k.png</href></Icon></IconStyle></Style>\n", (const char*)host.get_string(), port.get_int32());
 	STYLE(node);
 	STYLE(capacitor);
 	STYLE(load);

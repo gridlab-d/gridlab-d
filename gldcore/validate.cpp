@@ -25,6 +25,8 @@
 #include "lock.h"
 #include "threadpool.h"
 
+SET_MYCONTEXT(DMC_VALIDATE)
+
 /** validating result counter */
 class counters {
 public:
@@ -78,7 +80,9 @@ public:
 	void inc_files(const char *name) 
 	{
 		if ( global_debug_mode || global_verbose_mode )
-			output_debug("processing %s", name); 
+		{
+			IN_MYCONTEXT output_debug("processing %s", name);
+		}
 		else
 		{
 			static size_t len = 0;
@@ -91,7 +95,7 @@ public:
 		n_files++;
 		wunlock(); 
 	};
-	void inc_access(const char *name) { output_debug("%s folder access failure", name); wlock(); n_access++; wunlock(); };
+	void inc_access(const char *name) { IN_MYCONTEXT output_debug("%s folder access failure", name); wlock(); n_access++; wunlock(); };
 	void inc_success(const char *name, int code, double t) { output_error("%s success unexpected, code %d in %.1f seconds",name, code, t); wlock(); n_success++; wunlock(); };
 	void inc_failed(const char *name, int code, double t) { output_error("%s error unexpected, code %d (%s) in %.1f seconds",name, code, exec_getexitcodestr(code), t); wlock(); n_failed++; wunlock(); };
 	void inc_exceptions(const char *name, int code, double t) { output_error("%s exception unexpected, code %d (%s) in %.1f seconds",name, code, exec_getexitcodestr(code), t); wlock(); n_exceptions++; wunlock(); };
@@ -343,9 +347,9 @@ static int vsystem(const char *fmt, ...)
 	va_start(ptr,fmt);
 	vsprintf(command,fmt,ptr);
 	va_end(ptr);
-	output_debug("calling system('%s')",command);
+	IN_MYCONTEXT output_debug("calling system('%s')",command);
 	int rc = system(command);
-	output_debug("system('%s') returns code %x", command, rc);
+	IN_MYCONTEXT output_debug("system('%s') returns code %x", command, rc);
 	return rc;
 }
 
@@ -355,7 +359,7 @@ static bool destroy_dir(char *name)
 	DIR *dirp = opendir(name);
 	if ( dirp==NULL ) return true; // directory does not exist
 	struct dirent *dp;
-	output_debug("destroying contents of '%s'", name);
+	IN_MYCONTEXT output_debug("destroying contents of '%s'", name);
 	while ( dirp!=NULL && (dp=readdir(dirp))!=NULL )
 	{
 		if ( strcmp(dp->d_name,".")!=0 && strcmp(dp->d_name,"..")!=0 )
@@ -369,7 +373,9 @@ static bool destroy_dir(char *name)
 				return false;
 			}
 			else
-				output_debug("deleted %s", dp->d_name);
+			{
+				IN_MYCONTEXT output_debug("deleted %s", dp->d_name);
+			}
 		}
 	}
 	closedir(dirp);
@@ -379,7 +385,7 @@ static bool destroy_dir(char *name)
 /** copyfile routine */
 static bool copyfile(char *from, char *to)
 {
-	output_debug("copying '%s' to '%s'", from, to);
+	IN_MYCONTEXT output_debug("copying '%s' to '%s'", from, to);
 	FILE *in = fopen(from,"r");
 	if ( in==NULL )
 	{
@@ -413,7 +419,7 @@ static bool copyfile(char *from, char *to)
 /** routine to run a validation test */
 static counters run_test(char *file, double *elapsed_time=NULL)
 {
-	output_debug("run_test(char *file='%s') starting", file);
+	IN_MYCONTEXT output_debug("run_test(char *file='%s') starting", file);
 	counters result;
 
 	bool is_err = strstr(file,"_err.")!=NULL || strstr(file,"_err_")!=NULL;
@@ -445,7 +451,7 @@ static counters run_test(char *file, double *elapsed_time=NULL)
 		result.inc_access(file);
 		return result;
     } else {
-        //output_verbose("run_test(): deleted '%s'", dir);
+        //IN_MYCONTEXT output_verbose("run_test(): deleted '%s'", dir);
         rmdir(dir);
 	}
 #ifdef WIN32
@@ -459,7 +465,9 @@ static counters run_test(char *file, double *elapsed_time=NULL)
 		return result;
 	}
 	else
-		output_debug("created test folder '%s'", dir);
+	{
+		IN_MYCONTEXT output_debug("created test folder '%s'", dir);
+	}
 	char out[1024];
 	sprintf(out,"%s/%s.glm",dir,name);
 	if ( !copyfile(file,out) )
@@ -489,24 +497,36 @@ static counters run_test(char *file, double *elapsed_time=NULL)
 	if ( exited )
 	{
 		code = WEXITSTATUS(code);
-		output_debug("exit code %d received from %s", code, name);
+		IN_MYCONTEXT output_debug("exit code %d received from %s", code, name);
 		if ( code==XC_SIGINT ) // ctrl-c caught
 			return result;
 		else if ( is_opt ) // no expected outcome
 		{
 			if ( code==XC_SUCCESS ) 
-				output_verbose("optional test %s succeeded, code %d in %.1f seconds", name, code, t);
+			{
+				IN_MYCONTEXT output_verbose("optional test %s succeeded, code %d in %.1f seconds", name, code, t);
+			}
 			else if ( code==XC_EXCEPTION )
+			{
 				output_warning("optional test %s exception, code %d in %.1f seconds", name, code, t);
+			}
 			else 
+			{
 				output_warning("optional test %s error, code %d in %.1f seconds", name, code, t);
+			}
 		}
 		else if ( is_exc && code==XC_EXCEPTION ) // expected exception
-			output_verbose("%s exception was expected, code %d in %.1f seconds", name, code, t);
+		{
+			IN_MYCONTEXT output_verbose("%s exception was expected, code %d in %.1f seconds", name, code, t);
+		}
 		else if ( is_err && code!=XC_SUCCESS ) // expected error
-			output_verbose("%s error was expected, code %d in %.1f seconds", name, code, t);
+		{
+			IN_MYCONTEXT output_verbose("%s error was expected, code %d in %.1f seconds", name, code, t);
+		}
 		else if ( code==XC_SUCCESS ) // expected success
-			output_verbose("%s success was expected, code %d in %.1f seconds", name, code, t);
+		{
+			IN_MYCONTEXT output_verbose("%s success was expected, code %d in %.1f seconds", name, code, t);
+		}
         else if ( code==XC_EXCEPTION ){ // unexpected exception
 			result.inc_exceptions(file,code,t);
             problem = true;
@@ -521,7 +541,7 @@ static counters run_test(char *file, double *elapsed_time=NULL)
 	else // signaled
 	{
 		code = WTERMSIG(code);
-		output_debug("signal %d received from %s", code, name);
+		IN_MYCONTEXT output_debug("signal %d received from %s", code, name);
 		if ( is_opt ) // no expected outcome
 			output_warning("optional test %s exception, code %d in %.1f seconds", name, code, t);
 		else if ( is_exc ) // expected exception
@@ -531,14 +551,14 @@ static counters run_test(char *file, double *elapsed_time=NULL)
             problem = true;
         }
 	} 
-	output_debug("run_test(char *file='%s') done", file);
+	IN_MYCONTEXT output_debug("run_test(char *file='%s') done", file);
     if ( !problem && clean && !destroy_dir(dir) )
     {
         output_error("run_test(char *file='%s'): unable to destroy test folder after the test", dir);
         result.inc_access(file);
         return result;
     } else {
-        //output_verbose("run_test(): deleted '%s'", dir);
+        //IN_MYCONTEXT output_verbose("run_test(): deleted '%s'", dir);
         rmdir(dir);
     }
 	return result;
@@ -556,7 +576,7 @@ static char *result_code = NULL;
 static unsigned int dirlock = 0;
 static void pushdir(char *dir)
 {
-	output_debug("adding %s to process stack", dir);
+	IN_MYCONTEXT output_debug("adding %s to process stack", dir);
 	DIRLIST *item = (DIRLIST*)malloc(sizeof(DIRLIST));
 	strncpy(item->name,dir,sizeof(item->name)-1);
 	wlock(&dirlock);
@@ -597,19 +617,19 @@ static DIRLIST *popdir(void)
 	DIRLIST *item = dirstack;
 	if ( dirstack ) dirstack = dirstack->next;
 	runlock(&dirlock);
-	output_debug("pulling %s from process stack", item->name);
+	IN_MYCONTEXT output_debug("pulling %s from process stack", item->name);
 	return item;
 }
 
 void *(run_test_proc)(void *arg)
 {
 	size_t id = (size_t)arg;
-	output_debug("starting run_test_proc id %d", id);
+	IN_MYCONTEXT output_debug("starting run_test_proc id %d", id);
 	DIRLIST *item;
 	bool passed = true;
 	while ( (item=popdir())!=NULL )
 	{
-		output_debug("process %d picked up '%s'", id, item->name);
+		IN_MYCONTEXT output_debug("process %d picked up '%s'", id, item->name);
 		double dt;
 		counters result = run_test(item->name,&dt);
 		if ( result.get_nerrors()>0 ) passed=false;
@@ -640,12 +660,12 @@ static size_t process_dir(const char *path, bool runglms=false)
 	sprintf(blockfile,"%s/validate.no",path);
 	if ( access(blockfile,00)==0 && !global_isdefined("force_validate") )
 	{
-		output_debug("processing directory '%s' blocked by presence of 'validate.no' file", path);
+		IN_MYCONTEXT output_debug("processing directory '%s' blocked by presence of 'validate.no' file", path);
 		return 0;
 	}
 
 	size_t count = 0;
-	output_debug("processing directory '%s' with run of GLMs %s", path, runglms?"enabled":"disabled");
+	IN_MYCONTEXT output_debug("processing directory '%s' with run of GLMs %s", path, runglms?"enabled":"disabled");
 	counters result;
 	final.inc_scanned();
 	if ( runglms ) final.inc_tested();
@@ -813,15 +833,15 @@ int validate(int argc, char *argv[])
 	if ( n_procs==0 ) n_procs = processor_count();
 	n_procs = min(final.get_tested(),(unsigned)n_procs);
 	pthread_t *pid = new pthread_t[n_procs];
-	output_debug("starting validation with cmdargs '%s' using %d threads", validate_cmdargs, n_procs);
+	IN_MYCONTEXT output_debug("starting validation with cmdargs '%s' using %d threads", validate_cmdargs, n_procs);
 	for ( i=0 ; i<n_procs ; i++ )
 		pthread_create(&pid[i],NULL,run_test_proc,(void*)i);
 	void *rc;
-	output_debug("begin waiting process");
+	IN_MYCONTEXT output_debug("begin waiting process");
 	for ( i=0 ; i<n_procs ; i++ )
 	{
 		pthread_join(pid[i],&rc);
-		output_debug("process %d done", i);
+		IN_MYCONTEXT output_debug("process %d done", i);
 	}
 	delete [] pid;
 	final.print();
@@ -935,7 +955,9 @@ int validate(int argc, char *argv[])
 	{
 		if ( vsystem(MAILER " -s 'GridLAB-D Validation Report (%d errors)' %s <%s", 
 				final.get_nerrors(), mailto, report_file)==0 )
-			output_verbose("Mail message send to %s",mailto);
+		{
+			IN_MYCONTEXT output_verbose("Mail message send to %s",mailto);
+		}
 		else
 			output_error("Error sending notification to %s", mailto);
 	}

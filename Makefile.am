@@ -49,23 +49,16 @@ dist_doc_DATA =
 include assert/Makefile.mk
 include climate/Makefile.mk
 include commercial/Makefile.mk
-#include rest/Makefile.mk
-#include comm/Makefile.mk
 include connection/Makefile.mk
-#include control/Makefile.mk
 include gldcore/link/engine/Makefile.mk
 include gldcore/link/matlab/Makefile.mk
 include gldcore/Makefile.mk
 include gldcore/rt/Makefile.mk
 include gldcore/solvers/Makefile.mk
-#include debug/Makefile.mk
 include generators/Makefile.mk
 include market/Makefile.mk
-#include matlab/Makefile.mk
 include mysql/Makefile.mk
-#include network/Makefile.mk
 include optimize/Makefile.mk
-#include plc/Makefile.mk
 include powerflow/Makefile.mk
 include reliability/Makefile.mk
 include residential/Makefile.mk
@@ -76,8 +69,9 @@ include tape_plot/Makefile.mk
 # we combine the sources in CBLAS and superLU_MT in a single Makefile fragment
 include third_party/superLU_MT/Makefile_combined.mk
 include third_party/jsonCpp/Makefile.mk
-#include third_party/CBLAS/Makefile.mk
-#include third_party/superLU_MT/Makefile.mk
+
+# custom modules (see ./customize)
+include custom.mk
 
 # for doxygen commands
 include aminclude.mk

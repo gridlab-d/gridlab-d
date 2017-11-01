@@ -1,5 +1,7 @@
 #include "instance_slave.h"
 
+SET_MYCONTEXT(DMC_INSTANCE)
+
 // in practice, these are initialized by instance.c
 extern clock_t instance_synctime;
 
@@ -93,7 +95,7 @@ STATUS instance_slave_parse_prop_list(char *line, linkage **root, LINKAGETYPE ty
 		return FAILED;
 	}
 
-	output_verbose("parser list: \'%s\'", line);
+	IN_MYCONTEXT output_verbose("parser list: \'%s\'", line);
 
 	token = strtok(line, ", \0\n\r");	// @todo should use strtok_r, will change later
 	while(token != 0){
@@ -113,7 +115,7 @@ STATUS instance_slave_parse_prop_list(char *line, linkage **root, LINKAGETYPE ty
 			output_error("instance_slave_link_properties(): prop '%s' not found in object '%s'", propname, objname);
 			return FAILED;
 		}
-		output_verbose("found links for %s", token);
+		IN_MYCONTEXT output_verbose("found links for %s", token);
 		// build link
 		link = (linkage *)malloc(sizeof(linkage));
 		if(0 == link){
@@ -121,7 +123,7 @@ STATUS instance_slave_parse_prop_list(char *line, linkage **root, LINKAGETYPE ty
 			return FAILED;
 		}
 		memset(link, 0, sizeof(linkage));
-		output_verbose("making link for \'%s.%s\'", objname, propname);
+		IN_MYCONTEXT output_verbose("making link for \'%s.%s\'", objname, propname);
 		strcpy(link->remote.obj, objname);
 		strcpy(link->remote.prop, propname);
 		link->target.obj = obj;
@@ -160,7 +162,7 @@ STATUS instance_slave_link_properties(){
 	size_t maxlen = 0;
 	size_t pickle_size = 0;
 
-	output_verbose("instance_slave_link_properties(): entered");
+	IN_MYCONTEXT output_verbose("instance_slave_link_properties(): entered");
 	if(local_inst.message == 0){
 		output_error("instance_slave_link_properties(): local_inst message wrapper not initialized");
 		return FAILED;
@@ -237,7 +239,7 @@ STATUS instance_slave_link_properties(){
 			output_warning("instance_slave_link_properties(): pickle prop_size and calculated prop_size do not match!");
 		}
 	}
-	output_debug("instance_slave_link_properties(): exiting for slave %"FMT_INT64, local_inst.cacheid);
+	IN_MYCONTEXT output_debug("instance_slave_link_properties(): exiting for slave %"FMT_INT64, local_inst.cacheid);
 	return SUCCESS;
 }
 
@@ -247,14 +249,14 @@ int instance_slave_wait_mmap(){
 #ifdef WIN32
 	DWORD rc = 0;
 	tc = (MESSAGE *)(local_inst.filemap);
-	output_verbose("wait_mmap: started wait with with fmap ts = %lli", tc->ts);
+	IN_MYCONTEXT output_verbose("wait_mmap: started wait with with fmap ts = %lli", tc->ts);
 	rc = WaitForSingleObject(local_inst.hSlave,global_signal_timeout);
 	switch ( rc ) {
 		case WAIT_ABANDONED:
 			output_error("instance_slave_wait_mmap(): slave %d wait abandoned", slave_id);
 			break;
 		case WAIT_OBJECT_0:
-			output_verbose("instance_slave_wait_mmap(): slave %d wait completed", slave_id);
+			IN_MYCONTEXT output_verbose("instance_slave_wait_mmap(): slave %d wait completed", slave_id);
 			status = 1;
 			break;
 		case WAIT_TIMEOUT:
@@ -271,14 +273,14 @@ int instance_slave_wait_mmap(){
 	// copy the data from the mmap to the cache
 	memcpy(local_inst.cache, local_inst.filemap, local_inst.cachesize);
 	printcontent((char*)local_inst.cache, local_inst.cachesize);
-	output_verbose("wait_mmap: resumed with fmap ts = %lli", tc->ts);
+	IN_MYCONTEXT output_verbose("wait_mmap: resumed with fmap ts = %lli", tc->ts);
 #else
 	// fatal error
 #endif
 
 	
 	/* copy inbound linkages */
-//	output_verbose("instance_slave_wait_mmap(): slave %d controller reading links", slave_id);
+//	IN_MYCONTEXT output_verbose("instance_slave_wait_mmap(): slave %d controller reading links", slave_id);
 	memcpy(local_inst.cache, local_inst.filemap, local_inst.cachesize);
 
 	return status;
@@ -289,9 +291,9 @@ int instance_slave_wait_socket(){
 	int rv = 0;
 	size_t offset = 0;
 
-	output_debug("instance_slave_wait_socket(): entered");
+	IN_MYCONTEXT output_debug("instance_slave_wait_socket(): entered");
 	if(0 == local_inst.buffer){
-//		output_verbose("instance_slave_wait_mmap(): local_inst.buffer unallocated");
+//		IN_MYCONTEXT output_verbose("instance_slave_wait_mmap(): local_inst.buffer unallocated");
 		local_inst.buffer_size = 1 + local_inst.prop_size + sizeof(MESSAGE) + strlen(MSG_DATA);
 		local_inst.buffer = (char *)malloc(local_inst.buffer_size);
 		if(0 == local_inst.buffer){
@@ -303,7 +305,7 @@ int instance_slave_wait_socket(){
 	// read socket
 	rv = recv(local_inst.sockfd, local_inst.buffer, (int)local_inst.buffer_size, 0);
 	printcontent(local_inst.buffer, rv);
-//	output_debug("instance_slave_wait_socket(): %d = recv(%d, %x, %d, 0)", rv, local_inst.sockfd, local_inst.buffer, (int)local_inst.buffer_size);
+//	IN_MYCONTEXT output_debug("instance_slave_wait_socket(): %d = recv(%d, %x, %d, 0)", rv, local_inst.sockfd, local_inst.buffer, (int)local_inst.buffer_size);
 	if(0 == rv){
 		output_error("instance_slave_wait_socket(): socket closed");
 		closesocket(local_inst.sockfd);
@@ -320,14 +322,14 @@ int instance_slave_wait_socket(){
 		return 0;
 	}
 
-//	output_debug("instance_slave_wait_socket(): msg memcpy(%x, %x, %d)", local_inst.cache, local_inst.buffer + offset, sizeof(MESSAGE));
+//	IN_MYCONTEXT output_debug("instance_slave_wait_socket(): msg memcpy(%x, %x, %d)", local_inst.cache, local_inst.buffer + offset, sizeof(MESSAGE));
 	memcpy(local_inst.cache, local_inst.buffer + offset, sizeof(MESSAGE));
 	offset += sizeof(MESSAGE);
 
-//	output_debug("instance_slave_wait_socket(): db memcpy(%x, %x, %d)", local_inst.message->data_buffer, local_inst.buffer + offset, local_inst.prop_size);
+//	IN_MYCONTEXT output_debug("instance_slave_wait_socket(): db memcpy(%x, %x, %d)", local_inst.message->data_buffer, local_inst.buffer + offset, local_inst.prop_size);
 	memcpy(local_inst.message->data_buffer, local_inst.buffer + offset, local_inst.prop_size);
 	status = 1;
-	output_debug("instance_slave_wait_socket(): exiting");
+	IN_MYCONTEXT output_debug("instance_slave_wait_socket(): exiting");
 	return status;
 }
 
@@ -338,7 +340,7 @@ int instance_slave_wait_socket(){
 int instance_slave_wait(void)
 {
 	int status = 0;
-	output_verbose("instance_slave_wait(): slave %d entering wait state with t2=%lli (%x)", slave_id, local_inst.cache->ts, ((char*)&local_inst.cache->ts-(char*)local_inst.cache));
+	IN_MYCONTEXT output_verbose("instance_slave_wait(): slave %d entering wait state with t2=%lli (%x)", slave_id, local_inst.cache->ts, ((char*)&local_inst.cache->ts-(char*)local_inst.cache));
 	if(local_inst.cnxtype == CI_MMAP){
 #ifdef WIN32
 		status = instance_slave_wait_mmap();
@@ -356,7 +358,7 @@ int instance_slave_wait(void)
 
 int instance_slave_done_mmap(){
 	// this works for MMAP, needs function with switches (or struct w/ func* )
-	output_verbose("instance_slave_done_mmap(): copying %d bytes from %x to %x", local_inst.cachesize, local_inst.cache, local_inst.filemap);
+	IN_MYCONTEXT output_verbose("instance_slave_done_mmap(): copying %d bytes from %x to %x", local_inst.cachesize, local_inst.cache, local_inst.filemap);
 	memcpy(local_inst.filemap, local_inst.cache, local_inst.cachesize);
 //	printcontent(local_inst.filemap, (int)local_inst.cachesize);
 
@@ -372,7 +374,7 @@ int instance_slave_done_socket(){
 	size_t offset = 0;
 	int rv = 0;
 	
-//	output_debug("instance_slave_done_socket(): enter");
+//	IN_MYCONTEXT output_debug("instance_slave_done_socket(): enter");
 	if(0 == local_inst.buffer){
 		local_inst.buffer_size = 1 + local_inst.prop_size + sizeof(MESSAGE) + strlen(MSG_DATA);
 		local_inst.buffer = (char *)malloc(local_inst.buffer_size);
@@ -392,7 +394,7 @@ int instance_slave_done_socket(){
 	// feed through socket
 	rv = send(local_inst.sockfd, local_inst.buffer, (int)offset, 0);
 	printcontent(local_inst.buffer, rv);
-//	output_debug("instance_slave_done_socket(): %d = send(%d, %x, %d, 0)", rv, local_inst.sockfd, local_inst.buffer, offset);
+//	IN_MYCONTEXT output_debug("instance_slave_done_socket(): %d = send(%d, %x, %d, 0)", rv, local_inst.sockfd, local_inst.buffer, offset);
 	if(rv < 0){
 		output_error("instance_slave_done_socket(): error when sending data");
 		closesocket(local_inst.sockfd);
@@ -404,7 +406,7 @@ int instance_slave_done_socket(){
 		// TODO this should be a valid exitcode (see exec.c XC_*)
 		return -1;
 	}
-//	output_debug("instance_slave_done_socket(): exiting");
+//	IN_MYCONTEXT output_debug("instance_slave_done_socket(): exiting");
 	return 0;
 }
 
@@ -418,7 +420,7 @@ void instance_slave_done(void)
 
 	// @todo cnx exchange
 	/* signal the master */
-	output_verbose("instance_slave_done(): slave %d signaling master", slave_id);
+	IN_MYCONTEXT output_verbose("instance_slave_done(): slave %d signaling master", slave_id);
 	switch(local_inst.cnxtype){
 		case CI_MMAP:
 			rv = instance_slave_done_mmap();
@@ -447,7 +449,7 @@ void *instance_slaveproc(void *ptr)
 {
 	linkage *lnk;
 	STATUS rv = SUCCESS;
-	output_verbose("instance_slaveproc(): slave %d controller startup in progress", slave_id);
+	IN_MYCONTEXT output_verbose("instance_slaveproc(): slave %d controller startup in progress", slave_id);
 
 	pthread_mutex_lock(&mls_inst_lock);
 	pthread_cond_wait(&mls_inst_signal, &mls_inst_lock);
@@ -459,7 +461,7 @@ void *instance_slaveproc(void *ptr)
 
 	do{
 		/* wait for master to signal slave */
-		output_verbose("instance_slaveproc(): slave %d controller waiting", slave_id);
+		IN_MYCONTEXT output_verbose("instance_slaveproc(): slave %d controller waiting", slave_id);
 		if ( 0 == instance_slave_wait() )
 		{
 			/* stop the main loop and exit the slave controller */
@@ -469,7 +471,7 @@ void *instance_slaveproc(void *ptr)
 			break;
 		}
 
-		output_debug("instance_slaveproc(): slave %d controller reading links", slave_id);
+		IN_MYCONTEXT output_debug("instance_slaveproc(): slave %d controller reading links", slave_id);
 		for ( lnk=local_inst.write ; lnk!=NULL ; lnk=lnk->next ){
 			if(FAILED == linkage_master_to_slave(0, lnk)){
 				output_warning("instance_slaveproc(): linkage_master_to_slave failed");
@@ -478,13 +480,13 @@ void *instance_slaveproc(void *ptr)
 			}
 		}
 
-//		output_debug("continuing");
+//		IN_MYCONTEXT output_debug("continuing");
 		
 		/* resume the main loop */
 		// note, if TS_NEVER, we want the slave's exec loop to end normally
-		//output_debug("slave %d controller resuming exec with %lli", slave_id, local_inst.cache->ts);
-		output_debug("slave %d controller resuming exec with %lli", local_inst.cache->id, local_inst.cache->ts);
-		output_debug("slave %d controller setting step_to %lli to cache->ts %lli", local_inst.cache->id, exec_sync_get(NULL), local_inst.cache->ts);
+		//IN_MYCONTEXT output_debug("slave %d controller resuming exec with %lli", slave_id, local_inst.cache->ts);
+		IN_MYCONTEXT output_debug("slave %d controller resuming exec with %lli", local_inst.cache->id, local_inst.cache->ts);
+		IN_MYCONTEXT output_debug("slave %d controller setting step_to %lli to cache->ts %lli", local_inst.cache->id, exec_sync_get(NULL), local_inst.cache->ts);
 		exec_sync_merge(NULL,(void*)&local_inst.cache);
 
 		pthread_cond_broadcast(&mls_inst_signal);
@@ -494,14 +496,14 @@ void *instance_slaveproc(void *ptr)
 		}
 
 		/* wait for main loop to pause */
-		output_verbose("slave %d controller waiting for main to complete", slave_id);
+		IN_MYCONTEXT output_verbose("slave %d controller waiting for main to complete", slave_id);
 
 		pthread_mutex_lock(&mls_inst_lock);
 		pthread_cond_wait(&mls_inst_signal, &mls_inst_lock);
 		pthread_mutex_unlock(&mls_inst_lock);
 
 		/* @todo copy output linkages */
-		output_debug("slave %d controller writing links", slave_id);
+		IN_MYCONTEXT output_debug("slave %d controller writing links", slave_id);
 		for ( lnk=local_inst.read ; lnk!=NULL ; lnk=lnk->next ){
 			if(FAILED == linkage_slave_to_master(0, lnk)){
 				output_warning("linkage_slave_to_master failed");
@@ -509,7 +511,7 @@ void *instance_slaveproc(void *ptr)
 				break;
 			}
 		}
-//		output_debug("continuing");
+//		IN_MYCONTEXT output_debug("continuing");
 
 		/* copy the next time stamp */
 		/* how about we copy the time we want to step to and see what the master says, instead? -MH */
@@ -518,7 +520,7 @@ void *instance_slaveproc(void *ptr)
 
 		instance_slave_done();
 	} while (global_clock != TS_NEVER && rv == SUCCESS);
-	output_verbose("slave %"FMT_INT64" completion state reached", local_inst.cacheid);
+	IN_MYCONTEXT output_verbose("slave %"FMT_INT64" completion state reached", local_inst.cacheid);
 	pthread_exit(NULL);
 	return NULL;
 }
@@ -536,7 +538,7 @@ STATUS instance_slave_init_mem(){
 	size_t sz = sizeof(MESSAGE);
 	size_t cacheSize;
 
-	output_debug("instance_slave_init_mem()");
+	IN_MYCONTEXT output_debug("instance_slave_init_mem()");
 	/* @todo open cache */
 	local_inst.cacheid = global_master_port;
 	sprintf(cacheName,"GLD-%"FMT_INT64"x",global_master_port);
@@ -548,19 +550,19 @@ STATUS instance_slave_init_mem(){
 	}
 	else
 	{
-		output_debug("cache '%s' opened for slave", cacheName);
+		IN_MYCONTEXT output_debug("cache '%s' opened for slave", cacheName);
 	}
 	local_inst.filemap = (void*)MapViewOfFile(local_inst.hMap,FILE_MAP_ALL_ACCESS,0,0,(DWORD)0); // not sure how big it is, so grab it all
-	output_debug("MapViewOfFile returned");
-	output_debug("resulting handle is %x", local_inst.filemap);
+	IN_MYCONTEXT output_debug("MapViewOfFile returned");
+	IN_MYCONTEXT output_debug("resulting handle is %x", local_inst.filemap);
 	rv = (int64)local_inst.filemap;
 
-	output_debug("copying %d bytes from map %x to local message", sz, local_inst.filemap);
+	IN_MYCONTEXT output_debug("copying %d bytes from map %x to local message", sz, local_inst.filemap);
 	memcpy(&tmsg, local_inst.filemap, sz);
 	
-	output_debug("data copied");
-	output_debug("namesz %d, datesz %d", tmsg.name_size, tmsg.data_size);
-	output_debug("TMSG: usize %d, asize %d, id %x, nsz %d, psz %d", tmsg.usize, tmsg.asize, tmsg.id, tmsg.name_size, tmsg.data_size);
+	IN_MYCONTEXT output_debug("data copied");
+	IN_MYCONTEXT output_debug("namesz %d, datesz %d", tmsg.name_size, tmsg.data_size);
+	IN_MYCONTEXT output_debug("TMSG: usize %d, asize %d, id %x, nsz %d, psz %d", tmsg.usize, tmsg.asize, tmsg.id, tmsg.name_size, tmsg.data_size);
 	if(tmsg.name_size < 0){
 		return FAILED;
 	}
@@ -592,7 +594,7 @@ STATUS instance_slave_init_mem(){
 	}
 	else
 	{
-		output_debug("opened event signal '%s' for slave %d", eventName, slave_id);
+		IN_MYCONTEXT output_debug("opened event signal '%s' for slave %d", eventName, slave_id);
 	}
 
 	/* open master signalling event */
@@ -605,7 +607,7 @@ STATUS instance_slave_init_mem(){
 	}
 	else
 	{
-		output_debug("opened event signal '%s' for slave %d ", eventName, slave_id);
+		IN_MYCONTEXT output_debug("opened event signal '%s' for slave %d ", eventName, slave_id);
 	}
 	return SUCCESS;
 #else
@@ -631,7 +633,7 @@ STATUS instance_slave_init_socket(){
 
 	// start up WinSock, if on Windows
 #ifdef WIN32
-	output_debug("starting WS2");
+	IN_MYCONTEXT output_debug("starting WS2");
 	if (WSAStartup(MAKEWORD(2,0),&wsaData)!=0)
 	{
 		output_error("instance_cnx_socket(): socket library initialization failed: %s",strerror(GetLastError()));
@@ -665,7 +667,7 @@ STATUS instance_slave_init_socket(){
 	}
 	// handshake?
 	sprintf(cmd, HS_CBK "%"FMT_INT64"d", global_slave_id);
-	output_debug("cmd/cbk: %s", cmd);
+	IN_MYCONTEXT output_debug("cmd/cbk: %s", cmd);
 	rv = send(local_inst.sockfd, cmd, (int)strlen(cmd), 0);
 	if(0 == rv){
 		output_fatal("instance_slave_init_socket(): socket closed before slave handshake sent");
@@ -705,7 +707,7 @@ STATUS instance_slave_init_socket(){
 		;
 	}
 	memcpy(&pickle, cmd+strlen(MSG_INST), sizeof(pickle));
-	output_debug("pickle: %"FMT_INT64"d %d %d %d %d %"FMT_INT64"d", pickle.cacheid, pickle.cachesize, pickle.name_size, pickle.prop_size, pickle.id, pickle.ts);
+	IN_MYCONTEXT output_debug("pickle: %"FMT_INT64"d %d %d %d %d %"FMT_INT64"d", pickle.cacheid, pickle.cachesize, pickle.name_size, pickle.prop_size, pickle.id, pickle.ts);
 	if(local_inst.cacheid != pickle.cacheid){
 		; // error
 	}
@@ -731,7 +733,7 @@ STATUS instance_slave_init_socket(){
 		return FAILED;
 	}
 	messagewrapper_init(&(local_inst.message), local_inst.cache);
-	output_debug("mw: m %x, n %x (%d), d %x (%d)", local_inst.message->msg, local_inst.message->name_buffer, *(local_inst.message->name_size), local_inst.message->data_buffer, *(local_inst.message->data_size));
+	IN_MYCONTEXT output_debug("mw: m %x, n %x (%d), d %x (%d)", local_inst.message->msg, local_inst.message->name_buffer, *(local_inst.message->name_size), local_inst.message->data_buffer, *(local_inst.message->data_size));
 	local_inst.message->name_size = (int16 *)&local_inst.name_size;
 	local_inst.message->data_size = (int16 *)&local_inst.prop_size;
 	// receipt instance struct
@@ -747,7 +749,7 @@ STATUS instance_slave_init_socket(){
 	}
 
 	// recv linkage information
-	output_debug("recv'ing linkage data");
+	IN_MYCONTEXT output_debug("recv'ing linkage data");
 	rv = recv(local_inst.sockfd, cmd, 1024, 0);
 	if(rv == 0){
 		output_fatal("instance_slave_init_socket(): socket closed before linkage names recv'd");
@@ -785,10 +787,10 @@ STATUS instance_slave_init_socket(){
 	}
 	if(0 != memcmp(cmd, MSG_START, (int)strlen(MSG_START))){
 		output_fatal("instance_slave_init_socket(): master did not send MSG_START message when expected");
-		output_debug(cmd);
+		IN_MYCONTEXT output_debug(cmd);
 		return FAILED;
 	} else {
-		output_debug("instance_slave_init_socket(): recv start message");
+		IN_MYCONTEXT output_debug("instance_slave_init_socket(): recv start message");
 	}
 
 	// send initial link data 
@@ -809,7 +811,7 @@ STATUS instance_slave_init_socket(){
 	output_redirect_stream("profile", local_inst.stream);
 	output_redirect_stream("progress", local_inst.stream);*/
 
-	output_debug("end of instance_slave_init_socket()");
+	IN_MYCONTEXT output_debug("end of instance_slave_init_socket()");
 	return SUCCESS;
 }
 
@@ -828,7 +830,7 @@ STATUS instance_slave_init_pthreads(){
 		output_error("error with pthread_cond_init() in instance_slave_init_pthreads()");
 		return FAILED;
 	}
-	output_verbose("opened slave end of master-slave comm channel for slave %d", slave_id);
+	IN_MYCONTEXT output_verbose("opened slave end of master-slave comm channel for slave %d", slave_id);
 
 //	exec_mls_create(); // need to do this before we start the thread
 
@@ -841,7 +843,7 @@ STATUS instance_slave_init_pthreads(){
 	}
 	else
 	{
-		output_verbose("started slave controller for slave %d", slave_id);
+		IN_MYCONTEXT output_verbose("started slave controller for slave %d", slave_id);
 	}
 	return SUCCESS;
 }
@@ -857,16 +859,16 @@ STATUS instance_slave_init(void)
 //	STATUS stat;
 	size_t cacheSize = sizeof(MESSAGE)+MSGALLOCSZ; /* @todo size instance cache dynamically from linkage list */
 
-	output_debug("instance_slave_init()");
+	IN_MYCONTEXT output_debug("instance_slave_init()");
 
 //	memset(&local_inst, 0, sizeof(local_inst));
 	local_inst.cacheid = global_slave_id;
 	global_multirun_mode = MRM_SLAVE;
-	output_debug("slave %lli setting prefixes", local_inst.cacheid);
+	IN_MYCONTEXT output_debug("slave %lli setting prefixes", local_inst.cacheid);
 	output_prefix_enable();
 	
 
-	output_debug("slave %lli initializing connection", local_inst.cacheid);
+	IN_MYCONTEXT output_debug("slave %lli initializing connection", local_inst.cacheid);
 	// this is where we open a connection, snag the first header, and initialize everything from there
 	switch(global_multirun_connection){
 		case MRC_MEM:
@@ -895,14 +897,14 @@ STATUS instance_slave_init(void)
 		return FAILED;
 	}
 
-	output_debug("li: %llx %d %d %d %d", local_inst.cacheid, local_inst.cachesize, local_inst.name_size, local_inst.prop_size, local_inst.id);
-//	output_debug("slave %"FMT_INT64" entering init_pthreads()", local_inst.cacheid);
+	IN_MYCONTEXT output_debug("li: %llx %d %d %d %d", local_inst.cacheid, local_inst.cachesize, local_inst.name_size, local_inst.prop_size, local_inst.id);
+//	IN_MYCONTEXT output_debug("slave %"FMT_INT64" entering init_pthreads()", local_inst.cacheid);
 	rv = instance_slave_init_pthreads(); // starts slaveproc() thread
-//	output_debug("slave %"FMT_INT64" exited init_pthreads()", local_inst.cacheid);
-//	output_debug("li: %"FMT_INT64" %d %d %d %d", local_inst.cacheid, local_inst.cachesize, local_inst.name_size, local_inst.prop_size, local_inst.id);
+//	IN_MYCONTEXT output_debug("slave %"FMT_INT64" exited init_pthreads()", local_inst.cacheid);
+//	IN_MYCONTEXT output_debug("li: %"FMT_INT64" %d %d %d %d", local_inst.cacheid, local_inst.cachesize, local_inst.name_size, local_inst.prop_size, local_inst.id);
 	
 	global_clock = exec_sync_get(NULL); // copy time signal to gc, legit since it's from msg
-	output_debug("inst_slave_init(): gc = %lli", global_clock);
+	IN_MYCONTEXT output_debug("inst_slave_init(): gc = %lli", global_clock);
 
 	// signal master that slave init is done
 //	instance_slave_done();

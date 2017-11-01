@@ -1,0 +1,4 @@
+2011-01-01 00:00:02,switch_1
++1s,switch_1|switch_2
++2s,switch_1|switch_2|switch_3
++3s,switch_1|switch_2|switch_3|switch_4

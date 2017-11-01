@@ -35,6 +35,8 @@
 #include "sanitize.h"
 #include "exec.h"
 
+SET_MYCONTEXT(DMC_CMDARG)
+
 clock_t loader_time = 0;
 
 STATUS load_module_list(FILE *fd,int* test_mod_num)
@@ -230,14 +232,16 @@ static STATUS no_cmdargs()
 #else
 		sprintf(cmd,"%s '%s' & ps -p $! >/dev/null", global_browser, htmlfile);
 #endif
-		output_verbose("Starting browser using command [%s]", cmd);
+		IN_MYCONTEXT output_verbose("Starting browser using command [%s]", cmd);
 		if (system(cmd)!=0)
 		{
 			output_error("unable to start browser");
 			return FAILED;
 		}
 		else
-			output_verbose("starting interface");
+		{
+			IN_MYCONTEXT output_verbose("starting interface");
+		}
 		strcpy(global_environment,"server");
 		global_mainloopstate = MLS_PAUSED;
 		return SUCCESS;
@@ -434,7 +438,7 @@ static int endusetest(int argc, char *argv[])
 static int xmlstrict(int argc, char *argv[])
 {
 	global_xmlstrict = !global_xmlstrict;
-	output_verbose("xmlstrict is %s", global_xmlstrict?"enabled":"disabled");
+	IN_MYCONTEXT output_verbose("xmlstrict is %s", global_xmlstrict?"enabled":"disabled");
 	return 0;
 }
 static int globaldump(int argc, char *argv[])
@@ -995,14 +999,16 @@ static int info(int argc, char *argv[])
 #else
 		sprintf(cmd,"%s \"%s%s\" & ps -p $! >/dev/null", global_browser, global_infourl, argv[1]);
 #endif
-		output_verbose("Starting browser using command [%s]", cmd);
+		IN_MYCONTEXT output_verbose("Starting browser using command [%s]", cmd);
 		if (system(cmd)!=0)
 		{
 			output_error("unable to start browser");
 			return CMDERR;
 		}
 		else
-			output_verbose("starting interface");
+		{
+			IN_MYCONTEXT output_verbose("starting interface");
+		}
 		return 1;
 	}
 	else
@@ -1026,7 +1032,7 @@ static int slave(int argc, char *argv[])
 		return CMDERR;
 	}
 
-	output_debug("slave()");
+	IN_MYCONTEXT output_debug("slave()");
 	if(2 != sscanf(argv[1],"%255[^:]:%255s",host,port))
 	{
 		output_error("unable to parse slave parameters");
@@ -1049,7 +1055,7 @@ static int slave(int argc, char *argv[])
 		return CMDERR;
 	}
 
-	output_verbose("slave instance for master '%s' using connection '%"FMT_INT64"x' started ok", global_master, global_master_port);
+	IN_MYCONTEXT output_verbose("slave instance for master '%s' using connection '%"FMT_INT64"x' started ok", global_master, global_master_port);
 	return 1;
 }
 
@@ -1068,7 +1074,7 @@ static int slave_id(int argc, char *argv[]){
 		output_error("slave_id(): unable to read ID number");
 		return CMDERR;
 	}
-	output_debug("slave using ID %"FMT_INT64"d", global_slave_id);
+	IN_MYCONTEXT output_debug("slave using ID %"FMT_INT64"d", global_slave_id);
 	return 1;
 }
 static int example(int argc, char *argv[])
@@ -1202,7 +1208,8 @@ static int workdir(int argc, char *argv[])
 		output_error("%s is not a valid workdir", global_workdir);
 		return CMDERR;
 	}
-	output_verbose("working directory is '%s'", getcwd(global_workdir,sizeof(global_workdir)));
+	getcwd(global_workdir,sizeof(global_workdir));
+	IN_MYCONTEXT output_verbose("working directory is '%s'", global_workdir);
 	return 1;
 }
 

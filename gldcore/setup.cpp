@@ -5,6 +5,8 @@
 #include "load.h"
 #include "convert.h"
 
+SET_MYCONTEXT(DMC_SETUP)
+
 #ifdef HAVE_CURSES
 int height=0, width=0;
 char status[1024] = "Ready";

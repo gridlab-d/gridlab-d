@@ -6,7 +6,7 @@ MAJ=`cat $FIL | sed -rn 's/#define REV_MAJOR ([0-9]+).*/\1/p' | tr -d '\n'`
 MIN=`cat $FIL | sed -rn 's/#define REV_MINOR ([0-9]+).*/\1/p' | tr -d '\n'`
 PAT=`cat $FIL | sed -rn 's/#define REV_PATCH ([0-9]+).*/\1/p' | tr -d '\n'`
 BRA=`cat $FIL | sed -rn 's/#define BRANCH "([A-Za-z0-9]+)".*/\1/p' | tr -d '\n'`
-SVN=`git --version | cut -f3 -d ' '`
+SVN=`git --version | cut -f3 -d' '`
 case $1 in
     -version | --version | --versio | --versi | --vers | --ver | --ver | --v)
         echo "$MAJ.$MIN.$PAT" ;;

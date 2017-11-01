@@ -18,6 +18,8 @@
 #include "module.h"
 #include "lock.h"
 
+SET_MYCONTEXT(DMC_GLOBALS)
+
 static GLOBALVAR *global_varlist = NULL, *lastvar = NULL;
 
 static KEYWORD df_keys[] = {
@@ -105,6 +107,61 @@ static KEYWORD sm_keys[] = {
 	{"DELTA_ITER", SM_DELTA_ITER, sm_keys+4},
 	{"ERROR", SM_ERROR, NULL},
 };
+static KEYWORD dmc_keys[] = {
+		{"NONE", 		DMC_NONE, 			dmc_keys+1},
+		{"ALL", 		DMC_ALL, 			dmc_keys+2},
+		{"LOAD",		DMC_LOAD,			dmc_keys+3},
+		{"CREATE",		DMC_CREATE, 		dmc_keys+4},
+		{"EXEC",		DMC_EXEC, 			dmc_keys+5},
+		{"TIME", 		DMC_TIME, 			dmc_keys+6},
+		{"FIND", 		DMC_FIND, 			dmc_keys+7},
+		{"CLASS", 		DMC_CLASS, 			dmc_keys+8},
+		{"OBJECT", 		DMC_OBJECT, 		dmc_keys+9},
+		{"MODULE", 		DMC_MODULE, 		dmc_keys+10},
+		{"INDEX", 		DMC_INDEX, 			dmc_keys+11},
+		{"GLOBALS", 	DMC_GLOBALS, 		dmc_keys+12},
+		{"EXCEPTION", 	DMC_EXCEPTION, 		dmc_keys+13},
+		{"AGGREGATE", 	DMC_AGGREGATE, 		dmc_keys+14},
+		{"COMPARE", 	DMC_COMPARE, 		dmc_keys+15},
+		{"CONVERT", 	DMC_CONVERT, 		dmc_keys+16},
+		{"DELTAMODE", 	DMC_DELTAMODE, 		dmc_keys+17},
+		{"ENDUSE", 		DMC_ENDUSE, 		dmc_keys+18},
+		{"ENVIRONMENT", DMC_ENVIRONMENT,	dmc_keys+19},
+		{"GUI", 		DMC_GUI, 			dmc_keys+20},
+		{"HTTPCLIENT", 	DMC_HTTPCLIENT, 	dmc_keys+21},
+		{"INSTANCE", 	DMC_INSTANCE, 		dmc_keys+22},
+		{"INTERPOLATE", DMC_INTERPOLATE, 	dmc_keys+23},
+		{"JOB", 		DMC_JOB, 			dmc_keys+24},
+		{"KML", 		DMC_KML, 			dmc_keys+25},
+		{"LEGAL", 		DMC_LEGAL, 			dmc_keys+26},
+		{"LINK", 		DMC_LINK, 			dmc_keys+27},
+		{"LIST", 		DMC_LIST, 			dmc_keys+28},
+		{"XML", 		DMC_XML, 			dmc_keys+29},
+		{"LOADSHAPE", 	DMC_LOADSHAPE, 		dmc_keys+30},
+		{"LOCALE", 		DMC_LOCALE, 		dmc_keys+31},
+		{"LOCK", 		DMC_LOCK, 			dmc_keys+32},
+		{"MATCH", 		DMC_MATCH, 			dmc_keys+33},
+		{"MATLAB", 		DMC_MATLAB, 		dmc_keys+34},
+		{"PROPERTY", 	DMC_PROPERTY, 		dmc_keys+35},
+		{"RANDOM", 		DMC_RANDOM, 		dmc_keys+36},
+		{"REALTIME", 	DMC_REALTIME, 		dmc_keys+37},
+		{"SANITIZE", 	DMC_SANITIZE, 		dmc_keys+38},
+		{"SAVE", 		DMC_SAVE, 			dmc_keys+39},
+		{"SCHEDULE", 	DMC_SCHEDULE, 		dmc_keys+40},
+		{"SERVER", 		DMC_SERVER, 		dmc_keys+41},
+		{"SETUP", 		DMC_SETUP, 			dmc_keys+42},
+		{"STREAM", 		DMC_STREAM, 		dmc_keys+43},
+		{"TEST", 		DMC_TEST, 			dmc_keys+44},
+		{"THREADPOOL", 	DMC_THREADPOOL, 	dmc_keys+45},
+		{"TRANSFORM", 	DMC_TRANSFORM, 		dmc_keys+46},
+		{"HTTP", 		DMC_HTTP, 			dmc_keys+47},
+		{"UNIT", 		DMC_UNIT, 			dmc_keys+48},
+		{"VALIDATE", 	DMC_VALIDATE, 		dmc_keys+49},
+		{"VERSION", 	DMC_VERSION, 		dmc_keys+50},
+		{"XCORE", 		DMC_XCORE, 			dmc_keys+51},
+		{"MAIN",		DMC_MAIN,			dmc_keys+52},
+		{"CMDARG",		DMC_CMDARG,			NULL},
+};
 
 static struct s_varmap {
 	char *name;
@@ -120,7 +177,7 @@ static struct s_varmap {
 	{"version.minor", PT_int32, &global_version_minor, PA_REFERENCE, "minor version"},
 	{"version.patch", PT_int32, &global_version_patch, PA_REFERENCE, "patch number"},
 	{"version.build", PT_int32, &global_version_build, PA_REFERENCE, "build number"},
-	{"version.branch", PT_char32, &global_version_branch, PA_REFERENCE, "branch name"},
+	{"version.branch", PT_char256, &global_version_branch, PA_REFERENCE, "branch name"},
 	{"command_line", PT_char1024, &global_command_line, PA_REFERENCE, "command line"},
 	{"environment", PT_char1024, &global_environment, PA_PUBLIC, "operating environment"},
 	{"quiet", PT_bool, &global_quiet_mode, PA_PUBLIC, "quiet output status flag"},
@@ -230,6 +287,7 @@ static struct s_varmap {
 	{"wget_options", PT_char1024, &global_wget_options, PA_PUBLIC, "wget options"},
 	{"svnroot", PT_char1024, &global_svnroot, PA_PUBLIC, "svnroot"},
 	{"allow_reinclude", PT_bool, &global_reinclude, PA_PUBLIC, "allow the same include file to be included multiple times"},
+	{"output_message_context", PT_set, &global_output_message_context, PA_PUBLIC, "control context from which debug messages are allowed", dmc_keys},
 	/* add new global variables here */
 };
 
@@ -648,6 +706,21 @@ char *global_now(char *buffer, int size)
 		return NULL;
 	}
 }
+char *global_today(char *buffer, int size)
+{
+	if ( size>32 )
+	{
+		time_t now = time(NULL);
+		struct tm *tmbuf = gmtime(&now);
+		strftime(buffer,size,"%Y-%m-%d %H:%M:%S UTC",tmbuf);
+		return buffer;
+	}
+	else
+	{
+		output_error("global_today(...): buffer too small");
+		return NULL;
+	}
+}
 char *global_true(char *buffer, int size)
 {
 	if ( size>1 )
@@ -690,7 +763,7 @@ char *global_seq(char *buffer, int size, char *name)
 			}
 			addr = (int32*)var->prop->addr;
 			(*addr)++;
-			output_debug("updating global sequence '%s' to value '%d'", seq, *addr); 
+			IN_MYCONTEXT output_debug("updating global sequence '%s' to value '%d'", seq, *addr);
 			return global_getvar(seq,buffer,size);
 		}
 		else
@@ -934,6 +1007,7 @@ char *global_getvar(char *name, char *buffer, int size)
 	} map[] = {
 		{"GUID",global_guid},
 		{"NOW",global_now},
+		{"TODAY",global_today},
 		{"RUN",global_run},
 #if defined WIN32
 		{"WINDOWS",global_true},

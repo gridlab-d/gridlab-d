@@ -1283,6 +1283,14 @@ static unsigned long _nan[] = { 0xffffffff, 0x7fffffff, };
 
 #ifdef __cplusplus
 
+#define MMF_NONE 0
+#define MMF_QUIET OF_QUIET
+#define MMF_DEBUG OF_DEBUG
+#define MMF_VERBOSE OF_VERBOSE
+#define MMF_WARNING OF_WARNING
+#define MMF_ALL (OF_QUIET|OF_DEBUG|OF_VERBOSE|OF_WARNING)
+extern set module_message_flags;
+
 /**************************************************************************************
  * GRIDLABD BASE CLASSES (Version 3.0 and later)
  * @defgroup gridlabd_h_classes Module API Classes
@@ -1871,6 +1879,14 @@ public: // iterators
 	inline gld_string get_##X##_string(void) { return get_##X##_property().get_string(); }; \
 	inline void set_##X(char *str) { get_##X##_property().from_string(str); }; \
 
+/// Define a method property
+#define GL_METHOD(C,X) public: int X(char *buffer, size_t len=0); \
+	static inline size_t get_##X##_offset(void) { return (size_t)method_##C##_##X; }; \
+	inline int get_##X(char *buffer, size_t len) { return X(buffer,len); }; \
+	inline int set_##X(char *buffer) { return X(buffer,0); }
+#define IMPL_METHOD(C,X) int C::X(char *buffer, size_t len)  // use this to implement a method
+
+
 /// Set bits of a bitflag property
 inline void setbits(unsigned long &flags, unsigned int bits) { flags|=bits; }; 
 /// Clear bits of a bitflag property
@@ -1907,7 +1923,7 @@ public: // header read accessors (no locking)
 	inline unsigned int get_lock(void) { return my()->lock; };
 	inline unsigned int get_rng_state(void) { return my()->rng_state; };
 	inline TIMESTAMP get_heartbeat(void) { return my()->heartbeat; };
-	inline unsigned long get_flags(unsigned long mask=0xffffffff) { return (my()->flags)&mask; };
+	inline uint64 get_flags(uint64 mask=0xffffffffffffffff) { return (my()->flags)&mask; };
 
 protected: // header write accessors (no locking)
 	inline void set_clock(TIMESTAMP ts=0) { my()->clock=(ts?ts:gl_globalclock); };
@@ -1915,9 +1931,9 @@ protected: // header write accessors (no locking)
 	inline void set_forecast(FORECAST *fs) { my()->forecast=fs; };
 	inline void set_latitude(double x) { my()->latitude=x; };
 	inline void set_longitude(double x) { my()->longitude=x; };
-	inline void set_flags(unsigned long flags) { my()->flags=flags; };
-	inline void set_flags_bits(unsigned long bits) { my()->flags|=bits; };
-	inline void unset_flags_bits(unsigned long bits) { my()->flags&=~bits; };
+	inline void set_flags(uint64 flags) { my()->flags=flags; };
+	inline void set_flags_bits(uint64 bits) { my()->flags|=bits; };
+	inline void unset_flags_bits(uint64 bits) { my()->flags&=~bits; };
 
 protected: // locking (self)
 	inline void rlock(void) { ::rlock(&my()->lock); };
@@ -1959,10 +1975,10 @@ public: // iterators
 
 public: // exceptions
 	inline void exception(const char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); throw (const char*)buf;};
-	inline void error(const char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_error("%s",buf);};
-	inline void warning(const char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_warning("%s",buf);};
-	inline void debug(const char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_debug("%s",buf);};
-};
+	inline void error(const char *msg, ...) { static char buf[1024]; if ( get_flags(OF_QUIET) ) return; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_error("%s",buf);};
+	inline void warning(const char *msg, ...) { static char buf[1024]; if ( !get_flags(OF_WARNING) ) return; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_warning("%s",buf);};
+	inline void verbose(const char *msg, ...) { static char buf[1024]; if ( !get_flags(OF_VERBOSE) ) return; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_verbose("%s",buf);};
+	inline void debug(const char *msg, ...) { static char buf[1024]; if ( !get_flags(OF_DEBUG) ) return; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_debug("%s",buf);};};
 /// Create a gld_object from an OBJECT
 static inline gld_object* get_object(OBJECT*obj)
 {
@@ -2133,6 +2149,16 @@ public: // special operations
 	{ 
 		return callback->properties.compare_basic(pstruct.prop->ptype,(PROPERTYCOMPAREOP)op,get_addr(),a,b,NULL);
 	};
+	inline int call(char *buffer, size_t len) { return (*(pstruct.prop->method))(obj+1,buffer,len); };
+	inline int call(const char *buffer) { return (*(pstruct.prop->method))(obj+1,(char*)buffer,0); };
+	inline int callf(const char *format,...) {
+		va_list ptr;
+		va_start(ptr,format);
+		char buffer[1024];
+		vsprintf(buffer,format,ptr);
+		va_end(ptr);
+		return call((const char*)buffer);
+	};
 
 public: // iterators
 	inline bool is_last(void) { return pstruct.prop==NULL || pstruct.prop->next==NULL || pstruct.prop->oclass!=pstruct.prop->next->oclass; };
@@ -2292,31 +2318,51 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef DLMAIN
+
 EXPORT int do_kill(void*);
+
+set module_message_flags = MMF_ALL;
+
 #ifdef WIN32
+
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 EXPORT int gld_major=MAJOR, gld_minor=MINOR; 
 BOOL APIENTRY DllMain(HANDLE h, DWORD r) { if (r==DLL_PROCESS_DETACH) do_kill(h); return TRUE; }
+
 #else // !WIN32
+
 CDECL int gld_major=MAJOR, gld_minor=MINOR; 
 CDECL int dllinit() __attribute__((constructor));
 CDECL int dllkill() __attribute__((destructor));
 CDECL int dllinit() { return 0; }
 CDECL int dllkill() { do_kill(NULL); }
+
 #endif // !WIN32
+
 #elif defined CONSOLE
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif
 #include "console.h"
+
 #endif // DLMAIN
 
+#define INIT_MMF(M) { \
+	static KEYWORD mmf_keys[] = { \
+		{"QUIET",MMF_QUIET,mmf_keys+1}, \
+		{"WARNING",MMF_WARNING,mmf_keys+2}, \
+		{"DEBUG",MMF_DEBUG,mmf_keys+3}, \
+		{"VERBOSE",MMF_VERBOSE,NULL}, \
+	}; \
+	GLOBALVAR *var = gl_global_create(#M "::message_flags",PT_set,&module_message_flags,PT_DESCRIPTION,"module message control flags",NULL); \
+	var->prop->keywords = mmf_keys; \
+}
 #define EXPORT_CREATE_C(X,C) EXPORT int create_##X(OBJECT **obj, OBJECT *parent) \
 {	try { *obj = gl_create_object(C::oclass); \
 	if ( *obj != NULL ) { C *my = OBJECTDATA(*obj,C); \
-		gl_set_parent(*obj,parent); return my->create(); \
+		gl_set_parent(*obj,parent); (*obj)->flags|=module_message_flags; return my->create(); \
 	} else return 0; } CREATE_CATCHALL(X); }
 /// Implement class create export
 #define EXPORT_CREATE(X) EXPORT_CREATE_C(X,X)
@@ -2395,6 +2441,13 @@ CDECL int dllkill() { do_kill(NULL); }
 	T_CATCHALL(X,loadmethod); }
 #define EXPORT_LOADMETHOD(X,N) EXPORT_LOADMETHOD_C(X,X,N)
 
+#define DECL_METHOD(X,N) EXPORT int method_##X##_##N(OBJECT *obj, char *value, size_t size)
+#define EXPORT_METHOD_C(X,C,N) DECL_METHOD(X,N) \
+		{	C *my = OBJECTDATA(obj,C); try { if ( obj!=NULL ) { \
+			return my->N(value,size); \
+			} else return 0; } \
+			T_CATCHALL(X,method); }
+		#define EXPORT_METHOD(X,N) EXPORT_METHOD_C(X,X,N)
 #endif
 
 /****************************************

@@ -100,6 +100,7 @@ public:
 	const char *get_last_error(void);
 	bool table_exists(char *table);
 	bool query(char *query,...);
+	bool query_ex(char *query,...);
 	unsigned int64 get_last_index(void);
 	MYSQL_RES *select(char *query,...);
 	MYSQL_RES get_next(MYSQL_RES*res);

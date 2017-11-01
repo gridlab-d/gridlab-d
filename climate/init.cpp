@@ -20,6 +20,8 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		return NULL;
 	}
 
+	INIT_MMF(climate);
+
 	new climate(module);
 	new weather(module);
 	new csv_reader(module);

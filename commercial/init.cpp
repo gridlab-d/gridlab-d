@@ -18,6 +18,8 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		return NULL;
 	}
 
+	INIT_MMF(commercial);
+
 	gl_global_create("commercial::warn_control",PT_bool,&office::warn_control,NULL);
 	gl_global_create("commercial::warn_low_temp",PT_double,&office::warn_low_temp,NULL);
 	gl_global_create("commercial::warn_high_temp",PT_double,&office::warn_high_temp,NULL);

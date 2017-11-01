@@ -6,6 +6,8 @@
 #include "http_client.h"
 #include "ufile.h"
 
+SET_MYCONTEXT(DMC_HTTP)
+
 UFILE *uopen(char *fname, void *arg)
 {
 	UFILE *rp = NULL;

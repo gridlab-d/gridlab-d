@@ -39,6 +39,8 @@
 #include "output.h"
 #include "find.h"
 
+SET_MYCONTEXT(DMC_LEGAL)
+
 /* branch names and histories (named after WECC 500kV busses)
 	Allston			Version 1.0 originated at PNNL March 2007, released February 2008
 	Buckley			Version 1.1 originated at PNNL January 2008, released April 2008
@@ -248,7 +250,9 @@ void *check_version_proc(void *ptr)
 		rc|=CV_NEWBUILD;
 	}
 	if ( rc==0 )
-		output_verbose("this version is current");
+	{
+		IN_MYCONTEXT output_verbose("this version is current");
+	}
 
 	/* done */
 Done:

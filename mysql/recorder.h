@@ -9,6 +9,7 @@
 #define MO_DROPTABLES	0x0001	// drop tables option flag
 #define MO_USEUNITS		0x0002	// add units to column names
 #define MO_NOCREATE		0x0004	// do not automatically create tables
+#define MO_NOADD		0x0008	// do not automatically add missing columns
 
 #include <string>
 #include <vector>
@@ -36,6 +37,7 @@ private:
 	std::vector<gld_property> property_target;
 	std::vector<gld_unit> property_unit;
 	char header_data[1024];
+	char *oldvalues;
 public:
 	inline bool get_trigger_on(void) { return trigger_on; };
 	inline bool get_enabled(void) { return enabled; };

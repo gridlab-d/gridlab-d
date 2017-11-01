@@ -1,0 +1,18 @@
+module powernet;
+#set suppress_repeat_messages=0
+object house {
+	Uair 500 Btu/degF/h;
+	Cair 1000 Btu/degF;
+	Umass 5000 Btu/degF/h;
+	Cmass 10000 Btu/degF;
+	Qheat 18000 Btu/h;
+	Qcool 36000 Btu/h;
+	Qint 18000 Btu/h;
+	Tair 72 degF;
+	
+	name house_1;
+	object agent {
+		name agent_1;
+		sell "id:house_1; quantity:10kW; price:20$/MWh; start:1478291100s; duration:300s";
+	};
+}

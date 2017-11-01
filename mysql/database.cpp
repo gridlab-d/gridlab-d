@@ -258,6 +258,7 @@ char *database::get_sqltype(gld_property &prop)
 	case PT_char32:
 		return "CHAR(32)";
 	case PT_enumeration:
+		// TODO replace with ENUM('value1','value2',...);
 	case PT_char256:
 		return "TEXT(256)";
 	case PT_char1024:
@@ -265,7 +266,8 @@ char *database::get_sqltype(gld_property &prop)
 	case PT_complex:
 		return "CHAR(40)";
 	case PT_set:
-		return "LARGETEXT";
+		// TODO replace with SET('value1','value2',...);
+		return "TEXT";
 	case PT_bool:
 		return "CHAR(1)";
 	case PT_timestamp:
@@ -365,6 +367,20 @@ bool database::query(char *fmt,...)
 		gl_verbose("%s->query[%s] ok", get_name(), command);
 
 	return true;
+}
+
+bool database::query_ex(char *fmt,...)
+{
+	char command[1024];
+	va_list ptr;
+	va_start(ptr,fmt);
+	vsnprintf(command,sizeof(command),fmt,ptr);
+	va_end(ptr);
+
+	// query mysql
+	gl_debug("%s->query_ex[%s]", get_name(), command);
+	check_schema();
+	return mysql_query(mysql,command) ? false : true;
 }
 
 MYSQL_RES *database::select(char *fmt,...)

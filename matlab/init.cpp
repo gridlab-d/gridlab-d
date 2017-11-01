@@ -166,6 +166,8 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		return NULL;
 	}
 
+	INIT_MMF(matlab);
+
 	// open a connection to the Matlab engine
 	int status=0;
 	static char server[1024];

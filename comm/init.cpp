@@ -25,6 +25,8 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		return NULL;
 	}
 
+	INIT_MMF(comm);
+
 	new network(module);
 	new network_interface(module);
 #ifdef USE_MPI

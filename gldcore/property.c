@@ -27,13 +27,15 @@
 #include "stream.h"
 #include "exec.h"
 
+SET_MYCONTEXT(DMC_PROPERTY)
+
 /* IMPORTANT: this list must match PROPERTYTYPE enum in property.h */
 PROPERTYSPEC property_type[_PT_LAST] = {
 	{"void", "string", 0, 0, convert_from_void,convert_to_void},
 	{"double", "decimal", sizeof(double), 24, convert_from_double,convert_to_double,NULL,stream_double,{TCOPS(double)},},
 	{"complex", "string", sizeof(complex), 48, convert_from_complex,convert_to_complex,NULL,NULL,{TCOPS(double)},complex_get_part},
-	{"enumeration", "string", sizeof(int32), 32, convert_from_enumeration,convert_to_enumeration,NULL,NULL,{TCOPS(uint64)},},
-	{"set", "string", sizeof(int64), 32, convert_from_set,convert_to_set,NULL,NULL,{TCOPS(uint64)},},
+	{"enumeration", "string", sizeof(enumeration), 1024, convert_from_enumeration,convert_to_enumeration,NULL,NULL,{TCOPS(uint64)},},
+	{"set", "string", sizeof(set), 1024, convert_from_set,convert_to_set,NULL,NULL,{TCOPS(uint64)},},
 	{"int16", "integer", sizeof(int16), 6, convert_from_int16,convert_to_int16,NULL,NULL,{TCOPS(uint16)},},
 	{"int32", "integer", sizeof(int32), 12, convert_from_int32,convert_to_int32,NULL,NULL,{TCOPS(uint32)},},
 	{"int64", "integer", sizeof(int64), 24, convert_from_int64,convert_to_int64,NULL,NULL,{TCOPS(uint64)},},
@@ -44,14 +46,15 @@ PROPERTYSPEC property_type[_PT_LAST] = {
 	{"object", "string", sizeof(OBJECT*), sizeof(OBJECTNAME), convert_from_object,convert_to_object,NULL,NULL,{TCOPB(object)},object_get_part},
 	{"delegated", "string", (unsigned int)-1, 0, convert_from_delegated, convert_to_delegated},
 	{"bool", "string", sizeof(bool), 6, convert_from_boolean, convert_to_boolean,NULL,NULL,{TCOPB(bool)},},
-	{"timestamp", "string", sizeof(int64), 24, convert_from_timestamp_stub, convert_to_timestamp_stub,NULL,NULL,{TCOPS(uint64)},timestamp_get_part},
-	{"double_array", "string", sizeof(double_array), 0, convert_from_double_array, convert_to_double_array,double_array_create,NULL,{TCNONE},double_array_get_part},
-	{"complex_array", "string", sizeof(complex_array), 0, convert_from_complex_array, convert_to_complex_array,complex_array_create,NULL,{TCNONE},complex_array_get_part},
+	{"timestamp", "string", sizeof(int64), 32, convert_from_timestamp_stub, convert_to_timestamp_stub,NULL,NULL,{TCOPS(uint64)},timestamp_get_part},
+	{"double_array", "string", sizeof(double_array), 1024, convert_from_double_array, convert_to_double_array,double_array_create,NULL,{TCNONE},double_array_get_part},
+	{"complex_array", "string", sizeof(complex_array), 1024, convert_from_complex_array, convert_to_complex_array,complex_array_create,NULL,{TCNONE},complex_array_get_part},
 	{"real", "decimal", sizeof(real), 24, convert_from_real, convert_to_real},
 	{"float", "decimal", sizeof(float), 24, convert_from_float, convert_to_float},
-	{"loadshape", "string", sizeof(loadshape), 0, convert_from_loadshape, convert_to_loadshape, loadshape_create,NULL,{TCOPS(double)},},
-	{"enduse", "string", sizeof(enduse), 0, convert_from_enduse, convert_to_enduse, enduse_create,NULL,{TCOPS(double)},enduse_get_part},
+	{"loadshape", "string", sizeof(loadshape), 1024, convert_from_loadshape, convert_to_loadshape, loadshape_create,NULL,{TCOPS(double)},},
+	{"enduse", "string", sizeof(enduse), 1024, convert_from_enduse, convert_to_enduse, enduse_create,NULL,{TCOPS(double)},enduse_get_part},
 	{"randomvar", "string", sizeof(randomvar), 24, convert_from_randomvar, convert_to_randomvar, randomvar_create,NULL,{TCOPS(double)},random_get_part},
+	{"method","string", -1, 0, convert_from_method,convert_to_method},
 };
 
 PROPERTYSPEC *property_getspec(PROPERTYTYPE ptype)
@@ -93,7 +96,7 @@ int property_check(void)
 		case PT_random: sz = sizeof(randomvar); break;
 		default: break;
 		}
-		output_verbose("property_check of %s: declared size is %d, actual size is %d", property_type[ptype].name, property_type[ptype].size, sz);
+		IN_MYCONTEXT output_verbose("property_check of %s: declared size is %d, actual size is %d", property_type[ptype].name, property_type[ptype].size, sz);
 		if ( sz>0 && property_type[ptype].size<sz )
 		{
 			status = 0;
@@ -195,8 +198,8 @@ int property_create(PROPERTY *prop, void *addr)
 	{
 		if (property_type[prop->ptype].create)
 			return property_type[prop->ptype].create(addr);
-		//memset(addr,0,(prop->size==0?1:prop->size)*property_type[prop->ptype].size);
-		memset(addr,0,property_type[prop->ptype].size);
+		if ( (int)property_type[prop->ptype].size>0 )
+			memset(addr,0,property_type[prop->ptype].size);
 		return 1;
 	}
 	else

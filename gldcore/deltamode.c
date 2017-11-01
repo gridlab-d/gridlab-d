@@ -18,6 +18,8 @@
 #include "output.h"
 #include "realtime.h"
 
+SET_MYCONTEXT(DMC_DELTAMODE)
+
 static OBJECT **delta_objectlist = NULL; /* qualified object list */
 static int delta_objectcount = 0; /* qualified object count */
 static MODULE **delta_modulelist = NULL; /* qualified module list */
@@ -95,7 +97,9 @@ STATUS delta_init(void)
 		if ( obj->flags&OF_DELTAMODE )
 		{
 			if ( !obj->oclass->update )
-				output_debug("object '%s' requested deltamode updates but the class '%s' does not export the update function", object_name(obj, temp_name_buff, 63), obj->oclass->name);
+			{
+				IN_MYCONTEXT output_debug("object '%s' requested deltamode updates but the class '%s' does not export the update function", object_name(obj, temp_name_buff, 63), obj->oclass->name);
+			}
 			delta_objectcount++;
 			if ( obj->rank > toprank ){
 				toprank = obj->rank;

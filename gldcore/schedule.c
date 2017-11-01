@@ -22,6 +22,8 @@
 #include "lock.h"
 #include "exec.h"
 
+SET_MYCONTEXT(DMC_SCHEDULE)
+
 static SCHEDULE *schedule_list = NULL;
 static uint32 n_schedules = 0;
 static int interpolated_schedules = FALSE;
@@ -527,11 +529,11 @@ void *schedule_createproc(void *args)
 	pthread_mutex_lock(&sc_activelock);
 	while ( sc_running>=global_threadcount )
 	{
-		output_debug("schedule '%s' creation waiting (%d of %d active)", sch->name, sc_running, global_threadcount); 
+		IN_MYCONTEXT output_debug("schedule '%s' creation waiting (%d of %d active)", sch->name, sc_running, global_threadcount);
 		pthread_cond_wait(&sc_active,&sc_activelock);
 	}
 	sc_running++;
-	output_debug("deferred schedule '%s' creation starting (%d of %d active)", sch->name, sc_running, global_threadcount); 
+	IN_MYCONTEXT output_debug("deferred schedule '%s' creation starting (%d of %d active)", sch->name, sc_running, global_threadcount);
 	pthread_cond_broadcast(&sc_active);
 	pthread_mutex_unlock(&sc_activelock);
 
@@ -597,7 +599,7 @@ void *schedule_createproc(void *args)
 						int day = t/60/24;
 						int hour = t/60 - day*24;
 						int minute = t - hour*60 - day*24*60;
-						output_debug("schedule '%s' gap in calendar %d at day %d, hour %d, minute %d lasting %d minutes", sch->name, day, hour, minute);
+						IN_MYCONTEXT output_debug("schedule '%s' gap in calendar %d at day %d, hour %d, minute %d lasting %d minutes", sch->name, day, hour, minute);
 						ingap = 1;
 						ngaps++;
 					}
@@ -627,7 +629,7 @@ void *schedule_createproc(void *args)
 #ifdef _DEBUG
 		/* calculate checksum */
 		sch->checksum = schedule_checksum(sch);
-		output_debug("schedule '%s' checksum is %0x08d", sch->name, sch->checksum);
+		IN_MYCONTEXT output_debug("schedule '%s' checksum is %0x08d", sch->name, sch->checksum);
 #endif
 		status = SUCCESS;
 	}
@@ -642,7 +644,7 @@ Done:
 	pthread_mutex_unlock(&sc_activelock);
 	if ( status==SUCCESS )
 	{
-		output_debug("deferred creation of schedule '%s' completed", sch->name);
+		IN_MYCONTEXT output_debug("deferred creation of schedule '%s' completed", sch->name);
 	}
 	else
 	{
@@ -661,10 +663,10 @@ int schedule_createwait(void)
 	pthread_mutex_lock(&sc_activelock);
 	while ( sc_running>0 || sc_done<sc_started )
 	{
-		output_debug("waiting for deferred schedule creations to complete (%d of %d active)", sc_running, global_threadcount);
+		IN_MYCONTEXT output_debug("waiting for deferred schedule creations to complete (%d of %d active)", sc_running, global_threadcount);
 		pthread_cond_wait(&sc_active,&sc_activelock);
 	}
-	output_debug("all deferred schedule creations completed %s", sc_status==SUCCESS ? "successfully" : "with at least one failure");
+	IN_MYCONTEXT output_debug("all deferred schedule creations completed %s", sc_status==SUCCESS ? "successfully" : "with at least one failure");
 	pthread_mutex_unlock(&sc_activelock);
 	return sc_status;
 }
@@ -713,7 +715,7 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 		 */
 		return NULL;
 	}
-	output_debug("schedule '%s' uses %.1f MB of memory", name, sizeof(SCHEDULE)/1000000.0);
+	IN_MYCONTEXT output_debug("schedule '%s' uses %.1f MB of memory", name, sizeof(SCHEDULE)/1000000.0);
 	if (strlen(name)>=sizeof(sch->name))
 	{
 		output_error("schedule_create(char *name='%s', char *definition='%s') name too long)", name, definition);
@@ -1039,7 +1041,9 @@ TIMESTAMP schedule_sync(SCHEDULE *sch, /**< the schedule that is to be synchroni
 			double value = schedule_value(sch,index);
 #ifdef _DEBUG
 			if ( dtnext==0 )
-				output_debug("schedule_sync(SCHEDULE *sch={name: '%s',...}, TIMESTAMP t=%"FMT_INT64"d) has a dtnext==0", sch->name, t);
+			{
+				IN_MYCONTEXT output_debug("schedule_sync(SCHEDULE *sch={name: '%s',...}, TIMESTAMP t=%"FMT_INT64"d) has a dtnext==0", sch->name, t);
+			}
 #endif
 			if(sch->value != value){//This will not update sch->since to the starttime if value == 0 at the starttime.
 				sch->since = t;
@@ -1149,7 +1153,7 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 		SCHEDULE *sch;
 		int n_items, schn=0;
 
-		output_debug("loadshape_syncall setting up for %d shapes", n_schedules);
+		IN_MYCONTEXT output_debug("loadshape_syncall setting up for %d shapes", n_schedules);
 
 		// determine needed threads
 		n_threads_sch = global_threadcount;
@@ -1169,8 +1173,8 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 			if (n_threads_sch*n_items<n_schedules) // not enough slots yet
 				n_threads_sch++; // add one underused threads
 
-			output_debug("schedule_syncall is using %d of %d available threads", n_threads_sch, global_threadcount);
-			output_debug("schedule_syncall is assigning %d shapes per thread", n_items);
+			IN_MYCONTEXT output_debug("schedule_syncall is using %d of %d available threads", n_threads_sch, global_threadcount);
+			IN_MYCONTEXT output_debug("schedule_syncall is assigning %d shapes per thread", n_items);
 
 			// allocate thread list
 			thread_sch = (SCHEDULESYNCDATA*)malloc(sizeof(SCHEDULESYNCDATA)*n_threads_sch);
@@ -1245,7 +1249,7 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 		// begin wait
 		while (donecount_sch>0) 
 			pthread_cond_wait(&done_sch,&donelock_sch);
-		output_debug("passed donecount==0 condition");
+		IN_MYCONTEXT output_debug("passed donecount==0 condition");
 
 		// unlock done count
 		pthread_mutex_unlock(&donelock_sch);
@@ -1334,7 +1338,7 @@ int schedule_test(void)
 	}
 	else
 	{
-		output_verbose("%d schedule tests completed with no errors--see test.txt for details",ok);
+		IN_MYCONTEXT output_verbose("%d schedule tests completed with no errors--see test.txt for details",ok);
 		output_test("scheduletest: %d schedule tests completed, %d errors found",ok,errorcount);
 	}
 	output_test("END: schedule tests");

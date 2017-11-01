@@ -11,6 +11,10 @@
  */
 
 #include "match.h"
+#include "output.h"
+#include "globals.h"
+
+SET_MYCONTEXT(DMC_MATCH)
 
 /* match: search for regexp anywhere in text */ 
 int match(char *regexp, char *text){

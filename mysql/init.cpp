@@ -19,6 +19,8 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		return NULL;
 	}
 
+	INIT_MMF(mysql);
+
 	gl_global_create("mysql::hostname",PT_char256,default_hostname,PT_ACCESS,PA_PUBLIC,PT_DESCRIPTION,"default MySQL server name",NULL);
 	gl_global_create("mysql::username",PT_char32,default_username,PT_ACCESS,PA_PUBLIC,PT_DESCRIPTION,"default MySQL user name",NULL);
 	gl_global_create("mysql::password",PT_char32,default_password,PT_ACCESS,PA_PUBLIC,PT_DESCRIPTION,"default MySQL user password",NULL);

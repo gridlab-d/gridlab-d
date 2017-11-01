@@ -20,6 +20,8 @@
 #include "object.h"
 #include "load.h"
 
+SET_MYCONTEXT(DMC_CONVERT)
+
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 typedef uint32_t  uint32;   /* unsigned 32-bit integers */
@@ -398,14 +400,14 @@ int convert_to_set(const char *buffer, /**< a pointer to the string buffer */
 	KEYWORD *keys=prop->keywords;
 	char temp[4096];
 	const char *ptr;
-	uint32 value=0;
+	uint64 value=0;
 	int count=0;
 
 	/* directly convert numeric strings */
 	if (strnicmp(buffer,"0x",2)==0)
-		return sscanf(buffer,"0x%x",(uint32*)data);
+		return sscanf(buffer,"0x%x",(uint64*)data);
 	else if (isdigit(buffer[0]))
-		return sscanf(buffer,"%d",(uint32*)data);
+		return sscanf(buffer,"%d",(uint64*)data);
 
 	/* prevent long buffer from being scanned */
 	if (strlen(buffer)>sizeof(temp)-1)
@@ -464,7 +466,7 @@ int convert_to_set(const char *buffer, /**< a pointer to the string buffer */
 			}
 		}
 	}
-	*(uint32*)data = value;
+	*(uint64*)data = value;
 	return count;
 }
 
@@ -1252,4 +1254,33 @@ int convert_from_struct(char *buffer, size_t len, void *data, PROPERTY *prop)
 	return -len;
 }
 
+int convert_from_method (	char *buffer, /**< a pointer to the string buffer */
+							int size, /**< the size of the string buffer */
+							void *data, /**< a pointer to the data that is not changed */
+							PROPERTY *prop) /**< a pointer to keywords that are supported */
+{
+	if ( buffer==NULL ) { output_error("gldcore/convert_from_method(): buffer is null"); return -1; }
+	if ( data==NULL ) { output_error("gldcore/convert_from_method(): data is null"); return -1; }
+	if ( prop==NULL ) { output_error("gldcore/convert_from_method(): prop is null"); return -1; }
+	if ( prop->method==NULL ) { output_error("gldcore/convert_from_method(prop='%s'): method is null", prop->name ? prop->name : "(anon)"); return -1; }
+	OBJECT *obj = (OBJECT*)(data)-1;
+	int rc = (prop->method)(obj,buffer,size);
+	IN_MYCONTEXT output_debug("gldcore/convert_from_method(buffer='%s', size=%d, object='%s', prop='%s') -> %d", buffer, size, obj->name?obj->name:"(anon)", prop->name, rc);
+	return rc;
+}
+
+int convert_to_method (	const char *buffer, /**< a pointer to the string buffer that is ignored */
+						void *data, /**< a pointer to the data that is not changed */
+						PROPERTY *prop) /**< a pointer to keywords that are supported */
+{
+	if ( buffer==NULL ) { output_error("gldcore/convert_to_method(): buffer is null"); return -1; }
+	if ( data==NULL ) { output_error("gldcore/convert_to_method(): data is null"); return -1; }
+	if ( prop==NULL ) { output_error("gldcore/convert_to_method(): prop is null"); return -1; }
+	if ( prop->method==NULL ) { output_error("gldcore/convert_to_method(prop='%s'): method is null", prop->name ? prop->name : "(anon)"); return -1; }
+	void *ptr = (void*)buffer; // force to non-const (trust me)
+	OBJECT *obj = (OBJECT*)(data)-1;
+	int rc = (prop->method)(obj,(char*)ptr,0);
+	IN_MYCONTEXT output_debug("gldcore/convert_to_method(buffer='%s', object='%s', prop='%s') -> %d", buffer, obj->name?obj->name:"(anon)", prop->name, rc);
+	return rc;
+}
 /**@}**/

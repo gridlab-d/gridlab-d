@@ -35,6 +35,8 @@
 #include "output.h"
 #include "find.h"
 
+SET_MYCONTEXT(DMC_AGGREGATE)
+
 /** This function builds an collection of objects into an aggregation.  
 	The aggregation can be run using aggregate_value(AGGREGATION*)
  **/

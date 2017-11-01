@@ -136,6 +136,8 @@
 
 #include "pthread.h"
 
+SET_MYCONTEXT(DMC_EXEC)
+
 /** Set/get exit code **/
 int exec_setexitcode(int xc)
 {
@@ -143,7 +145,7 @@ int exec_setexitcode(int xc)
 	if ( oldxc!=XC_SUCCESS )
 		output_warning("new exitcode %d overwrites existing exitcode %d", xc,oldxc);
 	global_exit_code = xc;
-	output_debug("exit code %d", xc);
+	IN_MYCONTEXT output_debug("exit code %d", xc);
 	return oldxc;
 }
 int exec_getexitcode(void)
@@ -206,8 +208,8 @@ int exec_init()
 	/* set thread count equal to processor count if not passed on command-line */
 	if (global_threadcount == 0)
 		global_threadcount = processor_count();
-	output_verbose("detected %d processor(s)", processor_count());
-	output_verbose("using %d helper thread(s)", global_threadcount);
+	IN_MYCONTEXT output_verbose("detected %d processor(s)", processor_count());
+	IN_MYCONTEXT output_verbose("using %d helper thread(s)", global_threadcount);
 
 	/* setup clocks */
 	if ( global_starttime==0 )
@@ -452,7 +454,7 @@ static void ss_do_object_sync(int thread, void *item)
 		this_t = object_sync(obj, global_clock, passtype[pass]);
 		if (this_t == global_clock)
 		{
-			output_verbose("%s: object %s calling for re-sync", simtime(), object_name(obj, b, 63));
+			IN_MYCONTEXT output_verbose("%s: object %s calling for re-sync", simtime(), object_name(obj, b, 63));
 		}
 
 
@@ -528,7 +530,7 @@ static void ss_do_object_sync(int thread, void *item)
 		/* check for iteration limit approach */
 		if (iteration_counter == 2 && this_t == global_clock) {
 			char b[64];
-			output_verbose("%s: object %s iteration limit imminent",
+			IN_MYCONTEXT output_verbose("%s: object %s iteration limit imminent",
 								simtime(), object_name(obj, b, 63));
 		}
 		else if (iteration_counter == 1 && this_t == global_clock) {
@@ -830,7 +832,7 @@ static STATUS init_all(void)
 {
 	OBJECT *obj;
 	STATUS rv = SUCCESS;
-	output_verbose("initializing objects...");
+	IN_MYCONTEXT output_verbose("initializing objects...");
 
 	/* initialize instances */
 	if ( instance_initall()==FAILED )
@@ -1425,7 +1427,7 @@ void exec_mls_create(void)
 
 	mls_created = 1;
 
-	output_debug("exec_mls_create()");
+	IN_MYCONTEXT output_debug("exec_mls_create()");
 	rv = pthread_mutex_init(&mls_svr_lock,NULL);
 	if (rv != 0)
 	{
@@ -1454,22 +1456,22 @@ void exec_mls_suspend(void)
 {
 	int loopctr = 10;
 	int rv = 0;
-	output_debug("pausing simulation");
+	IN_MYCONTEXT output_debug("pausing simulation");
 	if ( global_multirun_mode==MRM_STANDALONE && strcmp(global_environment,"server")!=0 )
 		output_warning("suspending simulation with no server/multirun active to control mainloop state");
-	output_debug("lock_ (%x->%x)", &mls_svr_lock, mls_svr_lock);
+	IN_MYCONTEXT output_debug("lock_ (%x->%x)", &mls_svr_lock, mls_svr_lock);
 	rv = pthread_mutex_lock(&mls_svr_lock);
 	if (0 != rv)
 	{
 		output_error("error with pthread_mutex_lock() in exec_mls_suspend()");
 	}
-	output_debug("sched update_");
+	IN_MYCONTEXT output_debug("sched update_");
 	sched_update(global_clock,global_mainloopstate=MLS_PAUSED);
-	output_debug("wait loop_");
+	IN_MYCONTEXT output_debug("wait loop_");
 	while ( global_clock==TS_ZERO || (global_clock>=global_mainlooppauseat && global_mainlooppauseat<TS_NEVER) ) {
 		if (loopctr > 0)
 		{
-			output_debug(" * tick (%i)", --loopctr);
+			IN_MYCONTEXT output_debug(" * tick (%i)", --loopctr);
 		}
 		rv = pthread_cond_wait(&mls_svr_signal, &mls_svr_lock);
 		if (rv != 0)
@@ -1477,9 +1479,9 @@ void exec_mls_suspend(void)
 			output_error("error with pthread_cond_wait() in exec_mls_suspend()");
 		}
 	}
-	output_debug("sched update_");
+	IN_MYCONTEXT output_debug("sched update_");
 	sched_update(global_clock,global_mainloopstate=MLS_RUNNING);
-	output_debug("unlock_");
+	IN_MYCONTEXT output_debug("unlock_");
 	rv = pthread_mutex_unlock(&mls_svr_lock);
 	if (rv != 0)
 	{
@@ -1795,7 +1797,7 @@ STATUS exec_start(void)
 		if (global_threadcount == 0)
 		{
 			global_threadcount = processor_count();
-			output_verbose("using %d helper thread(s)", global_threadcount);
+			IN_MYCONTEXT output_verbose("using %d helper thread(s)", global_threadcount);
 		}
 
 		//sjin: allocate arg_data_array to store pthreads creation argument
@@ -1820,7 +1822,7 @@ STATUS exec_start(void)
 	}
 	else
 	{
-		output_debug("debug mode running single threaded");
+		IN_MYCONTEXT output_debug("debug mode running single threaded");
 		output_message("GridLAB-D entering debug mode");
 	}
 
@@ -1838,7 +1840,7 @@ STATUS exec_start(void)
 		time_t gtime;
 		time(&gtime);
 		global_clock = gtime;
-		output_verbose("realtime mode requires using now (%s) as starttime", convert_from_timestamp(global_clock,buffer,sizeof(buffer))>0?buffer:"invalid time");
+		IN_MYCONTEXT output_verbose("realtime mode requires using now (%s) as starttime", convert_from_timestamp(global_clock,buffer,sizeof(buffer))>0?buffer:"invalid time");
 		if ( global_stoptime<global_clock )
 			global_stoptime = TS_NEVER;
 	}
@@ -1847,13 +1849,13 @@ STATUS exec_start(void)
 	if (global_multirun_mode == MRM_SLAVE)
 	{
 		pthread_cond_broadcast(&mls_inst_signal); // tell slaveproc() it's time to get rolling
-		output_debug("exec_start(), slave waiting for first time signal");
+		IN_MYCONTEXT output_debug("exec_start(), slave waiting for first time signal");
 		pthread_mutex_lock(&mls_inst_lock);
 		pthread_cond_wait(&mls_inst_signal, &mls_inst_lock);
 		pthread_mutex_unlock(&mls_inst_lock);
 		// will have copied data down and updated step_to with slave_cache
 		//global_clock = exec_sync_get(NULL); // copy time signal to gc
-		output_debug("exec_start(), slave received first time signal of %lli", global_clock);
+		IN_MYCONTEXT output_debug("exec_start(), slave received first time signal of %lli", global_clock);
 	}
 	// maybe that's all we need...
 	iteration_counter = global_iteration_limit;
@@ -1896,7 +1898,7 @@ STATUS exec_start(void)
 	}
 
 	/* allocate and initialize thread data */
-	output_debug("nObjRankList=%d ",nObjRankList);
+	IN_MYCONTEXT output_debug("nObjRankList=%d ",nObjRankList);
 
 	next_t1 = malloc(sizeof(next_t1[0])*nObjRankList);
 	memset(next_t1,0,sizeof(next_t1[0])*nObjRankList);
@@ -1940,7 +1942,7 @@ STATUS exec_start(void)
 		while ( iteration_counter>0 && exec_sync_isrunning(NULL) && exec_getexitcode()==XC_SUCCESS ) 
 		{
 			TIMESTAMP internal_synctime;
-			output_debug("*** main loop event at %lli; stoptime=%lli, n_events=%i, exitcode=%i ***", exec_sync_get(NULL), global_stoptime, exec_sync_getevents(NULL), exec_getexitcode());
+			IN_MYCONTEXT output_debug("*** main loop event at %lli; stoptime=%lli, n_events=%i, exitcode=%i ***", exec_sync_get(NULL), global_stoptime, exec_sync_getevents(NULL), exec_getexitcode());
 
 			/* update the process table info */
 			sched_update(global_clock,MLS_RUNNING);
@@ -1963,7 +1965,7 @@ STATUS exec_start(void)
 				ftime(&tv);
 				if (1000-tv.millitm >= 0)
 				{
-					output_verbose("waiting %d msec", 1000-tv.millitm);
+					IN_MYCONTEXT output_verbose("waiting %d msec", 1000-tv.millitm);
 					Sleep(1000-tv.millitm );
 					metric = (1000-tv.millitm)/1000.0;
 					global_clock += global_run_realtime;
@@ -1975,7 +1977,7 @@ STATUS exec_start(void)
 				gettimeofday(&tv, NULL);
 				if (1000000-tv.tv_usec >= 0)
 				{
-					output_verbose("waiting %d usec", 1000000-tv.tv_usec);
+					IN_MYCONTEXT output_verbose("waiting %d usec", 1000000-tv.tv_usec);
 					usleep(1000000-tv.tv_usec);
 					metric = (1000000-tv.tv_usec)/1000000.0;
 					global_clock += global_run_realtime;
@@ -1987,7 +1989,7 @@ STATUS exec_start(void)
 				global_realtime_metric = global_realtime_metric*IIR + metric*(1-IIR);
 				exec_sync_reset(NULL);
 				exec_sync_set(NULL,global_clock);
-				output_verbose("realtime clock advancing to %d", (int)global_clock);
+				IN_MYCONTEXT output_verbose("realtime clock advancing to %d", (int)global_clock);
 			}
 
 			/* internal control of global clock */
@@ -2003,7 +2005,7 @@ STATUS exec_start(void)
 				DELTAMODEFLAGS flags=DMF_NONE;
 				DT delta_dt = delta_modedesired(&flags);
 				TIMESTAMP t = TS_NEVER;
-				output_debug("delta_dt is %d", (int)delta_dt);
+				IN_MYCONTEXT output_debug("delta_dt is %d", (int)delta_dt);
 				switch ( delta_dt ) {
 				case DT_INFINITY: /* no dt -> event mode */
 					global_simulation_mode = SM_EVENT;
@@ -2052,7 +2054,7 @@ STATUS exec_start(void)
 			else if ( global_debug_output )
 			{
 				char dt[64]="(invalid)"; convert_from_timestamp(global_clock,dt,sizeof(dt));
-				output_debug("global_clock -> %s\n",dt);
+				IN_MYCONTEXT output_debug("global_clock -> %s\n",dt);
 			}
 			/* set time context */
 			output_set_time_context(global_clock);
@@ -2256,8 +2258,8 @@ STATUS exec_start(void)
 			/**** LOOPED SLAVE PAUSE HERE ****/
 			if(global_multirun_mode == MRM_SLAVE)
 			{
-				output_debug("step_to = %lli", exec_sync_get(NULL));
-				output_debug("exec_start(), slave waiting for looped time signal");
+				IN_MYCONTEXT output_debug("step_to = %lli", exec_sync_get(NULL));
+				IN_MYCONTEXT output_debug("exec_start(), slave waiting for looped time signal");
 
 				pthread_cond_broadcast(&mls_inst_signal);
 
@@ -2265,7 +2267,7 @@ STATUS exec_start(void)
 				pthread_cond_wait(&mls_inst_signal, &mls_inst_lock);
 				pthread_mutex_unlock(&mls_inst_lock);
 
-				output_debug("exec_start(), slave received looped time signal (%lli)", exec_sync_get(NULL));
+				IN_MYCONTEXT output_debug("exec_start(), slave received looped time signal (%lli)", exec_sync_get(NULL));
 			}
 
 			/* check for clock advance (indicating last pass) */
@@ -2349,7 +2351,7 @@ STATUS exec_start(void)
 		if ( exec_sync_isnever(NULL) )
 		{
 			char buffer[64];
-			output_verbose("simulation at steady state at %s", convert_from_timestamp(global_clock,buffer,sizeof(buffer))?buffer:"invalid time");
+			IN_MYCONTEXT output_verbose("simulation at steady state at %s", convert_from_timestamp(global_clock,buffer,sizeof(buffer))?buffer:"invalid time");
 		}
 
 		/* terminate main loop state control */
@@ -2366,7 +2368,7 @@ STATUS exec_start(void)
 		 */
 	}
 	ENDCATCH
-	output_debug("*** main loop ended at %lli; stoptime=%lli, n_events=%i, exitcode=%i ***", exec_sync_get(NULL), global_stoptime, exec_sync_getevents(NULL), exec_getexitcode());
+	IN_MYCONTEXT output_debug("*** main loop ended at %lli; stoptime=%lli, n_events=%i, exitcode=%i ***", exec_sync_get(NULL), global_stoptime, exec_sync_getevents(NULL), exec_getexitcode());
 	if(global_multirun_mode == MRM_MASTER)
 	{
 		instance_master_done(TS_NEVER); // tell everyone to pack up and go home
@@ -2533,7 +2535,7 @@ STATUS exec_test(struct sync_data *data, /**< the synchronization state data */
 		/* check for iteration limit approach */
 		if (iteration_counter == 2 && this_t == global_clock) {
 			char b[64];
-			output_verbose("%s: object %s iteration limit imminent",
+			IN_MYCONTEXT output_verbose("%s: object %s iteration limit imminent",
 								simtime(), object_name(obj, b, 63));
 		}
 		else if (iteration_counter == 1 && this_t == global_clock) {
@@ -2683,7 +2685,7 @@ void *slave_node_proc(void *args)
 	//	the first four tokens are dir="%s" file="%s" port=%d id=%I64
 	//	subsequent toekns are as legitimate GLD cmdargs
 	//	ex: [HS_CMD]dir="C:\mytemp\mls\slave\" file="model.glm" port="6762" id="1234567890" --profile --relax --quiet
-	output_debug("cmd: \'%s\'", buffer);
+	IN_MYCONTEXT output_debug("cmd: \'%s\'", buffer);
 	// HS_CMD
 	if ( memcmp(token[0],buffer,token_len[0])!=0 )
 	{
@@ -2697,7 +2699,7 @@ void *slave_node_proc(void *args)
 	if ( memcmp(token[1], buffer+offset, token_len[1])!=0 )
 	{
 		output_error("slave_node_proc(): error in command instruction dir token");
-		output_debug("t=\"%5s\" vs c=\"%5s\"", token[1], buffer+offset);
+		IN_MYCONTEXT output_debug("t=\"%5s\" vs c=\"%5s\"", token[1], buffer+offset);
 		closesocket(masterfd);
 		free(addrin);
 		return 0;
@@ -2712,12 +2714,12 @@ void *slave_node_proc(void *args)
 	{
 		++tok_len;
 	}
-	output_debug("tok_len = %d", tok_len);
+	IN_MYCONTEXT output_debug("tok_len = %d", tok_len);
 	if (tok_len > 0)
 	{
 		char temp[256];
 		sprintf(temp, "%%d offset and %%d len for \'%%%ds\'", tok_len);
-		output_debug(temp, offset, tok_len, buffer+offset);
+		IN_MYCONTEXT output_debug(temp, offset, tok_len, buffer+offset);
 		memcpy(dirname, buffer+offset, (tok_len > sizeof(dirname) ? sizeof(dirname) : tok_len));
 	} else {
 		dirname[0] = 0;
@@ -2728,7 +2730,7 @@ void *slave_node_proc(void *args)
 	if ( memcmp(token[2],buffer+offset,token_len[2])!=0 )
 	{
 		output_error("slave_node_proc(): error in command instruction file token");
-		output_debug("(%d)t=\"%7s\" vs c=\"%7s\"", offset, token[2], buffer+offset);
+		IN_MYCONTEXT output_debug("(%d)t=\"%7s\" vs c=\"%7s\"", offset, token[2], buffer+offset);
 		closesocket(masterfd);
 		free(addrin);
 		return 0;
@@ -2741,7 +2743,7 @@ void *slave_node_proc(void *args)
 		memcpy(filename, buffer+offset, (tok_len > sizeof(filename) ? sizeof(filename) : tok_len));
 		filename[tok_len]=0;
 		sprintf(temp, "%%d offset and %%d len for \'%%%ds\'", tok_len);
-		output_debug(temp, offset, tok_len, buffer+offset);
+		IN_MYCONTEXT output_debug(temp, offset, tok_len, buffer+offset);
 	} 
 	else 
 	{
@@ -2779,7 +2781,7 @@ void *slave_node_proc(void *args)
 		return 0;
 	}
 	offset = token_len[4]; // not += since we updated our zero point
-	output_debug("%12s -> ???", token_to);
+	IN_MYCONTEXT output_debug("%12s -> ???", token_to);
 	id = strtoll(token_to+offset, &token_to, 10);
 	if (id < 0)
 	{
@@ -2790,7 +2792,7 @@ void *slave_node_proc(void *args)
 	} 
 	else 
 	{
-		output_debug("id = %llu", id);
+		IN_MYCONTEXT output_debug("id = %llu", id);
 	}
 	// then zero or more CL args
 	params = 1 + token_to;
@@ -2814,18 +2816,18 @@ void *slave_node_proc(void *args)
 	else 
 	{
 		memcpy(addrstr, paddrstr, sizeof(addrstr));
-		output_debug("snp(): connect to %s:%d", addrstr, mtr_port);
+		IN_MYCONTEXT output_debug("snp(): connect to %s:%d", addrstr, mtr_port);
 	}
 
 #ifdef WIN32
 	// write, system() --slave command
 	sprintf(filepath, "%s%s%s", dirname, (dirname[0] ? "\\" : ""), filename);
-	output_debug("filepath = %s", filepath);
+	IN_MYCONTEXT output_debug("filepath = %s", filepath);
 	sprintf(ippath, "--slave %s:%d", addrstr, mtr_port);
-	output_debug("ippath = %s", ippath);
+	IN_MYCONTEXT output_debug("ippath = %s", ippath);
 	sprintf(cmd, "%s%sgridlabd.exe %s --id %"FMT_INT64"d %s %s",
 		(global_execdir[0] ? global_execdir : ""), (global_execdir[0] ? "\\" : ""), params, id, ippath, filepath);//addrstr, mtr_port, filepath);//,
-	output_debug("system(\"%s\")", cmd);
+	IN_MYCONTEXT output_debug("system(\"%s\")", cmd);
 
 	rv = system(cmd);
 #endif
@@ -2862,7 +2864,7 @@ void exec_slave_node()
 	inaddrsz = sizeof(struct sockaddr_in);
 #ifdef WIN32
 	// if we're on windows, we're using WinSock2, so we need WSAStartup.
-	output_debug("starting WS2");
+	IN_MYCONTEXT output_debug("starting WS2");
 	if (WSAStartup(MAKEWORD(2,0),&wsaData)!=0)
 	{
 		output_error("exec_slave_node(): socket library initialization failed: %s",strerror(GetLastError()));
@@ -2899,7 +2901,7 @@ void exec_slave_node()
 		closesocket(sockfd);
 		return;
 	}
-	output_debug("exec_slave_node(): listening on port %d", global_slave_port);
+	IN_MYCONTEXT output_debug("exec_slave_node(): listening on port %d", global_slave_port);
 
 	// set up fd_set
 	FD_ZERO(&master_fdset);
@@ -2908,7 +2910,7 @@ void exec_slave_node()
 	args[0] = (SOCKET *)&node_done;
 	args[1] = (SOCKET *)&sockfd;
 
-	output_debug("esn(): starting loop");
+	IN_MYCONTEXT output_debug("esn(): starting loop");
 	while (!node_done)
 	{
 		reader_fdset = master_fdset;
@@ -2924,16 +2926,16 @@ void exec_slave_node()
 		else if (rct == 0)
 		{
 			// Waited three seconds without any input.  Play it again, Sam.
-			//output_debug("esn(): select ");
+			//IN_MYCONTEXT output_debug("esn(): select ");
 		} 
 		else if (rct > 0)
 		{
 			inaddr = malloc(inaddrsz);
 			args[3] = (SOCKET *)inaddr;
-			//output_debug("esn(): got client");
+			//IN_MYCONTEXT output_debug("esn(): got client");
 			memset(inaddr, 0, inaddrsz);
 			args[2] = (SOCKET *)accept(sockfd, (struct sockaddr *)inaddr, &inaddrsz);
-			output_debug("esn(): accepted client");
+			IN_MYCONTEXT output_debug("esn(): accepted client");
 			if (-1 == (int64)(args[2]))
 			{
 				output_error("unable to accept connection");
@@ -2957,7 +2959,7 @@ void exec_slave_node()
 				closesocket((SOCKET)(args[2]));
 				return;
 			}
-			//output_debug("esn(): thread created");
+			//IN_MYCONTEXT output_debug("esn(): thread created");
 			if ( pthread_detach(slave_thread) )
 			{
 				output_error("slavenode unable to detach connection thread");
@@ -2966,7 +2968,7 @@ void exec_slave_node()
 				closesocket((SOCKET)(args[2]));
 				return;
 			}
-			//output_debug("esn(): thread detached");
+			//IN_MYCONTEXT output_debug("esn(): thread detached");
 		} // end if rct
 	} // end while
 }
@@ -3037,28 +3039,30 @@ static EXITCODE run_scripts(SIMPLELIST *list)
 			return rc;
 		}
 		else
-			output_verbose("script '%s'' returned ok", item->data);
+		{
+			IN_MYCONTEXT output_verbose("script '%s'' returned ok", item->data);
+		}
 	}
 	return XC_SUCCESS;
 }
 int exec_add_createscript(const char *file)
 {
-	output_debug("adding create script '%s'", file);
+	IN_MYCONTEXT output_debug("adding create script '%s'", file);
 	return add_script(&create_scripts,file);
 }
 int exec_add_initscript(const char *file)
 {
-	output_debug("adding init script '%s'", file);
+	IN_MYCONTEXT output_debug("adding init script '%s'", file);
 	return add_script(&init_scripts,file);
 }
 int exec_add_syncscript(const char *file)
 {
-	output_debug("adding sync script '%s'", file);
+	IN_MYCONTEXT output_debug("adding sync script '%s'", file);
 	return add_script(&sync_scripts,file);
 }
 int exec_add_termscript(const char *file)
 {
-	output_debug("adding term script '%s'", file);
+	IN_MYCONTEXT output_debug("adding term script '%s'", file);
 	return add_script(&term_scripts,file);
 }
 int exec_run_createscripts(void)

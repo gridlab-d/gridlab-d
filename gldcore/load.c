@@ -186,6 +186,8 @@ typedef struct stat STAT;
 #include "linkage.h"
 #include "gui.h"
 
+SET_MYCONTEXT(DMC_LOAD)
+
 static unsigned int linenum=1;
 static int include_fail = 0;
 static char filename[1024];
@@ -466,20 +468,20 @@ static STATUS exec(char *format,...)
 	va_start(ptr,format);
 	vsprintf(cmd,format,ptr);
 	va_end(ptr);
-	output_debug("Running '%s' in '%s'", cmd, getcwd(NULL,0));
+	IN_MYCONTEXT output_debug("Running '%s' in '%s'", cmd, getcwd(NULL,0));
 	return system(cmd)==0?SUCCESS:FAILED;
 }
 
 static STATUS debugger(char *target)
 {
 	int result;
-	output_debug("Starting debugger");
+	IN_MYCONTEXT output_debug("Starting debugger");
 #ifdef _MSC_VER
 #define getpid _getpid
 	result = exec("start %s gdb --quiet %s --pid=%d",global_gdb_window?"":"/b",target,global_process_id)>=0?SUCCESS:FAILED;
 	system("pause");
 #else
-	output_debug("Use 'dll-symbols %s' to load symbols",target);
+	IN_MYCONTEXT output_debug("Use 'dll-symbols %s' to load symbols",target);
 	result = exec("gdb --quiet %s --pid=%d &",target,global_process_id)>=0?SUCCESS:FAILED;
 #endif
 	return result;
@@ -580,7 +582,7 @@ static int mkdirs(char *path)
 	if ((rc = access(path, F_OK)) && errno == ENOENT) {
 		// path doesn't exist
 		char *pos, *end, *tmp;
-		output_verbose("creating directory '%s'", path);
+		IN_MYCONTEXT output_verbose("creating directory '%s'", path);
 		if (!(tmp = (char *) malloc(strlen(path) + 1))) {
 			errno = ENOMEM;
 			output_fatal("mkdirs() failed: '%s'", strerror(errno));
@@ -635,7 +637,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 		if (getenv("GRIDLABD"))
 		{
 			strncpy(global_include,getenv("GRIDLABD"),sizeof(global_include));
-			output_verbose("global_include is not set, assuming value of GRIDLABD variable '%s'", global_include);
+			IN_MYCONTEXT output_verbose("global_include is not set, assuming value of GRIDLABD variable '%s'", global_include);
 		}
 		else
 		{
@@ -685,17 +687,21 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 		{
 			if (global_debug_mode || use_msvc || global_gdb || global_gdb_window )
 			{
-				output_verbose("%s is being used for debugging", afile);
+				IN_MYCONTEXT output_verbose("%s is being used for debugging", afile);
 			}
 			else if (global_force_compile)
-				output_verbose("%s recompile is forced", afile);
+			{
+				IN_MYCONTEXT output_verbose("%s recompile is forced", afile);
+			}
 			else if (modtime<stat.st_mtime)
 			{
-				output_verbose("%s is up to date", afile);
+				IN_MYCONTEXT output_verbose("%s is up to date", afile);
 				outdated = false;
 			}
 			else
-				output_verbose("%s is outdated", afile);
+			{
+				IN_MYCONTEXT output_verbose("%s is outdated", afile);
+			}
 			fclose(fp);
 		}
 		
@@ -704,7 +710,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 			/* write source file */
 			fp = fopen(cfile,"w");
 
-			output_verbose("writing inline code to '%s'", cfile);
+			IN_MYCONTEXT output_verbose("writing inline code to '%s'", cfile);
 			if (fp==NULL)
 			{
 				output_fatal("unable to open '%s' for writing", cfile);
@@ -769,7 +775,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 			outfilename=NULL;
 
 			/* compile object file */
-			output_verbose("compiling inline code from '%s'", cfile);
+			IN_MYCONTEXT output_verbose("compiling inline code from '%s'", cfile);
 			if (!use_msvc)
 			{
 #define DEFAULT_CXX "g++"
@@ -791,7 +797,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 						mopt,
 						getenv("CXXFLAGS")?getenv("CXXFLAGS"):DEFAULT_CXXFLAGS,
 						cfile, ofile);
-				output_verbose("compile command: [%s]", execstr);
+				IN_MYCONTEXT output_verbose("compile command: [%s]", execstr);
 				if(exec(execstr)==FAILED)
 				{
 					errno = EINVAL;
@@ -802,14 +808,14 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 
 
 				/* link new runtime module */
-				output_verbose("linking inline code from '%s'", ofile);
+				IN_MYCONTEXT output_verbose("linking inline code from '%s'", ofile);
 				sprintf(ldstr, "%s %s %s %s -shared -Wl,\"%s\" -o \"%s\" %s",
 						getenv("CXX")?getenv("CXX"):DEFAULT_CXX,
 						mopt,
 						global_debug_output?"-g -O0":"",
 						getenv("LDFLAGS")?getenv("LDFLAGS"):DEFAULT_LDFLAGS,
 						ofile, afile, libs);
-				output_verbose("link command: [%s]", ldstr);
+				IN_MYCONTEXT output_verbose("link command: [%s]", ldstr);
 				if(exec(ldstr) == FAILED)
 				{
 					errno = EINVAL;
@@ -874,7 +880,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 		}
 
 		/* load runtime module */
-		output_verbose("loading dynamic link library %s...", afile);
+		IN_MYCONTEXT output_verbose("loading dynamic link library %s...", afile);
 		mod = module_load(oclass->name,0,NULL);
 		if (mod==NULL)
 		{
@@ -887,9 +893,11 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 		if ( global_gdb || global_gdb_window )
 		{
 			if (global_debug_mode)
-				output_debug("using gdb requires GLD debugger be disabled");
+			{
+				IN_MYCONTEXT output_debug("using gdb requires GLD debugger be disabled");
+			}
 			global_debug_output = 1;
-			output_verbose("attaching debugger to process id %d", getpid());
+			IN_MYCONTEXT output_verbose("attaching debugger to process id %d", getpid());
 			if (debugger(afile)==FAILED)
 			{
 				output_error("debugger load failed: %s", errno?strerror(errno):"(no details)");
@@ -899,7 +907,9 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 
 		/* provide info so external debugger can be attached */
 		else
-			output_debug("class %s running in process %d", oclass->name, getpid());
+		{
+			IN_MYCONTEXT output_debug("class %s running in process %d", oclass->name, getpid());
+		}
 
 		oclass->has_runtime = true;
 		strcpy(oclass->runtime,afile);
@@ -1181,7 +1191,7 @@ static int resolve_double(UNRESOLVED *item, char *context)
 			return FAILED;
 		}
 
-		output_debug("reference '%s' resolved ok", item->id);
+		IN_MYCONTEXT output_debug("reference '%s' resolved ok", item->id);
 
 		return SUCCESS;
 	}
@@ -2366,9 +2376,13 @@ double load_latitude(char *buffer)
 		return obj->latitude;
 	}
 	else if ( isnan(v) && ( strcmp(buffer,"")!=0 || stricmp(buffer, "none")!=0 ) )
+	{
 		output_error_raw("%s(%d): '%s' is not a valid latitude", filename,linenum,buffer);
+	}
 	else
-		output_debug("%s(%d): latitude is converted to %lf", filename, linenum, v);
+	{
+		IN_MYCONTEXT output_debug("%s(%d): latitude is converted to %lf", filename, linenum, v);
+	}
 	return v;
 }
 
@@ -2384,9 +2398,13 @@ double load_longitude(char *buffer)
 		return obj->longitude;
 	}
 	else if ( isnan(v) && ( strcmp(buffer,"")!=0 || stricmp(buffer, "none")!=0 ) )
+	{
 		output_error_raw("%s(%d): '%s' is not a valid longitude", filename,linenum,buffer);
+	}
 	else
-		output_debug("%s(%d): longitude is convert to %lf", filename, linenum, v);
+	{
+		IN_MYCONTEXT output_debug("%s(%d): longitude is convert to %lf", filename, linenum, v);
+	}
 	return v;
 }
 
@@ -4689,7 +4707,7 @@ static int import(PARSER)
 					}
 					else
 					{
-						output_verbose("%d objects loaded to %s from %s", result, modname, fname);
+						IN_MYCONTEXT output_verbose("%d objects loaded to %s from %s", result, modname, fname);
 						ACCEPT;
 					}
 				}
@@ -4752,7 +4770,7 @@ static int export(PARSER)
 					}
 					else
 					{
-						output_verbose("%d objects export from %s to %s", result, modname, fname);
+						IN_MYCONTEXT output_verbose("%d objects export from %s to %s", result, modname, fname);
 						ACCEPT;
 					}
 				}
@@ -4918,7 +4936,7 @@ static int linkage_term(PARSER,instance *inst)
 	}
 	OR if ( LITERAL("return_port") && WHITE && TERM(integer16(HERE,&(inst->return_port))) && WHITE, LITERAL(";"))
 	{
-		output_debug("linkage_term(): return_port = %d", inst->return_port);
+		IN_MYCONTEXT output_debug("linkage_term(): return_port = %d", inst->return_port);
 		ACCEPT;
 		DONE;
 	}
@@ -5348,7 +5366,7 @@ static int C_code_block(PARSER, char *buffer, int size)
 		if (skip) _n++,*d++=*++_p;
 	} while ( *++_p!='\0', _n++<size, n_curly>=0 );
 	*--d='\0'; _n--; // don't include the last curly
-//	output_debug("*** Begin external 'C' code ***\n%s\n *** End external 'C' code ***\n", buffer);
+//	IN_MYCONTEXT output_debug("*** Begin external 'C' code ***\n%s\n *** End external 'C' code ***\n", buffer);
 	DONE;
 }
 
@@ -5777,7 +5795,7 @@ static int script_directive(PARSER)
 		if ( TERM(value(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
 		{
 			int rc;
-			output_verbose("running command [%s]", command);
+			IN_MYCONTEXT output_verbose("running command [%s]", command);
 			rc = system(command);
 			if ( rc!=0 )
 			{
@@ -6173,8 +6191,10 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 		return -1;
 	}
 	else
-		output_verbose("include_file(char *incname='%s', char *buffer=0x%p, int size=%d): search of GLPATH='%s' result is '%s'", 
+	{
+		IN_MYCONTEXT output_verbose("include_file(char *incname='%s', char *buffer=0x%p, int size=%d): search of GLPATH='%s' result is '%s'",
 			incname, buffer, size, getenv("GLPATH") ? getenv("GLPATH") : "NULL", ff ? ff : "NULL");
+	}
 
 	old_linenum = linenum;
 	linenum = 1;
@@ -6195,7 +6215,7 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 		return -1;
 	}
 
-	output_verbose("%s(%d): included file is %d bytes long", incname, old_linenum, stat.st_size);
+	IN_MYCONTEXT output_verbose("%s(%d): included file is %d bytes long", incname, old_linenum, stat.st_size);
 
 	/* reset line counter for parser */
 	include_list = this;
@@ -6274,7 +6294,7 @@ void kill_processes(void)
 		int rc = pthread_kill(*(threadlist->data),sig);
 		switch ( rc ) {
 		case 0:
-			output_debug("killing thread %p", threadlist->data);
+			IN_MYCONTEXT output_debug("killing thread %p", threadlist->data);
 			break;
 		case ESRCH:
 			output_error("unable to kill thread %p (no such thread)", threadlist->data);
@@ -6305,7 +6325,9 @@ void* start_process(const char *cmd)
 		return NULL;
 	}
 	else
-		output_debug("creating thread %p for process '%s'", pThreadInfo, cmd);
+	{
+		IN_MYCONTEXT output_debug("creating thread %p for process '%s'", pThreadInfo, cmd);
+	}
 	thread->data = pThreadInfo;
 	thread->next = threadlist;
 	threadlist = thread;
@@ -6561,7 +6583,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		else if (sscanf(term, "<%[^>]>", value) == 1)
 		{
 			/* C include file */
-			output_verbose("added C include for \"%s\"", value);
+			IN_MYCONTEXT output_verbose("added C include for \"%s\"", value);
 			append_code("#include <%s>\n",value);
 			strcpy(line,"\n");
 			return TRUE;
@@ -6829,7 +6851,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		//if (sscanf(term+1,"%[^\n\r]",value)==1)
 		strcpy(value, strip_right_white(term+1));
 		if(1){
-			output_debug("%s(%d): %s", filename, linenum, value);
+			IN_MYCONTEXT output_debug("%s(%d): %s", filename, linenum, value);
 			strcpy(line,"\n");
 			return TRUE;
 		}
@@ -6851,7 +6873,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			return FALSE;
 		}
 		strcpy(value, strip_right_white(term+1));
-		output_debug("%s(%d): executing system(char *cmd='%s')", filename, linenum, value);
+		IN_MYCONTEXT output_debug("%s(%d): executing system(char *cmd='%s')", filename, linenum, value);
 		global_return_code = system(value);
 		if( global_return_code==127 || global_return_code==-1 )
 		{
@@ -6876,7 +6898,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			return FALSE;
 		}
 		strcpy(value, strip_right_white(term+1));
-		output_debug("%s(%d): executing system(char *cmd='%s')", filename, linenum, value);
+		IN_MYCONTEXT output_debug("%s(%d): executing system(char *cmd='%s')", filename, linenum, value);
 		if( start_process(value)==NULL )
 		{
 			output_error_raw("%s(%d): ERROR unable to start '%s'", filename, linenum, value);
@@ -6934,7 +6956,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 	else if ( strncmp(line,MACRO "sleep",6)==0 )
 	{
 		int msec = atoi(line+6);
-		output_debug("sleeping %.3f seconds...",msec/1000.0);
+		IN_MYCONTEXT output_debug("sleeping %.3f seconds...",msec/1000.0);
 		exec_sleep(msec*1000);
 		strcpy(line,"\n");
 		return TRUE;
@@ -6981,7 +7003,7 @@ STATUS loadall_glm(char *file) /**< a pointer to the first character in the file
 		fsize = stat.st_size;
 		buffer = malloc(BUFFERSIZE); /* lots of space */
 	}
-	output_verbose("file '%s' is %d bytes long", file,fsize);
+	IN_MYCONTEXT output_verbose("file '%s' is %d bytes long", file,fsize);
 	if (buffer==NULL)
 	{
 		output_error("unable to allocate buffer for file '%s': %s", file, errno?strerror(errno):"(no details)");
@@ -7025,7 +7047,7 @@ STATUS loadall_glm(char *file) /**< a pointer to the first character in the file
 	/* establish ranks */
 	for (obj=first?first:object_get_first(); obj!=NULL; obj=obj->next)
 		object_set_parent(obj,obj->parent);
-	output_verbose("%d object%s loaded", object_get_count(), object_get_count()>1?"s":"");
+	IN_MYCONTEXT output_verbose("%d object%s loaded", object_get_count(), object_get_count()>1?"s":"");
 	goto Done;
 Failed:
 	if (errno!=0){
@@ -7070,7 +7092,7 @@ STATUS loadall_glm_roll(char *file) /**< a pointer to the first character in the
 		// empty file short circuit
 		return SUCCESS;
 	}
-	output_verbose("file '%s' is %d bytes long", file,fsize);
+	IN_MYCONTEXT output_verbose("file '%s' is %d bytes long", file,fsize);
 	/* removed malloc check since it doesn't malloc any more */
 	buffer[0] = '\0';
 
@@ -7119,7 +7141,7 @@ STATUS loadall_glm_roll(char *file) /**< a pointer to the first character in the
 	/* establish ranks */
 	for (obj=first?first:object_get_first(); obj!=NULL; obj=obj->next)
 		object_set_parent(obj,obj->parent);
-	output_verbose("%d object%s loaded", object_get_count(), object_get_count()>1?"s":"");
+	IN_MYCONTEXT output_verbose("%d object%s loaded", object_get_count(), object_get_count()>1?"s":"");
 	goto Done;
 Failed:
 	if (errno!=0){
@@ -7154,10 +7176,10 @@ TECHNOLOGYREADINESSLEVEL calculate_trl(void)
 
 			// downgrade trl
 			technology_readiness_level = oclass->trl;
-			output_verbose("class '%s' TRL is %s", oclass->name, global_getvar("technology_readiness_level",buffer,sizeof(buffer)));
+			IN_MYCONTEXT output_verbose("class '%s' TRL is %s", oclass->name, global_getvar("technology_readiness_level",buffer,sizeof(buffer)));
 		}
 	}
-	output_verbose("model TRL is %s", global_getvar("technology_readiness_level",buffer,sizeof(buffer)));
+	IN_MYCONTEXT output_verbose("model TRL is %s", global_getvar("technology_readiness_level",buffer,sizeof(buffer)));
 	return technology_readiness_level;
 }
 
