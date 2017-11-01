@@ -850,7 +850,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 						}//End row validity check
 					}//end rows of 3 phase
 				}//end not SPCT
-				else	//SPCT inmplementation
+				else	//SPCT implementation
 				{
 					for (jindex=0; jindex<3; jindex++)			//rows
 					{

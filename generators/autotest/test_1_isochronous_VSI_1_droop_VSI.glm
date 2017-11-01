@@ -12,7 +12,7 @@ clock {
 #set suppress_repeat_messages=1
 #set relax_naming_rules=1;
 #set profiler=1
-#set pauseatexit=1
+//#set pauseatexit=1
 //#set verbose=1
 #define rotor_convergence=0.00000000000001
 #set double_format=%+.12lg
