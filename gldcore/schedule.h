@@ -95,6 +95,7 @@ struct s_schedule {
 #define SN_BOOLEAN 0x8000 /**< schedule is boolean (only one/zero values are expected) */
 #define SN_NONZERO 0x4000 /**< schedule is non-zero (no zero values are expected) */
 #define SN_POSITIVE 0x2000 /**< schedule is positive (no negative values are expected) */
+#define SN_IS_NORMALIZED 0x0020	/**< schedule normalization flag - indicates that the schedule has been nomalized already */
 
 #ifdef __cplusplus
 extern "C" {

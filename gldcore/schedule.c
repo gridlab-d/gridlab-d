@@ -876,8 +876,8 @@ void *schedule_createproc(void *args)
 		}
 
 		/* normalize */
-		if (sch->flags!=0)
-			schedule_normalize(sch,sch->flags);
+		if ((sch->flags&SN_NORMAL==SN_NORMAL) || (sch->flags&SN_NORMAL==SN_ABSOLUTE) || (sch->flags&SN_NORMAL==SN_WEIGHTED))
+			schedule_normalize(sch,SN_IS_NORMALIZED);
 
 		/* validate */
 		if ((sch->flags&(SN_POSITIVE|SN_NONZERO|SN_BOOLEAN)) != 0 && ! schedule_validate(sch,sch->flags))
@@ -1195,7 +1195,7 @@ int schedule_normalize(SCHEDULE *sch,	/**< the schedule to normalize */
 			continue;
 
 		/* weighted normalization */
-		if (flags&SN_WEIGHTED)
+		if ((sch->flags&SN_WEIGHTED)==SN_WEIGHTED)
 		{	
 			double scale[MAXVALUES];
 			unsigned int i;
@@ -1219,7 +1219,7 @@ int schedule_normalize(SCHEDULE *sch,	/**< the schedule to normalize */
 		/* unweighted normalization */
 		else
 		{
-			double scale = (flags&SN_ABSOLUTE?sch->abs[b]:sch->sum[b]);
+			double scale = ((sch->flags&SN_ABSOLUTE)==SN_ABSOLUTE?sch->abs[b]:sch->sum[b]);
 
 			/* if the coefficient is non-zero */
 			if (scale!=0)
