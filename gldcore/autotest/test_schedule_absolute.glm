@@ -16,7 +16,7 @@ object test {
 	object assert {
 		target value;
 		relation inside;
-		lower 0;
-		upper +1;
+		lower -1;
+		upper 0;
 	};
 }
