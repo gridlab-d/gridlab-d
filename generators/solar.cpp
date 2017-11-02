@@ -533,6 +533,16 @@ int solar::init(OBJECT *parent)
 	OBJECT *obj = OBJECTHDR(this);
 	int climate_result;
 
+	if (parent != NULL)
+	{
+		if((parent->flags & OF_INIT) != OF_INIT)
+		{
+			char objname[256];
+			gl_verbose("solar::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}
+
 	if (gen_mode_v == UNKNOWN)
 	{
 		gl_warning("Generator control mode is not specified! Using default: SUPPLY_DRIVEN");
@@ -668,13 +678,6 @@ int solar::init(OBJECT *parent)
 		}
 
 		inverter *par = OBJECTDATA(obj->parent, inverter);
-
-		if((parent->flags & OF_INIT) != OF_INIT)
-		{
-			char objname[256];
-			gl_verbose("solar::init(): deferring initialization on %s", gl_name(parent, objname, 255));
-			return 2; // defer
-		}
 
 		if(par->use_multipoint_efficiency == TRUE)
 		{

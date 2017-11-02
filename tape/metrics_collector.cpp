@@ -18,8 +18,6 @@ CLASS *metrics_collector::oclass = NULL;
 CLASS *metrics_collector::pclass = NULL;
 metrics_collector *metrics_collector::defaults = NULL;
 
-
-
 void new_metrics_collector(MODULE *mod){
 	new metrics_collector(mod);
 }
@@ -55,9 +53,20 @@ int metrics_collector::create(){
 	// Give default values to parameters related to triplex_meter
 	real_power_array = NULL;
 	reactive_power_array = NULL;
-	voltage_mag_array = NULL;
-	voltage_average_mag_array = NULL;
+	voltage_vll_array = NULL;
+	voltage_vln_array = NULL;
 	voltage_unbalance_array = NULL;
+	total_load_array = NULL;
+	hvac_load_array = NULL;
+	wh_load_array = NULL;
+	air_temperature_array = NULL;
+	dev_cooling_array = NULL;
+	dev_heating_array = NULL;
+	count_array = NULL;
+	real_power_loss_array = NULL;
+	reactive_power_loss_array = NULL;
+
+	metrics = NULL;
 	last_vol_val = -1.0; // give initial value as negative one
 
 	// Interval related
@@ -65,6 +74,7 @@ int metrics_collector::create(){
 	curr_index = last_index = 0;
 	interval_length_dbl=-1.0;
 
+	strcpy (parent_name, "No name given");
 
 	return 1;
 }
@@ -72,7 +82,6 @@ int metrics_collector::create(){
 int metrics_collector::init(OBJECT *parent){
 
 	OBJECT *obj = OBJECTHDR(this);
-	Json::Value paramters;
 
 //	int temp = strcmp(parent->oclass->name,"triplex_meter") != 0;
 	if (parent == NULL)
@@ -84,7 +93,7 @@ int metrics_collector::init(OBJECT *parent){
 		return 0;
 	}
 	parent_string = "";
-	// Find parent, if not defined, or if the parent is not a triplex_meter/house/inverter, throw an exception
+	// Find parent, if not defined, or if the parent is not a supported class, throw an exception
 	if (gl_object_isa(parent,"triplex_meter"))	{
 		parent_string = "triplex_meter";
 	} else if (gl_object_isa(parent,"house")) {
@@ -93,6 +102,10 @@ int metrics_collector::init(OBJECT *parent){
 		parent_string = "waterheater";
 	} else if (gl_object_isa(parent,"inverter")) {
 		parent_string = "inverter";
+	} else if (gl_object_isa(parent,"capacitor")) {
+		parent_string = "capacitor";
+	} else if (gl_object_isa(parent,"regulator")) {
+		parent_string = "regulator";
 	} else if (gl_object_isa(parent,"substation")) {  // must be a swing bus
 		PROPERTY *pval = gl_get_property(parent,"bustype");
 		if ((pval==NULL) || (pval->ptype!=PT_enumeration))
@@ -122,56 +135,57 @@ int metrics_collector::init(OBJECT *parent){
 			}
 		}
 	} else {
-		gl_error("metrics_collector allows only these parents: triplex meter, house, waterheater, inverter, substation, or meter");
+		gl_error("metrics_collector allows only these parents: triplex meter, house, waterheater, inverter, substation, meter, capacitor, regulator");
 		/*  TROUBLESHOOT
 		Check the parent object of the metrics_collector.
 		*/
 		return 0;
 	}
 
+	// Create the structures for JSON outputs
 	if (strcmp(parent_string, "triplex_meter") == 0)
 	{
-		// Create the JSON dictionary for the outputs
-		metrics_Output["Parent_id"] = parent->id;
 		if (parent->name != NULL) {
-			metrics_Output["Parent_name"] = parent->name;
+			strcpy (parent_name, parent->name);
 		}
-		else {
-			metrics_Output["Parent_name"] = "No name given";
+		metrics = (double *)gl_malloc(MTR_ARRAY_SIZE*sizeof(double));
+		if (metrics == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocate JSON metrics array",obj->id);
 		}
 	}
 	else if (strcmp(parent_string, "meter") == 0)
 	{
-		metrics_Output["Parent_id"] = parent->id;
 		if (parent->name != NULL) {
-			metrics_Output["Parent_name"] = parent->name;
+			strcpy (parent_name, parent->name);
 		}
-		else {
-			metrics_Output["Parent_name"] = "No name given";
+		metrics = (double *)gl_malloc(MTR_ARRAY_SIZE*sizeof(double));
+		if (metrics == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocate JSON metrics array",obj->id);
 		}
 	} 
 	else if (strcmp(parent_string, "house") == 0)
 	{
-		// Create the JSON dictionary for the outputs
-		metrics_Output["Parent_id"] = parent->id;
 		if (parent->name != NULL) {
-			metrics_Output["Parent_name"] = parent->name;
+			strcpy (parent_name, parent->name);
 		}
-		else {
-			metrics_Output["Parent_name"] = "No name given";
+		metrics = (double *)gl_malloc(HSE_ARRAY_SIZE*sizeof(double));
+		if (metrics == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocate JSON metrics array",obj->id);
 		}
 	}
-	else if (strcmp(parent_string, "waterheater") == 0)
+	else if (strcmp(parent_string, "waterheater") == 0) 
 	{
-		// Create the JSON dictionary for the outputs
-		metrics_Output["Parent_id"] = parent->parent->id; // For waterheater, write its outputs inside the house object
 		if (parent->parent->name != NULL) {
-			metrics_Output["Parent_name"] = parent->parent->name;
+			strcpy (parent_name, parent->parent->name);
 		}
-		else {
-			metrics_Output["Parent_name"] = "No name given";
+		metrics = (double *)gl_malloc(WH_ARRAY_SIZE*sizeof(double));
+		if (metrics == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocate JSON metrics array",obj->id);
 		}
-
 		// Get the name of the waterheater for actual load
 		char tname[32];
 		sprintf(tname, "%i", parent->id);
@@ -180,13 +194,35 @@ int metrics_collector::init(OBJECT *parent){
 	}
 	else if (strcmp(parent_string, "inverter") == 0)
 	{
-		// Create the JSON dictionary for the outputs
-		metrics_Output["Parent_id"] = parent->id;
 		if (parent->name != NULL) {
-			metrics_Output["Parent_name"] = parent->name;
+			strcpy (parent_name, parent->name);
 		}
-		else {
-			metrics_Output["Parent_name"] = "No name given";
+		metrics = (double *)gl_malloc(INV_ARRAY_SIZE*sizeof(double));
+		if (metrics == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocate JSON metrics array",obj->id);
+		}
+	}
+	else if (strcmp(parent_string, "capacitor") == 0)
+	{
+		if (parent->name != NULL) {
+			strcpy (parent_name, parent->name);
+		}
+		metrics = (double *)gl_malloc(CAP_ARRAY_SIZE*sizeof(double));
+		if (metrics == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocate JSON metrics array",obj->id);
+		}
+	}
+	else if (strcmp(parent_string, "regulator") == 0)
+	{
+		if (parent->name != NULL) {
+			strcpy (parent_name, parent->name);
+		}
+		metrics = (double *)gl_malloc(REG_ARRAY_SIZE*sizeof(double));
+		if (metrics == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocate JSON metrics array",obj->id);
 		}
 	}
 	// If its parent is a meter - this is only allowed for the Swing-bus type meter
@@ -203,10 +239,15 @@ int metrics_collector::init(OBJECT *parent){
 			*/
 		}
 		if (parent->name != NULL) {
-			metrics_Output["Parent_name"] = parent->name;
+			strcpy (parent_name, parent->name);
 		}
 		else {
-			metrics_Output["Parent_name"] = "Swing Bus Metrics";
+			strcpy (parent_name, "Swing Bus Metrics");
+		}
+		metrics = (double *)gl_malloc(FDR_ARRAY_SIZE*sizeof(double));
+		if (metrics == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocate JSON metrics array",obj->id);
 		}
 	}
 
@@ -227,7 +268,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Check
 		if (real_power_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated real power array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate real power array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -239,7 +280,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Check
 		if (reactive_power_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated reactive power array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate reactive power array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -247,11 +288,11 @@ int metrics_collector::init(OBJECT *parent){
 		}
 
 		// Allocate phase 1-2 voltage array
-		voltage_mag_array = (double *)gl_malloc(interval_length*sizeof(double));
+		voltage_vll_array = (double *)gl_malloc(interval_length*sizeof(double));
 		// Check
-		if (voltage_mag_array == NULL)
+		if (voltage_vll_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated phase 1-2 voltage array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate phase 1-2 voltage array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -259,11 +300,11 @@ int metrics_collector::init(OBJECT *parent){
 		}
 
 		// Allocate average voltage array
-		voltage_average_mag_array = (double *)gl_malloc(interval_length*sizeof(double));
+		voltage_vln_array = (double *)gl_malloc(interval_length*sizeof(double));
 		// Check
-		if (voltage_average_mag_array == NULL)
+		if (voltage_vln_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated average voltage array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate average vln voltage array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -275,7 +316,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Check
 		if (voltage_unbalance_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated voltage unbalance array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate voltage unbalance array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -287,8 +328,8 @@ int metrics_collector::init(OBJECT *parent){
 		{
 			real_power_array[curr_index] = 0.0;
 			reactive_power_array[curr_index] = 0.0;
-			voltage_mag_array[curr_index] = 0.0;
-			voltage_average_mag_array[curr_index] = 0.0;
+			voltage_vll_array[curr_index] = 0.0;
+			voltage_vln_array[curr_index] = 0.0;
 			voltage_unbalance_array[curr_index] = 0.0;
 		}
 
@@ -300,7 +341,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Check
 		if (total_load_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated total_load array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate total_load array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -312,7 +353,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Check
 		if (hvac_load_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated hvac_load array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate hvac_load array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -324,7 +365,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Check
 		if (air_temperature_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated air_temperature array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate air_temperature array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -332,11 +373,11 @@ int metrics_collector::init(OBJECT *parent){
 		}
 
 		// Allocate air temperature deviation from cooling setpointarray
-		air_temperature_deviation_cooling_array = (double *)gl_malloc(interval_length*sizeof(double));
+		dev_cooling_array = (double *)gl_malloc(interval_length*sizeof(double));
 		// Check
-		if (air_temperature_deviation_cooling_array == NULL)
+		if (dev_cooling_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated air_temperature_deviation_cooling_array array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate dev_cooling_array array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -344,11 +385,11 @@ int metrics_collector::init(OBJECT *parent){
 		}
 
 		// Allocate air temperature deviation from heating setpointarray
-		air_temperature_deviation_heating_array = (double *)gl_malloc(interval_length*sizeof(double));
+		dev_heating_array = (double *)gl_malloc(interval_length*sizeof(double));
 		// Check
-		if (air_temperature_deviation_heating_array == NULL)
+		if (dev_heating_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated air_temperature_deviation_heating_array array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate dev_heating_array array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -361,18 +402,18 @@ int metrics_collector::init(OBJECT *parent){
 			total_load_array[curr_index] = 0.0;
 			hvac_load_array[curr_index] = 0.0;
 			air_temperature_array[curr_index] = 0.0;
-			air_temperature_deviation_cooling_array[curr_index] = 0.0;
-			air_temperature_deviation_heating_array[curr_index] = 0.0;
+			dev_cooling_array[curr_index] = 0.0;
+			dev_heating_array[curr_index] = 0.0;
 		}
 	}
 	// If parent is waterheater
 	else if (strcmp(parent_string, "waterheater") == 0) {
 		// Allocate hvac_load array
-		actual_load_array = (double *)gl_malloc(interval_length*sizeof(double));
+		wh_load_array = (double *)gl_malloc(interval_length*sizeof(double));
 		// Check
-		if (actual_load_array == NULL)
+		if (wh_load_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated actual_load array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate wh_load array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -386,7 +427,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Check
 		if (real_power_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated real power array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate real power array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -398,7 +439,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Check
 		if (reactive_power_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated reactive power array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate reactive power array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -412,7 +453,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Check
 		if (real_power_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated real power array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate real power array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -424,7 +465,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Check
 		if (reactive_power_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated reactive power array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate reactive power array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -435,7 +476,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Check
 		if (real_power_loss_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated real power loss array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate real power loss array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -447,12 +488,25 @@ int metrics_collector::init(OBJECT *parent){
 		// Check
 		if (reactive_power_loss_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocated reactive power loss array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate reactive power loss array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
 			*/
 		}
+	}
+	else if ((strcmp(parent_string, "capacitor") == 0) || (strcmp(parent_string, "regulator") == 0)) {
+		count_array = (double *)gl_malloc(interval_length*sizeof(double));
+		// Check
+		if (count_array == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocate operation count array",obj->id);
+			/*  TROUBLESHOOT
+			While attempting to allocate the array, an error was encountered.
+			Please try again.  If the error persists, please submit a bug report via the Trac system.
+			*/
+		}
+		for (int i = 0; i < interval_length; i++) count_array[i] = 0.0;
 	}
 	// else not possible come to this step
 	else {
@@ -467,7 +521,7 @@ int metrics_collector::init(OBJECT *parent){
 
 	// Initialize tracking variables
 	curr_index = 0;
-  last_index = 0;
+	last_index = 0;
 
 	// Update time variables
 	last_write = gl_globalclock;
@@ -517,7 +571,7 @@ int metrics_collector::commit(TIMESTAMP t1){
 			return 0;
 		}
 		interval_write = false;
-        last_index = 0;  // TODO - we need to have array[0] = array[299], or circular queue
+        last_index = 0;  // TODO - we need to have array[0] = array[299], or circular queue (temporarily wrap in write_line)
 	}
 
 	return 1;
@@ -560,8 +614,8 @@ int metrics_collector::read_line(OBJECT *obj){
 		// compliance with C84.1; unbalance defined as max deviation from average / average, here based on 1-N and 2-N
 		double vavg = 0.5 * (v1 + v2);
 
-		interpolate (voltage_mag_array, last_index, curr_index, fabs(v12));
-		interpolate (voltage_average_mag_array, last_index, curr_index, vavg);
+		interpolate (voltage_vll_array, last_index, curr_index, fabs(v12));
+		interpolate (voltage_vln_array, last_index, curr_index, vavg);
 		interpolate (voltage_unbalance_array, last_index, curr_index, 0.5 * fabs(v1 - v2)/vavg);
 	}
 	else if (strcmp(parent_string, "meter") == 0)
@@ -601,8 +655,8 @@ int metrics_collector::read_line(OBJECT *obj){
 			last_vol_val = vll;
 		}
 
-		interpolate (voltage_mag_array, last_index, curr_index, vll);  // Vll
-		interpolate (voltage_average_mag_array, last_index, curr_index, vavg);  // Vln
+		interpolate (voltage_vll_array, last_index, curr_index, vll);  // Vll
+		interpolate (voltage_vln_array, last_index, curr_index, vavg);  // Vln
 		interpolate (voltage_unbalance_array, last_index, curr_index, vdev / vll); // max deviation from Vll / average Vll
 	} 
 	else if (strcmp(parent_string, "house") == 0)
@@ -617,22 +671,31 @@ int metrics_collector::read_line(OBJECT *obj){
 		interpolate (air_temperature_array, last_index, curr_index, airTemperature);
 		// Get air temperature deviation from house cooling setpoint
 		double cooling_setpoint = *gl_get_double_by_name(obj->parent, "cooling_setpoint");
-		interpolate (air_temperature_deviation_cooling_array, last_index, curr_index, airTemperature - cooling_setpoint);
-		// Get air temperature deviation from house cooling setpoint
+		interpolate (dev_cooling_array, last_index, curr_index, airTemperature - cooling_setpoint);
+		// Get air temperature deviation from house heating setpoint
 		double heating_setpoint = *gl_get_double_by_name(obj->parent, "heating_setpoint");
-		interpolate (air_temperature_deviation_cooling_array, last_index, curr_index, airTemperature - heating_setpoint);
-
+		interpolate (dev_heating_array, last_index, curr_index, airTemperature - heating_setpoint);
 	}
 	else if (strcmp(parent_string, "waterheater") == 0) {
 		// Get load values
 		double actualload = *gl_get_double_by_name(obj->parent, "actual_load");
-		interpolate (actual_load_array, last_index, curr_index, actualload);
+		interpolate (wh_load_array, last_index, curr_index, actualload);
 	}
 	else if (strcmp(parent_string, "inverter") == 0) {
 		// Get VA_Out values
 		complex VAOut = *gl_get_complex_by_name(obj->parent, "VA_Out");
 		interpolate (real_power_array, last_index, curr_index, (double)VAOut.Re());
 		interpolate (reactive_power_array, last_index, curr_index, (double)VAOut.Im());
+	}
+	else if (strcmp(parent_string, "capacitor") == 0) {
+		double opcount = *gl_get_double_by_name(obj->parent, "cap_A_switch_count")
+			+ *gl_get_double_by_name(obj->parent, "cap_B_switch_count") + *gl_get_double_by_name(obj->parent, "cap_C_switch_count");
+		interpolate (count_array, last_index, curr_index, opcount);
+	}
+	else if (strcmp(parent_string, "regulator") == 0) {
+		double opcount = *gl_get_double_by_name(obj->parent, "tap_A_change_count")
+			+ *gl_get_double_by_name(obj->parent, "tap_B_change_count") + *gl_get_double_by_name(obj->parent, "tap_C_change_count");
+		interpolate (count_array, last_index, curr_index, opcount);
 	}
 	else if (strcmp(parent_string, "swingbus") == 0) {
 		// Get VAfeeder values
@@ -685,7 +748,7 @@ int metrics_collector::read_line(OBJECT *obj){
 	}
 	// else not possible come to this step
 	else {
-		gl_error("metrics_collector must have a triplex meter or house or waterheater or inverter or swing-bus as it's parent");
+		gl_error("metrics_collector must have a triplex meter, house, waterheater, inverter, swing-bus, capacitor or regulator as its parent");
 		/*  TROUBLESHOOT
 		Check the parent object of the metrics_collector. The metrics_collector is only able to be childed via a
 		triplex meter or a house or a waterheater or an inverter or a swing-bus when connecting into powerflow systems.
@@ -712,42 +775,45 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 	// Writing to JSON output file is executed in metrics_collector_writer object
 	char time_str[64];
 	DATETIME dt;
+	double svP, svQ, svPL, svQL, svHVAC, svTotal, svWH, svAir; // these are to wrap arrays that were passed to findMedian
 
 	if ((strcmp(parent_string, "triplex_meter") == 0) || (strcmp(parent_string, "meter") == 0)) {
+		svP = real_power_array[interval_length - 1];
+		svQ = reactive_power_array[interval_length - 1];
 		// Rearranging the arrays of data, and put into the dictionary
 		// Real power data
-		metrics_Output["min_real_power"] = findMin(real_power_array, interval_length);
-		metrics_Output["max_real_power"] = findMax(real_power_array, interval_length);
-		metrics_Output["avg_real_power"] = findAverage(real_power_array, interval_length);
-		metrics_Output["median_real_power"] = findMedian(real_power_array, interval_length);
+		metrics[MTR_MIN_REAL_POWER] = findMin(real_power_array, interval_length);
+		metrics[MTR_MAX_REAL_POWER] = findMax(real_power_array, interval_length);
+		metrics[MTR_AVG_REAL_POWER] = findAverage(real_power_array, interval_length);
+		metrics[MTR_MED_REAL_POWER] = findMedian(real_power_array, interval_length);
 
 		// Reactive power data
-		metrics_Output["min_reactive_power"] = findMin(reactive_power_array, interval_length);
-		metrics_Output["max_reactive_power"] = findMax(reactive_power_array, interval_length);
-		metrics_Output["avg_reactive_power"] = findAverage(reactive_power_array, interval_length);
-		metrics_Output["median_reactive_power"] = findMedian(reactive_power_array, interval_length);
+		metrics[MTR_MIN_REAC_POWER] = findMin(reactive_power_array, interval_length);
+		metrics[MTR_MAX_REAC_POWER] = findMax(reactive_power_array, interval_length);
+		metrics[MTR_AVG_REAC_POWER] = findAverage(reactive_power_array, interval_length);
+		metrics[MTR_MED_REAC_POWER] = findMedian(reactive_power_array, interval_length);
 
 		// Energy data
-		metrics_Output["real_energy"] = findAverage(real_power_array, interval_length) * interval_write / 3600;
-		metrics_Output["reactive_energy"] = findAverage(reactive_power_array, interval_length) * interval_write / 3600;
+		metrics[MTR_REAL_ENERGY] = findAverage(real_power_array, interval_length) * interval_write / 3600;
+		metrics[MTR_REAC_ENERGY] = findAverage(reactive_power_array, interval_length) * interval_write / 3600;
 
 		// Bill - TODO?
-		metrics_Output["bill"] = metrics_Output["real_energy"].asDouble() * price_parent / 1000; // price unit given is [$/kWh]
+		metrics[MTR_BILL] = metrics[MTR_REAL_ENERGY] * price_parent / 1000; // price unit given is [$/kWh]
 
 		// Phase 1 to 2 voltage data
-		metrics_Output["min_voltage"] = findMin(voltage_mag_array, interval_length);
-		metrics_Output["max_voltage"] = findMax(voltage_mag_array, interval_length);
-		metrics_Output["avg_voltage"] = findAverage(voltage_mag_array, interval_length);
+		metrics[MTR_MIN_VLL] = findMin(voltage_vll_array, interval_length);
+		metrics[MTR_MAX_VLL] = findMax(voltage_vll_array, interval_length);
+		metrics[MTR_AVG_VLL] = findAverage(voltage_vll_array, interval_length);
 
 		// Phase 1 to 2 average voltage data
-		metrics_Output["min_voltage_average"] = findMin(voltage_average_mag_array, interval_length);
-		metrics_Output["max_voltage_average"] = findMax(voltage_average_mag_array, interval_length);
-		metrics_Output["avg_voltage_average"] = findAverage(voltage_average_mag_array, interval_length);
+		metrics[MTR_MIN_VLN] = findMin(voltage_vln_array, interval_length);
+		metrics[MTR_MAX_VLN] = findMax(voltage_vln_array, interval_length);
+		metrics[MTR_AVG_VLN] = findAverage(voltage_vln_array, interval_length);
 
 		// Voltage unbalance data
-		metrics_Output["min_voltage_unbalance"] = findMin(voltage_unbalance_array, interval_length);
-		metrics_Output["max_voltage_unbalance"] = findMax(voltage_unbalance_array, interval_length);
-		metrics_Output["avg_voltage_unbalance"] = findAverage(voltage_unbalance_array, interval_length);
+		metrics[MTR_MIN_VUNB] = findMin(voltage_unbalance_array, interval_length);
+		metrics[MTR_MAX_VUNB] = findMax(voltage_unbalance_array, interval_length);
+		metrics[MTR_AVG_VUNB] = findAverage(voltage_unbalance_array, interval_length);
 
 		// Voltage above/below ANSI C84 A/B Range
 		double normVol = *gl_get_double_by_name(obj->parent, "nominal_voltage");
@@ -756,105 +822,146 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		double aboveRangeB = normVol* 1.058 * (std::sqrt(3));
 		double belowRangeB = normVol* 0.917 * (std::sqrt(3));
 		// Voltage above Range A
-		struct vol_violation vol_Vio = findOutLimit(last_vol_val, voltage_mag_array, true, aboveRangeA, interval_length);
-		metrics_Output["above_RangeA_Duration"] = vol_Vio.durationViolation;
-		metrics_Output["above_RangeA_Count"] = vol_Vio.countViolation;
+		struct vol_violation vol_Vio = findOutLimit(last_vol_val, voltage_vll_array, true, aboveRangeA, interval_length);
+		metrics[MTR_ABOVE_A_DUR] = vol_Vio.durationViolation;
+		metrics[MTR_ABOVE_A_CNT] = vol_Vio.countViolation;
 		// Voltage below Range A
-		vol_Vio = findOutLimit(last_vol_val, voltage_mag_array, false, belowRangeA, interval_length);
-		metrics_Output["below_RangeA_Duration"] = vol_Vio.durationViolation;
-		metrics_Output["below_RangeA_Count"] = vol_Vio.countViolation;
+		vol_Vio = findOutLimit(last_vol_val, voltage_vll_array, false, belowRangeA, interval_length);
+		metrics[MTR_BELOW_A_DUR] = vol_Vio.durationViolation;
+		metrics[MTR_BELOW_A_CNT] = vol_Vio.countViolation;
 		// Voltage above Range B
-		vol_Vio = findOutLimit(last_vol_val, voltage_mag_array, true, aboveRangeB, interval_length);
-		metrics_Output["above_RangeB_Duration"] = vol_Vio.durationViolation;
-		metrics_Output["above_RangeB_Count"] = vol_Vio.countViolation;
+		vol_Vio = findOutLimit(last_vol_val, voltage_vll_array, true, aboveRangeB, interval_length);
+		metrics[MTR_ABOVE_B_DUR] = vol_Vio.durationViolation;
+		metrics[MTR_ABOVE_B_CNT] = vol_Vio.countViolation;
 		// Voltage below Range B
-		vol_Vio = findOutLimit(last_vol_val, voltage_mag_array, false, belowRangeB, interval_length);
-		metrics_Output["below_RangeB_Duration"] = vol_Vio.durationViolation;
-		metrics_Output["below_RangeB_Count"] = vol_Vio.countViolation;
+		vol_Vio = findOutLimit(last_vol_val, voltage_vll_array, false, belowRangeB, interval_length);
+		metrics[MTR_BELOW_B_DUR] = vol_Vio.durationViolation;
+		metrics[MTR_BELOW_B_CNT] = vol_Vio.countViolation;
 
 		// Voltage below 10% of the norminal voltage rating
 		double belowNorVol10 = normVol * 0.1;
-		vol_Vio = findOutLimit(last_vol_val, voltage_mag_array, false, belowNorVol10, interval_length);
-		metrics_Output["below_10_percent_NormVol_Duration"] = vol_Vio.durationViolation;
-		metrics_Output["below_10_percent_NormVol_Count"] = vol_Vio.countViolation;
+		vol_Vio = findOutLimit(last_vol_val, voltage_vll_array, false, belowNorVol10, interval_length);
+		metrics[MTR_BELOW_10_DUR] = vol_Vio.durationViolation;
+		metrics[MTR_BELOW_10_CNT] = vol_Vio.countViolation;
 
 		// Update the lastVol value based on this metrics interval value
-		last_vol_val = voltage_mag_array[interval_length - 1];
+		last_vol_val = voltage_vll_array[interval_length - 1];
 
+		// wrap the arrays for next collection interval (TODO circular queue)
+		real_power_array[0] = svP;
+		reactive_power_array[0] = svQ;
+		voltage_vll_array[0] = voltage_vll_array[interval_length - 1];
+		voltage_vln_array[0] = voltage_vln_array[interval_length - 1];
+		voltage_unbalance_array[0] = voltage_unbalance_array[interval_length - 1];
 	}
 	// If parent is house
 	else if (strcmp(parent_string, "house") == 0) {
+		svTotal = total_load_array[interval_length - 1];
+		svHVAC = hvac_load_array[interval_length - 1];
+		svAir = air_temperature_array[interval_length - 1];
 		// Rearranging the arrays of data, and put into the dictionary
 		// total_load data
-		metrics_Output["min_house_total_load"] = findMin(total_load_array, interval_length);
-		metrics_Output["max_house_total_load"] = findMax(total_load_array, interval_length);
-		metrics_Output["avg_house_total_load"] = findAverage(total_load_array, interval_length);
-		metrics_Output["median_house_total_load"] = findMedian(total_load_array, interval_length);
+		metrics[HSE_MIN_TOTAL_LOAD] = findMin(total_load_array, interval_length);
+		metrics[HSE_MAX_TOTAL_LOAD] = findMax(total_load_array, interval_length);
+		metrics[HSE_AVG_TOTAL_LOAD] = findAverage(total_load_array, interval_length);
+		metrics[HSE_MED_TOTAL_LOAD] = findMedian(total_load_array, interval_length);
 
 		// hvac_load data
-		metrics_Output["min_house_hvac_load"] = findMin(hvac_load_array, interval_length);
-		metrics_Output["max_house_hvac_load"] = findMax(hvac_load_array, interval_length);
-		metrics_Output["avg_house_hvac_load"] = findAverage(hvac_load_array, interval_length);
-		metrics_Output["median_house_hvac_load"] = findMedian(hvac_load_array, interval_length);
+		metrics[HSE_MIN_HVAC_LOAD] = findMin(hvac_load_array, interval_length);
+		metrics[HSE_MAX_HVAC_LOAD] = findMax(hvac_load_array, interval_length);
+		metrics[HSE_AVG_HVAC_LOAD] = findAverage(hvac_load_array, interval_length);
+		metrics[HSE_MED_HVAC_LOAD] = findMedian(hvac_load_array, interval_length);
 
 		// air_temperature data
-		metrics_Output["min_house_air_temperature"] = findMin(air_temperature_array, interval_length);
-		metrics_Output["max_house_air_temperature"] = findMax(air_temperature_array, interval_length);
-		metrics_Output["avg_house_air_temperature"] = findAverage(air_temperature_array, interval_length);
-		metrics_Output["median_house_air_temperature"] = findMedian(air_temperature_array, interval_length);
-		metrics_Output["avg_house_air_temperature_deviation_cooling"] = findAverage(air_temperature_deviation_cooling_array, interval_length);
-		metrics_Output["avg_house_air_temperature_deviation_heating"] = findAverage(air_temperature_deviation_heating_array, interval_length);
+		metrics[HSE_MIN_AIR_TEMP] = findMin(air_temperature_array, interval_length);
+		metrics[HSE_MAX_AIR_TEMP] = findMax(air_temperature_array, interval_length);
+		metrics[HSE_AVG_AIR_TEMP] = findAverage(air_temperature_array, interval_length);
+		metrics[HSE_MED_AIR_TEMP] = findMedian(air_temperature_array, interval_length);
+		metrics[HSE_AVG_DEV_COOLING] = findAverage(dev_cooling_array, interval_length);
+		metrics[HSE_AVG_DEV_HEATING] = findAverage(dev_heating_array, interval_length);
 
+		// wrap the arrays for next collection interval (TODO circular queue)
+		total_load_array[0] = svTotal;
+		hvac_load_array[0] = svHVAC;
+		air_temperature_array[0] = svAir;
+		dev_cooling_array[0] = dev_cooling_array[interval_length - 1];
+		dev_heating_array[0] = dev_heating_array[interval_length - 1];
 	}
 	// If parent is waterheater
 	else if (strcmp(parent_string, "waterheater") == 0) {
+		svWH = wh_load_array[interval_length - 1];
 		// Rearranging the arrays of data, and put into the dictionary
-		// actual_load data
-		metrics_Output["min_waterheater_actual_load"] = findMin(actual_load_array, interval_length);
-		metrics_Output["max_waterheater_actual_load"] = findMax(actual_load_array, interval_length);
-		metrics_Output["avg_waterheater_actual_load"] = findAverage(actual_load_array, interval_length);
-		metrics_Output["median_waterheater_actual_load"] = findMedian(actual_load_array, interval_length);
+		// wh_load data
+		metrics[WH_MIN_ACTUAL_LOAD] = findMin(wh_load_array, interval_length);
+		metrics[WH_MAX_ACTUAL_LOAD] = findMax(wh_load_array, interval_length);
+		metrics[WH_AVG_ACTUAL_LOAD] = findAverage(wh_load_array, interval_length);
+		metrics[WH_MED_ACTUAL_LOAD] = findMedian(wh_load_array, interval_length);
 
+		// wrap the arrays for next collection interval (TODO circular queue)
+		wh_load_array[0] = svWH;
 	}
 	else if (strcmp(parent_string, "inverter") == 0) {
+		svP = real_power_array[interval_length - 1];
+		svQ = reactive_power_array[interval_length - 1];
 		// Rearranging the arrays of data, and put into the dictionary
 		// real power data
-		metrics_Output["min_inverter_real_power"] = findMin(real_power_array, interval_length);
-		metrics_Output["max_inverter_real_power"] = findMax(real_power_array, interval_length);
-		metrics_Output["avg_inverter_real_power"] = findAverage(real_power_array, interval_length);
-		metrics_Output["median_inverter_real_power"] = findMedian(real_power_array, interval_length);
+		metrics[INV_MIN_REAL_POWER] = findMin(real_power_array, interval_length);
+		metrics[INV_MAX_REAL_POWER] = findMax(real_power_array, interval_length);
+		metrics[INV_AVG_REAL_POWER] = findAverage(real_power_array, interval_length);
+		metrics[INV_MED_REAL_POWER] = findMedian(real_power_array, interval_length);
 		// Reactive power data
-		metrics_Output["min_inverter_reactive_power"] = findMin(reactive_power_array, interval_length);
-		metrics_Output["max_inverter_reactive_power"] = findMax(reactive_power_array, interval_length);
-		metrics_Output["avg_inverter_reactive_power"] = findAverage(reactive_power_array, interval_length);
-		metrics_Output["median_inverter_reactive_power"] = findMedian(reactive_power_array, interval_length);
-
+		metrics[INV_MIN_REAC_POWER] = findMin(reactive_power_array, interval_length);
+		metrics[INV_MAX_REAC_POWER] = findMax(reactive_power_array, interval_length);
+		metrics[INV_AVG_REAC_POWER] = findAverage(reactive_power_array, interval_length);
+		metrics[INV_MED_REAC_POWER] = findMedian(reactive_power_array, interval_length);
+		// wrap the arrays for next collection interval (TODO circular queue)
+		real_power_array[0] = svP;
+		reactive_power_array[0] = svQ;
+	}
+	else if (strcmp(parent_string, "capacitor") == 0) {
+		metrics[CAP_OPERATION_CNT] = findMax(count_array, interval_length);
+		// wrap the arrays for next collection interval (TODO circular queue) 
+		count_array[0] = count_array[interval_length - 1];
+	}
+	else if (strcmp(parent_string, "regulator") == 0) {
+		metrics[REG_OPERATION_CNT] = findMax(count_array, interval_length);
+		// wrap the arrays for next collection interval (TODO circular queue) 
+		count_array[0] = count_array[interval_length - 1];
 	}
 	else if (strcmp(parent_string, "swingbus") == 0) {
-		// Rearranging the arrays of data, and put into the dictionary
+		svP = real_power_array[interval_length - 1];
+		svQ = reactive_power_array[interval_length - 1];
+		svPL = real_power_loss_array[interval_length - 1];
+		svQL = reactive_power_loss_array[interval_length - 1];
 		// real power data
-		metrics_Output["min_feeder_real_power"] = findMin(real_power_array, interval_length);
-		metrics_Output["max_feeder_real_power"] = findMax(real_power_array, interval_length);
-		metrics_Output["avg_feeder_real_power"] = findAverage(real_power_array, interval_length);
-		metrics_Output["median_feeder_real_power"] = findMedian(real_power_array, interval_length);
-		// Reactive power data
-		metrics_Output["min_feeder_reactive_power"] = findMin(reactive_power_array, interval_length);
-		metrics_Output["max_feeder_reactive_power"] = findMax(reactive_power_array, interval_length);
-		metrics_Output["avg_feeder_reactive_power"] = findAverage(reactive_power_array, interval_length);
-		metrics_Output["median_feeder_reactive_power"] = findMedian(reactive_power_array, interval_length);
+		metrics[FDR_MIN_REAL_POWER] = findMin(real_power_array, interval_length);
+		metrics[FDR_MAX_REAL_POWER] = findMax(real_power_array, interval_length);
+		metrics[FDR_AVG_REAL_POWER] = findAverage(real_power_array, interval_length);
+		metrics[FDR_MED_REAL_POWER] = findMedian(real_power_array, interval_length);
+		// Reactive power data    
+		metrics[FDR_MIN_REAC_POWER] = findMin(reactive_power_array, interval_length);
+		metrics[FDR_MAX_REAC_POWER] = findMax(reactive_power_array, interval_length);
+		metrics[FDR_AVG_REAC_POWER] = findAverage(reactive_power_array, interval_length);
+		metrics[FDR_MED_REAC_POWER] = findMedian(reactive_power_array, interval_length);
 		// Energy data
-		metrics_Output["real_energy"] = findAverage(real_power_array, interval_length) * interval_write / 3600;
-		metrics_Output["reactive_energy"] = findAverage(reactive_power_array, interval_length) * interval_write / 3600;
+		metrics[FDR_REAL_ENERGY] = findAverage(real_power_array, interval_length) * interval_write / 3600;
+		metrics[FDR_REAC_ENERGY] = findAverage(reactive_power_array, interval_length) * interval_write / 3600;
 		// real power loss data
-		metrics_Output["min_feeder_real_power_loss"] = findMin(real_power_loss_array, interval_length);
-		metrics_Output["max_feeder_real_power_loss"] = findMax(real_power_loss_array, interval_length);
-		metrics_Output["avg_feeder_real_power_loss"] = findAverage(real_power_loss_array, interval_length);
-		metrics_Output["median_feeder_real_power_loss"] = findMedian(real_power_loss_array, interval_length);
-		// Reactive power loss data
-		metrics_Output["min_feeder_reactive_power_loss"] = findMin(reactive_power_loss_array, interval_length);
-		metrics_Output["max_feeder_reactive_power_loss"] = findMax(reactive_power_loss_array, interval_length);
-		metrics_Output["avg_feeder_reactive_power_loss"] = findAverage(reactive_power_loss_array, interval_length);
-		metrics_Output["median_feeder_reactive_power_loss"] = findMedian(reactive_power_loss_array, interval_length);
+		metrics[FDR_MIN_REAL_LOSS] = findMin(real_power_loss_array, interval_length);
+		metrics[FDR_MAX_REAL_LOSS] = findMax(real_power_loss_array, interval_length);
+		metrics[FDR_AVG_REAL_LOSS] = findAverage(real_power_loss_array, interval_length);
+		metrics[FDR_MED_REAL_LOSS] = findMedian(real_power_loss_array, interval_length);
+		// Reactive power data    
+		metrics[FDR_MIN_REAC_LOSS] = findMin(reactive_power_loss_array, interval_length);
+		metrics[FDR_MAX_REAC_LOSS] = findMax(reactive_power_loss_array, interval_length);
+		metrics[FDR_AVG_REAC_LOSS] = findAverage(reactive_power_loss_array, interval_length);
+		metrics[FDR_MED_REAC_LOSS] = findMedian(reactive_power_loss_array, interval_length);
+
+		// wrap the arrays for next collection interval (TODO circular queue)
+		real_power_array[0] = svP;
+		reactive_power_array[0] = svQ;
+		real_power_loss_array[0] = svPL;
+		reactive_power_loss_array[0] = svQL;
 	}
 
 	return 1;
@@ -864,6 +971,7 @@ void metrics_collector::interpolate(double array[], int idx1, int idx2, double v
 {
 	array[idx2] = val2;
 	int steps = idx2 - idx1;
+
 	if (steps > 1) {
 		double val1 = array[idx1];
 		double dVal = (val2 - val1) / steps;
@@ -912,7 +1020,7 @@ double metrics_collector::findAverage(double array[], int length) {
 }
 
 double metrics_collector::findMedian(double array[], int length) {
-	double median;
+	double median = 0;
 
 	std::sort(&array[0], &array[length]);
 
