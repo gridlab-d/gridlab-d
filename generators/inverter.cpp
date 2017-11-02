@@ -1645,6 +1645,25 @@ int inverter::init(OBJECT *parent)
 		}
 		//Default else - don't do anything
 
+		if (four_quadrant_control_mode == FQM_CONSTANT_PQ) {
+			//Check parents and map the variables
+			if (gl_object_isa(parent,"node","powerflow") || gl_object_isa(parent,"load","powerflow") || gl_object_isa(parent,"meter","powerflow") || gl_object_isa(parent,"triplex_node","powerflow") || gl_object_isa(parent,"triplex_load","powerflow") || gl_object_isa(parent,"triplex_load","powerflow"))
+			{
+				//Find the propery of the frequency measurements
+				freq_pointer = get_double(parent,"measured_frequency");
+
+				//Make sure it worked
+				if (freq_pointer == NULL)
+				{
+					GL_THROW("Inverter:%d %s failed to map the measured_frequency property",obj->id, (obj->name ? obj->name : "Unnamed"));
+					/*  TROUBLESHOOT
+					While attempting to map the measured_frequency property, an error occurred.  Please try again.
+					If the error persists, please submit your GLM and a bug report to the ticketing system.
+					*/
+				}
+			}
+		}
+
 		//If we're a voltage sourced-inverter, map up our variables
 		if (four_quadrant_control_mode == FQM_VSI)
 		{
@@ -5709,7 +5728,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 						// Calculation for frequency deviation
 						if (inverter_droop_fp) {
-							curr_state.df_mea_delayed = 1.0/Tfreq_delay*(*mapped_freq_variable - curr_state.f_mea_delayed);
+							curr_state.df_mea_delayed = 1.0/Tfreq_delay*(*freq_pointer - curr_state.f_mea_delayed);
 						}
 						// Calculation for frequency deviation
 						if (inverter_droop_vq) {
@@ -5821,7 +5840,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 						pred_state.f_mea_delayed = curr_state.f_mea_delayed + (deltat * curr_state.df_mea_delayed);
 						// Calculate Pref based on the droop curve
 //						double delta_Pref = (pred_state.f_mea_delayed - freq_ref) * (1 / R_fp);
-						double delta_Pref = ((pred_state.f_mea_delayed - freq_ref)/freq_ref) * (1 / R_fp) * p_rated;
+						double delta_Pref = ((pred_state.f_mea_delayed - freq_ref)/freq_ref) * (1 / R_fp) * p_rated * 3;
 						power_diff_val = Pref_prev - (Pref0 - delta_Pref);
 						if (checkRampRate_real == true) {
 							if (power_diff_val > 0 && (power_diff_val > rampDownRate_real*3)) {
@@ -6049,11 +6068,11 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 					// Calculation for frequency deviation
 					if (inverter_droop_fp) {
-						pred_state.df_mea_delayed = 1.0/Tfreq_delay*(*mapped_freq_variable - pred_state.f_mea_delayed);
+						pred_state.df_mea_delayed = 1.0/Tfreq_delay*(*freq_pointer - pred_state.f_mea_delayed);
 						curr_state.f_mea_delayed = curr_state.f_mea_delayed + ((curr_state.df_mea_delayed + pred_state.df_mea_delayed) * deltat) / 2.0;
 						// Calculate Pref based on teh droop curve
 //						double delta_Pref = (curr_state.f_mea_delayed - freq_ref) * (1 / R_fp);
-						double delta_Pref = ((curr_state.f_mea_delayed - freq_ref)/freq_ref) * (1 / R_fp) * p_rated;
+						double delta_Pref = ((curr_state.f_mea_delayed - freq_ref)/freq_ref) * (1 / R_fp) * p_rated * 3;
 						power_diff_val = Pref_prev - (Pref0 - delta_Pref);
 						if (checkRampRate_real == true) {
 							if (power_diff_val > 0 && (power_diff_val > rampDownRate_real*3)) {
@@ -6313,7 +6332,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 					// Calculation for frequency deviation
 					if (inverter_droop_fp) {
-						curr_state.df_mea_delayed = 1.0/Tfreq_delay*(*mapped_freq_variable - curr_state.f_mea_delayed);
+						curr_state.df_mea_delayed = 1.0/Tfreq_delay*(*freq_pointer - curr_state.f_mea_delayed);
 					}
 					// Calculation for frequency deviation
 					if (inverter_droop_vq) {
@@ -6830,7 +6849,9 @@ STATUS inverter::init_PI_dynamics(INV_STATE *curr_time)
 		Q_Out = Qref0[0] + Qref0[1] + Qref0[2];
 
 		// Delayed frequency initial value is given:
-		curr_time->f_mea_delayed = *mapped_freq_variable;
+		if (inverter_droop_fp) {
+			curr_time->f_mea_delayed = *freq_pointer;
+		}
 
 		// Set Voltage initial value for v/q droop if adopted
 		if((phases & 0x10) == 0x10) {
