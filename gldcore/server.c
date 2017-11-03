@@ -1732,6 +1732,15 @@ int http_control_request(HTTPCNX *http, char *action)
 		exec_mls_resume(global_clock);
 		return 1;
 	}
+	else if ( strcmp(action,"pause_wait")==0 )
+	{
+		output_verbose("main loop pause");
+		exec_mls_resume(global_clock);
+		output_verbose("waiting for pause");
+		while ( global_mainloopstate!=MLS_PAUSED )
+			usleep(100000);
+		return 1;
+	}
 	else if ( sscanf(action,"pauseat=%[-0-9%:A-Za-z ]",buffer)==1 )
 	{
 		TIMESTAMP ts;
