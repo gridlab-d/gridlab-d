@@ -1110,14 +1110,87 @@ int http_find_request(HTTPCNX *http,char *uri)
 	if ( list == NULL )
 		return 0;
 	http_format(http,"[\n");
-	for ( obj = find_first(list) ; obj != NULL ; obj = find_next(list,obj) )
+	obj = find_first(list);
+	while ( 1 )
 	{
 		if ( obj->name == NULL )
-			http_format(http,"\t{\"name\" : \"%s:%d\"},\n",obj->oclass->name,obj->id);
+			http_format(http,"\t{\"name\" : \"%s:%d\"}",obj->oclass->name,obj->id);
 		else
-			http_format(http,"\t{\"name\" : \"%s\"},\n",obj->name);
+			http_format(http,"\t{\"name\" : \"%s\"}",obj->name);
+		obj = find_next(list,obj);
+		if ( obj!=NULL )
+			http_format(http,",\n\t");
+		else
+			break;
 	}
-	http_format(http,"\t]\n");
+	http_format(http,"\n\t]\n");
+	http_type(http,"text/json");
+	return 1;
+}
+
+/** Process a bulk modify request
+    @returns non-zero on success, 0 on failure (errno set)
+ **/
+int http_modify_request(HTTPCNX *http, char *uri)
+{
+	char *p = uri;
+	while ( p != NULL && *p != '\0' ) 
+	{
+		char oname[1024], pname[1024], value[1024];
+		if ( sscanf(p,"%[^.].%[^=]=%[^;]",oname,pname,value) == 3 )
+		{
+			OBJECT *obj = object_find_name(oname);
+			if ( obj == NULL )
+				output_error("object '%s' not found", oname);
+			else if ( object_set_value_by_name(obj,pname,value) <= 0 )
+				output_error("object '%s' property '%s' set to '%s' failed", oname, pname, value);
+		} 
+		else
+			output_error("modify syntax error at '%s'", p);
+		p = strchr(p+1,';');
+		if ( p != NULL ) p++;
+	};
+	return 1;
+}
+
+/** Process a bulk read request
+    @returns non-zero on success, 0 on failure (errno set)
+ **/
+int http_read_request(HTTPCNX *http, char *uri)
+{
+	char *p = uri;
+	http_format(http,"[\n\t");
+	int first=1;
+	while ( *p != '\0' )
+	{
+		char oname[1024], pname[1024];
+		if ( sscanf(p,"%[^.].%[^;]",oname,pname) == 2 )
+		{
+			char value[1024];
+			OBJECT *obj = object_find_name(oname);
+			if ( obj == NULL )	
+				output_error("object '%s' not found", oname);
+			else if ( object_get_value_by_name(obj,pname,value,sizeof(value)) <= 0 )
+				output_error("object '%s' property '%s' get failed", oname, pname);
+			else
+			{
+				if ( !first )
+					http_format(http,",\n\t");
+				else
+					first = 0;
+				http_format(http,"{\"object\" : \"%s\" , \"property\" : \"%s\" , \"value\" : \"%s\" }",oname,pname,value);
+			}
+		}
+		else
+			output_error("read syntax error at '%s'", p);
+		p = strchr(p+1,';');
+		if ( p != NULL ) 
+			p++;
+		else
+			break;
+	}
+	http_format(http,"\n\t]\n");
+	http_type(http,"text/json");
 	return 1;
 }
 
@@ -1907,6 +1980,8 @@ void *http_response(void *ptr)
 				{"/kml/", 		http_kml_request,		HTTP_OK, HTTP_NOTFOUND},
 				{"/json/",		http_json_request,		HTTP_OK, HTTP_NOTFOUND},
 				{"/find/",	http_find_request,	HTTP_OK, HTTP_NOTFOUND},
+				{"/modify/",	http_modify_request,	HTTP_OK, HTTP_NOTFOUND},
+				{"/read/",	http_read_request,	HTTP_OK, HTTP_NOTFOUND},
 			};
 			int n;
 			for ( n=0 ; n<sizeof(map)/sizeof(map[0]) ; n++ )
