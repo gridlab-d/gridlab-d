@@ -1834,6 +1834,9 @@ int http_control_request(HTTPCNX *http, char *action)
 	else if ( strcmp(action,"shutdown")==0 )
 	{
 		output_verbose("server shutdown by client");
+		http_status(http,HTTP_OK);
+		http_send(http);
+		http_close(http);
 		exit(XC_SUCCESS);
 	}
 	else if ( strcmp(action,"stop")==0 )
