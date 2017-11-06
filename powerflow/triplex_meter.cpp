@@ -421,11 +421,9 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				if (last_measured_min_voltage[2].Mag() > last_measured_voltage[2].Mag()) {
 					last_measured_min_voltage[2] = last_measured_voltage[2];
 				}
-				for (int i = 1; i <= dt; i++) {
-					last_measured_avg_voltage[0] = last_measured_avg_voltage[0] + ((last_measured_voltage[0].Mag() - last_measured_avg_voltage[0])/(i + interval_dt));
-					last_measured_avg_voltage[1] = last_measured_avg_voltage[1] + ((last_measured_voltage[1].Mag() - last_measured_avg_voltage[1])/(i + interval_dt));
-					last_measured_avg_voltage[2] = last_measured_avg_voltage[2] + ((last_measured_voltage[2].Mag() - last_measured_avg_voltage[2])/(i + interval_dt));
-				}
+				last_measured_avg_voltage[0] = ((interval_dt * last_measured_avg_voltage[0]) + (dt * last_measured_voltage[0].Mag()))/(dt + interval_dt);
+				last_measured_avg_voltage[1] = ((interval_dt * last_measured_avg_voltage[1]) + (dt * last_measured_voltage[1].Mag()))/(dt + interval_dt);
+				last_measured_avg_voltage[2] = ((interval_dt * last_measured_avg_voltage[2]) + (dt * last_measured_voltage[2].Mag()))/(dt + interval_dt);
 			}
 			interval_count++;
 			interval_dt = interval_dt + dt;
@@ -455,11 +453,9 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			if (last_measured_min_voltage[2].Mag() > last_measured_voltage[2].Mag()) {
 				last_measured_min_voltage[2] = last_measured_voltage[2];
 			}
-			for (int j = 1; j <= dt; j++) {
-				last_measured_avg_voltage[0] = last_measured_avg_voltage[0] + ((last_measured_voltage[0].Mag() - last_measured_avg_voltage[0])/(j + interval_dt));
-				last_measured_avg_voltage[1] = last_measured_avg_voltage[1] + ((last_measured_voltage[1].Mag() - last_measured_avg_voltage[1])/(j + interval_dt));
-				last_measured_avg_voltage[2] = last_measured_avg_voltage[2] + ((last_measured_voltage[2].Mag() - last_measured_avg_voltage[2])/(j + interval_dt));
-			}
+			last_measured_avg_voltage[0] = ((interval_dt * last_measured_avg_voltage[0]) + (dt * last_measured_voltage[0].Mag()))/(dt + interval_dt);
+			last_measured_avg_voltage[1] = ((interval_dt * last_measured_avg_voltage[1]) + (dt * last_measured_voltage[1].Mag()))/(dt + interval_dt);
+			last_measured_avg_voltage[2] = ((interval_dt * last_measured_avg_voltage[2]) + (dt * last_measured_voltage[2].Mag()))/(dt + interval_dt);
 			measured_real_max_voltage_in_interval[0] = last_measured_max_voltage[0].Re();
 			measured_real_max_voltage_in_interval[1] = last_measured_max_voltage[1].Re();
 			measured_real_max_voltage_in_interval[2] = last_measured_max_voltage[2].Re();
