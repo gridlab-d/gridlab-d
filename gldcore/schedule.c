@@ -876,7 +876,7 @@ void *schedule_createproc(void *args)
 		}
 
 		/* normalize */
-		if ((sch->flags&SN_NORMAL==SN_NORMAL) || (sch->flags&SN_NORMAL==SN_ABSOLUTE) || (sch->flags&SN_NORMAL==SN_WEIGHTED))
+		if ((sch->flags&SN_NORMAL)==SN_NORMAL || (sch->flags&SN_ABSOLUTE)==SN_ABSOLUTE || (sch->flags&SN_WEIGHTED)==SN_WEIGHTED)
 			schedule_normalize(sch,SN_IS_NORMALIZED);
 
 		/* validate */
