@@ -284,7 +284,7 @@ int regulator::init(OBJECT *parent)
 	//Get global_minimum_timestep value and set the appropriate flag
 	unsigned int glob_min_timestep, temp_val;
 	char temp_buff[128];
-	char indexval;
+	int indexval;
 
 	//Retrieve the global value, only does so as a text string for some reason
 	gl_global_getvar("minimum_timestep",temp_buff,sizeof(temp_buff));
