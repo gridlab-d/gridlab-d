@@ -2605,11 +2605,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					//Q_Out is either set or input from elsewhere
 					//Gather Rload
 
-					if(parent_string == "meter")
-					{
-						VA_Out = complex(P_Out,Q_Out);
-					}
-					else if (parent_string == "triplex_meter")
+					if(strcmp(parent_string, "meter") == 0 || strcmp(parent_string, "triplex_meter") == 0)
 					{
 						VA_Out = complex(P_Out,Q_Out);
 					}

@@ -175,17 +175,98 @@ int find_value_index (SCHEDULE *sch, /// schedule to search
 	return -1;
 }
 
+/* compiles a single dtnext array and report errors
+   returns 1 on success, 0 on failure */
+int schedule_compile_dtnext(SCHEDULE *sch, unsigned char calendar)
+{
+	/* construct the dtnext array */
+	int invariant = 1;
+
+	/* number of minutes that are indexed */
+	int t = MAXMINUTES-1;
+
+	/* assume that loopback results in a value change in 1 minute */
+	sch->dtnext[calendar][t] = 1;
+
+	/* scan backwards through time */
+	for (t--; t>=0; t--)
+	{
+		/* get this and the next index to values */
+		int index0 = sch->index[calendar][t];
+		int index1 = sch->index[calendar][t+1];
+
+		/* if the values are the same */
+		if (sch->data[index0]==sch->data[index1])
+		{
+			/* if we haven't reached the maximum delta-t (for unsigned char dtnext) */
+			if (sch->dtnext[calendar][t+1]<255)
+
+				/* add 1 minute to next values time */
+				sch->dtnext[calendar][t] = sch->dtnext[calendar][t+1] + 1;
+			else
+
+				/* start the time over at 1 minute (to next value) */
+				sch->dtnext[calendar][t] = 1;
+		}
+		else
+		{
+			/* start the time over at 1 minute (to next value) */
+			sch->dtnext[calendar][t] = 1;
+			invariant = 0;
+		}
+	}
+
+	/* special case for invariant schedule */
+	if (invariant) {
+		memset(sch->dtnext[calendar],0,sizeof(unsigned char)*MAXMINUTES); /* zero means never */
+	}
+
+	/* check for gaps in the schedule */
+	else
+	{
+		int ngaps = 0;
+		int ingap = 0;
+		{
+			int t;
+			int t_limit = MAXVALUES-1;
+			for ( t=0; t<t_limit; t++ )
+			{
+				if ( sch->dtnext[calendar][t] == 0 && !ingap)
+				{
+					int day = t/60/24;
+					int hour = t/60 - day*24;
+					int minute = t - hour*60 - day*24*60;
+					output_debug("schedule '%s' gap in calendar %d at day %d, hour %d, minute %d lasting %d minutes", sch->name, day, hour, minute);
+					ingap = 1;
+					ngaps++;
+				}
+				else if ( sch->dtnext[calendar][t] != 0 && ingap )
+					ingap = 0;
+			}
+		}
+		if (ngaps>0) {
+			output_error("schedule '%s' has %d gaps which may cause erroneous results", sch->name, ngaps);
+			/* TROUBLESHOOT
+		   The definition given the schedule has missing data that will cause time synchronization problems.
+		   Make sure that all the time covered by the schedule has values given.
+		   */
+			return 0;
+		}
+	}
+	return 1;
+}
+
 /* compiles a single schedule block and report errors
-   returns 1 on success, 0 on failure 
+   returns 1 on success, 0 on failure
  */
 
-int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
+int schedule_compile_block(SCHEDULE *sch, unsigned char block, char *blockname, char *blockdef)
 {
 	char *token = NULL;
 	unsigned int minute=0;
 
 	/* check block count */
-	if (sch->block>=MAXBLOCKS)
+	if (block>=MAXBLOCKS)
 	{
 		output_error("schedule_compile(SCHEDULE *sch='{name=%s, ...}') maximum number of blocks reached", sch->name);
 		/* TROUBLESHOOT
@@ -195,7 +276,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 	}
 
 	/* first index is always default value 0 */
-	sch->count[sch->block]=1;
+	sch->count[block]=1;
 	while ( (token=strtok(token==NULL?blockdef:NULL,";\r\n"))!=NULL )
 	{
 		struct {
@@ -213,30 +294,52 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 		}, *match;
 		unsigned int calendar;
 		double value=1.0; /* default value is 1.0 */
-		int ndx;
+		int ndx=-2;
 
 		/* remove leading whitespace */
 		while (isspace(*token)) token++;
-		if (strcmp(token,"")==0)
+
+		/* skip blank lines */
+		if (strcmp(token,"")==0) {
 			continue;
-		if ( strcmp(token,"nonzero")==0 )
+		}
+
+		/* check for normalization, etc */
+		if ( strcmp(token,"nonzero")==0 ) {
 			sch->flags |= SN_NONZERO;
-		else if ( strcmp(token,"positive")==0 )
+			continue;
+		}
+		else if ( strcmp(token,"positive")==0 ) {
 			sch->flags |= SN_POSITIVE;
-		else if ( strcmp(token,"boolean")==0 )
+			continue;
+		}
+		else if ( strcmp(token,"boolean")==0 ) {
 			sch->flags |= SN_BOOLEAN;
-		else if ( strcmp(token,"normal")==0 )
+			continue;
+		}
+		else if ( strcmp(token,"normal")==0 ) {
 			sch->flags |= SN_NORMAL;
-		else if ( strcmp(token,"weighted")==0 )
+			continue;
+		}
+		else if ( strcmp(token,"weighted")==0 ) {
 			sch->flags |= SN_NORMAL|SN_WEIGHTED;
-		else if ( strcmp(token,"absolute")==0 )
+			continue;
+		}
+		else if ( strcmp(token,"absolute")==0 ) {
 			sch->flags |= SN_NORMAL|SN_ABSOLUTE;
-		else if ( strcmp(token,"interpolated")==0 )
-		{
+			continue;
+		}
+		else if ( strcmp(token,"interpolated")==0 ) {
 			sch->flags |= SN_INTERPOLATED;
 			interpolated_schedules = TRUE;
+			continue;
 		}
-		else if (sscanf(token,"%s%*[ \t]%s%*[ \t]%s%*[ \t]%s%*[ \t]%s%*[ \t]%lf",matcher[0].pattern,matcher[1].pattern,matcher[2].pattern,matcher[3].pattern,matcher[4].pattern,&value)<5) /* value can be missing -> defaults to 1.0 */
+
+		/* at this point we assume a line that needs parsing */
+		/* value can be missing -> defaults to 1.0 */
+		if (sscanf(token,"%s%*[ \t]%s%*[ \t]%s%*[ \t]%s%*[ \t]%s%*[ \t]%lf",
+					matcher[0].pattern, matcher[1].pattern, matcher[2].pattern,
+					matcher[3].pattern, matcher[4].pattern, &value)<5)
 		{
 			output_error("schedule_compile(SCHEDULE *sch='{name=%s, ...}') ignored an invalid definition '%s'", sch->name, token);
 			/* TROUBLESHOOT
@@ -246,19 +349,20 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 		}
 		else
 		{
-			if ((ndx=find_value_index(sch,sch->block,value))==-1)
+			/* a valid line was scanned */
+			if ((ndx=find_value_index(sch,block,value))==-1)
 			{	
-				ndx = sch->count[sch->block]++;
+				ndx = sch->count[block]++;
 				// bound checking
 				if(ndx > MAXVALUES-1)
 				{
-					output_error("schedule_compile(SCHEDULE *sch='{name=%s, ...}') maximum number of values reached in block %i", sch->name, sch->block);
+					output_error("schedule_compile(SCHEDULE *sch='{name=%s, ...}') maximum number of values reached in block %i", sch->name, block);
 					return 0;
 				}
-				sch->data[sch->block*MAXVALUES+ndx] = value;
+				sch->data[block*MAXVALUES+ndx] = value;
 			}
-			sch->sum[sch->block] += value;
-			sch->abs[sch->block] += (value<0?-value:value); // check to see if the value already exists in the value array, if so, don't ++index and use existing indexed value
+			sch->sum[block] += value;
+			sch->abs[block] += (value<0?-value:value); // check to see if the value already exists in the value array, if so, don't ++index and use existing indexed value
 		}
 
 		/* compile matching tables */
@@ -276,14 +380,200 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 		}
 
 		/* load schedule based on weekday of Jan 1 */
-		for (calendar=0; calendar<14; calendar++) // don't do holidays (requires a special case that's not supported yet)
+		for (calendar=0; calendar<MAXCALENDARS; calendar++) // don't do holidays (requires a special case that's not supported yet)
 		{
 			unsigned int weekday = calendar%7;
 			unsigned int is_leapyear = (calendar>=7?1:0);
 			unsigned int calendar = weekday*2+is_leapyear;
 			unsigned int month;
 			unsigned int days[] = {31,(is_leapyear?29:28),31,30,31,30,31,31,30,31,30,31};
-			unsigned int n = sch->block*MAXVALUES + ndx;
+			unsigned int n = block*MAXVALUES + ndx;
+			if (ndx == -2) {
+				output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) internal index error", sch->name);
+				return 0;
+			}
+			minute = 0;
+			for (month=0; month<12; month++)
+			{
+				unsigned int day;
+				if (!matcher[3].table[month])
+				{
+					minute+=60*24*days[month];
+					weekday+=days[month];
+					continue;
+				}
+				for (day=0; day<days[month]; weekday++,day++)
+				{
+					unsigned int hour;
+					weekday%=7; /* wrap day of week */
+					if (!matcher[4].table[weekday] || !matcher[2].table[day])
+					{
+						minute+=60*24;
+						continue;
+					}
+					for (hour=0; hour<24; hour++)
+					{
+						unsigned int stop = minute+60;
+						if (!matcher[1].table[hour])
+						{
+							minute = stop;
+							continue;
+						}
+						while (minute<stop)
+						{
+							if (matcher[0].table[minute%60])
+							{
+								if (sch->index[calendar] != NULL && sch->index[calendar][minute]>0)
+								{
+									char *dayofweek[] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat","Sun","Hol"};
+									output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) '%s' in block '%s' has a conflict with value %g on %s %d/%d %02d:%02d", sch->name, token, blockname, sch->data[sch->index[calendar][minute]], dayofweek[weekday], month+1, day+1, hour, minute%60);
+									/* TROUBLESHOOT
+									   The schedule definition is not valid and has been ignored.  Check the syntax of your schedule and try again.
+									 */
+									return 0;
+								}
+								else
+								{
+									/* associate this time with the current value */
+									if (sch->index[calendar] != NULL) sch->index[calendar][minute] = n;
+									sch->weight[n]++;
+									sch->minutes[block]++;
+
+								}
+							}
+							minute++;
+						}
+					}
+				}
+			}
+		}
+	}
+	sch->blockname[block] = strdup(blockname);
+	if (sch->blockname[block] == NULL) {
+		output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) insufficient memory for block name", sch->name);
+		return 0;
+	}
+	return 1;
+}
+
+/* compiles a single schedule block for the given calendar and report errors
+   returns 1 on success, 0 on failure
+ */
+
+int schedule_recompile_block(SCHEDULE *sch, unsigned char calendar, unsigned char block, char *blockname, char *blockdef)
+{
+	char *token = NULL;
+	unsigned int minute=0;
+
+	if (sch->index[calendar] == NULL)
+	{
+		output_error("schedule_recompile(SCHEDULE *sch='{name=%s, ...}') sch->index was NULL", sch->name);
+		return 0;
+	}
+
+	/* check block count */
+	if (block>=MAXBLOCKS)
+	{
+		output_error("schedule_recompile(SCHEDULE *sch='{name=%s, ...}') block index out of bounds", sch->name);
+		return 0;
+	}
+
+	while ( (token=strtok(token==NULL?blockdef:NULL,";\r\n"))!=NULL )
+	{
+		struct {
+			char *name;
+			int base;
+			int max;
+			char pattern[256];
+			char table[60];
+		} matcher[] = {
+			{"minute",0,59},
+			{"hour",0,23},
+			{"day",1,31},
+			{"month",1,12},
+			{"weekday",0,8},
+		}, *match;
+		double value=1.0; /* default value is 1.0 */
+		int ndx=-2;
+
+		/* remove leading whitespace */
+		while (isspace(*token)) token++;
+
+		/* skip blank lines */
+		if (strcmp(token,"")==0) {
+			continue;
+		}
+
+		/* check for normalization, etc */
+		if ( strcmp(token,"nonzero")==0 ) {
+			continue;
+		}
+		else if ( strcmp(token,"positive")==0 ) {
+			continue;
+		}
+		else if ( strcmp(token,"boolean")==0 ) {
+			continue;
+		}
+		else if ( strcmp(token,"normal")==0 ) {
+			continue;
+		}
+		else if ( strcmp(token,"weighted")==0 ) {
+			continue;
+		}
+		else if ( strcmp(token,"absolute")==0 ) {
+			continue;
+		}
+		else if ( strcmp(token,"interpolated")==0 ) {
+			continue;
+		}
+
+		/* at this point we assume a line that needs parsing */
+		/* value can be missing -> defaults to 1.0 */
+		if (sscanf(token,"%s%*[ \t]%s%*[ \t]%s%*[ \t]%s%*[ \t]%s%*[ \t]%lf",
+					matcher[0].pattern, matcher[1].pattern, matcher[2].pattern,
+					matcher[3].pattern, matcher[4].pattern, &value)<5)
+		{
+			output_error("schedule_recompile(SCHEDULE *sch='{name=%s, ...}') ignored an invalid definition '%s'", sch->name, token);
+			/* TROUBLESHOOT
+			   The schedule definition is not valid and has been ignored.  Check the syntax of your schedule and try again.
+			 */
+			continue;
+		}
+		else
+		{
+			/* a valid line was scanned */
+			if ((ndx=find_value_index(sch,block,value))==-1)
+			{	
+				output_error("schedule_recompile(SCHEDULE *sch='{name=%s, ...}') unable to find value", sch->name);
+				return 0;
+			}
+		}
+
+		/* compile matching tables */
+		for (match=matcher; match<matcher+sizeof(matcher)/sizeof(matcher[0]); match++)
+		{
+			/* get match tables */
+			if (!schedule_matcher(match->pattern,match->table,match->max,match->base))
+			{
+				output_error("schedule_recompile(SCHEDULE *sch={name='%s', ...}) %s pattern syntax error in item '%s'", sch->name, match->name, token);
+				/* TROUBLESHOOT
+					The schedule definition is not valid and has been ignored.  Check the syntax of your schedule and try again.
+				*/
+				return 0;
+			}
+		}
+
+		/* load schedule based on weekday of Jan 1 */
+		{
+			unsigned int is_leapyear = calendar%2;
+			unsigned int weekday = calendar/2;
+			unsigned int month;
+			unsigned int days[] = {31,(is_leapyear?29:28),31,30,31,30,31,31,30,31,30,31};
+			unsigned int n = block*MAXVALUES + ndx;
+			if (ndx == -2) {
+				output_error("schedule_recompile(SCHEDULE *sch={name='%s', ...}) internal index error", sch->name);
+				return 0;
+			}
 			minute = 0;
 			for (month=0; month<12; month++)
 			{
@@ -318,7 +608,7 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 								if (sch->index[calendar][minute]>0)
 								{
 									char *dayofweek[] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat","Sun","Hol"};
-									output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) '%s' in block '%s' has a conflict with value %g on %s %d/%d %02d:%02d", sch->name, token, blockname, sch->data[sch->index[calendar][minute]], dayofweek[weekday], month+1, day+1, hour, minute%60);
+									output_error("schedule_recompile(SCHEDULE *sch={name='%s', ...}) '%s' in block '%s' has a conflict with value %g on %s %d/%d %02d:%02d", sch->name, token, blockname, sch->data[sch->index[calendar][minute]], dayofweek[weekday], month+1, day+1, hour, minute%60);
 									/* TROUBLESHOOT
 									   The schedule definition is not valid and has been ignored.  Check the syntax of your schedule and try again.
 									 */
@@ -328,9 +618,6 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 								{
 									/* associate this time with the current value */
 									sch->index[calendar][minute] = n;
-									sch->weight[n]++;
-									sch->minutes[sch->block]++;
-
 								}
 							}
 							minute++;
@@ -340,7 +627,40 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 			}
 		}
 	}
-	strcpy(sch->blockname[sch->block],blockname);
+	return 1;
+}
+
+/* compiles the index for a multi-block schedule and report errors
+   returns 1 on success, 0 on failure 
+ */
+int schedule_recompile(SCHEDULE *sch, unsigned char calendar)
+{
+	unsigned char block;
+	if (sch->index[calendar] == 0) {
+		sch->index[calendar] = malloc(sizeof(unsigned char)*MAXMINUTES);
+		if (sch->index[calendar] == NULL) {
+			output_error("schedule_recompile(SCHEDULE *sch='{name=%s, ...}') insufficient memory for index", sch->name);
+			return 0;
+		}
+		memset(sch->index[calendar],0,sizeof(unsigned char)*MAXMINUTES);
+	}
+	if (sch->dtnext[calendar] == 0) {
+		sch->dtnext[calendar] = malloc(sizeof(unsigned char)*MAXMINUTES);
+		if (sch->dtnext[calendar] == NULL) {
+			output_error("schedule_recompile(SCHEDULE *sch='{name=%s, ...}') insufficient memory for dtnext", sch->name);
+			return 0;
+		}
+		memset(sch->dtnext[calendar],0,sizeof(unsigned char)*MAXMINUTES);
+	}
+	for (block=0; block<sch->block; block++) {
+		/* schedule_recompile_block uses strtok and corrupts our stored blockdef, use a copy */
+		char blockdef[MAXDEFINITION];
+		strcpy(blockdef, sch->blockdef[block]);
+		if (schedule_recompile_block(sch, calendar, block, sch->blockname[block], blockdef) == 0) {
+			output_error("schedule_recompile(SCHEDULE *sch='{name=%s, ...}') error recomputing index", sch->name);
+			return 0;
+		}
+	}
 	return 1;
 }
 
@@ -350,8 +670,8 @@ int schedule_compile_block(SCHEDULE *sch, char *blockname, char *blockdef)
 int schedule_compile(SCHEDULE *sch)
 {
 	char *p = sch->definition, *q = NULL;
-	char blockdef[65536];
-	char blockname[64];
+	char blockdef[MAXDEFINITION];
+	char blockname[MAXNAME];
 	enum {INIT, NAME, OPEN, BLOCK, CLOSE} state = INIT;
 	int comment=0;
 	
@@ -362,7 +682,12 @@ int schedule_compile(SCHEDULE *sch)
 		/* remove leading whitespace */
 		while (isspace(*p)) p++;
 		strcpy(blockdef,p);
-		if (schedule_compile_block(sch,"*",blockdef))
+		sch->blockdef[sch->block] = strdup(p);
+		if (sch->blockdef[sch->block] == NULL) {
+			output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) insufficient memory for block definition", sch->name);
+			return 0;
+		}
+		if (schedule_compile_block(sch,sch->block,"*",blockdef))
 		{
 			sch->block++;
 			return 1;
@@ -421,7 +746,7 @@ int schedule_compile(SCHEDULE *sch)
 			}
 			else /* valid text */
 			{
-				if (q<blockname+sizeof(blockname)-1)
+				if (q<blockname+MAXNAME-1)
 				{
 					*q++ = *p++;
 					*q = '\0';
@@ -484,21 +809,26 @@ int schedule_compile(SCHEDULE *sch)
 				state = CLOSE;
 				q = NULL;
 				p++;
-				if (schedule_compile_block(sch,blockname,blockdef))
+				sch->blockdef[sch->block] = strdup(blockdef);
+				if (sch->blockdef[sch->block] == NULL) {
+					output_error("schedule %s: block %s insufficient memory for block definition", sch->name, blockname);
+					return 0;
+				}
+				if (schedule_compile_block(sch,sch->block,blockname,blockdef))
 					sch->block++;
 				else
 					return 0;
 			}
 			else 
 			{
-				if (q<blockdef+sizeof(blockdef)-1)
+				if (q<blockdef+MAXDEFINITION-1)
 				{
 					*q++ = *p++;
 					*q = '\0';
 				}
 				else
 				{
-					output_error("schedule name is too long");
+					output_error("schedule %s: block %s definition is too long", sch->name, blockname);
 					/* TROUBLESHOOT
 						The definition given the schedule is too long to be used.  Use a definition that is less than 1024 characters and try again.
 					 */
@@ -538,84 +868,16 @@ void *schedule_createproc(void *args)
 	/* compile the schedule */
 	if (schedule_compile(sch))
 	{
-		/* construct the dtnext array */
 		unsigned char calendar;
-		int invariant = 1;
-		for (calendar=0; calendar<14; calendar++)
+		/* construct the dtnext array for valid calendars */
+		for (calendar=0; calendar<MAXCALENDARS; calendar++)
 		{
-			/* number of minutes that are indexed */
-			int t = sizeof(sch->dtnext[calendar])/sizeof(sch->dtnext[calendar][0])-1;
-
-			/* assume that loopback results in a value change in 1 minute */
-			sch->dtnext[calendar][t] = 1; 
-
-			/* scan backwards through time */
-			for (t--; t>=0; t--)
-			{
-				/* get this and the next index to values */
-				int index0 = sch->index[calendar][t];
-				int index1 = sch->index[calendar][t+1];
-
-				/* if the values are the same */
-				if (sch->data[index0]==sch->data[index1])
-				{	
-					/* if we haven't reached the maximum delta-t (for unsigned char dtnext) */
-					if (sch->dtnext[calendar][t+1]<255)
-
-						/* add 1 minute to next values time */
-						sch->dtnext[calendar][t] = sch->dtnext[calendar][t+1] + 1;
-					else
-
-						/* start the time over at 1 minute (to next value) */
-						sch->dtnext[calendar][t] = 1;
-				}
-				else
-				{
-					/* start the time over at 1 minute (to next value) */
-					sch->dtnext[calendar][t] = 1;
-					invariant = 0;
-				}
-			}
-		}
-
-		/* special case for invariant schedule */
-		if (invariant)
-			memset(sch->dtnext,0,sizeof(sch->dtnext)); /* zero means never */
-
-		/* check for gaps in the schedule */
-		else
-		{
-			int ngaps = 0;
-			int ingap = 0;
-			for (calendar=0; calendar<14; calendar++)
-			{
-				int t;
-				for ( t=0; t<sizeof(sch->dtnext[calendar])/sizeof(sch->dtnext[calendar][0])-1; t++ )
-				{
-					if ( sch->dtnext[calendar][t] == 0 && !ingap)
-					{
-						int day = t/60/24;
-						int hour = t/60 - day*24;
-						int minute = t - hour*60 - day*24*60;
-						output_debug("schedule '%s' gap in calendar %d at day %d, hour %d, minute %d lasting %d minutes", sch->name, day, hour, minute);
-						ingap = 1;
-						ngaps++;
-					}
-					else if ( sch->dtnext[calendar][t] != 0 && ingap )
-						ingap = 0;
-				}
-			}
-			if (ngaps>0)
-				output_error("schedule '%s' has %d gaps which may cause erroneous results", sch->name, ngaps);
-				/* TROUBLESHOOT
-					The definition given the schedule has missing data that will cause time synchronization problems.
-					Make sure that all the time covered by the schedule has values given.
-				 */
+			if (sch->dtnext[calendar] != 0) schedule_compile_dtnext(sch, calendar);
 		}
 
 		/* normalize */
-		if (sch->flags!=0)
-			schedule_normalize(sch,sch->flags);
+		if ((sch->flags&SN_NORMAL)==SN_NORMAL || (sch->flags&SN_ABSOLUTE)==SN_ABSOLUTE || (sch->flags&SN_WEIGHTED)==SN_WEIGHTED)
+			schedule_normalize(sch,SN_IS_NORMALIZED);
 
 		/* validate */
 		if ((sch->flags&(SN_POSITIVE|SN_NONZERO|SN_BOOLEAN)) != 0 && ! schedule_validate(sch,sch->flags))
@@ -714,26 +976,36 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 		return NULL;
 	}
 	output_debug("schedule '%s' uses %.1f MB of memory", name, sizeof(SCHEDULE)/1000000.0);
-	if (strlen(name)>=sizeof(sch->name))
+	if (strlen(name)>=MAXNAME)
 	{
 		output_error("schedule_create(char *name='%s', char *definition='%s') name too long)", name, definition);
 		/* TROUBLESHOOT
 			The name given the schedule is too long to be used.  Use a name that is less than 64 characters and try again.
 		 */
-		free(sch);
+		schedule_free(sch);
 		return NULL;
 	}
-	strcpy(sch->name,name);
-	if (strlen(definition)>=sizeof(sch->definition))
+	sch->name = strdup(name);
+	if (sch->name == NULL) {
+		output_error("schedule_create(char *name='%s', char *definition='%s') insufficient memory for name)", name, definition);
+		schedule_free(sch);
+		return NULL;
+	}
+	if (strlen(definition)>=MAXDEFINITION)
 	{
 		output_error("schedule_create(char *name='%s', char *definition='%s') definition too long)", name, definition);
 		/* TROUBLESHOOT
 			The definition given the schedule is too long to be used.  Use a definition that is less than 1024 characters and try again.
 		 */
-		free(sch);
+		schedule_free(sch);
 		return NULL;
 	}
-	strcpy(sch->definition,definition);
+	sch->definition = strdup(definition);
+	if (sch->definition == NULL) {
+		output_error("schedule_create(char *name='%s', char *definition='%s') insufficient memory for definition)", name, definition);
+		schedule_free(sch);
+		return NULL;
+	}
 
 	/* attach to schedule list */
 	schedule_add(sch);
@@ -749,7 +1021,7 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 		else
 		{
 			/* error message should be given by schedule_compile */
-			free(sch);
+			schedule_free(sch);
 			sch = NULL;
 			return NULL;
 		}
@@ -773,12 +1045,59 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 
 SCHEDULE *schedule_new(void)
 {
+	unsigned int cal;
+	unsigned int cal_lo;
+	unsigned int cal_hi;
+	DATETIME dt_starttime;
+	DATETIME dt_starttime_lo;
+	DATETIME dt_starttime_hi;
+
 	/* create the schedule */
 	SCHEDULE *sch = (SCHEDULE*)malloc(sizeof(SCHEDULE));
 	if (sch==NULL) return NULL;
-
-	/* initialize */
 	memset(sch,0,sizeof(SCHEDULE));
+
+	/* only allocate the initial calendar(s) */
+	TIMESTAMP ONE_WEEK = 604800;
+	if (!local_datetime(global_starttime, &dt_starttime)) {
+		throw_exception("schedule_new() unable to determine local starttime", global_starttime);
+	}
+	if (!local_datetime(global_starttime-ONE_WEEK, &dt_starttime_lo)) {
+		throw_exception("schedule_new() unable to determine local starttime left skewed", global_starttime);
+	}
+	if (!local_datetime(global_starttime+ONE_WEEK, &dt_starttime_hi)) {
+		throw_exception("schedule_new() unable to determine local starttime right skewed", global_starttime);
+	}
+	cal = ((dt_starttime.weekday-dt_starttime.yearday+53*7)%7)*2 + ISLEAPYEAR(dt_starttime.year);
+	cal_lo = ((dt_starttime_lo.weekday-dt_starttime_lo.yearday+53*7)%7)*2 + ISLEAPYEAR(dt_starttime_lo.year);
+	cal_hi = ((dt_starttime_hi.weekday-dt_starttime_hi.yearday+53*7)%7)*2 + ISLEAPYEAR(dt_starttime_hi.year);
+
+	/* create the first calendar needed */
+	sch->index[cal] = malloc(sizeof(unsigned char)*MAXMINUTES);
+	if (sch->index[cal]==NULL) return NULL;
+	memset(sch->index[cal],0,sizeof(unsigned char)*MAXMINUTES);
+	sch->dtnext[cal] = malloc(sizeof(unsigned char)*MAXMINUTES);
+	if (sch->dtnext[cal]==NULL) return NULL;
+	memset(sch->dtnext[cal],0,sizeof(unsigned char)*MAXMINUTES);
+	/* create left skewed calendar, if needed */
+	if (cal_lo != cal) {
+		sch->index[cal_lo] = malloc(sizeof(unsigned char)*MAXMINUTES);
+		if (sch->index[cal_lo]==NULL) return NULL;
+		memset(sch->index[cal_lo],0,sizeof(unsigned char)*MAXMINUTES);
+		sch->dtnext[cal_lo] = malloc(sizeof(unsigned char)*MAXMINUTES);
+		if (sch->dtnext[cal_lo]==NULL) return NULL;
+		memset(sch->dtnext[cal_lo],0,sizeof(unsigned char)*MAXMINUTES);
+	}
+	/* create right skewed calendar, if needed */
+	if (cal_hi != cal) {
+		sch->index[cal_hi] = malloc(sizeof(unsigned char)*MAXMINUTES);
+		if (sch->index[cal_hi]==NULL) return NULL;
+		memset(sch->index[cal_hi],0,sizeof(unsigned char)*MAXMINUTES);
+		sch->dtnext[cal_hi] = malloc(sizeof(unsigned char)*MAXMINUTES);
+		if (sch->dtnext[cal_hi]==NULL) return NULL;
+		memset(sch->dtnext[cal_hi],0,sizeof(unsigned char)*MAXMINUTES);
+	}
+
 #ifdef _DEBUG
 	sch->magic1 = sch->magic2 = SCHEDULE_MAGIC; 
 #endif
@@ -786,6 +1105,23 @@ SCHEDULE *schedule_new(void)
 	sch->next_t = TS_NEVER;
 	return sch;
 }
+
+void schedule_free(SCHEDULE *sch)
+{
+	unsigned char i;
+	if (sch->name) free(sch->name);
+	if (sch->definition) free(sch->definition);
+	for (i=0; i<MAXBLOCKS; i++) {
+		if (sch->blockname[i]) free(sch->blockname[i]);
+		if (sch->blockdef[i]) free(sch->blockdef[i]);
+	}
+	for (i=0; i<MAXCALENDARS; i++) {
+		if (sch->index[i]) free(sch->index[i]);
+		if (sch->dtnext[i]) free(sch->dtnext[i]);
+	}
+	free(sch);
+}
+
 void schedule_add(SCHEDULE *sch)
 {
 	sch->next = schedule_list;
@@ -859,7 +1195,7 @@ int schedule_normalize(SCHEDULE *sch,	/**< the schedule to normalize */
 			continue;
 
 		/* weighted normalization */
-		if (flags&SN_WEIGHTED)
+		if ((sch->flags&SN_WEIGHTED)==SN_WEIGHTED)
 		{	
 			double scale[MAXVALUES];
 			unsigned int i;
@@ -883,7 +1219,7 @@ int schedule_normalize(SCHEDULE *sch,	/**< the schedule to normalize */
 		/* unweighted normalization */
 		else
 		{
-			double scale = (flags&SN_ABSOLUTE?sch->abs[b]:sch->sum[b]);
+			double scale = ((sch->flags&SN_ABSOLUTE)==SN_ABSOLUTE?sch->abs[b]:sch->sum[b]);
 
 			/* if the coefficient is non-zero */
 			if (scale!=0)
@@ -927,11 +1263,16 @@ SCHEDULEINDEX schedule_index(SCHEDULE *sch, TIMESTAMP ts)
 	/* compute the minute of year */
 	min=(dt.yearday*24 + dt.hour)*60 + dt.minute;
 
-	if ( cal>=14 || min>=60*24*366 )
+	if ( cal>=MAXCALENDARS || min>=MAXMINUTES )
 		output_error("schedule_index(): timestamp %" FMT_INT64 "d has calendar %d minute %d which is invalid", ts, cal, min);
 
 	SET_CALENDAR(ref, cal);
 	SET_MINUTE(ref, min);
+
+	if ( sch->index[cal] == 0) {
+		schedule_recompile(sch, cal);
+		schedule_compile_dtnext(sch, cal);
+	}
 
 	/* got it */
 	return ref;
@@ -945,7 +1286,7 @@ double schedule_value(SCHEDULE *sch,		/**< the schedule to read */
 {
 	int32 cal = GET_CALENDAR(index);
 	int32 min = GET_MINUTE(index);
-	if ( cal>=14 || min>=60*24*366 )
+	if ( cal>=MAXCALENDARS || min>=MAXMINUTES )
 		output_error("schedule_index(): index %d has calendar %d minute %d which is invalid", index, cal, min);
 	return sch->data[sch->index[cal][min]];
 }
@@ -958,7 +1299,7 @@ int32 schedule_dtnext(SCHEDULE *sch,			/**< the schedule to read */
 {
 	int32 cal = GET_CALENDAR(index);
 	int32 min = GET_MINUTE(index);
-	if ( cal>=14 || min>=60*24*366 )
+	if ( cal>=MAXCALENDARS || min>=MAXMINUTES )
 		output_error("schedule_dtnext(): index %d has calendar %d minute %d which is invalid", index, cal, min);
 	return sch->dtnext[cal][min];
 }
@@ -969,7 +1310,7 @@ int32 schedule_duration(SCHEDULE *sch,			/**< the schedule to read */
 	int32 cal = GET_CALENDAR(index);
 	int32 min = GET_MINUTE(index);
 	int block;
-	if ( cal>=14 || min>=60*24*366 )
+	if ( cal>=MAXCALENDARS || min>=MAXMINUTES )
 		output_error("schedule_duration(): index %d has calendar %d minute %d which is invalid", index, cal, min);
 	block = (sch->index[cal][min]>>6)&MAXBLOCKS; // these change if MAXVALUES or MAXBLOCKS changes
 	return sch->minutes[block];
@@ -980,7 +1321,7 @@ double schedule_weight(SCHEDULE *sch,			/**< the schedule to read */
 {
 	int32 cal = GET_CALENDAR(index);
 	int32 min = GET_MINUTE(index);
-	if ( cal>=14 || min>=60*24*366 )
+	if ( cal>=MAXCALENDARS || min>=MAXMINUTES )
 		output_error("schedule_weight(): index %d has calendar %d minute %d which is invalid", index, cal, min);
 	return sch->weight[sch->index[cal][min]];
 }
@@ -1355,7 +1696,7 @@ void schedule_dump(SCHEDULE *sch, char *file, char *mode)
 
 	fprintf(fp,"schedule %s { %s }\n", sch->name, sch->definition);
 	fprintf(fp,"sizeof(SCHEDULE) = %.3f MB\n", (double)sizeof(SCHEDULE)/1024/1024);
-	for (calendar=0; calendar<14; calendar++)
+	for (calendar=0; calendar<MAXCALENDARS; calendar++)
 	{
 		int year=0, month, y;
 		int daysinmonth[] = {31,((calendar&1)?29:28),31,30,31,30,31,31,30,31,30,31};
