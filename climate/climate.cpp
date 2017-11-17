@@ -532,7 +532,7 @@ climate::climate(MODULE *module)
 		if (gl_publish_variable(oclass,
 			PT_double,"solar_elevation",PADDR(solar_elevation), //sjin: publish solar elevation variable
 			PT_double,"solar_azimuth",PADDR(solar_azimuth), //sjin: publish solar azimuth variable
-      PT_double,"solar_zenith",PADDR(solar_zenith),
+			PT_double,"solar_zenith",PADDR(solar_zenith),
 			PT_char32, "city", PADDR(city),
 			PT_char1024,"tmyfile",PADDR(tmyfile),
 			PT_double,"temperature[degF]",PADDR(temperature),
@@ -584,6 +584,7 @@ climate::climate(MODULE *module)
 			PT_double,"cloud_alpha[pu]",PADDR(cloud_alpha),
 			PT_double,"cloud_num_layers[pu]",PADDR(cloud_num_layers),
 			PT_double,"cloud_aerosol_transmissivity[pu]",PADDR(cloud_aerosol_transmissivity),
+			PT_double,"update_time",PADDR(update_time),
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		memset(this,0,sizeof(climate));
 		sa = new SolarAngles();
@@ -1992,6 +1993,33 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 	TIMESTAMP cloud_rv = 0;
 	DATETIME dt;
 
+	// establish current time
+	update_time = t0;
+
+	// %%%%% 20170224 MJB Stub in solar_flux computation
+	if(t0 > TS_ZERO && tmy==NULL) {
+		gld_clock now(t0);
+		//calculate the solar radiation
+		OBJECT *obj=OBJECTHDR(this);
+		double longitude = obj->longitude;
+		double sol_time = sa->solar_time((double)now.get_hour() + (now.get_minute()/60.0) + (now.get_second()/3600.0) + (now.get_is_dst() ? -1:0),now.get_yearday(),RAD(tz_meridian),longitude);
+		gl_localtime(t0, &dt);
+		short day_of_yr = sa->day_of_yr(dt.month,dt.day);
+		solar_zenith = sa->zenith(day_of_yr, RAD(obj->latitude), sol_time);
+		double sol_rad = 0.0;
+		std::cout << "Solar Flux: ";
+		for(COMPASS_PTS c_point = CP_H; c_point < CP_LAST;c_point=COMPASS_PTS(c_point+1)){
+			if(c_point == CP_H)
+				sol_rad = file.calc_solar(CP_E,now.get_yearday(),RAD(obj->latitude),sol_time,solar_direct,solar_diffuse,solar_global,ground_reflectivity,0.0);//(double)dnr * cos_incident + dhr;
+			else
+				sol_rad = file.calc_solar(c_point,now.get_yearday(),RAD(obj->latitude),sol_time,solar_direct,solar_diffuse,solar_global,ground_reflectivity);//(double)dnr * cos_incident + dhr;
+			// TMY2 solar radiation data is in Watt-hours per square meter.
+			solar_flux[c_point] = sol_rad;
+			std::cout << solar_flux[c_point] <<", ";
+		}
+		std::cout << std::endl;
+
+	}
 	// TODO: need to read the cloud stuff from the csv file
 	// changes appear to be limited to weather.h, weather.cpp, csv_reader.h, csv_reader.cpp
 	if(t0 > TS_ZERO && reader_type == RT_CSV){
