@@ -7,8 +7,11 @@
 #include <math.h>
 #include "gridlabd.h"
 
+#include "commercial.h"
 #include "office.h"
 #include "multizone.h"
+
+char coefficient_file[1024];
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
@@ -21,9 +24,11 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	gl_global_create("commercial::warn_control",PT_bool,&office::warn_control,NULL);
 	gl_global_create("commercial::warn_low_temp",PT_double,&office::warn_low_temp,NULL);
 	gl_global_create("commercial::warn_high_temp",PT_double,&office::warn_high_temp,NULL);
+	gl_global_create("commercial::coefficient_file", PT_char1024, &coefficient_file, PT_DESCRIPTION, "File containing fit parameters for commercial building types, climate zones, and NAICS codes", NULL);
 
 	new office(module);
 	new multizone(module); 
+	new CommercialLoad(module);
 
 	/* always return the first class registered */
 	return office::oclass;
