@@ -3958,6 +3958,29 @@ int node::NR_current_update(bool postpass, bool parentcall)
 			current_inj[2] += temp_current_inj[2];
 		}
 
+		//See if we're delta-enabled and need to accumulate those items
+		//Note that this is done after the parent/child update due to child deltamode objects mapping "through"
+		//To the parent.  If this was above the previous code, deltamode-related postings get counted twice.
+		if ((deltamode_inclusive == true) && (dynamic_norton == true))
+		{
+			//See which variables exist
+			if (DynVariable != NULL)
+			{
+				current_inj[0] -= DynVariable[0];
+				current_inj[1] -= DynVariable[1];
+				current_inj[2] -= DynVariable[2];
+			}
+
+			//See if the shunt exists
+			if (full_Y != NULL)
+			{
+				//This assumes three-phase right now
+				current_inj[0] += full_Y[0]*voltage[0] + full_Y[1]*voltage[1] + full_Y[2]*voltage[2];
+				current_inj[1] += full_Y[3]*voltage[0] + full_Y[4]*voltage[1] + full_Y[5]*voltage[2];
+				current_inj[2] += full_Y[6]*voltage[0] + full_Y[7]*voltage[1] + full_Y[8]*voltage[2];
+			}
+		}
+
 		//Handle our links - "child" contributions are bypassed into their parents due to NR structure, so this order works
 		if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))	//Make sure we aren't children as well, since we'll get NULL pointers and make everyone upset
 		{
