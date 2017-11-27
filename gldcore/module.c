@@ -603,6 +603,7 @@ static void _module_list (char *path)
 	}
 
 	/* open directory */
+	output_debug("module_list(char *path='%s')", path);
 #ifdef WIN32
 	sprintf(search,"%s\\*.dll",path);
 	hFind=FindFirstFile(search,&sFind);
@@ -615,34 +616,48 @@ static void _module_list (char *path)
 	while((ent = readdir(dir)) != NULL) {
 #endif
 
-	/* iterate files list */
-		char fname[1024];
+		/* iterate files list */
+		char buffer[1024], *fname=buffer;
+		strcpy(fname,path);
+		strcat(fname,"/");
 		char *ext;
 		void *hLib = NULL;
 		int *pMajor = NULL, *pMinor = NULL;
 		LIBINIT init = NULL;
 		global_suppress_repeat_messages = 0;
 #ifdef WIN32
-		strcpy(fname,sFind.cFileName);
+		strcat(fname,sFind.cFileName);
 		/* check image */
 		if ( !_checkimg(fname) ) continue;
 #else
-		// TODO Posix version
 		/* isolate so files only */
-		strcpy(fname, ent->d_name);
+		strcat(fname, ent->d_name);
 		ext = strrchr(fname,'.');
 		if ( ext==NULL ) continue; /* no extension */
 		if ( strcmp(ext,".so")!=0 ) continue; /* not the right extension */
 #endif
+		output_debug("library '%s' ok", fname);
 		/* access DLL */
 		hLib = DLLOAD(fname);
-		if ( hLib==NULL ) continue;
-		if ( DLSYM(hLib,"init")==NULL ) continue;
-		pMajor = (int*)DLSYM(hLib, "major");
-		pMinor = (int*)DLSYM(hLib, "minor");
-		if ( pMajor==NULL || pMinor==NULL ) continue;
-
-		/* TODO print info */
+		if ( hLib==NULL ) 
+		{	
+			output_verbose("DLLOAD failed for '%s'", fname);
+			continue;
+		}
+		if ( DLSYM(hLib,"init")==NULL ) 
+		{
+			output_verbose("library '%s' has no init() function", fname);
+			continue;
+		}
+		pMajor = (int*)DLSYM(hLib, "gld_major");
+		pMinor = (int*)DLSYM(hLib, "gld_minor");
+		if ( pMajor==NULL || pMinor==NULL ) 
+		{
+			output_verbose("library '%s' has no value(s) for major or minor", fname);
+			continue;
+		}
+		if ( strrchr(fname,'/') != NULL ) fname = strrchr(fname,'/')+1; // cut off path
+		if ( strrchr(fname,'.') != NULL ) *strrchr(fname,'.')='\0'; // cut off extension
 		output_message("%-24.24s %5d.%d %s", fname, *pMajor, *pMinor, path);
 #ifdef WIN32
 		global_suppress_repeat_messages = gsrm;
