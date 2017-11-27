@@ -2504,6 +2504,7 @@ STATUS exec_start(void)
 			output_profile("Simulation rate         %8.1lf x realtime", delta_simtime/delta_runtime/1000);
 		}
 		output_profile("\n");
+		object_synctime_profile_dump(NULL);
 	}
 
 	sched_update(global_clock,MLS_DONE);

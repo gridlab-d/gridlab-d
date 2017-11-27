@@ -460,6 +460,8 @@ int object_loadmethod(OBJECT *obj, char *name, char *value);
 #define MYCLOCK (MY->clock) /**< get an object's own clock */
 #define MYRANK (MY->rank) /**< get an object's own rank */
 
+void object_synctime_profile_dump(char *filename);
+
 #endif
 
 /** @} **/

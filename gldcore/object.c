@@ -1430,6 +1430,31 @@ void object_profile(OBJECT *obj, OBJECTPROFILEITEM pass, clock_t t)
 	}
 }
 
+void object_synctime_profile_dump(char *filename)
+{
+	char *fname = filename?filename:"object_profile.txt";
+	FILE *fp = fopen(fname,"wt");
+	OBJECT *obj;
+	if ( fp == NULL )
+	{
+		output_warning("unable to access object profile dumpfile '%s'", fname);
+		return;
+	}
+	fprintf(fp,"%s","object,presync,sync,postsync,init,heartbeat,precommit,commit,finalize\n");
+	for ( obj = object_get_first() ; obj != NULL ; obj = object_get_next(obj) )
+	{
+		int i;
+		if ( obj->name )
+			fprintf(fp,"%s",obj->name);
+		else
+			fprintf(fp,"%s:%d",obj->oclass->name);
+		for ( i = 0 ; i < _OPI_NUMITEMS ; i++ )
+			fprintf(fp,",%d",(int)obj->synctime[i]);
+		fprintf(fp,"\n");
+	}
+	fclose(fp);
+}
+
 TIMESTAMP _object_sync(OBJECT *obj, /**< the object to synchronize */
 					  TIMESTAMP ts, /**< the desire clock to sync to */
 					  PASSCONFIG pass) /**< the pass configuration */
