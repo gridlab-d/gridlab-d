@@ -63,10 +63,10 @@ meter::meter(MODULE *mod) : node(mod)
 		if (gl_publish_variable(oclass,
 			PT_INHERIT, "node",
 			PT_double, "measured_real_energy[Wh]", PADDR(measured_real_energy),PT_DESCRIPTION,"metered real energy consumption, cummalitive",
-            PT_double, "measured_real_energy_delta[Wh]", PADDR(measured_real_energy_delta),PT_DESCRIPTION,"delta in metered real energy consumption from last specified measured_energy_delta_timestep",
+			PT_double, "measured_real_energy_delta[Wh]", PADDR(measured_real_energy_delta),PT_DESCRIPTION,"delta in metered real energy consumption from last specified measured_energy_delta_timestep",
 			PT_double, "measured_reactive_energy[VAh]",PADDR(measured_reactive_energy),PT_DESCRIPTION,"metered reactive energy consumption, cummalitive",
-            PT_double, "measured_reactive_energy_delta[VAh]",PADDR(measured_reactive_energy_delta),PT_DESCRIPTION,"delta in metered reactive energy consumption from last specified measured_energy_delta_timestep",
-            PT_double, "measured_energy_delta_timestep[s]",PADDR(measured_energy_delta_timestep),PT_DESCRIPTION,"Period of timestep for real and reactive delta energy calculation",
+			PT_double, "measured_reactive_energy_delta[VAh]",PADDR(measured_reactive_energy_delta),PT_DESCRIPTION,"delta in metered reactive energy consumption from last specified measured_energy_delta_timestep",
+			PT_double, "measured_energy_delta_timestep[s]",PADDR(measured_energy_delta_timestep),PT_DESCRIPTION,"Period of timestep for real and reactive delta energy calculation",
 			PT_complex, "measured_power[VA]", PADDR(measured_power),PT_DESCRIPTION,"metered real power",
 			PT_complex, "measured_power_A[VA]", PADDR(indiv_measured_power[0]),PT_DESCRIPTION,"metered complex power on phase A",
 			PT_complex, "measured_power_B[VA]", PADDR(indiv_measured_power[1]),PT_DESCRIPTION,"metered complex power on phase B",
@@ -181,7 +181,7 @@ int meter::isa(char *classname)
 int meter::create()
 {
 	int result = node::create();
-	
+	int i;
 #ifdef SUPPORT_OUTAGES
 	sustained_count=0;	//reliability sustained event counter
 	momentary_count=0;	//reliability momentary event counter
@@ -190,23 +190,31 @@ int meter::create()
 	t_flag=0;
 	pre_load=0;
 #endif
-
-	measured_voltage[0] = measured_voltage[1] = measured_voltage[2] = complex(0,0,A);
-	measured_voltageD[0] = measured_voltageD[1] = measured_voltageD[2] = complex(0,0,A);
-	measured_real_max_voltage_in_interval[0] = measured_real_max_voltage_in_interval[1] = measured_real_max_voltage_in_interval[2] = 0.0;
-	measured_reactive_max_voltage_in_interval[0] = measured_reactive_max_voltage_in_interval[1] = measured_reactive_max_voltage_in_interval[2] = 0.0;
-	measured_real_max_voltageD_in_interval[0] = measured_real_max_voltageD_in_interval[1] = measured_real_max_voltageD_in_interval[2] = 0.0;
-	measured_reactive_max_voltageD_in_interval[0] = measured_reactive_max_voltageD_in_interval[1] = measured_reactive_max_voltageD_in_interval[2] = 0.0;
-	measured_real_min_voltage_in_interval[0] = measured_real_min_voltage_in_interval[1] = measured_real_min_voltage_in_interval[2] = 0.0;
-	measured_reactive_min_voltage_in_interval[0] = measured_reactive_min_voltage_in_interval[1] = measured_reactive_min_voltage_in_interval[2] = 0.0;
-	measured_real_min_voltageD_in_interval[0] = measured_real_min_voltageD_in_interval[1] = measured_real_min_voltageD_in_interval[2] = 0.0;
-	measured_reactive_min_voltageD_in_interval[0] = measured_reactive_min_voltageD_in_interval[1] = measured_reactive_min_voltageD_in_interval[2] = 0.0;
-	measured_avg_voltage_mag_in_interval[0] = measured_avg_voltage_mag_in_interval[1] = measured_avg_voltage_mag_in_interval[2] = 0.0;
-	measured_current[0] = measured_current[1] = measured_current[2] = complex(0,0,J);
+	for ( i = 0 ; i < 3 ; i++ )
+	{
+		measured_voltage[i] = complex(0,0,A);
+		measured_voltageD[i] = complex(0,0,A);
+		measured_real_max_voltage_in_interval[i] = 0.0;
+		measured_reactive_max_voltage_in_interval[i] = 0.0;
+		measured_real_max_voltageD_in_interval[i] = 0.0;
+		measured_reactive_max_voltageD_in_interval[i] = 0.0;
+		measured_real_min_voltage_in_interval[i] = 0.0;
+		measured_reactive_min_voltage_in_interval[i] = 0.0;
+		measured_real_min_voltageD_in_interval[i] = 0.0;
+		measured_reactive_min_voltageD_in_interval[i] = 0.0;
+		measured_avg_voltage_mag_in_interval[i] = 0.0;
+		measured_current[i] = complex(0,0,J);
+	}
+	for ( i = 0 ; i < sizeof(tier_price)/sizeof(tier_price[0]) ; i++ )
+	{
+		tier_price[i] = 0;
+		tier_energy[i] = 0;
+		last_tier_price[i] = 0;
+	}
 	measured_real_energy = measured_reactive_energy = 0.0;
-    measured_real_energy_delta = measured_reactive_energy_delta = 0;
-    last_measured_real_energy = last_measured_reactive_energy = 0;
-    measured_energy_delta_timestep = -1;
+	measured_real_energy_delta = measured_reactive_energy_delta = 0;
+	last_measured_real_energy = last_measured_reactive_energy = 0;
+	measured_energy_delta_timestep = -1;
 	measured_power = complex(0,0,J);
 	measured_demand = 0.0;
 	measured_real_power = 0.0;
@@ -225,12 +233,7 @@ int meter::create()
 	bill_day = 15;
 	last_bill_month = -1;
 	price = 0.0;
-	tier_price[0] = tier_price[1] = tier_price[2] = 0;
-	tier_energy[0] = tier_energy[1] = tier_energy[2] = 0;
 	last_price = 0;
-	last_tier_price[0] = 0;
-	last_tier_price[1] = 0;
-	last_tier_price[2] = 0;
 	last_price_base = 0;
 	meter_power_consumption = complex(0,0);
 
@@ -306,30 +309,40 @@ int meter::init(OBJECT *parent)
 }
 
 int meter::check_prices(){
-	if(bill_mode == BM_UNIFORM){
-		if(price < 0.0){
+	if ( bill_mode == BM_UNIFORM )
+	{
+		if ( price < 0.0 ) 
+		{
 			//GL_THROW("triplex_meter price is negative!"); // This shouldn't throw an error - negative prices are okay JCF
 		}
-	} else if(bill_mode == BM_TIERED || bill_mode == BM_TIERED_RTP){
-		if(tier_price[1] == 0){
+	} 
+	else if ( bill_mode == BM_TIERED || bill_mode == BM_TIERED_RTP )
+	{
+		if ( tier_price[1] == 0 )
+		{
 			tier_price[1] = tier_price[0];
 			tier_energy[1] = tier_energy[0];
 		}
-		if(tier_price[2] == 0){
+		if ( tier_price[2] == 0 ) 
+		{
 			tier_price[2] = tier_price[1];
 			tier_energy[2] = tier_energy[1];
 		}
-		if(tier_energy[2] < tier_energy[1] || tier_energy[1] < tier_energy[0]){
+		if ( tier_energy[2] < tier_energy[1] || tier_energy[1] < tier_energy[0] )
+		{
 			GL_THROW("meter energy tiers quantity trend improperly");
 		}
-		for(int i = 0; i < 3; ++i){
-			if(tier_price[i] < 0.0 || tier_energy[i] < 0.0)
+		for ( int i = 0 ; i < sizeof(tier_price)/sizeof(tier_price[0]) ; ++i )
+		{
+			if ( tier_price[i] < 0.0 || tier_energy[i] < 0.0 )
 				GL_THROW("meter tiers cannot have negative values");
 		}
 	}
 
-	if(bill_mode == BM_HOURLY || bill_mode == BM_TIERED_RTP){
-		if(power_market == 0 || price_prop == 0){
+	if ( bill_mode == BM_HOURLY || bill_mode == BM_TIERED_RTP )
+	{
+		if ( power_market == 0 || price_prop == 0 ) 
+		{
 			GL_THROW("meter cannot use real time energy prices without a power market that publishes the next price");
 		}
 		//price = *gl_get_double(power_market,price_prop);
@@ -344,18 +357,19 @@ int meter::check_prices(){
 
 	return 0;
 }
+
 TIMESTAMP meter::presync(TIMESTAMP t0)
 {
-	if (meter_power_consumption != complex(0,0))
+	if ( meter_power_consumption != complex(0,0) )
 		power[0] = power[1] = power[2] = 0.0;
 
 	//Reliability addition - if momentary flag set - clear it
-	if (meter_interrupted_secondary == true)
+	if ( meter_interrupted_secondary == true )
 		meter_interrupted_secondary = false;
-    
-    // Capturing first timestamp of simulation for use in delta energy measurements.
-    if (t0 != 0 && start_timestamp == 0)
-        start_timestamp = t0;
+	
+	// Capturing first timestamp of simulation for use in delta energy measurements.
+	if ( t0 != 0 && start_timestamp == 0 )
+		start_timestamp = t0;
 
 	return node::presync(t0);
 }
@@ -430,6 +444,7 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 	if ((solver_method == SM_NR)||solver_method  == SM_FBS)
 	{
+		int i;
 		if (t1 > last_t)
 		{
 			dt = t1 - last_t;
@@ -438,9 +453,7 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		else
 			dt = 0;
 		
-		measured_current[0] = current_inj[0];
-		measured_current[1] = current_inj[1];
-		measured_current[2] = current_inj[2];
+		for ( i = 0 ; i < 3 ; i++ ) measured_current[i] = current_inj[i];
 
 		// compute energy use from previous cycle
 		// - everything below this can moved to commit function once tape player is collecting from commit function7
@@ -451,143 +464,83 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 
 		// compute demand power
-		indiv_measured_power[0] = measured_voltage[0]*(~measured_current[0]);
-		indiv_measured_power[1] = measured_voltage[1]*(~measured_current[1]);
-		indiv_measured_power[2] = measured_voltage[2]*(~measured_current[2]);
-
+		for ( i = 0 ; i < 3 ; i++ ) indiv_measured_power[i] = measured_voltage[i]*(~measured_current[i]);
 		measured_power = indiv_measured_power[0] + indiv_measured_power[1] + indiv_measured_power[2];
-
-		measured_real_power = (indiv_measured_power[0]).Re()
-							+ (indiv_measured_power[1]).Re()
-							+ (indiv_measured_power[2]).Re();
-
-		measured_reactive_power = (indiv_measured_power[0]).Im()
-								+ (indiv_measured_power[1]).Im()
-								+ (indiv_measured_power[2]).Im();
+		measured_real_power = (indiv_measured_power[0]).Re() + (indiv_measured_power[1]).Re() + (indiv_measured_power[2]).Re();
+		measured_reactive_power = (indiv_measured_power[0]).Im() + (indiv_measured_power[1]).Im() + (indiv_measured_power[2]).Im();
 
 		if (measured_real_power > measured_demand) 
 			measured_demand = measured_real_power;
-        
-        // Delta energy cacluation
-		if (measured_energy_delta_timestep > 0) {
-			if (t0 == start_timestamp) {
+		
+		// Delta energy caculation
+		double mvDMag[3] = { measured_voltageD[0].Mag(), measured_voltageD[1].Mag(), measured_voltageD[2].Mag()};
+		double last_mvDMag[3] = { last_measured_voltageD[0].Mag(), last_measured_voltageD[1].Mag(), last_measured_voltageD[2].Mag()};
+		if (measured_energy_delta_timestep > 0) 
+		{
+			if (t0 == start_timestamp) 
+			{
 				last_delta_timestamp = start_timestamp;
 				voltage_avg_count = 0;
 				interval_dt = 0;
-				measured_real_max_voltage_in_interval[0] = voltageA.Re();
-				measured_real_max_voltage_in_interval[1] = voltageB.Re();
-				measured_real_max_voltage_in_interval[2] = voltageC.Re();
-				measured_real_max_voltageD_in_interval[0] = measured_voltageD[0].Re();
-				measured_real_max_voltageD_in_interval[1] = measured_voltageD[1].Re();
-				measured_real_max_voltageD_in_interval[2] = measured_voltageD[2].Re();
-				measured_real_min_voltage_in_interval[0] = voltageA.Re();
-				measured_real_min_voltage_in_interval[1] = voltageB.Re();
-				measured_real_min_voltage_in_interval[2] = voltageC.Re();
-				measured_real_min_voltageD_in_interval[0] = measured_voltageD[0].Re();
-				measured_real_min_voltageD_in_interval[1] = measured_voltageD[1].Re();
-				measured_real_min_voltageD_in_interval[2] = measured_voltageD[2].Re();
-				measured_reactive_max_voltage_in_interval[0] = voltageA.Im();
-				measured_reactive_max_voltage_in_interval[1] = voltageB.Im();
-				measured_reactive_max_voltage_in_interval[2] = voltageC.Im();
-				measured_reactive_max_voltageD_in_interval[0] = measured_voltageD[0].Im();
-				measured_reactive_max_voltageD_in_interval[1] = measured_voltageD[1].Im();
-				measured_reactive_max_voltageD_in_interval[2] = measured_voltageD[2].Im();
-				measured_reactive_min_voltage_in_interval[0] = voltageA.Im();
-				measured_reactive_min_voltage_in_interval[1] = voltageB.Im();
-				measured_reactive_min_voltage_in_interval[2] = voltageC.Im();
-				measured_reactive_min_voltageD_in_interval[0] = measured_voltageD[0].Im();
-				measured_reactive_min_voltageD_in_interval[1] = measured_voltageD[1].Im();
-				measured_reactive_min_voltageD_in_interval[2] = measured_voltageD[2].Im();
-				measured_avg_voltage_mag_in_interval[0] = voltageA.Mag();
-				measured_avg_voltage_mag_in_interval[1] = voltageB.Mag();
-				measured_avg_voltage_mag_in_interval[2] = voltageC.Mag();
-				measured_avg_voltageD_mag_in_interval[0] = measured_voltageD[0].Mag();
-				measured_avg_voltageD_mag_in_interval[1] = measured_voltageD[1].Mag();
-				measured_avg_voltageD_mag_in_interval[2] = measured_voltageD[2].Mag();
-				last_measured_voltage[0] = voltageA;
-				last_measured_voltage[1] = voltageB;
-				last_measured_voltage[2] = voltageC;
-				last_measured_voltageD[0] = measured_voltageD[0];
-				last_measured_voltageD[1] = measured_voltageD[1];
-				last_measured_voltageD[2] = measured_voltageD[2];
+				for ( i = 0 ; i < 3 ; i++ ) 
+				{
+					last_measured_voltage[0] = measured_voltage[i];
+					last_measured_voltageD[i] = measured_voltageD[i];
+					measured_real_max_voltage_in_interval[i] = last_measured_voltage[i].Re();
+					measured_real_max_voltageD_in_interval[i] = last_measured_voltageD[i].Re();
+					measured_real_min_voltage_in_interval[i] = last_measured_voltage[i].Re();
+					measured_real_min_voltageD_in_interval[i] = last_measured_voltageD[i].Re();
+					measured_reactive_max_voltage_in_interval[i] = last_measured_voltage[i].Im();
+					measured_reactive_max_voltageD_in_interval[i] = last_measured_voltageD[i].Im();
+					measured_reactive_min_voltage_in_interval[i] = last_measured_voltage[i].Im();
+					measured_reactive_min_voltageD_in_interval[i] = last_measured_voltageD[i].Im();
+					measured_avg_voltage_mag_in_interval[i] = last_measured_voltage[i].Mag();
+					measured_avg_voltageD_mag_in_interval[i] = mvDMag[i];
+				}
 				if (tretval > last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) {
 					tretval = last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep);
 				}
 			}
 
-
-			if ((t1 > last_delta_timestamp) && (t1 < last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) && (t1 != t0)) {
-				if (voltage_avg_count <= 0) {
-					last_measured_max_voltage_mag[0] = voltageA;
-					last_measured_max_voltage_mag[1] = voltageB;
-					last_measured_max_voltage_mag[2] = voltageC;
-					last_measured_max_voltageD_mag[0] = measured_voltageD[0];
-					last_measured_max_voltageD_mag[1] = measured_voltageD[1];
-					last_measured_max_voltageD_mag[2] = measured_voltageD[2];
-					last_measured_min_voltage_mag[0] = voltageA;
-					last_measured_min_voltage_mag[1] = voltageB;
-					last_measured_min_voltage_mag[2] = voltageC;
-					last_measured_min_voltageD_mag[0] = measured_voltageD[0];
-					last_measured_min_voltageD_mag[1] = measured_voltageD[1];
-					last_measured_min_voltageD_mag[2] = measured_voltageD[2];
-					last_measured_avg_voltage_mag[0] = last_measured_voltage[0].Mag();
-					last_measured_avg_voltage_mag[1] = last_measured_voltage[1].Mag();
-					last_measured_avg_voltage_mag[2] = last_measured_voltage[2].Mag();
-					last_measured_avg_voltageD_mag[0] = last_measured_voltageD[0].Mag();
-					last_measured_avg_voltageD_mag[1] = last_measured_voltageD[1].Mag();
-					last_measured_avg_voltageD_mag[2] = last_measured_voltageD[2].Mag();
-				} else {
-					if ( last_measured_voltage[0].Mag() > last_measured_max_voltage_mag[0].Mag()) {
-						last_measured_max_voltage_mag[0] = last_measured_voltage[0];
+			double lmvmag[3] = { last_measured_voltage[0].Mag(), last_measured_voltage[1].Mag(), last_measured_voltage[2].Mag()};
+			if ((t1 > last_delta_timestamp) && (t1 < last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) && (t1 != t0)) 
+			{
+				if (voltage_avg_count <= 0) 
+				{
+					for ( i = 0 ; i < 3 ; i++ )
+					{
+						last_measured_max_voltage_mag[i] = measured_voltage[i];
+						last_measured_max_voltageD_mag[i] = measured_voltageD[i];
+						last_measured_min_voltage_mag[i] = measured_voltage[i];
+						last_measured_min_voltageD_mag[i] = measured_voltageD[i];
+						last_measured_avg_voltage_mag[i] = lmvmag[i];
+						last_measured_avg_voltageD_mag[i] = last_mvDMag[i];
+						last_measured_voltage[i] = measured_voltage[i].Mag();
+						last_measured_voltageD[i] = mvDMag[i];
 					}
-					if ( last_measured_voltage[1].Mag() > last_measured_max_voltage_mag[1].Mag()) {
-						last_measured_max_voltage_mag[1] = last_measured_voltage[1];
-					}
-					if ( last_measured_voltage[2].Mag() > last_measured_max_voltage_mag[2].Mag()) {
-						last_measured_max_voltage_mag[2] = last_measured_voltage[2];
-					}
-					if (last_measured_voltageD[0].Mag() > last_measured_max_voltageD_mag[0].Mag()) {
-						last_measured_max_voltageD_mag[0] = last_measured_voltageD[0];
-					}
-					if (last_measured_voltageD[1].Mag() > last_measured_max_voltageD_mag[1].Mag()) {
-						last_measured_max_voltageD_mag[1] = last_measured_voltageD[1];
-					}
-					if (last_measured_voltageD[2].Mag() > last_measured_max_voltageD_mag[2].Mag()) {
-						last_measured_max_voltageD_mag[2] = last_measured_voltageD[2];
-					}
-					if ( last_measured_voltage[0].Mag() < last_measured_min_voltage_mag[0].Mag()) {
-						last_measured_min_voltage_mag[0] = last_measured_voltage[0];
-					}
-					if ( last_measured_voltage[0].Mag() < last_measured_min_voltage_mag[1].Mag()) {
-						last_measured_min_voltage_mag[1] = last_measured_voltage[0];
-					}
-					if ( last_measured_voltage[0].Mag() < last_measured_min_voltage_mag[2].Mag()) {
-						last_measured_min_voltage_mag[2] = last_measured_voltage[0];
-					}
-					if (last_measured_voltageD[0].Mag() < last_measured_min_voltageD_mag[0].Mag()) {
-						last_measured_min_voltageD_mag[0] = last_measured_voltageD[0];
-					}
-					if (last_measured_voltageD[1].Mag() < last_measured_min_voltageD_mag[1].Mag()) {
-						last_measured_min_voltageD_mag[1] = last_measured_voltageD[1];
-					}
-					if (last_measured_voltageD[2].Mag() < last_measured_min_voltageD_mag[2].Mag()) {
-						last_measured_min_voltageD_mag[2] = last_measured_voltageD[2];
-					}
-					for ( int i = 1; i <= dt; i++){
-						last_measured_avg_voltage_mag[0] = last_measured_avg_voltage_mag[0] + ((last_measured_voltage[0].Mag() - last_measured_avg_voltage_mag[0])/(interval_dt + i));
-						last_measured_avg_voltage_mag[1] = last_measured_avg_voltage_mag[1] + ((last_measured_voltage[1].Mag() - last_measured_avg_voltage_mag[1])/(interval_dt + i));
-						last_measured_avg_voltage_mag[2] = last_measured_avg_voltage_mag[2] + ((last_measured_voltage[2].Mag() - last_measured_avg_voltage_mag[2])/(interval_dt + i));
-						last_measured_avg_voltageD_mag[0] = last_measured_avg_voltageD_mag[0] + ((last_measured_voltageD[0].Mag() - last_measured_avg_voltageD_mag[0])/(interval_dt + i));
-						last_measured_avg_voltageD_mag[1] = last_measured_avg_voltageD_mag[1] + ((last_measured_voltageD[1].Mag() - last_measured_avg_voltageD_mag[1])/(interval_dt + i));
-						last_measured_avg_voltageD_mag[2] = last_measured_avg_voltageD_mag[2] + ((last_measured_voltageD[2].Mag() - last_measured_avg_voltageD_mag[2])/(interval_dt + i));
+				} 
+				else 
+				{
+					for ( i = 0 ; i < 3 ; i++ )
+					{
+						int j;
+						if ( lmvmag[i] > last_measured_max_voltage_mag[i].Mag()) 
+							last_measured_max_voltage_mag[i] = lmvmag[i];
+						if (last_mvDMag[i] > last_measured_max_voltageD_mag[i].Mag()) 
+							last_measured_max_voltageD_mag[i] = last_measured_voltageD[i];
+						if ( lmvmag[i] < last_measured_min_voltage_mag[i].Mag()) 
+							last_measured_min_voltage_mag[i] = lmvmag[i];
+						if (last_mvDMag[i] < last_measured_min_voltageD_mag[i].Mag()) 
+							last_measured_min_voltageD_mag[i] = last_measured_voltageD[i];
+						for ( j = 1; j <= dt; j++)
+						{
+							last_measured_avg_voltage_mag[i] = last_measured_avg_voltage_mag[i] + ((lmvmag[i] - last_measured_avg_voltage_mag[i])/(interval_dt + j));
+							last_measured_avg_voltageD_mag[i] = last_measured_avg_voltageD_mag[i] + ((last_mvDMag[i] - last_measured_avg_voltageD_mag[i])/(interval_dt + j));
+						}
+						last_measured_voltage[i] = measured_voltage[i].Mag();
+						last_measured_voltageD[i] = mvDMag[i];
 					}
 				}
-				last_measured_voltage[0] = voltageA.Mag();
-				last_measured_voltage[1] = voltageB.Mag();
-				last_measured_voltage[2] = voltageC.Mag();
-				last_measured_voltageD[0] = measured_voltageD[0].Mag();
-				last_measured_voltageD[1] = measured_voltageD[1].Mag();
-				last_measured_voltageD[2] = measured_voltageD[2].Mag();
 				if (t1 != last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) {
 					voltage_avg_count++;
 					interval_dt = interval_dt + dt;
@@ -597,88 +550,40 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				}
 			}
 
-			if ((t1 == last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) && (t1 != t0) && measured_energy_delta_timestep > 0) {
+			if ((t1 == last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) && (t1 != t0) && measured_energy_delta_timestep > 0) 
+			{
 				measured_real_energy_delta = measured_real_energy - last_measured_real_energy;
 				measured_reactive_energy_delta = measured_reactive_energy - last_measured_reactive_energy;
 				last_measured_real_energy = measured_real_energy;
 				last_measured_reactive_energy = measured_reactive_energy;
 				last_delta_timestamp = t1;
-				if ( last_measured_voltage[0].Mag() > last_measured_max_voltage_mag[0].Mag()) {
-					last_measured_max_voltage_mag[0] = last_measured_voltage[0];
+				for ( i = 0 ; i < 3 ; i++ )
+				{
+					if ( lmvmag[i] > last_measured_max_voltage_mag[i].Mag())
+						last_measured_max_voltage_mag[i] = lmvmag[i];
+					if (last_mvDMag[i] > last_measured_max_voltageD_mag[i].Mag())
+						last_measured_max_voltageD_mag[i] = last_measured_voltageD[i];
+					if ( lmvmag[i] < last_measured_min_voltage_mag[i].Mag())
+						last_measured_min_voltage_mag[i] = last_measured_voltage[i];
+					if (last_mvDMag[i] < last_measured_min_voltageD_mag[i].Mag())
+						last_measured_min_voltageD_mag[i] = last_measured_voltageD[i];
+					for (int j = 1; j <= dt; j++) {
+						last_measured_avg_voltage_mag[i] = last_measured_avg_voltage_mag[i] + ((lmvmag[i] - last_measured_avg_voltage_mag[i])/(interval_dt + j));
+						last_measured_avg_voltageD_mag[i] = last_measured_avg_voltageD_mag[i] + ((last_mvDMag[i] - last_measured_avg_voltageD_mag[i])/(interval_dt + j));
+					}
+					last_measured_voltage[i] = measured_voltage[i].Mag();
+					last_measured_voltageD[i] = mvDMag[i];
+					interval_dt = 0;
+					voltage_avg_count = 0;
+					measured_real_max_voltage_in_interval[i] = last_measured_max_voltage_mag[i].Re();
+					measured_real_max_voltageD_in_interval[i] = last_measured_max_voltageD_mag[i].Re();
+					measured_real_min_voltage_in_interval[i] = last_measured_min_voltage_mag[i].Re();
+					measured_real_min_voltageD_in_interval[i] = last_measured_min_voltageD_mag[i].Re();
+					measured_reactive_max_voltage_in_interval[i] = last_measured_max_voltageD_mag[i].Im();
+					measured_reactive_max_voltageD_in_interval[i] = last_measured_max_voltageD_mag[i].Im();
+					measured_reactive_min_voltage_in_interval[i] = last_measured_min_voltage_mag[i].Im();
+					measured_reactive_min_voltageD_in_interval[i] = last_measured_min_voltageD_mag[i].Im();
 				}
-				if ( last_measured_voltage[1].Mag() > last_measured_max_voltage_mag[1].Mag()) {
-					last_measured_max_voltage_mag[1] = last_measured_voltage[1];
-				}
-				if ( last_measured_voltage[2].Mag() > last_measured_max_voltage_mag[2].Mag()) {
-					last_measured_max_voltage_mag[2] = last_measured_voltage[2];
-				}
-				if (last_measured_voltageD[0].Mag() > last_measured_max_voltageD_mag[0].Mag()) {
-					last_measured_max_voltageD_mag[0] = last_measured_voltageD[0];
-				}
-				if (last_measured_voltageD[1].Mag() > last_measured_max_voltageD_mag[1].Mag()) {
-					last_measured_max_voltageD_mag[1] = last_measured_voltageD[1];
-				}
-				if (last_measured_voltageD[2].Mag() > last_measured_max_voltageD_mag[2].Mag()) {
-					last_measured_max_voltageD_mag[2] = last_measured_voltageD[2];
-				}
-				if ( last_measured_voltage[0].Mag() < last_measured_min_voltage_mag[0].Mag()) {
-					last_measured_min_voltage_mag[0] = last_measured_voltage[0];
-				}
-				if ( last_measured_voltage[0].Mag() < last_measured_min_voltage_mag[1].Mag()) {
-					last_measured_min_voltage_mag[1] = last_measured_voltage[0];
-				}
-				if ( last_measured_voltage[0].Mag() < last_measured_min_voltage_mag[2].Mag()) {
-					last_measured_min_voltage_mag[2] = last_measured_voltage[0];
-				}
-				if (last_measured_voltageD[0].Mag() < last_measured_min_voltageD_mag[0].Mag()) {
-					last_measured_min_voltageD_mag[0] = last_measured_voltageD[0];
-				}
-				if (last_measured_voltageD[1].Mag() < last_measured_min_voltageD_mag[1].Mag()) {
-					last_measured_min_voltageD_mag[1] = last_measured_voltageD[1];
-				}
-				if (last_measured_voltageD[2].Mag() < last_measured_min_voltageD_mag[2].Mag()) {
-					last_measured_min_voltageD_mag[2] = last_measured_voltageD[2];
-				}
-				for (int j = 1; j <= dt; j++) {
-					last_measured_avg_voltage_mag[0] = last_measured_avg_voltage_mag[0] + ((last_measured_voltage[0].Mag() - last_measured_avg_voltage_mag[0])/(interval_dt + j));
-					last_measured_avg_voltage_mag[1] = last_measured_avg_voltage_mag[1] + ((last_measured_voltage[1].Mag() - last_measured_avg_voltage_mag[1])/(interval_dt + j));
-					last_measured_avg_voltage_mag[2] = last_measured_avg_voltage_mag[2] + ((last_measured_voltage[2].Mag() - last_measured_avg_voltage_mag[2])/(interval_dt + j));
-					last_measured_avg_voltageD_mag[0] = last_measured_avg_voltageD_mag[0] + ((last_measured_voltageD[0].Mag() - last_measured_avg_voltageD_mag[0])/(interval_dt + j));
-					last_measured_avg_voltageD_mag[1] = last_measured_avg_voltageD_mag[1] + ((last_measured_voltageD[1].Mag() - last_measured_avg_voltageD_mag[1])/(interval_dt + j));
-					last_measured_avg_voltageD_mag[2] = last_measured_avg_voltageD_mag[2] + ((last_measured_voltageD[2].Mag() - last_measured_avg_voltageD_mag[2])/(interval_dt + j));
-				}
-				last_measured_voltage[0] = voltageA.Mag();
-				last_measured_voltage[1] = voltageB.Mag();
-				last_measured_voltage[2] = voltageC.Mag();
-				last_measured_voltageD[0] = measured_voltageD[0].Mag();
-				last_measured_voltageD[1] = measured_voltageD[1].Mag();
-				last_measured_voltageD[2] = measured_voltageD[2].Mag();
-				interval_dt = 0;
-				voltage_avg_count = 0;
-				measured_real_max_voltage_in_interval[0] = last_measured_max_voltage_mag[0].Re();
-				measured_real_max_voltage_in_interval[1] = last_measured_max_voltage_mag[1].Re();
-				measured_real_max_voltage_in_interval[2] = last_measured_max_voltage_mag[2].Re();
-				measured_real_max_voltageD_in_interval[0] = last_measured_max_voltageD_mag[0].Re();
-				measured_real_max_voltageD_in_interval[1] = last_measured_max_voltageD_mag[1].Re();
-				measured_real_max_voltageD_in_interval[2] = last_measured_max_voltageD_mag[2].Re();
-				measured_real_min_voltage_in_interval[0] = last_measured_min_voltage_mag[0].Re();
-				measured_real_min_voltage_in_interval[1] = last_measured_min_voltage_mag[1].Re();
-				measured_real_min_voltage_in_interval[2] = last_measured_min_voltage_mag[2].Re();
-				measured_real_min_voltageD_in_interval[0] = last_measured_min_voltageD_mag[0].Re();
-				measured_real_min_voltageD_in_interval[1] = last_measured_min_voltageD_mag[1].Re();
-				measured_real_min_voltageD_in_interval[2] = last_measured_min_voltageD_mag[2].Re();
-				measured_reactive_max_voltage_in_interval[0] = last_measured_max_voltageD_mag[0].Im();
-				measured_reactive_max_voltage_in_interval[1] = last_measured_max_voltageD_mag[1].Im();
-				measured_reactive_max_voltage_in_interval[2] = last_measured_max_voltageD_mag[2].Im();
-				measured_reactive_max_voltageD_in_interval[0] = last_measured_max_voltageD_mag[0].Im();
-				measured_reactive_max_voltageD_in_interval[1] = last_measured_max_voltageD_mag[1].Im();
-				measured_reactive_max_voltageD_in_interval[2] = last_measured_max_voltageD_mag[2].Im();
-				measured_reactive_min_voltage_in_interval[0] = last_measured_min_voltage_mag[0].Im();
-				measured_reactive_min_voltage_in_interval[1] = last_measured_min_voltage_mag[1].Im();
-				measured_reactive_min_voltage_in_interval[2] = last_measured_min_voltage_mag[2].Im();
-				measured_reactive_min_voltageD_in_interval[0] = last_measured_min_voltageD_mag[0].Im();
-				measured_reactive_min_voltageD_in_interval[1] = last_measured_min_voltageD_mag[1].Im();
-				measured_reactive_min_voltageD_in_interval[2] = last_measured_min_voltageD_mag[2].Im();
 				if (tretval > last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) {
 					tretval = last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep);
 				}
