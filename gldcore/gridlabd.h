@@ -2088,6 +2088,7 @@ public: // special operations
 	inline bool is_double_array(void) { return pstruct.prop->ptype==PT_double_array; };
 	inline bool is_complex_array(void) { return pstruct.prop->ptype==PT_complex_array; };
 	inline bool is_objectref(void) { return pstruct.prop->ptype==PT_object; };
+	inline bool is_bool(void) { return pstruct.prop->ptype==PT_bool; };
 
 	// TODO these need to use throw instead of returning overloaded values
 	inline double get_double(void) { errno=0; switch(pstruct.prop->ptype) { case PT_double: case PT_random: case PT_enduse: case PT_loadshape: return has_part() ? get_part() : *(double*)get_addr(); default: errno=EINVAL; return NaN;} };

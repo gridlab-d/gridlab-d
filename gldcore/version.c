@@ -6,6 +6,7 @@
 
 #include "version.h"
 #include <time.h>
+#include <stdio.h>
 
 #include "build.h" // BRANCH will be defined automatically from the ticket
 

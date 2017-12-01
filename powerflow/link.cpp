@@ -213,7 +213,7 @@ int link_object::create(void)
 
 	current_in[0] = current_in[1] = current_in[2] = complex(0,0);
 
-	link_limits[0][0] = link_limits[0][1] = link_limits[0][2] = link_limits[1][0] = link_limits[1][2] = link_limits[1][3] = NULL;
+	link_limits[0][0] = link_limits[0][1] = link_limits[0][2] = link_limits[1][0] = link_limits[1][1] = link_limits[1][2] = NULL;
 	
 	link_rating[0][0] = link_rating[0][1] = link_rating[0][2] = 1000;	//Replicates current defaults of line objects
 	link_rating[1][0] = link_rating[1][1] = link_rating[1][2] = 2000;
