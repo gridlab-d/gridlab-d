@@ -677,6 +677,20 @@ EXPORT bool glx_init(glxlink *mod)
 			if ( obj==NULL ) continue;
 			class_id[obj->oclass->id]++; // index into class struct
 
+			//Explicit error on object - prevents segfaults if relax_naming_rules is enabled
+			if ((obj->name&&isdigit(obj->name[0])) == true)
+			{
+				gl_error("MATLAB Link: object names can not start with numbers");
+				/*  TROUBLESHOOT
+				When using the MATLAB link, object names cannot start with numbers.
+				The file must run with relax_naming_rules not enabled.  This is due to
+				MATLAB not liking variables that start with numbers.  Change your GLM and
+				try again.  As an alternative, you can just specify "object" in the .link file
+				to make GridLAB-D not import any objects, which skips this section of the code.
+				*/
+				return false;
+			}
+
 			const char *objname[] = {obj->name&&isdigit(obj->name[0])?NULL:obj->name};
 			const char *oclassname[] = {obj->oclass->name};
 
