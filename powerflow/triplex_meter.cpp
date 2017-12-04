@@ -211,6 +211,7 @@ int triplex_meter::create()
 
 	interval_length_dbl = -1.0;	//Flagged as off, by default
 
+	//Time average initialization stuff
 	average_interval_power_array = NULL;
 	average_interval_power_power1_array = NULL;
 	average_interval_power_power2_array = NULL;
@@ -226,12 +227,18 @@ int triplex_meter::create()
 	interval_length = -1;
 	prev_timestep_val = -1.0;
 
+	perform_average_time=0;
+	last_update_time=0;
+	curr_avg_pos_index=0;
+
 	return result;
 }
 
 // Initialize a distribution triplex_meter, return 1 on success
 int triplex_meter::init(OBJECT *parent)
 {
+	OBJECT *hdr = OBJECTHDR(this);
+
 #ifdef SUPPORT_OUTAGES
 	sustained_count=0;	//reliability sustained event counter
 	momentary_count=0;	//reliability momentary event counter
@@ -249,8 +256,112 @@ int triplex_meter::init(OBJECT *parent)
 	}
 	check_prices();
 
-	//Update time tracking variable for AMI
-	last_update_time = gl_globalclock;	//Just update us for now - other variables will be handled in sub-functions
+	//AMI averaging interval initialization
+	if (interval_length_dbl >= 1.0)	//Value set that is valid
+	{
+		//Get the integer representation
+		interval_length = int(interval_length_dbl);
+
+		//Allocate power array
+		average_interval_power_array = (complex *)gl_malloc(interval_length*sizeof(complex));
+
+		//Check
+		if (average_interval_power_array == NULL)
+		{
+			GL_THROW("triplex_meter:d - %s -- Failed to allocated AMI averaging array",hdr->id,(hdr->name ? hdr->name : "(unnamed)"));
+			/*  TROUBLESHOOT
+			While attempting to allocate the array to perform the average for AMI-like reporting, an error was encountered.
+			Please try again.  If the error persists, please submit a bug report via the Trac system.
+			*/
+		}
+
+		//Allocate power1 array
+		average_interval_power_power1_array = (complex *)gl_malloc(interval_length*sizeof(complex));
+
+		//Check
+		if (average_interval_power_power1_array == NULL)
+		{
+			GL_THROW("triplex_meter:d - %s -- Failed to allocated AMI averaging array",hdr->id,(hdr->name ? hdr->name : "(unnamed)"));
+			//Defined above
+		}
+
+		//Allocate power2 array
+		average_interval_power_power2_array = (complex *)gl_malloc(interval_length*sizeof(complex));
+
+		//Check
+		if (average_interval_power_power2_array == NULL)
+		{
+			GL_THROW("triplex_meter:d - %s -- Failed to allocated AMI averaging array",hdr->id,(hdr->name ? hdr->name : "(unnamed)"));
+			//Defined above
+		}
+
+		//Allocate voltage array
+		average_interval_voltage_mag_array = (double *)gl_malloc(interval_length*sizeof(double));
+
+		//Check it
+		if (average_interval_voltage_mag_array == NULL)
+		{
+			GL_THROW("triplex_meter:d - %s -- Failed to allocated AMI averaging array",hdr->id,(hdr->name ? hdr->name : "(unnamed)"));
+			// Defined above
+		}
+
+		//Allocate voltage array
+		average_interval_voltage_array = (complex *)gl_malloc(interval_length*sizeof(complex));
+
+		//Check it
+		if (average_interval_voltage_array == NULL)
+		{
+			GL_THROW("triplex_meter:d - %s -- Failed to allocated AMI averaging array",hdr->id,(hdr->name ? hdr->name : "(unnamed)"));
+			// Defined above
+		}
+
+		//Allocate voltage array
+		average_interval_voltage1_array = (complex *)gl_malloc(interval_length*sizeof(complex));
+
+		//Check it
+		if (average_interval_voltage1_array == NULL)
+		{
+			GL_THROW("triplex_meter:d - %s -- Failed to allocated AMI averaging array",hdr->id,(hdr->name ? hdr->name : "(unnamed)"));
+			// Defined above
+		}
+
+		//Allocate voltage array
+		average_interval_voltage2_array = (complex *)gl_malloc(interval_length*sizeof(complex));
+
+		//Check it
+		if (average_interval_voltage2_array == NULL)
+		{
+			GL_THROW("triplex_meter:d - %s -- Failed to allocated AMI averaging array",hdr->id,(hdr->name ? hdr->name : "(unnamed)"));
+			// Defined above
+		}
+
+		//Initialize the array
+		for (curr_avg_pos_index=0; curr_avg_pos_index<interval_length; curr_avg_pos_index++)
+		{
+			average_interval_power_array[curr_avg_pos_index] = complex(0.0,0.0);
+			average_interval_power_power1_array[curr_avg_pos_index] = complex(0.0,0.0);
+			average_interval_power_power2_array[curr_avg_pos_index] = complex(0.0,0.0);
+			average_interval_voltage_mag_array[curr_avg_pos_index] = 0.0;
+			average_interval_voltage_array[curr_avg_pos_index] = complex(0.0,0.0);
+			average_interval_voltage1_array[curr_avg_pos_index] = complex(0.0,0.0);
+			average_interval_voltage2_array[curr_avg_pos_index] = complex(0.0,0.0);
+		}
+
+		//Initialize tracking variables
+		curr_avg_pos_index = 0;
+		average_interval_power=complex(0.0,0.0);
+		average_interval_power1_power=complex(0.0,0.0);
+		average_interval_power2_power=complex(0.0,0.0);
+		average_interval_voltage_mag=0.0;
+		average_interval_voltage=complex(0.0,0.0);
+		average_interval_voltage1=complex(0.0,0.0);
+		average_interval_voltage2=complex(0.0,0.0);
+
+		//Update time variables
+		last_update_time = gl_globalclock;
+		perform_average_time = gl_globalclock + interval_length;
+
+	}	//End AMI if
 
 	return triplex_node::init(parent);
 }
@@ -299,6 +410,12 @@ TIMESTAMP triplex_meter::presync(TIMESTAMP t0)
 {
 	if (tpmeter_power_consumption != complex(0,0))
 		power[0] = power[1] = 0.0;
+
+	//Copy in the voltage for the AMI averaging routine
+	curr_voltage_mag_value = voltaged[0].Mag();
+	curr_voltage_value = voltaged[0];
+	curr_voltage1_value = voltage[0];
+	curr_voltage2_value = voltage[1];
 
 	//Reliability addition - clear momentary flag if set
 	if (tpmeter_interrupted_secondary == true)
@@ -358,9 +475,174 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	OBJECT *obj = OBJECTHDR(this);
 	TIMESTAMP rv = TS_NEVER;
 	TIMESTAMP hr = TS_NEVER;
+	int diff_time_avg;
+	int end_fill_pos, temp_index;
 
 	//Call node postsync now, otherwise current_inj isn't right
 	rv = triplex_node::postsync(t1);
+
+	//Handle AMI averaging
+	if (interval_length > 0)
+	{
+		//See if it is time to update
+		if (t1 >= perform_average_time)
+		{
+			//Figure out the time forward to the average
+			diff_time_avg = (int)(perform_average_time - last_update_time);
+
+			//Determine the end point
+			end_fill_pos = curr_avg_pos_index + diff_time_avg;
+
+			//Accumulate it onto the existing indexer
+			if (end_fill_pos > interval_length)
+			{
+				//Fill the values
+				for (temp_index=curr_avg_pos_index; temp_index<interval_length; temp_index++)
+				{
+					average_interval_power_array[temp_index] = measured_power;
+					average_interval_power_power1_array[temp_index] = indiv_measured_power[0];
+					average_interval_power_power2_array[temp_index] = indiv_measured_power[1];
+					average_interval_voltage_mag_array[temp_index] = curr_voltage_mag_value;
+					average_interval_voltage_array[temp_index] = curr_voltage_value;
+					average_interval_voltage1_array[temp_index] = curr_voltage1_value;
+					average_interval_voltage2_array[temp_index] = curr_voltage2_value;
+				}
+
+				//Get the leftovers, if any
+				while (end_fill_pos > interval_length)
+					end_fill_pos -= interval_length;
+
+				//Loop through the rest
+				for (temp_index=0; temp_index<end_fill_pos; temp_index++)
+				{
+					average_interval_power_array[temp_index] = measured_power;
+					average_interval_power_power1_array[temp_index] = indiv_measured_power[0];
+					average_interval_power_power2_array[temp_index] = indiv_measured_power[1];
+					average_interval_voltage_mag_array[temp_index] = curr_voltage_mag_value;
+					average_interval_voltage_array[temp_index] = curr_voltage_value;
+					average_interval_voltage1_array[temp_index] = curr_voltage1_value;
+					average_interval_voltage2_array[temp_index] = curr_voltage2_value;
+				}
+			}//End over interval
+			else	//Not beyond the interval
+			{
+				//Fill the values
+				for (temp_index=curr_avg_pos_index; temp_index<end_fill_pos; temp_index++)
+				{
+					average_interval_power_array[temp_index] = measured_power;
+					average_interval_power_power1_array[temp_index] = indiv_measured_power[0];
+					average_interval_power_power2_array[temp_index] = indiv_measured_power[1];
+					average_interval_voltage_mag_array[temp_index] = curr_voltage_mag_value;
+					average_interval_voltage_array[temp_index] = curr_voltage_value;
+					average_interval_voltage1_array[temp_index] = curr_voltage1_value;
+					average_interval_voltage2_array[temp_index] = curr_voltage2_value;
+				}
+			}
+
+			//Reset average accumulators
+			average_interval_power = complex(0.0,0.0);
+			average_interval_power1_power = complex(0.0,0.0);
+			average_interval_power2_power = complex(0.0,0.0);
+			average_interval_voltage_mag = 0.0;
+			average_interval_voltage = complex(0.0,0.0);
+			average_interval_voltage1 = complex(0.0,0.0);
+			average_interval_voltage2 = complex(0.0,0.0);
+
+			//Perform average
+			for (temp_index=0; temp_index<interval_length; temp_index++)
+			{
+				average_interval_power += average_interval_power_array[temp_index];
+				average_interval_power1_power += average_interval_power_power1_array[temp_index];
+				average_interval_power2_power += average_interval_power_power2_array[temp_index];
+				average_interval_voltage_mag += average_interval_voltage_mag_array[temp_index];
+				average_interval_voltage += average_interval_voltage_array[temp_index];
+				average_interval_voltage1 += average_interval_voltage1_array[temp_index];
+				average_interval_voltage2 += average_interval_voltage2_array[temp_index];
+			}
+
+			//Make average
+			average_interval_power /= (double)(interval_length);
+			average_interval_power1_power /= (double)(interval_length);
+			average_interval_power2_power /= (double)(interval_length);
+			average_interval_voltage_mag /= (double)(interval_length);
+			average_interval_voltage /= (double)(interval_length);
+			average_interval_voltage1 /= (double)(interval_length);
+			average_interval_voltage2 /= (double)(interval_length);
+
+			//Update position pointer
+			curr_avg_pos_index = end_fill_pos;
+
+			//Update last update time
+			last_update_time = perform_average_time;
+
+			//Update next average
+			perform_average_time += interval_length;
+		}//End perform the average
+		//Defaulted else, update like normal
+
+		//Figure out how much to update
+		diff_time_avg = (int)(t1 - last_update_time);
+
+		//Determine the end point
+		end_fill_pos = curr_avg_pos_index + diff_time_avg;
+
+		//Accumulate it onto the existing indexer
+		if (end_fill_pos > interval_length)
+		{
+			//Fill the values
+			for (temp_index=curr_avg_pos_index; temp_index<interval_length; temp_index++)
+			{
+				average_interval_power_array[temp_index] = measured_power;
+				average_interval_power_power1_array[temp_index] = indiv_measured_power[0];
+				average_interval_power_power2_array[temp_index] = indiv_measured_power[1];
+				average_interval_voltage_mag_array[temp_index] = curr_voltage_mag_value;
+				average_interval_voltage_array[temp_index] = curr_voltage_value;
+				average_interval_voltage1_array[temp_index] = curr_voltage1_value;
+				average_interval_voltage2_array[temp_index] = curr_voltage2_value;
+			}
+
+			//Get the leftovers, if any
+			while (end_fill_pos > interval_length)
+				end_fill_pos -= interval_length;
+
+			//Loop through the rest
+			for (temp_index=0; temp_index<end_fill_pos; temp_index++)
+			{
+				average_interval_power_array[temp_index] = measured_power;
+				average_interval_power_power1_array[temp_index] = indiv_measured_power[0];
+				average_interval_power_power2_array[temp_index] = indiv_measured_power[1];
+				average_interval_voltage_mag_array[temp_index] = curr_voltage_mag_value;
+				average_interval_voltage_array[temp_index] = curr_voltage_value;
+				average_interval_voltage1_array[temp_index] = curr_voltage1_value;
+				average_interval_voltage2_array[temp_index] = curr_voltage2_value;
+			}
+		}//End over interval
+		else	//Not beyond the interval
+		{
+			//Fill the values
+			for (temp_index=curr_avg_pos_index; temp_index<end_fill_pos; temp_index++)
+			{
+				average_interval_power_array[temp_index] = measured_power;
+				average_interval_power_power1_array[temp_index] = indiv_measured_power[0];
+				average_interval_power_power2_array[temp_index] = indiv_measured_power[1];
+				average_interval_voltage_mag_array[temp_index] = curr_voltage_mag_value;
+				average_interval_voltage_array[temp_index] = curr_voltage_value;
+				average_interval_voltage1_array[temp_index] = curr_voltage1_value;
+				average_interval_voltage2_array[temp_index] = curr_voltage2_value;
+			}
+		}
+
+		//Update position pointer
+		curr_avg_pos_index = end_fill_pos;
+
+		//Update last update time
+		last_update_time = t1;
+
+		//See how our update time compares and update, if appropriate
+		if (perform_average_time < rv)
+			rv = perform_average_time;
+
+	}//End AMI updates
 
 	//measured_voltage[0] = voltageA;
 	//measured_voltage[1] = voltageB;
@@ -423,8 +705,8 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			measured_imag_min_voltage_in_interval[1] = voltage2.Im();
 			measured_imag_min_voltage_in_interval[2] = voltage12.Im();
 			measured_avg_voltage_mag_in_interval[0] = voltage1.Mag();
-			measured_avg_voltage_mag_in_interval[1] = voltage1.Mag();
-			measured_avg_voltage_mag_in_interval[2] = voltage1.Mag();
+			measured_avg_voltage_mag_in_interval[1] = voltage2.Mag();
+			measured_avg_voltage_mag_in_interval[2] = voltage12.Mag();
 			interval_dt = 0;
 			interval_count = 0;
 		}
@@ -587,7 +869,12 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	if (next_time != 0 && next_time < rv)
 		return -next_time;
 	else
-		return rv;
+	{
+		if (rv != TS_NEVER)
+			return -rv;
+		else
+			return rv;
+	}
 }
 
 double triplex_meter::process_bill(TIMESTAMP t1){
