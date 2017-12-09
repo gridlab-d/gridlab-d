@@ -5955,89 +5955,91 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 							{
 								// Check the current power output for each phase
 								power_val[i] = (pCircuit_V[i] * ~(pred_state.Iac[i]));
-							}
+								
+								//Deflag the variable
+								ramp_change = false;
+								
+								if (checkRampRate_real == true) {
 
-							if (checkRampRate_real == true) {
+									//Compute the difference - real part
+									power_diff_val = (power_val[i].Re() - prev_VA_out[i].Re()) / deltat;
 
-								//Compute the difference - real part
-								power_diff_val = (power_val[i].Re() - prev_VA_out[i].Re()) / deltat;
-
-								if (power_val[i].Re() > prev_VA_out[i].Re())	//Ramp up
-								{
-									//See if it was too big
-									if (power_diff_val > rampUpRate_real)
+									if (power_val[i].Re() > prev_VA_out[i].Re())	//Ramp up
 									{
-										//Flag
-										ramp_change = true;
+										//See if it was too big
+										if (power_diff_val > rampUpRate_real)
+										{
+											//Flag
+											ramp_change = true;
 
-										power_val[i].SetReal(prev_VA_out[i].Re() + (rampUpRate_real * deltat));
+											power_val[i].SetReal(prev_VA_out[i].Re() + (rampUpRate_real * deltat));
+										}
+										//Default else - was okay
 									}
-									//Default else - was okay
-								}
-								else	//Ramp down
-								{
-									//See if it was too big
-									if (power_diff_val < -rampDownRate_real)
+									else	//Ramp down
 									{
-										//Flag
-										ramp_change = true;
+										//See if it was too big
+										if (power_diff_val < -rampDownRate_real)
+										{
+											//Flag
+											ramp_change = true;
 
-										power_val[i].SetReal(prev_VA_out[i].Re() - (rampDownRate_real * deltat));
+											power_val[i].SetReal(prev_VA_out[i].Re() - (rampDownRate_real * deltat));
+										}
+										//Default else - was okay
 									}
-									//Default else - was okay
 								}
-							}
 
-							if (checkRampRate_reactive == true) {
+								if (checkRampRate_reactive == true) {
 
-								//Compute the difference - reactive part
-								power_diff_val = (power_val[i].Im() - prev_VA_out[i].Im()) / deltat;
+									//Compute the difference - reactive part
+									power_diff_val = (power_val[i].Im() - prev_VA_out[i].Im()) / deltat;
 
-								if (power_val[i].Im() > prev_VA_out[i].Im())	//Ramp up
-								{
-									//See if it was too big
-									if (power_diff_val > rampUpRate_reactive)
+									if (power_val[i].Im() > prev_VA_out[i].Im())	//Ramp up
 									{
-										//Flag
-										ramp_change = true;
+										//See if it was too big
+										if (power_diff_val > rampUpRate_reactive)
+										{
+											//Flag
+											ramp_change = true;
 
-										power_val[i].SetImag(prev_VA_out[i].Im() + (rampUpRate_reactive * deltat));
+											power_val[i].SetImag(prev_VA_out[i].Im() + (rampUpRate_reactive * deltat));
+										}
+										//Default else - was okay
 									}
-									//Default else - was okay
-								}
-								else	//Ramp down
-								{
-									//See if it was too big
-									if (power_diff_val < -rampDownRate_reactive)
+									else	//Ramp down
 									{
-										//Flag
-										ramp_change = true;
+										//See if it was too big
+										if (power_diff_val < -rampDownRate_reactive)
+										{
+											//Flag
+											ramp_change = true;
 
-										power_val[i].SetImag(prev_VA_out[i].Im() - (rampDownRate_reactive * deltat));
+											power_val[i].SetImag(prev_VA_out[i].Im() - (rampDownRate_reactive * deltat));
+										}
+										//Default else - was okay
 									}
-									//Default else - was okay
 								}
+
+								//Now "extrapolate" this back to a current value, if needed
+								if (ramp_change == true)
+								{
+									//Compute a "new current" value
+									temp_current_val[i] = ~(power_val[i] / pCircuit_V[i]);
+
+									// Update the output current values, as well as the current multipliers
+									pred_state.Idq[i] = temp_current_val[i];
+									pred_state.md[i] = pred_state.Idq[i].Re()/I_In.Re();
+									pred_state.mq[i] = pred_state.Idq[i].Im()/I_In.Re();
+									pred_state.Iac[i] = pred_state.Idq[i];
+
+								}
+								//Default else - no ramp change, so don't mess with anything
+
+								//Store the updated power value
+								curr_VA_out[i] = power_val[i];
 							}
-
-							//Now "extrapolate" this back to a current value, if needed
-							if (ramp_change == true)
-							{
-								//Compute a "new current" value
-								temp_current_val[i] = ~(power_val[i] / pCircuit_V[i]);
-
-								// Update the output current values, as well as the current multipliers
-								pred_state.Idq[i] = temp_current_val[i];
-								pred_state.md[i] = pred_state.Idq[i].Re()/I_In.Re();
-								pred_state.mq[i] = pred_state.Idq[i].Im()/I_In.Re();
-								pred_state.Iac[i] = pred_state.Idq[i];
-
-							}
-							//Default else - no ramp change, so don't mess with anything
-
-							//Store the updated power value
-							curr_VA_out[i] = power_val[i];
 						}
-
 
 						// Before updating pLine_unrotI and Iout, need to check inverter real power output:
 						// If not attached to the battery, need to check if real power < 0 or > rating
@@ -6220,88 +6222,91 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 							{
 								// Check the current power output for each phase
 								power_val[i] = (pCircuit_V[i] * ~(curr_state.Iac[i]));
-							}
+								
+								//Deflag the variable
+								ramp_change = false;
 
-							if (checkRampRate_real == true) {
+								if (checkRampRate_real == true) {
 
-								//Compute the difference - real part
-								power_diff_val = (power_val[i].Re() - prev_VA_out[i].Re()) / deltat;
+									//Compute the difference - real part
+									power_diff_val = (power_val[i].Re() - prev_VA_out[i].Re()) / deltat;
 
-								if (power_val[i].Re() > prev_VA_out[i].Re())	//Ramp up
-								{
-									//See if it was too big
-									if (power_diff_val > rampUpRate_real)
+									if (power_val[i].Re() > prev_VA_out[i].Re())	//Ramp up
 									{
-										//Flag
-										ramp_change = true;
+										//See if it was too big
+										if (power_diff_val > rampUpRate_real)
+										{
+											//Flag
+											ramp_change = true;
 
-										power_val[i].SetReal(prev_VA_out[i].Re() + (rampUpRate_real * deltat));
+											power_val[i].SetReal(prev_VA_out[i].Re() + (rampUpRate_real * deltat));
+										}
+										//Default else - was okay
 									}
-									//Default else - was okay
-								}
-								else	//Ramp down
-								{
-									//See if it was too big
-									if (power_diff_val < -rampDownRate_real)
+									else	//Ramp down
 									{
-										//Flag
-										ramp_change = true;
+										//See if it was too big
+										if (power_diff_val < -rampDownRate_real)
+										{
+											//Flag
+											ramp_change = true;
 
-										power_val[i].SetReal(prev_VA_out[i].Re() - (rampDownRate_real * deltat));
+											power_val[i].SetReal(prev_VA_out[i].Re() - (rampDownRate_real * deltat));
+										}
+										//Default else - was okay
 									}
-									//Default else - was okay
 								}
-							}
 
-							if (checkRampRate_reactive == true) {
+								if (checkRampRate_reactive == true) {
 
-								//Compute the difference - reactive part
-								power_diff_val = (power_val[i].Im() - prev_VA_out[i].Im()) / deltat;
+									//Compute the difference - reactive part
+									power_diff_val = (power_val[i].Im() - prev_VA_out[i].Im()) / deltat;
 
-								if (power_val[i].Im() > prev_VA_out[i].Im())	//Ramp up
-								{
-									//See if it was too big
-									if (power_diff_val > rampUpRate_reactive)
+									if (power_val[i].Im() > prev_VA_out[i].Im())	//Ramp up
 									{
-										//Flag
-										ramp_change = true;
+										//See if it was too big
+										if (power_diff_val > rampUpRate_reactive)
+										{
+											//Flag
+											ramp_change = true;
 
-										power_val[i].SetImag(prev_VA_out[i].Im() + (rampUpRate_reactive * deltat));
+											power_val[i].SetImag(prev_VA_out[i].Im() + (rampUpRate_reactive * deltat));
+										}
+										//Default else - was okay
 									}
-									//Default else - was okay
-								}
-								else	//Ramp down
-								{
-									//See if it was too big
-									if (power_diff_val < -rampDownRate_reactive)
+									else	//Ramp down
 									{
-										//Flag
-										ramp_change = true;
+										//See if it was too big
+										if (power_diff_val < -rampDownRate_reactive)
+										{
+											//Flag
+											ramp_change = true;
 
-										power_val[i].SetImag(prev_VA_out[i].Im() - (rampDownRate_reactive * deltat));
+											power_val[i].SetImag(prev_VA_out[i].Im() - (rampDownRate_reactive * deltat));
+										}
+										//Default else - was okay
 									}
-									//Default else - was okay
 								}
+
+
+								//Now "extrapolate" this back to a current value, if needed
+								if (ramp_change == true)
+								{
+									//Compute a "new current" value
+									temp_current_val[i] = ~(power_val[i] / pCircuit_V[i]);
+
+									// Update the output current values, as well as the current multipliers
+									curr_state.Idq[i] = temp_current_val[i];
+									curr_state.md[i] = curr_state.Idq[i].Re()/I_In.Re();
+									curr_state.mq[i] = curr_state.Idq[i].Im()/I_In.Re();
+									curr_state.Iac[i] = curr_state.Idq[i];
+
+								}
+								//Default else - no ramp change, so don't mess with anything
+
+								//Store the updated power value
+								curr_VA_out[i] = power_val[i];
 							}
-
-
-							//Now "extrapolate" this back to a current value, if needed
-							if (ramp_change == true)
-							{
-								//Compute a "new current" value
-								temp_current_val[i] = ~(power_val[i] / pCircuit_V[i]);
-
-								// Update the output current values, as well as the current multipliers
-								curr_state.Idq[i] = temp_current_val[i];
-								curr_state.md[i] = curr_state.Idq[i].Re()/I_In.Re();
-								curr_state.mq[i] = curr_state.Idq[i].Im()/I_In.Re();
-								curr_state.Iac[i] = curr_state.Idq[i];
-
-							}
-							//Default else - no ramp change, so don't mess with anything
-
-							//Store the updated power value
-							curr_VA_out[i] = power_val[i];
 						}
 
 						// Before updating pLine_unrotI and Iout, need to check inverter real power output:
