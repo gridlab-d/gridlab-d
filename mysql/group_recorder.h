@@ -26,6 +26,7 @@ public:
 	static CLASS *oclass, *pclass;
 
 	group_recorder(MODULE *);
+	~group_recorder();
 	int create();
 	int init(OBJECT *);
 	int isa(char *);
@@ -58,6 +59,7 @@ private:
 	int write_header();
 	int build_row(TIMESTAMP);
 	int flush_line();
+	int on_limit_hit();
 private:
 	MYSQL *mysql;
 	database *db;

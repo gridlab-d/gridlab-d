@@ -20,25 +20,24 @@ table_manager::table_manager(database* db_in, set options_in, int threshold_in, 
 
 	insert_values_initialized = false;
 
-	prev_table = NULL;
 	next_table = NULL;
 	column_count = 0;
 	insert_count = 0;
 	done = false;
 }
 
-void table_manager::init_table(table_manager* prev_table_in, table_manager* next_table_in) {
-	prev_table = prev_table_in;
+std::vector<std::string*>* table_manager::get_table_headers(){
+	return &table_headers;
+}
+
+void table_manager::init_table(table_manager* next_table_in) {
 	next_table = next_table_in;
 }
 
 void table_manager::extend_list(query_engine* parent) {
 	table_manager* new_table = new table_manager(db, options, threshold, column_limit, table_index + 1, table_root);
-	new_table->init_table(this, (next_table != NULL) ? next_table : this);
+	new_table->init_table((next_table != NULL) ? next_table : this);
 	next_table = new_table;
-	if (prev_table == NULL) {
-		prev_table = new_table; // establishes the circular binding on first insertion.
-	}
 	parent->inc_table_count();
 }
 
@@ -123,11 +122,6 @@ void table_manager::flush_value_row(TIMESTAMP* timestamp) {
 			query_count++;
 		}
 	}
-}
-
-void table_manager::clear_values_init() {
-	insert_values_initialized = false;
-	insert_values.clear();
 }
 
 void table_manager::commit_values() {
