@@ -122,7 +122,7 @@ int database::init(OBJECT *parent)
 	gl_verbose("mysql_connect(hostname='%s',username='%s',password='%s',schema='%s',port=%u,socketname='%s',clientflags=0x%016llx[%s])",
 		(const char*)hostname,(const char*)username,(const char*)password,(const char*)schema,port,(const char*)socketname,get_clientflags(),(const char*)flags);
 
-	mysql = mysql_real_connect(mysql_client,hostname,username,strcmp(password,"")?password:NULL,NULL,port,socketname,(unsigned long)clientflags);
+	mysql = mysql_real_connect(mysql_client,hostname,username,password,NULL,port,socketname,(unsigned long)clientflags);
 	if ( mysql==NULL )
 		exception("mysql connect failed - %s", mysql_error(mysql_client));
 	else
@@ -361,6 +361,25 @@ bool database::query(char *fmt,...)
 	check_schema();
 	if ( mysql_query(mysql,command)!=0 )
 		exception("%s->query[%s] failed - %s", get_name(), command, mysql_error(mysql));
+	else if ( get_options()&DBO_SHOWQUERY )
+		gl_verbose("%s->query[%s] ok", get_name(), command);
+
+	return true;
+}
+
+bool database::query(const char *command)
+{
+	// this fixes an issue where it would blind seg-fault on very large queries.
+	char buffer[1024];
+	memcpy( buffer, command, 1023 );
+	buffer[1023] = '\0';
+
+	// query mysql
+	gl_debug("%s->query[%s]", get_name(), command);
+	check_schema();
+	if ( mysql_query(mysql,command)!=0 )
+		exception("%s->query[%s] failed - %s", get_name(), buffer, mysql_error(mysql));
+//		exception("%s->query[%s] failed - %s", get_name(), command, mysql_error(mysql));
 	else if ( get_options()&DBO_SHOWQUERY )
 		gl_verbose("%s->query[%s] ok", get_name(), command);
 
