@@ -7,6 +7,8 @@
  *      Provides a unified MySQL Connection interface and query constructor.
  */
 
+#include <sstream>
+#include <vector>
 #include "query_engine.h"
 
 using namespace std;
@@ -23,6 +25,13 @@ query_engine::query_engine(database* db_in, set options_in, int threshold_in, in
 		set_columns(column_in);
 		set_formatter_max(1024);
 		table_count = 0;
+	}
+}
+
+query_engine::~query_engine() {
+	for (int i = 0; i < table_count; i++) {
+		table_path->commit_state();
+		next_table();
 	}
 }
 
@@ -43,54 +52,11 @@ int query_engine::init(database* db_in) {
 	return 1;
 }
 
-//void query_engine::set_query(string header_in, string footer_in) {
-//	header = header_in;
-//	footer = footer_in;
-//}
-//
-//int query_engine::push_value(string value_in) {
-//	if (query_count < threshold) {
-//		query_buffer.append(value_in);
-//		query_count++;
-//	} else {
-//		if (!query_engine::commit()) {
-//			exception("Database commit failed.");
-//			return 0;
-//		}
-//		query_count = 1;
-//		query_buffer = value_in;
-//	}
-//	return 1;
-//}
-
-//int query_engine::publish() {
-//	if (!query_engine::commit()) {
-//		exception("Database commit failed.");
-//		return 0;
-//	}
-//	return 1;
-//}
-
 int query_engine::query_immediate(string query_in) {
 	if (db->query(query_in.c_str()))
 		return 1;
 	return 0;
 }
-
-//int query_engine::commit() {
-//	MYSQL* mysql = db->get_handle();
-//	if (header.length() != 0) {
-//		query_buffer.insert(0, header.append(" "));
-//	}
-//	if (footer.length() != 0) {
-//		query_buffer.append(footer.insert(0, " "));
-//	}
-//	if (query_buffer.length() != 0) {
-//		db->query(query_buffer.c_str());
-//		return 1;
-//	}
-//	return 0;
-//}
 
 void query_engine::set_formatter_max(int max_in) {
 	formatter_max_characters = max_in;
@@ -106,29 +72,54 @@ string query_engine::format(char *fmt, ...) {
 	return string(command);
 }
 
-void query_engine::next_table(){
+void query_engine::next_table() {
 	table_path = table_path->get_next_table();
 }
 
 void query_engine::init_tables() {
 	table_path = new table_manager(db, options, threshold,
-			column_limit,  0, &table);
+			column_limit, 0, &table);
 	inc_table_count();
 }
 
-void query_engine::set_table_root(char1024 table_in){
+void query_engine::set_table_root(char1024 table_in) {
 	table = table_in;
+	table_references.format("%s_%s", table_in.get_string(), "INDEX");
 }
 
-char1024 query_engine::get_table(){
+char1024 query_engine::get_table() {
 	return table_path->get_table_name();
 }
+char1024 query_engine::get_table_references() {
+	return table_references;
+}
 
-void query_engine::set_tables_done(){
-	for(int i = 0; i < table_count; i++){
+void query_engine::set_tables_done() {
+	for (int i = 0; i < table_count; i++) {
 		table_path->set_done();
 		next_table();
 	}
 }
 
+void query_engine::build_table_references() {
+	stringstream query;
+	vector<string*>* table_headers;
+
+	query << "INSERT INTO `" << table_references.get_string() << "` (`table_name`, `header`) VALUES";
+
+	for (int i = 0; i < table_count; i++) {
+		table_headers = table_path->get_table_headers();
+		int header_count = table_headers->size();
+		char1024 table_name = table_path->get_table_name();
+		for (int j = 0; j < header_count-1; j++) {
+			query << "('" << table_name.get_string() << "','" << *((*table_headers)[j]) << "'),";
+		}
+		query << "('" << table_name.get_string() << "','" << *((*table_headers)[header_count-1]) << "')" << ((i == table_count-1) ? " " : ",");
+		next_table();
+	}
+	query << ";";
+	string query_string = query.str();
+	const char* temp = query_string.c_str();
+	db->query(query_string.c_str());
+}
 

@@ -69,6 +69,10 @@ group_recorder::group_recorder(MODULE *mod) {
 	}
 }
 
+group_recorder::~group_recorder() {
+	delete group_recorder_connection;
+}
+
 int group_recorder::create(void) {
 	memcpy(this, defaults, sizeof(*this));
 	db = last_database;
@@ -267,9 +271,14 @@ int group_recorder::commit(TIMESTAMP t1) {
 		}
 	}
 
+	if (gl_globalclock == gl_globalstoptime) {
+		flush_line();
+		group_recorder_connection->set_tables_done();
+	}
+
 	// check if write limit
 	if (limit > 0 && write_count >= limit) {
-		flush_line();
+		on_limit_hit();
 		group_recorder_connection->set_tables_done();
 	}
 
@@ -335,7 +344,7 @@ int group_recorder::write_header() {
 			}
 
 			const string property_name_string_buffer = property_name_buffer.str();
-			while (complex_part_local_buffer != NONE) { // TODO: allow double/float/decimal
+			while (complex_part_local_buffer != NONE) {
 				property_name_local_buffer << property_name_string_buffer;
 				switch (complex_part_local_buffer & compare) {
 					case NONE:
@@ -393,8 +402,13 @@ int group_recorder::write_header() {
 		for (int index = 0; index < grc->get_table_count(); index++) {
 			// drop table if exists and drop specified
 			if (db->table_exists(grc->get_table().get_string())) {
-				if (get_options() & MO_DROPTABLES && !db->query("DROP TABLE IF EXISTS `%s`", grc->get_table().get_string()))
+				if ((get_options() & MO_DROPTABLES) && !db->query("DROP TABLE IF EXISTS `%s`", grc->get_table().get_string()))
 					exception("unable to drop table '%s'", grc->get_table().get_string());
+			}
+
+			if (db->table_exists(grc->get_table_references().get_string())) {
+				if ((get_options() & MO_DROPTABLES) && !db->query("DROP TABLE IF EXISTS `%s`", grc->get_table_references().get_string()))
+					exception("unable to drop table '%s'", grc->get_table_references().get_string());
 			}
 
 			// create table if not exists
@@ -429,10 +443,38 @@ int group_recorder::write_header() {
 
 			grc->next_table();
 		}
+		ostringstream query;
+		string query_string;
+
+		query << "CREATE TABLE IF NOT EXISTS `" << grc->get_table_references().get_string() << "` ("
+				"`table_name` VARCHAR(256), "
+				"`header` VARCHAR(256));";
+		if (!db->table_exists(grc->get_table_references().get_string())) {
+			if (!(options & MO_NOCREATE)) {
+				query_string = query.str();
+				const char* query_char_string = query_string.c_str();
+				if (!db->query(query_char_string))
+					exception("unable to create table '%s' in schema '%s'", grc->get_table_references().get_string(), db->get_schema());
+				else
+					gl_verbose("table %s created ok", grc->get_table_references().get_string());
+			} else
+				exception("NOCREATE option prevents creation of table '%s'", grc->get_table_references().get_string());
+		}
+
+		// check row count
+		else {
+			if (db->select("SELECT count(*) FROM `%s`", grc->get_table_references().get_string()) == NULL)
+				exception("unable to get row count of table '%s'", grc->get_table_references().get_string());
+
+			gl_verbose("table '%s' ok", grc->get_table_references().get_string());
+		}
+
+		grc->build_table_references();
 	} else {
 		exception("no property specified");
 		return 0;
 	}
+	return 1;
 }
 
 /**
@@ -560,13 +602,18 @@ int group_recorder::build_row(TIMESTAMP t1) {
  @return 0 on failure, 1 on success
  **/
 int group_recorder::flush_line() {
-	if (limit > 0 && write_count >= limit) {
-		for (int i = 0; i < group_recorder_connection->get_table_count(); i++) {
-			group_recorder_connection->get_table_path()->commit_state();
-			group_recorder_connection->next_table();
-		}
+	for (int i = 0; i < group_recorder_connection->get_table_count(); i++) {
+		group_recorder_connection->get_table_path()->commit_state();
+		group_recorder_connection->next_table();
 	}
 	return 1;
+}
+
+int group_recorder::on_limit_hit() {
+	if (limit > 0 && write_count >= limit) {
+		return flush_line();
+	}
+	return 0;
 }
 
 EXPORT TIMESTAMP sync_group_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
