@@ -8,6 +8,7 @@
 #define _DATABASE_H
 
 #include "gridlabd.h"
+#include "property.h"
 
 #ifdef WIN32
 #undef int64
@@ -34,6 +35,9 @@
 #define EXTERN extern
 #define INIT(A)
 #endif
+
+typedef enum {VT_INTEGER, VT_DOUBLE, VT_STRING} VARIABLETYPE;
+typedef enum e_complex_part {NONE = 0x00, REAL=0x01, IMAG=0x02, MAG=0x04, ANG=0x08, ANG_RAD=0x10} CPLPT;
 
 EXTERN char default_hostname[256] INIT("127.0.0.1");
 EXTERN char default_username[32] INIT("gridlabd");
@@ -100,6 +104,7 @@ public:
 	const char *get_last_error(void);
 	bool table_exists(char *table);
 	bool query(char *query,...);
+	bool query(const char *query);
 	unsigned int64 get_last_index(void);
 	MYSQL_RES *select(char *query,...);
 	MYSQL_RES get_next(MYSQL_RES*res);
@@ -121,6 +126,7 @@ public:
 
 EXTERN database *last_database INIT(NULL);
 
+#include "group_recorder.h"
 #include "recorder.h"
 #include "player.h"
 #include "collector.h"
