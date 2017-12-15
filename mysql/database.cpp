@@ -370,8 +370,10 @@ bool database::query(char *fmt,...)
 bool database::query(const char *command)
 {
 	// this fixes an issue where it would blind seg-fault on very large queries.
+	int command_length = strlen(command);
+	if(command_length > 1023){command_length = 1023;}
 	char buffer[1024];
-	memcpy( buffer, command, 1023 );
+	memcpy( buffer, command, command_length );
 	buffer[1023] = '\0';
 
 	// query mysql
