@@ -104,22 +104,28 @@ void query_engine::set_tables_done() {
 void query_engine::build_table_references() {
 	stringstream query;
 	vector<string*>* table_headers;
+	int local_header_count;
 
 	query << "INSERT INTO `" << table_references.get_string() << "` (`table_name`, `header`) VALUES";
 
-	for (int i = 0; i < table_count; i++) {
+	for (int i = 0; table_count > 0 && i < table_count; i++) {
 		table_headers = table_path->get_table_headers();
 		int header_count = table_headers->size();
-		char1024 table_name = table_path->get_table_name();
-		for (int j = 0; j < header_count-1; j++) {
-			query << "('" << table_name.get_string() << "','" << *((*table_headers)[j]) << "'),";
+		if (header_count > 0) {
+			local_header_count += header_count;
+			char1024 table_name = table_path->get_table_name();
+			for (int j = 0; j < header_count - 1; j++) {
+				query << "('" << table_name.get_string() << "','" << *((*table_headers)[j]) << "'),";
+			}
+			query << "('" << table_name.get_string() << "','" << *((*table_headers)[header_count - 1]) << "')" << (
+					(i == table_count - 1) ? " " : ",");
 		}
-		query << "('" << table_name.get_string() << "','" << *((*table_headers)[header_count-1]) << "')" << ((i == table_count-1) ? " " : ",");
 		next_table();
 	}
 	query << ";";
 	string query_string = query.str();
 	const char* temp = query_string.c_str();
-	db->query(query_string.c_str());
+	if (local_header_count != 0 && table_count != 0)
+		db->query(query_string.c_str());
 }
 

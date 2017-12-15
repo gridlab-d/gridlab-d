@@ -522,7 +522,7 @@ int group_recorder::build_row(TIMESTAMP t1) {
 		// get value as a complex
 		cptr = gl_get_complex(curr->obj, &(curr->prop));
 		if (0 == cptr) {
-			gl_error("group_recorder::read_line(): unable to get complex property '%s' from object '%s'", curr->prop.name, gl_name(curr->obj, objname, 127));
+			gl_error("group_recorder::build_row(): unable to get complex property '%s' from object '%s'", curr->prop.name, gl_name(curr->obj, objname, 127));
 			/* TROUBLESHOOT
 			 Could not read a complex property as a complex value.
 			 */
@@ -579,7 +579,7 @@ int group_recorder::build_row(TIMESTAMP t1) {
 		} else {
 			size_t offset = gl_get_value(curr->obj, GETADDR(curr->obj, &(curr->prop)), buffer, 127, &(curr->prop));
 			if (0 == offset) {
-				gl_error("group_recorder::read_line(): unable to get value for '%s' in object '%s'", curr->prop.name, curr->obj->name);
+				gl_error("group_recorder::build_row(): unable to get value for '%s' in object '%s'", curr->prop.name, curr->obj->name);
 				/* TROUBLESHOOT
 				 An error occured while reading the specified property in one of the objects.
 				 */

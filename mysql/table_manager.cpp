@@ -20,7 +20,7 @@ table_manager::table_manager(database* db_in, set options_in, int threshold_in, 
 
 	insert_values_initialized = false;
 
-	next_table = NULL;
+	next_table = this;
 	column_count = 0;
 	insert_count = 0;
 	done = false;
