@@ -968,7 +968,7 @@ int http_json_request(HTTPCNX *http,char *uri)
 		/* find the variable */
 		if (global_getvar(arg1,buffer,sizeof(buffer))==NULL)
 		{
-			http_format(http,"{\"error\": \"globalvar not found\", query: \"%s\"}\n", arg1);
+			http_format(http,"{\"error\": \"globalvar not found\", \"query\": \"%s\"}\n", arg1);
 			http_type(http,"text/json");
 			return 1;
 		}
@@ -993,7 +993,7 @@ int http_json_request(HTTPCNX *http,char *uri)
 			obj = object_find_by_id(atoi(id+1));
 		if ( obj==NULL )
 		{
-			http_format(http,"{\"error\": \"object not found\", query: \"%s\"}\n", arg1);
+			http_format(http,"{\"error\": \"object not found\", \"query\": \"%s\"}\n", arg1);
 			http_type(http,"text/json");
 			return 1;
 		}
@@ -1003,7 +1003,7 @@ int http_json_request(HTTPCNX *http,char *uri)
 			bool use_tuple = strcmp(arg2,"*")==0 || strcmp(arg2,"*[tuple]")==0;
 			if ( !use_tuple && strcmp(arg2,"*[dict]")!=0 )
 			{
-				http_format(http,"{\"error\": \"invalid '*' query format\", query: \"%s\"}\n", arg2);
+				http_format(http,"{\"error\": \"invalid '*' query format\", \"query\": \"%s\"}\n", arg2);
 				http_type(http,"text/json");
 				return 1;
 			}
@@ -1053,7 +1053,7 @@ int http_json_request(HTTPCNX *http,char *uri)
 				}
 				else
 				{
-					http_format(http,"{\"error\" : \"unable to get property value\", object: \"%s\", property: \"%s\"}\n", arg1,arg2);
+					http_format(http,"{\"error\" : \"unable to get property value\", \"object\": \"%s\", \"property\": \"%s\"}\n", arg1,arg2);
 					http_type(http,"text/json");
 					return 1;
 				}
@@ -1067,7 +1067,7 @@ int http_json_request(HTTPCNX *http,char *uri)
 			PROPERTYSPEC *spec = prop ? property_getspec(prop->ptype) : NULL;
 			if ( !get_value_with_unit(obj,arg1,arg2,buffer,sizeof(buffer)) )
 			{
-				http_format(http,"{\"error\": \"property not found\", object: \"%s\", property: \"%s\"}\n", arg1,arg2);
+				http_format(http,"{\"error\": \"property not found\", \"object\": \"%s\", \"property\": \"%s\"}\n", arg1,arg2);
 				http_type(http,"text/json");
 				return 1;
 			}
@@ -1075,7 +1075,7 @@ int http_json_request(HTTPCNX *http,char *uri)
 			/* assignment, if any */
 			if ( value && !object_set_value_by_name(obj,arg2,value) )
 			{
-				http_format(http,"{\"error\": \"property write failed\", object: \"%s\", property: \"%s\", value: \"%s\"}\n", arg1,arg2,value);
+				http_format(http,"{\"error\": \"property write failed\", \"object\": \"%s\", \"property\": \"%s\", \"value\": \"%s\"}\n", arg1,arg2,value);
 				http_type(http,"text/json");
 				return 1;
 			}
