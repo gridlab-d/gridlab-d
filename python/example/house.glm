@@ -1,0 +1,55 @@
+clock {
+	timezone US/CA/Los Angeles;
+	starttime '2017-01-01 00:00:00 PST';
+	stoptime '2017-01-02 00:00:00 PST';
+}
+
+#option server // required for python library get/set/control operations
+#set complex_format="%d+%dj" // required for python to parse complex values
+
+//
+// CLIMATE
+//
+module climate;
+object climate {
+	tmyfile CA-San_Diego_North_Island_Nas.tmy3;
+	interpolate QUADRATIC;
+}
+
+#define houselist="NONE"
+
+//
+// HOUSES
+//
+module residential;
+
+object house:..20 {
+ 	heating_system_type GAS;
+	cooling_system_type ELECTRIC;
+	auxiliary_system_type ELECTRIC;
+ 	heating_setpoint 70 degF;
+	cooling_setpoint 76 degF;
+	thermostat_deadband 1 degF;
+	aux_heat_deadband 2 degF;
+}
+
+//
+// CLOUD COORDINATOR
+//
+class cloud_coordinator {
+	double lmp[$/MWh];
+	intrinsic presync(TIMESTAMP t0, TIMESTAMP t1) 
+	{
+		TIMESTAMP t2 = ((t1/300)+1)*300; 
+		return t2;
+	};
+}
+
+object cloud_coordinator {
+	name coordinator;
+	lmp 50 $/MWh;
+}
+
+script on_init ./tstat_init.py;
+script on_commit "./tstat_commit.py";
+script export clock;
