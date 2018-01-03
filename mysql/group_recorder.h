@@ -36,10 +36,8 @@ public:
 public:
 	GL_STRING(char1024,table);
 	GL_STRING(char1024, group_def);
-	GL_ATOMIC(double, dInterval);
-	GL_ATOMIC(double, dFlush_interval);
 	GL_ATOMIC(bool, strict);
-	GL_ATOMIC(bool, print_units);
+//	GL_ATOMIC(bool, print_units);
 	GL_STRING(char256, property_name);
 	GL_ATOMIC(int32, limit);
     GL_ATOMIC(bool, format);

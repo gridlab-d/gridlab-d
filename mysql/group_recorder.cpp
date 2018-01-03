@@ -42,15 +42,13 @@ group_recorder::group_recorder(MODULE *mod) {
 			GL_THROW("unable to register object class implemented by %s", __FILE__);
 
 		if (gl_publish_variable(oclass,
-				PT_char1024, "file", PADDR(table), PT_DESCRIPTION, "output file name (legacy compatibility)",
+				PT_char1024, "file", PADDR(table), PT_DESCRIPTION, "output file name (legacy compatibility, applied to table field)",
 				PT_char1024, "table", PADDR(table), PT_DESCRIPTION, "database table name",
 				PT_char1024, "group", PADDR(group_def), PT_DESCRIPTION, "group definition string",
-				PT_double, "interval[s]", PADDR(dInterval), PT_DESCRIPTION, "recording interval (0 'every iteration', -1 'on change')",
-				PT_double, "flush_interval[s]", PADDR(dFlush_interval), PT_DESCRIPTION, "file flush interval (0 never, negative on samples)",
 				PT_bool, "strict", PADDR(strict), PT_DESCRIPTION, "causes the group_recorder to stop the simulation should there be a problem opening or writing with the group_recorder",
-				PT_bool, "print_units", PADDR(print_units), PT_DESCRIPTION, "flag to append units to each written value, if applicable",
+//				PT_bool, "print_units", PADDR(print_units), PT_DESCRIPTION, "flag to append units to each written value, if applicable", // TODO: figure out how to meaningfully restore this functionality
 				PT_char256, "property", PADDR(property_name), PT_DESCRIPTION, "property to record",
-				PT_int32, "limit", PADDR(limit), PT_DESCRIPTION, "the maximum number of lines to write to the file",
+				PT_int32, "limit", PADDR(limit), PT_DESCRIPTION, "the maximum number of lines to write to the database",
 				PT_object, "connection", PADDR(connection), PT_DESCRIPTION, "database connection",
 				PT_set, "options", PADDR(options), PT_DESCRIPTION, "SQL options",
 				PT_char32, "mode", PADDR(mode), PT_DESCRIPTION, "table output mode",
@@ -59,7 +57,7 @@ group_recorder::group_recorder(MODULE *mod) {
 				PT_int32, "column_limit", PADDR(column_limit), PT_DESCRIPTION, "maximum number of columns per MySQL table (default 200)",
 				PT_char32, "datetime_fieldname", PADDR(datetime_fieldname), PT_DESCRIPTION, "name of date-time field",
 				PT_char32, "recordid_fieldname", PADDR(recordid_fieldname), PT_DESCRIPTION, "name of record-id field",
-				PT_char256, "complex_part", PADDR(complex_part), PT_DESCRIPTION, "the complex part(s) to record if complex properties are gathered",
+				PT_char256, "complex_part", PADDR(complex_part), PT_DESCRIPTION, "the complex part(s) to record if complex properties are gathered (default REAL|IMAG)",
 				PT_char256, "data_type", PADDR(data_type), PT_DESCRIPTION, "the data format MySQL should use to store the values (default is DOUBLE with no precision set). Acceptable types are DECIMAL(M,D), FLOAT(M,D), and DOUBLE(M,D)",
 				NULL) < 1) {
 			; //GL_THROW("unable to publish properties in %s",__FILE__);
@@ -79,9 +77,11 @@ int group_recorder::create(void) {
 	strcpy(datetime_fieldname, "t");
 	strcpy(recordid_fieldname, "id");
 	strcpy(data_type, "DOUBLE");
+	strcpy(complex_part, "REAL|IMAG");
 	query_buffer_limit = 200;
 	formatter_limit = 65535;
 	column_limit = 200;
+
 
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -130,21 +130,6 @@ int group_recorder::init(OBJECT *obj) {
 		}
 	}
 
-	// check valid write interval
-	write_interval = (int64) (dInterval);
-	if (-1 > write_interval) {
-		gl_error("group_recorder::init(): invalid write_interval of %i, must be -1 or greater", write_interval);
-		/* TROUBLESHOOT
-		 The group_recorder interval must be -1, 0, or a positive number of seconds.
-		 */
-		return 0;
-	}
-
-	// all flush intervals are valid
-	flush_interval = (int64) dFlush_interval;
-//
-//
-//
 	// build group
 	//	* invariant?
 	//	* non-empty set?
@@ -518,6 +503,7 @@ int group_recorder::build_row(TIMESTAMP t1) {
 			property_name_buffer << curr->obj->name << ":" << curr->obj->id;
 		}
 
+		// TODO: update to gld_property type
 		complex *cptr = 0;
 		// get value as a complex
 		cptr = gl_get_complex(curr->obj, &(curr->prop));
