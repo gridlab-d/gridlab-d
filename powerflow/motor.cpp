@@ -364,7 +364,7 @@ int motor::init(OBJECT *parent)
 		TL = 0.0;  // pu
 	}
 	else if (motor_op_mode == modeTPIM && TPIM_initial_status == initialRUNNING){
-		omgr0 = sqrt(TLrated); // pu
+		omgr0 = 1.0; // pu
 		TL = TLrated;
 	}
 
@@ -830,8 +830,8 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 			/**** YUAN *****/
 			//This may need to be revisited - check to see if it should stay in deltamode or not
 			// figure out if we need to exit delta mode on the next pass
-			if (Vas.Mag() > DM_volt_exit_per/100 && Vbs.Mag() > DM_volt_exit_per/100 && Vcs.Mag() > DM_volt_exit_per/100
-					&& omgr0 > DM_speed_exit_per/100)
+			if ((Vas.Mag() > DM_volt_exit_per/100) && (Vbs.Mag() > DM_volt_exit_per/100) && (Vcs.Mag() > DM_volt_exit_per/100)
+					&& fabs(omgr0-omgr0_prev) > DM_speed_exit_per/100)
 			{
 				return SM_EVENT;
 			}
