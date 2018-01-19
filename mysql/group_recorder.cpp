@@ -55,7 +55,7 @@ group_recorder::group_recorder(MODULE *mod) {
 				PT_int32, "column_limit", PADDR(column_limit), PT_DESCRIPTION, "maximum number of columns per MySQL table (default 200)",
 				PT_char32, "datetime_fieldname", PADDR(datetime_fieldname), PT_DESCRIPTION, "name of date-time field",
 				PT_char32, "recordid_fieldname", PADDR(recordid_fieldname), PT_DESCRIPTION, "name of record-id field",
-				PT_char256, "complex_part[s]", PADDR(complex_part), PT_DESCRIPTION, "the complex part(s) to record if complex properties are gathered (default REAL|IMAG)",
+				PT_char256, "complex_part", PADDR(complex_part), PT_DESCRIPTION, "the complex part(s) to record if complex properties are gathered (default REAL|IMAG)",
 				PT_char256, "data_type", PADDR(data_type), PT_DESCRIPTION, "the data format MySQL should use to store the values (default is DOUBLE with no precision set). Acceptable types are DECIMAL(M,D), FLOAT(M,D), and DOUBLE(M,D)",
 				PT_double, "interval[s]", PADDR(dInterval), PT_DESCRIPTION, "recording interval (0 'every iteration', -1 'on change')",
 
