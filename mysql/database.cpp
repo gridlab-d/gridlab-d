@@ -381,7 +381,6 @@ bool database::query(const char *command)
 	check_schema();
 	if ( mysql_query(mysql,command)!=0 )
 		exception("%s->query[%s] failed - %s", get_name(), buffer, mysql_error(mysql));
-//		exception("%s->query[%s] failed - %s", get_name(), command, mysql_error(mysql));
 	else if ( get_options()&DBO_SHOWQUERY )
 		gl_verbose("%s->query[%s] ok", get_name(), command);
 
