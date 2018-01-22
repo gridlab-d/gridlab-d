@@ -22,9 +22,9 @@ num=`git log --max-count=1 --pretty=format:"%ad" --date=raw | sed -ne 's/ [\+\-]
 rev=$((${num}/86400))
 branchname=`git rev-parse --abbrev-ref HEAD`
 if [ -z "${mod}" ]; then
-	branch="${dir}:${new}"
-else
 	branch="$new:$branchname"
+else
+	branch="$new:$branchname:Modified"
 fi
 if test -f $2 ; then 
 	oldnum=`cat $2 | sed -ne 's/^#define BUILDNUM //p'`
