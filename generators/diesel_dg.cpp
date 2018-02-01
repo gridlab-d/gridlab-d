@@ -98,6 +98,8 @@ diesel_dg::diesel_dg(MODULE *module)
 			//End of synchronous generator inputs
 			PT_double, "Rated_V[V]", PADDR(Rated_V),PT_DESCRIPTION,"nominal line-line voltage in Volts",
 			PT_double, "Rated_VA[VA]", PADDR(Rated_VA),PT_DESCRIPTION,"nominal capacity in VA",
+			PT_double, "overload_limit[pu]", PADDR(Overload_Limit_Pub),PT_DESCRIPTION,"per-unit value of the maximum power the generator can provide",
+
 			PT_complex, "power_out_A[VA]", PADDR(power_val[0]),PT_DESCRIPTION,"Output power of phase A",
 			PT_complex, "power_out_B[VA]", PADDR(power_val[1]),PT_DESCRIPTION,"Output power of phase B",
 			PT_complex, "power_out_C[VA]", PADDR(power_val[2]),PT_DESCRIPTION,"Output power of phase C",
@@ -477,6 +479,9 @@ int diesel_dg::create(void)
 	//End of synchronous generator inputs
 	Rated_V = 0.0;
 	Rated_VA = 0.0;
+
+	Overload_Limit_Pub = 1.25;	//By default, let us go 25% over the limit
+	Overload_Limit_Value = 0.0;	//Will populate later
 
 	Rs = 0.025;				//Estimated values for synch representation.
 	Xs = 0.200;
@@ -947,6 +952,23 @@ int diesel_dg::init(OBJECT *parent)
 			the machine base for all of the other default parameter values.
 			*/
 		}
+
+		//Make sure the limit is positive and non-zero
+		if (Overload_Limit_Pub <= 0.0)
+		{
+			//Set to 25% over again, just because
+			Overload_Limit_Pub = 1.25;
+
+			//Give a warning
+			gl_warning("diesel_dg:%d %s - overload_limit has a value less than or equal to zero - set to 1.25",obj->id,(obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			The value for overload_limit in diesel_dg must be greater than zero.  If it is not, it will be arbitrarily set to 1.25.
+			Explicitly set this value, if this is not intended.
+			*/
+		}
+
+		//Compute the interval value
+		Overload_Limit_Value = Rated_VA * Overload_Limit_Pub;
 
 		//Check voltage value
 		if (Rated_V<=0.0)
@@ -2280,21 +2302,18 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 			//Mechanical power update
 			next_state.pwr_mech = Rated_VA*(next_state.gov_pconstant.x5);
 
+			//See if mechanical power is too big -- if so, limit it (and x5 to match)
+			if (next_state.pwr_mech > Overload_Limit_Value)
+			{
+				//Limit it
+				next_state.pwr_mech = Overload_Limit_Value;
+
+				//Fix the state variable, in hopes it will propagate
+				next_state.gov_pconstant.x5 = Overload_Limit_Value / Rated_VA;
+			}
+
 			//Translate this into the torque model
 			next_state.torque_mech = next_state.pwr_mech / next_state.omega;
-
-
-//			// Update x1 state variable
-//			next_state.gov_ggov1.x1 = curr_state.gov_ggov1.x1 + predictor_vals.gov_ggov1.x1*deltat;
-
-//			// Update x_Pconstant state variable, and thus state varibale FuelFlow
-//			next_state.gov_ggov1.x_Pconstant = curr_state.gov_ggov1.x_Pconstant + predictor_vals.gov_ggov1.x_Pconstant*deltat;
-////			next_state.pwr_mech = Rated_VA * (next_state.gov_ggov1.x_Pconstant + (gen_base_set_vals.Pref - next_state.pwr_electric.Re() / Rated_VA) * kp_Pconstant);
-//			next_state.pwr_mech = Rated_VA * (next_state.gov_ggov1.x_Pconstant + (gen_base_set_vals.Pref - next_state.gov_ggov1.x1) * kp_Pconstant);
-//
-//			//Translate this into the torque model
-//			next_state.torque_mech = next_state.pwr_mech / next_state.omega;
-
 		}//End P_CONSTANT update
 		else if ((Governor_type == GGOV1) || (Governor_type == GGOV1_OLD))
 		{
@@ -2431,11 +2450,31 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 			{
 				//Mechanical power update
 				next_state.pwr_mech = Rated_VA*(next_state.gov_ggov1.x5 - gov_ggv1_Dm*(next_state.omega/omega_ref - gen_base_set_vals.wref));
+
+				//Check the value and threshold, if necessary
+				if (next_state.pwr_mech > Overload_Limit_Value)
+				{
+					//Set power
+					next_state.pwr_mech = Overload_Limit_Value;
+
+					//Fix the variables
+					next_state.gov_ggov1.x5 = Overload_Limit_Value / Rated_VA + gov_ggv1_Dm*(next_state.omega/omega_ref - gen_base_set_vals.wref);
+				}
 			}
 			else
 			{
 				//Mechanical power update
 				next_state.pwr_mech = Rated_VA*(next_state.gov_ggov1.x5);
+
+				//Check the value, and threshold, if necessary
+				if (next_state.pwr_mech > Overload_Limit_Value)
+				{
+					//Limit it
+					next_state.pwr_mech = Overload_Limit_Value;
+
+					//Fix the variable
+					next_state.gov_ggov1.x5 = next_state.pwr_mech / Rated_VA;
+				}
 			}
 			//Translate this into the torque model
 			next_state.torque_mech = next_state.pwr_mech / next_state.omega;
@@ -2708,19 +2747,18 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 			//Mechanical power update
 			next_state.pwr_mech = Rated_VA*(next_state.gov_pconstant.x5);
 
+			//Check the limit
+			if (next_state.pwr_mech > Overload_Limit_Value)
+			{
+				//Limit it
+				next_state.pwr_mech = Overload_Limit_Value;
+
+				//Fix the variable
+				next_state.gov_pconstant.x5 = Overload_Limit_Value / Rated_VA;
+			}
+
 			//Translate this into the torque model
 			next_state.torque_mech = next_state.pwr_mech / next_state.omega;
-
-//			// Update x1 state varibale
-//			next_state.gov_ggov1.x1 = curr_state.gov_ggov1.x1 + (predictor_vals.gov_ggov1.x1 + corrector_vals.gov_ggov1.x1)*deltath;
-//
-//			// Update x_Pconstant state variable, and thus state varibale FuelFlow
-//			next_state.gov_ggov1.x_Pconstant = curr_state.gov_ggov1.x_Pconstant + (predictor_vals.gov_ggov1.x_Pconstant + corrector_vals.gov_ggov1.x_Pconstant)*deltath;
-////			next_state.pwr_mech = Rated_VA * (next_state.gov_ggov1.x_Pconstant + (gen_base_set_vals.Pref - next_state.pwr_electric.Re() / Rated_VA) * kp_Pconstant);
-//			next_state.pwr_mech = Rated_VA * (next_state.gov_ggov1.x_Pconstant + (gen_base_set_vals.Pref - next_state.gov_ggov1.x1) * kp_Pconstant);
-//
-//			//Translate this into the torque model
-//			next_state.torque_mech = next_state.pwr_mech / next_state.omega;
 
 		}// End P_CONSTANT mode corrector stage
 		else if ((Governor_type == GGOV1) || (Governor_type == GGOV1_OLD))
@@ -2855,11 +2893,31 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 			{
 				//Mechanical power update
 				next_state.pwr_mech = Rated_VA*(next_state.gov_ggov1.x5 - gov_ggv1_Dm*(next_state.omega/omega_ref - gen_base_set_vals.wref));
+
+				//Check the limit
+				if (next_state.pwr_mech > Overload_Limit_Value)
+				{
+					//Limit it
+					next_state.pwr_mech = Overload_Limit_Value;
+
+					//Fix the variable
+					next_state.gov_ggov1.x5 = Overload_Limit_Value / Rated_VA + gov_ggv1_Dm*(next_state.omega/omega_ref - gen_base_set_vals.wref);
+				}
 			}
 			else
 			{
 				//Mechanical power update
 				next_state.pwr_mech = Rated_VA*(next_state.gov_ggov1.x5);
+
+				//Check the limit
+				if (next_state.pwr_mech > Overload_Limit_Value)
+				{
+					//Limit it
+					next_state.pwr_mech = Overload_Limit_Value;
+
+					//Fix the variable
+					next_state.gov_ggov1.x5 = Overload_Limit_Value / Rated_VA;
+				}
 			}
 			//Translate this into the torque model
 			next_state.torque_mech = next_state.pwr_mech / next_state.omega;
@@ -3229,6 +3287,16 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 
 	curr_time->pwr_mech = curr_time->torque_mech*curr_time->omega;
 
+	//Check to see if it needs to be limited -- individual governors do this below, but in case we have no governor
+	if (curr_time->pwr_mech > Overload_Limit_Value)
+	{
+		//Limit it
+		curr_time->pwr_mech = Overload_Limit_Value;
+
+		//Fix the torque too, in case something uses it
+		curr_time->torque_mech = Overload_Limit_Value / curr_time->omega;
+	}
+
 	temp_double_2 = omega_ref/(2.0*inertia);
 
 	//Post the delta value
@@ -3286,6 +3354,16 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 		curr_time->torque_mech = (Rated_VA/omega_ref)*torquenow;
 		curr_time->pwr_mech = curr_time->torque_mech*curr_time->omega;
 
+		//See if it exceeded the limit -- if so, cap it
+		if (curr_time->pwr_mech > Overload_Limit_Value)
+		{
+			//Limit it
+			curr_time->pwr_mech = Overload_Limit_Value;
+
+			//Fix the torque variable
+			curr_time->torque_mech = Overload_Limit_Value / curr_time->omega;
+		}
+
 		//Compute the offset currently
 		temp_double_1 = gen_base_set_vals.wref - curr_time->omega/omega_ref-gov_degov1_R*curr_time->gov_degov1.throttle;
 		
@@ -3325,6 +3403,16 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 		//Calculate the mechanical power for this time
 		curr_time->torque_mech = (Rated_VA/omega_ref)*torquenow;
 		curr_time->pwr_mech = curr_time->torque_mech*curr_time->omega;
+
+		//See if it exceeded the limit -- if so, cap it
+		if (curr_time->pwr_mech > Overload_Limit_Value)
+		{
+			//Limit it
+			curr_time->pwr_mech = Overload_Limit_Value;
+
+			//Fix the torque variable
+			curr_time->torque_mech = Overload_Limit_Value / curr_time->omega;
+		}
 
 		//Compute the offset currently
 		delomega = curr_time->gov_gast.throttle - (curr_time->omega/omega_ref-1)*gov_gast_R; 
@@ -3422,6 +3510,16 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 		curr_time->gov_pconstant.x5 = (1.0 - pconstant_Tc/pconstant_Tb)*curr_time->gov_pconstant.x5b + pconstant_Tc/pconstant_Tb*curr_time->gov_pconstant.x5a;
 
 		curr_time->pwr_mech = Rated_VA*curr_time->gov_pconstant.x5;
+
+		//See if it exceeded the limit -- if so, cap it
+		if (curr_time->pwr_mech > Overload_Limit_Value)
+		{
+			//Limit it
+			curr_time->pwr_mech = Overload_Limit_Value;
+
+			//Fix the state variable
+			curr_time->gov_pconstant.x5 = Overload_Limit_Value / Rated_VA;
+		}
 
 		//Translate this into the torque model
 		curr_time->torque_mech = curr_time->pwr_mech / curr_time->omega;
@@ -3572,10 +3670,30 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 		if (gov_ggv1_Dm > 0.0)	//Mechanical power set
 		{
 			curr_time->pwr_mech = Rated_VA*(curr_time->gov_ggov1.x5 - gov_ggv1_Dm*(curr_time->omega/omega_ref - gen_base_set_vals.wref));
+
+			//See if it exceeded the limit -- if so, cap it
+			if (curr_time->pwr_mech > Overload_Limit_Value)
+			{
+				//Limit it
+				curr_time->pwr_mech = Overload_Limit_Value;
+
+				//Fix the torque variable
+				curr_time->torque_mech = Overload_Limit_Value / Rated_VA + gov_ggv1_Dm*(curr_time->omega/omega_ref - gen_base_set_vals.wref);
+			}
 		}
 		else
 		{
 			curr_time->pwr_mech = Rated_VA*curr_time->gov_ggov1.x5;
+
+			//See if it exceeded the limit -- if so, cap it
+			if (curr_time->pwr_mech > Overload_Limit_Value)
+			{
+				//Limit it
+				curr_time->pwr_mech = Overload_Limit_Value;
+
+				//Fix the state variable
+				curr_time->gov_ggov1.x5 = Overload_Limit_Value / Rated_VA;
+			}
 		}
 		//Translate this into the torque model
 		curr_time->torque_mech = curr_time->pwr_mech / curr_time->omega;		
@@ -3876,6 +3994,16 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 	//Set the initial power
 	curr_time->torque_mech = -1.0*temp_double_1*Rated_VA/omega_ref;
 	curr_time->pwr_mech = curr_time->torque_mech*curr_time->omega;
+
+	//Check it and limit it, if necessary
+	if (curr_time->pwr_mech > Overload_Limit_Value)
+	{
+		//Limit it
+		curr_time->pwr_mech = Overload_Limit_Value;
+
+		//Fix the mechanical torque too, even though it probably gets caught below
+		curr_time->torque_mech = Overload_Limit_Value / curr_time->omega;
+	}
 
 	//Governor initial conditions
 	if (Governor_type == DEGOV1)

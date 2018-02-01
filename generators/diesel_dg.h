@@ -189,6 +189,8 @@ private:
 	bool deltamode_inclusive;	//Boolean for deltamode calls - pulled from object flags
 	double *mapped_freq_variable;	//Mapping to frequency variable in powerflow module - deltamode updates
 
+	double Overload_Limit_Value;	//The computed maximum output power, based on the Rated_VA and the Overload_Limit_Value
+
 protected:
 	/* TODO: put unpublished but inherited variables */
 public:
@@ -250,6 +252,7 @@ public:
 
 	double Rated_V;
 	double Rated_VA;
+	double Overload_Limit_Pub;	//Maximum rating for the generator, in per-unit
 
 	//end of diesel engine inputs
 	
