@@ -4161,7 +4161,7 @@ STATUS node::calc_freq_dynamics(double deltat)
 {
 	unsigned char phase_conf, phase_mask;
 	unsigned int indexval;
-	double dfmeasdt, errorval, deltaom, dxdt, fbus;
+	double dfmeasdt, errorval, deltaom, dxdt, fbus, adiffval;
 	STATUS return_status;
 	bool is_triplex_node;
 
@@ -4243,13 +4243,16 @@ STATUS node::calc_freq_dynamics(double deltat)
 				}
 			}
 
-			//Extract the angle
-			curr_freq_state.anglemeas[indexval] = curr_freq_state.voltage_val[indexval].Arg();
+			//Extract the angle - use ATAN2, since it divides better than the complex-oriented .Arg function
+			curr_freq_state.anglemeas[indexval] = atan2(curr_freq_state.voltage_val[indexval].Im(),curr_freq_state.voltage_val[indexval].Re());
 
 			//Perform update
 			if (fmeas_type == FM_SIMPLE)
 			{
-				fbus = ((curr_freq_state.anglemeas[indexval] - prev_freq_state.anglemeas[indexval])/deltat + freq_omega_ref) / (2.0 * PI);
+				//Use a function to get the difference
+				adiffval = compute_angle_diff(curr_freq_state.anglemeas[indexval],prev_freq_state.anglemeas[indexval]);
+
+				fbus = (adiffval/deltat + freq_omega_ref) / (2.0 * PI);
 				dfmeasdt = (fbus - prev_freq_state.fmeas[indexval]) / freq_sfm_Tf;
 				curr_freq_state.fmeas[indexval] = prev_freq_state.fmeas[indexval] + dfmeasdt*deltat;
 			}
@@ -4436,8 +4439,8 @@ void node::init_freq_dynamics(void)
 				}
 			}
 
-			//Populate the angle
-			prev_freq_state.anglemeas[indexval] = prev_freq_state.voltage_val[indexval].Arg();
+			//Populate the angle - use ATAN2, since it divides better than the complex-oriented .Arg function
+			prev_freq_state.anglemeas[indexval] = atan2(prev_freq_state.voltage_val[indexval].Im(),prev_freq_state.voltage_val[indexval].Re());
 			
 			//Assume "current" start
 			prev_freq_state.fmeas[indexval] = current_frequency;
@@ -4918,6 +4921,30 @@ STATUS node::link_VFD_functions(OBJECT *linkVFD)
 
 	//Always succeed, if we made it this far
 	return SUCCESS;
+}
+
+//Function to compute the difference between two angles
+//Note that the inputs are in radians
+//Mainly used by frequency calculations
+//Effectively the code from https://stackoverflow.com/questions/11498169/dealing-with-angle-wrap-in-c-code
+double node::compute_angle_diff(double angle_A, double angle_B)
+{
+	double diff_val, two_PI;
+
+	//Constant - save a multiply
+	two_PI = 2.0 * PI;
+
+	//Compute the raw difference
+	diff_val = fmod((angle_B - angle_A + PI), two_PI);
+   
+   //See if we need to wrap it around
+   if (diff_val < 0.0)
+   {
+	   diff_val += two_PI;
+   }
+
+   //Return the result, with the offset removed
+   return (diff_val - PI);
 }
 
 //////////////////////////////////////////////////////////////////////////
