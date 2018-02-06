@@ -26,3 +26,7 @@ AS_IF([test "x$GRIDLABD_DEBUG" = "x"],
   	[AS_IF([test "x$HAS_MINGW" = "xyes"],
 		["$GRIDLABD_DEBUG" "$bindir/gridlabd.exe"],
 		["$GRIDLABD_DEBUG" "$bindir/gridlabd.bin"])])
+
+AS_IF([test "x$GRIDLABD_GRIND" = "x"],
+	[valgrind $GRIDLABD_GRIND "$bindir/gridlabd.exe" $@],
+	[valgrind $GRIDLABD_GRIND "$bindir/gridlabd.bin" $@])

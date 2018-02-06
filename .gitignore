@@ -3,6 +3,8 @@
 Makefile.in
 
 # http://www.gnu.org/software/autoconf
+gldcore/gridlabd.in
+custom.mk
 /autom4te.cache
 /autoscan.log
 /autoscan-*.log

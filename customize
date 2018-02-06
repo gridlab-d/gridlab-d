@@ -112,7 +112,11 @@ function sync_validate ()
 
 function configure ()
 {
+	if [ ! -f ./configure ]; then
+		autoreconf -isf
+	fi
 	if [ $# -eq 0 ]; then
+		autom4te -l M4sh gldcore/gridlabd.m4sh > gldcore/gridlabd.in
 		if [ -f $CONFIGURE ]; then
 			eval "./configure $(sed 's/$/ /' < $CONFIGURE | tr -d '\n')"
 		else
