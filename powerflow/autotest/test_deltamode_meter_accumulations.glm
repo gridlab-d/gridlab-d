@@ -1,0 +1,789 @@
+// $Id$
+// Simple topology to test various accumulation methods
+
+//#set suppress_repeat_messages=0
+//#set profiler=1
+#set dateformat=US
+#define rotor_convergence=0.0001
+// #set verbose=1
+
+#set double_format=%+.12lg
+#set complex_format=%+.12lg%+.12lg%c
+
+//Deltamode declarations - global values
+#set deltamode_timestep=100000000		//100 ms
+#set deltamode_maximumtime=60000000000	//1 minute
+#set deltamode_iteration_limit=10		//Iteration limit
+
+clock {
+	timezone "PST+8PDT";
+	starttime '2001-01-01 00:00:00 PST';
+	stoptime '2001-01-01 00:00:02 PST';
+}
+
+module assert;
+module tape;
+module powerflow {
+	enable_subsecond_models true;
+	all_powerflow_delta true;
+	deltamode_timestep 10.0 ms;	//10 ms
+	solver_method NR;
+};
+module generators {
+	enable_subsecond_models TRUE;
+	deltamode_timestep 10000.0 us;	//10 ms
+}
+
+//Reference line type
+object line_configuration {
+	name OHL_config;
+	z11 0.3465+1.0179j;	//Ohms/mile
+	z12 0.1560+0.5017j;
+	z13 0.1580+0.4236j;
+	z21 0.1560+0.5017j;
+	z22 0.3375+1.0478j;
+	z23 0.1535+0.3849j;
+	z31 0.1580+0.4236j;
+	z32 0.1535+0.3849j;
+	z33 0.3414+1.0348j;
+}
+
+//Power system
+object meter {
+	phases ABC;
+	name BUS_SWING;
+	bustype SWING;
+	nominal_voltage 8660.254;
+	
+	//SWING node just has a line out and a generator childed - so it should be zero
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power;
+		within 0.01;
+		value 0.0;
+	};	
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power_A;
+		within 0.01;
+		value 0.0;
+	};	
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power_B;
+		within 0.01;
+		value 0.0;
+	};	
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power_C;
+		within 0.01;
+		value 0.0;
+	};	
+}
+
+object meter {
+	phases ABC;
+	name BUS_1;
+	nominal_voltage 8660.254;
+	
+	//BUS_1 has a childed node with generator/line, plus a line out, so it should net to zero
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power;
+		within 0.01;
+		value 0.0;
+	};	
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power_A;
+		within 0.01;
+		value 0.0;
+	};	
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power_B;
+		within 0.01;
+		value 0.0;
+	};	
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power_C;
+		within 0.01;
+		value 0.0;
+	};	
+}
+
+object meter {
+	phases ABC;
+	name BUS_1_p;
+	parent BUS_1;
+	nominal_voltage 8660.254;
+	
+	//BUS_1_p is childed to BUS_1.  It has a generator in and a line out (other line is on the parent)
+	//Should not be net zero, since the parent has a line flowing out
+	//Predominately negative, since the generator is pumping power up to the other line
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power;
+		within 0.01;
+		value -10973.50714-109967.4914j;
+	};	
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power_A;
+		within 0.01;
+		value -21909.09183-41805.94511j;
+	};	
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power_B;
+		within 0.01;
+		value 21997.97098-30978.08718j;
+	};	
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power_C;
+		within 0.01;
+		value -11062.38629-37183.45909j;
+	};	
+}
+
+object meter {
+	phases ABC;
+	name BUS_2;
+	nominal_voltage 8660.254;
+	
+	//BUS_2 is has a generator, one line flowing in, and one line flowing out.
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power;
+		within 0.01;
+		value 144120.1265+12764.94096j;
+	};	
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power_A;
+		within 0.01;
+		value 43777.38956+1933.450055j;
+	};	
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power_B;
+		within 0.01;
+		value 53703.80495+6516.376248j;
+	};	
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power_C;
+		within 0.01;
+		value 46638.93201+4315.114652j;
+	};	
+}
+
+object meter {
+	phases ABC;
+	name BUS_3;
+	nominal_voltage 8660.254;
+	
+	//BUS_3 has a child (with just gen), one line in, and one line out
+	//Expected to be a net value, since the generator is injecting
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power;
+		within 0.01;
+		value 269276.1988+95544.02812j;
+	};	
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power_A;
+		within 0.01;
+		value 96204.45015+33438.47154j;
+	};	
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power_B;
+		within 0.01;
+		value 78113.80545+32314.69508j;
+	};	
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power_C;
+		within 0.01;
+		value 94957.94321+29790.86151j;
+	};	
+}
+
+object meter {
+	phases ABC;
+	name BUS_3_p;
+	parent BUS_3;
+	nominal_voltage 8660.254;
+	
+	//BUS_3_p just has a diesel hanging from it - should be just net negative
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power;
+		within 0.01;
+		value -125162.8504-262860.2995j;
+	};	
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power_A;
+		within 0.01;
+		value -56679.68063-90139.53046j;
+	};	
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power_B;
+		within 0.01;
+		value -19849.4597-81839.10448j;
+	};	
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power_C;
+		within 0.01;
+		value -48633.71004-90881.66456j;
+	};
+}
+
+object meter {
+	phases ABC;
+	name BUS_4;
+	nominal_voltage 8660.254;
+	
+	//BUS_4 - two lines in and two line outs - no reversals, so standard
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power;
+		within 0.01;
+		value 2423952.978+1411843.032j;
+	};	
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power_A;
+		within 0.01;
+		value 845573.6902+468246.7682j;
+	};	
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power_B;
+		within 0.01;
+		value 752957.4566+474485.4802j;
+	};	
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power_C;
+		within 0.01;
+		value 825421.8314+469110.7835j;
+	};	
+}
+
+object meter {
+	phases ABC;
+	name BUS_5;
+	nominal_voltage 8660.254;
+	
+	//BUS_5 has three lines, but all are flowing "into" the node.
+	//Based on the convention, this should be zero
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power;
+		within 0.01;
+		value 0.0;
+	};	
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power_A;
+		within 0.01;
+		value 0.0;
+	};	
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power_B;
+		within 0.01;
+		value 0.0;
+	};	
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power_C;
+		within 0.01;
+		value 0.0;
+	};	
+}
+
+object diesel_dg {
+	parent BUS_SWING;
+	name Gen_Bus_Swing;
+	Rated_V 15000.0;
+	Rated_VA 10.0 MVA;
+	flags DELTAMODE;
+	Gen_type DYN_SYNCHRONOUS;
+	rotor_speed_convergence ${rotor_convergence};
+	//temp properties - sync with example
+	power_out_A 10.0+10.0j;
+	power_out_B 10.0+10.0j;
+	power_out_C 10.0+10.0j;
+	Exciter_type SEXS;
+	Governor_type DEGOV1;
+	DEGOV1_R 0.01;
+}
+
+object diesel_dg {
+	parent BUS_1_p;
+	name Gen_Bus_1;
+	Rated_V 15000.0;
+	Rated_VA 10.0 MVA;
+	flags DELTAMODE;
+	Gen_type DYN_SYNCHRONOUS;
+	rotor_speed_convergence ${rotor_convergence};
+	//temp properties - sync with example
+	power_out_A 57500.0+37500.0j;
+	power_out_B 45000.0+47500.0j;
+	power_out_C 52500.0+37500.0j;
+	Exciter_type NO_EXC;
+	Governor_type NO_GOV;
+}
+	
+object diesel_dg {
+	parent BUS_2;
+	name Gen_Bus_2;
+	Rated_V 15000.0;
+	Rated_VA 10.0 MVA;
+	flags DELTAMODE;
+	Gen_type DYN_SYNCHRONOUS;
+	rotor_speed_convergence ${rotor_convergence};
+	//temp properties - sync with example
+	power_out_A 47500.0+27500.0j;
+	power_out_B 35000.0+27500.0j;
+	power_out_C 42500.0+27500.0j;
+	Exciter_type NO_EXC;
+	Governor_type NO_GOV;
+}
+
+object diesel_dg {
+	parent BUS_3_p;
+	name Gen_Bus_3;
+	Rated_V 15000.0;
+	Rated_VA 10.0 MVA;
+	flags DELTAMODE;
+	Gen_type DYN_SYNCHRONOUS;
+	rotor_speed_convergence ${rotor_convergence};
+	//temp properties - sync with example
+	power_out_A 37500.0+87500.0j;
+	power_out_B 75000.0+87500.0j;
+	power_out_C 12500.0+87500.0j;
+	Exciter_type NO_EXC;
+	Governor_type NO_GOV;
+}
+
+//Load buses
+object meter {
+	phases ABC;
+	name BUS_7;
+	nominal_voltage 8660.254;
+	
+	//BUS_7 has a childed load and a single line flowing out (backwards)
+	//As such, it should net to zero, based on the convention
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power;
+		within 0.01;
+		value 0.0;
+	};	
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power_A;
+		within 0.01;
+		value 0.0;
+	};	
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power_B;
+		within 0.01;
+		value 0.0;
+	};	
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power_C;
+		within 0.01;
+		value 0.0;
+	};	
+}
+
+object load {
+	phases ABC;
+	name BUS_7_p;
+	parent BUS_7;
+	nominal_voltage 8660.254;
+	constant_power_A 875000.0+575000.0j;
+	constant_power_B 750000.0+575000.0j;
+	constant_power_C 825000.0+575000.0j;
+	//Player doesn't really do anything on this time case -- just basically triggers deltamode
+	object player {
+		file "../diesel_deltamode_load_player_A.csv";
+		property constant_power_A;
+		flags DELTAMODE;
+	};
+}
+
+object load {
+	phases ABC;
+	name BUS_6;
+	nominal_voltage 8660.254;
+	constant_power_A 120000.0+7200.0j;
+	constant_power_B 100000.0+6400.0j;
+	constant_power_C 140000.0+5000.0j;
+}
+
+//Create overhead lines
+object overhead_line {
+	phases ABC;
+	name BUS_SWING_to_BUS_4;
+	from BUS_SWING;
+	to BUS_4;
+	length 3500.0 ft;
+	configuration OHL_config;
+}
+
+object overhead_line {
+	phases ABC;
+	name BUS_1_p_to_BUS_2;
+	from BUS_1_p;
+	to BUS_2;
+	length 3500.0 ft;
+	configuration OHL_config;
+}
+
+object overhead_line {
+	phases ABC;
+	name BUS_2_to_BUS_3;
+	from BUS_2;
+	to BUS_3;
+	length 3500.0 ft;
+	configuration OHL_config;
+}
+
+object overhead_line {
+	phases ABC;
+	name BUS_3_to_BUS_6;
+	from BUS_3;
+	to BUS_6;
+	length 3500.0 ft;
+	configuration OHL_config;
+}
+
+object overhead_line {
+	phases ABC;
+	name BUS_1_to_BUS_4;
+	from BUS_1;
+	to BUS_4;
+	length 3500.0 ft;
+	configuration OHL_config;
+}
+
+object overhead_line {
+	phases ABC;
+	name BUS_4_to_BUS_5;
+	from BUS_4;
+	to BUS_5;
+	length 3500.0 ft;
+	configuration OHL_config;
+}
+
+object overhead_line {
+	phases ABC;
+	name BUS_4_to_BUS_6;
+	from BUS_4;
+	to BUS_6;
+	length 3500.0 ft;
+	configuration OHL_config;
+}
+
+object overhead_line {
+	phases ABC;
+	name BUS_7_to_BUS_5;
+	from BUS_7;
+	to BUS_5;
+	length 3500.0 ft;
+	configuration OHL_config;
+}
+
+object overhead_line {
+	phases ABC;
+	name BUS_6_to_BUS_5;
+	from BUS_6;
+	to BUS_5;
+	length 3500.0 ft;
+	configuration OHL_config;
+}
+
+// //Recorders
+// object group_recorder {
+	// name meter_power_A_real;
+	// flags DELTAMODE;
+	// group "class=meter";
+	// property "measured_power_A";
+	// complex_part REAL;
+	// interval 1;
+	// file meter_power_A_real.csv;
+// }
+	
+// object group_recorder {
+	// name meter_power_A_imag;
+	// flags DELTAMODE;
+	// group "class=meter";
+	// property "measured_power_A";
+	// complex_part IMAG;
+	// interval 1;
+	// file meter_power_A_imag.csv;
+// }
+
+// object group_recorder {
+	// name meter_power_B_real;
+	// flags DELTAMODE;
+	// group "class=meter";
+	// property "measured_power_B";
+	// complex_part REAL;
+	// interval 1;
+	// file meter_power_B_real.csv;
+// }
+	
+// object group_recorder {
+	// name meter_power_B_imag;
+	// flags DELTAMODE;
+	// group "class=meter";
+	// property "measured_power_B";
+	// complex_part IMAG;
+	// interval 1;
+	// file meter_power_B_imag.csv;
+// }
+
+// object group_recorder {
+	// name meter_power_C_real;
+	// flags DELTAMODE;
+	// group "class=meter";
+	// property "measured_power_C";
+	// complex_part REAL;
+	// interval 1;
+	// file meter_power_C_real.csv;
+// }
+	
+// object group_recorder {
+	// name meter_power_C_imag;
+	// flags DELTAMODE;
+	// group "class=meter";
+	// property "measured_power_C";
+	// complex_part IMAG;
+	// interval 1;
+	// file meter_power_C_imag.csv;
+// }
+
+// object group_recorder {
+	// name meter_power_real;
+	// flags DELTAMODE;
+	// group "class=meter";
+	// property "measured_power";
+	// complex_part REAL;
+	// interval 1;
+	// file meter_power_real.csv;
+// }
+	
+// object group_recorder {
+	// name meter_power_imag;
+	// flags DELTAMODE;
+	// group "class=meter";
+	// property "measured_power";
+	// complex_part IMAG;
+	// interval 1;
+	// file meter_power_imag.csv;
+// }
+
+// object group_recorder {
+	// name diesel_power_real;
+	// flags DELTAMODE;
+	// group "class=diesel_dg";
+	// property "pwr_electric";
+	// complex_part REAL;
+	// interval 1;
+	// file diesel_power_real.csv;
+// }
+	
+// object group_recorder {
+	// name diesel_power_imag;
+	// flags DELTAMODE;
+	// group "class=diesel_dg";
+	// property "pwr_electric";
+	// complex_part IMAG;
+	// interval 1;
+	// file diesel_power_imag.csv;
+// }
+
+// object group_recorder {
+	// name diesel_power_A_real;
+	// flags DELTAMODE;
+	// group "class=diesel_dg";
+	// property "power_out_A";
+	// complex_part REAL;
+	// interval 1;
+	// file diesel_power_A_real.csv;
+// }
+	
+// object group_recorder {
+	// name diesel_power_A_imag;
+	// flags DELTAMODE;
+	// group "class=diesel_dg";
+	// property "power_out_A";
+	// complex_part IMAG;
+	// interval 1;
+	// file diesel_power_A_imag.csv;
+// }
+
+// object group_recorder {
+	// name diesel_power_B_real;
+	// flags DELTAMODE;
+	// group "class=diesel_dg";
+	// property "power_out_B";
+	// complex_part REAL;
+	// interval 1;
+	// file diesel_power_B_real.csv;
+// }
+	
+// object group_recorder {
+	// name diesel_power_B_imag;
+	// flags DELTAMODE;
+	// group "class=diesel_dg";
+	// property "power_out_B";
+	// complex_part IMAG;
+	// interval 1;
+	// file diesel_power_B_imag.csv;
+// }
+
+// object group_recorder {
+	// name diesel_power_C_real;
+	// flags DELTAMODE;
+	// group "class=diesel_dg";
+	// property "power_out_C";
+	// complex_part REAL;
+	// interval 1;
+	// file diesel_power_C_real.csv;
+// }
+	
+// object group_recorder {
+	// name diesel_power_C_imag;
+	// flags DELTAMODE;
+	// group "class=diesel_dg";
+	// property "power_out_C";
+	// complex_part IMAG;
+	// interval 1;
+	// file diesel_power_C_imag.csv;
+// }
+
+// object group_recorder {
+	// name diesel_power_rotor;
+	// flags DELTAMODE;
+	// group "class=diesel_dg";
+	// property "rotor_speed";
+	// interval 1;
+	// file diesel_rotor_speed.csv;
+// }
+
+// object group_recorder {
+	// name ohl_power_A_real;
+	// flags DELTAMODE;
+	// group "class=overhead_line";
+	// property "power_in_A";
+	// complex_part REAL;
+	// interval 1;
+	// file ohl_power_A_real.csv;
+// }
+	
+// object group_recorder {
+	// name ohl_power_A_imag;
+	// flags DELTAMODE;
+	// group "class=overhead_line";
+	// property "power_in_A";
+	// complex_part IMAG;
+	// interval 1;
+	// file ohl_power_A_imag.csv;
+// }
+
+// object group_recorder {
+	// name ohl_power_B_real;
+	// flags DELTAMODE;
+	// group "class=overhead_line";
+	// property "power_in_B";
+	// complex_part REAL;
+	// interval 1;
+	// file ohl_power_B_real.csv;
+// }
+	
+// object group_recorder {
+	// name ohl_power_B_imag;
+	// flags DELTAMODE;
+	// group "class=overhead_line";
+	// property "power_in_B";
+	// complex_part IMAG;
+	// interval 1;
+	// file ohl_power_B_imag.csv;
+// }
+
+// object group_recorder {
+	// name ohl_power_C_real;
+	// flags DELTAMODE;
+	// group "class=overhead_line";
+	// property "power_in_C";
+	// complex_part REAL;
+	// interval 1;
+	// file ohl_power_C_real.csv;
+// }
+	
+// object group_recorder {
+	// name ohl_power_C_imag;
+	// flags DELTAMODE;
+	// group "class=overhead_line";
+	// property "power_in_C";
+	// complex_part IMAG;
+	// interval 1;
+	// file ohl_power_C_imag.csv;
+// }
+
+// object group_recorder {
+	// name ohl_power_real;
+	// flags DELTAMODE;
+	// group "class=overhead_line";
+	// property "power_in";
+	// complex_part REAL;
+	// interval 1;
+	// file ohl_power_real.csv;
+// }
+	
+// object group_recorder {
+	// name ohl_power_imag;
+	// flags DELTAMODE;
+	// group "class=overhead_line";
+	// property "power_in";
+	// complex_part IMAG;
+	// interval 1;
+	// file ohl_power_imag.csv;
+// }
+
+// object group_recorder {
+	// name ohl_power_out_real;
+	// flags DELTAMODE;
+	// group "class=overhead_line";
+	// property "power_out";
+	// complex_part REAL;
+	// interval 1;
+	// file ohl_power_out_real.csv;
+// }
+	
+// object group_recorder {
+	// name ohl_power_out_imag;
+	// flags DELTAMODE;
+	// group "class=overhead_line";
+	// property "power_out";
+	// complex_part IMAG;
+	// interval 1;
+	// file ohl_power_out_imag.csv;
+// }

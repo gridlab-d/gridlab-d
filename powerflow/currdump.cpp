@@ -36,8 +36,8 @@ currdump::currdump(MODULE *mod)
 			PT_char256,"filename",PADDR(filename),PT_DESCRIPTION,"the file to dump the current data into",
 			PT_int32,"runcount",PADDR(runcount),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the number of times the file has been written to",
 			PT_enumeration, "mode", PADDR(mode),
-				PT_KEYWORD, "rect", (enumeration)CDM_RECT,
-				PT_KEYWORD, "polar", (enumeration)CDM_POLAR,
+				PT_KEYWORD, "RECT", (enumeration)CDM_RECT,
+				PT_KEYWORD, "POLAR", (enumeration)CDM_POLAR,
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		
 	}
