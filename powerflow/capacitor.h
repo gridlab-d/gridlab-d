@@ -96,6 +96,7 @@ private:
 	link_object *RLink;					// Remote link to sense power measurements for VAR controls
 	bool Iteration_Toggle;			// "Off" iteration tracker
 	bool NR_cycle_cap;				// First run of "off" iteration tracker - used to reiterate delta-configured, wye-connected capacitors
+	bool deltamode_reiter_request;	// Flag to replicate a reiteration request from sync, since that is handled different in deltamode - used to match QSTS
 
 public:
 	static CLASS *pclass;

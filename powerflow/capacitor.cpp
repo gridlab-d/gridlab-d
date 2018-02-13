@@ -150,6 +150,7 @@ int capacitor::create()
 	NotFirstIteration=false;
 	Iteration_Toggle = false;
 	NR_cycle_cap = true;
+	deltamode_reiter_request = false;	//By default deltamode is considered to not be running
 
 	return result;
 }
@@ -403,33 +404,22 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 	//Perform appropriate updates
 	if (service_status == ND_IN_SERVICE)
 	{
-		//Compute time delays -- see if we're in deltamode
-		if (deltatimestep_running > 0)	//Deltamode active
+		//Determine updates
+		if (dwell_time_left>0)		//Dwelling in progress, flag us to iterate when it should be done
 		{
-			if (dwell_time_left>0)		//Dwelling in progress, flag us to iterate when it should be done
+			if (dwell_time_left < 1)
+				result = t0 + 1;
+			else
 				result = t0 + (TIMESTAMP)dwell_time_left;	//If nothing changes in the system, it will reiterate at the dwell time.  Otherwise, it will come in earlier
-			else if (time_to_change>0)	//Change in progress, flag us to iterate when it should be done
-				result = t0 + (TIMESTAMP)time_to_change;
-			else;
-		}
-		else	//Normal mode, do some "rounding"
+		}//End Dwell time check
+		else if (time_to_change>0)	//Change in progress, flag us to iterate when it should be done
 		{
-			if (dwell_time_left>0)		//Dwelling in progress, flag us to iterate when it should be done
-			{
-				if (dwell_time_left < 1)
-					result = t0 + 1;
-				else
-					result = t0 + (TIMESTAMP)dwell_time_left;	//If nothing changes in the system, it will reiterate at the dwell time.  Otherwise, it will come in earlier
-			}//End Dwell time check
-			else if (time_to_change>0)	//Change in progress, flag us to iterate when it should be done
-			{
-				if (time_to_change < 1)
-					result = t0 + 1;
-				else
-					result = t0 + (TIMESTAMP)time_to_change;
-			}//End time_to_change check
-			else;
-		}
+			if (time_to_change < 1)
+				result = t0 + 1;
+			else
+				result = t0 + (TIMESTAMP)time_to_change;
+		}//End time_to_change check
+		else;
 
 		if (NotFirstIteration==false)	//Force a reiteration on the very first pass, no matter what
 		{
@@ -447,7 +437,6 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 				NR_cycle_cap = false;
 			}
 		}
-
 	}
 	//Defaulted else -- out of service portions are handled already
 
@@ -1642,11 +1631,11 @@ SIMULATIONMODE capacitor::inter_deltaupdate_capacitor(unsigned int64 delta_time,
 		//Perform appropriate updates - appears to be associated with action counting
 		if (service_status == ND_IN_SERVICE)
 		{
-			if (Phase_Mismatch == true)	//Kludgy test to get to reiteratte - DELETE ME OR FIX ME!
+			if (Phase_Mismatch == true)	//Kludgy test to get to reiterate
 			{
 				if ((Iteration_Toggle == true) && (NR_cycle_cap == true))
 				{
-					//Was a return t0 here -- force a reiterate somehow (happens by default)
+					deltamode_reiter_request = true;	//Was a return t0 here -- force a reiteration to match behavior
 					NR_cycle_cap = false;
 				}
 			}
@@ -1692,7 +1681,15 @@ SIMULATIONMODE capacitor::inter_deltaupdate_capacitor(unsigned int64 delta_time,
 		//Call the functionalized postsync
 		result_dbl = cap_postPost_fxn(result_dbl,curr_time_value);
 
-		//Always "exit" -- if we progress forward, capacitor will operate appropriately
+		//See what kind of exit it was -- if we need to reiterate or not (to match QSTS behavior)
+		if ((result_dbl == curr_time_value) || (deltamode_reiter_request == true))
+		{
+			//Set the tracking flag to false, just in case
+			deltamode_reiter_request = false;
+
+			//Force an iteration
+			return SM_DELTA_ITER;
+		}
 
 		//See if GFA functionality is required, since it may require iterations or "continance"
 		//Not sure this really is needed in capacitors, but whatever

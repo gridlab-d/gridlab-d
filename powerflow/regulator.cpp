@@ -50,7 +50,7 @@ regulator::regulator(MODULE *mod) : link_object(mod)
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_regulator)==NULL)
 			GL_THROW("Unable to publish regulator deltamode function");
 
 		//Publish restoration-related function (current update)
@@ -77,6 +77,7 @@ int regulator::create()
 	tap_C_change_count = -1;
 	iteration_flag = true;
 	regulator_resistance = -1.0;
+	deltamode_reiter_request = false;	//By default, we're assumed to not want this
 	return result;
 }
 
@@ -257,8 +258,8 @@ int regulator::init(OBJECT *parent)
 			break;
 	}
 
-	mech_t_next[0] = mech_t_next[1] = mech_t_next[2] = TS_NEVER;
-	dwell_t_next[0] = dwell_t_next[1] = dwell_t_next[2] = TS_NEVER;
+	mech_t_next[0] = mech_t_next[1] = mech_t_next[2] = TSNVRDBL;
+	dwell_t_next[0] = dwell_t_next[1] = dwell_t_next[2] = TSNVRDBL;
 
 	//Now set first_run_flag appropriately
 	for (jindex=0;jindex<3;jindex++)
@@ -326,12 +327,84 @@ int regulator::init(OBJECT *parent)
 TIMESTAMP regulator::presync(TIMESTAMP t0) 
 {
 	regulator_configuration *pConfig = OBJECTDATA(configuration, regulator_configuration);
-	node *pTo = OBJECTDATA(to, node);
+	TIMESTAMP t1;
+	double t1_dbl;
 	char phaseWarn;
 
 	//Toggle the iteration variable -- only for voltage-type adjustments (since it's in presync now)
 	if ((solver_method == SM_NR) && ((pConfig->Control == pConfig->OUTPUT_VOLTAGE) || (pConfig->Control == pConfig->REMOTE_NODE)))
 		iteration_flag = !iteration_flag;
+
+	//Call the pre-presync regulator code
+	next_time = reg_prePre_fxn((double)t0);
+
+	//Call the standard presync
+	t1 = link_object::presync(t0);
+
+	//Cast it, for comparisons below
+	t1_dbl = (double)t1;
+	
+	//Call the post-presync regulator code
+	reg_postPre_fxn();
+
+	//Check the time handling
+	if (offnominal_time && (t0 > next_time))
+	{
+		next_time = t0;
+	}
+
+	//Force a "reiteration" if we're checking voltage - consequence of this previously being in true pass of NR
+	if ((solver_method == SM_NR) && ((pConfig->Control == pConfig->OUTPUT_VOLTAGE) || (pConfig->Control == pConfig->REMOTE_NODE)) && (iteration_flag==false))
+	{
+		return t0;
+	}
+
+	if ((first_run_flag[0] < 1) || (first_run_flag[1] < 1) || (first_run_flag[2] < 1)) return t1;
+	else if (t1_dbl <= next_time) return t1;
+	else if (next_time != TSNVRDBL) return -next_time; //soft return to next tap change
+	else return TS_NEVER;
+}
+
+//Postsync
+TIMESTAMP regulator::postsync(TIMESTAMP t0)
+{
+	double function_return_time;
+	TIMESTAMP temp_return_time;
+
+	TIMESTAMP t1 = link_object::postsync(t0);
+
+	function_return_time = reg_postPost_fxn(double(t0));
+
+	//See if it was an error or not
+	if (function_return_time == -1.0)
+	{
+		return TS_INVALID;
+	}
+	else if (function_return_time != 0.0)
+	{
+		//Cast the return time
+		if (function_return_time != TSNVRDBL)
+		{
+			temp_return_time = (TIMESTAMP)function_return_time;
+		}
+		else	//Must be TS_NEVER
+		{
+			temp_return_time = TS_NEVER;
+		}
+
+		//Return this -- whatever came out here as non-0.0 or non-"-1.0" was supposed to exit anyways
+		return temp_return_time;
+	}
+	//Default else -- no returns were hit, so just do t1
+
+	return t1;
+}
+
+//Functionalized "presync before link::presync" portions, mostly for deltamode functionality
+double regulator::reg_prePre_fxn(double curr_time_value)
+{
+	double next_time_val;
+	regulator_configuration *pConfig = OBJECTDATA(configuration, regulator_configuration);
 
 	if (pConfig->Control == pConfig->MANUAL) {
 		for (int i = 0; i < 3; i++) {
@@ -345,7 +418,7 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 				Check the Type specification in your regulator_configuration object.  It can an only be type A or B.
 				*/
 		}
-		next_time = TS_NEVER;
+		next_time_val = TSNVRDBL;
 	}
 	else if (iteration_flag==true)
 	{
@@ -353,13 +426,13 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 		{
 			//Set flags correctly for each pass, 1 indicates okay to change taps, 0 indicates no go
 			for (int i = 0; i < 3; i++) {
-				if (mech_t_next[i] <= t0) {
+				if (mech_t_next[i] <= curr_time_value) {
 					mech_flag[i] = 1;
 				}
-				if (dwell_t_next[i] <= t0) {
+				if (dwell_t_next[i] <= curr_time_value) {
 					dwell_flag[i] = 1;
 				}
-				else if (dwell_t_next[i] > t0) {
+				else if (dwell_t_next[i] > curr_time_value) {
 					dwell_flag[i] = 0;
 				}
 			}
@@ -395,13 +468,13 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 							{
 								tap[i] = pConfig->raise_taps;
 							}
-							dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
-							mech_t_next[i] = t0 + (int64)pConfig->time_delay;
+							dwell_t_next[i] = curr_time_value + pConfig->dwell_time;
+							mech_t_next[i] = curr_time_value + pConfig->time_delay;
 						}
 						//dwelling has happened, and now waiting for actual physical change time
-						else if (mech_flag[i] == 0 && dwell_flag[i] == 1 && (mech_t_next[i] - t0) >= pConfig->time_delay)
+						else if (mech_flag[i] == 0 && dwell_flag[i] == 1 && (mech_t_next[i] - curr_time_value) >= pConfig->time_delay)
 						{
-							mech_t_next[i] = t0 + (int64)pConfig->time_delay;
+							mech_t_next[i] = curr_time_value + pConfig->time_delay;
 						}
 						//if both flags say it's okay to change the tap, then change the tap
 						else if (mech_flag[i] == 1 && dwell_flag[i] == 1) 
@@ -415,23 +488,23 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 							if (tap[i] > pConfig->raise_taps) 
 							{
 								tap[i] = pConfig->raise_taps;
-								dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
-								mech_t_next[i] = t0 + (int64)pConfig->time_delay;
+								dwell_t_next[i] = curr_time_value + pConfig->dwell_time;
+								mech_t_next[i] = curr_time_value + pConfig->time_delay;
 								dwell_flag[i] = mech_flag[i] = 0;
 							}
 							else 
 							{
-								mech_t_next[i] = t0 + (int64)pConfig->time_delay;
-								dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
+								mech_t_next[i] = curr_time_value + pConfig->time_delay;
+								dwell_t_next[i] = curr_time_value + pConfig->dwell_time;
 								mech_flag[i] = 0;
 							}
 						}
 						//only set the dwell time if we've reached the end of the previous dwell (in case other 
 						//objects update during that time)
-						else if (dwell_flag[i] == 0 && (dwell_t_next[i] - t0) >= pConfig->dwell_time) 
+						else if (dwell_flag[i] == 0 && (dwell_t_next[i] - curr_time_value) >= pConfig->dwell_time) 
 						{
-							dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
-							mech_t_next[i] = dwell_t_next[i] + (int64)pConfig->time_delay;
+							dwell_t_next[i] = curr_time_value + pConfig->dwell_time;
+							mech_t_next[i] = dwell_t_next[i] + pConfig->time_delay;
 						}														
 					}
 					else if (check_voltage[i].Mag() > Vhigh)  //lower voltage
@@ -447,12 +520,12 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 							{
 								tap[i] = -pConfig->lower_taps;
 							}
-							dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
-							mech_t_next[i] = t0 + (int64)pConfig->time_delay;
+							dwell_t_next[i] = curr_time_value + pConfig->dwell_time;
+							mech_t_next[i] = curr_time_value + pConfig->time_delay;
 						}
-						else if (mech_flag[i] == 0 && dwell_flag[i] == 1 && (mech_t_next[i] - t0) >= pConfig->time_delay)
+						else if (mech_flag[i] == 0 && dwell_flag[i] == 1 && (mech_t_next[i] - curr_time_value) >= pConfig->time_delay)
 						{
-							mech_t_next[i] = t0 + (int64)pConfig->time_delay;
+							mech_t_next[i] = curr_time_value + pConfig->time_delay;
 						}
 						else if (mech_flag[i] == 1 && dwell_flag[i] == 1) 
 						{
@@ -464,28 +537,28 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 							if (tap[i] < -pConfig->lower_taps) 
 							{
 								tap[i] = -pConfig->lower_taps;
-								dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
-								mech_t_next[i] = t0 + (int64)pConfig->time_delay;
+								dwell_t_next[i] = curr_time_value + pConfig->dwell_time;
+								mech_t_next[i] = curr_time_value + pConfig->time_delay;
 								dwell_flag[i] = mech_flag[i] = 0;
 							}
 							else 
 							{
-								mech_t_next[i] = t0 + (int64)pConfig->time_delay;
-								dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
+								mech_t_next[i] = curr_time_value + pConfig->time_delay;
+								dwell_t_next[i] = curr_time_value + pConfig->dwell_time;
 								mech_flag[i] = 0;
 							}
 						}
-						else if (dwell_flag[i] == 0 && (dwell_t_next[i] - t0) >= pConfig->dwell_time) 
+						else if (dwell_flag[i] == 0 && (dwell_t_next[i] - curr_time_value) >= pConfig->dwell_time) 
 						{
-							dwell_t_next[i] = t0 + (int64)pConfig->dwell_time;
-							mech_t_next[i] = dwell_t_next[i] + (int64)pConfig->time_delay;
+							dwell_t_next[i] = curr_time_value + pConfig->dwell_time;
+							mech_t_next[i] = dwell_t_next[i] + pConfig->time_delay;
 						}
 					}
 					//If no tap changes were needed, then this resets dwell_flag to 0 and indicates regulator has no
 					//more changes unless system changes
 					else 
 					{	
-						dwell_t_next[i] = mech_t_next[i] = TS_NEVER;
+						dwell_t_next[i] = mech_t_next[i] = TSNVRDBL;
 						//if (pConfig->dwell_time == 0)
 						//	dwell_flag[i] = 1;
 						//else
@@ -502,30 +575,32 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 					else if (pConfig->Type == pConfig->B)
 					{	a_mat[i][i] = 1.0 - tap[i] * tapChangePer;}
 					else
-					{	throw "invalid regulator type";}
-					/*  TROUBLESHOOT
-					Check the Type of regulator specified.  Type can only be A or B at this time.
-					*/
+					{	
+						GL_THROW("invalid regulator type");
+						/*  TROUBLESHOOT
+						Check the Type of regulator specified.  Type can only be A or B at this time.
+						*/
+					}
 				}
 				//Determine how far to advance the clock
 				int64 nt[3];
-				nt[0] = nt[1] = nt[2] = t0;
+				nt[0] = nt[1] = nt[2] = curr_time_value;
 				for (int i = 0; i < 3; i++) {
-					if (mech_t_next[i] > t0)
+					if (mech_t_next[i] > curr_time_value)
 						nt[i] = mech_t_next[i];
-					if (dwell_t_next[i] > t0)
+					if (dwell_t_next[i] > curr_time_value)
 						nt[i] = dwell_t_next[i];
 				}
 
-				if (nt[0] > t0)
-					next_time = nt[0];
-				if (nt[1] > t0 && nt[1] < next_time)
-					next_time = nt[1];
-				if (nt[2] > t0 && nt[2] < next_time)
-					next_time = nt[2];
+				if (nt[0] > curr_time_value)
+					next_time_val = nt[0];
+				if (nt[1] > curr_time_value && nt[1] < next_time_val)
+					next_time_val = nt[1];
+				if (nt[2] > curr_time_value && nt[2] < next_time_val)
+					next_time_val = nt[2];
 
-				if (next_time <= t0)
-					next_time = TS_NEVER;
+				if (next_time_val <= curr_time_value)
+					next_time_val = TSNVRDBL;
 			}
 			else
 				GL_THROW("Specified connect type is not supported in automatic modes at this time.");
@@ -538,13 +613,13 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 		else if (pConfig->control_level == pConfig->BANK)
 		{
 			//Set flags correctly for each pass, 1 indicates okay to change taps, 0 indicates no go - we'll store all of banked stuff in index=0
-			if (mech_t_next[0] <= t0) {
+			if (mech_t_next[0] <= curr_time_value) {
 				mech_flag[0] = 1;
 			}
-			if (dwell_t_next[0] <= t0) {
+			if (dwell_t_next[0] <= curr_time_value) {
 				dwell_flag[0] = 1;
 			}
-			else if (dwell_t_next[0] > t0) {
+			else if (dwell_t_next[0] > curr_time_value) {
 				dwell_flag[0] = 0;
 			}
 
@@ -577,13 +652,13 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 						{
 							tap[0] = tap[1] = tap[2] = pConfig->raise_taps;
 						}
-						dwell_t_next[0] = t0 + (int64)pConfig->dwell_time;
-						mech_t_next[0] = t0 + (int64)pConfig->time_delay;
+						dwell_t_next[0] = curr_time_value + pConfig->dwell_time;
+						mech_t_next[0] = curr_time_value + pConfig->time_delay;
 					}
 					//dwelling has happened, and now waiting for actual physical change time
-					else if (mech_flag[0] == 0 && dwell_flag[0] == 1 && (mech_t_next[0] - t0) >= pConfig->time_delay)
+					else if (mech_flag[0] == 0 && dwell_flag[0] == 1 && (mech_t_next[0] - curr_time_value) >= pConfig->time_delay)
 					{
-						mech_t_next[0] = t0 + (int64)pConfig->time_delay;
+						mech_t_next[0] = curr_time_value + pConfig->time_delay;
 					}
 					//if both flags say it's okay to change the tap, then change the tap
 					else if (mech_flag[0] == 1 && dwell_flag[0] == 1) 
@@ -598,23 +673,23 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 						if (tap[0] > pConfig->raise_taps) 
 						{
 							tap[0] = tap[1] = tap[2] = pConfig->raise_taps;
-							dwell_t_next[0] = t0 + (int64)pConfig->dwell_time;
-							mech_t_next[0] = t0 + (int64)pConfig->time_delay;
+							dwell_t_next[0] = curr_time_value + pConfig->dwell_time;
+							mech_t_next[0] = curr_time_value + pConfig->time_delay;
 							dwell_flag[0] = mech_flag[0] = 0;
 						}
 						else 
 						{
-							mech_t_next[0] = t0 + (int64)pConfig->time_delay;
-							dwell_t_next[0] = t0 + (int64)pConfig->dwell_time;
+							mech_t_next[0] = curr_time_value + pConfig->time_delay;
+							dwell_t_next[0] = curr_time_value + pConfig->dwell_time;
 							mech_flag[0] = 0;
 						}
 					}
 					//only set the dwell time if we've reached the end of the previous dwell (in case other 
 					//objects update during that time)
-					else if (dwell_flag[0] == 0 && (dwell_t_next[0] - t0) >= pConfig->dwell_time) 
+					else if (dwell_flag[0] == 0 && (dwell_t_next[0] - curr_time_value) >= pConfig->dwell_time) 
 					{
-						dwell_t_next[0] = t0 + (int64)pConfig->dwell_time;
-						mech_t_next[0] = dwell_t_next[0] + (int64)pConfig->time_delay;
+						dwell_t_next[0] = curr_time_value + pConfig->dwell_time;
+						mech_t_next[0] = dwell_t_next[0] + pConfig->time_delay;
 					}														
 				}
 				else if (check_voltage[0].Mag() > Vhigh)  //lower voltage
@@ -632,12 +707,12 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 						{
 							tap[0] = tap[1] = tap[2] = -pConfig->lower_taps;
 						}
-						dwell_t_next[0] = t0 + (int64)pConfig->dwell_time;
-						mech_t_next[0] = t0 + (int64)pConfig->time_delay;
+						dwell_t_next[0] = curr_time_value + pConfig->dwell_time;
+						mech_t_next[0] = curr_time_value + pConfig->time_delay;
 					}
-					else if (mech_flag[0] == 0 && dwell_flag[0] == 1 && (mech_t_next[0] - t0) >= pConfig->time_delay)
+					else if (mech_flag[0] == 0 && dwell_flag[0] == 1 && (mech_t_next[0] - curr_time_value) >= pConfig->time_delay)
 					{
-						mech_t_next[0] = t0 + (int64)pConfig->time_delay;
+						mech_t_next[0] = curr_time_value + pConfig->time_delay;
 					}
 					else if (mech_flag[0] == 1 && dwell_flag[0] == 1) 
 					{
@@ -651,28 +726,28 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 						if (tap[0] < -pConfig->lower_taps) 
 						{
 							tap[0] = tap[1] = tap[2] = -pConfig->lower_taps;
-							dwell_t_next[0] = t0 + (int64)pConfig->dwell_time;
-							mech_t_next[0] = t0 + (int64)pConfig->time_delay;
+							dwell_t_next[0] = curr_time_value + pConfig->dwell_time;
+							mech_t_next[0] = curr_time_value + pConfig->time_delay;
 							dwell_flag[0] = mech_flag[0] = 0;
 						}
 						else 
 						{
-							mech_t_next[0] = t0 + (int64)pConfig->time_delay;
-							dwell_t_next[0] = t0 + (int64)pConfig->dwell_time;
+							mech_t_next[0] = curr_time_value + pConfig->time_delay;
+							dwell_t_next[0] = curr_time_value + pConfig->dwell_time;
 							mech_flag[0] = 0;
 						}
 					}
-					else if (dwell_flag[0] == 0 && (dwell_t_next[0] - t0) >= pConfig->dwell_time) 
+					else if (dwell_flag[0] == 0 && (dwell_t_next[0] - curr_time_value) >= pConfig->dwell_time) 
 					{
-						dwell_t_next[0] = t0 + (int64)pConfig->dwell_time;
-						mech_t_next[0] = dwell_t_next[0] + (int64)pConfig->time_delay;
+						dwell_t_next[0] = curr_time_value + pConfig->dwell_time;
+						mech_t_next[0] = dwell_t_next[0] + pConfig->time_delay;
 					}
 				}
 				//If no tap changes were needed, then this resets dwell_flag to 0 and indicates regulator has no
 				//more changes unless system changes
 				else 
 				{	
-					dwell_t_next[0] = mech_t_next[0] = TS_NEVER;
+					dwell_t_next[0] = mech_t_next[0] = TSNVRDBL;
 					dwell_flag[0] = 0;
 					mech_flag[0] = 0;
 				}
@@ -684,25 +759,27 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 					else if (pConfig->Type == pConfig->B)
 					{	a_mat[i][i] = 1.0 - tap[i] * tapChangePer;}
 					else
-					{	throw "invalid regulator type";}
-					/*  TROUBLESHOOT
-					Check the Type of regulator specified.  Type can only be A or B at this time.
-					*/
+					{
+						GL_THROW("invalid regulator type");
+						/*  TROUBLESHOOT
+						Check the Type of regulator specified.  Type can only be A or B at this time.
+						*/
+					}
 				}
 
 				//Determine how far to advance the clock
 				int64 nt[3];
-				nt[0] = nt[1] = nt[2] = t0;
-				if (mech_t_next[0] > t0)
+				nt[0] = nt[1] = nt[2] = curr_time_value;
+				if (mech_t_next[0] > curr_time_value)
 					nt[0] = mech_t_next[0];
-				if (dwell_t_next[0] > t0)
+				if (dwell_t_next[0] > curr_time_value)
 					nt[0] = dwell_t_next[0];
 
-				if (nt[0] > t0)
-					next_time = nt[0];
+				if (nt[0] > curr_time_value)
+					next_time_val = nt[0];
 
-				if (next_time <= t0)
-					next_time = TS_NEVER;
+				if (next_time_val <= curr_time_value)
+					next_time_val = TSNVRDBL;
 			}
 			else
 				GL_THROW("Specified connect type is not supported in automatic modes at this time.");
@@ -746,16 +823,23 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 		case regulator_configuration::CLOSED_DELTA:
 			break;
 		default:
-			throw "unknown regulator connect type";
+			GL_THROW("unknown regulator connect type");
 			/*  TROUBLESHOOT
 			Check the connection type specified.  Only a few are available at this time.  Ones available can be
 			found on the wiki website ( http://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=Power_Flow_Guide )
 			*/
 			break;
 	}
-		
-	TIMESTAMP t1 = link_object::presync(t0);
-	
+
+	return next_time_val;
+}
+
+//Functionalized version of the code for deltamode - "post-link::presync" portions
+void regulator::reg_postPre_fxn(void)
+{
+	regulator_configuration *pConfig = OBJECTDATA(configuration, regulator_configuration);
+	char phaseWarn;
+
 	if (solver_method == SM_NR)
 	{
 		//Get matrices for NR
@@ -873,33 +957,18 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 		gl_warning("Regulator %s has phase %c at the minimum tap value",OBJECTHDR(this)->name,phaseWarn);
 		//Defined above
 	}
-	if (offnominal_time && (t0 > next_time))
-	{
-		next_time = t0;
-	}
-
-	//Force a "reiteration" if we're checking voltage - consequence of this previously being in true pass of NR
-	if ((solver_method == SM_NR) && ((pConfig->Control == pConfig->OUTPUT_VOLTAGE) || (pConfig->Control == pConfig->REMOTE_NODE)) && (iteration_flag==false))
-	{
-		return t0;
-	}
-
-	if (first_run_flag[0] < 1 || first_run_flag[1] < 1 || first_run_flag[2] < 1) return t1;
-	else if (t1 <= next_time) return t1;
-	else if (next_time != TS_NEVER) return -next_time; //soft return to next tap change
-	else return TS_NEVER;
 }
-TIMESTAMP regulator::postsync(TIMESTAMP t0)
+
+//Functionalized "postsyc after link::postsync" items -- mostly for deltamode compatibility
+double regulator::reg_postPost_fxn(double curr_time_value)
 {
 	regulator_configuration *pConfig = OBJECTDATA(configuration, regulator_configuration);
-	node *pTo = OBJECTDATA(to, node);
 
-	TIMESTAMP t1 = link_object::postsync(t0);
-	
+	//Copied from postsync
 	if (iteration_flag==true)
 	{		
-		if(prev_time < t0){
-			prev_time = t0;
+		if(prev_time < curr_time_value){
+			prev_time = curr_time_value;
 			initial_tap_A = prev_tap_A;
 			initial_tap_B = prev_tap_B;
 			initial_tap_C = prev_tap_C;
@@ -922,7 +991,7 @@ TIMESTAMP regulator::postsync(TIMESTAMP t0)
 				tap_C_changed = 1;
 			}
 		}
-		if(prev_time == t0){
+		if(prev_time == curr_time_value){
 			if(tap_A_changed == 0){
 				if(prev_tap_A != tap[0]){
 					prev_tap_A = tap[0];
@@ -936,7 +1005,7 @@ TIMESTAMP regulator::postsync(TIMESTAMP t0)
 					tap_A_change_count--;
 					if(tap_A_change_count < 0){
 						gl_error("Unusual control of the regulator has resulted in a negative tap change count on phase A.");
-						return TS_INVALID;
+						return -1.0;
 					}
 					tap_A_changed = 0;
 				} else if(prev_tap_A != tap[0]){
@@ -959,7 +1028,7 @@ TIMESTAMP regulator::postsync(TIMESTAMP t0)
 					tap_B_change_count--;
 					if(tap_B_change_count < 0){
 						gl_error("Unusual control of the regulator has resulted in a negative tap change count on phase B.");
-						return TS_INVALID;
+						return -1.0;
 					}
 					tap_B_changed = 0;
 				}else if(prev_tap_B != tap[1]){
@@ -982,7 +1051,7 @@ TIMESTAMP regulator::postsync(TIMESTAMP t0)
 					tap_C_change_count--;
 					if(tap_C_change_count < 0){
 						gl_error("Unusual control of the regulator has resulted in a negative tap change count on phase C.");
-						return TS_INVALID;
+						return -1.0;
 					}
 					tap_C_changed = 0;
 				}else if(prev_tap_C != tap[2]){
@@ -997,13 +1066,13 @@ TIMESTAMP regulator::postsync(TIMESTAMP t0)
 		if (pConfig->Control != pConfig->MANUAL) 
 		{
 			for (int i = 0; i < 3; i++) {
-				if (mech_t_next[i] <= t0) {
+				if (mech_t_next[i] <= curr_time_value) {
 					mech_flag[i] = 1;
 				}
-				if (dwell_t_next[i] <= t0) {
+				if (dwell_t_next[i] <= curr_time_value) {
 					dwell_flag[i] = 1;
 				}
-				else if (dwell_t_next[i] > t0) {
+				else if (dwell_t_next[i] > curr_time_value) {
 					dwell_flag[i] = 0;
 				}
 			}
@@ -1088,130 +1157,39 @@ TIMESTAMP regulator::postsync(TIMESTAMP t0)
 				}
 			}
 
-
 			for (i=0; i<3; i++)
 			{
 				if (first_run_flag[i] < 1)
-					return t0;
+					return curr_time_value;
 				if (dwell_flag[i] == 1 && mech_flag[i] == 1)
 				{			
 					if (check_voltage[i].Mag() < Vlow && tap[i] != pConfig->lower_taps && new_reverse_flow_action[i] == false) {
 						if (pConfig->control_level == pConfig->INDIVIDUAL && toggle_reverse_flow[i] == false) {
-							return t0;
+							return curr_time_value;
 						} else if (pConfig->control_level == pConfig->BANK && toggle_reverse_flow_banked == false) {
-							return t0;
+							return curr_time_value;
 						}
 					}
 
 					if (check_voltage[i].Mag() > Vhigh && tap[i] != -pConfig->raise_taps && new_reverse_flow_action[i] == false) {
 						if (pConfig->control_level == pConfig->INDIVIDUAL && toggle_reverse_flow[i] == false) {
-							return t0;
+							return curr_time_value;
 						} else if (pConfig->control_level == pConfig->BANK && toggle_reverse_flow_banked == false) {
-							return t0;
+							return curr_time_value;
 						}
 					}
 				}
 				if (new_reverse_flow_action[i] == true && (toggle_reverse_flow[i] == true || toggle_reverse_flow_banked == true))
-					return t0;
+					return curr_time_value;
 			}
 		}
 	}
 
-	return t1;
+	//If we made it this far, just exit "like normal"
+	return 0.0;
 }
 
-
-//////////////////////////////////////////////////////////////////////////
-// IMPLEMENTATION OF CORE LINKAGE: regulator
-//////////////////////////////////////////////////////////////////////////
-
-/**
-* REQUIRED: allocate and initialize an object.
-*
-* @param obj a pointer to a pointer of the last object in the list
-* @param parent a pointer to the parent of this object
-* @return 1 for a successfully created object, 0 for error
-*/
-
-
-
-/* This can be added back in after tape has been moved to commit
-EXPORT TIMESTAMP commit_regulator(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
-{
-	if (solver_method==SM_FBS)
-	{
-		regulator *plink = OBJECTDATA(obj,regulator);
-		plink->calculate_power();
-	}
-	return TS_NEVER;
-}
-*/
-EXPORT int create_regulator(OBJECT **obj, OBJECT *parent)
-{
-	try
-	{
-		*obj = gl_create_object(regulator::oclass);
-		if (*obj!=NULL)
-		{
-			regulator *my = OBJECTDATA(*obj,regulator);
-			gl_set_parent(*obj,parent);
-			return my->create();
-		}
-		else
-			return 0;
-	}
-	CREATE_CATCHALL(regulator);
-}
-
-/**
-* Object initialization is called once after all object have been created
-*
-* @param obj a pointer to this object
-* @return 1 on success, 0 on error
-*/
-EXPORT int init_regulator(OBJECT *obj)
-{
-	try {
-		regulator *my = OBJECTDATA(obj,regulator);
-		return my->init(obj->parent);
-	}
-	INIT_CATCHALL(regulator);
-}
-
-/**
-* Sync is called when the clock needs to advance on the bottom-up pass (PC_BOTTOMUP)
-*
-* @param obj the object we are sync'ing
-* @param t0 this objects current timestamp
-* @param pass the current pass for this sync call
-* @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
-*/
-EXPORT TIMESTAMP sync_regulator(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
-{
-	try {
-		regulator *pObj = OBJECTDATA(obj,regulator);
-		TIMESTAMP t1 = TS_NEVER;
-		switch (pass) {
-		case PC_PRETOPDOWN:
-			return pObj->presync(t0);
-		case PC_BOTTOMUP:
-			return pObj->sync(t0);
-		case PC_POSTTOPDOWN:
-			t1 = pObj->postsync(t0);
-			obj->clock = t0;
-			return t1;
-		default:
-			throw "invalid pass request";
-		}
-	} 
-	SYNC_CATCHALL(regulator);
-}
-
-EXPORT int isa_regulator(OBJECT *obj, char *classname)
-{
-	return OBJECTDATA(obj,regulator)->isa(classname);
-}
-
+//Function to get the voltages of interest
 void regulator::get_monitored_voltage()
 {
 	regulator_configuration *pConfig = OBJECTDATA(configuration, regulator_configuration);
@@ -1406,6 +1384,178 @@ int regulator::kmldata(int (*stream)(const char*,...))
 		stream("</TR>\n");
 	}
 	return 2;
+}
+
+//Module-level deltamode call
+SIMULATIONMODE regulator::inter_deltaupdate_regulator(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
+{
+	//OBJECT *hdr = OBJECTHDR(this);
+	double curr_time_value;	//Current time of simulation
+	double temp_time;
+	regulator_configuration *pConfig = OBJECTDATA(configuration, regulator_configuration);
+
+	//Get the current time
+	curr_time_value = gl_globaldeltaclock;
+
+	if (interupdate_pos == false)	//Before powerflow call
+	{
+		//Replicate presync behavior
+		//Toggle the iteration variable -- only for voltage-type adjustments (since it's in presync now)
+		if ((pConfig->Control == pConfig->OUTPUT_VOLTAGE) || (pConfig->Control == pConfig->REMOTE_NODE))
+			iteration_flag = !iteration_flag;
+
+		//Call the pre-presync regulator code
+		next_time = reg_prePre_fxn(curr_time_value);
+
+		//Link presync stuff
+		NR_link_presync_fxn();
+		
+		//Call the post-presync regulator code
+		reg_postPre_fxn();
+
+		//Force a "reiteration" if we're checking voltage - consequence of this previously being in true pass of NR
+		if (((pConfig->Control == pConfig->OUTPUT_VOLTAGE) || (pConfig->Control == pConfig->REMOTE_NODE)) && (iteration_flag==false))
+		{
+			deltamode_reiter_request = true;	//Flag us for a reiter
+		}
+
+		return SM_DELTA;	//Just return something other than SM_ERROR for this call
+	}
+	else	//After the call
+	{
+		//Call postsync
+		BOTH_link_postsync_fxn();
+
+		//Call the regulator-specific post-postsync function
+		temp_time = reg_postPost_fxn(curr_time_value);
+
+		//Make sure it wasn't an error
+		if (temp_time == -1.0)
+		{
+			return SM_ERROR;
+		}
+		else if ((temp_time == curr_time_value) || (deltamode_reiter_request==true))	//See if this requested a reiter, or if above did
+		{
+			//Clear the flag, regardless
+			deltamode_reiter_request = false;
+
+			//Ask for a reiteration
+			return SM_DELTA_ITER;
+		}
+		//Otherwise, it was a proceed forward -- probably returned a future state time
+
+		//In-rush handling would go here, but regulator has no in-rush capabilities
+
+		return SM_EVENT;	//Always prompt for an exit
+	}
+}//End module deltamode
+
+//////////////////////////////////////////////////////////////////////////
+// IMPLEMENTATION OF CORE LINKAGE: regulator
+//////////////////////////////////////////////////////////////////////////
+
+/**
+* REQUIRED: allocate and initialize an object.
+*
+* @param obj a pointer to a pointer of the last object in the list
+* @param parent a pointer to the parent of this object
+* @return 1 for a successfully created object, 0 for error
+*/
+
+
+
+/* This can be added back in after tape has been moved to commit
+EXPORT TIMESTAMP commit_regulator(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
+{
+	if (solver_method==SM_FBS)
+	{
+		regulator *plink = OBJECTDATA(obj,regulator);
+		plink->calculate_power();
+	}
+	return TS_NEVER;
+}
+*/
+EXPORT int create_regulator(OBJECT **obj, OBJECT *parent)
+{
+	try
+	{
+		*obj = gl_create_object(regulator::oclass);
+		if (*obj!=NULL)
+		{
+			regulator *my = OBJECTDATA(*obj,regulator);
+			gl_set_parent(*obj,parent);
+			return my->create();
+		}
+		else
+			return 0;
+	}
+	CREATE_CATCHALL(regulator);
+}
+
+/**
+* Object initialization is called once after all object have been created
+*
+* @param obj a pointer to this object
+* @return 1 on success, 0 on error
+*/
+EXPORT int init_regulator(OBJECT *obj)
+{
+	try {
+		regulator *my = OBJECTDATA(obj,regulator);
+		return my->init(obj->parent);
+	}
+	INIT_CATCHALL(regulator);
+}
+
+/**
+* Sync is called when the clock needs to advance on the bottom-up pass (PC_BOTTOMUP)
+*
+* @param obj the object we are sync'ing
+* @param t0 this objects current timestamp
+* @param pass the current pass for this sync call
+* @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
+*/
+EXPORT TIMESTAMP sync_regulator(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+	try {
+		regulator *pObj = OBJECTDATA(obj,regulator);
+		TIMESTAMP t1 = TS_NEVER;
+		switch (pass) {
+		case PC_PRETOPDOWN:
+			return pObj->presync(t0);
+		case PC_BOTTOMUP:
+			return pObj->sync(t0);
+		case PC_POSTTOPDOWN:
+			t1 = pObj->postsync(t0);
+			obj->clock = t0;
+			return t1;
+		default:
+			throw "invalid pass request";
+		}
+	} 
+	SYNC_CATCHALL(regulator);
+}
+
+EXPORT int isa_regulator(OBJECT *obj, char *classname)
+{
+	return OBJECTDATA(obj,regulator)->isa(classname);
+}
+
+//Export for deltamode
+EXPORT SIMULATIONMODE interupdate_regulator(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
+{
+	regulator *my = OBJECTDATA(obj,regulator);
+	SIMULATIONMODE status = SM_ERROR;
+	try
+	{
+		status = my->inter_deltaupdate_regulator(delta_time,dt,iteration_count_val,interupdate_pos);
+		return status;
+	}
+	catch (char *msg)
+	{
+		gl_error("interupdate_regulator(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
+		return status;
+	}
 }
 
 /**@}*/

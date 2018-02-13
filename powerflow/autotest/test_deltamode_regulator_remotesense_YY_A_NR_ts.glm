@@ -1,6 +1,7 @@
 // $id$
-//	Copyright (C) 2008 Battelle Memorial Institute
-
+// Copy/modification of XXXX
+// Mostly to just replicate in deltamode - to make sure that works
+//
 // 4 node system with a balanced load and a regulator
 // being controlled under REMOTE_SENSE mode, each phase
 // individually controlled.  Check to make sure voltages are being
@@ -9,6 +10,9 @@
 // to artificially lower the voltage at the regulator, but tests
 // the regulator function.  This test will look at a time series.
 
+#set deltamode_timestep=100000000		//100 ms
+#set deltamode_maximumtime=60000000000	//1 minute
+#set deltamode_iteration_limit=60		//Iteration limit - due to the nature of this file, this needs to be higher -- tap changes and low dwell
 
 clock {
 	timezone EST+5EDT;
@@ -16,27 +20,32 @@ clock {
 	stoptime '2000-01-01 4:00:00';
 }
 
-module powerflow {
-	solver_method NR;
-};
+//Order matters for deltamode
 module assert;
 module tape;
 
-//#define savefile="test_reg_NR.xml";
-//#define stylesheet="C:\Documents and Settings\d3x289\Desktop\GLD_8_7\trunk\VS2005\gridlabd-2_0";
-#set relax_naming_rules=1
+//Enable deltamode
+module powerflow {
+	enable_subsecond_models true;
+	deltamode_timestep 100.0 ms;
+	all_powerflow_delta true;
+	solver_method NR;
+}
 
-object overhead_line_conductor:100 {
+object overhead_line_conductor {
+	name olc100;
 	geometric_mean_radius 0.0244;
 	resistance 0.306;
 }
 
-object overhead_line_conductor:101 {
+object overhead_line_conductor {
+	name olc101;
 	geometric_mean_radius 0.00814;
 	resistance 0.592;
 }
 
-object line_spacing:200 {
+object line_spacing {
+	name ls200;
 	distance_AB 2.5;
 	distance_BC 4.5;
 	distance_AC 7.0;
@@ -45,12 +54,13 @@ object line_spacing:200 {
 	distance_CN 5.0;
 }
 
-object line_configuration:300 {
-	conductor_A overhead_line_conductor:100;
-	conductor_B overhead_line_conductor:100;
-	conductor_C overhead_line_conductor:100;
-	conductor_N overhead_line_conductor:101;
-	spacing line_spacing:200;
+object line_configuration {
+	name lc300;
+	conductor_A olc100;
+	conductor_B olc100;
+	conductor_C olc100;
+	conductor_N olc101;
+	spacing ls200;
 }
 
 object regulator_configuration {
@@ -81,15 +91,12 @@ object overhead_line {
 	from FeederNode;
 	to InterNode;
 	length 200000;
-	configuration line_configuration:300;
+	configuration lc300;
 }
 
 object node {
 	phases ABCN;
 	name InterNode;
-	voltage_A +7199.558+0.000j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
 	nominal_voltage 7200;
 }
 	
@@ -105,9 +112,6 @@ object regulator {
 object node {
 	phases "ABCN";
 	name TopNode;
-	voltage_A +7199.558+0.000j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
 	nominal_voltage 7200;
 }
 
@@ -116,15 +120,12 @@ object overhead_line {
 	from TopNode;
 	to MiddleNode;
 	length 2000;
-	configuration line_configuration:300;
+	configuration lc300;
 }
 
 object node {
 	phases "ABCN";
 	nominal_voltage 7200;
-	voltage_A +7199.558+0.000j;
-	voltage_B -3599.779-6235.000j;
-	voltage_C -3599.779+6235.000j;
 	name MiddleNode;
 }
 
@@ -133,63 +134,100 @@ object overhead_line {
 	from MiddleNode;
 	to BottomLoad;
 	length 2500;
-	configuration line_configuration:300;
+	configuration lc300;
 }
 
 object load {
 	phases "ABCN";
 	name BottomLoad;
 	nominal_voltage 7200;
-	
+	// object recorder {
+		// flags DELTAMODE;
+		// property "voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag";
+		// interval -1;
+		// file voltagerecorder_out.csv;
+	// };
+	// object recorder {
+		// flags DELTAMODE;
+		// property "voltage_A.real,voltage_A.imag";
+		// interval 60;
+		// file voltagerecorder_out_A.csv;
+	// };
+	// object recorder {
+		// flags DELTAMODE;
+		// property "voltage_B.real,voltage_B.imag";
+		// interval 60;
+		// file voltagerecorder_out_B.csv;
+	// };
+	// object recorder {
+		// flags DELTAMODE;
+		// property "voltage_C.real,voltage_C.imag";
+		// interval 60;
+		// file voltagerecorder_out_C.csv;
+	// };
 	object player {
+		flags DELTAMODE;
+		name uselessdeltatrigger;
+		property nominal_voltage;
+		file ../data_reg_deltamode_trigger.player;
+	};
+	object player {
+		flags DELTAMODE;
 		file ../regulator_load_phA.player;
 		loop 6;
 		property constant_power_A;
 	};
 	object player {
+		flags DELTAMODE;
 		file ../regulator_load_phB.player;
 		loop 6;
 		property constant_power_B;
 	};
 	object player {
+		flags DELTAMODE;
 		file ../regulator_load_phC.player;
 		loop 6;
 		property constant_power_C;
 	};
-
 	object complex_assert {
+		flags DELTAMODE;
 		operation MAGNITUDE;
 		target voltage_A;
 		within 0.1;
 		object player {
+			flags DELTAMODE;
 			property value;
 			file ../data_reg_remote_YY_A_NR_phase_A.csv;
 		};
 	};
 	object complex_assert {
+		flags DELTAMODE;
 		operation MAGNITUDE;
 		target voltage_B;
 		within 0.1;
 		object player {
+			flags DELTAMODE;
 			property value;
 			file ../data_reg_remote_YY_A_NR_phase_B.csv;
 		};
 	};
 	object complex_assert {
+		flags DELTAMODE;
 		operation MAGNITUDE;
 		target voltage_C;
 		within 0.1;
 		object player {
+			flags DELTAMODE;
 			property value;
 			file ../data_reg_remote_YY_A_NR_phase_C.csv;
 		};
 	};
 }
 
-object recorder {
-	file test.csv;
-	interval 3600;
-	limit 24;
-	parent Regulator;
-	property tap_A,tap_B,tap_C;
-}
+// object recorder {
+	// flags DELTAMODE;
+	// file reg_taps.csv;
+	// interval -1;
+	// parent Regulator;
+	// property tap_A,tap_B,tap_C;
+// }

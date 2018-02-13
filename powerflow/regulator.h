@@ -12,6 +12,8 @@
 #define tap_B tap[1]
 #define tap_C tap[2]
 
+EXPORT SIMULATIONMODE interupdate_regulator(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
+
 class regulator : public link_object
 {
 public:
@@ -44,10 +46,16 @@ public:
 
 	double regulator_resistance;
 
+	//Deltamode function
+	SIMULATIONMODE inter_deltaupdate_regulator(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
+	double reg_prePre_fxn(double curr_time_value);	//Functionalized "presync before link::presync" calls
+	void reg_postPre_fxn(void);	//Functionalized "presync after link::presync" calls
+	double reg_postPost_fxn(double curr_time_value);	//Functionalized "postsync after link::postsync" calls
+
 protected:
-	int64 mech_t_next[3];	 //next time step after tap change
-	int64 dwell_t_next[3];	 //wait to advance only after sensing over/under voltage for a certain dwell_time
-	int64 next_time;		 //final return for next time step
+	double mech_t_next[3];	 //next time step after tap change
+	double dwell_t_next[3];	 //wait to advance only after sensing over/under voltage for a certain dwell_time
+	double next_time;		 //final return for next time step
 	int16 mech_flag[3];		 //indicates whether a state change is okay due to mechanical tap changes
 	int16 dwell_flag[3];	 //indicates whether a state change is okay due to dwell time limitations
 	int16 first_run_flag[3]; //keeps the system from blowing up on bad initial tap position guess
@@ -61,6 +69,7 @@ private:
 	bool offnominal_time;	//Used to detect off-nominal timesteps and perform an exception for them
 	bool iteration_flag;	//Iteration toggler - to maintain logic from previous NR implementation, to a degree
 	bool new_reverse_flow_action[3];
+	bool deltamode_reiter_request;	// Flag to replicate a reiteration request from presync/postsync, since that is handled different in deltamode - used to match QSTS
 public:
 	static CLASS *oclass;
 	static CLASS *pclass;
