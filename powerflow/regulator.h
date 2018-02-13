@@ -48,7 +48,7 @@ public:
 
 	//Deltamode function
 	SIMULATIONMODE inter_deltaupdate_regulator(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
-	double reg_prePre_fxn(double curr_time_value);	//Functionalized "presync before link::presync" calls
+	void reg_prePre_fxn(double curr_time_value);	//Functionalized "presync before link::presync" calls
 	void reg_postPre_fxn(void);	//Functionalized "presync after link::presync" calls
 	double reg_postPost_fxn(double curr_time_value);	//Functionalized "postsync after link::postsync" calls
 

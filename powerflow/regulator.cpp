@@ -328,29 +328,32 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 {
 	regulator_configuration *pConfig = OBJECTDATA(configuration, regulator_configuration);
 	TIMESTAMP t1;
-	double t1_dbl;
+	double t1_dbl, t0_dbl;
 	char phaseWarn;
+
+	//Cast the timestamp
+	t0_dbl = (double)t0;
 
 	//Toggle the iteration variable -- only for voltage-type adjustments (since it's in presync now)
 	if ((solver_method == SM_NR) && ((pConfig->Control == pConfig->OUTPUT_VOLTAGE) || (pConfig->Control == pConfig->REMOTE_NODE)))
 		iteration_flag = !iteration_flag;
 
 	//Call the pre-presync regulator code
-	next_time = reg_prePre_fxn((double)t0);
+	reg_prePre_fxn(t0_dbl);
 
 	//Call the standard presync
 	t1 = link_object::presync(t0);
 
-	//Cast it, for comparisons below
+	//Cast timestamp, for comparisons below
 	t1_dbl = (double)t1;
 	
 	//Call the post-presync regulator code
 	reg_postPre_fxn();
 
 	//Check the time handling
-	if (offnominal_time && (t0 > next_time))
+	if (offnominal_time && (t0_dbl > next_time))
 	{
-		next_time = t0;
+		next_time = t0_dbl;
 	}
 
 	//Force a "reiteration" if we're checking voltage - consequence of this previously being in true pass of NR
@@ -369,7 +372,6 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 TIMESTAMP regulator::postsync(TIMESTAMP t0)
 {
 	double function_return_time;
-	TIMESTAMP temp_return_time;
 
 	TIMESTAMP t1 = link_object::postsync(t0);
 
@@ -382,18 +384,9 @@ TIMESTAMP regulator::postsync(TIMESTAMP t0)
 	}
 	else if (function_return_time != 0.0)
 	{
-		//Cast the return time
-		if (function_return_time != TSNVRDBL)
-		{
-			temp_return_time = (TIMESTAMP)function_return_time;
-		}
-		else	//Must be TS_NEVER
-		{
-			temp_return_time = TS_NEVER;
-		}
-
-		//Return this -- whatever came out here as non-0.0 or non-"-1.0" was supposed to exit anyways
-		return temp_return_time;
+		//Based on the code logic, this was always a return t0
+		//If this changes, re-evaluate this code
+		return t0;
 	}
 	//Default else -- no returns were hit, so just do t1
 
@@ -401,10 +394,10 @@ TIMESTAMP regulator::postsync(TIMESTAMP t0)
 }
 
 //Functionalized "presync before link::presync" portions, mostly for deltamode functionality
-double regulator::reg_prePre_fxn(double curr_time_value)
+void regulator::reg_prePre_fxn(double curr_time_value)
 {
-	double next_time_val;
 	regulator_configuration *pConfig = OBJECTDATA(configuration, regulator_configuration);
+
 
 	if (pConfig->Control == pConfig->MANUAL) {
 		for (int i = 0; i < 3; i++) {
@@ -413,12 +406,14 @@ double regulator::reg_prePre_fxn(double curr_time_value)
 			else if (pConfig->Type == pConfig->B)
 			{	a_mat[i][i] = 1.0 - tap[i] * tapChangePer;}
 			else
-			{	throw "invalid regulator type";}
+			{
+				GL_THROW("invalid regulator type");
 				/*  TROUBLESHOOT
 				Check the Type specification in your regulator_configuration object.  It can an only be type A or B.
 				*/
+			}
 		}
-		next_time_val = TSNVRDBL;
+		next_time = TSNVRDBL;
 	}
 	else if (iteration_flag==true)
 	{
@@ -583,7 +578,7 @@ double regulator::reg_prePre_fxn(double curr_time_value)
 					}
 				}
 				//Determine how far to advance the clock
-				int64 nt[3];
+				double nt[3];
 				nt[0] = nt[1] = nt[2] = curr_time_value;
 				for (int i = 0; i < 3; i++) {
 					if (mech_t_next[i] > curr_time_value)
@@ -593,14 +588,14 @@ double regulator::reg_prePre_fxn(double curr_time_value)
 				}
 
 				if (nt[0] > curr_time_value)
-					next_time_val = nt[0];
-				if (nt[1] > curr_time_value && nt[1] < next_time_val)
-					next_time_val = nt[1];
-				if (nt[2] > curr_time_value && nt[2] < next_time_val)
-					next_time_val = nt[2];
+					next_time = nt[0];
+				if (nt[1] > curr_time_value && nt[1] < next_time)
+					next_time = nt[1];
+				if (nt[2] > curr_time_value && nt[2] < next_time)
+					next_time = nt[2];
 
-				if (next_time_val <= curr_time_value)
-					next_time_val = TSNVRDBL;
+				if (next_time <= curr_time_value)
+					next_time = TSNVRDBL;
 			}
 			else
 				GL_THROW("Specified connect type is not supported in automatic modes at this time.");
@@ -768,7 +763,7 @@ double regulator::reg_prePre_fxn(double curr_time_value)
 				}
 
 				//Determine how far to advance the clock
-				int64 nt[3];
+				double nt[3];
 				nt[0] = nt[1] = nt[2] = curr_time_value;
 				if (mech_t_next[0] > curr_time_value)
 					nt[0] = mech_t_next[0];
@@ -776,10 +771,10 @@ double regulator::reg_prePre_fxn(double curr_time_value)
 					nt[0] = dwell_t_next[0];
 
 				if (nt[0] > curr_time_value)
-					next_time_val = nt[0];
+					next_time = nt[0];
 
-				if (next_time_val <= curr_time_value)
-					next_time_val = TSNVRDBL;
+				if (next_time <= curr_time_value)
+					next_time = TSNVRDBL;
 			}
 			else
 				GL_THROW("Specified connect type is not supported in automatic modes at this time.");
@@ -830,8 +825,6 @@ double regulator::reg_prePre_fxn(double curr_time_value)
 			*/
 			break;
 	}
-
-	return next_time_val;
 }
 
 //Functionalized version of the code for deltamode - "post-link::presync" portions
@@ -1405,7 +1398,7 @@ SIMULATIONMODE regulator::inter_deltaupdate_regulator(unsigned int64 delta_time,
 			iteration_flag = !iteration_flag;
 
 		//Call the pre-presync regulator code
-		next_time = reg_prePre_fxn(curr_time_value);
+		reg_prePre_fxn(curr_time_value);
 
 		//Link presync stuff
 		NR_link_presync_fxn();
