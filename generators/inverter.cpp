@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
+#include <iostream> // only for cout and endl
+using namespace std;
 
 #include "generators.h"
 #include "power_electronics.h"
@@ -51,6 +53,7 @@ inverter::inverter(MODULE *module)
 				PT_KEYWORD,"CONSTANT_PF",(enumeration)FQM_CONSTANT_PF,
 				//PT_KEYWORD,"CONSTANT_V",FQM_CONSTANT_V,	//Not implemented yet
 				PT_KEYWORD,"VOLT_VAR",(enumeration)FQM_VOLT_VAR,
+				PT_KEYWORD,"VOLT_WATT",(enumeration)FQM_VOLT_WATT,
 				PT_KEYWORD,"VOLT_VAR_FREQ_PWR",FQM_VOLT_VAR_FREQ_PWR, //Ab add : mode
 				PT_KEYWORD,"LOAD_FOLLOWING",(enumeration)FQM_LOAD_FOLLOWING,
 				PT_KEYWORD,"GROUP_LOAD_FOLLOWING",(enumeration)FQM_GROUP_LF,
@@ -193,10 +196,10 @@ inverter::inverter(MODULE *module)
 			PT_double, "maximum_dc_power", PADDR(p_dco), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the maximum dc power point for the efficiency curve",
 			PT_double, "maximum_dc_voltage", PADDR(v_dco), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the maximum dc voltage point for the efficiency curve",
 			PT_double, "minimum_dc_power", PADDR(p_so), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the minimum dc power point for the efficiency curve",
-			PT_double, "c_0", PADDR(c_o), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the first coefficient in the efficienty curve",
-			PT_double, "c_1", PADDR(c_1), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the second coefficient in the efficienty curve",
-			PT_double, "c_2", PADDR(c_2), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the third coefficient in the efficienty curve",
-			PT_double, "c_3", PADDR(c_3), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the fourth coefficient in the efficienty curve",
+			PT_double, "c_0", PADDR(c_o), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the first coefficient in the efficiency curve",
+			PT_double, "c_1", PADDR(c_1), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the second coefficient in the efficiency curve",
+			PT_double, "c_2", PADDR(c_2), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the third coefficient in the efficiency curve",
+			PT_double, "c_3", PADDR(c_3), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the fourth coefficient in the efficiency curve",
 			//load following parameters
 			PT_object,"sense_object", PADDR(sense_object), PT_DESCRIPTION, "FOUR QUADRANT MODEL: name of the object the inverter is trying to mitigate the load on (node/link) in LOAD_FOLLOWING",
 			PT_double,"max_charge_rate[W]", PADDR(max_charge_rate), PT_DESCRIPTION, "FOUR QUADRANT MODEL: maximum rate the battery can be charged in LOAD_FOLLOWING",
@@ -245,6 +248,11 @@ inverter::inverter(MODULE *module)
 			PT_double,"V4[pu]", PADDR(V4), PT_DESCRIPTION, "FOUR QUADRANT MODEL: voltage point 4 in volt/var curve. Used in VOLT_VAR control mode.",
 			PT_double,"Q4[pu]", PADDR(Q4), PT_DESCRIPTION, "FOUR QUADRANT MODEL: VAR point 4 in volt/var curve. Used in VOLT_VAR control mode.",
 			PT_double,"volt_var_control_lockout[s]", PADDR(vv_lockout), PT_DESCRIPTION, "FOUR QUADRANT QUADRANT MODEL: the lockout time between volt/var actions.",
+			//Volt Var Parameters
+			PT_double,"VW_V1[pu]", PADDR(VW_V1), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Voltage at which power limiting begins (e.g. 1.0583). Used in VOLT_WATT control mode.",
+			PT_double,"VW_V2[pu]", PADDR(VW_V2), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Voltage at which power limiting ends. (e.g. 1.1000). Used in VOLT_WATT control mode.",
+		  PT_double,"VW_P1[pu]", PADDR(VW_P1), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Power limit at VW_P1 (e.g. 1). Used in VOLT_WATT control mode.",
+		  PT_double,"VW_P2[pu]", PADDR(VW_P2), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Power limit at VW_P2 (e.g. 0). Used in VOLT_WATT control mode.",
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 			defaults = this;
@@ -463,6 +471,12 @@ int inverter::create(void)
 	Q4 = -2;
 	vv_lockout = -1;
 
+	// Volt-Watt parameters
+	VW_V1 = -2;
+	VW_V2 = -2;
+	VW_P1 = -2;
+	VW_P2 = -2;
+
 	/* TODO: set the context-free initial value of properties */
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -612,7 +626,7 @@ int inverter::init(OBJECT *parent)
 	}
 	else if	((parent != NULL && strcmp(parent->oclass->name,"meter") != 0)||(parent != NULL && strcmp(parent->oclass->name,"triplex_meter") != 0))
 	{
-		throw("Inverter must have a meter or triplex meter as it's parent");
+		throw("Inverter must have a meter or triplex meter as its parent");
 		/*  TROUBLESHOOT
 		Check the parent object of the inverter.  The inverter is only able to be childed via a meter or 
 		triplex meter when connecting into powerflow systems.  You can also choose to have no parent, in which
@@ -1429,6 +1443,35 @@ int inverter::init(OBJECT *parent)
 		last_vv_check = 0;
 	}
 	
+	if (four_quadrant_control_mode == FQM_VOLT_WATT) {
+//		cout << "line 1447" << endl;
+		if (VW_V1 == -2) VW_V1 = 1.05833;
+		if (VW_V2 == -2) VW_V2 = 1.10;
+		if (VW_P1 == -2) VW_P1 = 1.00;
+		if (VW_P2 == -2) VW_P2 = 0.0;
+		if (VW_V1 >= VW_V2) {
+			gl_error("inverter::init(): VOLT_WATT mode requires VW_V2 > VW_V1.");
+			return 0;
+		}
+		if (VW_P1 <= VW_P2) {
+			gl_error("inverter::init(): VOLT_WATT mode requires VW_P1 > VW_P2.");
+			return 0;
+		}
+		if (V_base == 0) {
+			gl_error("inverter::init(): The base voltage must be greater than 0 for VOLT_WATT.");
+			return 0;
+		}
+		VW_m = (VW_P2 - VW_P1) / (VW_V2 - VW_V1); // this will be negative, and Plimit = P1 + (v - V1) * m, until it reaches zero
+
+		if (vv_lockout < 0.0) {
+			gl_warning("VOLT_WATT uses the VOLT_VAR lockout, which is 0. Warning this may cause oscillating behavior.");
+			vv_lockout = 0;
+		}
+		allowed_vv_action = 0;
+		last_vv_check = 0;
+		pa_vw_limited = pb_vw_limited = pc_vw_limited = p_rated;
+	}
+
 	///////////////////////////////////////////////////////////////////////////
 	// DELTA MODE
 	///////////////////////////////////////////////////////////////////////////
@@ -1788,8 +1831,9 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 				}
 			}
 		} //End LOAD_FOLLOWING checks
-		else if (four_quadrant_control_mode == FQM_VOLT_VAR)
+		else if (four_quadrant_control_mode == FQM_VOLT_VAR || four_quadrant_control_mode == FQM_VOLT_WATT)
 		{
+//			cout << "line 1836" << endl;
 			if ((phases & 0x10) == 0x10)	//Triplex
 			{
 				*pPower -= last_power[3];	//Theoretically pPower is mapped to power_12, which already has the [2] offset applied
@@ -2539,7 +2583,8 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 			double VA_Efficiency, temp_PF, temp_QVal, P_in, net_eff; //Ab added last two
 			complex temp_VA;
 			complex battery_power_out = complex(0,0);
-			if (four_quadrant_control_mode != FQM_VOLT_VAR) {
+			if (four_quadrant_control_mode != FQM_VOLT_VAR && four_quadrant_control_mode != FQM_VOLT_WATT) {
+//				cout << "line 2587" << endl;
 				//Compute power in - supposedly DC, but since it's complex, we'll be proper (other models may need fixing)
 				VA_In = V_In * ~ I_In;
 
@@ -2604,62 +2649,67 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					}
 				}
 				VA_Efficiency += battery_power_out.Mag();
-			} else {
-				
-				if (V1 == -2) {
-				V1 = 0.97;
+			} else { // == FQM_VOLT_VAR || == FQM_VOLT_WATT
+//				cout << "line 2653" << endl;
+				if (four_quadrant_control_mode == FQM_VOLT_VAR) { // revalidating the parameters, we are in ::sync here, but maybe they changed?
+					if (V1 == -2) V1 = 0.97;
+					if (V2 == -2) V2 = 0.99;
+					if (V3 == -2) V3 = 1.01;
+					if (V4 == -2) V4 = 1.03;
+					if (Q1 == -2) Q1 = 0.50;
+					if (Q2 == -2) Q2 = 0.0;
+					if (Q3 == -2) Q3 = 0.0;
+					if (Q4 == -2) Q4 = -0.50;
+					if (V1 > V2 || V2 > V3 || V3 > V4) {
+						gl_error("inverter::sync(): V1 <= V2 <= V3 <= V4 must be true.");
+						return 0;
+					}
+					if (Q1 < Q2 || Q2 < Q3 || Q3 < Q4) {
+						gl_error("inverter::sync(): Q1 >= Q2 >= Q3 >= Q4 must be true.");
+						return 0;
+					}
+					if (V_base == 0) {
+						gl_error("inverter::sync(): The base voltage must be greater than 0.");
+						return 0;
+					}
+					if (V2 != V1) {
+						m12 = (Q2 - Q1) / (V2 - V1);
+					} else {
+						m12 = 0;
+					}
+					if (V3 != V2) {
+						m23 = (Q3 - Q2) / (V3 - V2);
+					} else {
+						m23 = 0;
+					}
+					if (V4 != V3) {
+						m34 = (Q4 - Q3) / (V4 - V3);
+					} else {
+						m34 = 0;
+					}
+					b12 = Q1 - (m12 * V1);
+					b23 = Q2 - (m23 * V2);
+					b34 = Q3 - (m34 * V3);
+				} else if (four_quadrant_control_mode == FQM_VOLT_WATT) {
+//					cout << "line 2694" << endl;
+					if (VW_V1 == -2) VW_V1 = 1.05833;
+					if (VW_V2 == -2) VW_V2 = 1.10;
+					if (VW_P1 == -2) VW_P1 = 1.00;
+					if (VW_P2 == -2) VW_P2 = 0.0;
+					if (VW_V1 >= VW_V2) {
+						gl_error("inverter::sync(): VOLT_WATT mode requires VW_V2 > VW_V1.");
+						return 0;
+					}
+					if (VW_P1 <= VW_P2) {
+						gl_error("inverter::sync(): VOLT_WATT mode requires VW_P1 > VW_P2.");
+						return 0;
+					}
+					if (V_base == 0) {
+						gl_error("inverter::sync(): The base voltage must be greater than 0 for VOLT_WATT.");
+						return 0;
+					}
+					VW_m = (VW_P2 - VW_P1) / (VW_V2 - VW_V1);
 				}
-				if (V2 == -2) {
-					V2 = 0.99;
-				}
-				if (V3 == -2) {
-					V3 = 1.01;
-				}
-				if (V4 == -2) {
-					V4 = 1.03;
-				}
-				if (Q1 == -2) {
-					Q1 = 0.50;
-				}
-				if (Q2 == -2) {
-					Q2 = 0.0;
-				}
-				if (Q3 == -2) {
-					Q3 = 0.0;
-				}
-				if (Q4 == -2) {
-					Q4 = -0.50;
-				}
-				if (V1 > V2 || V2 > V3 || V3 > V4) {
-					gl_error("inverter::init(): The curve was not constructed properly. V1 <= V2 <= V3 <= V4 must be true.");
-					return 0;
-				}
-				if (Q1 < Q2 || Q2 < Q3 || Q3 < Q4) {
-					gl_error("inverter::init(): The curve was not constructed properly. Q1 >= Q2 >= Q3 >= Q4 must be true.");
-					return 0;
-				}
-				if (V_base == 0) {
-					gl_error("inverter::init(): The base voltage must be greater than 0.");
-					return 0;
-				}
-				if (V2 != V1) {
-					m12 = (Q2 - Q1) / (V2 - V1);
-				} else {
-					m12 = 0;
-				}
-				if (V3 != V2) {
-					m23 = (Q3 - Q2) / (V3 - V2);
-				} else {
-					m23 = 0;
-				}
-				if (V4 != V3) {
-					m34 = (Q4 - Q3) / (V4 - V3);
-				} else {
-					m34 = 0;
-				}
-				b12 = Q1 - (m12 * V1);
-				b23 = Q2 - (m23 * V2);
-				b34 = Q3 - (m34 * V3);
 
 				//Compute power in - supposedly DC, but since it's complex, we'll be proper (other models may need fixing)
 				VA_In = V_In * ~ I_In;
@@ -2826,7 +2876,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 			{
 				VA_Out = -lf_dispatch_power;	//Place the expected dispatch power into the output
 			}
-				else if (four_quadrant_control_mode == FQM_VOLT_VAR_FREQ_PWR) {
+			else if (four_quadrant_control_mode == FQM_VOLT_VAR_FREQ_PWR) {
 					// start Ab add
 					// Jason Bank, jason.bank@nrel.gov		8/26/2013
 					// use voltage control input with lookup table values to determine what Qo should be then update Po according to:
@@ -2867,7 +2917,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				
 					//TODO: should VA_Out be checked against inverter power rating? if exceeds clip it? clip to preserve reactive power set point or to preserve real output power?
 					// end Ab add
-				}//end VOLT_VAR_FREQ_PWR mode
+			}//end VOLT_VAR_FREQ_PWR mode
 
 			//Execution of power-factor regulation output of inverter that will get included in power-flow solution
 			if ((pf_reg == INCLUDED) || (pf_reg == INCLUDED_ALT))
@@ -2881,7 +2931,8 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//} else if(four_quadrant_control_mode == FQM_VOLT_VAR){
 			//	GL_THROW("VOLT_VAR mode is not supported at this time.");
 			//}
-			if (four_quadrant_control_mode != FQM_VOLT_VAR){
+			if (four_quadrant_control_mode != FQM_VOLT_VAR && four_quadrant_control_mode != FQM_VOLT_WATT) {
+//				cout << "line 2935" << endl;
 				//check to see if VA_Out is within rated absolute power rating
 				if(VA_Out.Mag() > p_max)
 				{
@@ -3036,56 +3087,74 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						}
 					}
 				}//End three-phase variant
-			} else { // Volt Var Control mode
-				if (power_A.Mag() > p_rated ) {
-					if (power_A.Re() > p_rated) {
-						power_A.SetReal(p_rated);
-						power_A.SetImag(0);
-					} else if (power_A.Re() < -p_rated) {
-						power_A.SetReal(-p_rated);
-						power_A.SetImag(0);
-					} else if (power_A.Re() < p_rated && power_A.Re() > -p_rated) {
-						double q_max = 0;
-						q_max = sqrt((p_rated * p_rated) - (power_A.Re() * power_A.Re()));
-						if (power_A.Im() > q_max) {
-							power_A.SetImag(q_max);
-						} else {
-							power_A.SetImag(-q_max);
+			} else { // Volt Var Control mode == FQM_VOLT_VAR || == FQM_VOLT_WATT
+//				cout << "line 3091" << endl;
+				if (four_quadrant_control_mode == FQM_VOLT_VAR)
+				{
+					if (power_A.Mag() > p_rated) {
+						if (power_A.Re() > p_rated) {
+							power_A.SetReal(p_rated);
+							power_A.SetImag(0);
+						} else if (power_A.Re() < -p_rated) {
+							power_A.SetReal(-p_rated);
+							power_A.SetImag(0);
+						} else if (power_A.Re() < p_rated && power_A.Re() > -p_rated) {
+							double q_max = 0;
+							q_max = sqrt((p_rated * p_rated) - (power_A.Re() * power_A.Re()));
+							if (power_A.Im() > q_max) {
+								power_A.SetImag(q_max);
+							} else {
+								power_A.SetImag(-q_max);
+							}
+						}
+					}
+					if (power_B.Mag() > p_rated ) {
+						if (power_B.Re() > p_rated) {
+							power_B.SetReal(p_rated);
+							power_B.SetImag(0);
+						} else if (power_B.Re() < -p_rated) {
+							power_B.SetReal(-p_rated);
+							power_B.SetImag(0);
+						} else if (power_B.Re() < p_rated && power_B.Re() > -p_rated) {
+							double q_max = 0;
+							q_max = sqrt((p_rated * p_rated) - (power_B.Re() * power_B.Re()));
+							if (power_B.Im() > q_max) {
+								power_B.SetImag(q_max);
+							} else {
+								power_B.SetImag(-q_max);
+							}
+						}
+					}
+					if (power_C.Mag() > p_rated ) {
+						if (power_C.Re() > p_rated) {
+							power_C.SetReal(p_rated);
+							power_C.SetImag(0);
+						} else if (power_C.Re() < -p_rated) {
+							power_C.SetReal(-p_rated);
+							power_C.SetImag(0);
+						} else if (power_C.Re() < p_rated && power_C.Re() > -p_rated) {
+							double q_max = 0;
+							q_max = sqrt((p_rated * p_rated) - (power_C.Re() * power_C.Re()));
+							if (power_C.Im() > q_max) {
+								power_C.SetImag(q_max);
+							} else {
+								power_C.SetImag(-q_max);
+							}
 						}
 					}
 				}
-				if (power_B.Mag() > p_rated ) {
-					if (power_B.Re() > p_rated) {
-						power_B.SetReal(p_rated);
-						power_B.SetImag(0);
-					} else if (power_B.Re() < -p_rated) {
-						power_B.SetReal(-p_rated);
-						power_B.SetImag(0);
-					} else if (power_B.Re() < p_rated && power_B.Re() > -p_rated) {
-						double q_max = 0;
-						q_max = sqrt((p_rated * p_rated) - (power_B.Re() * power_B.Re()));
-						if (power_B.Im() > q_max) {
-							power_B.SetImag(q_max);
-						} else {
-							power_B.SetImag(-q_max);
-						}
+				else if (four_quadrant_control_mode == FQM_VOLT_WATT)
+				{
+//					cout << "line 3148" << endl;
+//					cout << "comparing " << power_A.Re() << " to " << pa_vw_limited << endl;
+					if (power_A.Re() > pa_vw_limited) {
+						power_A.SetReal (pa_vw_limited);
 					}
-				}
-				if (power_C.Mag() > p_rated ) {
-					if (power_C.Re() > p_rated) {
-						power_C.SetReal(p_rated);
-						power_C.SetImag(0);
-					} else if (power_C.Re() < -p_rated) {
-						power_C.SetReal(-p_rated);
-						power_C.SetImag(0);
-					} else if (power_C.Re() < p_rated && power_C.Re() > -p_rated) {
-						double q_max = 0;
-						q_max = sqrt((p_rated * p_rated) - (power_C.Re() * power_C.Re()));
-						if (power_C.Im() > q_max) {
-							power_C.SetImag(q_max);
-						} else {
-							power_C.SetImag(-q_max);
-						}
+					if (power_B.Re() > pb_vw_limited) {
+						power_B.SetReal (pb_vw_limited);
+					}
+					if (power_C.Re() > pc_vw_limited) {
+						power_C.SetReal (pc_vw_limited);
 					}
 				}
 				if ((phases & 0x10) == 0x10) {
@@ -3113,13 +3182,10 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						pPower[2] += last_power[2];
 						I_Out[2] = ~(VA_Out / *pCircuit_V);
 					}
-				}
-			}
-			//Negate VA_Out, so it matches sign ideals
-			//VA_Out = -VA_Out;
-
-		}//End FOUR_QUADRANT mode
-	}
+				} 
+			} // End VOLT_VAR and VOLT_WATT
+		} //End FOUR_QUADRANT mode
+	} // End meter is in service
 	else
 	{
 		//Check to see if we're accumulating or out of service
@@ -3620,28 +3686,15 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 		//Default else, do nothing
 	}// End FQM_GROUP_LF
-	else if ((inverter_type_v == FOUR_QUADRANT) && (four_quadrant_control_mode == FQM_VOLT_VAR))
+	else if (inverter_type_v == FOUR_QUADRANT)
 	{
-		if (t1 >= allowed_vv_action && (t1 > last_vv_check)) {
-			vv_operation = false;
-			last_vv_check = t1;
-			if ((phases & 0x10) == 0x10) {
-				if((pCircuit_V[0].Mag() / V_base) <= V1) {
-					power_A.SetImag(Q1 * p_rated);
-				} else if ((pCircuit_V[0].Mag() / V_base) <= V2 && V1 < (pCircuit_V[0].Mag() / V_base)) {
-					power_A.SetImag(getVar((pCircuit_V[0].Mag() / V_base), m12, b12) * p_rated);
-				} else if ((pCircuit_V[0].Mag() / V_base) <= V3 && V2 < (pCircuit_V[0].Mag() / V_base)) {
-					power_A.SetImag(getVar((pCircuit_V[0].Mag() / V_base), m23, b23) * p_rated);
-				} else if ((pCircuit_V[0].Mag() / V_base) <= V4 && V3 < (pCircuit_V[0].Mag() / V_base)) {
-					power_A.SetImag(getVar((pCircuit_V[0].Mag() / V_base), m34, b34) * p_rated);
-				} else if (V4 < (pCircuit_V[0].Mag() / V_base)) {
-					power_A.SetImag(Q4 * p_rated);
-				}
-				if (last_power->Im() != power_A.Im()) {
-					vv_operation = true;
-				}
-			} else {
-				if ((phases & 0x01) == 0x01) {
+		if (four_quadrant_control_mode == FQM_VOLT_VAR)
+		{
+			if (t1 >= allowed_vv_action && (t1 > last_vv_check))
+			{
+				vv_operation = false;
+				last_vv_check = t1;
+				if ((phases & 0x10) == 0x10) {
 					if((pCircuit_V[0].Mag() / V_base) <= V1) {
 						power_A.SetImag(Q1 * p_rated);
 					} else if ((pCircuit_V[0].Mag() / V_base) <= V2 && V1 < (pCircuit_V[0].Mag() / V_base)) {
@@ -3653,46 +3706,129 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 					} else if (V4 < (pCircuit_V[0].Mag() / V_base)) {
 						power_A.SetImag(Q4 * p_rated);
 					}
-					if (last_power[0].Im() != power_A.Im()) {
+					if (last_power->Im() != power_A.Im()) {
 						vv_operation = true;
 					}
+					VA_Out = power_A; // TEMc
+				} else {
+					if ((phases & 0x01) == 0x01) {
+						if((pCircuit_V[0].Mag() / V_base) <= V1) {
+							power_A.SetImag(Q1 * p_rated);
+						} else if ((pCircuit_V[0].Mag() / V_base) <= V2 && V1 < (pCircuit_V[0].Mag() / V_base)) {
+							power_A.SetImag(getVar((pCircuit_V[0].Mag() / V_base), m12, b12) * p_rated);
+						} else if ((pCircuit_V[0].Mag() / V_base) <= V3 && V2 < (pCircuit_V[0].Mag() / V_base)) {
+							power_A.SetImag(getVar((pCircuit_V[0].Mag() / V_base), m23, b23) * p_rated);
+						} else if ((pCircuit_V[0].Mag() / V_base) <= V4 && V3 < (pCircuit_V[0].Mag() / V_base)) {
+							power_A.SetImag(getVar((pCircuit_V[0].Mag() / V_base), m34, b34) * p_rated);
+						} else if (V4 < (pCircuit_V[0].Mag() / V_base)) {
+							power_A.SetImag(Q4 * p_rated);
+						}
+						if (last_power[0].Im() != power_A.Im()) {
+							vv_operation = true;
+						}
+					}
+					if ((phases & 0x02) == 0x02) {
+						if((pCircuit_V[1].Mag() / V_base) <= V1) {
+							power_B.SetImag(Q1 * p_rated);
+						} else if ((pCircuit_V[1].Mag() / V_base) <= V2 && V1 < (pCircuit_V[1].Mag() / V_base)) {
+							power_B.SetImag(getVar((pCircuit_V[1].Mag() / V_base), m12, b12) * p_rated);
+						} else if ((pCircuit_V[1].Mag() / V_base) <= V3 && V2 < (pCircuit_V[1].Mag() / V_base)) {
+							power_B.SetImag(getVar((pCircuit_V[1].Mag() / V_base), m23, b23) * p_rated);
+						} else if ((pCircuit_V[1].Mag() / V_base) <= V4 && V3 < (pCircuit_V[1].Mag() / V_base)) {
+							power_B.SetImag(getVar((pCircuit_V[1].Mag() / V_base), m34, b34) * p_rated);
+						} else if (V4 < (pCircuit_V[1].Mag() / V_base)) {
+							power_B.SetImag(Q4 * p_rated);
+						}
+						if (last_power[1].Im() != power_B.Im()) {
+							vv_operation = true;
+						}
+					}
+					if ((phases & 0x04) == 0x04) {
+						if((pCircuit_V[2].Mag() / V_base) <= V1) {
+							power_C.SetImag(Q1 * p_rated);
+						} else if ((pCircuit_V[2].Mag() / V_base) <= V2 && V1 < (pCircuit_V[2].Mag() / V_base)) {
+							power_C.SetImag(getVar((pCircuit_V[2].Mag() / V_base), m12, b12) * p_rated);
+						} else if ((pCircuit_V[2].Mag() / V_base) <= V3 && V2 < (pCircuit_V[2].Mag() / V_base)) {
+							power_C.SetImag(getVar((pCircuit_V[2].Mag() / V_base), m23, b23) * p_rated);
+						} else if ((pCircuit_V[2].Mag() / V_base) <= V4 && V3 < (pCircuit_V[2].Mag() / V_base)) {
+							power_C.SetImag(getVar((pCircuit_V[2].Mag() / V_base), m34, b34) * p_rated);
+						} else if (V4 < (pCircuit_V[2].Mag() / V_base)) {
+							power_C.SetImag(Q4 * p_rated);
+						}
+						if (last_power[2].Im() != power_C.Im()) {
+							vv_operation = true;
+						}
+					}
+					VA_Out = power_A + power_B + power_C; // TEMc
 				}
-				if ((phases & 0x02) == 0x02) {
-					if((pCircuit_V[1].Mag() / V_base) <= V1) {
-						power_B.SetImag(Q1 * p_rated);
-					} else if ((pCircuit_V[1].Mag() / V_base) <= V2 && V1 < (pCircuit_V[1].Mag() / V_base)) {
-						power_B.SetImag(getVar((pCircuit_V[1].Mag() / V_base), m12, b12) * p_rated);
-					} else if ((pCircuit_V[1].Mag() / V_base) <= V3 && V2 < (pCircuit_V[1].Mag() / V_base)) {
-						power_B.SetImag(getVar((pCircuit_V[1].Mag() / V_base), m23, b23) * p_rated);
-					} else if ((pCircuit_V[1].Mag() / V_base) <= V4 && V3 < (pCircuit_V[1].Mag() / V_base)) {
-						power_B.SetImag(getVar((pCircuit_V[1].Mag() / V_base), m34, b34) * p_rated);
-					} else if (V4 < (pCircuit_V[1].Mag() / V_base)) {
-						power_B.SetImag(Q4 * p_rated);
-					}
-					if (last_power[1].Im() != power_B.Im()) {
-						vv_operation = true;
-					}
-				}
-				if ((phases & 0x04) == 0x04) {
-					if((pCircuit_V[2].Mag() / V_base) <= V1) {
-						power_C.SetImag(Q1 * p_rated);
-					} else if ((pCircuit_V[2].Mag() / V_base) <= V2 && V1 < (pCircuit_V[2].Mag() / V_base)) {
-						power_C.SetImag(getVar((pCircuit_V[2].Mag() / V_base), m12, b12) * p_rated);
-					} else if ((pCircuit_V[2].Mag() / V_base) <= V3 && V2 < (pCircuit_V[2].Mag() / V_base)) {
-						power_C.SetImag(getVar((pCircuit_V[2].Mag() / V_base), m23, b23) * p_rated);
-					} else if ((pCircuit_V[2].Mag() / V_base) <= V4 && V3 < (pCircuit_V[2].Mag() / V_base)) {
-						power_C.SetImag(getVar((pCircuit_V[2].Mag() / V_base), m34, b34) * p_rated);
-					} else if (V4 < (pCircuit_V[2].Mag() / V_base)) {
-						power_C.SetImag(Q4 * p_rated);
-					}
-					if (last_power[2].Im() != power_C.Im()) {
-						vv_operation = true;
-					}
+				if (vv_operation) {
+					t2 = t1;
+					allowed_vv_action = (TIMESTAMP)floor((double)t1 + vv_lockout + 0.5);
 				}
 			}
-			if (vv_operation) {
-				t2 = t1;
-				allowed_vv_action = (TIMESTAMP)floor((double)t1 + vv_lockout + 0.5);
+		} 
+		else if (four_quadrant_control_mode == FQM_VOLT_WATT)
+		{
+//			cout << "line 3775" << endl;
+			if (t1 >= allowed_vv_action && (t1 > last_vv_check))
+			{
+				vv_operation = false;
+				last_vv_check = t1;
+				double vpu;
+				pa_vw_limited = pb_vw_limited = pc_vw_limited = p_rated;
+				if ((phases & 0x10) == 0x10) {
+					vpu = pCircuit_V[0].Mag() / V_base;
+					if (vpu > VW_V1) {
+						pa_vw_limited = p_rated * (1.0 + VW_m * (vpu - VW_V1));
+						if (pa_vw_limited < 0.0) pa_vw_limited = 0.0;
+						if (power_A.Re() > pa_vw_limited) power_A.SetReal (pa_vw_limited); // TODO - curtail power absorption for batteries?
+					}
+					if (last_power->Re() != power_A.Re()) {
+						vv_operation = true;
+					}
+					VA_Out = power_A;
+				} else {
+					if ((phases & 0x01) == 0x01) {
+						vpu = pCircuit_V[0].Mag() / V_base;
+						if (vpu > VW_V1) {
+							pa_vw_limited = p_rated * (1.0 + VW_m * (vpu - VW_V1));
+							if (pa_vw_limited < 0.0) pa_vw_limited = 0.0;
+//							cout << "A vpu=" << vpu << " plim =" << pa_vw_limited << " punlim=" << power_A.Re() << " p_rated=" << p_rated 
+//								<< " m=" << VW_m << " V1=" << VW_V1 << endl;
+							if (power_A.Re() > pa_vw_limited) power_A.SetReal (pa_vw_limited);
+						}
+						if (last_power[0].Re() != power_A.Re()) {
+							vv_operation = true;
+						}
+					}
+					if ((phases & 0x02) == 0x02) {
+						vpu = pCircuit_V[1].Mag() / V_base;
+						if (vpu > VW_V1) {
+							pb_vw_limited = p_rated * (1.0 + VW_m * (vpu - VW_V1));
+							if (pb_vw_limited < 0.0) pb_vw_limited = 0.0;
+							if (power_B.Re() > pb_vw_limited) power_B.SetReal (pb_vw_limited);
+						}
+						if (last_power[1].Re() != power_B.Re()) {
+							vv_operation = true;
+						}
+					}
+					if ((phases & 0x04) == 0x04) {
+						vpu = pCircuit_V[2].Mag() / V_base;
+						if (vpu > VW_V1) {
+							pc_vw_limited = p_rated * (1.0 + VW_m * (vpu - VW_V1));
+							if (pc_vw_limited < 0.0) pc_vw_limited = 0.0;
+							if (power_C.Re() > pc_vw_limited) power_C.SetReal (pc_vw_limited);
+						}
+						if (last_power[2].Re() != power_C.Re()) {
+							vv_operation = true;
+						}
+					}
+					VA_Out = power_A + power_B + power_C;
+				}
+				if (vv_operation) {
+					t2 = t1;
+					allowed_vv_action = (TIMESTAMP)floor((double)t1 + vv_lockout + 0.5);
+				}
 			}
 		}
 	}
@@ -4078,7 +4214,8 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 	else	//Must be four quadrant (load_following or otherwise)
 	{
-		if (four_quadrant_control_mode != FQM_VOLT_VAR) {
+		if (four_quadrant_control_mode != FQM_VOLT_VAR && four_quadrant_control_mode != FQM_VOLT_WATT) {
+//			cout << "line 4221" << endl;
 			if ((phases & 0x10) == 0x10)	//Triplex
 			{
 				if (deltamode_inclusive == true)

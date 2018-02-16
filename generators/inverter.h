@@ -170,7 +170,7 @@ public:
 	enumeration inverter_manufacturer; //known manufacturer to set some presets else use variables themselves for custom inverter.
 
 	//properties for four quadrant control modes
-	enum FOUR_QUADRANT_CONTROL_MODE {FQM_NONE=0,FQM_CONSTANT_PQ=1,FQM_CONSTANT_PF=2,FQM_CONSTANT_V=3,FQM_VOLT_VAR=4,FQM_LOAD_FOLLOWING=5, FQM_GENERIC_DROOP=6, FQM_GROUP_LF=7, FQM_VOLT_VAR_FREQ_PWR=8};
+	enum FOUR_QUADRANT_CONTROL_MODE {FQM_NONE=0,FQM_CONSTANT_PQ=1,FQM_CONSTANT_PF=2,FQM_CONSTANT_V=3,FQM_VOLT_VAR=4,FQM_LOAD_FOLLOWING=5, FQM_GENERIC_DROOP=6, FQM_GROUP_LF=7, FQM_VOLT_VAR_FREQ_PWR=8, FQM_VOLT_WATT=9};
 	enumeration four_quadrant_control_mode;
 
 	double excess_input_power;		//Variable tracking excess power on the input that is not placed to the output
@@ -227,6 +227,11 @@ public:
 	TIMESTAMP allowed_vv_action;
 	TIMESTAMP last_vv_check;
 	bool vv_operation;
+	//VoltWatt Control parameters
+	double VW_V1;
+	double VW_V2;
+	double VW_P1;
+	double VW_P2;
 
 	//1547 variables
 	bool enable_1547_compliance;	//Flag to enable IEEE 1547-2003 condition checking
@@ -296,6 +301,12 @@ private:
 	complex last_I_Out[3];
 	complex I_Out[3];
 	double last_I_In;
+
+	// Volt-Watt variables
+	double pa_vw_limited;
+	double pb_vw_limited;
+	double pc_vw_limited;
+	double VW_m;
 
 	//1547 variables
 	double out_of_violation_time_total;	//Tracking variable to see how long we've been "outside of bad conditions" to re-enable the inverter
