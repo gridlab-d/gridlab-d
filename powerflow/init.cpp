@@ -94,6 +94,11 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	gl_global_create("powerflow::enable_frequency_dependence",PT_bool,&enable_frequency_dependence,PT_DESCRIPTION,"Flag to enable frequency-based variations in impedance values of lines and loads",NULL);
 	gl_global_create("powerflow::default_resistance",PT_double,&default_resistance,NULL);
 	gl_global_create("powerflow::enable_inrush",PT_bool,&enable_inrush_calculations,PT_DESCRIPTION,"Flag to enable in-rush calculations for lines and transformers in deltamode",NULL);
+	gl_global_create("powerflow::inrush_integration",PT_enumeration,&default_inrush_integration_method,PT_DESCRIPTION,"Determine the integration method utilized in in-rush calculations",
+		PT_KEYWORD,"NONE",IRM_NONE,
+		PT_KEYWORD,"TRAPEZOIDAL",IRM_TRAPEZOIDAL,
+		PT_KEYWORD,"BACKWARD_EULER",IRM_BACKEULER,
+		NULL);
 	gl_global_create("powerflow::low_voltage_impedance_level",PT_double,&impedance_conversion_low_pu,PT_DESCRIPTION,"Lower limit of voltage (in per-unit) at which all load types are converted to impedance for in-rush calculations",NULL);
 	gl_global_create("powerflow::enable_mesh_fault_current",PT_bool,&enable_mesh_fault_current,PT_DESCRIPTION,"Flag to enable mesh-based fault current calculations",NULL);
 

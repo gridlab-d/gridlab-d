@@ -45,6 +45,13 @@ typedef enum {
 	LS_CLOSED=1			///< defines that that link is closed
 } LINESTATUS;	//Line/link status - made at powerflow level for reusability
 
+typedef enum {
+	IRM_NONE=0,			///< Flag as no integration method
+	IRM_UNDEFINED=1,	///< Basically a flag to indicate "use the default" - specific object-level usage
+	IRM_TRAPEZOIDAL=2,	///< Use the trapezoidal implementaiton
+	IRM_BACKEULER=3		///< Use the backward-Euler implementation
+} INRUSHINTMETHOD;	//Selection of the integration method for the inrush calculations
+
 //Structure to hold external LU solver calls
 typedef struct s_ext_fxn {
 	void *dllLink;
@@ -118,6 +125,7 @@ GLOBAL double default_resistance INIT(1e-4);		/**< sets the default resistance f
 
 //In-rush deltamode stuff
 GLOBAL bool enable_inrush_calculations INIT(false);	/**< Flag to enable in-rush calculations in deltamode */
+GLOBAL INRUSHINTMETHOD default_inrush_integration_method INIT(IRM_TRAPEZOIDAL);	/**< Integration method used for inrush calculations */
 GLOBAL double impedance_conversion_low_pu INIT(0.7);	/** Lower PU voltage level to convert all loads to impedance */
 GLOBAL double deltatimestep_running INIT(-1.0);			/** Value of the current deltamode simulation - used for integration method in in-rush */
 

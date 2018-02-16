@@ -11,8 +11,6 @@
 #define _power_electronics_H
 
 #include <stdarg.h>
-#include "../powerflow/powerflow_object.h"
-//#include "../powerflow/node.h"
 #include "gridlabd.h"
 
 /**

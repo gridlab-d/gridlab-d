@@ -156,6 +156,18 @@ load::load(MODULE *mod) : node(mod)
 			PT_double, "current_fraction_C[pu]",PADDR(current_fraction[2]),PT_DESCRIPTION,"this is the constant current fraction of base power on phase C",
 			PT_double, "impedance_fraction_C[pu]",PADDR(impedance_fraction[2]),PT_DESCRIPTION,"this is the constant impedance fraction of base power on phase C",
 
+			PT_enumeration, "inrush_integration_method_capacitance",PADDR(inrush_int_method_capacitance),PT_DESCRIPTION,"Selected integration method to use for capacitive elements of the load",
+				PT_KEYWORD,"NONE",(enumeration)IRM_NONE,
+				PT_KEYWORD,"UNDEFINED",(enumeration)IRM_UNDEFINED,
+				PT_KEYWORD,"TRAPEZOIDAL",(enumeration)IRM_TRAPEZOIDAL,
+				PT_KEYWORD,"BACKWARD_EULER",(enumeration)IRM_BACKEULER,
+
+			PT_enumeration, "inrush_integration_method_inductance",PADDR(inrush_int_method_inductance),PT_DESCRIPTION,"Selected integration method to use for inductive elements of the load",
+				PT_KEYWORD,"NONE",(enumeration)IRM_NONE,
+				PT_KEYWORD,"UNDEFINED",(enumeration)IRM_UNDEFINED,
+				PT_KEYWORD,"TRAPEZOIDAL",(enumeration)IRM_TRAPEZOIDAL,
+				PT_KEYWORD,"BACKWARD_EULER",(enumeration)IRM_BACKEULER,
+
          	NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Publish deltamode functions
@@ -215,6 +227,10 @@ int load::create(void)
 
 	//ZIP fraction tracking
 	base_load_val_was_nonzero[0] = base_load_val_was_nonzero[1] = base_load_val_was_nonzero[2] = false;
+
+	//Set defaults to see if anyone changes the integration methods
+	inrush_int_method_inductance = IRM_UNDEFINED;
+	inrush_int_method_capacitance = IRM_UNDEFINED;
 
     return res;
 }
@@ -291,6 +307,20 @@ int load::init(OBJECT *parent)
 		//See if we're going to be "in-rushy" or not
 		if (enable_inrush_calculations==true)
 		{
+			//Figure out if we need our integration method updated - inductance
+			if (inrush_int_method_inductance == IRM_UNDEFINED)
+			{
+				//Pull the main object-level one
+				inrush_int_method_inductance = inrush_integration_method;
+			}
+
+			//Figure out if we need our integration method updated - capacitance
+			if (inrush_int_method_capacitance == IRM_UNDEFINED)
+			{
+				//Pull the main object-level one
+				inrush_int_method_capacitance = inrush_integration_method;
+			}
+
 			//Allocate all of the terms - inductive and capacitive, just in case
 			//Allocate ahrl - inductive term
 			ahrlloadstore = (complex *)gl_malloc(3*sizeof(complex));
@@ -2357,7 +2387,6 @@ void load::load_update_fxn(bool fault_mode)
 	//In-rush update information - incorporate the latest "impedance" values
 	//Put at bottom to ensure it gets the "converted impedance final result"
 	//Deltamode catch and check
-	//if ((deltatimestep_running > 0) && (enable_inrush_calculations == true))
 	if (enable_inrush_calculations == true)
 	{
 		if (deltatimestep_running > 0)	//In deltamode
@@ -2419,24 +2448,48 @@ void load::load_update_fxn(bool fault_mode)
 							LoadHistTermC[index_var+3] = LoadHistTermC[index_var];
 
 							//Code from below -- transition in needs an update first
-							//Extract the imaginary part (should be only part) and de-phasor it - Yshunt/(2*pi*f)*2/dt
-							workingvalue = shunt[index_var].Im() / (PI * current_frequency * deltatimestep_running);
+							if (inrush_int_method_capacitance == IRM_TRAPEZOIDAL)
+							{
+								//Extract the imaginary part (should be only part) and de-phasor it - Yshunt/(2*pi*f)*2/dt
+								workingvalue = shunt[index_var].Im() / (PI * current_frequency * deltatimestep_running);
 
-							//Create chrcstore while we're in here
-							chrcloadstore[index_var] = 2.0 * workingvalue;
+								//Create chrcstore while we're in here
+								chrcloadstore[index_var] = 2.0 * workingvalue;
+
+								//Calculate the updated history terms - hrcf = chrc*vfromprev/2.0
+								//Do a parent check
+								if ((SubNode != CHILD) && (SubNode != DIFF_CHILD))
+								{
+									LoadHistTermC[index_var] = NR_busdata[NR_node_reference].V[index_var] * chrcloadstore[index_var] / complex(2.0,0.0);
+								}
+								else	//Childed - get parent values
+								{
+									LoadHistTermC[index_var] = NR_busdata[*NR_subnode_reference].V[index_var] * chrcloadstore[index_var] / complex(2.0,0.0);
+								}
+							}
+							else if (inrush_int_method_capacitance == IRM_BACKEULER)
+							{
+								//Extract the imaginary part (should be only part) and de-phasor it - Yshunt/(2*pi*f)/dt
+								workingvalue = shunt[index_var].Im() / (2.0 * PI * current_frequency * deltatimestep_running);
+
+								//Create chrcstore while we're in here
+								chrcloadstore[index_var] = workingvalue;
+
+								//Calculate the updated history terms - hrcf = chrc*vfromprev
+								//Do a parent check
+								if ((SubNode != CHILD) && (SubNode != DIFF_CHILD))
+								{
+									LoadHistTermC[index_var] = NR_busdata[NR_node_reference].V[index_var] * chrcloadstore[index_var];
+								}
+								else	//Childed - get parent values
+								{
+									LoadHistTermC[index_var] = NR_busdata[*NR_subnode_reference].V[index_var] * chrcloadstore[index_var];
+								}
+							}
+							//future else
 
 							//End of copy from below
 
-							//Calculate the updated history terms - hrcf = chrc*vfromprev/2.0
-							//Do a parent check
-							if ((SubNode != CHILD) && (SubNode != DIFF_CHILD))
-							{
-								LoadHistTermC[index_var] = NR_busdata[NR_node_reference].V[index_var] * chrcloadstore[index_var] / complex(2.0,0.0);
-							}
-							else	//Childed - get parent values
-							{
-								LoadHistTermC[index_var] = NR_busdata[*NR_subnode_reference].V[index_var] * chrcloadstore[index_var] / complex(2.0,0.0);
-							}
 						}
 						else if (shunt[index_var].Im()<0.0) //Inductive
 						{
@@ -2454,11 +2507,23 @@ void load::load_update_fxn(bool fault_mode)
 							//Form the equivalent impedance value
 							working_impedance_value = complex(1.0,0.0) / shunt[index_var];
 
-							//Extract the imaginary part (should be only part) and de-phasor it - Yimped/(2*pi*f)*2/dt
-							workingvalue = working_impedance_value.Im() / (PI * current_frequency * deltatimestep_running);
+							if (inrush_int_method_inductance == IRM_TRAPEZOIDAL)
+							{
+								//Extract the imaginary part (should be only part) and de-phasor it - Yimped/(2*pi*f)*2/dt
+								workingvalue = working_impedance_value.Im() / (PI * current_frequency * deltatimestep_running);
 
-							//Put into the other working matrix (zh)
-							working_data_value = working_impedance_value - complex(workingvalue,0.0);
+								//Put into the other working matrix (zh)
+								working_data_value = working_impedance_value - complex(workingvalue,0.0);
+							}
+							else if (inrush_int_method_inductance == IRM_BACKEULER)
+							{
+								//Extract the imaginary part (should be only part) and de-phasor it - Yimped/(2*pi*f)/dt
+								workingvalue = working_impedance_value.Im() / (2.0 * PI * current_frequency * deltatimestep_running);
+
+								//Put into the other working matrix (zh)
+								working_data_value = complex(-1.0 * workingvalue,0.0);
+							}
+							//Default else -- should never get here
 
 							//Put back into "real" impedance value to make Y (Znew)
 							working_impedance_value += complex(workingvalue,0.0);
@@ -2476,8 +2541,17 @@ void load::load_update_fxn(bool fault_mode)
 							//Form the bhrl term - Y*Zh = bhrl
 							bhrlloadstore[index_var] = working_admittance_value * working_data_value;
 
-							//Compute the ahrl term - Y(Zh*Y - I)
-							ahrlloadstore[index_var] = working_admittance_value*(working_data_value * working_admittance_value - complex(1.0,0.0));
+							if (inrush_int_method_inductance == IRM_TRAPEZOIDAL)
+							{
+								//Compute the ahrl term - Y(Zh*Y - I)
+								ahrlloadstore[index_var] = working_admittance_value*(working_data_value * working_admittance_value - complex(1.0,0.0));
+							}
+							else if (inrush_int_method_inductance == IRM_BACKEULER)
+							{
+								//Compute the ahrl term - Y*Zh*Y
+								ahrlloadstore[index_var] = working_admittance_value * working_data_value * working_admittance_value;
+							}
+							//else should never happen
 
 							//End copy of above
 
@@ -2523,18 +2597,36 @@ void load::load_update_fxn(bool fault_mode)
 							//Update capacitive history terms
 							LoadHistTermC[index_var+3] = LoadHistTermC[index_var];
 
-							//Calculate the updated history terms - hrcf = chrc*vfromprev - hrcfprev
-							//Do a parent check
-							if ((SubNode != CHILD) && (SubNode != DIFF_CHILD))
+							//Figure out which method we're using
+							if (inrush_int_method_capacitance == IRM_TRAPEZOIDAL)
 							{
-								LoadHistTermC[index_var] = NR_busdata[NR_node_reference].V[index_var] * chrcloadstore[index_var] -
-														   LoadHistTermC[index_var+3];
+								//Calculate the updated history terms - hrcf = chrc*vfromprev - hrcfprev
+								//Do a parent check
+								if ((SubNode != CHILD) && (SubNode != DIFF_CHILD))
+								{
+									LoadHistTermC[index_var] = NR_busdata[NR_node_reference].V[index_var] * chrcloadstore[index_var] -
+															LoadHistTermC[index_var+3];
+								}
+								else	//Childed - get parent values
+								{
+									LoadHistTermC[index_var] = NR_busdata[*NR_subnode_reference].V[index_var] * chrcloadstore[index_var] -
+															LoadHistTermC[index_var+3];
+								}
 							}
-							else	//Childed - get parent values
+							else if (inrush_int_method_capacitance == IRM_BACKEULER)
 							{
-								LoadHistTermC[index_var] = NR_busdata[*NR_subnode_reference].V[index_var] * chrcloadstore[index_var] -
-														   LoadHistTermC[index_var+3];
+								//Calculate the updated history terms - hrcf = chrc*vfromprev
+								//Do a parent check
+								if ((SubNode != CHILD) && (SubNode != DIFF_CHILD))
+								{
+									LoadHistTermC[index_var] = NR_busdata[NR_node_reference].V[index_var] * chrcloadstore[index_var];
+								}
+								else	//Childed - get parent values
+								{
+									LoadHistTermC[index_var] = NR_busdata[*NR_subnode_reference].V[index_var] * chrcloadstore[index_var];
+								}
 							}
+							//Default else -- some other method
 						}
 						else if (shunt[index_var].Im()<0.0) //Inductive
 						{
@@ -2656,14 +2748,27 @@ void load::load_update_fxn(bool fault_mode)
 				ahrlloadstore[index_var] = complex(0.0,0.0);
 				bhrlloadstore[index_var] = complex(0.0,0.0);
 
-				//Extract the imaginary part (should be only part) and de-phasor it - Yshunt/(2*pi*f)*2/dt
-				workingvalue = shunt[index_var].Im() / (PI * current_frequency * deltatimestep_running);
+				if (inrush_int_method_capacitance == IRM_TRAPEZOIDAL)
+				{
+					//Extract the imaginary part (should be only part) and de-phasor it - Yshunt/(2*pi*f)*2/dt
+					workingvalue = shunt[index_var].Im() / (PI * current_frequency * deltatimestep_running);
+
+					//Create chrcstore while we're in here
+					chrcloadstore[index_var] = 2.0 * workingvalue;
+				}
+				else if (inrush_int_method_capacitance == IRM_BACKEULER)
+				{
+					//Extract the imaginary part (should be only part) and de-phasor it - Yshunt/(2*pi*f)/dt
+					workingvalue = shunt[index_var].Im() / (2.0 * PI * current_frequency * deltatimestep_running);
+
+					//Create chrcstore while we're in here
+					chrcloadstore[index_var] = workingvalue;
+				}
+				//Future else
 
 				//Put into the "shunt" admittance value
 				shunt[index_var] += complex(workingvalue,0.0);
 
-				//Create chrcstore while we're in here
-				chrcloadstore[index_var] = 2.0 * workingvalue;
 			}//End capacitve term update
 			else if (shunt[index_var].Im()<0.0) //Inductive
 			{
@@ -2673,11 +2778,23 @@ void load::load_update_fxn(bool fault_mode)
 				//Form the equivalent impedance value
 				working_impedance_value = complex(1.0,0.0) / shunt[index_var];
 
-				//Extract the imaginary part (should be only part) and de-phasor it - Yimped/(2*pi*f)*2/dt
-				workingvalue = working_impedance_value.Im() / (PI * current_frequency * deltatimestep_running);
+				if (inrush_int_method_inductance == IRM_TRAPEZOIDAL)
+				{
+					//Extract the imaginary part (should be only part) and de-phasor it - Yimped/(2*pi*f)*2/dt
+					workingvalue = working_impedance_value.Im() / (PI * current_frequency * deltatimestep_running);
 
-				//Put into the other working matrix (zh)
-				working_data_value = working_impedance_value - complex(workingvalue,0.0);
+					//Put into the other working matrix (zh)
+					working_data_value = working_impedance_value - complex(workingvalue,0.0);
+				}
+				else if (inrush_int_method_inductance == IRM_BACKEULER)
+				{
+					//Extract the imaginary part (should be only part) and de-phasor it - Yimped/(2*pi*f)/dt
+					workingvalue = working_impedance_value.Im() / (2.0 * PI * current_frequency * deltatimestep_running);
+
+					//Put into the other working matrix (zh)
+					working_data_value = complex(-1.0 * workingvalue,0.0);
+				}
+				//future ones
 
 				//Put back into "real" impedance value to make Y (Znew)
 				working_impedance_value += complex(workingvalue,0.0);
@@ -2695,8 +2812,17 @@ void load::load_update_fxn(bool fault_mode)
 				//Form the bhrl term - Y*Zh = bhrl
 				bhrlloadstore[index_var] = working_admittance_value * working_data_value;
 
-				//Compute the ahrl term - Y(Zh*Y - I)
-				ahrlloadstore[index_var] = working_admittance_value*(working_data_value * working_admittance_value - complex(1.0,0.0));
+				if (inrush_int_method_inductance == IRM_TRAPEZOIDAL)
+				{
+					//Compute the ahrl term - Y(Zh*Y - I)
+					ahrlloadstore[index_var] = working_admittance_value*(working_data_value * working_admittance_value - complex(1.0,0.0));
+				}
+				else if (inrush_int_method_inductance == IRM_BACKEULER)
+				{
+					//Compute the ahrl term - Y*Zh*Y
+					ahrlloadstore[index_var] = working_admittance_value * working_data_value * working_admittance_value;
+				}
+				//Future else
 
 				//Make sure we store the "new Y" so things get updated right
 				shunt[index_var] = working_admittance_value;

@@ -10,8 +10,6 @@
 #define _rectifier_H
 
 #include <stdarg.h>
-#include "../powerflow/powerflow_object.h"
-//#include "../powerflow/node.h"
 #include "gridlabd.h"
 #include "power_electronics.h"
 

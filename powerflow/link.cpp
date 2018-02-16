@@ -172,6 +172,19 @@ link_object::link_object(MODULE *mod) : powerflow_object(mod)
 			PT_double, "continuous_rating[A]", PADDR(link_rating[0]), PT_DESCRIPTION, "Continuous rating for this link object (set individual line segments",
 			PT_double, "emergency_rating[A]", PADDR(link_rating[1]), PT_DESCRIPTION, "Emergency rating for this link object (set individual line segments",
 			PT_double, "inrush_convergence_value[V]", PADDR(inrush_tol_value), PT_DESCRIPTION, "Tolerance, as change in line voltage drop between iterations, for deltamode in-rush completion",
+
+			PT_enumeration, "inrush_integration_method_capacitance",PADDR(inrush_int_method_capacitance),PT_DESCRIPTION,"Selected integration method to use for capacitive elements of the link",
+				PT_KEYWORD,"NONE",(enumeration)IRM_NONE,
+				PT_KEYWORD,"UNDEFINED",(enumeration)IRM_UNDEFINED,
+				PT_KEYWORD,"TRAPEZOIDAL",(enumeration)IRM_TRAPEZOIDAL,
+				PT_KEYWORD,"BACKWARD_EULER",(enumeration)IRM_BACKEULER,
+
+			PT_enumeration, "inrush_integration_method_inductance",PADDR(inrush_int_method_inductance),PT_DESCRIPTION,"Selected integration method to use for inductive elements of the link",
+				PT_KEYWORD,"NONE",(enumeration)IRM_NONE,
+				PT_KEYWORD,"UNDEFINED",(enumeration)IRM_UNDEFINED,
+				PT_KEYWORD,"TRAPEZOIDAL",(enumeration)IRM_TRAPEZOIDAL,
+				PT_KEYWORD,"BACKWARD_EULER",(enumeration)IRM_BACKEULER,
+
 			NULL) < 1 && errno) GL_THROW("unable to publish link properties in %s",__FILE__);
 
 			//Publish deltamode functions
@@ -253,13 +266,16 @@ int link_object::create(void)
 	deltamode_prev_time = -1.0; 
 	inrush_tol_value = 0.0001;	//0.1 mV - arbitrary
 
-	//****************** DEBUG
 	//Saturation-based items -- probably need to be moved, but putting here since me=lazy
 	D_sat = 0.0;
 	A_phi = complex(0.0,0.0);
 	B_phi = complex(0.0,0.0);
 	hphi = NULL;
 	saturation_calculated_vals = NULL;
+
+	//Set defaults to see if anyone changes the integration methods
+	inrush_int_method_inductance = IRM_UNDEFINED;
+	inrush_int_method_capacitance = IRM_UNDEFINED;
 
 	return result;
 }
@@ -569,6 +585,20 @@ int link_object::init(OBJECT *parent)
 			//See if we're a normal line
 			if (SpecialLnk == NORMAL)
 			{
+				//Figure out if we need our integration method updated - inductance
+				if (inrush_int_method_inductance == IRM_UNDEFINED)
+				{
+					//Pull the main object-level one
+					inrush_int_method_inductance = inrush_integration_method;
+				}
+
+				//Figure out if we need our integration method updated - capacitance
+				if (inrush_int_method_capacitance == IRM_UNDEFINED)
+				{
+					//Pull the main object-level one
+					inrush_int_method_capacitance = inrush_integration_method;
+				}
+
 				//Allocate the terms -- Inductance -- fully allocate, to stay consistent
 				LinkHistTermL = (complex *)gl_malloc(6*sizeof(complex));
 
@@ -1007,6 +1037,7 @@ void link_object::NR_link_presync_fxn(void)
 
 					if (use_line_cap == true)	//Only enable if capacitance is on
 					{
+						// Both do this, but backward-Euler probably doesn't need this
 						LinkHistTermCf[3] = LinkHistTermCf[0];	//"from" capacitance
 						LinkHistTermCf[4] = LinkHistTermCf[1];
 						LinkHistTermCf[5] = LinkHistTermCf[2];
@@ -1044,37 +1075,70 @@ void link_object::NR_link_presync_fxn(void)
 
 						if (use_line_cap == true)	//Only do if capacitance is enabled
 						{
-							//Calculate the updated history terms - hrcf = chrc*vfromprev - hrcfprev
-							LinkHistTermCf[0] = NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[0] +
-												NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[1] +
-												NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[2] -
-												LinkHistTermCf[3];
+							//See which method we're using
+							if (inrush_int_method_capacitance == IRM_TRAPEZOIDAL)
+							{
+								//Calculate the updated history terms - hrcf = chrc*vfromprev - hrcfprev
+								LinkHistTermCf[0] = NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[0] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[1] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[2] -
+													LinkHistTermCf[3];
 
-							LinkHistTermCf[1] = NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[3] +
-												NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[4] +
-												NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[5] -
-												LinkHistTermCf[4];
+								LinkHistTermCf[1] = NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[3] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[4] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[5] -
+													LinkHistTermCf[4];
 
-							LinkHistTermCf[2] = NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[6] +
-												NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[7] +
-												NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[8] -
-												LinkHistTermCf[5];
+								LinkHistTermCf[2] = NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[6] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[7] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[8] -
+													LinkHistTermCf[5];
 
-							//Calculate the updated history terms - hrcf = chrc*vfromprev - hrcfprev
-							LinkHistTermCt[0] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[0] +
-												NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[1] +
-												NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[2] -
-												LinkHistTermCt[3];
+								//Calculate the updated history terms - hrcf = chrc*vfromprev - hrcfprev
+								LinkHistTermCt[0] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[0] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[1] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[2] -
+													LinkHistTermCt[3];
 
-							LinkHistTermCt[1] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[3] +
-												NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[4] +
-												NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[5] -
-												LinkHistTermCt[4];
+								LinkHistTermCt[1] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[3] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[4] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[5] -
+													LinkHistTermCt[4];
 
-							LinkHistTermCt[2] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[6] +
-												NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[7] +
-												NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[8] -
-												LinkHistTermCt[5];
+								LinkHistTermCt[2] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[6] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[7] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[8] -
+													LinkHistTermCt[5];
+							}//End trapezoial method
+							else if (inrush_int_method_capacitance == IRM_BACKEULER)
+							{
+								//Calculate the updated history terms - hrcf = chrc*vfromprev
+								LinkHistTermCf[0] = NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[0] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[1] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[2];
+
+								LinkHistTermCf[1] = NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[3] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[4] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[5];
+
+								LinkHistTermCf[2] = NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[6] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[7] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[8];
+
+								//Calculate the updated history terms - hrcf = chrc*vfromprev
+								LinkHistTermCt[0] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[0] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[1] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[2];
+
+								LinkHistTermCt[1] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[3] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[4] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[5];
+
+								LinkHistTermCt[2] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[6] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[7] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[8];
+							}
+							//Default else - not any of these
 						}//End capacitance update
 					}//End "normal" run
 					else	//First run from steady state
@@ -1114,31 +1178,64 @@ void link_object::NR_link_presync_fxn(void)
 						//Update capacitance terms
 						if (use_line_cap == true)	//Only do if capacitance is enabled
 						{
-							//Calculate the updated history terms - hrcf = chrc*vfromprev/2.0
-							LinkHistTermCf[0] = (NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[0] +
-												NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[1] +
-												NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[2]) / complex(2.0,0.0);
+							//See which method we are
+							if (inrush_int_method_capacitance == IRM_TRAPEZOIDAL)
+							{
+								//Calculate the updated history terms - hrcf = chrc*vfromprev/2.0
+								LinkHistTermCf[0] = (NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[0] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[1] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[2]) / complex(2.0,0.0);
 
-							LinkHistTermCf[1] = (NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[3] +
-												NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[4] +
-												NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[5]) / complex(2.0,0.0);
+								LinkHistTermCf[1] = (NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[3] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[4] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[5]) / complex(2.0,0.0);
 
-							LinkHistTermCf[2] = (NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[6] +
-												NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[7] +
-												NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[8]) / complex(2.0,0.0);
+								LinkHistTermCf[2] = (NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[6] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[7] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[8]) / complex(2.0,0.0);
 
-							//Calculate the updated history terms - hrcf = chrc*vfromprev - hrcfprev
-							LinkHistTermCt[0] = (NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[0] +
-												NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[1] +
-												NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[2]) / complex(2.0,0.0);
+								//Calculate the updated history terms - hrcf = chrc*vfromprev - hrcfprev
+								LinkHistTermCt[0] = (NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[0] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[1] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[2]) / complex(2.0,0.0);
 
-							LinkHistTermCt[1] = (NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[3] +
-												NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[4] +
-												NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[5]) / complex(2.0,0.0);
+								LinkHistTermCt[1] = (NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[3] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[4] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[5]) / complex(2.0,0.0);
 
-							LinkHistTermCt[2] = (NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[6] +
-												NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[7] +
-												NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[8]) / complex(2.0,0.0);
+								LinkHistTermCt[2] = (NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[6] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[7] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[8]) / complex(2.0,0.0);
+							}
+							else if (inrush_int_method_capacitance == IRM_BACKEULER)
+							{
+								//Calculate the updated history terms - hrcf = chrc*vfromprev
+								LinkHistTermCf[0] = NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[0] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[1] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[2];
+
+								LinkHistTermCf[1] = NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[3] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[4] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[5];
+
+								LinkHistTermCf[2] = NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[6] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[7] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[8];
+
+								//Calculate the updated history terms - hrcf = chrc*vfromprev
+								LinkHistTermCt[0] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[0] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[1] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[2];
+
+								LinkHistTermCt[1] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[3] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[4] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[5];
+
+								LinkHistTermCt[2] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[6] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[7] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[8];
+							}
+							//else - not sure?
 						}//End capacitance update
 					}//End first run of in-rush from steady-state
 
@@ -1243,7 +1340,6 @@ void link_object::NR_link_presync_fxn(void)
 						//Set the transformer flag for "normal"
 						transf_from_stdy_state = false;
 					}
-					/**************************************************************/
 
 					//Update the tracker
 					deltamode_prev_time = curr_delta_time;
@@ -1893,11 +1989,23 @@ void link_object::NR_link_presync_fxn(void)
 				{
 					for (kindex=0; kindex<3; kindex++)
 					{
-						//Extract the imaginary part (should be only part) and de-phasor it - Yshunt/(2*pi*f)*2/dt
-						workingvalue = b_mat[jindex][kindex].Im() / (PI * current_frequency * deltatimestep_running);
+						if (inrush_int_method_inductance == IRM_TRAPEZOIDAL)
+						{
+							//Extract the imaginary part (should be only part) and de-phasor it - Yshunt/(2*pi*f)*2/dt
+							workingvalue = b_mat[jindex][kindex].Im() / (PI * current_frequency * deltatimestep_running);
 
-						//Put into the other working matrix (zh)
-						Ylefttemp[jindex][kindex] = b_mat[jindex][kindex] - complex(workingvalue,0.0);
+							//Put into the other working matrix (zh)
+							Ylefttemp[jindex][kindex] = b_mat[jindex][kindex] - complex(workingvalue,0.0);
+						}
+						else if (inrush_int_method_inductance == IRM_BACKEULER)
+						{
+							//Extract the imaginary part (should be only part) and de-phasor it - Yshunt/(2*pi*f)/dt
+							workingvalue = b_mat[jindex][kindex].Im() / (2.0 * PI * current_frequency * deltatimestep_running);
+
+							//Put into the other working matrix (zh)
+							Ylefttemp[jindex][kindex] = complex(-1.0 * workingvalue,0.0);
+						}
+						//Default else -- better not get here
 
 						//Put back into the impedance matrix
 						b_mat[jindex][kindex] += complex(workingvalue,0.0);
@@ -1944,12 +2052,21 @@ void link_object::NR_link_presync_fxn(void)
 				//Form the bhrl term - Y*Zh = bhrl
 				multiply(Y,Ylefttemp,Yfrom);
 
-				//Compute the ahrl term - Y(Zh*Y - I)
-				multiply(Ylefttemp,Y,Yto);	//Zh*Y
-				Yto[0][0]-=1.0;	// -I
-				Yto[1][1]-=1.0;
-				Yto[2][2]-=1.0;
-				multiply(Y,Yto,Ylefttemp);	//Y(Zh*Y-I)
+				if (inrush_int_method_inductance == IRM_TRAPEZOIDAL)
+				{
+					//Compute the ahrl term - Y(Zh*Y - I)
+					multiply(Ylefttemp,Y,Yto);	//Zh*Y
+					Yto[0][0]-=1.0;	// -I
+					Yto[1][1]-=1.0;
+					Yto[2][2]-=1.0;
+					multiply(Y,Yto,Ylefttemp);	//Y(Zh*Y-I)
+				}
+				else if (inrush_int_method_inductance == IRM_BACKEULER)
+				{
+					//Compute the ahrl term - Y*Zh*Y
+					multiply(Ylefttemp,Y,Yto);	//Zh*Y
+					multiply(Y,Yto,Ylefttemp);	//Y(Zh*Y))
+				}
 
 				//Loop and store them - translate due to mallocing to be safe
 				for (jindex=0; jindex<3; jindex++)
@@ -2059,17 +2176,29 @@ void link_object::NR_link_presync_fxn(void)
 						{
 							for (kindex=0; kindex<3; kindex++)
 							{
-								//Extract the imaginary part (should be only part) and de-phasor it - Yshunt/(2*pi*f)*2/dt
-								workingvalue = Ylefttemp[jindex][kindex].Im() / (PI * current_frequency * deltatimestep_running);
+								if (inrush_int_method_capacitance == IRM_TRAPEZOIDAL)
+								{
+									//Extract the imaginary part (should be only part) and de-phasor it - Yshunt/(2*pi*f)*2/dt
+									workingvalue = Ylefttemp[jindex][kindex].Im() / (PI * current_frequency * deltatimestep_running);
+
+									//Create chrcstore while we're in here
+									chrcstore[jindex*3+kindex] = 2.0 * workingvalue;
+								}
+								else if (inrush_int_method_capacitance == IRM_BACKEULER)
+								{
+									//Extract the imaginary part (should be only part) and de-phasor it - Yshunt/(2*pi*f)/dt
+									workingvalue = Ylefttemp[jindex][kindex].Im() / (2.0 * PI * current_frequency * deltatimestep_running);
+
+									//Create chrcstore while we're in here
+									chrcstore[jindex*3+kindex] = workingvalue;
+								}
+								//Default else
 
 								//Put into the "shunt" matrix
 								Ylefttemp[jindex][kindex] += complex(workingvalue,0.0);
 
 								//Copy this value into the final storage matrix too
 								LinkCapShuntTerm[jindex*3+kindex] = Ylefttemp[jindex][kindex];
-
-								//Create chrcstore while we're in here
-								chrcstore[jindex*3+kindex] = 2.0 * workingvalue;
 							}
 						}
 					}

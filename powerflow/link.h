@@ -132,6 +132,8 @@ public:
 	void BOTH_link_postsync_fxn(void);
 	void perform_limit_checks(double *over_limit_value, bool *over_limits);
 	double inrush_tol_value;	///< Tolerance value (of vdiff on the line ends) before "inrush convergence" is accepted
+	INRUSHINTMETHOD inrush_int_method_inductance;	//Individual mode selection
+	INRUSHINTMETHOD inrush_int_method_capacitance;
 
 	//New matrix functions associated with transformer inrush (bigger)
 	void lmatrix_add(complex *matrix_in_A, complex *matrix_in_B, complex *matrix_out, int matsize);

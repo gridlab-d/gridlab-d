@@ -31,6 +31,8 @@ public:
 	complex constant_power_dy[6];		// Power load, explicitly specified wye and delta -- delta first, then wye
 	complex constant_current_dy[6];	// Current load, explicitly specified wye and delta -- delta first, then wye
 	complex constant_impedance_dy[6];	// Impedance load, explicitly specified wye and delta -- delta first, then wye
+	INRUSHINTMETHOD inrush_int_method_inductance;	//Individual mode selection
+	INRUSHINTMETHOD inrush_int_method_capacitance;
 
 	double base_power[3];
 	double power_pf[3];
