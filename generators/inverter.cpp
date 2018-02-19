@@ -11,8 +11,8 @@
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
-#include <iostream> // only for cout and endl
-using namespace std;
+//#include <iostream> // only for cout and endl
+//using namespace std;
 
 #include "generators.h"
 #include "power_electronics.h"
