@@ -408,6 +408,7 @@ private:
 	double kp_Vterminal;			///< The proportional gain for the VSI terminal voltage modulation
 
 	void update_control_references(void);
+	STATUS initalize_IEEE_1547_checks(OBJECT *parent);
 
 public:
 	/* required implementations */
