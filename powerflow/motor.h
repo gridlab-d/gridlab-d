@@ -39,7 +39,7 @@ private:
 	complex complex_exp(double angle);
 	int invertMatrix(complex TF[16], complex ITF[16]);
 
-	//************** Begin_Yuan's TPIM model ********************//
+	//TPIM functions
 	void TPIMupdateVars(); // function to update the previous values for the motor model
 	void TPIMUpdateMotorStatus(); // function to update the status of the motor
 	void TPIMStateOFF(); // function to ensure that internal model states are zeros when the motor is OFF
@@ -47,12 +47,12 @@ private:
 	void TPIMUpdateProtection(double delta_time); // function to update the protection of the motor
 	void TPIMSteadyState(TIMESTAMP t1); // steady state model for the TPIM motor
 	void TPIMDynamic(double curr_delta_time, double dTime); // dynamic phasor model for the TPIM motor
-	//************** End_Yuan's TPIM model ********************//
 
 	double delta_cycle;
 	double Pbase;
 	double Ibase;
-	double wb;
+	double wbase;
+	double ws_pu;
 	double n; 
 	double Rds;
 	double Rqs;
@@ -71,7 +71,7 @@ private:
 	double cap_run_speed; 
 	double trip_time;
 	double reconnect_time;
-	double interation_count;
+	int32 iteration_count;
 	double DM_volt_trig_per;
 	double DM_speed_trig_per;
 	double DM_volt_trig;
@@ -114,7 +114,7 @@ private:
     complex If;
     complex Ib;
     complex Is;
-    complex Ss;
+    complex motor_elec_power;
     double Telec;
 	double Tmech;
     double wr;
@@ -132,7 +132,7 @@ private:
     complex If_prev;
     complex Ib_prev;
     complex Is_prev;
-    complex Ss_prev;
+    complex motor_elec_power_prev;
     double Telec_prev;
 	double Tmech_prev;
     double wr_prev;
@@ -142,25 +142,22 @@ private:
 	double ws;
 	int connected_phase;
 
-	//************** Begin_Yuan's TPIM model ********************//
+	//TPIM variables
 	double rs;
-	double rr;
+	double rr_pu;
 	double lm;
-	double IbTPIM; // base current for TPIM model
 	double lls;
 	double llr;
-	double TLrated; // rated mechanical torque applied to three phase induction motor
-	double TL;  // actually applied mechanical torque
+	double TL_pu;  // actually applied mechanical torque
 	double Kfric;
 	complex phips;
 	complex phins_cj;
 	complex phipr;
 	complex phinr_cj;
-	double omgr0;
+	double wr_pu;
 	complex Ias;
 	complex Ibs;
 	complex Ics;
-	complex Smt;
 	complex Vas;
 	complex Vbs;
 	complex Vcs;
@@ -172,27 +169,16 @@ private:
 	double Lr;
 	double sigma1;
 	double sigma2;
-	double wref;
-	double wsyn;
 
 	complex phips_prev;
 	complex phins_cj_prev;
 	complex phipr_prev;
 	complex phinr_cj_prev;
-	double omgr0_prev;
+	double wr_pu_prev;
 	complex Ips_prev;
 	complex Ipr_prev;
 	complex Ins_cj_prev;
 	complex Inr_cj_prev;
-
-	typedef enum {
-		initialRUNNING=0,			///< Motor starts running from established speed and torque
-		initialSTATIONARY = 1			///< Motor starts up from zero speed and torque
-	} TPIM_INITIAL_STATUS;
-	enumeration TPIM_initial_status;
-
-	//************** End_Yuan's TPIM model ********************//
-
 
 public:
 	int create(void);

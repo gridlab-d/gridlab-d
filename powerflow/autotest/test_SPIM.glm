@@ -50,7 +50,7 @@ object motor {
 	reconnect_time 10;
 	motor_override ON;
 	object double_assert {
-		target wr;
+		target rotor_speed;
 		within 0.1;
 		flags DELTAMODE;
 		object player {
@@ -168,7 +168,7 @@ object player {
      // parent induction_motor;
      // file wr.csv;
      // interval 1;
-     // property wr;
+     // property rotor_speed;
 	 // flags DELTAMODE;
 // };
 

@@ -345,7 +345,7 @@ object motor {
 	triplex_connection_type TRIPLEX_12;
 	object double_assert {
 		flags DELTAMODE;
-		target wr;
+		target rotor_speed;
 		within 0.1;
 		object player {
 			flags DELTAMODE;
@@ -355,7 +355,7 @@ object motor {
 	};
 	// object recorder {
 		// flags DELTAMODE;
-		// property wr;
+		// property rotor_speed;
 		// interval 1;
 		// file motor_A_speed.csv;
 	// };
@@ -374,7 +374,7 @@ object motor {
 	triplex_connection_type TRIPLEX_1N;
 	object double_assert {
 		flags DELTAMODE;
-		target wr;
+		target rotor_speed;
 		within 0.1;
 		object player {
 			flags DELTAMODE;
@@ -384,7 +384,7 @@ object motor {
 	};
 	// object recorder {
 		// flags DELTAMODE;
-		// property wr;
+		// property rotor_speed;
 		// interval 1;
 		// file motor_B_speed.csv;
 	// };
@@ -403,7 +403,7 @@ object motor {
 	triplex_connection_type TRIPLEX_2N;
 	object double_assert {
 		flags DELTAMODE;
-		target wr;
+		target rotor_speed;
 		within 0.1;
 		object player {
 			flags DELTAMODE;
@@ -413,7 +413,7 @@ object motor {
 	};
 	// object recorder {
 		// flags DELTAMODE;
-		// property wr;
+		// property rotor_speed;
 		// interval 1;
 		// file motor_C_speed.csv;
 	// };

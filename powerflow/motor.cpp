@@ -40,30 +40,32 @@ motor::motor(MODULE *mod):node(mod)
 			PT_INHERIT, "node",
 			PT_double, "base_power[W]", PADDR(Pbase),PT_DESCRIPTION,"base power",
 			PT_double, "n", PADDR(n),PT_DESCRIPTION,"ratio of stator auxiliary windings to stator main windings",
-			PT_double, "Rds[ohm]", PADDR(Rds),PT_DESCRIPTION,"d-axis resistance",
-			PT_double, "Rqs[ohm]", PADDR(Rqs),PT_DESCRIPTION,"q-asis resistance",
-			PT_double, "Rr[ohm]", PADDR(Rr),PT_DESCRIPTION,"rotor resistance",
-			PT_double, "Xm[ohm]", PADDR(Xm),PT_DESCRIPTION,"magnetizing reactance",
-			PT_double, "Xr[ohm]", PADDR(Xr),PT_DESCRIPTION,"rotor reactance",
-			PT_double, "Xc_run[ohm]", PADDR(Xc1),PT_DESCRIPTION,"running capacitor reactance",
-			PT_double, "Xc_start[ohm]", PADDR(Xc2),PT_DESCRIPTION,"starting capacitor reactance",
-			PT_double, "Xd_prime[ohm]", PADDR(Xd_prime),PT_DESCRIPTION,"d-axis reactance",
-			PT_double, "Xq_prime[ohm]", PADDR(Xq_prime),PT_DESCRIPTION,"q-axis reactance",
-			PT_double, "A_sat", PADDR(Asat),PT_DESCRIPTION,"flux saturation parameter, A",
-			PT_double, "b_sat", PADDR(bsat),PT_DESCRIPTION,"flux saturation parameter, b",
+			PT_double, "Rds[ohm]", PADDR(Rds),PT_DESCRIPTION,"d-axis resistance - single-phase model",
+			PT_double, "Rqs[ohm]", PADDR(Rqs),PT_DESCRIPTION,"q-asis resistance - single-phase model",
+			PT_double, "Rr[ohm]", PADDR(Rr),PT_DESCRIPTION,"rotor resistance - single-phase model",
+			PT_double, "Xm[ohm]", PADDR(Xm),PT_DESCRIPTION,"magnetizing reactance - single-phase model",
+			PT_double, "Xr[ohm]", PADDR(Xr),PT_DESCRIPTION,"rotor reactance - single-phase model",
+			PT_double, "Xc_run[ohm]", PADDR(Xc1),PT_DESCRIPTION,"running capacitor reactance - single-phase model",
+			PT_double, "Xc_start[ohm]", PADDR(Xc2),PT_DESCRIPTION,"starting capacitor reactance - single-phase model",
+			PT_double, "Xd_prime[ohm]", PADDR(Xd_prime),PT_DESCRIPTION,"d-axis reactance - single-phase model",
+			PT_double, "Xq_prime[ohm]", PADDR(Xq_prime),PT_DESCRIPTION,"q-axis reactance - single-phase model",
+			PT_double, "A_sat", PADDR(Asat),PT_DESCRIPTION,"flux saturation parameter, A - single-phase model",
+			PT_double, "b_sat", PADDR(bsat),PT_DESCRIPTION,"flux saturation parameter, b - single-phase model",
 			PT_double, "H", PADDR(H),PT_DESCRIPTION,"moment of inertia",
 			PT_double, "To_prime[s]", PADDR(To_prime),PT_DESCRIPTION,"rotor time constant",
 			PT_double, "capacitor_speed[%]", PADDR(cap_run_speed_percentage),PT_DESCRIPTION,"percentage speed of nominal when starting capacitor kicks in",
 			PT_double, "trip_time[s]", PADDR(trip_time),PT_DESCRIPTION,"time motor can stay stalled before tripping off ",
 			PT_double, "reconnect_time[s]", PADDR(reconnect_time),PT_DESCRIPTION,"time before tripped motor reconnects",
-			PT_double, "mechanical_torque", PADDR(Tmech),PT_DESCRIPTION,"mechanical torque applied to the motor",
-			PT_double, "iteration_count", PADDR(interation_count),PT_DESCRIPTION,"maximum number of iterations for steady state model",
+			
+			//Reconcile torque and speed, primarily
+			PT_double, "mechanical_torque[pu]", PADDR(Tmech),PT_DESCRIPTION,"mechanical torque applied to the motor",
+			PT_int32, "iteration_count", PADDR(iteration_count),PT_DESCRIPTION,"maximum number of iterations for steady state model",
 			PT_double, "delta_mode_voltage_trigger[%]", PADDR(DM_volt_trig_per),PT_DESCRIPTION,"percentage voltage of nominal when delta mode is triggered",
 			PT_double, "delta_mode_rotor_speed_trigger[%]", PADDR(DM_speed_trig_per),PT_DESCRIPTION,"percentage speed of nominal when delta mode is triggered",
 			PT_double, "delta_mode_voltage_exit[%]", PADDR(DM_volt_exit_per),PT_DESCRIPTION,"percentage voltage of nominal to exit delta mode",
 			PT_double, "delta_mode_rotor_speed_exit[%]", PADDR(DM_speed_exit_per),PT_DESCRIPTION,"percentage speed of nominal to exit delta mode",
 			PT_double, "maximum_speed_error", PADDR(speed_error),PT_DESCRIPTION,"maximum speed error for the steady state model",
-			PT_double, "wr", PADDR(wr),PT_DESCRIPTION,"rotor speed",
+			PT_double, "rotor_speed[rad/s]", PADDR(wr),PT_DESCRIPTION,"rotor speed",
 			PT_enumeration,"motor_status",PADDR(motor_status),PT_DESCRIPTION,"the current status of the motor",
 				PT_KEYWORD,"RUNNING",(enumeration)statusRUNNING,
 				PT_KEYWORD,"STALLED",(enumeration)statusSTALLED,
@@ -82,8 +84,8 @@ motor::motor(MODULE *mod):node(mod)
 				PT_KEYWORD,"TRIPLEX_12",(enumeration)TPNconnected12,
 
 			// These model parameters are published as hidden
-			PT_double, "wb[rad/s]", PADDR(wb),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"base speed",
-			PT_double, "ws", PADDR(ws),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"system speed",
+			PT_double, "wb[rad/s]", PADDR(wbase),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"base speed",
+			PT_double, "ws[rad/s]", PADDR(ws),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"system speed",
 			PT_complex, "psi_b", PADDR(psi_b),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"backward rotating flux",
 			PT_complex, "psi_f", PADDR(psi_f),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"forward rotating flux",
 			PT_complex, "psi_dr", PADDR(psi_dr),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"Rotor d axis flux",
@@ -93,48 +95,33 @@ motor::motor(MODULE *mod):node(mod)
 			PT_complex, "If", PADDR(If),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"forward current",
 			PT_complex, "Ib", PADDR(Ib),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"backward current",
 			PT_complex, "Is", PADDR(Is),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"motor current",
-			PT_complex, "Ss", PADDR(Ss),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"motor power",
-			PT_double, "electrical_torque", PADDR(Telec),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"electrical torque",
+			PT_complex, "electrical_power[VA]", PADDR(motor_elec_power),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"motor power",
+			PT_double, "electrical_torque[pu]", PADDR(Telec),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"electrical torque",
 			PT_complex, "Vs", PADDR(Vs),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"motor voltage",
 			PT_bool, "motor_trip", PADDR(motor_trip),PT_DESCRIPTION,"boolean variable to check if motor is tripped",
 			PT_double, "trip", PADDR(trip),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"current time in tripped state",
 			PT_double, "reconnect", PADDR(reconnect),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"current time since motor was tripped",
 
-			//**** YUAN'S THREE-PHASE INDUCTION MOTOR VARIABLES COULD GO HERE ****//
-			//************** Begin_Yuan's TPIM model ********************//
-			PT_double, "rs[pu]", PADDR(rs),PT_DESCRIPTION,"stator resistance",
-			PT_double, "rr[pu]", PADDR(rr),PT_DESCRIPTION,"rotor resistance",
-			PT_double, "lm[pu]", PADDR(lm),PT_DESCRIPTION,"magnetizing reactance",
-			PT_double, "lls[pu]", PADDR(lls),PT_DESCRIPTION,"stator leakage reactance",
-			PT_double, "llr[pu]", PADDR(llr),PT_DESCRIPTION,"rotor leakage reactance",
-			PT_double, "TPIM_rated_mechanical_Load_torque", PADDR(TLrated),PT_DESCRIPTION,"rated mechanical load torque applied to three-phase induction motor",
+			//Three-phase-specific variables
+			PT_double, "rs[pu]", PADDR(rs),PT_DESCRIPTION,"stator resistance - three-phase model",
+			PT_double, "rr[pu]", PADDR(rr_pu),PT_DESCRIPTION,"rotor per-unit resistance - three-phase model",
+			PT_double, "lm[pu]", PADDR(lm),PT_DESCRIPTION,"magnetizing reactance - three-phase model",
+			PT_double, "lls[pu]", PADDR(lls),PT_DESCRIPTION,"stator leakage reactance - three-phase model",
+			PT_double, "llr[pu]", PADDR(llr),PT_DESCRIPTION,"rotor leakage reactance - three-phase model",
 			PT_double, "friction_coefficient", PADDR(Kfric),PT_DESCRIPTION,"coefficient of speed-dependent torque",
-			PT_enumeration,"TPIM_initial_status",PADDR(TPIM_initial_status),PT_DESCRIPTION,"initial status of three-phase induction motor: RUNNING or STATIONARY",
-				PT_KEYWORD,"RUNNING",(enumeration)initialRUNNING,
-				PT_KEYWORD,"STATIONARY",(enumeration)initialSTATIONARY,
-			// share declarations of interation_count, DM_volt_trig_per, DM_speed_trig_per, DM_volt_exit_per, DM_speed_exit_per, speed_error with SPIM model
-			// share declarations of motor_status, motor_override and motor_op_mode with SPIM model
-			// share declarations of motor_trip
-
-//			PT_double, "trip_time[s]", PADDR(trip_time),PT_DESCRIPTION,"time motor can stay stalled before tripping off ",
-//			PT_double, "reconnect_time[s]", PADDR(reconnect_time),PT_DESCRIPTION,"time before tripped motor reconnects",
 
 			// These model parameters are published as hidden
-			// share declarations of wb with SPIM
-			PT_double, "wsyn", PADDR(wsyn),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"system frequency in pu",
 			PT_complex, "phips", PADDR(phips),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"positive sequence stator flux",
 			PT_complex, "phins_cj", PADDR(phins_cj),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"conjugate of negative sequence stator flux",
 			PT_complex, "phipr", PADDR(phipr),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"positive sequence rotor flux",
 			PT_complex, "phinr_cj", PADDR(phinr_cj),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"conjugate of negative sequence rotor flux",
-			PT_double, "omgr0", PADDR(omgr0),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"dc component of rotor speed",
-			PT_double, "TL", PADDR(TL),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"actually applied mechanical torque",
-			PT_complex, "Ias", PADDR(Ias),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"motor phase-a stator current",
-			PT_complex, "Ibs", PADDR(Ibs),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"motor phase-b stator current",
-			PT_complex, "Ics", PADDR(Ics),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"motor phase-c stator current",
-			PT_complex, "Smt", PADDR(Smt),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"motor complex power",
-			PT_complex, "Vas", PADDR(Vas),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"motor phase-a stator-to-ground voltage",
-			PT_complex, "Vbs", PADDR(Vbs),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"motor phase-b stator-to-ground voltage",
-			PT_complex, "Vcs", PADDR(Vcs),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"motor phase-c stator-to-ground voltage",
+			PT_double, "per_unit_rotor_speed[pu]", PADDR(wr_pu),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"rotor speed in per-unit",
+			PT_complex, "Ias[pu]", PADDR(Ias),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"motor phase-a stator current",
+			PT_complex, "Ibs[pu]", PADDR(Ibs),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"motor phase-b stator current",
+			PT_complex, "Ics[pu]", PADDR(Ics),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"motor phase-c stator current",
+			PT_complex, "Vas[pu]", PADDR(Vas),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"motor phase-a stator-to-ground voltage",
+			PT_complex, "Vbs[pu]", PADDR(Vbs),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"motor phase-b stator-to-ground voltage",
+			PT_complex, "Vcs[pu]", PADDR(Vcs),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"motor phase-c stator-to-ground voltage",
 			PT_complex, "Ips", PADDR(Ips),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"positive sequence stator current",
 			PT_complex, "Ipr", PADDR(Ipr),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"positive sequence rotor current",
 			PT_complex, "Ins_cj", PADDR(Ins_cj),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"conjugate of negative sequence stator current",
@@ -143,11 +130,6 @@ motor::motor(MODULE *mod):node(mod)
 			PT_double, "Lr", PADDR(Lr),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"rotor synchronous reactance",
 			PT_double, "sigma1", PADDR(sigma1),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"intermediate variable 1 associated with synch. react.",
 			PT_double, "sigma2", PADDR(sigma2),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"intermediate variable 2 associated with synch. react.",
-//			PT_bool, "motor_trip", PADDR(motor_trip),PT_DESCRIPTION,"boolean variable to check if motor is tripped",
-//			PT_double, "trip", PADDR(trip),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"current time in tripped state",
-//			PT_double, "reconnect", PADDR(reconnect),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"current time since motor was tripped",
-
-			//************** End_Yuan's TPIM model ********************//
 
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
@@ -170,6 +152,9 @@ int motor::create()
 	int result = node::create();
 	last_cycle = 0;
 
+	//Flag variable
+	Tmech = -1.0;
+
 	// Default parameters
 	motor_override = overrideON;  // share the variable with TPIM
 	motor_trip = 0;  // share the variable with TPIM
@@ -190,8 +175,7 @@ int motor::create()
 	To_prime =0.1212;   
 	trip_time = 10;        
 	reconnect_time = 300;
-	interation_count = 1000;  // share the variable with TPIM
-	Tmech = 1.0448;
+	iteration_count = 1000;  // share the variable with TPIM
 	cap_run_speed_percentage = 50;
 	DM_volt_trig_per = 80; // share the variable with TPIM
 	DM_speed_trig_per = 80;  // share the variable with TPIM
@@ -202,62 +186,51 @@ int motor::create()
 	// initial parameter for internal model
 	trip = 0;
 	reconnect = 0;
-	psi_b = complex(0,0);
-    psi_f = complex(0,0);
-    psi_dr = complex(0,0); 
-    psi_qr = complex(0,0); 
-    Ids = complex(0,0);
-    Iqs = complex(0,0);  
-    If = complex(0,0);
-    Ib = complex(0,0);
-    Is = complex(0,0);
-    Ss = complex(0,0);
+	psi_b = complex(0.0,0.0);
+    psi_f = complex(0.0,0.0);
+    psi_dr = complex(0.0,0.0); 
+    psi_qr = complex(0.0,0.0); 
+    Ids = complex(0.0,0.0);
+    Iqs = complex(0.0,0.0);  
+    If = complex(0.0,0.0);
+    Ib = complex(0.0,0.0);
+    Is = complex(0.0,0.0);
+    motor_elec_power = complex(0.0,0.0);
     Telec = 0; 
     wr = 0;
 
     //Mode initialization
     motor_op_mode = modeSPIM; // share the variable with TPIM
 
-    /************ YUAN ***************/
-    //Three-phase induction motor parameters would go here
-    //************** Begin_Yuan's TPIM model ********************//
+    //Three-phase induction motor parameters
     rs = 0.01;  // pu
     lls = 0.1;  //  pu
     lm = 3.0;  // pu
-    rr = 0.005;  // pu
+    rr_pu = 0.005;  // pu
     llr = 0.08;  // pu
 
-    //************* Parameters are for 3000 W motor - reconciled variable with SPIM - figure out how to trigger this
-    //PbTPIM = 3000; // W
-    //Hs = 0.1;  // s	-- this needs to be reconciled as well
+    // Parameters are for 3000 W motor
     Kfric = 0.0;  // pu
-	TL = 0.95;  // pu
-	TLrated = 0.95;  //pu
-	phips = complex(0,0); // pu
-	phins_cj = complex(0,0); // pu
-	phipr = complex(0,0); // pu
-	phinr_cj = complex(0,0); // pu
-	omgr0 = 0.97; // pu
-	Ias = complex(0,0); // pu
-	Ibs = complex(0,0); // pu
-	Ics = complex(0,0); // pu
-	Smt = complex(0,0); // VA
-	Vas = complex(0,0); // pu
-	Vbs = complex(0,0); // pu
-	Vcs = complex(0,0); // pu
-	Ips = complex(0,0); // pu
-	Ipr = complex(0,0); // pu
-	Ins_cj = complex(0,0); // pu
-	Inr_cj = complex(0,0); // pu
+	phips = complex(0.0,0.0); // pu
+	phins_cj = complex(0.0,0.0); // pu
+	phipr = complex(0.0,0.0); // pu
+	phinr_cj = complex(0.0,0.0); // pu
+	wr_pu = 0.97; // pu
+	Ias = complex(0.0,0.0); // pu
+	Ibs = complex(0.0,0.0); // pu
+	Ics = complex(0.0,0.0); // pu
+	Vas = complex(0.0,0.0); // pu
+	Vbs = complex(0.0,0.0); // pu
+	Vcs = complex(0.0,0.0); // pu
+	Ips = complex(0.0,0.0); // pu
+	Ipr = complex(0.0,0.0); // pu
+	Ins_cj = complex(0.0,0.0); // pu
+	Inr_cj = complex(0.0,0.0); // pu
 	Ls = 0.0; // pu
 	Lr = 0.0; // pu
 	sigma1 = 0.0; // pu
 	sigma2 = 0.0; // pu
-	wref = 0.0; // pu
-	wsyn = 1.0; // pu
-	TPIM_initial_status = initialRUNNING;
-
-    //************** End_Yuan's TPIM model ********************//
+	ws_pu = 1.0; // pu
 
 	triplex_connected = false;	//By default, not connected to triplex
 	triplex_connection_type = TPNconnected12;	//If it does end up being triplex, we default it to L1-L2
@@ -271,10 +244,15 @@ int motor::init(OBJECT *parent)
 	int result = node::init(parent);
 
 	// Check what phases are connected on this motor
-	double num_phases = 0;
-	num_phases = num_phases+has_phase(PHASE_A);
-	num_phases = num_phases+has_phase(PHASE_B);
-	num_phases = num_phases+has_phase(PHASE_C);
+	int num_phases = 0;
+	if (has_phase(PHASE_A)==true)
+		num_phases++;
+
+	if (has_phase(PHASE_B)==true)
+		num_phases++;
+
+	if (has_phase(PHASE_C)==true)
+		num_phases++;
 	
 	// error out if we have more than one phase
 	if (num_phases == 1)
@@ -287,15 +265,28 @@ int motor::init(OBJECT *parent)
 	}
 	else
 	{
-		GL_THROW("motor:%s -- only single-phase or three-phase motors are support",(obj->name ? obj->name : "Unnamed"));
+		GL_THROW("motor:%s -- only single-phase or three-phase motors are supported",(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
 		The motor only supports single-phase and three-phase motors at this time.  Please use one of these connection types.
 		*/
 	}
 
-	// determine the specific phase this motor is connected to
-	// --- @TODO: Implement support for split phase
+	//Check the initial torque conditions
+	if (Tmech == -1.0)
+	{
+		//See which one we are
+		if (motor_op_mode == modeSPIM)
+		{
+			Tmech = 1.0448;
+		}
+		else	//Assume 3 phase
+		{
+			Tmech = 0.95;
+		}
+	}
+	//Default else - user specified it
 
+	// determine the specific phase this motor is connected to
 	if (motor_op_mode == modeSPIM)
 	{
 		if (has_phase(PHASE_S))
@@ -311,65 +302,56 @@ int motor::init(OBJECT *parent)
 			if (has_phase(PHASE_A)) {
 				connected_phase = 0;
 			}
-			if (has_phase(PHASE_B)) {
+			else if (has_phase(PHASE_B)) {
 				connected_phase = 1;
 			}
-			if (has_phase(PHASE_C)) {
+			else {	//Phase C, by default
 				connected_phase = 2;
 			}
 		}
 	}
-	else	//Three-phase diagnostics
-	{
-		/***** YUAN ********/
-		//Any error checking or initial coding would go here
-		//************** Begin_Yuan's TPIM model ********************//
-		if(has_phase(PHASE_A) == 0 || has_phase(PHASE_B) == 0 || has_phase(PHASE_C) == 0) {
-			GL_THROW("At least 1 phase connection is missing for the TPIM model");
-		}
-		//************** End_Yuan's TPIM model ********************//
-
-	}
+	//Default else -- three-phase diagnostics (none needed right now)
 
 	//Parameters
-	if ((triplex_connected == true) && (triplex_connection_type == TPNconnected12))
+	if (motor_op_mode == modeSPIM)
 	{
-		Ibase = Pbase/(2.0*nominal_voltage);	//To reflect LL connection
+		if ((triplex_connected == true) && (triplex_connection_type == TPNconnected12))
+		{
+			Ibase = Pbase/(2.0*nominal_voltage);	//To reflect LL connection
+		}
+		else	//"Three-phase" or "normal" triplex
+		{
+			Ibase = Pbase/nominal_voltage;
+		}
 	}
-	else	//"Three-phase" or "normal" triplex
+	else	//Three-phase
 	{
-		Ibase = Pbase/nominal_voltage;
+		Ibase = Pbase/nominal_voltage/3.0;
 	}
 
-	wb=2*PI*nominal_frequency;
-	cap_run_speed = (cap_run_speed_percentage*wb)/100;
+	wbase=2.0*PI*nominal_frequency;
+	cap_run_speed = (cap_run_speed_percentage*wbase)/100;
 	DM_volt_trig = (DM_volt_trig_per)/100;
-	DM_speed_trig = (DM_speed_trig_per*wb)/100;
+	DM_speed_trig = (DM_speed_trig_per*wbase)/100;
 	DM_volt_exit = (DM_volt_exit_per)/100;
-	DM_speed_exit = (DM_speed_exit_per*wb)/100;
+	DM_speed_exit = (DM_speed_exit_per*wbase)/100;
 
-	//************** Begin_Yuan's TPIM model ********************//
-	IbTPIM = Pbase / nominal_voltage / 3.0;  // A, I guess nominal_voltage is line-to-ground here, right ?
+	//TPIM Items
 	Ls = lls + lm; // pu
 	Lr = llr + lm; // pu
 	sigma1 = Ls - lm * lm / Lr; // pu
 	sigma2 = Lr - lm * lm / Ls; // pu
 
-	if (motor_op_mode == modeTPIM && TPIM_initial_status == initialSTATIONARY){
-		DM_volt_trig_per = 110;  // percent
-		DM_speed_trig_per = 110;
-		DM_volt_exit_per = 110;
-		DM_speed_exit_per = 110;
-		omgr0 = 0.0; // pu
-		TL = 0.0;  // pu
+	if ((motor_op_mode == modeTPIM) && (motor_status != statusRUNNING)){
+		wr_pu = 0.0; // pu
+		wr = 0.0;
 	}
-	else if (motor_op_mode == modeTPIM && TPIM_initial_status == initialRUNNING){
-		omgr0 = 1.0; // pu
-		TL = TLrated;
+	else if ((motor_op_mode == modeTPIM) && (motor_status == statusRUNNING)){
+		wr_pu = 1.0; // pu
+		wr = wbase;
 	}
 
-	omgr0_prev = omgr0;
-	//************** End_Yuan's TPIM model ********************//
+	wr_pu_prev = wr_pu;
 
 	return result;
 }
@@ -470,12 +452,9 @@ TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 		// update motor status
 		SPIMUpdateMotorStatus();
 	}
-
-	//************** Begin_Yuan's TPIM model ********************//
 	else	//Must be three-phase
 	{
-		/**** YUAN ****/
-		//Three-phase steady-state code would go here
+		//Three-phase steady-state code
 		if((double)t1 == last_cycle) { // if time did not advance, load old values
 			TPIMreinitializeVars();
 		}
@@ -489,17 +468,17 @@ TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 		// update protection
 		TPIMUpdateProtection(delta_cycle);
 
-		if (motor_override == overrideON && wsyn > 0.1 &&  Vas.Mag() > 0.1 && Vbs.Mag() > 0.1 && Vcs.Mag() > 0.1 &&
+		if (motor_override == overrideON && ws_pu > 0.1 &&  Vas.Mag() > 0.1 && Vbs.Mag() > 0.1 && Vcs.Mag() > 0.1 &&
 			motor_trip == 0) { // motor is currently connected and grid conditions are not "collapsed"
-			// This needs to be re-visited to determine the lower bounds of wsyn and Vas, Vbs and Vcs
+			// This needs to be re-visited to determine the lower bounds of ws_pu and Vas, Vbs and Vcs
 
 			// run the steady state solver
 			TPIMSteadyState(t1);
 
 			// update current draw -- might need to be pre_rotated_current
-			pre_rotated_current[0] = Ias*IbTPIM; // A
-			pre_rotated_current[1] = Ibs*IbTPIM; // A
-			pre_rotated_current[2] = Ics*IbTPIM; // A
+			pre_rotated_current[0] = Ias*Ibase; // A
+			pre_rotated_current[1] = Ibs*Ibase; // A
+			pre_rotated_current[2] = Ics*Ibase; // A
 		}
 		else { // motor is currently disconnected
 			pre_rotated_current[0] = 0; // A
@@ -511,7 +490,6 @@ TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 		// update motor status
 		TPIMUpdateMotorStatus();
 	}
-	//************** End_Yuan's TPIM model ********************//
 
 	//Must be at the bottom, or the new values will be calculated after the fact
 	TIMESTAMP result = node::sync(t1);
@@ -523,7 +501,7 @@ TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 	// figure out if we need to enter delta mode on the next pass
 	if (motor_op_mode == modeSPIM)
 	{
-		if ((Vs.Mag() < DM_volt_trig || wr < DM_speed_trig) && deltamode_inclusive)
+		if (((Vs.Mag() < DM_volt_trig) || (wr < DM_speed_trig)) && deltamode_inclusive)
 		{
 			// we should not enter delta mode if the motor is tripped or not close to reconnect
 			if (motor_trip == 1 && reconnect < reconnect_time-1) {
@@ -539,13 +517,11 @@ TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 			return result;
 		}
 	}
-	//************** Begin_Yuan's TPIM model ********************//
 	else	//Must be three-phase
 	{
-		/******* YUAN ********/
 		//This may need to be updated for three-phase
-		if ( (Vas.Mag() < DM_volt_trig_per / 100 || Vbs.Mag() < DM_volt_trig_per / 100 ||
-				Vcs.Mag() < DM_volt_trig_per / 100 || omgr0 < DM_speed_trig_per / 100)
+		if ( ((Vas.Mag() < DM_volt_trig) || (Vbs.Mag() < DM_volt_trig) ||
+				(Vcs.Mag() < DM_volt_trig) || (wr < DM_speed_trig))
 				&& deltamode_inclusive)
 		{
 			// we should not enter delta mode if the motor is tripped or not close to reconnect
@@ -562,7 +538,6 @@ TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 			return result;
 		}
 	}
-	//************** End_Yuan's TPIM model ********************//
 }
 
 TIMESTAMP motor::postsync(TIMESTAMP t0, TIMESTAMP t1)
@@ -619,12 +594,9 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 			// update motor status
 			SPIMUpdateMotorStatus();
 		}
-
-		//************** Begin_Yuan's TPIM model ********************//
 		else	//Three-phase
 		{
-			/******* YUAN *********/
-			//This would be where the three-phase deltamode/dynamic code would go -- first run/deltamode initialization stuff
+			//first run/deltamode initialization stuff
 			// update voltage and frequency
 			updateFreqVolt();
 
@@ -636,8 +608,6 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 			// update motor status
 			TPIMUpdateMotorStatus();
 		}
-		//************** End_Yuan's TPIM model ********************//
-
 	}//End first pass and timestep of deltamode (initial condition stuff)
 
 	if (interupdate_pos == false)	//Before powerflow call
@@ -728,12 +698,8 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 			// update motor status
 			SPIMUpdateMotorStatus();
 		}
-
-		//************** Begin_Yuan's TPIM model ********************//
 		else 	//Must be three-phase
 		{
-			/*************** YUAN ***********************/
-			//This is where other three-phase code would go (predictor step?)
 			// if deltaTime is not small enough we will run into problems
 			if (deltaTime > 0.0005) {
 				gl_warning("Delta time for the TPIM model needs to be lower than 0.0005 seconds");
@@ -755,15 +721,15 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 			}
 
 
-			if (motor_override == overrideON && wsyn > 0.1 && Vas.Mag() > 0.1 && Vbs.Mag() > 0.1 && Vcs.Mag() > 0.1 &&
+			if (motor_override == overrideON && ws_pu > 0.1 && Vas.Mag() > 0.1 && Vbs.Mag() > 0.1 && Vcs.Mag() > 0.1 &&
 					motor_trip == 0) { // motor is currently connected and grid conditions are not "collapsed"
 				// run the dynamic solver
 				TPIMDynamic(curr_delta_time, deltaTime);
 
 				// update current draw -- pre_rotated_current
-				pre_rotated_current[0] = Ias*IbTPIM; // A
-				pre_rotated_current[1] = Ibs*IbTPIM; // A
-				pre_rotated_current[2] = Ics*IbTPIM; // A
+				pre_rotated_current[0] = Ias*Ibase; // A
+				pre_rotated_current[1] = Ibs*Ibase; // A
+				pre_rotated_current[2] = Ics*Ibase; // A
 			}
 			else { // motor is currently disconnected
 				pre_rotated_current[0] = 0; // A
@@ -775,8 +741,6 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 			// update motor status
 			TPIMUpdateMotorStatus();
 		}
-		//************** End_Yuan's TPIM model ********************//
-
 
 		//Call sync-equivalent items (solver occurs at end of sync)
 		NR_node_sync_fxn(hdr);
@@ -808,7 +772,7 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 		if (motor_op_mode == modeSPIM)
 		{
 			// figure out if we need to exit delta mode on the next pass
-			if (Vs.Mag() > DM_volt_exit && wr > DM_speed_exit)
+			if ((Vs.Mag() > DM_volt_exit) && (wr > DM_speed_exit))
 			{
 				// we return to steady state if the voltage and speed is good
 				return SM_EVENT;
@@ -823,15 +787,11 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 			//Default - stay in deltamode
 			return SM_DELTA;
 		}
-
-		//************** Begin_Yuan's TPIM model ********************//
 		else	//Must be three-phase
 		{
-			/**** YUAN *****/
-			//This may need to be revisited - check to see if it should stay in deltamode or not
 			// figure out if we need to exit delta mode on the next pass
-			if ((Vas.Mag() > DM_volt_exit_per/100) && (Vbs.Mag() > DM_volt_exit_per/100) && (Vcs.Mag() > DM_volt_exit_per/100)
-					&& fabs(omgr0-omgr0_prev) > DM_speed_exit_per/100)
+			if ((Vas.Mag() > DM_volt_exit) && (Vbs.Mag() > DM_volt_exit) && (Vcs.Mag() > DM_volt_exit)
+					&& ((fabs(wr_pu-wr_pu_prev)*wbase) > DM_speed_exit))
 			{
 				return SM_EVENT;
 			}
@@ -844,11 +804,9 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 				return SM_EVENT;
 			}
 
-
 			//Default - stay in deltamode
 			return SM_DELTA;
 		}
-		//************** End_Yuan's TPIM model ********************//
 	}
 }
 
@@ -866,23 +824,23 @@ void motor::updateFreqVolt() {
 				if (triplex_connection_type == TPNconnected1N)
 				{
 					Vs = parNode->voltage[0]/parNode->nominal_voltage;
-					ws = parNode->curr_freq_state.fmeas[0]*2*PI;
+					ws = parNode->curr_freq_state.fmeas[0]*2.0*PI;
 				}
 				else if (triplex_connection_type == TPNconnected2N)
 				{
 					Vs = parNode->voltage[1]/parNode->nominal_voltage;
-					ws = parNode->curr_freq_state.fmeas[1]*2*PI;
+					ws = parNode->curr_freq_state.fmeas[1]*2.0*PI;
 				}
 				else	//Assume it is 12 now
 				{
 					Vs = parNode->voltaged[0]/(2.0*parNode->nominal_voltage);	//To reflect LL connection
-					ws = parNode->curr_freq_state.fmeas[0]*2*PI;
+					ws = parNode->curr_freq_state.fmeas[0]*2.0*PI;
 				}
 			}
 			else	//"Three-phase" connection
 			{
 				Vs = parNode->voltage[connected_phase]/parNode->nominal_voltage;
-				ws = parNode->curr_freq_state.fmeas[connected_phase]*2*PI;
+				ws = parNode->curr_freq_state.fmeas[connected_phase]*2.0*PI;
 			}
 		}
 		else // No parent, use our own voltage
@@ -893,27 +851,29 @@ void motor::updateFreqVolt() {
 				if (triplex_connection_type == TPNconnected1N)
 				{
 					Vs = voltage[0]/nominal_voltage;
-					ws = curr_freq_state.fmeas[0]*2*PI;
+					ws = curr_freq_state.fmeas[0]*2.0*PI;
 				}
 				else if (triplex_connection_type == TPNconnected2N)
 				{
 					Vs = voltage[1]/nominal_voltage;
-					ws = curr_freq_state.fmeas[1]*2*PI;
+					ws = curr_freq_state.fmeas[1]*2.0*PI;
 				}
 				else	//Assume it is 12 now
 				{
 					Vs = voltaged[0]/(2.0*nominal_voltage);	//To reflect LL connection
-					ws = curr_freq_state.fmeas[0]*2*PI;
+					ws = curr_freq_state.fmeas[0]*2.0*PI;
 				}
 			}
 			else 	//"Three-phase" connection
 			{
 				Vs = voltage[connected_phase]/nominal_voltage;
-				ws = curr_freq_state.fmeas[connected_phase]*2*PI;
+				ws = curr_freq_state.fmeas[connected_phase]*2.0*PI;
 			}
 		}
+
+		//Make the per-unit value
+		ws_pu = ws/wbase;
 	}
-	//************** Begin_Yuan's TPIM model ********************//
 	else //TPIM model
 	{
 		if ( (SubNode == CHILD) || (SubNode == DIFF_CHILD) ) // if we have a parent, reference the voltage and frequency of the parent
@@ -924,17 +884,19 @@ void motor::updateFreqVolt() {
 			Vbs = parNode->voltage[1]/parNode->nominal_voltage;
 			Vcs = parNode->voltage[2]/parNode->nominal_voltage;
 			// obtain frequency in pu, take the average of 3-ph frequency ?
-			wsyn = (parNode->curr_freq_state.fmeas[0]+ parNode->curr_freq_state.fmeas[1] + parNode->curr_freq_state.fmeas[2]) / 60.0 / 3.0;
+			ws_pu = (parNode->curr_freq_state.fmeas[0]+ parNode->curr_freq_state.fmeas[1] + parNode->curr_freq_state.fmeas[2]) / nominal_frequency / 3.0;
 		}
 		else // No parent, use our own voltage
 		{
 			Vas = voltage[0]/nominal_voltage;
 			Vbs = voltage[1]/nominal_voltage;
 			Vcs = voltage[2]/nominal_voltage;
-			wsyn = (curr_freq_state.fmeas[0] + curr_freq_state.fmeas[1] + curr_freq_state.fmeas[2]) / 60.0 / 3.0;
+			ws_pu = (curr_freq_state.fmeas[0] + curr_freq_state.fmeas[1] + curr_freq_state.fmeas[2]) / nominal_frequency / 3.0;
 		}
+
+		//Make the non-per-unit value
+		ws = ws_pu * wbase;
 	}
-	//************** End_Yuan's TPIM model ********************//
 }
 
 // function to update the previous values for the motor model
@@ -950,7 +912,7 @@ void motor::SPIMupdateVars() {
 	If_prev = If;
 	Ib_prev = Ib;
 	Is_prev = Is;
-	Ss_prev = Ss;
+	motor_elec_power_prev = motor_elec_power;
 	reconnect_prev = reconnect;
 	motor_trip_prev = motor_trip;
 	trip_prev = trip;
@@ -958,13 +920,13 @@ void motor::SPIMupdateVars() {
 }
 
 
-//************** Begin_Yuan's TPIM model ********************//
+//TPIM state variable updates - transition them
 void motor::TPIMupdateVars() {
 	phips_prev = phips;
 	phins_cj_prev = phins_cj;
 	phipr_prev = phipr;
 	phinr_cj_prev = phinr_cj;
-	omgr0_prev = omgr0;
+	wr_pu_prev = wr_pu;
 	Ips_prev = Ips;
 	Ipr_prev = Ipr;
 	Ins_cj_prev = Ins_cj;
@@ -975,8 +937,6 @@ void motor::TPIMupdateVars() {
 	trip_prev = trip;
 
 }
-//************** End_Yuan's TPIM model ********************//
-
 
 // function to reinitialize values for the motor model
 void motor::SPIMreinitializeVars() {
@@ -991,21 +951,20 @@ void motor::SPIMreinitializeVars() {
 	If = If_prev;
 	Ib = Ib_prev;
 	Is = Is_prev;
-	Ss = Ss_prev;
+	motor_elec_power = motor_elec_power_prev;
 	reconnect = reconnect_prev;
 	motor_trip = motor_trip_prev;
 	trip = trip_prev;
 	psi_sat = psi_sat_prev;
 }
 
-
-//************** Begin_Yuan's TPIM model ********************//
+//TPIM initalization routine
 void motor::TPIMreinitializeVars() {
 	phips = phips_prev;
 	phins_cj = phins_cj_prev;
 	phipr = phipr_prev;
 	phinr_cj = phinr_cj_prev;
-	omgr0 = omgr0_prev;
+	wr_pu = wr_pu_prev;
 	Ips = Ips_prev;
 	Ipr = Ipr_prev;
 	Ins_cj = Ins_cj_prev;
@@ -1016,8 +975,6 @@ void motor::TPIMreinitializeVars() {
 	trip = trip_prev;
 
 }
-//************** End_Yuan's TPIM model ********************//
-
 
 // function to update the status of the motor
 void motor::SPIMUpdateMotorStatus() {
@@ -1034,13 +991,13 @@ void motor::SPIMUpdateMotorStatus() {
 	}	
 }
 
-//************** Begin_Yuan's TPIM model ********************//
+//TPIM status update
 void motor::TPIMUpdateMotorStatus() {
-	if (motor_override == overrideOFF || wsyn <= 0.1 ||
+	if (motor_override == overrideOFF || ws_pu <= 0.1 ||
 			Vas.Mag() <= 0.1 || Vbs.Mag() <= 0.1 || Vcs.Mag() <= 0.1) {
 		motor_status = statusOFF;
 	}
-	else if (omgr0 > 0.0) {
+	else if (wr_pu > 0.0) {
 		motor_status = statusRUNNING;
 	}
 	else if (motor_trip == 1) {
@@ -1050,8 +1007,6 @@ void motor::TPIMUpdateMotorStatus() {
 		motor_status = statusSTALLED;
 	}
 }
-//************** End_Yuan's TPIM model ********************//
-
 
 // function to update the protection of the motor
 void motor::SPIMUpdateProtection(double delta_time) {	
@@ -1081,14 +1036,13 @@ void motor::SPIMUpdateProtection(double delta_time) {
 	}
 }
 
-//************** Begin_Yuan's TPIM model ********************//
-// function to update the protection of the motor
+// TPIM thermal protection
 void motor::TPIMUpdateProtection(double delta_time) {
 	if (motor_override == overrideON) {
-		if (omgr0 < 0.01 && motor_trip == 0 && wsyn > 0.1 && Vas.Mag() > 0.1 && Vbs.Mag() > 0.1 && Vcs.Mag() > 0.1) { // conditions for counting up the time trip timer
+		if (wr_pu < 0.01 && motor_trip == 0 && ws_pu > 0.1 && Vas.Mag() > 0.1 && Vbs.Mag() > 0.1 && Vcs.Mag() > 0.1) { // conditions for counting up the time trip timer
 			trip = trip + delta_time; // count up by the time since last pass
 		}
-		else if ( (omgr0 >= 0.01 && motor_trip == 0) || wsyn <= 0.1 || Vas.Mag() <= 0.1 || Vbs.Mag() <= 0.1 || Vcs.Mag() <= 0.1) { // conditions for counting down the time trip timer
+		else if ( (wr_pu >= 0.01 && motor_trip == 0) || ws_pu <= 0.1 || Vas.Mag() <= 0.1 || Vbs.Mag() <= 0.1 || Vcs.Mag() <= 0.1) { // conditions for counting down the time trip timer
 			trip = trip - (delta_time / (reconnect_time/trip_time)) < 0 ? 0 : trip - (delta_time / (reconnect_time/trip_time)); // count down by the time since last cycle scaled by the difference in trip and reconnect times
 		}
 	}
@@ -1109,48 +1063,48 @@ void motor::TPIMUpdateProtection(double delta_time) {
 		reconnect = 0;
 	}
 }
-//************** End_Yuan's TPIM model ********************//
 
 // function to ensure that internal model states are zeros when the motor is OFF
 void motor::SPIMStateOFF() {
-	psi_b = complex(0,0);
-    psi_f = complex(0,0);
-    psi_dr = complex(0,0); 
-    psi_qr = complex(0,0); 
-    Ids = complex(0,0);
-    Iqs = complex(0,0);  
-    If = complex(0,0);
-    Ib = complex(0,0);
-    Is = complex(0,0);
-    Ss = complex(0,0);
+	psi_b = complex(0.0,0.0);
+    psi_f = complex(0.0,0.0);
+    psi_dr = complex(0.0,0.0); 
+    psi_qr = complex(0.0,0.0); 
+    Ids = complex(0.0,0.0);
+    Iqs = complex(0.0,0.0);  
+    If = complex(0.0,0.0);
+    Ib = complex(0.0,0.0);
+    Is = complex(0.0,0.0);
+    motor_elec_power = complex(0.0,0.0);
     Telec = 0; 
     wr = 0;
+	wr_pu = 0.0;
 }
 
-//************** Begin_Yuan's TPIM model ********************//
+//TPIM "zero-stating" item
 void motor::TPIMStateOFF() {
-	phips = complex(0,0);
-	phins_cj = complex(0,0);
-	phipr = complex(0,0);
-	phinr_cj = complex(0,0);
-	omgr0 = 0;
-	Ips = complex(0,0);
-	Ipr = complex(0,0);
-	Ins_cj = complex(0,0);
-	Inr_cj = complex(0,0);
+	phips = complex(0.0,0.0);
+	phins_cj = complex(0.0,0.0);
+	phipr = complex(0.0,0.0);
+	phinr_cj = complex(0.0,0.0);
+	wr_pu = 0;
+	wr = 0.0;
+	wr_pu = 0.0;
+	Ips = complex(0.0,0.0);
+	Ipr = complex(0.0,0.0);
+	Ins_cj = complex(0.0,0.0);
+	Inr_cj = complex(0.0,0.0);
 }
-//************** End_Yuan's TPIM model ********************//
-
 
 // Function to calculate the solution to the steady state SPIM model
 void motor::SPIMSteadyState(TIMESTAMP t1) {
 	double wr_delta = 1;
     psi_sat = 1;
 	double psi = -1;
-    double count = 1;
+    int32 count = 1;
 	double Xc = -1;
 
-	while (fabs(wr_delta) > speed_error && count < interation_count) {
+	while (fabs(wr_delta) > speed_error && count < iteration_count) {
         count++;
         
         //Kick in extra capacitor if we droop in speed
@@ -1161,22 +1115,22 @@ void motor::SPIMSteadyState(TIMESTAMP t1) {
            Xc = Xc1; 
 		}
 
-		TF[0] = (complex(0,1)*Xd_prime*ws)/wb + Rds; 
+		TF[0] = (complex(0.0,1.0)*Xd_prime*ws_pu) + Rds; 
 		TF[1] = 0;
-		TF[2] = (complex(0,1)*Xm*ws)/(Xr*wb);
-		TF[3] = (complex(0,1)*Xm*ws)/(Xr*wb);
+		TF[2] = (complex(0.0,1.0)*Xm*ws_pu)/Xr;
+		TF[3] = (complex(0.0,1.0)*Xm*ws_pu)/Xr;
 		TF[4] = 0;
-		TF[5] = (complex(0,1)*Xc*wb)/ws + (complex(0,1)*Xq_prime*ws)/wb + Rqs;
-		TF[6] = -(Xm*n*ws)/(Xr*wb);
-		TF[7] = (Xm*n*ws)/(Xr*wb);
+		TF[5] = (complex(0.0,1.0)*Xc)/ws_pu + (complex(0.0,1.0)*Xq_prime*ws_pu) + Rqs;
+		TF[6] = -(Xm*n*ws_pu)/Xr;
+		TF[7] = (Xm*n*ws_pu)/Xr;
 		TF[8] = Xm/2;
-		TF[9] =  -(complex(0,1)*Xm*n)/2;
-		TF[10] = (complex(0,1)*wr - complex(0,1)*ws)*To_prime -psi_sat;
+		TF[9] =  -(complex(0.0,1.0)*Xm*n)/2;
+		TF[10] = (complex(0.0,1.0)*wr - complex(0.0,1.0)*ws)*To_prime -psi_sat;
 		TF[11] = 0;
 		TF[12] = Xm/2;
-		TF[13] = (complex(0,1)*Xm*n)/2;
+		TF[13] = (complex(0.0,1.0)*Xm*n)/2;
 		TF[14] = 0;
-		TF[15] = (complex(0,1)*wr + complex(0,1)*ws)*-To_prime -psi_sat ;
+		TF[15] = (complex(0.0,1.0)*wr + complex(0.0,1.0)*ws)*-To_prime -psi_sat ;
 
 		// big matrix solving winding currents and fluxes
 		invertMatrix(TF,ITF);
@@ -1184,11 +1138,11 @@ void motor::SPIMSteadyState(TIMESTAMP t1) {
 		Iqs = ITF[4]*Vs.Mag() + ITF[5]*Vs.Mag();
 		psi_f = ITF[8]*Vs.Mag() + ITF[9]*Vs.Mag();
 		psi_b = ITF[12]*Vs.Mag() + ITF[13]*Vs.Mag();
-		If = (Ids-(complex(0,1)*n*Iqs))*0.5;
-		Ib = (Ids+(complex(0,1)*n*Iqs))*0.5;
+		If = (Ids-(complex(0.0,1.0)*n*Iqs))*0.5;
+		Ib = (Ids+(complex(0.0,1.0)*n*Iqs))*0.5;
 
         //electrical torque 
-		Telec = (Xm/Xr)*2*(If.Im()*psi_f.Re() - If.Re()*psi_f.Im() - Ib.Im()*psi_b.Re() + Ib.Re()*psi_b.Im()); 
+		Telec = (Xm/Xr)*2.0*(If.Im()*psi_f.Re() - If.Re()*psi_f.Im() - Ib.Im()*psi_b.Re() + Ib.Re()*psi_b.Im()); 
 
         //calculate speed deviation 
         wr_delta = Telec-Tmech;
@@ -1205,25 +1159,27 @@ void motor::SPIMSteadyState(TIMESTAMP t1) {
         //update the rotor speed
 		if (wr+wr_delta > 0) {
 			wr = wr+wr_delta;
+			wr_pu = wr/wbase;
 		}
 		else {
 			wr = 0;
+			wr_pu = 0.0;
 		}
 	}
     
     psi_dr = psi_f + psi_b;
-    psi_qr = complex(0,1)*psi_f + complex(0,-1)*psi_b;
+    psi_qr = complex(0.0,1.0)*psi_f + complex(0,-1)*psi_b;
     // system current and power equations
     Is = (Ids + Iqs)*complex_exp(Vs.Arg());
-    Ss = Vs*~Is;
+    motor_elec_power = Vs*~Is;
 }
 
 
-//************** Begin_Yuan's TPIM model ********************//
+//TPIM steady state function
 void motor::TPIMSteadyState(TIMESTAMP t1) {
 		double omgr0_delta = 1;
-		double count = 1;
-		complex alpha = complex(0,0);
+		int32 count = 1;
+		complex alpha = complex(0.0,0.0);
 		complex A1, A2, A3, A4;
 		complex B1, B2, B3, B4;
 		complex C1, C2, C3, C4;
@@ -1241,34 +1197,34 @@ void motor::TPIMSteadyState(TIMESTAMP t1) {
 
         // printf("Enter steady state: \n");
 
-        if (TPIM_initial_status == initialRUNNING){
+        if (motor_status == statusRUNNING){
 
-			while (fabs(omgr0_delta) > speed_error && count < interation_count) {
+			while (fabs(omgr0_delta) > speed_error && count < iteration_count) {
 				count++;
 
 				// pre-calculate complex coefficients of the 4 linear equations associated with flux state variables
-				A1 = -(complex(0,1) * (wref + wsyn) + rs / sigma1) ;
+				A1 = -(complex(0.0,1.0) * ws_pu + rs / sigma1) ;
 				B1 =  0.0 ;
 				C1 =  rs / sigma1 * lm / Lr ;
 				D1 =  0.0 ;
 				E1 = Vap ;
 
 				A2 = 0.0;
-				B2 = -(complex(0,1) * (wref - wsyn) + rs / sigma1) ;
+				B2 = -(complex(0.0,-1.0) * ws_pu + rs / sigma1) ;
 				C2 = 0.0 ;
 				D2 = rs / sigma1 * lm / Lr ;
-				E2 = ~Van ;  // Does ~ represent conjugate of complex ?
+				E2 = ~Van ;
 
-				A3 = rr / sigma2 * lm / Ls ;
+				A3 = rr_pu / sigma2 * lm / Ls ;
 				B3 =  0.0 ;
-				C3 =  -(complex(0,1) * (wref + wsyn - omgr0) + rr / sigma2) ;
+				C3 =  -(complex(0.0,1.0) * (ws_pu - wr_pu) + rr_pu / sigma2) ;
 				D3 =  0.0 ;
 				E3 =  0.0 ;
 
 				A4 = 0.0 ;
-				B4 =  rr / sigma2 * lm / Ls ;
+				B4 =  rr_pu / sigma2 * lm / Ls ;
 				C4 = 0.0 ;
-				D4 = -(complex(0,1) * (wref - wsyn - omgr0) + rr / sigma2) ;
+				D4 = -(complex(0.0,1.0) * (-ws_pu - wr_pu) + rr_pu / sigma2) ;
 				E4 =  0.0 ;
 
 				// solve the 4 linear equations to obtain 4 flux state variables
@@ -1322,52 +1278,51 @@ void motor::TPIMSteadyState(TIMESTAMP t1) {
 				Inr_cj = (phinr_cj - phins_cj * lm / Ls) / sigma2; // pu
 				Telec = (~phips * Ips + ~phins_cj * Ins_cj).Im() ;  // pu
 
-				// iteratively compute speed increment to make sure Telec matches TL during steady state mode
-				// if it does not match, then update current and Telec using new omgr0
-				omgr0_delta = ( Telec - TL ) / interation_count;
-
-				// printf("omgr0 = %f, omgr0_delta = %f, Telec = %f, TL = %f \n", omgr0, omgr0_delta, Telec, TL);
+				// iteratively compute speed increment to make sure Telec matches Tmech during steady state mode
+				// if it does not match, then update current and Telec using new wr_pu
+				omgr0_delta = ( Telec - Tmech ) / ((double)iteration_count);
 
 				//update the rotor speed to make sure electrical torque traces mechanical torque
-				if (omgr0 + omgr0_delta > 0) {
-					omgr0 = omgr0 + omgr0_delta;
+				if (wr_pu + omgr0_delta > 0) {
+					wr_pu = wr_pu + omgr0_delta;
+					wr = wr_pu * wbase;
 				}
 				else {
-					omgr0 = 0;
+					wr_pu = 0;
+					wr = 0.0;
 				}
 
 			}  // End while
 
-        } // End if TPIM_initial_status == initialRUNNING
-
-        else // must be TPIM_initial_status == initialSTATIONARY
+        } // End if TPIM is assumed running
+        else // must be the TPIM stalled or otherwise not running
         {
-        	omgr0 = 0.0;
-        	TL = 0.0;
+        	wr_pu = 0.0;
+			wr = 0.0;
 
 			// pre-calculate complex coefficients of the 4 linear equations associated with flux state variables
-			A1 = -(complex(0,1) * (wref + wsyn) + rs / sigma1) ;
+			A1 = -(complex(0.0,1.0) * ws_pu + rs / sigma1) ;
 			B1 =  0.0 ;
 			C1 =  rs / sigma1 * lm / Lr ;
 			D1 =  0.0 ;
 			E1 = Vap ;
 
 			A2 = 0.0;
-			B2 = -(complex(0,1) * (wref - wsyn) + rs / sigma1) ;
+			B2 = -(complex(0.0,-1.0) * ws_pu + rs / sigma1) ;
 			C2 = 0.0 ;
 			D2 = rs / sigma1 * lm / Lr ;
-			E2 = ~Van ;  // Does ~ represent conjugate of complex ?
+			E2 = ~Van ;
 
-			A3 = rr / sigma2 * lm / Ls ;
+			A3 = rr_pu / sigma2 * lm / Ls ;
 			B3 =  0.0 ;
-			C3 =  -(complex(0,1) * (wref + wsyn - omgr0) + rr / sigma2) ;
+			C3 =  -(complex(0.0,1.0) * (ws_pu - wr_pu) + rr_pu / sigma2) ;
 			D3 =  0.0 ;
 			E3 =  0.0 ;
 
 			A4 = 0.0 ;
-			B4 =  rr / sigma2 * lm / Ls ;
+			B4 =  rr_pu / sigma2 * lm / Ls ;
 			C4 = 0.0 ;
-			D4 = -(complex(0,1) * (wref - wsyn - omgr0) + rr / sigma2) ;
+			D4 = -(complex(0.0,1.0) * (-ws_pu - wr_pu) + rr_pu / sigma2) ;
 			E4 =  0.0 ;
 
 			// solve the 4 linear equations to obtain 4 flux state variables
@@ -1427,11 +1382,9 @@ void motor::TPIMSteadyState(TIMESTAMP t1) {
         Ibs = alpha * alpha * Ips + alpha * ~Ins_cj ; // pu
         Ics = alpha * Ips + alpha * alpha * ~Ins_cj ; // pu
 
-		Smt = (Vap * ~Ips + Van * Ins_cj) * Pbase; // VA
+		motor_elec_power = (Vap * ~Ips + Van * Ins_cj) * Pbase; // VA
 
 }
-//************** End_Yuan's TPIM model ********************//
-
 
 // Function to calculate the solution to the steady state SPIM model
 void motor::SPIMDynamic(double curr_delta_time, double dTime) {
@@ -1447,8 +1400,8 @@ void motor::SPIMDynamic(double curr_delta_time, double dTime) {
 	}
 
     // Flux equation
-	psi_b = (Ib*Xm) / ((complex(0,1)*(ws+wr)*To_prime)+psi_sat);
-	psi_f = psi_f + ( If*(Xm/To_prime) - (complex(0,1)*(ws-wr) + psi_sat/To_prime)*psi_f )*dTime;   
+	psi_b = (Ib*Xm) / ((complex(0.0,1.0)*(ws+wr)*To_prime)+psi_sat);
+	psi_f = psi_f + ( If*(Xm/To_prime) - (complex(0.0,1.0)*(ws-wr) + psi_sat/To_prime)*psi_f )*dTime;   
 
     //Calculate saturated flux
 	psi = sqrt(psi_f.Re()*psi_f.Re() + psi_f.Im()*psi_f.Im() + psi_b.Re()*psi_b.Re() + psi_b.Im()*psi_b.Im());
@@ -1461,36 +1414,38 @@ void motor::SPIMDynamic(double curr_delta_time, double dTime) {
 
 	// Calculate d and q axis fluxes
 	psi_dr = psi_f + psi_b;
-	psi_qr = complex(0,1)*psi_f + complex(0,-1)*psi_b;
+	psi_qr = complex(0.0,1.0)*psi_f + complex(0,-1)*psi_b;
 
 	// d and q-axis current equations
-	Ids = (-(complex(0,1)*(ws/wb)*(Xm/Xr)*psi_dr) + Vs.Mag()) / ((complex(0,1)*(ws/wb)*Xd_prime)+Rds);  
-	Iqs = (-(complex(0,1)*(ws/wb)*(n*Xm/Xr)*psi_qr) + Vs.Mag()) / ((complex(0,1)*(ws/wb)*Xq_prime)+(complex(0,1)*(wb/ws)*Xc)+Rqs); 
+	Ids = (-(complex(0.0,1.0)*ws_pu*(Xm/Xr)*psi_dr) + Vs.Mag()) / ((complex(0.0,1.0)*ws_pu*Xd_prime)+Rds);  
+	Iqs = (-(complex(0.0,1.0)*ws_pu*(n*Xm/Xr)*psi_qr) + Vs.Mag()) / ((complex(0.0,1.0)*ws_pu*Xq_prime)+(complex(0.0,1.0)/ws_pu*Xc)+Rqs); 
 
 	// f and b current equations
-	If = (Ids-(complex(0,1)*n*Iqs))*0.5;
-	Ib = (Ids+(complex(0,1)*n*Iqs))*0.5;
+	If = (Ids-(complex(0.0,1.0)*n*Iqs))*0.5;
+	Ib = (Ids+(complex(0.0,1.0)*n*Iqs))*0.5;
 
 	// system current and power equations
 	Is = (Ids + Iqs)*complex_exp(Vs.Arg());
-	Ss = Vs*~Is;
+	motor_elec_power = Vs*~Is;
 
     //electrical torque 
 	Telec = (Xm/Xr)*2*(If.Im()*psi_f.Re() - If.Re()*psi_f.Im() - Ib.Im()*psi_b.Re() + Ib.Re()*psi_b.Im()); 
 
 	// speed equation 
-	wr = wr + (((Telec-Tmech)*wb)/(2*H))*dTime;
+	wr = wr + (((Telec-Tmech)*wbase)/(2*H))*dTime;
 
     // speeds below 0 should be avioded
 	if (wr < 0) {
 		wr = 0;
 	}
+
+	//Get the per-unit version
+	wr_pu = wr / wbase;
 }
 
-
-//************** Begin_Yuan's TPIM model ********************//
+//Dynamic updates for TPIM
 void motor::TPIMDynamic(double curr_delta_time, double dTime) {
-	complex alpha = complex(0,0);
+	complex alpha = complex(0.0,0.0);
 	complex Vap;
 	complex Van;
 
@@ -1523,31 +1478,26 @@ void motor::TPIMDynamic(double curr_delta_time, double dTime) {
 
     TPIMupdateVars();
 
-    // Apply mechanical torque
-    if(omgr0 >= 1.0){
-    	TL = TLrated;
-    }
-
     //*** Predictor Step ***//
     // predictor step 1 - calculate coefficients
-    A1p = -(complex(0,1) * (wref + wsyn) + rs / sigma1) ;
+    A1p = -(complex(0.0,1.0) * ws_pu + rs / sigma1) ;
     C1p =  rs / sigma1 * lm / Lr ;
 
-    B2p = -(complex(0,1) * (wref - wsyn) + rs / sigma1) ;
+    B2p = -(complex(0.0,-1.0) * ws_pu + rs / sigma1) ;
     D2p = rs / sigma1 *lm / Lr ;
 
-    A3p = rr / sigma2 * lm / Ls ;
-    C3p =  -(complex(0,1) * (wref + wsyn - omgr0_prev) + rr / sigma2) ;
+    A3p = rr_pu / sigma2 * lm / Ls ;
+    C3p =  -(complex(0.0,1.0) * (ws_pu - wr_pu_prev) + rr_pu / sigma2) ;
 
-    B4p =  rr / sigma2 * lm / Ls ;
-    D4p = -(complex(0,1) * (wref - wsyn - omgr0_prev) + rr / sigma2) ;
+    B4p =  rr_pu / sigma2 * lm / Ls ;
+    D4p = -(complex(0.0,1.0) * (-ws_pu - wr_pu_prev) + rr_pu / sigma2) ;
 
     // predictor step 2 - calculate derivatives
-    dphips_prev_dt =  ( Vap + A1p * phips_prev + C1p * phipr_prev ) * wb;  // pu/s
-    dphins_cj_prev_dt = ( ~Van + B2p * phins_cj_prev + D2p * phinr_cj_prev ) * wb; // pu/s
-    dphipr_prev_dt  =  ( C3p * phipr_prev + A3p * phips_prev ) * wb; // pu/s
-    dphinr_cj_prev_dt = ( D4p * phinr_cj_prev  + B4p * phins_cj_prev ) * wb; // pu/s
-    domgr0_prev_dt =  ( (~phips_prev * Ips_prev + ~phins_cj_prev * Ins_cj_prev).Im() - TL - Kfric * omgr0_prev ) / (2.0 * H); // pu/s
+    dphips_prev_dt =  ( Vap + A1p * phips_prev + C1p * phipr_prev ) * wbase;  // pu/s
+    dphins_cj_prev_dt = ( ~Van + B2p * phins_cj_prev + D2p * phinr_cj_prev ) * wbase; // pu/s
+    dphipr_prev_dt  =  ( C3p * phipr_prev + A3p * phips_prev ) * wbase; // pu/s
+    dphinr_cj_prev_dt = ( D4p * phinr_cj_prev  + B4p * phins_cj_prev ) * wbase; // pu/s
+    domgr0_prev_dt =  ( (~phips_prev * Ips_prev + ~phins_cj_prev * Ins_cj_prev).Im() - Tmech - Kfric * wr_pu_prev ) / (2.0 * H); // pu/s
 
 
     // predictor step 3 - integrate for predicted state variable
@@ -1555,7 +1505,8 @@ void motor::TPIMDynamic(double curr_delta_time, double dTime) {
     phins_cj = phins_cj_prev + dphins_cj_prev_dt * dTime;
     phipr = phipr_prev + dphipr_prev_dt * dTime ;
     phinr_cj = phinr_cj_prev + dphinr_cj_prev_dt * dTime ;
-    omgr0 = omgr0_prev + domgr0_prev_dt.Re() * dTime ;
+    wr_pu = wr_pu_prev + domgr0_prev_dt.Re() * dTime ;
+	wr = wr_pu * wbase;
 
     // predictor step 4 - update outputs using predicted state variables
     Ips = (phips - phipr * lm / Lr) / sigma1;  // pu
@@ -1569,34 +1520,36 @@ void motor::TPIMDynamic(double curr_delta_time, double dTime) {
     // so predictor and corrector steps are placed in the same class function
 
     // corrector step 1 - calculate coefficients using predicted state variables
-    A1c = -(complex(0,1) * (wref + wsyn) + rs / sigma1) ;
+    A1c = -(complex(0.0,1.0) * ws_pu + rs / sigma1) ;
     C1c =  rs / sigma1 * lm / Lr ;
 
-    B2c = -(complex(0,1) * (wref - wsyn) + rs / sigma1) ;
+    B2c = -(complex(0.0,-1.0) * ws_pu + rs / sigma1) ;
     D2c = rs / sigma1 *lm / Lr ;
 
-    A3c = rr / sigma2 * lm / Ls ;
-    C3c =  -(complex(0,1) * (wref + wsyn - omgr0) + rr / sigma2) ;  // This coeff. is different from predictor
+    A3c = rr_pu / sigma2 * lm / Ls ;
+    C3c =  -(complex(0.0,1.0) * (ws_pu - wr_pu) + rr_pu / sigma2) ;  // This coeff. is different from predictor
 
-    B4c =  rr / sigma2 * lm / Ls ;
-    D4c = -(complex(0,1) * (wref - wsyn - omgr0) + rr / sigma2) ; // This coeff. is different from predictor
+    B4c =  rr_pu / sigma2 * lm / Ls ;
+    D4c = -(complex(0.0,1.0) * (-ws_pu - wr_pu) + rr_pu / sigma2) ; // This coeff. is different from predictor
 
     // corrector step 2 - calculate derivatives
-    dphips_dt =  ( Vap + A1c * phips + C1c * phipr ) * wb;
-    dphins_cj_dt = ( ~Van + B2c * phins_cj + D2c * phinr_cj ) * wb ;
-    dphipr_dt  =  ( C3c * phipr + A3c * phips ) * wb;
-    dphinr_cj_dt = ( D4c * phinr_cj  + B4c * phins_cj ) * wb;
-    domgr0_dt =  1.0/(2.0 * H) * ( (~phips * Ips + ~phins_cj * Ins_cj).Im() - TL - Kfric * omgr0 );
+    dphips_dt =  ( Vap + A1c * phips + C1c * phipr ) * wbase;
+    dphins_cj_dt = ( ~Van + B2c * phins_cj + D2c * phinr_cj ) * wbase ;
+    dphipr_dt  =  ( C3c * phipr + A3c * phips ) * wbase;
+    dphinr_cj_dt = ( D4c * phinr_cj  + B4c * phins_cj ) * wbase;
+    domgr0_dt =  1.0/(2.0 * H) * ( (~phips * Ips + ~phins_cj * Ins_cj).Im() - Tmech - Kfric * wr_pu );
 
     // corrector step 3 - integrate
     phips = phips_prev +  (dphips_prev_dt + dphips_dt) * dTime/2.0;
     phins_cj = phins_cj_prev + (dphins_cj_prev_dt + dphins_cj_dt) * dTime/2.0;
     phipr = phipr_prev + (dphipr_prev_dt + dphipr_dt) * dTime/2.0 ;
     phinr_cj = phinr_cj_prev + (dphinr_cj_prev_dt + dphinr_cj_dt) * dTime/2.0 ;
-    omgr0 = omgr0_prev + (domgr0_prev_dt + domgr0_dt).Re() * dTime/2.0 ;
+    wr_pu = wr_pu_prev + (domgr0_prev_dt + domgr0_dt).Re() * dTime/2.0 ;
+	wr = wr_pu * wbase;
 
-	if (omgr0 < 0) { // speeds below 0 should be avoided
-		omgr0 = 0;
+	if (wr_pu < 0.0) { // speeds below 0 should be avoided
+		wr_pu = 0.0;
+		wr = 0.0;
 	}
 
     // corrector step 4 - update outputs
@@ -1611,11 +1564,9 @@ void motor::TPIMDynamic(double curr_delta_time, double dTime) {
     Ibs = alpha * alpha * Ips + alpha * ~Ins_cj ; // pu
     Ics = alpha * Ips + alpha * alpha * ~Ins_cj ; // pu
 
-	Smt = (Vap * ~Ips + Van * Ins_cj) * Pbase; // VA
+	motor_elec_power = (Vap * ~Ips + Van * Ins_cj) * Pbase; // VA
 
 }
-//************** End_Yuan's TPIM model ********************//
-
 
 //Function to perform exp(j*val) (basically a complex rotation)
 complex motor::complex_exp(double angle)
