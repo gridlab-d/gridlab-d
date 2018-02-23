@@ -231,7 +231,7 @@ clean-wc:
 check-local validate: 
 	gridlabd --validate
 
-distdir = $(PACKAGE)_$(VERSION)
+dist_dir = $(PACKAGE)_$(VERSION)
 scratchdir = scratch
 XERCES_TARNAME = xerces-c-3.1.1
 XERCESCROOT = $(CURDIR)/$(scratchdir)/$(XERCES_TARNAME)
@@ -246,16 +246,16 @@ $(scratchdir)/.xerces.stamp: third_party/$(XERCES_TARNAME).tar.gz
 		autoreconf -isf && ./configure && make
 	touch $@
 
-$(scratchdir)/pkg: $(scratchdir)/.xerces.stamp distdir
+$(scratchdir)/pkg: $(scratchdir)/.xerces.stamp dist_dir
 	test ! -e $@ || rm -rf $@
 	test -d $@/gldcore || mkdir -p $@/gldcore
-	cd $(distdir) && ./configure --with-xerces=$(CURDIR)/$(scratchdir)/$(XERCES_TARNAME) && make install DESTDIR=$(CURDIR)/$@/gldcore
+	cd $(dist_dir) && ./configure --with-xerces=$(CURDIR)/$(scratchdir)/$(XERCES_TARNAME) && make install DESTDIR=$(CURDIR)/$@/gldcore
 	cd $@ && mkdir -p climate-data/usr/local/lib/gridlabd devel/usr/local/lib/gridlabd libxerces-c/usr/lib
 #	mv $@/gldcore/usr/lib/gridlabd/*.zip $@/climate-data/usr/lib/gridlabd/
 	mv $@/gldcore/usr/local/include $@/devel/usr/local/include
 	mv $@/gldcore/usr/local/lib/gridlabd/*.la $@/devel/usr/local/lib/gridlabd/
 	cp $(scratchdir)/$(XERCES_TARNAME)/src/.libs/libxerces-c.* $@/libxerces-c/usr/lib/
-	$(am__remove_distdir)
+	$(am__remove_dist_dir)
 
 $(scratchdir)/$(PACKAGE_TARNAME).mpkg: $(scratchdir)/pkg
 	env PATH=$$PATH:/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS \
@@ -268,11 +268,11 @@ $(scratchdir)/$(PACKAGE_TARNAME).dmg: $(scratchdir)/$(PACKAGE_TARNAME).mpkg
 	mv $< $(@D)/mnt/
 	hdiutil detach $(@D)/mnt
 
-$(distdir).dmg: $(scratchdir)/$(PACKAGE_TARNAME).dmg
+$(dist_dir).dmg: $(scratchdir)/$(PACKAGE_TARNAME).dmg
 	test ! -e $@ || rm -rf $@
 	hdiutil convert -format UDZO -o $@ $<
 	rm -f $<
-	-rmdir $(<D)
+	-rmdir $<D
 
 clean-dist-osx:
 	-test ! -d $(scratchdir)/mnt || hdiutil detach $(scratchdir)/mnt
@@ -281,15 +281,15 @@ clean-dist-osx:
 # Build a .mpkg installer package for Mac OS X
 dist-osx:
 	trap '$(MAKE) clean-dist-osx' EXIT && \
-	$(MAKE) $(distdir).dmg
+	$(MAKE) $(dist_dir).dmg
 
 # Build deb (binary and source) packages
-dist-deb: distdir
-	echo -e "gridlabd ($(VERSION)-1) unstable; urgency=low\n\n  * Version $(VERSION) release.\n  * View recent changes at: https://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=Special:RecentChanges\n\n -- GridLAB-D Team <gridlabd@pnl.gov> `date -R`\n" > $(distdir)/debian/changelog
-	ln -s $(distdir) $(distdir)-1
-	(cd $(distdir)-1 && dpkg-buildpackage -tc -us -uc $(DEBFLAGS))
-	rm -f $(distdir)-1
-	$(am__remove_distdir)
+dist-deb: dist_dir
+	echo -e "gridlabd ($(VERSION)-1) unstable; urgency=low\n\n  * Version $(VERSION) release.\n  * View recent changes at: https://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=Special:RecentChanges\n\n -- GridLAB-D Team <gridlabd@pnl.gov> `date -R`\n" > $(dist_dir)/debian/changelog
+	ln -s $(dist_dir) $(distdir)-1
+	(cd $(dist_dir)-1 && dpkg-buildpackage -tc -us -uc $(DEBFLAGS))
+	rm -f $(dist_dir)-1
+	$(am__remove_dist_dir)
 
 # Build Debian deb binary package
 dist-deb-bin:
@@ -301,7 +301,7 @@ dist-deb-src:
 
 # Build RPM binary package
 dist-rpm: dist-gzip
-	rpmbuild -tb $(distdir).tar.gz
+	rpmbuild -tb $(dist_dir).tar.gz
 
 RPMBUILDDIR = $(HOME)/rpmbuild
 
