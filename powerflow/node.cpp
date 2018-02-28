@@ -4927,7 +4927,8 @@ STATUS node::link_VFD_functions(OBJECT *linkVFD)
 //Note that the inputs are in radians
 //Mainly used by frequency calculations
 //Effectively the code from https://stackoverflow.com/questions/11498169/dealing-with-angle-wrap-in-c-code
-double node::compute_angle_diff(double angle_A, double angle_B)
+//Should do "B-A"
+double node::compute_angle_diff(double angle_B, double angle_A)
 {
 	double diff_val, two_PI;
 

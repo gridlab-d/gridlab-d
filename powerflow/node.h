@@ -130,7 +130,7 @@ private:
 	FUNCTIONADDR VFD_updating_function;		///< Address for VFD updating function, if it is present
 	OBJECT *VFD_object;						///< Object pointer for the VFD - for later function calls
 
-	double compute_angle_diff(double angle_A, double angle_B);	//Function to do differences, but handle the phase wrap/jump
+	double compute_angle_diff(double angle_B, double angle_A);	//Function to do differences, but handle the phase wrap/jump
 public:
 	double frequency;			///< frequency (only valid on reference bus) */
 	object reference_bus;		///< reference bus from which frequency is defined */
