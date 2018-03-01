@@ -3456,6 +3456,13 @@ EXPORT int calculate_overlimit_link(OBJECT *obj, double *overload_value, bool *o
 */
 int link_object::CurrentCalculation(int nodecall)
 {
+	//If we're FBS, just get out - assume success - mainly from API-directed-type calls
+	if (solver_method == SM_FBS)
+	{
+		return 1;
+	}
+	//Default else -- NR, which is mostly how this gets called
+
 	if (current_accumulated==false)	//Only update if we haven't done so yet
 	{
 		//Reset the deltamode-oriented flag, just because - will stay by exception
@@ -4511,6 +4518,15 @@ int link_object::CurrentCalculation(int nodecall)
 		//Flag us as done
 		current_accumulated = true;
 	}//End current not accumulated yet
+
+	//Copy in the values to the published values - otherwise, API-type calls may miss them
+	read_I_in[0] = current_in[0];
+	read_I_in[1] = current_in[1];
+	read_I_in[2] = current_in[2];
+
+	read_I_out[0] = current_out[0];
+	read_I_out[1] = current_out[1];
+	read_I_out[2] = current_out[2];
 
 	return 1;	//Assume it's always successful now
 }

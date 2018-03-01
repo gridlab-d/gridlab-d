@@ -92,10 +92,15 @@ private:
 	double VArVals[3];				// VAr values recorded (due to nature of how it's recorded, it has to be in here)
 	double CurrentVals[3];			// Current magnitude values recorded (due to nature of how it's recorded, it has to be in here)
 	bool NotFirstIteration;			// Checks to see if this is the first iteration of the system.
-	node *RNode;					// Remote node to sense voltage measurements (if desired) for VOLT controls
-	link_object *RLink;					// Remote link to sense power measurements for VAR controls
+	OBJECT *RNode;					// Remote node to sense voltage measurements (if desired) for VOLT controls
+	OBJECT *RLink;					// Remote link to sense power measurements for VAR controls
 	bool Iteration_Toggle;			// "Off" iteration tracker
 	bool NR_cycle_cap;				// First run of "off" iteration tracker - used to reiterate delta-configured, wye-connected capacitors
+	gld_property *RNode_voltage[3];	// Pointer for API to map to RNode voltage values
+	gld_property *RNode_voltaged[3];	//Pointer for API to map to RNode voltaged values
+	gld_property *RLink_indiv_power_in[3];	//Pointer for API to map to RLink indiv_power_in values
+	gld_property *RLink_current_in[3];	//Pointer for API to map to RLink current_in values
+	FUNCTIONADDR RLink_calculate_power_fxn;	//Pointer to RLink calculate_power function;
 
 public:
 	static CLASS *pclass;
