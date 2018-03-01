@@ -152,11 +152,20 @@ int capacitor::create()
 	NR_cycle_cap = true;
 	deltamode_reiter_request = false;	//By default deltamode is considered to not be running
 
+	//API/mapping variables
+	RNode_voltage[0] = RNode_voltage[1] = RNode_voltage[2] = NULL;
+	RNode_voltaged[0] = RNode_voltaged[1] = RNode_voltaged[2] = NULL;
+	RLink_indiv_power_in[0] = RLink_indiv_power_in[1] = RLink_indiv_power_in[2] = NULL;
+	RLink_current_in[0] = RLink_current_in[1] = RLink_current_in[2] = NULL;
+	RLink_calculate_power_fxn = NULL;
+
 	return result;
 }
 
 int capacitor::init(OBJECT *parent)
 {
+	gld_property *pSetPhases;
+	set temp_phases;
 	int result = node::init();
 
 	OBJECT *obj = OBJECTHDR(this);
@@ -175,13 +184,13 @@ int capacitor::init(OBJECT *parent)
 		{
 			if ((gl_object_isa(RemoteSensor,"node","powerflow")) && (gl_object_isa(SecondaryRemote,"link","powerflow")))	//Node in 1, link in 2
 			{
-				RNode = OBJECTDATA(RemoteSensor,node);
-				RLink = OBJECTDATA(SecondaryRemote,link_object);
+				RNode = RemoteSensor;
+				RLink = SecondaryRemote;
 			}
 			else if ((gl_object_isa(RemoteSensor,"link","powerflow")) && (gl_object_isa(SecondaryRemote,"node","powerflow")))	//link in 1, node in 2
 			{
-				RNode = OBJECTDATA(SecondaryRemote,node);
-				RLink = OBJECTDATA(RemoteSensor,link_object);
+				RNode = SecondaryRemote;
+				RLink = RemoteSensor;
 			}
 			else
 			{
@@ -195,7 +204,7 @@ int capacitor::init(OBJECT *parent)
 	}
 	else if (((control==VARVOLT) || (control==CURRENT)) && (SecondaryRemote==NULL) && (RemoteSensor != NULL) && gl_object_isa(RemoteSensor,"link","powerflow"))	//VAR-VOLT scheme, one sensor defined
 	{
-		RLink = OBJECTDATA(RemoteSensor,link_object);
+		RLink = RemoteSensor;
 	}
 	else if (SecondaryRemote != NULL)	//Should only be populated for VARVOLT scheme,
 	{
@@ -210,11 +219,11 @@ int capacitor::init(OBJECT *parent)
 	{
 		if (gl_object_isa(RemoteSensor,"node","powerflow"))
 		{
-			RNode = OBJECTDATA(RemoteSensor,node);	//Get remote node information
+			RNode = RemoteSensor;	//Get remote node information
 		}
 		else if (gl_object_isa(RemoteSensor,"link","powerflow"))
 		{
-			RLink = OBJECTDATA(RemoteSensor,link_object);	//Get remote link information
+			RLink = RemoteSensor;	//Get remote link information
 		}
 	}
 
@@ -341,23 +350,69 @@ int capacitor::init(OBJECT *parent)
 	switchC_state_Req_Next = switchC_state_Prev = switchC_state_Next = (CAPSWITCH)switchC_state;
 
 	//Perform phase checks - make sure what we want to look at actually exists
-	if (((control!=MANUAL) && (control!=VOLT)) && ((RLink->phases & pt_phase) != pt_phase))	//VAR, VOLTVAR, CURRENT
+	if ((control!=MANUAL) && (control!=VOLT))	//VAR, VOLTVAR, CURRENT
 	{
-		GL_THROW("One of the monitored remote link phases for capacitor:%d does not exist",obj->id);
-		/*  TROUBLESHOOT
-		One of the phases specified in pt_phase does not exist on the link being monitored by the capacitor.
-		This will cause either no results or erroneous results.  Ensure pt_phase and the phases property of the
-		remote link are compatible.
-		*/
+		//Pull the RLink phases to check
+		pSetPhases = new gld_property(RLink,"phases");
+
+		//Make sure it worked
+		if ((pSetPhases->is_valid() != true) || (pSetPhases->is_set() != true))
+		{
+			GL_THROW("Capacitor:%d - %s - Unable to map phases for remote link object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			/* TROUBLESHOOT
+			While trying to obtain the phases for the remote link of interest, an error occurred.  Please try again.  If the
+			error persists, please submit an issue.
+			*/
+		}
+
+		//Pull the voltage base value
+		temp_phases = pSetPhases->get_set();
+
+		//Now get rid of the item
+		delete pSetPhases;
+
+		//Check them
+		if ((temp_phases & pt_phase) != pt_phase)
+		{
+			GL_THROW("One of the monitored remote link phases for capacitor:%d does not exist",obj->id);
+			/*  TROUBLESHOOT
+			One of the phases specified in pt_phase does not exist on the link being monitored by the capacitor.
+			This will cause either no results or erroneous results.  Ensure pt_phase and the phases property of the
+			remote link are compatible.
+			*/
+		}
 	}
-	else if (((control==VOLT) || (control==VARVOLT)) && (RNode != NULL) && ((RNode->phases & pt_phase) != pt_phase))	//RNode check
+	else if (((control==VOLT) || (control==VARVOLT)) && (RNode != NULL))	//RNode check
 	{
-		GL_THROW("One of the monitored remote node phases for capacitor:%d does not exist",obj->id);
-		/*  TROUBLESHOOT
-		One of the phases specified in pt_phase does not exist on the node being monitored by the capacitor.
-		This will cause either no results or erroneous results.  Ensure pt_phase and the phases property of the
-		remote node are compatible.
-		*/
+		//Pull the RNode phases to check
+		pSetPhases = new gld_property(RNode,"phases");
+
+		//Make sure it worked
+		if ((pSetPhases->is_valid() != true) || (pSetPhases->is_set() != true))
+		{
+			GL_THROW("Capacitor:%d - %s - Unable to map phases for remote node object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			/* TROUBLESHOOT
+			While trying to obtain the phases for the remote node of interest, an error occurred.  Please try again.  If the
+			error persists, please submit an issue.
+			*/
+		}
+
+		//Pull the voltage base value
+		temp_phases = pSetPhases->get_set();
+
+		//Now get rid of the item
+		delete pSetPhases;
+
+		//Check to see if the phases are right
+		if ((temp_phases & pt_phase) != pt_phase)
+		{
+			GL_THROW("One of the monitored remote node phases for capacitor:%d does not exist",obj->id);
+			/*  TROUBLESHOOT
+			One of the phases specified in pt_phase does not exist on the node being monitored by the capacitor.
+			This will cause either no results or erroneous results.  Ensure pt_phase and the phases property of the
+			remote node are compatible.
+			*/
+		}
 	}
 	else if (((control==VOLT) || (control==VARVOLT)) && (RNode == NULL) && ((phases & pt_phase) != pt_phase))	//Self node check
 	{
@@ -368,6 +423,157 @@ int capacitor::init(OBJECT *parent)
 		capacitor are compatible.
 		*/
 	}
+
+	//Map the function for calculate power for RLink, if we're in the method we want
+	if ((control==VAR) || (control==VARVOLT))
+	{
+		//Do teh map
+		RLink_calculate_power_fxn = (FUNCTIONADDR)(gl_get_function(RLink,"update_power_pwr_object"));
+
+		//Check it
+		if (RLink_calculate_power_fxn == NULL)
+		{
+			GL_THROW("Capacitor:%d - %s - Unable to map link power calculation function",obj->id,(obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			While attempting to map the power update function for the link of interest in the capacitor, an error occurred.
+			Please try again.  If the error persists, please submit your code and a bug report via the ticketing system.
+			*/
+		}
+	}
+	//Default else -- it should already be nulled
+
+	//Map sub-object properties, if they exist
+	if (RLink != NULL)
+	{
+		//Map to the property of interest - power_in_A
+		RLink_indiv_power_in[0] = new gld_property(RLink,"power_in_A");
+
+		//Make sure it worked
+		if ((RLink_indiv_power_in[0]->is_valid() != true) || (RLink_indiv_power_in[0]->is_complex() != true))
+		{
+			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			/* TROUBLESHOOT
+			While attempting to map a property for the remote node or remote link, a property could not be properly mapped.
+			Please try again.  If the error persists, please submit an issue in the ticketing system.
+			*/
+		}
+
+		//Map to the property of interest - power_in_B
+		RLink_indiv_power_in[1] = new gld_property(RLink,"power_in_B");
+
+		//Make sure it worked
+		if ((RLink_indiv_power_in[1]->is_valid() != true) || (RLink_indiv_power_in[1]->is_complex() != true))
+		{
+			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
+		}
+
+		//Map to the property of interest - power_in_C
+		RLink_indiv_power_in[2] = new gld_property(RLink,"power_in_C");
+
+		//Make sure it worked
+		if ((RLink_indiv_power_in[2]->is_valid() != true) || (RLink_indiv_power_in[2]->is_complex() != true))
+		{
+			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
+		}
+
+		//Map to the property of interest - current_in_A
+		RLink_current_in[0] = new gld_property(RLink,"current_in_A");
+
+		//Make sure it worked
+		if ((RLink_current_in[0]->is_valid() != true) || (RLink_current_in[0]->is_complex() != true))
+		{
+			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
+		}
+
+		//Map to the property of interest - current_in_B
+		RLink_current_in[1] = new gld_property(RLink,"current_in_B");
+
+		//Make sure it worked
+		if ((RLink_current_in[1]->is_valid() != true) || (RLink_current_in[1]->is_complex() != true))
+		{
+			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
+		}
+
+		//Map to the property of interest - current_in_C
+		RLink_current_in[2] = new gld_property(RLink,"current_in_C");
+
+		//Make sure it worked
+		if ((RLink_current_in[2]->is_valid() != true) || (RLink_current_in[2]->is_complex() != true))
+		{
+			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
+		}
+	}
+	//Default else - not need to map it
+
+	//Do the same for the RNode
+	if (RNode != NULL)
+	{
+		//Map to the property of interest - voltage_A
+		RNode_voltage[0] = new gld_property(RNode,"voltage_A");
+
+		//Make sure it worked
+		if ((RNode_voltage[0]->is_valid() != true) || (RNode_voltage[0]->is_complex() != true))
+		{
+			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
+		}
+
+		//Map to the property of interest - voltage_B
+		RNode_voltage[1] = new gld_property(RNode,"voltage_B");
+
+		//Make sure it worked
+		if ((RNode_voltage[1]->is_valid() != true) || (RNode_voltage[1]->is_complex() != true))
+		{
+			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
+		}
+
+		//Map to the property of interest - voltage_C
+		RNode_voltage[2] = new gld_property(RNode,"voltage_C");
+
+		//Make sure it worked
+		if ((RNode_voltage[2]->is_valid() != true) || (RNode_voltage[2]->is_complex() != true))
+		{
+			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
+		}
+
+		//Map to the property of interest - voltage_AB
+		RNode_voltaged[0] = new gld_property(RNode,"voltage_AB");
+
+		//Make sure it worked
+		if ((RNode_voltaged[0]->is_valid() != true) || (RNode_voltaged[0]->is_complex() != true))
+		{
+			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
+		}
+
+		//Map to the property of interest - voltage_BC
+		RNode_voltaged[1] = new gld_property(RNode,"voltage_BC");
+
+		//Make sure it worked
+		if ((RNode_voltaged[1]->is_valid() != true) || (RNode_voltaged[1]->is_complex() != true))
+		{
+			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
+		}
+
+		//Map to the property of interest - voltage_CA
+		RNode_voltaged[2] = new gld_property(RNode,"voltage_CA");
+
+		//Make sure it worked
+		if ((RNode_voltaged[2]->is_valid() != true) || (RNode_voltaged[2]->is_complex() != true))
+		{
+			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
+		}
+	}
+
 	if(cap_switchA_count < 0)
 		cap_switchA_count = 0;
 	if(cap_switchB_count < 0)
@@ -549,12 +755,9 @@ bool capacitor::cap_sync_fxn(double time_value)
 					}
 					else
 					{
-						LOCK_OBJECT(OBJECTHDR(RNode));
-						VoltVals[0] = RNode->voltage[0];
-						VoltVals[1] = RNode->voltage[1];
-						VoltVals[2] = RNode->voltage[2];
-						UNLOCK_OBJECT(OBJECTHDR(RNode));
-
+						VoltVals[0] = RNode_voltage[0]->get_complex();
+						VoltVals[1] = RNode_voltage[1]->get_complex();
+						VoltVals[2] = RNode_voltage[2]->get_complex();
 					}
 				}
 				else				//L-L voltages
@@ -567,11 +770,9 @@ bool capacitor::cap_sync_fxn(double time_value)
 					}
 					else
 					{
-						LOCK_OBJECT(OBJECTHDR(RNode));
-						VoltVals[0] = RNode->voltaged[0];
-						VoltVals[1] = RNode->voltaged[1];
-						VoltVals[2] = RNode->voltaged[2];
-						UNLOCK_OBJECT(OBJECTHDR(RNode));
+						VoltVals[0] = RNode_voltaged[0]->get_complex();
+						VoltVals[1] = RNode_voltaged[1]->get_complex();
+						VoltVals[2] = RNode_voltaged[2]->get_complex();
 					}
 				}
 			}
@@ -1135,21 +1336,33 @@ double capacitor::cap_postPost_fxn(double result, double time_value)
 {
 	CAPSWITCH cap_A_test_state, cap_B_test_state, cap_C_test_state;
 	complex VoltVals[3];
+	int return_status;
+	OBJECT *obj = OBJECTHDR(this);
 
 	if ((control==VAR) || (control==VARVOLT))	//Grab the power values from remote link
 	{
 		READLOCK_OBJECT(OBJECTHDR(RLink));
 
 		//Force the link to do an update (will be ignored first run anyways (zero))
-		RLink->calculate_power();
+		return_status = ((int (*)(OBJECT *))(*RLink_calculate_power_fxn))(RLink);
 
-		//Takes all measurements from input side of link (output can not quite be up to date)
-		VArVals[0] = RLink->indiv_power_in[0].Im();
-		VArVals[1] = RLink->indiv_power_in[1].Im();
-		VArVals[2] = RLink->indiv_power_in[2].Im();
-		
 		READUNLOCK_OBJECT(OBJECTHDR(RLink));
 
+		//Make sure it worked
+		if (return_status != 1)
+		{
+			GL_THROW("Capacitor:%d - %s - Link power calculation failed",obj->id,(obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			While updated the power flowing through a link for the VAR or VOLTVAR control approach, an error occurred.
+			Please check the console output for additional indications as to why this occurred.
+			*/
+		}
+
+		//Takes all measurements from input side of link (output can not quite be up to date)
+		VArVals[0] = (RLink_indiv_power_in[0]->get_complex()).Im();
+		VArVals[1] = (RLink_indiv_power_in[1]->get_complex()).Im();
+		VArVals[2] = (RLink_indiv_power_in[2]->get_complex()).Im();
+		
 		//If NR, force us to do a reiteration if something changed - FBS handles this just due to the nature of how it solves
 		//Basically copied out of actual logic above
 		if (solver_method == SM_NR)
@@ -1213,12 +1426,9 @@ double capacitor::cap_postPost_fxn(double result, double time_value)
 					}
 					else
 					{
-						LOCK_OBJECT(OBJECTHDR(RNode));
-						VoltVals[0] = RNode->voltage[0];
-						VoltVals[1] = RNode->voltage[1];
-						VoltVals[2] = RNode->voltage[2];
-						UNLOCK_OBJECT(OBJECTHDR(RNode));
-
+						VoltVals[0] = RNode_voltage[0]->get_complex();
+						VoltVals[1] = RNode_voltage[1]->get_complex();
+						VoltVals[2] = RNode_voltage[2]->get_complex();
 					}
 				}
 				else				//L-L voltages
@@ -1231,11 +1441,9 @@ double capacitor::cap_postPost_fxn(double result, double time_value)
 					}
 					else
 					{
-						LOCK_OBJECT(OBJECTHDR(RNode));
-						VoltVals[0] = RNode->voltaged[0];
-						VoltVals[1] = RNode->voltaged[1];
-						VoltVals[2] = RNode->voltaged[2];
-						UNLOCK_OBJECT(OBJECTHDR(RNode));
+						VoltVals[0] = RNode_voltaged[0]->get_complex();
+						VoltVals[1] = RNode_voltaged[1]->get_complex();
+						VoltVals[2] = RNode_voltaged[2]->get_complex();
 					}
 				}
 
@@ -1342,14 +1550,10 @@ double capacitor::cap_postPost_fxn(double result, double time_value)
 	}
 	else if (control==CURRENT)	//Grab the current injection values
 	{
-		READLOCK_OBJECT(OBJECTHDR(RLink));
-
 		//Pull off the output currents
-		CurrentVals[0]=RLink->current_in[0].Mag();
-		CurrentVals[1]=RLink->current_in[1].Mag();
-		CurrentVals[2]=RLink->current_in[2].Mag();
-		
-		READUNLOCK_OBJECT(OBJECTHDR(RLink));
+		CurrentVals[0]=(RLink_current_in[0]->get_complex()).Mag();
+		CurrentVals[1]=(RLink_current_in[1]->get_complex()).Mag();
+		CurrentVals[2]=(RLink_current_in[2]->get_complex()).Mag();
 
 		//If NR, check logic to see if we need to request another pass
 		if (solver_method == SM_NR)
@@ -1417,12 +1621,9 @@ double capacitor::cap_postPost_fxn(double result, double time_value)
 			}
 			else
 			{
-				LOCK_OBJECT(OBJECTHDR(RNode));
-				VoltVals[0] = RNode->voltage[0];
-				VoltVals[1] = RNode->voltage[1];
-				VoltVals[2] = RNode->voltage[2];
-				UNLOCK_OBJECT(OBJECTHDR(RNode));
-
+				VoltVals[0] = RNode_voltage[0]->get_complex();
+				VoltVals[1] = RNode_voltage[1]->get_complex();
+				VoltVals[2] = RNode_voltage[2]->get_complex();
 			}
 		}
 		else				//L-L voltages
@@ -1435,11 +1636,9 @@ double capacitor::cap_postPost_fxn(double result, double time_value)
 			}
 			else
 			{
-				LOCK_OBJECT(OBJECTHDR(RNode));
-				VoltVals[0] = RNode->voltaged[0];
-				VoltVals[1] = RNode->voltaged[1];
-				VoltVals[2] = RNode->voltaged[2];
-				UNLOCK_OBJECT(OBJECTHDR(RNode));
+				VoltVals[0] = RNode_voltaged[0]->get_complex();
+				VoltVals[1] = RNode_voltaged[1]->get_complex();
+				VoltVals[2] = RNode_voltaged[2]->get_complex();
 			}
 		}
 

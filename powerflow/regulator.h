@@ -70,6 +70,8 @@ private:
 	bool iteration_flag;	//Iteration toggler - to maintain logic from previous NR implementation, to a degree
 	bool new_reverse_flow_action[3];
 	bool deltamode_reiter_request;	// Flag to replicate a reiteration request from presync/postsync, since that is handled different in deltamode - used to match QSTS
+	gld_property *RNode_voltage[3];	// Pointer for API to map to RNode voltage values
+	gld_property *ToNode_voltage[3];	//Pointer for API to map to voltages to read
 public:
 	static CLASS *oclass;
 	static CLASS *pclass;
