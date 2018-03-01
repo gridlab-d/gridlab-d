@@ -16,7 +16,6 @@
 using namespace std;
 
 #include "regulator.h"
-#include "node.h"
 
 CLASS* regulator::oclass = NULL;
 CLASS* regulator::pclass = NULL;
@@ -77,6 +76,10 @@ int regulator::create()
 	tap_C_change_count = -1;
 	iteration_flag = true;
 	regulator_resistance = -1.0;
+
+	RNode_voltage[0] = RNode_voltage[1] = RNode_voltage[2] = NULL;
+	ToNode_voltage[0] = ToNode_voltage[1] = ToNode_voltage[2] = NULL;
+
 	return result;
 }
 
@@ -123,16 +126,88 @@ int regulator::init(OBJECT *parent)
 
 	if (pConfig->Control == pConfig->REMOTE_NODE) 
 	{
-		node *RNode = OBJECTDATA(RemoteNode,node);
-		if (RNode == NULL)
+		if (RemoteNode == NULL)
 		{
-			throw "Remote sensing node not found";
+			GL_THROW("Remote sensing node not found on regulator:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
 			/* TROUBLESHOOT
 			If you are trying to use REMOTE_NODE, then please specify a sense_node within the regulator
 			object.  Otherwise, change your Control method.
 			*/
 		}
+		else if (gl_object_isa(RemoteNode,"node","powerflow") != true)
+		{
+			GL_THROW("Remote sensing node is not a node-type object in regulator:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			The object specified in the sense_node property is not a node-type object, so it will not work for the REMOTE_NODE.
+			*/
+		}
+
+		//Map to the property of interest - voltage_A
+		RNode_voltage[0] = new gld_property(RemoteNode,"voltage_A");
+
+		//Make sure it worked
+		if ((RNode_voltage[0]->is_valid() != true) || (RNode_voltage[0]->is_complex() != true))
+		{
+			GL_THROW("Regulator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			/* TROUBLESHOOT
+			While attempting to map a property for the sense_node, a property could not be properly mapped.
+			Please try again.  If the error persists, please submit an issue in the ticketing system.
+			*/
+
+		}
+
+		//Map to the property of interest - voltage_B
+		RNode_voltage[1] = new gld_property(RemoteNode,"voltage_B");
+
+		//Make sure it worked
+		if ((RNode_voltage[1]->is_valid() != true) || (RNode_voltage[1]->is_complex() != true))
+		{
+			GL_THROW("Regulator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
+		}
+
+		//Map to the property of interest - voltage_C
+		RNode_voltage[2] = new gld_property(RemoteNode,"voltage_C");
+
+		//Make sure it worked
+		if ((RNode_voltage[2]->is_valid() != true) || (RNode_voltage[2]->is_complex() != true))
+		{
+			GL_THROW("Regulator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
+		}
 	}
+
+	//Map the to-node connections
+	//Map to the property of interest - voltage_A
+	ToNode_voltage[0] = new gld_property(to,"voltage_A");
+
+	//Make sure it worked
+	if ((ToNode_voltage[0]->is_valid() != true) || (ToNode_voltage[0]->is_complex() != true))
+	{
+		GL_THROW("Regulator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+		//Defined above
+	}
+
+	//Map to the property of interest - voltage_B
+	ToNode_voltage[1] = new gld_property(to,"voltage_B");
+
+	//Make sure it worked
+	if ((ToNode_voltage[1]->is_valid() != true) || (ToNode_voltage[1]->is_complex() != true))
+	{
+		GL_THROW("Regulator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+		//Defined above
+	}
+
+	//Map to the property of interest - voltage_C
+	ToNode_voltage[2] = new gld_property(to,"voltage_C");
+
+	//Make sure it worked
+	if ((ToNode_voltage[2]->is_valid() != true) || (ToNode_voltage[2]->is_complex() != true))
+	{
+		GL_THROW("Regulator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+		//Defined above
+	}
+
 	// D_mat & W_mat - 3x3 matrix
 	D_mat[0][0] = D_mat[1][1] = D_mat[2][2] = complex(1,0);
 	D_mat[0][1] = D_mat[2][0] = D_mat[1][2] = complex(-1,0);
@@ -1226,9 +1301,9 @@ void regulator::get_monitored_voltage()
 			{
 				if (pTo) 
 				{
-					volt[0] = pTo->voltageA;
-					volt[1] = pTo->voltageB;
-					volt[2] = pTo->voltageC;
+					volt[0] = ToNode_voltage[0]->get_complex();
+					volt[1] = ToNode_voltage[1]->get_complex();
+					volt[2] = ToNode_voltage[2]->get_complex();
 				}
 				else
 				{	
@@ -1262,11 +1337,11 @@ void regulator::get_monitored_voltage()
 				if (pTo) 
 				{
 					if (pConfig->PT_phase == PHASE_A)
-						volt[0] = pTo->voltageA;
+						volt[0] = ToNode_voltage[0]->get_complex();
 					else if (pConfig->PT_phase == PHASE_B)
-						volt[0] = pTo->voltageB;
+						volt[0] = ToNode_voltage[1]->get_complex();
 					else if (pConfig->PT_phase == PHASE_C)
-						volt[0] = pTo->voltageC;
+						volt[0] = ToNode_voltage[2]->get_complex();
 				}
 				else
 				{	
@@ -1308,9 +1383,9 @@ void regulator::get_monitored_voltage()
 			{
 				if (pTo) 
 				{
-					check_voltage[0] = pTo->voltageA;
-					check_voltage[1] = pTo->voltageB;
-					check_voltage[2] = pTo->voltageC;
+					check_voltage[0] = ToNode_voltage[0]->get_complex();
+					check_voltage[1] = ToNode_voltage[1]->get_complex();
+					check_voltage[2] = ToNode_voltage[2]->get_complex();
 				}
 				else
 				{	
@@ -1322,11 +1397,11 @@ void regulator::get_monitored_voltage()
 				if (pTo) 
 				{
 					if (pConfig->PT_phase == PHASE_A)
-						check_voltage[0] = check_voltage[1] = check_voltage[2] = pTo->voltageA;
+						check_voltage[0] = check_voltage[1] = check_voltage[2] = ToNode_voltage[0]->get_complex();
 					else if (pConfig->PT_phase == PHASE_B)
-						check_voltage[0] = check_voltage[1] = check_voltage[2] = pTo->voltageB;
+						check_voltage[0] = check_voltage[1] = check_voltage[2] = ToNode_voltage[1]->get_complex();
 					else if (pConfig->PT_phase == PHASE_C)
-						check_voltage[0] = check_voltage[1] = check_voltage[2] = pTo->voltageC;
+						check_voltage[0] = check_voltage[1] = check_voltage[2] = ToNode_voltage[2]->get_complex();
 				}
 				else
 				{	
@@ -1337,23 +1412,21 @@ void regulator::get_monitored_voltage()
 			break;
 		case 3: //Remote Node
 		{
-			node *RNode = OBJECTDATA(RemoteNode,node);
 			if (pConfig->control_level == pConfig->INDIVIDUAL)
 			{
 				for (int i = 0; i < 3; i++)
 				{
-					check_voltage[i] = RNode->voltage[i];
+					check_voltage[i] = RNode_voltage[i]->get_complex();
 				}
 			}
 			else if (pConfig->control_level == pConfig->BANK)
 			{
 				if (pConfig->PT_phase == PHASE_A)
-					check_voltage[0] = check_voltage[1] = check_voltage[2] = RNode->voltage[0];
+					check_voltage[0] = check_voltage[1] = check_voltage[2] = RNode_voltage[0]->get_complex();
 				else if (pConfig->PT_phase == PHASE_B)
-					check_voltage[0] = check_voltage[1] = check_voltage[2] = RNode->voltage[1];
+					check_voltage[0] = check_voltage[1] = check_voltage[2] = RNode_voltage[1]->get_complex();
 				else if (pConfig->PT_phase == PHASE_C)
-					check_voltage[0] = check_voltage[1] = check_voltage[2] = RNode->voltage[2];
-
+					check_voltage[0] = check_voltage[1] = check_voltage[2] = RNode_voltage[2]->get_complex();
 			}
 		}
 			break;

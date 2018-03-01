@@ -61,6 +61,8 @@ private:
 	bool offnominal_time;	//Used to detect off-nominal timesteps and perform an exception for them
 	bool iteration_flag;	//Iteration toggler - to maintain logic from previous NR implementation, to a degree
 	bool new_reverse_flow_action[3];
+	gld_property *RNode_voltage[3];	// Pointer for API to map to RNode voltage values
+	gld_property *ToNode_voltage[3];	//Pointer for API to map to voltages to read
 public:
 	static CLASS *oclass;
 	static CLASS *pclass;
