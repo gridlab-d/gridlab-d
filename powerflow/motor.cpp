@@ -24,6 +24,7 @@ CLASS* motor::pclass = NULL;
 static PASSCONFIG passconfig = PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN;
 static PASSCONFIG clockpass = PC_BOTTOMUP;
 
+
 motor::motor(MODULE *mod):node(mod)
 {
 	if(oclass == NULL)
@@ -55,6 +56,16 @@ motor::motor(MODULE *mod):node(mod)
 			PT_double, "To_prime[s]", PADDR(To_prime),PT_DESCRIPTION,"rotor time constant",
 			PT_double, "capacitor_speed[%]", PADDR(cap_run_speed_percentage),PT_DESCRIPTION,"percentage speed of nominal when starting capacitor kicks in",
 			PT_double, "trip_time[s]", PADDR(trip_time),PT_DESCRIPTION,"time motor can stay stalled before tripping off ",
+            PT_double, "uv_relay_trip_time[s]", PADDR(uv_relay_trip_time),PT_DESCRIPTION,"time low-voltage condition must exist for under-voltage protection to trip ",
+            PT_double, "uv_relay_probability", PADDR(uv_relay_probability),PT_DESCRIPTION,"factor defining how common under-voltage protection relays are in the population of motors",
+            PT_double, "uv_relay_trip_V[V]", PADDR(uv_relay_trip_V),PT_DESCRIPTION,"pu minimum voltage before under-voltage relay trips",
+            PT_enumeration,"contactor_state",PADDR(contactor_state),PT_DESCRIPTION,"the current status of the motor",
+				PT_KEYWORD,"OPEN",(enumeration)contactorOPEN,
+				PT_KEYWORD,"CLOSED",(enumeration)contactorCLOSED,
+            PT_double, "contactor_open_Vmax[pu]", PADDR(contactor_open_Vmax),PT_DESCRIPTION,"pu voltage at which first motor contactor opens",
+            PT_double, "contactor_open_Vmin[pu]", PADDR(contactor_open_Vmin),PT_DESCRIPTION,"pu voltage at which all motor contactors are open",
+            PT_double, "contactor_close_Vmin[pu]", PADDR(contactor_close_Vmin),PT_DESCRIPTION,"pu voltage at which first motor contactor recloses",
+            PT_double, "contactor_close_Vmax[pu]", PADDR(contactor_close_Vmax),PT_DESCRIPTION,"pu voltage at which all motor contactors have reclosed",
 			PT_double, "reconnect_time[s]", PADDR(reconnect_time),PT_DESCRIPTION,"time before tripped motor reconnects",
 			
 			//Reconcile torque and speed, primarily
@@ -198,6 +209,29 @@ int motor::create()
     motor_elec_power = complex(0.0,0.0);
     Telec = 0; 
     wr = 0;
+    
+    // Randomized contactor transition values
+    //  Used to determine at what voltages the contactor
+    //  will open and closed and votlage drops too low.
+    // Based off WECC CMPLDW Motor D (single-phase
+    //  air-conditioner) model specifications.
+
+    // Under-voltage relay randomization
+    //  10% of under voltage relays should open if input voltage is
+    //  < 0.6 pu for at least 20ms.
+    uv_relay_rand = gl_random_uniform(RNGSTATE,0.0, 1.0);
+    uv_relay_time = 0;
+    uv_relay_trip_time = 0.02; //20ms default
+    uv_relay_probability = 0.1;
+    uv_relay_trip_V = 0.6;
+    uv_lockout = 0;
+    
+    contactor_open_Vmax = 0.5;
+    contactor_open_Vmin = 0.4;
+    contactor_close_Vmin = 0.5;
+    contactor_close_Vmax = 0.6;
+    
+    contactor_state = contactorCLOSED;
 
     //Mode initialization
     motor_op_mode = modeSPIM; // share the variable with TPIM
@@ -240,6 +274,16 @@ int motor::create()
 
 int motor::init(OBJECT *parent)
 {
+    
+    // Creating random values to determine conactor open and close state based on input parameters
+    // Contactors will open somewhere between input voltage
+    //  of contactor_open_Vmax (none open) to contactor_open_Vmin (all open)
+    contactor_open_rand = gl_random_uniform(RNGSTATE,contactor_open_Vmin, contactor_open_Vmax);
+    
+    // Contactors will close somewhere between input voltage
+    //  of contactor_close_Vmin (none close) to 0.6 (all close)
+    contactor_close_rand = gl_random_uniform(RNGSTATE,contactor_close_Vmin, contactor_close_Vmax);
+
 	OBJECT *obj = OBJECTHDR(this);
 	int result = node::init(parent);
 
@@ -352,6 +396,25 @@ int motor::init(OBJECT *parent)
 	}
 
 	wr_pu_prev = wr_pu;
+    
+    // Checking contactor open and close min and max voltages
+    if (contactor_open_Vmax < contactor_open_Vmin){
+        GL_THROW("motor:%s -- contactor_open_Vmax must be greater than contactor_open_Vmin",(obj->name ? obj->name : "Unnamed"));
+    }
+    if (contactor_close_Vmax < contactor_close_Vmin){
+        GL_THROW("motor:%s -- contactor_close_Vmax must be greater than contactor_close_Vmin",(obj->name ? obj->name : "Unnamed"));
+    }
+    
+    // Checking under-voltage relay input parameters
+    if (uv_relay_trip_time < 0 ){
+        GL_THROW("motor:%s -- uv_relay_trip_time must be greater than or equal to 0",(obj->name ? obj->name : "Unnamed"));
+    }
+    if (uv_relay_probability < 0 || uv_relay_trip_V > 1){
+        GL_THROW("motor:%s -- uv_relay_probability must be greater than or equal to 0 and less than or equal to 1",(obj->name ? obj->name : "Unnamed"));
+    }
+    if (uv_relay_trip_V < 0 || uv_relay_trip_V > 1){
+        GL_THROW("motor:%s -- uv_relay_trip_V must be greater than or equal to 0 and less than or equal to 1",(obj->name ? obj->name : "Unnamed"));
+    }
 
 	return result;
 }
@@ -1022,6 +1085,30 @@ void motor::SPIMUpdateProtection(double delta_time) {
 		else if ( (wr >= 1 && motor_trip == 0) || ws <= 1 || Vs.Mag() <= 0.1) { // conditions for counting down the time trip timer
 			trip = trip - (delta_time / (reconnect_time/trip_time)) < 0 ? 0 : trip - (delta_time / (reconnect_time/trip_time)); // count down by the time since last cycle scaled by the difference in trip and reconnect times
 		}
+        
+        // Under-voltage protection relay timer
+        if (uv_lockout == 0) {
+            if (Vs.Mag() <= uv_relay_trip_V && uv_relay_rand <= uv_relay_probability) { //  This particular AC motor does have an under-voltage relay that will trip
+                if (uv_relay_time <= uv_relay_trip_time) { //In under-voltage state and accumulating time
+                    uv_relay_time = uv_relay_time + delta_time;
+                    uv_lockout = 0;
+                }
+                else { //relay time has accumlated and trips the unit open, permanently
+                    motor_override = overrideOFF;
+                    uv_lockout = 1;
+                }
+            } else { //Either the voltage is high enough or this motor doesn't have under-voltage protection
+                uv_relay_time = 0;
+            }
+        }
+        
+        // Main contactor opening due to low-voltage condition (coil doesn't have enough magnetic force to hold contacts together)
+        
+        if (Vs.Mag() <=  contactor_open_rand && uv_lockout == 0 && contactor_state == contactorCLOSED) { //
+            motor_override = overrideOFF;
+            contactor_state = contactorOPEN;
+        }
+
 	}
 	else { // motor is off so it is "cooling" down
 		trip = trip - (delta_time / (reconnect_time/trip_time)) < 0 ? 0 : trip - (delta_time / (reconnect_time/trip_time)); // count down by the time since last cycle scaled by the difference in trip and reconnect times
@@ -1039,6 +1126,11 @@ void motor::SPIMUpdateProtection(double delta_time) {
 		motor_trip = 0;
 		reconnect = 0;
 	}
+    // Main contactor closing (magnetic force able to hold contacts together) once voltage gets high enough
+    if (Vs.Mag() >=  contactor_close_rand && uv_lockout == 0 && contactor_state == contactorOPEN ){//
+        motor_override = overrideON;
+        contactor_state = contactorCLOSED;
+    }
 }
 
 // TPIM thermal protection
@@ -1050,6 +1142,28 @@ void motor::TPIMUpdateProtection(double delta_time) {
 		else if ( (wr_pu >= 0.01 && motor_trip == 0) || ws_pu <= 0.1 || Vas.Mag() <= 0.1 || Vbs.Mag() <= 0.1 || Vcs.Mag() <= 0.1) { // conditions for counting down the time trip timer
 			trip = trip - (delta_time / (reconnect_time/trip_time)) < 0 ? 0 : trip - (delta_time / (reconnect_time/trip_time)); // count down by the time since last cycle scaled by the difference in trip and reconnect times
 		}
+        
+        // Under-voltage protection relay timer
+//        if (uv_lockout == 0) {
+//            if ((Vas.Mag() <= uv_relay_trip_V || Vbs.Mag() <= uv_relay_trip_V || Vcs.Mag() <= uv_relay_trip_V) && uv_relay_rand <= uv_relay_probability) { //  This particular AC motor does have an under-voltage relay that will trip
+//                if (uv_relay_time <= uv_relay_trip_time) { //In under-voltage state and accumulating time
+//                    uv_relay_time = uv_relay_time + delta_time;
+//                    uv_lockout = 0;
+//                }
+//                else { //relay time has accumlated and trips the unit open, permanently
+//                    motor_override = overrideOFF;
+//                    uv_lockout = 1;
+//                }
+//            } else { //Either the voltage is high enough or this motor doesn't have under-voltage protection
+//                uv_relay_time = 0;
+//            }
+//        }
+//        
+//        // Main contactor opening due to low-voltage condition (coil doesn't have enough magnetic force to hold contacts together)
+//        if ((Vas.Mag() <=  contactor_open_rand || Vbs.Mag() <=  contactor_open_rand || Vcs.Mag() <=  contactor_open_rand) && uv_lockout == 0 && contactor_state == contactorCLOSED) { //
+//            motor_override = overrideOFF;
+//            contactor_state = contactorOPEN;
+//        }
 	}
 	else { // motor is off so it is "cooling" down
 		trip = trip - (delta_time / (reconnect_time/trip_time)) < 0 ? 0 : trip - (delta_time / (reconnect_time/trip_time)); // count down by the time since last cycle scaled by the difference in trip and reconnect times
@@ -1067,6 +1181,12 @@ void motor::TPIMUpdateProtection(double delta_time) {
 		motor_trip = 0;
 		reconnect = 0;
 	}
+    
+    // Main contactor closing (magnetic force able to hold contacts together) once voltage gets high enough
+//    if ((Vas.Mag() >=  contactor_close_rand && Vbs.Mag() >=  contactor_close_rand && Vcs.Mag() >=  contactor_close_rand ) && uv_lockout == 0 && contactor_state == contactorOPEN ){//
+//        motor_override = overrideON;
+//        contactor_state = contactorCLOSED;
+//    }
 }
 
 // function to ensure that internal model states are zeros when the motor is OFF

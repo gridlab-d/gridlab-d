@@ -138,6 +138,25 @@ private:
     double wr_prev;
 	double psi_sat_prev;
 
+    // Under voltage protection
+    double uv_relay_rand;
+    double uv_relay_time;
+    double uv_relay_trip_time;
+    double uv_relay_trip_V;
+    int uv_lockout;
+    double uv_relay_probability;
+    typedef enum {
+		contactorOPEN=0,
+		contactorCLOSED=1
+	} CONTACTOR_STATE;
+	enumeration contactor_state;
+    double contactor_open_rand;
+    double contactor_close_rand;
+    double contactor_open_Vmax;
+    double contactor_open_Vmin;
+    double contactor_close_Vmin;
+    double contactor_close_Vmax;
+
 	complex Vs;
 	double ws;
 	int connected_phase;
