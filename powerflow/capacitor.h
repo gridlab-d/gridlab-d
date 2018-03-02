@@ -6,7 +6,6 @@
 
 #include "powerflow.h"
 #include "node.h"
-#include "link.h"
 
 #define TSNVRDBL 9223372036854775808.0
 EXPORT SIMULATIONMODE interupdate_capacitor(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);

@@ -135,11 +135,11 @@ int regulator::init(OBJECT *parent)
 			object.  Otherwise, change your Control method.
 			*/
 		}
-		else if (gl_object_isa(RemoteNode,"node","powerflow") != true)
+		else if ((gl_object_isa(RemoteNode,"node","powerflow") != true) && (gl_object_isa(RemoteNode,"network_interface") != true))
 		{
-			GL_THROW("Remote sensing node is not a node-type object in regulator:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
+			GL_THROW("Remote sensing node is not a valid object in regulator:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
-			The object specified in the sense_node property is not a node-type object, so it will not work for the REMOTE_NODE.
+			The object specified in the sense_node property is not a node-type or network_interface object, so it will not work for the REMOTE_NODE.
 			*/
 		}
 

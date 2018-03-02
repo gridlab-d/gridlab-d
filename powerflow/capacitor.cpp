@@ -192,6 +192,12 @@ int capacitor::init(OBJECT *parent)
 				RNode = SecondaryRemote;
 				RLink = RemoteSensor;
 			}
+			else if ((gl_object_isa(RemoteSensor,"network_interface")) && (gl_object_isa(SecondaryRemote,"network_interface")))
+			{
+				//Just copy in
+				RNode = RemoteSensor;
+				RLink = SecondaryRemote;
+			}
 			else
 			{
 				GL_THROW("For two remote sensors, Capacitor:%d requires one link and one node object specified.",obj->id);
@@ -202,7 +208,7 @@ int capacitor::init(OBJECT *parent)
 			}
 		}
 	}
-	else if (((control==VARVOLT) || (control==CURRENT)) && (SecondaryRemote==NULL) && (RemoteSensor != NULL) && gl_object_isa(RemoteSensor,"link","powerflow"))	//VAR-VOLT scheme, one sensor defined
+	else if (((control==VARVOLT) || (control==CURRENT)) && (SecondaryRemote==NULL) && (RemoteSensor != NULL) && (gl_object_isa(RemoteSensor,"link","powerflow") || gl_object_isa(RemoteSensor,"network_interface")))	//VAR-VOLT scheme, one sensor defined
 	{
 		RLink = RemoteSensor;
 	}
@@ -224,6 +230,18 @@ int capacitor::init(OBJECT *parent)
 		else if (gl_object_isa(RemoteSensor,"link","powerflow"))
 		{
 			RLink = RemoteSensor;	//Get remote link information
+		}
+		else if (gl_object_isa(RemoteSensor,"network_interface"))
+		{
+			gl_warning("Capacitor:%d - %s - the remote_sense object is a network_interface, node/link connections both enabled",obj->id,(obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			A capacitor has detected a network_interface object attached to the remote_sense object pointer.  It will map this object to both the node and link
+			options for remote telemetry.  The capacitor operation method should specify the proper device to use, but this may have unintenteded consequences.
+			*/
+
+			//Put it in both, since it assumes it may need one or the other
+			RNode = RemoteSensor;
+			RLink = RemoteSensor;
 		}
 	}
 
