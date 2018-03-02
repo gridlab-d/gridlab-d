@@ -501,42 +501,47 @@ TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 	// figure out if we need to enter delta mode on the next pass
 	if (motor_op_mode == modeSPIM)
 	{
-		if (((Vs.Mag() < DM_volt_trig) || (wr < DM_speed_trig)) && deltamode_inclusive)
-		{
-			// we should not enter delta mode if the motor is tripped or not close to reconnect
-			if (motor_trip == 1 && reconnect < reconnect_time-1) {
-				return result;
-			}
+        if (motor_override == overrideON){
+            if (((Vs.Mag() < DM_volt_trig) || (wr < DM_speed_trig)) && deltamode_inclusive)
+            {
+                // we should not enter delta mode if the motor is tripped or not close to reconnect
+                if (motor_trip == 1 && reconnect < reconnect_time-1) {
+                    return result;
+                }
 
-			// we are not tripped and the motor needs to enter delta mode to capture the dynamics
-			schedule_deltamode_start(t1);
-			return t1;
-		}
-		else
-		{
-			return result;
-		}
+                // we are not tripped and the motor needs to enter delta mode to capture the dynamics
+                schedule_deltamode_start(t1);
+                return t1;
+            }
+            else
+            {
+                return result;
+            }
+        }
+        
 	}
 	else	//Must be three-phase
 	{
-		//This may need to be updated for three-phase
-		if ( ((Vas.Mag() < DM_volt_trig) || (Vbs.Mag() < DM_volt_trig) ||
-				(Vcs.Mag() < DM_volt_trig) || (wr < DM_speed_trig))
-				&& deltamode_inclusive)
-		{
-			// we should not enter delta mode if the motor is tripped or not close to reconnect
-			if (motor_trip == 1 && reconnect < reconnect_time-1) {
-				return result;
-			}
+		if (motor_override == overrideON){
+            //This may need to be updated for three-phase
+            if ( ((Vas.Mag() < DM_volt_trig) || (Vbs.Mag() < DM_volt_trig) ||
+                    (Vcs.Mag() < DM_volt_trig) || (wr < DM_speed_trig))
+                    && deltamode_inclusive)
+            {
+                // we should not enter delta mode if the motor is tripped or not close to reconnect
+                if (motor_trip == 1 && reconnect < reconnect_time-1) {
+                    return result;
+                }
 
-			// we are not tripped and the motor needs to enter delta mode to capture the dynamics
-			schedule_deltamode_start(t1);
-			return t1;
-		}
-		else
-		{
-			return result;
-		}
+                // we are not tripped and the motor needs to enter delta mode to capture the dynamics
+                schedule_deltamode_start(t1);
+                return t1;
+            }
+            else
+            {
+                return result;
+            }
+        }
 	}
 }
 
