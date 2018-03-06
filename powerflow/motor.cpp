@@ -72,7 +72,7 @@ motor::motor(MODULE *mod):node(mod)
 				PT_KEYWORD,"TRIPPED",(enumeration)statusTRIPPED,
 				PT_KEYWORD,"OFF",(enumeration)statusOFF,
 			PT_int32,"motor_status_number",PADDR(motor_status),PT_DESCRIPTION,"the current status of the motor as an integer",
-			PT_enumeration,"motor_override",PADDR(motor_override),PT_DESCRIPTION,"override function to dictate if motor is turned off or on",
+			PT_enumeration,"desired_motor_state",PADDR(motor_override),PT_DESCRIPTION,"Should the motor be on or off",
 				PT_KEYWORD,"ON",(enumeration)overrideON,
 				PT_KEYWORD,"OFF",(enumeration)overrideOFF,
 			PT_enumeration,"motor_operation_type",PADDR(motor_op_mode),PT_DESCRIPTION,"current operation type of the motor - deltamode related",
@@ -154,6 +154,7 @@ int motor::create()
 
 	//Flag variable
 	Tmech = -1.0;
+	Tmech_eff = 0.0;
 
 	// Default parameters
 	motor_override = overrideON;  // share the variable with TPIM
@@ -282,6 +283,12 @@ int motor::init(OBJECT *parent)
 		else	//Assume 3 phase
 		{
 			Tmech = 0.95;
+
+			//Check mode
+			if (motor_status != statusOFF)
+			{
+				Tmech_eff = Tmech;
+			}
 		}
 	}
 	//Default else - user specified it
@@ -504,7 +511,7 @@ TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 		if (((Vs.Mag() < DM_volt_trig) || (wr < DM_speed_trig)) && deltamode_inclusive)
 		{
 			// we should not enter delta mode if the motor is tripped or not close to reconnect
-			if (motor_trip == 1 && reconnect < reconnect_time-1) {
+			if ((motor_trip == 1 && reconnect < reconnect_time-1)  || (motor_override == overrideOFF)) {
 				return result;
 			}
 
@@ -525,7 +532,7 @@ TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 				&& deltamode_inclusive)
 		{
 			// we should not enter delta mode if the motor is tripped or not close to reconnect
-			if (motor_trip == 1 && reconnect < reconnect_time-1) {
+			if ((motor_trip == 1 && reconnect < reconnect_time-1) || (motor_override == overrideOFF)) {
 				return result;
 			}
 
@@ -979,7 +986,9 @@ void motor::TPIMreinitializeVars() {
 // function to update the status of the motor
 void motor::SPIMUpdateMotorStatus() {
 	if (motor_override == overrideOFF || ws <= 1 || Vs.Mag() <= 0.1)
+	{
 		motor_status = statusOFF;
+	}
 	else if (wr > 1) {
 		motor_status = statusRUNNING;
 	}
@@ -1076,8 +1085,8 @@ void motor::SPIMStateOFF() {
     Ib = complex(0.0,0.0);
     Is = complex(0.0,0.0);
     motor_elec_power = complex(0.0,0.0);
-    Telec = 0; 
-    wr = 0;
+    Telec = 0.0; 
+    wr = 0.0;
 	wr_pu = 0.0;
 }
 
@@ -1087,13 +1096,14 @@ void motor::TPIMStateOFF() {
 	phins_cj = complex(0.0,0.0);
 	phipr = complex(0.0,0.0);
 	phinr_cj = complex(0.0,0.0);
-	wr_pu = 0;
 	wr = 0.0;
 	wr_pu = 0.0;
 	Ips = complex(0.0,0.0);
 	Ipr = complex(0.0,0.0);
 	Ins_cj = complex(0.0,0.0);
 	Inr_cj = complex(0.0,0.0);
+	Telec = 0.0;
+	Tmech_eff = 0.0;
 }
 
 // Function to calculate the solution to the steady state SPIM model
@@ -1280,7 +1290,7 @@ void motor::TPIMSteadyState(TIMESTAMP t1) {
 
 				// iteratively compute speed increment to make sure Telec matches Tmech during steady state mode
 				// if it does not match, then update current and Telec using new wr_pu
-				omgr0_delta = ( Telec - Tmech ) / ((double)iteration_count);
+				omgr0_delta = ( Telec - Tmech_eff ) / ((double)iteration_count);
 
 				//update the rotor speed to make sure electrical torque traces mechanical torque
 				if (wr_pu + omgr0_delta > 0) {
@@ -1478,6 +1488,11 @@ void motor::TPIMDynamic(double curr_delta_time, double dTime) {
 
     TPIMupdateVars();
 
+	if (wr_pu >= 1.0)
+	{
+		Tmech_eff = Tmech;
+	}
+
     //*** Predictor Step ***//
     // predictor step 1 - calculate coefficients
     A1p = -(complex(0.0,1.0) * ws_pu + rs / sigma1) ;
@@ -1497,7 +1512,7 @@ void motor::TPIMDynamic(double curr_delta_time, double dTime) {
     dphins_cj_prev_dt = ( ~Van + B2p * phins_cj_prev + D2p * phinr_cj_prev ) * wbase; // pu/s
     dphipr_prev_dt  =  ( C3p * phipr_prev + A3p * phips_prev ) * wbase; // pu/s
     dphinr_cj_prev_dt = ( D4p * phinr_cj_prev  + B4p * phins_cj_prev ) * wbase; // pu/s
-    domgr0_prev_dt =  ( (~phips_prev * Ips_prev + ~phins_cj_prev * Ins_cj_prev).Im() - Tmech - Kfric * wr_pu_prev ) / (2.0 * H); // pu/s
+    domgr0_prev_dt =  ( (~phips_prev * Ips_prev + ~phins_cj_prev * Ins_cj_prev).Im() - Tmech_eff - Kfric * wr_pu_prev ) / (2.0 * H); // pu/s
 
 
     // predictor step 3 - integrate for predicted state variable
@@ -1537,7 +1552,7 @@ void motor::TPIMDynamic(double curr_delta_time, double dTime) {
     dphins_cj_dt = ( ~Van + B2c * phins_cj + D2c * phinr_cj ) * wbase ;
     dphipr_dt  =  ( C3c * phipr + A3c * phips ) * wbase;
     dphinr_cj_dt = ( D4c * phinr_cj  + B4c * phins_cj ) * wbase;
-    domgr0_dt =  1.0/(2.0 * H) * ( (~phips * Ips + ~phins_cj * Ins_cj).Im() - Tmech - Kfric * wr_pu );
+    domgr0_dt =  1.0/(2.0 * H) * ( (~phips * Ips + ~phins_cj * Ins_cj).Im() - Tmech_eff - Kfric * wr_pu );
 
     // corrector step 3 - integrate
     phips = phips_prev +  (dphips_prev_dt + dphips_dt) * dTime/2.0;

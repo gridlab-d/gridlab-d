@@ -48,7 +48,7 @@ object motor {
 	nominal_voltage 240;
 	trip_time 5;
 	reconnect_time 10;
-	motor_override ON;
+	desired_motor_state ON;
 	object double_assert {
 		target rotor_speed;
 		within 0.1;
@@ -111,7 +111,7 @@ object player {
 object player {
 	parent induction_motor;
 	file ../SPIM_override.player;
-	property motor_override;
+	property desired_motor_state;
 	flags DELTAMODE;
 };
 
@@ -120,7 +120,7 @@ object player {
      // parent induction_motor;
      // file motor_override.csv;
      // interval 1;
-     // property motor_override;
+     // property desired_motor_state;
 	 // flags DELTAMODE;
 // };
 
