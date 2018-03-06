@@ -117,6 +117,7 @@ private:
     complex motor_elec_power;
     double Telec;
 	double Tmech;
+	double Tmech_eff;
     double wr;
 	double psi_sat;
 
