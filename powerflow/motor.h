@@ -117,6 +117,7 @@ private:
     complex motor_elec_power;
     double Telec;
 	double Tmech;
+	double Tmech_eff;
     double wr;
 	double psi_sat;
 
@@ -143,8 +144,12 @@ private:
     double uv_relay_time;
     double uv_relay_trip_time;
     double uv_relay_trip_V;
+    typedef enum {
+		uv_relay_INSTALLED=0,
+		uv_relay_UNINSTALLED=1
+	} UV_RELAY_INSTALLED;
+    enumeration uv_relay_install;
     int uv_lockout;
-    double uv_relay_probability;
     typedef enum {
 		contactorOPEN=0,
 		contactorCLOSED=1
@@ -152,9 +157,7 @@ private:
 	enumeration contactor_state;
     double contactor_open_rand;
     double contactor_close_rand;
-    double contactor_open_Vmax;
     double contactor_open_Vmin;
-    double contactor_close_Vmin;
     double contactor_close_Vmax;
 
 	complex Vs;
