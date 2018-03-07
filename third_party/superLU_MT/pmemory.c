@@ -1,3 +1,13 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
 /*
  * -- SuperLU MT routine (version 1.0) --
  * Univ. of California Berkeley, Xerox Palo Alto Research Center,
@@ -7,10 +17,10 @@
  */
 #include <stdlib.h>
 #include <stdio.h>
-#include "pdsp_defs.h"
+#include "slu_mt_ddefs.h"
 
 #define XPAND_HINT(memtype, new_next, jcol, param) {\
-fprintf(stderr, "Storage for %12s exceeded; Current column %d; Need at least %d;\n",\
+fprintf(stderr, "Storage for %12s exceeded; Current column " IFMT "; Need at least " IFMT ";\n",\
 	memtype, jcol, new_next); \
 fprintf(stderr, "You may set it by the %d-th parameter in routine sp_ienv().\n", param); \
 SUPERLU_ABORT("Memory allocation failed"); \
@@ -20,9 +30,9 @@ SUPERLU_ABORT("Memory allocation failed"); \
  * Set up pointers for integer working arrays.
  */
 void
-pxgstrf_SetIWork(int n, int panel_size, int *iworkptr, int **segrep,
-		 int **parent, int **xplore, int **repfnz, int **panel_lsub,
-		 int **marker, int **lbusy)
+pxgstrf_SetIWork(int_t n, int_t panel_size, int_t *iworkptr, int_t **segrep,
+		 int_t **parent, int_t **xplore, int_t **repfnz, int_t **panel_lsub,
+		 int_t **marker, int_t **lbusy)
 {
     *segrep = iworkptr;                                      /* n  */
     *parent = iworkptr + n;                                  /* n  */
@@ -36,17 +46,17 @@ pxgstrf_SetIWork(int n, int panel_size, int *iworkptr, int **segrep,
 
 
 void
-copy_mem_int(int howmany, void *old, void *new)
+copy_mem_int(int_t howmany, void *old, void *new)
 {
-    register int i;
-    int *iold = old;
-    int *inew = new;
+    register int_t i;
+    int_t *iold = old;
+    int_t *inew = new;
     for (i = 0; i < howmany; i++) inew[i] = iold[i];
 }
 
 
 void
-user_bcopy(char *src, char *dest, int bytes)
+user_bcopy(char *src, char *dest, int_t bytes)
 {
     char *s_ptr, *d_ptr;
 
@@ -57,10 +67,10 @@ user_bcopy(char *src, char *dest, int bytes)
 
 
 
-int *intMalloc(int n)
+int_t *intMalloc(int_t n)
 {
-    int *buf;
-    buf = (int *) SUPERLU_MALLOC( (size_t) n * sizeof(int));
+    int_t *buf;
+    buf = (int_t *) SUPERLU_MALLOC( (size_t) n * sizeof(int_t));
     if ( !buf ) {
 	fprintf(stderr, "SUPERLU_MALLOC failed for buf in intMalloc()\n");
 	exit (1);
@@ -68,11 +78,11 @@ int *intMalloc(int n)
     return (buf);
 }
 
-int *intCalloc(int n)
+int_t *intCalloc(int_t n)
 {
-    int *buf;
-    register int i;
-    buf = (int *) SUPERLU_MALLOC( (size_t) n * sizeof(int));
+    int_t *buf;
+    register int_t i;
+    buf = (int_t *) SUPERLU_MALLOC( (size_t) n * sizeof(int_t));
     if ( !buf ) {
 	fprintf(stderr, "SUPERLU_MALLOC failed for buf in intCalloc()\n");
 	exit (1);
@@ -88,19 +98,19 @@ int *intCalloc(int n)
  * Return value: 0 - success
  *              >0 - number of bytes allocated when run out of space
  */
-int
+int_t
 Glu_alloc(
-	  const int pnum,     /* process number */
-	  const int jcol,
-	  const int num,      /* number of elements requested */
+	  const int_t pnum,     /* process number */
+	  const int_t jcol,
+	  const int_t num,      /* number of elements requested */
 	  const MemType mem_type,
-          int   *prev_next,   /* return "next" value before allocation */
+          int_t   *prev_next,   /* return "next" value before allocation */
 	  pxgstrf_shared_t *pxgstrf_shared
 	  )
 {
     GlobalLU_t *Glu = pxgstrf_shared->Glu;
     Gstat_t    *Gstat = pxgstrf_shared->Gstat;
-    register int fsupc, nextl, nextu, new_next;
+    register int_t fsupc, nextl, nextu, new_next;
 #ifdef PROFILE
     double   t;
 #endif
@@ -118,7 +128,7 @@ Glu_alloc(
 
 #if 0
 	{
-	    register int i, j;
+	    register int_t i, j;
 	    i = fsupc + part_super_h[fsupc];
 	    if ( Glu->dynamic_snode_bound == YES )
 	      new_next = Glu->nextlu;
@@ -129,14 +139,14 @@ Glu_alloc(
 	    }
 	    if ( Glu->map_in_sup[fsupc]>Glu->nzlumax 
 		|| Glu->map_in_sup[fsupc]>new_next ) {
-		printf("(%d) jcol %d, map_[%d]=%d, map_[%d]=new_next %d\n",
+		printf("(" IFMT ") jcol " IFMT ", map_[" IFMT "]=" IFMT ", map_[" IFMT "]=new_next " IFMT "\n",
 		       pnum, jcol, fsupc, Glu->map_in_sup[fsupc],
 		       i, new_next);
-		printf("(%d) snode type %d,size %d, |H-snode| %d\n",
+		printf("(" IFMT ") snode type " IFMT ",size " IFMT ", |H-snode| " IFMT "\n",
 		       pnum, Glu->pan_status[fsupc].type, 
 		       Glu->pan_status[fsupc].size, part_super_h[fsupc]);
 		for (j = fsupc; j < i; j += part_super_h[j])
-		    printf("(%d) H snode %d, size %d\n",
+		    printf("(" IFMT ") H snode " IFMT ", size " IFMT "\n",
 			   pnum, j, part_super_h[j]);
 		SUPERLU_ABORT("LUSUP exceeded.");  /* xiaoye */
 	    }
@@ -239,18 +249,18 @@ Glu_alloc(
  * Dynamically set up storage image in lusup[*], using the supernode
  * boundaries in H.
  */
-int
+int_t
 DynamicSetMap(
-	      const int pnum,      /* process number */
-	      const int jcol,      /* leading column of the s-node in H */
-	      const int num,       /* number of elements requested */
+	      const int_t pnum,      /* process number */
+	      const int_t jcol,      /* leading column of the s-node in H */
+	      const int_t num,       /* number of elements requested */
 	      pxgstrf_shared_t *pxgstrf_shared
 	      )
 {
     GlobalLU_t *Glu = pxgstrf_shared->Glu;
     Gstat_t    *Gstat = pxgstrf_shared->Gstat;
-    register int nextlu, new_next;
-    int *map_in_sup = Glu->map_in_sup; /* modified; memory mapping function */
+    register int_t nextlu, new_next;
+    int_t *map_in_sup = Glu->map_in_sup; /* modified; memory mapping function */
     
 #ifdef PROFILE
     double t = SuperLU_timer_();

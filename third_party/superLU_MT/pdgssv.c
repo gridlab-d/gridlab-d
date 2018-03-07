@@ -1,10 +1,20 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
 
-#include "pdsp_defs.h"
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
+
+#include "slu_mt_ddefs.h"
 
 
 void
-pdgssv(int nprocs, SuperMatrix *A, int *perm_c, int *perm_r, 
-       SuperMatrix *L, SuperMatrix *U, SuperMatrix *B, int *info )
+pdgssv(int_t nprocs, SuperMatrix *A, int_t *perm_c, int_t *perm_r, 
+       SuperMatrix *L, SuperMatrix *U, SuperMatrix *B, int_t *info )
 {
 /*
  * -- SuperLU MT routine (version 2.0) --
@@ -53,7 +63,7 @@ pdgssv(int nprocs, SuperMatrix *A, int *perm_c, int *perm_r,
  * Arguments
  * =========
  *
- * nprocs (input) int
+ * nprocs (input) int_t
  *        Number of processes (or threads) to be spawned and used to perform
  *        the LU factorization by pdgstrf(). There is a single thread of
  *        control to call pdgstrf(), and all threads spawned by pdgstrf()
@@ -65,7 +75,7 @@ pdgssv(int nprocs, SuperMatrix *A, int *perm_c, int *perm_r,
  *        Stype = NC or NR; Dtype = _D; Mtype = GE. In the future,
  *        more general A will be handled.
  *
- * perm_c (input/output) int*
+ * perm_c (input/output) int_t*
  *        If A->Stype=NC, column permutation vector of size A->ncol,
  *        which defines the permutation matrix Pc; perm_c[i] = j means 
  *        column i of A is in position j in A*Pc.
@@ -78,7 +88,7 @@ pdgssv(int nprocs, SuperMatrix *A, int *perm_c, int *perm_r,
  *        which describes permutation of columns of tranpose(A) 
  *        (rows of A) as described above.
  * 
- * perm_r (output) int*,
+ * perm_r (output) int_t*,
  *        If A->Stype=NR, row permutation vector of size A->nrow, 
  *        which defines the permutation matrix Pr, and is determined 
  *        by partial pivoting.  perm_r[i] = j means row i of A is in 
@@ -107,7 +117,7 @@ pdgssv(int nprocs, SuperMatrix *A, int *perm_c, int *perm_r,
  *        On entry, the right hand side matrix.
  *        On exit, the solution matrix if info = 0;
  *
- * info   (output) int*
+ * info   (output) int_t*
  *	  = 0: successful exit
  *        > 0: if info = i, and i is
  *             <= A->ncol: U(i,i) is exactly zero. The factorization has
@@ -122,12 +132,13 @@ pdgssv(int nprocs, SuperMatrix *A, int *perm_c, int *perm_r,
     DNformat *Bstore;
     SuperMatrix *AA; /* A in NC format used by the factorization routine.*/
     SuperMatrix AC; /* Matrix postmultiplied by Pc */
-    int i, n, panel_size, relax;
+    int_t  n, panel_size, relax;
+    int i;
     fact_t   fact;
     yes_no_t refact, usepr;
     double diag_pivot_thresh, drop_tol;
     void *work;
-    int lwork;
+    int_t lwork;
     superlumt_options_t superlumt_options;
     Gstat_t  Gstat;
     double   t; /* Temporary time */
@@ -248,6 +259,6 @@ pdgssv(int nprocs, SuperMatrix *A, int *perm_c, int *perm_r,
 	ParallelProfile(n, Lstore->nsuper+1, Gstat.num_panels, nprocs, &Gstat);
     }
 #endif
-    //PrintStat(&Gstat);	//FT Commented
+    PrintStat(&Gstat);
     StatFree(&Gstat);
 }

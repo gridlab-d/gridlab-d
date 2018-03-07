@@ -1,27 +1,37 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
 
 /*
- * -- SuperLU MT routine (version 2.0) --
+ * -- SuperLU MT routine (version 3.0) --
  * Lawrence Berkeley National Lab, Univ. of California Berkeley,
  * and Xerox Palo Alto Research Center.
  * September 10, 2007
  *
  */
 #include <stdlib.h>
-#include "pdsp_defs.h"
+#include "slu_mt_ddefs.h"
 
 
 /*
  * Generate a banded square matrix A, with dimension n and semi-bandwidth b.
  */
 void
-dband(int n, int b, int nonz, double **nzval, int **rowind, int **colptr)
+dband(int_t n, int_t b, int_t nonz, double **nzval, int_t **rowind, int_t **colptr)
 {
     int iseed[] = {1992,1993,1994,1995};    
-    register int i, j, ub, lb, ilow, ihigh, lasta = 0;
+    register int_t i, j, ub, lb, ilow, ihigh, lasta = 0;
     double *a;
-    int    *asub, *xa;
+    int_t    *asub, *xa;
     double *val;
-    int    *row;
+    int_t    *row;
     extern double dlaran_();
     
     printf("A banded matrix.");
@@ -53,20 +63,20 @@ dband(int n, int b, int nonz, double **nzval, int **rowind, int **colptr)
  * Generate a block diagonal matrix A.
  */
 void
-dblockdiag(int nb, /* number of blocks */
-	   int bs, /* block size */
-	   int nonz, double **nzval, int **rowind, int **colptr)
+dblockdiag(int_t nb, /* number of blocks */
+	   int_t bs, /* block size */
+	   int_t nonz, double **nzval, int_t **rowind, int_t **colptr)
 {
     int iseed[] = {1992,1993,1994,1995};    
-    register int i, j, b, n, lasta = 0, cstart, rstart;
+    register int_t i, j, b, n, lasta = 0, cstart, rstart;
     double *a;
-    int    *asub, *xa;
+    int_t    *asub, *xa;
     double *val;
-    int    *row;
+    int_t    *row;
     extern double dlaran_();
     
     n = bs * nb;
-    printf("A block diagonal matrix: nb %d, bs %d, n %d\n", nb, bs, n);
+    printf("A block diagonal matrix: nb " IFMT ", bs " IFMT ", n " IFMT "\n", nb, bs, n);
     dallocateA(n, nonz, nzval, rowind, colptr); /* Allocate storage */
     a    = *nzval;
     asub = *rowind;

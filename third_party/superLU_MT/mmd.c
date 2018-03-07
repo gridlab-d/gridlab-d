@@ -1,5 +1,17 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
+#include "slu_mt_ddefs.h"
+
 /* f2c'ed */
-typedef int shortint;
+typedef int_t shortint;
 
 /* *************************************************************** */
 /* *************************************************************** */
@@ -48,25 +60,25 @@ typedef int shortint;
 
 /* *************************************************************** */
 
-/* Subroutine */ int genmmd_(int *neqns, int *xadj, shortint *adjncy, 
-	shortint *invp, shortint *perm, int *delta, shortint *dhead, 
-	shortint *qsize, shortint *llist, shortint *marker, int *maxint, 
-	int *nofsub)
+/* Subroutine */ int_t genmmd_(int_t *neqns, int_t *xadj, shortint *adjncy, 
+	shortint *invp, shortint *perm, int_t *delta, shortint *dhead, 
+	shortint *qsize, shortint *llist, shortint *marker, int_t *maxint, 
+	int_t *nofsub)
 {
     /* System generated locals */
-    int i__1;
+    int_t i__1;
 
     /* Local variables */
-    static int mdeg, ehead, i, mdlmt, mdnode;
-    extern /* Subroutine */ int mmdelm_(int *, int *, shortint *, 
+    static int_t mdeg, ehead, i, mdlmt, mdnode;
+    extern /* Subroutine */ int_t mmdelm_(int_t *, int_t *, shortint *, 
 	    shortint *, shortint *, shortint *, shortint *, shortint *, 
-	    shortint *, int *, int *), mmdupd_(int *, int *, 
-	    int *, shortint *, int *, int *, shortint *, shortint 
-	    *, shortint *, shortint *, shortint *, shortint *, int *, 
-	    int *), mmdint_(int *, int *, shortint *, shortint *, 
+	    shortint *, int_t *, int_t *), mmdupd_(int_t *, int_t *, 
+	    int_t *, shortint *, int_t *, int_t *, shortint *, shortint 
+	    *, shortint *, shortint *, shortint *, shortint *, int_t *, 
+	    int_t *), mmdint_(int_t *, int_t *, shortint *, shortint *, 
 	    shortint *, shortint *, shortint *, shortint *, shortint *), 
-	    mmdnum_(int *, shortint *, shortint *, shortint *);
-    static int nextmd, tag, num;
+	    mmdnum_(int_t *, shortint *, shortint *, shortint *);
+    static int_t nextmd, tag, num;
 
 
 /* *************************************************************** */
@@ -235,15 +247,15 @@ L1000:
 
 /* *************************************************************** */
 
-/* Subroutine */ int mmdint_(int *neqns, int *xadj, shortint *adjncy, 
+/* Subroutine */ int_t mmdint_(int_t *neqns, int_t *xadj, shortint *adjncy, 
 	shortint *dhead, shortint *dforw, shortint *dbakw, shortint *qsize, 
 	shortint *llist, shortint *marker)
 {
     /* System generated locals */
-    int i__1;
+    int_t i__1;
 
     /* Local variables */
-    static int ndeg, node, fnode;
+    static int_t ndeg, node, fnode;
 
 
 /* *************************************************************** */
@@ -319,15 +331,15 @@ L1000:
 
 /* *************************************************************** */
 
-/* Subroutine */ int mmdelm_(int *mdnode, int *xadj, shortint *adjncy,
+/* Subroutine */ int_t mmdelm_(int_t *mdnode, int_t *xadj, shortint *adjncy,
 	 shortint *dhead, shortint *dforw, shortint *dbakw, shortint *qsize, 
-	shortint *llist, shortint *marker, int *maxint, int *tag)
+	shortint *llist, shortint *marker, int_t *maxint, int_t *tag)
 {
     /* System generated locals */
-    int i__1, i__2;
+    int_t i__1, i__2;
 
     /* Local variables */
-    static int node, link, rloc, rlmt, i, j, nabor, rnode, elmnt, xqnbr, 
+    static int_t node, link, rloc, rlmt, i, j, nabor, rnode, elmnt, xqnbr, 
 	    istop, jstop, istrt, jstrt, nxnode, pvnode, nqnbrs, npv;
 
 
@@ -566,16 +578,16 @@ L1800:
 
 /* *************************************************************** */
 
-/* Subroutine */ int mmdupd_(int *ehead, int *neqns, int *xadj, 
-	shortint *adjncy, int *delta, int *mdeg, shortint *dhead, 
+/* Subroutine */ int_t mmdupd_(int_t *ehead, int_t *neqns, int_t *xadj, 
+	shortint *adjncy, int_t *delta, int_t *mdeg, shortint *dhead, 
 	shortint *dforw, shortint *dbakw, shortint *qsize, shortint *llist, 
-	shortint *marker, int *maxint, int *tag)
+	shortint *marker, int_t *maxint, int_t *tag)
 {
     /* System generated locals */
-    int i__1, i__2;
+    int_t i__1, i__2;
 
     /* Local variables */
-    static int node, mtag, link, mdeg0, i, j, enode, fnode, nabor, elmnt, 
+    static int_t node, mtag, link, mdeg0, i, j, enode, fnode, nabor, elmnt, 
 	    istop, jstop, q2head, istrt, jstrt, qxhead, iq2, deg, deg0;
 
 
@@ -922,14 +934,14 @@ L2300:
 
 /* *************************************************************** */
 
-/* Subroutine */ int mmdnum_(int *neqns, shortint *perm, shortint *invp, 
+/* Subroutine */ int_t mmdnum_(int_t *neqns, shortint *perm, shortint *invp, 
 	shortint *qsize)
 {
     /* System generated locals */
-    int i__1;
+    int_t i__1;
 
     /* Local variables */
-    static int node, root, nextf, father, nqsize, num;
+    static int_t node, root, nextf, father, nqsize, num;
 
 
 /* *************************************************************** */

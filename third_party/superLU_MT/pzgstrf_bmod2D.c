@@ -1,28 +1,38 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "pzsp_defs.h"
+#include "slu_mt_zdefs.h"
 
-void zlsolve(int, int, doublecomplex *, doublecomplex *);
-void zmatvec(int, int, int, doublecomplex *, doublecomplex *, doublecomplex *);
+void zlsolve(int_t, int_t, doublecomplex *, doublecomplex *);
+void zmatvec(int_t, int_t, int_t, doublecomplex *, doublecomplex *, doublecomplex *);
 
 
 void
 pzgstrf_bmod2D(
-	       const int pnum,   /* process number */
-	       const int m,      /* number of columns in the matrix */
-	       const int w,      /* current panel width */
-	       const int jcol,   /* leading column of the current panel */
-	       const int fsupc,  /* leading column of the updating supernode */
-	       const int krep,   /* last column of the updating supernode */
-	       const int nsupc,  /* number of columns in the updating s-node */
-	       int nsupr,        /* number of rows in the updating s-node */
-	       int nrow,         /* number of rows below the diagonal block of
+	       const int_t pnum,   /* process number */
+	       const int_t m,      /* number of columns in the matrix */
+	       const int_t w,      /* current panel width */
+	       const int_t jcol,   /* leading column of the current panel */
+	       const int_t fsupc,  /* leading column of the updating supernode */
+	       const int_t krep,   /* last column of the updating supernode */
+	       const int_t nsupc,  /* number of columns in the updating s-node */
+	       int_t nsupr,        /* number of rows in the updating s-node */
+	       int_t nrow,         /* number of rows below the diagonal block of
 				    the updating supernode */
-	       int *repfnz,      /* in */
-	       int *panel_lsub,  /* modified */
-	       int *w_lsub_end,  /* modified */
-	       int *spa_marker,  /* modified; size n-by-w */
+	       int_t *repfnz,      /* in */
+	       int_t *panel_lsub,  /* modified */
+	       int_t *w_lsub_end,  /* modified */
+	       int_t *spa_marker,  /* modified; size n-by-w */
 	       doublecomplex *dense,    /* modified */
 	       doublecomplex *tempv,    /* working array - zeros on entry/exit */
 	       GlobalLU_t *Glu,  /* modified */
@@ -56,25 +66,25 @@ pzgstrf_bmod2D(
     doublecomplex      comp_temp, comp_temp1;
 
     doublecomplex       ukj, ukj1, ukj2;
-    int          luptr, luptr1, luptr2;
-    int          segsze;
+    int_t          luptr, luptr1, luptr2;
+    int          segsze, nsupr32 = nsupr;
     int          block_nrow;  /* no of rows in a block row */
-    register int lptr;	      /* points to the row subscripts of a supernode */
-    int          kfnz, irow, no_zeros; 
-    register int isub, isub1, i;
-    register int jj;	      /* index through each column in the panel */
-    int          krep_ind;
-    int          *repfnz_col; /* repfnz[] for a column in the panel */
-    int          *col_marker; /* each column of the spa_marker[*,w] */
-    int          *col_lsub;   /* each column of the panel_lsub[*,w] */
+    register int_t lptr;   /* point_ts to the row subscripts of a supernode */
+    int_t          kfnz, irow, no_zeros; 
+    register int_t isub, isub1, i;
+    register int_t jj;	      /* index through each column in the panel */
+    int_t          krep_ind;
+    int_t          *repfnz_col; /* repfnz[] for a column in the panel */
+    int_t          *col_marker; /* each column of the spa_marker[*,w] */
+    int_t          *col_lsub;   /* each column of the panel_lsub[*,w] */
     doublecomplex       *dense_col;  /* dense[] for a column in the panel */
     doublecomplex       *TriTmp, *MatvecTmp;
-    register int ldaTmp;
-    register int r_ind, r_hi;
-    static   int first = 1, maxsuper, rowblk;
-    int          *lsub, *xlsub_end;
+    register int_t ldaTmp;
+    register int_t r_ind, r_hi;
+    static   int_t first = 1, maxsuper, rowblk;
+    int_t          *lsub, *xlsub_end;
     doublecomplex       *lusup;
-    int          *xlusup;
+    int_t          *xlusup;
     register float flopcnt;
     
 #ifdef TIMING    
@@ -227,10 +237,10 @@ pzgstrf_bmod2D(
 #ifdef USE_VENDOR_BLAS
 #if ( MACH==CRAY_PVP )
 	    CTRSV( ftcs1, ftcs2, ftcs3, &segsze, &lusup[luptr], 
-		   &nsupr, TriTmp, &incx );
+		   &nsupr32, TriTmp, &incx );
 #else
 	    ztrsv_( "L", "N", "U", &segsze, &lusup[luptr], 
-		   &nsupr, TriTmp, &incx );
+		   &nsupr32, TriTmp, &incx );
 #endif
 #else		
 	    zlsolve ( nsupr, segsze, &lusup[luptr], TriTmp );
@@ -286,13 +296,13 @@ pzgstrf_bmod2D(
             beta = zero;
 #if ( MACH==CRAY_PVP )
 	    CGEMV( ftcs2, &block_nrow, &segsze, &alpha, &lusup[luptr], 
-		  &nsupr, TriTmp, &incx, &beta, MatvecTmp, &incy );
+		  &nsupr32, TriTmp, &incx, &beta, MatvecTmp, &incy );
 #else
 	    zgemv_( "N", &block_nrow, &segsze, &alpha, &lusup[luptr1], 
-		   &nsupr, TriTmp, &incx, &beta, MatvecTmp, &incy );
+		   &nsupr32, TriTmp, &incx, &beta, MatvecTmp, &incy );
 #endif /* _CRAY_PVP */
 #else
-	    zmatvec(nsupr, block_nrow, segsze, &lusup[luptr1],
+	    zmatvec( nsupr, (int_t) block_nrow, (int_t) segsze, &lusup[luptr1],
 		    TriTmp, MatvecTmp);
 #endif
 		

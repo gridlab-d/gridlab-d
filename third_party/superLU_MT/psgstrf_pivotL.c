@@ -1,19 +1,29 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
 
 #include <math.h>
 #include <stdlib.h>
-#include "pssp_defs.h"
+#include "slu_mt_sdefs.h"
 
-int
+int_t
 psgstrf_pivotL(
-	       const int  pnum,  /* process number */
-	       const int  jcol,  /* current column */
+	       const int_t  pnum,  /* process number */
+	       const int_t  jcol,  /* current column */
 	       const float u,   /* diagonal pivoting threshold */
 	       yes_no_t *usepr,  /* re-use the pivot sequence given by
 				    perm_r[]/inv_perm_r[] */
-	       int   *perm_r,    /* modified - row pivotings */
-	       int   *inv_perm_r,/* modified - inverse of perm_r */
-	       int   *inv_perm_c,/* in - used to find diagonal of Pc*A*Pc' */
-	       int   *pivrow,    /* the pivot row for this column */
+	       int_t   *perm_r,    /* modified - row pivotings */
+	       int_t   *inv_perm_r,/* modified - inverse of perm_r */
+	       int_t   *inv_perm_c,/* in - used to find diagonal of Pc*A*Pc' */
+	       int_t   *pivrow,    /* the pivot row for this column */
 	       GlobalLU_t *Glu,  /* modified - global LU data structures */
 	       Gstat_t *Gstat    /* modified */
        )
@@ -47,20 +57,20 @@ psgstrf_pivotL(
  *   i > 0  U(i,i) is exactly zero.
  *
  */
-    register int fsupc; /* first column in the supernode */
-    register int nsupc; /* no of columns in the supernode */
-    register int nsupr; /* no of rows in the supernode */
-    register int lptr;  /* the starting subscript of the supernode */
-    register int pivptr, old_pivptr, diag, diagind;
-    register int isub, icol, k, itemp;
+    register int_t fsupc; /* first column in the supernode */
+    register int_t nsupc; /* no of columns in the supernode */
+    register int_t nsupr; /* no of rows in the supernode */
+    register int_t lptr;  /* the starting subscript of the supernode */
+    register int_t pivptr, old_pivptr, diag, diagind;
+    register int_t isub, icol, k, itemp;
     register float pivmax, rtemp, thresh;
     float       *lu_sup_ptr; 
     float       *lu_col_ptr;
     float	temp;
-    int          *lsub_ptr;
-    int          *lsub;
+    int_t          *lsub_ptr;
+    int_t          *lsub;
     float       *lusup;
-    int          *xlusup;
+    int_t          *xlusup;
 
     /* Initialize pointers */
     lsub       = Glu->lsub;

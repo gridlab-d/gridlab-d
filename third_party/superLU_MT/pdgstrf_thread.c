@@ -1,11 +1,21 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
 
-#include "pdsp_defs.h"
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
+
+#include "slu_mt_ddefs.h"
 
 void
 *pdgstrf_thread(void *arg)
 {
 /*
- * -- SuperLU MT routine (version 2.0) --
+ * -- SuperLU MT routine (version 3.0) --
  * Lawrence Berkeley National Lab, Univ. of California Berkeley,
  * and Xerox Palo Alto Research Center.
  * September 10, 2007
@@ -92,56 +102,56 @@ void
 
 #if ( MACH==SGI || MACH==ORIGIN )
 #if ( MACH==SGI )
-    int         pnum = mpc_my_threadnum();
+    int_t         pnum = mpc_my_threadnum();
 #elif ( MACH==ORIGIN )
-    int         pnum = mp_my_threadnum();
+    int_t         pnum = mp_my_threadnum();
 #endif
     pdgstrf_threadarg_t *thr_arg = &((pdgstrf_threadarg_t *)arg)[pnum];
 #else
     pdgstrf_threadarg_t *thr_arg  = arg;
-    int         pnum = thr_arg->pnum;
+    int_t         pnum = thr_arg->pnum;
 #endif
 
     /* Unpack the options argument */
     superlumt_options_t *superlumt_options = thr_arg->superlumt_options;
     pxgstrf_shared_t  *pxgstrf_shared= thr_arg->pxgstrf_shared;
-    int         panel_size = superlumt_options->panel_size;
+    int_t         panel_size = superlumt_options->panel_size;
     double     diag_pivot_thresh = superlumt_options->diag_pivot_thresh;
     yes_no_t    *usepr     = &superlumt_options->usepr; /* may be modified */
-    int         *etree     = superlumt_options->etree;
-    int         *super_bnd = superlumt_options->part_super_h;
-    int         *perm_r    = superlumt_options->perm_r;
-    int         *inv_perm_c= pxgstrf_shared->inv_perm_c;
-    int         *inv_perm_r= pxgstrf_shared->inv_perm_r;
-    int	        *xprune    = pxgstrf_shared->xprune;
-    int	        *ispruned  = pxgstrf_shared->ispruned;
+    int_t         *etree     = superlumt_options->etree;
+    int_t         *super_bnd = superlumt_options->part_super_h;
+    int_t         *perm_r    = superlumt_options->perm_r;
+    int_t         *inv_perm_c= pxgstrf_shared->inv_perm_c;
+    int_t         *inv_perm_r= pxgstrf_shared->inv_perm_r;
+    int_t	  *xprune    = pxgstrf_shared->xprune;
+    int_t	  *ispruned  = pxgstrf_shared->ispruned;
     SuperMatrix *A         = pxgstrf_shared->A;
     GlobalLU_t  *Glu       = pxgstrf_shared->Glu;
     Gstat_t 	*Gstat     = pxgstrf_shared->Gstat;
-    int         *info      = &thr_arg->info;
+    int_t         *info      = &thr_arg->info;
 
     /* Local working arrays */
-    int       *iwork;
+    int_t       *iwork;
     double    *dwork;
-    int	      *segrep, *repfnz, *parent, *xplore;
-    int	      *panel_lsub; /* dense[]/panel_lsub[] pair forms a w-wide SPA */
-    int	      *marker, *marker1, *marker2;
-    int       *lbusy; /* "Local busy" array, indicates which descendants
-			 were busy when this panel's computation began.
+    int_t      *segrep, *repfnz, *parent, *xplore;
+    int_t      *panel_lsub; /* dense[]/panel_lsub[] pair forms a w-wide SPA */
+    int_t      *marker, *marker1, *marker2;
+    int_t      *lbusy; /* "Local busy" array, indicates which descendants
+	       		 were busy when this panel's computation began.
 			 Those columns (s-nodes) are treated specially
 			 during pdgstrf_panel_dfs() and dpanel_bmod(). */
 
-    int       *spa_marker; /* size n-by-w */
-    int       *w_lsub_end; /* record the end of each column in panel_lsub */
+    int_t      *spa_marker; /* size n-by-w */
+    int_t      *w_lsub_end; /* record the end of each column in panel_lsub */
     double    *dense, *tempv;
-    int       *lsub, *xlsub, *xlsub_end;
+    int_t      *lsub, *xlsub, *xlsub_end;
 
     /* Local scalars */
-    register int m, n, k, jj, jcolm1, itemp, singular;
-    int       pivrow;   /* pivotal row number in the original matrix A */
-    int       nseg1;	/* no of segments in U-column above panel row jcol */
-    int       nseg;	/* no of segments in each U-column */
-    int       w, bcol, jcol;
+    register int_t m, n, k, jj, jcolm1, itemp, singular;
+    int_t       pivrow;   /* pivotal row number in the original matrix A */
+    int_t       nseg1;	/* no of segments in U-column above panel row jcol */
+    int_t       nseg;	/* no of segments in each U-column */
+    int_t       w, bcol, jcol;
 
 #ifdef PROFILE
     double *utime = Gstat->utime;
@@ -368,10 +378,8 @@ void
 
 #if ( DEBUGlevel>=2 )
 /*  if (jj >= LOCOL && jj <= HICOL) {*/
-  if ( jj==BADCOL ) {
-    dprint_lu_col(pnum, "panel:", jcol, jj, w, pivrow, xprune, Glu);
-    dcheck_zero_vec(pnum, "after pdgstrf_copy_to_ucol() dense_col[]", n, &dense[k]);
-  }
+                dprint_lu_col(pnum, "panel:", jcol, jj, w, pivrow, xprune, Glu);
+                dcheck_zero_vec(pnum, "after pdgstrf_copy_to_ucol() dense_col[]", n, &dense[k]);
 #endif
 		} /* for jj ... */
 		

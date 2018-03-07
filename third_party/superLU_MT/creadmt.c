@@ -1,3 +1,13 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
 
 /*
  * -- SuperLU routine (version 2.0) --
@@ -9,7 +19,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "pcsp_defs.h"
+#include "slu_mt_cdefs.h"
 
 #define TLEN	80
 
@@ -65,7 +75,7 @@ creadmt(int *m, int *n, int *nonz, complex **nzval, int **rowind, int **colptr)
     }
     if ( *nonz < lasta ) {
 	fprintf(stderr, "nnz inconsistent: *nonz %d, lasta %d\n",*nonz,lasta);
-	exit(EXIT_FAILURE);
+	EXIT;
     }
     
     xa[*n] = lasta--;

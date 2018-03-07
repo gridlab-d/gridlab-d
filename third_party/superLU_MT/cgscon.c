@@ -1,6 +1,16 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
 
 /*
- * -- SuperLU MT routine (version 2.0) --
+ * -- SuperLU MT routine (version 3.0) --
  * Lawrence Berkeley National Lab, Univ. of California Berkeley,
  * and Xerox Palo Alto Research Center.
  * September 10, 2007
@@ -8,11 +18,11 @@
  * History:     Modified from lapack routines DGECON.
  */
 #include <math.h>
-#include "pcsp_defs.h"
+#include "slu_mt_cdefs.h"
 
 void
 cgscon(char *norm, SuperMatrix *L, SuperMatrix *U,
-       float anorm, float *rcond, int *info)
+       float anorm, float *rcond, int_t *info)
 {
 /*
     Purpose   
@@ -55,7 +65,7 @@ cgscon(char *norm, SuperMatrix *L, SuperMatrix *U,
             The reciprocal of the condition number of the matrix A,   
             computed as RCOND = 1/(norm(A) * norm(inv(A))).
 	    
-    INFO    (output) int*
+    INFO    (output) int_t*
             = 0:  successful exit   
             < 0:  if INFO = -i, the i-th argument had an illegal value   
 
@@ -63,12 +73,13 @@ cgscon(char *norm, SuperMatrix *L, SuperMatrix *U,
 */
 
     /* Local variables */
-    int    kase, kase1, onenrm, i;
+    int_t    kase, kase1, onenrm;
+    int      i;
     float ainvnm;
     complex *work;
-    extern int crscl_(int *, complex *, complex *, int *);
+    extern int_t crscl_(int_t *, complex *, complex *, int_t *);
 
-    extern int clacon_(int *, complex *, complex *, float *, int *);
+    extern int_t clacon_(int_t *, complex *, complex *, float *, int_t *);
 
     
     /* Test the input parameters. */
