@@ -4829,7 +4829,7 @@ double *link_object::get_double(OBJECT *obj, char *name)
 // 30 - FUS-AC or FUS-CA - Fuse action CA
 // 31 - FUS-ABC - Fuse action ABC
 // 32 - TLL - all lines fault - phases A, B, and C
-int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time, void *Extra_Data)
+int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time)
 {
 	unsigned char phase_remove = 0x00;	//Default is no phases removed
 	unsigned char rand_phases,temp_phases, work_phases;			//Working variable
@@ -4843,7 +4843,6 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 	OBJECT *objhdr = OBJECTHDR(this);
 	OBJECT *tmpobj;
 	FUNCTIONADDR funadd = NULL;
-	double *Recloser_Counts;
 	double type_fault;
 	bool switch_val;
 	complex C_mat[7][7];
@@ -4874,9 +4873,6 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 		//Default repair time is non-existant
 		*repair_time = 0;
-
-		//Link up recloser counts for manipulation
-		Recloser_Counts = (double *)Extra_Data;
 
 		//Initial check - faults only work for NR right now
 		if (solver_method != SM_NR)
@@ -7159,7 +7155,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}
 
 				//Store the number of recloser actions
-				*Recloser_Counts = ext_result_dbl;
+				reliability_metrics_recloser_counts = ext_result_dbl;
 
 				//Store the branch as an index in appropriate phases
 				for (phaseidx=0; phaseidx < 3; phaseidx++)
@@ -7387,7 +7383,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								}
 
 								//Store the number of recloser actions
-								*Recloser_Counts = ext_result_dbl;
+								reliability_metrics_recloser_counts = ext_result_dbl;
 
 								//Store the branch as an index in appropriate phases
 								for (phaseidx=0; phaseidx < 3; phaseidx++)
@@ -7475,7 +7471,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 									}
 
 									//Store the number of recloser actions
-									*Recloser_Counts = ext_result_dbl;
+									reliability_metrics_recloser_counts = ext_result_dbl;
 
 									//Store the branch as an index in appropriate phases
 									for (phaseidx=0; phaseidx < 3; phaseidx++)
@@ -7735,9 +7731,6 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 		//Default repair time is non-existant
 		*repair_time = 0;
-
-		//Link up recloser counts for manipulation
-		Recloser_Counts = (double *)Extra_Data;
 
 		//Initial check - faults only work for NR right now
 		if (solver_method != SM_NR)
@@ -9967,7 +9960,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}
 
 				//Store the number of recloser actions
-				*Recloser_Counts = ext_result_dbl;
+				reliability_metrics_recloser_counts = ext_result_dbl;
 
 				//Store the branch as an index in appropriate phases
 				for (phaseidx=0; phaseidx < 3; phaseidx++)
@@ -10195,7 +10188,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								}
 
 								//Store the number of recloser actions
-								*Recloser_Counts = ext_result_dbl;
+								reliability_metrics_recloser_counts = ext_result_dbl;
 
 								//Store the branch as an index in appropriate phases
 								for (phaseidx=0; phaseidx < 3; phaseidx++)
@@ -10283,7 +10276,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 									}
 
 									//Store the number of recloser actions
-									*Recloser_Counts = ext_result_dbl;
+									reliability_metrics_recloser_counts = ext_result_dbl;
 
 									//Store the branch as an index in appropriate phases
 									for (phaseidx=0; phaseidx < 3; phaseidx++)
@@ -10520,7 +10513,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 }
 
 //Function to remove enacted fault on link - use same list as above (link_fault_on)
-int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name, void *Extra_Data)
+int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 {
 	unsigned char phase_restore = 0x00;	//Default is no phases restored
 	unsigned char temp_phases, temp_phases_B, work_phases;			//Working variable
@@ -10530,7 +10523,6 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name, vo
 	OBJECT *objhdr = OBJECTHDR(this);
 	OBJECT *tmpobj;
 	FUNCTIONADDR funadd = NULL;
-	double *Recloser_Counts;
 	bool switch_val;
 
 	//Check our operations mode
@@ -10538,9 +10530,6 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name, vo
 	{
 		//Set up default switch variable - used to indicate special cases
 		switch_val = false;
-
-		//Link up recloser counts for manipulation
-		Recloser_Counts = (double *)Extra_Data;
 
 		//Less logic here - just undo what we did before - find the fault type and clear it out
 		switch (*implemented_fault)
@@ -11549,9 +11538,6 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name, vo
 	{
 		//Set up default switch variable - used to indicate special cases
 		switch_val = false;
-
-		//Link up recloser counts for manipulation
-		Recloser_Counts = (double *)Extra_Data;
 
 		//Less logic here - just undo what we did before - find the fault type and clear it out
 		switch (*implemented_fault)

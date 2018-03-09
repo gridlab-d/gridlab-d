@@ -116,7 +116,6 @@ int eventgen::create(void)
 	UnreliableObjs = NULL;
 	UnreliableObjCount = 0;
 
-	metrics_obj = NULL;
 	metrics_obj_hdr = NULL;
 
 	max_outage_length_dbl = 432000.0;	//5 day maximum outage by default
@@ -145,6 +144,11 @@ int eventgen::create(void)
 
 	//Delta-related items
 	deltamode_inclusive=false;		//Not in deltamode by default
+
+	metrics_object_event_ended = NULL;
+	metrics_object_event_ended_sec = NULL;
+	metrics_get_interrupted_count = NULL;
+	metrics_get_interrupted_count_sec = NULL;
 
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -257,7 +261,6 @@ int eventgen::init(OBJECT *parent)
 		*/
 
 		//Set the metrics object related pointers to NULL
-		metrics_obj = NULL;
 		metrics_obj_hdr = NULL;
 		secondary_interruption_cnt = NULL;
 	}
@@ -267,11 +270,51 @@ int eventgen::init(OBJECT *parent)
 		//See if we are a proper metrics object
 		if (gl_object_isa(hdr->parent,"metrics","reliability"))
 		{
-			//Map it up
-			metrics_obj = OBJECTDATA(hdr->parent,metrics);
-
-			//Map general header too, for locking
+			//Map general header, for locking
 			metrics_obj_hdr = hdr->parent;
+
+			//Map the functions
+			metrics_object_event_ended = (FUNCTIONADDR)(gl_get_function(metrics_obj_hdr,"metrics_event_ended"));
+
+			//Check it
+			if (metrics_object_event_ended == NULL)
+			{
+				GL_THROW("Eventgen:%d - %s - Unable to map link power calculation function",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				While attempting to map the metrics functions for the evengen object, an error occurred.
+				Please try again.  If the error persists, please submit your code and a bug report via the ticketing system.
+				*/
+			}
+
+			//Do the secondary
+			metrics_object_event_ended_sec = (FUNCTIONADDR)(gl_get_function(metrics_obj_hdr,"metrics_event_ended_secondary"));
+
+			//Check it
+			if (metrics_object_event_ended_sec == NULL)
+			{
+				GL_THROW("Eventgen:%d - %s - Unable to map link power calculation function",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
+				//Defined above
+			}
+
+			//Grab the "interruptions" functions too
+			metrics_get_interrupted_count = (FUNCTIONADDR)(gl_get_function(metrics_obj_hdr,"metrics_get_interrupted_count"));
+
+			//Check it
+			if (metrics_get_interrupted_count == NULL)
+			{
+				GL_THROW("Eventgen:%d - %s - Unable to map link power calculation function",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
+				//Defined above
+			}
+
+			//Grab the "interruptions" functions too -- secondary one
+			metrics_get_interrupted_count_sec = (FUNCTIONADDR)(gl_get_function(metrics_obj_hdr,"metrics_get_interrupted_count_secondary"));
+
+			//Check it
+			if (metrics_get_interrupted_count_sec == NULL)
+			{
+				GL_THROW("Eventgen:%d - %s - Unable to map link power calculation function",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
+				//Defined above
+			}
 		}
 		else	//It isn't.  Become angry
 		{
@@ -280,7 +323,19 @@ int eventgen::init(OBJECT *parent)
 		}
 
 		//Flag the secondary count variable - find its location
-		secondary_interruption_cnt = &metrics_obj->secondary_interruptions_count;
+
+		//Map to the property of interest - secondary_interruption_cnt
+		secondary_interruption_cnt = new gld_property(metrics_obj_hdr,"secondary_interruptions_count");
+
+		//Make sure it worked
+		if ((secondary_interruption_cnt->is_valid() != true) || (secondary_interruption_cnt->is_bool() != true))
+		{
+			GL_THROW("event_gen:%d - %s - Unable to map property for remote object",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			While attmepting to map to a remote object's property, an error occurred.  Please try again.  If the error persists, please
+			submit an issue via the ticketing system.
+			*/
+		}
 	}
 
 	//Populate the maximum length variable
@@ -598,7 +653,7 @@ int eventgen::init(OBJECT *parent)
 	}	//End randomized fault mode
 
 	//Check simultaneous fault value
-	if (((max_simult_faults == -1) || (max_simult_faults > 1)) && (metrics_obj != NULL))	//infinite or more than 1 - and metrics are on, so we care
+	if (((max_simult_faults == -1) || (max_simult_faults > 1)) && (metrics_obj_hdr != NULL))	//infinite or more than 1 - and metrics are on, so we care
 	{
 		gl_warning("event_gen:%s has the ability to generate more than 1 simultaneous fault - metrics may not be accurate",hdr->name);
 		/*  TROUBLESHOOT
@@ -824,14 +879,36 @@ TIMESTAMP eventgen::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	int after_count, after_count_sec, differential_count, differential_count_sec, index;
 	RELEVANTSTRUCT *temp_struct;
+	bool temp_bool;
+	gld_rlock *test_rlock;
+	STATUS temp_status;
+	OBJECT *hdr = OBJECTHDR(this);
 
 	//See if we need a "post-fault" count - assumes all customers will determine their outage state by either presync or sync (or before this in postsync)
-	if ((diff_count_needed == true) && (metrics_obj != NULL))
+	if ((diff_count_needed == true) && (metrics_obj_hdr != NULL))
 	{
-		if (*secondary_interruption_cnt == true)
+		//Read the boolean
+		secondary_interruption_cnt->getp<bool>(temp_bool,*test_rlock);
+
+		if (temp_bool == true)
 		{
+			//Lock metrics event
+			wlock(metrics_obj_hdr);
+
 			//Get current number of customers out of service
-			metrics_obj->get_interrupted_count_secondary(&after_count,&after_count_sec);
+			temp_status = ((STATUS (*)(OBJECT *,int *,int *))(*metrics_get_interrupted_count_sec))(metrics_obj_hdr,&after_count,&after_count_sec);
+
+			//Unlock the object
+			wunlock(metrics_obj_hdr);
+
+			if (temp_status == FAILED)
+			{
+				GL_THROW("Eventgen:%d - %s - an error occurred while trying to get the object interruption count",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				While attempting to get the interrupted object count, an error occurred.  Please try again.  If the error persists,
+				please submit an issue via the ticketing system.
+				*/
+			}
 
 			//Figure out the differential
 			differential_count = after_count - curr_time_interrupted;
@@ -900,8 +977,20 @@ TIMESTAMP eventgen::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 		else	//No secondaries
 		{
+			//Lock metrics event
+			wlock(metrics_obj_hdr);
+
 			//Get current number of customers out of service
-			after_count = metrics_obj->get_interrupted_count();
+			temp_status = ((STATUS (*)(OBJECT *,int *))(*metrics_get_interrupted_count))(metrics_obj_hdr,&after_count);
+
+			//Unlock it
+			wunlock(metrics_obj_hdr);
+
+			if (temp_status == FAILED)
+			{
+				GL_THROW("Eventgen:%d - %s - an error occurred while trying to get the object interruption count",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
+				//Defined elsewhere
+			}
 
 			//Figure out the differential
 			differential_count = after_count - curr_time_interrupted;
@@ -1267,15 +1356,6 @@ int eventgen::add_unhandled_event(OBJECT *obj_to_fault, char *event_type, TIMEST
 	return 1;	//Always successful here
 }
 
-//Retrieve the address of a double
-double *eventgen::get_double(OBJECT *obj, char *name)
-{
-	PROPERTY *p = gl_get_property(obj,name);
-	if (p==NULL || p->ptype!=PT_double)
-		return NULL;
-	return (double*)GETADDR(obj,p);
-}
-
 //Function to update any event times after a successful state change
 void eventgen::regen_events(TIMESTAMP t1_ts, double t1_dbl){
 	OBJECT *hdr = OBJECTHDR(this);
@@ -1402,11 +1482,10 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 	int returnval, index;
 	char impl_fault[257];
 	RELEVANTSTRUCT *temp_struct, *temp_struct_b;
-	void *Extra_Data;
+	bool temp_bool;
+	gld_rlock *test_rlock;
+	STATUS temp_status;
 
-	//Initialize
-	Extra_Data = NULL;
-	
 	//Reset next event time - we'll find the new one in here
 	next_event_time = TS_NEVER;
 	next_event_time_dbl = TSNVRDBL;
@@ -1421,15 +1500,44 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 			if ((faults_in_prog < max_simult_faults) || (max_simult_faults == -1))	//Room to fault or infinite amount
 			{
 				//See if something else has already asked for a count update
-				if ((diff_count_needed == false) && (metrics_obj != NULL))
+				if ((diff_count_needed == false) && (metrics_obj_hdr != NULL))
 				{
-					if (*secondary_interruption_cnt == true)
+					//Read the boolean
+					secondary_interruption_cnt->getp<bool>(temp_bool,*test_rlock);
+
+					if (temp_bool == true)
 					{
-						metrics_obj->get_interrupted_count_secondary(&curr_time_interrupted,&curr_time_interrupted_sec);	//Get the count of currently interrupted objects
+						//Lock metrics event
+						wlock(metrics_obj_hdr);
+
+						//Get current number of customers out of service
+						temp_status = ((STATUS (*)(OBJECT *,int *,int *))(*metrics_get_interrupted_count_sec))(metrics_obj_hdr,&curr_time_interrupted,&curr_time_interrupted_sec);
+
+						//Unlock it
+						wunlock(metrics_obj_hdr);
+
+						if (temp_status == FAILED)
+						{
+							GL_THROW("Eventgen:%d - %s - an error occurred while trying to get the object interruption count",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
+							//Defined above
+						}
 					}
 					else	//No secondaries
 					{
-						curr_time_interrupted = metrics_obj->get_interrupted_count();	//Get the count of currently interrupted objects
+						//Lock metrics event
+						wlock(metrics_obj_hdr);
+
+						//Get current number of customers out of service
+						temp_status = ((STATUS (*)(OBJECT *,int *))(*metrics_get_interrupted_count))(metrics_obj_hdr,&curr_time_interrupted);
+
+						//Unlock it
+						wunlock(metrics_obj_hdr);
+
+						if (temp_status == FAILED)
+						{
+							GL_THROW("Eventgen:%d - %s - an error occurred while trying to get the object interruption count",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
+							//Defined elsewhere
+						}
 					}
 					diff_count_needed = true;										//Flag us for an update
 				}
@@ -1448,14 +1556,20 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 					*/
 				}
 
-				if (metrics_obj != NULL)
+				//Lock the object of interest
+				wlock(UnreliableObjs[index].obj_of_int);
+
+				if (metrics_obj_hdr != NULL)
 				{
-					returnval = ((int (*)(OBJECT *, OBJECT **, char *, int *, TIMESTAMP *, void *))(*funadd))(UnreliableObjs[index].obj_of_int,&UnreliableObjs[index].obj_made_int,fault_type.get_string(),&UnreliableObjs[index].implemented_fault,&mean_repair_time,metrics_obj->Extra_Data);
+					returnval = ((int (*)(OBJECT *, OBJECT **, char *, int *, TIMESTAMP *))(*funadd))(UnreliableObjs[index].obj_of_int,&UnreliableObjs[index].obj_made_int,fault_type.get_string(),&UnreliableObjs[index].implemented_fault,&mean_repair_time);
 				}
 				else
 				{
-					returnval = ((int (*)(OBJECT *, OBJECT **, char *, int *, TIMESTAMP *, void *))(*funadd))(UnreliableObjs[index].obj_of_int,&UnreliableObjs[index].obj_made_int,fault_type.get_string(),&UnreliableObjs[index].implemented_fault,&mean_repair_time,Extra_Data);
+					returnval = ((int (*)(OBJECT *, OBJECT **, char *, int *, TIMESTAMP *))(*funadd))(UnreliableObjs[index].obj_of_int,&UnreliableObjs[index].obj_made_int,fault_type.get_string(),&UnreliableObjs[index].implemented_fault,&mean_repair_time);
 				}
+
+				//Unlock the object of interest
+				wunlock(UnreliableObjs[index].obj_of_int);
 
 				if (returnval == 0)	//Failed :(
 				{
@@ -1585,14 +1699,20 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 				//Defined above
 			}
 
-			if (metrics_obj != NULL)
+			//Lock the object
+			wlock(UnreliableObjs[index].obj_of_int);
+
+			if (metrics_obj_hdr != NULL)
 			{
-				returnval = ((int (*)(OBJECT *, int *, char *, void *))(*funadd))(UnreliableObjs[index].obj_of_int,&UnreliableObjs[index].implemented_fault,impl_fault,metrics_obj->Extra_Data);
+				returnval = ((int (*)(OBJECT *, int *, char *))(*funadd))(UnreliableObjs[index].obj_of_int,&UnreliableObjs[index].implemented_fault,impl_fault);
 			}
 			else
 			{
-				returnval = ((int (*)(OBJECT *, int *, char *, void *))(*funadd))(UnreliableObjs[index].obj_of_int,&UnreliableObjs[index].implemented_fault,impl_fault,Extra_Data);
+				returnval = ((int (*)(OBJECT *, int *, char *))(*funadd))(UnreliableObjs[index].obj_of_int,&UnreliableObjs[index].implemented_fault,impl_fault);
 			}
+
+			//Unock the object
+			wunlock(UnreliableObjs[index].obj_of_int);
 
 			if (returnval == 0)	//Restoration is no go :(
 			{
@@ -1604,23 +1724,35 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 				*/
 			}
 
-			if (metrics_obj != NULL)
+			if (metrics_obj_hdr != NULL)
 			{
+				//Read the boolean
+				secondary_interruption_cnt->getp<bool>(temp_bool,*test_rlock);
+
 				//Lock metrics event
 				wlock(metrics_obj_hdr);
 
 				//Call the event updater - call relevant version
-				if (*secondary_interruption_cnt == true)
+				if (temp_bool == true)
 				{
-					metrics_obj->event_ended_sec(hdr,UnreliableObjs[index].obj_of_int,UnreliableObjs[index].obj_made_int,UnreliableObjs[index].fail_time,UnreliableObjs[index].rest_time,fault_type.get_string(),impl_fault,UnreliableObjs[index].customers_affected,UnreliableObjs[index].customers_affected_sec);
+					temp_status = ((STATUS (*)(OBJECT *,OBJECT *,OBJECT *,OBJECT *,TIMESTAMP,TIMESTAMP,char *,char *,int, int))(*metrics_object_event_ended_sec))(metrics_obj_hdr,hdr,UnreliableObjs[index].obj_of_int,UnreliableObjs[index].obj_made_int,UnreliableObjs[index].fail_time,UnreliableObjs[index].rest_time,fault_type.get_string(),impl_fault,UnreliableObjs[index].customers_affected,UnreliableObjs[index].customers_affected_sec);
 				}
 				else	//no secondaries
 				{
-					metrics_obj->event_ended(hdr,UnreliableObjs[index].obj_of_int,UnreliableObjs[index].obj_made_int,UnreliableObjs[index].fail_time,UnreliableObjs[index].rest_time,fault_type.get_string(),impl_fault,UnreliableObjs[index].customers_affected);
+					temp_status = ((STATUS (*)(OBJECT *,OBJECT *,OBJECT *,OBJECT *,TIMESTAMP,TIMESTAMP,char *,char *,int))(*metrics_object_event_ended))(metrics_obj_hdr,hdr,UnreliableObjs[index].obj_of_int,UnreliableObjs[index].obj_made_int,UnreliableObjs[index].fail_time,UnreliableObjs[index].rest_time,fault_type.get_string(),impl_fault,UnreliableObjs[index].customers_affected);
 				}
 
 				//All done, unlock it
 				wunlock(metrics_obj_hdr);
+
+				if (temp_status == FAILED)
+				{
+					GL_THROW("Eventgen:%d - %s - an error occurred while trying to end an event",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
+					/*  TROUBLESHOOT
+					While attempting to end a reliability event, an error occurred.  Please try again.  If the error persists,
+					please submit an issue via the ticketing system.
+					*/
+				}
 			}
 
 			//If in random mode, update the failure values
@@ -1755,15 +1887,44 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 			{
 				//"Random" events are always allowed to happen
 				//See if something else has already asked for a count update
-				if ((diff_count_needed == false) && (metrics_obj != NULL))
+				if ((diff_count_needed == false) && (metrics_obj_hdr != NULL))
 				{
-					if (*secondary_interruption_cnt == true)
+					//Read the boolean
+					secondary_interruption_cnt->getp<bool>(temp_bool,*test_rlock);
+
+					if (temp_bool == true)
 					{
-						metrics_obj->get_interrupted_count_secondary(&curr_time_interrupted,&curr_time_interrupted_sec);	//Get the count of currently interrupted objects
+						//Lock the metrics object
+						wlock(metrics_obj_hdr);
+
+						//Get current number of customers out of service
+						temp_status = ((STATUS (*)(OBJECT *,int *,int *))(*metrics_get_interrupted_count_sec))(metrics_obj_hdr,&curr_time_interrupted,&curr_time_interrupted_sec);
+
+						//Unlock the metrics object
+						wunlock(metrics_obj_hdr);
+
+						if (temp_status == FAILED)
+						{
+							GL_THROW("Eventgen:%d - %s - an error occurred while trying to get the object interruption count",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
+							//Defined above
+						}
 					}
 					else	//No secondaries
 					{
-						curr_time_interrupted = metrics_obj->get_interrupted_count();	//Get the count of currently interrupted objects
+						//Lock the metrics object
+						wlock(metrics_obj_hdr);
+
+						//Get current number of customers out of service
+						temp_status = ((STATUS (*)(OBJECT *,int *))(*metrics_get_interrupted_count))(metrics_obj_hdr,&curr_time_interrupted);
+
+						//Unlock the metrics object
+						wunlock(metrics_obj_hdr);
+
+						if (temp_status == FAILED)
+						{
+							GL_THROW("Eventgen:%d - %s - an error occurred while trying to get the object interruption count",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
+							//Defined elsewhere
+						}
 					}
 					diff_count_needed = true;										//Flag us for an update
 				}
@@ -1778,14 +1939,20 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 					//Defined above
 				}
 
-				if (metrics_obj != NULL)
+				//Lock the object of interest
+				wlock(temp_struct->objdetails.obj_of_int);
+
+				if (metrics_obj_hdr != NULL)
 				{
-					returnval = ((int (*)(OBJECT *, OBJECT **, char *, int *, TIMESTAMP *, void *))(*funadd))(temp_struct->objdetails.obj_of_int,&temp_struct->objdetails.obj_made_int,temp_struct->event_type,&temp_struct->objdetails.implemented_fault,&mean_repair_time,metrics_obj->Extra_Data);
+					returnval = ((int (*)(OBJECT *, OBJECT **, char *, int *, TIMESTAMP *))(*funadd))(temp_struct->objdetails.obj_of_int,&temp_struct->objdetails.obj_made_int,temp_struct->event_type,&temp_struct->objdetails.implemented_fault,&mean_repair_time);
 				}
 				else
 				{
-					returnval = ((int (*)(OBJECT *, OBJECT **, char *, int *, TIMESTAMP *, void *))(*funadd))(temp_struct->objdetails.obj_of_int,&temp_struct->objdetails.obj_made_int,temp_struct->event_type,&temp_struct->objdetails.implemented_fault,&mean_repair_time,Extra_Data);
+					returnval = ((int (*)(OBJECT *, OBJECT **, char *, int *, TIMESTAMP *))(*funadd))(temp_struct->objdetails.obj_of_int,&temp_struct->objdetails.obj_made_int,temp_struct->event_type,&temp_struct->objdetails.implemented_fault,&mean_repair_time);
 				}
+
+				//Unlock it
+				wunlock(temp_struct->objdetails.obj_of_int);
 
 				if (returnval == 0)	//Failed :(
 				{
@@ -1863,14 +2030,20 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 					//Defined above
 				}
 
-				if (metrics_obj != NULL)
+				//Lock the object of interst
+				wlock(temp_struct->objdetails.obj_of_int);
+
+				if (metrics_obj_hdr != NULL)
 				{
-					returnval = ((int (*)(OBJECT *, int *, char *, void *))(*funadd))(temp_struct->objdetails.obj_of_int,&temp_struct->objdetails.implemented_fault,impl_fault,metrics_obj->Extra_Data);
+					returnval = ((int (*)(OBJECT *, int *, char *))(*funadd))(temp_struct->objdetails.obj_of_int,&temp_struct->objdetails.implemented_fault,impl_fault);
 				}
 				else
 				{
-					returnval = ((int (*)(OBJECT *, int *, char *, void *))(*funadd))(temp_struct->objdetails.obj_of_int,&temp_struct->objdetails.implemented_fault,impl_fault,Extra_Data);
+					returnval = ((int (*)(OBJECT *, int *, char *))(*funadd))(temp_struct->objdetails.obj_of_int,&temp_struct->objdetails.implemented_fault,impl_fault);
 				}
+
+				//Unlock it
+				wunlock(temp_struct->objdetails.obj_of_int);
 
 				if (returnval == 0)	//Restoration is no go :(
 				{
@@ -1878,23 +2051,32 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 					//Defined above
 				}
 
-				if (metrics_obj != NULL)
+				if (metrics_obj_hdr != NULL)
 				{
+					//Read the boolean
+					secondary_interruption_cnt->getp<bool>(temp_bool,*test_rlock);
+
 					//Lock metrics event
 					wlock(metrics_obj_hdr);
 
 					//Call the event updater - call relevant version
-					if (*secondary_interruption_cnt == true)
+					if (temp_bool == true)
 					{
-						metrics_obj->event_ended_sec(hdr,temp_struct->objdetails.obj_of_int,temp_struct->objdetails.obj_made_int,temp_struct->objdetails.fail_time,temp_struct->objdetails.rest_time,temp_struct->event_type,impl_fault,temp_struct->objdetails.customers_affected,temp_struct->objdetails.customers_affected_sec);
+						temp_status = ((STATUS (*)(OBJECT *,OBJECT *,OBJECT *,OBJECT *,TIMESTAMP,TIMESTAMP,char *,char *,int, int))(*metrics_object_event_ended_sec))(metrics_obj_hdr,hdr,temp_struct->objdetails.obj_of_int,temp_struct->objdetails.obj_made_int,temp_struct->objdetails.fail_time,temp_struct->objdetails.rest_time,temp_struct->event_type,impl_fault,temp_struct->objdetails.customers_affected,temp_struct->objdetails.customers_affected_sec);
 					}
 					else	//no secondaries
 					{
-						metrics_obj->event_ended(hdr,temp_struct->objdetails.obj_of_int,temp_struct->objdetails.obj_made_int,temp_struct->objdetails.fail_time,temp_struct->objdetails.rest_time,temp_struct->event_type,impl_fault,temp_struct->objdetails.customers_affected);
+						temp_status = ((STATUS (*)(OBJECT *,OBJECT *,OBJECT *,OBJECT *,TIMESTAMP,TIMESTAMP,char *,char *,int))(*metrics_object_event_ended))(metrics_obj_hdr,hdr,temp_struct->objdetails.obj_of_int,temp_struct->objdetails.obj_made_int,temp_struct->objdetails.fail_time,temp_struct->objdetails.rest_time,temp_struct->event_type,impl_fault,temp_struct->objdetails.customers_affected);
 					}
 
 					//All done, unlock it
 					wunlock(metrics_obj_hdr);
+
+					if (temp_status == FAILED)
+					{
+						GL_THROW("Eventgen:%d - %s - an error occurred while trying to end an event",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
+						//Defined elsewhere
+					}
 				}
 
 				//Event is done, remove it from the structure

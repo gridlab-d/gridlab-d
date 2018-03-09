@@ -424,7 +424,7 @@ int capacitor::init(OBJECT *parent)
 	//Map the function for calculate power for RLink, if we're in the method we want
 	if ((control==VAR) || (control==VARVOLT))
 	{
-		//Do teh map
+		//Do the map
 		RLink_calculate_power_fxn = (FUNCTIONADDR)(gl_get_function(RLink,"update_power_pwr_object"));
 
 		//Check it

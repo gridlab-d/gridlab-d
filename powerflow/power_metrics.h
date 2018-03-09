@@ -35,7 +35,6 @@ public:
 	double CAIDI_int;
 	double ASAI_int;
 	double MAIFI_int;
-	double Extra_PF_Data;
 	void perform_rel_calcs(int number_int, int number_int_secondary, int total_cust, TIMESTAMP rest_time_val, TIMESTAMP base_time_val);
 	void reset_metrics_variables(bool annual_metrics);
 	void check_fault_check(void);
@@ -61,7 +60,7 @@ private:
 EXPORT int calc_pfmetrics(OBJECT *callobj, OBJECT *calcobj, int number_int, int number_int_secondary, int total_customers, TIMESTAMP rest_time_val, TIMESTAMP base_time_val);
 EXPORT int reset_pfinterval_metrics(OBJECT *callobj, OBJECT *calcobj);
 EXPORT int reset_pfannual_metrics(OBJECT *callobj, OBJECT *calcobj);
-EXPORT void *init_pf_reliability_extra(OBJECT *myhdr, OBJECT *callhdr);
+EXPORT STATUS init_pf_reliability_extra(OBJECT *myhdr, OBJECT *callhdr);
 EXPORT int logfile_extra(OBJECT *myhdr, char *BufferArray);
 
 #endif // _POWER_METRICS_H

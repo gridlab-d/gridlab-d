@@ -125,9 +125,6 @@ int power_metrics::create(void)
 	fault_check_object_lnk = NULL;
 	rel_metrics = NULL;
 
-	//Extra variable (recloser count)
-	Extra_PF_Data = 0.0;
-
 	return 1;
 }
 
@@ -226,8 +223,8 @@ void power_metrics::calc_MAIFI(void)
 {
 	if (num_cust_total != 0)
 	{
-		MAIFI_num += Extra_PF_Data*num_cust_momentary_interrupted;
-		MAIFI_num_int += Extra_PF_Data*num_cust_momentary_interrupted;
+		MAIFI_num += reliability_metrics_recloser_counts*num_cust_momentary_interrupted;
+		MAIFI_num_int += reliability_metrics_recloser_counts*num_cust_momentary_interrupted;
 
 		//See if it was a "momentary" outage - if so, add extra data
 		if (outage_length < 300)	//Less than 5 minutes - "normal" failures are considered momentary
@@ -388,11 +385,11 @@ EXPORT int reset_pfannual_metrics(OBJECT *callobj, OBJECT *calcobj)
 	return 1;	//Always successful - theoretically
 }
 
-//Exported function to initialize extra reliability variables - in this case, only a recloser reclose counter
-EXPORT void *init_pf_reliability_extra(OBJECT *myhdr, OBJECT *callhdr)
+//Exported function to initialize extra reliability variables
+//Used to do the recloser reclose counter, but turned that into a global for
+//API ease - reliability_metrics_recloser_counts
+EXPORT STATUS init_pf_reliability_extra(OBJECT *myhdr, OBJECT *callhdr)
 {
-	void *Data_Index;
-	
 	//Link to us
 	power_metrics *pmetrics_obj;
 	pmetrics_obj = OBJECTDATA(myhdr,power_metrics);
@@ -400,14 +397,8 @@ EXPORT void *init_pf_reliability_extra(OBJECT *myhdr, OBJECT *callhdr)
 	//Map calling object
 	pmetrics_obj->rel_metrics = callhdr;
 
-	//Map the proper data index
-	Data_Index = (void *)&(pmetrics_obj->Extra_PF_Data);
-
-	//Check success
-	if (Data_Index != NULL)
-		return Data_Index;	//Success
-	else
-		return 0;	//Failure
+	//Always succeed, because how would we fail?
+	return SUCCESS;
 }
 
 //Exposed function for extra reliability log file information

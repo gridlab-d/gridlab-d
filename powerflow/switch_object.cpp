@@ -1796,7 +1796,7 @@ EXPORT int reliability_operation(OBJECT *thisobj, unsigned char desired_phases)
 	return 1;	//This will always succeed...because I say so!
 }
 
-EXPORT int create_fault_switch(OBJECT *thisobj, OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time, void *Extra_Data)
+EXPORT int create_fault_switch(OBJECT *thisobj, OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time)
 {
 	int retval;
 
@@ -1804,11 +1804,11 @@ EXPORT int create_fault_switch(OBJECT *thisobj, OBJECT **protect_obj, char *faul
 	switch_object *thisswitch = OBJECTDATA(thisobj,switch_object);
 
 	//Try to fault up
-	retval = thisswitch->link_fault_on(protect_obj, fault_type, implemented_fault,repair_time,Extra_Data);
+	retval = thisswitch->link_fault_on(protect_obj, fault_type, implemented_fault,repair_time);
 
 	return retval;
 }
-EXPORT int fix_fault_switch(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name, void *Extra_Data)
+EXPORT int fix_fault_switch(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name)
 {
 	int retval;
 
@@ -1816,7 +1816,7 @@ EXPORT int fix_fault_switch(OBJECT *thisobj, int *implemented_fault, char *imp_f
 	switch_object *thisswitch = OBJECTDATA(thisobj,switch_object);
 
 	//Clear the fault
-	retval = thisswitch->link_fault_off(implemented_fault, imp_fault_name, Extra_Data);
+	retval = thisswitch->link_fault_off(implemented_fault, imp_fault_name);
 
 	//Clear the fault type
 	*implemented_fault = -1;

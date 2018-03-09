@@ -38,7 +38,17 @@ metrics::metrics(MODULE *module)
 			PT_char1024, "metrics_of_interest", PADDR(metrics_oi),
 			PT_double, "metric_interval[s]", PADDR(metric_interval_dbl),
 			PT_double, "report_interval[s]", PADDR(report_interval_dbl),
+			PT_bool,"secondary_interruptions_count",PADDR(secondary_interruptions_count),PT_ACCESS,PA_HIDDEN,
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+
+		if (gl_publish_function(oclass,	"metrics_event_ended", (FUNCTIONADDR)metrics_event_ended)==NULL)
+			GL_THROW("Unable to publish reliability external function");
+		if (gl_publish_function(oclass,	"metrics_event_ended_secondary", (FUNCTIONADDR)metrics_event_ended_secondary)==NULL)
+			GL_THROW("Unable to publish reliability external function");
+		if (gl_publish_function(oclass,	"metrics_get_interrupted_count", (FUNCTIONADDR)metrics_get_interrupted_count)==NULL)
+			GL_THROW("Unable to publish reliability external function");
+		if (gl_publish_function(oclass,	"metrics_get_interrupted_count_secondary", (FUNCTIONADDR)metrics_get_interrupted_count_secondary)==NULL)
+			GL_THROW("Unable to publish reliability external function");
 	}
 }
 
@@ -73,8 +83,6 @@ int metrics::create(void)
 
 	secondary_interruptions_count = false;	//By default, we don't look for the secondary interruptions flag
 
-	Extra_Data = NULL;	//Start "extra" variable as null
-	
 	return 1; /* return 1 on success, 0 on failure */
 }
 
@@ -92,6 +100,7 @@ int metrics::init(OBJECT *parent)
 	OBJECT *temp_obj;
 	bool *temp_bool;
 	FUNCTIONADDR funadd = NULL;
+	STATUS temp_return_status;
 
 	//Ensure our "module metrics" object is populated
 	if (module_metrics_obj == NULL)
@@ -118,10 +127,10 @@ int metrics::init(OBJECT *parent)
 		*/
 	}
 
-	Extra_Data = ((void *(*)(OBJECT *, OBJECT *))(*funadd))(module_metrics_obj,hdr);
+	temp_return_status = ((STATUS (*)(OBJECT *, OBJECT *))(*funadd))(module_metrics_obj,hdr);
 
 	//Make sure it worked
-	if (Extra_Data==NULL)
+	if (temp_return_status==FAILED)
 	{
 		GL_THROW("Unable to map reliability init function on %s in %s",module_metrics_obj->name,hdr->name);
 		//defined above
@@ -235,10 +244,10 @@ int metrics::init(OBJECT *parent)
 		startVal = endVal;
 		
 		//Now try to find this variable
-		CalcIndices[index].MetricLoc = get_metric(module_metrics_obj,CalcIndices[index].MetricName);
+		CalcIndices[index].MetricLoc = new gld_property(module_metrics_obj,CalcIndices[index].MetricName);
 
 		//Make sure it worked
-		if (CalcIndices[index].MetricLoc == NULL)
+		if ((CalcIndices[index].MetricLoc->is_valid() != true) || (CalcIndices[index].MetricLoc->is_double() != true))
 		{
 			GL_THROW("Unable to find metric %s in object %s for metric:%s",CalcIndices[index].MetricName.get_string(),module_metrics_obj->name,hdr->name);
 			/*  TROUBLESHOOT
@@ -257,8 +266,19 @@ int metrics::init(OBJECT *parent)
 			metricbuffer[(indexb+3)] = 't';
 			metricbuffer[(indexb+4)] = '\0';
 
-			//Try to map it
-			CalcIndices[index].MetricLocInterval = get_metric(module_metrics_obj,metricbuffer);
+			//Now try to find this variable
+			CalcIndices[index].MetricLocInterval = new gld_property(module_metrics_obj,metricbuffer);
+
+			//Make sure it worked
+			if ((CalcIndices[index].MetricLocInterval->is_valid() != true) || (CalcIndices[index].MetricLocInterval->is_double() != true))
+			{
+				GL_THROW("Unable to find metric interval in object %s for metric:%s",module_metrics_obj->name,hdr->name);
+				/*  TROUBLESHOOT
+				While attempting to map out a reliability metric, the desired metric interval was not found.  Please check the variable
+				name and ensure the metric is being published in the module metrics object and try again.  If the error persists,
+				please submit your code and a bug report to the trac website.
+				*/
+			}
 
 			//No NULL check - if it wasn't found, we won't deal with it
 		}
@@ -418,11 +438,11 @@ int metrics::init(OBJECT *parent)
 
 		Customers[index].CustomerObj = temp_obj;
 
-		//Try to find our "outage" indicator and map its address
-		temp_bool = get_outage_flag(temp_obj, "customer_interrupted");
+		//Map the property
+		Customers[index].CustInterrupted = new gld_property(temp_obj,"customer_interrupted");
 
 		//make sure it found it
-		if (temp_bool == NULL)
+		if ((Customers[index].CustInterrupted->is_valid() != true) || (Customers[index].CustInterrupted->is_bool() != true))
 		{
 			GL_THROW("Unable to find interrupted flag for customer object %s in metrics:%s",temp_obj->name,hdr->name);
 			/*  TROUBLESHOOT
@@ -432,17 +452,14 @@ int metrics::init(OBJECT *parent)
 			*/
 		}
 
-		//Write this value in
-		Customers[index].CustInterrupted = temp_bool;
-
 		if (index == 0)	//First customer, handle slightly different
 		{
 			//Populate the secondary index - needs to exist, even if never used
 			//Try to find our secondary "outage" indicator and map its address
-			temp_bool = get_outage_flag(temp_obj, "customer_interrupted_secondary");
+			Customers[index].CustInterrupted_Secondary = new gld_property(temp_obj, "customer_interrupted_secondary");
 
 			//make sure it found it
-			if (temp_bool == NULL)	//Not found, assume no one else wants one
+			if ((Customers[index].CustInterrupted_Secondary->is_valid() != true) || (Customers[index].CustInterrupted_Secondary->is_bool() != true))	//Not found, assume no one else wants one
 			{
 				gl_warning("Unable to find secondary interruption flag, no secondary interruptions recorded in metrics:%s",hdr->name);
 				/*  TROUBLESHOOT
@@ -451,23 +468,23 @@ int metrics::init(OBJECT *parent)
 				supports being polled by reliability as a customer (customer_interrupted_secondary exists as a published property) and
 				try again.  If the error persists, please submit your code and a bug report via the trac website.
 				*/
+
+				//Null it too, just out of principle
+				Customers[index].CustInterrupted_Secondary = NULL;
 			}
 			else	//One found, assume all want one now
 			{
 				secondary_interruptions_count = true;
-				
-				//Write this value in
-				Customers[index].CustInterrupted_Secondary = temp_bool;
 			}
 		}
 		else if (secondary_interruptions_count == true)	//Decided we want it
 		{
 			//Populate the secondary index - needs to exist, even if never used
 			//Try to find our secondary "outage" indicator and map its address
-			temp_bool = get_outage_flag(temp_obj, "customer_interrupted_secondary");
+			Customers[index].CustInterrupted_Secondary = new gld_property(temp_obj, "customer_interrupted_secondary");
 
 			//make sure it found it
-			if (temp_bool == NULL)
+			if ((Customers[index].CustInterrupted_Secondary->is_valid() != true) || (Customers[index].CustInterrupted_Secondary->is_bool() != true))
 			{
 				GL_THROW("Unable to find secondary interruption flag for customer object %s in metrics:%s",temp_obj->name,hdr->name);
 				/*  TROUBLESHOOT
@@ -476,9 +493,6 @@ int metrics::init(OBJECT *parent)
 				try again.  If the error persists, please submit your code and a bug report via the trac website.
 				*/
 			}
-
-			//Write this value in
-			Customers[index].CustInterrupted_Secondary = temp_bool;
 		}
 		//Defaulted else - unwanted
 
@@ -604,8 +618,14 @@ TIMESTAMP metrics::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			//Update the interval
 			next_metric_interval = t0 + metric_interval;
 
+			//Lock the remote object
+			wlock(module_metrics_obj);
+
 			//Reset the stat variables
 			returnval = ((int (*)(OBJECT *, OBJECT *))(*reset_interval_func))(hdr,module_metrics_obj);
+
+			//Unlock it
+			wunlock(module_metrics_obj);
 
 			if (returnval != 1)	//See if it failed
 			{
@@ -643,8 +663,14 @@ TIMESTAMP metrics::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			//Update interval
 			next_annual_interval = t0 + 31536000;	//t0 + 365 days of seconds
 
+			//Lock the remote metrics object
+			wlock(module_metrics_obj);
+
 			//Reset the stats
 			returnval = ((int (*)(OBJECT *, OBJECT *))(*reset_annual_func))(hdr,module_metrics_obj);
+
+			//Unlock it
+			wunlock(module_metrics_obj);
 
 			if (returnval != 1)	//See if it failed
 			{
@@ -705,8 +731,14 @@ void metrics::event_ended(OBJECT *event_obj, OBJECT *fault_obj, OBJECT *faulting
 	//Determine the actual outage length (may be off due to iterations and such)
 	outage_length = event_end_time - event_start_time;
 
+	//Lock the remote object
+	wlock(module_metrics_obj);
+
 	//Perform the calculation
 	returnval = ((int (*)(OBJECT *, OBJECT *, int, int, TIMESTAMP, TIMESTAMP))(*compute_metrics))(hdr,module_metrics_obj,number_customers_int,CustomerCount,outage_length,metric_interval);
+
+	//Unlock it
+	wunlock(module_metrics_obj);
 
 	//Make sure it worked
 	if (returnval != 1)
@@ -762,8 +794,14 @@ void metrics::event_ended_sec(OBJECT *event_obj, OBJECT *fault_obj, OBJECT *faul
 	//Determine the actual outage length (may be off due to iterations and such)
 	outage_length = event_end_time - event_start_time;
 
+	//Lock the remote object
+	wlock(module_metrics_obj);
+
 	//Perform the calculation
 	returnval = ((int (*)(OBJECT *, OBJECT *, int, int, int, TIMESTAMP, TIMESTAMP))(*compute_metrics))(hdr,module_metrics_obj,number_customers_int,number_customers_int_secondary,CustomerCount,outage_length,metric_interval);
+
+	//Unlock it
+	wunlock(module_metrics_obj);
 
 	//Make sure it worked
 	if (returnval != 1)
@@ -809,6 +847,8 @@ void metrics::event_ended_sec(OBJECT *event_obj, OBJECT *fault_obj, OBJECT *faul
 int metrics::get_interrupted_count(void)
 {
 	int index, in_outage;
+	gld_rlock *test_rlock;
+	bool temp_bool;
 
 	//Reset counter
 	in_outage = 0;
@@ -816,7 +856,11 @@ int metrics::get_interrupted_count(void)
 	//Loop through the list and get the number of customer objects reported as interrupted
 	for (index=0; index<CustomerCount; index++)
 	{
-		if (*Customers[index].CustInterrupted == true)
+		//Pull the flag
+		Customers[index].CustInterrupted->getp<bool>(temp_bool,*test_rlock);
+		
+		//Check it
+		if (temp_bool == true)
 			in_outage++;
 	}
 
@@ -828,6 +872,8 @@ int metrics::get_interrupted_count(void)
 void metrics::get_interrupted_count_secondary(int *in_outage, int *in_outage_secondary)
 {
 	int index, in_outage_temp, in_outage_temp_sec;
+	gld_rlock *test_rlock;
+	bool temp_bool;
 
 	//Reset counter
 	in_outage_temp = 0;
@@ -836,11 +882,18 @@ void metrics::get_interrupted_count_secondary(int *in_outage, int *in_outage_sec
 	//Loop through the list and get the number of customer objects reported as interrupted
 	for (index=0; index<CustomerCount; index++)
 	{
-		if (*Customers[index].CustInterrupted == true)
+		//Pull the flag
+		Customers[index].CustInterrupted->getp<bool>(temp_bool,*test_rlock);
+		
+		//Check it
+		if (temp_bool == true)
 			in_outage_temp++;
 
 		//Assumes secondary metric exists, otherwise we shouldn't be here
-		if (*Customers[index].CustInterrupted_Secondary == true)
+		Customers[index].CustInterrupted_Secondary->getp<bool>(temp_bool,*test_rlock);
+		
+		//Check it
+		if (temp_bool == true)
 			in_outage_temp_sec++;
 	}
 
@@ -870,12 +923,12 @@ void metrics::write_metrics(void)
 		if (index==0)
 		{
 			//Print metric name and value
-			fprintf(FPVAL,"%s = %f",CalcIndices[index].MetricName.get_string(),*CalcIndices[index].MetricLoc);
+			fprintf(FPVAL,"%s = %f",CalcIndices[index].MetricName.get_string(),CalcIndices[index].MetricLoc->get_double());
 		}
 		else
 		{
 			//Print metric name and value
-			fprintf(FPVAL,", %s = %f",CalcIndices[index].MetricName.get_string(),*CalcIndices[index].MetricLoc);
+			fprintf(FPVAL,", %s = %f",CalcIndices[index].MetricName.get_string(),CalcIndices[index].MetricLoc->get_double());
 		}
 	}
 
@@ -893,13 +946,13 @@ void metrics::write_metrics(void)
 				if (first_written == false)
 				{
 					//Print metric name and value
-					fprintf(FPVAL,"Interval values: %s = %f",CalcIndices[index].MetricName.get_string(),*CalcIndices[index].MetricLocInterval);
+					fprintf(FPVAL,"Interval values: %s = %f",CalcIndices[index].MetricName.get_string(),CalcIndices[index].MetricLocInterval->get_double());
 					first_written = true;
 				}
 				else
 				{
 					//Print metric name and value
-					fprintf(FPVAL,", %s = %f",CalcIndices[index].MetricName.get_string(),*CalcIndices[index].MetricLocInterval);
+					fprintf(FPVAL,", %s = %f",CalcIndices[index].MetricName.get_string(),CalcIndices[index].MetricLocInterval->get_double());
 				}
 			}
 		}
@@ -910,27 +963,118 @@ void metrics::write_metrics(void)
 	fclose(FPVAL);
 }
 
-//Retrieve the address of a metric
-double *metrics::get_metric(OBJECT *obj, char *name)
+//Exports for the different external functions
+EXPORT STATUS metrics_get_interrupted_count(OBJECT *obj,int *in_outage)
 {
-	PROPERTY *p = gl_get_property(obj,name);
-	if (p==NULL || p->ptype!=PT_double)
-		return NULL;
-	return (double*)GETADDR(obj,p);
+	metrics *mymet = OBJECTDATA(obj,metrics);
+
+	try
+	{
+		*in_outage = mymet->get_interrupted_count();
+	}
+	catch (char *msg)
+	{
+		gl_error("metrics_get_interrupted_count: %s", msg);
+		return FAILED;
+	}
+	catch (const char *msg)
+	{
+		gl_error("metrics_get_interrupted_count: %s", msg);
+		return FAILED;
+	}
+	catch (...)
+	{
+		gl_error("metrics_get_interrupted_count: unhandled exception");
+		return FAILED;
+	}
+
+	return SUCCESS;
 }
 
-//Function to extract address of outage flag
-bool *metrics::get_outage_flag(OBJECT *obj, char *name)
+EXPORT STATUS metrics_get_interrupted_count_secondary(OBJECT *obj,int *in_outage, int *in_outage_secondary)
 {
-	PROPERTY *p = gl_get_property(obj,name);
-	if (p==NULL || p->ptype!=PT_bool)
-		return NULL;
-	return (bool*)GETADDR(obj,p);
+	metrics *mymet = OBJECTDATA(obj,metrics);
+
+	try
+	{
+		mymet->get_interrupted_count_secondary(in_outage,in_outage_secondary);
+	}
+	catch (char *msg)
+	{
+		gl_error("metrics_get_interrupted_count: %s", msg);
+		return FAILED;
+	}
+	catch (const char *msg)
+	{
+		gl_error("metrics_get_interrupted_count: %s", msg);
+		return FAILED;
+	}
+	catch (...)
+	{
+		gl_error("metrics_get_interrupted_count: unhandled exception");
+		return FAILED;
+	}
+
+	return SUCCESS;
 }
+
+EXPORT STATUS metrics_event_ended(OBJECT *obj, OBJECT *event_obj,OBJECT *fault_obj,OBJECT *faulting_obj,TIMESTAMP event_start_time,TIMESTAMP event_end_time,char *fault_type,char *impl_fault,int number_customers_int)
+{
+	metrics *mymet = OBJECTDATA(obj,metrics);
+
+	try
+	{
+		mymet->event_ended(event_obj,fault_obj,faulting_obj,event_start_time,event_end_time,fault_type,impl_fault,number_customers_int);
+	}
+	catch (char *msg)
+	{
+		gl_error("metrics_event_ended: %s", msg);
+		return FAILED;
+	}
+	catch (const char *msg)
+	{
+		gl_error("metrics_event_ended: %s", msg);
+		return FAILED;
+	}
+	catch (...)
+	{
+		gl_error("metrics_event_ended: unhandled exception");
+		return FAILED;
+	}
+
+	return SUCCESS;
+}
+
+EXPORT STATUS metrics_event_ended_secondary(OBJECT *obj, OBJECT *event_obj,OBJECT *fault_obj,OBJECT *faulting_obj,TIMESTAMP event_start_time,TIMESTAMP event_end_time,char *fault_type,char *impl_fault,int number_customers_int, int number_customers_int_secondary)
+{
+	metrics *mymet = OBJECTDATA(obj,metrics);
+
+	try
+	{
+		mymet->event_ended_sec(event_obj,fault_obj,faulting_obj,event_start_time,event_end_time,fault_type,impl_fault,number_customers_int,number_customers_int_secondary);
+	}
+	catch (char *msg)
+	{
+		gl_error("metrics_event_ended_secondary: %s", msg);
+		return FAILED;
+	}
+	catch (const char *msg)
+	{
+		gl_error("metrics_event_ended_secondary: %s", msg);
+		return FAILED;
+	}
+	catch (...)
+	{
+		gl_error("metrics_event_ended_secondary: unhandled exception");
+		return FAILED;
+	}
+
+	return SUCCESS;
+}
+
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////
-
 EXPORT int create_metrics(OBJECT **obj, OBJECT *parent)
 {
 	try

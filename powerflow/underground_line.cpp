@@ -1199,7 +1199,7 @@ EXPORT int recalc_underground_line(OBJECT *obj)
 	return 1;
 }
 
-EXPORT int create_fault_ugline(OBJECT *thisobj, OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time, void *Extra_Data)
+EXPORT int create_fault_ugline(OBJECT *thisobj, OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time)
 {
 	int retval;
 
@@ -1207,11 +1207,11 @@ EXPORT int create_fault_ugline(OBJECT *thisobj, OBJECT **protect_obj, char *faul
 	underground_line *thisline = OBJECTDATA(thisobj,underground_line);
 
 	//Try to fault up
-	retval = thisline->link_fault_on(protect_obj, fault_type, implemented_fault,repair_time,Extra_Data);
+	retval = thisline->link_fault_on(protect_obj, fault_type, implemented_fault,repair_time);
 
 	return retval;
 }
-EXPORT int fix_fault_ugline(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name, void *Extra_Data)
+EXPORT int fix_fault_ugline(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name)
 {
 	int retval;
 
@@ -1219,7 +1219,7 @@ EXPORT int fix_fault_ugline(OBJECT *thisobj, int *implemented_fault, char *imp_f
 	underground_line *thisline = OBJECTDATA(thisobj,underground_line);
 
 	//Clear the fault
-	retval = thisline->link_fault_off(implemented_fault, imp_fault_name, Extra_Data);
+	retval = thisline->link_fault_off(implemented_fault, imp_fault_name);
 
 	//Clear the fault type
 	*implemented_fault = -1;
