@@ -42,21 +42,25 @@ motor::motor(MODULE *mod):node(mod)
 			PT_double, "n", PADDR(n),PT_DESCRIPTION,"ratio of stator auxiliary windings to stator main windings",
 			PT_double, "Rds[ohm]", PADDR(Rds),PT_DESCRIPTION,"d-axis resistance - single-phase model",
 			PT_double, "Rqs[ohm]", PADDR(Rqs),PT_DESCRIPTION,"q-asis resistance - single-phase model",
-			PT_double, "Rr[ohm]", PADDR(Rr),PT_DESCRIPTION,"rotor resistance - single-phase model",
-			PT_double, "Xm[ohm]", PADDR(Xm),PT_DESCRIPTION,"magnetizing reactance - single-phase model",
-			PT_double, "Xr[ohm]", PADDR(Xr),PT_DESCRIPTION,"rotor reactance - single-phase model",
+			PT_double, "Rs[ohm]", PADDR(Rs),PT_DESCRIPTION,"stator resistance - three-phase model",
+			PT_double, "Rr[ohm]", PADDR(Rr),PT_DESCRIPTION,"rotor resistance",
+			PT_double, "Xm[ohm]", PADDR(Xm),PT_DESCRIPTION,"magnetizing reactance",
+			PT_double, "Xr[ohm]", PADDR(Xr),PT_DESCRIPTION,"rotor reactance",
+			PT_double, "Xs[ohm]", PADDR(Xs),PT_DESCRIPTION,"stator leakage reactance - three-phase model",
 			PT_double, "Xc_run[ohm]", PADDR(Xc1),PT_DESCRIPTION,"running capacitor reactance - single-phase model",
 			PT_double, "Xc_start[ohm]", PADDR(Xc2),PT_DESCRIPTION,"starting capacitor reactance - single-phase model",
 			PT_double, "Xd_prime[ohm]", PADDR(Xd_prime),PT_DESCRIPTION,"d-axis reactance - single-phase model",
 			PT_double, "Xq_prime[ohm]", PADDR(Xq_prime),PT_DESCRIPTION,"q-axis reactance - single-phase model",
 			PT_double, "A_sat", PADDR(Asat),PT_DESCRIPTION,"flux saturation parameter, A - single-phase model",
 			PT_double, "b_sat", PADDR(bsat),PT_DESCRIPTION,"flux saturation parameter, b - single-phase model",
-			PT_double, "H", PADDR(H),PT_DESCRIPTION,"moment of inertia",
+			PT_double, "H[s]", PADDR(H),PT_DESCRIPTION,"inertia constant",
+			PT_double, "J[kg*m^2]", PADDR(Jm),PT_DESCRIPTION,"moment of inertia",
+			PT_double, "number_of_poles", PADDR(pf),PT_DESCRIPTION,"number of poles",
 			PT_double, "To_prime[s]", PADDR(To_prime),PT_DESCRIPTION,"rotor time constant",
 			PT_double, "capacitor_speed[%]", PADDR(cap_run_speed_percentage),PT_DESCRIPTION,"percentage speed of nominal when starting capacitor kicks in",
 			PT_double, "trip_time[s]", PADDR(trip_time),PT_DESCRIPTION,"time motor can stay stalled before tripping off ",
 			PT_double, "reconnect_time[s]", PADDR(reconnect_time),PT_DESCRIPTION,"time before tripped motor reconnects",
-			
+
 			//Reconcile torque and speed, primarily
 			PT_double, "mechanical_torque[pu]", PADDR(Tmech),PT_DESCRIPTION,"mechanical torque applied to the motor",
 			PT_int32, "iteration_count", PADDR(iteration_count),PT_DESCRIPTION,"maximum number of iterations for steady state model",
@@ -102,13 +106,6 @@ motor::motor(MODULE *mod):node(mod)
 			PT_double, "trip", PADDR(trip),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"current time in tripped state",
 			PT_double, "reconnect", PADDR(reconnect),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"current time since motor was tripped",
 
-			//Three-phase-specific variables
-			PT_double, "rs[pu]", PADDR(rs),PT_DESCRIPTION,"stator resistance - three-phase model",
-			PT_double, "rr[pu]", PADDR(rr_pu),PT_DESCRIPTION,"rotor per-unit resistance - three-phase model",
-			PT_double, "lm[pu]", PADDR(lm),PT_DESCRIPTION,"magnetizing reactance - three-phase model",
-			PT_double, "lls[pu]", PADDR(lls),PT_DESCRIPTION,"stator leakage reactance - three-phase model",
-			PT_double, "llr[pu]", PADDR(llr),PT_DESCRIPTION,"rotor leakage reactance - three-phase model",
-			PT_double, "friction_coefficient", PADDR(Kfric),PT_DESCRIPTION,"coefficient of speed-dependent torque",
 
 			// These model parameters are published as hidden
 			PT_complex, "phips", PADDR(phips),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"positive sequence stator flux",
@@ -159,20 +156,21 @@ int motor::create()
 	// Default parameters
 	motor_override = overrideON;  // share the variable with TPIM
 	motor_trip = 0;  // share the variable with TPIM
-	Pbase = 3500;                    
+	Pbase = -999;
 	n = 1.22;              
 	Rds =0.0365;           
 	Rqs = 0.0729;          
-	Rr =0.0486;             
-	Xm=2.28;               
-	Xr=2.33;               
+	Rr =-999;
+	Xm=-999;
+	Xr=-999;
 	Xc1 = -2.779;           
 	Xc2 = -0.7;            
 	Xd_prime = 0.1033;      
 	Xq_prime =0.1489;       
 	bsat = 0.7212;  
 	Asat = 5.6;
-	H=0.04;
+	H=-999;
+	Jm=-999;
 	To_prime =0.1212;   
 	trip_time = 10;        
 	reconnect_time = 300;
@@ -183,6 +181,8 @@ int motor::create()
 	DM_volt_exit_per = 95; // share the variable with TPIM
 	DM_speed_exit_per = 95; // share the variable with TPIM
 	speed_error = 1e-10; // share the variable with TPIM
+
+	wbase=2.0*PI*nominal_frequency;
 
 	// initial parameter for internal model
 	trip = 0;
@@ -203,12 +203,15 @@ int motor::create()
     //Mode initialization
     motor_op_mode = modeSPIM; // share the variable with TPIM
 
-    //Three-phase induction motor parameters
-    rs = 0.01;  // pu
-    lls = 0.1;  //  pu
-    lm = 3.0;  // pu
-    rr_pu = 0.005;  // pu
-    llr = 0.08;  // pu
+    //Three-phase induction motor parameters, 500 HP, 2.3kV
+    pf = 4;
+    Rs= 0.262;
+    Xs= 1.206;
+    rs_pu = -999;  // pu
+    lls = -999;  //  pu
+    lm = -999;  // pu
+    rr_pu = -999;  // pu
+    llr = -999;  // pu
 
     // Parameters are for 3000 W motor
     Kfric = 0.0;  // pu
@@ -293,6 +296,107 @@ int motor::init(OBJECT *parent)
 	}
 	//Default else - user specified it
 
+
+	//Check default rated power
+	if (Pbase == -999)
+	{
+		//See which one we are
+		if (motor_op_mode == modeSPIM)
+		{
+			Pbase = 3500;
+		}
+		else	//Assume 3 phase
+		{
+			Pbase = 372876;
+		}
+	}
+	//Default else - user specified it
+
+	//Check default magnetizing inductance
+	if (Xm == -999)
+	{
+		//See which one we are
+		if (motor_op_mode == modeSPIM)
+		{
+			Xm = 2.28;
+		}
+		else	//Assume 3 phase
+		{
+			Xm = 56.02;
+		}
+	}
+	//Default else - user specified it
+
+	//Check default rotor inductance
+	if (Xr == -999)
+	{
+		//See which one we are
+		if (motor_op_mode == modeSPIM)
+		{
+			Xr = 2.33;
+		}
+		else	//Assume 3 phase
+		{
+			Xr = 1.206;
+		}
+	}
+	//Default else - user specified it
+
+    //Check default rotor resistance
+	if (Rr == -999)
+	{
+		//See which one we are
+		if (motor_op_mode == modeSPIM)
+		{
+			Rr = 0.0486;
+		}
+		else	//Assume 3 phase
+		{
+			Rr = 0.187;
+		}
+	}
+	//Default else - user specified it
+
+	// Moment of inertia and/or inertia constant
+	if ((Jm == -999) && (H == -999)) // none specified
+	{
+		//See which one we are
+		if (motor_op_mode == modeSPIM)
+		{
+			Jm = 0.0019701;
+			H = 0.04;
+		}
+		else	//Assume 3 phase
+		{
+			Jm = 11.06;
+			H = 0.52694;
+		}
+	}
+	else if ((Jm != -999) && (H == -999)) // Jm but not H specified; calculate H
+	{
+		H = 1/2*pow(2/pf,2)*Jm*pow(wbase,2)/Pbase;
+	}
+	else if ((Jm == -999) && (H != -999)) // H but not Jm specified
+	{
+		Jm = H /(1/2*pow(2/pf,2)*pow(wbase,2)/Pbase); // no need to calculate Jm, only H is needed
+	}
+	else if ((Jm != -999) && (H != -999)) // both Jm and H specified; priority to H
+	{
+		gl_warning("motor:%s -- both H and J were specified, H will be used, J is ignored",(obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		Both H and J were specified, H will be used, J is ignored.
+		*/
+	}
+
+	// Per unit parameters
+	Zbase = 3*pow(nominal_voltage,2)/Pbase;
+	rs_pu = Rs/Zbase;  // pu
+	lls = Xs/Zbase;  //  pu
+	rr_pu = Rr/Zbase;  // pu
+	llr = Xr/Zbase;  // pu
+	lm = Xm/Zbase;  // pu
+
+
 	// determine the specific phase this motor is connected to
 	if (motor_op_mode == modeSPIM)
 	{
@@ -336,7 +440,7 @@ int motor::init(OBJECT *parent)
 		Ibase = Pbase/nominal_voltage/3.0;
 	}
 
-	wbase=2.0*PI*nominal_frequency;
+
 	cap_run_speed = (cap_run_speed_percentage*wbase)/100;
 	DM_volt_trig = (DM_volt_trig_per)/100;
 	DM_speed_trig = (DM_speed_trig_per*wbase)/100;
@@ -1173,7 +1277,7 @@ void motor::SPIMSteadyState(TIMESTAMP t1) {
 		}
 		else {
 			wr = 0;
-			wr_pu = 0.0;
+			wr_pu = 0;
 		}
 	}
     
@@ -1213,16 +1317,16 @@ void motor::TPIMSteadyState(TIMESTAMP t1) {
 				count++;
 
 				// pre-calculate complex coefficients of the 4 linear equations associated with flux state variables
-				A1 = -(complex(0.0,1.0) * ws_pu + rs / sigma1) ;
+				A1 = -(complex(0.0,1.0) * ws_pu + rs_pu / sigma1) ;
 				B1 =  0.0 ;
-				C1 =  rs / sigma1 * lm / Lr ;
+				C1 =  rs_pu / sigma1 * lm / Lr ;
 				D1 =  0.0 ;
 				E1 = Vap ;
 
 				A2 = 0.0;
-				B2 = -(complex(0.0,-1.0) * ws_pu + rs / sigma1) ;
+				B2 = -(complex(0.0,-1.0) * ws_pu + rs_pu / sigma1) ;
 				C2 = 0.0 ;
-				D2 = rs / sigma1 * lm / Lr ;
+				D2 = rs_pu / sigma1 * lm / Lr ;
 				E2 = ~Van ;
 
 				A3 = rr_pu / sigma2 * lm / Ls ;
@@ -1293,13 +1397,13 @@ void motor::TPIMSteadyState(TIMESTAMP t1) {
 				omgr0_delta = ( Telec - Tmech_eff ) / ((double)iteration_count);
 
 				//update the rotor speed to make sure electrical torque traces mechanical torque
-				if (wr_pu + omgr0_delta > 0) {
+				if (wr_pu + omgr0_delta > -10) {
 					wr_pu = wr_pu + omgr0_delta;
 					wr = wr_pu * wbase;
 				}
 				else {
-					wr_pu = 0;
-					wr = 0.0;
+					wr_pu = -10;
+					wr = wr_pu * wbase;
 				}
 
 			}  // End while
@@ -1311,16 +1415,16 @@ void motor::TPIMSteadyState(TIMESTAMP t1) {
 			wr = 0.0;
 
 			// pre-calculate complex coefficients of the 4 linear equations associated with flux state variables
-			A1 = -(complex(0.0,1.0) * ws_pu + rs / sigma1) ;
+			A1 = -(complex(0.0,1.0) * ws_pu + rs_pu / sigma1) ;
 			B1 =  0.0 ;
-			C1 =  rs / sigma1 * lm / Lr ;
+			C1 =  rs_pu / sigma1 * lm / Lr ;
 			D1 =  0.0 ;
 			E1 = Vap ;
 
 			A2 = 0.0;
-			B2 = -(complex(0.0,-1.0) * ws_pu + rs / sigma1) ;
+			B2 = -(complex(0.0,-1.0) * ws_pu + rs_pu / sigma1) ;
 			C2 = 0.0 ;
-			D2 = rs / sigma1 * lm / Lr ;
+			D2 = rs_pu / sigma1 * lm / Lr ;
 			E2 = ~Van ;
 
 			A3 = rr_pu / sigma2 * lm / Ls ;
@@ -1495,11 +1599,11 @@ void motor::TPIMDynamic(double curr_delta_time, double dTime) {
 
     //*** Predictor Step ***//
     // predictor step 1 - calculate coefficients
-    A1p = -(complex(0.0,1.0) * ws_pu + rs / sigma1) ;
-    C1p =  rs / sigma1 * lm / Lr ;
+    A1p = -(complex(0.0,1.0) * ws_pu + rs_pu / sigma1) ;
+    C1p =  rs_pu / sigma1 * lm / Lr ;
 
-    B2p = -(complex(0.0,-1.0) * ws_pu + rs / sigma1) ;
-    D2p = rs / sigma1 *lm / Lr ;
+    B2p = -(complex(0.0,-1.0) * ws_pu + rs_pu / sigma1) ;
+    D2p = rs_pu / sigma1 *lm / Lr ;
 
     A3p = rr_pu / sigma2 * lm / Ls ;
     C3p =  -(complex(0.0,1.0) * (ws_pu - wr_pu_prev) + rr_pu / sigma2) ;
@@ -1535,11 +1639,11 @@ void motor::TPIMDynamic(double curr_delta_time, double dTime) {
     // so predictor and corrector steps are placed in the same class function
 
     // corrector step 1 - calculate coefficients using predicted state variables
-    A1c = -(complex(0.0,1.0) * ws_pu + rs / sigma1) ;
-    C1c =  rs / sigma1 * lm / Lr ;
+    A1c = -(complex(0.0,1.0) * ws_pu + rs_pu / sigma1) ;
+    C1c =  rs_pu / sigma1 * lm / Lr ;
 
-    B2c = -(complex(0.0,-1.0) * ws_pu + rs / sigma1) ;
-    D2c = rs / sigma1 *lm / Lr ;
+    B2c = -(complex(0.0,-1.0) * ws_pu + rs_pu / sigma1) ;
+    D2c = rs_pu / sigma1 *lm / Lr ;
 
     A3c = rr_pu / sigma2 * lm / Ls ;
     C3c =  -(complex(0.0,1.0) * (ws_pu - wr_pu) + rr_pu / sigma2) ;  // This coeff. is different from predictor
@@ -1562,9 +1666,9 @@ void motor::TPIMDynamic(double curr_delta_time, double dTime) {
     wr_pu = wr_pu_prev + (domgr0_prev_dt + domgr0_dt).Re() * dTime/2.0 ;
 	wr = wr_pu * wbase;
 
-	if (wr_pu < 0.0) { // speeds below 0 should be avoided
-		wr_pu = 0.0;
-		wr = 0.0;
+	if (wr_pu < -10.0) { // speeds below -10 should be avoided
+		wr_pu = -10.0;
+		wr = wr_pu * wbase;
 	}
 
     // corrector step 4 - update outputs
