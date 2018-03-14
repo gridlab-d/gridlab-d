@@ -63,12 +63,13 @@ motor::motor(MODULE *mod):node(mod)
 
 			//Reconcile torque and speed, primarily
 			PT_double, "mechanical_torque[pu]", PADDR(Tmech),PT_DESCRIPTION,"mechanical torque applied to the motor",
+			PT_double, "mechanical_torque_state_var[pu]", PADDR(Tmech_eff),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"Internal state variable torque - three-phase model",
 			PT_int32, "iteration_count", PADDR(iteration_count),PT_DESCRIPTION,"maximum number of iterations for steady state model",
 			PT_double, "delta_mode_voltage_trigger[%]", PADDR(DM_volt_trig_per),PT_DESCRIPTION,"percentage voltage of nominal when delta mode is triggered",
 			PT_double, "delta_mode_rotor_speed_trigger[%]", PADDR(DM_speed_trig_per),PT_DESCRIPTION,"percentage speed of nominal when delta mode is triggered",
 			PT_double, "delta_mode_voltage_exit[%]", PADDR(DM_volt_exit_per),PT_DESCRIPTION,"percentage voltage of nominal to exit delta mode",
 			PT_double, "delta_mode_rotor_speed_exit[%]", PADDR(DM_speed_exit_per),PT_DESCRIPTION,"percentage speed of nominal to exit delta mode",
-			PT_double, "maximum_speed_error", PADDR(speed_error),PT_DESCRIPTION,"maximum speed error for the steady state model",
+			PT_double, "maximum_speed_error", PADDR(speed_error),PT_DESCRIPTION,"maximum speed error for transitioning modes",
 			PT_double, "rotor_speed[rad/s]", PADDR(wr),PT_DESCRIPTION,"rotor speed",
 			PT_enumeration,"motor_status",PADDR(motor_status),PT_DESCRIPTION,"the current status of the motor",
 				PT_KEYWORD,"RUNNING",(enumeration)statusRUNNING,
@@ -902,7 +903,7 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 		{
 			// figure out if we need to exit delta mode on the next pass
 			if ((Vas.Mag() > DM_volt_exit) && (Vbs.Mag() > DM_volt_exit) && (Vcs.Mag() > DM_volt_exit)
-					&& ((fabs(wr_pu-wr_pu_prev)*wbase) > DM_speed_exit))
+					&& (wr > DM_speed_exit) && ((fabs(wr_pu-wr_pu_prev)*wbase) > speed_error))
 			{
 				return SM_EVENT;
 			}
@@ -1206,6 +1207,7 @@ void motor::TPIMStateOFF() {
 	Ipr = complex(0.0,0.0);
 	Ins_cj = complex(0.0,0.0);
 	Inr_cj = complex(0.0,0.0);
+	motor_elec_power = complex(0.0,0.0);
 	Telec = 0.0;
 	Tmech_eff = 0.0;
 }
@@ -1277,7 +1279,7 @@ void motor::SPIMSteadyState(TIMESTAMP t1) {
 		}
 		else {
 			wr = 0;
-			wr_pu = 0;
+			wr_pu = 0.0;
 		}
 	}
     
