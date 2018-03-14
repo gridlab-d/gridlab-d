@@ -66,6 +66,7 @@ private:
 	double bsat;
 	double Asat;
 	double H;
+	double Jm;
 	double To_prime;
 	double cap_run_speed_percentage;
 	double cap_run_speed; 
@@ -165,7 +166,11 @@ private:
 	int connected_phase;
 
 	//TPIM variables
-	double rs;
+	double Zbase;
+	double Rs;
+	double Xs;
+	double pf;
+	double rs_pu;
 	double rr_pu;
 	double lm;
 	double lls;
