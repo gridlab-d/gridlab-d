@@ -58,6 +58,7 @@ group_recorder::group_recorder(MODULE *mod) {
 				PT_char256, "complex_part", PADDR(complex_part), PT_DESCRIPTION, "the complex part(s) to record if complex properties are gathered (default REAL|IMAG)",
 				PT_char256, "data_type", PADDR(data_type), PT_DESCRIPTION, "the data format MySQL should use to store the values (default is DOUBLE with no precision set). Acceptable types are DECIMAL(M,D), FLOAT(M,D), and DOUBLE(M,D)",
 				PT_double, "interval[s]", PADDR(dInterval), PT_DESCRIPTION, "recording interval (0 'every iteration', -1 'on change')",
+				PT_bool, "legacy_mode", PADDR(legacy_mode), PT_DESCRIPTION, "Produces output consistent with the tape group_recorder formatting, rather than the new database optimized formatting",
 
 				// legacy compatibility components.
 				PT_bool, "format", PADDR(format), PT_DESCRIPTION, "(unused) legacy variable for compatibility with tape group_recorder",
@@ -84,6 +85,7 @@ int group_recorder::create(void) {
 	query_buffer_limit = 200;
 	column_limit = 200;
 	print_units = false;
+	legacy_mode = false;
 
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -291,7 +293,7 @@ int group_recorder::write_header() {
 	OBJECT *obj = OBJECTHDR(this);
 	query_engine* grc = group_recorder_connection;
 	grc->set_table_root(get_table());
-	grc->init_tables();
+	grc->init_tables(recordid_fieldname, datetime_fieldname, false);
 	// check for table existence and create if not found
 	if (get_property_name() > 0) {
 		stringstream property_list;
@@ -337,6 +339,7 @@ int group_recorder::write_header() {
 
 			if (0 != target_prop.get_object()->name) {
 				property_name_buffer << target_prop.get_object()->name;
+//				target_prop.get_sql_safe_name()
 			} else {
 				property_name_buffer << target_prop.get_object()->name << ":" << target_prop.get_object()->id;
 			}
@@ -395,6 +398,7 @@ int group_recorder::write_header() {
 					}
 				}
 			} else {
+				// TODO: this can be cleaned up using the db->get_sql_type() method.
 				property_name_local_buffer << property_name_string_buffer;
 				property_name_string = setup_property_buffer(&property_name_local_buffer, "");
 				if (target_prop.is_double()) {

@@ -52,6 +52,7 @@ class group_recorder : public gld_object {
 		GL_STRING(char1024, group_def)
 		GL_ATOMIC(bool, strict)
 		GL_ATOMIC(bool, print_units)
+		GL_ATOMIC(bool, legacy_mode)
 		GL_STRING(char256, property_name)
 		GL_ATOMIC(int32, limit)
 		GL_ATOMIC(bool, format)
@@ -59,7 +60,7 @@ class group_recorder : public gld_object {
 		GL_ATOMIC(set,options)
 		GL_STRING(char32,mode)
 		GL_ATOMIC(int32, query_buffer_limit)
-		GL_ATOMIC(int32, formatter_limit)
+//		GL_ATOMIC(int32, formatter_limit)
 		GL_STRING(char32,datetime_fieldname)
 		GL_STRING(char32,recordid_fieldname)
 		GL_STRING(char1024,header_fieldnames)
@@ -74,7 +75,7 @@ class group_recorder : public gld_object {
 		int build_row(TIMESTAMP);
 		int flush_line();
 		int on_limit_hit();
-		template<class T> std::string to_string(T);
+		template<class T> std::string to_string(T); // This template exists in both Recorder and Group Recorder, and could be cleaned up.
 
 		MYSQL *mysql;
 		database *db;
