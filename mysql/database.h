@@ -114,7 +114,7 @@ public:
 #define TD_BACKUP 0x0002 ///< table dump is formatted as SQL backup dump
 	size_t dump(char *table, char *file=NULL, unsigned long options=0x0000);
 
-	char *get_sqltype(gld_property &p);
+	const char *get_sqltype(gld_property &p);
 	char *get_sqldata(char *buffer, size_t size, gld_property &p, double scale=1.0);
 	char *get_sqldata(char *buffer, size_t size, gld_property &p, gld_unit *unit=NULL);
 	bool get_sqlbind(MYSQL_BIND &value,gld_property &target, my_bool *error=NULL);

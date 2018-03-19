@@ -60,8 +60,8 @@ void query_engine::next_table() {
 	table_path = table_path->get_next_table();
 }
 
-void query_engine::init_tables() {
-	table_path = new table_manager(db, threshold, column_limit, 0, &table);
+void query_engine::init_tables(char32 recordid_fieldname, char32 datetime_fieldname, bool single_table_mode) {
+	table_path = new table_manager(db, threshold, column_limit, 0, &table, recordid_fieldname, datetime_fieldname, single_table_mode);
 	inc_table_count();
 }
 
@@ -115,7 +115,6 @@ void query_engine::build_table_references(bool print_units) {
 	}
 	query << ";";
 	string query_string = query.str();
-	const char* temp = query_string.c_str();
 	if (local_header_count != 0 && table_count != 0)
 		db->query(query_string.c_str());
 }

@@ -32,7 +32,7 @@ class query_engine : public gld_object {
 		}
 		void set_table_root(char1024);
 		void next_table();
-		void init_tables();
+		void init_tables(char32, char32, bool);
 		inline void inc_table_count() {
 			table_count++;
 		}
@@ -61,7 +61,7 @@ class query_engine : public gld_object {
 
 class table_manager : public gld_object, public query_engine {
 	public:
-		table_manager(database*, int, int, int, char1024*);
+		table_manager(database*, int, int, int, char1024*, char32, char32, bool);
 		void init_table(table_manager*);
 		bool query_table(std::string*);
 		inline table_manager* get_next_table() {
@@ -71,6 +71,7 @@ class table_manager : public gld_object, public query_engine {
 			return table;
 		}
 		int add_table_header(query_engine*, std::stringstream&, std::string*, char*);
+		int add_table_header(std::string*, std::string*);
 		void flush_value_row(TIMESTAMP*);
 		inline void commit_state() {
 			if (!done) {
@@ -104,6 +105,7 @@ class table_manager : public gld_object, public query_engine {
 		std::vector<char*> table_units;
 		std::vector<std::string> insert_values;
 		table_manager* next_table;
+		char32 recordid_fieldname, datetime_fieldname;
 };
 
 #endif /* MYSQL_QUERY_ENGINE_H_ */

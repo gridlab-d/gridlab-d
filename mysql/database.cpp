@@ -241,7 +241,7 @@ bool database::table_exists(char *t)
 	return false;
 }
 
-char *database::get_sqltype(gld_property &prop)
+const char *database::get_sqltype(gld_property &prop)
 {
 	switch ( prop.get_type() ) {
 	case PT_double:
@@ -263,7 +263,8 @@ char *database::get_sqltype(gld_property &prop)
 	case PT_char1024:
 		return "TEXT(1024)";
 	case PT_complex:
-		return "CHAR(40)";
+		// special handling for complex
+		return (prop.get_partname()[0] != '\0') ?	"DOUBLE" : "CHAR(40)";
 	case PT_set:
 		return "LARGETEXT";
 	case PT_bool:
@@ -339,6 +340,11 @@ char *database::get_sqldata(char *buffer, size_t size, gld_property &prop, gld_u
 		else
 			sprintf(buffer,"%g",prop.get_double());
 		return buffer;
+	case PT_complex:
+		if(prop.get_partname()[0] != '\0'){
+			sprintf(buffer, "%f", prop.get_part(prop.get_partname()));
+			return buffer;
+		}
 	}
 	char tmp[65536];
 	if ( prop.to_string(tmp,sizeof(tmp))<size )

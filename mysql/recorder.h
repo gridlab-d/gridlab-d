@@ -13,9 +13,13 @@
 #include <string>
 #include <vector>
 
+#include "database.h"
+#include "query_engine.h"
+
 class recorder : public gld_object {
 public:
 	GL_STRING(char1024,property);
+//	GL_STRING(char1024, group_def);
 	GL_STRING(char32,trigger);
 	GL_STRING(char1024,table);
 	GL_STRING(char32,mode);
@@ -26,9 +30,14 @@ public:
 	GL_ATOMIC(char32,datetime_fieldname);
 	GL_ATOMIC(char32,recordid_fieldname);
 	GL_ATOMIC(char1024,header_fieldnames);
+	GL_STRING(char256, complex_part);
+	GL_STRING(char256, data_type);
+	GL_ATOMIC(int32, query_buffer_limit);
+
 private:
 	bool enabled;
 	database *db;
+	query_engine* recorder_connection;
 	bool trigger_on;
 	char compare_op[16];
 	char compare_val[32];
@@ -36,6 +45,7 @@ private:
 	std::vector<gld_property> property_target;
 	std::vector<gld_unit> property_unit;
 	char header_data[1024];
+	template<class T> std::string to_string(T); // This template exists in both Recorder and Group Recorder, and could be cleaned up.
 public:
 	inline bool get_trigger_on(void) { return trigger_on; };
 	inline bool get_enabled(void) { return enabled; };
