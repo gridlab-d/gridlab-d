@@ -528,34 +528,9 @@ object motor {
            file "../TPIM_under_voltage_relay_status.player";
            loop 1;
            flags DELTAMODE;
-       };
+      };
    };
 }
-
-//object motor {
-//    name SPIM;
-//    parent LoadNode;
-//    phases AN;
-//    frequency_measure_type PLL;
-//    base_power 35000.0;
-//    motor_trip true;
-//    reconnect_time 100 s;
-//    trip_time 0.5;
-//    nominal_voltage 2401.777;
-//    uv_relay_install INSTALLED;
-//    uv_relay_trip_time 0.02;
-//    uv_relay_trip_V 0.6;
-//    object enum_assert {
-//        target motor_status;
-//        flags DELTAMODE;
-//        object player {
-//            property value;
-//            file "../SPIM_under_voltage_relay_status.player";
-//            loop 1;
-//            flags DELTAMODE;
-//        };
-//    };
-//}
 
 
 //Base system objects -- nodes

@@ -224,7 +224,7 @@ int motor::create()
     uv_lockout = 0;
     
     contactor_open_Vmin = 0.0;
-    contactor_close_Vmax = 0.00000;
+    contactor_close_Vmax = 0.01;
     contactor_state = contactorCLOSED;
 
     //Mode initialization
@@ -1193,7 +1193,7 @@ void motor::SPIMUpdateProtection(double delta_time) {
         // Main contactor opening due to low-voltage condition (coil doesn't have enough magnetic force to hold contacts together)
         
         if (Vs.Mag() <=  contactor_open_Vmin && uv_lockout == 0 && contactor_state == contactorCLOSED) { //
-            std::cout << "Under voltage, contactor open: " << Vs.Mag() << "\n";
+            //std::cout << "Under voltage, contactor open: " << Vs.Mag() << "\n";
             motor_override = overrideOFF;
             contactor_state = contactorOPEN;
         }
@@ -1217,7 +1217,7 @@ void motor::SPIMUpdateProtection(double delta_time) {
 	}
     // Main contactor closing (magnetic force able to hold contacts together) once voltage gets high enough
     if (Vs.Mag() >=  contactor_close_Vmax && uv_lockout == 0 && contactor_state == contactorOPEN ){//
-        std::cout << "Voltage OK, contactor closed: " << Vs.Mag() << "\n";
+        //std::cout << "Voltage OK, contactor closed: " << Vs.Mag() << "\n";
         motor_override = overrideON;
         contactor_state = contactorCLOSED;
     }
@@ -1254,7 +1254,7 @@ void motor::TPIMUpdateProtection(double delta_time) {
         
         // Main contactor opening due to low-voltage condition (coil doesn't have enough magnetic force to hold contacts together)
         if ((Vas.Mag() <=  contactor_open_Vmin || Vbs.Mag() <=  contactor_open_Vmin || Vcs.Mag() <=  contactor_open_Vmin) && uv_lockout == 0  && contactor_state == contactorCLOSED) { //
-            std::cout << "Under voltage, contactor open: " << Vas.Mag() << "\t" << Vbs.Mag() << "\t" << Vcs.Mag()<< "\n";
+            //std::cout << "Under voltage, contactor open: " << Vas.Mag() << "\t" << Vbs.Mag() << "\t" << Vcs.Mag()<< "\n";
             motor_override = overrideOFF;
             contactor_state = contactorOPEN;
         }
@@ -1278,7 +1278,7 @@ void motor::TPIMUpdateProtection(double delta_time) {
     
     // Main contactor closing (magnetic force able to hold contacts together) once voltage gets high enough
     if ((Vas.Mag() >=  contactor_close_Vmax && Vbs.Mag() >=  contactor_close_Vmax && Vcs.Mag() >=  contactor_close_Vmax ) && uv_lockout == 0 && contactor_state == contactorOPEN ){//
-        std::cout << "Voltage OK, contactor closed: " << Vas.Mag() << "\t" << Vbs.Mag() << "\t" << Vcs.Mag()<< "\n";
+        //std::cout << "Voltage OK, contactor closed: " << Vas.Mag() << "\t" << Vbs.Mag() << "\t" << Vcs.Mag()<< "\n";
         motor_override = overrideON;
         contactor_state = contactorCLOSED;
     }

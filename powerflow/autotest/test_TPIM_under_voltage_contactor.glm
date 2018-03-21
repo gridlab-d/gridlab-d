@@ -518,16 +518,16 @@ object motor {
     uv_relay_install UNINSTALLED;
     contactor_open_Vmin 0.6;
     contactor_close_Vmax 0.8;
-//    object enum_assert {
-//	    target motor_status;
-//	    flags DELTAMODE;
-//        object player {
-//            property value;
-//            file "../TPIM_under_voltage_contactor_status.player";
-//            loop 1;
-//            flags DELTAMODE;
-//        };
-//    };
+    object enum_assert {
+    target motor_status;
+    flags DELTAMODE;
+        object player {
+            property value;
+            file "../TPIM_under_voltage_contactor_status.player";
+            loop 1;
+            flags DELTAMODE;
+       };
+   };
 }
 
 
@@ -615,14 +615,14 @@ object player {
 //	file ${recorder_filename};
 //}
 //
-object group_recorder {
-name induct_group_rec;
-flags DELTAMODE;
-file induction_motor_status.csv;
-group "class=motor";
-interval 1;
-property motor_status;
-}
+//object group_recorder {
+//name induct_group_rec;
+//flags DELTAMODE;
+//file induction_motor_status.csv;
+//group "class=motor";
+//interval 1;
+//property motor_status;
+//}
 //
 //object group_recorder {
 //	name induct_group_rotor;
