@@ -754,6 +754,7 @@ SIMULATIONMODE fncs_msg::deltaInterUpdate(unsigned int delta_iteration_counter, 
 
 SIMULATIONMODE fncs_msg::deltaClockUpdate(double t1, unsigned long timestep, SIMULATIONMODE sysmode)
 {
+	SIMULATIONMODE rv = SM_DELTA;
 #if HAVE_FNCS
 	if (t1 > last_delta_fncs_time){
 		fncs::time fncs_time = 0;
@@ -765,6 +766,7 @@ SIMULATIONMODE fncs_msg::deltaClockUpdate(double t1, unsigned long timestep, SIM
 		fncs_time = fncs::time_request(t);
 		if(sysmode == SM_EVENT)
 			exitDeltamode = true;
+			rv = SM_EVENT;
 		if(fncs_time != t){
 			gl_error("fncs_msg::deltaClockUpdate: Cannot return anything other than the time GridLAB-D requested in deltamode.");
 			return SM_ERROR;
@@ -774,7 +776,7 @@ SIMULATIONMODE fncs_msg::deltaClockUpdate(double t1, unsigned long timestep, SIM
 		}
 	}
 #endif
-	return SM_DELTA; // We should've only gotten here by being in SM_DELTA to begin with.
+	return rv; // We should've only gotten here by being in SM_DELTA to begin with.
 }
 
 TIMESTAMP fncs_msg::clk_update(TIMESTAMP t1)
