@@ -74,6 +74,7 @@ gldcore/stamp-h1
 .cproject
 .project
 .settings/
+.vscode
 Makefile
 */.deps/
 */*/*/.deps/
