@@ -645,7 +645,7 @@ int node::init(OBJECT *parent)
 			}
 			else		//Phase compatible, no issues
 			{
-				if ((parNode->SubNode==CHILD) | (parNode->SubNode==DIFF_CHILD) | ((obj->parent->parent!=NR_swing_bus) && (obj->parent->parent!=NULL)))	//Our parent is another child
+				if ((parNode->SubNode==CHILD) | (parNode->SubNode==DIFF_CHILD) | (obj->parent->parent!=NULL))	//Our parent is another child
 				{
 					GL_THROW("NR: Grandchildren are not supported at this time!");
 					//Defined above
@@ -718,24 +718,6 @@ int node::init(OBJECT *parent)
 			{		
 				gl_set_rank(obj,4);
 			}
-		}
-
-		if ((obj->parent==NULL) && (obj != NR_swing_bus)) // need to find a swing bus to be this node's parent
-		{
-			gl_set_parent(obj,NR_swing_bus);
-		}
-
-		/* Make sure we aren't the swing bus */
-		if (obj != NR_swing_bus)
-		{
-			/* still no swing bus found */
-			if (obj->parent==NULL)
-				GL_THROW("NR: no swing bus found or specified");
-				/*	TROUBLESHOOT
-				Newton-Raphson failed to automatically assign a swing bus to the node (unchilded nodes are referenced
-				to the swing bus).  This should have been detected by this point and represents a bug in the solver.
-				Please submit a bug report detailing how you obtained this message.
-				*/
 		}
 
 		//Use SWING node to hook in the solver - since it's called by SWING, might as well
@@ -1415,6 +1397,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			will be updated in future versions.
 			*/
 		}
+
 		if (((phase_to_check & (busphasesIn | busphasesOut) != phase_to_check) && (busphasesIn != 0 && busphasesOut != 0) && (solver_method == SM_NR)))
 		{
 			GL_THROW("node:%d (%s) has more phases leaving than entering",obj->id,obj->name);
@@ -1457,6 +1440,17 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 	{
 		if (prev_NTime==0)	//First run, if we are a child, make sure no one linked us before we knew that
 		{
+			//Make sure an overall SWING bus exists
+			if (NR_swing_bus==NULL)
+			{
+				GL_THROW("NR: no swing bus found or specified");
+				/*	TROUBLESHOOT
+				Newton-Raphson failed to automatically assign a swing bus to the node (unchilded nodes are referenced
+				to the swing bus).  This should have been detected by this point and represents a bug in the solver.
+				Please submit a bug report detailing how you obtained this message.
+				*/
+			}
+
 			if (((SubNode == CHILD) || (SubNode == DIFF_CHILD)) && (NR_connected_links[0] > 0))
 			{
 				node *parNode = OBJECTDATA(SubNodeParent,node);
