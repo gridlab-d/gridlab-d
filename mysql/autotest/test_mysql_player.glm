@@ -22,9 +22,14 @@ clock {
 module mysql;
 object database {
 	// use defaults as though replacing a tape module
-	on_init ../test_mysql_player_init.sql;
-	options NEWDB;
-	clientflags LOCAL_FILES;
+   on_init ../test_mysql_player_init.sql;
+   hostname "localhost";
+   username "gridlabd";
+   password "";
+   schema "gridlabd";
+   port 3306;
+   tz_offset 0;
+   clientflags LOCAL_FILES;
 }
 
 class test {
