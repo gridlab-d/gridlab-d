@@ -196,10 +196,10 @@ object meter {
 object recorder {
   parent meter_3;
   interval 30;
-  property "voltage_A.real", "voltage_A.imag", "voltage_B";
+  property "voltage_A.real", "voltage_A.imag[V]", "voltage_B";
   file property_test_1;
   mode "w+";
-  options UNITS|PURGE;
+  options UNITS;
   query_buffer_limit 500;
 };
 
@@ -210,8 +210,18 @@ object recorder {
   file property_test_2;
   header_fieldnames "name";
   mode "w+";
-  options UNITS|PURGE;
+  options UNITS;
     query_buffer_limit 500;
+};
+
+object recorder {
+  group "groupid=meter_group";
+  interval 30;
+  property "voltage_A.real","voltage_A.imag","voltage_B";
+  file property_group_test;
+  mode "w+";
+  options UNITS;
+    query_buffer_limit 2000;
 };
 
 #endif
