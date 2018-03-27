@@ -46,17 +46,17 @@ recorder::recorder(MODULE *module) {
 				PT_char32, "trigger", get_trigger_offset(), PT_DESCRIPTION, "recorder trigger condition",
 				PT_char1024, "table", get_table_offset(), PT_DESCRIPTION, "table name to store samples",
 				PT_char1024, "file", get_table_offset(), PT_DESCRIPTION, "file name (for tape compatibility)",
+				PT_char1024, "group", get_group_offset(), PT_DESCRIPTION, "group name for group_recorder mode",
 				PT_char32, "mode", get_mode_offset(), PT_DESCRIPTION, "table output mode",
 				PT_int32, "limit", get_limit_offset(), PT_DESCRIPTION, "maximum number of records to output",
 				PT_double, "interval[s]", get_interval_offset(), PT_DESCRIPTION, "sampling interval",
 				PT_object, "connection", get_connection_offset(), PT_DESCRIPTION, "database connection",
-				PT_set, "options", get_options_offset(), PT_DESCRIPTION, "SQL options",
+				PT_set, "options", get_sql_options_offset(), PT_DESCRIPTION, "SQL options",
 				PT_KEYWORD, "PURGE", (set) MO_DROPTABLES, PT_DESCRIPTION, "flag to drop tables before creation",
 				PT_KEYWORD, "UNITS", (set) MO_USEUNITS, PT_DESCRIPTION, "include units in column names",
 				PT_char32, "datetime_fieldname", get_datetime_fieldname_offset(), PT_DESCRIPTION, "name of date-time field",
 				PT_char32, "recordid_fieldname", get_recordid_fieldname_offset(), PT_DESCRIPTION, "name of record-id field",
 				PT_char1024, "header_fieldnames", get_header_fieldnames_offset(), PT_DESCRIPTION, "name of header fields to include",
-				PT_char256, "data_type", get_data_type_offset(), PT_DESCRIPTION, "the data format MySQL should use to store the values (default is DOUBLE with no precision set). Acceptable types are DECIMAL(M,D), FLOAT(M,D), and DOUBLE(M,D)",
 				PT_int32, "query_buffer_limit", get_query_buffer_limit_offset(), PT_DESCRIPTION, "max number of queries to buffer before pushing to database",
 				NULL) < 1) {
 			char msg[256];
@@ -73,7 +73,7 @@ int recorder::create(void) {
 	db = last_database;
 	strcpy(datetime_fieldname, "t");
 	strcpy(recordid_fieldname, "id");
-	strcpy(data_type, "DOUBLE");
+	strcpy(group, "");
 	query_buffer_limit = 200;
 
 	return 1; /* return 1 on success, 0 on failure */
@@ -87,6 +87,8 @@ int recorder::init(OBJECT *parent) {
 	query_engine* rc = recorder_connection;
 	rc->set_table_root(get_table());
 	rc->init_tables(recordid_fieldname, datetime_fieldname, true);
+
+	group_mode = (0 != strcmp(group, ""));
 
 	// check mode
 	if (strlen(mode) > 0) {
@@ -106,7 +108,7 @@ int recorder::init(OBJECT *parent) {
 		for (n = 0; n < sizeof(modes) / sizeof(modes[0]); n++) {
 			if (strcmp(mode, modes[n].str) == 0)
 					{
-				options = modes[n].bits;
+				options = modes[n].bits | sql_options;
 				break;
 			}
 		}
@@ -116,53 +118,124 @@ int recorder::init(OBJECT *parent) {
 			exception("mode '%s' is not valid for a recorder", (const char*) mode);
 	}
 
-	// connect the target properties
-	vector<string> property_specs = split(get_property(), ", \t;");
-	char property_list[65536] = "";
+	property_specs = split(get_property(), ", \t;");
 
-	for (size_t n = 0; n < property_specs.size(); n++) {
-		char buffer[1024];
-		strcpy(buffer, (const char*) property_specs[n].c_str());
-		vector<string> spec = split(buffer, "[]");
-		if (spec.size() > 0) {
-			strcpy(buffer, (const char*) spec[0].c_str());
-			gld_property prop;
-			if (get_parent() == NULL)
-				prop = gld_property(buffer);
-			else
-				prop = gld_property(get_parent(), buffer);
-			if (prop.get_object() == NULL) {
+	if (group_mode) {
+		group_items = new gld_objlist(group.get_string());
+		vector<char1024> property_spec_char;
+		for (int property_index = 0; property_index < property_specs.size();
+				property_index++) {
+			const char* char_buffer = property_specs[property_index].c_str();
+			char1024 property_buffer;
+			strcpy(property_buffer, char_buffer);
+			property_spec_char.push_back(property_buffer);
+		}
+
+		group_obj_count = 0;
+		for (size_t index = 0; index < group_items->get_size(); index++) {
+			for (int property_index = 0; property_index < property_specs.size();
+					property_index++) {
+				OBJECT* obj_builder = group_items->get(index);
+//				obj_builder
+				gld_property obj_prop(obj_builder);
+				obj_prop.set_property(property_spec_char[property_index]);
+
+				group_obj_count++;
+				if (group_obj_list == 0) {
+					group_obj_list = new recorder_quickobjlist(obj_builder, obj_prop.get_property_struct());
+				} else {
+					group_obj_list->tack(obj_builder, obj_prop.get_property_struct());
+				}
+			}
+		}
+
+		// connect the target properties
+		for (size_t n = 0; n < property_specs.size(); n++) {
+			char buffer[1024];
+			strcpy(buffer, (const char*) property_specs[n].c_str());
+			vector<string> spec = split(buffer, "[]");
+			if (spec.size() > 0) {
+				strcpy(buffer, (const char*) spec[0].c_str());
+				OBJECT* obj_builder = group_items->get(0); // Maybe not the best way to do this?
+				gld_property prop(obj_builder, property_spec_char[n]);
+				if (!prop.is_valid())
+					exception("property %s is not valid", buffer);
+
+				property_target.push_back(prop);
+				gl_debug("adding field from property '%s'", buffer);
+				double scale = 1.0;
+				gld_unit unit;
+				if (spec.size() > 1) {
+					char buffer[1024];
+					strcpy(buffer, (const char*) spec[1].c_str());
+					unit = gld_unit(buffer);
+				}
+				else if (prop.get_unit() != NULL && (options & MO_USEUNITS))
+					unit = *prop.get_unit();
+				property_unit.push_back(unit);
+				n_properties++;
+				char tmp[2][2][128];
+				char name_buffer[64];
+				sprintf(tmp[0][0], "%s", prop.get_sql_safe_name(name_buffer));
+				sprintf(tmp[0][1], "`%s` %s, ", prop.get_sql_safe_name(name_buffer), db->get_sqltype(prop));
+				sprintf(tmp[1][0], "%s_units", prop.get_sql_safe_name(name_buffer));
+				sprintf(tmp[1][1], "`%s_units` %s, ", prop.get_sql_safe_name(name_buffer), "CHAR(10)");
+
+				if (unit.is_valid()) {
+					rc->get_table_path()->add_table_header(new string(tmp[0][0]), new string(tmp[0][1]));
+					rc->get_table_path()->add_table_header(new string(tmp[1][0]), new string(tmp[1][1]));
+				} else {
+					rc->get_table_path()->add_table_header(new string(tmp[0][0]), new string(tmp[0][1]));
+				}
+			}
+		}
+	} else {
+		// connect the target properties
+		for (size_t n = 0; n < property_specs.size(); n++) {
+			char buffer[1024];
+			strcpy(buffer, (const char*) property_specs[n].c_str());
+			vector<string> spec = split(buffer, "[]");
+			if (spec.size() > 0) {
+				strcpy(buffer, (const char*) spec[0].c_str());
+				gld_property prop;
 				if (get_parent() == NULL)
-					exception("parent object is not set");
-				prop = gld_property(get_parent(), buffer);
-			}
-			if (!prop.is_valid())
-				exception("property %s is not valid", buffer);
+					prop = gld_property(buffer);
+				else
+					prop = gld_property(get_parent(), buffer);
+				if (prop.get_object() == NULL) {
+					if (get_parent() == NULL)
+						exception("parent object is not set");
+					prop = gld_property(get_parent(), buffer);
+				}
+				if (!prop.is_valid())
+					exception("property %s is not valid", buffer);
 
-			property_target.push_back(prop);
-			gl_debug("adding field from property '%s'", buffer);
-			double scale = 1.0;
-			gld_unit unit;
-			if (spec.size() > 1) {
-				char buffer[1024];
-				strcpy(buffer, (const char*) spec[1].c_str());
-				unit = gld_unit(buffer);
-			}
-			else if (prop.get_unit() != NULL && (options & MO_USEUNITS))
-				unit = *prop.get_unit();
-			property_unit.push_back(unit);
-			n_properties++;
-			char tmp[2][2][128];
-			sprintf(tmp[0][0], "%s", prop.get_sql_safe_name());
-			sprintf(tmp[0][1], "`%s` %s, ", prop.get_sql_safe_name(), db->get_sqltype(prop));
-			sprintf(tmp[1][0], "%s_units", prop.get_sql_safe_name());
-			sprintf(tmp[1][1], "`%s_units` %s, ", prop.get_sql_safe_name(), "CHAR(10)");
+				property_target.push_back(prop);
+				gl_debug("adding field from property '%s'", buffer);
+				double scale = 1.0;
+				gld_unit unit;
+				if (spec.size() > 1) {
+					char buffer[1024];
+					strcpy(buffer, (const char*) spec[1].c_str());
+					unit = gld_unit(buffer);
+				}
+				else if (prop.get_unit() != NULL && (options & MO_USEUNITS))
+					unit = *prop.get_unit();
+				property_unit.push_back(unit);
+				n_properties++;
+				char tmp[2][2][128];
+				char name_buffer[64];
+				sprintf(tmp[0][0], "%s", prop.get_sql_safe_name(name_buffer));
+				sprintf(tmp[0][1], "`%s` %s, ", prop.get_sql_safe_name(name_buffer), db->get_sqltype(prop));
+				sprintf(tmp[1][0], "%s_units", prop.get_sql_safe_name(name_buffer));
+				sprintf(tmp[1][1], "`%s_units` %s, ", prop.get_sql_safe_name(name_buffer), "CHAR(10)");
 
-			if (unit.is_valid()) {
-				rc->get_table_path()->add_table_header(new string(tmp[0][0]), new string(tmp[0][1]));
-				rc->get_table_path()->add_table_header(new string(tmp[1][0]), new string(tmp[1][1]));
-			} else {
-				rc->get_table_path()->add_table_header(new string(tmp[0][0]), new string(tmp[0][1]));
+				if (unit.is_valid()) {
+					rc->get_table_path()->add_table_header(new string(tmp[0][0]), new string(tmp[0][1]));
+					rc->get_table_path()->add_table_header(new string(tmp[1][0]), new string(tmp[1][1]));
+				} else {
+					rc->get_table_path()->add_table_header(new string(tmp[0][0]), new string(tmp[0][1]));
+				}
 			}
 		}
 	}
@@ -176,7 +249,7 @@ int recorder::init(OBJECT *parent) {
 		vector<string> header_specs = split(buffer, ",");
 		size_t header_pos = 0;
 		for (size_t n = 0; n < header_specs.size(); n++) {
-			if (header_specs[n].compare("name") == 0) {
+			if (header_specs[n].compare("name") == 0 || group_mode) {
 				rc->get_table_path()->add_table_header(new string("name"), new string("name CHAR(64), index i_name (name), "));
 			}
 			else if (header_specs[n].compare("class") == 0) {
@@ -296,65 +369,156 @@ TIMESTAMP recorder::commit(TIMESTAMP t0, TIMESTAMP t1) {
 
 	// collect data
 	if (enabled) {
-		gl_debug("header_fieldname=[%s]", (const char*) header_fieldnames);
-		gl_debug("header_fielddata=[%s]", header_data);
-		char fieldlist[65536] = "", valuelist[65536] = "";
-		size_t fieldlen = 0;
-		if (header_fieldnames[0] != '\0')
-			fieldlen = sprintf(fieldlist, ",%s", (const char*) header_fieldnames);
-		strcpy(valuelist, header_data);
-		size_t valuelen = strlen(valuelist);
-		for (size_t n = 0; n < property_target.size(); n++) {
-			string* name_string = new string(property_target[n].get_sql_safe_name());
-			char buffer[1024] = "NULL";
 
-			if (property_unit[n].is_valid()) {
-				db->get_sqldata(buffer, sizeof(buffer), property_target[n], &property_unit[n]);
-				rc->get_table_path()->add_insert_values(rc, name_string, string(buffer));
-				rc->get_table_path()->add_insert_values(rc, new string(*name_string + "_units"), string(property_unit[n].get_name()));
-			}
-			else {
-				db->get_sqldata(buffer, sizeof(buffer), property_target[n], &property_unit[n]);
-				rc->get_table_path()->add_insert_values(rc, name_string, string(buffer));
-			}
-		}
+		if (group_mode) {
+			OBJECT* working_object = 0;
+			recorder_quickobjlist *curr = 0;
+			gld_property target_prop;
+			for (curr = group_obj_list; curr != 0;) {
+				if(curr == 0){
+					break;
+				}
+//			for (size_t index = 0; index < group_items->get_size(); index++) {
+//				OBJECT* curr = group_items->get(index);
+				if (working_object != 0 && working_object != curr->obj) {
+					rc->get_table_path()->flush_value_row(&t0);
+					working_object = curr->obj;
+				} else if (working_object == 0) {
+					working_object = curr->obj;
+				}
 
-		// This partially duplicates some logic used above, and I don't like it, so it may be reworked later.
-		char header_buffer[1024];
-		strcpy(header_buffer, header_fieldnames);
-		vector<string> header_specs = split(header_buffer, ",");
-		for (size_t n = 0; n < header_specs.size(); n++) {
-			if (header_specs[n].compare("name") == 0) {
-				rc->get_table_path()->add_insert_values(rc, new string("name"), string("'" + string(get_parent()->get_name()) + "'"));
+				gl_debug("header_fieldname=[%s]", (const char*) header_fieldnames);
+				gl_debug("header_fielddata=[%s]", header_data);
+				char fieldlist[65536] = "", valuelist[65536] = "";
+				size_t fieldlen = 0;
+				if (header_fieldnames[0] != '\0')
+					fieldlen = sprintf(fieldlist, ",%s", (const char*) header_fieldnames);
+				strcpy(valuelist, header_data);
+				size_t valuelen = strlen(valuelist);
+				for (size_t n = 0; n < property_target.size() && curr != 0; n++, curr = curr->next) {
+					if(curr == 0){
+						break;
+					}
+					char name_buffer[64];
+					string* name_string = new string(property_target[n].get_sql_safe_name(name_buffer));
+					target_prop = gld_property(curr->obj, &(curr->prop));
+					char buffer[1024] = "NULL";
+					if (target_prop.get_unit()->is_valid() && (get_options() & MO_USEUNITS)) {
+						db->get_sqldata(buffer, sizeof(buffer), target_prop, target_prop.get_unit());
+						rc->get_table_path()->add_insert_values(rc, name_string, string(buffer));
+						rc->get_table_path()->add_insert_values(rc, new string(*name_string + "_units"), "'" + string(target_prop.get_unit()->get_name()) + "'");
+					} else if (get_options() & MO_USEUNITS) {
+						rc->get_table_path()->add_insert_values(rc, name_string, string("NULL"));
+						rc->get_table_path()->add_insert_values(rc, new string(*name_string + "_units"), string("NULL"));
+					}
+					else {
+						db->get_sqldata(buffer, sizeof(buffer), target_prop, target_prop.get_unit());
+						rc->get_table_path()->add_insert_values(rc, name_string, string(buffer));
+					}
+				}
+
+				char header_buffer[1024];
+				strcpy(header_buffer, header_fieldnames);
+				vector<string> header_specs = split(header_buffer, ",");
+				for (size_t n = 0; n < header_specs.size(); n++) {
+					if (header_specs[n].compare("name") == 0 || group_mode) {
+						rc->get_table_path()->add_insert_values(rc, new string("name"), string("'" + string(target_prop.get_object()->name) + "'"));
+					}
+					else if (header_specs[n].compare("class") == 0) {
+						rc->get_table_path()->add_insert_values(rc, new string("class"), string("'" + string(target_prop.get_objectref()->get_oclass()->get_name()) + "'"));
+					}
+					else if (header_specs[n].compare("latitude") == 0) {
+						if (isnan(get_parent()->get_latitude()))
+							rc->get_table_path()->add_insert_values(rc, new string("latitude"), string("NULL"));
+						else
+							rc->get_table_path()->add_insert_values(rc, new string("latitude"), string(to_string(target_prop.get_objectref()->get_latitude())));
+					}
+					else if (header_specs[n].compare("longitude") == 0) {
+						if (isnan(get_parent()->get_longitude()))
+							rc->get_table_path()->add_insert_values(rc, new string("longitude"), string("NULL"));
+						else
+							rc->get_table_path()->add_insert_values(rc, new string("longitude"), string(to_string(target_prop.get_objectref()->get_longitude())));
+					}
+					else
+						exception("header field %s does not exist", (const char*) header_specs[n].c_str());
+				}
 			}
-			else if (header_specs[n].compare("class") == 0) {
-				rc->get_table_path()->add_insert_values(rc, new string("class"), string("'" + string(get_parent()->get_oclass()->get_name()) + "'"));
+
+			// check limit
+			if (get_limit() > 0 && group_limit_counter >= get_limit()) {
+				rc->get_table_path()->commit_state();
+
+				// shut off recorder
+				rc->set_tables_done();
+				enabled = false;
+				gl_verbose("table '%s' size limit %d reached", rc->get_table().get_string(), get_limit());
+			} else {
+				group_limit_counter++;
 			}
-			else if (header_specs[n].compare("latitude") == 0) {
-				if (isnan(get_parent()->get_latitude()))
-					rc->get_table_path()->add_insert_values(rc, new string("latitude"), string("NULL"));
+		} else {
+
+			gl_debug("header_fieldname=[%s]", (const char*) header_fieldnames);
+			gl_debug("header_fielddata=[%s]", header_data);
+			char fieldlist[65536] = "", valuelist[65536] = "";
+			size_t fieldlen = 0;
+			if (header_fieldnames[0] != '\0')
+				fieldlen = sprintf(fieldlist, ",%s", (const char*) header_fieldnames);
+			strcpy(valuelist, header_data);
+			size_t valuelen = strlen(valuelist);
+			for (size_t n = 0; n < property_target.size(); n++) {
+				char name_buffer[64];
+				string* name_string = new string(property_target[n].get_sql_safe_name(name_buffer));
+				char buffer[1024] = "NULL";
+
+				if (property_unit[n].is_valid()) {
+					db->get_sqldata(buffer, sizeof(buffer), property_target[n], &property_unit[n]);
+					rc->get_table_path()->add_insert_values(rc, name_string, string(buffer));
+					rc->get_table_path()->add_insert_values(rc, new string(*name_string + "_units"), "'" + string(property_unit[n].get_name()) + "'");
+				}
+				else {
+					db->get_sqldata(buffer, sizeof(buffer), property_target[n], &property_unit[n]);
+					rc->get_table_path()->add_insert_values(rc, name_string, string(buffer));
+				}
+			}
+
+			char header_buffer[1024];
+			strcpy(header_buffer, header_fieldnames);
+			vector<string> header_specs = split(header_buffer, ",");
+			for (size_t n = 0; n < header_specs.size(); n++) {
+				if (header_specs[n].compare("name") == 0) {
+					rc->get_table_path()->add_insert_values(rc, new string("name"), string("'" + string(get_parent()->get_name()) + "'"));
+				}
+				else if (header_specs[n].compare("class") == 0) {
+					rc->get_table_path()->add_insert_values(rc, new string("class"), string("'" + string(get_parent()->get_oclass()->get_name()) + "'"));
+				}
+				else if (header_specs[n].compare("latitude") == 0) {
+					if (isnan(get_parent()->get_latitude()))
+						rc->get_table_path()->add_insert_values(rc, new string("latitude"), string("NULL"));
+					else
+						rc->get_table_path()->add_insert_values(rc, new string("latitude"), string(to_string(get_parent()->get_latitude())));
+				}
+				else if (header_specs[n].compare("longitude") == 0) {
+					if (isnan(get_parent()->get_longitude()))
+						rc->get_table_path()->add_insert_values(rc, new string("longitude"), string("NULL"));
+					else
+						rc->get_table_path()->add_insert_values(rc, new string("longitude"), string(to_string(get_parent()->get_longitude())));
+				}
 				else
-					rc->get_table_path()->add_insert_values(rc, new string("latitude"), string("'" + to_string(get_parent()->get_latitude()) + "'"));
+					exception("header field %s does not exist", (const char*) header_specs[n].c_str());
 			}
-			else if (header_specs[n].compare("longitude") == 0) {
-				if (isnan(get_parent()->get_longitude()))
-					rc->get_table_path()->add_insert_values(rc, new string("longitude"), string("NULL"));
-				else
-					rc->get_table_path()->add_insert_values(rc, new string("longitude"), string("'" + to_string(get_parent()->get_longitude()) + "'"));
-			}
-			else
-				exception("header field %s does not exist", (const char*) header_specs[n].c_str());
-		}
 
 // check limit
-		if (get_limit() > 0 && db->get_last_index() >= get_limit()) {
-			rc->get_table_path()->commit_state();
+			if (get_limit() > 0 && db->get_last_index() >= get_limit()) {
+				rc->get_table_path()->commit_state();
 
-			// shut off recorder
-			rc->set_tables_done();
-			enabled = false;
-			gl_verbose("table '%s' size limit %d reached", rc->get_table().get_string(), get_limit());
+				// shut off recorder
+				rc->set_tables_done();
+				enabled = false;
+				gl_verbose("table '%s' size limit %d reached", rc->get_table().get_string(), get_limit());
+			}
+
 		}
+
 	}
 	else {
 		gl_debug("%s: sampling is not enabled", get_name());
