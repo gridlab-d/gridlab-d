@@ -42,7 +42,6 @@ recorder::recorder(MODULE *module) {
 		defaults = this;
 		if (gl_publish_variable(oclass,
 				PT_char1024, "property", get_property_offset(), PT_DESCRIPTION, "target property name",
-				//				PT_char1024, "group", get_property_offset(), PT_DESCRIPTION,  "group definition string",
 				PT_char32, "trigger", get_trigger_offset(), PT_DESCRIPTION, "recorder trigger condition",
 				PT_char1024, "table", get_table_offset(), PT_DESCRIPTION, "table name to store samples",
 				PT_char1024, "file", get_table_offset(), PT_DESCRIPTION, "file name (for tape compatibility)",
@@ -136,7 +135,6 @@ int recorder::init(OBJECT *parent) {
 			for (int property_index = 0; property_index < property_specs.size();
 					property_index++) {
 				OBJECT* obj_builder = group_items->get(index);
-//				obj_builder
 				gld_property obj_prop(obj_builder);
 				obj_prop.set_property(property_spec_char[property_index]);
 
@@ -148,6 +146,8 @@ int recorder::init(OBJECT *parent) {
 				}
 			}
 		}
+
+		rc->get_table_path()->add_table_header(new string("name"), new string("name CHAR(64), index i_name (name), "));
 
 		// connect the target properties
 		for (size_t n = 0; n < property_specs.size(); n++) {
@@ -249,7 +249,7 @@ int recorder::init(OBJECT *parent) {
 		vector<string> header_specs = split(buffer, ",");
 		size_t header_pos = 0;
 		for (size_t n = 0; n < header_specs.size(); n++) {
-			if (header_specs[n].compare("name") == 0 || group_mode) {
+			if (header_specs[n].compare("name") == 0) {
 				rc->get_table_path()->add_table_header(new string("name"), new string("name CHAR(64), index i_name (name), "));
 			}
 			else if (header_specs[n].compare("class") == 0) {
@@ -369,17 +369,15 @@ TIMESTAMP recorder::commit(TIMESTAMP t0, TIMESTAMP t1) {
 
 	// collect data
 	if (enabled) {
-
 		if (group_mode) {
 			OBJECT* working_object = 0;
 			recorder_quickobjlist *curr = 0;
 			gld_property target_prop;
 			for (curr = group_obj_list; curr != 0;) {
-				if(curr == 0){
+				if (curr == 0) {
 					break;
 				}
-//			for (size_t index = 0; index < group_items->get_size(); index++) {
-//				OBJECT* curr = group_items->get(index);
+
 				if (working_object != 0 && working_object != curr->obj) {
 					rc->get_table_path()->flush_value_row(&t0);
 					working_object = curr->obj;
@@ -389,19 +387,24 @@ TIMESTAMP recorder::commit(TIMESTAMP t0, TIMESTAMP t1) {
 
 				gl_debug("header_fieldname=[%s]", (const char*) header_fieldnames);
 				gl_debug("header_fielddata=[%s]", header_data);
+
+				target_prop = gld_property(curr->obj, &(curr->prop));
+				rc->get_table_path()->add_insert_values(rc, new string("name"), string("'" + string(target_prop.get_object()->name) + "'"));
+
 				char fieldlist[65536] = "", valuelist[65536] = "";
 				size_t fieldlen = 0;
 				if (header_fieldnames[0] != '\0')
 					fieldlen = sprintf(fieldlist, ",%s", (const char*) header_fieldnames);
 				strcpy(valuelist, header_data);
 				size_t valuelen = strlen(valuelist);
-				for (size_t n = 0; n < property_target.size() && curr != 0; n++, curr = curr->next) {
-					if(curr == 0){
+				for (size_t n = 0; n < property_target.size() && curr != 0;
+						n++, curr = curr->next) {
+					if (curr == 0) {
 						break;
 					}
 					char name_buffer[64];
 					string* name_string = new string(property_target[n].get_sql_safe_name(name_buffer));
-					target_prop = gld_property(curr->obj, &(curr->prop));
+
 					char buffer[1024] = "NULL";
 					if (target_prop.get_unit()->is_valid() && (get_options() & MO_USEUNITS)) {
 						db->get_sqldata(buffer, sizeof(buffer), target_prop, target_prop.get_unit());
@@ -415,32 +418,6 @@ TIMESTAMP recorder::commit(TIMESTAMP t0, TIMESTAMP t1) {
 						db->get_sqldata(buffer, sizeof(buffer), target_prop, target_prop.get_unit());
 						rc->get_table_path()->add_insert_values(rc, name_string, string(buffer));
 					}
-				}
-
-				char header_buffer[1024];
-				strcpy(header_buffer, header_fieldnames);
-				vector<string> header_specs = split(header_buffer, ",");
-				for (size_t n = 0; n < header_specs.size(); n++) {
-					if (header_specs[n].compare("name") == 0 || group_mode) {
-						rc->get_table_path()->add_insert_values(rc, new string("name"), string("'" + string(target_prop.get_object()->name) + "'"));
-					}
-					else if (header_specs[n].compare("class") == 0) {
-						rc->get_table_path()->add_insert_values(rc, new string("class"), string("'" + string(target_prop.get_objectref()->get_oclass()->get_name()) + "'"));
-					}
-					else if (header_specs[n].compare("latitude") == 0) {
-						if (isnan(get_parent()->get_latitude()))
-							rc->get_table_path()->add_insert_values(rc, new string("latitude"), string("NULL"));
-						else
-							rc->get_table_path()->add_insert_values(rc, new string("latitude"), string(to_string(target_prop.get_objectref()->get_latitude())));
-					}
-					else if (header_specs[n].compare("longitude") == 0) {
-						if (isnan(get_parent()->get_longitude()))
-							rc->get_table_path()->add_insert_values(rc, new string("longitude"), string("NULL"));
-						else
-							rc->get_table_path()->add_insert_values(rc, new string("longitude"), string(to_string(target_prop.get_objectref()->get_longitude())));
-					}
-					else
-						exception("header field %s does not exist", (const char*) header_specs[n].c_str());
 				}
 			}
 
