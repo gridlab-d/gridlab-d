@@ -7,6 +7,8 @@
  *      Provides a unified MySQL Connection interface and query constructor.
  */
 
+#ifdef HAVE_MYSQL
+
 #include <sstream>
 #include <vector>
 #include "query_engine.h"
@@ -119,3 +121,4 @@ void query_engine::build_table_references(bool print_units) {
 		db->query(query_string.c_str());
 }
 
+#endif //HAVE_MYSQL
