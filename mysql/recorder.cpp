@@ -120,6 +120,8 @@ int recorder::init(OBJECT *parent) {
 	property_specs = split(get_property(), ", \t;");
 
 	if (group_mode) {
+		strcpy(header_fieldnames, "");
+
 		group_items = new gld_objlist(group.get_string());
 		vector<char1024> property_spec_char;
 		for (int property_index = 0; property_index < property_specs.size();
@@ -249,7 +251,7 @@ int recorder::init(OBJECT *parent) {
 		vector<string> header_specs = split(buffer, ",");
 		size_t header_pos = 0;
 		for (size_t n = 0; n < header_specs.size(); n++) {
-			if (header_specs[n].compare("name") == 0) {
+			if (header_specs[n].compare("name") == 0 && !group_mode) {
 				rc->get_table_path()->add_table_header(new string("name"), new string("name CHAR(64), index i_name (name), "));
 			}
 			else if (header_specs[n].compare("class") == 0) {
@@ -493,9 +495,7 @@ TIMESTAMP recorder::commit(TIMESTAMP t0, TIMESTAMP t1) {
 				enabled = false;
 				gl_verbose("table '%s' size limit %d reached", rc->get_table().get_string(), get_limit());
 			}
-
 		}
-
 	}
 	else {
 		gl_debug("%s: sampling is not enabled", get_name());
