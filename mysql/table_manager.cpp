@@ -5,6 +5,8 @@
  *      Author: mark.eberlein@pnnl.gov
  */
 
+#ifdef HAVE_MYSQL
+
 #include <sstream>
 #include <vector>
 #include "query_engine.h"
@@ -183,3 +185,5 @@ void table_manager::commit_values() {
 		insert_count = 0;
 	}
 }
+
+#endif // HAVE_MYSQL
