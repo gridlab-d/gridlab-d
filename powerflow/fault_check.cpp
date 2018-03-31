@@ -69,8 +69,6 @@ int fault_check::create(void)
 
 	restoration_fxn = NULL;		//No restoration function mapped by default
 
-	associated_grid = NULL;	//Null the array
-
 	grid_association_mode = false;	//By default, we go to normal "Highlander" grid (there can be only one!)
 
 	return result;
@@ -277,6 +275,7 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 		else	//Mesh, maybe
 		{
 			//Do the grid association check (if needed)
+			//****************** NOTE - is there a better way to do this with islands now -- need to do twice (pre/post) to catch stragglers! ****//
 			if (grid_association_mode == true)
 			{
 				associate_grids();
@@ -304,6 +303,12 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 			{
 				//Special flag, so removal doesn't break everything (theoretically)
 				support_search_links_mesh(-77,false);
+			}
+
+			//Do the grid association check (if needed)
+			if (grid_association_mode == true)
+			{
+				associate_grids();
 			}
 
 			override_output = output_check_supported_mesh();	//See if anything changed
@@ -676,12 +681,6 @@ void fault_check::write_output_file(TIMESTAMP tval, double tval_delta)
 		deltamodeflag=false;
 	}
 
-	//Perform the grid association again, since things may have adjusted since the last one
-	if ((full_print_output == true) && (grid_association_mode == true))
-	{
-		associate_grids();
-	}
-
 	//open the file
 	FPOutput = fopen(output_filename,"at");
 
@@ -826,7 +825,7 @@ void fault_check::write_output_file(TIMESTAMP tval, double tval_delta)
 							//Print extra information, if needed
 							if (grid_association_mode == true)
 							{
-								fprintf(FPOutput," - Island %d\n",(associated_grid[index]+1));
+								fprintf(FPOutput," - Island %d\n",(NR_busdata[index].island_number+1));
 							}
 							else
 							{
@@ -841,7 +840,7 @@ void fault_check::write_output_file(TIMESTAMP tval, double tval_delta)
 							//Print extra information, if needed
 							if (grid_association_mode == true)
 							{
-								fprintf(FPOutput," - Island %d\n",(associated_grid[index]+1));
+								fprintf(FPOutput," - Island %d\n",(NR_busdata[index].island_number+1));
 							}
 							else
 							{
@@ -856,7 +855,7 @@ void fault_check::write_output_file(TIMESTAMP tval, double tval_delta)
 							//Print extra information, if needed
 							if (grid_association_mode == true)
 							{
-								fprintf(FPOutput," - Island %d\n",(associated_grid[index]+1));
+								fprintf(FPOutput," - Island %d\n",(NR_busdata[index].island_number+1));
 							}
 							else
 							{
@@ -871,7 +870,7 @@ void fault_check::write_output_file(TIMESTAMP tval, double tval_delta)
 							//Print extra information, if needed
 							if (grid_association_mode == true)
 							{
-								fprintf(FPOutput," - Island %d\n",(associated_grid[index]+1));
+								fprintf(FPOutput," - Island %d\n",(NR_busdata[index].island_number+1));
 							}
 							else
 							{
@@ -886,7 +885,7 @@ void fault_check::write_output_file(TIMESTAMP tval, double tval_delta)
 							//Print extra information, if needed
 							if (grid_association_mode == true)
 							{
-								fprintf(FPOutput," - Island %d\n",(associated_grid[index]+1));
+								fprintf(FPOutput," - Island %d\n",(NR_busdata[index].island_number+1));
 							}
 							else
 							{
@@ -901,7 +900,7 @@ void fault_check::write_output_file(TIMESTAMP tval, double tval_delta)
 							//Print extra information, if needed
 							if (grid_association_mode == true)
 							{
-								fprintf(FPOutput," - Island %d\n",(associated_grid[index]+1));
+								fprintf(FPOutput," - Island %d\n",(NR_busdata[index].island_number+1));
 							}
 							else
 							{
@@ -916,7 +915,7 @@ void fault_check::write_output_file(TIMESTAMP tval, double tval_delta)
 							//Print extra information, if needed
 							if (grid_association_mode == true)
 							{
-								fprintf(FPOutput," - Island %d\n",(associated_grid[index]+1));
+								fprintf(FPOutput," - Island %d\n",(NR_busdata[index].island_number+1));
 							}
 							else
 							{
@@ -1030,6 +1029,7 @@ void fault_check::support_check_alterations(int baselink_int, bool rest_mode)
 		reset_alterations_check();
 
 		//Do the grid association check (if needed)
+		//****************** NOTE - is there a better way to do this with islands now -- need to do twice (pre/post) to catch stragglers! ****//
 		if (grid_association_mode == true)
 		{
 			associate_grids();
@@ -1041,6 +1041,12 @@ void fault_check::support_check_alterations(int baselink_int, bool rest_mode)
 
 		//Now loop through and remove those components that are not supported anymore -- start from SWING, just because we have to start somewhere
 		support_search_links_mesh(baselink_int,rest_mode);
+
+		//Do the grid association check (if needed)
+		if (grid_association_mode == true)
+		{
+			associate_grids();
+		}
 	}//End Strictly radial assumption
 
 	//Determine if an output is desired and if we're not in restoration check mode (otherwise, it may flood the output log)
@@ -1878,28 +1884,16 @@ void fault_check::reset_associated_grid(void)
 {
 	unsigned int indexval;
 
-	//Check to see if we're allocated first
-	if (associated_grid == NULL)
-	{
-		//Allocate it - one for each bus
-		associated_grid = (int *)gl_malloc(NR_bus_count*sizeof(int));
-
-		//Check to see if it worked
-		if (associated_grid == NULL)
-		{
-			GL_THROW("fault_check: failed to allocate array for tracking individual grids");
-			/*  TROUBLESHOOT
-			While attempting to allocate an array used to track which nodes are associated with which grid,
-			an error occurred.  Please try again.  If the error persists, please submit your code and a bug
-			report via the ticketing system.
-			*/
-		}
-	}
-
-	//Zero it
+	//Loop through and reset the bus indicators
 	for (indexval=0; indexval<NR_bus_count; indexval++)
 	{
-		associated_grid[indexval] = -1;	//Starts as "not associated"
+		NR_busdata[indexval].island_number = -1;	//Starts as "not associated"
+	}
+
+	//Reset the links too, just for giggles
+	for (indexval=0; indexval<NR_branch_count; indexval++)
+	{
+		NR_branchdata[indexval].island_number = -1;	//Start as "not associated" as well
 	}
 }
 
@@ -1908,6 +1902,7 @@ void fault_check::associate_grids(void)
 {
 	unsigned int indexval;
 	int grid_counter;
+	STATUS stat_return_val;
 
 	//Call the reset/allocation routine
 	reset_associated_grid();
@@ -1923,7 +1918,7 @@ void fault_check::associate_grids(void)
 		if (NR_busdata[indexval].type == 2)	//SWING bus
 		{
 			//See if we're already flagged
-			if (associated_grid[indexval] == -1)	//We're still unparsed
+			if (NR_busdata[indexval].island_number == -1)	//We're still unparsed
 			{
 				//Call the associater routine
 				search_associated_grids(indexval,grid_counter);
@@ -1944,7 +1939,7 @@ void fault_check::associate_grids(void)
 		if (NR_busdata[indexval].type == 3)	//SWING_PQ bus
 		{
 			//See if we're already flagged
-			if (associated_grid[indexval] == -1)	//We're still unparsed
+			if (NR_busdata[indexval].island_number == -1)	//We're still unparsed
 			{
 				//Flag us as a swing - to be safe
 				NR_busdata[indexval].swing_functions_enabled = true;
@@ -1971,7 +1966,7 @@ void fault_check::associate_grids(void)
 		if ((*NR_busdata[indexval].busflag & NF_ISSOURCE) == NF_ISSOURCE)	//Source flagged
 		{
 			//See if we're already flagged
-			if (associated_grid[indexval] == -1)	//We're still unparsed
+			if (NR_busdata[indexval].island_number == -1)	//We're still unparsed
 			{
 				//Call the associater routine
 				search_associated_grids(indexval,grid_counter);
@@ -1984,7 +1979,44 @@ void fault_check::associate_grids(void)
 		//Default else, keep going to look for one
 	}
 
-	//Another loop for just "NF_ISSOURCE" flags??
+	//See if it is different from the "existing count"
+	if (NR_islands_detected != grid_counter)
+	{
+		//See if we need to free anything first - basically, see if it already exists
+		if ((NR_powerflow.island_matrix_values != NULL) && (NR_islands_detected != 0))
+		{
+			stat_return_val = NR_array_structure_free(&NR_powerflow,NR_islands_detected);
+
+			//Make sure it worked
+			if (stat_return_val == FAILED)
+			{
+				GL_THROW("fault_check: Failed to free up a multi-island NR solver array properly");
+				/*  TROUBLESHOOT
+				While attempting to free up one of the multi-island solver variable arrays, an error
+				was encountered.  Please try again.  If the error persists, please submit your code and
+				a bug report via the ticketing/issues system.
+				*/
+			}
+		}
+
+		//Now allocate new ones
+		stat_return_val = NR_array_structure_allocate(&NR_powerflow,grid_counter);
+
+		//Make sure it worked
+		if (stat_return_val == FAILED)
+		{
+			GL_THROW("fault_check: Failed to allocate a multi-island NR solver array properly");
+			/*  TROUBLESHOOT
+			While attempting to allocate a multi-island solver variable array, an error was encountered.
+			Please try again.  If the error persists, please submit your code and a bug report via the
+			ticketing/issue system.
+			*/
+		}
+
+		//Update the overall tracker
+		NR_islands_detected = grid_counter;
+	}
+	//Default else - the size is still fine (no need to update the value
 }
 
 //Multiple grid checking items - the actual crawler
@@ -2014,15 +2046,18 @@ void fault_check::search_associated_grids(unsigned int node_int, int grid_counte
 		if (((NR_busdata[node_int].phases & 0x07) & (NR_branchdata[NR_busdata[node_int].Link_Table[index]].phases & 0x07)) != 0x00)
 		{
 			//See if the other side has been handled
-			if (associated_grid[node_ref] == -1)
+			if (NR_busdata[node_ref].island_number == -1)
 			{
 				//Set the appropriate side
-				associated_grid[node_ref] = grid_counter;
+				NR_busdata[node_ref].island_number = grid_counter;
+
+				//Also flag us, as the link, to be associated with this island
+				NR_branchdata[NR_busdata[node_int].Link_Table[index]].island_number = grid_counter;
 
 				//Recurse in
 				search_associated_grids(node_ref,grid_counter);
 			}
-			else if (associated_grid[node_ref] != grid_counter)
+			else if (NR_busdata[node_ref].island_number != grid_counter)
 			{
 				GL_THROW("fault_check: duplicate grid assignment on node %s!",NR_busdata[node_ref].name);
 				/*  TROUBLESHOOT

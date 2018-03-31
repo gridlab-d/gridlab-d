@@ -63,7 +63,6 @@ public:
 private:
 	TIMESTAMP prev_time;	//Previous timestamp - mainly for intialization
 	FUNCTIONADDR restoration_fxn;	// Function address for restoration object reconfiguration call
-	int *associated_grid;	//Array for assignment of nodes to different "main connection" points
 };
 
 EXPORT int powerflow_alterations(OBJECT *thisobj, int baselink,bool rest_mode);

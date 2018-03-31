@@ -2315,6 +2315,8 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 					*/
 				}
 
+				//For all initial implementations, we're all part of the same big/happy island - island #0!
+				NR_branchdata[NR_branch_reference].island_number = 0;
 
 				//Start with admittance matrix
 				if (SpecialLnk!=NORMAL)	//Transformer, send more - may not need all 4, but put them there anyways

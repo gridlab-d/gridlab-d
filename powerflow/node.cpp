@@ -371,6 +371,7 @@ int node::init(OBJECT *parent)
 		char extpath[1024];
 		CALLBACKS **cbackval = NULL;
 		bool ExtLinkFailure;
+		STATUS status_ret_value;
 
 		// Store the topological parent before anyone overwrites it
 		TopologicalParent = obj->parent;
@@ -503,6 +504,24 @@ int node::init(OBJECT *parent)
 				be designated "bustype SWING".
 				*/
 			}
+
+			//Now that we have one bus to rule them all, make sure it has space for its variables
+			//Assumes one monolithic grid, by default
+			status_ret_value = NR_array_structure_allocate(&NR_powerflow,1);
+
+			//Make sure it worked
+			if (status_ret_value == FAILED)
+			{
+				GL_THROW("NR: Failed to allocate monolithic grid solver arrays");
+				/*  TROUBLESHOOT
+				While attempting to allocate the initial, single-island/monolithic array,
+				an error occurred.  Please try again.  If the error persists, please submit your
+				code and a report via the ticketing/issues system.
+				*/
+			}
+
+			//And update the master counter
+			NR_islands_detected = 1;
 		}//end swing bus search
 
 		//Check for parents to see if they are a parent/childed load
@@ -3194,6 +3213,9 @@ int node::NR_populate(void)
 
 	//Bus type
 	NR_busdata[NR_node_reference].type = (int)bustype;
+
+	//For all initial implementations, we're all part of the same big/happy island - island #0!
+	NR_busdata[NR_node_reference].island_number = 0;
 
 	//Interim check to make sure it isn't a PV bus, since those aren't supported yet - this will get removed when that functionality is put in place
 	if (NR_busdata[NR_node_reference].type==1)
