@@ -8,10 +8,10 @@ import json
 # Get the time from the environment (must be exported by GLM)
 #
 t = os.getenv("clock")
-print '\n\nDate/Time {:20}'.format(t)
-print '================================='
-print 'Object       Tair  Theat  Tcool    Tdb   Taux Mode'
-print '---------- ------ ------ ------ ------ ------ ----'
+#print '\n\nDate/Time {:20}'.format(t)
+#print '================================='
+#print 'Object       Tair  Theat  Tcool    Tdb   Taux Mode'
+#print '---------- ------ ------ ------ ------ ------ ----'
 #
 # Process the list of houses
 #
@@ -30,28 +30,32 @@ for name in houses['houselist'].split(';') :
 	M = house['system_mode']
 	
 	# show values
-	print '{:10} {:6.1f} {:6.1f} {:6.1f} {:6.1f} {:6.1f} {:4}'.format(name,Ta,Th,Tc,Td,Tx,M)
+	#print '{:10} {:6.1f} {:6.1f} {:6.1f} {:6.1f} {:6.1f} {:4}'.format(name,Ta,Th,Tc,Td,Tx,M)
 	
 	#
 	# Run thermostat logic
 	#
+	N = M
 	if M=='OFF':
 		if Ta > Tc + Td/2 :
-			gridlabd.set(name,'system_mode','COOL')
+			N = 'COOL'
 		elif Ta < Th - Td/2 :
-			gridlabd.set(name,'system_mode','HEAT')
+			N = 'HEAT'
 	elif M == 'COOL' :
 		if Ta < Tc - Td/2 :
-			gridlabd.set(name,'system_mode','OFF')
+			N = 'OFF'
 	elif M == 'HEAT' :
 		if Ta > Th + Td/2 :
-			gridlabd.set(name,'system_mode','OFF')
+			N = 'OFF'
 		elif Ta < Th - Tx/2 :
-			gridlabd.set(name,'system_mode','AUX')
+			N = 'AUX'
 	elif M == 'AUX' :
 		if Ta > Th + Td/2 :
-			gridlabd.set(name,'system_mode','OFF')
+			N = 'OFF'
 	else :
 		print "WARNING: tstat mode {} is invalid, changing mode to OFF".format(M)
-		set(name,'system_mode','OFF')
+		N = 'OFF'
+	if N != M :
+		print '{:25} {:10} {}'.format(t,name,N)
+		gridlabd.set(name,'system_mode',N)
 

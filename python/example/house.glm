@@ -51,5 +51,5 @@ object cloud_coordinator {
 }
 
 script on_init ./tstat_init.py;
-script on_commit "./tstat_commit.py";
+script on_precommit "./tstat_commit.py";
 script export clock;

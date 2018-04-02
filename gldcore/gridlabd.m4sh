@@ -26,3 +26,4 @@ AS_IF([test "x$GRIDLABD_DEBUG" = "x"],
   	[AS_IF([test "x$HAS_MINGW" = "xyes"],
 		["$GRIDLABD_DEBUG" "$bindir/gridlabd.exe"],
 		["$GRIDLABD_DEBUG" "$bindir/gridlabd.bin"])])
+

@@ -489,6 +489,7 @@ static void http_close(HTTPCNX *http)
 #else
 	close(http->s);
 #endif
+	free(http->buffer);
 }
 /** Set the response MIME type **/
 static void http_mime(HTTPCNX *http, char *path)
@@ -2010,6 +2011,7 @@ void *http_response(void *ptr)
 		break;
 	}
 	http_close(http);
+	free(http);
 	IN_MYCONTEXT output_verbose("socket %d closed",http->s);
 	return 0;
 }

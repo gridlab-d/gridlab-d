@@ -2104,6 +2104,13 @@ STATUS exec_start(void)
 			/* run precommit only on first iteration */
 			if (iteration_counter == global_iteration_limit)
 			{
+				/* run commit scripts, if any */
+				if ( exec_sync_get(NULL)!=global_clock && exec_run_precommitscripts()!=XC_SUCCESS )
+				{
+					output_error("precommit script(s) failed");
+					THROW("script precommit failure");
+				}
+			
 				pc_rv = precommit_all(global_clock);
 				if(SUCCESS != pc_rv)
 				{
@@ -3029,6 +3036,7 @@ static int update_exports(void)
 
 SIMPLELIST *create_scripts = NULL;
 SIMPLELIST *init_scripts = NULL;
+SIMPLELIST *precommit_scripts = NULL;
 SIMPLELIST *sync_scripts = NULL;
 SIMPLELIST *commit_scripts = NULL;
 SIMPLELIST *term_scripts = NULL;
@@ -3077,6 +3085,11 @@ int exec_add_syncscript(const char *file)
 	IN_MYCONTEXT output_debug("adding sync script '%s'", file);
 	return add_script(&sync_scripts,file);
 }
+int exec_add_precommitscript(const char *file)
+{
+	IN_MYCONTEXT output_debug("adding precommit script '%s'", file);
+	return add_script(&precommit_scripts,file);
+}
 int exec_add_commitscript(const char *file)
 {
 	IN_MYCONTEXT output_debug("adding commit script '%s'", file);
@@ -3094,6 +3107,10 @@ int exec_run_createscripts(void)
 int exec_run_initscripts(void)
 {
 	return run_scripts(init_scripts);
+}
+int exec_run_precommitscripts(void)
+{
+	return run_scripts(precommit_scripts);
 }
 int exec_run_syncscripts(void)
 {

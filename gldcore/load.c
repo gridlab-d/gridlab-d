@@ -5773,6 +5773,23 @@ static int script_directive(PARSER)
 			else
 				REJECT;
 		}
+		if ( LITERAL("on_precommit") )
+		{
+			if ( WHITE,TERM(value(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
+			{
+				if ( exec_add_precommitscript(command)==0 )
+				{
+					output_error_raw("%s(%d): unable to add on_precommit script '%s'", filename,linenum,command);
+					REJECT;
+				}
+				else
+				{
+					ACCEPT; DONE;
+				}
+			}
+			else
+				REJECT;
+		}
 		if ( LITERAL("on_commit") )
 		{
 			if ( WHITE,TERM(value(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
