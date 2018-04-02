@@ -90,7 +90,7 @@ refrigerator::refrigerator(MODULE *module) : residential_enduse(module)
 			PT_double,"cycle_time[s]",PADDR(cycle_time),
 			PT_double,"output",PADDR(Qr),
 			PT_double,"event_temp",PADDR(Tevent),
-			PT_double,"UA[Btu/degF*h]",PADDR(UA),					
+			PT_double,"UA[Btu/degF/h]",PADDR(UA),					
 			PT_double,"compressor_off_normal_energy",PADDR(compressor_off_normal_energy),
 			PT_double,"compressor_off_normal_power[W]",PADDR(compressor_off_normal_power),
 			PT_double,"compressor_on_normal_energy",PADDR(compressor_on_normal_energy),

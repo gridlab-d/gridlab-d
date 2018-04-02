@@ -164,7 +164,7 @@ house::house(MODULE *mod) : residential_enduse(mod)
 			PT_double,"gross_wall_area[sf]",PADDR(gross_wall_area), PT_DESCRIPTION, "total exterior wall area",
 			PT_double,"ceiling_height[ft]",PADDR(ceiling_height), PT_DESCRIPTION, "height of the house's ceiling, across all floors",
 			PT_double,"aspect_ratio",PADDR(aspect_ratio), PT_DESCRIPTION, "ratio of the length to the width of the house's ground footprint",
-			PT_double,"envelope_UA[Btu/degF*h]",PADDR(envelope_UA), PT_DESCRIPTION, "insulative UA value of the house, based on insulation thickness and surface area",
+			PT_double,"envelope_UA[Btu/degF/h]",PADDR(envelope_UA), PT_DESCRIPTION, "insulative UA value of the house, based on insulation thickness and surface area",
 			PT_double,"window_wall_ratio",PADDR(window_wall_ratio), PT_DESCRIPTION, "ratio of exterior window area to exterior wall area",
 			PT_double,"glazing_shgc",PADDR(glazing_shgc), PT_DESCRIPTION, "siding glazing solar heat gain coeffient",
 			PT_double,"airchange_per_hour",PADDR(airchange_per_hour), PT_DESCRIPTION, "volume of air exchanged between the house and exterior per hour",

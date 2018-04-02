@@ -88,7 +88,7 @@ freezer::freezer(MODULE *module) : residential_enduse(module)
 			PT_timestamp,"next_time",PADDR(last_time),
 			PT_double,"output",PADDR(Qr),
 			PT_double,"event_temp",PADDR(Tevent),
-			PT_double,"UA[Btu/degF*h]",PADDR(UA),
+			PT_double,"UA[Btu/degF/h]",PADDR(UA),
 			PT_enumeration,"state",PADDR(motor_state),
 				PT_KEYWORD,"OFF",(enumeration)S_OFF,
 				PT_KEYWORD,"ON",(enumeration)S_ON,

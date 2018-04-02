@@ -42,7 +42,7 @@ range::range(MODULE *module) : residential_enduse(module){
 		if (gl_publish_variable(oclass,
 			PT_INHERIT, "residential_enduse",
 			PT_double,"oven_volume[gal]",PADDR(oven_volume), PT_DESCRIPTION, "the volume of the oven",
-			PT_double,"oven_UA[Btu/degF*h]",PADDR(oven_UA), PT_DESCRIPTION, "the UA of the oven (surface area divided by R-value)",
+			PT_double,"oven_UA[Btu/degF/h]",PADDR(oven_UA), PT_DESCRIPTION, "the UA of the oven (surface area divided by R-value)",
 			PT_double,"oven_diameter[ft]",PADDR(oven_diameter), PT_DESCRIPTION, "the diameter of the oven",
 
 			PT_double,"oven_demand[gpm]",PADDR(oven_demand), PT_DESCRIPTION, "the hot food take out from the oven",
