@@ -58,14 +58,18 @@ public:
 	void associate_grids(void);												//Function to look for the various swing nodes in the system, then associate the grids
 	void search_associated_grids(unsigned int node_int, int grid_counter);	//Function to perform the "grid association" and populate the array
 
+	STATUS disable_island(int island_number);			//Function to remove/disable an island if it diverged in powerflow
+
 	TIMESTAMP sync(TIMESTAMP t0);
 
 private:
 	TIMESTAMP prev_time;	//Previous timestamp - mainly for intialization
 	FUNCTIONADDR restoration_fxn;	// Function address for restoration object reconfiguration call
+	bool force_reassociation;	//Flag to force the island reassociation -- used if an island was removed to renumber them
 };
 
 EXPORT int powerflow_alterations(OBJECT *thisobj, int baselink,bool rest_mode);
 EXPORT double handle_sectionalizer(OBJECT *thisobj, int sectionalizer_number);
+EXPORT STATUS powerflow_disable_island(OBJECT *thisobj, int island_number);
 
 #endif // _FAULT_CHECK_H

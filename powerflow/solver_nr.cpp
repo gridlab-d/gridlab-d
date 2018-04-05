@@ -241,6 +241,9 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	//Saturation mismatch tracking variable
 	int func_result_val;
 
+	//Temporary function variable
+	FUNCTIONADDR temp_fxn_val;
+
 	//Generic status variable
 	STATUS call_return_status;
 
@@ -285,6 +288,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	//Miscellaneous working variable
 	double work_vals_double_0, work_vals_double_1,work_vals_double_2,work_vals_double_3,work_vals_double_4;
 	char work_vals_char_0;
+	bool something_has_been_output;
 
 	//SuperLU variables
 	SuperMatrix L_LU,U_LU;
@@ -3275,6 +3279,9 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		{
 			//Code to export the sparse matrix values - useful for debugging issues
 
+			//Reset the flag
+			something_has_been_output = false;
+
 			//Check our frequency
 			if ((NRMatDumpMethod == MD_ALL) || ((NRMatDumpMethod != MD_ALL) && (powerflow_values->island_matrix_values[island_loop_index].iteration_count == 0)))
 			{
@@ -3305,6 +3312,9 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 							//Print them out
 							fprintf(FPoutVal,"%d,%d,%s\n",jindexer,kindexer,bus[indexer].name);
+
+							//Set the flag
+							something_has_been_output = true;
 						}//End island check
 					}
 
@@ -3315,44 +3325,53 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				//Print the simulation time and iteration number
 				fprintf(FPoutVal,"Timestamp: %lld - Iteration %lld\n",gl_globalclock,powerflow_values->island_matrix_values[island_loop_index].iteration_count);
 
-				//Print size - for parsing ease
-				fprintf(FPoutVal,"Matrix Information - non-zero element count = %d\n",powerflow_values->island_matrix_values[island_loop_index].size_Amatrix);
-				
-				//Print the values - printed as "row index, column index, value"
-				//This particular output is after they have been column sorted for the algorithm
-				//Header
-				fprintf(FPoutVal,"Matrix Information - row, column, value\n");
-
-				//Null temp variable
-				temp_element = NULL;
-
-				//Loop through the columns, extracting starting point each time
-				for (jindexer=0; jindexer<powerflow_values->island_matrix_values[island_loop_index].Y_Amatrix->ncols; jindexer++)
+				//See if anything wrote out
+				if (something_has_been_output == true)
 				{
-					//Extract the column starting point
-					temp_element = powerflow_values->island_matrix_values[island_loop_index].Y_Amatrix->cols[jindexer];
+					//Print size - for parsing ease
+					fprintf(FPoutVal,"Matrix Information - non-zero element count = %d\n",powerflow_values->island_matrix_values[island_loop_index].size_Amatrix);
+					
+					//Print the values - printed as "row index, column index, value"
+					//This particular output is after they have been column sorted for the algorithm
+					//Header
+					fprintf(FPoutVal,"Matrix Information - row, column, value\n");
 
-					//Check for nulling
-					if (temp_element != NULL)
+					//Null temp variable
+					temp_element = NULL;
+
+					//Loop through the columns, extracting starting point each time
+					for (jindexer=0; jindexer<powerflow_values->island_matrix_values[island_loop_index].Y_Amatrix->ncols; jindexer++)
 					{
-						//Print this value
-						fprintf(FPoutVal,"%d,%d,%f\n",temp_element->row_ind,jindexer,temp_element->value);
+						//Extract the column starting point
+						temp_element = powerflow_values->island_matrix_values[island_loop_index].Y_Amatrix->cols[jindexer];
 
-						//Loop
-						while (temp_element->next != NULL)
+						//Check for nulling
+						if (temp_element != NULL)
 						{
-							//Get next element
-							temp_element = temp_element->next;
-
-							//Repeat the print
+							//Print this value
 							fprintf(FPoutVal,"%d,%d,%f\n",temp_element->row_ind,jindexer,temp_element->value);
-						}
-					}
-					//If it is null, go next.  Implies we have an invalid matrix size, but that may be what we're looking for
-				}//End sparse matrix traversion for dump
 
-				//Print an extra line, so it looks nice for ALL/PERCALL
-				fprintf(FPoutVal,"\n");
+							//Loop
+							while (temp_element->next != NULL)
+							{
+								//Get next element
+								temp_element = temp_element->next;
+
+								//Repeat the print
+								fprintf(FPoutVal,"%d,%d,%f\n",temp_element->row_ind,jindexer,temp_element->value);
+							}
+						}
+						//If it is null, go next.  Implies we have an invalid matrix size, but that may be what we're looking for
+					}//End sparse matrix traversion for dump
+
+					//Print an extra line, so it looks nice for ALL/PERCALL
+					fprintf(FPoutVal,"\n");
+				}
+				else //Nothing written - indicate as much
+				{
+					//Print the emptiness
+					fprintf(FPoutVal,"Empty island (possibly powerflow-removed)\n\n");
+				}
 
 				//Close the file, we're done with it
 				fclose(FPoutVal);
@@ -4299,16 +4318,83 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				}
 				//Default else -- someone is already negative, so just accept it
 			}
-			//Default else -- we're actually a really bad failure, let it stay "bad_computations" flagged
+			else if (NR_island_fail_method == true)	//Really bad failure, but let's see if we're in "special handling mode"
+			{
+				*bad_computations = false;	//Deflag us, so it keeps going
+
+				//Set the return value to the iteration limit (negative)
+				//No checks necessary -- this will just rail, regardless
+				return_value_for_solver_NR = -NR_iteration_limit;
+
+				//Call the "removal" routine - map it 
+				temp_fxn_val = (FUNCTIONADDR)(gl_get_function(fault_check_object,"island_removal_function"));
+				
+				//Make sure it was found
+				if (temp_fxn_val == NULL)
+				{
+					GL_THROW("NR: Unable to map island removal function");
+					/*  TROUBLESHOOT
+					While attempting to map the island removal function, an error was encountered.  Please
+					try again.  If the error persists, please submit your code and a report via the issues
+					system.
+					*/
+				}
+
+				//Call the function
+				call_return_status = ((STATUS (*)(OBJECT *,int))(temp_fxn_val))(fault_check_object,island_loop_index);
+
+				//Make sure it worked
+				if (call_return_status != SUCCESS)
+				{
+					GL_THROW("NR: Failed to remove island %d from the powerflow",(island_loop_index+1));
+					/*  TROUBLESHOOT
+					While attempting to remove an island from the powerflow, an error occurred.  Please try again.
+					If the error persists, please submit your code and a report via the issues system.
+					*/
+				}
+				//If we succeeded, good to go!
+			}
+			//Default else -- a bad failure we just want to ignore
 		}
 		else	//must be negative -- Not quite a full failure, just "something didn't converge"
 		{
 			*bad_computations = false;	//Deflag us
 
-			//See if we're the first negative one - if so, populate us (should just be NR limit)
-			if (powerflow_values->island_matrix_values[island_loop_index].return_code < return_value_for_solver_NR)
+			//See which mode we're in
+			if (NR_island_fail_method == true)	//See if we're in "special island mode" or not
 			{
-				return_value_for_solver_NR = powerflow_values->island_matrix_values[island_loop_index].return_code;
+				//Set the return value to the iteration limit (negative)
+				//No checks necessary -- this will just rail, regardless
+				return_value_for_solver_NR = -NR_iteration_limit;
+
+				//Call the "removal" routine - map it 
+				temp_fxn_val = (FUNCTIONADDR)(gl_get_function(fault_check_object,"island_removal_function"));
+				
+				//Make sure it was found
+				if (temp_fxn_val == NULL)
+				{
+					GL_THROW("NR: Unable to map island removal function");
+					//Defined above
+				}
+
+				//Call the function
+				call_return_status = ((STATUS (*)(OBJECT *,int))(temp_fxn_val))(fault_check_object,island_loop_index);
+
+				//Make sure it worked
+				if (call_return_status != SUCCESS)
+				{
+					GL_THROW("NR: Failed to remove island %d from the powerflow",(island_loop_index+1));
+					//Defined above
+				}
+				//If we succeeded, good to go!
+			}
+			else	//Nope, just handle like "normal"
+			{
+				//See if we're the first negative one - if so, populate us (should just be NR limit)
+				if (powerflow_values->island_matrix_values[island_loop_index].return_code < return_value_for_solver_NR)
+				{
+					return_value_for_solver_NR = powerflow_values->island_matrix_values[island_loop_index].return_code;
+				}
 			}
 		}
 		//Default else - it was a failure, just keep going

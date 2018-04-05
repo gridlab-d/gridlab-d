@@ -42,6 +42,8 @@ fault_check::fault_check(MODULE *mod) : powerflow_object(mod)
 				GL_THROW("Unable to publish remove from service function");
 			if (gl_publish_function(oclass,"handle_sectionalizer",(FUNCTIONADDR)handle_sectionalizer)==NULL)
 				GL_THROW("Unable to publish sectionalizer special function");
+			if (gl_publish_function(oclass,"island_removal_function",(FUNCTIONADDR)powerflow_disable_island)==NULL)
+				GL_THROW("Unable to publish island deletion function");
     }
 }
 
@@ -70,6 +72,8 @@ int fault_check::create(void)
 	restoration_fxn = NULL;		//No restoration function mapped by default
 
 	grid_association_mode = false;	//By default, we go to normal "Highlander" grid (there can be only one!)
+
+	force_reassociation = false;	//By default, don't need to reassociate
 
 	return result;
 }
@@ -178,6 +182,10 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 	else if (fcheck_state == ALLT)	//Must be every iteration then
 	{
 		perform_check = true;	//Flag the check
+	}
+	else if (force_reassociation == true)
+	{
+		perform_check = true;	//Flag the check - easist way to force the reassociation
 	}
 	else	//Doesn't fit one of the above
 	{
@@ -1920,11 +1928,16 @@ void fault_check::associate_grids(void)
 			//See if we're already flagged
 			if (NR_busdata[indexval].island_number == -1)	//We're still unparsed
 			{
-				//Call the associater routine
-				search_associated_grids(indexval,grid_counter);
+				//See if we have phases
+				if ((NR_busdata[indexval].phases & 0x07) != 0x00)
+				{
+					//Call the associater routine
+					search_associated_grids(indexval,grid_counter);
 
-				//Increment the counter, when we're done
-				grid_counter++;
+					//Increment the counter, when we're done
+					grid_counter++;
+				}
+				//Default else -- no phases, so pretend it still doesn't exist
 			}
 			//Default else, we've already been hit, skip out
 		}
@@ -1941,14 +1954,19 @@ void fault_check::associate_grids(void)
 			//See if we're already flagged
 			if (NR_busdata[indexval].island_number == -1)	//We're still unparsed
 			{
-				//Flag us as a swing - to be safe
-				NR_busdata[indexval].swing_functions_enabled = true;
+				//See if we have phases
+				if ((NR_busdata[indexval].phases & 0x07) != 0x00)
+				{
+					//Flag us as a swing - to be safe
+					NR_busdata[indexval].swing_functions_enabled = true;
 
-				//Call the associater routine
-				search_associated_grids(indexval,grid_counter);
+					//Call the associater routine
+					search_associated_grids(indexval,grid_counter);
 
-				//Increment the counter, when we're done
-				grid_counter++;
+					//Increment the counter, when we're done
+					grid_counter++;
+				}
+				//Default else -- no phases, so pretend it still doesn't exist
 			}
 			else	//Deflag us as a swing
 			{
@@ -1968,11 +1986,16 @@ void fault_check::associate_grids(void)
 			//See if we're already flagged
 			if (NR_busdata[indexval].island_number == -1)	//We're still unparsed
 			{
-				//Call the associater routine
-				search_associated_grids(indexval,grid_counter);
+				//See if we have phases
+				if ((NR_busdata[indexval].phases & 0x07) != 0x00)
+				{
+					//Call the associater routine
+					search_associated_grids(indexval,grid_counter);
 
-				//Increment the counter, when we're done
-				grid_counter++;
+					//Increment the counter, when we're done
+					grid_counter++;
+				}
+				//Default else -- no phases, so pretend it still doesn't exist
 			}
 			//Default else, we've already been hit, skip out
 		}
@@ -2015,8 +2038,14 @@ void fault_check::associate_grids(void)
 
 		//Update the overall tracker
 		NR_islands_detected = grid_counter;
+
+		//Force an NR update too, just in case
+		NR_admit_change = true;
 	}
 	//Default else - the size is still fine (no need to update the value
+
+	//Deflag the "force a reassociation" flag
+	force_reassociation = false;
 }
 
 //Multiple grid checking items - the actual crawler
@@ -2070,6 +2099,74 @@ void fault_check::search_associated_grids(unsigned int node_int, int grid_counte
 		}
 		//Default else, not a match, so next
 	}
+}
+
+//Function to remove a divergent island
+STATUS fault_check::disable_island(int island_number)
+{
+	int index_value;
+	TIMESTAMP curr_time_val_TS;
+	double curr_time_val_DBL;
+
+	//Loop through the buses -- remove if it is in this island (keep SWING functions affected though)
+	for (index_value=0; index_value < NR_bus_count; index_value++)
+	{
+		//See if we're in the island
+		if (NR_busdata[index_value].island_number == island_number)
+		{
+			//Just trim it off
+			NR_busdata[index_value].phases &= 0xF8;
+
+			//De-associate us too
+			NR_busdata[index_value].island_number = -1;
+
+			//Empty the valid phases property
+			valid_phases[index_value] = 0x00;
+		}
+		//Default else -- next bus
+	}
+
+	//Do the same for branches, just so we don't get confused
+	for (index_value=0; index_value < NR_branch_count; index_value++)
+	{
+		//Check our association
+		if (NR_branchdata[index_value].island_number == island_number)
+		{
+			//Trim the phases 
+			NR_branchdata[index_value].phases &= 0xF8;
+
+			//De-associate us
+			NR_branchdata[index_value].island_number = -1;
+		}
+		//Default else -- next branch
+	}
+
+	//If there's an output file, log it in there too (since this is through an "unconventional" channel)
+	if (output_filename[0] != '\0')	//See if there's an output
+	{
+		//See which one to call/populate
+		if (deltatimestep_running > 0.0)	//Deltamode
+		{
+			curr_time_val_TS = 0;
+			curr_time_val_DBL = gl_globaldeltaclock;
+		}
+		else	//Steady state
+		{
+			curr_time_val_TS = gl_globalclock;
+			curr_time_val_DBL = 0.0;
+		}
+
+		write_output_file(curr_time_val_TS,curr_time_val_DBL);	//Write it
+	}
+
+	//Flag a forced reiteration for the next time somethig can (not now though, we may be halfway through an NR solver loop)
+	force_reassociation = true;
+
+	//Verbose it, for information
+	gl_verbose("fault_check: Removed island %d from the powerflow",(island_number+1));
+
+	//Not sure how we'd fail, at this point
+	return SUCCESS;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -2280,4 +2377,13 @@ EXPORT double handle_sectionalizer(OBJECT *thisobj, int sectionalizer_number)
 	return result_val;
 }
 
+//Function to remove a divergent island from the powerflow, so it isn't handled anymore
+EXPORT STATUS powerflow_disable_island(OBJECT *thisobj, int island_number)
+{
+	//Fault check object link
+	fault_check *fltyobj = OBJECTDATA(fault_check_object,fault_check);
+
+	//Call the function
+	return fltyobj->disable_island(island_number);
+}
 /**@}**/
