@@ -137,8 +137,11 @@ void sparse_reset(SPARSE* sm, int ncols)
 }
 
 //Add in new elements to the sparse notation
-inline void sparse_add(SPARSE* sm, int row, int col, double value)
+inline void sparse_add(SPARSE* sm, int row, int col, double value, BUSDATA *bus_values, unsigned int bus_values_count, NR_SOLVER_STRUCT *powerflow_information, int island_number_curr)
 {
+	unsigned int bus_index_val, bus_start_val, bus_end_val;
+	bool found_proper_bus_val;
+
 	SP_E* insertion_point = sm->cols[col];
 	SP_E* new_list_element = &(sm->llheap[sm->llptr++]);
 
@@ -167,20 +170,84 @@ inline void sparse_add(SPARSE* sm, int row, int col, double value)
 			{
 				if (insertion_point->next->row_ind == new_list_element->row_ind)	//Same entry (by column), so bad
 				{
-					GL_THROW("NR: duplicate admittance entry found - check for parallel circuits between common nodes!");
-					/*  TROUBLESHOOT
-					While building up the admittance matrix for the Newton-Raphson solver, a duplicate entry was found.
-					This is often caused by having multiple lines on the same phases in parallel between two nodes.  Please
-					reconcile this model difference and try again.
-					*/
-				}
+					//Reset the flag
+					found_proper_bus_val = false;
+
+					//Loop through and see if we can find the bus
+					for (bus_index_val=0; bus_index_val<bus_values_count; bus_index_val++)
+					{
+						//Island check
+						if (bus_values[bus_index_val].island_number == island_number_curr)
+						{
+							//Extract the start/stop indices
+							bus_start_val = 2*bus_values[bus_index_val].Matrix_Loc;
+							bus_end_val = bus_start_val + 2*powerflow_information->BA_diag[bus_index_val].size - 1;
+
+							//See if we're in this range
+							if ((new_list_element->row_ind >= bus_start_val) && (new_list_element->row_ind <= bus_end_val))
+							{
+								//See if it is actually named -- it should be available
+								if (bus_values[bus_index_val].name != NULL)
+								{
+									GL_THROW("NR: duplicate admittance entry found - attaches to node %s - check for parallel circuits between common nodes!",bus_values[bus_index_val].name);
+									/*  TROUBLESHOOT
+									While building up the admittance matrix for the Newton-Raphson solver, a duplicate entry was found.
+									This is often caused by having multiple lines on the same phases in parallel between two nodes.  A reference node
+									does not have a name.  Please name your nodes and and try again.  Afterwards, please reconcile this model difference and try again.
+									*/
+								}
+								else
+								{
+									GL_THROW("NR: duplicate admittance entry found - no name available - check for parallel circuits between common nodes!");
+									/*  TROUBLESHOOT
+									While building up the admittance matrix for the Newton-Raphson solver, a duplicate entry was found.
+									This is often caused by having multiple lines on the same phases in parallel between two nodes.  A reference node
+									does not have a name.  Please name your nodes and and try again.  Afterwards, please reconcile this model difference and try again.
+									*/
+								}//End unnamed bus
+							}//End found a bus
+							//Default else -- keep going
+						}//End part of the island
+						//Default else -- next bus
+					}//End of the for loop to find the bus
+				}//End matches - error
 			}
 			else	//No next item, so see if our value matches
 			{
 				if (insertion_point->row_ind == new_list_element->row_ind)	//Same entry (by column), so bad
 				{
-					GL_THROW("NR: duplicate admittance entry found - check for parallel circuits between common nodes!");
-					//Defined above
+					//Reset the flag
+					found_proper_bus_val = false;
+
+					//Loop through and see if we can find the bus
+					for (bus_index_val=0; bus_index_val<bus_values_count; bus_index_val++)
+					{
+						//Island check
+						if (bus_values[bus_index_val].island_number == island_number_curr)
+						{
+							//Extract the start/stop indices
+							bus_start_val = 2*bus_values[bus_index_val].Matrix_Loc;
+							bus_end_val = bus_start_val + 2*powerflow_information->BA_diag[bus_index_val].size - 1;
+
+							//See if we're in this range
+							if ((new_list_element->row_ind >= bus_start_val) && (new_list_element->row_ind <= bus_end_val))
+							{
+								//See if it is actually named -- it should be available
+								if (bus_values[bus_index_val].name != NULL)
+								{
+									GL_THROW("NR: duplicate admittance entry found - attaches to node %s - check for parallel circuits between common nodes!",bus_values[bus_index_val].name);
+									//Defined above
+								}
+								else
+								{
+									GL_THROW("NR: duplicate admittance entry found - no name available - check for parallel circuits between common nodes!");
+									//Defined above
+								}//End unnamed bus
+							}//End found a bus
+							//Default else -- keep going
+						}//End part of the island
+						//Default else -- next bus
+					}//End of the for loop to find the bus
 				}
 			}
 
@@ -3253,7 +3320,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			row = powerflow_values->island_matrix_values[island_loop_index].Y_offdiag_PQ[indexer].row_ind;
 			col = powerflow_values->island_matrix_values[island_loop_index].Y_offdiag_PQ[indexer].col_ind;
 			value = powerflow_values->island_matrix_values[island_loop_index].Y_offdiag_PQ[indexer].Y_value;
-			sparse_add(powerflow_values->island_matrix_values[island_loop_index].Y_Amatrix, row, col, value);
+			sparse_add(powerflow_values->island_matrix_values[island_loop_index].Y_Amatrix, row, col, value, bus, bus_count, powerflow_values, island_loop_index);
 		}
 
 		//Integrate fixed portions of diagonal components
@@ -3262,7 +3329,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			row = powerflow_values->island_matrix_values[island_loop_index].Y_diag_fixed[indexer].row_ind;
 			col = powerflow_values->island_matrix_values[island_loop_index].Y_diag_fixed[indexer].col_ind;
 			value = powerflow_values->island_matrix_values[island_loop_index].Y_diag_fixed[indexer].Y_value;
-			sparse_add(powerflow_values->island_matrix_values[island_loop_index].Y_Amatrix, row, col, value);
+			sparse_add(powerflow_values->island_matrix_values[island_loop_index].Y_Amatrix, row, col, value, bus, bus_count, powerflow_values, island_loop_index);
 		}
 
 		//Integrate the variable portions of the diagonal components
@@ -3271,7 +3338,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			row = powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].row_ind;
 			col = powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].col_ind;
 			value = powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].Y_value;
-			sparse_add(powerflow_values->island_matrix_values[island_loop_index].Y_Amatrix, row, col, value);
+			sparse_add(powerflow_values->island_matrix_values[island_loop_index].Y_Amatrix, row, col, value, bus, bus_count, powerflow_values, island_loop_index);
 		}
 
 		//See if we want to dump out the matrix values
