@@ -47,6 +47,7 @@ class group_recorder : public gld_object {
 		int isa(char *);
 		TIMESTAMP postsync(TIMESTAMP, TIMESTAMP);
 		int commit(TIMESTAMP);
+		std::vector<std::string> gr_split(char*, const char*);
 
 		GL_STRING(char1024,table)
 		GL_STRING(char1024, group_def)
