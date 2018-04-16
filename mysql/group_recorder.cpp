@@ -15,7 +15,7 @@ CLASS *group_recorder::pclass = NULL;
 group_recorder *group_recorder::defaults = NULL;
 using namespace std;
 
-vector<string> split(char* str, const char* delim) {
+vector<string> group_recorder::gr_split(char* str, const char* delim) {
 	char* saveptr;
 	char* token = strtok_r(str, delim, &saveptr);
 
@@ -299,7 +299,7 @@ int group_recorder::write_header() {
 
 		char buffer[1024];
 		strcpy(buffer, complex_part);
-		vector<string> complex_part_vector = split(buffer, "|");
+		vector<string> complex_part_vector = gr_split(buffer, "|");
 		set complex_part_buffer = 0x00;
 
 		for (size_t n = 0; n < complex_part_vector.size(); n++) {
@@ -523,7 +523,7 @@ int group_recorder::build_row(TIMESTAMP t1) {
 	query_engine* grc = group_recorder_connection;
 	char buffer[1024];
 	strcpy(buffer, complex_part);
-	vector<string> complex_part_vector = split(buffer, "|");
+	vector<string> complex_part_vector = gr_split(buffer, "|");
 	set complex_part_buffer = 0x00;
 
 	for (size_t n = 0; n < complex_part_vector.size(); n++) {
