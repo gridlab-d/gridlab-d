@@ -469,6 +469,7 @@ int inverter::create(void)
 	reconnect_time = 300.0;				//5 minute default, as suggested by 1547-2003
 	inverter_1547_status = true;		//Not in a violation, by default
 	out_of_violation_time_total = 0.0;	//Not in a violation, so not tracking 'recovery'
+	ieee_1547_double = -1.0;			//Flag as not an issue
 	freq_pointer = NULL;				//No mapping, by default
 	prev_time = 0;						//Tracking variable
 	prev_time_dbl = 0.0;				//Tracking variable
@@ -3720,7 +3721,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 	else
 	{
 		//Check to see if we're accumulating or out of service
-		if (*pMeterStatus==1)
+		if ((*pMeterStatus==1) && (inverter_1547_status==true))
 		{
 			if (inverter_type_v != FOUR_QUADRANT)
 			{
@@ -4861,7 +4862,6 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 	bool deltaConverged = false;
 	bool ramp_change;
 	int i;
-	double ieee_1547_double;
 	complex temp_current_val[3];
 	complex power_val[3];
 	double inputPower;

@@ -397,6 +397,7 @@ private:
 	double out_of_violation_time_total;	//Tracking variable to see how long we've been "outside of bad conditions" to re-enable the inverter
 	double *freq_pointer;				//Pointer to frequency value for checking 1547 compliance
 	double node_nominal_voltage;		//Nominal voltage for per-unit-izing for 1547 checks
+	double ieee_1547_double;			//Deltamode tracker - made global for "off-cycle" checks
 
 	// Feeder frequency determined by the diesel generators
 	double *mapped_freq_variable;  //Mapping to frequency variable in powerflow module - deltamode updates
