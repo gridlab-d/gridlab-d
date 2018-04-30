@@ -84,9 +84,9 @@ inverter::inverter(MODULE *module)
 			PT_complex, "phaseA_I_Out[V]", PADDR(phaseA_I_Out), PT_DESCRIPTION, "AC current on A phase in three-phase system; 240-V connection on a triplex system",
 			PT_complex, "phaseB_I_Out[V]", PADDR(phaseB_I_Out), PT_DESCRIPTION, "AC current on B phase in three-phase system",
 			PT_complex, "phaseC_I_Out[V]", PADDR(phaseC_I_Out), PT_DESCRIPTION, "AC current on C phase in three-phase system",
-			PT_complex, "power_A[VA]", PADDR(power_A), PT_DESCRIPTION, "AC power on A phase in three-phase system; 240-V connection on a triplex system",
-			PT_complex, "power_B[VA]", PADDR(power_B), PT_DESCRIPTION, "AC power on B phase in three-phase system",
-			PT_complex, "power_C[VA]", PADDR(power_C), PT_DESCRIPTION, "AC power on C phase in three-phase system",
+			PT_complex, "power_A[VA]", PADDR(power_val[0]), PT_DESCRIPTION, "AC power on A phase in three-phase system; 240-V connection on a triplex system",
+			PT_complex, "power_B[VA]", PADDR(power_val[1]), PT_DESCRIPTION, "AC power on B phase in three-phase system",
+			PT_complex, "power_C[VA]", PADDR(power_val[2]), PT_DESCRIPTION, "AC power on C phase in three-phase system",
 			PT_complex, "curr_VA_out_A[VA]", PADDR(curr_VA_out[0]), PT_DESCRIPTION, "AC power on A phase in three-phase system; 240-V connection on a triplex system",
 			PT_complex, "curr_VA_out_B[VA]", PADDR(curr_VA_out[1]), PT_DESCRIPTION, "AC power on B phase in three-phase system",
 			PT_complex, "curr_VA_out_C[VA]", PADDR(curr_VA_out[2]), PT_DESCRIPTION, "AC power on C phase in three-phase system",
@@ -2059,34 +2059,33 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 	complex calculated_iO[3];
 
 	complex temp_current_val[3];
-	complex power_val[3];
 	complex temp_power_val[3];
 
 	//Assume always want TS_NEVER
 	tret_value = TS_NEVER;
 
 	if(gen_status_v == OFFLINE){
-		power_A = complex(0);
-		power_B = complex(0);
-		power_C = complex(0);
+		power_val[0] = complex(0.0,0.0);
+		power_val[1] = complex(0.0,0.0);
+		power_val[2] = complex(0.0,0.0);
 		P_Out = 0;
 		Q_Out = 0;
 		VA_Out = complex(0);
 		if ((phases & 0x10) == 0x10) {
-			last_power[3] = -power_A;
+			last_power[3] = -power_val[0];
 			*pPower += last_power[3];
 		} else {
 			p_in = 0;
 			if ((phases & 0x01) == 0x01) {
-				last_power[0] = -power_A;
+				last_power[0] = -power_val[0];
 				pPower[0] += last_power[0];
 			}
 			if ((phases & 0x02) == 0x02) {
-				last_power[1] = -power_B;
+				last_power[1] = -power_val[1];
 				pPower[1] += last_power[1];
 			}
 			if ((phases & 0x04) == 0x04) {
-				last_power[2] = -power_C;
+				last_power[2] = -power_val[2];
 				pPower[2] += last_power[2];
 			}
 		}
@@ -2416,9 +2415,9 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 					if ((phases & 0x10) == 0x10)  //Triplex-line -> Assume it's only across the 240 V for now.
 					{
-						power_A = complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)));
+						power_val[0] = complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)));
 						if (phaseA_V_Out.Mag() != 0.0)
-							phaseA_I_Out = ~(power_A / phaseA_V_Out);
+							phaseA_I_Out = ~(power_val[0] / phaseA_V_Out);
 						else
 							phaseA_I_Out = complex(0.0,0.0);
 
@@ -2433,17 +2432,17 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					}
 					else if (number_of_phases_out == 3) // All three phases
 					{
-						power_A = power_B = power_C = complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/3;
+						power_val[0] = power_val[1] = power_val[2] = complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/3;
 						if (phaseA_V_Out.Mag() != 0.0)
-							phaseA_I_Out = ~(power_A / phaseA_V_Out); // /sqrt(2.0);
+							phaseA_I_Out = ~(power_val[0] / phaseA_V_Out); // /sqrt(2.0);
 						else
 							phaseA_I_Out = complex(0.0,0.0);
 						if (phaseB_V_Out.Mag() != 0.0)
-							phaseB_I_Out = ~(power_B / phaseB_V_Out); // /sqrt(2.0);
+							phaseB_I_Out = ~(power_val[1] / phaseB_V_Out); // /sqrt(2.0);
 						else
 							phaseB_I_Out = complex(0.0,0.0);
 						if (phaseC_V_Out.Mag() != 0.0)
-							phaseC_I_Out = ~(power_C / phaseC_V_Out); // /sqrt(2.0);
+							phaseC_I_Out = ~(power_val[2] / phaseC_V_Out); // /sqrt(2.0);
 						else
 							phaseC_I_Out = complex(0.0,0.0);
 
@@ -2470,24 +2469,24 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 						if ( ((phases & 0x01) == 0x01) && phaseA_V_Out.Mag() != 0)
 						{
-							power_A = complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/2;;
-							phaseA_I_Out = ~(power_A / phaseA_V_Out);
+							power_val[0] = complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/2;;
+							phaseA_I_Out = ~(power_val[0] / phaseA_V_Out);
 						}
 						else 
 							phaseA_I_Out = complex(0,0);
 
 						if ( ((phases & 0x02) == 0x02) && phaseB_V_Out.Mag() != 0)
 						{
-							power_B = complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/2;;
-							phaseB_I_Out = ~(power_B / phaseB_V_Out);
+							power_val[1] = complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/2;;
+							phaseB_I_Out = ~(power_val[1] / phaseB_V_Out);
 						}
 						else 
 							phaseB_I_Out = complex(0,0);
 
 						if ( ((phases & 0x04) == 0x04) && phaseC_V_Out.Mag() != 0)
 						{
-							power_C = complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/2;;
-							phaseC_I_Out = ~(power_C / phaseC_V_Out);
+							power_val[2] = complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/2;;
+							phaseC_I_Out = ~(power_val[2] / phaseC_V_Out);
 						}
 						else 
 							phaseC_I_Out = complex(0,0);
@@ -2506,22 +2505,22 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					{
 						if( ((phases & 0x01) == 0x01) && phaseA_V_Out.Mag() != 0)
 						{
-							power_A = complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)));
-							phaseA_I_Out = ~(power_A / phaseA_V_Out); 
+							power_val[0] = complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)));
+							phaseA_I_Out = ~(power_val[0] / phaseA_V_Out); 
 							//complex phaseA_V_Internal = filter_voltage_impact_source(phaseA_I_Out, phaseA_V_Out);
 							//phaseA_I_Out = filter_current_impact_out(phaseA_I_Out, phaseA_V_Internal);
 						}
 						else if( ((phases & 0x02) == 0x02) && phaseB_V_Out.Mag() != 0)
 						{
-							power_B = complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)));
-							phaseB_I_Out = ~(power_B / phaseB_V_Out); 
+							power_val[1] = complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)));
+							phaseB_I_Out = ~(power_val[1] / phaseB_V_Out); 
 							//complex phaseB_V_Internal = filter_voltage_impact_source(phaseB_I_Out, phaseB_V_Out);
 							//phaseB_I_Out = filter_current_impact_out(phaseB_I_Out, phaseB_V_Internal);
 						}
 						else if( ((phases & 0x04) == 0x04) && phaseC_V_Out.Mag() != 0)
 						{
-							power_C = complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)));
-							phaseC_I_Out = ~(power_C / phaseC_V_Out); 
+							power_val[2] = complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)));
+							phaseC_I_Out = ~(power_val[2] / phaseC_V_Out); 
 							//complex phaseC_V_Internal = filter_voltage_impact_source(phaseC_I_Out, phaseC_V_Out);
 							//phaseC_I_Out = filter_current_impact_out(phaseC_I_Out, phaseC_V_Internal);
 						}
@@ -2576,10 +2575,10 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 					if ( (phases & 0x07) == 0x07) // Three phase
 					{
-						power_A = power_B = power_C = VA_Out /3;
-						phaseA_I_Out = (power_A / phaseA_V_Out); // /sqrt(2.0);
-						phaseB_I_Out = (power_B / phaseB_V_Out); // /sqrt(2.0);
-						phaseC_I_Out = (power_C / phaseC_V_Out); // /sqrt(2.0);
+						power_val[0] = power_val[1] = power_val[2] = VA_Out /3;
+						phaseA_I_Out = (power_val[0] / phaseA_V_Out); // /sqrt(2.0);
+						phaseB_I_Out = (power_val[1] / phaseB_V_Out); // /sqrt(2.0);
+						phaseC_I_Out = (power_val[2] / phaseC_V_Out); // /sqrt(2.0);
 
 						phaseA_I_Out = ~ phaseA_I_Out;
 						phaseB_I_Out = ~ phaseB_I_Out;
@@ -2588,20 +2587,20 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					}
 					else if ( (number_of_phases_out == 1) && ((phases & 0x01) == 0x01) ) // Phase A only
 					{
-						power_A = VA_Out;
-						phaseA_I_Out = (power_A / phaseA_V_Out); // /sqrt(2);
+						power_val[0] = VA_Out;
+						phaseA_I_Out = (power_val[0] / phaseA_V_Out); // /sqrt(2);
 						phaseA_I_Out = ~ phaseA_I_Out;
 					}
 					else if ( (number_of_phases_out == 1) && ((phases & 0x02) == 0x02) ) // Phase B only
 					{
-						power_B = VA_Out;
-						phaseB_I_Out = (power_B / phaseB_V_Out);  // /sqrt(2);
+						power_val[1] = VA_Out;
+						phaseB_I_Out = (power_val[1] / phaseB_V_Out);  // /sqrt(2);
 						phaseB_I_Out = ~ phaseB_I_Out;
 					}
 					else if ( (number_of_phases_out == 1) && ((phases & 0x04) == 0x04) ) // Phase C only
 					{
-						power_C = VA_Out;
-						phaseC_I_Out = (power_C / phaseC_V_Out); // /sqrt(2);
+						power_val[2] = VA_Out;
+						phaseC_I_Out = (power_val[2] / phaseC_V_Out); // /sqrt(2);
 						phaseC_I_Out = ~ phaseC_I_Out;
 					}
 					else
@@ -2716,14 +2715,14 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						}
 					}
 					
-					power_A = (~phaseA_I_Out) * phaseA_V_Out;
-					power_B = (~phaseB_I_Out) * phaseB_V_Out;
-					power_C = (~phaseC_I_Out) * phaseC_V_Out;
+					power_val[0] = (~phaseA_I_Out) * phaseA_V_Out;
+					power_val[1] = (~phaseB_I_Out) * phaseB_V_Out;
+					power_val[2] = (~phaseC_I_Out) * phaseC_V_Out;
 
 					//check if inverter is overloaded -- if so, cap at max power
-					if (((power_A + power_B + power_C) > Rated_kVA) ||
-						((power_A.Re() + power_B.Re() + power_C.Re()) > Max_P) ||
-						((power_A.Im() + power_B.Im() + power_C.Im()) > Max_Q))
+					if (((power_val[0] + power_val[1] + power_val[2]) > Rated_kVA) ||
+						((power_val[0].Re() + power_val[1].Re() + power_val[2].Re()) > Max_P) ||
+						((power_val[0].Im() + power_val[1].Im() + power_val[2].Im()) > Max_Q))
 					{
 						VA_Out = Rated_kVA / number_of_phases_out;
 						//if it's maxed out, don't ask for the simulator to re-call
@@ -2746,21 +2745,21 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					}
 					
 					//check if power is negative for some reason, should never be
-					if(power_A < 0)
+					if(power_val[0] < 0)
 					{
-						power_A = 0;
+						power_val[0] = 0;
 						phaseA_I_Out = 0;
 						throw("phaseA power is negative!");
 					}
-					if(power_B < 0)
+					if(power_val[1] < 0)
 					{
-						power_B = 0;
+						power_val[1] = 0;
 						phaseB_I_Out = 0;
 						throw("phaseB power is negative!");
 					}
-					if(power_C < 0)
+					if(power_val[2] < 0)
 					{
-						power_C = 0;
+						power_val[2] = 0;
 						phaseC_I_Out = 0;
 						throw("phaseC power is negative!");
 					}
@@ -2861,16 +2860,16 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 				//Compute the power contribution of the battery object
 				if((phases & 0x10) == 0x10){ // split phase
-					battery_power_out = power_A;
+					battery_power_out = power_val[0];
 				} else { // three phase
 					if((phases & 0x01) == 0x01){ // has phase A
-						battery_power_out += power_A;
+						battery_power_out += power_val[0];
 					}
 					if((phases & 0x02) == 0x02){ // hase phase B
-						battery_power_out += power_B;
+						battery_power_out += power_val[1];
 					}
 					if((phases & 0x04) == 0x04){ // has phase C
-						battery_power_out += power_C;
+						battery_power_out += power_val[2];
 					}
 				}
 				//Determine how to efficiency weight it
@@ -3014,16 +3013,16 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					}
 				}
 				if ((phases & 0x10) == 0x10){
-					power_A.SetReal(VA_Efficiency);
+					power_val[0].SetReal(VA_Efficiency);
 				} else {
 					if ((phases & 0x01) == 0x01) {
-						power_A.SetReal(VA_Efficiency/number_of_phases_out);
+						power_val[0].SetReal(VA_Efficiency/number_of_phases_out);
 					}
 					if ((phases & 0x02) == 0x02) {
-						power_B.SetReal(VA_Efficiency/number_of_phases_out);
+						power_val[1].SetReal(VA_Efficiency/number_of_phases_out);
 					}
 					if ((phases & 0x04) == 0x04) {
-						power_C.SetReal(VA_Efficiency/number_of_phases_out);
+						power_val[2].SetReal(VA_Efficiency/number_of_phases_out);
 					}
 				}
 			}
@@ -3596,60 +3595,60 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					} //End three-phase variant
 				}//End non-Volt Var Control mode
 			} else { // Volt Var Control mode
-				if (power_A.Mag() > p_rated ) {
-					if (power_A.Re() > p_rated) {
-						power_A.SetReal(p_rated);
-						power_A.SetImag(0);
-					} else if (power_A.Re() < -p_rated) {
-						power_A.SetReal(-p_rated);
-						power_A.SetImag(0);
-					} else if (power_A.Re() < p_rated && power_A.Re() > -p_rated) {
+				if (power_val[0].Mag() > p_rated ) {
+					if (power_val[0].Re() > p_rated) {
+						power_val[0].SetReal(p_rated);
+						power_val[0].SetImag(0);
+					} else if (power_val[0].Re() < -p_rated) {
+						power_val[0].SetReal(-p_rated);
+						power_val[0].SetImag(0);
+					} else if (power_val[0].Re() < p_rated && power_val[0].Re() > -p_rated) {
 						double q_max = 0;
-						q_max = sqrt((p_rated * p_rated) - (power_A.Re() * power_A.Re()));
-						if (power_A.Im() > q_max) {
-							power_A.SetImag(q_max);
+						q_max = sqrt((p_rated * p_rated) - (power_val[0].Re() * power_val[0].Re()));
+						if (power_val[0].Im() > q_max) {
+							power_val[0].SetImag(q_max);
 						} else {
-							power_A.SetImag(-q_max);
+							power_val[0].SetImag(-q_max);
 						}
 					}
 				}
-				if (power_B.Mag() > p_rated ) {
-					if (power_B.Re() > p_rated) {
-						power_B.SetReal(p_rated);
-						power_B.SetImag(0);
-					} else if (power_B.Re() < -p_rated) {
-						power_B.SetReal(-p_rated);
-						power_B.SetImag(0);
-					} else if (power_B.Re() < p_rated && power_B.Re() > -p_rated) {
+				if (power_val[1].Mag() > p_rated ) {
+					if (power_val[1].Re() > p_rated) {
+						power_val[1].SetReal(p_rated);
+						power_val[1].SetImag(0);
+					} else if (power_val[1].Re() < -p_rated) {
+						power_val[1].SetReal(-p_rated);
+						power_val[1].SetImag(0);
+					} else if (power_val[1].Re() < p_rated && power_val[1].Re() > -p_rated) {
 						double q_max = 0;
-						q_max = sqrt((p_rated * p_rated) - (power_B.Re() * power_B.Re()));
-						if (power_B.Im() > q_max) {
-							power_B.SetImag(q_max);
+						q_max = sqrt((p_rated * p_rated) - (power_val[1].Re() * power_val[1].Re()));
+						if (power_val[1].Im() > q_max) {
+							power_val[1].SetImag(q_max);
 						} else {
-							power_B.SetImag(-q_max);
+							power_val[1].SetImag(-q_max);
 						}
 					}
 				}
-				if (power_C.Mag() > p_rated ) {
-					if (power_C.Re() > p_rated) {
-						power_C.SetReal(p_rated);
-						power_C.SetImag(0);
-					} else if (power_C.Re() < -p_rated) {
-						power_C.SetReal(-p_rated);
-						power_C.SetImag(0);
-					} else if (power_C.Re() < p_rated && power_C.Re() > -p_rated) {
+				if (power_val[2].Mag() > p_rated ) {
+					if (power_val[2].Re() > p_rated) {
+						power_val[2].SetReal(p_rated);
+						power_val[2].SetImag(0);
+					} else if (power_val[2].Re() < -p_rated) {
+						power_val[2].SetReal(-p_rated);
+						power_val[2].SetImag(0);
+					} else if (power_val[2].Re() < p_rated && power_val[2].Re() > -p_rated) {
 						double q_max = 0;
-						q_max = sqrt((p_rated * p_rated) - (power_C.Re() * power_C.Re()));
-						if (power_C.Im() > q_max) {
-							power_C.SetImag(q_max);
+						q_max = sqrt((p_rated * p_rated) - (power_val[2].Re() * power_val[2].Re()));
+						if (power_val[2].Im() > q_max) {
+							power_val[2].SetImag(q_max);
 						} else {
-							power_C.SetImag(-q_max);
+							power_val[2].SetImag(-q_max);
 						}
 					}
 				}
 				if ((phases & 0x10) == 0x10) {
-					p_in = power_A.Re() / inv_eta;
-					last_power[3] = -power_A;
+					p_in = power_val[0].Re() / inv_eta;
+					last_power[3] = -power_val[0];
 					*pPower += last_power[3];
 
 					if (pCircuit_V[0].Mag() > 0.0)
@@ -3663,8 +3662,8 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				} else {
 					p_in = 0;
 					if ((phases & 0x01) == 0x01) {
-						p_in += power_A.Re()/inv_eta;
-						last_power[0] = -power_A;
+						p_in += power_val[0].Re()/inv_eta;
+						last_power[0] = -power_val[0];
 						pPower[0] += last_power[0];
 						if (pCircuit_V[0].Mag() > 0.0)
 						{
@@ -3676,8 +3675,8 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						}
 					}
 					if ((phases & 0x02) == 0x02) {
-						p_in += power_B.Re()/inv_eta;
-						last_power[1] = -power_B;
+						p_in += power_val[1].Re()/inv_eta;
+						last_power[1] = -power_val[1];
 						pPower[1] += last_power[1];
 						if (pCircuit_V[0].Mag() > 0.0)	//This looks wrong, but it is right, since pCircuit_V is directly to the voltage
 						{
@@ -3689,8 +3688,8 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						}
 					}
 					if ((phases & 0x04) == 0x04) {
-						p_in += power_C.Re()/inv_eta;
-						last_power[2] = -power_C;
+						p_in += power_val[2].Re()/inv_eta;
+						last_power[2] = -power_val[2];
 						pPower[2] += last_power[2];
 						if (pCircuit_V[0].Mag() > 0.0)	//This looks wrong, but it is right, since pCircuit_V is directly to the voltage
 						{
@@ -3790,7 +3789,6 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	double new_pf_reg_distpatch_VAR, curr_real_power_val, curr_reactive_power_val, curr_pf, available_VA, new_Q_out, Q_out, Q_required, Q_available, Q_load;
 	double scaling_factor, Q_target;
 	complex temp_current_val[3];
-	complex power_val[3];
 	TIMESTAMP dt;
 	double inputPower;
 
@@ -4229,65 +4227,65 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			last_vv_check = t1;
 			if ((phases & 0x10) == 0x10) {
 				if((pCircuit_V[0].Mag() / V_base) <= V1) {
-					power_A.SetImag(Q1 * p_rated);
+					power_val[0].SetImag(Q1 * p_rated);
 				} else if ((pCircuit_V[0].Mag() / V_base) <= V2 && V1 < (pCircuit_V[0].Mag() / V_base)) {
-					power_A.SetImag(getVar((pCircuit_V[0].Mag() / V_base), m12, b12) * p_rated);
+					power_val[0].SetImag(getVar((pCircuit_V[0].Mag() / V_base), m12, b12) * p_rated);
 				} else if ((pCircuit_V[0].Mag() / V_base) <= V3 && V2 < (pCircuit_V[0].Mag() / V_base)) {
-					power_A.SetImag(getVar((pCircuit_V[0].Mag() / V_base), m23, b23) * p_rated);
+					power_val[0].SetImag(getVar((pCircuit_V[0].Mag() / V_base), m23, b23) * p_rated);
 				} else if ((pCircuit_V[0].Mag() / V_base) <= V4 && V3 < (pCircuit_V[0].Mag() / V_base)) {
-					power_A.SetImag(getVar((pCircuit_V[0].Mag() / V_base), m34, b34) * p_rated);
+					power_val[0].SetImag(getVar((pCircuit_V[0].Mag() / V_base), m34, b34) * p_rated);
 				} else if (V4 < (pCircuit_V[0].Mag() / V_base)) {
-					power_A.SetImag(Q4 * p_rated);
+					power_val[0].SetImag(Q4 * p_rated);
 				}
-				if (last_power->Im() != power_A.Im()) {
+				if (last_power->Im() != power_val[0].Im()) {
 					vv_operation = true;
 				}
 			} else {
 				if ((phases & 0x01) == 0x01) {
 					if((pCircuit_V[0].Mag() / V_base) <= V1) {
-						power_A.SetImag(Q1 * p_rated);
+						power_val[0].SetImag(Q1 * p_rated);
 					} else if ((pCircuit_V[0].Mag() / V_base) <= V2 && V1 < (pCircuit_V[0].Mag() / V_base)) {
-						power_A.SetImag(getVar((pCircuit_V[0].Mag() / V_base), m12, b12) * p_rated);
+						power_val[0].SetImag(getVar((pCircuit_V[0].Mag() / V_base), m12, b12) * p_rated);
 					} else if ((pCircuit_V[0].Mag() / V_base) <= V3 && V2 < (pCircuit_V[0].Mag() / V_base)) {
-						power_A.SetImag(getVar((pCircuit_V[0].Mag() / V_base), m23, b23) * p_rated);
+						power_val[0].SetImag(getVar((pCircuit_V[0].Mag() / V_base), m23, b23) * p_rated);
 					} else if ((pCircuit_V[0].Mag() / V_base) <= V4 && V3 < (pCircuit_V[0].Mag() / V_base)) {
-						power_A.SetImag(getVar((pCircuit_V[0].Mag() / V_base), m34, b34) * p_rated);
+						power_val[0].SetImag(getVar((pCircuit_V[0].Mag() / V_base), m34, b34) * p_rated);
 					} else if (V4 < (pCircuit_V[0].Mag() / V_base)) {
-						power_A.SetImag(Q4 * p_rated);
+						power_val[0].SetImag(Q4 * p_rated);
 					}
-					if (last_power[0].Im() != power_A.Im()) {
+					if (last_power[0].Im() != power_val[0].Im()) {
 						vv_operation = true;
 					}
 				}
 				if ((phases & 0x02) == 0x02) {
 					if((pCircuit_V[1].Mag() / V_base) <= V1) {
-						power_B.SetImag(Q1 * p_rated);
+						power_val[1].SetImag(Q1 * p_rated);
 					} else if ((pCircuit_V[1].Mag() / V_base) <= V2 && V1 < (pCircuit_V[1].Mag() / V_base)) {
-						power_B.SetImag(getVar((pCircuit_V[1].Mag() / V_base), m12, b12) * p_rated);
+						power_val[1].SetImag(getVar((pCircuit_V[1].Mag() / V_base), m12, b12) * p_rated);
 					} else if ((pCircuit_V[1].Mag() / V_base) <= V3 && V2 < (pCircuit_V[1].Mag() / V_base)) {
-						power_B.SetImag(getVar((pCircuit_V[1].Mag() / V_base), m23, b23) * p_rated);
+						power_val[1].SetImag(getVar((pCircuit_V[1].Mag() / V_base), m23, b23) * p_rated);
 					} else if ((pCircuit_V[1].Mag() / V_base) <= V4 && V3 < (pCircuit_V[1].Mag() / V_base)) {
-						power_B.SetImag(getVar((pCircuit_V[1].Mag() / V_base), m34, b34) * p_rated);
+						power_val[1].SetImag(getVar((pCircuit_V[1].Mag() / V_base), m34, b34) * p_rated);
 					} else if (V4 < (pCircuit_V[1].Mag() / V_base)) {
-						power_B.SetImag(Q4 * p_rated);
+						power_val[1].SetImag(Q4 * p_rated);
 					}
-					if (last_power[1].Im() != power_B.Im()) {
+					if (last_power[1].Im() != power_val[1].Im()) {
 						vv_operation = true;
 					}
 				}
 				if ((phases & 0x04) == 0x04) {
 					if((pCircuit_V[2].Mag() / V_base) <= V1) {
-						power_C.SetImag(Q1 * p_rated);
+						power_val[2].SetImag(Q1 * p_rated);
 					} else if ((pCircuit_V[2].Mag() / V_base) <= V2 && V1 < (pCircuit_V[2].Mag() / V_base)) {
-						power_C.SetImag(getVar((pCircuit_V[2].Mag() / V_base), m12, b12) * p_rated);
+						power_val[2].SetImag(getVar((pCircuit_V[2].Mag() / V_base), m12, b12) * p_rated);
 					} else if ((pCircuit_V[2].Mag() / V_base) <= V3 && V2 < (pCircuit_V[2].Mag() / V_base)) {
-						power_C.SetImag(getVar((pCircuit_V[2].Mag() / V_base), m23, b23) * p_rated);
+						power_val[2].SetImag(getVar((pCircuit_V[2].Mag() / V_base), m23, b23) * p_rated);
 					} else if ((pCircuit_V[2].Mag() / V_base) <= V4 && V3 < (pCircuit_V[2].Mag() / V_base)) {
-						power_C.SetImag(getVar((pCircuit_V[2].Mag() / V_base), m34, b34) * p_rated);
+						power_val[2].SetImag(getVar((pCircuit_V[2].Mag() / V_base), m34, b34) * p_rated);
 					} else if (V4 < (pCircuit_V[2].Mag() / V_base)) {
-						power_C.SetImag(Q4 * p_rated);
+						power_val[2].SetImag(Q4 * p_rated);
 					}
-					if (last_power[2].Im() != power_C.Im()) {
+					if (last_power[2].Im() != power_val[2].Im()) {
 						vv_operation = true;
 					}
 				}
@@ -4863,7 +4861,6 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 	bool ramp_change;
 	int i;
 	complex temp_current_val[3];
-	complex power_val[3];
 	double inputPower;
 
 	SIMULATIONMODE simmode_return_value = SM_EVENT;
@@ -6634,9 +6631,6 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 STATUS inverter::post_deltaupdate(complex *useful_value, unsigned int mode_pass)
 {
-	complex temp_current_val[3];
-	complex power_val[3];
-
 	if (inverter_dyn_mode == PI_CONTROLLER)
 	{
 		if (four_quadrant_control_mode != FQM_VSI) {
@@ -6683,7 +6677,6 @@ STATUS inverter::init_PI_dynamics(INV_STATE *curr_time)
 {
 	complex prev_Idq[3];
 	complex temp_current_val[3];
-	complex power_val[3];
 
 	if (four_quadrant_control_mode != FQM_VSI)
 	{
@@ -7957,7 +7950,6 @@ double inverter::getVar(double volt, double m, double b)
 STATUS inverter::updateCurrInjection()
 {
 	complex temp_current_val[3];
-	complex power_val[3];
 	double power_diff_val;
 	bool ramp_change;
 	double deltat, temp_time;

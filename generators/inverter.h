@@ -221,9 +221,7 @@ public:
 	complex phaseA_I_Out;      // current
 	complex phaseB_I_Out;
 	complex phaseC_I_Out;
-	complex power_A;//power
-	complex power_B;
-	complex power_C;
+	complex power_val[3];	//power
 	complex p_clip_A;
 	complex p_clip_B;
 	complex p_clip_C;
