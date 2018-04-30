@@ -3653,7 +3653,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 					if (pCircuit_V[0].Mag() > 0.0)
 					{
-						I_Out[0] = ~(VA_Out / *pCircuit_V);
+						I_Out[0] = ~(power_val[0] / *pCircuit_V);
 					}
 					else
 					{
@@ -3667,7 +3667,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						pPower[0] += last_power[0];
 						if (pCircuit_V[0].Mag() > 0.0)
 						{
-							I_Out[0] = ~(VA_Out / *pCircuit_V);
+							I_Out[0] = ~(power_val[0] / pCircuit_V[0]);
 						}
 						else
 						{
@@ -3678,9 +3678,9 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						p_in += power_val[1].Re()/inv_eta;
 						last_power[1] = -power_val[1];
 						pPower[1] += last_power[1];
-						if (pCircuit_V[0].Mag() > 0.0)	//This looks wrong, but it is right, since pCircuit_V is directly to the voltage
+						if (pCircuit_V[1].Mag() > 0.0)
 						{
-							I_Out[1] = ~(VA_Out / *pCircuit_V);
+							I_Out[1] = ~(power_val[1] / pCircuit_V[1]);
 						}
 						else
 						{
@@ -3691,9 +3691,9 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						p_in += power_val[2].Re()/inv_eta;
 						last_power[2] = -power_val[2];
 						pPower[2] += last_power[2];
-						if (pCircuit_V[0].Mag() > 0.0)	//This looks wrong, but it is right, since pCircuit_V is directly to the voltage
+						if (pCircuit_V[2].Mag() > 0.0)
 						{
-							I_Out[2] = ~(VA_Out / *pCircuit_V);
+							I_Out[2] = ~(power_val[2] / pCircuit_V[2]);
 						}
 						else
 						{
