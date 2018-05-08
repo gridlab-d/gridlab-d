@@ -5,6 +5,8 @@
 #ifndef _MEMORY_H
 #define _MEMORY_H
 
+#include "globals.h"
+
 struct player;
 struct shaper;
 struct recorder;

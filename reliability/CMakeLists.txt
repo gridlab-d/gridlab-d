@@ -4,20 +4,20 @@ set(CMAKE_CXX_STANDARD 11)
 
 include_directories(../gldcore)
 
-add_library(reliability SHARED
-        eventgen.cpp
-        eventgen.h
-        init.cpp
-        main.cpp
-        metrics.cpp
-        metrics.h
-        reliability.h
+add_library(${PROJECT_NAME} SHARED
+        reliability/eventgen.cpp
+        reliability/eventgen.h
+        reliability/init.cpp
+        reliability/main.cpp
+        reliability/metrics.cpp
+        reliability/metrics.h
+        reliability/reliability.h
 )
 
-set_target_properties(reliability
+set_target_properties(${PROJECT_NAME}
         PROPERTIES PREFIX ""
         )
 
-install(TARGETS reliability
-        LIBRARY DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
-        )
+#install(TARGETS ${PROJECT_NAME}
+#        LIBRARY DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
+#        )

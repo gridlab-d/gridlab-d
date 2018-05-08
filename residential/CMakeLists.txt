@@ -4,59 +4,59 @@ set(CMAKE_CXX_STANDARD 11)
 
 include_directories(../gldcore)
 
-add_library(residential SHARED
-        appliance.cpp
-        appliance.h
-        clotheswasher.cpp
-        clotheswasher.h
-        dishwasher.cpp
-        dishwasher.h
-        dryer.cpp
-        dryer.h
-        elcap1990.h
-        elcap2010.h
-        evcharger.cpp
-        evcharger.h
-        evcharger_det.cpp
-        evcharger_det.h
-        freezer.cpp
-        freezer.h
-        house_a.cpp
-        house_a.h
-        house_e.cpp
-        house_e.h
-        init.cpp
-        lights.cpp
-        lights.h
-        main.cpp
-        microwave.cpp
-        microwave.h
-        occupantload.cpp
-        occupantload.h
-        plugload.cpp
-        plugload.h
-        range.cpp
-        range.h
-        rbsa2014.h
-        refrigerator.cpp
-        refrigerator.h
-        residential.h
-        residential_enduse.cpp
-        residential_enduse.h
-        solvers.cpp
-        solvers.h
-        thermal_storage.cpp
-        thermal_storage.h
-        waterheater.cpp
-        waterheater.h
-        zipload.cpp
-        zipload.h
+add_library(${PROJECT_NAME} SHARED
+        residential/appliance.cpp
+        residential/appliance.h
+        residential/clotheswasher.cpp
+        residential/clotheswasher.h
+        residential/dishwasher.cpp
+        residential/dishwasher.h
+        residential/dryer.cpp
+        residential/dryer.h
+        residential/elcap1990.h
+        residential/elcap2010.h
+        residential/evcharger.cpp
+        residential/evcharger.h
+        residential/evcharger_det.cpp
+        residential/evcharger_det.h
+        residential/freezer.cpp
+        residential/freezer.h
+        residential/house_a.cpp
+        residential/house_a.h
+        residential/house_e.cpp
+        residential/house_e.h
+        residential/init.cpp
+        residential/lights.cpp
+        residential/lights.h
+        residential/main.cpp
+        residential/microwave.cpp
+        residential/microwave.h
+        residential/occupantload.cpp
+        residential/occupantload.h
+        residential/plugload.cpp
+        residential/plugload.h
+        residential/range.cpp
+        residential/range.h
+        residential/rbsa2014.h
+        residential/refrigerator.cpp
+        residential/refrigerator.h
+        residential/residential.h
+        residential/residential_enduse.cpp
+        residential/residential_enduse.h
+        residential/solvers.cpp
+        residential/solvers.h
+        residential/thermal_storage.cpp
+        residential/thermal_storage.h
+        residential/waterheater.cpp
+        residential/waterheater.h
+        residential/zipload.cpp
+        residential/zipload.h
 )
 
-set_target_properties(residential
+set_target_properties(${PROJECT_NAME}
         PROPERTIES PREFIX ""
         )
 
-install(TARGETS residential
-        LIBRARY DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
-        )
+#install(TARGETS ${PROJECT_NAME}
+#        LIBRARY DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
+#        )

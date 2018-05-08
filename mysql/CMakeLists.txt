@@ -4,23 +4,23 @@ set(CMAKE_CXX_STANDARD 11)
 
 include_directories(../gldcore)
 
-add_library(mysql SHARED
-        collector.cpp
-        collector.h
-        database.cpp
-        database.h
-        init.cpp
-        main.cpp
-        player.cpp
-        player.h
-        recorder.cpp
-        recorder.h
+add_library(${PROJECT_NAME} SHARED
+        mysql/collector.cpp
+        mysql/collector.h
+        mysql/database.cpp
+        mysql/database.h
+        mysql/init.cpp
+        mysql/main.cpp
+        mysql/player.cpp
+        mysql/player.h
+        mysql/recorder.cpp
+        mysql/recorder.h
 )
 
-set_target_properties(mysql
+set_target_properties(${PROJECT_NAME}
         PROPERTIES PREFIX ""
         )
 
-install(TARGETS mysql
-        LIBRARY DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
-        )
+#install(TARGETS ${PROJECT_NAME}
+#        LIBRARY DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
+#        )

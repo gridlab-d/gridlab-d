@@ -4,15 +4,15 @@ set(CMAKE_CXX_STANDARD 11)
 
 include_directories(../gldcore)
 
-add_library(tape_file SHARED
-        tape_file.cpp
-        tape_file.h
+add_library(${PROJECT_NAME} SHARED
+        tape_file/tape_file.cpp
+        tape_file/tape_file.h
 )
 
-set_target_properties(tape_file
+set_target_properties(${PROJECT_NAME}
         PROPERTIES PREFIX ""
         )
 
-install(TARGETS tape_file
-        LIBRARY DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
-        )
+#install(TARGETS ${PROJECT_NAME}
+#        LIBRARY DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
+#        )

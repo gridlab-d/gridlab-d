@@ -4,41 +4,41 @@ set(CMAKE_CXX_STANDARD 11)
 
 include_directories(../gldcore)
 
-add_library(tape SHARED
-        collector.c
-        file.c
-        file.h
-        group_recorder.cpp
-        group_recorder.h
-        histogram.cpp
-        histogram.h
-        loadshape.cpp
-        loadshape.h
-        main.cpp
-        memory.c
-        memory.h
-        metrics_collector.cpp
-        metrics_collector.h
-        metrics_collector_writer.cpp
-        metrics_collector_writer.h
-        multi_recorder.c
-        odbc.c
-        odbc.h
-        player.c
-        recorder.c
-        schedule.cpp
-        schedule.h
-        shaper.c
-        tape.c
-        tape.h
-        violation_recorder.cpp
-        violation_recorder.h
+add_library(${PROJECT_NAME} SHARED
+        tape/collector.c
+        tape/file.c
+        tape/file.h
+        tape/group_recorder.cpp
+        tape/group_recorder.h
+        tape/histogram.cpp
+        tape/histogram.h
+        tape/loadshape.cpp
+        tape/loadshape.h
+        tape/main.cpp
+        tape/memory.c
+        tape/memory.h
+        tape/metrics_collector.cpp
+        tape/metrics_collector.h
+        tape/metrics_collector_writer.cpp
+        tape/metrics_collector_writer.h
+        tape/multi_recorder.c
+        tape/odbc.c
+        tape/odbc.h
+        tape/player.c
+        tape/recorder.c
+        tape/schedule.cpp
+        tape/schedule.h
+        tape/shaper.c
+        tape/tape.c
+        tape/tape.h
+        tape/violation_recorder.cpp
+        tape/violation_recorder.h
         )
 
-set_target_properties(tape
+set_target_properties(${PROJECT_NAME}
         PROPERTIES PREFIX ""
         )
 
-install(TARGETS tape
-        LIBRARY DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
-        )
+#install(TARGETS ${PROJECT_NAME}
+#        LIBRARY DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
+#        )

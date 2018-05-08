@@ -4,23 +4,23 @@ set(CMAKE_CXX_STANDARD 11)
 
 include_directories(../gldcore)
 
-add_library(commercial SHARED
-        hvac.cpp
-        hvac.h
-        init.cpp
-        main.cpp
-        multizone.cpp
-        multizone.h
-        office.cpp
-        office.h
-        solvers.cpp
-        solvers.h
+add_library(${PROJECT_NAME} SHARED
+        commercial/hvac.cpp
+        commercial/hvac.h
+        commercial/init.cpp
+        commercial/main.cpp
+        commercial/multizone.cpp
+        commercial/multizone.h
+        commercial/office.cpp
+        commercial/office.h
+        commercial/solvers.cpp
+        commercial/solvers.h
         )
 
-set_target_properties(commercial
+set_target_properties(${PROJECT_NAME}
         PROPERTIES PREFIX ""
         )
 
-install(TARGETS commercial
-        LIBRARY DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
-        )
+#install(TARGETS ${PROJECT_NAME}
+#LIBRARY DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
+#        )

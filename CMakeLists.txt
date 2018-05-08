@@ -45,27 +45,46 @@ include_directories(gldcore/link/engine)
 include_directories(gldcore/solvers)
 include_directories(gldcore)
 
-SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/install64/lib)
+#SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/install64/lib)
+
+
+
+##add_subdirectory(third_party/superLU_MT)
+##add_subdirectory(third_party/jsonCpp)
+#add_subdirectory(assert)
+#add_subdirectory(climate)
+#add_subdirectory(commercial)
+#add_subdirectory(connection)
+##add_subdirectory(gldcore/link/engine)
+##add_subdirectory(gldcore/solvers)
+#add_subdirectory(generators)
+#add_subdirectory(market)
+#add_subdirectory(mysql)
+#add_subdirectory(optimize)
+#add_subdirectory(powerflow)
+#add_subdirectory(reliability)
+#add_subdirectory(residential)
+#add_subdirectory(tape_file)
+#add_subdirectory(tape)
+#add_subdirectory(tape_plot)
+##add_subdirectory(gldcore)
 
 #add_subdirectory(third_party/superLU_MT)
 #add_subdirectory(third_party/jsonCpp)
-add_subdirectory(assert)
-add_subdirectory(climate)
-add_subdirectory(commercial)
-add_subdirectory(connection)
-#add_subdirectory(gldcore/link/engine)
-#add_subdirectory(gldcore/solvers)
-add_subdirectory(generators)
-add_subdirectory(market)
-add_subdirectory(mysql)
-add_subdirectory(optimize)
-add_subdirectory(powerflow)
-add_subdirectory(reliability)
-add_subdirectory(residential)
-add_subdirectory(tape_file)
-add_subdirectory(tape)
-add_subdirectory(tape_plot)
-#add_subdirectory(gldcore)
+include(assert/CMakeLists.txt)
+include(climate/CMakeLists.txt)
+include(commercial/CMakeLists.txt)
+include(connection/CMakeLists.txt)
+include(generators/CMakeLists.txt)
+include(market/CMakeLists.txt)
+include(mysql/CMakeLists.txt)
+include(optimize/CMakeLists.txt)
+include(powerflow/CMakeLists.txt)
+include(reliability/CMakeLists.txt)
+include(residential/CMakeLists.txt)
+include(tape_file/CMakeLists.txt)
+include(tape/CMakeLists.txt)
+include(tape_plot/CMakeLists.txt)
 
 
 # Load and link C/C++ files for the executeable
@@ -249,8 +268,7 @@ target_link_libraries(gridlabd ${CURSES_LIBRARIES})
 #find_library()
 
 
-install(TARGETS gridlabd
+install(TARGETS gridlabd assert climate commercial connection generators market mysql optimize powerflow reliability tape tape_file tape_plot
         RUNTIME DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/bin
-        LIBRARY DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/lib
-        ARCHIVE DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/lib/static)
-#install(TARGETS gridlabd_assert DESTINATION /some/full/path)
+        LIBRARY DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/lib/gridlabd
+        PUBLIC_HEADER DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/include/gridlabd)

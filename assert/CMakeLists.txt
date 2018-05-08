@@ -4,25 +4,25 @@ set(CMAKE_CXX_STANDARD 11)
 
 include_directories(../gldcore)
 
-add_library(assert SHARED
-        assert.cpp
-        assert.h
-        complex_assert.cpp
-        complex_assert.h
-        double_assert.cpp
-        double_assert.h
-        enum_assert.cpp
-        enum_assert.h
-        init.cpp
-        int_assert.cpp
-        int_assert.h
-        main.cpp
+add_library(${PROJECT_NAME} SHARED
+        assert/assert.cpp
+        assert/assert.h
+        assert/complex_assert.cpp
+        assert/complex_assert.h
+        assert/double_assert.cpp
+        assert/double_assert.h
+        assert/enum_assert.cpp
+        assert/enum_assert.h
+        assert/init.cpp
+        assert/int_assert.cpp
+        assert/int_assert.h
+        assert/main.cpp
         )
 
-set_target_properties(assert
+set_target_properties(${PROJECT_NAME}
         PROPERTIES PREFIX ""
         )
 
-install(TARGETS assert
-        LIBRARY DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
-        )
+#install(TARGETS ${PROJECT_NAME}
+#LIBRARY DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
+#        )

@@ -4,36 +4,36 @@ set(CMAKE_CXX_STANDARD 11)
 
 include_directories(../gldcore)
 
-add_library(connection SHARED
-        init.cpp
-        jsmn.c
-        jsmn.h
-        json.cpp
-        json.h
-        main.cpp
-        message.h
-        native.cpp
-        native.h
-        server.cpp
-        server.h
-        socket.cpp
-        socket.h
-        tcp.cpp
-        tcp.h
-        transport.cpp
-        transport.h
-        udp.cpp
-        udp.h
-        varmap.cpp
-        varmap.h
-        xml.cpp
-        xml.h
+add_library(${PROJECT_NAME} SHARED
+        connection/init.cpp
+        connection/jsmn.c
+        connection/jsmn.h
+        connection/json.cpp
+        connection/json.h
+        connection/main.cpp
+        connection/message.h
+        connection/native.cpp
+        connection/native.h
+        connection/server.cpp
+        connection/server.h
+        connection/socket.cpp
+        connection/socket.h
+        connection/tcp.cpp
+        connection/tcp.h
+        connection/transport.cpp
+        connection/transport.h
+        connection/udp.cpp
+        connection/udp.h
+        connection/varmap.cpp
+        connection/varmap.h
+        connection/xml.cpp
+        connection/xml.h
         )
 
-set_target_properties(connection
+set_target_properties(${PROJECT_NAME}
         PROPERTIES PREFIX ""
         )
 
-install(TARGETS connection
-        LIBRARY DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
-        )
+#install(TARGETS ${PROJECT_NAME}
+#        LIBRARY DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
+#        )
