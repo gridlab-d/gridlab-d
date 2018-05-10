@@ -92,6 +92,12 @@ int group_recorder::create(void) {
 int group_recorder::init(OBJECT *obj) {
 	OBJECT *gr_obj = 0;
 
+	if (get_table()[0] == '\0')
+			{
+		gl_error("Both 'table' and 'file' fields are empty. Database target is unknown.");
+		return 0;
+	}
+
 	// check the connection
 	group_recorder_connection = new query_engine(
 			get_connection() != NULL ? (database*) (get_connection() + 1) : db, query_buffer_limit, column_limit);
