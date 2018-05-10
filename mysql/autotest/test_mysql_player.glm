@@ -10,6 +10,11 @@
 //
 // In addition, this test verifies the on_init
 //
+//
+// NOTE: This functionality requires the "local_infile" global to be set, otherwise
+// you may get an error about the command not being allowed in this version of MySQL.
+// In the MySQL server command line:
+// mysql> SET GLOBAL local_infile = 'ON';
 
 #ifdef MYSQL
 
