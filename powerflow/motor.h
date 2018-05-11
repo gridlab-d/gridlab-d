@@ -6,6 +6,7 @@
 
 #include "node.h"
 
+
 EXPORT SIMULATIONMODE interupdate_motor(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
 class motor : public node
@@ -33,20 +34,25 @@ private:
 	void SPIMUpdateMotorStatus(); // function to update the status of the motor
 	void SPIMStateOFF(); // function to ensure that internal model states are zeros when the motor is OFF
 	void SPIMreinitializeVars(); // function to reinitialize values for the motor model
-	void SPIMUpdateProtection(double delta_time); // function to update the protection of the motor
 	void SPIMSteadyState(TIMESTAMP t1); // steady state model for the SPIM motor
 	void SPIMDynamic(double curr_delta_time, double dTime); // dynamic phasor model for the SPIM motor
 	complex complex_exp(double angle);
 	int invertMatrix(complex TF[16], complex ITF[16]);
+
+	void UpdateProtection(double delta_time); // function to update the protection of both SPIM and TPIM motor
 
 	//TPIM functions
 	void TPIMupdateVars(); // function to update the previous values for the motor model
 	void TPIMUpdateMotorStatus(); // function to update the status of the motor
 	void TPIMStateOFF(); // function to ensure that internal model states are zeros when the motor is OFF
 	void TPIMreinitializeVars(); // function to reinitialize values for the motor model
-	void TPIMUpdateProtection(double delta_time); // function to update the protection of the motor
+//	void TPIMUpdateProtection(double delta_time); // function to update the protection of the motor
 	void TPIMSteadyState(TIMESTAMP t1); // steady state model for the TPIM motor
 	void TPIMDynamic(double curr_delta_time, double dTime); // dynamic phasor model for the TPIM motor
+
+	// Protection functions
+	void motorCheckTrip(double delta_time, double_array* motorProtection, double* timerList, bool& tripStatus); // function to check the trip status under each protection
+	void motorCheckReconnect(double delta_time, double_array* motorProtection, double& reconnectTimer, bool& reconnectStatus); // function to check the reconnect status under each protection
 
 	double delta_cycle;
 	double Pbase;
@@ -207,6 +213,66 @@ private:
 	complex Ins_cj_prev;
 	complex Inr_cj_prev;
 
+	// Protection parameters
+
+public:
+
+	// double array defining trip volt and time to be entered by users
+	GL_STRUCT(double_array,relayProtectionTrip); // Volt-time curve of electronic relay protection (Protection 1)
+	GL_STRUCT(double_array,overLoadProtectionTrip); // Volt-time curve of over load protection (Protection 2)
+	GL_STRUCT(double_array,thermalProtectionTrip); // Volt-time curve of thermal protection (Protection 3)
+	GL_STRUCT(double_array,contactorProtectionTrip); // Volt-time curve of contactor protection (Protection 4)
+	GL_STRUCT(double_array,emsProtectionTrip); // Volt-time curve of EMS protection (Protection 5)
+
+	// double array defining reconnect volt and time to be entered by users
+	GL_STRUCT(double_array,relayProtectionReconnect); // Volt-time curve of electronic relay protection
+	GL_STRUCT(double_array,contactorProtectionReconnect); // Volt-time curve of contactor protection
+	GL_STRUCT(double_array,emsProtectionReconnect); // Volt-time curve of EMS protection
+
+private:
+	// Array of timer to determine whether has arrived at tripping time
+	double *relayTimerList;
+	double *overLoadTimerList;
+	double *thermalTimerList;
+	double *contactorTimerList;
+	double *emsTimerList;
+
+	// Array of previous timer to record the values in last cycle, incase duplicated additions to timer at the same cycle
+	double *relayTimerList_prev;
+	double *overLoadTimerList_prev;
+	double *thermalTimerList_prev;
+	double *contactorTimerList_prev;
+	double *emsTimerList_prev;
+
+	// Reconnect timer to determine whether has arrived at reconnection time
+	double relayTimerReconnect;
+	double contactorTimerReconnect;
+	double emsTimerReconnect;
+
+	// Reconnect timer to record the values in last cycle, incase duplicated additions to timer at the same cycle
+	double relayTimerReconnect_prev;
+	double contactorTimerReconnect_prev;
+	double emsTimerReconnect_prev;
+
+	// boolean flag indicating the protection type is adopted or not
+	bool hasRelayProtection;
+	bool hasOverLoadProtection;
+	bool hasThermalProtection;
+	bool hasContactorProtection;
+	bool hasEMSProtection;
+
+	// boolean flag indicating the protection has determined to trip or not
+	bool relayTrip;
+	bool overLoadTrip;
+	bool thermalTrip;
+	bool contactorTrip;
+	bool emsTrip;
+
+	// boolean flag indicating the protection type has determined to reconnect or not
+	bool relayReconnect;
+	bool contactorReconnect;
+	bool emsReconnect;
+
 public:
 	int create(void);
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
@@ -219,6 +285,7 @@ public:
 	int isa(char *classname);
 	static CLASS *pclass;
 	static CLASS *oclass;
+	static motor *defaults;
 };
 
 #endif

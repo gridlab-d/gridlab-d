@@ -142,6 +142,16 @@ motor::motor(MODULE *mod):node(mod)
 			PT_double, "sigma1", PADDR(sigma1),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"intermediate variable 1 associated with synch. react.",
 			PT_double, "sigma2", PADDR(sigma2),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"intermediate variable 2 associated with synch. react.",
 
+			PT_double_array, "relayProtectionTrip",get_relayProtectionTrip_offset(),
+			PT_double_array, "overLoadProtectionTrip",get_overLoadProtectionTrip_offset(),
+			PT_double_array, "thermalProtectionTrip",get_thermalProtectionTrip_offset(),
+			PT_double_array, "contactorProtectionTrip",get_contactorProtectionTrip_offset(),
+			PT_double_array, "emsProtectionTrip",get_emsProtectionTrip_offset(),
+
+			PT_double_array, "relayProtectionReconnect",get_relayProtectionReconnect_offset(),
+			PT_double_array, "contactorProtectionReconnect",get_contactorProtectionReconnect_offset(),
+			PT_double_array, "emsProtectionReconnect",get_emsProtectionReconnect_offset(),
+
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Publish deltamode functions
@@ -266,11 +276,30 @@ int motor::create()
 	triplex_connected = false;	//By default, not connected to triplex
 	triplex_connection_type = TPNconnected12;	//If it does end up being triplex, we default it to L1-L2
 
+	// Initialization of protection parameters
+	hasRelayProtection = false;
+	hasOverLoadProtection = false;
+	hasThermalProtection = false;
+	hasContactorProtection = false;
+	hasEMSProtection = false;
+
+	relayTrip = false;
+	overLoadTrip = false;
+	thermalTrip = false;
+	contactorTrip = false;
+	emsTrip = false;
+
+	relayReconnect = false;
+	contactorReconnect = false;
+	emsReconnect = false;
+
 	return result;
 }
 
 int motor::init(OBJECT *parent)
 {
+	unsigned int rowNum;
+	unsigned int colNum;
 
 	OBJECT *obj = OBJECTHDR(this);
 	int result = node::init(parent);
@@ -506,6 +535,243 @@ int motor::init(OBJECT *parent)
         GL_THROW("motor:%s -- uv_relay_trip_V must be greater than or equal to 0 and less than or equal to 1",(obj->name ? obj->name : "Unnamed"));
     }
 
+    // Protection initialization
+    // Check size of each protection type
+    // Realy protection
+	rowNum = relayProtectionTrip.get_rows();
+	colNum = relayProtectionTrip.get_cols();
+    if (rowNum != 2 && rowNum != 0){
+        GL_THROW("motor:%s -- Volt-time curve of relay protection must have 2 rows, one is for voltage, one is for time",(obj->name ? obj->name : "Unnamed"));
+    }
+    if (colNum > 1 ){
+        GL_THROW("motor:%s -- Volt-time curve of relay protection must have only one volt-time point",(obj->name ? obj->name : "Unnamed"));
+    }
+    if (colNum > 0) {
+    	//Check to see if we're allocated first
+		if (relayTimerList == NULL)
+		{
+			//Allocate it - one for each bus
+			relayTimerList = (double *)gl_malloc(colNum*sizeof(double));
+			relayTimerList_prev = (double *)gl_malloc(colNum*sizeof(double));
+
+			//Check to see if it worked
+			if (relayTimerList == NULL || relayTimerList_prev == NULL)
+			{
+				GL_THROW("motor:%s: failed to allocate array for tracking relay trip timers", (obj->name ? obj->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				While attempting to allocate an array used to track relay trip timers,
+				an error occurred.  Please try again.  If the error persists, please submit your code and a bug
+				report via the ticketing system.
+				*/
+			}
+		}
+
+		//Zero it
+		for (int i = 0; i < colNum; i++)
+		{
+			relayTimerList[i] = 0.0;	// Starts with 0 timer
+			relayTimerList_prev[i] = 0.0;
+		}
+
+    	hasRelayProtection = true;
+    }
+
+    // Over load protection
+	rowNum = overLoadProtectionTrip.get_rows();
+	colNum = overLoadProtectionTrip.get_cols();
+    if (rowNum != 2 && rowNum != 0){
+        GL_THROW("motor:%s -- Volt-time curve of over load protection must have 2 rows, one is for voltage, one is for time",(obj->name ? obj->name : "Unnamed"));
+    }
+    if (colNum > 0) {
+    	//Check to see if we're allocated first
+		if (overLoadTimerList == NULL)
+		{
+			//Allocate it - one for each bus
+			overLoadTimerList = (double *)gl_malloc(colNum*sizeof(double));
+			overLoadTimerList_prev = (double *)gl_malloc(colNum*sizeof(double));
+
+			//Check to see if it worked
+			if (overLoadTimerList == NULL || overLoadTimerList_prev == NULL)
+			{
+				GL_THROW("motor:%s: failed to allocate array for tracking relay trip timers", (obj->name ? obj->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				While attempting to allocate an array used to track relay trip timers,
+				an error occurred.  Please try again.  If the error persists, please submit your code and a bug
+				report via the ticketing system.
+				*/
+			}
+		}
+
+		//Zero it
+		for (int i = 0; i < colNum; i++)
+		{
+			overLoadTimerList[i] = 0.0;	// Starts with 0 timer
+			overLoadTimerList_prev[i] = 0.0;
+		}
+
+    	hasOverLoadProtection= true;
+    }
+
+    // Thermal protection
+	rowNum = thermalProtectionTrip.get_rows();
+	colNum = thermalProtectionTrip.get_cols();
+    if (rowNum != 2 && rowNum != 0){
+        GL_THROW("motor:%s -- Volt-time curve of thermal protection must have 2 rows, one is for voltage, one is for time",(obj->name ? obj->name : "Unnamed"));
+    }
+    if (colNum > 0) {
+    	//Check to see if we're allocated first
+		if (thermalTimerList == NULL)
+		{
+			//Allocate it - one for each bus
+			thermalTimerList = (double *)gl_malloc(colNum*sizeof(double));
+			thermalTimerList_prev = (double *)gl_malloc(colNum*sizeof(double));
+
+			//Check to see if it worked
+			if (thermalTimerList == NULL || thermalTimerList_prev == NULL)
+			{
+				GL_THROW("motor:%s: failed to allocate array for tracking relay trip timers", (obj->name ? obj->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				While attempting to allocate an array used to track relay trip timers,
+				an error occurred.  Please try again.  If the error persists, please submit your code and a bug
+				report via the ticketing system.
+				*/
+			}
+		}
+
+		//Zero it
+		for (int i = 0; i < colNum; i++)
+		{
+			thermalTimerList[i] = 0.0;	// Starts with 0 timer
+			thermalTimerList_prev[i] = 0.0;
+		}
+
+    	hasThermalProtection = true;
+    }
+
+    // Contactor protection
+	rowNum = contactorProtectionTrip.get_rows();
+	colNum = contactorProtectionTrip.get_cols();
+    if (rowNum != 2 && rowNum != 0){
+        GL_THROW("motor:%s -- Volt-time curve of contactor protection must have 2 rows, one is for voltage, one is for time",(obj->name ? obj->name : "Unnamed"));
+    }
+    if (colNum > 1 ){
+        GL_THROW("motor:%s -- Volt-time curve of contactor protection must have only one volt-time point",(obj->name ? obj->name : "Unnamed"));
+    }
+    if (colNum > 0) {
+    	//Check to see if we're allocated first
+		if (contactorTimerList == NULL)
+		{
+			//Allocate it - one for each bus
+			contactorTimerList = (double *)gl_malloc(colNum*sizeof(double));
+			contactorTimerList_prev = (double *)gl_malloc(colNum*sizeof(double));
+
+			//Check to see if it worked
+			if (contactorTimerList == NULL || contactorTimerList_prev == NULL)
+			{
+				GL_THROW("motor:%s: failed to allocate array for tracking relay trip timers", (obj->name ? obj->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				While attempting to allocate an array used to track relay trip timers,
+				an error occurred.  Please try again.  If the error persists, please submit your code and a bug
+				report via the ticketing system.
+				*/
+			}
+		}
+
+		//Zero it
+		for (int i = 0; i < colNum; i++)
+		{
+			contactorTimerList[i] = 0.0;	// Starts with 0 timer
+			contactorTimerList_prev[i] = 0.0;
+		}
+
+    	hasContactorProtection = true;
+    }
+
+    // EMS protection
+	rowNum = emsProtectionTrip.get_rows();
+	colNum = emsProtectionTrip.get_cols();
+    if (rowNum != 2 && rowNum != 0){
+        GL_THROW("motor:%s -- Volt-time curve of EMS protection must have 2 rows, one is for voltage, one is for time",(obj->name ? obj->name : "Unnamed"));
+    }
+    if (colNum > 0) {
+    	//Check to see if we're allocated first
+		if (emsTimerList == NULL)
+		{
+			//Allocate it - one for each bus
+			emsTimerList = (double *)gl_malloc(colNum*sizeof(double));
+			emsTimerList_prev = (double *)gl_malloc(colNum*sizeof(double));
+
+			//Check to see if it worked
+			if (emsTimerList == NULL || emsTimerList_prev == NULL)
+			{
+				GL_THROW("motor:%s: failed to allocate array for tracking relay trip timers", (obj->name ? obj->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				While attempting to allocate an array used to track relay trip timers,
+				an error occurred.  Please try again.  If the error persists, please submit your code and a bug
+				report via the ticketing system.
+				*/
+			}
+		}
+
+		//Zero it
+		for (int i = 0; i < colNum; i++)
+		{
+			emsTimerList[i] = 0.0;	// Starts with 0 timer
+			emsTimerList_prev[i] = 0.0;
+		}
+
+    	hasEMSProtection= true;
+    }
+
+    // Check each reconnection Volt-time curve entered by user
+    // Relay reconnection
+	rowNum = relayProtectionReconnect.get_rows();
+	colNum = relayProtectionReconnect.get_cols();
+    if (rowNum != 2 && rowNum != 0){
+        GL_THROW("motor:%s -- Volt-time curve of relay reconnection must have 2 rows, one is for voltage, one is for time",(obj->name ? obj->name : "Unnamed"));
+    }
+    if (colNum > 1){
+        GL_THROW("motor:%s -- Volt-time curve of relay reconnection must have only one volt-time point",(obj->name ? obj->name : "Unnamed"));
+    }
+    if (colNum == 1) {
+
+    	relayTimerReconnect = 0.0;
+    	relayTimerReconnect_prev = 0.0;
+
+    }
+
+    // Contactor reconnection
+	rowNum = contactorProtectionReconnect.get_rows();
+	colNum = contactorProtectionReconnect.get_cols();
+    if (rowNum != 2 && rowNum != 0){
+        GL_THROW("motor:%s -- Volt-time curve of contactor reconnection must have 2 rows, one is for voltage, one is for time",(obj->name ? obj->name : "Unnamed"));
+    }
+    if (colNum > 1){
+        GL_THROW("motor:%s -- Volt-time curve of contactor reconnection must have only one volt-time point",(obj->name ? obj->name : "Unnamed"));
+    }
+    if (colNum == 1) {
+
+    	contactorTimerReconnect = 0.0;
+    	contactorTimerReconnect_prev = 0.0;
+
+    }
+
+    // EMS reconnection
+	rowNum = emsProtectionReconnect.get_rows();
+	colNum = emsProtectionReconnect.get_cols();
+    if (rowNum != 2 && rowNum != 0){
+        GL_THROW("motor:%s -- Volt-time curve of EMS reconnection must have 2 rows, one is for voltage, one is for time",(obj->name ? obj->name : "Unnamed"));
+    }
+    if (colNum > 1){
+        GL_THROW("motor:%s -- Volt-time curve of EMS reconnection must have only one volt-time point",(obj->name ? obj->name : "Unnamed"));
+    }
+    if (colNum == 1) {
+
+    	emsTimerReconnect = 0.0;
+    	emsTimerReconnect_prev= 0.0;
+
+    }
+
 	return result;
 }
 
@@ -547,7 +813,7 @@ TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 
 		// update protection
-		SPIMUpdateProtection(delta_cycle);
+		UpdateProtection(delta_cycle);
 
 		if (motor_override == overrideON && ws > 1 && Vs.Mag() > 0.1 && motor_trip == 0) { // motor is currently connected and grid conditions are not "collapsed"
 			// run the steady state solver
@@ -619,7 +885,7 @@ TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 
 		// update protection
-		TPIMUpdateProtection(delta_cycle);
+		UpdateProtection(delta_cycle);
 
 		if (motor_override == overrideON && ws_pu > 0.1 &&  Vas.Mag() > 0.1 && Vbs.Mag() > 0.1 && Vcs.Mag() > 0.1 &&
 			motor_trip == 0) { // motor is currently connected and grid conditions are not "collapsed"
@@ -792,8 +1058,8 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 			}
 
 			// update protection
-			if (delta_time>0) {
-				SPIMUpdateProtection(deltaTime);
+			if (delta_time > 0) {
+				UpdateProtection(deltaTime);
 			}
 
 			if (motor_override == overrideON && ws > 1 && Vs.Mag() > 0.1 && motor_trip == 0) { // motor is currently connected and grid conditions are not "collapsed"
@@ -871,9 +1137,8 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 
 			// update protection
 			if (delta_time>0) {
-				TPIMUpdateProtection(deltaTime);
+				UpdateProtection(deltaTime);
 			}
-
 
 			if (motor_override == overrideON && ws_pu > 0.1 && Vas.Mag() > 0.1 && Vbs.Mag() > 0.1 && Vcs.Mag() > 0.1 &&
 					motor_trip == 0) { // motor is currently connected and grid conditions are not "collapsed"
@@ -1055,6 +1320,9 @@ void motor::updateFreqVolt() {
 
 // function to update the previous values for the motor model
 void motor::SPIMupdateVars() {
+
+	int colNum;
+
 	wr_prev = wr;
 	Telec_prev = Telec; 
 	psi_dr_prev = psi_dr;
@@ -1067,15 +1335,75 @@ void motor::SPIMupdateVars() {
 	Ib_prev = Ib;
 	Is_prev = Is;
 	motor_elec_power_prev = motor_elec_power;
+	psi_sat_prev = psi_sat;
+
 	reconnect_prev = reconnect;
 	motor_trip_prev = motor_trip;
 	trip_prev = trip;
-	psi_sat_prev = psi_sat;
+
+	// Update timer for protection
+	if (hasRelayProtection == true) {
+
+		colNum = relayProtectionTrip.get_cols();
+
+		for (int i = 0; i < colNum; i++)
+		{
+			relayTimerList_prev[i] = relayTimerList[i];
+		}
+
+	}
+	if (hasOverLoadProtection == true) {
+
+		colNum = overLoadProtectionTrip.get_cols();
+
+		for (int i = 0; i < colNum; i++)
+		{
+			overLoadTimerList_prev[i] = overLoadTimerList[i];
+		}
+	}
+	if (hasThermalProtection == true) {
+
+		colNum = thermalProtectionTrip.get_cols();
+
+		for (int i = 0; i < colNum; i++)
+		{
+			thermalTimerList_prev[i] = thermalTimerList[i];
+		}
+	}
+	if (hasContactorProtection == true) {
+
+		colNum = contactorProtectionTrip.get_cols();
+
+		for (int i = 0; i < colNum; i++)
+		{
+			contactorTimerList_prev[i] = contactorTimerList[i];
+		}
+
+	}
+	if (hasEMSProtection == true) {
+
+		colNum = emsProtectionTrip.get_cols();
+
+		for (int i = 0; i < colNum; i++)
+		{
+			emsTimerList_prev[i] = emsTimerList[i];
+		}
+
+	}
+
+	// Update reconnection timer
+	relayTimerReconnect_prev = relayTimerReconnect;
+	contactorTimerReconnect_prev = contactorTimerReconnect;
+	emsTimerReconnect_prev = emsTimerReconnect;
+
 }
 
 
 //TPIM state variable updates - transition them
 void motor::TPIMupdateVars() {
+
+	int colNum;
+
 	phips_prev = phips;
 	phins_cj_prev = phins_cj;
 	phipr_prev = phipr;
@@ -1090,10 +1418,68 @@ void motor::TPIMupdateVars() {
 	motor_trip_prev = motor_trip;
 	trip_prev = trip;
 
+	// Update timer for protection
+	if (hasRelayProtection == true) {
+
+		colNum = relayProtectionTrip.get_cols();
+
+		for (int i = 0; i < colNum; i++)
+		{
+			relayTimerList_prev[i] = relayTimerList[i];
+		}
+
+	}
+	if (hasOverLoadProtection == true) {
+
+		colNum = overLoadProtectionTrip.get_cols();
+
+		for (int i = 0; i < colNum; i++)
+		{
+			overLoadTimerList_prev[i] = overLoadTimerList[i];
+		}
+	}
+	if (hasThermalProtection == true) {
+
+		colNum = thermalProtectionTrip.get_cols();
+
+		for (int i = 0; i < colNum; i++)
+		{
+			thermalTimerList_prev[i] = thermalTimerList[i];
+		}
+	}
+	if (hasContactorProtection == true) {
+
+		colNum = contactorProtectionTrip.get_cols();
+
+		for (int i = 0; i < colNum; i++)
+		{
+			contactorTimerList_prev[i] = contactorTimerList[i];
+		}
+
+	}
+	if (hasEMSProtection == true) {
+
+		colNum = emsProtectionTrip.get_cols();
+
+		for (int i = 0; i < colNum; i++)
+		{
+			emsTimerList_prev[i] = emsTimerList[i];
+		}
+
+	}
+
+	// Update reconnection timer
+	relayTimerReconnect_prev = relayTimerReconnect;
+	contactorTimerReconnect_prev = contactorTimerReconnect;
+	emsTimerReconnect_prev = emsTimerReconnect;
+
 }
 
 // function to reinitialize values for the motor model
 void motor::SPIMreinitializeVars() {
+
+	int colNum;
+
 	wr = wr_prev;
 	Telec = Telec_prev; 
 	psi_dr = psi_dr_prev;
@@ -1106,14 +1492,73 @@ void motor::SPIMreinitializeVars() {
 	Ib = Ib_prev;
 	Is = Is_prev;
 	motor_elec_power = motor_elec_power_prev;
+	psi_sat = psi_sat_prev;
+
 	reconnect = reconnect_prev;
 	motor_trip = motor_trip_prev;
 	trip = trip_prev;
-	psi_sat = psi_sat_prev;
+
+	// Update timer for protection
+	if (hasRelayProtection == true) {
+
+		colNum = relayProtectionTrip.get_cols();
+
+		for (int i = 0; i < colNum; i++)
+		{
+			relayTimerList[i] = relayTimerList_prev[i];
+		}
+
+	}
+	if (hasOverLoadProtection == true) {
+
+		colNum = overLoadProtectionTrip.get_cols();
+
+		for (int i = 0; i < colNum; i++)
+		{
+			overLoadTimerList[i] = overLoadTimerList_prev[i];
+		}
+	}
+	if (hasThermalProtection == true) {
+
+		colNum = thermalProtectionTrip.get_cols();
+
+		for (int i = 0; i < colNum; i++)
+		{
+			thermalTimerList[i] = thermalTimerList_prev[i];
+		}
+	}
+	if (hasContactorProtection == true) {
+
+		colNum = contactorProtectionTrip.get_cols();
+
+		for (int i = 0; i < colNum; i++)
+		{
+			contactorTimerList[i] = contactorTimerList_prev[i];
+		}
+
+	}
+	if (hasEMSProtection == true) {
+
+		colNum = emsProtectionTrip.get_cols();
+
+		for (int i = 0; i < colNum; i++)
+		{
+			emsTimerList[i] = emsTimerList_prev[i];
+		}
+
+	}
+
+	// Update reconnection timer
+	relayTimerReconnect = relayTimerReconnect_prev;
+	contactorTimerReconnect = contactorTimerReconnect_prev;
+	emsTimerReconnect = emsTimerReconnect_prev;
 }
 
 //TPIM initalization routine
 void motor::TPIMreinitializeVars() {
+
+	int colNum;
+
 	phips = phips_prev;
 	phins_cj = phins_cj_prev;
 	phipr = phipr_prev;
@@ -1127,6 +1572,61 @@ void motor::TPIMreinitializeVars() {
 	reconnect = reconnect_prev;
 	motor_trip = motor_trip_prev;
 	trip = trip_prev;
+
+	// Update timer for protection
+	if (hasRelayProtection == true) {
+
+		colNum = relayProtectionTrip.get_cols();
+
+		for (int i = 0; i < colNum; i++)
+		{
+			relayTimerList[i] = relayTimerList_prev[i];
+		}
+
+	}
+	if (hasOverLoadProtection == true) {
+
+		colNum = overLoadProtectionTrip.get_cols();
+
+		for (int i = 0; i < colNum; i++)
+		{
+			overLoadTimerList[i] = overLoadTimerList_prev[i];
+		}
+	}
+	if (hasThermalProtection == true) {
+
+		colNum = thermalProtectionTrip.get_cols();
+
+		for (int i = 0; i < colNum; i++)
+		{
+			thermalTimerList[i] = thermalTimerList_prev[i];
+		}
+	}
+	if (hasContactorProtection == true) {
+
+		colNum = contactorProtectionTrip.get_cols();
+
+		for (int i = 0; i < colNum; i++)
+		{
+			contactorTimerList[i] = contactorTimerList_prev[i];
+		}
+
+	}
+	if (hasEMSProtection == true) {
+
+		colNum = emsProtectionTrip.get_cols();
+
+		for (int i = 0; i < colNum; i++)
+		{
+			emsTimerList[i] = emsTimerList_prev[i];
+		}
+
+	}
+
+	// Update reconnection timer
+	relayTimerReconnect = relayTimerReconnect_prev;
+	contactorTimerReconnect = contactorTimerReconnect_prev;
+	emsTimerReconnect = emsTimerReconnect_prev;
 
 }
 
@@ -1165,123 +1665,140 @@ void motor::TPIMUpdateMotorStatus() {
 }
 
 // function to update the protection of the motor
-void motor::SPIMUpdateProtection(double delta_time) {	
-	if (motor_override == overrideON) { 
-		if (wr < 1 && motor_trip == 0 && ws > 1 && Vs.Mag() > 0.1) { // conditions for counting up the time trip timer
-			trip = trip + delta_time; // count up by the time since last pass
+void motor::UpdateProtection(double delta_time) {
+
+	unsigned int colNum;
+
+	// Check each adopted protection type to update trip or reconnect time
+	// If the motor is on, check whether to trip
+	if (motor_override == overrideON && motor_trip == 0) {
+
+		if (hasRelayProtection == true) {
+			motorCheckTrip(delta_time, &(relayProtectionTrip), relayTimerList, relayTrip);
 		}
-		else if ( (wr >= 1 && motor_trip == 0) || ws <= 1 || Vs.Mag() <= 0.1) { // conditions for counting down the time trip timer
-			trip = trip - (delta_time / (reconnect_time/trip_time)) < 0 ? 0 : trip - (delta_time / (reconnect_time/trip_time)); // count down by the time since last cycle scaled by the difference in trip and reconnect times
+		if (hasOverLoadProtection == true) {
+			motorCheckTrip(delta_time, &(overLoadProtectionTrip), overLoadTimerList, overLoadTrip);
 		}
-        
-        // Under-voltage protection relay timer
-        if (uv_lockout == 0) {
-            if (Vs.Mag() <= uv_relay_trip_V && Vs.Mag() > 0.01 && uv_relay_install == uv_relay_INSTALLED) { //  This particular AC motor does have an under-voltage relay that will trip. Assumes voltages less than 0.01 pu indicates a disconnected state and shouldn't be considered under-voltage.
-                if (uv_relay_time <= uv_relay_trip_time) { //In under-voltage state and accumulating time
-                    uv_relay_time = uv_relay_time + delta_time;
-                    uv_lockout = 0;
-                }
-                else { //relay time has accumlated and trips the unit open, permanently
-                    motor_override = overrideOFF;
-                    uv_lockout = 1;
-                }
-            } else { //Either the voltage is high enough or this motor doesn't have under-voltage protection
-                uv_relay_time = 0;
-            }
-        }
-        
-        // Main contactor opening due to low-voltage condition (coil doesn't have enough magnetic force to hold contacts together)
-        
-        if (Vs.Mag() <=  contactor_open_Vmin && uv_lockout == 0 && contactor_state == contactorCLOSED) { //
-            //std::cout << "Under voltage, contactor open: " << Vs.Mag() << "\n";
-            motor_override = overrideOFF;
-            contactor_state = contactorOPEN;
-        }
-
-	}
-	else { // motor is off so it is "cooling" down
-		trip = trip - (delta_time / (reconnect_time/trip_time)) < 0 ? 0 : trip - (delta_time / (reconnect_time/trip_time)); // count down by the time since last cycle scaled by the difference in trip and reconnect times
-	}
-
-	if (motor_trip == 1) {
-		reconnect = reconnect + delta_time; // count up by the time since last pass
-	}
-
-	if (trip >= trip_time) { // check if we should trip the motor
-		motor_trip = 1;
-		trip = 0;
-	}
-	if (reconnect >= reconnect_time) { // check if we should reconnect the motor
-		motor_trip = 0;
-		reconnect = 0;
-	}
-    // Main contactor closing (magnetic force able to hold contacts together) once voltage gets high enough
-    if (Vs.Mag() >=  contactor_close_Vmax && uv_lockout == 0 && contactor_state == contactorOPEN ){//
-        //std::cout << "Voltage OK, contactor closed: " << Vs.Mag() << "\n";
-        motor_override = overrideON;
-        contactor_state = contactorCLOSED;
-    }
-}
-
-// TPIM thermal protection
-void motor::TPIMUpdateProtection(double delta_time) {
-	if (motor_override == overrideON) {
-		if (wr_pu < 0.01 && motor_trip == 0 && ws_pu > 0.1 && Vas.Mag() > 0.1 && Vbs.Mag() > 0.1 && Vcs.Mag() > 0.1) { // conditions for counting up the time trip timer
-			trip = trip + delta_time; // count up by the time since last pass
+		if (hasThermalProtection == true) {
+			motorCheckTrip(delta_time, &(thermalProtectionTrip), thermalTimerList, thermalTrip);
 		}
-		else if ( (wr_pu >= 0.01 && motor_trip == 0) || ws_pu <= 0.1 || Vas.Mag() <= 0.1 || Vbs.Mag() <= 0.1 || Vcs.Mag() <= 0.1) { // conditions for counting down the time trip timer
-			trip = trip - (delta_time / (reconnect_time/trip_time)) < 0 ? 0 : trip - (delta_time / (reconnect_time/trip_time)); // count down by the time since last cycle scaled by the difference in trip and reconnect times
+		if (hasContactorProtection == true) {
+			motorCheckTrip(delta_time, &(contactorProtectionTrip), contactorTimerList, contactorTrip);
 		}
-        
-        // Under-voltage protection relay timer
-        if (uv_lockout == 0) {
-            if (((Vas.Mag() <= uv_relay_trip_V && Vas.Mag() > 0.001) || (Vbs.Mag() <= uv_relay_trip_V && Vbs.Mag() > 0.001) || (Vcs.Mag() <= uv_relay_trip_V) && Vcs.Mag() > 0.001) && uv_relay_install == uv_relay_INSTALLED) { //  This particular AC motor does have an under-voltage relay that will trip
-                if (uv_relay_time <= uv_relay_trip_time) { //In under-voltage state and accumulating time
-                    //std::cout << "Under voltage: " << Vas.Mag() << "\t" << Vbs.Mag() << "\t" << Vcs.Mag()<< "\n";
-                    uv_relay_time = uv_relay_time + delta_time;
-                    uv_lockout = 0;
-                }
-                else { //relay time has accumlated and trips the unit open, permanently
-                    //std::cout << "Under voltage protection relay trip.\n";
-                    motor_override = overrideOFF;
-                    uv_lockout = 1;
-                }
-            } else { //Either the voltage is high enough or this motor doesn't have under-voltage protection
-                //std::cout << "Voltage OK: " << Vas.Mag() << "\t" << Vbs.Mag() << "\t" << Vcs.Mag()<< "\n";
-                uv_relay_time = 0;
-            }
-        }
-        
-        // Main contactor opening due to low-voltage condition (coil doesn't have enough magnetic force to hold contacts together)
-        if ((Vas.Mag() <=  contactor_open_Vmin || Vbs.Mag() <=  contactor_open_Vmin || Vcs.Mag() <=  contactor_open_Vmin) && uv_lockout == 0  && contactor_state == contactorCLOSED) { //
-            //std::cout << "Under voltage, contactor open: " << Vas.Mag() << "\t" << Vbs.Mag() << "\t" << Vcs.Mag()<< "\n";
-            motor_override = overrideOFF;
-            contactor_state = contactorOPEN;
-        }
-	}
-	else { // motor is off so it is "cooling" down
-		trip = trip - (delta_time / (reconnect_time/trip_time)) < 0 ? 0 : trip - (delta_time / (reconnect_time/trip_time)); // count down by the time since last cycle scaled by the difference in trip and reconnect times
-	}
+		if (hasEMSProtection == true) {
+			motorCheckTrip(delta_time, &(emsProtectionTrip), emsTimerList, emsTrip);
+		}
 
-	if (motor_trip == 1) {
-		reconnect = reconnect + delta_time; // count up by the time since last pass
-	}
+		// If either of the protection determines trip, then mark motor as trip status
+		if (relayTrip || overLoadTrip || thermalTrip || contactorTrip || emsTrip) {
 
-	if (trip >= trip_time) { // check if we should trip the motor
-		motor_trip = 1;
-		trip = 0;
+			// Identify motor as tripped
+			motor_trip = 1;
+
+			// Reinitialize the timer array of each protection
+		    // Relay protection
+		    if (hasRelayProtection == true) {
+				//Zero it
+				for (int i = 0; i < relayProtectionTrip.get_cols(); i++)
+				{
+					relayTimerList[i] = 0.0;	// Starts with 0 timer
+				}
+				// Make reconnection status flag as false;
+				relayReconnect = false;
+		    }
+
+		    // Over load protection
+		    if (hasOverLoadProtection == true) {
+				//Zero it
+				for (int i = 0; i < overLoadProtectionTrip.get_cols(); i++)
+				{
+					overLoadTimerList[i] = 0.0;	// Starts with 0 timer
+				}
+		    }
+
+		    // Thermal protection
+		    if (hasThermalProtection == true) {
+				//Zero it
+				for (int i = 0; i < thermalProtectionTrip.get_cols(); i++)
+				{
+					thermalTimerList[i] = 0.0;	// Starts with 0 timer
+				}
+		    }
+
+		    // Contactor protection
+		    if (hasContactorProtection == true) {
+				//Zero it
+				for (int i = 0; i < contactorProtectionTrip.get_cols(); i++)
+				{
+					contactorTimerList[i] = 0.0;	// Starts with 0 timer
+				}
+
+				// Make reconnection status flag as false;
+				contactorReconnect = false;
+		    }
+
+		    // EMS protection
+		    if (hasEMSProtection == true) {
+				//Zero it
+				for (int i = 0; i < emsProtectionTrip.get_cols(); i++)
+				{
+					emsTimerList[i] = 0.0;	// Starts with 0 timer
+				}
+
+				// Make reconnection status flag as false;
+				emsReconnect = false;
+		    }
+		} // end motor trip identification, and reinitialization of timer array
 	}
-	if (reconnect >= reconnect_time) { // check if we should reconnect the motor
-		motor_trip = 0;
-		reconnect = 0;
+	// If the motor is off, need to check whether to reconnect
+	else {
+		// The reconnection of thermal and overload takes more than 5 minutes, thus not checked here
+		if (hasRelayProtection == true && relayTrip == true) {
+			motorCheckReconnect(delta_time, &(relayProtectionReconnect), relayTimerReconnect, relayReconnect);
+		}
+		if (hasContactorProtection == true && contactorTrip == true) {
+			motorCheckReconnect(delta_time, &(contactorProtectionReconnect), contactorTimerReconnect, contactorReconnect);
+		}
+		if (hasEMSProtection == true && emsTrip == true) {
+			motorCheckReconnect(delta_time, &(emsProtectionReconnect), emsTimerReconnect, emsReconnect);
+		}
+		if (relayReconnect || contactorReconnect || emsReconnect) {
+
+			// Update motor trip and reconnect status
+			motor_trip = 0;
+
+			// Reinitialize protection reconnection timer
+			relayTimerReconnect = 0.0;
+			contactorTimerReconnect = 0.0;
+			emsTimerReconnect = 0.0;
+
+			// Reinitialize the trip status of each protection
+		    // Realy protection
+		    if (hasRelayProtection == true) {
+		    	relayTrip = false;
+		    }
+
+		    // Over load protection
+		    if (hasOverLoadProtection == true) {
+				overLoadTrip = false;
+		    }
+
+		    // Thermal protection
+		    if (hasThermalProtection == true) {
+				thermalTrip = false;
+		    }
+
+		    // Contactor protection
+		    if (hasContactorProtection == true) {
+				contactorTrip = false;
+		    }
+
+		    // EMS protection
+		    if (hasEMSProtection == true) {
+				emsTrip = false;
+		    }
+		}
 	}
-    
-    // Main contactor closing (magnetic force able to hold contacts together) once voltage gets high enough
-    if ((Vas.Mag() >=  contactor_close_Vmax && Vbs.Mag() >=  contactor_close_Vmax && Vcs.Mag() >=  contactor_close_Vmax ) && uv_lockout == 0 && contactor_state == contactorOPEN ){//
-        //std::cout << "Voltage OK, contactor closed: " << Vas.Mag() << "\t" << Vbs.Mag() << "\t" << Vcs.Mag()<< "\n";
-        motor_override = overrideON;
-        contactor_state = contactorCLOSED;
-    }
 }
 
 // function to ensure that internal model states are zeros when the motor is OFF
@@ -1698,7 +2215,7 @@ void motor::TPIMDynamic(double curr_delta_time, double dTime) {
     Vap = (Vas + alpha * Vbs + alpha * alpha * Vcs) / 3.0;
     Van = (Vas + alpha * alpha * Vbs + alpha * Vcs) / 3.0;
 
-    TPIMupdateVars();
+//    TPIMupdateVars();
 
 	if (wr_pu >= 1.0)
 	{
@@ -1840,6 +2357,96 @@ int motor::invertMatrix(complex TF[16], complex ITF[16])
         ITF[i] = inv[i] * det;
 
     return 1;
+}
+
+// Function to check whether trip is determined by each protection
+void motor::motorCheckTrip(double delta_time, double_array* motorProtection, double* timerList, bool &tripStatus)
+{
+	int ct = motorProtection->get_cols();
+	double *thresV;
+
+	// Check if the trip condition is met
+	for (int i = 0; i < ct; i++) {
+		double *tripTime = motorProtection->get_addr(1, i);
+		if (timerList[i] >= (*tripTime)) {
+			tripStatus = true;
+			return;
+		}
+	}
+
+	// Since there is no trip currently, will iterate over all points of Volt-time curve
+	for (int i = ct - 1; i >= 0; i--) {
+		thresV = motorProtection->get_addr(0, i);
+		// SPIM check
+		if (motor_op_mode == modeSPIM)
+		{
+			if ((Vs.Mag()) > (*thresV)) {
+				// If current voltage is larger than the voltage threshold of one point,
+				// Directly reset the timer of the point, and the points with smaller voltage threshold
+				for (int j = i; j >= 0; j--) {
+					timerList[j] = 0.0;
+				}
+				break;
+			}
+			else {
+				timerList[i] += delta_time;
+			}
+		}
+		// TPIM check
+		else {
+			if ((Vas.Mag() > (*thresV)) && (Vbs.Mag() > (*thresV)) && (Vcs.Mag() > (*thresV))) {
+				// If current voltage is larger than the voltage threshold of one point,
+				// Directly reset the timer of the point, and the points with smaller voltage threshold
+				for (int j = i; j >= 0; j--) {
+					timerList[j] = 0.0;
+				}
+				break;
+			}
+			else {
+				timerList[i] += delta_time;
+			}
+		}
+
+	}
+
+	return;
+}
+
+// Function to check whether reconnection is determined by each protection
+void motor::motorCheckReconnect(double delta_time, double_array* motorReconnection, double &reconnectTimer, bool &reconnectStatus)
+{
+	double *reconnectV = motorReconnection->get_addr(0, 0);
+	double *reconnectT = motorReconnection->get_addr(1, 0);
+
+	// Check if needs reconnection
+	if (reconnectTimer >= (*reconnectT)) {
+		reconnectStatus = true;
+		reconnectTimer = 0.0;
+		return;
+	}
+
+	// Update reconnect timer
+	// SPIM check
+	if (motor_op_mode == modeSPIM)
+	{
+		if ((Vs.Mag()) > (*reconnectV)) {
+			reconnectTimer += delta_time;
+		}
+		else {
+			reconnectTimer = 0.0;
+		}
+	}
+	// TPIM check
+	else {
+		if ((Vas.Mag() > (*reconnectV)) && (Vbs.Mag() > (*reconnectV)) && (Vcs.Mag() > (*reconnectV))) {
+			reconnectTimer += delta_time;
+		}
+		else {
+			reconnectTimer = 0.0;
+		}
+	}
+
+	return;
 }
 
 //////////////////////////////////////////////////////////////////////////
