@@ -1393,7 +1393,7 @@ void motor::SPIMSteadyState(TIMESTAMP t1) {
     psi_qr = complex(0.0,1.0)*psi_f + complex(0,-1)*psi_b;
     // system current and power equations
     Is = (Ids + Iqs)*complex_exp(Vs.Arg());
-    motor_elec_power = Vs*~Is;
+    motor_elec_power = (Vs*~Is) * Pbase;
 }
 
 
@@ -1648,7 +1648,7 @@ void motor::SPIMDynamic(double curr_delta_time, double dTime) {
 
 	// system current and power equations
 	Is = (Ids + Iqs)*complex_exp(Vs.Arg());
-	motor_elec_power = Vs*~Is;
+	motor_elec_power = (Vs*~Is) * Pbase;
 
     //electrical torque 
 	Telec = (Xm/Xr)*2*(If.Im()*psi_f.Re() - If.Re()*psi_f.Im() - Ib.Im()*psi_b.Re() + Ib.Re()*psi_b.Im()); 

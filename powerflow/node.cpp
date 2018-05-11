@@ -312,7 +312,21 @@ int node::create(void)
 	dynamic_norton = false;			//By default, no one needs the Norton equivalent posting
 	dynamic_generator = false;		//By default, we don't have any generator attached
 
-	fmeas_type = FM_NONE;			//By default, no frequency measurement occurs
+	//Check to see if we need to enable an overall frequency method, by default (individual object can override)
+	if (all_powerflow_freq_measure_method == FMM_SIMPLE)	//Default to simple method
+	{
+		fmeas_type = FM_SIMPLE;	//By default, use the simple frequency measurement method
+	}
+	else if (all_powerflow_freq_measure_method == FMM_PLL)	//Default to PLL
+	{
+		fmeas_type = FM_PLL;	//By default, use the PLL frequency measurement method
+	}
+	else	//Probably "NONE", but just default to nothing, whatever this was
+	{
+		fmeas_type = FM_NONE;	//By default, no frequency measurement occurs
+	}
+
+	//Default frequency measurement parameters
 	freq_omega_ref=0.0;
 	freq_sfm_Tf=0.01;
 	freq_pll_Kp=10;

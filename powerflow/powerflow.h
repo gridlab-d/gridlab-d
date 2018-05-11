@@ -52,6 +52,12 @@ typedef enum {
 	IRM_BACKEULER=3		///< Use the backward-Euler implementation
 } INRUSHINTMETHOD;	//Selection of the integration method for the inrush calculations
 
+typedef enum {
+	FMM_NONE=0,		///< No default
+	FMM_SIMPLE=1,	///< Objects default to simple frequency measurement method
+	FMM_PLL=2		///< Objects default to the PLL-based frequency measurement method
+} FREQMEASDEFAULT;	//Base default method for frequency measurement
+
 //Structure to hold external LU solver calls
 typedef struct s_ext_fxn {
 	void *dllLink;
@@ -109,6 +115,7 @@ GLOBAL bool restoration_checks_active INIT(false);	/***< Overall flag for when r
 
 GLOBAL bool enable_subsecond_models INIT(false);		/* normally not operating in delta mode */
 GLOBAL bool all_powerflow_delta INIT(false);			/* Flag to make all powerflow objects participate in deltamode -- otherwise is individually flagged per object */
+GLOBAL FREQMEASDEFAULT all_powerflow_freq_measure_method INIT(FMM_NONE);		/* Flag to enable all capable powerflow objects to do frequency measurements */
 GLOBAL unsigned long deltamode_timestep INIT(10000000); /* deltamode timestep value - 10 ms timestep, at first - intermnal */
 GLOBAL double deltamode_timestep_publish INIT(10000000.0); /* deltamode module-published 10 ms timestep, at first -- module property version, to be converted*/
 GLOBAL OBJECT **delta_objects INIT(NULL);				/* Array pointer objects that need deltamode interupdate calls */

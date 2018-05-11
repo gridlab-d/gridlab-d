@@ -100,6 +100,11 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		PT_KEYWORD,"TRAPEZOIDAL",IRM_TRAPEZOIDAL,
 		PT_KEYWORD,"BACKWARD_EULER",IRM_BACKEULER,
 		NULL);
+	gl_global_create("powerflow::all_frequency_measure_default",PT_enumeration,&all_powerflow_freq_measure_method,
+		PT_KEYWORD,"NONE",	FMM_NONE,
+		PT_KEYWORD,"SIMPLE", FMM_SIMPLE,
+		PT_KEYWORD,"PLL", FMM_PLL,
+		NULL);
 	gl_global_create("powerflow::low_voltage_impedance_level",PT_double,&impedance_conversion_low_pu,PT_DESCRIPTION,"Lower limit of voltage (in per-unit) at which all load types are converted to impedance for in-rush calculations",NULL);
 	gl_global_create("powerflow::enable_mesh_fault_current",PT_bool,&enable_mesh_fault_current,PT_DESCRIPTION,"Flag to enable mesh-based fault current calculations",NULL);
 
