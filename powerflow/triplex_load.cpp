@@ -479,6 +479,7 @@ void triplex_load::triplex_load_update_fxn()
 			}
 			
 			// Calculate then shift the constant current to use the posted voltage as the reference angle
+			//Note that the 2*nominal_voltage is to account for the 240 V connection
 			temp_curr = ~complex(real_power, imag_power)/complex(2*nominal_voltage, 0);
 			temp_angle = temp_curr.Arg() + voltage12.Arg();
 			temp_curr.SetPolar(temp_curr.Mag(), temp_angle);
@@ -507,6 +508,7 @@ void triplex_load::triplex_load_update_fxn()
 				imag_power *= -1.0;	//Adjust imaginary portion for negative PF
 			}
 
+			//Note that nominal_voltage is 120, so need to double for 240, the 4 is 2^2
 			constant_impedance[2] = ~(complex(4*nominal_voltage*nominal_voltage, 0)/complex(real_power, imag_power));
 		} else {
 			constant_impedance[2] = complex(0, 0);
