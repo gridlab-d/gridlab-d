@@ -404,6 +404,8 @@ TIMESTAMP recorder::commit(TIMESTAMP t0, TIMESTAMP t1) {
 					if (curr == 0) {
 						break;
 					}
+					target_prop = gld_property(curr->obj, &(curr->prop));
+
 					char name_buffer[64];
 					string* name_string = new string(property_target[n].get_sql_safe_name(name_buffer));
 
