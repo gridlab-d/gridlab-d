@@ -81,36 +81,47 @@ meter::meter(MODULE *mod) : node(mod)
 			PT_complex, "measured_voltage_AB[V]", PADDR(measured_voltageD[0]),PT_DESCRIPTION,"measured line-to-line voltage on phase AB",
 			PT_complex, "measured_voltage_BC[V]", PADDR(measured_voltageD[1]),PT_DESCRIPTION,"measured line-to-line voltage on phase BC",
 			PT_complex, "measured_voltage_CA[V]", PADDR(measured_voltageD[2]),PT_DESCRIPTION,"measured line-to-line voltage on phase CA",
-			PT_double, "measured_real_max_voltage_in_interval_A", PADDR(measured_real_max_voltage_in_interval[0]),PT_DESCRIPTION,"measured real max line-to-neutral voltage on phase A over a specified interval",
-			PT_double, "measured_real_max_voltage_in_interval_B", PADDR(measured_real_max_voltage_in_interval[1]),PT_DESCRIPTION,"measured real max line-to-neutral voltage on phase B over a specified interval",
-			PT_double, "measured_real_max_voltage_in_interval_C", PADDR(measured_real_max_voltage_in_interval[2]),PT_DESCRIPTION,"measured real max line-to-neutral voltage on phase C over a specified interval",
-			PT_double, "measured_reactive_max_voltage_in_interval_A", PADDR(measured_reactive_max_voltage_in_interval[0]),PT_DESCRIPTION,"measured reactive max line-to-neutral voltage on phase A over a specified interval",
-			PT_double, "measured_reactive_max_voltage_in_interval_B", PADDR(measured_reactive_max_voltage_in_interval[1]),PT_DESCRIPTION,"measured reactive max line-to-neutral voltage on phase B over a specified interval",
-			PT_double, "measured_reactive_max_voltage_in_interval_C", PADDR(measured_reactive_max_voltage_in_interval[2]),PT_DESCRIPTION,"measured reactive max line-to-neutral voltage on phase C over a specified interval",
-			PT_double, "measured_real_max_voltage_in_interval_AB", PADDR(measured_real_max_voltageD_in_interval[0]),PT_DESCRIPTION,"measured real max line-to-line voltage on phase A over a specified interval",
-			PT_double, "measured_real_max_voltage_in_interval_BC", PADDR(measured_real_max_voltageD_in_interval[1]),PT_DESCRIPTION,"measured real max line-to-line voltage on phase B over a specified interval",
-			PT_double, "measured_real_max_voltage_in_interval_CA", PADDR(measured_real_max_voltageD_in_interval[2]),PT_DESCRIPTION,"measured real max line-to-line voltage on phase C over a specified interval",
-			PT_double, "measured_reactive_max_voltage_in_interval_AB", PADDR(measured_reactive_max_voltageD_in_interval[0]),PT_DESCRIPTION,"measured reactive max line-to-line voltage on phase A over a specified interval",
-			PT_double, "measured_reactive_max_voltage_in_interval_BC", PADDR(measured_reactive_max_voltageD_in_interval[1]),PT_DESCRIPTION,"measured reactive max line-to-line voltage on phase B over a specified interval",
-			PT_double, "measured_reactive_max_voltage_in_interval_CA", PADDR(measured_reactive_max_voltageD_in_interval[2]),PT_DESCRIPTION,"measured reactive max line-to-line voltage on phase C over a specified interval",
-			PT_double, "measured_real_min_voltage_in_interval_A", PADDR(measured_real_min_voltage_in_interval[0]),PT_DESCRIPTION,"measured real min line-to-neutral voltage on phase A over a specified interval",
-			PT_double, "measured_real_min_voltage_in_interval_B", PADDR(measured_real_min_voltage_in_interval[1]),PT_DESCRIPTION,"measured real min line-to-neutral voltage on phase B over a specified interval",
-			PT_double, "measured_real_min_voltage_in_interval_C", PADDR(measured_real_min_voltage_in_interval[2]),PT_DESCRIPTION,"measured real min line-to-neutral voltage on phase C over a specified interval",
-			PT_double, "measured_reactive_min_voltage_in_interval_A", PADDR(measured_reactive_min_voltage_in_interval[0]),PT_DESCRIPTION,"measured reactive min line-to-neutral voltage on phase A over a specified interval",
-			PT_double, "measured_reactive_min_voltage_in_interval_B", PADDR(measured_reactive_min_voltage_in_interval[1]),PT_DESCRIPTION,"measured reactive min line-to-neutral voltage on phase B over a specified interval",
-			PT_double, "measured_reactive_min_voltage_in_interval_C", PADDR(measured_reactive_min_voltage_in_interval[2]),PT_DESCRIPTION,"measured reactive min line-to-neutral voltage on phase C over a specified interval",
-			PT_double, "measured_real_min_voltage_in_interval_AB", PADDR(measured_real_min_voltageD_in_interval[0]),PT_DESCRIPTION,"measured real min line-to-line voltage on phase A over a specified interval",
-			PT_double, "measured_real_min_voltage_in_interval_BC", PADDR(measured_real_min_voltageD_in_interval[1]),PT_DESCRIPTION,"measured real min line-to-line voltage on phase B over a specified interval",
-			PT_double, "measured_real_min_voltage_in_interval_CA", PADDR(measured_real_min_voltageD_in_interval[2]),PT_DESCRIPTION,"measured real min line-to-line voltage on phase C over a specified interval",
-			PT_double, "measured_reactive_min_voltage_in_interval_AB", PADDR(measured_reactive_min_voltageD_in_interval[0]),PT_DESCRIPTION,"measured reactive min line-to-line voltage on phase A over a specified interval",
-			PT_double, "measured_reactive_min_voltage_in_interval_BC", PADDR(measured_reactive_min_voltageD_in_interval[1]),PT_DESCRIPTION,"measured reactive min line-to-line voltage on phase B over a specified interval",
-			PT_double, "measured_reactive_min_voltage_in_interval_CA", PADDR(measured_reactive_min_voltageD_in_interval[2]),PT_DESCRIPTION,"measured reactive min line-to-line voltage on phase C over a specified interval",
-			PT_double, "measured_avg_voltage_mag_in_interval_A", PADDR(measured_avg_voltage_mag_in_interval[0]),PT_DESCRIPTION,"measured avg line-to-neutral voltage magnitude on phase A over a specified interval",
-			PT_double, "measured_avg_voltage_mag_in_interval_B", PADDR(measured_avg_voltage_mag_in_interval[1]),PT_DESCRIPTION,"measured avg line-to-neutral voltage magnitude on phase B over a specified interval",
-			PT_double, "measured_avg_voltage_mag_in_interval_C", PADDR(measured_avg_voltage_mag_in_interval[2]),PT_DESCRIPTION,"measured avg line-to-neutral voltage magnitude on phase C over a specified interval",
-			PT_double, "measured_avg_voltage_mag_in_interval_AB", PADDR(measured_avg_voltageD_mag_in_interval[0]),PT_DESCRIPTION,"measured avg line-to-line voltage magnitude on phase A over a specified interval",
-			PT_double, "measured_avg_voltage_mag_in_interval_BC", PADDR(measured_avg_voltageD_mag_in_interval[1]),PT_DESCRIPTION,"measured avg line-to-line voltage magnitude on phase B over a specified interval",
-			PT_double, "measured_avg_voltage_mag_in_interval_CA", PADDR(measured_avg_voltageD_mag_in_interval[2]),PT_DESCRIPTION,"measured avg line-to-line voltage magnitude on phase C over a specified interval",
+
+			//Voltage items
+			PT_double, "measured_real_max_voltage_in_interval_A[V]", PADDR(measured_real_max_voltage_in_interval[0]),PT_DESCRIPTION,"measured real max line-to-neutral voltage on phase A over a specified interval",
+			PT_double, "measured_real_max_voltage_in_interval_B[V]", PADDR(measured_real_max_voltage_in_interval[1]),PT_DESCRIPTION,"measured real max line-to-neutral voltage on phase B over a specified interval",
+			PT_double, "measured_real_max_voltage_in_interval_C[V]", PADDR(measured_real_max_voltage_in_interval[2]),PT_DESCRIPTION,"measured real max line-to-neutral voltage on phase C over a specified interval",
+			PT_double, "measured_reactive_max_voltage_in_interval_A[V]", PADDR(measured_reactive_max_voltage_in_interval[0]),PT_DESCRIPTION,"measured reactive max line-to-neutral voltage on phase A over a specified interval",
+			PT_double, "measured_reactive_max_voltage_in_interval_B[V]", PADDR(measured_reactive_max_voltage_in_interval[1]),PT_DESCRIPTION,"measured reactive max line-to-neutral voltage on phase B over a specified interval",
+			PT_double, "measured_reactive_max_voltage_in_interval_C[V]", PADDR(measured_reactive_max_voltage_in_interval[2]),PT_DESCRIPTION,"measured reactive max line-to-neutral voltage on phase C over a specified interval",
+			PT_double, "measured_real_max_voltage_in_interval_AB[V]", PADDR(measured_real_max_voltageD_in_interval[0]),PT_DESCRIPTION,"measured real max line-to-line voltage on phase A over a specified interval",
+			PT_double, "measured_real_max_voltage_in_interval_BC[V]", PADDR(measured_real_max_voltageD_in_interval[1]),PT_DESCRIPTION,"measured real max line-to-line voltage on phase B over a specified interval",
+			PT_double, "measured_real_max_voltage_in_interval_CA[V]", PADDR(measured_real_max_voltageD_in_interval[2]),PT_DESCRIPTION,"measured real max line-to-line voltage on phase C over a specified interval",
+			PT_double, "measured_reactive_max_voltage_in_interval_AB[V]", PADDR(measured_reactive_max_voltageD_in_interval[0]),PT_DESCRIPTION,"measured reactive max line-to-line voltage on phase A over a specified interval",
+			PT_double, "measured_reactive_max_voltage_in_interval_BC[V]", PADDR(measured_reactive_max_voltageD_in_interval[1]),PT_DESCRIPTION,"measured reactive max line-to-line voltage on phase B over a specified interval",
+			PT_double, "measured_reactive_max_voltage_in_interval_CA[V]", PADDR(measured_reactive_max_voltageD_in_interval[2]),PT_DESCRIPTION,"measured reactive max line-to-line voltage on phase C over a specified interval",
+			PT_double, "measured_real_min_voltage_in_interval_A[V]", PADDR(measured_real_min_voltage_in_interval[0]),PT_DESCRIPTION,"measured real min line-to-neutral voltage on phase A over a specified interval",
+			PT_double, "measured_real_min_voltage_in_interval_B[V]", PADDR(measured_real_min_voltage_in_interval[1]),PT_DESCRIPTION,"measured real min line-to-neutral voltage on phase B over a specified interval",
+			PT_double, "measured_real_min_voltage_in_interval_C[V]", PADDR(measured_real_min_voltage_in_interval[2]),PT_DESCRIPTION,"measured real min line-to-neutral voltage on phase C over a specified interval",
+			PT_double, "measured_reactive_min_voltage_in_interval_A[V]", PADDR(measured_reactive_min_voltage_in_interval[0]),PT_DESCRIPTION,"measured reactive min line-to-neutral voltage on phase A over a specified interval",
+			PT_double, "measured_reactive_min_voltage_in_interval_B[V]", PADDR(measured_reactive_min_voltage_in_interval[1]),PT_DESCRIPTION,"measured reactive min line-to-neutral voltage on phase B over a specified interval",
+			PT_double, "measured_reactive_min_voltage_in_interval_C[V]", PADDR(measured_reactive_min_voltage_in_interval[2]),PT_DESCRIPTION,"measured reactive min line-to-neutral voltage on phase C over a specified interval",
+			PT_double, "measured_real_min_voltage_in_interval_AB[V]", PADDR(measured_real_min_voltageD_in_interval[0]),PT_DESCRIPTION,"measured real min line-to-line voltage on phase A over a specified interval",
+			PT_double, "measured_real_min_voltage_in_interval_BC[V]", PADDR(measured_real_min_voltageD_in_interval[1]),PT_DESCRIPTION,"measured real min line-to-line voltage on phase B over a specified interval",
+			PT_double, "measured_real_min_voltage_in_interval_CA[V]", PADDR(measured_real_min_voltageD_in_interval[2]),PT_DESCRIPTION,"measured real min line-to-line voltage on phase C over a specified interval",
+			PT_double, "measured_reactive_min_voltage_in_interval_AB[V]", PADDR(measured_reactive_min_voltageD_in_interval[0]),PT_DESCRIPTION,"measured reactive min line-to-line voltage on phase A over a specified interval",
+			PT_double, "measured_reactive_min_voltage_in_interval_BC[V]", PADDR(measured_reactive_min_voltageD_in_interval[1]),PT_DESCRIPTION,"measured reactive min line-to-line voltage on phase B over a specified interval",
+			PT_double, "measured_reactive_min_voltage_in_interval_CA[V]", PADDR(measured_reactive_min_voltageD_in_interval[2]),PT_DESCRIPTION,"measured reactive min line-to-line voltage on phase C over a specified interval",
+			PT_double, "measured_avg_voltage_mag_in_interval_A[V]", PADDR(measured_avg_voltage_mag_in_interval[0]),PT_DESCRIPTION,"measured avg line-to-neutral voltage magnitude on phase A over a specified interval",
+			PT_double, "measured_avg_voltage_mag_in_interval_B[V]", PADDR(measured_avg_voltage_mag_in_interval[1]),PT_DESCRIPTION,"measured avg line-to-neutral voltage magnitude on phase B over a specified interval",
+			PT_double, "measured_avg_voltage_mag_in_interval_C[V]", PADDR(measured_avg_voltage_mag_in_interval[2]),PT_DESCRIPTION,"measured avg line-to-neutral voltage magnitude on phase C over a specified interval",
+			PT_double, "measured_avg_voltage_mag_in_interval_AB[V]", PADDR(measured_avg_voltageD_mag_in_interval[0]),PT_DESCRIPTION,"measured avg line-to-line voltage magnitude on phase A over a specified interval",
+			PT_double, "measured_avg_voltage_mag_in_interval_BC[V]", PADDR(measured_avg_voltageD_mag_in_interval[1]),PT_DESCRIPTION,"measured avg line-to-line voltage magnitude on phase B over a specified interval",
+			PT_double, "measured_avg_voltage_mag_in_interval_CA[V]", PADDR(measured_avg_voltageD_mag_in_interval[2]),PT_DESCRIPTION,"measured avg line-to-line voltage magnitude on phase C over a specified interval",
+			
+			//power average items
+			PT_double, "measured_real_max_power_in_interval[W]", PADDR(measured_real_max_power_in_interval),PT_DESCRIPTION,"measured maximum real power over a specified interval",
+			PT_double, "measured_reactive_max_power_in_interval[VAr]", PADDR(measured_reactive_max_power_in_interval),PT_DESCRIPTION,"measured maximum reactive power over a specified interval",
+			PT_double, "measured_real_min_power_in_interval[W]", PADDR(measured_real_min_power_in_interval),PT_DESCRIPTION,"measured minimum real power over a specified interval",
+			PT_double, "measured_reactive_min_power_in_interval[VAr]", PADDR(measured_reactive_min_power_in_interval),PT_DESCRIPTION,"measured minimum reactive power over a specified interval",
+			PT_double, "measured_avg_real_power_in_interval[W]", PADDR(measured_real_avg_power_in_interval),PT_DESCRIPTION,"measured average real power over a specified interval",
+			PT_double, "measured_avg_reactive_power_in_interval[VAr]", PADDR(measured_reactive_avg_power_in_interval),PT_DESCRIPTION,"measured average reactive power over a specified interval",
+			
 			PT_complex, "measured_current_A[A]", PADDR(measured_current[0]),PT_DESCRIPTION,"measured current on phase A",
 			PT_complex, "measured_current_B[A]", PADDR(measured_current[1]),PT_DESCRIPTION,"measured current on phase B",
 			PT_complex, "measured_current_C[A]", PADDR(measured_current[2]),PT_DESCRIPTION,"measured current on phase C",
@@ -197,7 +208,8 @@ int meter::create()
 	measured_real_energy = measured_reactive_energy = 0.0;
     measured_real_energy_delta = measured_reactive_energy_delta = 0;
     last_measured_real_energy = last_measured_reactive_energy = 0;
-    measured_energy_delta_timestep = -1;
+    last_measured_real_power = last_measured_reactive_power = 0.0;
+	measured_energy_delta_timestep = -1;
 	measured_power = complex(0,0,J);
 	measured_demand = 0.0;
 	measured_real_power = 0.0;
@@ -229,6 +241,21 @@ int meter::create()
 	node_type = METER_NODE;
 
 	meter_NR_servered = false;	//Assume we are just a normal meter at first
+
+	//power average items
+	measured_real_max_power_in_interval = 0.0;
+	measured_reactive_max_power_in_interval = 0.0;
+	measured_real_min_power_in_interval = 0.0;
+	measured_reactive_min_power_in_interval = 0.0;
+	measured_real_avg_power_in_interval = 0.0;
+	measured_reactive_avg_power_in_interval = 0.0;
+
+	last_measured_max_real_power = 0.0;
+	last_measured_min_real_power = 0.0;
+	last_measured_max_reactive_power = 0.0;
+	last_measured_min_reactive_power = 0.0;
+	last_measured_avg_real_power = 0.0;
+	last_measured_avg_reactive_power = 0.0;
 
 	return result;
 }
@@ -465,6 +492,8 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				last_delta_timestamp = start_timestamp;
 				voltage_avg_count = 0;
 				interval_dt = 0;
+
+				//Voltage values
 				measured_real_max_voltage_in_interval[0] = voltageA.Re();
 				measured_real_max_voltage_in_interval[1] = voltageB.Re();
 				measured_real_max_voltage_in_interval[2] = voltageC.Re();
@@ -495,6 +524,16 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				measured_avg_voltageD_mag_in_interval[0] = measured_voltageD[0].Mag();
 				measured_avg_voltageD_mag_in_interval[1] = measured_voltageD[1].Mag();
 				measured_avg_voltageD_mag_in_interval[2] = measured_voltageD[2].Mag();
+				
+				//Power values
+				measured_real_max_power_in_interval = measured_real_power;
+				measured_real_min_power_in_interval = measured_real_power;
+				measured_real_avg_power_in_interval = measured_real_power;
+
+				measured_reactive_max_power_in_interval = measured_reactive_power;
+				measured_reactive_min_power_in_interval = measured_reactive_power;
+				measured_reactive_avg_power_in_interval = measured_reactive_power;
+				
 				last_measured_voltage[0] = voltageA;
 				last_measured_voltage[1] = voltageB;
 				last_measured_voltage[2] = voltageC;
@@ -527,6 +566,15 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 					last_measured_avg_voltageD_mag[0] = last_measured_voltageD[0].Mag();
 					last_measured_avg_voltageD_mag[1] = last_measured_voltageD[1].Mag();
 					last_measured_avg_voltageD_mag[2] = last_measured_voltageD[2].Mag();
+
+					//Power
+					last_measured_min_real_power = last_measured_real_power;
+					last_measured_max_real_power = last_measured_real_power;
+					last_measured_avg_real_power = last_measured_real_power;
+					last_measured_min_reactive_power = last_measured_reactive_power;
+					last_measured_max_reactive_power = last_measured_reactive_power;
+					last_measured_avg_reactive_power = last_measured_reactive_power;
+
 				} else {
 					if ( last_measured_voltage[0].Mag() > last_measured_max_voltage_mag[0].Mag()) {
 						last_measured_max_voltage_mag[0] = last_measured_voltage[0];
@@ -564,12 +612,35 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 					if (last_measured_voltageD[2].Mag() < last_measured_min_voltageD_mag[2].Mag()) {
 						last_measured_min_voltageD_mag[2] = last_measured_voltageD[2];
 					}
+
+					//Power min/max check
+					if (last_measured_max_real_power < last_measured_real_power)
+					{
+						last_measured_max_real_power = last_measured_real_power;
+					}
+					if (last_measured_max_reactive_power < last_measured_reactive_power)
+					{
+						last_measured_max_reactive_power = last_measured_reactive_power;
+					}
+					if (last_measured_min_real_power > last_measured_real_power)
+					{
+						last_measured_min_real_power = last_measured_real_power;
+					}
+					if (last_measured_min_reactive_power > last_measured_reactive_power)
+					{
+						last_measured_min_reactive_power = last_measured_reactive_power;
+					}
+
 					last_measured_avg_voltage_mag[0] = ((interval_dt * last_measured_avg_voltage_mag[0]) + (dt * last_measured_voltage[0].Mag()))/(interval_dt + dt);
 					last_measured_avg_voltage_mag[1] = ((interval_dt * last_measured_avg_voltage_mag[1]) + (dt * last_measured_voltage[1].Mag()))/(interval_dt + dt);
 					last_measured_avg_voltage_mag[2] = ((interval_dt * last_measured_avg_voltage_mag[2]) + (dt * last_measured_voltage[2].Mag()))/(interval_dt + dt);
 					last_measured_avg_voltageD_mag[0] = ((interval_dt * last_measured_avg_voltageD_mag[0]) + (dt * last_measured_voltageD[0].Mag()))/(interval_dt + dt);
 					last_measured_avg_voltageD_mag[1] = ((interval_dt * last_measured_avg_voltageD_mag[1]) + (dt * last_measured_voltageD[1].Mag()))/(interval_dt + dt);
 					last_measured_avg_voltageD_mag[2] = ((interval_dt * last_measured_avg_voltageD_mag[2]) + (dt * last_measured_voltageD[2].Mag()))/(interval_dt + dt);
+
+					//Update the power averages
+					last_measured_avg_real_power = ((interval_dt * last_measured_avg_real_power) + (dt * last_measured_real_power))/(dt + interval_dt);
+					last_measured_avg_reactive_power = ((interval_dt * last_measured_avg_reactive_power) + (dt * last_measured_reactive_power))/(dt + interval_dt);
 				}
 				last_measured_voltage[0] = voltageA.Mag();
 				last_measured_voltage[1] = voltageB.Mag();
@@ -628,6 +699,25 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				if (last_measured_voltageD[2].Mag() < last_measured_min_voltageD_mag[2].Mag()) {
 					last_measured_min_voltageD_mag[2] = last_measured_voltageD[2];
 				}
+
+				//Power min/max check
+				if (last_measured_max_real_power < last_measured_real_power)
+				{
+					last_measured_max_real_power = last_measured_real_power;
+				}
+				if (last_measured_max_reactive_power < last_measured_reactive_power)
+				{
+					last_measured_max_reactive_power = last_measured_reactive_power;
+				}
+				if (last_measured_min_real_power > last_measured_real_power)
+				{
+					last_measured_min_real_power = last_measured_real_power;
+				}
+				if (last_measured_min_reactive_power > last_measured_reactive_power)
+				{
+					last_measured_min_reactive_power = last_measured_reactive_power;
+				}
+
 				last_measured_avg_voltage_mag[0] = ((interval_dt * last_measured_avg_voltage_mag[0]) + (dt * last_measured_voltage[0].Mag()))/(interval_dt + dt);
 				last_measured_avg_voltage_mag[1] = ((interval_dt * last_measured_avg_voltage_mag[1]) + (dt * last_measured_voltage[1].Mag()))/(interval_dt + dt);
 				last_measured_avg_voltage_mag[2] = ((interval_dt * last_measured_avg_voltage_mag[2]) + (dt * last_measured_voltage[2].Mag()))/(interval_dt + dt);
@@ -640,6 +730,11 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				last_measured_voltageD[0] = measured_voltageD[0].Mag();
 				last_measured_voltageD[1] = measured_voltageD[1].Mag();
 				last_measured_voltageD[2] = measured_voltageD[2].Mag();
+
+				//Update the power averages
+				last_measured_avg_real_power = ((interval_dt * last_measured_avg_real_power) + (dt * last_measured_real_power))/(dt + interval_dt);
+				last_measured_avg_reactive_power = ((interval_dt * last_measured_avg_reactive_power) + (dt * last_measured_reactive_power))/(dt + interval_dt);
+
 				interval_dt = 0;
 				voltage_avg_count = 0;
 				measured_real_max_voltage_in_interval[0] = last_measured_max_voltage_mag[0].Re();
@@ -666,6 +761,16 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				measured_reactive_min_voltageD_in_interval[0] = last_measured_min_voltageD_mag[0].Im();
 				measured_reactive_min_voltageD_in_interval[1] = last_measured_min_voltageD_mag[1].Im();
 				measured_reactive_min_voltageD_in_interval[2] = last_measured_min_voltageD_mag[2].Im();
+
+				//Power values
+				measured_real_max_power_in_interval = last_measured_max_real_power;
+				measured_real_min_power_in_interval = last_measured_min_real_power;
+				measured_real_avg_power_in_interval = last_measured_avg_real_power;
+				
+				measured_reactive_max_power_in_interval = last_measured_max_reactive_power;
+				measured_reactive_min_power_in_interval = last_measured_min_reactive_power;
+				measured_reactive_avg_power_in_interval = last_measured_avg_reactive_power;
+
 				if (tretval > last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) {
 					tretval = last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep);
 				}
@@ -713,7 +818,6 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			// Now that we've accumulated the bill for the last time period, update to the new price
 			double *pprice = (gl_get_double(power_market, price_prop));
 			last_price = price = *pprice;
-			last_measured_real_power = measured_real_power;
 
 			if (monthly_bill == previous_monthly_bill)
 			{
@@ -733,6 +837,10 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				next_time =	gl_mktime(&t_next);
 			}
 		}
+
+		//Update trackers -- could probably be one more level out
+		last_measured_real_power = measured_real_power;
+		last_measured_reactive_power = measured_reactive_power;
 	}
 
 	//Multi run (for now) updates to power values
