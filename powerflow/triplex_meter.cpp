@@ -96,9 +96,9 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 			PT_double, "measured_imag_min_voltage_1_in_interval[V]", PADDR(measured_imag_min_voltage_in_interval[0]),PT_DESCRIPTION,"measured imaginary min line-to-ground voltage on phase 1 over a specified interval",
 			PT_double, "measured_imag_min_voltage_2_in_interval[V]", PADDR(measured_imag_min_voltage_in_interval[1]),PT_DESCRIPTION,"measured imaginary min line-to-ground voltage on phase 2 over a specified interval",
 			PT_double, "measured_imag_min_voltage_12_in_interval[V]", PADDR(measured_imag_min_voltage_in_interval[2]),PT_DESCRIPTION,"measured imaginary min line-to-ground voltage on phase 12 over a specified interval",
-			PT_double, "measured_avg_voltage_mag_1_in_interval[V]", PADDR(measured_avg_voltage_mag_in_interval[0]),PT_DESCRIPTION,"measured average line-to-ground voltage magnitude on phase 1 over a specified interval",
-			PT_double, "measured_avg_voltage_mag_2_in_interval[V]", PADDR(measured_avg_voltage_mag_in_interval[1]),PT_DESCRIPTION,"measured average line-to-ground voltage magnitude on phase 2 over a specified interval",
-			PT_double, "measured_avg_voltage_mag_12_in_interval[V]", PADDR(measured_avg_voltage_mag_in_interval[2]),PT_DESCRIPTION,"measured average line-to-ground voltage magnitude on phase 12 over a specified interval",
+			PT_double, "measured_avg_voltage_1_mag_in_interval[V]", PADDR(measured_avg_voltage_mag_in_interval[0]),PT_DESCRIPTION,"measured average line-to-ground voltage magnitude on phase 1 over a specified interval",
+			PT_double, "measured_avg_voltage_2_mag_in_interval[V]", PADDR(measured_avg_voltage_mag_in_interval[1]),PT_DESCRIPTION,"measured average line-to-ground voltage magnitude on phase 2 over a specified interval",
+			PT_double, "measured_avg_voltage_12_mag_in_interval[V]", PADDR(measured_avg_voltage_mag_in_interval[2]),PT_DESCRIPTION,"measured average line-to-ground voltage magnitude on phase 12 over a specified interval",
 
 			//power average items
 			PT_double, "measured_real_max_power_in_interval[W]", PADDR(measured_real_max_power_in_interval),PT_DESCRIPTION,"measured maximum real power over a specified interval",
