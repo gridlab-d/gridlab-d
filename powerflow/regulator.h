@@ -8,10 +8,6 @@
 #include "link.h"
 #include "regulator_configuration.h"
 
-#define tap_A tap[0]
-#define tap_B tap[1]
-#define tap_C tap[2]
-
 class regulator : public link_object
 {
 public:

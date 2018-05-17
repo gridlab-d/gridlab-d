@@ -325,7 +325,7 @@ int eventgen::init(OBJECT *parent)
 		//Flag the secondary count variable - find its location
 
 		//Map to the property of interest - secondary_interruption_cnt
-		secondary_interruption_cnt = new gld_property(metrics_obj_hdr,"secondary_interruptions_count");
+		secondary_interruption_cnt = new gld_property(metrics_obj_hdr,"perform_secondary_interruptions_count");
 
 		//Make sure it worked
 		if ((secondary_interruption_cnt->is_valid() != true) || (secondary_interruption_cnt->is_bool() != true))

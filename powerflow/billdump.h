@@ -5,9 +5,6 @@
 #define _BILLDUMP_H
 
 #include "powerflow.h"
-#include "node.h"
-#include "triplex_meter.h"
-#include "meter.h"
 
 class billdump : public gld_object
 {

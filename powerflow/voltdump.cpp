@@ -12,7 +12,6 @@
 #include <math.h>
 
 #include "voltdump.h"
-#include "node.h"
 
 //////////////////////////////////////////////////////////////////////////
 // voltdump CLASS FUNCTIONS
@@ -72,9 +71,9 @@ void voltdump::dump(TIMESTAMP t){
 	FINDLIST *nodes = NULL;
 	OBJECT *obj = NULL;
 	FILE *outfile = NULL;
-	node *pnode;
-//	CLASS *nodeclass = NULL;
-//	PROPERTY *vA, *vB, *vC;
+
+	gld_property *node_voltage_value_link[3];
+	complex node_voltage_values[3];
 
 	if(group[0] == 0){
 		nodes = gl_find_objects(FL_NEW,FT_MODULE,SAME,"powerflow",FT_END);
@@ -96,15 +95,9 @@ void voltdump::dump(TIMESTAMP t){
 	//nodeclass = node::oclass;
 	//vA=gl_find_property(nodeclass, "
 
-	int node_count = 0;
-	while (obj=gl_find_next(nodes,obj)){
-		if(gl_object_isa(obj, "node", "powerflow")){
-			node_count += 1;
-		}
-	}
 	/* print column names */
 	gl_printtime(t, timestr, 64);
-	fprintf(outfile,"# %s run at %s on %i nodes\n", filename.get_string(), timestr, node_count);
+	fprintf(outfile,"# %s run at %s on %i nodes\n", filename.get_string(), timestr, nodes->hit_count);
 	if (mode == VDM_RECT)
 		fprintf(outfile,"node_name,voltA_real,voltA_imag,voltB_real,voltB_imag,voltC_real,voltC_imag\n");
 	else if (mode == VDM_POLAR)
@@ -113,18 +106,65 @@ void voltdump::dump(TIMESTAMP t){
 	obj = 0;
 	while (obj=gl_find_next(nodes,obj)){
 		if(gl_object_isa(obj, "node", "powerflow")){
-			pnode = OBJECTDATA(obj,node);
+
+
+			//Map the properties of interest - first current
+			node_voltage_value_link[0] = new gld_property(obj,"voltage_A");
+
+			//Check it
+			if ((node_voltage_value_link[0]->is_valid() != true) || (node_voltage_value_link[0]->is_complex() != true))
+			{
+				GL_THROW("voltdump - Unable to map voltage property of node:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				While the billdump object attempted to map the current_in_A, current_in_B, or current_in_C, an error
+				occurred.  Please try again.  If the error persists, please submit your code via the ticketing and issues system.
+				*/
+			}
+
+			//Map the properties of interest - second current
+			node_voltage_value_link[1] = new gld_property(obj,"voltage_B");
+
+			//Check it
+			if ((node_voltage_value_link[1]->is_valid() != true) || (node_voltage_value_link[1]->is_complex() != true))
+			{
+				GL_THROW("voltdump - Unable to map voltage property of node:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
+				//Defined above
+			}
+
+			//Map the properties of interest - third current
+			node_voltage_value_link[2] = new gld_property(obj,"voltage_C");
+
+			//Check it
+			if ((node_voltage_value_link[2]->is_valid() != true) || (node_voltage_value_link[2]->is_complex() != true))
+			{
+				GL_THROW("voltdump - Unable to map voltage property of node:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
+				//Defined above
+			}
+
+			//Pull the values
+			node_voltage_values[0] = node_voltage_value_link[0]->get_complex();
+			node_voltage_values[1] = node_voltage_value_link[1]->get_complex();
+			node_voltage_values[2] = node_voltage_value_link[2]->get_complex();
+
 			if(obj->name == NULL){
 				sprintf(namestr, "%s:%i", obj->oclass->name, obj->id);
 			}
 			if(mode == VDM_RECT){
-				fprintf(outfile,"%s,%f,%f,%f,%f,%f,%f\n",(obj->name ? obj->name : namestr),pnode->voltage[0].Re(),pnode->voltage[0].Im(),pnode->voltage[1].Re(),pnode->voltage[1].Im(),pnode->voltage[2].Re(),pnode->voltage[2].Im());
+				fprintf(outfile,"%s,%f,%f,%f,%f,%f,%f\n",(obj->name ? obj->name : namestr),node_voltage_values[0].Re(),node_voltage_values[0].Im(),node_voltage_values[1].Re(),node_voltage_values[1].Im(),node_voltage_values[2].Re(),node_voltage_values[2].Im());
 			} else if(mode == VDM_POLAR){
-				fprintf(outfile,"%s,%f,%f,%f,%f,%f,%f\n",(obj->name ? obj->name : namestr),pnode->voltage[0].Mag(),pnode->voltage[0].Arg(),pnode->voltage[1].Mag(),pnode->voltage[1].Arg(),pnode->voltage[2].Mag(),pnode->voltage[2].Arg());
+				fprintf(outfile,"%s,%f,%f,%f,%f,%f,%f\n",(obj->name ? obj->name : namestr),node_voltage_values[0].Mag(),node_voltage_values[0].Arg(),node_voltage_values[1].Mag(),node_voltage_values[1].Arg(),node_voltage_values[2].Mag(),node_voltage_values[2].Arg());
 			}
+
+			//Clear the properties found
+			delete node_voltage_value_link[0];
+			delete node_voltage_value_link[1];
+			delete node_voltage_value_link[2];
 		}
 	}
 	fclose(outfile);
+
+	//Free the findlist
+	gl_free(nodes);
 }
 
 TIMESTAMP voltdump::commit(TIMESTAMP t){

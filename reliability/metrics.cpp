@@ -38,7 +38,7 @@ metrics::metrics(MODULE *module)
 			PT_char1024, "metrics_of_interest", PADDR(metrics_oi),
 			PT_double, "metric_interval[s]", PADDR(metric_interval_dbl),
 			PT_double, "report_interval[s]", PADDR(report_interval_dbl),
-			PT_bool,"secondary_interruptions_count",PADDR(secondary_interruptions_count),PT_ACCESS,PA_HIDDEN,
+			PT_bool,"perform_secondary_interruptions_count",PADDR(secondary_interruptions_count),PT_ACCESS,PA_HIDDEN,
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		if (gl_publish_function(oclass,	"metrics_event_ended", (FUNCTIONADDR)metrics_event_ended)==NULL)
