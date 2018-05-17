@@ -1,8 +1,8 @@
-cmake_minimum_required(VERSION 3.10)
 project(mysql)
-set(CMAKE_CXX_STANDARD 11)
 
 include_directories(../gldcore)
+
+#TODO: MySQL imports
 
 add_library(${PROJECT_NAME} SHARED
         mysql/collector.cpp

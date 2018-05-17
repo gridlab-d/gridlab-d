@@ -1,8 +1,10 @@
-cmake_minimum_required(VERSION 3.10)
 project(connection)
-set(CMAKE_CXX_STANDARD 11)
 
 include_directories(../gldcore)
+
+include_directories(../third_party/jsonCpp)
+SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I../third_party/jsonCpp" )
+
 
 add_library(${PROJECT_NAME} SHARED
         connection/init.cpp
@@ -34,6 +36,4 @@ set_target_properties(${PROJECT_NAME}
         PROPERTIES PREFIX ""
         )
 
-#install(TARGETS ${PROJECT_NAME}
-#        LIBRARY DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
-#        )
+target_link_libraries(${PROJECT_NAME} libjsoncpp)

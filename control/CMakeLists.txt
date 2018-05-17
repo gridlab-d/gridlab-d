@@ -1,4 +1,3 @@
-cmake_minimum_required(VERSION 3.10)
 project(gridlabd_assert)
 
 include_directories(BEFORE ../gldcore)

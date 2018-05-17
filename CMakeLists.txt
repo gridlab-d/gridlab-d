@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 2.8.12)
 project(gridlabd)
 set(CMAKE_CXX_STANDARD 14)
 SET(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -37,40 +37,22 @@ CHECK_FUNCTION_EXISTS(madvise HAVE_MADVISE)
 #configure_file(cmake_config.h.in config.h)
 add_definitions(-DHAVE_CONFIG_H)
 
+SET(GL_MODULES assert climate commercial connection generators market
+        mysql optimize powerflow reliability residential tape tape_file
+        tape_plot glsolvers glxengine
+        )
 
 # Load module directories. When adding new module, add it here.
+include_directories(gldcore)
 include_directories(third_party/superLU_MT)
 include_directories(third_party/jsonCpp)
-include_directories(gldcore/link/engine)
-include_directories(gldcore/solvers)
-include_directories(gldcore)
 
-#SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/install64/lib)
-
-
-
-##add_subdirectory(third_party/superLU_MT)
-##add_subdirectory(third_party/jsonCpp)
-#add_subdirectory(assert)
-#add_subdirectory(climate)
-#add_subdirectory(commercial)
-#add_subdirectory(connection)
-##add_subdirectory(gldcore/link/engine)
-##add_subdirectory(gldcore/solvers)
-#add_subdirectory(generators)
-#add_subdirectory(market)
-#add_subdirectory(mysql)
-#add_subdirectory(optimize)
-#add_subdirectory(powerflow)
-#add_subdirectory(reliability)
-#add_subdirectory(residential)
-#add_subdirectory(tape_file)
-#add_subdirectory(tape)
-#add_subdirectory(tape_plot)
-##add_subdirectory(gldcore)
+include(third_party/superLU_MT/CMakeLists.txt)
+include(third_party/jsonCpp/CMakeLists.txt)
 
 #add_subdirectory(third_party/superLU_MT)
 #add_subdirectory(third_party/jsonCpp)
+
 include(assert/CMakeLists.txt)
 include(climate/CMakeLists.txt)
 include(commercial/CMakeLists.txt)
@@ -82,16 +64,18 @@ include(optimize/CMakeLists.txt)
 include(powerflow/CMakeLists.txt)
 include(reliability/CMakeLists.txt)
 include(residential/CMakeLists.txt)
-include(tape_file/CMakeLists.txt)
 include(tape/CMakeLists.txt)
+include(tape_file/CMakeLists.txt)
 include(tape_plot/CMakeLists.txt)
+include(gldcore/solvers/CMakeLists.txt)
+include(gldcore/link/engine/CMakeLists.txt)
 
 
 # Load and link C/C++ files for the executeable
 add_executable(gridlabd
-        gldcore/link/engine/engine.cpp
-        gldcore/link/engine/engine.h
-        gldcore/link/engine/udpconnection.cpp
+#        gldcore/link/engine/engine.cpp
+#        gldcore/link/engine/engine.h
+#        gldcore/link/engine/udpconnection.cpp
         #gldcore/link/matlab/matlab.cpp
         #gldcore/odbc++/callablestatement.h
         #gldcore/odbc++/config-win32.h
@@ -111,10 +95,6 @@ add_executable(gridlabd
         gldcore/globals.c
         gldcore/globals.h
         gldcore/gridlabd.h
-        gldcore/solvers/etp.cpp
-        gldcore/solvers/main.cpp
-        gldcore/solvers/modified_euler.cpp
-        gldcore/solvers/newton_method.cpp
         gldcore/aggregate.c
         gldcore/aggregate.h
         gldcore/build.h
@@ -240,35 +220,23 @@ add_executable(gridlabd
         #gldcore/xcore.h
         )
 
+add_dependencies(gridlabd libjsoncpp libsuperlu)
 
 find_package(Threads)
 find_package(Curses)
 target_link_libraries(gridlabd ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(gridlabd ${CMAKE_DL_LIBS})
 target_link_libraries(gridlabd ${CURSES_LIBRARIES})
+target_link_libraries(gridlabd ${GL_MODULES})
+target_link_libraries(gridlabd libjsoncpp libsuperlu)
 
 
-
-#TARGET_LINK_LIBRARIES(gridlabd
-#        gridlabd_assert
-#        gridlabd_climate
-#        gridlabd_commercial
-#        gridlabd_connection
-#        gridlabd_generators
-#        gridlabd_market
-#        gridlabd_mysql
-#        gridlabd_optimize
-#        gridlabd_powerflow
-#        gridlabd_reliability
-#        gridlabd_residential
-#        gridlabd_tape_file
-#        gridlabd_tape
-#        gridlabd_tape_plot
-#        )
-#find_library()
-
-
-install(TARGETS gridlabd assert climate commercial connection generators market mysql optimize powerflow reliability tape tape_file tape_plot
+install(TARGETS gridlabd ${GL_MODULES} #libjsoncpp libsuperlu
+        PERMISSIONS
+        OWNER_EXECUTE OWNER_READ OWNER_WRITE
+        GROUP_EXECUTE GROUP_READ
+        WORLD_EXECUTE WORLD_READ
         RUNTIME DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/bin
         LIBRARY DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/lib/gridlabd
-        PUBLIC_HEADER DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/include/gridlabd)
+        PUBLIC_HEADER DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/include/gridlabD
+        )

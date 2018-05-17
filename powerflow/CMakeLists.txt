@@ -1,8 +1,8 @@
-cmake_minimum_required(VERSION 3.10)
 project(powerflow)
-set(CMAKE_CXX_STANDARD 11)
 
 include_directories(../gldcore)
+include_directories(../third_party/SuperLU_MT)
+SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I../third_party/SuperLU_MT" )
 
 add_library(${PROJECT_NAME} SHARED
         powerflow/billdump.cpp
@@ -111,6 +111,8 @@ add_library(${PROJECT_NAME} SHARED
 set_target_properties(${PROJECT_NAME}
         PROPERTIES PREFIX ""
         )
+
+target_link_libraries(${PROJECT_NAME} libsuperlu)
 
 #install(TARGETS ${PROJECT_NAME}
 #        LIBRARY DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
