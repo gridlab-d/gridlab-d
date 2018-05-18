@@ -3,6 +3,27 @@ project(gridlabd)
 set(CMAKE_CXX_STANDARD 14)
 SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Sets default compile scheme to Release (Maximum optimization, no debugger data)
+# To compile as Debug outside of IDE, run cmake with "-DCMAKE_BUILD_TYPE=Debug" flag.
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
+
+# Compiler/Linker flags for all build types
+set(CMAKE_CXX_FLAGS "-w")
+set(CMAKE_C_FLAGS "-w")
+set(CMAKE_LD_FLAGS "-w")
+
+# Compiler/Linker flags for debug specific build types
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
+set(CMAKE_C_FLAGS_DEBUG "-g -O0")
+
+# Compiler/Linker flags for release specific build types (default)
+set(CMAKE_LD_FLAGS_RELEASE "-O3")
+set(CMAKE_C_FLAGS_RELEASE "-O3")
+set(CMAKE_LD_FLAGS_RELEASE "-O3")
+
 # CMake Module includes
 INCLUDE(CheckIncludeFiles)
 INCLUDE(CheckFunctionExists)
@@ -222,11 +243,15 @@ add_executable(gridlabd
 
 add_dependencies(gridlabd libjsoncpp libsuperlu)
 
+SET(CURSES_NEED_NCURSES TRUE)
+
 find_package(Threads)
 find_package(Curses)
 target_link_libraries(gridlabd ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(gridlabd ${CMAKE_DL_LIBS})
-target_link_libraries(gridlabd ${CURSES_LIBRARIES})
+if(CURSES_FOUND)
+    target_link_libraries(gridlabd ${CURSES_LIBRARIES})
+endif()
 target_link_libraries(gridlabd ${GL_MODULES})
 target_link_libraries(gridlabd libjsoncpp libsuperlu)
 
@@ -238,5 +263,5 @@ install(TARGETS gridlabd ${GL_MODULES} #libjsoncpp libsuperlu
         WORLD_EXECUTE WORLD_READ
         RUNTIME DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/bin
         LIBRARY DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/lib/gridlabd
-        PUBLIC_HEADER DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/include/gridlabD
+        PUBLIC_HEADER DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/include/gridlabd
         )
