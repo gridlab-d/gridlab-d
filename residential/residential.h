@@ -41,6 +41,13 @@ typedef enum {	X12=0,	///< circuit from line 1 to line 2    (240V)
 				X13=2,	///< circuit from line 1 to line 3(N) (120V)
 } CIRCUITTYPE; ///< circuit type
 
+typedef struct s_smartfuse {
+	double powerRef; // power reference for smart-dim-fuse (0=disable)
+	double vFactor; // voltage factor for smart-dim-fuse (1.0 by default)
+	double vMin;
+	double vMax;
+} SMARTFUSE;
+
 typedef struct s_circuit {
 	CIRCUITTYPE type;	///< circuit type
 	enduse *pLoad;	///< pointer to the load struct (ENDUSELOAD* in house_a, enduse* in house_e)
@@ -51,6 +58,7 @@ typedef struct s_circuit {
 	BREAKERSTATUS status; ///< breaker status
 	TIMESTAMP reclose; ///< time at which breaker is reclosed
 	unsigned short tripsleft; ///< the number of trips left before breaker faults
+	SMARTFUSE *smartfuse; ///< SmartFuse info
 	struct s_circuit *next; ///< next circuit in list
 	// DPC: commented this out until the rest of house_e is updated
 } CIRCUIT; ///< circuit definition

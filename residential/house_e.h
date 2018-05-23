@@ -473,9 +473,10 @@ public:
 	complex *get_complex(OBJECT *obj, char *name);
 	bool *get_bool(OBJECT *obj, char *name);
 	int *get_enum(OBJECT *obj, char *name);
-// message handlers
+// smartfuse implementation
 public:
 	GL_METHOD(house_e,smart_breaker);
+	void update_smartfuse(CIRCUIT *);
 };
 
 

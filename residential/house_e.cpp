@@ -105,10 +105,148 @@ enumeration house_e::implicit_enduse_source = IES_ELCAP1990;
 static double aux_cutin_temperature = 10;
 
 EXPORT_METHOD(house_e,smart_breaker)
-IMPL_METHOD(house_e,smart_breaker)
+int jprintf(char *buffer, size_t len, ...)
 {
-	// TODO: handle incoming message
-	return 0; // return 0 if no return message, non-zero for message
+	va_list ptr;
+	va_start(ptr,len);
+	char *p = buffer;
+	if ( len <= 0 )
+		return 0;
+	*p++ = '{';
+	int count = 0;
+	while ( p < buffer + len-2 )
+	{
+		char t[1024];
+		char *token = va_arg(ptr,char*);
+		if ( token == NULL ) break;
+		char *value = va_arg(ptr,char*);
+		if ( value == NULL ) 
+		{
+			gl_error("jprintf(): unexpected NULL value");
+			break;
+		}
+		int rl = snprintf(t,sizeof(t),"\"%s\":\"%s\"",token,value);
+		if ( p + rl >= buffer + len-2 )
+			return -strlen(buffer);
+		p += sprintf(p,"%s%s",count++==0?"":",",t);
+	}
+	strcat(p,"}");
+	va_end(ptr);
+	return strlen(buffer);
+}
+void house_e::update_smartfuse(CIRCUIT *c)
+{
+	SMARTFUSE *fuse = c->smartfuse;
+	double R = fuse->powerRef;
+	if ( R <= 0 ) // unable to control to this reference
+		return;
+	enduse *load = c->pLoad;
+	double Z = load->admittance.Mag();
+	double I = load->current.Mag();
+	double P = load->power.Mag();
+	double V = 1.0; // assume unity unless otherwise controlled
+	if ( Z <= 0.0 ) 
+	{
+		if ( I > 0.0 )
+		{
+			V = (R-P)/I;
+		}
+	}
+	else
+	{
+		V = (sqrt(I*I-4*(P-R)*Z) - I)/(2*Z);
+	}
+	double Vm = V;
+	if ( Vm < fuse->vMin )
+		fuse->vFactor = fuse->vMin;
+	else if ( Vm > fuse->vMax )
+		fuse->vFactor = fuse->vMax;
+	else
+		fuse->vFactor = Vm;
+}
+int house_e::smart_breaker(char *buffer, size_t len)
+{
+	char reply[1024] = "";
+
+	// parse the incoming message
+	char target[64] = "unknown", cmd[1024], value[1024];
+	int nargs = sscanf(buffer,"%[^&]&%[^=]=%[^\n]",target,cmd,value);
+	if ( nargs < 2 )
+	{
+		error("house_e::smart_breaker(char *buffer='%s', size_t len=%d): incoming message rejected (sscanf()=%d)",buffer,len,nargs);
+		jprintf(reply,sizeof(reply),"error","invalid message format",NULL);
+	}
+
+	// find the circuit this message applies to
+	CIRCUIT *c;
+	for ( c = panel.circuits ; c != NULL ; c = c->next )
+	{
+		if ( c->pLoad->name != NULL && strcmp(c->pLoad->name,target) == 0 )
+			break;
+	}
+	if ( c == NULL ) // circuit not found
+	{
+		error("house_e::smart_breaker(char *buffer='%s', size_t len=%d): incoming message rejected (circuit '%s' not found)",buffer,len,target);
+		jprintf(reply,sizeof(reply),"status","error","data","circuit not found",NULL);
+	}
+	else // handle the message
+	{
+		bool ok = false;
+		if ( strcmp(cmd,"GET") == 0 )
+		{
+			ok = true;
+		}
+		else if ( strcmp(cmd,"RESET") == 0 )
+		{
+			c->status = BRK_CLOSED;
+			ok = true;
+		}
+		else if ( strcmp(cmd,"OPEN") == 0 )
+		{
+			c->status = BRK_OPEN;
+			ok = true;
+		}
+		else if ( strcmp(cmd,"CONTROL") == 0 )
+		{
+			if ( c->smartfuse == NULL )
+			{
+				c->smartfuse->powerRef = atof(value);
+				ok = true;
+			}
+			else
+			{
+				jprintf(reply,sizeof(reply),"status","error","data","smartfuse not installed",NULL);
+				ok = false;
+			}
+		}
+		if ( ok )
+		{	
+			char amps[64];
+			sprintf(amps,"%.0f",c->max_amps);
+			char volts[64];
+			sprintf(volts,"%.0f",c->pV->Mag());
+			char data[1024];
+			jprintf(data,sizeof(data),"breaker",c->status==BRK_OPEN?"OPEN":(c->status==BRK_CLOSED?"CLOSED":(c->status==BRK_FAULT?"FAULT":"ERROR")),
+				"max",amps,
+				"voltage",volts,
+				"control","None",
+				NULL);
+			jprintf(reply,sizeof(reply),"status","ok","data",data,NULL);
+		}
+		else if ( strcmp(reply,"") == 0 ) // no reply to explain failure -- use general failure reply
+		{
+			jprintf(reply,sizeof(reply),"status","error","data","command rejected",NULL);
+		}
+	}
+	int rv = strlen(reply);
+	if ( rv >= len )
+	{
+		// note this can occur is a closing NULL is missing from the jprintf call
+		error("house_e::smart_breaker(char *buffer='%s', size_t len=%d): reply '%s' is too long for the return buffer",buffer,len,reply);
+		return 0; // return 0 if no return message, non-zero for message
+	}
+	strcpy(buffer,reply);
+	return rv;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -462,7 +600,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 				PT_KEYWORD, "BAND", (enumeration)TC_BAND, // T<mode>{On,Off} control HVAC (setpoints/deadband are ignored)
 				PT_KEYWORD, "NONE", (enumeration)TC_NONE, // system_mode controls HVAC (setpoints/deadband and T<mode>{On,Off} are ignored)
 
-			PT_method, "smart_breaker", get_smart_breaker_offset(), PT_DESCRIPTION, "smart breaker message handlers", 
+			PT_method, "circuit", get_smart_breaker_offset(), PT_DESCRIPTION, "smart breaker message handlers", 
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);			
 
@@ -1767,6 +1905,13 @@ CIRCUIT *house_e::attach(OBJECT *obj, ///< object to attach
 	// @todo get data on residential breaker lifetimes (residential, low priority)
 	c->tripsleft = 100;
 
+	// add smartfuse
+	c->smartfuse = new SMARTFUSE;
+	c->smartfuse->powerRef = 0.0;
+	c->smartfuse->vFactor = 1.0;
+	c->smartfuse->vMin = 0.95;
+	c->smartfuse->vMax = 1.05;
+
 	return c;
 }
 
@@ -2391,11 +2536,15 @@ TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1)
 	/* update all voltage factors */
 	for (c=panel.circuits; c!=NULL; c=c->next)
 	{
+		// implement smartfuse controller
+		if ( c->smartfuse != NULL )
+			update_smartfuse(c);
+
 		// get circuit type
 		int n = (int)c->type;
 		if (n<0 || n>2)
 			GL_THROW("%s:%d circuit %d has an invalid circuit type (%d)", obj->oclass->name, obj->id, c->id, (int)c->type);
-		c->pLoad->voltage_factor = c->pV->Mag() / ((c->pLoad->config&EUC_IS220) ? 240 : 120);
+		c->pLoad->voltage_factor = c->pV->Mag() / ((c->pLoad->config&EUC_IS220) ? 240 : 120) * c->smartfuse->vFactor;
 		if ((c->pLoad->voltage_factor > 1.06 || c->pLoad->voltage_factor < 0.88) && (ANSI_voltage_check==true))
 			gl_warning("%s - %s:%d is outside of ANSI standards (voltage = %.0f percent of nominal 120/240)", obj->name, obj->oclass->name,obj->id,c->pLoad->voltage_factor*100);
 	}
