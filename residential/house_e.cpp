@@ -104,6 +104,13 @@ set house_e::implicit_enduses_active = IEU_ALL;
 enumeration house_e::implicit_enduse_source = IES_ELCAP1990;
 static double aux_cutin_temperature = 10;
 
+EXPORT_METHOD(house_e,smart_breaker)
+IMPL_METHOD(house_e,smart_breaker)
+{
+	// TODO: handle incoming message
+	return 0; // return 0 if no return message, non-zero for message
+}
+
 //////////////////////////////////////////////////////////////////////////
 // implicit loadshapes - these are enabled by using implicit_enduses global
 //////////////////////////////////////////////////////////////////////////
@@ -454,6 +461,8 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 				PT_KEYWORD, "FULL", (enumeration)TC_FULL, // setpoint/deadband controls HVAC
 				PT_KEYWORD, "BAND", (enumeration)TC_BAND, // T<mode>{On,Off} control HVAC (setpoints/deadband are ignored)
 				PT_KEYWORD, "NONE", (enumeration)TC_NONE, // system_mode controls HVAC (setpoints/deadband and T<mode>{On,Off} are ignored)
+
+			PT_method, "smart_breaker", get_smart_breaker_offset(), PT_DESCRIPTION, "smart breaker message handlers", 
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);			
 

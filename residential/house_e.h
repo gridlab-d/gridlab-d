@@ -16,6 +16,8 @@
 #include "loadshape.h"
 #include "residential_enduse.h"
 
+DECL_METHOD(house_e,smart_breaker);
+
 typedef struct s_implicit_enduse {
 	enduse load;
 	double amps;
@@ -471,7 +473,11 @@ public:
 	complex *get_complex(OBJECT *obj, char *name);
 	bool *get_bool(OBJECT *obj, char *name);
 	int *get_enum(OBJECT *obj, char *name);
+// message handlers
+public:
+	GL_METHOD(house_e,smart_breaker);
 };
+
 
 inline double sgn(double x) 
 {

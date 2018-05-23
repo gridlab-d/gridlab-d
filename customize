@@ -112,6 +112,9 @@ function sync_validate ()
 
 function configure ()
 {
+	if [ ! -f ./gldcore/gridlabd.in -o ./gldcore/gridlabd.m4sh -nt ./gldcore/gridlabd.in ]; then
+		m4 ./gldcore/gridlabd.m4sh >./gldcore/gridlabd.in
+	fi
 	if [ ! -f ./configure ]; then
 		autoreconf -isf
 	fi
