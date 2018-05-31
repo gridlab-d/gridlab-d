@@ -15,7 +15,6 @@
 #include <errno.h>
 #include <math.h>
 
-#include "house_a.h"
 #include "range.h"
 
 #define HEIGHT_PRECISION 0.01
@@ -646,7 +645,10 @@ double range::update_state(double dt1,TIMESTAMP t1)
 {	
 	OBJECT *hdr = OBJECTHDR(this);
 	cooktop_energy_used += total_power_cooktop* dt1/3600;
+	double temp_voltage_magnitude;
 
+	//Pull in the current voltage value
+	temp_voltage_magnitude = (pCircuit->pV->get_complex()).Mag();
 
 switch(state_cooktop) {
 
@@ -706,7 +708,7 @@ switch(state_cooktop) {
 					
 				}	
 		
-				else if (pCircuit->pV->Mag()<stall_voltage)
+				else if (temp_voltage_magnitude<stall_voltage)
 				{
 					state_cooktop = CT_STALLED;
 					state_time = 0;
@@ -734,7 +736,7 @@ case CT_STAGE_2_ONLY:
 				cycle_time_cooktop = time_cooktop_setting - cooktop_interval[0] - cooktop_interval[1]; 
 			}	
 
-			else if (pCircuit->pV->Mag()<stall_voltage)
+			else if (temp_voltage_magnitude<stall_voltage)
 			{
 				state_cooktop = CT_STALLED;
 				state_time = 0;
@@ -754,7 +756,7 @@ case CT_STAGE_3_ONLY:
 					
 			}					
 
-			else if (pCircuit->pV->Mag()<stall_voltage)
+			else if (temp_voltage_magnitude<stall_voltage)
 			{
 				state_cooktop = CT_STALLED;
 				state_time = 0;
@@ -764,7 +766,7 @@ case CT_STAGE_3_ONLY:
 	break;
 
 	case CT_STALLED:
-		if (pCircuit->pV->Mag()>start_voltage)
+		if (temp_voltage_magnitude>start_voltage)
 		{
 			state_cooktop = CT_STAGE_1_ONLY;
 			state_time = cycle_time_cooktop;
@@ -776,7 +778,7 @@ case CT_STAGE_3_ONLY:
 	case CT_TRIPPED:
 		if (state_time>reset_delay)
 		{
-			if (pCircuit->pV->Mag()>start_voltage)
+			if (temp_voltage_magnitude>start_voltage)
 				state_cooktop = CT_STAGE_1_ONLY;
 			else
 				state_cooktop = CT_STALLED;
@@ -1134,6 +1136,7 @@ double range::actual_kW(void)
 	OBJECT *obj = OBJECTHDR(this);
 	const double nominal_voltage = 240.0; //@TODO:  Determine if this should be published or how we want to obtain this from the equipment/network
     static int trip_counter = 0;
+	double actual_voltage;
 
 	// calculate rated heat capacity adjusted for the current line voltage
 	if (heat_needed && re_override != OV_OFF)
@@ -1141,7 +1144,16 @@ double range::actual_kW(void)
 		if(heat_mode == GASHEAT){
 			return heating_element_capacity; /* gas heating is voltage independent. */
 		}
-		const double actual_voltage = pCircuit ? pCircuit->pV->Mag() : nominal_voltage;
+
+		if (pCircuit == NULL)
+		{
+			actual_voltage = nominal_voltage;
+		}
+		else
+		{
+			actual_voltage = (pCircuit->pV->get_complex()).Mag();
+		}
+
         if (actual_voltage > 2.0*nominal_voltage)
         {
             if (trip_counter++ > 10)

@@ -28,7 +28,6 @@
 #include "voltdump.h"
 #include "series_reactor.h"
 #include "restoration.h"
-#include "frequency_gen.h"
 #include "volt_var_control.h"
 #include "fault_check.h"
 #include "motor.h"
@@ -128,7 +127,6 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new voltdump(module);
 	new series_reactor(module);
 	new restoration(module);
-	new frequency_gen(module);
 	new volt_var_control(module);
 	new fault_check(module);
 	new motor(module);

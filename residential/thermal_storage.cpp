@@ -148,7 +148,8 @@ int thermal_storage::init(OBJECT *parent)
 	}
 	OBJECT *hdr = OBJECTHDR(this);
 	hdr->flags |= OF_SKIPSAFE;
-	double *design_cooling_capacity;
+	gld_property *design_cooling_capacity_prop;
+	double design_cooling_capacity;
 
 	//Make sure the parent is a house
 	if (!(gl_object_isa(parent,"house","residential")))
@@ -159,17 +160,56 @@ int thermal_storage::init(OBJECT *parent)
 		*/
 	}
 
-	//Pull a house link, we'll use it for addresses
-	house_e *house_lnk = OBJECTDATA(parent,house_e);
+	//Link up the appropriate variables
 
-	//Link the variables to the parent values (house values)
-	design_cooling_capacity = &house_lnk->design_cooling_capacity;
-	outside_temperature = &house_lnk->outside_temperature;
-	thermal_storage_available = &house_lnk->thermal_storage_present;
-	thermal_storage_active = &house_lnk->thermal_storage_inuse;
+	//Start with the design_cooling_capacity
+	design_cooling_capacity_prop = new gld_property(parent,"design_cooling_capacity");
+
+	//Make sure it worked
+	if ((design_cooling_capacity_prop->is_valid() != true) || (design_cooling_capacity_prop->is_double() != true))
+	{
+		GL_THROW("thermal_storage:%d - %s - Unable to map house interface property",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to map the parent house's properties, the thermal_storage object encountered an error.  Please
+		try again.  If the error persists, please submit your code and a bug report via the issues tracker.
+		*/
+	}
+
+	//Outside temperature
+	outside_temperature = new gld_property(parent,"outdoor_temperature");
+
+	//Check it
+	if ((outside_temperature->is_valid() != true) || (outside_temperature->is_double() != true))
+	{
+		GL_THROW("thermal_storage:%d - %s - Unable to map house interface property",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
+		//Defined above
+	}
+
+	//Thermal_storage_available
+	thermal_storage_available = new gld_property(parent,"thermal_storage_present");
+
+	//Check it
+	if ((thermal_storage_available->is_valid() != true) || (thermal_storage_available->is_bool() != true))
+	{
+		GL_THROW("thermal_storage:%d - %s - Unable to map house interface property",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
+		//Defined above
+	}
+	
+	//thermal_storage_active
+	thermal_storage_active = new gld_property(parent,"thermal_storage_in_use");
+
+	//Check it
+	if ((thermal_storage_active->is_valid() != true) || (thermal_storage_active->is_bool() != true))
+	{
+		GL_THROW("thermal_storage:%d - %s - Unable to map house interface property",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
+		//Defined above
+	}
+
+	//Pull the design cooling capacity for checks
+	design_cooling_capacity = design_cooling_capacity_prop->get_double();
 
 	//Check the cooling capacity
-	if (*design_cooling_capacity == NULL)
+	if (design_cooling_capacity == 0)	//Not sure how this could happen
 	{
 		gl_warning("\'design_cooling_capacity\' not specified in parent ~ default to 5 ton or 60,000 Btu/hr");
 		/* TROUBLESHOOT
@@ -179,9 +219,12 @@ int thermal_storage::init(OBJECT *parent)
 		discharge_rate = 5 * 12000; //Btu/hr, is set to 5 ton when not defined
 		water_capacity = 1.7413;	//m^3, is set to the same as a 5 ton unit
 	} else {
-		discharge_rate = *design_cooling_capacity;
+		discharge_rate = design_cooling_capacity;
 		water_capacity = 1.7413 * (discharge_rate / (5 * 12000));
 	}
+
+	//clear out the temporary property
+	delete design_cooling_capacity_prop;
 
 	surface_area = 6 * pow(water_capacity, 0.6667); //suface area of a cube calculated from volume
 
@@ -305,11 +348,16 @@ TIMESTAMP thermal_storage::sync(TIMESTAMP t0, TIMESTAMP t1)
 	double val = 0.0;
 	TIMESTAMP t2 = TS_NEVER;
 	next_timestep = TS_NEVER;
-	double actual_recharge_power;
+	double actual_recharge_power, outside_temperature_val;
+	gld_wlock *test_rlock;
+	bool temp_bool_val;
 
 	//Make sure we aren't on the first run
 	if (t0 != 0)
 	{
+		//Pull the current temperature from the house outside
+		outside_temperature_val = outside_temperature->get_double();
+
 		if (*recharge_time_ptr == 1 && *discharge_time_ptr == 1)
 		{
 			gl_warning("recharge and discharge can not both be scheduled to be concurrently on ~ defaulting to recharge");
@@ -339,7 +387,7 @@ TIMESTAMP thermal_storage::sync(TIMESTAMP t0, TIMESTAMP t1)
 		if (stored_capacity > 0)
 		{
 			surface_area = 6 * pow(water_capacity, 0.6667); //suface area of a cube calculated from volume
-			stored_capacity = stored_capacity + ((k * surface_area * (32 - *outside_temperature) / 0.05) * (t0 - last_timestep));
+			stored_capacity = stored_capacity + ((k * surface_area * (32 - outside_temperature_val) / 0.05) * (t0 - last_timestep));
 			state_of_charge = stored_capacity / total_capacity * 100;
 			if (stored_capacity < 0)
 			{
@@ -354,16 +402,18 @@ TIMESTAMP thermal_storage::sync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 
 		//Recharge cycle
-		actual_recharge_power = recharge_power * (1 + (75 - *outside_temperature) * 0.0106);
-		if (recharge && *recharge_time_ptr == 1 && *outside_temperature >= 15 && *outside_temperature <=115)
+		actual_recharge_power = recharge_power * (1 + (75 - outside_temperature_val) * 0.0106);
+		if (recharge && *recharge_time_ptr == 1 && outside_temperature_val >= 15 && outside_temperature_val <=115)
 		//needs to recharge, is set to recharge and the outside temperature is between 15 and 155 deg F
 		{
 			//Recharge cycle, so ES is not available
-			*thermal_storage_available = 0;
-			actual_recharge_power = recharge_power * (1 + (75 - *outside_temperature) * 0.0106);
+			temp_bool_val = false;
+			thermal_storage_available->setp<bool>(temp_bool_val,*test_rlock);
+
+			actual_recharge_power = recharge_power * (1 + (75 - outside_temperature_val) * 0.0106);
 			if (last_timestep != t0) //only calculate energy once per timestep
 			{
-				stored_capacity = stored_capacity + (((total_capacity / 30) / (9 * *outside_temperature + 705)) * (t0 - last_timestep));
+				stored_capacity = stored_capacity + (((total_capacity / 30) / (9 * outside_temperature_val + 705)) * (t0 - last_timestep));
 			}
 			if (stored_capacity >= total_capacity)
 			{
@@ -377,7 +427,7 @@ TIMESTAMP thermal_storage::sync(TIMESTAMP t0, TIMESTAMP t1)
 			{
 				recharge = 1;
 				state_of_charge = stored_capacity / total_capacity * 100;
-				next_timestep = (TIMESTAMP)((total_capacity - stored_capacity) / ((total_capacity / 30) / (9 * *outside_temperature + 705)));
+				next_timestep = (TIMESTAMP)((total_capacity - stored_capacity) / ((total_capacity / 30) / (9 * outside_temperature_val + 705)));
 				if (next_timestep == 0)	next_timestep = 1;
 				load.power = actual_recharge_power;
 				load.power_factor = recharge_power_factor;
@@ -385,22 +435,33 @@ TIMESTAMP thermal_storage::sync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 		}
 
-		if (*recharge_time_ptr != 1 && *discharge_time_ptr == 1 && state_of_charge > 0 && *outside_temperature >=15)
+		if (*recharge_time_ptr != 1 && *discharge_time_ptr == 1 && state_of_charge > 0 && outside_temperature_val >=15)
 		//not set to recharge, set to discharge, has charge to use and the outside air temperature is above 15 deg F
 		{
-			if (*thermal_storage_available == 0)	last_timestep = t0; //don't run energy calculations when first turned on
-			*thermal_storage_available = 1;
+			thermal_storage_active->getp<bool>(temp_bool_val,*test_rlock);
+			if (temp_bool_val == false)	last_timestep = t0; //don't run energy calculations when first turned on
+
+
+			temp_bool_val = true;
+			thermal_storage_available->setp<bool>(temp_bool_val,*test_rlock);
+
 		} else {
-			*thermal_storage_available = 0;
+			temp_bool_val = false;
+			thermal_storage_available->setp<bool>(temp_bool_val,*test_rlock);
 		}
 
+		//Pull the bool value to see if we're active or not
+		thermal_storage_active->getp<bool>(temp_bool_val,*test_rlock);
+
 		//Discharge cycle
-		if (recharge == 0 && *discharge_time_ptr == 1 && (*thermal_storage_active > 0))
+		if (recharge == 0 && *discharge_time_ptr == 1 && (temp_bool_val == true))
 		{
 			if (stored_capacity > 0)
 			{
 				//Capacity available - flag as available
-				*thermal_storage_available = 1;
+				temp_bool_val = true;
+				thermal_storage_available->setp<bool>(temp_bool_val,*test_rlock);
+
 				if (last_timestep != t0) //only calculate energy once per timestep
 				{
 					stored_capacity = stored_capacity - (discharge_rate * (t0 - last_timestep) / 3600);
@@ -414,7 +475,9 @@ TIMESTAMP thermal_storage::sync(TIMESTAMP t0, TIMESTAMP t1)
 			} else
 			{
 				//Out of capacity - flag as unavailable
-				*thermal_storage_available = 0;
+				temp_bool_val = false;
+				thermal_storage_available->setp<bool>(temp_bool_val,*test_rlock);
+
 				state_of_charge = 0;
 				load.power = 0;
 				load.power_factor = discharge_power_factor;

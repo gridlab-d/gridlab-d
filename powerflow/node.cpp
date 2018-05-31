@@ -138,6 +138,10 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			PT_complex, "prerotated_current_B[A]", PADDR(pre_rotated_current[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality - bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
 			PT_complex, "prerotated_current_C[A]", PADDR(pre_rotated_current[2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality - bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
 
+			PT_complex, "current_inj_A[A]", PADDR(current_inj[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
+			PT_complex, "current_inj_B[A]", PADDR(current_inj[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
+			PT_complex, "current_inj_C[A]", PADDR(current_inj[2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
+
 			PT_complex, "current_AB[A]", PADDR(current_dy[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
 			PT_complex, "current_BC[A]", PADDR(current_dy[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
 			PT_complex, "current_CA[A]", PADDR(current_dy[2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current delta-connected injection (in = positive), this an accumulator only, not a output or input variable",

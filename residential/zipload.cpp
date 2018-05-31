@@ -23,7 +23,6 @@
 #include <float.h>
 #include <memory.h>
 
-#include "house_a.h"
 #include "zipload.h"
 
 //////////////////////////////////////////////////////////////////////////
@@ -333,6 +332,7 @@ TIMESTAMP ZIPload::sync(TIMESTAMP t0, TIMESTAMP t1)
 	double real_power = 0.0;
 	double imag_power = 0.0;
 	double angleval;
+	double temp_voltage_magnitude;
 
 	double test = multiplier;
 
@@ -494,13 +494,16 @@ TIMESTAMP ZIPload::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 	if (pCircuit!=NULL){
+		//Pull the current voltage value
+		temp_voltage_magnitude = (pCircuit->pV->get_complex()).Mag();
+
 		if (is_240)
 		{
-			load.voltage_factor = pCircuit->pV->Mag() / 240; // update voltage factor - not really used for anything
+			load.voltage_factor = temp_voltage_magnitude / 240.0; // update voltage factor - not really used for anything
 		}
 		else //120
 		{
-			load.voltage_factor = pCircuit->pV->Mag() / 120; // update voltage factor - not really used for anything
+			load.voltage_factor = temp_voltage_magnitude / 120.0; // update voltage factor - not really used for anything
 		}
 	}
 

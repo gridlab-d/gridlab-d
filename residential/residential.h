@@ -9,6 +9,14 @@
 #include "gridlabd.h"
 #include "module.h"
 
+#ifdef _RESIDENTIAL_CPP
+#define GLOBAL
+#define INIT(A) = (A)
+#else
+#define GLOBAL extern
+#define INIT(A)
+#endif
+
 /* useful constants */
 #define RHOWATER	(62.4)			// lb/cf
 #define CFPGAL		(0.133681)		// cf/gal
@@ -44,7 +52,7 @@ typedef enum {	X12=0,	///< circuit from line 1 to line 2    (240V)
 typedef struct s_circuit {
 	CIRCUITTYPE type;	///< circuit type
 	enduse *pLoad;	///< pointer to the load struct (ENDUSELOAD* in house_a, enduse* in house_e)
-	complex *pV; ///< pointer to circuit voltage
+	gld_property *pV; ///< pointer to appropriate circuit voltage property
 	double max_amps; ///< maximum breaker amps
 	int id; ///< circuit id
 	BREAKERSTATUS status; ///< breaker status
@@ -64,6 +72,14 @@ typedef struct s_panel {
 typedef	CIRCUIT *(*ATTACHFUNCTION)(OBJECT *, enduse *, double , int is220); ///< type definition for attach function
 
 typedef enum {HORIZONTAL, NORTH, NORTH_EAST, EAST, SOUTH_EAST, SOUTH, SOUTH_WEST, WEST, NORTH_WEST,N_SOLAR_SURFACES} ORIENTATION;
+
+//Globals
+GLOBAL double default_line_voltage INIT(120.0);			//Value for the default nominal_voltage
+GLOBAL bool ANSI_voltage_check INIT(true);				//Flag to enable/disable ANSI voltage violation checks
+GLOBAL double default_outdoor_temperature INIT(74.0);	//Value for default outdoor air temperature
+GLOBAL double default_humidity INIT(75.0);				//Value for default humidity
+GLOBAL int64 default_etp_iterations INIT(100);			//Value for etp solution iterations
+GLOBAL double default_horizontal_solar INIT(0.0);		//Value for horizontal solar gains
 
 #endif  /* _RESIDENTIAL_H */
 

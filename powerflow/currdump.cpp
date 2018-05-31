@@ -113,7 +113,7 @@ void currdump::dump(TIMESTAMP t){
 			{
 				GL_THROW("currdump - Unable to map current property of link:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
-				While the billdump object attempted to map the current_in_A, current_in_B, or current_in_C, an error
+				While the currdump object attempted to map the current_in_A, current_in_B, or current_in_C, an error
 				occurred.  Please try again.  If the error persists, please submit your code via the ticketing and issues system.
 				*/
 			}

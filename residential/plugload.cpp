@@ -15,7 +15,6 @@
 #include <errno.h>
 #include <math.h>
 
-#include "house_a.h"
 #include "plugload.h"
 
 //////////////////////////////////////////////////////////////////////////
@@ -93,10 +92,16 @@ int plugload::isa(char *classname)
 TIMESTAMP plugload::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
 	TIMESTAMP t2 = TS_NEVER;
+	double temp_voltage_magnitude;
 	double val = 0.0;
 
 	if (pCircuit!=NULL)
-		load.voltage_factor = pCircuit->pV->Mag() / 120; // update voltage factor
+	{
+		//Get the current voltage
+		temp_voltage_magnitude = (pCircuit->pV->get_complex()).Mag();
+
+		load.voltage_factor = temp_voltage_magnitude / 120; // update voltage factor
+	}
 
 	t2 = residential_enduse::sync(t0,t1);
 

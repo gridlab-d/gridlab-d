@@ -24,7 +24,6 @@
 #include <errno.h>
 #include <math.h>
 
-#include "house_a.h"
 #include "waterheater.h"
 
 #define TSTAT_PRECISION 0.01
@@ -1344,7 +1343,16 @@ double waterheater::actual_kW(void)
 		if(heat_mode == GASHEAT){
 			return heating_element_capacity; /* gas heating is voltage independent. */
 		}
-		actual_voltage = pCircuit ? pCircuit->pV->Mag() : nominal_voltage;
+
+		if (pCircuit == NULL)
+		{
+			actual_voltage = nominal_voltage;
+		}
+		else
+		{
+			actual_voltage = (pCircuit->pV->get_complex()).Mag();
+		}
+
         if (actual_voltage > 2.0*nominal_voltage)
         {
             if (trip_counter++ > 10)

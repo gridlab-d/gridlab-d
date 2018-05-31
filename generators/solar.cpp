@@ -123,6 +123,9 @@ solar::solar(MODULE *module)
 			PT_double, "latitude[deg]", PADDR(latitude), PT_DESCRIPTION, "The location of the array in degrees latitude",
 			PT_double, "longitude[deg]", PADDR(longitude), PT_DESCRIPTION, "The location of the array in degrees longitude",
 
+			PT_complex, "default_voltage_variable", PADDR(default_voltage_array),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"Accumulator/placeholder for default voltage value, when solar is run without an inverter",
+			PT_complex, "default_current_variable", PADDR(default_current_array),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"Accumulator/placeholder for default current value, when solar is run without an inverter",
+
 			PT_enumeration, "orientation", PADDR(orientation_type),
 				PT_KEYWORD, "DEFAULT", (enumeration)DEFAULT,
 				PT_KEYWORD, "FIXED_AXIS", (enumeration)FIXED_AXIS,
@@ -175,10 +178,8 @@ int solar::create(void)
 	Pmax_temp_coeff = 0.0;
 	Voc_temp_coeff  = 0.0;
 
-	pSolarD = NULL;
-	pSolarH = NULL;
-	pSolarG = NULL;
-	pAlbedo = NULL;
+	//Property values - NULL out
+	pTout = NULL;
 	pWindSpeed = NULL;
 
 	module_acoeff = -2.81;		//Coefficients from Sandia database - represents 
@@ -206,6 +207,14 @@ int solar::create(void)
 	//Null out the function pointers
 	calc_solar_radiation = NULL;
 
+	//Inverter pointers
+	inverter_voltage_property = NULL;
+	inverter_current_property = NULL;
+
+	//Default versions
+	default_voltage_array = complex(0.0,0.0);
+	default_current_array = complex(0.0,0.0);
+	
 	return 1; /* return 1 on success, 0 on failure */
 }
 
@@ -279,15 +288,10 @@ int solar::init_climate()
 			is utilizing default values for all relevant weather variables.
 			*/
 
-			//default to mock data
-			static double tout=59.0, rhout=0.75, solar=92.902, wsout=0.0, albdefault=0.2;
-			pTout = &tout;
-			pRhout = &rhout;
-			pSolarD = &solar;	//Default all solar values to normal "optimal" 1000 W/m^2
-			pSolarH = &solar;
-			pSolarG = &solar;
-			pAlbedo = &albdefault;
-			pWindSpeed = &wsout;
+			//default to mock data - for the two fields that exist (temperature and windspeed)
+			//All others just put in the one equation that uses them
+			Tamb = 59.0;
+			wind_speed = 0.0;
 
 			if (orientation_type==FIXED_AXIS)
 			{
@@ -316,74 +320,27 @@ int solar::init_climate()
 			}
 			if (obj->rank<=hdr->rank)
 				gl_set_dependent(obj,hdr);
-		   
-			pTout = (double*)GETADDR(obj,gl_get_property(obj,"temperature"));
-//			pRhout = (double*)GETADDR(obj,gl_get_property(obj,"humidity"));	<---- Not used anywhere yet
-			pSolarD = (double*)GETADDR(obj,gl_get_property(obj,"solar_direct"));
-			pSolarH = (double*)GETADDR(obj,gl_get_property(obj,"solar_diffuse"));
-			pSolarG = (double*)GETADDR(obj,gl_get_property(obj,"solar_global"));
-			pAlbedo = (double*)GETADDR(obj,gl_get_property(obj,"ground_reflectivity"));
-			pWindSpeed = (double*)GETADDR(obj,gl_get_property(obj,"wind_speed"));
+			
+			//Map the properties - temperature
+			pTout = new gld_property(obj,"temperature");
 
-			//Should probably check these
-			if (pTout==NULL)
+			//Check it
+			if ((pTout->is_valid() != true) || (pTout->is_double() != true))
 			{
-				GL_THROW("Failed to map outside temperature");
+				GL_THROW("solar:%d - %s - Failed to map outside temperature",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
 				/*  TROUBLESHOOT
 				The solar PV array failed to map the outside air temperature.  Ensure this is
 				properly specified in your climate data and try again.
 				*/
 			}
 
-			//No need to error check - doesn't exist in any formulations yet
-			//if (pRhout==NULL)
-			//{
-			//	GL_THROW("Failed to map outside relative humidity");
-			//	/*  TROUBLESHOOT
-			//	The solar PV array failed to map the outside relative humidity.  Ensure this is
-			//	properly specified in your climate data and try again.
-			//	*/
-			//}
+			//Map the wind speed
+			pWindSpeed = new gld_property(obj,"wind_speed");
 
-			if (pSolarD==NULL)
+			//Check tit
+			if ((pWindSpeed->is_valid() != true) || (pWindSpeed->is_double() != true))
 			{
-				GL_THROW("Failed to map direct normal solar radiation");
-				/*  TROUBLESHOOT
-				The solar PV array failed to map the solar direct normal radiation.  Ensure this is
-				properly specified in your climate data and try again.
-				*/
-			}
-
-			if (pSolarH==NULL)
-			{
-				GL_THROW("Failed to map diffuse horizontal solar radiation");
-				/*  TROUBLESHOOT
-				The solar PV array failed to map the solar diffuse horizontal radiation.  Ensure this is
-				properly specified in your climate data and try again.
-				*/
-			}
-
-			if (pSolarG==NULL)
-			{
-				GL_THROW("Failed to map global horizontal solar radiation");
-				/*  TROUBLESHOOT
-				The solar PV array failed to map the solar global horizontal radiation.  Ensure this is
-				properly specified in your climate data and try again.
-				*/
-			}
-
-			if (pAlbedo==NULL)
-			{
-				GL_THROW("Failed to map albedo/ground reflectance");
-				/*  TROUBLESHOOT
-				The solar PV array failed to map the ground reflectance.  Ensure this is
-				properly specified in your climate data and try again.
-				*/
-			}
-
-			if (pWindSpeed==NULL)
-			{
-				GL_THROW("Failed to map wind speed");
+				GL_THROW("solar:%d - %s - Failed to map wind speed",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
 				/*  TROUBLESHOOT
 				The solar PV array failed to map the wind speed.  Ensure this is
 				properly specified in your climate data and try again.
@@ -608,9 +565,6 @@ int solar::init(OBJECT *parent)
 			break;
 	}
 
-	static complex default_line_voltage[1], default_line_current[1];
-	int i;
-
 	//efficiency dictates how much of the rate insolation the panel can capture and
 	//turn into electricity
 	//Rated power output
@@ -663,18 +617,27 @@ int solar::init(OBJECT *parent)
 	// find parent inverter, if not defined, use a default voltage
 	if (parent != NULL && strcmp(parent->oclass->name,"inverter") == 0) // SOLAR has a PARENT and PARENT is an INVERTER
 	{
-		struct {
-			complex **var;
-			char *varname;
-		} map[] = {
-			// map the V & I from the inverter
-			{&pCircuit_V,			"V_In"}, // assumes 2 and 3 follow immediately in memory
-			{&pLine_I,				"I_In"}, // assumes 2 and 3(N) follow immediately in memory
-		};
-		// construct circuit variable map to meter
-		for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
+		//Map the inverter voltage
+		inverter_voltage_property = new gld_property(parent,"V_In");
+
+		//Check it
+		if ((inverter_voltage_property->is_valid() != true) || (inverter_voltage_property->is_complex() != true))
 		{
-			*(map[i].var) = get_complex(parent,map[i].varname);
+			GL_THROW("solar:%d - %s - Unable to map inverter power interface field",obj->id,(obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			While attempting to map to one of the inverter interface variables, an error occurred.  Please try again.
+			If the error persists, please submit a bug report and your model file via the issue tracking system.
+			*/
+		}
+
+		//Map the inverter current
+		inverter_current_property = new gld_property(parent,"I_In");
+
+		//Check it
+		if ((inverter_current_property->is_valid() != true) || (inverter_current_property->is_complex() != true))
+		{
+			GL_THROW("solar:%d - %s - Unable to map inverter power interface field",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
 		}
 
 		inverter *par = OBJECTDATA(obj->parent, inverter);
@@ -727,22 +690,34 @@ int solar::init(OBJECT *parent)
 	else
 	{	// default values of voltage
 		gl_warning("solar panel:%d has no parent defined. Using static voltages.", obj->id);
-		struct {
-			complex **var;
-			char *varname;
-		} map[] = {
-			// map the V & I from the inverter
-			{&pCircuit_V,			"V_In"}, // assumes 2 and 3 follow immediately in memory
-			{&pLine_I,				"I_In"}, // assumes 2 and 3(N) follow immediately in memory
-		};
-		// attach meter variables to each circuit in the default_meter
-		*(map[0].var) = &default_line_voltage[0];
-		*(map[1].var) = &default_line_current[0];
+		
+		//Map the values to ourself
 
-		// provide initial values for voltages
-		default_line_voltage[0] = complex(V_Max.Re()/sqrt(3.0),0);
-        	//default_line_voltage[0] = V_Max/sqrt(3.0);
-     
+		//Map the inverter voltage
+		inverter_voltage_property = new gld_property(obj,"default_voltage_variable");
+
+		//Check it
+		if ((inverter_voltage_property->is_valid() != true) || (inverter_voltage_property->is_complex() != true))
+		{
+			GL_THROW("solar:%d - %s - Unable to map a default power interface field",obj->id,(obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			While attempting to map to one of the default power interface variables, an error occurred.  Please try again.
+			If the error persists, please submit a bug report and your model file via the issue tracking system.
+			*/
+		}
+
+		//Map the inverter current
+		inverter_current_property = new gld_property(obj,"default_current_variable");
+
+		//Check it
+		if ((inverter_current_property->is_valid() != true) || (inverter_current_property->is_complex() != true))
+		{
+			GL_THROW("solar:%d - %s - Unable to map a default power interface field",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
+		}
+
+		//Set the local voltage value
+		default_voltage_array = complex(V_Max.Re()/sqrt(3.0),0);
 	}
 
 	climate_result=init_climate();
@@ -751,7 +726,7 @@ int solar::init(OBJECT *parent)
 	if ((soiling_factor<0) || (soiling_factor>1.0))
 	{
 		soiling_factor = 0.95;
-		gl_warning("Invalid soiling factor specified, defaulting to 95%");
+		gl_warning("Invalid soiling factor specified, defaulting to 95%%");
 		/*  TROUBLESHOOT
 		A soiling factor less than zero or greater than 1.0 was specified.  This is not within the valid
 		range, so a default of 0.95 was selected.
@@ -761,7 +736,7 @@ int solar::init(OBJECT *parent)
 	if ((derating_factor<0) || (derating_factor>1.0))
 	{
 		derating_factor = 0.95;
-		gl_warning("Invalid derating factor specified, defaulting to 95%");
+		gl_warning("Invalid derating factor specified, defaulting to 95%%");
 		/*  TROUBLESHOOT
 		A derating factor less than zero or greater than 1.0 was specified.  This is not within the valid
 		range, so a default of 0.95 was selected.
@@ -785,6 +760,7 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 	int64 ret_value;
 	OBJECT *obj = OBJECTHDR(this);
 	double insolwmsq, corrwindspeed, Tback, Ftempcorr;
+	gld_wlock *test_rlock;
 
 	//Check the shading factor
 	if ((shading_factor <0) || (shading_factor > 1))
@@ -799,8 +775,12 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 	if (solar_model_tilt != PLAYERVAL)
 	{
 		//Update windspeed - since it's being read and has a variable
-		wind_speed = *pWindSpeed;
-		Tamb = *pTout;
+		if (weather != NULL)
+		{
+			wind_speed = pWindSpeed->get_double();
+			Tamb = pTout->get_double();
+		}
+		//Default else -- just keep the original "static" values
 
 		//Check our mode
 		switch (orientation_type) {
@@ -808,7 +788,10 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 				{
 					if (weather == NULL)
 					{
-						Insolation = shading_factor*(*pSolarD) + *pSolarH + *pSolarG*(1 - cos(tilt_angle))*(*pAlbedo)/2.0;
+						//Original equation the pointed to statics (and weather, but how would it get here?)
+						//Insolation = shading_factor*(*pSolarD) + *pSolarH + *pSolarG*(1 - cos(tilt_angle))*(*pAlbedo)/2.0;
+						//Old static - static double tout=59.0, rhout=0.75, solar=92.902, wsout=0.0, albdefault=0.2;
+						Insolation = 92.902 * (shading_factor + 1.0 + 0.1* (1.0 - cos(tilt_angle)));
 					}
 					else
 					{
@@ -923,8 +906,9 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 
      I_Out = (VA_Out/V_Out);
 
-	 *pLine_I =I_Out;
-     *pCircuit_V =V_Out;
+	//Export the values
+	inverter_voltage_property->setp<complex>(V_Out,*test_rlock);
+	inverter_current_property->setp<complex>(I_Out,*test_rlock);
 
 	return TS_NEVER; 
 }
