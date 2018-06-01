@@ -257,7 +257,7 @@ TIMESTAMP freezer::sync(TIMESTAMP t0, TIMESTAMP t1)
 	//Pull the voltage magnitude
 	temp_voltage_magnitude = (pCircuit->pV->get_complex()).Mag();
 
-	if(temp_voltage_magnitude < (120.0 * 0.6) ){ /* stall voltage */
+	if(temp_voltage_magnitude < (default_line_voltage * 0.6) ){ /* stall voltage */
 		gl_verbose("freezer motor has stalled");
 		motor_state = S_OFF;
 		Qr = 0;

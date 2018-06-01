@@ -221,7 +221,7 @@ TIMESTAMP lights::sync(TIMESTAMP t0, TIMESTAMP t1)
 		//Pull voltage magnitude
 		temp_voltage_magnitude = (pCircuit->pV->get_complex()).Mag();
 
-		load.voltage_factor = temp_voltage_magnitude / 120; // update voltage factor
+		load.voltage_factor = temp_voltage_magnitude / default_line_voltage; // update voltage factor
 	}
 
 	t2 = residential_enduse::sync(t0,t1);

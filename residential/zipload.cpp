@@ -499,11 +499,11 @@ TIMESTAMP ZIPload::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 		if (is_240)
 		{
-			load.voltage_factor = temp_voltage_magnitude / 240.0; // update voltage factor - not really used for anything
+			load.voltage_factor = temp_voltage_magnitude / (2.0 * default_line_voltage); // update voltage factor - not really used for anything
 		}
 		else //120
 		{
-			load.voltage_factor = temp_voltage_magnitude / 120.0; // update voltage factor - not really used for anything
+			load.voltage_factor = temp_voltage_magnitude / default_line_voltage; // update voltage factor - not really used for anything
 		}
 	}
 

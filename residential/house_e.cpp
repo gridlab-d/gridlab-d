@@ -727,9 +727,9 @@ int house_e::create()
 	pMeterStatus = NULL;
 	
 	//Powerflow values -- set defaults here
-	value_Circuit_V[0] = complex(240.0,0.0);	//Duplicates old method
-	value_Circuit_V[1] = complex(120.0,0.0);
-	value_Circuit_V[2] = complex(120.0,0.0);
+	value_Circuit_V[0] = complex(2.0*default_line_voltage,0.0);	//Duplicates old method
+	value_Circuit_V[1] = complex(default_line_voltage,0.0);
+	value_Circuit_V[2] = complex(default_line_voltage,0.0);
 	value_Line_I[0] = value_Line_I[1] = value_Line_I[2] = complex(0.0,0.0);
 	value_Shunt[0] = value_Shunt[1] = value_Shunt[2] = complex(0.0,0.0);
 	value_Power[0] = value_Power[1] = value_Power[2] = complex(0.0,0.0);
@@ -2989,20 +2989,20 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 				if (n==0)	//1-2 240 V load
 				{
 					value_Power[2] += c->pLoad->power * 1000.0;
-					value_Line_I[2] += ~(c->pLoad->current * 1000.0 / 240.0);
-					value_Shunt[2] += ~(c->pLoad->admittance * 1000.0 / (240.0 * 240.0));
+					value_Line_I[2] += ~(c->pLoad->current * 1000.0 / (2.0 * default_line_voltage));
+					value_Shunt[2] += ~(c->pLoad->admittance * 1000.0 / (4.0 * default_line_voltage * default_line_voltage));	//Note that the denom is 2*120 * 2, so 4 * nominal
 				}
 				else if (n==1)	//2-N 120 V load
 				{
 					value_Power[1] += c->pLoad->power * 1000.0;
-					value_Line_I[1] += ~(c->pLoad->current * 1000.0 / 120.0);
-					value_Shunt[1] += ~(c->pLoad->admittance * 1000.0 / (120.0 * 120.0));
+					value_Line_I[1] += ~(c->pLoad->current * 1000.0 / default_line_voltage);
+					value_Shunt[1] += ~(c->pLoad->admittance * 1000.0 / (default_line_voltage * default_line_voltage));
 				}
 				else	//n has to equal 2 here (checked above) - 1-N 120 V load
 				{
 					value_Power[0] += c->pLoad->power * 1000.0;
-					value_Line_I[0] += ~(c->pLoad->current * 1000.0 / 120.0);
-					value_Shunt[0] += ~(c->pLoad->admittance * 1000.0 / (120.0 * 120.0));
+					value_Line_I[0] += ~(c->pLoad->current * 1000.0 / default_line_voltage);
+					value_Shunt[0] += ~(c->pLoad->admittance * 1000.0 / (default_line_voltage * default_line_voltage));
 				}
 
 				total.total += c->pLoad->total;

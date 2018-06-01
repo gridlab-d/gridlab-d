@@ -167,10 +167,10 @@ int dryer::init(OBJECT *parent)
 	if (is_240)
 	{
 		load.config = EUC_IS220;
-		if (stall_voltage==0) stall_voltage  = 0.6*240;
+		if (stall_voltage==0) stall_voltage  = 1.2*default_line_voltage;	//0.6 * 2 * line_voltage
 	}
 	else
-		if (stall_voltage==0) stall_voltage  = 0.6*120;
+		if (stall_voltage==0) stall_voltage  = 0.6*default_line_voltage;
 
 	if (trip_delay==0) trip_delay = 10;
 	if (reset_delay==0) reset_delay = 60;

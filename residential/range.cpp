@@ -1134,7 +1134,6 @@ double range::dhdt(double h)
 double range::actual_kW(void)
 {
 	OBJECT *obj = OBJECTHDR(this);
-	const double nominal_voltage = 240.0; //@TODO:  Determine if this should be published or how we want to obtain this from the equipment/network
     static int trip_counter = 0;
 	double actual_voltage;
 
@@ -1147,14 +1146,14 @@ double range::actual_kW(void)
 
 		if (pCircuit == NULL)
 		{
-			actual_voltage = nominal_voltage;
+			actual_voltage = default_line_voltage;
 		}
 		else
 		{
 			actual_voltage = (pCircuit->pV->get_complex()).Mag();
 		}
 
-        if (actual_voltage > 2.0*nominal_voltage)
+        if (actual_voltage > 2.0*default_line_voltage)
         {
             if (trip_counter++ > 10)
 				GL_THROW("oven line voltage for range:%d is too high, exceeds twice nominal voltage.",obj->id);
@@ -1166,7 +1165,7 @@ double range::actual_kW(void)
             else
                 return 0.0;         // @TODO:  This condition should trip the breaker with a counter
         }
-		double test = heating_element_capacity * (actual_voltage*actual_voltage) / (nominal_voltage*nominal_voltage);
+		double test = heating_element_capacity * (actual_voltage*actual_voltage) / (default_line_voltage*default_line_voltage);
 		return test;
     }
 	else
