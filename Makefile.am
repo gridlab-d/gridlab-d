@@ -285,7 +285,7 @@ dist-osx:
 
 # Build deb (binary and source) packages
 dist-deb: distdir
-	echo -e "gridlabd ($(VERSION)-1) unstable; urgency=low\n\n  * Version $(VERSION) release.\n  * View recent changes at: https://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=Special:RecentChanges\n\n -- GridLAB-D Team <gridlabd@pnl.gov> `date -R`\n" > $(distdir)/debian/changelog
+	echo -e "gridlabd ($(VERSION)-1) unstable; urgency=low\n\n  * Version $(VERSION) release.\n  * View recent changes at: https://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=Special:RecentChanges\n\n -- GridLAB-D Team <gridlabd@pnl.gov>  `date -R`\n" > $(distdir)/debian/changelog
 	ln -s $(distdir) $(distdir)-1
 	(cd $(distdir)-1 && dpkg-buildpackage -tc -us -uc $(DEBFLAGS))
 	rm -f $(distdir)-1
