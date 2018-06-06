@@ -9,25 +9,28 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
+# Allows specific compiler optimizations to be disabled for all build types.
+set(DISABLED_OPTIMIZATIONS "")
+#set(DISABLED_OPTIMIZATIONS "${DISABLED_OPTIMIZATIONS} -fno-inline-functions")
+
 # Compiler/Linker flags for all build types
 set(CMAKE_CXX_FLAGS "-w")
-set(CMAKE_C_FLAGS "-w")
-set(CMAKE_LD_FLAGS "-w")
+set(CMAKE_C_FLAGS   "-w")
+set(CMAKE_LD_FLAGS  "-w")
 
 # Compiler/Linker flags for debug specific build types
-set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
-set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
-set(CMAKE_C_FLAGS_DEBUG "-g -O0")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O3 ${DISABLED_OPTIMIZATIONS}")
+set(CMAKE_C_FLAGS_DEBUG   "-g -O3 ${DISABLED_OPTIMIZATIONS}")
+set(CMAKE_LD_FLAGS_DEBUG  "-g -O3 ${DISABLED_OPTIMIZATIONS}")
 
 # Compiler/Linker flags for release specific build types (default)
-set(CMAKE_LD_FLAGS_RELEASE "-O3")
-set(CMAKE_C_FLAGS_RELEASE "-O3")
-set(CMAKE_LD_FLAGS_RELEASE "-O3")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 ${DISABLED_OPTIMIZATIONS}")
+set(CMAKE_C_FLAGS_RELEASE   "-O3 ${DISABLED_OPTIMIZATIONS}")
+set(CMAKE_LD_FLAGS_RELEASE  "-O3 ${DISABLED_OPTIMIZATIONS}")
 
 # CMake Module includes
 INCLUDE(CheckIncludeFiles)
 INCLUDE(CheckFunctionExists)
-
 
 # Check header files
 CHECK_INCLUDE_FILES(arpa/inet.h HAVE_INET_H)
@@ -54,9 +57,46 @@ CHECK_INCLUDE_FILES(unistd.h HAVE_UNISTD_H)
 CHECK_INCLUDE_FILES(wchar.h HAVE_WCHAR_H)
 
 CHECK_FUNCTION_EXISTS(madvise HAVE_MADVISE)
+CHECK_FUNCTION_EXISTS(error_at_line HAVE_ERROR_AT_LINE) #AC_FUNC_ERROR_AT_LINE
+CHECK_FUNCTION_EXISTS(malloc HAVE_MALLOC) #AC_FUNC_MALLOC
+CHECK_FUNCTION_EXISTS(mktime HAVE_MKTIME) #AC_FUNC_MKTIME
+CHECK_FUNCTION_EXISTS(realloc HAVE_REALLOC) #AC_FUNC_REALLOC
+CHECK_FUNCTION_EXISTS(strftime HAVE_STRFTIME) #AC_FUNC_STRFTIME
+CHECK_FUNCTION_EXISTS(strtod HAVE_STRTOD) #AC_FUNC_STRTOD
+CHECK_FUNCTION_EXISTS(vprintf HAVE_VPRINTF) #AC_FUNC_VPRINTF
+CHECK_FUNCTION_EXISTS(alarm HAVE_ALARM)
+CHECK_FUNCTION_EXISTS(atexit HAVE_ATEXIT)
+CHECK_FUNCTION_EXISTS(floor HAVE_FLOOR)
+CHECK_FUNCTION_EXISTS(ftime HAVE_FTIME)
+CHECK_FUNCTION_EXISTS(getcwd HAVE_GETCWD)
+CHECK_FUNCTION_EXISTS(gethostbyname HAVE_GETHOSTBYNAME)
+CHECK_FUNCTION_EXISTS(gethrtime HAVE_GETHRTIME)
+CHECK_FUNCTION_EXISTS(gettimeofday HAVE_GETTIMEOFDAY)
+CHECK_FUNCTION_EXISTS(inet_ntoa HAVE_INET_NTOA)
+CHECK_FUNCTION_EXISTS(memset HAVE_MEMSET)
+CHECK_FUNCTION_EXISTS(mkdir HAVE_MKDIR)
+CHECK_FUNCTION_EXISTS(pow HAVE_POW)
+CHECK_FUNCTION_EXISTS(putenv HAVE_PUTENV)
+CHECK_FUNCTION_EXISTS(select HAVE_SELECT)
+CHECK_FUNCTION_EXISTS(setenv HAVE_SETENV)
+CHECK_FUNCTION_EXISTS(socket HAVE_SOCKET)
+CHECK_FUNCTION_EXISTS(sqrt HAVE_SQRT)
+CHECK_FUNCTION_EXISTS(strchr HAVE_STRCHR)
+CHECK_FUNCTION_EXISTS(strcspn HAVE_STRCSPN)
+CHECK_FUNCTION_EXISTS(strerror HAVE_STRERROR)
+CHECK_FUNCTION_EXISTS(strpbrk HAVE_STRPBRK)
+CHECK_FUNCTION_EXISTS(strrchr HAVE_STRRCHR)
+CHECK_FUNCTION_EXISTS(strstr HAVE_STRSTR)
+CHECK_FUNCTION_EXISTS(strtol HAVE_STRTOL)
+CHECK_FUNCTION_EXISTS(tzset HAVE_TZSET)
 
-#configure_file(cmake_config.h.in config.h)
+
+#MESSAGE("suffix = ${CMAKE_SHARED_LIBRARY_SUFFIX}")
+SET(DLEXT ${CMAKE_SHARED_LIBRARY_SUFFIX})
+
+configure_file(gldcore/cmake_config.h.in config.h @ONLY)
 add_definitions(-DHAVE_CONFIG_H)
+
 
 SET(GL_MODULES assert climate commercial connection generators market
         mysql optimize powerflow reliability residential tape tape_file
@@ -67,6 +107,9 @@ SET(GL_MODULES assert climate commercial connection generators market
 include_directories(gldcore)
 include_directories(third_party/superLU_MT)
 include_directories(third_party/jsonCpp)
+
+# Load the current binary directory, where config.h is output.
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 include(third_party/superLU_MT/CMakeLists.txt)
 include(third_party/jsonCpp/CMakeLists.txt)
