@@ -10,7 +10,7 @@
 #define _solar_H
 
 #include <stdarg.h>
-#include "gridlabd.h"
+#include "generators.h"
 
 class solar : public gld_object
 {
@@ -89,8 +89,6 @@ public:
 
 	double Max_P;//< maximum real power capacity in kW
     double Min_P;//< minimus real power capacity in kW
-	//double Max_Q;//< maximum reactive power capacity in kVar
-    //double Min_Q;//< minimus reactive power capacity in kVar
 	double Rated_kVA; //< nominal capacity in kVA
 	
 
@@ -122,7 +120,6 @@ public:
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 
-	complex *get_complex(OBJECT *obj, char *name);
 public:
 	static CLASS *oclass;
 	static solar *defaults;

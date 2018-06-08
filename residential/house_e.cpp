@@ -1323,7 +1323,7 @@ int house_e::init(OBJECT *parent)
 		pMeterStatus = new gld_property(parent,"service_status");
 
 		//Make sure it worked
-		if ((pMeterStatus->is_valid() != true) && (pMeterStatus->is_enumeration() != true))
+		if ((pMeterStatus->is_valid() != true) || (pMeterStatus->is_enumeration() != true))
 		{
 			GL_THROW("house:%d - %s - Failed to map meter status variable from parent",obj->id,(obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT

@@ -108,8 +108,6 @@ triplex_node::triplex_node(MODULE *mod) : node(mod)
 				GL_THROW("Unable to publish triplex_node delta_linkage function");
 			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_triplex_node)==NULL)
 				GL_THROW("Unable to publish triplex_node deltamode function");
-			if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
-				GL_THROW("Unable to publish triplex_node deltamode function");
     }
 }
 

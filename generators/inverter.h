@@ -13,8 +13,7 @@
 #include <vector>		//for list<> in Volt/VAr schedule
 #include <string> //Ab add
 #include <stdarg.h>
-#include "gridlabd.h"
-#include "power_electronics.h"
+
 #include "generators.h"
 
 EXPORT STATUS preupdate_inverter(OBJECT *obj,TIMESTAMP t0, unsigned int64 delta_time);
@@ -54,8 +53,8 @@ typedef struct {
 	double I_in;
 } PID_INV_VARS;
 
-//inverter extends power_electronics
-class inverter: public power_electronics
+//Inverter class
+class inverter: public gld_object
 {
 private:
 	bool deltamode_inclusive; 	//Boolean for deltamode calls - pulled from object flags
@@ -65,6 +64,14 @@ private:
 protected:
 	/* TODO: put unpublished but inherited variables */
 public:
+	//Comaptibility variables - used to be in power_electronics
+	int32 number_of_phases_out;	//Count for number of phases
+
+	//General status variables
+	set phases;	/**< device phases (see PHASE codes) */
+    enum GENERATOR_MODE {CONSTANT_V=1, CONSTANT_PQ=2, CONSTANT_PF=4, SUPPLY_DRIVEN=5};
+    enumeration gen_mode_v;  //operating mode of the generator 
+
 	INV_STATE curr_state; ///< The current state of the inverter in deltamode
 	enum INVERTER_TYPE {TWO_PULSE=0, SIX_PULSE=1, TWELVE_PULSE=2, PWM=3, FOUR_QUADRANT = 4};
 	enumeration inverter_type_v;
@@ -77,6 +84,8 @@ public:
 	double Vdc;
 	complex I_In; // I_in (DC)
 	complex VA_In; //power in (DC)
+
+	double efficiency;
 
 	enum PF_REG {INCLUDED=1, EXCLUDED=2, INCLUDED_ALT=3} pf_reg;
 	enum PF_REG_STATUS {REGULATING = 1, IDLING = 2} pf_reg_status;
@@ -98,7 +107,6 @@ public:
 	double margin;
 	complex I_out_prev;
 	complex I_step_max;
-	double internal_losses;
 	double C_Storage_In;
 	double power_factor;
 	double P_Out_t0;
@@ -109,16 +117,7 @@ public:
 	complex V_In_Set_B;
 	complex V_In_Set_C; 
 
-	complex *pCircuit_V;		//< pointer to the three voltages on three lines
-	complex *pLine_I;			//< pointer to the three current on three lines
-	complex *pLine_unrotI;		//< pointer to the three-phase, unrotated current
-	complex *pLine12;			//< used in triplex metering
-	complex *pPower;			//< pointer to the three power loads on three lines
-	complex *pPower12;			//< used in triplex metering
-	int *pMeterStatus;			//< Pointer to service_status variable on parent
-
 	double output_frequency;
-	double frequency_losses;
 	
 	//Deltamode PID-controller implementation
 	double kpd;			///< The proportional gain for the d axis modulation
@@ -277,10 +276,40 @@ public:
 	std::vector<std::pair<double,double> > VoltVArSched;  //Volt/VAr schedule -- i realize I'm using goofball data types, what would be the GridLABD-esque way of implementing this data type? 
 	std::vector<std::pair<double,double> > freq_pwrSched; //freq-power schedule -- i realize I'm using goofball data types, what would be the GridLABD-esque way of implementing this data type? 
 private:
+	//Comaptibility variables - used to be in power_electronics
+	bool parent_is_a_meter;		//Boolean to indicate if the parent object is a meter/triplex_meter
+	bool parent_is_triplex;		//Boolean to indicate if the parent object is triplex-oriented (for variable exchange)
+
+	gld_property *pCircuit_V[3];					///< pointer to the three L-N voltage fields
+	gld_property *pLine_I[3];						///< pointer to the three current fields
+	gld_property *pLine_unrotI[3];					///< pointer to the three pre-rotated current fields
+	gld_property *pPower[3];						///< pointer to power value on meter parent
+	gld_property *pLine12;							//< used in triplex metering
+	gld_property *pPower12;							//< used in triplex metering
+	gld_property *pMeterStatus;						///< Pointer to service_status variable on meter parent
+	
+	//Default or "connecting point" values for powerflow interactions
+	complex value_Circuit_V[3];					///< value holeder for the three L-N voltage fields
+	complex value_Line_I[3];					///< value holeder for the three current fields
+	complex value_Line_unrotI[3];				///< value holeder for the three pre-rotated current fields
+	complex value_Power[3];						///< value holeder for power value on meter parent
+	complex value_Line12;						//< value holder for triplex L-L variable
+	complex value_Power12;						//< value holder for triplex L-L variable
+	enumeration value_MeterStatus;				///< value holeder for service_status variable on meter parent
+
+	//int number_of_phases_out;	//Count for number of phases
+	bool phaseAOut;
+	bool phaseBOut;
+	bool phaseCOut;
+	double Max_P;//< maximum real power capacity in kW
+	double Max_Q;//< maximum reactive power capacity in kVar
+	double Rated_kVA; //< nominal capacity in kVA
+	double Rated_kV; //< nominal line-line voltage in kV
+
 	//load following variables
 	FUNCTIONADDR powerCalc;				//Address for power_calculate in link object, if it is a link
 	bool sense_is_link;					//Boolean flag for if the sense object is a link or a node
-	complex *sense_power;				//Link to measured power value fo sense_object
+	gld_property *sense_power;			//Link to measured power value fo sense_object
 	double lf_dispatch_power;			//Amount of real power to try and dispatch to meet thresholds
 	TIMESTAMP next_update_time;			//TIMESTAMP of next dispatching change allowed
 	bool lf_dispatch_change_allowed;	//Flag to indicate if a change in dispatch is allowed
@@ -299,14 +328,22 @@ private:
 
 	//1547 variables
 	double out_of_violation_time_total;	//Tracking variable to see how long we've been "outside of bad conditions" to re-enable the inverter
-	double *freq_pointer;				//Pointer to frequency value for checking 1547 compliance
+	gld_property *freq_pointer;			//Pointer to frequency value for checking 1547 compliance
 	double node_nominal_voltage;		//Nominal voltage for per-unit-izing for 1547 checks
 
 	void update_control_references(void);
 	STATUS initalize_IEEE_1547_checks(OBJECT *parent);
+
+	//Map functions
+	gld_property *map_complex_value(OBJECT *obj, char *name);
+	gld_property *map_double_value(OBJECT *obj, char *name);
+	void pull_complex_powerflow_values(void);
+	void reset_complex_powerflow_accumulators(void);
+	void push_complex_powerflow_values(void);
+
+	double lin_eq_volt(double volt, double m, double b);
 public:
 	/* required implementations */
-	bool *get_bool(OBJECT *obj, char *name);
 	inverter(MODULE *module);
 	int create(void);
 	int init(OBJECT *parent);
@@ -316,14 +353,11 @@ public:
 	STATUS pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time);
 	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 	STATUS post_deltaupdate(complex *useful_value, unsigned int mode_pass);
-	int *get_enum(OBJECT *obj, char *name);
 	double perform_1547_checks(double timestepvalue);
 public:
 	static CLASS *oclass;
 	static inverter *defaults;
 	static CLASS *plcass;
-	complex *get_complex(OBJECT *obj, char *name);
-	double *get_double(OBJECT *obj, char *name);
 	complex complex_exp(double angle);
 	STATUS init_PI_dynamics(INV_STATE *curr_time);
 	STATUS init_PID_dynamics(void);

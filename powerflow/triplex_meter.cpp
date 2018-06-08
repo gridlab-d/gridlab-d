@@ -140,8 +140,6 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 				GL_THROW("Unable to publish triplex_meter delta_linkage function");
 			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_triplex_meter)==NULL)
 				GL_THROW("Unable to publish triplex_meter deltamode function");
-			if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
-				GL_THROW("Unable to publish triplex_meter deltamode function");
 
                         // market price name
                         gl_global_create("powerflow::market_price_name",PT_char1024,&market_price_name,NULL);

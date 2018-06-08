@@ -87,7 +87,6 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	gl_global_create("powerflow::enable_subsecond_models", PT_bool, &enable_subsecond_models,PT_DESCRIPTION,"Enable deltamode capabilities within the powerflow module",NULL);
 	gl_global_create("powerflow::all_powerflow_delta", PT_bool, &all_powerflow_delta,PT_DESCRIPTION,"Forces all powerflow objects that are capable to participate in deltamode",NULL);
 	gl_global_create("powerflow::deltamode_timestep", PT_double, &deltamode_timestep_publish,PT_UNITS,"ns",PT_DESCRIPTION,"Desired minimum timestep for deltamode-related simulations",NULL);
-	gl_global_create("powerflow::deltamode_extra_function", PT_int64, &deltamode_extra_function,NULL);
 	gl_global_create("powerflow::current_frequency",PT_double,&current_frequency,PT_UNITS,"Hz",PT_DESCRIPTION,"Current system-level frequency of the powerflow system",NULL);
 	gl_global_create("powerflow::master_frequency_update",PT_bool,&master_frequency_update,PT_DESCRIPTION,"Tracking variable to see if an object has become the system frequency updater",NULL);
 	gl_global_create("powerflow::enable_frequency_dependence",PT_bool,&enable_frequency_dependence,PT_DESCRIPTION,"Flag to enable frequency-based variations in impedance values of lines and loads",NULL);
@@ -441,53 +440,6 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 	{
 		return SUCCESS;
 	}
-}
-
-//Extra function for deltamode calls - allows module-level calls "out of order"
-//mode variable is for selection of call (only 1 for now)
-int delta_extra_function(unsigned int mode)
-{
-	complex accumulated_power, accumulated_freqpower;
-	STATUS function_status;
-	int curr_object_number;
-
-	//Zero the values
-	accumulated_power = complex(0.0,0.0);
-	accumulated_freqpower = complex(0.0,0.0);
-
-	//Call each powerflow functions "deltamode_frequency" to get total weighted
-	//average for frequency - then post to global
-	//Loop through the object list and call the updates
-	for (curr_object_number=0; curr_object_number<pwr_object_count; curr_object_number++)
-	{
-		if (delta_freq_functions[curr_object_number] != NULL)
-		{
-			//See if we're in service or not
-			if ((delta_objects[curr_object_number]->in_svc_double <= gl_globaldeltaclock) && (delta_objects[curr_object_number]->out_svc_double >= gl_globaldeltaclock))
-			{
-				//See if the function actually exists
-				if (delta_freq_functions[curr_object_number] != NULL)
-				{
-					//Call the actual function
-					function_status = ((STATUS (*)(OBJECT *, complex *, complex *))(*delta_freq_functions[curr_object_number]))(delta_objects[curr_object_number],&accumulated_power,&accumulated_freqpower);
-				}
-				else	//Doesn't exit, assume we succeeded
-				{
-					function_status = SUCCESS;
-				}
-			}
-			else	//Defaulted else, not in service
-				function_status = SUCCESS;
-		}
-		else	//Defaulted else, not in service
-			function_status = SUCCESS;
-
-		//Make sure we worked
-		if (function_status == FAILED)
-			return 0;
-	}
-	
-	return 1;	
 }
 
 CDECL int do_kill()

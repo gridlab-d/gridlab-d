@@ -163,8 +163,6 @@ load::load(MODULE *mod) : node(mod)
 				GL_THROW("Unable to publish load delta_linkage function");
 			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_load)==NULL)
 				GL_THROW("Unable to publish load deltamode function");
-			if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
-				GL_THROW("Unable to publish load deltamode function");
     }
 }
 

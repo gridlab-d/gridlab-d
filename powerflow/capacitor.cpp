@@ -95,8 +95,6 @@ capacitor::capacitor(MODULE *mod):node(mod)
 				GL_THROW("Unable to publish capacitor delta_linkage function");
 			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_capacitor)==NULL)
 				GL_THROW("Unable to publish capacitor deltamode function");
-			if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
-				GL_THROW("Unable to publish capacitor deltamode function");
     }
 }
 

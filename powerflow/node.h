@@ -11,7 +11,6 @@
 
 //Deltamode functions
 EXPORT complex *delta_linkage(OBJECT *obj, unsigned char mapvar);
-EXPORT STATUS delta_frequency_node(OBJECT *obj, complex *powerval, complex *freqpowerval);
 EXPORT SIMULATIONMODE interupdate_node(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
 #define I_INJ(V, S, Z, I) (I_S(S, V) + ((Z.IsFinite()) ? I_Z(Z, V) : complex(0.0)) + I_I(I))
@@ -98,7 +97,7 @@ private:
 	complex last_voltage[3];		///< voltage at last pass
 	complex current_inj[3];			///< current injection (total of current+shunt+power)
 	TIMESTAMP prev_NTime;			///< Previous timestep - used for propogating child properties
-	complex last_child_power[4][3];	///< Previous power values - used for child object propogation
+	complex last_child_power[5][3];	///< Previous power values - used for child object propogation
 	complex last_child_power_dy[6][3];	///< Previous power values joint - used for child object propogation
 	complex last_child_current12;	///< Previous current value - used for child object propogation (namely triplex)
 	bool deltamode_inclusive;		///< Flag for deltamode functionality, just to prevent having to mask the flags
@@ -185,6 +184,8 @@ public:
 	complex voltaged[3];	/// bus voltage differences
 	complex current[3];		/// bus current injection (positive = in)
 	complex pre_rotated_current[3];	/// bus current that has been rotated already for deltamode (direct post to powerflow)
+	complex deltamode_dynamic_current[3];	/// bus current that is pre-rotated, but also has ability to be reset within powerflow
+	complex deltamode_PGenTotal;			/// Bus generated power - used deltamode
 	complex power[3];		/// bus power injection (positive = in)
 	complex shunt[3];		/// bus shunt admittance 
 	complex current_dy[6];	/// bus current injection (positive = in), explicitly specify delta and wye portions

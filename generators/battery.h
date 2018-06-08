@@ -11,9 +11,8 @@
 
 #include <stdarg.h>
 
-#include "gridlabd.h"
+#include "generators.h"
 #include "energy_storage.h"
-
 
 class battery : public energy_storage
 {
@@ -30,8 +29,30 @@ private:
 	double v_oc; // the open circuit voltage as a function of soc
 	double v_t; // the terminal voltage as a function of soc and battery load.
 	double p_br;
-	//complex AMx[3][3];//generator impedance matrix
 
+	gld_property *pCircuit_V[3];		//< pointer to the three voltages on three lines
+	gld_property *pLine_I[3];			//< pointer to the three current on three lines
+	gld_property *pLine12;			//< used in triplex metering
+	gld_property *pPower;
+
+	gld_property *pTout;
+	gld_property *pSoc;
+	gld_property *pBatteryLoad;
+	gld_property *pSocReserve;
+	gld_property *pRatedPower;
+
+	complex value_Circuit_V[3];
+	complex value_Line_I[3];
+	complex value_Line12;
+
+	double value_Tout;
+
+	bool parent_is_meter;
+	bool parent_is_triplex;
+	bool parent_is_inverter;
+	bool climate_object_found;
+
+	void push_powerflow_currents(void);
 protected:
 	/* TODO: put unpublished but inherited variables */
 public:
@@ -90,10 +111,6 @@ public:
 	enumeration battery_state;
 
 		
-	complex *pCircuit_V;		//< pointer to the three voltages on three lines
-	complex *pLine_I;			//< pointer to the three current on three lines
-	complex *pLine12;			//< used in triplex metering
-	complex *pPower;
 	double power_set_high;
 	double power_set_low;
 	double power_set_high_highT;
@@ -103,14 +120,10 @@ public:
 	double deadband;
 	double check_power;
 	double pf;
-	//double lockout_time;
-	//int lockout_flag;
-	//TIMESTAMP next_time;
+
 	complex last_current[3];
 	double no_of_cycles;
 	bool Iteration_Toggle;			// "Off" iteration tracker
-	double *pTout;
-	double *pSolar;
 	double parasitic_power_draw;
 	double high_temperature;
 	double low_temperature;
@@ -126,17 +139,15 @@ public:
 	enumeration battery_type;
 	double soc; //state of charge of the battery
 	double bat_load; //current load of the battery
-	double *pSoc;
-	double *pBatteryLoad;
 	double last_bat_load;
 	double b_soc_reserve;
-	double *pSocReserve;
+
 	TIMESTAMP state_change_time;
 
 	//battery module parameters
 	double v_max; //the maximum DC voltage of the battery in V
 	double p_max; // the rated DC power the battery can supply or draw in W
-	double *pRatedPower;
+
 	double e_max; // the battery's internal capacity in Wh
 	double eta_rt; // the roundtrip efficiency of the battery at rated power.
 
@@ -152,10 +163,10 @@ public:
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 
 	double calculate_efficiency(complex voltage, complex current);
-	complex *get_complex(OBJECT *obj, char *name);
 	complex calculate_v_terminal(complex v, complex i);
-	void fetch_double(double **prop, char *name, OBJECT *parent);
 
+	gld_property *map_complex_value(OBJECT *obj, char *name);
+	gld_property *map_double_value(OBJECT *obj, char *name);
 public:
 	static CLASS *oclass;
 	static battery *defaults;
@@ -166,46 +177,3 @@ public:
 };
 
 #endif
-
-/**@}*/
-/** $Id: battery.h,v 1.0 2008/07/18
-	@file battery.h
-	@addtogroup battery
-	@ingroup MODULENAME
-
- @{  
- **/
-
-#ifndef _battery_H
-#define _battery_H
-
-#include <stdarg.h>
-#include "gridlabd.h"
-
-class battery {
-private:
-	/* TODO: put private variables here */
-protected:
-	/* TODO: put unpublished but inherited variables */
-public:
-	/* TODO: put published variables here */
-public:
-	/* required implementations */
-	battery(MODULE *module);
-	int create(void);
-	int init(OBJECT *parent);
-	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
-	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
-	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
-public:
-	static CLASS *oclass;
-	static battery *defaults;
-#ifdef OPTIONAL
-	static CLASS *pclass; /**< defines the parent class */
-	TIMESTAMPP plc(TIMESTAMP t0, TIMESTAMP t1); /**< defines the default PLC code */
-#endif
-};
-
-#endif
-
-/**@}*/

@@ -122,7 +122,6 @@ GLOBAL bool enable_mesh_fault_current INIT(false);	/** Flag to enable mesh-based
 
 // Deltamode stuff
 void schedule_deltamode_start(TIMESTAMP tstart);	/* Anticipated time for a deltamode start, even if it is now */
-int delta_extra_function(unsigned int mode);
 
 /* used by many powerflow enums */
 #define UNKNOWN 0

@@ -138,6 +138,12 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			PT_complex, "prerotated_current_B[A]", PADDR(pre_rotated_current[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality - bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
 			PT_complex, "prerotated_current_C[A]", PADDR(pre_rotated_current[2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality - bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
 
+			PT_complex, "deltamode_generator_current_A[A]", PADDR(deltamode_dynamic_current[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality - bus current injection (in = positive), direct generator injection (so may be overwritten internally), this an accumulator only, not a output or input variable",
+			PT_complex, "deltamode_generator_current_B[A]", PADDR(deltamode_dynamic_current[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality - bus current injection (in = positive), direct generator injection (so may be overwritten internally), this an accumulator only, not a output or input variable",
+			PT_complex, "deltamode_generator_current_C[A]", PADDR(deltamode_dynamic_current[2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality - bus current injection (in = positive), direct generator injection (so may be overwritten internally), this an accumulator only, not a output or input variable",
+
+			PT_complex, "deltamode_PGenTotal",PADDR(deltamode_PGenTotal),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality - power value for a diesel generator -- accumulator only, not an output or input",
+
 			PT_complex, "current_inj_A[A]", PADDR(current_inj[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
 			PT_complex, "current_inj_B[A]", PADDR(current_inj[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
 			PT_complex, "current_inj_C[A]", PADDR(current_inj[2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
@@ -207,10 +213,7 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			if (gl_publish_function(oclass,	"delta_linkage_node", (FUNCTIONADDR)delta_linkage)==NULL)
 				GL_THROW("Unable to publish node delta_linkage function");
 			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_node)==NULL)
-				GL_THROW("Unable to publish node deltamode function");
-			if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
-				GL_THROW("Unable to publish node deltamode function");
-    
+				GL_THROW("Unable to publish node deltamode function");    
 	}
 }
 
@@ -284,6 +287,10 @@ int node::create(void)
 	memset(pre_rotated_current,0,sizeof(pre_rotated_current));
 	memset(power,0,sizeof(power));
 	memset(shunt,0,sizeof(shunt));
+
+	deltamode_dynamic_current[0] = deltamode_dynamic_current[1] = deltamode_dynamic_current[2] = complex(0.0,0.0);
+
+	deltamode_PGenTotal = complex(0.0,0.0);
 
 	current_dy[0] = current_dy[1] = current_dy[2] = complex(0.0,0.0);
 	current_dy[3] = current_dy[4] = current_dy[5] = complex(0.0,0.0);
@@ -603,6 +610,7 @@ int node::init(OBJECT *parent)
 							last_child_power[1][0] = last_child_power[1][1] = last_child_power[1][2] = complex(0,0);
 							last_child_power[2][0] = last_child_power[2][1] = last_child_power[2][2] = complex(0,0);
 							last_child_power[3][0] = last_child_power[3][1] = last_child_power[3][2] = complex(0,0);
+							last_child_power[4][0] = last_child_power[4][1] = last_child_power[4][2] = complex(0,0);
 							last_child_current12 = 0.0;
 
 							//Do the same for the delta/wye explicit portions
@@ -662,6 +670,7 @@ int node::init(OBJECT *parent)
 				last_child_power[1][0] = last_child_power[1][1] = last_child_power[1][2] = complex(0,0);
 				last_child_power[2][0] = last_child_power[2][1] = last_child_power[2][2] = complex(0,0);
 				last_child_power[3][0] = last_child_power[3][1] = last_child_power[3][2] = complex(0,0);
+				last_child_power[4][0] = last_child_power[4][1] = last_child_power[4][2] = complex(0,0);
 				last_child_current12 = 0.0;
 
 				//Do the same for the delta/wye explicit portions
@@ -1180,13 +1189,6 @@ int node::init(OBJECT *parent)
 
 		//Increment the counter for allocation
 		pwr_object_count++;
-
-		//If we're THE SWING, map the variable for the extra function as well
-		if (obj==NR_swing_bus)
-		{
-			//Assign the function variable for deltamode
-			deltamode_extra_function = (int64)(&(delta_extra_function));
-		}
 
 		//Check out parent and toss some warnings
 		if (TopologicalParent != NULL)
@@ -1804,7 +1806,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 					//0-2 represent ABC current,3 represents overall power, 4 represents power frequency weighting,
 					//5 represents overall output power
 
-					temp_par_node->DynVariable = (complex *)gl_malloc(6*sizeof(complex));
+					temp_par_node->DynVariable = (complex *)gl_malloc(4*sizeof(complex));
 
 					//Check it
 					if (temp_par_node->DynVariable==NULL)
@@ -1814,8 +1816,8 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 					}
 
 					//Zero them, for consistency
-					temp_par_node->DynVariable[0] = temp_par_node->DynVariable[1] = temp_par_node->DynVariable[2] = complex(0.0,0.0);
-					temp_par_node->DynVariable[3] = temp_par_node->DynVariable[4] = temp_par_node->DynVariable[5] = complex(0.0,0.0);
+					temp_par_node->DynVariable[0] = temp_par_node->DynVariable[1] = complex(0.0,0.0);
+					temp_par_node->DynVariable[2] = temp_par_node->DynVariable[3] = complex(0.0,0.0);
 
 					//Unlock our parent
 					UNLOCK_OBJECT(SubNodeParent);
@@ -2079,6 +2081,14 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 				ParToLoad->pre_rotated_current[1] += pre_rotated_current[1];
 				ParToLoad->pre_rotated_current[2] += pre_rotated_current[2];
 
+				//And the deltamode accumulators too -- if deltamode
+				if (deltamode_inclusive == true)
+				{
+					ParToLoad->deltamode_dynamic_current[0] += deltamode_dynamic_current[0];
+					ParToLoad->deltamode_dynamic_current[1] += deltamode_dynamic_current[1];
+					ParToLoad->deltamode_dynamic_current[2] += deltamode_dynamic_current[2];
+				}
+
 				//Do the same for explicit delta/wye portions
 				for (loop_index_var=0; loop_index_var<6; loop_index_var++)
 				{
@@ -2111,6 +2121,14 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 				ParToLoad->pre_rotated_current[0] += pre_rotated_current[0]-last_child_power[3][0];
 				ParToLoad->pre_rotated_current[1] += pre_rotated_current[1]-last_child_power[3][1];
 				ParToLoad->pre_rotated_current[2] += pre_rotated_current[2]-last_child_power[3][2];
+
+				//And the deltamode accumulators too -- if deltamode
+				if (deltamode_inclusive == true)
+				{
+					ParToLoad->deltamode_dynamic_current[0] += deltamode_dynamic_current[0]-last_child_power[4][0];
+					ParToLoad->deltamode_dynamic_current[1] += deltamode_dynamic_current[1]-last_child_power[4][1];
+					ParToLoad->deltamode_dynamic_current[2] += deltamode_dynamic_current[2]-last_child_power[4][2];
+				}
 
 				//Do the same for the explicit delta/wye loads - last_child_power is set up as columns of ZIP, not ABC
 				for (loop_index_var=0; loop_index_var<6; loop_index_var++)
@@ -2162,6 +2180,14 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 			last_child_power[3][1] = pre_rotated_current[1];
 			last_child_power[3][2] = pre_rotated_current[2];
 
+			//And the deltamode accumulators too -- if deltamode
+			if (deltamode_inclusive == true)
+			{
+				last_child_power[4][0] = deltamode_dynamic_current[0];
+				last_child_power[4][1] = deltamode_dynamic_current[1];
+				last_child_power[4][2] = deltamode_dynamic_current[2];
+			}
+
 			//Do the same for delta/wye explicit loads
 			for (loop_index_var=0; loop_index_var<6; loop_index_var++)
 			{
@@ -2201,6 +2227,14 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 			ParToLoad->pre_rotated_current[1] += pre_rotated_current[1];
 			ParToLoad->pre_rotated_current[2] += pre_rotated_current[2];
 
+			//And the deltamode accumulators too -- if deltamode
+			if (deltamode_inclusive == true)
+			{
+				ParToLoad->deltamode_dynamic_current[0] += deltamode_dynamic_current[0];
+				ParToLoad->deltamode_dynamic_current[1] += deltamode_dynamic_current[1];
+				ParToLoad->deltamode_dynamic_current[2] += deltamode_dynamic_current[2];
+			}
+
 			//Import power and "load" characteristics for explicit delta/wye portions
 			for (loop_index_var=0; loop_index_var<6; loop_index_var++)
 			{
@@ -2225,6 +2259,13 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 			last_child_power[3][1] = pre_rotated_current[1];
 			last_child_power[3][2] = pre_rotated_current[2];
 
+			//And the deltamode accumulators too -- if deltamode
+			if (deltamode_inclusive == true)
+			{
+				last_child_power[4][0] = deltamode_dynamic_current[0];
+				last_child_power[4][1] = deltamode_dynamic_current[1];
+				last_child_power[4][2] = deltamode_dynamic_current[2];
+			}
 		}//End differently connected child
 	}//end not uninitialized
 }
@@ -3326,7 +3367,7 @@ int node::NR_populate(void)
 				//0-2 represent ABC current,3 represents overall power, 4 represents power frequency weighting,
 				//5 represents overall output power
 
-				DynVariable = (complex *)gl_malloc(6*sizeof(complex));
+				DynVariable = (complex *)gl_malloc(4*sizeof(complex));
 
 				//Check it
 				if (DynVariable==NULL)
@@ -3336,16 +3377,16 @@ int node::NR_populate(void)
 				}
 
 				//Zero them, for consistency
-				DynVariable[0] = DynVariable[1] = DynVariable[2] = complex(0.0,0.0);
-				DynVariable[3] = DynVariable[4] = DynVariable[5] = complex(0.0,0.0);
+				DynVariable[0] = DynVariable[1] = complex(0.0,0.0);
+				DynVariable[2] = DynVariable[3] = complex(0.0,0.0);
 			}
 		}//End we're a parent
 
 		//Map all relevant variables to the NR structure
 		NR_busdata[NR_node_reference].full_Y = full_Y;
 		NR_busdata[NR_node_reference].full_Y_all = full_Y_all;
-		NR_busdata[NR_node_reference].DynCurrent = DynVariable;
-		NR_busdata[NR_node_reference].PGenTotal = &DynVariable[3];
+		NR_busdata[NR_node_reference].DynCurrent = &deltamode_dynamic_current[0]; //DynVariable;
+		NR_busdata[NR_node_reference].PGenTotal = &deltamode_PGenTotal;
 	}
 	else	//Ensure it is empty
 	{
@@ -3410,6 +3451,14 @@ int node::NR_current_update(bool postpass, bool parentcall)
 				ParToLoad->pre_rotated_current[1] -= last_child_power[3][1];
 				ParToLoad->pre_rotated_current[2] -= last_child_power[3][2];
 
+				//And the deltamode accumulators too -- if deltamode
+				if (deltamode_inclusive == true)
+				{
+					ParToLoad->deltamode_dynamic_current[0] -= last_child_power[4][0];
+					ParToLoad->deltamode_dynamic_current[1] -= last_child_power[4][1];
+					ParToLoad->deltamode_dynamic_current[2] -= last_child_power[4][2];
+				}
+
 				//Remove power and "load" characteristics for explicit delta/wye values
 				for (loop_index=0; loop_index<6; loop_index++)
 				{
@@ -3471,6 +3520,14 @@ int node::NR_current_update(bool postpass, bool parentcall)
 				ParToLoad->pre_rotated_current[0] -= last_child_power[3][0];
 				ParToLoad->pre_rotated_current[1] -= last_child_power[3][1];
 				ParToLoad->pre_rotated_current[2] -= last_child_power[3][2];
+
+				//And the deltamode accumulators too -- if deltamode
+				if (deltamode_inclusive == true)
+				{
+					ParToLoad->deltamode_dynamic_current[0] -= last_child_power[4][0];
+					ParToLoad->deltamode_dynamic_current[1] -= last_child_power[4][1];
+					ParToLoad->deltamode_dynamic_current[2] -= last_child_power[4][2];
+				}
 
 				if (!parentcall)	//Wasn't a parent call - unlock us so our siblings get a shot
 				{
@@ -3644,6 +3701,8 @@ int node::NR_current_update(bool postpass, bool parentcall)
 				((voltage[1]==0) ? complex(0,0) : ~(power[1]/voltage[1])) + voltage[1]*shunt[1] + current[1] + pre_rotated_current[1],
 				((voltage[2]==0) ? complex(0,0) : ~(power[2]/voltage[2])) + voltage[2]*shunt[2] + current[2] + pre_rotated_current[2],
 			};
+			
+			//******NOTE -- Does the delamode generator current need to go in here!?!??!************************
 			temp_current_inj[0] = d[0];			
 			temp_current_inj[1] = d[1];
 			temp_current_inj[2] = d[2];
@@ -4597,8 +4656,6 @@ EXPORT SIMULATIONMODE interupdate_node(OBJECT *obj, unsigned int64 delta_time, u
 //1 - PGenTotal - total amount of generation on that bus (for current gen)
 //2 - DeltaCurrents - currents calculated from updated powerflow solution
 //3 - full_Y_all - exposed Ybus self admittance area
-//4 - FreqPower - Frequeny-power weighting, for "nominal" update at end
-//5 - TotalPower - Accumulated power, but not powerflow derived (differs from PGenTotal above)
 EXPORT complex *delta_linkage(OBJECT *obj, unsigned char mapvar)
 {
 	complex *testval;
@@ -4608,25 +4665,9 @@ EXPORT complex *delta_linkage(OBJECT *obj, unsigned char mapvar)
 	{
 		testval = my->full_Y;
 	}
-	else if (mapvar==1)	//Generation total - PGenTotal
-	{
-		testval = &(my->DynVariable[3]);
-	}
-	else if (mapvar==2)	//Dynamic current values - DeltaCurrents
-	{
-		testval = &(my->DynVariable[0]);
-	}
 	else if (mapvar==3)	//Self admittance, but fully Y-bus form
 	{
 		testval = my->full_Y_all;
-	}
-	else if (mapvar==4)	//Frequency-power variable
-	{
-		testval = &(my->DynVariable[4]);
-	}
-	else if (mapvar==5)	//Total power variable
-	{
-		testval = &(my->DynVariable[5]);
 	}
 	else	//Unknown - fail out
 	{
@@ -4634,27 +4675,6 @@ EXPORT complex *delta_linkage(OBJECT *obj, unsigned char mapvar)
 	}
 
 	return testval;
-}
-
-//Function to extract and post the accumulated power and "frequency power" for
-//updating "system frequency" when transiting back to standard mode
-//Return SUCCESS/FAILED
-EXPORT STATUS delta_frequency_node(OBJECT *obj, complex *powerval, complex *freqpowerval)
-{
-	//Map us
-	node *my = OBJECTDATA(obj,node);
-
-	//Null check to see if they even are needed
-	if ((my->DynVariable != NULL) && ((my->SubNode!=CHILD) && (my->SubNode!=DIFF_CHILD)))
-	{
-		//Accumulate values
-		*powerval += my->DynVariable[5];
-		*freqpowerval += my->DynVariable[4];
-	}
-	//Default else - not there, so ignore us
-
-	//Always succeed, for now
-	return SUCCESS;
 }
 
 /**@}*/
