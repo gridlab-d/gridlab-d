@@ -29,6 +29,13 @@ private:
 	} MOTOR_TRIPLEX_CONNECTION;
 	enumeration triplex_connection_type;
 
+	typedef enum {
+			TPIM_A=0,		///< Type A three-phase motor
+			TPIM_B=1,		///< Type B three-phase motor
+			TPIM_C=2		///< Type C three-phase motor
+	} TPIM_TYPE;
+	enumeration TPIM_type;
+
 	void SPIMupdateVars(); // function to update the previous values for the motor model
 	void updateFreqVolt(); // function to update frequency and voltage for the motor
 	void SPIMUpdateMotorStatus(); // function to update the status of the motor

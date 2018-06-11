@@ -152,6 +152,11 @@ motor::motor(MODULE *mod):node(mod)
 			PT_double_array, "contactorProtectionReconnect",get_contactorProtectionReconnect_offset(),
 			PT_double_array, "emsProtectionReconnect",get_emsProtectionReconnect_offset(),
 
+			PT_enumeration,"TPIM_type",PADDR(TPIM_type),PT_DESCRIPTION,"type of the three-phase motor (A, B, C)",
+				PT_KEYWORD,"TPIM_A",(enumeration)TPIM_A,
+				PT_KEYWORD,"TPIM_B",(enumeration)TPIM_B,
+				PT_KEYWORD,"TPIM_C",(enumeration)TPIM_C,
+
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Publish deltamode functions
@@ -292,6 +297,8 @@ int motor::create()
 	relayReconnect = false;
 	contactorReconnect = false;
 	emsReconnect = false;
+
+	TPIM_type = TPIM_A; // default to motor A
 
 	return result;
 }
@@ -1910,7 +1917,7 @@ void motor::SPIMSteadyState(TIMESTAMP t1) {
     psi_qr = complex(0.0,1.0)*psi_f + complex(0,-1)*psi_b;
     // system current and power equations
     Is = (Ids + Iqs)*complex_exp(Vs.Arg());
-    motor_elec_power = Vs*~Is;
+    motor_elec_power = Vs * ~Is * Pbase; // VA;
 }
 
 
@@ -2165,7 +2172,7 @@ void motor::SPIMDynamic(double curr_delta_time, double dTime) {
 
 	// system current and power equations
 	Is = (Ids + Iqs)*complex_exp(Vs.Arg());
-	motor_elec_power = Vs*~Is;
+	motor_elec_power = Vs * ~Is * Pbase; // VA;
 
     //electrical torque 
 	Telec = (Xm/Xr)*2*(If.Im()*psi_f.Re() - If.Re()*psi_f.Im() - Ib.Im()*psi_b.Re() + Ib.Re()*psi_b.Im()); 
@@ -2215,11 +2222,18 @@ void motor::TPIMDynamic(double curr_delta_time, double dTime) {
     Vap = (Vas + alpha * Vbs + alpha * alpha * Vcs) / 3.0;
     Van = (Vas + alpha * alpha * Vbs + alpha * Vcs) / 3.0;
 
-//    TPIMupdateVars();
+//    TPIMupdateVars(); // repeated thus removed here
 
-	if (wr_pu >= 1.0)
-	{
+//	if (wr_pu >= 1.0)
+//	{
+//		Tmech_eff = Tmech;
+//	}
+
+	if (TPIM_type == TPIM_A) {
 		Tmech_eff = Tmech;
+	}
+	else if (TPIM_type == TPIM_B || TPIM_type == TPIM_C) {
+		Tmech_eff = wr_pu * wr_pu *Tmech;
 	}
 
     //*** Predictor Step ***//
