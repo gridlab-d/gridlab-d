@@ -189,6 +189,8 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			PT_bool, "Norton_dynamic", PADDR(dynamic_norton),PT_DESCRIPTION,"Flag to indicate a Norton-equivalent connection -- used for generators and deltamode",
 			PT_bool, "generator_dynamic", PADDR(dynamic_generator),PT_DESCRIPTION,"Flag to indicate a voltage-sourcing or swing-type generator is present -- used for generators and deltamode",
 
+			PT_bool, "reset_disabled_island_state", PADDR(reset_island_state), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Deltamode/multi-island flag -- used to reset disabled status (and reform an island)",
+
 			//GFA - stuff
 			PT_bool, "GFA_enable", PADDR(GFA_enable), PT_DESCRIPTION, "Disable/Enable Grid Friendly Appliance(TM)-type functionality",
 			PT_double, "GFA_freq_low_trip[Hz]", PADDR(GFA_freq_low_trip), PT_DESCRIPTION, "Low frequency trip point for Grid Friendly Appliance(TM)-type functionality",
@@ -222,7 +224,8 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			GL_THROW("Unable to publish node current injection update mapping function");
 		if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==NULL)
 			GL_THROW("Unable to publish node VFD attachment function");
-    
+		if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == NULL)
+			GL_THROW("Unable to publish node island-status-reset function");
 	}
 }
 
@@ -356,6 +359,9 @@ int node::create(void)
 	VFD_attached = false;	//Not connected to a VFD
 	VFD_updating_function = NULL;	//Make sure is set empty
 	VFD_object = NULL;	//Make empty
+
+	//Multi-island tracking
+	reset_island_state = false;	//Reset is disabled, by default
 
 	return result;
 }
@@ -1974,6 +1980,14 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 	//See if we've been initialized or not
 	if (NR_node_reference!=-1)
 	{
+		//Do a check to see if we need to be "islanded reset" -- do this to re-enable phases, if needed
+		if ((reset_island_state == true) && (NR_island_fail_method == true))
+		{
+			//Call the reset function - easier this way -- don't really care about the status here -- warning messages will suffice for this call
+			fxn_ret_value = reset_node_island_condition();
+		}
+		//Default else -- our current state is acceptable
+
 		//Make sure we're a real boy - if we're not, do nothing (we'll steal mommy's or daddy's voltages in postsync)
 		if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
 		{
@@ -4824,6 +4838,94 @@ STATUS node::NR_swap_swing_status(bool desired_status)
 	return SUCCESS;
 }
 
+//Function to reset the "disabled state" of the node, if called (re-enable an island, basically)
+STATUS node::reset_node_island_condition(void)
+{
+	OBJECT *obj = OBJECTHDR(this);
+	STATUS temp_status;
+	FUNCTIONADDR temp_fxn_val;
+	int node_calling_reference;
+
+	//Deflag the overall variable, just in case
+	reset_island_state = false;
+
+	//Check and see if this was even something we wanted to do
+	if ((SubNode != CHILD) && (SubNode!=DIFF_CHILD))
+	{
+		//Check our status
+		if (NR_busdata[NR_node_reference].island_number != -1)
+		{
+			gl_warning("node:%d - %s - Tried to re-enable a node that wasn't disabled!",obj->id,(obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			While attempting to reset a node from a "disabled island" state, it was not already disabled.  Therefore, no action occurred.
+			*/
+
+			//Return a "failure" - just in case
+			return FAILED;
+		}
+		else
+		{
+			//Reset our phases (assume full-on reset)
+			NR_busdata[NR_node_reference].phases = NR_busdata[NR_node_reference].origphases;
+
+			//Store the value
+			node_calling_reference = NR_node_reference;
+		}
+	}
+	else	//We're a child, see if our parent is appropriately disabled
+	{
+		if (NR_busdata[*NR_subnode_reference].island_number != -1)
+		{
+			gl_warning("node:%d - %s - Tried to re-enable a node that wasn't disabled!",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
+
+			//Return the failure
+			return FAILED;
+		}
+		else
+		{
+			//Reset our parent's phases
+			NR_busdata[*NR_subnode_reference].phases = NR_busdata[*NR_subnode_reference].origphases;
+
+			//Store our parent's value
+			node_calling_reference = *NR_subnode_reference;
+		}
+	}
+
+	//If we made it this far, we've been "re-validated" - call the reset function
+	//Make sure it will even remotely work first
+	if (fault_check_object == NULL)	//Make sure we actually have a fault check object
+	{
+		//Hard throw this one -- this can't be ignored
+		GL_THROW("node:%d - %s -- Island condition reset failed - no fault_check object mapped!",obj->id,(obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		A node attempted to reset its "disabled from powerflow/islands" status, but there is no fault_check object in the system.  It's unclear
+		how this call was made.  Please check your system and try again.  If this message was encountered in error, please submit your code, models, and
+		a bug report via the issue tracker system.
+		*/
+	}
+
+	//Map the function
+	temp_fxn_val = (FUNCTIONADDR)(gl_get_function(fault_check_object,"rescan_topology"));
+
+	//Make sure it worked
+	if (temp_fxn_val == NULL)
+	{
+		//Another hard failure
+		GL_THROW("node:%d - %s -- Island condition reset failed - reset function mapping failed!",obj->id,(obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to call the topology rescan functionality, an error occurred.  Please check your model and try again.  If the error persists,
+		please submit your code, models, and a bug report via the issue tracking system.
+		*/
+	}
+
+	//Then call the reset
+	temp_status = ((STATUS (*)(OBJECT *,int))(temp_fxn_val))(fault_check_object,node_calling_reference);
+	
+	//Just pass its result
+	return temp_status;
+}
+
 //Function to perform a mapping of the "internal iteration" current injection update
 //Primarily used for deltamode and voltage-source inverters, but could be used in other places
 STATUS node::NR_map_current_update_function(OBJECT *callObj)
@@ -5108,6 +5210,21 @@ EXPORT STATUS node_map_current_update_function(OBJECT *nodeObj, OBJECT *callObj)
 	temp_status = my->NR_map_current_update_function(callObj);
 
 	//Return the value
+	return temp_status;
+}
+
+//Exposed function to reset the "disabled island" state of this node
+EXPORT STATUS node_reset_disabled_status(OBJECT *nodeObj)
+{
+	STATUS temp_status;
+
+	//Map the node
+	node *my = OBJECTDATA(nodeObj,node);
+
+	//Call our local function
+	temp_status = my->reset_node_island_condition();
+
+	//Return
 	return temp_status;
 }
 /**@}*/

@@ -83,6 +83,7 @@ GLOBAL BRANCHDATA *NR_branchdata INIT(NULL);		/**< Newton-Raphson branch data po
 GLOBAL NR_SOLVER_STRUCT NR_powerflow;				/**< Newton-Raphson solver pointer working variables - one per island detected */
 GLOBAL int NR_islands_detected INIT(0);				/**< Newton-Raphson solver island count (from fault_check) - determines the array size of NR_powerflow */
 GLOBAL bool NR_island_fail_method INIT(false);		/**< Newton-Raphson multiple islands - determine how individual island failure may determined */
+GLOBAL bool NR_solver_working INIT(false);			/**< Newton-Raphson global flag to indicate if the solver is working -- mostly to prevent island redetection if it is mid-array */
 GLOBAL int NR_curr_bus INIT(-1);					/**< Newton-Raphson current bus indicator - used to populate NR_busdata */
 GLOBAL int NR_curr_branch INIT(-1);					/**< Newton-Raphson current branch indicator - used to populate NR_branchdata */
 GLOBAL int64 NR_iteration_limit INIT(500);			/**< Newton-Raphson iteration limit (per GridLAB-D iteration) */

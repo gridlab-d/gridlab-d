@@ -14,6 +14,7 @@ EXPORT complex *delta_linkage(OBJECT *obj, unsigned char mapvar);
 EXPORT STATUS delta_frequency_node(OBJECT *obj, complex *powerval, complex *freqpowerval);
 EXPORT SIMULATIONMODE interupdate_node(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 EXPORT STATUS swap_node_swing_status(OBJECT *obj, bool desired_status);
+EXPORT STATUS node_reset_disabled_status(OBJECT *nodeObj);
 EXPORT STATUS node_map_current_update_function(OBJECT *nodeObj, OBJECT *callObj);
 EXPORT STATUS attach_vfd_to_node(OBJECT *obj,OBJECT *calledVFD);
 
@@ -131,6 +132,7 @@ private:
 	OBJECT *VFD_object;						///< Object pointer for the VFD - for later function calls
 
 	double compute_angle_diff(double angle_B, double angle_A);	//Function to do differences, but handle the phase wrap/jump
+
 public:
 	double frequency;			///< frequency (only valid on reference bus) */
 	object reference_bus;		///< reference bus from which frequency is defined */
@@ -138,6 +140,8 @@ public:
 	unsigned short k;			///< incidence count (number of links connecting to this node) */
 	complex *prev_voltage_value;	// Pointer for array used to store previous voltage value for Master/Slave functionality
 	complex *prev_power_value;		// Pointer for array used to store previous power value for Master/Slave functionality
+
+	bool reset_island_state;			//< Flagging variable - indicates the disabled island state should be re-evaluated
 public:
 	// status
 	enum {
@@ -266,6 +270,9 @@ public:
 
 	//NR bus status toggle function
 	STATUS NR_swap_swing_status(bool desired_status);
+
+	//Island-condition reset function
+	STATUS reset_node_island_condition(void);
 
 	//Function to map "internal powerflow iteration" current injection updates
 	STATUS NR_map_current_update_function(OBJECT *callObj);

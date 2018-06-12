@@ -148,6 +148,8 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 				GL_THROW("Unable to publish triplex_meter current injection update mapping function");
 			if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==NULL)
 				GL_THROW("Unable to publish triplex_meter VFD attachment function");
+			if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == NULL)
+				GL_THROW("Unable to publish triplex_meter island-status-reset function");
 
 			// market price name
 			gl_global_create("powerflow::market_price_name",PT_char1024,&market_price_name,NULL);

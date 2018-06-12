@@ -383,6 +383,9 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	SuperLUStat_t stat;
 #endif
 
+	//Set the global - we're working now, so no more adjustments to island arrays until we're done (except removals)
+	NR_solver_working = true;
+
 	//Initialize the tracker variable inside each island, just in case
 	for (island_loop_index=0; island_loop_index<NR_islands_detected; island_loop_index++)
 	{
@@ -3705,6 +3708,9 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					mesh_imped_vals->return_code = 0;
 					*bad_computations = true;
 
+					//Deflag the island locker, though not really needed
+					NR_solver_working = false;
+
 					//Return a 0 to flag
 					return 0;
 				}
@@ -3726,6 +3732,9 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					//Flags
 					*bad_computations = true;
 					mesh_imped_vals->return_code = 0;
+
+					//Deflag the island locker, though not really needed
+					NR_solver_working = false;
 
 					//Exit
 					return 0;
@@ -3801,6 +3810,9 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 						//Flag as bad
 						*bad_computations = true;
 						mesh_imped_vals->return_code = 0;
+
+						//Deflag the island locker, though not really needed
+						NR_solver_working = false;
 
 						//Exit
 						return 0;
@@ -3894,6 +3906,9 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							*bad_computations = true;
 							mesh_imped_vals->return_code = 0;
 
+							//Deflag the island locker, though not really needed
+							NR_solver_working = false;
+
 							//Exit
 							return 0;
 						}
@@ -3948,6 +3963,9 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 				//Flag bad computations, just because
 				*bad_computations = true;
+
+				//Deflag us, even though that may be moot here
+				NR_solver_working = false;
 
 				//Exit
 				return 0;
@@ -4466,6 +4484,9 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		}
 		//Default else - it was a failure, just keep going
 	}
+
+	//Deflag the "island locker"
+	NR_solver_working = false;
 
 	//Check bad computations
 	if (*bad_computations == true)

@@ -44,6 +44,8 @@ fault_check::fault_check(MODULE *mod) : powerflow_object(mod)
 				GL_THROW("Unable to publish sectionalizer special function");
 			if (gl_publish_function(oclass,"island_removal_function",(FUNCTIONADDR)powerflow_disable_island)==NULL)
 				GL_THROW("Unable to publish island deletion function");
+			if (gl_publish_function(oclass,"rescan_topology",(FUNCTIONADDR)powerflow_rescan_topo)==NULL)
+				GL_THROW("Unable to publish the topology rescan function");
     }
 }
 
@@ -1007,7 +1009,7 @@ void fault_check::support_check_alterations(int baselink_int, bool rest_mode)
 			//Recurse our way in - adjusted version of original search_links function above (but no storage, because we don't care now)
 			support_search_links(base_bus_val, base_bus_val, rest_mode);
 		}
-	}
+	}//End strictly radial assumption
 	else	//Not assumed to be strictly radial, or just being safe -- check EVERYTHING
 	{
 		//See if we should even go in first
@@ -1055,7 +1057,7 @@ void fault_check::support_check_alterations(int baselink_int, bool rest_mode)
 		{
 			associate_grids();
 		}
-	}//End Strictly radial assumption
+	}//End not strictly radial assumption
 
 	//Determine if an output is desired and if we're not in restoration check mode (otherwise, it may flood the output log)
 	if ((restoration_checks_active == false) && (output_filename[0] != '\0'))
@@ -1186,9 +1188,20 @@ void fault_check::support_search_links_mesh(int baselink_int, bool impact_mode)
 								add_phases |= (NR_branchdata[device_index].origphases & 0xE0);	//Mask in SPCT-type flags
 							}
 
-							//Restore components - USBs are typically node oriented, so they aren't explicitly included here
-							NR_branchdata[device_index].phases |= add_phases;
-
+							//See if we're a switch -- if so, just because we're valid on both ends doesn't mean anything
+							if ((NR_branchdata[device_index].lnk_type == 2) || (NR_branchdata[device_index].lnk_type == 5) || (NR_branchdata[device_index].lnk_type == 6))
+							{
+								if (*NR_branchdata[device_index].status == 1)
+								{
+									//Restore components - USBs are typically node oriented, so they aren't explicitly included here
+									NR_branchdata[device_index].phases |= add_phases;
+								}
+							}
+							else //Not a switch device, proceed
+							{
+								//Restore components - USBs are typically node oriented, so they aren't explicitly included here
+								NR_branchdata[device_index].phases |= add_phases;
+							}
 						}//End addition of phases
 						//Default else, nothing new supported here
 
@@ -2159,7 +2172,7 @@ STATUS fault_check::disable_island(int island_number)
 		write_output_file(curr_time_val_TS,curr_time_val_DBL);	//Write it
 	}
 
-	//Flag a forced reiteration for the next time somethig can (not now though, we may be halfway through an NR solver loop)
+	//Flag a forced reiteration for the next time something can (not now though, we may be halfway through an NR solver loop)
 	force_reassociation = true;
 
 	//Verbose it, for information
@@ -2168,6 +2181,24 @@ STATUS fault_check::disable_island(int island_number)
 	//Not sure how we'd fail, at this point
 	return SUCCESS;
 }
+
+//Function to force a rescan - used for island "rejoining" portions
+STATUS fault_check::rescan_topology(int bus_that_called_reset)
+{
+	//Make sure this wasn't somehow called while solver_NR is working
+	if (NR_solver_working == true)
+	{
+		//If it was, just return a failure -- let the calling object deal with it
+		return FAILED;
+	}
+
+	//Call the "topology re-evaluation" function
+	support_check_alterations(bus_that_called_reset,true);
+
+	//If we made it this far, we win!
+	return SUCCESS;
+}
+
 
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE: fault_check
@@ -2385,5 +2416,15 @@ EXPORT STATUS powerflow_disable_island(OBJECT *thisobj, int island_number)
 
 	//Call the function
 	return fltyobj->disable_island(island_number);
+}
+
+//Function to prompt a topology rescan, likely when a swing comes back into service after failing
+EXPORT STATUS powerflow_rescan_topo(OBJECT *thisobj,int bus_that_called_reset)
+{
+	//Fault check object link
+	fault_check *fltyobj = OBJECTDATA(fault_check_object,fault_check);
+
+	//Call the function
+	return fltyobj->rescan_topology(bus_that_called_reset);
 }
 /**@}**/

@@ -90,6 +90,8 @@ substation::substation(MODULE *mod) : node(mod)
 			GL_THROW("Unable to publish substation swing-swapping function");
 		if (gl_publish_function(oclass,	"pwr_current_injection_update_map", (FUNCTIONADDR)node_map_current_update_function)==NULL)
 			GL_THROW("Unable to publish substation current injection update mapping function");
+		if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == NULL)
+			GL_THROW("Unable to publish substation island-status-reset function");
 	}
 }
 
