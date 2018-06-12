@@ -485,16 +485,6 @@ int link_object::init(OBJECT *parent)
 		fNode->busphasesOut |= phases_test;
 	}
 	
-	if (nominal_voltage==0)
-	{
-		node *pFrom = OBJECTDATA(from,node);
-		nominal_voltage = pFrom->nominal_voltage;
-	}
-
-	/* no nominal voltage */
-	if (nominal_voltage==0)
-		throw "nominal voltage is not specified";
-
 	/* record this link on the nodes' incidence counts */
 	OBJECTDATA(from,node)->k++;
 	OBJECTDATA(to,node)->k++;

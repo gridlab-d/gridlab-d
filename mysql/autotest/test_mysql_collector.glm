@@ -18,8 +18,13 @@ clock {
 }
 
 module mysql;
-object database {
-	options NEWDB;
+object database {   
+   hostname "localhost";
+   username "gridlabd";
+   password "";
+   schema "gridlabd";
+   port 3306;
+   tz_offset 0;
 }
 
 class test {
