@@ -13,3 +13,6 @@ override_dh_auto_configure:
 override_dh_install:
 	dh_install
 	rm -f debian/gridlabd/usr/lib/gridlabd/*.la
+
+override_dh_fixperms:
+	dh_fixperms --exclude .so
