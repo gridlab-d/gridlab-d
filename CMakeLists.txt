@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.12)
 project(gridlabd)
-set(CMAKE_CXX_STANDARD 14)
-SET(CMAKE_CXX_STANDARD_REQUIRED ON)
+#set(CMAKE_CXX_STANDARD 11)
+#SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Package information for Gridlab-d
 SET(DLEXT ${CMAKE_SHARED_LIBRARY_SUFFIX})
@@ -25,18 +25,37 @@ set(DISABLED_OPTIMIZATIONS "")
 
 # Compiler/Linker flags for all build types
 set(CMAKE_CXX_FLAGS "-w")
-set(CMAKE_C_FLAGS   "-w")
-set(CMAKE_LD_FLAGS  "-w")
+set(CMAKE_C_FLAGS "-w")
+set(CMAKE_LD_FLAGS "-w")
 
 # Compiler/Linker flags for debug specific build types
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 ${DISABLED_OPTIMIZATIONS}")
-set(CMAKE_C_FLAGS_DEBUG   "-g -O0 ${DISABLED_OPTIMIZATIONS}")
-set(CMAKE_LD_FLAGS_DEBUG  "-g -O0 ${DISABLED_OPTIMIZATIONS}")
+set(CMAKE_C_FLAGS_DEBUG "-g -O0 ${DISABLED_OPTIMIZATIONS}")
+set(CMAKE_LD_FLAGS_DEBUG "-g -O0 ${DISABLED_OPTIMIZATIONS}")
 
 # Compiler/Linker flags for release specific build types (default)
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 ${DISABLED_OPTIMIZATIONS}")
-set(CMAKE_C_FLAGS_RELEASE   "-O3 ${DISABLED_OPTIMIZATIONS}")
-set(CMAKE_LD_FLAGS_RELEASE  "-O3 ${DISABLED_OPTIMIZATIONS}")
+set(CMAKE_C_FLAGS_RELEASE "-O3 ${DISABLED_OPTIMIZATIONS}")
+set(CMAKE_LD_FLAGS_RELEASE "-O3 ${DISABLED_OPTIMIZATIONS}")
+
+# Set up platform specific library linking
+IF (WIN32 OR MSYS OR MINGW OR CYGWIN)
+#    find_library(MYLIB
+#            NAMES "dl"
+#            HINTS "C:\\MinGW\\msys\\1.0\\opt\\windows_64\\mingw\\bin"
+#            NO_DEFAULT_PATH
+#            )
+
+#    message(${MYLIB})
+    SET(OS_SPECIFIC_LIBRARIES ws2_32 wsock32 dl) # ${MYLIB})
+ELSEIF (LINUX)
+    SET(OS_SPECIFIC_LIBRARIES ${CMAKE_DL_LIBS})
+ELSEIF (APPLE)
+    SET(OS_SPECIFIC_LIBRARIES ${CMAKE_DL_LIBS})
+ELSE ()
+    SET(OS_SPECIFIC_LIBRARIES ${CMAKE_DL_LIBS})
+ENDIF ()
+LIST(APPEND CMAKE_REQUIRED_LIBRARIES ${OS_SPECIFIC_LIBRARIES})
 
 # Set the list of modules and files which should be copied into the install directory.
 SET(GL_MODULES
@@ -146,7 +165,6 @@ SET(GLD_SHARE
         gldcore/gridlabd.htm
         )
 
-#SET(CURSES_NEED_NCURSES TRUE)
 find_package(Threads)
 find_package(Curses)
 
@@ -154,7 +172,7 @@ SET(HAVE_CURSES CURSES_FOUND)
 
 # Link required libraries for symbol checks
 list(APPEND CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
-list(APPEND CMAKE_REQUIRED_LIBRARIES m)
+list(APPEND CMAKE_REQUIRED_LIBRARIES m dl)
 
 # CMake Module includes
 INCLUDE(CheckIncludeFiles)
@@ -188,6 +206,7 @@ CHECK_INCLUDE_FILES(ncursesw/curses.h HAVE_NCURSESW_CURSES_H)
 CHECK_INCLUDE_FILES(ncursesw.h HAVE_NCURSESW_H)
 CHECK_INCLUDE_FILES(ncurses/curses.h HAVE_NCURSES_CURSES_H)
 CHECK_INCLUDE_FILES(ncurses.h HAVE_NCURSES_H)
+CHECK_INCLUDE_FILES(dlfcn.h HAVE_DLFCN_H)
 
 CHECK_FUNCTION_EXISTS(madvise HAVE_MADVISE)
 CHECK_FUNCTION_EXISTS(error_at_line HAVE_ERROR_AT_LINE) #AC_FUNC_ERROR_AT_LINE
@@ -246,10 +265,7 @@ TRY_COMPILE(DYN_PROC_AFFINITY ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY
 TRY_COMPILE(HAVE___SYNC_ADD_AND_FETCH ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/HAVE___SYNC_ADD_AND_FETCH.cc)
 TRY_COMPILE(HAVE___SYNC_BOOL_COMPARE_AND_SWAP ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/HAVE___SYNC_BOOL_COMPARE_AND_SWAP.cc)
 
-#MESSAGE("dyn_proc_affinity = ${DYN_PROC_AFFINITY}")
-#MESSAGE("HAVE___SYNC_ADD_AND_FETCH = ${HAVE___SYNC_ADD_AND_FETCH}")
-#MESSAGE("HAVE___SYNC_BOOL_COMPARE_AND_SWAP = ${HAVE___SYNC_BOOL_COMPARE_AND_SWAP}")
-
+# Generate the config.h header file.
 configure_file(gldcore/cmake_config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/gldcore/config.h @ONLY)
 add_definitions(-DHAVE_CONFIG_H)
 
@@ -258,14 +274,8 @@ include_directories(gldcore)
 include_directories(third_party/superLU_MT)
 include_directories(third_party/jsonCpp)
 
-# Load the current binary directory, where config.h is output.
-#include_directories(${CMAKE_CURRENT_BINARY_DIR})
-
 include(third_party/superLU_MT/CMakeLists.txt)
 include(third_party/jsonCpp/CMakeLists.txt)
-
-#add_subdirectory(third_party/superLU_MT)
-#add_subdirectory(third_party/jsonCpp)
 
 include(assert/CMakeLists.txt)
 include(climate/CMakeLists.txt)
@@ -287,25 +297,6 @@ include(gldcore/link/engine/CMakeLists.txt)
 
 # Load and link C/C++ files for the executeable
 add_executable(gridlabd
-        #        gldcore/link/engine/engine.cpp
-        #        gldcore/link/engine/engine.h
-        #        gldcore/link/engine/udpconnection.cpp
-        #gldcore/link/matlab/matlab.cpp
-        #gldcore/odbc++/callablestatement.h
-        #gldcore/odbc++/config-win32.h
-        #gldcore/odbc++/config.h
-        #gldcore/odbc++/connection.h
-        #gldcore/odbc++/databasemetadata.h
-        #gldcore/odbc++/drivermanager.h
-        #gldcore/odbc++/errorhandler.h
-        #gldcore/odbc++/preparedstatement.h
-        #gldcore/odbc++/resultset.h
-        #gldcore/odbc++/resultsetmetadata.h
-        #gldcore/odbc++/setup.h
-        #gldcore/odbc++/statement.h
-        #gldcore/odbc++/threads.h
-        #gldcore/odbc++/types.h
-        #gldcore/rt/gridlabd.h
         gldcore/globals.c
         gldcore/globals.h
         gldcore/gridlabd.h
@@ -316,7 +307,7 @@ add_executable(gridlabd
         gldcore/class.h
         gldcore/cmdarg.c
         gldcore/cmdarg.h
-        #gldcore/cmex.c
+        #        gldcore/cmex.c
         #gldcore/cmex.h
         gldcore/compare.c
         gldcore/compare.h
@@ -430,14 +421,13 @@ add_executable(gridlabd
         gldcore/validate.h
         gldcore/version.c
         gldcore/version.h
-        #gldcore/xcore.cpp
-        #gldcore/xcore.h
+        #        gldcore/xcore.cpp
+        #        gldcore/xcore.h
         )
 
 add_dependencies(gridlabd libjsoncpp libsuperlu)
 
 target_link_libraries(gridlabd ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(gridlabd ${CMAKE_DL_LIBS})
 if (CURSES_FOUND)
     target_link_libraries(gridlabd ${CURSES_LIBRARIES})
 endif ()
@@ -445,21 +435,38 @@ endif ()
 target_link_libraries(gridlabd ${GL_MODULES})
 target_link_libraries(gridlabd libjsoncpp libsuperlu)
 
+target_link_libraries(gridlabd ${OS_SPECIFIC_LIBRARIES})
 
-install(TARGETS gridlabd ${GL_MODULES} #libjsoncpp libsuperlu
-        PERMISSIONS
+SET(FILE_PERMISSIONS PERMISSIONS
         OWNER_EXECUTE OWNER_READ OWNER_WRITE
         GROUP_EXECUTE GROUP_READ
-        WORLD_EXECUTE WORLD_READ
+        WORLD_EXECUTE WORLD_READ)
+
+install(TARGETS gridlabd
+        ${FILE_PERMISSIONS}
         RUNTIME DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/bin
-        LIBRARY DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/lib/gridlabd
         )
+install(TARGETS ${GL_MODULES}
+        ${FILE_PERMISSIONS}
+        RUNTIME DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/lib/gridlabd
+        LIBRARY DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/lib/gridlabd
+        ARCHIVE DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/lib/gridlabd
+        COMPONENT library)
 
 install(FILES ${HEADER_FILE_NAMES}
+        ${FILE_PERMISSIONS}
         DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/include/gridlabd
         )
 
 install(FILES ${GLD_SHARE}
+        ${FILE_PERMISSIONS}
         DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/share/gridlabd)
 install(FILES COPYRIGHT LICENSE
+        ${FILE_PERMISSIONS}
         DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/share/doc/gridlabd)
+
+
+#install(FILES ${MYLIB}
+#        ${FILE_PERMISSIONS}
+#        DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/bin
+#        )

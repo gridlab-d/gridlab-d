@@ -39,9 +39,6 @@ set_target_properties(${PROJECT_NAME}
         PROPERTIES PREFIX ""
         )
 
-#find_library(libjsoncpp PATHS ${CMAKE_CURRENT_SOURCE_DIR}/third_party/jsonCpp)
 target_link_libraries(${PROJECT_NAME} libjsoncpp)
 
-#install(TARGETS ${PROJECT_NAME}
-#        LIBRARY DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
-#        )
+target_link_libraries(${PROJECT_NAME} ${OS_SPECIFIC_LIBRARIES})
