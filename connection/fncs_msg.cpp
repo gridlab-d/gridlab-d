@@ -368,22 +368,36 @@ int fncs_msg::init(OBJECT *parent){
 	OBJECT *gld_obj;
 	for (int isize=0 ; isize<nsize ; isize++){
 		if(!vjson_publish_gld_property_name[isize]->is_header) {
-			const string gld_property_name = vjson_publish_gld_property_name[isize]->object_name + "." + vjson_publish_gld_property_name[isize]->object_property;
-			const char *expr1 = vjson_publish_gld_property_name[isize]->object_name.c_str();
-			const char *expr2 = vjson_publish_gld_property_name[isize]->object_property.c_str();
-			char *bufObj = new char[strlen(expr1)+1];
-			char *bufProp = new char[strlen(expr2)+1];
-			strcpy(bufObj, expr1);
-			strcpy(bufProp, expr2);
-			vjson_publish_gld_property_name[isize]->prop = new gld_property(bufObj,bufProp);
+			const string gld_object_name = vjson_publish_gld_property_name[isize]->object_name;
+			if(gld_object_name.compare("globals") != 0){
+				const string gld_property_name = vjson_publish_gld_property_name[isize]->object_name + "." + vjson_publish_gld_property_name[isize]->object_property;
+				const char *expr1 = vjson_publish_gld_property_name[isize]->object_name.c_str();
+				const char *expr2 = vjson_publish_gld_property_name[isize]->object_property.c_str();
+				char *bufObj = new char[strlen(expr1)+1];
+				char *bufProp = new char[strlen(expr2)+1];
+				strcpy(bufObj, expr1);
+				strcpy(bufProp, expr2);
+				vjson_publish_gld_property_name[isize]->prop = new gld_property(bufObj,bufProp);
 
-			if ( vjson_publish_gld_property_name[isize]->prop->is_valid() ){
-				gl_verbose("connection: local variable '%s' resolved OK, object id %d",
-						gld_property_name.c_str(), vjson_publish_gld_property_name[isize]->prop->get_object()->id); //renke debug
-			}
-			else {
-				gl_error("connection: local variable '%s' cannot be resolved", gld_property_name.c_str());
-				return 0;
+				if ( vjson_publish_gld_property_name[isize]->prop->is_valid() ){
+					gl_verbose("connection: local variable '%s' resolved OK, object id %d",
+							gld_property_name.c_str(), vjson_publish_gld_property_name[isize]->prop->get_object()->id); //renke debug
+				}
+				else {
+					gl_error("connection: local variable '%s' cannot be resolved", gld_property_name.c_str());
+					return 0;
+				}
+			} else {
+				const string gld_global_name = vjson_publish_gld_property_name[isize]->object_property;
+				const char * expr1 = vjson_publish_gld_property_name[isize]->object_property.c_str();
+				char *bufProp = new char[strlen(expr1)+1];
+				strcpy(bufProp, expr1);
+				vjson_publish_gld_property_name[isize]->prop = new gld_property(bufProp);
+				if( vjson_publish_gld_property_name[isize]->prop->is_valid() ) {
+					gl_verbose("fncs_msg::init: Global variable '%s' resolved OK",vjson_publish_gld_property_name[isize]->object_property.c_str());
+				} else {
+					gl_error("fncs_msg::init: Global variable '%s' cannot be resolved", vjson_publish_gld_property_name[isize]->object_property.c_str());
+				}
 			}
 		} else {
 			if(vjson_publish_gld_property_name[isize]->object_property.compare("parent") == 0) {
@@ -402,10 +416,12 @@ int fncs_msg::init(OBJECT *parent){
 		} else {
 			vObj = vjson_publish_gld_property_name[isize]->obj;
 		}
-		if((vObj->flags & OF_INIT) != OF_INIT){
-			gl_warning("%d, ncs_msg::init(): vjson_publish_gld_property %s.%s not initialized!:  \n", isize,
-					vjson_publish_gld_property_name[isize]->object_name.c_str(), vjson_publish_gld_property_name[isize]->object_property.c_str());
-			defer = true;
+		if(vObj != NULL){
+			if((vObj->flags & OF_INIT) != OF_INIT){
+				gl_warning("%d, fncs_msg::init(): vjson_publish_gld_property %s.%s not initialized!:  \n", isize,
+						vjson_publish_gld_property_name[isize]->object_name.c_str(), vjson_publish_gld_property_name[isize]->object_property.c_str());
+				defer = true;
+			}
 		}
 	}
 
@@ -1202,6 +1218,8 @@ int fncs_msg::publishJsonVariables( )  //Renke add
 				char chtmp[1024];
 				gldpro_obj->to_string(chtmp, 1024);
 				publish_json_data[simName][vjson_publish_gld_property_name[isize]->object_name][vjson_publish_gld_property_name[isize]->object_property] = string((char *)chtmp);
+			} else if (gldpro_obj->is_timestamp()) {
+				publish_json_data[simName][vjson_publish_gld_property_name[isize]->object_name][vjson_publish_gld_property_name[isize]->object_property] = (Json::Value::Int64)gldpro_obj->get_timestamp();
 			} else {
 				gl_error("fncs_msg::publishJsonVariables(): the type of the gld_property: %s.%s is not a recognized type! \n",vjson_publish_gld_property_name[isize]->object_name.c_str(), vjson_publish_gld_property_name[isize]->object_property.c_str() );
 				return 0;
