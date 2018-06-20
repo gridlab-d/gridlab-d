@@ -197,6 +197,7 @@ object recorder {
   parent meter_3;
   interval 30;
   property "voltage_A.real", "voltage_A.imag[V]", "voltage_B";
+  recorder_name "Normal Recorder mode";
   file property_test_1;
   mode "w+";
   options UNITS;
@@ -218,10 +219,11 @@ object recorder {
   group "groupid=meter_group";
   interval 30;
   property "voltage_A.real","voltage_A.imag","voltage_B";
+  recorder_name "Group Recorder mode";
   file property_group_test;
   mode "w+";
   options UNITS;
-    query_buffer_limit 2000;
+  query_buffer_limit 2000;
 };
 
 #endif
