@@ -1,20 +1,34 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
 /*
- * -- SuperLU MT routine (version 1.0) --
+ * -- SuperLU MT routine (version 2.2) --
  * Univ. of California Berkeley, Xerox Palo Alto Research Center,
  * and Lawrence Berkeley National Lab.
  * August 15, 1997
  *
+ * Last modified: August 18, 2014
+ *
  */
-//#include <unistd.h>
+#ifdef unix
+#include <unistd.h>
+#endif
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "pdsp_defs.h"
+#include "slu_mt_ddefs.h"
 
 
 void superlu_abort_and_exit(char* msg)
 {
-    fprintf(stderr, msg);
+    fprintf(stderr,"%s\n", msg);
     exit (-1);
 }
 
@@ -118,9 +132,9 @@ Destroy_SuperNode_SCP(SuperMatrix *A)
  * Reset repfnz[*] for the current column 
  */
 void
-pxgstrf_resetrep_col(const int nseg, const int *segrep, int *repfnz)
+pxgstrf_resetrep_col(const int_t nseg, const int_t *segrep, int_t *repfnz)
 {
-    register int i, irep;
+    register int_t i, irep;
     
     for (i = 0; i < nseg; ++i) {
 	irep = segrep[i];
@@ -134,11 +148,11 @@ pxgstrf_resetrep_col(const int nseg, const int *segrep, int *repfnz)
  * symmetrically reduced L. 
  */
 void
-countnz(const int n, int *xprune, int *nnzL, int *nnzU, GlobalLU_t *Glu)
+countnz(const int_t n, int_t *xprune, int_t *nnzL, int_t *nnzU, GlobalLU_t *Glu)
 {
-    register int nsuper, fsupc, i, j, nnzL0, jlen, irep;
-    register int nnzsup = 0;
-    register int *xsup, *xsup_end, *xlsub, *xlsub_end, *supno;
+    register int_t nsuper, fsupc, i, j, nnzL0, jlen, irep;
+    register int_t nnzsup = 0;
+    register int_t *xsup, *xsup_end, *xlsub, *xlsub_end, *supno;
 	
     xsup      = Glu->xsup;
     xsup_end  = Glu->xsup_end;
@@ -173,13 +187,13 @@ countnz(const int n, int *xprune, int *nnzL, int *nnzU, GlobalLU_t *Glu)
     }
 
 #if ( PRNTlevel==1 )
-    printf(".. # supernodes = %d\n", nsuper+1);
-    printf(".. # edges in symm-reduced L = %d\n", nnzL0);
+    printf(".. # supernodes = " IFMT "\n", nsuper+1);
+    printf(".. # edges in symm-reduced L = " IFMT "\n", nnzL0);
     if ( Glu->dynamic_snode_bound )
-      printf(".. # NZ in LUSUP %d, dynamic bound %d, utilization %.2f\n",
+      printf(".. # NZ in LUSUP " IFMT ", dynamic bound " IFMT ", utilization %.2f\n",
 	     nnzsup, Glu->nextlu, (float)nnzsup/Glu->nextlu);
     else
-      printf(".. # NNZ in LUSUP %d, static bound %d, utilization %.2f\n",
+      printf(".. # NNZ in LUSUP " IFMT ", static bound " IFMT ", utilization %.2f\n",
 	     nnzsup, Glu->nzlumax, (float)nnzsup/Glu->nzlumax);
 #endif
 }
@@ -192,10 +206,10 @@ countnz(const int n, int *xprune, int *nnzL, int *nnzU, GlobalLU_t *Glu)
  * row permuation to the row subscripts of matrix $L$.
  */
 void
-fixupL(const int n, const int *perm_r, GlobalLU_t *Glu)
+fixupL(const int_t n, const int_t *perm_r, GlobalLU_t *Glu)
 {
-    register int nsuper, fsupc, nextl, i, j, jstrt;
-    register int *xsup, *xsup_end, *lsub, *xlsub, *xlsub_end;
+    register int_t nsuper, fsupc, nextl, i, j, jstrt;
+    register int_t *xsup, *xsup_end, *lsub, *xlsub, *xlsub_end;
 
     if ( n <= 1 ) return;
 
@@ -223,7 +237,7 @@ fixupL(const int n, const int *perm_r, GlobalLU_t *Glu)
     xlsub[n] = nextl;
 
 #if ( PRNTlevel==1 )
-    printf(".. # edges in supernodal graph of L = %d\n", nextl);
+    printf(".. # edges in supernodal graph of L = " IFMT "\n", nextl);
     fflush(stdout);
 #endif
 }
@@ -235,7 +249,7 @@ int cpp_defs()
 {
     printf("CPP Defs:\n");
 #ifdef PRNTlevel
-    printf("\tPRNTlevel=%d\n", PRNTlevel);
+    printf("\tPRNTlevel=\n", PRNTlevel);
 #endif 
 #ifdef DEBUGlevel
     printf("\tDEBUGlevel=%d\n", DEBUGlevel);
@@ -264,10 +278,10 @@ int cpp_defs()
  * memory holes due to untightness of the upper bounds by A'A-supernode.
  */
 void
-compressSUP(const int n, GlobalLU_t *Glu)
+compressSUP(const int_t n, GlobalLU_t *Glu)
 {
-    register int nextlu, i, j, jstrt;
-    int *xlusup, *xlusup_end;
+    register int_t nextlu, i, j, jstrt;
+    int_t *xlusup, *xlusup_end;
     double *lusup;
 
     if ( n <= 1 ) return;
@@ -285,29 +299,31 @@ compressSUP(const int n, GlobalLU_t *Glu)
 	xlusup_end[j] = nextlu;
     }
     xlusup[n] = nextlu;
-    printf("\tcompressSUP() nextlu %d\n", nextlu);
+    printf("\tcompressSUP() nextlu" IFMT "\n", nextlu);
 }
 
-//int check_mem_leak(char *where)
-//{ 
-//    void *addr;
-//    addr = (void *)sbrk(0);
-//    printf("\tsbrk(0) %s: addr = %u\n", where, addr);
-//    return 0;
-//}
+int_t check_mem_leak(char *where)
+{
+#ifdef unix
+    void *addr;
+    addr = (void *)sbrk(0);
+    printf("\tsbrk(0) %s: addr = %ld\n", where, (size_t) addr);
+#endif
+    return 0;
+}
 
 /*
  * Diagnostic print of segment info after pdgstrf_panel_dfs().
  */
-void print_panel_seg(int n, int w, int jcol, int nseg, 
-		     int *segrep, int *repfnz)
+void print_panel_seg(int_t n, int_t w, int_t jcol, int_t nseg, 
+		     int_t *segrep, int_t *repfnz)
 {
-    int j, k;
+    int_t j, k;
     
     for (j = jcol; j < jcol+w; j++) {
-	printf("\tcol %d:\n", j);
+	printf("\tcol" IFMT ":\n", j);
 	for (k = 0; k < nseg; k++)
-	    printf("\t\tseg %d, segrep %d, repfnz %d\n", k, 
+	    printf("\t\tseg"IFMT ", segrep"IFMT ", repfnz"IFMT "\n", k, 
 			segrep[k], repfnz[(j-jcol)*n + segrep[k]]);
     }
 }
@@ -316,14 +332,14 @@ void print_panel_seg(int n, int w, int jcol, int nseg,
  * Allocate storage for various statistics.
  */
 void
-StatAlloc(const int n, const int nprocs, const int panel_size, 
-	  const int relax, Gstat_t *Gstat)
+StatAlloc(const int_t n, const int_t nprocs, const int_t panel_size, 
+	  const int_t relax, Gstat_t *Gstat)
 {
-    register int w;
+    register int_t w;
 
     w = SUPERLU_MAX( panel_size, relax ) + 1;
     Gstat->panel_histo = intCalloc(w);
-    Gstat->utime = (double *) doubleMalloc(NPHASES);
+    Gstat->utime = (double *) SUPERLU_MALLOC(NPHASES * sizeof(double));
     Gstat->ops   = (flops_t *) SUPERLU_MALLOC(NPHASES * sizeof(flops_t));
     
     if ( !(Gstat->procstat =
@@ -331,7 +347,7 @@ StatAlloc(const int n, const int nprocs, const int panel_size,
 	SUPERLU_ABORT( "SUPERLU_MALLOC failed for procstat[]" );
 
 #if (PRNTlevel==1)
-    printf(".. StatAlloc(): n %d, nprocs %d, panel_size %d, relax %d\n",
+    printf(".. StatAlloc(): n " IFMT ", nprocs " IFMT ", panel_size " IFMT ", relax " IFMT "\n",
 		n, nprocs, panel_size, relax);
 #endif
 #ifdef PROFILE    
@@ -361,7 +377,7 @@ StatAlloc(const int n, const int nprocs, const int panel_size,
  * Initialize various statistics variables.
  */
 void
-StatInit(const int n, const int nprocs, Gstat_t *Gstat)
+StatInit(const int_t n, const int_t nprocs, Gstat_t *Gstat)
 {
     register int i;
     
@@ -400,7 +416,7 @@ StatInit(const int n, const int nprocs, Gstat_t *Gstat)
 #endif
     
 #if ( PRNTlevel==1 )
-    printf(".. StatInit(): n %d, nprocs %d\n", n, nprocs);
+    printf(".. StatInit(): n " IFMT ", nprocs " IFMT "\n", n, nprocs);
 #endif
 }
 
@@ -414,16 +430,12 @@ PrintStat(Gstat_t *Gstat)
 
     utime = Gstat->utime;
     ops   = Gstat->ops;
-    //printf("Factor time  = %8.2f\n", utime[FACT]);
-	printf("Factor time  = %lf\n", utime[FACT]); //sj
-    printf("Factor flops = %e\n", ops[FACT]); //sj
-	if ( utime[FACT] != 0.0 )
+    printf("Factor time  = %8.2f\n", utime[FACT]);
+    if ( utime[FACT] != 0.0 )
       printf("Factor flops = %e\tMflops = %8.2f\n", ops[FACT],
 	     ops[FACT]*1e-6/utime[FACT]);
 
-    //printf("Solve time   = %8.2f\n", utime[SOLVE]);
-	printf("Solve time   = %lf\n", utime[SOLVE]); //sj
-	printf("Solve flops = %e\n", ops[SOLVE]); //sj
+    printf("Solve time   = %8.2f\n", utime[SOLVE]);
     if ( utime[SOLVE] != 0.0 )
       printf("Solve flops = %e\tMflops = %8.2f\n", ops[SOLVE],
 	     ops[SOLVE]*1e-6/utime[SOLVE]);
@@ -474,9 +486,9 @@ LUSolveFlops(Gstat_t *Gstat)
 /* 
  * Fills an integer array with a given value.
  */
-void ifill(int *a, int alen, int ival)
+void ifill(int_t *a, int_t alen, int_t ival)
 {
-    register int i;
+    register int_t i;
     for (i = 0; i < alen; i++) a[i] = ival;
 }
 
@@ -486,13 +498,13 @@ void ifill(int *a, int alen, int ival)
  * Get the statistics of the supernodes 
  */
 #define NBUCKS 10
-static 	int	max_sup_size;
+static 	int_t	max_sup_size;
 
-void super_stats(int nsuper, int *xsup, int *xsup_end)
+void super_stats(int_t nsuper, int_t *xsup, int_t *xsup_end)
 {
-    register int nsup1 = 0;
-    int          i, isize, whichb, bl, bh;
-    int          bucket[NBUCKS];
+    register int_t nsup1 = 0;
+    int_t          i, isize, whichb, bl, bh;
+    int_t          bucket[NBUCKS];
 
     max_sup_size = 0;
 
@@ -508,22 +520,22 @@ void super_stats(int nsuper, int *xsup, int *xsup_end)
         bucket[whichb]++;
     }
     
-    printf("** Supernode statistics:\n\tno of supernodes = %d\n", nsuper+1);
-    printf("\tmax supernode size = %d\n", max_sup_size);
-    printf("\tno of size 1 supernodes = %d\n", nsup1);
+    printf("** Supernode statistics:\n\tno of supernodes = " IFMT "\n", nsuper+1);
+    printf("\tmax supernode size = " IFMT "\n", max_sup_size);
+    printf("\tno of size 1 supernodes = " IFMT "\n", nsup1);
 
     printf("\tHistogram of supernode size:\n");
     for (i = 0; i < NBUCKS; i++) {
         bl = (float) i * max_sup_size / NBUCKS;
         bh = (float) (i+1) * max_sup_size / NBUCKS;
-        printf("\t%3d-%3d\t\t%d\n", bl+1, bh, bucket[i]);
+        printf("\t" IFMT "-" IFMT "\t\t" IFMT "\n", bl+1, bh, bucket[i]);
     }
 
 }
 
-void panel_stats(int n, int max_w, int* in_domain, Gstat_t *Gstat)
+void panel_stats(int_t n, int_t max_w, int_t* in_domain, Gstat_t *Gstat)
 {
-    register int i, w;
+    register int_t i, w;
     float *histo_flops, total;
 
     histo_flops = (float *) SUPERLU_MALLOC( max_w * sizeof(float) );
@@ -541,7 +553,7 @@ void panel_stats(int n, int max_w, int* in_domain, Gstat_t *Gstat)
     if ( total != 0.0 ) {
 	printf("** Panel & flops distribution: nondomain flopcnt %e\n", total);
 	for (i = 1; i <= max_w; i++)
-	    printf("\t%d\t%d\t%e (%.2f)\n", i, Gstat->panel_histo[i],
+	    printf("\t" IFMT "\t" IFMT "\t%e (%.2f)\n", i, Gstat->panel_histo[i],
 		   histo_flops[i-1], histo_flops[i-1]/total);
     }
     SUPERLU_FREE (histo_flops);
@@ -549,12 +561,12 @@ void panel_stats(int n, int max_w, int* in_domain, Gstat_t *Gstat)
 
 
 
-float SpaSize(int n, int np, float sum_npw)
+float SpaSize(int_t n, int_t np, float sum_npw)
 {
     return (sum_npw*8 + np*8 + n*4)/1024.;
 }
 
-float DenseSize(int n, float sum_nw)
+float DenseSize(int_t n, float sum_nw)
 {
     return (sum_nw*8 + n*8)/1024.;;
 }
@@ -563,28 +575,28 @@ float DenseSize(int n, float sum_nw)
 /*
  * Check whether repfnz[] == EMPTY after reset.
  */
-void check_repfnz(int n, int w, int jcol, int *repfnz)
+void check_repfnz(int_t n, int_t w, int_t jcol, int_t *repfnz)
 {
-    int jj, k;
+    int_t jj, k;
 
     for (jj = jcol; jj < jcol+w; jj++) 
 	for (k = 0; k < n; k++)
 	    if ( repfnz[(jj-jcol)*n + k] != EMPTY ) {
-		fprintf(stderr, "col %d, repfnz_col[%d] = %d\n", jj,
+		fprintf(stderr, "col " IFMT ", repfnz_col[" IFMT "] = " IFMT "\n", jj,
 			k, repfnz[(jj-jcol)*n + k]);
 		SUPERLU_ABORT("repfnz[] not empty.");
 	    }
 }
 
 
-int PrintInt10(char *name, int len, int *x)
+int_t PrintInt10(char *name, int_t len, int_t *x)
 {
-    register int i;
+    register int_t i;
     
-    printf("(len=%d) %s:", len, name);
+    printf("(len=" IFMT ") %s:", len, name);
     for (i = 0; i < len; ++i) {
-	if ( i % 10 == 0 ) printf("\n[%4d-%4d]", i, i+9);
-	printf("%6d", x[i]);
+	if ( i % 10 == 0 ) printf("\n[" IFMT "-" IFMT "]", i, i+9);
+	printf(IFMT, x[i]);
     }
     printf("\n");
     return 0;
@@ -592,24 +604,24 @@ int PrintInt10(char *name, int len, int *x)
 
 /* Print a summary of the testing results. */
 void
-PrintSumm(char *type, int nfail, int nrun, int nerrs)
+PrintSumm(char *type, int_t nfail, int_t nrun, int_t nerrs)
 {
     if ( nfail > 0 )
-	printf("%3s driver: %d out of %d tests failed to pass the threshold\n",
+	printf("%3s driver: " IFMT " out of " IFMT " tests failed to pass the threshold\n",
 	       type, nfail, nrun);
     else
-	printf("All tests for %3s driver passed the threshold (%6d tests run)\n", type, nrun);
+	printf("All tests for %3s driver passed the threshold (" IFMT " tests run)\n", type, nrun);
 
     if ( nerrs > 0 )
-	printf("%6d error messages recorded\n", nerrs);
+	printf(IFMT " error messages recorded\n", nerrs);
 }
 
 
 /* Print the adjacency list for graph of L, including the pruned graph,
    graph of U, and L supernodes partition */
-int PrintGLGU(int n, int *xprune, GlobalLU_t *Glu)
+int_t PrintGLGU(int_t n, int_t *xprune, GlobalLU_t *Glu)
 {
-    register int nsuper = Glu->nsuper;
+    register int_t nsuper = Glu->nsuper;
     PrintInt10("LSUB", Glu->xlsub_end[n-1], Glu->lsub);
     PrintInt10("XLSUB", n, Glu->xlsub);
     PrintInt10("XLSUB_END", n, Glu->xlsub_end);
@@ -627,7 +639,7 @@ int PrintGLGU(int n, int *xprune, GlobalLU_t *Glu)
 /*
  * Print the statistics of the relaxed snodes for matlab process
  */
-void relax_stats(int start, int end, int step)
+void relax_stats(int_t start, int_t end, int_t step)
 {
     FILE *fp;
     int i;
@@ -659,11 +671,11 @@ void relax_stats(int start, int end, int step)
 /*
  * Obtain the distribution of time/flops/nzs on the snode size.
  */
-void snode_profile(int nsuper, int *xsup)
+void snode_profile(int_t nsuper, int_t *xsup)
 {
     FILE *fp;
-    int i, j;
-    int ssize;
+    int_t i, j;
+    int_t ssize;
 
     if ( !(stat_snode = (stat_snode_t *) SUPERLU_MALLOC((max_sup_size+1) *
 	sizeof(stat_snode_t))) ) ABORT("SUPERLU_MALLOC fails for stat_snode[].");
@@ -690,11 +702,11 @@ void snode_profile(int nsuper, int *xsup)
 
     fp = fopen("snode.m", "w");
     
-    fprintf(fp, "max_sup_size = %d;\n", max_sup_size);
+    fprintf(fp, "max_sup_size = " IFMT ";\n", max_sup_size);
 
     fprintf(fp,"ncols = [");
     for (i = 1; i <= max_sup_size; i++) 
-	fprintf(fp, "%d ", stat_snode[i].ncols);
+	fprintf(fp, IFMT "  ", stat_snode[i].ncols);
     fprintf(fp, "];\n");
 
     fprintf(fp, "fctime = [");
@@ -719,11 +731,11 @@ void snode_profile(int nsuper, int *xsup)
 }
 #endif
 
-int print_int_vec(char *what, int n, int *vec)
+int print_int_vec(char *what, int_t n, int_t *vec)
 {
-    int i;
+    int_t i;
     printf("%s\n", what);
-    for (i = 0; i < n; ++i) printf("%d\t%d\n", i, vec[i]);
+    for (i = 0; i < n; ++i) printf(IFMT "\t" IFMT "\n", i, vec[i]);
     return 0;
 }
 
@@ -731,16 +743,16 @@ int print_int_vec(char *what, int n, int *vec)
 /*
  * Print the parallel execution statistics.
  */
-int ParallelProfile(const int n, const int supers, const int panels, 
-		const int procs, Gstat_t *Gstat)
+int_t ParallelProfile(const int_t n, const int_t supers, const int_t panels, 
+		const int_t procs, Gstat_t *Gstat)
 {
-    register int i, imax, pruned, unpruned, waits, itemp, cs_numbers;
+    register int_t i, imax, pruned, unpruned, waits, itemp, cs_numbers;
     register float loadmax, loadtot, temp, thresh, loadprint;
     register float waittime, cs_time;
     double    *utime = Gstat->utime;
     procstat_t *pstat;
     panstat_t *pan;
-    void print_flops_by_height(int, panstat_t *, int *, float *);
+    void print_flops_by_height(int_t, panstat_t *, int_t *, float *);
     
     printf("\n---- Parallel Profile Per Processor ----\n");
     printf("%4s%16s%8s%10s%10s%10s%10s%8s\n", "proc", "factops",
@@ -750,7 +762,7 @@ int ParallelProfile(const int n, const int supers, const int panels,
 	pstat = &(Gstat->procstat[i]);
 	if ( pstat->fctime != 0 ) {
 	    temp = pstat->spintime/pstat->fctime*100.;
-	    printf("%4d%16e%8.2f%10d%10.3f%10.3f%10.3f%8.1f\n", 
+	    printf( IFMT "%16e%8.2f" IFMT "%10.3f%10.3f%10.3f%8.1f\n", 
 		   i, pstat->fcops, pstat->fctime, pstat->skedwaits,
 		   pstat->skedtime, pstat->cs_time, pstat->spintime, temp);
 	}
@@ -762,8 +774,7 @@ int ParallelProfile(const int n, const int supers, const int panels,
     cs_time = 0.0;
     for (i = 0; i < procs; ++i) {
 	pstat = &(Gstat->procstat[i]);
-	printf("%4d%8d%12d%14d\n", i, pstat->panels,
-		pstat->pruned, pstat->unpruned);
+	printf(IFMT IFMT IFMT IFMT "\n", i, pstat->panels, pstat->pruned, pstat->unpruned);
 	pruned += Gstat->procstat[i].pruned;
 	unpruned += Gstat->procstat[i].unpruned;
 	cs_time += Gstat->procstat[i].cs_time;
@@ -771,13 +782,13 @@ int ParallelProfile(const int n, const int supers, const int panels,
     temp = pruned + unpruned;
     if ( temp != 0 ) {
     	printf("%12s%26s\n", "", "--------------------");
-    	printf("%12s%12d%14d%14.0f\n", "total", pruned, unpruned, temp);
+    	printf("%12s" IFMT IFMT "%14.0f\n", "total", pruned, unpruned, temp);
     	printf("%12s%12.2f%14.2f\n", "frac.", pruned/temp, unpruned/temp);
     }
 
-    printf("%16s%16d\n", "piped-panels", Gstat->panhows[PIPE]);
-    printf("%16s%16d\n", "nonpiped-DADs", Gstat->panhows[DADPAN]);
-    printf("%16s%16d\n", "nonpiped-panels", Gstat->panhows[NOPIPE]);
+    printf("%16s" IFMT "\n", "piped-panels", Gstat->panhows[PIPE]);
+    printf("%16s" IFMT "\n", "nonpiped-DADs", Gstat->panhows[DADPAN]);
+    printf("%16s" IFMT "\n", "nonpiped-panels", Gstat->panhows[NOPIPE]);
 
     /* work load distribution */
     loadmax = loadtot = Gstat->procstat[0].fcops;
@@ -798,10 +809,10 @@ int ParallelProfile(const int n, const int supers, const int panels,
 	waits += Gstat->panstat[i].pipewaits;
 	waittime += Gstat->panstat[i].spintime;
     }
-    printf("%25s%8d,\tper-panel %.1f\n", "total #delays in pipeline",
+    printf("%25s" IFMT ",\tper-panel %.1f\n", "total #delays in pipeline",
 	    waits, (float)waits/panels);
     temp = waittime / procs;
-    printf("%25s%8.2f\t[%.1f%]\n", "mean spin time per-proc", 
+    printf("%25s%8.2f\t [%.1f]\n", "mean spin time per-proc", 
 	   temp, temp/utime[FACT]*100);
     
     /* Delays due to scheduling. */
@@ -810,9 +821,9 @@ int ParallelProfile(const int n, const int supers, const int panels,
 	waits += Gstat->procstat[i].skedwaits;
 	waittime += Gstat->procstat[i].skedtime;
     }
-    printf("%25s%8d\n", "total #delays in schedule", waits);
+    printf("%25s" IFMT "\n", "total #delays in schedule", waits);
     temp = waittime / procs;
-    printf("%25s%8.2f\t[%.1f%]\n", "mean sched. time per-proc", 
+    printf("%25s%8.2f\t [%.1f]\n", "mean sched. time per-proc", 
 	   temp, temp/utime[FACT]*100);
 
     /* estimated overhead in spin-locks */
@@ -828,13 +839,16 @@ int ParallelProfile(const int n, const int supers, const int panels,
 #elif ( MACH==DEC || PTHREAD )
 #define TMUTEX          2.71e-6
 #define FLOPS_PER_LOCK  407
+#else
+#define TMUTEX          2.00e-6
+#define FLOPS_PER_LOCK  500
 #endif
     cs_numbers = n + 3*supers + panels + procs; 
     itemp = cs_numbers * FLOPS_PER_LOCK;     /* translated to flops */
     temp = cs_numbers * TMUTEX;
-    printf("mutex-lock overhead (est.) %8.2f, #locks %d, equiv. flops %e\n", 
+    printf("mutex-lock overhead (est.) %8.2f, #locks " IFMT ", equiv. flops %e\n", 
 	   temp, cs_numbers, (float) itemp);
-    printf("time in critical section   %8.2f\t[%.1f%]\n",
+    printf("time in critical section   %8.2f\t [%.1f]\n",
 	   cs_time/procs, cs_time/procs/utime[FACT]*100);
 
     printf("\n---- Parallel Profile Per Panel ----\n");
@@ -849,14 +863,14 @@ int ParallelProfile(const int n, const int supers, const int panels,
 	    loadprint += pan->flopcnt;
 	    ++itemp;
 	    if ( pan->fctime != 0 ) temp = pan->flopcnt/pan->fctime*1e-6;
-	    printf("%4d%4d%8d%16e%8.1f%8.2f%12.2f%8.2f\n", i, pan->size,
+	    printf(IFMT IFMT IFMT "%16e%8.1f%8.2f%12.2f%8.2f\n", i, pan->size,
 		    Gstat->height[i], pan->flopcnt, pan->flopcnt/loadtot*100.,
 		    pan->fctime*1e3, pan->spintime*1e3, temp);
 	}
     }
-    printf("Total panels %d,  height(T) %d, height(T)/n= %.4f\n", 
+    printf("Total panels " IFMT ",  height(T) " IFMT ", height(T)/n= %.4f\n", 
 	   panels, Gstat->height[n], (float)Gstat->height[n]/n);
-    printf("Printed flops %e [%.1f], printed panels %d [%.1f]\n",
+    printf("Printed flops %e [%.1f], printed panels " IFMT " [%.1f]\n",
 	    loadprint, loadprint/loadtot*100.,
 	    itemp, (float)itemp/panels);
 
@@ -871,10 +885,10 @@ int ParallelProfile(const int n, const int supers, const int panels,
  * Print the distribution of flops by the height of etree.
  */
 void
-print_flops_by_height(int n, panstat_t *panstat,
-		      int *height, float *flops_by_height)
+print_flops_by_height(int_t n, panstat_t *panstat,
+		      int_t *height, float *flops_by_height)
 {
-    register int i, w, ht;
+    register int_t i, w, ht;
     register float flops;
 
     for (i = 0; i < n; i += w) {
@@ -887,8 +901,7 @@ print_flops_by_height(int n, panstat_t *panstat,
     ht = height[n-1]; /* root */
     for (i = 0; i <= ht; ++i) {
 	flops = flops_by_height[i];
-	if ( flops != 0.0 )
-	    printf("%8d\t%e\n", i, flops);
+	if ( flops != 0.0 ) printf(IFMT "\t%e\n", i, flops);
     }
 }
 
@@ -896,11 +909,11 @@ print_flops_by_height(int n, panstat_t *panstat,
 /*
  * Print the analysis of the optimal runtime.
  */
-int
-CPprofile(const int n, cp_panel_t *cp_panel, pxgstrf_shared_t *pxgstrf_shared)
+int_t
+CPprofile(const int_t n, cp_panel_t *cp_panel, pxgstrf_shared_t *pxgstrf_shared)
 {
     Gstat_t *Gstat = pxgstrf_shared->Gstat;
-    register int maxpan, i, j, treecnt;
+    register int_t maxpan, i, j, treecnt;
     register float eft, maxeft; /* earliest (possible) finish time */
     flops_t  *ops;
 
@@ -908,7 +921,7 @@ CPprofile(const int n, cp_panel_t *cp_panel, pxgstrf_shared_t *pxgstrf_shared)
     treecnt = 0;
     maxeft = 0;
     for (i = Gstat->cp_firstkid[n]; i != EMPTY; i = Gstat->cp_nextkid[i]) {
-/*	printf("Root %d, height %d\n", i, height[i]);*/
+/*	printf("Root " IFMT ", height " IFMT "\n", i, height[i]);*/
 	j = (pxgstrf_shared->pan_status[i].size > 0) ? 
 	  i : (i + pxgstrf_shared->pan_status[i].size);
 	eft   = cp_panel[j].est + cp_panel[j].pdiv;
@@ -920,12 +933,12 @@ CPprofile(const int n, cp_panel_t *cp_panel, pxgstrf_shared_t *pxgstrf_shared)
     }
     
     ops   = Gstat->ops;
-    printf("\n** Runtime prediction model: #trees %d\n", treecnt);
-    printf("Last panel %d, seq-time %e, EFT %e, ideal-speedup %.2f\n",
+    printf("\n** Runtime prediction model: #trees " IFMT "\n", treecnt);
+    printf("Last panel " IFMT ", seq-time %e, EFT %e, ideal-speedup %.2f\n",
 	   maxpan, ops[FACT], maxeft, ops[FACT]/maxeft);
 
 #if ( DEBUGlevel>=2 )
-    printf("last panel %d\n", maxpan);
+    printf("last panel " IFMT "\n", maxpan);
     for (i = 0; i < n; i += pxgstrf_shared->pan_status[i].size)
 	printf("%6d %8s%e\t%8s%8.0f\n", i, "est  ", cp_panel[i].est,
 	       "pdiv  ", cp_panel[i].pdiv);
@@ -945,12 +958,12 @@ CPprofile(const int n, cp_panel_t *cp_panel, pxgstrf_shared_t *pxgstrf_shared)
 void
 Print_SuperNode_SCP(SuperMatrix *A)
 {
-    int i, j, c;
-    int n = A->ncol;
+    int_t i, j, c;
+    int_t n = A->ncol;
     SCPformat *Astore = A->Store;
     double *nzval = Astore->nzval;
-    int *colbeg = Astore->nzval_colbeg, *colend = Astore->nzval_colend;
-    printf("SuperNode_SCP: nnz %d, nsuper %d\n", Astore->nnz, Astore->nsuper);
+    int_t *colbeg = Astore->nzval_colbeg, *colend = Astore->nzval_colend;
+    printf("SuperNode_SCP: nnz " IFMT ", nsuper " IFMT "\n", Astore->nnz, Astore->nsuper);
     printf("valL=[\n");
     for (c = 0, j = 0; j < n; ++j) {
         for (i = colbeg[j]; i < colend[j]; ++i) {
@@ -973,12 +986,12 @@ Print_SuperNode_SCP(SuperMatrix *A)
 void
 Print_CompCol_NC(SuperMatrix *A)
 {
-    int i, j, c;
-    int n = A->ncol;
+    int_t i, j, c;
+    int_t n = A->ncol;
     NCformat *Astore = A->Store;
     double *nzval = Astore->nzval;
-    int *colptr = Astore->colptr;
-    printf("CompCol_NC: nnz %d\n", Astore->nnz);
+    int_t *colptr = Astore->colptr;
+    printf("CompCol_NC: nnz " IFMT "\n", Astore->nnz);
     printf("valA=[\n");
     for (c = 0, j = 0; j < n; ++j) {
         for (i = colptr[j]; i < colptr[j+1]; ++i, ++c) {
@@ -994,12 +1007,12 @@ Print_CompCol_NC(SuperMatrix *A)
 void
 Print_CompCol_NCP(SuperMatrix *A)
 {
-    int i, j, c;
-    int n = A->ncol;
+    int_t i, j, c;
+    int_t n = A->ncol;
     NCPformat *Astore = A->Store;
     double *nzval = Astore->nzval;
-    int *colbeg = Astore->colbeg, *colend = Astore->colend;
-    printf("SuperNode_NCP: nnz %d\n", Astore->nnz);
+    int_t *colbeg = Astore->colbeg, *colend = Astore->colend;
+    printf("SuperNode_NCP: nnz " IFMT "\n", Astore->nnz);
     printf("nzval[U]\n");
     for (c = 0, j = 0; j < n; ++j) {
         for (i = colbeg[j]; i < colend[j]; ++i, ++c) {
@@ -1015,12 +1028,12 @@ Print_CompCol_NCP(SuperMatrix *A)
 void
 Print_Dense(SuperMatrix *A)
 {
-    int i, j, c;
-    int m = A->nrow, n = A->ncol;
+    int_t i, j, c;
+    int_t m = A->nrow, n = A->ncol;
     DNformat *Astore = A->Store;
-    int lda = Astore->lda;
+    int_t lda = Astore->lda;
     double *nzval = Astore->nzval;
-    printf("Dense: lda %d\n", lda);
+    printf("Dense: lda " IFMT "\n", lda);
     printf("val=[\n");
     for (c = 0, j = 0; j < n; ++j) {
         for (i = 0; i < m; ++i, ++c) {

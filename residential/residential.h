@@ -9,6 +9,14 @@
 #include "gridlabd.h"
 #include "module.h"
 
+#ifdef _RESIDENTIAL_CPP
+#define GLOBAL
+#define INIT(A) = (A)
+#else
+#define GLOBAL extern
+#define INIT(A)
+#endif
+
 /* useful constants */
 #define RHOWATER	(62.4)			// lb/cf
 #define CFPGAL		(0.133681)		// cf/gal
@@ -22,6 +30,7 @@
 
 const double pi = 3.1415926535897931;
 const double Cp = 1;					// Btu/lbm-F
+#define TSNVRDBL 9223372036854775808.0	//TS_NEVER in double form - for deltamode
 
 /* approximate tests */
 #define AEQ(A,B,C) (fabs(A-B)<C)
@@ -44,8 +53,8 @@ typedef enum {	X12=0,	///< circuit from line 1 to line 2    (240V)
 typedef struct s_circuit {
 	CIRCUITTYPE type;	///< circuit type
 	enduse *pLoad;	///< pointer to the load struct (ENDUSELOAD* in house_a, enduse* in house_e)
-	complex *pV; ///< pointer to circuit voltage
 	gld_property *pfrequency; ///< pointer to circuit frequency
+	gld_property *pV; ///< pointer to appropriate circuit voltage property
 	double max_amps; ///< maximum breaker amps
 	int id; ///< circuit id
 	BREAKERSTATUS status; ///< breaker status
@@ -65,6 +74,32 @@ typedef struct s_panel {
 typedef	CIRCUIT *(*ATTACHFUNCTION)(OBJECT *, enduse *, double , int is220); ///< type definition for attach function
 
 typedef enum {HORIZONTAL, NORTH, NORTH_EAST, EAST, SOUTH_EAST, SOUTH, SOUTH_WEST, WEST, NORTH_WEST,N_SOLAR_SURFACES} ORIENTATION;
+
+//Globals
+GLOBAL double default_line_voltage INIT(120.0);			//Value for the default nominal_voltage
+GLOBAL bool ANSI_voltage_check INIT(true);				//Flag to enable/disable ANSI voltage violation checks
+GLOBAL double default_outdoor_temperature INIT(74.0);	//Value for default outdoor air temperature
+GLOBAL double default_humidity INIT(75.0);				//Value for default humidity
+GLOBAL int64 default_etp_iterations INIT(100);			//Value for etp solution iterations
+GLOBAL double default_horizontal_solar INIT(0.0);		//Value for horizontal solar gains
+GLOBAL double default_grid_frequency INIT(60.0);		//Value for frequency
+
+//Deltamode inclusion
+GLOBAL bool enable_subsecond_models INIT(false); 			/* normally not operating in delta mode */
+GLOBAL bool all_house_delta INIT(false);					/* Cheater flag -- may not make it into the merge -- basically allows all houses to use deltamode */
+GLOBAL double deltamode_timestep_publish INIT(10000000.0); 	/* 10 ms timestep */
+GLOBAL unsigned long deltamode_timestep INIT(10000000);		/* 10 ms timestep */
+GLOBAL OBJECT **delta_objects INIT(NULL);						/* Array pointer objects that need deltamode interupdate calls */
+GLOBAL FUNCTIONADDR *delta_functions INIT(NULL);				/* Array pointer functions for objects that need deltamode interupdate calls */
+GLOBAL FUNCTIONADDR *post_delta_functions INIT(NULL);			/* Array pointer functions for objects that need deltamode postupdate calls */
+GLOBAL int res_object_count INIT(0);							/* deltamode object count */
+GLOBAL int res_object_current INIT(-1);						/* Index of current deltamode object */
+GLOBAL TIMESTAMP deltamode_starttime INIT(TS_NEVER);			/* Tracking variable for next desired instance of deltamode */
+
+//Function definitions
+void schedule_deltamode_start(TIMESTAMP tstart);	/* Anticipated time for a deltamode start, even if it is now */
+void allocate_deltamode_arrays(void);				/* Overall function to allocate deltamode capabilities - rather than having to edit everything */
+
 
 #endif  /* _RESIDENTIAL_H */
 

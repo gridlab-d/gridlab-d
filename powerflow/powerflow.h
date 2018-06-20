@@ -113,6 +113,7 @@ GLOBAL OBJECT *restoration_object INIT(NULL);		/**< restoration object of the sy
 GLOBAL OBJECT *fault_check_object INIT(NULL);		/**< fault_check object of the system */
 GLOBAL bool meshed_fault_checking_enabled INIT(false);	/*** fault_check object flag for possible meshing -- adjusts how reliability-related code runs */
 GLOBAL bool restoration_checks_active INIT(false);	/***< Overall flag for when reconfigurations are occurring - special actions in devices */
+GLOBAL double reliability_metrics_recloser_counts INIT(0.0);	/***< Recloser counts for momentary outages for power_metrics -- primarily to do backwards compatibility*/
 
 GLOBAL bool enable_subsecond_models INIT(false);		/* normally not operating in delta mode */
 GLOBAL bool all_powerflow_delta INIT(false);			/* Flag to make all powerflow objects participate in deltamode -- otherwise is individually flagged per object */

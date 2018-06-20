@@ -48,22 +48,11 @@ GLOBAL double deltamode_endtime_dbl INIT(TSNVRDBL);		/* Tracking variable to see
 GLOBAL TIMESTAMP deltamode_supersec_endtime INIT(TS_NEVER);	/* Tracking variable to indicate the "floored" time of detamode_endtime */
 GLOBAL double deltatimestep_running INIT(-1.0);			/** Value of the current deltamode simulation - used primarily to tell if we're in deltamode or not for VSI */
 
+GLOBAL double default_line_voltage INIT(120.0);			//Value for the default nominal_voltage
+GLOBAL double default_temperature_value INIT(59.0);		//Value for default temperature, used for battery model			
+
 void schedule_deltamode_start(TIMESTAMP tstart);	/* Anticipated time for a deltamode start, even if it is now */
 void allocate_deltamode_arrays(void);				/* Overall function to allocate deltamode capabilities - rather than having to edit everything */
-
-/*** DO NOT DELETE THE NEXT LINE ***/
-//NEWCLASS
-#include "diesel_dg.h"
-#include "windturb_dg.h"
-#include "battery.h"
-#include "dc_dc_converter.h"
-#include "inverter.h"
-#include "microturbine.h"
-#include "power_electronics.h"
-#include "rectifier.h"
-#include "solar.h"
-#include "central_dg_control.h"
-#include "controller_dg.h"
 
 #define UNKNOWN 0
 

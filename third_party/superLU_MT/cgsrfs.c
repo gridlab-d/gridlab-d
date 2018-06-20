@@ -1,13 +1,23 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
 
 #include <math.h>
-#include "pcsp_defs.h"
+#include "slu_mt_cdefs.h"
 
 
 void
 cgsrfs(trans_t trans, SuperMatrix *A, SuperMatrix *L, SuperMatrix *U,
-       int *perm_r, int *perm_c, equed_t equed, float *R, float *C,
+       int_t *perm_r, int_t *perm_c, equed_t equed, float *R, float *C,
        SuperMatrix *B, SuperMatrix *X, float *ferr, float *berr,
-       Gstat_t *Gstat, int *info)
+       Gstat_t *Gstat, int_t *info)
 {
 /*
  * -- SuperLU MT routine (version 2.0) --
@@ -49,11 +59,11 @@ cgsrfs(trans_t trans, SuperMatrix *A, SuperMatrix *L, SuperMatrix *U,
  *         dgstrf(). Use column-wise storage scheme,
  *         i.e., U has types: Stype = NCP, Dtype = _D, Mtype = TRU.
  *
- * perm_r  (input) int*, dimension (A->nrow)
+ * perm_r  (input) int_t*, dimension (A->nrow)
  *         Row permutation vector, which defines the permutation matrix Pr;
  *         perm_r[i] = j means row i of A is in position j in Pr*A.
  *
- * perm_c  (input) int*, dimension (A->ncol)
+ * perm_c  (input) int_t*, dimension (A->ncol)
  *         Column permutation vector, which defines the
  *         permutation matrix Pc; perm_c[i] = j means column i of A is 
  *         in position j in A*Pc.
@@ -101,7 +111,7 @@ cgsrfs(trans_t trans, SuperMatrix *A, SuperMatrix *L, SuperMatrix *U,
  *         vector X(j) (i.e., the smallest relative change in
  *         any element of A or B that makes X(j) an exact solution).
  *
- * info    (output) int*
+ * info    (output) int_t*
  *         = 0:  successful exit
  *         < 0:  if INFO = -i, the i-th argument had an illegal value
  *
@@ -115,7 +125,7 @@ cgsrfs(trans_t trans, SuperMatrix *A, SuperMatrix *L, SuperMatrix *U,
 #define ITMAX 5
     
     /* Table of constant values */
-    int    ione = 1;
+    int    ione = 1, nrow = A->nrow;
     complex ndone = {-1., 0.};
     complex done = {1., 0.};
     
@@ -125,18 +135,19 @@ cgsrfs(trans_t trans, SuperMatrix *A, SuperMatrix *L, SuperMatrix *U,
     SuperMatrix Bjcol;
     DNformat *Bstore, *Xstore, *Bjcol_store;
     complex   *Bmat, *Xmat, *Bptr, *Xptr;
-    int      kase;
+    int_t      kase;
     float   safe1, safe2;
-    int      i, j, k, irow, nz, count, notran, rowequ, colequ;
-    int      ldb, ldx, nrhs;
+    int_t      j, k, irow, nz, count, notran, rowequ, colequ;
+    int        i;
+    int_t      ldb, ldx, nrhs;
     float   s, xk, lstres, eps, safmin;
     char     transc[1];
     trans_t  transt;
     complex   *work;
     float   *rwork;
-    int      *iwork;
+    int_t      *iwork;
     extern double slamch_(char *);
-    extern int clacon_(int *, complex *, complex *, float *, int *);
+    extern int_t clacon_(int_t *, complex *, complex *, float *, int_t *);
 #ifdef _CRAY
     extern int CCOPY(int *, complex *, int *, complex *, int *);
     extern int CSAXPY(int *, complex *, complex *, int *, complex *, int *);
@@ -252,9 +263,9 @@ cgsrfs(trans_t trans, SuperMatrix *A, SuperMatrix *L, SuperMatrix *U,
 	       where op(A) = A, A**T, or A**H, depending on TRANS. */
 	    
 #ifdef _CRAY
-	    CCOPY(&A->nrow, Bptr, &ione, work, &ione);
+	    CCOPY(&nrow, Bptr, &ione, work, &ione);
 #else
-	    ccopy_(&A->nrow, Bptr, &ione, work, &ione);
+	    ccopy_(&nrow, Bptr, &ione, work, &ione);
 #endif
 	    sp_cgemv(transc, ndone, A, Xptr, ione, done, work, ione);
 
@@ -307,10 +318,10 @@ cgsrfs(trans_t trans, SuperMatrix *A, SuperMatrix *L, SuperMatrix *U,
 		cgstrs (trans, L, U, perm_r, perm_c, &Bjcol, Gstat, info);
 		
 #ifdef _CRAY
-		CAXPY(&A->nrow, &done, work, &ione,
+		CAXPY(&nrow, &done, work, &ione,
 		       &Xmat[j*ldx], &ione);
 #else
-		caxpy_(&A->nrow, &done, work, &ione,
+		caxpy_(&nrow, &done, work, &ione,
 		       &Xmat[j*ldx], &ione);
 #endif
 		lstres = berr[j];

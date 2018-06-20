@@ -1,17 +1,27 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
 
-#include "pssp_defs.h"
+All rights reserved. 
 
-int
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
+
+#include "slu_mt_sdefs.h"
+
+int_t
 psgstrf_snode_dfs(
-		  const int  pnum,      /* process number */
-		  const int  jcol,	  /* in - start of the supernode */
-		  const int  kcol, 	  /* in - end of the supernode */
-		  const int  *asub,     /* in */
-		  const int  *xa_begin, /* in */
-		  const int  *xa_end,   /* in */
-		  int        *xprune,   /* out */
-		  int        *marker,   /* modified */
-		  int        *col_lsub, /* values are irrelevant on entry 
+		  const int_t  pnum,      /* process number */
+		  const int_t  jcol,	  /* in - start of the supernode */
+		  const int_t  kcol, 	  /* in - end of the supernode */
+		  const int_t  *asub,     /* in */
+		  const int_t  *xa_begin, /* in */
+		  const int_t  *xa_end,   /* in */
+		  int_t        *xprune,   /* out */
+		  int_t        *marker,   /* modified */
+		  int_t        *col_lsub, /* values are irrelevant on entry 
 					   and on return */
 		  pxgstrf_shared_t *pxgstrf_shared /* modified */
 		  )
@@ -36,10 +46,10 @@ psgstrf_snode_dfs(
  *
  */
     GlobalLU_t *Glu = pxgstrf_shared->Glu;
-    register int i, k, ifrom, nextl, nsuper;
-    int          ito;
-    int          krow, kmark, mem_error;
-    int          *supno, *lsub, *xlsub, *xlsub_end;
+    register int_t i, k, ifrom, nextl, nsuper;
+    int_t          ito;
+    int_t          krow, kmark, mem_error;
+    int_t          *supno, *lsub, *xlsub, *xlsub_end;
     
     supno                 = Glu->supno;
     xlsub                 = Glu->xlsub;

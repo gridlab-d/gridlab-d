@@ -1294,8 +1294,8 @@ static unsigned long _nan[] = { 0xffffffff, 0x7fffffff, };
  * @defgroup gridlabd_h_classes Module API Classes
  * @{
  **************************************************************************************/
-
 #include <ctype.h>
+#include <stdio.h>
 #include "module.h"
 #include "class.h"
 #include "property.h"
@@ -2013,6 +2013,7 @@ public: // constructors/casts
 	};
 	inline gld_property(OBJECT *o) : obj(o), pstruct(nullpstruct) { pstruct.prop=o->oclass->pmap; };
 	inline gld_property(OBJECT *o, PROPERTY *p) : obj(o), pstruct(nullpstruct) { pstruct.prop=p; };
+	inline gld_property(OBJECT *o, PROPERTYSTRUCT *p) : obj(o), pstruct(nullpstruct) { pstruct=*p; };
 	inline gld_property(GLOBALVAR *v) : obj(NULL), pstruct(nullpstruct) { pstruct.prop=v->prop; };
 	inline gld_property(char *n) : obj(NULL), pstruct(nullpstruct)
 	{
@@ -2047,8 +2048,17 @@ public: // constructors/casts
 public: // read accessors
 	inline OBJECT *get_object(void) { return obj; };
 	inline PROPERTY *get_property(void) { return pstruct.prop; };
+	inline PROPERTYSTRUCT *get_property_struct(void) { return &pstruct; };
 	inline gld_class* get_class(void) { return (gld_class*)pstruct.prop->oclass; };
 	inline char *get_name(void) { return pstruct.prop->name; };
+	inline char *get_sql_safe_name(char* return_val) {
+		if (pstruct.part[0] != '\0') {
+			sprintf(return_val, "%s_%s", pstruct.prop->name, pstruct.part);
+		} else {
+			sprintf(return_val, "%s", pstruct.prop->name);
+		}
+		return return_val;
+	};
 	inline gld_type get_type(void) { return gld_type(pstruct.prop->ptype); };
 	inline size_t get_size(void) { return (size_t)(pstruct.prop->size); };
 	inline size_t get_width(void) { return (size_t)(pstruct.prop->width); };

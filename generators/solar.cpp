@@ -24,7 +24,6 @@
 #include <errno.h>
 #include <math.h>
 
-#include "generators.h"
 #include "solar.h"
 
 #define RAD(x) (x*PI)/180
@@ -123,6 +122,9 @@ solar::solar(MODULE *module)
 			PT_double, "latitude[deg]", PADDR(latitude), PT_DESCRIPTION, "The location of the array in degrees latitude",
 			PT_double, "longitude[deg]", PADDR(longitude), PT_DESCRIPTION, "The location of the array in degrees longitude",
 
+			PT_complex, "default_voltage_variable", PADDR(default_voltage_array),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"Accumulator/placeholder for default voltage value, when solar is run without an inverter",
+			PT_complex, "default_current_variable", PADDR(default_current_array),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"Accumulator/placeholder for default current value, when solar is run without an inverter",
+
 			PT_enumeration, "orientation", PADDR(orientation_type),
 				PT_KEYWORD, "DEFAULT", (enumeration)DEFAULT,
 				PT_KEYWORD, "FIXED_AXIS", (enumeration)FIXED_AXIS,
@@ -179,10 +181,8 @@ int solar::create(void)
 	Pmax_temp_coeff = 0.0;
 	Voc_temp_coeff  = 0.0;
 
-	pSolarD = NULL;
-	pSolarH = NULL;
-	pSolarG = NULL;
-	pAlbedo = NULL;
+	//Property values - NULL out
+	pTout = NULL;
 	pWindSpeed = NULL;
 
 	module_acoeff = -2.81;		//Coefficients from Sandia database - represents 
@@ -214,6 +214,14 @@ int solar::create(void)
 	deltamode_inclusive = false;
 	first_sync_delta_enabled = false;
 
+	//Inverter pointers
+	inverter_voltage_property = NULL;
+	inverter_current_property = NULL;
+
+	//Default versions
+	default_voltage_array = complex(0.0,0.0);
+	default_current_array = complex(0.0,0.0);
+	
 	return 1; /* return 1 on success, 0 on failure */
 }
 
@@ -287,15 +295,10 @@ int solar::init_climate()
 			is utilizing default values for all relevant weather variables.
 			*/
 
-			//default to mock data
-			static double tout=59.0, rhout=0.75, solar=92.902, wsout=0.0, albdefault=0.2;
-			pTout = &tout;
-			pRhout = &rhout;
-			pSolarD = &solar;	//Default all solar values to normal "optimal" 1000 W/m^2
-			pSolarH = &solar;
-			pSolarG = &solar;
-			pAlbedo = &albdefault;
-			pWindSpeed = &wsout;
+			//default to mock data - for the two fields that exist (temperature and windspeed)
+			//All others just put in the one equation that uses them
+			Tamb = 59.0;
+			wind_speed = 0.0;
 
 			if (orientation_type==FIXED_AXIS)
 			{
@@ -324,74 +327,27 @@ int solar::init_climate()
 			}
 			if (obj->rank<=hdr->rank)
 				gl_set_dependent(obj,hdr);
-		   
-			pTout = (double*)GETADDR(obj,gl_get_property(obj,"temperature"));
-//			pRhout = (double*)GETADDR(obj,gl_get_property(obj,"humidity"));	<---- Not used anywhere yet
-			pSolarD = (double*)GETADDR(obj,gl_get_property(obj,"solar_direct"));
-			pSolarH = (double*)GETADDR(obj,gl_get_property(obj,"solar_diffuse"));
-			pSolarG = (double*)GETADDR(obj,gl_get_property(obj,"solar_global"));
-			pAlbedo = (double*)GETADDR(obj,gl_get_property(obj,"ground_reflectivity"));
-			pWindSpeed = (double*)GETADDR(obj,gl_get_property(obj,"wind_speed"));
+			
+			//Map the properties - temperature
+			pTout = new gld_property(obj,"temperature");
 
-			//Should probably check these
-			if (pTout==NULL)
+			//Check it
+			if ((pTout->is_valid() != true) || (pTout->is_double() != true))
 			{
-				GL_THROW("Failed to map outside temperature");
+				GL_THROW("solar:%d - %s - Failed to map outside temperature",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
 				/*  TROUBLESHOOT
 				The solar PV array failed to map the outside air temperature.  Ensure this is
 				properly specified in your climate data and try again.
 				*/
 			}
 
-			//No need to error check - doesn't exist in any formulations yet
-			//if (pRhout==NULL)
-			//{
-			//	GL_THROW("Failed to map outside relative humidity");
-			//	/*  TROUBLESHOOT
-			//	The solar PV array failed to map the outside relative humidity.  Ensure this is
-			//	properly specified in your climate data and try again.
-			//	*/
-			//}
+			//Map the wind speed
+			pWindSpeed = new gld_property(obj,"wind_speed");
 
-			if (pSolarD==NULL)
+			//Check tit
+			if ((pWindSpeed->is_valid() != true) || (pWindSpeed->is_double() != true))
 			{
-				GL_THROW("Failed to map direct normal solar radiation");
-				/*  TROUBLESHOOT
-				The solar PV array failed to map the solar direct normal radiation.  Ensure this is
-				properly specified in your climate data and try again.
-				*/
-			}
-
-			if (pSolarH==NULL)
-			{
-				GL_THROW("Failed to map diffuse horizontal solar radiation");
-				/*  TROUBLESHOOT
-				The solar PV array failed to map the solar diffuse horizontal radiation.  Ensure this is
-				properly specified in your climate data and try again.
-				*/
-			}
-
-			if (pSolarG==NULL)
-			{
-				GL_THROW("Failed to map global horizontal solar radiation");
-				/*  TROUBLESHOOT
-				The solar PV array failed to map the solar global horizontal radiation.  Ensure this is
-				properly specified in your climate data and try again.
-				*/
-			}
-
-			if (pAlbedo==NULL)
-			{
-				GL_THROW("Failed to map albedo/ground reflectance");
-				/*  TROUBLESHOOT
-				The solar PV array failed to map the ground reflectance.  Ensure this is
-				properly specified in your climate data and try again.
-				*/
-			}
-
-			if (pWindSpeed==NULL)
-			{
-				GL_THROW("Failed to map wind speed");
+				GL_THROW("solar:%d - %s - Failed to map wind speed",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
 				/*  TROUBLESHOOT
 				The solar PV array failed to map the wind speed.  Ensure this is
 				properly specified in your climate data and try again.
@@ -540,6 +496,13 @@ int solar::init(OBJECT *parent)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	int climate_result;
+	gld_property *temp_property_pointer;
+	gld_wlock *test_rlock;
+	bool temp_bool_val;
+	double temp_double_val, temp_inv_p_rated, temp_p_efficiency, temp_p_eta;
+	double temp_double_div_value_eta, temp_double_div_value_eff;
+	enumeration temp_enum_val;
+	int32 temp_phase_count_val;
 
 	if (parent != NULL)
 	{
@@ -616,9 +579,6 @@ int solar::init(OBJECT *parent)
 			break;
 	}
 
-	static complex default_line_voltage[1], default_line_current[1];
-	int i;
-
 	//efficiency dictates how much of the rate insolation the panel can capture and
 	//turn into electricity
 	//Rated power output
@@ -669,88 +629,229 @@ int solar::init(OBJECT *parent)
 	Rated_kVA = Max_P / 1000;
 
 	// find parent inverter, if not defined, use a default voltage
-	if (parent != NULL && strcmp(parent->oclass->name,"inverter") == 0) // SOLAR has a PARENT and PARENT is an INVERTER
+	if (parent != NULL)
 	{
-		struct {
-			complex **var;
-			char *varname;
-		} map[] = {
-			// map the V & I from the inverter
-			{&pCircuit_V,			"V_In"}, // assumes 2 and 3 follow immediately in memory
-			{&pLine_I,				"I_In"}, // assumes 2 and 3(N) follow immediately in memory
-		};
-		// construct circuit variable map to meter
-		for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
+		if (gl_object_isa(parent,"inverter","generators") == true) // SOLAR has a PARENT and PARENT is an INVERTER
 		{
-			*(map[i].var) = get_complex(parent,map[i].varname);
-		}
+			//Map the inverter voltage
+			inverter_voltage_property = new gld_property(parent,"V_In");
 
-		inverter *par = OBJECTDATA(obj->parent, inverter);
-
-		if(par->use_multipoint_efficiency == TRUE)
-		{
-			if(Max_P > par->p_dco){
-				gl_warning("The PV is over rated for its parent inverter.");
+			//Check it
+			if ((inverter_voltage_property->is_valid() != true) || (inverter_voltage_property->is_complex() != true))
+			{
+				GL_THROW("solar:%d - %s - Unable to map inverter power interface field",obj->id,(obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
-				The maximum output for the PV array is larger than the inverter rating.  Ensure this 
-				was done intentionally.  If not, please correct your values and try again.
+				While attempting to map to one of the inverter interface variables, an error occurred.  Please try again.
+				If the error persists, please submit a bug report and your model file via the issue tracking system.
 				*/
 			}
-		}
-		else if(par->inverter_type_v == 4)
-		{//four quadrant inverter
-			if(par->number_of_phases_out == 4){
-				if(Max_P > par->p_rated/par->inv_eta){
+
+			//Map the inverter current
+			inverter_current_property = new gld_property(parent,"I_In");
+
+			//Check it
+			if ((inverter_current_property->is_valid() != true) || (inverter_current_property->is_complex() != true))
+			{
+				GL_THROW("solar:%d - %s - Unable to map inverter power interface field",obj->id,(obj->name ? obj->name : "Unnamed"));
+				//Defined above
+			}
+
+			//Find multipoint efficiency property to check
+			temp_property_pointer = new gld_property(parent,"use_multipoint_efficiency");
+
+			//Check and make sure it is valid
+			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_bool() != true))
+			{
+				GL_THROW("solar:%d - %s - Unable to map inverter property",obj->id,(obj->name ? obj->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				While mapping a property of the inverter parented to a solar object, an error occurred.  Please
+				try again.
+				*/
+			}
+
+			//Pull the property
+			temp_property_pointer->getp<bool>(temp_bool_val,*test_rlock);
+
+			//Remove the property
+			delete temp_property_pointer;
+
+			//Pull the maximum_dc_power property
+			temp_property_pointer = new gld_property(parent,"maximum_dc_power");
+
+			//Check it
+			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_double() != true))
+			{
+				GL_THROW("solar:%d - %s - Unable to map inverter property",obj->id,(obj->name ? obj->name : "Unnamed"));
+				//Defined above
+			}
+
+			//Pull the value
+			temp_double_val = temp_property_pointer->get_double();
+
+			//Remove it
+			delete temp_property_pointer;
+
+			//Pull the inverter_type property
+			temp_property_pointer = new gld_property(parent,"inverter_type");
+
+			//Check it
+			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_enumeration() != true))
+			{
+				GL_THROW("solar:%d - %s - Unable to map inverter property",obj->id,(obj->name ? obj->name : "Unnamed"));
+				//Defined above
+			}
+
+			//Pull the value
+			temp_enum_val = temp_property_pointer->get_enumeration();
+
+			//Remove the property
+			delete temp_property_pointer;
+
+			//Pull the number of phases
+			temp_property_pointer = new gld_property(parent,"number_of_phases_out");
+
+			//Check it
+			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_integer() != true))
+			{
+				GL_THROW("solar:%d - %s - Unable to map inverter property",obj->id,(obj->name ? obj->name : "Unnamed"));
+				//Defined above
+			}
+			
+			//Pull the value
+			temp_phase_count_val = temp_property_pointer->get_integer();
+
+			//Remove the property
+			delete temp_property_pointer;
+
+			//Retrieve the rated_power property
+			temp_property_pointer = new gld_property(parent,"rated_power");
+
+			//Check it
+			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_double() != true))
+			{
+				GL_THROW("solar:%d - %s - Unable to map inverter property",obj->id,(obj->name ? obj->name : "Unnamed"));
+				//Defined above
+			}
+
+			//Pull the value
+			temp_inv_p_rated = temp_property_pointer->get_double();
+
+			//Remove it
+			delete temp_property_pointer;
+
+			//Pull efficiency - efficiency_value
+			temp_property_pointer = new gld_property(parent,"efficiency_value");
+
+			//Check it
+			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_double() != true))
+			{
+				GL_THROW("solar:%d - %s - Unable to map inverter property",obj->id,(obj->name ? obj->name : "Unnamed"));
+				//Defined above
+			}
+
+			//Pull the value
+			temp_p_efficiency = temp_property_pointer->get_double();
+
+			//Remove it
+			delete temp_property_pointer;
+
+			//Pull inv_eta - "inverter_efficiency"
+			temp_property_pointer = new gld_property(parent,"inverter_efficiency");
+
+			//Check it
+			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_double() != true))
+			{
+				GL_THROW("solar:%d - %s - Unable to map inverter property",obj->id,(obj->name ? obj->name : "Unnamed"));
+				//Defined above
+			}
+
+			//Pull the value
+			temp_p_eta = temp_property_pointer->get_double();
+
+			//Remove it
+			delete temp_property_pointer;
+			
+			//Create some intermediate values
+			temp_double_div_value_eta = temp_inv_p_rated/temp_p_eta;
+			temp_double_div_value_eff = temp_inv_p_rated/temp_p_efficiency;
+			
+			if(temp_bool_val == TRUE)
+			{
+				if(Max_P > temp_double_val){
 					gl_warning("The PV is over rated for its parent inverter.");
-					//Defined above
-				}
-			} else {
-				if(Max_P > par->number_of_phases_out*par->p_rated/par->inv_eta){
-					gl_warning("The PV is over rated for its parent inverter.");
-					//Defined above
+					/*  TROUBLESHOOT
+					The maximum output for the PV array is larger than the inverter rating.  Ensure this 
+					was done intentionally.  If not, please correct your values and try again.
+					*/
 				}
 			}
-		} else {
-			if(par->number_of_phases_out == 4){
-				if(Max_P > par->p_rated/par->efficiency){
-					gl_warning("The PV is over rated for its parent inverter.");
-					//Defined above
+			else if(temp_enum_val == 4)
+			{//four quadrant inverter
+				if(temp_phase_count_val == 4){
+					if(Max_P > temp_double_div_value_eta){
+						gl_warning("The PV is over rated for its parent inverter.");
+						//Defined above
+					}
+				} else {
+					if(Max_P > temp_phase_count_val*temp_double_div_value_eta){
+						gl_warning("The PV is over rated for its parent inverter.");
+						//Defined above
+					}
 				}
 			} else {
-				if(Max_P > par->number_of_phases_out*par->p_rated/par->efficiency){
-					gl_warning("The PV is over rated for its parent inverter.");
-					//Defined above
+				if(temp_phase_count_val == 4){
+					if(Max_P > temp_double_div_value_eff){
+						gl_warning("The PV is over rated for its parent inverter.");
+						//Defined above
+					}
+				} else {
+					if(Max_P > temp_phase_count_val*temp_double_div_value_eff){
+						gl_warning("The PV is over rated for its parent inverter.");
+						//Defined above
+					}
 				}
 			}
+			//gl_verbose("Max_P is : %f", Max_P);
 		}
-		//gl_verbose("Max_P is : %f", Max_P);
+		else	//It's not an inverter - fail it.
+		{
+			GL_THROW("Solar panel can only have an inverter as its parent.");
+			/* TROUBLESHOOT
+			The solar panel can only have an INVERTER as parent, and no other object. Or it can be all by itself, without a parent.
+			*/
+		}
 	}
-	else if	(parent != NULL && strcmp(parent->oclass->name,"inverter") != 0)
-	{
-		GL_THROW("Solar panel can only have an inverter as its parent.");
-		/* TROUBLESHOOT
-		   The solar panel can only have an INVERTER as parent, and no other object. Or it can be all by itself, without a parent.
-		*/
-	}
-	else
+	else	//No parent
 	{	// default values of voltage
 		gl_warning("solar panel:%d has no parent defined. Using static voltages.", obj->id);
-		struct {
-			complex **var;
-			char *varname;
-		} map[] = {
-			// map the V & I from the inverter
-			{&pCircuit_V,			"V_In"}, // assumes 2 and 3 follow immediately in memory
-			{&pLine_I,				"I_In"}, // assumes 2 and 3(N) follow immediately in memory
-		};
-		// attach meter variables to each circuit in the default_meter
-		*(map[0].var) = &default_line_voltage[0];
-		*(map[1].var) = &default_line_current[0];
+		
+		//Map the values to ourself
 
-		// provide initial values for voltages
-		default_line_voltage[0] = complex(V_Max.Re()/sqrt(3.0),0);
-        	//default_line_voltage[0] = V_Max/sqrt(3.0);
-     
+		//Map the inverter voltage
+		inverter_voltage_property = new gld_property(obj,"default_voltage_variable");
+
+		//Check it
+		if ((inverter_voltage_property->is_valid() != true) || (inverter_voltage_property->is_complex() != true))
+		{
+			GL_THROW("solar:%d - %s - Unable to map a default power interface field",obj->id,(obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			While attempting to map to one of the default power interface variables, an error occurred.  Please try again.
+			If the error persists, please submit a bug report and your model file via the issue tracking system.
+			*/
+		}
+
+		//Map the inverter current
+		inverter_current_property = new gld_property(obj,"default_current_variable");
+
+		//Check it
+		if ((inverter_current_property->is_valid() != true) || (inverter_current_property->is_complex() != true))
+		{
+			GL_THROW("solar:%d - %s - Unable to map a default power interface field",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
+		}
+
+		//Set the local voltage value
+		default_voltage_array = complex(V_Max.Re()/sqrt(3.0),0);
 	}
 
 	climate_result=init_climate();
@@ -759,7 +860,7 @@ int solar::init(OBJECT *parent)
 	if ((soiling_factor<0) || (soiling_factor>1.0))
 	{
 		soiling_factor = 0.95;
-		gl_warning("Invalid soiling factor specified, defaulting to 95%");
+		gl_warning("Invalid soiling factor specified, defaulting to 95%%");
 		/*  TROUBLESHOOT
 		A soiling factor less than zero or greater than 1.0 was specified.  This is not within the valid
 		range, so a default of 0.95 was selected.
@@ -769,7 +870,7 @@ int solar::init(OBJECT *parent)
 	if ((derating_factor<0) || (derating_factor>1.0))
 	{
 		derating_factor = 0.95;
-		gl_warning("Invalid derating factor specified, defaulting to 95%");
+		gl_warning("Invalid derating factor specified, defaulting to 95%%");
 		/*  TROUBLESHOOT
 		A derating factor less than zero or greater than 1.0 was specified.  This is not within the valid
 		range, so a default of 0.95 was selected.
@@ -839,9 +940,8 @@ int solar::init(OBJECT *parent)
 
 TIMESTAMP solar::presync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	I_Out = complex(0,0);
+	I_Out = complex(0.0,0.0);
 	
-
 	TIMESTAMP t2 = TS_NEVER;
 	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
 }
@@ -851,6 +951,7 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 	int64 ret_value;
 	OBJECT *obj = OBJECTHDR(this);
 	double insolwmsq, corrwindspeed, Tback, Ftempcorr;
+	gld_wlock *test_rlock;
 
 	//Check the shading factor
 	if ((shading_factor <0) || (shading_factor > 1))
@@ -923,8 +1024,12 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 	if (solar_model_tilt != PLAYERVAL)
 	{
 		//Update windspeed - since it's being read and has a variable
-		wind_speed = *pWindSpeed;
-		Tamb = *pTout;
+		if (weather != NULL)
+		{
+			wind_speed = pWindSpeed->get_double();
+			Tamb = pTout->get_double();
+		}
+		//Default else -- just keep the original "static" values
 
 		//Check our mode
 		switch (orientation_type) {
@@ -932,7 +1037,10 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 				{
 					if (weather == NULL)
 					{
-						Insolation = shading_factor*(*pSolarD) + *pSolarH + *pSolarG*(1 - cos(tilt_angle))*(*pAlbedo)/2.0;
+						//Original equation the pointed to statics (and weather, but how would it get here?)
+						//Insolation = shading_factor*(*pSolarD) + *pSolarH + *pSolarG*(1 - cos(tilt_angle))*(*pAlbedo)/2.0;
+						//Old static - static double tout=59.0, rhout=0.75, solar=92.902, wsout=0.0, albdefault=0.2;
+						Insolation = 92.902 * (shading_factor + 1.0 + 0.1* (1.0 - cos(tilt_angle)));
 					}
 					else
 					{
@@ -1047,8 +1155,9 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 
      I_Out = (VA_Out/V_Out);
 
-	 *pLine_I =I_Out;
-     *pCircuit_V =V_Out;
+	//Export the values
+	inverter_voltage_property->setp<complex>(V_Out,*test_rlock);
+	inverter_current_property->setp<complex>(I_Out,*test_rlock);
 
 	return TS_NEVER; 
 }
@@ -1059,16 +1168,7 @@ TIMESTAMP solar::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	TIMESTAMP t2 = TS_NEVER;
 	/* TODO: implement post-topdown behavior */
 	
-
-return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
-}
-
-complex *solar::get_complex(OBJECT *obj, char *name)
-{
-	PROPERTY *p = gl_get_property(obj,name);
-	if (p==NULL || p->ptype!=PT_complex)
-		return NULL;
-	return (complex*)GETADDR(obj,p);
+	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
 }
 
 //Deltamode interupdate function -- basically call sync

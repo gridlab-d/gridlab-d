@@ -5,7 +5,6 @@
 #define _currdump_H
 
 #include "powerflow.h"
-#include "link.h"
 
 typedef enum {
 	CDM_RECT,

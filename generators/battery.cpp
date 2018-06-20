@@ -12,12 +12,7 @@
 #include <errno.h>
 #include <math.h>
 
-#include "generators.h"
-
-#include "energy_storage.h"
 #include "battery.h"
-#include "gridlabd.h"
-#include "power_electronics.h"
 
 #define HOUR 3600 * TS_SECOND
 
@@ -184,10 +179,7 @@ int battery::create(void)
 	Max_P = 0;//< maximum real power capacity in kW
     Min_P = 0;//< minimus real power capacity in kW
 	
-	//double Max_Q;//< maximum reactive power capacity in kVar
-    //double Min_Q;//< minimus reactive power capacity in kVar
 	Rated_kVA = 1; //< nominal capacity in kVA
-	//double Rated_kV; //< nominal line-line voltage in kV
 	
 	efficiency =  0;
 	base_efficiency = 0;
@@ -206,64 +198,40 @@ int battery::create(void)
 	enableDelta = false;
 	state_change_time_delta = 0;
 	Pout_delta =  0;
+	pCircuit_V[0] = pCircuit_V[1] = pCircuit_V[2] = NULL;
+	pLine_I[0] = pLine_I[1] = pLine_I[2] = NULL;
+	pLine12 = NULL;
+	pPower = NULL;
+	pTout = NULL;
+	pSoc = NULL;
+	pBatteryLoad = NULL;
+	pSocReserve = NULL;
+	pRatedPower = NULL;
+	peff = NULL;
+	pinverter_VA_Out = NULL;
+
+	value_Circuit_V[0] = value_Circuit_V[1] = value_Circuit_V[2] = complex(0.0,0.0);
+	value_Line_I[0] = value_Line_I[1] = value_Line_I[2] = complex(0.0,0.0);
+	value_Line12 = complex(0.0,0.0);
+
+	value_Tout = 0.0;
+
+	parent_is_meter = false;
+	parent_is_triplex = false;
+	parent_is_inverter = false;
+	climate_object_found = false;	//Use default data, by default
 
 	/* TODO: set the context-free initial value of properties */
 	return 1; /* return 1 on success, 0 on failure */
 }
 
-void battery::fetch_double(double **prop, char *name, OBJECT *parent){
-	OBJECT *hdr = OBJECTHDR(this);
-	*prop = gl_get_double_by_name(parent, name);
-	if(*prop == NULL){
-		char tname[32];
-		char *namestr = (hdr->name ? hdr->name : tname);
-		char msg[256];
-		sprintf(tname, "battery:%i", hdr->id);
-		if(*name == NULL)
-			sprintf(msg, "%s: battery unable to find property: name is NULL", namestr);
-		else
-			sprintf(msg, "%s: battery unable to find %s", namestr, name);
-		throw(msg);
-	}
-}
-
-void battery::fetch_enumeration(enumeration **prop, char *name, OBJECT *parent){
-	OBJECT *hdr = OBJECTHDR(this);
-	*prop = gl_get_enum_by_name(parent, name);
-	if(*prop == NULL){
-		char tname[32];
-		char *namestr = (hdr->name ? hdr->name : tname);
-		char msg[256];
-		sprintf(tname, "battery:%i", hdr->id);
-		if(*name == NULL)
-			sprintf(msg, "%s: battery unable to find property: name is NULL", namestr);
-		else
-			sprintf(msg, "%s: battery unable to find %s", namestr, name);
-		throw(msg);
-	}
-}
-
-void battery::fetch_complex(complex **prop, char *name, OBJECT *parent){
-	OBJECT *hdr = OBJECTHDR(this);
-	*prop = gl_get_complex_by_name(parent, name);
-	if(*prop == NULL){
-		char tname[32];
-		char *namestr = (hdr->name ? hdr->name : tname);
-		char msg[256];
-		sprintf(tname, "battery:%i", hdr->id);
-		if(*name == NULL)
-			sprintf(msg, "%s: battery unable to find property: name is NULL", namestr);
-		else
-			sprintf(msg, "%s: battery unable to find %s", namestr, name);
-		throw(msg);
-	}
-}
-
-
 /* Object initialization is called once after all object have been created */
 int battery::init(OBJECT *parent)
 {
 	OBJECT *obj = OBJECTHDR(this);
+	gld_property *temp_property_pointer;
+	double temp_value_SocReserve;
+	enumeration temp_value_control_mode;
 
 	if(parent != NULL){
 		if((parent->flags & OF_INIT) != OF_INIT){
@@ -310,165 +278,176 @@ int battery::init(OBJECT *parent)
 		}
 	}
 
-	extern complex default_line_current[3];
-	extern complex default_line_voltage[3];
-	if(use_internal_battery_model == FALSE){
-		int i;
-
+	if(use_internal_battery_model == FALSE)
+	{
 		// find parent meter, if not defined, use a default meter (using static variable 'default_meter')
-		if (parent!=NULL && gl_object_isa(parent,"meter"))
+		if (parent!=NULL)
 		{
-			// attach meter variables to each circuit
-			struct {
-				complex **var;
-				char *varname;
-			}
-			map[] = {
-			// local object name,	meter object name
-				{&pCircuit_V,			"voltage_A"}, // assumes 2 and 3 follow immediately in memory
-				{&pLine_I,				"current_A"}, // assumes 2 and 3(N) follow immediately in memory
-				{&pPower,				"measured_power"},
-			};
-			/// @todo use triplex property mapping instead of assuming memory order for meter variables (residential, low priority) (ticket #139)
-		
-			for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
-				*(map[i].var) = get_complex(parent,map[i].varname);
-
-			//Map phases
-			set *phaseInfo;
-			PROPERTY *tempProp;
-			tempProp = gl_get_property(parent,"phases");
-
-			if ((tempProp==NULL || tempProp->ptype!=PT_set))
+			if (gl_object_isa(parent,"meter","powerflow") == true)
 			{
-				GL_THROW("Unable to map phases property - ensure the parent is a meter or triplex_meter");
-				/*  TROUBLESHOOT
-				While attempting to map the phases property from the parent object, an error was encountered.
-				Please check and make sure your parent object is a meter or triplex_meter inside the powerflow module and try
-				again.  If the error persists, please submit your code and a bug report via the Trac website.
-				*/
-			}
-			else
-				phaseInfo = (set*)GETADDR(parent,tempProp);
+				//Set the flags
+				parent_is_meter = true;
+				parent_is_triplex = false;
+				parent_is_inverter = false;
 
-			//Copy in so the code works
-			phases = *phaseInfo;
+				//Make the mappings
+				pCircuit_V[0] = map_complex_value(parent,"voltage_A");
+				pCircuit_V[1] = map_complex_value(parent,"voltage_B");
+				pCircuit_V[2] = map_complex_value(parent,"voltage_C");
 
-			if ( (phases & 0x07) == 0x07 ){ // three phase
-				number_of_phases_out = 3;
-			}
-			else if ( ((phases & 0x03) == 0x03) || ((phases & 0x05) == 0x05) || ((phases & 0x06) == 0x06) ){ // two-phase
-				number_of_phases_out = 2;
-				GL_THROW("Battery %d: The battery can only be connected to a meter with all three phases. Please check parent meter's phases.");
-				/* TROUBLESHOOT
-				The battery's parent is a meter. The battery can only operate correctly when the parent meter is a three-phase meter.
-				*/
-			}
-			else if ( ((phases & 0x01) == 0x01) || ((phases & 0x02) == 0x02) || ((phases & 0x04) == 0x04) ){ // single phase
-				number_of_phases_out = 1;
-				GL_THROW("Battery %d: The battery can only be connected to a meter with all three phases. Please check parent meter's phases.");
-				/* TROUBLESHOOT
-				The battery's parent is a meter. The battery can only operate correctly when the parent meter is a three-phase meter.
-				*/
-			}
-			else
-			{
-				//Never supposed to really get here
-				GL_THROW("Invalid phase configuration specified!");
-				/*  TROUBLESHOOT
-				An invalid phase congifuration was specified when attaching to the "parent" object.  Please report this
-				error.
-				*/
-			}
-		}
-		else if (parent!=NULL && gl_object_isa(parent,"triplex_meter"))
-		{
-			struct {
-				complex **var;
-				char *varname;
-			}
-			map[] = {
-				// local object name,	meter object name
-				{&pCircuit_V,			"voltage_12"}, // assumes 1N and 2N follow immediately in memory
-				{&pLine_I,				"current_1"}, // assumes 2 and 3(N) follow immediately in memory
-				{&pLine12,				"current_12"}, // maps current load 1-2 onto triplex load
-				{&pPower,				"measured_power"}, //looks at power being transferred through triplex meter
-			};
+				pLine_I[0] = map_complex_value(parent,"current_A");
+				pLine_I[1] = map_complex_value(parent,"current_B");
+				pLine_I[2] = map_complex_value(parent,"current_C");
 
-			//Map phases
-			set *phaseInfo;
-			PROPERTY *tempProp;
-			tempProp = gl_get_property(parent,"phases");
+				pLine12 = NULL;
 
-			if ((tempProp==NULL || tempProp->ptype!=PT_set))
-			{
-				GL_THROW("Unable to map phases property - ensure the parent is a meter or triplex_meter");
-				//Defined above
-			}
-			else
-				phaseInfo = (set*)GETADDR(parent,tempProp);
+				pPower = map_complex_value(parent,"measured_power");
 
-			//Copy in so the code works
-			phases = *phaseInfo;
+				//Map and pull the phases
+				temp_property_pointer = new gld_property(parent,"phases");
 
-			number_of_phases_out = 1;
-
-			// attach meter variables to each circuit
-			for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
-			{
-				if ((*(map[i].var) = get_complex(parent,map[i].varname))==NULL)
+				//Make sure ti worked
+				if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_set() != true))
 				{
-					GL_THROW("%s (%s:%d) does not implement triplex_meter variable %s for %s (battery:%d)", 
-					/*	TROUBLESHOOT
-						The battery requires that the triplex_meter contains certain published properties in order to properly connect
-						the battery to the triplex-meter.  If the triplex_meter does not contain those properties, GridLAB-D may
-						suffer fatal pointer errors.  If you encounter this error, please report it to the developers, along with
-						the version of GridLAB-D that raised this error.
+					GL_THROW("Unable to map phases property - ensure the parent is a meter or triplex_meter");
+					/*  TROUBLESHOOT
+					While attempting to map the phases property from the parent object, an error was encountered.
+					Please check and make sure your parent object is a meter or triplex_meter inside the powerflow module and try
+					again.  If the error persists, please submit your code and a bug report via the Trac website.
 					*/
-					parent->name?parent->name:"unnamed object", parent->oclass->name, parent->id, map[i].varname, obj->name?obj->name:"unnamed", obj->id);
 				}
-			}
-		}
-		else if (parent != NULL && strcmp(parent->oclass->name,"inverter") == 0)
-		{
-			number_of_phases_out = 0;
-			phases = 0x00;
-			struct {
-				complex **var;
-				char *varname;
-			} 
-		
-			map[] = {
-				// map the V & I from the inverter
-				{&pCircuit_V,			"V_In"}, // assumes 2 and 3 follow immediately in memory
-				{&pLine_I,				"I_In"}, // assumes 2 and 3(N) follow immediately in memory
-			};
 
-			// construct circuit variable map to meter
-			for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
+				//Pull the phase information
+				phases = temp_property_pointer->get_set();
+
+				//Clear the temporary pointer
+				delete temp_property_pointer;
+
+				if ( (phases & 0x07) == 0x07 ){ // three phase
+					number_of_phases_out = 3;
+				}
+				else if ( ((phases & 0x03) == 0x03) || ((phases & 0x05) == 0x05) || ((phases & 0x06) == 0x06) ){ // two-phase
+					number_of_phases_out = 2;
+					GL_THROW("Battery %d: The battery can only be connected to a meter with all three phases. Please check parent meter's phases.",obj->id);
+					/* TROUBLESHOOT
+					The battery's parent is a meter. The battery can only operate correctly when the parent meter is a three-phase meter.
+					*/
+				}
+				else if ( ((phases & 0x01) == 0x01) || ((phases & 0x02) == 0x02) || ((phases & 0x04) == 0x04) ){ // single phase
+					number_of_phases_out = 1;
+					GL_THROW("Battery %d: The battery can only be connected to a meter with all three phases. Please check parent meter's phases.",obj->id);
+					/* TROUBLESHOOT
+					The battery's parent is a meter. The battery can only operate correctly when the parent meter is a three-phase meter.
+					*/
+				}
+				else
+				{
+					//Never supposed to really get here
+					GL_THROW("Invalid phase configuration specified!");
+					/*  TROUBLESHOOT
+					An invalid phase congifuration was specified when attaching to the "parent" object.  Please report this
+					error.
+					*/
+				}
+
+				//Pull the initial voltages in, just to init them
+				value_Circuit_V[0] = pCircuit_V[0]->get_complex();
+				value_Circuit_V[1] = pCircuit_V[1]->get_complex();
+				value_Circuit_V[2] = pCircuit_V[2]->get_complex();
+			}
+			else if (gl_object_isa(parent,"triplex_meter","powerflow") == true)
 			{
-				*(map[i].var) = get_complex(parent,map[i].varname);
+				//Set flags
+				parent_is_meter = true;
+				parent_is_triplex = true;
+				parent_is_inverter = false;
+
+				//Map the variables
+				pCircuit_V[0] = map_complex_value(parent,"voltage_12");
+				pCircuit_V[1] = map_complex_value(parent,"voltage_1N");
+				pCircuit_V[2] = map_complex_value(parent,"voltage_2N");
+
+				pLine_I[0] = map_complex_value(parent,"current_1");
+				pLine_I[1] = map_complex_value(parent,"current_2");
+				pLine_I[2] = map_complex_value(parent,"current_N");
+
+				pLine12 = map_complex_value(parent,"current_12");
+
+				pPower = map_complex_value(parent,"measured_power");
+
+				//Map and pull the phases
+				temp_property_pointer = new gld_property(parent,"phases");
+
+				//Make sure ti worked
+				if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_set() != true))
+				{
+					GL_THROW("Unable to map phases property - ensure the parent is a meter or triplex_meter");
+					//Defined above
+				}
+
+				//Pull the phase information
+				phases = temp_property_pointer->get_set();
+
+				//Clear the temporary pointer
+				delete temp_property_pointer;
+
+				number_of_phases_out = 1;
+
+				//Pull the initial voltages in, just to init them
+				value_Circuit_V[0] = pCircuit_V[0]->get_complex();
+				value_Circuit_V[1] = pCircuit_V[1]->get_complex();
+				value_Circuit_V[2] = pCircuit_V[2]->get_complex();
+			}
+			else if (gl_object_isa(parent,"inverter","generators") == true)
+			{
+				//Set flags
+				parent_is_meter = true;
+				parent_is_triplex = false;
+				parent_is_inverter = true;
+
+				number_of_phases_out = 0;
+				phases = 0x00;
+
+				//Map up the two inverter variabes
+				pCircuit_V[0] = map_complex_value(parent,"V_In");
+				pCircuit_V[1] = NULL;
+				pCircuit_V[2] = NULL;
+
+				pLine_I[0] = map_complex_value(parent,"I_In");
+				pLine_I[1] = NULL;
+				pLine_I[2] = NULL;
+
+				peff = map_double_value(parent,"inverter_efficiency");
+				pinverter_VA_Out = map_complex_value(parent,"VA_Out");
+
+				//Pull the initial voltage value, to be consistent
+				value_Circuit_V[0] = pCircuit_V[0]->get_complex();
+			}
+			else	//Not a proper parent
+			{
+				GL_THROW("Battery must have a meter or triplex meter or inverter as it's parent");
+				/*  TROUBLESHOOT
+				Check the parent object of the inverter.  The battery is only able to be childed via a meter or 
+				triplex meter when connecting into powerflow systems.  You can also choose to have no parent, in which
+				case the battery will be a stand-alone application using default voltage values for solving purposes.
+				*/
 			}
 		}
-		else if	((parent != NULL && strcmp(parent->oclass->name,"meter") != 0)||(parent != NULL && strcmp(parent->oclass->name,"triplex_meter") != 0)||(parent != NULL && strcmp(parent->oclass->name,"inverter") != 0))
+		else	//No parent
 		{
-			GL_THROW("Battery must have a meter or triplex meter or inverter as it's parent");
-			/*  TROUBLESHOOT
-			Check the parent object of the inverter.  The battery is only able to be childed via a meter or 
-			triplex meter when connecting into powerflow systems.  You can also choose to have no parent, in which
-			case the battery will be a stand-alone application using default voltage values for solving purposes.
-			*/
-		}
-		else
-		{
+			parent_is_meter = false;
+			parent_is_triplex = false;
+			parent_is_inverter = false;
+
 			number_of_phases_out = 3;
 			phases = 0x07;
 
 			gl_warning("Battery:%d has no parent meter object defined; using static voltages", obj->id);
 
-			// attach meter variables to each circuit in the default_meter
-			pCircuit_V = &default_line_voltage[0];
-			pLine_I = &default_line_current[0];
+			//Assumes three-phase, so just populate with the module-level value
+			value_Circuit_V[0].SetPolar(default_line_voltage,0);
+			value_Circuit_V[1].SetPolar(default_line_voltage,-2.0/3.0*PI);
+			value_Circuit_V[2].SetPolar(default_line_voltage,2.0/3.0*PI);
 		}
 
 		if (gen_mode_v==GM_UNKNOWN)
@@ -490,42 +469,39 @@ int battery::init(OBJECT *parent)
 			
 		if (additional_controls == AC_LINEAR_TEMPERATURE)
 		{
-			static FINDLIST *climates = NULL;
-			int not_found = 0;
-			if (climates==NULL && not_found==0) 
-			{
-				climates = gl_find_objects(FL_NEW,FT_CLASS,SAME,"climate",FT_END);
-				if (climates==NULL)
-				{
-					not_found = 1;
-					gl_warning("battery: no climate data found, using static data");
+			FINDLIST *climates = NULL;
 
-					//default to mock data
-					static double tout=59.0, solar=1000;
-					pTout = &tout;
-					pSolar = &solar;
-				}
-				else if (climates->hit_count>1)
-				{
-					gl_warning("battery: %d climates found, using first one defined", climates->hit_count);
-				}
+			climates = gl_find_objects(FL_NEW,FT_CLASS,SAME,"climate",FT_END);
+
+			if (climates==NULL) 
+			{
+				climate_object_found = false;
+
+				gl_warning("battery: no climate data found, using static data");
+
+				//Assign the default from the module
+				value_Tout = default_temperature_value;
 			}
 			if (climates!=NULL)
 			{
 				if (climates->hit_count==0)
 				{
-					//default to mock data
-					static double tout=59.0, solar=1000;
-					pTout = &tout;
-					pSolar = &solar;
+					climate_object_found = false;
+
+					//Assign the default from the module
+					value_Tout = default_temperature_value;
 				}
 				else //climate data was found
 				{
+					climate_object_found = true;
+
 					OBJECT *clim = gl_find_next(climates,NULL);
+
 					if (clim->rank<=obj->rank)
 						gl_set_dependent(clim,obj);
-					pTout = (double*)GETADDR(clim,gl_get_property(clim,"temperature"));
-					pSolar = (double*)GETADDR(clim,gl_get_property(clim,"solar_flux"));
+
+					//Map the temperature
+					pTout = map_double_value(clim,"temperature");
 				}
 			}
 		}
@@ -616,7 +592,9 @@ int battery::init(OBJECT *parent)
 		power_transferred = 0;
 
 		first_time_step = 0;
-	} else {//use_internal_battery_model is TRUE
+	}
+	else	//Use the internal battery model
+	{
 		if (parent!=NULL)
 		{
 			//Promote our parent, as necessary
@@ -624,14 +602,20 @@ int battery::init(OBJECT *parent)
 		}
 
 		// find parent inverter, if not defined, use a default meter (using static variable 'default_meter')
-		if(parent != NULL && strcmp(parent->oclass->name,"inverter") != 0 || parent == NULL)
+		if(parent == NULL)
 		{
-			GL_THROW("Battery must have an inverter as it's parent");
+			GL_THROW("Battery must have an inverter as it's parent when using the internal battery model");
 			/*  TROUBLESHOOT
-			Check the parent object of battery. It must be an inverter.
+			When using the internal battery model parameter option for the battery object, it must be parented
+			to an inverter to work.  If this is not done, the code will fail.
 			*/
 		}
-		
+		else if (gl_object_isa(parent,"inverter","generators") == false)
+		{
+			GL_THROW("Battery must have an inverter as it's parent");
+			//Defined above
+		}
+
 		switch(rfb_size_v)
 		{
 			case HOUSEHOLD:
@@ -691,11 +675,39 @@ int battery::init(OBJECT *parent)
 		} else {//battery_type is LEAD_ACID
 			//find lead acid cell spec
 		}
-		fetch_double(&pSocReserve,"soc_reserve",parent);
-		if(*pSocReserve == 0){
+
+		//Map up the various inverter properties for interfacing with the battery
+		pSocReserve = map_double_value(parent,"soc_reserve");
+		pSoc = map_double_value(parent,"battery_soc");
+		pBatteryLoad = map_double_value(parent,"power_in");
+		pRatedPower = map_double_value(parent,"rated_battery_power");
+
+		//Map the control mode into the temporary variable
+		temp_property_pointer = new gld_property(parent,"four_quadrant_control_mode");
+
+		//Make sure it is proper
+		if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_enumeration() != true))
+		{
+			GL_THROW("battery:%d - %s - Unable to map the parent inverter four_quadrant_control_mode",obj->id,(obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			While attempting to map the four_quadrant_control_mode variable from the parent inverter, an issue occurred.  Please try again.
+			If the error persists, please submit you model and description via the issue tracking system.
+			*/
+		}
+
+		//Pull the value
+		temp_value_control_mode = temp_property_pointer->get_enumeration();
+
+		//Delete the property pointer
+		delete temp_property_pointer;
+
+		//Fetch the initial value of SocReserve for testing
+		temp_value_SocReserve = pSocReserve->get_double();
+
+		if(temp_value_SocReserve == 0){
 			b_soc_reserve = 0;
 		} else {
-			b_soc_reserve = *pSocReserve;
+			b_soc_reserve = temp_value_SocReserve;
 		}
 		if(battery_state == BS_EMPTY && soc != b_soc_reserve){
 			soc = b_soc_reserve;
@@ -712,20 +724,11 @@ int battery::init(OBJECT *parent)
 			soc = 1;
 			battery_state = BS_FULL;
 		}
-		fetch_double(&pSoc,"battery_soc",parent);
-		fetch_double(&pBatteryLoad,"power_in",parent);
-		fetch_double(&pRatedPower,"rated_battery_power",parent);
-
-		// parent pointers that help delta mode implementation
-		fetch_enumeration(&pControlMode,"four_quadrant_control_mode",parent);
-		fetch_complex(&inverter_VA_Out,"VA_Out",parent);
-		fetch_double(&peff,"inverter_efficiency",parent);
 
 		// Enable battery delta mode flag if its parent control mode is FQM_CONSTANT_PQ
-		if (*pControlMode == 1 || *pControlMode == 9) {
+		if ((temp_value_control_mode == 1) || (temp_value_control_mode == 9)) {
 			enableDelta = true;
 		}
-
 	}
 
 	return 1; /* return 1 on success, 0 on failure */
@@ -735,16 +738,6 @@ int battery::init(OBJECT *parent)
 complex battery::calculate_v_terminal(complex v, complex i){
 	return v - (i * Rinternal);
 }
-
-
-complex *battery::get_complex(OBJECT *obj, char *name)
-{
-	PROPERTY *p = gl_get_property(obj,name);
-	if (p==NULL || p->ptype!=PT_complex)
-		return NULL;
-	return (complex*)GETADDR(obj,p);
-}
-
 
 TIMESTAMP battery::rfb_event_time(TIMESTAMP t0, complex power, double e){
 	if((e < margin) && (power < 0)){
@@ -787,15 +780,17 @@ double battery::calculate_efficiency(complex voltage, complex current){
 
 }
 
-
-
 /* Presync is called when the clock needs to advance on the first top-down pass */
 TIMESTAMP battery::presync(TIMESTAMP t0, TIMESTAMP t1)
 {
+	gld_wlock *test_rlock;
+
 	if(use_internal_battery_model == TRUE){
 			double dt;
 		if(t0 != 0){
-			b_soc_reserve = *pSocReserve;
+
+			//Update the reserve value
+			b_soc_reserve = pSocReserve->get_double();
 			if(battery_state == BS_DISCHARGING || battery_state == BS_CHARGING){
 				dt = (double)(t1-t0);
 				if(soc >= 0 && soc <= 1){
@@ -814,7 +809,9 @@ TIMESTAMP battery::presync(TIMESTAMP t0, TIMESTAMP t1)
 				}
 			}
 		}
-		*pSoc = soc;
+
+		//Push the SOC up
+		pSoc->setp<double>(soc,*test_rlock);
 	}
 	TIMESTAMP t2 = TS_NEVER;
 	/* TODO: implement pre-topdown behavior */
@@ -824,7 +821,7 @@ TIMESTAMP battery::presync(TIMESTAMP t0, TIMESTAMP t1)
 /* Sync is called when the clock needs to advance on the bottom-up pass */
 TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
-
+	complex temp_complex_value;
 	OBJECT *obj = OBJECTHDR(this);
 
 	//First run allocation
@@ -919,7 +916,7 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 				for (int i=0;i<3;i++)
 				{
-					volt[i] = pCircuit_V[i];
+					volt[i] = pCircuit_V[i]->get_complex();
 				}
 
 				if (first_time_step == 0)
@@ -948,7 +945,9 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 				else if (prev_state == 1) //charge
 					Energy = Energy + base_efficiency * power_transferred * (double)dt / 3600;
 
-				check_power = (*pPower).Mag();
+				//Pull the measured power
+				temp_complex_value = pPower->get_complex();
+				check_power = temp_complex_value.Mag();
 
 				if (first_time_step > 0)
 				{
@@ -961,9 +960,12 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 						last_current[1].SetPolar(parasitic_power_draw/3/volt[1].Mag(),volt[1].Arg());
 						last_current[2].SetPolar(parasitic_power_draw/3/volt[2].Mag(),volt[2].Arg());
 						
-						pLine_I[0] += last_current[0];
-						pLine_I[1] += last_current[1];
-						pLine_I[2] += last_current[2];
+						value_Line_I[0] = last_current[0];
+						value_Line_I[1] = last_current[1];
+						value_Line_I[2] = last_current[2];
+
+						//Do a powerflow update
+						push_powerflow_currents();
 
 						return TS_NEVER;
 					}
@@ -980,9 +982,12 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 						last_current[1].SetPolar(-test_current + parasitic_power_draw/3/volt[1].Mag(),volt[1].Arg());
 						last_current[2].SetPolar(-test_current + parasitic_power_draw/3/volt[2].Mag(),volt[2].Arg());
 						
-						pLine_I[0] += last_current[0];
-						pLine_I[1] += last_current[1];
-						pLine_I[2] += last_current[2];
+						value_Line_I[0] = last_current[0];
+						value_Line_I[1] = last_current[1];
+						value_Line_I[2] = last_current[2];
+
+						//Do a powerflow update
+						push_powerflow_currents();
 
 						power_transferred = 0;
 
@@ -1012,9 +1017,12 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 						last_current[1].SetPolar(test_current + parasitic_power_draw/3/volt[1].Mag(),volt[1].Arg());
 						last_current[2].SetPolar(test_current + parasitic_power_draw/3/volt[2].Mag(),volt[2].Arg());
 						
-						pLine_I[0] += last_current[0];
-						pLine_I[1] += last_current[1];
-						pLine_I[2] += last_current[2];
+						value_Line_I[0] = last_current[0];
+						value_Line_I[1] = last_current[1];
+						value_Line_I[2] = last_current[2];
+
+						//Do a powerflow update
+						push_powerflow_currents();
 
 						power_transferred = 0;
 
@@ -1044,9 +1052,12 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 						last_current[1].SetPolar(test_current + parasitic_power_draw/3/volt[1].Mag(),volt[1].Arg());
 						last_current[2].SetPolar(test_current + parasitic_power_draw/3/volt[2].Mag(),volt[2].Arg());
 						
-						pLine_I[0] += last_current[0];
-						pLine_I[1] += last_current[1];
-						pLine_I[2] += last_current[2];
+						value_Line_I[0] = last_current[0];
+						value_Line_I[1] = last_current[1];
+						value_Line_I[2] = last_current[2];
+
+						//Do a powerflow update
+						push_powerflow_currents();
 
 						power_transferred = 0;
 
@@ -1076,9 +1087,12 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 						last_current[1].SetPolar(-test_current + parasitic_power_draw/3/volt[1].Mag(),volt[1].Arg());
 						last_current[2].SetPolar(-test_current + parasitic_power_draw/3/volt[2].Mag(),volt[2].Arg());
 						
-						pLine_I[0] += last_current[0];
-						pLine_I[1] += last_current[1];
-						pLine_I[2] += last_current[2];
+						value_Line_I[0] = last_current[0];
+						value_Line_I[1] = last_current[1];
+						value_Line_I[2] = last_current[2];
+
+						//Do a powerflow update
+						push_powerflow_currents();
 
 						power_transferred = 0;
 
@@ -1109,9 +1123,12 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 						last_current[1].SetPolar(parasitic_power_draw/3/volt[1].Mag(),volt[1].Arg());
 						last_current[2].SetPolar(parasitic_power_draw/3/volt[2].Mag(),volt[2].Arg());
 
-						pLine_I[0] += last_current[0];
-						pLine_I[1] += last_current[1];
-						pLine_I[2] += last_current[2];
+						value_Line_I[0] = last_current[0];
+						value_Line_I[1] = last_current[1];
+						value_Line_I[2] = last_current[2];
+
+						//Do a powerflow update
+						push_powerflow_currents();
 
 						prev_state = 0;
 						power_transferred = 0;
@@ -1137,7 +1154,7 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 				complex volt;
 				TIMESTAMP dt,t_energy_limit;
 
-				volt = pCircuit_V[0]; // 240-V circuit (we're assuming it can only be hooked here now
+				volt = pCircuit_V[0]->get_complex(); // 240-V circuit (we're assuming it can only be hooked here now
 
 				if (first_time_step == 0)
 				{
@@ -1168,7 +1185,10 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 					if (Energy > E_Max)
 						Energy = E_Max;
 				}
-				check_power = (*pPower).Mag();
+
+				//Pull the power value
+				temp_complex_value = pPower->get_complex();
+				check_power = temp_complex_value.Mag();
 
 				if (additional_controls == AC_LINEAR_TEMPERATURE)
 				{
@@ -1190,15 +1210,21 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 					double slope2_lo = (power_set_low - (slope2_hi * midpoint_temperature + yint2_hi)) / (low_temperature - midpoint_temperature);
 					double yint2_lo = power_set_low - low_temperature * slope2_lo;
 				
-					if (*pTout > midpoint_temperature)
+					//Fetch the temperature
+					if (climate_object_found == true)
 					{
-						check_power_high = slope1_hi * (*pTout) + yint1_hi;
-						check_power_low = slope2_hi * (*pTout) + yint2_hi;
+						value_Tout = pTout->get_double();
+					}
+
+					if (value_Tout > midpoint_temperature)
+					{
+						check_power_high = slope1_hi * value_Tout + yint1_hi;
+						check_power_low = slope2_hi * value_Tout + yint2_hi;
 					}
 					else
 					{
-						check_power_high = slope1_lo * (*pTout) + yint1_lo;
-						check_power_low = slope2_lo * (*pTout) + yint2_lo;
+						check_power_high = slope1_lo * value_Tout + yint1_lo;
+						check_power_low = slope2_lo * value_Tout + yint2_lo;
 					}
 				}
 				else
@@ -1215,9 +1241,10 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 						battery_state = BS_WAITING;
 
 						last_current[0].SetPolar(parasitic_power_draw/volt.Mag(),volt.Arg());
-						*pLine12 += last_current[0];
+						value_Line12 = last_current[0];
 
-						
+						//Do a powerflow update
+						push_powerflow_currents();
 
 						return TS_NEVER;
 					}
@@ -1231,8 +1258,10 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 								no_of_cycles += 1;
 
 							last_current[0].SetPolar(parasitic_power_draw/volt.Mag(),volt.Arg());
-							*pLine12 += last_current[0];
+							value_Line12 = last_current[0];
 							
+							//Do a powerflow update
+							push_powerflow_currents();
 
 							VA_Out = power_transferred = 0;
 							battery_state = BS_CONFLICTED;
@@ -1250,7 +1279,7 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 							if (power_desired <= 0) // we're in voltage support mode
 							{
 								last_current[0].SetPolar(-I_Max.Mag(),volt.Arg());
-								*pLine12 += last_current[0]; //generation, pure real power
+								value_Line12 = last_current[0]; //generation, pure real power
 								
 							}
 							else // We're load following
@@ -1260,8 +1289,11 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 								double current_desired = -power_desired/volt.Mag();
 								last_current[0].SetPolar(current_desired,volt.Arg());
-								*pLine12 += last_current[0];
+								value_Line12 = last_current[0];
 							}
+
+							//Do a powerflow update
+							push_powerflow_currents();
 							
 							power_transferred = last_current[0].Mag()*volt.Mag();
 
@@ -1283,7 +1315,10 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 							if (prev_state != 0)
 								no_of_cycles += 1;
 							last_current[0].SetPolar(parasitic_power_draw/volt.Mag(),volt.Arg());
-							*pLine12 += last_current[0];
+							value_Line12 = last_current[0];
+
+							//Do a powerflow update
+							push_powerflow_currents();
 
 							VA_Out = power_transferred = 0;
 							battery_state = BS_CONFLICTED;
@@ -1302,7 +1337,7 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 							if (power_desired <= 0) // We're in voltage management mode
 							{
 								last_current[0].SetPolar(I_Max.Mag(),volt.Arg());
-								*pLine12 += last_current[0]; //load, pure real power
+								value_Line12 = last_current[0]; //load, pure real power
 								
 							}
 							else // We're in load tracking mode
@@ -1312,9 +1347,12 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 								double current_desired = power_desired/volt.Mag();
 								last_current[0].SetPolar(current_desired,volt.Arg());
-								*pLine12 += last_current[0];
+								value_Line12 = last_current[0];
 							}
 			
+							//Do a powerflow update
+							push_powerflow_currents();
+
 							power_transferred = last_current[0].Mag()*volt.Mag();
 							
 							VA_Out = power_transferred;
@@ -1335,7 +1373,10 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 								no_of_cycles += 1;
 
 							last_current[0].SetPolar(parasitic_power_draw/volt.Mag(),volt.Arg());
-							*pLine12 += last_current[0];
+							value_Line12 = last_current[0];
+
+							//Do a powerflow update
+							push_powerflow_currents();
 
 							VA_Out = power_transferred = 0;
 							battery_state = BS_CONFLICTED;
@@ -1355,7 +1396,7 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 							if (power_desired <= 0) // We're in voltage management mode
 							{
 								last_current[0].SetPolar(I_Max.Mag(),volt.Arg());
-								*pLine12 += last_current[0]; //load, pure real power
+								value_Line12 = last_current[0]; //load, pure real power
 								
 							}
 							else // We're in load tracking mode
@@ -1365,9 +1406,12 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 								double current_desired = power_desired/volt.Mag();
 								last_current[0].SetPolar(current_desired, volt.Arg());
-								*pLine12 += last_current[0];
+								value_Line12 = last_current[0];
 							}
 			
+							//Do a powerflow update
+							push_powerflow_currents();
+
 							power_transferred = last_current[0].Mag()*volt.Mag();
 							
 							VA_Out = power_transferred;
@@ -1388,7 +1432,10 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 								no_of_cycles += 1;
 
 							last_current[0].SetPolar(parasitic_power_draw/volt.Mag(),volt.Arg());
-							*pLine12 += last_current[0];
+							value_Line12 = last_current[0];
+
+							//Do a powerflow update
+							push_powerflow_currents();
 
 							VA_Out = power_transferred = 0;
 							battery_state = BS_CONFLICTED;
@@ -1407,7 +1454,7 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 							if (power_desired <= 0) // we're in voltage support mode
 							{
 								last_current[0].SetPolar(-I_Max.Mag(),volt.Arg());
-								*pLine12 += last_current[0]; //generation, pure real power
+								value_Line12 = last_current[0]; //generation, pure real power
 								
 							}
 							else // We're load following
@@ -1417,8 +1464,11 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 								double current_desired = -power_desired/volt.Mag();
 								last_current[0].SetPolar(current_desired,volt.Arg());
-								*pLine12 += last_current[0];						
+								value_Line12 = last_current[0];						
 							}
+
+							//Do a powerflow update
+							push_powerflow_currents();
 
 							power_transferred = last_current[0].Mag()*volt.Mag();
 
@@ -1438,7 +1488,10 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 							no_of_cycles +=1;
 
 						last_current[0].SetPolar(parasitic_power_draw/volt.Mag(),volt.Arg());
-						*pLine12 += last_current[0];
+						value_Line12 = last_current[0];
+
+						//Do a powerflow update
+						push_powerflow_currents();
 
 						prev_state = 0;
 						if (Energy <= 0)
@@ -1477,7 +1530,12 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 				for (int jj=0; jj<3; jj++)
 				{
-					volt[jj] = pCircuit_V[jj]; // 240-V circuit (we're assuming it can only be hooked here now)
+					if (parent_is_meter == true)
+					{
+						value_Circuit_V[jj] = pCircuit_V[jj]->get_complex();
+					}
+
+					volt[jj] = value_Circuit_V[jj]; // 240-V circuit (we're assuming it can only be hooked here now)
 					if (volt[jj].Mag() > high_voltage)
 						high_voltage = volt[jj].Mag();
 					if (volt[jj].Mag() < low_voltage)
@@ -1524,8 +1582,12 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 						for (int jj=0; jj<3; jj++)
 						{
 							last_current[jj].SetPolar(parasitic_power_draw/3/volt[jj].Mag(),volt[jj].Arg());
-							pLine_I[jj] += last_current[jj];
+							value_Line_I[jj] = last_current[jj];
 						}
+
+						//Do a powerflow update
+						push_powerflow_currents();
+						
 						return TS_NEVER;
 					}
 					else // We're within the voltage limits, so follow the schedule
@@ -1545,9 +1607,13 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 							for (int jj=0; jj<3; jj++)
 							{
 								last_current[jj].SetPolar((-power_desired + parasitic_power_draw)/3/volt[jj].Mag(),volt[jj].Arg());
-								pLine_I[jj] += last_current[jj];
+								value_Line_I[jj] = last_current[jj];
 								VA_Out += last_current[jj].Mag()*volt[jj].Mag();
 							}					
+
+							//Do a powerflow update
+							push_powerflow_currents();
+
 							power_transferred = VA_Out.Mag();
 
 							t_energy_limit = TIMESTAMP(3600 * (E_Max - Energy) / power_transferred);
@@ -1566,9 +1632,13 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 							for (int jj=0; jj<3; jj++)
 							{
 								last_current[jj].SetPolar((-power_desired + parasitic_power_draw)/3/volt[jj].Mag(),volt[jj].Arg());
-								pLine_I[jj] += last_current[jj];
+								value_Line_I[jj] = last_current[jj];
 								VA_Out += last_current[jj].Mag()*volt[jj].Mag();
 							}					
+							
+							//Do a powerflow update
+							push_powerflow_currents();
+
 							power_transferred = VA_Out.Mag();
 
 							t_energy_limit = TIMESTAMP(3600 * Energy / power_transferred);
@@ -1596,9 +1666,13 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 							for (int jj=0; jj<3; jj++)
 							{
 								last_current[jj].SetPolar((parasitic_power_draw)/3/volt[jj].Mag(),volt[jj].Arg());
-								pLine_I[jj] += last_current[jj];
+								value_Line_I[jj] = last_current[jj];
 								VA_Out += last_current[jj].Mag()*volt[jj].Mag();
 							}					
+							
+							//Do a powerflow update
+							push_powerflow_currents();
+
 							power_transferred = VA_Out.Mag();
 							t_energy_limit = TIMESTAMP(3600 * Energy / power_transferred);
 
@@ -1616,9 +1690,13 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 							for (int jj=0; jj<3; jj++)
 							{
 								last_current[jj].SetPolar((parasitic_power_draw)/3/volt[jj].Mag(),volt[jj].Arg());
-								pLine_I[jj] += last_current[jj];
+								value_Line_I[jj] = last_current[jj];
 								VA_Out += last_current[jj].Mag()*volt[jj].Mag();
 							}					
+							
+							//Do a powerflow update
+							push_powerflow_currents();
+
 							power_transferred = VA_Out.Mag();
 
 							t_energy_limit = TIMESTAMP(3600 * Energy / power_transferred);
@@ -1657,7 +1735,12 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 				complex volt;
 				TIMESTAMP dt,t_energy_limit;
 
-				volt = pCircuit_V[0]; // 240-V circuit (we're assuming it can only be hooked here now)
+				if ((parent_is_meter == true) && (parent_is_triplex == true))
+				{
+					value_Circuit_V[0] = pCircuit_V[0]->get_complex();
+				}
+
+				volt = value_Circuit_V[0]; // 240-V circuit (we're assuming it can only be hooked here now)
 
 				if (first_time_step == 0)
 				{
@@ -1698,7 +1781,10 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 						prev_state = -1;
 
 						last_current[0].SetPolar(parasitic_power_draw/volt.Mag(),volt.Arg());
-						*pLine12 += last_current[0];
+						value_Line12 = last_current[0];
+
+						//Do a powerflow update
+						push_powerflow_currents();
 
 						return TS_NEVER;
 					}
@@ -1717,7 +1803,10 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 							double current_desired = -(power_desired - parasitic_power_draw) / volt.Mag();
 							last_current[0].SetPolar(current_desired,volt.Arg());
-							*pLine12 += last_current[0];
+							value_Line12 = last_current[0];
+
+							//Do a powerflow update
+							push_powerflow_currents();
 
 							VA_Out = power_transferred = last_current[0].Mag()*volt.Mag();
 
@@ -1735,7 +1824,10 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 							double current_desired = -(power_desired - parasitic_power_draw) / volt.Mag();
 							last_current[0].SetPolar(current_desired,volt.Arg());
-							*pLine12 += last_current[0];
+							value_Line12 = last_current[0];
+
+							//Do a powerflow update
+							push_powerflow_currents();
 
 							VA_Out = power_transferred = last_current[0].Mag()*volt.Mag();
 
@@ -1762,7 +1854,10 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 							double current_desired = (parasitic_power_draw) / volt.Mag();
 							last_current[0].SetPolar(current_desired,volt.Arg());
-							*pLine12 += last_current[0];
+							value_Line12 = last_current[0];
+
+							//Do a powerflow update
+							push_powerflow_currents();
 
 							VA_Out = power_transferred = last_current[0].Mag()*volt.Mag();
 
@@ -1780,7 +1875,10 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 							double current_desired = (parasitic_power_draw) / volt.Mag();
 							last_current[0].SetPolar(current_desired,volt.Arg());
-							*pLine12 += last_current[0];
+							value_Line12 = last_current[0];
+
+							//Do a powerflow update
+							push_powerflow_currents();
 
 							VA_Out = power_transferred = last_current[0].Mag()*volt.Mag();
 
@@ -1822,8 +1920,20 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//gather I_Out
 			//gather P_Out
 			////gl_verbose("battery sync: entered");
-			V_Out = pCircuit_V[0];
-			I_Out = pLine_I[0];
+
+			//See if the property was valid (since not sure what we are here -- meter or inverter)
+			if (pCircuit_V[0] != NULL)
+			{
+				value_Circuit_V[0] = pCircuit_V[0]->get_complex();
+			}
+
+			if (pLine_I[0] != NULL)
+			{
+				value_Line_I[0] = pLine_I[0]->get_complex();
+			}
+
+			V_Out = value_Circuit_V[0];
+			I_Out = value_Line_I[0];
 
 			//gl_verbose("battery sync: V_Out from parent is: (%f , %f)", V_Out.Re(), V_Out.Im());
 			//gl_verbose("battery sync: I_Out from parent is: (%f , %f)", I_Out.Re(), V_Out.Im());
@@ -2040,32 +2150,36 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 /* Postsync is called when the clock needs to advance on the second top-down pass */
 TIMESTAMP battery::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
+	double temp_double_value;
+
 	if(use_internal_battery_model == FALSE){
 		TIMESTAMP result;
 
 		Iteration_Toggle = !Iteration_Toggle;
 		if (number_of_phases_out == 3)//has all three phases
 		{
-			pLine_I[0] -= last_current[0];
-			pLine_I[1] -= last_current[1];
-			pLine_I[2] -= last_current[2];
+			value_Line_I[0] = -last_current[0];
+			value_Line_I[1] = -last_current[1];
+			value_Line_I[2] = -last_current[2];
 		}
 		else if ( ((phases & 0x0010) == 0x0010) && (number_of_phases_out == 1) )
 		{
-			complex temp;
-			temp = *pLine12;
-			temp -= last_current[0];
-			*pLine12 = temp;
+			value_Line12 = -last_current[0];
 		}
 		result = TS_NEVER;
+
+		//Do a powerflow update
+		push_powerflow_currents();
 
 		if (Iteration_Toggle == true)
 			return result;
 		else
 			return TS_NEVER;
 	} else {//use_internal_battery_model is TRUE
-		bat_load = -(*pBatteryLoad);
-		p_max = *pRatedPower;
+		//Pull the load
+		temp_double_value = pBatteryLoad->get_double();
+		bat_load = -temp_double_value;
+		p_max = pRatedPower->get_double();
 		//figure out the the actual power coming out of the battery due to the battery load and the battery efficiency
 		if(t0 != 0 && bat_load != 0){
 			if(bat_load < 0 && battery_state != BS_EMPTY){
@@ -2099,7 +2213,9 @@ TIMESTAMP battery::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			r_in = v_oc*v_oc*fabs(p_br-p_max)/(p_br*p_br);
 			v_t = (v_oc+pow((v_oc*v_oc+(4*bat_load*r_in)),0.5))/2;
 			internal_battery_load = v_oc*bat_load/v_t;
-			b_soc_reserve = *pSocReserve;
+
+			//Pull the value
+			b_soc_reserve = pSocReserve->get_double();
 			if(internal_battery_load < 0){
 				state_change_time = t1 + (TIMESTAMP)ceil((b_soc_reserve-soc)*e_max*3600/internal_battery_load);
 			} else if(internal_battery_load > 0){
@@ -2111,6 +2227,103 @@ TIMESTAMP battery::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 }
 
+//Map Complex value
+gld_property *battery::map_complex_value(OBJECT *obj, char *name)
+{
+	gld_property *pQuantity;
+	OBJECT *objhdr = OBJECTHDR(this);
+
+	//Map to the property of interest
+	pQuantity = new gld_property(obj,name);
+
+	//Make sure it worked
+	if ((pQuantity->is_valid() != true) || (pQuantity->is_complex() != true))
+	{
+		GL_THROW("battery:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to map a quantity from another object, an error occurred in battery.  Please try again.
+		If the error persists, please submit your system and a bug report via the ticketing system.
+		*/
+	}
+
+	//return the pointer
+	return pQuantity;
+}
+
+//Map double value
+gld_property *battery::map_double_value(OBJECT *obj, char *name)
+{
+	gld_property *pQuantity;
+	OBJECT *objhdr = OBJECTHDR(this);
+
+	//Map to the property of interest
+	pQuantity = new gld_property(obj,name);
+
+	//Make sure it worked
+	if ((pQuantity->is_valid() != true) || (pQuantity->is_double() != true))
+	{
+		GL_THROW("battery:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to map a quantity from another object, an error occurred in battery.  Please try again.
+		If the error persists, please submit your system and a bug report via the ticketing system.
+		*/
+	}
+
+	//return the pointer
+	return pQuantity;
+}
+
+//Function to resynch the various current accumulators
+//Unlike other objects, meter checks are inside (mostly for copy-paste laziness above)
+void battery::push_powerflow_currents(void)
+{
+	complex temp_complex_val;
+	gld_wlock *test_rlock;
+	int indexval;
+
+	if (parent_is_meter==true)
+	{
+		//See if it is triplex
+		if (parent_is_triplex == true)	//It is
+		{
+			//Shouldn't need to NULL check this one, but do it anyways, for consistency
+			if (pLine12 != NULL)
+			{
+				//**** Current value ***/
+				//Pull current value again, just in case
+				temp_complex_val = pLine12->get_complex();
+
+				//Add the difference
+				temp_complex_val += value_Line12;
+
+				//Push it back up
+				pLine12->setp<complex>(temp_complex_val,*test_rlock);
+			}//End pLine_I valid
+			//Default else -- it's null, so skip it
+		}//End is triplex
+		else	//Three-phase, or a variant...theoretically
+		{
+			for (indexval=0; indexval<3; indexval++)
+			{
+				//Null check them, out of paranoia
+				if (pLine_I[indexval] != NULL)
+				{
+					//**** Current value ***/
+					//Pull current value again, just in case
+					temp_complex_val = pLine_I[indexval]->get_complex();
+
+					//Add the difference
+					temp_complex_val += value_Line_I[indexval];
+
+					//Push it back up
+					pLine_I[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+				}//End pLine_I valid
+				//Default else -- it's null, so skip it
+			}
+		}//End not-triplex
+	}//End is meter
+	//Not a meter, so do nothing?
+}
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF DELTA MODE
 //////////////////////////////////////////////////////////////////////////
@@ -2184,7 +2397,9 @@ SIMULATIONMODE battery::inter_deltaupdate(unsigned int64 delta_time, unsigned lo
 
 void battery::update_soc(unsigned int64 delta_time)
 {
-	b_soc_reserve = *pSocReserve;
+	gld_wlock *test_rlock;
+
+	b_soc_reserve = pSocReserve->get_double();
 	if(battery_state == BS_DISCHARGING || battery_state == BS_CHARGING){
 		if(soc >= 0 && soc <= 1){
 			soc += (internal_battery_load*deltat/3600)/e_max;
@@ -2202,30 +2417,40 @@ void battery::update_soc(unsigned int64 delta_time)
 		}
 	}
 	pre_soc = soc;
-	*pSoc = soc;
+	//Push the SOC up
+	pSoc->setp<double>(soc,*test_rlock);
 }
 
 double battery::check_state_change_time_delta(unsigned int64 delta_time, unsigned long dt)
 {
 	double time_return;
+	complex inv_VA_out_value;
+	double inv_eff_value;
+
+	//Retrieve the inverter properties
+	if (parent_is_inverter == true)
+	{
+		inv_VA_out_value = pinverter_VA_Out->get_complex();
+		inv_eff_value = peff->get_double();
+	}
 
 	// Update battery output based on true inverter output
-	if ((*inverter_VA_Out).Re() > 0.0)	//Discharging
+	if (inv_VA_out_value.Re() > 0.0)	//Discharging
 	{
-		Pout_delta = (*inverter_VA_Out).Re()/(*peff);
+		Pout_delta = inv_VA_out_value.Re()/inv_eff_value;
 	}
-	else if ((*inverter_VA_Out).Re() == 0.0)	//Idle
+	else if (inv_VA_out_value.Re() == 0.0)	//Idle
 	{
 		Pout_delta = 0.0;
 	}
 	else	//Must be positive, so charging
 	{
-		Pout_delta = (*inverter_VA_Out).Re()*(*peff);
+		Pout_delta = inv_VA_out_value.Re()*inv_eff_value;
 	}
 
 	// Use the battery output to calculate expected time reaching soc limit && update internal_battery_load
 	bat_load = -(Pout_delta);
-	p_max = *pRatedPower;
+	p_max = pRatedPower->get_double();
 	//figure out the the actual power coming out of the battery due to the battery load and the battery efficiency
 	if(bat_load != 0){
 		if(bat_load < 0 && battery_state != BS_EMPTY){
@@ -2259,7 +2484,7 @@ double battery::check_state_change_time_delta(unsigned int64 delta_time, unsigne
 		r_in = v_oc*v_oc*fabs(p_br-p_max)/(p_br*p_br);
 		v_t = (v_oc+pow((v_oc*v_oc+(4*bat_load*r_in)),0.5))/2;
 		internal_battery_load = v_oc*bat_load/v_t;
-		b_soc_reserve = *pSocReserve;
+		b_soc_reserve = pSocReserve->get_double();
 		if(internal_battery_load < 0){
 			time_return = (delta_time) + (TIMESTAMP)ceil((b_soc_reserve-soc)*e_max*3600/internal_battery_load);
 		} else if(internal_battery_load > 0){

@@ -38,9 +38,9 @@ regulator::regulator(MODULE *mod) : link_object(mod)
 		if (gl_publish_variable(oclass,
 			PT_INHERIT, "link",
 			PT_object,"configuration",PADDR(configuration),PT_DESCRIPTION,"reference to the regulator_configuration object used to determine regulator properties",
-			PT_int16, "tap_A",PADDR(tap_A),PT_DESCRIPTION,"current tap position of tap A",
-			PT_int16, "tap_B",PADDR(tap_B),PT_DESCRIPTION,"current tap position of tap B",
-			PT_int16, "tap_C",PADDR(tap_C),PT_DESCRIPTION,"current tap position of tap C",
+			PT_int16, "tap_A",PADDR(tap[0]),PT_DESCRIPTION,"current tap position of tap A",
+			PT_int16, "tap_B",PADDR(tap[1]),PT_DESCRIPTION,"current tap position of tap B",
+			PT_int16, "tap_C",PADDR(tap[2]),PT_DESCRIPTION,"current tap position of tap C",
 			PT_double, "tap_A_change_count",PADDR(tap_A_change_count),PT_DESCRIPTION,"count of all physical tap changes on phase A since beginning of simulation (plus initial value)",
 			PT_double, "tap_B_change_count",PADDR(tap_B_change_count),PT_DESCRIPTION,"count of all physical tap changes on phase B since beginning of simulation (plus initial value)",
 			PT_double, "tap_C_change_count",PADDR(tap_C_change_count),PT_DESCRIPTION,"count of all physical tap changes on phase C since beginning of simulation (plus initial value)",
@@ -69,7 +69,7 @@ int regulator::create()
 {
 	int result = link_object::create();
 	configuration = NULL;
-	tap_A = tap_B = tap_C = -999;
+	tap[0] = tap[1] = tap[2] = -999;
 	offnominal_time = false;
 	tap_A_change_count = -1;
 	tap_B_change_count = -1;
@@ -1261,7 +1261,6 @@ double regulator::reg_postPost_fxn(double curr_time_value)
 void regulator::get_monitored_voltage()
 {
 	regulator_configuration *pConfig = OBJECTDATA(configuration, regulator_configuration);
-	node *pTo = OBJECTDATA(to, node);
 
 	int testval = (int)(pConfig->Control);
 	switch (testval)
@@ -1270,16 +1269,9 @@ void regulator::get_monitored_voltage()
 		{
 			if (pConfig->control_level == pConfig->INDIVIDUAL)
 			{
-				if (pTo) 
-				{
-					volt[0] = ToNode_voltage[0]->get_complex();
-					volt[1] = ToNode_voltage[1]->get_complex();
-					volt[2] = ToNode_voltage[2]->get_complex();
-				}
-				else
-				{	
-					volt[0] = volt[1] = volt[2] = 0.0;
-				}
+				volt[0] = ToNode_voltage[0]->get_complex();
+				volt[1] = ToNode_voltage[1]->get_complex();
+				volt[2] = ToNode_voltage[2]->get_complex();
 
 				for (int i = 0; i < 3; i++) 
 					V2[i] = volt[i] / ((double) pConfig->PT_ratio);
@@ -1305,19 +1297,12 @@ void regulator::get_monitored_voltage()
 			}
 			else if (pConfig->control_level == pConfig->BANK)
 			{
-				if (pTo) 
-				{
-					if (pConfig->PT_phase == PHASE_A)
-						volt[0] = ToNode_voltage[0]->get_complex();
-					else if (pConfig->PT_phase == PHASE_B)
-						volt[0] = ToNode_voltage[1]->get_complex();
-					else if (pConfig->PT_phase == PHASE_C)
-						volt[0] = ToNode_voltage[2]->get_complex();
-				}
-				else
-				{	
-					volt[0] = volt[1] = volt[2] = 0.0;
-				}
+				if (pConfig->PT_phase == PHASE_A)
+					volt[0] = ToNode_voltage[0]->get_complex();
+				else if (pConfig->PT_phase == PHASE_B)
+					volt[0] = ToNode_voltage[1]->get_complex();
+				else if (pConfig->PT_phase == PHASE_C)
+					volt[0] = ToNode_voltage[2]->get_complex();
 
 				V2[0] = volt[0] / ((double) pConfig->PT_ratio);
 
@@ -1352,32 +1337,18 @@ void regulator::get_monitored_voltage()
 		{
 			if (pConfig->control_level == pConfig->INDIVIDUAL)
 			{
-				if (pTo) 
-				{
-					check_voltage[0] = ToNode_voltage[0]->get_complex();
-					check_voltage[1] = ToNode_voltage[1]->get_complex();
-					check_voltage[2] = ToNode_voltage[2]->get_complex();
-				}
-				else
-				{	
-					check_voltage[0] = check_voltage[1] = check_voltage[2] = 0.0;
-				}
+				check_voltage[0] = ToNode_voltage[0]->get_complex();
+				check_voltage[1] = ToNode_voltage[1]->get_complex();
+				check_voltage[2] = ToNode_voltage[2]->get_complex();
 			}
 			else if (pConfig->control_level == pConfig->BANK)
 			{
-				if (pTo) 
-				{
-					if (pConfig->PT_phase == PHASE_A)
-						check_voltage[0] = check_voltage[1] = check_voltage[2] = ToNode_voltage[0]->get_complex();
-					else if (pConfig->PT_phase == PHASE_B)
-						check_voltage[0] = check_voltage[1] = check_voltage[2] = ToNode_voltage[1]->get_complex();
-					else if (pConfig->PT_phase == PHASE_C)
-						check_voltage[0] = check_voltage[1] = check_voltage[2] = ToNode_voltage[2]->get_complex();
-				}
-				else
-				{	
-					check_voltage[0] = check_voltage[1] = check_voltage[2] = 0.0;
-				}
+				if (pConfig->PT_phase == PHASE_A)
+					check_voltage[0] = check_voltage[1] = check_voltage[2] = ToNode_voltage[0]->get_complex();
+				else if (pConfig->PT_phase == PHASE_B)
+					check_voltage[0] = check_voltage[1] = check_voltage[2] = ToNode_voltage[1]->get_complex();
+				else if (pConfig->PT_phase == PHASE_C)
+					check_voltage[0] = check_voltage[1] = check_voltage[2] = ToNode_voltage[2]->get_complex();
 			}
 		}
 			break;

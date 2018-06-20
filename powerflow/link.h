@@ -60,8 +60,8 @@ public: /// @todo make this private and create interfaces to control values
 	void calculate_power();
 	void calculate_power_splitphase();
 	void set_flow_directions();
-	int link_fault_on(OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time, void *Extra_Data);		//Function to create fault on line
-	int link_fault_off(int *implemented_fault, char *imp_fault_name, void *Extra_Data);	//Function to remove fault from line
+	int link_fault_on(OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time);		//Function to create fault on line
+	int link_fault_off(int *implemented_fault, char *imp_fault_name);	//Function to remove fault from line
 	double mean_repair_time;
 	double *link_limits[2][3];		/**< pointers for line limits (emergency vs. continuous) for link objects and by phase - pointered for variation */
 	double link_rating[2][3];		/**< Values for current line rating - gives individual segments the ability to set */

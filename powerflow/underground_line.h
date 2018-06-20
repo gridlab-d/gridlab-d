@@ -21,7 +21,7 @@ private:
 	void test_phases(line_configuration *config, const char ph);
 };
 
-EXPORT int create_fault_ugline(OBJECT *thisobj, OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time, void *Extra_Data);
-EXPORT int fix_fault_ugline(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name, void* Extra_Data);
+EXPORT int create_fault_ugline(OBJECT *thisobj, OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time);
+EXPORT int fix_fault_ugline(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name);
 EXPORT int recalc_underground_line(OBJECT *obj);
 #endif // _UNDERGROUNDLINE_H

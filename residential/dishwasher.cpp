@@ -12,7 +12,6 @@
 #include <errno.h>
 #include <math.h>
 
-#include "house_a.h"
 #include "dishwasher.h"
 
 //////////////////////////////////////////////////////////////////////////
@@ -204,10 +203,10 @@ int dishwasher::init(OBJECT *parent)
 	if (is_240)
 	{
 		load.config = EUC_IS220;
-		if (stall_voltage==0) stall_voltage  = 0.6*240;
+		if (stall_voltage==0) stall_voltage  = 1.2*default_line_voltage;	//0.6 * 2 * line_voltage
 	}
 	else
-		if (stall_voltage==0) stall_voltage  = 0.6*120;
+		if (stall_voltage==0) stall_voltage  = 0.6*default_line_voltage;
 
 	if (trip_delay==0) trip_delay = 10;
 	if (reset_delay==0) reset_delay = 60;
@@ -468,10 +467,13 @@ double dishwasher::update_state(double dt) //,TIMESTAMP t1)
 {	
 	// accumulate the energy
 
+	double temp_voltage_value_mag;
 	OBJECT *hdr = OBJECTHDR(this);
 
 	energy_used += total_power/1000 * dt/3600;
 
+	//Pull the current voltage value, for use below
+	temp_voltage_value_mag = (pCircuit->pV->get_complex()).Mag();
 
 switch(state) {
 
@@ -496,7 +498,7 @@ switch(state) {
 				new_running_state = true;
 				
 			}
-		else if (pCircuit->pV->Mag()<stall_voltage)
+		else if (temp_voltage_value_mag<stall_voltage)
 			{
 				state = dishwasher_STALLED;
 				state_time = 0;
@@ -758,7 +760,7 @@ switch(state) {
 			}		
 		
 		
-		else if (pCircuit->pV->Mag()<stall_voltage)
+		else if (temp_voltage_value_mag<stall_voltage)
 			{
 				state = dishwasher_STALLED;
 				state_time = 0;
@@ -978,7 +980,7 @@ case dishwasher_MOTOR_ONLY:
 			}		
 
 
-		else if (pCircuit->pV->Mag()<stall_voltage)
+		else if (temp_voltage_value_mag<stall_voltage)
 			{
 					state = dishwasher_STALLED;
 					state_time = 0;
@@ -1071,7 +1073,7 @@ case dishwasher_MOTOR_COIL_ONLY:
 		}		
 
 
-	else if (pCircuit->pV->Mag()<stall_voltage)
+	else if (temp_voltage_value_mag<stall_voltage)
 		{
 			state = dishwasher_STALLED;
 			state_time = 0;
@@ -1169,7 +1171,7 @@ case dishwasher_HEATEDDRY_ONLY:
 			
 
 
-	else if (pCircuit->pV->Mag()<stall_voltage)
+	else if (temp_voltage_value_mag<stall_voltage)
 			{
 					state = dishwasher_STALLED;
 					state_time = 0;
@@ -1277,7 +1279,7 @@ case dishwasher_COIL_ONLY:
 		}		
 
 	
-	else if (pCircuit->pV->Mag()<stall_voltage)
+	else if (temp_voltage_value_mag<stall_voltage)
 		{
 			state = dishwasher_STALLED;
 			state_time = 0;
@@ -1287,7 +1289,7 @@ case dishwasher_COIL_ONLY:
 
 case dishwasher_STALLED:
 
-		if (pCircuit->pV->Mag()>start_voltage)
+		if (temp_voltage_value_mag>start_voltage)
 		{
 			state = dishwasher_MOTOR_ONLY;
 			state_time = cycle_time;
@@ -1304,7 +1306,7 @@ case dishwasher_TRIPPED:
 
 		if (state_time>reset_delay)
 		{
-			if (pCircuit->pV->Mag()>start_voltage)
+			if (temp_voltage_value_mag>start_voltage)
 				state = dishwasher_MOTOR_ONLY;
 			else
 				state = dishwasher_STALLED;

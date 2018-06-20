@@ -54,7 +54,6 @@
 #include <errno.h>
 #include <math.h>
 
-#include "house_a.h"
 #include "refrigerator.h"
 
 //////////////////////////////////////////////////////////////////////////

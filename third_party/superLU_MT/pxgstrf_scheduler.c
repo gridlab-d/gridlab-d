@@ -1,8 +1,18 @@
-#include "pdsp_defs.h"
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
+#include "slu_mt_ddefs.h"
 
 void
-pxgstrf_scheduler(const int pnum, const int n, const int *etree, 
-		  int *cur_pan, int *bcol, pxgstrf_shared_t *pxgstrf_shared)
+pxgstrf_scheduler(const int_t pnum, const int_t n, const int_t *etree, 
+		  int_t *cur_pan, int_t *bcol, pxgstrf_shared_t *pxgstrf_shared)
 {
 /*
  * -- SuperLU MT routine (version 1.0) --
@@ -23,18 +33,18 @@ pxgstrf_scheduler(const int pnum, const int n, const int *etree,
  *
  * Arguments
  * =========
- * pnum    (input) int
+ * pnum    (input) int_t
  *         Processor number.
  *
- * n       (input) int
+ * n       (input) int_t
  *         Column dimension of the matrix.
  *
- * etree   (input) int*
+ * etree   (input) int_t*
  *         Elimination tree of A'*A, size n.
  *         Note: etree is a vector of parent pointers for a forest whose
  *         vertices are the integers 0 to n-1; etree[root] = n.
  *
- * cur_pan (input/output) int*
+ * cur_pan (input/output) int_t*
  *         On entry, the current panel just finished by this processor;
  *         On exit, [0, n-1]: the new panel to work on;
  *                  EMPTY:    failed to get any work, will try later;
@@ -43,10 +53,10 @@ pxgstrf_scheduler(const int pnum, const int n, const int *etree,
  * taskq   (input/output) queue_t*
  *         Global work queue.
  *
- * fb_cols (input/output) int*
+ * fb_cols (input/output) int_t*
  *         The farthest busy descendant of each (leading column of the) panel.
  *
- * bcol    (output) int*
+ * bcol    (output) int_t*
  *         The most distant busy descendant of cur_pan in the *linear*
  *         pipeline of busy descendants. If all proper descendants of
  *         cur_pan are done, bcol is returned equal to cur_pan.
@@ -70,8 +80,8 @@ pxgstrf_scheduler(const int pnum, const int n, const int *etree,
  *
  */
 
-    register int dad, dad_ukids, jcol, w, j;
-    int *fb_cols = pxgstrf_shared->fb_cols;
+    register int_t dad, dad_ukids, jcol, w, j;
+    int_t *fb_cols = pxgstrf_shared->fb_cols;
     queue_t *taskq = &pxgstrf_shared->taskq;
     Gstat_t *Gstat = pxgstrf_shared->Gstat;
 #ifdef PROFILE
@@ -115,14 +125,14 @@ pxgstrf_scheduler(const int pnum, const int n, const int *etree,
     if ( jcol != EMPTY ) { /* jcol was just finished by this processor */    
 	dad_ukids = --pxgstrf_shared->pan_status[dad].ukids;
 	
-#ifdef DEBUG
+#if ( DEBUGlevel>=1 )
 	printf("(%d) DONE %d in Scheduler(), dad %d, STATE %d, dad_ukids %d\n",
 	       pnum, jcol, dad, STATE(dad), dad_ukids);
 #endif	
 
 	if ( dad_ukids == 0 && STATE( dad ) > BUSY ) { /* dad not started */
 	    jcol = dad;
-#ifdef DEBUG
+#if ( DEBUGlevel>=1 )
 	    printf("(%d) Scheduler[1] Got dad %d, STATE %d\n",
 		   pnum, jcol, STATE(dad));
 #endif
@@ -140,7 +150,7 @@ pxgstrf_scheduler(const int pnum, const int n, const int *etree,
 		    jcol = taskq->queue[taskq->head++];
 		    --taskq->count;
 		    if ( STATE( jcol ) >= CANGO ) { /* CANGO or CANPIPE */
-#ifdef DEBUG
+#if ( DEBUGlevel>=1 )
 			printf("(%d) Dequeue[1] Got %d, STATE %d, Qcount %d\n",
 			       pnum, jcol, STATE(jcol), j);
 #endif
@@ -166,7 +176,7 @@ pxgstrf_scheduler(const int pnum, const int n, const int *etree,
 		jcol = taskq->queue[taskq->head++];
 		--taskq->count;
 		if ( STATE( jcol ) >= CANGO ) { /* CANGO or CANPIPE */
-#ifdef DEBUG
+#if ( DEBUGlevel>=1 )
 		    printf("(%d) Dequeue[2] Got %d, STATE %d, Qcount %d\n",
 			   pnum, jcol, STATE(jcol), j);
 #endif
@@ -203,7 +213,7 @@ pxgstrf_scheduler(const int pnum, const int n, const int *etree,
 		/*>> j = Enqueue(taskq, dad);*/
 		taskq->queue[taskq->tail++] = dad;
 		++taskq->count;
-#ifdef DEBUG
+#if ( DEBUGlevel>=1 )
 		printf("(%d) Enqueue() %d's dad %d ->CANPIPE, Qcount %d\n",
 		       pnum, jcol, dad, j);
 #endif
@@ -216,7 +226,7 @@ pxgstrf_scheduler(const int pnum, const int n, const int *etree,
 	    /* Find the farthest busy descendant of the new panel
 	       and its parent.*/
 	    *bcol = fb_cols[jcol];
-#ifdef DEBUG
+#if ( DEBUGlevel>=1 )
 	    printf("(%d) Scheduler[2] fb_cols[%d]=%d, STATE %d\n",
 		   pnum, jcol, *bcol, STATE( *bcol ));
 #endif
@@ -229,7 +239,7 @@ pxgstrf_scheduler(const int pnum, const int n, const int *etree,
 
     *cur_pan = jcol;
 
-#ifdef DEBUG
+#if ( DEBUGlevel>=1 )
     printf("(%d) Exit C.S. tasks_remain %d, cur_pan %d\n", 
 	   pnum, pxgstrf_shared->tasks_remain, jcol);
 #endif
@@ -253,34 +263,38 @@ pxgstrf_scheduler(const int pnum, const int n, const int *etree,
 }
 
 
-///* Fix the order of the panels to be taken. */
-//void
-//Preorder(const int pnum, const int n, const int *etree, int *cur_pan,
-//         queue_t *taskq, int *fb_cols, int *bcol,
-//	 pxgstrf_shared_t *pxgstrf_shared)
-//{
-//    register int w, dad, dad_ukids;
-//
-//#undef POSTORDER
-//#ifdef POSTORDER
-//    if ( *cur_pan == EMPTY ) {
-//	*cur_pan = 0;
-//    } else {
-//	w = pxgstrf_shared->pan_status[*cur_pan].size;
-//	*cur_pan += w;
-//    }
-//#else /* Breadth-first bottom up */
-//    if ( *cur_pan != EMPTY ) {
-//	dad = DADPANEL (*cur_pan);
-//	dad_ukids = --pxgstrf_shared->pan_status[dad].ukids;
-//	if ( dad_ukids == 0 ) {
-//	    taskq->queue[taskq->tail++] = dad;
-//	    ++taskq->count;
-//	}
-//    }
-//    *cur_pan = taskq->queue[taskq->head++];
-//    --taskq->count;
-//#endif
-//    --pxgstrf_shared->tasks_remain;
-//    *bcol = *cur_pan;
-//}
+/* @@@@@@@@@@@@@@ not called @@@@@@@@@@@@@@@@@@ */
+#if 0
+/* Fix the order of the panels to be taken. */
+void
+Preorder(const int_t pnum, const int_t n, const int_t *etree, int_t *cur_pan,
+         queue_t *taskq, int_t *fb_cols, int_t *bcol,
+	 pxgstrf_shared_t *pxgstrf_shared)
+{
+    register int_t w, dad, dad_ukids;
+
+#undef POSTORDER
+#ifdef POSTORDER
+    if ( *cur_pan == EMPTY ) {
+	*cur_pan = 0;
+    } else {
+	w = pxgstrf_shared->pan_status[*cur_pan].size;
+	*cur_pan += w;
+    }
+#else /* Breadth-first bottom up */
+    if ( *cur_pan != EMPTY ) {
+	dad = DADPANEL (*cur_pan);
+	dad_ukids = --pxgstrf_shared->pan_status[dad].ukids;
+	if ( dad_ukids == 0 ) {
+	    taskq->queue[taskq->tail++] = dad;
+	    ++taskq->count;
+	}
+    }
+    *cur_pan = taskq->queue[taskq->head++];
+    --taskq->count;
+#endif
+    --pxgstrf_shared->tasks_remain;
+    *bcol = *cur_pan;
+}
+#endif
+/* @@@@@@@@@@@@@@ not called @@@@@@@@@@@@@@@@@@ */

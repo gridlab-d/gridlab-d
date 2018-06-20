@@ -14,8 +14,7 @@
 #include "../powerflow/node.h"
 #include "gridlabd.h"
 #include "generators.h"
-
-class diesel_dg;
+#include "diesel_dg.h"
 
 EXPORT SIMULATIONMODE interupdate_controller_dg(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 EXPORT STATUS postupdate_controller_dg(OBJECT *obj, complex *useful_value, unsigned int mode_pass);

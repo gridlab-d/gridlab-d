@@ -72,10 +72,16 @@ capacitor::capacitor(MODULE *mod):node(mod)
 			PT_double, "cap_C_switch_count", PADDR(cap_switchC_count),PT_DESCRIPTION,"number of switch operations on Phase C",
 			PT_double, "voltage_set_high[V]", PADDR(voltage_set_high), PT_DESCRIPTION,"Turn off if voltage is above this set point",
 			PT_double, "voltage_set_low[V]", PADDR(voltage_set_low), PT_DESCRIPTION,"Turns on if voltage is below this set point",
+			PT_double, "voltage_deadband_center[V]", PADDR(voltage_center), PT_DESCRIPTION,"The voltage deadband center",
+			PT_double, "voltage_deadband[V]", PADDR(voltage_deadband), PT_DESCRIPTION,"The deadband between voltage_set_high and voltage_set_low",
 			PT_double, "VAr_set_high[VAr]", PADDR(VAr_set_high),PT_DESCRIPTION,"high VAR set point for VAR control (turn off)",
 			PT_double, "VAr_set_low[VAr]", PADDR(VAr_set_low),PT_DESCRIPTION,"low VAR set point for VAR control (turn on)",
+			PT_double, "VAr_deadband_center[VAr]", PADDR(VAr_center), PT_DESCRIPTION,"The VAr deadband center",
+			PT_double, "VAr_deadband[VAr]", PADDR(VAr_deadband), PT_DESCRIPTION,"The deadband between VAr_set_high and VAr_set_low",
 			PT_double, "current_set_low[A]", PADDR(current_set_low),PT_DESCRIPTION,"high current set point for current control mode (turn on)",
 			PT_double, "current_set_high[A]", PADDR(current_set_high),PT_DESCRIPTION,"low current set point for current control mode (turn off)",
+			PT_double, "current_deadband_center[A]", PADDR(current_center), PT_DESCRIPTION,"The current deadband center",
+			PT_double, "current_deadband[A]", PADDR(current_deadband), PT_DESCRIPTION,"The deadband between current_set_high and current_set_low",
 			PT_double, "capacitor_A[VAr]", PADDR(capacitor_A),PT_DESCRIPTION,"Capacitance value for phase A or phase AB",
 			PT_double, "capacitor_B[VAr]", PADDR(capacitor_B),PT_DESCRIPTION,"Capacitance value for phase B or phase BC",
 			PT_double, "capacitor_C[VAr]", PADDR(capacitor_C),PT_DESCRIPTION,"Capacitance value for phase C or phase CA",
@@ -91,11 +97,7 @@ capacitor::capacitor(MODULE *mod):node(mod)
          	NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	"delta_linkage_node", (FUNCTIONADDR)delta_linkage)==NULL)
-			GL_THROW("Unable to publish capacitor delta_linkage function");
 		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_capacitor)==NULL)
-			GL_THROW("Unable to publish capacitor deltamode function");
-		if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
 			GL_THROW("Unable to publish capacitor deltamode function");
 		if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==NULL)
 			GL_THROW("Unable to publish capacitor swing-swapping function");
@@ -146,6 +148,12 @@ int capacitor::create()
 	RLink = NULL;
 	VArVals[0] = VArVals[1] = VArVals[2] = 0.0;
 	CurrentVals[0] = CurrentVals[1] = CurrentVals[2] = 0.0;
+	voltage_center = -1.0;
+	voltage_deadband = -1.0;
+	VAr_center = -1.0;
+	VAr_deadband = -1.0;
+	current_center = -1.0;
+	current_deadband = -1.0;
 
 	NotFirstIteration=false;
 	Iteration_Toggle = false;
@@ -445,7 +453,7 @@ int capacitor::init(OBJECT *parent)
 	//Map the function for calculate power for RLink, if we're in the method we want
 	if ((control==VAR) || (control==VARVOLT))
 	{
-		//Do teh map
+		//Do the map
 		RLink_calculate_power_fxn = (FUNCTIONADDR)(gl_get_function(RLink,"update_power_pwr_object"));
 
 		//Check it
@@ -684,7 +692,24 @@ bool capacitor::cap_sync_fxn(double time_value)
 
 	//Initial value
 	Phase_Mismatch = false;
-
+	if(control == VOLT || control == VARVOLT) {
+		if(voltage_center > 0 && voltage_deadband > 0) {
+			voltage_set_low = voltage_center - (voltage_deadband*0.5);
+			voltage_set_high = voltage_center + (voltage_deadband*0.5);
+		}
+	}
+	if(control == VAR || control == VARVOLT) {
+		if(VAr_center > 0 && VAr_deadband > 0) {
+			VAr_set_low = VAr_center - (VAr_deadband*0.5);
+			VAr_set_high = VAr_center + (VAr_deadband*0.5);
+		}
+	}
+	if(control == CURRENT) {
+		if(current_center > 0 && current_deadband > 0) {
+			current_set_low = current_center - (current_deadband*0.5);
+			current_set_high = current_center + (current_deadband*0.5);
+		}
+	}
 	//Check by status
 	if (service_status == ND_IN_SERVICE)
 	{

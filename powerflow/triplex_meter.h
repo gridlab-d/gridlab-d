@@ -19,10 +19,16 @@ public:
 	double measured_reactive_energy;///< metered reactive energy consumption
 	double measured_reactive_energy_delta;///< metered reactive energy consumption over last interval
 	double measured_real_max_voltage_in_interval[3];	///< metered real part of maximum voltage over the last interval
-	double measured_imag_max_voltage_in_interval[3];	///< metered real part of maximum voltage over the last interval
-	double measured_real_min_voltage_in_interval[3];	///< metered real part of maximum voltage over the last interval
-	double measured_imag_min_voltage_in_interval[3];	///< metered real part of maximum voltage over the last interval
-	double measured_avg_voltage_mag_in_interval[3];	///< metered real part of maximum voltage over the last interval
+	double measured_imag_max_voltage_in_interval[3];	///< metered imaginary part of maximum voltage over the last interval
+	double measured_real_min_voltage_in_interval[3];	///< metered real part of minimum voltage over the last interval
+	double measured_imag_min_voltage_in_interval[3];	///< metered imaginary part of minimum voltage over the last interval
+	double measured_avg_voltage_mag_in_interval[3];	///< metered real part of average voltage over the last interval
+	double measured_real_avg_power_in_interval;	///< metered real part of average power over the last interval
+	double measured_reactive_avg_power_in_interval;	///< metered reactive part of average power over the last interval
+	double measured_real_max_power_in_interval;	///< maximum real power over the last interval
+	double measured_reactive_max_power_in_interval;	///< maximum real power over the last interval
+	double measured_real_min_power_in_interval;	///< minimum real power over the last interval
+	double measured_reactive_min_power_in_interval;	///< minimum real power over the last interval
     double measured_energy_delta_timestep; // Period of timestep for real and reactive delta energy calculation
 	complex measured_power;			///< metered power
 	complex indiv_measured_power[3]; ///< individual phase power
@@ -30,6 +36,7 @@ public:
 	double measured_real_power;		///< metered real power
 	double last_measured_real_power; ///< previous instance's metered real power
 	double measured_reactive_power; ///< metered reactive power
+	double last_measured_reactive_power; ///< previously measured reactive power
 	complex tpmeter_power_consumption; ///< power consumed by meter operation
 	bool tpmeter_interrupted;		///< Reliability flag - goes active if the customer is in an "interrupted" state
 	bool tpmeter_interrupted_secondary;	///< Reliability flag - goes active if the customer is in a "secondary interrupted" state - i.e., momentary
@@ -78,6 +85,12 @@ private:
     complex last_measured_voltage[3];
     complex last_measured_max_voltage[3];
     complex last_measured_min_voltage[3];
+	double last_measured_max_real_power;
+	double last_measured_min_real_power;
+	double last_measured_max_reactive_power;
+	double last_measured_min_reactive_power;
+	double last_measured_avg_real_power;
+	double last_measured_avg_reactive_power;
     double last_measured_avg_voltage[3];
     TIMESTAMP last_delta_timestamp;
     TIMESTAMP start_timestamp;

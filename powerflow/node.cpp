@@ -140,6 +140,19 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			PT_complex, "prerotated_current_B[A]", PADDR(pre_rotated_current[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality - bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
 			PT_complex, "prerotated_current_C[A]", PADDR(pre_rotated_current[2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality - bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
 
+			PT_complex, "deltamode_generator_current_A[A]", PADDR(deltamode_dynamic_current[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality - bus current injection (in = positive), direct generator injection (so may be overwritten internally), this an accumulator only, not a output or input variable",
+			PT_complex, "deltamode_generator_current_B[A]", PADDR(deltamode_dynamic_current[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality - bus current injection (in = positive), direct generator injection (so may be overwritten internally), this an accumulator only, not a output or input variable",
+			PT_complex, "deltamode_generator_current_C[A]", PADDR(deltamode_dynamic_current[2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality - bus current injection (in = positive), direct generator injection (so may be overwritten internally), this an accumulator only, not a output or input variable",
+
+			PT_complex, "deltamode_PGenTotal",PADDR(deltamode_PGenTotal),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality - power value for a diesel generator -- accumulator only, not an output or input",
+
+			PT_complex_array, "deltamode_full_Y_matrix",  get_full_Y_matrix_offset(),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality full_Y matrix exposes so generator objects can interact for Norton equivalents",
+			PT_complex_array, "deltamode_full_Y_all_matrix",  get_full_Y_all_matrix_offset(),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality full_Y_all matrix exposes so generator objects can interact for Norton equivalents",
+
+			PT_complex, "current_inj_A[A]", PADDR(current_inj[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
+			PT_complex, "current_inj_B[A]", PADDR(current_inj[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
+			PT_complex, "current_inj_C[A]", PADDR(current_inj[2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
+
 			PT_complex, "current_AB[A]", PADDR(current_dy[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
 			PT_complex, "current_BC[A]", PADDR(current_dy[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
 			PT_complex, "current_CA[A]", PADDR(current_dy[2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
@@ -212,11 +225,7 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			PT_object, "topological_parent", PADDR(TopologicalParent),PT_DESCRIPTION,"topological parent as per GLM configuration",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
-		if (gl_publish_function(oclass,	"delta_linkage_node", (FUNCTIONADDR)delta_linkage)==NULL)
-			GL_THROW("Unable to publish node delta_linkage function");
 		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_node)==NULL)
-			GL_THROW("Unable to publish node deltamode function");
-		if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
 			GL_THROW("Unable to publish node deltamode function");
 		if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==NULL)
 			GL_THROW("Unable to publish node swing-swapping function");
@@ -282,7 +291,6 @@ int node::create(void)
 	full_Y = NULL;		//Not used by default
 	full_Y_load = NULL;	//Not used by default
 	full_Y_all = NULL;	//Not used by default
-	DynVariable = NULL;	//Not used by default
 	BusHistTerm[0] = complex(0.0,0.0);
 	BusHistTerm[1] = complex(0.0,0.0);
 	BusHistTerm[2] = complex(0.0,0.0);
@@ -299,6 +307,10 @@ int node::create(void)
 	memset(pre_rotated_current,0,sizeof(pre_rotated_current));
 	memset(power,0,sizeof(power));
 	memset(shunt,0,sizeof(shunt));
+
+	deltamode_dynamic_current[0] = deltamode_dynamic_current[1] = deltamode_dynamic_current[2] = complex(0.0,0.0);
+
+	deltamode_PGenTotal = complex(0.0,0.0);
 
 	current_dy[0] = current_dy[1] = current_dy[2] = complex(0.0,0.0);
 	current_dy[3] = current_dy[4] = current_dy[5] = complex(0.0,0.0);
@@ -1363,6 +1375,11 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 	TIMESTAMP temp_time_value, temp_t1_value;
 	node *temp_par_node = NULL;
 	FUNCTIONADDR temp_funadd = NULL;
+	gld_property *temp_complex_property;
+	gld_wlock *test_rlock;
+	complex temp_complex_value;
+	complex_array temp_complex_array;
+	int temp_idx_x, temp_idx_y;
 
 	//Determine the flag state - see if a schedule is overriding us
 	if (service_status_dbl>-1.0)
@@ -1802,44 +1819,125 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 					//Flag our parent, just to make sure things work properly
 					temp_par_node->dynamic_norton = true;
 
-					//See if our parent has been allocated yet or not
-					if (temp_par_node->full_Y == NULL)
+					//See if we even have anything to contribute on the full_Y matrix
+					if (full_Y_matrix.is_valid(0,0) == true)
 					{
-						//Do allocations
-						temp_par_node->full_Y = (complex *)gl_malloc(9*sizeof(complex));
-
-						//Check it
-						if (temp_par_node->full_Y==NULL)
+						//Make sure it is the right size
+						if ((full_Y_matrix.get_rows() == 3) && (full_Y_matrix.get_cols() == 3))
 						{
-							GL_THROW("Node:%s failed to allocate space for the a deltamode variable",SubNodeParent->name);
+							//Allocate ourself
+							full_Y = (complex *)gl_malloc(9*sizeof(complex));
+
+							//Check it
+							if (full_Y==NULL)
+							{
+								GL_THROW("Node:%s failed to allocate space for the a deltamode variable",(obj->name?obj->name:"Unnamed"));
+								/*  TROUBLESHOOT
+								While attempting to allocate memory for a dynamics-required (deltamode) variable, an error
+								occurred. Please try again.  If the error persists, please submit your code and a bug
+								report via the trac website.
+								*/
+							}
+
+							//Map to the parent property
+							temp_complex_property = new gld_property(SubNodeParent,"deltamode_full_Y_matrix");
+
+							//Check it
+							if ((temp_complex_property->is_valid() != true) || (temp_complex_property->is_complex_array() != true))
+							{
+								GL_THROW("Node:%d - %s - parent deltamode matrix property is not valid!",obj->id,(obj->name ? obj->name : "Unnamed"));
+								/*  TROUBLESHOOT
+								While attempting to map to the exposed deltamode matrix property of a powerflow parent, an error occurred.
+								Please try again.  If the error persists, please submit your model and an issue via the ticketing system.
+								*/
+							}
+
+							//Pull down the variable
+							temp_complex_property->getp<complex_array>(temp_complex_array,*test_rlock);
+
+							//See if it is valid
+							if (temp_complex_array.is_valid(0,0) != true)
+							{
+								//Create it
+								temp_complex_array.grow_to(3,3);
+
+								//Zero it, by default
+								for (temp_idx_x=0; temp_idx_x<3; temp_idx_x++)
+								{
+									for (temp_idx_y=0; temp_idx_y<3; temp_idx_y++)
+									{
+										temp_complex_array.set_at(temp_idx_x,temp_idx_y,complex(0.0,0.0));
+									}
+								}
+							}
+							else	//Already populated, make sure it is the right size!
+							{
+								if ((temp_complex_array.get_rows() != 3) && (temp_complex_array.get_cols() != 3))
+								{
+									GL_THROW("node:%s exposed Norton-equivalent matrix is the wrong size!",obj->name?obj->name:"unnamed");
+									/*  TROUBLESHOOT
+									While mapping to an admittance matrix on the parent node device, it was found it is the wrong size.
+									Please try again.  If the error persists, please submit your code and model via the issue tracking system.
+									*/
+								}
+								//Default else -- right size
+							}
+
+							//Made it this far, just try adding them
+							temp_complex_array += full_Y_matrix;
+
+							//Push it back up
+							temp_complex_property->setp<complex_array>(temp_complex_array,*test_rlock);
+
+							//Loop through and store the local values, while we're at it
+							full_Y[0] = full_Y_matrix.get_at(0,0);
+							full_Y[1] = full_Y_matrix.get_at(0,1);
+							full_Y[2] = full_Y_matrix.get_at(0,2);
+
+							full_Y[3] = full_Y_matrix.get_at(1,0);
+							full_Y[4] = full_Y_matrix.get_at(1,1);
+							full_Y[5] = full_Y_matrix.get_at(1,2);
+
+							full_Y[6] = full_Y_matrix.get_at(2,0);
+							full_Y[7] = full_Y_matrix.get_at(2,1);
+							full_Y[8] = full_Y_matrix.get_at(2,2);
+						}//End size is 3x3
+						else
+						{
+							GL_THROW("Node:%d - %s - Invalid deltamode matrix size!",obj->id,(obj->name ? obj->name : "Unnamed"));
 							/*  TROUBLESHOOT
-							While attempting to allocate memory for a dynamics-required (deltamode) variable, an error
-							occurred. Please try again.  If the error persists, please submit your code and a bug
-							report via the trac website.
+							While attempting to link up to one of the deltamode dynamic matrices, an unexpected size was encountered.
+							Please try again.  If the error persists, please submit your code and a bug report via the issue tracker.
 							*/
 						}
+					}//End we have values
 
-						//Zero it, just to be safe (gens will accumulate into it)
-						temp_par_node->full_Y[0] = temp_par_node->full_Y[1] = temp_par_node->full_Y[2] = complex(0.0,0.0);
-						temp_par_node->full_Y[3] = temp_par_node->full_Y[4] = temp_par_node->full_Y[5] = complex(0.0,0.0);
-						temp_par_node->full_Y[6] = temp_par_node->full_Y[7] = temp_par_node->full_Y[8] = complex(0.0,0.0);
+					//NULL our overall pointer -- we don't need it
+					full_Y_all = NULL;
 
-						//Allocate another matrix for admittance - this will have the full value
-						temp_par_node->full_Y_all = (complex *)gl_malloc(9*sizeof(complex));
-
-						//Check it
-						if (temp_par_node->full_Y_all==NULL)
+					//See if we've somehow already been allocated
+					if (full_Y_all_matrix.is_valid(0,0) == true)
+					{
+						//See if we're the right size already
+						if ((full_Y_all_matrix.get_rows() != 3) && (full_Y_all_matrix.get_cols() != 3))
 						{
-							GL_THROW("Node:%s failed to allocate space for the a deltamode variable",SubNodeParent->name);
+							GL_THROW("node:%s exposed Norton-equivalent matrix is the wrong size!",obj->name?obj->name:"unnamed");
 							//Defined above
 						}
+					}
+					else	//Try allocating it
+					{
+						full_Y_all_matrix.grow_to(3,3);
+					}
 
-						//Zero it, just to be safe (gens will accumulate into it)
-						temp_par_node->full_Y_all[0] = temp_par_node->full_Y_all[1] = temp_par_node->full_Y_all[2] = complex(0.0,0.0);
-						temp_par_node->full_Y_all[3] = temp_par_node->full_Y_all[4] = temp_par_node->full_Y_all[5] = complex(0.0,0.0);
-						temp_par_node->full_Y_all[6] = temp_par_node->full_Y_all[7] = temp_par_node->full_Y_all[8] = complex(0.0,0.0);
-					}//End not allocated
-					//Default else -- it's already allocated
+					//Now zero it
+					for (temp_idx_x=0; temp_idx_x<3; temp_idx_x++)
+					{
+						for (temp_idx_y=0; temp_idx_y<3; temp_idx_y++)
+						{
+							full_Y_all_matrix.set_at(temp_idx_x,temp_idx_y,complex(0.0,0.0));
+						}
+					}
 				}//End Norton equivalent
 
 				//Now do the other variable
@@ -1849,45 +1947,15 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 					temp_par_node->dynamic_generator = true;
 				}
 
-				//Check to see if the other variable is needed (both need it)
-				if (temp_par_node->DynVariable == NULL)
-				{
-					//Do the same for a dynamics contribution (just 4x1 for now for normal nodes)
-					//0-2 represent ABC current,3 represents overall power, 4 represents power frequency weighting,
-					//5 represents overall output power
-
-					temp_par_node->DynVariable = (complex *)gl_malloc(6*sizeof(complex));
-
-					//Check it
-					if (temp_par_node->DynVariable==NULL)
-					{
-						GL_THROW("Node:%s failed to allocate space for the a deltamode variable",SubNodeParent->name);
-						//Defined above
-					}
-
-					//Zero them, for consistency
-					temp_par_node->DynVariable[0] = temp_par_node->DynVariable[1] = temp_par_node->DynVariable[2] = complex(0.0,0.0);
-					temp_par_node->DynVariable[3] = temp_par_node->DynVariable[4] = temp_par_node->DynVariable[5] = complex(0.0,0.0);
-				}//End allocate DynCurrent (and others)
-				//Default else -- already flagged
-
 				//Unlock our parent
 				UNLOCK_OBJECT(SubNodeParent);
 
-				//Link the local pointers, as appropriate
-				if (dynamic_norton==true)
-				{
-					full_Y = temp_par_node->full_Y;
-					full_Y_all = temp_par_node->full_Y_all;
-				}
-				else	//NULL the pointers, again, just because
+				//NULL the pointers, if necessary (paranoia)
+				if (dynamic_norton!=true)
 				{
 					full_Y = NULL;
 					full_Y_all = NULL;
 				}
-
-				//Map the shared variable
-				DynVariable = temp_par_node->DynVariable;
 
 				//No need to do NR mappings - we don't get hit anyways
 			}//End child Norton equivalent/dynamic generator postings code
@@ -2150,6 +2218,16 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 				ParToLoad->pre_rotated_current[1] += pre_rotated_current[1];
 				ParToLoad->pre_rotated_current[2] += pre_rotated_current[2];
 
+				//And the deltamode accumulators too -- if deltamode
+				if (deltamode_inclusive == true)
+				{
+					//Pull our parent value down -- everything is being pushed up there anyways
+					//Pulling to keep meters accurate (theoretically)
+					deltamode_dynamic_current[0] = ParToLoad->deltamode_dynamic_current[0];
+					deltamode_dynamic_current[1] = ParToLoad->deltamode_dynamic_current[1];
+					deltamode_dynamic_current[2] = ParToLoad->deltamode_dynamic_current[2];
+				}
+
 				//Do the same for explicit delta/wye portions
 				for (loop_index_var=0; loop_index_var<6; loop_index_var++)
 				{
@@ -2182,6 +2260,16 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 				ParToLoad->pre_rotated_current[0] += pre_rotated_current[0]-last_child_power[3][0];
 				ParToLoad->pre_rotated_current[1] += pre_rotated_current[1]-last_child_power[3][1];
 				ParToLoad->pre_rotated_current[2] += pre_rotated_current[2]-last_child_power[3][2];
+
+				//And the deltamode accumulators too -- if deltamode
+				if (deltamode_inclusive == true)
+				{
+					//Pull our parent value down -- everything is being pushed up there anyways
+					//Pulling to keep meters accurate (theoretically)
+					deltamode_dynamic_current[0] = ParToLoad->deltamode_dynamic_current[0];
+					deltamode_dynamic_current[1] = ParToLoad->deltamode_dynamic_current[1];
+					deltamode_dynamic_current[2] = ParToLoad->deltamode_dynamic_current[2];
+				}
 
 				//Do the same for the explicit delta/wye loads - last_child_power is set up as columns of ZIP, not ABC
 				for (loop_index_var=0; loop_index_var<6; loop_index_var++)
@@ -2272,6 +2360,16 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 			ParToLoad->pre_rotated_current[1] += pre_rotated_current[1];
 			ParToLoad->pre_rotated_current[2] += pre_rotated_current[2];
 
+			//And the deltamode accumulators too -- if deltamode
+			if (deltamode_inclusive == true)
+			{
+				//Pull our parent value down -- everything is being pushed up there anyways
+				//Pulling to keep meters accurate (theoretically)
+				deltamode_dynamic_current[0] = ParToLoad->deltamode_dynamic_current[0];
+				deltamode_dynamic_current[1] = ParToLoad->deltamode_dynamic_current[1];
+				deltamode_dynamic_current[2] = ParToLoad->deltamode_dynamic_current[2];
+			}
+
 			//Import power and "load" characteristics for explicit delta/wye portions
 			for (loop_index_var=0; loop_index_var<6; loop_index_var++)
 			{
@@ -2295,7 +2393,6 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 			last_child_power[3][0] = pre_rotated_current[0];
 			last_child_power[3][1] = pre_rotated_current[1];
 			last_child_power[3][2] = pre_rotated_current[2];
-
 		}//End differently connected child
 
 		//Call the VFD update, if we need it
@@ -2700,6 +2797,84 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 void node::BOTH_node_postsync_fxn(OBJECT *obj)
 {
 	double curr_delta_time;
+	complex_array temp_complex_array;
+	int index_x_val, index_y_val;
+	gld_property *temp_property;
+	gld_wlock *test_rlock;
+
+	//See if we're a generator-attached bus (needs full_Y_all) - if so, update it
+	if ((deltamode_inclusive == true) && (dynamic_norton==true))
+	{
+		//See if we're a child or a parent
+		if ((SubNode==CHILD) || (SubNode==DIFF_CHILD))
+		{
+			//Map to our parent
+			temp_property = new gld_property(SubNodeParent,"deltamode_full_Y_all_matrix");
+
+			//Make sure it worked
+			if ((temp_property->is_valid() != true) || (temp_property->is_complex_array() != true))
+			{
+				GL_THROW("Node:%d - %s - Failed to map deltamode matrix to parent",obj->id,(obj->name ? obj->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				While attempting to map to a parent's deltamode-related matrix, a node device encountered an issue.  Please try again.
+				If the error persists, please submit a ticket with your code/model to the issue tracker.
+				*/
+			}
+
+			//Pull down the value
+			temp_property->getp<complex_array>(temp_complex_array,*test_rlock);
+
+			//See if it is the right size
+			if ((temp_complex_array.get_rows() == 3) && (temp_complex_array.get_cols() == 3))
+			{
+				//Store it directly into ours
+				full_Y_all_matrix = temp_complex_array;
+			}
+			//Default else - wrong size, just ignore it
+
+			//Delete the link
+			delete temp_property;
+		}
+		else	//Parent or stand-alone
+		{
+			//Make sure we're valid and a right size
+			if (full_Y_all_matrix.is_valid(0,0) == true)
+			{
+				//Make sure it is the right size
+				if ((full_Y_all_matrix.get_rows() != 3) || (full_Y_matrix.get_cols() != 3))
+				{
+					//Try forcing to be 3x3
+					full_Y_all_matrix.grow_to(3,3);
+				}
+			}
+			else	//Not allocated yet -- allocate it
+			{
+				full_Y_all_matrix.grow_to(3,3);
+			}
+
+			//Make sure it valid, just for giggles
+			if (full_Y_all != NULL)
+			{
+				//Copy our values in
+				for (index_x_val=0; index_x_val<3; index_x_val++)
+				{
+					for (index_y_val=0; index_y_val<3; index_y_val++)
+					{
+						full_Y_all_matrix.set_at(index_x_val,index_y_val,full_Y_all[index_x_val*3+index_y_val]);
+					}
+				}
+			}
+			else	//If we got here, yell
+			{
+				GL_THROW("Node:%d - %s - Node tried to update a deltamode matrix that does not exist!",obj->id,(obj->name ? obj->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				While attempting to update an exposed deltamode matrix, the underlying data was found to not exist!  Please submit your code
+				and a bug report via the issue tracker system.
+				*/
+			}
+		}//End parent update
+	}
+	//Default else -- not needing this to be updated
 
 	//Update tracking variables for nodes/loads/meters
 	if ((deltatimestep_running > 0) && (enable_inrush_calculations == true))
@@ -2741,7 +2916,7 @@ void node::BOTH_node_postsync_fxn(OBJECT *obj)
 	//This code performs the new "flattened" NR calculations.
 	if (solver_method == SM_NR)
 	{
-		int result = NR_current_update(true,false);
+		int result = NR_current_update(false);
 
 		//Make sure it worked, just to be thorough
 		if (result != 1)
@@ -3402,10 +3577,28 @@ int node::NR_populate(void)
 						*/
 					}
 
-					//Zero it, just to be safe (gens will accumulate into it)
-					full_Y[0] = full_Y[1] = full_Y[2] = complex(0.0,0.0);
-					full_Y[3] = full_Y[4] = full_Y[5] = complex(0.0,0.0);
-					full_Y[6] = full_Y[7] = full_Y[8] = complex(0.0,0.0);
+					//See if our published matrix has anything in it
+					if ((full_Y_matrix.get_rows() == 3) && (full_Y_matrix.get_cols() == 3))
+					{
+						full_Y[0] = full_Y_matrix.get_at(0,0);
+						full_Y[1] = full_Y_matrix.get_at(0,1);
+						full_Y[2] = full_Y_matrix.get_at(0,2);
+
+						full_Y[3] = full_Y_matrix.get_at(1,0);
+						full_Y[4] = full_Y_matrix.get_at(1,1);
+						full_Y[5] = full_Y_matrix.get_at(1,2);
+
+						full_Y[6] = full_Y_matrix.get_at(2,0);
+						full_Y[7] = full_Y_matrix.get_at(2,1);
+						full_Y[8] = full_Y_matrix.get_at(2,2);
+					}
+					else
+					{
+						//Zero it, just to be safe (gens will accumulate into it)
+						full_Y[0] = full_Y[1] = full_Y[2] = complex(0.0,0.0);
+						full_Y[3] = full_Y[4] = full_Y[5] = complex(0.0,0.0);
+						full_Y[6] = full_Y[7] = full_Y[8] = complex(0.0,0.0);
+					}
 
 					//Allocate another matrix for admittance - this will have the full value
 					full_Y_all = (complex *)gl_malloc(9*sizeof(complex));
@@ -3417,10 +3610,31 @@ int node::NR_populate(void)
 						//Defined above
 					}
 
-					//Zero it, just to be safe (gens will accumulate into it)
-					full_Y_all[0] = full_Y_all[1] = full_Y_all[2] = complex(0.0,0.0);
-					full_Y_all[3] = full_Y_all[4] = full_Y_all[5] = complex(0.0,0.0);
-					full_Y_all[6] = full_Y_all[7] = full_Y_all[8] = complex(0.0,0.0);
+					//See if our published matrix has anything in it
+					if ((full_Y_all_matrix.get_rows() == 3) && (full_Y_all_matrix.get_cols() == 3))
+					{
+						full_Y_all[0] = full_Y_all_matrix.get_at(0,0);
+						full_Y_all[1] = full_Y_all_matrix.get_at(0,1);
+						full_Y_all[2] = full_Y_all_matrix.get_at(0,2);
+
+						full_Y_all[3] = full_Y_all_matrix.get_at(1,0);
+						full_Y_all[4] = full_Y_all_matrix.get_at(1,1);
+						full_Y_all[5] = full_Y_all_matrix.get_at(1,2);
+
+						full_Y_all[6] = full_Y_all_matrix.get_at(2,0);
+						full_Y_all[7] = full_Y_all_matrix.get_at(2,1);
+						full_Y_all[8] = full_Y_all_matrix.get_at(2,2);
+					}
+					else
+					{
+						//Try growing it to the proper size
+						full_Y_all_matrix.grow_to(3,3);
+
+						//Zero it, just to be safe (gens will accumulate into it)
+						full_Y_all[0] = full_Y_all[1] = full_Y_all[2] = complex(0.0,0.0);
+						full_Y_all[3] = full_Y_all[4] = full_Y_all[5] = complex(0.0,0.0);
+						full_Y_all[6] = full_Y_all[7] = full_Y_all[8] = complex(0.0,0.0);
+					}
 				}
 				else	//Not needed, make sure we're nulled
 				{
@@ -3435,35 +3649,13 @@ int node::NR_populate(void)
 				//Null it, just because
 				full_Y_all = NULL;
 			}
-
-			//Double check that the other variable hasn't been mapped already -- in case a non-Norton one did it
-			if (DynVariable == NULL)
-			{
-				//Do the same for a dynamics contribution (just 4x1 for now for normal nodes)
-				//0-2 represent ABC current,3 represents overall power, 4 represents power frequency weighting,
-				//5 represents overall output power
-
-				DynVariable = (complex *)gl_malloc(6*sizeof(complex));
-
-				//Check it
-				if (DynVariable==NULL)
-				{
-					GL_THROW("Node:%s failed to allocate space for the a deltamode variable",me->name);
-					//Defined above
-				}
-
-				//Zero them, for consistency
-				DynVariable[0] = DynVariable[1] = DynVariable[2] = complex(0.0,0.0);
-				DynVariable[3] = DynVariable[4] = DynVariable[5] = complex(0.0,0.0);
-			}
-			//Default else -- already allocated by a pesky child
 		}//End we're a parent
 
 		//Map all relevant variables to the NR structure
 		NR_busdata[NR_node_reference].full_Y = full_Y;
 		NR_busdata[NR_node_reference].full_Y_all = full_Y_all;
-		NR_busdata[NR_node_reference].DynCurrent = DynVariable;
-		NR_busdata[NR_node_reference].PGenTotal = &DynVariable[3];
+		NR_busdata[NR_node_reference].DynCurrent = &deltamode_dynamic_current[0];
+		NR_busdata[NR_node_reference].PGenTotal = &deltamode_PGenTotal;
 	}
 	else	//Ensure it is empty
 	{
@@ -3477,11 +3669,8 @@ int node::NR_populate(void)
 }
 
 //Computes "load" portions of current injection
-//postpass is set to true for the "postsync" power update - it does extra child node items needed
 //parentcall is set when a parent object has called this update - mainly for locking purposes
-//NOTE: Once NR gets collapsed into single pass form, the "postpass" flag will probably be irrelevant and could be removed
-//      Once "flattened", this function shoud only be called by postsync, so why flag what always is true?
-int node::NR_current_update(bool postpass, bool parentcall)
+int node::NR_current_update(bool parentcall)
 {
 	unsigned int table_index;
 	link_object *temp_link;
@@ -3499,146 +3688,153 @@ int node::NR_current_update(bool postpass, bool parentcall)
 	//Don't do anything if we've already been "updated"
 	if (current_accumulated==false)
 	{
-		if (postpass)	//Perform what used to be in post-synch - used to childed object items - occurred on "false" pass, so goes before all
+		if (SubNode==CHILD)	//Remove child contributions
 		{
-			if (SubNode==CHILD)	//Remove child contributions
+			node *ParToLoad = OBJECTDATA(SubNodeParent,node);
+
+			if (!parentcall)	//We weren't called by our parent, so lock us to create sibling rivalry!
 			{
-				node *ParToLoad = OBJECTDATA(SubNodeParent,node);
-
-				if (!parentcall)	//We weren't called by our parent, so lock us to create sibling rivalry!
-				{
-					//Lock the parent for writing
-					LOCK_OBJECT(SubNodeParent);
-				}
-
-				//Remove power and "load" characteristics
-				ParToLoad->power[0]-=last_child_power[0][0];
-				ParToLoad->power[1]-=last_child_power[0][1];
-				ParToLoad->power[2]-=last_child_power[0][2];
-
-				ParToLoad->shunt[0]-=last_child_power[1][0];
-				ParToLoad->shunt[1]-=last_child_power[1][1];
-				ParToLoad->shunt[2]-=last_child_power[1][2];
-
-				ParToLoad->current[0]-=last_child_power[2][0];
-				ParToLoad->current[1]-=last_child_power[2][1];
-				ParToLoad->current[2]-=last_child_power[2][2];
-
-				if (has_phase(PHASE_S))	//Triplex slightly different
-					ParToLoad->current12-=last_child_current12;
-
-				//Unrotated stuff too
-				ParToLoad->pre_rotated_current[0] -= last_child_power[3][0];
-				ParToLoad->pre_rotated_current[1] -= last_child_power[3][1];
-				ParToLoad->pre_rotated_current[2] -= last_child_power[3][2];
-
-				//Remove power and "load" characteristics for explicit delta/wye values
-				for (loop_index=0; loop_index<6; loop_index++)
-				{
-					ParToLoad->power_dy[loop_index] -= last_child_power_dy[loop_index][0];		//Power
-					ParToLoad->shunt_dy[loop_index] -= last_child_power_dy[loop_index][1];		//Shunt
-					ParToLoad->current_dy[loop_index] -= last_child_power_dy[loop_index][2];	//Current
-				}
-
-				if (!parentcall)	//Wasn't a parent call - unlock us so our siblings get a shot
-				{
-					//Unlock the parent now that it is done
-					UNLOCK_OBJECT(SubNodeParent);
-				}
-
-				//Update previous power tracker - if we haven't really converged, things will mess up without this
-				//Power
-				last_child_power[0][0] = last_child_power[0][1] = last_child_power[0][2] = 0.0;
-
-				//Shunt
-				last_child_power[1][0] = last_child_power[1][1] = last_child_power[1][2] = 0.0;
-
-				//Current
-				last_child_power[2][0] = last_child_power[2][1] = last_child_power[2][2] = 0.0;
-
-				//Zero the last power accumulators
-				for (loop_index=0; loop_index<6; loop_index++)
-				{
-					last_child_power_dy[loop_index][0] = complex(0.0);	//Power
-					last_child_power_dy[loop_index][1] = complex(0.0);	//Shunt
-					last_child_power_dy[loop_index][2] = complex(0.0);	//Current
-				}
-
-				//Current 12 if we are triplex
-				if (has_phase(PHASE_S))
-					last_child_current12 = 0.0;
-
-				//Do the same for the prerorated stuff
-				last_child_power[3][0] = last_child_power[3][1] = last_child_power[3][2] = complex(0.0,0.0);
-			}
-			else if (SubNode==DIFF_CHILD)	//Differently connected 
-			{
-				node *ParToLoad = OBJECTDATA(SubNodeParent,node);
-
-				if (!parentcall)	//We weren't called by our parent, so lock us to create sibling rivalry!
-				{
-					//Lock the parent for writing
-					LOCK_OBJECT(SubNodeParent);
-				}
-
-				//Remove power and "load" characteristics for explicit delta/wye values
-				for (loop_index=0; loop_index<6; loop_index++)
-				{
-					ParToLoad->power_dy[loop_index] -= last_child_power_dy[loop_index][0];		//Power
-					ParToLoad->shunt_dy[loop_index] -= last_child_power_dy[loop_index][1];		//Shunt
-					ParToLoad->current_dy[loop_index] -= last_child_power_dy[loop_index][2];	//Current
-				}
-
-				//Do this for the unrotated stuff too - it never gets auto-zeroed (like the above)
-				ParToLoad->pre_rotated_current[0] -= last_child_power[3][0];
-				ParToLoad->pre_rotated_current[1] -= last_child_power[3][1];
-				ParToLoad->pre_rotated_current[2] -= last_child_power[3][2];
-
-				if (!parentcall)	//Wasn't a parent call - unlock us so our siblings get a shot
-				{
-					//Unlock the parent now that it is done
-					UNLOCK_OBJECT(SubNodeParent);
-				}
-
-				//Zero the last power accumulators
-				for (loop_index=0; loop_index<6; loop_index++)
-				{
-					last_child_power_dy[loop_index][0] = complex(0.0);	//Power
-					last_child_power_dy[loop_index][1] = complex(0.0);	//Shunt
-					last_child_power_dy[loop_index][2] = complex(0.0);	//Current
-				}
-
-				//Now zero the accmulator, just in case
-				last_child_power[3][0] = last_child_power[3][1] = last_child_power[3][2] = complex(0.0,0.0);
+				//Lock the parent for writing
+				LOCK_OBJECT(SubNodeParent);
 			}
 
-			if ((SubNode==CHILD) || (SubNode==DIFF_CHILD))	//Child Voltage Updates
+			//Remove power and "load" characteristics
+			ParToLoad->power[0]-=last_child_power[0][0];
+			ParToLoad->power[1]-=last_child_power[0][1];
+			ParToLoad->power[2]-=last_child_power[0][2];
+
+			ParToLoad->shunt[0]-=last_child_power[1][0];
+			ParToLoad->shunt[1]-=last_child_power[1][1];
+			ParToLoad->shunt[2]-=last_child_power[1][2];
+
+			ParToLoad->current[0]-=last_child_power[2][0];
+			ParToLoad->current[1]-=last_child_power[2][1];
+			ParToLoad->current[2]-=last_child_power[2][2];
+
+			if (has_phase(PHASE_S))	//Triplex slightly different
+				ParToLoad->current12-=last_child_current12;
+
+			//Unrotated stuff too
+			ParToLoad->pre_rotated_current[0] -= last_child_power[3][0];
+			ParToLoad->pre_rotated_current[1] -= last_child_power[3][1];
+			ParToLoad->pre_rotated_current[2] -= last_child_power[3][2];
+
+			//And the deltamode accumulators too -- if deltamode
+			if (deltamode_inclusive == true)
 			{
-				node *ParStealLoad = OBJECTDATA(SubNodeParent,node);
-
-				//Steal our paren't voltages as well
-				//this will either be parent called or a child "no way it can change" rank read - no lock needed
-				voltage[0] = ParStealLoad->voltage[0];
-				voltage[1] = ParStealLoad->voltage[1];
-				voltage[2] = ParStealLoad->voltage[2];
-
-				//Compute "delta" voltages, so current injections upward are correct
-				if (has_phase(PHASE_S))
-				{
-					//Compute the delta voltages
-					voltaged[0] = voltage[0] + voltage[1];	//12
-					voltaged[1] = voltage[1] - voltage[2];	//2N
-					voltaged[2] = voltage[0] - voltage[2];	//1N -- unsure why it is odd
-				}
-				else	//"Normal" three phase - compute normal deltas
-				{
-					//Compute the delta voltages
-					voltaged[0] = voltage[0] - voltage[1];
-					voltaged[1] = voltage[1] - voltage[2];
-					voltaged[2] = voltage[2] - voltage[0];
-				}
+				//Pull our parent value down -- everything is being pushed up there anyways
+				//Pulling to keep meters accurate (theoretically)
+				deltamode_dynamic_current[0] = ParToLoad->deltamode_dynamic_current[0];
+				deltamode_dynamic_current[1] = ParToLoad->deltamode_dynamic_current[1];
+				deltamode_dynamic_current[2] = ParToLoad->deltamode_dynamic_current[2];
 			}
-		}//End postsynch equivalent pass
+
+			//Remove power and "load" characteristics for explicit delta/wye values
+			for (loop_index=0; loop_index<6; loop_index++)
+			{
+				ParToLoad->power_dy[loop_index] -= last_child_power_dy[loop_index][0];		//Power
+				ParToLoad->shunt_dy[loop_index] -= last_child_power_dy[loop_index][1];		//Shunt
+				ParToLoad->current_dy[loop_index] -= last_child_power_dy[loop_index][2];	//Current
+			}
+
+			if (!parentcall)	//Wasn't a parent call - unlock us so our siblings get a shot
+			{
+				//Unlock the parent now that it is done
+				UNLOCK_OBJECT(SubNodeParent);
+			}
+
+			//Update previous power tracker - if we haven't really converged, things will mess up without this
+			//Power
+			last_child_power[0][0] = last_child_power[0][1] = last_child_power[0][2] = 0.0;
+
+			//Shunt
+			last_child_power[1][0] = last_child_power[1][1] = last_child_power[1][2] = 0.0;
+
+			//Current
+			last_child_power[2][0] = last_child_power[2][1] = last_child_power[2][2] = 0.0;
+
+			//Zero the last power accumulators
+			for (loop_index=0; loop_index<6; loop_index++)
+			{
+				last_child_power_dy[loop_index][0] = complex(0.0);	//Power
+				last_child_power_dy[loop_index][1] = complex(0.0);	//Shunt
+				last_child_power_dy[loop_index][2] = complex(0.0);	//Current
+			}
+
+			//Current 12 if we are triplex
+			if (has_phase(PHASE_S))
+				last_child_current12 = 0.0;
+
+			//Do the same for the prerorated stuff
+			last_child_power[3][0] = last_child_power[3][1] = last_child_power[3][2] = complex(0.0,0.0);
+		}
+		else if (SubNode==DIFF_CHILD)	//Differently connected 
+		{
+			node *ParToLoad = OBJECTDATA(SubNodeParent,node);
+
+			if (!parentcall)	//We weren't called by our parent, so lock us to create sibling rivalry!
+			{
+				//Lock the parent for writing
+				LOCK_OBJECT(SubNodeParent);
+			}
+
+			//Remove power and "load" characteristics for explicit delta/wye values
+			for (loop_index=0; loop_index<6; loop_index++)
+			{
+				ParToLoad->power_dy[loop_index] -= last_child_power_dy[loop_index][0];		//Power
+				ParToLoad->shunt_dy[loop_index] -= last_child_power_dy[loop_index][1];		//Shunt
+				ParToLoad->current_dy[loop_index] -= last_child_power_dy[loop_index][2];	//Current
+			}
+
+			//Do this for the unrotated stuff too - it never gets auto-zeroed (like the above)
+			ParToLoad->pre_rotated_current[0] -= last_child_power[3][0];
+			ParToLoad->pre_rotated_current[1] -= last_child_power[3][1];
+			ParToLoad->pre_rotated_current[2] -= last_child_power[3][2];
+
+			if (!parentcall)	//Wasn't a parent call - unlock us so our siblings get a shot
+			{
+				//Unlock the parent now that it is done
+				UNLOCK_OBJECT(SubNodeParent);
+			}
+
+			//Zero the last power accumulators
+			for (loop_index=0; loop_index<6; loop_index++)
+			{
+				last_child_power_dy[loop_index][0] = complex(0.0);	//Power
+				last_child_power_dy[loop_index][1] = complex(0.0);	//Shunt
+				last_child_power_dy[loop_index][2] = complex(0.0);	//Current
+			}
+
+			//Now zero the accmulator, just in case
+			last_child_power[3][0] = last_child_power[3][1] = last_child_power[3][2] = complex(0.0,0.0);
+		}
+
+		if ((SubNode==CHILD) || (SubNode==DIFF_CHILD))	//Child Voltage Updates
+		{
+			node *ParStealLoad = OBJECTDATA(SubNodeParent,node);
+
+			//Steal our paren't voltages as well
+			//this will either be parent called or a child "no way it can change" rank read - no lock needed
+			voltage[0] = ParStealLoad->voltage[0];
+			voltage[1] = ParStealLoad->voltage[1];
+			voltage[2] = ParStealLoad->voltage[2];
+
+			//Compute "delta" voltages, so current injections upward are correct
+			if (has_phase(PHASE_S))
+			{
+				//Compute the delta voltages
+				voltaged[0] = voltage[0] + voltage[1];	//12
+				voltaged[1] = voltage[1] - voltage[2];	//2N
+				voltaged[2] = voltage[0] - voltage[2];	//1N -- unsure why it is odd
+			}
+			else	//"Normal" three phase - compute normal deltas
+			{
+				//Compute the delta voltages
+				voltaged[0] = voltage[0] - voltage[1];
+				voltaged[1] = voltage[1] - voltage[2];
+				voltaged[2] = voltage[2] - voltage[0];
+			}
+		}
 
 		//Handle relvant children first
 		if (NR_number_child_nodes[0]>0)	//We have children
@@ -3646,7 +3842,7 @@ int node::NR_current_update(bool postpass, bool parentcall)
 			for (table_index=0; table_index<NR_number_child_nodes[0]; table_index++)
 			{
 				//Call their update - By this call's nature, it is being called by a parent here
-				temp_result = NR_child_nodes[table_index]->NR_current_update(postpass,true);
+				temp_result = NR_child_nodes[table_index]->NR_current_update(true);
 
 				//Make sure it worked, just to be thorough
 				if (temp_result != 1)
@@ -4007,13 +4203,10 @@ int node::NR_current_update(bool postpass, bool parentcall)
 		//To the parent.  If this was above the previous code, deltamode-related postings get counted twice.
 		if ((deltamode_inclusive == true) && (dynamic_norton == true))
 		{
-			//See which variables exist
-			if (DynVariable != NULL)
-			{
-				current_inj[0] -= DynVariable[0];
-				current_inj[1] -= DynVariable[1];
-				current_inj[2] -= DynVariable[2];
-			}
+			//Injections from generators -- always accumulate (may be zero)
+			current_inj[0] -= deltamode_dynamic_current[0];
+			current_inj[1] -= deltamode_dynamic_current[1];
+			current_inj[2] -= deltamode_dynamic_current[2];
 
 			//See if the shunt exists
 			if (full_Y != NULL)
@@ -5125,61 +5318,6 @@ EXPORT SIMULATIONMODE interupdate_node(OBJECT *obj, unsigned int64 delta_time, u
 		gl_error("interupdate_node(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
 		return status;
 	}
-}
-
-//Function to easily access complex bus deltamode values
-//0 = full_Y - exposed bus admittance model
-//1 - PGenTotal - total amount of generation on that bus (for current gen)
-//2 - DeltaCurrents - currents calculated from updated powerflow solution
-//3 - full_Y_all - exposed Ybus self admittance area
-EXPORT complex *delta_linkage(OBJECT *obj, unsigned char mapvar)
-{
-	complex *testval;
-	node *my = OBJECTDATA(obj,node);
-
-	if (mapvar==0)	//Bus admittance - full_Y
-	{
-		testval = my->full_Y;
-	}
-	else if (mapvar==1)	//Generation total - PGenTotal
-	{
-		testval = &(my->DynVariable[3]);
-	}
-	else if (mapvar==2)	//Dynamic current values - DeltaCurrents
-	{
-		testval = &(my->DynVariable[0]);
-	}
-	else if (mapvar==3)	//Self admittance, but fully Y-bus form
-	{
-		testval = my->full_Y_all;
-	}
-	else	//Unknown - fail out
-	{
-		testval = NULL;
-	}
-
-	return testval;
-}
-
-//Function to extract and post the accumulated power and "frequency power" for
-//updating "system frequency" when transiting back to standard mode
-//Return SUCCESS/FAILED
-EXPORT STATUS delta_frequency_node(OBJECT *obj, complex *powerval, complex *freqpowerval)
-{
-	//Map us
-	node *my = OBJECTDATA(obj,node);
-
-	//Null check to see if they even are needed
-	if ((my->DynVariable != NULL) && ((my->SubNode!=CHILD) && (my->SubNode!=DIFF_CHILD)))
-	{
-		//Accumulate values
-		*powerval += my->DynVariable[5];
-		*freqpowerval += my->DynVariable[4];
-	}
-	//Default else - not there, so ignore us
-
-	//Always succeed, for now
-	return SUCCESS;
 }
 
 //Function to set a node as a SWING inside NR - basically converts a SWING to a PQ, without the SWING_PQ requirement

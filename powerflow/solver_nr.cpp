@@ -38,7 +38,7 @@ Initialization after returning to service?
 #define MT // this enables multithreaded SuperLU
 
 #ifdef MT
-#include <pdsp_defs.h>	//superLU_MT 
+#include <slu_mt_ddefs.h>	//superLU_MT 
 #else
 #include <slu_ddefs.h>	//Sequential superLU (other platforms)
 #endif

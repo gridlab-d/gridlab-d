@@ -80,11 +80,7 @@ substation::substation(MODULE *mod) : node(mod)
 			//PT_double, "measured_reactive[kVar]", PADDR(measured_reactive), has not implemented yet
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	"delta_linkage_node", (FUNCTIONADDR)delta_linkage)==NULL)
-			GL_THROW("Unable to publish substation delta_linkage function");
 		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_substation)==NULL)
-			GL_THROW("Unable to publish substation deltamode function");
-		if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
 			GL_THROW("Unable to publish substation deltamode function");
 		if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==NULL)
 			GL_THROW("Unable to publish substation swing-swapping function");
@@ -343,7 +339,7 @@ TIMESTAMP substation::sync(TIMESTAMP t0, TIMESTAMP t1)
 	
 	// update currents if in NR
 	if(solver_method == SM_NR){
-		int result = node::NR_current_update(true,false);
+		int result = node::NR_current_update(false);
 
 		if(result != 1){
 			GL_THROW("Attempt to update current/power on substation:%s failed!",obj->name);

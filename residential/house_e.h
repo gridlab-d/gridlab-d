@@ -71,16 +71,6 @@ public:
 	PANEL panel; ///< main house_e panel
 	/// Get voltage on a circuit
 	/// @return voltage (or 0 if breaker is open)
-	inline complex V(CIRCUIT *c)			///< pointer to circuit 
-	{ return c->status==BRK_CLOSED ? *(c->pV) : complex(0,0);};
-	complex *pCircuit_V;					///< pointer to the three voltages on three lines
-	complex *pLine_I;						///< pointer to the three current on three lines
-	complex *pShunt;						///< pointer to shunt value on triplex parent
-	complex *pPower;						///< pointer to power value on triplex parent
-	gld_property *pFrequency;						///< pointer to frequency value on triplex parent
-	double default_frequency;
-	bool *pHouseConn;						///< Pointer to house_present variable on triplex parent
-	int *pMeterStatus;						///< Pointer to service_status variable on triplex parent
 	IMPLICITENDUSE *implicit_enduse_list;	///< implicit enduses
 	static set implicit_enduses_active;		///< implicit enduses that are to be activated
 	static enumeration implicit_enduse_source; ///< source of implicit enduses (e.g., ELCAP1990, ELCAP2010, RBSA2014)
@@ -240,8 +230,8 @@ public:
 	double hvac_duty_cycle;
 
 	/* Energy Storage Variable */
-	double thermal_storage_present;		//Indication of if thermal storage is present and available for drawing
-	double thermal_storage_inuse;		//Flag to indicate thermal storage is being pulled at the moment
+	bool thermal_storage_present;		//Indication of if thermal storage is present and available for drawing
+	bool thermal_storage_inuse;		//Flag to indicate thermal storage is being pulled at the moment
 
 	typedef enum {
 		ST_NONE = 0x00000000,	///< flag to indicate no system is installed
@@ -393,9 +383,6 @@ public:
 	double Rwindows;
 	double Rdoors;
 
-	double *pTout;	// pointer to outdoor temperature (see climate)
-	double *pRhout;	// pointer to outdoor humidity (see climate)
-	double *pSolar;	// pointer to solar radiation array (see climate)
 	double incident_solar_radiation;///< This variable hold the average incident solar radiation hitting the house in Btu/(hr*sf)
 
 	double Tair;
@@ -429,9 +416,36 @@ private:
 	bool check_start;
 	bool heat_start;
 
-	complex load_values[3][3];	//Power, Current, and impedance (admittance) load accumulators for
 	bool deltamode_inclusive;	//Boolean for deltamode calls - pulled from object flags
 	bool deltamode_registered;	//Boolean for deltamode registration -- basically a "first run" flag
+	bool proper_meter_parent;		//Flag to see if powerflow interactions should occur
+	bool proper_climate_found;		//Flag to see if climate interactions should occur
+
+	//Pointers for powerflow properties
+	gld_property *pCircuit_V[3];					///< pointer to the three voltages on three lines
+	gld_property *pLine_I[3];						///< pointer to the three current on three lines
+	gld_property *pShunt[3];						///< pointer to shunt value on triplex parent
+	gld_property *pPower[3];						///< pointer to power value on triplex parent
+	gld_property *pMeterStatus;						///< Pointer to service_status variable on triplex parent
+	gld_property *pFrequency;						///< pointer to frequency value on triplex parent
+
+	//Default or "connecting point" values for powerflow interactions
+	complex value_Circuit_V[3];					///< value holder for the three voltages on three lines
+	complex value_Line_I[3];					///< value holder for the three current on three lines
+	complex value_Shunt[3];						///< value holder for shunt value on triplex parent
+	complex value_Power[3];						///< value holder for power value on triplex parent
+	enumeration value_MeterStatus;				///< value holder for service_status variable on triplex parent
+	double value_Frequency;						///< value holder for measured frequency on triplex parent
+
+	//Pointers for climate properties
+	gld_property *pTout;		// pointer to outdoor temperature (see climate)
+	gld_property *pRhout;		// pointer to outdoor humidity (see climate)
+	gld_property *pSolar[9];	// pointer to solar radiation array (see climate)
+
+	//Values for the weather information
+	double value_Tout;			//< Value holder for outside temperature
+	double value_Rhout;			//< Value holder for relative humidity
+	double value_Solar[9];		//< Value holder for solar irradiance
 
 public:
 	int error_flag;
@@ -464,21 +478,13 @@ public:
 
 // access methods
 public:
-	inline double get_floor_area () { return floor_area; };
-	inline double get_Tout () { return *pTout; };
-	inline double get_Tair () { return Tair; };
-
-	complex *get_complex(OBJECT *obj, char *name);
-	bool *get_bool(OBJECT *obj, char *name);
-	int *get_enum(OBJECT *obj, char *name);
+	//Map function
+	gld_property *map_complex_value(OBJECT *obj, char *name);
+	gld_property *map_double_value(OBJECT *obj, char *name);
+	void pull_complex_powerflow_values(void);
+	void pull_climate_values(void);
+	void push_complex_powerflow_values(void);
 };
-
-inline double sgn(double x) 
-{
-	if (x<0) return -1;
-	if (x>0) return 1;
-	return 0;
-}
 
 #endif
 

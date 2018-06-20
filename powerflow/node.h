@@ -10,8 +10,6 @@
 #include "powerflow.h"
 
 //Deltamode functions
-EXPORT complex *delta_linkage(OBJECT *obj, unsigned char mapvar);
-EXPORT STATUS delta_frequency_node(OBJECT *obj, complex *powerval, complex *freqpowerval);
 EXPORT SIMULATIONMODE interupdate_node(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 EXPORT STATUS swap_node_swing_status(OBJECT *obj, bool desired_status);
 EXPORT STATUS node_reset_disabled_status(OBJECT *nodeObj);
@@ -125,6 +123,8 @@ private:
 	double out_of_violation_time_total;		//Tracking variable to see how long we've been "outside of bad conditions"
 	double prev_time_dbl;					//Tracking variable for GFA functionality
 	double GFA_Update_time;
+	GL_STRUCT(complex_array,full_Y_matrix);
+	GL_STRUCT(complex_array,full_Y_all_matrix);
 
 	//VFD-related items
 	bool VFD_attached;						///< Flag to indicate this is on the to-side of a VFD link
@@ -204,6 +204,8 @@ public:
 	complex voltaged[3];	/// bus voltage differences
 	complex current[3];		/// bus current injection (positive = in)
 	complex pre_rotated_current[3];	/// bus current that has been rotated already for deltamode (direct post to powerflow)
+	complex deltamode_dynamic_current[3];	/// bus current that is pre-rotated, but also has ability to be reset within powerflow
+	complex deltamode_PGenTotal;			/// Bus generated power - used deltamode
 	complex power[3];		/// bus power injection (positive = in)
 	complex shunt[3];		/// bus shunt admittance 
 	complex current_dy[6];	/// bus current injection (positive = in), explicitly specify delta and wye portions
@@ -212,7 +214,6 @@ public:
 	complex *full_Y;		/// full 3x3 bus shunt admittance - populate as necessary
 	complex *full_Y_load;	/// 3x1 bus shunt admittance - meant to update (not part of BA_diag) - populate as necessary
 	complex *full_Y_all;	/// Full 3x3 bus admittance with "other" contributions (self of full admittance) - populate as necessary
-	complex *DynVariable;	/// Dynamics extra variable (current and power for gens, typically)
 	DYN_NODE_TYPE node_type;/// Variable to indicate what we are - prevents needing a gl_object_isa EVERY...SINGLE...TIME in an already slow dynamic simulation
 	complex current12;		/// Used for phase 1-2 current injections in triplex
 	complex nom_res_curr[3];/// Used for the inclusion of nominal residential currents (for angle adjustments)
@@ -236,6 +237,7 @@ public:
 public:
 	static CLASS *oclass;
 	static CLASS *pclass;
+	static node *defaults;
 public:
 	node(MODULE *mod);
 	inline node(CLASS *cl=oclass):powerflow_object(cl){};
@@ -265,7 +267,7 @@ public:
 
 	int NR_populate(void);
 	OBJECT *SubNodeParent;	/// Child node's original parent or child of parent
-	int NR_current_update(bool postpass, bool parentcall);
+	int NR_current_update(bool parentcall);
 	object TopologicalParent;	/// Child node's original parent as per the topological configuration in the GLM file
 
 	//NR bus status toggle function

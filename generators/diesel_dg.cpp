@@ -621,10 +621,18 @@ int diesel_dg::create(void)
 	gov_ggv1_fsrn_enable = true;
 
 	//Other deltamode-variables
-	bus_admittance_mat = NULL;
-	full_bus_admittance_mat = NULL;
-	PGenerated = NULL;
-	IGenerated = NULL;
+	pPGenerated = NULL;
+	pIGenerated[0] = pIGenerated[1] = pIGenerated[2] = NULL;
+	pbus_full_Y_mat = NULL;
+	pbus_full_Y_all_mat = NULL;
+	generator_admittance[0][0] = generator_admittance[0][1] = generator_admittance[0][2] = complex(0.0,0.0);
+	generator_admittance[1][0] = generator_admittance[1][1] = generator_admittance[1][2] = complex(0.0,0.0);
+	generator_admittance[2][0] = generator_admittance[2][1] = generator_admittance[2][2] = complex(0.0,0.0);
+
+	full_bus_admittance_mat[0][0] = full_bus_admittance_mat[0][1] = full_bus_admittance_mat[0][2] = complex(0.0,0.0);
+	full_bus_admittance_mat[1][0] = full_bus_admittance_mat[1][1] = full_bus_admittance_mat[1][2] = complex(0.0,0.0);
+	full_bus_admittance_mat[2][0] = full_bus_admittance_mat[2][1] = full_bus_admittance_mat[2][2] = complex(0.0,0.0);
+	value_IGenerated[0] = value_IGenerated[1] = value_IGenerated[2] = complex(0.0,0.0);
 	Governor_type = NO_GOV;
 	Exciter_type = NO_EXC;
 
@@ -716,6 +724,13 @@ int diesel_dg::create(void)
 	pwr_electric_init = -1;
 	frequency_deviation_energy = 0;
 	frequency_deviation_max = 0;
+	//NULL/zero pointers
+	pCircuit_V[0] = pCircuit_V[1] = pCircuit_V[2] = NULL;
+	pLine_I[0] = pLine_I[1] = pLine_I[2] = NULL;
+	value_Circuit_V[0] = value_Circuit_V[1] = value_Circuit_V[2] = complex(0.0,0.0);
+	value_Line_I[0] = value_Line_I[1] = value_Line_I[2] = complex(0.0,0.0);
+
+	parent_is_powerflow = false;	//By default, we're not a good child
 
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -724,28 +739,21 @@ int diesel_dg::create(void)
 int diesel_dg::init(OBJECT *parent)
 {
 	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *tmp_obj = NULL;
 
-	PROPERTY *pval;
+	int temp_idx_x, temp_idx_y;
 	double ZB, SB, EB;
 	double test_pf;
-	bool *Norton_posting;
-	bool *Frequency_mapped;
+	gld_property *Frequency_mapped;
+	gld_property *temp_property_pointer;
+	gld_wlock *test_rlock;
+	bool temp_bool_value;
+	double temp_voltage_magnitude;
+	complex temp_complex_value;
+	complex_array temp_complex_array;
+
 	complex tst, tst2, tst3, tst4;
 	current_A = current_B = current_C = 0.0;
-
-	// construct circuit variable map to meter -- copied from 'House' module
-	struct {
-		complex **var;
-		char *varname;
-	} map[] = {
-		// local object name,	meter object name
-		{&pCircuit_V,			"voltage_A"}, // assumes 2 and 3 follow immediately in memory
-		{&pLine_I,				"current_A"}, // assumes 2 and 3 follow immediately in memory
-		/// @todo use triplex property mapping instead of assuming memory order for meter variables (residential, low priority) (ticket #139)
-	};
-
-	static complex default_line123_voltage[3], default_line1_current[3];
-	int i;
 
 	//Set the deltamode flag, if desired
 	if ((obj->flags & OF_DELTAMODE) == OF_DELTAMODE)
@@ -756,33 +764,96 @@ int diesel_dg::init(OBJECT *parent)
 	// find parent meter, if not defined, use a default meter (using static variable 'default_meter')
 	if (parent!=NULL)
 	{
-		if (gl_object_isa(parent,"meter","powerflow") || gl_object_isa(parent,"node","powerflow") || gl_object_isa(parent,"load","powerflow") ||  gl_object_isa(parent,"elec_frequency","powerflow") )
+		if (gl_object_isa(parent,"meter","powerflow") || gl_object_isa(parent,"node","powerflow") || gl_object_isa(parent,"load","powerflow"))
 		{
-			// attach meter variables to each circuit
-			for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
-				*(map[i].var) = get_complex(parent,map[i].varname);
+			//Flag us as a proper child
+			parent_is_powerflow = true;
+
+			//See if this attached node is a child or not
+			if (parent->parent != NULL)
+			{
+				//Map parent
+				tmp_obj = parent->parent;
+
+				//See what it is
+				if ((gl_object_isa(tmp_obj,"meter","powerflow") == false) && (gl_object_isa(tmp_obj,"node","powerflow")==false) && (gl_object_isa(tmp_obj,"load","powerflow")==false))
+				{
+					//Not a wierd map, just use normal parent
+					tmp_obj = parent;
+				}
+				else	//Implies it is a powerflow parent
+				{
+					//See if we are deltamode-enabled -- if so, flag our parent while we're here
+					if (deltamode_inclusive == true)
+					{
+						//Map our deltamode flag and set it (parent will be done below)
+						temp_property_pointer = new gld_property(parent,"Norton_dynamic");
+
+						//Make sure it worked
+						if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_bool() != true))
+						{
+							GL_THROW("diesel_dg:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
+							//Defined elsewhere
+						}
+
+						//Flag it to true
+						temp_bool_value = true;
+						temp_property_pointer->setp<bool>(temp_bool_value,*test_rlock);
+
+						//Remove it
+						delete temp_property_pointer;
+					}
+					//Default else -- it is one of those, but not deltamode, so nothing extra to do
+				}//End we were a powerflow child
+			}
+			else	//It is nul
+			{
+				//Just point it to the normal parent
+				tmp_obj = parent;
+			}
+
+			//Now do the standard mapping
+
+			//Map the voltage
+			pCircuit_V[0] = map_complex_value(tmp_obj,"voltage_A");
+			pCircuit_V[1] = map_complex_value(tmp_obj,"voltage_B");
+			pCircuit_V[2] = map_complex_value(tmp_obj,"voltage_C");
+
+			//Current gets mapped this way too right now, but that may not be right
+			pLine_I[0] = map_complex_value(tmp_obj,"current_A");
+			pLine_I[1] = map_complex_value(tmp_obj,"current_B");
+			pLine_I[2] = map_complex_value(tmp_obj,"current_C");
 
 			//If we were deltamode requesting, set the flag on the other side
 			if (deltamode_inclusive==true)
 			{
-				//Map the flag
-				pval = gl_get_property(parent,"Norton_dynamic");
+				//Map the current injection variables
+				pIGenerated[0] = map_complex_value(tmp_obj,"deltamode_generator_current_A");
+				pIGenerated[1] = map_complex_value(tmp_obj,"deltamode_generator_current_B");
+				pIGenerated[2] = map_complex_value(tmp_obj,"deltamode_generator_current_C");
 
-				//Check it
-				if ((pval==NULL) || (pval->ptype!=PT_bool))
+				//Map the PGenerated value
+				pPGenerated = map_complex_value(tmp_obj,"deltamode_PGenTotal");
+
+				//Map the flag
+				temp_property_pointer = new gld_property(tmp_obj,"Norton_dynamic");
+
+				//Make sure it worked
+				if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_bool() != true))
 				{
-					GL_THROW("diesel_dg:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
+					GL_THROW("diesel_dg:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",tmp_obj->name?tmp_obj->name:"unnamed");
 					/*  TROUBLESHOOT
 					While attempting to set up the deltamode interfaces and calculations with powerflow, the required interface could not be mapped.
 					Please check your GLM and try again.  If the error persists, please submit a trac ticket with your code.
 					*/
 				}
 
-				//Map to the intermediate
-				Norton_posting = (bool*)GETADDR(parent,pval);
+				//Flag it to true
+				temp_bool_value = true;
+				temp_property_pointer->setp<bool>(temp_bool_value,*test_rlock);
 
-				//Set the flag
-				*Norton_posting = true;
+				//Remove it
+				delete temp_property_pointer;
 			}
 		}
 		else	//Only three-phase node objects supported right now
@@ -794,12 +865,11 @@ int diesel_dg::init(OBJECT *parent)
 			*/
 		}
 
-		//Map phases
-		set *phaseInfo;
-		PROPERTY *tempProp;
-		tempProp = gl_get_property(parent,"phases");
+		//Map and pull the phases
+		temp_property_pointer = new gld_property(parent,"phases");
 
-		if ((tempProp==NULL || tempProp->ptype!=PT_set))
+		//Make sure ti worked
+		if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_set() != true))
 		{
 			GL_THROW("Unable to map phases property - ensure the parent is a meter or a node or a load");
 			/*  TROUBLESHOOT
@@ -808,11 +878,13 @@ int diesel_dg::init(OBJECT *parent)
 			again.  If the error persists, please submit your code and a bug report via the Trac website.
 			*/
 		}
-		else
-			phaseInfo = (set*)GETADDR(parent,tempProp);
 
-		//Copy in so the code works
-		phases = *phaseInfo;
+		//Pull the phase information
+		phases = temp_property_pointer->get_set();
+
+		//Clear the temporary pointer
+		delete temp_property_pointer;
+
 		if((phases & 0x0007) != 0x0007){//parent does not have all three meters
 			GL_THROW("The diesel_dg object must be connected to all three phases. Please make sure the parent object has all three phases.");
 			/* TROUBLESHOOT
@@ -821,20 +893,23 @@ int diesel_dg::init(OBJECT *parent)
 			*/
 		}
 	}
-	else
+	else	//No parent
 	{
-		OBJECT *obj = OBJECTHDR(this);
-		gl_warning("diesel_dg:%d %s", obj->id, parent==NULL?"has no parent meter defined":"parent is not a meter");
+		//Not a good child -- bad child?
+		parent_is_powerflow = false;
 
-		// attach meter variables to each circuit in the default_meter
-			*(map[0].var) = &default_line123_voltage[0];
-			*(map[1].var) = &default_line1_current[0];
+		gl_warning("diesel_dg:%d - %s has no parent object - default voltages being used",obj->id,(obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		The diesel_dg object does not have a proper parent -- default voltage values are used.
+		*/
 
-		// provide initial values for voltages
-			default_line123_voltage[0] = complex(Rated_V/sqrt(3.0),0);
-			default_line123_voltage[1] = complex(Rated_V/sqrt(3.0)*cos(2*PI/3),Rated_V/sqrt(3.0)*sin(2*PI/3));
-			default_line123_voltage[2] = complex(Rated_V/sqrt(3.0)*cos(-2*PI/3),Rated_V/sqrt(3.0)*sin(-2*PI/3));
+		//Determine the magnitude
+		temp_voltage_magnitude = Rated_V/sqrt(3.0);
 
+		//Populate the working variables
+		value_Circuit_V[0].SetPolar(temp_voltage_magnitude,0.0);
+		value_Circuit_V[1].SetPolar(temp_voltage_magnitude,-2.0/3.0*PI);
+		value_Circuit_V[2].SetPolar(temp_voltage_magnitude,2.0/3.0*PI);
 	}
 
 	//Preliminary check on modes
@@ -999,6 +1074,81 @@ int diesel_dg::init(OBJECT *parent)
 
 		//Compute other constant terms
 		Rr = 2.0*(X2.Re()-Ra);
+
+		//If we're deltamode-enabled and parented to a meter - post the admittance up
+		if ((deltamode_inclusive == true) && (parent_is_powerflow == true))
+		{
+			//Map up the admittance matrix to apply our contributions
+			pbus_full_Y_mat = new gld_property(parent,"deltamode_full_Y_matrix");
+
+			//Check it
+			if ((pbus_full_Y_mat->is_valid() != true) || (pbus_full_Y_mat->is_complex_array() != true))
+			{
+				GL_THROW("diesel_dg:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
+				//Defined above
+			}
+
+			//Pull down the variable
+			pbus_full_Y_mat->getp<complex_array>(temp_complex_array,*test_rlock);
+
+			//See if it is valid
+			if (temp_complex_array.is_valid(0,0) != true)
+			{
+				//Create it
+				temp_complex_array.grow_to(3,3);
+
+				//Zero it, by default
+				for (temp_idx_x=0; temp_idx_x<3; temp_idx_x++)
+				{
+					for (temp_idx_y=0; temp_idx_y<3; temp_idx_y++)
+					{
+						temp_complex_array.set_at(temp_idx_x,temp_idx_y,complex(0.0,0.0));
+					}
+				}
+			}
+			else	//Already populated, make sure it is the right size!
+			{
+				if ((temp_complex_array.get_rows() != 3) && (temp_complex_array.get_cols() != 3))
+				{
+					GL_THROW("diesel_dg:%s exposed Norton-equivalent matrix is the wrong size!",obj->name?obj->name:"unnamed");
+					/*  TROUBLESHOOT
+					While mapping to an admittance matrix on the parent node device, it was found it is the wrong size.
+					Please try again.  If the error persists, please submit your code and model via the issue tracking system.
+					*/
+				}
+				//Default else -- right size
+			}
+
+			//Loop through and store the values
+			for (temp_idx_x=0; temp_idx_x<3; temp_idx_x++)
+			{
+				for (temp_idx_y=0; temp_idx_y<3; temp_idx_y++)
+				{
+					//Read the existing value
+					temp_complex_value = temp_complex_array.get_at(temp_idx_x,temp_idx_y);
+
+					//Accumulate into it
+					temp_complex_value += generator_admittance[temp_idx_x][temp_idx_y];
+
+					//Store it
+					temp_complex_array.set_at(temp_idx_x,temp_idx_y,temp_complex_value);
+				}
+			}
+
+			//Push it back up
+			pbus_full_Y_mat->setp<complex_array>(temp_complex_array,*test_rlock);
+
+			//Map the full version needed later
+			//Map up the admittance matrix to apply our contributions
+			pbus_full_Y_all_mat = new gld_property(parent,"deltamode_full_Y_all_matrix");
+
+			//Check it
+			if ((pbus_full_Y_all_mat->is_valid() != true) || (pbus_full_Y_all_mat->is_complex_array() != true))
+			{
+				GL_THROW("diesel_dg:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
+				//Defined above
+			}
+		}//End powerflow deltamode - generator admittance mapping
 
 		// If P_CONSTANT mode, change power_val based on given P_CONSTANT_Pref value
 		if (Governor_type == P_CONSTANT) {
@@ -1245,10 +1395,10 @@ int diesel_dg::init(OBJECT *parent)
 			Frequency_mapped = NULL;
 
 			//Get linking to checker variable
-			Frequency_mapped = (bool *)gl_get_module_var(gl_find_module("powerflow"),"master_frequency_update");
+			Frequency_mapped = new gld_property("powerflow::master_frequency_update");
 
 			//See if it worked
-			if (Frequency_mapped == NULL)
+			if ((Frequency_mapped->is_valid() != true) || (Frequency_mapped->is_bool() != true))
 			{
 				GL_THROW("diesel_dg:%s - Failed to map frequency checking variable from powerflow for deltamode",obj->name?obj->name:"unnamed");
 				/*  TROUBLESHOOT
@@ -1257,25 +1407,32 @@ int diesel_dg::init(OBJECT *parent)
 				the error persists, please submit your code and a bug report via the ticketing system.
 				*/
 			}
+
+			//Pull the value
+			Frequency_mapped->getp<bool>(temp_bool_value,*test_rlock);
 			
 			//Check the value
-			if (*Frequency_mapped == false)	//No one has mapped yet, we are volunteered
+			if (temp_bool_value == false)	//No one has mapped yet, we are volunteered
 			{
 				//Update powerflow frequency
-				mapped_freq_variable = (double *)gl_get_module_var(gl_find_module("powerflow"),"current_frequency");
+				mapped_freq_variable = new gld_property("powerflow::current_frequency");
 
-				//Make sure it isn't empty
-				if (mapped_freq_variable == NULL)
+				//Make sure it worked
+				if ((mapped_freq_variable->is_valid() != true) || (mapped_freq_variable->is_double() != true))
 				{
 					GL_THROW("diesel_dg:%s - Failed to map frequency checking variable from powerflow for deltamode",obj->name?obj->name:"unnamed");
 					//Defined above
 				}
 
 				//Flag the frequency mapping as having occurred
-				*Frequency_mapped = true;
+				temp_bool_value = true;
+				Frequency_mapped->setp<bool>(temp_bool_value,*test_rlock);
 			}
 			//Default else -- someone else is already mapped, just continue onward
 
+			//Delete the reference
+			delete Frequency_mapped;
+			
 			gen_object_count++;	//Increment the counter
 		}
 	}//End deltamode inclusive
@@ -1336,11 +1493,10 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 	double Pmech;
 	unsigned char jindex, kindex;
 	OBJECT *obj = OBJECTHDR(this);
-	double *ptemp_double;
-	double temp_double_high, temp_double_low, tdiff, ang_diff;
+	gld_property *temp_property_ptr;
+	double temp_double_high, temp_double_low, temp_double_val, tdiff, ang_diff;
 	complex temp_current_val[3];
 	complex temp_voltage_val[3];
-	FUNCTIONADDR test_fxn;
 	complex rotate_value;
 	TIMESTAMP tret_value;
 	double vdiff;
@@ -1348,9 +1504,14 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 	double real_diff;     // Temporary variable representing difference between reference real power and actual real power output
 	double reactive_diff; // Temporary variable representing difference between reference reactive power and actual reactive power output
 	complex temp_power_val[3];
+	complex temp_complex_value_power;
+	gld_wlock *test_rlock;
 
 	//Assume always want TS_NEVER
 	tret_value = TS_NEVER;
+
+	//Reset the poweflow interfaces
+	reset_powerflow_accumulators();
 
 	//First run allocation - in diesel_dg for now, but may need to move elsewhere
 	if (first_run == true)	//First run
@@ -1415,9 +1576,10 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 				if (gl_object_isa(obj->parent,"meter","powerflow") || gl_object_isa(obj->parent,"load","powerflow") || gl_object_isa(obj->parent,"node","powerflow") || gl_object_isa(obj->parent,"elec_frequency","powerflow"))
 				{
 					//Check the nominal voltage
-					ptemp_double = get_double(obj->parent,"nominal_voltage");
+					temp_property_ptr = new gld_property(obj->parent,"nominal_voltage");
 
-					if (ptemp_double == NULL)
+					//Check it
+					if ((temp_property_ptr->is_valid() != true) || (temp_property_ptr->is_double() != true))
 					{
 						GL_THROW("diesel_dg:%s - unable to retrieve nominal_voltage from parent!",obj->name?obj->name:"unnamed");
 						/*  TROUBLESHOOT
@@ -1427,12 +1589,15 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 					}
 					else	//Found it
 					{
+						//Pull its value
+						temp_double_val = temp_property_ptr->get_double();
+
 						//Form a "deadband" - not sure how much it will like "exact" comparisons of doubles
 						temp_double_high = Rated_V/sqrt(3.0)*1.01;
 						temp_double_low = Rated_V/sqrt(3.0)*0.99;
 
 						//Compare it
-						if ((*ptemp_double > temp_double_high) || (*ptemp_double < temp_double_low))
+						if ((temp_double_val > temp_double_high) || (temp_double_val < temp_double_low))
 						{
 							GL_THROW("diesel_dg:%s - nominal voltage mismatch!",obj->name?obj->name:"unnamed");
 							/*  TROUBLESHOOT
@@ -1442,75 +1607,14 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 						}
 					}//End found point else
 
-					//Map the bus mappings
-					test_fxn = (FUNCTIONADDR)(gl_get_function(obj->parent,"delta_linkage_node"));
-
-					//See if it was located
-					if (test_fxn == NULL)
-					{
-						GL_THROW("diesel_dg:%s - failed to map bus admittance matrix from node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
-						/*  TROUBLESHOOT
-						While attempting to map the location of a bus interface point for the deltamode capabilities, an error was encountered.
-						Please try again.  If the error persists, please submit your code and a bug report via the trac website.
-						*/
-					}
-
-					//Map the value - bus admittance is 0
-					bus_admittance_mat = ((complex * (*)(OBJECT *, unsigned char))(*test_fxn))(obj->parent,0);
-
-					//See if it worked (should return NULL if the object wasn't "delta-compliant"
-					if (bus_admittance_mat==NULL)
-					{
-						GL_THROW("diesel_dg:%s - invalid reference passed from node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
-						/*  TROUBLESHOOT
-						While attempting to map a deltamode interface variable, an error occurred.  This could be due to the matrix not being
-						initialized correctly, or because the attached node is not flagged for deltamode.
-						*/
-					}
-
-					//Copy the contents in
-					for (jindex=0; jindex<3; jindex++)
-					{
-						for (kindex=0; kindex<3; kindex++)
-						{
-							bus_admittance_mat[3*jindex+kindex]+=generator_admittance[jindex][kindex];
-						}
-					}
-
-					//Map the value - PGenerated is 1
-					PGenerated = ((complex * (*)(OBJECT *, unsigned char))(*test_fxn))(obj->parent,1);
-
-					//See if it worked (should return NULL if the object wasn't "delta-compliant"
-					if (PGenerated==NULL)
-					{
-						GL_THROW("diesel_dg:%s - invalid reference passed from node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
-						//Defined above
-					}
-
-					//Map current "injection" - direct generator current
-					IGenerated = ((complex * (*)(OBJECT *, unsigned char))(*test_fxn))(obj->parent,2);
-
-					//See if it worked (should return NULL if the object wasn't "delta-compliant"
-					if (IGenerated==NULL)
-					{
-						GL_THROW("diesel_dg:%s - invalid reference passed from node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
-						//Defined above
-					}
-
-					//Map the value - full bus admittance is 3
-					full_bus_admittance_mat = ((complex * (*)(OBJECT *, unsigned char))(*test_fxn))(obj->parent,3);
-
-					//See if it worked (should return NULL if the object wasn't "delta-compliant"
-					if (full_bus_admittance_mat==NULL)
-					{
-						GL_THROW("diesel_dg:%s - invalid reference passed from node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
-						//Defined above
-					}
-
-					//Map up requisite variables we missed earlier?
+					//clear the property
+					delete temp_property_ptr;
 
 					//Accumulate and pass our starting power
-					*PGenerated = power_val[0] + power_val[1] + power_val[2];
+					temp_complex_value_power = power_val[0] + power_val[1] + power_val[2];
+
+					//Push it up
+					pPGenerated->setp<complex>(temp_complex_value_power,*test_rlock);
 
 				}//End parent is a node object
 				else	//Nope, so who knows what is going on - better fail, just to be safe
@@ -1580,9 +1684,12 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 		//current_A = current_B = current_C = 0.0;
 
 		int k;
-		voltage_A = pCircuit_V[0];	//Syncs the meter parent to the generator.
-		voltage_B = pCircuit_V[1];
-		voltage_C = pCircuit_V[2];
+		//Powerflow value pull
+		pull_powerflow_values();
+
+		voltage_A = value_Circuit_V[0];	//Syncs the meter parent to the generator.
+		voltage_B = value_Circuit_V[1];
+		voltage_C = value_Circuit_V[2];
 
 		double Pconva = (voltage_A.Mag() / (voltage_A.Mag() + voltage_B.Mag() + voltage_C.Mag()))*Pconv;
 		double Pconvb = (voltage_B.Mag() / (voltage_A.Mag() + voltage_B.Mag() + voltage_C.Mag()))*Pconv;
@@ -1667,15 +1774,19 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 		GenElecEff = TotalPowerOutput.Re()/Pconv * 100;
 
-		pLine_I[0] = current_A;
-		pLine_I[1] = current_B;
-		pLine_I[2] = current_C;
+		value_Line_I[0] = current_A;
+		value_Line_I[1] = current_B;
+		value_Line_I[2] = current_C;
+
 	}//End no dynamic generator (older code)
 	else	//Must be a synchronous dynamic machine
 	{
 		//Only do updates if this is a new timestep
 		if ((prev_time < t1) && (first_run == false))
 		{
+			//Pull the current powerflow values down
+			pull_powerflow_values();
+
 			//Get time difference
 			tdiff = (double)(t1)-prev_time_dbl;
 
@@ -1687,14 +1798,17 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 			rotate_value = complex_exp(ang_diff);
 
 			//Apply to voltage - See if this breaks stuff
-			pCircuit_V[0] = pCircuit_V[0]*rotate_value;
-			pCircuit_V[1] = pCircuit_V[1]*rotate_value;
-			pCircuit_V[2] = pCircuit_V[2]*rotate_value;
+			value_Circuit_V[0] = value_Circuit_V[0]*rotate_value;
+			value_Circuit_V[1] = value_Circuit_V[1]*rotate_value;
+			value_Circuit_V[2] = value_Circuit_V[2]*rotate_value;
+
+			//Do a voltage push, since this originally did
+			push_powerflow_values(true);
 
 			//Rotate the current injection too, otherwise it may "undo" this
-			IGenerated[0] = IGenerated[0]*rotate_value;
-			IGenerated[1] = IGenerated[1]*rotate_value;
-			IGenerated[2] = IGenerated[2]*rotate_value;
+			value_IGenerated[0] = value_IGenerated[0]*rotate_value;
+			value_IGenerated[1] = value_IGenerated[1]*rotate_value;
+			value_IGenerated[2] = value_IGenerated[2]*rotate_value;
 
 			if (Governor_type == P_CONSTANT) {
 				//Figure out P difference based on given Pref
@@ -1707,14 +1821,14 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 				temp_power_val[2] = power_val[2] + complex(real_diff, 0.0);
 
 				//Back out the current injection
-				temp_current_val[0] = ~(temp_power_val[0]/pCircuit_V[0]) + generator_admittance[0][0]*pCircuit_V[0] + generator_admittance[0][1]*pCircuit_V[1] + generator_admittance[0][2]*pCircuit_V[2];
-				temp_current_val[1] = ~(temp_power_val[1]/pCircuit_V[1]) + generator_admittance[1][0]*pCircuit_V[0] + generator_admittance[1][1]*pCircuit_V[1] + generator_admittance[1][2]*pCircuit_V[2];
-				temp_current_val[2] = ~(temp_power_val[2]/pCircuit_V[2]) + generator_admittance[2][0]*pCircuit_V[0] + generator_admittance[2][1]*pCircuit_V[1] + generator_admittance[2][2]*pCircuit_V[2];
+				temp_current_val[0] = ~(temp_power_val[0]/value_Circuit_V[0]) + generator_admittance[0][0]*value_Circuit_V[0] + generator_admittance[0][1]*value_Circuit_V[1] + generator_admittance[0][2]*value_Circuit_V[2];
+				temp_current_val[1] = ~(temp_power_val[1]/value_Circuit_V[1]) + generator_admittance[1][0]*value_Circuit_V[0] + generator_admittance[1][1]*value_Circuit_V[1] + generator_admittance[1][2]*value_Circuit_V[2];
+				temp_current_val[2] = ~(temp_power_val[2]/value_Circuit_V[2]) + generator_admittance[2][0]*value_Circuit_V[0] + generator_admittance[2][1]*value_Circuit_V[1] + generator_admittance[2][2]*value_Circuit_V[2];
 
 				//Apply and see what happens
-				IGenerated[0] = temp_current_val[0];
-				IGenerated[1] = temp_current_val[1];
-				IGenerated[2] = temp_current_val[2];
+				value_IGenerated[0] = temp_current_val[0];
+				value_IGenerated[1] = temp_current_val[1];
+				value_IGenerated[2] = temp_current_val[2];
 
 				//Keep us here
 				tret_value = t1;
@@ -1728,7 +1842,7 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 			if (Exciter_type == SEXS)
 			{
 				//Compute our current voltage point (pos_sequence)
-				convert_abc_to_pn0(&pCircuit_V[0],&temp_voltage_val[0]);
+				convert_abc_to_pn0(&value_Circuit_V[0],&temp_voltage_val[0]);
 
 				//Get the positive sequence magnitude
 				voltage_mag_curr = temp_voltage_val[0].Mag()/voltage_base;
@@ -1744,19 +1858,18 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 					temp_power_val[2] = power_val[2] + complex(real_diff,reactive_diff);
 
 					//Back out the current injection
-					temp_current_val[0] = ~(temp_power_val[0]/pCircuit_V[0]) + generator_admittance[0][0]*pCircuit_V[0] + generator_admittance[0][1]*pCircuit_V[1] + generator_admittance[0][2]*pCircuit_V[2];
-					temp_current_val[1] = ~(temp_power_val[1]/pCircuit_V[1]) + generator_admittance[1][0]*pCircuit_V[0] + generator_admittance[1][1]*pCircuit_V[1] + generator_admittance[1][2]*pCircuit_V[2];
-					temp_current_val[2] = ~(temp_power_val[2]/pCircuit_V[2]) + generator_admittance[2][0]*pCircuit_V[0] + generator_admittance[2][1]*pCircuit_V[1] + generator_admittance[2][2]*pCircuit_V[2];
+					temp_current_val[0] = ~(temp_power_val[0]/value_Circuit_V[0]) + generator_admittance[0][0]*value_Circuit_V[0] + generator_admittance[0][1]*value_Circuit_V[1] + generator_admittance[0][2]*value_Circuit_V[2];
+					temp_current_val[1] = ~(temp_power_val[1]/value_Circuit_V[1]) + generator_admittance[1][0]*value_Circuit_V[0] + generator_admittance[1][1]*value_Circuit_V[1] + generator_admittance[1][2]*value_Circuit_V[2];
+					temp_current_val[2] = ~(temp_power_val[2]/value_Circuit_V[2]) + generator_admittance[2][0]*value_Circuit_V[0] + generator_admittance[2][1]*value_Circuit_V[1] + generator_admittance[2][2]*value_Circuit_V[2];
 
 					//Apply and see what happens
-					IGenerated[0] = temp_current_val[0];
-					IGenerated[1] = temp_current_val[1];
-					IGenerated[2] = temp_current_val[2];
+					value_IGenerated[0] = temp_current_val[0];
+					value_IGenerated[1] = temp_current_val[1];
+					value_IGenerated[2] = temp_current_val[2];
 
 					//Keep us here
 					tret_value = t1;
 				}
-
 
 				if ((voltage_mag_curr>Max_Ef) || (voltage_mag_curr<Min_Ef))
 				{
@@ -1773,14 +1886,14 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 					temp_power_val[2] = power_val[2] + complex(0.0,reactive_diff);
 
 					//Back out the current injection
-					temp_current_val[0] = ~(temp_power_val[0]/pCircuit_V[0]) + generator_admittance[0][0]*pCircuit_V[0] + generator_admittance[0][1]*pCircuit_V[1] + generator_admittance[0][2]*pCircuit_V[2];
-					temp_current_val[1] = ~(temp_power_val[1]/pCircuit_V[1]) + generator_admittance[1][0]*pCircuit_V[0] + generator_admittance[1][1]*pCircuit_V[1] + generator_admittance[1][2]*pCircuit_V[2];
-					temp_current_val[2] = ~(temp_power_val[2]/pCircuit_V[2]) + generator_admittance[2][0]*pCircuit_V[0] + generator_admittance[2][1]*pCircuit_V[1] + generator_admittance[2][2]*pCircuit_V[2];
+					temp_current_val[0] = ~(temp_power_val[0]/value_Circuit_V[0]) + generator_admittance[0][0]*value_Circuit_V[0] + generator_admittance[0][1]*value_Circuit_V[1] + generator_admittance[0][2]*value_Circuit_V[2];
+					temp_current_val[1] = ~(temp_power_val[1]/value_Circuit_V[1]) + generator_admittance[1][0]*value_Circuit_V[0] + generator_admittance[1][1]*value_Circuit_V[1] + generator_admittance[1][2]*value_Circuit_V[2];
+					temp_current_val[2] = ~(temp_power_val[2]/value_Circuit_V[2]) + generator_admittance[2][0]*value_Circuit_V[0] + generator_admittance[2][1]*value_Circuit_V[1] + generator_admittance[2][2]*value_Circuit_V[2];
 
 					//Apply and see what happens
-					IGenerated[0] = temp_current_val[0];
-					IGenerated[1] = temp_current_val[1];
-					IGenerated[2] = temp_current_val[2];
+					value_IGenerated[0] = temp_current_val[0];
+					value_IGenerated[1] = temp_current_val[1];
+					value_IGenerated[2] = temp_current_val[2];
 
 					//Keep us here
 					tret_value = t1;
@@ -1791,6 +1904,9 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 		//Nothing else in here right now....all handled internal to powerflow
 	}//End synchronous dynamics-enabled generator
+
+	//Push the various accumulator values up
+	push_powerflow_values(false);
 
 	return tret_value;
 }
@@ -1803,8 +1919,14 @@ TIMESTAMP diesel_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	OBJECT *obj = OBJECTHDR(this);
 	complex aval, avalsq;
 	TIMESTAMP dt;
+	complex_array temp_complex_array;
+	int index_x, index_y;
+	gld_wlock *test_rlock;
 
 	TIMESTAMP t2 = TS_NEVER;
+
+	//Reset the powerflow interface values, for giggles
+	reset_powerflow_accumulators();
 
 	if (Gen_type == DYNAMIC)
 	{
@@ -1814,6 +1936,9 @@ TIMESTAMP diesel_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			deltamode_endtime = TS_NEVER;
 			deltamode_endtime_dbl = TSNVRDBL;
 		}
+
+		//Update the powerflow variables
+		pull_powerflow_values();
 
 		// Update energy, fuel usage, and emissions for the past time step, before updating power output
 		if (fuelEmissionCal == true) {
@@ -1852,14 +1977,14 @@ TIMESTAMP diesel_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 		//Update output power
 		//Get current injected
-		temp_current_val[0] = (IGenerated[0] - generator_admittance[0][0]*pCircuit_V[0] - generator_admittance[0][1]*pCircuit_V[1] - generator_admittance[0][2]*pCircuit_V[2]);
-		temp_current_val[1] = (IGenerated[1] - generator_admittance[1][0]*pCircuit_V[0] - generator_admittance[1][1]*pCircuit_V[1] - generator_admittance[1][2]*pCircuit_V[2]);
-		temp_current_val[2] = (IGenerated[2] - generator_admittance[2][0]*pCircuit_V[0] - generator_admittance[2][1]*pCircuit_V[1] - generator_admittance[2][2]*pCircuit_V[2]);
+		temp_current_val[0] = (value_IGenerated[0] - generator_admittance[0][0]*value_Circuit_V[0] - generator_admittance[0][1]*value_Circuit_V[1] - generator_admittance[0][2]*value_Circuit_V[2]);
+		temp_current_val[1] = (value_IGenerated[1] - generator_admittance[1][0]*value_Circuit_V[0] - generator_admittance[1][1]*value_Circuit_V[1] - generator_admittance[1][2]*value_Circuit_V[2]);
+		temp_current_val[2] = (value_IGenerated[2] - generator_admittance[2][0]*value_Circuit_V[0] - generator_admittance[2][1]*value_Circuit_V[1] - generator_admittance[2][2]*value_Circuit_V[2]);
 
 		//Update power output variables, just so we can see what is going on
-		power_val[0] = pCircuit_V[0]*~temp_current_val[0];
-		power_val[1] = pCircuit_V[1]*~temp_current_val[1];
-		power_val[2] = pCircuit_V[2]*~temp_current_val[2];
+		power_val[0] = value_Circuit_V[0]*~temp_current_val[0];
+		power_val[1] = value_Circuit_V[1]*~temp_current_val[1];
+		power_val[2] = value_Circuit_V[2]*~temp_current_val[2];
 
 		//Update the output power variable
 		curr_state.pwr_electric = power_val[0] + power_val[1] + power_val[2];
@@ -1885,10 +2010,27 @@ TIMESTAMP diesel_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			aval = complex(cos(2.0*PI/3.0),sin(2.0*PI/3.0));
 			avalsq = aval*aval;
 
+			//Pull in the current version of full_Y_all
+			pbus_full_Y_all_mat->getp<complex_array>(temp_complex_array,*test_rlock);
+
+			//Make sure it is the right size -- if so, pull it
+			if ((temp_complex_array.get_rows() == 3) && (temp_complex_array.get_cols() == 3))
+			{
+				//Push it into the matrix for "ease of access"
+				for (index_x=0; index_x<3; index_x++)
+				{
+					for (index_y=0; index_y<3; index_y++)
+					{
+						full_bus_admittance_mat[index_x][index_y] = temp_complex_array.get_at(index_x,index_y);
+					}
+				}
+			}
+			//Default else -- it's not the right size, so leave the existing matrix (even if it is zero)
+
 			//Perform the conversion
-			YS1_Full = full_bus_admittance_mat[0]+aval*full_bus_admittance_mat[3]+avalsq*full_bus_admittance_mat[6];
-			YS1_Full += avalsq*full_bus_admittance_mat[1]+full_bus_admittance_mat[4]+aval*full_bus_admittance_mat[7];
-			YS1_Full += aval*full_bus_admittance_mat[2]+avalsq*full_bus_admittance_mat[5]+full_bus_admittance_mat[8];
+			YS1_Full = full_bus_admittance_mat[0][0]+aval*full_bus_admittance_mat[1][0]+avalsq*full_bus_admittance_mat[2][0];
+			YS1_Full += avalsq*full_bus_admittance_mat[0][1]+full_bus_admittance_mat[1][1]+aval*full_bus_admittance_mat[2][1];
+			YS1_Full += aval*full_bus_admittance_mat[0][2]+avalsq*full_bus_admittance_mat[1][2]+full_bus_admittance_mat[2][2];
 			YS1_Full /= 3.0;
 
 		}//End "first run" paired
@@ -1901,22 +2043,135 @@ TIMESTAMP diesel_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
 }
 
-//Retrieves the pointer for a complex variable from another object
-complex *diesel_dg::get_complex(OBJECT *obj, char *name)
+//Map Complex value
+gld_property *diesel_dg::map_complex_value(OBJECT *obj, char *name)
 {
-	PROPERTY *p = gl_get_property(obj,name);
-	if (p==NULL || p->ptype!=PT_complex)
-		return NULL;
-	return (complex*)GETADDR(obj,p);
+	gld_property *pQuantity;
+	OBJECT *objhdr = OBJECTHDR(this);
+
+	//Map to the property of interest
+	pQuantity = new gld_property(obj,name);
+
+	//Make sure it worked
+	if ((pQuantity->is_valid() != true) || (pQuantity->is_complex() != true))
+	{
+		GL_THROW("diesel_dg:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to map a quantity from another object, an error occurred in diesel_dg.  Please try again.
+		If the error persists, please submit your system and a bug report via the ticketing system.
+		*/
+	}
+
+	//return the pointer
+	return pQuantity;
 }
 
-//Retrieves the pointer for a double variable from another object
-double *diesel_dg::get_double(OBJECT *obj, char *name)
+//Map double value
+gld_property *diesel_dg::map_double_value(OBJECT *obj, char *name)
 {
-	PROPERTY *p = gl_get_property(obj,name);
-	if (p==NULL || p->ptype!=PT_double)
-		return NULL;
-	return (double*)GETADDR(obj,p);
+	gld_property *pQuantity;
+	OBJECT *objhdr = OBJECTHDR(this);
+
+	//Map to the property of interest
+	pQuantity = new gld_property(obj,name);
+
+	//Make sure it worked
+	if ((pQuantity->is_valid() != true) || (pQuantity->is_double() != true))
+	{
+		GL_THROW("diesel_dg:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to map a quantity from another object, an error occurred in diesel_dg.  Please try again.
+		If the error persists, please submit your system and a bug report via the ticketing system.
+		*/
+	}
+
+	//return the pointer
+	return pQuantity;
+}
+
+//Function to pull the various powerflow gld_property values into their storage arrays
+void diesel_dg::pull_powerflow_values(void)
+{
+	int indexval;
+
+	//See if we're a proper child -- otherwise, skip all this
+	if (parent_is_powerflow == true)
+	{
+		for (indexval=0; indexval<3; indexval++)
+		{
+			//Pull the voltage down
+			value_Circuit_V[indexval] = pCircuit_V[indexval]->get_complex();
+
+			//Deltamode accumulators
+			if (deltamode_inclusive == true)
+			{
+				//Update IGenerated, in case the powerflow is overriding it
+				value_IGenerated[indexval] = pIGenerated[indexval]->get_complex();
+			}
+		}
+	}
+	//Default else -- do nothing
+}
+
+//Function to push/update the accumulators associated with the powerflow
+//Flag to update voltages, since those are usually a pull value (only does that
+void diesel_dg::push_powerflow_values(bool update_voltage)
+{
+	complex temp_complex_val;
+	gld_wlock *test_rlock;
+	int indexval;
+
+	//See if we're proper first
+	if (parent_is_powerflow == true)
+	{
+		if (update_voltage == true)
+		{
+			//Loop through the three-phases/accumulators
+			for (indexval=0; indexval<3; indexval++)
+			{
+				//**** push voltaget value -- not an accumulator, just force ****/
+				pCircuit_V[indexval]->setp<complex>(value_Circuit_V[indexval],*test_rlock);
+			}
+		}
+		else	//Standard update
+		{
+			//Loop through the three-phases/accumulators
+			for (indexval=0; indexval<3; indexval++)
+			{
+				//**** Pure Current value ***/
+				//Pull current value again, just in case
+				temp_complex_val = pLine_I[indexval]->get_complex();
+
+				//Add the difference
+				temp_complex_val += value_Line_I[indexval];
+
+				//Push it back up
+				pLine_I[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+
+				//Update dynamic variables
+				if (deltamode_inclusive == true)
+				{
+					//**** Pre-rotated current injection value ***/
+					//This is a direct write - not an accumulator
+					pIGenerated[indexval]->setp<complex>(value_IGenerated[indexval],*test_rlock);
+				}					
+			}
+		}
+	}
+	//Default else -- don't do anything
+}
+
+//Function to reset the accumulators/temp variables for powerflow
+void diesel_dg::reset_powerflow_accumulators(void)
+{
+	int indexval;
+
+	//Loop through and zero them
+	for (indexval=0; indexval<3; indexval++)
+	{
+		//pLine_I values
+		value_Line_I[indexval] = complex(0.0,0.0);
+	}
 }
 
 //Converts the admittance terms from sequence (pn0) to three-phase (abc)
@@ -1997,16 +2252,24 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 	unsigned char pass_mod;
 	unsigned int loop_index;
 	double temp_double, temp_mag_val, temp_mag_diff;
+	double temp_double_freq_val;
 	double deltat, deltath;
 	double omega_pu;
 	double x5a_now;
 	complex temp_rotation;
 	complex temp_complex[3];
 	complex temp_current_val[3];
+	gld_wlock *test_rlock;
 
 	//Create delta_t variable
 	deltat = (double)dt/(double)DT_SECOND;
 	deltath = deltat/2.0;
+
+	//Reset the powerflow interface variables
+	reset_powerflow_accumulators();
+
+	//Pull the present powerflow values
+	pull_powerflow_values();
 
 	//Initialization items
 	if ((delta_time==0) && (iteration_count_val==0))	//First run of new delta call
@@ -2157,14 +2420,14 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 	if (pass_mod==0)	//Predictor pass
 	{
 		//Compute the "present" electric power value before anything gets updated for the new timestep
-		temp_current_val[0] = (IGenerated[0] - generator_admittance[0][0]*pCircuit_V[0] - generator_admittance[0][1]*pCircuit_V[1] - generator_admittance[0][2]*pCircuit_V[2]);
-		temp_current_val[1] = (IGenerated[1] - generator_admittance[1][0]*pCircuit_V[0] - generator_admittance[1][1]*pCircuit_V[1] - generator_admittance[1][2]*pCircuit_V[2]);
-		temp_current_val[2] = (IGenerated[2] - generator_admittance[2][0]*pCircuit_V[0] - generator_admittance[2][1]*pCircuit_V[1] - generator_admittance[2][2]*pCircuit_V[2]);
+		temp_current_val[0] = (value_IGenerated[0] - generator_admittance[0][0]*value_Circuit_V[0] - generator_admittance[0][1]*value_Circuit_V[1] - generator_admittance[0][2]*value_Circuit_V[2]);
+		temp_current_val[1] = (value_IGenerated[1] - generator_admittance[1][0]*value_Circuit_V[0] - generator_admittance[1][1]*value_Circuit_V[1] - generator_admittance[1][2]*value_Circuit_V[2]);
+		temp_current_val[2] = (value_IGenerated[2] - generator_admittance[2][0]*value_Circuit_V[0] - generator_admittance[2][1]*value_Circuit_V[1] - generator_admittance[2][2]*value_Circuit_V[2]);
 
 		//Update power output variables, just so we can see what is going on
-		power_val[0] = pCircuit_V[0]*~temp_current_val[0];
-		power_val[1] = pCircuit_V[1]*~temp_current_val[1];
-		power_val[2] = pCircuit_V[2]*~temp_current_val[2];
+		power_val[0] = value_Circuit_V[0]*~temp_current_val[0];
+		power_val[1] = value_Circuit_V[1]*~temp_current_val[1];
+		power_val[2] = value_Circuit_V[2]*~temp_current_val[2];
 
 		//Update the output power variable
 		curr_state.pwr_electric = power_val[0] + power_val[1] + power_val[2];
@@ -2650,9 +2913,12 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 	    omega_pu = curr_state.omega/omega_ref;
 
 		//Update generator current injection (technically is done "before" next powerflow)
-		IGenerated[0] = next_state.EintVal[0]*YS1*omega_pu;
-		IGenerated[1] = next_state.EintVal[1]*YS1*omega_pu;
-		IGenerated[2] = next_state.EintVal[2]*YS1*omega_pu;
+		value_IGenerated[0] = next_state.EintVal[0]*YS1*omega_pu;
+		value_IGenerated[1] = next_state.EintVal[1]*YS1*omega_pu;
+		value_IGenerated[2] = next_state.EintVal[2]*YS1*omega_pu;
+
+		//Resync power variables
+		push_powerflow_values(false);
 
 		return SM_DELTA_ITER;	//Reiterate - to get us to corrector pass
 	}
@@ -3095,9 +3361,9 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 		omega_pu = next_state.omega/omega_ref;
 
 		//Update generator current injection (technically is done "before" next powerflow)
-		IGenerated[0] = next_state.EintVal[0]*YS1*omega_pu;
-		IGenerated[1] = next_state.EintVal[1]*YS1*omega_pu;
-		IGenerated[2] = next_state.EintVal[2]*YS1*omega_pu;
+		value_IGenerated[0] = next_state.EintVal[0]*YS1*omega_pu;
+		value_IGenerated[1] = next_state.EintVal[1]*YS1*omega_pu;
+		value_IGenerated[2] = next_state.EintVal[2]*YS1*omega_pu;
 
 		//Copy everything back into curr_state, since we'll be back there
 		memcpy(&curr_state,&next_state,sizeof(MAC_STATES));
@@ -3112,8 +3378,15 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 		//Work around for a generator to dictate frequency
 		if (mapped_freq_variable!=NULL)
 		{
-			*mapped_freq_variable = curr_state.omega/(2.0*PI);
+			//Set the value
+			temp_double_freq_val = curr_state.omega/(2.0*PI);
+
+			//Push it up
+			mapped_freq_variable->setp<double>(temp_double_freq_val,*test_rlock);
 		}
+
+		//Resync power variables
+		push_powerflow_values(false);
 
 		//See what to check to determine if an exit is needed
 		if (apply_rotor_speed_convergence == true)
@@ -3169,7 +3442,7 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 			//Loop through the phases - built on the assumption of three-phase
 			for (loop_index=0; loop_index<3; loop_index++)
 			{
-				temp_mag_val = pCircuit_V[loop_index].Mag();
+				temp_mag_val = value_Circuit_V[loop_index].Mag();
 				temp_mag_diff = fabs(temp_mag_val - prev_voltage_val[loop_index]);
 
 				//See if it is bigger or not
@@ -3252,10 +3525,12 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 	complex temp_current_val[3];
 	double diff_f, temp_Vfd;
 
+	//Powerflow update values already called before these - just use values directly
+
 	//Convert current as well
-	current_pu[0] = (IGenerated[0] - generator_admittance[0][0]*pCircuit_V[0] - generator_admittance[0][1]*pCircuit_V[1] - generator_admittance[0][2]*pCircuit_V[2])/current_base;
-	current_pu[1] = (IGenerated[1] - generator_admittance[1][0]*pCircuit_V[0] - generator_admittance[1][1]*pCircuit_V[1] - generator_admittance[1][2]*pCircuit_V[2])/current_base;
-	current_pu[2] = (IGenerated[2] - generator_admittance[2][0]*pCircuit_V[0] - generator_admittance[2][1]*pCircuit_V[1] - generator_admittance[2][2]*pCircuit_V[2])/current_base;
+	current_pu[0] = (value_IGenerated[0] - generator_admittance[0][0]*value_Circuit_V[0] - generator_admittance[0][1]*value_Circuit_V[1] - generator_admittance[0][2]*value_Circuit_V[2])/current_base;
+	current_pu[1] = (value_IGenerated[1] - generator_admittance[1][0]*value_Circuit_V[0] - generator_admittance[1][1]*value_Circuit_V[1] - generator_admittance[1][2]*value_Circuit_V[2])/current_base;
+	current_pu[2] = (value_IGenerated[2] - generator_admittance[2][0]*value_Circuit_V[0] - generator_admittance[2][1]*value_Circuit_V[1] - generator_admittance[2][2]*value_Circuit_V[2])/current_base;
 
 	// post currents
 	current_A=current_pu[0]*current_base;
@@ -3443,11 +3718,11 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 	{
 		// Recalculate the Pelec output based on the predictor step results
 		//Compute the "present" electric power value before anything gets updated for the new timestep
-		temp_current_val[0] = (IGenerated[0] - generator_admittance[0][0]*pCircuit_V[0] - generator_admittance[0][1]*pCircuit_V[1] - generator_admittance[0][2]*pCircuit_V[2]);
-		temp_current_val[1] = (IGenerated[1] - generator_admittance[1][0]*pCircuit_V[0] - generator_admittance[1][1]*pCircuit_V[1] - generator_admittance[1][2]*pCircuit_V[2]);
-		temp_current_val[2] = (IGenerated[2] - generator_admittance[2][0]*pCircuit_V[0] - generator_admittance[2][1]*pCircuit_V[1] - generator_admittance[2][2]*pCircuit_V[2]);
+		temp_current_val[0] = (value_IGenerated[0] - generator_admittance[0][0]*value_Circuit_V[0] - generator_admittance[0][1]*value_Circuit_V[1] - generator_admittance[0][2]*value_Circuit_V[2]);
+		temp_current_val[1] = (value_IGenerated[1] - generator_admittance[1][0]*value_Circuit_V[0] - generator_admittance[1][1]*value_Circuit_V[1] - generator_admittance[1][2]*value_Circuit_V[2]);
+		temp_current_val[2] = (value_IGenerated[2] - generator_admittance[2][0]*value_Circuit_V[0] - generator_admittance[2][1]*value_Circuit_V[1] - generator_admittance[2][2]*value_Circuit_V[2]);
 		//Update the output power variable
-		complex pwr_electric_dynamics = pCircuit_V[0]*~temp_current_val[0] + pCircuit_V[1]*~temp_current_val[1] + pCircuit_V[2]*~temp_current_val[2];
+		complex pwr_electric_dynamics = value_Circuit_V[0]*~temp_current_val[0] + value_Circuit_V[1]*~temp_current_val[1] + value_Circuit_V[2]*~temp_current_val[2];
 
 		//1 - Pelec measurement
 		curr_delta->gov_pconstant.x1 = 1.0/pconstant_Tpelec*(pwr_electric_dynamics.Re() / Rated_VA - curr_time->gov_pconstant.x1);
@@ -3832,7 +4107,7 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 			}
 
 			//Get the average magnitude first
-			temp_double_1 = (pCircuit_V[0].Mag() + pCircuit_V[1].Mag() + pCircuit_V[2].Mag())/voltage_base/3.0;
+			temp_double_1 = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag())/voltage_base/3.0;
 
 			//Calculate the difference from the desired set point
 			temp_double_2 = gen_base_set_vals.vset - temp_double_1;
@@ -3919,21 +4194,20 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 	double temp_double_1, temp_double_2, temp_double_3;
 	unsigned int index_val;
 
-	//Convert voltage to per-unit
-	voltage_pu[0] = pCircuit_V[0]/voltage_base;
-	voltage_pu[1] = pCircuit_V[1]/voltage_base;
-	voltage_pu[2] = pCircuit_V[2]/voltage_base;
+	//Convert voltage to per-unit -- already pulled in outer function
+	voltage_pu[0] = value_Circuit_V[0]/voltage_base;
+	voltage_pu[1] = value_Circuit_V[1]/voltage_base;
+	voltage_pu[2] = value_Circuit_V[2]/voltage_base;
 
 	//Convert current as well
-	current_pu[0] = (IGenerated[0] - generator_admittance[0][0]*pCircuit_V[0] - generator_admittance[0][1]*pCircuit_V[1] - generator_admittance[0][2]*pCircuit_V[2])/current_base;
-	current_pu[1] = (IGenerated[1] - generator_admittance[1][0]*pCircuit_V[0] - generator_admittance[1][1]*pCircuit_V[1] - generator_admittance[1][2]*pCircuit_V[2])/current_base;
-	current_pu[2] = (IGenerated[2] - generator_admittance[2][0]*pCircuit_V[0] - generator_admittance[2][1]*pCircuit_V[1] - generator_admittance[2][2]*pCircuit_V[2])/current_base;
+	current_pu[0] = (value_IGenerated[0] - generator_admittance[0][0]*value_Circuit_V[0] - generator_admittance[0][1]*value_Circuit_V[1] - generator_admittance[0][2]*value_Circuit_V[2])/current_base;
+	current_pu[1] = (value_IGenerated[1] - generator_admittance[1][0]*value_Circuit_V[0] - generator_admittance[1][1]*value_Circuit_V[1] - generator_admittance[1][2]*value_Circuit_V[2])/current_base;
+	current_pu[2] = (value_IGenerated[2] - generator_admittance[2][0]*value_Circuit_V[0] - generator_admittance[2][1]*value_Circuit_V[1] - generator_admittance[2][2]*value_Circuit_V[2])/current_base;
 
 	// post currents
 	current_A=current_pu[0]*current_base;
 	current_B=current_pu[1]*current_base;
 	current_C=current_pu[2]*current_base;
-
 	
 	//Compute initial power
 	curr_time->pwr_electric = (voltage_pu[0]*~current_pu[0]+voltage_pu[1]*~current_pu[1]+voltage_pu[2]*~current_pu[2])*voltage_base*current_base;

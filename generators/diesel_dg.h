@@ -10,9 +10,7 @@
 #define _diesel_dg_H
 
 #include <stdarg.h>
-#include "gridlabd.h"
 #include "generators.h"
-#include "power_electronics.h"
 
 EXPORT SIMULATIONMODE interupdate_diesel_dg(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 EXPORT STATUS postupdate_diesel_dg(OBJECT *obj, complex *useful_value, unsigned int mode_pass);
@@ -145,19 +143,25 @@ typedef struct {
 class diesel_dg : public gld_object
 {
 private:
-	/* TODO: put private variables here */
-	complex *pCircuit_V; ///< pointer to the three voltages on three lines
-	complex *pLine_I; ///< pointer to the three current on three lines
+	gld_property *pCircuit_V[3]; ///< pointer to the three voltages on three lines
+	gld_property *pLine_I[3]; ///< pointer to the three current on three lines
+
+	complex value_Circuit_V[3];	///Storage variable for voltages
+	complex value_Line_I[3];	///Storage variable for voltages
+
+	bool parent_is_powerflow;
 
 	bool first_run;		///< Flag for first run of the diesel_dg object - eliminates t0==0 dependence
 	bool is_isochronous_gen;	///< Flag to indicate if we're isochronous, mostly to help keep us in deltamode
 
 	//Internal synchronous machine variables
-	complex *bus_admittance_mat;		//Link to bus raw self-admittance value - grants 3x3 access instead of diagonal
-	complex *full_bus_admittance_mat;	//Link to bus full self-admittance of Ybus form
-	complex *PGenerated;				//Link to bus PGenerated field - mainly used for SWING generator
-	complex *IGenerated;				//Link to direct current injections to powerflow at bus-level
+	gld_property *pbus_full_Y_mat;		//Link to the full_Y bus variable -- used for Norton equivalents
+	gld_property *pbus_full_Y_all_mat;	//Link to the full_Y_all bus variable -- used for Norton equivalents
+	gld_property *pPGenerated;			//Link to bus PGenerated field - mainly used for SWING generator
+	gld_property *pIGenerated[3];		//Link to direct current injections to powerflow at bus-level (prerot current)
+	complex value_IGenerated[3];		//Accumulator/holding variable for direct current injections at bus-level (pre-rotated current)
 	complex generator_admittance[3][3];	//Generator admittance matrix converted from sequence values
+	complex full_bus_admittance_mat[3][3];	//Full self-admittance of Ybus form - pulled from node connection
 	double power_base;					//Per-phase basis (divide by 3)
 	double voltage_base;				//Voltage p.u. base for analysis (converted from delta)
 	double current_base;				//Current p.u. base for analysis
@@ -187,7 +191,7 @@ private:
 	MAC_STATES corrector_vals;	//Corrector pass values of variables
 
 	bool deltamode_inclusive;	//Boolean for deltamode calls - pulled from object flags
-	double *mapped_freq_variable;	//Mapping to frequency variable in powerflow module - deltamode updates
+	gld_property *mapped_freq_variable;	//Mapping to frequency variable in powerflow module - deltamode updates
 
 	double Overload_Limit_Value;	//The computed maximum output power, based on the Rated_VA and the Overload_Limit_Value
 
@@ -474,8 +478,6 @@ public:
 public:
 	static CLASS *oclass;
 	static diesel_dg *defaults;
-	complex *get_complex(OBJECT *obj, char *name);
-	double *get_double(OBJECT *obj, char *name);
 	void convert_Ypn0_to_Yabc(complex Y0, complex Y1, complex Y2, complex *Yabcmat);
 	void convert_pn0_to_abc(complex *Xpn0, complex *Xabc);
 	void convert_abc_to_pn0(complex *Xabc, complex *Xpn0);
@@ -485,6 +487,12 @@ public:
 	double abs_complex(complex val);
 
 	friend class controller_dg;
+
+	gld_property *map_complex_value(OBJECT *obj, char *name);
+	gld_property *map_double_value(OBJECT *obj, char *name);
+	void pull_powerflow_values(void);
+	void push_powerflow_values(bool update_voltage);
+	void reset_powerflow_accumulators(void);
 
 #ifdef OPTIONAL
 	static CLASS *pclass; /**< defines the parent class */

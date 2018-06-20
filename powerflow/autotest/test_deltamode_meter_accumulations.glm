@@ -421,7 +421,7 @@ object load {
 	constant_power_C 825000.0+575000.0j;
 	//Player doesn't really do anything on this time case -- just basically triggers deltamode
 	object player {
-		file "../diesel_deltamode_load_player_A.csv";
+		file "../data_load_change_delta_trigger.csv";
 		property constant_power_A;
 		flags DELTAMODE;
 	};

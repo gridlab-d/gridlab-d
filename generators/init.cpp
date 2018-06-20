@@ -11,14 +11,17 @@
 #include "generators.h"
 #undef  _GENERATORS_GLOBALS
 
-//Define defaults, since many use them and they aren't here yet
-complex default_line_voltage[3] = {complex(480.0,0.0),complex(-240.0,-415.69219),complex(-240.0,415.69219)};
-complex default_line_voltage_triplex[3] = {complex(240,0,A),complex(120,0,A),complex(120,0,A)};
-complex default_line_current[3] = {complex(0,0,J),complex(0,0,J),complex(0,0,J)};
-complex default_line_shunt[3] = {complex(0,0,J),complex(0,0,J),complex(0,0,J)};
-complex default_line_power[3] = {complex(0,0,J),complex(0,0,J),complex(0,0,J)};
-int default_meter_status = 1;	//In service
+//Include the various items
+#include "diesel_dg.h"
+#include "windturb_dg.h"
+#include "battery.h"
+#include "inverter.h"
+#include "rectifier.h"
+#include "solar.h"
+#include "central_dg_control.h"
+#include "controller_dg.h"
 
+//Define defaults, since many use them and they aren't here yet
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
 	if (set_callback(fntable)==NULL)
@@ -28,50 +31,24 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	}
 
 	/* Publish external global variables */
+	gl_global_create("generators::default_line_voltage",PT_double,&default_line_voltage,PT_UNITS,"V",PT_DESCRIPTION,"line voltage (L-N) to use when no circuit is attached",NULL);
 	gl_global_create("generators::enable_subsecond_models", PT_bool, &enable_subsecond_models,PT_DESCRIPTION,"Enable deltamode capabilities within the generators module",NULL);
 	gl_global_create("generators::deltamode_timestep", PT_double, &deltamode_timestep_publish,PT_UNITS,"ns",PT_DESCRIPTION,"Desired minimum timestep for deltamode-related simulations",NULL);
+	gl_global_create("generators::default_temperature_value", PT_double, &default_temperature_value,PT_UNITS,"degF",PT_DESCRIPTION,"Temperature when no climate module is detected",NULL);
 
-	CLASS *first =
-	/*** DO NOT EDIT NEXT LINE ***/
-	//NEWCLASS
-	(new diesel_dg(module))->oclass;
-	NULL;
-
-	(new windturb_dg(module))->oclass;
-	NULL;
-
-	(new power_electronics(module))->oclass;
-	NULL;
-
-	(new energy_storage(module))->oclass;
-	NULL;
-
-	(new inverter(module))->oclass;
-	NULL;
-
-	(new dc_dc_converter(module))->oclass;
-	NULL;
-
-	(new rectifier(module))->oclass;
-	NULL;
-
-	(new microturbine(module))->oclass;
-	NULL;
-
-	(new battery(module))->oclass;
-	NULL;
-
-	(new solar(module))->oclass;
-	NULL;
-
-	(new central_dg_control(module))->oclass;
-	NULL;
-
-	(new controller_dg(module))->oclass;
-	NULL;
+	//Instantiate the classes
+	new diesel_dg(module);
+	new windturb_dg(module);
+	new energy_storage(module);
+	new inverter(module);
+	new rectifier(module);
+	new battery(module);
+	new solar(module);
+	new central_dg_control(module);
+	new controller_dg(module);
 
 	/* always return the first class registered */
-	return first;
+	return diesel_dg::oclass;
 }
 
 //Call function for scheduling deltamode
