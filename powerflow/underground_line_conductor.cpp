@@ -84,7 +84,7 @@ int underground_line_conductor::init(OBJECT *parent)
 		and refer to Fig. 4.11 of "Distribution System Modeling and Analysis, Third Edition" by William H. Kersting for a diagram.
 		*/
 	}
-	if (shield_diameter <= shield_thickness)
+	if(((shield_diameter != 0.0) || (shield_thickness != 0.0)) && (shield_diameter <= shield_thickness))
 	{
 		GL_THROW("shield_diameter was specified as less than or equal to the tapeshield_thickness");
 		/* TROUBLESHOOT
@@ -126,6 +126,15 @@ EXPORT int create_underground_line_conductor(OBJECT **obj, OBJECT *parent)
 			return 0;
 	}
 	CREATE_CATCHALL(underground_line_conductor);
+}
+
+EXPORT int init_underground_line_conductor(OBJECT *obj)
+{
+	try {
+		underground_line_conductor *my = OBJECTDATA(obj,underground_line_conductor);
+		return my->init(obj->parent);
+	}
+	INIT_CATCHALL(underground_line_conductor);
 }
 
 EXPORT TIMESTAMP sync_underground_line_conductor(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)

@@ -1679,7 +1679,7 @@ EXPORT int create_switch(OBJECT **obj, OBJECT *parent)
 		else
 			return 0;
 	}
-	CREATE_CATCHALL(switch);
+	CREATE_CATCHALL(switch_object);
 }
 
 /**
@@ -1694,7 +1694,7 @@ EXPORT int init_switch(OBJECT *obj)
 		switch_object *my = OBJECTDATA(obj,switch_object);
 		return my->init(obj->parent);
 	}
-	INIT_CATCHALL(switch);
+	INIT_CATCHALL(switch_object);
 }
 
 /**
@@ -1723,7 +1723,7 @@ EXPORT TIMESTAMP sync_switch(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			throw "invalid pass request";
 		}
 	} 
-	SYNC_CATCHALL(switch);
+	SYNC_CATCHALL(switch_object);
 }
 
 EXPORT int isa_switch(OBJECT *obj, char *classname)
