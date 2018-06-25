@@ -78,7 +78,7 @@ public:
 
 	double zero_power;
 	double motor_power;					///< installed dishwasher motor power [W] (default = random uniform between 150-350 W)
-	double coil_power[3];					///< installed heating coil power [W] (default = random uniform between 3500-5000 W, 0 for gas)
+	double coil_power[4];					///< installed heating coil power [W] (default = random uniform between 3500-5000 W, 0 for gas)
 	double controls_power;
 	double dishwasher_demand;				///< amount of demand added per hour (units/hr)
 	double enduse_queue;				///< accumulated demand (units)

@@ -220,6 +220,7 @@ class climate : public gld_object {
 	GL_ATOMIC(double,cloud_reflectivity);
 	GL_ATOMIC(double,cloud_speed_factor);
 	GL_ATOMIC(enumeration,cloud_model);
+    GL_ATOMIC(double,update_time);
 
 	// data not shared with classes in this module (no locks needed)
 private:

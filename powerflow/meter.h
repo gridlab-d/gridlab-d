@@ -14,6 +14,23 @@ class meter : public node
 public:
 	complex measured_voltage[3];	///< measured voltage
 	complex measured_voltageD[3];	///< measured voltage - Line-to-Line
+	double measured_real_max_voltage_in_interval[3];	///< measured real max voltage in a time interval
+	double measured_real_max_voltageD_in_interval[3];	///< measured real max voltage in a time interval - Line-to-Line
+	double measured_real_min_voltage_in_interval[3];	///< measured real min voltage in a time interval
+	double measured_real_min_voltageD_in_interval[3];	///< measured real min voltage in a time interval - Line-to-Line
+	double measured_avg_voltage_mag_in_interval[3];	///< measured avg voltage magnitude in a time interval
+	double measured_avg_voltageD_mag_in_interval[3];	///< measured avg voltage magnitude in a time interval - Line-to-Line
+	double measured_reactive_max_voltage_in_interval[3];	///< measured reactive max voltage in a time interval
+	double measured_reactive_max_voltageD_in_interval[3];	///< measured reactive max voltage in a time interval - Line-to-Line
+	double measured_reactive_min_voltage_in_interval[3];	///< measured reactive min voltage in a time interval
+	double measured_reactive_min_voltageD_in_interval[3];	///< measured reactive min voltage in a time interval - Line-to-Line
+	double measured_real_avg_power_in_interval;	///< metered real part of average power over the last interval
+	double measured_reactive_avg_power_in_interval;	///< metered reactive part of average power over the last interval
+	double measured_real_max_power_in_interval;	///< maximum real power over the last interval
+	double measured_reactive_max_power_in_interval;	///< maximum real power over the last interval
+	double measured_real_min_power_in_interval;	///< minimum real power over the last interval
+	double measured_reactive_min_power_in_interval;	///< minimum real power over the last interval
+
 	complex measured_current[3];	///< measured current
 	double measured_real_energy;	///< metered real energy consumption
 	double measured_real_energy_delta;	///< metered real energy consumption over last interval
@@ -25,6 +42,7 @@ public:
 	double measured_real_power;		///< metered real power
 	double last_measured_real_power; ///< previous metered real power
 	double measured_reactive_power; ///< metered reactive power
+	double last_measured_reactive_power; ///< previously measured reactive power
 	complex indiv_measured_power[3];///< metered power on each phase
 	bool meter_interrupted;			///< Reliability flag - goes active if the customer is in an "interrupted" state
 	bool meter_interrupted_secondary;	///< Reliability flag - goes active if the customer is in an "secondary interrupted" state - i.e., momentary
@@ -79,8 +97,26 @@ private:
 	double previous_energy_total;  // Used to track what the meter reading was the previous month
     double last_measured_real_energy;
     double last_measured_reactive_energy;
+    complex last_measured_max_voltage_mag[3];
+    complex last_measured_max_voltageD_mag[3];
+    complex last_measured_min_voltage_mag[3];
+    complex last_measured_min_voltageD_mag[3];
+    complex last_measured_voltage[3];
+    complex last_measured_voltageD[3];
+    double last_measured_avg_voltage_mag[3];
+    double last_measured_avg_voltageD_mag[3];
+
+	double last_measured_max_real_power;
+	double last_measured_min_real_power;
+	double last_measured_max_reactive_power;
+	double last_measured_min_reactive_power;
+	double last_measured_avg_real_power;
+	double last_measured_avg_reactive_power;
+
+    int voltage_avg_count;
     TIMESTAMP last_delta_timestamp;
     TIMESTAMP start_timestamp;
+    TIMESTAMP interval_dt;
 
 public:
 	static CLASS *oclass;

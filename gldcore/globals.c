@@ -713,12 +713,12 @@ int global_isdefined(char *name)
 
 int parameter_expansion(char *buffer, int size, char *spec)
 {
-	char name[64], value[64], pattern[64], op[64], string[64]="", yes[1024]="1", no[1024]="0";
+	char name[64], value[1023], pattern[64], op[64], string[64]="", yes[1024]="1", no[1024]="0";
 	int offset, length;
 	int32 number;
 
 	/* ${name:-value} */
-	if ( sscanf(spec,"%63[^:]:-%63s",name,value)==2 )
+	if ( sscanf(spec,"%63[^:]:-%1023[^}]",name,value)==2 )
 	{	
 		if ( global_getvar(name,buffer,size)==NULL )
 			strncpy(buffer,value,size);
@@ -726,7 +726,7 @@ int parameter_expansion(char *buffer, int size, char *spec)
 	}
 
 	/* ${name:=value} */
-	if ( sscanf(spec,"%63[^:]:=%63s",name,value)==2 )
+	if ( sscanf(spec,"%63[^:]:=%1023[^}]",name,value)==2 )
 	{
 		if ( !global_isdefined(name) )
 			global_setvar(name,value);
@@ -735,7 +735,7 @@ int parameter_expansion(char *buffer, int size, char *spec)
 	}
 
 	/* ${name:+value} */
-	if ( sscanf(spec,"%63[^:]:+%63s",name,value)==2 )
+	if ( sscanf(spec,"%63[^:]:+%1023[^}]",name,value)==2 )
 	{
 		if ( !global_isdefined(name) )
 			strcpy(buffer,"");
@@ -772,7 +772,7 @@ int parameter_expansion(char *buffer, int size, char *spec)
 	}
 
 	/* ${name/offset/length} */
-	if ( sscanf(spec,"%63[^/]/%63[^/]/%63s",name,pattern,string)>=2 )
+	if ( sscanf(spec,"%63[^/]/%63[^/]/%63[^}]",name,pattern,string)>=2 )
 	{
 		char temp[1024], *ptr;
 		size_t start;
@@ -791,7 +791,7 @@ int parameter_expansion(char *buffer, int size, char *spec)
 	}
 
 	/* ${name//offset/length} */
-	if ( sscanf(spec,"%63[^/]//%63[^/]/%63s",name,pattern,string)==2 )
+	if ( sscanf(spec,"%63[^/]//%63[^/]/%63[^}]",name,pattern,string)==2 )
 	{
 		char temp[1024], *ptr=NULL;
 		size_t start;

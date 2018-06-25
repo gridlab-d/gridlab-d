@@ -105,7 +105,7 @@ int csv_reader::open(const char *file){
 			has_cols = 1;
 		}
 	}
-	while(fgets(line, 1024, infile) > 0){
+	while(fgets(line, 1024, infile) != NULL){
 		++linenum;
 		// consume leading whitespace?
 		// comments following valid lines?

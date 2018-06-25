@@ -579,13 +579,13 @@ static void *ss_do_object_sync_list(void *threadarg)
 static STATUS init_by_creation()
 {
 	OBJECT *obj;
+	char b[64];
 	STATUS rv = SUCCESS;
 	TRY {
 		for (obj=object_get_first(); obj!=NULL; obj=object_get_next(obj))
 		{
 			if (object_init(obj)==FAILED)
 			{
-				char *b = (char *)malloc(64);
 				memset(b, 0, 64);
 				output_error("init_all(): object %s initialization failed", object_name(obj, b, 63));
 				/* TROUBLESHOOT
@@ -623,10 +623,21 @@ static int init_by_deferral_retry(OBJECT **def_array, int def_ct)
 {
 	OBJECT *obj;
 	int ct = 0, i = 0, obj_rv = 0;
-	OBJECT **next_arr = (OBJECT **)malloc(def_ct * sizeof(OBJECT *)), **tarray = 0;
+	OBJECT **next_arr, **tarray;
 	int rv = SUCCESS;
 	char b[64];
 	int retry = 1, tries = 0;
+	tarray = NULL;
+
+	//Split out the malloc so it can be checked
+	next_arr = (OBJECT **)malloc(def_ct * sizeof(OBJECT *));
+
+	//Check it, like a proper programmer
+	if (next_arr == NULL)
+	{
+		output_error("init_by_deferral_retry(): error allocating temporary array");
+		return FAILED;
+	}
 
 	if (global_init_max_defer < 1)
 	{
@@ -640,7 +651,11 @@ static int init_by_deferral_retry(OBJECT **def_array, int def_ct)
 			rv = FAILED;
 			break;
 		}
+
+		//Zero the temp array AND its tracking variable
 		memset(next_arr, 0, def_ct * sizeof(OBJECT *));
+		ct = 0;
+
 		// initialize each object in def_array
 		for (i = 0; i < def_ct; ++i)
 		{
@@ -668,6 +683,7 @@ static int init_by_deferral_retry(OBJECT **def_array, int def_ct)
 			if (rv == FAILED)
 			{
 				free(next_arr);
+				next_arr = NULL;
 				return rv;
 			}
 		}
@@ -677,22 +693,46 @@ static int init_by_deferral_retry(OBJECT **def_array, int def_ct)
 			output_error("init_by_deferral_retry(): all uninitialized objects deferred, model is unable to initialize");
 			rv = FAILED;
 			retry = 0;
-		} else if (0 == ct)
+
+			//See if we iterated
+			if (tries > 0)
+			{
+				//Yes - fix the pointers before leaving, otherwise we'll double-free things!
+				tarray = def_array;
+				def_array = next_arr;
+				next_arr = tarray;
+			}
+			//Default else - we failed first try, so pointer swap-around below didn't occur
+		}
+		else if (0 == ct)
 		{
 			rv = SUCCESS;
 			retry = 0;
-		} else {
+
+			//See if we iterated
+			if (tries > 0)
+			{
+				//Yes - fix the pointers before leaving, otherwise we'll double-free things!
+				tarray = def_array;
+				def_array = next_arr;
+				next_arr = tarray;
+			}
+			//Default else - we succeeded first try, so pointer swap-around below didn't occur
+		}
+		else
+		{
 			++tries;
 			retry = 1;
 			tarray = next_arr;
 			next_arr = def_array;
 			def_array = tarray;
 			def_ct = ct;
-			// three-point turn to swap the 'next' and the 'old' arrays, memset 0'ing at the top.
+			// three-point turn to swap the 'next' and the 'old' arrays, memset 0'ing at the top, along with ct reset
 		}
 	}
 
 	free(next_arr);
+	next_arr = NULL;
 	return rv;
 }
 
@@ -703,7 +743,16 @@ static int init_by_deferral()
 	OBJECT *obj = 0;
 	STATUS rv = SUCCESS;
 	char b[64];
+
 	def_array = (OBJECT **)malloc(sizeof(OBJECT *) * object_get_count());
+
+	//Check the malloc, like we should
+	if (def_array == NULL)
+	{
+		output_error("init_by_deferral(): failed to allocate memory");
+		return FAILED;
+	}
+
 	obj = object_get_first();
 	while (obj != 0)
 	{
@@ -733,6 +782,7 @@ static int init_by_deferral()
 		if (rv == FAILED)
 		{
 			free(def_array);
+			def_array = NULL;
 			return rv;
 		}
 
@@ -745,11 +795,13 @@ static int init_by_deferral()
 		rv = init_by_deferral_retry(def_array, def_ct);
 		if (rv == FAILED) // got hung up retrying
 		{ 
-				free(def_array);
-				return FAILED;
+			free(def_array);
+			def_array = NULL;
+			return FAILED;
 		}
 	}
 	free(def_array);
+	def_array = NULL;
 
 	obj = object_get_first();
 	while (obj != 0)

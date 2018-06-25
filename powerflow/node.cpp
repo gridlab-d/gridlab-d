@@ -1441,7 +1441,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 	{
 		if (prev_NTime==0)	//First run, if we are a child, make sure no one linked us before we knew that
 		{
-			if (((SubNode == CHILD) || (SubNode == DIFF_CHILD)) && (NR_connected_links>0))
+			if (((SubNode == CHILD) || (SubNode == DIFF_CHILD)) && (NR_connected_links[0] > 0))
 			{
 				node *parNode = OBJECTDATA(SubNodeParent,node);
 
@@ -1452,17 +1452,11 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 				//Zero our accumulator, just in case (used later)
 				NR_connected_links[0] = 0;
 
-				//Check and see if we're a house-triplex.  If so, flag our parent so NR works
-				if (house_present==true)
-				{
-					parNode->house_present=true;
-				}
-
 				WRITEUNLOCK_OBJECT(SubNodeParent);	//Unlock
 			}
 
 			//See if we need to alloc our child space
-			if (NR_number_child_nodes[0]>0)	//Malloc it up
+			if (NR_number_child_nodes[0] > 0)	//Malloc it up
 			{
 				NR_child_nodes = (node**)gl_malloc(NR_number_child_nodes[0] * sizeof(node*));
 
@@ -1488,6 +1482,12 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 				node *parNode = OBJECTDATA(SubNodeParent,node);
 
 				WRITELOCK_OBJECT(SubNodeParent);	//Lock
+
+				//Check and see if we're a house-triplex.  If so, flag our parent so NR works - just draconian write (won't hurt anything)
+				if (house_present==true)
+				{
+					parNode->house_present=true;
+				}
 
 				//Make sure there's still room
 				if (parNode->NR_number_child_nodes[1]>=parNode->NR_number_child_nodes[0])

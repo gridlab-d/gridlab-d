@@ -740,7 +740,7 @@ int volt_var_control::init(OBJECT *parent)
 					}//end defaults
 
 					//Check to make sure max_vdrop isn't negative
-					if (max_vdrop <= 0)
+					if (max_vdrop[index] <= 0)
 					{
 						GL_THROW("volt_var_control %s: Maximum expected voltage drop specified for regulator %d should be a positive non-zero number.",obj->name,(index+1));
 						/*  TROUBLESHOOT

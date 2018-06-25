@@ -303,6 +303,7 @@ private:
 	double node_nominal_voltage;		//Nominal voltage for per-unit-izing for 1547 checks
 
 	void update_control_references(void);
+	STATUS initalize_IEEE_1547_checks(OBJECT *parent);
 public:
 	/* required implementations */
 	bool *get_bool(OBJECT *obj, char *name);

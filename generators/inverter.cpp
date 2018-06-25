@@ -471,7 +471,7 @@ int inverter::create(void)
 int inverter::init(OBJECT *parent)
 {
 	OBJECT *obj = OBJECTHDR(this);
-	double *temp_nominal_pointer;
+	STATUS return_value_init;
 
 	if(parent != NULL){
 		if((parent->flags & OF_INIT) != OF_INIT){
@@ -1453,89 +1453,15 @@ int inverter::init(OBJECT *parent)
 		//Check for frequency 
 		if (enable_1547_compliance == true)
 		{
-			//Check parents and map the variables
-			if (gl_object_isa(parent,"node","powerflow") || gl_object_isa(parent,"load","powerflow") || gl_object_isa(parent,"meter","powerflow") || gl_object_isa(parent,"triplex_node","powerflow") || gl_object_isa(parent,"triplex_load","powerflow") || gl_object_isa(parent,"triplex_load","powerflow"))
+			return_value_init = initalize_IEEE_1547_checks(parent);
+
+			//Check
+			if (return_value_init == FAILED)
 			{
-				//Find the propery of the frequency measurements
-				freq_pointer = get_double(parent,"measured_frequency");
-
-				//Make sure it worked
-				if (freq_pointer == NULL)
-				{
-					GL_THROW("Inverter:%d %s failed to map the measured_frequency property",obj->id, (obj->name ? obj->name : "Unnamed"));
-					/*  TROUBLESHOOT
-					While attempting to map the measured_frequency property, an error occurred.  Please try again.
-					If the error persists, please submit your GLM and a bug report to the ticketing system.
-					*/
-				}
-				//Default else, it worked
-
-				//Link to nominal voltage
-				temp_nominal_pointer = get_double(parent,"nominal_voltage");
-
-				//Make sure it worked
-				if (temp_nominal_pointer == NULL)
-				{
-					GL_THROW("Inverter:%d %s failed to map the nominal_voltage property",obj->id, (obj->name ? obj->name : "Unnamed"));
-					/*  TROUBLESHOOT
-					While attempting to map the nominal_voltage property, an error occurred.  Please try again.
-					If the error persists, please submit your GLM and a bug report to the ticketing system.
-					*/
-				}
-				//Default else, it worked
-
-				//Copy that value out
-				node_nominal_voltage = *temp_nominal_pointer;
-
-				//See if we really want IEEE 1547, not A
-				if (ieee_1547_version == IEEE1547)
-				{
-					//Adjust the values - high values
-					over_freq_high_band_setpoint = 70.0;	//Very high - only 1 band for 1547
-					over_freq_high_band_delay = 0.16;		//Same clearly as below
-					over_freq_low_band_setpoint = 60.5;		//1547 high hvalue
-					over_freq_low_band_delay = 0.16;		//1547 over-frequency value
-
-					//Set the others based on size
-					if (p_rated > 30000.0)
-					{
-						under_freq_high_band_setpoint = 59.5;	//Arbitrary selection in the range
-						under_freq_high_band_delay = 300.0;		//Maximum delay, just because
-						under_freq_low_band_setpoint = 57.0;	//Lower limit of 1547
-						under_freq_low_band_delay = 0.16;		//Lower limit clearing of 1547
-					}
-					else	//Smaller one
-					{
-						under_freq_high_band_setpoint = 59.3;	//Low frequency value for small inverter 1547
-						under_freq_high_band_delay = 0.16;		//Low frequency value clearing time for 1547
-						under_freq_low_band_setpoint = 47.0;	//Arbitrary low point - 1547 didn't have this value for small inverters
-						under_freq_low_band_delay = 0.16;		//Same value as low frequency, since this band doesn't technically exist
-					}
-
-					//Set the voltage values as well - basically, the under votlage has an extra category
-					under_voltage_lowest_voltage_setpoint = 0.40;	//Lower than range before, so just duplicate disconnect value
-					under_voltage_middle_voltage_setpoint = 0.50;	//Lower limit of 1547
-					under_voltage_high_voltage_setpoint = 0.88;		//Low area threshold for 1547
-					over_voltage_low_setpoint = 1.10;				//Lower limit of upper threshold for 1547
-					over_voltage_high_setpoint = 1.20;				//Upper most limit of voltage values
-					
-					under_voltage_lowest_delay = 0.16;			//Lower than "normal low" - it is technically an overlap
-					under_voltage_middle_delay = 0.16;			//Low limit of 1547
-					under_voltage_high_delay = 2.0;				//High lower limit of 1547
-					over_voltage_low_delay = 1.0;				//Low higher limit of 1547
-					over_voltage_high_delay = 0.16;				//Highest value
-				}
-			}
-			else
-			{
-				//Make sure nulled and disable 1547, since it won't do anything
-				freq_pointer = NULL;
-				enable_1547_compliance = false;
-
-				gl_warning("Inverter:%d %s does not have a valid parent - 1547 checks have been disabled",obj->id,(obj->name ? obj->name : "Unnamed"));
+				GL_THROW("inverter:%d-%s - initalizing the IEEE 1547 checks failed",obj->id,(obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
-				The IEEE 1547-2003 checks for interconnection require a valid powerflow parent.  One was not detected, so
-				this functionality has been detected.
+				While attempting to initialize some of the variables for the inverter IEEE 1547 functionality, an error occurred.
+				Please try again.  If the error persists, please submit your code and a bug report via the issues tracker.
 				*/
 			}
 		}
@@ -1550,6 +1476,28 @@ int inverter::init(OBJECT *parent)
 			The inverter is not flagged for deltamode operations, yet deltamode simulations are enabled for the overall system.  When deltamode
 			triggers, this inverter may no longer contribute to the system, until event-driven mode resumes.  This could cause issues with the simulation.
 			It is recommended all objects that support deltamode enable it.
+			*/
+		}
+		else if (enable_1547_compliance == true)
+		{
+			//Initalize it
+			return_value_init = initalize_IEEE_1547_checks(parent);
+
+			//Check
+			if (return_value_init == FAILED)
+			{
+				GL_THROW("inverter:%d-%s - initalizing the IEEE 1547 checks failed",obj->id,(obj->name ? obj->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				While attempting to initialize some of the variables for the inverter IEEE 1547 functionality, an error occurred.
+				Please try again.  If the error persists, please submit your code and a bug report via the issues tracker.
+				*/
+			}
+
+			//Warn, because this probably won't work well
+			gl_warning("inverter:%d-%s - IEEE 1547 checks are enabled, but the model is not deltamode-enabled",obj->id,(obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			The IEEE 1547 checks have been enabled for the inverter object, but deltamode is not enabled.  This will severely hinder the inverter's
+			ability to do these checks, and really isn't the intended mode of operation.
 			*/
 		}
 	}
@@ -2234,11 +2182,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					//Q_Out is either set or input from elsewhere
 					//Gather Rload
 
-					if(parent_string == "meter")
-					{
-						VA_Out = complex(P_Out,Q_Out);
-					}
-					else if (parent_string == "triplex_meter")
+					if(strcmp(parent_string, "meter") == 0 || strcmp(parent_string, "triplex_meter") == 0)
 					{
 						VA_Out = complex(P_Out,Q_Out);
 					}
@@ -4971,6 +4915,106 @@ void inverter::update_control_references(void)
 	// update references
 	Pref = VA_Outref.Re();
 	Qref = VA_Outref.Im();
+}
+
+//Functionalized IEEE 1547 initalizer - mostly so it can easily be done in either deltamode or ss
+STATUS inverter::initalize_IEEE_1547_checks(OBJECT *parent)
+{
+	OBJECT *obj = OBJECTHDR(this);
+	double *temp_nominal_pointer;
+
+	//Check parents and map the variables
+	if (gl_object_isa(parent,"node","powerflow") || gl_object_isa(parent,"load","powerflow") || gl_object_isa(parent,"meter","powerflow") || gl_object_isa(parent,"triplex_node","powerflow") || gl_object_isa(parent,"triplex_load","powerflow") || gl_object_isa(parent,"triplex_load","powerflow"))
+	{
+		//Find the propery of the frequency measurements
+		freq_pointer = get_double(parent,"measured_frequency");
+
+		//Make sure it worked
+		if (freq_pointer == NULL)
+		{
+			gl_error("Inverter:%d %s failed to map the measured_frequency property",obj->id, (obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			While attempting to map the measured_frequency property, an error occurred.  Please try again.
+			If the error persists, please submit your GLM and a bug report to the ticketing system.
+			*/
+
+			return FAILED;
+		}
+		//Default else, it worked
+
+		//Link to nominal voltage
+		temp_nominal_pointer = get_double(parent,"nominal_voltage");
+
+		//Make sure it worked
+		if (temp_nominal_pointer == NULL)
+		{
+			gl_error("Inverter:%d %s failed to map the nominal_voltage property",obj->id, (obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			While attempting to map the nominal_voltage property, an error occurred.  Please try again.
+			If the error persists, please submit your GLM and a bug report to the ticketing system.
+			*/
+
+			return FAILED;
+		}
+		//Default else, it worked
+
+		//Copy that value out
+		node_nominal_voltage = *temp_nominal_pointer;
+
+		//See if we really want IEEE 1547, not A
+		if (ieee_1547_version == IEEE1547)
+		{
+			//Adjust the values - high values
+			over_freq_high_band_setpoint = 70.0;	//Very high - only 1 band for 1547
+			over_freq_high_band_delay = 0.16;		//Same clearly as below
+			over_freq_low_band_setpoint = 60.5;		//1547 high hvalue
+			over_freq_low_band_delay = 0.16;		//1547 over-frequency value
+
+			//Set the others based on size
+			if (p_rated > 30000.0)
+			{
+				under_freq_high_band_setpoint = 59.5;	//Arbitrary selection in the range
+				under_freq_high_band_delay = 300.0;		//Maximum delay, just because
+				under_freq_low_band_setpoint = 57.0;	//Lower limit of 1547
+				under_freq_low_band_delay = 0.16;		//Lower limit clearing of 1547
+			}
+			else	//Smaller one
+			{
+				under_freq_high_band_setpoint = 59.3;	//Low frequency value for small inverter 1547
+				under_freq_high_band_delay = 0.16;		//Low frequency value clearing time for 1547
+				under_freq_low_band_setpoint = 47.0;	//Arbitrary low point - 1547 didn't have this value for small inverters
+				under_freq_low_band_delay = 0.16;		//Same value as low frequency, since this band doesn't technically exist
+			}
+
+			//Set the voltage values as well - basically, the under votlage has an extra category
+			under_voltage_lowest_voltage_setpoint = 0.40;	//Lower than range before, so just duplicate disconnect value
+			under_voltage_middle_voltage_setpoint = 0.50;	//Lower limit of 1547
+			under_voltage_high_voltage_setpoint = 0.88;		//Low area threshold for 1547
+			over_voltage_low_setpoint = 1.10;				//Lower limit of upper threshold for 1547
+			over_voltage_high_setpoint = 1.20;				//Upper most limit of voltage values
+			
+			under_voltage_lowest_delay = 0.16;			//Lower than "normal low" - it is technically an overlap
+			under_voltage_middle_delay = 0.16;			//Low limit of 1547
+			under_voltage_high_delay = 2.0;				//High lower limit of 1547
+			over_voltage_low_delay = 1.0;				//Low higher limit of 1547
+			over_voltage_high_delay = 0.16;				//Highest value
+		}
+	}
+	else
+	{
+		//Make sure nulled and disable 1547, since it won't do anything
+		freq_pointer = NULL;
+		enable_1547_compliance = false;
+
+		gl_warning("Inverter:%d %s does not have a valid parent - 1547 checks have been disabled",obj->id,(obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		The IEEE 1547-2003 checks for interconnection require a valid powerflow parent.  One was not detected, so
+		this functionality has been detected.
+		*/
+	}
+
+	//By default, we succeed
+	return SUCCESS;
 }
 
 //Functionalized routine to perform the IEEE 1547-2003 checks
