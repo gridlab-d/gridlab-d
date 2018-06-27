@@ -40,20 +40,20 @@ set(CMAKE_LD_FLAGS_RELEASE "-O3 ${DISABLED_OPTIMIZATIONS}")
 
 # Set up platform specific library linking
 IF (WIN32 OR MSYS OR MINGW OR CYGWIN)
-#    find_library(MYLIB
-#            NAMES "dl"
-#            HINTS "C:\\MinGW\\msys\\1.0\\opt\\windows_64\\mingw\\bin"
-#            NO_DEFAULT_PATH
-#            )
+    #    find_library(MYLIB
+    #            NAMES "dl"
+    #            HINTS "C:\\MinGW\\msys\\1.0\\opt\\windows_64\\mingw\\bin"
+    #            NO_DEFAULT_PATH
+    #            )
 
-#    message(${MYLIB})
+    #    message(${MYLIB})
     SET(OS_SPECIFIC_LIBRARIES ws2_32 wsock32 dl) # ${MYLIB})
 ELSEIF (LINUX)
-    SET(OS_SPECIFIC_LIBRARIES ${CMAKE_DL_LIBS})
+    SET(OS_SPECIFIC_LIBRARIES "")
 ELSEIF (APPLE)
-    SET(OS_SPECIFIC_LIBRARIES ${CMAKE_DL_LIBS})
+    SET(OS_SPECIFIC_LIBRARIES "")
 ELSE ()
-    SET(OS_SPECIFIC_LIBRARIES ${CMAKE_DL_LIBS})
+    SET(OS_SPECIFIC_LIBRARIES "")
 ENDIF ()
 LIST(APPEND CMAKE_REQUIRED_LIBRARIES ${OS_SPECIFIC_LIBRARIES})
 
@@ -177,6 +177,7 @@ list(APPEND CMAKE_REQUIRED_LIBRARIES m dl)
 # CMake Module includes
 INCLUDE(CheckIncludeFiles)
 INCLUDE(CheckFunctionExists)
+INCLUDE(CheckSymbolExists)
 
 # Check header files
 CHECK_INCLUDE_FILES(arpa/inet.h HAVE_ARPA_INET_H)
@@ -241,12 +242,31 @@ CHECK_FUNCTION_EXISTS(gethrtime HAVE_GETHRTIME)
 CHECK_FUNCTION_EXISTS(floor HAVE_FLOOR)
 CHECK_FUNCTION_EXISTS(pow HAVE_POW)
 CHECK_FUNCTION_EXISTS(sqrt HAVE_SQRT)
+CHECK_FUNCTION_EXISTS(bindprocessor HAVE_BINDPROCESSOR)
+CHECK_FUNCTION_EXISTS(thread_policy_set HAVE_THREAD_POLICY_SET)
+
+CHECK_SYMBOL_EXISTS(sched_setaffinity sched.h HAVE_SCHED_SETAFFINITY)
+CHECK_SYMBOL_EXISTS(sched_getaffinity sched.h HAVE_SCHED_GETAFFINITY)
 
 # Test for compiler builtin functions.
+FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/HAVE_CPU_SET_T.cc "
+#include <sched.h>
+int main() {
+    cpu_set_t t;
+    return 0;
+}")
 FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/HAVE_DYN_PROC_AFFINITY.cc "
 #include <sched.h>
 int main() {
     cpu_set_t *cpu = CPU_ALLOC(2);
+    return 0;
+}")
+FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/HAVE_CPU_SET_MACROS.cc "
+#include <sched.h>
+int main() {
+    cpu_set_t t;
+    CPU_ZERO(&t);
+    CPU_SET(1,&t);
     return 0;
 }")
 FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/HAVE___SYNC_ADD_AND_FETCH.cc "
@@ -261,7 +281,9 @@ int main() {
     __sync_bool_compare_and_swap(&value, value, 1);
     return 0;
 }")
+TRY_COMPILE(HAVE_CPU_SET_T ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/HAVE_CPU_SET_T.cc)
 TRY_COMPILE(DYN_PROC_AFFINITY ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/HAVE_DYN_PROC_AFFINITY.cc)
+TRY_COMPILE(HAVE_CPU_SET_MACROS ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/HAVE_CPU_SET_MACROS.cc)
 TRY_COMPILE(HAVE___SYNC_ADD_AND_FETCH ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/HAVE___SYNC_ADD_AND_FETCH.cc)
 TRY_COMPILE(HAVE___SYNC_BOOL_COMPARE_AND_SWAP ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/HAVE___SYNC_BOOL_COMPARE_AND_SWAP.cc)
 
@@ -435,7 +457,11 @@ endif ()
 target_link_libraries(gridlabd ${GL_MODULES})
 target_link_libraries(gridlabd libjsoncpp libsuperlu)
 
-target_link_libraries(gridlabd ${OS_SPECIFIC_LIBRARIES})
+IF (WIN32 OR MSYS OR MINGW OR CYGWIN)
+    target_link_libraries(gridlabd ${OS_SPECIFIC_LIBRARIES})
+ELSE ()
+    target_link_libraries(${CMAKE_DL_LIBS})
+ENDIF ()
 
 SET(FILE_PERMISSIONS PERMISSIONS
         OWNER_EXECUTE OWNER_READ OWNER_WRITE
