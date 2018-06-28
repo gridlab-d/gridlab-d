@@ -15,13 +15,21 @@ SET(PACKAGE_VERSION "4.0.0")
 
 # Sets default compile scheme to Release (Maximum optimization, no debugger data)
 # To compile as Debug outside of IDE, run cmake with "-DCMAKE_BUILD_TYPE=Debug" flag.
-if (NOT CMAKE_BUILD_TYPE)
+IF (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
-endif ()
+ENDIF ()
 
 # Allows specific compiler optimizations to be disabled for all build types.
 set(DISABLED_OPTIMIZATIONS "")
 #set(DISABLED_OPTIMIZATIONS "${DISABLED_OPTIMIZATIONS} -fno-inline-functions")
+
+# Sets optimization flags.
+IF (CMAKE_BUILD_TYPE=Release)
+    SET(COMPILER_OPTIMIZATION_FLAG -O3)
+ELSE ()
+    SET(COMPILER_OPTIMIZATION_FLAG -O0)
+ENDIF ()
+
 
 # Compiler/Linker flags for all build types
 set(CMAKE_CXX_FLAGS "-w")
@@ -29,14 +37,14 @@ set(CMAKE_C_FLAGS "-w")
 set(CMAKE_LD_FLAGS "-w")
 
 # Compiler/Linker flags for debug specific build types
-set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 ${DISABLED_OPTIMIZATIONS}")
-set(CMAKE_C_FLAGS_DEBUG "-g -O0 ${DISABLED_OPTIMIZATIONS}")
-set(CMAKE_LD_FLAGS_DEBUG "-g -O0 ${DISABLED_OPTIMIZATIONS}")
+set(CMAKE_CXX_FLAGS_DEBUG "-g ${COMPILER_OPTIMIZATION_FLAG} ${DISABLED_OPTIMIZATIONS}")
+set(CMAKE_C_FLAGS_DEBUG "-g ${COMPILER_OPTIMIZATION_FLAG} ${DISABLED_OPTIMIZATIONS}")
+set(CMAKE_LD_FLAGS_DEBUG "-g ${COMPILER_OPTIMIZATION_FLAG} ${DISABLED_OPTIMIZATIONS}")
 
 # Compiler/Linker flags for release specific build types (default)
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 ${DISABLED_OPTIMIZATIONS}")
-set(CMAKE_C_FLAGS_RELEASE "-O3 ${DISABLED_OPTIMIZATIONS}")
-set(CMAKE_LD_FLAGS_RELEASE "-O3 ${DISABLED_OPTIMIZATIONS}")
+set(CMAKE_CXX_FLAGS_RELEASE "${COMPILER_OPTIMIZATION_FLAG} ${DISABLED_OPTIMIZATIONS}")
+set(CMAKE_C_FLAGS_RELEASE "${COMPILER_OPTIMIZATION_FLAG} ${DISABLED_OPTIMIZATIONS}")
+set(CMAKE_LD_FLAGS_RELEASE "${COMPILER_OPTIMIZATION_FLAG} ${DISABLED_OPTIMIZATIONS}")
 
 # Set up platform specific library linking
 IF (WIN32 OR MSYS OR MINGW OR CYGWIN)
@@ -275,12 +283,12 @@ if (NOT _GNU_SOURCE)
     if (NOT _GNU_SOURCE)
         unset(_GNU_SOURCE CACHE)
         CHECK_SYMBOL_EXISTS(_GNU_SOURCE "features.h" _GNU_SOURCE)
-    endif()
-endif()
+    endif ()
+endif ()
 
 if (_GNU_SOURCE)
     add_definitions(-D_GNU_SOURCE)
-endif()
+endif ()
 
 # Test for compiler builtin functions.
 FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/HAVE_CPU_SET_T.cc "
