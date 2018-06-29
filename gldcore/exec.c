@@ -2285,6 +2285,14 @@ STATUS exec_start(void)
 				IN_MYCONTEXT output_debug("exec_start(), slave received looped time signal (%lli)", exec_sync_get(NULL));
 			}
 
+			/* run sync scripts, if any */
+			if ( exec_run_syncscripts()!=XC_SUCCESS )
+			{
+				output_error("sync script(s) failed");
+				THROW("script synchronization failure");
+			}
+
+
 			/* check for clock advance (indicating last pass) */
 			if ( exec_sync_get(NULL)!=global_clock )
 			{
@@ -2324,13 +2332,6 @@ STATUS exec_start(void)
 				 */
 				exec_sync_set(NULL,TS_INVALID,false);
 				THROW("convergence failure");
-			}
-
-			/* run sync scripts, if any */
-			if ( exec_run_syncscripts()!=XC_SUCCESS )
-			{
-				output_error("sync script(s) failed");
-				THROW("script synchronization failure");
 			}
 
 			/* run commit scripts, if any */
