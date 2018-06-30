@@ -1530,11 +1530,20 @@ TIMESTAMP _object_sync(OBJECT *obj, /**< the object to synchronize */
 	return obj->valid_to;
 }
 
-int object_event(char *event)
+int object_event(OBJECT *obj, char *event)
 {
-	char ts[1024];
-	sprintf(ts,"%d",global_clock);
-	setenv("CLOCK",ts,1);
+	char buffer[1024];
+	sprintf(buffer,"%d",global_clock);
+	setenv("CLOCK",buffer,1);
+	sprintf(buffer,"%s",global_hostname);
+	setenv("HOSTNAME",buffer,1);
+	sprintf(buffer,"%d",global_server_portnum);
+	setenv("PORT",buffer,1);
+	if ( obj->name )	
+		sprintf(buffer,"%s",obj->name);
+	else
+		sprintf(buffer,"%s:%d",obj->oclass->name,obj->id);
+	setenv("OBJECT",buffer,1);
 	return system(event);
 }
 
@@ -1577,7 +1586,7 @@ TIMESTAMP object_sync(OBJECT *obj, /**< the object to synchronize */
 		break;
 	}
 	if ( event != NULL )
-		rc = object_event(event);
+		rc = object_event(obj,event);
 
 	/* do profiling, if needed */
 	if ( global_profiler==1 )
@@ -1630,7 +1639,7 @@ int object_init(OBJECT *obj) /**< the object to initialize */
 		rv = (int)(*(obj->oclass->init))(obj, obj->parent);
 	if ( rv == 1 && obj->events.init != NULL )
 	{
-		int rc = object_event(obj->events.init);
+		int rc = object_event(obj,obj->events.init);
 		if ( rc != 0 )
 		{
 			IN_MYCONTEXT output_error("object %s:%d init at ts=%d event handler failed with code %d",obj->oclass->name,obj->id,global_starttime,rc);
@@ -1666,7 +1675,7 @@ STATUS object_precommit(OBJECT *obj, TIMESTAMP t1)
 	}
 	if ( rv == 1 && obj->events.precommit != NULL )
 	{
-		int rc = object_event(obj->events.precommit);
+		int rc = object_event(obj,obj->events.precommit);
 		if ( rc != 0 )
 		{
 			IN_MYCONTEXT output_error("object %s:%d precommit at ts=%d event handler failed with code %d",obj->oclass->name,obj->id,global_starttime,rc);
@@ -1691,9 +1700,9 @@ TIMESTAMP object_commit(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 	if(rv == 1){ // if 'old school' or no commit callback,
 		rv =TS_NEVER;
 	} 
-	if ( rv == 1 && obj->events.commit != NULL )
+	if ( obj->events.commit != NULL )
 	{
-		int rc = object_event(obj->events.commit);
+		int rc = object_event(obj,obj->events.commit);
 		if ( rc != 0 )
 		{
 			IN_MYCONTEXT output_error("object %s:%d commit at ts=%d event handler failed with code %d",obj->oclass->name,obj->id,global_starttime,rc);
@@ -1725,9 +1734,9 @@ STATUS object_finalize(OBJECT *obj)
 	if(rv == 1){ // if 'old school' or no finalize callback,
 		rv = SUCCESS;
 	}
-	if ( rv == 1 && obj->events.finalize != NULL )
+	if ( obj->events.finalize != NULL )
 	{
-		int rc = object_event(obj->events.precommit);
+		int rc = object_event(obj,obj->events.precommit);
 		if ( rc != 0 )
 		{
 			IN_MYCONTEXT output_error("object %s:%d precommit at ts=%d event handler failed with code %d",obj->oclass->name,obj->id,global_starttime,rc);

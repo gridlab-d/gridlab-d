@@ -307,7 +307,7 @@ static STATUS setup_ranks(void)
 		for (obj=object_get_first(); obj!=NULL; obj=object_get_next(obj))
 		{
 			/* ignore objects that don't use this passconfig */
-			if ((obj->oclass->passconfig&passtype[i])==0)
+			if ((obj->oclass->passconfig&passtype[i])==0 )
 				continue;
 
 			/* add this object to the ranks for this passconfig */
@@ -927,7 +927,7 @@ static STATUS precommit_all(TIMESTAMP t0)
 		OBJECT *obj;
 		for ( obj=object_get_first() ; obj!=NULL ; obj=object_get_next(obj) )
 		{
-			if ( obj->oclass->precommit!=NULL )
+			if ( obj->oclass->precommit!=NULL || obj->events.precommit!=NULL )
 			{
 				item = (SIMPLELINKLIST*)malloc(sizeof(SIMPLELINKLIST));
 				if ( item==NULL )
@@ -995,7 +995,7 @@ static int commit_init(void)
 	/* build commit list */
 	for ( obj=object_get_first() ; obj!=NULL ; obj=object_get_next(obj) )
 	{
-		if ( obj->oclass->commit!=NULL )
+		if ( obj->oclass->commit!=NULL || obj->events.commit!=NULL )
 		{
 			/* separate observers */
 			unsigned int pc = ((obj->oclass->passconfig&PC_OBSERVER)==PC_OBSERVER)?1:0;
@@ -1197,7 +1197,7 @@ static STATUS finalize_all()
 		OBJECT *obj;
 		for ( obj=object_get_first() ; obj!=NULL ; obj=object_get_next(obj) )
 		{
-			if ( obj->oclass->finalize!=NULL )
+			if ( obj->oclass->finalize!=NULL || obj->events.finalize!=NULL )
 			{
 				item = (SIMPLELINKLIST*)malloc(sizeof(SIMPLELINKLIST));
 				if ( item==NULL )
