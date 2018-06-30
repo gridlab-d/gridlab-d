@@ -704,7 +704,15 @@ typedef enum {
 	/* add profile items here */
 	_OPI_NUMITEMS,
 } OBJECTPROFILEITEM;
-struct s_object_list {
+typedef struct s_eventhandlers {
+	char *init;
+	char *precommit;
+	char *presync;
+	char *sync;
+	char *postsync;
+	char *commit;
+	char *finalize;
+} EVENTHANDLERS;struct s_object_list {
 	OBJECTNUM id; /**< object id number; globally unique */
 	CLASS *oclass; /**< object class; determine structure of object data */
 	OBJECTNAME name;
@@ -730,6 +738,7 @@ struct s_object_list {
 	unsigned int rng_state; /**< random number generator state */
 	TIMESTAMP heartbeat; /**< heartbeat call interval (in sim-seconds) */
 	unsigned int64 guid; /**< globally unique identifier */
+	EVENTHANDLERS events;
 	/* IMPORTANT: flags must be last */
 	unsigned int64 flags; /**< object flags */
 }; /**< Object header structure */
