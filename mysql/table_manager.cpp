@@ -101,7 +101,7 @@ int table_manager::add_table_header(string* property_name, string* property_full
 	table_headers.push_back(property_name);
 	table_units.push_back(property_unit_buffer);
 
-	table_header_buffer << *property_full_header;
+	table_header_buffer << (column_count > 0 ? ", " : "")  << *property_full_header;
 	column_count++;
 
 	// cleanup input variable which does not need to persist.

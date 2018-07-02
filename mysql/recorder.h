@@ -64,6 +64,7 @@ public:
 	GL_ATOMIC(char1024,header_fieldnames);
 	GL_STRING(char256, data_type);
 	GL_ATOMIC(int32, query_buffer_limit);
+	GL_ATOMIC(bool, minified);
 
 private:
 	bool enabled;
