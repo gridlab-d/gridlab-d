@@ -1455,6 +1455,33 @@ template <class T> inline void gl_set_value(OBJECT *obj, ///< the object whose p
 	*ptr = value;
 }
 
+/// Set a property from a string
+/// @return 1 on success, 0 on error
+inline int gl_set_string(OBJECT *obj, ///< object whose property is being obtained
+                          char *propname, ///< name of the property
+                          char *value) ///< string value to convert
+{
+        PROPERTY *prop = callback->properties.get_property(obj,propname,NULL);
+        if ( prop == NULL )
+                return 0;
+        void *addr = gl_get_addr(obj,propname);
+        return callback->convert.string_to_property(prop,addr,value);
+}
+
+/// Get a property into a string
+/// @return number of characters written, 0 on error
+inline int gl_get_string(OBJECT *obj,
+                          char *propname,
+                          char *buffer,
+                          int size)
+{
+        PROPERTY *prop = callback->properties.get_property(obj,propname,NULL);
+        if ( prop == NULL )
+                return 0;
+        void *addr = gl_get_addr(obj,propname);
+        return callback->convert.property_to_string(prop,addr,buffer,size);
+}
+
 inline FUNCTIONADDR gl_get_function(OBJECT *obj, char *fname) { return callback->function.get(obj->oclass->name,fname);};
 inline FUNCTIONADDR gl_get_function(CLASS *oclass, char *fname) { return callback->function.get(oclass->name,fname);};
 inline FUNCTIONADDR gl_get_function(char *classname, char *fname) { return callback->function.get(classname,fname);};
