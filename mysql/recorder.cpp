@@ -59,6 +59,7 @@ recorder::recorder(MODULE *module) {
 				PT_char1024, "header_fieldnames", get_header_fieldnames_offset(), PT_DESCRIPTION, "name of header fields to include",
 				PT_int32, "query_buffer_limit", get_query_buffer_limit_offset(), PT_DESCRIPTION, "max number of queries to buffer before pushing to database",
 				PT_bool, "minimize_data", get_minified_offset(), PT_DESCRIPTION, "sets a signal for size minimization to the database. will use VARCHAR and FLOAT instead of CHAR and DOUBLE for most types",
+				PT_char1024, "custom_sql", get_custom_sql_offset(), PT_DESCRIPTION, "Custom SQL",
 				NULL) < 1) {
 			char msg[256];
 			sprintf(msg, "unable to publish properties in %s", __FILE__);
@@ -78,7 +79,7 @@ int recorder::create(void) {
 	strcpy(recorder_name, "");
 	query_buffer_limit = 200;
 	minified = false;
-
+	strcpy(custom_sql, "");
 	return 1; /* return 1 on success, 0 on failure */
 }
 
@@ -90,6 +91,7 @@ int recorder::init(OBJECT *parent) {
 	query_engine* rc = recorder_connection;
 	rc->set_table_root(get_table());
 	rc->init_tables(recordid_fieldname, datetime_fieldname, true);
+	rc->get_table_path()->set_custom_sql(string(custom_sql));
 
 	group_mode = (0 != strcmp(group, ""));
 	tag_mode = !(recorder_name == "");
@@ -254,6 +256,9 @@ int recorder::init(OBJECT *parent) {
 		}
 	}
 
+//	if (get_custom_sql_header() != "")
+//		query << ", " << get_custom_sql_header() << "";
+
 	// get header fields
 	if (strlen(header_fieldnames) > 0) {
 		if (get_parent() == NULL)
@@ -301,6 +306,7 @@ int recorder::init(OBJECT *parent) {
 		query << "CREATE TABLE IF NOT EXISTS `" << rc->get_table().get_string() << "` ("
 				"`" << recordid_fieldname << "` INT AUTO_INCREMENT PRIMARY KEY, "
 				"`" << datetime_fieldname << "` DATETIME(0), "
+				<< rc->get_table_path()->get_custom_sql_columns() <<
 				"" << rc->get_table_path()->get_table_header_buffer().str() << "";
 
 		if (!get_minified()) {
