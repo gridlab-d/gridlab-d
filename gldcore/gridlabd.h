@@ -2313,7 +2313,9 @@ EXPORT int do_kill(void*);
 EXPORT int gld_major=MAJOR, gld_minor=MINOR; 
 BOOL APIENTRY DllMain(HANDLE h, DWORD r) { if (r==DLL_PROCESS_DETACH) do_kill(h); return TRUE; }
 #else // !WIN32
-CDECL int gld_major=MAJOR, gld_minor=MINOR; 
+CDECL int gld_major, gld_minor; 
+int gld_major=MAJOR;
+int gld_minor=MINOR;
 CDECL int dllinit() __attribute__((constructor));
 CDECL int dllkill() __attribute__((destructor));
 CDECL int dllinit() { return 0; }
