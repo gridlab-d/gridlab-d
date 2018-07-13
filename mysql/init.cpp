@@ -44,6 +44,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new recorder(module);
 	new player(module);
 	new collector(module);
+	new group_recorder(module);
 
 	static int32 mysql_flag = 1;
 	gl_global_create("MYSQL",PT_int32,&mysql_flag,PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"indicates that MySQL is available",NULL);

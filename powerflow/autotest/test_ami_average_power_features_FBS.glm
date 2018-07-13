@@ -1,0 +1,201 @@
+// Tests "average reporting" for AMI systems
+//Checks the power values
+
+clock {
+     timezone PST+8PDT;
+     starttime '2012-01-01 00:00:00';
+     stoptime '2012-01-01 01:00:00';
+}
+
+//#set profiler=1
+#set double_format=%+.12lg
+
+module tape;
+module assert;
+module powerflow {
+	solver_method FBS;
+	maximum_voltage_error 1e-9;
+}
+
+object triplex_line_conductor {
+	name tplex_line_cond;
+	resistance 0.97;
+	geometric_mean_radius 0.0111;
+}
+
+object triplex_line_conductor {
+	name tplex_line_cond1;
+	resistance 0.97;
+	geometric_mean_radius 0.0111;
+}
+
+object triplex_line_conductor {
+	name tplex_line_cond2;
+	resistance 0.97;
+	geometric_mean_radius 0.0111;
+}
+
+object triplex_line_configuration {
+	name triplex_line_configuration_1;
+	conductor_1 tplex_line_cond;
+	conductor_2 tplex_line_cond;
+	conductor_N tplex_line_cond;
+	insulation_thickness 0.08;
+	diameter 0.368;
+}
+
+//Simple three-phase line
+object line_configuration {
+	name OHL_config;
+	z11 0.3465+1.0179j;	//Ohms/mile
+	z12 0.1560+0.5017j;
+	z13 0.1580+0.4236j;
+	z21 0.1560+0.5017j;
+	z22 0.3375+1.0478j;
+	z23 0.1535+0.3849j;
+	z31 0.1580+0.4236j;
+	z32 0.1535+0.3849j;
+	z33 0.3414+1.0348j;
+}
+
+//Three-phase system
+object meter {
+	bustype SWING;
+	name THREE_PHASE_ROOT;
+	phases ABCN;
+	measured_energy_delta_timestep 7.0 min;
+	nominal_voltage 7200.0;
+	object double_assert {
+		target measured_avg_real_power_in_interval;
+		within 0.01;
+		object player {
+			property value;
+			file "../data_AMI_average_test_7_min_avg_real_power_threephase.csv";
+		};
+	};
+	object double_assert {
+		target measured_avg_reactive_power_in_interval;
+		within 0.01;
+		object player {
+			property value;
+			file "../data_AMI_average_test_7_min_avg_reac_power_threephase.csv";
+		};
+	};
+	// object recorder
+	// {
+		// property "measured_real_power,measured_reactive_power,measured_avg_real_power_in_interval,measured_avg_reactive_power_in_interval,measured_real_max_power_in_interval,measured_reactive_max_power_in_interval,measured_real_min_power_in_interval,measured_reactive_min_power_in_interval";
+		// interval 60;
+		// file "ami_test_out_data_7min_new_threephase.csv";
+	// };
+}
+
+object load {
+	name THREE_PHASE_LOAD;
+	phases ABCN;
+	nominal_voltage 7200.0;
+	constant_power_A 2500.0-120.0j;
+	constant_power_B 2500.0-120.0j;
+	constant_power_C 2500.0-120.0j;
+	object player {
+		property constant_power_A;
+		file "../data_power_values_ami_average_test.player";
+	};
+	object player {
+		property constant_power_B;
+		file "../data_power_values_ami_average_test.player";
+	};
+	object player {
+		property constant_power_C;
+		file "../data_power_values_ami_average_test.player";
+	};
+};
+
+object overhead_line {
+	phases ABCN;
+	name three_phase_line;
+	from THREE_PHASE_ROOT;
+	to THREE_PHASE_LOAD;
+	length 100.0 ft;
+	configuration OHL_config;
+}
+
+
+//Triplex system
+object triplex_meter {
+	bustype SWING;
+	name ROOT;
+	phases BS;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name IMALINE;
+	phases BS;
+	from ROOT;
+	to NOTROOT;
+	configuration triplex_line_configuration_1;
+	length 50.0 ft;
+}
+
+object triplex_line {
+	name IMALINE2;
+	phases BS;
+	from ROOT;
+	to NOTROOT2;
+	configuration triplex_line_configuration_1;
+	length 50.0 ft;
+}
+
+object triplex_meter {
+	name NOTROOT2;
+	phases BS;
+	nominal_voltage 120.0;
+	measured_energy_delta_timestep 7.0 min;
+	power_12 2500.0-120.0j;
+	// object recorder
+	// {
+		// property "measured_real_power,measured_reactive_power,measured_avg_real_power_in_interval,measured_avg_reactive_power_in_interval,measured_real_max_power_in_interval,measured_reactive_max_power_in_interval,measured_real_min_power_in_interval,measured_reactive_min_power_in_interval";
+		// interval 60;
+		// file "ami_test_out_data_7min_new.csv";
+	// };
+	object player {
+		property power_12;
+		file "../data_power_values_ami_average_test.player";
+	};
+}
+
+object triplex_meter {
+	name NOTROOT;
+	phases BS;
+	nominal_voltage 120.0;
+	measured_energy_delta_timestep 5.0 min;
+	power_12 2500.0-120.0j;
+	object double_assert {
+		in '2012-01-01 00:05:00 PST';	//Defer it out to the first "valid interval" -- of due to FBS power calculations on startup
+		target measured_avg_real_power_in_interval;
+		within 0.01;
+		object player {
+			property value;
+			file "../data_AMI_average_test_5_min_avg_real_power_triplex.csv";
+		};
+	};
+	object double_assert {
+		in '2012-01-01 00:05:00 PST';	//Defer it out to the first "valid interval" -- of due to FBS power calculations on startup
+		target measured_avg_reactive_power_in_interval;
+		within 0.01;
+		object player {
+			property value;
+			file "../data_AMI_average_test_5_min_avg_reac_power_triplex.csv";
+		};
+	};
+	// object recorder
+	// {
+		// property "measured_real_power,measured_reactive_power,measured_avg_real_power_in_interval,measured_avg_reactive_power_in_interval";
+		// interval 60;
+		// file "ami_test_out_data_5min_new.csv";
+	// };
+	object player {
+		property power_12;
+		file "../data_power_values_ami_average_test.player";
+	};
+}
