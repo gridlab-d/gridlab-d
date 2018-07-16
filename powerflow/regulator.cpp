@@ -284,7 +284,7 @@ int regulator::init(OBJECT *parent)
 	//Get global_minimum_timestep value and set the appropriate flag
 	unsigned int glob_min_timestep, temp_val;
 	char temp_buff[128];
-	char indexval;
+	int indexval;
 
 	//Retrieve the global value, only does so as a text string for some reason
 	gl_global_getvar("minimum_timestep",temp_buff,sizeof(temp_buff));
@@ -820,7 +820,7 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 	}
 
 	//General warnings for if we're at a railed tap limit
-	if (tap[0] == pConfig->raise_taps)
+	if (tap[0] == pConfig->raise_taps && has_phase(PHASE_A))
 	{
 		phaseWarn='A';	//Just so troubleshoot is generic
 
@@ -831,7 +831,7 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 		*/
 	}
 
-	if (tap[1] == pConfig->raise_taps)
+	if (tap[1] == pConfig->raise_taps && has_phase(PHASE_B))
 	{
 		phaseWarn='B';	//Just so troubleshoot is generic
 
@@ -839,7 +839,7 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 		//Defined above
 	}
 
-	if (tap[2] == pConfig->raise_taps)
+	if (tap[2] == pConfig->raise_taps && has_phase(PHASE_C))
 	{
 		phaseWarn='C';	//Just so troubleshoot is generic
 
@@ -847,7 +847,7 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 		//Defined above
 	}
 
-	if (tap[0] == -pConfig->lower_taps)
+	if (tap[0] == -pConfig->lower_taps && has_phase(PHASE_A))
 	{
 		phaseWarn='A';	//Just so troubleshoot is generic
 
@@ -858,7 +858,7 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 		*/
 	}
 
-	if (tap[1] == -pConfig->lower_taps)
+	if (tap[1] == -pConfig->lower_taps && has_phase(PHASE_B))
 	{
 		phaseWarn='B';	//Just so troubleshoot is generic
 
@@ -866,7 +866,7 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 		//Defined above
 	}
 
-	if (tap[2] == -pConfig->lower_taps)
+	if (tap[2] == -pConfig->lower_taps && has_phase(PHASE_C))
 	{
 		phaseWarn='C';	//Just so troubleshoot is generic
 

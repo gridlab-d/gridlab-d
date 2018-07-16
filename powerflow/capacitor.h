@@ -22,10 +22,16 @@ public:
 	set phases_connected;		// phases capacitors connected to
 	double voltage_set_high;    // high voltage set point for voltage control (turn off)
 	double voltage_set_low;     // low voltage set point for voltage control (turn on)
+	double voltage_center;		// CIM support for setting voltage_set_high and voltage_set_low
+	double voltage_deadband;
 	double VAr_set_high;		// high VAR set point for VAR control (turn off)
 	double VAr_set_low;			// low VAR set point for VAR control (turn on)
+	double VAr_center;
+	double VAr_deadband;
 	double current_set_high;	// high current set point for current control mode (turn on)
 	double current_set_low;		// low current set point for current control mode (turn off)
+	double current_center;
+	double current_deadband;
 	double capacitor_A;			// Capacitance value for phase A or phase AB
 	double capacitor_B;			// Capacitance value for phase B or phase BC
 	double capacitor_C;			// Capacitance value for phase C or phase CA

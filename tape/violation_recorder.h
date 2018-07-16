@@ -119,7 +119,7 @@ public:
 				}
 
 				//"Constructor"
-				new (next) vobjlist();
+				new (next) vobjlist(o);
 			}
 		} else {
 			obj = o;
@@ -182,7 +182,7 @@ public:
 				}
 
 				//"Constructor"
-				new (next) uniqueList();
+				new (next) uniqueList(n);
 			}
 		} else {
 			name = n;
