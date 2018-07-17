@@ -33,91 +33,24 @@ diesel_dg::diesel_dg(MODULE *module)
 
 		if (gl_publish_variable(oclass,
 
-			PT_enumeration,"Gen_mode",PADDR(Gen_mode),
-				PT_KEYWORD,"UNKNOWN",(enumeration)UNKNOWN,
-				PT_KEYWORD,"CONSTANTE",(enumeration)CONSTANTE,
-				PT_KEYWORD,"CONSTANTPQ",(enumeration)CONSTANTPQ,
-				PT_KEYWORD,"CONSTANTP",(enumeration)CONSTANTP,
-
-			PT_enumeration,"Gen_status",PADDR(Gen_status),//Gen_status is not used in the code. I suggest removing it from the object.
-				PT_KEYWORD,"UNKNOWN",(enumeration)UNKNOWN,
-				PT_KEYWORD,"OFFLINE",(enumeration)OFFLINE,
-				PT_KEYWORD,"ONLINE",(enumeration)ONLINE,	
-
 			PT_enumeration,"Gen_type",PADDR(Gen_type),
-				PT_KEYWORD,"INDUCTION",(enumeration)INDUCTION,
-				PT_KEYWORD,"SYNCHRONOUS",(enumeration)SYNCHRONOUS,
+				PT_KEYWORD,"CONSTANT_PQ",(enumeration)NON_DYN_CONSTANT_PQ,PT_DESCRIPTION,"Non-dynamic mode of diesel generator with constant PQ output as defined",
 				PT_KEYWORD,"DYN_SYNCHRONOUS",(enumeration)DYNAMIC,PT_DESCRIPTION,"Dynamics-capable implementation of synchronous diesel generator",
 		
-			PT_double, "pf", PADDR(pf),PT_DESCRIPTION,"desired power factor",
-
-			PT_double, "GenElecEff", PADDR(GenElecEff),PT_DESCRIPTION,"calculated electrical efficiency of generator",
-			PT_complex, "TotalOutputPow[VA]", PADDR(TotalPowerOutput), PT_DESCRIPTION, "total complex power generated",
-			PT_double, "TotalRealPow[W]", PADDR(TotalPowerOutput.Re()),PT_DESCRIPTION,"total real power generated",
-			PT_double, "TotalReacPow[VAr]", PADDR(TotalPowerOutput.Im()),PT_DESCRIPTION,"total reactive power generated",
-
-			// Diesel engine power plant inputs
-			PT_double, "speed[1/min]", PADDR(speed),PT_DESCRIPTION,"speed of an engine",
-			PT_double, "cylinders", PADDR(cylinders),PT_DESCRIPTION,"Total number of cylinders in a diesel engine",
-			PT_double, "stroke", PADDR(stroke),PT_DESCRIPTION,"category of internal combustion engines",
-			PT_double, "torque[N]", PADDR(torque),PT_DESCRIPTION,"Net brake load",
-			PT_double, "pressure[N/m^2]", PADDR(pressure),PT_DESCRIPTION,"",
-			PT_double, "time_operation[min]", PADDR(time_operation),PT_DESCRIPTION,"",
-			PT_double, "fuel[kg]", PADDR(fuel),PT_DESCRIPTION,"fuel consumption",
-			PT_double, "w_coolingwater[kg]", PADDR(w_coolingwater),PT_DESCRIPTION,"weight of cooling water supplied per minute",
-			PT_double, "inlet_temperature[degC]", PADDR(inlet_temperature),PT_DESCRIPTION,"Inlet temperature of cooling water in degC",
-			PT_double, "outlet_temperature[degC]", PADDR(outlet_temperature),PT_DESCRIPTION,"outlet temperature of cooling water in degC",
-			PT_double, "air_fuel[kg]", PADDR(air_fuel),PT_DESCRIPTION,"Air used per kg fuel",
-			PT_double, "room_temperature[degC]", PADDR(room_temperature),PT_DESCRIPTION,"Room temperature in degC",
-			PT_double, "exhaust_temperature[degC]", PADDR(exhaust_temperature),PT_DESCRIPTION,"exhaust gas temperature in degC",
-			PT_double, "cylinder_length[m]", PADDR(cylinder_length),PT_DESCRIPTION,"length of the cylinder, used in efficiency calculations",
-			PT_double, "cylinder_radius[m]", PADDR(cylinder_radius),PT_DESCRIPTION,"inner radius of cylinder, used in efficiency calculations",
-			PT_double, "brake_diameter[m]", PADDR(brake_diameter),PT_DESCRIPTION,"diameter of brake, used in efficiency calculations",
-			PT_double, "calotific_fuel[kJ/kg]", PADDR(calotific_fuel),PT_DESCRIPTION,"calorific value of fuel",
-			PT_double, "steam_exhaust[kg]", PADDR(steam_exhaust),PT_DESCRIPTION,"steam formed per kg of fuel in the exhaust",
-			PT_double, "specific_heat_steam[kJ/kg/K]", PADDR(specific_heat_steam),PT_DESCRIPTION,"specific heat of steam in exhaust",
-			PT_double, "specific_heat_dry[kJ/kg/K]", PADDR(specific_heat_dry),PT_DESCRIPTION,"specific heat of dry exhaust gases",
-
-			PT_double, "indicated_hp[W]", PADDR(indicated_hp),PT_DESCRIPTION,"Indicated horse power is the power developed inside the cylinder",
-			PT_double, "brake_hp[W]", PADDR(brake_hp),PT_DESCRIPTION,"brake horse power is the output of the engine at the shaft measured by a dynamometer",
-			PT_double, "thermal_efficiency", PADDR(thermal_efficiency),PT_DESCRIPTION,"thermal efficiency or mechanical efiiciency of the engine is efined as bp/ip",
-			PT_double, "energy_supplied[kJ]", PADDR(energy_supplied),PT_DESCRIPTION,"energy supplied during the trail",
-			PT_double, "heat_equivalent_ip[kJ]", PADDR(heat_equivalent_ip),PT_DESCRIPTION,"heat equivalent of IP in a given time of operation",
-			PT_double, "energy_coolingwater[kJ]", PADDR(energy_coolingwater),PT_DESCRIPTION,"energy carried away by cooling water",
-			PT_double, "mass_exhaustgas[kg]", PADDR(mass_exhaustgas),PT_DESCRIPTION,"mass of dry exhaust gas",
-			PT_double, "energy_exhaustgas[kJ]", PADDR(energy_exhaustgas),PT_DESCRIPTION,"energy carried away by dry exhaust gases",
-			PT_double, "energy_steam[kJ]", PADDR(energy_steam),PT_DESCRIPTION,"energy carried away by steam",
-			PT_double, "total_energy_exhaustgas[kJ]", PADDR(total_energy_exhaustgas),PT_DESCRIPTION,"total energy carried away by dry exhaust gases is the sum of energy carried away bt steam and energy carried away by dry exhaust gases",
-			PT_double, "unaccounted_energyloss[kJ]", PADDR(unaccounted_energyloss),PT_DESCRIPTION,"unaccounted for energy loss",
-
-			//end of diesel engine inputs
-
-			//Synchronous generator inputs
-			PT_double, "Pconv[kW]", PADDR(Pconv),PT_DESCRIPTION,"Converted power = Mechanical input - (F & W loasses + Stray losses + Core losses)",
+			PT_double, "pf", PADDR(power_factor),PT_DESCRIPTION,"desired power factor",
 
 			//End of synchronous generator inputs
-			PT_double, "Rated_V[V]", PADDR(Rated_V),PT_DESCRIPTION,"nominal line-line voltage in Volts",
+			PT_double, "Rated_V[V]", PADDR(Rated_V_LL),PT_DESCRIPTION,"nominal line-line voltage in Volts",
 			PT_double, "Rated_VA[VA]", PADDR(Rated_VA),PT_DESCRIPTION,"nominal capacity in VA",
 			PT_double, "overload_limit[pu]", PADDR(Overload_Limit_Pub),PT_DESCRIPTION,"per-unit value of the maximum power the generator can provide",
 
+			PT_complex, "current_out_A[A]", PADDR(current_val[0]),PT_DESCRIPTION,"Output current of phase A",
+			PT_complex, "current_out_B[A]", PADDR(current_val[1]),PT_DESCRIPTION,"Output current of phase B",
+			PT_complex, "current_out_C[A]", PADDR(current_val[2]),PT_DESCRIPTION,"Output current of phase C",
 			PT_complex, "power_out_A[VA]", PADDR(power_val[0]),PT_DESCRIPTION,"Output power of phase A",
 			PT_complex, "power_out_B[VA]", PADDR(power_val[1]),PT_DESCRIPTION,"Output power of phase B",
 			PT_complex, "power_out_C[VA]", PADDR(power_val[2]),PT_DESCRIPTION,"Output power of phase C",
 			
-			PT_double, "Rs", PADDR(Rs),PT_DESCRIPTION,"internal transient resistance in p.u.",
-			PT_double, "Xs", PADDR(Xs),PT_DESCRIPTION,"internal transient impedance in p.u.",
-			PT_double, "Rg", PADDR(Rg),PT_DESCRIPTION,"grounding resistance in p.u.",
-			PT_double, "Xg", PADDR(Xg),PT_DESCRIPTION,"grounding impedance in p.u.",
-			PT_complex, "voltage_A[V]", PADDR(voltage_A),PT_DESCRIPTION,"voltage at generator terminal, phase A",
-			PT_complex, "voltage_B[V]", PADDR(voltage_B),PT_DESCRIPTION,"voltage at generator terminal, phase B",
-			PT_complex, "voltage_C[V]", PADDR(voltage_C),PT_DESCRIPTION,"voltage at generator terminal, phase C",
-			PT_complex, "current_A[A]", PADDR(current_A),PT_DESCRIPTION,"current generated at generator terminal, phase A",
-			PT_complex, "current_B[A]", PADDR(current_B),PT_DESCRIPTION,"current generated at generator terminal, phase B",
-			PT_complex, "current_C[A]", PADDR(current_C),PT_DESCRIPTION,"current generated at generator terminal, phase C",
-			PT_complex, "EfA[V]", PADDR(EfA),PT_DESCRIPTION,"induced voltage on phase A",
-			PT_complex, "EfB[V]", PADDR(EfB),PT_DESCRIPTION,"induced voltage on phase B",
-			PT_complex, "EfC[V]", PADDR(EfC),PT_DESCRIPTION,"induced voltage on phase C",
-
 			//Properties for dynamics capabilities (subtransient model)
 			PT_double,"omega_ref[rad/s]",PADDR(omega_ref),PT_DESCRIPTION,"Reference frequency of generator (rad/s)",
 			PT_double,"inertia",PADDR(inertia),PT_DESCRIPTION,"Inertial constant (H) of generator",
@@ -231,7 +164,6 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_double,"vset_delta_MIN",PADDR(vset_delta_MIN),PT_DESCRIPTION,"Minimum delta Vset limit",
 			PT_double,"vadd",PADDR(gen_base_set_vals.vadd),PT_DESCRIPTION,"Delta Vset",
 			PT_double,"vadd_a",PADDR(gen_base_set_vals.vadd_a),PT_DESCRIPTION,"Delta Vset before going into bound check",
-
 
 			//Properties for Governor of dynamics model
 			PT_enumeration,"Governor_type",PADDR(Governor_type),PT_DESCRIPTION,"Governor model for dynamics-capable implementation",
@@ -429,76 +361,15 @@ int diesel_dg::create(void)
 {
 ////Initialize tracking variables
 
-	pf = 0.0;
-
-	GenElecEff = 0.0;
-	TotalPowerOutput = 0.0;
-
-	// Diesel engine power plant inputs
-	speed = 0.0;
-	cylinders = 0.0;
-	stroke = 0.0;
-	torque = 0.0;
-	pressure =0.0;
-	time_operation = 0.0;
-	fuel = 0.0;
-	w_coolingwater = 0.0;
-	inlet_temperature = 0.0;
-	outlet_temperature = 0.0;
-	air_fuel = 0.0;
-	room_temperature = 0.0;
-	exhaust_temperature = 0.0;
-	cylinder_length = 0.0;
-	cylinder_radius = 0.0;
-	brake_diameter = 0.0;
-	calotific_fuel = 0.0;
-	steam_exhaust = 0.0;
-	specific_heat_steam = 0.0;
-	specific_heat_dry = 0.0;
-
-	indicated_hp = 0.0;
-	brake_hp = 0.0;
-	thermal_efficiency = 0.0;
-	energy_supplied = 0.0;
-
-	heat_equivalent_ip = 0.0;
-	energy_coolingwater = 0.0;
-	mass_exhaustgas = 0.0;
-	energy_exhaustgas = 0.0;
-
-	energy_steam = 0.0;
-	total_energy_exhaustgas = 0.0;
-	unaccounted_energyloss = 0.0;
-
-	//end of diesel engine inputs
-
-	//Synchronous generator inputs
-
-	Pconv = 0.0;
+	power_factor = 0.0;
 
 	//End of synchronous generator inputs
-	Rated_V = 0.0;
+	Rated_V_LL = 0.0;
+	Rated_V_LN = 0.0;
 	Rated_VA = 0.0;
 
 	Overload_Limit_Pub = 1.25;	//By default, let us go 25% over the limit
 	Overload_Limit_Value = 0.0;	//Will populate later
-
-	Rs = 0.025;				//Estimated values for synch representation.
-	Xs = 0.200;
-	Rg = 0.000;
-	Xg = 0.000;
-	voltage_A = 0.0;
-	voltage_B = 0.0;
-	voltage_C = 0.0;
-	current_A = 0.0;
-	current_B = 0.0;
-	current_C = 0.0;
-	EfA = 0.0;
-	EfB = 0.0;
-	EfC = 0.0;
-	Max_P = 11000;
-	Max_Q = 6633.25;
-
 	//Arbitrary defaults
 	Max_Ef = 1.05;
 	Min_Ef = 0.95;
@@ -636,9 +507,8 @@ int diesel_dg::create(void)
 	Governor_type = NO_GOV;
 	Exciter_type = NO_EXC;
 
-	power_val[0] = 0.0;
-	power_val[1] = 0.0;
-	power_val[2] = 0.0;
+	power_val[0] = power_val[1] = power_val[2] = complex(0.0,0.0);
+	current_val[0] = current_val[1] = current_val[2] = complex(0.0,0.0);
 
 	//Rotor convergence becomes 0.1 rad
 	rotor_speed_convergence_criterion = 0.1;
@@ -727,10 +597,16 @@ int diesel_dg::create(void)
 	//NULL/zero pointers
 	pCircuit_V[0] = pCircuit_V[1] = pCircuit_V[2] = NULL;
 	pLine_I[0] = pLine_I[1] = pLine_I[2] = NULL;
+	pPower[0] = pPower[1] = pPower[2] = NULL;
 	value_Circuit_V[0] = value_Circuit_V[1] = value_Circuit_V[2] = complex(0.0,0.0);
 	value_Line_I[0] = value_Line_I[1] = value_Line_I[2] = complex(0.0,0.0);
-
+	value_Power[0] = value_Power[1] = value_Power[2] = complex(0.0,0.0);
+	value_prev_Power[0] = value_prev_Power[1] = value_prev_Power[2] = complex(0.0,0.0);
+	
 	parent_is_powerflow = false;	//By default, we're not a good child
+
+	//Overall, force the generator into "PQ mode" first
+	Gen_type = NON_DYN_CONSTANT_PQ;
 
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -751,10 +627,9 @@ int diesel_dg::init(OBJECT *parent)
 	double temp_voltage_magnitude;
 	complex temp_complex_value;
 	complex_array temp_complex_array;
-
-	complex tst, tst2, tst3, tst4;
-	current_A = current_B = current_C = 0.0;
-
+	gld_property *pNominal_Voltage;
+	double nominal_voltage_value, nom_test_val;
+	
 	//Set the deltamode flag, if desired
 	if ((obj->flags & OF_DELTAMODE) == OF_DELTAMODE)
 	{
@@ -823,6 +698,59 @@ int diesel_dg::init(OBJECT *parent)
 			pLine_I[0] = map_complex_value(tmp_obj,"current_A");
 			pLine_I[1] = map_complex_value(tmp_obj,"current_B");
 			pLine_I[2] = map_complex_value(tmp_obj,"current_C");
+
+			//Map power -- not used by all, but just for the sake of populating
+			pPower[0] = map_complex_value(tmp_obj,"power_A");
+			pPower[1] = map_complex_value(tmp_obj,"power_B");
+			pPower[2] = map_complex_value(tmp_obj,"power_C");
+
+			//Map nominal voltage for populating variables
+			//Pull the nominal voltage
+			pNominal_Voltage = new gld_property(parent,"nominal_voltage");
+
+			//Make sure it worked
+			if ((pNominal_Voltage->is_valid() != true) || (pNominal_Voltage->is_double() != true))
+			{
+				GL_THROW("diesel_dg:%d %s - Unable to map nominal_voltage from object:%d %s",obj->id,(obj->name ? obj->name : "Unnamed"),parent->id,(parent->name ? parent->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				While attempting to map the nominal_voltage from a parent object, an error occurred.  Please try again.
+				If the error persists, please submit your system and a bug report via the ticketing system.
+				*/
+			}
+
+			//Pull the voltage base value
+			nominal_voltage_value = pNominal_Voltage->get_double();
+
+			//Now get rid of the item
+			delete pNominal_Voltage;
+
+			//Compute the line-neutral value
+			Rated_V_LN = Rated_V_LL / sqrt(3.0);
+
+			//See if Rated_V is set
+			if (Rated_V_LL > 0.0)	//It is
+			{
+				//Normalize it by the nominal voltage, for testing - also convert from appropriately
+				nom_test_val = Rated_V_LN / nominal_voltage_value;
+
+				//Make sure it matches
+				if ((nom_test_val > 1.01) || (nom_test_val < 0.99))
+				{
+					GL_THROW("diesel_dg:%d %s - Rated_V does not match the nominal voltage!",obj->id,(obj->name ? obj->name : "Unnamed"));
+					/*  TROUBLESHOOT
+					The value specified in Rated_V does not match the nominal_voltage of the parented node.  Please fix this
+					discrepancy.
+					*/
+				}
+			}
+			else	//Nope, use the nominal voltage
+			{
+				//Nominal voltage should be in LN, so convert it to LL
+				Rated_V_LL = nominal_voltage_value * sqrt(3.0);
+
+				//Get the LN value too
+				Rated_V_LN = nominal_voltage_value;
+			}
 
 			//If we were deltamode requesting, set the flag on the other side
 			if (deltamode_inclusive==true)
@@ -903,13 +831,10 @@ int diesel_dg::init(OBJECT *parent)
 		The diesel_dg object does not have a proper parent -- default voltage values are used.
 		*/
 
-		//Determine the magnitude
-		temp_voltage_magnitude = Rated_V/sqrt(3.0);
-
 		//Populate the working variables
-		value_Circuit_V[0].SetPolar(temp_voltage_magnitude,0.0);
-		value_Circuit_V[1].SetPolar(temp_voltage_magnitude,-2.0/3.0*PI);
-		value_Circuit_V[2].SetPolar(temp_voltage_magnitude,2.0/3.0*PI);
+		value_Circuit_V[0].SetPolar(Rated_V_LN,0.0);
+		value_Circuit_V[1].SetPolar(Rated_V_LN,-2.0/3.0*PI);
+		value_Circuit_V[2].SetPolar(Rated_V_LN,2.0/3.0*PI);
 	}
 
 	//Preliminary check on modes
@@ -927,82 +852,78 @@ int diesel_dg::init(OBJECT *parent)
 		*/
 	}
 
-	//Old checks - only if not in dynamics mode (that's handled below)
-	if (Gen_type!=DYNAMIC)
+	if (Gen_type == NON_DYN_CONSTANT_PQ)
 	{
-		if (Gen_mode==UNKNOWN)
+		// Check rated power
+		if (Rated_VA <= 0.0)
 		{
-			OBJECT *obj = OBJECTHDR(this);
-			GL_THROW("Generator control mode is not specified");
+			Rated_VA = 0.5e6;	//Set to parameter-basis default
+
+			gl_warning("diesel_dg:%s did not have a valid Rated_VA set, assuming 5000 kVA",obj->name?obj->name:"unnamed");
 			/*  TROUBLESHOOT
-			The generator is in the mode of UNKNOWN.  Please change this mode and try again.
-			*/
-		}
-		if (Gen_mode == CONSTANTP)
-		{
-			GL_THROW("Generator control mode, CONSTANTP is not implemented yet.");
-			/* TROUBLESHOOT
-			The generator is in the mode of CONSTANTP. Please change this to CONSTANTPQ and try again.
+			The Rated_VA value was not set or was set to a negative number.  It is being forced to 5000 kVA, which is
+			the machine base for all of the other default parameter values.
 			*/
 		}
 
-		//Default checks
-		if (Rated_VA==0.0)
-		{
-			Rated_VA = 12000.0;
+		// Check given power output in glm file
+		power_base = Rated_VA/3.0;
 
-			gl_warning("Generator power not specified, defaulting to 12 KVA");
+		//Check specified power against per-phase limit (power_base) - impose that for now
+		if (power_val[0].Mag()>power_base)
+		{
+			gl_warning("diesel_dg:%s - power_out_A is above 1/3 the total rating, capping",obj->name?obj->name:"unnamed");
 			/*  TROUBLESHOOT
-			A rated power for the diesel_dg object was not specified for the non-dynamic
-			operation.  It has been assigned a default of 12 KVA.
+			The diesel_dg object has a power_out_A value that is above 1/3 the total rating.  It will be thresholded to
+			that level.
 			*/
-		}
 
-		SB = Rated_VA/3;
+			//Maintain power factor value
+			test_pf = power_val[0].Re()/power_val[0].Mag();
 
-		if (Rated_V==0.0)
+			//Form up
+			if (power_val[0].Im()<0.0)
+				power_val[0] = complex((power_base*test_pf),(-1.0*sqrt(1-test_pf*test_pf)*power_base));
+			else
+				power_val[0] = complex((power_base*test_pf),(sqrt(1-test_pf*test_pf)*power_base));
+		}//End phase A power limit check
+
+		if (power_val[1].Mag()>power_base)
 		{
-			Rated_V = 480.0;
-
-			gl_warning("Generator voltage not specified, defaulting to 480 V");
+			gl_warning("diesel_dg:%s - power_out_B is above 1/3 the total rating, capping",obj->name?obj->name:"unnamed");
 			/*  TROUBLESHOOT
-			A rated voltage for the diesel_dg object was not specified for the non-dynamic
-			operation.  It has been assigned a default of 480 V.
+			The diesel_dg object has a power_out_B value that is above 1/3 the total rating.  It will be thresholded to
+			that level.
 			*/
-		}
 
-		EB = Rated_V/sqrt(3.0);
+			//Maintain power factor value
+			test_pf = power_val[1].Re()/power_val[1].Mag();
 
-		if (SB!=0.0)
-			ZB = EB*EB/SB;
-		else
+			//Form up
+			if (power_val[1].Im()<0.0)
+				power_val[1] = complex((power_base*test_pf),(-1.0*sqrt(1-test_pf*test_pf)*power_base));
+			else
+				power_val[1] = complex((power_base*test_pf),(sqrt(1-test_pf*test_pf)*power_base));
+		}//End phase B power limit check
+
+		if (power_val[2].Mag()>power_base)
 		{
-			GL_THROW("Generator power capacity not specified!");
+			gl_warning("diesel_dg:%s - power_out_C is above 1/3 the total rating, capping",obj->name?obj->name:"unnamed");
 			/*  TROUBLESHOOT
-			The power capacity (Rated_VA) is not set.  Please set it and try again.
+			The diesel_dg object has a power_out_C value that is above 1/3 the total rating.  It will be thresholded to
+			that level.
 			*/
-		}
 
-		if (Gen_type == SYNCHRONOUS)  
-		{
-			double Real_Rs = Rs * ZB; 
-			double Real_Xs = Xs * ZB;
-			double Real_Rg = Rg * ZB; 
-			double Real_Xg = Xg * ZB;
-			tst = complex(Real_Rg,Real_Xg);
-			tst2 = complex(Real_Rs,Real_Xs);
-			AMx[0][0] = tst2 + tst;			//Impedance matrix
-			AMx[1][1] = tst2 + tst;
-			AMx[2][2] = tst2 + tst;
-			AMx[0][1] = AMx[0][2] = AMx[1][0] = AMx[1][2] = AMx[2][0] = AMx[2][1] = tst;
-			tst3 = (complex(1,0) + complex(2,0)*tst/tst2)/(tst2 + complex(3,0)*tst);
-			tst4 = (-tst/tst2)/(tst2 + tst);
-			invAMx[0][0] = tst3;			//Admittance matrix (inverse of Impedance matrix)
-			invAMx[1][1] = tst3;
-			invAMx[2][2] = tst3;
-			invAMx[0][1] = AMx[0][2] = AMx[1][0] = AMx[1][2] = AMx[2][0] = AMx[2][1] = tst4;
-		}
-	}//End not dynamic init checks
+			//Maintain power factor value
+			test_pf = power_val[2].Re()/power_val[2].Mag();
+
+			//Form up
+			if (power_val[2].Im()<0.0)
+				power_val[2] = complex((power_base*test_pf),(-1.0*sqrt(1-test_pf*test_pf)*power_base));
+			else
+				power_val[2] = complex((power_base*test_pf),(sqrt(1-test_pf*test_pf)*power_base));
+		}//End phase C power limit check
+	}
 	else	//Must be dynamic!
 	{
 		//Make sure our parent is delta enabled!
@@ -1046,9 +967,9 @@ int diesel_dg::init(OBJECT *parent)
 		Overload_Limit_Value = Rated_VA * Overload_Limit_Pub;
 
 		//Check voltage value
-		if (Rated_V<=0.0)
+		if (Rated_V_LL<=0.0)
 		{
-			Rated_V = 15000.0;	//Set to parameter-basis default
+			Rated_V_LL = 15000.0;	//Set to parameter-basis default
 
 			gl_warning("diesel_dg:%s did not have a valid Rated_V set, assuming 15 kV",obj->name?obj->name:"unnamed");
 			/*  TROUBLESHOOT
@@ -1060,7 +981,7 @@ int diesel_dg::init(OBJECT *parent)
 
 		//Determine machine base values for later
 		power_base = Rated_VA/3.0;
-		voltage_base = Rated_V/sqrt(3.0);
+		voltage_base = Rated_V_LN;
 		current_base = power_base / voltage_base;
 		impedance_base = voltage_base / current_base;
 
@@ -1490,11 +1411,8 @@ TIMESTAMP diesel_dg::presync(TIMESTAMP t0, TIMESTAMP t1)
 
 TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
-	double Pmech;
-	unsigned char jindex, kindex;
 	OBJECT *obj = OBJECTHDR(this);
-	gld_property *temp_property_ptr;
-	double temp_double_high, temp_double_low, temp_double_val, tdiff, ang_diff;
+	double tdiff, ang_diff;
 	complex temp_current_val[3];
 	complex temp_voltage_val[3];
 	complex rotate_value;
@@ -1575,41 +1493,6 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 			{
 				if (gl_object_isa(obj->parent,"meter","powerflow") || gl_object_isa(obj->parent,"load","powerflow") || gl_object_isa(obj->parent,"node","powerflow") || gl_object_isa(obj->parent,"elec_frequency","powerflow"))
 				{
-					//Check the nominal voltage
-					temp_property_ptr = new gld_property(obj->parent,"nominal_voltage");
-
-					//Check it
-					if ((temp_property_ptr->is_valid() != true) || (temp_property_ptr->is_double() != true))
-					{
-						GL_THROW("diesel_dg:%s - unable to retrieve nominal_voltage from parent!",obj->name?obj->name:"unnamed");
-						/*  TROUBLESHOOT
-						While attempting to retrieve the nominal_voltage value of the parented node, something went wrong.  Please
-						try again.  If the error persists, please submit your code and a bug report via the trac website.
-						*/
-					}
-					else	//Found it
-					{
-						//Pull its value
-						temp_double_val = temp_property_ptr->get_double();
-
-						//Form a "deadband" - not sure how much it will like "exact" comparisons of doubles
-						temp_double_high = Rated_V/sqrt(3.0)*1.01;
-						temp_double_low = Rated_V/sqrt(3.0)*0.99;
-
-						//Compare it
-						if ((temp_double_val > temp_double_high) || (temp_double_val < temp_double_low))
-						{
-							GL_THROW("diesel_dg:%s - nominal voltage mismatch!",obj->name?obj->name:"unnamed");
-							/*  TROUBLESHOOT
-							The Rated_V value for the diesel_dg object (line-line value) is not within 1% of the nominal
-							wye-voltage of the parent meter.  Please fix this and try again.
-							*/
-						}
-					}//End found point else
-
-					//clear the property
-					delete temp_property_ptr;
-
 					//Accumulate and pass our starting power
 					temp_complex_value_power = power_val[0] + power_val[1] + power_val[2];
 
@@ -1653,133 +1536,20 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}//End first timestep
 
 	//Existing code retained - kept as "not dynamic"
-	if (Gen_type != DYNAMIC)
+	if (Gen_type == NON_DYN_CONSTANT_PQ)
 	{
-		indicated_hp = (100000/60)*(pressure*cylinder_length*(3.1416/4)*cylinder_radius*cylinder_radius*speed*cylinders);
-		
-		brake_hp = 2*3.1416*(speed/stroke)*(torque/cylinders)/60;
+		// Assign the power output from diesel_dg to its parent node
+		// Note that value_prev_Power is the positive value of power_val (from prev) - so the -(-) = +
+		value_Power[0] = -power_val[0] + value_prev_Power[0];
+		value_Power[1] = -power_val[1] + value_prev_Power[1];
+		value_Power[2] = -power_val[2] + value_prev_Power[2];
 
-		thermal_efficiency = (brake_hp/indicated_hp)*100;
-
-		energy_supplied = fuel * calotific_fuel;
-
-		heat_equivalent_ip = indicated_hp * time_operation * 60/1000;
-
-		energy_coolingwater = w_coolingwater * 4.187 * (outlet_temperature - inlet_temperature);
-
-		mass_exhaustgas = (fuel * air_fuel) - (steam_exhaust * fuel);
-
-		energy_exhaustgas = mass_exhaustgas * specific_heat_dry * (exhaust_temperature - room_temperature);
-
-		energy_steam = (steam_exhaust * fuel) * (4.187 * (100 - room_temperature) + 2257.9 + specific_heat_steam * (exhaust_temperature - 100));
-
-		total_energy_exhaustgas = energy_exhaustgas + energy_steam;
-
-		unaccounted_energyloss = energy_supplied - heat_equivalent_ip - energy_coolingwater - total_energy_exhaustgas;	
-
-		Pmech = brake_hp;
-
-		Pconv = 1 * Pmech;  //TO DO:  friction and windage loss, misc. loss model
-
-		//current_A = current_B = current_C = 0.0;
-
-		int k;
-		//Powerflow value pull
-		pull_powerflow_values();
-
-		voltage_A = value_Circuit_V[0];	//Syncs the meter parent to the generator.
-		voltage_B = value_Circuit_V[1];
-		voltage_C = value_Circuit_V[2];
-
-		double Pconva = (voltage_A.Mag() / (voltage_A.Mag() + voltage_B.Mag() + voltage_C.Mag()))*Pconv;
-		double Pconvb = (voltage_B.Mag() / (voltage_A.Mag() + voltage_B.Mag() + voltage_C.Mag()))*Pconv;
-		double Pconvc = (voltage_C.Mag() / (voltage_A.Mag() + voltage_B.Mag() + voltage_C.Mag()))*Pconv;
-
-		if (Gen_type == SYNCHRONOUS)	
-		{											//sg ef mode is not working yet
-			double Mxef, Mnef, PoutA, PoutB, PoutC, QoutA, QoutB, QoutC;
-			complex SoutA, SoutB, SoutC;
-			complex lossesA, lossesB, lossesC;
-
-			Mxef = Max_Ef * Rated_V/sqrt(3.0);
-			Mnef = Min_Ef * Rated_V/sqrt(3.0);
-
-			
-			if (Gen_mode == CONSTANTE)	//Ef is controllable to give a needed power output.
-			{
-				current_A = invAMx[0][0]*(voltage_A - EfA) + invAMx[0][1]*(voltage_B - EfB) + invAMx[0][2]*(voltage_C - EfC);
-				current_B = invAMx[1][0]*(voltage_A - EfA) + invAMx[1][1]*(voltage_B - EfB) + invAMx[1][2]*(voltage_C - EfC);
-				current_C = invAMx[2][0]*(voltage_A - EfA) + invAMx[2][1]*(voltage_B - EfB) + invAMx[2][2]*(voltage_C - EfC);
-
-				SoutA = -voltage_A * (~(current_A));  //TO DO:  unbalanced
-				SoutB = -voltage_B * (~(current_B));
-				SoutC = -voltage_C * (~(current_C));
-			}
-
-			else if (Gen_mode == CONSTANTPQ)	//Gives a constant output power of real power converted Pout,  
-			{									//then Qout is found through a controllable power factor.
-				if (Pconva > 1*Max_P/3) {
-					Pconva = 1*Max_P/3;		//If air density increases, power extracted can be much greater
-				}								//than amount the generator can handle.  This limits to 5% overpower.
-				if (Pconvb > 1*Max_P/3) {
-					Pconvb = 1*Max_P/3;
-				}
-				if (Pconvc > 1*Max_P/3) {
-					Pconvc = 1*Max_P/3;
-				}
-				
-				current_A = -(~(complex(Pconva,(Pconva/pf)*sin(acos(pf)))/voltage_A));
-				current_B = -(~(complex(Pconvb,(Pconvb/pf)*sin(acos(pf)))/voltage_B));
-				current_C = -(~(complex(Pconvc,(Pconvc/pf)*sin(acos(pf)))/voltage_C));
-
-				for (k = 0; k < 100; k++)
-				{
-					PoutA = Pconva - current_A.Mag()*current_A.Mag()*(AMx[0][0] - AMx[0][1]).Re();
-					PoutB = Pconvb - current_B.Mag()*current_B.Mag()*(AMx[1][1] - AMx[0][1]).Re();
-					PoutC = Pconvc - current_C.Mag()*current_C.Mag()*(AMx[2][2] - AMx[0][1]).Re();
-
-					QoutA = pf/fabs(pf)*PoutA*sin(acos(pf));
-					QoutB = pf/fabs(pf)*PoutB*sin(acos(pf));
-					QoutC = pf/fabs(pf)*PoutC*sin(acos(pf));
-
-					current_A = -(~(complex(PoutA,QoutA)/voltage_A));
-					current_B = -(~(complex(PoutB,QoutB)/voltage_B));
-					current_C = -(~(complex(PoutC,QoutC)/voltage_C));
-				}
-
-				EfA = voltage_A - (AMx[0][0] - AMx[0][1])*current_A - AMx[0][2]*(current_A + current_B + current_C);
-				EfB = voltage_B - (AMx[1][1] - AMx[1][0])*current_A - AMx[1][2]*(current_A + current_B + current_C);
-				EfC = voltage_C - (AMx[2][2] - AMx[2][0])*current_A - AMx[2][1]*(current_A + current_B + current_C);
-
-				//if (EfA.Mag() > Mxef || EfA.Mag() > Mxef || EfA.Mag() > Mxef)
-				//{
-				//	Gen_mode = CONSTANTEf;
-				//}TO DO:  loop back to Ef if true?
-			}
-		}//Synchronous generator ends here
-		
-		//test functions
-
-		double PowerA, PowerB, PowerC, QA, QB, QC;
-
-		PowerA = -voltage_A.Mag()*current_A.Mag()*cos(voltage_A.Arg() - current_A.Arg());
-		PowerB = -voltage_B.Mag()*current_B.Mag()*cos(voltage_B.Arg() - current_B.Arg());
-		PowerC = -voltage_C.Mag()*current_C.Mag()*cos(voltage_C.Arg() - current_C.Arg());
-
-		QA = -voltage_A.Mag()*current_A.Mag()*sin(voltage_A.Arg() - current_A.Arg());
-		QB = -voltage_B.Mag()*current_B.Mag()*sin(voltage_B.Arg() - current_B.Arg());
-		QC = -voltage_C.Mag()*current_C.Mag()*sin(voltage_C.Arg() - current_C.Arg());
-
-		TotalPowerOutput = complex((PowerA + PowerB + PowerC),(QA + QB + QC));
-
-		GenElecEff = TotalPowerOutput.Re()/Pconv * 100;
-
-		value_Line_I[0] = current_A;
-		value_Line_I[1] = current_B;
-		value_Line_I[2] = current_C;
-
-	}//End no dynamic generator (older code)
-	else	//Must be a synchronous dynamic machine
+		//Update the accumulator tracker
+		value_prev_Power[0] = power_val[0];
+		value_prev_Power[1] = power_val[1];
+		value_prev_Power[2] = power_val[2];
+	}
+	else if (Gen_type == DYNAMIC)	//Synchronous dynamic machine
 	{
 		//Only do updates if this is a new timestep
 		if ((prev_time < t1) && (first_run == false))
@@ -1904,6 +1674,13 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 		//Nothing else in here right now....all handled internal to powerflow
 	}//End synchronous dynamics-enabled generator
+	else
+	{
+		GL_THROW("diesel_dg:%d %s - Unknown Gen_type specified!",obj->id,(obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		An unsupported Gen_type was somehow specified in the diesel_dg.  Fix this, and try again.
+		*/
+	}
 
 	//Push the various accumulator values up
 	push_powerflow_values(false);
@@ -2124,39 +1901,60 @@ void diesel_dg::push_powerflow_values(bool update_voltage)
 	//See if we're proper first
 	if (parent_is_powerflow == true)
 	{
-		if (update_voltage == true)
+		//See what kind of object we are
+		if (Gen_type == NON_DYN_CONSTANT_PQ)
 		{
-			//Loop through the three-phases/accumulators
+			//Post the power
 			for (indexval=0; indexval<3; indexval++)
 			{
-				//**** push voltaget value -- not an accumulator, just force ****/
-				pCircuit_V[indexval]->setp<complex>(value_Circuit_V[indexval],*test_rlock);
-			}
-		}
-		else	//Standard update
-		{
-			//Loop through the three-phases/accumulators
-			for (indexval=0; indexval<3; indexval++)
-			{
-				//**** Pure Current value ***/
-				//Pull current value again, just in case
-				temp_complex_val = pLine_I[indexval]->get_complex();
+				//**** Pure Power Value ***/
+				//Pull the power value
+				temp_complex_val = pPower[indexval]->get_complex();
 
-				//Add the difference
-				temp_complex_val += value_Line_I[indexval];
+				//Add the value
+				temp_complex_val += value_Power[indexval];
 
 				//Push it back up
-				pLine_I[indexval]->setp<complex>(temp_complex_val,*test_rlock);
-
-				//Update dynamic variables
-				if (deltamode_inclusive == true)
-				{
-					//**** Pre-rotated current injection value ***/
-					//This is a direct write - not an accumulator
-					pIGenerated[indexval]->setp<complex>(value_IGenerated[indexval],*test_rlock);
-				}					
+				pPower[indexval]->setp<complex>(temp_complex_val,*test_rlock);
 			}
 		}
+		else if (Gen_type == DYNAMIC)
+		{
+			if (update_voltage == true)
+			{
+				//Loop through the three-phases/accumulators
+				for (indexval=0; indexval<3; indexval++)
+				{
+					//**** push voltage value -- not an accumulator, just force ****/
+					pCircuit_V[indexval]->setp<complex>(value_Circuit_V[indexval],*test_rlock);
+				}
+			}
+			else	//Standard update
+			{
+				//Loop through the three-phases/accumulators
+				for (indexval=0; indexval<3; indexval++)
+				{
+					//**** Pure Current value ***/
+					//Pull current value again, just in case
+					temp_complex_val = pLine_I[indexval]->get_complex();
+
+					//Add the difference
+					temp_complex_val += value_Line_I[indexval];
+
+					//Push it back up
+					pLine_I[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+
+					//Update dynamic variables
+					if (deltamode_inclusive == true)
+					{
+						//**** Pre-rotated current injection value ***/
+						//This is a direct write - not an accumulator
+						pIGenerated[indexval]->setp<complex>(value_IGenerated[indexval],*test_rlock);
+					}					
+				}
+			}
+		}//End synchronous
+		//Default else - some other type, so skip for now
 	}
 	//Default else -- don't do anything
 }
@@ -3533,9 +3331,9 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 	current_pu[2] = (value_IGenerated[2] - generator_admittance[2][0]*value_Circuit_V[0] - generator_admittance[2][1]*value_Circuit_V[1] - generator_admittance[2][2]*value_Circuit_V[2])/current_base;
 
 	// post currents
-	current_A=current_pu[0]*current_base;
-	current_B=current_pu[1]*current_base;
-	current_C=current_pu[2]*current_base;
+	current_val[0]=current_pu[0]*current_base;
+	current_val[1]=current_pu[1]*current_base;
+	current_val[2]=current_pu[2]*current_base;
 
 
 	//Nab per-unit omega, while we're at it
@@ -4205,9 +4003,9 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 	current_pu[2] = (value_IGenerated[2] - generator_admittance[2][0]*value_Circuit_V[0] - generator_admittance[2][1]*value_Circuit_V[1] - generator_admittance[2][2]*value_Circuit_V[2])/current_base;
 
 	// post currents
-	current_A=current_pu[0]*current_base;
-	current_B=current_pu[1]*current_base;
-	current_C=current_pu[2]*current_base;
+	current_val[0]=current_pu[0]*current_base;
+	current_val[1]=current_pu[1]*current_base;
+	current_val[2]=current_pu[2]*current_base;
 	
 	//Compute initial power
 	curr_time->pwr_electric = (voltage_pu[0]*~current_pu[0]+voltage_pu[1]*~current_pu[1]+voltage_pu[2]*~current_pu[2])*voltage_base*current_base;

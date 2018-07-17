@@ -209,7 +209,7 @@ public:
 	violation_recorder(MODULE *);
 	int create();
 	int init(OBJECT *);
-	int finalize(OBJECT *obj);
+	STATUS finalize(OBJECT *obj);
 	int isa(char *);
 	TIMESTAMP postsync(TIMESTAMP, TIMESTAMP);
 
