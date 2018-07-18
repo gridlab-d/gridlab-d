@@ -111,6 +111,7 @@ GLOBAL double default_maximum_voltage_error INIT(1e-6);	/**< default sync voltag
 GLOBAL double default_maximum_power_error INIT(0.0001);	/**< default power convergence limit for multirun */
 GLOBAL OBJECT *restoration_object INIT(NULL);		/**< restoration object of the system */
 GLOBAL OBJECT *fault_check_object INIT(NULL);		/**< fault_check object of the system */
+GLOBAL bool fault_check_override_mode INIT(false);	/**< Mode designator for fault_check -- overrides errors and prevents powerflow -- meant for debug */
 GLOBAL bool meshed_fault_checking_enabled INIT(false);	/*** fault_check object flag for possible meshing -- adjusts how reliability-related code runs */
 GLOBAL bool restoration_checks_active INIT(false);	/***< Overall flag for when reconfigurations are occurring - special actions in devices */
 GLOBAL double reliability_metrics_recloser_counts INIT(0.0);	/***< Recloser counts for momentary outages for power_metrics -- primarily to do backwards compatibility*/
