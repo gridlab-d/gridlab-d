@@ -42,21 +42,22 @@ typedef enum {
 class link_object : public powerflow_object
 {
 public: /// @todo make this private and create interfaces to control values
-	complex a_mat[3][3];	// a_mat - 3x3 matrix, 'a' matrix
-	complex b_mat[3][3];	// b_mat - 3x3 matrix, 'b' matrix
-	complex c_mat[3][3];	// c_mat - 3x3 matrix, 'c' matrix
-	complex d_mat[3][3];	// d_mat - 3x3 matrix, 'd' matrix
-	complex A_mat[3][3];	// A_mat - 3x3 matrix, 'A' matrix
-	complex B_mat[3][3];	// B_mat - 3x3 matrix, 'B' matrix
-	complex tn[3];			// Used to calculate return current
-	complex To_Y[3][3];		// To_Y  - 3x3 matrix, object transition to admittance
-	complex From_Y[3][3];	// From_Y - 3x3 matrix, object transition from admittance
-	complex *YSfrom;		// YSfrom - Pointer to 3x3 matrix representing admittance seen from "from" side (transformers)
-	complex *YSto;			// YSto - Pointer to 3x3 matrix representing admittance seen from "to" side (transformers)
-	double voltage_ratio;	// voltage ratio (normally 1.0)
-	int NR_branch_reference;	//Index of NR_branchdata this link is contained in
-	SPECIAL_LINK SpecialLnk;	//Flag for exceptions to the normal handling
-	set flow_direction;		// Flag direction of powerflow: 1 is normal, -1 is reverse flow, 0 is no flow
+	complex a_mat[3][3];				// a_mat - 3x3 matrix, 'a' matrix
+	complex b_mat[3][3];				// b_mat - 3x3 matrix, 'b' matrix
+	complex c_mat[3][3];				// c_mat - 3x3 matrix, 'c' matrix
+	complex d_mat[3][3];				// d_mat - 3x3 matrix, 'd' matrix
+	complex A_mat[3][3];				// A_mat - 3x3 matrix, 'A' matrix
+	complex B_mat[3][3];				// B_mat - 3x3 matrix, 'B' matrix
+	complex tn[3];						// Used to calculate return current
+	complex base_admittance_mat[3][3];	// 3x3 matrix as "pre-inverted" matrix for NR - mostly for transformers
+	complex To_Y[3][3];					// To_Y  - 3x3 matrix, object transition to admittance
+	complex From_Y[3][3];				// From_Y - 3x3 matrix, object transition from admittance
+	complex *YSfrom;					// YSfrom - Pointer to 3x3 matrix representing admittance seen from "from" side (transformers)
+	complex *YSto;						// YSto - Pointer to 3x3 matrix representing admittance seen from "to" side (transformers)
+	double voltage_ratio;				// voltage ratio (normally 1.0)
+	int NR_branch_reference;			//Index of NR_branchdata this link is contained in
+	SPECIAL_LINK SpecialLnk;			//Flag for exceptions to the normal handling
+	set flow_direction;					// Flag direction of powerflow: 1 is normal, -1 is reverse flow, 0 is no flow
 	void calculate_power();
 	void calculate_power_splitphase();
 	void set_flow_directions();
@@ -126,7 +127,7 @@ public:
 	static int kmlinit(int (*stream)(const char*,...));
 	int kmldump(int (*stream)(const char*,...));
 	//Current injection calculation function - so it can be called remotely
-	int CurrentCalculation(int nodecall);
+	int CurrentCalculation(int nodecall, bool link_fault_mode);
 
 	void NR_link_presync_fxn(void);
 	void BOTH_link_postsync_fxn(void);

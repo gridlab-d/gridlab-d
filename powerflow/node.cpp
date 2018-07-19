@@ -4250,7 +4250,7 @@ int node::NR_current_update(bool parentcall)
 				WRITELOCK_OBJECT(NR_branchdata[NR_busdata[NR_node_reference].Link_Table[table_index]].obj);
 
 				//Call its update - tell it who is asking so it knows what to lock
-				temp_result = temp_link->CurrentCalculation(NR_node_reference);
+				temp_result = temp_link->CurrentCalculation(NR_node_reference,false);
 
 				//Unlock the link
 				WRITEUNLOCK_OBJECT(NR_branchdata[NR_busdata[NR_node_reference].Link_Table[table_index]].obj);

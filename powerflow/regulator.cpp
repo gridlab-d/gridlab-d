@@ -231,6 +231,7 @@ int regulator::init(OBJECT *parent)
 		{
 			a_mat[i][j] = b_mat[i][j] = c_mat[i][j] = d_mat[i][j] =
 					A_mat[i][j] = B_mat[i][j] = 0.0;
+			base_admittance_mat[i][j] = complex(0.0,0.0);
 		}
 	}
 
@@ -276,11 +277,20 @@ int regulator::init(OBJECT *parent)
 				SpecialLnk = REGULATOR;
 				//complex Izt = complex(1,0) / zt;
 				if (has_phase(PHASE_A))
-					b_mat[0][0] = 1/regulator_resistance;
+				{
+					base_admittance_mat[0][0] = complex(1.0/regulator_resistance,0.0);
+					b_mat[0][0] = regulator_resistance;
+				}
 				if (has_phase(PHASE_B))
-					b_mat[1][1] = 1/regulator_resistance;
+				{
+					base_admittance_mat[1][1] = complex(1.0/regulator_resistance,0.0);
+					b_mat[1][1] = regulator_resistance;
+				}
 				if (has_phase(PHASE_C))
-					b_mat[2][2] = 1/regulator_resistance;
+				{
+					base_admittance_mat[2][2] = complex(1.0/regulator_resistance,0.0);
+					b_mat[2][2] = regulator_resistance;
+				}
 			}
 			break;
 		case regulator_configuration::OPEN_DELTA_ABBC:
@@ -917,7 +927,7 @@ void regulator::reg_postPre_fxn(void)
 		complex Yfrom[3][3];
 
 		//Pre-admittancized matrix
-		equalm(b_mat,Yto);
+		equalm(base_admittance_mat,Yto);
 
 		//Store value into YSto
 		for (jindex=0; jindex<3; jindex++)
