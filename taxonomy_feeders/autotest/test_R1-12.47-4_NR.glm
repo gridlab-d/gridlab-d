@@ -6878,7 +6878,7 @@ object underground_line:651 {
 	// };
  object complex_assert{
 		target power_in_A;
-		value +211367+132286j;
+		value +211368+132287j;
 		within 1;
 	};
 	object complex_assert{
@@ -6888,12 +6888,12 @@ object underground_line:651 {
 	};
 	object complex_assert{
 		target power_in_C;
-		value +218030+136134j;
+		value +218029+136134j;
 		within 1;
 	};
  object complex_assert{
 		target power_out_A;
-		value +211366+132286j;
+		value +211368+132286j;
 		within 1;
 	};
 	object complex_assert{
@@ -6903,7 +6903,7 @@ object underground_line:651 {
 	};
 	object complex_assert{
 		target power_out_C;
-		value +218030+136134j;
+		value +218029+136134j;
 		within 1;
 	};
 }

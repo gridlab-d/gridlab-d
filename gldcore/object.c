@@ -2254,35 +2254,34 @@ static OBJECTTREE *object_tree_add(OBJECT *obj, OBJECTNAME name){
 
 /*	Finds a name in the tree
  */
-static OBJECTTREE **findin_tree(OBJECTTREE *tree, OBJECTNAME name)
+static OBJECTTREE **findin_tree(OBJECTTREE **tree, OBJECTNAME name)
 {
-	static OBJECTTREE **temptree = NULL;
-	if(tree == NULL){
+	if(tree == NULL || *tree == NULL){
 		return NULL;
 	} else {
-		int rel = strcmp(tree->name, name);
+		int rel = strcmp((*tree)->name, name);
 		if(rel > 0){
-			if(tree->before != NULL){
-				if(strcmp(tree->before->name, name) == 0){
-					return &(tree->before);
+			if((*tree)->before != NULL){
+				if(strcmp((*tree)->before->name, name) == 0){
+					return &((*tree)->before);
 				} else {
-					return findin_tree(tree->before, name);
+					return findin_tree(&((*tree)->before), name);
 				}
 			} else {
 				return NULL;
 			}
 		} else if(rel<0) {
-			if(tree->after != NULL){
-				if(strcmp(tree->after->name, name) == 0){
-					return &(tree->after);
+			if((*tree)->after != NULL){
+				if(strcmp((*tree)->after->name, name) == 0){
+					return &((*tree)->after);
 				} else {
-					return findin_tree(tree->after, name);
+					return findin_tree(&((*tree)->after), name);
 				}
 			} else {
 				return NULL;
 			}
 		} else {
-			return (temptree = &tree);
+			return tree;
 		}
 	}
 }
@@ -2292,7 +2291,7 @@ static OBJECTTREE **findin_tree(OBJECTTREE *tree, OBJECTNAME name)
  */
 void object_tree_delete(OBJECT *obj, OBJECTNAME name)
 {
-	OBJECTTREE **item = findin_tree(top,name);
+	OBJECTTREE **item = findin_tree(&(top),name);
 	OBJECTTREE *temp = NULL, **dtemp = NULL;
 
 	if(item != NULL && strcmp((*item)->name, name)!=0){
@@ -2338,7 +2337,7 @@ void object_tree_delete(OBJECT *obj, OBJECTNAME name)
 OBJECT *object_find_name(OBJECTNAME name){
 	OBJECTTREE **item = NULL;
 
-	item = findin_tree(top, name);
+	item = findin_tree(&(top), name);
 	
 	if(item != NULL && *item != NULL){
 		return (*item)->obj;

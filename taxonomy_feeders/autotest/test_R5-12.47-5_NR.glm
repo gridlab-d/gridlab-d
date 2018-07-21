@@ -9674,7 +9674,7 @@ object node:1005 {
 		target voltage_C;
 		once ONCE_TRUE;
 		in '2000-01-01 00:05:00 EST';
-		value +7167.63+117.74d;
+		value -3337.56+6344.46j;
 		within 1;
 	};	 
 } 

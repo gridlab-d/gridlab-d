@@ -146,6 +146,7 @@ meter::meter(MODULE *mod) : node(mod)
 				PT_KEYWORD,"TIERED",(enumeration)BM_TIERED,
 				PT_KEYWORD,"HOURLY",(enumeration)BM_HOURLY,
 				PT_KEYWORD,"TIERED_RTP",(enumeration)BM_TIERED_RTP,
+				PT_KEYWORD,"TIERED_TOU",(enumeration)BM_TIERED_TOU,
 			PT_object, "power_market", PADDR(power_market),PT_DESCRIPTION,"Market (auction object) where the price is being received from",
 			PT_int32, "bill_day", PADDR(bill_day),PT_DESCRIPTION,"day of month bill is to be processed (currently limited to days 1-28)",
 			PT_double, "price[$/kWh]", PADDR(price),PT_DESCRIPTION,"current price of electricity",
@@ -336,6 +337,22 @@ int meter::check_prices(){
 		if(tier_price[2] == 0){
 			tier_price[2] = tier_price[1];
 			tier_energy[2] = tier_energy[1];
+		}
+		if(tier_energy[2] < tier_energy[1] || tier_energy[1] < tier_energy[0]){
+			GL_THROW("meter energy tiers quantity trend improperly");
+		}
+		for(int i = 0; i < 3; ++i){
+			if(tier_price[i] < 0.0 || tier_energy[i] < 0.0)
+				GL_THROW("meter tiers cannot have negative values");
+		}
+	} else if (bill_mode == BM_TIERED_TOU) { // beware: TOU pricing schedules haven't pushed values yet
+		if(tier_energy[1] == 0){ 
+			tier_price[1] = tier_price[0];
+			tier_energy[1] = DBL_MAX;
+		}
+		if(tier_energy[2] == 0){
+			tier_price[2] = tier_price[1];
+			tier_energy[2] = DBL_MAX;
 		}
 		if(tier_energy[2] < tier_energy[1] || tier_energy[1] < tier_energy[0]){
 			GL_THROW("meter energy tiers quantity trend improperly");
@@ -566,7 +583,7 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 					last_measured_avg_voltageD_mag[0] = last_measured_voltageD[0].Mag();
 					last_measured_avg_voltageD_mag[1] = last_measured_voltageD[1].Mag();
 					last_measured_avg_voltageD_mag[2] = last_measured_voltageD[2].Mag();
-
+		
 					//Power
 					last_measured_min_real_power = last_measured_real_power;
 					last_measured_max_real_power = last_measured_real_power;
@@ -776,6 +793,7 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				}
 			}
 		}
+		monthly_energy = measured_real_energy/1000 - previous_energy_total;
 
 		if (bill_mode == BM_UNIFORM || bill_mode == BM_TIERED)
 		{
@@ -802,7 +820,7 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 		}
 
-		if( (bill_mode == BM_HOURLY || bill_mode == BM_TIERED_RTP) && power_market != NULL && price_prop != NULL){
+		if(bill_mode == BM_HOURLY || bill_mode == BM_TIERED_RTP || bill_mode == BM_TIERED_TOU){
 			double seconds;
 			if (dt != last_t)
 				seconds = (double)(dt);
@@ -811,14 +829,31 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			
 			if (seconds > 0)
 			{
-				hourly_acc += seconds/3600 * price * last_measured_real_power/1000;
+				double acc_price = price;
+				if (bill_mode == BM_TIERED_TOU)
+				{
+					if(monthly_energy < tier_energy[0])
+						acc_price = last_price;
+					else if(monthly_energy < tier_energy[1])
+						acc_price = last_tier_price[0];
+					else if(monthly_energy < tier_energy[2])
+						acc_price = last_tier_price[1];
+					else
+						acc_price = last_tier_price[2];
+				}
+				hourly_acc += seconds/3600 * acc_price * last_measured_real_power/1000;
 				process_bill(t1);
 			}
 
-			// Now that we've accumulated the bill for the last time period, update to the new price
-			double *pprice = (gl_get_double(power_market, price_prop));
-			last_price = price = *pprice;
+			// Now that we've accumulated the bill for the last time period, update to the new price (if using the market)
+			if (bill_mode != BM_TIERED_TOU && power_market != NULL && price_prop != NULL)
+			{
+				double *pprice = (gl_get_double(power_market, price_prop));
+				last_price = price = *pprice;
+			}
+			last_measured_real_power = measured_real_power;
 
+			// copied logic on when the next bill must be processed
 			if (monthly_bill == previous_monthly_bill)
 			{
 				DATETIME t_next;
@@ -859,7 +894,6 @@ double meter::process_bill(TIMESTAMP t1){
 	DATETIME dtime;
 	gl_localtime(t1,&dtime);
 
-	monthly_energy = measured_real_energy/1000 - previous_energy_total;
 	monthly_bill = monthly_fee;
 	switch(bill_mode){
 		case BM_NONE:
@@ -878,6 +912,7 @@ double meter::process_bill(TIMESTAMP t1){
 				monthly_bill += last_price*tier_energy[0] + last_tier_price[0]*(tier_energy[1] - tier_energy[0]) + last_tier_price[1]*(tier_energy[2] - tier_energy[1]) + last_tier_price[2]*(monthly_energy - tier_energy[2]);
 			break;
 		case BM_HOURLY:
+		case BM_TIERED_TOU:
 			monthly_bill += hourly_acc;
 			break;
 		case BM_TIERED_RTP:

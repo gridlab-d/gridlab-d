@@ -1989,7 +1989,7 @@ object node:69 {
 		once ONCE_TRUE;
 		in '2000-01-01 00:06:00 EST';
 		target voltage_C;
-		value -3568.39+6300.85j;
+		value -3568.39+6299.79j;
 		within 1;
 	};	 
 } 
@@ -3971,7 +3971,7 @@ object node:296 {
 		target voltage_C;
 		once ONCE_TRUE;
 		in '2000-01-01 00:07:00 EST';
-		value -3571.9+6309.28j;
+		value -3571.9+6308.24j;
 		within 1;
 	};	 
 } 

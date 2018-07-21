@@ -503,7 +503,7 @@ int fncs_msg::init(OBJECT *parent){
 		}
 	}
 	//register with fncs
-	printf("%s",zplfile.str().c_str());
+//	printf("%s",zplfile.str().c_str());
 	fncs::initialize(zplfile.str());
 	atexit(send_die);
 	last_approved_fncs_time = gl_globalclock;
