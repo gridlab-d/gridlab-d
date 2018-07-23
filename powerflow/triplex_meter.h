@@ -64,7 +64,8 @@ public:
 		BM_UNIFORM,
 		BM_TIERED,
 		BM_HOURLY,
-		BM_TIERED_RTP
+		BM_TIERED_RTP,
+		BM_TIERED_TOU
 	} BILLMODE;						///< Designates the bill mode to be used
 	enumeration bill_mode;				///< Designates the bill mode to be used
 	OBJECT *power_market;			///< Designates the auction object where prices are read from for bill mode
@@ -75,10 +76,10 @@ public:
 	double price_base, last_price_base; ///< Prices used in rtp pricing
 	double tier_price[3], tier_energy[3], last_tier_price[3];  ///< Allows for additional tiers of pricing over the standard price in TIERED
 
-	double process_bill(TIMESTAMP t1);	///< function for processing current bill
 	int check_prices();				///< checks to make sure current prices are valid
 
 private:
+	double process_bill(TIMESTAMP t1);	///< function for processing current bill
 	double previous_energy_total;  ///< Used to track what the meter reading was the previous month
     double last_measured_real_energy;
     double last_measured_reactive_energy;

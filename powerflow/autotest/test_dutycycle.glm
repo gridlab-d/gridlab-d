@@ -33,17 +33,20 @@ schedule my_price {
      // next.P my_price*1;
 // }
 
-object overhead_line_conductor:100 {
+object overhead_line_conductor {
+        name overhead_line_conductor_100;
 	geometric_mean_radius 0.0244;
 	resistance 0.306;
 }
 
-object overhead_line_conductor:101 {
+object overhead_line_conductor {
+        name overhead_line_conductor_101;
 	geometric_mean_radius 0.00814;
 	resistance 0.592;
 }
 
-object line_spacing:200 {
+object line_spacing {
+        name line_spacing_200;
 	distance_AB 2.5;
 	distance_BC 4.5;
 	distance_AC 7.0;
@@ -52,15 +55,17 @@ object line_spacing:200 {
 	distance_CN 5.0;
 }
 
-object line_configuration:300 {
-	conductor_A overhead_line_conductor:100;
-	conductor_B overhead_line_conductor:100;
-	conductor_C overhead_line_conductor:100;
-	conductor_N overhead_line_conductor:101;
-	spacing line_spacing:200;
+object line_configuration {
+        name line_configuration_300;
+	conductor_A overhead_line_conductor_100;
+	conductor_B overhead_line_conductor_100;
+	conductor_C overhead_line_conductor_100;
+	conductor_N overhead_line_conductor_101;
+	spacing line_spacing_200;
 }
 
-object transformer_configuration:400 {
+object transformer_configuration {
+        name transformer_configuration_400;
 	connect_type WYE_WYE;
 	power_rating 6000;
 	primary_voltage 12470;
@@ -69,7 +74,8 @@ object transformer_configuration:400 {
 	reactance 0.06;
 }
 
-object node:1 {
+object node {
+        name node_1;
 	phases "ABCN";
 	bustype SWING;
 	voltage_A +7199.558+0.000j;
@@ -79,14 +85,16 @@ object node:1 {
 }
 
 object overhead_line:12 {
+        name overhead_line_12;
 	phases "ABCN";
-	from node:1;
-	to node:2;
+	from node_1;
+	to node_2;
 	length 2000;
-	configuration line_configuration:300;
+	configuration line_configuration_300;
 }
 
-object node:2 {
+object node {
+        name node_2;
 	phases "ABCN";
 	voltage_A +7199.558+0.000j;
 	voltage_B -3599.779-6235.000j;
@@ -94,14 +102,16 @@ object node:2 {
 	nominal_voltage 7200;
 }
 
-object transformer:23 {
+object transformer {
+        name transformer_23;
 	phases "ABCN";
-	from node:2;
-	to node:3;
-	configuration transformer_configuration:400;
+	from node_2;
+	to node_3;
+	configuration transformer_configuration_400;
 }
 
-object node:3 {
+object node {
+        name node_3;
 	phases "ABCN";
 	voltage_A +2401.777+0.000j;
 	voltage_B -1200.889-2080.000j;
@@ -109,15 +119,17 @@ object node:3 {
 	nominal_voltage 2400;
 }
 
-object overhead_line:34 {
+object overhead_line {
+        name overhead_line_34;
 	phases "ABCN";
-	from node:3;
-	to load:4;
+	from node_3;
+	to load_4;
 	length 2500;
-	configuration line_configuration:300;
+	configuration line_configuration_300;
 }
 
-object load:4 {
+object load {
+        name load_4;
 	phases "ABCN";
 	name load4;
 	voltage_A +2401.777+0.000j;
@@ -168,22 +180,17 @@ object triplex_node {
 	nominal_voltage 120;
 	phases AS;
 }
-
+object triplex_line_conductor {
+    name tplcond1;
+    resistance 0.97;
+    geometric_mean_radius 0.0111;
+}
 object triplex_line_configuration {
      name TPLconfig;
-     conductor_1 object triplex_line_conductor {
-          resistance 0.97;
-          geometric_mean_radius 0.0111;
-     };
+     conductor_1 tplcond1;
 
-     conductor_2 object triplex_line_conductor {
-          resistance 0.97;
-          geometric_mean_radius 0.0111;
-     };
-     conductor_N object triplex_line_conductor {
-          resistance 0.97;
-          geometric_mean_radius 0.0111;
-     };
+     conductor_2 tplcond1;
+     conductor_N tplcond1;
      insulation_thickness 0.08;
      diameter 0.368;
 }

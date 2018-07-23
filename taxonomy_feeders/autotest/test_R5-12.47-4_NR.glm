@@ -9114,14 +9114,14 @@ object overhead_line:2136 {
 		target power_in_A;
 		once ONCE_TRUE;
 		in '2000-01-01 00:05:00 EST';
-		value +227708+138572j;
+		value +227706+138565j;
 		within 2;
 	};
 	object complex_assert{
 		target power_in_B;
 		once ONCE_TRUE;
 		in '2000-01-01 00:05:00 EST';
-		value +392323+236971j;
+		value +392302+236928j;
 		within 2;
 	};
 	object complex_assert{
@@ -9135,14 +9135,14 @@ object overhead_line:2136 {
 		target power_out_A;
 		once ONCE_TRUE;
 		in '2000-01-01 00:05:00 EST';
-		value +227663+138523j;
+		value +227660+138516j;
 		within 2;
 	};
 	object complex_assert{
 		target power_out_B;
 		once ONCE_TRUE;
 		in '2000-01-01 00:05:00 EST';
-		value +392328+236763j;
+		value +392307+236720j;
 		within 2;
 	};
 	object complex_assert{
@@ -9736,14 +9736,14 @@ object overhead_line:2258 {
 		target power_in_A;
 		once ONCE_TRUE;
 		in '2000-01-01 00:06:00 EST';
-		value +227800+138620j;
+		value +227795+138620j;
 		within 4;
 	};
 	object complex_assert{
 		target power_in_B;
 		once ONCE_TRUE;
 		in '2000-01-01 00:06:00 EST';
-		value +456588+275575j;
+		value +456562+275521j;
 		within 4;
 	};
 	object complex_assert{
@@ -9757,14 +9757,14 @@ object overhead_line:2258 {
 		target power_out_A;
 		once ONCE_TRUE;
 		in '2000-01-01 00:06:00 EST';
-		value +227799+138618j;
+		value +227793+138618j;
 		within 4;
 	};
 	object complex_assert{
 		target power_out_B;
 		once ONCE_TRUE;
 		in '2000-01-01 00:06:00 EST';
-		value +456587+275567j;
+		value +456562+275513j;
 		within 20;
 	};
 	object complex_assert{
