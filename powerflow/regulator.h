@@ -8,9 +8,6 @@
 #include "link.h"
 #include "regulator_configuration.h"
 
-#define tap_A tap[0]
-#define tap_B tap[1]
-#define tap_C tap[2]
 EXPORT SIMULATIONMODE interupdate_regulator(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
 class regulator : public link_object

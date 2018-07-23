@@ -38,9 +38,9 @@ regulator::regulator(MODULE *mod) : link_object(mod)
 		if (gl_publish_variable(oclass,
 			PT_INHERIT, "link",
 			PT_object,"configuration",PADDR(configuration),PT_DESCRIPTION,"reference to the regulator_configuration object used to determine regulator properties",
-			PT_int16, "tap_A",PADDR(tap_A),PT_DESCRIPTION,"current tap position of tap A",
-			PT_int16, "tap_B",PADDR(tap_B),PT_DESCRIPTION,"current tap position of tap B",
-			PT_int16, "tap_C",PADDR(tap_C),PT_DESCRIPTION,"current tap position of tap C",
+			PT_int16, "tap_A",PADDR(tap[0]),PT_DESCRIPTION,"current tap position of tap A",
+			PT_int16, "tap_B",PADDR(tap[1]),PT_DESCRIPTION,"current tap position of tap B",
+			PT_int16, "tap_C",PADDR(tap[2]),PT_DESCRIPTION,"current tap position of tap C",
 			PT_enumeration, "msg_mode", PADDR(msgmode),PT_DESCRIPTION,"messages regarding remote node voltage to come internally from gridlabd or externally through co-simulation. Set to EXTERNAL only if you have co-simulation enabled",
 				PT_KEYWORD, "INTERNAL", (enumeration)msg_INTERNAL,
 				PT_KEYWORD, "EXTERNAL", (enumeration)msg_EXTERNAL, 
@@ -75,7 +75,7 @@ int regulator::create()
 {
 	int result = link_object::create();
 	configuration = NULL;
-	tap_A = tap_B = tap_C = -999;
+	tap[0] = tap[1] = tap[2] = -999;
 	offnominal_time = false;
 	tap_A_change_count = -1;
 	tap_B_change_count = -1;
