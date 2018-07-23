@@ -6,11 +6,12 @@
 // Gen 1 thereforely increases its power to maintain the feeder frequency
 // Since q/v droop enabled in the inverter, inverter adjusts its reactive power output based on the terminal voltage changes
 // With the p/f droop disabled in the inverter, inverter real power outputs are kept the same as the reference value
+// this autotest will reach reactive power steady state if run for atleast 10 minutes past the load increase.
 
 clock {
 	timezone "PST+8PDT";
-	starttime '2001-08-01 12:00:00 PST';
-	stoptime '2001-08-01 12:00:20 PST';
+	starttime '2001-08-01 12:00:08 PST';
+	stoptime '2001-08-01 12:00:11 PST';
 }
 
 #set suppress_repeat_messages=1
@@ -3254,7 +3255,7 @@ object regulator:1606701 {
 
 // This player kicks the system into delta mode early so that all transition transients can settle before the scenario transients are triggered
 object player {
-	file ../trigger.player;
+	file ../trigger1.player;
 	property nominal_voltage;
 	parent 50;
 	flags DELTAMODE;
