@@ -3,15 +3,15 @@
 // Another diesel generator Gen2 of constant_Q and f/p droop mode is placed at bus 8
 // Test case: 
 // At 2001-08-01 12:00:30.001 PST, microgrid_switch3 opens, and part of feeder is not supported by the power eneration
-// Gen 1 thereforely decreases its power to maintain the frequency, 
+// Gen 1 therefore decreases its power to maintain the frequency, 
 // Gen 2 tries to maintain its constant Q values, and adjust its P output based on the f/p droop
-// When comes to the steady state, the frequency is back to the norminal one, with Gen 2 PQ output the same as the conditions bwfore the switch opens
-
+// When the system comes to the steady state, the frequency is back to the nominal one, with Gen 2 PQ output the same as the conditions before the switch opens
+// if the system does not reach complete steady state in this autotest, extend the stop time little further.
 
 clock {
 	timezone "PST+8PDT";
 	starttime '2001-08-01 12:00:00 PST';
-	stoptime '2001-08-01 12:01:00 PST';
+	stoptime '2001-08-01 12:00:34 PST';
 }
 
 #set suppress_repeat_messages=1
@@ -56,7 +56,7 @@ object fault_check {
 	strictly_radial false;
 	eventgen_object testgendev;
 	grid_association true;	//Flag to ensure non-monolithic islands
-	output_filename test_connect.txt;
+//	output_filename test_connect.txt;
 	full_output_file true;
 }
 
@@ -67,23 +67,23 @@ object fault_check {
 object eventgen {
 	flags DELTAMODE;
 	name testgendev;
-	parent testmetrics;
+//	parent testmetrics;
 	fault_type "SW-ABC";     //Type of fault for the object to induce
 	manual_outages "microgrid_switch3,2001-08-01 12:00:30.001 PST,2001-08-01 12:01:15.001 PST";
 }   // First time is when the switch will open, the second time is when it will close
 
 
-object metrics {
-	name testmetrics;
-	report_file delete_me.txt;
-	module_metrics_object pwrmetrics;
-	metrics_of_interest "SAIFI";
-	customer_group "class=meter";
-}
+//object metrics {
+//	name testmetrics;
+//	report_file delete_me.txt;
+//	module_metrics_object pwrmetrics;
+//	metrics_of_interest "SAIFI";
+//	customer_group "class=meter";
+//}
 
-object power_metrics {
-	name pwrmetrics;
-}
+//object power_metrics {
+//	name pwrmetrics;
+//}
 
 
 ///////////////////////////////////////////////////////////////////////////
@@ -3260,12 +3260,12 @@ object regulator:1606701 {
 }
 
 // This player kicks the system into delta mode early so that all transition transients can settle before the scenario transients are triggered
-object player {
-	file trigger.player;
-	property nominal_voltage;
-	parent 50;
-	flags DELTAMODE;
-}
+//object player {
+//	file trigger.player;
+//	property nominal_voltage;
+//	parent 50;
+//	flags DELTAMODE;
+//}
 
 // DG #1 
 object diesel_dg {

@@ -1,11 +1,11 @@
 // The 123-bus feeder with one VSI in isochronous mode placed at SWING bus
 // In this test case:
-// Part of the feeder is disconnected at 12:00:05.0001 PST. 
+// Part of the feeder is disconnected at 12:00:10.0001 PST. 
 // Since the frequency is kept to 60 HZ by the isochronous VSI, the real power output of the droop VSI is kept the same. Other power outputs are adjusted accordingly.
 
 clock {
 	timezone "PST+8PDT";
-	starttime '2001-08-01 12:00:00 PST';
+	starttime '2001-08-01 12:00:08 PST';
 	stoptime '2001-08-01 12:00:10 PST';
 }
 
@@ -65,7 +65,7 @@ object eventgen {
 	name testgendev;
 	// parent testmetrics;
 	fault_type "SW-ABC";     //Type of fault for the object to induce
-	manual_outages "microgrid_switch3,2001-08-01 12:00:03.001 PST,2001-08-01 12:00:8.001 PST";
+	manual_outages "microgrid_switch3,2001-08-01 12:00:10.001 PST,2001-08-01 12:00:18.001 PST";
 }   // First time is when the switch will open, the second time is when it will close
 
 
@@ -3469,12 +3469,12 @@ object regulator:1606701 {
 }
 
 // This player kicks the system into delta mode early so that all transition transients can settle before the scenario transients are triggered
-object player {
-	file ../trigger.player;
-	property nominal_voltage;
-	parent 50;
-	flags DELTAMODE;
-}
+//object player {
+//	file ../trigger.player;
+//	property nominal_voltage;
+//	parent 50;
+//	flags DELTAMODE;
+//}
 
 // Voltage source inverter	
 object inverter {

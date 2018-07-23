@@ -2,14 +2,15 @@
 // 1 diesel generator of isochronous mode is placed at the swing bus,
 // 1 inverter of constant_P mode and constant_Q mode is placed at node 54.
 // Test case:
-// At 2001-08-01 12:00:30.001 PST, three-phase load 49 increases based on the given players
-// Gen 1 thereforely increases its power to maintain the feeder frequency
+// At 2001-08-01 12:00:10.001 PST, three-phase load 49 increases based on the given players
+// Gen 1 therefore increases its power to maintain the feeder frequency
 // With the f/p and v/q droops disabled in the inverter, inverter real and reactive power outputs are kept the same as the reference values
+// To see the system come to complete stability, increase the stoptime
 
 clock {
 	timezone "PST+8PDT";
-	starttime '2001-08-01 12:00:00 PST';
-	stoptime '2001-08-01 12:00:20 PST';
+	starttime '2001-08-01 12:00:08 PST';
+	stoptime '2001-08-01 12:00:11 PST';
 }
 
 #set suppress_repeat_messages=1
@@ -52,20 +53,20 @@ object fault_check {
 	name base_fault_check_object;
 	check_mode ONCHANGE;
 	strictly_radial false;
-	eventgen_object testgendev;
+//	eventgen_object testgendev;
 	grid_association true;	//Flag to ensure non-monolithic islands
 //	output_filename test_connect.txt;
 	full_output_file true;
 }
 
 // Junk event
-object eventgen {
-	flags DELTAMODE;
-	name testgendev;
+//object eventgen {
+//	flags DELTAMODE;
+//	name testgendev;
 	// parent testmetrics;
-	fault_type "SW-ABC";     //Type of fault for the object to induce
-	manual_outages "microgrid_switch3,2001-08-01 12:01:30.00 PST,2001-08-01 12:01:31 PST";
-}   // First time is when the switch will open, the second time is when it will close
+//	fault_type "SW-ABC";     //Type of fault for the object to induce
+//	manual_outages "microgrid_switch3,2001-08-01 12:01:30.00 PST,2001-08-01 12:01:31 PST";
+//}   // First time is when the switch will open, the second time is when it will close
 
 
 // object metrics {
@@ -3253,7 +3254,7 @@ object regulator:1606701 {
 
 // This player kicks the system into delta mode early so that all transition transients can settle before the scenario transients are triggered
 object player {
-	file ../trigger.player;
+	file ../trigger2.player;
 	property nominal_voltage;
 	parent 50;
 	flags DELTAMODE;
