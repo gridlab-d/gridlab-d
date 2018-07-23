@@ -8,6 +8,9 @@
 #include "link.h"
 #include "regulator_configuration.h"
 
+#define tap_A tap[0]
+#define tap_B tap[1]
+#define tap_C tap[2]
 EXPORT SIMULATIONMODE interupdate_regulator(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
 class regulator : public link_object
@@ -24,6 +27,7 @@ public:
 	complex D_mat[3][3];
 	complex W_mat[3][3];
 	complex curr[3];
+	complex check_voltage[3];//Voltage that is being checked against if internal. If externally obtained (through cosim), this is the voltage value
 	OBJECT *RemoteNode;		 //Remote node for sensing voltage values in REMOTE_NODE Control method
 	double tap_A_change_count; //Counter for the number of times tap_A changes.
 	double tap_B_change_count; //Counter for the number of times tap_B changes.
@@ -34,7 +38,11 @@ public:
 	int16 tap_A_changed;
 	int16 tap_B_changed;
 	int16 tap_C_changed;
-
+	typedef enum {
+		msg_INTERNAL,
+		msg_EXTERNAL,
+	} msg_mode;
+	enumeration msgmode;
 	TIMESTAMP prev_time;
 	int16 prev_tap_A;
 	int16 prev_tap_B;
@@ -55,7 +63,6 @@ protected:
 	int16 mech_flag[3];		 //indicates whether a state change is okay due to mechanical tap changes
 	int16 dwell_flag[3];	 //indicates whether a state change is okay due to dwell time limitations
 	int16 first_run_flag[3]; //keeps the system from blowing up on bad initial tap position guess
-	complex check_voltage[3];//Voltage that is being checked against
 	void get_monitored_voltage();  //Function to calculate check_voltage depending on mode
 	bool toggle_reverse_flow[3];
 	bool toggle_reverse_flow_banked;

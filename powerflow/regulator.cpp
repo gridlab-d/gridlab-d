@@ -38,9 +38,15 @@ regulator::regulator(MODULE *mod) : link_object(mod)
 		if (gl_publish_variable(oclass,
 			PT_INHERIT, "link",
 			PT_object,"configuration",PADDR(configuration),PT_DESCRIPTION,"reference to the regulator_configuration object used to determine regulator properties",
-			PT_int16, "tap_A",PADDR(tap[0]),PT_DESCRIPTION,"current tap position of tap A",
-			PT_int16, "tap_B",PADDR(tap[1]),PT_DESCRIPTION,"current tap position of tap B",
-			PT_int16, "tap_C",PADDR(tap[2]),PT_DESCRIPTION,"current tap position of tap C",
+			PT_int16, "tap_A",PADDR(tap_A),PT_DESCRIPTION,"current tap position of tap A",
+			PT_int16, "tap_B",PADDR(tap_B),PT_DESCRIPTION,"current tap position of tap B",
+			PT_int16, "tap_C",PADDR(tap_C),PT_DESCRIPTION,"current tap position of tap C",
+			PT_enumeration, "msg_mode", PADDR(msgmode),PT_DESCRIPTION,"messages regarding remote node voltage to come internally from gridlabd or externally through co-simulation. Set to EXTERNAL only if you have co-simulation enabled",
+				PT_KEYWORD, "INTERNAL", (enumeration)msg_INTERNAL,
+				PT_KEYWORD, "EXTERNAL", (enumeration)msg_EXTERNAL, 
+			PT_complex, "remote_voltage_A[V]", PADDR(check_voltage[0]),PT_DESCRIPTION,"remote node voltage, Phase A to ground",
+            PT_complex, "remote_voltage_B[V]", PADDR(check_voltage[1]),PT_DESCRIPTION,"remote node voltage, Phase B to ground",
+            PT_complex, "remote_voltage_C[V]", PADDR(check_voltage[2]),PT_DESCRIPTION,"remote node voltage, Phase C to ground",
 			PT_double, "tap_A_change_count",PADDR(tap_A_change_count),PT_DESCRIPTION,"count of all physical tap changes on phase A since beginning of simulation (plus initial value)",
 			PT_double, "tap_B_change_count",PADDR(tap_B_change_count),PT_DESCRIPTION,"count of all physical tap changes on phase B since beginning of simulation (plus initial value)",
 			PT_double, "tap_C_change_count",PADDR(tap_C_change_count),PT_DESCRIPTION,"count of all physical tap changes on phase C since beginning of simulation (plus initial value)",
@@ -69,7 +75,7 @@ int regulator::create()
 {
 	int result = link_object::create();
 	configuration = NULL;
-	tap[0] = tap[1] = tap[2] = -999;
+	tap_A = tap_B = tap_C = -999;
 	offnominal_time = false;
 	tap_A_change_count = -1;
 	tap_B_change_count = -1;
@@ -77,6 +83,8 @@ int regulator::create()
 	iteration_flag = true;
 	regulator_resistance = -1.0;
 	deltamode_reiter_request = false;	//By default, we're assumed to not want this
+	msgmode = msg_INTERNAL;
+	check_voltage[0] = check_voltage[1] = check_voltage[2] = 0.0;
 
 	RNode_voltage[0] = RNode_voltage[1] = RNode_voltage[2] = NULL;
 	ToNode_voltage[0] = ToNode_voltage[1] = ToNode_voltage[2] = NULL;
@@ -144,40 +152,50 @@ int regulator::init(OBJECT *parent)
 		}
 
 		//Map to the property of interest - voltage_A
-		RNode_voltage[0] = new gld_property(RemoteNode,"voltage_A");
+	   if (msgmode == msg_INTERNAL)
+	   {
+			RNode_voltage[0] = new gld_property(RemoteNode,"voltage_A");
+			//Make sure it worked
+			if ((RNode_voltage[0]->is_valid() != true) || (RNode_voltage[0]->is_complex() != true))
+			{
+				GL_THROW("Regulator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+				/* TROUBLESHOOT
+				While attempting to map a property for the sense_node, a property could not be properly mapped.
+				Please try again.  If the error persists, please submit an issue in the ticketing system.
+				*/
 
-		//Make sure it worked
-		if ((RNode_voltage[0]->is_valid() != true) || (RNode_voltage[0]->is_complex() != true))
-		{
-			GL_THROW("Regulator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
-			/* TROUBLESHOOT
-			While attempting to map a property for the sense_node, a property could not be properly mapped.
-			Please try again.  If the error persists, please submit an issue in the ticketing system.
-			*/
+			}
+			RNode_voltage[1] = new gld_property(RemoteNode,"voltage_B");
+			//Make sure it worked
+			if ((RNode_voltage[1]->is_valid() != true) || (RNode_voltage[1]->is_complex() != true))
+			{
+				GL_THROW("Regulator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+				//Defined above
+			}
+				
+			RNode_voltage[2] = new gld_property(RemoteNode,"voltage_C");			
 
-		}
 
-		//Map to the property of interest - voltage_B
-		RNode_voltage[1] = new gld_property(RemoteNode,"voltage_B");
 
-		//Make sure it worked
-		if ((RNode_voltage[1]->is_valid() != true) || (RNode_voltage[1]->is_complex() != true))
-		{
-			GL_THROW("Regulator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
-			//Defined above
-		}
 
-		//Map to the property of interest - voltage_C
-		RNode_voltage[2] = new gld_property(RemoteNode,"voltage_C");
 
-		//Make sure it worked
-		if ((RNode_voltage[2]->is_valid() != true) || (RNode_voltage[2]->is_complex() != true))
-		{
-			GL_THROW("Regulator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
-			//Defined above
-		}
-	}
 
+
+
+
+
+			//Make sure it worked
+
+			if ((RNode_voltage[2]->is_valid() != true) || (RNode_voltage[2]->is_complex() != true))
+			{
+
+				GL_THROW("Regulator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+				//Defined above
+			}
+			
+	   
+	   }
+}
 	//Map the to-node connections
 	//Map to the property of interest - voltage_A
 	ToNode_voltage[0] = new gld_property(to,"voltage_A");
@@ -1364,21 +1382,28 @@ void regulator::get_monitored_voltage()
 			break;
 		case 3: //Remote Node
 		{
-			if (pConfig->control_level == pConfig->INDIVIDUAL)
+			if (msgmode == msg_INTERNAL)
+
 			{
-				for (int i = 0; i < 3; i++)
+				if (pConfig->control_level == pConfig->INDIVIDUAL)
 				{
-					check_voltage[i] = RNode_voltage[i]->get_complex();
+
+					for (int i = 0; i < 3; i++)
+					{
+						check_voltage[i] = RNode_voltage[i]->get_complex();
+		//				gl_warning("check_voltage %f",check_voltage[i]);
+		//				gl_warning("Regulator:%s regulator_resistance has been set to zero. This will result singular matrix. Setting to the global default.",obj->name);
+					}
 				}
-			}
-			else if (pConfig->control_level == pConfig->BANK)
-			{
-				if (pConfig->PT_phase == PHASE_A)
-					check_voltage[0] = check_voltage[1] = check_voltage[2] = RNode_voltage[0]->get_complex();
-				else if (pConfig->PT_phase == PHASE_B)
-					check_voltage[0] = check_voltage[1] = check_voltage[2] = RNode_voltage[1]->get_complex();
-				else if (pConfig->PT_phase == PHASE_C)
-					check_voltage[0] = check_voltage[1] = check_voltage[2] = RNode_voltage[2]->get_complex();
+				else if (pConfig->control_level == pConfig->BANK)
+				{
+					if (pConfig->PT_phase == PHASE_A)
+						check_voltage[0] = check_voltage[1] = check_voltage[2] = RNode_voltage[0]->get_complex();
+					else if (pConfig->PT_phase == PHASE_B)
+						check_voltage[0] = check_voltage[1] = check_voltage[2] = RNode_voltage[1]->get_complex();
+					else if (pConfig->PT_phase == PHASE_C)
+						check_voltage[0] = check_voltage[1] = check_voltage[2] = RNode_voltage[2]->get_complex();
+				}
 			}
 		}
 			break;
