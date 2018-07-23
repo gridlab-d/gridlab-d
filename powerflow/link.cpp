@@ -100,7 +100,6 @@
 #include "triplex_meter.h"
 #include "switch_object.h"
 
-
 CLASS* link_object::oclass = NULL;
 CLASS* link_object::pclass = NULL;
 
@@ -1777,7 +1776,7 @@ void link_object::NR_link_presync_fxn(void)
 				complex tempImped;
 
 				//Pre-admittancized matrix
-				equalm(b_mat,Yto);
+				equalm(base_admittance_mat,Yto);
 
 				//Store value into YSto
 				for (jindex=0; jindex<3; jindex++)
@@ -1810,66 +1809,66 @@ void link_object::NR_link_presync_fxn(void)
 			else if (SpecialLnk==SPLITPHASE)	//Split phase
 			{
 				//Yto - same for all
-				YSto[0] = b_mat[0][0];
-				YSto[1] = b_mat[0][1];
-				YSto[3] = b_mat[1][0];
-				YSto[4] = b_mat[1][1];
+				YSto[0] = base_admittance_mat[0][0];
+				YSto[1] = base_admittance_mat[0][1];
+				YSto[3] = base_admittance_mat[1][0];
+				YSto[4] = base_admittance_mat[1][1];
 				YSto[2] = YSto[5] = YSto[6] = YSto[7] = YSto[8] = 0.0;
 
 				if (has_phase(PHASE_A))		//A connected
 				{
 					//To_Y
-					To_Y[0][0] = -b_mat[0][2];
-					To_Y[1][0] = -b_mat[1][2];
+					To_Y[0][0] = -base_admittance_mat[0][2];
+					To_Y[1][0] = -base_admittance_mat[1][2];
 					To_Y[0][1] = To_Y[0][2] = To_Y[1][1] = 0.0;
 					To_Y[1][2] = To_Y[2][0] = To_Y[2][1] = To_Y[2][2] = 0.0;
 
 					//Yfrom
-					YSfrom[0] = b_mat[2][2];
+					YSfrom[0] = base_admittance_mat[2][2];
 					YSfrom[1] = YSfrom[2] = YSfrom[3] = YSfrom[4] = 0.0;
 					YSfrom[5] = YSfrom[6] = YSfrom[7] = YSfrom[8] = 0.0;
 
 					//From_Y
-					From_Y[0][0] = -b_mat[2][0];
-					From_Y[0][1] = -b_mat[2][1];
+					From_Y[0][0] = -base_admittance_mat[2][0];
+					From_Y[0][1] = -base_admittance_mat[2][1];
 					From_Y[0][2] = From_Y[1][0] = From_Y[1][1] = 0.0;
 					From_Y[1][2] = From_Y[2][0] = From_Y[2][1] = From_Y[2][2] = 0.0;
 				}
 				else if (has_phase(PHASE_B))	//B connected
 				{
 					//To_Y
-					To_Y[0][1] = -b_mat[0][2];
-					To_Y[1][1] = -b_mat[1][2];
+					To_Y[0][1] = -base_admittance_mat[0][2];
+					To_Y[1][1] = -base_admittance_mat[1][2];
 					To_Y[0][0] = To_Y[0][2] = To_Y[1][0] = 0.0;
 					To_Y[1][2] = To_Y[2][0] = To_Y[2][1] = To_Y[2][2] = 0.0;
 
 					//Yfrom
-					YSfrom[4] = b_mat[2][2];
+					YSfrom[4] = base_admittance_mat[2][2];
 					YSfrom[0] = YSfrom[1] = YSfrom[2] = YSfrom[3] = 0.0;
 					YSfrom[5] = YSfrom[6] = YSfrom[7] = YSfrom[8] = 0.0;
 
 					//From_Y
-					From_Y[1][0] = -b_mat[2][0];
-					From_Y[1][1] = -b_mat[2][1];
+					From_Y[1][0] = -base_admittance_mat[2][0];
+					From_Y[1][1] = -base_admittance_mat[2][1];
 					From_Y[0][0] = From_Y[0][1] = From_Y[0][2] = 0.0;
 					From_Y[1][2] = From_Y[2][0] = From_Y[2][1] = From_Y[2][2] = 0.0;
 				}
 				else if (has_phase(PHASE_C))	//C connected
 				{
 					//To_Y
-					To_Y[0][2] = -b_mat[0][2];
-					To_Y[1][2] = -b_mat[1][2];
+					To_Y[0][2] = -base_admittance_mat[0][2];
+					To_Y[1][2] = -base_admittance_mat[1][2];
 					To_Y[0][0] = To_Y[0][1] = To_Y[1][0] = 0.0;
 					To_Y[1][1] = To_Y[2][0] = To_Y[2][1] = To_Y[2][2] = 0.0;
 
 					//Yfrom
-					YSfrom[8] = b_mat[2][2];
+					YSfrom[8] = base_admittance_mat[2][2];
 					YSfrom[0] = YSfrom[1] = YSfrom[2] = YSfrom[3] = 0.0;
 					YSfrom[4] = YSfrom[5] = YSfrom[6] = YSfrom[7] = 0.0;
 
 					//From_Y
-					From_Y[2][0] = -b_mat[2][0];
-					From_Y[2][1] = -b_mat[2][1];
+					From_Y[2][0] = -base_admittance_mat[2][0];
+					From_Y[2][1] = -base_admittance_mat[2][1];
 					From_Y[0][0] = From_Y[0][1] = From_Y[0][2] = 0.0;
 					From_Y[1][0] = From_Y[1][1] = From_Y[1][2] = From_Y[2][2] = 0.0;
 				}
@@ -1924,7 +1923,7 @@ void link_object::NR_link_presync_fxn(void)
 				else	//No in-rush or not WYE-WYE, just go like normal
 				{
 					//Pre-admittancized matrix
-					equalm(b_mat,Yto);
+					equalm(base_admittance_mat,Yto);
 
 					//Store value into YSto
 					for (jindex=0; jindex<3; jindex++)
@@ -3538,7 +3537,7 @@ EXPORT int updatepowercalc_link(OBJECT *obj)
 	link_object *my = OBJECTDATA(obj,link_object);
 
 	//Call the current update -- do it as a "self call"
-	my->CurrentCalculation(-1);
+	my->CurrentCalculation(-1,false);
 
 	//Now update the power value
 	my->calculate_power();
@@ -3561,7 +3560,7 @@ EXPORT int calculate_overlimit_link(OBJECT *obj, double *overload_value, bool *o
 	if (use_link_limits == true)
 	{
 		//Call the current update -- do it as a "self call"
-		my->CurrentCalculation(-1);
+		my->CurrentCalculation(-1,false);
 
 		//Now update the power value
 		my->calculate_power();
@@ -3578,15 +3577,16 @@ EXPORT int calculate_overlimit_link(OBJECT *obj, double *overload_value, bool *o
 * CurrentCalculation will perform the Newton-Raphson accumulation of
 * current injections - functionalized for Master/Slave use
 * nodecall is set by calling nodes - indicates the NR reference (for locking issues)
-*
-* This function may supercede "calc_currents" for the restoration module - quite honestly, I don't know if
-*      that function even calculates proper values anymore.
+* link_fault_mode is used by mesh fault current propagation -- use as "false" for normal operations
 *
 * Locking not needed on various fnode/tnode voltage reads - rank separation prevents contention
 *     For normal operation, only from nodes need locking - this is an assumption holdover from FBS days - it may need revisiting
 */
-int link_object::CurrentCalculation(int nodecall)
+int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 {
+	complex *current_pointer_in;
+	complex *current_pointer_out;
+
 	//If we're FBS, just get out - assume success - mainly from API-directed-type calls
 	if (solver_method == SM_FBS)
 	{
@@ -3598,6 +3598,17 @@ int link_object::CurrentCalculation(int nodecall)
 	{
 		//Reset the deltamode-oriented flag, just because - will stay by exception
 		inrush_computations_needed = false;
+
+		if (link_fault_mode == true)
+		{
+			current_pointer_in = &If_in[0];
+			current_pointer_out = &If_out[0];
+		}
+		else
+		{
+			current_pointer_in = &current_in[0];
+			current_pointer_out = &current_out[0];
+		}
 
 		if (is_closed())	//Only compute this if the overall link is "in service"
 		{
@@ -3733,14 +3744,14 @@ int link_object::CurrentCalculation(int nodecall)
 					}
 
 					//Apply adjustments
-					current_in[0] = current_temp[0] + shunt_current_val[0];
-					current_in[1] = current_temp[1] + shunt_current_val[1];
-					current_in[2] = current_temp[2] + shunt_current_val[2];
+					current_pointer_in[0] = current_temp[0] + shunt_current_val[0];
+					current_pointer_in[1] = current_temp[1] + shunt_current_val[1];
+					current_pointer_in[2] = current_temp[2] + shunt_current_val[2];
 
 					//Output is backwards, plus needs other components negated (full backwards - injection into to node, so KCL)
-					current_out[0] = -current_temp[3] - shunt_current_val[3];
-					current_out[1] = -current_temp[4] - shunt_current_val[4];
-					current_out[2] = -current_temp[5] - shunt_current_val[5];
+					current_pointer_out[0] = -current_temp[3] - shunt_current_val[3];
+					current_pointer_out[1] = -current_temp[4] - shunt_current_val[4];
+					current_pointer_out[2] = -current_temp[5] - shunt_current_val[5];
 
 					//Compute the difference, for convergence checks (semi-silly, but should still work)
 					//Just prim - secondary of each phase, but if the difference doesn't move, should be solved (right?)
@@ -3791,80 +3802,80 @@ int link_object::CurrentCalculation(int nodecall)
 							   A_mat[2][2]*tnode->voltage[2];
 
 					//Put across admittance
-					itemp[0] = b_mat[0][0]*vtemp[0]+
-							   b_mat[0][1]*vtemp[1]+
-							   b_mat[0][2]*vtemp[2];
+					itemp[0] = base_admittance_mat[0][0]*vtemp[0]+
+							   base_admittance_mat[0][1]*vtemp[1]+
+							   base_admittance_mat[0][2]*vtemp[2];
 
-					itemp[1] = b_mat[1][0]*vtemp[0]+
-							   b_mat[1][1]*vtemp[1]+
-							   b_mat[1][2]*vtemp[2];
+					itemp[1] = base_admittance_mat[1][0]*vtemp[0]+
+							   base_admittance_mat[1][1]*vtemp[1]+
+							   base_admittance_mat[1][2]*vtemp[2];
 
-					itemp[2] = b_mat[2][0]*vtemp[0]+
-							   b_mat[2][1]*vtemp[1]+
-							   b_mat[2][2]*vtemp[2];
+					itemp[2] = base_admittance_mat[2][0]*vtemp[0]+
+							   base_admittance_mat[2][1]*vtemp[1]+
+							   base_admittance_mat[2][2]*vtemp[2];
 
-					//Scale the "b_mat" value by the inverse (make it high-side impedance)
+					//Scale the "base_admittance_mat" value by the inverse (make it high-side impedance)
 					//Post values based on phases (reliability related)
 					if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
-						current_in[0] = itemp[0]*invsquared;
+						current_pointer_in[0] = itemp[0]*invsquared;
 					else
-						current_in[0] = 0.0;
+						current_pointer_in[0] = 0.0;
 
 					if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
-						current_in[1] = itemp[1]*invsquared;
+						current_pointer_in[1] = itemp[1]*invsquared;
 					else
-						current_in[1] = 0.0;
+						current_pointer_in[1] = 0.0;
 
 					if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
-						current_in[2] = itemp[2]*invsquared;
+						current_pointer_in[2] = itemp[2]*invsquared;
 					else
-						current_in[2] = 0.0;
+						current_pointer_in[2] = 0.0;
 
 					//Calculate current out
 					if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
 					{
-						current_out[0] = A_mat[0][0]*current_in[0]+
-										 A_mat[0][1]*current_in[1]+
-										 A_mat[0][2]*current_in[2];
+						current_pointer_out[0] = A_mat[0][0]*current_pointer_in[0]+
+										 	 	 A_mat[0][1]*current_pointer_in[1]+
+												 A_mat[0][2]*current_pointer_in[2];
 
 						//Apply additional change
 						if (a_mat[0][0] != 0)
 						{
-							current_out[0] -= tnode->voltage[0]/a_mat[0][0]*voltage_ratio;
+							current_pointer_out[0] -= tnode->voltage[0]/a_mat[0][0]*voltage_ratio;
 						}
 					}
 					else
-						current_out[0] = 0.0;
+						current_pointer_out[0] = 0.0;
 
 					if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
 					{
-						current_out[1] = A_mat[1][0]*current_in[0]+
-										 A_mat[1][1]*current_in[1]+
-										 A_mat[1][2]*current_in[2];
+						current_pointer_out[1] = A_mat[1][0]*current_pointer_in[0]+
+										 	 	 A_mat[1][1]*current_pointer_in[1]+
+												 A_mat[1][2]*current_pointer_in[2];
 
 						//Apply additional update
 						if (a_mat[1][1] != 0)
 						{
-							current_out[1] -= tnode->voltage[1]/a_mat[1][1]*voltage_ratio;
+							current_pointer_out[1] -= tnode->voltage[1]/a_mat[1][1]*voltage_ratio;
 						}
 					}
 					else
-						current_out[1] = 0.0;
+						current_pointer_out[1] = 0.0;
 
 					if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
 					{
-						current_out[2] = A_mat[2][0]*current_in[0]+
-										 A_mat[2][1]*current_in[1]+
-										 A_mat[2][2]*current_in[2];
+						current_pointer_out[2] = A_mat[2][0]*current_pointer_in[0]+
+										 	 	 A_mat[2][1]*current_pointer_in[1]+
+												 A_mat[2][2]*current_pointer_in[2];
 
 						//Apply additional update
 						if (a_mat[2][2] != 0)
 						{
-							current_out[2] -= tnode->voltage[2]/a_mat[2][2]*voltage_ratio;
+							current_pointer_out[2] -= tnode->voltage[2]/a_mat[2][2]*voltage_ratio;
 						}
 					}
 					else
-						current_out[2] = 0.0;
+						current_pointer_out[2] = 0.0;
 
 					//See if our nature requires a lock
 					if (flock)
@@ -3873,10 +3884,14 @@ int link_object::CurrentCalculation(int nodecall)
 						WRITELOCK_OBJECT(fobjval);
 					}
 
-					//Current in is just the same
-					fnode->current_inj[0] += current_in[0];
-					fnode->current_inj[1] += current_in[1];
-					fnode->current_inj[2] += current_in[2];
+					//Check to see which mode we're in
+					if (link_fault_mode == false)
+					{
+						//Current in is just the same
+						fnode->current_inj[0] += current_pointer_in[0];
+						fnode->current_inj[1] += current_pointer_in[1];
+						fnode->current_inj[2] += current_pointer_in[2];
+					}
 
 					//If we locked our from node, be sure to let it go
 					if (flock)
@@ -3886,7 +3901,7 @@ int link_object::CurrentCalculation(int nodecall)
 					}
 
 					//Replicate to the "original parent" if needed
-					if (ofnode != NULL)
+					if ((ofnode != NULL) && (link_fault_mode == false))
 					{
 						//See if our nature requires a lock
 						if (flock)
@@ -3896,9 +3911,9 @@ int link_object::CurrentCalculation(int nodecall)
 						}
 
 						//Apply current injection updates to child as well
-						ofnode->current_inj[0] += current_in[0];
-						ofnode->current_inj[1] += current_in[1];
-						ofnode->current_inj[2] += current_in[2];
+						ofnode->current_inj[0] += current_pointer_in[0];
+						ofnode->current_inj[1] += current_pointer_in[1];
+						ofnode->current_inj[2] += current_pointer_in[2];
 
 						//If we locked our from node, be sure to let it go
 						if (flock)
@@ -3929,58 +3944,58 @@ int link_object::CurrentCalculation(int nodecall)
 
 				if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
 				{
-					current_out[0] = From_Y[0][0]*vtemp[0]+
+					current_pointer_out[0] = From_Y[0][0]*vtemp[0]+
 									 From_Y[0][1]*vtemp[1]+
 									 From_Y[0][2]*vtemp[2];
 				}
 				else
-					current_out[0] = 0.0;
+					current_pointer_out[0] = 0.0;
 
 				if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
 				{
-					current_out[1] = From_Y[1][0]*vtemp[0]+
-									 From_Y[1][1]*vtemp[1]+
-									 From_Y[1][2]*vtemp[2];
+					current_pointer_out[1] = From_Y[1][0]*vtemp[0]+
+									 	 	 From_Y[1][1]*vtemp[1]+
+											 From_Y[1][2]*vtemp[2];
 				}
 				else
-					current_out[1] = 0.0;
+					current_pointer_out[1] = 0.0;
 
 				if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
 				{
-					current_out[2] = From_Y[2][0]*vtemp[0]+
-									From_Y[2][1]*vtemp[1]+
-									From_Y[2][2]*vtemp[2];
+					current_pointer_out[2] = From_Y[2][0]*vtemp[0]+
+											 From_Y[2][1]*vtemp[1]+
+											 From_Y[2][2]*vtemp[2];
 				}
 				else
-					current_out[2] = 0.0;
+					current_pointer_out[2] = 0.0;
 
 				//Calculate current_in based on current_out (backwards, isn't it?)
 				if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
 				{
-					current_in[0] = d_mat[0][0]*current_out[0]+
-									d_mat[0][1]*current_out[1]+
-									d_mat[0][2]*current_out[2];
+					current_pointer_in[0] = d_mat[0][0]*current_pointer_out[0]+
+											d_mat[0][1]*current_pointer_out[1]+
+											d_mat[0][2]*current_pointer_out[2];
 				}
 				else
-					current_in[0] = 0.0;
+					current_pointer_in[0] = 0.0;
 
 				if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
 				{
-					current_in[1] = d_mat[1][0]*current_out[0]+
-									d_mat[1][1]*current_out[1]+
-									d_mat[1][2]*current_out[2];
+					current_pointer_in[1] = d_mat[1][0]*current_pointer_out[0]+
+											d_mat[1][1]*current_pointer_out[1]+
+											d_mat[1][2]*current_pointer_out[2];
 				}
 				else
-					current_in[1] = 0.0;
+					current_pointer_in[1] = 0.0;
 
 				if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
 				{
-					current_in[2] = d_mat[2][0]*current_out[0]+
-									d_mat[2][1]*current_out[1]+
-									d_mat[2][2]*current_out[2];
+					current_pointer_in[2] = d_mat[2][0]*current_pointer_out[0]+
+											d_mat[2][1]*current_pointer_out[1]+
+											d_mat[2][2]*current_pointer_out[2];
 				}
 				else
-					current_in[2] = 0.0;
+					current_pointer_in[2] = 0.0;
 
 				//See if our nature requires a lock
 				if (flock)
@@ -3989,10 +4004,14 @@ int link_object::CurrentCalculation(int nodecall)
 					WRITELOCK_OBJECT(fobjval);
 				}
 
-				//Current in is just the same
-				fnode->current_inj[0] += current_in[0];
-				fnode->current_inj[1] += current_in[1];
-				fnode->current_inj[2] += current_in[2];
+				//Check to see which mode we're in
+				if (link_fault_mode == false)
+				{
+					//Current in is just the same
+					fnode->current_inj[0] += current_pointer_in[0];
+					fnode->current_inj[1] += current_pointer_in[1];
+					fnode->current_inj[2] += current_pointer_in[2];
+				}
 
 				//If we locked our from node, be sure to let it go
 				if (flock)
@@ -4002,7 +4021,7 @@ int link_object::CurrentCalculation(int nodecall)
 				}
 
 				//Replicate to the "original parent" if needed
-				if (ofnode != NULL)
+				if ((ofnode != NULL) && (link_fault_mode == false))
 				{
 					//See if our nature requires a lock
 					if (flock)
@@ -4012,9 +4031,9 @@ int link_object::CurrentCalculation(int nodecall)
 					}
 
 					//Apply current injection updates to child
-					ofnode->current_inj[0] += current_in[0];
-					ofnode->current_inj[1] += current_in[1];
-					ofnode->current_inj[2] += current_in[2];
+					ofnode->current_inj[0] += current_pointer_in[0];
+					ofnode->current_inj[1] += current_pointer_in[1];
+					ofnode->current_inj[2] += current_pointer_in[2];
 
 					//If we locked our from node, be sure to let it go
 					if (flock)
@@ -4045,32 +4064,32 @@ int link_object::CurrentCalculation(int nodecall)
 				//Get low side current (current out) - for now, oh grand creator (me) mandates D-GWye are three phase or nothing
 				if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x07)	//ABC
 				{
-					current_out[0] = vtemp[0] * b_mat[0][0];
-					current_out[1] = vtemp[1] * b_mat[1][1];
-					current_out[2] = vtemp[2] * b_mat[2][2];
+					current_pointer_out[0] = vtemp[0] * base_admittance_mat[0][0];
+					current_pointer_out[1] = vtemp[1] * base_admittance_mat[1][1];
+					current_pointer_out[2] = vtemp[2] * base_admittance_mat[2][2];
 
 					//Translate back to high-side
-					current_in[0] = d_mat[0][0]*current_out[0]+
-									d_mat[0][1]*current_out[1]+
-									d_mat[0][2]*current_out[2];
+					current_pointer_in[0] = d_mat[0][0]*current_pointer_out[0]+
+											d_mat[0][1]*current_pointer_out[1]+
+											d_mat[0][2]*current_pointer_out[2];
 
-					current_in[1] = d_mat[1][0]*current_out[0]+
-									d_mat[1][1]*current_out[1]+
-									d_mat[1][2]*current_out[2];
+					current_pointer_in[1] = d_mat[1][0]*current_pointer_out[0]+
+											d_mat[1][1]*current_pointer_out[1]+
+											d_mat[1][2]*current_pointer_out[2];
 
-					current_in[2] = d_mat[2][0]*current_out[0]+
-									d_mat[2][1]*current_out[1]+
-									d_mat[2][2]*current_out[2];
+					current_pointer_in[2] = d_mat[2][0]*current_pointer_out[0]+
+											d_mat[2][1]*current_pointer_out[1]+
+											d_mat[2][2]*current_pointer_out[2];
 				}
 				else
 				{
-					current_out[0] = 0.0;
-					current_out[1] = 0.0;
-					current_out[2] = 0.0;
+					current_pointer_out[0] = 0.0;
+					current_pointer_out[1] = 0.0;
+					current_pointer_out[2] = 0.0;
 
-					current_in[0] = 0.0;
-					current_in[1] = 0.0;
-					current_in[2] = 0.0;
+					current_pointer_in[0] = 0.0;
+					current_pointer_in[1] = 0.0;
+					current_pointer_in[2] = 0.0;
 				}
 
 				//See if our nature requires a lock
@@ -4080,10 +4099,14 @@ int link_object::CurrentCalculation(int nodecall)
 					WRITELOCK_OBJECT(fobjval);
 				}
 
-				//Current in is just the same
-				fnode->current_inj[0] += current_in[0];
-				fnode->current_inj[1] += current_in[1];
-				fnode->current_inj[2] += current_in[2];
+				//Check to see which mode we're in
+				if (link_fault_mode == false)
+				{
+					//Current in is just the same
+					fnode->current_inj[0] += current_pointer_in[0];
+					fnode->current_inj[1] += current_pointer_in[1];
+					fnode->current_inj[2] += current_pointer_in[2];
+				}
 
 				//If we locked our from node, be sure to let it go
 				if (flock)
@@ -4093,7 +4116,7 @@ int link_object::CurrentCalculation(int nodecall)
 				}
 
 				//Replicate to the "original parent" if needed
-				if (ofnode != NULL)
+				if ((ofnode != NULL) && (link_fault_mode == false))
 				{
 					//See if our nature requires a lock
 					if (flock)
@@ -4103,9 +4126,9 @@ int link_object::CurrentCalculation(int nodecall)
 					}
 
 					//Apply updates to child object
-					ofnode->current_inj[0] += current_in[0];
-					ofnode->current_inj[1] += current_in[1];
-					ofnode->current_inj[2] += current_in[2];
+					ofnode->current_inj[0] += current_pointer_in[0];
+					ofnode->current_inj[1] += current_pointer_in[1];
+					ofnode->current_inj[2] += current_pointer_in[2];
 
 					//If we locked our from node, be sure to let it go
 					if (flock)
@@ -4119,10 +4142,10 @@ int link_object::CurrentCalculation(int nodecall)
 			{
 				if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
 				{
-					current_in[0] = itemp[0] = 
-						fnode->voltage[0]*b_mat[2][2]+
-						tnode->voltage[0]*b_mat[2][0]+
-						tnode->voltage[1]*b_mat[2][1];
+					current_pointer_in[0] = itemp[0] =
+											fnode->voltage[0]*base_admittance_mat[2][2]+
+											tnode->voltage[0]*base_admittance_mat[2][0]+
+											tnode->voltage[1]*base_admittance_mat[2][1];
 
 					//See if our nature requires a lock
 					if (flock)
@@ -4131,8 +4154,12 @@ int link_object::CurrentCalculation(int nodecall)
 						WRITELOCK_OBJECT(fobjval);
 					}
 
-					//Accumulate injection
-					fnode->current_inj[0] += itemp[0];
+					//Check to see which mode we're in
+					if (link_fault_mode == false)
+					{
+						//Accumulate injection
+						fnode->current_inj[0] += itemp[0];
+					}
 
 					//If we locked our from node, be sure to let it go
 					if (flock)
@@ -4142,7 +4169,7 @@ int link_object::CurrentCalculation(int nodecall)
 					}
 
 					//Replicate to the "original parent" if needed
-					if (ofnode != NULL)
+					if ((ofnode != NULL) && (link_fault_mode == false))
 					{
 						//See if our nature requires a lock
 						if (flock)
@@ -4163,20 +4190,20 @@ int link_object::CurrentCalculation(int nodecall)
 					}
 
 					//calculate current out
-					current_out[0] = fnode->voltage[0]*b_mat[0][2]+
-									 tnode->voltage[0]*b_mat[0][0]+
-									 tnode->voltage[1]*b_mat[0][1];
+					current_pointer_out[0] = fnode->voltage[0]*base_admittance_mat[0][2]+
+											 tnode->voltage[0]*base_admittance_mat[0][0]+
+											 tnode->voltage[1]*base_admittance_mat[0][1];
 
-					current_out[1] = fnode->voltage[0]*b_mat[1][2]+
-									 tnode->voltage[0]*b_mat[1][0]+
-									 tnode->voltage[1]*b_mat[1][1];
+					current_pointer_out[1] = fnode->voltage[0]*base_admittance_mat[1][2]+
+											 tnode->voltage[0]*base_admittance_mat[1][0]+
+											 tnode->voltage[1]*base_admittance_mat[1][1];
 				}
 				else if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
 				{
-					current_in[1] = itemp[0] = 
-						fnode->voltage[1]*b_mat[2][2] +
-						tnode->voltage[0]*b_mat[2][0] +
-						tnode->voltage[1]*b_mat[2][1];
+					current_pointer_in[1] = itemp[0] =
+											fnode->voltage[1]*base_admittance_mat[2][2] +
+											tnode->voltage[0]*base_admittance_mat[2][0] +
+											tnode->voltage[1]*base_admittance_mat[2][1];
 
 					//See if our nature requires a lock
 					if (flock)
@@ -4185,8 +4212,12 @@ int link_object::CurrentCalculation(int nodecall)
 						WRITELOCK_OBJECT(fobjval);
 					}
 
-					//Accumulate the injection
-					fnode->current_inj[1] += itemp[0];
+					//Check to see which mode we're in
+					if (link_fault_mode == false)
+					{
+						//Accumulate the injection
+						fnode->current_inj[1] += itemp[0];
+					}
 
 					//If we locked our from node, be sure to let it go
 					if (flock)
@@ -4196,7 +4227,7 @@ int link_object::CurrentCalculation(int nodecall)
 					}
 
 					//Replicate to the "original parent" if needed
-					if (ofnode != NULL)
+					if ((ofnode != NULL) && (link_fault_mode == false))
 					{
 						//See if our nature requires a lock
 						if (flock)
@@ -4217,21 +4248,21 @@ int link_object::CurrentCalculation(int nodecall)
 					}
 
 					//calculate current out
-					current_out[0] = fnode->voltage[1]*b_mat[0][2] +
-									 tnode->voltage[0]*b_mat[0][0] +
-									 tnode->voltage[1]*b_mat[0][1];
+					current_pointer_out[0] = fnode->voltage[1]*base_admittance_mat[0][2] +
+									 	 	 tnode->voltage[0]*base_admittance_mat[0][0] +
+											 tnode->voltage[1]*base_admittance_mat[0][1];
 
-					current_out[1] = fnode->voltage[1]*b_mat[1][2] +
-									 tnode->voltage[0]*b_mat[1][0] +
-									 tnode->voltage[1]*b_mat[1][1];
+					current_pointer_out[1] = fnode->voltage[1]*base_admittance_mat[1][2] +
+									 	 	 tnode->voltage[0]*base_admittance_mat[1][0] +
+											 tnode->voltage[1]*base_admittance_mat[1][1];
 
 				}
 				else if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
 				{
-					current_in[2] = itemp[0] = 
-						fnode->voltage[2]*b_mat[2][2] +
-						tnode->voltage[0]*b_mat[2][0] +
-						tnode->voltage[1]*b_mat[2][1];
+					current_pointer_in[2] = itemp[0] =
+											fnode->voltage[2]*base_admittance_mat[2][2] +
+											tnode->voltage[0]*base_admittance_mat[2][0] +
+											tnode->voltage[1]*base_admittance_mat[2][1];
 
 					//See if our nature requires a lock
 					if (flock)
@@ -4240,8 +4271,12 @@ int link_object::CurrentCalculation(int nodecall)
 						WRITELOCK_OBJECT(fobjval);
 					}
 
-					//Accumulate the injection
-					fnode->current_inj[2] += itemp[0];
+					//Check to see which mode we're in
+					if (link_fault_mode == false)
+					{
+						//Accumulate the injection
+						fnode->current_inj[2] += itemp[0];
+					}
 
 					//If we locked our from node, be sure to let it go
 					if (flock)
@@ -4251,7 +4286,7 @@ int link_object::CurrentCalculation(int nodecall)
 					}
 
 					//Replicate to the "original parent" if needed
-					if (ofnode != NULL)
+					if ((ofnode != NULL) && (link_fault_mode == false))
 					{
 						//See if our nature requires a lock
 						if (flock)
@@ -4272,26 +4307,26 @@ int link_object::CurrentCalculation(int nodecall)
 					}
 
 					//calculate current out
-					current_out[0] = fnode->voltage[2]*b_mat[0][2]+
-									 tnode->voltage[0]*b_mat[0][0]+
-									 tnode->voltage[1]*b_mat[0][1];
+					current_pointer_out[0] = fnode->voltage[2]*base_admittance_mat[0][2]+
+									 	 	 tnode->voltage[0]*base_admittance_mat[0][0]+
+											 tnode->voltage[1]*base_admittance_mat[0][1];
 
-					current_out[1] = fnode->voltage[2]*b_mat[1][2]+
-									 tnode->voltage[0]*b_mat[1][0]+
-									 tnode->voltage[1]*b_mat[1][1];
+					current_pointer_out[1] = fnode->voltage[2]*base_admittance_mat[1][2]+
+									 	 	 tnode->voltage[0]*base_admittance_mat[1][0]+
+											 tnode->voltage[1]*base_admittance_mat[1][1];
 				}
 				else	//No phases valid
 				{
-					current_out[0] = 0.0;
-					current_out[1] = 0.0;
+					current_pointer_out[0] = 0.0;
+					current_pointer_out[1] = 0.0;
 					//2 is generalized below - no sense doing twice
-					current_in[0] = 0.0;
-					current_in[1] = 0.0;
-					current_in[2] = 0.0;
+					current_pointer_in[0] = 0.0;
+					current_pointer_in[1] = 0.0;
+					current_pointer_in[2] = 0.0;
 				}
 
 				//Find neutral
-				current_out[2] = -(current_out[0] + current_out[1]);
+				current_pointer_out[2] = -(current_pointer_out[0] + current_pointer_out[1]);
 
 			}//end split-phase, center tapped xformer
 			else if (has_phase(PHASE_S))	//Split-phase line
@@ -4307,26 +4342,26 @@ int link_object::CurrentCalculation(int nodecall)
 							   a_mat[1][0]*tnode->voltage[0]-
 							   a_mat[1][1]*tnode->voltage[1];
 
-					current_in[0] = From_Y[0][0]*vtemp[0]+
-									From_Y[0][1]*vtemp[1];
+					current_pointer_in[0] = From_Y[0][0]*vtemp[0]+
+											From_Y[0][1]*vtemp[1];
 
-					current_in[1] = From_Y[1][0]*vtemp[0]+
-									From_Y[1][1]*vtemp[1];
+					current_pointer_in[1] = From_Y[1][0]*vtemp[0]+
+											From_Y[1][1]*vtemp[1];
 
 					//Calculate neutral current
-					current_in[2] = tn[0]*current_in[0] + tn[1]*current_in[1];
+					current_pointer_in[2] = tn[0]*current_pointer_in[0] + tn[1]*current_pointer_in[1];
 				}
 				else	//Not valid
 				{
-					current_in[0] = 0.0;
-					current_in[1] = 0.0;
-					current_in[2] = 0.0;
+					current_pointer_in[0] = 0.0;
+					current_pointer_in[1] = 0.0;
+					current_pointer_in[2] = 0.0;
 				}
 
 				//Cuurent out is the same as current in for triplex (simple lines)
-				current_out[0] = current_in[0];
-				current_out[1] = current_in[1];
-				current_out[2] = current_in[2];
+				current_pointer_out[0] = current_pointer_in[0];
+				current_pointer_out[1] = current_pointer_in[1];
+				current_pointer_out[2] = current_pointer_in[2];
 
 				//See if our nature requires a lock
 				if (flock)
@@ -4335,9 +4370,13 @@ int link_object::CurrentCalculation(int nodecall)
 					WRITELOCK_OBJECT(fobjval);
 				}
 
-				//Current in values go to the injection
-				fnode->current_inj[0] += current_in[0];
-				fnode->current_inj[1] += current_in[1];
+				//Check to see which mode we're in
+				if (link_fault_mode == false)
+				{
+					//Current in values go to the injection
+					fnode->current_inj[0] += current_pointer_in[0];
+					fnode->current_inj[1] += current_pointer_in[1];
+				}
 
 				//If we locked our from node, be sure to let it go
 				if (flock)
@@ -4347,7 +4386,7 @@ int link_object::CurrentCalculation(int nodecall)
 				}
 
 				//Replicate to the "original parent" if needed
-				if (ofnode != NULL)
+				if ((ofnode != NULL) && (link_fault_mode == false))
 				{
 					//See if our nature requires a lock
 					if (flock)
@@ -4357,8 +4396,8 @@ int link_object::CurrentCalculation(int nodecall)
 					}
 
 					//Apply current injections to child
-					ofnode->current_inj[0] += current_in[0];
-					ofnode->current_inj[1] += current_in[1];
+					ofnode->current_inj[0] += current_pointer_in[0];
+					ofnode->current_inj[1] += current_pointer_in[1];
 
 					//If we locked our from node, be sure to let it go
 					if (flock)
@@ -4458,61 +4497,61 @@ int link_object::CurrentCalculation(int nodecall)
 					//See if phases are valid
 					if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
 					{
-						current_out[0] = From_Y[0][0]*vtemp[0]+
-										From_Y[0][1]*vtemp[1]+
-										From_Y[0][2]*vtemp[2] - 
-										LinkHistTermL[0];
+						current_pointer_out[0] = From_Y[0][0]*vtemp[0]+
+												 From_Y[0][1]*vtemp[1]+
+												 From_Y[0][2]*vtemp[2] -
+												 LinkHistTermL[0];
 
 						//Update our vmag value
 						vmagtemp[0] = vtemp[0].Mag();
 					}
 					else
 					{
-						current_out[0] = 0.0;
+						current_pointer_out[0] = 0.0;
 						vmagtemp[0] = 0.0;
 					}
 
 					if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
 					{
-						current_out[1] = From_Y[1][0]*vtemp[0]+
-										From_Y[1][1]*vtemp[1]+
-										From_Y[1][2]*vtemp[2] -
-										LinkHistTermL[1];
+						current_pointer_out[1] = From_Y[1][0]*vtemp[0]+
+												 From_Y[1][1]*vtemp[1]+
+												 From_Y[1][2]*vtemp[2] -
+												 LinkHistTermL[1];
 
 						//Update our vmag value
 						vmagtemp[1] = vtemp[1].Mag();
 					}
 					else
 					{
-						current_out[1] = 0.0;
+						current_pointer_out[1] = 0.0;
 						vmagtemp[1] = 0.0;
 					}
 
 					if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
 					{
-						current_out[2] = From_Y[2][0]*vtemp[0]+
-									From_Y[2][1]*vtemp[1]+
-									From_Y[2][2]*vtemp[2] - 
-									LinkHistTermL[2];
+						current_pointer_out[2] = From_Y[2][0]*vtemp[0]+
+												 From_Y[2][1]*vtemp[1]+
+												 From_Y[2][2]*vtemp[2] -
+												 LinkHistTermL[2];
 
 						//Update our vmag value
 						vmagtemp[2] = vtemp[2].Mag();
 					}
 					else
 					{
-						current_out[2] = 0.0;
+						current_pointer_out[2] = 0.0;
 						vmagtemp[2] = 0.0;
 					}
 
 					//Now calculate current_in
-					current_in[0] = current_out[0] + shunt_current_val[0];
-					current_in[1] = current_out[1] + shunt_current_val[1];
-					current_in[2] = current_out[2] + shunt_current_val[2];
+					current_pointer_in[0] = current_pointer_out[0] + shunt_current_val[0];
+					current_pointer_in[1] = current_pointer_out[1] + shunt_current_val[1];
+					current_pointer_in[2] = current_pointer_out[2] + shunt_current_val[2];
 
 					//Adjust current out
-					current_out[0] -= shunt_current_val[3];
-					current_out[1] -= shunt_current_val[4];
-					current_out[2] -= shunt_current_val[5];
+					current_pointer_out[0] -= shunt_current_val[3];
+					current_pointer_out[1] -= shunt_current_val[4];
+					current_pointer_out[2] -= shunt_current_val[5];
 
 					//Final determination of "convergence" or not
 					if (fabs(vmagtemp[0]-inrush_vdiffmag_prev[0]) > inrush_tol_value)
@@ -4553,52 +4592,52 @@ int link_object::CurrentCalculation(int nodecall)
 					//See if phases are valid
 					if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
 					{
-						current_out[0] = From_Y[0][0]*vtemp[0]+
-										From_Y[0][1]*vtemp[1]+
-										From_Y[0][2]*vtemp[2];
+						current_pointer_out[0] = From_Y[0][0]*vtemp[0]+
+												 From_Y[0][1]*vtemp[1]+
+												 From_Y[0][2]*vtemp[2];
 					}
 					else
-						current_out[0] = 0.0;
+						current_pointer_out[0] = 0.0;
 
 					if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
 					{
-						current_out[1] = From_Y[1][0]*vtemp[0]+
-										From_Y[1][1]*vtemp[1]+
-										From_Y[1][2]*vtemp[2];
+						current_pointer_out[1] = From_Y[1][0]*vtemp[0]+
+												 From_Y[1][1]*vtemp[1]+
+												 From_Y[1][2]*vtemp[2];
 					}
 					else
-						current_out[1] = 0.0;
+						current_pointer_out[1] = 0.0;
 
 					if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
 					{
-						current_out[2] = From_Y[2][0]*vtemp[0]+
-									From_Y[2][1]*vtemp[1]+
-									From_Y[2][2]*vtemp[2];
+						current_pointer_out[2] = From_Y[2][0]*vtemp[0]+
+												 From_Y[2][1]*vtemp[1]+
+												 From_Y[2][2]*vtemp[2];
 					}
 					else
-						current_out[2] = 0.0;
+						current_pointer_out[2] = 0.0;
 
 					//Now calculate current_in
-					current_in[0] = c_mat[0][0]*tnode->voltage[0]+
-									c_mat[0][1]*tnode->voltage[1]+
-									c_mat[0][2]*tnode->voltage[2]+
-									d_mat[0][0]*current_out[0]+
-									d_mat[0][1]*current_out[1]+
-									d_mat[0][2]*current_out[2];
+					current_pointer_in[0] = c_mat[0][0]*tnode->voltage[0]+
+											c_mat[0][1]*tnode->voltage[1]+
+											c_mat[0][2]*tnode->voltage[2]+
+											d_mat[0][0]*current_pointer_out[0]+
+											d_mat[0][1]*current_pointer_out[1]+
+											d_mat[0][2]*current_pointer_out[2];
 
-					current_in[1] = c_mat[1][0]*tnode->voltage[0]+
-									c_mat[1][1]*tnode->voltage[1]+
-									c_mat[1][2]*tnode->voltage[2]+
-									d_mat[1][0]*current_out[0]+
-									d_mat[1][1]*current_out[1]+
-									d_mat[1][2]*current_out[2];
+					current_pointer_in[1] = c_mat[1][0]*tnode->voltage[0]+
+											c_mat[1][1]*tnode->voltage[1]+
+											c_mat[1][2]*tnode->voltage[2]+
+											d_mat[1][0]*current_pointer_out[0]+
+											d_mat[1][1]*current_pointer_out[1]+
+											d_mat[1][2]*current_pointer_out[2];
 
-					current_in[2] = c_mat[2][0]*tnode->voltage[0]+
-									c_mat[2][1]*tnode->voltage[1]+
-									c_mat[2][2]*tnode->voltage[2]+
-									d_mat[2][0]*current_out[0]+
-									d_mat[2][1]*current_out[1]+
-									d_mat[2][2]*current_out[2];
+					current_pointer_in[2] = c_mat[2][0]*tnode->voltage[0]+
+											c_mat[2][1]*tnode->voltage[1]+
+											c_mat[2][2]*tnode->voltage[2]+
+											d_mat[2][0]*current_pointer_out[0]+
+											d_mat[2][1]*current_pointer_out[1]+
+											d_mat[2][2]*current_pointer_out[2];
 				}//End "normal" calculation
 
 				//See if our nature requires a lock
@@ -4608,10 +4647,14 @@ int link_object::CurrentCalculation(int nodecall)
 					WRITELOCK_OBJECT(fobjval);
 				}
 
-				//Current in is just the same
-				fnode->current_inj[0] += current_in[0];
-				fnode->current_inj[1] += current_in[1];
-				fnode->current_inj[2] += current_in[2];
+				//Check to see which mode we're in
+				if (link_fault_mode == false)
+				{
+					//Current in is just the same
+					fnode->current_inj[0] += current_pointer_in[0];
+					fnode->current_inj[1] += current_pointer_in[1];
+					fnode->current_inj[2] += current_pointer_in[2];
+				}
 
 				//If we locked our from node, be sure to let it go
 				if (flock)
@@ -4621,7 +4664,7 @@ int link_object::CurrentCalculation(int nodecall)
 				}
 
 				//Replicate to the "original parent" if needed
-				if (ofnode != NULL)
+				if ((ofnode != NULL) && (link_fault_mode == false))
 				{
 					//See if our nature requires a lock
 					if (flock)
@@ -4631,9 +4674,9 @@ int link_object::CurrentCalculation(int nodecall)
 					}
 
 					//Apply current injections to childed object
-					ofnode->current_inj[0] += current_in[0];
-					ofnode->current_inj[1] += current_in[1];
-					ofnode->current_inj[2] += current_in[2];
+					ofnode->current_inj[0] += current_pointer_in[0];
+					ofnode->current_inj[1] += current_pointer_in[1];
+					ofnode->current_inj[2] += current_pointer_in[2];
 
 					//If we locked our from node, be sure to let it go
 					if (flock)
@@ -4646,8 +4689,8 @@ int link_object::CurrentCalculation(int nodecall)
 		}//End is closed
 		else	//Open, so no current
 		{
-			current_in[0] = current_in[1] = current_in[2] = 0.0;
-			current_out[0] = current_out[1] = current_out[2] = 0.0;
+			current_pointer_in[0] = current_pointer_in[1] = current_pointer_in[2] = 0.0;
+			current_pointer_out[0] = current_pointer_out[1] = current_pointer_out[2] = 0.0;
 		}
 
 		//Flag us as done
@@ -13668,7 +13711,7 @@ void lu_decomp(complex *a, complex *l, complex *u, int size_val)
 			u[n*size_val+m] = complex(0,0);
 		}
 	}
-	// for loop to decompose a in to lower triangular matrix l and upper triangular matirx u
+	// for loop to decompose a in to lower triangular matrix l and upper triangular matrix u
 	for(k=0; k<size_val; k++){
 		l[k*size_val+k] = complex(1,0);
 		for(m=k; m<size_val; m++){

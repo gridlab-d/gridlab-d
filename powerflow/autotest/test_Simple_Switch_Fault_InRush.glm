@@ -155,7 +155,7 @@ object switch {
 	phases ABCN;
 	from node1;
 	to node1a;
-	status OPEN;
+	status CLOSED;
 }
 
 object meter {

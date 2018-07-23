@@ -34,6 +34,7 @@ public:
 	//Legacy FBS code - will change when reliability makes its way in there
 	int fuse_state(OBJECT *parent);
 	
+	void fuse_change_status_function(void);
 	void set_fuse_full(char desired_status_A, char desired_status_B, char desired_status_C);	//Used to set individual phases - 0 = blown, 1 = good, 2 = don't care (retain current)
 	void set_fuse_full_reliability(unsigned char desired_status);
 	void set_fuse_faulted_phases(unsigned char desired_status);

@@ -45,6 +45,8 @@ public:
 
 	enum {LC_UNKNOWN=0, LC_RESIDENTIAL, LC_COMMERCIAL, LC_INDUSTRIAL, LC_AGRICULTURAL};
 	enumeration load_class;
+	enum {DISCRETIONARY=0, PRIORITY, CRITICAL};
+	enumeration load_priority;
 
 	int create(void);
 	int init(OBJECT *parent);

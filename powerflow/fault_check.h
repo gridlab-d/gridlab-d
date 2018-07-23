@@ -15,8 +15,9 @@ public:
 	//Move typedef in here so reliabilty-related items can access the enumeration
 	typedef enum {
 			SINGLE=0,		//Runs one fault_check, right at the beginning of powerflow
-			ONCHANGE=1,	//Runs fault_check everytime a Jacobian reconfiguration is requested
-			ALLT=2			//Runs fault_check on every iteration
+			ONCHANGE=1,		//Runs fault_check everytime a Jacobian reconfiguration is requested
+			ALLT=2,			//Runs fault_check on every iteration
+			SINGLE_DEBUG=3	//Runs one fault_check, but will terminate the simulation -- bypasses some phase check errors
 			} FCSTATE;
 
 	unsigned int **Supported_Nodes;			//Nodes with source support (connected to swing somehow)
@@ -40,7 +41,7 @@ public:
 	void search_links(int node_int);							//Function to check connectivity and support of nodes
 	void search_links_mesh(int node_int);						//Function to check connectivity and support of nodes, but more in the "mesh" sense
 	void support_check(int swing_node_int);						//Function that performs the connectivity check - this way so can be easily externally accessed
-	void support_check_mesh(int swing_node_int);				//Function that performs the connectivity check for not-so-radial systems
+	void support_check_mesh(void);								//Function that performs the connectivity check for not-so-radial systems
 	void reset_support_check(void);								//Function to re-init the support matrix
 	void write_output_file(TIMESTAMP tval, double tval_delta);	//Function to write out "unsupported" items
 
