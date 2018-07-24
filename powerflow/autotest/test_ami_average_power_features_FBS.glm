@@ -63,7 +63,7 @@ object meter {
 	bustype SWING;
 	name THREE_PHASE_ROOT;
 	phases ABCN;
-	measured_energy_delta_timestep 7.0 min;
+	measured_stats_interval 7.0 min;
 	nominal_voltage 7200.0;
 	object double_assert {
 		target measured_avg_real_power_in_interval;
@@ -150,7 +150,7 @@ object triplex_meter {
 	name NOTROOT2;
 	phases BS;
 	nominal_voltage 120.0;
-	measured_energy_delta_timestep 7.0 min;
+	measured_stats_interval 7.0 min;
 	power_12 2500.0-120.0j;
 	// object recorder
 	// {
@@ -168,10 +168,9 @@ object triplex_meter {
 	name NOTROOT;
 	phases BS;
 	nominal_voltage 120.0;
-	measured_energy_delta_timestep 5.0 min;
+	measured_stats_interval 5.0 min;
 	power_12 2500.0-120.0j;
 	object double_assert {
-		in '2012-01-01 00:05:00 PST';	//Defer it out to the first "valid interval" -- of due to FBS power calculations on startup
 		target measured_avg_real_power_in_interval;
 		within 0.01;
 		object player {
@@ -180,7 +179,6 @@ object triplex_meter {
 		};
 	};
 	object double_assert {
-		in '2012-01-01 00:05:00 PST';	//Defer it out to the first "valid interval" -- of due to FBS power calculations on startup
 		target measured_avg_reactive_power_in_interval;
 		within 0.01;
 		object player {
