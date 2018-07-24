@@ -52,6 +52,7 @@ public:
 	GL_STRING(char32,trigger);
 	GL_STRING(char1024,table);
 	GL_STRING(char1024,group);
+	GL_STRING(char1024,recorder_name);
 	GL_STRING(char32,mode);
 	GL_ATOMIC(int32,limit);
 	GL_ATOMIC(double,interval);
@@ -67,6 +68,7 @@ public:
 private:
 	bool enabled;
 	bool group_mode;
+	bool tag_mode;
 	database *db;
 	query_engine* recorder_connection;
 	bool trigger_on;

@@ -475,6 +475,7 @@ void underground_line::recalc(void)
 						Z(i, j) = Z_DIST(i, j);
 				}
 			}	
+			#undef Z_GMR_S	//Make the compiler happy
 		 } else {
                 // see example: 4.4
                 #define Z_GMR(i) (GMR(i) == 0.0 ? complex(0.0) : complex(freq_coeff_real + RES(i), freq_coeff_imag * (log(1.0 / GMR(i)) + freq_additive_term))) 
@@ -491,19 +492,19 @@ void underground_line::recalc(void)
 					if (i > 3 && i != 7){
 						Z(i, j) = Z_GMR_S_SELF(i); //44,55,66 //there is 'test' in this if for CN Z formation. is it needed here?
 					}
-					else if (i == 7) {
-						if (has_phase(PHASE_A)) {
-							Z(i, j) = Z_GMR(4); //z77 for phase-A conductor
-						}
-						else if (has_phase(PHASE_B)) {
-							Z(i, j) = Z_GMR(5); //z77 for phase-B conductor
-						}
-						else if (has_phase(PHASE_C)) {
-							Z(i, j) = Z_GMR(6); //z77 for phase-C conductor
-						}
-					}
+					//else if (i == 7) {
+						//if (has_phase(PHASE_A)) {
+							//Z(i, j) = Z_GMR(4); //z77 for phase-A conductor
+						//}
+						//else if (has_phase(PHASE_B)) {
+							//Z(i, j) = Z_GMR(5); //z77 for phase-B conductor
+						//}
+						//else if (has_phase(PHASE_C)) {
+							//Z(i, j) = Z_GMR(6); //z77 for phase-C conductor
+						//}
+					//}
 					else
-						Z(i, j) = Z_GMR(i); //11,22,33
+						Z(i, j) = Z_GMR(i); //11,22,33,77
 				}
 				else {
 					if ((i == 1 && j == 4) || (i == 2 && j == 5) || (i == 3 && j == 6)) {
@@ -543,30 +544,59 @@ void underground_line::recalc(void)
 				complex z_ij_cn[3][3] = {{Z(1, 1), Z(1, 2), Z(1, 3)},
 									  {Z(2, 1), Z(2, 2), Z(2, 3)},
 									  {Z(3, 1), Z(3, 2), Z(3, 3)}};
-				complex z_in_cn[3][3] = {{Z(1, 4), Z(1, 5), Z(1, 6)},
-									  {Z(2, 4), Z(2, 5), Z(2, 6)},
-									  {Z(3, 4), Z(3, 5), Z(3, 6)}};
-				complex z_nj_cn[3][3] = {{Z(4, 1), Z(4, 2), Z(4, 3)},
+				complex z_in_cn[3][4] = {{Z(1, 4), Z(1, 5), Z(1, 6),Z(1, 7)},
+									  {Z(2, 4), Z(2, 5), Z(2, 6),Z(2, 7)},
+									  {Z(3, 4), Z(3, 5), Z(3, 6),Z(3, 7)}};
+				complex z_nj_cn[4][3] = {{Z(4, 1), Z(4, 2), Z(4, 3)},
 									  {Z(5, 1), Z(5, 2), Z(5, 3)},
-									  {Z(6, 1), Z(6, 2), Z(6, 3)}};
-				complex z_nn_cn[3][3] = {{Z(4, 4), Z(4, 5), Z(4, 6)},
-									  {Z(5, 4), Z(5, 5), Z(5, 6)},
-									  {Z(6, 4), Z(6, 5), Z(6, 6)}};
+									  {Z(6, 1), Z(6, 2), Z(6, 3)},
+				                      {Z(7, 1), Z(7, 2), Z(7, 3)}};
+				complex z_nn_cn[4][4] = {{Z(4, 4), Z(4, 5), Z(4, 6), Z(4, 7)},
+						               {Z(5, 4), Z(5, 5), Z(5, 6), Z(5, 7)},
+						               {Z(6, 4), Z(6, 5), Z(6, 6), Z(6, 7)},
+						               {Z(7, 4), Z(7, 5), Z(7, 6), Z(7, 7)}};
 				
-				if (!(has_phase(PHASE_A)&&has_phase(PHASE_B)&&has_phase(PHASE_C))){
+				if (!(has_phase(PHASE_A)&&has_phase(PHASE_B)&&has_phase(PHASE_C)&&has_phase(PHASE_N))){
 					if (!has_phase(PHASE_A))
 						z_nn_cn[0][0]=complex(1.0);
 					if (!has_phase(PHASE_B))
 						z_nn_cn[1][1]=complex(1.0);
 					if (!has_phase(PHASE_C))
 						z_nn_cn[2][2]=complex(1.0);
+					if (!has_phase(PHASE_N))
+						z_nn_cn[3][3]=complex(1.0);
+				} //add phase_N here
+				complex z_nn_inv_cn[4][4], z_p1_cn[3][4], z_p2_cn[3][3], z_abc_cn[3][3];
+				lu_matrix_inverse(&z_nn_cn[0][0],&z_nn_inv_cn[0][0],4);
+
+
+				//inverse(z_nn_cn,z_nn_inv_cn);
+				//multiply(z_in_cn, z_nn_inv_cn, z_p1_cn);
+				//multiply(z_p1_cn, z_nj_cn, z_p2_cn);
+
+				for (int row = 0; row < 3; row++) {
+					for (int col = 0; col < 4; col++) {
+						// Multiply the row of A by the column of B to get the row, column of product.
+						for (int inner = 0; inner < 4; inner++) {
+							z_p1_cn[row][col] += z_in_cn[row][inner] * z_nn_inv_cn[inner][col];
+						}
+					}
 				}
-				complex z_nn_inv_cn[3][3], z_p1_cn[3][3], z_p2_cn[3][3], z_abc_cn[3][3];
-				inverse(z_nn_cn,z_nn_inv_cn);
-				multiply(z_in_cn, z_nn_inv_cn, z_p1_cn);
-				multiply(z_p1_cn, z_nj_cn, z_p2_cn);
+				//multiply(z_in, z_nn_inv, z_p1);
+
+				for (int roww = 0; roww < 3; roww++) {
+					for (int coll = 0; coll < 3; coll++) {
+						// Multiply the row of A by the column of B to get the row, column of product.
+						for (int innerr = 0; innerr < 4; innerr++) {
+							z_p2_cn[roww][coll] += z_p1_cn[roww][innerr] * z_nj_cn[innerr][coll];
+						}
+					}
+				}
+				//multiply(z_p1, z_nj, z_p2);
+
 				subtract(z_ij_cn, z_p2_cn, z_abc_cn);
 				multiply(miles, z_abc_cn, Zabc_mat);
+
 			}
 			else {
 			complex z_ij_ts[3][3] = {{Z(1, 1), Z(1, 2), Z(1, 3)},
@@ -585,14 +615,16 @@ void underground_line::recalc(void)
 									  {Z(5, 4), Z(5, 5), Z(5, 6), Z(5, 7)},
 									  {Z(6, 4), Z(6, 5), Z(6, 6), Z(6, 7)},
 									  {Z(7, 4), Z(7, 5), Z(7, 6), Z(7, 7)}};
-			if (!(has_phase(PHASE_A)&&has_phase(PHASE_B)&&has_phase(PHASE_C))){
+			if (!(has_phase(PHASE_A)&&has_phase(PHASE_B)&&has_phase(PHASE_C)&&has_phase(PHASE_N))){
 					if (!has_phase(PHASE_A))
 						z_nn_ts[0][0]=complex(1.0);
 					if (!has_phase(PHASE_B))
 						z_nn_ts[1][1]=complex(1.0);
 					if (!has_phase(PHASE_C))
 						z_nn_ts[2][2]=complex(1.0);
-				}
+					if(!has_phase(PHASE_N))
+						z_nn_ts[3][3]=complex(1.0);
+				}  //add phase_N here
 			complex z_nn_inv_ts[4][4], z_p1_ts[3][4], z_p2_ts[3][3], z_abc_ts[3][3];
 				lu_matrix_inverse(&z_nn_ts[0][0],&z_nn_inv_ts[0][0],4);
 				

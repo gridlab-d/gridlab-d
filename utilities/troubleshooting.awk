@@ -45,7 +45,7 @@ BEGIN { # this is executed before any files are processed
 	# process the current line if a message was found
 	if ( group != "" ) {
 
-		tag = "l" FNR;
+		tag = FNR;
 		id = module "/" filename "(" FNR ")";
 		if ( debug ) print "<!-- " id ": " gensub(/[ \t]/," ","g",$0);
 
@@ -82,7 +82,7 @@ BEGIN { # this is executed before any files are processed
 			}
 			while ( index($0,"*/") == 0 )
 			
-			info = explanation "<cite>See <a href=\"http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/" module "/" filename "?view=markup#" tag "\">" id "</a>.</cite>"
+			info = explanation "<cite>See <a href=\"https://github.com/gridlab-d/gridlab-d/blob/" branch "/" module "/" filename "#L" tag "\">" id "</a>.</cite>"
 			
 			# add message and TROUBLESHOOT text to appropriate array
 			if ( group == "Warnings" ) {

@@ -24,6 +24,13 @@ public:
 	double measured_reactive_max_voltageD_in_interval[3];	///< measured reactive max voltage in a time interval - Line-to-Line
 	double measured_reactive_min_voltage_in_interval[3];	///< measured reactive min voltage in a time interval
 	double measured_reactive_min_voltageD_in_interval[3];	///< measured reactive min voltage in a time interval - Line-to-Line
+	double measured_real_avg_power_in_interval;	///< metered real part of average power over the last interval
+	double measured_reactive_avg_power_in_interval;	///< metered reactive part of average power over the last interval
+	double measured_real_max_power_in_interval;	///< maximum real power over the last interval
+	double measured_reactive_max_power_in_interval;	///< maximum real power over the last interval
+	double measured_real_min_power_in_interval;	///< minimum real power over the last interval
+	double measured_reactive_min_power_in_interval;	///< minimum real power over the last interval
+
 	complex measured_current[3];	///< measured current
 	double measured_real_energy;	///< metered real energy consumption
 	double measured_real_energy_delta;	///< metered real energy consumption over last interval
@@ -35,6 +42,7 @@ public:
 	double measured_real_power;		///< metered real power
 	double last_measured_real_power; ///< previous metered real power
 	double measured_reactive_power; ///< metered reactive power
+	double last_measured_reactive_power; ///< previously measured reactive power
 	complex indiv_measured_power[3];///< metered power on each phase
 	bool meter_interrupted;			///< Reliability flag - goes active if the customer is in an "interrupted" state
 	bool meter_interrupted_secondary;	///< Reliability flag - goes active if the customer is in an "secondary interrupted" state - i.e., momentary
@@ -66,7 +74,8 @@ public:
 		BM_UNIFORM,
 		BM_TIERED,
 		BM_HOURLY,
-		BM_TIERED_RTP
+		BM_TIERED_RTP,
+		BM_TIERED_TOU
 	} BILLMODE;
 	//BILLMODE bill_mode;
 	enumeration bill_mode;
@@ -78,7 +87,6 @@ public:
 	double price_base, last_price_base;
 	double tier_price[3], tier_energy[3], last_tier_price[3];  //Allows for additional tiers of pricing over the standard price in TIERED
 
-	double process_bill(TIMESTAMP t1);
 	int check_prices();
 
 	void BOTH_meter_sync_fxn(void);
@@ -86,6 +94,7 @@ public:
 	SIMULATIONMODE inter_deltaupdate_meter(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
 private:
+	double process_bill(TIMESTAMP t1);
 	double previous_energy_total;  // Used to track what the meter reading was the previous month
     double last_measured_real_energy;
     double last_measured_reactive_energy;
@@ -97,6 +106,14 @@ private:
     complex last_measured_voltageD[3];
     double last_measured_avg_voltage_mag[3];
     double last_measured_avg_voltageD_mag[3];
+
+	double last_measured_max_real_power;
+	double last_measured_min_real_power;
+	double last_measured_max_reactive_power;
+	double last_measured_min_reactive_power;
+	double last_measured_avg_real_power;
+	double last_measured_avg_reactive_power;
+
     int voltage_avg_count;
     TIMESTAMP last_delta_timestamp;
     TIMESTAMP start_timestamp;

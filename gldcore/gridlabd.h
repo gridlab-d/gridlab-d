@@ -2099,6 +2099,7 @@ public: // special operations
 	inline bool is_complex_array(void) { return pstruct.prop->ptype==PT_complex_array; };
 	inline bool is_objectref(void) { return pstruct.prop->ptype==PT_object; };
 	inline bool is_bool(void) { return pstruct.prop->ptype==PT_bool; };
+	inline bool is_timestamp(void) { return pstruct.prop->ptype==PT_timestamp; };
 
 	// TODO these need to use throw instead of returning overloaded values
 	inline double get_double(void) { errno=0; switch(pstruct.prop->ptype) { case PT_double: case PT_random: case PT_enduse: case PT_loadshape: return has_part() ? get_part() : *(double*)get_addr(); default: errno=EINVAL; return NaN;} };
@@ -2107,6 +2108,7 @@ public: // special operations
 	inline double get_double(char*to) { double rv = get_double(); return get_unit()->convert(to,rv) ? rv : QNAN; };
 	inline complex get_complex(void) { errno=0; if ( pstruct.prop->ptype==PT_complex ) return *(complex*)get_addr(); else return complex(QNAN,QNAN); };
 	inline int64 get_integer(void) { errno=0; switch(pstruct.prop->ptype) { case PT_int16: return (int64)*(int16*)get_addr(); case PT_int32: return (int64)*(int32*)get_addr(); case PT_int64: return *(int64*)get_addr(); default: errno=EINVAL; return 0;} };
+	inline TIMESTAMP get_timestamp(void) { if (pstruct.prop->ptype == PT_timestamp) return *(TIMESTAMP*)get_addr(); exception("get_timestamp() called on a property that is not a timestamp"); };
 	inline enumeration get_enumeration(void) { if ( pstruct.prop->ptype == PT_enumeration ) return *(enumeration*)get_addr(); exception("get_enumeration() called on a property that is not an enumeration"); };
 	inline set get_set(void) { if ( pstruct.prop->ptype == PT_set ) return *(set*)get_addr(); exception("get_set() called on a property that is not a set"); };
 	inline gld_object* get_objectref(void) { if ( is_objectref() ) return ::get_object(*(OBJECT**)get_addr()); else return NULL; };

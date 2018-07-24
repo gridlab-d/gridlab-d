@@ -80,21 +80,32 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 			PT_complex, "measured_voltage_1[V]", PADDR(measured_voltage[0]),PT_DESCRIPTION,"measured voltage, phase 1 to ground",
 			PT_complex, "measured_voltage_2[V]", PADDR(measured_voltage[1]),PT_DESCRIPTION,"measured voltage, phase 2 to ground",
 			PT_complex, "measured_voltage_N[V]", PADDR(measured_voltage[2]),PT_DESCRIPTION,"measured voltage, phase N to ground",
-			PT_double, "measured_real_max_voltage_1_in_interval", PADDR(measured_real_max_voltage_in_interval[0]),PT_DESCRIPTION,"measured real max line-to-ground voltage on phase 1 over a specified interval",
-			PT_double, "measured_real_max_voltage_2_in_interval", PADDR(measured_real_max_voltage_in_interval[1]),PT_DESCRIPTION,"measured real max line-to-ground voltage on phase 2 over a specified interval",
-			PT_double, "measured_real_max_voltage_12_in_interval", PADDR(measured_real_max_voltage_in_interval[2]),PT_DESCRIPTION,"measured real max line-to-ground voltage on phase 12 over a specified interval",
-			PT_double, "measured_imag_max_voltage_1_in_interval", PADDR(measured_imag_max_voltage_in_interval[0]),PT_DESCRIPTION,"measured imaginary max line-to-ground voltage on phase 1 over a specified interval",
-			PT_double, "measured_imag_max_voltage_2_in_interval", PADDR(measured_imag_max_voltage_in_interval[1]),PT_DESCRIPTION,"measured imaginary max line-to-ground voltage on phase 2 over a specified interval",
-			PT_double, "measured_imag_max_voltage_12_in_interval", PADDR(measured_imag_max_voltage_in_interval[2]),PT_DESCRIPTION,"measured imaginary max line-to-ground voltage on phase 12 over a specified interval",
-			PT_double, "measured_real_min_voltage_1_in_interval", PADDR(measured_real_min_voltage_in_interval[0]),PT_DESCRIPTION,"measured real min line-to-ground voltage on phase 1 over a specified interval",
-			PT_double, "measured_real_min_voltage_2_in_interval", PADDR(measured_real_min_voltage_in_interval[1]),PT_DESCRIPTION,"measured real min line-to-ground voltage on phase 2 over a specified interval",
-			PT_double, "measured_real_min_voltage_12_in_interval", PADDR(measured_real_min_voltage_in_interval[2]),PT_DESCRIPTION,"measured real min line-to-ground voltage on phase 12 over a specified interval",
-			PT_double, "measured_imag_min_voltage_1_in_interval", PADDR(measured_imag_min_voltage_in_interval[0]),PT_DESCRIPTION,"measured imaginary min line-to-ground voltage on phase 1 over a specified interval",
-			PT_double, "measured_imag_min_voltage_2_in_interval", PADDR(measured_imag_min_voltage_in_interval[1]),PT_DESCRIPTION,"measured imaginary min line-to-ground voltage on phase 2 over a specified interval",
-			PT_double, "measured_imag_min_voltage_12_in_interval", PADDR(measured_imag_min_voltage_in_interval[2]),PT_DESCRIPTION,"measured imaginary min line-to-ground voltage on phase 12 over a specified interval",
-			PT_double, "measured_avg_voltage_mag_1_in_interval", PADDR(measured_avg_voltage_mag_in_interval[0]),PT_DESCRIPTION,"measured average line-to-ground voltage magnitude on phase 1 over a specified interval",
-			PT_double, "measured_avg_voltage_mag_2_in_interval", PADDR(measured_avg_voltage_mag_in_interval[1]),PT_DESCRIPTION,"measured average line-to-ground voltage magnitude on phase 2 over a specified interval",
-			PT_double, "measured_avg_voltage_mag_12_in_interval", PADDR(measured_avg_voltage_mag_in_interval[2]),PT_DESCRIPTION,"measured average line-to-ground voltage magnitude on phase 12 over a specified interval",
+			
+			//Voltage average items
+			PT_double, "measured_real_max_voltage_1_in_interval[V]", PADDR(measured_real_max_voltage_in_interval[0]),PT_DESCRIPTION,"measured real max line-to-ground voltage on phase 1 over a specified interval",
+			PT_double, "measured_real_max_voltage_2_in_interval[V]", PADDR(measured_real_max_voltage_in_interval[1]),PT_DESCRIPTION,"measured real max line-to-ground voltage on phase 2 over a specified interval",
+			PT_double, "measured_real_max_voltage_12_in_interval[V]", PADDR(measured_real_max_voltage_in_interval[2]),PT_DESCRIPTION,"measured real max line-to-ground voltage on phase 12 over a specified interval",
+			PT_double, "measured_imag_max_voltage_1_in_interval[V]", PADDR(measured_imag_max_voltage_in_interval[0]),PT_DESCRIPTION,"measured imaginary max line-to-ground voltage on phase 1 over a specified interval",
+			PT_double, "measured_imag_max_voltage_2_in_interval[V]", PADDR(measured_imag_max_voltage_in_interval[1]),PT_DESCRIPTION,"measured imaginary max line-to-ground voltage on phase 2 over a specified interval",
+			PT_double, "measured_imag_max_voltage_12_in_interval[V]", PADDR(measured_imag_max_voltage_in_interval[2]),PT_DESCRIPTION,"measured imaginary max line-to-ground voltage on phase 12 over a specified interval",
+			PT_double, "measured_real_min_voltage_1_in_interval[V]", PADDR(measured_real_min_voltage_in_interval[0]),PT_DESCRIPTION,"measured real min line-to-ground voltage on phase 1 over a specified interval",
+			PT_double, "measured_real_min_voltage_2_in_interval[V]", PADDR(measured_real_min_voltage_in_interval[1]),PT_DESCRIPTION,"measured real min line-to-ground voltage on phase 2 over a specified interval",
+			PT_double, "measured_real_min_voltage_12_in_interval[V]", PADDR(measured_real_min_voltage_in_interval[2]),PT_DESCRIPTION,"measured real min line-to-ground voltage on phase 12 over a specified interval",
+			PT_double, "measured_imag_min_voltage_1_in_interval[V]", PADDR(measured_imag_min_voltage_in_interval[0]),PT_DESCRIPTION,"measured imaginary min line-to-ground voltage on phase 1 over a specified interval",
+			PT_double, "measured_imag_min_voltage_2_in_interval[V]", PADDR(measured_imag_min_voltage_in_interval[1]),PT_DESCRIPTION,"measured imaginary min line-to-ground voltage on phase 2 over a specified interval",
+			PT_double, "measured_imag_min_voltage_12_in_interval[V]", PADDR(measured_imag_min_voltage_in_interval[2]),PT_DESCRIPTION,"measured imaginary min line-to-ground voltage on phase 12 over a specified interval",
+			PT_double, "measured_avg_voltage_1_mag_in_interval[V]", PADDR(measured_avg_voltage_mag_in_interval[0]),PT_DESCRIPTION,"measured average line-to-ground voltage magnitude on phase 1 over a specified interval",
+			PT_double, "measured_avg_voltage_2_mag_in_interval[V]", PADDR(measured_avg_voltage_mag_in_interval[1]),PT_DESCRIPTION,"measured average line-to-ground voltage magnitude on phase 2 over a specified interval",
+			PT_double, "measured_avg_voltage_12_mag_in_interval[V]", PADDR(measured_avg_voltage_mag_in_interval[2]),PT_DESCRIPTION,"measured average line-to-ground voltage magnitude on phase 12 over a specified interval",
+
+			//power average items
+			PT_double, "measured_real_max_power_in_interval[W]", PADDR(measured_real_max_power_in_interval),PT_DESCRIPTION,"measured maximum real power over a specified interval",
+			PT_double, "measured_reactive_max_power_in_interval[VAr]", PADDR(measured_reactive_max_power_in_interval),PT_DESCRIPTION,"measured maximum reactive power over a specified interval",
+			PT_double, "measured_real_min_power_in_interval[W]", PADDR(measured_real_min_power_in_interval),PT_DESCRIPTION,"measured minimum real power over a specified interval",
+			PT_double, "measured_reactive_min_power_in_interval[VAr]", PADDR(measured_reactive_min_power_in_interval),PT_DESCRIPTION,"measured minimum reactive power over a specified interval",
+			PT_double, "measured_avg_real_power_in_interval[W]", PADDR(measured_real_avg_power_in_interval),PT_DESCRIPTION,"measured average real power over a specified interval",
+			PT_double, "measured_avg_reactive_power_in_interval[VAr]", PADDR(measured_reactive_avg_power_in_interval),PT_DESCRIPTION,"measured average reactive power over a specified interval",
+
 			PT_complex, "measured_current_1[A]", PADDR(measured_current[0]),PT_DESCRIPTION,"measured current, phase 1",
 			PT_complex, "measured_current_2[A]", PADDR(measured_current[1]),PT_DESCRIPTION,"measured current, phase 2",
 			PT_complex, "measured_current_N[A]", PADDR(measured_current[2]),PT_DESCRIPTION,"measured current, phase N",
@@ -120,6 +131,7 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 				PT_KEYWORD,"TIERED",(enumeration)BM_TIERED,
 				PT_KEYWORD,"HOURLY",(enumeration)BM_HOURLY,
 				PT_KEYWORD,"TIERED_RTP",(enumeration)BM_TIERED_RTP,
+				PT_KEYWORD,"TIERED_TOU",(enumeration)BM_TIERED_TOU,
 			PT_object, "power_market", PADDR(power_market),PT_DESCRIPTION,"Designates the auction object where prices are read from for bill mode",
 			PT_int32, "bill_day", PADDR(bill_day),PT_DESCRIPTION,"Day bill is to be processed (assumed to occur at midnight of that day)",
 			PT_double, "price[$/kWh]", PADDR(price),PT_DESCRIPTION,"Standard uniform pricing",
@@ -130,21 +142,6 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 			PT_double, "second_tier_energy[kWh]", PADDR(tier_energy[1]),PT_DESCRIPTION,"price of energy on tier above first tier",
 			PT_double, "third_tier_price[$/kWh]", PADDR(tier_price[2]),PT_DESCRIPTION,"first tier price of energy greater than third tier energy",
 			PT_double, "third_tier_energy[kWh]", PADDR(tier_energy[2]),PT_DESCRIPTION,"price of energy on tier above second tier",
-
-			PT_double, "AMI_averaging_interval[s]", PADDR(interval_length_dbl),PT_DESCRIPTION,"Interval at which averages for AMI are updated",
-			PT_complex, "AMI_average_power[VA]", PADDR(average_interval_power),PT_DESCRIPTION,"Averaged complex power for power12 for AMI reporting interval",
-			PT_double, "AMI_average_real_power[W]", PADDR(average_interval_power.Re()),PT_DESCRIPTION,"Averaged real power for power12 for AMI reporting interval",
-			PT_double, "AMI_average_reactive_power[VAr]", PADDR(average_interval_power.Im()),PT_DESCRIPTION,"Averaged reactive power for power12 for AMI reporting interval",
-			PT_complex, "AMI_average_phase1_power[VA]", PADDR(average_interval_power1_power),PT_DESCRIPTION,"Averaged complex power for power1 for AMI reporting interval",
-			PT_double, "AMI_average_phase1_real_power[W]", PADDR(average_interval_power1_power.Re()),PT_DESCRIPTION,"Averaged real power for power1 for AMI reporting interval",
-			PT_double, "AMI_average_phase1_reactive_power[VAr]", PADDR(average_interval_power1_power.Im()),PT_DESCRIPTION,"Averaged reactive power for power1 for AMI reporting interval",
-			PT_complex, "AMI_average_phase2_power[VA]", PADDR(average_interval_power2_power),PT_DESCRIPTION,"Averaged complex power for power2 for AMI reporting interval",
-			PT_double, "AMI_average_phase2_real_power[W]", PADDR(average_interval_power2_power.Re()),PT_DESCRIPTION,"Averaged real power for power2 for AMI reporting interval",
-			PT_double, "AMI_average_phase2_reactive_power[VAr]", PADDR(average_interval_power2_power.Im()),PT_DESCRIPTION,"Averaged reactive power for power2 for AMI reporting interval",
-			PT_double, "AMI_average_voltage12_magnitude[V]", PADDR(average_interval_voltage_mag),PT_DESCRIPTION,"Averaged voltage12 magnitude for AMI reporting interval",
-			PT_complex, "AMI_average_voltage12[V]", PADDR(average_interval_voltage),PT_DESCRIPTION,"Averaged voltage12 for AMI reporting interval",
-			PT_complex, "AMI_average_voltage1[V]", PADDR(average_interval_voltage1),PT_DESCRIPTION,"Averaged voltage1 for AMI reporting interval",
-			PT_complex, "AMI_average_voltage2[V]", PADDR(average_interval_voltage2),PT_DESCRIPTION,"Averaged voltage2 for AMI reporting interval",
 
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
@@ -170,6 +167,7 @@ int triplex_meter::create()
 	measured_real_energy = measured_reactive_energy = 0;
 	measured_real_energy_delta = measured_reactive_energy_delta = 0;
     last_measured_real_energy = last_measured_reactive_energy = 0;
+	last_measured_real_power = last_measured_reactive_power = 0.0;
     measured_energy_delta_timestep = -1;
     start_timestamp = 0;
     last_delta_timestamp = 0;
@@ -200,36 +198,27 @@ int triplex_meter::create()
 	tpmeter_interrupted = false;	//Assumes we start as "uninterrupted"
 	tpmeter_interrupted_secondary = false;	//Assumes start with no momentary interruptions
 
-	//AMI-type functionality
-	average_interval_power = complex(0.0,0.0);
-	average_interval_power1_power = complex(0.0,0.0);
-	average_interval_power2_power = complex(0.0,0.0);
-	average_interval_voltage_mag = 0.0;
-	average_interval_voltage = complex(0.0,0.0);
-	average_interval_voltage1 = complex(0.0,0.0);
-	average_interval_voltage2 = complex(0.0,0.0);
+	//zero the various interval measurements, just because
+	measured_real_max_voltage_in_interval[0] =  measured_real_max_voltage_in_interval[1] = measured_real_max_voltage_in_interval[2] = 0.0;
+	measured_imag_max_voltage_in_interval[0] = 	measured_imag_max_voltage_in_interval[1] = measured_imag_max_voltage_in_interval[2] = 0.0;
+	measured_real_min_voltage_in_interval[0] =  measured_real_min_voltage_in_interval[1] = measured_real_min_voltage_in_interval[2] = 0.0;
+	measured_imag_min_voltage_in_interval[0] = measured_imag_min_voltage_in_interval[1] = measured_imag_min_voltage_in_interval[2] = 0.0;
+	measured_avg_voltage_mag_in_interval[0] =  measured_avg_voltage_mag_in_interval[1] = measured_avg_voltage_mag_in_interval[2] = 0.0;
 
-	interval_length_dbl = -1.0;	//Flagged as off, by default
+	//power average items
+	measured_real_max_power_in_interval = 0.0;
+	measured_reactive_max_power_in_interval = 0.0;
+	measured_real_min_power_in_interval = 0.0;
+	measured_reactive_min_power_in_interval = 0.0;
+	measured_real_avg_power_in_interval = 0.0;
+	measured_reactive_avg_power_in_interval = 0.0;
 
-	//Time average initialization stuff
-	average_interval_power_array = NULL;
-	average_interval_power_power1_array = NULL;
-	average_interval_power_power2_array = NULL;
-	average_interval_voltage_mag_array = NULL;
-	average_interval_voltage_array = NULL;
-	average_interval_voltage1_array = NULL;
-	average_interval_voltage2_array = NULL;
-	curr_voltage_mag_value = 0.0;
-	curr_voltage_value = complex(0.0,0.0);
-	curr_voltage1_value = complex(0.0,0.0);
-	curr_voltage2_value = complex(0.0,0.0);
-
-	interval_length = -1;
-	prev_timestep_val = -1.0;
-
-	perform_average_time=0;
-	last_update_time=0;
-	curr_avg_pos_index=0;
+	last_measured_max_real_power = 0.0;
+	last_measured_min_real_power = 0.0;
+	last_measured_max_reactive_power = 0.0;
+	last_measured_min_reactive_power = 0.0;
+	last_measured_avg_real_power = 0.0;
+	last_measured_avg_reactive_power = 0.0;
 
 	return result;
 }
@@ -237,8 +226,6 @@ int triplex_meter::create()
 // Initialize a distribution triplex_meter, return 1 on success
 int triplex_meter::init(OBJECT *parent)
 {
-	OBJECT *hdr = OBJECTHDR(this);
-
 #ifdef SUPPORT_OUTAGES
 	sustained_count=0;	//reliability sustained event counter
 	momentary_count=0;	//reliability momentary event counter
@@ -251,117 +238,10 @@ int triplex_meter::init(OBJECT *parent)
 	if(power_market != 0){
 		price_prop = gl_get_property(power_market, market_price_name);
 		if(price_prop == 0){
-                        GL_THROW("triplex_meter::power_market object \'%s\' does not publish \'%s\'", (power_market->name ? power_market->name : "(anon)"), (const char*)market_price_name);
+			GL_THROW("triplex_meter::power_market object \'%s\' does not publish \'%s\'", (power_market->name ? power_market->name : "(anon)"), (const char*)market_price_name);
 		}
 	}
 	check_prices();
-
-	//AMI averaging interval initialization
-	if (interval_length_dbl >= 1.0)	//Value set that is valid
-	{
-		//Get the integer representation
-		interval_length = int(interval_length_dbl);
-
-		//Allocate power array
-		average_interval_power_array = (complex *)gl_malloc(interval_length*sizeof(complex));
-
-		//Check
-		if (average_interval_power_array == NULL)
-		{
-			GL_THROW("triplex_meter:d - %s -- Failed to allocated AMI averaging array",hdr->id,(hdr->name ? hdr->name : "(unnamed)"));
-			/*  TROUBLESHOOT
-			While attempting to allocate the array to perform the average for AMI-like reporting, an error was encountered.
-			Please try again.  If the error persists, please submit a bug report via the Trac system.
-			*/
-		}
-
-		//Allocate power1 array
-		average_interval_power_power1_array = (complex *)gl_malloc(interval_length*sizeof(complex));
-
-		//Check
-		if (average_interval_power_power1_array == NULL)
-		{
-			GL_THROW("triplex_meter:d - %s -- Failed to allocated AMI averaging array",hdr->id,(hdr->name ? hdr->name : "(unnamed)"));
-			//Defined above
-		}
-
-		//Allocate power2 array
-		average_interval_power_power2_array = (complex *)gl_malloc(interval_length*sizeof(complex));
-
-		//Check
-		if (average_interval_power_power2_array == NULL)
-		{
-			GL_THROW("triplex_meter:d - %s -- Failed to allocated AMI averaging array",hdr->id,(hdr->name ? hdr->name : "(unnamed)"));
-			//Defined above
-		}
-
-		//Allocate voltage array
-		average_interval_voltage_mag_array = (double *)gl_malloc(interval_length*sizeof(double));
-
-		//Check it
-		if (average_interval_voltage_mag_array == NULL)
-		{
-			GL_THROW("triplex_meter:d - %s -- Failed to allocated AMI averaging array",hdr->id,(hdr->name ? hdr->name : "(unnamed)"));
-			// Defined above
-		}
-
-		//Allocate voltage array
-		average_interval_voltage_array = (complex *)gl_malloc(interval_length*sizeof(complex));
-
-		//Check it
-		if (average_interval_voltage_array == NULL)
-		{
-			GL_THROW("triplex_meter:d - %s -- Failed to allocated AMI averaging array",hdr->id,(hdr->name ? hdr->name : "(unnamed)"));
-			// Defined above
-		}
-
-		//Allocate voltage array
-		average_interval_voltage1_array = (complex *)gl_malloc(interval_length*sizeof(complex));
-
-		//Check it
-		if (average_interval_voltage1_array == NULL)
-		{
-			GL_THROW("triplex_meter:d - %s -- Failed to allocated AMI averaging array",hdr->id,(hdr->name ? hdr->name : "(unnamed)"));
-			// Defined above
-		}
-
-		//Allocate voltage array
-		average_interval_voltage2_array = (complex *)gl_malloc(interval_length*sizeof(complex));
-
-		//Check it
-		if (average_interval_voltage2_array == NULL)
-		{
-			GL_THROW("triplex_meter:d - %s -- Failed to allocated AMI averaging array",hdr->id,(hdr->name ? hdr->name : "(unnamed)"));
-			// Defined above
-		}
-
-		//Initialize the array
-		for (curr_avg_pos_index=0; curr_avg_pos_index<interval_length; curr_avg_pos_index++)
-		{
-			average_interval_power_array[curr_avg_pos_index] = complex(0.0,0.0);
-			average_interval_power_power1_array[curr_avg_pos_index] = complex(0.0,0.0);
-			average_interval_power_power2_array[curr_avg_pos_index] = complex(0.0,0.0);
-			average_interval_voltage_mag_array[curr_avg_pos_index] = 0.0;
-			average_interval_voltage_array[curr_avg_pos_index] = complex(0.0,0.0);
-			average_interval_voltage1_array[curr_avg_pos_index] = complex(0.0,0.0);
-			average_interval_voltage2_array[curr_avg_pos_index] = complex(0.0,0.0);
-		}
-
-		//Initialize tracking variables
-		curr_avg_pos_index = 0;
-		average_interval_power=complex(0.0,0.0);
-		average_interval_power1_power=complex(0.0,0.0);
-		average_interval_power2_power=complex(0.0,0.0);
-		average_interval_voltage_mag=0.0;
-		average_interval_voltage=complex(0.0,0.0);
-		average_interval_voltage1=complex(0.0,0.0);
-		average_interval_voltage2=complex(0.0,0.0);
-
-		//Update time variables
-		last_update_time = gl_globalclock;
-		perform_average_time = gl_globalclock + interval_length;
-
-	}	//End AMI if
 
 	return triplex_node::init(parent);
 }
@@ -373,13 +253,29 @@ int triplex_meter::check_prices(){
 			//GL_THROW("triplex_meter price is negative!"); // This shouldn't throw an error - negative prices are okay JCF
 		}
 	} else if(bill_mode == BM_TIERED || bill_mode == BM_TIERED_RTP){
-		if(tier_price[1] == 0){
+		if(tier_price[1] == 0){ 
 			tier_price[1] = tier_price[0];
 			tier_energy[1] = tier_energy[0];
 		}
 		if(tier_price[2] == 0){
 			tier_price[2] = tier_price[1];
 			tier_energy[2] = tier_energy[1];
+		}
+		if(tier_energy[2] < tier_energy[1] || tier_energy[1] < tier_energy[0]){
+			GL_THROW("triplex_meter energy tiers quantity trend improperly");
+		}
+		for(int i = 0; i < 3; ++i){
+			if(tier_price[i] < 0.0 || tier_energy[i] < 0.0)
+				GL_THROW("triplex_meter tiers cannot have negative values");
+		}
+	} else if (bill_mode == BM_TIERED_TOU) { // beware: TOU pricing schedules haven't pushed values yet
+		if(tier_energy[1] == 0){ 
+			tier_price[1] = tier_price[0];
+			tier_energy[1] = DBL_MAX;
+		}
+		if(tier_energy[2] == 0){
+			tier_price[2] = tier_price[1];
+			tier_energy[2] = DBL_MAX;
 		}
 		if(tier_energy[2] < tier_energy[1] || tier_energy[1] < tier_energy[0]){
 			GL_THROW("triplex_meter energy tiers quantity trend improperly");
@@ -410,12 +306,6 @@ TIMESTAMP triplex_meter::presync(TIMESTAMP t0)
 {
 	if (tpmeter_power_consumption != complex(0,0))
 		power[0] = power[1] = 0.0;
-
-	//Copy in the voltage for the AMI averaging routine
-	curr_voltage_mag_value = voltaged[0].Mag();
-	curr_voltage_value = voltaged[0];
-	curr_voltage1_value = voltage[0];
-	curr_voltage2_value = voltage[1];
 
 	//Reliability addition - clear momentary flag if set
 	if (tpmeter_interrupted_secondary == true)
@@ -475,181 +365,18 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	OBJECT *obj = OBJECTHDR(this);
 	TIMESTAMP rv = TS_NEVER;
 	TIMESTAMP hr = TS_NEVER;
-	int diff_time_avg;
-	int end_fill_pos, temp_index;
 
 	//Call node postsync now, otherwise current_inj isn't right
 	rv = triplex_node::postsync(t1);
 
-	//Handle AMI averaging
-	if (interval_length > 0)
-	{
-		//See if it is time to update
-		if (t1 >= perform_average_time)
-		{
-			//Figure out the time forward to the average
-			diff_time_avg = (int)(perform_average_time - last_update_time);
+	//measured_voltage[0] = voltage[0];
+	//measured_voltage[1] = voltage[1];
+	//measured_voltage[2] = voltage[2];
 
-			//Determine the end point
-			end_fill_pos = curr_avg_pos_index + diff_time_avg;
-
-			//Accumulate it onto the existing indexer
-			if (end_fill_pos > interval_length)
-			{
-				//Fill the values
-				for (temp_index=curr_avg_pos_index; temp_index<interval_length; temp_index++)
-				{
-					average_interval_power_array[temp_index] = measured_power;
-					average_interval_power_power1_array[temp_index] = indiv_measured_power[0];
-					average_interval_power_power2_array[temp_index] = indiv_measured_power[1];
-					average_interval_voltage_mag_array[temp_index] = curr_voltage_mag_value;
-					average_interval_voltage_array[temp_index] = curr_voltage_value;
-					average_interval_voltage1_array[temp_index] = curr_voltage1_value;
-					average_interval_voltage2_array[temp_index] = curr_voltage2_value;
-				}
-
-				//Get the leftovers, if any
-				while (end_fill_pos > interval_length)
-					end_fill_pos -= interval_length;
-
-				//Loop through the rest
-				for (temp_index=0; temp_index<end_fill_pos; temp_index++)
-				{
-					average_interval_power_array[temp_index] = measured_power;
-					average_interval_power_power1_array[temp_index] = indiv_measured_power[0];
-					average_interval_power_power2_array[temp_index] = indiv_measured_power[1];
-					average_interval_voltage_mag_array[temp_index] = curr_voltage_mag_value;
-					average_interval_voltage_array[temp_index] = curr_voltage_value;
-					average_interval_voltage1_array[temp_index] = curr_voltage1_value;
-					average_interval_voltage2_array[temp_index] = curr_voltage2_value;
-				}
-			}//End over interval
-			else	//Not beyond the interval
-			{
-				//Fill the values
-				for (temp_index=curr_avg_pos_index; temp_index<end_fill_pos; temp_index++)
-				{
-					average_interval_power_array[temp_index] = measured_power;
-					average_interval_power_power1_array[temp_index] = indiv_measured_power[0];
-					average_interval_power_power2_array[temp_index] = indiv_measured_power[1];
-					average_interval_voltage_mag_array[temp_index] = curr_voltage_mag_value;
-					average_interval_voltage_array[temp_index] = curr_voltage_value;
-					average_interval_voltage1_array[temp_index] = curr_voltage1_value;
-					average_interval_voltage2_array[temp_index] = curr_voltage2_value;
-				}
-			}
-
-			//Reset average accumulators
-			average_interval_power = complex(0.0,0.0);
-			average_interval_power1_power = complex(0.0,0.0);
-			average_interval_power2_power = complex(0.0,0.0);
-			average_interval_voltage_mag = 0.0;
-			average_interval_voltage = complex(0.0,0.0);
-			average_interval_voltage1 = complex(0.0,0.0);
-			average_interval_voltage2 = complex(0.0,0.0);
-
-			//Perform average
-			for (temp_index=0; temp_index<interval_length; temp_index++)
-			{
-				average_interval_power += average_interval_power_array[temp_index];
-				average_interval_power1_power += average_interval_power_power1_array[temp_index];
-				average_interval_power2_power += average_interval_power_power2_array[temp_index];
-				average_interval_voltage_mag += average_interval_voltage_mag_array[temp_index];
-				average_interval_voltage += average_interval_voltage_array[temp_index];
-				average_interval_voltage1 += average_interval_voltage1_array[temp_index];
-				average_interval_voltage2 += average_interval_voltage2_array[temp_index];
-			}
-
-			//Make average
-			average_interval_power /= (double)(interval_length);
-			average_interval_power1_power /= (double)(interval_length);
-			average_interval_power2_power /= (double)(interval_length);
-			average_interval_voltage_mag /= (double)(interval_length);
-			average_interval_voltage /= (double)(interval_length);
-			average_interval_voltage1 /= (double)(interval_length);
-			average_interval_voltage2 /= (double)(interval_length);
-
-			//Update position pointer
-			curr_avg_pos_index = end_fill_pos;
-
-			//Update last update time
-			last_update_time = perform_average_time;
-
-			//Update next average
-			perform_average_time += interval_length;
-		}//End perform the average
-		//Defaulted else, update like normal
-
-		//Figure out how much to update
-		diff_time_avg = (int)(t1 - last_update_time);
-
-		//Determine the end point
-		end_fill_pos = curr_avg_pos_index + diff_time_avg;
-
-		//Accumulate it onto the existing indexer
-		if (end_fill_pos > interval_length)
-		{
-			//Fill the values
-			for (temp_index=curr_avg_pos_index; temp_index<interval_length; temp_index++)
-			{
-				average_interval_power_array[temp_index] = measured_power;
-				average_interval_power_power1_array[temp_index] = indiv_measured_power[0];
-				average_interval_power_power2_array[temp_index] = indiv_measured_power[1];
-				average_interval_voltage_mag_array[temp_index] = curr_voltage_mag_value;
-				average_interval_voltage_array[temp_index] = curr_voltage_value;
-				average_interval_voltage1_array[temp_index] = curr_voltage1_value;
-				average_interval_voltage2_array[temp_index] = curr_voltage2_value;
-			}
-
-			//Get the leftovers, if any
-			while (end_fill_pos > interval_length)
-				end_fill_pos -= interval_length;
-
-			//Loop through the rest
-			for (temp_index=0; temp_index<end_fill_pos; temp_index++)
-			{
-				average_interval_power_array[temp_index] = measured_power;
-				average_interval_power_power1_array[temp_index] = indiv_measured_power[0];
-				average_interval_power_power2_array[temp_index] = indiv_measured_power[1];
-				average_interval_voltage_mag_array[temp_index] = curr_voltage_mag_value;
-				average_interval_voltage_array[temp_index] = curr_voltage_value;
-				average_interval_voltage1_array[temp_index] = curr_voltage1_value;
-				average_interval_voltage2_array[temp_index] = curr_voltage2_value;
-			}
-		}//End over interval
-		else	//Not beyond the interval
-		{
-			//Fill the values
-			for (temp_index=curr_avg_pos_index; temp_index<end_fill_pos; temp_index++)
-			{
-				average_interval_power_array[temp_index] = measured_power;
-				average_interval_power_power1_array[temp_index] = indiv_measured_power[0];
-				average_interval_power_power2_array[temp_index] = indiv_measured_power[1];
-				average_interval_voltage_mag_array[temp_index] = curr_voltage_mag_value;
-				average_interval_voltage_array[temp_index] = curr_voltage_value;
-				average_interval_voltage1_array[temp_index] = curr_voltage1_value;
-				average_interval_voltage2_array[temp_index] = curr_voltage2_value;
-			}
-		}
-
-		//Update position pointer
-		curr_avg_pos_index = end_fill_pos;
-
-		//Update last update time
-		last_update_time = t1;
-
-		//See how our update time compares and update, if appropriate
-		if (perform_average_time < rv)
-			rv = perform_average_time;
-
-	}//End AMI updates
-
-	//measured_voltage[0] = voltageA;
-	//measured_voltage[1] = voltageB;
-	//measured_voltage[2] = voltageC;
-	measured_voltage[0].SetPolar(voltageA.Mag(),voltageA.Arg());
-	measured_voltage[1].SetPolar(voltageB.Mag(),voltageB.Arg());
-	measured_voltage[2].SetPolar(voltageC.Mag(),voltageC.Arg());
+	//Really no idea why this is done -- maybe to force a polar status?
+	measured_voltage[0].SetPolar(voltage[0].Mag(),voltage[0].Arg());
+	measured_voltage[1].SetPolar(voltage[1].Mag(),voltage[1].Arg());
+	measured_voltage[2].SetPolar(voltage[2].Mag(),voltage[2].Arg());
 
 	if (t1 > last_t)
 	{
@@ -692,6 +419,8 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		// Delta energy cacluation
 		if (t0 == start_timestamp) {
 			last_delta_timestamp = start_timestamp;
+
+			//Voltage values
 			measured_real_max_voltage_in_interval[0] = voltage1.Re();
 			measured_real_max_voltage_in_interval[1] = voltage2.Re();
 			measured_real_max_voltage_in_interval[2] = voltage12.Re();
@@ -705,8 +434,18 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			measured_imag_min_voltage_in_interval[1] = voltage2.Im();
 			measured_imag_min_voltage_in_interval[2] = voltage12.Im();
 			measured_avg_voltage_mag_in_interval[0] = voltage1.Mag();
-			measured_avg_voltage_mag_in_interval[1] = voltage2.Mag();
-			measured_avg_voltage_mag_in_interval[2] = voltage12.Mag();
+			measured_avg_voltage_mag_in_interval[1] = voltage1.Mag();
+			measured_avg_voltage_mag_in_interval[2] = voltage1.Mag();
+
+			//Power values
+			measured_real_max_power_in_interval = measured_real_power;
+			measured_real_min_power_in_interval = measured_real_power;
+			measured_real_avg_power_in_interval = measured_real_power;
+
+			measured_reactive_max_power_in_interval = measured_reactive_power;
+			measured_reactive_min_power_in_interval = measured_reactive_power;
+			measured_reactive_avg_power_in_interval = measured_reactive_power;
+
 			interval_dt = 0;
 			interval_count = 0;
 		}
@@ -722,6 +461,15 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				last_measured_avg_voltage[0] = last_measured_voltage[0].Mag();
 				last_measured_avg_voltage[1] = last_measured_voltage[1].Mag();
 				last_measured_avg_voltage[2] = last_measured_voltage[2].Mag();
+
+				//Power
+				last_measured_min_real_power = last_measured_real_power;
+				last_measured_max_real_power = last_measured_real_power;
+				last_measured_avg_real_power = last_measured_real_power;
+				last_measured_min_reactive_power = last_measured_reactive_power;
+				last_measured_max_reactive_power = last_measured_reactive_power;
+				last_measured_avg_reactive_power = last_measured_reactive_power;
+
 			} else {
 				if (last_measured_max_voltage[0].Mag() < last_measured_voltage[0].Mag()) {
 					last_measured_max_voltage[0] = last_measured_voltage[0];
@@ -741,9 +489,32 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				if (last_measured_min_voltage[2].Mag() > last_measured_voltage[2].Mag()) {
 					last_measured_min_voltage[2] = last_measured_voltage[2];
 				}
+
+				//Power min/max check
+				if (last_measured_max_real_power < last_measured_real_power)
+				{
+					last_measured_max_real_power = last_measured_real_power;
+				}
+				if (last_measured_max_reactive_power < last_measured_reactive_power)
+				{
+					last_measured_max_reactive_power = last_measured_reactive_power;
+				}
+				if (last_measured_min_real_power > last_measured_real_power)
+				{
+					last_measured_min_real_power = last_measured_real_power;
+				}
+				if (last_measured_min_reactive_power > last_measured_reactive_power)
+				{
+					last_measured_min_reactive_power = last_measured_reactive_power;
+				}
+
 				last_measured_avg_voltage[0] = ((interval_dt * last_measured_avg_voltage[0]) + (dt * last_measured_voltage[0].Mag()))/(dt + interval_dt);
 				last_measured_avg_voltage[1] = ((interval_dt * last_measured_avg_voltage[1]) + (dt * last_measured_voltage[1].Mag()))/(dt + interval_dt);
 				last_measured_avg_voltage[2] = ((interval_dt * last_measured_avg_voltage[2]) + (dt * last_measured_voltage[2].Mag()))/(dt + interval_dt);
+
+				//Update the power averages
+				last_measured_avg_real_power = ((interval_dt * last_measured_avg_real_power) + (dt * last_measured_real_power))/(dt + interval_dt);
+				last_measured_avg_reactive_power = ((interval_dt * last_measured_avg_reactive_power) + (dt * last_measured_reactive_power))/(dt + interval_dt);
 			}
 			interval_count++;
 			interval_dt = interval_dt + dt;
@@ -773,9 +544,33 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			if (last_measured_min_voltage[2].Mag() > last_measured_voltage[2].Mag()) {
 				last_measured_min_voltage[2] = last_measured_voltage[2];
 			}
+
+			//Power min/max check
+			if (last_measured_max_real_power < last_measured_real_power)
+			{
+				last_measured_max_real_power = last_measured_real_power;
+			}
+			if (last_measured_max_reactive_power < last_measured_reactive_power)
+			{
+				last_measured_max_reactive_power = last_measured_reactive_power;
+			}
+			if (last_measured_min_real_power > last_measured_real_power)
+			{
+				last_measured_min_real_power = last_measured_real_power;
+			}
+			if (last_measured_min_reactive_power > last_measured_reactive_power)
+			{
+				last_measured_min_reactive_power = last_measured_reactive_power;
+			}
+
 			last_measured_avg_voltage[0] = ((interval_dt * last_measured_avg_voltage[0]) + (dt * last_measured_voltage[0].Mag()))/(dt + interval_dt);
 			last_measured_avg_voltage[1] = ((interval_dt * last_measured_avg_voltage[1]) + (dt * last_measured_voltage[1].Mag()))/(dt + interval_dt);
 			last_measured_avg_voltage[2] = ((interval_dt * last_measured_avg_voltage[2]) + (dt * last_measured_voltage[2].Mag()))/(dt + interval_dt);
+
+			//Update the power averages
+			last_measured_avg_real_power = ((interval_dt * last_measured_avg_real_power) + (dt * last_measured_real_power))/(dt + interval_dt);
+			last_measured_avg_reactive_power = ((interval_dt * last_measured_avg_reactive_power) + (dt * last_measured_reactive_power))/(dt + interval_dt);
+
 			measured_real_max_voltage_in_interval[0] = last_measured_max_voltage[0].Re();
 			measured_real_max_voltage_in_interval[1] = last_measured_max_voltage[1].Re();
 			measured_real_max_voltage_in_interval[2] = last_measured_max_voltage[2].Re();
@@ -791,6 +586,16 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			measured_avg_voltage_mag_in_interval[0] = last_measured_avg_voltage[0];
 			measured_avg_voltage_mag_in_interval[1] = last_measured_avg_voltage[1];
 			measured_avg_voltage_mag_in_interval[2] = last_measured_avg_voltage[2];
+
+			//Power values
+			measured_real_max_power_in_interval = last_measured_max_real_power;
+			measured_real_min_power_in_interval = last_measured_min_real_power;
+			measured_real_avg_power_in_interval = last_measured_avg_real_power;
+			
+			measured_reactive_max_power_in_interval = last_measured_max_reactive_power;
+			measured_reactive_min_power_in_interval = last_measured_min_reactive_power;
+			measured_reactive_avg_power_in_interval = last_measured_avg_reactive_power;
+
 			interval_dt = 0;
 			interval_count = 0;
 		}
@@ -803,6 +608,7 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 	}
 
+	monthly_energy = measured_real_energy/1000 - previous_energy_total;
 
 	if (bill_mode == BM_UNIFORM || bill_mode == BM_TIERED)
 	{
@@ -829,7 +635,8 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 	}
 
-	if( (bill_mode == BM_HOURLY || bill_mode == BM_TIERED_RTP) && power_market != NULL && price_prop != NULL){
+	if (bill_mode == BM_HOURLY || bill_mode == BM_TIERED_RTP || bill_mode == BM_TIERED_TOU) 
+	{
 		double seconds;
 		if (dt != last_t)
 			seconds = (double)(dt);
@@ -838,15 +645,31 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		
 		if (seconds > 0)
 		{
-			hourly_acc += seconds/3600 * price * last_measured_real_power/1000;
+			double acc_price = price;
+			if (bill_mode == BM_TIERED_TOU)
+			{
+				if(monthly_energy < tier_energy[0])
+					acc_price = last_price;
+				else if(monthly_energy < tier_energy[1])
+					acc_price = last_tier_price[0];
+				else if(monthly_energy < tier_energy[2])
+					acc_price = last_tier_price[1];
+				else
+					acc_price = last_tier_price[2];
+			}
+			hourly_acc += seconds/3600 * acc_price * last_measured_real_power/1000;
 			process_bill(t1);
 		}
 
-		// Now that we've accumulated the bill for the last time period, update to the new price
-		double *pprice = (gl_get_double(power_market, price_prop));
-		last_price = price = *pprice;
+		// Now that we've accumulated the bill for the last time period, update to the new price (if using the market)
+		if (bill_mode != BM_TIERED_TOU && power_market != NULL && price_prop != NULL)
+		{
+			double *pprice = (gl_get_double(power_market, price_prop));
+			last_price = price = *pprice;
+		}
 		last_measured_real_power = measured_real_power;
 
+		// copied logic on when the next bill must be processed
 		if (monthly_bill == previous_monthly_bill)
 		{
 			DATETIME t_next;
@@ -866,22 +689,20 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 	}
 
+	//Update the power trackers
+	last_measured_real_power = measured_real_power;
+	last_measured_reactive_power = measured_reactive_power;
+
 	if (next_time != 0 && next_time < rv)
 		return -next_time;
 	else
-	{
-		if (rv != TS_NEVER)
-			return -rv;
-		else
-			return rv;
-	}
+		return rv;
 }
 
 double triplex_meter::process_bill(TIMESTAMP t1){
 	DATETIME dtime;
 	gl_localtime(t1,&dtime);
 
-	monthly_energy = measured_real_energy/1000 - previous_energy_total;
 	monthly_bill = monthly_fee;
 	switch(bill_mode){
 		case BM_NONE:
@@ -900,6 +721,7 @@ double triplex_meter::process_bill(TIMESTAMP t1){
 				monthly_bill += last_price*tier_energy[0] + last_tier_price[0]*(tier_energy[1] - tier_energy[0]) + last_tier_price[1]*(tier_energy[2] - tier_energy[1]) + last_tier_price[2]*(monthly_energy - tier_energy[2]);
 			break;
 		case BM_HOURLY:
+		case BM_TIERED_TOU:
 			monthly_bill += hourly_acc;
 			break;
 		case BM_TIERED_RTP:
