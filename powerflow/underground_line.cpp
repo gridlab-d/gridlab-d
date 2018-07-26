@@ -66,7 +66,10 @@ int underground_line::init(OBJECT *parent)
 	double temp_rating_continuous = 10000.0;
 	double temp_rating_emergency = 20000.0;
 	char index;
+	int type_A, type_B, type_C, type_N;
+	int cond_present, cond_present_CN, cable_types_value;
 	OBJECT *temp_obj;
+	OBJECT *obj = OBJECTHDR(this);
 
 	int result = line::init(parent);
 
@@ -87,10 +90,38 @@ int underground_line::init(OBJECT *parent)
 	//Test the phases
 	line_configuration *config = OBJECTDATA(configuration, line_configuration);
 
-	test_phases(config,'A');
-	test_phases(config,'B');
-	test_phases(config,'C');
-	test_phases(config,'N');
+	type_A = test_phases(config,'A');
+	type_B = test_phases(config,'B');
+	type_C = test_phases(config,'C');
+	type_N = test_phases(config,'N');	//Return value not used right now
+
+	//Figure out how many conductors we expected
+	cond_present = 0;
+	
+	if (config->phaseA_conductor != NULL)
+		cond_present++;
+
+	if (config->phaseB_conductor != NULL)
+		cond_present++;
+
+	if (config->phaseC_conductor != NULL)
+		cond_present++;
+
+	//Form the cable-types value (add up tests)
+	cable_types_value = type_A + type_B + type_C;
+
+	//Form the "CN test value"
+	cond_present_CN = cond_present * 10;
+
+	//Check for "consistency"
+	if ((cable_types_value != cond_present) && (cable_types_value != cond_present_CN))
+	{
+		GL_THROW("Underground_line:%d %s - Cable types specified in configuration are not consistent!",obj->id,(obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		An underground_line object needs to have all the same cable-tpe in the configuration (e.g., tape-sheild or concentric neutral).  Please
+		correct this.
+		*/
+	}
 
 	if ((!config->line_spacing || !gl_object_isa(config->line_spacing, "line_spacing")) && config->impedance11 == 0.0 && config->impedance22 == 0.0 && config->impedance33 == 0.0)
 		throw "invalid or missing line spacing on underground line";
@@ -120,7 +151,7 @@ int underground_line::init(OBJECT *parent)
 		{
 			temp_obj = config->phaseC_conductor;
 		}
-		else	//Must be 3
+		else	//Must be 4
 		{
 			temp_obj = config->phaseN_conductor;
 		}
@@ -188,8 +219,6 @@ int underground_line::init(OBJECT *parent)
 			}
 		}//End Phase valid
 	}//End FOR
-
-
 
 	return result;
 }
@@ -623,9 +652,16 @@ void underground_line::recalc(void)
 					if (!has_phase(PHASE_C))
 						z_nn_ts[2][2]=complex(1.0);
 					if(!has_phase(PHASE_N))
+					{
 						z_nn_ts[3][3]=complex(1.0);
+					    gl_warning("Underground_line:%d - %s is a tape-shielded cable and may need an explicit phase N conductor",obj->id,(obj->name ? obj->name : "Unnamed"));
+						/*  TROUBLESHOOT
+						The underground cable is set up as a tape-shielded cable.  For neutral currents, it may require an explicit neutral to be connected, unless it represents a
+						delta-connected system.
+						*/
+					}
 				}  //add phase_N here
-			complex z_nn_inv_ts[4][4], z_p1_ts[3][4], z_p2_ts[3][3], z_abc_ts[3][3];
+				complex z_nn_inv_ts[4][4], z_p1_ts[3][4], z_p2_ts[3][3], z_abc_ts[3][3];
 				lu_matrix_inverse(&z_nn_ts[0][0],&z_nn_inv_ts[0][0],4);
 				
 				for (int row = 0; row < 3; row++) {
@@ -1073,17 +1109,25 @@ int underground_line::isa(char *classname)
 	return strcmp(classname,"underground_line")==0 || line::isa(classname);
 }
 
+
 /**
 * test_phases is called to ensure all necessary conductors are included in the
 * configuration object and are of the proper type.
 *
 * @param config the line configuration object
 * @param ph the phase to check
+*
+* Returns 1 for TS, 10 for CN, and 0 for missing/neither/don't care
 */
-void underground_line::test_phases(line_configuration *config, const char ph)
+int underground_line::test_phases(line_configuration *config, const char ph)
 {
+	int return_val;
 	bool condCheck, condNotPres;
 	OBJECT *obj = GETOBJECT(this);
+	double temp_shield_gmr_val, temp_neutral_gmr_val;
+
+	//Default return value is "don't care"
+	return_val = 0;
 
 	if (ph=='A')
 	{
@@ -1091,11 +1135,34 @@ void underground_line::test_phases(line_configuration *config, const char ph)
 		{
 			condCheck = (config->phaseA_conductor && !gl_object_isa(config->phaseA_conductor, "underground_line_conductor","powerflow"));
 			condNotPres = ((!config->phaseA_conductor) && has_phase(PHASE_A));
+
+			//Check to see what kind of conductor this is - if it exists
+			if ((config->phaseA_conductor != NULL) && (condCheck == false))
+			{
+				//Get the values
+				get_cable_values(config->phaseA_conductor,&temp_shield_gmr_val,&temp_neutral_gmr_val);
+
+				//Both check is inside conductor, so just see which we are
+				if (temp_shield_gmr_val > 0.0)
+				{
+					return_val = 1;
+				}
+				else if (temp_neutral_gmr_val > 0.0)
+				{
+					return_val = 10;
+				}
+				else	//It's somehow unspecified
+				{
+					return_val = 0;
+				}
+			}
+			//Defaulted else - something above wasn't valid, so let error checks below handle it
 		}
 		else
 		{
 			condCheck = false;
 			condNotPres = false;
+			return_val = 0;
 		}
 	}
 	else if (ph=='B')
@@ -1104,11 +1171,34 @@ void underground_line::test_phases(line_configuration *config, const char ph)
 		{
 			condCheck = (config->phaseB_conductor && !gl_object_isa(config->phaseB_conductor, "underground_line_conductor","powerflow"));
 			condNotPres = ((!config->phaseB_conductor) && has_phase(PHASE_B));
+
+			//Check to see what kind of conductor this is - if it exists
+			if ((config->phaseB_conductor != NULL) && (condCheck == false))
+			{
+				//Get the values
+				get_cable_values(config->phaseB_conductor,&temp_shield_gmr_val,&temp_neutral_gmr_val);
+
+				//Both check is inside conductor, so just see which we are
+				if (temp_shield_gmr_val > 0.0)
+				{
+					return_val = 1;
+				}
+				else if (temp_neutral_gmr_val > 0.0)
+				{
+					return_val = 10;
+				}
+				else	//It's somehow unspecified
+				{
+					return_val = 0;
+				}
+			}
+			//Defaulted else - something above wasn't valid, so let error checks below handle it
 		}
 		else
 		{
 			condCheck = false;
 			condNotPres = false;
+			return_val = 0;
 		}
 	}
 	else if (ph=='C')
@@ -1117,11 +1207,34 @@ void underground_line::test_phases(line_configuration *config, const char ph)
 		{
 			condCheck = (config->phaseC_conductor && !gl_object_isa(config->phaseC_conductor, "underground_line_conductor","powerflow"));
 			condNotPres = ((!config->phaseC_conductor) && has_phase(PHASE_C));
+
+			//Check to see what kind of conductor this is - if it exists
+			if ((config->phaseC_conductor != NULL) && (condCheck == false))
+			{
+				//Get the values
+				get_cable_values(config->phaseC_conductor,&temp_shield_gmr_val,&temp_neutral_gmr_val);
+
+				//Both check is inside conductor, so just see which we are
+				if (temp_shield_gmr_val > 0.0)
+				{
+					return_val = 1;
+				}
+				else if (temp_neutral_gmr_val > 0.0)
+				{
+					return_val = 10;
+				}
+				else	//It's somehow unspecified
+				{
+					return_val = 0;
+				}
+			}
+			//Defaulted else - something above wasn't valid, so let error checks below handle it
 		}
 		else
 		{
 			condCheck = false;
 			condNotPres = false;
+			return_val = 0;
 		}
 	}
 	else if (ph=='N')
@@ -1130,11 +1243,29 @@ void underground_line::test_phases(line_configuration *config, const char ph)
 		{
 			condCheck = (config->phaseN_conductor && !gl_object_isa(config->phaseN_conductor, "underground_line_conductor","powerflow"));
 			condNotPres = ((!config->phaseN_conductor) && has_phase(PHASE_N));
+
+			//Check to see what kind of conductor this is - if it exists
+			if ((config->phaseN_conductor != NULL) && (condCheck == false))
+			{
+				//Get the values
+				get_cable_values(config->phaseN_conductor,&temp_shield_gmr_val,&temp_neutral_gmr_val);
+
+				//See if tape shield or concentric neutral parameters are set
+				if ((temp_shield_gmr_val > 0.0) || (temp_neutral_gmr_val > 0.0))
+				{
+					gl_warning("Underground_line:%d %s - phase N conductor should just be a normal conductor!",obj->id,(obj->name ? obj->name : "Unnamed"));
+					/*  TROUBLESHOOT
+					A conductor on phase N has properties that imply it is either a concentric neutral or a tape-shield cable.  This is redundant for
+					a neutral connection and may not be necessary.
+					*/
+				}
+			}
 		}
 		else
 		{
 			condCheck = false;
 			condNotPres = false;
+			return_val = 0;
 		}
 	}
 	//Nothing else down here.  Should never get anything besides ABCN to check
@@ -1149,7 +1280,57 @@ void underground_line::test_phases(line_configuration *config, const char ph)
 		The object specified as the configuration for the underground line is not a valid
 		configuration object.  Please ensure you have a line_configuration object selected.
 		*/
+
+	return return_val;
 }
+
+//Function to extract the shield GMR and neutral GMR values from a conductor - for CN/TS-type checks
+void underground_line::get_cable_values(OBJECT *line_conductor, double *sh_gmr, double *neu_gmr)
+{
+	gld_property *temp_prop_A;
+	double temp_shield_gmr_val, temp_neutral_gmr_val;
+	OBJECT *obj = OBJECTHDR(this);
+
+	//Map some properties and get some values
+	temp_prop_A = new gld_property(line_conductor,"shield_gmr");
+
+	//Make sure it worked properly
+	if ((temp_prop_A->is_valid() != true) || (temp_prop_A->is_double() != true))
+	{
+		GL_THROW("Underground_line:%d %s - conductor %s lacks desired property!",obj->id,(obj->name ? obj->name : "Unnamed"),(line_conductor->name ? line_conductor->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While mapping the sheild_gmr or neutral_gmr property from the Phase N conductor of an underground line, that parameter wasn't found.
+		Check your GLM and try again.
+		*/
+	}
+
+	//Pull the value
+	temp_shield_gmr_val = temp_prop_A->get_double();
+
+	//Clear it
+	delete temp_prop_A;
+
+	//Now map the neutral gmr
+	temp_prop_A = new gld_property(line_conductor,"neutral_gmr");
+
+	//Make sure it worked properly
+	if ((temp_prop_A->is_valid() != true) || (temp_prop_A->is_double() != true))
+	{
+		GL_THROW("Underground_line:%d %s - conductor %s lacks desired property!",obj->id,(obj->name ? obj->name : "Unnamed"),(line_conductor->name ? line_conductor->name : "Unnamed"));
+		//Defined above
+	}
+
+	//Pull the value
+	temp_neutral_gmr_val = temp_prop_A->get_double();
+
+	//Clear it
+	delete temp_prop_A;
+
+	//Push the values out
+	*sh_gmr = temp_shield_gmr_val;
+	*neu_gmr = temp_neutral_gmr_val;
+}
+
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE: underground_line
 //////////////////////////////////////////////////////////////////////////

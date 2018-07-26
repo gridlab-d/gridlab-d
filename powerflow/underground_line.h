@@ -18,7 +18,8 @@ public:
 	int isa(char *classname);
 	int create(void);
 private:
-	void test_phases(line_configuration *config, const char ph);
+	int test_phases(line_configuration *config, const char ph);
+	void get_cable_values(OBJECT *line_conductor, double *sh_gmr, double *neu_gmr);
 };
 
 EXPORT int create_fault_ugline(OBJECT *thisobj, OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time);
