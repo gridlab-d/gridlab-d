@@ -1632,7 +1632,7 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 	unsigned char pass_mod;
 	unsigned int loop_index;
 	double temp_double;
-	double deltat, deltath;
+	double deltat, deltath, delta_thresh;
 	double omega_pu;
 	double x5a_now;
 	complex temp_rotation;
@@ -1642,6 +1642,9 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 	//Create delta_t variable
 	deltat = (double)dt/(double)DT_SECOND;
 	deltath = deltat/2.0;
+
+	//Compute a threshold variable - used to reconcile some odd casting/rounding between x86 and x64
+	delta_thresh = 0.5 / (double)DT_SECOND;
 
 	//Initialization items
 	if ((delta_time==0) && (iteration_count_val==0))	//First run of new delta call
@@ -1662,7 +1665,7 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 			//See if there's any leftovers
 			temp_double = gov_degov1_TD-(double)(torque_delay_len*dt)/(double)DT_SECOND;
 
-			if (temp_double > 0.0)	//Means bigger, +1 it
+			if (temp_double > delta_thresh)	//Means bigger, +1 it
 				torque_delay_len += 1;
 			//Default else - it's either just right, or negative (meaning we should be 1 bigger already)
 
@@ -1706,7 +1709,7 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 				//See if there's any leftovers
 				temp_double = gov_ggv1_Teng-(double)(x5a_delayed_len*dt)/(double)DT_SECOND;
 
-				if (temp_double > 0.0)	//Means bigger, +1 it
+				if (temp_double > delta_thresh)	//Means bigger, +1 it
 					x5a_delayed_len += 1;
 				//Default else - it's either just right, or negative (meaning we should be 1 bigger already)
 

@@ -48,7 +48,7 @@ dist_doc_DATA =
 # include Makefile fragments instead of using SUBDIRS
 include assert/Makefile.mk
 include climate/Makefile.mk
-include commercial/Makefile.mk
+#include commercial/Makefile.mk
 #include rest/Makefile.mk
 #include comm/Makefile.mk
 include connection/Makefile.mk
@@ -64,7 +64,7 @@ include market/Makefile.mk
 #include matlab/Makefile.mk
 include mysql/Makefile.mk
 #include network/Makefile.mk
-include optimize/Makefile.mk
+#include optimize/Makefile.mk
 #include plc/Makefile.mk
 include powerflow/Makefile.mk
 include reliability/Makefile.mk

@@ -421,12 +421,12 @@ int tmy2_reader::read_data(double *dnr, double *dhr, double *ghr, double *tdb, d
 		tmp_dhr = atoi(t_dhr);
 		tmp_tot_sky_cov = atoi(t_tkc);
 		tmp_opq_sky_cov = atoi(t_osc);
-		tmp_tdb = (int)(atof(t_tdb)*10); //Since for TMY3, measurement is 1/10. So we are multiplying this by 10 to avoid code changes later on. tmp_tdb is now scaled same as TMY2 value
+		tmp_tdb = (int)(roundf(atof(t_tdb)*10)); //Since for TMY3, measurement is 1/10. So we are multiplying this by 10 to avoid code changes later on. tmp_tdb is now scaled same as TMY2 value
 		tmp_rh = atoi(t_rh);
 		tmp_press = atoi(t_press);
 		tmp_wd = atoi(t_wd);
-		tmp_ws = (int)(atof(t_ws)*10);
-		tmp_precip = (int)(atof(t_precip)*10);//converting from centimeters to millimeters
+		tmp_ws = (int)(roundf(atof(t_ws)*10));
+		tmp_precip = (int)(roundf(atof(t_precip)*10));//converting from centimeters to millimeters
 		tmp_sf = atoi(t_sf);		
 		rct = rct+1;
 		tmp_sf = 0; //tmy3 doesnt have this field (snow depth). so set to 0
