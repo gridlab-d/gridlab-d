@@ -30,6 +30,7 @@ public:
 	double measured_reactive_max_power_in_interval;	///< maximum real power over the last interval
 	double measured_real_min_power_in_interval;	///< minimum real power over the last interval
 	double measured_reactive_min_power_in_interval;	///< minimum real power over the last interval
+	double measured_min_max_avg_timestep; // Period of timestep for min/max/average calculations
 
 	complex measured_current[3];	///< measured current
 	double measured_real_energy;	///< metered real energy consumption
@@ -116,6 +117,7 @@ private:
 
     int voltage_avg_count;
     TIMESTAMP last_delta_timestamp;
+    TIMESTAMP last_stat_timestamp;
     TIMESTAMP start_timestamp;
     TIMESTAMP interval_dt;
 

@@ -36,8 +36,6 @@ EXPORT int64 triplex_meter_reset(OBJECT *obj)
 	return 0;
 }
 
-static char1024 market_price_name = "current_market.clearing_price";
-
 //////////////////////////////////////////////////////////////////////////
 // triplex_meter CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
@@ -108,6 +106,9 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 			PT_double, "measured_avg_real_power_in_interval[W]", PADDR(measured_real_avg_power_in_interval),PT_DESCRIPTION,"measured average real power over a specified interval",
 			PT_double, "measured_avg_reactive_power_in_interval[VAr]", PADDR(measured_reactive_avg_power_in_interval),PT_DESCRIPTION,"measured average reactive power over a specified interval",
 
+			//Interval for the min/max/averages
+            PT_double, "measured_stats_interval[s]",PADDR(measured_min_max_avg_timestep),PT_DESCRIPTION,"Period of timestep for min/max/average calculations",
+
 			PT_complex, "measured_current_1[A]", PADDR(measured_current[0]),PT_DESCRIPTION,"measured current, phase 1",
 			PT_complex, "measured_current_2[A]", PADDR(measured_current[1]),PT_DESCRIPTION,"measured current, phase 2",
 			PT_complex, "measured_current_N[A]", PADDR(measured_current[2]),PT_DESCRIPTION,"measured current, phase N",
@@ -154,9 +155,6 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 				GL_THROW("Unable to publish triplex_meter deltamode function");
 			if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
 				GL_THROW("Unable to publish triplex_meter deltamode function");
-
-                        // market price name
-                        gl_global_create("powerflow::market_price_name",PT_char1024,&market_price_name,NULL);
 		}
 }
 
@@ -420,10 +418,32 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 	if (measured_real_power>measured_demand)
 		measured_demand=measured_real_power;
+	
+	//Perform delta energy updates
 	if(measured_energy_delta_timestep > 0) {
 		// Delta energy cacluation
 		if (t0 == start_timestamp) {
 			last_delta_timestamp = start_timestamp;
+		}
+
+		if ((t1 == last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) && (t1 != t0))  {
+			measured_real_energy_delta = measured_real_energy - last_measured_real_energy;
+			measured_reactive_energy_delta = measured_reactive_energy - last_measured_reactive_energy;
+			last_measured_real_energy = measured_real_energy;
+			last_measured_reactive_energy = measured_reactive_energy;
+			last_delta_timestamp = t1;
+		}
+
+		if (rv > last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) {
+			rv = last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep);
+		}
+	}//End delta energy updates
+
+	//Perform min/max/avg stat updates
+	if(measured_min_max_avg_timestep > 0) {
+		// Delta energy cacluation
+		if (t0 == start_timestamp) {
+			last_stat_timestamp = start_timestamp;
 
 			//Voltage values
 			measured_real_max_voltage_in_interval[0] = voltage1.Re();
@@ -438,24 +458,24 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			measured_imag_min_voltage_in_interval[0] = voltage1.Im();
 			measured_imag_min_voltage_in_interval[1] = voltage2.Im();
 			measured_imag_min_voltage_in_interval[2] = voltage12.Im();
-			measured_avg_voltage_mag_in_interval[0] = voltage1.Mag();
-			measured_avg_voltage_mag_in_interval[1] = voltage1.Mag();
-			measured_avg_voltage_mag_in_interval[2] = voltage1.Mag();
+			measured_avg_voltage_mag_in_interval[0] = 0.0;
+			measured_avg_voltage_mag_in_interval[1] = 0.0;
+			measured_avg_voltage_mag_in_interval[2] = 0.0;
 
 			//Power values
 			measured_real_max_power_in_interval = measured_real_power;
 			measured_real_min_power_in_interval = measured_real_power;
-			measured_real_avg_power_in_interval = measured_real_power;
+			measured_real_avg_power_in_interval = 0.0;
 
 			measured_reactive_max_power_in_interval = measured_reactive_power;
 			measured_reactive_min_power_in_interval = measured_reactive_power;
-			measured_reactive_avg_power_in_interval = measured_reactive_power;
+			measured_reactive_avg_power_in_interval = 0.0;
 
 			interval_dt = 0;
 			interval_count = 0;
 		}
 
-		if ((t1 > last_delta_timestamp) && (t1 < last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) && (t1 != t0)) {
+		if ((t1 > last_stat_timestamp) && (t1 < last_stat_timestamp + TIMESTAMP(measured_min_max_avg_timestep)) && (t1 != t0)) {
 			if (interval_count == 0) {
 				last_measured_max_voltage[0] = last_measured_voltage[0];
 				last_measured_max_voltage[1] = last_measured_voltage[1];
@@ -525,12 +545,8 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			interval_dt = interval_dt + dt;
 		}
 
-		if ((t1 == last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) && (t1 != t0))  {
-			measured_real_energy_delta = measured_real_energy - last_measured_real_energy;
-			measured_reactive_energy_delta = measured_reactive_energy - last_measured_reactive_energy;
-			last_measured_real_energy = measured_real_energy;
-			last_measured_reactive_energy = measured_reactive_energy;
-			last_delta_timestamp = t1;
+		if ((t1 == last_stat_timestamp + TIMESTAMP(measured_min_max_avg_timestep)) && (t1 != t0))  {
+			last_stat_timestamp = t1;
 			if (last_measured_max_voltage[0].Mag() < last_measured_voltage[0].Mag()) {
 				last_measured_max_voltage[0] = last_measured_voltage[0];
 			}
@@ -608,10 +624,10 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		last_measured_voltage[0] = voltage1;
 		last_measured_voltage[1] = voltage2;
 		last_measured_voltage[2] = voltage12;
-		if (rv > last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) {
-			rv = last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep);
+		if (rv > last_stat_timestamp + TIMESTAMP(measured_min_max_avg_timestep)) {
+			rv = last_stat_timestamp + TIMESTAMP(measured_min_max_avg_timestep);
 		}
-	}
+	}//End min/max/avg updates
 
 	monthly_energy = measured_real_energy/1000 - previous_energy_total;
 
