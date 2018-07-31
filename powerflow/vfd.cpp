@@ -729,6 +729,9 @@ STATUS vfd::VFD_current_injection(void)
 			tNode->voltage[index_val] = settleVoltOut[index_val];
 		}//End phase FOR loop
 	}//End not off
+
+	//Always return success right now
+	return SUCCESS;
 }
 
 TIMESTAMP vfd::presync(TIMESTAMP t0)
