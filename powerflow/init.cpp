@@ -107,6 +107,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		NULL);
 	gl_global_create("powerflow::low_voltage_impedance_level",PT_double,&impedance_conversion_low_pu,PT_DESCRIPTION,"Lower limit of voltage (in per-unit) at which all load types are converted to impedance for in-rush calculations",NULL);
 	gl_global_create("powerflow::enable_mesh_fault_current",PT_bool,&enable_mesh_fault_current,PT_DESCRIPTION,"Flag to enable mesh-based fault current calculations",NULL);
+	gl_global_create("powerflow::market_price_name",PT_char1024,&market_price_name,PT_DESCRIPTION,"Market current price published variable name",NULL);
 
 	// register each object class by creating the default instance
 	new powerflow_object(module);

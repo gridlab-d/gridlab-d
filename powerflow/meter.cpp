@@ -122,6 +122,9 @@ meter::meter(MODULE *mod) : node(mod)
 			PT_double, "measured_avg_real_power_in_interval[W]", PADDR(measured_real_avg_power_in_interval),PT_DESCRIPTION,"measured average real power over a specified interval",
 			PT_double, "measured_avg_reactive_power_in_interval[VAr]", PADDR(measured_reactive_avg_power_in_interval),PT_DESCRIPTION,"measured average reactive power over a specified interval",
 			
+			//Interval for the min/max/averages
+            PT_double, "measured_stats_interval[s]",PADDR(measured_min_max_avg_timestep),PT_DESCRIPTION,"Period of timestep for min/max/average calculations",
+
 			PT_complex, "measured_current_A[A]", PADDR(measured_current[0]),PT_DESCRIPTION,"measured current on phase A",
 			PT_complex, "measured_current_B[A]", PADDR(measured_current[1]),PT_DESCRIPTION,"measured current on phase B",
 			PT_complex, "measured_current_C[A]", PADDR(measured_current[2]),PT_DESCRIPTION,"measured current on phase C",
@@ -215,6 +218,7 @@ int meter::create()
     last_measured_real_energy = last_measured_reactive_energy = 0;
     last_measured_real_power = last_measured_reactive_power = 0.0;
 	measured_energy_delta_timestep = -1;
+	measured_min_max_avg_timestep = -1;
 	measured_power = complex(0,0,J);
 	measured_demand = 0.0;
 	measured_real_power = 0.0;
@@ -511,6 +515,35 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		if (measured_energy_delta_timestep > 0) {
 			if (t0 == start_timestamp) {
 				last_delta_timestamp = start_timestamp;
+
+				if (tretval > last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) {
+					tretval = last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep);
+				}
+			}
+
+			if ((t1 > last_delta_timestamp) && (t1 < last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) && (t1 != t0)) {
+				if (tretval > last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) {
+					tretval = last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep);
+				}
+			}
+
+			if ((t1 == last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) && (t1 != t0) && measured_energy_delta_timestep > 0) {
+				measured_real_energy_delta = measured_real_energy - last_measured_real_energy;
+				measured_reactive_energy_delta = measured_reactive_energy - last_measured_reactive_energy;
+				last_measured_real_energy = measured_real_energy;
+				last_measured_reactive_energy = measured_reactive_energy;
+				last_delta_timestamp = t1;
+
+				if (tretval > last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) {
+					tretval = last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep);
+				}
+			}
+		}//End perform delta-energy updates
+
+        // Min/Max/Stat calculation
+		if (measured_min_max_avg_timestep > 0) {
+			if (t0 == start_timestamp) {
+				last_stat_timestamp = start_timestamp;
 				voltage_avg_count = 0;
 				interval_dt = 0;
 
@@ -539,21 +572,21 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				measured_reactive_min_voltageD_in_interval[0] = measured_voltageD[0].Im();
 				measured_reactive_min_voltageD_in_interval[1] = measured_voltageD[1].Im();
 				measured_reactive_min_voltageD_in_interval[2] = measured_voltageD[2].Im();
-				measured_avg_voltage_mag_in_interval[0] = voltageA.Mag();
-				measured_avg_voltage_mag_in_interval[1] = voltageB.Mag();
-				measured_avg_voltage_mag_in_interval[2] = voltageC.Mag();
-				measured_avg_voltageD_mag_in_interval[0] = measured_voltageD[0].Mag();
-				measured_avg_voltageD_mag_in_interval[1] = measured_voltageD[1].Mag();
-				measured_avg_voltageD_mag_in_interval[2] = measured_voltageD[2].Mag();
+				measured_avg_voltage_mag_in_interval[0] = 0.0;
+				measured_avg_voltage_mag_in_interval[1] = 0.0;
+				measured_avg_voltage_mag_in_interval[2] = 0.0;
+				measured_avg_voltageD_mag_in_interval[0] = 0.0;
+				measured_avg_voltageD_mag_in_interval[1] = 0.0;
+				measured_avg_voltageD_mag_in_interval[2] = 0.0;
 				
 				//Power values
 				measured_real_max_power_in_interval = measured_real_power;
 				measured_real_min_power_in_interval = measured_real_power;
-				measured_real_avg_power_in_interval = measured_real_power;
+				measured_real_avg_power_in_interval = 0.0;
 
 				measured_reactive_max_power_in_interval = measured_reactive_power;
 				measured_reactive_min_power_in_interval = measured_reactive_power;
-				measured_reactive_avg_power_in_interval = measured_reactive_power;
+				measured_reactive_avg_power_in_interval = 0.0;
 				
 				last_measured_voltage[0] = voltageA;
 				last_measured_voltage[1] = voltageB;
@@ -561,13 +594,12 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				last_measured_voltageD[0] = measured_voltageD[0];
 				last_measured_voltageD[1] = measured_voltageD[1];
 				last_measured_voltageD[2] = measured_voltageD[2];
-				if (tretval > last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) {
-					tretval = last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep);
+				if (tretval > last_stat_timestamp + TIMESTAMP(measured_min_max_avg_timestep)) {
+					tretval = last_stat_timestamp + TIMESTAMP(measured_min_max_avg_timestep);
 				}
 			}
 
-
-			if ((t1 > last_delta_timestamp) && (t1 < last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) && (t1 != t0)) {
+			if ((t1 > last_stat_timestamp) && (t1 < last_stat_timestamp + TIMESTAMP(measured_min_max_avg_timestep)) && (t1 != t0)) {
 				if (voltage_avg_count <= 0) {
 					last_measured_max_voltage_mag[0] = voltageA;
 					last_measured_max_voltage_mag[1] = voltageB;
@@ -669,21 +701,17 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				last_measured_voltageD[0] = measured_voltageD[0].Mag();
 				last_measured_voltageD[1] = measured_voltageD[1].Mag();
 				last_measured_voltageD[2] = measured_voltageD[2].Mag();
-				if (t1 != last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) {
+				if (t1 != last_stat_timestamp + TIMESTAMP(measured_min_max_avg_timestep)) {
 					voltage_avg_count++;
 					interval_dt = interval_dt + dt;
 				}
-				if (tretval > last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) {
-					tretval = last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep);
+				if (tretval > last_stat_timestamp + TIMESTAMP(measured_min_max_avg_timestep)) {
+					tretval = last_stat_timestamp + TIMESTAMP(measured_min_max_avg_timestep);
 				}
 			}
 
-			if ((t1 == last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) && (t1 != t0) && measured_energy_delta_timestep > 0) {
-				measured_real_energy_delta = measured_real_energy - last_measured_real_energy;
-				measured_reactive_energy_delta = measured_reactive_energy - last_measured_reactive_energy;
-				last_measured_real_energy = measured_real_energy;
-				last_measured_reactive_energy = measured_reactive_energy;
-				last_delta_timestamp = t1;
+			if ((t1 == last_stat_timestamp + TIMESTAMP(measured_min_max_avg_timestep)) && (t1 != t0) && measured_min_max_avg_timestep > 0) {
+				last_stat_timestamp = t1;
 				if ( last_measured_voltage[0].Mag() > last_measured_max_voltage_mag[0].Mag()) {
 					last_measured_max_voltage_mag[0] = last_measured_voltage[0];
 				}
@@ -792,11 +820,12 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				measured_reactive_min_power_in_interval = last_measured_min_reactive_power;
 				measured_reactive_avg_power_in_interval = last_measured_avg_reactive_power;
 
-				if (tretval > last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) {
-					tretval = last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep);
+				if (tretval > last_stat_timestamp + TIMESTAMP(measured_min_max_avg_timestep)) {
+					tretval = last_stat_timestamp + TIMESTAMP(measured_min_max_avg_timestep);
 				}
 			}
-		}
+		}//End "Perform stat update" calculations
+
 		monthly_energy = measured_real_energy/1000 - previous_energy_total;
 
 		if (bill_mode == BM_UNIFORM || bill_mode == BM_TIERED)
