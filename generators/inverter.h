@@ -57,6 +57,15 @@ typedef struct {
 	double q_mea_delayed;
 	double dq_mea_delayed;
 
+	// Pmax controller stuff
+    double fmax_ini_StateVal;
+    double dfmax_ini_StateVal;
+    double fmax_StateVal;
+
+	// Pmin controller stuff
+    double fmin_ini_StateVal;
+    double dfmin_ini_StateVal;
+    double fmin_StateVal;
 
 } INV_STATE;
 
@@ -154,6 +163,8 @@ public:
 	complex V_In_Set_C; 
 	double output_frequency;
 	
+	double pCircuit_V_Avg;          // average value of 3 phase terminal voltage
+
 	//Deltamode PID-controller implementation
 	double kpd;			///< The proportional gain for the d axis modulation
 	double kpq;			///< The proportional gain for the q axis modulation
@@ -173,6 +184,10 @@ public:
 	double Pref0; 		   //The initial Pref set before entering the delta mode
 	bool inverter_droop_fp;   // Boolean value indicating whether the f/p droop curve is included in the inverter or not
 	double R_fp;		   // f/p droop curve parameter
+	double kppmax;   //Pmax controller proportional gain
+	double kipmax;  // Pmax controller integral gain
+	double Pmax;  //Pmax value
+	double Pmin; //Pmin value
 
 	double Tvol_delay;    // Time delay for inverter terminal voltage seen by inverter
 	double V_ref[3]; 	   // Voltage reference values for three phases
@@ -446,6 +461,7 @@ private:
 
 	double ki_Vterminal;			///< The integrator gain for the VSI terminal voltage modulation
 	double kp_Vterminal;			///< The proportional gain for the VSI terminal voltage modulation
+	double V_set_droop;            // Voltage set point of droop control
 
 	void update_control_references(void);
 	STATUS initalize_IEEE_1547_checks(OBJECT *parent);

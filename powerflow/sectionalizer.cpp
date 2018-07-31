@@ -56,7 +56,7 @@ sectionalizer::sectionalizer(MODULE *mod) : switch_object(mod)
 
 int sectionalizer::isa(char *classname)
 {
-	return strcmp(classname,"sectionalizer")==0 || link_object::isa(classname);
+	return strcmp(classname,"sectionalizer")==0 || switch_object::isa(classname);
 }
 
 //Creation run

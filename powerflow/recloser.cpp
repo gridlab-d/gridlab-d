@@ -57,7 +57,7 @@ recloser::recloser(MODULE *mod) : switch_object(mod)
 
 int recloser::isa(char *classname)
 {
-	return strcmp(classname,"recloser")==0 || link_object::isa(classname);
+	return strcmp(classname,"recloser")==0 || switch_object::isa(classname);
 }
 
 int recloser::create()

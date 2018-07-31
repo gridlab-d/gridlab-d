@@ -117,7 +117,7 @@ triplex_load::triplex_load(MODULE *mod) : triplex_node(mod)
 
 int triplex_load::isa(char *classname)
 {
-	return strcmp(classname,"triplex_load")==0 || node::isa(classname);
+	return strcmp(classname,"triplex_load")==0 || triplex_node::isa(classname);
 }
 
 int triplex_load::create(void)

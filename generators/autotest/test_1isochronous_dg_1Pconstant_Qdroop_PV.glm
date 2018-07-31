@@ -3401,6 +3401,6 @@ object inverter {
 			property value;
 			file "../constantP_PV_VA.csv";
 		};
-		within "0.1";
+		within "2.0";
 	};	
 };	

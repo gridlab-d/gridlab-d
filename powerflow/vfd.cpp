@@ -691,7 +691,17 @@ STATUS vfd::VFD_current_injection(void)
 
 		//Translate the output power to the input - divide it by 3 here too (for per-phase)
 		//Assumes everything coalesces onto a common DC bus
-		powerInElectrical = powerOutElectrical*100.0/currEfficiency/3.0;
+		//Zero check the efficiency
+		if (currEfficiency == 0.0)
+		{
+			//Zero both - power isn't coming from nowhere!
+			powerOutElectrical = complex(0.0,0.0);
+			powerInElectrical = complex(0.0,0.0);
+		}
+		else
+		{
+			powerInElectrical = powerOutElectrical*100.0/currEfficiency/3.0;
+		}
 
 		//Balance the power on the input, post it, and update the accumulator
 		for (index_val=0; index_val<3; index_val++)
@@ -706,7 +716,14 @@ STATUS vfd::VFD_current_injection(void)
 			prev_power[index_val] = powerInElectrical;
 
 			//Compute the amount and apply it to the input
-			current_in[index_val] = ~(powerInElectrical/fNode->voltage[index_val]);
+			if (fNode->voltage[index_val].Mag() == 0.0)
+			{
+				current_in[index_val] = complex(0.0,0.0);
+			}
+			else
+			{
+				current_in[index_val] = ~(powerInElectrical/fNode->voltage[index_val]);
+			}
 
 			//Push the new voltage out to the to node
 			tNode->voltage[index_val] = settleVoltOut[index_val];
