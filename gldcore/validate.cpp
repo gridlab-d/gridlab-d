@@ -9,8 +9,11 @@
 #else
 #include <unistd.h>
 #include <dirent.h>
-#include <sys/types.h>
 #endif
+
+#ifdef __linux__
+#include <sys/types.h>
+endif
 
 #include <string.h>
 #include <stdlib.h>
@@ -653,14 +656,22 @@ static size_t process_dir(const char *path, bool runglms=false)
 	struct dirent *dp;
 	DIR *dirp = opendir(path);
 	if ( dirp==NULL ) return 0; // nothing to do
+
+	#ifdef __linux__
 	struct stat s;
+	#endif
+
 	while ( (dp=readdir(dirp))!=NULL )
 	{
 		char item[1024];
 		size_t len = sprintf(item,"%s/%s",path,dp->d_name);
 		char *ext = strrchr(item,'.');
 		if ( dp->d_name[0]=='.' ) continue; // ignore anything that starts with a dot
+#ifdef __linux__
 		if ( (dp->d_type==DT_DIR || (dp->d_type==DT_UNKNOWN && !lstat(item, &s) && S_ISDIR(s.st_mode))) && strcmp(dp->d_name,"autotest")==0 )
+#else
+		if ( dp->d_type==DT_DIR && strcmp(dp->d_name,"autotest")==0 )
+#endif
 		{
 			count+=process_dir(item,true);
 			if ( global_validateoptions&VO_RPTDIR )
@@ -671,7 +682,11 @@ static size_t process_dir(const char *path, bool runglms=false)
 				report_newrow();
 			}
 		}
+#ifdef __linux__
 		else if ( dp->d_type==DT_DIR || (dp->d_type==DT_UNKNOWN && !lstat(item, &s) && S_ISDIR(s.st_mode)))
+#else
+		else if ( dp->d_type==DT_DIR )
+#endif
 			count+=process_dir(item);
 		else if ( runglms==true && strstr(item,"/test_")!=0 && strcmp(ext,".glm")==0 )
 		{
