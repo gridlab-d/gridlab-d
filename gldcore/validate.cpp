@@ -13,7 +13,7 @@
 
 #ifdef __linux__
 #include <sys/types.h>
-endif
+#endif
 
 #include <string.h>
 #include <stdlib.h>
