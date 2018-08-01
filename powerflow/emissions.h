@@ -12,7 +12,6 @@
 
 #include "powerflow.h"
 #include "powerflow_object.h"
-#include "meter.h"
 
 class emissions : public powerflow_object
 {
@@ -142,8 +141,8 @@ public:
 
 	double Region;
 
-	//Link to the parent meter
-	meter *ParMeterObj;
+	//Link to the parent meter total power
+	gld_property *parent_meter_total_power;
 
 	//Energy calculation
 	double accumulated_energy;

@@ -1,17 +1,19 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
 
-#include "pcsp_defs.h"
+All rights reserved. 
 
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
 
-#if ( MACH==CRAY_PVP )
-fortran void CTRSM(_fcd, _fcd, _fcd, _fcd, int*, int*, complex*,
-		   complex*, int*, complex*, int*);
-fortran void CGEMM(_fcd, _fcd, int*, int*, int*, complex*, complex*, 
-		   int*, complex*, int*, complex*, complex*, int*);
-#endif
+#include "slu_mt_cdefs.h"
 
 void
 cgstrs(trans_t trans, SuperMatrix *L, SuperMatrix *U, 
-       int *perm_r, int *perm_c, SuperMatrix *B, Gstat_t *Gstat, int *info)
+       int_t *perm_r, int_t *perm_c, SuperMatrix *B, Gstat_t *Gstat, int_t *info)
 {
 /*
  * -- SuperLU MT routine (version 2.0) --
@@ -44,12 +46,12 @@ cgstrs(trans_t trans, SuperMatrix *L, SuperMatrix *U,
  *         pcgstrf(). Use column-wise storage scheme, i.e., U has types:
  *         Stype = NCP, Dtype = _D, Mtype = TRU.
  *
- * perm_r  (input) int*
+ * perm_r  (input) int_t*
  *         Row permutation vector of size L->nrow, which defines the
  *         permutation matrix Pr; perm_r[i] = j means row i of A is in
  *         position j in Pr*A.
  *
- * perm_c  (int*) dimension A->ncol
+ * perm_c  (int_t*) dimension A->ncol
  *	   Column permutation vector, which defines the 
  *         permutation matrix Pc; perm_c[i] = j means column i of A is 
  *         in position j in A*Pc.
@@ -78,10 +80,10 @@ cgstrs(trans_t trans, SuperMatrix *L, SuperMatrix *U,
 #endif
 
     complex   temp_comp;
-    register int j, k, jcol, iptr, luptr, ksupno, istart, irow, bptr;
-    register int fsupc, nsuper;
-    int      i, n, nsupc, nsupr, nrow, nrhs, ldb;
-    int      *supno;
+    register int_t j, k, jcol, iptr, luptr, ksupno, istart, irow, bptr;
+    register int_t fsupc, nsuper;
+    int        i, n, nsupc, nsupr, nrow, nrhs, ldb;
+    int_t      *supno;
     DNformat *Bstore;
     SCPformat *Lstore;
     NCPformat *Ustore;
@@ -95,7 +97,7 @@ cgstrs(trans_t trans, SuperMatrix *L, SuperMatrix *U,
     Bstore = B->Store;
     ldb = Bstore->lda;
     nrhs = B->ncol;
-    if ( trans != NOTRANS && trans != TRANS ) *info = -1;
+    if ( trans != NOTRANS && trans != TRANS && trans != CONJ ) *info = -1;
     else if ( L->nrow != L->ncol || L->nrow < 0 ) *info = -3;
     else if ( U->nrow != U->ncol || U->nrow < 0 ) *info = -4;
     else if ( ldb < SUPERLU_MAX(0, L->nrow) ) *info = -6;
@@ -189,8 +191,8 @@ cgstrs(trans_t trans, SuperMatrix *L, SuperMatrix *U,
 #else		
 		for (j = 0, bptr = 0; j < nrhs; j++, bptr += ldb) {
 		    rhs_work = &Bmat[bptr];
-		    clsolve (nsupr, nsupc, &Lval[luptr], &rhs_work[fsupc]);
-		    cmatvec (nsupr, nrow, nsupc, &Lval[luptr+nsupc],
+		    clsolve ((int_t)nsupr, (int_t)nsupc, &Lval[luptr], &rhs_work[fsupc]);
+		    cmatvec ((int_t)nsupr, (int_t)nrow, (int_t)nsupc, &Lval[luptr+nsupc],
 			     &rhs_work[fsupc], &work[0] );
 
 		    iptr = istart + nsupc;
@@ -322,10 +324,10 @@ cgstrs(trans_t trans, SuperMatrix *L, SuperMatrix *U,
  * Diagnostic print of the solution vector
  */
 void
-cprint_soln(int n, int nrhs, complex *soln)
+cprint_soln(int_t n, int_t nrhs, complex *soln)
 {
-    int i;
+    int_t i;
 
     for (i = 0; i < n; i++)
-	printf("\t%d: %.10f\n", i, soln[i]);
+	printf("\t" IFMT ": %.10f\t%.10f\n", i, soln[i].r, soln[i].i);
 }

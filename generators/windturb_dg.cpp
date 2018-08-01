@@ -151,7 +151,7 @@ int windturb_dg::create(void)
 	/* set the default values of all properties here */
 	Ridealgas = 8.31447;
 	Molar = 0.0289644;
-	std_air_dens = 1.2754;	//dry air density at std pressure and temp in kg/m^3
+	//std_air_dens = 1.2754;	//dry air density at std pressure and temp in kg/m^3
 	std_air_temp = 0;	//IUPAC std air temp in Celsius
 	std_air_press = 100000;	//IUPAC std air pressure in Pascals
 	Turbine_Model = GENERIC_SYNCH_LARGE;	//************** Default specified so it doesn't crash out
@@ -168,7 +168,19 @@ int windturb_dg::create(void)
 	ws_rated = -9999;
 	CP_Data = CALCULATED;
 
-	default_NR_mode = false;
+	pCircuit_V[0] = pCircuit_V[1] = pCircuit_V[2] = NULL;
+	pLine_I[0] = pLine_I[1] = pLine_I[2] = NULL;
+	value_Circuit_V[0] = value_Circuit_V[1] = value_Circuit_V[2] = complex(0.0,0.0);
+	value_Line_I[0] = value_Line_I[1] = value_Line_I[2] = complex(0.0,0.0);
+	parent_is_valid = false;
+
+    pPress = NULL;
+	pTemp = NULL;
+	pWS = NULL;
+    value_Press = 0.0;
+	value_Temp = 0.0;
+	value_WS = 0.0;
+	climate_is_valid = false;
 
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -180,21 +192,20 @@ int windturb_dg::init_climate()
 	OBJECT *hdr = OBJECTHDR(this);
 
 	// link to climate data
-	static FINDLIST *climates = NULL;
-	int not_found = 0;
+	FINDLIST *climates = NULL;
 
 	climates = gl_find_objects(FL_NEW,FT_CLASS,SAME,"climate",FT_END);
 	if (climates==NULL)
 	{
-		not_found = 1;
+		//Flag as not found
+		climate_is_valid = false;
+
 		gl_warning("windturb_dg (id:%d)::init_climate(): no climate data found, using static data",hdr->id);
 
 		//default to mock data
-		static double air_dens = std_air_dens, avgWS = avg_ws, Press = std_air_press, Temp = std_air_temp;
-		pWS = &avgWS;
-		pPress = &Press;
-		pTemp = &Temp;
-
+		value_WS = avg_ws;
+		value_Press = std_air_press;
+		value_Temp = std_air_temp;
 	}
 	else if (climates->hit_count>1)
 	{
@@ -205,12 +216,16 @@ int windturb_dg::init_climate()
 	{
 		if (climates->hit_count==0)
 		{
+			//Flag as false
+			climate_is_valid = false;
+
 			//default to mock data
 			gl_warning("windturb_dg (id:%d)::init_climate(): no climate data found, using static data",hdr->id);
-			static double air_dens = std_air_dens, avgWS = avg_ws, Press = std_air_press, Temp = std_air_temp;
-			pWS = &avgWS;
-			pPress = &Press;
-			pTemp = &Temp;
+
+			//default to mock data
+			value_WS = avg_ws;
+			value_Press = std_air_press;
+			value_Temp = std_air_temp;
 		}
 		else //climate data was found
 		{
@@ -218,23 +233,13 @@ int windturb_dg::init_climate()
 			OBJECT *obj = gl_find_next(climates,NULL);
 			if (obj->rank<=hdr->rank)
 				gl_set_dependent(obj,hdr);
-			pWS = (double*)GETADDR(obj,gl_get_property(obj,"wind_speed"));  
-			pPress = (double*)GETADDR(obj,gl_get_property(obj,"pressure"));
-			pTemp = (double*)GETADDR(obj,gl_get_property(obj,"temperature"));
 
-			//Make sure it worked
-			if (pWS==NULL)
-			{
-				GL_THROW("windturb_dg (id:%d): Unable to map wind_speed from climate object",obj->id);
-			}
-			if (pPress==NULL)
-			{
-				GL_THROW("windturb_dg (id:%d): Unable to map air pressure from climate object",obj->id);
-			}
-			if (pTemp==NULL)
-			{
-				GL_THROW("windturb_dg (id:%d): Unable to map air temperature from climate object",obj->id);
-			}
+			pWS = map_double_value(obj,"wind_speed");  
+			pPress = map_double_value(obj,"pressure");
+			pTemp = map_double_value(obj,"temperature");
+
+			//Flag properly
+			climate_is_valid = true;
 		}
 	}
 	return 1;
@@ -243,7 +248,11 @@ int windturb_dg::init_climate()
 int windturb_dg::init(OBJECT *parent)
 {
 	OBJECT *obj = OBJECTHDR(this);
-
+	double temp_double_value;
+	gld_property *temp_property_pointer;
+	set temp_phases_set;
+	int temp_phases=0;
+		
 	double ZB, SB, EB;
 	complex tst, tst2, tst3, tst4;
 
@@ -460,55 +469,6 @@ int windturb_dg::init(OBJECT *parent)
 			*/
 	}
 
-	// construct circuit variable map to meter -- copied from 'House' module
-	struct {
-		complex **var;
-		char *varname;
-	} map[] = {
-		// local object name,	meter object name
-		{&pCircuit_V,			"voltage_A"}, // assumes 2 and 3 follow immediately in memory
-		{&pLine_I,				"current_A"}, // assumes 2 and 3(N) follow immediately in memory
-		/// @todo use triplex property mapping instead of assuming memory order for meter variables (residential, low priority) (ticket #139)
-	};
-
-	static complex default_line123_voltage[3], default_line1_current[3];
-	int i;
-
-	//Map phases
-	set *phaseInfo;
-	PROPERTY *tempProp;
-	tempProp = gl_get_property(parent,"phases");
-
-	if ((tempProp==NULL || tempProp->ptype!=PT_set))
-	{
-		GL_THROW("Unable to map phases property - ensure the parent is a powerflow:meter");
-		/*  TROUBLESHOOT
-		While attempting to map the phases property from the parent object, an error was encountered.
-		Please check and make sure your parent object is a meter inside the powerflow module and try
-		again.  If the error persists, please submit your code and a bug report via the Trac website.
-		*/
-	}
-	else
-		phaseInfo = (set*)GETADDR(parent,tempProp);
-
-	int temp_phases=0;
-
-	// Currently only supports 3-phase connection, so check number of phases of parent
-	if ((*phaseInfo & PHASE_A) == PHASE_A)
-		temp_phases += 1;
-	if ((*phaseInfo & PHASE_B) == PHASE_B)
-		temp_phases += 1;
-	if ((*phaseInfo & PHASE_C) == PHASE_C)
-		temp_phases += 1;
-
-	if (temp_phases < 3)
-		GL_THROW("The wind turbine model currently only supports a 3-phase connection, please check meter connection");
-	/*  TROUBLESHOOT
-	Currently the wind turbine model only supports 3-phase connnections. Please attach to 3-phase meter.
-	*/
-
-
-
 	// find parent meter, if not defined, use a default meter (using static variable 'default_meter')
 	if (parent!=NULL)
 	{
@@ -519,28 +479,48 @@ int windturb_dg::init(OBJECT *parent)
 		}
 		if (gl_object_isa(parent,"meter","powerflow"))	//Attach to meter
 		{
-			/*
-			NR_mode = get_bool(parent,"NR_mode");
+			//Flag properly
+			parent_is_valid = true;
 
-			//Check NR_mode, just to be consistent
-			if (NR_mode == NULL)
+			//Map phases
+			//Map and pull the phases
+			temp_property_pointer = new gld_property(parent,"phases");
+
+			//Make sure ti worked
+			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_set() != true))
 			{
-				GL_THROW("Wind turbine failed to map NR_mode property");
-				*/
+				GL_THROW("Unable to map phases property - ensure the parent is a meter or a node or a load");
 				/*  TROUBLESHOOT
-				While attempting to map up the NR_mode property, an error
-				was encountered.  Please try again.  If the error persists,
-				please submit your code and a bug report via the trac website.
+				While attempting to map the phases property from the parent object, an error was encountered.
+				Please check and make sure your parent object is a meter or triplex_meter inside the powerflow module and try
+				again.  If the error persists, please submit your code and a bug report via the Trac website.
 				*/
-			/*
 			}
-		*/
+
+			//Pull the phase information
+			temp_phases_set = temp_property_pointer->get_set();
+
+			//Clear the temporary pointer
+			delete temp_property_pointer;
+
+			// Currently only supports 3-phase connection, so check number of phases of parent
+			if ((temp_phases_set & PHASE_A) == PHASE_A)
+				temp_phases += 1;
+			if ((temp_phases_set & PHASE_B) == PHASE_B)
+				temp_phases += 1;
+			if ((temp_phases_set & PHASE_C) == PHASE_C)
+				temp_phases += 1;
+
+			if (temp_phases < 3)
+				GL_THROW("The wind turbine model currently only supports a 3-phase connection, please check meter connection");
+			/*  TROUBLESHOOT
+			Currently the wind turbine model only supports 3-phase connnections. Please attach to 3-phase meter.
+			*/
 
 			//Map the voltages
-			double *parNominalVoltage;
+			temp_property_pointer = new gld_property(parent,"nominal_voltage");
 
-			tempProp = gl_get_property(parent,"nominal_voltage");
-			if ((tempProp==NULL || tempProp->ptype!=PT_double))
+			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_double() != true))
 			{
 				GL_THROW("Unable to map nominal_voltage property - ensure the parent is a powerflow:meter");
 				/*  TROUBLESHOOT
@@ -549,12 +529,16 @@ int windturb_dg::init(OBJECT *parent)
 				again.  If the error persists, please submit your code and a bug report via the Trac website.
 				*/
 			}
-			else
-				parNominalVoltage = (double*)GETADDR(parent,tempProp);
+
+			//Pull value
+			temp_double_value = temp_property_pointer->get_double();
+
+			//Remove the pointer
+			delete temp_property_pointer;
 
 			// check nominal voltage against rated voltage
-			if ( fabs(1 - (*parNominalVoltage * sqrt(3.0) / Rated_V) ) > 0.1 )
-				gl_warning("windturb_dg (id:%d, name:%s): Rated generator voltage (LL: %.1f) and nominal voltage (LL: %.1f) of meter parent are different by greater than 10 percent. Odd behavior may occur.",obj->id,obj->name,Rated_V,*parNominalVoltage * sqrt(3.0));
+			if ( fabs(1 - (temp_double_value * sqrt(3.0) / Rated_V) ) > 0.1 )
+				gl_warning("windturb_dg (id:%d, name:%s): Rated generator voltage (LL: %.1f) and nominal voltage (LL: %.1f) of meter parent are different by greater than 10 percent. Odd behavior may occur.",obj->id,obj->name,Rated_V,temp_double_value * sqrt(3.0));
 			/* TROUBLESHOOT
 			Currently, the model allows you to attach the turbine to a voltage that is quite different than the rated terminal
 			voltage of the generator.  However, this may cause odd behavior, as the solved powerflow voltage is used to calculate
@@ -562,19 +546,14 @@ int windturb_dg::init(OBJECT *parent)
 			voltages of the parent meter be within ~10% of the rated voltage.
 			*/
 
-			// attach meter variables to each circuit
-			for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
-			{
-				*(map[i].var) = get_complex(parent,map[i].varname);
+			//Map the values of the parent
+			pCircuit_V[0] = map_complex_value(parent,"voltage_A");
+			pCircuit_V[1] = map_complex_value(parent,"voltage_B");
+			pCircuit_V[2] = map_complex_value(parent,"voltage_C");
 
-				if (*(map[i].var) == NULL)
-				{
-					GL_THROW("Unable to map variable %s",map[i].varname);
-					/*  TROUBLESHOOT
-					The variable name was not found when mapping it
-					*/
-				}
-			}
+			pLine_I[0] = map_complex_value(parent,"current_A");
+			pLine_I[1] = map_complex_value(parent,"current_B");
+			pLine_I[2] = map_complex_value(parent,"current_C");
 		}
 		else if (gl_object_isa(parent,"triplex_meter","powerflow"))
 		{
@@ -582,31 +561,16 @@ int windturb_dg::init(OBJECT *parent)
 			/*  TROUBLESHOOT
 			This model does not currently support connection to a triplex system.  Please connect to a 3-phase meter.
 			*/
-
-			//Map voltage
-			pCircuit_V = get_complex(parent,"voltage_1");
-
-			//Make sure it worked
-			if (pCircuit_V == NULL)
-				GL_THROW("Unable to map triplex_meter voltage");
-
-			//Map current
-			pLine_I = get_complex(parent,"current_1");
-
-			//Make sure it worked
-			if (pLine_I == NULL)
-				GL_THROW("Unable to map triplex_meter current");
-
-			//NR_mode = get_bool(parent,"NR_mode");
 		}
 		else if (gl_object_isa(parent,"rectifier","generators"))
 		{
+			//Set the "pull flag"
+			parent_is_valid = true;
 
 			//Map the voltages
-			double *parNominalVoltage;
+			temp_property_pointer = new gld_property(parent,"V_Rated");
 
-			tempProp = gl_get_property(parent,"V_Rated");
-			if ((tempProp==NULL || tempProp->ptype!=PT_double))
+			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_double() != true))
 			{
 				GL_THROW("Unable to map V_Rated property - ensure the parent is a powerflow:meter");
 				/*  TROUBLESHOOT
@@ -615,12 +579,16 @@ int windturb_dg::init(OBJECT *parent)
 				again.  If the error persists, please submit your code and a bug report via the Trac website.
 				*/
 			}
-			else
-				parNominalVoltage = (double*)GETADDR(parent,tempProp);
+
+			//Pull the value
+			temp_double_value = temp_property_pointer->get_double();
+
+			//Remove the pointer
+			delete temp_property_pointer;
 
 			// check nominal voltage against rated voltage
-			if ( fabs(1 - (*parNominalVoltage / Rated_V) ) > 0.1 )
-				gl_warning("windturb_dg (id:%d, name:%s): Rated generator voltage (LL: %.1f) and nominal voltage (LL: %.1f) of meter parent are different by greater than 10 percent. Odd behavior may occur.",obj->id,obj->name,Rated_V,*parNominalVoltage * sqrt(3.0));
+			if ( fabs(1 - (temp_double_value / Rated_V) ) > 0.1 )
+				gl_warning("windturb_dg (id:%d, name:%s): Rated generator voltage (LL: %.1f) and nominal voltage (LL: %.1f) of meter parent are different by greater than 10 percent. Odd behavior may occur.",obj->id,obj->name,Rated_V,temp_double_value * sqrt(3.0));
 			/* TROUBLESHOOT
 			Currently, the model allows you to attach the turbine to a voltage that is quite different than the rated terminal
 			voltage of the generator.  However, this may cause odd behavior, as the solved powerflow voltage is used to calculate
@@ -628,22 +596,14 @@ int windturb_dg::init(OBJECT *parent)
 			voltages of the parent meter be within ~10% of the rated voltage.
 			*/
 
+			//Map the values of the parent
+			pCircuit_V[0] = map_complex_value(parent,"voltage_A");
+			pCircuit_V[1] = map_complex_value(parent,"voltage_B");
+			pCircuit_V[2] = map_complex_value(parent,"voltage_C");
 
-
-			// attach meter variables to each circuit
-			for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
-			{
-				if ((*(map[i].var) = get_complex(parent,map[i].varname))==NULL)
-				{
-					GL_THROW("%s (%s:%d) does not implement rectifier variable %s for %s (windturb_dg:%d)", 
-						/*	TROUBLESHOOT
-						The rectifier requires that the inverter contains certain published properties in order to properly connect. If you encounter this error, please report it to the developers, along with
-						the version of GridLAB-D that raised this error.
-						*/
-						parent->name?parent->name:"unnamed object", parent->oclass->name, parent->id, map[i].varname, obj->name?obj->name:"unnamed", obj->id);
-				}
-			}
-
+			pLine_I[0] = map_complex_value(parent,"current_A");
+			pLine_I[1] = map_complex_value(parent,"current_B");
+			pLine_I[2] = map_complex_value(parent,"current_C");
 		}
 		else
 		{
@@ -657,16 +617,18 @@ int windturb_dg::init(OBJECT *parent)
 	{
 		gl_warning("windturb_dg:%d %s", obj->id, parent==NULL?"has no parent meter defined":"parent is not a meter");	
 
-		// attach meter variables to each circuit in the default_meter
-		*(map[0].var) = &default_line123_voltage[0];
-		*(map[1].var) = &default_line1_current[0];
+		//Set the flag
+		parent_is_valid = false;
 
-		// provide initial values for voltages
-		default_line123_voltage[0] = complex(Rated_V/sqrt(3.0),0);
-		default_line123_voltage[1] = complex(Rated_V/sqrt(3.0)*cos(2*PI/3),Rated_V/sqrt(3.0)*sin(2*PI/3));
-		default_line123_voltage[2] = complex(Rated_V/sqrt(3.0)*cos(-2*PI/3),Rated_V/sqrt(3.0)*sin(-2*PI/3));
+		//Set the default values for the voltage
 
-		NR_mode = &default_NR_mode;
+		//Get default magnitude
+		temp_double_value = Rated_V/sqrt(3.0);
+
+		//Set the values
+		value_Circuit_V[0].SetPolar(temp_double_value,0.0);
+		value_Circuit_V[1].SetPolar(temp_double_value,-2.0/3.0*PI);
+		value_Circuit_V[2].SetPolar(temp_double_value,2.0/3.0*PI);
 	}
 
 	if (Gen_status==OFFLINE)
@@ -747,400 +709,415 @@ TIMESTAMP windturb_dg::presync(TIMESTAMP t0, TIMESTAMP t1)
 TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
 	TIMESTAMP t2 = TS_NEVER;
-	//if ( *NR_mode == false )
-	//{
-		double Pwind, Pmech, detCp, F, G, gearbox_eff;
-		double matCp[2][3];
+	double Pwind, Pmech, detCp, F, G, gearbox_eff;
+	double matCp[2][3];
 
-		store_last_current = current_A.Mag() + current_B.Mag() + current_C.Mag();
+	store_last_current = current_A.Mag() + current_B.Mag() + current_C.Mag();
 
-		// convert press to Pascals and temp to Kelvins
-		// TODO: convert this to using gl_convert
-		air_dens = (*pPress*100) * Molar / (Ridealgas * ( (*pTemp - 32)*5/9 + 273.15));
+	//Pull the updates, if needed
+	if (climate_is_valid == true)
+	{
+		value_Press = pPress->get_double();
+		value_Temp = pTemp->get_double();
+		value_WS = pWS->get_double();
+	}
 
-		//wind speed at height of hub - uses European Wind Atlas method
-		if(ref_height == roughness_l){
-			ref_height = roughness_l+0.001;
+	// convert press to Pascals and temp to Kelvins
+	// TODO: convert this to using gl_convert
+	air_dens = (value_Press*100) * Molar / (Ridealgas * ( (value_Temp - 32)*5/9 + 273.15));
+
+	//wind speed at height of hub - uses European Wind Atlas method
+	if(ref_height == roughness_l){
+		ref_height = roughness_l+0.001;
+	}
+	WSadj = value_WS * log(turbine_height/roughness_l)/log(ref_height/roughness_l); 
+
+	/* TODO:  import previous and future wind data 
+	and then pseudo-randomize the wind speed values beween 1st and 2nd
+	WSadj = gl_pseudorandomvalue(RT_RAYLEIGH,&c,(WS1/sqrt(PI/2)));*/
+
+	Pwind = 0.5 * (air_dens) * PI * pow(blade_diam/2,2) * pow(WSadj,3);
+
+	if (CP_Data == GENERAL_LARGE || CP_Data == GENERAL_MID || CP_Data == GENERAL_SMALL)	
+	{
+		if (WSadj <= cut_in_ws)
+		{	
+			Cp = 0;	
 		}
-		WSadj = *pWS * log(turbine_height/roughness_l)/log(ref_height/roughness_l); 
 
-		double test = *pPress;
-		/* TODO:  import previous and future wind data 
-		and then pseudo-randomize the wind speed values beween 1st and 2nd
-		WSadj = gl_pseudorandomvalue(RT_RAYLEIGH,&c,(WS1/sqrt(PI/2)));*/
-
-		Pwind = 0.5 * (air_dens) * PI * pow(blade_diam/2,2) * pow(WSadj,3);
-
-		if (CP_Data == GENERAL_LARGE || CP_Data == GENERAL_MID || CP_Data == GENERAL_SMALL)	
-		{
-			if (WSadj <= cut_in_ws)
-			{	
-				Cp = 0;	
-			}
-
-			else if (WSadj > cut_out_ws)
-			{	
-				Cp = 0;	
-			}
-
-			else if(WSadj > ws_rated)
-			{
-				Cp = Cp_rated * pow(ws_rated,3) / pow(WSadj,3);	
-			}
-			else
-			{   
-				if (WSadj == 0 || WSadj <= cut_in_ws || WSadj >= cut_out_ws)
-				{
-					Cp = 0;
-				}
-				else {
-					matCp[0][0] = pow((ws_maxcp/cut_in_ws - 1),2);   //Coeff of Performance found 
-					matCp[0][1] = pow((ws_maxcp/cut_in_ws - 1),3);	 //by using method described in [1]
-					matCp[0][2] = 1;
-					matCp[1][0] = pow((ws_maxcp/ws_rated - 1),2);
-					matCp[1][1] = pow((ws_maxcp/ws_rated - 1),3);
-					matCp[1][2] = 1 - Cp_rated/Cp_max;
-					detCp = matCp[0][0]*matCp[1][1] - matCp[0][1]*matCp[1][0];
-
-					F = (matCp[0][2]*matCp[1][1] - matCp[0][1]*matCp[1][2])/detCp;
-					G = (matCp[0][0]*matCp[1][2] - matCp[0][2]*matCp[1][0])/detCp;
-
-					Cp = Cp_max*(1 - F*pow((ws_maxcp/WSadj - 1),2) - G*pow((ws_maxcp/WSadj - 1),3));
-				}
-			}
+		else if (WSadj > cut_out_ws)
+		{	
+			Cp = 0;	
 		}
-		else if (CP_Data == MANUF_TABLE)	//Coefficient of Perfomance generated from Manufacturer's table
+
+		else if(WSadj > ws_rated)
 		{
-			switch (Turbine_Model)	{
-				case VESTAS_V82:
-					if (WSadj <= cut_in_ws || WSadj >= cut_out_ws)
-					{	
-						Cp = 0;	
-					}
-					else  //TO DO:  possibly replace polynomial with spline library function interpolation
-					{	  
-						//Uses a centered, 10th-degree polynomial Matlab interpolation of original Manuf. data
-						double z = (WSadj - 10.5)/5.9161;
-
-						//Original data [0 0 0 0 0.135 0.356 0.442 0.461 .458 .431 .397 .349 .293 .232 .186 .151 .125 .104 .087 .074 .064] from 4-20 m/s
-						Cp = -0.08609*pow(z,10) + 0.078599*pow(z,9) + 0.50509*pow(z,8) - 0.45466*pow(z,7) - 0.94154*pow(z,6) + 0.77922*pow(z,5) + 0.59082*pow(z,4) - 0.23196*pow(z,3) - 0.25009*pow(z,2) - 0.24282*z + 0.37502;
-					}
-					break;
-				default:
-					GL_THROW("Coefficient of Performance model not determined.");
-			}
-
-		}
-		else if (CP_Data == CALCULATED)
-		{
-			matCp[0][0] = pow((ws_maxcp/cut_in_ws - 1),2);   //Coeff of Performance found 
-			matCp[0][1] = pow((ws_maxcp/cut_in_ws - 1),3);	 //by using method described in [1]
-			matCp[0][2] = 1;
-			matCp[1][0] = pow((ws_maxcp/ws_rated - 1),2);
-			matCp[1][1] = pow((ws_maxcp/ws_rated - 1),3);
-			matCp[1][2] = 1 - Cp_rated/Cp_max;
-			detCp = matCp[0][0]*matCp[1][1] - matCp[0][1]*matCp[1][0];
-
-			F = (matCp[0][2]*matCp[1][1] - matCp[0][1]*matCp[1][2])/detCp;
-			G = (matCp[0][0]*matCp[1][2] - matCp[0][2]*matCp[1][0])/detCp;
-
-			Cp = Cp_max*(1 - F*pow((ws_maxcp/WSadj - 1),2) - G*pow((ws_maxcp/WSadj - 1),3));
+			Cp = Cp_rated * pow(ws_rated,3) / pow(WSadj,3);	
 		}
 		else
-		{
-			GL_THROW("CP_Data not defined.");
+		{   
+			if (WSadj == 0 || WSadj <= cut_in_ws || WSadj >= cut_out_ws)
+			{
+				Cp = 0;
+			}
+			else {
+				matCp[0][0] = pow((ws_maxcp/cut_in_ws - 1),2);   //Coeff of Performance found 
+				matCp[0][1] = pow((ws_maxcp/cut_in_ws - 1),3);	 //by using method described in [1]
+				matCp[0][2] = 1;
+				matCp[1][0] = pow((ws_maxcp/ws_rated - 1),2);
+				matCp[1][1] = pow((ws_maxcp/ws_rated - 1),3);
+				matCp[1][2] = 1 - Cp_rated/Cp_max;
+				detCp = matCp[0][0]*matCp[1][1] - matCp[0][1]*matCp[1][0];
+
+				F = (matCp[0][2]*matCp[1][1] - matCp[0][1]*matCp[1][2])/detCp;
+				G = (matCp[0][0]*matCp[1][2] - matCp[0][2]*matCp[1][0])/detCp;
+
+				Cp = Cp_max*(1 - F*pow((ws_maxcp/WSadj - 1),2) - G*pow((ws_maxcp/WSadj - 1),3));
+			}
+		}
+	}
+	else if (CP_Data == MANUF_TABLE)	//Coefficient of Perfomance generated from Manufacturer's table
+	{
+		switch (Turbine_Model)	{
+			case VESTAS_V82:
+				if (WSadj <= cut_in_ws || WSadj >= cut_out_ws)
+				{	
+					Cp = 0;	
+				}
+				else  //TO DO:  possibly replace polynomial with spline library function interpolation
+				{	  
+					//Uses a centered, 10th-degree polynomial Matlab interpolation of original Manuf. data
+					double z = (WSadj - 10.5)/5.9161;
+
+					//Original data [0 0 0 0 0.135 0.356 0.442 0.461 .458 .431 .397 .349 .293 .232 .186 .151 .125 .104 .087 .074 .064] from 4-20 m/s
+					Cp = -0.08609*pow(z,10) + 0.078599*pow(z,9) + 0.50509*pow(z,8) - 0.45466*pow(z,7) - 0.94154*pow(z,6) + 0.77922*pow(z,5) + 0.59082*pow(z,4) - 0.23196*pow(z,3) - 0.25009*pow(z,2) - 0.24282*z + 0.37502;
+				}
+				break;
+			default:
+				GL_THROW("Coefficient of Performance model not determined.");
 		}
 
-		/// define user defined data , also catch for future cases
+	}
+	else if (CP_Data == CALCULATED)
+	{
+		matCp[0][0] = pow((ws_maxcp/cut_in_ws - 1),2);   //Coeff of Performance found 
+		matCp[0][1] = pow((ws_maxcp/cut_in_ws - 1),3);	 //by using method described in [1]
+		matCp[0][2] = 1;
+		matCp[1][0] = pow((ws_maxcp/ws_rated - 1),2);
+		matCp[1][1] = pow((ws_maxcp/ws_rated - 1),3);
+		matCp[1][2] = 1 - Cp_rated/Cp_max;
+		detCp = matCp[0][0]*matCp[1][1] - matCp[0][1]*matCp[1][0];
 
-		Pmech = Pwind * Cp; 
+		F = (matCp[0][2]*matCp[1][1] - matCp[0][1]*matCp[1][2])/detCp;
+		G = (matCp[0][0]*matCp[1][2] - matCp[0][2]*matCp[1][0])/detCp;
 
-		if (Pmech != 0)
+		Cp = Cp_max*(1 - F*pow((ws_maxcp/WSadj - 1),2) - G*pow((ws_maxcp/WSadj - 1),3));
+	}
+	else
+	{
+		GL_THROW("CP_Data not defined.");
+	}
+
+	/// define user defined data , also catch for future cases
+
+	Pmech = Pwind * Cp; 
+
+	if (Pmech != 0)
+	{
+		gearbox_eff = 1 - (q*.01*Rated_VA / Pmech);	 //Method described in [2].	
+
+		if (gearbox_eff < .1)		
 		{
-			gearbox_eff = 1 - (q*.01*Rated_VA / Pmech);	 //Method described in [2].	
+			gearbox_eff = .1;	//Prevents efficiency from becoming negative at low power.
+		}							
 
-			if (gearbox_eff < .1)		
-			{
-				gearbox_eff = .1;	//Prevents efficiency from becoming negative at low power.
-			}							
+		Pmech = Pwind * Cp * gearbox_eff;
+	}	
 
-			Pmech = Pwind * Cp * gearbox_eff;
-		}	
+	Pconv = 1 * Pmech;  //TODO: Assuming 0% losses due to friction and miscellaneous losses
 
-		Pconv = 1 * Pmech;  //TODO: Assuming 0% losses due to friction and miscellaneous losses
+	if (Gen_status==ONLINE)
+	{
+		int k;
 
-		if (Gen_status==ONLINE)
+		//Pull the voltage values
+		if (parent_is_valid == true)
 		{
-			int k;
-			voltage_A = pCircuit_V[0];	//Syncs the meter parent to the generator.
-			voltage_B = pCircuit_V[1];
-			voltage_C = pCircuit_V[2];
-			double Pconva = 0.0;
-			double Pconvb = 0.0;
-			double Pconvc = 0.0;
-			if((voltage_A.Mag() + voltage_B.Mag() + voltage_C.Mag()) > 1e-9){
-				Pconva = (voltage_A.Mag() / (voltage_A.Mag() + voltage_B.Mag() + voltage_C.Mag()))*Pconv;
-				Pconvb = (voltage_B.Mag() / (voltage_A.Mag() + voltage_B.Mag() + voltage_C.Mag()))*Pconv;
-				Pconvc = (voltage_C.Mag() / (voltage_A.Mag() + voltage_B.Mag() + voltage_C.Mag()))*Pconv;
-			}
+			value_Circuit_V[0] = pCircuit_V[0]->get_complex();
+			value_Circuit_V[1] = pCircuit_V[1]->get_complex();
+			value_Circuit_V[2] = pCircuit_V[2]->get_complex();
+		}
 
-			if (Gen_type == INDUCTION)	//TO DO:  Induction gen. Ef not working correctly yet.
+		voltage_A = value_Circuit_V[0];	//Syncs the meter parent to the generator.
+		voltage_B = value_Circuit_V[1];
+		voltage_C = value_Circuit_V[2];
+		double Pconva = 0.0;
+		double Pconvb = 0.0;
+		double Pconvc = 0.0;
+		if((voltage_A.Mag() + voltage_B.Mag() + voltage_C.Mag()) > 1e-9){
+			Pconva = (voltage_A.Mag() / (voltage_A.Mag() + voltage_B.Mag() + voltage_C.Mag()))*Pconv;
+			Pconvb = (voltage_B.Mag() / (voltage_A.Mag() + voltage_B.Mag() + voltage_C.Mag()))*Pconv;
+			Pconvc = (voltage_C.Mag() / (voltage_A.Mag() + voltage_B.Mag() + voltage_C.Mag()))*Pconv;
+		}
+
+		if (Gen_type == INDUCTION)	//TO DO:  Induction gen. Ef not working correctly yet.
+		{
+			Pconva = Pconva/Rated_VA;					//induction generator solved in pu
+			Pconvb = Pconvb/Rated_VA;
+			Pconvc = Pconvc/Rated_VA;
+
+			Vapu = voltage_A/(Rated_V/sqrt(3.0));	
+			Vbpu = voltage_B/(Rated_V/sqrt(3.0));
+			Vcpu = voltage_C/(Rated_V/sqrt(3.0));
+
+			Vrotor_A = Vapu;  
+			Vrotor_B = Vbpu;
+			Vrotor_C = Vcpu;
+
+			complex detTPMat = IndTPMat[1][1]*IndTPMat[0][0] - IndTPMat[1][0]*IndTPMat[0][1];
+
+			if (Pconv > 0)			
 			{
-				Pconva = Pconva/Rated_VA;					//induction generator solved in pu
-				Pconvb = Pconvb/Rated_VA;
-				Pconvc = Pconvc/Rated_VA;
-
-				Vapu = voltage_A/(Rated_V/sqrt(3.0));	
-				Vbpu = voltage_B/(Rated_V/sqrt(3.0));
-				Vcpu = voltage_C/(Rated_V/sqrt(3.0));
-
-				Vrotor_A = Vapu;  
-				Vrotor_B = Vbpu;
-				Vrotor_C = Vcpu;
-
-				complex detTPMat = IndTPMat[1][1]*IndTPMat[0][0] - IndTPMat[1][0]*IndTPMat[0][1];
-
-				if (Pconv > 0)			
+				switch (Gen_mode)	
 				{
-					switch (Gen_mode)	
+				case CONSTANTE:
+					for(k = 0; k < 6; k++) //TODO: convert to a convergence
 					{
-					case CONSTANTE:
-						for(k = 0; k < 6; k++) //TODO: convert to a convergence
-						{
-							Irotor_A = (~((complex(Pconva,0)/Vrotor_A)));
-							Irotor_B = (~((complex(Pconvb,0)/Vrotor_B)));
-							Irotor_C = (~((complex(Pconvc,0)/Vrotor_C)));
+						Irotor_A = (~((complex(Pconva,0)/Vrotor_A)));
+						Irotor_B = (~((complex(Pconvb,0)/Vrotor_B)));
+						Irotor_C = (~((complex(Pconvc,0)/Vrotor_C)));
 
-							Iapu = IndTPMat[1][0]*Vrotor_A + IndTPMat[1][1]*Irotor_A;
-							Ibpu = IndTPMat[1][0]*Vrotor_B + IndTPMat[1][1]*Irotor_B;
-							Icpu = IndTPMat[1][0]*Vrotor_C + IndTPMat[1][1]*Irotor_C;
+						Iapu = IndTPMat[1][0]*Vrotor_A + IndTPMat[1][1]*Irotor_A;
+						Ibpu = IndTPMat[1][0]*Vrotor_B + IndTPMat[1][1]*Irotor_B;
+						Icpu = IndTPMat[1][0]*Vrotor_C + IndTPMat[1][1]*Irotor_C;
 
-							Vrotor_A = complex(1,0)/detTPMat * (IndTPMat[1][1]*Vapu - IndTPMat[0][1]*Iapu);
-							Vrotor_B = complex(1,0)/detTPMat * (IndTPMat[1][1]*Vbpu - IndTPMat[0][1]*Ibpu);
-							Vrotor_C = complex(1,0)/detTPMat * (IndTPMat[1][1]*Vcpu - IndTPMat[0][1]*Icpu);
+						Vrotor_A = complex(1,0)/detTPMat * (IndTPMat[1][1]*Vapu - IndTPMat[0][1]*Iapu);
+						Vrotor_B = complex(1,0)/detTPMat * (IndTPMat[1][1]*Vbpu - IndTPMat[0][1]*Ibpu);
+						Vrotor_C = complex(1,0)/detTPMat * (IndTPMat[1][1]*Vcpu - IndTPMat[0][1]*Icpu);
 
-							Vrotor_A = Vrotor_A * Max_Vrotor / Vrotor_A.Mag();
-							Vrotor_B = Vrotor_B * Max_Vrotor / Vrotor_B.Mag();
-							Vrotor_C = Vrotor_C * Max_Vrotor / Vrotor_C.Mag();
-						}
-						break;
-					case CONSTANTPQ:
-						double last_Ipu = 0;
-						double current_Ipu = 1;
-						unsigned int temp_ind = 1;
-
-						while ( fabs( (last_Ipu-current_Ipu)/current_Ipu) > 0.005 )
-						{
-							last_Ipu = current_Ipu;
-
-							Irotor_A = -(~complex(-Pconva/Vrotor_A.Mag()*cos(Vrotor_A.Arg()),Pconva/Vrotor_A.Mag()*sin(Vrotor_A.Arg())));
-							Irotor_B = -(~complex(-Pconvb/Vrotor_B.Mag()*cos(Vrotor_B.Arg()),Pconvb/Vrotor_B.Mag()*sin(Vrotor_B.Arg())));
-							Irotor_C = -(~complex(-Pconvc/Vrotor_C.Mag()*cos(Vrotor_C.Arg()),Pconvc/Vrotor_C.Mag()*sin(Vrotor_C.Arg())));
-
-							Iapu = IndTPMat[1][0]*Vrotor_A - IndTPMat[1][1]*Irotor_A;
-							Ibpu = IndTPMat[1][0]*Vrotor_B - IndTPMat[1][1]*Irotor_B;
-							Icpu = IndTPMat[1][0]*Vrotor_C - IndTPMat[1][1]*Irotor_C;
-
-							Vrotor_A = complex(1,0)/detTPMat * (IndTPMat[1][1]*Vapu - IndTPMat[0][1]*Iapu);
-							Vrotor_B = complex(1,0)/detTPMat * (IndTPMat[1][1]*Vbpu - IndTPMat[0][1]*Ibpu);
-							Vrotor_C = complex(1,0)/detTPMat * (IndTPMat[1][1]*Vcpu - IndTPMat[0][1]*Icpu);
-
-							current_Ipu = Iapu.Mag() + Ibpu.Mag() + Icpu.Mag();
-
-							temp_ind += 1;
-							if (temp_ind > 100)
-							{
-								OBJECT *obj = OBJECTHDR(this);
-
-								gl_warning("windturb_dg (id:%d,name:%s): internal iteration limit reached, breaking out of loop.  Injected current may not be solved sufficiently.",obj->id,obj->name);
-								/* TROUBLESHOOT
-								This may need some work.  The generator models are solved iteratively by using the system voltage
-								as the boundary condition.  The current model iterates on solving the current injection, but then
-								breaks out if not solved within 100 iterations.  May indicate some issues with the model (i.e.,
-								voltage is incorrectly set on the connection node) or it may indicate poor programming.  Please report
-								if you see this message.
-								*/
-								break;
-							}
-						}
-						break;
+						Vrotor_A = Vrotor_A * Max_Vrotor / Vrotor_A.Mag();
+						Vrotor_B = Vrotor_B * Max_Vrotor / Vrotor_B.Mag();
+						Vrotor_C = Vrotor_C * Max_Vrotor / Vrotor_C.Mag();
 					}
+					break;
+				case CONSTANTPQ:
+					double last_Ipu = 0;
+					double current_Ipu = 1;
+					unsigned int temp_ind = 1;
 
-					// convert current back out of p.u.
-					current_A = Iapu * Rated_VA/(Rated_V/sqrt(3.0));	
-					current_B = Ibpu * Rated_VA/(Rated_V/sqrt(3.0));	
-					current_C = Icpu * Rated_VA/(Rated_V/sqrt(3.0));
+					while ( fabs( (last_Ipu-current_Ipu)/current_Ipu) > 0.005 )
+					{
+						last_Ipu = current_Ipu;
+
+						Irotor_A = -(~complex(-Pconva/Vrotor_A.Mag()*cos(Vrotor_A.Arg()),Pconva/Vrotor_A.Mag()*sin(Vrotor_A.Arg())));
+						Irotor_B = -(~complex(-Pconvb/Vrotor_B.Mag()*cos(Vrotor_B.Arg()),Pconvb/Vrotor_B.Mag()*sin(Vrotor_B.Arg())));
+						Irotor_C = -(~complex(-Pconvc/Vrotor_C.Mag()*cos(Vrotor_C.Arg()),Pconvc/Vrotor_C.Mag()*sin(Vrotor_C.Arg())));
+
+						Iapu = IndTPMat[1][0]*Vrotor_A - IndTPMat[1][1]*Irotor_A;
+						Ibpu = IndTPMat[1][0]*Vrotor_B - IndTPMat[1][1]*Irotor_B;
+						Icpu = IndTPMat[1][0]*Vrotor_C - IndTPMat[1][1]*Irotor_C;
+
+						Vrotor_A = complex(1,0)/detTPMat * (IndTPMat[1][1]*Vapu - IndTPMat[0][1]*Iapu);
+						Vrotor_B = complex(1,0)/detTPMat * (IndTPMat[1][1]*Vbpu - IndTPMat[0][1]*Ibpu);
+						Vrotor_C = complex(1,0)/detTPMat * (IndTPMat[1][1]*Vcpu - IndTPMat[0][1]*Icpu);
+
+						current_Ipu = Iapu.Mag() + Ibpu.Mag() + Icpu.Mag();
+
+						temp_ind += 1;
+						if (temp_ind > 100)
+						{
+							OBJECT *obj = OBJECTHDR(this);
+
+							gl_warning("windturb_dg (id:%d,name:%s): internal iteration limit reached, breaking out of loop.  Injected current may not be solved sufficiently.",obj->id,obj->name);
+							/* TROUBLESHOOT
+							This may need some work.  The generator models are solved iteratively by using the system voltage
+							as the boundary condition.  The current model iterates on solving the current injection, but then
+							breaks out if not solved within 100 iterations.  May indicate some issues with the model (i.e.,
+							voltage is incorrectly set on the connection node) or it may indicate poor programming.  Please report
+							if you see this message.
+							*/
+							break;
+						}
+					}
+					break;
 				}
-				else // Generator is offline
-				{
-					current_A = 0;	
-					current_B = 0;	
-					current_C = 0;
-				}
+
+				// convert current back out of p.u.
+				current_A = Iapu * Rated_VA/(Rated_V/sqrt(3.0));	
+				current_B = Ibpu * Rated_VA/(Rated_V/sqrt(3.0));	
+				current_C = Icpu * Rated_VA/(Rated_V/sqrt(3.0));
 			}
+			else // Generator is offline
+			{
+				current_A = 0;	
+				current_B = 0;	
+				current_C = 0;
+			}
+		}
 
-			else if (Gen_type == SYNCHRONOUS)			//synch gen is NOT solved in pu
-			{											//sg ef mode is not working yet
-				double Mxef, Mnef, PoutA, PoutB, PoutC, QoutA, QoutB, QoutC;
-				complex SoutA, SoutB, SoutC;
-				complex lossesA, lossesB, lossesC;
+		else if (Gen_type == SYNCHRONOUS)			//synch gen is NOT solved in pu
+		{											//sg ef mode is not working yet
+			double Mxef, Mnef, PoutA, PoutB, PoutC, QoutA, QoutB, QoutC;
+			complex SoutA, SoutB, SoutC;
+			complex lossesA, lossesB, lossesC;
 
-				Mxef = Max_Ef * Rated_V/sqrt(3.0);
-				Mnef = Min_Ef * Rated_V/sqrt(3.0);
+			Mxef = Max_Ef * Rated_V/sqrt(3.0);
+			Mnef = Min_Ef * Rated_V/sqrt(3.0);
 
-				//TODO: convert to a convergence
-				if (Gen_mode == CONSTANTE)	//Ef is controllable to give a needed power output.
-				{
-					current_A = invAMx[0][0]*(voltage_A - EfA) + invAMx[0][1]*(voltage_B - EfB) + invAMx[0][2]*(voltage_C - EfC);
-					current_B = invAMx[1][0]*(voltage_A - EfA) + invAMx[1][1]*(voltage_B - EfB) + invAMx[1][2]*(voltage_C - EfC);
-					current_C = invAMx[2][0]*(voltage_A - EfA) + invAMx[2][1]*(voltage_B - EfB) + invAMx[2][2]*(voltage_C - EfC);
+			//TODO: convert to a convergence
+			if (Gen_mode == CONSTANTE)	//Ef is controllable to give a needed power output.
+			{
+				current_A = invAMx[0][0]*(voltage_A - EfA) + invAMx[0][1]*(voltage_B - EfB) + invAMx[0][2]*(voltage_C - EfC);
+				current_B = invAMx[1][0]*(voltage_A - EfA) + invAMx[1][1]*(voltage_B - EfB) + invAMx[1][2]*(voltage_C - EfC);
+				current_C = invAMx[2][0]*(voltage_A - EfA) + invAMx[2][1]*(voltage_B - EfB) + invAMx[2][2]*(voltage_C - EfC);
 
-					SoutA = -voltage_A * (~(current_A));  //TO DO:  unbalanced
-					SoutB = -voltage_B * (~(current_B));
-					SoutC = -voltage_C * (~(current_C));
+				SoutA = -voltage_A * (~(current_A));  //TO DO:  unbalanced
+				SoutB = -voltage_B * (~(current_B));
+				SoutC = -voltage_C * (~(current_C));
 
+			}
+			//Gives a constant output power of real power converted Pout,then Qout is found through a controllable power factor.
+			else if (Gen_mode == CONSTANTP)	
+			{	
+				//If air density increases, power extracted can be much greater than the default specifications - cap it.								
+				if (Pconva > 1.025*Max_P/3) {
+					Pconva = 1.025*Max_P/3;		
+				}								
+				if (Pconvb > 1.025*Max_P/3) {
+					Pconvb = 1.025*Max_P/3;
 				}
-				//Gives a constant output power of real power converted Pout,then Qout is found through a controllable power factor.
-				else if (Gen_mode == CONSTANTP)	
-				{	
-					//If air density increases, power extracted can be much greater than the default specifications - cap it.								
-					if (Pconva > 1.025*Max_P/3) {
-						Pconva = 1.025*Max_P/3;		
-					}								
-					if (Pconvb > 1.025*Max_P/3) {
-						Pconvb = 1.025*Max_P/3;
-					}
-					if (Pconvc > 1.025*Max_P/3) {
-						Pconvc = 1.025*Max_P/3;
-					}
-					if(voltage_A.Mag() > 0.0){
-						current_A = -(~(complex(Pconva,Pconva*tan(acos(pf)))/voltage_A));
-					} else {
-						current_A = complex(0.0,0.0);
-					}
-					if(voltage_B.Mag() > 0.0){
-						current_B = -(~(complex(Pconvb,Pconvb*tan(acos(pf)))/voltage_B));
-					} else {
-						current_B = complex(0.0,0.0);
-					}
-					if(voltage_B.Mag() > 0.0){
-						current_C = -(~(complex(Pconvc,Pconvc*tan(acos(pf)))/voltage_C));
-					} else {
-						current_C = complex(0.0,0.0);
-					}
+				if (Pconvc > 1.025*Max_P/3) {
+					Pconvc = 1.025*Max_P/3;
+				}
+				if(voltage_A.Mag() > 0.0){
+					current_A = -(~(complex(Pconva,Pconva*tan(acos(pf)))/voltage_A));
+				} else {
+					current_A = complex(0.0,0.0);
+				}
+				if(voltage_B.Mag() > 0.0){
+					current_B = -(~(complex(Pconvb,Pconvb*tan(acos(pf)))/voltage_B));
+				} else {
+					current_B = complex(0.0,0.0);
+				}
+				if(voltage_B.Mag() > 0.0){
+					current_C = -(~(complex(Pconvc,Pconvc*tan(acos(pf)))/voltage_C));
+				} else {
+					current_C = complex(0.0,0.0);
+				}
 
-					if (Pconv > 0)
+				if (Pconv > 0)
+				{
+					double last_current = 0;
+					double current_current = current_A.Mag() + current_B.Mag() + current_C.Mag();
+					unsigned int temp_count = 1;
+					
+					while ( fabs( (last_current-current_current)/current_current) > 0.005 )
 					{
-						double last_current = 0;
-						double current_current = current_A.Mag() + current_B.Mag() + current_C.Mag();
-						unsigned int temp_count = 1;
-						
-						while ( fabs( (last_current-current_current)/current_current) > 0.005 )
-						{
-							last_current = current_current;
+						last_current = current_current;
 
-							PoutA = Pconva - current_A.Mag()*current_A.Mag()*(AMx[0][0] - AMx[0][1]).Re();
-							PoutB = Pconvb - current_B.Mag()*current_B.Mag()*(AMx[1][1] - AMx[0][1]).Re();
-							PoutC = Pconvc - current_C.Mag()*current_C.Mag()*(AMx[2][2] - AMx[0][1]).Re();
+						PoutA = Pconva - current_A.Mag()*current_A.Mag()*(AMx[0][0] - AMx[0][1]).Re();
+						PoutB = Pconvb - current_B.Mag()*current_B.Mag()*(AMx[1][1] - AMx[0][1]).Re();
+						PoutC = Pconvc - current_C.Mag()*current_C.Mag()*(AMx[2][2] - AMx[0][1]).Re();
 
-							QoutA = pf/fabs(pf)*PoutA*sin(acos(pf));
-							QoutB = pf/fabs(pf)*PoutB*sin(acos(pf));
-							QoutC = pf/fabs(pf)*PoutC*sin(acos(pf));
-							if(voltage_A.Mag() > 0.0){
-								current_A = -(~(complex(PoutA,QoutA)/voltage_A));
-							} else {
-								current_A = complex(0.0,0.0);
-							}
-							if(voltage_B.Mag() > 0.0){
-							current_B = -(~(complex(PoutB,QoutB)/voltage_B));
-							} else {
-								current_B = complex(0.0,0.0);
-							}
-							if(voltage_C.Mag() > 0.0){
-							current_C = -(~(complex(PoutC,QoutC)/voltage_C));
-							} else {
-								current_C = complex(0.0,0.0);
-							}
-
-							current_current = current_A.Mag() + current_B.Mag() + current_C.Mag();
-
-							temp_count += 1;
-
-							if ( temp_count > 100 )
-							{
-								OBJECT *obj = OBJECTHDR(this);
-
-								gl_warning("windturb_dg (id:%d,name:%s): internal iteration limit reached, breaking out of loop.  Injected current may not be solved sufficiently.",obj->id,obj->name);
-								/* TROUBLESHOOT
-								This may need some work.  The generator models are solved iteratively by using the system voltage
-								as the boundary condition.  The current model iterates on solving the current injection, but then
-								breaks out if not solved within 100 iterations.  May indicate some issues with the model (i.e.,
-								voltage is incorrectly set on the connection node) or it may indicate poor programming.  Please report
-								if you see this message.
-								*/
-								break;
-							}
+						QoutA = pf/fabs(pf)*PoutA*sin(acos(pf));
+						QoutB = pf/fabs(pf)*PoutB*sin(acos(pf));
+						QoutC = pf/fabs(pf)*PoutC*sin(acos(pf));
+						if(voltage_A.Mag() > 0.0){
+							current_A = -(~(complex(PoutA,QoutA)/voltage_A));
+						} else {
+							current_A = complex(0.0,0.0);
 						}
-						gl_debug("windturb_dg iteration count = %d",temp_count);
-					}
-					else
-					{
-						current_A = 0;
-						current_B = 0;
-						current_C = 0;
-					}
+						if(voltage_B.Mag() > 0.0){
+						current_B = -(~(complex(PoutB,QoutB)/voltage_B));
+						} else {
+							current_B = complex(0.0,0.0);
+						}
+						if(voltage_C.Mag() > 0.0){
+						current_C = -(~(complex(PoutC,QoutC)/voltage_C));
+						} else {
+							current_C = complex(0.0,0.0);
+						}
 
-					EfA = voltage_A - (AMx[0][0] - AMx[0][1])*current_A - AMx[0][2]*(current_A + current_B + current_C);
-					EfB = voltage_B - (AMx[1][1] - AMx[1][0])*current_A - AMx[1][2]*(current_A + current_B + current_C);
-					EfC = voltage_C - (AMx[2][2] - AMx[2][0])*current_A - AMx[2][1]*(current_A + current_B + current_C);
+						current_current = current_A.Mag() + current_B.Mag() + current_C.Mag();
+
+						temp_count += 1;
+
+						if ( temp_count > 100 )
+						{
+							OBJECT *obj = OBJECTHDR(this);
+
+							gl_warning("windturb_dg (id:%d,name:%s): internal iteration limit reached, breaking out of loop.  Injected current may not be solved sufficiently.",obj->id,obj->name);
+							/* TROUBLESHOOT
+							This may need some work.  The generator models are solved iteratively by using the system voltage
+							as the boundary condition.  The current model iterates on solving the current injection, but then
+							breaks out if not solved within 100 iterations.  May indicate some issues with the model (i.e.,
+							voltage is incorrectly set on the connection node) or it may indicate poor programming.  Please report
+							if you see this message.
+							*/
+							break;
+						}
+					}
+					gl_debug("windturb_dg iteration count = %d",temp_count);
 				}
 				else
-					GL_THROW("Unknown generator mode");
+				{
+					current_A = 0;
+					current_B = 0;
+					current_C = 0;
+				}
+
+				EfA = voltage_A - (AMx[0][0] - AMx[0][1])*current_A - AMx[0][2]*(current_A + current_B + current_C);
+				EfB = voltage_B - (AMx[1][1] - AMx[1][0])*current_A - AMx[1][2]*(current_A + current_B + current_C);
+				EfC = voltage_C - (AMx[2][2] - AMx[2][0])*current_A - AMx[2][1]*(current_A + current_B + current_C);
 			}
-
-			//sum up and finalize everything for output
-			double PowerA, PowerB, PowerC, QA, QB, QC;
-
-			PowerA = -voltage_A.Mag()*current_A.Mag()*cos(voltage_A.Arg() - current_A.Arg());
-			PowerB = -voltage_B.Mag()*current_B.Mag()*cos(voltage_B.Arg() - current_B.Arg());
-			PowerC = -voltage_C.Mag()*current_C.Mag()*cos(voltage_C.Arg() - current_C.Arg());
-
-			QA = -voltage_A.Mag()*current_A.Mag()*sin(voltage_A.Arg() - current_A.Arg());
-			QB = -voltage_B.Mag()*current_B.Mag()*sin(voltage_B.Arg() - current_B.Arg());
-			QC = -voltage_C.Mag()*current_C.Mag()*sin(voltage_C.Arg() - current_C.Arg());
-
-			power_A = complex(PowerA,QA);
-			power_B = complex(PowerB,QB);
-			power_C = complex(PowerC,QC);
-
-			TotalRealPow = PowerA + PowerB + PowerC;
-			TotalReacPow = QA + QB + QC;
-
-			GenElecEff = TotalRealPow/Pconv * 100;
-
-			Wind_Speed = WSadj;
-			
-			complex testCurrent;
-			testCurrent = pLine_I[0];
-			complex *testCurrentPointer;
-			testCurrentPointer = pLine_I;
-
-			pLine_I[0] += current_A;
-			pLine_I[1] += current_B;
-			pLine_I[2] += current_C;
+			else
+				GL_THROW("Unknown generator mode");
 		}
-		// Generator is offline
-		else 
+
+		//sum up and finalize everything for output
+		double PowerA, PowerB, PowerC, QA, QB, QC;
+
+		PowerA = -voltage_A.Mag()*current_A.Mag()*cos(voltage_A.Arg() - current_A.Arg());
+		PowerB = -voltage_B.Mag()*current_B.Mag()*cos(voltage_B.Arg() - current_B.Arg());
+		PowerC = -voltage_C.Mag()*current_C.Mag()*cos(voltage_C.Arg() - current_C.Arg());
+
+		QA = -voltage_A.Mag()*current_A.Mag()*sin(voltage_A.Arg() - current_A.Arg());
+		QB = -voltage_B.Mag()*current_B.Mag()*sin(voltage_B.Arg() - current_B.Arg());
+		QC = -voltage_C.Mag()*current_C.Mag()*sin(voltage_C.Arg() - current_C.Arg());
+
+		power_A = complex(PowerA,QA);
+		power_B = complex(PowerB,QB);
+		power_C = complex(PowerC,QC);
+
+		TotalRealPow = PowerA + PowerB + PowerC;
+		TotalReacPow = QA + QB + QC;
+
+		GenElecEff = TotalRealPow/Pconv * 100;
+
+		Wind_Speed = WSadj;
+		
+		//Update values
+		value_Line_I[0] = current_A;
+		value_Line_I[1] = current_B;
+		value_Line_I[2] = current_C;
+
+		//Powerflow post-it
+		if (parent_is_valid == true)
 		{
-			current_A = 0;
-			current_B = 0;
-			current_C = 0;
-
-			power_A = complex(0,0);
-			power_B = complex(0,0);
-			power_C = complex(0,0);
+			push_complex_powerflow_values();
 		}
-	//}
+	}
+	// Generator is offline
+	else 
+	{
+		current_A = 0;
+		current_B = 0;
+		current_C = 0;
+
+		power_A = complex(0,0);
+		power_B = complex(0,0);
+		power_C = complex(0,0);
+	}
 
 	// Double check to make sure it is actually converged to a steady answer
 	//   Mostly applies to NR mode to make sure terminal voltage has converged enough
@@ -1156,33 +1133,87 @@ TIMESTAMP windturb_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	TIMESTAMP t2 = TS_NEVER;
 	// Handling for NR || FBS
-	//if ( *NR_mode == true || ( *NR_mode == false && last_NR_mode == false )) 
-	//{
-		//Remove our parent contributions (so XMLs look proper)
-		pLine_I[0] -= current_A;
-		pLine_I[1] -= current_B;
-		pLine_I[2] -= current_C;
-	//}
 
-	//last_NR_mode = *NR_mode;
+	//Remove our parent contributions (so XMLs look proper)
+	value_Line_I[0] = -current_A;
+	value_Line_I[1] = -current_B;
+	value_Line_I[2] = -current_C;
+
+	//Push up the powerflow interface
+	if (parent_is_valid == true)
+	{
+		push_complex_powerflow_values();
+	}
 
 	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
 }
 
-bool *windturb_dg::get_bool(OBJECT *obj, char *name)
+//Map Complex value
+gld_property *windturb_dg::map_complex_value(OBJECT *obj, char *name)
 {
-	PROPERTY *p = gl_get_property(obj,name);
-	if (p==NULL || p->ptype!=PT_bool)
-		return NULL;
-	return (bool*)GETADDR(obj,p);
+	gld_property *pQuantity;
+	OBJECT *objhdr = OBJECTHDR(this);
+
+	//Map to the property of interest
+	pQuantity = new gld_property(obj,name);
+
+	//Make sure it worked
+	if ((pQuantity->is_valid() != true) || (pQuantity->is_complex() != true))
+	{
+		GL_THROW("windturb_dg:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to map a quantity from another object, an error occurred in windturb_dg.  Please try again.
+		If the error persists, please submit your system and a bug report via the ticketing system.
+		*/
+	}
+
+	//return the pointer
+	return pQuantity;
 }
 
-complex *windturb_dg::get_complex(OBJECT *obj, char *name)
+//Map double value
+gld_property *windturb_dg::map_double_value(OBJECT *obj, char *name)
 {
-	PROPERTY *p = gl_get_property(obj,name);
-	if (p==NULL || p->ptype!=PT_complex)
-		return NULL;
-	return (complex*)GETADDR(obj,p);
+	gld_property *pQuantity;
+	OBJECT *objhdr = OBJECTHDR(this);
+
+	//Map to the property of interest
+	pQuantity = new gld_property(obj,name);
+
+	//Make sure it worked
+	if ((pQuantity->is_valid() != true) || (pQuantity->is_double() != true))
+	{
+		GL_THROW("windturb_dg:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to map a quantity from another object, an error occurred in windturb_dg.  Please try again.
+		If the error persists, please submit your system and a bug report via the ticketing system.
+		*/
+	}
+
+	//return the pointer
+	return pQuantity;
+}
+
+//Function to push up all changes of complex properties to powerflow from local variables
+void windturb_dg::push_complex_powerflow_values(void)
+{
+	complex temp_complex_val;
+	gld_wlock *test_rlock;
+	int indexval;
+
+	//Loop through the three-phases/accumulators
+	for (indexval=0; indexval<3; indexval++)
+	{
+		//**** Current value ***/
+		//Pull current value again, just in case
+		temp_complex_val = pLine_I[indexval]->get_complex();
+
+		//Add the difference
+		temp_complex_val += value_Line_I[indexval];
+
+		//Push it back up
+		pLine_I[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////

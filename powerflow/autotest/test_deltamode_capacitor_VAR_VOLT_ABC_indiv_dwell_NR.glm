@@ -1,0 +1,217 @@
+// $id$
+// $id$
+// Duplicates test_capacitor_VAR_VOLT_ABC_indiv_dwell_NR, but forces
+// it to do this in deltamode, as a way to test that functionality
+// Does so via a "useless player"
+//
+// 4 Node Feeder: Balanced step-up delta-grY
+// Capacitor attached to end load
+// Individual CAP VAR control - delta on a delta
+
+clock {
+	timezone EST+5EDT;
+	timestamp '2000-01-01 0:00:00';
+	stoptime '2000-01-01 0:00:58';
+}
+
+//Order matters for deltamode
+module assert;
+module tape;
+
+//Enable deltamode
+module powerflow {
+	enable_subsecond_models true;
+	deltamode_timestep 10.0 ms;
+	all_powerflow_delta true;
+	solver_method NR;
+}
+
+object overhead_line_conductor {
+	name cond100;
+	geometric_mean_radius 0.0244;
+	resistance 0.306;
+}
+
+object overhead_line_conductor {
+	name cond101;
+	geometric_mean_radius 0.00814;
+	resistance 0.592;
+}
+
+object line_spacing {
+	name line_spac200;
+	distance_AB 2.5;
+	distance_BC 4.5;
+	distance_AC 7.0;
+	distance_AN 5.656854;
+	distance_BN 4.272002;
+	distance_CN 5.0;
+}
+
+object line_configuration {
+	name line_conf_300;
+	conductor_A cond100;
+	conductor_B cond100;
+	conductor_C cond100;
+	conductor_N cond101;
+	spacing line_spac200;
+}
+
+object transformer_configuration {
+	name trans_conf400;
+	connect_type DELTA_GWYE;
+	install_type VAULT;
+	power_rating 6000;
+	primary_voltage 12470;
+	secondary_voltage 24900;
+	resistance 0.05;
+	reactance 0.06;
+}
+
+object node {
+	name node1;
+	bustype SWING;
+	phases "ABCD";
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7200;
+}
+
+object overhead_line {
+	phases "ABCD";
+	from node1;
+	to node2;
+	length 2000;
+	configuration line_conf_300;
+}
+
+object node {
+	name node2;
+	phases "ABCD";
+	nominal_voltage 7200;
+}
+
+object transformer {
+	name xformer;
+	phases "ABC";
+	from node2;
+	to node3;
+	configuration trans_conf400;
+}
+
+object node {
+	name node3;
+	phases "ABCN";
+	nominal_voltage 14377;	
+}
+
+object overhead_line {
+	name link34;
+	phases "ABCN";
+	from node3;
+	to load4;
+	length 2500;
+	configuration line_conf_300;
+}
+
+object load {
+	phases "ABCN";
+	name load4;
+	constant_power_A +0.000+0.0j;
+	constant_power_B +0.000+0.0j;
+	constant_power_C +0.000+0.0j;
+	maximum_voltage_error 0.001;
+	nominal_voltage 14377;
+	object player {
+		flags DELTAMODE;
+		property constant_power_A;
+		file ../loader_fastA.player;
+	};
+	object player {
+		flags DELTAMODE;
+		property constant_power_B;
+		file ../loader_fastB.player;
+	};
+	object player {
+		flags DELTAMODE;
+		property constant_power_C;
+		file ../loader_fastC.player;
+	};
+	object player {
+		flags DELTAMODE;
+		name uselessdeltatrigger;
+		property nominal_voltage;
+		file ../data_cap_deltamode_trigger.player;
+	};
+	object complex_assert {
+		flags DELTAMODE;
+		target "voltage_A";
+		within 0.1;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file ../cap_volt_A_indiv_VOLTVAR_dwell.player;
+			};
+	};
+	object complex_assert {
+		flags DELTAMODE;
+		target "voltage_B";
+		within 0.1;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file ../cap_volt_B_indiv_VOLTVAR_dwell.player;
+			};
+	};
+	object complex_assert {
+		flags DELTAMODE;
+		target "voltage_C";
+		within 0.1;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file ../cap_volt_C_indiv_VOLTVAR_dwell.player;
+			};
+	};
+	// object recorder {
+		// flags DELTAMODE;
+		// property "voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag";
+		// interval -1;
+		// file voltagerecorder_out.csv;
+	// };
+}
+
+object capacitor {
+	phases ABC;				
+	name CAP2;
+	pt_phase ABC;				
+	parent load4;
+	remote_sense link34;
+	phases_connected ABC;		
+	control VARVOLT;
+	VAr_set_high 60000.0;
+	VAr_set_low 50000.0;
+	voltage_set_low 14260.0;
+	voltage_set_high 14270.0;
+	capacitor_A 10.0 kVAr;
+	capacitor_B 10.0 kVAr;
+	capacitor_C 10.0 kVAr;
+	control_level INDIVIDUAL;
+	switchA OPEN;
+	switchB OPEN;
+	switchC OPEN;
+	time_delay 4.0;
+	lockout_time 5.0;
+	dwell_time 3.0;
+	cap_nominal_voltage 14000;
+	nominal_voltage 14377;
+	// object recorder {
+		// flags DELTAMODE;
+		// property "switchA,switchB,switchC";
+		// interval -1;
+		// file "cap_status_out.csv";
+	// };
+}
+
+

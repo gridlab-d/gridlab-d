@@ -1,9 +1,6 @@
-// $Id: test_diesel_dg.glm 4738 2014-07-03 00:55:39Z dchassin $
-//	Copyright (C) 2009 Battelle Memorial Institute
+// $Id: test_diesel_dg.glm
 
-#set profiler=1
-//#set threadcount=1;
-#set relax_naming_rules=1
+//#set profiler=1
 
 clock {
 	timezone EST+5EDT;
@@ -11,176 +8,99 @@ clock {
 	stoptime '2010-01-28 0:00:00';
 }
 
-module powerflow;
-module generators;
-module tape;
-module assert;
 module powerflow{
 	solver_method NR;
-	//acceleration_factor 1.4;
 	default_maximum_voltage_error 1e-9;
 }
 
+module generators;
+//module tape;
+module assert;
+
+
 
 // Create node objects
- 
-object meter:671 {
-     name 671;
-     phases "ABCN";
-     voltage_A 2401.7771;
-     voltage_B -1200.8886-2080.000j;
-     voltage_C -1200.8886+2080.000j;
-     nominal_voltage 2401.7771;
-     bustype SWING;
-	    object recorder {
-		property measured_power;
-		file "m_671.csv";
-		interval 3600;
-		limit 10000;
-          };
-        
+object meter {
+	name meter671;
+	phases "ABCN";
+	nominal_voltage 2401.7771;
+	bustype SWING;
+	object complex_assert {
+		value -479.669-235.478j;
+		target measured_power;
+		within 0.01;
+	};
+	// object recorder {
+		// property "measured_power.real,measured_power.imag";
+		// interval -1;
+		// file testout.csv;
+	// };
 }
 
-   object transformer_configuration {               
-         name IEEE13_SPCT_CONFIG;                
-         connect_type SINGLE_PHASE_CENTER_TAPPED;               
-         install_type PADMOUNT;                
-         primary_voltage 2401.7771 V;               
-         secondary_voltage 124 V;               
-         power_rating 25.0;                //KVA rating
-         impedance 0.01924+0.08658j;                
-         shunt_impedance 409.8361+1844.2624j;                
-    
-   }   
-   
-   object triplex_line_conductor {               
-         name IEEE13-1/0 AA triplex;              
-         resistance 0.97;                
-         geometric_mean_radius 0.0111;                
-      
-   }   
-   
-   object triplex_line_configuration {               
-         name IEEE13_TLCFG;                
-         conductor_1 IEEE13-1/0 AA triplex;              
-         conductor_2 IEEE13-1/0 AA triplex;              
-         conductor_N IEEE13-1/0 AA triplex;              
-         insulation_thickness 0.08;                
-         diameter 0.368;                
-       
-   } 
+object transformer_configuration {               
+	name IEEE13_SPCT_CONFIG;                
+	connect_type SINGLE_PHASE_CENTER_TAPPED;               
+	install_type PADMOUNT;                
+	primary_voltage 2401.7771 V;               
+	secondary_voltage 124 V;               
+	power_rating 25.0;                //KVA rating
+	impedance 0.01924+0.08658j;                
+	shunt_impedance 409.8361+1844.2624j;                
+}   
 
-   object transformer {
-          name IEEE13_SPCT_1;
-          phases AS;
-          from 671;
-          to IEEE13_671_tn;
-          configuration IEEE13_SPCT_CONFIG;
+object triplex_line_conductor {               
+	name IEEE13-1/0 AA triplex;              
+	resistance 0.97;                
+	geometric_mean_radius 0.0111;                
+}   
 
-   }
+object triplex_line_configuration {               
+	name IEEE13_TLCFG;                
+	conductor_1 IEEE13-1/0 AA triplex;              
+	conductor_2 IEEE13-1/0 AA triplex;              
+	conductor_N IEEE13-1/0 AA triplex;              
+	insulation_thickness 0.08;                
+	diameter 0.368;                
+} 
 
-   object triplex_node {
-          name IEEE13_671_tn;
-          phases AS;
-          nominal_voltage 124;
-	  
-   }
+object transformer {
+	name IEEE13_SPCT_1;
+	phases AS;
+	from meter671;
+	to IEEE13_671_tn;
+	configuration IEEE13_SPCT_CONFIG;
+}
 
-   object triplex_line {
-          name 671_TL;
-          phases AS;
-          from IEEE13_671_tn;
-          to IEEE13_671_A_tm;
-          length 10.00;
-          configuration IEEE13_TLCFG;
- 
-   }
+object triplex_node {
+	name IEEE13_671_tn;
+	phases AS;
+	nominal_voltage 124;
+}
 
-   object triplex_meter {
-          name IEEE13_671_A_tm;
-          phases AS;
-          nominal_voltage 124;
+object triplex_line {
+	name tplex_671_TL;
+	phases AS;
+	from IEEE13_671_tn;
+	to IEEE13_671_A_tm;
+	length 10.00;
+	configuration IEEE13_TLCFG;
+}
 
-   }
-
+object triplex_meter {
+	name IEEE13_671_A_tm;
+	phases AS;
+	nominal_voltage 124;
+}
 	
-	
-     object diesel_dg {
-     
-	       name IEEE13_diesel_dg_1_671_tm;
-	       
-	       parent 671; 
-	       
-	       Gen_mode CONSTANTPQ;
-	       
-	       Gen_status ONLINE;
-	       
-	       Gen_type SYNCHRONOUS;
-	       
-	       phases AS;
-	       
-	       pf 1.0;
-	       
-	       cylinders 1;
-	       	       		 
-	       stroke 2;
-	       
-	       pressure 3;
-	       
-               speed 360 1/min;       		 
-	       		
-	       torque 680 N;
-	       	
-	       time_operation 20 min;
-	       	
-	       fuel 1.56 kg;
-	       		
-	       w_coolingwater 160 kg;
-	       
-	       inlet_temperature 32 degC;
-	       		 
-	       outlet_temperature 57 degC;
-	       		 
-	       air_fuel 30 kg;
-	       		 
-	       room_temperature 27 degC;
-	       		 
-	       exhaust_temperature 310 degC;		 
-	       		 
-	       cylinder_length 0.29 m;
-	       		 
-	       cylinder_radius 0.21 m;
-	       		 
-	       brake_diameter 1 m;
-	       	 
-	       calotific_fuel 44000 kJ/kg;
-	       		 
-	       steam_exhaust 1.3 kg;
-	       		 
-	       specific_heat_steam 2.093 kJ/kg/K;
-	       		 
-	       specific_heat_dry 1.01 kJ/kg/K;
-	       
-	       
-	       	object double_assert {
-	       		target "brake_hp";
-	       		within 0.1;
-	       		object player {
-	       			property value;
-	       			file ../diesel_brake_hp.player;
-	       			};
-		};
-	              	       
-	       
-	       object recorder {
-	       
-		 	        file diesel_dg_out.csv;
-		   	       	interval 3600;
-		   	       	limit 24;
-		   	       	property brake_hp, TotalRealPow, TotalReacPow;
-	     		 };
-	             
-	      }
+object diesel_dg {
+	name Imadiesel;
+	parent meter671;
+	phases AS;
+	Gen_type CONSTANT_PQ;
+	Rated_VA 5.0 kVA;
+	power_out_A 250.0+120.0j;	//1
+	power_out_B 250.0+120.0j;	//2
+  }
        
     
 	

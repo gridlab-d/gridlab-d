@@ -1,12 +1,22 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
 
-#include "pcsp_defs.h"
+All rights reserved. 
 
-int
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
+
+#include "slu_mt_cdefs.h"
+
+int_t
 pcgstrf_snode_bmod(
-		   const int  pnum,   /* process number */
-		   const int  jcol,   /* in - current column in the s-node */
-		   const int  jsupno, /* in */
-		   const int  fsupc,  /* in - first column in the s-node */
+		   const int_t  pnum,   /* process number */
+		   const int_t  jcol,   /* in - current column in the s-node */
+		   const int_t  jsupno, /* in */
+		   const int_t  fsupc,  /* in - first column in the s-node */
 		   complex     *dense, /* in */
 		   complex     *tempv, /* working array */
 		   GlobalLU_t *Glu,   /* modified */
@@ -34,11 +44,12 @@ pcgstrf_snode_bmod(
     complex         alpha = none, beta = one;
 #endif
     
-    int            luptr, nsupc, nsupr, nrow;
-    int            isub, irow, i, iptr; 
-    register int   ufirst, nextlu;
+    int_t            luptr;
+    int              nsupc, nsupr, nrow;
+    int_t            isub, irow, i, iptr; 
+    register int_t   ufirst, nextlu;
     complex         *lusup;
-    int            *lsub, *xlsub, *xlsub_end, *xlusup, *xlusup_end;
+    int_t            *lsub, *xlsub, *xlsub_end, *xlusup, *xlusup_end;
     register float flopcnt;
 
     lsub       = Glu->lsub;
@@ -71,7 +82,6 @@ pcgstrf_snode_bmod(
 				   jcol in supernode L\U(jsupno). */
 	nrow = nsupr - nsupc;
 	
-	flopcnt = nsupc * (nsupc - 1) + 2 * nrow * nsupc; //sj
 	Gstat->procstat[pnum].fcops += flopcnt;
 
 /*	ops[TRSV] += nsupc * (nsupc - 1);

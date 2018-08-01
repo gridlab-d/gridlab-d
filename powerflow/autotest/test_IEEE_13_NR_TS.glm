@@ -17,7 +17,7 @@ module assert;
 
 object voltdump {
     filename IEEE_13_NR_TS_voltage.csv;
-	mode polar;
+	mode POLAR;
 }
 
 // Phase Conductor for 601: 556,500 26/7 ACSR

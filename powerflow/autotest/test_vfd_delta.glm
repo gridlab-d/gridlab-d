@@ -1,0 +1,567 @@
+//Modified file for VFD testing
+
+clock {
+	timezone PST+8PDT;
+	starttime '2017-03-28 00:00:00';
+	stoptime '2017-03-28 00:01:36';
+}
+
+//#set pauseatexit=1
+//#set profiler=1
+
+//Deltamode declarations - global values
+#set deltamode_maximumtime=5000000000000	//2 minutes
+#set deltamode_iteration_limit=10		//Iteration limit
+
+
+module tape;
+module powerflow {
+    solver_method NR;
+	enable_subsecond_models true;
+	all_powerflow_delta true;
+	deltamode_timestep 10 ms;
+}; 
+module assert;
+object overhead_line_conductor{
+	name olc100;
+	geometric_mean_radius 0.0244;
+	resistance 0.306;
+}
+
+object overhead_line_conductor {
+	name olc101;
+	geometric_mean_radius 0.00814;
+	resistance 0.592;
+}
+
+object line_spacing {
+	name ls200;
+	distance_AB 2.5;
+	distance_BC 4.5;
+	distance_AC 7.0;
+	distance_AN 5.656854;
+	distance_BN 4.272002;
+	distance_CN 5.0;
+}
+
+object line_configuration {
+	name lc300;
+	conductor_A olc100;
+	conductor_B olc100;
+	conductor_C olc100;
+	conductor_N olc101;
+	spacing ls200;
+}
+
+object line_configuration {
+	name lc312;
+	z11 0.152+0.535j;
+	z12 0.036+0.323j;
+	z13 0.036+0.275j;
+	z21 0.036+0.323j;
+	z22 0.152+0.535j;
+	z23 0.036+0.296j;
+	z31 0.036+0.275j;
+	z32 0.036+0.296j;
+	z33 0.152+0.535j;
+}
+
+object line_configuration {
+	name lc323;
+	z11 0.266+0.937j;
+	z12 0.063+0.564j;
+	z13 0.063+0.482j;
+	z21 0.063+0.564j;
+	z22 0.266+0.937j;
+	z23 0.063+0.517j;
+	z31 0.063+0.482j;
+	z32 0.063+0.517j;
+	z33 0.266+0.937j;
+}
+
+object line_configuration {
+	name lc313;
+	z11 0.266+0.937j;
+	z12 0.063+0.564j;
+	z13 0.063+0.482j;
+	z21 0.063+0.564j;
+	z22 0.266+0.937j;
+	z23 0.063+0.517j;
+	z31 0.063+0.482j;
+	z32 0.063+0.517j;
+	z33 0.266+0.937j;
+}
+
+object node {
+	phases "ABC";
+	name node1;
+	bustype SWING;
+	nominal_voltage 4200;
+}
+
+object overhead_line {
+	phases "ABC";
+	name ohl12;
+	from node1;
+	to node2;
+	length 1 mile;
+	configuration lc312;
+}
+
+object node {
+	phases "ABC";
+	name node2;
+	nominal_voltage 4200;
+}
+
+object overhead_line {
+	phases "ABC";
+	name ohl23;
+	from node2;
+	to node3;
+	length 1 mile;
+	configuration lc323;
+}
+
+object node {
+	phases "ABC";
+	name node3;
+	nominal_voltage 4200;
+}
+
+object switch {
+	name testSwitch;
+	phases ABCN;
+	from node3;
+	to node4;
+	status CLOSED;
+}
+
+// object node {
+	// phases "ABC";
+	// name node4;
+	// nominal_voltage 4200;
+// }
+
+object meter {
+	phases "ABC";
+	name node4;
+	nominal_voltage 4200;
+/////////////////////////////////////////////////////////////////////////////////////////////
+	// object recorder {
+		// property "measured_current_A";
+		// interval 1;
+		// file ../data_vfd_currRecorderA.csv;
+		// flags DELTAMODE;
+	// };
+	// object recorder {
+		// property "measured_current_B";
+		// interval 1;
+		// file ../data_vfd_currRecorderB.csv;
+		// flags DELTAMODE;
+	// };
+	// object recorder {
+		// property "measured_current_C";
+		// interval 1;
+		// file ../data_vfd_currRecorderC.csv;
+		// flags DELTAMODE;
+	// };
+	// object recorder {
+		// property "measured_power_A";
+		// interval 1;
+		// file ../data_vfd_powRecorderA.csv;
+		// flags DELTAMODE;
+	// };
+	// object recorder {
+		// property "measured_power_B";
+		// interval 1;
+		// file ../data_vfd_powRecorderB.csv;
+		// flags DELTAMODE;
+	// };
+	// object recorder {
+		// property "measured_power_C";
+		// interval 1;
+		// file ../data_vfd_powRecorderC.csv;
+		// flags DELTAMODE;
+	// };
+/////////////////////////////////////////////////////////////////////////////////////////	
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_current_A;
+		within 0.05;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file ../data_vfd_currRecorderA.csv;
+		};	
+	};
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_current_B;
+		within 0.05;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file ../data_vfd_currRecorderB.csv;
+		};	
+	};
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_current_C;
+		within 0.05;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file ../data_vfd_currRecorderC.csv;
+		};	
+	};
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power_A;
+		within 0.05;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file ../data_vfd_powRecorderA.csv;
+		};
+	};		
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power_B;
+		within 0.05;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file ../data_vfd_powRecorderB.csv;
+		};	
+	};
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power_C;
+		within 0.05;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file ../data_vfd_powRecorderC.csv;
+		};	
+	};
+}
+
+object vfd {
+	from node4;
+	to node5;
+	//stable_time 1.45;
+	stable_time 3.2;
+	object player {
+		property desired_motor_speed;
+		file ../data_vfd_speedPlayer_delta.player;
+		flags DELTAMODE;
+	};
+	//Desired_vfd_rpm 1800; 
+	phases "ABC";
+////////////////////////////////////////////////////////////////////////////////////////////////
+	// object recorder {
+		// property "current_in_A";
+		// file ../data_vfd_in_rec_curr_A.csv;
+		// interval 1;
+		// flags DELTAMODE;
+	// };
+	// object recorder {
+		// property "current_in_B";
+		// file ../data_vfd_in_rec_curr_B.csv;
+		// interval 1;
+		// flags DELTAMODE;
+	// };
+	// object recorder {
+		// property "current_in_C";
+		// file ../data_vfd_in_rec_curr_C.csv;
+		// interval 1;
+		// flags DELTAMODE;
+	// };
+	// object recorder {
+		// property "power_in_A";
+		// file ../data_vfd_in_rec_pow_A.csv;
+		// interval 1;
+		// flags DELTAMODE;
+	// };
+	// object recorder {
+		// property "power_in_B";
+		// file ../data_vfd_in_rec_pow_B.csv;
+		// interval 1;
+		// flags DELTAMODE;
+	// };
+	// object recorder {
+		// property "power_in_C";
+		// file ../data_vfd_in_rec_pow_C.csv;
+		// interval 1;
+		// flags DELTAMODE;
+	// };
+/////////////////////////////////////////////////////////////////////////////////////////	
+	object complex_assert {
+		flags DELTAMODE;
+		target current_in_A;
+		within 0.05;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file ../data_vfd_in_rec_curr_A.csv;
+		};	
+	};
+	object complex_assert {
+		flags DELTAMODE;
+		target current_in_B;
+		within 0.05;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file ../data_vfd_in_rec_curr_B.csv;
+		};	
+	};
+	object complex_assert {
+		flags DELTAMODE;
+		target current_in_C;
+		within 0.05;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file ../data_vfd_in_rec_curr_C.csv;
+		};	
+	};
+	object complex_assert {
+		flags DELTAMODE;
+		target power_in_A;
+		within 0.05;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file ../data_vfd_in_rec_pow_A.csv;
+		};	
+	};
+	object complex_assert {
+		flags DELTAMODE;
+		target power_in_B;
+		within 0.05;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file ../data_vfd_in_rec_pow_B.csv;
+		};	
+	};
+	object complex_assert {
+		flags DELTAMODE;
+		target power_in_C;
+		within 0.05;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file ../data_vfd_in_rec_pow_C.csv;
+		};	
+	};
+/////////////////////////////////////////////////////////////////////////////////////////////////		
+	// object recorder {
+		// property "current_out_A";
+		// file ../data_vfd_out_rec_curr_A.csv;
+		// interval 1;
+		// flags DELTAMODE;
+	// };
+	// object recorder {
+		// property "current_out_B";
+		// file ../data_vfd_out_rec_curr_B.csv;
+		// interval 1;
+		// flags DELTAMODE;
+	// };
+	// object recorder {
+		// property "current_out_C";
+		// file ../data_vfd_out_rec_curr_C.csv;
+		// interval 1;
+		// flags DELTAMODE;
+	// };
+	// object recorder {
+		// property "power_out_A";
+		// file ../data_vfd_out_rec_pow_A.csv;
+		// interval 1;
+		// flags DELTAMODE;
+	// };
+	// object recorder {
+		// property "power_out_B";
+		// file ../data_vfd_out_rec_pow_B.csv;
+		// interval 1;
+		// flags DELTAMODE;
+	// };
+	// object recorder {
+		// property "power_out_C";
+		// file ../data_vfd_out_rec_pow_C.csv;
+		// interval 1;
+		// flags DELTAMODE;
+	// };
+///////////////////////////////////////////////////////////////////////////////////////////////////	
+	object complex_assert {
+		flags DELTAMODE;
+		target current_out_A;
+		within 0.05;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file ../data_vfd_out_rec_curr_A.csv;
+		};
+	};		
+	object complex_assert {
+		flags DELTAMODE;
+		target current_out_B;
+		within 0.05;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file ../data_vfd_out_rec_curr_B.csv;
+		};	
+	};
+	object complex_assert {
+		flags DELTAMODE;
+		target current_out_C;
+		within 0.05;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file ../data_vfd_out_rec_curr_C.csv;
+		};
+	};		
+	object complex_assert {
+		flags DELTAMODE;
+		target power_out_A;
+		within 0.05;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file ../data_vfd_out_rec_pow_A.csv;
+		};	
+	};
+	object complex_assert {
+		flags DELTAMODE;
+		target power_out_B;
+		within 0.05;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file ../data_vfd_out_rec_pow_B.csv;
+		};	
+	};
+	object complex_assert {
+		flags DELTAMODE;
+		target power_out_C;
+		within 0.05;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file ../data_vfd_out_rec_pow_C.csv;
+		};	
+	};
+////////////////////////////////////////////////////////////////////////////////////////////
+	// object recorder {
+		// property "desired_motor_speed,desired_output_frequency,current_output_frequency";
+		// file ../data_vfd_Desired_vfd_rpm.csv;
+		// interval 1;
+		// flags DELTAMODE;
+	// };	
+	// object recorder {
+		// property "vfd_state";
+		// file ../data_vfd_state_out.csv;
+		// interval 1;
+		// flags DELTAMODE;
+	// };
+//////////////////////////////////////////////////////////////////////////////////////////
+	// object assert {
+		// flags DELTAMODE;
+		// target vfd_state;
+		// within 0.05;
+		// object player {
+			// flags DELTAMODE;
+			// property value;
+			// file ../data_vfd_state_out.csv;
+		// };
+	// };
+}
+
+object load { //675 {
+     name node5;
+	 bustype SWING;
+     phases "ABC";
+	 base_power_A 1000;
+	 base_power_B 1000;
+	 base_power_C 1000;
+	 current_pf_A 0.9;
+	 current_pf_B 0.9;
+	 current_pf_C 0.9;
+	 current_fraction_A 1;
+	 current_fraction_B 1;
+	 current_fraction_C 1;
+     nominal_voltage 4200;
+////////////////////////////////////////////////////////////////////////////////////////////
+	// object recorder {
+		// property "voltage_A";
+		// interval 1;
+		// file ../data_vfd_load_volt_out_volt_A.csv;
+		// flags DELTAMODE;
+	// };
+	// object recorder {
+		// property "voltage_B";
+		// interval 1;
+		// file ../data_vfd_load_volt_out_volt_B.csv;
+		// flags DELTAMODE;
+	// };
+	// object recorder {
+		// property "voltage_C";
+		// interval 1;
+		// file ../data_vfd_load_volt_out_volt_C.csv;
+		// flags DELTAMODE;
+	// };
+/////////////////////////////////////////////////////////////////////////////////////////
+	object complex_assert {
+		flags DELTAMODE;
+		target voltage_A;
+		within 0.05;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file ../data_vfd_load_volt_out_volt_A.csv;
+		};
+	};		
+	object complex_assert {
+		flags DELTAMODE;
+		target voltage_B;
+		within 0.05;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file ../data_vfd_load_volt_out_volt_B.csv;
+		};	
+	};
+	object complex_assert {
+		flags DELTAMODE;
+		target voltage_C;
+		within 0.05;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file ../data_vfd_load_volt_out_volt_C.csv;
+		};
+	};
+///////////////////////////////////////////////////////////////////////////
+	// frequency_measure_type SIMPLE;
+	// object recorder {
+		// property measured_frequency;
+		// interval 1;
+		// file measured_freq_value.csv;
+		// flags DELTAMODE;
+	// };
+//////////////////////////////////////////////////////////////////////////
+	// object assert {
+		// flags DELTAMODE;
+		// target measured_frequency;
+		// within 0.05;
+		// object player {
+			// flags DELTAMODE;
+			// property value;
+			// file ../data_vfd_measured_freq_value.csv;
+		// };
+	// };
+}

@@ -96,6 +96,7 @@ class powerflow_object : public gld_object
 public:
 	set phases;				/**< device phases (see PHASE codes) */
 	double nominal_voltage;	/**< nominal voltage */
+	INRUSHINTMETHOD inrush_integration_method;	/** Set on an individual object level */
 #ifdef SUPPORT_OUTAGES
 	set condition;			/**< operating condition (see OC codes) */
 	enumeration solution;	/**< solution code (PS_NORMAL=0, class-specific solution mode code>0) */

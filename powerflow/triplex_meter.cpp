@@ -149,12 +149,16 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 			//Deltamode functions
-			if (gl_publish_function(oclass,	"delta_linkage_node", (FUNCTIONADDR)delta_linkage)==NULL)
-				GL_THROW("Unable to publish triplex_meter delta_linkage function");
 			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_triplex_meter)==NULL)
 				GL_THROW("Unable to publish triplex_meter deltamode function");
-			if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
-				GL_THROW("Unable to publish triplex_meter deltamode function");
+			if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==NULL)
+				GL_THROW("Unable to publish triplex_meter swing-swapping function");
+			if (gl_publish_function(oclass,	"pwr_current_injection_update_map", (FUNCTIONADDR)node_map_current_update_function)==NULL)
+				GL_THROW("Unable to publish triplex_meter current injection update mapping function");
+			if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==NULL)
+				GL_THROW("Unable to publish triplex_meter VFD attachment function");
+			if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == NULL)
+				GL_THROW("Unable to publish triplex_meter island-status-reset function");
 		}
 }
 
@@ -782,9 +786,44 @@ double triplex_meter::process_bill(TIMESTAMP t1){
 //Module-level call
 SIMULATIONMODE triplex_meter::inter_deltaupdate_triplex_meter(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
 {
-	//unsigned char pass_mod;
 	OBJECT *hdr = OBJECTHDR(this);
 	int TempNodeRef;
+	double deltat, deltatimedbl;
+	STATUS return_status_val;
+
+	//Create delta_t variable
+	deltat = (double)dt/(double)DT_SECOND;
+
+	//Update time tracking variable - mostly for GFA functionality calls
+	if ((iteration_count_val==0) && (interupdate_pos == false)) //Only update timestamp tracker on first iteration
+	{
+		//Get decimal timestamp value
+		deltatimedbl = (double)delta_time/(double)DT_SECOND; 
+
+		//Update tracking variable
+		prev_time_dbl = (double)gl_globalclock + deltatimedbl;
+
+		//Update frequency calculation values (if needed)
+		if (fmeas_type != FM_NONE)
+		{
+			//Copy the tracker value
+			memcpy(&prev_freq_state,&curr_freq_state,sizeof(FREQM_STATES));
+		}
+	}
+
+	//Initialization items
+	if ((delta_time==0) && (iteration_count_val==0) && (interupdate_pos == false) && (fmeas_type != FM_NONE))	//First run of new delta call
+	{
+		//Initialize dynamics
+		init_freq_dynamics();
+	}//End first pass and timestep of deltamode (initial condition stuff)
+
+	//Perform the GFA update, if enabled
+	if ((GFA_enable == true) && (iteration_count_val == 0) && (interupdate_pos == false))	//Always just do on the first pass
+	{
+		//Do the checks
+		GFA_Update_time = perform_GFA_checks(deltat);
+	}
 
 	if (interupdate_pos == false)	//Before powerflow call
 	{
@@ -843,7 +882,7 @@ SIMULATIONMODE triplex_meter::inter_deltaupdate_triplex_meter(unsigned int64 del
 		NR_node_sync_fxn(hdr);
 
 		return SM_DELTA;	//Just return something other than SM_ERROR for this call
-	}
+	}//End Before NR solver (or inclusive)
 	else	//After the call
 	{
 		//Perform node postsync-like updates on the values - call first so current is right
@@ -875,34 +914,38 @@ SIMULATIONMODE triplex_meter::inter_deltaupdate_triplex_meter(unsigned int64 del
 			if (measured_real_power>measured_demand)
 				measured_demand=measured_real_power;
 
-		//No control required at this time - powerflow defers to the whims of other modules
-		//Code below implements predictor/corrector-type logic, even though it effectively does nothing
-		return SM_EVENT;
+		//Frequency measurement stuff
+		if (fmeas_type != FM_NONE)
+		{
+			return_status_val = calc_freq_dynamics(deltat);
 
-		////Do deltamode-related logic
-		//if (bustype==SWING)	//We're the SWING bus, control our destiny (which is really controlled elsewhere)
-		//{
-		//	//See what we're on
-		//	pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
+			//Check it
+			if (return_status_val == FAILED)
+			{
+				return SM_ERROR;
+			}
+		}//End frequency measurement desired
+		//Default else -- don't calculate it
 
-		//	//Check pass
-		//	if (pass_mod==0)	//Predictor pass
-		//	{
-		//		return SM_DELTA_ITER;	//Reiterate - to get us to corrector pass
-		//	}
-		//	else	//Corrector pass
-		//	{
-		//		//As of right now, we're always ready to leave
-		//		//Other objects will dictate if we stay (powerflow is indifferent)
-		//		return SM_EVENT;
-		//	}//End corrector pass
-		//}//End SWING bus handling
-		//else	//Normal bus
-		//{
-		//	return SM_EVENT;	//Normal nodes want event mode all the time here - SWING bus will
-		//						//control the reiteration process for pred/corr steps
-		//}
-	}
+		//See if GFA functionality is required, since it may require iterations or "continance"
+		if (GFA_enable == true)
+		{
+			//See if our return is value
+			if ((GFA_Update_time > 0.0) && (GFA_Update_time < 1.7))
+			{
+				//Force us to stay
+				return SM_DELTA;
+			}
+			else	//Just return whatever we were going to do
+			{
+				return SM_EVENT;
+			}
+		}
+		else	//Normal mode
+		{
+			return SM_EVENT;
+		}
+	}//End "After NR solver" branch
 }
 
 //////////////////////////////////////////////////////////////////////////

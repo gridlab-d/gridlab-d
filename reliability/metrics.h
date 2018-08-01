@@ -13,16 +13,21 @@
 #include <stdarg.h>
 #include "gridlabd.h"
 
+EXPORT STATUS metrics_event_ended(OBJECT *obj, OBJECT *event_obj,OBJECT *fault_obj,OBJECT *faulting_obj,TIMESTAMP event_start_time,TIMESTAMP event_end_time,char *fault_type,char *impl_fault,int number_customers_int);
+EXPORT STATUS metrics_event_ended_secondary(OBJECT *obj, OBJECT *event_obj,OBJECT *fault_obj,OBJECT *faulting_obj,TIMESTAMP event_start_time,TIMESTAMP event_end_time,char *fault_type,char *impl_fault,int number_customers_int, int number_customers_int_secondary);
+EXPORT STATUS metrics_get_interrupted_count(OBJECT *obj,int *in_outage);
+EXPORT STATUS metrics_get_interrupted_count_secondary(OBJECT *obj,int *in_outage, int *in_outage_secondary);
+
 typedef struct s_indices {
 	char256 MetricName;			//Name of metric from metric_of_interest
-	double *MetricLoc;			//Pointer to where this metric is calculated
-	double *MetricLocInterval;	//Pointer to where the interval metric is calculated (if it has one)
+	gld_property *MetricLoc;			//Pointer to where this metric is calculated
+	gld_property *MetricLocInterval;	//Pointer to where the interval metric is calculated (if it has one)
 } INDEXARRAY;
 
 typedef struct s_custarray {
 	OBJECT *CustomerObj;	//Object pointer to the customer
-	bool *CustInterrupted;	//Pointer to customer "interrupted" flag
-	bool *CustInterrupted_Secondary;	//Pointer to secondary customer "interrupted" flag - may or may not be used
+	gld_property *CustInterrupted;	//Pointer to customer "interrupted" flag
+	gld_property *CustInterrupted_Secondary;	//Pointer to secondary customer "interrupted" flag - may or may not be used
 } CUSTARRAY;
 
 class metrics : public gld_object {
@@ -47,8 +52,6 @@ private:
 
 	TIMESTAMP curr_time;	//Time tracking variable
 	
-	double *get_metric(OBJECT *obj, char *name);	//Function to extract address of double value (metric)
-	bool *get_outage_flag(OBJECT *obj, char *name);	//Function to extract address of outage flag
 public:
 	static bool report_event_log;
 
@@ -65,7 +68,6 @@ public:
 	char1024 metrics_oi;
 	double metric_interval_dbl;
 	double report_interval_dbl;
-	void *Extra_Data;		//Pointer to extra data array - if needed
 	void event_ended(OBJECT *event_obj,OBJECT *fault_obj,OBJECT *faulting_obj,TIMESTAMP event_start_time,TIMESTAMP event_end_time,char *fault_type,char *impl_fault,int number_customers_int);
 	void event_ended_sec(OBJECT *event_obj,OBJECT *fault_obj,OBJECT *faulting_obj,TIMESTAMP event_start_time,TIMESTAMP event_end_time,char *fault_type,char *impl_fault,int number_customers_int, int number_customers_int_secondary);
 	int get_interrupted_count(void);

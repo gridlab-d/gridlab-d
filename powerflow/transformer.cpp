@@ -180,8 +180,11 @@ int transformer::init(OBJECT *parent)
 
 	for (int i = 0; i < 3; i++) 
 	{
-		for (int j = 0; j < 3; j++) 
-			a_mat[i][j] = b_mat[i][j] = c_mat[i][j] = d_mat[i][j] = A_mat[i][j] = B_mat[i][j] = 0.0;
+		for (int j = 0; j < 3; j++)
+		{
+			a_mat[i][j] = b_mat[i][j] = c_mat[i][j] = d_mat[i][j] = A_mat[i][j] = B_mat[i][j] = complex(0.0,0.0);
+			base_admittance_mat[i][j] = complex(0.0,0.0);
+		}
 	}
 
 	switch (config->connect_type) {
@@ -409,14 +412,23 @@ int transformer::init(OBJECT *parent)
 
 				//Pre-inverted
 				if (has_phase(PHASE_A))
-					//b_mat[0][0] = (zc - zt) / ((zc + zt) * zt);
-					b_mat[0][0] = complex(1,0) / zt;//(zc - zt) / ((zc + zt) * zt);
+				{
+					//base_admittance_mat[0][0] = (zc - zt) / ((zc + zt) * zt);
+					base_admittance_mat[0][0] = complex(1,0) / zt;//(zc - zt) / ((zc + zt) * zt);
+					b_mat[0][0] = zt;
+				}
 				if (has_phase(PHASE_B))
-					//b_mat[1][1] = (zc - zt) / ((zc + zt) * zt);
-					b_mat[1][1] = complex(1,0) / zt;//(zc - zt) / ((zc + zt) * zt);
+				{
+					//base_admittance_mat[1][1] = (zc - zt) / ((zc + zt) * zt);
+					base_admittance_mat[1][1] = complex(1,0) / zt;//(zc - zt) / ((zc + zt) * zt);
+					b_mat[1][1] = zt;
+				}
 				if (has_phase(PHASE_C))
-					//b_mat[2][2] = (zc - zt) / ((zc + zt) * zt);
-					b_mat[2][2] = complex(1,0) / zt;//(zc - zt) / ((zc + zt) * zt);
+				{
+					//base_admittance_mat[2][2] = (zc - zt) / ((zc + zt) * zt);
+					base_admittance_mat[2][2] = complex(1,0) / zt;//(zc - zt) / ((zc + zt) * zt);
+					b_mat[2][2] = zt;
+				}
 
 				//Other matrices
 				A_mat[0][1] = A_mat[0][2] = A_mat[1][0] = A_mat[1][2] = A_mat[2][0] = A_mat[2][1] = 0.0;
@@ -483,11 +495,16 @@ int transformer::init(OBJECT *parent)
 			}
 			else if (solver_method==SM_NR)
 			{
+				/*** TODO -- this needs to be fixed !!!! ****/
+				
 				//Calculate admittance matrix
 				complex Izt = complex(1,0) / zt;
 
-				b_mat[0][0] = b_mat[1][1] = b_mat[2][2] = Izt;
+				base_admittance_mat[0][0] = base_admittance_mat[1][1] = base_admittance_mat[2][2] = Izt;
 
+				//Base impedance
+				b_mat[0][0] = b_mat[1][1] = b_mat[2][2] = zt;
+				
 				//used for power loss calculations
 				//a_mat[0][0] = a_mat[1][1] = a_mat[2][2] = nt;
 
@@ -557,6 +574,9 @@ int transformer::init(OBJECT *parent)
 
 				nt *= sqrt(3.0);	//Adjustment for other matrices
 
+				//Base impedance for dumps
+				b_mat[0][0] = b_mat[1][1] = b_mat[2][2] = zt;
+
 				if (voltage_ratio>1.0) //Step down
 				{
 					//High->low voltage change
@@ -565,9 +585,9 @@ int transformer::init(OBJECT *parent)
 					c_mat[0][1] = c_mat[1][2] = c_mat[2][0] = 0.0;
 
 					//Y-based impedance model
-					b_mat[0][0] = b_mat[1][1] = b_mat[2][2] = Izt;
-					b_mat[0][1] = b_mat[0][2] = b_mat[1][0] = 0.0;
-					b_mat[1][2] = b_mat[2][0] = b_mat[2][1] = 0.0;
+					base_admittance_mat[0][0] = base_admittance_mat[1][1] = base_admittance_mat[2][2] = Izt;
+					base_admittance_mat[0][1] = base_admittance_mat[0][2] = base_admittance_mat[1][0] = 0.0;
+					base_admittance_mat[1][2] = base_admittance_mat[2][0] = base_admittance_mat[2][1] = 0.0;
 
 					//I-low to I-high change
 					B_mat[0][0] = B_mat[1][1] = B_mat[2][2] = complex(1.0) / alphaval;
@@ -589,9 +609,9 @@ int transformer::init(OBJECT *parent)
 					c_mat[0][2] = c_mat[1][0] = c_mat[2][1] = 0.0;
 
 					//Impedance matrix
-					b_mat[0][0] = b_mat[1][1] = b_mat[2][2] = Izt;
-					b_mat[0][1] = b_mat[0][2] = b_mat[1][0] = 0.0;
-					b_mat[1][2] = b_mat[2][0] = b_mat[2][1] = 0.0;
+					base_admittance_mat[0][0] = base_admittance_mat[1][1] = base_admittance_mat[2][2] = Izt;
+					base_admittance_mat[0][1] = base_admittance_mat[0][2] = base_admittance_mat[1][0] = 0.0;
+					base_admittance_mat[1][2] = base_admittance_mat[2][0] = base_admittance_mat[2][1] = 0.0;
 
 					//I-high to I-low change
 					B_mat[0][0] = B_mat[1][1] = B_mat[2][2] = complex(1.0) / alphaval;
@@ -855,12 +875,12 @@ int transformer::init(OBJECT *parent)
 				complex indet;
 				indet=complex(1.0)/(z1*z2*zc*nt*nt+z0*(z2*zc+z1*zc+z1*z2*nt*nt));
 
-				//Store all information into b_mat (pull it out later) - phases handled in link
+				//Store all information into base_admittance_mat (pull it out later) - phases handled in link
 				// Yto_00	Yto_01   To_Y00
 				// Yto_10	Yto_11	 To_Y10
 				// From_Y00	From_Y01 YFrom_00
 				//
-				// Translates into			b_mat*[V1; V2; VSource] = [I1; I2; ISource]
+				// Translates into			base_admittance_mat*[V1; V2; VSource] = [I1; I2; ISource]
 				//      V1 V2 Vsource			
 				// I1
 				// I2
@@ -868,31 +888,31 @@ int transformer::init(OBJECT *parent)
 
 				//Put in a_mat first, it gets scaled
 				//Yto
-				a_mat[0][0] = -(z2*zc*nt*nt+z0*zc+z0*z2*nt*nt);	//-z2*nt*nt-z0;
-				a_mat[0][1] = z0*zc;							//z0;
-				a_mat[1][0] = -z0*zc;							//-z0;
-				a_mat[1][1] = (z1*zc*nt*nt+z0*zc+z0*z1*nt*nt);	//z1*nt*nt+z0;
+				base_admittance_mat[0][0] = (-(z2*zc*nt*nt+z0*zc+z0*z2*nt*nt))*indet;	//-z2*nt*nt-z0;
+				base_admittance_mat[0][1] = (z0*zc)*indet;							//z0;
+				base_admittance_mat[1][0] = (-z0*zc)*indet;							//-z0;
+				base_admittance_mat[1][1] = (z1*zc*nt*nt+z0*zc+z0*z1*nt*nt)*indet;	//z1*nt*nt+z0;
 
 				//To_Y
-				a_mat[0][2] = z2*zc*nt;		//z2*nt;
-				a_mat[1][2] = -z1*zc*nt;	//-z1*nt;
+				base_admittance_mat[0][2] = (z2*zc*nt)*indet;		//z2*nt;
+				base_admittance_mat[1][2] = (-z1*zc*nt)*indet;	//-z1*nt;
 
 				//From_Y
-				a_mat[2][0] = -z2*zc*nt;	//-z2*nt;
-				a_mat[2][1] = -z1*zc*nt;	//-z1*nt;
+				base_admittance_mat[2][0] = (-z2*zc*nt)*indet;	//-z2*nt;
+				base_admittance_mat[2][1] = (-z1*zc*nt)*indet;	//-z1*nt;
 
 				//Yfrom
-				a_mat[2][2] = (z2*zc+z1*zc+z1*z2*nt*nt);	//z1+z2;
+				base_admittance_mat[2][2] = (z2*zc+z1*zc+z1*z2*nt*nt)*indet;	//z1+z2;
 
-				//Form it into b_mat
-				for (char xindex=0; xindex<3; xindex++)
-				{
-					for (char yindex=0; yindex<3; yindex++)
-					{
-						b_mat[xindex][yindex]=a_mat[xindex][yindex]*indet;
-						a_mat[xindex][yindex]=0.0;
-					}
-				}
+				//Low-side base impedance
+				b_mat[0][0] = (z1) + (z0*zc/((zc + z0)*nt*nt));
+				b_mat[0][1] = -(z0*zc/((zc + z0)*nt*nt));
+				b_mat[1][0] = (z0*zc/((zc + z0)*nt*nt));
+				b_mat[1][1] = complex(-1,0) * ((z2) + (z0*zc/((zc + z0)*nt*nt)));
+				b_mat[1][2] = complex(0,0);
+				b_mat[2][0] = complex(0,0);
+				b_mat[2][1] = complex(0,0);
+				b_mat[2][2] = complex(0,0);
 			}	
 			else 
 			{

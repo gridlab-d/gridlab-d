@@ -24,7 +24,6 @@
 #include <errno.h>
 #include <math.h>
 
-#include "house_a.h"
 #include "waterheater.h"
 
 #define TSTAT_PRECISION 0.01
@@ -225,7 +224,7 @@ int waterheater::init(OBJECT *parent)
 {
 	OBJECT *hdr = OBJECTHDR(this);
 
-	nominal_voltage = 240.0; //@TODO:  Determine if this should be published or how we want to obtain this from the equipment/network
+	nominal_voltage = (2.0 * default_line_voltage); //@TODO:  Determine if this should be published or how we want to obtain this from the equipment/network
 	actual_voltage = nominal_voltage;
 	
 	if(parent != NULL){
@@ -1344,7 +1343,16 @@ double waterheater::actual_kW(void)
 		if(heat_mode == GASHEAT){
 			return heating_element_capacity; /* gas heating is voltage independent. */
 		}
-		actual_voltage = pCircuit ? pCircuit->pV->Mag() : nominal_voltage;
+
+		if (pCircuit == NULL)
+		{
+			actual_voltage = nominal_voltage;
+		}
+		else
+		{
+			actual_voltage = (pCircuit->pV->get_complex()).Mag();
+		}
+
         if (actual_voltage > 2.0*nominal_voltage)
         {
             if (trip_counter++ > 10)

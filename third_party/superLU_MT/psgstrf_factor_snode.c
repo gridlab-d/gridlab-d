@@ -1,24 +1,34 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
 
-#include "pssp_defs.h"
+All rights reserved. 
 
-int
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
+
+#include "slu_mt_sdefs.h"
+
+int_t
 psgstrf_factor_snode(
-		     const int pnum,  /* process number */
-		     const int jcol,
+		     const int_t pnum,  /* process number */
+		     const int_t jcol,
 		     SuperMatrix *A,
 		     const float diag_pivot_thresh,
 		     yes_no_t *usepr,
-		     int    *perm_r,
-		     int    *inv_perm_r, /* modified */
-		     int    *inv_perm_c, /* in - used to find diagonal of Pc*A*Pc' */
-		     int    *xprune,
-		     int    *marker,
-		     int    *col_lsub, /* values are irrevelant on entry 
+		     int_t    *perm_r,
+		     int_t    *inv_perm_r, /* modified */
+		     int_t    *inv_perm_c, /* in - used to find diagonal of Pc*A*Pc' */
+		     int_t    *xprune,
+		     int_t    *marker,
+		     int_t    *col_lsub, /* values are irrevelant on entry 
 					  and on return */
 		     float *dense,
 		     float *tempv,
 		     pxgstrf_shared_t *pxgstrf_shared,
-		     int    *info
+		     int_t    *info
 		     )
 {
 /*
@@ -35,14 +45,14 @@ psgstrf_factor_snode(
  *
  */
     GlobalLU_t   *Glu = pxgstrf_shared->Glu;
-    int          singular;
+    int_t          singular;
     NCPformat    *Astore;
-    register int kcol, icol, k, jsupno, fsupc, nsupr;
-    register int ifrom, ito;
-    int          nextu, nextlu;
-    int          pivrow;
+    register int_t kcol, icol, k, jsupno, fsupc, nsupr;
+    register int_t ifrom, ito;
+    int_t          nextu, nextlu;
+    int_t          pivrow;
     float       *a;
-    int          *asub, *xa_begin, *xa_end, *xusub, *xusub_end,
+    int_t          *asub, *xa_begin, *xa_end, *xusub, *xusub_end,
                  *xsup, *supno, *xlusup, *lsub, *xlsub, *xlsub_end;
 
     lsub      = Glu->lsub;

@@ -1,6 +1,16 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
 
 /*
- * -- SuperLU routine (version 2.0) --
+ * -- SuperLU routine (version 3.0) --
  * Lawrence Berkeley National Lab, Univ. of California Berkeley,
  * and Xerox Palo Alto Research Center.
  * September 10, 2007
@@ -8,10 +18,11 @@
  */
 #include <math.h>
 #include "slu_mt_Cnames.h"
+#include "slu_mt_ddefs.h"
 #include "slu_mt_util.h"
 
-int
-dlacon_(int *n, double *v, double *x, int *isgn, double *est, int *kase)
+int_t
+dlacon_(int_t *n, double *v, double *x, int_t *isgn, double *est, int_t *kase)
 
 {
 /*
@@ -25,7 +36,7 @@ dlacon_(int *n, double *v, double *x, int *isgn, double *est, int *kase)
     Arguments   
     =========   
 
-    N      (input) INT
+    N      (input) INT_T
            The order of the matrix.  N >= 1.   
 
     V      (workspace) DOUBLE PRECISION array, dimension (N)   
@@ -39,12 +50,12 @@ dlacon_(int *n, double *v, double *x, int *isgn, double *est, int *kase)
            and DLACON must be re-called with all the other parameters   
            unchanged.   
 
-    ISGN   (workspace) INT array, dimension (N)
+    ISGN   (workspace) INT_T array, dimension (N)
 
     EST    (output) DOUBLE PRECISION   
            An estimate (a lower bound) for norm(A).   
 
-    KASE   (input/output) INT
+    KASE   (input/output) INT_T
            On the initial call to DLACON, KASE should be 0.   
            On an intermediate return, KASE will be 1 or 2, indicating   
            whether X should be overwritten by A * X  or A' * X.   
@@ -64,14 +75,15 @@ dlacon_(int *n, double *v, double *x, int *isgn, double *est, int *kase)
 
     /* Table of constant values */
     int c__1 = 1;
+    int ni = *n;
     double      zero = 0.0;
     double      one = 1.0;
     
     /* Local variables */
-    static int iter;
-    static int jump, jlast;
+    static int_t iter;
+    static int_t jump, jlast;
     static double altsgn, estold;
-    static int i, j;
+    static int_t i, j;
     double temp;
     extern int idamax_(int *, double *, int *);
     extern double dasum_(int *, double *, int *);
@@ -106,7 +118,7 @@ dlacon_(int *n, double *v, double *x, int *isgn, double *est, int *kase)
 	/*        ... QUIT */
 	goto L150;
     }
-    *est = dasum_(n, x, &c__1);
+    *est = dasum_(&ni, x, &c__1);
 
     for (i = 0; i < *n; ++i) {
 	x[i] = d_sign(one, x[i]);
@@ -119,7 +131,7 @@ dlacon_(int *n, double *v, double *x, int *isgn, double *est, int *kase)
     /*     ................ ENTRY   (JUMP = 2)   
 	   FIRST ITERATION.  X HAS BEEN OVERWRITTEN BY TRANSPOSE(A)*X. */
 L40:
-    j = idamax_(n, &x[0], &c__1);
+    j = idamax_(&ni, &x[0], &c__1);
     --j;
     iter = 2;
 
@@ -134,9 +146,9 @@ L50:
     /*     ................ ENTRY   (JUMP = 3)   
 	   X HAS BEEN OVERWRITTEN BY A*X. */
 L70:
-    dcopy_(n, &x[0], &c__1, &v[0], &c__1);
+    dcopy_(&ni, &x[0], &c__1, &v[0], &c__1);
     estold = *est;
-    *est = dasum_(n, v, &c__1);
+    *est = dasum_(&ni, v, &c__1);
 
     for (i = 0; i < *n; ++i)
 	if (i_dnnt(d_sign(one, x[i])) != isgn[i])
@@ -161,7 +173,7 @@ L90:
 	   X HAS BEEN OVERWRITTEN BY TRANDPOSE(A)*X. */
 L110:
     jlast = j;
-    j = idamax_(n, &x[0], &c__1);
+    j = idamax_(&ni, &x[0], &c__1);
     --j;
     if (x[jlast] != fabs(x[j]) && iter < 5) {
 	++iter;
@@ -182,9 +194,9 @@ L120:
     /*     ................ ENTRY   (JUMP = 5)   
 	   X HAS BEEN OVERWRITTEN BY A*X. */
 L140:
-    temp = dasum_(n, x, &c__1) / (double) (*n * 3) * 2.;
+    temp = dasum_(&ni, x, &c__1) / (double) (*n * 3) * 2.;
     if (temp > *est) {
-	dcopy_(n, &x[0], &c__1, &v[0], &c__1);
+	dcopy_(&ni, &x[0], &c__1, &v[0], &c__1);
 	*est = temp;
     }
 

@@ -15,7 +15,6 @@
 #include <errno.h>
 #include <math.h>
 
-#include "house_a.h"
 #include "microwave.h"
 
 //////////////////////////////////////////////////////////////////////////
@@ -205,6 +204,7 @@ TIMESTAMP microwave::update_state_cycle(TIMESTAMP t0, TIMESTAMP t1){
 
 double microwave::update_state(double dt)
 {
+	double temp_voltage_magnitude;
 	// run times (used for gl_random_sample()) - DPC: this is an educated guess, the true PDF needs to be researched
 	static double rt[] = {30,30,30,30,30,30,30,30,30,30,60,60,60,60,90,90,120,150,180,450,600};
 	static double sumrt = 2520; // sum(pdf) -- you do the math
@@ -247,7 +247,11 @@ double microwave::update_state(double dt)
 	case ON:
 		// power outage or runtime expired
 		runtime = floor(runtime);
-		if (pCircuit->pV->Mag() < 0.25 || state_time>runtime)
+
+		//Pull the circuit voltage value
+		temp_voltage_magnitude = (pCircuit->pV->get_complex()).Mag();
+
+		if (temp_voltage_magnitude < 0.25 || state_time>runtime)
 		{
 			state = OFF;
 			state_time = 0;
@@ -269,6 +273,7 @@ double microwave::update_state(double dt)
 TIMESTAMP microwave::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
 	TIMESTAMP ct = 0;
+	double temp_voltage_magnitude;
 	double dt = 0;
 	double val = 0.0;
 	TIMESTAMP t2 = TS_NEVER;
@@ -277,7 +282,12 @@ TIMESTAMP microwave::sync(TIMESTAMP t0, TIMESTAMP t1)
 		return TS_NEVER;
 	
 	if (pCircuit!=NULL)
-		load.voltage_factor = pCircuit->pV->Mag() / 120; // update voltage factor
+	{
+		//Pull the voltage magnitude
+		temp_voltage_magnitude = (pCircuit->pV->get_complex()).Mag();
+
+		load.voltage_factor = temp_voltage_magnitude / default_line_voltage; // update voltage factor
+	}
 
 	t2 = residential_enduse::sync(t0,t1);
 
