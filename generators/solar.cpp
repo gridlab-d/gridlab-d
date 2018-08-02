@@ -119,9 +119,6 @@ solar::solar(MODULE *module)
 			PT_double, "orientation_azimuth[deg]", PADDR(orientation_azimuth), PT_DESCRIPTION, "Facing direction of the PV array",
 			PT_bool, "latitude_angle_fix", PADDR(fix_angle_lat), PT_DESCRIPTION, "Fix tilt angle to installation latitude value",
 
-			PT_double, "latitude[deg]", PADDR(latitude), PT_DESCRIPTION, "The location of the array in degrees latitude",
-			PT_double, "longitude[deg]", PADDR(longitude), PT_DESCRIPTION, "The location of the array in degrees longitude",
-
 			PT_complex, "default_voltage_variable", PADDR(default_voltage_array),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"Accumulator/placeholder for default voltage value, when solar is run without an inverter",
 			PT_complex, "default_current_variable", PADDR(default_current_array),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"Accumulator/placeholder for default current value, when solar is run without an inverter",
 
@@ -202,10 +199,6 @@ int solar::create(void)
 	orientation_type = DEFAULT;	//Default = ideal tracking
 	solar_model_tilt = LIUJORDAN;	//"Classic" tilt model - from Duffie and Beckman (same as ETP inputs)
 	solar_power_model = BASEEFFICIENT; //Use older power output calculation model - unsure where it came from
-
-	// by default, the array has no position
-	latitude = NaN;
-	longitude = NaN;
 
 	//Null out the function pointers
 	calc_solar_radiation = NULL;
@@ -328,6 +321,20 @@ int solar::init_climate()
 			if (obj->rank<=hdr->rank)
 				gl_set_dependent(obj,hdr);
 			
+			//Check and see if we have a lat/long set -- if not, pull the one from the climate
+			if (isnan(hdr->longitude))
+			{
+				//Pull the value from the climate
+				hdr->longitude = obj->longitude;
+			}
+
+			//Do the same for latitude
+			if (isnan(hdr->latitude))
+			{
+				//Pull the value from the climate
+				hdr->latitude = obj->latitude;
+			}
+			
 			//Map the properties - temperature
 			pTout = new gld_property(obj,"temperature");
 
@@ -357,15 +364,15 @@ int solar::init_climate()
 			//If climate data was found, check other related variables
 			if (fix_angle_lat==true)
 			{
-				if (obj->latitude < 0)	//Southern hemisphere
+				if (hdr->latitude < 0)	//Southern hemisphere
 				{
 					//Get the latitude from the climate file
-					tilt_angle = -obj->latitude;
+					tilt_angle = -hdr->latitude;
 				}
 				else	//Northern
 				{
 					//Get the latitude from the climate file
-					tilt_angle = obj->latitude;
+					tilt_angle = hdr->latitude;
 				}
 			}
 
@@ -1044,14 +1051,14 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 					}
 					else
 					{
-						ret_value = ((int64 (*)(OBJECT *, double, double, double, double, double *))(*calc_solar_radiation))(weather, RAD(tilt_angle), latitude, longitude, shading_factor, &Insolation);
+						ret_value = ((int64 (*)(OBJECT *, double, double, double, double, double *))(*calc_solar_radiation))(weather, RAD(tilt_angle), obj->latitude, obj->longitude, shading_factor, &Insolation);
 					}
 					break;
 				}
 			case FIXED_AXIS: // NOTE that this means FIXED, stationary. There is no AXIS at all. FIXED_AXIS is known as Single Axis Tracking by some, so the term is misleading.
 				{
 					//Snag solar insolation - prorate by shading (direct axis) - uses model selected earlier
-					ret_value = ((int64 (*)(OBJECT *, double, double, double, double, double, double *))(*calc_solar_radiation))(weather,RAD(tilt_angle),RAD(orientation_azimuth_corrected),latitude,longitude,shading_factor,&Insolation);
+					ret_value = ((int64 (*)(OBJECT *, double, double, double, double, double, double *))(*calc_solar_radiation))(weather,RAD(tilt_angle),RAD(orientation_azimuth_corrected),obj->latitude,obj->longitude,shading_factor,&Insolation);
 					//ret_value = ((int64 (*)(OBJECT *, double, double, double, double *))(*calc_solar_radiation))(weather,tilt_angle,orientation_azimuth_corrected,shading_factor,&Insolation);
 
 					//Make sure it worked

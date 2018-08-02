@@ -115,8 +115,8 @@ EXPORT int64 calculate_solar_radiation_shading_position_radians(OBJECT *obj, dou
 	gl_localtime(obj->clock, &dt);
 	std_time = (double)(dt.hour) + ((double)dt.minute)/60.0  + (dt.is_dst ? -1.0:0.0);
 	doy=sa.day_of_yr(dt.month,dt.day);
-	solar_time = sa.solar_time(std_time, doy, RAD(cli->get_tz_meridian()), RAD(obj->longitude));
-	cos_incident = sa.cos_incident(RAD(obj->latitude), tilt, orientation, solar_time, doy);
+	solar_time = sa.solar_time(std_time, doy, RAD(cli->get_tz_meridian()), RAD(longitude));
+	cos_incident = sa.cos_incident(RAD(latitude), tilt, orientation, solar_time, doy);
 	*value = (shading_value*dnr*cos_incident) + dhr*(1+cos(tilt))/2. + ghr*(1-cos(tilt))*cli->get_ground_reflectivity()/2.;
 
 	return 1;
@@ -174,8 +174,8 @@ EXPORT int64 calc_solar_solpos_shading_position_rad(OBJECT *obj, double tilt, do
 	sa.S_init(&sa.solpos_vals);
 
 	//Assign in values
-	sa.solpos_vals.longitude = obj->longitude;
-	sa.solpos_vals.latitude = RAD(obj->latitude);
+	sa.solpos_vals.longitude = longitude;
+	sa.solpos_vals.latitude = RAD(latitude);
 	if (dt.is_dst == 1)
 	{
 		sa.solpos_vals.timezone = cli->get_tz_offset_val()-1.0;
@@ -1066,11 +1066,9 @@ void climate::init_cloud_pattern() {
 	double latitude, longitude;
 	num_points = 0;
 	for(gr_obj = gl_find_next(items, 0); gr_obj != 0; gr_obj = gl_find_next(items, gr_obj) ){
-		p_ptr = gl_get_property(gr_obj, "latitude");
-		latitude = *gl_get_double(gr_obj, p_ptr);
-		p_ptr = gl_get_property(gr_obj, "longitude");
-		longitude = *gl_get_double(gr_obj, p_ptr);
-		if (longitude != NaN && latitude != NaN) {
+		latitude = gr_obj->latitude;
+		longitude = gr_obj->longitude;
+		if (!isnan(longitude) && !isnan(latitude)) {
 			coord_list[num_points][0] = latitude;
 			coord_list[num_points][1] = longitude;
 			num_points++;
