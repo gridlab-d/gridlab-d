@@ -1667,6 +1667,8 @@ STATUS object_precommit(OBJECT *obj, TIMESTAMP t1)
 {
 	clock_t t = (clock_t)exec_clock();
 	STATUS rv = SUCCESS;
+	if ( global_validto_context&VTC_PRECOMMIT == VTC_PRECOMMIT )
+		return rv;
 	if(obj->oclass->precommit != NULL){
 		rv = (STATUS)(*(obj->oclass->precommit))(obj, t1);
 	}
@@ -1694,6 +1696,8 @@ TIMESTAMP object_commit(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
 	clock_t t = (clock_t)exec_clock();
 	TIMESTAMP rv = 1;
+	if ( global_validto_context&VTC_COMMIT == VTC_COMMIT )
+		return TS_NEVER;
 	if(obj->oclass->commit != NULL){
 		rv = (TIMESTAMP)(*(obj->oclass->commit))(obj, t1, t2);
 	}
