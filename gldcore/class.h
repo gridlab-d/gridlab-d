@@ -122,9 +122,9 @@ struct s_class_list {
 	struct s_class_list *next;
 }; /* CLASS */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+//#ifdef __cplusplus
+//extern "C" {
+//#endif
 
 PROPERTY *class_get_first_property(CLASS *oclass);
 PROPERTY *class_get_next_property(PROPERTY *prop);
@@ -164,9 +164,9 @@ int class_define_type(CLASS *oclass, DELEGATEDTYPE *delegation, ...);
 int class_add_loadmethod(CLASS *oclass, char *name, int (*call)(void*,char*));
 LOADMETHOD *class_get_loadmethod(CLASS *oclass,char *name);
 
-#ifdef __cplusplus
-}
-#endif
+//#ifdef __cplusplus
+//}
+//#endif
 
 #endif
 

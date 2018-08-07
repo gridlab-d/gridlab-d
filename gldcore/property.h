@@ -858,7 +858,7 @@ typedef enum {_PT_FIRST=-1,
 	PT_HAS_NOTIFY, /* used to indicate that a notify function exists for the specified property */
 	PT_HAS_NOTIFY_OVERRIDE, /* as PT_HAS_NOTIFY, but instructs the core not to set the property to the value being set */
 } PROPERTYTYPE; /**< property types */
-typedef char CLASSNAME[64]; /**< the name a GridLAB class */
+typedef char CLASSNAME[64]; /**< the name of a GridLAB class */
 typedef void* PROPERTYADDR; /**< the offset of a property from the end of the OBJECT header */
 typedef char PROPERTYNAME[64]; /**< the name of a property */
 typedef char FUNCTIONNAME[64]; /**< the name of a function (not used) */

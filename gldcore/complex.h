@@ -30,14 +30,20 @@ typedef enum {I='i',J='j',A='d', R='r'} CNOTATION; /**< complex number notation 
 #ifndef __cplusplus
 typedef struct s_complex {
 #else
-class complex { 
+
+
+// This needed to be added back to the C++ component for property.cpp
+double complex_get_part(void *c, char *name);
+
+
+class complex {
 private:
 #endif
 	double r; /**< the real part */
 	double i; /**< the imaginary part */
 	CNOTATION f; /**< the default notation to use */
 #ifndef __cplusplus
-} complex;
+	} complex;
 #define complex_set_polar(X,M,A) ((X).r=((M)*cos(A)),(X).i=((M)*sin(A)),(X))
 #define complex_set_power_factor(X,M,P)	complex_set_polar((X),(M)/(P),acos(P))
 #define complex_get_mag(X) (sqrt((X).r*(X).r + (X).i*(X).i))
@@ -46,19 +52,19 @@ double complex_get_part(void *c, char *name);
 #else
 public:
 	/** Construct a complex number with zero magnitude */
-	inline complex() /**< create a zero complex number */
+	complex() /**< create a zero complex number */
 	{
 		r = 0;
 		i = 0;
 		f = CNOTATION_DEFAULT;
 	};
-	inline complex(double re) /**< create a complex number with only a real part */
+	complex(double re) /**< create a complex number with only a real part */
 	{
 		r = re;
 		i = 0;
 		f = CNOTATION_DEFAULT;
 	};
-	inline complex(double re, double im, CNOTATION nf=CNOTATION_DEFAULT) /**< create a complex number with both real and imaginary parts */
+	complex(double re, double im, CNOTATION nf=CNOTATION_DEFAULT) /**< create a complex number with both real and imaginary parts */
 	{
 		f = nf;
 		//if (nf==A)
@@ -67,52 +73,52 @@ public:
 		//}
 		//else
 		//{
-			r = re;
-			i = im;
+		r = re;
+		i = im;
 		//}
 	};
-	
+
 	/* assignment operations */
-	inline complex &operator = (complex x) /**< complex assignment */
+	complex &operator = (complex x) /**< complex assignment */
 	{
-		r = x.r; 
-		i = x.i; 
-		f = x.f; 
+		r = x.r;
+		i = x.i;
+		f = x.f;
 		return *this;
 	};
-	inline complex &operator = (double x) /**< double assignment */
+	complex &operator = (double x) /**< double assignment */
 	{
-		r = x; 
-		i = 0; 
+		r = x;
+		i = 0;
 		f = CNOTATION_DEFAULT;
 		return *this;
 	};
 
 	/* access operations */
-	inline double & Re(void) /**< access to real part */
+	double & Re(void) /**< access to real part */
 	{
 		return r;
 	};
-	inline double & Im(void) /**< access to imaginary part */
+	double & Im(void) /**< access to imaginary part */
 	{
 		return i;
 	};
-	inline CNOTATION & Notation(void) /**< access to notation */
+	CNOTATION & Notation(void) /**< access to notation */
 	{
 		return f;
 	};
-	inline double Mag(void) const /**< compute magnitude */
+	double Mag(void) const /**< compute magnitude */
 	{
 		return sqrt(r*r+i*i);
 	};
-	inline double Mag(double m)  /**< set magnitude */
+	double Mag(double m)  /**< set magnitude */
 	{
 		double old = sqrt(r*r+i*i);
 		r *= m/old;
 		i *= m/old;
 		return m;
 	};
-	inline double Arg(void) const /**< compute angle */
+	double Arg(void) const /**< compute angle */
 	{
 		if (r==0)
 		{
@@ -128,90 +134,90 @@ public:
 		else
 			return PI+atan(i/r);
 	};
-	inline double Arg(double a)  /**< set angle */
+	double Arg(double a)  /**< set angle */
 	{
 		SetPolar(Mag(),a,f);
 		return a;
 	};
-	inline complex Log(void) const /**< compute log */
-	{ 
+	complex Log(void) const /**< compute log */
+	{
 		return complex(log(Mag()),Arg(),f);
 	};
-	inline void SetReal(double v) /**< set real part */
+	void SetReal(double v) /**< set real part */
 	{
 		r = v;
 	};
-	inline void SetImag(double v) /**< set imaginary part */
+	void SetImag(double v) /**< set imaginary part */
 	{
 		i = v;
 	};
-	inline void SetNotation(CNOTATION nf) /**< set notation */
+	void SetNotation(CNOTATION nf) /**< set notation */
 	{
 		f = nf;
 	}
-	inline void SetRect(double rp, double ip, CNOTATION nf=CNOTATION_DEFAULT) /**< set rectangular value */
+	void SetRect(double rp, double ip, CNOTATION nf=CNOTATION_DEFAULT) /**< set rectangular value */
 	{
 		r = rp;
 		i = ip;
 		f = nf;
 	};
-	inline void SetPolar(double m, double a, CNOTATION nf=A) /**< set polar values */
+	void SetPolar(double m, double a, CNOTATION nf=A) /**< set polar values */
 	{
-		r = (m*cos(a)); 
+		r = (m*cos(a));
 		i = (m*sin(a));
 		f = nf;
 	};
 
 #if 0
-	//inline operator const double (void) const /**< cast real part to double */
+	//operator const double (void) const /**< cast real part to double */
 	//{
 	//	return r;
 	//};
 #endif
 
-	inline complex operator - (void) /**< change sign */
+	complex operator - (void) /**< change sign */
 	{
 		return complex(-r,-i,f);
 	};
-	inline complex operator ~ (void) /**< complex conjugate */
-	{ 
+	complex operator ~ (void) /**< complex conjugate */
+	{
 		return complex(r,-i,f);
 	};
 
 	/* reflexive math operations */
-	inline complex &operator += (double x) /**< add a double to the real part */
+	complex &operator += (double x) /**< add a double to the real part */
 	{
-		r += x; 
+		r += x;
 		return *this;
 	};
-	inline complex &operator -= (double x) /**< subtract a double from the real part */
+	complex &operator -= (double x) /**< subtract a double from the real part */
 	{
-		r -= x; 
+		r -= x;
 		return *this;
 	};
-	inline complex &operator *= (double x) /**< multiply a double to real part */
+	complex &operator *= (double x) /**< multiply a double to real part */
 	{
-		r *= x; 
-		i *= x; 
+		r *= x;
+		i *= x;
 		return *this;
 	};
-	inline complex &operator /= (double x) /**< divide into the real part */
+	complex &operator /= (double x) /**< divide into the real part */
 	{
-		r /= x; 
+		r /= x;
 		i /= x;
 		return *this;
 	};
-	inline complex &operator ^= (double x) /**< raise to a real power */
-	{ 
-		double lm = log(Mag()), a = Arg(), b = exp(x*lm), c = x*a; 
-		r = (b*cos(c)); 
-		i = (b*sin(c)); 
+	complex &operator ^= (double x) /**< raise to a real power */
+	{
+		double lm = log(Mag()), a = Arg(), b = exp(x*lm), c = x*a;
+		r = (b*cos(c));
+		i = (b*sin(c));
 		return *this;
 	};
-	inline complex &operator += (complex x) /**< add a complex number */
+	complex &operator += (complex x) /**< add a complex number */
 	{
-		r += x.r; 
-		i += x.i; 
+		r += x.r;
+		i += x.i;
 		return *this;
 	};
 	inline complex &operator -= (complex x)  /**< subtract a complex number */

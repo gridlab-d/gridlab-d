@@ -7,6 +7,9 @@
 #ifndef _OBJECT_H
 #define _OBJECT_H
 
+#pragma GCC push_options
+#pragma GCC optimize ("O0")
+
 #include "complex.h"
 #include "timestamp.h"
 #include "class.h"
@@ -452,6 +455,9 @@ int object_loadmethod(OBJECT *obj, char *name, char *value);
 #define MYPARENT (MY->parent) /**< get the parent from the object's data structure */
 #define MYCLOCK (MY->clock) /**< get an object's own clock */
 #define MYRANK (MY->rank) /**< get an object's own rank */
+
+
+#pragma GCC pop_options
 
 #endif
 
