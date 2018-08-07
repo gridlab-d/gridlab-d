@@ -1,6 +1,6 @@
 project(optimize)
 
-include_directories(../gldcore)
+include_directories(../${GLDCORE_LOC})
 
 add_library(${PROJECT_NAME} SHARED
         optimize/init.cpp

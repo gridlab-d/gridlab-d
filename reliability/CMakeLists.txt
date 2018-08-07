@@ -1,6 +1,6 @@
 project(reliability)
 
-include_directories(../gldcore)
+include_directories(../${GLDCORE_LOC})
 
 add_library(${PROJECT_NAME} SHARED
         reliability/eventgen.cpp

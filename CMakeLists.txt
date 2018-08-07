@@ -13,6 +13,11 @@ SET(PACKAGE_TARNAME "${PROJECT_NAME}")
 SET(PACKAGE_URL "")
 SET(PACKAGE_VERSION "4.0.0")
 
+SET(GLDCORE_LOC gldcore2)
+
+cmake_policy(SET CMP0045 OLD)
+
+
 # Sets default compile scheme to Release (Maximum optimization, no debugger data)
 # To compile as Debug outside of IDE, run cmake with "-DCMAKE_BUILD_TYPE=Debug" flag.
 IF (NOT CMAKE_BUILD_TYPE)
@@ -78,29 +83,93 @@ SET(GL_MODULES
         powerflow
         reliability
         residential
-        tape
-        tape_file
-        tape_plot
+#        tape
+#        tape_file
+#        tape_plot
         glsolvers
         glxengine
         )
 SET(HEADER_FILE_NAMES
-        gldcore/build.h
-        gldcore/class.h
-        gldcore/complex.h
-        gldcore/debug.h
-        gldcore/enduse.h
-        gldcore/exception.h
-        gldcore/loadshape.h
-        gldcore/lock.h
-        gldcore/module.h
-        gldcore/object.h
-        gldcore/property.h
-        gldcore/schedule.h
-        gldcore/test.h
-        gldcore/version.h
+#        gldcore/build.h
+#        gldcore/class.h
+#        gldcore/complex.h
+#        gldcore/debug.h
+#        gldcore/enduse.h
+#        gldcore/exception.h
+#        gldcore/loadshape.h
+#        gldcore/lock.h
+#        gldcore/module.h
+#        gldcore/object.h
+#        gldcore/property.h
+#        gldcore/schedule.h
+#        gldcore/test.h
+#        gldcore/version.h
+
+        gldcore2/build.h
+        gldcore2/class.h
+        gldcore2/complex.h
+        gldcore2/debug.h
+        gldcore2/enduse.h
+        gldcore2/exception.h
+        gldcore2/loadshape.h
+        gldcore2/lock.h
+        gldcore2/module.h
+        gldcore2/object.h
+        gldcore2/property.h
+        gldcore2/schedule.h
+        gldcore2/test.h
+        gldcore2/version.h
         )
 SET(GLD_SHARE
+#        gldcore/tzinfo.txt
+#        gldcore/unitfile.txt
+#        gldcore/rt/about.htm
+#        gldcore/rt/COPYRIGHT
+#        gldcore/rt/debugger.conf
+#        gldcore/rt/eula.htm
+#        gldcore/rt/favicon.ico
+#        gldcore/rt/gnuplot.conf
+#        gldcore/rt/gridlabd.conf
+#        gldcore/rt/gridlabd.css
+#        gldcore/rt/gridlabd.h
+#        gldcore/rt/gridlabd.htm
+#        gldcore/rt/gridlabd.jpg
+#        gldcore/rt/gridlabd.js
+#        gldcore/rt/gridlabd.syn
+#        gldcore/rt/LICENSE
+#        gldcore/rt/mingw.conf
+#        gldcore/rt/STATUS
+#        gldcore/rt/capacitor_b.png
+#        gldcore/rt/capacitor_g.png
+#        gldcore/rt/capacitor_k.png
+#        gldcore/rt/capacitor_r.png
+#        gldcore/rt/load_b.png
+#        gldcore/rt/load_g.png
+#        gldcore/rt/load_k.png
+#        gldcore/rt/load_r.png
+#        gldcore/rt/meter_g.png
+#        gldcore/rt/node_b.png
+#        gldcore/rt/node_g.png
+#        gldcore/rt/node_k.png
+#        gldcore/rt/node_r.png
+#        gldcore/rt/regulator_b.png
+#        gldcore/rt/regulator_g.png
+#        gldcore/rt/regulator_k.png
+#        gldcore/rt/regulator_r.png
+#        gldcore/rt/switch_b.png
+#        gldcore/rt/switch_g.png
+#        gldcore/rt/switch_k.png
+#        gldcore/rt/switch_r.png
+#        gldcore/rt/transformer_b.png
+#
+#        gldcore/rt/transformer_g.png
+#        gldcore/rt/transformer_k.png
+#        gldcore/rt/transformer_r.png
+#        gldcore/rt/triplex_meter_b.png
+#        gldcore/rt/triplex_meter_g.png
+#        gldcore/rt/triplex_meter_k.png
+#        gldcore/rt/triplex_meter_r.png
+
         gldcore/tzinfo.txt
         gldcore/unitfile.txt
         gldcore/rt/about.htm
@@ -170,7 +239,9 @@ SET(GLD_SHARE
         models/waterheater_example.glm
         models/weather.csv
         models/wind_turbine_example.glm
-        gldcore/gridlabd.htm
+
+#        gldcore/gridlabd.htm
+        gldcore2/gridlabd.htm
         )
 
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
@@ -229,7 +300,6 @@ CHECK_INCLUDE_FILES(sys/stat.h HAVE_SYS_STAT_H)
 CHECK_INCLUDE_FILES(sys/timeb.h HAVE_SYS_TIMEB_H)
 CHECK_INCLUDE_FILES(sys/time.h HAVE_SYS_TIME_H)
 CHECK_INCLUDE_FILES(sys/types.h HAVE_SYS_TYPES_H)
-
 
 CHECK_FUNCTION_EXISTS(madvise HAVE_MADVISE)
 CHECK_FUNCTION_EXISTS(error_at_line HAVE_ERROR_AT_LINE) #AC_FUNC_ERROR_AT_LINE
@@ -349,11 +419,13 @@ TRY_COMPILE(HAVE_ISFINITE ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR
 TRY_COMPILE(HAVE_PTHREAD_PRIO_INHERIT ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/HAVE_PTHREAD_PRIO_INHERIT.cc)
 
 # Generate the config.h header file.
-configure_file(gldcore/cmake_config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/gldcore/config.h @ONLY)
+#configure_file(gldcore/cmake_config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/gldcore/config.h @ONLY)
+configure_file(gldcore2/cmake_config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/gldcore2/config.h @ONLY)
 add_definitions(-DHAVE_CONFIG_H)
 
 # Load module directories. When adding new module, add it here.
-include_directories(gldcore)
+#include_directories(gldcore)
+include_directories(gldcore2)
 include_directories(third_party/superLU_MT)
 include_directories(third_party/jsonCpp)
 
@@ -371,142 +443,280 @@ include(optimize/CMakeLists.txt)
 include(powerflow/CMakeLists.txt)
 include(reliability/CMakeLists.txt)
 include(residential/CMakeLists.txt)
-include(tape/CMakeLists.txt)
+#include(tape/CMakeLists.txt)
 include(tape_file/CMakeLists.txt)
 include(tape_plot/CMakeLists.txt)
-include(gldcore/solvers/CMakeLists.txt)
-include(gldcore/link/engine/CMakeLists.txt)
+#include(gldcore/solvers/CMakeLists.txt)
+#include(gldcore/link/engine/CMakeLists.txt)
+include(gldcore2/solvers/CMakeLists.txt)
+include(gldcore2/link/engine/CMakeLists.txt)
 
 
 # Load and link C/C++ files for the executeable
 add_executable(gridlabd
-        gldcore/globals.c
-        gldcore/globals.h
-        gldcore/gridlabd.h
-        gldcore/aggregate.c
-        gldcore/aggregate.h
-        gldcore/build.h
-        gldcore/class.c
-        gldcore/class.h
-        gldcore/cmdarg.c
-        gldcore/cmdarg.h
-        #        gldcore/cmex.c
-        #gldcore/cmex.h
-        gldcore/compare.c
-        gldcore/compare.h
-        gldcore/complex.h
-        gldcore/config.h
-        gldcore/console.h
-        gldcore/convert.cpp
-        gldcore/convert.h
-        gldcore/debug.c
-        gldcore/debug.h
-        gldcore/deltamode.c
-        gldcore/deltamode.h
-        gldcore/enduse.c
-        gldcore/enduse.h
-        gldcore/environment.c
-        gldcore/environment.h
-        gldcore/exception.c
-        gldcore/exception.h
-        gldcore/exec.c
-        gldcore/exec.h
-        gldcore/find.c
-        gldcore/find.h
-        gldcore/gld_sock.h
-        gldcore/gui.c
-        gldcore/gui.h
-        gldcore/http_client.c
-        gldcore/http_client.h
-        gldcore/index.c
-        gldcore/index.h
-        gldcore/instance.c
-        gldcore/instance.h
-        gldcore/instance_cnx.c
-        gldcore/instance_cnx.h
-        gldcore/instance_slave.c
-        gldcore/instance_slave.h
-        gldcore/interpolate.c
-        gldcore/interpolate.h
-        gldcore/job.cpp
-        gldcore/job.h
-        gldcore/kill.c
-        gldcore/kill.h
-        gldcore/kml.c
-        gldcore/kml.h
-        gldcore/legal.c
-        gldcore/legal.h
-        gldcore/link.cpp
-        gldcore/link.h
-        gldcore/linkage.c
-        gldcore/linkage.h
-        gldcore/list.c
-        gldcore/list.h
-        gldcore/load.c
-        gldcore/load.h
-        gldcore/load_xml.cpp
-        gldcore/load_xml.h
-        gldcore/load_xml_handle.cpp
-        gldcore/load_xml_handle.h
-        gldcore/loadshape.c
-        gldcore/loadshape.h
-        gldcore/local.c
-        gldcore/local.h
-        gldcore/lock.cpp
-        gldcore/lock.h
-        gldcore/main.c
-        gldcore/match.c
-        gldcore/match.h
-        gldcore/matlab.c
-        gldcore/matlab.h
-        gldcore/module.c
-        gldcore/module.h
-        gldcore/object.c
-        gldcore/object.h
-        gldcore/output.c
-        gldcore/output.h
-        gldcore/platform.h
-        gldcore/property.c
-        gldcore/property.h
-        gldcore/random.c
-        gldcore/random.h
-        gldcore/realtime.c
-        gldcore/realtime.h
-        gldcore/sanitize.cpp
-        gldcore/sanitize.h
-        gldcore/save.c
-        gldcore/save.h
-        gldcore/schedule.c
-        gldcore/schedule.h
-        gldcore/server.c
-        gldcore/server.h
-        gldcore/setup.cpp
-        gldcore/setup.h
-        gldcore/stream.cpp
-        gldcore/stream.h
-        gldcore/stream_type.h
-        gldcore/test.c
-        gldcore/test.h
-        gldcore/test_callbacks.h
-        gldcore/test_framework.cpp
-        gldcore/test_framework.h
-        gldcore/threadpool.c
-        gldcore/threadpool.h
-        gldcore/timestamp.c
-        gldcore/timestamp.h
-        gldcore/transform.c
-        gldcore/transform.h
-        gldcore/ufile.c
-        gldcore/ufile.h
-        gldcore/unit.c
-        gldcore/unit.h
-        gldcore/validate.cpp
-        gldcore/validate.h
-        gldcore/version.c
-        gldcore/version.h
-        #        gldcore/xcore.cpp
-        #        gldcore/xcore.h
+#        gldcore/globals.c
+#        gldcore/globals.h
+#        gldcore/gridlabd.h
+#        gldcore/aggregate.c
+#        gldcore/aggregate.h
+#        gldcore/build.h
+#        gldcore/class.c
+#        gldcore/class.h
+#        gldcore/cmdarg.c
+#        gldcore/cmdarg.h
+#        #        gldcore/cmex.c
+#        #gldcore/cmex.h
+#        gldcore/compare.c
+#        gldcore/compare.h
+#        gldcore/complex.h
+#        gldcore/config.h
+#        gldcore/console.h
+#        gldcore/convert.cpp
+#        gldcore/convert.h
+#        gldcore/debug.c
+#        gldcore/debug.h
+#        gldcore/deltamode.c
+#        gldcore/deltamode.h
+#        gldcore/enduse.c
+#        gldcore/enduse.h
+#        gldcore/environment.c
+#        gldcore/environment.h
+#        gldcore/exception.c
+#        gldcore/exception.h
+#        gldcore/exec.c
+#        gldcore/exec.h
+#        gldcore/find.c
+#        gldcore/find.h
+#        gldcore/gld_sock.h
+#        gldcore/gui.c
+#        gldcore/gui.h
+#        gldcore/http_client.c
+#        gldcore/http_client.h
+#        gldcore/index.c
+#        gldcore/index.h
+#        gldcore/instance.c
+#        gldcore/instance.h
+#        gldcore/instance_cnx.c
+#        gldcore/instance_cnx.h
+#        gldcore/instance_slave.c
+#        gldcore/instance_slave.h
+#        gldcore/interpolate.c
+#        gldcore/interpolate.h
+#        gldcore/job.cpp
+#        gldcore/job.h
+#        gldcore/kill.c
+#        gldcore/kill.h
+#        gldcore/kml.c
+#        gldcore/kml.h
+#        gldcore/legal.c
+#        gldcore/legal.h
+#        gldcore/link.cpp
+#        gldcore/link.h
+#        gldcore/linkage.c
+#        gldcore/linkage.h
+#        gldcore/list.c
+#        gldcore/list.h
+#        gldcore/load.c
+#        gldcore/load.h
+#        gldcore/load_xml.cpp
+#        gldcore/load_xml.h
+#        gldcore/load_xml_handle.cpp
+#        gldcore/load_xml_handle.h
+#        gldcore/loadshape.c
+#        gldcore/loadshape.h
+#        gldcore/local.c
+#        gldcore/local.h
+#        gldcore/lock.cpp
+#        gldcore/lock.h
+#        gldcore/main.c
+#        gldcore/match.c
+#        gldcore/match.h
+#        gldcore/matlab.c
+#        gldcore/matlab.h
+#        gldcore/module.c
+#        gldcore/module.h
+#        gldcore/object.c
+#        gldcore/object.h
+#        gldcore/output.c
+#        gldcore/output.h
+#        gldcore/platform.h
+#        gldcore/property.c
+#        gldcore/property.h
+#        gldcore/random.c
+#        gldcore/random.h
+#        gldcore/realtime.c
+#        gldcore/realtime.h
+#        gldcore/sanitize.cpp
+#        gldcore/sanitize.h
+#        gldcore/save.c
+#        gldcore/save.h
+#        gldcore/schedule.c
+#        gldcore/schedule.h
+#        gldcore/server.c
+#        gldcore/server.h
+#        gldcore/setup.cpp
+#        gldcore/setup.h
+#        gldcore/stream.cpp
+#        gldcore/stream.h
+#        gldcore/stream_type.h
+#        gldcore/test.c
+#        gldcore/test.h
+#        gldcore/test_callbacks.h
+#        gldcore/test_framework.cpp
+#        gldcore/test_framework.h
+#        gldcore/threadpool.c
+#        gldcore/threadpool.h
+#        gldcore/timestamp.c
+#        gldcore/timestamp.h
+#        gldcore/transform.c
+#        gldcore/transform.h
+#        gldcore/ufile.c
+#        gldcore/ufile.h
+#        gldcore/unit.c
+#        gldcore/unit.h
+#        gldcore/validate.cpp
+#        gldcore/validate.h
+#        gldcore/version.c
+#        gldcore/version.h
+#        #        gldcore/xcore.cpp
+#        #        gldcore/xcore.h
+        gldcore2/gridlabd.h
+        gldcore2/globals.cpp
+        gldcore2/globals.h
+        gldcore2/object.cpp
+        gldcore2/object.h
+        gldcore2/schedule.cpp
+        gldcore2/schedule.h
+        gldcore2/aggregate.cpp
+        gldcore2/aggregate.h
+        gldcore2/build.h
+        gldcore2/class.cpp
+        gldcore2/class.h
+        gldcore2/cmdarg.cpp
+        gldcore2/cmdarg.h
+        #        gldcore2/cmex.c
+        #gldcore2/cmex.h
+        gldcore2/compare.cpp
+        gldcore2/compare.h
+        gldcore2/complex.h
+        gldcore2/config.h
+        gldcore2/console.h
+        gldcore2/convert.cpp
+        gldcore2/convert.h
+        gldcore2/debug.cpp
+        gldcore2/debug.h
+        gldcore2/deltamode.cpp
+        gldcore2/deltamode.h
+        gldcore2/enduse.cpp
+        gldcore2/enduse.h
+        gldcore2/environment.cpp
+        gldcore2/environment.h
+        gldcore2/exception.cpp
+        gldcore2/exception.h
+        gldcore2/exec.cpp
+        gldcore2/exec.h
+        gldcore2/find.cpp
+        gldcore2/find.h
+        gldcore2/gld_sock.h
+        gldcore2/gui.cpp
+        gldcore2/gui.h
+        gldcore2/http_client.cpp
+        gldcore2/http_client.h
+        gldcore2/index.cpp
+        gldcore2/index.h
+        gldcore2/instance.cpp
+        gldcore2/instance.h
+        gldcore2/instance_cnx.cpp
+        gldcore2/instance_cnx.h
+        # TODO: restore these. they're turned off until I can figure out what's going on with them.
+#        gldcore2/instance_slave.cpp
+#        gldcore2/instance_slave.h
+        gldcore2/interpolate.cpp
+        gldcore2/interpolate.h
+        gldcore2/job.cpp
+        gldcore2/job.h
+        gldcore2/kill.cpp
+        gldcore2/kill.h
+        gldcore2/kml.cpp
+        gldcore2/kml.h
+        gldcore2/legal.cpp
+        gldcore2/legal.h
+        gldcore2/link.cpp
+        gldcore2/link.h
+        gldcore2/linkage.cpp
+        gldcore2/linkage.h
+        gldcore2/list.cpp
+        gldcore2/list.h
+        gldcore2/load.cpp
+        gldcore2/load.h
+        gldcore2/load_xml.cpp
+        gldcore2/load_xml.h
+        gldcore2/load_xml_handle.cpp
+        gldcore2/load_xml_handle.h
+        gldcore2/loadshape.cpp
+        gldcore2/loadshape.h
+        gldcore2/local.cpp
+        gldcore2/local.h
+        gldcore2/lock.cpp
+        gldcore2/lock.h
+        gldcore2/main.cpp
+        gldcore2/match.cpp
+        gldcore2/match.h
+        gldcore2/matlab.cpp
+        gldcore2/matlab.h
+        gldcore2/module.cpp
+        gldcore2/module.h
+        gldcore2/output.cpp
+        gldcore2/output.h
+        gldcore2/platform.h
+        gldcore2/property.cpp
+        gldcore2/property.h
+        gldcore2/random.cpp
+        gldcore2/random.h
+        gldcore2/realtime.cpp
+        gldcore2/realtime.h
+        gldcore2/sanitize.cpp
+        gldcore2/sanitize.h
+        gldcore2/save.cpp
+        gldcore2/save.h
+        gldcore2/server.cpp
+        gldcore2/server.h
+        gldcore2/setup.cpp
+        gldcore2/setup.h
+        gldcore2/stream.cpp
+        gldcore2/stream.h
+        gldcore2/stream_type.h
+        gldcore2/test.cpp
+        gldcore2/test.h
+        gldcore2/test_callbacks.h
+        gldcore2/test_framework.cpp
+        gldcore2/test_framework.h
+        gldcore2/threadpool.cpp
+        gldcore2/threadpool.h
+        gldcore2/timestamp.cpp
+        gldcore2/timestamp.h
+        gldcore2/transform.cpp
+        gldcore2/transform.h
+        gldcore2/ufile.cpp
+        gldcore2/ufile.h
+        gldcore2/unit.cpp
+        gldcore2/unit.h
+        gldcore2/validate.cpp
+        gldcore2/validate.h
+        gldcore2/version.cpp
+        gldcore2/version.h
+        #        gldcore2/xcore.cpp
+        #        gldcore2/xcore.h
         )
+
+#MESSAGE(${CMAKE_CURRENT_SOURCE_DIR}/third_party/mysql-connector-c++)
+#
+#add_custom_target(
+#        mysql_connector
+#        COMMAND ./install.sh
+#        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/third_party/mysql-connector-c++
+#)
+#add_dependencies(gridlabd mysql_connector)
 
 add_dependencies(gridlabd libjsoncpp libsuperlu)
 

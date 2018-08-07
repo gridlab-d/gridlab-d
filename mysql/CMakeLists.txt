@@ -1,6 +1,6 @@
 project(mysql)
 
-include_directories(../gldcore)
+include_directories(../${GLDCORE_LOC})
 
 #TODO: MySQL imports
 

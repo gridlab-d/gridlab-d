@@ -1,6 +1,6 @@
 project(tape)
 
-include_directories(../gldcore)
+include_directories(../${GLDCORE_LOC})
 include_directories(../third_party/jsonCpp)
 SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I../third_party/jsonCpp" )
 
