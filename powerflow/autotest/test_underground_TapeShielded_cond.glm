@@ -5,7 +5,7 @@
 #set iteration_limit=100000;
 //#set pauseatexit=1
 //#set savefile=UG_line.xml
-#define stylesheet=C:\GridlabD\944\VS2005\x64\Debug\gridlabd-2_0
+//#define stylesheet=C:\GridlabD\944\VS2005\x64\Debug\gridlabd-2_0
 clock {
 	timezone EST+5EDT;
 	starttime '2000-01-01 0:00:00';
@@ -27,16 +27,26 @@ object underground_line_conductor {
 	name ulc6070;
 	outer_diameter 1.060000 in;
 	conductor_gmr 0.011100 ft;
-        neutral_gmr 0.01113 ft;
 	conductor_diameter 0.368000 in;
 	conductor_resistance 0.970000 Ohm/mile;
-        neutral_resistance 0.607 Ohm/mile;
 	insulation_relative_permitivitty 2.3;
 	shield_gmr 0.0365 ft;
 	shield_resistance 4.2786 Ohm/mile;
 	shield_diameter 0.88 in;
 	shield_thickness 0.005 in;
 }
+
+// Phase Conductor for 607, phase N. 1/0 AA,TS N: 1/0 Cu, Phase N is a CU copper conductor.
+object underground_line_conductor { 
+	 name ulc6070N;
+	 outer_diameter 1.060000; //1.060000; inch, not used in tape-shield calculation
+	 conductor_gmr 0.0111300;  //ft
+	 conductor_diameter 0.368; //0.368000; inch
+	 conductor_resistance 0.6070000;
+	 insulation_relative_permitivitty 2.3;
+
+}
+
 
 object line_spacing {
 	name ls520ABCN;
@@ -101,7 +111,7 @@ object line_configuration {
 	conductor_A ulc6070;
 	conductor_B ulc6070;
 	conductor_C ulc6070;
-	conductor_N ulc6070;
+	conductor_N ulc6070N;
 	spacing ls520ABCN;
 }
 object line_configuration {
@@ -114,37 +124,37 @@ object line_configuration {
 object line_configuration {
 	name lc607AN;
 	conductor_A ulc6070;
-	conductor_N ulc6070;
+	conductor_N ulc6070N;
 	spacing ls520AN;
 }
 object line_configuration {
 	name lc607BN;
 	conductor_B ulc6070;
-	conductor_N ulc6070;
+	conductor_N ulc6070N;
 	spacing ls520BN;
 }
 object line_configuration {
 	name lc607CN;
 	conductor_C ulc6070;
-	conductor_N ulc6070;
+	conductor_N ulc6070N;
 	spacing ls520CN;
 }object line_configuration {
 	name lc607ABN;
 	conductor_A ulc6070;
 	conductor_B ulc6070;
-	conductor_N ulc6070;
+	conductor_N ulc6070N;
 	spacing ls520ABN;
 }object line_configuration {
 	name lc607BCN;
 	conductor_B ulc6070;
 	conductor_C ulc6070;
-	conductor_N ulc6070;
+	conductor_N ulc6070N;
 	spacing ls520BCN;
 }object line_configuration {
 	name lc607CAN;
 	conductor_A ulc6070;
 	conductor_C ulc6070;
-	conductor_N ulc6070;
+	conductor_N ulc6070N;
 	spacing ls520CAN;
 }
 object line_configuration {
@@ -289,7 +299,7 @@ object node {
 	nominal_voltage 2401.7771;
 	object complex_assert {
 		target voltage_A;
-		value +2303.25+10.3247j; //+2307.26+11.2559j;	
+		value +2310.79+10.414j; //+2307.26+11.2559j;	
 		within 0.01; 
 	};	
 
@@ -305,7 +315,7 @@ object node {
 	nominal_voltage 2401.7771;
 	object complex_assert {
 		target voltage_B;
-		value -1142.68-1999.84j; //-1143.38-2003.77j;//-1143.88-2003.77j; //-1146.38-2006.41j
+		value -1146.38-2006.41j; //-1143.38-2003.77j;//-1143.88-2003.77j; //-1146.38-2006.41j
 		within 0.01; 
 	};
 
@@ -321,7 +331,7 @@ object node {
 	nominal_voltage 2401.7771;
 	object complex_assert {
 		target voltage_C;
-		value -1160.57+1989.51j;	//-1164.41+1992.5j;	
+		value -1164.41+1996j;	//-1164.41+1992.5j;	
 		within 0.01; 
 	};
 }
@@ -342,12 +352,12 @@ object node {
 	nominal_voltage 2401.7771;
 	object complex_assert {
 		target voltage_A;
-		value +2390.83+1.72635j; //+2391.41+0.999035j;	//+2391.37+0.997664j //+2388.85+1.21321j
+		value +2391.37+0.997664j; //+2391.41+0.999035j;	//+2391.37+0.997664j //+2388.85+1.21321j
 		within 0.01; 
 		};
 	object complex_assert {
 		target voltage_B;
-		value -1197.81-2067.69j ; //-1197.31-2068.47j;	//-1197.27-2068.42j //-1199.99-2068.25j
+		value -1197.27-2068.42j ; //-1197.31-2068.47j;	//-1197.27-2068.42j //-1199.99-2068.25j
 		within 0.01; 
 		};
 
@@ -365,12 +375,12 @@ object load {
 	nominal_voltage 2401.7771;
 	object complex_assert {
 		target voltage_B;
-		value -1194.84-2071.07j; //-1195.77-2071.25j;	
+		value -1195.75-2071.21j; //-1195.77-2071.25j;	
 		within 0.01; 
 		};
 	object complex_assert {
 		target voltage_C;
-		value -1191.34+2070.34j; //-1192.28+2070.26j;	
+		value -1192.25+2070.2j; //-1192.28+2070.26j;	
 		within 0.01; 
 		};
 }
@@ -387,12 +397,12 @@ object load {
 	nominal_voltage 2401.7771;
 	object complex_assert {
 		target voltage_C;
-		value -1196.49+2070.03j;	
+		value -1196.15+2070.88j;	
 		within 0.01; 
 		};
 	object complex_assert {
 		target voltage_A;
-		value 2389.04-3.465511j;	
+		value 2389.39-2.62361j;	
 		within 0.01; 
 		};
 }
@@ -409,17 +419,17 @@ object load {
 	nominal_voltage 2401.7771;
 	object complex_assert {
 		target voltage_A;
-		value +2390.91+1.56516j; //+2391.42+0.909195j;	
+		value +2391.38+0.907984j; //+2391.42+0.909195j;	
 		within 0.01; 
 		};
 	object complex_assert {
 		target voltage_B;
-		value -1197.75-2067.85j; //-1197.32-2068.56j;	
+		value -1197.29-2068.51j; //-1197.32-2068.56j;	
 		within 0.01; 
 		};
 	object complex_assert {
 		target voltage_C;
-		value -1200.99+2082.42j; //-1200.51+2081.76j;	
+		value -1200.51+2081.77j; //-1200.51+2081.76j;	
 		within 0.01; 
 		};
 	

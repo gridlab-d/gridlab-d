@@ -1,10 +1,20 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
 
 #include <math.h>
-#include "pssp_defs.h"
+#include "slu_mt_sdefs.h"
 
 
 float
-sPivotGrowth(int ncols, SuperMatrix *A, int *perm_c, 
+sPivotGrowth(int_t ncols, SuperMatrix *A, int_t *perm_c, 
              SuperMatrix *L, SuperMatrix *U)
 {
 /*
@@ -24,7 +34,7 @@ sPivotGrowth(int ncols, SuperMatrix *A, int *perm_c,
  * Arguments
  * =========
  *
- * ncols    (input) int
+ * ncols    (input) int_t
  *          The number of columns of matrices A, L and U.
  *
  * A        (input) SuperMatrix*
@@ -47,9 +57,9 @@ sPivotGrowth(int ncols, SuperMatrix *A, int *perm_c,
     SCPformat *Lstore;
     NCPformat *Ustore;
     float  *Aval, *Lval, *Uval;
-    int      fsupc, nsupr, luptr, nz_in_U;
-    int      i, j, k, oldcol;
-    int      *inv_perm_c;
+    int_t      fsupc, nsupr, luptr, nz_in_U;
+    int_t      i, j, k, oldcol;
+    int_t      *inv_perm_c;
     float   rpg, maxaj, maxuj;
     extern   double slamch_(char *);
     float   smlnum;
@@ -66,7 +76,7 @@ sPivotGrowth(int ncols, SuperMatrix *A, int *perm_c,
     Lval = Lstore->nzval;
     Uval = Ustore->nzval;
     
-    inv_perm_c = (int *) SUPERLU_MALLOC( (size_t) A->ncol*sizeof(int) );
+    inv_perm_c = intMalloc(A->ncol);
     for (j = 0; j < A->ncol; ++j) inv_perm_c[perm_c[j]] = j;
 
     for (k = 0; k <= Lstore->nsuper; ++k) {

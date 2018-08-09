@@ -254,7 +254,7 @@ object rectifier {
 	object recorder {
 		file TEST_rectifier.csv;
 		interval 5;
-		property Vdc, voltage_A,voltage_B,voltage_C,current_A,current_B,current_C, power_A_In, power_B_In, power_C_In;
+		property "voltage_A,voltage_B,voltage_C,current_A,current_B,current_C, power_out_A, power_out_B, power_out_C";
 	};
 }
 

@@ -20,10 +20,11 @@ new=`git log -n 1 | sed -n '1s/^commit //p' | cut -c1-8`
 mod=`git status -sb | grep "^#" | sed 's/## .*\.\.\.//' | sed 's/## //' | sed 's/ .*//'`
 num=`git log --max-count=1 --pretty=format:"%ad" --date=raw | sed -ne 's/ [\+\-][0-9]\{4\}$//p'`
 rev=$((${num}/86400))
+branchname=`git rev-parse --abbrev-ref HEAD`
 if [ -z "${mod}" ]; then
-	branch="${USER}@$(hostname):${PWD/${HOME}\//}:$new"
+	branch="$new:$branchname"
 else
-	branch="${dir}:${mod}:${new}"
+	branch="$new:$branchname:Modified"
 fi
 if test -f $2 ; then 
 	oldnum=`cat $2 | sed -ne 's/^#define BUILDNUM //p'`

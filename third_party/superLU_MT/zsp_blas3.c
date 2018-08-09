@@ -1,3 +1,13 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
 
 /*
  * -- SuperLU routine (version 1.0) --
@@ -11,13 +21,13 @@
  * Purpose:		Sparse BLAS3, using some dense BLAS3 operations.
  */
 
-#include "pzsp_defs.h"
+#include "slu_mt_zdefs.h"
 
 
-int
-sp_zgemm(char *trans, int m, int n, int k, 
-         doublecomplex alpha, SuperMatrix *A, doublecomplex *b, int ldb, 
-         doublecomplex beta, doublecomplex *c, int ldc)
+int_t
+sp_zgemm(char *trans, int_t m, int_t n, int_t k, 
+         doublecomplex alpha, SuperMatrix *A, doublecomplex *b, int_t ldb, 
+         doublecomplex beta, doublecomplex *c, int_t ldc)
 {
 /*  Purpose   
     =======   
@@ -44,18 +54,18 @@ sp_zgemm(char *trans, int m, int n, int k,
                 TRANS = 'T' or 't'   y := alpha*A'*x + beta*y.
                 TRANS = 'C' or 'c'   y := alpha*A'*x + beta*y.
 
-    M      - (input) int   
+    M      - (input) int_t   
              On entry,  M  specifies  the number of rows of the matrix 
 	     op( A ) and of the matrix C.  M must be at least zero. 
 	     Unchanged on exit.   
 
-    N      - (input) int
+    N      - (input) int_t
              On entry,  N specifies the number of columns of the matrix 
 	     op( B ) and the number of columns of the matrix C. N must be 
 	     at least zero.
 	     Unchanged on exit.   
 
-    K      - (input) int
+    K      - (input) int_t
              On entry, K specifies the number of columns of the matrix 
 	     op( A ) and the number of rows of the matrix op( B ). K must 
 	     be at least  zero.   
@@ -78,7 +88,7 @@ sp_zgemm(char *trans, int m, int n, int k,
              matrix B.   
              Unchanged on exit.   
 
-    LDB    - (input) int
+    LDB    - (input) int_t
              On entry, LDB specifies the first dimension of B as declared 
              in the calling (sub) program. LDB must be at least max( 1, n ).  
              Unchanged on exit.   
@@ -94,7 +104,7 @@ sp_zgemm(char *trans, int m, int n, int k,
              On exit, the array C is overwritten by the m by n matrix 
 	     ( alpha*op( A )*B + beta*C ).   
 
-    LDC    - (input) int
+    LDC    - (input) int_t
              On entry, LDC specifies the first dimension of C as declared 
              in the calling (sub)program. LDC must be at least max(1,m).   
              Unchanged on exit.   

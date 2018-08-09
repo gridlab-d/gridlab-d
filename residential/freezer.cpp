@@ -54,7 +54,6 @@
 #include <errno.h>
 #include <math.h>
 
-#include "house_a.h"
 #include "freezer.h"
 
 //////////////////////////////////////////////////////////////////////////
@@ -237,6 +236,7 @@ TIMESTAMP freezer::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	double nHours = (gl_tohours(t1)- gl_tohours(t0))/TS_SECOND;
 	double t = 0.0, dt = 0.0;
+	double temp_voltage_magnitude;
 
 	const double COP = COPcoef*((-3.5/45)*(Tout-70)+4.5);
 
@@ -254,7 +254,10 @@ TIMESTAMP freezer::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	load.total = Qr * KWPBTUPH * COP;
 
-	if(pCircuit->pV->Mag() < (120.0 * 0.6) ){ /* stall voltage */
+	//Pull the voltage magnitude
+	temp_voltage_magnitude = (pCircuit->pV->get_complex()).Mag();
+
+	if(temp_voltage_magnitude < (default_line_voltage * 0.6) ){ /* stall voltage */
 		gl_verbose("freezer motor has stalled");
 		motor_state = S_OFF;
 		Qr = 0;

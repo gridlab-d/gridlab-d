@@ -1,9 +1,19 @@
-#include "pdsp_defs.h"
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
+#include "slu_mt_ddefs.h"
 
 void
-pxgstrf_mark_busy_descends(int pnum, int jcol, int *etree, 
+pxgstrf_mark_busy_descends(int_t pnum, int_t jcol, int_t *etree, 
 			   pxgstrf_shared_t *pxgstrf_shared,
-			   int *bcol, int *lbusy)
+			   int_t *bcol, int_t *lbusy)
 {
 /*
  * -- SuperLU MT routine (version 1.0) --
@@ -25,26 +35,26 @@ pxgstrf_mark_busy_descends(int pnum, int jcol, int *etree,
  * Arguments
  * =========
  *
- * jcol    (input) int
+ * jcol    (input) int_t
  *         Current panel, with leading column jcol.
  *
- * etree   (input) int*
+ * etree   (input) int_t*
  *         Elimination tree parent pointers.
  *
- * bcol    (input/output) int*
+ * bcol    (input/output) int_t*
  *         Farthest busy descendant of jcol.
  *         On entry, it is the first column of the farthest busy panel.
  *         On exit, it may be adjusted to the first column of the
  *                  farthest busy supernode.
  *
- * lbusy   (input/output) int*
+ * lbusy   (input/output) int_t*
  *         Initially all -1, lbusy(r) = jcol means that r was busy
  *         at the beginning of computing jcol.
  *
  */
     GlobalLU_t *Glu = pxgstrf_shared->Glu;
-    register int w,  kcol, fsupc, bcol_reg;
-    int *xsup;
+    register int_t w,  kcol, fsupc, bcol_reg;
+    int_t *xsup;
 
     bcol_reg = *bcol;
     if ( bcol_reg < jcol ) {

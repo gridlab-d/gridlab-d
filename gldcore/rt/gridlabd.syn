@@ -207,6 +207,7 @@ gl_random_weibull
 gl_random_beta
 gl_random_gamma
 gl_localtime
+gl_localtime_delta
 gl_strftime
 trace
 

@@ -1,0 +1,38 @@
+//Simple test for inverter phase checks - triplex presence
+//In this case, the inverter wants triplex, but the parent doesn't support it
+clock {
+	timezone PST8;
+	starttime '2013-08-01 0:00:00';
+	stoptime '2013-08-01 0:00:01';
+}
+
+module powerflow {
+	solver_method FBS;
+}
+
+module generators;
+
+object meter {
+	name one_bus;
+	phases BC;
+	nominal_voltage 7200.0;
+}
+
+object triplex_meter {
+	name other_bus;
+	phases CS;
+	nominal_voltage 120.0;
+}
+
+//Wrong connection
+object inverter {
+	name inverter_1;
+	phases BS;
+	parent one_bus;
+}
+
+object inverter {
+	name inverter_2;
+	phases CS;
+	parent other_bus;
+}

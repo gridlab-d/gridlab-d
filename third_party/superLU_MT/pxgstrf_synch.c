@@ -1,31 +1,42 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
 /*
- * -- SuperLU MT routine (version 1.0) --
+ * -- SuperLU MT routine (version 2.1) --
  * Univ. of California Berkeley, Xerox Palo Alto Research Center,
  * and Lawrence Berkeley National Lab.
  * August 15, 1997
  *
+ * Modified:  March 20, 2013 version 2.1
  */
 #include <stdio.h>
 #include <math.h>
-#include "pdsp_defs.h"
+#include "slu_mt_ddefs.h"
 
 #define SPLIT_TOP
 
-int
-ParallelInit(int n, pxgstrf_relax_t *pxgstrf_relax, 
+int_t
+ParallelInit(int_t n, pxgstrf_relax_t *pxgstrf_relax, 
 	     superlumt_options_t *superlumt_options, 
 	     pxgstrf_shared_t *pxgstrf_shared)
 {
-    int      *etree = superlumt_options->etree;
-    register int w, dad, ukids, i, j, k, rs, panel_size, relax;
-    register int P, w_top, do_split = 0;
+    int_t      *etree = superlumt_options->etree;
+    register int_t w, dad, ukids, i, j, k, rs, panel_size, relax;
+    register int_t P, w_top, do_split = 0;
     panel_t panel_type;
-    int      *panel_histo = pxgstrf_shared->Gstat->panel_histo;
-    register int nthr, concurrency, info;
+    int_t      *panel_histo = pxgstrf_shared->Gstat->panel_histo;
+    register int_t nthr, concurrency, info;
     Gstat_t  *Gstat = pxgstrf_shared->Gstat;
 
 #if ( MACH==SUN )
-    register int sync_type = USYNC_THREAD;
+    register int_t sync_type = USYNC_THREAD;
     
     /* Set concurrency level. */
     nthr = sysconf(_SC_NPROCESSORS_ONLN);
@@ -33,7 +44,7 @@ ParallelInit(int n, pxgstrf_relax_t *pxgstrf_relax,
     concurrency = thr_getconcurrency();
 
 #if ( PRNTlevel==1 )    
-    printf(".. CPUs %d, concurrency (#LWP) %d, P %d\n",
+    printf(".. CPUs " IFMT ", concurrency (#LWP) " IFMT ", P " IFMT "\n",
 	   nthr, concurrency, P);
 #endif
 
@@ -50,7 +61,8 @@ ParallelInit(int n, pxgstrf_relax_t *pxgstrf_relax,
 	pthread_mutex_init(&pxgstrf_shared->lu_locks[i], NULL);
 #else
 
-    pxgstrf_shared->lu_locks = (mutex_t *) SUPERLU_MALLOC(NO_GLU_LOCKS * sizeof(mutex_t));
+    pxgstrf_shared->lu_locks =
+	(mutex_t *) SUPERLU_MALLOC( NO_GLU_LOCKS * sizeof(mutex_t) );
 
 #endif    
     
@@ -70,7 +82,7 @@ ParallelInit(int n, pxgstrf_relax_t *pxgstrf_relax,
     pxgstrf_shared->num_splits = 0;
     
     if ( (info = queue_init(&pxgstrf_shared->taskq, n)) ) {
-	fprintf(stderr, "ParallelInit(): %d\n", info);
+	fprintf(stderr, "ParallelInit(): " IFMT "\n", info);
 	SUPERLU_ABORT("queue_init fails.");
     }
 
@@ -167,7 +179,7 @@ ParallelInit(int n, pxgstrf_relax_t *pxgstrf_relax,
     pxgstrf_shared->pan_status[n].state = UNREADY;
 
 #if ( PRNTlevel==1 )
-    printf(".. Split: P %d, #nondomain panels %d\n", P, pxgstrf_shared->tasks_remain);
+    printf(".. Split: P " IFMT ", #nondomain panels " IFMT "\n", P, pxgstrf_shared->tasks_remain);
 #endif
 #ifdef DOMAINS
     EnqueueDomains(&pxgstrf_shared->taskq, list_head, pxgstrf_shared);
@@ -175,7 +187,7 @@ ParallelInit(int n, pxgstrf_relax_t *pxgstrf_relax,
     EnqueueRelaxSnode(&pxgstrf_shared->taskq, n, pxgstrf_relax, pxgstrf_shared);
 #endif
 #if ( PRNTlevel==1 )
-    printf(".. # tasks %d\n", pxgstrf_shared->tasks_remain);
+    printf(".. # tasks " IFMT "\n", pxgstrf_shared->tasks_remain);
     fflush(stdout);
 #endif
 
@@ -196,34 +208,34 @@ ParallelInit(int n, pxgstrf_relax_t *pxgstrf_relax,
 /*
  * Free the storage used by the parallel scheduling algorithm.
  */
-int ParallelFinalize(pxgstrf_shared_t *pxgstrf_shared)
+int_t ParallelFinalize(pxgstrf_shared_t *pxgstrf_shared)
 {
     /* Destroy mutexes */
 #if ( MACH==SUN )
-    register int i;
+    register int_t i;
     for (i = 0; i < NO_GLU_LOCKS; ++i)
         mutex_destroy( &pxgstrf_shared->lu_locks[i] );
 #elif ( MACH==DEC || MACH==PTHREAD )
-    register int i;
+    register int_t i;
     for (i = 0; i < NO_GLU_LOCKS; ++i) 
         pthread_mutex_destroy( &pxgstrf_shared->lu_locks[i] );
 #endif    
     
     SUPERLU_FREE ((void*)pxgstrf_shared->lu_locks);
-    SUPERLU_FREE ((int*)pxgstrf_shared->spin_locks);
+    SUPERLU_FREE ((int_t*)pxgstrf_shared->spin_locks);
     SUPERLU_FREE (pxgstrf_shared->pan_status);
     SUPERLU_FREE (pxgstrf_shared->fb_cols);
     SUPERLU_FREE (pxgstrf_shared->Glu->map_in_sup);
     queue_destroy(&pxgstrf_shared->taskq);
 
 #if ( PRNTlevel==1 )
-    printf(".. # panel splittings %d\n", pxgstrf_shared->num_splits);
+    printf(".. # panel splittings " IFMT "\n", pxgstrf_shared->num_splits);
 #endif
 
     return 0;
 }
 
-int queue_init(queue_t *q, int n)
+int_t queue_init(queue_t *q, int_t n)
 {
     if ( n < 1 ) return (-1);
 
@@ -235,7 +247,7 @@ int queue_init(queue_t *q, int n)
     return 0;
 }
 
-int queue_destroy(queue_t *q)
+int_t queue_destroy(queue_t *q)
 {
     SUPERLU_FREE( q->queue );
     return 0;
@@ -244,7 +256,7 @@ int queue_destroy(queue_t *q)
 /*
  * Return value: number of items in the queue
  */
-int Enqueue(queue_t *q, qitem_t item)
+int_t Enqueue(queue_t *q, qitem_t item)
 {
     q->queue[q->tail++] = item;
     ++q->count;
@@ -255,7 +267,7 @@ int Enqueue(queue_t *q, qitem_t item)
  * Return value: >= 0 number of items in the queue
  *               = -1 queue is empty
  */
-int Dequeue(queue_t *q, qitem_t *item)
+int_t Dequeue(queue_t *q, qitem_t *item)
 {
     if ( q->count <= 0 ) return EMPTY;
     
@@ -264,20 +276,19 @@ int Dequeue(queue_t *q, qitem_t *item)
     return (q->count);
 }
 
-int QueryQueue(queue_t *q)
+int_t QueryQueue(queue_t *q)
 {
-    register int     i;
-    printf("Queue count: %d\n", q->count);
-    for (i = q->head; i < q->tail; ++i)
-	printf("%8d\titem %8d\n", i, q->queue[i]);
+    register int_t     i;
+    printf("Queue count: " IFMT "\n", q->count);
+    for (i = q->head; i < q->tail; ++i)	printf(IFMT "\titem " IFMT "\n", i, q->queue[i]);
 
     return 0;
 }
 
-int EnqueueRelaxSnode(queue_t *q, int n, pxgstrf_relax_t *pxgstrf_relax,
+int_t EnqueueRelaxSnode(queue_t *q, int_t n, pxgstrf_relax_t *pxgstrf_relax,
 		      pxgstrf_shared_t *pxgstrf_shared)
 {
-    register int rs, j, m;
+    register int_t rs, j, m;
 
     m = pxgstrf_relax[0].size;
     for (rs = 1; rs <= m; ++rs) {
@@ -287,7 +298,7 @@ int EnqueueRelaxSnode(queue_t *q, int n, pxgstrf_relax_t *pxgstrf_relax,
 	++pxgstrf_shared->tasks_remain;
     }
 #if ( PRNTlevel==1 )    
-    printf(".. EnqueueRelaxSnode(): count %d\n", q->count);
+    printf(".. EnqueueRelaxSnode(): count " IFMT "\n", q->count);
 #endif
     return 0;
 }
@@ -297,7 +308,7 @@ int EnqueueRelaxSnode(queue_t *q, int n, pxgstrf_relax_t *pxgstrf_relax,
  * A pair of two numbers {root, fst_desc} is added in the queue.
  */
 /*int EnqueueDomains(int P, queue_t *q, struct Branch **proc_domains_h)*/
-int EnqueueDomains(queue_t *q, struct Branch *list_head,
+int_t EnqueueDomains(queue_t *q, struct Branch *list_head,
 		   pxgstrf_shared_t *pxgstrf_shared)
 {
     struct Branch *b, *thrash;
@@ -315,13 +326,13 @@ int EnqueueDomains(queue_t *q, struct Branch *list_head,
 	b = b->next;
 	SUPERLU_FREE (thrash);
     }
-    printf("EnqueueDomains(): count %d\n", q->count);
+    printf("EnqueueDomains(): count " IFMT "\n", q->count);
     return 0;
 }
 
-int NewNsuper(const int pnum, pxgstrf_shared_t *pxgstrf_shared, int *data)
+int_t NewNsuper(const int_t pnum, pxgstrf_shared_t *pxgstrf_shared, int_t *data)
 {
-    register int i;
+    register int_t i;
     mutex_t *lock = &pxgstrf_shared->lu_locks[NSUPER_LOCK];
     Gstat_t *Gstat = pxgstrf_shared->Gstat;
 
@@ -337,6 +348,8 @@ int NewNsuper(const int pnum, pxgstrf_shared_t *pxgstrf_shared, int *data)
 #pragma critical lock(lock)
 #elif  ( MACH==CRAY_PVP )
 #pragma _CRI guard (*lock)
+#elif ( MACH==OPENMP )
+#pragma omp critical ( NSUPER_LOCK )
 #endif    
     {
       i = ++(*data);
@@ -356,14 +369,14 @@ int NewNsuper(const int pnum, pxgstrf_shared_t *pxgstrf_shared, int *data)
     return i;
 }
 
-int lockon(int *block)
+int_t lockon(int_t *block)
 {
     while ( *block ) ; /* spin-wait */
     *block = 1;
     return 0;
 }
 
-int lockoff(int *block)
+int_t lockoff(int_t *block)
 {
     *block = 0;
     return 0;

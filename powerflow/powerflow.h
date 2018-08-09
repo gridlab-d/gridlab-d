@@ -28,6 +28,9 @@ void print_matrix(complex mat[3][3]);
 #define GETOBJECT(obj) ((OBJECT *) obj - 1)
 #define IMPORT_CLASS(name) extern CLASS *name##_class
 
+//Deltamode use
+#define TSNVRDBL 9223372036854775808.0
+
 typedef enum {SM_FBS=0, SM_GS=1, SM_NR=2} SOLVERMETHOD;		/**< powerflow solver methodology */
 typedef enum {MM_SUPERLU=0, MM_EXTERN=1} MATRIXSOLVERMETHOD;	/**< NR matrix solver methodlogy */
 typedef enum {
@@ -41,6 +44,19 @@ typedef enum {
 	LS_OPEN=0,			///< defines that that link is open
 	LS_CLOSED=1			///< defines that that link is closed
 } LINESTATUS;	//Line/link status - made at powerflow level for reusability
+
+typedef enum {
+	IRM_NONE=0,			///< Flag as no integration method
+	IRM_UNDEFINED=1,	///< Basically a flag to indicate "use the default" - specific object-level usage
+	IRM_TRAPEZOIDAL=2,	///< Use the trapezoidal implementaiton
+	IRM_BACKEULER=3		///< Use the backward-Euler implementation
+} INRUSHINTMETHOD;	//Selection of the integration method for the inrush calculations
+
+typedef enum {
+	FMM_NONE=0,		///< No default
+	FMM_SIMPLE=1,	///< Objects default to simple frequency measurement method
+	FMM_PLL=2		///< Objects default to the PLL-based frequency measurement method
+} FREQMEASDEFAULT;	//Base default method for frequency measurement
 
 //Structure to hold external LU solver calls
 typedef struct s_ext_fxn {
@@ -64,7 +80,10 @@ GLOBAL unsigned int NR_bus_count INIT(0);			/**< Newton-Raphson bus count - used
 GLOBAL unsigned int NR_branch_count INIT(0);		/**< Newton-Raphson branch count - used for determining size of branch vector */
 GLOBAL BUSDATA *NR_busdata INIT(NULL);				/**< Newton-Raphson bus data pointer array */
 GLOBAL BRANCHDATA *NR_branchdata INIT(NULL);		/**< Newton-Raphson branch data pointer array */
-GLOBAL NR_SOLVER_STRUCT NR_powerflow;				/**< Newton-Raphson solver working variables - "steady-state" powerflow version */
+GLOBAL NR_SOLVER_STRUCT NR_powerflow;				/**< Newton-Raphson solver pointer working variables - one per island detected */
+GLOBAL int NR_islands_detected INIT(0);				/**< Newton-Raphson solver island count (from fault_check) - determines the array size of NR_powerflow */
+GLOBAL bool NR_island_fail_method INIT(false);		/**< Newton-Raphson multiple islands - determine how individual island failure may determined */
+GLOBAL bool NR_solver_working INIT(false);			/**< Newton-Raphson global flag to indicate if the solver is working -- mostly to prevent island redetection if it is mid-array */
 GLOBAL int NR_curr_bus INIT(-1);					/**< Newton-Raphson current bus indicator - used to populate NR_busdata */
 GLOBAL int NR_curr_branch INIT(-1);					/**< Newton-Raphson current branch indicator - used to populate NR_branchdata */
 GLOBAL int64 NR_iteration_limit INIT(500);			/**< Newton-Raphson iteration limit (per GridLAB-D iteration) */
@@ -92,36 +111,44 @@ GLOBAL double default_maximum_voltage_error INIT(1e-6);	/**< default sync voltag
 GLOBAL double default_maximum_power_error INIT(0.0001);	/**< default power convergence limit for multirun */
 GLOBAL OBJECT *restoration_object INIT(NULL);		/**< restoration object of the system */
 GLOBAL OBJECT *fault_check_object INIT(NULL);		/**< fault_check object of the system */
+GLOBAL bool fault_check_override_mode INIT(false);	/**< Mode designator for fault_check -- overrides errors and prevents powerflow -- meant for debug */
 GLOBAL bool meshed_fault_checking_enabled INIT(false);	/*** fault_check object flag for possible meshing -- adjusts how reliability-related code runs */
 GLOBAL bool restoration_checks_active INIT(false);	/***< Overall flag for when reconfigurations are occurring - special actions in devices */
+GLOBAL double reliability_metrics_recloser_counts INIT(0.0);	/***< Recloser counts for momentary outages for power_metrics -- primarily to do backwards compatibility*/
 
 GLOBAL bool enable_subsecond_models INIT(false);		/* normally not operating in delta mode */
 GLOBAL bool all_powerflow_delta INIT(false);			/* Flag to make all powerflow objects participate in deltamode -- otherwise is individually flagged per object */
+GLOBAL FREQMEASDEFAULT all_powerflow_freq_measure_method INIT(FMM_NONE);		/* Flag to enable all capable powerflow objects to do frequency measurements */
 GLOBAL unsigned long deltamode_timestep INIT(10000000); /* deltamode timestep value - 10 ms timestep, at first - intermnal */
 GLOBAL double deltamode_timestep_publish INIT(10000000.0); /* deltamode module-published 10 ms timestep, at first -- module property version, to be converted*/
 GLOBAL OBJECT **delta_objects INIT(NULL);				/* Array pointer objects that need deltamode interupdate calls */
 GLOBAL FUNCTIONADDR *delta_functions INIT(NULL);	/* Array pointer functions for objects that need deltamode interupdate calls */
-GLOBAL FUNCTIONADDR *delta_freq_functions INIT(NULL);	/* Array pointer functions for objects that have "frequency" updates at end of deltamode */
+GLOBAL FUNCTIONADDR *post_delta_functions INIT(NULL);		/* Array pointer functions for objects that need deltamode postupdate calls */
 GLOBAL int pwr_object_count INIT(0);				/* deltamode object count */
 GLOBAL int pwr_object_current INIT(-1);				/* Index of current deltamode object */
 GLOBAL TIMESTAMP deltamode_starttime INIT(TS_NEVER);	/* Tracking variable for next desired instance of deltamode */
+GLOBAL TIMESTAMP deltamode_endtime INIT(TS_NEVER);		/* Tracking variable to see when deltamode ended - so differential calculations don't get messed up */
+GLOBAL double deltamode_endtime_dbl INIT(TSNVRDBL);		/* Tracking variable to see when deltamode ended - double valued for explicit movement calculations */
+GLOBAL TIMESTAMP deltamode_supersec_endtime INIT(TS_NEVER);	/* Tracking variable to indicate the "floored" time of detamode_endtime */
 GLOBAL double current_frequency INIT(60.0);			/**< Current operating frequency of the system - used by deltamode stuff */
 GLOBAL bool master_frequency_update INIT(false);	/**< Whether a generator has designated itself "keeper of frequency" -- temporary deltamode override */
 GLOBAL bool enable_frequency_dependence INIT(false);	/**< Flag to enable frequency-based updates of impedance values, namely loads and lines */
-GLOBAL int64 deltamode_extra_function INIT(0);		/**< Kludge pointer to module-level function, so generators can call it */
 GLOBAL double default_resistance INIT(1e-4);		/**< sets the default resistance for safety devices */
 
 //In-rush deltamode stuff
 GLOBAL bool enable_inrush_calculations INIT(false);	/**< Flag to enable in-rush calculations in deltamode */
+GLOBAL INRUSHINTMETHOD default_inrush_integration_method INIT(IRM_TRAPEZOIDAL);	/**< Integration method used for inrush calculations */
 GLOBAL double impedance_conversion_low_pu INIT(0.7);	/** Lower PU voltage level to convert all loads to impedance */
 GLOBAL double deltatimestep_running INIT(-1.0);			/** Value of the current deltamode simulation - used for integration method in in-rush */
 
 //Mesh fault current stuff
 GLOBAL bool enable_mesh_fault_current INIT(false);	/** Flag to enable mesh-based fault current calculations */
 
+//Market-based item -- moved from triplex_meter
+GLOBAL char1024 market_price_name INIT("current_market.clearing_price");
+
 // Deltamode stuff
 void schedule_deltamode_start(TIMESTAMP tstart);	/* Anticipated time for a deltamode start, even if it is now */
-int delta_extra_function(unsigned int mode);
 
 /* used by many powerflow enums */
 #define UNKNOWN 0

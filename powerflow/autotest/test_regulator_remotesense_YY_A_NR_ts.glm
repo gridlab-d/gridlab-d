@@ -156,24 +156,33 @@ object load {
 		loop 6;
 		property constant_power_C;
 	};
-	
+
 	object complex_assert {
 		operation MAGNITUDE;
-		value 7200;
 		target voltage_A;
-		within 45;
+		within 0.1;
+		object player {
+			property value;
+			file ../data_reg_remote_YY_A_NR_phase_A.csv;
+		};
 	};
 	object complex_assert {
 		operation MAGNITUDE;
-		value 7200;
 		target voltage_B;
-		within 45;
+		within 0.1;
+		object player {
+			property value;
+			file ../data_reg_remote_YY_A_NR_phase_B.csv;
+		};
 	};
 	object complex_assert {
 		operation MAGNITUDE;
-		value 7200;
 		target voltage_C;
-		within 45;
+		within 0.1;
+		object player {
+			property value;
+			file ../data_reg_remote_YY_A_NR_phase_C.csv;
+		};
 	};
 }
 

@@ -199,7 +199,7 @@ static CALLBACKS callbacks = {
 	object_isa,
 	class_register_type,
 	class_define_type,
-	{mkdatetime,strdatetime,timestamp_to_days,timestamp_to_hours,timestamp_to_minutes,timestamp_to_seconds,local_datetime,convert_to_timestamp,convert_to_timestamp_delta,convert_from_timestamp,convert_from_deltatime_timestamp},
+	{mkdatetime,strdatetime,timestamp_to_days,timestamp_to_hours,timestamp_to_minutes,timestamp_to_seconds,local_datetime,local_datetime_delta,convert_to_timestamp,convert_to_timestamp_delta,convert_from_timestamp,convert_from_deltatime_timestamp},
 	unit_convert, unit_convert_ex, unit_find,
 	{create_exception_handler,delete_exception_handler,throw_exception,exception_msg},
 	{global_create, global_setvar, global_getvar, global_find},

@@ -75,6 +75,7 @@ third_party_superLU_MT_libsuperlu_la_SOURCES += third_party/superLU_MT/slu_mt_ma
 third_party_superLU_MT_libsuperlu_la_SOURCES += third_party/superLU_MT/slu_mt_util.h
 third_party_superLU_MT_libsuperlu_la_SOURCES += third_party/superLU_MT/sp_coletree.c
 third_party_superLU_MT_libsuperlu_la_SOURCES += third_party/superLU_MT/sp_colorder.c
+third_party_superLU_MT_libsuperlu_la_SOURCES += third_party/superLU_MT/cholnzcnt.c
 third_party_superLU_MT_libsuperlu_la_SOURCES += third_party/superLU_MT/sp_ienv.c
 third_party_superLU_MT_libsuperlu_la_SOURCES += third_party/superLU_MT/superlu_timer.c
 third_party_superLU_MT_libsuperlu_la_SOURCES += third_party/superLU_MT/supermatrix.h

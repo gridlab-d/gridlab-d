@@ -1,15 +1,25 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
 
-#include "pdsp_defs.h"
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
+
+#include "slu_mt_ddefs.h"
 
 void
 pdgstrf_thread_finalize(pdgstrf_threadarg_t *pdgstrf_threadarg, 
 			pxgstrf_shared_t *pxgstrf_shared,
-			SuperMatrix *A, int *perm_r,
+			SuperMatrix *A, int_t *perm_r,
 			SuperMatrix *L, SuperMatrix *U
 			)
 {
 /*
- * -- SuperLU MT routine (version 2.0) --
+ * -- SuperLU MT routine (version 3.0) --
  * Lawrence Berkeley National Lab, Univ. of California Berkeley,
  * and Xerox Palo Alto Research Center.
  * September 10, 2007
@@ -22,6 +32,8 @@ pdgstrf_thread_finalize(pdgstrf_threadarg_t *pdgstrf_threadarg,
  * factorization pdgstrf_thread(). It sets up the L and U data
  * structures, and deallocats the storage associated with the structures
  * pxgstrf_shared and pdgstrf_threadarg.
+ *
+ * Only Master thread calls this routine.
  *
  * Arguments
  * =========
@@ -38,7 +50,7 @@ pdgstrf_thread_finalize(pdgstrf_threadarg_t *pdgstrf_threadarg,
  *          (A->nrow, A->ncol). The type of A can be:
  *          Stype = NCP; Dtype = _D; Mtype = GE.
  *
- * perm_r   (input) int*, dimension A->nrow
+ * perm_r   (input) int_t*, dimension A->nrow
  *          Row permutation vector which defines the permutation matrix Pr,
  *          perm_r[i] = j means row i of A is in position j in Pr*A.
  *
@@ -54,8 +66,8 @@ pdgstrf_thread_finalize(pdgstrf_threadarg_t *pdgstrf_threadarg,
  *
  *
  */
-    register int nprocs, n, i, iinfo;
-    int       nnzL, nnzU;
+    register int_t nprocs, n, i, iinfo;
+    int_t       nnzL, nnzU;
     superlumt_options_t *superlumt_options;
     GlobalLU_t *Glu;
     extern ExpHeader *dexpanders;
@@ -67,7 +79,7 @@ pdgstrf_thread_finalize(pdgstrf_threadarg_t *pdgstrf_threadarg,
 
     countnz(n, pxgstrf_shared->xprune, &nnzL, &nnzU, Glu);
     fixupL(n, perm_r, Glu);
-
+    
 #ifdef COMPRESS_LUSUP
     compressSUP(n, pxgstrf_shared->Glu);
 #endif
@@ -108,26 +120,8 @@ pdgstrf_thread_finalize(pdgstrf_threadarg_t *pdgstrf_threadarg,
     PrintInt10("inv_perm_r", n, pxgstrf_shared->inv_perm_r);
 #endif
 
-#if ( PRNTlevel>=1 )
-    {
-	int *colcnt = superlumt_options->colcnt_h;
-	int fsupc;
-	for (i = 0; i <= Glu->nsuper; ++i) {
-	    fsupc = Glu->xsup[i];
-	    if ( pxgstrf_shared->pan_status[fsupc].type != RELAXED_SNODE ) {
-		iinfo = Glu->xlusup_end[fsupc] - Glu->xlusup[fsupc];
-		if ( iinfo > colcnt[fsupc] )
-		    printf("@@ LUSUP s-node col %d nnz %d exceeds bound %d\n",
-			   i, iinfo, colcnt[fsupc]);
-	    }
-	}
-	    
-    }
-#endif
-    
     /* Deallocate the storage used by the parallel scheduling algorithm. */
     ParallelFinalize(pxgstrf_shared);
-
     SUPERLU_FREE(pdgstrf_threadarg);
     SUPERLU_FREE(pxgstrf_shared->inv_perm_r);
     SUPERLU_FREE(pxgstrf_shared->inv_perm_c);
