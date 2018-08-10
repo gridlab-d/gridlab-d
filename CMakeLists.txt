@@ -83,9 +83,9 @@ SET(GL_MODULES
         powerflow
         reliability
         residential
-#        tape
-#        tape_file
-#        tape_plot
+        tape
+        tape_file
+        tape_plot
         glsolvers
         glxengine
         )
@@ -443,9 +443,9 @@ include(optimize/CMakeLists.txt)
 include(powerflow/CMakeLists.txt)
 include(reliability/CMakeLists.txt)
 include(residential/CMakeLists.txt)
-#include(tape/CMakeLists.txt)
-#include(tape_file/CMakeLists.txt)
-#include(tape_plot/CMakeLists.txt)
+include(tape/CMakeLists.txt)
+include(tape_file/CMakeLists.txt)
+include(tape_plot/CMakeLists.txt)
 include(${GLDCORE_LOC}/solvers/CMakeLists.txt)
 include(${GLDCORE_LOC}/link/engine/CMakeLists.txt)
 

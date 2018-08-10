@@ -311,7 +311,7 @@ int double_array_create(double_array *&a)
 	// to handle it. If it properly replaces the pointer in all scope, we're fine, if it
 	// replaces it locally only, we're in trouble.
 
-	a = new double_array;
+	a = new double_array();
 //	int n;
 //	a->set_rows(0);
 //	a->set_cols(0);
@@ -364,7 +364,7 @@ double double_array_get_part(void *x, char *name)
  *********************************************************/
 int complex_array_create(complex_array *&a)
 {
-    a = new complex_array;
+    a = new complex_array();
 
 //	int n;
 //	a->n = a->m = 0;

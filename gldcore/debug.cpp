@@ -254,7 +254,7 @@ static int list_unnamed = 1; /**< flag indicating that listing includes unnamed 
 static int list_inactive = 1; /**< flag indicating that listing includes inactive objects */
 static int list_sync = 1; /**< flag indicating that listing includes objects that have syncs */
 
-static STATUS exec(char *format,...)
+static STATUS exec_cmd(char *format,...)
 {
 	char cmd[1024];
 	va_list ptr;
@@ -1209,7 +1209,7 @@ Retry:
 		}
 		else if (strncmp(cmd,"gdb",3)==0)
 		{
-			if (exec("gdb --quiet %s --pid=%d",global_execname,global_process_id)<=0)
+			if (exec_cmd("gdb --quiet %s --pid=%d",global_execname,global_process_id)<=0)
 				output_debug("unable to start gdb");
 		}
 		else if (strncmp(cmd,"help",max(1,strlen(cmd)))==0)

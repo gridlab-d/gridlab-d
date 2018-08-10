@@ -119,8 +119,8 @@ private:
 #else
 typedef struct s_doublearray {
 #endif
-	size_t n, m; /** n rows, m cols */
-	size_t max_val; /** current allocation size max_val x max_val */
+	unsigned long long int n, m; /** n rows, m cols */
+    unsigned long long int max_val; /** current allocation size max_val x max_val */
 	unsigned int *refs; /** reference count **/
 	double ***x; /** pointer to 2D array of pointers to double values */
 	unsigned char *f; /** pointer to array of flags: bit0=byref, */
@@ -156,7 +156,9 @@ public:
 	{
 		refs = new unsigned int;
 		*refs = 0;
-		m = n = max_val = 0;
+		n = rows;
+		m = cols;
+		max_val = 0;
 		x = NULL;
 		f = NULL;
 		if ( rows>0 )
@@ -188,7 +190,7 @@ public:
 			for ( r=0 ; r<n ; r++ )
 				for ( c=0 ; c<m ; c++ )
 					if ( tst_flag(r,c,BYREF) )
-						free(x[r][c]); 
+						free(x[r][c]);
 				free(x[r]);
 			free(x);
 			delete refs;
@@ -262,7 +264,9 @@ public:
 			for ( i=0 ; i<n ; i++ )
 			{
 				double **y = (double**)malloc(sizeof(double*)*c);
-				if ( x[i]!=NULL )
+                memset(y,0,sizeof(double*)*c);
+
+                if ( x[i]!=NULL )
 				{
 					memcpy(y,x[i],sizeof(double**)*m);
 					free(x[i]);

@@ -921,8 +921,9 @@ int convert_to_timestamp_stub(const char *buffer, void *data, PROPERTY *prop)
  **/
 int convert_from_double_array(char *buffer, int size, void *data, PROPERTY *prop)
 {
-	double_array *a = (double_array*)data;
-	unsigned int n,m;
+//	double_array *a = (double_array*)data;
+    double_array *a= new double_array(0, 0, reinterpret_cast<double**>(&data));
+    unsigned int n,m;
 	unsigned int p = 0;
 	for ( n=0 ; n<a->get_rows() ; n++ )
 	{
@@ -945,9 +946,9 @@ int convert_from_double_array(char *buffer, int size, void *data, PROPERTY *prop
  **/
 int convert_to_double_array(const char *buffer, void *data, PROPERTY *prop)
 {
-	double_array *a=(double_array*)data;
-	a->set_name(prop->name);
 	unsigned row=0, col=0;
+	double_array *a= new double_array(row, col, reinterpret_cast<double**>(&data));
+	a->set_name(prop->name);
 	const char *p = buffer;
 	
 	/* new array */

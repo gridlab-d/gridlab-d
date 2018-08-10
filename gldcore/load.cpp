@@ -459,7 +459,7 @@ static void mark_line()
 {
 	mark_linex(filename,linenum);
 }
-static STATUS exec(char *format,...)
+static STATUS exec_cmd(char *format,...)
 {
 	char cmd[1024];
 	va_list ptr;
@@ -476,11 +476,11 @@ static STATUS debugger(char *target)
 	output_debug("Starting debugger");
 #ifdef _MSC_VER
 #define getpid _getpid
-	result = exec("start %s gdb --quiet %s --pid=%d",global_gdb_window?"":"/b",target,global_process_id)>=0?SUCCESS:FAILED;
+	result = exec_cmd("start %s gdb --quiet %s --pid=%d",global_gdb_window?"":"/b",target,global_process_id)>=0?SUCCESS:FAILED;
 	system("pause");
 #else
 	output_debug("Use 'dll-symbols %s' to load symbols",target);
-	result = exec("gdb --quiet %s --pid=%d &",target,global_process_id)>=0?SUCCESS:FAILED;
+	result = exec_cmd("gdb --quiet %s --pid=%d &",target,global_process_id)>=0?SUCCESS:FAILED;
 #endif
     return static_cast<STATUS>(result);
 }
@@ -792,7 +792,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 						getenv("CXXFLAGS")?getenv("CXXFLAGS"):DEFAULT_CXXFLAGS,
 						cfile, ofile);
 				output_verbose("compile command: [%s]", execstr);
-				if(exec(execstr)==FAILED)
+				if(exec_cmd(execstr)==FAILED)
 				{
 					errno = EINVAL;
 					return FAILED;
@@ -810,7 +810,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 						getenv("LDFLAGS")?getenv("LDFLAGS"):DEFAULT_LDFLAGS,
 						ofile, afile, libs);
 				output_verbose("link command: [%s]", ldstr);
-				if(exec(ldstr) == FAILED)
+				if(exec_cmd(ldstr) == FAILED)
 				{
 					errno = EINVAL;
 					return FAILED;
@@ -819,7 +819,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 				if ( global_getvar("LDPOSTLINK",tbuf,sizeof(tbuf))!=NULL )
 				{
 					/* SE linux needs the new module marked as relocatable (textrel_shlib_t) */
-					exec("%s '%s'", tbuf, afile);
+					exec_cmd("%s '%s'", tbuf, afile);
 				}
 
 				if ( !global_debug_output )
@@ -840,7 +840,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 				if (functions&FN_COMMIT) sprintf(exports+strlen(exports),"/EXPORT:commit_%s ",oclass->name);
 				if (functions&FN_FINALIZE) sprintf(exports+strlen(exports),"/EXPORT:finalize_%s ",oclass->name);
 
-				if (exec("cl /Od /DWIN32 /D_DEBUG /D_WINDOWS /D_USRDLL /D_CRT_SECURE_NO_DEPRECATE /D_WINDLL /D_MBCS /Gm /EHsc /RTC1 "
+				if (exec_cmd("cl /Od /DWIN32 /D_DEBUG /D_WINDOWS /D_USRDLL /D_CRT_SECURE_NO_DEPRECATE /D_WINDLL /D_MBCS /Gm /EHsc /RTC1 "
 #if __WORDSIZE__==64
 					"/Wp64 "
 #endif
@@ -851,7 +851,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 					return FAILED;
 				}
 
-				if (exec("link %s /OUT:%s /NOLOGO /DLL /MANIFEST /MANIFESTFILE:%s.manifest "
+				if (exec_cmd("link %s /OUT:%s /NOLOGO /DLL /MANIFEST /MANIFESTFILE:%s.manifest "
 					"/SUBSYSTEM:WINDOWS "
 #ifdef _DEBUG
 					"/DEBUG "
