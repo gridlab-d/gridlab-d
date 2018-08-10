@@ -62,6 +62,10 @@ TIMESTAMP delta_mode_needed = TS_NEVER; /* the time at which delta mode needs to
 #define snprintf _snprintf
 #else /* ANSI */
 #include "dlfcn.h"
+#include "violation_recorder.h"
+#include "metrics_collector.h"
+#include "metrics_collector_writer.h"
+
 #ifndef DLEXT
 #define DLEXT ".so"
 #else
@@ -108,14 +112,14 @@ TAPEFUNCS *get_ftable(char *mode){
 		fptr = fptr->next;
 	}
 	/* fptr = NULL */
-	fptr = malloc(sizeof(TAPEFUNCS));
+	fptr = static_cast<TAPEFUNCS *>(malloc(sizeof(TAPEFUNCS)));
 	if(fptr == NULL)
 	{
 		gl_error("get_ftable(char *mode='%s'): out of memory", mode);
 		return NULL; /* out of memory */
 	}
 	snprintf(modname, sizeof(modname), "tape_%s" DLEXT, mode);
-	
+
 	if(gl_findfile(modname, NULL, 0|4, tpath,sizeof(tpath)) == NULL){
 		gl_error("unable to locate %s", modname);
 		return NULL;
@@ -130,7 +134,7 @@ TAPEFUNCS *get_ftable(char *mode){
 		*c = callback;
 
 	//	nonfatal ommission
-	ops = fptr->collector = malloc(sizeof(TAPEOPS));
+	ops = fptr->collector = static_cast<TAPEOPS *>(malloc(sizeof(TAPEOPS)));
 	memset(ops,0,sizeof(TAPEOPS));
 	ops->open = (OPENFUNC)DLSYM(lib, "open_collector");
 	ops->read = NULL;
@@ -139,7 +143,7 @@ TAPEFUNCS *get_ftable(char *mode){
 	ops->close = (CLOSEFUNC)DLSYM(lib, "close_collector");
 	ops->flush = (FLUSHFUNC)DLSYM(lib, "flush_collector");
 
-	ops = fptr->player = malloc(sizeof(TAPEOPS));
+	ops = fptr->player = static_cast<TAPEOPS *>(malloc(sizeof(TAPEOPS)));
 	memset(ops,0,sizeof(TAPEOPS));
 	ops->open = (OPENFUNC)DLSYM(lib, "open_player");
 	ops->read = (READFUNC)DLSYM(lib, "read_player");
@@ -148,7 +152,7 @@ TAPEFUNCS *get_ftable(char *mode){
 	ops->close = (CLOSEFUNC)DLSYM(lib, "close_player");
 	ops->flush = NULL;
 
-	ops = fptr->recorder = malloc(sizeof(TAPEOPS));
+	ops = fptr->recorder = static_cast<TAPEOPS *>(malloc(sizeof(TAPEOPS)));
 	memset(ops,0,sizeof(TAPEOPS));
 	ops->open = (OPENFUNC)DLSYM(lib, "open_recorder");
 	ops->read = NULL;
@@ -157,7 +161,7 @@ TAPEFUNCS *get_ftable(char *mode){
 	ops->close = (CLOSEFUNC)DLSYM(lib, "close_recorder");
 	ops->flush = (FLUSHFUNC)DLSYM(lib, "flush_collector");
 
-	ops = fptr->histogram = malloc(sizeof(TAPEOPS));
+	ops = fptr->histogram = static_cast<TAPEOPS *>(malloc(sizeof(TAPEOPS)));
 	memset(ops,0,sizeof(TAPEOPS));
 	ops->open = (OPENFUNC)DLSYM(lib, "open_histogram");
 	ops->read = NULL;
@@ -166,7 +170,7 @@ TAPEFUNCS *get_ftable(char *mode){
 	ops->close = (CLOSEFUNC)DLSYM(lib, "close_histogram");
 	ops->flush = (FLUSHFUNC)DLSYM(lib, "flush_collector");
 
-	ops = fptr->shaper = malloc(sizeof(TAPEOPS));
+	ops = fptr->shaper = static_cast<TAPEOPS *>(malloc(sizeof(TAPEOPS)));
 	memset(ops,0,sizeof(TAPEOPS));
 	ops->open = (OPENFUNC)DLSYM(lib, "open_shaper");
 	ops->read = (READFUNC)DLSYM(lib, "read_shaper");
@@ -182,7 +186,7 @@ TAPEFUNCS *get_ftable(char *mode){
 	return funcs;
 }
 
-EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
+EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
 	struct recorder my;
 	struct collector my2;
@@ -208,7 +212,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 	gl_global_create("tape::delta_mode_needed", PT_timestamp, &delta_mode_needed,NULL);
 
 	/* register the first class implemented, use SHARE to reveal variables */
-	player_class = gl_register_class(module,"player",sizeof(struct player),PC_PRETOPDOWN); 
+	player_class = gl_register_class(module,"player",sizeof(struct player),PC_PRETOPDOWN);
 	player_class->trl = TRL_PROVEN;
 	PUBLISH_STRUCT(player,char256,property);
 	PUBLISH_STRUCT(player,char1024,file);
@@ -217,7 +221,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 	PUBLISH_STRUCT(player,int32,loop);
 
 	/* register the first class implemented, use SHARE to reveal variables */
-	shaper_class = gl_register_class(module,"shaper",sizeof(struct shaper),PC_PRETOPDOWN); 
+	shaper_class = gl_register_class(module,"shaper",sizeof(struct shaper),PC_PRETOPDOWN);
 	shaper_class->trl = TRL_QUALIFIED;
 	PUBLISH_STRUCT(shaper,char1024,file);
 	PUBLISH_STRUCT(shaper,char8,filetype);
@@ -243,7 +247,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 	PUBLISH_STRUCT(recorder,char32,columns);
 	PUBLISH_STRUCT(recorder,int32,flush);
     PUBLISH_STRUCT(recorder,bool,format);
-	
+
 	if(gl_publish_variable(recorder_class,
 		PT_double, "interval[s]", ((char*)&(my.dInterval) - (char *)&my),
 		PT_enumeration, "output", ((char*)&(my.output) - (char *)&my),
@@ -253,7 +257,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 			PT_KEYWORD, "JPG",    JPG,
 			PT_KEYWORD, "PDF",    PDF,
 			PT_KEYWORD, "PNG",    PNG,
-			PT_KEYWORD, "SVG",    SVG, 
+			PT_KEYWORD, "SVG",    SVG,
 		PT_enumeration, "header_units", ((char*)&(my.header_units) - (char *)&my),
 			PT_KEYWORD, "DEFAULT", HU_DEFAULT,
 			PT_KEYWORD, "ALL", HU_ALL,
@@ -288,7 +292,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 			PT_KEYWORD, "JPG",    JPG,
 			PT_KEYWORD, "PDF",    PDF,
 			PT_KEYWORD, "PNG",    PNG,
-			PT_KEYWORD, "SVG",    SVG, 
+			PT_KEYWORD, "SVG",    SVG,
 		PT_enumeration, "header_units", ((char*)&(my.header_units) - (char *)&my),
 			PT_KEYWORD, "DEFAULT", HU_DEFAULT,
 			PT_KEYWORD, "ALL", HU_ALL,
@@ -397,7 +401,7 @@ void delta_add_recorder(OBJECT *obj)
 		delta_recorder_list[n_recorders++] = obj;
 	else
 	{
-		gl_error("recorder:%d: unable to add any more delta_mode recorders (max=%d)", 
+		gl_error("recorder:%d: unable to add any more delta_mode recorders (max=%d)",
 			obj->id, sizeof(delta_recorder_list)/sizeof(delta_recorder_list[0]));
 	}
 }
@@ -408,7 +412,7 @@ void delta_add_player(OBJECT *obj)
 		delta_player_list[n_players++] = obj;
 	else
 	{
-		gl_error("player:%d: unable to add any more delta_mode players (max=%d)", 
+		gl_error("player:%d: unable to add any more delta_mode players (max=%d)",
 			obj->id, sizeof(delta_player_list)/sizeof(delta_player_list[0]));
 	}
 }
@@ -448,10 +452,10 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 
 	/* prepare the timestamp */
 	static char global_dateformat[8]="";
-	
+
 	TIMESTAMP integer_clock = (TIMESTAMP)clock_val;	/* Whole seconds - update from global clock because we could be in delta for over 1 second */
 	int microseconds = (int)((clock_val-(int)(clock_val))*1000000+0.5);	/* microseconds roll-over - biased upward (by 0.5) */
-	
+
 	/* Recorders should only "fire" on the 0th iteration - may need to adjust if "0" is implemented in deltamode */
 	if (iteration_count_val==0)
 	{
@@ -500,7 +504,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 				/* Defaulted else, not in service, do nothing */
 			}
 		}
-		
+
 		/* Store recorder clock (to be used next time) */
 		recorder_delta_clock = clock_val;
 	}/* End Recorder only on 0th iteration loop */
@@ -523,8 +527,6 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 			/* post the current value */
 			if ( t<=clock_val )
 			{
-				extern TIMESTAMP player_read(OBJECT *obj);
-
 				/* Behave similar to "supersecond" players */
 				while ( t<=clock_val )
 				{
@@ -715,10 +717,9 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 	return SUCCESS;
 }
 
-int do_kill()
+extern "C" int do_kill(void*)
 {
 	/* if global memory needs to be released, this is the time to do it */
 	return 0;
 }
-
 /**@}*/
