@@ -15,6 +15,11 @@ module powerflow {
 	}
 module assert;
 
+object voltdump {
+    filename IEEE_13_NR_voltage.csv;
+	mode POLAR;
+}
+
 // Phase Conductor for 601: 556,500 26/7 ACSR
 object overhead_line_conductor {
 	name olc6010;

@@ -1,30 +1,40 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
 
-#include "pssp_defs.h"
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
+
+#include "slu_mt_sdefs.h"
 
 
-int
+int_t
 psgstrf_column_dfs(
-		   const int  pnum,    /* process number */
-		   const int  m,       /* number of rows in the matrix */
-		   const int  jcol,    /* current column in the panel */
-		   const int  fstcol,  /* first column in the panel */
-		   int *perm_r,   /* row pivotings that are done so far */
-		   int *ispruned, /* in */
-		   int *col_lsub, /* the RHS vector to start the dfs */
-		   int lsub_end,  /* size of col_lsub[] */
-		   int *super_bnd,/* supernode partition by upper bound */
-		   int *nseg,     /* modified - with new segments appended */
-		   int *segrep,   /* modified - with new segments appended */
-		   int *repfnz,   /* modified */
-		   int *xprune,   /* modified */
-		   int *marker2,  /* modified */
-		   int *parent,   /* working array */
-		   int *xplore,   /* working array */
+		   const int_t  pnum,    /* process number */
+		   const int_t  m,       /* number of rows in the matrix */
+		   const int_t  jcol,    /* current column in the panel */
+		   const int_t  fstcol,  /* first column in the panel */
+		   int_t *perm_r,   /* row pivotings that are done so far */
+		   int_t *ispruned, /* in */
+		   int_t *col_lsub, /* the RHS vector to start the dfs */
+		   int_t lsub_end,  /* size of col_lsub[] */
+		   int_t *super_bnd,/* supernode partition by upper bound */
+		   int_t *nseg,     /* modified - with new segments appended */
+		   int_t *segrep,   /* modified - with new segments appended */
+		   int_t *repfnz,   /* modified */
+		   int_t *xprune,   /* modified */
+		   int_t *marker2,  /* modified */
+		   int_t *parent,   /* working array */
+		   int_t *xplore,   /* working array */
 		   pxgstrf_shared_t *pxgstrf_shared /* modified */
 		   )
 {
 /*
- * -- SuperLU MT routine (version 2.0) --
+ * -- SuperLU MT routine (version 3.0) --
  * Lawrence Berkeley National Lab, Univ. of California Berkeley,
  * and Xerox Palo Alto Research Center.
  * September 10, 2007
@@ -60,22 +70,25 @@ psgstrf_column_dfs(
  */
     GlobalLU_t *Glu = pxgstrf_shared->Glu; /* modified */
     Gstat_t *Gstat = pxgstrf_shared->Gstat; /* modified */
-    register int jcolm1, jcolm1size, nextl, ifrom;
-    register int k, krep, krow, kperm, samesuper, nsuper;
-    register int no_lsub;
-    int	    fsupc;		/* first column in a supernode */
-    int     myfnz;		/* first nonz column in a U-segment */
-    int	    chperm, chmark, chrep, kchild;
-    int     xdfs, maxdfs, kpar;
-    int     ito;	        /* Used to compress row subscripts */
-    int     mem_error;
-    int     *xsup, *xsup_end, *supno, *lsub, *xlsub, *xlsub_end;
-    static  int  first = 1, maxsuper;
+    register int_t jcolm1, jcolm1size, nextl, ifrom;
+    register int_t k, krep, krow, kperm, samesuper, nsuper;
+    register int_t no_lsub;
+    int_t	    fsupc;		/* first column in a supernode */
+    int_t     myfnz;		/* first nonz column in a U-segment */
+    int_t	    chperm, chmark, chrep, kchild;
+    int_t     xdfs, maxdfs, kpar;
+    int_t     ito;	        /* Used to compress row subscripts */
+    int_t     mem_error;
+    int_t     *xsup, *xsup_end, *supno, *lsub, *xlsub, *xlsub_end;
+/*    static  int  first = 1, maxsuper;*/
+    int_t maxsuper = sp_ienv(3);
 
+#if 0
     if ( first ) {
 	maxsuper = sp_ienv(3);
 	first = 0;
     }
+#endif
 
     /* Initialize pointers */
     xsup      = Glu->xsup;

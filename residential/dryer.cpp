@@ -167,10 +167,10 @@ int dryer::init(OBJECT *parent)
 	if (is_240)
 	{
 		load.config = EUC_IS220;
-		if (stall_voltage==0) stall_voltage  = 0.6*240;
+		if (stall_voltage==0) stall_voltage  = 1.2*default_line_voltage;	//0.6 * 2 * line_voltage
 	}
 	else
-		if (stall_voltage==0) stall_voltage  = 0.6*120;
+		if (stall_voltage==0) stall_voltage  = 0.6*default_line_voltage;
 
 	if (trip_delay==0) trip_delay = 10;
 	if (reset_delay==0) reset_delay = 60;
@@ -399,10 +399,14 @@ TIMESTAMP dryer::presync(TIMESTAMP t0, TIMESTAMP t1){
 
 double dryer::update_state(double dt) //,TIMESTAMP t1)
 {	
+	double temp_voltage_magnitude;
+
 	OBJECT *hdr = OBJECTHDR(this);
 	// accumulate the energy
 	energy_used += total_power/1000 * dt/3600;
 
+	//Pull the voltage value
+	temp_voltage_magnitude = (pCircuit->pV->get_complex()).Mag();
 
 switch(state) {
 
@@ -424,7 +428,7 @@ switch(state) {
 				new_running_state = true;
 				
 			}
-		else if (pCircuit->pV->Mag()<stall_voltage)
+		else if (temp_voltage_magnitude<stall_voltage)
 			{
 				state = DRYER_STALLED;
 				state_time = 0;
@@ -476,7 +480,7 @@ switch(state) {
 			}		
 
 		
-		else if (pCircuit->pV->Mag()<stall_voltage)
+		else if (temp_voltage_magnitude<stall_voltage)
 			{
 				state = DRYER_STALLED;
 				state_time = 0;
@@ -594,7 +598,7 @@ case DRYER_MOTOR_COIL_ONLY:
 					else
 						cycle_time = cycle_t;	*/		
 		}
-	else if (pCircuit->pV->Mag()<stall_voltage)
+	else if (temp_voltage_magnitude<stall_voltage)
 		{
 			state = DRYER_STALLED;
 			state_time = 0;
@@ -709,7 +713,7 @@ case DRYER_MOTOR_COIL_ONLY:
 						new_running_state = true;
 			}	
 
-		else if (pCircuit->pV->Mag()<stall_voltage)
+		else if (temp_voltage_magnitude<stall_voltage)
 			{
 					state = DRYER_STALLED;
 					state_time = 0;
@@ -719,7 +723,7 @@ case DRYER_MOTOR_COIL_ONLY:
 
 	case DRYER_STALLED:
 
-		if (pCircuit->pV->Mag()>start_voltage)
+		if (temp_voltage_magnitude>start_voltage)
 		{
 			state = DRYER_MOTOR_ONLY;
 			state_time = cycle_time;
@@ -736,7 +740,7 @@ case DRYER_MOTOR_COIL_ONLY:
 
 		if (state_time>reset_delay)
 		{
-			if (pCircuit->pV->Mag()>start_voltage)
+			if (temp_voltage_magnitude>start_voltage)
 				state = DRYER_MOTOR_ONLY;
 			else
 				state = DRYER_STALLED;

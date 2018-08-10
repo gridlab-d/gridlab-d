@@ -12,7 +12,12 @@
 #include <errno.h>
 #include <math.h>
 
-#include "generators.h"
+//Delte me -- just put in for compiling
+#include "battery.h"
+#include "inverter.h"
+#include "solar.h"
+//Delete me end
+
 #include "central_dg_control.h"
 
 #define DEFAULT 1.0;
@@ -76,6 +81,10 @@ int central_dg_control::create(void)
 	// Default values for Inverter object.
 	control_mode_setting[0] = NO_CONTROL;
 	control_mode_setting[1] = control_mode_setting[2] = control_mode_setting[3] = NO_SETTING;
+
+	//Null properties
+	pPower_Meas[0] = pPower_Meas[1] = pPower_Meas[2] = NULL;
+
 	return 1; /* return 1 on success, 0 on failure */
 }
 
@@ -87,12 +96,12 @@ int central_dg_control::init(OBJECT *parent)
 	FINDLIST *solar_list;
 	int index = 0;
 	OBJECT *obj = 0;
+	OBJECT *thisobj = OBJECTHDR(this);
 	all_inverter_S_rated = 0;
 	all_battery_S_rated = 0;
 	all_solar_S_rated = 0;
 	int inverter_filled_to = -1;
 
-	
 	//////////////////////////////////////////////////////////////////////////
 	// Assemble object maps
 	//////////////////////////////////////////////////////////////////////////
@@ -253,8 +262,58 @@ int central_dg_control::init(OBJECT *parent)
 
 	all_inverter_S_rated = all_solar_S_rated + all_battery_S_rated;
 
-	
+	//Map the feeder meter
+	if (feederhead_meter != NULL)
+	{
+		//Make sure it is a meter
+		if (gl_object_isa(feederhead_meter,"meter","powerflow") == true)
+		{
+			//Map up the values
+			pPower_Meas[0] = new gld_property(feederhead_meter,"measured_power_A");
 
+			//Check it
+			if ((pPower_Meas[0]->is_valid() != true) || (pPower_Meas[0]->is_complex() != true))
+			{
+				GL_THROW("central_dg_control:%d - %s - failed to map feaderhead_meter power property!",thisobj->id,(thisobj->name ? thisobj->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				While attempting to map the measured_power_X property of the meter specified in feaderhead_meter, an error occurred.  Try again.
+				If the error persists, please submit a bug report via the issues system.
+				*/
+			}
+
+			//Get the next one
+			pPower_Meas[1] = new gld_property(feederhead_meter,"measured_power_B");
+
+			//Check it
+			if ((pPower_Meas[1]->is_valid() != true) || (pPower_Meas[1]->is_complex() != true))
+			{
+				GL_THROW("central_dg_control:%d - %s - failed to map feaderhead_meter power property!",thisobj->id,(thisobj->name ? thisobj->name : "Unnamed"));
+				//Defined above
+			}
+
+			//Get the next one
+			pPower_Meas[2] = new gld_property(feederhead_meter,"measured_power_C");
+
+			//Check it
+			if ((pPower_Meas[2]->is_valid() != true) || (pPower_Meas[2]->is_complex() != true))
+			{
+				GL_THROW("central_dg_control:%d - %s - failed to map feaderhead_meter power property!",thisobj->id,(thisobj->name ? thisobj->name : "Unnamed"));
+				//Defined above
+			}
+		}
+		else	//Nope - fail
+		{
+			GL_THROW("central_dg_control:%d - %s - feederhead_meter is empty!",thisobj->id,(thisobj->name ? thisobj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			The central_dg_control requires a feederhead_meter object to be specified.  Ensure this field is populated with a meter.
+			*/
+		}
+	}
+	else
+	{
+		GL_THROW("central_dg_control:%d - %s - feederhead_meter is empty!",thisobj->id,(thisobj->name ? thisobj->name : "Unnamed"));
+		//Defined above
+	}
 
 	P_disp_3p = 0.0;
 	Q_disp_3p = 0.0;
@@ -288,6 +347,7 @@ TIMESTAMP central_dg_control::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	//Need information on power flow for this time step so let it run once 
 	//without any central control and then reiterate
+	complex temp_complex_array[3];
 
 	if (t0!=t1) {
 		return t1;
@@ -295,16 +355,18 @@ TIMESTAMP central_dg_control::sync(TIMESTAMP t0, TIMESTAMP t1)
 	int i;
 	int n;
 	
-	complex *complex_power[3];
-	complex_power[0] = gl_get_complex_by_name(feederhead_meter,"measured_power_A");
-	complex_power[1] = gl_get_complex_by_name(feederhead_meter,"measured_power_B");
-	complex_power[2] = gl_get_complex_by_name(feederhead_meter,"measured_power_C");
-	P[0] = complex_power[0]->Re();
-	P[1] = complex_power[1]->Re();
-	P[2] = complex_power[2]->Re();
-	Q[0] = complex_power[0]->Im();
-	Q[1] = complex_power[1]->Im();
-	Q[2] = complex_power[2]->Im();
+	//Pull the feeder values (not sure why in sync - it isn't accurate here)
+	//@TODO -- Probably need to fix this or figure out why it is in sync
+	temp_complex_array[0] = pPower_Meas[0]->get_complex();
+	temp_complex_array[1] = pPower_Meas[1]->get_complex();
+	temp_complex_array[2] = pPower_Meas[2]->get_complex();
+
+	P[0] = temp_complex_array[0].Re();
+	P[1] = temp_complex_array[1].Re();
+	P[2] = temp_complex_array[2].Re();
+	Q[0] = temp_complex_array[0].Im();
+	Q[1] = temp_complex_array[1].Im();
+	Q[2] = temp_complex_array[2].Im();
 	P_3p = P[0] + P[1] + P[2];
 	Q_3p = Q[0] + Q[1] + Q[2];
 	S_3p = complex(P_3p, Q_3p);
@@ -524,89 +586,6 @@ TIMESTAMP central_dg_control::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	
 	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
 }
-
-
-
-
-
-
-double central_dg_control::fmin(double a, double b)
-{
-	if (a < b)
-		return a;
-	else
-		return b;
-}
-double central_dg_control::fmin(double a, double b, double c)
-{
-	if (a < b && a < c)
-		return a;
-	else if (b < c)
-		return b;
-	else
-		return c;
-		
-}
-double central_dg_control::fmax(double a, double b)
-{
-	if (a > b)
-		return a;
-	else
-		return b;
-}
-double central_dg_control::fmax(double a, double b, double c)
-{
-	if (a > b && a > c)
-		return a;
-	else if (b > c)
-		return b;
-	else
-		return c;
-		
-}
-
-
-//Retrieves the pointer for a double variable from another object
-double *central_dg_control::get_double(OBJECT *obj, char *name)
-{
-	PROPERTY *p = gl_get_property(obj,name);
-	if (p==NULL || p->ptype!=PT_double)
-		return NULL;
-	return (double*)GETADDR(obj,p);
-}
-bool *central_dg_control::get_bool(OBJECT *obj, char *name)
-{
-	PROPERTY *p = gl_get_property(obj,name);
-	if (p==NULL || p->ptype!=PT_bool)
-		return NULL;
-	return (bool*)GETADDR(obj,p);
-}
-int *central_dg_control::get_enum(OBJECT *obj, char *name)
-{
-	PROPERTY *p = gl_get_property(obj,name);
-	if (p==NULL || p->ptype!=PT_enumeration)
-		return NULL;
-	return (int*)GETADDR(obj,p);
-}
-complex * central_dg_control::get_complex(OBJECT *obj, char *name)
-{
-	PROPERTY *p = gl_get_property(obj,name);
-	if (p==NULL || p->ptype!=PT_complex)
-		return NULL;
-	return (complex*)GETADDR(obj,p);
-}
-//Function to perform exp(j*val)
-//Basically a complex rotation
-complex central_dg_control::complex_exp(double angle)
-{
-	complex output_val;
-
-	//exp(jx) = cos(x)+j*sin(x)
-	output_val = complex(cos(angle),sin(angle));
-
-	return output_val;
-}
-
 	
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE

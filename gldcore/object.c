@@ -771,7 +771,7 @@ int object_set_value_by_addr(OBJECT *obj, /**< the object to alter */
 	int result=0;
 	if(prop==NULL && (prop=get_property_at_addr(obj,addr))==NULL) 
 		return 0;
-	if(prop->access != PA_PUBLIC){
+	if((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN)){
 		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
 		/*	TROUBLESHOOT
 			The specified property was published by its object as private.  It may not be modified by other modules.
@@ -1004,7 +1004,7 @@ int object_set_value_by_name(OBJECT *obj, /**< the object to change */
 			return len>0?(int)len:1; /* empty string is not necessarily wrong */
 		}
 	}
-	if(prop->access != PA_PUBLIC){
+	if((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN)){
 		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
 		/*	TROUBLESHOOT
 			The specified property was published by its object as private.  It may not be modified by other modules.
@@ -1026,7 +1026,7 @@ int object_set_int16_by_name(OBJECT *obj, PROPERTYNAME name, int16 value)
 		errno = ENOENT;
 		return 0;
 	}
-	if(prop->access != PA_PUBLIC){
+	if((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN)){
 		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
 		/*	TROUBLESHOOT
 			The specified property was published by its object as private.  It may not be modified by other modules.
@@ -1054,7 +1054,7 @@ int object_set_int32_by_name(OBJECT *obj, PROPERTYNAME name, int32 value)
 		errno = ENOENT;
 		return 0;
 	}
-	if(prop->access != PA_PUBLIC){
+	if((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN)){
 		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
 		/*	TROUBLESHOOT
 			The specified property was published by its object as private.  It may not be modified by other modules.
@@ -1075,7 +1075,7 @@ int object_set_int64_by_name(OBJECT *obj, PROPERTYNAME name, int64 value)
 		errno = ENOENT;
 		return 0;
 	}
-	if(prop->access != PA_PUBLIC){
+	if((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN)){
 		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
 		/*	TROUBLESHOOT
 			The specified property was published by its object as private.  It may not be modified by other modules.
@@ -1096,7 +1096,7 @@ int object_set_double_by_name(OBJECT *obj, PROPERTYNAME name, double value)
 		errno = ENOENT;
 		return 0;
 	}
-	if(prop->access != PA_PUBLIC){
+	if((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN)){
 		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
 		/*	TROUBLESHOOT
 			The specified property was published by its object as private.  It may not be modified by other modules.
@@ -1117,7 +1117,7 @@ int object_set_complex_by_name(OBJECT *obj, PROPERTYNAME name, complex value)
 		errno = ENOENT;
 		return 0;
 	}
-	if(prop->access != PA_PUBLIC){
+	if((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN)){
 		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
 		/*	TROUBLESHOOT
 			The specified property was published by its object as private.  It may not be modified by other modules.
@@ -2254,35 +2254,34 @@ static OBJECTTREE *object_tree_add(OBJECT *obj, OBJECTNAME name){
 
 /*	Finds a name in the tree
  */
-static OBJECTTREE **findin_tree(OBJECTTREE *tree, OBJECTNAME name)
+static OBJECTTREE **findin_tree(OBJECTTREE **tree, OBJECTNAME name)
 {
-	static OBJECTTREE **temptree = NULL;
-	if(tree == NULL){
+	if(tree == NULL || *tree == NULL){
 		return NULL;
 	} else {
-		int rel = strcmp(tree->name, name);
+		int rel = strcmp((*tree)->name, name);
 		if(rel > 0){
-			if(tree->before != NULL){
-				if(strcmp(tree->before->name, name) == 0){
-					return &(tree->before);
+			if((*tree)->before != NULL){
+				if(strcmp((*tree)->before->name, name) == 0){
+					return &((*tree)->before);
 				} else {
-					return findin_tree(tree->before, name);
+					return findin_tree(&((*tree)->before), name);
 				}
 			} else {
 				return NULL;
 			}
 		} else if(rel<0) {
-			if(tree->after != NULL){
-				if(strcmp(tree->after->name, name) == 0){
-					return &(tree->after);
+			if((*tree)->after != NULL){
+				if(strcmp((*tree)->after->name, name) == 0){
+					return &((*tree)->after);
 				} else {
-					return findin_tree(tree->after, name);
+					return findin_tree(&((*tree)->after), name);
 				}
 			} else {
 				return NULL;
 			}
 		} else {
-			return (temptree = &tree);
+			return tree;
 		}
 	}
 }
@@ -2292,7 +2291,7 @@ static OBJECTTREE **findin_tree(OBJECTTREE *tree, OBJECTNAME name)
  */
 void object_tree_delete(OBJECT *obj, OBJECTNAME name)
 {
-	OBJECTTREE **item = findin_tree(top,name);
+	OBJECTTREE **item = findin_tree(&(top),name);
 	OBJECTTREE *temp = NULL, **dtemp = NULL;
 
 	if(item != NULL && strcmp((*item)->name, name)!=0){
@@ -2338,7 +2337,7 @@ void object_tree_delete(OBJECT *obj, OBJECTNAME name)
 OBJECT *object_find_name(OBJECTNAME name){
 	OBJECTTREE **item = NULL;
 
-	item = findin_tree(top, name);
+	item = findin_tree(&(top), name);
 	
 	if(item != NULL && *item != NULL){
 		return (*item)->obj;

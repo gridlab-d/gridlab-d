@@ -10,15 +10,11 @@
 #define _energy_storage_H
 
 #include <stdarg.h>
-#include "../powerflow/powerflow_object.h"
-//#include "../powerflow/node.h"
-#include "gridlabd.h"
+#include "generators.h"
 
 class energy_storage : public gld_object
 {
 private:
-	/* TODO: put private variables here */
-	//complex AMx[3][3];//generator impedance matrix
 
 protected:
 	/* TODO: put unpublished but inherited variables */
@@ -43,10 +39,7 @@ public:
 	double Max_P;//< maximum real power capacity in kW
     double Min_P;//< minimus real power capacity in kW
 	
-	//double Max_Q;//< maximum reactive power capacity in kVar
-    //double Min_Q;//< minimus reactive power capacity in kVar
 	double Rated_kVA; //< nominal capacity in kVA
-	//double Rated_kV; //< nominal line-line voltage in kV
 	
 	double efficiency;
 
@@ -79,8 +72,6 @@ public:
 	energy_storage(MODULE *module);
 	int create(void);
 	int init(OBJECT *parent);
-	//double timestamp_to_hours(TIMESTAMP t);
-	//TIMESTAMP rfb_event_time(TIMESTAMP t0, complex power, double e);
 	
 	//this should be overridden by a customized method in child classes
 	double calculate_efficiency(complex voltage, complex current);
@@ -89,7 +80,6 @@ public:
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 
-	complex *get_complex(OBJECT *obj, char *name);
 	complex calculate_v_terminal(complex v, complex i);
 
 public:
@@ -111,37 +101,3 @@ public:
 
  @{  
  **/
-
-#ifndef _energy_storage_H
-#define _energy_storage_H
-
-#include <stdarg.h>
-#include "gridlabd.h"
-
-class energy_storage {
-private:
-	/* TODO: put private variables here */
-protected:
-	/* TODO: put unpublished but inherited variables */
-public:
-	/* TODO: put published variables here */
-public:
-	/* required implementations */
-	energy_storage(MODULE *module);
-	int create(void);
-	int init(OBJECT *parent);
-	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
-	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
-	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
-public:
-	static CLASS *oclass;
-	static energy_storage *defaults;
-#ifdef OPTIONAL
-	static CLASS *pclass; /**< defines the parent class */
-	TIMESTAMPP plc(TIMESTAMP t0, TIMESTAMP t1); /**< defines the default PLC code */
-#endif
-};
-
-#endif
-
-/**@}*/

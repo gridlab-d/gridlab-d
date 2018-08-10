@@ -1,8 +1,6 @@
 #include "group_recorder.h"
 #include <sstream>
 
-
-
 CLASS *group_recorder::oclass = NULL;
 CLASS *group_recorder::pclass = NULL;
 group_recorder *group_recorder::defaults = NULL;
@@ -41,6 +39,10 @@ group_recorder::group_recorder(MODULE *mod){
 		NULL) < 1){
 			;//GL_THROW("unable to publish properties in %s",__FILE__);
 		}
+
+		if (gl_publish_function(oclass,"obj_postupdate_fxn",(FUNCTIONADDR)group_recorder_postroutine)==NULL)
+			GL_THROW("Unable to publish deltamode postupdate function for group_recorder");
+
 		defaults = this;
 		memset(this, 0, sizeof(group_recorder));
     }
@@ -48,11 +50,14 @@ group_recorder::group_recorder(MODULE *mod){
 
 int group_recorder::create(){
 	memcpy(this, defaults, sizeof(group_recorder));
+	deltamode_gr = false;
 	return 1;
 }
 
 int group_recorder::init(OBJECT *obj){
 	OBJECT *gr_obj = 0;
+	OBJECT *thisobj = OBJECTHDR(this);
+	int retvalue;
 
 	// check for group
 	if(0 == group_def[0]){
@@ -98,8 +103,6 @@ int group_recorder::init(OBJECT *obj){
 	// all flush intervals are valid
 	flush_interval = (int64)dFlush_interval;
 	
-	
-    
 	// build group
 	//	* invariant?
 	//	* non-empty set?
@@ -174,7 +177,6 @@ int group_recorder::init(OBJECT *obj){
 			itr->prop.unit = NULL;
 		}
 	}
-    
 
 	tape_status = TS_OPEN;
 	if(0 == write_header()){
@@ -185,7 +187,23 @@ int group_recorder::init(OBJECT *obj){
 		tape_status = TS_ERROR;
 		return 0;
 	}
-	
+
+	/* set up the delta_mode flag, if necessary */
+	if ( (thisobj->flags)&OF_DELTAMODE )
+	{
+		/* Add the device into the list */
+		retvalue = delta_add_tape_device(thisobj,GROUPRECORDER);
+
+		/* Make sure it worked */
+		if (retvalue == 0)
+		{
+			/* Error message is inside the delta_add_tape_device function, just fail us */
+			return 0;
+		}
+
+		/* Set the flag */
+		deltamode_gr = true;
+	}
 
 	return 1;
 }
@@ -209,6 +227,19 @@ TIMESTAMP group_recorder::postsync(TIMESTAMP t0, TIMESTAMP t1){
 			last_write = t1;
 			next_write = t1 + write_interval;
 		}
+		//Extra check for deltamode-related group_recorder - make sure it didn't get stuck
+		if (deltamode_gr == true)
+		{
+			//See if we stagnated
+			if ((t0 == t1) && (t1 == next_write))
+			{
+				//We did, just bump us forward one
+				next_write = next_write + TS_SECOND;
+			}
+
+		}
+		//Default else -- Normal mode, just do what was done before
+
 		return next_write;
 	} else {
 		// on-change intervals simply short-circuit
@@ -216,7 +247,7 @@ TIMESTAMP group_recorder::postsync(TIMESTAMP t0, TIMESTAMP t1){
 	}
 	// if every iteration, write
 	if(0 == write_interval){
-		if(0 == write_line(t1) ){
+		if(0 == write_line(t1,0.0,false) ){
 			gl_error("group_recorder::sync(): error when writing the values to the file");
 			/* TROUBLESHOOT
 				Placeholder.
@@ -234,7 +265,7 @@ TIMESTAMP group_recorder::postsync(TIMESTAMP t0, TIMESTAMP t1){
 	return TS_NEVER;
 }
 
-int group_recorder::commit(TIMESTAMP t1){
+int group_recorder::commit(TIMESTAMP t1, double t1dbl, bool deltacall){
 	// short-circuit if strict & error
 	if((TS_ERROR == tape_status) && strict){
 		gl_error("group_recorder::commit(): the object has error'ed and is halting the simulation");
@@ -245,6 +276,12 @@ int group_recorder::commit(TIMESTAMP t1){
 		return 0;
 	}
 
+	//See if we're deltamode -- if so, just make an update for t1 for the various items
+	if (deltacall==true)
+	{
+		t1 = (TIMESTAMP)t1dbl;
+	}
+
 	// short-circuit if not open
 	if(TS_OPEN != tape_status){
 		return 1;
@@ -252,12 +289,12 @@ int group_recorder::commit(TIMESTAMP t1){
 
 	// if periodic interval, check for write
 	if(write_interval > 0){
-		if(interval_write){
+		if(((interval_write==true) && (deltacall==false)) || (deltacall==true)){
 			if(0 == read_line()){
 				gl_error("group_recorder::commit(): error when reading the values");
 				return 0;
 			}
-			if(0 == write_line(t1)){
+			if(0 == write_line(t1,t1dbl,deltacall)){
 				gl_error("group_recorder::commit(): error when writing the values to the file");
 				return 0;
 			}
@@ -276,7 +313,7 @@ int group_recorder::commit(TIMESTAMP t1){
 				return 0;
 			}
 			if(0 != strcmp(line_buffer, prev_line_buffer) ){
-				if(0 == write_line(t1)){
+				if(0 == write_line(t1,t1dbl,deltacall)){
 					gl_error("group_recorder::commit(): error when writing the values to the file");
 					return 0;
 				}
@@ -495,7 +532,7 @@ int group_recorder::read_line(){
 /**
 	@return 1 on successful write, 0 on unsuccessful write, error, or when not ready
  **/
-int group_recorder::write_line(TIMESTAMP t1){
+int group_recorder::write_line(TIMESTAMP t1, double t1dbl, bool deltacall){
 	char time_str[64];
 	DATETIME dt;
 
@@ -525,32 +562,54 @@ int group_recorder::write_line(TIMESTAMP t1){
 	}
 
 	// write time_str
-	// Somebody else: recorder.c uses multiple formats, in the sense of "formatted or not".  This does not.
-    // TDH: It does now!
-    if (!format){
-        if(0 == gl_localtime(t1, &dt)){
-            gl_error("group_recorder::write_line(): error when converting the sync time");
-            /* TROUBLESHOOT
-                Unprintable timestamp.
-             */
-            tape_status = TS_ERROR;
-            return 0;
-        }
-        if(0 == gl_strtime(&dt, time_str, sizeof(time_str) ) ){
-            gl_error("group_recorder::write_line(): error when writing the sync time as a string");
-            /* TROUBLESHOOT
-                Error printing the timestamp.
-             */
-            tape_status = TS_ERROR;
-            return 0;
-        }
-    } else { //Just converting TIMESTAMP to char array
-        std::string number;
-        std::stringstream strstream;
-        strstream << (long long)t1;
-        strstream >> number;
-        strcpy(time_str, number.c_str());
-    }
+	// recorder.c uses multiple formats, in the sense of "formatted or not".  This has been fixed to match
+	if (format == false)
+	{
+		if (deltacall==false)
+		{
+			if(0 == gl_localtime(t1, &dt))
+			{
+				gl_error("group_recorder::write_line(): error when converting the sync time");
+				/* TROUBLESHOOT
+					Unprintable timestamp.
+				 */
+				tape_status = TS_ERROR;
+				return 0;
+			}
+		}
+		else //delta call
+		{
+			if(0 == gl_localtime_delta(t1dbl, &dt))
+			{
+				gl_error("group_recorder::write_line(): error when converting the sync time");
+				/* TROUBLESHOOT
+					Unprintable timestamp.
+				 */
+				tape_status = TS_ERROR;
+				return 0;
+			}
+		}
+			
+		if(0 == gl_strtime(&dt, time_str, sizeof(time_str) ) )
+		{
+			gl_error("group_recorder::write_line(): error when writing the sync time as a string");
+			/* TROUBLESHOOT
+				Error printing the timestamp.
+			 */
+			tape_status = TS_ERROR;
+			return 0;
+		}
+	}
+	else	//Just converting TIMESTAMP to char array
+	{
+		// ************* TODO: This needs to be fixed for deltamode *****************//
+		std::string number;
+		std::stringstream strstream;
+		strstream << (long long)t1;
+		strstream >> number;
+		strcpy(time_str, number.c_str());
+	}
+
 	// print line to file
 	if(0 >= fprintf(rec_file, "%s%s\n", time_str, line_buffer)){
 		gl_error("group_recorder::write_line(): error when writing to the output file");
@@ -691,7 +750,7 @@ EXPORT int commit_group_recorder(OBJECT *obj){
 	int rv = 0;
 	group_recorder *my = OBJECTDATA(obj, group_recorder);
 	try {
-		rv = my->commit(obj->clock);
+		rv = my->commit(obj->clock,0.0,false);
 	}
 	catch (char *msg){
 		gl_error("commit_group_recorder: %s", msg);
@@ -707,4 +766,46 @@ EXPORT int isa_group_recorder(OBJECT *obj, char *classname)
 	return OBJECTDATA(obj, group_recorder)->isa(classname);
 }
 
+//Deltamode -- object-level call
+EXPORT SIMULATIONMODE update_group_recorder(OBJECT *obj, TIMESTAMP t0, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
+{
+	double tsdblvalue, dblincrement;
+	int return_val;
+	group_recorder *thisrcdr = OBJECTDATA(obj,group_recorder);
+
+	//See if we're the first call
+	if ((iteration_count_val == 0) && (delta_time != 0))
+	{
+		//Get decimal timestamp value - always previous value
+		dblincrement = ((double)delta_time-(double)dt)/(double)DT_SECOND; 
+
+		//Update tracking variable
+		tsdblvalue = (double)t0 + dblincrement;
+
+		//Call the commit routine
+		return_val = thisrcdr->commit(t0,tsdblvalue,true);
+
+		//Make sure we didn't fail
+		if (return_val == 0)
+		{
+			return SM_ERROR;
+		}
+	}
+	//Default else, just keep going
+
+	return SM_EVENT;
+}
+
+//Deltamode -- exposed function for commit (slightly different) to get the post update call
+EXPORT int group_recorder_postroutine(OBJECT *obj, double timedbl)
+{
+	int return_value;
+	group_recorder *thisrcdr = OBJECTDATA(obj,group_recorder);
+
+	//Call the commit routine
+	return_value = thisrcdr->commit(0,timedbl,true);
+
+	//Send the status back
+	return return_value;
+}
 // EOF

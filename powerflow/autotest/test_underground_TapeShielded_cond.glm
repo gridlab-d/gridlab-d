@@ -4,8 +4,8 @@
 
 #set iteration_limit=100000;
 //#set pauseatexit=1
-#set savefile=UG_line.xml
-#define stylesheet=C:\GridlabD\944\VS2005\x64\Debug\gridlabd-2_0
+//#set savefile=UG_line.xml
+//#define stylesheet=C:\GridlabD\944\VS2005\x64\Debug\gridlabd-2_0
 clock {
 	timezone EST+5EDT;
 	starttime '2000-01-01 0:00:00';
@@ -27,16 +27,26 @@ object underground_line_conductor {
 	name ulc6070;
 	outer_diameter 1.060000 in;
 	conductor_gmr 0.011100 ft;
-        neutral_gmr 0.01113 ft;
 	conductor_diameter 0.368000 in;
 	conductor_resistance 0.970000 Ohm/mile;
-        neutral_resistance 0.607 Ohm/mile;
 	insulation_relative_permitivitty 2.3;
 	shield_gmr 0.0365 ft;
 	shield_resistance 4.2786 Ohm/mile;
 	shield_diameter 0.88 in;
 	shield_thickness 0.005 in;
 }
+
+// Phase Conductor for 607, phase N. 1/0 AA,TS N: 1/0 Cu, Phase N is a CU copper conductor.
+object underground_line_conductor { 
+	 name ulc6070N;
+	 outer_diameter 1.060000; //1.060000; inch, not used in tape-shield calculation
+	 conductor_gmr 0.0111300;  //ft
+	 conductor_diameter 0.368; //0.368000; inch
+	 conductor_resistance 0.6070000;
+	 insulation_relative_permitivitty 2.3;
+
+}
+
 
 object line_spacing {
 	name ls520ABCN;
@@ -101,7 +111,7 @@ object line_configuration {
 	conductor_A ulc6070;
 	conductor_B ulc6070;
 	conductor_C ulc6070;
-	conductor_N ulc6070;
+	conductor_N ulc6070N;
 	spacing ls520ABCN;
 }
 object line_configuration {
@@ -114,37 +124,37 @@ object line_configuration {
 object line_configuration {
 	name lc607AN;
 	conductor_A ulc6070;
-	conductor_N ulc6070;
+	conductor_N ulc6070N;
 	spacing ls520AN;
 }
 object line_configuration {
 	name lc607BN;
 	conductor_B ulc6070;
-	conductor_N ulc6070;
+	conductor_N ulc6070N;
 	spacing ls520BN;
 }
 object line_configuration {
 	name lc607CN;
 	conductor_C ulc6070;
-	conductor_N ulc6070;
+	conductor_N ulc6070N;
 	spacing ls520CN;
 }object line_configuration {
 	name lc607ABN;
 	conductor_A ulc6070;
 	conductor_B ulc6070;
-	conductor_N ulc6070;
+	conductor_N ulc6070N;
 	spacing ls520ABN;
 }object line_configuration {
 	name lc607BCN;
 	conductor_B ulc6070;
 	conductor_C ulc6070;
-	conductor_N ulc6070;
+	conductor_N ulc6070N;
 	spacing ls520BCN;
 }object line_configuration {
 	name lc607CAN;
 	conductor_A ulc6070;
 	conductor_C ulc6070;
-	conductor_N ulc6070;
+	conductor_N ulc6070N;
 	spacing ls520CAN;
 }
 object line_configuration {

@@ -1,6 +1,16 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
 
 /*
- * -- SuperLU routine (version 2.0) --
+ * -- SuperLU routine (version 3.0) --
  * Lawrence Berkeley National Lab, Univ. of California Berkeley,
  * and Xerox Palo Alto Research Center.
  * September 10, 2007
@@ -11,7 +21,7 @@
  * History:     Modified from LAPACK routine CLAQGE
  */
 #include <math.h>
-#include "pcsp_defs.h"
+#include "slu_mt_cdefs.h"
 
 
 void
@@ -80,7 +90,7 @@ claqgs(SuperMatrix *A, float *r, float *c,
     /* Local variables */
     NCformat *Astore;
     complex   *Aval;
-    int i, j, irow;
+    int_t i, j, irow;
     float large, small, cj;
     extern double slamch_(char *);
     float temp;

@@ -5,7 +5,6 @@
 #define _VOLTDUMP_H
 
 #include "powerflow.h"
-#include "node.h"
 
 typedef enum {
 	VDM_RECT,
