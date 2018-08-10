@@ -13,7 +13,7 @@
 #include "file.h"
 
 /*******************************************************************
- * players 
+ * players
  */
 int file_open_player(struct player *my, char *fname, char *flags)
 {
@@ -51,7 +51,7 @@ void file_close_player(struct player *my)
 }
 
 /*******************************************************************
- * shape generators 
+ * shape generators
  */
 #define MAPSIZE(N) ((N-1)/8+1)
 #define SET(X,B) ((X)[(B)/8]|=(1<<((B)&7)))
@@ -68,8 +68,8 @@ static void setmap(char *spec, unsigned char *map, int size)
 		if (*p=='*')
 		{
 			int i;
-			for (i=0;i<size;i++) 
-				SET(map,i); 
+			for (i=0;i<size;i++)
+				SET(map,i);
 			p++;
 		}
 		else if (isdigit(*p))
@@ -79,18 +79,18 @@ static void setmap(char *spec, unsigned char *map, int size)
 			/* no spanning */
 				SET(map,i);
 			else if (i>last) /* span to i */
-				do { 
-					SET(map,last); 
+				do {
+					SET(map,last);
 				} while (++last<=i);
 			else
 			{
 				/* span to i w/wrap around */
-				do { 
-					SET(map,last); 
+				do {
+					SET(map,last);
 				} while (++last<size);
 				last=0;
-				do { 
-					SET(map,last); 
+				do {
+					SET(map,last);
 				} while (++last<=i);
 			}
 			last = i;
@@ -141,7 +141,7 @@ int file_open_shaper(struct shaper *my, char *fname, char *flags)
 
 	/* clear everything */
 	memset(scale,0,sizeof(scale));
-	linenum=0; 
+	linenum=0;
 	file=fname;
 
 	/* "-" means stdin */
@@ -250,13 +250,13 @@ void file_close_shaper(struct shaper *my)
 }
 
 /*******************************************************************
- * recorders 
+ * recorders
  */
 int file_open_recorder(struct recorder *my, char *fname, char *flags)
 {
 	time_t now=time(NULL);
 	OBJECT *obj=OBJECTHDR(my);
-	
+
 	my->fp = (strcmp(fname,"-")==0?stdout:fopen(fname,flags));
 	if (my->fp==NULL)
 	{
@@ -289,7 +289,7 @@ int file_open_recorder(struct recorder *my, char *fname, char *flags)
 }
 
 int file_write_recorder(struct recorder *my, char *timestamp, char *value)
-{ 
+{
 	return fprintf(my->fp,"%s,%s\n", timestamp, value);
 }
 
@@ -304,7 +304,7 @@ void file_flush_recorder(struct recorder *my)
 }
 
 /*******************************************************************
- * collectors 
+ * collectors
  */
 int file_open_collector(struct collector *my, char *fname, char *flags)
 {

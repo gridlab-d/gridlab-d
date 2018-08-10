@@ -512,10 +512,10 @@ PROPERTY *link_properties(struct recorder *rec, OBJECT *obj, char *property_list
 		cpart = strchr(item, '.');
 		if(cpart != NULL){
 			if(strcmp("imag", cpart+1) == 0){
-				cid = (int)((int64)&(oblig.i) - (int64)&oblig);
+				cid = (int)((int64)&(oblig.Im()) - (int64)&oblig);
 				*cpart = 0;
 			} else if(strcmp("real", cpart+1) == 0){
-				cid = (int)((int64)&(oblig.r) - (int64)&oblig);
+				cid = (int)((int64)&(oblig.Re()) - (int64)&oblig);
 				*cpart = 0;
 			} else {
 				;

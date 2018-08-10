@@ -12,12 +12,12 @@
 	   may be specified using \p property \p condition \p value, where \p property is one
 	   of \p class, \p size, \p parent, \p id, \p rank, or any registered property of the object.
 	- \p property value of collectors must be in the form \p aggregator(property) where
-	the \p aggregator is one of \p min, \p max, \p count, \p avg, \p std, \p mean, \p var, 
-	\p mbe, \p kur. If a \p | is used instead of parentheses, then the absolute value 
+	the \p aggregator is one of \p min, \p max, \p count, \p avg, \p std, \p mean, \p var,
+	\p mbe, \p kur. If a \p | is used instead of parentheses, then the absolute value
 	of the property is used.
 	If the property is a complex number, the property must be specified in the form
-	\p property.part, where \p part is one of \p real, \p imag, \p mag, \p ang, or \p arg.  
-	Angles are in degrees, and \p arg is in radians. 
+	\p property.part, where \p part is one of \p real, \p imag, \p mag, \p ang, or \p arg.
+	Angles are in degrees, and \p arg is in radians.
  @{
  **/
 
@@ -71,7 +71,7 @@ static int collector_open(OBJECT *obj)
 	char32 flags="w";
 	TAPEFUNCS *tf = 0;
 	struct collector *my = OBJECTDATA(obj,struct collector);
-	
+
 	my->interval = (int64)(my->dInterval/TS_SECOND);
 
 	/* if prefix is omitted (no colons found) */
@@ -111,7 +111,7 @@ static int collector_open(OBJECT *obj)
 static int write_collector(struct collector *my, char *ts, char *value)
 {
 	int rc=my->ops->write(my, ts, value);
-	if ( (my->flush==0 || (my->flush>0 && my->flush%gl_globalclock==0)) && my->ops->flush!=NULL ) 
+	if ( (my->flush==0 || (my->flush>0 && my->flush%gl_globalclock==0)) && my->ops->flush!=NULL )
 		my->ops->flush(my);
 	return rc;
 }
@@ -181,7 +181,7 @@ int read_aggregates(AGGREGATION *aggr, char *buffer, int size)
 	int count=0;
 	char32 fmt;
 
-	gl_global_getvar("double_format", fmt, 32);
+	gl_global_getvar(const_cast<char *>("double_format"), fmt, 32);
 	for (p=aggr; p!=NULL && offset<size-33; p=p->next)
 	{
 		if (offset>0) strcpy(buffer+offset++,",");
@@ -200,7 +200,7 @@ EXPORT TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	typedef enum {NONE='\0', LT='<', EQ='=', GT='>'} COMPAREOP;
 	COMPAREOP comparison;
 	char1024 buffer = "";
-	
+
 	if(my->status == TS_DONE){
 		return TS_NEVER;
 	}
@@ -216,7 +216,7 @@ EXPORT TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		my->status = TS_ERROR;
 		goto Error;
 	}
-	
+
 	if((my->status == TS_OPEN) && (t0 > obj->clock)){
 		obj->clock = t0;
 		if((my->interval > 0) && (my->last.ts < t0) && (my->last.value[0] != 0)){
@@ -270,7 +270,7 @@ EXPORT TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	}
 
 	/* write tape */
-	if(my->status == TS_OPEN){	
+	if(my->status == TS_OPEN){
 		if(my->interval == 0 /* sample on every pass */
 			|| ((my->interval == -1) && my->last.ts != t0 && strcmp(buffer, my->last.value) != 0) /* sample only when value changes */
 			){
