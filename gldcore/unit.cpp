@@ -80,6 +80,7 @@
 #include <errno.h>
 #include <ctype.h>
 #include <math.h>
+#include <cwctype>
 
 #include "platform.h"
 #include "output.h"
@@ -469,7 +470,7 @@ int unit_derived(char *name,char *derivation)
  **/
 void unit_init(void)
 {
-	static int tried=0, trylock=0;
+	static unsigned int tried=0, trylock=0;
 	char *glpath = getenv("GLPATH");
 	FILE *fp = NULL;
 	char tpath[1024];
@@ -681,8 +682,8 @@ int unit_convert_complex(UNIT *pFrom, UNIT *pTo, complex *pValue)
 	}
 	
 	if (pTo->c == pFrom->c && pTo->e == pFrom->e && pTo->h == pFrom->h && pTo->k == pFrom->k && pTo->m == pFrom->m && pTo->s == pFrom->s){
-		pValue->r = (pValue->r - pFrom->b) * (pFrom->a / pTo->a) + pTo->b;
-		pValue->i = (pValue->i - pFrom->b) * (pFrom->a / pTo->a) + pTo->b;
+		pValue->SetReal((pValue->Re() - pFrom->b) * (pFrom->a / pTo->a) + pTo->b);
+		pValue->SetImag((pValue->Im() - pFrom->b) * (pFrom->a / pTo->a) + pTo->b);
 		return 1;
 	} else {
 		output_error("could not convert units from %s to %s, mismatched constant values", pFrom->name, pTo->name);
@@ -698,13 +699,12 @@ UNIT *unit_find(char *unit) /**< the name of the unit */
 	UNIT *p;
 	int rv = 0;
 
-	TRY {
+	try {
 		/* first time */
 		if (unit_list==NULL) unit_init();
-	} CATCH (char *msg) {
+	} catch (char *msg) {
 		output_error("unit_find(char *unit='%s'): %s", unit,msg);
-	}
-	ENDCATCH;
+	};
 
 	/* scan list for existing entry */
 	p = unit_find_raw(unit);
@@ -713,12 +713,11 @@ UNIT *unit_find(char *unit) /**< the name of the unit */
 	}
 	
 	/* derive entry if possible */
-	TRY {
+	try {
 		rv = unit_derived(unit, unit);
-	} CATCH (char *msg) {
+	} catch (char *msg) {
 		output_error("unit_find(char *unit='%s'): %s", unit,msg);
-	}
-	ENDCATCH;
+	};
 
 	//if (unit_derived(unit,unit)){
 	if(rv){

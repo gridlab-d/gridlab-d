@@ -25,12 +25,12 @@ struct thread_data {
 	struct sync_data *data; /**< pointer to the sync state structure */
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+//#ifdef __cplusplus
+//extern "C" {
+//#endif
 int exec_init(void);
 STATUS exec_start(void);
-char *simtime(void);
+const char *simtime(void);
 STATUS t_setup_ranks(void);
 INDEX **exec_getranks(void);
 void exec_sleep(unsigned int usec);
@@ -68,11 +68,9 @@ EXITCODE exec_run_initscripts(void);
 EXITCODE exec_run_syncscripts(void);
 EXITCODE exec_run_termscripts(void);
 
-int64 exec_clock(void);
-
-#ifdef __cplusplus
-}
-#endif
+//#ifdef __cplusplus
+//}
+//#endif
 
 #ifndef max
 #define max(n, m) ((n) > (m) ? (n) : (m))

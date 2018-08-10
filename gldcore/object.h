@@ -100,7 +100,11 @@ typedef struct s_object_list {
 /* this is the callback table for modules
  * the table is initialized in module.cpp
  */
-typedef struct s_callbacks {
+//typedef struct s_callbacks {
+typedef class s_callbacks {
+public:
+    s_callbacks() noexcept;
+
 	TIMESTAMP *global_clock;
 	double *global_delta_curr_clock;
 	TIMESTAMP *global_stoptime;
@@ -117,7 +121,7 @@ typedef struct s_callbacks {
 		OBJECT *(*foreign)(OBJECT *);
 	} create;
 	int (*define_map)(CLASS*,...);
-	int (*loadmethod)(CLASS*,char*,int (*call)(OBJECT*,char*));
+	int (*loadmethod)(CLASS*,char*,int (*call)(void*,char*));
 	CLASS *(*class_getfirst)(void);
 	CLASS *(*class_getname)(char*);
 	PROPERTY *(*class_add_extended_property)(CLASS *,char *,PROPERTYTYPE,char *);
@@ -164,7 +168,7 @@ typedef struct s_callbacks {
 		double (*refresh)(struct s_aggregate *aggregate);
 	} aggregate;
 	struct {
-		void *(*getvar)(MODULE *module, const char *varname);
+		double *(*getvar)(MODULE *module, const char *varname);
 		MODULE *(*getfirst)(void);
 		int (*depends)(const char *name, unsigned char major, unsigned char minor, unsigned short build);
 		const char *(*find_transform_function)(TRANSFORMFUNCTION function);
@@ -197,7 +201,7 @@ typedef struct s_callbacks {
 		double (*timestamp_to_minutes)(TIMESTAMP t);
 		double (*timestamp_to_seconds)(TIMESTAMP t);
 		int (*local_datetime)(TIMESTAMP ts, DATETIME *dt);
-		TIMESTAMP (*convert_to_timestamp)(char *value);
+        TIMESTAMP (*convert_to_timestamp)(const char *value);
 		TIMESTAMP (*convert_to_timestamp_delta)(const char *value, unsigned int *microseconds, double *dbl_time_value);
 		int (*convert_from_timestamp)(TIMESTAMP ts, char *buffer, int size);
 		int (*convert_from_deltatime_timestamp)(double ts_v, char *buffer, int size);
@@ -208,7 +212,7 @@ typedef struct s_callbacks {
 	struct {
 		EXCEPTIONHANDLER *(*create_exception_handler)();
 		void (*delete_exception_handler)(EXCEPTIONHANDLER *ptr);
-		void (*throw_exception)(char *msg, ...);
+		void (*throw_exception)(const char *msg, ...);
 		char *(*exception_msg)(void);
 	} exception;
 	struct {
@@ -406,8 +410,8 @@ int object_saveall_xml(FILE *fp);
 void object_stream_fixup(OBJECT *obj, char *classname, char *objname);
 
 char *object_name(OBJECT *obj, char *, int);
-int convert_from_latitude(double,void*,size_t);
-int convert_from_longitude(double,void*,size_t);
+int convert_from_latitude(double, char *, size_t);
+int convert_from_longitude(double, char *, size_t);
 double convert_to_latitude(char *buffer);
 double convert_to_longitude(char *buffer);
 
@@ -459,6 +463,6 @@ int object_loadmethod(OBJECT *obj, char *name, char *value);
 
 #pragma GCC pop_options
 
-#endif
+#endif // _OBJECT_H
 
 /** @} **/

@@ -435,7 +435,7 @@ CLASS *class_register(MODULE *module,        /**< the module that implements the
 	int b = sizeof(property_type[0]);
 	int c = _PT_LAST - _PT_FIRST - 1;
 
-	if (_PT_LAST-_PT_FIRST-1!=sizeof(property_type)/sizeof(property_type[0]))
+	if (_PT_LAST-_PT_FIRST-1!=sizeof(property_type)/sizeof(property_type[0])) // This is always false.
 	{
 		output_fatal("property_type[] in class.c has an incorrect number of members (%i vs %i)", a/b, c);
 		/* TROUBLESHOOT
@@ -645,14 +645,15 @@ int class_define_map(CLASS *oclass, /**< the object class */
                      ...) /**< definition arguments (see remarks) */
 {
 	va_list arg;
-	PROPERTYTYPE* buffer, proptype;
+	PROPERTYTYPE proptype;
 	int count=0;
 	PROPERTY *prop=NULL;
 	va_start(arg,oclass);
 	errno = 0;
-	while ((buffer=va_arg(arg,PROPERTYTYPE*))!=0)
+	int prop_buffer;
+	while ((prop_buffer=va_arg(arg,int))!=0)
 	{
-	    proptype = *buffer;
+	    proptype = static_cast<PROPERTYTYPE>(prop_buffer);
 		if (proptype>_PT_LAST)
 		{
 			if (proptype==PT_INHERIT)
@@ -768,7 +769,7 @@ int class_define_map(CLASS *oclass, /**< the object class */
 			else if (proptype==PT_KEYWORD && prop->ptype==PT_set)
 			{
 				char *keyword = va_arg(arg,char*);
-				unsigned int64 keyvalue = va_arg(arg, int64);
+				unsigned int64 keyvalue = va_arg(arg, uint64);
 				if (!class_define_set_member(oclass,prop->name,keyword,keyvalue))
 				{
 					errno = EINVAL;
@@ -783,7 +784,8 @@ int class_define_map(CLASS *oclass, /**< the object class */
 			}
 			else if (proptype==PT_ACCESS)
 			{
-				PROPERTYACCESS pa = va_arg(arg,PROPERTYACCESS);
+                int prop_buffer = va_arg(arg,int);
+				PROPERTYACCESS pa = PROPERTYACCESS(prop_buffer);
 				switch (pa) {
 				case PA_PUBLIC:
 				case PA_PROTECTED:

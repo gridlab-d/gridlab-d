@@ -182,6 +182,7 @@ CDECL EXTERN CALLBACKS *callback INIT(NULL);
 /** @} **/
 
 #define PADDR(X) ((char*)&(this->X)-(char*)this)
+#define PADDR_C(X) ((char*)&(self->X)-(char*)self)
 
 /******************************************************************************
  * Exception handling

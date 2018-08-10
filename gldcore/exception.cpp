@@ -64,7 +64,7 @@ EXCEPTIONHANDLER *handlers = NULL;
  **/
 EXCEPTIONHANDLER *create_exception_handler(void)
 {
-	EXCEPTIONHANDLER *ptr = malloc(sizeof(EXCEPTIONHANDLER));
+	EXCEPTIONHANDLER *ptr = static_cast<EXCEPTIONHANDLER*>(malloc(sizeof(EXCEPTIONHANDLER)));
 	if(ptr == NULL){
 		output_fatal("create_exception_handler(): malloc failure");
 		return NULL;
@@ -98,7 +98,7 @@ void delete_exception_handler(EXCEPTIONHANDLER *ptr) /**< a pointer to the excep
 
 /** Throw an exception
  **/
-void throw_exception(char *format, /**< the format string */
+void throw_exception(const char *format, /**< the format string */
 					 ...) /**< the parameters of the message */
 {
 	char buffer[1024];

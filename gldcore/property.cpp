@@ -29,29 +29,46 @@
 
 /* IMPORTANT: this list must match PROPERTYTYPE enum in property.h */
 PROPERTYSPEC property_type[_PT_LAST] = {
-	{"void", "string", 0, 0, convert_from_void,convert_to_void},
-	{"double", "decimal", sizeof(double), 24, convert_from_double,convert_to_double,NULL,stream_double,{TCOPS(double)},},
-	{"complex", "string", sizeof(complex), 48, convert_from_complex,convert_to_complex,NULL,NULL,{TCOPS(double)},complex_get_part},
-	{"enumeration", "string", sizeof(int32), 32, convert_from_enumeration,convert_to_enumeration,NULL,NULL,{TCOPS(uint64)},},
-	{"set", "string", sizeof(int64), 32, convert_from_set,convert_to_set,NULL,NULL,{TCOPS(uint64)},},
-	{"int16", "integer", sizeof(int16), 6, convert_from_int16,convert_to_int16,NULL,NULL,{TCOPS(uint16)},},
-	{"int32", "integer", sizeof(int32), 12, convert_from_int32,convert_to_int32,NULL,NULL,{TCOPS(uint32)},},
-	{"int64", "integer", sizeof(int64), 24, convert_from_int64,convert_to_int64,NULL,NULL,{TCOPS(uint64)},},
-	{"char8", "string", sizeof(char8), 8, convert_from_char8,convert_to_char8,NULL,NULL,{TCOPS(string)},},
-	{"char32", "string", sizeof(char32), 32, convert_from_char32,convert_to_char32,NULL,NULL,{TCOPS(string)},},
-	{"char256", "string", sizeof(char256), 256, convert_from_char256,convert_to_char256,NULL,NULL,{TCOPS(string)},},
-	{"char1024", "string", sizeof(char1024), 1024, convert_from_char1024,convert_to_char1024,NULL,NULL,{TCOPS(string)},},
-	{"object", "string", sizeof(OBJECT*), sizeof(OBJECTNAME), convert_from_object,convert_to_object,NULL,NULL,{TCOPB(object)},object_get_part},
-	{"delegated", "string", (unsigned int)-1, 0, convert_from_delegated, convert_to_delegated},
-	{"bool", "string", sizeof(bool), 6, convert_from_boolean, convert_to_boolean,NULL,NULL,{TCOPB(bool)},},
-	{"timestamp", "string", sizeof(int64), 24, convert_from_timestamp_stub, convert_to_timestamp_stub,NULL,NULL,{TCOPS(uint64)},timestamp_get_part},
-	{"double_array", "string", sizeof(double_array), 0, convert_from_double_array, convert_to_double_array,double_array_create,NULL,{TCNONE},double_array_get_part},
-	{"complex_array", "string", sizeof(complex_array), 0, convert_from_complex_array, convert_to_complex_array,complex_array_create,NULL,{TCNONE},complex_array_get_part},
-	{"real", "decimal", sizeof(real), 24, convert_from_real, convert_to_real},
-	{"float", "decimal", sizeof(float), 24, convert_from_float, convert_to_float},
-	{"loadshape", "string", sizeof(loadshape), 0, convert_from_loadshape, convert_to_loadshape, loadshape_create,NULL,{TCOPS(double)},},
-	{"enduse", "string", sizeof(enduse), 0, convert_from_enduse, convert_to_enduse, enduse_create,NULL,{TCOPS(double)},enduse_get_part},
-	{"randomvar", "string", sizeof(randomvar), 24, convert_from_randomvar, convert_to_randomvar, randomvar_create,NULL,{TCOPS(double)},random_get_part},
+		{"void",          "string",  0,                     0,                  convert_from_void,           convert_to_void},
+		{"double",        "decimal", sizeof(double),        24,                 convert_from_double,         convert_to_double,         NULL, reinterpret_cast<size_t (*)(
+				FILE *,
+				int,
+				void *,
+				PROPERTY *)>(stream_double),                                                                                                        {TCOPS(double)},},
+		{"complex",       "string",  sizeof(complex),       48,                 convert_from_complex,        convert_to_complex,        NULL, NULL, {TCOPS(double)}, complex_get_part},
+		{"enumeration",   "string",  sizeof(int32),         32,                 convert_from_enumeration,    convert_to_enumeration,    NULL, NULL, {TCOPS(uint64)},},
+		{"set",           "string",  sizeof(int64),         32,                 convert_from_set,            convert_to_set,            NULL, NULL, {TCOPS(uint64)},},
+		{"int16",         "integer", sizeof(int16),         6,                  convert_from_int16,          convert_to_int16,          NULL, NULL, {TCOPS(uint16)},},
+		{"int32",         "integer", sizeof(int32),         12,                 convert_from_int32,          convert_to_int32,          NULL, NULL, {TCOPS(uint32)},},
+		{"int64",         "integer", sizeof(int64),         24,                 convert_from_int64,          convert_to_int64,          NULL, NULL, {TCOPS(uint64)},},
+		{"char8",         "string",  sizeof(char8),         8,                  convert_from_char8,          convert_to_char8,          NULL, NULL, {TCOPS(string)},},
+		{"char32",        "string",  sizeof(char32),        32,                 convert_from_char32,         convert_to_char32,         NULL, NULL, {TCOPS(string)},},
+		{"char256",       "string",  sizeof(char256),       256,                convert_from_char256,        convert_to_char256,        NULL, NULL, {TCOPS(string)},},
+		{"char1024",      "string",  sizeof(char1024),      1024,               convert_from_char1024,       convert_to_char1024,       NULL, NULL, {TCOPS(string)},},
+		{"object",        "string",  sizeof(OBJECT *),      sizeof(OBJECTNAME), convert_from_object,         convert_to_object,         NULL, NULL, {TCOPB(object)}, object_get_part},
+		{"delegated",     "string",  (unsigned int) -1,     0,                  convert_from_delegated,      convert_to_delegated},
+		{"bool",          "string",  sizeof(bool),          6,                  convert_from_boolean,        convert_to_boolean,        NULL, NULL, {TCOPB(bool)},},
+		{"timestamp",     "string",  sizeof(int64),         24,                 convert_from_timestamp_stub, convert_to_timestamp_stub, NULL, NULL, {TCOPS(uint64)}, timestamp_get_part},
+		{"double_array",  "string",  sizeof(double_array),  0,                  convert_from_double_array,   convert_to_double_array,  reinterpret_cast<int (*)(
+				void *)>(double_array_create),                                                                                                NULL, {TCNONE},        double_array_get_part},
+		{"complex_array", "string",  sizeof(complex_array), 0,                  convert_from_complex_array,  convert_to_complex_array, reinterpret_cast<int (*)(
+				void *)>(complex_array_create),                                                                                               NULL, {TCNONE},        complex_array_get_part},
+		{"real",          "decimal", sizeof(real),          24,                 convert_from_real,           convert_to_real},
+		{"float",         "decimal", sizeof(float),         24,                 convert_from_float,          convert_to_float},
+		{"loadshape",     "string",  sizeof(loadshape),     0,                  convert_from_loadshape,      reinterpret_cast<int (*)(
+				const char *,
+				void *,
+				PROPERTY *)>(convert_to_loadshape),                                                                                    reinterpret_cast<int (*)(
+				void *)>(loadshape_create),                                                                                                   NULL, {TCOPS(double)},},
+		{"enduse",        "string",  sizeof(enduse),        0,                  convert_from_enduse,         reinterpret_cast<int (*)(
+				const char *,
+				void *,
+				PROPERTY *)>(convert_to_enduse),                                                                                       reinterpret_cast<int (*)(
+				void *)>(enduse_create),                                                                                                      NULL, {TCOPS(double)}, enduse_get_part},
+		{"randomvar",     "string",  sizeof(randomvar),     24,                 convert_from_randomvar,      reinterpret_cast<int (*)(
+				const char *, void *,
+				PROPERTY *)>(convert_to_randomvar),                                                                                    reinterpret_cast<int (*)(
+				void *)>(randomvar_create),                                                                                                   NULL, {TCOPS(double)}, random_get_part},
 };
 
 PROPERTYSPEC *property_getspec(PROPERTYTYPE ptype)
@@ -66,7 +83,7 @@ int property_check(void)
 {
 	PROPERTYTYPE ptype;
 	int status = 1;
-	for ( ptype=_PT_FIRST+1 ; ptype<_PT_LAST ; ptype++ )
+	for ( ptype=_PT_FIRST, ++ptype ; ptype<_PT_LAST ; ++ptype )
 	{
 		size_t sz = 0;
 		switch (ptype) {
@@ -221,7 +238,7 @@ PROPERTYCOMPAREOP property_compare_op(PROPERTYTYPE ptype, char *opstr)
 	int n;
 	for ( n=0; n<_TCOP_LAST; n++)
 		if (strcmp(property_type[ptype].compare[n].str,opstr)==0)
-			return n;
+			return static_cast<PROPERTYCOMPAREOP>(n);
 	return TCOP_ERR;
 }
 
@@ -252,7 +269,7 @@ bool property_compare_basic(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void *x, v
 PROPERTYTYPE property_get_type(char *name)
 {
 	PROPERTYTYPE ptype;
-	for ( ptype = _PT_FIRST+1 ; ptype<_PT_LAST ; ptype++ )
+	for ( ptype = _PT_FIRST, ++ptype ; ptype<_PT_LAST ; ++ptype )
 	{
 		if ( strcmp(property_type[ptype].name,name)==0)
 			return ptype;
@@ -277,59 +294,67 @@ double property_get_part(OBJECT *obj, PROPERTY *prop, char *part)
 double complex_get_part(void *x, char *name)
 {
 	complex *c = (complex*)x;
-	if ( strcmp(name,"real")==0) return c->r;
-	if ( strcmp(name,"imag")==0) return c->i;
-	if ( strcmp(name,"mag")==0) return complex_get_mag(*c);
-	if ( strcmp(name,"arg")==0) return complex_get_arg(*c);
-	if ( strcmp(name,"ang")==0) return (complex_get_arg(*c)*180/PI);
+	if ( strcmp(name,"real")==0) return c->Re();
+	if ( strcmp(name,"imag")==0) return c->Im();
+	if ( strcmp(name,"mag")==0) return c->Mag(); // complex_get_mag(*c);
+	if ( strcmp(name,"arg")==0) return c->Arg(); // complex_get_arg(*c);
+	if ( strcmp(name,"ang")==0) return c->Arg()*180/PI; // (complex_get_arg(*c)*180/PI);
 	return QNAN;
 }
 
 /*********************************************************
  * DOUBLE ARRAYS
  *********************************************************/
-int double_array_create(double_array*a)
+int double_array_create(double_array *&a)
 {
-	int n;
-	a->n = a->m = 0;
-	a->max = 1;
-	a->x = (double***)malloc(sizeof(double**)*a->max);
-	a->f = (unsigned char*)malloc(sizeof(unsigned char)*a->max);
-	if ( a->x==NULL || a->f==NULL )
-		return 0;
-	memset(a->x,0,sizeof(double**)*a->max);
-	memset(a->f,0,sizeof(unsigned char)*a->max);
+	// FIXME: this could potentially cause a lot of issues depending on how C++ decides
+	// to handle it. If it properly replaces the pointer in all scope, we're fine, if it
+	// replaces it locally only, we're in trouble.
+
+	a = new double_array;
+//	int n;
+//	a->set_rows(0);
+//	a->set_cols(0);
+//	a->set_max(1);
+//	a->x = (double***)malloc(sizeof(double**)*a->get_max());
+//	a->f = (unsigned char*)malloc(sizeof(unsigned char)*a->get_max());
+//	if ( a->x==NULL || a->f==NULL )
+//		return 0;
+//	memset(a->x,0,sizeof(double**)*a->get_max());
+//	memset(a->f,0,sizeof(unsigned char)*a->get_max());
 	return 1;
 }
-double get_double_array_value(double_array*a,unsigned int n, unsigned int m)
-{
-	if ( a->n>n && a->m>m )
-		return *(a->x[n][m]);
-	else
-		throw_exception("get_double_array_value(double_array*a='n=%d,m=%d,...',unsigned int n=%d,unsigned int m=%d): array index out of range",a->n,a->m,n,m);
-}
-void set_double_array_value(double_array*a,unsigned int n, unsigned int m, double x)
-{
-	if ( a->n>n && a->m>m )
-		*(a->x[n][m])=x;
-	else
-		throw_exception("get_double_array_value(double_array*a='n=%d,m=%d,...',unsigned int n=%d,unsigned int m=%d): array index out of range",a->n,a->m,n,m);
-}
-double *get_double_array_ref(double_array*a,unsigned int n, unsigned int m)
-{
-	if ( a->n>n && a->m>m )
-		return a->x[n][m];
-	else
-		throw_exception("get_double_array_value(double_array*a='n=%d,m=%d,...',unsigned int n=%d,unsigned int m=%d): array index out of range",a->n,a->m,n,m);
-}
+
+// NOTE: none of the following 3 functions were ever used, so we're seeing that removing them doesn't break anything.
+//double get_double_array_value(double_array*a,unsigned int n, unsigned int m)
+//{
+//	if ( a->get_rows()>n && a->get_cols()>m )
+//		return *(a->get_addr(n,m));
+//	else
+//		throw_exception("get_double_array_value(double_array*a='n=%d,m=%d,...',unsigned int n=%d,unsigned int m=%d): array index out of range",a->n,a->m,n,m);
+//}
+//void set_double_array_value(double_array*a,unsigned int n, unsigned int m, double x)
+//{
+//	if ( a->get_rows()>n && a->get_cols()>m )
+//		*(a->get_addr(n,m))=x;
+//	else
+//		throw_exception("get_double_array_value(double_array*a='n=%d,m=%d,...',unsigned int n=%d,unsigned int m=%d): array index out of range",a->n,a->m,n,m);
+//}
+//double *get_double_array_ref(double_array*a,unsigned int n, unsigned int m)
+//{
+//	if (  a->get_rows()>n && a->get_cols()>m  )
+//		return a->get_addr(n,m);
+//	else
+//		throw_exception("get_double_array_value(double_array*a='n=%d,m=%d,...',unsigned int n=%d,unsigned int m=%d): array index out of range",a->n,a->m,n,m);
+//}
 double double_array_get_part(void *x, char *name)
 {
-	int n,m;
+	unsigned int n,m;
 	if (sscanf(name,"%d.%d",&n,&m)==2)
 	{
 		double_array *a = (double_array*)x;
-		if ( n<a->n && m<a->m && a->x[n][m]!=NULL )
-			return *(a->x[n][m]);
+		if ( n<a->get_rows() && m<a->get_cols() && a->get_addr(n,m)!=NULL )
+			return *(a->get_addr(n,m));
 	}
 	return QNAN;
 }
@@ -337,40 +362,42 @@ double double_array_get_part(void *x, char *name)
 /*********************************************************
  * COMPLEX ARRAYS
  *********************************************************/
-int complex_array_create(complex_array *a)
+int complex_array_create(complex_array *&a)
 {
-	int n;
-	a->n = a->m = 0;
-	a->max = 1;
-	a->x = (complex***)malloc(sizeof(complex**)*a->max);
-	a->f = (unsigned char*)malloc(sizeof(unsigned char)*a->max);
-	if ( a->x==NULL || a->f==NULL )
-		return 0;
-	memset(a->x,0,sizeof(complex**)*a->max);
-	memset(a->f,0,sizeof(unsigned char)*a->max);
+    a = new complex_array;
+
+//	int n;
+//	a->n = a->m = 0;
+//	a->get_max() = 1;
+//	a->x = (complex***)malloc(sizeof(complex**)*a->get_max());
+//	a->f = (unsigned char*)malloc(sizeof(unsigned char)*a->get_max());
+//	if ( a->x==NULL || a->f==NULL )
+//		return 0;
+//	memset(a->x,0,sizeof(complex**)*a->get_max());
+//	memset(a->f,0,sizeof(unsigned char)*a->get_max());
 	return 1;
 }
-complex *get_complex_array_value(complex_array *a,unsigned int n, unsigned int m)
-{
-	if ( a->n>n && a->m>m )
-		return a->x[n][m];
-	else
-		throw_exception("get_complex_array_value(complex_array*a='n=%d,m=%d,...',unsigned int n=%d,unsigned int m=%d): array index out of range",a->n,a->m,n,m);
-}
-void set_complex_array_value(complex_array *a,unsigned int n, unsigned int m, complex *x)
-{
-	if ( a->n>n && a->m>m )
-		*(a->x[n][m]) = *x;
-	else
-		throw_exception("get_complex_array_value(complex_array*a='n=%d,m=%d,...',unsigned int n=%d,unsigned int m=%d): array index out of range",a->n,a->m,n,m);
-}
-complex *get_complex_array_ref(complex_array *a,unsigned int n, unsigned int m)
-{
-	if ( a->n>n && a->m>m )
-		return a->x[n][m];
-	else
-		throw_exception("get_complex_array_value(complex_array*a='n=%d,m=%d,...',unsigned int n=%d,unsigned int m=%d): array index out of range",a->n,a->m,n,m);
-}
+//complex *get_complex_array_value(complex_array *a,unsigned int n, unsigned int m)
+//{
+//	if (  a->get_rows()>n && a->get_cols()>m  )
+//		return a->get_addr(n,m);
+//	else
+//		throw_exception("get_complex_array_value(complex_array*a='n=%d,m=%d,...',unsigned int n=%d,unsigned int m=%d): array index out of range",a->n,a->m,n,m);
+//}
+//void set_complex_array_value(complex_array *a,unsigned int n, unsigned int m, complex *x)
+//{
+//	if (  a->get_rows()>n && a->get_cols()>m  )
+//		*(a->get_addr(n,m)) = *x;
+//	else
+//		throw_exception("get_complex_array_value(complex_array*a='n=%d,m=%d,...',unsigned int n=%d,unsigned int m=%d): array index out of range",a->n,a->m,n,m);
+//}
+//complex *get_complex_array_ref(complex_array *a,unsigned int n, unsigned int m)
+//{
+//	if (  a->get_rows()>n && a->get_cols()>m  )
+//		return a->get_addr(n,m);
+//	else
+//		throw_exception("get_complex_array_value(complex_array*a='n=%d,m=%d,...',unsigned int n=%d,unsigned int m=%d): array index out of range",a->n,a->m,n,m);
+//}
 double complex_array_get_part(void *x, char *name)
 {
 	int n,m;
@@ -378,10 +405,10 @@ double complex_array_get_part(void *x, char *name)
 	if (sscanf(name,"%d.%d.%31s",&n,&m,subpart)==2)
 	{
 		complex_array *a = (complex_array*)x;
-		if ( n<a->n && m<a->m && a->x[n][m]!=NULL )
+		if ( n<a->get_rows() && m<a->get_cols() && a->get_addr(n,m)!=NULL )
 		{
-			if ( strcmp(subpart,"real")==0 ) return a->x[n][m]->r;
-			else if ( strcmp(subpart,"imag")==0 ) return a->x[n][m]->i;
+			if ( strcmp(subpart,"real")==0 ) return a->get_addr(n,m)->Re();
+			else if ( strcmp(subpart,"imag")==0 ) return a->get_addr(n,m)->Im();
 			else return QNAN;
 		}
 	}

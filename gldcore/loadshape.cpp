@@ -78,7 +78,7 @@ static void sync_pulsed(loadshape *ls, double dt)
 		}
 TurnOff:
 		/* load is off */
-		ls->s = 0;
+		ls->s = static_cast<MACHINESTATE>(0);
 
 		/* no load when off */
 		ls->load = 0;
@@ -116,7 +116,7 @@ TurnOff:
 		}
 TurnOn:	
 		/* the load is on */
-		ls->s = 1;
+		ls->s = static_cast<MACHINESTATE>(1);
 
 		/* fixed power pulse */
 		if (ls->params.pulsed.pulsetype==MPT_POWER)
@@ -161,7 +161,7 @@ static void sync_modulated(loadshape *ls, double dt)
 			goto TurnOn;
 		}
 TurnOff:
-		ls->s = 0;
+		ls->s = static_cast<MACHINESTATE>(0);
 		ls->load = 0;
 
 		// amplitude modulation
@@ -232,7 +232,7 @@ TurnOff:
 			goto TurnOff;
 		}
 TurnOn:	
-		ls->s = 1;
+		ls->s = static_cast<MACHINESTATE>(1);
 
 		// amplitude modulation
 		if (ls->params.modulated.modulation==MMT_AMPLITUDE) 
@@ -293,14 +293,14 @@ static void sync_queued(loadshape *ls, double dt)
 	/* update s and r */
 	if (ls->q > ls->d[0])
 	{
-		ls->s = 1;
+		ls->s = static_cast<MACHINESTATE>(1);
 
 		ls->r = -1/duration;
 		
 	}
 	else if (ls->q < ls->d[1])
 	{
-		ls->s = 0;
+		ls->s = static_cast<MACHINESTATE>(0);
 		ls->r = 1/random_exponential(&(ls->rng_state),ls->schedule->value*ls->params.pulsed.scalar*queue_value);
 	}
 	/* else state remains unchanged */
@@ -1167,26 +1167,26 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 				ls->type = MT_PULSED;
 				ls->params.pulsed.energy = 0.0;
 				ls->params.pulsed.pulsetype = MPT_UNKNOWN;
-				ls->params.pulsed.pulsetype = 0.0;
-				ls->params.pulsed.scalar = 0,0;
+				ls->params.pulsed.pulsevalue = 0.0;
+				ls->params.pulsed.scalar = 0.0;
 			}
 			else if (strcmp(value,"modulated")==0)
 			{
 				ls->type = MT_MODULATED;
 				ls->params.modulated.energy = 0.0;
 				ls->params.modulated.pulsetype = MPT_UNKNOWN;
-				ls->params.modulated.pulsetype = 0.0;
-				ls->params.modulated.scalar = 0,0;
+				ls->params.modulated.pulsevalue = 0.0;
+				ls->params.modulated.scalar = 0.0;
 			}
 			else if (strcmp(value,"queued")==0)
 			{
 				ls->type = MT_QUEUED;
 				ls->params.queued.energy = 0.0;
 				ls->params.queued.pulsetype = MPT_UNKNOWN;
-				ls->params.queued.pulsetype = 0.0;
-				ls->params.queued.scalar = 0,0;
-				ls->params.queued.q_on = 0,0;
-				ls->params.queued.q_off = 0,0;
+				ls->params.queued.pulsevalue = 0.0;
+				ls->params.queued.scalar = 0.0;
+				ls->params.queued.q_on = 0.0;
+				ls->params.queued.q_off = 0.0;
 			}
 			else if (strcmp(value,"scheduled")==0)
 			{

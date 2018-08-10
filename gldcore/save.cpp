@@ -211,7 +211,7 @@ int savexml_strict(char *filename,FILE *fp)
 					{
 						for (item=ranks[pass]->ordinal[i]->first; item!=NULL; item=item->next)
 						{
-							OBJECT *obj = item->data;
+							OBJECT *obj = static_cast<OBJECT *>(item->data);
 							if (obj->rank!=lastrank)
 							{
 								if (lastrank>=0)
@@ -303,7 +303,7 @@ int savexml_strict(char *filename,FILE *fp)
 								{
 									complex *pval = object_get_complex(obj,prop);
 									if (pval)
-										pval->f = A;
+										pval->SetNotation(A);
 								}
 								if (object_get_value_by_name(obj,prop->name,buffer,sizeof(buffer))>0 && strcmp(buffer,"")!=0)
 									count += fprintf(fp,"\t\t\t\t<%s>%s</%s>\n",prop->name,buffer,prop->name);

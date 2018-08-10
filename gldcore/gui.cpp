@@ -710,7 +710,7 @@ static int gui_html_source_page(char *source)
 }
 static void gui_entity_html_content(GUIENTITY *entity)
 {
-	char *ptype = gui_get_property(entity) ? class_get_property_typename(entity->prop->ptype) : "";
+	char *ptype = const_cast<char *>(gui_get_property(entity) ? class_get_property_typename(entity->prop->ptype) : "");
 	switch (entity->type) {
 
 	case GUI_PAGE:
@@ -748,7 +748,7 @@ static void gui_entity_html_content(GUIENTITY *entity)
 			for (key=prop->keywords; key!=NULL; key=key->next)
 			{
 				int value = *(int*)gui_get_data(entity);
-				char *checked = (value==key->value)?"checked":"";
+				char *checked = const_cast<char *>((value == key->value) ? "checked" : "");
 				char label[64], *p;
 				strcpy(label,key->name);
 				for (p=label; *p!='\0'; p++) if (*p=='_') *p=' '; else if (p>label && *p>='A' && *p<='Z') *p+='a'-'A';
@@ -766,7 +766,7 @@ static void gui_entity_html_content(GUIENTITY *entity)
 			for (key=prop->keywords; key!=NULL; key=key->next)
 			{
 				int value = *(int*)gui_get_data(entity);
-				char *checked = (value==key->value)?"checked":"";
+				char *checked = const_cast<char *>((value == key->value) ? "checked" : "");
 				char label[64], *p;
 				strcpy(label,key->name);
 				for (p=label; *p!='\0'; p++) if (*p=='_') *p=' '; else if (p>label && *p>='A' && *p<='Z') *p+='a'-'A';
@@ -779,7 +779,7 @@ static void gui_entity_html_content(GUIENTITY *entity)
 		{
 			PROPERTY *prop = gui_get_property(entity);
 			KEYWORD *key = NULL;
-			char *multiple = (prop->ptype==PT_set?"multiple":"");
+			char *multiple = const_cast<char *>(prop->ptype == PT_set ? "multiple" : "");
 			char size[64] = "";
 			if (entity->size>0) sprintf(size,"size=\"%d\"",entity->size);
 			if (!entity->parent || gui_get_type(entity->parent)!=GUI_SPAN) newcol(entity);
@@ -787,7 +787,7 @@ static void gui_entity_html_content(GUIENTITY *entity)
 			for (key=prop->keywords; key!=NULL; key=key->next)
 			{
 				int value = *(int*)gui_get_data(entity);
-				char *checked = (value==key->value)?"selected":"";
+				char *checked = const_cast<char *>((value == key->value) ? "selected" : "");
 				char label[64], *p;
 				strcpy(label,key->name);
 				for (p=label; *p!='\0'; p++) if (*p=='_') *p=' '; else if (p>label && *p>='A' && *p<='Z') *p+='a'-'A';
@@ -962,7 +962,7 @@ STATUS gui_html_output_all(void)
 /**************************************************************************/
 char *gui_glm_typename(GUIENTITYTYPE type)
 {
-	char *typename[] = {
+	char *type_name[] = {
 		NULL, 
 		"row", "tab", "page", "group", "span", NULL,
 		"title", "status", "text", NULL,
@@ -970,8 +970,8 @@ char *gui_glm_typename(GUIENTITYTYPE type)
 		"browse", "table", "graph", NULL,
 		NULL,
 	};
-	if (type>=0 || type<sizeof(typename)/sizeof(typename[0]))
-		return typename[type];
+	if (type>=0 || type<sizeof(type_name)/sizeof(type_name[0]))
+		return type_name[type];
 	else
 		return NULL;
 }
@@ -979,10 +979,10 @@ size_t gui_glm_write(FILE *fp, GUIENTITY *entity, int indent)
 {
 	size_t count=0;
 	GUIENTITY *parent = entity;
-	char *typename = gui_glm_typename(parent->type);
-	char tabs[] = "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t";
+	char *type_name = gui_glm_typename(parent->type);
+	char tabs[] = "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t"; // but why? surely there's a better way.
 	if (indent<0) tabs[0]='\0'; else if (indent<sizeof(tabs)) tabs[indent]='\0';
-	if (typename==NULL)
+	if (type_name==NULL)
 		return FAILED;
 	
 	if (entity->type==GUI_ACTION)
@@ -991,7 +991,7 @@ size_t gui_glm_write(FILE *fp, GUIENTITY *entity, int indent)
 	}
 	else
 	{
-		count += fprintf(fp,"%s%s {\n",tabs,typename);
+		count += fprintf(fp,"%s%s {\n",tabs,type_name);
 
 		if (gui_get_object(entity))
 			count += fprintf(fp,"%s\tlink %s:%s;\n", tabs,entity->objectname,entity->propertyname);

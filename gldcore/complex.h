@@ -220,91 +220,91 @@ public:
 		i += x.i;
 		return *this;
 	};
-	inline complex &operator -= (complex x)  /**< subtract a complex number */
+	complex &operator -= (complex x)  /**< subtract a complex number */
 	{
-		r -= x.r; 
-		i -= x.i; 
+		r -= x.r;
+		i -= x.i;
 		return *this;
 	};
-	inline complex &operator *= (complex x)  /**< multip[le by a complex number */
+	complex &operator *= (complex x)  /**< multip[le by a complex number */
 	{
-		double pr=r; 
-		r = pr * x.r - i * x.i; 
-		i = pr * x.i + i * x.r; 
+		double pr=r;
+		r = pr * x.r - i * x.i;
+		i = pr * x.i + i * x.r;
 		return *this;
 	};
-	inline complex &operator /= (complex y)  /**< divide by a complex number */
+	complex &operator /= (complex y)  /**< divide by a complex number */
 	{
 		double xr=r;
 		double a = y.r*y.r+y.i*y.i;
-		r = (xr*y.r+i*y.i)/a; 
+		r = (xr*y.r+i*y.i)/a;
 		i = (i*y.r-xr*y.i)/a;
 		return *this;
 	};
-	inline complex &operator ^= (complex x) /**< raise to a complex power */
-	{ 
-		double lm = log(Mag()), a = Arg(), b = exp(x.r*lm-x.i*a), c = x.r*a+x.i*lm; 
-		r = (b*cos(c)); 
-		i = (b*sin(c)); 
+	complex &operator ^= (complex x) /**< raise to a complex power */
+	{
+		double lm = log(Mag()), a = Arg(), b = exp(x.r*lm-x.i*a), c = x.r*a+x.i*lm;
+		r = (b*cos(c));
+		i = (b*sin(c));
 		return *this;
 	};
 
 	/* binary math operations */
-	inline complex operator + (double y) /**< double sum */
+	complex operator + (double y) /**< double sum */
 	{
 		complex x(*this);
 		return x+=y;
 	};
-	inline complex operator - (double y) /**< double subtract */
+	complex operator - (double y) /**< double subtract */
 	{
 		complex x(*this);
 		return x-=y;
 	};
-	inline complex operator * (double y) /**< double multiply */
+	complex operator * (double y) /**< double multiply */
 	{
 		complex x(*this);
 		return x*=y;
 	};
-	inline complex operator / (double y) /**< double divide */
+	complex operator / (double y) /**< double divide */
 	{
 		complex x(*this);
 		return x/=y;
 	};
-	inline complex operator ^ (double y) /**< double power */
+	complex operator ^ (double y) /**< double power */
 	{
 		complex x(*this);
 		return x^=y;
 	};
-	inline complex operator + (complex y) /**< complex sum */
+	complex operator + (complex y) /**< complex sum */
 	{
 		complex x(*this);
 		return x+=y;
 	};
-	inline complex operator - (complex y) /**< complex subtract */
+	complex operator - (complex y) /**< complex subtract */
 	{
 		complex x(*this);
 		return x-=y;
 	};
-	inline complex operator * (complex y) /**< complex multiply */
+	complex operator * (complex y) /**< complex multiply */
 	{
 		complex x(*this);
 		return x*=y;
 	};
-	inline complex operator / (complex y) /**< complex divide */
+	complex operator / (complex y) /**< complex divide */
 	{
 		complex x(*this);
 		return x/=y;
 	};
-	inline complex operator ^ (complex y) /**< complex power */
+	complex operator ^ (complex y) /**< complex power */
 	{
 		complex x(*this);
 		return x^=y;
 	};
 
 	/** set power factor */
-	inline complex SetPowerFactor(double mag, /**< magnitude of power */
-		double pf, /**< power factor */
-		CNOTATION n=J) /** notation */
+	complex SetPowerFactor(double mag, /**< magnitude of power */
+								  double pf, /**< power factor */
+								  CNOTATION n=J) /** notation */
 	{
 		SetPolar(mag/pf, acos(pf),n);
 		return *this;
@@ -312,29 +312,29 @@ public:
 
 
 	/* comparison */
-	inline bool IsZero(double err=0.0) /**< zero test */
+	bool IsZero(double err=0.0) /**< zero test */
 	{
 		return Mag()<=err;
 	}
 
 	/* magnitude comparisons */
-	inline bool operator == (double m)	{ return Mag()==m; };
-	inline bool operator != (double m)	{ return Mag()!=m; };
-	inline bool operator < (double m)	{ return Mag()<m; };
-	inline bool operator <= (double m)	{ return Mag()<=m; };
-	inline bool operator > (double m)	{ return Mag()>m; };
-	inline bool operator >= (double m)	{ return Mag()>=m; };
+	bool operator == (double m)	{ return Mag()==m; };
+	bool operator != (double m)	{ return Mag()!=m; };
+	bool operator < (double m)	{ return Mag()<m; };
+	bool operator <= (double m)	{ return Mag()<=m; };
+	bool operator > (double m)	{ return Mag()>m; };
+	bool operator >= (double m)	{ return Mag()>=m; };
 
 	/* angle comparisons */
-	inline bool operator == (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)==0.0;};
-	inline bool operator != (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)!=0.0;};
-	inline bool operator < (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)<PI;};
-	inline bool operator <= (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)<=PI;};
-	inline bool operator > (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)>PI;};
-	inline bool operator >= (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)>=PI;};
-	inline bool IsFinite(void) { return isfinite(r) && isfinite(i); };
+	bool operator == (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)==0.0;};
+	bool operator != (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)!=0.0;};
+	bool operator < (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)<PI;};
+	bool operator <= (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)<=PI;};
+	bool operator > (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)>PI;};
+	bool operator >= (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)>=PI;};
+	bool IsFinite(void) { return isfinite(r) && isfinite(i); };
 };
 #endif
 
 #endif
- /**@}**/
+/**@}**/

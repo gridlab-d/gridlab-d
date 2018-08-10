@@ -369,7 +369,7 @@ int schedule_compile_block(SCHEDULE *sch, unsigned char block, char *blockname, 
 		for (match=matcher; match<matcher+sizeof(matcher)/sizeof(matcher[0]); match++)
 		{
 			/* get match tables */
-			if (!schedule_matcher(match->pattern,match->table,match->max,match->base))
+			if (!schedule_matcher(match->pattern, reinterpret_cast<unsigned char *>(match->table), match->max, match->base))
 			{
 				output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) %s pattern syntax error in item '%s'", sch->name, match->name, token);
 				/* TROUBLESHOOT
@@ -553,7 +553,7 @@ int schedule_recompile_block(SCHEDULE *sch, unsigned char calendar, unsigned cha
 		for (match=matcher; match<matcher+sizeof(matcher)/sizeof(matcher[0]); match++)
 		{
 			/* get match tables */
-			if (!schedule_matcher(match->pattern,match->table,match->max,match->base))
+			if (!schedule_matcher(match->pattern, reinterpret_cast<unsigned char *>(match->table), match->max, match->base))
 			{
 				output_error("schedule_recompile(SCHEDULE *sch={name='%s', ...}) %s pattern syntax error in item '%s'", sch->name, match->name, token);
 				/* TROUBLESHOOT
@@ -637,7 +637,7 @@ int schedule_recompile(SCHEDULE *sch, unsigned char calendar)
 {
 	unsigned char block;
 	if (sch->index[calendar] == 0) {
-		sch->index[calendar] = malloc(sizeof(unsigned char)*MAXMINUTES);
+		sch->index[calendar] = static_cast<unsigned char *>(malloc(sizeof(unsigned char) * MAXMINUTES));
 		if (sch->index[calendar] == NULL) {
 			output_error("schedule_recompile(SCHEDULE *sch='{name=%s, ...}') insufficient memory for index", sch->name);
 			return 0;
@@ -645,7 +645,7 @@ int schedule_recompile(SCHEDULE *sch, unsigned char calendar)
 		memset(sch->index[calendar],0,sizeof(unsigned char)*MAXMINUTES);
 	}
 	if (sch->dtnext[calendar] == 0) {
-		sch->dtnext[calendar] = malloc(sizeof(unsigned char)*MAXMINUTES);
+		sch->dtnext[calendar] = static_cast<unsigned char *>(malloc(sizeof(unsigned char) * MAXMINUTES));
 		if (sch->dtnext[calendar] == NULL) {
 			output_error("schedule_recompile(SCHEDULE *sch='{name=%s, ...}') insufficient memory for dtnext", sch->name);
 			return 0;
@@ -846,9 +846,9 @@ int schedule_compile(SCHEDULE *sch)
 static pthread_cond_t sc_active = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t sc_activelock = PTHREAD_MUTEX_INITIALIZER;
 static STATUS sc_status = SUCCESS;
-static sc_running=0, sc_started=0, sc_done=0;
+static int sc_running=0, sc_started=0, sc_done=0;
 
-void *schedule_createproc(void *args)
+STATUS schedule_createproc(void *args)
 {
 	STATUS status = SUCCESS;
 	void *rv = 0;
@@ -910,8 +910,9 @@ Done:
 	{
 		output_error("deferred creation of schedule '%s' failed", sch->name);
 	}
-	rv = (void *)status;
-	return rv;
+//	rv = (void *)status;
+//	return rv;
+	return status;
 }
 
 /** Wait for deferred schedule creations to finish 
@@ -1013,7 +1014,7 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 	/* singlethreaded creation */
 	if ( global_threadcount<=1 )
 	{
-		result = (STATUS)schedule_createproc(sch);
+		result = schedule_createproc(sch);
 		if (SUCCESS == result)
 		{
 			return sch;
@@ -1032,7 +1033,7 @@ SCHEDULE *schedule_create(char *name,		/**< the name of the schedule */
 	{
 		static unsigned int n_threads = 0;
 		static pthread_t thread_id;
-		if ( pthread_create(&thread_id,NULL,schedule_createproc,(void*)sch)!=0 )
+		if ( pthread_create(&thread_id,NULL, reinterpret_cast<void* (*)(void*)>(schedule_createproc),(void*)sch)!=0 )
 		{
 			/* fails so do it inline */
 			output_warning("schedule_createproc failed, schedule '%s' created inline instead", sch->name);
@@ -1073,27 +1074,27 @@ SCHEDULE *schedule_new(void)
 	cal_hi = ((dt_starttime_hi.weekday-dt_starttime_hi.yearday+53*7)%7)*2 + ISLEAPYEAR(dt_starttime_hi.year);
 
 	/* create the first calendar needed */
-	sch->index[cal] = malloc(sizeof(unsigned char)*MAXMINUTES);
+	sch->index[cal] = static_cast<unsigned char *>(malloc(sizeof(unsigned char) * MAXMINUTES));
 	if (sch->index[cal]==NULL) return NULL;
 	memset(sch->index[cal],0,sizeof(unsigned char)*MAXMINUTES);
-	sch->dtnext[cal] = malloc(sizeof(unsigned char)*MAXMINUTES);
+	sch->dtnext[cal] = static_cast<unsigned char *>(malloc(sizeof(unsigned char) * MAXMINUTES));
 	if (sch->dtnext[cal]==NULL) return NULL;
 	memset(sch->dtnext[cal],0,sizeof(unsigned char)*MAXMINUTES);
 	/* create left skewed calendar, if needed */
 	if (cal_lo != cal) {
-		sch->index[cal_lo] = malloc(sizeof(unsigned char)*MAXMINUTES);
+		sch->index[cal_lo] = static_cast<unsigned char *>(malloc(sizeof(unsigned char) * MAXMINUTES));
 		if (sch->index[cal_lo]==NULL) return NULL;
 		memset(sch->index[cal_lo],0,sizeof(unsigned char)*MAXMINUTES);
-		sch->dtnext[cal_lo] = malloc(sizeof(unsigned char)*MAXMINUTES);
+		sch->dtnext[cal_lo] = static_cast<unsigned char *>(malloc(sizeof(unsigned char) * MAXMINUTES));
 		if (sch->dtnext[cal_lo]==NULL) return NULL;
 		memset(sch->dtnext[cal_lo],0,sizeof(unsigned char)*MAXMINUTES);
 	}
 	/* create right skewed calendar, if needed */
 	if (cal_hi != cal) {
-		sch->index[cal_hi] = malloc(sizeof(unsigned char)*MAXMINUTES);
+		sch->index[cal_hi] = static_cast<unsigned char *>(malloc(sizeof(unsigned char) * MAXMINUTES));
 		if (sch->index[cal_hi]==NULL) return NULL;
 		memset(sch->index[cal_hi],0,sizeof(unsigned char)*MAXMINUTES);
-		sch->dtnext[cal_hi] = malloc(sizeof(unsigned char)*MAXMINUTES);
+		sch->dtnext[cal_hi] = static_cast<unsigned char *>(malloc(sizeof(unsigned char) * MAXMINUTES));
 		if (sch->dtnext[cal_hi]==NULL) return NULL;
 		memset(sch->dtnext[cal_hi],0,sizeof(unsigned char)*MAXMINUTES);
 	}
@@ -1686,7 +1687,7 @@ void schedule_dumpall(char *file)
 {
 	SCHEDULE *sch;
 	for (sch=schedule_list; sch!=NULL; sch=sch->next)
-		schedule_dump(sch, file, sch==schedule_list?"w":"a");
+		schedule_dump(sch, file, const_cast<char *>(sch == schedule_list ? "w" : "a"));
 }
 
 void schedule_dump(SCHEDULE *sch, char *file, char *mode)

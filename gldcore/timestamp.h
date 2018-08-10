@@ -49,14 +49,14 @@ typedef unsigned long DT; /**< stores incremental delta time values in ns */
 #define DT_SECOND 1000000000
 
 typedef struct s_datetime {
-	unsigned short year; /**< year (1970 to 2970 is allowed) */
-	unsigned short month; /**< month (1-12) */
-	unsigned short day; /**< day (1 to 28/29/30/31) */
-	unsigned short hour; /**< hour (0-23) */
-	unsigned short minute; /**< minute (0-59) */
-	unsigned short second; /**< second (0-59) */
-	unsigned int nanosecond; /**< usecond (0-999999999) */
-	unsigned short is_dst; /**< 0=std, 1=dst */
+	short year; /**< year (1970 to 2970 is allowed) */
+	short month; /**< month (1-12) */
+	short day; /**< day (1 to 28/29/30/31) */
+	short hour; /**< hour (0-23) */
+	short minute; /**< minute (0-59) */
+	short second; /**< second (0-59) */
+	int nanosecond; /**< usecond (0-999999999) */
+	short is_dst; /**< 0=std, 1=dst */
 	char tz[5]; /**< ptr to tzspec timezone id */
 	unsigned short weekday; /**< 0=Sunday */
 	unsigned short yearday; /**< 0=Jan 1 */

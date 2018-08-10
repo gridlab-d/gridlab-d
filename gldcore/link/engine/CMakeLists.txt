@@ -1,11 +1,11 @@
 project(glxengine)
 
-include_directories(../../../gldcore)
+include_directories(../../../${GLDCORE_LOC})
 
 add_library(${PROJECT_NAME} SHARED
-        gldcore/link/engine/engine.cpp
-        gldcore/link/engine/engine.h
-        gldcore/link/engine/udpconnection.cpp
+        ${GLDCORE_LOC}/link/engine/engine.cpp
+        ${GLDCORE_LOC}/link/engine/engine.h
+        ${GLDCORE_LOC}/link/engine/udpconnection.cpp
         )
 
 set_target_properties(${PROJECT_NAME}

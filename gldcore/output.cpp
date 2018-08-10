@@ -41,7 +41,7 @@
 #include "lock.h"
 #include "module.h"
 
-static unsigned long output_lock = 0;
+static unsigned int output_lock = 0;
 static char buffer[65536];
 #define CHECK 0xcdcd
 int overflow=CHECK;
@@ -729,7 +729,7 @@ int output_progress()
 		ts = buffer;
 	}
 	else
-		ts = convert_from_timestamp(global_clock,buffer,sizeof(buffer))>0?buffer:"(invalid)";
+		ts = const_cast<char *>(convert_from_timestamp(global_clock, buffer, sizeof(buffer)) > 0 ? buffer : "(invalid)");
 
 	if (redirect.progress)
 	{

@@ -117,9 +117,10 @@ native::native(MODULE *module)
 			NULL)<1)
 				throw "connection/native::native(MODULE*): unable to publish properties of connection:native";
 
-		if ( !gl_publish_loadmethod(oclass,"link",loadmethod_native_link) )
+		if ( !gl_publish_loadmethod(oclass, "link", reinterpret_cast<int (*)(void *, char *)>(loadmethod_native_link)) )
 			throw "connection/native::native(MODULE*): unable to publish link method of connection:native";
-		if ( !gl_publish_loadmethod(oclass,"option",loadmethod_native_option) )
+		if ( !gl_publish_loadmethod(oclass, "option",
+									reinterpret_cast<int (*)(void *, char *)>(loadmethod_native_option)) )
 			throw "connection/native::native(MODULE*): unable to publish option method of connection:native";
 		mode = NULL;
 		transport = NULL;

@@ -34,6 +34,7 @@
 #include "setup.h"
 #include "sanitize.h"
 #include "exec.h"
+#include "module.h"
 
 clock_t loader_time = 0;
 
@@ -1034,7 +1035,7 @@ static int slave(int argc, char *argv[])
 
 	strncpy(global_master,host,sizeof(global_master)-1);
 	if ( strcmp(global_master,"localhost")==0 ){
-		sscanf(port,"%"FMT_INT64"x",&global_master_port); /* port is actual mmap/shmem */
+		sscanf(port,"%" FMT_INT64 "x",&global_master_port); /* port is actual mmap/shmem */
 		global_multirun_connection = MRC_MEM;
 	}
 	else

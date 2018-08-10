@@ -186,7 +186,7 @@ void *check_version_proc(void *ptr)
 {
 	int patch, build;
 	char *url = "http://sourceforge.net/p/gridlab-d/code/HEAD/tree/trunk/core/versions.txt?format=raw";
-	HTTPRESULT *result = http_read(url,0x1000);
+	HTTPRESULT *result = static_cast<HTTPRESULT *>(http_read(url, 0x1000));
 	char target[32];
 	char *pv = NULL, *nv = NULL;
 	int rc = 0;

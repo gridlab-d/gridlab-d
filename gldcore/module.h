@@ -85,7 +85,7 @@ extern "C" {
 	void *module_malloc(size_t size);
 	void module_free(void *ptr);
 
-#if defined WIN32 && !defined __MINGW32__
+//#if defined WIN32 && !defined __MINGW32__
 	// added in module.c because it has WIN32 API
 	void sched_init(int readonly);
 	void sched_clear(void);
@@ -95,7 +95,7 @@ extern "C" {
 	void sched_controller(void);
 	unsigned short sched_get_cpuid(unsigned short n);
 	pid_t sched_get_procid();
-#endif
+//#else
 
 	int module_load_function_list(char *libname, char *fnclist);
 	TRANSFORMFUNCTION module_get_transform_function(const char *function);

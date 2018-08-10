@@ -68,7 +68,7 @@ KEYWORD oflags[] = {
 int object_get_oflags(KEYWORD **extflags){
 	int flag_size = sizeof(oflags);
 
-	*extflags = module_malloc(flag_size);
+	*extflags = static_cast<KEYWORD *>(module_malloc(flag_size));
 
 	if(extflags == NULL){
 		output_error("object_get_oflags: malloc failure");
@@ -176,7 +176,7 @@ int object_build_object_array(){
 		object_array = NULL;
 	}
 
-	object_array = malloc(sizeof(OBJECT *) * tcount);
+	object_array = static_cast<OBJECT **>(malloc(sizeof(OBJECT *) * tcount));
 
 	if(object_array == NULL){
 		return 0;
@@ -1431,7 +1431,7 @@ TIMESTAMP _object_sync(OBJECT *obj, /**< the object to synchronize */
 	{
 		char buffer[64];
 		char buffer2[64];
-		char *passname = (pass==PC_PRETOPDOWN?"PC_PRETOPDOWN":(pass==PC_BOTTOMUP?"PC_BOTTOMUP":(pass==PC_POSTTOPDOWN?"PC_POSTTOPDOWN":"<unknown>")));
+		char *passname = const_cast<char *>(pass == PC_PRETOPDOWN ? "PC_PRETOPDOWN" : (pass == PC_BOTTOMUP ? "PC_BOTTOMUP" : (pass == PC_POSTTOPDOWN ? "PC_POSTTOPDOWN" : "<unknown>")));
 		output_fatal("object_sync(OBJECT *obj='%s', TIMESTAMP ts='%s', PASSCONFIG pass=%s): int64 sync_%s(OBJECT*,TIMESTAMP,PASSCONFIG) is not implemented in module %s", object_name(obj, buffer2, 63), convert_from_timestamp(ts,buffer,sizeof(buffer))?buffer:"<invalid>", passname, oclass->name, oclass->module->name);
 		/*	TROUBLESHOOT
 			The indicated sync function is not implemented by the class given.
@@ -1684,7 +1684,7 @@ int object_dump(char *outbuffer, /**< the destination buffer */
 	for(prop = obj->oclass->pmap; prop != NULL && prop->oclass == obj->oclass; prop = prop->next){
 		char *value = object_property_to_string(obj, prop->name, tmp2, 1023);
 		if(value != NULL){
-			count += sprintf(buffer + count, "\t%s %s = %s;\n", prop->ptype == PT_delegated ? prop->delegation->type : class_get_property_typename(prop->ptype), prop->name, value);
+			count += sprintf(buffer + count, "\t%s %s = %s;\n", prop->ptype == PT_delegated ? prop->delegation->type.get_string() : class_get_property_typename(prop->ptype), prop->name, value);
 			if(count > size){
 				throw_exception("object_dump(char *buffer=%x, int size=%d, OBJECT *obj=%s:%d) buffer overrun", outbuffer, size, obj->oclass->name, obj->id);
 				/* TROUBLESHOOT
@@ -1701,7 +1701,7 @@ int object_dump(char *outbuffer, /**< the destination buffer */
 		for(prop = pclass->pmap; prop != NULL && prop->oclass == pclass; prop = prop->next){
 			char *value = object_property_to_string(obj, prop->name, tmp2, 1023);
 			if(value != NULL){
-				count += sprintf(buffer + count, "\t%s %s = %s;\n", prop->ptype == PT_delegated ? prop->delegation->type : class_get_property_typename(prop->ptype), prop->name, value);
+				count += sprintf(buffer + count, "\t%s %s = %s;\n", prop->ptype == PT_delegated ? prop->delegation->type.get_string() : class_get_property_typename(prop->ptype), prop->name, value);
 				if(count > size){
 					throw_exception("object_dump(char *buffer=%x, int size=%d, OBJECT *obj=%s:%d) buffer overrun", outbuffer, size, obj->oclass->name, obj->id);
 					/* TROUBLESHOOT
@@ -2001,7 +2001,7 @@ int object_saveall_xml_old(FILE *fp){ /**< the stream to write to */
 	return count;
 }
 
-int convert_from_latitude(double v, void *buffer, size_t bufsize)
+int convert_from_latitude(double v, char *buffer, size_t bufsize)
 {
 	double d = floor(fabs(v));
 	double r = fabs(v) - d;
@@ -2012,10 +2012,10 @@ int convert_from_latitude(double v, void *buffer, size_t bufsize)
 	if ( isnan(v) )
 		return 0;
 	else
-		return sprintf(buffer, "%.0f%c%.0f:%.2f", d, ns, m, s);
+		return sprintf(static_cast<char *>(buffer), "%.0f%c%.0f:%.2f", d, ns, m, s);
 }
 
-int convert_from_longitude(double v, void *buffer, size_t bufsize){
+int convert_from_longitude(double v, char *buffer, size_t bufsize){
 	double d = floor(fabs(v));
 	double r = fabs(v)-d;
 	double m = floor(r*60);
@@ -2025,7 +2025,7 @@ int convert_from_longitude(double v, void *buffer, size_t bufsize){
 	if ( isnan(v) )
 		return 0;
 	else
-		return sprintf(buffer, "%.0f%c%.0f:%.2f", d, ns, m, s);
+		return sprintf(static_cast<char *>(buffer), "%.0f%c%.0f:%.2f", d, ns, m, s);
 }
 
 double convert_to_latitude(char *buffer)
@@ -2494,7 +2494,7 @@ NAMESPACE *object_current_namespace()
  **/
 int object_open_namespace(char *space)
 {
-	NAMESPACE *ns = malloc(sizeof(NAMESPACE));
+	NAMESPACE *ns = static_cast<NAMESPACE *>(malloc(sizeof(NAMESPACE)));
 	if(ns==NULL)
 	{
 		throw_exception("object_open_namespace(char *space='%s'): memory allocation failure", space);
@@ -2590,7 +2590,7 @@ FORECAST *forecast_create(OBJECT *obj, char *specs)
 	FORECAST *fc;
 
 	/* crate forecast entity */
-	fc = malloc(sizeof(FORECAST));
+	fc = static_cast<FORECAST *>(malloc(sizeof(FORECAST)));
 	if ( fc==NULL )
 		throw_exception("forecast_create(): memory allocation failed");
 		/* TROUBLESHOOT
@@ -2664,7 +2664,7 @@ void forecast_save(FORECAST *fc, TIMESTAMP ts, int32 tstep, int n_values, double
 	if ( fc->n_values != n_values )
 	{
 		if ( fc->values ) free(fc->values);
-		fc->values = malloc( n_values * sizeof(double) );
+		fc->values = static_cast<double *>(malloc(n_values * sizeof(double) ));
 		if ( fc->values == NULL )
 			throw_exception("forecast_save(): memory allocation failed");
 			/* TROUBLESHOOT

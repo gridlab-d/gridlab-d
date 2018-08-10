@@ -230,7 +230,7 @@ int inline_code_init(void)
 {
 	if ( code_block==NULL )
 	{
-		code_block = malloc(global_inline_block_size);
+        code_block = static_cast<char *>(malloc(global_inline_block_size));
 		if ( code_block==NULL ) {
 			output_error("code_block malloc failed (inline_block_size=%d)", global_inline_block_size);
 			/* TROUBLESHOOT
@@ -243,7 +243,7 @@ int inline_code_init(void)
 	}
 	if ( global_block==NULL )
 	{
-		global_block = malloc(global_inline_block_size);
+        global_block = static_cast<char *>(malloc(global_inline_block_size));
 		if ( global_block==NULL ) {
 			output_error("global_block malloc failed (inline_block_size=%d)", global_inline_block_size);
 			/* TROUBLESHOOT
@@ -256,7 +256,7 @@ int inline_code_init(void)
 	}
 	if ( init_block==NULL )
 	{
-		init_block = malloc(global_inline_block_size);
+        init_block = static_cast<char *>(malloc(global_inline_block_size));
 		if ( init_block==NULL ) {
 			output_error("init_block malloc failed (inline_block_size=%d)", global_inline_block_size);
 			/* TROUBLESHOOT
@@ -482,7 +482,7 @@ static STATUS debugger(char *target)
 	output_debug("Use 'dll-symbols %s' to load symbols",target);
 	result = exec("gdb --quiet %s --pid=%d &",target,global_process_id)>=0?SUCCESS:FAILED;
 #endif
-	return result;
+    return static_cast<STATUS>(result);
 }
 
 static char *setup_class(CLASS *oclass)
@@ -922,17 +922,17 @@ static unsigned int object_index_size = 65536;
 {
 	if (object_index==NULL)
 	{
-		object_index = malloc(sizeof(OBJECT*)*object_index_size);
+        object_index = static_cast<OBJECT **>(malloc(sizeof(OBJECT *) * object_index_size));
 		memset(object_index,0,sizeof(OBJECT*)*object_index_size);
-		object_linked = malloc(sizeof(unsigned char)*object_index_size);
+        object_linked = static_cast<unsigned char *>(malloc(sizeof(unsigned char) * object_index_size));
 		memset(object_linked,0,sizeof(unsigned char)*object_index_size);
 	}
 	if (id>=object_index_size) /* index needs to grow */
 	{
 		int new_size = (id/object_index_size+1)*object_index_size;
-		object_index = realloc(object_index,sizeof(OBJECT*)*new_size);
+        object_index = static_cast<OBJECT **>(realloc(object_index, sizeof(OBJECT *) * new_size));
 //		memset(object_index+object_index_size*sizeof(OBJECT *),0,sizeof(OBJECT*)*(new_size-object_index_size));
-		object_linked = realloc(object_linked,sizeof(unsigned char)*new_size);
+        object_linked = static_cast<unsigned char *>(realloc(object_linked, sizeof(unsigned char) * new_size));
 //		memset(object_linked+object_index_size*sizeof(unsigned char),0,sizeof(unsigned char)*(new_size-object_index_size));
 		object_index_size = new_size;
 	}
@@ -981,7 +981,7 @@ static UNRESOLVED *first_unresolved = NULL;
 		output_error("add_unresolved(...): id '%s' is too long to resolve", id);
 		return NULL;
 	}
-	item = malloc(sizeof(UNRESOLVED));
+    item = static_cast<UNRESOLVED *>(malloc(sizeof(UNRESOLVED)));
 	if (item==NULL) { errno = ENOMEM; return NULL; }
 	item->by = by;
 	item->ptype = ptype;
@@ -1165,7 +1165,7 @@ static int resolve_double(UNRESOLVED *item, char *context)
 			if (xform) xform->source_type = XS_DOUBLE;
 			break;
 		case PT_complex:
-			*ref = &(((complex*)object_get_addr(obj,prop->name))->r);
+                *ref = &(((complex *) object_get_addr(obj, prop->name))->Re());
 			if (xform) xform->source_type = XS_COMPLEX;
 			break;
 		case PT_loadshape:
@@ -1173,7 +1173,7 @@ static int resolve_double(UNRESOLVED *item, char *context)
 			if (xform) xform->source_type = XS_LOADSHAPE;
 			break;
 		case PT_enduse:
-			*ref = &(((enduse*)object_get_addr(obj,prop->name))->total.r);
+                *ref = &(((enduse *) object_get_addr(obj, prop->name))->total.Re());
 			if (xform) xform->source_type = XS_ENDUSE;
 			break;
 		default:
@@ -1369,7 +1369,7 @@ static int unitspec(PARSER, UNIT **unit)
 	START;
 	while (size>1 && isalpha(*_p) || isdigit(*_p) || *_p=='$' || *_p=='%' || *_p=='*' || *_p=='/' || *_p=='^') COPY(result);
 	result[_n]='\0';
-	TRY {
+    try {
 		if ((*unit=unit_find(result))==NULL){
 			linenum=_l;
 			_n = 0;
@@ -1377,11 +1377,10 @@ static int unitspec(PARSER, UNIT **unit)
 			_n = (int)strlen(result);
 		}
 	}
-	CATCH (char *msg) {
+    catch (char *msg) {
 		linenum=_l;
 		_n = 0;
 	}
-	ENDCATCH
 	DONE;
 }
 
@@ -2173,45 +2172,35 @@ static int complex_value(PARSER, complex *pValue)
 	START;
 	if ((WHITE,TERM(real_value(HERE,&r))) && (WHITE,TERM(real_value(HERE,&i))) && LITERAL("i"))
 	{
-		pValue->r = r;
-		pValue->i = i;
-		pValue->f = I;
+        pValue->SetRect(r, i, I);
 		ACCEPT;
 		DONE;
 	}
 	OR
 	if ((WHITE,TERM(real_value(HERE,&r))) && (WHITE,TERM(real_value(HERE,&i))) && LITERAL("j"))
 	{
-		pValue->r = r;
-		pValue->i = i;
-		pValue->f = J;
+        pValue->SetRect(r, i, J);
 		ACCEPT;
 		DONE;
 	}
 	OR
 	if ((WHITE,TERM(real_value(HERE,&m))) && (WHITE,TERM(real_value(HERE,&a))) && LITERAL("d"))
 	{
-		pValue->r = m*cos(a*PI/180);
-		pValue->i = m*sin(a*PI/180);
-		pValue->f = A;
+        pValue->SetRect(m * cos(a * PI / 180), m * sin(a * PI / 180), A);
 		ACCEPT;
 		DONE;
 	}
 	OR
 	if ((WHITE,TERM(real_value(HERE,&m))) && (WHITE,TERM(real_value(HERE,&a))) && LITERAL("r"))
 	{
-		pValue->r = m*cos(a);
-		pValue->i = m*sin(a);
-		pValue->f = R;
+        pValue->SetRect(m * cos(a), m * sin(a), R);
 		ACCEPT;
 		DONE;
 	} 
 	OR
 	if ((WHITE,TERM(real_value(HERE,&m))))
 	{
-		pValue->r = m;
-		pValue->i = 0.0;
-		pValue->f = I;
+        pValue->SetRect(m, 0.0, I);
 		ACCEPT;
 		DONE;
 	}
@@ -2294,12 +2283,8 @@ int time_value_datetime(PARSER, TIMESTAMP *t)
 		if (*t!=-1) 
 		{
 			ACCEPT;
-		}
-		else
-			REJECT;
-	}
-	else
-		REJECT;
+        } else REJECT;
+    } else REJECT;
 	DONE;
 }
 
@@ -2324,12 +2309,8 @@ int time_value_datetimezone(PARSER, TIMESTAMP *t)
 		if (*t!=-1) 
 		{
 			ACCEPT;
-		}
-		else
-			REJECT;
-	}
-	else
-		REJECT;
+        } else REJECT;
+    } else REJECT;
 	DONE;
 }
 
@@ -2926,7 +2907,7 @@ static int property_specs(PARSER, KEYWORD **keys)
 	if WHITE ACCEPT;
 	if ( TERM(name(HERE,keyname,sizeof(keyname))) && (WHITE,LITERAL("=")) && TERM(integer32(HERE,&keyvalue)))
 	{
-		*keys = malloc(sizeof(KEYWORD));
+        *keys = static_cast<KEYWORD *>(malloc(sizeof(KEYWORD)));
 		(*keys)->next = NULL;
 		if WHITE ACCEPT;
 		if LITERAL(",") ACCEPT;
@@ -3802,21 +3783,21 @@ static int property_ref(PARSER, TRANSFORMSOURCE *xstype, void **ref, OBJECT *fro
 			}
 			else if (prop->ptype==PT_loadshape)
 			{
-				loadshape *ls = (void*)object_get_addr(obj,pname);
+                loadshape *ls = static_cast<loadshape *>(object_get_addr(obj, pname));
 				*ref = &(ls->load);
 				*xstype = XS_LOADSHAPE;
 				ACCEPT;
 			}
 			else if (prop->ptype==PT_enduse)
 			{
-				enduse *eu = (void*)object_get_addr(obj,pname);
-				*ref = &(eu->total.r);
+                enduse *eu = static_cast<enduse *>(object_get_addr(obj, pname));
+                *ref = &(eu->total.Re());
 				*xstype = XS_ENDUSE;
 				ACCEPT;
 			}
 			else if ( prop->ptype==PT_random )
 			{
-				randomvar *rv = (void*)object_get_addr(obj,pname);
+                randomvar *rv = static_cast<randomvar *>(object_get_addr(obj, pname));
 				*ref = &(rv->value);
 				*xstype = XS_RANDOMVAR;
 				ACCEPT;
@@ -4093,7 +4074,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				}
 				else if (object_set_complex_by_name(obj,propname,cval)==0)
 				{
-					output_error_raw("%s(%d): property %s of %s %s could not be set to '%g%+gi'", filename, linenum, propname, format_object(obj), cval.r, cval.i);
+					output_error_raw("%s(%d): property %s of %s %s could not be set to '%g%+gi'", filename, linenum, propname, format_object(obj), cval.Re(), cval.Im());
 					REJECT;
 				}
 				else
@@ -4181,8 +4162,8 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				void *target = (void*)((char*)(obj+1) + (int64)prop->addr);
 
 				/* add the transform list */
-				if (!transform_add_linear(xstype,source,target,scale,bias,obj,prop,(xstype == XS_SCHEDULE ? source : 0)))
-				{
+                if (!transform_add_linear(xstype, static_cast<double *>(source), target, scale, bias, obj, prop,
+                                          static_cast<SCHEDULE *>(xstype == XS_SCHEDULE ? source : 0))) {
 					output_error_raw("%s(%d): schedule transform could not be created - %s", filename, linenum, errno?strerror(errno):"(no details)");
 					REJECT;
 				}
@@ -4653,8 +4634,8 @@ static int object_block(PARSER, OBJECT *parent, OBJECT **subobj)
 	DONE;
 }
 
-static int import(PARSER)
-{
+
+static int load_import(PARSER) {
 	char32 modname;
 	char1024 fname;
 	START;
@@ -4714,8 +4695,7 @@ static int import(PARSER)
 	DONE
 }
 
-static int export(PARSER)
-{
+int load_export(PARSER) {
 	char32 modname;
 	char1024 fname;
 	START;
@@ -4737,7 +4717,7 @@ static int export(PARSER)
 						output_error_raw("%s(%d): module %s not loaded", filename, linenum, modname);
 						REJECT;
 					}
-					if ( !load_resolve_all(first_unresolved) )
+                    if (!load_resolve_all())
 						output_error_raw("%s(%d): module export encountered before all object names were resolved", filename, linenum, modname);
 					result = module_export(module,fname);
 					if (result < 0)
@@ -4901,8 +4881,8 @@ static int linkage_term(PARSER,instance *inst)
 		ACCEPT;
 		DONE;
 	}
-	OR if ( LITERAL("cacheid") && WHITE && TERM(integer(HERE,&(inst->cacheid))) && WHITE,LITERAL(";"))
-	{
+    OR
+    if (LITERAL("cacheid") && WHITE && TERM(integer(HERE, (int64*) &(inst->cacheid))) && WHITE, LITERAL(";")) {
 		ACCEPT;
 		DONE;
 	}
@@ -4916,8 +4896,8 @@ static int linkage_term(PARSER,instance *inst)
 		ACCEPT;
 		DONE;
 	}
-	OR if ( LITERAL("return_port") && WHITE && TERM(integer16(HERE,&(inst->return_port))) && WHITE, LITERAL(";"))
-	{
+    OR
+    if (LITERAL("return_port") && WHITE && TERM(integer16(HERE, (int16*) &(inst->return_port))) && WHITE, LITERAL(";")) {
 		output_debug("linkage_term(): return_port = %d", inst->return_port);
 		ACCEPT;
 		DONE;
@@ -5271,7 +5251,7 @@ static int gui_entity(PARSER, GUIENTITY *parent)
 	if TERM(gui_entity_type(HERE,(GUIENTITYTYPE *)&type))
 	{ 
 		GUIENTITY *entity = gui_create_entity();
-		gui_set_type(entity,type);
+        gui_set_type(entity, static_cast<GUIENTITYTYPE>(type));
 		gui_set_srcref(entity,filename,linenum);
 		gui_set_parent(entity,parent);
 		if WHITE ACCEPT;
@@ -5844,8 +5824,8 @@ static int gridlabd_file(PARSER)
 	OR if TERM(class_block(HERE)) {ACCEPT; DONE;}
 	OR if TERM(module_block(HERE)) {ACCEPT; DONE;}
 	OR if TERM(clock_block(HERE)) {ACCEPT; DONE;}
-	OR if TERM(import(HERE)) {ACCEPT; DONE; }
-	OR if TERM(export(HERE)) {ACCEPT; DONE; }
+	OR if TERM(load_import(HERE)) {ACCEPT; DONE; }
+	OR if TERM(load_export(HERE)) {ACCEPT; DONE; }
 	OR if TERM(library(HERE)) {ACCEPT; DONE; }
 	OR if TERM(schedule(HERE)) {ACCEPT; DONE; }
 	OR if TERM(instance_block(HERE)) {ACCEPT; DONE; }
@@ -6123,10 +6103,11 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 	unsigned int old_linenum = _linenum;
 	/* check include list */
 	INCLUDELIST *list;
-	INCLUDELIST *this = (INCLUDELIST *)malloc(sizeof(INCLUDELIST));//={incname,include_list}; /* REALLY BAD IDEA ~~ "this" is a reserved C++ keyword */
+    INCLUDELIST * self = (INCLUDELIST *) malloc(
+            sizeof(INCLUDELIST));//={incname,include_list};
 
-	strcpy(this->file, incname);
-	this->next = include_list;
+    strcpy(self->file, incname);
+    self->next = include_list;
 
 	buffer2[0]=0;
 	
@@ -6151,8 +6132,8 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 					return 0;
 				}
 			}
-			this->next = header_list;
-			header_list = this;
+            self->next = header_list;
+            header_list = self;
 		}
 	} else { /* no extension */
 		for (list = header_list; list != NULL; list = list->next){
@@ -6161,8 +6142,8 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 				return 0;
 			}
 		}
-		this->next = header_list;
-		header_list = this;
+        self->next = header_list;
+        header_list = self;
 	}
 
 	/* open file */
@@ -6198,7 +6179,7 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 	output_verbose("%s(%d): included file is %d bytes long", incname, old_linenum, stat.st_size);
 
 	/* reset line counter for parser */
-	include_list = this;
+    include_list = self;
 	//count = buffer_read(fp,buffer,incname,size); // fread(buffer,1,stat.st_size,fp);
 
 	move = buffer_read_alt(fp, buffer2, incname, 20479);
@@ -6220,7 +6201,7 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 		move = buffer_read_alt(fp, buffer2, incname, 20479);
 	}
 
-	//include_list = this.next;
+    //include_list = self.next;
 
 	linenum = old_linenum;
 
@@ -6297,7 +6278,7 @@ void* start_process(const char *cmd)
 	static bool first = true;
 	pthread_t *pThreadInfo = (pthread_t*)malloc(sizeof(pthread_t));
 	struct s_threadlist *thread = (struct s_threadlist*)malloc(sizeof(struct s_threadlist));
-	char *args = malloc(strlen(cmd)+1);
+    char *args = static_cast<char *>(malloc(strlen(cmd) + 1));
 	strcpy(args,cmd);
 	if ( thread==NULL || pThreadInfo==NULL || pthread_create(pThreadInfo,NULL,(void*(*)(void*))system,args)!=0 )
 	{
@@ -6572,7 +6553,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			int len=0;
 			char *p;
 			FILE *fp;
-			HTTPRESULT *http = http_read(value,0x40000);
+			HTTPRESULT *http = static_cast<HTTPRESULT *>(http_read(value, 0x40000));
 			char tmpname[1024];
 			if ( http==NULL )
 			{
@@ -6979,7 +6960,7 @@ STATUS loadall_glm(char *file) /**< a pointer to the first character in the file
 	{
 		modtime = stat.st_mtime;
 		fsize = stat.st_size;
-		buffer = malloc(BUFFERSIZE); /* lots of space */
+        buffer = static_cast<char *>(malloc(BUFFERSIZE)); /* lots of space */
 	}
 	output_verbose("file '%s' is %d bytes long", file,fsize);
 	if (buffer==NULL)
@@ -7018,8 +6999,7 @@ STATUS loadall_glm(char *file) /**< a pointer to the first character in the file
 		if (p==0)
 			output_error("%s doesn't appear to be a GLM file", file);
 		goto Failed;
-	}
-	else if ((status=load_resolve_all())==FAILED)
+    } else if ((status = static_cast<STATUS>(load_resolve_all())) == FAILED)
 		goto Failed;
 
 	/* establish ranks */
@@ -7103,7 +7083,7 @@ STATUS loadall_glm_roll(char *file) /**< a pointer to the first character in the
 		if(p){
 			eol = strchr(p,'\n');
 		} else {
-			p = "";
+            p = const_cast<char *>("");
 		}
 		if (eol!=NULL){
 			*eol='\0';
@@ -7112,8 +7092,7 @@ STATUS loadall_glm_roll(char *file) /**< a pointer to the first character in the
 		if (p==0)
 			output_error("%s doesn't appear to be a GLM file", file);
 		goto Failed;
-	}
-	else if ((status=load_resolve_all())==FAILED)
+    } else if ((status = static_cast<STATUS>(load_resolve_all())) == FAILED)
 		goto Failed;
 
 	/* establish ranks */
@@ -7158,7 +7137,7 @@ TECHNOLOGYREADINESSLEVEL calculate_trl(void)
 		}
 	}
 	output_verbose("model TRL is %s", global_getvar("technology_readiness_level",buffer,sizeof(buffer)));
-	return technology_readiness_level;
+    return static_cast<TECHNOLOGYREADINESSLEVEL>(technology_readiness_level);
 }
 
 /** Load a file
