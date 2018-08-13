@@ -11,8 +11,6 @@ add_library(${PROJECT_NAME} SHARED
         market/collect.h
         market/controller.cpp
         market/controller.h
-#        market/controller2.cpp
-#        market/controller2.h
         market/curve.cpp
         market/curve.h
         market/double_controller.cpp
@@ -21,6 +19,7 @@ add_library(${PROJECT_NAME} SHARED
         market/generator_controller.h
         market/init.cpp
         market/main.cpp
+        market/market.h
         market/passive_controller.cpp
         market/passive_controller.h
         market/stub_bidder.cpp
@@ -29,7 +28,6 @@ add_library(${PROJECT_NAME} SHARED
         market/stubauction.h
         market/supervisory_control.cpp
         market/supervisory_control.h
-        market/market.h
         )
 
 set_target_properties(${PROJECT_NAME}

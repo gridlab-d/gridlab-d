@@ -6,8 +6,6 @@ add_library(${PROJECT_NAME} SHARED
         optimize/init.cpp
         optimize/main.cpp
         optimize/optimize.h
-        optimize/particle_swarm_optimization.cpp
-        optimize/particle_swarm_optimization.h
         optimize/simple.cpp
         optimize/simple.h
 )

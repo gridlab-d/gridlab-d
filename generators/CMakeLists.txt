@@ -7,8 +7,6 @@ add_library(${PROJECT_NAME} SHARED
         generators/battery.h
         generators/central_dg_control.cpp
         generators/central_dg_control.h
-        generators/dc_dc_converter.cpp
-        generators/dc_dc_converter.h
         generators/diesel_dg.cpp
         generators/diesel_dg.h
         generators/energy_storage.cpp
@@ -18,16 +16,14 @@ add_library(${PROJECT_NAME} SHARED
         generators/inverter.cpp
         generators/inverter.h
         generators/main.cpp
-        generators/microturbine.cpp
-        generators/microturbine.h
-        generators/power_electronics.cpp
-        generators/power_electronics.h
         generators/rectifier.cpp
         generators/rectifier.h
         generators/solar.cpp
         generators/solar.h
         generators/windturb_dg.cpp
         generators/windturb_dg.h
+        generators/controller_dg.cpp
+        generators/controller_dg.h
 )
 
 set_target_properties(${PROJECT_NAME}

@@ -2,7 +2,8 @@ project(powerflow)
 
 include_directories(../gldcore)
 include_directories(../third_party/SuperLU_MT)
-SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I../third_party/SuperLU_MT" )
+include_directories(../third_party/jsonCpp)
+SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I../third_party/SuperLU_MT -I../third_party/jsonCpp" )
 
 add_library(${PROJECT_NAME} SHARED
         powerflow/billdump.cpp
@@ -15,18 +16,17 @@ add_library(${PROJECT_NAME} SHARED
         powerflow/emissions.h
         powerflow/fault_check.cpp
         powerflow/fault_check.h
-        powerflow/frequency_gen.cpp
-        powerflow/frequency_gen.h
         powerflow/fuse.cpp
         powerflow/fuse.h
-        powerflow/fuse_test.h
         powerflow/impedance_dump.cpp
         powerflow/impedance_dump.h
+        powerflow/jsondump.cpp
+        powerflow/jsondump.h
         powerflow/init.cpp
-        powerflow/line.cpp
-        powerflow/line.h
         powerflow/line_configuration.cpp
         powerflow/line_configuration.h
+        powerflow/line.cpp
+        powerflow/line.h
         powerflow/line_spacing.cpp
         powerflow/line_spacing.h
         powerflow/link.cpp
@@ -43,27 +43,27 @@ add_library(${PROJECT_NAME} SHARED
         powerflow/motor.h
         powerflow/node.cpp
         powerflow/node.h
-        powerflow/overhead_line.cpp
-        powerflow/overhead_line.h
         powerflow/overhead_line_conductor.cpp
         powerflow/overhead_line_conductor.h
+        powerflow/overhead_line.cpp
+        powerflow/overhead_line.h
         powerflow/overheadline_test.h
-        powerflow/power_metrics.cpp
-        powerflow/power_metrics.h
         powerflow/powerflow.cpp
         powerflow/powerflow.h
         powerflow/powerflow_library.cpp
         powerflow/powerflow_library.h
         powerflow/powerflow_object.cpp
         powerflow/powerflow_object.h
+        powerflow/power_metrics.cpp
+        powerflow/power_metrics.h
         powerflow/pqload.cpp
         powerflow/pqload.h
         powerflow/recloser.cpp
         powerflow/recloser.h
-        powerflow/regulator.cpp
-        powerflow/regulator.h
         powerflow/regulator_configuration.cpp
         powerflow/regulator_configuration.h
+        powerflow/regulator.cpp
+        powerflow/regulator.h
         powerflow/regulator_test.h
         powerflow/restoration.cpp
         powerflow/restoration.h
@@ -79,39 +79,41 @@ add_library(${PROJECT_NAME} SHARED
         powerflow/switch_object.h
         powerflow/test.cpp
         powerflow/test.h
-        powerflow/transformer.cpp
-        powerflow/transformer.h
         powerflow/transformer_configuration.cpp
         powerflow/transformer_configuration.h
+        powerflow/transformer.cpp
+        powerflow/transformer.h
         powerflow/transformer_test.h
-        powerflow/triplex_line.cpp
-        powerflow/triplex_line.h
         powerflow/triplex_line_conductor.cpp
         powerflow/triplex_line_conductor.h
         powerflow/triplex_line_configuration.cpp
         powerflow/triplex_line_configuration.h
-        powerflow/triplex_load.cpp
+        powerflow/triplex_line.cpp
+        powerflow/triplex_line.h
+        powerflow/triplexline_test.h
         powerflow/triplex_load.h
+        powerflow/triplex_load.cpp
         powerflow/triplex_meter.cpp
         powerflow/triplex_meter.h
         powerflow/triplex_node.cpp
         powerflow/triplex_node.h
-        powerflow/triplexline_test.h
-        powerflow/underground_line.cpp
-        powerflow/underground_line.h
         powerflow/underground_line_conductor.cpp
         powerflow/underground_line_conductor.h
+        powerflow/underground_line.cpp
+        powerflow/underground_line.h
         powerflow/undergroundline_test.h
-        powerflow/volt_var_control.cpp
-        powerflow/volt_var_control.h
+        powerflow/vfd.cpp
+        powerflow/vfd.h
         powerflow/voltdump.cpp
         powerflow/voltdump.h
-)
+        powerflow/volt_var_control.cpp
+        powerflow/volt_var_control.h
+        )
 
 set_target_properties(${PROJECT_NAME}
         PROPERTIES PREFIX ""
         )
 
-target_link_libraries(${PROJECT_NAME} libsuperlu)
+target_link_libraries(${PROJECT_NAME} libjsoncpp libsuperlu)
 
 target_link_libraries(${PROJECT_NAME} ${OS_SPECIFIC_LIBRARIES})

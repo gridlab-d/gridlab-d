@@ -15,6 +15,11 @@ add_library(${PROJECT_NAME} SHARED
         mysql/player.h
         mysql/recorder.cpp
         mysql/recorder.h
+        mysql/query_engine.h
+        mysql/table_manager.cpp
+        mysql/query_engine.cpp
+        mysql/group_recorder.cpp
+        mysql/group_recorder.h
 )
 
 set_target_properties(${PROJECT_NAME}

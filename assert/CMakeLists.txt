@@ -11,9 +11,9 @@ add_library(${PROJECT_NAME} SHARED
         assert/double_assert.h
         assert/enum_assert.cpp
         assert/enum_assert.h
-        assert/init.cpp
         assert/int_assert.cpp
         assert/int_assert.h
+        assert/init.cpp
         assert/main.cpp
         )
 

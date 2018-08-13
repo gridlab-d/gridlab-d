@@ -11,16 +11,12 @@ add_library(${PROJECT_NAME} SHARED
         residential/dishwasher.h
         residential/dryer.cpp
         residential/dryer.h
-        residential/elcap1990.h
-        residential/elcap2010.h
         residential/evcharger.cpp
-        residential/evcharger.h
         residential/evcharger_det.cpp
         residential/evcharger_det.h
+        residential/evcharger.h
         residential/freezer.cpp
         residential/freezer.h
-        residential/house_a.cpp
-        residential/house_a.h
         residential/house_e.cpp
         residential/house_e.h
         residential/init.cpp
@@ -35,12 +31,12 @@ add_library(${PROJECT_NAME} SHARED
         residential/plugload.h
         residential/range.cpp
         residential/range.h
-        residential/rbsa2014.h
         residential/refrigerator.cpp
         residential/refrigerator.h
-        residential/residential.h
         residential/residential_enduse.cpp
         residential/residential_enduse.h
+        residential/residential.h
+        residential/rbsa2014.h
         residential/solvers.cpp
         residential/solvers.h
         residential/thermal_storage.cpp
@@ -49,6 +45,8 @@ add_library(${PROJECT_NAME} SHARED
         residential/waterheater.h
         residential/zipload.cpp
         residential/zipload.h
+        residential/elcap1990.h
+        residential/elcap2010.h
 )
 
 set_target_properties(${PROJECT_NAME}
