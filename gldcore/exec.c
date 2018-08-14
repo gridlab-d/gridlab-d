@@ -1230,7 +1230,7 @@ STATUS t_sync_all(PASSCONFIG pass)
 
 	/* run all non-schedule transforms */
 	{
-		TIMESTAMP st = transform_syncall(global_clock,XS_DOUBLE|XS_COMPLEX|XS_ENDUSE);// if (abs(t)<t2) t2=t;
+		TIMESTAMP st = transform_syncall(global_clock,XS_ALL&(~(XS_SCHEDULE|XS_LOADSHAPE)));// if (abs(t)<t2) t2=t;
 		if (st<sync.step_to)
 			sync.step_to = st;
 	}
@@ -2181,7 +2181,7 @@ STATUS exec_start(void)
 
 				/* run all non-schedule transforms */
 				{
-					TIMESTAMP st = transform_syncall(global_clock,XS_DOUBLE|XS_COMPLEX|XS_ENDUSE);// if (abs(t)<t2) t2=t;
+					TIMESTAMP st = transform_syncall(global_clock,XS_ALL&(~(XS_SCHEDULE|XS_LOADSHAPE)));// if (abs(t)<t2) t2=t;
 					exec_sync_set(NULL,st);
 				}
 			}

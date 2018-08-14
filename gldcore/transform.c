@@ -189,21 +189,36 @@ TRANSFERFUNCTION *find_filter(char *name)
 	}
 	return NULL;
 }
+int transfer_function_constrain(char *tfname, unsigned int64 flags, unsigned int64 nbits, double minimum, double maximum)
+{
+	TRANSFERFUNCTION *tf = find_filter(tfname);
+	if ( tf==NULL )
+	{
+		output_error("transfer_function_constrain(name='%s',...): transfer function not found",tfname);
+		return 0;
+	}
+	tf->flags = flags;
+	tf->resolution = (maximum-minimum)/pow(2.0,(double)nbits);
+	tf->minimum = minimum;
+	tf->maximum = maximum;
+	output_debug("transfer function '%s' constraint to range (%lg,%lg( with resolution %lg (%lld bits, flags=0x%llx)",tfname,minimum,maximum,tf->resolution, nbits, flags);
+	return 1;
+}
 int get_source_type(PROPERTY *prop)
 {
 	/* TODO extend this to support multiple sources */
-	int source_type = 0;
 	switch ( prop->ptype ) {
-	case PT_double: source_type = XS_DOUBLE; break;
-	case PT_complex: source_type = XS_COMPLEX; break;
-	case PT_loadshape: source_type = XS_LOADSHAPE; break;
-	case PT_enduse: source_type = XS_ENDUSE; break;
-	case PT_random: source_type = XS_RANDOMVAR; break;
+	case PT_double: return XS_DOUBLE; 
+	case PT_complex: return XS_COMPLEX; 
+	case PT_loadshape: return XS_LOADSHAPE; 
+	case PT_enduse: return XS_ENDUSE;
+	case PT_random: return XS_RANDOMVAR;
 	default:
 		output_error("tranform/get_source_type(PROPERTY *prop='%s'): unsupported source property type '%s'",
 			prop->name,property_getspec(prop->ptype)->name);
 		break;
 	}
+	return XS_UNKNOWN;
 }
 int transform_add_filter(OBJECT *target_obj,		/* pointer to the target object (lhs) */
 						 PROPERTY *target_prop,	/* pointer to the target property */
@@ -254,11 +269,8 @@ int transform_add_filter(OBJECT *target_obj,		/* pointer to the target object (l
 	xform->next = schedule_xformlist;
 	schedule_xformlist = xform;
 
-	if ( global_debug_output )
-	{
-		output_debug("added filter '%s' from source '%s:%s' to target '%s:%s'", filter,
-			object_name(target_obj,buffer1,sizeof(buffer1)),target_prop->name,object_name(source_obj,buffer2,sizeof(buffer2)),source_prop->name);
-	}
+	output_debug("added filter '%s' from source '%s:%s' to target '%s:%s'", filter,
+		object_name(target_obj,buffer1,sizeof(buffer1)),target_prop->name,object_name(source_obj,buffer2,sizeof(buffer2)),source_prop->name);
 	return 1;
 
 }
@@ -353,7 +365,9 @@ void cast_from_double(PROPERTYTYPE ptype, void *addr, double value)
 	case PT_float: *(float*)addr = (float)value; break;
 	case PT_loadshape: ((loadshape*)addr)->load = value; break;
 	case PT_enduse: ((enduse*)addr)->total.r = value; break;
-	default: break;
+	case PT_random: ((randomvar*)addr)->value = value;
+	default: 
+		output_error("transform.c/cast_from_double(PROPERTYTYPE ptype=0x%x, void *addr=0x%p, double value=%lg): unsupported property type",ptype,addr,value);
 	}
 }
 
@@ -383,6 +397,18 @@ TIMESTAMP apply_filter(TRANSFERFUNCTION *f,	///< transfer function
 	}
 	memcpy(x,dx,sizeof(double)*n);
 	*y = x[n-1]; // output
+	if ( ((f->flags)&FC_MINIMUM) == FC_MINIMUM && *y < f->minimum )
+	{
+		*y = f->minimum;
+	}
+	else if ( ((f->flags)&FC_MAXIMUM) == FC_MAXIMUM && *y > f->maximum )
+	{
+		*y = f->maximum;
+	}
+	if ( ((f->flags)&FC_RESOLUTION) == FC_RESOLUTION && f->resolution > 0.0 )
+	{
+		*y = floor((*y - f->minimum)/f->resolution)*f->resolution + f->minimum;
+	}
 	return ((int64)(t1/f->timestep)+1)*f->timestep + f->timeskew;
 }
 
@@ -440,7 +466,10 @@ TIMESTAMP transform_syncall(TIMESTAMP t1, TRANSFORMSOURCE source)
 	/* process the schedule transformations */
 	for (xform=schedule_xformlist; xform!=NULL; xform=xform->next)
 	{	
-		if (xform->source_type&source){
+		if ( xform->source_type == XS_UNKNOWN )
+			output_warning("transform_syncall(...): transform to property '%s' of object '%s' has an unknown source type, it will always be run", xform->target_prop->name, xform->target_obj->name?xform->target_obj->name:"(unnamed)");
+		if ( xform->source_type == XS_UNKNOWN || (xform->source_type&source)!=0 )
+		{
 			if((xform->source_type == XS_SCHEDULE) && (xform->target_obj->schedule_skew != 0)){
 			    tskew = t1 - xform->target_obj->schedule_skew; // subtract so the +12 is 'twelve seconds later', not earlier
 			    SCHEDULEINDEX index = schedule_index(xform->source_schedule,tskew);
