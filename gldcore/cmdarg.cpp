@@ -13,7 +13,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#ifdef WIN32 && !(__MINGW__)
+#if defined(WIN32) && !defined(__MINGW__)
 #include <direct.h>
 #else
 #include <unistd.h>
@@ -34,6 +34,7 @@
 #include "setup.h"
 #include "sanitize.h"
 #include "exec.h"
+#include "module.h"
 
 clock_t loader_time = 0;
 
@@ -189,11 +190,11 @@ int compare(const void *a, const void *b)
 }
 
 typedef struct s_cmdarg {
-	char *lopt;
-	char *sopt;
+	const char *lopt;
+	const char *sopt;
 	int (*call)(int argc, char *argv[]);
-	char *args;
-	char *desc;
+	const char *args;
+	const char *desc;
 } CMDARG;
 static int help(int argc, char *argv[]);
 
@@ -1034,7 +1035,7 @@ static int slave(int argc, char *argv[])
 
 	strncpy(global_master,host,sizeof(global_master)-1);
 	if ( strcmp(global_master,"localhost")==0 ){
-		sscanf(port,"%"FMT_INT64"x",&global_master_port); /* port is actual mmap/shmem */
+		sscanf(port,"%" FMT_INT64 "x",&global_master_port); /* port is actual mmap/shmem */
 		global_multirun_connection = MRC_MEM;
 	}
 	else
@@ -1215,7 +1216,7 @@ static int workdir(int argc, char *argv[])
 /* CMDARG structure below                    */
 /*********************************************/
 
-static CMDARG main[] = {
+static CMDARG main_cmd[] = {
 
 	/* NULL,NULL,NULL,NULL, "Section heading */
 	{NULL,NULL,NULL,NULL, "Command-line options"},
@@ -1311,10 +1312,10 @@ int cmdarg_runoption(const char *value)
 	char option[64], params[1024]="";
 	if ( (n=sscanf(value,"%63s %1023[^\n]", option,params))>0 )
 	{
-		for ( i=0 ; i<sizeof(main)/sizeof(main[0]) ; i++ )
+		for ( i=0 ; i<sizeof(main_cmd)/sizeof(main_cmd[0]) ; i++ )
 		{
-			if ( main[i].lopt!=NULL && strcmp(main[i].lopt,option)==0 )
-				return main[i].call(n,(void*)&params);
+			if ( main_cmd[i].lopt!=NULL && strcmp(main_cmd[i].lopt,option)==0 )
+				return main_cmd[i].call(n,(char**)&params);
 		}
 	}
 	return 0;
@@ -1328,16 +1329,16 @@ static int help(int argc, char *argv[])
 	global_suppress_repeat_messages = 0;
 	output_message("Syntax: gridlabd [<options>] file1 [file2 [...]]");
 
-	for ( i=0 ; i<sizeof(main)/sizeof(main[0]) ; i++ )
+	for ( i=0 ; i<sizeof(main_cmd)/sizeof(main_cmd[0]) ; i++ )
 	{
-		CMDARG arg = main[i];
+		CMDARG arg = main_cmd[i];
 		size_t len = (arg.sopt?strlen(arg.sopt):0) + (arg.lopt?strlen(arg.lopt):0) + (arg.args?strlen(arg.args):0);
 		if (len>indent) indent = len;
 	}
 
-	for ( i=0 ; i<sizeof(main)/sizeof(main[0]) ; i++ )
+	for ( i=0 ; i<sizeof(main_cmd)/sizeof(main_cmd[0]) ; i++ )
 	{
-		CMDARG arg = main[i];
+		CMDARG arg = main_cmd[i];
 
 		/* if this entry is a heading */
 		if ( arg.lopt==NULL && arg.sopt==NULL && arg.call==NULL && arg.args==NULL)
@@ -1408,9 +1409,9 @@ STATUS cmdarg_load(int argc, /**< the number of arguments in \p argv */
 	{
 		int found = 0;
 		int i;
-		for ( i=0 ; i<sizeof(main)/sizeof(main[0]) ; i++ )
+		for ( i=0 ; i<sizeof(main_cmd)/sizeof(main_cmd[0]) ; i++ )
 		{
-			CMDARG arg = main[i];
+			CMDARG arg = main_cmd[i];
 			char tmp[1024];
 			sprintf(tmp,"%s=",arg.lopt);
 			if ( ( arg.sopt && strncmp(*argv,"-",1)==0 && strcmp((*argv)+1,arg.sopt)==0 ) 

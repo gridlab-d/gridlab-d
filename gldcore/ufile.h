@@ -5,8 +5,11 @@
 #ifndef _UFILE_H
 #define _UFILE_H
 
+typedef enum {UFT_NONE, UFT_FILE, UFT_HTTP} type_enum;
+
+
 typedef struct s_ufile {
-	enum {UFT_NONE, UFT_FILE, UFT_HTTP} type;
+	type_enum type;
 	void *handle;
 } UFILE;
 

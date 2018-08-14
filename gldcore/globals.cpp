@@ -374,7 +374,7 @@ GLOBALVAR *global_create(char *name, ...){
 	/* allocate the global var definition */
 	var = (GLOBALVAR *)malloc(sizeof(GLOBALVAR));
 	memset(var,0,sizeof(GLOBALVAR));
-	
+
 	if(var == NULL){
 		errno = ENOMEM;
 		throw_exception("global_create(char *name='%s',...): unable to allocate memory for global variable", name);
@@ -390,115 +390,132 @@ GLOBALVAR *global_create(char *name, ...){
 	/* read the property args */
 	va_start(arg, name);
 
-	while ((proptype = va_arg(arg,PROPERTYTYPE)) != 0){
-		if(proptype > _PT_LAST){
-			if(prop == NULL){
-				throw_exception("global_create(char *name='%s',...): property keyword not specified after an enumeration property definition", name);
-			} else if(proptype == PT_KEYWORD && prop->ptype == PT_enumeration) {
-				char *keyword = va_arg(arg, char *);
-				int32 keyvalue = va_arg(arg, int32);
-				KEYWORD *key = (KEYWORD *)malloc(sizeof(KEYWORD));
-				if(key == NULL){
-					throw_exception("global_create(char *name='%s',...): property keyword could not be stored", name);
-					/* TROUBLESHOOT
-						The memory needed to store the property's keyword is not available.  Try freeing up memory and try again.
-					 */
-				}
-				key->next = prop->keywords;
-				strncpy(key->name, keyword, sizeof(key->name));
-				key->value = keyvalue;
-				prop->keywords = key;
-			} else if(proptype == PT_KEYWORD && prop->ptype == PT_set){
-				char *keyword = va_arg(arg, char *);
-				unsigned int64 keyvalue = va_arg(arg, int64); /* uchars are promoted to int by GCC */
-				KEYWORD *key = (KEYWORD *)malloc(sizeof(KEYWORD));
-				if(key == NULL){
-					throw_exception("global_create(char *name='%s',...): property keyword could not be stored", name);
-					/* TROUBLESHOOT
-						The memory needed to store the property's keyword is not available.  Try freeing up memory and try again.
-					 */
-				}
-				key->next = prop->keywords;
-				strncpy(key->name, keyword, sizeof(key->name));
-				key->value = keyvalue;
-				prop->keywords = key;
-			} else if(proptype == PT_ACCESS){
-				PROPERTYACCESS pa = va_arg(arg, PROPERTYACCESS);
-				switch (pa){
-					case PA_PUBLIC:
-					case PA_REFERENCE:
-					case PA_PROTECTED:
-					case PA_PRIVATE:
-					case PA_HIDDEN:
-						prop->access = pa;
-						break;
-					default:
-						errno = EINVAL;
-						throw_exception("global_create(char *name='%s',...): unrecognized property access code (PROPERTYACCESS=%d)", name, pa);
-						/* TROUBLESHOOT
-							The specific property access code is not recognized.  Correct the access code and try again.
-						 */
-						break;
-				}
-			} else if(proptype == PT_SIZE){
-				prop->size = va_arg(arg, uint32);
-				if(prop->addr == 0){
-					if (prop->size > 0){
-						prop->addr = (PROPERTYADDR)malloc(prop->size * property_size(prop));
-					} else {
-						throw_exception("global_create(char *name='%s',...): property size must be greater than 0 to allocate memory", name);
-						/* TROUBLESHOOT
-							The size of the property must be positive.
-						 */
-					}
-				}
-			} else if(proptype == PT_UNITS){
-				char *unitspec = va_arg(arg, char *);
-				if((prop->unit = unit_find(unitspec)) == NULL){
-					output_warning("global_create(char *name='%s',...): property %s unit '%s' is not recognized",name, prop->name,unitspec);
-					/* TROUBLESHOOT
-						The property definition uses a unit that is not found.  Check the unit and try again.  
-						If you wish to define a new unit, try adding it to <code>.../etc/unitfile.txt</code>.
-					 */
-				}
-			} else if (proptype == PT_DESCRIPTION) {
-				prop->description = va_arg(arg,char*);
-			} else if (proptype == PT_DEPRECATED) {
-				prop->flags |= PF_DEPRECATED;
-			} else {
-				throw_exception("global_create(char *name='%s',...): property extension code not recognized (PROPERTYTYPE=%d)", name, proptype);
-				/* TROUBLESHOOT
-					The property extension code used is not valid.  This is probably a bug and should be reported.
-				 */
-			}
-		} else {
+//	while ((proptype = va_arg(arg,PROPERTYTYPE)) != 0){
+    uint64 prop_buffer;
+    while ((prop_buffer = va_arg(arg, uint64)) != 0) {
+        proptype = PROPERTYTYPE(prop_buffer);
+        if (proptype > _PT_LAST) {
+            if (prop == NULL) {
+                throw_exception(
+                        "global_create(char *name='%s',...): property keyword not specified after an enumeration property definition",
+                        name);
+            } else if (proptype == PT_KEYWORD && prop->ptype == PT_enumeration) {
+                char *keyword = va_arg(arg, char *);
+                int32 keyvalue = va_arg(arg, int32);
+                KEYWORD *key = (KEYWORD *) malloc(sizeof(KEYWORD));
+                if (key == NULL) {
+                    throw_exception("global_create(char *name='%s',...): property keyword could not be stored", name);
+                    /* TROUBLESHOOT
+                        The memory needed to store the property's keyword is not available.  Try freeing up memory and try again.
+                     */
+                }
+                key->next = prop->keywords;
+                strncpy(key->name, keyword, sizeof(key->name));
+                key->value = keyvalue;
+                prop->keywords = key;
+            } else if (proptype == PT_KEYWORD && prop->ptype == PT_set) {
+                char *keyword = va_arg(arg, char *);
+                unsigned int64 keyvalue = va_arg(arg, uint64);
+                KEYWORD *key = (KEYWORD *) malloc(sizeof(KEYWORD));
+                if (key == NULL) {
+                    throw_exception("global_create(char *name='%s',...): property keyword could not be stored", name);
+                    /* TROUBLESHOOT
+                        The memory needed to store the property's keyword is not available.  Try freeing up memory and try again.
+                     */
+                }
+                key->next = prop->keywords;
+                strncpy(key->name, keyword, sizeof(key->name));
+                key->value = keyvalue;
+                prop->keywords = key;
+            } else if (proptype == PT_ACCESS) {
+                prop_buffer = va_arg(arg, uint64);
+                PROPERTYACCESS pa = PROPERTYACCESS(prop_buffer);
+                switch (pa) {
+                    case PA_PUBLIC:
+                    case PA_REFERENCE:
+                    case PA_PROTECTED:
+                    case PA_PRIVATE:
+                    case PA_HIDDEN:
+                        prop->access = pa;
+                        break;
+                    default:
+                        errno = EINVAL;
+                        throw_exception(
+                                "global_create(char *name='%s',...): unrecognized property access code (PROPERTYACCESS=%d)",
+                                name, pa);
+                        /* TROUBLESHOOT
+                            The specific property access code is not recognized.  Correct the access code and try again.
+                         */
+                        break;
+                }
+            } else if (proptype == PT_SIZE) {
+                prop->size = va_arg(arg, uint32);
+                if (prop->addr == 0) {
+                    if (prop->size > 0) {
+                        prop->addr = (PROPERTYADDR) malloc(prop->size * property_size(prop));
+                    } else {
+                        throw_exception(
+                                "global_create(char *name='%s',...): property size must be greater than 0 to allocate memory",
+                                name);
+                        /* TROUBLESHOOT
+                            The size of the property must be positive.
+                         */
+                    }
+                }
+            } else if (proptype == PT_UNITS) {
+                char *unitspec = va_arg(arg, char *);
+                if ((prop->unit = unit_find(unitspec)) == NULL) {
+                    output_warning("global_create(char *name='%s',...): property %s unit '%s' is not recognized", name,
+                                   prop->name, unitspec);
+                    /* TROUBLESHOOT
+                        The property definition uses a unit that is not found.  Check the unit and try again.
+                        If you wish to define a new unit, try adding it to <code>.../etc/unitfile.txt</code>.
+                     */
+                }
+            } else if (proptype == PT_DESCRIPTION) {
+                prop->description = va_arg(arg, char*);
+            } else if (proptype == PT_DEPRECATED) {
+                prop->flags |= PF_DEPRECATED;
+            } else {
+                throw_exception(
+                        "global_create(char *name='%s',...): property extension code not recognized (PROPERTYTYPE=%d)",
+                        name, proptype);
+                /* TROUBLESHOOT
+                    The property extension code used is not valid.  This is probably a bug and should be reported.
+                 */
+            }
 
-			PROPERTYADDR addr = va_arg(arg,PROPERTYADDR);
-			if(strlen(name) >= sizeof(prop->name)){
-				throw_exception("global_create(char *name='%s',...): property name '%s' is too big to store", name, name);
-				/* TROUBLESHOOT
-					The property name cannot be longer than the size of the internal buffer used to store it (currently this is 63 characters).
-					Use a shorter name and try again.
-				 */
-			}
+//            prop = property_malloc(proptype, NULL, name, NULL, NULL);
+        } else {
 
-			prop = property_malloc(proptype,NULL,name,addr,NULL);
-			if (prop==NULL)
-				throw_exception("global_create(char *name='%s',...): property '%s' could not be stored", name, name);
-			if (var->prop==NULL)
-				var->prop = prop;
+            prop_buffer = va_arg(arg, uint64);
+            PROPERTYADDR addr = PROPERTYADDR(prop_buffer);
+            if (strlen(name) >= sizeof(prop->name)) {
+                throw_exception("global_create(char *name='%s',...): property name '%s' is too big to store", name,
+                                name);
+                /* TROUBLESHOOT
+                    The property name cannot be longer than the size of the internal buffer used to store it (currently this is 63 characters).
+                    Use a shorter name and try again.
+                 */
+            }
+            prop = property_malloc(proptype, NULL, name, addr, NULL);
 
-			/* link map to oclass if not yet done */
-			if (lastprop!=NULL)
-				lastprop->next = prop;
-			else
-				lastprop = prop;
+            if (prop == NULL)
+                throw_exception("global_create(char *name='%s',...): property '%s' could not be stored", name, name);
+            if (var->prop == NULL)
+                var->prop = prop;
 
-			/* save enum property in case keywords come up */
-			if (prop->ptype>_PT_LAST)
-				prop = NULL;
-		}
-	}
+            /* link map to oclass if not yet done */
+            if (lastprop != NULL)
+                lastprop->next = prop;
+            else
+                lastprop = prop;
+
+            /* save enum property in case keywords come up */
+            if (prop->ptype > _PT_LAST)
+                prop = NULL;
+        }
+    }
 	va_end(arg);
 
 	if (lastvar==NULL)
@@ -546,7 +563,7 @@ STATUS global_setvar(char *def, ...) /**< the definition */
 	if (strcmp(name,"")!=0) /* something was defined */
 	{
 		GLOBALVAR *var = global_find(name);
-		static int globalvar_lock = 0;
+		static unsigned int globalvar_lock = 0;
 		int retval;
 		if (var==NULL)
 		{
@@ -821,7 +838,7 @@ int parameter_expansion(char *buffer, int size, char *spec)
 		int32 *addr;
 		if ( var==NULL || var->prop->ptype!=PT_int32 )
 			return 0;
-		addr = var->prop->addr;
+		addr = (int32*) &(var->prop->addr);
 		sprintf(buffer,"%d",++(*addr));
 		return 1;
 	}
@@ -833,7 +850,7 @@ int parameter_expansion(char *buffer, int size, char *spec)
 		int32 *addr;
 		if ( var==NULL || var->prop->ptype!=PT_int32 )
 			return 0;
-		addr = var->prop->addr;
+		addr = (int32*) &(var->prop->addr);
 		sprintf(buffer,"%d",--(*addr));
 		return 1;
 	}
@@ -845,7 +862,7 @@ int parameter_expansion(char *buffer, int size, char *spec)
 		int32 *addr;
 		if ( var==NULL || var->prop->ptype!=PT_int32 )
 			return 0;
-		addr = var->prop->addr;
+		addr = (int32*) &(var->prop->addr);
 		sprintf(buffer,"%d",(*addr));
 		if ( strcmp(op,"++")==0 ) { (*addr)++; return 1; }
 		else if ( strcmp(op,"--")==0 ) { (*addr)--; return 1; }
@@ -857,7 +874,7 @@ int parameter_expansion(char *buffer, int size, char *spec)
 		GLOBALVAR *var = global_find(name);
 		if ( var!=NULL && var->prop->ptype==PT_int32 )
 		{
-			int32 *addr = var->prop->addr;
+			int32* addr = (int32*) &(var->prop->addr);
 			if ( strcmp(op,"==")==0 ) { strcpy(buffer,(*addr==number)?yes:no); return 1; }
 			else if ( strcmp(op,"!=")==0 || strcmp(op,"<>")==0 ) { strcpy(buffer,(*addr!=number)?yes:no); return 1; }
 			else if ( strcmp(op,"<=")==0 ) { strcpy(buffer,(*addr<=number)?yes:no); return 1; }
@@ -875,7 +892,7 @@ int parameter_expansion(char *buffer, int size, char *spec)
 		GLOBALVAR *var = global_find(name);
 		if ( var!=NULL && var->prop->ptype==PT_int32 )
 		{
-			int32 *addr = var->prop->addr;
+			int32* addr = (int32*) &(var->prop->addr);
 			sprintf(buffer,"%d",(*addr));
 			if ( strcmp(op,"+=")==0 ) { sprintf(buffer,"%d",(*addr)+=number); return 1; }
 			if ( strcmp(op,"-=")==0 ) { sprintf(buffer,"%d",(*addr)-=number); return 1; }
@@ -902,7 +919,7 @@ int parameter_expansion(char *buffer, int size, char *spec)
 				var = global_create(name,PT_int32,addr,PT_ACCESS,PA_PUBLIC,NULL);
 		}
 		else
-			addr = var->prop->addr;
+			addr = (int32*) &(var->prop->addr);
 		*addr = number;
 		sprintf(buffer,"%d",number);
 		return 1;

@@ -13,6 +13,11 @@ SET(PACKAGE_TARNAME "${PROJECT_NAME}")
 SET(PACKAGE_URL "")
 SET(PACKAGE_VERSION "4.0.0")
 
+SET(GLDCORE_LOC gldcore)
+
+#cmake_policy(SET CMP0045 OLD)
+
+
 # Sets default compile scheme to Release (Maximum optimization, no debugger data)
 # To compile as Debug outside of IDE, run cmake with "-DCMAKE_BUILD_TYPE=Debug" flag.
 IF (NOT CMAKE_BUILD_TYPE)
@@ -85,70 +90,134 @@ SET(GL_MODULES
         glxengine
         )
 SET(HEADER_FILE_NAMES
-        gldcore/build.h
-        gldcore/class.h
-        gldcore/complex.h
-        gldcore/debug.h
-        gldcore/enduse.h
-        gldcore/exception.h
-        gldcore/loadshape.h
-        gldcore/lock.h
-        gldcore/module.h
-        gldcore/object.h
-        gldcore/property.h
-        gldcore/schedule.h
-        gldcore/test.h
-        gldcore/version.h
+#        ${GLDCORE_LOC}/build.h
+#        ${GLDCORE_LOC}/class.h
+#        ${GLDCORE_LOC}/complex.h
+#        ${GLDCORE_LOC}/debug.h
+#        ${GLDCORE_LOC}/enduse.h
+#        ${GLDCORE_LOC}/exception.h
+#        ${GLDCORE_LOC}/loadshape.h
+#        ${GLDCORE_LOC}/lock.h
+#        ${GLDCORE_LOC}/module.h
+#        ${GLDCORE_LOC}/object.h
+#        ${GLDCORE_LOC}/property.h
+#        ${GLDCORE_LOC}/schedule.h
+#        ${GLDCORE_LOC}/test.h
+#        ${GLDCORE_LOC}/version.h
+
+        ${GLDCORE_LOC}/build.h
+        ${GLDCORE_LOC}/class.h
+        ${GLDCORE_LOC}/complex.h
+        ${GLDCORE_LOC}/debug.h
+        ${GLDCORE_LOC}/enduse.h
+        ${GLDCORE_LOC}/exception.h
+        ${GLDCORE_LOC}/loadshape.h
+        ${GLDCORE_LOC}/lock.h
+        ${GLDCORE_LOC}/module.h
+        ${GLDCORE_LOC}/object.h
+        ${GLDCORE_LOC}/property.h
+        ${GLDCORE_LOC}/schedule.h
+        ${GLDCORE_LOC}/test.h
+        ${GLDCORE_LOC}/version.h
         )
 SET(GLD_SHARE
-        gldcore/tzinfo.txt
-        gldcore/unitfile.txt
-        gldcore/rt/about.htm
-        gldcore/rt/COPYRIGHT
-        gldcore/rt/debugger.conf
-        gldcore/rt/eula.htm
-        gldcore/rt/favicon.ico
-        gldcore/rt/gnuplot.conf
-        gldcore/rt/gridlabd.conf
-        gldcore/rt/gridlabd.css
-        gldcore/rt/gridlabd.h
-        gldcore/rt/gridlabd.htm
-        gldcore/rt/gridlabd.jpg
-        gldcore/rt/gridlabd.js
-        gldcore/rt/gridlabd.syn
-        gldcore/rt/LICENSE
-        gldcore/rt/mingw.conf
-        gldcore/rt/STATUS
-        gldcore/rt/capacitor_b.png
-        gldcore/rt/capacitor_g.png
-        gldcore/rt/capacitor_k.png
-        gldcore/rt/capacitor_r.png
-        gldcore/rt/load_b.png
-        gldcore/rt/load_g.png
-        gldcore/rt/load_k.png
-        gldcore/rt/load_r.png
-        gldcore/rt/meter_g.png
-        gldcore/rt/node_b.png
-        gldcore/rt/node_g.png
-        gldcore/rt/node_k.png
-        gldcore/rt/node_r.png
-        gldcore/rt/regulator_b.png
-        gldcore/rt/regulator_g.png
-        gldcore/rt/regulator_k.png
-        gldcore/rt/regulator_r.png
-        gldcore/rt/switch_b.png
-        gldcore/rt/switch_g.png
-        gldcore/rt/switch_k.png
-        gldcore/rt/switch_r.png
-        gldcore/rt/transformer_b.png
+#        ${GLDCORE_LOC}/tzinfo.txt
+#        ${GLDCORE_LOC}/unitfile.txt
+#        ${GLDCORE_LOC}/rt/about.htm
+#        ${GLDCORE_LOC}/rt/COPYRIGHT
+#        ${GLDCORE_LOC}/rt/debugger.conf
+#        ${GLDCORE_LOC}/rt/eula.htm
+#        ${GLDCORE_LOC}/rt/favicon.ico
+#        ${GLDCORE_LOC}/rt/gnuplot.conf
+#        ${GLDCORE_LOC}/rt/gridlabd.conf
+#        ${GLDCORE_LOC}/rt/gridlabd.css
+#        ${GLDCORE_LOC}/rt/gridlabd.h
+#        ${GLDCORE_LOC}/rt/gridlabd.htm
+#        ${GLDCORE_LOC}/rt/gridlabd.jpg
+#        ${GLDCORE_LOC}/rt/gridlabd.js
+#        ${GLDCORE_LOC}/rt/gridlabd.syn
+#        ${GLDCORE_LOC}/rt/LICENSE
+#        ${GLDCORE_LOC}/rt/mingw.conf
+#        ${GLDCORE_LOC}/rt/STATUS
+#        ${GLDCORE_LOC}/rt/capacitor_b.png
+#        ${GLDCORE_LOC}/rt/capacitor_g.png
+#        ${GLDCORE_LOC}/rt/capacitor_k.png
+#        ${GLDCORE_LOC}/rt/capacitor_r.png
+#        ${GLDCORE_LOC}/rt/load_b.png
+#        ${GLDCORE_LOC}/rt/load_g.png
+#        ${GLDCORE_LOC}/rt/load_k.png
+#        ${GLDCORE_LOC}/rt/load_r.png
+#        ${GLDCORE_LOC}/rt/meter_g.png
+#        ${GLDCORE_LOC}/rt/node_b.png
+#        ${GLDCORE_LOC}/rt/node_g.png
+#        ${GLDCORE_LOC}/rt/node_k.png
+#        ${GLDCORE_LOC}/rt/node_r.png
+#        ${GLDCORE_LOC}/rt/regulator_b.png
+#        ${GLDCORE_LOC}/rt/regulator_g.png
+#        ${GLDCORE_LOC}/rt/regulator_k.png
+#        ${GLDCORE_LOC}/rt/regulator_r.png
+#        ${GLDCORE_LOC}/rt/switch_b.png
+#        ${GLDCORE_LOC}/rt/switch_g.png
+#        ${GLDCORE_LOC}/rt/switch_k.png
+#        ${GLDCORE_LOC}/rt/switch_r.png
+#        ${GLDCORE_LOC}/rt/transformer_b.png
+#
+#        ${GLDCORE_LOC}/rt/transformer_g.png
+#        ${GLDCORE_LOC}/rt/transformer_k.png
+#        ${GLDCORE_LOC}/rt/transformer_r.png
+#        ${GLDCORE_LOC}/rt/triplex_meter_b.png
+#        ${GLDCORE_LOC}/rt/triplex_meter_g.png
+#        ${GLDCORE_LOC}/rt/triplex_meter_k.png
+#        ${GLDCORE_LOC}/rt/triplex_meter_r.png
 
-        gldcore/rt/transformer_g.png
-        gldcore/rt/transformer_k.png
-        gldcore/rt/transformer_r.png
-        gldcore/rt/triplex_meter_b.png
-        gldcore/rt/triplex_meter_g.png
-        gldcore/rt/triplex_meter_k.png
-        gldcore/rt/triplex_meter_r.png
+        ${GLDCORE_LOC}/tzinfo.txt
+        ${GLDCORE_LOC}/unitfile.txt
+        ${GLDCORE_LOC}/rt/about.htm
+        ${GLDCORE_LOC}/rt/COPYRIGHT
+        ${GLDCORE_LOC}/rt/debugger.conf
+        ${GLDCORE_LOC}/rt/eula.htm
+        ${GLDCORE_LOC}/rt/favicon.ico
+        ${GLDCORE_LOC}/rt/gnuplot.conf
+        ${GLDCORE_LOC}/rt/gridlabd.conf
+        ${GLDCORE_LOC}/rt/gridlabd.css
+        ${GLDCORE_LOC}/rt/gridlabd.h
+        ${GLDCORE_LOC}/rt/gridlabd.htm
+        ${GLDCORE_LOC}/rt/gridlabd.jpg
+        ${GLDCORE_LOC}/rt/gridlabd.js
+        ${GLDCORE_LOC}/rt/gridlabd.syn
+        ${GLDCORE_LOC}/rt/LICENSE
+        ${GLDCORE_LOC}/rt/mingw.conf
+        ${GLDCORE_LOC}/rt/STATUS
+        ${GLDCORE_LOC}/rt/capacitor_b.png
+        ${GLDCORE_LOC}/rt/capacitor_g.png
+        ${GLDCORE_LOC}/rt/capacitor_k.png
+        ${GLDCORE_LOC}/rt/capacitor_r.png
+        ${GLDCORE_LOC}/rt/load_b.png
+        ${GLDCORE_LOC}/rt/load_g.png
+        ${GLDCORE_LOC}/rt/load_k.png
+        ${GLDCORE_LOC}/rt/load_r.png
+        ${GLDCORE_LOC}/rt/meter_g.png
+        ${GLDCORE_LOC}/rt/node_b.png
+        ${GLDCORE_LOC}/rt/node_g.png
+        ${GLDCORE_LOC}/rt/node_k.png
+        ${GLDCORE_LOC}/rt/node_r.png
+        ${GLDCORE_LOC}/rt/regulator_b.png
+        ${GLDCORE_LOC}/rt/regulator_g.png
+        ${GLDCORE_LOC}/rt/regulator_k.png
+        ${GLDCORE_LOC}/rt/regulator_r.png
+        ${GLDCORE_LOC}/rt/switch_b.png
+        ${GLDCORE_LOC}/rt/switch_g.png
+        ${GLDCORE_LOC}/rt/switch_k.png
+        ${GLDCORE_LOC}/rt/switch_r.png
+        ${GLDCORE_LOC}/rt/transformer_b.png
+
+        ${GLDCORE_LOC}/rt/transformer_g.png
+        ${GLDCORE_LOC}/rt/transformer_k.png
+        ${GLDCORE_LOC}/rt/transformer_r.png
+        ${GLDCORE_LOC}/rt/triplex_meter_b.png
+        ${GLDCORE_LOC}/rt/triplex_meter_g.png
+        ${GLDCORE_LOC}/rt/triplex_meter_k.png
+        ${GLDCORE_LOC}/rt/triplex_meter_r.png
 
         models/climate_csvreader_example.glm
         models/collector_example.glm
@@ -170,7 +239,9 @@ SET(GLD_SHARE
         models/waterheater_example.glm
         models/weather.csv
         models/wind_turbine_example.glm
-        gldcore/gridlabd.htm
+
+#        ${GLDCORE_LOC}/gridlabd.htm
+        ${GLDCORE_LOC}/gridlabd.htm
         )
 
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
@@ -229,7 +300,6 @@ CHECK_INCLUDE_FILES(sys/stat.h HAVE_SYS_STAT_H)
 CHECK_INCLUDE_FILES(sys/timeb.h HAVE_SYS_TIMEB_H)
 CHECK_INCLUDE_FILES(sys/time.h HAVE_SYS_TIME_H)
 CHECK_INCLUDE_FILES(sys/types.h HAVE_SYS_TYPES_H)
-
 
 CHECK_FUNCTION_EXISTS(madvise HAVE_MADVISE)
 CHECK_FUNCTION_EXISTS(error_at_line HAVE_ERROR_AT_LINE) #AC_FUNC_ERROR_AT_LINE
@@ -349,11 +419,13 @@ TRY_COMPILE(HAVE_ISFINITE ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR
 TRY_COMPILE(HAVE_PTHREAD_PRIO_INHERIT ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/HAVE_PTHREAD_PRIO_INHERIT.cc)
 
 # Generate the config.h header file.
-configure_file(gldcore/cmake_config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/gldcore/config.h @ONLY)
+#configure_file(${GLDCORE_LOC}/cmake_config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/${GLDCORE_LOC}/config.h @ONLY)
+configure_file(${GLDCORE_LOC}/cmake_config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/${GLDCORE_LOC}/config.h @ONLY)
 add_definitions(-DHAVE_CONFIG_H)
 
 # Load module directories. When adding new module, add it here.
-include_directories(gldcore)
+#include_directories(${GLDCORE_LOC})
+include_directories(${GLDCORE_LOC})
 include_directories(third_party/superLU_MT)
 include_directories(third_party/jsonCpp)
 
@@ -374,139 +446,147 @@ include(residential/CMakeLists.txt)
 include(tape/CMakeLists.txt)
 include(tape_file/CMakeLists.txt)
 include(tape_plot/CMakeLists.txt)
-include(gldcore/solvers/CMakeLists.txt)
-include(gldcore/link/engine/CMakeLists.txt)
-
+include(${GLDCORE_LOC}/solvers/CMakeLists.txt)
+include(${GLDCORE_LOC}/link/engine/CMakeLists.txt)
 
 # Load and link C/C++ files for the executeable
 add_executable(gridlabd
-        gldcore/globals.c
-        gldcore/globals.h
-        gldcore/gridlabd.h
-        gldcore/aggregate.c
-        gldcore/aggregate.h
-        gldcore/build.h
-        gldcore/class.c
-        gldcore/class.h
-        gldcore/cmdarg.c
-        gldcore/cmdarg.h
-        #        gldcore/cmex.c
-        #gldcore/cmex.h
-        gldcore/compare.c
-        gldcore/compare.h
-        gldcore/complex.h
-        gldcore/config.h
-        gldcore/console.h
-        gldcore/convert.cpp
-        gldcore/convert.h
-        gldcore/debug.c
-        gldcore/debug.h
-        gldcore/deltamode.c
-        gldcore/deltamode.h
-        gldcore/enduse.c
-        gldcore/enduse.h
-        gldcore/environment.c
-        gldcore/environment.h
-        gldcore/exception.c
-        gldcore/exception.h
-        gldcore/exec.c
-        gldcore/exec.h
-        gldcore/find.c
-        gldcore/find.h
-        gldcore/gld_sock.h
-        gldcore/gui.c
-        gldcore/gui.h
-        gldcore/http_client.c
-        gldcore/http_client.h
-        gldcore/index.c
-        gldcore/index.h
-        gldcore/instance.c
-        gldcore/instance.h
-        gldcore/instance_cnx.c
-        gldcore/instance_cnx.h
-        gldcore/instance_slave.c
-        gldcore/instance_slave.h
-        gldcore/interpolate.c
-        gldcore/interpolate.h
-        gldcore/job.cpp
-        gldcore/job.h
-        gldcore/kill.c
-        gldcore/kill.h
-        gldcore/kml.c
-        gldcore/kml.h
-        gldcore/legal.c
-        gldcore/legal.h
-        gldcore/link.cpp
-        gldcore/link.h
-        gldcore/linkage.c
-        gldcore/linkage.h
-        gldcore/list.c
-        gldcore/list.h
-        gldcore/load.c
-        gldcore/load.h
-        gldcore/load_xml.cpp
-        gldcore/load_xml.h
-        gldcore/load_xml_handle.cpp
-        gldcore/load_xml_handle.h
-        gldcore/loadshape.c
-        gldcore/loadshape.h
-        gldcore/local.c
-        gldcore/local.h
-        gldcore/lock.cpp
-        gldcore/lock.h
-        gldcore/main.c
-        gldcore/match.c
-        gldcore/match.h
-        gldcore/matlab.c
-        gldcore/matlab.h
-        gldcore/module.c
-        gldcore/module.h
-        gldcore/object.c
-        gldcore/object.h
-        gldcore/output.c
-        gldcore/output.h
-        gldcore/platform.h
-        gldcore/property.c
-        gldcore/property.h
-        gldcore/random.c
-        gldcore/random.h
-        gldcore/realtime.c
-        gldcore/realtime.h
-        gldcore/sanitize.cpp
-        gldcore/sanitize.h
-        gldcore/save.c
-        gldcore/save.h
-        gldcore/schedule.c
-        gldcore/schedule.h
-        gldcore/server.c
-        gldcore/server.h
-        gldcore/setup.cpp
-        gldcore/setup.h
-        gldcore/stream.cpp
-        gldcore/stream.h
-        gldcore/stream_type.h
-        gldcore/test.c
-        gldcore/test.h
-        gldcore/test_callbacks.h
-        gldcore/test_framework.cpp
-        gldcore/test_framework.h
-        gldcore/threadpool.c
-        gldcore/threadpool.h
-        gldcore/timestamp.c
-        gldcore/timestamp.h
-        gldcore/transform.c
-        gldcore/transform.h
-        gldcore/ufile.c
-        gldcore/ufile.h
-        gldcore/unit.c
-        gldcore/unit.h
-        gldcore/validate.cpp
-        gldcore/validate.h
-        gldcore/version.c
-        gldcore/version.h
-        #        gldcore/xcore.cpp
-        #        gldcore/xcore.h
+        ${GLDCORE_LOC}/gridlabd.h
+        ${GLDCORE_LOC}/globals.cpp
+        ${GLDCORE_LOC}/globals.h
+        ${GLDCORE_LOC}/object.cpp
+        ${GLDCORE_LOC}/object.h
+        ${GLDCORE_LOC}/schedule.cpp
+        ${GLDCORE_LOC}/schedule.h
+        ${GLDCORE_LOC}/aggregate.cpp
+        ${GLDCORE_LOC}/aggregate.h
+        ${GLDCORE_LOC}/build.h
+        ${GLDCORE_LOC}/class.cpp
+        ${GLDCORE_LOC}/class.h
+        ${GLDCORE_LOC}/cmdarg.cpp
+        ${GLDCORE_LOC}/cmdarg.h
+        #${GLDCORE_LOC}/cmex.c
+        #${GLDCORE_LOC}/cmex.h
+        ${GLDCORE_LOC}/compare.cpp
+        ${GLDCORE_LOC}/compare.h
+        ${GLDCORE_LOC}/complex.h
+        ${GLDCORE_LOC}/config.h
+        ${GLDCORE_LOC}/console.h
+        ${GLDCORE_LOC}/convert.cpp
+        ${GLDCORE_LOC}/convert.h
+        ${GLDCORE_LOC}/debug.cpp
+        ${GLDCORE_LOC}/debug.h
+        ${GLDCORE_LOC}/deltamode.cpp
+        ${GLDCORE_LOC}/deltamode.h
+        ${GLDCORE_LOC}/enduse.cpp
+        ${GLDCORE_LOC}/enduse.h
+        ${GLDCORE_LOC}/environment.cpp
+        ${GLDCORE_LOC}/environment.h
+        ${GLDCORE_LOC}/exception.cpp
+        ${GLDCORE_LOC}/exception.h
+        ${GLDCORE_LOC}/exec.cpp
+        ${GLDCORE_LOC}/exec.h
+        ${GLDCORE_LOC}/find.cpp
+        ${GLDCORE_LOC}/find.h
+        ${GLDCORE_LOC}/gld_sock.h
+        ${GLDCORE_LOC}/gui.cpp
+        ${GLDCORE_LOC}/gui.h
+        ${GLDCORE_LOC}/http_client.cpp
+        ${GLDCORE_LOC}/http_client.h
+        ${GLDCORE_LOC}/index.cpp
+        ${GLDCORE_LOC}/index.h
+        ${GLDCORE_LOC}/instance.cpp
+        ${GLDCORE_LOC}/instance.h
+        ${GLDCORE_LOC}/instance_cnx.cpp
+        ${GLDCORE_LOC}/instance_cnx.h
+        ${GLDCORE_LOC}/instance_slave.cpp
+        ${GLDCORE_LOC}/instance_slave.h
+        ${GLDCORE_LOC}/interpolate.cpp
+        ${GLDCORE_LOC}/interpolate.h
+        ${GLDCORE_LOC}/job.cpp
+        ${GLDCORE_LOC}/job.h
+        ${GLDCORE_LOC}/kill.cpp
+        ${GLDCORE_LOC}/kill.h
+        ${GLDCORE_LOC}/kml.cpp
+        ${GLDCORE_LOC}/kml.h
+        ${GLDCORE_LOC}/legal.cpp
+        ${GLDCORE_LOC}/legal.h
+        ${GLDCORE_LOC}/link.cpp
+        ${GLDCORE_LOC}/link.h
+        ${GLDCORE_LOC}/linkage.cpp
+        ${GLDCORE_LOC}/linkage.h
+        ${GLDCORE_LOC}/list.cpp
+        ${GLDCORE_LOC}/list.h
+        ${GLDCORE_LOC}/load.cpp
+        ${GLDCORE_LOC}/load.h
+        ${GLDCORE_LOC}/load_xml.cpp
+        ${GLDCORE_LOC}/load_xml.h
+        ${GLDCORE_LOC}/load_xml_handle.cpp
+        ${GLDCORE_LOC}/load_xml_handle.h
+        ${GLDCORE_LOC}/loadshape.cpp
+        ${GLDCORE_LOC}/loadshape.h
+        ${GLDCORE_LOC}/local.cpp
+        ${GLDCORE_LOC}/local.h
+        ${GLDCORE_LOC}/lock.cpp
+        ${GLDCORE_LOC}/lock.h
+        ${GLDCORE_LOC}/main.cpp
+        ${GLDCORE_LOC}/match.cpp
+        ${GLDCORE_LOC}/match.h
+        ${GLDCORE_LOC}/matlab.cpp
+        ${GLDCORE_LOC}/matlab.h
+        ${GLDCORE_LOC}/module.cpp
+        ${GLDCORE_LOC}/module.h
+        ${GLDCORE_LOC}/output.cpp
+        ${GLDCORE_LOC}/output.h
+        ${GLDCORE_LOC}/platform.h
+        ${GLDCORE_LOC}/property.cpp
+        ${GLDCORE_LOC}/property.h
+        ${GLDCORE_LOC}/random.cpp
+        ${GLDCORE_LOC}/random.h
+        ${GLDCORE_LOC}/realtime.cpp
+        ${GLDCORE_LOC}/realtime.h
+        ${GLDCORE_LOC}/sanitize.cpp
+        ${GLDCORE_LOC}/sanitize.h
+        ${GLDCORE_LOC}/save.cpp
+        ${GLDCORE_LOC}/save.h
+        ${GLDCORE_LOC}/server.cpp
+        ${GLDCORE_LOC}/server.h
+        ${GLDCORE_LOC}/setup.cpp
+        ${GLDCORE_LOC}/setup.h
+        ${GLDCORE_LOC}/stream.cpp
+        ${GLDCORE_LOC}/stream.h
+        ${GLDCORE_LOC}/stream_type.h
+        ${GLDCORE_LOC}/test.cpp
+        ${GLDCORE_LOC}/test.h
+        ${GLDCORE_LOC}/test_callbacks.h
+        ${GLDCORE_LOC}/test_framework.cpp
+        ${GLDCORE_LOC}/test_framework.h
+        ${GLDCORE_LOC}/threadpool.cpp
+        ${GLDCORE_LOC}/threadpool.h
+        ${GLDCORE_LOC}/timestamp.cpp
+        ${GLDCORE_LOC}/timestamp.h
+        ${GLDCORE_LOC}/transform.cpp
+        ${GLDCORE_LOC}/transform.h
+        ${GLDCORE_LOC}/ufile.cpp
+        ${GLDCORE_LOC}/ufile.h
+        ${GLDCORE_LOC}/unit.cpp
+        ${GLDCORE_LOC}/unit.h
+        ${GLDCORE_LOC}/validate.cpp
+        ${GLDCORE_LOC}/validate.h
+        ${GLDCORE_LOC}/version.cpp
+        ${GLDCORE_LOC}/version.h
+        #        ${GLDCORE_LOC}/xcore.cpp
+        #        ${GLDCORE_LOC}/xcore.h
         )
+
+#MESSAGE(${CMAKE_CURRENT_SOURCE_DIR}/third_party/mysql-connector-c++)
+#
+#add_custom_target(
+#        mysql_connector
+#        COMMAND ./install.sh
+#        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/third_party/mysql-connector-c++
+#)
+#add_dependencies(gridlabd mysql_connector)
 
 add_dependencies(gridlabd libjsoncpp libsuperlu)
 

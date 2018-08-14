@@ -147,7 +147,8 @@ void dlload_error(const char *filename)
 }
 
 /* MALLOC/FREE - GL threadsafe versions */
-static int malloc_lock = 0;
+static unsigned int malloc_lock = 0;
+
 void *module_malloc(size_t size)
 {
 	void *ptr;
@@ -168,67 +169,253 @@ void module_free(void *ptr)
 #define MAGIC 0x012BB0B9
 int64 lock_count;
 int64 lock_spin;
-static CALLBACKS callbacks = {
-	&global_clock,
-	&global_delta_curr_clock,
-	&global_stoptime,
-	output_verbose,
-	output_message,
-	output_warning,
-	output_error,
-	output_debug,
-	output_test,
-	class_register,
-	{object_create_single,object_create_array,object_create_foreign},
-	class_define_map, class_add_loadmethod,
-	class_get_first_class,
-	class_get_class_from_classname,
-	class_add_extended_property,
-	{class_define_function,class_get_function},
-	class_define_enumeration_member,
-	class_define_set_member,
-	{object_get_first,object_set_dependent,object_set_parent,object_set_rank,},
-	{object_get_property, object_set_value_by_addr,object_get_value_by_addr, object_set_value_by_name,object_get_value_by_name,object_get_reference,object_get_unit,object_get_addr,class_string_to_propertytype,property_compare_basic,property_compare_op,property_get_part,property_getspec},
-	{find_objects,find_next,findlist_copy,findlist_add,findlist_del,findlist_clear},
-	class_find_property,
-	module_malloc,
-	module_free,
-	{aggregate_mkgroup,aggregate_value,},
-	{module_getvar_addr,module_get_first,module_depends,module_find_transform_function},
-	{random_uniform, random_normal, random_bernoulli, random_pareto, random_lognormal, random_sampled, random_exponential, random_type, random_value, pseudorandom_value, random_triangle, random_beta, random_gamma, random_weibull, random_rayleigh},
-	object_isa,
-	class_register_type,
-	class_define_type,
-	{mkdatetime,strdatetime,timestamp_to_days,timestamp_to_hours,timestamp_to_minutes,timestamp_to_seconds,local_datetime,local_datetime_delta,convert_to_timestamp,convert_to_timestamp_delta,convert_from_timestamp,convert_from_deltatime_timestamp},
-	unit_convert, unit_convert_ex, unit_find,
-	{create_exception_handler,delete_exception_handler,throw_exception,exception_msg},
-	{global_create, global_setvar, global_getvar, global_find},
-	{rlock, wlock}, {runlock, wunlock},
-	{find_file},
-	{object_get_bool, object_get_complex, object_get_enum, object_get_set, object_get_int16, object_get_int32, object_get_int64, object_get_double, object_get_string, object_get_object},
-	{object_get_bool_by_name, object_get_complex_by_name, object_get_enum_by_name, object_get_set_by_name, object_get_int16_by_name, object_get_int32_by_name, object_get_int64_by_name,
-		object_get_double_by_name, object_get_string_by_name, object_get_object_by_name},
-	{class_string_to_property, class_property_to_string,},
-	module_find,
-	object_find_name, object_find_by_id,
-	object_build_name,
-	object_get_oflags,
-	object_get_count,
-	{schedule_create, schedule_index, schedule_value, schedule_dtnext, schedule_find_byname, schedule_getfirst},
-	{loadshape_create,loadshape_init},
-	{enduse_create,enduse_sync},
-	{interpolate_linear, interpolate_quadratic},
-	{forecast_create, forecast_find, forecast_read, forecast_save},
-	{object_remote_read, object_remote_write, global_remote_read, global_remote_write},
-	{objlist_create,objlist_search,objlist_destroy,objlist_add,objlist_del,objlist_size,objlist_get,objlist_apply},
-	{{convert_from_latitude, convert_to_latitude},{convert_from_longitude,convert_to_longitude}},
-	{http_read,http_delete_result},
-	{transform_getnext,transform_add_linear,transform_add_external,transform_apply},
-	{randomvar_getnext,randomvar_getspec},
-	{version_major,version_minor,version_patch,version_build,version_branch},
-	MAGIC /* used to check structure */
-};
-CALLBACKS *module_callbacks(void) { return &callbacks; }
+s_callbacks::s_callbacks() noexcept {
+    global_clock = &::global_clock;
+    global_delta_curr_clock = &::global_delta_curr_clock;
+    global_stoptime = &::global_stoptime;
+    output_verbose = ::output_verbose;
+    output_message = ::output_message;
+    output_warning = ::output_warning;
+    output_error = ::output_error;
+    output_debug = ::output_debug;
+    output_test = ::output_test;
+    register_class = class_register;
+    create.single = object_create_single;
+    create.array = object_create_array;
+    create.foreign = object_create_foreign;
+    define_map = class_define_map;
+    loadmethod = class_add_loadmethod;
+    class_getfirst = class_get_first_class;
+    class_getname = class_get_class_from_classname;
+    class_add_extended_property = ::class_add_extended_property;
+    function.define = class_define_function;
+    function.get = class_get_function;
+    define_enumeration_member = class_define_enumeration_member;
+    define_set_member = class_define_set_member;
+    object.get_first = object_get_first;
+    object.set_dependent = object_set_dependent;
+    object.set_parent = object_set_parent;
+    object.set_rank = object_set_rank;
+    properties.get_property = object_get_property;
+    properties.set_value_by_addr = object_set_value_by_addr;
+    properties.get_value_by_addr = object_get_value_by_addr;
+    properties.set_value_by_name = object_set_value_by_name;
+    properties.get_value_by_name = object_get_value_by_name;
+    properties.get_reference = object_get_reference;
+    properties.get_unit = object_get_unit;
+    properties.get_addr = object_get_addr;
+    properties.set_value_by_type = class_string_to_propertytype;
+    properties.compare_basic = property_compare_basic;
+    properties.get_compare_op = property_compare_op;
+    properties.get_part = property_get_part;
+    properties.get_spec = property_getspec;
+    find.objects = find_objects;
+    find.next = find_next;
+    find.copy = findlist_copy;
+    find.add = findlist_add;
+    find.del = findlist_del;
+    find.clear = findlist_clear;
+    find_property = class_find_property;
+    malloc = module_malloc;
+    free = module_free;
+    aggregate.create = aggregate_mkgroup;
+    aggregate.refresh = aggregate_value;
+    module.getvar = module_getvar_addr;
+    module.getfirst = module_get_first;
+    module.depends = module_depends;
+    module.find_transform_function = module_find_transform_function;
+    random.uniform = random_uniform;
+    random.normal = random_normal;
+    random.bernoulli = random_bernoulli;
+    random.pareto = random_pareto;
+    random.lognormal = random_lognormal;
+    random.sampled = random_sampled;
+    random.exponential = random_exponential;
+    random.type = random_type;
+    random.value = random_value;
+    random.pseudo = pseudorandom_value;
+    random.triangle = random_triangle;
+    random.beta = random_beta;
+    random.gamma = random_gamma;
+    random.weibull = random_weibull;
+    random.rayleigh = random_rayleigh;
+    object_isa = ::object_isa;
+    register_type = class_register_type;
+    define_type = class_define_type;
+    time.mkdatetime = mkdatetime;
+    time.strdatetime = strdatetime;
+    time.timestamp_to_days = timestamp_to_days;
+    time.timestamp_to_hours = timestamp_to_hours;
+    time.timestamp_to_minutes = timestamp_to_minutes;
+    time.timestamp_to_seconds = timestamp_to_seconds;
+    time.local_datetime = local_datetime;
+    time.convert_to_timestamp = convert_to_timestamp;
+    time.convert_to_timestamp_delta = convert_to_timestamp_delta;
+    time.convert_from_timestamp = convert_from_timestamp;
+    time.convert_from_deltatime_timestamp = convert_from_deltatime_timestamp;
+    unit_convert = ::unit_convert;
+    unit_convert_ex = ::unit_convert_ex;
+    unit_find = ::unit_find;
+    exception.create_exception_handler = create_exception_handler;
+    exception.delete_exception_handler = delete_exception_handler;
+    exception.throw_exception = throw_exception;
+    exception.exception_msg = exception_msg;
+    global.create = global_create;
+    global.setvar = global_setvar;
+    global.getvar = global_getvar;
+    global.find = global_find;
+    lock.read = rlock;
+    lock.write = wlock;
+    unlock.read = runlock;
+    unlock.write = wunlock;
+    file.find_file = find_file;
+    objvar.bool_var = object_get_bool;
+    objvar.complex_var = object_get_complex;
+    objvar.enum_var = object_get_enum;
+    objvar.set_var = object_get_set;
+    objvar.int16_var = object_get_int16;
+    objvar.int32_var = object_get_int32;
+    objvar.int64_var = object_get_int64;
+    objvar.double_var = object_get_double;
+    objvar.string_var = object_get_string;
+    objvar.object_var = object_get_object;
+    objvarname.bool_var = object_get_bool_by_name;
+    objvarname.complex_var = object_get_complex_by_name;
+    objvarname.enum_var =  object_get_enum_by_name;
+    objvarname.set_var =  object_get_set_by_name;
+    objvarname.int16_var = object_get_int16_by_name;
+    objvarname.int32_var = object_get_int32_by_name;
+    objvarname.int64_var = object_get_int64_by_name;
+    objvarname.double_var = object_get_double_by_name;
+    objvarname.string_var = object_get_string_by_name;
+    objvarname.object_var = object_get_object_by_name;
+    convert.string_to_property = class_string_to_property;
+    convert.property_to_string = class_property_to_string;
+    module_find = ::module_find;
+    get_object = object_find_name;
+    object_find_by_id = ::object_find_by_id;
+    name_object = object_build_name;
+    get_oflags = object_get_oflags;
+    object_count = object_get_count;
+    schedule.create = schedule_create;
+    schedule.index = schedule_index;
+    schedule.value = schedule_value;
+    schedule.dtnext = schedule_dtnext;
+    schedule.find = schedule_find_byname;
+    schedule.getfirst = schedule_getfirst;
+    loadshape.create = loadshape_create;
+    loadshape.init = loadshape_init;
+    enduse.create = enduse_create;
+    enduse.sync = enduse_sync;
+    interpolate.linear = interpolate_linear;
+    interpolate.quadratic = interpolate_quadratic;
+    forecast.create = forecast_create;
+    forecast.find = forecast_find;
+    forecast.read = forecast_read;
+    forecast.save = forecast_save;
+    remote.readobj = object_remote_read;
+    remote.writeobj = object_remote_write;
+    remote.readvar = global_remote_read;
+    remote.writevar = global_remote_write;
+    objlist.create = objlist_create;
+    objlist.search = objlist_search;
+    objlist.destroy = objlist_destroy;
+    objlist.add = objlist_add;
+    objlist.del = objlist_del;
+    objlist.size = objlist_size;
+    objlist.get = objlist_get;
+    objlist.apply = objlist_apply;
+    geography.latitude.to_string = convert_from_latitude;
+    geography.latitude.from_string = convert_to_latitude;
+    geography.longitude.to_string = convert_from_longitude;
+    geography.longitude.from_string = convert_to_longitude;
+    http.read = http_read;
+    http.free = http_delete_result;
+    transform.getnext = transform_getnext;
+    transform.add_linear = transform_add_linear;
+    transform.add_external = transform_add_external;
+    transform.apply = transform_apply;
+    randomvar.getnext = randomvar_getnext;
+    randomvar.getspec = randomvar_getspec;
+    version.major = version_major;
+    version.minor = version_minor;
+    version.patch = version_patch;
+    version.build = version_build;
+    version.branch = version_branch;
+    magic = MAGIC;
+}
+
+extern CALLBACKS* callbacks = new s_callbacks;
+
+CALLBACKS *module_callbacks(void) { return callbacks; }
+
+
+///* these are the core functions available to loadable modules
+// * the structure is defined in object.h */
+//#define MAGIC 0x012BB0B9
+//int64 lock_count;
+//int64 lock_spin;
+//static CALLBACKS callbacks = {
+//	&global_clock,
+//	&global_delta_curr_clock,
+//	&global_stoptime,
+//	output_verbose,
+//	output_message,
+//	output_warning,
+//	output_error,
+//	output_debug,
+//	output_test,
+//	class_register,
+//	{object_create_single,object_create_array,object_create_foreign},
+//	class_define_map, class_add_loadmethod,
+//	class_get_first_class,
+//	class_get_class_from_classname,
+//	class_add_extended_property,
+//	{class_define_function,class_get_function},
+//	class_define_enumeration_member,
+//	class_define_set_member,
+//	{object_get_first,object_set_dependent,object_set_parent,object_set_rank,},
+//	{object_get_property, object_set_value_by_addr,object_get_value_by_addr, object_set_value_by_name,object_get_value_by_name,object_get_reference,object_get_unit,object_get_addr,class_string_to_propertytype,property_compare_basic,property_compare_op,property_get_part,property_getspec},
+//	{find_objects,find_next,findlist_copy,findlist_add,findlist_del,findlist_clear},
+//	class_find_property,
+//	module_malloc,
+//	module_free,
+//	{aggregate_mkgroup,aggregate_value,},
+//	{module_getvar_addr,module_get_first,module_depends,module_find_transform_function},
+//	{random_uniform, random_normal, random_bernoulli, random_pareto, random_lognormal, random_sampled, random_exponential, random_type, random_value, pseudorandom_value, random_triangle, random_beta, random_gamma, random_weibull, random_rayleigh},
+//	object_isa,
+//	class_register_type,
+//	class_define_type,
+//	{mkdatetime,strdatetime,timestamp_to_days,timestamp_to_hours,timestamp_to_minutes,timestamp_to_seconds,local_datetime,convert_to_timestamp,convert_to_timestamp_delta,convert_from_timestamp,convert_from_deltatime_timestamp},
+//	unit_convert, unit_convert_ex, unit_find,
+//	{create_exception_handler,delete_exception_handler,throw_exception,exception_msg},
+//	{global_create, global_setvar, global_getvar, global_find},
+//	{rlock, wlock}, {runlock, wunlock},
+//	{find_file},
+//	{object_get_bool, object_get_complex, object_get_enum, object_get_set, object_get_int16, object_get_int32, object_get_int64, object_get_double, object_get_string, object_get_object},
+//	{object_get_bool_by_name, object_get_complex_by_name, object_get_enum_by_name, object_get_set_by_name, object_get_int16_by_name, object_get_int32_by_name, object_get_int64_by_name,
+//		object_get_double_by_name, object_get_string_by_name, object_get_object_by_name},
+//	{class_string_to_property, class_property_to_string,},
+//	module_find,
+//	object_find_name, object_find_by_id,
+//	object_build_name,
+//	object_get_oflags,
+//	object_get_count,
+//	{schedule_create, schedule_index, schedule_value, schedule_dtnext, schedule_find_byname, schedule_getfirst},
+//	{loadshape_create,loadshape_init},
+//	{enduse_create,enduse_sync},
+//	{interpolate_linear, interpolate_quadratic},
+//	{forecast_create, forecast_find, forecast_read, forecast_save},
+//	{object_remote_read, object_remote_write, global_remote_read, global_remote_write},
+//	{objlist_create,objlist_search,objlist_destroy,objlist_add,objlist_del,objlist_size,objlist_get,objlist_apply},
+//	{{convert_from_latitude, convert_to_latitude},{convert_from_longitude,convert_to_longitude}},
+//	{http_read,http_delete_result},
+//	{transform_getnext,transform_add_linear,transform_add_external,transform_apply},
+//	{randomvar_getnext,randomvar_getspec},
+//	{version_major,version_minor,version_patch,version_build,version_branch},
+//	MAGIC /* used to check structure */
+//};
+//CALLBACKS *module_callbacks(void) { return &callbacks; }
 
 static MODULE *first_module = NULL;
 static MODULE *last_module = NULL;
@@ -266,7 +453,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	CLASS *previous = NULL;
 	CLASS *c;
 
-	if ( callbacks.magic != MAGIC )
+	if ( callbacks->magic != MAGIC )
 	{
 		output_fatal("callback function table alignment error (magic number position mismatch)");
 		return NULL;
@@ -467,7 +654,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	mod->deltaClockUpdate = (SIMULATIONMODE(*)(void *, double, unsigned long, SIMULATIONMODE))DLSYM(hLib,"deltaClockUpdate");
 	mod->postupdate = (STATUS(*)(void*,int64,unsigned int64))DLSYM(hLib,"postupdate");
 	/* clock  update */
-	mod->clockupdate = (TIMESTAMP(*)(TIMESTAMP))DLSYM(hLib,"clock_update");
+	mod->clockupdate = (TIMESTAMP(*)(TIMESTAMP*))DLSYM(hLib,"clock_update");
 	mod->cmdargs = (int(*)(int,char**))DLSYM(hLib,"cmdargs");
 	mod->kmldump = (int(*)(int(*)(const char*,...),OBJECT*))DLSYM(hLib,"kmldump");
 	mod->subload = (MODULE *(*)(char *, MODULE **, CLASS **, int, char **))DLSYM(hLib, "subload");
@@ -487,7 +674,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 
 	/* call the initialization function */
 	errno = 0;
-	mod->oclass = (*init)(&callbacks,(void*)mod,argc,argv);
+	mod->oclass = (*init)(callbacks,(void*)mod,argc,argv);
 	if ( mod->oclass==NULL && errno!=0 )
 		return NULL;
 
@@ -661,7 +848,7 @@ void module_list(void)
 	_module_list(global_workdir);
 	_module_list(global_execdir);
 	if(glpath != NULL){
-		char *glPath = malloc(sizeof(char) * (unsigned)strlen(glpath));
+        char *glPath = static_cast<char *>(malloc(sizeof(char) * (unsigned) strlen(glpath)));
 		strncpy(glPath, glpath, (unsigned)strlen(glpath));
 		tokPath = strtok_r(glPath, pathDelim, &tokPathPtr);
 		while (tokPath != NULL){
@@ -672,7 +859,7 @@ void module_list(void)
 		free(glPath);
 	}
 	if(gridlabd != NULL){
-		char *gridLabD = malloc(sizeof(char) * (unsigned)strlen(gridlabd));
+        char *gridLabD = static_cast<char *>(malloc(sizeof(char) * (unsigned) strlen(gridlabd)));
 		strncpy(gridLabD, gridlabd, (unsigned)strlen(gridlabd));
 		tokPath = strtok_r(gridLabD, pathDelim, &tokPathPtr);
 		while (tokPath != NULL){
@@ -724,7 +911,7 @@ double* module_getvar_addr(MODULE *mod, const char *varname)
 	sprintf(modvarname,"%s::%s",mod->name,varname);
 	var = global_find(modvarname);
 	if (var!=NULL)
-		return var->prop->addr;
+        return static_cast<double *>(var->prop->addr);
 	else
 		return NULL;
 }
@@ -1085,6 +1272,7 @@ void module_termall(void)
  ***************************************************************************/
 
 #include <sys/stat.h>
+#include <cctype>
 
 #ifdef WIN32
 #ifdef X64
@@ -1161,9 +1349,9 @@ int module_compile(char *name,	/**< name of library */
 	char cfile[1024];
 	char ofile[1024];
 	char afile[1024];
-	char *cc = getenv("CC")?getenv("CC"):CC;
-	char *ccflags = getenv("CCFLAGS")?getenv("CCFLAGS"):CCFLAGS;
-	char *ldflags = getenv("LDFLAGS")?getenv("LDFLAGS"):LDFLAGS;
+    char *cc = const_cast<char *>(getenv("CC") ? getenv("CC") : CC);
+    char *ccflags = const_cast<char *>(getenv("CCFLAGS") ? getenv("CCFLAGS") : CCFLAGS);
+    char *ldflags = const_cast<char *>(getenv("LDFLAGS") ? getenv("LDFLAGS") : LDFLAGS);
 	int rc;
 	size_t codesize = strlen(code), len;
 	FILE *fp;
@@ -1272,13 +1460,13 @@ static int add_external_function(char *fctname, char *libname, void *lib)
 	{
 		int ordinal;
 		char function[1024];
-		EXTERNALFUNCTION *item = malloc(sizeof(EXTERNALFUNCTION));
+        EXTERNALFUNCTION *item = static_cast<EXTERNALFUNCTION *>(malloc(sizeof(EXTERNALFUNCTION)));
 		if ( item==NULL ) 
 		{
 			output_error("add_external_function(char *fn='%s',lib='%s',...): memory allocation failed", fctname, libname);
 			return 0;
 		}
-		item->fname = malloc(strlen(fctname)+1);
+        item->fname = static_cast<char *>(malloc(strlen(fctname) + 1));
 		if ( item->fname==NULL )
 		{
 			output_error("add_external_function(char *fn='%s',lib='%s',...): memory allocation failed", fctname, libname);
@@ -1321,7 +1509,7 @@ static int add_external_function(char *fctname, char *libname, void *lib)
 int module_load_function_list(char *libname, char *fnclist)
 {
 	char libpath[1024];
-	char *static_name = malloc(strlen(libname)+1);
+    char *static_name = static_cast<char *>(malloc(strlen(libname) + 1));
 	void *lib;
 	char *s, *e;
 	
@@ -1335,7 +1523,9 @@ int module_load_function_list(char *libname, char *fnclist)
 		snprintf(libpath,sizeof(libpath),"%s" DLEXT, libname);
 
 	lib = DLLOAD(libpath);
+#ifdef WIN32
 	errno = GetLastError();
+#endif
 	if (lib==NULL)
 	{
 #ifdef WIN32
@@ -1382,7 +1572,7 @@ TRANSFORMFUNCTION module_get_transform_function(const char *function)
 	for ( item=external_function_list; item!=NULL ; item=item->next )
 	{
 		if ( strcmp(item->fname,function)==0 )
-			return item->call;
+            return reinterpret_cast<TRANSFORMFUNCTION>(item->call);
 	}
 	errno = ENOENT;
 	return NULL;
@@ -1393,7 +1583,7 @@ const char *module_find_transform_function(TRANSFORMFUNCTION function)
 	EXTERNALFUNCTION *item;
 	for ( item=external_function_list; item!=NULL ; item=item->next )
 	{
-		if ( strcmp(item->call,function)==0 )
+        if (strcmp(static_cast<const char *>(item->call), reinterpret_cast<const char *>(function)) == 0)
 			return item->fname;
 	}
 	errno = ENOENT;
@@ -1847,8 +2037,8 @@ MYPROCINFO *sched_allocate_procs(unsigned int n_threads, pid_t pid)
 #endif
 
 	if ( n_threads==0 ) n_threads = n_procs;
-	my_proc = malloc(sizeof(MYPROCINFO));
-	my_proc->list = malloc(sizeof(unsigned short)*n_threads);
+    my_proc = static_cast<MYPROCINFO *>(malloc(sizeof(MYPROCINFO)));
+    my_proc->list = static_cast<unsigned short *>(malloc(sizeof(unsigned short) * n_threads));
 	my_proc->n_procs = n_threads;
 	for ( t=0 ; t<(int)n_threads ; t++ )
 	{

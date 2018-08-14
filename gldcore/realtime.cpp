@@ -7,18 +7,18 @@
 #include <errno.h>
 #include "realtime.h"
 
-time_t realtime_now(void)
+extern time_t realtime_now()
 {
 	return time(NULL);
 }
 static time_t starttime = 0;
-time_t realtime_starttime(void)
+extern time_t realtime_starttime()
 {
 	if ( starttime==0 )
 		starttime = realtime_now();
 	return starttime;
 }
-time_t realtime_runtime(void)
+extern time_t realtime_runtime()
 {
 	return realtime_now() - starttime;
 }
@@ -26,14 +26,14 @@ time_t realtime_runtime(void)
 /****************************************************************/
 typedef struct s_eventlist {
 	time_t at;
-	STATUS (*call)(void);
+	STATUS (*call)();
 	struct s_eventlist *next;
 } EVENT;
 static EVENT *eventlist = NULL;
 
-STATUS realtime_schedule_event(time_t at, STATUS (*callback)(void))
+extern STATUS realtime_schedule_event(time_t at, STATUS (*callback)())
 {
-	EVENT *event = malloc(sizeof(EVENT));
+	EVENT *event = static_cast<EVENT *>(malloc(sizeof(EVENT)));
 	if (event==NULL)
 	{
 		errno=ENOMEM;
@@ -46,7 +46,7 @@ STATUS realtime_schedule_event(time_t at, STATUS (*callback)(void))
 	return SUCCESS;
 }
 
-STATUS realtime_run_schedule(void)
+extern STATUS realtime_run_schedule()
 {
 	time_t now = realtime_now();
 	EVENT *event, *last=NULL;

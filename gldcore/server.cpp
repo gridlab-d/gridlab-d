@@ -23,7 +23,7 @@
 #endif
 
 #include <memory.h>
-#include <string.h>
+#include <cstring>
 #include <errno.h>
 #include <pthread.h>
 
@@ -39,6 +39,8 @@
 #include "legal.h"
 
 #include "gui.h"
+#include "kml.h"
+
 #define SET_MYCONTEXT(X)
 #define IN_MYCONTEXT
 SET_MYCONTEXT(DMC_SERVER)
@@ -126,7 +128,7 @@ static void *server_routine(void *arg)
 		return NULL;
 	}
 	started = 1;
-	sockfd = (SOCKET)arg;
+	sockfd = *reinterpret_cast<SOCKET*>(arg);
 	// repeat forever..
 	static int active = 0;
 	void *result = NULL;
@@ -138,7 +140,7 @@ static void *server_routine(void *arg)
 		int clilen = sizeof(cli_addr);
 
 		/* accept client request and get client address */
-		newsockfd = accept(sockfd,(struct sockaddr *)&cli_addr,&clilen);
+		newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, reinterpret_cast<socklen_t *>(&clilen));
 		if ((int)newsockfd<0 && errno!=EINTR)
 		{
 			status = GetLastError();
@@ -162,7 +164,7 @@ static void *server_routine(void *arg)
 			if (global_server_quit_on_close)
 				shutdown_now();
 			else
-				gui_wait_status(0);
+				gui_wait_status(static_cast<GUIACTIONSTATUS>(0));
 			active = 1;
 		}
 	}
@@ -278,7 +280,7 @@ STATUS server_join(void)
 {
 	void *result;
 	if (pthread_join(thread,&result)==0)
-		return (STATUS) result;	
+		return *static_cast<STATUS*>(result);
 	else
 	{
 		output_error("server thread join failed: %s", strerror(GetLastError()));
@@ -310,7 +312,7 @@ static HTTPCNX *http_create(SOCKET s)
 	memset(http,0,sizeof(HTTPCNX));
 	http->s = s;
 	http->max = 65536;
-	http->buffer = malloc(http->max);
+	http->buffer = static_cast<char *>(malloc(http->max));
 	return http;
 }
 
@@ -470,7 +472,7 @@ static void http_write(HTTPCNX *http, char *data, size_t len)
 		{
 			http->max = http->len+len+1;
 		}
-		http->buffer = malloc(http->max);
+		http->buffer = static_cast<char *>(malloc(http->max));
 		memcpy(http->buffer,old,http->len);
 		free(old);
 	}
@@ -670,45 +672,45 @@ int get_value_with_unit(OBJECT *obj, char *arg1, char *arg2, char *buffer, size_
 				output_error("object '%s' property '%s' conversion from '%s' to '%s' failed", arg1, arg2, prop->unit->name, unit);
 				return 0;
 			}
-			switch ( spec[2]=='\0' ? cvalue.f : spec[2] ) {
+			switch ( spec[2]=='\0' ? cvalue.Notation() : spec[2] ) {
 			case I: // i-notation
 				sprintf(fmt,"%%.%c%c%%+.%c%ci %%s",spec[0],spec[1],spec[0],spec[1]);
-				snprintf(buffer,len,fmt,cvalue.r,cvalue.i,uname);
+				snprintf(buffer,len,fmt,cvalue.Re(),cvalue.Im(),uname);
 				break;
 			case J: // j-notation
 				sprintf(fmt,"%%.%c%c%%+.%c%cj %%s",spec[0],spec[1],spec[0],spec[1]);
-				snprintf(buffer,len,fmt,cvalue.r,cvalue.i,uname);
+				snprintf(buffer,len,fmt,cvalue.Re(),cvalue.Im(),uname);
 				break;
 			case A: // degrees
 				sprintf(fmt,"%%.%c%c%%+.%c%cd %%s",spec[0],spec[1],spec[0],spec[1]);
-				snprintf(buffer,len,fmt,complex_get_mag(cvalue),complex_get_arg(cvalue)*180/PI,uname);
+				snprintf(buffer,len,fmt,cvalue.Mag(),cvalue.Arg()*180/PI,uname);
 				break;
 			case R: // radians
 				sprintf(fmt,"%%.%c%c%%+.%c%cr %%s",spec[0],spec[1],spec[0],spec[1]);
-				snprintf(buffer,len,fmt,complex_get_mag(cvalue),complex_get_arg(cvalue),uname);
+				snprintf(buffer,len,fmt,cvalue.Mag(),cvalue.Arg(),uname);
 				break;
 			case 'M': // magnitude only
 				sprintf(fmt,"%%.%c%c %%s",spec[0],spec[1]);
-				snprintf(buffer,len,fmt,complex_get_mag(cvalue),uname);
+				snprintf(buffer,len,fmt,cvalue.Mag(),uname);
 				break;
 			case 'D': // angle only in degrees
 				sprintf(fmt,"%%.%c%c deg",spec[0],spec[1]);
-				snprintf(buffer,len,fmt,complex_get_arg(cvalue)*180/PI,uname);
+				snprintf(buffer,len,fmt,cvalue.Arg()*180/PI,uname);
 				break;
 			case 'R': // angle only in radians
 				sprintf(fmt,"%%.%c%c rad",spec[0],spec[1]);
-				sprintf(buffer,fmt,complex_get_arg(cvalue),uname);
+				sprintf(buffer,fmt,cvalue.Arg(),uname);
 				break;
 			case 'X': // real part only
 				sprintf(fmt,"%%.%c%c %%s",spec[0],spec[1]);
-				sprintf(buffer,fmt,cvalue.r,uname);
+				sprintf(buffer,fmt,cvalue.Re(),uname);
 				break;
 			case 'Y': // imaginary part only
 				sprintf(fmt,"%%.%c%c %%s",spec[0],spec[1]);
-				sprintf(buffer,fmt,cvalue.i,uname);
+				sprintf(buffer,fmt,cvalue.Im(),uname);
 				break;
 			default:
-				output_error("object '%s' property '%s' complex angle notation '%c' is not valid", arg1, arg2, spec[2]=='\0' ? cvalue.f : spec[3]);
+				output_error("object '%s' property '%s' complex angle notation '%c' is not valid", arg1, arg2, spec[2]=='\0' ? cvalue.Notation() : spec[3]);
 				return 0;
 			}
 		}
@@ -876,7 +878,7 @@ int http_xml_request(HTTPCNX *http,char *uri)
 			char buffer[1024];
 			http_format(http,"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n");
 			http_format(http,"<properties>\n");
-#define PROPERTY(N,F,V) http_format(http,"\t<property>\n\t\t<name>"N"</name>\n\t\t<value>"F"</value>\n\t</property>\n", V)
+#define PROPERTY(N,F,V) http_format(http,"\t<property>\n\t\t<name>N##</name>\n\t\t<value>F##</value>\n\t</property>\n", V)
 			PROPERTY("id","%d",obj->id);
 			PROPERTY("class","%s",obj->oclass->name);
 			if ( obj->name ) PROPERTY("name","%s",object_name(obj,buffer,sizeof(buffer)));
@@ -969,8 +971,8 @@ int http_json_request(HTTPCNX *http,char *uri)
 		/* find the variable */
 		if (global_getvar(arg1,buffer,sizeof(buffer))==NULL)
 		{
-			http_format(http,"{\"error\": \"globalvar not found\", \"query\": \"%s\"}\n", arg1);
-			http_type(http,"text/json");
+			http_format(http, const_cast<char *>("{\"error\": \"globalvar not found\", \"query\": \"%s\"}\n"), arg1);
+			http_type(http, const_cast<char *>("text/json"));
 			return 1;
 		}
 
@@ -978,9 +980,9 @@ int http_json_request(HTTPCNX *http,char *uri)
 		if (value) global_setvar(arg1,value);
 
 		/* post the response */
-		http_format(http,"{\"%s\": \"%s\"}\n",
+		http_format(http, const_cast<char *>("{\"%s\": \"%s\"}\n"),
 			arg1, http_unquote(buffer));
-		http_type(http,"text/json");
+		http_type(http, const_cast<char *>("text/json"));
 		return 1;
 
 	/* get object property */
@@ -994,8 +996,8 @@ int http_json_request(HTTPCNX *http,char *uri)
 			obj = object_find_by_id(atoi(id+1));
 		if ( obj==NULL )
 		{
-			http_format(http,"{\"error\": \"object not found\", \"query\": \"%s\"}\n", arg1);
-			http_type(http,"text/json");
+			http_format(http, const_cast<char *>("{\"error\": \"object not found\", \"query\": \"%s\"}\n"), arg1);
+			http_type(http, const_cast<char *>("text/json"));
 			return 1;
 		}
 
@@ -1004,14 +1006,14 @@ int http_json_request(HTTPCNX *http,char *uri)
 			bool use_tuple = strcmp(arg2,"*")==0 || strcmp(arg2,"*[tuple]")==0;
 			if ( !use_tuple && strcmp(arg2,"*[dict]")!=0 )
 			{
-				http_format(http,"{\"error\": \"invalid '*' query format\", \"query\": \"%s\"}\n", arg2);
-				http_type(http,"text/json");
+				http_format(http, const_cast<char *>("{\"error\": \"invalid '*' query format\", \"query\": \"%s\"}\n"), arg2);
+				http_type(http, const_cast<char *>("text/json"));
 				return 1;
 			}
 			PROPERTY *prop;
 			char buffer[1024];
-			if ( use_tuple ) http_format(http,"["); else http_format(http,"{");
-#define PROPERTY(N,F,V) {if ( use_tuple ) http_format(http,"\n\t{\""N"\": \""F"\"},", V); else http_format(http," \""N"\": \""F"\",", V);}
+			if ( use_tuple ) http_format(http,"["); else http_format(http, const_cast<char *>("{"));
+#define PROPERTY(N,F,V) {if ( use_tuple ) http_format(http,"\n\t{\"N##\": \"F##\"},", V); else http_format(http," \"N##\": \"F##\",", V);}
 			PROPERTY("id","%d",obj->id);
 			PROPERTY("class","%s",obj->oclass->name);
 			if ( obj->name ) PROPERTY("name","%s",object_name(obj,buffer,sizeof(buffer)));
@@ -1039,7 +1041,8 @@ int http_json_request(HTTPCNX *http,char *uri)
 			{
 				if ( prop!=obj->oclass->pmap)
 				{
-					if ( use_tuple ) http_format(http,"%s\n",","); else http_format(http,"%s ",",");
+					if ( use_tuple ) http_format(http, const_cast<char *>("%s\n"), ","); else http_format(http,
+																										  const_cast<char *>("%s "), ",");
 				}
 				else
 				{
@@ -1048,19 +1051,21 @@ int http_json_request(HTTPCNX *http,char *uri)
 				if ( object_get_value_by_name(obj,prop->name,buffer,sizeof(buffer))>0 )
 				{
 					if ( use_tuple )
-						http_format(http,"\t{\"%s\": \"%s\"}",prop->name,http_unquote(buffer));
+						http_format(http, const_cast<char *>("\t{\"%s\": \"%s\"}"), prop->name, http_unquote(buffer));
 					else
-						http_format(http,"\"%s\": \"%s\"",prop->name,http_unquote(buffer));
+						http_format(http, const_cast<char *>("\"%s\": \"%s\""), prop->name, http_unquote(buffer));
 				}
 				else
 				{
-					http_format(http,"{\"error\" : \"unable to get property value\", \"object\": \"%s\", \"property\": \"%s\"}\n", arg1,arg2);
-					http_type(http,"text/json");
+					http_format(http,
+								const_cast<char *>("{\"error\" : \"unable to get property value\", \"object\": \"%s\", \"property\": \"%s\"}\n"), arg1, arg2);
+					http_type(http, const_cast<char *>("text/json"));
 					return 1;
 				}
 			}
 #undef PROPERTY
-			if ( use_tuple ) http_format(http,"\n\t]\n"); else http_format(http,"}\n");
+			if ( use_tuple ) http_format(http, const_cast<char *>("\n\t]\n")); else http_format(http,
+																								const_cast<char *>("}\n"));
 		}
 		else
 		{
@@ -1068,27 +1073,29 @@ int http_json_request(HTTPCNX *http,char *uri)
 			PROPERTYSPEC *spec = prop ? property_getspec(prop->ptype) : NULL;
 			if ( !get_value_with_unit(obj,arg1,arg2,buffer,sizeof(buffer)) )
 			{
-				http_format(http,"{\"error\": \"property not found\", \"object\": \"%s\", \"property\": \"%s\"}\n", arg1,arg2);
-				http_type(http,"text/json");
+				http_format(http,
+							const_cast<char *>("{\"error\": \"property not found\", \"object\": \"%s\", \"property\": \"%s\"}\n"), arg1, arg2);
+				http_type(http, const_cast<char *>("text/json"));
 				return 1;
 			}
 
 			/* assignment, if any */
 			if ( value && !object_set_value_by_name(obj,arg2,value) )
 			{
-				http_format(http,"{\"error\": \"property write failed\", \"object\": \"%s\", \"property\": \"%s\", \"value\": \"%s\"}\n", arg1,arg2,value);
-				http_type(http,"text/json");
+				http_format(http,
+							const_cast<char *>("{\"error\": \"property write failed\", \"object\": \"%s\", \"property\": \"%s\", \"value\": \"%s\"}\n"), arg1, arg2, value);
+				http_type(http, const_cast<char *>("text/json"));
 				return 1;
 			}
 
 			/* post the response */
-			http_format(http,"{\t\"object\" : \"%s\", \n", arg1);
-			http_format(http,"\t\"name\" : \"%s\", \n", arg2);
+			http_format(http, const_cast<char *>("{\t\"object\" : \"%s\", \n"), arg1);
+			http_format(http, const_cast<char *>("\t\"name\" : \"%s\", \n"), arg2);
 			if ( spec!=NULL ) 
-				http_format(http,"\t\"type\" : \"%s\", \n", spec->name);
-			http_format(http,"\t\"value\" : \"%s\"\n}\n", http_unquote(buffer));
+				http_format(http, const_cast<char *>("\t\"type\" : \"%s\", \n"), spec->name);
+			http_format(http, const_cast<char *>("\t\"value\" : \"%s\"\n}\n"), http_unquote(buffer));
 		}
-		http_type(http,"text/json");
+		http_type(http, const_cast<char *>("text/json"));
 		return 1;
 
 	default:
@@ -1200,7 +1207,7 @@ int http_read_request(HTTPCNX *http, char *uri)
  **/
 int http_gui_request(HTTPCNX *http,char *uri)
 {
-	gui_set_html_stream((void*)http,http_format);
+	gui_set_html_stream((void*)http, reinterpret_cast<GUISTREAMFN>(http_format));
 	if (gui_html_output_page(uri)>=0)
 	{
 		http_type(http,"text/html");
@@ -1758,7 +1765,7 @@ int http_kml_request(HTTPCNX *http, char *action)
 			http_status(http,HTTP_NOTACCEPTABLE);
 			return 0;
 		}
-		p = strchr(propname,"=");
+		p = strchr(propname,'=');
 		object_get_value_by_name(obj,propname,buffer,sizeof(buffer));
 		if ( p!=NULL )
 		{	// set the value
@@ -1877,7 +1884,7 @@ int http_favicon(HTTPCNX *http)
  **/
 void *http_response(void *ptr)
 {
-	SOCKET fd = (SOCKET)ptr;
+	SOCKET fd = *static_cast<SOCKET*>(ptr);
 	HTTPCNX *http = http_create(fd);
 	size_t len;
 	int content_length = 0;
@@ -1886,9 +1893,10 @@ void *http_response(void *ptr)
 	int keep_alive = 0;
 	char *connection = NULL;
 	char *accept = NULL;
+	typedef enum {INTEGER,STRING} response_type;
 	struct s_map {
 		char *name;
-		enum {INTEGER,STRING} type;
+		response_type type;
 		void *value;
 		size_t sz;
 	} map[] = {
@@ -1958,7 +1966,7 @@ void *http_response(void *ptr)
 			http_send(http);
 		}
 		else {
-			static struct s_map {
+			static struct s_path_map {
 				char *path;
 				int (*request)(HTTPCNX*,char*);
 				char *success;

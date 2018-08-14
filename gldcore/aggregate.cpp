@@ -328,15 +328,15 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 	return result;
 }
 
-double mag(complex *x)
-{
-	return sqrt(x->r*x->r + x->i*x->i);
-}
-
-double arg(complex *x)
-{
-	return (x->r==0) ? (x->i>0 ? PI/2 : (x->i==0 ? 0 : -PI/2)) : ((x->i>0) ? (x->r>0 ? atan(x->i/x->r) : PI-atan(x->i/x->r)) : (x->r>0 ? -atan(x->i/x->r) : PI+atan(x->i/x->r)));
-}
+//double mag(complex *x)
+//{
+//	return sqrt(x->r*x->r + x->i*x->i);
+//}
+//
+//double arg(complex *x)
+//{
+//	return (x->r==0) ? (x->i>0 ? PI/2 : (x->i==0 ? 0 : -PI/2)) : ((x->i>0) ? (x->r>0 ? atan(x->i/x->r) : PI-atan(x->i/x->r)) : (x->r>0 ? -atan(x->i/x->r) : PI+atan(x->i/x->r)));
+//}
 
 /** This function performs an aggregate calculation given by the aggregation 
  **/
@@ -367,11 +367,16 @@ double aggregate_value(AGGREGATION *aggr) /**< the aggregation to perform */
 			if (pcomplex!=NULL)
 			{
 				switch (aggr->part) {
-				case AP_REAL: value=pcomplex->r; break;
-				case AP_IMAG: value=pcomplex->i; break;
-				case AP_MAG: value=mag(pcomplex); break;
-				case AP_ARG: value=arg(pcomplex); break;
-				case AP_ANG: value=arg(pcomplex)*180/PI;  break;
+//				case AP_REAL: value=pcomplex->r; break;
+//				case AP_IMAG: value=pcomplex->i; break;
+//				case AP_MAG: value=mag(pcomplex); break;
+//				case AP_ARG: value=arg(pcomplex); break;
+//				case AP_ANG: value=arg(pcomplex)*180/PI;  break;
+				case AP_REAL: value=pcomplex->Re(); break;
+				case AP_IMAG: value=pcomplex->Im(); break;
+				case AP_MAG: value=pcomplex->Mag(); break;
+				case AP_ARG: value=pcomplex->Arg(); break;
+				case AP_ANG: value=pcomplex->Arg()*180/PI;  break;
 				default: pcomplex = NULL; break; /* invalidate the result */
 				}
 			}
@@ -451,8 +456,8 @@ double aggregate_value(AGGREGATION *aggr) /**< the aggregation to perform */
 			}
 		}
 	}
-	switch (aggr->op) {
 		double v = 0.0, t = 0.0, m = 0.0;
+	switch (aggr->op) {
 	case AGGR_GAMMA:
 		return 1 + numerator/(denominator-numerator*log(secondary));
 	case AGGR_STD:

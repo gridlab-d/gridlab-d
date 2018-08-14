@@ -2,6 +2,7 @@
  */
 
 #include <stdio.h>
+#include <cctype>
 
 
 #include "output.h"
@@ -160,7 +161,7 @@ size_t hread(char *buffer, size_t size, HTTP* http)
 /* URL access */
 HTTPRESULT *http_new_result(void)
 {
-	HTTPRESULT *result = malloc(sizeof(HTTPRESULT));
+	HTTPRESULT *result = (HTTPRESULT *) malloc(sizeof(HTTPRESULT));
 	result->body.data = NULL;
 	result->body.size = 0;
 	result->header.data = NULL;
@@ -169,8 +170,9 @@ HTTPRESULT *http_new_result(void)
 	return result;
 }
 
-void http_delete_result(HTTPRESULT *result)
+void http_delete_result(void *result_in)
 {
+    HTTPRESULT *result = reinterpret_cast<HTTPRESULT*>(result_in);
 	if ( result->body.size>0 )
 		free(result->body.data);
 	if ( result->header.size>0 )
@@ -178,7 +180,7 @@ void http_delete_result(HTTPRESULT *result)
 	free(result);
 }
 
-HTTPRESULT *http_read(char *url, int maxlen)
+void *http_read(char *url, int maxlen)
 {
 	HTTPRESULT *result = http_new_result();
 	
@@ -220,7 +222,7 @@ HTTPRESULT *http_read(char *url, int maxlen)
 //					}
 //					else
 //					{
-						result->body.data = malloc(result->body.size+1);
+						result->body.data = (char*) malloc(result->body.size+1);
 //					}
 					memcpy(result->body.data,data,result->body.size);
 					result->body.data[result->body.size] = '\0';
@@ -231,7 +233,7 @@ HTTPRESULT *http_read(char *url, int maxlen)
 					result->body.size = 0;
 				}
 				result->header.size = (int)hlen;
-				result->header.data = malloc(hlen+1);
+				result->header.data = (char*) malloc(hlen+1);
 				strcpy(result->header.data,buffer);
 				result->status = 0;
 			}
@@ -250,7 +252,7 @@ HTTPRESULT *http_read(char *url, int maxlen)
 		else
 		{
 			result->body.size = filelength(fileno(fp))+1;
-			result->body.data = malloc(result->body.size);
+			result->body.data = (char*) malloc(result->body.size);
 			memset(result->body.data,0,result->body.size);
 			if ( fread(result->body.data,1,result->body.size,fp)<=0 )
 			{
@@ -262,7 +264,7 @@ HTTPRESULT *http_read(char *url, int maxlen)
 		}
 		fclose(fp);
 	}
-	return result;
+	return static_cast<void*>(result);
 }
 const char * http_get_header_data(HTTPRESULT *result, const char* param)
 {
@@ -290,7 +292,7 @@ static char wget_cachedir[1024]="-";
 void http_get_options(void)
 {
 	char *option=NULL, *last=NULL;
-	while ( (option=strtok_s(option==NULL?global_wget_options:NULL,";",&last))!=NULL )
+	while ( (option=strtok_r(((option==NULL)?global_wget_options.get_string():NULL),";",&last))!=NULL )
 	{
 		char name[1024], value[1024];
 		int n = sscanf(option,"%[^:]:%[^\n\r]",name,value);
@@ -394,7 +396,7 @@ int http_saveas(char *url, char *file)
 //	if ( wget_update==WU_NEVER && stat(file,&st)==0 )
 //		return 1;
 
-	result = http_read(url,0x4000); /* read only enough to get header */
+	result = static_cast<HTTPRESULT *>(http_read(url, 0x4000)); /* read only enough to get header */
 	if ( result==NULL )
 	{
 		output_error("http_saveas(char *url='%s', char *file='%s'): hopen failed", url, file);
@@ -417,7 +419,7 @@ int http_saveas(char *url, char *file)
 //		if ( wget_update==WU_NEVER && st.st_mtime>0 && st.st_mtime>modtime )
 //			return 1;
 	
-		result = http_read(url,wget_maxsize);
+		result = static_cast<HTTPRESULT *>(http_read(url, wget_maxsize));
 		fp = fopen(file,"w");
 	
 		if ( fp==NULL )

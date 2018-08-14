@@ -316,7 +316,7 @@ DT delta_update(void)
 					if ( d_oclass->update )	/* Make sure it exists - init should handle this */
 					{
 						/* Call the object-level interupdate */
-						interupdate_mode_result = d_oclass->update(d_obj,global_clock,global_deltaclock,timestep,delta_iteration_count);
+						interupdate_mode_result = static_cast<SIMULATIONMODE>(d_oclass->update(d_obj,global_clock,global_deltaclock,timestep,delta_iteration_count));
 
 						/* Check the status and handle appropriately */
 						switch ( interupdate_mode_result ) {

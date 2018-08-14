@@ -1,6 +1,6 @@
 project(commercial)
 
-include_directories(../gldcore)
+include_directories(../${GLDCORE_LOC})
 
 add_library(${PROJECT_NAME} SHARED
         commercial/hvac.cpp

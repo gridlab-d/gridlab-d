@@ -26,7 +26,7 @@
 #error("gldcore/build.h was not updated properly (REV_YEAR is missing) - try deleting it and rebuilding again")
 #endif
 
-const char *version_copyright(void)
+char *version_copyright(void)
 {
 	static char buffer[1024];
 	sprintf(buffer,"Copyright (C) 2004-%d\nBattelle Memorial Institute\nAll Rights Reserved", REV_YEAR);
@@ -45,7 +45,7 @@ unsigned int version_patch(void)
 {
 	return REV_PATCH;
 }
-const unsigned int version_build(void)
+unsigned int version_build(void)
 {
 	return BUILDNUM;
 }

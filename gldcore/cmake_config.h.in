@@ -125,6 +125,9 @@
 /* Define to 1 if you have the `mkdir' function. */
 #cmakedefine HAVE_MKDIR 1
 
+/* Define to 1 if the MySQL library is present. */
+#cmakedefine HAVE_MYSQL 1
+
 /* Define to 1 if the Ncurses library is present */
 #cmakedefine HAVE_NCURSES 1
 

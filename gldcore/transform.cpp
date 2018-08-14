@@ -1,6 +1,7 @@
 /* transform.c
  */
 
+#include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -243,13 +244,13 @@ int transform_add_filter(OBJECT *target_obj,		/* pointer to the target object (l
 	memset(xform->x,0,sizeof(double)*(tf->n-1));
 
 	// build tranform
-	xform->source = object_get_addr(source_obj,source_prop->name);
-	xform->source_type = get_source_type(source_prop);
+	xform->source = static_cast<double *>(object_get_addr(source_obj, source_prop->name));
+	xform->source_type = static_cast<TRANSFORMSOURCE>(get_source_type(source_prop));
 	xform->target_obj = target_obj;
 	xform->target_prop = target_prop;
 	xform->function_type = XT_FILTER;
 	xform->tf = tf;
-	xform->y = object_get_addr(target_obj,target_prop->name);
+	xform->y = static_cast<double *>(object_get_addr(target_obj, target_prop->name));
 	xform->t2 = (int64)(global_starttime/tf->timestep)*tf->timestep + tf->timeskew;
 	xform->next = schedule_xformlist;
 	schedule_xformlist = xform;
@@ -265,7 +266,7 @@ int transform_add_filter(OBJECT *target_obj,		/* pointer to the target object (l
 
 int transform_add_external(	OBJECT *target_obj,		/* pointer to the target object (lhs) */
 							PROPERTY *target_prop,	/* pointer to the target property */
-							char *function,			/* function name to use */
+							const char *function,			/* function name to use */
 							OBJECT *source_obj,		/* object containing source value (rhs) */
 							PROPERTY *source_prop)		/* schedule object associated with target value, used if stype == XS_SCHEDULE */
 {
@@ -284,7 +285,7 @@ int transform_add_external(	OBJECT *target_obj,		/* pointer to the target object
 	xform->function_type = XT_EXTERNAL;
 
 	/* apply source type */
-	xform->source_type = get_source_type(source_prop);
+	xform->source_type = static_cast<TRANSFORMSOURCE>(get_source_type(source_prop));
 
 	/* build lhs (target) */
 	/* TODO extend to support multiple targets, e.g., complex */
@@ -326,7 +327,7 @@ int transform_add_linear(	TRANSFORMSOURCE stype,	/* specifies the type of source
 	xform->source_schedule = sched;
 	xform->target_obj = obj;
 	xform->target_prop = prop;
-	xform->target = target;
+	xform->target = static_cast<double *>(target);
 	xform->scale = scale;
 	xform->bias = bias;
 	xform->function_type = XT_LINEAR;
@@ -341,7 +342,7 @@ void cast_from_double(PROPERTYTYPE ptype, void *addr, double value)
 	switch ( ptype ) {
 	case PT_void: break;
 	case PT_double: *(double*)addr = value; break;
-	case PT_complex: ((complex*)addr)->r = value; ((complex*)addr)->i = 0; break;
+	case PT_complex: ((complex*)addr)->SetReal(value); ((complex*)addr)->SetImag(0); break;
 	case PT_bool: *(int32*)addr = (value!=0); 
 	case PT_int16: *(int16*)addr = (int16)value; break;
 	case PT_int32: *(int32*)addr = (int32)value; break;
@@ -352,7 +353,7 @@ void cast_from_double(PROPERTYTYPE ptype, void *addr, double value)
 	case PT_timestamp: *(int64*)addr = (int64)value; break;
 	case PT_float: *(float*)addr = (float)value; break;
 	case PT_loadshape: ((loadshape*)addr)->load = value; break;
-	case PT_enduse: ((enduse*)addr)->total.r = value; break;
+	case PT_enduse: ((enduse*)addr)->total.SetReal(value); break;
 	default: break;
 	}
 }
@@ -371,7 +372,7 @@ TIMESTAMP apply_filter(TRANSFERFUNCTION *f,	///< transfer function
 	unsigned int i;
 
 	// observable form
-	if ( n>sizeof(dx)/sizeof(double) ) throw_exception("transfer function %s order too high", f->name);
+	if ( n>sizeof(dx)/sizeof(double) ) throw_exception(const_cast<char *>("transfer function %s order too high"), f->name);
 	for ( i=0 ; i<n ; i++ )
 	{
 		if ( i==0 )

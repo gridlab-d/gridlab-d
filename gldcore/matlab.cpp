@@ -19,7 +19,7 @@
 #include "class.h"
 #include "object.h"
 
-STATUS matlab_startup(int argc, char *argv)
+extern STATUS matlab_startup(int argc, char *argv[])
 {
 	if (system("matlab -r gl")==0)
 		return SUCCESS;
@@ -27,7 +27,7 @@ STATUS matlab_startup(int argc, char *argv)
 		return FAILED;
 }
 
-MODULE *load_java_module(const char *file, /**< module filename, searches \p PATH */
+extern MODULE *load_java_module(const char *file, /**< module filename, searches \p PATH */
 									  int argc, /**< count of arguments in \p argv */
 									  char *argv[]) /**< arguments passed from the command line */
 {
@@ -35,7 +35,7 @@ MODULE *load_java_module(const char *file, /**< module filename, searches \p PAT
 	return NULL;
 }
 
-MODULE *load_python_module(const char *file, /**< module filename, searches \p PATH */
+extern MODULE *load_python_module(const char *file, /**< module filename, searches \p PATH */
 									  int argc, /**< count of arguments in \p argv */
 									  char *argv[]) /**< arguments passed from the command line */
 {

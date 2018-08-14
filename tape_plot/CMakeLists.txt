@@ -1,6 +1,6 @@
 project(tape_plot)
 
-include_directories(../gldcore)
+include_directories(../${GLDCORE_LOC})
 
 add_library(${PROJECT_NAME} SHARED
         tape_plot/tape_plot.cpp

@@ -247,15 +247,22 @@ PROPERTY *class_add_extended_property(CLASS *oclass,      /**< the class to whic
                                       PROPERTYTYPE ptype, /**< the type of the property */
                                       char *unit)         /**< the unit of the property */
 {
-	PROPERTY *prop = malloc(sizeof(PROPERTY));
+	PROPERTY *prop = (PROPERTY*) malloc(sizeof(PROPERTY));
 	UNIT *pUnit = NULL;
 
-	TRY {
+//	TRY {
+//		if (unit)
+//			pUnit = unit_find(unit);
+//	} CATCH (char *msg) {
+//		// will get picked up later
+//	} ENDCATCH;
+
+	try {
 		if (unit)
 			pUnit = unit_find(unit);
-	} CATCH (char *msg) {
+	} catch (char *msg) {
 		// will get picked up later
-	} ENDCATCH;
+	};
 
 	if (prop==NULL)
 		throw_exception("class_add_extended_property(oclass='%s', name='%s', ...): memory allocation failed", oclass->name, name);
@@ -342,7 +349,7 @@ PROPERTYTYPE class_get_propertytype_from_typename(char *name) /**< a string cont
 	for (i=0; i<sizeof(property_type)/sizeof(property_type[0]); i++)
 	{
 		if (strcmp(property_type[i].name,name)==0)
-			return i;
+			return static_cast<PROPERTYTYPE>(i);
 	}
 	return PT_void;
 }
@@ -428,7 +435,7 @@ CLASS *class_register(MODULE *module,        /**< the module that implements the
 	int b = sizeof(property_type[0]);
 	int c = _PT_LAST - _PT_FIRST - 1;
 
-	if (_PT_LAST-_PT_FIRST-1!=sizeof(property_type)/sizeof(property_type[0]))
+	if (_PT_LAST-_PT_FIRST-1!=sizeof(property_type)/sizeof(property_type[0])) // This is always false.
 	{
 		output_fatal("property_type[] in class.c has an incorrect number of members (%i vs %i)", a/b, c);
 		/* TROUBLESHOOT
@@ -643,8 +650,10 @@ int class_define_map(CLASS *oclass, /**< the object class */
 	PROPERTY *prop=NULL;
 	va_start(arg,oclass);
 	errno = 0;
-	while ((proptype=va_arg(arg,PROPERTYTYPE))!=0)
+	int prop_buffer;
+	while ((prop_buffer=va_arg(arg,int))!=0)
 	{
+	    proptype = static_cast<PROPERTYTYPE>(prop_buffer);
 		if (proptype>_PT_LAST)
 		{
 			if (proptype==PT_INHERIT)
@@ -760,7 +769,7 @@ int class_define_map(CLASS *oclass, /**< the object class */
 			else if (proptype==PT_KEYWORD && prop->ptype==PT_set)
 			{
 				char *keyword = va_arg(arg,char*);
-				unsigned int64 keyvalue = va_arg(arg, int64);
+				unsigned int64 keyvalue = va_arg(arg, uint64);
 				if (!class_define_set_member(oclass,prop->name,keyword,keyvalue))
 				{
 					errno = EINVAL;
@@ -775,7 +784,8 @@ int class_define_map(CLASS *oclass, /**< the object class */
 			}
 			else if (proptype==PT_ACCESS)
 			{
-				PROPERTYACCESS pa = va_arg(arg,PROPERTYACCESS);
+                int prop_buffer = va_arg(arg,int);
+				PROPERTYACCESS pa = PROPERTYACCESS(prop_buffer);
 				switch (pa) {
 				case PA_PUBLIC:
 				case PA_PROTECTED:
@@ -828,10 +838,23 @@ int class_define_map(CLASS *oclass, /**< the object class */
 			else if (proptype==PT_UNITS)
 			{
 				char *unitspec = va_arg(arg,char*);
-				TRY {
+//				TRY {
+//					if ((prop->unit = unit_find(unitspec))==NULL)
+//						throw_exception("unable to define unit '%s'", unitspec);
+//				} CATCH (const char *msg) {
+//						output_error("class_define_map(oclass='%s',...): property %s unit '%s' is not recognized: %s",oclass->name, prop->name,unitspec,msg);
+//						/*	TROUBLESHOOT
+//							A class is attempting to publish a variable using a unit that is not defined.
+//							This is caused by an incorrect unit specification in a variable publication (in C++) or declaration (in GLM).
+//							Units are defined in the unit file located in the GridLAB-D <b>etc</b> folder.
+//							This error immediately follows a throw event with the same message.
+//						 */
+//				} ENDCATCH;
+
+				try {
 					if ((prop->unit = unit_find(unitspec))==NULL)
-						throw_exception("unable to define unit '%s'", unitspec); 
-				} CATCH (const char *msg) {
+						throw_exception("unable to define unit '%s'", unitspec);
+				} catch (const char *msg) {
 						output_error("class_define_map(oclass='%s',...): property %s unit '%s' is not recognized: %s",oclass->name, prop->name,unitspec,msg);
 						/*	TROUBLESHOOT
 							A class is attempting to publish a variable using a unit that is not defined.
@@ -839,7 +862,7 @@ int class_define_map(CLASS *oclass, /**< the object class */
 							Units are defined in the unit file located in the GridLAB-D <b>etc</b> folder.
 							This error immediately follows a throw event with the same message.
 						 */
-				} ENDCATCH;
+				};
 			}
 			else if (proptype==PT_DESCRIPTION)
 			{

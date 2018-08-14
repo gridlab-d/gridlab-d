@@ -99,9 +99,9 @@ json::json(MODULE *module) : native(module)
 		NULL)<1)
 			throw "connection/json::json(MODULE*): unable to publish properties of connection:json";
 
-	if ( !gl_publish_loadmethod(oclass,"link",loadmethod_json_link) )
+	if ( !gl_publish_loadmethod(oclass, "link", reinterpret_cast<int (*)(void *, char *)>(loadmethod_json_link)) )
 		throw "connection/json::json(MODULE*): unable to publish link method of connection:json";
-	if ( !gl_publish_loadmethod(oclass,"option",loadmethod_json_option) )
+	if ( !gl_publish_loadmethod(oclass, "option", reinterpret_cast<int (*)(void *, char *)>(loadmethod_json_option)) )
 		throw "connection/json::json(MODULE*): unable to publish option method of connection:json";
 }
 

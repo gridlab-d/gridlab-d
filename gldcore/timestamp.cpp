@@ -28,6 +28,7 @@
 #include <math.h>
 #include <time.h>
 #include <ctype.h>
+#include <cwctype>
 #include "platform.h"
 #include "timestamp.h"
 #include "exception.h"
@@ -55,7 +56,7 @@ typedef struct{
 	int month, nth, day, hour, minute;
 } SPEC; /**< the specification of a DST event */
 
-static daysinmonth[] = {31,28,31,30,31,30,31,31,30,31,30,31};
+static int daysinmonth[] = {31,28,31,30,31,30,31,31,30,31,30,31};
 static char *dow[] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
 
 #define YEAR0 (1970) /* basis year is 1970 */
@@ -578,7 +579,7 @@ int strdatetime(DATETIME *t, char *buffer, int size){
 				t->day, t->month, t->year, t->hour, t->minute, t->second,t->tz);
 		}
 	} else {
-		THROW("global_dateformat=%d is not valid", global_dateformat);
+		throw_exception(const_cast<char *>("global_dateformat=%d is not valid"), global_dateformat);
 		/* TROUBLESHOOT
 			The value of the global variable 'global_dateformat' is not valid.
 			Check for attempts to set this variable and make sure that is one of the valid
@@ -721,7 +722,7 @@ char *tz_locale(char *country, char *province, char *city)
 	int len = sprintf(target,"%s/%s/%s",country,province,city);
 
 	if(find_file(TZFILE, NULL, R_OK,filepath,sizeof(filepath)) == NULL){
-		THROW("timezone specification file %s not found in GLPATH=%s: %s", TZFILE, getenv("GLPATH"), strerror(errno));
+		throw_exception(const_cast<char *>("timezone specification file %s not found in GLPATH=%s: %s"), TZFILE, getenv("GLPATH"), strerror(errno));
 		/* TROUBLESHOOT
 			The system could not locate the timezone file <code>tzinfo.txt</code>.
 			Check that the <code>etc</code> folder is included in the '''GLPATH''' environment variable and try again.
@@ -729,7 +730,7 @@ char *tz_locale(char *country, char *province, char *city)
 	}
 	fp = fopen(filepath,"r");
 	if(fp == NULL){
-		THROW("%s: access denied: %s", filepath, strerror(errno));
+		throw_exception(const_cast<char *>("%s: access denied: %s"), filepath, strerror(errno));
 		/* TROUBLESHOOT
 			The system was unable to read the timezone file.  Check that the file has the correct permissions and try again.
 		 */
@@ -750,7 +751,8 @@ char *tz_locale(char *country, char *province, char *city)
 		else
 			sscanf(buffer, "%[^,]", tzname);
 	}
-	THROW("tz_locale(char *country='%s', char *province='%s', char *city='%s'): not tzinfo entry found", country, province, city);
+	throw_exception(
+			const_cast<char *>("tz_locale(char *country='%s', char *province='%s', char *city='%s'): not tzinfo entry found"), country, province, city);
 	return NULL;
 }
 
@@ -863,7 +865,7 @@ void load_tzspecs(char *tz){
 	pTzname = tz_name(tz);
 
 	if(pTzname == 0){
-		THROW("timezone '%s' was not understood by tz_name.", tz);
+		throw_exception(const_cast<char *>("timezone '%s' was not understood by tz_name."), tz);
 		/* TROUBLESHOOT
 			The specific timezone is not valid.
 			Try using a valid timezone or add the desired timezone to the timezone file <code>.../etc/tzinfo.txt</code> and try again.
@@ -876,7 +878,7 @@ void load_tzspecs(char *tz){
 	strncpy(tzdst, tz_dst(current_tzname), sizeof(tzdst));
 
 	if(find_file(TZFILE, NULL, R_OK,filepath,sizeof(filepath)) == NULL){
-		THROW("timezone specification file %s not found in GLPATH=%s: %s", TZFILE, getenv("GLPATH"), strerror(errno));
+		throw_exception(const_cast<char *>("timezone specification file %s not found in GLPATH=%s: %s"), TZFILE, getenv("GLPATH"), strerror(errno));
 		/* TROUBLESHOOT
 			The system could not locate the timezone file <code>tzinfo.txt</code>.
 			Check that the <code>etc</code> folder is included in the '''GLPATH''' environment variable and try again.
@@ -886,7 +888,7 @@ void load_tzspecs(char *tz){
 	fp = fopen(filepath,"r");
 
 	if(fp == NULL){
-		THROW("%s: access denied: %s", filepath, strerror(errno));
+		throw_exception(const_cast<char *>("%s: access denied: %s"), filepath, strerror(errno));
 		/* TROUBLESHOOT
 			The system was unable to read the timezone file.  Check that the file has the correct permissions and try again.
 		 */
@@ -948,7 +950,7 @@ void load_tzspecs(char *tz){
 			set_tzspec(year, current_tzname, &start, &end);
 			found = 1;
 		} else {
-			THROW("%s(%d): %s is not a valid timezone spec", filepath, linenum, buffer);
+			throw_exception(const_cast<char *>("%s(%d): %s is not a valid timezone spec"), filepath, linenum, buffer);
 			/* TROUBLESHOOT
 				The timezone specification is not valid.  Verify the syntax of the timezone spec and that it is defined in the timezone file
 				<code>.../etc/tzinfo.txt</code> or add it, and try again.
@@ -985,7 +987,7 @@ char *timestamp_set_tz(char *tz_name)
 		static unsigned int tzlock=0;
 
 		if (strcmp(_tzname[0], "") == 0){
-			THROW("timezone not identified");
+			throw_exception(const_cast<char *>("timezone not identified"));
 			/* TROUBLESHOOT
 				An attempt to use timezones was made before the timezome has been specified.  Try adding or moving the
 				timezone spec to the top of the <code>clock</code> directive and try again.  Alternatively, you can set the '''TZ''' environment
@@ -1059,7 +1061,7 @@ int convert_from_timestamp_delta(TIMESTAMP ts, DELTAT delta_t, char *buffer, int
 					len = strdatetime(&t,temp,sizeof(temp));
 				}
 				else
-					THROW("%"FMT_INT64"d is an invalid timestamp", ts);
+					throw_exception("%" FMT_INT64 "d is an invalid timestamp", ts);
 					/* TROUBLESHOOT
 						An attempt to convert a timestamp to a date/time string has failed because the timezone isn't valid.
 						This is most likely an internal error and should be reported.
@@ -1080,7 +1082,7 @@ int convert_from_timestamp_delta(TIMESTAMP ts, DELTAT delta_t, char *buffer, int
 	else if (ts==0)
 		len=sprintf(temp,"%s","INIT");
 	else
-		len=sprintf(temp,"%"FMT_INT64"d",ts);
+		len=sprintf(temp,"%" FMT_INT64 "d",ts);
 	if (len<size)
 	{
 		if(ts == TS_NEVER){
@@ -1121,7 +1123,7 @@ int convert_from_deltatime_timestamp(double ts_v, char *buffer, int size)
 					len = strdatetime(&t,temp,sizeof(temp));
 				}
 				else
-					THROW("%"FMT_INT64"d is an invalid timestamp", ts);
+					throw_exception("%" FMT_INT64 "d is an invalid timestamp", ts);
 					/* TROUBLESHOOT
 						An attempt to convert a timestamp to a date/time string has failed because the timezone isn't valid.
 						This is most likely an internal error and should be reported.

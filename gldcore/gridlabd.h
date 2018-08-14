@@ -182,6 +182,7 @@ CDECL EXTERN CALLBACKS *callback INIT(NULL);
 /** @} **/
 
 #define PADDR(X) ((char*)&(this->X)-(char*)this)
+#define PADDR_C(X) ((char*)&(self->X)-(char*)self)
 
 /******************************************************************************
  * Exception handling
@@ -444,8 +445,8 @@ inline FUNCTION *gl_publish_function(CLASS *oclass, /**< class to which function
 									 FUNCTIONNAME functionname, /**< name of function */
 									 FUNCTIONADDR call) /**< address of function entry */
 { return (*callback->function.define)(oclass, functionname, call);}
-inline FUNCTIONADDR gl_get_function(OBJECT *obj, char *name)
-{ return obj?(*callback->function.get)(obj->oclass->name,name):NULL;}
+inline FUNCTIONADDR gl_get_function(OBJECT *obj, const char *name)
+{ return obj ? (*callback->function.get)(obj->oclass->name, const_cast<char *>(name)) : NULL;}
 #else
 #define gl_publish_function (*callback->function.define)
 #define gl_get_function (*callback->function.get)
@@ -2065,7 +2066,12 @@ public: // read accessors
 	inline PROPERTYACCESS get_access(void) { return pstruct.prop->access; };
 	inline bool get_access(unsigned int bits, unsigned int mask=0xffff) {  return ((pstruct.prop->access&mask)|bits); };
 	inline gld_unit* get_unit(void) { return (gld_unit*)pstruct.prop->unit; };
-	inline void* get_addr(void) { return obj?((void*)((char*)(obj+1)+(unsigned int64)(pstruct.prop->addr))):pstruct.prop->addr; };
+//	inline void* get_addr(void) { return obj?((void*)((char*)(obj+1)+(unsigned int64)(pstruct.prop->addr))):pstruct.prop->addr; };
+    inline void *get_addr(void) {
+        return obj
+        ? reinterpret_cast<void*>(reinterpret_cast<char *>(obj) + 1 + ((unsigned int64)(pstruct.prop->addr)))
+        : reinterpret_cast<void*>(pstruct.prop->addr);
+    };
 	inline gld_keyword* get_first_keyword(void) { return (gld_keyword*)pstruct.prop->keywords; };
 	inline char* get_description(void) { return pstruct.prop->description; };
 	inline PROPERTYFLAGS get_flags(void) { return pstruct.prop->flags; };

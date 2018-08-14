@@ -22,11 +22,13 @@
 
 #include "globals.h"
 #include "threadpool.h"
+#include "output.h"
+#include "exec.h"
 
-// should include output.h, but this causes a conflict with int64
-int output_error(const char *format,...);
-// should include exec.h, but this causes a conflict with int64
-int64 exec_clock(void);
+//// should include output.h, but this causes a conflict with int64
+//int output_error(const char *format,...);
+//// should include exec.h, but this causes a conflict with int64
+//int64 exec_clock(void);
 
 
 static int mti_debug_mode = 0;

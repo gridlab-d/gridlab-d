@@ -231,4 +231,9 @@ void enable_deltamode(TIMESTAMP t1); /* indicate when deltamode is needed */
 EXPORT int delta_add_tape_device(OBJECT *obj, DELTATAPEOBJ tape_type);
 void set_csv_options(void);
 
+
+// TODO: Misc prototypes from across the module. Move all of these into appropriate header files for each component
+extern TIMESTAMP player_read(OBJECT *obj);
+extern int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buffer, int size);
+
 #endif

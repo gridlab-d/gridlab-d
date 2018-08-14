@@ -21,6 +21,7 @@
 #include <time.h>
 #include <float.h>
 #include <ctype.h>
+#include <sys/time.h>
 
 #include "random.h"
 #include "find.h"
@@ -209,7 +210,7 @@ double randunit(unsigned int *state)
 {
 	double u;
 	unsigned int ur;
-	static int random_lock=0;
+	static unsigned int random_lock=0;
 
 	if ( state==NULL || state==ur_state )
 	{

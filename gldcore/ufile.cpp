@@ -3,6 +3,8 @@
  */
 
 #include <stdio.h>
+#include <cstring>
+#include <cstdlib>
 #include "http_client.h"
 #include "ufile.h"
 
@@ -12,7 +14,7 @@ UFILE *uopen(char *fname, void *arg)
 	errno = 0;
 	if ( strncmp(fname,"http://",7)==0)
 	{
-		HTTP *http = hopen(fname,(int)arg);
+		HTTP *http = hopen(fname,*(int*)arg);
 		if ( http==NULL ) return NULL;
 		rp = (UFILE*)malloc(sizeof(UFILE));
 		if ( rp==NULL ) 
@@ -44,13 +46,10 @@ size_t uread(void *buffer, size_t count, UFILE *rp)
 {
 	switch( rp->type ) {
 	case UFT_HTTP:
-		return hread(buffer,count,rp->handle);
-		break;
+		return hread(static_cast<char *>(buffer), count, static_cast<HTTP *>(rp->handle));
 	case UFT_FILE:
-		return fread(buffer,1,count,rp->handle);
-		break;
+		return fread(buffer, 1, count, static_cast<FILE *>(rp->handle));
 	default:
-		return -1;
-		break;
+		return static_cast<size_t>(-1);
 	}
 }

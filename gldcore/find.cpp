@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <stdio.h>
-#ifdef WIN32 && !(__MINGW__)
+#if defined(WIN32) && !defined(__MINGW__)
 #include <io.h>
 #	define snprintf _snprintf
 #endif
@@ -22,7 +22,7 @@
 #include "module.h"
 #include "timestamp.h"
 
-static FINDTYPE invar_types[] = {FT_ID, FT_SIZE, FT_CLASS, FT_PARENT, FT_RANK, FT_NAME, FT_LAT, FT_LONG, FT_INSVC, FT_OUTSVC, FT_MODULE, FT_ISA, 0};
+static FINDTYPE invar_types[] = {FT_ID, FT_SIZE, FT_CLASS, FT_PARENT, FT_RANK, FT_NAME, FT_LAT, FT_LONG, FT_INSVC, FT_OUTSVC, FT_MODULE, FT_ISA, static_cast<FINDTYPE>(0)};
 
 static int compare_int(int64 a, FINDOP op, int64 b)
 {
@@ -218,7 +218,7 @@ static int compare_property_alt(OBJECT *obj, char *propname, FINDOP op, void *va
 			char_target = (char *)object_get_string(obj, prop);
 			if(char_target == NULL)
 				return 0;
-			return compare_string(char_target, op, value);
+			return compare_string(char_target, op, static_cast<char*>(value));
 			break;
 		case PT_object:
 
@@ -278,7 +278,7 @@ static int compare(OBJECT *obj, FINDTYPE ftype, FINDOP op, void *value, char *pr
 FINDLIST *new_list(unsigned int n)
 {
 	unsigned int size = (n>>3)+1;
-	FINDLIST *list = module_malloc(sizeof(FINDLIST)+size-1);
+	FINDLIST *list = static_cast<FINDLIST*>(module_malloc(sizeof(FINDLIST)+size-1));
 	if (list==NULL)
 	{
 		errno=ENOMEM;
@@ -390,11 +390,14 @@ FINDLIST *find_objects(FINDLIST *start, ...)
 		FINDTYPE ftype;
 		va_list(ptr);
 		va_start(ptr,start);
-		while ((ftype=va_arg(ptr,FINDTYPE)) != FT_END)
+		uint64 va_buffer;
+		while ((va_buffer=va_arg(ptr,uint64)) != FT_END)
 		{
+			ftype = FINDTYPE(va_buffer);
+
 			int invert=0;
 			int parent=0;
-			FINDOP conj=AND;
+			FINDOP conj=static_cast<FINDOP>(AND);
 			FINDOP op;
 			char *propname = NULL;
 			void *value;
@@ -403,14 +406,16 @@ FINDLIST *find_objects(FINDLIST *start, ...)
 			/* conjunction */
 			if (ftype==AND || ftype==OR)
 			{	/* expect another op */
-				conj=ftype;
-				ftype = va_arg(ptr, FINDTYPE);
+				conj=static_cast<FINDOP>(ftype);
+				va_buffer = va_arg(ptr, uint64);
+				ftype = FINDTYPE(va_buffer);
 			}
 
 			/* follow to parent */
 			while (ftype==FT_PARENT)
 			{
-				ftype=va_arg(ptr,FINDTYPE);
+				va_buffer = va_arg(ptr, uint64);
+				ftype = FINDTYPE(va_buffer);
 				parent++;
 			}
 
@@ -419,13 +424,15 @@ FINDLIST *find_objects(FINDLIST *start, ...)
 				propname=va_arg(ptr,char*);
 
 			/* read operation */
-			op = va_arg(ptr,FINDOP);
+			va_buffer = va_arg(ptr, uint64);
+			op = FINDOP(va_buffer);
 
 			/* negation */
 			if (op==NOT)
 			{	/* expect another op */
 				invert=1;
-				op = va_arg(ptr,FINDOP);
+				va_buffer = va_arg(ptr, uint64);
+				op = FINDOP(va_buffer);
 			}
 
 			/* read value */
@@ -692,7 +699,7 @@ int compare_integer64_nl(void *a, FINDVALUE b) {
 FINDLIST *findlist_copy(FINDLIST *list)
 {
 	unsigned int size = sizeof(FINDLIST)+(list->result_size>>3);
-	FINDLIST *new_list = module_malloc(size);
+	FINDLIST *new_list = static_cast<FINDLIST*>(module_malloc(size));
 	memcpy(new_list,list,size);
 	return new_list;
 }
@@ -1404,16 +1411,16 @@ char *find_file(char *name, /**< the name of the file to find */
 
 OBJLIST *objlist_create(CLASS *oclass, PROPERTY *match_property, char *part, char *match_op, void *match_value1, void *match_value2 )
 {
-	OBJLIST *list = malloc(sizeof(OBJLIST));
+	OBJLIST *list = (OBJLIST *)(malloc(sizeof(OBJLIST)));
 	
 	/* check parameters */
-	if ( !list ) return output_error("find_create(): memory allocation failed"),NULL;
+	if ( !list ) return (OBJLIST *)(output_error("find_create(): memory allocation failed"),NULL);
 	
 	/* setup object list structure */
 	list->asize = INITSIZE;
 	list->size = 0;
-	list->objlist = malloc(sizeof(OBJECT*)*INITSIZE);
-	if ( !list->objlist ) return output_error("find_create(): memory allocation failed"),free(list),NULL;
+	list->objlist = (s_object_list **)(malloc(sizeof(OBJECT*) * INITSIZE));
+	if ( !list->objlist ) return (OBJLIST *)(output_error("find_create(): memory allocation failed"),free(list),NULL);
 	list->oclass = oclass;
 
 	/* perform search */
@@ -1438,11 +1445,11 @@ OBJLIST *objlist_search(char *group)
 	{
 		return NULL;
 	}
-	list = malloc(sizeof(OBJLIST));
+	list = (OBJLIST *)(malloc(sizeof(OBJLIST)));
 	if ( !list ) return NULL;
 	list->oclass = NULL;
 	list->asize = list->size = result->hit_count;
-	list->objlist = malloc(sizeof(OBJECT*)*result->hit_count);
+	list->objlist = (s_object_list **)(malloc(sizeof(OBJECT*) * result->hit_count));
 	if ( !list->objlist ) return NULL;
 	for ( obj=find_first(result),n=0 ; obj!=NULL ; obj=find_next(result,obj),n++ )
 		list->objlist[n] = obj;

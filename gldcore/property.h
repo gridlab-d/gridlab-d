@@ -120,7 +120,7 @@ private:
 typedef struct s_doublearray {
 #endif
 	size_t n, m; /** n rows, m cols */
-	size_t max; /** current allocation size max x max */
+	size_t max_val; /** current allocation size max x max */
 	unsigned int *refs; /** reference count **/
 	double ***x; /** pointer to 2D array of pointers to double values */
 	unsigned char *f; /** pointer to array of flags: bit0=byref, */
@@ -141,8 +141,6 @@ private:
 		throw (const char*)buf;
 		va_end(ptr);
 	};
-	inline void set_rows(const size_t i) { n=i; };
-	inline void set_cols(const size_t i) { m=i; };
 	inline void set_flag(const size_t r, size_t c, const unsigned char b) {f[r*m+c]|=b;};
 	inline void clr_flag(const size_t r, size_t c, const unsigned char b) {f[r*m+c]&=~b;};
 	inline bool tst_flag(const size_t r, size_t c, const unsigned char b) const {return (f[r*m+c]&b)==b;};
@@ -158,7 +156,9 @@ public:
 	{
 		refs = new unsigned int;
 		*refs = 0;
-		m = n = max = 0;
+		n = rows;
+		m = cols;
+		max_val = 0;
 		x = NULL;
 		f = NULL;
 		if ( rows>0 )
@@ -175,86 +175,84 @@ public:
 	{
 		n = a.n;
 		m = a.m;
-		max = a.max;
+		max_val = a.max_val;
 		refs = a.refs;
 		x = a.x;
 		f = a.f;
 		name = a.name;
 		(*refs)++;
 	}
-	~double_array(void)
-	{
-		if ( (*refs)-- == 0 )
-		{
-			size_t r,c;
-			for ( r=0 ; r<n ; r++ )
-			{
-				for ( c=0 ; c<m ; c++ )
-				{
-					if ( tst_flag(r,c,BYREF) )
-						free(x[r][c]); 
-				}
-				free(x[r]);
-			}
-			free(x);
-			delete refs;
-		}
-	}
+	~double_array(void) {
+        if ((*refs)-- == 0) {
+            size_t r, c;
+            for (r = 0; r < n; r++) {
+                for (c = 0; c < m; c++) {
+                    if (tst_flag(r, c, BYREF))
+                        free(x[r][c]);
+                }
+                free(x[r]);
+            }
+            free(x);
+            delete refs;
+        }
+    }
 public:
 	void set_name(const char *v) { name = v; }; 
 	inline const char *get_name(void) const { return name; };
 	void copy_name(const char *v) { char *s=(char*)malloc(strlen(v)+1); strcpy(s,v); name=(const char*)s; };
 	inline const size_t get_rows(void) const { return n; };
 	inline const size_t get_cols(void) const { return m; };
-	inline const size_t get_max(void) const { return max; };
+	inline const size_t get_max(void) const { return max_val; };
+	inline void set_rows(const size_t i) { n=i; };
+	inline void set_cols(const size_t i) { m=i; };
 	void set_max(const size_t size) 
 	{
-		if ( size<=max ) exception(".set_max(%u): cannot shrink double_array",size);
+		if ( size<=max_val ) exception(".set_max(%u): cannot shrink double_array",size);
 		size_t r;
 		double ***z = (double***)malloc(sizeof(double**)*size);
 		// create new rows
-		for ( r=0 ; r<max ; r++ )
+		for ( r=0 ; r<max_val ; r++ )
 		{
 			if ( x[r]!=NULL )
 			{
 				double **y = (double**)malloc(sizeof(double*)*size);
 				if ( y==NULL ) exception(".set_max(%u): unable to expand double_array",size);
-				memcpy(y,x[r],sizeof(double*)*max);
-				memset(y+max,0,sizeof(double*)*(size-max));
+				memcpy(y,x[r],sizeof(double*)*max_val);
+				memset(y+max_val,0,sizeof(double*)*(size-max_val));
 				free(x[r]);
 				z[r] = y;
 			}
 			else
 				z[r] = NULL;
 		}
-		memset(z+max,0,sizeof(double**)*(size-max));
+		memset(z+max_val,0,sizeof(double**)*(size-max_val));
 		free(x);
 		x = z;
 		unsigned char *nf = (unsigned char*)malloc(sizeof(unsigned char)*size);
 		if ( f!=NULL )
 		{
-			memcpy(nf,f,max);
-			memset(nf+max,0,size-max);
+			memcpy(nf,f,max_val);
+			memset(nf+max_val,0,size-max_val);
 			free(f);
 		}
 		else
 			memset(nf,0,size);
 		f = nf;
-		max=size; 
+		max_val=size;
 	};
 	void grow_to(const size_t r, const size_t c) 
 	{ 
-		size_t s = (max<1?1:max);
+		size_t s = (max_val<1?1:max_val);
 		while ( c>=s || r>=s ) s*=2; 
-		if ( s>max )set_max(s);
+		if ( s>max_val )set_max(s);
 
 		// add rows
 		while ( n<r ) 
 		{
 			if ( x[n]==NULL ) 
 			{
-				x[n] = (double**)malloc(sizeof(double*)*max);
-				memset(x[n],0,sizeof(double*)*max);
+				x[n] = (double**)malloc(sizeof(double*)*max_val);
+				memset(x[n],0,sizeof(double*)*max_val);
 			}
 			n++;
 		}
@@ -266,7 +264,9 @@ public:
 			for ( i=0 ; i<n ; i++ )
 			{
 				double **y = (double**)malloc(sizeof(double*)*c);
-				if ( x[i]!=NULL )
+                memset(y,0,sizeof(double*)*c);
+
+                if ( x[i]!=NULL )
 				{
 					memcpy(y,x[i],sizeof(double**)*m);
 					free(x[i]);
@@ -583,28 +583,26 @@ class complex_vector {
 private:
 	complex **data;
 public:
-	complex_vector(complex **x) 
-	{ 
-		data=x; 
+	complex_vector(complex **x)
+	{
+		data=x;
 	};
-	complex &operator[] (const size_t n) 
-	{ 
-		if ( data[n]==NULL ) data[n]=new complex; 
-		return *data[n]; 
+	complex &operator[] (const size_t n)
+	{
+		if ( data[n]==NULL ) data[n]=new complex;
+		return *data[n];
 	};
 	const complex operator[] (const size_t n) const
 	{
-		if ( data[n]==NULL ) data[n]=new complex; 
+		if ( data[n]==NULL ) data[n]=new complex;
 		return *data[n];
 	}
 };
 class complex_array {
 private:
-#else
-typedef struct s_complexarray {
 #endif
-	size_t n, m; /** n rows, m cols */
-	size_t max; /** current allocation size max x max */
+	size_t n, m;
+	size_t max_val; /** current allocation size max_val x max_val */
 	unsigned int *refs; /** reference count **/
 	complex ***x; /** pointer to 2D array of pointers to complex values */
 	unsigned char *f; /** pointer to array of flags: bit0=byref, */
@@ -616,12 +614,12 @@ typedef struct s_complexarray {
 private:
 
 	inline void exception(const char *msg,...) const
-	{ 
-		static char buf[1024]; 
+	{
+		static char buf[1024];
 		va_list ptr;
 		va_start(ptr,msg);
-		sprintf(buf,"%s", name?name:""); 
-		vsprintf(buf+strlen(buf), msg, ptr); 
+		sprintf(buf,"%s", name?name:"");
+		vsprintf(buf+strlen(buf), msg, ptr);
 		throw (const char*)buf;
 		va_end(ptr);
 	};
@@ -630,10 +628,10 @@ private:
 	inline void set_flag(const size_t r, size_t c, const unsigned char b) {f[r*m+c]|=b;};
 	inline void clr_flag(const size_t r, size_t c, const unsigned char b) {f[r*m+c]&=~b;};
 	inline bool tst_flag(const size_t r, size_t c, const unsigned char b) const {return (f[r*m+c]&b)==b;};
-	complex &my(const size_t r, const size_t c) 
-	{ 
+	complex &my(const size_t r, const size_t c)
+	{
 		if ( x[r][c]==NULL ) x[r][c] = new complex;
-		return (*x[r][c]); 
+		return (*x[r][c]);
 	};
 public:
 	inline complex_vector operator[] (const size_t n) { return complex_vector(x[n]); }
@@ -642,7 +640,9 @@ public:
 	{
 		refs = new unsigned int;
 		*refs = 0;
-		m = n = max = 0;
+		n = rows;
+		m = cols;
+		max_val = 0;
 		x = NULL;
 		f = NULL;
 		if ( rows>0 )
@@ -659,7 +659,7 @@ public:
 	{
 		n = a.n;
 		m = a.m;
-		max = a.max;
+		max_val = a.max_val;
 		refs = a.refs;
 		x = a.x;
 		f = a.f;
@@ -676,7 +676,7 @@ public:
 				for ( c=0 ; c<m ; c++ )
 				{
 					if ( tst_flag(r,c,BYREF) )
-						free(x[r][c]); 
+						free(x[r][c]);
 				}
 				free(x[r]);
 			}
@@ -685,60 +685,60 @@ public:
 		}
 	}
 public:
-	void set_name(const char *v) { name = v; }; 
+	void set_name(const char *v) { name = v; };
 	inline const char *get_name(void) const { return name; };
 	void copy_name(const char *v) { char *s=(char*)malloc(strlen(v)+1); strcpy(s,v); name=(const char*)s; };
 	inline const size_t get_rows(void) const { return n; };
 	inline const size_t get_cols(void) const { return m; };
-	inline const size_t get_max(void) const { return max; };
-	void set_max(const size_t size) 
+	inline const size_t get_max(void) const { return max_val; };
+	void set_max(const size_t size)
 	{
-		if ( size<=max ) exception(".set_max(%u): cannot shrink complex_array",size);
+		if ( size<=max_val ) exception(".set_max(%u): cannot shrink complex_array",size);
 		size_t r;
 		complex ***z = (complex***)malloc(sizeof(complex**)*size);
 		// create new rows
-		for ( r=0 ; r<max ; r++ )
+		for ( r=0 ; r<max_val ; r++ )
 		{
 			if ( x[r]!=NULL )
 			{
 				complex **y = (complex**)malloc(sizeof(complex*)*size);
 				if ( y==NULL ) exception(".set_max(%u): unable to expand complex_array",size);
-				memcpy(y,x[r],sizeof(complex*)*max);
-				memset(y+max,0,sizeof(complex*)*(size-max));
+				memcpy(y,x[r],sizeof(complex*)*max_val);
+				memset(y+max_val,0,sizeof(complex*)*(size-max_val));
 				free(x[r]);
 				z[r] = y;
 			}
 			else
 				z[r] = NULL;
 		}
-		memset(z+max,0,sizeof(complex**)*(size-max));
+		memset(z+max_val,0,sizeof(complex**)*(size-max_val));
 		free(x);
 		x = z;
 		unsigned char *nf = (unsigned char*)malloc(sizeof(unsigned char)*size);
 		if ( f!=NULL )
 		{
-			memcpy(nf,f,max);
-			memset(nf+max,0,size-max);
+			memcpy(nf,f,max_val);
+			memset(nf+max_val,0,size-max_val);
 			free(f);
 		}
 		else
 			memset(nf,0,size);
 		f = nf;
-		max=size; 
+		max_val=size;
 	};
-	void grow_to(const size_t r, const size_t c) 
+	void grow_to(const size_t r, const size_t c)
 	{ 
-		size_t s = (max<1?1:max);
+		size_t s = (max_val<1?1:max_val);
 		while ( c>=s || r>=s ) s*=2; 
-		if ( s>max )set_max(s);
+		if ( s>max_val )set_max(s);
 
 		// add rows
-		while ( n<r ) 
+		while ( n<r )
 		{
 			if ( x[n]==NULL ) 
 			{
-				x[n] = (complex**)malloc(sizeof(complex*)*max);
-				memset(x[n],0,sizeof(complex*)*max);
+				x[n] = (complex**)malloc(sizeof(complex*)*max_val);
+				memset(x[n],0,sizeof(complex*)*max_val);
 			}
 			n++;
 		}
@@ -774,7 +774,7 @@ public:
 	};
 	inline bool is_nan(const size_t c) const { return is_nan(0,c); };
 	bool is_empty(void) const { return n==0 && m==0; };
-	void clr_at(const size_t r, const size_t c) 
+	void clr_at(const size_t r, const size_t c)
 	{ 
 		check_valid(r,c);
 		if ( tst_flag(r,c,BYREF) )
@@ -783,8 +783,8 @@ public:
 	};
 	inline void clr_at(const size_t c) { return clr_at(0,c); };
 	/// make a new matrix (row major)
-	complex **copy_matrix(void) 
-	{   
+	complex **copy_matrix(void)
+	{
 		complex **y = new complex*[n];
 		unsigned int r;
 		for ( r=0 ; r<n ; r++ )
@@ -794,7 +794,7 @@ public:
 			for ( c=0 ; c<m ; c++ )
 				y[r][c] = *(x[r][c]);
 		}
-		return y;               
+		return y;
 	};
 	/// free a matrix
 	void free_matrix(complex **y)
@@ -840,7 +840,7 @@ public:
 	inline complex &get(const size_t r, const size_t c) { return *x[r][c]; };
 	inline complex &get(const size_t c) { return get(0,c); };
 	inline void set_at(const size_t c, const complex v) { set_at(0,c,v); };
-	void set_at(const size_t r, const size_t c, const complex v) 
+	void set_at(const size_t r, const size_t c, const complex v)
 	{ 
 		check_valid(r,c);
 		if ( x[r][c]==NULL ) 
@@ -848,7 +848,7 @@ public:
 		*(x[r][c]) = v; 
 	};
 	inline void set_at(const size_t c, complex *v) { set_at(0,c,v); };
-	void set_at(const size_t r, const size_t c, complex *v) 
+	void set_at(const size_t r, const size_t c, complex *v)
 	{ 
 		check_valid(r,c);
 		if ( v==NULL ) 
@@ -877,7 +877,7 @@ public:
 		if ( c2==-1 ) c2 = m-1;
 		if ( r2<r1 || c2<c1 ) exception(".dump(%u,%u,%u,%u): invalid (r,c)", r1,r2,c1,c2);
 		size_t r,c;
-		fprintf(stderr,"complex_array %s = {\n",name?name:"unnamed"); 
+		fprintf(stderr,"complex_array %s = {\n",name?name:"unnamed");
 		for ( r=r1 ; r<=n ; r++ )
 		{
 			for ( c=c1 ; c<=m ; c++ )
@@ -1037,7 +1037,7 @@ public:
 		for ( r=0 ; r<get_rows() ; r++ )
 		{
 			for ( c=0 ; c<y.get_cols() ; c++ )
-			{	
+			{
 				complex b = 0;
 				for ( k=0 ; k<get_cols() ; k++ )
 					b += my(r,k) * y[k][c];
@@ -1141,7 +1141,7 @@ typedef enum {_PT_FIRST=-1,
 	PT_HAS_NOTIFY, /* used to indicate that a notify function exists for the specified property */
 	PT_HAS_NOTIFY_OVERRIDE, /* as PT_HAS_NOTIFY, but instructs the core not to set the property to the value being set */
 } PROPERTYTYPE; /**< property types */
-typedef char CLASSNAME[64]; /**< the name a GridLAB class */
+typedef char CLASSNAME[64]; /**< the name of a GridLAB class */
 typedef void* PROPERTYADDR; /**< the offset of a property from the end of the OBJECT header */
 typedef char PROPERTYNAME[64]; /**< the name of a property */
 typedef char FUNCTIONNAME[64]; /**< the name of a function (not used) */
@@ -1253,18 +1253,20 @@ PROPERTYTYPE property_get_type(char *name);
 double property_get_part(struct s_object_list *obj, PROPERTY *prop, char *part);
 
 /* double array */
-int double_array_create(double_array*a);
-double get_double_array_value(double_array*,unsigned int n, unsigned int m);
-void set_double_array_value(double_array*,unsigned int n, unsigned int m, double x);
-double *get_double_array_ref(double_array*,unsigned int n, unsigned int m);
+int double_array_create(double_array*&a);
+//double get_double_array_value(double_array*,unsigned int n, unsigned int m);
+//void set_double_array_value(double_array*,unsigned int n, unsigned int m, double x);
+//double *get_double_array_ref(double_array*,unsigned int n, unsigned int m);
 double double_array_get_part(void *x, char *name);
 
 /* complex array */
-int complex_array_create(complex_array*a);
-complex *get_complex_array_value(complex_array*,unsigned int n, unsigned int m);
-void set_complex_array_value(complex_array*,unsigned int n, unsigned int m, complex *x);
-complex *get_complex_array_ref(complex_array*,unsigned int n, unsigned int m);
+int complex_array_create(complex_array*&a);
+//complex *get_complex_array_value(complex_array*,unsigned int n, unsigned int m);
+//void set_complex_array_value(complex_array*,unsigned int n, unsigned int m, complex *x);
+//complex *get_complex_array_ref(complex_array*,unsigned int n, unsigned int m);
 double complex_array_get_part(void *x, char *name);
+
+inline PROPERTYTYPE &operator++(PROPERTYTYPE &d){	return d = PROPERTYTYPE(d + 1);}
 
 #ifdef __cplusplus
 }

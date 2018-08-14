@@ -103,7 +103,7 @@ STATUS instance_cnx_socket(instance *inst){
 	char sendcmd[1024];
 	INSTANCE_PICKLE pickle;
 	char *colon;
-	int rv, return_addr_sz;
+	int rv;
 	unsigned int64 check_id;
 	size_t bytes_to_send, msg_link_sz, idx;
 //	size_t sent_bytes;
@@ -114,7 +114,7 @@ STATUS instance_cnx_socket(instance *inst){
 	fd_set callback_fdset;
 	struct timeval timer;
 	struct sockaddr_storage ss;
-	int slt;
+	unsigned int slt, return_addr_sz;
 	char blank[8];
 	char *args[7] = {"--profile", "--relax", "--debug", "--verbose",
 		"--warn", "--quiet", "--avlbalance"};
