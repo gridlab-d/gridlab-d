@@ -622,7 +622,7 @@ int diesel_dg::init(OBJECT *parent)
 	double test_pf;
 	gld_property *Frequency_mapped;
 	gld_property *temp_property_pointer;
-	gld_wlock *test_rlock;
+	gld_wlock *test_rlock = NULL;
 	bool temp_bool_value;
 	double temp_voltage_magnitude;
 	complex temp_complex_value;
@@ -1013,7 +1013,7 @@ int diesel_dg::init(OBJECT *parent)
 			pbus_full_Y_mat->getp<complex_array>(temp_complex_array,*test_rlock);
 
 			//See if it is valid
-			if (temp_complex_array.is_valid(0,0) != true)
+			if (!temp_complex_array.is_valid(0, 0))
 			{
 				//Create it
 				temp_complex_array.grow_to(3,3);

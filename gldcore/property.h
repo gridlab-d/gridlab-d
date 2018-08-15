@@ -197,12 +197,16 @@ public:
         }
     }
 public:
-	void set_name(const char *v) { name = v; }; 
-	inline const char *get_name(void) const { return name; };
 	void copy_name(const char *v) { char *s=(char*)malloc(strlen(v)+1); strcpy(s,v); name=(const char*)s; };
+
+	// Getters
+	inline const char *get_name(void) const { return name; };
 	inline const size_t get_rows(void) const { return n; };
 	inline const size_t get_cols(void) const { return m; };
 	inline const size_t get_max(void) const { return max_val; };
+
+	// Setters
+	void set_name(const char *v) { name = v; };
 	inline void set_rows(const size_t i) { n=i; };
 	inline void set_cols(const size_t i) { m=i; };
 	void set_max(const size_t size) 
@@ -623,8 +627,7 @@ private:
 		throw (const char*)buf;
 		va_end(ptr);
 	};
-	inline void set_rows(const size_t i) { n=i; };
-	inline void set_cols(const size_t i) { m=i; };
+
 	inline void set_flag(const size_t r, size_t c, const unsigned char b) {f[r*m+c]|=b;};
 	inline void clr_flag(const size_t r, size_t c, const unsigned char b) {f[r*m+c]&=~b;};
 	inline bool tst_flag(const size_t r, size_t c, const unsigned char b) const {return (f[r*m+c]&b)==b;};
@@ -685,12 +688,18 @@ public:
 		}
 	}
 public:
-	void set_name(const char *v) { name = v; };
-	inline const char *get_name(void) const { return name; };
 	void copy_name(const char *v) { char *s=(char*)malloc(strlen(v)+1); strcpy(s,v); name=(const char*)s; };
+
+	// Getters
+	inline const char *get_name(void) const { return name; };
 	inline const size_t get_rows(void) const { return n; };
 	inline const size_t get_cols(void) const { return m; };
 	inline const size_t get_max(void) const { return max_val; };
+
+	// Setters
+	void set_name(const char *v) { name = v; };
+	inline void set_rows(const size_t i) { n=i; };
+	inline void set_cols(const size_t i) { m=i; };
 	void set_max(const size_t size)
 	{
 		if ( size<=max_val ) exception(".set_max(%u): cannot shrink complex_array",size);
@@ -838,6 +847,7 @@ public:
 	complex get_at(const size_t r, const size_t c) { return is_nan(r,c) ? QNAN : *(x[r][c]) ; };
 	inline complex get_at(const size_t c) { return get_at(0,c); };
 	inline complex &get(const size_t r, const size_t c) { return *x[r][c]; };
+	inline complex &get(const size_t r, const size_t c) const { return *x[r][c]; };
 	inline complex &get(const size_t c) { return get(0,c); };
 	inline void set_at(const size_t c, const complex v) { set_at(0,c,v); };
 	void set_at(const size_t r, const size_t c, const complex v)
@@ -1253,14 +1263,14 @@ PROPERTYTYPE property_get_type(char *name);
 double property_get_part(struct s_object_list *obj, PROPERTY *prop, char *part);
 
 /* double array */
-int double_array_create(double_array*&a);
+int double_array_create(double_array &a);
 //double get_double_array_value(double_array*,unsigned int n, unsigned int m);
 //void set_double_array_value(double_array*,unsigned int n, unsigned int m, double x);
 //double *get_double_array_ref(double_array*,unsigned int n, unsigned int m);
 double double_array_get_part(void *x, char *name);
 
 /* complex array */
-int complex_array_create(complex_array*&a);
+int complex_array_create(complex_array &a);
 //complex *get_complex_array_value(complex_array*,unsigned int n, unsigned int m);
 //void set_complex_array_value(complex_array*,unsigned int n, unsigned int m, complex *x);
 //complex *get_complex_array_ref(complex_array*,unsigned int n, unsigned int m);

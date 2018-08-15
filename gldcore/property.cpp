@@ -305,17 +305,12 @@ double complex_get_part(void *x, char *name)
 /*********************************************************
  * DOUBLE ARRAYS
  *********************************************************/
-int double_array_create(double_array *&a)
+int double_array_create(double_array &a)
 {
-	// FIXME: this could potentially cause a lot of issues depending on how C++ decides
-	// to handle it. If it properly replaces the pointer in all scope, we're fine, if it
-	// replaces it locally only, we're in trouble.
-
-	a = new double_array();
-//	int n;
-//	a->set_rows(0);
-//	a->set_cols(0);
-//	a->set_max(1);
+	a = double_array();
+//	a.set_max(1);
+//	a.set_rows(0);
+//	a.set_cols(0);
 //	a->x = (double***)malloc(sizeof(double**)*a->get_max());
 //	a->f = (unsigned char*)malloc(sizeof(unsigned char)*a->get_max());
 //	if ( a->x==NULL || a->f==NULL )
@@ -362,13 +357,13 @@ double double_array_get_part(void *x, char *name)
 /*********************************************************
  * COMPLEX ARRAYS
  *********************************************************/
-int complex_array_create(complex_array *&a)
+int complex_array_create(complex_array &a)
 {
-    a = new complex_array();
+    a = complex_array();
 
-//	int n;
-//	a->n = a->m = 0;
-//	a->get_max() = 1;
+//	a.set_max(1);
+//	a.set_rows(0);
+//	a.set_cols(0);
 //	a->x = (complex***)malloc(sizeof(complex**)*a->get_max());
 //	a->f = (unsigned char*)malloc(sizeof(unsigned char)*a->get_max());
 //	if ( a->x==NULL || a->f==NULL )
