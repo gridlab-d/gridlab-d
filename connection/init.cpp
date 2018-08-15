@@ -13,6 +13,7 @@
 #include "xml.h"
 #include "json.h"
 #include "fncs_msg.h"
+#include "helics_msg.h"
 #include "socket.h"
 
 CONNECTIONSECURITY connection_security = CS_STANDARD;
@@ -49,6 +50,9 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new json(module);
 #if HAVE_FNCS
 	new fncs_msg(module);
+#endif
+#if HAVE_HELICS
+	new helics_msg(module);
 #endif
 	// TODO add new classes before this line
 
