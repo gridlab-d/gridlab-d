@@ -88,7 +88,7 @@ GLD_SOURCES_PLACE_HOLDER += gldcore/platform.h
 GLD_SOURCES_PLACE_HOLDER += gldcore/property.c
 GLD_SOURCES_PLACE_HOLDER += gldcore/property.h
 GLD_SOURCES_PLACE_HOLDER += gldcore/random.c
-GLD_SOURCES_PLACE_HOLDER += gldcore/random.h
+GLD_SOURCES_PLACE_HOLDER += gldcore/gldrandom.h
 GLD_SOURCES_PLACE_HOLDER += gldcore/realtime.c
 GLD_SOURCES_PLACE_HOLDER += gldcore/realtime.h
 GLD_SOURCES_PLACE_HOLDER += gldcore/sanitize.cpp
@@ -131,7 +131,7 @@ GLD_SOURCES_EXTRA_PLACE_HOLDER += gldcore/xcore.h
 
 if HAVE_MINGW
 
-bin_SCRIPTS += gldcore/gridlabd
+bin_SCRIPTS += gldcore/gridlabd.sh
 
 bin_PROGRAMS += gridlabd
 
@@ -156,7 +156,7 @@ EXTRA_gridlabd_SOURCES += $(GLD_SOURCES_EXTRA_PLACE_HOLDER)
 
 else
 
-bin_SCRIPTS += gldcore/gridlabd
+bin_SCRIPTS += gldcore/gridlabd.sh
 
 bin_PROGRAMS += gridlabd.bin
 

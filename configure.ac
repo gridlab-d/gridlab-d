@@ -606,7 +606,7 @@ AC_SUBST([MYSQL_LIBS])
 
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([gridlabd.spec])
-AC_CONFIG_FILES([gldcore/gridlabd], [chmod +x gldcore/gridlabd])
+AC_CONFIG_FILES([gldcore/gridlabd.sh], [chmod +x gldcore/gridlabd.sh])
 AC_OUTPUT
 
 BINDIR=`eval echo $(eval echo $bindir)`
