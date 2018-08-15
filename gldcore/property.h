@@ -881,7 +881,7 @@ public:
 		for ( r=r1 ; r<=n ; r++ )
 		{
 			for ( c=c1 ; c<=m ; c++ )
-				fprintf(stderr," %8g", my(r,c));
+				fprintf(stderr," %8g%+8gi", my(r,c).Re(), my(r,c).Im());
 			fprintf(stderr,"\n");
 		}
 		fprintf(stderr," }\n");

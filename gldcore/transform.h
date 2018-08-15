@@ -20,11 +20,11 @@ typedef enum {
 	XS_UNKNOWN	= 0x00, 
 	XS_DOUBLE	= 0x01, 
 	XS_COMPLEX	= 0x02, 
-	XS_LOADSHAPE= 0x04, 
+	XS_LOADSHAPE	= 0x04, 
 	XS_ENDUSE	= 0x08, 
-	XS_SCHEDULE = 0x10,
-	XS_RANDOMVAR = 0x20,
-	XS_ALL		= 0x1f,
+	XS_SCHEDULE	= 0x10,
+	XS_RANDOMVAR	= 0x20,
+	XS_ALL		= 0x3f,
 } TRANSFORMSOURCE;
 
 /* list of supported transform function types */
@@ -46,9 +46,17 @@ typedef struct s_transferfunction {
 	double timestep;	///< timestep (seconds)
 	double timeskew;	///< timeskew (seconds)
 	unsigned int n;		///< denominator order
-	double *a;			///< denominator coefficients
+	double *a;		///< denominator coefficients
 	unsigned int m;		///< numerator order
-	double *b;			///< numerator coefficients
+	double *b;		///< numerator coefficients
+#define FC_NONE 0x0000 ///< no constraints
+#define FC_RESOLUTION  0x0001 ///< resolution limit
+#define FC_MINIMUM  0x0002 ///< lower limit
+#define FC_MAXIMUM  0x0004 ///< upper limit
+	unsigned int64 flags; ///< constraints flags
+	double resolution; ///< resolution in bits
+	double minimum; ///< lowest value
+	double maximum; ///< highest value
 	struct s_transferfunction *next;
 } TRANSFERFUNCTION;
 
@@ -109,6 +117,7 @@ UNIT *gldvar_getunits(GLDVAR *var, unsigned int n);
 
 int transform_add_filter(struct s_object_list *target_obj, struct s_property_map *target_prop, char *function, struct s_object_list *source_obj, struct s_property_map *source_prop);
 int transfer_function_add(char *tfname, char *domain, double timestep, double timeskew, unsigned int n, double *a, unsigned int m, double *b);
+int transfer_function_constrain(char *tfname, unsigned int64 flags, unsigned int64 nbits, double minimum, double maximum);
 
 int transform_saveall(FILE *fp);
 
