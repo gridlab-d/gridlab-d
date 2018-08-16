@@ -1040,20 +1040,20 @@ static int resolve_object(UNRESOLVED *item, char *filename)
 		if (value++==NULL)
 		{
 			output_error_raw("%s(%d): %s reference to %s is missing match value", filename, item->line,
-				format_object(item->by), item->id);
+				format_object(item->by), item->id.get_string());
 			return FAILED;
 		}
 		match = find_objects(FL_NEW,FT_CLASS,SAME,classname,AND,FT_PROPERTY,propname,SAME,value,FT_END);
 		if (match==NULL || match->hit_count==0)
 		{
 			output_error_raw("%s(%d): %s reference to %s does not match any existing objects", filename, item->line,
-				format_object(item->by), item->id);
+				format_object(item->by), item->id.get_string());
 			return FAILED;
 		}
 		else if (match->hit_count>1)
 		{
 			output_error_raw("%s(%d): %s reference to %s matches more than one object", filename, item->line,
-				format_object(item->by), item->id);
+				format_object(item->by), item->id.get_string());
 			return FAILED;
 		}
 		obj=find_first(match);
@@ -1065,7 +1065,7 @@ static int resolve_object(UNRESOLVED *item, char *filename)
 		if (obj==NULL)
 		{
 			output_error_raw("%s(%d): unable resolve reference from %s to %s", filename, item->line,
-				format_object(item->by), item->id);
+				format_object(item->by), item->id.get_string());
 			return FAILED;
 		}
 	}
@@ -1075,13 +1075,13 @@ static int resolve_object(UNRESOLVED *item, char *filename)
 		if (obj==NULL)
 		{
 			output_error_raw("%s(%d): unable resolve reference from %s to %s", filename, item->line,
-				format_object(item->by), item->id);
+				format_object(item->by), item->id.get_string());
 			return FAILED;
 		}
 		if ((strcmp(obj->oclass->name,classname)!=0) && (strcmp("id", classname) != 0))
 		{ /* "id:###" is our wildcard.  some converters use it for dangerous simplicity. -mh */
 			output_error_raw("%s(%d): class of reference from %s to %s mismatched", filename, item->line,
-				format_object(item->by), item->id);
+				format_object(item->by), item->id.get_string());
 			return FAILED;
 		}
 	}
@@ -1092,7 +1092,7 @@ static int resolve_object(UNRESOLVED *item, char *filename)
 		if (obj==NULL)
 		{
 			output_error_raw("%s(%d): unable resolve reference from %s to %s", filename, item->line,
-				format_object(item->by), item->id);
+				format_object(item->by), item->id.get_string());
 			return FAILED;
 		}
 	}
@@ -1102,7 +1102,7 @@ static int resolve_object(UNRESOLVED *item, char *filename)
 	}
 	else
 	{
-		output_error_raw("%s(%d): '%s' not found", filename, item->line, item->id);
+		output_error_raw("%s(%d): '%s' not found", filename, item->line, item->id.get_string());
 		return FAILED;
 	}
 	*(OBJECT**)(item->ref) = obj;
@@ -1177,11 +1177,11 @@ static int resolve_double(UNRESOLVED *item, char *context)
 			if (xform) xform->source_type = XS_ENDUSE;
 			break;
 		default:
-			output_error_raw("%s(%d): reference '%s' type is not supported", filename, item->line, item->id);
+			output_error_raw("%s(%d): reference '%s' type is not supported", filename, item->line, item->id.get_string());
 			return FAILED;
 		}
 
-		output_debug("reference '%s' resolved ok", item->id);
+		output_debug("reference '%s' resolved ok", item->id.get_string());
 
 		return SUCCESS;
 	}
@@ -1221,7 +1221,7 @@ static int resolve_list(UNRESOLVED *item)
 				return FAILED;
 			break;
 		default:
-			output_error_raw("%s(%d): unresolved reference to property '%s' uses unsupported type (ptype=%d)", filename, item->line, item->id, item->ptype);
+			output_error_raw("%s(%d): unresolved reference to property '%s' uses unsupported type (ptype=%d)", filename, item->line, item->id.get_string(), item->ptype);
 			break;
 		}
 		next = item->next;
@@ -1680,7 +1680,7 @@ static int functional(PARSER, double *pValue)
 		double a;
 		if (rtype==RT_INVALID || nargs==0 || (WHITE,!LITERAL("(")))
 		{
-			output_error_raw("%s(%d): %s is not a valid random distribution", filename,linenum,fname);
+			output_error_raw("%s(%d): %s is not a valid random distribution", filename,linenum,fname.get_string());
 			REJECT;
 		}
 		if (nargs==-1)
@@ -1698,7 +1698,7 @@ static int functional(PARSER, double *pValue)
 					else
 					{
 						// variable arg list
-						output_error_raw("%s(%d): expected a %s distribution term after ,", filename,linenum, fname);
+						output_error_raw("%s(%d): expected a %s distribution term after ,", filename,linenum, fname.get_string());
 						REJECT;
 					}
 				}
@@ -1709,13 +1709,13 @@ static int functional(PARSER, double *pValue)
 				}
 				else
 				{
-					output_error_raw("%s(%d): missing ) after %s distribution terms", filename,linenum, fname);
+					output_error_raw("%s(%d): missing ) after %s distribution terms", filename,linenum, fname.get_string());
 					REJECT;
 				}
 			}
 			else
 			{
-				output_error_raw("%s(%d): expected first term of %s distribution", filename,linenum, fname);
+				output_error_raw("%s(%d): expected first term of %s distribution", filename,linenum, fname.get_string());
 				REJECT;
 			}
 		}
@@ -1734,7 +1734,7 @@ static int functional(PARSER, double *pValue)
 					}
 					else
 					{
-						output_error_raw("%s(%d): expected ) after %s distribution term", filename,linenum, fname);
+						output_error_raw("%s(%d): expected ) after %s distribution term", filename,linenum, fname.get_string());
 						REJECT;
 					}
 				}
@@ -1747,7 +1747,7 @@ static int functional(PARSER, double *pValue)
 					}
 					else
 					{
-						output_error_raw("%s(%d): missing second %s distribution term and/or )", filename,linenum, fname);
+						output_error_raw("%s(%d): missing second %s distribution term and/or )", filename,linenum, fname.get_string());
 						REJECT;
 					}
 				}
@@ -1760,7 +1760,7 @@ static int functional(PARSER, double *pValue)
 					}
 					else
 					{
-						output_error_raw("%s(%d): missing terms and/or ) in %s distribution ", filename,linenum, fname);
+						output_error_raw("%s(%d): missing terms and/or ) in %s distribution ", filename,linenum, fname.get_string());
 						REJECT;
 					}
 				}
@@ -1772,7 +1772,7 @@ static int functional(PARSER, double *pValue)
 			}
 			else
 			{
-				output_error_raw("%s(%d): expected first term of %s distribution", filename,linenum, fname);
+				output_error_raw("%s(%d): expected first term of %s distribution", filename,linenum, fname.get_string());
 				REJECT;
 			}
 		}
@@ -2432,7 +2432,7 @@ static int clock_properties(PARSER)
 		if (TERM(value(HERE,timezone,sizeof(timezone))) && (WHITE,LITERAL(";")) && strlen(timezone)>0)
 		{
 			if (timestamp_set_tz(timezone)==NULL)
-				output_warning("%s(%d): timezone %s is not defined",filename,linenum,timezone);
+				output_warning("%s(%d): timezone %s is not defined",filename,linenum,timezone.get_string());
 				/* TROUBLESHOOT
 					The specified timezone is not defined in the timezone file <code>.../etc/tzinfo.txt</code>.  
 					Try using an known timezone, or add the desired timezone to the timezome file and try again.
@@ -2815,7 +2815,7 @@ static int module_properties(PARSER, MODULE *mod)
 				}
 				else
 				{
-					output_error_raw("%s(%d): invalid module %s property '%s'", filename, linenum, mod->name, propname);
+					output_error_raw("%s(%d): invalid module %s property '%s'", filename, linenum, mod->name, propname.get_string());
 					REJECT;
 				}
 			}
@@ -2827,7 +2827,7 @@ static int module_properties(PARSER, MODULE *mod)
 		}
 		else
 		{
-			output_error_raw("%s(%d): missing module %s property %s value", filename, linenum, mod->name, propname);
+			output_error_raw("%s(%d): missing module %s property %s value", filename, linenum, mod->name, propname.get_string());
 			REJECT;
 		}
 	}
@@ -2932,7 +2932,7 @@ static int property_type(PARSER, PROPERTYTYPE *ptype, KEYWORD **keys)
 		*ptype = class_get_propertytype_from_typename(type);
 		if (*ptype==PT_void)
 		{
-			output_error_raw("%s(%d): class member %s is not recognized", filename, linenum, type);
+			output_error_raw("%s(%d): class member %s is not recognized", filename, linenum, type.get_string());
 			REJECT;
 		}
 		if (WHITE,LITERAL("{"))
@@ -3797,7 +3797,7 @@ static int property_ref(PARSER, TRANSFORMSOURCE *xstype, void **ref, OBJECT *fro
 			}
 			else if ( prop->ptype==PT_random )
 			{
-                randomvar *rv = static_cast<randomvar *>(object_get_addr(obj, pname));
+                randomvar_struct *rv = static_cast<randomvar_struct *>(object_get_addr(obj, pname));
 				*ref = &(rv->value);
 				*xstype = XS_RANDOMVAR;
 				ACCEPT;
@@ -3991,7 +3991,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				}
 				else
 				{
-					output_error_raw("%s(%d): load method '%s/%s::%s' failed on value '%s'", filename, linenum, obj->oclass->module->name,obj->oclass->name,propname,propval);
+					output_error_raw("%s(%d): load method '%s/%s::%s' failed on value '%s'", filename, linenum, obj->oclass->module->name,obj->oclass->name,propname,propval.get_string());
 					REJECT;
 				}
 			}
@@ -4277,7 +4277,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 					{
 						if (add_unresolved(obj,PT_object,(void*)&obj->parent,oclass,propval,filename,linenum,UR_RANKS)==NULL)
 						{
-							output_error_raw("%s(%d): unable to add unresolved reference to parent %s", filename, linenum, propval);
+							output_error_raw("%s(%d): unable to add unresolved reference to parent %s", filename, linenum, propval.get_string());
 							REJECT;
 						}
 						else
@@ -4287,7 +4287,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 					{
 						if ((obj->rank = atoi(propval))<0)
 						{
-							output_error_raw("%s(%d): unable to set rank to %s", filename, linenum, propval);
+							output_error_raw("%s(%d): unable to set rank to %s", filename, linenum, propval.get_string());
 							REJECT;
 						}
 						else
@@ -4332,7 +4332,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 					{
 						if (object_set_name(obj,propval)==NULL)
 						{
-							output_error_raw("%s(%d): property name %s could not be used", filename, linenum, propval);
+							output_error_raw("%s(%d): property name %s could not be used", filename, linenum, propval.get_string());
 							REJECT;
 						}
 						else
@@ -4386,7 +4386,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				}
 				else if (object_set_value_by_name(obj,propname,propval)==0)
 				{
-					output_error_raw("%s(%d): property %s of %s could not be set to '%s'", filename, linenum, propname, format_object(obj), propval);
+					output_error_raw("%s(%d): property %s of %s could not be set to '%s'", filename, linenum, propname, format_object(obj), propval.get_string());
 					REJECT;
 				}
 				else
@@ -4654,35 +4654,35 @@ static int load_import(PARSER) {
 					MODULE *module = module_find(modname);
 					if (module==NULL)
 					{
-						output_error_raw("%s(%d): module %s not loaded", filename, linenum, modname);
+						output_error_raw("%s(%d): module %s not loaded", filename, linenum, modname.get_string());
 						REJECT;
 					}
 					result = module_import(module,fname);
 					if (result < 0)
 					{
-						output_error_raw("%s(%d): %d errors loading importing %s into %s module", filename, linenum, -result, fname, modname);
+						output_error_raw("%s(%d): %d errors loading importing %s into %s module", filename, linenum, -result, fname.get_string(), modname.get_string());
 						REJECT;
 					}
 					else if (result==0)
 					{
-						output_error_raw("%s(%d): module %s load of %s failed; %s", filename, linenum, modname, fname, errno?strerror(errno):"(no details)");
+						output_error_raw("%s(%d): module %s load of %s failed; %s", filename, linenum, modname.get_string(), fname.get_string(), errno?strerror(errno):"(no details)");
 						REJECT;
 					}
 					else
 					{
-						output_verbose("%d objects loaded to %s from %s", result, modname, fname);
+						output_verbose("%d objects loaded to %s from %s", result, modname.get_string(), fname.get_string());
 						ACCEPT;
 					}
 				}
 				else
 				{
-					output_error_raw("%s(%d): expected ; after module %s import from %s statement", filename, linenum, modname, fname);
+					output_error_raw("%s(%d): expected ; after module %s import from %s statement", filename, linenum, modname.get_string(), fname.get_string());
 					REJECT;
 				}
 			}
 			else
 			{
-				output_error_raw("%s(%d): expected filename after module %s import statement", filename, linenum, modname);
+				output_error_raw("%s(%d): expected filename after module %s import statement", filename, linenum, modname.get_string());
 				REJECT;
 			}
 		}
@@ -4714,37 +4714,37 @@ int load_export(PARSER) {
 					MODULE *module = module_find(modname);
 					if (module==NULL)
 					{
-						output_error_raw("%s(%d): module %s not loaded", filename, linenum, modname);
+						output_error_raw("%s(%d): module %s not loaded", filename, linenum, modname.get_string());
 						REJECT;
 					}
                     if (!load_resolve_all())
-						output_error_raw("%s(%d): module export encountered before all object names were resolved", filename, linenum, modname);
+						output_error_raw("%s(%d): module export encountered before all object names were resolved", filename, linenum, modname.get_string());
 					result = module_export(module,fname);
 					if (result < 0)
 					{
-						output_error_raw("%s(%d): %d errors export %s from %s module", filename, linenum, -result, fname, modname);
+						output_error_raw("%s(%d): %d errors export %s from %s module", filename, linenum, -result, fname.get_string(), modname.get_string());
 						REJECT;
 					}
 					else if (result==0)
 					{
-						output_error_raw("%s(%d): module %s export of %s failed; %s", filename, linenum, modname, fname, errno?strerror(errno):"(no details)");
+						output_error_raw("%s(%d): module %s export of %s failed; %s", filename, linenum, modname.get_string(), fname.get_string(), errno?strerror(errno):"(no details)");
 						REJECT;
 					}
 					else
 					{
-						output_verbose("%d objects export from %s to %s", result, modname, fname);
+						output_verbose("%d objects export from %s to %s", result, modname.get_string(), fname.get_string());
 						ACCEPT;
 					}
 				}
 				else
 				{
-					output_error_raw("%s(%d): expected ; after module %s export from %s statement", filename, linenum, modname, fname);
+					output_error_raw("%s(%d): expected ; after module %s export from %s statement", filename, linenum, modname.get_string(), fname.get_string());
 					REJECT;
 				}
 			}
 			else
 			{
-				output_error_raw("%s(%d): expected export specification after module %s export statement", filename, linenum, modname);
+				output_error_raw("%s(%d): expected export specification after module %s export statement", filename, linenum, modname.get_string());
 				REJECT;
 			}
 		}

@@ -96,6 +96,7 @@
 #include "random.h"
 #define STREAM_MODULE
 #include "stream.h"
+#include "module.h"
 
 #ifdef DLMAIN
 #define EXTERN
@@ -1201,9 +1202,9 @@ inline const char *gl_module_find_transform_function(TRANSFORMFUNCTION function)
 /**@}*/
 
 #ifdef __cplusplus
-inline randomvar *gl_randomvar_getfirst(void) { return callback->randomvar.getnext(NULL); };
-inline randomvar *gl_randomvar_getnext(randomvar *var) { return callback->randomvar.getnext(var); };
-inline size_t gl_randomvar_getspec(char *str, size_t size, const randomvar *var) { return callback->randomvar.getspec(str,size,var); };
+inline randomvar_struct *gl_randomvar_getfirst(void) { return callback->randomvar.getnext(NULL); };
+inline randomvar_struct *gl_randomvar_getnext(randomvar_struct *var) { return callback->randomvar.getnext(var); };
+inline size_t gl_randomvar_getspec(char *str, size_t size, const randomvar_struct *var) { return callback->randomvar.getspec(str,size,var); };
 #else
 #define gl_randomvar_getnext (*callback->randomvar.getnext) /* randomvar *(*randomvar.getnext)(randomvar*) */
 #define gl_randomvar_getspec (*callback->randomvar.getspec) /* size_t (*randomvar.getspec(char*,size_t,randomvar*) */
@@ -1841,9 +1842,9 @@ public: // iterators
 	inline gld_property get_##X##_property(void) { return gld_property(my(),#X); }; \
 	inline char* get_##X(gld_rlock&) { return X.get_string(); }; \
 	inline char* get_##X(gld_wlock&) { return X.get_string(); }; \
-	inline char get_##X(size_t n) { gld_rlock _lock(my()); return X[n]; }; \
-	inline char get_##X(size_t n, gld_rlock&) { return X[n]; }; \
-	inline char get_##X(size_t n, gld_wlock&) { return X[n]; }; \
+	inline char get_##X(size_t n) { gld_rlock _lock(my()); return (char)X; }; \
+	inline char get_##X(size_t n, gld_rlock&) { return (char)X; }; \
+	inline char get_##X(size_t n, gld_wlock&) { return (char)X; }; \
 	inline void set_##X(char *p) { gld_wlock _lock(my()); strncpy(X,p,sizeof(X)); }; \
 	inline void set_##X(char *p, gld_wlock&) { strncpy(X,p,sizeof(X)); }; \
 	inline void set_##X(size_t n, char c) { gld_wlock _lock(my()); X[n]=c; }; \

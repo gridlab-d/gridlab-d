@@ -29,6 +29,9 @@
 #include "tape.h"
 #include "file.h"
 #include "odbc.h"
+#include "violation_recorder.h"
+#include "metrics_collector.h"
+#include "metrics_collector_writer.h"
 
 #define MAP_DOUBLE(X,LO,HI) {#X,VT_DOUBLE,&X,LO,HI}
 #define MAP_INTEGER(X,LO,HI) {#X,VT_INTEGER,&X,LO,HI}
@@ -121,12 +124,12 @@ TAPEFUNCS *get_ftable(char *mode){
 	snprintf(modname, sizeof(modname), "tape_%s" DLEXT, mode);
 
 	if(gl_findfile(modname, NULL, 0|4, tpath,sizeof(tpath)) == NULL){
-		gl_error("unable to locate %s", modname);
+		gl_error("unable to locate %s", modname.get_string());
 		return NULL;
 	}
 	lib = fptr->hLib = DLLOAD(tpath);
 	if(fptr->hLib == NULL){
-		gl_error("tape module: unable to load DLL for %s", modname);
+		gl_error("tape module: unable to load DLL for %s", modname.get_string());
 		return NULL;
 	}
 	c = (CALLBACKS **)DLSYM(lib, "callback");
@@ -357,7 +360,7 @@ EXPORT int check(void)
 			if (gl_findfile(pData->file,NULL,F_OK,fpath,sizeof(fpath))==NULL)
 			{
 				errcount++;
-				gl_error("player %s (id=%d) uses the file '%s', which cannot be found", obj->name?obj->name:"(unnamed)", obj->id, pData->file);
+				gl_error("player %s (id=%d) uses the file '%s', which cannot be found", obj->name?obj->name:"(unnamed)", obj->id, pData->file.get_string());
 			}
 		}
 	}
@@ -371,7 +374,7 @@ EXPORT int check(void)
 			if (gl_findfile(pData->file,NULL,F_OK,fpath,sizeof(fpath))==NULL)
 			{
 				errcount++;
-				gl_error("shaper %s (id=%d) uses the file '%s', which cannot be found", obj->name?obj->name:"(unnamed)", obj->id, pData->file);
+				gl_error("shaper %s (id=%d) uses the file '%s', which cannot be found", obj->name?obj->name:"(unnamed)", obj->id, pData->file.get_string());
 			}
 		}
 	}

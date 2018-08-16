@@ -5,7 +5,7 @@
 
 #include "engine.h"
 
-//CALLBACKS *callback = NULL;
+CALLBACKS *callback = NULL;
 
 #include "link.h"
 #include "build.h"

@@ -14,6 +14,7 @@
 #include "platform.h"
 #include "complex.h"
 #include "unit.h"
+#include <iostream>
 
 // also in object.h
 typedef struct s_class_list CLASS;
@@ -48,6 +49,15 @@ typedef unsigned int64 uint64;
 
 /* Valid GridLAB data types */
 #ifdef __cplusplus
+template<size_t size> class charbuf;
+
+template<size_t size>
+std::ostream& operator<<(std::ostream& os, const charbuf<size>& buffer)
+{
+	os << buffer.buffer;
+	return os;
+}
+
 template<size_t size> class charbuf {
 private:
 	char buffer[size];
@@ -61,7 +71,8 @@ public:
 	inline char* erase(void) { return (char*)memset(buffer,0,size); };
 	inline char* copy_to(char *s) { return s?strncpy(s,buffer,size):NULL; };
 	inline char* copy_from(const char *s) { return s?strncpy(buffer,s,size):NULL; };
-	inline operator char*(void) { return buffer; };
+	operator char*() { return buffer; };
+	operator char() { return *buffer; };
 	inline bool operator ==(const char *s) { return strcmp(buffer,s)==0; };
 	inline bool operator <(const char *s) { return strcmp(buffer,s)==-1; };
 	inline bool operator >(const char *s) { return strcmp(buffer,s)==1; };
@@ -73,7 +84,11 @@ public:
 	inline char *token(char *from, const char *delim, char **context) { this->strtok_s(from,delim,context); };
 	inline size_t format(char *fmt, ...) { va_list ptr; va_start(ptr,fmt); size_t len=vsnprintf(buffer,size,fmt,ptr); va_end(ptr); return len; };
 	inline size_t vformat(char *fmt, va_list ptr) { return vsnprintf(buffer,size,fmt,ptr); };
+
+    friend std::ostream& operator<< <>(std::ostream& out, const charbuf& buffer);
 };
+
+
 typedef charbuf<1025> char1024;
 typedef charbuf<257> char256;
 typedef charbuf<33> char32;

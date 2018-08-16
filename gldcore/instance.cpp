@@ -206,7 +206,7 @@ void *instance_runproc(void *ptr)
 #ifdef WIN32
 			/* run new instance */
 			sprintf(cmd,"%s/gridlabd %s %s --slave %s:%"FMT_INT64"x %s &", global_execdir, global_verbose_mode?"--verbose":"", global_debug_output?"--debug":"", global_hostname,inst->cacheid, inst->model);
-			output_verbose("starting new instance with command '%s'", cmd);
+			output_verbose("starting new instance with command '%s'", cmd.get_string());
 			rc = system(cmd);
 			break;
 #else
@@ -537,7 +537,7 @@ STATUS instance_init(instance *inst)
 			}
 		}
 		if(i == cnxtypecnt){ // exhausted the list without finding a match
-			output_error("instance_init(): unrecognized connection type '%s' for instance '%s'", inst->cnxtypestr, inst->model);
+			output_error("instance_init(): unrecognized connection type '%s' for instance '%s'", inst->cnxtypestr.get_string(), inst->model);
 			return FAILED;
 		}
 	} else {

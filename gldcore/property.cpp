@@ -65,7 +65,7 @@ PROPERTYSPEC property_type[_PT_LAST] = {
 				void *,
 				PROPERTY *)>(convert_to_enduse),                                                                                       reinterpret_cast<int (*)(
 				void *)>(enduse_create),                                                                                                      NULL, {TCOPS(double)}, enduse_get_part},
-		{"randomvar",     "string",  sizeof(randomvar),     24,                 convert_from_randomvar,      reinterpret_cast<int (*)(
+		{"randomvar",     "string",  sizeof(randomvar_struct),     24,                 convert_from_randomvar,      reinterpret_cast<int (*)(
 				const char *, void *,
 				PROPERTY *)>(convert_to_randomvar),                                                                                    reinterpret_cast<int (*)(
 				void *)>(randomvar_create),                                                                                                   NULL, {TCOPS(double)}, random_get_part},
@@ -107,7 +107,7 @@ int property_check(void)
 		case PT_float: sz = sizeof(float); break;
 		case PT_loadshape: sz = sizeof(loadshape); break;
 		case PT_enduse: sz = sizeof(enduse); break;
-		case PT_random: sz = sizeof(randomvar); break;
+		case PT_random: sz = sizeof(randomvar_struct); break;
 		default: break;
 		}
 		output_verbose("property_check of %s: declared size is %d, actual size is %d", property_type[ptype].name, property_type[ptype].size, sz);

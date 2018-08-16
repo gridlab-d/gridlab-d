@@ -16,11 +16,14 @@
 
 #include <string>
 #include "gridlabd.h"
-#ifdef max
-#undef max
+#ifdef MAX
+#undef MAX
 #endif
-#ifdef min
-#undef min
+#ifdef MIN
+#undef MIN
+#endif
+#ifdef WIN32
+#define isnan _isnan
 #endif
 #include "climate.h"
 #include "timestamp.h"

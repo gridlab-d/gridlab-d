@@ -1041,7 +1041,7 @@ static int expression(PARSER, FINDPGM **pgm)
 			FINDVALUE v;
 			CLASS *oclass = class_get_class_from_classname(pvalue);
 			if (oclass==NULL)
-				output_error("class '%s' not found", pvalue);
+				output_error("class '%s' not found", pvalue.get_string());
 				/*	TROUBLESHOOT
 					A search rule specified a class that doesn't exist.  
 					Check the class name to make sure it exists and try again.
@@ -1059,7 +1059,7 @@ static int expression(PARSER, FINDPGM **pgm)
 			FINDVALUE v;
 			CLASS *oclass = class_get_class_from_classname(pvalue);
 			if (oclass==NULL)
-				output_error("class '%s' not found", pvalue);
+				output_error("class '%s' not found", pvalue.get_string());
 				/*	TROUBLESHOOT
 					A search rule specified a class that doesn't exist.  
 					Check the class name to make sure it exists and try again.
@@ -1087,7 +1087,7 @@ static int expression(PARSER, FINDPGM **pgm)
 			FINDVALUE v;
 			MODULE *mod = module_find(pvalue);
 			if (mod==NULL)
-				output_error("module '%s' not found", pvalue);
+				output_error("module '%s' not found", pvalue.get_string());
 				/* TROUBLESHOOT
 					A search rule specified a module that hasn't been loaded.
 					Check the module name to make sure it's been loaded and try again.
@@ -1133,7 +1133,7 @@ static int expression(PARSER, FINDPGM **pgm)
 			FINDVALUE v;
 			OBJECT *parent = object_find_name(pvalue);
 			if (parent==NULL && strcmp(pvalue, "root") != 0 && strcmp(pvalue, "ROOT") != 0)
-				output_error("parent '%s' not found", pvalue);
+				output_error("parent '%s' not found", pvalue.get_string());
 				/* TROUBLESHOOT 
 					A search rule specified a parent that isn't defined.
 					Check the parent name and try again.
@@ -1151,7 +1151,7 @@ static int expression(PARSER, FINDPGM **pgm)
 			FINDVALUE v;
 			int rank = atoi(pvalue);
 			if (rank<0)
-				output_error("rank %s is invalid", pvalue);
+				output_error("rank %s is invalid", pvalue.get_string());
 				/* TROUBLESHOOT
 					A search rule specified an object rank that is negative.
 					Make sure the rank is zero or positive and try again.
@@ -1253,14 +1253,14 @@ static int expression(PARSER, FINDPGM **pgm)
 		{
 			/** @todo support searches on flags (PLC, lock) */
 			/* still need to think about how to input flags without hardcoding the flag name. -mh */
-			output_error("find expression on %s not supported", pname);
+			output_error("find expression on %s not supported", pname.get_string());
 			/* TROUBLESHOOT
 				A search criteria attempted to search on the flags of an object, which is supported yet.
 				Remove the "flags" criteria and try again.
 			 */
 		}
 		else
-			output_error("find expression refers to unknown or unsupported property '%s'", pname);
+			output_error("find expression refers to unknown or unsupported property '%s'", pname.get_string());
 			/* TROUBLESHOOT
 				A search criteria used an expression that isn't recognized.  
 				Fix the search rule and try again.

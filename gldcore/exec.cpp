@@ -92,6 +92,8 @@
 #include <windows.h>
 #include <winbase.h>
 #include <direct.h>
+#include <gridunity_development/connection/socket.h>
+
 #else
 #include <unistd.h>
 #include <sys/types.h>
@@ -2941,7 +2943,7 @@ void exec_slave_node()
 			args[3] = (SOCKET *)inaddr;
 			//output_debug("esn(): got client");
 			memset(inaddr, 0, inaddrsz);
-			args[2] = (SOCKET *)accept(sockfd, (struct sockaddr *)inaddr, reinterpret_cast<socklen_t *>(&inaddrsz));
+			args[2] = (SOCKET *)accept(sockfd, (struct sockaddr *)inaddr, &inaddrsz);
 			output_debug("esn(): accepted client");
 			if (-1 == (int64)(args[2]))
 			{

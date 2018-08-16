@@ -550,7 +550,7 @@ STATUS instance_slave_init_mem(){
 	{
 		output_debug("cache '%s' opened for slave", cacheName);
 	}
-	local_inst.filemap = (void*)MapViewOfFile(local_inst.hMap,FILE_MAP_ALL_ACCESS,0,0,(DWORD)0); // not sure how big it is, so grab it all
+	local_inst.filemap = static_cast<char *>(MapViewOfFile(local_inst.hMap, FILE_MAP_ALL_ACCESS, 0, 0, (DWORD)0)); // not sure how big it is, so grab it all
 	output_debug("MapViewOfFile returned");
 	output_debug("resulting handle is %x", local_inst.filemap);
 	rv = (int64)local_inst.filemap;
@@ -580,7 +580,7 @@ STATUS instance_slave_init_mem(){
 	
 	local_inst.name_size = *(local_inst.message->name_size);
 	local_inst.prop_size = *(local_inst.message->data_size);
-	exec_sync_merge(NULL,(void*)&local_inst.cache);
+	exec_sync_merge(NULL,reinterpret_cast<sync_data*>(&local_inst.cache));
 
 	/* open slave signalling event */
 	sprintf(eventName,"GLD-%"FMT_INT64"x-S", global_master_port);
@@ -588,7 +588,7 @@ STATUS instance_slave_init_mem(){
 	if ( !local_inst.hSlave )
 	{
 		output_error("unable to open event signal '%s' for slave %d", eventName, slave_id);
-		return 0;
+		return static_cast<STATUS>(0);
 	}
 	else
 	{

@@ -1417,7 +1417,7 @@ TIMESTAMP _object_sync(OBJECT *obj, /**< the object to synchronize */
 {
 	CLASS *oclass = obj->oclass;
 	register TIMESTAMP plc_time=TS_NEVER, sync_time;
-	TIMESTAMP effective_valid_to = min(obj->clock+global_skipsafe,obj->valid_to);
+	TIMESTAMP effective_valid_to = MIN(obj->clock+global_skipsafe,obj->valid_to);
 	int autolock = obj->oclass->passconfig&PC_AUTOLOCK;
 
 	/* check skipsafe */
@@ -1759,7 +1759,7 @@ int object_save(char *buffer, int size, OBJECT *obj)
 	/* dump header properties */
 	if(obj->parent != NULL){
 		convert_from_object(oname, sizeof(oname), &obj->parent, NULL);
-		count += sprintf(temp+count, "\tparent %s;\n", oname);
+		count += sprintf(temp+count, "\tparent %s;\n", oname.get_string());
 	}
 
 	count += sprintf(temp+count, "\trank %d;\n", obj->rank);
@@ -1886,13 +1886,13 @@ int object_saveall_xml(FILE *fp){ /**< the stream to write to */
 		if((oclass == NULL) || (obj->oclass != oclass)){
 			oclass = obj->oclass;
 		}
-		count += fprintf(fp, "\t\t<object type=\"%s\" id=\"%i\" name=\"%s\">\n", obj->oclass->name, obj->id, oname);
+		count += fprintf(fp, "\t\t<object type=\"%s\" id=\"%i\" name=\"%s\">\n", obj->oclass->name, obj->id, oname.get_string());
 
 		/* dump internal properties */
 		if(obj->parent != NULL){
 			convert_from_object(oname, sizeof(oname), &obj->parent, NULL);
 			count += fprintf(fp,"\t\t\t<parent>\n");
-			count += fprintf(fp, "\t\t\t\t%s\n", oname);
+			count += fprintf(fp, "\t\t\t\t%s\n", oname.get_string());
 			count += fprintf(fp,"\t\t\t</parent>\n");
 		} else {
 			count += fprintf(fp,"\t\t\t<parent>root</parent>\n");
@@ -1954,7 +1954,7 @@ int object_saveall_xml_old(FILE *fp){ /**< the stream to write to */
 				oclass = obj->oclass;
 			}
 			count += fprintf(fp, "\t\t<object>\n");
-			count += fprintf(fp, "\t\t\t<name>%s</name> \n", oname);
+			count += fprintf(fp, "\t\t\t<name>%s</name> \n", oname.get_string());
 			count += fprintf(fp, "\t\t\t<class>%s</class> \n", obj->oclass->name);
 			count += fprintf(fp, "\t\t\t<id>%d</id>\n", obj->id);
 
@@ -1962,7 +1962,7 @@ int object_saveall_xml_old(FILE *fp){ /**< the stream to write to */
 			if(obj->parent != NULL){
 				convert_from_object(oname, sizeof(oname), &obj->parent, NULL);
 				count += fprintf(fp, "\t\t\t<parent>\n");
-				count += fprintf(fp, "\t\t\t\t<name>%s</name>\n", oname);
+				count += fprintf(fp, "\t\t\t\t<name>%s</name>\n", oname.get_string());
 				count += fprintf(fp, "\t\t\t\t<class>%s</class>\n", obj->parent->oclass->name);
 				count += fprintf(fp, "\t\t\t\t<id>%d</id>\n", obj->parent->id);
 				count += fprintf(fp, "\t\t\t</parent>\n");

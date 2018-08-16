@@ -783,7 +783,7 @@ double pseudorandom_value(RANDOMTYPE type, /**< the type of distribution desired
 }
 
 /******************************************************************************/
-static double mean(double sample[], unsigned int count)
+static double samp_mean(double sample[], unsigned int count)
 {
 	double sum=0;
 	unsigned int i;
@@ -791,35 +791,31 @@ static double mean(double sample[], unsigned int count)
 		sum += sample[i];
 	return sum/count;
 }
-#ifdef min
-#undef min
-#endif
-static double min(double sample[], unsigned int count)
+
+static double samp_min(double sample[], unsigned int count)
 {
-	double min;
+	double min_val;
 	unsigned int i;
 	for (i=0; i<count; i++)
 	{
-		if (i==0) min=sample[0];
-		else if (sample[i]<min) min=sample[i];
+		if (i==0) min_val=sample[0];
+		else if (sample[i]<min_val) min_val=sample[i];
 	}
-	return min;
+	return min_val;
 }
-#ifdef max
-#undef max
-#endif
-static double max(double sample[], unsigned int count)
+
+static double samp_max(double sample[], unsigned int count)
 {
-	double max;
+	double max_val;
 	unsigned int i;
 	for (i=0; i<count; i++)
 	{
-		if (i==0) max=sample[0];
-		else if (sample[i]>max) max=sample[i];
+		if (i==0) max_val=sample[0];
+		else if (sample[i]>max_val) max_val=sample[i];
 	}
-	return max;
+	return max_val;
 }
-static double stdev(double sample[], unsigned int count)
+static double samp_stdev(double sample[], unsigned int count)
 {
 	double sum=0, mean=0;
 	unsigned int n = 0, i;
@@ -881,10 +877,10 @@ int random_test(void)
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
 	errorcount+=report(NULL,0,0,0);
-	errorcount+=report("Mean",mean(sample,count),a,0.01);
-	errorcount+=report("Stdev",stdev(sample,count),0,0.01);
-	errorcount+=report("Min",min(sample,count),a,0.01);
-	errorcount+=report("Max",max(sample,count),a,0.01);
+	errorcount+=report("Mean",samp_mean(sample,count),a,0.01);
+	errorcount+=report("Stdev",samp_stdev(sample,count),0,0.01);
+	errorcount+=report("Min",samp_min(sample,count),a,0.01);
+	errorcount+=report("Max",samp_max(sample,count),a,0.01);
 	if (preverrors==errorcount)	ok++; else failed++;
 	preverrors=errorcount;
 
@@ -899,10 +895,10 @@ int random_test(void)
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
 	errorcount+=report(NULL,0,0,0);
-	errorcount+=report("Mean",mean(sample,count),(a+b)/2,0.01);
-	errorcount+=report("Stdev",stdev(sample,count),sqrt((b-a)*(b-a)/12),0.01);
-	errorcount+=report("Min",min(sample,count),a,0.01);
-	errorcount+=report("Max",max(sample,count),b,0.01);
+	errorcount+=report("Mean",samp_mean(sample,count),(a+b)/2,0.01);
+	errorcount+=report("Stdev",samp_stdev(sample,count),sqrt((b-a)*(b-a)/12),0.01);
+	errorcount+=report("Min",samp_min(sample,count),a,0.01);
+	errorcount+=report("Max",samp_max(sample,count),b,0.01);
 	if (preverrors==errorcount)	ok++; else failed++;
 	preverrors=errorcount;
 
@@ -916,10 +912,10 @@ int random_test(void)
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
 	errorcount+=report(NULL,0,0,0.01);
-	errorcount+=report("Mean",mean(sample,count),a,0.01);
-	errorcount+=report("Stdev",stdev(sample,count),sqrt(a*(1-a)),0.01);
-	errorcount+=report("Min",min(sample,count),0,0.01);
-	errorcount+=report("Max",max(sample,count),1,0.01);
+	errorcount+=report("Mean",samp_mean(sample,count),a,0.01);
+	errorcount+=report("Stdev",samp_stdev(sample,count),sqrt(a*(1-a)),0.01);
+	errorcount+=report("Min",samp_min(sample,count),0,0.01);
+	errorcount+=report("Max",samp_max(sample,count),1,0.01);
 	if (preverrors==errorcount)	ok++; else failed++;
 	preverrors=errorcount;
 
@@ -934,8 +930,8 @@ int random_test(void)
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
 	errorcount+=report(NULL,0,0,0.01);
-	errorcount+=report("Mean",mean(sample,count),a,0.01);
-	errorcount+=report("Stdev",stdev(sample,count),b,0.01);
+	errorcount+=report("Mean",samp_mean(sample,count),a,0.01);
+	errorcount+=report("Stdev",samp_stdev(sample,count),b,0.01);
 	if (preverrors==errorcount)	ok++; else failed++;
 	preverrors=errorcount;
 
@@ -949,9 +945,9 @@ int random_test(void)
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
 	errorcount+=report(NULL,0,0,0.01);
-	errorcount+=report("Mean",mean(sample,count),1/a,0.01);
-	errorcount+=report("Stdev",stdev(sample,count),1/a,0.01);
-	errorcount+=report("Min",min(sample,count),0,0.01);
+	errorcount+=report("Mean",samp_mean(sample,count),1/a,0.01);
+	errorcount+=report("Stdev",samp_stdev(sample,count),1/a,0.01);
+	errorcount+=report("Min",samp_min(sample,count),0,0.01);
 	if (preverrors==errorcount)	ok++; else failed++;
 	preverrors=errorcount;
 	
@@ -966,9 +962,9 @@ int random_test(void)
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
 	errorcount+=report(NULL,0,0,0.01);
-	errorcount+=report("Mean",mean(sample,count),exp(a+b*b/2),0.01);
-	errorcount+=report("Stdev",stdev(sample,count),sqrt((exp(b*b)-1)*exp(2*a+b*b)),0.1);
-	errorcount+=report("Min",min(sample,count),0,0.1);
+	errorcount+=report("Mean",samp_mean(sample,count),exp(a+b*b/2),0.01);
+	errorcount+=report("Stdev",samp_stdev(sample,count),sqrt((exp(b*b)-1)*exp(2*a+b*b)),0.1);
+	errorcount+=report("Min",samp_min(sample,count),0,0.1);
 	if (preverrors==errorcount)	ok++; else failed++;
 	preverrors=errorcount;
 
@@ -983,9 +979,9 @@ int random_test(void)
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
 	errorcount+=report(NULL,0,0,0.01);
-	errorcount+=report("Mean",mean(sample,count),b*a/(b-1),0.01);
-	errorcount+=report("Stdev",stdev(sample,count),sqrt(a*a*b/((b-1)*(b-1)*(b-2))),0.25);
-	errorcount+=report("Min",min(sample,count),a,0.01);
+	errorcount+=report("Mean",samp_mean(sample,count),b*a/(b-1),0.01);
+	errorcount+=report("Stdev",samp_stdev(sample,count),sqrt(a*a*b/((b-1)*(b-1)*(b-2))),0.25);
+	errorcount+=report("Min",samp_min(sample,count),a,0.01);
 	if (preverrors==errorcount)	ok++; else failed++;
 	preverrors=errorcount;
 
@@ -1000,8 +996,8 @@ int random_test(void)
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
 	errorcount+=report(NULL,0,0,0.01);
-	errorcount+=report("Mean",mean(sample,count),a*sqrt(3.1415926/2),0.01);
-	errorcount+=report("Stdev",stdev(sample,count),sqrt((4-3.1415926)/2*a*a),0.01);
+	errorcount+=report("Mean",samp_mean(sample,count),a*sqrt(3.1415926/2),0.01);
+	errorcount+=report("Stdev",samp_stdev(sample,count),sqrt((4-3.1415926)/2*a*a),0.01);
 	if (preverrors==errorcount)	ok++; else failed++;
 	preverrors=errorcount;
 
@@ -1016,8 +1012,8 @@ int random_test(void)
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
 	errorcount+=report(NULL,0,0,0.01);
-	errorcount+=report("Mean",mean(sample,count),a/(a+b),0.01);
-	errorcount+=report("Stdev",stdev(sample,count),sqrt(a*b/((a+b)*(a+b)*(a+b+1))),0.01);
+	errorcount+=report("Mean",samp_mean(sample,count),a/(a+b),0.01);
+	errorcount+=report("Stdev",samp_stdev(sample,count),sqrt(a*b/((a+b)*(a+b)*(a+b+1))),0.01);
 	if (preverrors==errorcount)	ok++; else failed++;
 	preverrors=errorcount;
 
@@ -1032,8 +1028,8 @@ int random_test(void)
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
 	errorcount+=report(NULL,0,0,0.01);
-	errorcount+=report("Mean",mean(sample,count),a*b,0.25);
-	errorcount+=report("Stdev",stdev(sample,count),sqrt(a*b*b),0.01);
+	errorcount+=report("Mean",samp_mean(sample,count),a*b,0.25);
+	errorcount+=report("Stdev",samp_stdev(sample,count),sqrt(a*b*b),0.01);
 	if (preverrors==errorcount)	ok++; else failed++;
 	preverrors=errorcount;
 
@@ -1048,8 +1044,8 @@ int random_test(void)
 			output_test("Sample %d is not a finite number!",i--);
 	}
 	errorcount+=report(NULL,0,0,0.01);
-	errorcount+=report("Mean",mean(sample,count),(a+b)/2,0.01);
-	errorcount+=report("Stdev",stdev(sample,count),sqrt((a-b)*(a-b)/24),0.01);
+	errorcount+=report("Mean",samp_mean(sample,count),(a+b)/2,0.01);
+	errorcount+=report("Stdev",samp_stdev(sample,count),sqrt((a-b)*(a-b)/24),0.01);
 	if (preverrors==errorcount)	ok++; else failed++;
 	preverrors=errorcount;
 
@@ -1063,11 +1059,11 @@ int random_test(void)
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
 	errorcount+=report(NULL,0,0,0.01);
-	errorcount+=report("Mean",mean(sample,count),4.5,0.01);
-	//report("Stdev",stdev(sample,count),sqrt(9*9/12),0.01);
-	errorcount+=report("Stdev",stdev(sample,count),sqrt(99/12),0.1); /* sqrt((b-a+1)^2-1 / 12)*/ /* 2.87 is more accurate and was Mathematica's answer */
-	errorcount+=report("Min",min(sample,count),0,0.01);
-	errorcount+=report("Max",max(sample,count),9,0.01);
+	errorcount+=report("Mean",samp_mean(sample,count),4.5,0.01);
+	//report("Stdev",samp_stdev(sample,count),sqrt(9*9/12),0.01);
+	errorcount+=report("Stdev",samp_stdev(sample,count),sqrt(99/12),0.1); /* sqrt((b-a+1)^2-1 / 12)*/ /* 2.87 is more accurate and was Mathematica's answer */
+	errorcount+=report("Min",samp_min(sample,count),0,0.01);
+	errorcount+=report("Max",samp_max(sample,count),9,0.01);
 	if (preverrors==errorcount)	ok++; else failed++;
 	preverrors=errorcount;
 
@@ -1127,20 +1123,20 @@ int random_test(void)
 //////////////////////////////////////////////////////////////////////////////////////////////////
 // Random Variables
 
-static randomvar *randomvar_list = NULL;
+static randomvar_struct *randomvar_list = NULL;
 static unsigned int n_randomvars = 0;
 clock_t randomvar_synctime = 0;
 
 int convert_to_randomvar(char *string, void *data, PROPERTY *prop)
 {
-	randomvar *var = (randomvar*)data;
+	randomvar_struct *var = (randomvar_struct*)data;
 	char buffer[1024];
 	char *token = NULL;
 	char *last = NULL;
 
 	/* clean memory */
-	randomvar *next = var->next;
-	memset(var,0,sizeof(randomvar));
+	randomvar_struct *next = var->next;
+	memset(var,0,sizeof(randomvar_struct));
 	var->next = next;
 
 	/* check string length before copying to buffer */
@@ -1254,13 +1250,13 @@ int convert_to_randomvar(char *string, void *data, PROPERTY *prop)
 
 int convert_from_randomvar(char *string,int size,void *data, PROPERTY *prop)
 {
-	randomvar *var = (randomvar*)data;
+	randomvar_struct *var = (randomvar_struct*)data;
 	return sprintf(string,"%lf",var->value);
 }
 
-int randomvar_create(randomvar *var)
+int randomvar_create(randomvar_struct *var)
 {
-	memset(var,0,sizeof(randomvar));
+	memset(var,0,sizeof(randomvar_struct));
 	var->next = randomvar_list;
 	var->state = randwarn(NULL);
 	randomvar_list = var;
@@ -1268,7 +1264,7 @@ int randomvar_create(randomvar *var)
 	return 1;
 }
 
-int randomvar_update(randomvar *var)
+int randomvar_update(randomvar_struct *var)
 {
 	do {
 		double v = pseudorandom_value(var->type,&(var->state),var->a,var->b);
@@ -1280,7 +1276,7 @@ int randomvar_update(randomvar *var)
 	return 1;
 }
 
-int randomvar_init(randomvar *var)
+int randomvar_init(randomvar_struct *var)
 {
 	randomvar_update(var);
 	return 1;
@@ -1288,7 +1284,7 @@ int randomvar_init(randomvar *var)
 
 int randomvar_initall(void)
 {
-	randomvar *var;
+	randomvar_struct *var;
 	for (var=randomvar_list; var!=NULL; var=var->next)
 	{
 		if (randomvar_init(var)==1)
@@ -1297,19 +1293,19 @@ int randomvar_initall(void)
 	return SUCCESS;
 }
 
-TIMESTAMP randomvar_sync(randomvar *var, TIMESTAMP t1)
+TIMESTAMP randomvar_sync(randomvar_struct *var, TIMESTAMP t1)
 {
 	if ( var->update_rate<=0 || t1%var->update_rate==0 )
 		randomvar_update(var);
 	return var->update_rate<=0 ? TS_NEVER : ((t1/var->update_rate)+1)*var->update_rate;
 }
 
-randomvar *randomvar_getnext(randomvar*var)
+randomvar_struct *randomvar_getnext(randomvar_struct*var)
 {
 	return var ? randomvar_list : var->next;
 }
 
-size_t randomvar_getspec(char *str, size_t size, const randomvar *var)
+size_t randomvar_getspec(char *str, size_t size, const randomvar_struct *var)
 {
 	char buffer[1024];
 	char specs[1024];
@@ -1331,7 +1327,7 @@ TIMESTAMP randomvar_syncall(TIMESTAMP t1)
 {
 	if ( randomvar_list )
 	{
-		randomvar *var;
+		randomvar_struct *var;
 		TIMESTAMP t2 = TS_NEVER;
 		clock_t ts = (clock_t)exec_clock();
 		for (var=randomvar_list; var!=NULL; var=var->next)
@@ -1348,7 +1344,7 @@ TIMESTAMP randomvar_syncall(TIMESTAMP t1)
 
 double random_get_part(void *x, char *name)
 {
-	randomvar *v = (randomvar*)x;
+	randomvar_struct *v = (randomvar_struct*)x;
 	if ( strcmp(name,"a")==0 ) return v->a;
 	if ( strcmp(name,"b")==0 ) return v->b;
 	if ( strcmp(name,"high")==0 ) return v->high;

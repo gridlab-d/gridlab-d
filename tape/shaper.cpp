@@ -97,7 +97,7 @@ static int shaper_open(OBJECT *obj)
 	if (strcmp(fname,"")==0)
 
 		/* use object name-id as default file name */
-		sprintf(fname,"%s-%d.%s",obj->parent->oclass->name,obj->parent->id, my->filetype);
+		sprintf(fname,"%s-%d.%s",obj->parent->oclass->name,obj->parent->id, my->filetype.get_string());
 
 	/* if type is file or file is stdin */
 	fns = get_ftable(my->mode);
@@ -195,12 +195,12 @@ EXPORT TIMESTAMP sync_shaper(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		/* build target list */
 		if (my->targets==NULL && my->group[0]!='\0')
 		{
-			FINDLIST *object_list = gl_find_objects(FL_GROUP,my->group);
+			FINDLIST *object_list = gl_find_objects(FL_GROUP,my->group.get_string());
 			OBJECT *item=NULL;
 			int n=0;
 			if (object_list==NULL || object_list->hit_count<=0)
 			{
-				gl_warning("shaper group '%s' is empty", my->group);
+				gl_warning("shaper group '%s' is empty", my->group.get_string());
 				my->status=TS_DONE;
 				return TS_NEVER;
 			}
@@ -226,7 +226,7 @@ EXPORT TIMESTAMP sync_shaper(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 						my->targets[n].addr = (double*)(gl_get_addr(item,prop->name)); /* pointer => int64 */
 						if (my->targets[n].addr<(double*)(item+1))
 						{
-							if (my->targets[n].addr>NULL)
+							if (my->targets[n].addr!=NULL)
 								GL_THROW("gl_get_addr(OBJECT *obj=[%s (%s:%d)], char *name='%s') return an invalid non-NULL pointer", item->name?item->name:"unnamed object", item->oclass->name, obj->id,prop->name);
 							else
 								GL_THROW("property '%s' not found in %s (%s:%d)", prop->name, item->name?item->name:"unnamed object", item->oclass->name, item->id);
@@ -239,7 +239,7 @@ EXPORT TIMESTAMP sync_shaper(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 					else
 						gl_warning("object %s:%d property %s is not a double", item->oclass->name,item->id, prop->name);
 				} else {
-					gl_error("object %s:%d property %s not found in object %s", obj->oclass->name,obj->id, my->property, item->oclass->name,item->id);
+					gl_error("object %s:%d property %s not found in object %s", obj->oclass->name,obj->id, my->property.get_string(), item->oclass->name,item->id);
 				}
 			}
 		}
@@ -274,7 +274,7 @@ EXPORT TIMESTAMP sync_shaper(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	}
 	obj->clock = t0;
 	if(t1 == 0){
-		gl_error("shaper:%i will return t1==0 ~ check the shaper's target property, \"%s\"", obj->id, my->property);
+		gl_error("shaper:%i will return t1==0 ~ check the shaper's target property, \"%s\"", obj->id, my->property.get_string());
 	}
 	return t1!=TS_NEVER?-t1:TS_NEVER; /* negative indicates a "soft" event which is only considered for stepping, not for stopping */
 }

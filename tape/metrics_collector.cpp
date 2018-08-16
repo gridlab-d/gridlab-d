@@ -967,7 +967,7 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		curr_index = 1;
 	}
 
-	next_write = min(next_write + interval_length, gl_globalstoptime);
+	next_write = MIN(next_write + interval_length, gl_globalstoptime);
 	first_write = false;
 
 	return 1;

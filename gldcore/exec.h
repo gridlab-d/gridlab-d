@@ -72,8 +72,8 @@ EXITCODE exec_run_termscripts(void);
 //}
 //#endif
 
-#ifndef max
-#define max(n, m) ((n) > (m) ? (n) : (m))
+#ifndef MAX
+#define MAX(n, m) ((n) > (m) ? (n) : (m))
 #endif
 
 #endif

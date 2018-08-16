@@ -971,7 +971,7 @@ int module_saveall_xml(FILE *fp){
 		count += fprintf(fp, "\t\t<properties>\n");
 		while(gvptr != NULL){
 			if(strncmp(tname, gvptr->prop->name, tlen) == 0){
-				count += fprintf(fp, "\t\t\t<%s>%s</%s>\n", gvptr->prop->name+tlen, class_property_to_string(gvptr->prop,(void*)gvptr->prop->addr,buffer,1024)>0 ? buffer : "...", gvptr->prop->name+tlen);
+				count += fprintf(fp, "\t\t\t<%s>%s</%s>\n", gvptr->prop->name+tlen, class_property_to_string(gvptr->prop,(void*)gvptr->prop->addr,buffer.get_string(),1024)>0 ? buffer.get_string() : "...", gvptr->prop->name+tlen);
 			} // else we have a module::prop name
 			gvptr = global_getnext(gvptr);
 		}
@@ -1007,7 +1007,7 @@ int module_saveobj_xml(FILE *fp, MODULE *mod){ /**< the stream to write to */
 		}
 		if ((oclass == NULL) || (obj->oclass != oclass))
 			oclass = obj->oclass;
-		count += fprintf(fp,"\t\t<object type=\"%s\" id=\"%i\" name=\"%s\">\n", obj->oclass->name, obj->id, oname);
+		count += fprintf(fp,"\t\t<object type=\"%s\" id=\"%i\" name=\"%s\">\n", obj->oclass->name, obj->id, oname.get_string());
 
 		/* dump internal properties */
 		if (obj->parent!=NULL){
@@ -1016,7 +1016,7 @@ int module_saveobj_xml(FILE *fp, MODULE *mod){ /**< the stream to write to */
 			} else {
 				sprintf(oname, "%s:%i", obj->parent->oclass->name, obj->parent->id);
 			}
-			count += fprintf(fp,"\t\t\t<parent>%s</parent>\n", oname);
+			count += fprintf(fp,"\t\t\t<parent>%s</parent>\n", oname.get_string());
 		} else {
 			count += fprintf(fp,"\t\t\t<parent>root</parent>\n");
 		}
@@ -1100,8 +1100,8 @@ int module_saveall_xml_old(FILE *fp)
 			if (module_getvar(mod,varname,value,sizeof(value)))
 			{	/* TODO: support other types (ticket #46) */
 				count += fprintf(fp,"\t\t\t\t<property> \n");
-				count += fprintf(fp,"\t\t\t\t\t <type>double</type>\n", varname);
-				count += fprintf(fp,"\t\t\t\t\t <name>%s</name>\n", value);
+				count += fprintf(fp,"\t\t\t\t\t <type>double</type>\n", varname.get_string());
+				count += fprintf(fp,"\t\t\t\t\t <name>%s</name>\n", value.get_string());
 				count += fprintf(fp,"\t\t\t\t</property> \n");
 			}
 		}

@@ -68,7 +68,7 @@ STATUS instance_cnx_mmap(instance *inst){
 		if ( !(inst->hMaster) )
 		{
 			output_error("unable to create event signal '%s' for slave %d", eventname, inst->id);
-			return 1;
+			return static_cast<STATUS>(1);
 		}
 		else
 		{
@@ -114,7 +114,7 @@ STATUS instance_cnx_socket(instance *inst){
 	fd_set callback_fdset;
 	struct timeval timer;
 	struct sockaddr_storage ss;
-	unsigned int slt, return_addr_sz;
+	int slt, return_addr_sz;
 	char blank[8];
 	char *args[7] = {"--profile", "--relax", "--debug", "--verbose",
 		"--warn", "--quiet", "--avlbalance"};

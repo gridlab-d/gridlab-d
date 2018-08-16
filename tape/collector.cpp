@@ -75,7 +75,7 @@ static int collector_open(OBJECT *obj)
 	my->interval = (int64)(my->dInterval/TS_SECOND);
 
 	/* if prefix is omitted (no colons found) */
-	if (sscanf(my->file,"%32[^:]:%1024[^:]:%[^:]",type,fname,flags)==1)
+	if (sscanf(my->file,"%32[^:]:%1024[^:]:%[^:]",type.get_string(),fname.get_string(),flags.get_string())==1)
 	{
 		/* filename is file by default */
 		strcpy(fname,my->file);
@@ -87,7 +87,7 @@ static int collector_open(OBJECT *obj)
 	{
 		char *p;
 		/* use group spec as default file name */
-		sprintf(fname,"%s.%s",my->group,my->filetype);
+		sprintf(fname,"%s.%s",my->group.get_string(),my->filetype.get_string());
 
 		/* but change disallowed characters to _ */
 		for (p=fname; *p!='\0'; p++)
@@ -212,7 +212,7 @@ EXPORT TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	/* read property */
 	if (my->aggr==NULL)
 	{
-		sprintf(buffer,"'%s' contains an aggregate that is not found in the group '%s'", my->property, my->group);
+		sprintf(buffer,"'%s' contains an aggregate that is not found in the group '%s'", (char*)my->property, (char*)my->group);
 		my->status = TS_ERROR;
 		goto Error;
 	}
@@ -230,7 +230,7 @@ EXPORT TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	if(my->aggr != NULL && (my->interval == 0 || my->interval == -1)){
 		if(read_aggregates(my->aggr,buffer,sizeof(buffer))==0)
 		{
-			sprintf(buffer,"unable to read aggregate '%s' of group '%s'", my->property, my->group);
+			sprintf(buffer,"unable to read aggregate '%s' of group '%s'", my->property.get_string(), my->group.get_string());
 			close_collector(my);
 			my->status = TS_ERROR;
 		}
@@ -239,7 +239,7 @@ EXPORT TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	if(my->aggr != NULL && my->interval > 0){
 		if((t0 >= my->last.ts + my->interval) || (t0 == my->last.ts)){
 			if(read_aggregates(my->aggr,buffer,sizeof(buffer))==0){
-				sprintf(buffer,"unable to read aggregate '%s' of group '%s'", my->property, my->group);
+				sprintf(buffer,"unable to read aggregate '%s' of group '%s'", my->property.get_string(), my->group.get_string());
 				close_collector(my);
 				my->status = TS_ERROR;
 			}
@@ -254,7 +254,7 @@ EXPORT TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		int desired = comparison==LT ? -1 : (comparison==EQ ? 0 : (comparison==GT ? 1 : -2));
 
 		/* if not trigger or can't get access */
-		int actual = strcmp(buffer,my->trigger+1);
+		int actual = strcmp(buffer,my->trigger.get_string()+1);
 		if (actual!=desired || (my->status==TS_INIT && !collector_open(obj))){
 			/* better luck next time */
 			return (my->interval==0 || my->interval==-1) ? TS_NEVER : t0+my->interval;
@@ -284,7 +284,7 @@ EXPORT TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 Error:
 	if (my->status==TS_ERROR)
 	{
-		gl_error("collector %d %s\n",obj->id, buffer);
+		gl_error("collector %d %s\n",obj->id, buffer.get_string());
 		my->status=TS_DONE;
 		return 0; /* failed */
 	}

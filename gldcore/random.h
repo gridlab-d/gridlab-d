@@ -6,8 +6,8 @@
  @{
  **/
 
-#ifndef _RANDOM_H
-#define _RANDOM_H
+#ifndef _GLD_RANDOM_H // Do not rename to _RANDOM_H since that is used by the bits/random.h header included from <algorithms>
+#define _GLD_RANDOM_H
 
 #include "platform.h"
 #include "timestamp.h"
@@ -63,7 +63,7 @@ extern "C" {
 
 #define RNF_INTEGRATE 0x0001 /**< RNG flag for integral number, e.g., random walk */
 
-typedef struct s_randomvar randomvar;
+typedef struct s_randomvar randomvar_struct;
 struct s_randomvar {
 	double value;				/**< current value */
 	unsigned int state;			/**< RNG state */
@@ -73,22 +73,22 @@ struct s_randomvar {
 	unsigned int update_rate;	/**< RNG refresh rate in seconds */
 	unsigned int flags;			/**< RNG flags */
 	/* internal parameters */
-	randomvar *next;
+	randomvar_struct *next;
 };
 
-int randomvar_update(randomvar *var);
-int randomvar_create(randomvar *var);
-int randomvar_init(randomvar *var);
+int randomvar_update(randomvar_struct *var);
+int randomvar_create(randomvar_struct *var);
+int randomvar_init(randomvar_struct *var);
 int randomvar_initall(void);
-TIMESTAMP randomvar_sync(randomvar *var, TIMESTAMP t1);
+TIMESTAMP randomvar_sync(randomvar_struct *var, TIMESTAMP t1);
 TIMESTAMP randomvar_syncall(TIMESTAMP t1);
 int convert_to_randomvar(char *string, void *data, PROPERTY *prop);
 int convert_from_randomvar(char *string,int size,void *data, PROPERTY *prop);
 unsigned int64 random_id(void);
 double random_get_part(void *x, char *name);
 unsigned entropy_source(void);
-randomvar *randomvar_getnext(randomvar *var);
-size_t randomvar_getspec(char *str, size_t size, const randomvar *var);
+randomvar_struct *randomvar_getnext(randomvar_struct *var);
+size_t randomvar_getspec(char *str, size_t size, const randomvar_struct *var);
 
 #endif
 
