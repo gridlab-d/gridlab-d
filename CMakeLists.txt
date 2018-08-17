@@ -20,21 +20,22 @@ SET(GLDCORE_LOC gldcore)
 
 # Sets default compile scheme to Release (Maximum optimization, no debugger data)
 # To compile as Debug outside of IDE, run cmake with "-DCMAKE_BUILD_TYPE=Debug" flag.
-IF (NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release)
-ENDIF ()
+IF(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
+    SET(CMAKE_BUILD_TYPE Release)
+ENDIF(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
 
 # Allows specific compiler optimizations to be disabled for all build types.
 set(DISABLED_OPTIMIZATIONS "")
 #set(DISABLED_OPTIMIZATIONS "${DISABLED_OPTIMIZATIONS} -fno-inline-functions")
 
 # Sets optimization flags.
-IF (CMAKE_BUILD_TYPE=Release)
+IF (CMAKE_BUILD_TYPE STREQUAL Release)
     SET(COMPILER_OPTIMIZATION_FLAG "-O3")
 ELSE ()
-    SET(COMPILER_OPTIMIZATION_FLAG "-O3")
+    SET(COMPILER_OPTIMIZATION_FLAG "-O0")
 ENDIF ()
 
+message("Compiler set to optimization level ${COMPILER_OPTIMIZATION_FLAG}")
 
 # Compiler/Linker flags for all build types
 set(CMAKE_CXX_FLAGS "-w")
@@ -47,20 +48,13 @@ set(CMAKE_C_FLAGS_DEBUG "-g ${COMPILER_OPTIMIZATION_FLAG} ${DISABLED_OPTIMIZATIO
 set(CMAKE_LD_FLAGS_DEBUG "-g ${COMPILER_OPTIMIZATION_FLAG} ${DISABLED_OPTIMIZATIONS}")
 
 # Compiler/Linker flags for release specific build types (default)
-set(CMAKE_CXX_FLAGS_RELEASE " ${COMPILER_OPTIMIZATION_FLAG} ${DISABLED_OPTIMIZATIONS}")
-set(CMAKE_C_FLAGS_RELEASE " ${COMPILER_OPTIMIZATION_FLAG} ${DISABLED_OPTIMIZATIONS}")
-set(CMAKE_LD_FLAGS_RELEASE " ${COMPILER_OPTIMIZATION_FLAG} ${DISABLED_OPTIMIZATIONS}")
+set(CMAKE_CXX_FLAGS_RELEASE "${COMPILER_OPTIMIZATION_FLAG} ${DISABLED_OPTIMIZATIONS}")
+set(CMAKE_C_FLAGS_RELEASE "${COMPILER_OPTIMIZATION_FLAG} ${DISABLED_OPTIMIZATIONS}")
+set(CMAKE_LD_FLAGS_RELEASE "${COMPILER_OPTIMIZATION_FLAG} ${DISABLED_OPTIMIZATIONS}")
 
 # Set up platform specific library linking
 IF (WIN32 OR MSYS OR MINGW OR CYGWIN)
-    #    find_library(MYLIB
-    #            NAMES "dl"
-    #            HINTS "C:\\MinGW\\msys\\1.0\\opt\\windows_64\\mingw\\bin"
-    #            NO_DEFAULT_PATH
-    #            )
-
-    #    message(${MYLIB})
-    SET(OS_SPECIFIC_LIBRARIES ws2_32 wsock32 dl m) # ${MYLIB})
+    SET(OS_SPECIFIC_LIBRARIES ws2_32 wsock32 dl m)
 ELSEIF (LINUX)
     SET(OS_SPECIFIC_LIBRARIES "")
 ELSEIF (APPLE)

@@ -355,7 +355,7 @@ FINDPGM *find_mkpgm(char *expression);
 
 	@return a pointer for FINDLIST structure used by find_first(), find_next, and find_makearray(), will return NULL if an error occurs.
 **/
-FINDLIST *find_objects(FINDLIST *start, ...)
+FINDLIST *find_objects(FINDLIST * volatile start, ...)
 {	
 	int ival;
 	char *sval;
@@ -390,11 +390,8 @@ FINDLIST *find_objects(FINDLIST *start, ...)
 		FINDTYPE ftype;
 		va_list(ptr);
 		va_start(ptr,start);
-		uint64 va_buffer;
-		while ((va_buffer=va_arg(ptr,uint64)) != FT_END)
+		while ((ftype = FINDTYPE(va_arg(ptr,int))) != FT_END)
 		{
-			ftype = FINDTYPE(va_buffer);
-
 			int invert=0;
 			int parent=0;
 			FINDOP conj=static_cast<FINDOP>(AND);
@@ -407,15 +404,13 @@ FINDLIST *find_objects(FINDLIST *start, ...)
 			if (ftype==AND || ftype==OR)
 			{	/* expect another op */
 				conj=static_cast<FINDOP>(ftype);
-				va_buffer = va_arg(ptr, uint64);
-				ftype = FINDTYPE(va_buffer);
+				ftype = FINDTYPE(va_arg(ptr, int));
 			}
 
 			/* follow to parent */
 			while (ftype==FT_PARENT)
 			{
-				va_buffer = va_arg(ptr, uint64);
-				ftype = FINDTYPE(va_buffer);
+				ftype = FINDTYPE(va_arg(ptr, int));
 				parent++;
 			}
 
@@ -424,15 +419,13 @@ FINDLIST *find_objects(FINDLIST *start, ...)
 				propname=va_arg(ptr,char*);
 
 			/* read operation */
-			va_buffer = va_arg(ptr, uint64);
-			op = FINDOP(va_buffer);
+			op = FINDOP(va_arg(ptr, int));
 
 			/* negation */
 			if (op==NOT)
 			{	/* expect another op */
 				invert=1;
-				va_buffer = va_arg(ptr, uint64);
-				op = FINDOP(va_buffer);
+				op = FINDOP(va_arg(ptr, int));
 			}
 
 			/* read value */
@@ -526,7 +519,7 @@ int find_makearray(FINDLIST *list, /**< the search list to scan */
 	the search list return
 	@return a pointer to the first object
  **/
-OBJECT *find_first(FINDLIST *list) /**< the search list to scan */
+OBJECT *find_first(FINDLIST * volatile list) /**< the search list to scan */
 {
 	return find_next(list,NULL);
 }
@@ -534,7 +527,7 @@ OBJECT *find_first(FINDLIST *list) /**< the search list to scan */
 /** Return the next object in the currenet search list
 	@return a pointer to the next object
  **/
-OBJECT *find_next(FINDLIST *list, /**< the search list to scan */
+OBJECT *find_next(FINDLIST * volatile list, /**< the search list to scan */
 				  OBJECT *obj) /**< the current object */
 {
 	if (obj==NULL)
@@ -696,7 +689,7 @@ int compare_integer64_nl(void *a, FINDVALUE b) {
 	the copy when you're done using it.
 	@return the copy
  **/
-FINDLIST *findlist_copy(FINDLIST *list)
+FINDLIST *findlist_copy(FINDLIST * volatile list)
 {
 	unsigned int size = sizeof(FINDLIST)+(list->result_size>>3);
 	FINDLIST *new_list = static_cast<FINDLIST*>(module_malloc(size));
@@ -704,20 +697,20 @@ FINDLIST *findlist_copy(FINDLIST *list)
 	return new_list;
 }
 
-void findlist_add(FINDLIST *list, OBJECT *obj)
+void findlist_add(FINDLIST * volatile list, OBJECT *obj)
 {
 	ADDOBJ(*list,obj->id);
 }
-void findlist_del(FINDLIST *list, OBJECT *obj)
+void findlist_del(FINDLIST * volatile list, OBJECT *obj)
 {
 	DELOBJ(*list,obj->id);
 }
-void findlist_clear(FINDLIST *list)
+void findlist_clear(FINDLIST * volatile list)
 {
 	DELALL(*list);
 }
 
-static void findlist_nop(FINDLIST *list, OBJECT *obj)
+static void findlist_nop(FINDLIST * volatile list, OBJECT *obj)
 {
 }
 

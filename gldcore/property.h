@@ -198,7 +198,7 @@ public:
 		(*refs)++;
 	}
 	~double_array(void) {
-        if ((*refs)-- == 0) {
+        if (x != NULL && (*refs)-- == 0) {
             size_t r, c;
             for (r = 0; r < n; r++) {
                 for (c = 0; c < m; c++) {
