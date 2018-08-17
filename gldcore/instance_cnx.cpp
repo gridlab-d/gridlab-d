@@ -114,12 +114,14 @@ STATUS instance_cnx_socket(instance *inst){
 	fd_set callback_fdset;
 	struct timeval timer;
 	struct sockaddr_storage ss;
-	int slt, return_addr_sz;
 	char blank[8];
 	char *args[7] = {"--profile", "--relax", "--debug", "--verbose",
 		"--warn", "--quiet", "--avlbalance"};
 #ifdef WIN32
+	int slt, return_addr_sz;
 	static WSADATA wsaData;
+#else
+	unsigned int slt, return_addr_sz;
 #endif
 	char rsp[32];
 	strcpy(rsp, HS_FAIL);

@@ -2861,13 +2861,15 @@ void exec_slave_node()
 	SOCKET *args[4];
 	struct sockaddr_in server_addr;
 	struct sockaddr_in *inaddr;
-	int inaddrsz;
 	fd_set reader_fdset, master_fdset;
 	struct timeval timer;
 	pthread_t slave_thread;
 	int rct;
 #ifdef WIN32
 	static WSADATA wsaData;
+		int inaddrsz;
+#else
+	unsigned int inaddrsz;
 #endif
 
 	inaddrsz = sizeof(struct sockaddr_in);

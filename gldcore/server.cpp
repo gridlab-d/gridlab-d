@@ -26,7 +26,6 @@
 #include <cstring>
 #include <errno.h>
 #include <pthread.h>
-#include <gridunity_development/connection/socket.h>
 #include <unistd.h>
 
 #include "server.h"
@@ -139,7 +138,13 @@ static void *server_routine(void *arg)
 		struct sockaddr_in cli_addr;
 		SOCKET newsockfd;
 
-		int clilen = sizeof(cli_addr);
+#ifdef WIN32
+		int clilen;
+#else
+		unsigned int clilen;
+#endif
+
+		clilen = sizeof(cli_addr);
 
 		/* accept client request and get client address */
 		newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
