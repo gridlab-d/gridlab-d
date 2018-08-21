@@ -958,6 +958,12 @@ int class_define_map(CLASS *oclass, /**< the object class */
 			if (prop==NULL)
 				goto Error;
 
+			if ( proptype==PT_method )
+			{
+				prop->addr = 0;
+				prop->method = (METHODCALL*)addr;
+			}
+
 			/* attach to property list */
 			class_add_property(oclass,prop);
 			count++;

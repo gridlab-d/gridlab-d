@@ -1254,4 +1254,27 @@ int convert_from_struct(char *buffer, size_t len, void *data, PROPERTY *prop)
 	return -len;
 }
 
+int convert_from_method (	char *buffer, /**< a pointer to the string buffer */
+							int size, /**< the size of the string buffer */
+							void *data, /**< a pointer to the data that is not changed */
+							PROPERTY *prop) /**< a pointer to keywords that are supported */
+{
+	if ( buffer==NULL ) { output_error("gldcore/convert_from_method(): buffer is null"); return -1; }
+	if ( data==NULL ) { output_error("gldcore/convert_from_method(): data is null"); return -1; }
+	if ( prop==NULL ) { output_error("gldcore/convert_from_method(): prop is null"); return -1; }
+	if ( prop->method==NULL ) { output_error("gldcore/convert_from_method(prop='%s'): method is null", prop->name ? prop->name : "(anon)"); return -1; }
+	return (prop->method)((OBJECT*)data,buffer,size);
+}
+int convert_to_method (	const char *buffer, /**< a pointer to the string buffer that is ignored */
+						void *data, /**< a pointer to the data that is not changed */
+						PROPERTY *prop) /**< a pointer to keywords that are supported */
+{
+	if ( buffer==NULL ) { output_error("gldcore/convert_to_method(): buffer is null"); return -1; }
+	if ( data==NULL ) { output_error("gldcore/convert_to_method(): data is null"); return -1; }
+	if ( prop==NULL ) { output_error("gldcore/convert_to_method(): prop is null"); return -1; }
+	if ( prop->method==NULL ) { output_error("gldcore/convert_to_method(prop='%s'): method is null", prop->name ? prop->name : "(anon)"); return -1; }
+	void *ptr = (void*)buffer; // force to non-const (trust me)
+	return (prop->method)((OBJECT*)data,(char*)ptr,0);
+}
+
 /**@}**/
