@@ -8,7 +8,7 @@
 #   Password: ...
 #   ...
 #   [root@... /]# cd /tmp
-#   [root@... /]# curl https://raw.githubusercontent.com/dchassin/gridlab/master/docker/centos-setup.sh -o setup.sh
+#   [root@... /]# curl https://raw.githubusercontent.com/dchassin/gridlab/master/utilties/centos-setup.sh -o setup.sh
 #   [root@... /]# chmod +x setup.sh
 #   [root@... /]# ./setup.sh
 #
@@ -23,7 +23,7 @@ yum install cmake -y
 yum install https://dev.mysql.com/get/mysql57-community-release-el7-9.noarch.rpm -y
 #yum install mysql56-server -y 
 MYSQL=mysql-connector-c-6.1.11-linux-glibc2.12-x86_64
-curl https://raw.githubusercontent.com/dchassin/gridlabd/master/docker/${MYSQL}.tar.zip -o ${MYSQL}.tar.zip
+curl https://raw.githubusercontent.com/dchassin/gridlabd/master/third_party/${MYSQL}.tar.zip -o ${MYSQL}.tar.zip
 unzip -y ${MYSQL}.tar
 tar xf ${MYSQL}.tar
 rm -f ${MYSQL}.tar
@@ -35,7 +35,7 @@ yum install mysql-libs -y
 
 # install armadillo
 cd /usr/local/src
-curl https://raw.githubusercontent.com/dchassin/gridlabd/master/docker/armadillo-7.800.1.tar.xz -o armadillo-7.800.1.tar.xz
+curl https://raw.githubusercontent.com/dchassin/gridlabd/master/third_party/armadillo-7.800.1.tar.xz -o armadillo-7.800.1.tar.xz
 tar xf armadillo-7.800.1.tar.xz
 rm -f armadillo-7.800.1.tar.xz
 cd armadillo-7.800.1
