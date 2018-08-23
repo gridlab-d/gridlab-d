@@ -29,7 +29,7 @@ git clone https://github.com/dchassin/gridlabd gridlabd
 
 # install xercesc
 cd /usr/local/src/gridlabd/third_party
-alias sudo=
+alias sudo=''
 . install_xercesc
 
 # install mysql 
@@ -43,9 +43,10 @@ cp -Ru ${MYSQL}/lib/* /usr/local/lib
 
 # install armadillo
 cd /usr/local/src/gridlabd/third_party
-gunzip armadillo-7.800.1.tar.gz
-tar xf armadillo-7.800.1.tar
-cd armadillo-7.800.1
+ARMA=armadillo-7.800.1
+gunzip ${ARMA}.tar.gz
+tar xf ${ARMA}.tar
+cd ${ARMA}
 cmake .
 make install
 
