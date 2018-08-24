@@ -37,11 +37,10 @@ export XERCESCROOT=`pwd`
 cd src/xercesc
 ./runConfigure -plinux -cgcc -xg++ -minmem -nsocket -tnative -rpthread
 make
-cd ${XERCESROOT}
+cd ${XERCESCROOT}
 cp -r include/xercesc /usr/include
-chmod -R a+rx /usr/include/xercesc
+chmod -R a+r /usr/include/xercesc
 ln lib/* /usr/lib 
-chmod -R a+rx /usr/lib/*xerces*
 /sbin/ldconfig
 
 # install mysql 
