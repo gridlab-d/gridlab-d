@@ -29,8 +29,20 @@ git clone https://github.com/dchassin/gridlabd gridlabd
 
 # install xercesc
 cd /usr/local/src/gridlabd/third_party
-alias sudo=''
-. install_xercesc
+XERCES=xerces-c-src_2_8_0
+gunzip ${XERCES}.tar.gz
+tar xf ${XERCES}.tar
+cd ${XERCES}
+export XERCESCROOT=`pwd`
+cd src/xercesc
+./runConfigure -plinux -cgcc -xg++ -minmem -nsocket -tnative -rpthread
+make
+cd ${XERCESROOT}
+cp -r include/xercesc /usr/include
+chmod -R a+rx /usr/include/xercesc
+ln lib/* /usr/lib 
+chmod -R a+rx /usr/lib/*xerces*
+/sbin/ldconfig
 
 # install mysql 
 cd /usr/local/src/gridlabd/third_party
