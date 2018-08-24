@@ -277,12 +277,12 @@ if test "x$GRIDLABD_DEBUG" = "x"; then :
   if test "x$HAS_MINGW" = "xyes"; then :
   "$bindir/gridlabd.exe" "$@"
 else
-  "$bindir/gridlabd.bin" "$@"
+  "$bindir/gridlabd" "$@"
 fi
 else
   if test "x$HAS_MINGW" = "xyes"; then :
   "$GRIDLABD_DEBUG" "$bindir/gridlabd.exe"
 else
-  "$GRIDLABD_DEBUG" "$bindir/gridlabd.bin"
+  "$GRIDLABD_DEBUG" "$bindir/gridlabd"
 fi
 fi

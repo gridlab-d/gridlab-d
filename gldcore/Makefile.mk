@@ -158,26 +158,26 @@ else
 
 bin_SCRIPTS += gldcore/gridlabd.sh
 
-bin_PROGRAMS += gridlabd.bin
+bin_PROGRAMS += gridlabd
 
-gridlabd_bin_CPPFLAGS =
-gridlabd_bin_CPPFLAGS += $(XERCES_CPPFLAGS)
-gridlabd_bin_CPPFLAGS += $(AM_CPPFLAGS)
+gridlabd_CPPFLAGS =
+gridlabd_CPPFLAGS += $(XERCES_CPPFLAGS)
+gridlabd_CPPFLAGS += $(AM_CPPFLAGS)
 
-gridlabd_bin_LDFLAGS =
-gridlabd_bin_LDFLAGS += $(XERCES_LDFLAGS)
-gridlabd_bin_LDFLAGS += $(AM_LDFLAGS)
+gridlabd_LDFLAGS =
+gridlabd_LDFLAGS += $(XERCES_LDFLAGS)
+gridlabd_LDFLAGS += $(AM_LDFLAGS)
 
-gridlabd_bin_LDADD =
-gridlabd_bin_LDADD += $(XERCES_LIB)
-gridlabd_bin_LDADD += $(CURSES_LIB)
-gridlabd_bin_LDADD += -ldl
+gridlabd_LDADD =
+gridlabd_LDADD += $(XERCES_LIB)
+gridlabd_LDADD += $(CURSES_LIB)
+gridlabd_LDADD += -ldl
 
-gridlabd_bin_SOURCES =
-gridlabd_bin_SOURCES += $(GLD_SOURCES_PLACE_HOLDER)
+gridlabd_SOURCES =
+gridlabd_SOURCES += $(GLD_SOURCES_PLACE_HOLDER)
 
-EXTRA_gridlabd_bin_SOURCES =
-EXTRA_gridlabd_bin_SOURCES += $(GLD_SOURCES_EXTRA_PLACE_HOLDER)
+EXTRA_gridlabd_SOURCES =
+EXTRA_gridlabd_SOURCES += $(GLD_SOURCES_EXTRA_PLACE_HOLDER)
 endif
 
 BUILT_SOURCES += gldcore/build.h
