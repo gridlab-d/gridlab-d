@@ -23,19 +23,19 @@ EXPORT_LOADMETHOD(fncs_msg,publish);
 EXPORT_LOADMETHOD(fncs_msg,subscribe);
 EXPORT_LOADMETHOD(fncs_msg,configure);
 
-EXPORT TIMESTAMP clocks_update(void *ptr, TIMESTAMP t1)
+EXPORT TIMESTAMP fncs_clocks_update(void *ptr, TIMESTAMP t1)
 {
 	fncs_msg*my = (fncs_msg*)ptr;
 	return my->clk_update(t1);
 }
 
-EXPORT SIMULATIONMODE dInterupdate(void *ptr, unsigned int dIntervalCounter, TIMESTAMP t0, unsigned int64 dt)
+EXPORT SIMULATIONMODE fncs_dInterupdate(void *ptr, unsigned int dIntervalCounter, TIMESTAMP t0, unsigned int64 dt)
 {
 	fncs_msg *my = (fncs_msg *)ptr;
 	return my->deltaInterUpdate(dIntervalCounter, t0, dt);
 }
 
-EXPORT SIMULATIONMODE dClockupdate(void *ptr, double t1, unsigned long timestep, SIMULATIONMODE sysmode)
+EXPORT SIMULATIONMODE fncs_dClockupdate(void *ptr, double t1, unsigned long timestep, SIMULATIONMODE sysmode)
 {
 	fncs_msg *my = (fncs_msg *)ptr;
 	return my->deltaClockUpdate(t1, timestep, sysmode);
@@ -81,9 +81,9 @@ fncs_msg::fncs_msg(MODULE *module)
 int fncs_msg::create(){
 	version = 1.0;
 	message_type = MT_GENERAL;
-	add_clock_update((void *)this,clocks_update);
-	register_object_interupdate((void *)this, dInterupdate);
-	register_object_deltaclockupdate((void *)this, dClockupdate);
+	add_clock_update((void *)this,fncs_clocks_update);
+	register_object_interupdate((void *)this, fncs_dInterupdate);
+	register_object_deltaclockupdate((void *)this, fncs_dClockupdate);
 	// setup all the variable maps
 	for ( int n=1 ; n<14 ; n++ )
 		vmap[n] = new varmap;
@@ -289,7 +289,7 @@ int fncs_msg::configure(char *value)
 	return rv;
 }
 
-void send_die(void)
+void fncs_send_die(void)
 {
 	//need to check the exit code. send die with an error exit code.
 	int a;
@@ -505,7 +505,7 @@ int fncs_msg::init(OBJECT *parent){
 	//register with fncs
 //	printf("%s",zplfile.str().c_str());
 	fncs::initialize(zplfile.str());
-	atexit(send_die);
+	atexit(fncs_send_die);
 	last_approved_fncs_time = gl_globalclock;
 	last_delta_fncs_time = (double)(gl_globalclock);
 	initial_sim_time = gl_globalclock;

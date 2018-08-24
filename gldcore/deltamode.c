@@ -246,7 +246,7 @@ DT delta_update(void)
 	clock_t t = clock();
 	DT seconds_advance, timestep;
 	DELTAT temp_time;
-	unsigned int delta_iteration_remaining, delta_iteration_count, delta_forced_iteration;
+	unsigned int delta_iteration_remaining, delta_iteration_count, delta_forced_iteration, delta_federation_iteration_remaining;
 	SIMULATIONMODE interupdate_mode, interupdate_mode_result, clockupdate_result;
 	int n;
 	double dbl_stop_time;
@@ -271,6 +271,8 @@ DT delta_update(void)
 	/* Do the same with the current "timestamp" */
 	dbl_curr_clk_time = (double)global_clock;
 
+	global_federation_reiteration = false;
+
 	/* Initialize the forced "post-update" timestep variable */
 	delta_forced_iteration = global_deltamode_forced_extra_timesteps;
 
@@ -286,132 +288,184 @@ DT delta_update(void)
 			break;	/* Just get us out of here */
 		}
 
-		/* set time context for deltamode */
-		output_set_delta_time_context(global_clock,global_deltaclock);
-
-		/* Initialize iteration limit counter */
-		delta_iteration_remaining = global_deltamode_iteration_limit;
+		delta_federation_iteration_remaining = global_deltamode_iteration_limit;
 
 		/* Initialize the iteration counter - seems silly to do, but saves a fetch */
 		delta_iteration_count = 0;
 
 		/* main object update loop */
 		realtime_run_schedule();
-
-		/* Begin deltamode iteration loop */
-		while (delta_iteration_remaining>0) /* Iterate on this delta timestep */
+		/* Federation reiteration loop */
+		while (delta_federation_iteration_remaining > 0)
 		{
-			/* Assume we are ready to go on, initially */
-			interupdate_mode = SM_EVENT;
+			/* Initialize iteration limit counter */
+			delta_iteration_remaining = global_deltamode_iteration_limit;
+			/* Initialize the iteration counter - seems silly to do, but saves a fetch */
+			delta_iteration_count = 0;
 
-			/* Loop through objects with their individual updates */
-			for ( n=0 ; n<delta_objectcount ; n++ )
+			/* Begin deltamode iteration loop */
+			while (delta_iteration_remaining>0) /* Iterate on this delta timestep */
 			{
-				d_obj = delta_objectlist[n];	/* Shouldn't need NULL checks, since they were done above */
-				d_oclass = d_obj->oclass;
+				/* Assume we are ready to go on, initially */
+				interupdate_mode = SM_EVENT;
 
-				/* See if the object is in service or not */
-				if ((d_obj->in_svc_double <= global_delta_curr_clock) && (d_obj->out_svc_double >= global_delta_curr_clock))
+				/* Loop through objects with their individual updates */
+				for ( n=0 ; n<delta_objectcount ; n++ )
 				{
-					if ( d_oclass->update )	/* Make sure it exists - init should handle this */
+					d_obj = delta_objectlist[n];	/* Shouldn't need NULL checks, since they were done above */
+					d_oclass = d_obj->oclass;
+
+					/* See if the object is in service or not */
+					if ((d_obj->in_svc_double <= global_delta_curr_clock) && (d_obj->out_svc_double >= global_delta_curr_clock))
 					{
-						/* Call the object-level interupdate */
-						interupdate_mode_result = d_oclass->update(d_obj,global_clock,global_deltaclock,timestep,delta_iteration_count);
+						if ( d_oclass->update )	/* Make sure it exists - init should handle this */
+						{
+							/* Call the object-level interupdate */
+							interupdate_mode_result = d_oclass->update(d_obj,global_clock,global_deltaclock,timestep,delta_iteration_count);
 
-						/* Check the status and handle appropriately */
-						switch ( interupdate_mode_result ) {
-							case SM_DELTA_ITER:
-								interupdate_mode = SM_DELTA_ITER;
-								break;
-							case SM_DELTA:
-								if (interupdate_mode != SM_DELTA_ITER)
-									interupdate_mode = SM_DELTA;
-								/* default else - leave it as is (SM_DELTA_ITER) */
-								break;
-							case SM_ERROR:
-								output_error("delta_update(): update failed for object \'%s\'", object_name(d_obj, temp_name_buff, 63));
-								/* TROUBLESHOOT
-								   An object failed to update correctly while operating in deltamode.
-								   Generally, this is an internal error and should be reported to the GridLAB-D developers.
-								 */
-								return DT_INVALID;
-							case SM_EVENT:
-							default: /* mode remains untouched */
-								break;
-						}
-					} /*End update exists */
-				}/* End in service */
-				/* Defaulted else, skip over it (not in service) */
-			}
+							/* Check the status and handle appropriately */
+							switch ( interupdate_mode_result ) {
+								case SM_DELTA_ITER:
+									interupdate_mode = SM_DELTA_ITER;
+									break;
+								case SM_DELTA:
+									if (interupdate_mode != SM_DELTA_ITER)
+										interupdate_mode = SM_DELTA;
+									/* default else - leave it as is (SM_DELTA_ITER) */
+									break;
+								case SM_ERROR:
+									output_error("delta_update(): update failed for object \'%s\'", object_name(d_obj, temp_name_buff, 63));
+									/* TROUBLESHOOT
+									   An object failed to update correctly while operating in deltamode.
+									   Generally, this is an internal error and should be reported to the GridLAB-D developers.
+									 */
+									return DT_INVALID;
+								case SM_EVENT:
+								default: /* mode remains untouched */
+									break;
+							}
+						} /*End update exists */
+					}/* End in service */
+					/* Defaulted else, skip over it (not in service) */
+				}
 
-			/* send interupdate messages */
-			interupdate_mode_result = delta_interupdate(timestep,delta_iteration_count);
+				/* send interupdate messages */
+				interupdate_mode_result = delta_interupdate(timestep,delta_iteration_count);
 
-			/* Check interupdate return statii */
-			if (interupdate_mode_result == SM_ERROR)
+				/* Check interupdate return statii */
+				if (interupdate_mode_result == SM_ERROR)
+				{
+					output_error("delta_update(): interupdate failed");
+					/* TROUBLESHOOT
+					   A module failed to complete an interupdate correctly while operating in deltamode.
+					   Generally, this is an internal error and should be reported to the GridLAB-D developers.
+					 */
+					return DT_INVALID;
+				}
+
+				if (global_deltamode_forced_always == true)
+				{
+					/* Override both returns, if SM_EVENT (all others okay) */
+					if (interupdate_mode_result == SM_EVENT)
+						interupdate_mode_result = SM_DELTA;
+
+					if (interupdate_mode == SM_EVENT)
+						interupdate_mode = SM_DELTA;
+				}
+
+				/* Now reconcile with object-level (if called) -- error is already handled */
+				if ((interupdate_mode_result != SM_EVENT) && (interupdate_mode == SM_EVENT))
+				{
+					interupdate_mode = interupdate_mode_result;	/* It is SM_DELTA or SM_DELTA_ITER, which trumps SM_EVENT */
+				}
+				else if ((interupdate_mode_result == SM_DELTA_ITER) && (interupdate_mode == SM_DELTA))
+				{
+					interupdate_mode = interupdate_mode_result;	/* Sets us to SM_DELTA_ITER */
+				}
+				/* defaulted else - interupdate is SM_DELTA_ITER or both are, so it doesn't matter */
+
+				if ((interupdate_mode == SM_DELTA) || (interupdate_mode == SM_EVENT))
+				{
+					break;	/* Get us out of the while and proceed as appropriate */
+				}
+				/* Defaulted else - SM_DELTA_ITER - stay here and continue on */
+
+				/* Update iteration counters */
+				delta_iteration_remaining--;
+				delta_iteration_count++;
+			} /* End iterating loop of deltamode */
+
+			/* If iteration limit reached, error us out */
+			if (delta_iteration_remaining==0)
 			{
-				output_error("delta_update(): interupdate failed");
-				/* TROUBLESHOOT
-				   A module failed to complete an interupdate correctly while operating in deltamode.
-				   Generally, this is an internal error and should be reported to the GridLAB-D developers.
-				 */
+				output_error("delta_update(): interupdate iteration limit reached");
+				/*  TROUBLESHOOT
+				While performing the interupdate portion of the deltamode updates, too many
+				reiterations were requested, so the simulation failed to progress forward.  You can
+				increase the iteration count with the global variable deltamode_iteration_limit.
+				*/
 				return DT_INVALID;
 			}
 
-			if (global_deltamode_forced_always == true)
-			{
-				/* Override both returns, if SM_EVENT (all others okay) */
-				if (interupdate_mode_result == SM_EVENT)
-					interupdate_mode_result = SM_DELTA;
+			// We have finished the current timestep. Call delta_clockUpdate.
+			clockupdate_result = delta_clockupdate(timestep, interupdate_mode);
 
-				if (interupdate_mode == SM_EVENT)
-					interupdate_mode = SM_DELTA;
+			if(clockupdate_result == SM_DELTA_ITER) {
+				interupdate_mode = clockupdate_result;
+				delta_federation_iteration_remaining--;
+				global_federation_reiteration = true;
+			} else if(clockupdate_result == SM_DELTA) {
+				global_federation_reiteration = false;
+				if(interupdate_mode == SM_EVENT) {
+					output_error("delta_update(): delta_interupdate() wanted to exit deltamode. However, delta_clockupdate() wanted to continue in deltamode. This shouldn't happen. Please check your object's delta_clockupdate function to determine what went wrong.");
+					/*  TROUBLESHOOT
+					While performing the interupdate portion of the deltamode updates,
+					all objects determined that it was ok to exit deltamode. When this is the
+					case, objects delta_clockupdate can only return DELTA_ITER indicating that
+					there needs to be a reiteration of the current deltamode timestep or EVENT
+					indicating that the simulation can exit deltamode. Please check your object's
+					delat_clockupdate function to make sure it adhere's to this behavior.
+					*/
+					return DT_INVALID;
+				} else {
+					break;
+				}
+			} else if(clockupdate_result == SM_EVENT) {
+				global_federation_reiteration = false;
+				if(interupdate_mode == SM_DELTA) {
+					output_error("delta_update(): delta_interupdate() wanted to move to the next deltamode timestep. However, delta_clockupdate() wanted to exit deltamode. This shouldn't happen. Please check your object's delta_clockupdate function to determine what went wrong.");
+					/*  TROUBLESHOOT
+					While performing the interupdate portion of the deltamode updates,
+					all objects determined that it was ok move to the next deltamode timestep.
+					When this is the case, objects delta_clockupdate can only return DELTA_ITER
+					indicating that there needs to be a reiteration of the current deltamode
+					timestep or DELTA indicating that the simulation can move to the next
+					deltamode timestep. Please check your object's delta_clockupdate function
+					to make sure it adhere's to this behavior.
+					*/
+					return DT_INVALID;
+				} else {
+					break;
+				}
+			} else if(clockupdate_result == SM_ERROR) {
+				output_error("delta_update(): clockupdate failed");
+				/* TROUBLESHOOT
+				 * A module failed to complete an clockupdate correctly while operating in deltamode.
+				 * Generally, this is an internal error and should be reported to the GridLAB-D developers.
+				 */
+				return DT_INVALID;
 			}
-
-			/* Now reconcile with object-level (if called) -- error is already handled */
-			if ((interupdate_mode_result != SM_EVENT) && (interupdate_mode == SM_EVENT))
-			{
-				interupdate_mode = interupdate_mode_result;	/* It is SM_DELTA or SM_DELTA_ITER, which trumps SM_EVENT */
-			}
-			else if ((interupdate_mode_result == SM_DELTA_ITER) && (interupdate_mode == SM_DELTA))
-			{
-				interupdate_mode = interupdate_mode_result;	/* Sets us to SM_DELTA_ITER */
-			}
-			/* defaulted else - interupdate is SM_DELTA_ITER or both are, so it doesn't matter */
-
-			if ((interupdate_mode == SM_DELTA) || (interupdate_mode == SM_EVENT))
-			{
-				break;	/* Get us out of the while and proceed as appropriate */
-			}
-			/* Defaulted else - SM_DELTA_ITER - stay here and continue on */
-
-			/* Update iteration counters */
-			delta_iteration_remaining--;
-			delta_iteration_count++;
-		} /* End iterating loop of deltamode */
-
-		/* If iteration limit reached, error us out */
-		if (delta_iteration_remaining==0)
-		{
-			output_error("delta_update(): interupdate iteration limit reached");
-			/*  TROUBLESHOOT
-			While performing the interupdate portion of the deltamode updates, too many
-			reiterations were requested, so the simulation failed to progress forward.  You can
-			increase the iteration count with the global variable deltamode_iteration_limit.
-			*/
-			return DT_INVALID;
 		}
 
-		// We have finished the current timestep. Call delta_clockUpdate.
-		clockupdate_result = delta_clockupdate(timestep, interupdate_mode);
-
-		if(clockupdate_result == SM_ERROR)
+		/* If federation iteration limit reached, error us out */
+		if (delta_federation_iteration_remaining==0)
 		{
-			output_error("delta_update(): clockupdate failed");
-			/* TROUBLESHOOT
-			 * A module failed to complete an clockupdate correctly while operating in deltamode.
-			 * Generally, this is an internal error and should be reported to the GridLAB-D developers.
-			 */
+			output_error("delta_update(): interupdate federation iteration limit reached");
+			/*  TROUBLESHOOT
+			While performing the clockupdate portion of the deltamode updates, too many
+			federate reiterations were requested, so the simulation failed to progress forward. You can
+			increase the iteration count with the global variable deltamode_iteration_limit.
+			*/
 			return DT_INVALID;
 		}
 
@@ -528,10 +582,11 @@ static SIMULATIONMODE delta_clockupdate(DT timestep, SIMULATIONMODE interupdate_
 	double nextTime = 0;
 	DT exitDeltaTimestep = 0;
 	MODULE ** module;
-	SIMULATIONMODE rv = SM_DELTA;
+	SIMULATIONMODE rv = SM_EVENT;
 	SIMULATIONMODE result = SM_EVENT;
 	if(interupdate_result == SM_DELTA)
 	{
+		rv = SM_DELTA;
 		//calculate the next timestep that we are going to in nanoseconds
 		nextTime = global_delta_curr_clock + ((double)timestep)/((double)DT_SECOND);
 		for(module=delta_modulelist; module < (delta_modulelist + delta_modulecount); module++)
@@ -559,6 +614,7 @@ static SIMULATIONMODE delta_clockupdate(DT timestep, SIMULATIONMODE interupdate_
 			}
 		}
 	} else if(interupdate_result == SM_EVENT) {
+		rv = SM_EVENT;
 		// we are exiting deltamode so we need to determine the timestep to the next whole second.
 		nextTime = ceil(global_delta_curr_clock);
 		exitDeltaTimestep = (DT)((nextTime - global_delta_curr_clock)*DT_SECOND);

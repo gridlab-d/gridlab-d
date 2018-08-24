@@ -32,7 +32,7 @@
 #define strtok_s strtok_r
 #else
 #ifdef __MINGW32__
-inline char* strtok_t(char *str, const char *delim, char **nextp)
+char* strtok_t(char *str, const char *delim, char **nextp)
 {
     char *ret;
 

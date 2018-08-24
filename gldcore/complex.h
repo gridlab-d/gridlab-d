@@ -21,7 +21,7 @@
 typedef enum {I='i',J='j',A='d', R='r'} CNOTATION; /**< complex number notation to use */
 #define CNOTATION_DEFAULT J /* never set this to A */
 #define PI 3.1415926535897932384626433832795
-#define E 2.71828182845905
+#define GLD_E 2.71828182845905
 
 #include <math.h>
 #include "platform.h"
@@ -30,6 +30,7 @@ typedef enum {I='i',J='j',A='d', R='r'} CNOTATION; /**< complex number notation 
 #ifndef __cplusplus
 typedef struct s_complex {
 #else
+namespace gld {
 class complex { 
 private:
 #endif
@@ -328,6 +329,7 @@ public:
 	inline bool operator >= (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)>=PI;};
 	inline bool IsFinite(void) { return isfinite(r) && isfinite(i); };
 };
+}
 #endif
 
 #endif
