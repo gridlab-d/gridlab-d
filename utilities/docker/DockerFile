@@ -1,0 +1,4 @@
+FROM centos
+RUN curl https://raw.githubusercontent.com/dchassin/gridlabd/master/utilities/docker/centos-setup.sh -o setup.sh
+RUN bash setup.sh
+
