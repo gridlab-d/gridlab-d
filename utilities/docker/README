@@ -1,0 +1,5 @@
+To create a docker image run the command
+
+   docker build https://raw.githubusercontent.com/dchassin/gridlabd/master/utilities/docker/DockerFile -t gridlabd
+   
+If the build succeeds and passes validation, the container will be created.
