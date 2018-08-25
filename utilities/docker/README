@@ -6,4 +6,4 @@ If the build succeeds and passes validation, the container will be created.
 
 To save the docker image use the following command
 
-   docker save gridlabd -o docker-gridlabd.tar
+   docker save gridlabd -o centos-gridlabd
