@@ -1,4 +1,6 @@
 FROM centos
+WORKDIR /tmp
 RUN curl https://raw.githubusercontent.com/dchassin/gridlabd/master/utilities/docker/centos-setup.sh -o setup.sh
-RUN bash setup.sh
-
+RUN ( bash setup.sh || true )
+RUN rm -rf /tmp/setup.sh /usr/local/src/gridlabd
+#EXPOSE 80/tcp 6267/tcp
