@@ -241,6 +241,47 @@ bool database::table_exists(char *t)
 	return false;
 }
 
+const char *database::get_sqltype(gld_property &prop, bool minified){
+	if(!minified)
+		return get_sqltype(prop);
+
+	switch ( prop.get_type() ) {
+		case PT_double:
+			return "FLOAT";
+		case PT_random:
+		case PT_loadshape:
+		case PT_enduse:
+			return "DOUBLE";
+		case PT_int16:
+		case PT_int32:
+		case PT_int64:
+			return "INT(20)";
+		case PT_char8:
+			return "VARCHAR(8)";
+		case PT_char32:
+			return "VARCHAR(32)";
+		case PT_enumeration:
+		case PT_char256:
+			return "VARCHAR(256)";
+		case PT_char1024:
+			return "VARCHAR(1024)";
+		case PT_complex:
+			// special handling for complex
+			return (prop.get_partname()[0] != '\0') ?	"FLOAT" : "VARCHAR(40)";
+		case PT_set:
+			return "LARGETEXT";
+		case PT_bool:
+			return "CHAR(1)";
+		case PT_timestamp:
+			return "DATETIME";
+		case PT_double_array:
+		case PT_complex_array:
+			return "HUGETEXT";
+		default:
+			return NULL;
+		}
+}
+
 const char *database::get_sqltype(gld_property &prop)
 {
 	switch ( prop.get_type() ) {
