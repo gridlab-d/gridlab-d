@@ -44,7 +44,7 @@ EXTERN char default_username[32] INIT("gridlabd");
 EXTERN char default_password[32] INIT("");
 EXTERN char default_schema[256] INIT("gridlabd");
 EXTERN int32 default_port INIT(3306);
-EXTERN char default_socketname[1024] INIT("/tmp/mysql.sock");
+EXTERN char default_socketname[1024] INIT("/var/run/mysqld/mysqld.sock");
 EXTERN int64 default_clientflags INIT(CLIENT_LOCAL_FILES);
 EXTERN MYSQL *mysql_client INIT(NULL); ///< connection handle
 EXTERN char default_table_prefix[256] INIT(""); ///< table prefix
