@@ -1,0 +1,263 @@
+clock {
+	timezone EST+5EDT;
+	starttime '2009-07-01 04:00:00';
+	stoptime '2009-07-01 04:59:00';
+}
+
+#set minimum_timestep=60;
+//#set profiler=1;
+
+module tape;
+module assert;
+module residential {
+	implicit_enduses NONE;
+};
+module powerflow {
+	solver_method NR;
+};
+
+schedule loads {       
+ {  
+  0-4 4 * 4-9 * 0.4897;
+  5-8 4 * 4-9 * 0.4145;
+  9-12 4 * 4-9 * 0.3829;
+  13-16 4 * 4-9 * 0.3300;
+  17-20 4 * 4-9 * 0.3817;
+  21-24 4 * 4-9 * 0.4340;
+  25-28 4 * 4-9 * 0.5499;
+  29-32 4 * 4-9 * 0.6556;
+  33-36 4 * 4-9 * 0.6961;
+  37-40 4 * 4-9 * 0.7413;
+  41-44 4 * 4-9 * 0.7653;
+  45-48 4 * 4-9 * 0.7755;
+  49-52 4 * 4-9 * 0.7900;
+  53-56 4 * 4-9 * 0.7326;
+  57-59 4 * 4-9 * 0.7097;
+  }
+}
+
+object line_configuration
+{
+	name conf_OHLine11kV;
+	conductor_A overhead_line_conductor_11kV;
+	conductor_B overhead_line_conductor_11kV;
+	conductor_C overhead_line_conductor_11kV;
+	conductor_N overhead_line_conductor_11kV;
+	spacing line_spacing_11kV;
+};
+object line_spacing
+{
+	name line_spacing_11kV;
+	distance_AB 1.0 m;
+	distance_BC 1.0 m;
+	distance_AC 2.0 m;
+};
+object overhead_line_conductor
+{
+	name overhead_line_conductor_11kV;
+	geometric_mean_radius .00446;
+	resistance 1.12;
+};
+object triplex_line_conductor {     
+	name triplex_4/0 AA;    
+	resistance 0.48;     
+	geometric_mean_radius 0.0158;     
+}       
+object triplex_line_configuration {     
+	name triplex_line_configuration_1;     
+	conductor_1 triplex_4/0 AA;    
+	conductor_2 triplex_4/0 AA;    
+	conductor_N triplex_4/0 AA;    
+	insulation_thickness 0.08;     
+	diameter 0.522;     
+}         
+object transformer_configuration {
+     name default_transformer;
+     connect_type SINGLE_PHASE_CENTER_TAPPED;
+     install_type PADMOUNT;
+     primary_voltage 7200 V;
+     secondary_voltage 120 V;
+     power_rating 50.0;
+	 powerA_rating 50.0;
+	 resistance 0.011;
+	 reactance 0.018;
+}
+
+object node
+{
+	name SWING_BUS;
+	nominal_voltage 7200;
+	voltage_A 7200 V;
+	phases A;
+	bustype SWING;
+};
+
+object overhead_line
+{
+	name LINE_1;
+	phases A;
+	from SWING_BUS;
+	to NODE_1;
+	configuration conf_OHLine11kV;
+	length 1500 m;
+};
+object meter
+{
+	name NODE_1;
+	nominal_voltage 7200;
+	phases A;
+	measured_energy_delta_timestep 300;
+	object assert {
+        target measured_real_energy_delta;
+        within 0.1;
+        object player {
+            property value;
+            file ../meter_real_energy_delta.player;
+        };
+    };
+    object assert {
+        target measured_reactive_energy_delta;
+        within 0.1;
+        object player {
+            property value;
+            file ../meter_reactive_energy_delta.player;
+        };
+    };
+};
+object transformer {
+     name center_tap_transformer_A;
+     phases AS;
+     from NODE_1;
+     to triplex_NODE_1;
+     configuration default_transformer;
+}
+	
+object triplex_meter {     
+	name triplex_NODE_1;     
+	phases AS;     
+	nominal_voltage 120;
+
+}
+
+object triplex_line {
+	groupid Triplex_Line;
+	phases AS;
+	from triplex_NODE_1;
+	to trip_parent_meter;
+	length 10;
+	configuration triplex_line_configuration_1;
+}
+object triplex_meter {
+	name trip_parent_meter;
+	phases AS;
+	nominal_voltage 120;
+}
+
+object triplex_meter {
+	name house_meter;
+	parent trip_parent_meter;
+	phases AS;
+	nominal_voltage 120;
+	measured_energy_delta_timestep 300;
+    object assert {
+        target measured_real_energy_delta;
+        within 0.1;
+        object player {
+            property value;
+            file ../triplex_meter_real_energy_delta.player;
+        };
+    };
+    object assert {
+        target measured_reactive_energy_delta;
+        within 0.1;
+        object player {
+            property value;
+            file ../triplex_meter_reactive_energy_delta.player;
+        };
+    };
+}
+
+object house {
+	name house_load_thinger;
+	parent house_meter;
+	schedule_skew -2658;
+	floor_area 2227;
+	number_of_stories 2;
+	ceiling_height 10;
+	over_sizing_factor 0.2;
+	//Thermal integrity -> Single Family 1
+	Rroof 13.92;
+	Rwall 9.14;
+	Rfloor 8.47;
+	glazing_layers 1;
+	glass_type 1;
+	glazing_treatment 1;
+	window_frame 1;
+	Rdoors 3.37;
+	airchange_per_hour 0.79;
+	cooling_COP 2.7;
+	air_temperature 68.87;
+	mass_temperature 68.87;
+	total_thermal_mass_per_floor_area 2.981;
+	heating_system_type HEAT_PUMP;
+	heating_COP 2.7;
+	cooling_system_type ELECTRIC;
+	auxiliary_strategy DEADBAND;
+	auxiliary_system_type ELECTRIC;
+	motor_model BASIC;
+	motor_efficiency AVERAGE;
+	breaker_amps 1000;
+	hvac_breaker_rating 1000;
+	cooling_setpoint 78.93;
+	heating_setpoint 67.59;
+	object ZIPload {
+		name house2_resp_load;
+		base_power loads*10;
+		heatgain_fraction 0.900;
+		power_pf 0.9;
+		current_pf -0.9;
+		impedance_pf 0.8;
+		impedance_fraction 0.200000;
+		current_fraction 0.400000;
+		power_fraction 0.400000;
+	};
+	object ZIPload {
+		name house2_unresp_load;
+		base_power loads*5;
+		heatgain_fraction 0.900;
+		power_pf 0.9;
+		current_pf 0.8;
+		impedance_pf -0.95;
+		impedance_fraction 0.200000;
+		current_fraction 0.400000;
+		power_fraction 0.400000;
+	};
+	object waterheater {
+		name house_2_wh;
+		heating_element_capacity 5.5 kW;
+		tank_setpoint 134.0;
+		temperature 132;
+		thermostat_deadband 5.8;
+		location INSIDE;
+		tank_UA 4.0;
+		demand 1.01;
+		tank_height 5;
+		tank_diameter 2;
+	};
+}
+
+//object recorder {
+//  name triplex_meter_delta;
+//  parent house_meter;
+//  property measured_real_energy, measured_real_energy_delta, measured_reactive_energy, measured_reactive_energy_delta;
+//  file "triplex_meter_energy.csv";
+//  interval 300;
+//}
+//
+object recorder {
+ name meter_delta;
+ parent NODE_1;
+ property measured_real_energy, measured_real_energy_delta, measured_reactive_energy, measured_reactive_energy_delta;
+ file "meter_energy.csv";
+ interval 300;
+}

@@ -26,7 +26,7 @@
 #include "load.h"
 #include "legal.h"
 #include "timestamp.h"
-#include "random.h"
+#include "gldrandom.h"
 #include "loadshape.h"
 #include "enduse.h"
 #include "instance.h"

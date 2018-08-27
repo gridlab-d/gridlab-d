@@ -296,7 +296,7 @@ void controller::cheat(){
 			heat_range_high = 5;
 			cool_ramp_low = 2;
 			cool_ramp_high = 2;
-			cool_range_low = 5;
+			cool_range_low = -5;
 			cool_range_high = 5;
 			break;
 		default:
@@ -1036,16 +1036,29 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 	double dBand = 0.0;
 	double heatDemand = 0.0;
 	double coolDemand = 0.0;
-	pAvg->getp(avgP);
-	pStd->getp(stdP);
-	pMarketId->getp(marketId);
-	pClearedPrice->getp(clrP);
-	pPriceCap->getp(pCap);
-	pMarginalFraction->getp(marginalFraction);
-	pMarginMode->getp(marginMode);
-	pClearedQuantity->getp(clrQ);
-	pSellerTotalQuantity->getp(sellerTotalQ);
-	pClearingType->getp(clrType);
+	if(bidmode != BM_PROXY){
+		pAvg->getp(avgP);
+		pStd->getp(stdP);
+		pMarketId->getp(marketId);
+		pClearedPrice->getp(clrP);
+		pPriceCap->getp(pCap);
+		pMarginalFraction->getp(marginalFraction);
+		pMarginMode->getp(marginMode);
+		pClearedQuantity->getp(clrQ);
+		pSellerTotalQuantity->getp(sellerTotalQ);
+		pClearingType->getp(clrType);
+	} else if(bidmode == BM_PROXY) {
+		avgP = pAvg->get_double();
+		stdP = pStd->get_double();
+		marketId = pMarketId->get_integer();
+		clrP = pClearedPrice->get_double();
+		pCap = pPriceCap->get_double();
+		marginalFraction = pMarginalFraction->get_double();
+		marginMode = pMarginMode->get_enumeration();
+		clrQ = pClearedQuantity->get_double();
+		sellerTotalQ = pSellerTotalQuantity->get_double();
+		clrType = pClearingType->get_enumeration();
+	}
 	pMonitor->getp(monitor);
 	if(control_mode == CN_RAMP || control_mode == CN_DEV_LEVEL){
 		pDemand->getp(demandP);
@@ -1059,11 +1072,19 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		pCoolingDemand->getp(coolDemand);
 	}
 	if (control_mode == CN_DEV_LEVEL) {
-		pMarketId2->getp(market2Id);
-		pPriceCap2->getp(pCap2);
-		pMarginalFraction2->getp(marginalFraction2);
-		pClearedQuantity2->getp(clrQ2);
-		pClearingType2->getp(clrType2);
+		if(bidmode != BM_PROXY){
+			pMarketId2->getp(market2Id);
+			pPriceCap2->getp(pCap2);
+			pMarginalFraction2->getp(marginalFraction2);
+			pClearedQuantity2->getp(clrQ2);
+			pClearingType2->getp(clrType2);
+		} else if(bidmode == BM_PROXY){
+			market2Id = pMarketId2->get_integer();
+			pCap2 = pPriceCap2->get_double();
+			marginalFraction2 = pMarginalFraction2->get_double();
+			clrQ2 = pClearedQuantity2->get_double();
+			clrType2 = pClearingType2->get_enumeration();
+		}
 		//printf("Reg signal is %f\n",fast_reg_signal);
 		fast_reg_run = gl_globalclock + (TIMESTAMP)(reg_period - (gl_globalclock+reg_period) % reg_period);
 
@@ -1358,7 +1379,11 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			}
 
 			if (clrQ2 == 0) {
-				pSellerTotalQuantity2->getp(P_ON);
+				if(bidmode != BM_PROXY){
+					pSellerTotalQuantity2->getp(P_ON);
+				} else if(bidmode == BM_PROXY){
+					P_ON = pSellerTotalQuantity2->get_double();
+				}
 			}
 			else {
 				P_ON = clrQ2;
@@ -1407,7 +1432,11 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			}
 			// We bid into the ON->OFF market
 			else if (market_flag == 1) {
-				pClearedPrice2->getp(clear_price);
+				if(bidmode != BM_PROXY){
+					pClearedPrice2->getp(clear_price);
+				} else if(bidmode == BM_PROXY) {
+					clear_price = pClearedPrice2->get_double();
+				}
 
 				if (last_p < clear_price) { // Cleared at the right price
 					engaged = 1;

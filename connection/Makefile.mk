@@ -1,9 +1,13 @@
 pkglib_LTLIBRARIES += connection/connection.la
 
 connection_connection_la_CPPFLAGS =
+connection_connection_la_CPPFLAGS += -I$(top_srcdir)/third_party/jsonCpp
 connection_connection_la_CPPFLAGS += $(AM_CPPFLAGS)
 if HAVE_FNCS
 connection_connection_la_CPPFLAGS += $(FNCS_CPPFLAGS)
+endif
+if HAVE_HELICS
+connection_connection_la_CPPFLAGS += $(HELICS_CPPFLAGS)
 endif
 
 connection_connection_la_LDFLAGS =
@@ -11,10 +15,17 @@ connection_connection_la_LDFLAGS += $(AM_LDFLAGS)
 if HAVE_FNCS
 connection_connection_la_LDFLAGS += $(FNCS_LDFLAGS)
 endif
+if HAVE_HELICS
+connection_connection_la_LDFLAGS += $(HELICS_LDFLAGS)
+endif
 
 connection_connection_la_LIBADD = 
+connection_connection_la_LIBADD += third_party/jsonCpp/libjsoncpp.la
 if HAVE_FNCS
 connection_connection_la_LIBADD += $(FNCS_LIBS)
+endif
+if HAVE_HELICS
+connection_connection_la_LIBADD += $(HELICS_LIBS)
 endif
 connection_connection_la_LIBADD += $(PTHREAD_CFLAGS)
 connection_connection_la_LIBADD += $(PTHREAD_LIBS)
@@ -44,6 +55,10 @@ connection_connection_la_SOURCES += connection/json.h
 if HAVE_FNCS
 connection_connection_la_SOURCES += connection/fncs_msg.cpp
 connection_connection_la_SOURCES += connection/fncs_msg.h
+endif
+if HAVE_HELICS
+connection_connection_la_SOURCES += connection/helics_msg.cpp
+connection_connection_la_SOURCES += connection/helics_msg.h
 endif
 connection_connection_la_SOURCES += connection/transport.cpp
 connection_connection_la_SOURCES += connection/transport.h

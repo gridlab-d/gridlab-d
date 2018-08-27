@@ -93,7 +93,7 @@
 #include "transform.h"
 #include "object.h"
 #include "find.h"
-#include "random.h"
+#include "gldrandom.h"
 #define STREAM_MODULE
 #include "stream.h"
 
@@ -888,6 +888,12 @@ inline bool *gl_get_bool(OBJECT *obj, /**< object to set dependency */
  **/
 #define gl_localtime (*callback->time.local_datetime)
 
+/** Convert a timestamp to a local date/time structure
+	Use this if it is a double precision time (deltamode)
+	@see local_datetime()
+ **/
+#define gl_localtime_delta (*callback->time.local_datetime_delta)
+
 #ifdef __cplusplus
 inline int gl_getweekday(TIMESTAMP t)
 {
@@ -1288,8 +1294,8 @@ static unsigned long _nan[] = { 0xffffffff, 0x7fffffff, };
  * @defgroup gridlabd_h_classes Module API Classes
  * @{
  **************************************************************************************/
-
 #include <ctype.h>
+#include <stdio.h>
 #include "module.h"
 #include "class.h"
 #include "property.h"
@@ -1467,6 +1473,10 @@ public: // read accessors
 	inline unsigned short get_second(void) { return dt.second; };
 	/// Get the nanosecond (0-999999)
 	inline unsigned int get_nanosecond(void) { return dt.nanosecond; };
+	/// Get the Unix Day Number (full days since the Unix Epoch)
+	inline unsigned int get_uday(void) { return dt.timestamp / 86400; };
+	/// Get the Julian Day Number
+	inline unsigned int get_jday(void) { return (dt.timestamp / 86400) + 2440587.5; };
 	/// Get the timezone spec
 	inline char* get_tz(void) { return dt.tz; };
 	/// Get the summer/daylight time flag
@@ -2003,6 +2013,7 @@ public: // constructors/casts
 	};
 	inline gld_property(OBJECT *o) : obj(o), pstruct(nullpstruct) { pstruct.prop=o->oclass->pmap; };
 	inline gld_property(OBJECT *o, PROPERTY *p) : obj(o), pstruct(nullpstruct) { pstruct.prop=p; };
+	inline gld_property(OBJECT *o, PROPERTYSTRUCT *p) : obj(o), pstruct(nullpstruct) { pstruct=*p; };
 	inline gld_property(GLOBALVAR *v) : obj(NULL), pstruct(nullpstruct) { pstruct.prop=v->prop; };
 	inline gld_property(char *n) : obj(NULL), pstruct(nullpstruct)
 	{
@@ -2020,7 +2031,12 @@ public: // constructors/casts
 		pstruct.prop = (v?v->prop:NULL);  
 	};
 	inline gld_property(char *m, char *n) : obj(NULL), pstruct(nullpstruct) 
-	{ 
+	{
+		obj = callback->get_object(m);
+		if ( obj != NULL ) {
+			callback->properties.get_property(obj, n, &pstruct);
+			return;
+		} 
 		char1024 vn; 
 		sprintf(vn,"%s::%s",m,n); 
 		GLOBALVAR *v=callback->global.find(vn); 
@@ -2032,8 +2048,17 @@ public: // constructors/casts
 public: // read accessors
 	inline OBJECT *get_object(void) { return obj; };
 	inline PROPERTY *get_property(void) { return pstruct.prop; };
+	inline PROPERTYSTRUCT *get_property_struct(void) { return &pstruct; };
 	inline gld_class* get_class(void) { return (gld_class*)pstruct.prop->oclass; };
 	inline char *get_name(void) { return pstruct.prop->name; };
+	inline char *get_sql_safe_name(char* return_val) {
+		if (pstruct.part[0] != '\0') {
+			sprintf(return_val, "%s_%s", pstruct.prop->name, pstruct.part);
+		} else {
+			sprintf(return_val, "%s", pstruct.prop->name);
+		}
+		return return_val;
+	};
 	inline gld_type get_type(void) { return gld_type(pstruct.prop->ptype); };
 	inline size_t get_size(void) { return (size_t)(pstruct.prop->size); };
 	inline size_t get_width(void) { return (size_t)(pstruct.prop->width); };
@@ -2079,6 +2104,8 @@ public: // special operations
 	inline bool is_double_array(void) { return pstruct.prop->ptype==PT_double_array; };
 	inline bool is_complex_array(void) { return pstruct.prop->ptype==PT_complex_array; };
 	inline bool is_objectref(void) { return pstruct.prop->ptype==PT_object; };
+	inline bool is_bool(void) { return pstruct.prop->ptype==PT_bool; };
+	inline bool is_timestamp(void) { return pstruct.prop->ptype==PT_timestamp; };
 
 	// TODO these need to use throw instead of returning overloaded values
 	inline double get_double(void) { errno=0; switch(pstruct.prop->ptype) { case PT_double: case PT_random: case PT_enduse: case PT_loadshape: return has_part() ? get_part() : *(double*)get_addr(); default: errno=EINVAL; return NaN;} };
@@ -2087,6 +2114,7 @@ public: // special operations
 	inline double get_double(char*to) { double rv = get_double(); return get_unit()->convert(to,rv) ? rv : QNAN; };
 	inline complex get_complex(void) { errno=0; if ( pstruct.prop->ptype==PT_complex ) return *(complex*)get_addr(); else return complex(QNAN,QNAN); };
 	inline int64 get_integer(void) { errno=0; switch(pstruct.prop->ptype) { case PT_int16: return (int64)*(int16*)get_addr(); case PT_int32: return (int64)*(int32*)get_addr(); case PT_int64: return *(int64*)get_addr(); default: errno=EINVAL; return 0;} };
+	inline TIMESTAMP get_timestamp(void) { if (pstruct.prop->ptype == PT_timestamp) return *(TIMESTAMP*)get_addr(); exception("get_timestamp() called on a property that is not a timestamp"); };
 	inline enumeration get_enumeration(void) { if ( pstruct.prop->ptype == PT_enumeration ) return *(enumeration*)get_addr(); exception("get_enumeration() called on a property that is not an enumeration"); };
 	inline set get_set(void) { if ( pstruct.prop->ptype == PT_set ) return *(set*)get_addr(); exception("get_set() called on a property that is not a set"); };
 	inline gld_object* get_objectref(void) { if ( is_objectref() ) return ::get_object(*(OBJECT**)get_addr()); else return NULL; };

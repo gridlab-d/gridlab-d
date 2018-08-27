@@ -22,8 +22,7 @@ class house : public residential_enduse { /* inherits due to HVAC being an endus
 public:
 	/// Get voltage on a circuit
 	/// @return voltage (or 0 if breaker is open)
-	inline complex V(CIRCUIT *c) ///< pointer to circuit 
-	{ return c->status==BRK_CLOSED ? *(c->pV) : complex(0,0);};
+
 	complex *pCircuit_V; ///< pointer to the three voltages on three lines
 	complex *pLine_I; ///< pointer to the three current on three lines
 	complex *pLine12; ///< pointer to the load across lines 1 & 2

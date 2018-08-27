@@ -13,6 +13,9 @@ class triplex_load : public triplex_node
 public:
 	static CLASS *oclass;
 	static CLASS *pclass;
+private:
+	bool base_load_val_was_nonzero[3];		///< Tracking variable to make ZIP-fraction loads check for zero conditions (but not already zeroed)
+
 public:
 	complex measured_voltage_1;	///< measured voltage
 	complex measured_voltage_2;
@@ -31,11 +34,14 @@ public:
 
 	enum {LC_UNKNOWN=0, LC_RESIDENTIAL, LC_COMMERCIAL, LC_INDUSTRIAL, LC_AGRICULTURAL};
 	enumeration load_class;
+	enum {DISCRETIONARY=0, PRIORITY, CRITICAL};
+	enumeration load_priority;
 
 	int create(void);
 	int init(OBJECT *parent);
 	
 	void triplex_load_update_fxn(void);
+	void triplex_load_delete_update_fxn(void);
 
 	triplex_load(MODULE *mod);
 	TIMESTAMP sync(TIMESTAMP t0);

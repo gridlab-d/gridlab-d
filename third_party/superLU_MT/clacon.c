@@ -1,6 +1,16 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
 
 /*
- * -- SuperLU routine (version 2.0) --
+ * -- SuperLU routine (version 3.0) --
  * Lawrence Berkeley National Lab, Univ. of California Berkeley,
  * and Xerox Palo Alto Research Center.
  * September 10, 2007
@@ -8,11 +18,12 @@
  */
 #include <math.h>
 #include "slu_mt_Cnames.h"
+#include "slu_mt_cdefs.h"
 #include "slu_mt_util.h"
 #include "slu_scomplex.h"
 
-int
-clacon_(int *n, complex *v, complex *x, float *est, int *kase)
+int_t
+clacon_(int_t *n, complex *v, complex *x, float *est, int_t *kase)
 
 {
 /*
@@ -26,7 +37,7 @@ clacon_(int *n, complex *v, complex *x, float *est, int *kase)
     Arguments   
     =========   
 
-    N      (input) INT
+    N      (input) INT_T
            The order of the matrix.  N >= 1.   
 
     V      (workspace) COMPLEX PRECISION array, dimension (N)   
@@ -45,7 +56,7 @@ clacon_(int *n, complex *v, complex *x, float *est, int *kase)
     EST    (output) FLOAT PRECISION   
            An estimate (a lower bound) for norm(A).   
 
-    KASE   (input/output) INT
+    KASE   (input/output) INT_T
            On the initial call to CLACON, KASE should be 0.   
            On an intermediate return, KASE will be 1 or 2, indicating   
            whether X should be overwritten by A * X  or A' * X.   
@@ -65,6 +76,7 @@ clacon_(int *n, complex *v, complex *x, float *est, int *kase)
 
     /* Table of constant values */
     int c__1 = 1;
+    int ni = *n;
     complex      zero = {0.0, 0.0};
     complex      one = {1.0, 0.0};
 
@@ -72,10 +84,10 @@ clacon_(int *n, complex *v, complex *x, float *est, int *kase)
     float d__1;
     
     /* Local variables */
-    static int iter;
-    static int jump, jlast;
+    static int_t iter;
+    static int_t jump, jlast;
     static float altsgn, estold;
-    static int i, j;
+    static int_t i, j;
     float temp;
     float safmin;
     extern double slamch_(char *);
@@ -110,7 +122,7 @@ clacon_(int *n, complex *v, complex *x, float *est, int *kase)
 	/*        ... QUIT */
 	goto L150;
     }
-    *est = scsum1_(n, x, &c__1);
+    *est = scsum1_(&ni, x, &c__1);
 
     for (i = 0; i < *n; ++i) {
 	d__1 = c_abs(&x[i]);
@@ -129,7 +141,7 @@ clacon_(int *n, complex *v, complex *x, float *est, int *kase)
     /*     ................ ENTRY   (JUMP = 2)   
 	   FIRST ITERATION.  X HAS BEEN OVERWRITTEN BY TRANSPOSE(A)*X. */
 L40:
-    j = icmax1_(n, &x[0], &c__1);
+    j = icmax1_(&ni, &x[0], &c__1);
     --j;
     iter = 2;
 
@@ -144,9 +156,9 @@ L50:
     /*     ................ ENTRY   (JUMP = 3)   
 	   X HAS BEEN OVERWRITTEN BY A*X. */
 L70:
-    ccopy_(n, &x[0], &c__1, &v[0], &c__1);
+    ccopy_(&ni, &x[0], &c__1, &v[0], &c__1);
     estold = *est;
-    *est = scsum1_(n, v, &c__1);
+    *est = scsum1_(&ni, v, &c__1);
 
 
 L90:
@@ -171,7 +183,7 @@ L90:
 	   X HAS BEEN OVERWRITTEN BY TRANDPOSE(A)*X. */
 L110:
     jlast = j;
-    j = icmax1_(n, &x[0], &c__1);
+    j = icmax1_(&ni, &x[0], &c__1);
     --j;
     if (x[jlast].r != (d__1 = x[j].r, fabs(d__1)) && iter < 5) {
 	++iter;
@@ -193,9 +205,9 @@ L120:
     /*     ................ ENTRY   (JUMP = 5)   
 	   X HAS BEEN OVERWRITTEN BY A*X. */
 L140:
-    temp = scsum1_(n, x, &c__1) / (float) (*n * 3) * 2.;
+    temp = scsum1_(&ni, x, &c__1) / (float) (*n * 3) * 2.;
     if (temp > *est) {
-	ccopy_(n, &x[0], &c__1, &v[0], &c__1);
+	ccopy_(&ni, &x[0], &c__1, &v[0], &c__1);
 	*est = temp;
     }
 

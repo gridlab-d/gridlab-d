@@ -1,10 +1,20 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
 
 #include <stdlib.h> /* for getenv and atoi */
-#include "pdsp_defs.h"
+#include "slu_mt_ddefs.h"
 
 void
-pdgstrf(superlumt_options_t *superlumt_options, SuperMatrix *A, int *perm_r,
-	SuperMatrix *L, SuperMatrix *U,	Gstat_t *Gstat, int *info)
+pdgstrf(superlumt_options_t *superlumt_options, SuperMatrix *A, int_t *perm_r,
+	SuperMatrix *L, SuperMatrix *U,	Gstat_t *Gstat, int_t *info)
 {
 /*
  * -- SuperLU MT routine (version 2.0) --
@@ -31,7 +41,7 @@ pdgstrf(superlumt_options_t *superlumt_options, SuperMatrix *A, int *perm_r,
  *        LU factorization is performed. The following fields must be set 
  *        by the user:
  *
- *        o nprocs (int)
+ *        o nprocs (int_t)
  *          Number of processes to be spawned and used for factorization.
  *
  *        o refact (yes_no_t)
@@ -43,10 +53,10 @@ pdgstrf(superlumt_options_t *superlumt_options, SuperMatrix *A, int *perm_r,
  *                 elimination tree, and the symbolic information of the
  *                 Householder matrix.
  *
- *        o panel_size (int)
+ *        o panel_size (int_t)
  *          A panel consists of at most panel_size consecutive columns.
  *
- *        o relax (int)
+ *        o relax (int_t)
  *          Degree of relaxing supernodes. If the number of nodes (columns)
  *          in a subtree of the elimination tree is less than relax, this 
  *          subtree is considered as one supernode, regardless of the row
@@ -69,12 +79,12 @@ pdgstrf(superlumt_options_t *superlumt_options, SuperMatrix *A, int *perm_r,
  *          0 <= drop_tol <= 1. The default value of drop_tol is 0,
  *          corresponding to not dropping any entry.
  *
- *        o perm_c (int*)
+ *        o perm_c (int_t*)
  *	    Column permutation vector of size A->ncol, which defines the 
  *          permutation matrix Pc; perm_c[i] = j means column i of A is 
  *          in position j in A*Pc.
  *
- *        o perm_r (int*)
+ *        o perm_r (int_t*)
  *	    Column permutation vector of size A->nrow.
  *          If superlumt_options->usepr = NO, this is an output argument.
  *
@@ -82,7 +92,7 @@ pdgstrf(superlumt_options_t *superlumt_options, SuperMatrix *A, int *perm_r,
  *          User-supplied work space and space for the output data structures.
  *          Not referenced if lwork = 0;
  *
- *        o lwork (int)
+ *        o lwork (int_t)
  *          Specifies the length of work array.
  *            = 0:  allocate space internally by system malloc;
  *            > 0:  use user-supplied work array of length lwork in bytes,
@@ -96,7 +106,7 @@ pdgstrf(superlumt_options_t *superlumt_options, SuperMatrix *A, int *perm_r,
  *        (A->nrow, A->ncol). The type of A can be:
  *        Stype = NCP; Dtype = _D; Mtype = GE.
  *
- * perm_r (input/output) int*, dimension A->nrow
+ * perm_r (input/output) int_t*, dimension A->nrow
  *        Row permutation vector which defines the permutation matrix Pr,
  *        perm_r[i] = j means row i of A is in position j in Pr*A.
  *        If superlumt_options->usepr = NO, perm_r is output argument;
@@ -120,7 +130,7 @@ pdgstrf(superlumt_options_t *superlumt_options, SuperMatrix *A, int *perm_r,
  *        Record all the statistics about the factorization; 
  *        See Gstat_t structure defined in slu_mt_util.h.
  *
- * info   (output) int*
+ * info   (output) int_t*
  *        = 0: successful exit
  *        < 0: if info = -i, the i-th argument had an illegal value
  *        > 0: if info = i, and i is
@@ -134,8 +144,8 @@ pdgstrf(superlumt_options_t *superlumt_options, SuperMatrix *A, int *perm_r,
  */
     pdgstrf_threadarg_t *pdgstrf_threadarg;
     pxgstrf_shared_t pxgstrf_shared;
-    register int nprocs = superlumt_options->nprocs;
-    register int i, iinfo;
+    register int_t nprocs = superlumt_options->nprocs;
+    register int_t i, iinfo;
     double    *utime = Gstat->utime;
     double    usrtime, wtime;
     double    usertimer_();
@@ -169,7 +179,8 @@ pdgstrf(superlumt_options_t *superlumt_options, SuperMatrix *A, int *perm_r,
     
     for (i = 1; i < nprocs; ++i) {
 #if ( PRNTlevel==1 )
-	printf(".. Create unbound threads: i %d, nprocs %d\n", i, nprocs);
+	printf(".. Create unbound threads: i " IFMT ", nprocs " IFMT "\n",
+               i, nprocs);
 #endif
 	if ( (iinfo = thr_create(NULL, 0,
 			       pdgstrf_thread, &(pdgstrf_threadarg[i]),
@@ -223,7 +234,7 @@ pdgstrf(superlumt_options_t *superlumt_options, SuperMatrix *A, int *perm_r,
     if ( getenv("MP_SET_NUMTHREADS") ) {
         i = atoi(getenv("MP_SET_NUMTHREADS"));
 	if ( nprocs > i ) {
-	    printf("nprocs=%d > environment allowed: MP_SET_NUMTHREADS=%d\n",
+	    printf("nprocs=" IFMT "> environment allowed: MP_SET_NUMTHREADS=" IFMT "\n",
 		   nprocs, i);
 	    exit(-1);
 	}
@@ -245,7 +256,7 @@ pdgstrf(superlumt_options_t *superlumt_options, SuperMatrix *A, int *perm_r,
     if ( getenv("NCPUS") ) {
         i = atoi(getenv("NCPUS"));
 	if ( nprocs > i ) {
-	    printf("nprocs=%d > environment allowed: NCPUS=%d\n",
+	    printf("nprocs=" IFMT "> environment allowed: NCPUS=" IFMT "\n",
 		   nprocs, i);
 	    exit(-1);
 	}
@@ -270,7 +281,7 @@ pdgstrf(superlumt_options_t *superlumt_options, SuperMatrix *A, int *perm_r,
 				    NULL,
 				    pdgstrf_thread, 
 				    &(pdgstrf_threadarg[i])) ) {
-	    fprintf(stderr, "pthread_create: %d\n", iinfo);
+	    fprintf(stderr, "pthread_create: " IFMT "\n", iinfo);
 	    SUPERLU_ABORT("pthread_create()");
 	}
     }
@@ -310,7 +321,7 @@ pdgstrf(superlumt_options_t *superlumt_options, SuperMatrix *A, int *perm_r,
     utime[FACT] = wtime;
 
 #if ( PRNTlevel==1 )
-    printf(".. pdgstrf_thread() returns info %d, usrtime %.2f, wtime %.2f\n",
+    printf(".. pdgstrf_thread() returns info " IFMT ", usrtime %.2f, wtime %.2f\n",
            *info, usrtime, wtime);
 #endif
 

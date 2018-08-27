@@ -1,9 +1,19 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
 
-#include "pdsp_defs.h"
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
+
+#include "slu_mt_ddefs.h"
 
 void
 pxgstrf_relax_snode(
-		    const int n, /* number of columns in the matrix */
+		    const int_t n, /* number of columns in the matrix */
 		    superlumt_options_t *superlumt_options,
 		    pxgstrf_relax_t *pxgstrf_relax /* relaxed s-nodes */
 		    )
@@ -21,11 +31,11 @@ pxgstrf_relax_snode(
  *   of the etree.
  *
  */ 
-    register int j, parent, rs;
-    register int fcol;	 /* beginning of a snode */
-    int *desc;  /* no of descendants of each etree node. */
-    int *etree = superlumt_options->etree; /* column elimination tree */
-    int relax = superlumt_options->relax; /* maximum no of columns allowed 
+    register int_t j, parent, rs;
+    register int_t fcol;	 /* beginning of a snode */
+    int_t *desc;  /* no of descendants of each etree node. */
+    int_t *etree = superlumt_options->etree; /* column elimination tree */
+    int_t relax = superlumt_options->relax; /* maximum no of columns allowed 
 					     in a relaxed s-node */
     
     desc = intCalloc(n+1);

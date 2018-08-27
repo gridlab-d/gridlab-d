@@ -63,14 +63,16 @@ public:
 private:
 	OBJECT **eventgen_obj;					//Reliability variable - link to eventgen object
 	FUNCTIONADDR event_schedule;			//Reliability variable - links to "add_event" function in eventgen
+	FUNCTIONADDR fault_handle_call;			//Reliability-type variable - calls topology reconfiguration after switch changes state
 	bool event_schedule_map_attempt;		//Flag to see if we've tried to map the event_schedule variable, or not
 };
 
 EXPORT int change_switch_state(OBJECT *thisobj, unsigned char phase_change, bool state);
 EXPORT int reliability_operation(OBJECT *thisobj, unsigned char desired_phases);
-EXPORT int create_fault_switch(OBJECT *thisobj, OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time, void *Extra_Data);
-EXPORT int fix_fault_switch(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name, void* Extra_Data);
+EXPORT int create_fault_switch(OBJECT *thisobj, OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time);
+EXPORT int fix_fault_switch(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name);
 EXPORT int switch_fault_updates(OBJECT *thisobj, unsigned char restoration_phases);
+EXPORT int change_switch_state_toggle(OBJECT *thisobj);
 
 #endif // SWITCH_OBJECT_H
 /**@}**/

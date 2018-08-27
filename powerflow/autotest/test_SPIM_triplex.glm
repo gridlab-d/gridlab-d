@@ -1,0 +1,420 @@
+//Simple test system to verify the triplex connections for SPIM are working properly
+
+clock {
+     timezone PST+8PDT;
+     starttime '2009-01-01 00:00:00';
+     stoptime '2009-01-01 00:00:45';
+}
+
+#set suppress_repeat_messages=0
+//#set profiler=1
+#define rotor_convergence=0.0001
+#set double_format=%+.12lg
+#set complex_format=%+.12lg%+.12lg%c
+
+
+//Deltamode declarations - global values
+#set deltamode_timestep=100000000		//100 ms
+#set deltamode_maximumtime=60000000000	//1 minute
+#set deltamode_iteration_limit=10		//Iteration limit
+//#set deltamode_forced_extra_timesteps=15
+
+
+module tape;
+module assert;
+module powerflow {
+    solver_method NR;
+    NR_iteration_limit 50;
+    enable_subsecond_models true;
+    all_powerflow_delta true;
+    enable_frequency_dependence true;
+    deltamode_timestep 0.2000 ms;
+    default_maximum_voltage_error 1e-9;
+ //   lu_solver "KLU_x64";
+}
+
+module generators {
+	enable_subsecond_models true;
+	deltamode_timestep 1 ms;
+}
+
+//Diesel
+object diesel_dg {
+    flags DELTAMODE;
+	parent HVMV_Sub_HSB;
+	name Gen1;
+	
+	Rated_V 12470; //Line-to-Line value
+	Rated_VA 10000000; // Defaults to 10 MVA
+	Gen_type DYN_SYNCHRONOUS;
+	rotor_speed_convergence ${rotor_convergence};
+	
+	power_out_A 1+1j;
+	power_out_B 1+1j;
+	power_out_C 1+1j;
+	
+	Exciter_type SEXS;
+	voltage_convergence 0.001 V;
+    rotor_speed_convergence_enabled true;           //This is turned on by default anyways
+    voltage_magnitude_convergence_enabled true;     //Enables voltage magnitude check
+	TA 0.01;
+	TB 0.02;
+	TC 0.08;	
+    KA 50;
+	
+	vset 1.05;
+	
+	object player {
+		name Voltage_input;
+		property vset;
+		file "../data_SPIM_Vset.player";
+		flags DELTAMODE;
+	};
+	
+	Governor_type GGOV1;//P_CONSTANT;
+		
+	//Toggle low-value-select items
+	GGOV1_Load_Limit_enable false;
+	GGOV1_Acceleration_Limit_enable false;
+	GGOV1_PID_enable true;
+	
+	inertia 0.553286;
+	damping 0.0;
+	Ra .006543;
+	Ta 0.05;
+	Xl 0.066;
+	Xd 1.77;
+	Xq 1.052;
+	Xdp 0.128;
+	Xqp 0.2232003883;
+	Xdpp 0.107;
+	Xqpp 0.189;
+	Tdop 1.748986;
+	Tqop 0.448458;
+	Tdopp 0.017013;
+	Tqopp 0.016817;
+
+	// //Default properties:
+	GGOV1_R 0.0; //4; // Permanent droop, p.u.
+	GGOV1_Rselect 0; // Feedback signal for droop, = 1 selected electrical power, = 0 none (isochronous governor), = -1 fuel valve stroke ( true stroke),= -2 governor output ( requested stroke)
+	
+	//GGOV1_Rselect 1; // Feedback signal for droop, = 1 selected electrical power, = 0 none (isochronous governor), = -1 fuel valve stroke ( true stroke),= -2 governor output ( requested stroke)
+	GGOV1_Tpelec 0.1; // Electrical power transducer time constant, sec. (>0.)
+	GGOV1_maxerr 0.5;//0.05; // Maximum value for speed error signal
+	GGOV1_minerr -0.5;//-0.05; // Minimum value for speed error signal
+	GGOV1_Kpgov 5.0;// 0.8; // Governor proportional gain
+	GGOV1_Kigov 25.0;// 0.2; // Governor integral gain
+	GGOV1_Kdgov 0.0; // Governor derivative gain
+	GGOV1_Tdgov 1.0; // Governor derivative controller time constant, sec.
+	GGOV1_vmax 1.0;//1.0; // Maximum valve position limit
+	GGOV1_vmin 0.15; // Minimum valve position limit
+	GGOV1_Tact 0.0005;//0.5; // Actuator time constant
+	GGOV1_Kturb 1.5; // Turbine gain (>0.)
+	GGOV1_wfnl 0.2;//0.2; // No load fuel flow, p.u
+	GGOV1_Tb 0.001;//0.1; // Turbine lag time constant, sec. (>0.)
+	GGOV1_Tc 0.05; // Turbine lead time constant, sec.
+	GGOV1_Fuel_lag 1; // Switch for fuel source characteristic, = 0 for fuel flow independent of speed, = 1 fuel flow proportional to speed
+	GGOV1_Teng 0.0; // Transport lag time constant for diesel engine
+	//GGOV1_Tfload 3.0; // Load Limiter time constant, sec. (>0.)
+	//GGOV1_Kpload 2.0; // Load limiter proportional gain for PI controller
+	//GGOV1_Kiload 0.67; // Load limiter integral gain for PI controller
+	GGOV1_Ldref 1.0; // Load limiter reference value p.u.
+	GGOV1_Dm 0.0; // Speed sensitivity coefficient, p.u.
+	GGOV1_ropen 50; // Maximum valve opening rate, p.u./sec.
+	GGOV1_rclose -50; // Minimum valve closing rate, p.u./sec.
+	GGOV1_Kimw 0.0;//0.002; // Power controller (reset) gain
+	GGOV1_Pmwset 5.0; // Power controller setpoint, MW
+	GGOV1_aset 0.01; // Acceleration limiter setpoint, p.u./sec.
+	GGOV1_Ka 10.0; // Acceleration limiter Gain
+	GGOV1_Ta 0.1; // Acceleration limiter time constant, sec. (>0.)
+	GGOV1_db 0.0; // Speed governor dead band
+	GGOV1_Tsa 4.0; // Temperature detection lead time constant, sec.
+	GGOV1_Tsb 5.0; // Temperature detection lag time constant, sec.
+	//Pref 0.50;
+}
+
+
+// Transformer and configuration at feeder
+
+object meter {
+	phases ABCN;
+	name "HVMV_Sub_HSB";
+	bustype SWING;
+	nominal_voltage 7200;
+}
+
+object overhead_line {
+	phases "ABCN";
+	name SubLineThing;
+	from HVMV_Sub_HSB;
+	to regxfmr_HVMV_Sub_LSB;
+	length 250;
+	configuration lc1001;
+}
+
+object line_spacing {
+	name ls5001;
+	distance_AB 2.5;
+	distance_AC 7.0;
+	distance_BC 4.5;
+	distance_AN 5.656854;
+	distance_BN 4.272002;
+	distance_CN 5.0;
+}
+
+object line_configuration {
+	name lc1001;
+	conductor_A olc10001;
+	conductor_B olc10001;
+	conductor_C olc10001;
+	conductor_N olc10002;
+	spacing ls5001;
+}
+
+object overhead_line_conductor {
+	name olc10001;
+	geometric_mean_radius 0.0244;
+	resistance 0.30600;
+}
+
+object overhead_line_conductor {
+	name olc10002;
+	geometric_mean_radius 0.008140;
+	resistance 0.59200;
+}
+
+object meter {
+	phases ABCN;
+	name "regxfmr_HVMV_Sub_LSB";
+	nominal_voltage 7199.558;
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power_A;
+		within 0.1;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file "../data_SPIM_triplex_measured_phaseA.csv";
+		};
+	};
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power_B;
+		within 0.1;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file "../data_SPIM_triplex_measured_phaseB.csv";
+		};
+	};
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power_C;
+		within 0.1;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file "../data_SPIM_triplex_measured_phaseC.csv";
+		};
+	};
+	// object recorder {
+		// flags DELTAMODE;
+		// property "measured_power_A.real,measured_power_A.imag,measured_power_B.real,measured_power_B.imag,measured_power_C.real,measured_power_C.imag";
+		// interval 1;
+		// file three_phase_measured_power.csv;
+	// };
+}
+
+
+object transformer_configuration {
+    name "tc1515A";
+    connect_type SINGLE_PHASE_CENTER_TAPPED;
+    install_type POLETOP;
+    primary_voltage 7200.0V;
+    secondary_voltage 120.0V;
+    power_rating 150.0kVA;
+    powerA_rating 150.0kVA;
+    impedance 0.006000+0.013600j;
+    impedance1 0.012000+0.006800j;
+    impedance2 0.012000+0.006800j;
+    shunt_impedance 1728000+691200j;
+}
+
+object transformer_configuration {
+    name "tc1515B";
+    connect_type SINGLE_PHASE_CENTER_TAPPED;
+    install_type POLETOP;
+    primary_voltage 7200.0V;
+    secondary_voltage 120.0V;
+    power_rating 150.0kVA;
+    powerB_rating 150.0kVA;
+    impedance 0.006000+0.013600j;
+    impedance1 0.012000+0.006800j;
+    impedance2 0.012000+0.006800j;
+    shunt_impedance 1728000+691200j;
+}
+
+object transformer_configuration {
+    name "tc1515C";
+    connect_type SINGLE_PHASE_CENTER_TAPPED;
+    install_type POLETOP;
+    primary_voltage 7200.0V;
+    secondary_voltage 120.0V;
+    power_rating 150.0kVA;
+    powerC_rating 150.0kVA;
+    impedance 0.006000+0.013600j;
+    impedance1 0.012000+0.006800j;
+    impedance2 0.012000+0.006800j;
+    shunt_impedance 1728000+691200j;
+}
+
+object transformer {
+    name XFMR_1;
+    phases AS;
+    from regxfmr_HVMV_Sub_LSB;
+    to TN_1;
+    configuration "tc1515A";
+    groupid Distribution_Trans;
+}
+
+object transformer {
+    name XFMR_2;
+    phases BS;
+    from regxfmr_HVMV_Sub_LSB;
+    to TN_2;
+    configuration "tc1515B";
+    groupid Distribution_Trans;
+}
+
+object transformer {
+    name XFMR_3;
+    phases CS;
+    from regxfmr_HVMV_Sub_LSB;
+    to TN_3;
+    configuration "tc1515C";
+    groupid Distribution_Trans;
+}
+
+object triplex_meter {
+	name TN_1;
+	nominal_voltage 120;
+	phases AS;
+	// object recorder {
+		// flags DELTAMODE;
+		// property "indiv_measured_power_1.real,indiv_measured_power_1.imag,indiv_measured_power_2.real,indiv_measured_power_2.imag";
+		// interval 1;
+		// file tplexASout.csv;
+	// };
+}
+
+object triplex_meter {
+	name TN_2;
+	nominal_voltage 120;
+	phases BS;
+	// object recorder {
+		// flags DELTAMODE;
+		// property "indiv_measured_power_1.real,indiv_measured_power_1.imag,indiv_measured_power_2.real,indiv_measured_power_2.imag";
+		// interval 1;
+		// file tplexBSout.csv;
+	// };
+}
+
+object triplex_meter {
+	name TN_3;
+	nominal_voltage 120;
+	phases CS;
+	// object recorder {
+		// flags DELTAMODE;
+		// property "indiv_measured_power_1.real,indiv_measured_power_1.imag,indiv_measured_power_2.real,indiv_measured_power_2.imag";
+		// interval 1;
+		// file tplexCSout.csv;
+	// };
+}
+
+
+object motor {
+	name Q14411__A_1;
+	parent TN_1;
+	phases AS;
+	frequency_measure_type PLL;
+	base_power 2298.290421;
+	motor_trip false;
+	reconnect_time 10.730187;
+	trip_time 2.269767;
+	nominal_voltage 120;
+	triplex_connection_type TRIPLEX_12;
+	object double_assert {
+		flags DELTAMODE;
+		target rotor_speed;
+		within 0.1;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file "../data_SPIM_triplex_motor_A_speed.csv";
+		};
+	};
+	// object recorder {
+		// flags DELTAMODE;
+		// property rotor_speed;
+		// interval 1;
+		// file motor_A_speed.csv;
+	// };
+};
+
+object motor {
+	name Q14411__B_1;
+	parent TN_2;
+	phases BS;
+	frequency_measure_type PLL;
+	base_power 3598.728015;
+	motor_trip false;
+	reconnect_time 15.698896;
+	trip_time 1.353400;
+	nominal_voltage 120;
+	triplex_connection_type TRIPLEX_1N;
+	object double_assert {
+		flags DELTAMODE;
+		target rotor_speed;
+		within 0.1;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file "../data_SPIM_triplex_motor_B_speed.csv";
+		};
+	};
+	// object recorder {
+		// flags DELTAMODE;
+		// property rotor_speed;
+		// interval 1;
+		// file motor_B_speed.csv;
+	// };
+};
+
+object motor {
+	name Q14411__C_1;
+	parent TN_3;
+	phases CS;
+	frequency_measure_type PLL;
+	base_power 4476.560164;
+	motor_trip false;
+	reconnect_time 20.429431;
+	trip_time 2.672854;
+	nominal_voltage 120;
+	triplex_connection_type TRIPLEX_2N;
+	object double_assert {
+		flags DELTAMODE;
+		target rotor_speed;
+		within 0.1;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file "../data_SPIM_triplex_motor_C_speed.csv";
+		};
+	};
+	// object recorder {
+		// flags DELTAMODE;
+		// property rotor_speed;
+		// interval 1;
+		// file motor_C_speed.csv;
+	// };
+};

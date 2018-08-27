@@ -1,0 +1,122 @@
+#!/bin/bash
+
+CUSTOMFILE="custom.mk"
+
+function help_syntax ()
+{
+	echo "Syntax: $(basename $0) <command> [<options> ...]"
+}
+
+function help ()
+{
+	help_syntax
+	echo "
+	add <module>             Add <module> to $CUSTOMFILE
+	delete <module>          Delete <module> from $CUSTOMFILE
+	enable <module>          Enable <module> in $CUSTOMFILE
+	disable <module>         Disable <module> in $CUSTOMFILE
+	status                   Display status of modules matching <pattern>
+	sync_validate            Add/remove validate.no files according to custom.mk
+"
+}
+
+function add ()
+{
+	F="$1/Makefile.mk"
+	if [ -z "$(grep $F $CUSTOMFILE)" ]; then
+		if [ -f $F ]; then
+			echo "include $F" >>$CUSTOMFILE
+		else
+			echo "module $1 is not a valid module (missing $F)"
+		fi
+	else
+		echo "$1 is already listed in $CUSTOMFILE"
+		sync_validate
+	fi
+}
+
+function delete ()
+{
+	F="$1/Makefile.mk"
+	if [ -z "$(grep $F $CUSTOMFILE)" ]; then
+		if [ -f $F ]; then
+			echo "module $1 is not listed in $CUSTOMFILE"
+		else
+			echo "module $1 is not a valid module (missing $F)"
+		fi
+	else
+		T=".tmp$$"
+		grep -v $F $CUSTOMFILE >$T && mv $T $CUSTOMFILE
+	fi
+}
+
+function enable ()
+{
+	F="$1/Makefile.mk"
+	if [ -z "$(grep $F $CUSTOMFILE)" ]; then
+		if [ -f $F ]; then
+			echo "module $1 is not listed in $CUSTOMFILE"
+		else
+			echo "module $1 is not a valid module (missing $F)"
+		fi
+	else
+		T=".tmp$$"
+		sed -e "1,\$s:^#include $F:include $F:" < $CUSTOMFILE >$T && mv $T $CUSTOMFILE
+		sync_validate
+	fi
+}
+
+function disable ()
+{
+	F="$1/Makefile.mk"
+	if [ -z "$(grep $F $CUSTOMFILE)" ]; then
+		if [ -f $F ]; then
+			echo "module $1 is not listed in $CUSTOMFILE"
+		else
+			echo "module $1 is not a valid module (missing $F)"
+		fi
+	else
+		T=".tmp$$"
+		sed -e "1,\$s:^include $F:#include $F:" < $CUSTOMFILE >$T && mv $T $CUSTOMFILE
+		sync_validate
+	fi
+}
+
+function status ()
+{
+	ENABLED=$(grep '^include' <$CUSTOMFILE | sed -e 's/include //g;s:/Makefile.mk::g')
+	DISABLED=$(grep '^#include' <$CUSTOMFILE | sed -e 's/#include //g;s:/Makefile.mk::g')
+	echo Enabled: $ENABLED
+	echo Disabled: $DISABLED
+}
+
+function sync_validate ()
+{
+	ENABLED=$(grep '^include' <$CUSTOMFILE | sed -e 's/include //g;s:/Makefile.mk::g')
+	DISABLED=$(grep '^#include' <$CUSTOMFILE | sed -e 's/#include //g;s:/Makefile.mk::g')
+	for F in $ENABLED; do
+		if [ -f $F/validate.no ]; then
+			echo -n "removing $F/validate.no..."
+			rm $F/validate.no && echo "ok"
+		fi
+	done
+	for F in $DISABLED; do
+		if [ ! -f $F/validate.no ]; then
+			echo -n "adding $F/validate.no..."
+			echo "$*: $(date)" > $F/validate.no && echo "ok"
+		fi
+	done
+}
+
+if [ $# -eq 0 ]; then
+	help_syntax
+else
+	case $1 in
+	(help|add|delete|enable|disable|status|sync_validate)
+		$*
+		;;
+	(*)
+		echo "$(basename $0): $1 is not a valid command"
+		;;
+	esac
+fi

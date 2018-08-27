@@ -18,6 +18,7 @@ typedef enum {TS_INIT, TS_OPEN, TS_DONE, TS_ERROR} TAPESTATUS;
 typedef enum {FT_FILE, FT_ODBC, FT_MEMORY} FILETYPE;
 typedef enum {SCREEN, EPS, GIF, JPG, PDF, PNG, SVG} PLOTFILE;
 typedef enum e_complex_part {NONE = 0, REAL, IMAG, MAG, ANG, ANG_RAD} CPLPT;
+typedef enum {UNKNOWN=0, PLAYER=1, RECORDER=2, GROUPRECORDER=3} DELTATAPEOBJ;
 
 /* recorder-specific enums */
 typedef enum {HU_DEFAULT, HU_ALL, HU_NONE} HEADERUNITS;
@@ -58,6 +59,12 @@ typedef struct s_recobjmap {
 	struct s_recobjmap *next;
 } RECORDER_MAP;
 
+typedef struct s_deltaobj {
+	OBJECT *obj;
+	DELTATAPEOBJ obj_type;
+	struct s_deltaobj *next;
+} DELTAOBJ_LIST;
+
 /** @}
   @addtogroup player
 	@{ 
@@ -82,12 +89,12 @@ struct player {
 	struct {
 		TIMESTAMP ts;
 		int64 ns;
-		char256 value;
+		char1024 value;
 	} next;
 	struct {
 		TIMESTAMP ts;
 		TIMESTAMP ns;
-		char256 value;
+		char1024 value;
 	} delta_track;	/* Added for deltamode fixes */
 	PROPERTY *target;
 	TAPEOPS *ops;
@@ -221,7 +228,7 @@ struct collector {
 };
 
 void enable_deltamode(TIMESTAMP t1); /* indicate when deltamode is needed */
-
+EXPORT int delta_add_tape_device(OBJECT *obj, DELTATAPEOBJ tape_type);
 void set_csv_options(void);
 
 #endif

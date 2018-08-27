@@ -84,6 +84,7 @@ GLOBAL int global_verbose_mode INIT(FALSE); /**< The verbose mode flag */
 GLOBAL int global_debug_output INIT(FALSE); /**< Enables debug output */
 GLOBAL int global_keep_progress INIT(FALSE); /**< Flag to keep progress reports */
 GLOBAL unsigned global_iteration_limit INIT(100); /**< The global iteration limit */
+GLOBAL bool global_federation_reiteration INIT(false); /**< enforce a hard reiteration for all modules due to a external federation reiteration. */
 GLOBAL char global_workdir[1024] INIT("."); /**< The current working directory */
 GLOBAL char global_dumpfile[1024] INIT("gridlabd.xml"); /**< The dump file name */
 GLOBAL char global_savefile[1024] INIT(""); /**< The save file name */
@@ -254,6 +255,8 @@ GLOBAL DELTAT global_deltaclock INIT(0); /**< the cumulative delta runtime with 
 GLOBAL double global_delta_curr_clock INIT(0.0);	/**< Deltamode clock offset by main clock (not just delta offset) */
 GLOBAL char global_deltamode_updateorder[1025] INIT(""); /**< the order in which modules are updated */
 GLOBAL unsigned int global_deltamode_iteration_limit INIT(10);	/**< Global iteration limit for each delta timestep (object and interupdate calls) */
+GLOBAL unsigned int global_deltamode_forced_extra_timesteps INIT(0);	/**< Deltamode forced extra time steps -- once all items want SM_EVENT, this will force this many more updates */
+GLOBAL bool global_deltamode_forced_always INIT(false);	/**< Deltamode flag - prevents exit from deltamode (no SM_EVENT) -- mainly for debugging purposes */
 
 /* master/slave */
 GLOBAL char global_master[1024] INIT(""); /**< master hostname */

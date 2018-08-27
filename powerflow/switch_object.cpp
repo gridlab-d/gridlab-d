@@ -61,6 +61,8 @@ switch_object::switch_object(MODULE *mod) : link_object(mod)
 				GL_THROW("Unable to publish fault restoration function");
 			if (gl_publish_function(oclass,	"change_switch_faults", (FUNCTIONADDR)switch_fault_updates)==NULL)
 				GL_THROW("Unable to publish switch fault correction function");
+			if (gl_publish_function(oclass,	"change_switch_state_toggle", (FUNCTIONADDR)change_switch_state_toggle)==NULL)
+				GL_THROW("Unable to publish switch toggle function");
 
 			//Publish deltamode functions
 			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_switch)==NULL)
@@ -97,6 +99,7 @@ int switch_object::create()
 
 	event_schedule = NULL;
 	eventgen_obj = NULL;
+	fault_handle_call = NULL;
 	event_schedule_map_attempt = false;	//Haven't tried to map yet
 	
 	switch_resistance = -1.0;
@@ -263,7 +266,8 @@ int switch_object::init(OBJECT *parent)
 			{
 				if (solver_method == SM_NR)
 				{
-					From_Y[0][0] = complex(1/switch_resistance,1/switch_resistance);
+					From_Y[0][0] = complex(1.0/switch_resistance,1.0/switch_resistance);
+					b_mat[0][0] = complex(switch_resistance,switch_resistance);
 					a_mat[0][0] = 1.0;
 					d_mat[0][0] = 1.0;
 				}
@@ -281,7 +285,8 @@ int switch_object::init(OBJECT *parent)
 			{
 				if (solver_method == SM_NR)
 				{
-					From_Y[1][1] = complex(1/switch_resistance,1/switch_resistance);
+					From_Y[1][1] = complex(1.0/switch_resistance,1.0/switch_resistance);
+					b_mat[1][1] = complex(switch_resistance,switch_resistance);
 					a_mat[1][1] = 1.0;
 					d_mat[1][1] = 1.0;
 				}
@@ -299,7 +304,8 @@ int switch_object::init(OBJECT *parent)
 			{
 				if (solver_method == SM_NR)
 				{
-					From_Y[2][2] = complex(1/switch_resistance,1/switch_resistance);
+					From_Y[2][2] = complex(1.0/switch_resistance,1.0/switch_resistance);
+					b_mat[2][2] = complex(switch_resistance,switch_resistance);
 					a_mat[2][2] = 1.0;
 					d_mat[2][2] = 1.0;
 				}
@@ -323,6 +329,11 @@ int switch_object::init(OBJECT *parent)
 				From_Y[0][0] = complex(0.0,0.0);
 				From_Y[1][1] = complex(0.0,0.0);
 				From_Y[2][2] = complex(0.0,0.0);
+
+				//Impedance, just because
+				b_mat[0][0] = complex(0.0,0.0);
+				b_mat[1][1] = complex(0.0,0.0);
+				b_mat[2][2] = complex(0.0,0.0);
 
 				//Ensure voltage ratio set too (technically not needed)
 				a_mat[0][0] = 0.0;
@@ -355,7 +366,8 @@ int switch_object::init(OBJECT *parent)
 				{
 					if (solver_method == SM_NR)
 					{
-						From_Y[0][0] = complex(1/switch_resistance,1/switch_resistance);
+						From_Y[0][0] = complex(1.0/switch_resistance,1.0/switch_resistance);
+						b_mat[0][0] = complex(switch_resistance,switch_resistance);
 						a_mat[0][0] = 1.0;
 						d_mat[0][0] = 1.0;
 					}
@@ -371,6 +383,7 @@ int switch_object::init(OBJECT *parent)
 					if (solver_method == SM_NR)
 					{
 						From_Y[0][0] = complex(0.0,0.0);
+						b_mat[0][0] = complex(0.0,0.0);
 						a_mat[0][0] = complex(0.0,0.0);
 						d_mat[0][0] = complex(0.0,0.0);
 					}
@@ -389,7 +402,8 @@ int switch_object::init(OBJECT *parent)
 				{
 					if (solver_method == SM_NR)
 					{
-						From_Y[1][1] = complex(1/switch_resistance,1/switch_resistance);
+						From_Y[1][1] = complex(1.0/switch_resistance,1.0/switch_resistance);
+						b_mat[1][1] = complex(switch_resistance,switch_resistance);
 						a_mat[1][1] = 1.0;
 						d_mat[1][1] = 1.0;
 					}
@@ -405,6 +419,7 @@ int switch_object::init(OBJECT *parent)
 					if (solver_method == SM_NR)
 					{
 						From_Y[1][1] = complex(0.0,0.0);
+						b_mat[1][1] = complex(0.0,0.0);
 						a_mat[1][1] = complex(0.0,0.0);
 						d_mat[1][1] = complex(0.0,0.0);
 					}
@@ -423,7 +438,8 @@ int switch_object::init(OBJECT *parent)
 				{
 					if (solver_method == SM_NR)
 					{
-						From_Y[2][2] = complex(1/switch_resistance,1/switch_resistance);
+						From_Y[2][2] = complex(1.0/switch_resistance,1.0/switch_resistance);
+						b_mat[2][2] = complex(switch_resistance,switch_resistance);
 						a_mat[2][2] = 1.0;
 						d_mat[2][2] = 1.0;
 					}
@@ -439,6 +455,7 @@ int switch_object::init(OBJECT *parent)
 					if (solver_method == SM_NR)
 					{
 						From_Y[2][2] = complex(0.0,0.0);
+						b_mat[2][2] = complex(0.0,0.0);
 						a_mat[2][2] = complex(0.0,0.0);
 						d_mat[2][2] = complex(0.0,0.0);
 					}
@@ -738,6 +755,8 @@ void switch_object::switch_sync_function(void)
 {
 	unsigned char pres_status;
 	double phase_total, switch_total;
+	OBJECT *obj = OBJECTHDR(this);
+	int result_val;
 
 	pres_status = 0x00;	//Reset individual status indicator - assumes all start open
 
@@ -803,6 +822,7 @@ void switch_object::switch_sync_function(void)
 					if (solver_method == SM_NR)
 					{
 						From_Y[0][0] = complex(0.0,0.0);	//Update admittance
+						b_mat[0][0] = complex(0.0,0.0);
 						a_mat[0][0] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
 						d_mat[0][0] = 0.0;	
 						NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove this bit
@@ -819,6 +839,7 @@ void switch_object::switch_sync_function(void)
 					if (solver_method == SM_NR)
 					{
 						From_Y[1][1] = complex(0.0,0.0);	//Update admittance
+						b_mat[1][1] = complex(0.0,0.0);
 						a_mat[1][1] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
 						d_mat[1][1] = 0.0;	
 						NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove this bit
@@ -835,6 +856,7 @@ void switch_object::switch_sync_function(void)
 					if (solver_method == SM_NR)
 					{
 						From_Y[2][2] = complex(0.0,0.0);	//Update admittance
+						b_mat[2][2] = complex(0.0,0.0);
 						a_mat[2][2] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
 						d_mat[2][2] = 0.0;
 						NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove this bit
@@ -854,7 +876,8 @@ void switch_object::switch_sync_function(void)
 
 					if (solver_method == SM_NR)
 					{
-						From_Y[0][0] = complex(1/switch_resistance,1/switch_resistance);	//Update admittance
+						From_Y[0][0] = complex(1.0/switch_resistance,1.0/switch_resistance);	//Update admittance
+						b_mat[0][0] = complex(switch_resistance,switch_resistance);
 						a_mat[0][0] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
 						d_mat[0][0] = 1.0;
 						NR_branchdata[NR_branch_reference].phases |= 0x04;	//Ensure we're set
@@ -872,7 +895,8 @@ void switch_object::switch_sync_function(void)
 
 					if (solver_method == SM_NR)
 					{
-						From_Y[1][1] = complex(1/switch_resistance,1/switch_resistance);	//Update admittance
+						From_Y[1][1] = complex(1.0/switch_resistance,1.0/switch_resistance);	//Update admittance
+						b_mat[1][1] = complex(switch_resistance,switch_resistance);
 						a_mat[1][1] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
 						d_mat[1][1] = 1.0;
 						NR_branchdata[NR_branch_reference].phases |= 0x02;	//Ensure we're set
@@ -890,7 +914,8 @@ void switch_object::switch_sync_function(void)
 
 					if (solver_method == SM_NR)
 					{
-						From_Y[2][2] = complex(1/switch_resistance,1/switch_resistance);	//Update admittance
+						From_Y[2][2] = complex(1.0/switch_resistance,1.0/switch_resistance);	//Update admittance
+						b_mat[2][2] = complex(switch_resistance,switch_resistance);
 						a_mat[2][2] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
 						d_mat[2][2] = 1.0;
 						NR_branchdata[NR_branch_reference].phases |= 0x01;	//Ensure we're set
@@ -914,6 +939,10 @@ void switch_object::switch_sync_function(void)
 					From_Y[0][0] = complex(0.0,0.0);
 					From_Y[1][1] = complex(0.0,0.0);
 					From_Y[2][2] = complex(0.0,0.0);
+
+					b_mat[0][0] = complex(0.0,0.0);
+					b_mat[1][1] = complex(0.0,0.0);
+					b_mat[2][2] = complex(0.0,0.0);
 		
 					NR_branchdata[NR_branch_reference].phases &= 0xF0;		//Remove all our phases
 				}
@@ -938,7 +967,8 @@ void switch_object::switch_sync_function(void)
 
 						if (solver_method == SM_NR)
 						{
-							From_Y[0][0] = complex(1/switch_resistance,1/switch_resistance);
+							From_Y[0][0] = complex(1.0/switch_resistance,1.0/switch_resistance);
+							b_mat[0][0] = complex(switch_resistance,switch_resistance);
 							NR_branchdata[NR_branch_reference].phases |= 0x04;	//Ensure we're set
 							a_mat[0][0] = 1.0;
 							d_mat[0][0] = 1.0;
@@ -954,6 +984,7 @@ void switch_object::switch_sync_function(void)
 						if (solver_method == SM_NR)
 						{
 							From_Y[0][0] = complex(0.0,0.0);
+							b_mat[0][0] = complex(0.0,0.0);
 							NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Make sure we're removed
 							a_mat[0][0] = 0.0;
 							d_mat[0][0] = 0.0;
@@ -974,7 +1005,8 @@ void switch_object::switch_sync_function(void)
 
 						if (solver_method == SM_NR)
 						{
-							From_Y[1][1] = complex(1/switch_resistance,1/switch_resistance);
+							From_Y[1][1] = complex(1.0/switch_resistance,1.0/switch_resistance);
+							b_mat[1][1] = complex(switch_resistance,switch_resistance);
 							NR_branchdata[NR_branch_reference].phases |= 0x02;	//Ensure we're set
 							a_mat[1][1] = 1.0;
 							d_mat[1][1] = 1.0;
@@ -990,6 +1022,7 @@ void switch_object::switch_sync_function(void)
 						if (solver_method == SM_NR)
 						{
 							From_Y[1][1] = complex(0.0,0.0);
+							b_mat[1][1] = complex(0.0,0.0);
 							NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Make sure we're removed
 							a_mat[1][1] = 0.0;
 							d_mat[1][1] = 0.0;
@@ -1010,7 +1043,8 @@ void switch_object::switch_sync_function(void)
 
 						if (solver_method == SM_NR)
 						{
-							From_Y[2][2] = complex(1/switch_resistance,1/switch_resistance);
+							From_Y[2][2] = complex(1.0/switch_resistance,1.0/switch_resistance);
+							b_mat[2][2] = complex(switch_resistance,switch_resistance);
 							NR_branchdata[NR_branch_reference].phases |= 0x01;	//Ensure we're set
 							a_mat[2][2] = 1.0;
 							d_mat[2][2] = 1.0;
@@ -1026,6 +1060,7 @@ void switch_object::switch_sync_function(void)
 						if (solver_method == SM_NR)
 						{
 							From_Y[2][2] = complex(0.0,0.0);
+							b_mat[2][2] = complex(0.0,0.0);
 							NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Make sure we're removed
 							a_mat[2][2] = 0.0;
 							d_mat[2][2] = 0.0;
@@ -1054,41 +1089,96 @@ void switch_object::switch_sync_function(void)
 
 		prev_full_status = pres_status;	//Update the status flags
 	}//End of "Normal" operation
-	else	//Meshed fault checking -- phases are handled externally by link.cpp, just like other objects
+	else	//Meshed fault checking -- phases are handled externally by link.cpp, just like other objects, but only with an eventgen call
 	{
 		if (status != prev_status)
 		{
+			//Check and see if we've mapped the function first
+			if (fault_handle_call == NULL)
+			{
+				//Make sure a fault_check object exists
+				if (fault_check_object != NULL)
+				{
+					//Get the link
+					fault_handle_call = (FUNCTIONADDR)(gl_get_function(fault_check_object,"reliability_alterations"));
+
+					//Make sure it worked
+					if (fault_handle_call == NULL)
+					{
+						GL_THROW("switch:%d - %s - Failed to map the topology update function!",obj->id,(obj->name ? obj->name : "Unnamed"));
+						/*  TROUBLESHOOT
+						While attempting to map up the topology reconfigure function, an error was encountered.  Please try again.
+						If the error persists, please submit your file and an issue report.
+						*/
+					}
+				}
+				//Default else -- it will just fail
+			}
+			//Default else -- already mapped
+
 			//Loop through and handle phases appropriate
 			if (status == CLOSED)
 			{
 				//Check phases
 				if (has_phase(PHASE_A))
 				{
-					From_Y[0][0] = complex(1/switch_resistance,1/switch_resistance);
+					//Handle the phase - theoretically done elsewhere, but double check
+					NR_branchdata[NR_branch_reference].phases |= 0x04;
+					From_Y[0][0] = complex(1.0/switch_resistance,1.0/switch_resistance);
+					b_mat[0][0] = complex(switch_resistance,switch_resistance);
 					a_mat[0][0] = 1.0;
 					d_mat[0][0] = 1.0;
 				}
 
 				if (has_phase(PHASE_B))
 				{
-					From_Y[1][1] = complex(1/switch_resistance,1/switch_resistance);
+					NR_branchdata[NR_branch_reference].phases |= 0x02;
+					From_Y[1][1] = complex(1.0/switch_resistance,1.0/switch_resistance);
+					b_mat[1][1] = complex(switch_resistance,switch_resistance);
 					a_mat[1][1] = 1.0;
 					d_mat[1][1] = 1.0;
 				}
 
 				if (has_phase(PHASE_C))
 				{
-					From_Y[2][2] = complex(1/switch_resistance,1/switch_resistance);
+					NR_branchdata[NR_branch_reference].phases |= 0x01;
+					From_Y[2][2] = complex(1.0/switch_resistance,1.0/switch_resistance);
+					b_mat[2][2] = complex(switch_resistance,switch_resistance);
 					a_mat[2][2] = 1.0;
 					d_mat[2][2] = 1.0;
 				}
+
+				//Call the reconfiguration function
+				if (fault_handle_call != NULL)
+				{
+					//Call the topology update
+					result_val = ((int (*)(OBJECT *, int, bool))(*fault_handle_call))(fault_check_object,NR_branch_reference,true);
+
+					//Make sure it worked
+					if (result_val != 1)
+					{
+						GL_THROW("switch:%d - %s - Topology update fail!",obj->id,(obj->name ? obj->name : "Unnamed"));
+						/*  TROUBLESHOOT
+						While attempting to update the topology of the system after a switch action, an error occurred.
+						Please try again.  If the error persists, please submit your file and an issue report.
+						*/
+					}
+				}
+				//Default else -- not mapped
 			}
 			else	//Must be open
 			{
+				//Handle phases
+				NR_branchdata[NR_branch_reference].phases &= 0xF8;
+
 				//Zero it all, just because
 				From_Y[0][0] = complex(0.0,0.0);
 				From_Y[1][1] = complex(0.0,0.0);
 				From_Y[2][2] = complex(0.0,0.0);
+
+				b_mat[0][0] = complex(0.0,0.0);
+				b_mat[1][1] = complex(0.0,0.0);
+				b_mat[2][2] = complex(0.0,0.0);
 	
 				A_mat[0][0] = 0.0;
 				A_mat[1][1] = 0.0;
@@ -1097,6 +1187,22 @@ void switch_object::switch_sync_function(void)
 				d_mat[0][0] = 0.0;
 				d_mat[1][1] = 0.0;
 				d_mat[2][2] = 0.0;
+
+				//Call the reconfiguration function
+				//Call the reconfiguration function
+				if (fault_handle_call != NULL)
+				{
+					//Call the topology update
+					result_val = ((int (*)(OBJECT *, int, bool))(*fault_handle_call))(fault_check_object,NR_branch_reference,false);
+
+					//Make sure it worked
+					if (result_val != 1)
+					{
+						GL_THROW("switch:%d - %s - Topology update fail!",obj->id,(obj->name ? obj->name : "Unnamed"));
+						//Defined above
+					}
+				}
+				//Default else -- not mapped
 			}
 
 			//Update status
@@ -1283,6 +1389,7 @@ void switch_object::set_switch(bool desired_status)
 				if (has_phase(PHASE_A))
 				{
 					From_Y[0][0] = complex(0.0,0.0);	//Update admittance
+					b_mat[0][0] = complex(0.0,0.0);
 					a_mat[0][0] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
 					d_mat[0][0] = 0.0;
 					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Ensure we're not set
@@ -1292,6 +1399,7 @@ void switch_object::set_switch(bool desired_status)
 				if (has_phase(PHASE_B))
 				{
 					From_Y[1][1] = complex(0.0,0.0);	//Update admittance
+					b_mat[1][1] = complex(0.0,0.0);
 					a_mat[1][1] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
 					d_mat[1][1] = 0.0;
 					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Ensure we're not set
@@ -1301,6 +1409,7 @@ void switch_object::set_switch(bool desired_status)
 				if (has_phase(PHASE_C))
 				{
 					From_Y[2][2] = complex(0.0,0.0);	//Update admittance
+					b_mat[2][2] = complex(0.0,0.0);
 					a_mat[2][2] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
 					d_mat[2][2] = 0.0;
 					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Ensure we're not set
@@ -1311,7 +1420,8 @@ void switch_object::set_switch(bool desired_status)
 			{
 				if (has_phase(PHASE_A))
 				{
-					From_Y[0][0] = complex(1/switch_resistance,1/switch_resistance);	//Update admittance
+					From_Y[0][0] = complex(1.0/switch_resistance,1.0/switch_resistance);	//Update admittance
+					b_mat[0][0] = complex(switch_resistance,switch_resistance);
 					a_mat[0][0] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
 					d_mat[0][0] = 1.0;
 					NR_branchdata[NR_branch_reference].phases |= 0x04;	//Ensure we're set
@@ -1320,7 +1430,8 @@ void switch_object::set_switch(bool desired_status)
 
 				if (has_phase(PHASE_B))
 				{
-					From_Y[1][1] = complex(1/switch_resistance,1/switch_resistance);	//Update admittance
+					From_Y[1][1] = complex(1.0/switch_resistance,1.0/switch_resistance);	//Update admittance
+					b_mat[1][1] = complex(switch_resistance,switch_resistance);
 					a_mat[1][1] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
 					d_mat[1][1] = 1.0;
 					NR_branchdata[NR_branch_reference].phases |= 0x02;	//Ensure we're set
@@ -1329,7 +1440,8 @@ void switch_object::set_switch(bool desired_status)
 
 				if (has_phase(PHASE_C))
 				{
-					From_Y[2][2] = complex(1/switch_resistance,1/switch_resistance);	//Update admittance
+					From_Y[2][2] = complex(1.0/switch_resistance,1.0/switch_resistance);	//Update admittance
+					b_mat[2][2] = complex(switch_resistance,switch_resistance);
 					a_mat[2][2] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
 					d_mat[2][2] = 1.0;
 					NR_branchdata[NR_branch_reference].phases |= 0x01;	//Ensure we're set
@@ -1612,7 +1724,7 @@ EXPORT int create_switch(OBJECT **obj, OBJECT *parent)
 		else
 			return 0;
 	}
-	CREATE_CATCHALL(switch);
+	CREATE_CATCHALL(switch_object);
 }
 
 /**
@@ -1627,7 +1739,7 @@ EXPORT int init_switch(OBJECT *obj)
 		switch_object *my = OBJECTDATA(obj,switch_object);
 		return my->init(obj->parent);
 	}
-	INIT_CATCHALL(switch);
+	INIT_CATCHALL(switch_object);
 }
 
 /**
@@ -1656,7 +1768,7 @@ EXPORT TIMESTAMP sync_switch(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			throw "invalid pass request";
 		}
 	} 
-	SYNC_CATCHALL(switch);
+	SYNC_CATCHALL(switch_object);
 }
 
 EXPORT int isa_switch(OBJECT *obj, char *classname)
@@ -1718,6 +1830,58 @@ EXPORT int change_switch_state(OBJECT *thisobj, unsigned char phase_change, bool
 	return 1;	//This will always succeed...because I say so!
 }
 
+//Function to change switch states
+EXPORT int change_switch_state_toggle(OBJECT *thisobj)
+{
+	FUNCTIONADDR funadd = NULL;
+	int ext_result;
+
+	//Map the switch
+	switch_object *swtchobj = OBJECTDATA(thisobj,switch_object);
+
+	//See the current state
+	if (swtchobj->status == switch_object::OPEN)
+	{
+		swtchobj->set_switch(true);
+	}
+	else //Must be closed
+	{
+		swtchobj->set_switch(false);
+	}
+
+	//Call the fault_check routine to update topology to reflect our change
+
+	//Map the function
+	funadd = (FUNCTIONADDR)(gl_get_function(fault_check_object,"reliability_alterations"));
+
+	//Make sure it was found
+	if (funadd == NULL)
+	{
+		gl_error("Unable to update topology for switching action");
+		/*  TROUBLESHOOT
+		While attempting to map the reliability function to manipulate topology, an error occurred.
+		Please try again.  If the bug persists, please submit your code and a bug report via the
+		ticketing system.
+		*/
+
+		return 0;
+	}
+
+	//Perform topological check -- just pass a general node
+	ext_result = ((int (*)(OBJECT *, int, bool))(*funadd))(fault_check_object,0,false);
+
+	//Make sure it worked
+	if (ext_result != 1)
+	{
+		gl_error("Unable to update topology for switching action");
+		//defined above
+
+		return 0;
+	}
+
+	return 1;	//This will always succeed...because I say so!
+}
+
 //Reliability interface - generalized switch operation so switches and other opjects can be similarly
 EXPORT int reliability_operation(OBJECT *thisobj, unsigned char desired_phases)
 {
@@ -1729,7 +1893,7 @@ EXPORT int reliability_operation(OBJECT *thisobj, unsigned char desired_phases)
 	return 1;	//This will always succeed...because I say so!
 }
 
-EXPORT int create_fault_switch(OBJECT *thisobj, OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time, void *Extra_Data)
+EXPORT int create_fault_switch(OBJECT *thisobj, OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time)
 {
 	int retval;
 
@@ -1737,11 +1901,11 @@ EXPORT int create_fault_switch(OBJECT *thisobj, OBJECT **protect_obj, char *faul
 	switch_object *thisswitch = OBJECTDATA(thisobj,switch_object);
 
 	//Try to fault up
-	retval = thisswitch->link_fault_on(protect_obj, fault_type, implemented_fault,repair_time,Extra_Data);
+	retval = thisswitch->link_fault_on(protect_obj, fault_type, implemented_fault,repair_time);
 
 	return retval;
 }
-EXPORT int fix_fault_switch(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name, void *Extra_Data)
+EXPORT int fix_fault_switch(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name)
 {
 	int retval;
 
@@ -1749,7 +1913,7 @@ EXPORT int fix_fault_switch(OBJECT *thisobj, int *implemented_fault, char *imp_f
 	switch_object *thisswitch = OBJECTDATA(thisobj,switch_object);
 
 	//Clear the fault
-	retval = thisswitch->link_fault_off(implemented_fault, imp_fault_name, Extra_Data);
+	retval = thisswitch->link_fault_off(implemented_fault, imp_fault_name);
 
 	//Clear the fault type
 	*implemented_fault = -1;

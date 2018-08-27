@@ -1,0 +1,26 @@
+// Test whether sampling at different intervals affect the outcome (hint: it shouldn't).
+// Change interval to different value and plot the different output files together.
+// The temperature values should track fairly well.
+
+#define INTERVAL=10
+
+#set randomseed=1
+
+clock {
+	timezone PST+8PDT;
+	starttime "2010-01-01 0:00:00 PST";
+	stoptime "2010-01-07 0:00:00 PST";
+}
+
+module residential;
+module tape;
+
+object waterheater {
+	name wh1;
+	object recorder {
+		name rec1;
+		file waterheater-${INTERVAL}.csv;
+		property temperature;
+		interval ${INTERVAL};
+	};
+}

@@ -16,6 +16,8 @@ public:
 private:
 	complex prev_shunt[3];
 
+	bool base_load_val_was_nonzero[3];		///< Tracking variable to make ZIP-fraction loads check for zero conditions (but not already zeroed)
+
 public:
 	complex measured_voltage_A;	///< measured voltage
 	complex measured_voltage_B;
@@ -29,6 +31,8 @@ public:
 	complex constant_power_dy[6];		// Power load, explicitly specified wye and delta -- delta first, then wye
 	complex constant_current_dy[6];	// Current load, explicitly specified wye and delta -- delta first, then wye
 	complex constant_impedance_dy[6];	// Impedance load, explicitly specified wye and delta -- delta first, then wye
+	INRUSHINTMETHOD inrush_int_method_inductance;	//Individual mode selection
+	INRUSHINTMETHOD inrush_int_method_capacitance;
 
 	double base_power[3];
 	double power_pf[3];
@@ -41,6 +45,8 @@ public:
 
 	enum {LC_UNKNOWN=0, LC_RESIDENTIAL, LC_COMMERCIAL, LC_INDUSTRIAL, LC_AGRICULTURAL};
 	enumeration load_class;
+	enum {DISCRETIONARY=0, PRIORITY, CRITICAL};
+	enumeration load_priority;
 
 	int create(void);
 	int init(OBJECT *parent);

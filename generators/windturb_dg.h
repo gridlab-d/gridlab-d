@@ -11,19 +11,7 @@
 
 
 #include <stdarg.h>
-#include "gridlabd.h"
 #include "generators.h"
-
-/*
-#ifdef _WINDTURB_DG_CPP
-#define GLOBAL
-#define INIT(A) = (A)
-#else
-#define GLOBAL extern
-#define INIT(A)
-#endif
-*/
-
 	
 class windturb_dg : public gld_object
 {
@@ -41,12 +29,22 @@ private:
 	double air_dens;
 	double Ridealgas;
 	double Molar;
-	double std_air_dens;
 	double std_air_temp;
 	double std_air_press;
-	complex *pCircuit_V;		//< pointer to the three voltages on three lines
-	complex *pLine_I;			//< pointer to the three current on three lines
-	bool last_NR_mode;		//Toggle to keep track of last NR mode - needed to differentiate between FBS and NR
+	gld_property *pCircuit_V[3];		//< pointer to the three voltages on three lines
+	gld_property *pLine_I[3];			//< pointer to the three current on three lines
+	complex value_Circuit_V[3];			//< value holder for voltage values
+	complex value_Line_I[3];			//< value holder for current values
+	bool parent_is_valid;				//< Flag to pointers
+
+    gld_property *pPress;			
+	gld_property *pTemp;			
+	gld_property *pWS;				
+
+    double value_Press;				
+	double value_Temp;				
+	double value_WS;				
+	bool climate_is_valid;			//< Flag to pointer values
 	
 protected:
 	/* TODO: put unpublished but inherited variables */
@@ -88,10 +86,6 @@ public:
 
 	double q;					//number of gearboxes
 
-    double * pPress;			//Used to find air density
-	double * pTemp;				// |
-	double * pWS;				// |
-	double * pair_density;		// |
 	double Pconv;				//Power converted from mechanical to electrical before elec losses
 	double GenElecEff;			//Generator electrical efficiency used for testing
 
@@ -145,12 +139,8 @@ public:
 	double Max_Vrotor;			// maximum induced voltage in p.u., e.g. 1.2
     double Min_Vrotor;			// minimum induced voltage in p.u., e.g. 0.8
 
-	bool *NR_mode;			//Toggle for NR solving cycle.  If not NR, just goes to false
-	bool default_NR_mode;
-
 public:
 	/* required implementations */
-	bool *get_bool(OBJECT *obj, char *name);
 	windturb_dg(MODULE *module);
 	int create(void);
 	int init(OBJECT *parent);
@@ -159,11 +149,13 @@ public:
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 
+	gld_property *map_complex_value(OBJECT *obj, char *name);
+	gld_property *map_double_value(OBJECT *obj, char *name);
+	void push_complex_powerflow_values(void);
 
 public:
 	static CLASS *oclass;
 	static windturb_dg *defaults;
-	complex *get_complex(OBJECT *obj, char *name);
 	static CLASS *pclass;
 };
 #endif

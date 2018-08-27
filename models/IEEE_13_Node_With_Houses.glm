@@ -285,7 +285,8 @@ object line_spacing:510 {
 	distance_BC 0.0;
 	distance_AN 0.0;
 	distance_CN 5.0;
-	distance_BN 0.0;}
+        distance_BN 0.0;
+}
 
 object line_configuration:601 {
 	conductor_A overhead_line_conductor:6010;

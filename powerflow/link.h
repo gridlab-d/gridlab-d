@@ -20,7 +20,8 @@ typedef enum {
 		SPLITPHASE=3,		///< defines the link is a split-phase transformer
 		SWITCH=4,			///< defines the link is a switch
 		DELTADELTA=5,		///< defines the link is a delta-delta transformer - for power operations
-		WYEWYE=6			///< defines the link is a Wye-wye transformer, mainly to allow triggering for unity turns ratios
+		WYEWYE=6,			///< defines the link is a Wye-wye transformer, mainly to allow triggering for unity turns ratios
+		VFD=7				///< defines the link is a VFD device (basically skip admittance)
 } SPECIAL_LINK;
 
 // flow directions (see link_object::flow_direction)
@@ -41,26 +42,27 @@ typedef enum {
 class link_object : public powerflow_object
 {
 public: /// @todo make this private and create interfaces to control values
-	complex a_mat[3][3];	// a_mat - 3x3 matrix, 'a' matrix
-	complex b_mat[3][3];	// b_mat - 3x3 matrix, 'b' matrix
-	complex c_mat[3][3];	// c_mat - 3x3 matrix, 'c' matrix
-	complex d_mat[3][3];	// d_mat - 3x3 matrix, 'd' matrix
-	complex A_mat[3][3];	// A_mat - 3x3 matrix, 'A' matrix
-	complex B_mat[3][3];	// B_mat - 3x3 matrix, 'B' matrix
-	complex tn[3];			// Used to calculate return current
-	complex To_Y[3][3];		// To_Y  - 3x3 matrix, object transition to admittance
-	complex From_Y[3][3];	// From_Y - 3x3 matrix, object transition from admittance
-	complex *YSfrom;		// YSfrom - Pointer to 3x3 matrix representing admittance seen from "from" side (transformers)
-	complex *YSto;			// YSto - Pointer to 3x3 matrix representing admittance seen from "to" side (transformers)
-	double voltage_ratio;	// voltage ratio (normally 1.0)
-	int NR_branch_reference;	//Index of NR_branchdata this link is contained in
-	SPECIAL_LINK SpecialLnk;	//Flag for exceptions to the normal handling
-	set flow_direction;		// Flag direction of powerflow: 1 is normal, -1 is reverse flow, 0 is no flow
+	complex a_mat[3][3];				// a_mat - 3x3 matrix, 'a' matrix
+	complex b_mat[3][3];				// b_mat - 3x3 matrix, 'b' matrix
+	complex c_mat[3][3];				// c_mat - 3x3 matrix, 'c' matrix
+	complex d_mat[3][3];				// d_mat - 3x3 matrix, 'd' matrix
+	complex A_mat[3][3];				// A_mat - 3x3 matrix, 'A' matrix
+	complex B_mat[3][3];				// B_mat - 3x3 matrix, 'B' matrix
+	complex tn[3];						// Used to calculate return current
+	complex base_admittance_mat[3][3];	// 3x3 matrix as "pre-inverted" matrix for NR - mostly for transformers
+	complex To_Y[3][3];					// To_Y  - 3x3 matrix, object transition to admittance
+	complex From_Y[3][3];				// From_Y - 3x3 matrix, object transition from admittance
+	complex *YSfrom;					// YSfrom - Pointer to 3x3 matrix representing admittance seen from "from" side (transformers)
+	complex *YSto;						// YSto - Pointer to 3x3 matrix representing admittance seen from "to" side (transformers)
+	double voltage_ratio;				// voltage ratio (normally 1.0)
+	int NR_branch_reference;			//Index of NR_branchdata this link is contained in
+	SPECIAL_LINK SpecialLnk;			//Flag for exceptions to the normal handling
+	set flow_direction;					// Flag direction of powerflow: 1 is normal, -1 is reverse flow, 0 is no flow
 	void calculate_power();
 	void calculate_power_splitphase();
 	void set_flow_directions();
-	int link_fault_on(OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time, void *Extra_Data);		//Function to create fault on line
-	int link_fault_off(int *implemented_fault, char *imp_fault_name, void *Extra_Data);	//Function to remove fault from line
+	int link_fault_on(OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time);		//Function to create fault on line
+	int link_fault_off(int *implemented_fault, char *imp_fault_name);	//Function to remove fault from line
 	double mean_repair_time;
 	double *link_limits[2][3];		/**< pointers for line limits (emergency vs. continuous) for link objects and by phase - pointered for variation */
 	double link_rating[2][3];		/**< Values for current line rating - gives individual segments the ability to set */
@@ -80,6 +82,7 @@ public:
 	complex read_I_out[3];  ///< published current flow out of link (w.r.t to node)
 	complex If_in[3];		///< fault current flowing in 
 	complex If_out[3];		///< fault current flowing out
+	complex Vf_out[3];
 	complex power_in;		///< power flow in (w.r.t from node)
 	complex power_out;		///< power flow out (w.r.t to node)
 	complex power_loss;		///< power losses 
@@ -125,12 +128,14 @@ public:
 	static int kmlinit(int (*stream)(const char*,...));
 	int kmldump(int (*stream)(const char*,...));
 	//Current injection calculation function - so it can be called remotely
-	int CurrentCalculation(int nodecall);
+	int CurrentCalculation(int nodecall, bool link_fault_mode);
 
 	void NR_link_presync_fxn(void);
 	void BOTH_link_postsync_fxn(void);
 	void perform_limit_checks(double *over_limit_value, bool *over_limits);
 	double inrush_tol_value;	///< Tolerance value (of vdiff on the line ends) before "inrush convergence" is accepted
+	INRUSHINTMETHOD inrush_int_method_inductance;	//Individual mode selection
+	INRUSHINTMETHOD inrush_int_method_capacitance;
 
 	//New matrix functions associated with transformer inrush (bigger)
 	void lmatrix_add(complex *matrix_in_A, complex *matrix_in_B, complex *matrix_out, int matsize);
@@ -189,3 +194,4 @@ void forward_sub(complex *l, complex *b, complex *z, int size_val); //backwards 
 void back_sub(complex *u, complex *z, complex *x, int size_val); // forwards substitution algorithm for a generic square system
 void lu_matrix_inverse(complex *input_mat, complex *output_mat, int size_val);	//matrix inversion calculated by LU decomp method
 #endif // _LINK_H
+

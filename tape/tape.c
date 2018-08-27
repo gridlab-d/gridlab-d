@@ -242,6 +242,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 	PUBLISH_STRUCT(recorder,char32,xdata);
 	PUBLISH_STRUCT(recorder,char32,columns);
 	PUBLISH_STRUCT(recorder,int32,flush);
+    PUBLISH_STRUCT(recorder,bool,format);
 	
 	if(gl_publish_variable(recorder_class,
 		PT_double, "interval[s]", ((char*)&(my.dInterval) - (char *)&my),
@@ -279,6 +280,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 		PT_char1024, "plotcommands", ((char*)&(my.plotcommands) - (char *)&my),
 		PT_char32, "xdata", ((char*)&(my.xdata) - (char *)&my),
 		PT_char32, "columns", ((char*)&(my.columns) - (char *)&my),
+        PT_char32, "format", ((char*)&(my.format) - (char *)&my),
 		PT_enumeration, "output", ((char*)&(my.output) - (char *)&my),
 			PT_KEYWORD, "SCREEN", SCREEN,
 			PT_KEYWORD, "EPS",    EPS,
@@ -321,6 +323,12 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 
 	/* new violation_recorder() */
 	new_violation_recorder(module);
+
+	/* new metrics_collector() */
+	new_metrics_collector(module);
+
+	/* new metrics_collector_writer() */
+	new_metrics_collector_writer(module);
 
 #if 0
 	new_loadshape(module);
@@ -376,34 +384,56 @@ EXPORT int check(void)
 	too slow and could happen at the wrong time).
  */
 
-OBJECT *delta_recorder_list[256];
-unsigned int n_recorders = 0;
 double recorder_delta_clock = 0.0;
+DELTAOBJ_LIST *delta_tape_objects = NULL;
 
-OBJECT *delta_player_list[256];
-unsigned int n_players = 0;
-
-void delta_add_recorder(OBJECT *obj)
+/* Function to add a tape module object into a deltamode list */
+int delta_add_tape_device(OBJECT *obj, DELTATAPEOBJ tape_type)
 {
-	if ( n_recorders < sizeof(delta_recorder_list)/sizeof(delta_recorder_list[0]) )
-		delta_recorder_list[n_recorders++] = obj;
-	else
+	DELTAOBJ_LIST *temp_ll_item, *index_item;
+
+	/* Allocate one */
+	temp_ll_item = (DELTAOBJ_LIST*)gl_malloc(sizeof(DELTAOBJ_LIST));
+
+	/* Make sure it worked */
+	if (temp_ll_item == NULL)
 	{
-		gl_error("recorder:%d: unable to add any more delta_mode recorders (max=%d)", 
-			obj->id, sizeof(delta_recorder_list)/sizeof(delta_recorder_list[0]));
+		gl_error("tape object:%d - unable to allocate space for deltamode",obj->id);
+		/*  TROUBLESHOOT
+		While attempting to allocate space for a tape module deltamode-capable object, an error occurred.  Please try again.
+		If the error persists, please submit your code and a bug report via the ticketing system.
+		*/
+		return FAILED;
 	}
+
+	/* Populate it */
+	temp_ll_item->obj = obj;
+	temp_ll_item->obj_type = tape_type;
+	temp_ll_item->next = NULL;
+
+	/* Find the place */
+	if (delta_tape_objects != NULL)
+	{
+		/* Get initial value */
+		index_item = delta_tape_objects;
+
+		while (index_item->next != NULL)
+		{
+			index_item = index_item->next;
+		}
+
+		//This should be the place to insert
+		index_item->next = temp_ll_item;
+	}
+	else /* Only one item, just add us in there */
+	{
+		delta_tape_objects = temp_ll_item;
+	}
+
+	/* If we made it this far, must be successful */
+	return SUCCESS;
 }
 
-void delta_add_player(OBJECT *obj)
-{
-	if ( n_players < sizeof(delta_player_list)/sizeof(delta_player_list[0]) )
-		delta_player_list[n_players++] = obj;
-	else
-	{
-		gl_error("player:%d: unable to add any more delta_mode players (max=%d)", 
-			obj->id, sizeof(delta_player_list)/sizeof(delta_player_list[0]));
-	}
-}
 
 void enable_deltamode(TIMESTAMP t)
 {
@@ -431,12 +461,12 @@ EXPORT unsigned long preupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 
 EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
+	DELTAOBJ_LIST *index_item;
 	SIMULATIONMODE mode = SM_EVENT;
 
 	/* determine the timestamp */
 	double clock_val = (double)gl_globalclock + (double)delta_time/(double)DT_SECOND;
 	char recorder_timestamp[64];
-	unsigned int n;
 
 	/* prepare the timestamp */
 	static char global_dateformat[8]="";
@@ -469,85 +499,176 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 			else
 				sprintf(recorder_timestamp,"%.09f",recorder_delta_clock);
 
-			/* output samples to recorders */
-			for ( n=0 ; n<n_recorders ; n++ )
-			{
-				OBJECT *obj = delta_recorder_list[n];
-				struct recorder *my = (struct recorder *)OBJECTDATA(obj,struct recorder);
-				char value[1024];
-				extern int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buffer, int size);
+			/* Initialize loop */
+			index_item = delta_tape_objects;
 
-				/* See if we're in service */
-				if ((obj->in_svc_double <= gl_globaldeltaclock) && (obj->out_svc_double >= gl_globaldeltaclock))
+			/* Loop through and find a recorder */
+			while (index_item != NULL)
+			{
+				if (index_item->obj_type == RECORDER)
 				{
-					if( read_properties(my, obj->parent,my->target,value,sizeof(value)) )
+					OBJECT *obj = index_item->obj;
+					struct recorder *my = (struct recorder *)OBJECTDATA(obj,struct recorder);
+					char value[1024];
+					extern int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buffer, int size);
+
+					/* See if we're in service */
+					if ((obj->in_svc_double <= gl_globaldeltaclock) && (obj->out_svc_double >= gl_globaldeltaclock))
 					{
-						if ( !my->ops->write(my, recorder_timestamp, value) )
+						if( read_properties(my, obj->parent,my->target,value,sizeof(value)) )
 						{
-							gl_error("recorder:%d: unable to write sample to file", obj->id);
-							return SM_ERROR;
+							if ( !my->ops->write(my, recorder_timestamp, value) )
+							{
+								gl_error("recorder:%d: unable to write sample to file", obj->id);
+								return SM_ERROR;
+							}
 						}
 					}
-				}
-				/* Defaulted else, not in service, do nothing */
-			}
+					/* Defaulted else, not in service, do nothing */
+				}/* End recorder */
+				/* Default else -- not a recorder, so skip */
+
+				/* Grab the next item */
+				index_item = index_item->next;
+			}//End list loop
 		}
 		
 		/* Store recorder clock (to be used next time) */
 		recorder_delta_clock = clock_val;
 	}/* End Recorder only on 0th iteration loop */
 
+	/*** Keep going below here ***/
 	/* input samples from players */
-	for ( n=0 ; n<n_players ; n++ )
+	/* Initialize loop */
+	index_item = delta_tape_objects;
+
+	/* Loop through and find a recorder */
+	while (index_item != NULL)
 	{
-		OBJECT *obj = delta_player_list[n];
-		struct player *my = (struct player *)OBJECTDATA(obj,struct player);
-		int y=0,m=0,d=0,H=0,M=0,S=0,ms=0, n=0;
-		char *fmt = "%d/%d/%d %d:%d:%d.%d,%*s";
-		double t = (double)my->next.ts + (double)my->next.ns/1e9;
-		char256 curr_value;
-
-		/* See if we're in service */
-		if ((obj->in_svc_double <= gl_globaldeltaclock) && (obj->out_svc_double >= gl_globaldeltaclock))
+		if (index_item->obj_type == PLAYER)
 		{
-			strcpy(curr_value,my->next.value);
+			OBJECT *obj = index_item->obj;
+			struct player *my = (struct player *)OBJECTDATA(obj,struct player);
+			int y=0,m=0,d=0,H=0,M=0,S=0,ms=0, n=0;
+			char *fmt = "%d/%d/%d %d:%d:%d.%d,%*s";
+			double t = (double)my->next.ts + (double)my->next.ns/1e9;
+			char256 curr_value;
 
-			/* post the current value */
-			if ( t<=clock_val )
+			/* See if we're in service */
+			if ((obj->in_svc_double <= gl_globaldeltaclock) && (obj->out_svc_double >= gl_globaldeltaclock))
 			{
-				extern TIMESTAMP player_read(OBJECT *obj);
+				strcpy(curr_value,my->next.value);
 
-				/* Behave similar to "supersecond" players */
-				while ( t<=clock_val )
+				/* post the current value */
+				if ( t<=clock_val )
 				{
-					gl_set_value(obj->parent,GETADDR(obj->parent,my->target),my->next.value,my->target); /* pointer => int64 */
+					extern TIMESTAMP player_read(OBJECT *obj);
 
-					/* read the next value */
-					player_read(obj);
+					/* Check to make sure we've be initialized -- if a deltamode timestep is first, it may be before this was initialized */
+					if (my->target == NULL)	/* Not set yet */
+					{
+						/*  This fails on Mac builds under 4.0 for some odd reason.  Commenting code and putting an error for now.
+						Will be investigated further for 4.1 release.
+						*/
 
-					/* update time */
+						gl_error("deltamode player: player \"%s\" has a deltamode timestep starting it - please avoid this",(obj->name ? obj->name : "(anon)"));
+						/*  TROUBLESHOOT
+						Starting a player with a deltamode timestep causes segmentation faults.  A fix was developed, but still has issues with
+						certain platforms and must be investigated further.  For now, start all player files with non-deltamode timesteps.  This
+						issues is documented at #1001 on the GridLAB-D Git site, and it expected to be resolved in release 4.1.
+						*/
+
+						return SM_ERROR;
+
+						/* *** Commenting -- all existing comment braces turned to ***
+						*** Make sure we actually opened the file (this part is new - paranoia check ***
+						if (my->status != TS_OPEN)
+						{
+							gl_error("deltamode player: player \"%s\" has not been opened yet!",obj->name?obj->name:"(anon)");
+							***  TROUBLESHOOT
+							While attempting to start a player with a deltamode timestep, it was found the player hasn't been opened yet.
+							Please submit your code and a bug report via the issue system.  To work around this, put a non-deltamode timestep
+							at the beginning of your player file
+							***
+
+							*** Set our status, just in case ***
+							my->status = TS_ERROR;
+
+							return SM_ERROR;
+						}
+
+						*** Code copied from player sync ***
+						my->target = player_link_properties(my, obj->parent, my->property);
+
+						*** Make sure it worked ***
+						if (my->target==NULL){
+							gl_error("deltamode player: Unable to find property \"%s\" in object %s", my->property, obj->name?obj->name:"(anon)");
+							***  TROUBLESHOOT
+							While attempting to link up the property of a player in deltamode, the property could not be found.  Make sure the object
+							exists and has the specified property and try again.
+							***
+							my->status = TS_ERROR;
+							return SM_ERROR;
+						}
+
+						*** Do an initialization of it ***
+						if (my->target!=NULL)
+						{
+							OBJECT *target = obj->parent ? obj->parent : obj; *** target myself if no parent ***
+							player_write_properties(my, target, my->target, my->next.value);
+						}
+
+						*** Copy the current value into our "tracking" variable ***
+						my->delta_track.ns = my->next.ns;
+						my->delta_track.ts = my->next.ts;
+						memcpy(my->delta_track.value,my->next.value,sizeof(char1024));
+						*/
+					}/* Target not already set */
+
+					/* Behave similar to "supersecond" players */
+					while ( t<=clock_val )
+					{
+						gl_set_value(obj->parent,GETADDR(obj->parent,my->target),my->next.value,my->target); /* pointer => int64 */
+
+						/* read the next value */
+						player_read(obj);
+
+						/* update time */
+						t = (double)my->next.ts + (double)my->next.ns/1e9;
+					}
+				}
+
+				/* Determine if we are at the end of the player or not (time check) */
+				if (my->next.ts != TS_NEVER)
+				{
+					/* Update time */
 					t = (double)my->next.ts + (double)my->next.ns/1e9;
-				}
 
-			}
-
-			/* Determine if we are at the end of the player or not (time check) */
-			if (my->next.ts != TS_NEVER)
-			{
-				/* Update time */
-				t = (double)my->next.ts + (double)my->next.ns/1e9;
-
-				/* Make sure we haven't passed this time already (last value) */
-				/* Check to see if we're within the next second too, so we aren't stuck in delta */
-				if ((t>=clock_val) && (t<(clock_val+1.0)))
+					/* Make sure we haven't passed this time already (last value) */
+					/* Check to see if we're within the next second too, so we aren't stuck in delta */
+					if ((t>=clock_val) && (t<(clock_val+1.0)))
+					{
+						/* determine whether deltamode remains necessary */
+						if (my->next.ns!=0)
+						{
+							mode = SM_DELTA;
+							gl_verbose("Tape object:%d - %s - requested deltamode to continue",obj->id,(obj->name ? obj->name : "Unnamed"));
+						}
+					}
+				}/*End not TS_NEVER */
+				else	/* Player is done - set the flag variables, just to prevent some other issues in sync_player */
 				{
-					/* determine whether deltamode remains necessary */
-					if (my->next.ns!=0)
-						mode = SM_DELTA;
+					/* These prevent the code on player.c:488 from overwriting with an older value */
+					my->delta_track.ns = 0;
+					my->delta_track.ts = TS_NEVER;
 				}
-			}/*End not TS_NEVER */
-		}
-		/* Default else - not in service */
+			}
+			/* Default else - not in service */
+		}/* End of player loop */
+		/* Default else - not a player */
+
+		/*Next item in the loop */
+		index_item = index_item->next;
 	}
 
 	return mode;
@@ -555,7 +676,13 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 
 EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 {
-	unsigned int n;
+	DELTAOBJ_LIST *index_item;
+	OBJECT *obj = NULL;
+	struct recorder *myrec = NULL;
+	struct player *myplayer = NULL;
+	FUNCTIONADDR temp_fxn;
+	char value[1024];
+	extern int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buffer, int size);
 
 	/* Perform one final update of recorder - otherwise it misses the last "value" */
 	/* Code copied out of interupdate above */
@@ -564,78 +691,145 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 	DATETIME rec_date_time;
 	TIMESTAMP rec_integer_clock;
 	int rec_microseconds;
+	bool recorder_init_items = false;
 	char global_dateformat[8]="";
+	int return_val;
 
-	if (n_recorders>0)
+	/* Initialize loop */
+	index_item = delta_tape_objects;
+
+	/* Loop through objects and look for recorder */
+	/* Only look for recorders first -- ensures they pull the last value before a player overwrites it */
+	while (index_item != NULL)
 	{
-		/* Set up recorder clock */
-		rec_integer_clock = (TIMESTAMP)recorder_delta_clock;	/* Whole seconds - update from global clock because we could be in delta for over 1 second */
-		rec_microseconds = (int)((recorder_delta_clock-(int)(recorder_delta_clock))*1000000+0.5);	/* microseconds roll-over - biased upward (by 0.5) */
-		if ( gl_localtime(rec_integer_clock,&rec_date_time)!=0 )
+		if (index_item->obj_type == RECORDER)
 		{
-			if ( global_dateformat[0]=='\0')
-				gl_global_getvar("dateformat",global_dateformat,sizeof(global_dateformat));
-			if ( strcmp(global_dateformat,"ISO")==0)
-				sprintf(recorder_timestamp,"%04d-%02d-%02d %02d:%02d:%02d.%.06d %s",rec_date_time.year,rec_date_time.month,rec_date_time.day,rec_date_time.hour,rec_date_time.minute,rec_date_time.second,rec_microseconds,rec_date_time.tz);
-			else if ( strcmp(global_dateformat,"US")==0)
-				sprintf(recorder_timestamp,"%02d-%02d-%04d %02d:%02d:%02d.%.06d %s",rec_date_time.month,rec_date_time.day,rec_date_time.year,rec_date_time.hour,rec_date_time.minute,rec_date_time.second,rec_microseconds,rec_date_time.tz);
-			else if ( strcmp(global_dateformat,"EURO")==0)
-				sprintf(recorder_timestamp,"%02d-%02d-%04d %02d:%02d:%02d.%.06d %s",rec_date_time.day,rec_date_time.month,rec_date_time.year,rec_date_time.hour,rec_date_time.minute,rec_date_time.second,rec_microseconds,rec_date_time.tz);
-			else
-				sprintf(recorder_timestamp,"%.09f",recorder_delta_clock);
-		}
-		else
-			sprintf(recorder_timestamp,"%.09f",recorder_delta_clock);
+			if (recorder_init_items == false)
+			{
+				/* Set up recorder clock */
+				rec_integer_clock = (TIMESTAMP)recorder_delta_clock;	/* Whole seconds - update from global clock because we could be in delta for over 1 second */
+				rec_microseconds = (int)((recorder_delta_clock-(int)(recorder_delta_clock))*1000000+0.5);	/* microseconds roll-over - biased upward (by 0.5) */
+				if ( gl_localtime(rec_integer_clock,&rec_date_time)!=0 )
+				{
+					if ( global_dateformat[0]=='\0')
+						gl_global_getvar("dateformat",global_dateformat,sizeof(global_dateformat));
+					if ( strcmp(global_dateformat,"ISO")==0)
+						sprintf(recorder_timestamp,"%04d-%02d-%02d %02d:%02d:%02d.%.06d %s",rec_date_time.year,rec_date_time.month,rec_date_time.day,rec_date_time.hour,rec_date_time.minute,rec_date_time.second,rec_microseconds,rec_date_time.tz);
+					else if ( strcmp(global_dateformat,"US")==0)
+						sprintf(recorder_timestamp,"%02d-%02d-%04d %02d:%02d:%02d.%.06d %s",rec_date_time.month,rec_date_time.day,rec_date_time.year,rec_date_time.hour,rec_date_time.minute,rec_date_time.second,rec_microseconds,rec_date_time.tz);
+					else if ( strcmp(global_dateformat,"EURO")==0)
+						sprintf(recorder_timestamp,"%02d-%02d-%04d %02d:%02d:%02d.%.06d %s",rec_date_time.day,rec_date_time.month,rec_date_time.year,rec_date_time.hour,rec_date_time.minute,rec_date_time.second,rec_microseconds,rec_date_time.tz);
+					else
+						sprintf(recorder_timestamp,"%.09f",recorder_delta_clock);
+				}
+				else
+					sprintf(recorder_timestamp,"%.09f",recorder_delta_clock);
 
-		/* output samples to recorders */
-		for ( n=0 ; n<n_recorders ; n++ )
-		{
-			OBJECT *obj = delta_recorder_list[n];
-			struct recorder *my = (struct recorder *)OBJECTDATA(obj,struct recorder);
-			char value[1024];
-			extern int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buffer, int size);
+				/*Deflag */
+				recorder_init_items = true;
+			}/*End recorder time init */
+
+			obj = index_item->obj;
+			myrec = (struct recorder *)OBJECTDATA(obj,struct recorder);
 
 			/* See if we're in service */
 			if ((obj->in_svc_double <= gl_globaldeltaclock) && (obj->out_svc_double >= gl_globaldeltaclock))
 			{
-				if( read_properties(my, obj->parent,my->target,value,sizeof(value)) )
+				if( read_properties(myrec, obj->parent,myrec->target,value,sizeof(value)) )
 				{
-					if ( !my->ops->write(my, recorder_timestamp, value) )
+					if ( !myrec->ops->write(myrec, recorder_timestamp, value) )
 					{
 						gl_error("recorder:%d: unable to write sample to file", obj->id);
 						return FAILED;
 					}
 
-					///* Update recorders so they don't "minimum timestep up" to where we exited! */
-					my->last.ts = rec_integer_clock;
-					my->last.ns = rec_microseconds;
+					/* Update recorders so they don't "minimum timestep up" to where we exited! */
+					myrec->last.ts = rec_integer_clock;
+					myrec->last.ns = rec_microseconds;
 
 					/*  Copy in the last value, just in case */
-					strcpy(my->last.value,value);
+					strcpy(myrec->last.value,value);
 				}
 			}
 			/* Defaulted else - not in service */
-		}
-		/* End copied code */
+		}//End deltamode recorders requested check
+		else if (index_item->obj_type == GROUPRECORDER)
+		{
+			/* Extract the object */
+			obj = index_item->obj;
 
+			/* Map up function - have to do a modified version (C call), which is why this looks odd*/
+			temp_fxn = (FUNCTIONADDR)(gl_get_function(obj->oclass->name,"obj_postupdate_fxn"));
+
+			if (temp_fxn == NULL)
+			{
+				gl_error("Unable to map group_recorder postupdate function");
+				/*  TROUBLESHOOT
+				While trying to map up a deltamode function for group_recorders, the function was not found.
+				Please try again.  If the error persists, please submit your code and a bug report via the ticketing
+				system.
+				*/
+
+				return FAILED;
+			}
+
+			/* Call the function */
+			return_val = ((int (*)(OBJECT *,double))(*temp_fxn))(index_item->obj,gl_globaldeltaclock);
+
+			/* Make sure it worked */
+			if (return_val != 1)
+			{
+				gl_error("Failed to perform postupdate for group_recorder object");
+				/*  TROUBLESHOOT
+				While trying to perform the final write for a group recorder deltamode call, an error occurred.  Please
+				look at the output console for more details.
+				*/
+
+				return FAILED;
+			}
+
+			/* Renull the function */
+			temp_fxn = NULL;
+		}
+		/* Default else - not a recorder */
+
+		/* Update pointer */
+		index_item = index_item->next;
+	}/* End while loop for recorders */
+
+	/* If any existed, do a flush */
+	if (recorder_init_items == true)
+	{
 		/* flush the output streams */
 		fflush(NULL);
-	}//End deltamode recorders requested check
+	}
 
 	/* check if any players still need delta mode */
 	delta_mode_needed = TS_NEVER;
-	for ( n=0 ; n<n_players ; n++ )
-	{
-		OBJECT *obj = delta_player_list[n];
-		struct player *my = (struct player *)OBJECTDATA(obj,struct player);
+	/* Initialize loop */
+	index_item = delta_tape_objects;
 
-		/* See if we're in service */
-		if ((obj->in_svc_double <= gl_globaldeltaclock) && (obj->out_svc_double >= gl_globaldeltaclock))
+	/* Loop through objects and look for players */
+	while (index_item != NULL)
+	{
+		/* See if it is a player */
+		if (index_item->obj_type == PLAYER)
 		{
-			if (( my->next.ns!=0 ) && (my->next.ts != t0))	/* See if we need to go back into deltamode, but make sure we aren't stuck! */
-				enable_deltamode(my->next.ts);
+			obj = index_item->obj;
+			myplayer = (struct player *)OBJECTDATA(obj,struct player);
+
+			/* See if we're in service */
+			if ((obj->in_svc_double <= gl_globaldeltaclock) && (obj->out_svc_double >= gl_globaldeltaclock))
+			{
+				if (( myplayer->next.ns!=0 ) && (myplayer->next.ts != t0))	/* See if we need to go back into deltamode, but make sure we aren't stuck! */
+					enable_deltamode(myplayer->next.ts);
+			}
 		}
-	}
+		/* Default else, not a player */
+
+		/* update pointer */
+		index_item = index_item->next;
+	}/* End object loop */
 
 	return SUCCESS;
 }

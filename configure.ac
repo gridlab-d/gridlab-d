@@ -24,9 +24,9 @@ m4_define([sbuild_m4_esyscmd_s],
 [sbuild_m4_chomp(m4_esyscmd([$1]))])
 
 dnl GridLAB-D version information
-m4_define([pkgversion], m4_esyscmd_s([build-aux/version.sh --version]))
-m4_define([pkgbranch],  m4_esyscmd_s([build-aux/version.sh --branch]))
-m4_define([svnversion], m4_esyscmd_s([build-aux/version.sh --svn]))
+m4_define([pkgversion], sbuild_m4_esyscmd_s([build-aux/version.sh --version]))
+m4_define([pkgbranch],  sbuild_m4_esyscmd_s([build-aux/version.sh --branch]))
+m4_define([svnversion], sbuild_m4_esyscmd_s([build-aux/version.sh --svn]))
 
 AC_PREREQ([2.63])
 AC_INIT([GridLAB-D], pkgversion, [gridlabd@pnnl.gov], [gridlabd])
@@ -57,6 +57,8 @@ AC_CANONICAL_HOST
 AC_SUBST(PACKAGE_BASEVERSION, pkgversion)
 AC_SUBST(PACKAGE_BRANCH, pkgbranch)
 AC_SUBST(PACKAGE_REVISION, svnversion)
+
+AM_SILENT_RULES([yes])
 
 AC_ARG_ENABLE([debug],
     [AS_HELP_STRING([--enable-debug],
@@ -475,6 +477,53 @@ AC_MSG_RESULT([$have_fncs])
 AC_DEFINE_UNQUOTED([HAVE_FNCS], [$have_fncs_int], [whether FNCS was found])
 AM_CONDITIONAL([HAVE_FNCS], [test "x$have_fncs" = xyes])
 
+# Check for HELICS
+AC_ARG_WITH([helics],
+    [AS_HELP_STRING([--with-helics],
+                    [Link to HELICS from the given prefix (=path)  @<:@default=no@:>@])],
+    [],
+    [with_helics=no])
+AS_CASE([$with_helics],
+        [yes],  [],
+        [no],   [],
+                [GLD_FLAG_PARSE([with_helics],
+                        [HELICS_LIBS],
+                        [HELICS_LDFLAGS],
+                        [HELICS_CPPFLAGS])])
+gld_save_LIBS="$LIBS"; LIBS="$LIBS $HELICS_LIBS"
+gld_save_LDFLAGS="$LDFLAGS"; LDFLAGS="$LDFLAGS $HELICS_LDFLAGS"
+gld_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $HELICS_CPPFLAGS"
+# add libhelics to HELICS_LIBS if missing
+AS_CASE([$HELICS_LIBS],
+        [*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared -lzmq -lboost_chrono -lboost_date_time -lboost_filesystem -lboost_program_options -lboost_system -lboost_timer -lboost_unit_test_framework"])
+AS_CASE([$LIBS],
+        [*lhelics*], [], [LIBS="$LIBS -lhelics-shared -lzmq -lboost_chrono -lboost_date_time -lboost_filesystem -lboost_program_options -lboost_system -lboost_timer -lboost_unit_test_framework"])
+# add libzmq to HELICS_LIBS if missing
+#AS_CASE([$HELICS_LIBS],
+#        [*lzmq*], [], [HELICS_LIBS="$HELICS_LIBS -lzmq"])
+#AS_CASE([$LIBS],
+#        [*lzmq*], [], [LIBS="$LIBS -lzmq"])
+have_helics=yes
+AC_MSG_CHECKING([for HELICS])
+AC_LINK_IFELSE(
+    [AC_LANG_PROGRAM([[
+#include<helics/application_api/helicsTypes.hpp>
+]],
+[[
+helics::publication_id_t t;
+]])],
+    [have_helics=yes; have_helics_int=1],
+    [have_helics=no; have_helics_int=0])
+LIBS="$gld_save_LIBS"
+LDFLAGS="$gld_save_LDFLAGS"
+CPPFLAGS="$gld_save_CPPFLAGS"
+AC_SUBST([HELICS_LIBS])
+AC_SUBST([HELICS_LDFLAGS])
+AC_SUBST([HELICS_CPPFLAGS])
+AC_MSG_RESULT([$have_helics])
+AC_DEFINE_UNQUOTED([HAVE_HELICS], [$have_helics_int], [whether HELICS was found])
+AM_CONDITIONAL([HAVE_HELICS], [test "x$have_helics" = xyes])
+
 AC_SUBST([GLD_CPPFLAGS])
 
 AC_LANG_POP([C++])
@@ -604,7 +653,7 @@ AC_SUBST([MYSQL_LIBS])
 
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([gridlabd.spec])
-AC_CONFIG_FILES([gldcore/gridlabd], [chmod +x gldcore/gridlabd])
+AC_CONFIG_FILES([gldcore/gridlabd.sh], [chmod +x gldcore/gridlabd.sh])
 AC_OUTPUT
 
 BINDIR=`eval echo $(eval echo $bindir)`

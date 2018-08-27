@@ -36,8 +36,6 @@ EXPORT int64 triplex_meter_reset(OBJECT *obj)
 	return 0;
 }
 
-static char1024 market_price_name = "current_market.clearing_price";
-
 //////////////////////////////////////////////////////////////////////////
 // triplex_meter CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
@@ -65,7 +63,10 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 		if (gl_publish_variable(oclass,
 			PT_INHERIT, "triplex_node",
 			PT_double, "measured_real_energy[Wh]", PADDR(measured_real_energy),PT_DESCRIPTION,"metered real energy consumption",
+			PT_double, "measured_real_energy_delta[Wh]", PADDR(measured_real_energy_delta),PT_DESCRIPTION,"delta in metered real energy consumption from last specified measured_energy_delta_timestep",
 			PT_double, "measured_reactive_energy[VAh]",PADDR(measured_reactive_energy),PT_DESCRIPTION,"metered reactive energy consumption",
+			PT_double, "measured_reactive_energy_delta[VAh]",PADDR(measured_reactive_energy_delta),PT_DESCRIPTION,"delta in metered reactive energy consumption from last specified measured_energy_delta_timestep",
+            PT_double, "measured_energy_delta_timestep[s]",PADDR(measured_energy_delta_timestep),PT_DESCRIPTION,"Period of timestep for real and reactive delta energy calculation",
 			PT_complex, "measured_power[VA]", PADDR(measured_power),PT_DESCRIPTION,"metered power",
 			PT_complex, "indiv_measured_power_1[VA]", PADDR(indiv_measured_power[0]),PT_DESCRIPTION,"metered power, phase 1",
 			PT_complex, "indiv_measured_power_2[VA]", PADDR(indiv_measured_power[1]),PT_DESCRIPTION,"metered power, phase 2",
@@ -79,6 +80,35 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 			PT_complex, "measured_voltage_1[V]", PADDR(measured_voltage[0]),PT_DESCRIPTION,"measured voltage, phase 1 to ground",
 			PT_complex, "measured_voltage_2[V]", PADDR(measured_voltage[1]),PT_DESCRIPTION,"measured voltage, phase 2 to ground",
 			PT_complex, "measured_voltage_N[V]", PADDR(measured_voltage[2]),PT_DESCRIPTION,"measured voltage, phase N to ground",
+			
+			//Voltage average items
+			PT_double, "measured_real_max_voltage_1_in_interval[V]", PADDR(measured_real_max_voltage_in_interval[0]),PT_DESCRIPTION,"measured real max line-to-ground voltage on phase 1 over a specified interval",
+			PT_double, "measured_real_max_voltage_2_in_interval[V]", PADDR(measured_real_max_voltage_in_interval[1]),PT_DESCRIPTION,"measured real max line-to-ground voltage on phase 2 over a specified interval",
+			PT_double, "measured_real_max_voltage_12_in_interval[V]", PADDR(measured_real_max_voltage_in_interval[2]),PT_DESCRIPTION,"measured real max line-to-ground voltage on phase 12 over a specified interval",
+			PT_double, "measured_imag_max_voltage_1_in_interval[V]", PADDR(measured_imag_max_voltage_in_interval[0]),PT_DESCRIPTION,"measured imaginary max line-to-ground voltage on phase 1 over a specified interval",
+			PT_double, "measured_imag_max_voltage_2_in_interval[V]", PADDR(measured_imag_max_voltage_in_interval[1]),PT_DESCRIPTION,"measured imaginary max line-to-ground voltage on phase 2 over a specified interval",
+			PT_double, "measured_imag_max_voltage_12_in_interval[V]", PADDR(measured_imag_max_voltage_in_interval[2]),PT_DESCRIPTION,"measured imaginary max line-to-ground voltage on phase 12 over a specified interval",
+			PT_double, "measured_real_min_voltage_1_in_interval[V]", PADDR(measured_real_min_voltage_in_interval[0]),PT_DESCRIPTION,"measured real min line-to-ground voltage on phase 1 over a specified interval",
+			PT_double, "measured_real_min_voltage_2_in_interval[V]", PADDR(measured_real_min_voltage_in_interval[1]),PT_DESCRIPTION,"measured real min line-to-ground voltage on phase 2 over a specified interval",
+			PT_double, "measured_real_min_voltage_12_in_interval[V]", PADDR(measured_real_min_voltage_in_interval[2]),PT_DESCRIPTION,"measured real min line-to-ground voltage on phase 12 over a specified interval",
+			PT_double, "measured_imag_min_voltage_1_in_interval[V]", PADDR(measured_imag_min_voltage_in_interval[0]),PT_DESCRIPTION,"measured imaginary min line-to-ground voltage on phase 1 over a specified interval",
+			PT_double, "measured_imag_min_voltage_2_in_interval[V]", PADDR(measured_imag_min_voltage_in_interval[1]),PT_DESCRIPTION,"measured imaginary min line-to-ground voltage on phase 2 over a specified interval",
+			PT_double, "measured_imag_min_voltage_12_in_interval[V]", PADDR(measured_imag_min_voltage_in_interval[2]),PT_DESCRIPTION,"measured imaginary min line-to-ground voltage on phase 12 over a specified interval",
+			PT_double, "measured_avg_voltage_1_mag_in_interval[V]", PADDR(measured_avg_voltage_mag_in_interval[0]),PT_DESCRIPTION,"measured average line-to-ground voltage magnitude on phase 1 over a specified interval",
+			PT_double, "measured_avg_voltage_2_mag_in_interval[V]", PADDR(measured_avg_voltage_mag_in_interval[1]),PT_DESCRIPTION,"measured average line-to-ground voltage magnitude on phase 2 over a specified interval",
+			PT_double, "measured_avg_voltage_12_mag_in_interval[V]", PADDR(measured_avg_voltage_mag_in_interval[2]),PT_DESCRIPTION,"measured average line-to-ground voltage magnitude on phase 12 over a specified interval",
+
+			//power average items
+			PT_double, "measured_real_max_power_in_interval[W]", PADDR(measured_real_max_power_in_interval),PT_DESCRIPTION,"measured maximum real power over a specified interval",
+			PT_double, "measured_reactive_max_power_in_interval[VAr]", PADDR(measured_reactive_max_power_in_interval),PT_DESCRIPTION,"measured maximum reactive power over a specified interval",
+			PT_double, "measured_real_min_power_in_interval[W]", PADDR(measured_real_min_power_in_interval),PT_DESCRIPTION,"measured minimum real power over a specified interval",
+			PT_double, "measured_reactive_min_power_in_interval[VAr]", PADDR(measured_reactive_min_power_in_interval),PT_DESCRIPTION,"measured minimum reactive power over a specified interval",
+			PT_double, "measured_avg_real_power_in_interval[W]", PADDR(measured_real_avg_power_in_interval),PT_DESCRIPTION,"measured average real power over a specified interval",
+			PT_double, "measured_avg_reactive_power_in_interval[VAr]", PADDR(measured_reactive_avg_power_in_interval),PT_DESCRIPTION,"measured average reactive power over a specified interval",
+
+			//Interval for the min/max/averages
+            PT_double, "measured_stats_interval[s]",PADDR(measured_min_max_avg_timestep),PT_DESCRIPTION,"Period of timestep for min/max/average calculations",
+
 			PT_complex, "measured_current_1[A]", PADDR(measured_current[0]),PT_DESCRIPTION,"measured current, phase 1",
 			PT_complex, "measured_current_2[A]", PADDR(measured_current[1]),PT_DESCRIPTION,"measured current, phase 2",
 			PT_complex, "measured_current_N[A]", PADDR(measured_current[2]),PT_DESCRIPTION,"measured current, phase N",
@@ -104,6 +134,7 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 				PT_KEYWORD,"TIERED",(enumeration)BM_TIERED,
 				PT_KEYWORD,"HOURLY",(enumeration)BM_HOURLY,
 				PT_KEYWORD,"TIERED_RTP",(enumeration)BM_TIERED_RTP,
+				PT_KEYWORD,"TIERED_TOU",(enumeration)BM_TIERED_TOU,
 			PT_object, "power_market", PADDR(power_market),PT_DESCRIPTION,"Designates the auction object where prices are read from for bill mode",
 			PT_int32, "bill_day", PADDR(bill_day),PT_DESCRIPTION,"Day bill is to be processed (assumed to occur at midnight of that day)",
 			PT_double, "price[$/kWh]", PADDR(price),PT_DESCRIPTION,"Standard uniform pricing",
@@ -118,15 +149,16 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 			//Deltamode functions
-			if (gl_publish_function(oclass,	"delta_linkage_node", (FUNCTIONADDR)delta_linkage)==NULL)
-				GL_THROW("Unable to publish triplex_meter delta_linkage function");
 			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_triplex_meter)==NULL)
 				GL_THROW("Unable to publish triplex_meter deltamode function");
-			if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
-				GL_THROW("Unable to publish triplex_meter deltamode function");
-
-                        // market price name
-                        gl_global_create("powerflow::market_price_name",PT_char1024,&market_price_name,NULL);
+			if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==NULL)
+				GL_THROW("Unable to publish triplex_meter swing-swapping function");
+			if (gl_publish_function(oclass,	"pwr_current_injection_update_map", (FUNCTIONADDR)node_map_current_update_function)==NULL)
+				GL_THROW("Unable to publish triplex_meter current injection update mapping function");
+			if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==NULL)
+				GL_THROW("Unable to publish triplex_meter VFD attachment function");
+			if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == NULL)
+				GL_THROW("Unable to publish triplex_meter island-status-reset function");
 		}
 }
 
@@ -140,6 +172,12 @@ int triplex_meter::create()
 {
 	int result = triplex_node::create();
 	measured_real_energy = measured_reactive_energy = 0;
+	measured_real_energy_delta = measured_reactive_energy_delta = 0;
+    last_measured_real_energy = last_measured_reactive_energy = 0;
+	last_measured_real_power = last_measured_reactive_power = 0.0;
+    measured_energy_delta_timestep = -1;
+    start_timestamp = 0;
+    last_delta_timestamp = 0;
 	measured_power = 0;
 	measured_demand = 0;
 	last_t = dt = next_time = 0;
@@ -167,6 +205,27 @@ int triplex_meter::create()
 	tpmeter_interrupted = false;	//Assumes we start as "uninterrupted"
 	tpmeter_interrupted_secondary = false;	//Assumes start with no momentary interruptions
 
+	//zero the various interval measurements, just because
+	measured_real_max_voltage_in_interval[0] =  measured_real_max_voltage_in_interval[1] = measured_real_max_voltage_in_interval[2] = 0.0;
+	measured_imag_max_voltage_in_interval[0] = 	measured_imag_max_voltage_in_interval[1] = measured_imag_max_voltage_in_interval[2] = 0.0;
+	measured_real_min_voltage_in_interval[0] =  measured_real_min_voltage_in_interval[1] = measured_real_min_voltage_in_interval[2] = 0.0;
+	measured_imag_min_voltage_in_interval[0] = measured_imag_min_voltage_in_interval[1] = measured_imag_min_voltage_in_interval[2] = 0.0;
+	measured_avg_voltage_mag_in_interval[0] =  measured_avg_voltage_mag_in_interval[1] = measured_avg_voltage_mag_in_interval[2] = 0.0;
+
+	//power average items
+	measured_real_max_power_in_interval = 0.0;
+	measured_reactive_max_power_in_interval = 0.0;
+	measured_real_min_power_in_interval = 0.0;
+	measured_reactive_min_power_in_interval = 0.0;
+	measured_real_avg_power_in_interval = 0.0;
+	measured_reactive_avg_power_in_interval = 0.0;
+
+	last_measured_max_real_power = 0.0;
+	last_measured_min_real_power = 0.0;
+	last_measured_max_reactive_power = 0.0;
+	last_measured_min_reactive_power = 0.0;
+	last_measured_avg_real_power = 0.0;
+	last_measured_avg_reactive_power = 0.0;
 
 	return result;
 }
@@ -186,7 +245,7 @@ int triplex_meter::init(OBJECT *parent)
 	if(power_market != 0){
 		price_prop = gl_get_property(power_market, market_price_name);
 		if(price_prop == 0){
-                        GL_THROW("triplex_meter::power_market object \'%s\' does not publish \'%s\'", (power_market->name ? power_market->name : "(anon)"), (const char*)market_price_name);
+			GL_THROW("triplex_meter::power_market object \'%s\' does not publish \'%s\'", (power_market->name ? power_market->name : "(anon)"), (const char*)market_price_name);
 		}
 	}
 	check_prices();
@@ -201,13 +260,29 @@ int triplex_meter::check_prices(){
 			//GL_THROW("triplex_meter price is negative!"); // This shouldn't throw an error - negative prices are okay JCF
 		}
 	} else if(bill_mode == BM_TIERED || bill_mode == BM_TIERED_RTP){
-		if(tier_price[1] == 0){
+		if(tier_price[1] == 0){ 
 			tier_price[1] = tier_price[0];
 			tier_energy[1] = tier_energy[0];
 		}
 		if(tier_price[2] == 0){
 			tier_price[2] = tier_price[1];
 			tier_energy[2] = tier_energy[1];
+		}
+		if(tier_energy[2] < tier_energy[1] || tier_energy[1] < tier_energy[0]){
+			GL_THROW("triplex_meter energy tiers quantity trend improperly");
+		}
+		for(int i = 0; i < 3; ++i){
+			if(tier_price[i] < 0.0 || tier_energy[i] < 0.0)
+				GL_THROW("triplex_meter tiers cannot have negative values");
+		}
+	} else if (bill_mode == BM_TIERED_TOU) { // beware: TOU pricing schedules haven't pushed values yet
+		if(tier_energy[1] == 0){ 
+			tier_price[1] = tier_price[0];
+			tier_energy[1] = DBL_MAX;
+		}
+		if(tier_energy[2] == 0){
+			tier_price[2] = tier_price[1];
+			tier_energy[2] = DBL_MAX;
 		}
 		if(tier_energy[2] < tier_energy[1] || tier_energy[1] < tier_energy[0]){
 			GL_THROW("triplex_meter energy tiers quantity trend improperly");
@@ -242,6 +317,10 @@ TIMESTAMP triplex_meter::presync(TIMESTAMP t0)
 	//Reliability addition - clear momentary flag if set
 	if (tpmeter_interrupted_secondary == true)
 		tpmeter_interrupted_secondary = false;
+
+    // Capturing first timestamp of simulation for use in delta energy measurements.
+    if (t0 != 0 && start_timestamp == 0)
+        start_timestamp = t0;
 
 	return triplex_node::presync(t0);
 }
@@ -297,12 +376,14 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	//Call node postsync now, otherwise current_inj isn't right
 	rv = triplex_node::postsync(t1);
 
-	//measured_voltage[0] = voltageA;
-	//measured_voltage[1] = voltageB;
-	//measured_voltage[2] = voltageC;
-	measured_voltage[0].SetPolar(voltageA.Mag(),voltageA.Arg());
-	measured_voltage[1].SetPolar(voltageB.Mag(),voltageB.Arg());
-	measured_voltage[2].SetPolar(voltageC.Mag(),voltageC.Arg());
+	//measured_voltage[0] = voltage[0];
+	//measured_voltage[1] = voltage[1];
+	//measured_voltage[2] = voltage[2];
+
+	//Really no idea why this is done -- maybe to force a polar status?
+	measured_voltage[0].SetPolar(voltage[0].Mag(),voltage[0].Arg());
+	measured_voltage[1].SetPolar(voltage[1].Mag(),voltage[1].Arg());
+	measured_voltage[2].SetPolar(voltage[2].Mag(),voltage[2].Arg());
 
 	if (t1 > last_t)
 	{
@@ -341,8 +422,218 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 	if (measured_real_power>measured_demand)
 		measured_demand=measured_real_power;
+	
+	//Perform delta energy updates
+	if(measured_energy_delta_timestep > 0) {
+		// Delta energy cacluation
+		if (t0 == start_timestamp) {
+			last_delta_timestamp = start_timestamp;
+		}
 
+		if ((t1 == last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) && (t1 != t0))  {
+			measured_real_energy_delta = measured_real_energy - last_measured_real_energy;
+			measured_reactive_energy_delta = measured_reactive_energy - last_measured_reactive_energy;
+			last_measured_real_energy = measured_real_energy;
+			last_measured_reactive_energy = measured_reactive_energy;
+			last_delta_timestamp = t1;
+		}
 
+		if (rv > last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) {
+			rv = last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep);
+		}
+	}//End delta energy updates
+
+	//Perform min/max/avg stat updates
+	if(measured_min_max_avg_timestep > 0) {
+		// Delta energy cacluation
+		if (t0 == start_timestamp) {
+			last_stat_timestamp = start_timestamp;
+
+			//Voltage values
+			measured_real_max_voltage_in_interval[0] = voltage1.Re();
+			measured_real_max_voltage_in_interval[1] = voltage2.Re();
+			measured_real_max_voltage_in_interval[2] = voltage12.Re();
+			measured_imag_max_voltage_in_interval[0] = voltage1.Im();
+			measured_imag_max_voltage_in_interval[1] = voltage2.Im();
+			measured_imag_max_voltage_in_interval[2] = voltage12.Im();
+			measured_real_min_voltage_in_interval[0] = voltage1.Re();
+			measured_real_min_voltage_in_interval[1] = voltage2.Re();
+			measured_real_min_voltage_in_interval[2] = voltage12.Re();
+			measured_imag_min_voltage_in_interval[0] = voltage1.Im();
+			measured_imag_min_voltage_in_interval[1] = voltage2.Im();
+			measured_imag_min_voltage_in_interval[2] = voltage12.Im();
+			measured_avg_voltage_mag_in_interval[0] = 0.0;
+			measured_avg_voltage_mag_in_interval[1] = 0.0;
+			measured_avg_voltage_mag_in_interval[2] = 0.0;
+
+			//Power values
+			measured_real_max_power_in_interval = measured_real_power;
+			measured_real_min_power_in_interval = measured_real_power;
+			measured_real_avg_power_in_interval = 0.0;
+
+			measured_reactive_max_power_in_interval = measured_reactive_power;
+			measured_reactive_min_power_in_interval = measured_reactive_power;
+			measured_reactive_avg_power_in_interval = 0.0;
+
+			interval_dt = 0;
+			interval_count = 0;
+		}
+
+		if ((t1 > last_stat_timestamp) && (t1 < last_stat_timestamp + TIMESTAMP(measured_min_max_avg_timestep)) && (t1 != t0)) {
+			if (interval_count == 0) {
+				last_measured_max_voltage[0] = last_measured_voltage[0];
+				last_measured_max_voltage[1] = last_measured_voltage[1];
+				last_measured_max_voltage[2] = last_measured_voltage[2];
+				last_measured_min_voltage[0] = last_measured_voltage[0];
+				last_measured_min_voltage[1] = last_measured_voltage[1];
+				last_measured_min_voltage[2] = last_measured_voltage[2];
+				last_measured_avg_voltage[0] = last_measured_voltage[0].Mag();
+				last_measured_avg_voltage[1] = last_measured_voltage[1].Mag();
+				last_measured_avg_voltage[2] = last_measured_voltage[2].Mag();
+
+				//Power
+				last_measured_min_real_power = last_measured_real_power;
+				last_measured_max_real_power = last_measured_real_power;
+				last_measured_avg_real_power = last_measured_real_power;
+				last_measured_min_reactive_power = last_measured_reactive_power;
+				last_measured_max_reactive_power = last_measured_reactive_power;
+				last_measured_avg_reactive_power = last_measured_reactive_power;
+
+			} else {
+				if (last_measured_max_voltage[0].Mag() < last_measured_voltage[0].Mag()) {
+					last_measured_max_voltage[0] = last_measured_voltage[0];
+				}
+				if (last_measured_max_voltage[1].Mag() < last_measured_voltage[1].Mag()) {
+					last_measured_max_voltage[1] = last_measured_voltage[1];
+				}
+				if (last_measured_max_voltage[2].Mag() < last_measured_voltage[2].Mag()) {
+					last_measured_max_voltage[2] = last_measured_voltage[2];
+				}
+				if (last_measured_min_voltage[0].Mag() > last_measured_voltage[0].Mag()) {
+					last_measured_min_voltage[0] = last_measured_voltage[0];
+				}
+				if (last_measured_min_voltage[1].Mag() > last_measured_voltage[1].Mag()) {
+					last_measured_min_voltage[1] = last_measured_voltage[1];
+				}
+				if (last_measured_min_voltage[2].Mag() > last_measured_voltage[2].Mag()) {
+					last_measured_min_voltage[2] = last_measured_voltage[2];
+				}
+
+				//Power min/max check
+				if (last_measured_max_real_power < last_measured_real_power)
+				{
+					last_measured_max_real_power = last_measured_real_power;
+				}
+				if (last_measured_max_reactive_power < last_measured_reactive_power)
+				{
+					last_measured_max_reactive_power = last_measured_reactive_power;
+				}
+				if (last_measured_min_real_power > last_measured_real_power)
+				{
+					last_measured_min_real_power = last_measured_real_power;
+				}
+				if (last_measured_min_reactive_power > last_measured_reactive_power)
+				{
+					last_measured_min_reactive_power = last_measured_reactive_power;
+				}
+
+				last_measured_avg_voltage[0] = ((interval_dt * last_measured_avg_voltage[0]) + (dt * last_measured_voltage[0].Mag()))/(dt + interval_dt);
+				last_measured_avg_voltage[1] = ((interval_dt * last_measured_avg_voltage[1]) + (dt * last_measured_voltage[1].Mag()))/(dt + interval_dt);
+				last_measured_avg_voltage[2] = ((interval_dt * last_measured_avg_voltage[2]) + (dt * last_measured_voltage[2].Mag()))/(dt + interval_dt);
+
+				//Update the power averages
+				last_measured_avg_real_power = ((interval_dt * last_measured_avg_real_power) + (dt * last_measured_real_power))/(dt + interval_dt);
+				last_measured_avg_reactive_power = ((interval_dt * last_measured_avg_reactive_power) + (dt * last_measured_reactive_power))/(dt + interval_dt);
+			}
+			interval_count++;
+			interval_dt = interval_dt + dt;
+		}
+
+		if ((t1 == last_stat_timestamp + TIMESTAMP(measured_min_max_avg_timestep)) && (t1 != t0))  {
+			last_stat_timestamp = t1;
+			if (last_measured_max_voltage[0].Mag() < last_measured_voltage[0].Mag()) {
+				last_measured_max_voltage[0] = last_measured_voltage[0];
+			}
+			if (last_measured_max_voltage[1].Mag() < last_measured_voltage[1].Mag()) {
+				last_measured_max_voltage[1] = last_measured_voltage[1];
+			}
+			if (last_measured_max_voltage[2].Mag() < last_measured_voltage[2].Mag()) {
+				last_measured_max_voltage[2] = last_measured_voltage[2];
+			}
+			if (last_measured_min_voltage[0].Mag() > last_measured_voltage[0].Mag()) {
+				last_measured_min_voltage[0] = last_measured_voltage[0];
+			}
+			if (last_measured_min_voltage[1].Mag() > last_measured_voltage[1].Mag()) {
+				last_measured_min_voltage[1] = last_measured_voltage[1];
+			}
+			if (last_measured_min_voltage[2].Mag() > last_measured_voltage[2].Mag()) {
+				last_measured_min_voltage[2] = last_measured_voltage[2];
+			}
+
+			//Power min/max check
+			if (last_measured_max_real_power < last_measured_real_power)
+			{
+				last_measured_max_real_power = last_measured_real_power;
+			}
+			if (last_measured_max_reactive_power < last_measured_reactive_power)
+			{
+				last_measured_max_reactive_power = last_measured_reactive_power;
+			}
+			if (last_measured_min_real_power > last_measured_real_power)
+			{
+				last_measured_min_real_power = last_measured_real_power;
+			}
+			if (last_measured_min_reactive_power > last_measured_reactive_power)
+			{
+				last_measured_min_reactive_power = last_measured_reactive_power;
+			}
+
+			last_measured_avg_voltage[0] = ((interval_dt * last_measured_avg_voltage[0]) + (dt * last_measured_voltage[0].Mag()))/(dt + interval_dt);
+			last_measured_avg_voltage[1] = ((interval_dt * last_measured_avg_voltage[1]) + (dt * last_measured_voltage[1].Mag()))/(dt + interval_dt);
+			last_measured_avg_voltage[2] = ((interval_dt * last_measured_avg_voltage[2]) + (dt * last_measured_voltage[2].Mag()))/(dt + interval_dt);
+
+			//Update the power averages
+			last_measured_avg_real_power = ((interval_dt * last_measured_avg_real_power) + (dt * last_measured_real_power))/(dt + interval_dt);
+			last_measured_avg_reactive_power = ((interval_dt * last_measured_avg_reactive_power) + (dt * last_measured_reactive_power))/(dt + interval_dt);
+
+			measured_real_max_voltage_in_interval[0] = last_measured_max_voltage[0].Re();
+			measured_real_max_voltage_in_interval[1] = last_measured_max_voltage[1].Re();
+			measured_real_max_voltage_in_interval[2] = last_measured_max_voltage[2].Re();
+			measured_imag_max_voltage_in_interval[0] = last_measured_max_voltage[0].Im();
+			measured_imag_max_voltage_in_interval[1] = last_measured_max_voltage[1].Im();
+			measured_imag_max_voltage_in_interval[2] = last_measured_max_voltage[2].Im();
+			measured_real_min_voltage_in_interval[0] = last_measured_min_voltage[0].Re();
+			measured_real_min_voltage_in_interval[1] = last_measured_min_voltage[1].Re();
+			measured_real_min_voltage_in_interval[2] = last_measured_min_voltage[2].Re();
+			measured_imag_min_voltage_in_interval[0] = last_measured_min_voltage[0].Im();
+			measured_imag_min_voltage_in_interval[1] = last_measured_min_voltage[1].Im();
+			measured_imag_min_voltage_in_interval[2] = last_measured_min_voltage[2].Im();
+			measured_avg_voltage_mag_in_interval[0] = last_measured_avg_voltage[0];
+			measured_avg_voltage_mag_in_interval[1] = last_measured_avg_voltage[1];
+			measured_avg_voltage_mag_in_interval[2] = last_measured_avg_voltage[2];
+
+			//Power values
+			measured_real_max_power_in_interval = last_measured_max_real_power;
+			measured_real_min_power_in_interval = last_measured_min_real_power;
+			measured_real_avg_power_in_interval = last_measured_avg_real_power;
+			
+			measured_reactive_max_power_in_interval = last_measured_max_reactive_power;
+			measured_reactive_min_power_in_interval = last_measured_min_reactive_power;
+			measured_reactive_avg_power_in_interval = last_measured_avg_reactive_power;
+
+			interval_dt = 0;
+			interval_count = 0;
+		}
+
+		last_measured_voltage[0] = voltage1;
+		last_measured_voltage[1] = voltage2;
+		last_measured_voltage[2] = voltage12;
+		if (rv > last_stat_timestamp + TIMESTAMP(measured_min_max_avg_timestep)) {
+			rv = last_stat_timestamp + TIMESTAMP(measured_min_max_avg_timestep);
+		}
+	}//End min/max/avg updates
+
+	monthly_energy = measured_real_energy/1000 - previous_energy_total;
 
 	if (bill_mode == BM_UNIFORM || bill_mode == BM_TIERED)
 	{
@@ -369,7 +660,8 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 	}
 
-	if( (bill_mode == BM_HOURLY || bill_mode == BM_TIERED_RTP) && power_market != NULL && price_prop != NULL){
+	if (bill_mode == BM_HOURLY || bill_mode == BM_TIERED_RTP || bill_mode == BM_TIERED_TOU) 
+	{
 		double seconds;
 		if (dt != last_t)
 			seconds = (double)(dt);
@@ -378,15 +670,31 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		
 		if (seconds > 0)
 		{
-			hourly_acc += seconds/3600 * price * last_measured_real_power/1000;
+			double acc_price = price;
+			if (bill_mode == BM_TIERED_TOU)
+			{
+				if(monthly_energy < tier_energy[0])
+					acc_price = last_price;
+				else if(monthly_energy < tier_energy[1])
+					acc_price = last_tier_price[0];
+				else if(monthly_energy < tier_energy[2])
+					acc_price = last_tier_price[1];
+				else
+					acc_price = last_tier_price[2];
+			}
+			hourly_acc += seconds/3600 * acc_price * last_measured_real_power/1000;
 			process_bill(t1);
 		}
 
-		// Now that we've accumulated the bill for the last time period, update to the new price
-		double *pprice = (gl_get_double(power_market, price_prop));
-		last_price = price = *pprice;
+		// Now that we've accumulated the bill for the last time period, update to the new price (if using the market)
+		if (bill_mode != BM_TIERED_TOU && power_market != NULL && price_prop != NULL)
+		{
+			double *pprice = (gl_get_double(power_market, price_prop));
+			last_price = price = *pprice;
+		}
 		last_measured_real_power = measured_real_power;
 
+		// copied logic on when the next bill must be processed
 		if (monthly_bill == previous_monthly_bill)
 		{
 			DATETIME t_next;
@@ -406,6 +714,10 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 	}
 
+	//Update the power trackers
+	last_measured_real_power = measured_real_power;
+	last_measured_reactive_power = measured_reactive_power;
+
 	if (next_time != 0 && next_time < rv)
 		return -next_time;
 	else
@@ -416,7 +728,6 @@ double triplex_meter::process_bill(TIMESTAMP t1){
 	DATETIME dtime;
 	gl_localtime(t1,&dtime);
 
-	monthly_energy = measured_real_energy/1000 - previous_energy_total;
 	monthly_bill = monthly_fee;
 	switch(bill_mode){
 		case BM_NONE:
@@ -435,6 +746,7 @@ double triplex_meter::process_bill(TIMESTAMP t1){
 				monthly_bill += last_price*tier_energy[0] + last_tier_price[0]*(tier_energy[1] - tier_energy[0]) + last_tier_price[1]*(tier_energy[2] - tier_energy[1]) + last_tier_price[2]*(monthly_energy - tier_energy[2]);
 			break;
 		case BM_HOURLY:
+		case BM_TIERED_TOU:
 			monthly_bill += hourly_acc;
 			break;
 		case BM_TIERED_RTP:
@@ -474,9 +786,44 @@ double triplex_meter::process_bill(TIMESTAMP t1){
 //Module-level call
 SIMULATIONMODE triplex_meter::inter_deltaupdate_triplex_meter(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
 {
-	//unsigned char pass_mod;
 	OBJECT *hdr = OBJECTHDR(this);
 	int TempNodeRef;
+	double deltat, deltatimedbl;
+	STATUS return_status_val;
+
+	//Create delta_t variable
+	deltat = (double)dt/(double)DT_SECOND;
+
+	//Update time tracking variable - mostly for GFA functionality calls
+	if ((iteration_count_val==0) && (interupdate_pos == false)) //Only update timestamp tracker on first iteration
+	{
+		//Get decimal timestamp value
+		deltatimedbl = (double)delta_time/(double)DT_SECOND; 
+
+		//Update tracking variable
+		prev_time_dbl = (double)gl_globalclock + deltatimedbl;
+
+		//Update frequency calculation values (if needed)
+		if (fmeas_type != FM_NONE)
+		{
+			//Copy the tracker value
+			memcpy(&prev_freq_state,&curr_freq_state,sizeof(FREQM_STATES));
+		}
+	}
+
+	//Initialization items
+	if ((delta_time==0) && (iteration_count_val==0) && (interupdate_pos == false) && (fmeas_type != FM_NONE))	//First run of new delta call
+	{
+		//Initialize dynamics
+		init_freq_dynamics();
+	}//End first pass and timestep of deltamode (initial condition stuff)
+
+	//Perform the GFA update, if enabled
+	if ((GFA_enable == true) && (iteration_count_val == 0) && (interupdate_pos == false))	//Always just do on the first pass
+	{
+		//Do the checks
+		GFA_Update_time = perform_GFA_checks(deltat);
+	}
 
 	if (interupdate_pos == false)	//Before powerflow call
 	{
@@ -535,7 +882,7 @@ SIMULATIONMODE triplex_meter::inter_deltaupdate_triplex_meter(unsigned int64 del
 		NR_node_sync_fxn(hdr);
 
 		return SM_DELTA;	//Just return something other than SM_ERROR for this call
-	}
+	}//End Before NR solver (or inclusive)
 	else	//After the call
 	{
 		//Perform node postsync-like updates on the values - call first so current is right
@@ -567,34 +914,38 @@ SIMULATIONMODE triplex_meter::inter_deltaupdate_triplex_meter(unsigned int64 del
 			if (measured_real_power>measured_demand)
 				measured_demand=measured_real_power;
 
-		//No control required at this time - powerflow defers to the whims of other modules
-		//Code below implements predictor/corrector-type logic, even though it effectively does nothing
-		return SM_EVENT;
+		//Frequency measurement stuff
+		if (fmeas_type != FM_NONE)
+		{
+			return_status_val = calc_freq_dynamics(deltat);
 
-		////Do deltamode-related logic
-		//if (bustype==SWING)	//We're the SWING bus, control our destiny (which is really controlled elsewhere)
-		//{
-		//	//See what we're on
-		//	pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
+			//Check it
+			if (return_status_val == FAILED)
+			{
+				return SM_ERROR;
+			}
+		}//End frequency measurement desired
+		//Default else -- don't calculate it
 
-		//	//Check pass
-		//	if (pass_mod==0)	//Predictor pass
-		//	{
-		//		return SM_DELTA_ITER;	//Reiterate - to get us to corrector pass
-		//	}
-		//	else	//Corrector pass
-		//	{
-		//		//As of right now, we're always ready to leave
-		//		//Other objects will dictate if we stay (powerflow is indifferent)
-		//		return SM_EVENT;
-		//	}//End corrector pass
-		//}//End SWING bus handling
-		//else	//Normal bus
-		//{
-		//	return SM_EVENT;	//Normal nodes want event mode all the time here - SWING bus will
-		//						//control the reiteration process for pred/corr steps
-		//}
-	}
+		//See if GFA functionality is required, since it may require iterations or "continance"
+		if (GFA_enable == true)
+		{
+			//See if our return is value
+			if ((GFA_Update_time > 0.0) && (GFA_Update_time < 1.7))
+			{
+				//Force us to stay
+				return SM_DELTA;
+			}
+			else	//Just return whatever we were going to do
+			{
+				return SM_EVENT;
+			}
+		}
+		else	//Normal mode
+		{
+			return SM_EVENT;
+		}
+	}//End "After NR solver" branch
 }
 
 //////////////////////////////////////////////////////////////////////////

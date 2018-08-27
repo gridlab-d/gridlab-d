@@ -1,0 +1,22 @@
+clock {
+	starttime '2000-01-01 00:00:00';
+	stoptime '2000-01-01 01:00:00';
+}
+schedule test_absolute {
+	absolute;
+	0-29 * * * * 0;
+	30-59 * * * * -2;
+}
+class test {
+	double value;
+}
+module assert;
+object test {
+	value test_absolute;
+	object assert {
+		target value;
+		relation inside;
+		lower -1;
+		upper 0;
+	};
+}

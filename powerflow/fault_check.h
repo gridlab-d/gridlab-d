@@ -15,8 +15,9 @@ public:
 	//Move typedef in here so reliabilty-related items can access the enumeration
 	typedef enum {
 			SINGLE=0,		//Runs one fault_check, right at the beginning of powerflow
-			ONCHANGE=1,	//Runs fault_check everytime a Jacobian reconfiguration is requested
-			ALLT=2			//Runs fault_check on every iteration
+			ONCHANGE=1,		//Runs fault_check everytime a Jacobian reconfiguration is requested
+			ALLT=2,			//Runs fault_check on every iteration
+			SINGLE_DEBUG=3	//Runs one fault_check, but will terminate the simulation -- bypasses some phase check errors
 			} FCSTATE;
 
 	unsigned int **Supported_Nodes;			//Nodes with source support (connected to swing somehow)
@@ -40,7 +41,7 @@ public:
 	void search_links(int node_int);							//Function to check connectivity and support of nodes
 	void search_links_mesh(int node_int);						//Function to check connectivity and support of nodes, but more in the "mesh" sense
 	void support_check(int swing_node_int);						//Function that performs the connectivity check - this way so can be easily externally accessed
-	void support_check_mesh(int swing_node_int);				//Function that performs the connectivity check for not-so-radial systems
+	void support_check_mesh(void);								//Function that performs the connectivity check for not-so-radial systems
 	void reset_support_check(void);								//Function to re-init the support matrix
 	void write_output_file(TIMESTAMP tval, double tval_delta);	//Function to write out "unsupported" items
 
@@ -58,15 +59,20 @@ public:
 	void associate_grids(void);												//Function to look for the various swing nodes in the system, then associate the grids
 	void search_associated_grids(unsigned int node_int, int grid_counter);	//Function to perform the "grid association" and populate the array
 
+	STATUS disable_island(int island_number);				//Function to remove/disable an island if it diverged in powerflow
+	STATUS rescan_topology(int bus_that_called_reset);		//Function to do the grid association and rescan islands
+
 	TIMESTAMP sync(TIMESTAMP t0);
 
 private:
 	TIMESTAMP prev_time;	//Previous timestamp - mainly for intialization
 	FUNCTIONADDR restoration_fxn;	// Function address for restoration object reconfiguration call
-	int *associated_grid;	//Array for assignment of nodes to different "main connection" points
+	bool force_reassociation;	//Flag to force the island reassociation -- used if an island was removed to renumber them
 };
 
 EXPORT int powerflow_alterations(OBJECT *thisobj, int baselink,bool rest_mode);
 EXPORT double handle_sectionalizer(OBJECT *thisobj, int sectionalizer_number);
+EXPORT STATUS powerflow_disable_island(OBJECT *thisobj, int island_number);
+EXPORT STATUS powerflow_rescan_topo(OBJECT *thisobj,int bus_that_called_reset);
 
 #endif // _FAULT_CHECK_H

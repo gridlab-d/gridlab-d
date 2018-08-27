@@ -514,7 +514,7 @@ void *instance_slaveproc(void *ptr)
 		/* copy the next time stamp */
 		/* how about we copy the time we want to step to and see what the master says, instead? -MH */
 		exec_sync_reset((void*)&local_inst.cache);
-		exec_sync_set((void*)&local_inst.cache,0);
+		exec_sync_set((void*)&local_inst.cache,0,false);
 
 		instance_slave_done();
 	} while (global_clock != TS_NEVER && rv == SUCCESS);
@@ -720,7 +720,7 @@ STATUS instance_slave_init_socket(){
 	local_inst.cache->name_size = (int16)local_inst.name_size;
 	local_inst.cache->data_size = (int16)local_inst.prop_size;
 	local_inst.cache->id = local_inst.id;
-	exec_sync_set((void*)&local_inst.cache,pickle.ts);
+	exec_sync_set((void*)&local_inst.cache,pickle.ts,false);
 	exec_sync_merge(NULL,(void*)&local_inst.cache);
 	if(0 == local_inst.buffer){
 		output_error("malloc() error with li.buffer");

@@ -105,7 +105,7 @@ object diesel_dg {
 		once ONCE_TRUE;
 		target rotor_speed;
 		within 0.02;
-		value 379.778;
+		value 377.553110803;
 	};
 }
 	
