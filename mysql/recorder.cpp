@@ -85,8 +85,16 @@ int recorder::create(void) {
 
 int recorder::init(OBJECT *parent) {
 // check the connection
-	recorder_connection = new query_engine(
-			get_connection() != NULL ? (database*) (get_connection() + 1) : db, query_buffer_limit, 200);
+
+	if ( get_connection()!=NULL )
+		db = (database*)(get_connection()+1);
+	if ( db==NULL )
+		exception("no database connection available or specified");
+	if ( !db->isa("database") )
+		exception("connection is not a mysql database");
+	gl_verbose("connection to mysql server '%s', schema '%s' ok", db->get_hostname(), db->get_schema());
+
+	recorder_connection = new query_engine(db, query_buffer_limit, 200);
 
 	query_engine* rc = recorder_connection;
 	rc->set_table_root(get_table());
@@ -372,6 +380,11 @@ EXPORT TIMESTAMP heartbeat_recorder(OBJECT *obj) {
 
 TIMESTAMP recorder::commit(TIMESTAMP t0, TIMESTAMP t1) {
 	query_engine* rc = recorder_connection;
+
+	if(!rc->get_database()->db_initialized) {
+		gl_error("A fatal database error has occurred.");
+		return -1;
+	}
 
 	// check trigger
 	if (trigger_on) {

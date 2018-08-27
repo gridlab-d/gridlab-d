@@ -48,7 +48,7 @@ class query_engine : public gld_object {
 		void set_tables_done();
 
 	protected:
-		int init(database*);
+		int init(database*&);
 		bool initialized;
 		database *db;
 		int threshold, query_count, column_limit;

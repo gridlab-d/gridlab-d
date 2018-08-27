@@ -104,6 +104,7 @@ int database::create(void)
 
 int database::init(OBJECT *parent)
 {
+	db_initialized = true;
 	// initialize the client
 	mysql_client = mysql_init(mysql_client);
 	if ( mysql_client==NULL )
@@ -123,7 +124,7 @@ int database::init(OBJECT *parent)
 		(const char*)hostname,(const char*)username,(const char*)password,(const char*)schema,port,(const char*)socketname,get_clientflags(),(const char*)flags);
 
 	mysql = mysql_real_connect(mysql_client,hostname,username,password,NULL,port,socketname,(unsigned long)clientflags);
-	if ( mysql==NULL )
+	if ( mysql==0 )
 		exception("mysql connect failed - %s", mysql_error(mysql_client));
 	else
 		gl_verbose("MySQL server info: %s", mysql_get_server_info(mysql));
@@ -220,7 +221,7 @@ void database::check_schema(void)
 	if ( last_used!=this )
 	{
 		char command[1024];
-		sprintf(command,"USE `%s`",get_schema());
+		snprintf(command, sizeof(command),"USE `%s`",get_schema());
 		mysql_query(mysql,command);
 		last_used = this;
 	}
@@ -400,7 +401,7 @@ bool database::query(char *fmt,...)
 	char command[1024];
 	va_list ptr;
 	va_start(ptr,fmt);
-	vsnprintf(command,sizeof(command),fmt,ptr);
+	vsnprintf(command,sizeof(command)-1,fmt,ptr);
 	va_end(ptr);
 
 	// query mysql
@@ -424,7 +425,7 @@ bool database::query(const char *command)
 	buffer[1023] = '\0';
 
 	// query mysql
-	gl_debug("%s->query[%s]", get_name(), command);
+	gl_debug("%s->query[%s]", get_name(), buffer);
 	check_schema();
 	if ( mysql_query(mysql,command)!=0 )
 		exception("%s->query[%s] failed - %s", get_name(), buffer, mysql_error(mysql));

@@ -70,6 +70,9 @@ public:
 	GL_ATOMIC(double,sync_interval);
 	GL_ATOMIC(int32,tz_offset);
 	GL_ATOMIC(bool,uses_dst);
+//	GL_ATOMIC(bool, initialized);
+
+	bool db_initialized {false};
 
 	// mysql handle
 private:
