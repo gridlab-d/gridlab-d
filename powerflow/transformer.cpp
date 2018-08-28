@@ -167,18 +167,8 @@ int transformer::init(OBJECT *parent)
 		SpecialLnk = WYEWYE;
 
 	//Populate limits - emergency and continuous are the same - moved above the init so the internal check works
-	if (has_phase(PHASE_A)) {
-		link_rating[0][0] = config->phaseA_kVA_rating*1000;
-		link_rating[1][0] = config->phaseA_kVA_rating*1000;
-	}
-	if (has_phase(PHASE_B)) {
-		link_rating[0][1] = config->phaseB_kVA_rating*1000;
-		link_rating[1][1] = config->phaseB_kVA_rating*1000;
-	}
-	if (has_phase(PHASE_C)) {
-		link_rating[0][2] = config->phaseC_kVA_rating*1000;
-		link_rating[1][2] = config->phaseC_kVA_rating*1000;
-	}
+	link_rating[0][0] = config->kVA_rating;
+	link_rating[1][0] = config->kVA_rating;
 
 	link_object::init(parent);
 	OBJECT *obj = OBJECTHDR(this);

@@ -69,7 +69,7 @@ int overhead_line::init(OBJECT *parent)
 	char index;
 	OBJECT *temp_obj;
 	line::init(parent);
-
+	
 	if (!configuration)
 		throw "no overhead line configuration specified.";
 		/*  TROUBLESHOOT
@@ -174,8 +174,8 @@ int overhead_line::init(OBJECT *parent)
 				}
 
 				//Populate link array
-				link_rating[0][index] = nominal_voltage*temp_rating_continuous;
-				link_rating[1][index] = nominal_voltage*temp_rating_emergency;
+				link_rating[0][index] = temp_rating_continuous;
+				link_rating[1][index] = temp_rating_emergency;
 			}//End Phase valid
 		}//End FOR
 	}
@@ -237,8 +237,8 @@ int overhead_line::init(OBJECT *parent)
 			}
 
 			//Populate link array
-			link_rating[0][0] = link_rating[0][1] = link_rating[0][2] = nominal_voltage*temp_rating_continuous;
-			link_rating[1][0] = link_rating[1][1] = link_rating[1][2] = nominal_voltage*temp_rating_emergency;
+			link_rating[0][0] = link_rating[0][1] = link_rating[0][2] = temp_rating_continuous;
+			link_rating[1][0] = link_rating[1][1] = link_rating[1][2] = temp_rating_emergency;
 		}
 	}
 	return 1;
