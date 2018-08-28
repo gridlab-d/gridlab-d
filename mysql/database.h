@@ -44,7 +44,7 @@ EXTERN char default_username[32] INIT("gridlabd");
 EXTERN char default_password[32] INIT("");
 EXTERN char default_schema[256] INIT("gridlabd");
 EXTERN int32 default_port INIT(3306);
-EXTERN char default_socketname[1024] INIT("/tmp/mysql.sock");
+EXTERN char default_socketname[1024] INIT("/var/run/mysqld/mysqld.sock");
 EXTERN int64 default_clientflags INIT(CLIENT_LOCAL_FILES);
 EXTERN MYSQL *mysql_client INIT(NULL); ///< connection handle
 EXTERN char default_table_prefix[256] INIT(""); ///< table prefix
@@ -70,6 +70,9 @@ public:
 	GL_ATOMIC(double,sync_interval);
 	GL_ATOMIC(int32,tz_offset);
 	GL_ATOMIC(bool,uses_dst);
+//	GL_ATOMIC(bool, initialized);
+
+	bool db_initialized {false};
 
 	// mysql handle
 private:
@@ -115,6 +118,7 @@ public:
 	size_t dump(char *table, char *file=NULL, unsigned long options=0x0000);
 
 	const char *get_sqltype(gld_property &p);
+	const char *get_sqltype(gld_property &P, bool minified);
 	char *get_sqldata(char *buffer, size_t size, gld_property &p, double scale=1.0);
 	char *get_sqldata(char *buffer, size_t size, gld_property &p, gld_unit *unit=NULL);
 	bool get_sqlbind(MYSQL_BIND &value,gld_property &target, my_bool *error=NULL);

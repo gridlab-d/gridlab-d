@@ -643,6 +643,43 @@ AS_IF([test "x$MYSQL" != "xno"],
 		GLD_CPPFLAGS="$GLD_CPPFLAGS -DHAVE_MYSQL"
 		HAVE_MYSQL=yes],
 	[HAVE_MYSQL=no])
+	
+AC_MSG_RESULT([Is single-location MySQL configured: $HAVE_MYSQL])
+
+	
+AC_ARG_WITH([rhel-mysql-libs],
+	[AS_HELP_STRING[--with-rhel-mysql-libs],
+	[Link to MySQL libs on RHEL from a given prefix (=path)])],
+	[],
+	[with_rhel_mysql_libs=no])
+
+AC_ARG_WITH([rhel-mysql-headers],
+	[AS_HELP_STRING([--with-rhel-mysql-headers],
+		[Link to MySQL headers on RHEL from a given prefix (=path)])],
+	[],
+	[with_rhel_mysql_headers=no])
+	
+AC_MSG_RESULT([Is RHEL MySQL Libs configured: $with_rhel_mysql_libs])
+AC_MSG_RESULT([Is RHEL MySQL Headers configured: $with_rhel_mysql_headers])
+
+	
+AS_IF([test "x$HAVE_MYSQL" != "xyes" && 
+       test "x$with_rhel_mysql_libs" != "xno" && 
+	   test "x$with_rhel_mysql_headers" != "xno"],
+			[MYSQL_CPPFLAGS="'-I$with_rhel_mysql_headers'"
+	 		MYSQL_LDFLAGS="'-L$with_rhel_mysql_libs'"
+			MYSQL_LIBS="-lmysqlclient"
+			GLD_CPPFLAGS="$GLD_CPPFLAGS -DHAVE_MYSQL"
+			HAVE_MYSQL=yes]
+	,[HAVE_MYSQL=$HAVE_MYSQL]) 
+	
+AC_MSG_RESULT([Is MySQL configured: $HAVE_MYSQL])
+AC_MSG_RESULT([MySQL_CPPFLAGS: $MYSQL_CPPFLAGS])
+AC_MSG_RESULT([MYSQL_LDFLAGS: $MYSQL_LDFLAGS])
+AC_MSG_RESULT([MYSQL_LIBS: $MYSQL_LIBS])
+AC_MSG_RESULT([GLD_CPPFLAGS: $GLD_CPPFLAGS])
+
+
 AC_SUBST([MYSQL_CPPFLAGS])
 AC_SUBST([MYSQL_LDFLAGS])
 AC_SUBST([MYSQL_LIBS])
