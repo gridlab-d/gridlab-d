@@ -168,8 +168,12 @@ link_object::link_object(MODULE *mod) : powerflow_object(mod)
 				PT_KEYWORD, "CR", (set)FD_C_REVERSE,
 				PT_KEYWORD, "CN", (set)FD_C_NONE,
 			PT_double, "mean_repair_time[s]",PADDR(mean_repair_time), PT_DESCRIPTION, "Time after a fault clears for the object to be back in service",
-			PT_double, "continuous_rating[A]", PADDR(link_rating[0]), PT_DESCRIPTION, "Continuous rating for this link object (set individual line segments",
-			PT_double, "emergency_rating[A]", PADDR(link_rating[1]), PT_DESCRIPTION, "Emergency rating for this link object (set individual line segments",
+			PT_double, "continuous_rating_A[A]", PADDR(link_rating[0][0]), PT_DESCRIPTION, "Continuous rating for phase A of this link object (set individual line segments)",
+			PT_double, "continuous_rating_B[A]", PADDR(link_rating[0][1]), PT_DESCRIPTION, "Continuous rating for phase B of this link object (set individual line segments)",
+			PT_double, "continuous_rating_C[A]", PADDR(link_rating[0][2]), PT_DESCRIPTION, "Continuous rating for phase C of this link object (set individual line segments)",
+			PT_double, "emergency_rating_A[A]", PADDR(link_rating[1][0]), PT_DESCRIPTION, "Emergency rating for phase A of this link object (set individual line segments)",
+			PT_double, "emergency_rating_B[A]", PADDR(link_rating[1][1]), PT_DESCRIPTION, "Emergency rating for phase B of this link object (set individual line segments)",
+			PT_double, "emergency_rating_C[A]", PADDR(link_rating[1][2]), PT_DESCRIPTION, "Emergency rating for phase C of this link object (set individual line segments)",
 			PT_double, "inrush_convergence_value[V]", PADDR(inrush_tol_value), PT_DESCRIPTION, "Tolerance, as change in line voltage drop between iterations, for deltamode in-rush completion",
 
 			PT_enumeration, "inrush_integration_method_capacitance",PADDR(inrush_int_method_capacitance),PT_DESCRIPTION,"Selected integration method to use for capacitive elements of the link",
@@ -233,7 +237,7 @@ int link_object::create(void)
 
 	current_in[0] = current_in[1] = current_in[2] = complex(0,0);
 
-	link_limits[0][0] = link_limits[0][1] = link_limits[0][2] = link_limits[1][0] = link_limits[1][1] = link_limits[1][2] = NULL;
+	link_limits[0][0] = link_limits[0][1] = link_limits[0][2] = link_limits[1][0] = link_limits[1][1] = link_limits[1][2] = 0;
 	
 	link_rating[0][0] = link_rating[0][1] = link_rating[0][2] = 1000;	//Replicates current defaults of line objects
 	link_rating[1][0] = link_rating[1][1] = link_rating[1][2] = 2000;
