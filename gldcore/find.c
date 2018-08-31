@@ -1225,7 +1225,7 @@ static int expression(PARSER, FINDPGM **pgm)
 		{
 			FINDVALUE v;
 			v.integer = convert_to_timestamp(pvalue);
-			printf("find insvc=%i\n", v.integer);
+			printf("find insvc=%lld\n", v.integer);
 			if(v.integer == TS_NEVER)
 				REJECT;
 			add_pgm(pgm, comparemap[op].integer, OFFSET(in_svc), v, NULL, findlist_del);
