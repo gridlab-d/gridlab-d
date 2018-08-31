@@ -93,7 +93,7 @@
 #include "transform.h"
 #include "object.h"
 #include "find.h"
-#include "random.h"
+#include "gldrandom.h"
 #define STREAM_MODULE
 #include "stream.h"
 #include "module.h"
@@ -1910,7 +1910,19 @@ public: // header read accessors (no locking)
 	inline double get_longitude(void) { return my()->longitude; };
 	inline TIMESTAMP get_in_svc(void) { return my()->in_svc; };
 	inline TIMESTAMP get_out_svc(void) { return my()->out_svc; };
-	inline const char* get_name(void) { static char _name[sizeof(CLASS)+16]; return my()->name?my()->name:(sprintf(_name,"%s:%d",my()->oclass->name,my()->id),_name); };
+	inline const char* get_name(void) {
+		static char _name[sizeof(CLASS) + 16];
+		if(my()->name){
+				return my()->name;
+		} else if(my()->oclass){
+			snprintf(_name, sizeof(CLASS) + 16, "%s:%d",
+					my()->oclass->name, my()->id);
+		} else {
+			snprintf(_name, sizeof(CLASS) + 16, "Unknown");
+		}
+		return _name;
+	}
+	;
 	inline NAMESPACE* get_space(void) { return my()->space; };
 	inline unsigned int get_lock(void) { return my()->lock; };
 	inline unsigned int get_rng_state(void) { return my()->rng_state; };

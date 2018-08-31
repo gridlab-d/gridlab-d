@@ -131,6 +131,7 @@ static struct s_varmap {
 	{"test", PT_bool, &global_debug_mode, PA_PUBLIC, "test enable flag"},
 	{"verbose", PT_bool, &global_verbose_mode, PA_PUBLIC, "verbose enable flag"},
 	{"iteration_limit", PT_int32, &global_iteration_limit, PA_PUBLIC, "iteration limit"},
+	{"federation_reiteration", PT_bool, &global_federation_reiteration, PA_REFERENCE, "global boolean to enforce a reiteration for all modules due to an external federation reiteration"},
 	{"workdir", PT_char1024, &global_workdir, PA_REFERENCE, "working directory"},
 	{"dumpfile", PT_char1024, &global_dumpfile, PA_PUBLIC, "dump filename"},
 	{"savefile", PT_char1024, &global_savefile, PA_PUBLIC, "save filename"},

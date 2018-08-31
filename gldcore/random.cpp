@@ -23,7 +23,7 @@
 #include <ctype.h>
 #include <sys/time.h>
 
-#include "random.h"
+#include "gldrandom.h"
 #include "find.h"
 #include "output.h"
 #include "exception.h"
@@ -40,7 +40,7 @@
 #endif
 
 #ifdef __MINGW32__
-inline char* strtok_t(char *str, const char *delim, char **nextp)
+char* strtok_t(char *str, const char *delim, char **nextp)
 {
     char *ret;
 
@@ -546,7 +546,7 @@ double random_gamma(unsigned int *state, /**< the rng state */
 	else if (na<1) /* a is small */
 	{
 		double p, q, x, u, v;
-		p = E/(alpha+E);
+		p = GLD_E/(alpha+GLD_E);
 		do {
 			u = randunit(state);
 			v = randunit_pos(state);

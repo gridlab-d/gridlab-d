@@ -22,7 +22,7 @@ AS_IF([test "x$TERM" = "xcygwin"],
 AS_IF([test "x$GRIDLABD_DEBUG" = "x"],
   	[AS_IF([test "x$HAS_MINGW" = "xyes"],
 		["$bindir/gridlabd.exe" "$@"],
-		["$bindir/gridlabd.bin" "$@"])],
+		["$bindir/gridlabd" "$@"])],
   	[AS_IF([test "x$HAS_MINGW" = "xyes"],
 		["$GRIDLABD_DEBUG" "$bindir/gridlabd.exe"],
-		["$GRIDLABD_DEBUG" "$bindir/gridlabd.bin"])])
+		["$GRIDLABD_DEBUG" "$bindir/gridlabd"])])

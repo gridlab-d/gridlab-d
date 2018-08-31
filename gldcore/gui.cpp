@@ -12,7 +12,7 @@
 #include "object.h"
 #include "load.h"
 #include "output.h"
-#include "random.h"
+#include "gldrandom.h"
 #include "convert.h"
 #include "schedule.h"
 #include "gui.h"

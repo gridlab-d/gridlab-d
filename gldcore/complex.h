@@ -21,7 +21,7 @@
 typedef enum {I='i',J='j',A='d', R='r'} CNOTATION; /**< complex number notation to use */
 #define CNOTATION_DEFAULT J /* never set this to A */
 #define PI 3.1415926535897932384626433832795
-#define E 2.71828182845905
+#define GLD_E 2.71828182845905
 
 #include <math.h>
 #include "platform.h"
@@ -35,7 +35,7 @@ typedef struct s_complex {
 // This needed to be added back to the C++ component for property.cpp
 double complex_get_part(void *c, char *name);
 
-
+namespace gld {
 class complex {
 private:
 #endif
@@ -334,6 +334,7 @@ public:
 	bool operator >= (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)>=PI;};
 	bool IsFinite(void) { return isfinite(r) && isfinite(i); };
 };
+}
 #endif
 
 #endif

@@ -72,7 +72,7 @@
 #include "output.h"
 #include "module.h"
 #include "find.h"
-#include "random.h"
+#include "gldrandom.h"
 #include "test_callbacks.h"
 #include "exception.h"
 #include "unit.h"

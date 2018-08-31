@@ -16,7 +16,6 @@
 using namespace std;
 
 query_engine::query_engine(database* db_in, int threshold_in, int column_in) {
-	if (!initialized) {
 		if (init(db_in)) {
 			gl_debug("Query Engine startup successful.");
 		} else {
@@ -25,7 +24,6 @@ query_engine::query_engine(database* db_in, int threshold_in, int column_in) {
 		set_threshold(threshold_in);
 		set_columns(column_in);
 		table_count = 0;
-	}
 }
 
 query_engine::~query_engine() {
@@ -35,20 +33,9 @@ query_engine::~query_engine() {
 	}
 }
 
-int query_engine::init(database* db_in) {
-	initialized = true;
+int query_engine::init(database* &db_in) {
 	query_count = 0;
 	db = db_in;
-	if (db == NULL) {
-		exception("no database connection available or specified");
-		return 0;
-	}
-	if (!db->isa("database")) {
-		exception("connection is not a mysql database");
-		return 0;
-	}
-	gl_verbose("connection to mysql server '%s', schema '%s' ok",
-			db->get_hostname(), db->get_schema());
 	return 1;
 }
 

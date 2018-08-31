@@ -16,7 +16,7 @@
 #include "aggregate.h"
 #include "exception.h"
 #include "globals.h"
-#include "random.h"
+#include "gldrandom.h"
 #include "schedule.h"
 #include "transform.h"
 #include "enduse.h"

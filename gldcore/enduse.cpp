@@ -16,7 +16,7 @@
 #include "exception.h"
 #include "convert.h"
 #include "globals.h"
-#include "random.h"
+#include "gldrandom.h"
 #include "schedule.h"
 #include "enduse.h"
 #include "gridlabd.h"
