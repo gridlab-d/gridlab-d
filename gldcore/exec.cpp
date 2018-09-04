@@ -88,11 +88,11 @@
 #include <ctype.h>
 #include <string.h>
 #include <sys/timeb.h>
+#include <thread>
 #ifdef WIN32
 #include <windows.h>
 #include <winbase.h>
 #include <direct.h>
-#include <gridunity_development/connection/socket.h>
 
 #else
 #include <unistd.h>
@@ -102,6 +102,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/errno.h>
+#include <list>
+
 #define SOCKET int
 #define INVALID_SOCKET (-1)
 #define closesocket close
@@ -138,6 +140,7 @@
 #include "save.h"
 
 #include "pthread.h"
+#include "cpp_threadpool.h"
 
 /** Set/get exit code **/
 int exec_setexitcode(int xc)
@@ -195,7 +198,6 @@ int64 exec_clock()
 /** The main system initialization sequence
 	@return 1 on success, 0 on failure
  **/
-
 int exec_init()
 {
 #if 0
@@ -203,7 +205,6 @@ int exec_init()
 	char glpathvar[1024];
 #endif
 #endif
-
 	size_t glpathlen=0;
 
 	/* set thread count equal to processor count if not passed on command-line */
@@ -240,7 +241,7 @@ int exec_init()
 /*int mc_start_time;
 int mc_end_time;
 int GetMachineCycleCount()
-{      
+{
    __int64 cycles;
    _asm rdtsc; // won't work on 486 or below - only pentium or above
 
@@ -313,10 +314,10 @@ static STATUS setup_ranks()
 				continue;
 
 			/* add this object to the ranks for this passconfig */
-			if (index_insert(ranks[i],obj,obj->rank)==FAILED) 
+			if (index_insert(ranks[i],obj,obj->rank)==FAILED)
 				return FAILED;
 			//sjin: print out obj id, pass, rank information
-			//else 
+			//else
 			//	printf("obj[%d]: pass = %d, rank = %d\n", obj->id, passtype[i], obj->rank);
 		}
 
@@ -357,7 +358,7 @@ void do_checkpoint()
 	switch (global_checkpoint_type) {
 
 	/* wallclock checkpoint interval */
-	case CPT_WALL: 
+	case CPT_WALL:
 
 		/* checkpoint based on wall time */
 		now = time(NULL);
@@ -367,9 +368,9 @@ void do_checkpoint()
 			global_checkpoint_interval = 3600;
 
 		break;
-	
+
 		/* simulation checkpoint interval */
-	case CPT_SIM: 
+	case CPT_SIM:
 
 		/* checkpoint based on sim time */
 		now = global_clock;
@@ -381,7 +382,7 @@ void do_checkpoint()
 		break;
 
 	/* no checkpoints used */
-	case CPT_NONE: 
+	case CPT_NONE:
 		now = 0;
 		break;
 	}
@@ -474,7 +475,7 @@ static void ss_do_object_sync(int thread, void *item)
 					if (fp==NULL)
 						output_error("sync_dumpfile '%s' is not writeable", global_sync_dumpfile);
 					else
-						fprintf(fp,"timestamp,pass,iteration,thread,object,sync\n");	
+						fprintf(fp,"timestamp,pass,iteration,thread,object,sync\n");
 					tried = 1;
 				}
 			}
@@ -509,7 +510,7 @@ static void ss_do_object_sync(int thread, void *item)
 		}
 #endif
 	}
-	else 
+	else
 		this_t = TS_NEVER; /* already out of service */
 
 	/* check for "soft" event (events that are ignored when stopping) */
@@ -614,7 +615,7 @@ static STATUS init_by_creation()
 	} CATCH (char *msg) {
 		output_error("init failure: %s", msg);
 		/* TROUBLESHOOT
-			The initialization procedure failed.  This is usually preceded 
+			The initialization procedure failed.  This is usually preceded
 			by a more detailed message that explains why it failed.  Follow
 			the guidance for that message and try again.
 		 */
@@ -798,7 +799,7 @@ static int init_by_deferral()
 	{
 		rv = static_cast<STATUS>(init_by_deferral_retry(def_array, def_ct));
 		if (rv == FAILED) // got hung up retrying
-		{ 
+		{
 			free(def_array);
 			def_array = NULL;
 			return FAILED;
@@ -909,7 +910,7 @@ static STATUS init_all()
  *		of a timestep, before the sync process.  This callback is only triggered
  *		once per timestep, and will not fire between iterations.
  */
-typedef struct s_simplelinklist { 
+typedef struct s_simplelinklist {
 	void *data;
 	struct s_simplelinklist *next;
 } SIMPLELINKLIST;
@@ -969,12 +970,12 @@ static STATUS precommit_all(TIMESTAMP t0)
 				}
 			}
 		}
-	} 
+	}
 	CATCH(const char *msg)
 	{
 		output_error("precommit_all() failure: %s", msg);
 		/* TROUBLESHOOT
-			The precommit'ing procedure failed.  This is usually preceded 
+			The precommit'ing procedure failed.  This is usually preceded
 			by a more detailed message that explains why it failed.  Follow
 			the guidance for that message and try again.
 		 */
@@ -1002,7 +1003,7 @@ static int commit_init()
 			/* separate observers */
 			unsigned int pc = ((obj->oclass->passconfig&PC_OBSERVER)==PC_OBSERVER)?1:0;
 			item = (SIMPLELINKLIST*)malloc(sizeof(SIMPLELINKLIST));
-			if ( item==NULL ) 
+			if ( item==NULL )
 				throw_exception("commit_init memory allocation failure");
 			item->data = (void*)obj;
 			item->next = commit_list[pc];
@@ -1050,9 +1051,9 @@ static MTIDATA commit_set(MTIDATA to, MTIDATA from)
 
 	/* clear request (may follow allocation request) */
 	if ( from==NULL ) *(TIMESTAMP*)to = TS_NEVER;
-	
-	/* copy request */ 
-	else memcpy(to,from,sizeof(TIMESTAMP));	
+
+	/* copy request */
+	else memcpy(to,from,sizeof(TIMESTAMP));
 
 	return to;
 }
@@ -1174,7 +1175,7 @@ static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2)
 	{
 		output_error("commit_all() failure: %s", msg);
 		/* TROUBLESHOOT
-			The commit'ing procedure failed.  This is usually preceded 
+			The commit'ing procedure failed.  This is usually preceded
 			by a more detailed message that explains why it failed.  Follow
 			the guidance for that message and try again.
 		 */
@@ -1236,12 +1237,12 @@ static STATUS finalize_all()
 				break;
 			}
 		}
-	} 
+	}
 	CATCH(const char *msg)
 	{
 		output_error("finalize_all() failure: %s", msg);
 		/* TROUBLESHOOT
-			The finalizing procedure failed.  This is usually preceded 
+			The finalizing procedure failed.  This is usually preceded
 			by a more detailed message that explains why it failed.  Follow
 			the guidance for that message and try again.
 		 */
@@ -1251,7 +1252,7 @@ static STATUS finalize_all()
 }
 
 STATUS exec_test(struct sync_data *data, int pass, OBJECT *obj);
- 
+
 STATUS t_setup_ranks()
 {
 	return setup_ranks();
@@ -1271,10 +1272,10 @@ STATUS t_sync_all(PASSCONFIG pass)
 		{
 			LISTITEM *item;
 			/* skip empty lists */
-			if (ranks[pass_index]->ordinal[i] == NULL) 
+			if (ranks[pass_index]->ordinal[i] == NULL)
 				continue;
-			
-			
+
+
 			for (item=ranks[pass_index]->ordinal[i]->first; item!=NULL; item=item->next)
 			{
 				OBJECT *obj = static_cast<OBJECT *>(item->data);
@@ -1317,7 +1318,7 @@ TIMESTAMP syncall_internals(TIMESTAMP t1)
 	h1 = link_syncall(t1);
 
 	/* @todo add other internal syncs here */
-	h2 = instance_syncall(t1);	
+	h2 = instance_syncall(t1);
 	s1 = randomvar_syncall(t1);
 	s2 = schedule_syncall(t1);
 	s3 = loadshape_syncall(t1);
@@ -1361,13 +1362,16 @@ typedef struct s_objsyncdata {
 	LISTITEM *ls;
 	unsigned int nObj; // number of obj in this object rank list
 	unsigned int t0;
-	int i; // index of mutex or cond this object rank list uses 
+	int i; // index of mutex or cond this object rank list uses
 } OBJSYNCDATA;
 
-static pthread_mutex_t *startlock;
-static pthread_mutex_t *donelock;
-static pthread_cond_t *start;
-static pthread_cond_t *done;
+//static pthread_mutex_t *startlock;
+//static pthread_mutex_t *donelock;
+//static pthread_cond_t *start;
+//static pthread_cond_t *done;
+
+static vector<unique_ptr<mutex>> startlock, donelock;
+static vector<unique_ptr<condition_variable>> start, done;
 
 static unsigned int *next_t1;
 static unsigned int *donecount;
@@ -1383,14 +1387,19 @@ static void *obj_syncproc(void *ptr)
 	// begin processing loop
 	while (data->ok)
 	{
-		// lock access to start condition
-		pthread_mutex_lock(&startlock[i]);
+        // lock access to start condition
+	    unique_lock<mutex> lock_start(*startlock[i]);
+//		pthread_mutex_lock(&startlock[i]);
 
 		// wait for thread start condition)
-		while (data->t0 == next_t1[i]) 
-			pthread_cond_wait(&start[i], &startlock[i]);
+		while (data->t0 == next_t1[i])
+        {
+		    start[i]->wait(lock_start);
+        }
+        lock_start.unlock();
+//			pthread_cond_wait(&start[i], &startlock[i]);
 		// unlock access to start count
-		pthread_mutex_unlock(&startlock[i]);
+//		pthread_mutex_unlock(&startlock[i]);
 
 		// process the list for this thread
 		for (s=data->ls, n=0; s!=NULL, n<data->nObj; s=s->next,n++) {
@@ -1402,19 +1411,24 @@ static void *obj_syncproc(void *ptr)
 		data->t0 = next_t1[i];
 
 		// lock access to done condition
-		pthread_mutex_lock(&donelock[i]);
+        unique_lock<mutex> lock_done(*donelock[i]);
+
+//        pthread_mutex_lock(&donelock[i]);
 
 		// signal thread is done for now
-		donecount[i] --; 
+		donecount[i] --;
 
 		// signal change in done condition
-		pthread_cond_broadcast(&done[i]);
+//		pthread_cond_broadcast(&done[i]);
+        done[i]->notify_all();
 
 		//unlock access to done count
-		pthread_mutex_unlock(&donelock[i]);
+//		pthread_mutex_unlock(&donelock[i]);
+    return NULL;
 	}
-	pthread_exit((void*)0);
-	return (void*)0;
+//	pthread_exit((void*)0);
+//	return (void*)0;
+    return NULL;
 }
 
 /** MAIN LOOP CONTROL ******************************************************************/
@@ -1515,7 +1529,7 @@ void exec_mls_resume(TIMESTAMP ts)
 void exec_mls_statewait(unsigned states)
 {
 	pthread_mutex_lock(&mls_svr_lock);
-	while ( ((global_mainloopstate&states)|states)==0 ) 
+	while ( ((global_mainloopstate&states)|states)==0 )
 		pthread_cond_wait(&mls_svr_signal, &mls_svr_lock);
 	pthread_mutex_unlock(&mls_svr_lock);
 }
@@ -1532,7 +1546,7 @@ void exec_mls_done()
  *******************************************************************/
 static struct sync_data main_sync = {TS_NEVER,0,SUCCESS};
 
-/** Reset the sync time data structure 
+/** Reset the sync time data structure
 
 	This call clears the sync data structure
 	and prepares it for a new interation pass.
@@ -1548,13 +1562,13 @@ void exec_sync_reset(struct sync_data *d) /**< sync data to reset (NULL to reset
 	d->hard_event = 0;
 	d->status = SUCCESS;
 }
-/** Merge the sync data structure 
+/** Merge the sync data structure
 
     This call posts a new sync event \p to into
 	an existing sync data structure \p from.
 	If \p to is \p NULL, then the main exec sync
 	event is updated.  If the status of \p from
-	is \p FAILED, then the \p to sync time is 
+	is \p FAILED, then the \p to sync time is
 	set to \p TS_INVALID.  If the time of \p from
 	is \p TS_NEVER, then \p to is not updated.  In
 	all other cases, the \p to sync time is updated
@@ -1568,16 +1582,16 @@ void exec_sync_merge(struct sync_data *to, /**< sync data to merge to (NULL to u
 	if ( to==NULL ) to = &main_sync;
 	if ( from==NULL ) from = &main_sync;
 	if ( from==to ) return;
-	if ( exec_sync_isinvalid(from) ) 
+	if ( exec_sync_isinvalid(from) )
 		exec_sync_set(to,TS_INVALID,false);
-	else if ( exec_sync_isnever(from) ) 
-		{} /* do nothing */	
+	else if ( exec_sync_isnever(from) )
+		{} /* do nothing */
 	else if ( exec_sync_ishard(from) )
 		exec_sync_set(to,exec_sync_get(from),false);
 	else
 		exec_sync_set(to,-exec_sync_get(from),false);
 }
-/** Update the sync data structure 
+/** Update the sync data structure
 
 	This call posts a new time to a sync event.
 	If the event is \p NULL, then the main sync event is updated.
@@ -1601,7 +1615,7 @@ void exec_sync_set(struct sync_data *d, /**< sync data to update (NULL to update
 		d->status = FAILED;
 		return;
 	}
-	if ( t<=-TS_MAX || t>TS_MAX ) 
+	if ( t<=-TS_MAX || t>TS_MAX )
 		throw_exception("set_synctime(struct sync_data *d={TIMESTAMP step_to=%lli,int32 hard_event=%d, STATUS=%s}, TIMESTAMP t=%lli): timestamp is not valid", d->step_to, d->hard_event, d->status==SUCCESS?"SUCCESS":"FAILED", t);
 	if ( d->step_to==TS_NEVER )
 	{
@@ -1612,7 +1626,7 @@ void exec_sync_set(struct sync_data *d, /**< sync data to update (NULL to update
 		}
 		else if ( t<0 )
 			d->step_to = -t;
-		else 
+		else
 			d->status = FAILED;
 	}
 	else if ( t>0 ) /* hard event */
@@ -1648,7 +1662,7 @@ TIMESTAMP exec_sync_get(struct sync_data *d) /**< Sync data to get sync time fro
 	if ( exec_sync_isinvalid(d) ) return TS_INVALID;
 	return absolute_timestamp(d->step_to);
 }
-/** Get the current hard event count 
+/** Get the current hard event count
 	@return the number of hard events associated with this sync event.
  **/
 unsigned int exec_sync_getevents(struct sync_data *d) /**< Sync data to get sync events from (NULL to read main)  */
@@ -1664,7 +1678,7 @@ int exec_sync_ishard(struct sync_data *d) /**< Sync data to read hard sync statu
 	if ( d==NULL ) d=&main_sync;
 	return d->hard_event>0;
 }
-/** Determine whether the current sync data time is never 
+/** Determine whether the current sync data time is never
 	@return non-zero if the event is NEVER, 0 otherwise
  **/
 int exec_sync_isnever(struct sync_data *d) /**< Sync data to read never sync status from (NULL to read main)  */
@@ -1725,11 +1739,12 @@ void exec_clock_update_modules()
  ******************************************************************/
 
 /** This is the main simulation loop
-	@return STATUS is SUCCESS if the simulation reached equilibrium, 
+	@return STATUS is SUCCESS if the simulation reached equilibrium,
 	and FAILED if a problem was encountered.
  **/
 STATUS exec_start()
 {
+	cpp_threadpool* threadpool = new cpp_threadpool(global_threadcount);
 	int64 passes = 0, tsteps = 0;
 	int ptc_rv = 0; // unused
 	int ptj_rv = 0; // unused
@@ -1743,7 +1758,7 @@ STATUS exec_start()
 
 	// Only setup threadpool for each object rank list at the first iteration;
 	// After the first iteration, setTP = false;
-	bool setTP = true; 
+	bool setTP = true;
 	//int n_threads; //number of thread used in the threadpool of an object rank list
 	OBJSYNCDATA *thread = NULL;
 
@@ -1764,7 +1779,7 @@ STATUS exec_start()
 	{
 		output_error("model initialization failed");
 		/* TROUBLESHOOT
-			The initialization procedure failed.  This is usually preceded 
+			The initialization procedure failed.  This is usually preceded
 			by a more detailed message that explains why it failed.  Follow
 			the guidance for that message and try again.
 		 */
@@ -1776,7 +1791,7 @@ STATUS exec_start()
 	{
 		output_error("ranks setup failed");
 		/* TROUBLESHOOT
-			The rank setup procedure failed.  This is usually preceded 
+			The rank setup procedure failed.  This is usually preceded
 			by a more detailed message that explains why it failed.  Follow
 			the guidance for that message and try again.
 		 */
@@ -1811,7 +1826,7 @@ STATUS exec_start()
 		}
 
 		//sjin: allocate arg_data_array to store pthreads creation argument
-		arg_data_array = (struct arg_data *) malloc(sizeof(struct arg_data) 
+		arg_data_array = (struct arg_data *) malloc(sizeof(struct arg_data)
 						 * global_threadcount);
 
 		/* allocate thread synchronization data */
@@ -1820,14 +1835,14 @@ STATUS exec_start()
 		if (!thread_data) {
 			output_error("thread memory allocation failed");
 			/* TROUBLESHOOT
-				A thread memory allocation failed.  
+				A thread memory allocation failed.
 				Follow the standard process for freeing up memory ang try again.
 			 */
 			return FAILED;
 		}
 		thread_data->count = global_threadcount;
 		thread_data->data = (struct sync_data *) (thread_data + 1);
-		for (j = 0; j < thread_data->count; j++) 
+		for (j = 0; j < thread_data->count; j++)
 			thread_data->data[j].status = SUCCESS;
 	}
 	else
@@ -1902,7 +1917,7 @@ STATUS exec_start()
 		for (i = PASSINIT(pass); PASSCMP(i, pass); i += PASSINC(pass))
 		{
 			/* skip empty lists */
-			if (ranks[pass]->ordinal[i] == NULL) 
+			if (ranks[pass]->ordinal[i] == NULL)
 				continue;
 			nObjRankList++; // count how many object rank list in one iteration
 		}
@@ -1914,23 +1929,33 @@ STATUS exec_start()
 	next_t1 = static_cast<unsigned int *>(malloc(sizeof(next_t1[0]) * nObjRankList));
 	memset(next_t1,0,sizeof(next_t1[0])*nObjRankList);
 
+//	next_t1 = new unsigned int[nObjRankList]{0};
+
 	donecount = static_cast<unsigned int *>(malloc(sizeof(donecount[0]) * nObjRankList));
 	memset(donecount,0,sizeof(donecount[0])*nObjRankList);
+
+//	donecount = new unsigned int[nObjRankList]{0};
 
 	n_threads = static_cast<unsigned int *>(malloc(sizeof(n_threads[0]) * nObjRankList));
 	memset(n_threads,0,sizeof(n_threads[0])*nObjRankList);
 
+//	n_threads = new unsigned int[nObjRankList]{0};
+
 	// allocation and nitialize mutex and cond for object rank lists
-	startlock = static_cast<pthread_mutex_t *>(malloc(sizeof(startlock[0]) * nObjRankList));
-	donelock = static_cast<pthread_mutex_t *>(malloc(sizeof(donelock[0]) * nObjRankList));
-	start = static_cast<pthread_cond_t *>(malloc(sizeof(start[0]) * nObjRankList));
-	done = static_cast<pthread_cond_t *>(malloc(sizeof(done[0]) * nObjRankList));
-	for(k=0;k<nObjRankList;k++) 
+//	startlock = static_cast<pthread_mutex_t *>(malloc(sizeof(startlock[0]) * nObjRankList));
+//	donelock = static_cast<pthread_mutex_t *>(malloc(sizeof(donelock[0]) * nObjRankList));
+//	start = static_cast<pthread_cond_t *>(malloc(sizeof(start[0]) * nObjRankList));
+//	done = static_cast<pthread_cond_t *>(malloc(sizeof(done[0]) * nObjRankList));
+	for(k=0;k<nObjRankList;k++)
 	{
-		pthread_mutex_init(&startlock[k], NULL);
-		pthread_mutex_init(&donelock[k], NULL);
-		pthread_cond_init(&start[k], NULL);
-		pthread_cond_init(&done[k], NULL);
+//		pthread_mutex_init(&startlock[k], NULL);
+//		pthread_mutex_init(&donelock[k], NULL);
+//		pthread_cond_init(&start[k], NULL);
+//		pthread_cond_init(&done[k], NULL);
+        startlock.push_back(unique_ptr<mutex>(new mutex));
+        donelock.push_back(unique_ptr<mutex>(new mutex));
+        start.push_back(unique_ptr<condition_variable>(new condition_variable));
+        done.push_back(unique_ptr<condition_variable>(new condition_variable));
 	}
 
 	// global test mode
@@ -1950,7 +1975,7 @@ STATUS exec_start()
 	TRY {
 
 		/* main loop runs for iteration limit, or when nothing futher occurs (ignoring soft events) */
-		while ( iteration_counter>0 && exec_sync_isrunning(NULL) && exec_getexitcode()==XC_SUCCESS ) 
+		while ( iteration_counter>0 && exec_sync_isrunning(NULL) && exec_getexitcode()==XC_SUCCESS )
 		{
 			TIMESTAMP internal_synctime;
 			output_debug("*** main loop event at %lli; stoptime=%lli, n_events=%i, exitcode=%i ***", exec_sync_get(NULL), global_stoptime, exec_sync_getevents(NULL), exec_getexitcode());
@@ -2054,7 +2079,7 @@ STATUS exec_start()
 			}
 			exec_sync_set(NULL,t,false);
 
-			
+
 			/* synchronize all internal schedules */
 			if ( global_clock < 0 )
 				throw_exception("clock time is negative (global_clock=%lli)", global_clock);
@@ -2096,7 +2121,7 @@ STATUS exec_start()
 				}
 			}
 #ifdef _DEBUG
-			if ( global_clock>=global_runaway_time ) 
+			if ( global_clock>=global_runaway_time )
 				throw_exception("running clock detected");
 #endif
 
@@ -2120,7 +2145,7 @@ STATUS exec_start()
 				for (i = PASSINIT(pass); PASSCMP(i, pass); i += PASSINC(pass))
 				{
 					/* skip empty lists */
-					if (ranks[pass]->ordinal[i] == NULL) 
+					if (ranks[pass]->ordinal[i] == NULL)
 						continue;
 
 					iObjRankList ++;
@@ -2141,12 +2166,12 @@ STATUS exec_start()
 					else
 					{
 						//sjin: if global_threadcount == 1, no pthread multhreading
-						if (global_threadcount == 1) 
+						if (global_threadcount == 1)
 						{
 							for (ptr = ranks[pass]->ordinal[i]->first; ptr != NULL; ptr=ptr->next) {
 								OBJECT *obj = static_cast<OBJECT *>(ptr->data);
-								ss_do_object_sync(0, ptr->data);					
-								
+								ss_do_object_sync(0, ptr->data);
+
 								if (obj->valid_to == TS_INVALID)
 								{
 									//Get us out of the loop so others don't exec on bad status
@@ -2155,82 +2180,90 @@ STATUS exec_start()
 								///printf("%d %s %d\n", obj->id, obj->name, obj->rank);
 							}
 							//printf("\n");
-						} 
-						else 
-						{ //sjin: implement pthreads
-							unsigned int n_items,objn=0,n;
-							unsigned int n_obj = ranks[pass]->ordinal[i]->size;
+						}
+						else { //sjin: implement pthreads
+                            unsigned int n_items, objn = 0, n;
+                            unsigned int n_obj = ranks[pass]->ordinal[i]->size;
 
-							// Only create threadpool for each object rank list at the first iteration. 
-							// Reuse the threadppol of each object rank list at all other iterations.
-							if (setTP == true) { 
-								incr = (int)ceil((float) n_obj / global_threadcount);
-								// if the number of objects is less than or equal to the number of threads, each thread process one object 
-								if (incr <= 1) {
-									n_threads[iObjRankList] = n_obj;
-									n_items = 1;
-								// if the number of objects is greater than the number of threads, each thread process the same number of 
-								// objects (incr), except that the last thread may process less objects 
-								} else {
-									n_threads[iObjRankList] = (int)ceil((float) n_obj / incr);
-									n_items = incr;
-								}
-								if ((int)n_threads[iObjRankList] > global_threadcount) {
-									output_error("Running threads > global_threadcount");
-									exit(0);
-								}
+                            // Only create threadpool for each object rank list at the first iteration.
+                            // Reuse the threadppol of each object rank list at all other iterations.
+//                            if (setTP) {
+                                incr = (int) ceil((float) n_obj / global_threadcount);
+                                // if the number of objects is less than or equal to the number of threads, each thread process one object
+                                if (incr <= 1) {
+                                    n_threads[iObjRankList] = n_obj;
+                                    n_items = 1;
+                                    // if the number of objects is greater than the number of threads, each thread process the same number of
+                                    // objects (incr), except that the last thread may process less objects
+                                } else {
+                                    n_threads[iObjRankList] = (int) ceil((float) n_obj / incr);
+                                    n_items = incr;
+                                }
+                                if ((int) n_threads[iObjRankList] > global_threadcount) {
+                                    output_error("Running threads > global_threadcount");
+                                    exit(0);
+                                }
 
-								// allocate thread list
-								thread = (OBJSYNCDATA*)malloc(sizeof(OBJSYNCDATA)*n_threads[iObjRankList]);
-								memset(thread,0,sizeof(OBJSYNCDATA)*n_threads[iObjRankList]);
-								// assign starting obj for each thread
-								for (ptr=ranks[pass]->ordinal[i]->first;ptr!=NULL;ptr=ptr->next)
-								{
-									if (thread[objn].nObj==n_items)
-										objn++;
-									if (thread[objn].nObj==0) {
-										thread[objn].ls=ptr;
-									}
-									thread[objn].nObj++;
-								}
-								// create threads
-								for (n=0; n<n_threads[iObjRankList]; n++) {
-									thread[n].ok = true;
-									thread[n].i = iObjRankList;
-									if (pthread_create(&(thread[n].pt),NULL,obj_syncproc,&(thread[n]))!=0) {
+                                // allocate thread list
+                                thread = (OBJSYNCDATA *) malloc(sizeof(OBJSYNCDATA) * n_threads[iObjRankList]);
+                                memset(thread, 0, sizeof(OBJSYNCDATA) * n_threads[iObjRankList]);
+                                // assign starting obj for each thread
+                                for (ptr = ranks[pass]->ordinal[i]->first; ptr != NULL; ptr = ptr->next) {
+                                    if (thread[objn].nObj == n_items)
+                                        objn++;
+                                    if (thread[objn].nObj == 0) {
+                                        thread[objn].ls = ptr;
+                                    }
+                                    thread[objn].nObj++;
+                                }
+                                // create threads
+                                for (n = 0; n < n_threads[iObjRankList]; n++) {
+                                    thread[n].ok = true;
+                                    thread[n].i = iObjRankList;
+                                    if(!threadpool->add_job([=] { obj_syncproc(&(thread[n])); })) {
+//									if (pthread_create(&(thread[n].pt),NULL,obj_syncproc,&(thread[n]))!=0) {
 										output_fatal("obj_sync thread creation failed");
-										thread[n].ok = false;
+                                        thread[n].ok = false;
 									} else
 										thread[n].n = n;
-								}
+                                }
+//                            }
 
-							}
-														
-							// lock access to done count
-							pthread_mutex_lock(&donelock[iObjRankList]);
-							
-							// initialize wait count
-							donecount[iObjRankList] = n_threads[iObjRankList];
+                            // lock access to done count
+                            unique_lock<mutex> lock_done(*donelock[iObjRankList]);
+//							pthread_mutex_lock(&donelock[iObjRankList]);
 
-							// lock access to start condition
-							pthread_mutex_lock(&startlock[iObjRankList]);
+                            // initialize wait count
+                            donecount[iObjRankList] = n_threads[iObjRankList];
 
-							// update start condition
-							next_t1[iObjRankList] ++;
+                            // lock access to start condition
+                            unique_lock<mutex> lock_start(*startlock[iObjRankList]);
+//							pthread_mutex_lock(&startlock[iObjRankList]);
 
-							// signal all the threads
-							pthread_cond_broadcast(&start[iObjRankList]);
-							// unlock access to start count
-							pthread_mutex_unlock(&startlock[iObjRankList]);
+                            // update start condition
+                            next_t1[iObjRankList]++;
 
-							// begin wait
-							while (donecount[iObjRankList]>0)
-								pthread_cond_wait(&done[iObjRankList],&donelock[iObjRankList]);
-							// unlock done count
-							pthread_mutex_unlock(&donelock[iObjRankList]);
-						}
+                            // signal all the threads
+                            start[iObjRankList]->notify_all();
 
-						for (j = 0; j < thread_data->count; j++) {
+//                            pthread_cond_broadcast(&start[iObjRankList]);
+                            // unlock access to start count
+//							pthread_mutex_unlock(&startlock[iObjRankList]);
+                            startlock[iObjRankList]->unlock();
+
+                            // begin wait
+                            while (donecount[iObjRankList] > 0)
+                                done[iObjRankList]->wait_for(lock_done, chrono::milliseconds(100));
+//								pthread_cond_wait(&done[iObjRankList],&donelock[iObjRankList]);
+
+                            // unlock done count
+//							pthread_mutex_unlock(&donelock[iObjRankList]);
+                            donelock[iObjRankList]->unlock();
+                        }
+                        threadpool->await();
+
+
+                        for (j = 0; j < thread_data->count; j++) {
 							if (thread_data->data[j].status == FAILED) {
 								exec_sync_set(NULL,TS_INVALID,false);
 								THROW("synchronization failed");
@@ -2246,11 +2279,11 @@ STATUS exec_start()
 					exec_sync_set(NULL,st,false);
 				}
 			}
-			setTP = false;
+//			setTP = false;
 
 			if (!global_debug_mode)
 			{
-				for (j = 0; j < thread_data->count; j++) 
+				for (j = 0; j < thread_data->count; j++)
 				{
 					exec_sync_merge(NULL,&thread_data->data[j]);
 				}
@@ -2284,25 +2317,25 @@ STATUS exec_start()
 				exec_clock_update_modules();
 				if(exec_sync_get(NULL) > global_clock) {
 					global_federation_reiteration = false;
-					TIMESTAMP commit_time = TS_NEVER;
-					commit_time = commit_all(global_clock, exec_sync_get(NULL));
-					if ( absolute_timestamp(commit_time) <= global_clock)
-					{
-						// commit cannot force reiterations, and any event where the time is less than the global clock
-						// indicates that the object is reporting a failure
-						output_error("model_commit_failed");
-						/* TROUBLESHOOT
-							The commit procedure failed. This is usually preceded
-							by a more detailed message that explains why it failed. Follow
-							the guidance for that message and try again.
-						*/
-						THROW("commit failure")
-					} else if( absolute_timestamp(commit_time) < exec_sync_get(NULL) )
-					{
-						exec_sync_set(NULL,commit_time,false);
-					}
-					/* reset iteration count */
-					iteration_counter = global_iteration_limit;
+				TIMESTAMP commit_time = TS_NEVER;
+				commit_time = commit_all(global_clock, exec_sync_get(NULL));
+				if ( absolute_timestamp(commit_time) <= global_clock)
+				{
+					// commit cannot force reiterations, and any event where the time is less than the global clock
+					//  indicates that the object is reporting a failure
+					output_error("model commit failed");
+					/* TROUBLESHOOT
+						The commit procedure failed.  This is usually preceded
+						by a more detailed message that explains why it failed.  Follow
+						the guidance for that message and try again.
+					 */
+					THROW("commit failure");
+				} else if( absolute_timestamp(commit_time) < exec_sync_get(NULL) )
+				{
+					exec_sync_set(NULL,commit_time,false);
+				}
+				/* reset iteration count */
+				iteration_counter = global_iteration_limit;
 					federation_iteration_counter = global_iteration_limit;
 
 					/* count number of timesteps */
@@ -2342,7 +2375,7 @@ STATUS exec_start()
 				output_error("sync script(s) failed");
 				THROW("script synchronization failure");
 			}
-			
+
 			/* handle delta mode operation */
 			if ( global_simulation_mode==SM_DELTA && exec_sync_get(NULL)>=global_clock )
 			{
@@ -2419,17 +2452,17 @@ STATUS exec_start()
 #ifdef NEVER
 		/* wipe out progress report */
 		if (!global_keep_progress)
-			output_raw("                                                           \r"); 
+			output_raw("                                                           \r");
 #endif
 	}
 
 	// Destroy mutex and cond
-	for(k=0;k<nObjRankList;k++) {
-		pthread_mutex_destroy(&startlock[k]);
-		pthread_mutex_destroy(&donelock[k]);
-		pthread_cond_destroy(&start[k]);
-		pthread_cond_destroy(&done[k]);
-	}
+//	for(k=0;k<nObjRankList;k++) {
+//		pthread_mutex_destroy(&startlock[k]);
+//		pthread_mutex_destroy(&donelock[k]);
+//		pthread_cond_destroy(&start[k]);
+//		pthread_cond_destroy(&done[k]);
+//	}
 
 	/* report performance */
 	if (global_profiler && !exec_sync_isinvalid(NULL) )
@@ -2472,7 +2505,7 @@ STATUS exec_start()
 		output_profile("    Transforms          %8.1f seconds (%.1f%%)", (double)transform_synctime/CLOCKS_PER_SEC,((double)transform_synctime/CLOCKS_PER_SEC)/elapsed_wall*100);
 		output_profile("  Model time            %8.1f seconds/thread (%.1f%%)", sync_time,sync_time/elapsed_wall*100);
 		if ( dp->t_count>0 )
-			output_profile("  Deltamode time        %8.1f seconds/thread (%.1f%%)", delta_runtime,delta_runtime/elapsed_wall*100);	
+			output_profile("  Deltamode time        %8.1f seconds/thread (%.1f%%)", delta_runtime,delta_runtime/elapsed_wall*100);
 		output_profile("Simulation time         %8.0f days", elapsed_sim/24);
 		if (sim_speed>10.0)
 			output_profile("Simulation speed         %7.0lfk object.hours/second", sim_speed);
@@ -2501,9 +2534,9 @@ STATUS exec_start()
 			output_profile("Minumum update timestep %8.4lf ms", dp->t_min/1e6);
 			output_profile("Maximum update timestep %8.4lf ms", dp->t_max/1e6);
 			output_profile("Total deltamode simtime %8.1lf s", delta_simtime/1000);
-			output_profile("Preupdate time          %8.1lf s (%.1f%%)", (double)(dp->t_preupdate)/(double)CLOCKS_PER_SEC, (double)(dp->t_preupdate)/total*100); 
-			output_profile("Object update time      %8.1lf s (%.1f%%)", (double)(dp->t_update)/(double)CLOCKS_PER_SEC, (double)(dp->t_update)/total*100); 
-			output_profile("Interupdate time        %8.1lf s (%.1f%%)", (double)(dp->t_interupdate)/(double)CLOCKS_PER_SEC, (double)(dp->t_interupdate)/total*100); 
+			output_profile("Preupdate time          %8.1lf s (%.1f%%)", (double)(dp->t_preupdate)/(double)CLOCKS_PER_SEC, (double)(dp->t_preupdate)/total*100);
+			output_profile("Object update time      %8.1lf s (%.1f%%)", (double)(dp->t_update)/(double)CLOCKS_PER_SEC, (double)(dp->t_update)/total*100);
+			output_profile("Interupdate time        %8.1lf s (%.1f%%)", (double)(dp->t_interupdate)/(double)CLOCKS_PER_SEC, (double)(dp->t_interupdate)/total*100);
 			output_profile("Postupdate time         %8.1lf s (%.1f%%)", (double)(dp->t_postupdate)/(double)CLOCKS_PER_SEC, (double)(dp->t_postupdate)/total*100);
 			output_profile("Total deltamode runtime %8.1lf s (100%%)", delta_runtime);
 			output_profile("Simulation rate         %8.1lf x realtime", delta_simtime/delta_runtime/1000);
@@ -2514,10 +2547,11 @@ STATUS exec_start()
 	sched_update(global_clock,MLS_DONE);
 
 	/* terminate links */
+	delete threadpool;
 	return exec_sync_getstatus(NULL);
 }
 
-/** Starts the executive test loop 
+/** Starts the executive test loop
 	@return STATUS is SUCCESS if all test passed, FAILED is any test failed.
  **/
 STATUS exec_test(struct sync_data *data, /**< the synchronization state data */
@@ -2532,7 +2566,7 @@ STATUS exec_test(struct sync_data *data, /**< the synchronization state data */
 		this_t = obj->in_svc + 1;	/* Round up for service (deltamode handled separately) */
 	else if (global_clock<=obj->out_svc)
 		this_t = object_sync(obj, global_clock, pass);
-	else 
+	else
 		this_t = TS_NEVER; /* already out of service */
 
 	/* check for "soft" event (events that are ignored when stopping) */
@@ -2674,7 +2708,7 @@ void *slave_node_proc(void *args)
 		closesocket(masterfd);
 		free(addrin);
 		return 0;
-	} 
+	}
 	else if (rv == 0)
 	{
 		output_error("slave_node_proc(): socket closed before sending handshake response");
@@ -2691,7 +2725,7 @@ void *slave_node_proc(void *args)
 		closesocket(masterfd);
 		free(addrin);
 		return 0;
-	} 
+	}
 	else if(0 == rv)
 	{
 		output_error("slave_node_proc(): socket closed before receiving command instruction");
@@ -2764,8 +2798,8 @@ void *slave_node_proc(void *args)
 		filename[tok_len]=0;
 		sprintf(temp, "%%d offset and %%d len for \'%%%ds\'", tok_len);
 		output_debug(temp, offset, tok_len, buffer+offset);
-	} 
-	else 
+	}
+	else
 	{
 		filename[0] = 0;
 	}
@@ -2786,7 +2820,7 @@ void *slave_node_proc(void *args)
 		closesocket(masterfd);
 		free(addrin);
 		return 0;
-	} 
+	}
 	else if (mtr_port < 1024)
 	{
 		output_warning("slave_node_proc(): return port %d specified, may cause system conflicts", mtr_port);
@@ -2809,8 +2843,8 @@ void *slave_node_proc(void *args)
 		closesocket(masterfd);
 		free(addrin);
 		return 0;
-	} 
-	else 
+	}
+	else
 	{
 		output_debug("id = %llu", id);
 	}
@@ -2832,8 +2866,8 @@ void *slave_node_proc(void *args)
 		closesocket(masterfd);
 		free(addrin);
 		return 0;
-	} 
-	else 
+	}
+	else
 	{
 		memcpy(addrstr, paddrstr, sizeof(addrstr));
 		output_debug("snp(): connect to %s:%d", addrstr, mtr_port);
@@ -2890,7 +2924,7 @@ void exec_slave_node()
 	if (WSAStartup(MAKEWORD(2,0),&wsaData)!=0)
 	{
 		output_error("exec_slave_node(): socket library initialization failed: %s",strerror(GetLastError()));
-		return;	
+		return;
 	}
 #endif
 
@@ -2928,7 +2962,7 @@ void exec_slave_node()
 	// set up fd_set
 	FD_ZERO(&master_fdset);
 	FD_SET(sockfd, &master_fdset);
-	
+
 	args[0] = (SOCKET *)&node_done;
 	args[1] = (SOCKET *)&sockfd;
 
@@ -2944,12 +2978,12 @@ void exec_slave_node()
 		{
 			output_error("slavenode select() error");
 			return;
-		} 
+		}
 		else if (rct == 0)
 		{
 			// Waited three seconds without any input.  Play it again, Sam.
 			//output_debug("esn(): select ");
-		} 
+		}
 		else if (rct > 0)
 		{
 			inaddr = static_cast<sockaddr_in *>(malloc(inaddrsz));

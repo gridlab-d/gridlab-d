@@ -33,6 +33,7 @@
 #include "kml.h"
 #include "kill.h"
 #include "threadpool.h"
+#include "cpp_threadpool.h"
 
 #if defined WIN32 && _DEBUG 
 /** Implements a pause on exit capability for Windows consoles

@@ -20,9 +20,9 @@ SET(GLDCORE_LOC gldcore)
 
 # Sets default compile scheme to Release (Maximum optimization, no debugger data)
 # To compile as Debug outside of IDE, run cmake with "-DCMAKE_BUILD_TYPE=Debug" flag.
-IF(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
+IF (NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
     SET(CMAKE_BUILD_TYPE Release)
-ENDIF(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
+ENDIF (NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
 
 # Allows specific compiler optimizations to be disabled for all build types.
 set(DISABLED_OPTIMIZATIONS "")
@@ -64,6 +64,14 @@ ELSE ()
 ENDIF ()
 LIST(APPEND CMAKE_REQUIRED_LIBRARIES ${OS_SPECIFIC_LIBRARIES})
 
+# Configure OpenMP to be compiled and linked if available.
+include(FindOpenMP)
+if (OPENMP_FOUND)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} ${OpenMP_LD_FLAGS}")
+endif ()
+
 # Set the list of modules and files which should be copied into the install directory.
 SET(GL_MODULES
         assert
@@ -84,20 +92,20 @@ SET(GL_MODULES
         glxengine
         )
 SET(HEADER_FILE_NAMES
-#        ${GLDCORE_LOC}/build.h
-#        ${GLDCORE_LOC}/class.h
-#        ${GLDCORE_LOC}/complex.h
-#        ${GLDCORE_LOC}/debug.h
-#        ${GLDCORE_LOC}/enduse.h
-#        ${GLDCORE_LOC}/exception.h
-#        ${GLDCORE_LOC}/loadshape.h
-#        ${GLDCORE_LOC}/lock.h
-#        ${GLDCORE_LOC}/module.h
-#        ${GLDCORE_LOC}/object.h
-#        ${GLDCORE_LOC}/property.h
-#        ${GLDCORE_LOC}/schedule.h
-#        ${GLDCORE_LOC}/test.h
-#        ${GLDCORE_LOC}/version.h
+        #        ${GLDCORE_LOC}/build.h
+        #        ${GLDCORE_LOC}/class.h
+        #        ${GLDCORE_LOC}/complex.h
+        #        ${GLDCORE_LOC}/debug.h
+        #        ${GLDCORE_LOC}/enduse.h
+        #        ${GLDCORE_LOC}/exception.h
+        #        ${GLDCORE_LOC}/loadshape.h
+        #        ${GLDCORE_LOC}/lock.h
+        #        ${GLDCORE_LOC}/module.h
+        #        ${GLDCORE_LOC}/object.h
+        #        ${GLDCORE_LOC}/property.h
+        #        ${GLDCORE_LOC}/schedule.h
+        #        ${GLDCORE_LOC}/test.h
+        #        ${GLDCORE_LOC}/version.h
 
         ${GLDCORE_LOC}/build.h
         ${GLDCORE_LOC}/class.h
@@ -115,54 +123,54 @@ SET(HEADER_FILE_NAMES
         ${GLDCORE_LOC}/version.h
         )
 SET(GLD_SHARE
-#        ${GLDCORE_LOC}/tzinfo.txt
-#        ${GLDCORE_LOC}/unitfile.txt
-#        ${GLDCORE_LOC}/rt/about.htm
-#        ${GLDCORE_LOC}/rt/COPYRIGHT
-#        ${GLDCORE_LOC}/rt/debugger.conf
-#        ${GLDCORE_LOC}/rt/eula.htm
-#        ${GLDCORE_LOC}/rt/favicon.ico
-#        ${GLDCORE_LOC}/rt/gnuplot.conf
-#        ${GLDCORE_LOC}/rt/gridlabd.conf
-#        ${GLDCORE_LOC}/rt/gridlabd.css
-#        ${GLDCORE_LOC}/rt/gridlabd.h
-#        ${GLDCORE_LOC}/rt/gridlabd.htm
-#        ${GLDCORE_LOC}/rt/gridlabd.jpg
-#        ${GLDCORE_LOC}/rt/gridlabd.js
-#        ${GLDCORE_LOC}/rt/gridlabd.syn
-#        ${GLDCORE_LOC}/rt/LICENSE
-#        ${GLDCORE_LOC}/rt/mingw.conf
-#        ${GLDCORE_LOC}/rt/STATUS
-#        ${GLDCORE_LOC}/rt/capacitor_b.png
-#        ${GLDCORE_LOC}/rt/capacitor_g.png
-#        ${GLDCORE_LOC}/rt/capacitor_k.png
-#        ${GLDCORE_LOC}/rt/capacitor_r.png
-#        ${GLDCORE_LOC}/rt/load_b.png
-#        ${GLDCORE_LOC}/rt/load_g.png
-#        ${GLDCORE_LOC}/rt/load_k.png
-#        ${GLDCORE_LOC}/rt/load_r.png
-#        ${GLDCORE_LOC}/rt/meter_g.png
-#        ${GLDCORE_LOC}/rt/node_b.png
-#        ${GLDCORE_LOC}/rt/node_g.png
-#        ${GLDCORE_LOC}/rt/node_k.png
-#        ${GLDCORE_LOC}/rt/node_r.png
-#        ${GLDCORE_LOC}/rt/regulator_b.png
-#        ${GLDCORE_LOC}/rt/regulator_g.png
-#        ${GLDCORE_LOC}/rt/regulator_k.png
-#        ${GLDCORE_LOC}/rt/regulator_r.png
-#        ${GLDCORE_LOC}/rt/switch_b.png
-#        ${GLDCORE_LOC}/rt/switch_g.png
-#        ${GLDCORE_LOC}/rt/switch_k.png
-#        ${GLDCORE_LOC}/rt/switch_r.png
-#        ${GLDCORE_LOC}/rt/transformer_b.png
-#
-#        ${GLDCORE_LOC}/rt/transformer_g.png
-#        ${GLDCORE_LOC}/rt/transformer_k.png
-#        ${GLDCORE_LOC}/rt/transformer_r.png
-#        ${GLDCORE_LOC}/rt/triplex_meter_b.png
-#        ${GLDCORE_LOC}/rt/triplex_meter_g.png
-#        ${GLDCORE_LOC}/rt/triplex_meter_k.png
-#        ${GLDCORE_LOC}/rt/triplex_meter_r.png
+        #        ${GLDCORE_LOC}/tzinfo.txt
+        #        ${GLDCORE_LOC}/unitfile.txt
+        #        ${GLDCORE_LOC}/rt/about.htm
+        #        ${GLDCORE_LOC}/rt/COPYRIGHT
+        #        ${GLDCORE_LOC}/rt/debugger.conf
+        #        ${GLDCORE_LOC}/rt/eula.htm
+        #        ${GLDCORE_LOC}/rt/favicon.ico
+        #        ${GLDCORE_LOC}/rt/gnuplot.conf
+        #        ${GLDCORE_LOC}/rt/gridlabd.conf
+        #        ${GLDCORE_LOC}/rt/gridlabd.css
+        #        ${GLDCORE_LOC}/rt/gridlabd.h
+        #        ${GLDCORE_LOC}/rt/gridlabd.htm
+        #        ${GLDCORE_LOC}/rt/gridlabd.jpg
+        #        ${GLDCORE_LOC}/rt/gridlabd.js
+        #        ${GLDCORE_LOC}/rt/gridlabd.syn
+        #        ${GLDCORE_LOC}/rt/LICENSE
+        #        ${GLDCORE_LOC}/rt/mingw.conf
+        #        ${GLDCORE_LOC}/rt/STATUS
+        #        ${GLDCORE_LOC}/rt/capacitor_b.png
+        #        ${GLDCORE_LOC}/rt/capacitor_g.png
+        #        ${GLDCORE_LOC}/rt/capacitor_k.png
+        #        ${GLDCORE_LOC}/rt/capacitor_r.png
+        #        ${GLDCORE_LOC}/rt/load_b.png
+        #        ${GLDCORE_LOC}/rt/load_g.png
+        #        ${GLDCORE_LOC}/rt/load_k.png
+        #        ${GLDCORE_LOC}/rt/load_r.png
+        #        ${GLDCORE_LOC}/rt/meter_g.png
+        #        ${GLDCORE_LOC}/rt/node_b.png
+        #        ${GLDCORE_LOC}/rt/node_g.png
+        #        ${GLDCORE_LOC}/rt/node_k.png
+        #        ${GLDCORE_LOC}/rt/node_r.png
+        #        ${GLDCORE_LOC}/rt/regulator_b.png
+        #        ${GLDCORE_LOC}/rt/regulator_g.png
+        #        ${GLDCORE_LOC}/rt/regulator_k.png
+        #        ${GLDCORE_LOC}/rt/regulator_r.png
+        #        ${GLDCORE_LOC}/rt/switch_b.png
+        #        ${GLDCORE_LOC}/rt/switch_g.png
+        #        ${GLDCORE_LOC}/rt/switch_k.png
+        #        ${GLDCORE_LOC}/rt/switch_r.png
+        #        ${GLDCORE_LOC}/rt/transformer_b.png
+        #
+        #        ${GLDCORE_LOC}/rt/transformer_g.png
+        #        ${GLDCORE_LOC}/rt/transformer_k.png
+        #        ${GLDCORE_LOC}/rt/transformer_r.png
+        #        ${GLDCORE_LOC}/rt/triplex_meter_b.png
+        #        ${GLDCORE_LOC}/rt/triplex_meter_g.png
+        #        ${GLDCORE_LOC}/rt/triplex_meter_k.png
+        #        ${GLDCORE_LOC}/rt/triplex_meter_r.png
 
         ${GLDCORE_LOC}/tzinfo.txt
         ${GLDCORE_LOC}/unitfile.txt
@@ -234,7 +242,7 @@ SET(GLD_SHARE
         models/weather.csv
         models/wind_turbine_example.glm
 
-#        ${GLDCORE_LOC}/gridlabd.htm
+        #        ${GLDCORE_LOC}/gridlabd.htm
         ${GLDCORE_LOC}/gridlabd.htm
         )
 
@@ -468,6 +476,8 @@ add_executable(gridlabd
         ${GLDCORE_LOC}/console.h
         ${GLDCORE_LOC}/convert.cpp
         ${GLDCORE_LOC}/convert.h
+        ${GLDCORE_LOC}/cpp_threadpool.cpp
+        ${GLDCORE_LOC}/cpp_threadpool.h
         ${GLDCORE_LOC}/debug.cpp
         ${GLDCORE_LOC}/debug.h
         ${GLDCORE_LOC}/deltamode.cpp
@@ -536,7 +546,7 @@ add_executable(gridlabd
         ${GLDCORE_LOC}/property.cpp
         ${GLDCORE_LOC}/property.h
         ${GLDCORE_LOC}/random.cpp
-        ${GLDCORE_LOC}/random.h
+        ${GLDCORE_LOC}/gldrandom.h
         ${GLDCORE_LOC}/realtime.cpp
         ${GLDCORE_LOC}/realtime.h
         ${GLDCORE_LOC}/sanitize.cpp
