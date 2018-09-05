@@ -14,6 +14,10 @@ Download the source code, build, install and validate (you will need autotools)
   host% gridlabd --validate
 ```
 
+# Using docker
+
+See https://github.com/dchassin/gridlabd/tree/master/utilities/docker for DockerFile and readme.
+
 ## Windows build
 
 Windows users will need to install cygwin to enable building using autotools.
