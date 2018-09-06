@@ -1068,7 +1068,7 @@ void climate::init_cloud_pattern() {
 	for(gr_obj = gl_find_next(items, 0); gr_obj != 0; gr_obj = gl_find_next(items, gr_obj) ){
 		latitude = gr_obj->latitude;
 		longitude = gr_obj->longitude;
-		if (!isnan(longitude) && !isnan(latitude)) {
+		if (!std::isnan(longitude) && !std::isnan(latitude)) {
 			coord_list[num_points][0] = latitude;
 			coord_list[num_points][1] = longitude;
 			num_points++;
