@@ -3314,6 +3314,8 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 								VA_Out = complex(VA_Efficiency,0.0);
 							}
 						}
+					} else {
+						VA_Out = temp_VA;
 					}
 				}
 
