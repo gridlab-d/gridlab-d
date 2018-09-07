@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
+#include <iostream>
 
 #include "switch_object.h"
 
@@ -757,6 +758,8 @@ void switch_object::switch_sync_function(void)
 	double phase_total, switch_total;
 	OBJECT *obj = OBJECTHDR(this);
 	int result_val;
+
+	std::cout << status << ":" << prev_status << std::endl;
 
 	pres_status = 0x00;	//Reset individual status indicator - assumes all start open
 

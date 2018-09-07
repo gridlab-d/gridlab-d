@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
+#include <iostream>
 
 #include "fault_check.h"
 
@@ -32,6 +33,7 @@ fault_check::fault_check(MODULE *mod) : powerflow_object(mod)
 				PT_KEYWORD, "ONCHANGE", (enumeration)ONCHANGE,
 				PT_KEYWORD, "ALL", (enumeration)ALLT,
 				PT_KEYWORD, "SINGLE_DEBUG", (enumeration)SINGLE_DEBUG,
+				PT_KEYWORD, "SWITCHING", (enumeration)SWITCHING,
 			PT_char1024,"output_filename",PADDR(output_filename),PT_DESCRIPTION,"Output filename for list of unsupported nodes",
 			PT_bool,"reliability_mode",PADDR(reliability_mode),PT_DESCRIPTION,"General flag indicating if fault_check is operating under faulting or restoration mode -- reliability set this",
 			PT_bool,"strictly_radial",PADDR(reliability_search_mode),PT_DESCRIPTION,"Flag to indicate if a system is known to be strictly radial -- uses radial assumptions for reliability alterations",
@@ -174,7 +176,7 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 	TIMESTAMP tret = powerflow_object::sync(t0);
 	unsigned int index;
 	int return_val;
-	bool perform_check, override_output;
+	bool perform_check, override_output, switching_rescan;
 
 	if (prev_time == 0)	//First run - see if restoration exists (we need it for now)
 	{
@@ -193,6 +195,10 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 	{
 		perform_check = true;	//Flag the check
 	}//end onchange check
+	else if ((fcheck_state == SWITCHING) && (NR_admit_change == true))	//Admittance change has been flagged
+	{
+		perform_check = true;
+	}
 	else if (fcheck_state == ALLT)	//Must be every iteration then
 	{
 		perform_check = true;	//Flag the check
@@ -205,6 +211,8 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 	{
 		perform_check = false;	//Flag not-a-check
 	}
+
+	switching_rescan = false;
 
 	if (perform_check)	//Each "check" is identical - split out here to avoid 3x replication
 	{
@@ -274,7 +282,11 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 					}
 
 					//See what mode we are in
-					if ((reliability_mode == false) && (fault_check_override_mode == false))
+					if (fcheck_state == SWITCHING)
+					{
+						switching_rescan = true;
+					}
+					else if ((reliability_mode == false) && (fault_check_override_mode == false))
 					{
 						GL_THROW("Unsupported phase on node %s",NR_busdata[index].name);
 						/*  TROUBLESHOOT
@@ -344,7 +356,11 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 				}
 
 				//See what mode we are in
-				if ((reliability_mode == false) && (fault_check_override_mode == false))
+				if (fcheck_state == SWITCHING)
+				{
+					switching_rescan = true;
+				}
+				else if ((reliability_mode == false) && (fault_check_override_mode == false))
 				{
 					GL_THROW("Unsupported phase on a possibly meshed node");
 					/*  TROUBLESHOOT
@@ -364,6 +380,10 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 		}
 	}//End check
 
+	if (switching_rescan)
+	{
+		rescan_topology (0);
+	}
 	//Update previous timestep info
 	prev_time = t0;
 
@@ -2325,6 +2345,7 @@ STATUS fault_check::disable_island(int island_number)
 //Function to force a rescan - used for island "rejoining" portions
 STATUS fault_check::rescan_topology(int bus_that_called_reset)
 {
+	std::cout << "rescan_topology:" << bus_that_called_reset << std::endl;
 	//Make sure this wasn't somehow called while solver_NR is working
 	if (NR_solver_working == true)
 	{

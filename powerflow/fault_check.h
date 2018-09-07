@@ -17,7 +17,8 @@ public:
 			SINGLE=0,		//Runs one fault_check, right at the beginning of powerflow
 			ONCHANGE=1,		//Runs fault_check everytime a Jacobian reconfiguration is requested
 			ALLT=2,			//Runs fault_check on every iteration
-			SINGLE_DEBUG=3	//Runs one fault_check, but will terminate the simulation -- bypasses some phase check errors
+			SINGLE_DEBUG=3,	//Runs one fault_check, but will terminate the simulation -- bypasses some phase check errors
+			SWITCHING=4 // Runs every time a new Jacobian is requested, does not require supported nodes
 			} FCSTATE;
 
 	unsigned int **Supported_Nodes;			//Nodes with source support (connected to swing somehow)
