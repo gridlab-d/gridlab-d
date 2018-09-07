@@ -17,6 +17,19 @@
 
 #include "switch_object.h"
 
+/* 
+ In order to support fault check_mode SWITCHING there are two function pointers to support: 
+  	fault_handle_call ==> fault_check::support_check_alterations (within powerflow module, should be able to call)
+  	event_schedule ==> eventgen::add_unhandled_event (within reliability module, need to re-implement locally)
+ 
+  	fault_check::sync identifies unsupported nodes
+  	switch_object::NR_switch_sync_post (after link::sync) calls event_schedule
+  	switch_object::switch_sync_function calls fault_handle_call
+  	eventgen::presync ==> eventgen::do_event ==> create_fault and fix_fault pointer calls from add_unhandled_event list
+  			 create_fault ==> link_fault_on
+  			 fix_fault ==> link_fault_off
+*/
+
 //////////////////////////////////////////////////////////////////////////
 // switch_object CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
@@ -654,10 +667,12 @@ void switch_object::NR_switch_sync_post(unsigned char *work_phases_pre, unsigned
 
 					//Call function
 					result_val = ((int (*)(OBJECT *, OBJECT *, char *, TIMESTAMP, TIMESTAMP, int, bool))(*event_schedule))(*eventgen_obj,obj,fault_val,(*t0-50),temp_time,impl_fault,fault_mode);
+					std::cout << "event_schedule with fault_mode == true" << std::endl;
 				}
 				else	//Failing - normal
 				{
 					result_val = ((int (*)(OBJECT *, OBJECT *, char *, TIMESTAMP, TIMESTAMP, int, bool))(*event_schedule))(*eventgen_obj,obj,fault_val,*t0,TS_NEVER,-1,fault_mode);
+					std::cout << "event_schedule with fault_mode == false" << std::endl;
 				}
 
 				//Make sure it worked
@@ -1156,6 +1171,7 @@ void switch_object::switch_sync_function(void)
 				{
 					//Call the topology update
 					result_val = ((int (*)(OBJECT *, int, bool))(*fault_handle_call))(fault_check_object,NR_branch_reference,true);
+					std::cout << "fault_handle_call at line 1170" << std::endl;
 
 					//Make sure it worked
 					if (result_val != 1)
@@ -1197,6 +1213,7 @@ void switch_object::switch_sync_function(void)
 				{
 					//Call the topology update
 					result_val = ((int (*)(OBJECT *, int, bool))(*fault_handle_call))(fault_check_object,NR_branch_reference,false);
+					std::cout << "fault_handle_call at line 1212" << std::endl;
 
 					//Make sure it worked
 					if (result_val != 1)

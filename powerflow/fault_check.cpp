@@ -380,9 +380,9 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 		}
 	}//End check
 
-	if (switching_rescan)
+	if (switching_rescan)  // TEMc
 	{
-		rescan_topology (0);
+		// support_check (0) or support_check_mesh () already called
 	}
 	//Update previous timestep info
 	prev_time = t0;
