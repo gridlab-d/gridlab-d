@@ -4,8 +4,9 @@
 #define _GRIDLABD_VERSION_H
 
 #define REV_MAJOR 4
-#define REV_MINOR 0
+#define REV_MINOR 1
 #define REV_PATCH 0
+#define REV_NAME "Lugo"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
