@@ -7,6 +7,7 @@
 #define REV_MINOR 1
 #define REV_PATCH 0
 #define REV_NAME "Lugo"
+//Version follows convention in legal.c
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
