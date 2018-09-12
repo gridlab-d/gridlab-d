@@ -494,6 +494,7 @@ int switch_object::init(OBJECT *parent)
 void switch_object::BOTH_switch_sync_pre(unsigned char *work_phases_pre, unsigned char *work_phases_post)
 {
 	//unsigned char work_phases, work_phases_pre, work_phases_post, work_phases_closed;
+	std::cout << "  BOTH_switch_sync_pre:" << phase_A_state << std::endl;
 
 	if ((solver_method == SM_NR) && (event_schedule != NULL))	//NR-reliability-related stuff
 	{
@@ -534,6 +535,8 @@ void switch_object::NR_switch_sync_post(unsigned char *work_phases_pre, unsigned
 	int result_val, impl_fault, indexval;
 	bool fault_mode;
 	TIMESTAMP temp_time;
+
+	std::cout << "  NR_switch_sync_post:" << phase_A_state << std::endl;
 
 	//Overall encompassing check -- meshed handled differently
 	if (meshed_fault_checking_enabled == false)
@@ -667,12 +670,12 @@ void switch_object::NR_switch_sync_post(unsigned char *work_phases_pre, unsigned
 
 					//Call function
 					result_val = ((int (*)(OBJECT *, OBJECT *, char *, TIMESTAMP, TIMESTAMP, int, bool))(*event_schedule))(*eventgen_obj,obj,fault_val,(*t0-50),temp_time,impl_fault,fault_mode);
-					std::cout << "event_schedule with fault_mode == true" << std::endl;
+					std::cout << "  NR_switch_sync_post:event_schedule with fault_mode == true" << std::endl;
 				}
 				else	//Failing - normal
 				{
 					result_val = ((int (*)(OBJECT *, OBJECT *, char *, TIMESTAMP, TIMESTAMP, int, bool))(*event_schedule))(*eventgen_obj,obj,fault_val,*t0,TS_NEVER,-1,fault_mode);
-					std::cout << "event_schedule with fault_mode == false" << std::endl;
+					std::cout << "  NR_switch_sync_post:event_schedule with fault_mode == false" << std::endl;
 				}
 
 				//Make sure it worked
@@ -708,6 +711,8 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	unsigned char work_phases_pre, work_phases_post;
+
+	std::cout << "switch_object::sync:" << t0 << ":" << phase_A_state << std::endl;
 
 	//Try to map the event_schedule function address, if we haven't tried yet
 	if (event_schedule_map_attempt == false)
@@ -751,6 +756,7 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 	BOTH_switch_sync_pre(&work_phases_pre, &work_phases_post);
 
 	//Call overlying link sync
+	std::cout << "  calling link_object::sync:" << phase_A_state << std::endl;
 	TIMESTAMP t2=link_object::sync(t0);
 
 	if (solver_method == SM_NR)
@@ -774,7 +780,7 @@ void switch_object::switch_sync_function(void)
 	OBJECT *obj = OBJECTHDR(this);
 	int result_val;
 
-	std::cout << status << ":" << prev_status << std::endl;
+	std::cout << "  switch_sync_function:" << status << ":" << prev_status << ":" << phase_A_state << std::endl;
 
 	pres_status = 0x00;	//Reset individual status indicator - assumes all start open
 
@@ -1171,7 +1177,7 @@ void switch_object::switch_sync_function(void)
 				{
 					//Call the topology update
 					result_val = ((int (*)(OBJECT *, int, bool))(*fault_handle_call))(fault_check_object,NR_branch_reference,true);
-					std::cout << "fault_handle_call at line 1170" << std::endl;
+					std::cout << "  switch_sync_function:fault_handle_call at line 1173" << std::endl;
 
 					//Make sure it worked
 					if (result_val != 1)
@@ -1213,7 +1219,7 @@ void switch_object::switch_sync_function(void)
 				{
 					//Call the topology update
 					result_val = ((int (*)(OBJECT *, int, bool))(*fault_handle_call))(fault_check_object,NR_branch_reference,false);
-					std::cout << "fault_handle_call at line 1212" << std::endl;
+					std::cout << "  switch_sync_function:fault_handle_call at line 1215" << std::endl;
 
 					//Make sure it worked
 					if (result_val != 1)
@@ -1244,6 +1250,8 @@ unsigned char switch_object::switch_expected_sync_function(void)
 	double phase_total, switch_total;
 	SWITCHSTATE temp_A_state, temp_B_state, temp_C_state;
 	enumeration temp_status;
+
+	std::cout << "  switch_expected_sync_function:" << phase_A_state << std::endl;
 
 	if (solver_method==SM_NR)	//Newton-Raphson checks
 	{
@@ -1397,6 +1405,7 @@ unsigned char switch_object::switch_expected_sync_function(void)
 //where admittance needs to be updated
 void switch_object::set_switch(bool desired_status)
 {
+	std::cout << "set_switch:" << phase_A_state << std::endl;
 	status = desired_status;	//Change the status
 	//Check solver method - Only works for NR right now
 	if (solver_method == SM_NR)
@@ -1499,6 +1508,7 @@ void switch_object::set_switch(bool desired_status)
 //0 = open, 1 = closed, 2 = don't care (leave as was)
 void switch_object::set_switch_full(char desired_status_A, char desired_status_B, char desired_status_C)
 {
+	std::cout << "set_switch_full:" << phase_A_state << std::endl;
 	if (desired_status_A == 0)
 		phase_A_state = OPEN;
 	else if (desired_status_A == 1)
@@ -1529,6 +1539,7 @@ void switch_object::set_switch_full_reliability(unsigned char desired_status)
 {
 	unsigned char desA, desB, desC, phase_change;
 
+	std::cout << "set_switch_full_reliability:" << phase_A_state << std::endl;
 	//Determine what to change
 	phase_change = desired_status ^ (~faulted_switch_phases);
 
@@ -1673,6 +1684,7 @@ OBJECT **switch_object::get_object(OBJECT *obj, char *name)
 //Function to adjust "faulted phases" block - in case something has tried to restore itself
 void switch_object::set_switch_faulted_phases(unsigned char desired_status)
 {
+	std::cout << "set_switch_faulted_phases:" << phase_A_state << std::endl;
 	//Remove from the fault tracker
 	phased_switch_status |= desired_status;
 }

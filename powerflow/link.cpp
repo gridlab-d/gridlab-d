@@ -100,6 +100,8 @@
 #include "triplex_meter.h"
 #include "switch_object.h"
 
+#include <iostream>
+
 CLASS* link_object::oclass = NULL;
 CLASS* link_object::pclass = NULL;
 
@@ -5039,6 +5041,8 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 	complex pf_mesh_fault_impedance_matrix[3][3];
 	complex CI_mat[3][3];
 	complex CV_mat[3][3];
+
+	std::cout << "link_fault_on" << std::endl;
 
 	//Check to see which mode we are in
 	if (meshed_fault_checking_enabled == false)	//"Normal" mode
@@ -10710,6 +10714,8 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 	OBJECT *tmpobj;
 	FUNCTIONADDR funadd = NULL;
 	bool switch_val;
+
+	std::cout << "link_fault_off" << std::endl;
 
 	//Check our operations mode
 	if (meshed_fault_checking_enabled == false)	//Normal mode

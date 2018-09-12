@@ -178,6 +178,8 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 	int return_val;
 	bool perform_check, override_output, switching_rescan;
 
+	std::cout << "fault_check::sync:" << t0 << std::endl;
+
 	if (prev_time == 0)	//First run - see if restoration exists (we need it for now)
 	{
 		allocate_alterations_values(reliability_mode);
@@ -413,6 +415,7 @@ void fault_check::search_links(int node_int)
 	BRANCHDATA temp_branch;
 	unsigned char work_phases;
 
+	std::cout << "  fault_check::search_links:" << node_int << std::endl;
 	//Loop through the connectivity and populate appropriately
 	for (index=0; index<NR_busdata[node_int].Link_Table_Size; index++)	//parse through our connected link
 	{
@@ -501,6 +504,7 @@ void fault_check::search_links_mesh(int node_int)
 	unsigned int index, device_value, node_value;
 	unsigned char temp_phases, temp_compare_phases, result_phases;
 
+	std::cout << "  fault_check::search_links_mesh:" << node_int << std::endl;
 	//Check our entry mode -- if grid association mode, do this as a recursion
 	if (grid_association_mode == false)	//Nope, do "normally"
 	{
@@ -640,6 +644,7 @@ void fault_check::support_check(int swing_node_int)
 	unsigned int index;
 	unsigned char phase_vals;
 
+	std::cout << "  fault_check::support_check:" << swing_node_int << std::endl;
 	//Reset the node status list
 	reset_support_check();
 
@@ -661,6 +666,7 @@ void fault_check::support_check_mesh(void)
 {
 	unsigned int indexa, indexb;
 
+	std::cout << "  fault_check::support_check_mesh" << std::endl;
 	//Reset the node status list
 	reset_support_check();
 
@@ -708,6 +714,7 @@ void fault_check::reset_support_check(void)
 {
 	unsigned int index;
 
+	std::cout << "  fault_check::reset_support_check" << std::endl;
 	//Reset the node - 0 = unsupported, 1 = supported (not populated here), 2 = N/A (no phase there)
 	for (index=0; index<NR_bus_count; index++)
 	{
@@ -1120,6 +1127,7 @@ void fault_check::support_check_alterations(int baselink_int, bool rest_mode)
 	double delta_ts_value;
 	TIMESTAMP event_ts_value;
 
+	std::cout << "  fault_check::support_check_alterations:" << baselink_int << ":" << rest_mode << std::endl;
 	if (prev_time == 0)	//First run - see if restoration exists (we need it for now)
 	{
 		allocate_alterations_values(true);
@@ -1255,6 +1263,7 @@ void fault_check::support_search_links_mesh(int baselink_int, bool impact_mode)
 	int device_index;
 	unsigned char temp_phases, work_phases, remove_phases, add_phases;
 
+	std::cout << "  fault_check::support_search_links_mesh:" << baselink_int << ":" << impact_mode << std::endl;
 	//First things first -- figure out how to flag ourselves
 	if (impact_mode == false)	//Removal mode
 	{
@@ -1457,6 +1466,7 @@ void fault_check::special_object_alteration_handle(int branch_idx)
 	OBJECT *temp_obj;
 	FUNCTIONADDR funadd = NULL;
 
+	std::cout << "  fault_check::special_object_alteration_handle:" << branch_idx << std::endl;
 	//See which mode we're in -- bypass if needed (might be always)
 	if (meshed_fault_checking_enabled == false)
 	{
@@ -1628,6 +1638,7 @@ void fault_check::support_search_links(int node_int, int node_start, bool impact
 	BRANCHDATA temp_branch;
 	unsigned char work_phases, phase_restrictions;
 
+	std::cout << "  fault_check::support_search_links:" << node_int << ":" << node_start << ":" << impact_mode << std::endl;
 	//Loop through the connectivity and populate appropriately
 	for (index=0; index<NR_busdata[node_int].Link_Table_Size; index++)	//parse through our connected link
 	{
@@ -1871,6 +1882,7 @@ void fault_check::support_search_links(int node_int, int node_start, bool impact
 //Function to reset "touched" alteration variable
 void fault_check::reset_alterations_check(void)
 {
+	std::cout << "  fault_check::reset_alterations_check" << std::endl;
 	unsigned int index;
 
 	//Do a check for initialization
@@ -1901,6 +1913,7 @@ void fault_check::allocate_alterations_values(bool reliability_mode_bool)
 {
 	unsigned int index;
 	
+	std::cout << "  fault_check::allocate_alterations_values:" << reliability_mode_bool << std::endl;
 	//Make sure we haven't been allocated before
 	if (Supported_Nodes == NULL)
 	{
@@ -1991,6 +2004,7 @@ void fault_check::momentary_activation(int node_int)
 	bool *momentary_flag;
 	PROPERTY *pval;
 
+	std::cout << "  fault_check::momentary_activation:" << node_int << std::endl;
 	//See if we are a meter or triplex meter
 	tmp_obj = NR_busdata[node_int].obj;
 
@@ -2065,6 +2079,7 @@ void fault_check::reset_associated_grid(void)
 {
 	unsigned int indexval;
 
+	std::cout << "  fault_check::reset_associated_grid" << std::endl;
 	//Loop through and reset the bus indicators
 	for (indexval=0; indexval<NR_bus_count; indexval++)
 	{
@@ -2085,6 +2100,7 @@ void fault_check::associate_grids(void)
 	int grid_counter;
 	STATUS stat_return_val;
 
+	std::cout << "  fault_check::associate_grids" << std::endl;
 	//Call the reset/allocation routine
 	reset_associated_grid();
 
@@ -2228,6 +2244,7 @@ void fault_check::search_associated_grids(unsigned int node_int, int grid_counte
 	unsigned int index;
 	int node_ref;
 
+	std::cout << "  fault_check::search_associated_grids:" << node_int << ":" << grid_counter << std::endl;
 	//Loop through the connection table for this node
 	for (index=0; index<NR_busdata[node_int].Link_Table_Size; index++)
 	{
@@ -2281,6 +2298,7 @@ STATUS fault_check::disable_island(int island_number)
 	TIMESTAMP curr_time_val_TS;
 	double curr_time_val_DBL;
 
+	std::cout << "  fault_check::disable_island:" << island_number << std::endl;
 	//Loop through the buses -- remove if it is in this island (keep SWING functions affected though)
 	for (index_value=0; index_value < NR_bus_count; index_value++)
 	{
@@ -2345,7 +2363,7 @@ STATUS fault_check::disable_island(int island_number)
 //Function to force a rescan - used for island "rejoining" portions
 STATUS fault_check::rescan_topology(int bus_that_called_reset)
 {
-	std::cout << "rescan_topology:" << bus_that_called_reset << std::endl;
+	std::cout << "  rescan_topology:" << bus_that_called_reset << std::endl;
 	//Make sure this wasn't somehow called while solver_NR is working
 	if (NR_solver_working == true)
 	{
