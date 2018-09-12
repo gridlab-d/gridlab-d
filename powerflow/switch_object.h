@@ -64,7 +64,14 @@ private:
 	OBJECT **eventgen_obj;					//Reliability variable - link to eventgen object
 	FUNCTIONADDR event_schedule;			//Reliability variable - links to "add_event" function in eventgen
 	FUNCTIONADDR fault_handle_call;			//Reliability-type variable - calls topology reconfiguration after switch changes state
+	bool local_event_schedule;          // for fault checking without reliability module
 	bool event_schedule_map_attempt;		//Flag to see if we've tried to map the event_schedule variable, or not
+	int local_unhandled_event (OBJECT *obj_to_fault, 
+														 char *event_type, 
+														 TIMESTAMP fail_time, 
+														 TIMESTAMP rest_length, 
+														 int implemented_fault, 
+														 bool fault_state);	// mimic eventgen::add_unhandled_event without reliability module
 };
 
 EXPORT int change_switch_state(OBJECT *thisobj, unsigned char phase_change, bool state);

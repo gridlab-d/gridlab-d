@@ -16,6 +16,7 @@
 #include <iostream>
 
 #include "switch_object.h"
+#include "fault_check.h"
 
 /* 
  In order to support fault check_mode SWITCHING there are two function pointers to support: 
@@ -114,6 +115,7 @@ int switch_object::create()
 	event_schedule = NULL;
 	eventgen_obj = NULL;
 	fault_handle_call = NULL;
+	local_event_schedule = false;
 	event_schedule_map_attempt = false;	//Haven't tried to map yet
 	
 	switch_resistance = -1.0;
@@ -496,7 +498,7 @@ void switch_object::BOTH_switch_sync_pre(unsigned char *work_phases_pre, unsigne
 	//unsigned char work_phases, work_phases_pre, work_phases_post, work_phases_closed;
 	std::cout << "  BOTH_switch_sync_pre:" << phase_A_state << std::endl;
 
-	if ((solver_method == SM_NR) && (event_schedule != NULL))	//NR-reliability-related stuff
+	if ((solver_method == SM_NR) && ((event_schedule != NULL) || (local_event_schedule == true)))	//NR-reliability-related stuff
 	{
 		if (meshed_fault_checking_enabled == false)
 		{
@@ -691,8 +693,20 @@ void switch_object::NR_switch_sync_post(unsigned char *work_phases_pre, unsigned
 				//Ensure we don't go anywhere yet
 				*t2 = *t0;
 
-			}	//End fault object present
-			else	//No object, just fail us out - save the iterations
+			}	//End fault object present with reliability
+			else if (local_event_schedule == true)
+			{
+				if (fault_mode == true) {
+					if (mean_repair_time != 0)
+						temp_time = 50 + (TIMESTAMP)(mean_repair_time);
+					else
+						temp_time = 50;
+					result_val = local_unhandled_event (obj,fault_val,(*t0-50),temp_time,impl_fault,fault_mode);
+				}	else{
+					result_val = local_unhandled_event (obj,fault_val,*t0,TS_NEVER,-1,fault_mode);
+				}
+			} 
+			else    //No object, just fail us out - save the iterations
 			{
 				gl_warning("No fault_check object present - Newton-Raphson solver may fail!");
 				/*  TROUBLESHOOT
@@ -706,6 +720,25 @@ void switch_object::NR_switch_sync_post(unsigned char *work_phases_pre, unsigned
 	}//end not meshed checking mode
 	//defaulted else -- meshed checking, but we don't do anything for that (link handles all)
 }
+
+int switch_object::local_unhandled_event (OBJECT *obj_to_fault, 
+																					char *event_type, 
+																					TIMESTAMP fail_time, 
+																					TIMESTAMP rest_length, 
+																					int implemented_fault, 
+																					bool fault_state)
+{
+	std::cout << "switch_object::local_unhandled_event:" 
+		<< obj_to_fault << ":"
+		<< *event_type << ":"
+		<< fail_time << ":"
+		<< rest_length << ":"
+		<< implemented_fault << ":"
+		<< fault_state
+		<< std::endl;
+	return 1;
+}
+
 
 TIMESTAMP switch_object::sync(TIMESTAMP t0)
 {
@@ -739,16 +772,16 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 					the error persists, please submit your code and a bug report via the trac website.
 					*/
 				}
+			} else { // no event generator, but we might want regular power flow with faults
+				fault_check *fltyobj = OBJECTDATA(fault_check_object,fault_check);
+				if (fltyobj->fcheck_state == fault_check::SWITCHING) {
+					local_event_schedule = true;
+				}
 			}
-			//Defaulted elses - just leave things as is :(
 		}
-		//Defaulted else - doesn't exist, so leave function address empty
-
-		//Flag the attempt as having occurred
 		event_schedule_map_attempt = true;
 	}
-
-	//Update time variable
+	// update time variable
 	if (prev_SW_time != t0)	//New timestep
 		prev_SW_time = t0;
 
