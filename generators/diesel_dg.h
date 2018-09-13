@@ -391,8 +391,8 @@ public:
 	double NOx_emission;		// Total NOx emissions (lbs) based on fule usage
 	double PM10_emission;		// Total PM-10 emissions (lbs) based on fule usage
 	TIMESTAMP last_time;
-	double dg_1000_a = 0.067;	// Parameter to calculate fuel usage (gal)based on VA power output (for 1000 kVA rating dg)
-	double dg_1000_b = 6.5544;	// Parameter to calculate fuel usage (gal)based on VA power output (for 1000 kVA rating dg)
+	double dg_1000_a;			// Parameter to calculate fuel usage (gal)based on VA power output (for 1000 kVA rating dg)
+	double dg_1000_b;			// Parameter to calculate fuel usage (gal)based on VA power output (for 1000 kVA rating dg)
 
 	// Relationship between frequency deviation and real power changes
 	double frequency_deviation;
