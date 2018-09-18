@@ -4,9 +4,9 @@ OutputDir=.
 
 ; ++RELEASE++
 SourceDir=.\install64
-OutputBaseFilename=gridlabd-4.0-x64
+OutputBaseFilename=gridlabd-4.1-x64
 AppName=GridLAB-D
-AppVerName=GridLAB-D 4.0
+AppVerName=GridLAB-D 4.1
 ; --RELEASE--
 
 ; ++DEBUG++
@@ -26,7 +26,7 @@ AppPublisherURL=http://www.pnl.gov
 ;AppComments=<Include application comments here>
 ;AppContact=GridLAB-D Development Team <gridlabd@pnl.gov>
 VersionInfoDescription=Gridlab-D - Grid Simulator
-VersionInfoVersion=4.0.0.0
+VersionInfoVersion=4.1.0.0
 
 ;AppMutex=<Mutex string to prevent installation while application is running>
 DefaultDirName={pf}\GridLAB-D
