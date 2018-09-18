@@ -1161,6 +1161,7 @@ void fault_check::support_check_alterations(int baselink_int, bool rest_mode)
 		if (rest_mode == true)	//Restoration
 		{
 			gl_verbose("Alterations support check called restoration on bus %s",NR_busdata[base_bus_val].name);
+			std::cout << "  restoring:" << NR_busdata[base_bus_val].name << ":" << int(NR_busdata[base_bus_val].phases) << std::endl;
 
 			if ((NR_busdata[base_bus_val].phases & 0x07) != 0x00)	//We have phase, means OK above us
 			{

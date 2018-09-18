@@ -497,7 +497,6 @@ void switch_object::BOTH_switch_sync_pre(unsigned char *work_phases_pre, unsigne
 {
 	int ret;
 	//unsigned char work_phases, work_phases_pre, work_phases_post, work_phases_closed;
-	std::cout << "  BOTH_switch_sync_pre:" << phase_A_state << std::endl;
 
 	if ((solver_method == SM_NR) && (event_schedule != NULL))	//NR-reliability-related stuff
 	{
@@ -520,14 +519,7 @@ void switch_object::BOTH_switch_sync_pre(unsigned char *work_phases_pre, unsigne
 	}
 	else    //Normal execution
 	{
-		if (solver_method == SM_NR && local_switching && fault_handle_call) {
-			if (prev_full_status != phased_switch_status) {
-				if (phased_switch_status < prev_full_status) { // opening
-					ret = ((int (*)(OBJECT *, int, bool))(*fault_handle_call))(fault_check_object,NR_branch_reference,true);
-				} else { // closing
-					ret = ((int (*)(OBJECT *, int, bool))(*fault_handle_call))(fault_check_object,NR_branch_reference,false);
-				}
-			}
+		if (solver_method == SM_NR && local_switching) {
 			prev_full_status = phased_switch_status;
 		}
 		//Call syncing function
@@ -537,6 +529,7 @@ void switch_object::BOTH_switch_sync_pre(unsigned char *work_phases_pre, unsigne
 		*work_phases_pre = 0x00;
 		*work_phases_post = 0x00;
 	}
+	std::cout << "  BOTH_switch_sync_pre leaving:" << work_phases_pre << ":" << work_phases_post << std::endl;
 }
 
 //Functionalized switch sync call -- after link call -- for deltamode functionality
@@ -549,7 +542,7 @@ void switch_object::NR_switch_sync_post(unsigned char *work_phases_pre, unsigned
 	bool fault_mode;
 	TIMESTAMP temp_time;
 
-	std::cout << "  NR_switch_sync_post:" << phase_A_state << std::endl;
+	std::cout << "  NR_switch_sync_post:" << work_phases_pre << ":" << work_phases_post << std::endl;
 
 	//Overall encompassing check -- meshed handled differently
 	if (meshed_fault_checking_enabled == false)
@@ -814,7 +807,7 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 				fault_check *fltyobj = OBJECTDATA(fault_check_object,fault_check);
 				if (fltyobj->fcheck_state == fault_check::SWITCHING) {
 					local_switching = true;
-					fault_handle_call = (FUNCTIONADDR)(gl_get_function(fault_check_object,"reliability_alterations"));
+//					fault_handle_call = (FUNCTIONADDR)(gl_get_function(fault_check_object,"reliability_alterations"));
 				}
 			}
 		}
@@ -1477,7 +1470,7 @@ unsigned char switch_object::switch_expected_sync_function(void)
 //where admittance needs to be updated
 void switch_object::set_switch(bool desired_status)
 {
-	std::cout << "set_switch:" << phase_A_state << std::endl;
+	std::cout << "set_switch:" << desired_status << std::endl;
 	status = desired_status;	//Change the status
 	//Check solver method - Only works for NR right now
 	if (solver_method == SM_NR)
@@ -1580,7 +1573,7 @@ void switch_object::set_switch(bool desired_status)
 //0 = open, 1 = closed, 2 = don't care (leave as was)
 void switch_object::set_switch_full(char desired_status_A, char desired_status_B, char desired_status_C)
 {
-	std::cout << "set_switch_full:" << phase_A_state << std::endl;
+	std::cout << "set_switch_full:" << int(desired_status_A) << int(desired_status_B) << int(desired_status_C) << std::endl;
 	if (desired_status_A == 0)
 		phase_A_state = OPEN;
 	else if (desired_status_A == 1)
@@ -1611,7 +1604,7 @@ void switch_object::set_switch_full_reliability(unsigned char desired_status)
 {
 	unsigned char desA, desB, desC, phase_change;
 
-	std::cout << "set_switch_full_reliability:" << phase_A_state << std::endl;
+	std::cout << "set_switch_full_reliability:" << int(desired_status) << std::endl;
 	//Determine what to change
 	phase_change = desired_status ^ (~faulted_switch_phases);
 
@@ -1756,7 +1749,7 @@ OBJECT **switch_object::get_object(OBJECT *obj, char *name)
 //Function to adjust "faulted phases" block - in case something has tried to restore itself
 void switch_object::set_switch_faulted_phases(unsigned char desired_status)
 {
-	std::cout << "set_switch_faulted_phases:" << phase_A_state << std::endl;
+	std::cout << "set_switch_faulted_phases:" << int (desired_status) << std::endl;
 	//Remove from the fault tracker
 	phased_switch_status |= desired_status;
 }
@@ -1885,9 +1878,11 @@ EXPORT int change_switch_state(OBJECT *thisobj, unsigned char phase_change, bool
 {
 	char desA, desB, desC;
 
+	std::cout << "  change_switch_state:" << int(phase_change) << ":" << state << std::endl;
+
 	//Map the switch
 	switch_object *swtchobj = OBJECTDATA(thisobj,switch_object);
-	if (swtchobj->local_switching) return 1;  // TODO - this effectively disables the reliability module switching
+//	if (swtchobj->local_switching) return 1;  // TODO - this effectively disables the reliability module switching
 
 	if ((swtchobj->switch_banked_mode == switch_object::BANKED_SW) || (meshed_fault_checking_enabled == true))	//Banked mode - all become "state", just cause
 	{
@@ -1941,9 +1936,10 @@ EXPORT int change_switch_state_toggle(OBJECT *thisobj)
 	FUNCTIONADDR funadd = NULL;
 	int ext_result;
 
+	std::cout << "  change_switch_state_toggle" << std::endl;
 	//Map the switch
 	switch_object *swtchobj = OBJECTDATA(thisobj,switch_object);
-	if (swtchobj->local_switching) return 1;  // TODO - this effectively disables the reliability module switching
+//	if (swtchobj->local_switching) return 1;  // TODO - this effectively disables the reliability module switching
 
 	//See the current state
 	if (swtchobj->status == switch_object::OPEN)
@@ -2029,9 +2025,10 @@ EXPORT int fix_fault_switch(OBJECT *thisobj, int *implemented_fault, char *imp_f
 
 EXPORT int switch_fault_updates(OBJECT *thisobj, unsigned char restoration_phases)
 {
+	std::cout << "  switch_fault_updates:" << int(restoration_phases) << std::endl;
 	//Link to ourselves
 	switch_object *thisswitch = OBJECTDATA(thisobj,switch_object);
-	if (thisswitch->local_switching) return 1;  // TODO - this effectively disables the reliability module switching
+//	if (thisswitch->local_switching) return 1;  // TODO - this effectively disables the reliability module switching
 
 	//Call the update
 	thisswitch->set_switch_faulted_phases(restoration_phases);
