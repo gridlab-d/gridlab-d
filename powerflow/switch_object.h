@@ -30,6 +30,7 @@ public:
 	int create(void);
 	int init(OBJECT *parent);
 	TIMESTAMP sync(TIMESTAMP t0);
+	TIMESTAMP presync(TIMESTAMP t0);  // implements local switching; TODO: this should have two TIMESTAMP arguments
 	switch_object(MODULE *mod);
 	inline switch_object(CLASS *cl=oclass):link_object(cl){};
 	int isa(char *classname);
@@ -58,20 +59,15 @@ public:
 	enumeration phase_B_state;				///< Defines the current state of the phase B switch
 	enumeration phase_C_state;				///< Defines the current state of the phase C switch
 
+	bool local_switching;             // for switching and fault checking without reliability module; uses phased_switch_status and prev_full_status in presync
+
 	double switch_resistance;
 	int kmldata(int (*stream)(const char*,...));
 private:
 	OBJECT **eventgen_obj;					//Reliability variable - link to eventgen object
 	FUNCTIONADDR event_schedule;			//Reliability variable - links to "add_event" function in eventgen
 	FUNCTIONADDR fault_handle_call;			//Reliability-type variable - calls topology reconfiguration after switch changes state
-	bool local_event_schedule;          // for fault checking without reliability module
 	bool event_schedule_map_attempt;		//Flag to see if we've tried to map the event_schedule variable, or not
-	int local_unhandled_event (OBJECT *obj_to_fault, 
-														 char *event_type, 
-														 TIMESTAMP fail_time, 
-														 TIMESTAMP rest_length, 
-														 int implemented_fault, 
-														 bool fault_state);	// mimic eventgen::add_unhandled_event without reliability module
 };
 
 EXPORT int change_switch_state(OBJECT *thisobj, unsigned char phase_change, bool state);
