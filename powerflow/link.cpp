@@ -100,6 +100,8 @@
 #include "triplex_meter.h"
 #include "switch_object.h"
 
+#include <iostream>
+
 CLASS* link_object::oclass = NULL;
 CLASS* link_object::pclass = NULL;
 
@@ -7889,6 +7891,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				gl_verbose("Event %d induced on %s by using %s",*implemented_fault,objhdr->name,NR_branchdata[temp_branch].name);
 		}//End a change has been flagged
 
+		std::cout << "link_fault_on (normal mode) returns:" << fault_type << ":" << *implemented_fault << ":" << *repair_time << std::endl;
 		return 1;	//Successful
 	}//End "normal" fault operations mode
 	else	//Meshed checking -- handle differently
@@ -10694,6 +10697,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				gl_verbose("Event %d induced on %s by using %s",*implemented_fault,objhdr->name,NR_branchdata[temp_branch].name);
 		}//End a change has been flagged
 
+		std::cout << "link_fault_on (meshed mode) returns:" << fault_type << ":" << *implemented_fault << ":" << *repair_time << std::endl;
 		return 1;	//Successful
 	}//End "Msehed mode" checks
 }
@@ -11718,6 +11722,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				gl_verbose("Event %s removed from %s by restoring %s",imp_fault_name,objhdr->name,NR_branchdata[temp_node].name);
 		}//End actual change
 
+		std::cout << "link_fault_off (normal mode) returns:" << imp_fault_name << ":" << *implemented_fault << std::endl;
 		return 1;
 	}//End "normal" operations mode
 	else	//Must be crazy mesh checking mode
@@ -12646,6 +12651,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				gl_verbose("Event %s removed from %s by restoring %s",imp_fault_name,objhdr->name,NR_branchdata[temp_node].name);
 		}//End actual change
 
+		std::cout << "link_fault_off (meshed mode) returns:" << imp_fault_name << ":" << *implemented_fault << std::endl;
 		return 1;
 	}//End meshed checking mode
 }
