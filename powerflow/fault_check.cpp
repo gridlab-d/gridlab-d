@@ -892,7 +892,7 @@ void fault_check::write_output_file(TIMESTAMP tval, double tval_delta)
 							else //Write an island count
 							{
 								//Write it the island summary
-								fprintf(FPOutput,"Number detected islands = %d\n\n",(NR_islands_detected+1));
+								fprintf(FPOutput,"Number detected islands = %d\n\n",NR_islands_detected);
 							}
 						}
 						else	//Event-based mode
@@ -909,7 +909,7 @@ void fault_check::write_output_file(TIMESTAMP tval, double tval_delta)
 							else
 							{
 								//Print the island count estimate
-								fprintf(FPOutput,"Number detected islands = %d\n\n",(NR_islands_detected+1));
+								fprintf(FPOutput,"Number detected islands = %d\n\n",NR_islands_detected);
 							}
 						}
 
@@ -924,7 +924,7 @@ void fault_check::write_output_file(TIMESTAMP tval, double tval_delta)
 						}
 						else
 						{
-							fprintf(FPOutput,"\nSupported Nodes -- %d Islands detected = %d\n",(NR_islands_detected+1));
+							fprintf(FPOutput,"\nSupported Nodes -- %d Islands detected\n",NR_islands_detected);
 						}
 
 						supportheaderwritten = true;	//Flag intermediate as written too
@@ -943,7 +943,7 @@ void fault_check::write_output_file(TIMESTAMP tval, double tval_delta)
 						else
 						{
 							//Write it
-							fprintf(FPOutput,"Special debug topology check -- phase checks bypassed -- Supported nodes list -- %d Islands detected\n\n",(NR_islands_detected+1));
+							fprintf(FPOutput,"Special debug topology check -- phase checks bypassed -- Supported nodes list -- %d Islands detected\n\n",NR_islands_detected);
 						}
 
 						//Set flags, just in case
@@ -958,7 +958,7 @@ void fault_check::write_output_file(TIMESTAMP tval, double tval_delta)
 						}
 						else
 						{
-							fprintf(FPOutput,"\nSupported Nodes -- %d Islands detected\n",(NR_islands_detected+1));
+							fprintf(FPOutput,"\nSupported Nodes -- %d Islands detected\n",NR_islands_detected);
 						}
 
 						supportheaderwritten = true;	//Flag intermediate as written too
