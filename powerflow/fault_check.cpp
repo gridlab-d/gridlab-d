@@ -175,7 +175,7 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 	TIMESTAMP tret = powerflow_object::sync(t0);
 	unsigned int index;
 	int return_val;
-	bool perform_check, override_output, switching_rescan;
+	bool perform_check, override_output;
 
 	gl_strftime (t0, time_buf, TIME_BUF_SIZE);
 	gl_verbose ("*** fault_check::sync:%s:%ld", time_buf, t0);
@@ -213,8 +213,6 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 	{
 		perform_check = false;	//Flag not-a-check
 	}
-
-	switching_rescan = false;
 
 	if (perform_check)	//Each "check" is identical - split out here to avoid 3x replication
 	{
@@ -273,38 +271,36 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 			//Call the connectivity check
 			support_check(0);
 
-			//Parse the list - see if anything is broken
-			for (index=0; index<NR_bus_count; index++)
+			if (fcheck_state != SWITCHING)  //Parse the list - see if anything is broken
 			{
-				if ((Supported_Nodes[index][0] == 0) || (Supported_Nodes[index][1] == 0) || (Supported_Nodes[index][2] == 0))
+				for (index=0; index<NR_bus_count; index++)
 				{
-					if (output_filename[0] != '\0')	//See if there's an output
+					if ((Supported_Nodes[index][0] == 0) || (Supported_Nodes[index][1] == 0) || (Supported_Nodes[index][2] == 0))
 					{
-						write_output_file(t0,0);	//Write it
-					}
+						if (output_filename[0] != '\0')	//See if there's an output
+						{
+							write_output_file(t0,0);	//Write it
+						}
 
-					//See what mode we are in
-					if (fcheck_state == SWITCHING)
-					{
-						switching_rescan = true;
+						//See what mode we are in
+						if ((reliability_mode == false) && (fault_check_override_mode == false))
+						{
+							GL_THROW("Unsupported phase on node %s",NR_busdata[index].name);
+							/*  TROUBLESHOOT
+							An unsupported connection was found on the indicated bus in the system.  Since reconfiguration
+							is not enabled, the solver will fail here on the next iteration, so the system is broken early.
+							*/
+						}
+						else	//Must be in reliability mode
+						{
+							gl_warning("Unsupported phase on node %s",NR_busdata[index].name);
+							/*  TROUBLESHOOT
+							An unsupported connection was found on the indicated bus in the system.  Since reliability
+							is enabled, the solver will simply ignore the unsupported components for now.
+							*/
+						}
+						break;	//Only need to do this once
 					}
-					else if ((reliability_mode == false) && (fault_check_override_mode == false))
-					{
-						GL_THROW("Unsupported phase on node %s",NR_busdata[index].name);
-						/*  TROUBLESHOOT
-						An unsupported connection was found on the indicated bus in the system.  Since reconfiguration
-						is not enabled, the solver will fail here on the next iteration, so the system is broken early.
-						*/
-					}
-					else	//Must be in reliability mode
-					{
-						gl_warning("Unsupported phase on node %s",NR_busdata[index].name);
-						/*  TROUBLESHOOT
-						An unsupported connection was found on the indicated bus in the system.  Since reliability
-						is enabled, the solver will simply ignore the unsupported components for now.
-						*/
-					}
-					break;	//Only need to do this once
 				}
 			}
 		}
@@ -350,7 +346,7 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 			override_output = output_check_supported_mesh();	//See if anything changed
 
 			//See if anything broke
-			if (override_output == true)
+			if (override_output == true && fcheck_state != SWITCHING)
 			{
 				if (output_filename[0] != '\0')	//See if there's an output
 				{
@@ -358,11 +354,7 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 				}
 
 				//See what mode we are in
-				if (fcheck_state == SWITCHING)
-				{
-					switching_rescan = true;
-				}
-				else if ((reliability_mode == false) && (fault_check_override_mode == false))
+				if ((reliability_mode == false) && (fault_check_override_mode == false))
 				{
 					GL_THROW("Unsupported phase on a possibly meshed node");
 					/*  TROUBLESHOOT
@@ -382,10 +374,6 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 		}
 	}//End check
 
-	if (switching_rescan)  // TEMc
-	{
-		// support_check (0) or support_check_mesh () already called
-	}
 	//Update previous timestep info
 	prev_time = t0;
 
@@ -1919,7 +1907,7 @@ void fault_check::allocate_alterations_values(bool reliability_mode_bool)
 	//Make sure we haven't been allocated before
 	if (Supported_Nodes == NULL)
 	{
-		if (restoration_object==NULL)
+		if (restoration_object==NULL && fcheck_state != SWITCHING)
 		{
 			gl_warning("Restoration object not detected!");	//Put down here because the variable may not be populated in time for init
 			/*  TROUBLESHOOT

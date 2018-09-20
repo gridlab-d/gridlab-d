@@ -1864,9 +1864,9 @@ EXPORT int change_switch_state(OBJECT *thisobj, unsigned char phase_change, bool
 {
 	char desA, desB, desC;
 
-	gl_verbose ("  change_switch_state:%d:%d", phase_change, state);
 	//Map the switch
 	switch_object *swtchobj = OBJECTDATA(thisobj,switch_object);
+	gl_verbose ("  change_switch_state:%d:%d:%d", phase_change, state, swtchobj->switch_banked_mode);
 
 	if ((swtchobj->switch_banked_mode == switch_object::BANKED_SW) || (meshed_fault_checking_enabled == true))	//Banked mode - all become "state", just cause
 	{

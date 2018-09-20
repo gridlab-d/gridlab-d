@@ -7,7 +7,7 @@ clock {
 #set relax_naming_rules=1
 #set profiler=1
 #set minimum_timestep=1
-#set verbose=1
+//#set verbose=1
 
 module powerflow {
 	solver_method NR;
@@ -56,7 +56,7 @@ object fault_check {
 	name test_fault;
 	check_mode SWITCHING;
 	reliability_mode TRUE;
-	strictly_radial FALSE;
+	strictly_radial TRUE;  // FALSE is not compatible with INDIVIDUAL
 }
 
 object meter {
