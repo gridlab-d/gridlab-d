@@ -67,7 +67,7 @@ schedule SW8_STATE {
 }
 
 #define VSOURCE=2401.8
-#include "IEEE123_base.inc";
+#include "../IEEE123_base.inc";
 
 object multi_recorder {
 	property n150:distribution_load.real,n150r:voltage_A.real,n149:voltage_A.real,n152:voltage_A.real,n135:voltage_A.real,n160:voltage_A.real,n197:voltage_A.real,n610:voltage_A.real;

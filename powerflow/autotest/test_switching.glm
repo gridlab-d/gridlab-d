@@ -7,13 +7,13 @@ clock {
 #set relax_naming_rules=1
 #set profiler=1
 #set minimum_timestep=1
+#set verbose=1
 
 module powerflow {
 	solver_method NR;
 	line_capacitance true;
 }
 
-// module connection; // FNCS
 module tape;
 module assert;
 
@@ -56,6 +56,7 @@ object fault_check {
 	name test_fault;
 	check_mode SWITCHING;
 	reliability_mode TRUE;
+	strictly_radial FALSE;
 }
 
 object meter {
@@ -88,7 +89,7 @@ object meter {
     object complex_assert {
 	  target measured_voltage_A;
 	  operation REAL;
-	  value 2414.93;
+	  value 2366.01;
 	  within 0.1;
 	  once ONCE_TRUE;
 	  in '2000-01-01 2:30:00';
@@ -96,7 +97,7 @@ object meter {
     object complex_assert {
 	  target measured_voltage_A;
 	  operation REAL;
-	  value 2443.86;
+	  value 2395.3;
 	  within 0.1;
 	  once ONCE_TRUE;
 	  in '2000-01-01 3:30:00';
@@ -104,7 +105,7 @@ object meter {
     object complex_assert {
 	  target measured_voltage_A;
 	  operation REAL;
-	  value 2414.93;
+	  value 2366.01;
 	  within 0.1;
 	  once ONCE_TRUE;
 	  in '2000-01-01 4:30:00';
@@ -112,7 +113,7 @@ object meter {
     object complex_assert {
 	  target measured_voltage_A;
 	  operation REAL;
-	  value 2348.43;
+	  value 2299.46;
 	  within 0.1;
 	  once ONCE_TRUE;
 	  in '2000-01-01 5:30:00';
@@ -120,7 +121,7 @@ object meter {
     object complex_assert {
 	  target measured_voltage_A;
 	  operation REAL;
-	  value 2414.93;
+	  value 2366.01;
 	  within 0.1;
 	  once ONCE_TRUE;
 	  in '2000-01-01 6:30:00';
@@ -136,25 +137,11 @@ object meter {
     object complex_assert {
 	  target measured_voltage_A;
 	  operation REAL;
-	  value 2414.93;
+	  value 2366.01;
 	  within 0.1;
 	  once ONCE_TRUE;
 	  in '2000-01-01 8:30:00';
     };
-}
-
-object recorder {
-	parent n650;
-	property distribution_load;
-	interval 1800.0;
-	file substation_load.csv;
-}
-
-object recorder {
-	parent m692;
-	property measured_voltage_A, measured_voltage_B, measured_voltage_C;
-	interval 1800.0;
-	file voltages.csv;
 }
 
 object voltdump {
@@ -530,7 +517,7 @@ object substation {
   object complex_assert {
 	target distribution_load;
 	operation REAL;
-	value 3.54115e+06;
+	value 3.59447e+06;
 	within 0.01e+06;
 	once ONCE_TRUE;
 	in '2000-01-01 2:30:00';
@@ -538,7 +525,7 @@ object substation {
   object complex_assert {
 	target distribution_load;
 	operation REAL;
-	value 3.47558e+06;
+	value 3.52786e+06;
 	within 0.01e+06;
 	once ONCE_TRUE;
 	in '2000-01-01 3:30:00';
@@ -546,7 +533,7 @@ object substation {
   object complex_assert {
 	target distribution_load;
 	operation REAL;
-	value 3.54115e+06;
+	value 3.59447e+06;
 	within 0.01e+06;
 	once ONCE_TRUE;
 	in '2000-01-01 4:30:00';
@@ -554,7 +541,7 @@ object substation {
   object complex_assert {
 	target distribution_load;
 	operation REAL;
-	value 3.09798e+06;
+	value 3.15289e+06;
 	within 0.01e+06;
 	once ONCE_TRUE;
 	in '2000-01-01 5:30:00';
@@ -562,7 +549,7 @@ object substation {
   object complex_assert {
 	target distribution_load;
 	operation REAL;
-	value 3.54115e+06;
+	value 3.59447e+06;
 	within 0.01e+06;
 	once ONCE_TRUE;
 	in '2000-01-01 6:30:00';
@@ -578,7 +565,7 @@ object substation {
   object complex_assert {
 	target distribution_load;
 	operation REAL;
-	value 3.54115e+06;
+	value 3.59447e+06;
 	within 0.01e+06;
 	once ONCE_TRUE;
 	in '2000-01-01 8:30:00';
@@ -635,7 +622,7 @@ object load { //646 {
      phases "BCD";
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
-     constant_impedance_B 56.5993+32.4831j;
+     constant_impedance_BC 56.5993+32.4831j;
      nominal_voltage 2401.7771;
 }
  
@@ -656,9 +643,9 @@ object load { //671 {
      voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
-     constant_power_A 385000+220000j;
-     constant_power_B 385000+220000j;
-     constant_power_C 385000+220000j;
+     constant_power_AB 385000+220000j;
+     constant_power_BC 385000+220000j;
+     constant_power_CA 385000+220000j;
      nominal_voltage 2401.7771;
 }
  
@@ -683,9 +670,9 @@ object load { //692 {
      voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
-     constant_current_A 0+0j;
-     constant_current_B 0+0j;
-     constant_current_C -17.2414+51.8677j;
+     constant_current_AB 0+0j;
+     constant_current_BC 0+0j;
+     constant_current_CA -17.2414+51.8677j;
      nominal_voltage 2401.7771;
 }
  
@@ -781,4 +768,10 @@ object regulator {
 	 from n650;
 	 to n630;
 	 configuration regconfig6506321;
+}
+
+object multi_recorder {
+	property n650:distribution_load,n630:voltage_A.real,m692:measured_voltage_A,m692:measured_voltage_B,m692:measured_voltage_C;
+	interval 1800.0;
+	file switching_13_output.csv;
 }
