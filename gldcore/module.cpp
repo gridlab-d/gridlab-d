@@ -169,7 +169,7 @@ void module_free(void *ptr)
 #define MAGIC 0x012BB0B9
 int64 lock_count;
 int64 lock_spin;
-s_callbacks::s_callbacks() noexcept {
+s_callbacks::s_callbacks() throw() {
     global_clock = &::global_clock;
     global_delta_curr_clock = &::global_delta_curr_clock;
     global_stoptime = &::global_stoptime;

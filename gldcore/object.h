@@ -103,7 +103,7 @@ typedef struct s_object_list {
 //typedef struct s_callbacks {
 typedef class s_callbacks {
 public:
-    s_callbacks() noexcept;
+    s_callbacks() throw();
 
 	TIMESTAMP *global_clock;
 	double *global_delta_curr_clock;
