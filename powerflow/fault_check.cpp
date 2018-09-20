@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
-#include <iostream>
 
 #include "fault_check.h"
 
@@ -178,7 +177,9 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 	int return_val;
 	bool perform_check, override_output, switching_rescan;
 
-	std::cout << "fault_check::sync:" << t0 << std::endl;
+	gl_strftime (t0, time_buf, TIME_BUF_SIZE);
+	gl_verbose ("*** fault_check::sync:%s:%ld", time_buf, t0);
+
 	if (prev_time == 0)	//First run - see if restoration exists (we need it for now)
 	{
 		allocate_alterations_values(reliability_mode);
@@ -414,7 +415,7 @@ void fault_check::search_links(int node_int)
 	BRANCHDATA temp_branch;
 	unsigned char work_phases;
 
-	std::cout << "  fault_check::search_links:" << NR_busdata[node_int].name << std::endl;
+	gl_verbose ("  fault_check::search_links:%s", NR_busdata[node_int].name);
 	//Loop through the connectivity and populate appropriately
 	for (index=0; index<NR_busdata[node_int].Link_Table_Size; index++)	//parse through our connected link
 	{
@@ -503,7 +504,7 @@ void fault_check::search_links_mesh(int node_int)
 	unsigned int index, device_value, node_value;
 	unsigned char temp_phases, temp_compare_phases, result_phases;
 
-	std::cout << "  fault_check::search_links_mesh:" << node_int << std::endl;
+	gl_verbose ("  fault_check::search_links_mesh:%s", NR_busdata[node_int].name);
 	//Check our entry mode -- if grid association mode, do this as a recursion
 	if (grid_association_mode == false)	//Nope, do "normally"
 	{
@@ -643,7 +644,7 @@ void fault_check::support_check(int swing_node_int)
 	unsigned int index;
 	unsigned char phase_vals;
 
-	std::cout << "  fault_check::support_check:" << NR_busdata[swing_node_int].name << std::endl;
+	gl_verbose ("  fault_check::support_check:%s", NR_busdata[swing_node_int].name);
 	//Reset the node status list
 	reset_support_check();
 
@@ -665,7 +666,7 @@ void fault_check::support_check_mesh(void)
 {
 	unsigned int indexa, indexb;
 
-	std::cout << "  fault_check::support_check_mesh" << std::endl;
+	gl_verbose ("  fault_check::support_check_mesh");
 	//Reset the node status list
 	reset_support_check();
 
@@ -713,7 +714,7 @@ void fault_check::reset_support_check(void)
 {
 	unsigned int index;
 
-	std::cout << "  fault_check::reset_support_check" << std::endl;
+	gl_verbose ("  fault_check::reset_support_check");
 	//Reset the node - 0 = unsupported, 1 = supported (not populated here), 2 = N/A (no phase there)
 	for (index=0; index<NR_bus_count; index++)
 	{
@@ -1126,7 +1127,7 @@ void fault_check::support_check_alterations(int baselink_int, bool rest_mode)
 	double delta_ts_value;
 	TIMESTAMP event_ts_value;
 
-	std::cout << "  fault_check::support_check_alterations:" << baselink_int << ":" << rest_mode << std::endl;
+	gl_verbose ("  fault_check::support_check_alterations:%s:%d", NR_branchdata[baselink_int].name, rest_mode);
 	if (prev_time == 0)	//First run - see if restoration exists (we need it for now)
 	{
 		allocate_alterations_values(true);
@@ -1159,8 +1160,8 @@ void fault_check::support_check_alterations(int baselink_int, bool rest_mode)
 		//See if the FROM side of our newly restored greatness is supported.  If it isn't, there's no point in proceeding
 		if (rest_mode == true)	//Restoration
 		{
-			gl_verbose("Alterations support check called restoration on bus %s",NR_busdata[base_bus_val].name);
-			std::cout << "  restoring:" << NR_busdata[base_bus_val].name << ":" << int(NR_busdata[base_bus_val].phases) << std::endl;
+			gl_verbose("  alterations support check called restoration on bus %s with phases %d",
+								 NR_busdata[base_bus_val].name, int(NR_busdata[base_bus_val].phases));
 
 			if ((NR_busdata[base_bus_val].phases & 0x07) != 0x00)	//We have phase, means OK above us
 			{
@@ -1172,7 +1173,8 @@ void fault_check::support_check_alterations(int baselink_int, bool rest_mode)
 		}
 		else	//Destructive!
 		{
-			gl_verbose("Alterations support check called removal on bus %s",NR_busdata[base_bus_val].name);
+			gl_verbose("  alterations support check called removal on bus %s with phases %d",
+								 NR_busdata[base_bus_val].name, int(NR_busdata[base_bus_val].phases));
 
 			//Recurse our way in - adjusted version of original search_links function above (but no storage, because we don't care now)
 			support_search_links(base_bus_val, base_bus_val, rest_mode);
@@ -1263,7 +1265,7 @@ void fault_check::support_search_links_mesh(int baselink_int, bool impact_mode)
 	int device_index;
 	unsigned char temp_phases, work_phases, remove_phases, add_phases;
 
-	std::cout << "  fault_check::support_search_links_mesh:" << baselink_int << ":" << impact_mode << std::endl;
+	gl_verbose ("  fault_check::support_search_links_mesh:%s:%d", NR_branchdata[baselink_int].name, impact_mode);
 	//First things first -- figure out how to flag ourselves
 	if (impact_mode == false)	//Removal mode
 	{
@@ -1466,7 +1468,7 @@ void fault_check::special_object_alteration_handle(int branch_idx)
 	OBJECT *temp_obj;
 	FUNCTIONADDR funadd = NULL;
 
-	std::cout << "  fault_check::special_object_alteration_handle:" << NR_branchdata[branch_idx].name << std::endl;
+	gl_verbose ("  fault_check::special_object_alteration_handle:%s", NR_branchdata[branch_idx].name);
 	//See which mode we're in -- bypass if needed (might be always)
 	if (meshed_fault_checking_enabled == false)
 	{
@@ -1638,8 +1640,7 @@ void fault_check::support_search_links(int node_int, int node_start, bool impact
 	BRANCHDATA temp_branch;
 	unsigned char work_phases, phase_restrictions;
 
-	std::cout << "  fault_check::support_search_links:" << NR_busdata[node_int].name << ":" 
-		<< NR_busdata[node_start].name << ":" << impact_mode << std::endl;
+	gl_verbose ("  fault_check::support_search_links:%s:%s:%d", NR_busdata[node_int].name, NR_busdata[node_start].name, impact_mode);
 	//Loop through the connectivity and populate appropriately
 	for (index=0; index<NR_busdata[node_int].Link_Table_Size; index++)	//parse through our connected link
 	{
@@ -1885,7 +1886,7 @@ void fault_check::reset_alterations_check(void)
 {
 	unsigned int index;
 
-	std::cout << "  fault_check::reset_alterations_check" << std::endl;
+	gl_verbose ("  fault_check::reset_alterations_check");
 	//Do a check for initialization
 	if (Alteration_Nodes == NULL)
 	{
@@ -1914,7 +1915,7 @@ void fault_check::allocate_alterations_values(bool reliability_mode_bool)
 {
 	unsigned int index;
 	
-	std::cout << "  fault_check::allocate_alterations_values:" << reliability_mode_bool << std::endl;
+	gl_verbose ("  fault_check::allocate_alterations_values:%d", reliability_mode_bool);
 	//Make sure we haven't been allocated before
 	if (Supported_Nodes == NULL)
 	{

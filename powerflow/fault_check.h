@@ -6,6 +6,8 @@
 
 #include "powerflow.h"
 
+#define TIME_BUF_SIZE 64 // TODO: this ought to be in gridlabd.h, which has hard-coded value of 15 that is apparently too small
+
 class fault_check : public powerflow_object
 {
 public:
@@ -69,6 +71,7 @@ private:
 	TIMESTAMP prev_time;	//Previous timestamp - mainly for intialization
 	FUNCTIONADDR restoration_fxn;	// Function address for restoration object reconfiguration call
 	bool force_reassociation;	//Flag to force the island reassociation -- used if an island was removed to renumber them
+	char time_buf[TIME_BUF_SIZE];  // to format verbose time stamp output (note: fault_check is a singleton object)
 };
 
 EXPORT int powerflow_alterations(OBJECT *thisobj, int baselink,bool rest_mode);

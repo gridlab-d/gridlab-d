@@ -7,7 +7,6 @@ clock {
 #set relax_naming_rules=1
 #set profiler=1
 #set minimum_timestep=1
-//#set verbose=1
 
 module powerflow {
 	solver_method NR;
@@ -17,13 +16,6 @@ module powerflow {
 // module connection; // FNCS
 module tape;
 module assert;
-
-//object fncs_msg {
-//  name gridlabdSimulator1;
-//  configure loadshed_fncs.cfg;
-//  option "transport:hostname localhost, port 5570";
-//  parent n650;
-//}
 
 schedule SWA_STATUS {
  * 0    * * * 1;
@@ -47,11 +39,6 @@ schedule SWC_STATUS {
  * 6    * * * 1;
  * 7    * * * 0;
  * 8-23 * * * 1;
-}
-
-schedule BANK_MODE {
- * 0-7  * * * 0;
- * 8-23 * * * 0;
 }
 
 object switch {
@@ -516,7 +503,7 @@ object node { //632 {
      nominal_voltage 2401.7771;
 }
 
-object substation { // must be a substation for MATPOWER/PYPOWER and TESP metrics
+object substation {
   name n650;
   phases "ABCN";
   bustype SWING;

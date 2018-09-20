@@ -13,7 +13,6 @@
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
-#include <iostream>
 
 #include "switch_object.h"
 #include "fault_check.h"
@@ -516,7 +515,7 @@ void switch_object::BOTH_switch_sync_pre(unsigned char *work_phases_pre, unsigne
 		*work_phases_pre = 0x00;
 		*work_phases_post = 0x00;
 	}
-	std::cout << "  BOTH_switch_sync_pre leaving:" << work_phases_pre << ":" << work_phases_post << std::endl;
+	gl_verbose ("  BOTH_switch_sync_pre leaving:%s:%s", work_phases_pre, work_phases_post);
 }
 
 //Functionalized switch sync call -- after link call -- for deltamode functionality
@@ -529,7 +528,7 @@ void switch_object::NR_switch_sync_post(unsigned char *work_phases_pre, unsigned
 	bool fault_mode;
 	TIMESTAMP temp_time;
 
-	std::cout << "  NR_switch_sync_post:" << work_phases_pre << ":" << work_phases_post << std::endl;
+	gl_verbose ("  NR_switch_sync_post:%s:%s", work_phases_pre, work_phases_post);
 	//Overall encompassing check -- meshed handled differently
 	if (meshed_fault_checking_enabled == false)
 	{
@@ -722,8 +721,7 @@ TIMESTAMP switch_object::presync(TIMESTAMP t0)
 		if (phase_B_state == CLOSED) phased_switch_status |= 0x02;
 		if (phase_C_state == CLOSED) phased_switch_status |= 0x01;
 		phase_changes = phased_switch_status ^ prev_full_status;
-		OBJECT *obj = OBJECTHDR(this);
-		std::cout << "switch_object::presync:" << obj->name << ":" << t0 << ":" << int (prev_full_status) << ":" << int (phased_switch_status) << ":" << int (phase_changes) << std::endl;
+		gl_verbose ("switch_object::presync:%s:%ld:%d:%d:%d", get_name(), t0, prev_full_status, phased_switch_status, phase_changes);
 		if (phased_switch_status != prev_full_status)	{
 			if (phased_switch_status < prev_full_status) closing = false;
 			if (phase_changes == 0x04)	{
@@ -769,7 +767,7 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 	OBJECT *obj = OBJECTHDR(this);
 	unsigned char work_phases_pre, work_phases_post;
 
-	std::cout << "switch_object::sync:" << obj->name << ":" << t0 << ":" << phase_A_state  << ":" << phase_B_state  << ":" << phase_C_state << std::endl;
+	gl_verbose ("switch_object::sync:%s:%ld:%d:%d:%d", get_name(), t0, phase_A_state, phase_B_state, phase_C_state);
 	//Try to map the event_schedule function address, if we haven't tried yet
 	if (event_schedule_map_attempt == false)
 	{
@@ -799,7 +797,6 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 				fault_check *fltyobj = OBJECTDATA(fault_check_object,fault_check);
 				if (fltyobj->fcheck_state == fault_check::SWITCHING) {
 					local_switching = true;
-//					fault_handle_call = (FUNCTIONADDR)(gl_get_function(fault_check_object,"reliability_alterations"));
 				}
 			}
 		}
@@ -813,7 +810,7 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 	BOTH_switch_sync_pre(&work_phases_pre, &work_phases_post);
 
 	//Call overlying link sync
-	std::cout << "  calling link_object::sync:" << phase_A_state << std::endl;
+	gl_verbose ("  calling link_object::sync:%d:%d:%d", phase_A_state, phase_B_state, phase_C_state);
 	TIMESTAMP t2=link_object::sync(t0);
 
 	if (solver_method == SM_NR)
@@ -837,8 +834,7 @@ void switch_object::switch_sync_function(void)
 	OBJECT *obj = OBJECTHDR(this);
 	int result_val;
 
-	std::cout << "  switch_sync_function:" << obj->name << ":" << status << ":" << prev_status << ":" 
-		<< phase_A_state  << ":" << phase_B_state  << ":" << phase_C_state << std::endl;
+	gl_verbose ("  switch_sync_function:%s:%d:%d:%d:%d:%d", get_name(), status, prev_status, phase_A_state, phase_B_state, phase_C_state);
 	pres_status = 0x00;	//Reset individual status indicator - assumes all start open
 
 	//See which mode we are operating in
@@ -1306,7 +1302,7 @@ unsigned char switch_object::switch_expected_sync_function(void)
 	SWITCHSTATE temp_A_state, temp_B_state, temp_C_state;
 	enumeration temp_status;
 
-	std::cout << "  switch_expected_sync_function:" << phase_A_state << ":" << phase_B_state  << ":" << phase_C_state << std::endl;
+	gl_verbose ("  switch_expected_sync_function:%d:%d:%d", phase_A_state, phase_B_state, phase_C_state);
 	if (solver_method==SM_NR)	//Newton-Raphson checks
 	{
 		//Store current phases
@@ -1459,8 +1455,7 @@ unsigned char switch_object::switch_expected_sync_function(void)
 //where admittance needs to be updated
 void switch_object::set_switch(bool desired_status)
 {
-	OBJECT *obj = OBJECTHDR(this);
-	std::cout << "set_switch:" << obj->name << ":" << desired_status << std::endl;
+	gl_verbose ("set_switch:%s:%d", get_name(), desired_status);
 	status = desired_status;	//Change the status
 	//Check solver method - Only works for NR right now
 	if (solver_method == SM_NR)
@@ -1563,8 +1558,7 @@ void switch_object::set_switch(bool desired_status)
 //0 = open, 1 = closed, 2 = don't care (leave as was)
 void switch_object::set_switch_full(char desired_status_A, char desired_status_B, char desired_status_C)
 {
-	OBJECT *obj = OBJECTHDR(this);
-	std::cout << "set_switch_full:" << obj->name << ":" << int(desired_status_A) << int(desired_status_B) << int(desired_status_C) << std::endl;
+	gl_verbose ("set_switch_full:%s:%d:%d:%d", get_name(), desired_status_A, desired_status_B, desired_status_C);
 	if (desired_status_A == 0)
 		phase_A_state = OPEN;
 	else if (desired_status_A == 1)
@@ -1595,8 +1589,8 @@ void switch_object::set_switch_full_reliability(unsigned char desired_status)
 {
 	unsigned char desA, desB, desC, phase_change;
 
-	OBJECT *obj = OBJECTHDR(this);
-	std::cout << "set_switch_full_reliability:" << obj->name << ":" << int(desired_status) << std::endl;
+	gl_verbose ("set_switch_full_reliability:%s:%d:%d:%d", get_name(), phased_switch_status, int(desired_status), local_switching);
+//	if (local_switching == true) return;  // FRANK
 	//Determine what to change
 	phase_change = desired_status ^ (~faulted_switch_phases);
 
@@ -1741,7 +1735,7 @@ OBJECT **switch_object::get_object(OBJECT *obj, char *name)
 //Function to adjust "faulted phases" block - in case something has tried to restore itself
 void switch_object::set_switch_faulted_phases(unsigned char desired_status)
 {
-	std::cout << "set_switch_faulted_phases:" << int (desired_status) << std::endl;
+	gl_verbose ("set_switch_faulted_phases:%d", desired_status);
 	//Remove from the fault tracker
 	phased_switch_status |= desired_status;
 }
@@ -1870,7 +1864,7 @@ EXPORT int change_switch_state(OBJECT *thisobj, unsigned char phase_change, bool
 {
 	char desA, desB, desC;
 
-	std::cout << "  change_switch_state:" << int(phase_change) << ":" << state << std::endl;
+	gl_verbose ("  change_switch_state:%d:%d", phase_change, state);
 	//Map the switch
 	switch_object *swtchobj = OBJECTDATA(thisobj,switch_object);
 
@@ -1926,7 +1920,7 @@ EXPORT int change_switch_state_toggle(OBJECT *thisobj)
 	FUNCTIONADDR funadd = NULL;
 	int ext_result;
 
-	std::cout << "  change_switch_state_toggle" << std::endl;
+	gl_verbose ("  change_switch_state_toggle");
 	//Map the switch
 	switch_object *swtchobj = OBJECTDATA(thisobj,switch_object);
 
@@ -2014,7 +2008,7 @@ EXPORT int fix_fault_switch(OBJECT *thisobj, int *implemented_fault, char *imp_f
 
 EXPORT int switch_fault_updates(OBJECT *thisobj, unsigned char restoration_phases)
 {
-	std::cout << "  switch_fault_updates:" << int(restoration_phases) << std::endl;
+	gl_verbose ("  switch_fault_updates:%d", int(restoration_phases));
 	//Link to ourselves
 	switch_object *thisswitch = OBJECTDATA(thisobj,switch_object);
 
