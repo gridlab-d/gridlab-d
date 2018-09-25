@@ -57,6 +57,7 @@ powerflow_powerflow_la_SOURCES += powerflow/overhead_line_conductor.h
 powerflow_powerflow_la_SOURCES += powerflow/overhead_line.cpp
 powerflow_powerflow_la_SOURCES += powerflow/overhead_line.h
 powerflow_powerflow_la_SOURCES += powerflow/overheadline_test.h
+powerflow_powerflow_la_SOURCES += powerflow/pole.h powerflow/pole.cpp
 powerflow_powerflow_la_SOURCES += powerflow/powerflow.cpp
 powerflow_powerflow_la_SOURCES += powerflow/powerflow.h
 powerflow_powerflow_la_SOURCES += powerflow/powerflow_library.cpp

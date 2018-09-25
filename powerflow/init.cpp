@@ -42,6 +42,7 @@
 #include "triplex_load.h"
 #include "impedance_dump.h"
 #include "vfd.h"
+#include "pole.h"
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
@@ -148,6 +149,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new triplex_load(module);
 	new impedance_dump(module);
 	new vfd(module);
+	new pole(module);
 
 	/* always return the first class registered */
 	return node::oclass;
