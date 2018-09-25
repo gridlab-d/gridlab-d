@@ -24,6 +24,17 @@ pole::pole(MODULE *mod) : node(mod)
 			PT_double, "tilt_angle[deg]", PADDR(tilt_angle), PT_DESCRIPTION, "tilt angle of pole",
 			PT_double, "tilt_direction[deg]", PADDR(tilt_direction), PT_DESCRIPTION, "tilt direction of pole",
 			PT_object, "weather", PADDR(weather), PT_DESCRIPTION, "weather data",
+			PT_double, "design_ice_thickness[in]", PADDR(ice_thickness), PT_DESCRIPTION, "design ice thickness on conductors",
+			PT_double, "design_wind_loading[psi]", PADDR(wind_loading), PT_DESCRIPTION, "design wind loading on pole",
+			PT_double, "design_temperature[degF]", PADDR(temperature), PT_DESCRIPTION, "design temperature for pole",
+			PT_double, "overload_factor", PADDR(overload_factor), PT_DESCRIPTION, "design overload factor",
+			PT_double, "strength_factor", PADDR(strength_factor), PT_DESCRIPTION, "design strength factor",
+			PT_double, "pole_length[ft]", PADDR(pole_length), PT_DESCRIPTION, "total length of pole (including underground portion)",
+			PT_double, "ground_depth[ft]", PADDR(ground_depth), PT_DESCRIPTION, "depth of pole underground",
+			PT_double, "ground_diameter[in]", PADDR(ground_diameter), PT_DESCRIPTION, "diameter of pole at ground level",
+			PT_double, "top_diameter[in]", PADDR(top_diameter), PT_DESCRIPTION, "diameter of pole at top",
+			PT_double, "fiber_strength[psi]", PADDR(fiber_strength), PT_DESCRIPTION, "pole structural strength",
+			PT_double, "resisting_moment[ft*lb]", PADDR(resisting_moment), PT_DESCRIPTION, "pole ultimate resisting moment",
 			NULL) < 1 ) throw "unable to publish properties in " __FILE__;
 	}
 }
@@ -43,6 +54,11 @@ int pole::create(void)
 	wind_direction = NULL;
 	wind_gust = NULL;
 	return node::create();
+}
+
+double pole::get_pole_diameter(double height)
+{
+	return (pole_length-height)*(ground_diameter-top_diameter)/(pole_length-ground_depth);
 }
 
 int pole::init(OBJECT *parent)
@@ -81,11 +97,17 @@ int pole::init(OBJECT *parent)
 		return 0;
 	}
 
+	resisting_moment = 0.000264*strength_factor*fiber_strength*(ground_diameter*ground_diameter*ground_diameter*247.6);
 	return node::init(parent);
 }
 
 TIMESTAMP pole::presync(TIMESTAMP t0)
 {
+	if ( *wind_speed > 0 || *wind_gust > 0 )
+	{
+		gld_clock dt;
+		printf("%s: wind %g deg at %g m/s gusting to %g mph\n", (const char*)(dt.get_string()), *wind_direction, *wind_speed, *wind_gust);
+	}
 	return node::presync(t0);
 }
 
