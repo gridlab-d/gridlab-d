@@ -16,6 +16,11 @@ public:
 	enumeration pole_type;
 	double tilt_angle;
 	double tilt_direction;
+	object weather;
+private:
+	double *wind_speed;
+	double *wind_direction;
+	double *wind_gust;
 public:
 	pole(MODULE *);
 	int create(void);

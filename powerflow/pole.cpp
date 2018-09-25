@@ -23,6 +23,7 @@ pole::pole(MODULE *mod) : node(mod)
 				PT_KEYWORD, "STEEL", (enumeration)PT_STEEL,
 			PT_double, "tilt_angle[deg]", PADDR(tilt_angle), PT_DESCRIPTION, "tilt angle of pole",
 			PT_double, "tilt_direction[deg]", PADDR(tilt_direction), PT_DESCRIPTION, "tilt direction of pole",
+			PT_object, "weather", PADDR(weather), PT_DESCRIPTION, "weather data",
 			NULL) < 1 ) throw "unable to publish properties in " __FILE__;
 	}
 }
@@ -37,6 +38,10 @@ int pole::create(void)
 	pole_type = PT_WOOD;
 	tilt_angle = 0.0;
 	tilt_direction = 0.0;
+	weather = NULL;
+	wind_speed = NULL;
+	wind_direction = NULL;
+	wind_gust = NULL;
 	return node::create();
 }
 
@@ -52,6 +57,30 @@ int pole::init(OBJECT *parent)
 		gl_error("polt tilt direction is not between 0 and 360 degrees");
 		return 0;
 	}
+	if ( weather == NULL || ! gl_object_isa(weather,"climate") )
+	{
+		gl_error("weather is not set to a climate object");
+		return 0;
+	}
+	wind_speed = (double*)gl_get_addr(weather,"wind_speed");
+	if ( wind_speed == NULL )
+	{
+		gl_error("weather object does not provide wind speed data");
+		return 0;
+	}
+	wind_direction = (double*)gl_get_addr(weather,"wind_dir");
+	if ( wind_direction == NULL )
+	{
+		gl_error("weather object does not provide wind direction data");
+		return 0;
+	}
+	wind_gust = (double*)gl_get_addr(weather,"wind_gust");
+	if ( wind_gust == NULL )
+	{
+		gl_error("weather object does not provide wind gust data");
+		return 0;
+	}
+
 	return node::init(parent);
 }
 
