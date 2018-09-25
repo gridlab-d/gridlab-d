@@ -22,7 +22,7 @@ pole::pole(MODULE *mod) : node(mod)
 				PT_KEYWORD, "CONCRETE", (enumeration)PT_CONCRETE,
 				PT_KEYWORD, "STEEL", (enumeration)PT_STEEL,
 			PT_double, "tilt_angle[deg]", PADDR(tilt_angle), PT_DESCRIPTION, "tilt angle of pole",
-			PT_double, "tile_direction[deg]", PADDR(tilt_direction), PT_DESCRIPTION, "tilt direction of pole",
+			PT_double, "tilt_direction[deg]", PADDR(tilt_direction), PT_DESCRIPTION, "tilt direction of pole",
 			NULL) < 1 ) throw "unable to publish properties in " __FILE__;
 	}
 }

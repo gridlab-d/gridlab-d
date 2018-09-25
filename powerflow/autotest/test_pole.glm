@@ -1,0 +1,14 @@
+module powerflow;
+
+clock {
+	starttime '2000-01-01 00:00:00';
+	stoptime '2001-01-01 00:00:00';
+}
+
+object pole {
+	phases ABC;
+	nominal_voltage 12470;
+	pole_type CONCRETE;
+	tilt_angle 5;
+	tilt_direction 270;
+}
