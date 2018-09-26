@@ -18,17 +18,38 @@ public:
 	double tilt_direction;
 	object weather;
 public: // wood pole model parameters
-	double ice_thickness; 		// (see Chart 1)
-	double wind_loading; 		// (see Chart 1)
-	double temperature; 		// (see Chart 1)
-	double overload_factor; 	// (see Chart 2)
-	double strength_factor; 	// (see Chart 3)
+	double design_ice_thickness; 		// (see Chart 1)
+	double design_wind_loading; 		// (see Chart 1)
+	double design_temperature; 		// (see Chart 1)
+	// overload factors (see Chart 2)
+	double overload_factor_vertical; 	
+	double overload_factor_transverse_general; 	
+	double overload_factor_transverse_crossing; 	
+	double overload_factor_transverse_wire; 	
+	double overload_factor_longitudinal_general; 	
+	double overload_factor_longitudinal_deadend; 	
+	// strength factors (see Chart 3)
+	double strength_factor_250b_wood; 	
+	double strength_factor_250b_support; 	
+	double strength_factor_250c_wood; 	
+	double strength_factor_250c_support; 	
+	double cable_diameter;		// (see Section F)
+	double ice_thickness;		// (see Section F)
 	double pole_length; 		// (see Chart 4)
-	double ground_depth;		// (see Section A)
+	double pole_depth;		// (see Section A)
 	double ground_diameter; 	// (see Chart 4)
 	double top_diameter; 		// (see Chart 4)
 	double fiber_strength; 		// (see Chart 5)
+	double equipment_area;		// (see Section E)
+	double equipment_height;	// (see Section E)
 	double resisting_moment; 	// (see Section B)
+	double pole_moment;		// (see Section D)
+	double equipment_moment;	// (see Section E)
+	double wire_load;		// (see Section F)
+	double wire_moment;		// (see Section F)
+	double wind_pressure;		// (see Section D)
+	double cable_height;		// (see Section F)
+	object cable_configuration;
 private:
 	double *wind_speed;
 	double *wind_direction;

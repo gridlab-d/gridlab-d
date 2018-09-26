@@ -18,4 +18,5 @@ object pole {
 	pole_type CONCRETE;
 	tilt_angle 5;
 	tilt_direction 270;
+	equipment_area 5 sf;
 }
