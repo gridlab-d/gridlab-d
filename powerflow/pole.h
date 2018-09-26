@@ -14,13 +14,17 @@ public:
 		double height;
 		double diameter;
 		double heading;
+		double tension;
+		double span;
 		struct s_wiredata *next;
 	} WIREDATA;
-	inline void add_wire(double height, double diameter, double heading) {
+	inline void add_wire(double height, double diameter, double heading, double tension, double span) {
 		WIREDATA *item = new WIREDATA;
 		item->height = height;
 		item->diameter = diameter;
 		item->heading = heading;
+		item->tension = tension;
+		item->span = span;
 		if ( wire_data != NULL )
 			wire_data->next = item;
 		wire_data = item;
@@ -50,6 +54,7 @@ private:
 	double wire_load;		// (see Section F)
 	double wire_moment;		// (see Section F)
 	double wind_pressure;		// (see Section D)
+	double wire_tension;	// (see Section G)
 	object cable_configuration;
 	bool is_deadend;
 private:

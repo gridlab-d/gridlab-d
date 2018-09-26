@@ -54,6 +54,7 @@ object overhead_line {
 	phases ABC;
 	from pole1;
 	to pole2;
+	length 500 ft;
 	configuration linetype1;
 }
 object pole {
@@ -62,7 +63,7 @@ object pole {
 	configuration "WOOD-C-45/5"; 
 	phases ABC;
 	nominal_voltage 12470;
-	tilt_angle 5;
+	tilt_angle 5 deg;
 	tilt_direction 270;
 	equipment_area 5 sf;
 	equipment_height 25 ft;

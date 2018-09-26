@@ -26,7 +26,7 @@ pole::pole(MODULE *mod) : node(mod)
 				PT_KEYWORD, "WOOD", (enumeration)PT_WOOD,
 				PT_KEYWORD, "CONCRETE", (enumeration)PT_CONCRETE,
 				PT_KEYWORD, "STEEL", (enumeration)PT_STEEL,
-			PT_double, "tilt_angle[deg]", PADDR(tilt_angle), PT_DESCRIPTION, "tilt angle of pole",
+			PT_double, "tilt_angle[rad]", PADDR(tilt_angle), PT_DESCRIPTION, "tilt angle of pole",
 			PT_double, "tilt_direction[deg]", PADDR(tilt_direction), PT_DESCRIPTION, "tilt direction of pole",
 			PT_object, "weather", PADDR(weather), PT_DESCRIPTION, "weather data",
 			PT_object, "configuration", PADDR(configuration), PT_DESCRIPTION, "configuration data",
@@ -120,11 +120,13 @@ int pole::init(OBJECT *parent)
 	if ( all_ohls == NULL )
 		all_ohls = gl_find_objects(FL_NEW,FT_CLASS,SAME,"overhead_line",FT_END);
 	OBJECT *obj = NULL;
+	int n_lines = 0;
 	while ( ( obj = gl_find_next(all_ohls,obj) ) != NULL )
 	{
 		overhead_line *line = OBJECTDATA(obj,overhead_line);
 		if ( line->from == my || line->to == my )
 		{
+			n_lines++;
 			line_configuration *line_config = OBJECTDATA(line->configuration,line_configuration);
 			if ( line_config == NULL )
 			{
@@ -138,26 +140,17 @@ int pole::init(OBJECT *parent)
 				break;
 			}
 			overhead_line_conductor *phaseA = OBJECTDATA(line_config->phaseA_conductor,overhead_line_conductor);
-			if ( phaseA == NULL )
-			{
-				warning("line configuration %s has no phase A conductor data",line_config->get_name());
-				break;
-			}
+			if ( phaseA != NULL )
+				add_wire(spacing->distance_AtoE,phaseA->cable_diameter,0.0,4430,line->length/2);
 			overhead_line_conductor *phaseB = OBJECTDATA(line_config->phaseB_conductor,overhead_line_conductor);
-			if ( phaseB == NULL )
-			{
-				warning("line configuration %s has no phase B conductor data",line_config->get_name());
-				break;
-			}
+			if ( phaseB != NULL )
+				add_wire(spacing->distance_BtoE,phaseB->cable_diameter,0.0,4430,line->length/2);
 			overhead_line_conductor *phaseC = OBJECTDATA(line_config->phaseC_conductor,overhead_line_conductor);
-			if ( phaseC == NULL )
-			{
-				warning("line configuration %s has no phase C conductor data",line_config->get_name());
-				break;
-			}
-			add_wire(spacing->distance_AtoE,phaseA->cable_diameter,0.0);
-			add_wire(spacing->distance_BtoE,phaseB->cable_diameter,0.0);
-			add_wire(spacing->distance_CtoE,phaseC->cable_diameter,0.0);
+			if ( phaseC != NULL )
+				add_wire(spacing->distance_CtoE,phaseC->cable_diameter,0.0,4430,line->length/2);
+			overhead_line_conductor *phaseN = OBJECTDATA(line_config->phaseN_conductor,overhead_line_conductor);
+			if ( phaseN != NULL )
+				add_wire(spacing->distance_NtoE,phaseN->cable_diameter,0.0,2190,line->length/2);
 			verbose("found link %s",(const char*)(line->get_name()));
 		}
 	}
@@ -165,13 +158,14 @@ int pole::init(OBJECT *parent)
 	{
 		warning("no wire data found--wire loading is not included");
 	}
+	is_deadend = ( n_lines < 2 );
 
 	return node::init(parent);
 }
 
 TIMESTAMP pole::presync(TIMESTAMP t0)
 {
-	if ( last_wind_speed != *wind_speed )
+	if ( pole_status == PS_OK && last_wind_speed != *wind_speed )
 	{
 		gld_clock dt;
 		wind_pressure = 0.00256*2.24 * (*wind_speed)*(*wind_speed);
@@ -184,12 +178,17 @@ TIMESTAMP pole::presync(TIMESTAMP t0)
 		wire_moment = 0.0;
 		for ( wire = get_first_wire() ; wire != NULL ; wire = get_next_wire(wire) )
 		{
-			wire_load += wind_pressure * (wire->diameter+2*ice_thickness)/12;
-			wire_moment += wire_load * wire->height * config->overload_factor_transverse_wire;
+			double load = wind_pressure * (wire->diameter+2*ice_thickness)/12;
+			wire_load += load;
+			wire_moment += wire->span * load * wire->height * config->overload_factor_transverse_wire;
+			double tension = wire->tension * config->overload_factor_transverse_wire * sin(tilt_angle/2) * wire->height;
+			wire_moment += tension;
 		}
 		double total_moment = pole_moment + equipment_moment + wire_moment;
 		verbose("wind %4.1f psi, pole %4.0f ft*lb, equipment %4.0f ft*lb, wires %4.0f ft*lb, margin %.0f%%", (const char*)(dt.get_string()), wind_pressure, pole_moment, equipment_moment, wire_moment, total_moment/resisting_moment*100);
 		pole_status = ( total_moment < resisting_moment ? PS_OK : PS_FAILED );
+		if ( pole_status == PS_FAILED )
+			warning("pole failed");
 		last_wind_speed = *wind_speed;
 	}
 	return node::presync(t0);
