@@ -45,6 +45,8 @@
 #include "file.h"
 #include "odbc.h"
 
+#include "shaper.h"
+
 
 CLASS *shaper_class = NULL;
 static OBJECT *last_shaper = NULL;

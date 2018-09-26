@@ -6,6 +6,7 @@ SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I../third_party/jsonCpp" )
 
 add_library(${PROJECT_NAME} SHARED
         tape/collector.cpp
+        tape/collector.h
         tape/file.cpp
         tape/file.h
         tape/group_recorder.h
@@ -24,11 +25,15 @@ add_library(${PROJECT_NAME} SHARED
         tape/memory.cpp
         tape/memory.h
         tape/multi_recorder.cpp
+        tape/multi_recorder.h
         tape/odbc.cpp
         tape/odbc.h
         tape/player.cpp
+        tape/player.h
         tape/recorder.cpp
+        tape/recorder.h
         tape/shaper.cpp
+        tape/shaper.h
         tape/tape.cpp
         tape/tape.h
         )

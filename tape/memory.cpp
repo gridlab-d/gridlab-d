@@ -12,6 +12,11 @@
 #include "tape.h"
 #include "memory.h"
 
+#include "collector.h"
+#include "player.h"
+#include "recorder.h"
+#include "shaper.h"
+
 /*******************************************************************
  * players 
  */

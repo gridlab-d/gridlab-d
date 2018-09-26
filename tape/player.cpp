@@ -44,6 +44,8 @@
 #include "file.h"
 #include "odbc.h"
 
+#include "player.h"
+
 CLASS *player_class = NULL;
 static OBJECT *last_player = NULL;
 

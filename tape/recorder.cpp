@@ -28,6 +28,8 @@
 #include "file.h"
 #include "odbc.h"
 
+#include "recorder.h"
+
 #ifndef WIN32
 #define strtok_s strtok_r
 #else

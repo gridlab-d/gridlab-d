@@ -21,6 +21,12 @@
 #include "gridlabd.h"
 #include "../tape/tape.h"
 #include "tape_plot.h"
+
+#include "../tape/collector.h"
+#include "../tape/player.h"
+#include "../tape/recorder.h"
+#include "../tape/shaper.h"
+
 #define MAXCOLUMNS 50
 
 /*******************************************************************

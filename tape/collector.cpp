@@ -33,6 +33,8 @@
 #include "file.h"
 #include "odbc.h"
 
+#include "collector.h"
+
 CLASS *collector_class = NULL;
 static OBJECT *last_collector = NULL;
 

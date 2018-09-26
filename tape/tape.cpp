@@ -33,6 +33,11 @@
 #include "metrics_collector.h"
 #include "metrics_collector_writer.h"
 
+#include "collector.h"
+#include "player.h"
+#include "recorder.h"
+#include "shaper.h"
+
 #define MAP_DOUBLE(X,LO,HI) {#X,VT_DOUBLE,&X,LO,HI}
 #define MAP_INTEGER(X,LO,HI) {#X,VT_INTEGER,&X,LO,HI}
 #define MAP_STRING(X) {#X,VT_STRING,X,sizeof(X),0}
