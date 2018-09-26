@@ -43,6 +43,7 @@
 #include "impedance_dump.h"
 #include "vfd.h"
 #include "pole.h"
+#include "pole_configuration.h"
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
@@ -150,6 +151,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new impedance_dump(module);
 	new vfd(module);
 	new pole(module);
+	new pole_configuration(module);
 
 	/* always return the first class registered */
 	return node::oclass;

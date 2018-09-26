@@ -11,12 +11,15 @@ object climate {
 	tmyfile CA-San_Diego_North_Island_Nas.tmy3;
 }
 
+object pole_configuration {
+	name "WOOD45/5";
+	pole_type WOOD;
+}
 object pole {
 	weather sandiego;
+	configuration "WOOD45/5"; 
 	phases ABC;
 	nominal_voltage 12470;
-	pole_type CONCRETE;
 	tilt_angle 5;
 	tilt_direction 270;
-	equipment_area 5 sf;
 }
