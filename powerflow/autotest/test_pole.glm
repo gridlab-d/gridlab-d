@@ -12,12 +12,17 @@ object climate {
 }
 
 object pole_configuration {
-	name "WOOD45/5";
+	name "WOOD-C-45/5";
 	pole_type WOOD;
+	pole_length 45 ft;
+	pole_depth 4.5 ft;
+	ground_diameter (32.5/3.14);
+	top_diameter (19/3.14);
+	fiber_strength 8000 psi;
 }
 object pole {
 	weather sandiego;
-	configuration "WOOD45/5"; 
+	configuration "WOOD-C-45/5"; 
 	phases ABC;
 	nominal_voltage 12470;
 	tilt_angle 5;

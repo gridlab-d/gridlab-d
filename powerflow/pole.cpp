@@ -101,10 +101,11 @@ int pole::init(OBJECT *parent)
 		return 0;
 	}
 
-	resisting_moment = 0.000264 
+	resisting_moment = 0.008186 
 		* config->strength_factor_250b_wood 
 		* config->fiber_strength
-		* ( config->ground_diameter * config->ground_diameter * config->ground_diameter * 247.6);
+		* ( config->ground_diameter * config->ground_diameter * config->ground_diameter);
+	verbose("resisting moment %.0f ft*lb",resisting_moment);
 	return node::init(parent);
 }
 
@@ -126,7 +127,8 @@ TIMESTAMP pole::presync(TIMESTAMP t0)
 			wire_load += wind_pressure * (wire_data[n].diameter+2*ice_thickness)/12;
 			wire_moment += wire_load * wire_data[n].height * config->overload_factor_transverse_wire;
 		}
-		printf("%s: wind %4.1f psi, pole %4.0f ft*lb, equipment %4.0f ft*lb, wires %4.0f ft*lb\n", (const char*)(dt.get_string()), wind_pressure, pole_moment, equipment_moment, wire_moment);
+		double total_moment = pole_moment + equipment_moment + wire_moment;
+		verbose("wind %4.1f psi, pole %4.0f ft*lb, equipment %4.0f ft*lb, wires %4.0f ft*lb, margin %.0f%%", (const char*)(dt.get_string()), wind_pressure, pole_moment, equipment_moment, wire_moment, total_moment/resisting_moment*100);
 	}
 	return node::presync(t0);
 }
