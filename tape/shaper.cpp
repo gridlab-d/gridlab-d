@@ -41,11 +41,9 @@
 #include "object.h"
 #include "aggregate.h"
 
-#include "tape.h"
+#include "shaper.h"
 #include "file.h"
 #include "odbc.h"
-
-#include "shaper.h"
 
 
 CLASS *shaper_class = NULL;

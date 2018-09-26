@@ -3,6 +3,11 @@
 	@file tape.h
  **/
 
+#include "collector.h"
+#include "player.h"
+#include "recorder.h"
+#include "shaper.h"
+
 #ifndef _TAPE_H
 #define _TAPE_H
 

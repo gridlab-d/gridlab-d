@@ -1,10 +1,10 @@
 //
 // Created by lauraleist on 9/26/18.
 //
-#include "tape.h"
-
 #ifndef _PLAYER_H
 #define _PLAYER_H
+
+#include "tape.h"
 
 /** @}
   @addtogroup player

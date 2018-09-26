@@ -1,10 +1,11 @@
 //
 // Created by lauraleist on 9/26/18.
 //
-#include "tape.h"
 
 #ifndef _SHAPER_H
 #define _SHAPER_H
+
+#include "tape.h"
 
 /** @}
 	@addtogroup shaper

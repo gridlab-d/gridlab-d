@@ -1,10 +1,11 @@
 //
 // Created by lauraleist on 9/26/18.
 //
-#include "tape.h"
 
 #ifndef _RECORDER_H
 #define _RECORDER_H
+
+#include "tape.h"
 
 /** @}
 	@addtogroup recorder

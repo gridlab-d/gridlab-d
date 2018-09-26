@@ -40,11 +40,9 @@
 #include "object.h"
 #include "aggregate.h"
 
-#include "tape.h"
+#include "player.h"
 #include "file.h"
 #include "odbc.h"
-
-#include "player.h"
 
 CLASS *player_class = NULL;
 static OBJECT *last_player = NULL;

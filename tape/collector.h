@@ -1,9 +1,11 @@
 //
 // Created by lauraleist on 9/26/18.
 //
-#include "tape.h"
+
 #ifndef _COLLECTOR_H
 #define _COLLECTOR_H
+
+#include "tape.h"
 
 /** @}
 	@addtogroup collector
