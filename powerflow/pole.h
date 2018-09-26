@@ -13,16 +13,28 @@ public:
 	typedef struct s_wiredata {
 		double height;
 		double diameter;
+		double heading;
+		struct s_wiredata *next;
 	} WIREDATA;
-	typedef enum e_wiretype {
-		WT_PHASEA, WT_PHASEB, WT_PHASEC, WT_NEUTRAL, WT_PHONE, WT_TV, _N_WIRETYPES,
-	} CONDUCTOR;
+	inline void add_wire(double height, double diameter, double heading) {
+		WIREDATA *item = new WIREDATA;
+		item->height = height;
+		item->diameter = diameter;
+		item->heading = heading;
+		if ( wire_data != NULL )
+			wire_data->next = item;
+		wire_data = item;
+	};
+	inline WIREDATA *get_next_wire(WIREDATA *wire) { return wire->next;};
+	inline WIREDATA *get_first_wire(void) { return wire_data;};
 public:
 	static CLASS *oclass;
 	static CLASS *pclass;
 public:
 	enum {PT_WOOD=0, PT_STEEL=1, PT_CONCRETE=2};
 	enumeration pole_type;
+	enum {PS_OK=0, PS_FAILED=1,};
+	enumeration pole_status;
 	double tilt_angle;
 	double tilt_direction;
 	object weather;
@@ -38,15 +50,15 @@ private:
 	double wire_load;		// (see Section F)
 	double wire_moment;		// (see Section F)
 	double wind_pressure;		// (see Section D)
-	double cable_height;		// (see Section F)
 	object cable_configuration;
+	bool is_deadend;
 private:
 	pole_configuration *config;
 	double last_wind_speed;
 	double *wind_speed;
 	double *wind_direction;
 	double *wind_gust;
-	WIREDATA wire_data[_N_WIRETYPES];
+	WIREDATA *wire_data;
 public:
 	pole(MODULE *);
 	int isa(char *);

@@ -2,6 +2,8 @@
 // Copyright (C) 2018, Stanford University
 
 #include "pole.h"
+#include "line.h"
+#include "overhead_line.h"
 
 CLASS *pole::oclass = NULL;
 CLASS *pole::pclass = NULL;
@@ -17,6 +19,9 @@ pole::pole(MODULE *mod) : node(mod)
 		oclass->trl = TRL_PROTOTYPE;
 		if ( gl_publish_variable(oclass,
 			PT_INHERIT, "node",
+			PT_enumeration, "pole_status", PADDR(pole_status), PT_DESCRIPTION, "pole status",
+				PT_KEYWORD, "OK", (enumeration)PS_OK,
+				PT_KEYWORD, "FAILED", (enumeration)PS_FAILED,
 			PT_enumeration,"pole_type", PADDR(pole_type), PT_DESCRIPTION, "material from which pole is made",
 				PT_KEYWORD, "WOOD", (enumeration)PT_WOOD,
 				PT_KEYWORD, "CONCRETE", (enumeration)PT_CONCRETE,
@@ -27,9 +32,6 @@ pole::pole(MODULE *mod) : node(mod)
 			PT_object, "configuration", PADDR(configuration), PT_DESCRIPTION, "configuration data",
 			PT_double, "equipment_area[sf]", PADDR(equipment_area), PT_DESCRIPTION, "equipment cross sectional area",
 			PT_double, "equipment_height[ft]", PADDR(equipment_height), PT_DESCRIPTION, "equipment height on pole",
-			PT_double, "resisting_moment[ft*lb]", PADDR(resisting_moment), PT_DESCRIPTION, "pole ultimate resisting moment",
-			PT_double, "equipment_moment[ft*lb]", PADDR(equipment_moment), PT_DESCRIPTION, "equipment moment",
-			PT_double, "wind_pressure[psi]", PADDR(wind_pressure), PT_DESCRIPTION, "wind pressure",
 			NULL) < 1 ) throw "unable to publish properties in " __FILE__;
 	}
 }
@@ -41,6 +43,7 @@ int pole::isa(char *classname)
 
 int pole::create(void)
 {
+	pole_status = PS_OK;
 	weather = NULL;
 	configuration = NULL;
 	tilt_angle = 0.0;
@@ -50,12 +53,16 @@ int pole::create(void)
 	wind_direction = NULL;
 	wind_gust = NULL;
 	last_wind_speed = 0.0;
-	memset(wire_data,0,sizeof(wire_data));
+	wire_data = NULL;
+	equipment_area = 0.0;
+	equipment_height = 0.0;
 	return node::create();
 }
 
 int pole::init(OBJECT *parent)
 {
+	OBJECT *my = (OBJECT*)(this)-1;
+
 	// configuration
 	if ( configuration == NULL || ! gl_object_isa(configuration,"pole_configuration") )
 	{
@@ -101,11 +108,64 @@ int pole::init(OBJECT *parent)
 		return 0;
 	}
 
+	// calculation resisting moment
 	resisting_moment = 0.008186 
 		* config->strength_factor_250b_wood 
 		* config->fiber_strength
 		* ( config->ground_diameter * config->ground_diameter * config->ground_diameter);
 	verbose("resisting moment %.0f ft*lb",resisting_moment);
+
+	// collect wire data
+	static FINDLIST *all_ohls = NULL;
+	if ( all_ohls == NULL )
+		all_ohls = gl_find_objects(FL_NEW,FT_CLASS,SAME,"overhead_line",FT_END);
+	OBJECT *obj = NULL;
+	while ( ( obj = gl_find_next(all_ohls,obj) ) != NULL )
+	{
+		overhead_line *line = OBJECTDATA(obj,overhead_line);
+		if ( line->from == my || line->to == my )
+		{
+			line_configuration *line_config = OBJECTDATA(line->configuration,line_configuration);
+			if ( line_config == NULL )
+			{
+				warning("line %s has no line configuration--skipping",line->get_name());
+				break;
+			}
+			line_spacing *spacing = OBJECTDATA(line_config->line_spacing,line_spacing);
+			if ( spacing == NULL )
+			{
+				warning("line configure %s has no line spacing data--skipping",line_config->get_name());
+				break;
+			}
+			overhead_line_conductor *phaseA = OBJECTDATA(line_config->phaseA_conductor,overhead_line_conductor);
+			if ( phaseA == NULL )
+			{
+				warning("line configuration %s has no phase A conductor data",line_config->get_name());
+				break;
+			}
+			overhead_line_conductor *phaseB = OBJECTDATA(line_config->phaseB_conductor,overhead_line_conductor);
+			if ( phaseB == NULL )
+			{
+				warning("line configuration %s has no phase B conductor data",line_config->get_name());
+				break;
+			}
+			overhead_line_conductor *phaseC = OBJECTDATA(line_config->phaseC_conductor,overhead_line_conductor);
+			if ( phaseC == NULL )
+			{
+				warning("line configuration %s has no phase C conductor data",line_config->get_name());
+				break;
+			}
+			add_wire(spacing->distance_AtoE,phaseA->cable_diameter,0.0);
+			add_wire(spacing->distance_BtoE,phaseB->cable_diameter,0.0);
+			add_wire(spacing->distance_CtoE,phaseC->cable_diameter,0.0);
+			verbose("found link %s",(const char*)(line->get_name()));
+		}
+	}
+	if ( wire_data == NULL )
+	{
+		warning("no wire data found--wire loading is not included");
+	}
+
 	return node::init(parent);
 }
 
@@ -118,17 +178,19 @@ TIMESTAMP pole::presync(TIMESTAMP t0)
 		double pole_height = config->pole_length - config->pole_depth;
 		pole_moment = wind_pressure * pole_height * pole_height * (config->ground_diameter+2*config->top_diameter)/72 * config->overload_factor_transverse_general;
 		equipment_moment = wind_pressure * equipment_area * equipment_height * config->overload_factor_transverse_general;
+
+		WIREDATA *wire;
 		wire_load = 0.0;
 		wire_moment = 0.0;
-
-		unsigned int n;
-		for ( n = 0 ; n < _N_WIRETYPES ; n++ )
+		for ( wire = get_first_wire() ; wire != NULL ; wire = get_next_wire(wire) )
 		{
-			wire_load += wind_pressure * (wire_data[n].diameter+2*ice_thickness)/12;
-			wire_moment += wire_load * wire_data[n].height * config->overload_factor_transverse_wire;
+			wire_load += wind_pressure * (wire->diameter+2*ice_thickness)/12;
+			wire_moment += wire_load * wire->height * config->overload_factor_transverse_wire;
 		}
 		double total_moment = pole_moment + equipment_moment + wire_moment;
 		verbose("wind %4.1f psi, pole %4.0f ft*lb, equipment %4.0f ft*lb, wires %4.0f ft*lb, margin %.0f%%", (const char*)(dt.get_string()), wind_pressure, pole_moment, equipment_moment, wire_moment, total_moment/resisting_moment*100);
+		pole_status = ( total_moment < resisting_moment ? PS_OK : PS_FAILED );
+		last_wind_speed = *wind_speed;
 	}
 	return node::presync(t0);
 }

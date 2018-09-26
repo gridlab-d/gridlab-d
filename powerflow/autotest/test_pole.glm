@@ -20,11 +20,50 @@ object pole_configuration {
 	top_diameter (19/3.14);
 	fiber_strength 8000 psi;
 }
+
 object pole {
+	name pole1;
 	weather sandiego;
 	configuration "WOOD-C-45/5"; 
 	phases ABC;
 	nominal_voltage 12470;
 	tilt_angle 5;
 	tilt_direction 270;
+}
+
+object line_spacing {
+	name spacing1;
+	distance_AE 30;
+	distance_BE 35;
+	distance_CE 40;
+}
+
+object overhead_line_conductor {
+	name conductor1;
+	diameter 0.5 in;
+}
+object line_configuration {
+	name linetype1;
+	spacing spacing1;
+	conductor_A conductor1;
+	conductor_B conductor1;
+	conductor_C conductor1;
+}
+
+object overhead_line {
+	phases ABC;
+	from pole1;
+	to pole2;
+	configuration linetype1;
+}
+object pole {
+	name pole2;
+	weather sandiego;
+	configuration "WOOD-C-45/5"; 
+	phases ABC;
+	nominal_voltage 12470;
+	tilt_angle 5;
+	tilt_direction 270;
+	equipment_area 5 sf;
+	equipment_height 25 ft;
 }
