@@ -64,6 +64,7 @@ private:
 	double *wind_direction;
 	double *wind_gust;
 	WIREDATA *wire_data;
+	TIMESTAMP down_time;
 public:
 	pole(MODULE *);
 	int isa(char *);

@@ -165,6 +165,13 @@ int pole::init(OBJECT *parent)
 
 TIMESTAMP pole::presync(TIMESTAMP t0)
 {
+	if ( pole_status == PS_FAILED && down_time+config->repair_time > gl_globalclock )
+	{
+		warning("pole repaired");
+		tilt_angle = 0.0;
+		tilt_direction = 0.0;
+		pole_status = PS_OK;
+	}
 	if ( pole_status == PS_OK && last_wind_speed != *wind_speed )
 	{
 		gld_clock dt;
@@ -188,10 +195,15 @@ TIMESTAMP pole::presync(TIMESTAMP t0)
 		verbose("wind %4.1f psi, pole %4.0f ft*lb, equipment %4.0f ft*lb, wires %4.0f ft*lb, margin %.0f%%", (const char*)(dt.get_string()), wind_pressure, pole_moment, equipment_moment, wire_moment, total_moment/resisting_moment*100);
 		pole_status = ( total_moment < resisting_moment ? PS_OK : PS_FAILED );
 		if ( pole_status == PS_FAILED )
-			warning("pole failed");
+		{
+			warning("pole failed at %.0f%% loading",total_moment/resisting_moment*100);
+			down_time = gl_globalclock;
+		}
 		last_wind_speed = *wind_speed;
 	}
-	return node::presync(t0);
+	TIMESTAMP t1 = node::presync(t0);
+	TIMESTAMP t2 = ( pole_status == PS_FAILED ? down_time + config->repair_time : TS_NEVER );
+	return ( t1 > t0 && t2 < t1 ) ? t1 : t2;
 }
 
 TIMESTAMP pole::sync(TIMESTAMP t0)

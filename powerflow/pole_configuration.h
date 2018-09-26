@@ -14,6 +14,7 @@ public:
 public:
 	enum {PT_WOOD=0, PT_STEEL=1, PT_CONCRETE=2};
 	enumeration pole_type;
+	double repair_time;
 public: // wood pole model parameters
 	double design_ice_thickness; 		// (see Chart 1)
 	double design_wind_loading; 		// (see Chart 1)

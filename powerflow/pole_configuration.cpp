@@ -40,7 +40,8 @@ pole_configuration::pole_configuration(MODULE *mod) : powerflow_library(mod)
 			PT_double, "ground_diameter[in]", PADDR(ground_diameter), PT_DESCRIPTION, "diameter of pole at ground level",
 			PT_double, "top_diameter[in]", PADDR(top_diameter), PT_DESCRIPTION, "diameter of pole at top",
 			PT_double, "fiber_strength[psi]", PADDR(fiber_strength), PT_DESCRIPTION, "pole structural strength",
-	            NULL) < 1) GL_THROW("unable to publish pole_configuration properties in %s",__FILE__);
+			PT_double, "repair_time[s]", PADDR(repair_time), PT_DESCRIPTION, "pole repair time",
+            NULL) < 1) GL_THROW("unable to publish pole_configuration properties in %s",__FILE__);
     }
 }
 
@@ -77,6 +78,7 @@ int pole_configuration::create(void)
     // defaults from chart 5 - southern yellow pine
     fiber_strength = 8000;
 
+	repair_time = 86400;
 	return 1;
 }
 

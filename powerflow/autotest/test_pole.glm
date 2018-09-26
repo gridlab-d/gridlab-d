@@ -1,6 +1,8 @@
 module powerflow;
 module climate;
 
+#set suppress_repeat_messages=FALSE
+
 clock {
 	starttime '2000-01-01 00:00:00';
 	stoptime '2001-01-01 00:00:00';
@@ -27,7 +29,7 @@ object pole {
 	configuration "WOOD-C-45/5"; 
 	phases ABC;
 	nominal_voltage 12470;
-	tilt_angle 5;
+	tilt_angle 0.4;
 	tilt_direction 270;
 }
 
