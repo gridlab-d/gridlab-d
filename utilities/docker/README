@@ -1,9 +1,21 @@
 To create a docker image run the command
 
-   docker build https://raw.githubusercontent.com/dchassin/gridlabd/master/utilities/docker/DockerFile -t gridlabd
+   % docker build https://raw.githubusercontent.com/dchassin/gridlabd/master/utilities/docker/DockerFile -t gridlabd
    
 If the build succeeds and passes validation, the container will be created.
 
 To save the docker image use the following command
 
-   docker save gridlabd -o centos-gridlabd
+   % docker save gridlabd -o centos-gridlabd
+
+To run gridlabd after mapping a local folder to a docker folder, use the following command
+
+   % docker run -it -v <localpath>:<dockerpath> centos-gridlabd gridlabd -W <dockerpath> <your-options>
+   
+To run a shell instead of gridlabd, use the following command
+
+   % docker run -it -v <localpath>:<dockerpath> centos-gridlabd bash
+   
+If you want to use an alias, try this one:
+
+   % alias gridlabd='docker run -it -v $(pwd):/gridlabd gridlabd gridlabd -W /gridlabd'
