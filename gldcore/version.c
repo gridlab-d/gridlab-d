@@ -10,9 +10,9 @@
 
 #include "build.h" // BRANCH will be defined automatically from the ticket
 
-//#ifndef BRANCH
-#define BRANCH "Keeler" // update this from legal.h each time trunk is branched
-//#endif
+#ifndef BRANCH
+#define BRANCH "Lugo" // update this from legal.h each time trunk is branched
+#endif
 
 #ifndef BUILDNUM
 #error("gldcore/build.h was not updated properly (BUILDNUM is missing) - try deleting it and rebuilding again")

@@ -28,7 +28,7 @@
 #include "linkage.h"
 #include "output.h"
 #include "globals.h"
-#include "random.h"
+#include "gldrandom.h"
 #include "exec.h"
 #include "instance.h"
 

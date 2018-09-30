@@ -25,7 +25,7 @@
 #include "output.h"
 #include "environment.h"
 #include "test.h"
-#include "random.h"
+#include "gldrandom.h"
 #include "realtime.h"
 #include "save.h"
 #include "local.h"
