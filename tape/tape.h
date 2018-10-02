@@ -3,10 +3,23 @@
 	@file tape.h
  **/
 
+
+
+
+#ifndef TAPE_SHAPER_H
+#ifndef TAPE_COLLECTOR_H
+#ifndef TAPE_PLAYER_H
+#ifndef TAPE_RECORDER_H
+
 #include "collector.h"
 #include "player.h"
 #include "recorder.h"
 #include "shaper.h"
+
+#endif
+#endif
+#endif
+#endif
 
 #ifndef _TAPE_H
 #define _TAPE_H
@@ -15,7 +28,6 @@
 #include "object.h"
 #include "aggregate.h"
 #include "memory.h"
-
 /* tape global controls */
 static char timestamp_format[32]="%Y-%m-%d %H:%M:%S";
 typedef enum {VT_INTEGER, VT_DOUBLE, VT_STRING} VARIABLETYPE;
@@ -24,6 +36,7 @@ typedef enum {FT_FILE, FT_ODBC, FT_MEMORY} FILETYPE;
 typedef enum {SCREEN, EPS, GIF, JPG, PDF, PNG, SVG} PLOTFILE;
 typedef enum e_complex_part {NONE = 0, REAL, IMAG, MAG, ANG, ANG_RAD} CPLPT;
 typedef enum {UNKNOWN=0, PLAYER=1, RECORDER=2, GROUPRECORDER=3} DELTATAPEOBJ;
+
 
 /* recorder-specific enums */
 typedef enum {HU_DEFAULT, HU_ALL, HU_NONE} HEADERUNITS;
@@ -71,13 +84,14 @@ typedef struct s_deltaobj {
 } DELTAOBJ_LIST;
 
 
-void enable_deltamode(TIMESTAMP t1); /* indicate when deltamode is needed */
+extern void enable_deltamode(TIMESTAMP t); /* indicate when deltamode is needed */
 EXPORT int delta_add_tape_device(OBJECT *obj, DELTATAPEOBJ tape_type);
+
 void set_csv_options(void);
 
 
 // TODO: Misc prototypes from across the module. Move all of these into appropriate header files for each component
-extern TIMESTAMP player_read(OBJECT *obj);
-extern int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buffer, int size);
+
+
 
 #endif

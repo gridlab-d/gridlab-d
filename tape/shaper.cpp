@@ -128,7 +128,7 @@ static TIMESTAMP shaper_read(OBJECT *obj, TIMESTAMP t0, unsigned int n)
 	TIMESTAMP t1 = TS_NEVER;
 
 	/* determine shape time */
-	time_t t = (time_t)(t0/TS_SECOND);
+	auto t = (time_t)(t0/TS_SECOND);
 	struct tm *tval = localtime(&t); /* TODO: this should use machine local time, but sim local time */
 
 	/* set the value at that time */

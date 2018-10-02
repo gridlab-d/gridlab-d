@@ -2,10 +2,15 @@
 // Created by lauraleist on 9/26/18.
 //
 
-#ifndef _SHAPER_H
-#define _SHAPER_H
+#ifndef TAPE_SHAPER_H
+#define TAPE_SHAPER_H
 
+//#ifndef _TAPE_H
 #include "tape.h"
+//#endif
+//#include "property.h"
+
+//typedef struct s_tape_operations TAPEOPS;
 
 /** @}
 	@addtogroup shaper

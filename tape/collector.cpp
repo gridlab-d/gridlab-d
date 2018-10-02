@@ -195,7 +195,7 @@ int read_aggregates(AGGREGATION *aggr, char *buffer, int size)
 
 
 
-EXPORT TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	struct collector *my = OBJECTDATA(obj,struct collector);
 	typedef enum {NONE='\0', LT='<', EQ='=', GT='>'} COMPAREOP;
@@ -215,7 +215,7 @@ EXPORT TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	{
 		sprintf(buffer,"'%s' contains an aggregate that is not found in the group '%s'", (char*)my->property, (char*)my->group);
 		my->status = TS_ERROR;
-		goto Error;
+		return sync_collector_error(&obj, &my, buffer);
 	}
 
 	if((my->status == TS_OPEN) && (t0 > obj->clock)){
@@ -282,15 +282,17 @@ EXPORT TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			strncpy(my->last.value, buffer, sizeof(my->last.value));
 		}
 	}
-Error:
-	if (my->status==TS_ERROR)
+	return sync_collector_error(&obj, &my, buffer);
+}
+TIMESTAMP sync_collector_error(OBJECT **obj, struct collector **my, char1024 buffer) {
+	if ((*my)->status==TS_ERROR)
 	{
-		gl_error("collector %d %s\n",obj->id, buffer.get_string());
-		my->status=TS_DONE;
+		gl_error("collector %d %s\n",(*obj)->id, buffer.get_string());
+		(*my)->status=TS_DONE;
 		return 0; /* failed */
 	}
 
-	return (my->interval==0 || my->interval==-1) ? TS_NEVER : my->last.ts+my->interval;
+	return ((*my)->interval==0 || (*my)->interval==-1) ? TS_NEVER : (*my)->last.ts+(*my)->interval;
 }
 
 /**@}*/

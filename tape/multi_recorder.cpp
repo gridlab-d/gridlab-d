@@ -35,7 +35,7 @@
 #include "object.h"
 #include "aggregate.h"
 
-#include "tape.h"
+#include "multi_recorder.h"
 #include "file.h"
 #include "odbc.h"
 
@@ -721,16 +721,17 @@ int read_multi_properties(struct recorder *my, OBJECT *obj, RECORDER_MAP *rmap, 
 	return count;
 }
 
-EXPORT TIMESTAMP sync_multi_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
-{
-	struct recorder *my = OBJECTDATA(obj,struct recorder);
-	typedef enum {NONE='\0', LT='<', EQ='=', GT='>'} COMPAREOP;
+TIMESTAMP sync_multi_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
+	struct recorder *my = OBJECTDATA(obj, struct recorder);
+	typedef enum {
+		NONE = '\0', LT = '<', EQ = '=', GT = '>'
+	} COMPAREOP;
 	COMPAREOP comparison;
 	char1024 buffer = "";
-	
-	if (my->status==TS_DONE)
-	{
-		close_multi_recorder(my); /* note: potentially called every sync pass for multiple timesteps, catch fp==NULL in tape ops */
+
+	if (my->status == TS_DONE) {
+		close_multi_recorder(
+				my); /* note: potentially called every sync pass for multiple timesteps, catch fp==NULL in tape ops */
 		return TS_NEVER;
 	}
 
@@ -741,15 +742,15 @@ EXPORT TIMESTAMP sync_multi_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		sprintf(buffer, "'%s' lacks a parent object", obj->name ? obj->name : tb, sprintf(tb, "recorder:%i", obj->id));
 		close_recorder(my);
 		my->status = TS_ERROR;
-		goto Error;
+		return sync_multi_recorder_error(&obj, &my, buffer);
 	}*/
 
-	if(my->last.ts < 1 && my->interval != -1)
+	if (my->last.ts < 1 && my->interval != -1)
 		my->last.ts = t0;
 
 	/* connect to property */
-	if (my->rmap==NULL){
-		my->rmap = link_multi_properties(obj->parent,my->property); // allowable use of obj->parent
+	if (my->rmap == NULL) {
+		my->rmap = link_multi_properties(obj->parent, my->property); // allowable use of obj->parent
 	}
 	/*	invalid target object must be handled individually */
 	/*if (my->target==NULL)
@@ -757,44 +758,41 @@ EXPORT TIMESTAMP sync_multi_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		sprintf(buffer,"'%s' contains a property of %s %d that is not found", my->property, obj->parent->oclass->name, obj->parent->id);
 		close_multi_recorder(my);
 		my->status = TS_ERROR;
-		goto Error;
+		return sync_multi_recorder_error(&obj, &my, buffer);
 	}*/
 
-	if (my->rmap==NULL)
-	{
-		sprintf(buffer,"'%s' contains a property reference that was not found", my->property.get_string());
+	if (my->rmap == NULL) {
+		sprintf(buffer, "'%s' contains a property reference that was not found", my->property.get_string());
 		close_multi_recorder(my);
 		my->status = TS_ERROR;
-		goto Error;
+		return sync_multi_recorder_error(&obj, &my, buffer);
 	}
 
 	// update clock
-	if ((my->status==TS_OPEN) && (t0 > obj->clock)) 
-	{	
+	if ((my->status == TS_OPEN) && (t0 > obj->clock)) {
 		obj->clock = t0;
 		// if the recorder is clock-based, write the value
-		if((my->interval > 0) && (my->last.ts < t0) && (my->last.value[0] != 0)){
+		if ((my->interval > 0) && (my->last.ts < t0) && (my->last.value[0] != 0)) {
 			multi_recorder_write(obj);
 			my->last.value[0] = 0; // once it's been finalized, dump it
 		}
 	}
 
 	/* update property value */
-	if ((my->rmap != NULL) && (my->interval == 0 || my->interval == -1)){	
-		if(read_multi_properties(my, obj->parent,my->rmap,buffer,sizeof(buffer))==0) // vestigal use of parent
+	if ((my->rmap != NULL) && (my->interval == 0 || my->interval == -1)) {
+		if (read_multi_properties(my, obj->parent, my->rmap, buffer, sizeof(buffer)) == 0) // vestigal use of parent
 		{
 			//sprintf(buffer,"unable to read property '%s' of %s %d", my->property, obj->parent->oclass->name, obj->parent->id);
-			sprintf(buffer,"unable to read a property");
+			sprintf(buffer, "unable to read a property");
 			close_multi_recorder(my);
 			my->status = TS_ERROR;
 		}
 	}
-	if ((my->rmap != NULL) && (my->interval > 0)){
-		if((t0 >=my->last.ts + my->interval) || (t0 == my->last.ts)){
-			if(read_multi_properties(my, obj->parent,my->rmap,buffer,sizeof(buffer))==0)
-			{
+	if ((my->rmap != NULL) && (my->interval > 0)) {
+		if ((t0 >= my->last.ts + my->interval) || (t0 == my->last.ts)) {
+			if (read_multi_properties(my, obj->parent, my->rmap, buffer, sizeof(buffer)) == 0) {
 				//sprintf(buffer,"unable to read property '%s' of %s %d", my->property, obj->parent->oclass->name, obj->parent->id);
-				sprintf(buffer,"unable to read a property");
+				sprintf(buffer, "unable to read a property");
 				close_multi_recorder(my);
 				my->status = TS_ERROR;
 			}
@@ -803,59 +801,54 @@ EXPORT TIMESTAMP sync_multi_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	}
 
 	/* check trigger, if any */
-	comparison = (COMPAREOP)my->trigger[0];
-	if (comparison!=NONE)
-	{
-		int desired = comparison==LT ? -1 : (comparison==EQ ? 0 : (comparison==GT ? 1 : -2));
+	comparison = (COMPAREOP) my->trigger[0];
+	if (comparison != NONE) {
+		int desired = comparison == LT ? -1 : (comparison == EQ ? 0 : (comparison == GT ? 1 : -2));
 
 		/* if not trigger or can't get access */
-		int actual = strcmp(buffer,my->trigger.get_string()+1);
-		if (actual!=desired || (my->status==TS_INIT && !multi_recorder_open(obj)))
-		{
+		int actual = strcmp(buffer, my->trigger.get_string() + 1);
+		if (actual != desired || (my->status == TS_INIT && !multi_recorder_open(obj))) {
 			/* better luck next time */
-			return (my->interval==0 || my->interval==-1) ? TS_NEVER : t0+my->interval;
+			return (my->interval == 0 || my->interval == -1) ? TS_NEVER : t0 + my->interval;
 		}
-	}
-	else if (my->status==TS_INIT && !multi_recorder_open(obj))
-	{
+	} else if (my->status == TS_INIT && !multi_recorder_open(obj)) {
 		close_multi_recorder(my);
 		return TS_NEVER;
 	}
 
-	if(my->last.ts < 1 && my->interval != -1)
+	if (my->last.ts < 1 && my->interval != -1)
 		my->last.ts = t0;
 
 	/* write tape */
-	if (my->status==TS_OPEN)
-	{	
-		if (my->interval==0 /* sample on every pass */
-			|| ((my->interval==-1) && my->last.ts!=t0 && strcmp(buffer,my->last.value)!=0) /* sample only when value changes */
-			)
-
-		{
-			strncpy(my->last.value,buffer,sizeof(my->last.value));
+	if (my->status == TS_OPEN) {
+		if (my->interval == 0 /* sample on every pass */
+			|| ((my->interval == -1) && my->last.ts != t0 &&
+				strcmp(buffer, my->last.value) != 0) /* sample only when value changes */
+				) {
+			strncpy(my->last.value, buffer, sizeof(my->last.value));
 			my->last.ts = t0;
 			multi_recorder_write(obj);
-		} else if (my->interval > 0 && my->last.ts == t0){
-			strncpy(my->last.value,buffer,sizeof(my->last.value));
+		} else if (my->interval > 0 && my->last.ts == t0) {
+			strncpy(my->last.value, buffer, sizeof(my->last.value));
 		}
 	}
-Error:
-	if (my->status==TS_ERROR)
+}
+TIMESTAMP sync_multi_recorder_error(OBJECT **obj, struct recorder **my, char1024 buffer) {
+	if ((*my)->status==TS_ERROR)
 	{
-		gl_error("recorder %d %s\n",obj->id, buffer.get_string());
-		close_multi_recorder(my);
-		my->status=TS_DONE;
+		gl_error("recorder %d %s\n",(*obj)->id, buffer.get_string());
+		close_multi_recorder((*my));
+		(*my)->status=TS_DONE;
 		return TS_NEVER;
 	}
 
-	if (my->interval==0 || my->interval==-1) 
+	if ((*my)->interval==0 || (*my)->interval==-1)
 	{
 		return TS_NEVER;
 	}
 	else
 	{
-		return my->last.ts+my->interval;
+		return (*my)->last.ts+(*my)->interval;
 	}
 }
 

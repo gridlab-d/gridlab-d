@@ -2,10 +2,12 @@
 // Created by lauraleist on 9/26/18.
 //
 
-#ifndef _RECORDER_H
-#define _RECORDER_H
+#ifndef TAPE_RECORDER_H
+#define TAPE_RECORDER_H
 
+//#ifndef _TAPE_H
 #include "tape.h"
+//#endif
 
 /** @}
 	@addtogroup recorder
@@ -55,5 +57,9 @@ struct recorder {
     int32 samples;
     PROPERTY *target;
 };
+
+extern int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buffer, int size);
+EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass);
+EXPORT TIMESTAMP sync_recorder_error(OBJECT **obj, struct recorder **my, char1024 buffer);
 
 #endif //_RECORDER_H

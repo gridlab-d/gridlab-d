@@ -1,10 +1,12 @@
 //
 // Created by lauraleist on 9/26/18.
 //
-#ifndef _PLAYER_H
-#define _PLAYER_H
+#ifndef TAPE_PLAYER_H
+#define TAPE_PLAYER_H
 
+//#ifndef _TAPE_H
 #include "tape.h"
+//#endif
 
 /** @}
   @addtogroup player
@@ -42,6 +44,6 @@ struct player {
     char lasterr[1024];
 }; /**< a player item */
 
-//extern TIMESTAMP player_read(OBJECT *obj);
+extern TIMESTAMP player_read(OBJECT *obj);
 
 #endif //_PLAYER_H

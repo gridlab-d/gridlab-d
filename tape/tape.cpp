@@ -24,8 +24,6 @@
 #include "histogram.h"
 #include "group_recorder.h"
 
-#define _TAPE_C
-
 #include "tape.h"
 #include "file.h"
 #include "odbc.h"
@@ -99,8 +97,9 @@ typedef char *(*READFUNC)(void *, char *, unsigned int);
 typedef int (*WRITEFUNC)(void *, char *, char *);
 typedef int (*REWINDFUNC)(void *);
 typedef void (*CLOSEFUNC)(void *);
+//TODO verify not a typo
 typedef void (*VOIDCALL)(void);
-typedef void (*FLUSHFUNC)(void*);
+typedef void (*FLUSHFUNC)(void *);
 
 TAPEFUNCS *get_ftable(char *mode){
 	/* check what we've already loaded */
@@ -479,7 +478,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 	/* prepare the timestamp */
 	static char global_dateformat[8]="";
 
-	TIMESTAMP integer_clock = (TIMESTAMP)clock_val;	/* Whole seconds - update from global clock because we could be in delta for over 1 second */
+	auto integer_clock = (TIMESTAMP)clock_val;	/* Whole seconds - update from global clock because we could be in delta for over 1 second */
 	int microseconds = (int)((clock_val-(int)(clock_val))*1000000+0.5);	/* microseconds roll-over - biased upward (by 0.5) */
 
 	/* Recorders should only "fire" on the 0th iteration - may need to adjust if "0" is implemented in deltamode */
@@ -489,7 +488,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 		if ((integer_clock != t0) || (microseconds != 0))
 		{
 			DATETIME rec_date_time;
-			TIMESTAMP rec_integer_clock = (TIMESTAMP)recorder_delta_clock;	/* Whole seconds - update from global clock because we could be in delta for over 1 second */
+			auto rec_integer_clock = (TIMESTAMP)recorder_delta_clock;	/* Whole seconds - update from global clock because we could be in delta for over 1 second */
 			int rec_microseconds = (int)((recorder_delta_clock-(int)(recorder_delta_clock))*1000000+0.5);	/* microseconds roll-over - biased upward (by 0.5) */
 			if ( gl_localtime(rec_integer_clock,&rec_date_time)!=0 )
 			{
@@ -516,9 +515,9 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 				if (index_item->obj_type == RECORDER)
 				{
 					OBJECT *obj = index_item->obj;
-					struct recorder *my = (struct recorder *)OBJECTDATA(obj,struct recorder);
+					struct recorder *my = OBJECTDATA(obj,struct recorder);
 					char value[1024];
-					extern int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buffer, int size);
+					//extern int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buffer, int size);
 
 					/* See if we're in service */
 					if ((obj->in_svc_double <= gl_globaldeltaclock) && (obj->out_svc_double >= gl_globaldeltaclock))
@@ -556,7 +555,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 		if (index_item->obj_type == PLAYER)
 		{
 			OBJECT *obj = index_item->obj;
-			struct player *my = (struct player *)OBJECTDATA(obj,struct player);
+			struct player *my = OBJECTDATA(obj,struct player);
 			int y=0,m=0,d=0,H=0,M=0,S=0,ms=0, n=0;
 			char *fmt = "%d/%d/%d %d:%d:%d.%d,%*s";
 			double t = (double)my->next.ts + (double)my->next.ns/1e9;
@@ -570,7 +569,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 				/* post the current value */
 				if ( t<=clock_val )
 				{
-					extern TIMESTAMP player_read(OBJECT *obj);
+					//extern TIMESTAMP player_read(OBJECT *obj);
 
 					/* Check to make sure we've be initialized -- if a deltamode timestep is first, it may be before this was initialized */
 					if (my->target == NULL)	/* Not set yet */
@@ -579,7 +578,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 						Will be investigated further for 4.1 release.
 						*/
 
-						gl_error("deltamode player: player \"%s\" has a deltamode timestep starting it - please avoid this",(obj->name ? obj->name : "(anon)"));
+						gl_error("deltamode player: player '%s' has a deltamode timestep starting it - please avoid this",(obj->name ? obj->name : "(anon)"));
 						/*  TROUBLESHOOT
 						Starting a player with a deltamode timestep causes segmentation faults.  A fix was developed, but still has issues with
 						certain platforms and must be investigated further.  For now, start all player files with non-deltamode timesteps.  This
@@ -592,7 +591,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 						*** Make sure we actually opened the file (this part is new - paranoia check ***
 						if (my->status != TS_OPEN)
 						{
-							gl_error("deltamode player: player \"%s\" has not been opened yet!",obj->name?obj->name:"(anon)");
+							gl_error("deltamode player: player '%s' has not been opened yet!",obj->name?obj->name:"(anon)");
 							***  TROUBLESHOOT
 							While attempting to start a player with a deltamode timestep, it was found the player hasn't been opened yet.
 							Please submit your code and a bug report via the issue system.  To work around this, put a non-deltamode timestep
@@ -610,7 +609,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 
 						*** Make sure it worked ***
 						if (my->target==NULL){
-							gl_error("deltamode player: Unable to find property \"%s\" in object %s", my->property, obj->name?obj->name:"(anon)");
+							gl_error("deltamode player: Unable to find property '%s' in object %s", my->property, obj->name?obj->name:"(anon)");
 							***  TROUBLESHOOT
 							While attempting to link up the property of a player in deltamode, the property could not be found.  Make sure the object
 							exists and has the specified property and try again.
@@ -690,14 +689,13 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 	struct player *myplayer = NULL;
 	FUNCTIONADDR temp_fxn;
 	char value[1024];
-	extern int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buffer, int size);
 
 	/* Perform one final update of recorder - otherwise it misses the last "value" */
 	/* Code copied out of interupdate above */
 	/* determine the timestamp */
 	char recorder_timestamp[64];
 	DATETIME rec_date_time;
-	TIMESTAMP rec_integer_clock;
+	TIMESTAMP rec_integer_clock = TS_INVALID; // FIXME: make sure this makes sense.
 	int rec_microseconds;
 	bool recorder_init_items = false;
 	char global_dateformat[8]="";
@@ -712,7 +710,7 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 	{
 		if (index_item->obj_type == RECORDER)
 		{
-			if (recorder_init_items == false)
+			if (!recorder_init_items)
 			{
 				/* Set up recorder clock */
 				rec_integer_clock = (TIMESTAMP)recorder_delta_clock;	/* Whole seconds - update from global clock because we could be in delta for over 1 second */
@@ -738,7 +736,7 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 			}/*End recorder time init */
 
 			obj = index_item->obj;
-			myrec = (struct recorder *)OBJECTDATA(obj,struct recorder);
+			myrec = OBJECTDATA(obj,struct recorder);
 
 			/* See if we're in service */
 			if ((obj->in_svc_double <= gl_globaldeltaclock) && (obj->out_svc_double >= gl_globaldeltaclock))
@@ -806,7 +804,7 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 	}/* End while loop for recorders */
 
 	/* If any existed, do a flush */
-	if (recorder_init_items == true)
+	if (recorder_init_items)
 	{
 		/* flush the output streams */
 		fflush(NULL);
@@ -824,7 +822,7 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 		if (index_item->obj_type == PLAYER)
 		{
 			obj = index_item->obj;
-			myplayer = (struct player *)OBJECTDATA(obj,struct player);
+			myplayer = OBJECTDATA(obj,struct player);
 
 			/* See if we're in service */
 			if ((obj->in_svc_double <= gl_globaldeltaclock) && (obj->out_svc_double >= gl_globaldeltaclock))

@@ -2,10 +2,12 @@
 // Created by lauraleist on 9/26/18.
 //
 
-#ifndef _COLLECTOR_H
-#define _COLLECTOR_H
+#ifndef TAPE_COLLECTOR_H
+#define TAPE_COLLECTOR_H
 
+//#ifndef _TAPE_H
 #include "tape.h"
+//#endif
 
 /** @}
 	@addtogroup collector
@@ -46,5 +48,8 @@ struct collector {
     int32 samples;
     AGGREGATION *aggr;
 };
+
+EXPORT TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass);
+EXPORT TIMESTAMP sync_collector_error(OBJECT **obj, struct collector **my, char1024 buffer);
 
 #endif //_COLLECTOR_H
