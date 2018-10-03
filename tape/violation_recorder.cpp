@@ -16,9 +16,9 @@ violation_recorder::violation_recorder(MODULE *mod){
 #ifdef _DEBUG
 		gl_debug("construction violation_recorder class");
 #endif
-		oclass = gl_register_class(mod,"violation_recorder",sizeof(violation_recorder), PC_POSTTOPDOWN);
+		oclass = gl_register_class(mod, const_cast<char *>("violation_recorder"), sizeof(violation_recorder), PC_POSTTOPDOWN);
         if(oclass == NULL)
-            GL_THROW("unable to register object class implemented by %s",__FILE__);
+            GL_THROW(const_cast<char *>("unable to register object class implemented by %s"), __FILE__);
 
         if(gl_publish_variable(oclass,
 			PT_char256, "file", PADDR(filename), PT_DESCRIPTION, "output file name",
@@ -239,7 +239,7 @@ int violation_recorder::assoc_meter_w_xfrmr_node(vobjlist *meter_list, vobjlist 
 
 		while (!found) {
 
-			p_ptr = gl_get_property(node1->obj, "to");
+			p_ptr = gl_get_property(node1->obj, const_cast<char *>("to"));
 			gl_get_value(node1->obj, GETADDR(node1->obj, p_ptr), to, 127, p_ptr);
 
 			// look through the meters to see if one matches the 'to' field
@@ -247,7 +247,7 @@ int violation_recorder::assoc_meter_w_xfrmr_node(vobjlist *meter_list, vobjlist 
 				if (meter->obj == 0) continue;
 				// check to see if a meter name matches with 'to' field
 				if (strcmp(to, meter->obj->name) == 0) {
-					p_ptr = gl_get_property(xfrmr->obj, "from");
+					p_ptr = gl_get_property(xfrmr->obj, const_cast<char *>("from"));
 					gl_get_value(xfrmr->obj, GETADDR(xfrmr->obj, p_ptr), from, 127, p_ptr);
 					// get the node on the primary side of the transformer
 					for(node = node_list; node != 0; node = node->next){
@@ -268,7 +268,7 @@ int violation_recorder::assoc_meter_w_xfrmr_node(vobjlist *meter_list, vobjlist 
 			// loop through the powerflow objects to find one whose 'from' field matches the 'to' field
 			for(node2 = powerflow_obj_list; node2 != 0; node2 = node2->next){
 				if (node2->obj == 0) continue;
-				p_ptr = gl_get_property(node2->obj, "from");
+				p_ptr = gl_get_property(node2->obj, const_cast<char *>("from"));
 				if (p_ptr != 0) {
 					gl_get_value(node2->obj, GETADDR(node2->obj, p_ptr), from, 127, p_ptr);
 					// found it
@@ -409,7 +409,7 @@ int violation_recorder::write_header(){
 	if(0 > fprintf(rec_file,"# host...... %s\n", getenv("HOST"))){ return 0; }
 #endif
 	if(0 > fprintf(rec_file,"# limit..... %d\n", limit)){ return 0; }
-	if(0 > fprintf(rec_file,"# interval.. %d\n", write_interval)){ return 0; }
+	if(0 > fprintf(rec_file,"# interval.. %" FMT_INT64 "d\n", write_interval)){ return 0; }
 	if(0 > fprintf(rec_file,"# timestamp, violation, observation, upper_limit, lower_limit, object(s), object type(s), phase, message\n")){ return 0; }
 //	if(0 > fprintf(rec_file, "\n")){ return 0; }
 	return 1;
@@ -467,7 +467,7 @@ int violation_recorder::check_violation_1(TIMESTAMP t1) {
 int violation_recorder::check_line_thermal_limit(TIMESTAMP t1, vobjlist *list, uniqueList *uniq_list, int type, double upper_bound, double lower_bound) {
 
 	vobjlist *curr = 0;
-	double nominal, nominalA, nominalB, nominalC;
+	double nominal, nominalA, nominalB, nominalC; // FIXME: add default value in case it's not initialized.
 	char objname[128];
 	double retval;
 
@@ -481,20 +481,22 @@ int violation_recorder::check_line_thermal_limit(TIMESTAMP t1, vobjlist *list, u
 			
 			triplex_line_conductor *pConfigurationA = OBJECTDATA(pConfiguration1->phaseA_conductor,triplex_line_conductor);
 			nominal = pConfigurationA->summer.continuous;
-			if (fails_static_condition(curr->obj, "current_out_A", upper_bound, lower_bound, nominal, &retval)) {
+			if (fails_static_condition(curr->obj, const_cast<char *>("current_out_A"), upper_bound, lower_bound, nominal, &retval)) {
 				uniq_list->insert(curr->obj->name);
 				increment_violation(VIOLATION1, type);
-				write_to_stream(t1, echo, "VIOLATION1, %f, %f, %f, %s, %s, S1, Current violates thermal limit.", retval, upper_bound, lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
+				write_to_stream(t1, echo,
+                                const_cast<char *>("VIOLATION1, %f, %f, %f, %s, %s, S1, Current violates thermal limit."), retval, upper_bound, lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
 			}
 			triplex_line_conductor *pConfigurationB = OBJECTDATA(pConfiguration1->phaseB_conductor,triplex_line_conductor);
 			nominal = pConfigurationB->summer.continuous;
-			if (fails_static_condition(curr->obj, "current_out_B", upper_bound, lower_bound, nominal, &retval)) {
+			if (fails_static_condition(curr->obj, const_cast<char *>("current_out_B"), upper_bound, lower_bound, nominal, &retval)) {
 				uniq_list->insert(curr->obj->name);
 				increment_violation(VIOLATION1, type);
-				write_to_stream(t1, echo, "VIOLATION1, %f, %f, %f, %s, %s, S2, Current violates thermal limit.", retval, upper_bound, lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
+				write_to_stream(t1, echo,
+                                const_cast<char *>("VIOLATION1, %f, %f, %f, %s, %s, S2, Current violates thermal limit."), retval, upper_bound, lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
 			}
 		} else { // 'normal' 3-phase line
-			if ( gl_object_isa(curr->obj,"underground_line","powerflow") ) {
+			if ( gl_object_isa(curr->obj, const_cast<char *>("underground_line"), const_cast<char *>("powerflow")) ) {
 				underground_line *pThree_phase_line = OBJECTDATA(curr->obj,underground_line);
 				line_configuration *pConfiguration1 = OBJECTDATA(pThree_phase_line->configuration,line_configuration);
 
@@ -552,24 +554,27 @@ int violation_recorder::check_line_thermal_limit(TIMESTAMP t1, vobjlist *list, u
 				
 			}		
 			if (has_phase(curr->obj, PHASE_A)) {
-				if (fails_static_condition(curr->obj, "current_out_A", upper_bound, lower_bound, nominalA, &retval)) {
+				if (fails_static_condition(curr->obj, const_cast<char *>("current_out_A"), upper_bound, lower_bound, nominalA, &retval)) {
 					uniq_list->insert(curr->obj->name);
 					increment_violation(VIOLATION1, type);
-					write_to_stream(t1, echo, "VIOLATION1, %f, %f, %f, %s, %s, A, Current violates thermal limit.", retval, upper_bound, lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
+					write_to_stream(t1, echo,
+                                    const_cast<char *>("VIOLATION1, %f, %f, %f, %s, %s, A, Current violates thermal limit."), retval, upper_bound, lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
 				}
 			}
 			if (has_phase(curr->obj, PHASE_B)) {
-				if (fails_static_condition(curr->obj, "current_out_B", upper_bound, lower_bound, nominalB, &retval)) {
+				if (fails_static_condition(curr->obj, const_cast<char *>("current_out_B"), upper_bound, lower_bound, nominalB, &retval)) {
 					uniq_list->insert(curr->obj->name);
 					increment_violation(VIOLATION1, type);
-					write_to_stream(t1, echo, "VIOLATION1, %f, %f, %f, %s, %s, B, Current violates thermal limit.", retval, upper_bound, lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
+					write_to_stream(t1, echo,
+                                    const_cast<char *>("VIOLATION1, %f, %f, %f, %s, %s, B, Current violates thermal limit."), retval, upper_bound, lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
 				}
 			}
 			if (has_phase(curr->obj, PHASE_C)) {
-				if (fails_static_condition(curr->obj, "current_out_C", upper_bound, lower_bound, nominalC, &retval)) {
+				if (fails_static_condition(curr->obj, const_cast<char *>("current_out_C"), upper_bound, lower_bound, nominalC, &retval)) {
 					uniq_list->insert(curr->obj->name);
 					increment_violation(VIOLATION1, type);
-					write_to_stream(t1, echo, "VIOLATION1, %f, %f, %f, %s, %s, C, Current violates thermal limit.", retval, upper_bound, lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
+					write_to_stream(t1, echo,
+                                    const_cast<char *>("VIOLATION1, %f, %f, %f, %s, %s, C, Current violates thermal limit."), retval, upper_bound, lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
 				}
 			}
 		}
@@ -593,10 +598,11 @@ int violation_recorder::check_xfrmr_thermal_limit(TIMESTAMP t1, vobjlist *list, 
 			transformer *pTransformer = OBJECTDATA(curr->obj,transformer);
 			transformer_configuration *pConfiguration = OBJECTDATA(pTransformer->configuration,transformer_configuration);
 			nominal = pConfiguration->kVA_rating*1000.;
-			if (fails_static_condition(curr->obj, "power_out", upper_bound, lower_bound, nominal, &retval)) {
+			if (fails_static_condition(curr->obj, const_cast<char *>("power_out"), upper_bound, lower_bound, nominal, &retval)) {
 				uniq_list->insert(curr->obj->name);
 				increment_violation(VIOLATION1, type);
-				write_to_stream(t1, echo, "VIOLATION1, %f, %f, %f, %s, %s, S, Power violates thermal limit.", retval, upper_bound, lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
+				write_to_stream(t1, echo,
+                                const_cast<char *>("VIOLATION1, %f, %f, %f, %s, %s, S, Power violates thermal limit."), retval, upper_bound, lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
 			}
 		// this is for the other transformers which have 3 phases, each of which can violate the limit
 		} else {
@@ -604,26 +610,29 @@ int violation_recorder::check_xfrmr_thermal_limit(TIMESTAMP t1, vobjlist *list, 
 			transformer_configuration *pConfiguration = OBJECTDATA(pTransformer->configuration,transformer_configuration);
 			if (has_phase(curr->obj, PHASE_A)) {
 				nominal = pConfiguration->phaseA_kVA_rating*1000.;
-				if (fails_static_condition(curr->obj, "power_out_A", upper_bound, lower_bound, nominal, &retval)) {
+				if (fails_static_condition(curr->obj, const_cast<char *>("power_out_A"), upper_bound, lower_bound, nominal, &retval)) {
 					uniq_list->insert(curr->obj->name);
 					increment_violation(VIOLATION1, type);
-					write_to_stream(t1, echo, "VIOLATION1, %f, %f, %f, %s, %s, A, Power violates thermal limit.", retval, upper_bound, lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
+					write_to_stream(t1, echo,
+                                    const_cast<char *>("VIOLATION1, %f, %f, %f, %s, %s, A, Power violates thermal limit."), retval, upper_bound, lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
 				}
 			}
 			if (has_phase(curr->obj, PHASE_B)) {
 				nominal = pConfiguration->phaseB_kVA_rating*1000.;
-				if (fails_static_condition(curr->obj, "power_out_B", upper_bound, lower_bound, nominal, &retval)) {
+				if (fails_static_condition(curr->obj, const_cast<char *>("power_out_B"), upper_bound, lower_bound, nominal, &retval)) {
 					uniq_list->insert(curr->obj->name);
 					increment_violation(VIOLATION1, type);
-					write_to_stream(t1, echo, "VIOLATION1, %f, %f, %f, %s, %s, B, Power violates thermal limit.", retval, upper_bound, lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
+					write_to_stream(t1, echo,
+                                    const_cast<char *>("VIOLATION1, %f, %f, %f, %s, %s, B, Power violates thermal limit."), retval, upper_bound, lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
 				}
 			}
 			if (has_phase(curr->obj, PHASE_C)) {
 				nominal = pConfiguration->phaseC_kVA_rating*1000.;
-				if (fails_static_condition(curr->obj, "power_out_C", upper_bound, lower_bound, nominal, &retval)) {
+				if (fails_static_condition(curr->obj, const_cast<char *>("power_out_C"), upper_bound, lower_bound, nominal, &retval)) {
 					uniq_list->insert(curr->obj->name);
 					increment_violation(VIOLATION1, type);
-					write_to_stream(t1, echo, "VIOLATION1, %f, %f, %f, %s, %s, C, Power violates thermal limit.", retval, upper_bound, lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
+					write_to_stream(t1, echo,
+                                    const_cast<char *>("VIOLATION1, %f, %f, %f, %s, %s, C, Power violates thermal limit."), retval, upper_bound, lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
 				}
 			}
 		}
@@ -647,80 +656,88 @@ int violation_recorder::check_violation_2(TIMESTAMP t1) {
 
 	for(curr = node_obj_list; curr != 0; curr = curr->next){
 		if (curr->obj == 0) continue;
-		p_ptr = gl_get_property(curr->obj, "nominal_voltage");
+		p_ptr = gl_get_property(curr->obj, const_cast<char *>("nominal_voltage"));
 		nominal = get_observed_double_value(curr->obj, p_ptr);
 		if (has_phase(curr->obj, PHASE_A)) {
-			if (fails_static_condition(curr->obj, "voltage_A", node_upper_bound, node_lower_bound, nominal, &retval)) {
+			if (fails_static_condition(curr->obj, const_cast<char *>("voltage_A"), node_upper_bound, node_lower_bound, nominal, &retval)) {
 				node_list_v2->insert(curr->obj->name);
 				increment_violation(VIOLATION2, NODE);
-				write_to_stream(t1, echo, "VIOLATION2, %f, %f, %f, %s, %s, A, Per unit voltage violates limit.", retval, node_upper_bound, node_lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
+				write_to_stream(t1, echo,
+                                const_cast<char *>("VIOLATION2, %f, %f, %f, %s, %s, A, Per unit voltage violates limit."), retval, node_upper_bound, node_lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
 			}
 		}
 		if (has_phase(curr->obj, PHASE_B)) {
-			if (fails_static_condition(curr->obj, "voltage_B", node_upper_bound, node_lower_bound, nominal, &retval)) {
+			if (fails_static_condition(curr->obj, const_cast<char *>("voltage_B"), node_upper_bound, node_lower_bound, nominal, &retval)) {
 				node_list_v2->insert(curr->obj->name);
 				increment_violation(VIOLATION2, NODE);
-				write_to_stream(t1, echo, "VIOLATION2, %f, %f, %f, %s, %s, B, Per unit voltage violates limit.", retval, node_upper_bound, node_lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
+				write_to_stream(t1, echo,
+                                const_cast<char *>("VIOLATION2, %f, %f, %f, %s, %s, B, Per unit voltage violates limit."), retval, node_upper_bound, node_lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
 			}
 		}
 		if (has_phase(curr->obj, PHASE_C)) {
-			if (fails_static_condition(curr->obj, "voltage_C", node_upper_bound, node_lower_bound, nominal, &retval)) {
+			if (fails_static_condition(curr->obj, const_cast<char *>("voltage_C"), node_upper_bound, node_lower_bound, nominal, &retval)) {
 				node_list_v2->insert(curr->obj->name);
 				increment_violation(VIOLATION2, NODE);
-				write_to_stream(t1, echo, "VIOLATION2, %f, %f, %f, %s, %s, C, Per unit voltage violates limit.", retval, node_upper_bound, node_lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
+				write_to_stream(t1, echo,
+                                const_cast<char *>("VIOLATION2, %f, %f, %f, %s, %s, C, Per unit voltage violates limit."), retval, node_upper_bound, node_lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
 			}
 		}
 	}
 
 	for(curr = comm_mtr_obj_list; curr != 0; curr = curr->next){
 		if (curr->obj == 0) continue;
-		p_ptr = gl_get_property(curr->obj, "nominal_voltage");
+		p_ptr = gl_get_property(curr->obj, const_cast<char *>("nominal_voltage"));
 		nominal = get_observed_double_value(curr->obj, p_ptr);
 		if (has_phase(curr->obj, PHASE_A)) {
-			if (fails_static_condition(curr->obj, "voltage_A", node_upper_bound, node_lower_bound, nominal, &retval)) {
+			if (fails_static_condition(curr->obj, const_cast<char *>("voltage_A"), node_upper_bound, node_lower_bound, nominal, &retval)) {
 				comm_meter_list_v2->insert(curr->obj->name);
 				increment_violation(VIOLATION2, CMTR);
-				write_to_stream(t1, echo, "VIOLATION2, %f, %f, %f, %s, %s, A, Per unit voltage violates limit.", retval, node_upper_bound, node_lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
+				write_to_stream(t1, echo,
+                                const_cast<char *>("VIOLATION2, %f, %f, %f, %s, %s, A, Per unit voltage violates limit."), retval, node_upper_bound, node_lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
 			}
 		}
 		if (has_phase(curr->obj, PHASE_B)) {
-			if (fails_static_condition(curr->obj, "voltage_B", node_upper_bound, node_lower_bound, nominal, &retval)) {
+			if (fails_static_condition(curr->obj, const_cast<char *>("voltage_B"), node_upper_bound, node_lower_bound, nominal, &retval)) {
 				comm_meter_list_v2->insert(curr->obj->name);
 				increment_violation(VIOLATION2, CMTR);
-				write_to_stream(t1, echo, "VIOLATION2, %f, %f, %f, %s, %s, B, Per unit voltage violates limit.", retval, node_upper_bound, node_lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
+				write_to_stream(t1, echo,
+                                const_cast<char *>("VIOLATION2, %f, %f, %f, %s, %s, B, Per unit voltage violates limit."), retval, node_upper_bound, node_lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
 			}
 		}
 		if (has_phase(curr->obj, PHASE_C)) {
-			if (fails_static_condition(curr->obj, "voltage_C", node_upper_bound, node_lower_bound, nominal, &retval)) {
+			if (fails_static_condition(curr->obj, const_cast<char *>("voltage_C"), node_upper_bound, node_lower_bound, nominal, &retval)) {
 				comm_meter_list_v2->insert(curr->obj->name);
 				increment_violation(VIOLATION2, CMTR);
-				write_to_stream(t1, echo, "VIOLATION2, %f, %f, %f, %s, %s, C, Per unit voltage violates limit.", retval, node_upper_bound, node_lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
+				write_to_stream(t1, echo,
+                                const_cast<char *>("VIOLATION2, %f, %f, %f, %s, %s, C, Per unit voltage violates limit."), retval, node_upper_bound, node_lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
 			}
 		}
 	}
 
 	for(curr = tplx_node_obj_list; curr != 0; curr = curr->next){
 		if (curr->obj == 0) continue;
-		p_ptr = gl_get_property(curr->obj, "nominal_voltage");
+		p_ptr = gl_get_property(curr->obj, const_cast<char *>("nominal_voltage"));
 		nominal = get_observed_double_value(curr->obj, p_ptr) * 2.;
 		if (has_phase(curr->obj, PHASE_S1) && has_phase(curr->obj, PHASE_S2)) {
-			if (fails_static_condition(curr->obj, "voltage_12", node_upper_bound, node_lower_bound, nominal, &retval)) {
+			if (fails_static_condition(curr->obj, const_cast<char *>("voltage_12"), node_upper_bound, node_lower_bound, nominal, &retval)) {
 				tplx_node_list_v2->insert(curr->obj->name);
 				increment_violation(VIOLATION2, TPXN);
-				write_to_stream(t1, echo, "VIOLATION2, %f, %f, %f, %s, %s, S, Per unit voltage violates limit.", retval, node_upper_bound, node_lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
+				write_to_stream(t1, echo,
+                                const_cast<char *>("VIOLATION2, %f, %f, %f, %s, %s, S, Per unit voltage violates limit."), retval, node_upper_bound, node_lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
 			}
 		}
 	}
 
 	for(curr = tplx_mtr_obj_list; curr != 0; curr = curr->next){
 		if (curr->obj == 0) continue;
-		p_ptr = gl_get_property(curr->obj, "nominal_voltage");
+		p_ptr = gl_get_property(curr->obj, const_cast<char *>("nominal_voltage"));
 		nominal = get_observed_double_value(curr->obj, p_ptr) * 2.;
 		if (has_phase(curr->obj, PHASE_S1) && has_phase(curr->obj, PHASE_S2)) {
-			if (fails_static_condition(curr->obj, "voltage_12", node_upper_bound, node_lower_bound, nominal, &retval)) {
+			if (fails_static_condition(curr->obj, const_cast<char *>("voltage_12"), node_upper_bound, node_lower_bound, nominal, &retval)) {
 				tplx_meter_list_v2->insert(curr->obj->name);
 				increment_violation(VIOLATION2, TPXM);
-				write_to_stream(t1, echo, "VIOLATION2, %f, %f, %f, %s, %s, S, Per unit voltage violates limit.", retval, node_upper_bound, node_lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
+				write_to_stream(t1, echo,
+                                const_cast<char *>("VIOLATION2, %f, %f, %f, %s, %s, S, Per unit voltage violates limit."), retval, node_upper_bound, node_lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
 			}
 		}
 	}
@@ -744,53 +761,58 @@ int violation_recorder::check_violation_3(TIMESTAMP t1) {
 
 	for(curr = tplx_node_obj_list; curr != 0; curr = curr->next){
 		if (curr->obj == 0) continue;
-		p_ptr = gl_get_property(curr->obj, "nominal_voltage");
+		p_ptr = gl_get_property(curr->obj, const_cast<char *>("nominal_voltage"));
 		nominal = get_observed_double_value(curr->obj, p_ptr) * 2.;
 		if (has_phase(curr->obj, PHASE_S1) && has_phase(curr->obj, PHASE_S2)) { // We are now checking all objects regardless of parent // && gl_object_isa(curr->obj->parent,"transformer")) {
-			if (fails_continuous_condition(curr, 0, "voltage_12", t1, interval, node_upper_bound, node_lower_bound, nominal, &retval)) {
+			if (fails_continuous_condition(curr, 0, const_cast<char *>("voltage_12"), t1, interval, node_upper_bound, node_lower_bound, nominal, &retval)) {
 				tplx_node_list_v3->insert(curr->obj->name);
 				increment_violation(VIOLATION3, TPXN);
-				write_to_stream(t1, echo, "VIOLATION3, %f, %f, %f, %s, %s, S, Per unit voltage violates limit continuously over %is interval.", retval, node_upper_bound, node_lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name, (int)node_continuous_voltage_interval);
+				write_to_stream(t1, echo,
+                                const_cast<char *>("VIOLATION3, %f, %f, %f, %s, %s, S, Per unit voltage violates limit continuously over %is interval."), retval, node_upper_bound, node_lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name, (int)node_continuous_voltage_interval);
 			}
 		}
 	}
 
 	for(curr = tplx_mtr_obj_list; curr != 0; curr = curr->next){
 		if (curr->obj == 0) continue;
-		p_ptr = gl_get_property(curr->obj, "nominal_voltage");
+		p_ptr = gl_get_property(curr->obj, const_cast<char *>("nominal_voltage"));
 		nominal = get_observed_double_value(curr->obj, p_ptr) * 2.;
 		if (has_phase(curr->obj, PHASE_S1) && has_phase(curr->obj, PHASE_S2)) { // We are now checking all objects regardless of parent // && gl_object_isa(curr->obj->parent,"transformer")) {
-			if (fails_continuous_condition(curr, 0, "voltage_12", t1, interval, node_upper_bound, node_lower_bound, nominal, &retval)) {
+			if (fails_continuous_condition(curr, 0, const_cast<char *>("voltage_12"), t1, interval, node_upper_bound, node_lower_bound, nominal, &retval)) {
 				tplx_meter_list_v3->insert(curr->obj->name);
 				increment_violation(VIOLATION3, TPXM);
-				write_to_stream(t1, echo, "VIOLATION3, %f, %f, %f, %s, %s, S, Per unit voltage violates limit continuously over %is interval.", retval, node_upper_bound, node_lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name, (int)node_continuous_voltage_interval);
+				write_to_stream(t1, echo,
+                                const_cast<char *>("VIOLATION3, %f, %f, %f, %s, %s, S, Per unit voltage violates limit continuously over %is interval."), retval, node_upper_bound, node_lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name, (int)node_continuous_voltage_interval);
 			}
 		}
 	}
 
 	for(curr = comm_mtr_obj_list; curr != 0; curr = curr->next){
 		if (curr->obj == 0) continue;
-		p_ptr = gl_get_property(curr->obj, "nominal_voltage");
+		p_ptr = gl_get_property(curr->obj, const_cast<char *>("nominal_voltage"));
 		nominal = get_observed_double_value(curr->obj, p_ptr);
 		if (has_phase(curr->obj, PHASE_A)) {
-			if (fails_continuous_condition(curr, 0, "voltage_A", t1, interval, node_upper_bound, node_lower_bound, nominal, &retval)) {
+			if (fails_continuous_condition(curr, 0, const_cast<char *>("voltage_A"), t1, interval, node_upper_bound, node_lower_bound, nominal, &retval)) {
 				comm_meter_list_v3->insert(curr->obj->name);
 				increment_violation(VIOLATION3, CMTR);
-				write_to_stream(t1, echo, "VIOLATION3, %f, %f, %f, %s, %s, A, Per unit voltage violates limit continuously over %is interval.", retval, node_upper_bound, node_lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name, (int)node_continuous_voltage_interval);
+				write_to_stream(t1, echo,
+                                const_cast<char *>("VIOLATION3, %f, %f, %f, %s, %s, A, Per unit voltage violates limit continuously over %is interval."), retval, node_upper_bound, node_lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name, (int)node_continuous_voltage_interval);
 			}
 		}
 		if (has_phase(curr->obj, PHASE_B)) {
-			if (fails_continuous_condition(curr, 0, "voltage_B", t1, interval, node_upper_bound, node_lower_bound, nominal, &retval)) {
+			if (fails_continuous_condition(curr, 0, const_cast<char *>("voltage_B"), t1, interval, node_upper_bound, node_lower_bound, nominal, &retval)) {
 				comm_meter_list_v3->insert(curr->obj->name);
 				increment_violation(VIOLATION3, CMTR);
-				write_to_stream(t1, echo, "VIOLATION3, %f, %f, %f, %s, %s, B, Per unit voltage violates limit continuously over %is interval.", retval, node_upper_bound, node_lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name, (int)node_continuous_voltage_interval);
+				write_to_stream(t1, echo,
+                                const_cast<char *>("VIOLATION3, %f, %f, %f, %s, %s, B, Per unit voltage violates limit continuously over %is interval."), retval, node_upper_bound, node_lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name, (int)node_continuous_voltage_interval);
 			}
 		}
 		if (has_phase(curr->obj, PHASE_C)) {
-			if (fails_continuous_condition(curr, 0, "voltage_C", t1, interval, node_upper_bound, node_lower_bound, nominal, &retval)) {
+			if (fails_continuous_condition(curr, 0, const_cast<char *>("voltage_C"), t1, interval, node_upper_bound, node_lower_bound, nominal, &retval)) {
 				comm_meter_list_v3->insert(curr->obj->name);
 				increment_violation(VIOLATION3, CMTR);
-				write_to_stream(t1, echo, "VIOLATION3, %f, %f, %f, %s, %s, C, Per unit voltage violates limit continuously over %is interval.", retval, node_upper_bound, node_lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name, (int)node_continuous_voltage_interval);
+				write_to_stream(t1, echo,
+                                const_cast<char *>("VIOLATION3, %f, %f, %f, %s, %s, C, Per unit voltage violates limit continuously over %is interval."), retval, node_upper_bound, node_lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name, (int)node_continuous_voltage_interval);
 			}
 		}
 	}
@@ -801,12 +823,13 @@ int violation_recorder::check_violation_3(TIMESTAMP t1) {
 
 // Reverse power exceeds 50% of the minimum trip setting of the substation breaker (fuse) or a recloser.
 int violation_recorder::check_violation_4(TIMESTAMP t1) {
-	return check_reverse_flow_violation(t1, VIOLATION4, 0.50, "Reverse flow current warning.");
+	return check_reverse_flow_violation(t1, VIOLATION4, 0.50, const_cast<char *>("Reverse flow current warning."));
 }
 
 // Reverse power exceeds 75% of the minimum trip setting of the substation breaker (fuse) or a recloser.
 int violation_recorder::check_violation_5(TIMESTAMP t1) {
-	return check_reverse_flow_violation(t1, VIOLATION5, 0.75, "Reverse flow current violates limit.");
+	return check_reverse_flow_violation(t1, VIOLATION5, 0.75,
+                                        const_cast<char *>("Reverse flow current violates limit."));
 }
 
 int violation_recorder::check_reverse_flow_violation(TIMESTAMP t1, int violation_num, double pct, char *str) {
@@ -826,27 +849,27 @@ int violation_recorder::check_reverse_flow_violation(TIMESTAMP t1, int violation
 	double nominal = 1.;
 	PROPERTY *p_ptr;
 	set *directions;
-	p_ptr = gl_get_property(link_monitor_obj, "flow_direction");
+	p_ptr = gl_get_property(link_monitor_obj, const_cast<char *>("flow_direction"));
 	if (p_ptr == NULL)
 		return 0;
 	directions = gl_get_set(link_monitor_obj, p_ptr);
 
 	if (has_phase(link_monitor_obj, PHASE_A) && ((*directions & AR) == AR)) {
-		if (fails_static_condition(link_monitor_obj, "current_out_A", breaker_limit_A_upper, breaker_limit_A_lower, nominal, &retval)) {
+		if (fails_static_condition(link_monitor_obj, const_cast<char *>("current_out_A"), breaker_limit_A_upper, breaker_limit_A_lower, nominal, &retval)) {
 			increment_violation(violation_num);
-			write_to_stream(t1, echo, "VIOLATION%i, %f, %f, %f, %s, %s, A, %s", (int)l2((double)violation_num)+1, retval, breaker_limit_A_upper, breaker_limit_A_lower, gl_name(link_monitor_obj, objname, 127), link_monitor_obj->oclass->name, str);
+			write_to_stream(t1, echo, const_cast<char *>("VIOLATION%i, %f, %f, %f, %s, %s, A, %s"), (int)l2((double)violation_num) + 1, retval, breaker_limit_A_upper, breaker_limit_A_lower, gl_name(link_monitor_obj, objname, 127), link_monitor_obj->oclass->name, str);
 		}
 	}
 	if (has_phase(link_monitor_obj, PHASE_B) && ((*directions & BR) == BR)) {
-		if (fails_static_condition(link_monitor_obj, "current_out_B", breaker_limit_B_upper, breaker_limit_B_lower, nominal, &retval)) {
+		if (fails_static_condition(link_monitor_obj, const_cast<char *>("current_out_B"), breaker_limit_B_upper, breaker_limit_B_lower, nominal, &retval)) {
 			increment_violation(violation_num);
-			write_to_stream(t1, echo, "VIOLATION%i, %f, %f, %f, %s, %s, B, %s",  (int)l2((double)violation_num)+1, retval, breaker_limit_B_upper, breaker_limit_B_lower, gl_name(link_monitor_obj, objname, 127), link_monitor_obj->oclass->name, str);
+			write_to_stream(t1, echo, const_cast<char *>("VIOLATION%i, %f, %f, %f, %s, %s, B, %s"), (int)l2((double)violation_num) + 1, retval, breaker_limit_B_upper, breaker_limit_B_lower, gl_name(link_monitor_obj, objname, 127), link_monitor_obj->oclass->name, str);
 		}
 	}
 	if (has_phase(link_monitor_obj, PHASE_C) && ((*directions & CR) == CR)) {
-		if (fails_static_condition(link_monitor_obj, "current_out_C", breaker_limit_C_upper, breaker_limit_C_lower, nominal, &retval)) {
+		if (fails_static_condition(link_monitor_obj, const_cast<char *>("current_out_C"), breaker_limit_C_upper, breaker_limit_C_lower, nominal, &retval)) {
 			increment_violation(violation_num);
-			write_to_stream(t1, echo, "VIOLATION%i, %f, %f, %f, %s, %s, C, %s",  (int)l2((double)violation_num)+1, retval, breaker_limit_C_upper, breaker_limit_C_lower, gl_name(link_monitor_obj, objname, 127), link_monitor_obj->oclass->name, str);
+			write_to_stream(t1, echo, const_cast<char *>("VIOLATION%i, %f, %f, %f, %s, %s, C, %s"), (int)l2((double)violation_num) + 1, retval, breaker_limit_C_upper, breaker_limit_C_lower, gl_name(link_monitor_obj, objname, 127), link_monitor_obj->oclass->name, str);
 		}
 	}
 
@@ -867,31 +890,35 @@ int violation_recorder::check_violation_6(TIMESTAMP t1) {
 	for(curr = inverter_obj_list; curr != 0; curr = curr->next){
 		if (curr->obj == 0) continue;
 		if (has_phase(curr->obj, PHASE_S)) { // inverter connected to a triplex system, only checking one phase here
-			if (fails_dynamic_condition(curr, 1, "phaseB_V_Out", t1, interval, upper_bound, lower_bound, nominal, &retval)) { // this is S1 !?!
+			if (fails_dynamic_condition(curr, 1, const_cast<char *>("phaseB_V_Out"), t1, interval, upper_bound, lower_bound, nominal, &retval)) { // this is S1 !?!
 				inverter_list_v6->insert(curr->obj->name);
 				increment_violation(VIOLATION6);
-				write_to_stream(t1, echo, "VIOLATION6, %f, %f, %f, %s, %s, S, Voltage change between %is intervals violates limit.", retval, upper_bound, lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name, (int)inverter_v_chng_interval);
+				write_to_stream(t1, echo,
+                                const_cast<char *>("VIOLATION6, %f, %f, %f, %s, %s, S, Voltage change between %is intervals violates limit."), retval, upper_bound, lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name, (int)inverter_v_chng_interval);
 			}
 		} else { // assume we are a three phase inverter
 			if (has_phase(curr->obj, PHASE_A)) {
-				if (fails_dynamic_condition(curr, 0, "phaseA_V_Out", t1, interval, upper_bound, lower_bound, nominal, &retval)) {
+				if (fails_dynamic_condition(curr, 0, const_cast<char *>("phaseA_V_Out"), t1, interval, upper_bound, lower_bound, nominal, &retval)) {
 					inverter_list_v6->insert(curr->obj->name);
 					increment_violation(VIOLATION6);
-					write_to_stream(t1, echo, "VIOLATION6, %f, %f, %f, %s, %s, A, Voltage change between %is intervals violates limit.", retval, upper_bound, lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name, (int)inverter_v_chng_interval);
+					write_to_stream(t1, echo,
+                                    const_cast<char *>("VIOLATION6, %f, %f, %f, %s, %s, A, Voltage change between %is intervals violates limit."), retval, upper_bound, lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name, (int)inverter_v_chng_interval);
 				}
 			}
 			if (has_phase(curr->obj, PHASE_B)) {
-				if (fails_dynamic_condition(curr, 1, "phaseB_V_Out", t1, interval, upper_bound, lower_bound, nominal, &retval)) {
+				if (fails_dynamic_condition(curr, 1, const_cast<char *>("phaseB_V_Out"), t1, interval, upper_bound, lower_bound, nominal, &retval)) {
 					inverter_list_v6->insert(curr->obj->name);
 					increment_violation(VIOLATION6);
-					write_to_stream(t1, echo, "VIOLATION6, %f, %f, %f, %s, %s, B, Voltage change between %is intervals violates limit.", retval, upper_bound, lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name, (int)inverter_v_chng_interval);
+					write_to_stream(t1, echo,
+                                    const_cast<char *>("VIOLATION6, %f, %f, %f, %s, %s, B, Voltage change between %is intervals violates limit."), retval, upper_bound, lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name, (int)inverter_v_chng_interval);
 				}
 			}
 			if (has_phase(curr->obj, PHASE_C)) {
-				if (fails_dynamic_condition(curr, 2, "phaseC_V_Out", t1, interval, upper_bound, lower_bound, nominal, &retval)) {
+				if (fails_dynamic_condition(curr, 2, const_cast<char *>("phaseC_V_Out"), t1, interval, upper_bound, lower_bound, nominal, &retval)) {
 					inverter_list_v6->insert(curr->obj->name);
 					increment_violation(VIOLATION6);
-					write_to_stream(t1, echo, "VIOLATION6, %f, %f, %f, %s, %s, C, Voltage change between %is intervals violates limit.", retval, upper_bound, lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name, (int)inverter_v_chng_interval);
+					write_to_stream(t1, echo,
+                                    const_cast<char *>("VIOLATION6, %f, %f, %f, %s, %s, C, Voltage change between %is intervals violates limit."), retval, upper_bound, lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name, (int)inverter_v_chng_interval);
 				}
 			}
 		}
@@ -915,86 +942,92 @@ int violation_recorder::check_violation_7(TIMESTAMP t1) {
 	for(curr = tplx_mtr_obj_list; curr != 0; curr = curr->next){
 		if (curr->obj == 0) continue;
 		if (curr->ref_obj == 0) continue;
-		p_ptr = gl_get_property(curr->obj, "nominal_voltage");
+		p_ptr = gl_get_property(curr->obj, const_cast<char *>("nominal_voltage"));
 		meter_nominal = get_observed_double_value(curr->obj, p_ptr);
 		pu = 0;
 		if (has_phase(curr->obj, PHASE_S1)) {
-			p_ptr = gl_get_property(curr->obj, "voltage_1");
+			p_ptr = gl_get_property(curr->obj, const_cast<char *>("voltage_1"));
 			meter_voltage = get_observed_double_value(curr->obj, p_ptr);
 			if (has_phase(curr->obj, PHASE_A)) {
-				p_ptr = gl_get_property(curr->ref_obj, "nominal_voltage");
+				p_ptr = gl_get_property(curr->ref_obj, const_cast<char *>("nominal_voltage"));
 				xfrmr_nominal = get_observed_double_value(curr->ref_obj, p_ptr);
-				p_ptr = gl_get_property(curr->ref_obj, "voltage_A");
+				p_ptr = gl_get_property(curr->ref_obj, const_cast<char *>("voltage_A"));
 				xfrmr_voltage = get_observed_double_value(curr->ref_obj, p_ptr);
 				pu = meter_voltage/meter_nominal-xfrmr_voltage/xfrmr_nominal;
 				if (fails_static_condition(pu, pu_upper_bound, pu_lower_bound, 1.0, &retval)) {
 					tplx_meter_list_v7->insert(curr->obj->name);
 					increment_violation(VIOLATION7, TPXM);
-					write_to_stream(t1, echo, "VIOLATION7, %f, %f, %f, %s %s, %s %s, A S1, Per unit voltage difference between objects violates limit.", retval, pu_upper_bound, pu_lower_bound, gl_name(curr->obj, metername, 127), gl_name(curr->ref_obj, xfrmrname, 127), curr->obj->oclass->name, curr->ref_obj->oclass->name);
+					write_to_stream(t1, echo,
+                                    const_cast<char *>("VIOLATION7, %f, %f, %f, %s %s, %s %s, A S1, Per unit voltage difference between objects violates limit."), retval, pu_upper_bound, pu_lower_bound, gl_name(curr->obj, metername, 127), gl_name(curr->ref_obj, xfrmrname, 127), curr->obj->oclass->name, curr->ref_obj->oclass->name);
 				}
 			}
 			if (has_phase(curr->obj, PHASE_B)) {
-				p_ptr = gl_get_property(curr->ref_obj, "nominal_voltage");
+				p_ptr = gl_get_property(curr->ref_obj, const_cast<char *>("nominal_voltage"));
 				xfrmr_nominal = get_observed_double_value(curr->ref_obj, p_ptr);
-				p_ptr = gl_get_property(curr->ref_obj, "voltage_B");
+				p_ptr = gl_get_property(curr->ref_obj, const_cast<char *>("voltage_B"));
 				xfrmr_voltage = get_observed_double_value(curr->ref_obj, p_ptr);
 				pu = meter_voltage/meter_nominal-xfrmr_voltage/xfrmr_nominal;
 				if (fails_static_condition(pu, pu_upper_bound, pu_lower_bound, 1.0, &retval)) {
 					tplx_meter_list_v7->insert(curr->obj->name);
 					increment_violation(VIOLATION7, TPXM);
-					write_to_stream(t1, echo, "VIOLATION7, %f, %f, %f, %s %s, %s %s, B S1, Per unit voltage difference between objects violates limit.", retval, pu_upper_bound, pu_lower_bound, gl_name(curr->obj, metername, 127), gl_name(curr->ref_obj, xfrmrname, 127), curr->obj->oclass->name, curr->ref_obj->oclass->name);
+					write_to_stream(t1, echo,
+                                    const_cast<char *>("VIOLATION7, %f, %f, %f, %s %s, %s %s, B S1, Per unit voltage difference between objects violates limit."), retval, pu_upper_bound, pu_lower_bound, gl_name(curr->obj, metername, 127), gl_name(curr->ref_obj, xfrmrname, 127), curr->obj->oclass->name, curr->ref_obj->oclass->name);
 				}
 			}
 			if (has_phase(curr->obj, PHASE_C)) {
-				p_ptr = gl_get_property(curr->ref_obj, "nominal_voltage");
+				p_ptr = gl_get_property(curr->ref_obj, const_cast<char *>("nominal_voltage"));
 				xfrmr_nominal = get_observed_double_value(curr->ref_obj, p_ptr);
-				p_ptr = gl_get_property(curr->ref_obj, "voltage_C");
+				p_ptr = gl_get_property(curr->ref_obj, const_cast<char *>("voltage_C"));
 				xfrmr_voltage = get_observed_double_value(curr->ref_obj, p_ptr);
 				pu = meter_voltage/meter_nominal-xfrmr_voltage/xfrmr_nominal;
 				if (fails_static_condition(pu, pu_upper_bound, pu_lower_bound, 1.0, &retval)) {
 					tplx_meter_list_v7->insert(curr->obj->name);
 					increment_violation(VIOLATION7, TPXM);
-					write_to_stream(t1, echo, "VIOLATION7, %f, %f, %f, %s %s, %s %s, C S1, Per unit voltage difference between objects violates limit.", retval, pu_upper_bound, pu_lower_bound, gl_name(curr->obj, metername, 127), gl_name(curr->ref_obj, xfrmrname, 127), curr->obj->oclass->name, curr->ref_obj->oclass->name);
+					write_to_stream(t1, echo,
+                                    const_cast<char *>("VIOLATION7, %f, %f, %f, %s %s, %s %s, C S1, Per unit voltage difference between objects violates limit."), retval, pu_upper_bound, pu_lower_bound, gl_name(curr->obj, metername, 127), gl_name(curr->ref_obj, xfrmrname, 127), curr->obj->oclass->name, curr->ref_obj->oclass->name);
 				}
 			}
 		}
 		if (has_phase(curr->obj, PHASE_S2)) {
-			p_ptr = gl_get_property(curr->obj, "voltage_2");
+			p_ptr = gl_get_property(curr->obj, const_cast<char *>("voltage_2"));
 			meter_voltage = get_observed_double_value(curr->obj, p_ptr);
 			if (has_phase(curr->obj, PHASE_A)) {
-				p_ptr = gl_get_property(curr->ref_obj, "nominal_voltage");
+				p_ptr = gl_get_property(curr->ref_obj, const_cast<char *>("nominal_voltage"));
 				xfrmr_nominal = get_observed_double_value(curr->ref_obj, p_ptr);
-				p_ptr = gl_get_property(curr->ref_obj, "voltage_A");
+				p_ptr = gl_get_property(curr->ref_obj, const_cast<char *>("voltage_A"));
 				xfrmr_voltage = get_observed_double_value(curr->ref_obj, p_ptr);
 				pu = meter_voltage/meter_nominal-xfrmr_voltage/xfrmr_nominal;
 				if (fails_static_condition(pu, pu_upper_bound, pu_lower_bound, 1.0, &retval)) {
 					tplx_meter_list_v7->insert(curr->obj->name);
 					increment_violation(VIOLATION7, TPXM);
-					write_to_stream(t1, echo, "VIOLATION7, %f, %f, %f, %s %s, %s %s, A S2, Per unit voltage difference between objects violates limit.", retval, pu_upper_bound, pu_lower_bound, gl_name(curr->obj, metername, 127), gl_name(curr->ref_obj, xfrmrname, 127), curr->obj->oclass->name, curr->ref_obj->oclass->name);
+					write_to_stream(t1, echo,
+                                    const_cast<char *>("VIOLATION7, %f, %f, %f, %s %s, %s %s, A S2, Per unit voltage difference between objects violates limit."), retval, pu_upper_bound, pu_lower_bound, gl_name(curr->obj, metername, 127), gl_name(curr->ref_obj, xfrmrname, 127), curr->obj->oclass->name, curr->ref_obj->oclass->name);
 				}
 			}
 			if (has_phase(curr->obj, PHASE_B)) {
-				p_ptr = gl_get_property(curr->ref_obj, "nominal_voltage");
+				p_ptr = gl_get_property(curr->ref_obj, const_cast<char *>("nominal_voltage"));
 				xfrmr_nominal = get_observed_double_value(curr->ref_obj, p_ptr);
-				p_ptr = gl_get_property(curr->ref_obj, "voltage_B");
+				p_ptr = gl_get_property(curr->ref_obj, const_cast<char *>("voltage_B"));
 				xfrmr_voltage = get_observed_double_value(curr->ref_obj, p_ptr);
 				pu = meter_voltage/meter_nominal-xfrmr_voltage/xfrmr_nominal;
 				if (fails_static_condition(pu, pu_upper_bound, pu_lower_bound, 1.0, &retval)) {
 					tplx_meter_list_v7->insert(curr->obj->name);
 					increment_violation(VIOLATION7, TPXM);
-					write_to_stream(t1, echo, "VIOLATION7, %f, %f, %f, %s %s, %s %s, B S2, Per unit voltage difference between objects violates limit.", retval, pu_upper_bound, pu_lower_bound, gl_name(curr->obj, metername, 127), gl_name(curr->ref_obj, xfrmrname, 127), curr->obj->oclass->name, curr->ref_obj->oclass->name);
+					write_to_stream(t1, echo,
+                                    const_cast<char *>("VIOLATION7, %f, %f, %f, %s %s, %s %s, B S2, Per unit voltage difference between objects violates limit."), retval, pu_upper_bound, pu_lower_bound, gl_name(curr->obj, metername, 127), gl_name(curr->ref_obj, xfrmrname, 127), curr->obj->oclass->name, curr->ref_obj->oclass->name);
 				}
 			}
 			if (has_phase(curr->obj, PHASE_C)) {
-				p_ptr = gl_get_property(curr->ref_obj, "nominal_voltage");
+				p_ptr = gl_get_property(curr->ref_obj, const_cast<char *>("nominal_voltage"));
 				xfrmr_nominal = get_observed_double_value(curr->ref_obj, p_ptr);
-				p_ptr = gl_get_property(curr->ref_obj, "voltage_C");
+				p_ptr = gl_get_property(curr->ref_obj, const_cast<char *>("voltage_C"));
 				xfrmr_voltage = get_observed_double_value(curr->ref_obj, p_ptr);
 				pu = meter_voltage/meter_nominal-xfrmr_voltage/xfrmr_nominal;
 				if (fails_static_condition(pu, pu_upper_bound, pu_lower_bound, 1.0, &retval)) {
 					tplx_meter_list_v7->insert(curr->obj->name);
 					increment_violation(VIOLATION7, TPXM);
-					write_to_stream(t1, echo, "VIOLATION7, %f, %f, %f, %s %s, %s %s, C S2, Per unit voltage difference between objects violates limit.", retval, pu_upper_bound, pu_lower_bound, gl_name(curr->obj, metername, 127), gl_name(curr->ref_obj, xfrmrname, 127), curr->obj->oclass->name, curr->ref_obj->oclass->name);
+					write_to_stream(t1, echo,
+                                    const_cast<char *>("VIOLATION7, %f, %f, %f, %s %s, %s %s, C S2, Per unit voltage difference between objects violates limit."), retval, pu_upper_bound, pu_lower_bound, gl_name(curr->obj, metername, 127), gl_name(curr->ref_obj, xfrmrname, 127), curr->obj->oclass->name, curr->ref_obj->oclass->name);
 				}
 			}
 		}
@@ -1003,49 +1036,52 @@ int violation_recorder::check_violation_7(TIMESTAMP t1) {
 	for(curr = comm_mtr_obj_list; curr != 0; curr = curr->next){
 		if (curr->obj == 0) continue;
 		if (curr->ref_obj == 0) continue;
-		p_ptr = gl_get_property(curr->obj, "nominal_voltage");
+		p_ptr = gl_get_property(curr->obj, const_cast<char *>("nominal_voltage"));
 		meter_nominal = get_observed_double_value(curr->obj, p_ptr);
 		pu = 0;
 		if (has_phase(curr->obj, PHASE_A)) {
-			p_ptr = gl_get_property(curr->obj, "voltage_A");
+			p_ptr = gl_get_property(curr->obj, const_cast<char *>("voltage_A"));
 			meter_voltage = get_observed_double_value(curr->obj, p_ptr);
-			p_ptr = gl_get_property(curr->ref_obj, "nominal_voltage");
+			p_ptr = gl_get_property(curr->ref_obj, const_cast<char *>("nominal_voltage"));
 			xfrmr_nominal = get_observed_double_value(curr->ref_obj, p_ptr);
-			p_ptr = gl_get_property(curr->ref_obj, "voltage_A");
+			p_ptr = gl_get_property(curr->ref_obj, const_cast<char *>("voltage_A"));
 			xfrmr_voltage = get_observed_double_value(curr->ref_obj, p_ptr);
 			pu = meter_voltage/meter_nominal-xfrmr_voltage/xfrmr_nominal;
 			if (fails_static_condition(pu, pu_upper_bound, pu_lower_bound, 1.0, &retval)) {
 				comm_meter_list_v7->insert(curr->obj->name);
 				increment_violation(VIOLATION7, CMTR);
-				write_to_stream(t1, echo, "VIOLATION7, %f, %f, %f, %s %s, %s %s, A, Per unit voltage difference between objects violates limit.", retval, pu_upper_bound, pu_lower_bound, gl_name(curr->obj, metername, 127), gl_name(curr->ref_obj, xfrmrname, 127), curr->obj->oclass->name, curr->ref_obj->oclass->name);
+				write_to_stream(t1, echo,
+                                const_cast<char *>("VIOLATION7, %f, %f, %f, %s %s, %s %s, A, Per unit voltage difference between objects violates limit."), retval, pu_upper_bound, pu_lower_bound, gl_name(curr->obj, metername, 127), gl_name(curr->ref_obj, xfrmrname, 127), curr->obj->oclass->name, curr->ref_obj->oclass->name);
 			}
 		}
 		if (has_phase(curr->obj, PHASE_B)) {
-			p_ptr = gl_get_property(curr->obj, "voltage_B");
+			p_ptr = gl_get_property(curr->obj, const_cast<char *>("voltage_B"));
 			meter_voltage = get_observed_double_value(curr->obj, p_ptr);
-			p_ptr = gl_get_property(curr->ref_obj, "nominal_voltage");
+			p_ptr = gl_get_property(curr->ref_obj, const_cast<char *>("nominal_voltage"));
 			xfrmr_nominal = get_observed_double_value(curr->ref_obj, p_ptr);
-			p_ptr = gl_get_property(curr->ref_obj, "voltage_B");
+			p_ptr = gl_get_property(curr->ref_obj, const_cast<char *>("voltage_B"));
 			xfrmr_voltage = get_observed_double_value(curr->ref_obj, p_ptr);
 			pu = meter_voltage/meter_nominal-xfrmr_voltage/xfrmr_nominal;
 			if (fails_static_condition(pu, pu_upper_bound, pu_lower_bound, 1.0, &retval)) {
 				comm_meter_list_v7->insert(curr->obj->name);
 				increment_violation(VIOLATION7, CMTR);
-				write_to_stream(t1, echo, "VIOLATION7, %f, %f, %f, %s %s, %s %s, B, Per unit voltage difference between objects violates limit.", retval, pu_upper_bound, pu_lower_bound, gl_name(curr->obj, metername, 127), gl_name(curr->ref_obj, xfrmrname, 127), curr->obj->oclass->name, curr->ref_obj->oclass->name);
+				write_to_stream(t1, echo,
+                                const_cast<char *>("VIOLATION7, %f, %f, %f, %s %s, %s %s, B, Per unit voltage difference between objects violates limit."), retval, pu_upper_bound, pu_lower_bound, gl_name(curr->obj, metername, 127), gl_name(curr->ref_obj, xfrmrname, 127), curr->obj->oclass->name, curr->ref_obj->oclass->name);
 			}
 		}
 		if (has_phase(curr->obj, PHASE_C)) {
-			p_ptr = gl_get_property(curr->obj, "voltage_C");
+			p_ptr = gl_get_property(curr->obj, const_cast<char *>("voltage_C"));
 			meter_voltage = get_observed_double_value(curr->obj, p_ptr);
-			p_ptr = gl_get_property(curr->ref_obj, "nominal_voltage");
+			p_ptr = gl_get_property(curr->ref_obj, const_cast<char *>("nominal_voltage"));
 			xfrmr_nominal = get_observed_double_value(curr->ref_obj, p_ptr);
-			p_ptr = gl_get_property(curr->ref_obj, "voltage_C");
+			p_ptr = gl_get_property(curr->ref_obj, const_cast<char *>("voltage_C"));
 			xfrmr_voltage = get_observed_double_value(curr->ref_obj, p_ptr);
 			pu = meter_voltage/meter_nominal-xfrmr_voltage/xfrmr_nominal;
 			if (fails_static_condition(pu, pu_upper_bound, pu_lower_bound, 1.0, &retval)) {
 				comm_meter_list_v7->insert(curr->obj->name);
 				increment_violation(VIOLATION7, CMTR);
-				write_to_stream(t1, echo, "VIOLATION7, %f, %f, %f, %s %s, %s %s, C, Per unit voltage difference between objects violates limit.", retval, pu_upper_bound, pu_lower_bound, gl_name(curr->obj, metername, 127), gl_name(curr->ref_obj, xfrmrname, 127), curr->obj->oclass->name, curr->ref_obj->oclass->name);
+				write_to_stream(t1, echo,
+                                const_cast<char *>("VIOLATION7, %f, %f, %f, %s %s, %s %s, C, Per unit voltage difference between objects violates limit."), retval, pu_upper_bound, pu_lower_bound, gl_name(curr->obj, metername, 127), gl_name(curr->ref_obj, xfrmrname, 127), curr->obj->oclass->name, curr->ref_obj->oclass->name);
 			}
 		}
 	}
@@ -1065,7 +1101,7 @@ int violation_recorder::check_violation_8(TIMESTAMP t1) {
 
 	double nominal = 1.;
 	PROPERTY *p_ptr;
-	p_ptr = gl_get_property(link_monitor_obj, "power_in");
+	p_ptr = gl_get_property(link_monitor_obj, const_cast<char *>("power_in"));
 
 	if (p_ptr == NULL)
 		return 0;
@@ -1075,7 +1111,7 @@ int violation_recorder::check_violation_8(TIMESTAMP t1) {
 
 	if (fails_static_condition (pf, 1.0, substation_pf_lower_limit, 1.0, &retval)) {
 		increment_violation(VIOLATION8);
-		write_to_stream(t1, echo, "VIOLATION8, %f, %f, %f, %s, %s,, %s", retval, 1.0, substation_pf_lower_limit, gl_name(link_monitor_obj, objname, 127), link_monitor_obj->oclass->name, "Power factor violates limit.");
+		write_to_stream(t1, echo, const_cast<char *>("VIOLATION8, %f, %f, %f, %s, %s,, %s"), retval, 1.0, substation_pf_lower_limit, gl_name(link_monitor_obj, objname, 127), link_monitor_obj->oclass->name, "Power factor violates limit.");
 	}
 
 	return 1;
@@ -1180,10 +1216,10 @@ int violation_recorder::fails_dynamic_condition (vobjlist *curr, int i, char *pr
 	return 0;
 }
 
-int violation_recorder::fails_continuous_condition (vobjlist *curr, int i, char *prop_name, TIMESTAMP t1, double interval, double upper_bound, double lower_bound, double normalization_value, double *retval) {
+int violation_recorder::fails_continuous_condition (vobjlist *curr, int i, const char *prop_name, TIMESTAMP t1, double interval, double upper_bound, double lower_bound, double normalization_value, double *retval) {
 	PROPERTY *p_ptr;
 	double value, pu;
-	p_ptr = gl_get_property(curr->obj, prop_name);
+	p_ptr = gl_get_property(curr->obj, const_cast<char *>(prop_name));
 	if (p_ptr == NULL)
 		return 0;
 	int s_curr = 0, s_prev = 0;
@@ -1231,7 +1267,7 @@ int violation_recorder::fails_continuous_condition (vobjlist *curr, int i, char 
 int violation_recorder::has_phase(OBJECT *obj, int phase) {
 	PROPERTY *p_ptr;
 	set *phases;
-	p_ptr = gl_get_property(obj, "phases");
+	p_ptr = gl_get_property(obj, const_cast<char *>("phases"));
 	phases = gl_get_set(obj, p_ptr);
 	if ((*phases & phase) == phase)
 		return true;
@@ -1501,7 +1537,7 @@ vobjlist *violation_recorder::vobjlist_alloc_fxn(vobjlist *input_list)
 	//Check it
 	if (input_list == NULL)
 	{
-		GL_THROW("violation_recorder:%d %s - Failed to allocate space for object list to check",obj->id,obj->name ? obj->name : "Unnamed");
+		GL_THROW(const_cast<char *>("violation_recorder:%d %s - Failed to allocate space for object list to check"),obj->id,obj->name ? obj->name : "Unnamed");
 		/*  TROUBLESHOOT
 		While attempting to allocate the memory for an object list within the violation recorder, an error occurred.  Please check your
 		file and try again.  If the error persists, please submit you code and a bug report via the ticketing system.
@@ -1528,7 +1564,7 @@ uniqueList *violation_recorder::uniqueList_alloc_fxn(uniqueList *input_unlist)
 	//Check it
 	if (input_unlist == NULL)
 	{
-		GL_THROW("violation_recorder:%d %s - Failed to allocate space for unique list",obj->id,obj->name ? obj->name : "Unnamed");
+		GL_THROW(const_cast<char *>("violation_recorder:%d %s - Failed to allocate space for unique list"),obj->id,obj->name ? obj->name : "Unnamed");
 		/*  TROUBLESHOOT
 		While attempting to allocate the memory for a list of unique objects within the violation recorder, an error occurred.  Please check your
 		file and try again.  If the error persists, please submit you code and a bug report via the ticketing system.

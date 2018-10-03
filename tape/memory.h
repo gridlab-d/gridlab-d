@@ -7,10 +7,6 @@
 
 #include "globals.h"
 
-struct player;
-struct shaper;
-struct recorder;
-struct collector;
 
 typedef struct s_memory {
 	GLOBALVAR *buffer;

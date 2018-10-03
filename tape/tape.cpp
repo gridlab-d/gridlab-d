@@ -32,6 +32,11 @@
 #include "metrics_collector_writer.h"
 
 
+#include "shaper.h"
+#include "collector.h"
+#include "player.h"
+#include "recorder.h"
+
 #define MAP_DOUBLE(X,LO,HI) {#X,VT_DOUBLE,&X,LO,HI}
 #define MAP_INTEGER(X,LO,HI) {#X,VT_INTEGER,&X,LO,HI}
 #define MAP_STRING(X) {#X,VT_STRING,X,sizeof(X),0}
@@ -206,16 +211,16 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 #else
 	sprintf(tape_gnuplot_path,"/usr/bin/gnuplot");
 #endif
-	gl_global_create("tape::gnuplot_path",PT_char1024,&tape_gnuplot_path,NULL);
-	gl_global_create("tape::flush_interval",PT_int32,&flush_interval,NULL);
-	gl_global_create("tape::csv_data_only",PT_int32,&csv_data_only,NULL);
-	gl_global_create("tape::csv_keep_clean",PT_int32,&csv_keep_clean,NULL);
+	gl_global_create(const_cast<char *>("tape::gnuplot_path"), PT_char1024, &tape_gnuplot_path, NULL);
+	gl_global_create(const_cast<char *>("tape::flush_interval"), PT_int32, &flush_interval, NULL);
+	gl_global_create(const_cast<char *>("tape::csv_data_only"), PT_int32, &csv_data_only, NULL);
+	gl_global_create(const_cast<char *>("tape::csv_keep_clean"), PT_int32, &csv_keep_clean, NULL);
 
 	/* control delta mode */
-	gl_global_create("tape::delta_mode_needed", PT_timestamp, &delta_mode_needed,NULL);
+	gl_global_create(const_cast<char *>("tape::delta_mode_needed"), PT_timestamp, &delta_mode_needed, NULL);
 
 	/* register the first class implemented, use SHARE to reveal variables */
-	player_class = gl_register_class(module,"player",sizeof(struct player),PC_PRETOPDOWN);
+	player_class = gl_register_class(module, const_cast<char *>("player"), sizeof(struct player), PC_PRETOPDOWN);
 	player_class->trl = TRL_PROVEN;
 	PUBLISH_STRUCT(player,char256,property);
 	PUBLISH_STRUCT(player,char1024,file);
@@ -224,7 +229,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	PUBLISH_STRUCT(player,int32,loop);
 
 	/* register the first class implemented, use SHARE to reveal variables */
-	shaper_class = gl_register_class(module,"shaper",sizeof(struct shaper),PC_PRETOPDOWN);
+	shaper_class = gl_register_class(module, const_cast<char *>("shaper"), sizeof(struct shaper), PC_PRETOPDOWN);
 	shaper_class->trl = TRL_QUALIFIED;
 	PUBLISH_STRUCT(shaper,char1024,file);
 	PUBLISH_STRUCT(shaper,char8,filetype);
@@ -235,7 +240,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	PUBLISH_STRUCT(shaper,double,events);
 
 	/* register the other classes as needed, */
-	recorder_class = gl_register_class(module,"recorder",sizeof(struct recorder),PC_POSTTOPDOWN|PC_OBSERVER);
+	recorder_class = gl_register_class(module, const_cast<char *>("recorder"), sizeof(struct recorder), PC_POSTTOPDOWN | PC_OBSERVER);
 	recorder_class->trl = TRL_PROVEN;
 	PUBLISH_STRUCT(recorder,char1024,property);
 	PUBLISH_STRUCT(recorder,char32,trigger);
@@ -270,10 +275,10 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 			PT_KEYWORD, "ALL", LU_ALL,
 			PT_KEYWORD, "NONE", LU_NONE,
 			NULL) < 1)
-		GL_THROW("Could not publish property output for recorder");
+		GL_THROW(const_cast<char *>("Could not publish property output for recorder"));
 
 		/* register the other classes as needed, */
-	multi_recorder_class = gl_register_class(module,"multi_recorder",sizeof(struct recorder),PC_POSTTOPDOWN|PC_OBSERVER);
+	multi_recorder_class = gl_register_class(module, const_cast<char *>("multi_recorder"), sizeof(struct recorder), PC_POSTTOPDOWN | PC_OBSERVER);
 	multi_recorder_class->trl = TRL_QUALIFIED;
 	if(gl_publish_variable(multi_recorder_class,
 		PT_double, "interval[s]", ((char*)&(my.dInterval) - (char *)&my),
@@ -305,10 +310,10 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 			PT_KEYWORD, "ALL", LU_ALL,
 			PT_KEYWORD, "NONE", LU_NONE,
 			NULL) < 1)
-		GL_THROW("Could not publish property output for multi_recorder");
+		GL_THROW(const_cast<char *>("Could not publish property output for multi_recorder"));
 
 	/* register the other classes as needed, */
-	collector_class = gl_register_class(module,"collector",sizeof(struct collector),PC_POSTTOPDOWN|PC_OBSERVER);
+	collector_class = gl_register_class(module, const_cast<char *>("collector"), sizeof(struct collector), PC_POSTTOPDOWN | PC_OBSERVER);
 	collector_class->trl = TRL_PROVEN;
 	PUBLISH_STRUCT(collector,char1024,property);
 	PUBLISH_STRUCT(collector,char32,trigger);
@@ -320,7 +325,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	if(gl_publish_variable(collector_class,
 		PT_double, "interval[s]", ((char*)&(my2.dInterval) - (char *)&my2),
 			NULL) < 1)
-		GL_THROW("Could not publish property output for collector");
+		GL_THROW(const_cast<char *>("Could not publish property output for collector"));
 
 	/* new histogram() */
 	new_histogram(module);
@@ -493,7 +498,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 			if ( gl_localtime(rec_integer_clock,&rec_date_time)!=0 )
 			{
 				if ( global_dateformat[0]=='\0')
-					gl_global_getvar("dateformat",global_dateformat,sizeof(global_dateformat));
+					gl_global_getvar(const_cast<char *>("dateformat"), global_dateformat, sizeof(global_dateformat));
 				if ( strcmp(global_dateformat,"ISO")==0)
 					sprintf(recorder_timestamp,"%04d-%02d-%02d %02d:%02d:%02d.%.06d %s",rec_date_time.year,rec_date_time.month,rec_date_time.day,rec_date_time.hour,rec_date_time.minute,rec_date_time.second,rec_microseconds,rec_date_time.tz);
 				else if ( strcmp(global_dateformat,"US")==0)
@@ -557,7 +562,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 			OBJECT *obj = index_item->obj;
 			struct player *my = OBJECTDATA(obj,struct player);
 			int y=0,m=0,d=0,H=0,M=0,S=0,ms=0, n=0;
-			char *fmt = "%d/%d/%d %d:%d:%d.%d,%*s";
+			char *fmt = const_cast<char *>("%d/%d/%d %d:%d:%d.%d,%*s");
 			double t = (double)my->next.ts + (double)my->next.ns/1e9;
 			char256 curr_value;
 
@@ -718,7 +723,7 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 				if ( gl_localtime(rec_integer_clock,&rec_date_time)!=0 )
 				{
 					if ( global_dateformat[0]=='\0')
-						gl_global_getvar("dateformat",global_dateformat,sizeof(global_dateformat));
+						gl_global_getvar(const_cast<char *>("dateformat"), global_dateformat, sizeof(global_dateformat));
 					if ( strcmp(global_dateformat,"ISO")==0)
 						sprintf(recorder_timestamp,"%04d-%02d-%02d %02d:%02d:%02d.%.06d %s",rec_date_time.year,rec_date_time.month,rec_date_time.day,rec_date_time.hour,rec_date_time.minute,rec_date_time.second,rec_microseconds,rec_date_time.tz);
 					else if ( strcmp(global_dateformat,"US")==0)

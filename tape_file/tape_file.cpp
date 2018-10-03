@@ -19,14 +19,12 @@
 #include <time.h>
 
 #include "gridlabd.h"
-#include "../tape/tape.h"
+#include "../tape/player.h"
+#include "../tape/shaper.h"
+#include "../tape/recorder.h"
+#include "../tape/collector.h"
 #include "../tape/histogram.h"
 #include "tape_file.h"
-
-#include "../tape/collector.h"
-#include "../tape/player.h"
-#include "../tape/recorder.h"
-#include "../tape/shaper.h"
 
 int csv_data_only = 0; /* enable this option to suppress addition of lines starting with # in CSV */
 int csv_keep_clean = 0; /* enable this option to keep data flushed at end of line */

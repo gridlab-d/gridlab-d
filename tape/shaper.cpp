@@ -227,9 +227,10 @@ EXPORT TIMESTAMP sync_shaper(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 						if (my->targets[n].addr<(double*)(item+1))
 						{
 							if (my->targets[n].addr!=NULL)
-								GL_THROW("gl_get_addr(OBJECT *obj=[%s (%s:%d)], char *name='%s') return an invalid non-NULL pointer", item->name?item->name:"unnamed object", item->oclass->name, obj->id,prop->name);
+								GL_THROW(
+										const_cast<char *>("gl_get_addr(OBJECT *obj=[%s (%s:%d)], char *name='%s') return an invalid non-NULL pointer"), item->name ? item->name : "unnamed object", item->oclass->name, obj->id, prop->name);
 							else
-								GL_THROW("property '%s' not found in %s (%s:%d)", prop->name, item->name?item->name:"unnamed object", item->oclass->name, item->id);
+								GL_THROW(const_cast<char *>("property '%s' not found in %s (%s:%d)"), prop->name, item->name ? item->name : "unnamed object", item->oclass->name, item->id);
 						}
 
 						/* get the next event */

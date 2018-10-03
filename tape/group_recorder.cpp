@@ -15,9 +15,9 @@ group_recorder::group_recorder(MODULE *mod){
 #ifdef _DEBUG
 		gl_debug("construction group_recorder class");
 #endif
-		oclass = gl_register_class(mod,"group_recorder",sizeof(group_recorder), PC_POSTTOPDOWN);
+		oclass = gl_register_class(mod, const_cast<char *>("group_recorder"), sizeof(group_recorder), PC_POSTTOPDOWN);
         if(oclass == NULL)
-            GL_THROW("unable to register object class implemented by %s",__FILE__);
+            GL_THROW(const_cast<char *>("unable to register object class implemented by %s"), __FILE__);
         
         if(gl_publish_variable(oclass,
 			PT_char256, "file", PADDR(filename), PT_DESCRIPTION, "output file name",
@@ -40,8 +40,8 @@ group_recorder::group_recorder(MODULE *mod){
 			;//GL_THROW("unable to publish properties in %s",__FILE__);
 		}
 
-		if (gl_publish_function(oclass,"obj_postupdate_fxn",(FUNCTIONADDR)group_recorder_postroutine)==NULL)
-			GL_THROW("Unable to publish deltamode postupdate function for group_recorder");
+		if (gl_publish_function(oclass, const_cast<char *>("obj_postupdate_fxn"), (FUNCTIONADDR)group_recorder_postroutine) == NULL)
+			GL_THROW(const_cast<char *>("Unable to publish deltamode postupdate function for group_recorder"));
 
 		defaults = this;
 		memset(this, 0, sizeof(group_recorder));
@@ -398,7 +398,7 @@ int group_recorder::write_header(){
 	if(0 > fprintf(rec_file,"# group..... %s\n", group_def.get_string())){ return 0; }
 	if(0 > fprintf(rec_file,"# property.. %s\n", property_name.get_string())){ return 0; }
 	if(0 > fprintf(rec_file,"# limit..... %d\n", limit)){ return 0; }
-	if(0 > fprintf(rec_file,"# interval.. %d\n", write_interval)){ return 0; }
+	if(0 > fprintf(rec_file,"# interval.. %" FMT_INT64 "d\n", write_interval)){ return 0; }
 
 	// write list of properties
 	if(0 > fprintf(rec_file, "# timestamp")){ return 0; }
@@ -563,9 +563,9 @@ int group_recorder::write_line(TIMESTAMP t1, double t1dbl, bool deltacall){
 
 	// write time_str
 	// recorder.c uses multiple formats, in the sense of "formatted or not".  This has been fixed to match
-	if (format == false)
+	if (!format)
 	{
-		if (deltacall==false)
+		if (!deltacall)
 		{
 			if(0 == gl_localtime(t1, &dt))
 			{

@@ -1,13 +1,11 @@
 //
 // Created by lauraleist on 9/26/18.
 //
-
 #ifndef TAPE_COLLECTOR_H
 #define TAPE_COLLECTOR_H
 
-//#ifndef _TAPE_H
+#include "property.h"
 #include "tape.h"
-//#endif
 
 /** @}
 	@addtogroup collector

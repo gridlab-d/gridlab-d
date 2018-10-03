@@ -1,12 +1,12 @@
 //
 // Created by lauraleist on 9/26/18.
 //
+
 #ifndef TAPE_PLAYER_H
 #define TAPE_PLAYER_H
 
-//#ifndef _TAPE_H
+#include "property.h"
 #include "tape.h"
-//#endif
 
 /** @}
   @addtogroup player
@@ -40,6 +40,7 @@ struct player {
         char1024 value;
     } delta_track;	/* Added for deltamode fixes */
     PROPERTY *target;
+
     TAPEOPS *ops;
     char lasterr[1024];
 }; /**< a player item */

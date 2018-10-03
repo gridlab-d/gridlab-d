@@ -27,7 +27,7 @@ public:
 	static metrics_collector_writer *defaults;
 	static CLASS *oclass, *pclass;
 
-	metrics_collector_writer(MODULE *);
+	explicit metrics_collector_writer(MODULE *);
 	int create();
 	int init(OBJECT *);
 	int isa(char *);

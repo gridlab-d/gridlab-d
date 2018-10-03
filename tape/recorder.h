@@ -5,9 +5,13 @@
 #ifndef TAPE_RECORDER_H
 #define TAPE_RECORDER_H
 
-//#ifndef _TAPE_H
+#include "property.h"
 #include "tape.h"
-//#endif
+
+
+/* recorder-specific enums */
+typedef enum {HU_DEFAULT, HU_ALL, HU_NONE} HEADERUNITS;
+typedef enum {LU_DEFAULT, LU_ALL, LU_NONE} LINEUNITS;
 
 /** @}
 	@addtogroup recorder

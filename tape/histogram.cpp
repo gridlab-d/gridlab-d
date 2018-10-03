@@ -199,7 +199,7 @@ void histogram::test_for_complex(char *tprop, char *tpart){
 		else if(0 == memcmp(tpart, "ang", 3)){comp_part = ANG;}
 		else {
 			comp_part = NONE;
-			throw("Unable to resolve complex part for \'%s\'", property.get_string());
+			throw("Unable to resolve complex part for '%s'", property.get_string());
 			return;
 		}
 		strtok(property, "."); /* "quickly" replaces the dot with a space */

@@ -9,13 +9,11 @@
 #include <time.h>
 
 #include "gridlabd.h"
-#include "tape.h"
 #include "file.h"
-
 #include "player.h"
+#include "shaper.h"
 #include "recorder.h"
 #include "collector.h"
-#include "shaper.h"
 
 /*******************************************************************
  * players
@@ -240,7 +238,7 @@ int file_open_shaper(struct shaper *my, char *fname, char *flags)
 	return 1;
 }
 
-char *file_read_shaper(struct shaper *my,char *buffer,unsigned int size)
+char *file_read_shaper(struct shaper *my, char *buffer, unsigned int size)
 {
 	return fgets(buffer,size,my->fp);
 }

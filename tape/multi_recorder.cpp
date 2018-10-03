@@ -203,7 +203,7 @@ static int multi_recorder_open(OBJECT *obj)
 								gl_error("multirecorder:%i: re-recording target mismatch: was %s, now %s", obj->id, data, target.get_string());
 							}
 						} else {
-							if(strncmp("(none)", target, 6)){
+							if(0 != strncmp("(none)", target, 6)){
 								gl_error("multirecorder:%i: re-recording target mismatch: was %s, now blank", obj->id, data);
 							}
 						}
@@ -454,7 +454,7 @@ static void close_multi_recorder(struct recorder *my)
 	}
 	if(my->multifp){
 		if(0 != fclose(my->multifp)){
-			gl_error("multirecorder: unable to close multi-run temp file \'%s\'", my->multitempfile.get_string());
+			gl_error("multirecorder: unable to close multi-run temp file '%s'", my->multitempfile.get_string());
 			perror("fclose(): ");
 		}
 
@@ -463,12 +463,12 @@ static void close_multi_recorder(struct recorder *my)
 		if(my->inputfp != NULL){
 			fclose(my->inputfp);
 			if(0 != remove(my->multifile)){ // old file
-				gl_error("multirecorder: unable to remove out-of-data multi-run file \'%s\'", my->multifile.get_string());
+				gl_error("multirecorder: unable to remove out-of-data multi-run file '%s'", my->multifile.get_string());
 				perror("remove(): ");
 			}
 		}
 		if(0 != rename(my->multitempfile, my->multifile)){
-			gl_error("multirecorder: unable to rename multi-run file \'%s\' to \'%s\'", my->multitempfile.get_string(), my->multifile.get_string());
+			gl_error("multirecorder: unable to rename multi-run file '%s' to '%s'", my->multitempfile.get_string(), my->multifile.get_string());
 			perror("rename(): ");
 		}
 		
@@ -832,6 +832,7 @@ TIMESTAMP sync_multi_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
 			strncpy(my->last.value, buffer, sizeof(my->last.value));
 		}
 	}
+    return sync_multi_recorder_error(&obj, &my, buffer);
 }
 TIMESTAMP sync_multi_recorder_error(OBJECT **obj, struct recorder **my, char1024 buffer) {
 	if ((*my)->status==TS_ERROR)
