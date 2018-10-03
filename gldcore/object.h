@@ -337,7 +337,7 @@ public:
 
 #ifdef __cplusplus
 extern "C" {
-#endif;
+#endif
 
 OBJECT *object_create_single(CLASS *oclass);
 OBJECT *object_create_array(CLASS *oclass, unsigned int n_objects);
@@ -445,7 +445,7 @@ int object_loadmethod(OBJECT *obj, char *name, char *value);
 
 #ifdef __cplusplus
 }
-#endif;
+#endif
 
 #define object_size(X) ((X)?(X)->size:-1) /**< get the size of the object X */
 #define object_id(X) ((X)?(X)->id:-1) /**< get the id of the object X */
@@ -464,6 +464,6 @@ int object_loadmethod(OBJECT *obj, char *name, char *value);
 
 #pragma GCC pop_options
 
-#endif; // _OBJECT_H
+#endif // _OBJECT_H
 
 /** @} **/
