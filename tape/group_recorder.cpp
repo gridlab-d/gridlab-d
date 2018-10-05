@@ -228,7 +228,7 @@ TIMESTAMP group_recorder::postsync(TIMESTAMP t0, TIMESTAMP t1){
 			next_write = t1 + write_interval;
 		}
 		//Extra check for deltamode-related group_recorder - make sure it didn't get stuck
-		if (deltamode_gr == true)
+		if (deltamode_gr)
 		{
 			//See if we stagnated
 			if ((t0 == t1) && (t1 == next_write))
@@ -277,7 +277,7 @@ int group_recorder::commit(TIMESTAMP t1, double t1dbl, bool deltacall){
 	}
 
 	//See if we're deltamode -- if so, just make an update for t1 for the various items
-	if (deltacall==true)
+	if (deltacall)
 	{
 		t1 = (TIMESTAMP)t1dbl;
 	}
@@ -289,7 +289,7 @@ int group_recorder::commit(TIMESTAMP t1, double t1dbl, bool deltacall){
 
 	// if periodic interval, check for write
 	if(write_interval > 0){
-		if(((interval_write==true) && (deltacall==false)) || (deltacall==true)){
+		if((interval_write && !deltacall) || deltacall){
 			if(0 == read_line()){
 				gl_error("group_recorder::commit(): error when reading the values");
 				return 0;
