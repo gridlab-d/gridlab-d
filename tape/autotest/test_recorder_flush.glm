@@ -1,5 +1,5 @@
 // test_recorder_flush.glm tests to make sure the recorder flush operation is correct 
-A. Ivanova Oct 9, 2018
+// A. Ivanova Oct 9, 2018
 
 /////////////////////////////////////////////
 // BEGIN
@@ -114,26 +114,13 @@ object load {
 	constant_power_B +1800000.000+871779.789j;
 	constant_power_C +1800000.000+871779.789j;
 	nominal_voltage 2400;
-	object player {
+	object tape.recorder {
+		name recorder_1;
 		property constant_power_A, constant_power_B, constant_power_C;
-		file ../test_player_buffer.player;
-		loop 0;
-	};
-	object complex_assert {
-		target constant_power_A;
-		value 20.12820806729023+79.78912749199718j;
-		within 0.001;
-	};
-	object complex_assert {
-		target constant_power_B;
-		value 21.12820806729023+79.78912749199718j;
-		within 0.001;
-	};
-	object complex_assert {
-		target constant_power_C;
-		value 22.12820806729023+79.78912749199718j;
-		within 0.001;
-	};		
+		file recorder_flush_test.csv;
+		interval 5; //interval set to 5 seconds for a simulation that updates every 5 minutes 
+		flush 0;
+	};	
 }
 
 
