@@ -1213,6 +1213,12 @@ static int workdir(int argc, char *argv[])
 	return 1;
 }
 
+static int printenv(int argc, char *argv[])
+{
+	system("printenv");
+	return CMDOK;
+}
+
 #include "job.h"
 #include "validate.h"
 
@@ -1239,10 +1245,11 @@ static CMDARG main[] = {
 	{"warn",		"w",	warn,			NULL, "Toggles display of warning messages" },
 	{"workdir",		"W",	workdir,		NULL, "Sets the working directory" },
 	
-	{NULL,NULL,NULL,NULL, "Global and module control"},
+	{NULL,NULL,NULL,NULL, "Global, environment and module information"},
 	{"define",		"D",	define,			"<name>=[<module>:]<value>", "Defines or sets a global (or module) variable" },
 	{"globals",		NULL,	globals,		NULL, "Displays a sorted list of all global variables" },
 	{"libinfo",		"L",	libinfo,		"<module>", "Displays information about a module" },
+	{"printenv",		"E",	printenv,		NULL, "Displays the default environment variables" },
 
 	{NULL,NULL,NULL,NULL, "Information"},
 	{"copyright",	NULL,	copyright,		NULL, "Displays copyright" },
