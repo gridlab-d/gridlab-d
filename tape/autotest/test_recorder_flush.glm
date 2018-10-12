@@ -31,5 +31,5 @@ object test {
 	};
 }
 
-script on_sync "echo `tail -n 1 recorder_flush_test2.csv`";
-script on_term "echo `tail -n 1 recorder_flush_test2.csv`";
+script on_sync "python ../test_recorder_flush_sync.py";
+script on_term "python ../test_recorder_flush_term.py";

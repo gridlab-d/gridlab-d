@@ -373,6 +373,11 @@ EXPORT int write_recorder(struct recorder *my, char *timestamp, char *value)
 	return count;
 }
 
+EXPORT void flush_recorder(struct recorder *my)
+{
+	fflush(my->fp);
+}
+
 EXPORT void close_recorder(struct recorder *my)
 {
 	if (my->fp)
