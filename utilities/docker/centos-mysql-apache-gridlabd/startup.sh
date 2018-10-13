@@ -25,7 +25,7 @@ if [ ! -f /etc/httpd/conf/httpd.original ]; then
 	sed -e 's/DirectoryIndex .*/& index.php/' /etc/httpd/conf/httpd.original >/etc/httpd/conf/httpd.conf
 fi
 systemctl enable httpd
-systemctl start httpd
+#systemctl start httpd
 
 # Start mysql server
 if [ ! -f /etc/my.original ]; then
@@ -33,7 +33,7 @@ if [ ! -f /etc/my.original ]; then
 	sed -e 's/^port=.*/#&/g;s/^socket=.*/#&/g;s/^datadir=.*/#&/g' /etc/my.original >/etc/my.cnf
 fi
 systemctl enable mysqld
-systemctl start httpd
+# systemctl start httpd
 mysql <<-END
 	CREATE USER 'gridlabd'@'localhost' IDENTIFIED BY 'gridlabd';
 	GRANT ALL PRIVILEGES ON *.* TO 'gridlabd'@'localhost' WITH GRANT OPTION;
@@ -46,4 +46,7 @@ if [ ! -f /etc/bashrc.original ]; then
 	cp /etc/bashrc /etc/bashrc.original
 	echo 'export LD_LIBRARY_PATH=/usr/local/lib' >> /etc/bashrc
 fi
+
+mysqld --user=root &
+/usr/sbin/httpd -D FOREGROUND 
 
