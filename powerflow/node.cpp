@@ -199,8 +199,8 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			PT_double, "service_status_double", PADDR(service_status_dbl),PT_DESCRIPTION,"In and out of service flag - type double - will indiscriminately override service_status - useful for schedules",
 			PT_double, "previous_uptime[min]", PADDR(previous_uptime),PT_DESCRIPTION,"Previous time between disconnects of node in minutes",
 			PT_double, "current_uptime[min]", PADDR(current_uptime),PT_DESCRIPTION,"Current time since last disconnect of node in minutes",
-			PT_bool, "Norton_dynamic", PADDR(dynamic_norton),PT_DESCRIPTION,"Flag to indicate a Norton-equivalent connection -- used for generators and deltamode",
-			PT_bool, "generator_dynamic", PADDR(dynamic_generator),PT_DESCRIPTION,"Flag to indicate a voltage-sourcing or swing-type generator is present -- used for generators and deltamode",
+			PT_bool, "Norton_dynamic", PADDR(dynamic_norton),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"Flag to indicate a Norton-equivalent connection -- used for generators and deltamode",
+			PT_bool, "generator_dynamic", PADDR(dynamic_generator),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"Flag to indicate a voltage-sourcing or swing-type generator is present -- used for generators and deltamode",
 
 			PT_bool, "reset_disabled_island_state", PADDR(reset_island_state), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Deltamode/multi-island flag -- used to reset disabled status (and reform an island)",
 

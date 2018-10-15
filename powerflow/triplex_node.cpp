@@ -100,6 +100,10 @@ triplex_node::triplex_node(MODULE *mod) : node(mod)
 			PT_double, "impedance_12_reac[Ohm]", PADDR(impedance[2].Im()),PT_DESCRIPTION,"constant series impedance on phase 1 to 2, imag",
 			PT_bool, "house_present", PADDR(house_present),PT_DESCRIPTION,"boolean for detecting whether a house is attached, not an input",
 
+			//Deltamode
+			PT_bool, "Norton_dynamic", PADDR(dynamic_norton),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"Flag to indicate a Norton-equivalent connection -- used for generators and deltamode",
+			PT_bool, "generator_dynamic", PADDR(dynamic_generator),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"Flag to indicate a voltage-sourcing or swing-type generator is present -- used for generators and deltamode",
+
 			PT_bool, "reset_disabled_island_state", PADDR(reset_island_state), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Deltamode/multi-island flag -- used to reset disabled status (and reform an island)",
 
 			//GFA - stuff
