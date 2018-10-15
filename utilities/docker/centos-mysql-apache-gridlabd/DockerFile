@@ -10,11 +10,14 @@ rm -f /lib/systemd/system/sockets.target.wants/*initctl*; \
 rm -f /lib/systemd/system/basic.target.wants/*;\
 rm -f /lib/systemd/system/anaconda.target.wants/*;
 VOLUME [ "/sys/fs/cgroup" ]
-CMD ["/usr/sbin/init"]
+#CMD ["/usr/sbin/init"]
 WORKDIR /tmp
 COPY *.sh /tmp/
 RUN bash system.sh
 RUN bash servers.sh
-RUN bash gridlabd.sh
-RUN bash startup.sh
+RUN chmod +wx *.sh
 EXPOSE 80/tcp 6267/tcp
+RUN mysqld --initialize-insecure
+
+#RUN bash gridlabd.sh
+CMD [ "sh", "-c", "/tmp/startup.sh" ]
