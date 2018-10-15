@@ -16,7 +16,7 @@ COPY *.sh /tmp/
 RUN bash system.sh
 RUN bash servers.sh
 RUN chmod +wx *.sh
-EXPOSE 80/tcp 6267/tcp
+EXPOSE 80/tcp 3306/tcp 6267/tcp
 RUN mysqld --initialize-insecure
 
 #RUN bash gridlabd.sh
