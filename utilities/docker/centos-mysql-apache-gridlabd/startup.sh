@@ -1,17 +1,3 @@
-#!/bin/bash
-#
-# docker centos-gridlabd setup script
-#
-# Building this docker image
-#
-#   host% docker build -f DockerFile .
-#   host% docker save > centos-gridlabd
-#
-# Starting docker on the host
-#
-#   host% docker run -it -v $(pwd):/gridlabd centos-gridlabd gridlabd -W /gridlabd <options>
-#
-
 echo '
 #####################################
 # DOCKER BUILD
@@ -25,7 +11,7 @@ if [ ! -f /etc/httpd/conf/httpd.original ]; then
 	sed -e 's/DirectoryIndex .*/& index.php/' /etc/httpd/conf/httpd.original >/etc/httpd/conf/httpd.conf
 fi
 systemctl enable httpd
-#systemctl start httpd
+/usr/sbin/httpd 
 
 # Start mysql server
 if [ ! -f /etc/my.original ]; then
@@ -33,7 +19,7 @@ if [ ! -f /etc/my.original ]; then
 	sed -e 's/^port=.*/#&/g;s/^socket=.*/#&/g;s/^datadir=.*/#&/g' /etc/my.original >/etc/my.cnf
 fi
 systemctl enable mysqld
-# systemctl start httpd
+mysqld --user=root
 mysql <<-END
 	CREATE USER 'gridlabd'@'localhost' IDENTIFIED BY 'gridlabd';
 	GRANT ALL PRIVILEGES ON *.* TO 'gridlabd'@'localhost' WITH GRANT OPTION;
@@ -47,6 +33,4 @@ if [ ! -f /etc/bashrc.original ]; then
 	echo 'export LD_LIBRARY_PATH=/usr/local/lib' >> /etc/bashrc
 fi
 
-mysqld --user=root &
-/usr/sbin/httpd -D FOREGROUND 
 

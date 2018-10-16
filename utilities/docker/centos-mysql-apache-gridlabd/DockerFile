@@ -1,5 +1,9 @@
-FROM centos:7
+FROM <<<BASE_SYSTEM>>>
 ENV container docker
+
+ENV REPO=<<<GRIDLABD_ORIGIN>>>
+ENV BRANCH=<<<GRIDLABD_BRANCH>>>
+
 RUN (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == \
 systemd-tmpfiles-setup.service ] || rm -f $i; done); \
 rm -f /lib/systemd/system/multi-user.target.wants/*;\
@@ -10,14 +14,9 @@ rm -f /lib/systemd/system/sockets.target.wants/*initctl*; \
 rm -f /lib/systemd/system/basic.target.wants/*;\
 rm -f /lib/systemd/system/anaconda.target.wants/*;
 VOLUME [ "/sys/fs/cgroup" ]
-#CMD ["/usr/sbin/init"]
 WORKDIR /tmp
 COPY *.sh /tmp/
-RUN bash system.sh
-RUN bash servers.sh
 RUN chmod +wx *.sh
-EXPOSE 80/tcp 3306/tcp 6267/tcp
-RUN mysqld --initialize-insecure
-
-#RUN bash gridlabd.sh
-CMD [ "sh", "-c", "/tmp/startup.sh" ]
+RUN bash system.sh
+RUN bash gridlabd.sh
+EXPOSE 6267/tcp
