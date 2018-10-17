@@ -81,6 +81,9 @@ fi
 
 # install gridlabd
 cd /usr/local/src/gridlabd
+if [ -f customize -a ! -z "${ENABLE}" ]; then
+	./customize enable ${ENABLE} || true
+fi
 autoreconf -isf
 ./configure --enable-silent-rules --prefix=/usr/local --with-mysql=$MYSQLOPT 'CXXFLAGS=-w -O3' 'CFLAGS=-w -O3'
 make install

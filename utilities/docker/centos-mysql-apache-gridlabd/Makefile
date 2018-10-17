@@ -37,9 +37,9 @@ clean: clean-gridlabd clean-mysqld clean-httpd
 
 clean-mysqld: 
 	@# clean up running image
-	docker kill mysqld mysql1 2>/dev/null || true
+	docker kill mysqld mysql56 2>/dev/null || true
 	docker rm mysqld 2>/dev/null || true
-	docker rmi $(MYSQLD_IMAGE) 2>/dev/null || true
+	docker rmi -f $(MYSQLD_IMAGE) 2>/dev/null || true
 	rm -rf mysqld
 	docker system prune -f
 
@@ -47,27 +47,27 @@ clean-httpd:
 	@# clean up running image
 	docker kill httpd php 2>/dev/null || true
 	docker rm httpd php 2>/dev/null || true
-	docker rmi $(HTTPD_IMAGE) 2>/dev/null || true
+	docker rmi -f $(HTTPD_IMAGE) 2>/dev/null || true
 	docker system prune -f
 
 clean-gridlabd:
 	@# clean up running image
 	docker kill gridlabd 2>/dev/null || true
 	docker rm gridlabd 2>/dev/null || true
-	docker rmi $(GRIDLABD_IMAGE) 2>/dev/null || true
+	docker rmi -f $(GRIDLABD_IMAGE) gridlabd 2>/dev/null || true
 	rm -f gridlabd.img dockerfile.tmp
 	docker system prune -f
 	
 gridlabd.img: DockerFile system.sh gridlabd.sh Makefile.conf
 	@# build a new image from scripts
 	@[ ! -f dockerfile.tmp ] || ( echo "ERROR: a build is already running (dockerfile.tmp exists--try 'make clean')."; fail)
-	sed '1,$$s?<<<GRIDLABD_ORIGIN>>>?$(GRIDLABD_ORIGIN)?;s?<<<GRIDLABD_BRANCH>>>?$(GRIDLABD_BRANCH)?;s?<<<BASE_SYSTEM>>>?$(BASE_SYSTEM)?' DockerFile > dockerfile.tmp
+	./make_dockerfile DockerFile Makefile.conf dockerfile.tmp
 	docker build -f dockerfile.tmp -t $(GRIDLABD_IMAGE) . && docker save $(GRIDLABD_IMAGE) -o gridlabd.img ; rm -f dockerfile.tmp
 	@[ -f gridlabd.img ] || ( echo "ERROR: build failed--cleaning up image"; docker rmi -f $$(docker images -q | head -n 1) )
 
-build: gridlabd.img
+build: gridlabd.img 
 
-push: build Makefile.conf
+push: build 
 	docker push $(GRIDLABD_IMAGE)
 
 gridlabd: Makefile.conf
@@ -83,18 +83,22 @@ gridlabd: Makefile.conf
 
 mysqld: Makefile.conf
 	@# pull image
+	@docker kill mysqld mysql56 1>/dev/null 2>&1 || true
+	@docker rm -f mysqld mysql56 1>/dev/null 2>&1 || true
+	@docker rmi -f $(MYSQLD_IMAGE) 1>/dev/null 2>&1 || true
+	@docker system prune -f 1>/dev/null 2>&1 || true
 	docker pull $(MYSQLD_IMAGE)
 	@# start service
-	docker run --name=mysql1 -p 3306:3306 -e MYSQL_ROOT_PASSWORD=gridlabd -v $$(pwd)/mysqld:/var/lib/mysql -d $(MYSQLD_IMAGE)
+	docker run --name=mysql56 -p 3306:3306 -e MYSQL_ROOT_PASSWORD=gridlabd -v $$(pwd)/mysqld:/var/lib/mysql --rm -dit $(MYSQLD_IMAGE)
 	@echo "Waiting for mysql to start..."
-	@while [ "$$(docker inspect -f '{{.State.Health.Status}}' mysql1)" == 'starting' ]; do sleep 1; done
-	@[ $$(docker inspect -f '{{.State.Health.Status}}' mysql1) == 'running' ] || docker logs mysql1 ; exit 1 > /dev/stderr
+	@while [ "$$(docker inspect -f '{{.State.Health.Status}}' mysql56)" == 'starting' ]; do sleep 1; done
+	@docker logs mysql56
+	@test $$(docker inspect -f '{{.State.Health.Status}}' mysql56) == 'running'
 	@echo "mysqld started ok."
-	docker inspect -f '{{.State.Health.Status}}' mysql1
 	@# set passwords
-	@#docker exec mysql1 mysqladmin --user=root --port=3306 --password="$$(docker logs mysqld 2>&1 | grep GENERATED | cut -f5 -d' ')" password gridlabd
+	@#docker exec mysql56 mysqladmin --user=root --port=3306 --password="$$(docker logs mysqld 2>&1 | grep GENERATED | cut -f5 -d' ')" password gridlabd
 	@# enable access by gridlabd service
-	docker exec -i mysql1 mysql -uroot -pgridlabd < mysql-setup.sql
+	@#docker exec -i mysql56 mysql -uroot -pgridlabd < mysql-setup.sql
 
 httpd: Makefile.conf
 	# pull images

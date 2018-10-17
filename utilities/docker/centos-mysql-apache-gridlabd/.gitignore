@@ -1,2 +1,3 @@
-data
-gridlabd
+gridlabd.img
+mysqld
+Makefile.conf
