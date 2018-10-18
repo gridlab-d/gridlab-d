@@ -8,7 +8,7 @@ HTTPD_IMAGE=$(HTTPD_IMG):$(HTTPD_TAG)
 
 help:
 	@echo "Valid targets:"
-	@echo "  install         pulls and installs the docker images"
+	@echo "  install         pulls and installs all the required docker images"
 	@echo "  clean           cleans up all docker images"
 	@echo "  clean-mysqld    cleans up mysqld docker images"
 	@echo "  clean-httpd     cleans up httpd docker images"
@@ -83,22 +83,21 @@ gridlabd: Makefile.conf
 
 mysqld: Makefile.conf
 	@# pull image
-	@docker kill mysqld mysql56 1>/dev/null 2>&1 || true
+	@test "$$(docker inspect -f '{{.State.Health.Status}}' mysql56)" != "healthy" || ( echo "mysql56 is currently running ('make clean-mysqld' will kill it)"; false )
+	@docker kill gridlabd 2>/dev/null || true
 	@docker rm -f mysqld mysql56 1>/dev/null 2>&1 || true
 	@docker rmi -f $(MYSQLD_IMAGE) 1>/dev/null 2>&1 || true
 	@docker system prune -f 1>/dev/null 2>&1 || true
 	docker pull $(MYSQLD_IMAGE)
 	@# start service
-	docker run --name=mysql56 -p 3306:3306 -e MYSQL_ROOT_PASSWORD=gridlabd -v $$(pwd)/mysqld:/var/lib/mysql --rm -dit $(MYSQLD_IMAGE)
+	docker run --name=mysql56 -p 3306:3306 -e MYSQL_ROOT_PASSWORD=$(MYSQL_ROOT_PASSWORD) -v "$$(pwd)/mysqld:/var/lib/mysqld" -d $(MYSQLD_IMAGE)
 	@echo "Waiting for mysql to start..."
-	@while [ "$$(docker inspect -f '{{.State.Health.Status}}' mysql56)" == 'starting' ]; do sleep 1; done
-	@docker logs mysql56
-	@test $$(docker inspect -f '{{.State.Health.Status}}' mysql56) == 'running'
+	@while [ "$$(docker inspect -f '{{.State.Health.Status}}' mysql56)" == "starting" ]; do sleep 1; done
+	docker logs mysql56
+	@test "$$(docker inspect -f '{{.State.Health.Status}}' mysql56)" == "healthy"
 	@echo "mysqld started ok."
-	@# set passwords
-	@#docker exec mysql56 mysqladmin --user=root --port=3306 --password="$$(docker logs mysqld 2>&1 | grep GENERATED | cut -f5 -d' ')" password gridlabd
-	@# enable access by gridlabd service
-	@#docker exec -i mysql56 mysql -uroot -pgridlabd < mysql-setup.sql
+	@# run setup script
+	docker exec -i mysql56 mysql -uroot -pgridlabd < mysql-setup.sql
 
 httpd: Makefile.conf
 	# pull images
