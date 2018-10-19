@@ -124,7 +124,7 @@ private:
 	TIMESTAMP initial_sim_time;
 	double last_delta_helics_time;
 	bool exitDeltamode;
-	string core_init_string;
+	string *core_init_string;
 	// TODO add other properties here as needed.
 
 public:
