@@ -1,3 +1,5 @@
+SET GLOBAL validate_password_policy=low;
+
 CREATE USER gridlabd_a@localhost IDENTIFIED BY 'gridlabd';
 GRANT ALL PRIVILEGES ON *.* TO gridlabd_a@localhost WITH GRANT OPTION;
 FLUSH PRIVILEGES;

@@ -8,22 +8,55 @@ HTTPD_IMAGE=$(HTTPD_IMG):$(HTTPD_TAG)
 
 help:
 	@echo "Valid targets:"
-	@echo "  install         pulls and installs all the required docker images"
-	@echo "  clean           cleans up all docker images"
-	@echo "  clean-mysqld    cleans up mysqld docker images"
-	@echo "  clean-httpd     cleans up httpd docker images"
-	@echo "  clean-gridlabd  cleans up gridlabd docker images"
-	@echo "  gridlabd        pulls and starts the gridlabd image from $(GRIDLABD_IMAGE)"
-	@echo "  mysqld          pulls and starts the mysqld image from $(MYSQLD_IMAGE)"
-	@echo "  httpd           pulls and starts the httpd image from $(HTTPD_IMAGE)"
-	@echo "  validate        run a validation test of the current install"
-	@echo "  start           starts the gridlabd, mysqld, and httpd services"
-	@echo "  stop            stops the gridlabd, mysqld, and httpd services"
-	@echo "  build           creates the gridlabd image on local disk from $(GRIDLABD_IMAGE)"
-	@echo "  push            pushes the gridlabd image to the docker repository"
-	@echo "  help            displays this list (default)"
+	@echo " "
+	@echo "  General targets"
+	@echo "  ---------------"
+	@echo "  install          pull and starts all the required docker images"
+	@echo "  status           lists the status of the docker services"
+	@echo "  start            starts all the required docker services"
+	@echo "  stop             stops all the required docker services"
+	@echo "  restart          restart all the required docker services"
+	@echo "  clean            cleans up all docker images"
+	@echo "  help             displays this list (default)"
+	@echo " "
+	@echo "  GridLAB-D targets"
+	@echo "  -----------------"
+	@echo "  install-gridlabd pulls and start the gridlabd image from $(GRIDLABD_IMAGE)"
+	@echo "  pull-gridlabd    pulls the gridlabd image from $(GRIDLABD_IMAGE)"
+	@echo "  start-gridlabd   starts the gridlabd server, mysqld, and httpd services"
+	@echo "  stop-gridlabd    stops the gridlabd server, mysqld, and httpd services"
+	@echo "  build-gridlabd   creates the gridlabd image on local disk from $(GRIDLABD_IMAGE)"
+	@echo "  validate         run a validation test of the current install"
+	@echo "  push-gridlabd    pushes the gridlabd image to the docker repository"
+	@echo "  clean-gridlabd   cleans up gridlabd docker images"
+	@echo " "
+	@echo "  MySQL targets"
+	@echo "  -------------"
+	@echo "  install-mysqld   pulls and starts the mysqld image from $(MYSQLD_IMAGE)"
+	@echo "  pull-mysqld      pulls the mysqld image from $(MYSQLD_IMAGE)"
+	@echo "  start-mysqld     starts the mysqld image from $(MYSQLD_IMAGE)"
+	@echo "  stop-mysqld      stop the mysqld image from $(MYSQLD_IMAGE)"
+	@echo "  restart-mysqld   restarts the mysqld image from $(MYSQLD_IMAGE)"
+	@echo "  clean-mysqld     cleans up mysqld docker images"
+	@echo " "
+	@echo "  Apache targets"
+	@echo "  --------------"
+	@echo "  install-httpd    pulls and starts the httpd image from $(HTTPD_IMAGE)"
+	@echo "  pull-httpd       pulls the httpd image from $(HTTPD_IMAGE)"
+	@echo "  start-httpd      starts the httpd image from $(HTTPD_IMAGE)"
+	@echo "  stop-httpd       stop the httpd image from $(HTTPD_IMAGE)"
+	@echo "  restart-httpd    restarts the httpd image from $(HTTPD_IMAGE)"
+	@echo "  clean-httpd      cleans up httpd docker images"
+	@echo " "
 
 install: gridlabd mysqld httpd
+
+status:
+	@echo "SERVICE    STATUS"
+	@echo "---------- -----------------------"
+	@echo "gridlabd   $$(docker inspect -f '{{.State.Health.Status}}' gld4 2>/dev/null || echo 'not started')" | tr -d '\n' ; echo ""
+	@echo "httpd      $$(docker inspect -f '{{.State.Health.Status}}' apache2 2>/dev/null || echo 'not started')" | tr -d '\n' ; echo ""
+	@echo "mysqld     $$(docker inspect -f '{{.State.Health.Status}}' mysql56 2>/dev/null || echo 'not started')" | tr -d '\n' ; echo ""
 
 start: 
 	# TODO start the services
@@ -34,6 +67,7 @@ stop:
 restart: stop start #
 
 clean: clean-gridlabd clean-mysqld clean-httpd
+	docker system prune -f
 
 clean-mysqld: 
 	@# clean up running image
@@ -50,9 +84,8 @@ clean-httpd:
 	docker rmi -f $(HTTPD_IMAGE) 2>/dev/null || true
 	docker system prune -f
 
-clean-gridlabd:
+clean-gridlabd: stop-mysqld
 	@# clean up running image
-	docker kill gridlabd 2>/dev/null || true
 	docker rm gridlabd 2>/dev/null || true
 	docker rmi -f $(GRIDLABD_IMAGE) gridlabd 2>/dev/null || true
 	rm -f gridlabd.img dockerfile.tmp
@@ -60,9 +93,9 @@ clean-gridlabd:
 	
 gridlabd.img: DockerFile system.sh gridlabd.sh Makefile.conf
 	@# build a new image from scripts
-	@[ ! -f dockerfile.tmp ] || ( echo "ERROR: a build is already running (dockerfile.tmp exists--try 'make clean')."; fail)
+	@[ ! -f dockerfile.tmp ] || ( echo "ERROR: a build is already running or was stopped before it finished (dockerfile.tmp exists--try 'make clean')."; fail)
 	./make_dockerfile DockerFile Makefile.conf dockerfile.tmp
-	docker build -f dockerfile.tmp -t $(GRIDLABD_IMAGE) . && docker save $(GRIDLABD_IMAGE) -o gridlabd.img ; rm -f dockerfile.tmp
+	docker build --no-cache -f dockerfile.tmp -t $(GRIDLABD_IMAGE) . && docker save $(GRIDLABD_IMAGE) -o gridlabd.img ; rm -f dockerfile.tmp
 	@[ -f gridlabd.img ] || ( echo "ERROR: build failed--cleaning up image"; docker rmi -f $$(docker images -q | head -n 1) )
 
 build: gridlabd.img 
@@ -81,23 +114,31 @@ gridlabd: Makefile.conf
 	# start gridlabd simulation
 	# TODO
 
-mysqld: Makefile.conf
-	@# pull image
-	@test "$$(docker inspect -f '{{.State.Health.Status}}' mysql56)" != "healthy" || ( echo "mysql56 is currently running ('make clean-mysqld' will kill it)"; false )
-	@docker kill gridlabd 2>/dev/null || true
-	@docker rm -f mysqld mysql56 1>/dev/null 2>&1 || true
+mysqld: pull-mysqld start-mysqld
+
+restart-mysqld: stop-mysqld start-mysqld
+
+stop-mysqld: Makefile.conf
+	docker rm -f mysqld mysql56 1>/dev/null 2>&1 || true
+
+pull-mysqld:
 	@docker rmi -f $(MYSQLD_IMAGE) 1>/dev/null 2>&1 || true
 	@docker system prune -f 1>/dev/null 2>&1 || true
 	docker pull $(MYSQLD_IMAGE)
+
+start-mysqld: Makefile.conf
+	@# pull image
+	@test "$$(docker inspect -f '{{.State.Health.Status}}' mysql56 2>&1)" != "healthy" || ( echo "mysql56 is already running ('make stop-mysqld' will kill it)"; false )
+	@test -z "$$(netstat -vatn | grep -w 3306 | grep -w LISTEN)" || ( echo "ERROR: cannot start mysqld because another service is listening on port 3306" ; false )
 	@# start service
-	docker run --name=mysql56 -p 3306:3306 -e MYSQL_ROOT_PASSWORD=$(MYSQL_ROOT_PASSWORD) -v "$$(pwd)/mysqld:/var/lib/mysqld" -d $(MYSQLD_IMAGE)
+	docker run --name=mysql56 -p 3306:3306 -e MYSQL_ROOT_PASSWORD=$(MYSQL_ROOT_PASSWORD) -d $(MYSQLD_IMAGE)
 	@echo "Waiting for mysql to start..."
 	@while [ "$$(docker inspect -f '{{.State.Health.Status}}' mysql56)" == "starting" ]; do sleep 1; done
 	docker logs mysql56
 	@test "$$(docker inspect -f '{{.State.Health.Status}}' mysql56)" == "healthy"
 	@echo "mysqld started ok."
 	@# run setup script
-	docker exec -i mysql56 mysql -uroot -pgridlabd < mysql-setup.sql
+	docker exec -i mysql56 mysql -uroot -pgridlabd < mysql-setup.sql || ( docker rm -f mysqld mysql56 1>/dev/null 2>&1 && fail )
 
 httpd: Makefile.conf
 	# pull images
