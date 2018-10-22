@@ -1,9 +1,10 @@
 # http://www.gnu.org/software/automake
 
 Makefile.in
+origin.txt
+*.xml
 
 # http://www.gnu.org/software/autoconf
-custom.mk
 /autom4te.cache
 /autoscan.log
 /autoscan-*.log
@@ -98,15 +99,11 @@ gldcore/config.h.in~
 */*/.dirstamp
 gridlabd.bin
 install/
-install64/
 */autotest/*/
 */*/*/autotest/*/
 validate.txt
 .libs/
-.*.swp
-/.DS_Store
 third_party/xerces*/*
 *.xcbkptlist
-
-# gridlabd configuration control
-configure.opt
+.*.swp
+.DS_Store

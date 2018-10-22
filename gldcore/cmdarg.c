@@ -1219,6 +1219,43 @@ static int printenv(int argc, char *argv[])
 	return CMDOK;
 }
 
+static int origin(int argc, char *argv[])
+{
+	FILE *fp;
+	char originfile[1024];
+	if ( find_file("origin.txt",NULL,R_OK,originfile,sizeof(originfile)-1) == NULL )
+	{
+		IN_MYCONTEXT output_error("origin file not found");
+		return CMDERR;
+	}
+	fp = fopen(originfile,"r");
+	if ( fp == NULL )
+	{
+		IN_MYCONTEXT output_error("unable to open origin file");
+		return CMDERR;
+	}
+	while ( ! feof(fp) )
+	{
+		char line[1024];
+		size_t len = fread(line,sizeof(line[0]),sizeof(line)-1,fp);
+		if ( ferror(fp) )
+		{
+			IN_MYCONTEXT output_error("error reading origin file");
+			return CMDERR;
+		}
+		if ( len >= 0 )
+		{
+			int old = global_suppress_repeat_messages;
+			global_suppress_repeat_messages = 0;
+			line[len] = '\0';
+			IN_MYCONTEXT output_message("%s",line);
+			global_suppress_repeat_messages = old;
+		}
+	}
+	fclose(fp);
+	return 1;
+}
+
 #include "job.h"
 #include "validate.h"
 
@@ -1256,6 +1293,7 @@ static CMDARG main[] = {
 	{"license",		NULL,	license,		NULL, "Displays the license agreement" },
 	{"version",		"V",	version,		NULL, "Displays the version information" },
 	{"setup",		NULL,	setup,			NULL, "Open simulation setup screen" },
+	{"origin",		NULL,	origin,			NULL, "Display origin information" },
 
 	{NULL,NULL,NULL,NULL, "Test processes"},
 	{"dsttest",		NULL,	dsttest,		NULL, "Perform daylight savings rule test" },
