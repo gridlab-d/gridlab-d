@@ -23,12 +23,12 @@ object test {
 	object recorder {
 		property x;
 		file test_recorder_flush.csv;
-		interval 5;
+		interval -1;
 		flush 300;
 		//flush -1;
 		//flush 0;
 	};
 }
 
-script on_sync "python test_recorder_flush_sync.py";
-script on_term "python test_recorder_flush_term.py";
+script on_sync "python ../test_recorder_flush_sync.py";
+//script on_term "python ../test_recorder_flush_term.py";

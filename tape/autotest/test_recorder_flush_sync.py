@@ -1,8 +1,6 @@
 import csv
 import time 
 import datetime
-#import os
-
 
 with open('test_recorder_flush.csv', 'r') as textfile:
 	
@@ -32,30 +30,4 @@ with open('test_recorder_flush.csv', 'r') as textfile:
 			exit(1)
 		break
 
-
-	# temp_time_stamp = reversed(list(csv.reader(textfile)))
-	# print((list(temp_time_stamp))[0])
-
-# print("berk")
-
-# with open('test_recorder_flush.csv', 'r') as textfile:
-# 	#temp_time_stamp = reversed(list(csv.reader(textfile)))
-# 	#print(list(temp_time_stamp)[0])
-# 	for row in reversed(list(csv.reader(textfile))):
-# 		current_date_time = ', '.join(row)
-# 		#print(current_date_time)
-# 		#print(type(current_time))
-# 		split_time = current_date_time.split(',')
-# 		current_date = split_time[0]
-# 		current_time = split_time[1]
-# 		#temp_time_stamp = current_date_time
-# 		#if current_time == temp_time_stamp
-# 		#	exit(0) 
-# 		#print(current_date)
-
-		
-
-# 		#print(current_date_time)
-
-# 		break
 
