@@ -10,7 +10,7 @@
 clock {
 	timezone EST+5EDT;
 	starttime '2000-01-01 0:00:00';
-	stoptime '2000-01-02 0:00:00';
+	stoptime '2000-01-01 1:00:00';
 }
 
 module tape;
@@ -22,14 +22,13 @@ object test {
 	x "type:normal(0,1); min:-10; max:+10; refresh:1min";
 	object recorder {
 		property x;
-		file recorder_flush_test2.csv;
-		interval -1;
+		file test_recorder_flush.csv;
+		interval 5;
 		flush 300;
 		//flush -1;
 		//flush 0;
-		//interval 5;
 	};
 }
 
-script on_sync "python ../test_recorder_flush_sync.py";
-script on_term "python ../test_recorder_flush_term.py";
+script on_sync "python test_recorder_flush_sync.py";
+script on_term "python test_recorder_flush_term.py";
