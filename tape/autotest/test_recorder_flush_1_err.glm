@@ -31,4 +31,4 @@ object test {
 }
 
 script on_sync "python ../test_recorder_flush_sync.py";
-//script on_term "python ../test_recorder_flush_term.py";
+script on_term "python ../test_recorder_flush_term.py";
