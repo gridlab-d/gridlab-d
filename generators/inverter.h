@@ -405,10 +405,6 @@ private:
 	enumeration value_MeterStatus;				///< value holder for service_status variable on meter parent
 	complex value_Meter_I[3];					///< value holder for meter measured current on three lines
 
-	//int number_of_phases_out;	//Count for number of phases
-	bool phaseAOut;
-	bool phaseBOut;
-	bool phaseCOut;
 	double Max_P;//< maximum real power capacity in kW
 	double Max_Q;//< maximum reactive power capacity in kVar
 	double Rated_kVA; //< nominal capacity in kVA
