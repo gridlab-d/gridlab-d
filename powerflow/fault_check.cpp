@@ -1115,7 +1115,6 @@ void fault_check::support_check_alterations(int baselink_int, bool rest_mode)
 	double delta_ts_value;
 	TIMESTAMP event_ts_value;
 
-	gl_verbose ("  fault_check::support_check_alterations:%s:%d", NR_branchdata[baselink_int].name, rest_mode);
 	if (prev_time == 0)	//First run - see if restoration exists (we need it for now)
 	{
 		allocate_alterations_values(true);
@@ -1129,6 +1128,7 @@ void fault_check::support_check_alterations(int baselink_int, bool rest_mode)
 			base_bus_val = 0;	//Swing is always 0th position
 		else	//Not swing, see what our to side is
 		{
+			gl_verbose ("  fault_check::support_check_alterations:%s:%d", NR_branchdata[baselink_int].name, rest_mode);
 			//Get to side
 			base_bus_val = NR_branchdata[baselink_int].to;
 
@@ -1253,12 +1253,12 @@ void fault_check::support_search_links_mesh(int baselink_int, bool impact_mode)
 	int device_index;
 	unsigned char temp_phases, work_phases, remove_phases, add_phases;
 
-	gl_verbose ("  fault_check::support_search_links_mesh:%s:%d", NR_branchdata[baselink_int].name, impact_mode);
 	//First things first -- figure out how to flag ourselves
 	if (impact_mode == false)	//Removal mode
 	{
 		if ((baselink_int != -99) && (baselink_int != -77))	//Not a SWING-related fault, so actually do something (SWING just proceeds in)
 		{
+			gl_verbose ("  fault_check::support_search_links_mesh:%s:%d", NR_branchdata[baselink_int].name, impact_mode);
 			//Figure out which phases mismatch the FROM/TO ends of this link - 
 			temp_phases = ((valid_phases[NR_branchdata[baselink_int].from] ^ valid_phases[NR_branchdata[baselink_int].to]) & 0x07);
 
