@@ -299,6 +299,7 @@ static struct s_varmap {
 	{"relax_undefined_if", PT_bool, &global_relax_undefined_if, PA_PUBLIC, "allow #if macro to handle undefined global variable as empty strings"},
 	{"literal_if", PT_bool, &global_literal_if, PA_PUBLIC, "do not interpret lhs of #if macro as a variable name"},
 	{"validto_context", PT_enumeration, &global_validto_context, PA_PUBLIC, "events to which valid_to time applies, rather than just sync passes", vtc_keys},
+	{"daemon_configfile", PT_char1024, &global_daemon_configfile, PA_PUBLIC, "name of configuration file used by the daemon"},
 	/* add new global variables here */
 };
 
