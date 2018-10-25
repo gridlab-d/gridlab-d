@@ -27,7 +27,7 @@ static char maxbacklog[8] = "4";
 static char logfile[1024] = "/usr/local/var/gridlabd-log";
 static char pidfile[1024] = "/usr/local/var/gridlabd-pid";
 static char workdir[1024] = "/";
-static char user[1024] = "gridlabd.gridlabd";
+static char user[1024] = "";
 
 // gridlabd stream specifications
 static char output[1024] = "";
@@ -90,8 +90,8 @@ static void daemon_log(char *format, ...)
 	{
 		char *mode = "w";
 
-		// if log file name starts with a +, then use append mode...
-		if ( logfile[0] == '+' )
+		// if log file name starts with a + or this isn't the daemon itself, then use append mode...
+		if ( logfile[0] == '+' || pid != daemon_pid )
 			mode = "a";
 
 		// ...skip the + on the log file name
@@ -143,7 +143,6 @@ static void daemon_cleanup(void)
 		struct stat fs;
 
 		// remove the pid file
-		daemon_log("daemon cleanup");
 		if ( unlink(pidfile) == 0 )
 			daemon_log("deleted pidfile '%s'",pidfile);
 
@@ -152,7 +151,7 @@ static void daemon_cleanup(void)
 			daemon_log("unable to delete pidfile '%s': %s",pidfile,strerror(errno));
 
 		// shutdown log
-		daemon_log("daemon shutdown");
+		daemon_log("daemon shutdown complete");
 		daemon_log(NULL); 
 	}
 }
@@ -182,27 +181,25 @@ static pid_t daemon_readpid(void)
 	return pid;
 }
 
-// FILE *keepalive_out = NULL;
-// int keepalive_time = 0;
-// static void daemon_keepalive(int sig)
-// {
-// 	if ( sig == SIGALRM )
-// 	{
-// 		fprintf(keepalive_out,".");
-// 		fflush(keepalive_out);
-// 		alarm(keepalive_time);
-// 	}
-// }
-
-static int parse_command(char *command, char **argv)
+FILE *keepalive_out = NULL;
+int keepalive_time = 0;
+static void daemon_keepalive(int sig)
 {
-#define MAXARGS 256
+	if ( sig == SIGALRM )
+	{
+		static char empty = '\0';
+		fwrite(&empty,1,1,keepalive_out);
+		fflush(keepalive_out);
+		alarm(keepalive_time);
+	}
+}
+
+static int parse_command(char *command, char **argv, int maxargs)
+{
 	int argc = 0;
-	argv = (char**)malloc(sizeof(char*)*MAXARGS);
-	memset(argv,0,sizeof(char*)*MAXARGS);
 	bool in = false;
 	char *p;
-	for ( p = command ; *p!='\0' && argc < MAXARGS ; p++ )
+	for ( p = command ; *p!='\0' && argc < maxargs ; p++ )
 	{
 		if ( in && isspace(*p) )
 		{
@@ -215,7 +212,7 @@ static int parse_command(char *command, char **argv)
 			in = true;
 		}
 	}
-	if ( argc == MAXARGS && *p != '\0')
+	if ( argc == maxargs && *p != '\0')
 	{
 		output_error("too many remote command arguments received (only %d parsed)",argc);
 	}
@@ -241,23 +238,19 @@ static int daemon_run(int sockfd)
 	char command[1024];
 	if ( ! fgets(command,sizeof(command)-1,in) )
 	{
-		fprintf(out,"ERROR    [INIT] : missing remote command\nexit %d",XC_INIERR);
-		fclose(out);
-		fclose(in);
+		daemon_log("remote command is missing",command);
 		return XC_INIERR;
 	}
-	else
-		output_debug("remote command received: %s",command);
 	alarm(0);
 
-	//// implement keepalive mechanism (probably not needed though)
-	// keepalive_time = atoi(keepalive);
-	// if ( keepalive_time > 0 )
-	// {
-	// 	keepalive_out = out;
-	// 	signal(SIGALRM,daemon_keepalive);
-	// 	alarm(keepalive_time);		
-	// }	
+	// implement keepalive mechanism (probably not needed though)
+	keepalive_time = atoi(keepalive);
+	if ( keepalive_time > 0 )
+	{
+		keepalive_out = out;
+		signal(SIGALRM,daemon_keepalive);
+		alarm(keepalive_time);		
+	}	
 
 	// setup simulation output streams
 	if ( strcmp(output,"")==0 ) output_redirect_stream("output",out); else output_redirect("output",output);
@@ -269,12 +262,33 @@ static int daemon_run(int sockfd)
 	if ( strcmp(progress,"")==0 ) output_redirect_stream("progress",out); else output_redirect("progress",progress);
 
 	// parse command args
-	char **argv;
-	int argc = parse_command(command, argv);
-	cmdarg_load(argc,argv);
+#define MAXARGS 256
+	char **argv = (char**)malloc(sizeof(char*)*MAXARGS);
+	memset(argv,0,sizeof(char*)*MAXARGS);
+	argv[0] = "gridlabd";
+	int argc = parse_command(command, argv+1, MAXARGS-1)+1;
 
-	// write result
-	return XC_SUCCESS;
+	// dump
+	strcpy(global_command_line,"");
+	for ( int n = 0 ; n < argc ; n++ )
+	{
+		if ( n > 0 )
+			strcat(global_command_line," ");
+		strcat(global_command_line,argv[n]);
+	}
+
+	if ( argc > 1 && cmdarg_load(argc,argv) == SUCCESS )
+	{
+		// write result
+		daemon_log("running command [%s] on socket %d", global_command_line, sockfd);
+		return XC_SUCCESS;
+	}
+	else
+	{
+		daemon_log("invalid or missing command arguments");
+		return XC_ARGERR;
+	}
+
 }
 
 static int server_sockfd = 0;
@@ -382,7 +396,7 @@ static void daemon_process(void)
 		}
 		else if ( pid > 0 ) // parent
 		{
-			daemon_log("forked pid %d",pid);
+			daemon_log("forked pid %d for new incoming command",pid);
 			continue;
 		}
 		else // child
@@ -390,11 +404,17 @@ static void daemon_process(void)
 			atexit(daemon_cleanup_run);
 			int code = daemon_run(server_sockfd);
 			if ( code != XC_SUCCESS )
+			{
+				daemon_log("processing failed with exit code %d",code);
 				exit(code);
+			}
+			else
+			{
+				return;
+			}
 		}
 	}
 	// this function only returns when a remote request is received and the command has been loaded
-	return;
 }
 
 static void daemon_loadconfig(void)
@@ -516,15 +536,27 @@ static int daemon_configure()
 {
 	pid_t pid, sid;
 
-	// change file mode
-	int mask = 0;
-	sscanf(umaskstr,"%x",&mask);
-	umask(mask);
-
 	// change the working folder
 	if ( chdir(workdir) < 0 )
 	{
 		output_error("unable to change to workdir '%s' -- %s", workdir, strerror(errno));
+		exit(XC_INIERR);
+	}
+
+	// set the user/group id
+	if ( strcmp(user,"") != 0 )
+	{
+		if ( geteuid() != 0 )
+		{
+			output_error("unable to change user/group to '%s' unless running as root",user);
+			exit(XC_INIERR);
+		}
+
+	}
+	// check process euid
+	if ( geteuid() == 0 )
+	{
+		output_error("running as root is forbidden");
 		exit(XC_INIERR);
 	}
 
@@ -537,13 +569,11 @@ static int daemon_configure()
 	}
 	daemon_log("session id %d",sid);
 
-	// set the user/group id
-	// TODO: process setuid
-	if ( geteuid() == 0 )
-	{
-		daemon_log("running as root is forbidden");
-		exit(XC_INIERR);
-	}
+	// change file mode
+	int mask = 0;
+	sscanf(umaskstr,"%x",&mask);
+	umask(mask);
+
 }
 
 int daemon_start(int argc, char *argv[])
@@ -567,11 +597,14 @@ int daemon_start(int argc, char *argv[])
 	{
 		// check to see if pid actually exists
 		if ( kill(pid,0) == 0 )
-		{	output_error("a daemon is already running (pid=%d)", pid);
+		{	
+			output_error("a daemon is already running (pid=%d)", pid);
 			exit(XC_INIERR);
 		}
 		else
+		{
 			output_warning("daemon pid %d died without cleanup its pidfile", pid);
+		}
 	}	
 
 	// fork the daemon process
@@ -584,16 +617,13 @@ int daemon_start(int argc, char *argv[])
 	else if ( pid > 0 )
 	{
 		output_verbose("daemon_start(): process started (pid = %d)", pid);
+		exit(XC_SUCCESS);
 	}
 	else
 	{
 		daemon_process();
-		return nargs;
+		return nargs+1;
 	}		
-	if ( argc > 0 ) 
-		exit(0);
-	else
-		return nargs;
 }
 
 int daemon_stop(int argc, char *argv[])
@@ -610,7 +640,6 @@ int daemon_stop(int argc, char *argv[])
 		// configure as specified
 		daemon_configure();
 	}
-
 
 	// kill existing daemon
 	int pid = daemon_readpid();
@@ -632,9 +661,9 @@ int daemon_stop(int argc, char *argv[])
 	else
 		output_verbose("daemon_stop(): no daemon running");
 	if ( argc > 0 )
-		exit(0);
+		exit(XC_SUCCESS);
 	else
-		return nargs;
+		return nargs+1;
 }
 
 int daemon_restart(int argc, char *argv[])
@@ -666,9 +695,6 @@ int daemon_status(int argc, char *argv[])
 
 		// access config file
 		daemon_loadconfig();
-
-		// configure as specified
-		daemon_configure();
 	}
 
 	// kill existing daemon
@@ -677,7 +703,7 @@ int daemon_status(int argc, char *argv[])
 		output_message("gridlabd daemon is up (pid=%d)", pid);
 	else
 		output_message("gridlabd daemon is down");
-	exit(0);
+	return nargs+1;
 }
 
 static void daemon_remote_kill(int sig)
@@ -764,20 +790,37 @@ int daemon_remote_client(int argc, char *argv[])
 
 	signal(SIGALRM,daemon_remote_kill);
 	int tout = max(0,atoi(timeout));
+	char *p = buffer;
 	while ( !feof(in) )
 	{
-		output_verbose("remote waiting for response");
 		alarm(tout);
-		if ( fgets(buffer,sizeof(buffer)-1,in) )
+		if ( fread(p,1,1,in)==1 )
 		{
-			if ( strcmp(buffer,".")!=0 )
-				printf("%s\n",buffer); 	
+			if ( *p == '\0' ) // use for keepalive
+				continue;
+			if ( *p == '\n' || *p == '\r' )
+			{
+				p[1] = '\0';
+				FILE *out = ( strncmp(buffer,"WARNING",7)==0 
+					|| strncmp(buffer,"ERROR",5)==0 
+					|| strncmp(buffer,"DEBUG",5)==0 
+					|| strncmp(buffer,"FATAL",5)==0 
+					|| strncmp(buffer,"EXCEPTION",9)==0 ) ? stderr : stdout;
+				fprintf(out,"%s",buffer);
+				fflush(out);
+				p = buffer;
+			}
+			else
+				p++;
 		}
 		else if ( ferror(in) ) 
 		{
-			output_error("remote read failed -- %s", strerror(errno));
+			output_error("remote socket read failed -- %s", strerror(errno));
 			break;
 		}
+		if ( p > buffer )
+			fprintf(out,"%s",buffer);
+		fclose(out);
 	}
 	shutdown(sockfd,SHUT_RDWR);
 	close(sockfd);
