@@ -373,6 +373,11 @@ EXPORT int write_recorder(struct recorder *my, char *timestamp, char *value)
 	return count;
 }
 
+EXPORT void flush_recorder(struct recorder *my)
+{
+	fflush(my->fp);
+}
+
 EXPORT void close_recorder(struct recorder *my)
 {
 	if (my->fp)
@@ -448,6 +453,11 @@ EXPORT int write_histogram(histogram *my, char *timestamp, char *value)
 	return count;
 }
 
+EXPORT void flush_histogram(struct recorder *my)
+{
+	fflush(my->fp);
+}
+
 EXPORT void close_histogram(histogram *my)
 {
 	if (my->fp)
@@ -509,6 +519,11 @@ EXPORT int write_collector(struct collector *my, char *timestamp, char *value)
 	int count = fprintf(my->fp,"%s,%s\n", timestamp, value);
 	if (csv_keep_clean) fflush(my->fp);
 	return count;
+}
+
+EXPORT void flush_collector(struct recorder *my)
+{
+	fflush(my->fp);
 }
 
 EXPORT void close_collector(struct collector *my)

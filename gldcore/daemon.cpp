@@ -24,8 +24,8 @@ static int daemon_pid = 0;
 static char clientmask[32] = "0.0.0.0";
 static char port[8] = "6266";
 static char maxbacklog[8] = "4";
-static char logfile[1024] = "gridlabd-log";
-static char pidfile[1024] = "gridlabd-pid";
+static char logfile[1024] = "/usr/local/var/gridlabd-log";
+static char pidfile[1024] = "/usr/local/var/gridlabd-pid";
 static char workdir[1024] = "/";
 static char user[1024] = "gridlabd.gridlabd";
 
@@ -401,8 +401,8 @@ static void daemon_loadconfig(void)
 	FILE *fp = fopen(global_daemon_configfile,"rt");
 	if ( fp == NULL )
 	{
-		output_error("daemon_loadconfig(): '%s' open failed: %s",(const char*)global_daemon_configfile,strerror(errno));
-		exit(XC_INIERR);
+		output_debug("daemon_loadconfig(): '%s' open failed: %s",(const char*)global_daemon_configfile,strerror(errno));
+		return;
 	}
 	output_debug("daemon_loadconfig(): loading '%s'",(const char*)global_daemon_configfile);
 

@@ -326,7 +326,7 @@ GLOBAL bool global_reinclude INIT(false); /**< allow the same include file to be
 GLOBAL bool global_relax_undefined_if INIT(false); /**< allow #if macro to handle undefined global variables */
 GLOBAL bool global_literal_if INIT(false); /**< do not interpret lhs of #if as a variable name */
 
-GLOBAL char1024 global_daemon_configfile INIT("gridlabd.cnf"); /**< name of daemon configuration file */
+GLOBAL char1024 global_daemon_configfile INIT("/usr/local/etc/gridlabd.cnf"); /**< name of daemon configuration file */
 typedef enum {
 	DMC_MAIN		= 0x0000000000000001,
 	DMC_CMDARG		= 0x0000000000000002,

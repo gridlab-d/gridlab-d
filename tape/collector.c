@@ -111,7 +111,7 @@ static int collector_open(OBJECT *obj)
 static int write_collector(struct collector *my, char *ts, char *value)
 {
 	int rc=my->ops->write(my, ts, value);
-	if ( (my->flush==0 || (my->flush>0 && my->flush%gl_globalclock==0)) && my->ops->flush!=NULL ) 
+	if ( (my->flush==0 || (my->flush>0 && gl_globalclock%my->flush==0)) && my->ops->flush!=NULL ) 
 		my->ops->flush(my);
 	return rc;
 }
