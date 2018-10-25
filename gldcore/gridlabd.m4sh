@@ -27,6 +27,7 @@ if test "x$1" = "x--docker" ; then :
     exit 0
   elif test "x$2" = "xenable"; then :
     if test $# -eq 3; then :
+      docker inspect $3 > /dev/null 2>&1 || docker pull $3
       docker tag $3 gridlabd
       docker images | head -n 1
       docker images | grep gridlabd
@@ -36,7 +37,7 @@ if test "x$1" = "x--docker" ; then :
       exit 1
     fi
   elif test "x$2" = "xdisable" ; then :
-    docker rmi gridlabd
+    docker rmi gridlabd > /dev/null 2>&1 
     docker images | head -n 1
     docker images | grep gridlabd
     exit 0
