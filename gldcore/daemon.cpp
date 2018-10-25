@@ -39,6 +39,7 @@ static char progress[1024] = "";
 static char error[1024] = "";
 static char keepalive[8] = "1";
 static char timeout[8] = "10";
+static char umaskstr[8] = "0";
 
 static struct s_config {
 	char *name;
@@ -60,6 +61,7 @@ static struct s_config {
 	{"port",port},
 	{"keepalive",keepalive},
 	{"timeout",timeout},
+	{"umask",umaskstr},
 	NULL, NULL // required to end loop
 };
 
@@ -515,7 +517,9 @@ static int daemon_configure()
 	pid_t pid, sid;
 
 	// change file mode
-	umask(0);
+	int mask = 0;
+	sscanf(umaskstr,"%x",&mask);
+	umask(mask);
 
 	// change the working folder
 	if ( chdir(workdir) < 0 )
