@@ -423,7 +423,8 @@ static void daemon_loadconfig(void)
 	FILE *fp = fopen(global_daemon_configfile,"rt");
 	if ( fp == NULL )
 	{
-		output_debug("daemon_loadconfig(): '%s' open failed: %s",(const char*)global_daemon_configfile,strerror(errno));
+		output_warning("daemon_loadconfig(): '%s' open failed: %s",(const char*)global_daemon_configfile,strerror(errno));
+		output_warning("daemon_loadconfig(): using default configuration");
 		return;
 	}
 	output_debug("daemon_loadconfig(): loading '%s'",(const char*)global_daemon_configfile);
@@ -479,54 +480,62 @@ static void daemon_loadconfig(void)
 static int daemon_arguments(int argc, char *argv[])
 {
 	int nargs = 0, portno = atoi(port);
+#define NEXT (argc--,argv++,++nargs)
+	// skip command
+	NEXT;
 
 	// process args
-	while ( argc > 1 )
+	while ( argc > 0 )
 	{
-		if ( strcmp(argv[1],"-f")==0 )
+		if ( strcmp(*argv,"-f")==0 )
 		{
-			if ( argc > 2 )
+			NEXT;
+			if ( argc > 0 )
 			{
-				strcpy((char*)global_daemon_configfile,argv[2]);
-				output_debug("daemon_start(): configuration file '%s selected",(const char*)global_daemon_configfile);
-				argc += 2;
-				argc -= 2;
-				nargs++;
+				struct stat fs;
+				strcpy((char*)global_daemon_configfile,*argv);
+				if ( stat((char*)global_daemon_configfile,&fs) == 0 )
+					output_debug("configuration file '%s selected", (const char*)global_daemon_configfile);
+				else
+				{
+					output_error("configuration file '%s' not found", (const char*)global_daemon_configfile);
+					exit(XC_PRCERR);
+				}
+				NEXT;
 			}
 			else
 			{
-				output_error("daemon_start(): '-f' option missing configuration file name");
+				output_error("'-f' option missing configuration file name");
 				exit(XC_PRCERR);
 			}
 		}
-		else if ( strcmp(argv[1],"-p")==0 )
+		else if ( strcmp(*argv,"-p")==0 )
 		{
-			if ( argc > 2 )
+			NEXT;
+			if ( argc > 0 )
 			{
-				portno = atoi(argv[2]);
+				portno = atoi(*argv);
 				if ( portno > 0 )
 				{
-					output_debug("daemon_start(): port number %d selected",portno);
+					output_debug("port number %d selected",portno);
 				}
 				else
 				{
-					output_error("daemon_start(): port number '%s' is not valid",argv[2]);
+					output_error("port number '%s' is not valid",*argv);
 					exit(XC_PRCERR);
 				}
-				argc += 2;
-				argc -= 2;
-				nargs++;
+				NEXT;
 			}
 			else
 			{
-				output_error("daemon_start(): '-p' option is missing port number");
+				output_error("d'-p' option is missing port number");
 				exit(XC_PRCERR);
 			}
 		}
-		else if ( argc > 1 )
+		else
 		{
-			output_error("daemon_start(): argument '%s' is not recognized",argv[0],argv[1],argv[2]);			
-				exit(XC_PRCERR);
+			output_error("argument '%s' is not recognized",*argv);			
+			exit(XC_PRCERR);
 		}
 	}
 	return nargs;
