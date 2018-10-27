@@ -24,6 +24,7 @@
 #include "timestamp.h"
 #include "json.h"
 
+static unsigned int json_version = 0;
 FILE *json = NULL;
 static int json_write(const char *fmt,...)
 {
@@ -180,6 +181,10 @@ static int json_objects(FILE *fp)
 		for ( prop = obj->oclass->pmap ; prop != NULL && prop->oclass == obj->oclass ; prop = prop->next )
 		{
 			char buffer[1024];
+			if ( prop->access != PA_PUBLIC )
+				continue;
+			if ( prop->ptype == PT_enduse )
+				continue;
 			char *value = object_property_to_string(obj,prop->name, buffer, sizeof(buffer)-1);
 			if ( value == NULL )
 				continue; // ignore values that don't convert propertly
@@ -200,7 +205,7 @@ int json_output(FILE *fp)
 {
 	json = fp;
 	json_write("{\t\"application\": \"gridlabd\",\n");
-	json_write("\t\"version\" : \"4.1.0\"");
+	json_write("\t\"version\" : \"%u.%u.%u\"",global_version_major,global_version_minor,json_version);
 	json_modules(fp);
 	json_classes(fp);
 	json_globals(fp);

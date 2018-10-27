@@ -3,6 +3,7 @@ import json
 import string
 
 version = "4.1.0"
+
 def convert(jsonfile,glmfile) :
 	fd = open(jsonfile,'r')
 	glm = json.load(fd)
@@ -23,7 +24,7 @@ def convert(jsonfile,glmfile) :
 	fd.write("clock {\n")
 	fd.write("\ttimezone {};\n".format(globals["timezone_locale"]["value"]))
 	fd.write("\tstarttime '{}';\n".format(globals["starttime"]["value"]))
-	fd.write("\tstarttime '{}';\n".format(globals["starttime"]["value"]))
+	fd.write("\tstoptime '{}';\n".format(globals["stoptime"]["value"]))
 	fd.write("}\n")
 	for mod in modules.keys() :
 		fd.write("module {} {}\n".format(mod,'{'))
@@ -36,7 +37,10 @@ def convert(jsonfile,glmfile) :
 	for obj,data in objects.items() :
 		fd.write("object {} {}\n".format(obj,'{'))
 		for name,value in data.items() :
-			fd.write("\t{} {};\n".format(name,value))
+			ignore = ["class","id","rng_state","guid"]
+			if ( name not in ignore) :
+				fd.write("\t{} {};\n".format(name,value))
 		fd.write("}\n")
 
 	fd.close()
+

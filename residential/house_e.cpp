@@ -600,7 +600,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 				PT_KEYWORD, "BAND", (enumeration)TC_BAND, // T<mode>{On,Off} control HVAC (setpoints/deadband are ignored)
 				PT_KEYWORD, "NONE", (enumeration)TC_NONE, // system_mode controls HVAC (setpoints/deadband and T<mode>{On,Off} are ignored)
 
-			PT_method, "circuit", get_smart_breaker_offset(), PT_DESCRIPTION, "smart breaker message handlers", 
+			PT_method, "circuit", get_smart_breaker_offset(), PT_ACCESS,PA_PROTECTED, PT_DESCRIPTION, "smart breaker message handlers", 
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);			
 
