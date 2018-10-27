@@ -40,8 +40,9 @@ static int json_write(const char *fmt,...)
 
 static int json_modules(FILE *fp)
 {
+	MODULE *mod;
 	json_write(",\n\t\"modules\" : {");
-	for ( MODULE *mod = module_get_first() ; mod != NULL ; mod = mod->next )
+	for ( mod = module_get_first() ; mod != NULL ; mod = mod->next )
 	{
 		if ( mod != module_get_first() )
 			json_write(",");
@@ -56,9 +57,11 @@ static int json_modules(FILE *fp)
 
 static int json_classes(FILE *fp)
 {
+	CLASS *oclass;
 	json_write(",\n\t\"classes\" : {");
-	for ( CLASS *oclass = class_get_first_class() ; oclass != NULL ; oclass = oclass->next )
+	for ( oclass = class_get_first_class() ; oclass != NULL ; oclass = oclass->next )
 	{
+		PROPERTY *prop;
 		if ( oclass != class_get_first_class() )
 			json_write(",");
 		json_write("\n\t\t\"%s\" : {",oclass->name);
@@ -74,8 +77,9 @@ static int json_classes(FILE *fp)
 		if ( oclass->has_runtime ) TUPLE("runtime","%s",oclass->runtime);
 		if ( oclass->pmap != NULL )
 			json_write(",");
-		for ( PROPERTY *prop = oclass->pmap ; prop != NULL ; prop=(prop->next?prop->next:(prop->oclass->parent?prop->oclass->parent->pmap:NULL)) )
+		for ( prop = oclass->pmap ; prop != NULL ; prop=(prop->next?prop->next:(prop->oclass->parent?prop->oclass->parent->pmap:NULL)) )
 		{
+			KEYWORD *key;
 			char *ptype = class_get_property_typename(prop->ptype);
 			if ( ptype == NULL )
 				continue;
@@ -83,7 +87,7 @@ static int json_classes(FILE *fp)
 				json_write(",");
 			json_write("\n\t\t\t\"%s\" : {",prop->name);
 			json_write("\n\t\t\t\t\"type\" : \"%s\"",ptype);
-			for ( KEYWORD *key = prop->keywords ; key != NULL ; key = key->next )
+			for ( key = prop->keywords ; key != NULL ; key = key->next )
 			{
 				if ( key == prop->keywords )
 				{
@@ -104,20 +108,22 @@ static int json_classes(FILE *fp)
 
 static int json_globals(FILE *fp)
 {
+	GLOBALVAR *var;
 	json_write(",\n\t\"globals\" : {");
 
 	/* for each module */
-	for ( GLOBALVAR *var = global_find(NULL) ; var != NULL ; var = global_getnext(var) )
+	for ( var = global_find(NULL) ; var != NULL ; var = global_getnext(var) )
 	{
 		char buffer[1024];
 		if ( global_getvar(var->prop->name,buffer,sizeof(buffer)-1) ) // only write globals that can be extracted
 		{
+			KEYWORD *key;
 			PROPERTYSPEC *pspec = property_getspec(var->prop->ptype);
 			if ( var != global_find(NULL) )
 				json_write(",");
 			json_write("\n\t\t\"%s\" : {", var->prop->name);
 			json_write("\n\t\t\t\"type\" : \"%s\",", pspec->name);
-			for ( KEYWORD *key = var->prop->keywords ; key != NULL ; key = key->next )
+			for ( key = var->prop->keywords ; key != NULL ; key = key->next )
 			{
 				if ( key == var->prop->keywords )
 				{
@@ -140,10 +146,11 @@ static int json_globals(FILE *fp)
 
 static int json_objects(FILE *fp)
 {
+	OBJECT *obj;
 	json_write(",\n\t\"objects\" : {");
 
 	/* scan each object in the model */
-	for ( OBJECT *obj=object_get_first() ; obj!=NULL ; obj=obj->next )
+	for ( obj = object_get_first() ; obj != NULL ; obj = obj->next )
 	{
 		PROPERTY *prop;
 		if ( obj != object_get_first() )
