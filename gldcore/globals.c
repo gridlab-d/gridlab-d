@@ -300,6 +300,7 @@ static struct s_varmap {
 	{"literal_if", PT_bool, &global_literal_if, PA_PUBLIC, "do not interpret lhs of #if macro as a variable name"},
 	{"validto_context", PT_enumeration, &global_validto_context, PA_PUBLIC, "events to which valid_to time applies, rather than just sync passes", vtc_keys},
 	{"daemon_configfile", PT_char1024, &global_daemon_configfile, PA_PUBLIC, "name of configuration file used by the daemon"},
+	{"timezone_locale", PT_char1024, &global_timezone_locale, PA_REFERENCE, "timezone specified by the clock directive"},
 	/* add new global variables here */
 };
 

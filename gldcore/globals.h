@@ -394,6 +394,8 @@ typedef enum {
 
 GLOBAL bool global_validto_context INIT(VTC_SYNC); /**< events for which valid_to applies, rather than just sync passes */
 
+GLOBAL char1024 global_timezone_locale INIT("UTC"); /**< timezone specification */
+
 #ifdef __cplusplus
 }
 #endif
