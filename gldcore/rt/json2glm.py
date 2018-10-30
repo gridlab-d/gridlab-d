@@ -36,11 +36,15 @@ def convert(jsonfile,glmfile) :
 
 	for obj,data in objects.items() :
 		fd.write("object {} {}\n".format(obj,'{'))
+		oclass = data["class"];
 		for name,value in data.items() :
-			ignore = ["class","id","rng_state","guid"]
+			ignore = ["class","id"]
+			myclass = classes[oclass]
 			if ( name not in ignore) :
-				fd.write("\t{} {};\n".format(name,value))
+				if ( name not in myclass or myclass[name]["access"] == "PUBLIC" ) :
+					fd.write("\t{} {};\n".format(name,value))
 		fd.write("}\n")
 
 	fd.close()
 
+convert('../autotest/test_json.json','../autotest/test_json_out.glm')

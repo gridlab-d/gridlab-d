@@ -87,7 +87,24 @@ static int json_classes(FILE *fp)
 			if ( prop != oclass->pmap )
 				json_write(",");
 			json_write("\n\t\t\t\"%s\" : {",prop->name);
-			json_write("\n\t\t\t\t\"type\" : \"%s\"",ptype);
+			json_write("\n\t\t\t\t\"type\" : \"%s\",",ptype);
+			char access[1024] = "";
+			switch ( prop->access ) {
+			case PA_PUBLIC: strcpy(access,"PUBLIC"); break;
+			case PA_REFERENCE: strcpy(access,"REFERENCE"); break;
+			case PA_PROTECTED: strcpy(access,"PROTECTED"); break;
+			case PA_PRIVATE: strcpy(access,"PRIVATE"); break;
+			case PA_HIDDEN: strcpy(access,"HIDDEN"); break;
+			case PA_N: strcpy(access,"NONE"); break;
+			default:
+				if ( prop->access & PA_R ) strcat(access,"R");
+				if ( prop->access & PA_W ) strcat(access,"W");
+				if ( prop->access & PA_S ) strcat(access,"S");
+				if ( prop->access & PA_L ) strcat(access,"L");
+				if ( prop->access & PA_H ) strcat(access,"H");
+				break;
+			}
+			json_write("\n\t\t\t\t\"access\" : \"%s\"",access);
 			for ( key = prop->keywords ; key != NULL ; key = key->next )
 			{
 				if ( key == prop->keywords )

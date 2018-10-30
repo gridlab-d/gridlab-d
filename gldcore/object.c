@@ -991,6 +991,16 @@ static int set_header_value(OBJECT *obj, char *name, char *value)
 			return FAILED;
 		}
 	}
+	else if ( strcmp(name,"rng_state")==0 )
+	{
+		obj->rng_state = atoi(value);
+		return SUCCESS;
+	}
+	else if ( strcmp(name,"guid")==0 )
+	{
+		obj->guid[0] = atoi(value);
+		return SUCCESS;
+	}
 	else {
 		output_error("object %s:%d called set_header_value() for invalid field '%s'", obj->oclass->name, obj->id, name);
 		/*	TROUBLESHOOT
