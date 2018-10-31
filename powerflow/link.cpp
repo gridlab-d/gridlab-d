@@ -2842,7 +2842,7 @@ TIMESTAMP link_object::sync(TIMESTAMP t0)
 			/* compute currents */
 			READLOCK_OBJECT(to);
 			complex tc[] = {t->current_inj[0], t->current_inj[1], t->current_inj[2]};
-			UNLOCK_OBJECT(to);
+			READUNLOCK_OBJECT(to);
 
 			complex i0, i1, i2;
 
