@@ -34,8 +34,8 @@ private:
 	char compare_op[16];
 	char compare_val[32];
 	size_t n_properties;
-	std::vector<gld_property> property_target;
-	std::vector<gld_unit> property_unit;
+	std::vector<gld_property> *property_target;
+	std::vector<gld_unit> *property_unit;
 	char header_data[1024];
 	char *oldvalues;
 public:

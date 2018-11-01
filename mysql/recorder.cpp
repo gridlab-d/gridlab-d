@@ -75,6 +75,8 @@ int recorder::create(void)
 	db = last_database;
 	strcpy(datetime_fieldname,"t");
 	strcpy(recordid_fieldname,"id");
+	property_target = new vector<gld_property>;
+	property_unit = new vector<gld_unit>;
 	return 1; /* return 1 on success, 0 on failure */
 }
 
@@ -119,6 +121,49 @@ int recorder::init(OBJECT *parent)
 			exception("mode '%s' is not valid for a recorder", (const char*)mode);
 	}
 
+	// drop table if exists and drop specified
+	db->table_exists(NULL); // clear last table checked
+	if ( db->table_exists(get_table()) )
+	{
+		if ( get_options()&MO_DROPTABLES && !db->query("DROP TABLE IF EXISTS `%s`", get_table()) )
+			exception("unable to drop table '%s'", get_table());
+		gl_verbose("dropped table %s",get_table());
+	}
+	
+	// create table if not exists
+	gl_verbose("preparing table %s",get_table());
+	db->table_exists(NULL); // clear last table checked
+	if ( !db->table_exists(get_table()) )
+	{
+		if ( !(options&MO_NOCREATE) )
+		{
+			if ( !db->query("CREATE TABLE IF NOT EXISTS `%s` ("
+				"`%s` INT AUTO_INCREMENT PRIMARY KEY, "
+				"`%s` TIMESTAMP, "
+				"INDEX `i_%s` (`%s`) "
+				")", 
+				get_table(),
+				(const char*)recordid_fieldname,
+				(const char*)datetime_fieldname,
+				(const char*)datetime_fieldname, (const char*)datetime_fieldname))
+				exception("unable to create table '%s' in schema '%s'", get_table(), db->get_schema());
+			else
+				gl_verbose("table %s created ok", get_table());
+		}
+		else
+			exception("NOCREATE option prevents creation of table '%s'", get_table());
+	}
+
+	// check row count
+	else 
+	{
+		if ( db->select("SELECT max(`%s`) FROM `%s`", (const char*)get_recordid_fieldname(), get_table())==NULL
+				&& db->select("SELECT count(*) FROM `%s`", get_table())==NULL )
+			exception("unable to get row count of table '%s'", get_table());
+
+		gl_verbose("table '%s' ok", get_table());
+	}
+
 	// connect the target properties
 	vector<string> property_specs = split(get_property(), ", \t;");
 	char property_list[65536]="";
@@ -144,7 +189,7 @@ int recorder::init(OBJECT *parent)
 			if ( !prop.is_valid() )
 				exception("property %s is not valid", buffer);
 
-			property_target.push_back(prop);
+			(*property_target).push_back(prop);
 			debug("adding field from property '%s'", buffer);
 			double scale = 1.0;
 			gld_unit unit;
@@ -156,7 +201,7 @@ int recorder::init(OBJECT *parent)
 			}
 			else if ( prop.get_unit()!=NULL && (options&MO_USEUNITS) )
 				unit = *prop.get_unit();
-			property_unit.push_back(unit);
+			(*property_unit).push_back(unit);
 			n_properties++;
 
 			char *sqltype = db->get_sqltype(prop);
@@ -233,56 +278,6 @@ int recorder::init(OBJECT *parent)
 		gl_verbose("header_fielddata=[%s]", header_data);
 	}
 
-	// check for table existence and create if not found
-	if ( n_properties>0 )
-	{
-		// drop table if exists and drop specified
-		if ( db->table_exists(get_table()) )
-		{
-			if ( get_options()&MO_DROPTABLES && !db->query("DROP TABLE IF EXISTS `%s`", get_table()) )
-				exception("unable to drop table '%s'", get_table());
-		}
-		
-		// create table if not exists
-		if ( !db->table_exists(get_table()) )
-		{
-			if ( !(options&MO_NOCREATE) )
-			{
-				if ( !db->query("CREATE TABLE IF NOT EXISTS `%s` ("
-					"`%s` INT AUTO_INCREMENT PRIMARY KEY, "
-					"`%s` TIMESTAMP, "
-					"%s"
-					"INDEX `i_%s` (`%s`) "
-					")", 
-					get_table(),
-					(const char*)recordid_fieldname,
-					(const char*)datetime_fieldname,
-					property_list,
-					(const char*)datetime_fieldname, (const char*)datetime_fieldname))
-					exception("unable to create table '%s' in schema '%s'", get_table(), db->get_schema());
-				else
-					gl_verbose("table %s created ok", get_table());
-			}
-			else
-				exception("NOCREATE option prevents creation of table '%s'", get_table());
-		}
-
-		// check row count
-		else 
-		{
-			if ( db->select("SELECT max(`%s`) FROM `%s`", (const char*)get_recordid_fieldname(), get_table())==NULL
-					&& db->select("SELECT count(*) FROM `%s`", get_table())==NULL )
-				exception("unable to get row count of table '%s'", get_table());
-
-			gl_verbose("table '%s' ok", get_table());
-		}
-	}
-	else
-	{
-		exception("no properties specified");
-		return 0;
-	}
-
 	// set heartbeat
 	if ( interval>0 )
 	{
@@ -337,7 +332,7 @@ TIMESTAMP recorder::commit(TIMESTAMP t0, TIMESTAMP t1)
 	if ( trigger_on )
 	{
 		// trigger condition
-		if ( property_target[0].compare(compare_op,compare_val) )
+		if ( (*property_target)[0].compare(compare_op,compare_val) )
 		{
 			// disable trigger and enable data collection
 			trigger_on = false;
@@ -368,14 +363,14 @@ TIMESTAMP recorder::commit(TIMESTAMP t0, TIMESTAMP t1)
 			fieldlen = sprintf(fieldlist,",%s",(const char*)header_fieldnames);
 		strcpy(valuelist,header_data);
 		size_t valuelen = strlen(valuelist);
-		for ( size_t n = 0 ; n < property_target.size() ; n++ )
+		for ( size_t n = 0 ; n < (*property_target).size() ; n++ )
 		{
 			char buffer[1024] = "NULL";
-			if ( property_unit[n].is_valid() )
-				fieldlen += sprintf(fieldlist+fieldlen,",`%s[%s]`", property_target[n].get_name(), property_unit[n].get_name());
+			if ( (*property_unit)[n].is_valid() )
+				fieldlen += sprintf(fieldlist+fieldlen,",`%s[%s]`", (*property_target)[n].get_name(), (*property_unit)[n].get_name());
 			else
-				fieldlen += sprintf(fieldlist+fieldlen,",`%s`", property_target[n].get_name());
-			db->get_sqldata(buffer, sizeof(buffer), property_target[n], &property_unit[n]);
+				fieldlen += sprintf(fieldlist+fieldlen,",`%s`", (*property_target)[n].get_name());
+			db->get_sqldata(buffer, sizeof(buffer), (*property_target)[n], &(*property_unit)[n]);
 			valuelen += sprintf(valuelist+valuelen,", %s", buffer);
 		}
 		if ( oldvalues )

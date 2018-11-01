@@ -227,8 +227,17 @@ void database::check_schema(void)
 }
 bool database::table_exists(char *t)
 {
+	if ( t == NULL )
+	{
+		strcpy(last_table_checked,"");
+		gl_verbose("clearing last table checked");
+		return false;
+	}
 	if ( strcmp(t,last_table_checked)==0 )
+	{
+		gl_verbose("table %s has already checked out ok",t);
 		return true;
+	}
 	check_schema();
 	if ( query("SHOW TABLES LIKE '%s'", t) )
 	{
@@ -238,9 +247,13 @@ bool database::table_exists(char *t)
 			int n = mysql_num_rows(res);
 			mysql_free_result(res);
 			strcpy(last_table_checked,t);
+			gl_verbose("founds %d tables like %s",n,t);
 			return n>0;
 		}
+		else
+			gl_error("unable to get result for show table %s",t);
 	}
+	gl_error("unable to query show table %s",t);
 	return false;
 }
 
