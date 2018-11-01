@@ -38,7 +38,7 @@ def convert(jsonfile,glmfile) :
 		fd.write("object {} {}\n".format(obj,'{'))
 		oclass = data["class"];
 		for name,value in data.items() :
-			ignore = ["class","id"]
+			ignore = ["class","id","object_size"]
 			myclass = classes[oclass]
 			if ( name not in ignore) :
 				if ( name not in myclass or myclass[name]["access"] == "PUBLIC" ) :

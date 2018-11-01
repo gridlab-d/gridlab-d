@@ -66,7 +66,7 @@ static int json_classes(FILE *fp)
 		if ( oclass != class_get_first_class() )
 			json_write(",");
 		json_write("\n\t\t\"%s\" : {",oclass->name);
-		FIRST("size","%u",oclass->size);
+		FIRST("object_size","%u",oclass->size);
 		if ( oclass->parent && oclass->parent->name )
 		{
 			TUPLE("parent","%s",oclass->parent->name );
