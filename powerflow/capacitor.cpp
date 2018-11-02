@@ -1384,12 +1384,12 @@ double capacitor::cap_postPost_fxn(double result, double time_value)
 
 	if ((control==VAR) || (control==VARVOLT))	//Grab the power values from remote link
 	{
-		READLOCK_OBJECT(OBJECTHDR(RLink));
+		//READLOCK_OBJECT(OBJECTHDR(RLink));
 
 		//Force the link to do an update (will be ignored first run anyways (zero))
 		return_status = ((int (*)(OBJECT *))(*RLink_calculate_power_fxn))(RLink);
 
-		READUNLOCK_OBJECT(OBJECTHDR(RLink));
+		//READUNLOCK_OBJECT(OBJECTHDR(RLink));
 
 		//Make sure it worked
 		if (return_status != 1)
