@@ -217,35 +217,53 @@ TIMESTAMP database::commit(TIMESTAMP t0, TIMESTAMP t1)
 	return TS_NEVER;
 }
 
-bool database::table_exists(char *t)
+bool database::table_exists(char *table)
 {
-	if ( t == NULL )
+	char query[1024];
+	sprintf(query,"SELECT count(*) FROM information_schema.columns where table_schema = '%s' and table_name = '%s' and column_name in ('id', 't')",(const char*)schema,table);
+	if ( mysql_query(mysql,query) )
+		return false;
+	MYSQL_RES *res = mysql_store_result(mysql);
+	if ( res == NULL )
+		return false;
+	MYSQL_ROW row = mysql_fetch_row(res);
+	if ( row[0] != NULL && atoi(row[0]) == 2 )
+		return true;
+	else
+		return false;
+}
+
+bool database::check_field(const char *table, const char *field)
+{
+	char query[1024];
+	sprintf(query,"SELECT count(*) FROM information_schema.columns where table_schema = '%s' and table_name = '%s' and column_name = '%s'",(const char*)schema,table,field);
+	if ( mysql_query(mysql,query) )
 	{
-		strcpy(last_table_checked,"");
-		gl_verbose("clearing last table checked");
+		gl_warning("%s: query [%s] failed -- %s", mysql_get_host_info(mysql), query, mysql_error(mysql));
 		return false;
 	}
-	if ( strcmp(t,last_table_checked)==0 )
+	MYSQL_RES *res = mysql_store_result(mysql);
+	if ( res == NULL )
 	{
-		gl_verbose("table %s has already checked out ok",t);
+		gl_warning("%s: store result for [%s] failed -- %s", mysql_get_host_info(mysql), query, mysql_error(mysql));
+		return false;
+	}
+	MYSQL_ROW row = mysql_fetch_row(res);
+	if ( row[0] == NULL )
+	{
+		gl_warning("%s: no result for field '%s' in table '%s' ", mysql_get_host_info(mysql), field, table);
+		return false;
+	}
+	else if ( atoi(row[0]) == 0 )
+	{
+		gl_warning("%s: field '%s' in table '%s' not found (count is '%s')", mysql_get_host_info(mysql), field, table, row[0]);
+		return false;
+	}	
+	else 
+	{
+		gl_verbose("%s: field '%s' in table '%s' is ok ", mysql_get_host_info(mysql), field, table);
 		return true;
 	}
-	if ( query("SHOW TABLES LIKE '%s'", t) )
-	{
-		MYSQL_RES *res = mysql_store_result(mysql);
-		if ( res )
-		{
-			int n = mysql_num_rows(res);
-			mysql_free_result(res);
-			strcpy(last_table_checked,t);
-			gl_verbose("founds %d tables like %s",n,t);
-			return n>0;
-		}
-		else
-			gl_error("unable to get result for show table %s",t);
-	}
-	gl_error("unable to query show table %s",t);
-	return false;
 }
 
 char *database::get_sqltype(gld_property &prop)

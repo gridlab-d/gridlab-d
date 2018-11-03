@@ -193,11 +193,11 @@ int recorder::init(OBJECT *parent)
 			debug("adding field from property '%s'", buffer);
 			double scale = 1.0;
 			gld_unit unit;
-			if ( spec.size()>0 )
+			if ( spec.size()>1 )
 			{
-				char buffer[1024];
-				strcpy(buffer,(const char*)spec[1].c_str());
-				unit = gld_unit(buffer);
+				char tmp[1024];
+				strcpy(tmp,(const char*)spec[1].c_str());
+				unit = gld_unit(tmp);
 			}
 			else if ( prop.get_unit()!=NULL && (options&MO_USEUNITS) )
 				unit = *prop.get_unit();
@@ -208,19 +208,22 @@ int recorder::init(OBJECT *parent)
 			if ( sqltype==NULL )
 				exception("property '%s' has an unknown SQL type", prop.get_name());
 
-			char tmp[128];
+			char fieldname[1024];
 			if ( unit.is_valid() )
-				sprintf(tmp,"`%s[%s]` %s, ", prop.get_name(), unit.get_name(), sqltype);
+				sprintf(fieldname,"%s[%s]", prop.get_name(), unit.get_name());
 			else
-				sprintf(tmp,"`%s` %s, ", prop.get_name(), sqltype);
+				sprintf(fieldname,"%s", prop.get_name());
+			char tmp[1024];
+			sprintf(tmp,"`%s` %s, ",fieldname,sqltype);
 			strcat(property_list,tmp);
-			if ( (options&MO_NOADD)==MO_NOADD )
-				gl_warning("automatic add of column '%s' to table '%s' suppressed by NOADD option",prop.get_name(),get_table());
-			else if ( db->query_ex("ALTER TABLE `%s` ADD COLUMN `%s` %s;", get_table(), prop.get_name(), sqltype) )
-				gl_verbose("automatically added missing column '%s' as '%s' to '%s'", prop.get_name(), sqltype, get_table());
-			else
-				gl_error("unable to add column '%s' to table '%s'",prop.get_name(),get_table());
-
+			if ( db->check_field(get_table(),fieldname) ) 
+				gl_verbose("column '%s' of table '%s' is ok",fieldname,get_table());
+			else if ( (options&MO_NOADD)==MO_NOADD )
+				gl_warning("automatic add of column '%s' to table '%s' suppressed by NOADD option",fieldname,get_table());
+			else if ( db->query("ALTER TABLE `%s` ADD COLUMN `%s` %s;", get_table(), fieldname, sqltype) )
+				gl_verbose("automatically added missing column '%s' as '%s' to '%s'", fieldname, sqltype, get_table());
+			else 
+				gl_error("unable to add column '%s' to table '%s'",fieldname,get_table());
 
 		}
 	}
@@ -236,6 +239,8 @@ int recorder::init(OBJECT *parent)
 		size_t header_pos = 0;
 		for ( size_t n = 0 ; n < header_specs.size() ; n++ )
 		{
+			if ( db->check_field(get_table(), (const char*)header_specs[n].c_str()) )
+				continue;
 			if ( header_specs[n].compare("name")==0 )
 			{
 				header_pos += sprintf(header_data+header_pos,",'%s'",get_parent()->get_name());
