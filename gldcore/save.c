@@ -31,6 +31,7 @@ int saveall(char *filename)
 		char *format;
 		int (*save)(char*,FILE*);
 	} map[] = {
+		{"gld", saveglm},
 		{"glm", saveglm},
 		//{"xml", savexml_strict},
 		{"xml", savexml},
