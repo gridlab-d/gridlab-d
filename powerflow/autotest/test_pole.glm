@@ -1,0 +1,72 @@
+module powerflow;
+module climate;
+
+#set suppress_repeat_messages=FALSE
+
+clock {
+	starttime '2000-01-01 00:00:00';
+	stoptime '2001-01-01 00:00:00';
+}
+
+object climate {
+	name sandiego;
+	tmyfile CA-San_Diego_North_Island_Nas.tmy3;
+}
+
+object pole_configuration {
+	name "WOOD-C-45/5";
+	pole_type WOOD;
+	pole_length 45 ft;
+	pole_depth 4.5 ft;
+	ground_diameter (32.5/3.14);
+	top_diameter (19/3.14);
+	fiber_strength 8000 psi;
+}
+
+object pole {
+	name pole1;
+	weather sandiego;
+	configuration "WOOD-C-45/5"; 
+	phases ABC;
+	nominal_voltage 12470;
+	tilt_angle 0.4;
+	tilt_direction 270;
+}
+
+object line_spacing {
+	name spacing1;
+	distance_AE 30;
+	distance_BE 35;
+	distance_CE 40;
+}
+
+object overhead_line_conductor {
+	name conductor1;
+	diameter 0.5 in;
+}
+object line_configuration {
+	name linetype1;
+	spacing spacing1;
+	conductor_A conductor1;
+	conductor_B conductor1;
+	conductor_C conductor1;
+}
+
+object overhead_line {
+	phases ABC;
+	from pole1;
+	to pole2;
+	length 500 ft;
+	configuration linetype1;
+}
+object pole {
+	name pole2;
+	weather sandiego;
+	configuration "WOOD-C-45/5"; 
+	phases ABC;
+	nominal_voltage 12470;
+	tilt_angle 5 deg;
+	tilt_direction 270;
+	equipment_area 5 sf;
+	equipment_height 25 ft;
+}

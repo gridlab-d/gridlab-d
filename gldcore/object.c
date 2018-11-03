@@ -1529,6 +1529,24 @@ TIMESTAMP _object_sync(OBJECT *obj, /**< the object to synchronize */
 
 	return obj->valid_to;
 }
+
+int object_event(OBJECT *obj, char *event)
+{
+	char buffer[1024];
+	sprintf(buffer,"%d",global_clock);
+	setenv("CLOCK",buffer,1);
+	sprintf(buffer,"%s",global_hostname);
+	setenv("HOSTNAME",buffer,1);
+	sprintf(buffer,"%d",global_server_portnum);
+	setenv("PORT",buffer,1);
+	if ( obj->name )	
+		sprintf(buffer,"%s",obj->name);
+	else
+		sprintf(buffer,"%s:%d",obj->oclass->name,obj->id);
+	setenv("OBJECT",buffer,1);
+	return system(event);
+}
+
 /** Synchronize an object.  The timestamp given is the desired increment.
 
 	If an object is called on multiple passes (see PASSCONFIG) it is 
@@ -1545,10 +1563,30 @@ TIMESTAMP object_sync(OBJECT *obj, /**< the object to synchronize */
 {
 	clock_t t = (clock_t)exec_clock();
 	TIMESTAMP t2=TS_NEVER;
+	int rc = 0;
+	const char *passname[]={"NOSYNC","PRESYNC","SYNC","INVALID","POSTSYNC"};
+	char *event = NULL;
 	do {
 		/* don't call sync beyond valid horizon */
 		t2 = _object_sync(obj,(ts<(obj->valid_to>0?obj->valid_to:TS_NEVER)?ts:obj->valid_to),pass);	
 	} while (t2>0 && ts>(t2<0?-t2:t2) && t2<TS_NEVER);
+
+	/* event handler */
+	switch (pass) {
+	case PC_PRETOPDOWN:
+		event = obj->events.presync;
+		break;
+	case PC_BOTTOMUP:
+		event = obj->events.sync;
+		break;
+	case PC_POSTTOPDOWN:
+		event = obj->events.postsync;
+		break;
+	default:
+		break;
+	}
+	if ( event != NULL )
+		rc = object_event(obj,event);
 
 	/* do profiling, if needed */
 	if ( global_profiler==1 )
@@ -1562,10 +1600,14 @@ TIMESTAMP object_sync(OBJECT *obj, /**< the object to synchronize */
 	}
 	if ( global_debug_output>0 )
 	{
-		const char *passname[]={"NOSYNC","PRESYNC","SYNC","INVALID","POSTSYNC"};
 		char dt1[64]="(invalid)"; if ( ts!=TS_INVALID ) convert_from_timestamp(absolute_timestamp(ts),dt1,sizeof(dt1)); else strcpy(dt1,"ERROR");
 		char dt2[64]="(invalid)"; if ( t2!=TS_INVALID ) convert_from_timestamp(absolute_timestamp(t2),dt2,sizeof(dt2)); else strcpy(dt2,"ERROR");
 		IN_MYCONTEXT output_debug("object %s:%d pass %s sync to %s -> %s %s", obj->oclass->name, obj->id, pass<0||pass>4?"(invalid)":passname[pass], dt1, is_soft_timestamp(t2)?"SOFT":"HARD", dt2);
+	}
+	if ( rc != 0 )
+	{
+		IN_MYCONTEXT output_error("object %s:%d pass %s at ts=%d event handler failed with code %d",obj->oclass->name,obj->id,pass<0||pass>4?"(invalid)":passname[pass],ts,rc);
+		return TS_ZERO;
 	}
 	return t2;
 }
@@ -1593,8 +1635,17 @@ int object_init(OBJECT *obj) /**< the object to initialize */
 	clock_t t = (clock_t)exec_clock();
 	int rv = 1;
 	obj->clock = global_starttime;
-	if(obj->oclass->init != NULL)
+	if ( obj->oclass->init != NULL )
 		rv = (int)(*(obj->oclass->init))(obj, obj->parent);
+	if ( rv == 1 && obj->events.init != NULL )
+	{
+		int rc = object_event(obj,obj->events.init);
+		if ( rc != 0 )
+		{
+			IN_MYCONTEXT output_error("object %s:%d init at ts=%d event handler failed with code %d",obj->oclass->name,obj->id,global_starttime,rc);
+			rv = 0;
+		}
+	}
 	object_profile(obj,OPI_INIT,t);
 	if ( global_debug_output>0 )
 	{
@@ -1616,11 +1667,22 @@ STATUS object_precommit(OBJECT *obj, TIMESTAMP t1)
 {
 	clock_t t = (clock_t)exec_clock();
 	STATUS rv = SUCCESS;
+	if ( global_validto_context&VTC_PRECOMMIT == VTC_PRECOMMIT )
+		return rv;
 	if(obj->oclass->precommit != NULL){
 		rv = (STATUS)(*(obj->oclass->precommit))(obj, t1);
 	}
 	if(rv == 1){ // if 'old school' or no precommit callback,
 		rv = SUCCESS;
+	}
+	if ( rv == 1 && obj->events.precommit != NULL )
+	{
+		int rc = object_event(obj,obj->events.precommit);
+		if ( rc != 0 )
+		{
+			IN_MYCONTEXT output_error("object %s:%d precommit at ts=%d event handler failed with code %d",obj->oclass->name,obj->id,global_starttime,rc);
+			rv = FAILED;
+		}
 	}
 	object_profile(obj,OPI_PRECOMMIT,t);
 	if ( global_debug_output>0 )
@@ -1634,12 +1696,23 @@ TIMESTAMP object_commit(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
 	clock_t t = (clock_t)exec_clock();
 	TIMESTAMP rv = 1;
+	if ( global_validto_context&VTC_COMMIT == VTC_COMMIT )
+		return TS_NEVER;
 	if(obj->oclass->commit != NULL){
 		rv = (TIMESTAMP)(*(obj->oclass->commit))(obj, t1, t2);
 	}
 	if(rv == 1){ // if 'old school' or no commit callback,
 		rv =TS_NEVER;
 	} 
+	if ( obj->events.commit != NULL )
+	{
+		int rc = object_event(obj,obj->events.commit);
+		if ( rc != 0 )
+		{
+			IN_MYCONTEXT output_error("object %s:%d commit at ts=%d event handler failed with code %d",obj->oclass->name,obj->id,global_starttime,rc);
+			rv = TS_INVALID;
+		}
+	}
 	object_profile(obj,OPI_COMMIT,t);
 	if ( global_debug_output>0 )
 	{
@@ -1664,6 +1737,15 @@ STATUS object_finalize(OBJECT *obj)
 	}
 	if(rv == 1){ // if 'old school' or no finalize callback,
 		rv = SUCCESS;
+	}
+	if ( obj->events.finalize != NULL )
+	{
+		int rc = object_event(obj,obj->events.precommit);
+		if ( rc != 0 )
+		{
+			IN_MYCONTEXT output_error("object %s:%d precommit at ts=%d event handler failed with code %d",obj->oclass->name,obj->id,global_starttime,rc);
+			rv = FAILED;
+		}
 	}
 	object_profile(obj,OPI_FINALIZE,t);
 	if ( global_debug_output>0 )

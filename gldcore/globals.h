@@ -382,6 +382,14 @@ GLOBAL set global_output_message_context INIT(DMC_ALL); /**< message context con
 
 GLOBAL int32 global_permissive_access INIT(FALSE); /**< enable permission property access */
 
+typedef enum {
+	VTC_SYNC	= 0x00,
+	VTC_PRECOMMIT = 0x01,
+	VTC_COMMIT 	= 0x02,
+} GLOBALVALIDTOCONTEXT;
+
+GLOBAL bool global_validto_context INIT(VTC_SYNC); /**< events for which valid_to applies, rather than just sync passes */
+
 #ifdef __cplusplus
 }
 #endif

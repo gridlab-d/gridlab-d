@@ -332,7 +332,13 @@ int auction::init(OBJECT *parent)
 		}
 	}
 	/* reference object & property */	
+
 	if(capacity_reference_object != NULL){
+		if ( linkref == NULL )
+		{	
+			linkref = capacity_reference_object;
+			gl_warning("%s (auction:%d) linkref is not set, using capacity_reference_object %s as a proxy",obj->name?obj->name:"anonymous",obj->id, capacity_reference_object->name?capacity_reference_object->name:"(unnamed)");
+		}
 		if(capacity_reference_propname[0] != 0){
 			capacity_reference_property = gl_get_property(capacity_reference_object, capacity_reference_propname.get_string());
 			if(capacity_reference_property == NULL){
@@ -902,6 +908,10 @@ void auction::clear_market(void)
 				}
 			} // else assume same units
 		}
+		total_unknown = asks.get_total() - asks.get_total_on() - asks.get_total_off();
+		double maybe_on = 0.5*total_unknown;
+		if ( asks.get_total() != 0.0 )
+			maybe_on = total_unknown * asks.get_total_on()/asks.get_total();
 		if (total_unknown > 0.001){ // greater than one mW ~ allows rounding errors.  Threshold may be one kW given a MW-unit'ed market.
 			gl_warning("total_unknown is %.0f -> some controllers are not providing their states with their bids", total_unknown);
 		}
@@ -910,12 +920,12 @@ void auction::clear_market(void)
 		unresponsive.from = (char *)gl_name(capacity_reference_object, capname, sizeof(capname));
 		unresponsive.price = pricecap;
 		unresponsive.state = BS_UNKNOWN;
-		unresponsive.quantity = (refload - asks.get_total_on() - total_unknown/2); /* estimate load on as 1/2 unknown load */
+		unresponsive.quantity = (refload - asks.get_total_on() - maybe_on); /* estimate load on as 1/2 unknown load */
 		unresponsive.bid_id = (int64)capacity_reference_object->id;
 		cap_ref_unrep = unresponsive.quantity;
 		if (unresponsive.quantity < -0.001)
 		{
-			gl_warning("capacity_reference_property %s has negative unresponsive load--this is probably due to improper bidding", gl_name(linkref,name,sizeof(name)), unresponsive.quantity);
+			gl_warning("capacity_reference_property %s has negative unresponsive load (refload=%.3f, total bids=%.3f, on=%.3f, off=%.3f, unknown=%.3f maybe_on=%.3f, unresponsive=%.3f)", gl_name(linkref,name,sizeof(name)), refload,asks.get_total(),asks.get_total_on(),asks.get_total_off(),total_unknown,maybe_on,unresponsive.quantity);
 		}
 		else if (unresponsive.quantity > 0.001)
 		{

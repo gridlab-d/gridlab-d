@@ -3988,6 +3988,12 @@ MODULE *load_get_current_module(void)
 {
 	return current_module;
 }
+char *makecopy(char *s)
+{
+	char *copy = (char*)malloc(strlen(s)+1);
+	strcpy(copy,s);
+	return copy;
+}
 static int object_block(PARSER, OBJECT *parent, OBJECT **obj);
 static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 {
@@ -4366,6 +4372,34 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 					{
 						obj->out_svc = convert_to_timestamp_delta(propval,&obj->out_svc_micro,&obj->out_svc_double);
 						ACCEPT;
+					}
+					else if (strcmp(propname,"on_init")==0 )
+					{
+						obj->events.init = makecopy(propval);
+					}
+					else if (strcmp(propname,"on_precommit")==0 )
+					{
+						obj->events.precommit = makecopy(propval);
+					}
+					else if (strcmp(propname,"on_presync")==0 )
+					{
+						obj->events.presync = makecopy(propval);
+					}
+					else if (strcmp(propname,"on_sync")==0 )
+					{
+						obj->events.sync = makecopy(propval);
+					}
+					else if (strcmp(propname,"on_postsync")==0 )
+					{
+						obj->events.postsync = makecopy(propval);
+					}
+					else if (strcmp(propname,"on_commit")==0 )
+					{
+						obj->events.commit = makecopy(propval);
+					}
+					else if (strcmp(propname,"on_finalize")==0 )
+					{
+						obj->events.finalize = makecopy(propval);
 					}
 					else if (strcmp(propname,"name")==0)
 					{

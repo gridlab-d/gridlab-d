@@ -1213,6 +1213,49 @@ static int workdir(int argc, char *argv[])
 	return 1;
 }
 
+static int printenv(int argc, char *argv[])
+{
+	system("printenv");
+	return CMDOK;
+}
+
+static int origin(int argc, char *argv[])
+{
+	FILE *fp;
+	char originfile[1024];
+	if ( find_file("origin.txt",NULL,R_OK,originfile,sizeof(originfile)-1) == NULL )
+	{
+		IN_MYCONTEXT output_error("origin file not found");
+		return CMDERR;
+	}
+	fp = fopen(originfile,"r");
+	if ( fp == NULL )
+	{
+		IN_MYCONTEXT output_error("unable to open origin file");
+		return CMDERR;
+	}
+	while ( ! feof(fp) )
+	{
+		char line[1024];
+		size_t len = fread(line,sizeof(line[0]),sizeof(line)-1,fp);
+		if ( ferror(fp) )
+		{
+			IN_MYCONTEXT output_error("error reading origin file");
+			return CMDERR;
+		}
+		if ( len >= 0 )
+		{
+			int old = global_suppress_repeat_messages;
+			global_suppress_repeat_messages = 0;
+			line[len] = '\0';
+			IN_MYCONTEXT output_message("%s",line);
+			global_suppress_repeat_messages = old;
+		}
+	}
+	fclose(fp);
+	return 1;
+}
+
 #include "job.h"
 #include "validate.h"
 
@@ -1239,16 +1282,18 @@ static CMDARG main[] = {
 	{"warn",		"w",	warn,			NULL, "Toggles display of warning messages" },
 	{"workdir",		"W",	workdir,		NULL, "Sets the working directory" },
 	
-	{NULL,NULL,NULL,NULL, "Global and module control"},
+	{NULL,NULL,NULL,NULL, "Global, environment and module information"},
 	{"define",		"D",	define,			"<name>=[<module>:]<value>", "Defines or sets a global (or module) variable" },
 	{"globals",		NULL,	globals,		NULL, "Displays a sorted list of all global variables" },
 	{"libinfo",		"L",	libinfo,		"<module>", "Displays information about a module" },
+	{"printenv",		"E",	printenv,		NULL, "Displays the default environment variables" },
 
 	{NULL,NULL,NULL,NULL, "Information"},
 	{"copyright",	NULL,	copyright,		NULL, "Displays copyright" },
 	{"license",		NULL,	license,		NULL, "Displays the license agreement" },
 	{"version",		"V",	version,		NULL, "Displays the version information" },
 	{"setup",		NULL,	setup,			NULL, "Open simulation setup screen" },
+	{"origin",		NULL,	origin,			NULL, "Display origin information" },
 
 	{NULL,NULL,NULL,NULL, "Test processes"},
 	{"dsttest",		NULL,	dsttest,		NULL, "Perform daylight savings rule test" },

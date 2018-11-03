@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
+#include <unistd.h>
 
 #include "voltdump.h"
 #include "node.h"
@@ -38,9 +39,11 @@ voltdump::voltdump(MODULE *mod)
 			PT_char256,"filename",PADDR(filename),PT_DESCRIPTION,"the file to dump the voltage data into", // must keep this for compatibility
 			PT_char256,"file",PADDR(filename),PT_DESCRIPTION,"the file to dump the voltage data into", // added 2012-07-10, adds convenience
 			PT_int32,"runcount",PADDR(runcount),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the number of times the file has been written to",
+			PT_int32,"maxcount",PADDR(maxcount),PT_DESCRIPTION,"the maximum number of times the file is written",
 			PT_enumeration, "mode", PADDR(mode),PT_DESCRIPTION,"dumps the voltages in either polar or rectangular notation",
-				PT_KEYWORD, "RECT", (enumeration)VDM_RECT,
-				PT_KEYWORD, "POLAR", (enumeration)VDM_POLAR,
+				PT_KEYWORD, "rect", (enumeration)VDM_RECT,
+				PT_KEYWORD, "polar", (enumeration)VDM_POLAR,
+			PT_char8, "filemode", PADDR(filemode), PT_DESCRIPTION,"sets the file write mode",
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		
 	}
@@ -52,12 +55,15 @@ int voltdump::create(void)
 	group.erase();
 	runtime = TS_NEVER;
 	runcount = 0;
+	maxcount = 1;
 	mode = VDM_RECT;
+	strcpy(filemode,"w");
 	return 1;
 }
 
 int voltdump::init(OBJECT *parent)
 {
+	unlink(filename);
 	return 1;
 }
 
@@ -87,7 +93,11 @@ void voltdump::dump(TIMESTAMP t){
 		return;
 	}
 
-	outfile = fopen(filename, "w");
+	if (strcmp(filemode,"a")==0)
+	{
+		gl_verbose("voltdump is appending data to %s",filename.get_string());
+	}
+	outfile = fopen(filename, filemode);
 	if(outfile == NULL){
 		gl_error("voltdump unable to open %s for output", filename.get_string());
 		return;
@@ -131,7 +141,7 @@ TIMESTAMP voltdump::commit(TIMESTAMP t){
 	if(runtime == 0){
 		runtime = t;
 	}
-	if((t >= runtime || runtime == TS_NEVER) && (runcount < 1)){
+	if((t >= runtime || runtime == TS_NEVER) && (runcount < maxcount || maxcount < 0)){
 		/* dump */
 		dump(t);
 		++runcount;

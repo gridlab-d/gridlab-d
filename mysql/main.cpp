@@ -271,7 +271,7 @@ static MYSQL *get_connection(const char *schema, bool autocreate=false)
 	if ( mysql==NULL )
 	{
 		gl_error("mysql_init memory allocation failure");
-		return false;
+		return NULL;
 	}
 	gl_debug("mysql_connect(hostname='%s',username='%s',password='%s',schema='%s',port=%u,socketname='%s',clientflags=0x%016llx)",
 		(const char*)hostname,(const char*)username,(const char*)password,(const char*)schema,port,(const char*)socketname,clientflags);
@@ -279,20 +279,20 @@ static MYSQL *get_connection(const char *schema, bool autocreate=false)
 	if ( mysql==NULL )
 	{
 		gl_error("mysql connect failed - %s", mysql_error(mysql_client));
-		return 0;
+		return NULL;
 	}
 	else
 		gl_debug("MySQL server info: %s", mysql_get_server_info(mysql));
 
 	// connect to database
 	if ( new_database && !query(mysql,"DROP SCHEMA IF EXISTS `%s`", schema))
-		return false;
+		return NULL;
 	else if ( mysql_select_db(mysql,schema)!=0 )
 	{
 		if ( !autocreate )
 		{
 			gl_error("unable to select schema '%s'", schema);
-			return 0;
+			return NULL;
 		}
 		else if ( create_schema(mysql,schema) )
 			return mysql;

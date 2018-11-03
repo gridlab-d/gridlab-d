@@ -19,7 +19,9 @@ public:
 	char32 group;
 	char256 filename;
 	int32 runcount;
+	int32 maxcount;
 	enumeration mode;		///< dumps the voltages in either polar or rectangular notation
+	char8 filemode;
 public:
 	static CLASS *oclass;
 public:

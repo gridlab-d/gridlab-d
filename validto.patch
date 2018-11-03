@@ -1,0 +1,65 @@
+diff --git a/gldcore/globals.c b/gldcore/globals.c
+index 896bfd0..d946d0c 100644
+--- a/gldcore/globals.c
++++ b/gldcore/globals.c
+@@ -162,6 +162,11 @@ static KEYWORD dmc_keys[] = {
+ 		{"MAIN",		DMC_MAIN,			dmc_keys+52},
+ 		{"CMDARG",		DMC_CMDARG,			NULL},
+ };
++static KEYWORD vtc_keys[] = {
++	{"SYNC",		VTC_SYNC,		vtc_keys+1},
++	{"PRECOMMIT",	VTC_PRECOMMIT,	vtc_keys+2},
++	{"COMMIT",		VTC_COMMIT,		NULL},
++};
+ 
+ static struct s_varmap {
+ 	char *name;
+@@ -293,6 +298,7 @@ static struct s_varmap {
+ 	{"permissive_access", PT_int32, &global_permissive_access, PA_PUBLIC, "enable permissive property access"},
+ 	{"relax_undefined_if", PT_bool, &global_relax_undefined_if, PA_PUBLIC, "allow #if macro to handle undefined global variable as empty strings"},
+ 	{"literal_if", PT_bool, &global_literal_if, PA_PUBLIC, "do not interpret lhs of #if macro as a variable name"},
++	{"validto_context", PT_enumeration, &global_validto_context, PA_PUBLIC, "events to which valid_to time applies, rather than just sync passes", vtc_keys},
+ 	/* add new global variables here */
+ };
+ 
+diff --git a/gldcore/globals.h b/gldcore/globals.h
+index dc765f7..140021c 100644
+--- a/gldcore/globals.h
++++ b/gldcore/globals.h
+@@ -382,6 +382,14 @@ GLOBAL set global_output_message_context INIT(DMC_ALL); /**< message context con
+ 
+ GLOBAL int32 global_permissive_access INIT(FALSE); /**< enable permission property access */
+ 
++typedef enum {
++	VTC_SYNC	= 0x00,
++	VTC_PRECOMMIT = 0x01,
++	VTC_COMMIT 	= 0x02,
++} GLOBALVALIDTOCONTEXT;
++
++GLOBAL bool global_validto_context INIT(VTC_SYNC); /**< events for which valid_to applies, rather than just sync passes */
++
+ #ifdef __cplusplus
+ }
+ #endif
+diff --git a/gldcore/object.c b/gldcore/object.c
+index 39b3f2b..be00ca1 100644
+--- a/gldcore/object.c
++++ b/gldcore/object.c
+@@ -1667,6 +1667,8 @@ STATUS object_precommit(OBJECT *obj, TIMESTAMP t1)
+ {
+ 	clock_t t = (clock_t)exec_clock();
+ 	STATUS rv = SUCCESS;
++	if ( global_validto_context&VTC_PRECOMMIT == VTC_PRECOMMIT )
++		return rv;
+ 	if(obj->oclass->precommit != NULL){
+ 		rv = (STATUS)(*(obj->oclass->precommit))(obj, t1);
+ 	}
+@@ -1694,6 +1696,8 @@ TIMESTAMP object_commit(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
+ {
+ 	clock_t t = (clock_t)exec_clock();
+ 	TIMESTAMP rv = 1;
++	if ( global_validto_context&VTC_COMMIT == VTC_COMMIT )
++		return TS_NEVER;
+ 	if(obj->oclass->commit != NULL){
+ 		rv = (TIMESTAMP)(*(obj->oclass->commit))(obj, t1, t2);
+ 	}
