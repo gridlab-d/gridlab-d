@@ -193,7 +193,7 @@ int recorder::init(OBJECT *parent)
 			debug("adding field from property '%s'", buffer);
 			double scale = 1.0;
 			gld_unit unit;
-			if ( spec.size()>1 )
+			if ( spec.size()>0 )
 			{
 				char buffer[1024];
 				strcpy(buffer,(const char*)spec[1].c_str());
@@ -206,7 +206,7 @@ int recorder::init(OBJECT *parent)
 
 			char *sqltype = db->get_sqltype(prop);
 			if ( sqltype==NULL )
-				exception("property %s has an unknown SQL type", prop.get_name());
+				exception("property '%s' has an unknown SQL type", prop.get_name());
 
 			char tmp[128];
 			if ( unit.is_valid() )
@@ -214,8 +214,14 @@ int recorder::init(OBJECT *parent)
 			else
 				sprintf(tmp,"`%s` %s, ", prop.get_name(), sqltype);
 			strcat(property_list,tmp);
-			if ( (options&MO_NOADD)==0 && db->query_ex("ALTER TABLE `%s` ADD COLUMN `%s` %s;", get_table(), prop.get_name(), sqltype) )
-				warning("automatically added missing column '%s' as '%s' to '%s'", prop.get_name(), sqltype, get_table());
+			if ( (options&MO_NOADD)==MO_NOADD )
+				gl_warning("automatic add of column '%s' to table '%s' suppressed by NOADD option",prop.get_name(),get_table());
+			else if ( db->query_ex("ALTER TABLE `%s` ADD COLUMN `%s` %s;", get_table(), prop.get_name(), sqltype) )
+				gl_verbose("automatically added missing column '%s' as '%s' to '%s'", prop.get_name(), sqltype, get_table());
+			else
+				gl_error("unable to add column '%s' to table '%s'",prop.get_name(),get_table());
+
+
 		}
 	}
 

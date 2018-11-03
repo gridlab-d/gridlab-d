@@ -42,7 +42,6 @@ EXTERN char default_schema[256] INIT("gridlabd");
 EXTERN int32 default_port INIT(3306);
 EXTERN char default_socketname[1024] INIT("/tmp/mysql.sock");
 EXTERN int64 default_clientflags INIT(CLIENT_LOCAL_FILES);
-EXTERN MYSQL *mysql_client INIT(NULL); ///< connection handle
 EXTERN char default_table_prefix[256] INIT(""); ///< table prefix
 
 #define DBO_SHOWQUERY 0x0001 ///< show SQL query when verbose is on
@@ -69,6 +68,7 @@ public:
 
 	// mysql handle
 private:
+	MYSQL *mysql_client;
 	MYSQL *mysql;
 public:
 	inline MYSQL *get_handle() { return mysql; };
