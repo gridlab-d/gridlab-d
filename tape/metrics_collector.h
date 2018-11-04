@@ -11,6 +11,8 @@
 #include "tape.h"
 #include "../powerflow/link.h"
 
+#undef ALL_MTR_METRICS
+
 #define MTR_MIN_REAL_POWER 0
 #define MTR_MAX_REAL_POWER 1
 #define MTR_AVG_REAL_POWER 2
@@ -23,23 +25,27 @@
 #define MTR_MIN_VLL        9
 #define MTR_MAX_VLL       10
 #define MTR_AVG_VLL       11
-#define MTR_MIN_VLN       12
-#define MTR_MAX_VLN       13
-#define MTR_AVG_VLN       14
-#define MTR_MIN_VUNB      15
-#define MTR_MAX_VUNB      16
-#define MTR_AVG_VUNB      17
-#define MTR_ABOVE_A_DUR   18
-#define MTR_ABOVE_A_CNT   19
-#define MTR_BELOW_A_DUR   20
-#define MTR_BELOW_A_CNT   21
-#define MTR_ABOVE_B_DUR   22
-#define MTR_ABOVE_B_CNT   23
-#define MTR_BELOW_B_DUR   24
+#define MTR_ABOVE_A_DUR   12
+#define MTR_BELOW_A_DUR   13
+#define MTR_ABOVE_B_DUR   14
+#define MTR_BELOW_B_DUR   15
+#ifdef ALL_MTR_METRICS
+#define MTR_MIN_VLN       16
+#define MTR_MAX_VLN       17
+#define MTR_AVG_VLN       18
+#define MTR_MIN_VUNB      19
+#define MTR_MAX_VUNB      20
+#define MTR_AVG_VUNB      21
+#define MTR_ABOVE_A_CNT   22
+#define MTR_BELOW_A_CNT   23
+#define MTR_ABOVE_B_CNT   24
 #define MTR_BELOW_B_CNT   25
 #define MTR_BELOW_10_DUR  26
 #define MTR_BELOW_10_CNT  27
 #define MTR_ARRAY_SIZE    28
+#else
+#define MTR_ARRAY_SIZE    16
+#endif
 
 #define HSE_MIN_HVAC_LOAD    0
 #define HSE_MAX_HVAC_LOAD    1

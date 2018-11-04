@@ -153,22 +153,24 @@ int metrics_collector_writer::init(OBJECT *parent){
 	jsn["index"] = idx++; jsn["units"] = "V"; meta["voltage12_min"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "V"; meta["voltage12_max"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "V"; meta["voltage12_avg"] = jsn;
+	jsn["index"] = idx++; jsn["units"] = "s"; meta["above_RangeA_Duration"] = jsn;
+	jsn["index"] = idx++; jsn["units"] = "s"; meta["below_RangeA_Duration"] = jsn;
+	jsn["index"] = idx++; jsn["units"] = "s"; meta["above_RangeB_Duration"] = jsn;
+	jsn["index"] = idx++; jsn["units"] = "s"; meta["below_RangeB_Duration"] = jsn;
+#ifdef ALL_MTR_METRICS
 	jsn["index"] = idx++; jsn["units"] = "V"; meta["voltage_min"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "V"; meta["voltage_max"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "V"; meta["voltage_avg"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "V"; meta["voltage_unbalance_min"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "V"; meta["voltage_unbalance_max"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "V"; meta["voltage_unbalance_avg"] = jsn;
-	jsn["index"] = idx++; jsn["units"] = "s"; meta["above_RangeA_Duration"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "";  meta["above_RangeA_Count"] = jsn;
-	jsn["index"] = idx++; jsn["units"] = "s"; meta["below_RangeA_Duration"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "";  meta["below_RangeA_Count"] = jsn;
-	jsn["index"] = idx++; jsn["units"] = "s"; meta["above_RangeB_Duration"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "";  meta["above_RangeB_Count"] = jsn;
-	jsn["index"] = idx++; jsn["units"] = "s"; meta["below_RangeB_Duration"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "";  meta["below_RangeB_Count"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "s"; meta["below_10_percent_NormVol_Duration"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "";  meta["below_10_percent_NormVol_Count"] = jsn;
+#endif
 	metrics_writer_billing_meters["Metadata"] = meta;
 	ary_billing_meters.resize(idx);
 
@@ -326,22 +328,24 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 			ary_billing_meters[idx++] = metrics[MTR_MIN_VLL];
 			ary_billing_meters[idx++] = metrics[MTR_MAX_VLL];
 			ary_billing_meters[idx++] = metrics[MTR_AVG_VLL];
+			ary_billing_meters[idx++] = metrics[MTR_ABOVE_A_DUR];
+			ary_billing_meters[idx++] = metrics[MTR_BELOW_A_DUR];
+			ary_billing_meters[idx++] = metrics[MTR_ABOVE_B_DUR];
+			ary_billing_meters[idx++] = metrics[MTR_BELOW_B_DUR];
+#ifdef ALL_MTR_METRICS
 			ary_billing_meters[idx++] = metrics[MTR_MIN_VLN];
 			ary_billing_meters[idx++] = metrics[MTR_MAX_VLN];
 			ary_billing_meters[idx++] = metrics[MTR_AVG_VLN];
 			ary_billing_meters[idx++] = metrics[MTR_MIN_VUNB];
 			ary_billing_meters[idx++] = metrics[MTR_MAX_VUNB];
 			ary_billing_meters[idx++] = metrics[MTR_AVG_VUNB];
-			ary_billing_meters[idx++] = metrics[MTR_ABOVE_A_DUR];
 			ary_billing_meters[idx++] = metrics[MTR_ABOVE_A_CNT];
-			ary_billing_meters[idx++] = metrics[MTR_BELOW_A_DUR];
 			ary_billing_meters[idx++] = metrics[MTR_BELOW_A_CNT];
-			ary_billing_meters[idx++] = metrics[MTR_ABOVE_B_DUR];
 			ary_billing_meters[idx++] = metrics[MTR_ABOVE_B_CNT];
-			ary_billing_meters[idx++] = metrics[MTR_BELOW_B_DUR];
 			ary_billing_meters[idx++] = metrics[MTR_BELOW_B_CNT];
 			ary_billing_meters[idx++] = metrics[MTR_BELOW_10_DUR];
 			ary_billing_meters[idx++] = metrics[MTR_BELOW_10_CNT];
+#endif
 			string key = temp_metrics_collector->parent_name;
 			billing_meter_objects[key] = ary_billing_meters;
 		} // End of recording metrics_collector data attached to one triplex_meter or primary meter
