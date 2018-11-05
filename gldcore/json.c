@@ -177,24 +177,24 @@ static int json_objects(FILE *fp)
 			continue;
 		if ( obj->name ) 
 			json_write("\n\t\t\"%s\" : {",obj->name);
-		else if ( obj->oclass->name == NULL )
-			continue; // ignore anonymous classes	
-		json_write("\n\t\t\"%s:%d\" : {", obj->oclass->name, obj->id);
-		FIRST("class","%s",obj->oclass->name);
-		TUPLE("id","%d",obj->id);
-		if ( ! isnan(obj->latitude) ) TUPLE("latitude","%d",obj->latitude);
-		if ( ! isnan(obj->longitude) ) TUPLE("longitude","%d",obj->longitude);
+		else
+			json_write("\n\t\t\"%s:%d\" : {", obj->oclass->name, obj->id);
+		FIRST("id","%d",obj->id);
+		if ( obj->oclass->name != NULL )
+			TUPLE("class","%s",obj->oclass->name);
+		if ( ! isnan(obj->latitude) ) TUPLE("latitude","%f",obj->latitude);
+		if ( ! isnan(obj->longitude) ) TUPLE("longitude","%f",obj->longitude);
 		if ( obj->groupid[0] != '\0' ) TUPLE("groupid","%s",obj->groupid);
 		TUPLE("rank","%u",(unsigned int)obj->rank);
-		TUPLE("clock","%llu",clock);
-		if ( obj->valid_to > TS_ZERO && obj->valid_to < TS_NEVER ) TUPLE("valid_to","%llu",obj->valid_to);
+		TUPLE("clock","%llu",(int64)(clock));
+		if ( obj->valid_to > TS_ZERO && obj->valid_to < TS_NEVER ) TUPLE("valid_to","%llu",(int64)(obj->valid_to));
 		TUPLE("schedule_skew","%llu",obj->schedule_skew);
-		if ( obj->in_svc > TS_ZERO && obj->in_svc < TS_NEVER ) TUPLE("in","%llu",obj->in_svc);
-		if ( obj->out_svc > TS_ZERO && obj->out_svc < TS_NEVER ) TUPLE("out","%llu",obj->out_svc);
-		TUPLE("rng_state","%u",obj->rng_state);
-		TUPLE("heartbeat","%llu",obj->heartbeat);
-		TUPLE("guid","0x%llx",obj->guid[0]);
-		TUPLE("flags","0x%llx",obj->flags);
+		if ( obj->in_svc > TS_ZERO && obj->in_svc < TS_NEVER ) TUPLE("in","%llu",(int64)(obj->in_svc));
+		if ( obj->out_svc > TS_ZERO && obj->out_svc < TS_NEVER ) TUPLE("out","%llu",(int64)(obj->out_svc));
+		TUPLE("rng_state","%llu",(int64)(obj->rng_state));
+		TUPLE("heartbeat","%llu",(int64)(obj->heartbeat));
+		TUPLE("guid","0x%llx",(int64)(obj->guid[0]));
+		TUPLE("flags","0x%llx",(int64)(obj->flags));
 		for ( prop = obj->oclass->pmap ; prop != NULL && prop->oclass == obj->oclass ; prop = prop->next )
 		{
 			char buffer[1024];
@@ -208,6 +208,8 @@ static int json_objects(FILE *fp)
 			int len = strlen(value);
 			if ( value[0] == '{' && value[len-1] == '}')
 				json_write(",\n\t\t\t\"%s\" : %s", prop->name, value);
+			else if ( value[0] == '"' && value[len-1] == '"')
+				json_write(",\n\t\t\t\"%s\": %s", prop->name, value);
 			else
 				TUPLE(prop->name,"%s",value);
 		}
