@@ -19,6 +19,9 @@
 #undef OPTIONAL
 #endif
 #include <helics/application_api/CombinationFederate.hpp>
+#include <helics/application_api/Endpoints.hpp>
+#include <helics/application_api/Inputs.hpp>
+#include <helics/application_api/Publications.hpp>
 #endif
 #include<sstream>
 #include<vector>
@@ -54,53 +57,54 @@ class helics_value_publication {
 public:
 	helics_value_publication(){
 		pObjectProperty = NULL;
-		pHelicsPublicationId = NULL;
+		HelicsPublication = NULL;
 	}
 	string objectName;
 	string propertyName;
-	string topicName;
+	string key;
 	gld_property *pObjectProperty;
-	helics::publication_id_t pHelicsPublicationId;
+	helics::Publication HelicsPublication;
 };
 
 class helics_value_subscription {
 public:
 	helics_value_subscription(){
 		pObjectProperty = NULL;
-		pHelicsSubscriptionId = NULL;
+		HelicsSubscription = NULL;
 	}
 	string objectName;
 	string propertyName;
 	string subscription_topic;
 	gld_property *pObjectProperty;
-	helics::subscription_id_t pHelicsSubscriptionId;
+	helics::Input HelicsSubscription;
 };
 
 class helics_endpoint_publication {
 public:
 	helics_endpoint_publication(){
 		pObjectProperty = NULL;
-		pHelicsPublicationEndpointId = NULL;
+		HelicsPublicationEndpoint = NULL;
 	}
 	string objectName;
 	string propertyName;
-	string topicName;
+	string name;
 	gld_property *pObjectProperty;
 	string destination;
-	helics::endpoint_id_t pHelicsPublicationEndpointId;
+	helics::Endpoint HelicsPublicationEndpoint;
 };
 
 class helics_endpoint_subscription {
 public:
 	helics_endpoint_subscription(){
 		pObjectProperty = NULL;
-		pHelicsSubscriptionEndpointId = NULL;
+		HelicsSubscriptionEndpoint = NULL;
 	}
 	string objectName;
 	string propertyName;
 	string subscription_topic;
+	string name;
 	gld_property *pObjectProperty;
-	helics::endpoint_id_t pHelicsSubscriptionEndpointId;
+	helics::Endpoint HelicsSubscriptionEndpoint;
 };
 #endif
 class helics_msg : public gld_object {
@@ -124,7 +128,7 @@ private:
 	TIMESTAMP initial_sim_time;
 	double last_delta_helics_time;
 	bool exitDeltamode;
-	string *core_init_string;
+	string *federate_configuration;
 	// TODO add other properties here as needed.
 
 public:
