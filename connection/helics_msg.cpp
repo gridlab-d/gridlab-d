@@ -167,15 +167,23 @@ void send_die(void)
 		//TODO find equivalent helics die message
 #if HAVE_HELICS
 		gl_verbose("helics_msg: Calling error");
-		pHelicsFederate->error((int)(exitCode.get_int16()));
+		helics::op_states fed_state = pHelicsFederate->getCurrentState;
+		if(fed_state != helics::op_states::finalize) {
+			pHelicsFederate->error((int)(exitCode.get_int16()));
+			pHelicsFederate->cleanupHelicsLibrary();
+		}
 #endif
-	}/* else {
+	} else {
 		//TODO find equivalent helics clean exit message
 #if HAVE_HELICS
 		gl_verbose("helics_msg: Calling finalize\n");
-		pHelicsFederate->finalize();
+		helics::op_states fed_state = pHelicsFederate->getCurrentState;
+		if(fed_state != helics::op_states::finalize) {
+			pHelicsFederate->finalize();
+			pHelicsFederate->cleanupHelicsLibrary();
+		}
 #endif
-	}*/
+	}
 }
 
 int helics_msg::init(OBJECT *parent){
@@ -330,7 +338,7 @@ int helics_msg::init(OBJECT *parent){
 		gl_error("helics_msg::init: a federate configuration file failed to provided.");
 		return 0;
 	}
-	gl_verbose("helics_msg: Calling ValueFederate Constructor");
+	gl_verbose("helics_msg: Calling CombinationFederate Constructor");
 	try {
 		helics_federate = new helics::CombinationFederate(federate_configuration);
 	} catch(const std::exception &e) {
