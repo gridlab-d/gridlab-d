@@ -107,3 +107,4 @@ third_party/xerces*/*
 *.xcbkptlist
 .*.swp
 .DS_Store
+*.json
