@@ -170,8 +170,8 @@ void send_die(void)
 		helics::op_states fed_state = pHelicsFederate->getCurrentState;
 		if(fed_state != helics::op_states::finalize) {
 			pHelicsFederate->error((int)(exitCode.get_int16()));
-			pHelicsFederate->cleanupHelicsLibrary();
 		}
+		pHelicsFederate->cleanupHelicsLibrary();
 #endif
 	} else {
 		//TODO find equivalent helics clean exit message
@@ -180,8 +180,8 @@ void send_die(void)
 		helics::op_states fed_state = pHelicsFederate->getCurrentState;
 		if(fed_state != helics::op_states::finalize) {
 			pHelicsFederate->finalize();
-			pHelicsFederate->cleanupHelicsLibrary();
 		}
+		pHelicsFederate->cleanupHelicsLibrary();
 #endif
 	}
 }
