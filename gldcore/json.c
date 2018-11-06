@@ -171,6 +171,7 @@ static int json_objects(FILE *fp)
 	for ( obj = object_get_first() ; obj != NULL ; obj = obj->next )
 	{
 		PROPERTY *prop;
+		CLASS *pclass;
 		if ( obj != object_get_first() )
 			json_write(",");
 		if ( obj->oclass == NULL ) // ignore objects with no defined class
@@ -195,23 +196,26 @@ static int json_objects(FILE *fp)
 		TUPLE("heartbeat","%llu",(int64)(obj->heartbeat));
 		TUPLE("guid","0x%llx",(int64)(obj->guid[0]));
 		TUPLE("flags","0x%llx",(int64)(obj->flags));
-		for ( prop = obj->oclass->pmap ; prop != NULL && prop->oclass == obj->oclass ; prop = prop->next )
+		for ( pclass = obj->oclass ; pclass != NULL ; pclass = pclass->parent )
 		{
-			char buffer[1024];
-			if ( prop->access != PA_PUBLIC )
-				continue;
-			if ( prop->ptype == PT_enduse )
-				continue;
-			char *value = object_property_to_string(obj,prop->name, buffer, sizeof(buffer)-1);
-			if ( value == NULL )
-				continue; // ignore values that don't convert propertly
-			int len = strlen(value);
-			if ( value[0] == '{' && value[len-1] == '}')
-				json_write(",\n\t\t\t\"%s\" : %s", prop->name, value);
-			else if ( value[0] == '"' && value[len-1] == '"')
-				json_write(",\n\t\t\t\"%s\": %s", prop->name, value);
-			else
-				TUPLE(prop->name,"%s",value);
+			for ( prop = pclass->pmap ; prop!=NULL && prop->oclass == pclass->pmap->oclass; prop = prop->next )
+			{
+				char buffer[1024];
+				if ( prop->access != PA_PUBLIC )
+					continue;
+				if ( prop->ptype == PT_enduse )
+					continue;
+				char *value = object_property_to_string(obj,prop->name, buffer, sizeof(buffer)-1);
+				if ( value == NULL )
+					continue; // ignore values that don't convert propertly
+				int len = strlen(value);
+				if ( value[0] == '{' && value[len-1] == '}')
+					json_write(",\n\t\t\t\"%s\" : %s", prop->name, value);
+				else if ( value[0] == '"' && value[len-1] == '"')
+					json_write(",\n\t\t\t\"%s\": %s", prop->name, value);
+				else
+					TUPLE(prop->name,"%s",value);
+			}
 		}
 		json_write("\n\t\t}");
 	}
