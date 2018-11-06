@@ -62,6 +62,7 @@ fncs_msg::fncs_msg(MODULE *module)
 		PT_enumeration, "message_type", PADDR(message_type), PT_DESCRIPTION, "set the type of message format you wish to construct",
 			PT_KEYWORD, "GENERAL", enumeration(MT_GENERAL), PT_DESCRIPTION, "use this for sending a general fncs topic/value pair",
 			PT_KEYWORD, "JSON", enumeration(MT_JSON), PT_DESCRIPTION, "use this for wanting to send a bundled json formatted message in a single topic",
+		PT_int, "gridappd_publish_period[s]", PADDR(real_time_gridappsd_publish_period), PT_DESCRIPTION, "use this with json bundling to set the period at which data is published."
 			// PT_KEYWORD, "JSON_SB", enumeration(MT_JSON_SB), PT_DESCRIPTION, "use this for wanting to subsribe a bundled json formatted message in a single topic",
 		// TODO add published properties here
 		NULL)<1)
@@ -91,6 +92,7 @@ int fncs_msg::create(){
 	header_version = new string("");
 	hostname = new string("");
 	inFunctionTopics = new vector<string>();
+	real_time_gridappsd_publish_period = 3;
 
 	return 1;
 }
@@ -509,6 +511,7 @@ int fncs_msg::init(OBJECT *parent){
 	last_approved_fncs_time = gl_globalclock;
 	last_delta_fncs_time = (double)(gl_globalclock);
 	initial_sim_time = gl_globalclock;
+	gridappsd_publish_time = initial_sim_time + (TIMESTAMP)real_time_gridappsd_publish_period;
 	return rv;
 }
 
@@ -622,9 +625,14 @@ TIMESTAMP fncs_msg::commit(TIMESTAMP t0, TIMESTAMP t1){
 	// TODO
 	if (message_type == MT_JSON)
 	{
-		result = publishJsonVariables();
-		if(result == 0){
-			return TS_INVALID;
+		if (real_time_gridappsd_publish_period == 0 || t1 == gridappsd_publish_time){
+			if(real_time_gridappsd_publish_period > 0){
+				gridappsd_publish_time = t1 + (TIMESTAMP)real_time_gridappsd_publish_period;
+			}
+			result = publishJsonVariables();
+			if(result == 0){
+				return TS_INVALID;
+			}
 		}
 	}
 

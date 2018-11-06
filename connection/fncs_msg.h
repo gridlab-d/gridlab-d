@@ -101,6 +101,7 @@ private:
 	varmap *vmap[14];
 	TIMESTAMP last_approved_fncs_time;
 	TIMESTAMP initial_sim_time;
+	TIMESTAMP gridappsd_publish_time;
 	double last_delta_fncs_time;
 	bool exitDeltamode;
 	// TODO add other properties here as needed.
@@ -139,6 +140,7 @@ public:
 	int get_varmapindex(const char *);
 	SIMULATIONMODE deltaInterUpdate(unsigned int delta_iteration_counter, TIMESTAMP t0, unsigned int64 dt);
 	SIMULATIONMODE deltaClockUpdate(double t1, unsigned long timestep, SIMULATIONMODE sysmode);
+	int real_time_gridappsd_publish_period;
 	// TODO add other event handlers here
 
 public:
