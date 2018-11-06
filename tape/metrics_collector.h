@@ -11,7 +11,7 @@
 #include "tape.h"
 #include "../powerflow/link.h"
 
-#undef ALL_MTR_METRICS
+#define ALL_MTR_METRICS
 
 #define MTR_MIN_REAL_POWER 0
 #define MTR_MAX_REAL_POWER 1
