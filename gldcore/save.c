@@ -14,6 +14,7 @@
 #include "gui.h"
 #include "schedule.h"
 #include "transform.h"
+#include "json.h"
 
 SET_MYCONTEXT(DMC_LOAD)
 
@@ -21,6 +22,7 @@ SET_MYCONTEXT(DMC_LOAD)
 
 static int saveglm(char *filename, FILE *fp);
 static int savexml(char *filename, FILE *fp);
+static int savejson(char *filename, FILE *fp);
 static int savexml_strict(char *filename, FILE *fp);
 
 int saveall(char *filename)
@@ -34,6 +36,7 @@ int saveall(char *filename)
 		{"glm", saveglm},
 		//{"xml", savexml_strict},
 		{"xml", savexml},
+		{"json", savejson},
 	};
 	int i;
 
@@ -375,4 +378,9 @@ int savexml(char *filename,FILE *fp)
 	if (fp!=stdout)
 		fclose(fp);
 	return count;
+}
+
+int savejson(char *filename, FILE *fp)
+{
+	return json_output(fp)==0;
 }

@@ -13,6 +13,9 @@
 extern "C" {
 #endif
 
+#define CMDOK (-1)
+#define CMDERR (-2)
+
 STATUS cmdarg_load(int argc,char *argv[]);
 int cmdarg_runoption(const char *value);
 

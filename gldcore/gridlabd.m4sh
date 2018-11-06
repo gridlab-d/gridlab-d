@@ -11,6 +11,54 @@ libdir="@libdir@"
 pkglibdir="$libdir/@PACKAGE@"
 HAS_MINGW="@HAS_MINGW@"
 
+HAS_DOCKER="no"
+which docker > /dev/null 2>&1 && HAS_DOCKER="yes"
+if test "x$1" = "x--docker" ; then :
+  if test "x$HAS_DOCKER" = "xno"; then :
+    echo "docker is not installed"
+    exit 1
+  elif test "x$2" = "xhelp"; then :
+    echo "Syntax: gridlabd --docker <command>"
+    echo "Valid commands:"
+    echo "  help             get a list of available docker control commands"
+    echo "  enable <image>   enable a docker image as the active image"
+    echo "  disable          disable the active image"
+    echo "  status           list the gridlabd images (active image is called 'gridlabd')"
+    exit 0
+  elif test "x$2" = "xenable"; then :
+    if test $# -eq 3; then :
+      docker inspect $3 > /dev/null 2>&1 || docker pull $3
+      docker tag $3 gridlabd
+      docker images | head -n 1
+      docker images | grep gridlabd
+      exit 0
+    else
+      echo "missing docker image name"
+      exit 1
+    fi
+  elif test "x$2" = "xdisable" ; then :
+    docker rmi gridlabd > /dev/null 2>&1 
+    docker images | head -n 1
+    docker images | grep gridlabd
+    exit 0
+  elif test "x$2" = "xstatus" ; then :
+    docker images | head -n 1
+    docker images | grep gridlabd
+    exit 0
+  else
+    echo "Syntax: gridlabd --docker <command>|help"
+    exit 1
+  fi
+fi
+if test "x$HAS_DOCKER" = "xyes" ; then :
+  HAS_IMAGE="no"
+  docker inspect gridlabd > /dev/null 2>&1 && HAS_IMAGE="yes"
+  if test "x$HAS_IMAGE" = "xyes" ; then :
+    docker run -it -v ${PWD}:${PWD} gridlabd /usr/local/bin/gridlabd -W ${PWD} $@
+    exit 0
+  fi
+fi
+
 AS_IF([test "x$GLPATH" = x],
     [export GLPATH="$pkglibdir:$pkgdatadir"],
     [export GLPATH="$pkglibdir:$pkgdatadir:$GLPATH"])
