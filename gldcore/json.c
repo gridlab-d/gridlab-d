@@ -182,6 +182,7 @@ static int json_objects(FILE *fp)
 	{
 		PROPERTY *prop;
 		CLASS *pclass;
+		char buffer[1024];
 		if ( obj != object_get_first() )
 			len += json_write(",");
 		if ( obj->oclass == NULL ) // ignore objects with no defined class
@@ -197,7 +198,8 @@ static int json_objects(FILE *fp)
 		if ( ! isnan(obj->longitude) ) TUPLE("longitude","%f",obj->longitude);
 		if ( obj->groupid[0] != '\0' ) TUPLE("groupid","%s",obj->groupid);
 		TUPLE("rank","%u",(unsigned int)obj->rank);
-		TUPLE("clock","%llu",(int64)(clock));
+		if ( convert_from_timestamp(obj->clock,buffer,sizeof(buffer)) )
+			TUPLE("clock","%s",buffer);
 		if ( obj->valid_to > TS_ZERO && obj->valid_to < TS_NEVER ) TUPLE("valid_to","%llu",(int64)(obj->valid_to));
 		TUPLE("schedule_skew","%llu",obj->schedule_skew);
 		if ( obj->in_svc > TS_ZERO && obj->in_svc < TS_NEVER ) TUPLE("in","%llu",(int64)(obj->in_svc));

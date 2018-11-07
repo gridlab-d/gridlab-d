@@ -1,0 +1,15 @@
+clock {
+	timezone US/CA/Los Angeles;
+	starttime '2018-01-01 00:00:00 PST';
+	stoptime '2018-02-01 00:00:00 PST';
+}
+
+dump 3600 test_dump.json;
+
+class test {
+	randomvar value;
+}
+
+object test {
+	value "type: normal(0,1); refresh: 1 min"; 
+}
