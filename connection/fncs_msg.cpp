@@ -62,7 +62,7 @@ fncs_msg::fncs_msg(MODULE *module)
 		PT_enumeration, "message_type", PADDR(message_type), PT_DESCRIPTION, "set the type of message format you wish to construct",
 			PT_KEYWORD, "GENERAL", enumeration(MT_GENERAL), PT_DESCRIPTION, "use this for sending a general fncs topic/value pair",
 			PT_KEYWORD, "JSON", enumeration(MT_JSON), PT_DESCRIPTION, "use this for wanting to send a bundled json formatted message in a single topic",
-		PT_int, "gridappd_publish_period[s]", PADDR(real_time_gridappsd_publish_period), PT_DESCRIPTION, "use this with json bundling to set the period at which data is published."
+		PT_int32, "gridappd_publish_period", PADDR(real_time_gridappsd_publish_period), PT_DESCRIPTION, "use this with json bundling to set the period [s] at which data is published.",
 			// PT_KEYWORD, "JSON_SB", enumeration(MT_JSON_SB), PT_DESCRIPTION, "use this for wanting to subsribe a bundled json formatted message in a single topic",
 		// TODO add published properties here
 		NULL)<1)
@@ -432,11 +432,27 @@ int fncs_msg::init(OBJECT *parent){
 		return 2;
 	}
 
+	// determine the fncs_step as either 1s, or the global minimum_step
+	fncs_step = 1;
+	// parsing the global variable from string==>int (code copied from regulator.cpp)
+	char temp_buff[128];
+	gl_global_getvar("minimum_timestep",temp_buff,sizeof(temp_buff));
+	int indexval = 0;
+	unsigned int glob_min_timestep = 0;
+	while ((indexval < sizeof(temp_buff)) && (temp_buff[indexval] != 0)) {
+		glob_min_timestep *= 10;
+		glob_min_timestep += (temp_buff[indexval]-48);
+		indexval++;
+	}
+	if (glob_min_timestep > 1) {
+		fncs_step = glob_min_timestep;
+	}
+	fncs_step *= 1000000000; // seconds ==> ns
 
 	//create zpl file for registering with fncs
 	if (message_type == MT_GENERAL){
 		zplfile << "name = " << simName << endl;
-		zplfile << "time_delta = 1000000000ns" << endl; //TODO: minimum timestep needs to take into account deltamode steps eventually.
+		zplfile << "time_delta = " << fncs_step << "ns" << endl; //TODO: minimum timestep needs to take into account deltamode steps eventually.
 		zplfile << "broker = tcp://" << *hostname << ":" << *port << endl;
 		zplfile << "values" << endl;
 		for(n = 1; n < 14; n++){
@@ -476,7 +492,7 @@ int fncs_msg::init(OBJECT *parent){
 			string default_json_str = string("{\"")+simName+string("\":{}}");
 
 			zplfile << "name = " << simName << endl;
-			zplfile << "time_delta = 1000000000ns" << endl; //TODO: minimum timestep needs to take into account deltamode steps eventually.
+			zplfile << "time_delta = " << fncs_step << "ns" << endl; //TODO: minimum timestep needs to take into account deltamode steps eventually.
 			zplfile << "broker = tcp://" << *hostname << ":" << *port << endl;
 			zplfile << "values" << endl;
 			zplfile << "    " << simName <<"/fncs_input" << endl;
@@ -809,7 +825,7 @@ TIMESTAMP fncs_msg::clk_update(TIMESTAMP t1)
 	TIMESTAMP fncs_time = 0;
 	if(exitDeltamode == true){
 #if HAVE_FNCS
-		fncs::update_time_delta(1000000000);
+		fncs::update_time_delta(fncs_step);
 #endif
 		exitDeltamode = false;
 		return t1;
