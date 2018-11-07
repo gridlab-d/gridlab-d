@@ -134,6 +134,10 @@ load::load(MODULE *mod) : node(mod)
 			PT_complex,	"measured_voltage_BC",PADDR(measured_voltage_BC),PT_DESCRIPTION,"current measured voltage on phases BC",
 			PT_complex,	"measured_voltage_CA",PADDR(measured_voltage_CA),PT_DESCRIPTION,"current measured voltage on phases CA",
 			PT_bool, "phase_loss_protection", PADDR(three_phase_protect), PT_DESCRIPTION, "Trip all three phases of the load if a fault occurs",
+			PT_complex, "measured_power_A",PADDR(measured_power[0]),PT_DESCRIPTION,"current measured power on phase A",
+			PT_complex, "measured_power_B",PADDR(measured_power[1]),PT_DESCRIPTION,"current measured power on phase B",
+			PT_complex, "measured_power_C",PADDR(measured_power[2]),PT_DESCRIPTION,"current measured power on phase C",
+			PT_complex, "measured_power",PADDR(measured_total_power),PT_DESCRIPTION,"current total power",
 
 			// This allows the user to set a base power on each phase, and specify the power as a function
 			// of ZIP and pf for each phase (similar to zipload).  This will override the constant values
@@ -488,6 +492,11 @@ TIMESTAMP load::postsync(TIMESTAMP t0)
 	measured_voltage_AB = measured_voltage_A-measured_voltage_B;
 	measured_voltage_BC = measured_voltage_B-measured_voltage_C;
 	measured_voltage_CA = measured_voltage_C-measured_voltage_A;
+
+	measured_power[0] = voltageA*(~current_inj[0]);
+	measured_power[1] = voltageA*(~current_inj[1]);
+	measured_power[2] = voltageA*(~current_inj[2]);
+	measured_total_power = measured_power[0] + measured_power[1] + measured_power[2];
 
 	return t1;
 }
@@ -3110,6 +3119,11 @@ SIMULATIONMODE load::inter_deltaupdate_load(unsigned int64 delta_time, unsigned 
 		measured_voltage_AB = measured_voltage_A-measured_voltage_B;
 		measured_voltage_BC = measured_voltage_B-measured_voltage_C;
 		measured_voltage_CA = measured_voltage_C-measured_voltage_A;
+
+		measured_power[0] = voltageA*(~current_inj[0]);
+		measured_power[1] = voltageA*(~current_inj[1]);
+		measured_power[2] = voltageA*(~current_inj[2]);
+		measured_total_power = measured_power[0] + measured_power[1] + measured_power[2];
 
 		//See if GFA functionality is required, since it may require iterations or "continance"
 		if (GFA_enable == true)
