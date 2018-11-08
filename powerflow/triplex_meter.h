@@ -13,6 +13,7 @@ class triplex_meter : public triplex_node
 {
 public:
 	complex measured_voltage[3];	///< measured voltage
+	complex measured_voltage12;		///< measure voltage phase 1 to 2
 	complex measured_current[3];	///< measured current
 	double measured_real_energy;	///< metered real energy consumption
 	double measured_real_energy_delta;	///< metered real energy consumption over last interval
