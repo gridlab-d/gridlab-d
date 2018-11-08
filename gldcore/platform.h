@@ -44,8 +44,8 @@
 	#ifndef isfinite
 		#define isfinite finite
 	#endif
-	#define min fmin /**< min macro */
-	#define max fmax /**< max macro */
+	#define min(A,B) ((A)<(B)?(A):(B)) /**< min macro */
+	#define max(A,B) ((A)>(B)?(A):(B))  /**< max macro */
 	#ifdef X64
 		#define NATIVE int64	/**< native integer size */
 	#else

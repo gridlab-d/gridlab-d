@@ -142,6 +142,6 @@ object triplex_meter {
 		interval 3600;
 		limit 30;
 		file "meter_power.csv"; // <- recorder with the results below
-		property indiv_measured_power_1,indiv_measured_power_2,indiv_measured_power_N,measured_power,measured_real_energy;
+		property indiv_measured_power_1,indiv_measured_power_2,indiv_measured_power_N,measured_power,measured_real_energy,measured_voltage_1,measured_voltage_2,measured_voltage_12;
 	 };
 }

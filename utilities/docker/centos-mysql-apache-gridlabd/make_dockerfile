@@ -1,0 +1,33 @@
+#!/bin/bash
+# DockerFile preprocessor
+
+function cleanup {
+	rm -f .tmp$$
+}
+trap cleanup EXIT
+
+SYNTAX='Syntax: '$0' <source-file> <definition-file> <destination-file>'
+if [ $# -eq 0 -o "$1" == "--help" -o "$1" == "-h" ]; then
+	echo $SYNTAX
+	exit 0
+fi
+if [ $# -ne 3 ]; then
+	echo $SYNTAX > /dev/stderr
+	exit 1
+fi
+if [ ! -f "$1" ]; then
+	echo "$0: source file '$1' not found" > /dev/stderr
+	exit 2
+fi
+if [ ! -f "$2" ]; then
+	echo "$0: definition file '$2' not found" > /dev/stderr
+	exit 3
+fi
+
+VARLIST=$(cut -s -f1 -d= $2)
+cp $1 $3
+for V in $VARLIST; do
+	X=$(grep "^$V=" $2 | cut -f2 -d=)
+	sed 's?<<<'$V'>>>?'$X'?g' $3 >.tmp$$
+	mv .tmp$$ $3
+done
