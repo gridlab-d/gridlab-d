@@ -1,8 +1,8 @@
 // do not edit -- updated automatically by 'save' action to setup.php at Tue, 09 Jan 2018 20:05:18 +0000 
 #define DOCROOT=/ieee123
-#define HOSTNAME=localhost
+#define HOSTNAME=dhcp-swlan-public-86-146.slac.stanford.edu
 #define NAME=ieee123.glm
-#define PORT=6267
+#define PORT=3306
 #define WEATHER=CA-Bakersfield_Meadows_Field.tmy3
 #define TIMEZONE=US/CA/Los Angeles
 #define LOADS=on
@@ -12,7 +12,7 @@
 #define DR_DISHWASHER=none
 #define DR_WASHER=none
 #define DR_DRYER=none
-#define MYSQL_ENABLE=off
+#define MYSQL_ENABLE=on
 #define MYSQL_NAME=ieee123
 #define MYSQL_SCADA=on
 #define MYSQL_AMI=on
