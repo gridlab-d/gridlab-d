@@ -59,6 +59,7 @@ EXPORT void term(void)
 	database *db;
 	for ( db=database::get_first() ; db!=NULL ; db=db->get_next() )
 		db->term();
+	mysql_library_end();
 }
 
 

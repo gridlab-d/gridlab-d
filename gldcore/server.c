@@ -508,6 +508,7 @@ static void http_mime(HTTPCNX *http, char *path)
 		{".log","text/plain"},
 		{".glm","text/plain"},
 		{".php","text/plain"},
+		{".json","text/json"},
 	};
 	int n;
 	for ( n=0 ; n<sizeof(map)/sizeof(map[0]) ; n++ )
@@ -965,6 +966,19 @@ int http_json_request(HTTPCNX *http,char *uri)
 
 	/* get global variable */
 	case 1:
+
+		if ( strcmp(arg1,"*") == 0 )
+		{
+			char action[1024];
+			strcpy(action,global_modelname);
+			char *ext = strchr(action,".glm");
+			if ( ext ) 
+				strcpy(ext,".json");
+			else
+				strcat(action,".json");
+			json_dump(action);
+			return http_copy(http,"JSON",action,false,0);
+		}
 
 		/* find the variable */
 		if (global_getvar(arg1,buffer,sizeof(buffer))==NULL)

@@ -18,6 +18,7 @@ int32 port INIT(-1);
 char socketname[1024] INIT("");
 int64 clientflags INIT(-1);
 char table_prefix[256] INIT(""); ///< table prefix
+static MYSQL *mysql_client = NULL;
 
 // options
 bool new_database = false; ///< flag to drop a database before using it (very dangerous)
@@ -266,12 +267,15 @@ if ( !query(mysql,"CREATE SCHEMA IF NOT EXISTS `%s`", schema) )
 }
 static MYSQL *get_connection(const char *schema, bool autocreate=false)
 {
+	if ( mysql_client == NULL )
+		mysql_client = mysql_init(NULL);
+
 	// connect to server
 	MYSQL *mysql = mysql_init(NULL);
 	if ( mysql==NULL )
 	{
 		gl_error("mysql_init memory allocation failure");
-		return false;
+		return NULL;
 	}
 	gl_debug("mysql_connect(hostname='%s',username='%s',password='%s',schema='%s',port=%u,socketname='%s',clientflags=0x%016llx)",
 		(const char*)hostname,(const char*)username,(const char*)password,(const char*)schema,port,(const char*)socketname,clientflags);
@@ -279,20 +283,20 @@ static MYSQL *get_connection(const char *schema, bool autocreate=false)
 	if ( mysql==NULL )
 	{
 		gl_error("mysql connect failed - %s", mysql_error(mysql_client));
-		return 0;
+		return NULL;
 	}
 	else
 		gl_debug("MySQL server info: %s", mysql_get_server_info(mysql));
 
 	// connect to database
 	if ( new_database && !query(mysql,"DROP SCHEMA IF EXISTS `%s`", schema))
-		return false;
+		return NULL;
 	else if ( mysql_select_db(mysql,schema)!=0 )
 	{
 		if ( !autocreate )
 		{
 			gl_error("unable to select schema '%s'", schema);
-			return 0;
+			return NULL;
 		}
 		else if ( create_schema(mysql,schema) )
 			return mysql;

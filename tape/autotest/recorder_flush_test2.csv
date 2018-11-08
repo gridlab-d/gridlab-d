@@ -1,0 +1,11 @@
+# file...... recorder_flush_test2.csv
+# date...... Fri Oct 12 21:34:50 2018
+# user...... (null)
+# host...... (null)
+# target.... test 0
+# trigger... (none)
+# interval.. -1
+# limit..... 0
+# timestamp,x
+2000-01-01 00:00:00 EST,0.740297
+# end of tape

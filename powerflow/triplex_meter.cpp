@@ -81,6 +81,7 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 			// added to record last voltage/current
 			PT_complex, "measured_voltage_1[V]", PADDR(measured_voltage[0]),PT_DESCRIPTION,"measured voltage, phase 1 to ground",
 			PT_complex, "measured_voltage_2[V]", PADDR(measured_voltage[1]),PT_DESCRIPTION,"measured voltage, phase 2 to ground",
+			PT_complex, "measured_voltage_12[V]", PADDR(measured_voltage12), PT_DESCRIPTION,"measured voltage, phase 1 to phase 2",
 			PT_complex, "measured_voltage_N[V]", PADDR(measured_voltage[2]),PT_DESCRIPTION,"measured voltage, phase N to ground",
 			PT_double, "measured_real_max_voltage_1_in_interval", PADDR(measured_real_max_voltage_in_interval[0]),PT_DESCRIPTION,"measured real max line-to-ground voltage on phase 1 over a specified interval",
 			PT_double, "measured_real_max_voltage_2_in_interval", PADDR(measured_real_max_voltage_in_interval[1]),PT_DESCRIPTION,"measured real max line-to-ground voltage on phase 2 over a specified interval",
@@ -336,6 +337,7 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	measured_voltage[0].SetPolar(voltageA.Mag(),voltageA.Arg());
 	measured_voltage[1].SetPolar(voltageB.Mag(),voltageB.Arg());
 	measured_voltage[2].SetPolar(voltageC.Mag(),voltageC.Arg());
+	measured_voltage12 = measured_voltage[0] + measured_voltage[1];
 
 	if (t1 > last_t)
 	{

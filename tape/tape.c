@@ -155,7 +155,7 @@ TAPEFUNCS *get_ftable(char *mode){
 	ops->write = (WRITEFUNC)DLSYM(lib, "write_recorder");
 	ops->rewind = NULL;
 	ops->close = (CLOSEFUNC)DLSYM(lib, "close_recorder");
-	ops->flush = (FLUSHFUNC)DLSYM(lib, "flush_collector");
+	ops->flush = (FLUSHFUNC)DLSYM(lib, "flush_recorder");
 
 	ops = fptr->histogram = malloc(sizeof(TAPEOPS));
 	memset(ops,0,sizeof(TAPEOPS));
@@ -164,7 +164,7 @@ TAPEFUNCS *get_ftable(char *mode){
 	ops->write = (WRITEFUNC)DLSYM(lib, "write_histogram");
 	ops->rewind = NULL;
 	ops->close = (CLOSEFUNC)DLSYM(lib, "close_histogram");
-	ops->flush = (FLUSHFUNC)DLSYM(lib, "flush_collector");
+	ops->flush = (FLUSHFUNC)DLSYM(lib, "flush_histogram");
 
 	ops = fptr->shaper = malloc(sizeof(TAPEOPS));
 	memset(ops,0,sizeof(TAPEOPS));
