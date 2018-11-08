@@ -18,6 +18,7 @@ int32 port INIT(-1);
 char socketname[1024] INIT("");
 int64 clientflags INIT(-1);
 char table_prefix[256] INIT(""); ///< table prefix
+static MYSQL *mysql_client = NULL;
 
 // options
 bool new_database = false; ///< flag to drop a database before using it (very dangerous)
@@ -266,6 +267,9 @@ if ( !query(mysql,"CREATE SCHEMA IF NOT EXISTS `%s`", schema) )
 }
 static MYSQL *get_connection(const char *schema, bool autocreate=false)
 {
+	if ( mysql_client == NULL )
+		mysql_client = mysql_init(NULL);
+
 	// connect to server
 	MYSQL *mysql = mysql_init(NULL);
 	if ( mysql==NULL )
