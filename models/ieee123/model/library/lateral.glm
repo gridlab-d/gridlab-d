@@ -1,0 +1,86 @@
+// IEEE 123 realtime demo feeder topology
+// Copyright (C) 2016, Stanford University
+// by dchassin@slac.stanford.edu
+//
+
+// lateral feeds
+object node {
+	name node_251;
+	groupid nodevolts;
+	phases ABCN;
+	nominal_voltage 2401.7771;
+	bustype SWING;
+	voltage_A 2401.777120+0.000000j;
+	voltage_B -1200.888560-2080.000000j;
+	voltage_C -1200.888560+2080.000000j;
+}
+
+object node {
+	name node_350;
+	groupid nodevolts;
+	phases ABCN;
+	nominal_voltage 2401.7771;
+	bustype SWING;
+	voltage_A 2401.777120+0.000000j;
+	voltage_B -1200.888560-2080.000000j;
+	voltage_C -1200.888560+2080.000000j;
+}
+
+
+object node {
+	name node_451;
+	groupid nodevolts;
+	phases ABCN;
+	nominal_voltage 2401.7771;
+	bustype SWING;
+	voltage_A 2401.777120+0.000000j;
+	voltage_B -1200.888560-2080.000000j;
+	voltage_C -1200.888560+2080.000000j;
+}
+
+object node {
+	name node_195;
+	groupid nodevolts;
+	phases ABCN;
+	nominal_voltage 2401.7771;
+	bustype SWING;
+	voltage_A 2401.777120+0.000000j;
+	voltage_B -1200.888560-2080.000000j;
+	voltage_C -1200.888560+2080.000000j;
+}
+
+// switch to laterals
+object switch {
+	name sw250to251;
+	phases ABCN;
+	from node_250;
+	to node_251;
+	status OPEN;
+}
+
+object switch {
+	name sw300to350;
+	phases ABCN;
+	from node_300;
+	to node_350;
+	status OPEN;
+}
+
+object switch {
+	name sw450to451;
+	phases ABCN;
+	from node_450;
+	to node_451;
+	status OPEN;
+}
+
+object switch {
+	name sw95to195;
+	phases ABCN;
+	from load_95;
+	to node_195;
+	status OPEN;
+}
+
+
+

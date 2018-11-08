@@ -1,0 +1,95 @@
+// IEEE 123 line sensors
+// Copyright (C) 2016, Stanford University
+// Author: dchassin@slac.stanford.edu
+//
+module gismo;
+
+//
+// Line sensors
+//
+object line_sensor {
+	name sensor13to18${PHASE};
+	parent line13to18;
+	measured_phase ${PHASE};
+	location 200 ft;
+#ifdef MYSQL_ENABLE
+#ifdef MYSQL_SCADA
+	object recorder {
+	        connection scada;
+	        table sensor;
+	        property "measured_voltage,measured_current,measured_power";
+	        interval 4;
+	        header_fieldnames "name";
+	};
+#endif
+#endif
+}
+object line_sensor {
+	name sensor51to151${PHASE};
+	parent line51to151;
+	measured_phase ${PHASE};
+	location 250 ft;
+#ifdef MYSQL_ENABLE
+#ifdef MYSQL_SCADA
+	object recorder {
+	        connection scada;
+	        table sensor;
+	        property "measured_voltage,measured_current,measured_power";
+	        interval 4;
+	        header_fieldnames "name";
+	};
+#endif
+#endif
+}
+object line_sensor {
+	name sensor57to60${PHASE};
+	parent line57to60;
+	measured_phase ${PHASE};
+	location 700 ft;
+#ifdef MYSQL_ENABLE
+#ifdef MYSQL_SCADA;
+	object recorder {
+	        connection scada;
+	        table sensor;
+	        property "measured_voltage,measured_current,measured_power";
+	        interval 4;
+	        header_fieldnames "name";
+	};
+#endif
+#endif
+}
+object line_sensor {
+	name sensor67to97${PHASE};
+	parent line67to97;
+	measured_phase ${PHASE};
+	location 50 ft;
+#ifdef MYSQL_ENABLE
+#ifdef MYSQL_SCADA
+	object recorder {
+	        connection scada;
+	        table sensor;
+	        property "measured_voltage,measured_current,measured_power";
+	        interval 4;
+	        header_fieldnames "name";
+	};
+#endif
+#endif
+}
+object line_sensor {
+	name sensor76to86${PHASE};
+	parent line76to86;
+	measured_phase ${PHASE};
+	location 350 ft;
+#ifdef MYSQL_ENABLE
+#ifdef MYSQL_SCADA
+	object recorder {
+	        connection scada;
+	        table sensor;
+	        property "measured_voltage,measured_current,measured_power";
+	        interval 4;
+	        header_fieldnames "name";
+	};
+#endif
+#endif
+}
+

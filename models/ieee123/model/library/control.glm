@@ -1,0 +1,43 @@
+// IEEE 123 switch configuration control
+// Copyright (C) 2016, Stanford University
+// Author: dchassin@slac.stanford.edu
+//
+
+//
+// Line sensors
+//
+#include using(PHASE=A) "model/library/sensors.glm"
+#include using(PHASE=B) "model/library/sensors.glm"
+#include using(PHASE=C) "model/library/sensors.glm"
+
+//
+// Switch coordinator
+//
+object switch_coordinator {
+	name scheme_1;
+	connect sw13to152;
+	connect sw18to135;
+	connect sw54to94;
+	connect sw60to160;
+	connect sw61to6101;
+	connect sw97to197;
+	connect sw151to300;
+	connect sw15001to149;
+	connect sw250to251;
+	connect sw300to350;
+	connect sw450to451;
+	connect sw95to195;
+#ifdef MYSQL_ENABLE
+#ifdef MYSQL_SCADA
+	object recorder {
+		connection scada;
+		table control;
+		property "armed,status";
+		interval -1;
+		header_fieldnames "name";
+	};
+#endif
+#endif
+}
+
+

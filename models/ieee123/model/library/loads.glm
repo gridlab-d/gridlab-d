@@ -1,0 +1,121 @@
+// IEEE-123 dynamic loads
+// Copyright (C) 2016, Stanford University
+// Author: dchassin@slac.stanford.edu
+
+module residential;
+object transformer_configuration {
+	name xfmr_config;
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type POLETOP;
+	powerA_rating 75;
+	powerB_rating 75;
+	powerC_rating 75;
+	primary_voltage 2401;
+	secondary_voltage 120.000;
+	impedance 0.006+0.0136j;
+}
+
+global int32 SEQ_CUSTID 0;
+#set allow_reinclude=true
+
+#include using(AREA=A,LOADID=1,PHASE=A,COUNT=4) "model/library/house.glm"
+#include using(AREA=A,LOADID=2,PHASE=B,COUNT=2) "model/library/house.glm"
+#include using(AREA=A,LOADID=4,PHASE=C,COUNT=4) "model/library/house.glm"
+#include using(AREA=A,LOADID=5,PHASE=C,COUNT=2) "model/library/house.glm"
+#include using(AREA=A,LOADID=6,PHASE=C,COUNT=4) "model/library/house.glm"
+#include using(AREA=A,LOADID=7,PHASE=A,COUNT=2) "model/library/house.glm"
+#include using(AREA=A,LOADID=9,PHASE=A,COUNT=4) "model/library/house.glm"
+#include using(AREA=A,LOADID=10,PHASE=A,COUNT=2) "model/library/house.glm"
+#include using(AREA=A,LOADID=11,PHASE=A,COUNT=4) "model/library/house.glm"
+#include using(AREA=A,LOADID=12,PHASE=B,COUNT=2) "model/library/house.glm"
+#include using(AREA=A,LOADID=16,PHASE=C,COUNT=4) "model/library/house.glm"
+#include using(AREA=A,LOADID=17,PHASE=C,COUNT=2) "model/library/house.glm"
+#include using(AREA=A,LOADID=19,PHASE=A,COUNT=4) "model/library/house.glm"
+#include using(AREA=A,LOADID=20,PHASE=A,COUNT=4) "model/library/house.glm"
+#include using(AREA=A,LOADID=22,PHASE=B,COUNT=4) "model/library/house.glm"
+#include using(AREA=A,LOADID=24,PHASE=C,COUNT=4) "model/library/house.glm"
+#include using(AREA=A,LOADID=28,PHASE=A,COUNT=4) "model/library/house.glm"
+#include using(AREA=A,LOADID=29,PHASE=A,COUNT=4) "model/library/house.glm"
+#include using(AREA=A,LOADID=30,PHASE=C,COUNT=4) "model/library/house.glm"
+#include using(AREA=A,LOADID=31,PHASE=C,COUNT=2) "model/library/house.glm"
+#include using(AREA=A,LOADID=32,PHASE=C,COUNT=2) "model/library/house.glm"
+#include using(AREA=A,LOADID=33,PHASE=A,COUNT=4) "model/library/house.glm"
+#include using(AREA=A,LOADID=34,PHASE=C,COUNT=4) "model/library/house.glm"
+
+#include using(AREA=B,LOADID=35,PHASE=A,COUNT=4) "model/library/house.glm"
+#include using(AREA=B,LOADID=37,PHASE=A,COUNT=4) "model/library/house.glm"
+#include using(AREA=B,LOADID=38,PHASE=B,COUNT=2) "model/library/house.glm"
+#include using(AREA=B,LOADID=39,PHASE=B,COUNT=2) "model/library/house.glm"
+#include using(AREA=B,LOADID=41,PHASE=C,COUNT=2) "model/library/house.glm"
+#include using(AREA=B,LOADID=42,PHASE=A,COUNT=2) "model/library/house.glm"
+#include using(AREA=B,LOADID=43,PHASE=B,COUNT=4) "model/library/house.glm"
+#include using(AREA=B,LOADID=45,PHASE=A,COUNT=2) "model/library/house.glm"
+#include using(AREA=B,LOADID=46,PHASE=A,COUNT=2) "model/library/house.glm"
+#include using(AREA=B,LOADID=47,PHASE=A,COUNT=3) "model/library/house.glm"
+#include using(AREA=B,LOADID=47,PHASE=B,COUNT=3) "model/library/house.glm"
+#include using(AREA=B,LOADID=47,PHASE=C,COUNT=3) "model/library/house.glm"
+#include using(AREA=B,LOADID=48,PHASE=A,COUNT=7) "model/library/house.glm"
+#include using(AREA=B,LOADID=48,PHASE=B,COUNT=7) "model/library/house.glm"
+#include using(AREA=B,LOADID=48,PHASE=C,COUNT=7) "model/library/house.glm"
+#include using(AREA=B,LOADID=49,PHASE=A,COUNT=3) "model/library/house.glm"
+#include using(AREA=B,LOADID=49,PHASE=B,COUNT=7) "model/library/house.glm"
+#include using(AREA=B,LOADID=49,PHASE=C,COUNT=3) "model/library/house.glm"
+#include using(AREA=B,LOADID=50,PHASE=C,COUNT=4) "model/library/house.glm"
+#include using(AREA=B,LOADID=51,PHASE=A,COUNT=2) "model/library/house.glm"
+
+#include using(AREA=C,LOADID=52,PHASE=A,COUNT=4) "model/library/house.glm"
+#include using(AREA=C,LOADID=53,PHASE=A,COUNT=4) "model/library/house.glm"
+#include using(AREA=C,LOADID=55,PHASE=A,COUNT=2) "model/library/house.glm"
+#include using(AREA=C,LOADID=56,PHASE=B,COUNT=2) "model/library/house.glm"
+#include using(AREA=C,LOADID=58,PHASE=B,COUNT=2) "model/library/house.glm"
+#include using(AREA=C,LOADID=59,PHASE=B,COUNT=2) "model/library/house.glm"
+#include using(AREA=C,LOADID=60,PHASE=A,COUNT=2) "model/library/house.glm"
+#include using(AREA=C,LOADID=62,PHASE=C,COUNT=4) "model/library/house.glm"
+#include using(AREA=C,LOADID=63,PHASE=A,COUNT=4) "model/library/house.glm"
+#include using(AREA=C,LOADID=64,PHASE=B,COUNT=7) "model/library/house.glm"
+#include using(AREA=C,LOADID=65,PHASE=A,COUNT=3) "model/library/house.glm"
+#include using(AREA=C,LOADID=65,PHASE=B,COUNT=3) "model/library/house.glm"
+#include using(AREA=C,LOADID=65,PHASE=C,COUNT=7) "model/library/house.glm"
+#include using(AREA=C,LOADID=66,PHASE=C,COUNT=7) "model/library/house.glm"
+
+#include using(AREA=D,LOADID=68,PHASE=A,COUNT=2) "model/library/house.glm"
+#include using(AREA=D,LOADID=69,PHASE=A,COUNT=4) "model/library/house.glm"
+#include using(AREA=D,LOADID=70,PHASE=A,COUNT=2) "model/library/house.glm"
+#include using(AREA=D,LOADID=71,PHASE=A,COUNT=4) "model/library/house.glm"
+#include using(AREA=D,LOADID=73,PHASE=C,COUNT=4) "model/library/house.glm"
+#include using(AREA=D,LOADID=74,PHASE=C,COUNT=4) "model/library/house.glm"
+#include using(AREA=D,LOADID=75,PHASE=C,COUNT=4) "model/library/house.glm"
+#include using(AREA=D,LOADID=76,PHASE=A,COUNT=10) "model/library/house.glm"
+#include using(AREA=D,LOADID=76,PHASE=B,COUNT=7) "model/library/house.glm"
+#include using(AREA=D,LOADID=76,PHASE=C,COUNT=7) "model/library/house.glm"
+#include using(AREA=D,LOADID=77,PHASE=B,COUNT=4) "model/library/house.glm"
+#include using(AREA=D,LOADID=79,PHASE=A,COUNT=4) "model/library/house.glm"
+#include using(AREA=D,LOADID=80,PHASE=B,COUNT=4) "model/library/house.glm"
+#include using(AREA=D,LOADID=82,PHASE=A,COUNT=4) "model/library/house.glm"
+#include using(AREA=D,LOADID=83,PHASE=C,COUNT=2) "model/library/house.glm"
+#include using(AREA=D,LOADID=84,PHASE=C,COUNT=2) "model/library/house.glm"
+#include using(AREA=D,LOADID=85,PHASE=C,COUNT=4) "model/library/house.glm"
+#include using(AREA=D,LOADID=86,PHASE=B,COUNT=2) "model/library/house.glm"
+#include using(AREA=D,LOADID=87,PHASE=B,COUNT=4) "model/library/house.glm"
+#include using(AREA=D,LOADID=88,PHASE=A,COUNT=4) "model/library/house.glm"
+#include using(AREA=D,LOADID=90,PHASE=B,COUNT=4) "model/library/house.glm"
+#include using(AREA=D,LOADID=92,PHASE=C,COUNT=4) "model/library/house.glm"
+#include using(AREA=D,LOADID=94,PHASE=A,COUNT=4) "model/library/house.glm"
+#include using(AREA=D,LOADID=95,PHASE=B,COUNT=2) "model/library/house.glm"
+#include using(AREA=D,LOADID=96,PHASE=B,COUNT=2) "model/library/house.glm"
+#include using(AREA=D,LOADID=98,PHASE=A,COUNT=4) "model/library/house.glm"
+#include using(AREA=D,LOADID=99,PHASE=B,COUNT=4) "model/library/house.glm"
+#include using(AREA=D,LOADID=100,PHASE=C,COUNT=4) "model/library/house.glm"
+
+#include using(AREA=E,LOADID=102,PHASE=C,COUNT=2) "model/library/house.glm"
+#include using(AREA=E,LOADID=103,PHASE=C,COUNT=4) "model/library/house.glm"
+#include using(AREA=E,LOADID=104,PHASE=C,COUNT=4) "model/library/house.glm"
+#include using(AREA=E,LOADID=106,PHASE=B,COUNT=4) "model/library/house.glm"
+#include using(AREA=E,LOADID=107,PHASE=B,COUNT=4) "model/library/house.glm"
+#include using(AREA=E,LOADID=109,PHASE=A,COUNT=4) "model/library/house.glm"
+#include using(AREA=E,LOADID=111,PHASE=A,COUNT=2) "model/library/house.glm"
+#include using(AREA=E,LOADID=112,PHASE=A,COUNT=2) "model/library/house.glm"
+#include using(AREA=E,LOADID=113,PHASE=A,COUNT=4) "model/library/house.glm"
+#include using(AREA=E,LOADID=114,PHASE=A,COUNT=2) "model/library/house.glm"
+
+#define NHOUSES=${SEQ_CUSTID}

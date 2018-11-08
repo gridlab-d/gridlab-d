@@ -1,0 +1,151 @@
+// IEEE 123 realtime loads
+// Copyright (C) 2016, Stanford University
+// Author: dchassin@slac.stanford.edu
+//
+// This GLM converts a static load into into an specified number of houses
+// Parameters:
+//
+//   AREA   - specifies the control area in which the load bus is located
+//   LOADID - specifies the load number to convert
+//   PHASE  - specifies the split phase on which the load is placed
+//   COUNT  - specifies the number of houses to connect
+//
+// Optional parameters
+//
+//   LOADS  - specifies that dynamic loads are enabled
+//   PVAREA - specifies the area of PV panels if SOLAR==yes (default 350 sf)
+//   SOLAR  - specifies that solar panels are installed
+//   PVPROB - specifies the probability that a PV is installed
+//
+// Example usage:
+//
+//   #include using(AREA=A,LOADID=1,PHASE=A,COUNT=4) "load.glm"
+//
+ 
+// connect dynamics load
+#ifdef LOADS
+#debug Converting area ${AREA} static load ${LOADID} phase ${PHASE} to ${COUNT} houses
+modify load_${LOADID}.groupid area_${AREA};
+modify load_${LOADID}.constant_power_${PHASE} 0+0j;	
+modify load_${LOADID}.constant_current_${PHASE} 0+0j;	
+modify load_${LOADID}.constant_impedance_${PHASE} 0+0j;	
+#define XLOAD=yes
+#else
+#ifdef MYSQL_ENABLE
+#ifdef MYSQL_AMI
+object recorder {
+	parent load_${LOADID};
+	connection ami;
+	table load;
+	property "measured_voltage_A,measured_voltage_B,measured_voltage_C,measured_voltage_AB,measured_voltage_BC,measured_voltage_CA";
+	interval 900;
+	header_fieldnames "name";
+};
+#endif // MYSQL_AMI
+#endif // MYSQL_ENABLE
+#endif // LOADS
+
+// add solar panel installation rank
+#ifdef SOLAR
+#ifndef XLOAD
+#define XLOAD=yes
+#endif // XLOAD
+#ifdef PVPROB
+class solar {
+	double installed;
+}
+#endif // PVPROB
+#endif // SOLAR
+
+#ifdef XLOAD
+// load/solar connection
+object transformer {
+	name xfrm_${LOADID}${PHASE};
+	phases ${PHASE}S;
+	from load_${LOADID};
+	to node_${LOADID}${PHASE};
+	configuration xfmr_config;
+}
+object triplex_node {
+	name node_${LOADID}${PHASE};
+	phases ${PHASE}S;
+	nominal_voltage 120;
+}
+object triplex_meter:..${COUNT} { 
+	name `meter_{SEQ_CUSTID:INC}`;
+	groupid load_${LOADID};
+	parent node_${LOADID}${PHASE};
+	phases ${PHASE}S;
+	nominal_voltage 120;
+	latitude (load_${LOADID}.latitude);
+	longitude (load_${LOADID}.longitude);
+#ifdef LOADS
+	object house { 
+		floor_area random.triangle(1000,2000);
+		name `house_{SEQ_CUSTID}`;
+	}; 
+#endif // LOADS
+#ifdef MYSQL_ENABLE
+#ifdef MYSQL_AMI
+	object recorder {
+		connection ami;
+		table meter;
+		property "measured_voltage_1,measured_voltage_2,measured_demand,measured_real_power,measured_reactive_power,measured_real_energy,measured_reactive_energy,measured_current_1,measured_current_2,measured_current_N";
+		interval 900;
+		header_fieldnames "name,groupid";
+	};
+#endif // MYSQL_AMI
+#endif // MYSQL_ENABLE
+#ifdef SOLAR
+	object inverter {
+		name `inverter_{SEQ_CUSTID}`;
+		phases ${PHASE}S;
+		rated_power 25000;	
+		generator_mode CONSTANT_PF;
+		generator_status ONLINE;
+		inverter_efficiency 0.9;
+		inverter_type PWM;
+		object solar {
+			name `solar_{SEQ_CUSTID}`;
+			phases ${PHASE}S;
+#ifndef PVAREA
+			area 350 sf;
+#else
+			area ${PVAREA};
+#endif // PVAREA
+#ifndef PVPROB
+			generator_status ONLINE;
+#else
+			installed random.bernoulli(${PVPROB});
+			generator_status ($installed) ? OFFLINE : ONLINE; 
+#endif // PVPROB
+			generator_mode SUPPLY_DRIVEN;
+			panel_type SINGLE_CRYSTAL_SILICON;
+#ifdef MYSQL_ENABLE
+#ifdef MYSQL_AMI
+			object recorder {
+				connection ami;
+				table solar;
+				property "Insolation";
+				interval 60;
+				header_fieldnames "name";
+			};
+#endif // MYSQL_AMI
+#endif // MYSQL_ENABLE
+		};
+#ifdef MYSQL_ENABLE
+#ifdef MYSQL_AMI
+		object recorder {
+			connection ami;
+			table inverter;
+			property "VA_Out";
+			interval 60;
+			header_fieldnames "name";
+		};
+#endif // MYSQL_AMI
+#endif // MYSQL_ENABLE
+	};
+#endif // SOLAR
+}
+#endif // XLOAD
+

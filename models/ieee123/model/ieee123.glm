@@ -1,0 +1,233 @@
+///////////////////////////////////////////////////////
+//
+// IEEE 123 realtime simulation model
+// Copyright (C) 2016, Stanford University
+// Author: dchassin@slac.stanford.edu
+//
+///////////////////////////////////////////////////////
+
+//
+// Read the configuration file for this system
+// Assumes the model is run from parent of model folder
+//
+#ifexist config/local.glm
+#include "config/local.glm"
+#endif // exist local.glm
+
+//
+// Check the configuration
+//
+#ifndef PORT // this is required and defined in config/local.glm
+#error config/local.glm load failed: if you have not already done so you must your server configure using config.php to create config/local.glm
+#endif // PORT
+
+///////////////////////////////////////////////////////
+//
+// BASIC SETTINGS
+//
+///////////////////////////////////////////////////////
+
+#ifdef RANDOMSEED
+#set randomseed=${RANDOMSEED} // select deterministic simulation
+#endif // RANDOMSEED
+
+#ifndef STARTTIME
+#ifndef STOPTIME
+//
+// Realtime run
+//
+#set show_progress=0
+#set suppress_repeat_messages=FALSE // allow all similar messages to be logged
+
+#ifdef HOSTNAME
+#set hostname=${HOSTNAME}  // tells clients where to get the data
+#else
+#warning HOSTNAME is not defined in either your environment or in config.glm, using localhost
+#define HOSTNAME=localhost
+#endif // HOSTNAME
+
+#option server // enables the server
+
+#set run_realtime=1 // tells the server to run in realtime mode
+
+#set server_portnum=${PORT} // is the port that clients will connect to
+#endif // STOPTIME
+#endif // STARTTIME
+
+#ifdef TIMEZONE
+clock {
+	timezone ${TIMEZONE};
+#ifdef STARTTIME
+	starttime ${STARTTIME};
+#endif
+#ifdef STOPTIME
+	stoptime ${STOPTIME};
+#endif
+}
+#else
+#error No timezone specified
+#endif // TIMEZONE
+
+///////////////////////////////////////////////////////
+//
+// WEATHER
+//
+///////////////////////////////////////////////////////
+#ifexist data/${WEATHER}
+module climate;
+object climate {
+        name weather;
+        tmyfile "data/${WEATHER}";
+        interpolate QUADRATIC;
+}
+#else
+#error No weather specified.
+#endif // exist WEATHER
+
+///////////////////////////////////////////////////////
+//
+// POWER SYSTEM MODEL
+//
+///////////////////////////////////////////////////////
+module powerflow {
+	solver_method NR;
+	line_capacitance true;
+	convergence_error_handling IGNORE;
+}
+
+#ifdef SOLAR
+module generators;
+#endif // SOLAR
+
+#ifdef VOLTDUMP
+object voltdump {
+	filename ${VOLTDUMP};
+	group "nodevolts";
+	mode polar;
+}
+#endif // VOLTDUMP
+
+#ifdef CURRDUMP
+object currdump {
+	filename ${CURRDUMP};
+	mode rect;
+}
+#endif // CURRDUMP
+
+//
+// Powerflow component configurations
+//
+#include "model/library/library.glm"
+
+//
+// Power system topology
+//
+#include "model/library/feeder.glm"
+#include "model/library/lateral.glm"
+
+//
+// Power system geoinformation
+//
+#include "model/library/geolocation.glm"
+
+///////////////////////////////////////////////////////
+//
+// MYSQL DATABASE SUPPORT
+//
+///////////////////////////////////////////////////////
+#ifdef MYSQL_ENABLE
+
+#ifndef MYSQLHOST
+#define MYSQLHOST=localhost
+#endif // MYSQLHOST
+
+module mysql {
+	hostname "${MYSQLHOST}";
+	username "gridlabd";
+	password "gridlabd";
+#ifdef SOCKETNAME
+	socketname "${SOCKETNAME}";
+#else
+	port 3306;	
+#endif // SOCKETNAME
+}
+
+#ifdef MYSQL_SCADA
+object database {
+	name scada;
+	schema "${MYSQL_NAME}_scada";
+}
+#endif // MYSQL_SCADA
+
+#ifdef MYSQL_AMI
+object database {
+	name ami;
+	schema "${MYSQL_NAME}_ami";
+}
+#endif // MYSQL_AMOI
+#endif // MYSQL_ENABLE
+
+///////////////////////////////////////////////////////
+//
+// LOAD MODEL
+//
+///////////////////////////////////////////////////////
+#include "model/library/loads.glm"
+
+///////////////////////////////////////////////////////
+//
+// DATA COLLECTION
+//
+///////////////////////////////////////////////////////
+
+#ifdef MYSQL_ENABLE
+//
+// SCADA recorders
+//
+#ifdef MYSQL_SCADA
+#include "model/library/scada.glm"
+#endif // MYSQL_SCADA
+#endif // MYSQL_ENABLE
+
+///////////////////////////////////////////////////////
+//
+// CONTROLS
+//
+///////////////////////////////////////////////////////
+#include "model/library/control.glm"
+
+///////////////////////////////////////////////////////
+//
+// MODEL EXPORT
+//
+///////////////////////////////////////////////////////
+
+#ifdef MYSQL_ENABLE
+
+#ifdef MYSQL_MODEL
+
+#ifndef STOPTIME
+#print dumping model to '${MYSQL_MODEL}_model'
+export mysql ${MYSQL_NAME}_model;
+#endif // MYSQL_MODEL
+
+#ifdef MYSQL_GRAPH
+#print dumping graph to '${MYSQL_NAME}_graph'
+export mysql --graph ${MYSQL_NAME}_graph;
+#endif // MYSQL_GRAPH
+
+#endif // STOPTIME
+
+#endif // MYSQL_ENABLE
+
+///////////////////////////////////////////////////////
+//
+// HISTORICAL RUN NOTICE
+//
+///////////////////////////////////////////////////////
+#ifndef STARTTIME
+#print starting realtime simulation at ${TODAY}
+#else
+#print starting historical simulation from ${STARTTIME} to ${STOPTIME}
+#set show_progress=1
+#endif
