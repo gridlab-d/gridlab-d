@@ -150,6 +150,6 @@ private :
 	bool load_state;
 	int object_count, class_count;
 
-	vector<OBJECT *> obj_vect;
+	vector<OBJECT *> *obj_vect;
 	gldStack *stack_ptr;
 };

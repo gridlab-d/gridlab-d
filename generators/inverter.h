@@ -367,8 +367,8 @@ public:
 	double max_pwr_slew_rate;		//maximum rate at which inverter can change its power output for frequency regulation (W/second) *not sure if this is defined anywhere else i.e. power electronics classes
 	char volt_var_sched[1024];		//user input Volt/VAr Schedule
 	char freq_pwr_sched[1024];		//user input freq-power Schedule
-	std::vector<std::pair<double,double> > VoltVArSched;  //Volt/VAr schedule -- i realize I'm using goofball data types, what would be the GridLABD-esque way of implementing this data type? 
-	std::vector<std::pair<double,double> > freq_pwrSched; //freq-power schedule -- i realize I'm using goofball data types, what would be the GridLABD-esque way of implementing this data type? 
+	std::vector<std::pair<double,double> > *VoltVArSched;  //Volt/VAr schedule -- i realize I'm using goofball data types, what would be the GridLABD-esque way of implementing this data type? 
+	std::vector<std::pair<double,double> > *freq_pwrSched; //freq-power schedule -- i realize I'm using goofball data types, what would be the GridLABD-esque way of implementing this data type? 
 private:
 	//load following variables
 	FUNCTIONADDR powerCalc;				//Address for power_calculate in link object, if it is a link

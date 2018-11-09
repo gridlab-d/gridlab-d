@@ -623,6 +623,7 @@ int climate::create(void)
 	cloud_num_layers = 40;
 	cloud_alpha = 400;
 	cloud_aerosol_transmissivity = 0.95;
+	file = new tmy2_reader;
 	return 1;
 }
 
@@ -777,7 +778,7 @@ int climate::init(OBJECT *parent)
 	}
 
 	// implicit if(reader_type == RT_TMY2) ~ do the following
-	if( file.open(found_file) < 3 ){
+	if( file->open(found_file) < 3 ){
 		gl_error("climate::init() -- weather file header improperly formed");
 		return 0;
 	}
@@ -798,7 +799,7 @@ int climate::init(OBJECT *parent)
 	int lat_deg,lat_min,long_deg,long_min;
 	/* The city/state data isn't used anywhere.  -mhauer */
 	//file.header_info(cty,st,&lat_deg,&lat_min,&long_deg,&long_min);
-	file.header_info(NULL,NULL,&lat_deg,&lat_min,&long_deg,&long_min);
+	file->header_info(NULL,NULL,&lat_deg,&lat_min,&long_deg,&long_min);
 
 	//Handle hemispheres
 	if (lat_deg<0)
@@ -847,15 +848,15 @@ int climate::init(OBJECT *parent)
 		gl_error("climate::init unable to gl_convert() 'm' to 'ft'!");
 		return 0;
 	}
-	file.elevation = (int)(file.elevation * meter_to_feet);
-	tz_meridian =  15 * file.tz_offset;//std_meridians[-file.tz_offset-5];
-	tz_offset_val = file.tz_offset;
-	while (line<8760 && file.next())
+	file->elevation = (int)(file->elevation * meter_to_feet);
+	tz_meridian =  15 * file->tz_offset;//std_meridians[-file.tz_offset-5];
+	tz_offset_val = file->tz_offset;
+	while (line<8760 && file->next())
 	{
-		while (isdigit(file.buf[1]) == 0) {
-			file.next();
+		while (isdigit(file->buf[1]) == 0) {
+			file->next();
 		}
-		file.read_data(&dnr,&dhr,&ghr,&temperature,&humidity,&month,&day,&hour,&wspeed,&wdir,&precip,&snowdepth,&pressure,&extra_dni,&extra_ghi,&tot_sky_cov,&opq_sky_cov);
+		file->read_data(&dnr,&dhr,&ghr,&temperature,&humidity,&month,&day,&hour,&wspeed,&wdir,&precip,&snowdepth,&pressure,&extra_dni,&extra_ghi,&tot_sky_cov,&opq_sky_cov);
 
 		int doy = sa->day_of_yr(month,day);
 		int hoy = (doy - 1) * 24 + (hour-1);
@@ -918,9 +919,9 @@ int climate::init(OBJECT *parent)
 
 			for(COMPASS_PTS c_point = CP_H; c_point < CP_LAST;c_point=COMPASS_PTS(c_point+1)){
 				if(c_point == CP_H)
-					sol_rad = file.calc_solar(CP_E,doy,RAD(get_latitude()),sol_time,dnr,dhr,ghr,ground_reflectivity,0.0);//(double)dnr * cos_incident + dhr;
+					sol_rad = file->calc_solar(CP_E,doy,RAD(get_latitude()),sol_time,dnr,dhr,ghr,ground_reflectivity,0.0);//(double)dnr * cos_incident + dhr;
 				else
-					sol_rad = file.calc_solar(c_point,doy,RAD(get_latitude()),sol_time,dnr,dhr,ghr,ground_reflectivity);//(double)dnr * cos_incident + dhr;
+					sol_rad = file->calc_solar(c_point,doy,RAD(get_latitude()),sol_time,dnr,dhr,ghr,ground_reflectivity);//(double)dnr * cos_incident + dhr;
 				/* TMY2 solar radiation data is in Watt-hours per square meter. */
 				tmy[hoy].solar[c_point] = sol_rad;
 
@@ -944,7 +945,7 @@ int climate::init(OBJECT *parent)
 
 		line++;
 	}
-	file.close();
+	file->close();
 
 	/* initialize climate to starttime */
 	presync(gl_globalclock);
@@ -1892,10 +1893,10 @@ void climate::build_cloud_pattern(int col_min, int col_max, int row_min, int row
 
 
 int climate::calc_cloud_pattern_size(std::vector< std::vector<double> > &location_list){
-	double lat_max = location_list[0][0];
-	double lat_min = location_list[0][0];
-	double long_max = location_list[0][1];
-	double long_min = location_list[0][1];
+	double lat_max = (location_list)[0][0];
+	double lat_min = (location_list)[0][0];
+	double long_max = (location_list)[0][1];
+	double long_min = (location_list)[0][1];
 	double lat_delta = 0;
 	double long_delta = 0;
 	double degree_range_lat = 0;
@@ -1903,10 +1904,10 @@ int climate::calc_cloud_pattern_size(std::vector< std::vector<double> > &locatio
 	int num_tile_edge = 1; //Minimum size (1 on-screen tile with 1 off-screen on all sides; 9 tiles total).
 	if (location_list.size() > 1) {
 		for (int i=1; i<location_list.size(); i++) {
-			lat_max = std::max(lat_max,location_list[i][0]);
-			lat_min = std::min(lat_min,location_list[i][0]);
-			long_max = std::max(long_max,location_list[i][1]);
-			long_min = std::min(long_min,location_list[i][1]);
+			lat_max = std::max(lat_max,(location_list)[i][0]);
+			lat_min = std::min(lat_min,(location_list)[i][0]);
+			long_max = std::max(long_max,(location_list)[i][1]);
+			long_min = std::min(long_min,(location_list)[i][1]);
 		}
 		lat_delta = fabs(lat_max - lat_min);
 		long_delta = fabs(long_max - long_min);
@@ -2010,9 +2011,9 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 
 		for(COMPASS_PTS c_point = CP_H; c_point < CP_LAST;c_point=COMPASS_PTS(c_point+1)){
 			if(c_point == CP_H)
-				sol_rad = file.calc_solar(CP_E,now.get_yearday(),RAD(reader->latitude),sol_time,solar_direct,solar_diffuse,solar_global,ground_reflectivity,0.0);//(double)dnr * cos_incident + dhr;
+				sol_rad = file->calc_solar(CP_E,now.get_yearday(),RAD(reader->latitude),sol_time,solar_direct,solar_diffuse,solar_global,ground_reflectivity,0.0);//(double)dnr * cos_incident + dhr;
 			else
-				sol_rad = file.calc_solar(c_point,now.get_yearday(),RAD(reader->latitude),sol_time,solar_direct,solar_diffuse,solar_global,ground_reflectivity);//(double)dnr * cos_incident + dhr;
+				sol_rad = file->calc_solar(c_point,now.get_yearday(),RAD(reader->latitude),sol_time,solar_direct,solar_diffuse,solar_global,ground_reflectivity);//(double)dnr * cos_incident + dhr;
 			/* TMY2 solar radiation data is in Watt-hours per square meter. */
 			solar_flux[c_point] = sol_rad;
 		}

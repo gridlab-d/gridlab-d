@@ -224,7 +224,7 @@ class climate : public gld_object {
 	// data not shared with classes in this module (no locks needed)
 private:
 	SolarAngles *sa;
-	tmy2_reader file;
+	tmy2_reader *file;
 	weather_reader *reader_hndl;
 	TMYDATA *tmy;
 public:
