@@ -4,7 +4,7 @@ This model is designed to operated either as a real-time simulation or as a norm
 
 If you wish to run in real-time, you should comment out the STARTTIME and STOPTIME definitions in `config/local.glm`. 
 
-If you are saving data to a MySQL data, the you enable MySQL by setting `MYSQL_ENABLE=on`.
+If you are saving data to a MySQL data, the you enable MySQL by uncommenting `MYSQL_ENABLE=on`.
 
 To run the simulation, do the following:
 
