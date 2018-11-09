@@ -135,7 +135,7 @@ object currdump {
 // MYSQL DATABASE SUPPORT
 //
 ///////////////////////////////////////////////////////
-#if MYSQL_ENABLE="on"
+#ifdef MYSQL_ENABLE
 
 #ifndef MYSQLHOST
 #define MYSQLHOST=localhost
