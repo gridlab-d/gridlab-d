@@ -8,7 +8,8 @@ If you are saving data to a MySQL data, the you enable MySQL by uncommenting `MY
 
 To run the simulation, do the following:
 
+~~~
   localhost% cd ieee123
   localhost% gridlabd model/ieee123.glm
-
+~~~
 
