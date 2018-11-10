@@ -194,6 +194,13 @@ static int json_objects(FILE *fp)
 		FIRST("id","%d",obj->id);
 		if ( obj->oclass->name != NULL )
 			TUPLE("class","%s",obj->oclass->name);
+		if ( obj->parent != NULL )
+		{
+			if ( obj->parent->name == NULL )
+				len += json_write(",\n\t\t\t\"parent\" : \"%s:%d\"",obj->parent->oclass->name,obj->parent->id);
+			else
+				TUPLE("parent","%s",obj->parent->name);
+		}
 		if ( ! isnan(obj->latitude) ) TUPLE("latitude","%f",obj->latitude);
 		if ( ! isnan(obj->longitude) ) TUPLE("longitude","%f",obj->longitude);
 		if ( obj->groupid[0] != '\0' ) TUPLE("groupid","%s",obj->groupid);
