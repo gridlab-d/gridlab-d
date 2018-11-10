@@ -59,12 +59,15 @@ int saveall(char *filename)
 		return 0;
 	}
 
+	output_debug("starting dump to %s",filename);
 	/* internal streaming used */
 	if (global_streaming_io_enabled)
 	{
 		int res = stream(fp,SF_OUT)>0 ? SUCCESS : FAILED;
 		if (res==FAILED)
 			output_error("stream context is %s",stream_context());
+		if ( fp != stdout ) 
+			fclose(fp);
 		return res;
 	}
 
@@ -73,7 +76,11 @@ int saveall(char *filename)
 	{
 		if (strcmp(ext,map[i].format)==0)
 		{
-			return (*(map[i].save))(filename,fp);
+			int rc = (*(map[i].save))(filename,fp);
+			if ( fp != stdout ) 
+				fclose(fp);
+			output_debug("dump to %s completed ok (%d bytes written)",filename,rc);
+			return rc;
 		}
 	}
 
@@ -84,6 +91,8 @@ int saveall(char *filename)
 		extension entirely to force use of the default format.
 	*/
 	errno = EINVAL;
+	if ( fp != stdout ) 
+		fclose(fp);
 	return FAILED;
 }
 
@@ -382,5 +391,5 @@ int savexml(char *filename,FILE *fp)
 
 int savejson(char *filename, FILE *fp)
 {
-	return json_output(fp)==0;
+	return json_output(fp);
 }

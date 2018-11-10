@@ -138,6 +138,9 @@
 
 SET_MYCONTEXT(DMC_EXEC)
 
+/* forward declaration */
+void exec_run_dump(void);
+
 /** Set/get exit code **/
 int exec_setexitcode(int xc)
 {
@@ -2340,6 +2343,9 @@ STATUS exec_start(void)
 				output_error("commit script(s) failed");
 				THROW("script commit failure");
 			}
+
+			/* run scheduled dump, if any */
+			exec_run_dump();
 			
 			/* handle delta mode operation */
 			if ( global_simulation_mode==SM_DELTA && exec_sync_get(NULL)>=global_clock )
@@ -3124,5 +3130,25 @@ int exec_run_commitscripts(void)
 int exec_run_termscripts(void)
 {
 	return run_scripts(term_scripts);
+}
+
+static char dumpfile[1024] = "";
+TIMESTAMP dumpinterval = TS_NEVER;
+int exec_schedule_dump(TIMESTAMP interval,char *filename)
+{
+	output_verbose("scheduling dump to %s every %d seconds",filename,interval);
+	dumpinterval = interval;
+	strcpy(dumpfile,filename);
+	return 1;
+}
+void exec_run_dump(void)
+{
+	if ( dumpfile[0] == '\0' || dumpinterval==TS_NEVER )
+		return;
+	else if ( dumpinterval == 0 || global_clock % dumpinterval == 0  && saveall(dumpfile) <= 0 )
+	{
+		char buffer[64];
+		output_error("dump to %s at %s failed",dumpfile,convert_from_timestamp(global_clock,buffer,sizeof(buffer))?buffer:"unknown time");
+	}
 }
 /**@}*/
