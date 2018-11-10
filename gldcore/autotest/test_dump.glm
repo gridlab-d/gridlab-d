@@ -1,0 +1,25 @@
+clock {
+	timezone US/CA/Los Angeles;
+	starttime '2018-01-01 00:00:00 PST';
+	stoptime '2018-02-01 00:00:00 PST';
+}
+
+dump 3600 test_dump.json;
+
+class test {
+	randomvar value;
+	intrinsic commit(TIMESTAMP t0, TIMESTAMP t1)
+	{
+		my->clock = t1;
+		return TS_NEVER;
+	};
+}
+
+object test {
+	name top;
+	value "type: normal(0,1); refresh: 1 min"; 
+	object test:..10 {
+		value "type: normal(0,1); refresh: 1 min"; 
+	};
+}
+
