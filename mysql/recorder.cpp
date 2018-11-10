@@ -237,29 +237,29 @@ int recorder::init(OBJECT *parent)
 		strcpy(buffer,header_fieldnames);
 		vector<string> header_specs = split(buffer, ",");
 		size_t header_pos = 0;
+		header_data[0] = '\0';
 		for ( size_t n = 0 ; n < header_specs.size() ; n++ )
 		{
-			if ( db->check_field(get_table(), (const char*)header_specs[n].c_str()) )
-				continue;
+			bool is_ok = db->check_field(get_table(), (const char*)header_specs[n].c_str());
 			if ( header_specs[n].compare("name")==0 )
 			{
 				header_pos += sprintf(header_data+header_pos,",'%s'",get_parent()->get_name());
 				strcat(property_list,"name CHAR(64), index i_name (name), ");
-				if ( (options&MO_NOADD)==0 && db->query_ex("ALTER TABLE `%s` ADD COLUMN `name` CHAR(64);", get_table(), get_parent()->get_name()) )
+				if ( !is_ok && (options&MO_NOADD)==0 && db->query_ex("ALTER TABLE `%s` ADD COLUMN `name` CHAR(64);", get_table(), get_parent()->get_name()) )
 					warning("automatically added missing header field 'name' to '%s'", get_table());
 			}
 			else if ( header_specs[n].compare("class")==0 )
 			{
 				header_pos += sprintf(header_data+header_pos,",'%s'",get_parent()->get_oclass()->get_name());
 				strcat(property_list,"class CHAR(32), index i_class (class), ");
-				if ( (options&MO_NOADD)==0 && db->query_ex("ALTER TABLE `%s` ADD COLUMN `class` CHAR(32);", get_table(), get_parent()->get_name()) )
+				if ( !is_ok && (options&MO_NOADD)==0 && db->query_ex("ALTER TABLE `%s` ADD COLUMN `class` CHAR(32);", get_table(), get_parent()->get_name()) )
 					warning("automatically added missing header field 'class' to '%s'", get_table());
 			}
 			else if ( header_specs[n].compare("groupid")==0 )
 			{
 				header_pos += sprintf(header_data+header_pos,",'%s'",get_parent()->get_groupid());
 				strcat(property_list,"groupid CHAR(32), index i_groupid (groupid), ");
-				if ( (options&MO_NOADD)==0 && db->query_ex("ALTER TABLE `%s` ADD COLUMN `groupid` CHAR(32);", get_table(), get_parent()->get_name()) )
+				if ( !is_ok && (options&MO_NOADD)==0 && db->query_ex("ALTER TABLE `%s` ADD COLUMN `groupid` CHAR(32);", get_table(), get_parent()->get_name()) )
 					warning("automatically added missing header field 'groupid' to '%s'", get_table());
 			}
 			else if ( header_specs[n].compare("latitude")==0 )
@@ -269,7 +269,7 @@ int recorder::init(OBJECT *parent)
 				else
 					header_pos += sprintf(header_data+header_pos,",%.6f", get_parent()->get_latitude());
 				strcat(property_list,"latitude DOUBLE, index i_latitude (latitude), ");
-				if ( (options&MO_NOADD)==0 && db->query_ex("ALTER TABLE `%s` ADD COLUMN `latitude` DOUBLE;", get_table(), get_parent()->get_name()) )
+				if ( !is_ok && (options&MO_NOADD)==0 && db->query_ex("ALTER TABLE `%s` ADD COLUMN `latitude` DOUBLE;", get_table(), get_parent()->get_name()) )
 					warning("automatically added missing header field 'latitude' to '%s'", get_table());
 			}
 			else if ( header_specs[n].compare("longitude")==0 )
@@ -279,14 +279,12 @@ int recorder::init(OBJECT *parent)
 				else
 					header_pos += sprintf(header_data+header_pos,",%.6f", get_parent()->get_oclass()->get_name());
 				strcat(property_list,"longitude DOUBLE, index i_longitude (longitude), ");
-				if ( (options&MO_NOADD)==0 && db->query_ex("ALTER TABLE `%s` ADD COLUMN `longitude` DOUBLE;", get_table(), get_parent()->get_name()) )
+				if ( !is_ok && (options&MO_NOADD)==0 && db->query_ex("ALTER TABLE `%s` ADD COLUMN `longitude` DOUBLE;", get_table(), get_parent()->get_name()) )
 					warning("automatically added missing header field 'longitude' to '%s'", get_table());
 			}
 			else
 				exception("header field %s does not exist",(const char*)header_specs[n].c_str());
 		}
-		gl_verbose("header_fieldname=[%s]", (const char*)header_fieldnames);
-		gl_verbose("header_fielddata=[%s]", header_data);
 	}
 
 	// set heartbeat
@@ -366,8 +364,6 @@ TIMESTAMP recorder::commit(TIMESTAMP t0, TIMESTAMP t1)
 	// collect data
 	if ( enabled )
 	{
-		debug("header_fieldname=[%s]", (const char*)header_fieldnames);
-		debug("header_fielddata=[%s]", header_data);
 		char fieldlist[65536] = "", valuelist[65536] = "";
 		size_t fieldlen = 0;
 		if ( header_fieldnames[0]!='\0' )

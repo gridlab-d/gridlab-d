@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<!--
+ IEEE-123 realtime simulation feeder control webpage
+ Copyright (C) 2016, Stanford University
+ Author: dchassin@slac.stanford.edu
+-->
+<HTML>
+
+<HEAD>
+<TITLE>Feeder</TITLE>
+</HEAD>
+
+<BODY ONLOAD="refresh();">
+
+<SCRIPT src="gridlabd.js"></SCRIPT>
+
+<H1>
+[<A HREF="http://<<<HOSTNAME>>>/<<<DOCROOT>>>/">Home</A>]
+[<A HREF="http://<<<HOSTNAME>>>:<<<PORT>>>/rt/control.htm">Control</A>]
+[<A HREF="http://<<<HOSTNAME>>>:<<<PORT>>>/rt/weather.htm">Weather</A>]
+[Feeder]
+[<A HREF="http://<<<HOSTNAME>>>:<<<PORT>>>/rt/meter.htm">Meter</A>]
+[<A HREF="http://<<<HOSTNAME>>>:<<<PORT>>>/kml/output/gridlabd.kml">Map</A>]
+</H1>
+
+<TABLE WIDTH="100%">
+	<TR><TH COLSPAN=4>Feeder (<<<modelname>>>)<HR/></TH></TR>
+	<TR><TH>Date/Time</TH><TD COLSPAN=3><DIV ID="clock"></DIV></TD></TR>
+	
+	<TR><TH COLSPAN=4><HR/><HR/></TH></TR>
+
+	<TR><TH ALIGN=LEFT COLSPAN>Switch<HR/></TH><TH ALIGN=LEFT>Status<HR/></TH><TH ALIGN=LEFT>Command<HR/></TH><TH ALIGN=LEFT>Current<HR/></TH></TR>
+	<TR><TD>13-152 ABC</TD><TD><DIV ID="sw13to152"></DIV></TD><TD>
+		<INPUT TYPE="submit" VALUE="ARM" ONCLICK="arm('scheme_1','sw13to152');" />
+		<INPUT TYPE="submit" VALUE="DISARM" ONCLICK="disarm('scheme_1','sw13to152');" />
+	</TD><TD><A HREF="http://<<<hostname>>>/<<<DOCROOT>>>/graphtool.php?title=Switch 13-152 Current&rev=1&query=SELECT t, cast(current_in_A as decimal(8,1)), cast(current_in_B as decimal(8,1)), cast(current_in_C as decimal(8,1)) FROM <<<MYSQL_NAME>>>_scada.switch WHERE name='sw13to152' ORDER BY id DESC LIMIT 60" TARGET="_blank"><DIV ID=sw13to152_current></DIV></A></DIV></TD></TR>
+	<TR><TD>18-135 ABC</TD><TD><DIV ID="sw18to135"></DIV></TD><TD>
+		<INPUT TYPE="submit" VALUE="ARM" ONCLICK="arm('scheme_1','sw18to135');" />
+		<INPUT TYPE="submit" VALUE="DISARM" ONCLICK="disarm('scheme_1','sw18to135');" />
+	</TD><TD><A HREF="http://<<<hostname>>>/<<<DOCROOT>>>/graphtool.php?title=Switch 13-152 Current&rev=1&query=SELECT t as x, cast(current_in_A as decimal(8,1)), cast(current_in_B as decimal(8,1)), cast(current_in_C as decimal(8,1)) FROM <<<MYSQL_NAME>>>_scada.switch WHERE name='sw18to135' ORDER BY id DESC LIMIT 60" TARGET="_blank"><DIV ID=sw18to135_current></DIV></DIV></A></TR>
+	<TR><TD>54-94 ABC</TD><TD><DIV ID="sw54to94"></DIV></TD><TD>
+		<INPUT TYPE="submit" VALUE="ARM" ONCLICK="arm('scheme_1','sw54to94');" />
+		<INPUT TYPE="submit" VALUE="DISARM" ONCLICK="disarm('scheme_1','sw54to94');" />
+	</TD><TD><A HREF="http://<<<hostname>>>/<<<DOCROOT>>>/graphtool.php?title=Switch 13-152 Current&rev=1&query=SELECT t as x, cast(current_in_A as decimal(8,1)), cast(current_in_B as decimal(8,1)), cast(current_in_C as decimal(8,1)) FROM <<<MYSQL_NAME>>>_scada.switch WHERE name='sw54to94' ORDER BY id DESC LIMIT 60" TARGET="_blank"><DIV ID=sw54to94_current></DIV></DIV></A></TR>
+	<TR><TD>60-160 ABC</TD><TD><DIV ID="sw60to160"></DIV></TD><TD>
+		<INPUT TYPE="submit" VALUE="ARM" ONCLICK="arm('scheme_1','sw60to160');" />
+		<INPUT TYPE="submit" VALUE="DISARM" ONCLICK="disarm('scheme_1','sw60to160');" />
+	</TD><TD><A HREF="http://<<<hostname>>>/<<<DOCROOT>>>/graphtool.php?title=Switch 13-152 Current&rev=1&query=SELECT t as x, cast(current_in_A as decimal(8,1)), cast(current_in_B as decimal(8,1)), cast(current_in_C as decimal(8,1)) FROM <<<MYSQL_NAME>>>_scada.switch WHERE name='sw60to160' ORDER BY id DESC LIMIT 60" TARGET="_blank"><DIV ID=sw60to160_current></DIV></DIV></A></TR>
+	<TR><TD>61-6101 ABC</TD><TD><DIV ID="sw61to6101"></DIV></TD><TD>
+		<INPUT TYPE="submit" VALUE="ARM" ONCLICK="arm('scheme_1','sw61to6101');" />
+		<INPUT TYPE="submit" VALUE="DISARM" ONCLICK="disarm('scheme_1','sw61to6101');" />
+	</TD><TD><A HREF="http://<<<hostname>>>/<<<DOCROOT>>>/graphtool.php?title=Switch 13-152 Current&rev=1&query=SELECT t as x, cast(current_in_A as decimal(8,1)), cast(current_in_B as decimal(8,1)), cast(current_in_C as decimal(8,1)) FROM <<<MYSQL_NAME>>>_scada.switch WHERE name='sw61to6101' ORDER BY id DESC LIMIT 60" TARGET="_blank"><DIV ID=sw61to6101_current></DIV></DIV></A></TR>
+	<TR><TD>97-197 ABC</TD><TD><DIV ID="sw97to197"></DIV></TD><TD>
+		<INPUT TYPE="submit" VALUE="ARM" ONCLICK="arm('scheme_1','sw97to197');" />
+		<INPUT TYPE="submit" VALUE="DISARM" ONCLICK="disarm('scheme_1','sw97to197');" />
+	</TD><TD><A HREF="http://<<<hostname>>>/<<<DOCROOT>>>/graphtool.php?title=Switch 13-152 Current&rev=1&query=SELECT t as x, cast(current_in_A as decimal(8,1)), cast(current_in_B as decimal(8,1)), cast(current_in_C as decimal(8,1)) FROM <<<MYSQL_NAME>>>_scada.switch WHERE name='sw97to197' ORDER BY id DESC LIMIT 60" TARGET="_blank"><DIV ID=sw97to197_current></DIV></DIV></A></TR>
+	<TR><TD>151-300 ABC</TD><TD><DIV ID="sw151to300"></DIV></TD><TD>
+		<INPUT TYPE="submit" VALUE="ARM" ONCLICK="arm('scheme_1','sw151to300');" />
+		<INPUT TYPE="submit" VALUE="DISARM" ONCLICK="disarm('scheme_1','sw151to300');" />
+	</TD><TD><A HREF="http://<<<hostname>>>/<<<DOCROOT>>>/graphtool.php?title=Switch 13-152 Current&rev=1&query=SELECT t as x, cast(current_in_A as decimal(8,1)), cast(current_in_B as decimal(8,1)), cast(current_in_C as decimal(8,1)) FROM <<<MYSQL_NAME>>>_scada.switch WHERE name='sw151to300' ORDER BY id DESC LIMIT 60" TARGET="_blank"><DIV ID=sw151to300_current></DIV></DIV></A></TR>
+	<TR><TH COLSPAN=4><HR/></TH></TR>
+	<TR><TH ALIGN=LEFT COLSPAN>Lateral<HR/><TH ALIGN=LEFT>Status<HR/></TH><TH ALIGN=LEFT>Command<HR/></TH><TH ALIGN=LEFT>Current<HR/></TH></TH></TR>
+	<TR><TD>15001-149 ABC</TD><TD><DIV ID="sw15001to149"></DIV></TD><TD>
+		<INPUT TYPE="submit" VALUE="ARM" ONCLICK="arm('scheme_1','sw15001to149');" />
+		<INPUT TYPE="submit" VALUE="DISARM" ONCLICK="disarm('scheme_1','sw15001to149');" />
+	</TD><TD><A HREF="http://<<<hostname>>>/<<<DOCROOT>>>/graphtool.php?title=Switch 13-152 Current&rev=1&query=SELECT t as x, cast(current_in_A as decimal(8,1)), cast(current_in_B as decimal(8,1)), cast(current_in_C as decimal(8,1)) FROM <<<MYSQL_NAME>>>_scada.switch WHERE name='sw15001to149' ORDER BY id DESC LIMIT 60" TARGET="_blank"><DIV ID=sw15001to149_current></DIV></DIV></A></TR>
+	<TR><TD>250-251 ABC</TD><TD><DIV ID="sw250to251"></DIV></TD><TD>
+		<INPUT TYPE="submit" VALUE="ARM" ONCLICK="arm('scheme_1','sw250to251');" />
+		<INPUT TYPE="submit" VALUE="DISARM" ONCLICK="disarm('scheme_1','sw250to251');" />
+	</TD><TD><A HREF="http://<<<hostname>>>/<<<DOCROOT>>>/graphtool.php?title=Switch 13-152 Current&rev=1&query=SELECT t as x, cast(current_in_A as decimal(8,1)), cast(current_in_B as decimal(8,1)), cast(current_in_C as decimal(8,1)) FROM <<<MYSQL_NAME>>>_scada.switch WHERE name='sw250to251' ORDER BY id DESC LIMIT 60" TARGET="_blank"><DIV ID=sw250to251_current></DIV></DIV></A></TR>
+	<TR><TD>300-350 ABC</TD><TD><DIV ID="sw300to350"></DIV></TD><TD>
+		<INPUT TYPE="submit" VALUE="ARM" ONCLICK="arm('scheme_1','sw300to350');" />
+		<INPUT TYPE="submit" VALUE="DISARM" ONCLICK="disarm('scheme_1','sw300to350');" />
+	</TD><TD><A HREF="http://<<<hostname>>>/<<<DOCROOT>>>/graphtool.php?title=Switch 13-152 Current&rev=1&query=SELECT t as x, cast(current_in_A as decimal(8,1)), cast(current_in_B as decimal(8,1)), cast(current_in_C as decimal(8,1)) FROM <<<MYSQL_NAME>>>_scada.switch WHERE name='sw300to350' ORDER BY id DESC LIMIT 60" TARGET="_blank"><DIV ID=sw300to350_current></DIV></DIV></A></TR>
+	<TR><TD>450-451 ABC</TD><TD><DIV ID="sw450to451"></DIV></TD><TD>
+		<INPUT TYPE="submit" VALUE="ARM" ONCLICK="arm('scheme_1','sw450to451');" />
+		<INPUT TYPE="submit" VALUE="DISARM" ONCLICK="disarm('scheme_1','sw450to451');" />
+	</TD><TD><A HREF="http://<<<hostname>>>/<<<DOCROOT>>>/graphtool.php?title=Switch 13-152 Current&rev=1&query=SELECT t as x, cast(current_in_A as decimal(8,1)), cast(current_in_B as decimal(8,1)), cast(current_in_C as decimal(8,1)) FROM <<<MYSQL_NAME>>>_scada.switch WHERE name='sw450to451' ORDER BY id DESC LIMIT 60" TARGET="_blank"><DIV ID=sw450to451_current></DIV></DIV></A></TR>
+	<TR><TD>95-195 ABC</TD><TD><DIV ID="sw95to195"></DIV></TD><TD>
+		<INPUT TYPE="submit" VALUE="ARM" ONCLICK="arm('scheme_1','sw95to195');" />
+		<INPUT TYPE="submit" VALUE="DISARM" ONCLICK="disarm('scheme_1','sw95to195');" />
+	</TD><TD><A HREF="http://<<<hostname>>>/<<<DOCROOT>>>/graphtool.php?title=Switch 13-152 Current&rev=1&query=SELECT t as x, cast(current_in_A as decimal(8,1)), cast(current_in_B as decimal(8,1)), cast(current_in_C as decimal(8,1)) FROM <<<MYSQL_NAME>>>_scada.switch WHERE name='sw95to195' ORDER BY id DESC LIMIT 60" TARGET="_blank"><DIV ID=sw95to195_current></DIV></DIV></A></TR>
+	
+	<TR><TH COLSPAN=4><HR/><HR/></TH></TR>
+
+	<TR><TH ALIGN=LEFT COLSPAN>Coordination<HR/></TH><TH ALIGN=LEFT>Pending action<HR/></TH><TH ALIGN=LEFT>Command<HR/></TH><TH ALIGN=LEFT>Armed switches<HR/></TH></TR>
+	<TR><TD>Manual</DIV></TD>
+		<TD><DIV ID="manual_1_status"></DIV></TD><TD>
+			<INPUT TYPE="submit" VALUE="EXECUTE" ONCLICK="coordinate_execute('manual_1','TOGGLE');" />
+			<INPUT TYPE="submit" VALUE="RESET" ONCLICK="coordinate_reset('manual_1');" />
+		</TD>
+		<TD><DIV ID="manual_1_armed"></DIV></TD>
+		
+	<TR><TD>Program 1</DIV></TD>
+		<TD><DIV ID="program_1_status">DIRECT</DIV></TD><TD>
+			<INPUT TYPE="submit" VALUE="EXECUTE" ONCLICK="coordinate_execute('program_1','DIRECT');" />
+		</TD>
+		<TD><DIV ID="program_1_armed">sw15001to149|sw13to152|sw18to135|sw60to160|sw61to6101|sw97to197</DIV></TD>
+	</TR>
+
+	<TR><TD>Program 2</DIV></TD>
+		<TD><DIV ID="program_2_status">DIRECT</DIV></TD><TD>
+			<INPUT TYPE="submit" VALUE="EXECUTE" ONCLICK="coordinate_execute('program_2','DIRECT');" />
+		</TD>
+		<TD><DIV ID="program_2_armed">sw15001to149|sw13to152|sw60to160|sw61to6101|sw97to197|sw151to300</DIV></TD>
+	</TR>
+
+	<TR><TD>Program 3</DIV></TD>
+		<TD><DIV ID="program_3_status">DIRECT</DIV></TD><TD>
+			<INPUT TYPE="submit" VALUE="EXECUTE" ONCLICK="coordinate_execute('program_3','DIRECT');" />
+		</TD>
+		<TD><DIV ID="program_3_armed">sw15001to149|sw13to152|sw54to94|sw61to6101|sw97to197|sw151to300</DIV></TD>
+	</TR>
+
+	<TR><TD>Program 4</DIV></TD>
+		<TD><DIV ID="program_4_status">DIRECT</DIV></TD><TD>
+			<INPUT TYPE="submit" VALUE="EXECUTE" ONCLICK="coordinate_execute('program_4','DIRECT');" />
+		</TD>
+		<TD><DIV ID="program_4_armed">sw15001to149|sw13to152|sw18to135|sw54to94|sw61to6101|sw97to197</DIV></TD>
+	</TR>
+
+	<TR><TD>Program 5</DIV></TD>
+		<TD><DIV ID="program_5_status">DIRECT</DIV></TD><TD>
+			<INPUT TYPE="submit" VALUE="EXECUTE" ONCLICK="coordinate_execute('program_5','DIRECT');" />
+		</TD>
+		<TD><DIV ID="program_5_armed">sw15001to149|sw13to152|sw18to135|sw54to94|sw61to6101|sw151to300</DIV></TD>
+	</TR>
+
+	<TR><TD>Program 6</DIV></TD>
+		<TD><DIV ID="program_6_status">DIRECT</DIV></TD><TD>
+			<INPUT TYPE="submit" VALUE="EXECUTE" ONCLICK="coordinate_execute('program_6','DIRECT');" />
+		</TD>
+		<TD><DIV ID="program_6_armed">sw15001to149|sw13to152|sw18to135|sw60to160|sw61to6101|sw151to300</DIV></TD>
+	</TR>
+
+	<TR><TH COLSPAN=4><HR/><HR/></TH></TR>
+	<TR><TH ALIGN=LEFT COLSPAN>Regulators<HR/></TH><TH ALIGN=LEFT>Control setpoint<HR/></TH><TH ALIGN=LEFT>Control type<HR/></TH><TH ALIGN=LEFT>Tap Settings<HR/></TH></TR>
+
+	<TR>
+		<TD>150-15001 ABC</TD><TD><DIV ID="reg150to15001_voltage"></DIV></TD>
+		<TD><DIV ID="reg150to15001"></DIV></TD>
+		<TD><A HREF="http://<<<hostname>>>/<<<DOCROOT>>>/graphtool.php?title=Regulator 150-15001 Tap setting&rev=1&ymin=-16&ymax=16&query=SELECT t as x, cast(tap_A as decimal(8,1)), cast(tap_B as decimal(8,1)), cast(tap_C as decimal(8,1)) FROM <<<MYSQL_NAME>>>_scada.regulator WHERE name='reg150to15001' ORDER BY id DESC LIMIT 60" TARGET="_blank"><DIV ID="reg150to15001_tap"></DIV></A></TD>
+	</TR>
+
+	<TR>
+		<TD>9-901 A</TD><TD><DIV ID="reg9to901_voltage"></DIV></TD>
+		<TD><DIV ID="reg9to901"></DIV></TD>
+		<TD><A HREF="http://<<<hostname>>>/<<<DOCROOT>>>/graphtool.php?title=Regulator 9-901 Tap setting&rev=1&ymin=-16&ymax=16&query=SELECT t as x, cast(tap_A as decimal(8,1)) FROM <<<MYSQL_NAME>>>_scada.regulator WHERE name='reg9to901' ORDER BY id DESC LIMIT 60" TARGET="_blank"><DIV ID="reg9to901_tap"></DIV></A></TD>
+	</TR>
+
+	<TR>
+		<TD>25-2501 AC</TD><TD><DIV ID="reg25to2501_voltage"></DIV></TD>
+		<TD><DIV ID="reg25to2501"></DIV></TD>
+		<TD><A HREF="http://<<<hostname>>>/<<<DOCROOT>>>/graphtool.php?title=Regultor 25-2501 Tap setting&rev=1&ymin=-16&ymax=16&query=SELECT t as x, cast(tap_A as decimal(8,1)), cast(tap_C as decimal(8,1)) FROM <<<MYSQL_NAME>>>_scada.regulator WHERE name='reg25to2501' ORDER BY id DESC LIMIT 60" TARGET="_blank"><DIV ID="reg25to2501_tap"></DIV></A></TD>
+	</TR>
+
+	<TR>
+		<TD>160-16001 ABC</TD><TD><DIV ID="reg160to16001_voltage"></DIV></TD>
+		<TD><DIV ID="reg160to16001"></DIV></TD>
+		<TD><A HREF="http://<<<hostname>>>/<<<DOCROOT>>>/graphtool.php?title=Regulator 160-16001 Tap setting&rev=1&ymin=-16&ymax=16&query=SELECT t as x, cast(tap_A as decimal(8,1)), cast(tap_B as decimal(8,1)), cast(tap_C as decimal(8,1)) FROM <<<MYSQL_NAME>>>_scada.regulator WHERE name='reg160to16001' ORDER BY id DESC LIMIT 60" TARGET="_blank"><DIV ID="reg160to16001_tap"></DIV></A></TD>
+	</TR>
+
+	<TR><TH COLSPAN=4><HR/><HR/></TH></TR>
+	<TR><TH ALIGN=LEFT COLSPAN=>Capacitors<HR/></TH><TH ALIGN=LEFT>Status<HR/></TH><TH ALIGN=LEFT>Command<HR/></TH><TH ALIGN=LEFT>Voltage<HR/></TH></TR>
+	<TR><TD>83 A</TD><TD><DIV ID="cap_83A"></DIV></TD><TD>
+		<INPUT TYPE="submit" VALUE="OPEN" ONCLICK="GLDSetProperty('cap_83','switchA','OPEN'); update();" />
+		<INPUT TYPE="submit" VALUE="CLOSE" ONCLICK="GLDSetProperty('cap_83','switchA','CLOSED'); update();" />
+	</TD><TD><A HREF="http://<<<hostname>>>/<<<DOCROOT>>>/graphtool.php?title=Capacitor 83 Phase A Voltage (V) &rev=1&ymin=2300&ymax=2500&query=SELECT t as x, cast(voltage_A as decimal(8,2)) as y FROM <<<MYSQL_NAME>>>_scada.capacitor WHERE name='cap_83' ORDER BY id DESC LIMIT 60" TARGET="_blank"><DIV ID="cap_83_voltageA"></DIV></A></TD></TR>
+	<TR><TD>83 B</TD><TD><DIV ID="cap_83B"></DIV></TD><TD>
+		<INPUT TYPE="submit" VALUE="OPEN" ONCLICK="GLDSetProperty('cap_83','switchB','OPEN'); update();" />
+		<INPUT TYPE="submit" VALUE="CLOSE" ONCLICK="GLDSetProperty('cap_83','switchB','CLOSED'); update();" />
+	</TD><TD><A HREF="http://<<<hostname>>>/<<<DOCROOT>>>/graphtool.php?title=Capacitor 83 Phase B Voltage (V)&rev=1&ymin=2300&ymax=2500&query=SELECT t as x, cast(voltage_B as decimal(8,2)) as y FROM <<<MYSQL_NAME>>>_scada.capacitor WHERE name='cap_83' ORDER BY id DESC LIMIT 60" TARGET="_blank"><DIV ID="cap_83_voltageB"></DIV></A></TD></TR>
+	<TR><TD>83 C</TD><TD><DIV ID="cap_83C"></DIV></TD><TD>
+		<INPUT TYPE="submit" VALUE="OPEN" ONCLICK="GLDSetProperty('cap_83','switchC','OPEN'); update();" />
+		<INPUT TYPE="submit" VALUE="CLOSE" ONCLICK="GLDSetProperty('cap_83','switchC','CLOSED'); update();" />
+	</TD><TD><A HREF="http://<<<hostname>>>/<<<DOCROOT>>>/graphtool.php?title=Capacitor 83 Phase C Voltage (V)&rev=1&ymin=2300&ymax=2500&query=SELECT t as x, cast(voltage_C as decimal(8,2)) as y FROM <<<MYSQL_NAME>>>_scada.capacitor WHERE name='cap_83' ORDER BY id DESC LIMIT 60" TARGET="_blank"><DIV ID="cap_83_voltageC"></DIV></A></TD></TR>
+	<TR><TD>88 A</TD><TD><DIV ID="cap_88A"></DIV></TD><TD>
+		<INPUT TYPE="submit" VALUE="OPEN" ONCLICK="GLDSetProperty('cap_88','switchA','OPEN'); update();" />
+		<INPUT TYPE="submit" VALUE="CLOSE" ONCLICK="GLDSetProperty('cap_88','switchA','CLOSED'); update();" />
+	</TD><TD><A HREF="http://<<<hostname>>>/<<<DOCROOT>>>/graphtool.php?title=Capacitor 88 Phase A Voltage (V)&rev=1&ymin=2300&ymax=2500&query=SELECT t as x, cast(voltage_A as decimal(8,2)) as y FROM <<<MYSQL_NAME>>>_scada.capacitor WHERE name='cap_88' ORDER BY id DESC LIMIT 60" TARGET="_blank"><DIV ID="cap_88_voltageA"></DIV></A></TD></TR>
+	<TR><TD>90 B</TD><TD><DIV ID="cap_90B"></DIV></TD><TD>
+		<INPUT TYPE="submit" VALUE="OPEN" ONCLICK="GLDSetProperty('cap_90','switchB','OPEN'); update();" />
+		<INPUT TYPE="submit" VALUE="CLOSE" ONCLICK="GLDSetProperty('cap_90','switchB','CLOSED'); update();" />
+	</TD><TD><A HREF="http://<<<hostname>>>/<<<DOCROOT>>>/graphtool.php?title=Capacitor 90 Phase B Voltage (V)&rev=1&ymin=2300&ymax=2500&query=SELECT t as x, cast(voltage_B as decimal(8,2)) as y FROM <<<MYSQL_NAME>>>_scada.capacitor WHERE name='cap_90' ORDER BY id DESC LIMIT 60" TARGET="_blank"><DIV ID="cap_90_voltageB"></DIV></A></TD></TR>
+	<TR><TD>92 C</TD><TD><DIV ID="cap_92C"></DIV></TD><TD>
+		<INPUT TYPE="submit" VALUE="OPEN" ONCLICK="GLDSetProperty('cap_92','switchC','OPEN'); update();" />
+		<INPUT TYPE="submit" VALUE="CLOSE" ONCLICK="GLDSetProperty('cap_92','switchC','CLOSED'); update();" />
+	</TD><TD><A HREF="http://<<<hostname>>>/<<<DOCROOT>>>/graphtool.php?title=Capacitor 92 Phase C Voltage (V)&rev=1&ymin=2300&ymax=2500&query=SELECT t as x, cast(voltage_C as decimal(8,2)) as y FROM <<<MYSQL_NAME>>>_scada.capacitor WHERE name='cap_92' ORDER BY id DESC LIMIT 60" TARGET="_blank"><DIV ID="cap_92_voltageC"></DIV></A></TD></TR>
+</TABLE>
+<HR/>
+<TABLE WIDTH="100%">
+	<TR><TD WIDTH=500></TD><TD WIDTH=50>Status</TD><TD WIDTH=50><DIV ID="status">Initializing</DIV></TD></TR>
+</TABLE>
+
+</BODY>
+
+<SCRIPT type="text/javascript">
+	var count = 0;
+	function refresh()
+	{
+	    setTimeout("refresh()",4000);
+	    update();
+	}
+	function update()
+	{
+		count = count + 1;
+	    if ( count == 1 )
+		    document.getElementById("status").innerHTML = "Updating";
+		else
+		    document.getElementById("status").innerHTML = "No response";			    
+	    document.getElementById("clock").innerHTML = GLDGetGlobal("clock");
+	    document.getElementById("sw13to152").innerHTML = GLDGetProperty("sw13to152","status");
+	    document.getElementById("sw13to152_current").innerHTML = triplet(75,GLDGetProperty("sw13to152","current_out_A[A,0fM]"),GLDGetProperty("sw13to152","current_out_B[A,0fM]"),GLDGetProperty("sw13to152","current_out_C[A,0fM]"));
+	    document.getElementById("sw18to135").innerHTML = GLDGetProperty("sw18to135","status");
+	    document.getElementById("sw18to135_current").innerHTML = triplet(75,GLDGetProperty("sw18to135","current_out_A[A,0fM]"),GLDGetProperty("sw18to135","current_out_B[A,0fM]"),GLDGetProperty("sw18to135","current_out_C[A,0fM]"));
+	    document.getElementById("sw54to94").innerHTML = GLDGetProperty("sw54to94","status");
+	    document.getElementById("sw54to94_current").innerHTML = triplet(75,GLDGetProperty("sw54to94","current_out_A[A,0fM]"),GLDGetProperty("sw54to94","current_out_B[A,0fM]"),GLDGetProperty("sw54to94","current_out_C[A,0fM]"));
+	    document.getElementById("sw60to160").innerHTML = GLDGetProperty("sw60to160","status");
+	    document.getElementById("sw60to160_current").innerHTML = triplet(75,GLDGetProperty("sw60to160","current_out_A[A,0fM]"),GLDGetProperty("sw60to160","current_out_B[A,0fM]"),GLDGetProperty("sw60to160","current_out_C[A,0fM]"));
+	    document.getElementById("sw61to6101").innerHTML = GLDGetProperty("sw61to6101","status");
+	    document.getElementById("sw61to6101_current").innerHTML = triplet(75,GLDGetProperty("sw61to6101","current_out_A[A,0fM]"),GLDGetProperty("sw61to6101","current_out_B[A,0fM]"),GLDGetProperty("sw61to6101","current_out_C[A,0fM]"));
+	    document.getElementById("sw97to197").innerHTML = GLDGetProperty("sw97to197","status");
+	    document.getElementById("sw97to197_current").innerHTML = triplet(75,GLDGetProperty("sw97to197","current_out_A[A,0fM]"),GLDGetProperty("sw97to197","current_out_B[A,0fM]"),GLDGetProperty("sw97to197","current_out_C[A,0fM]"));
+	    document.getElementById("sw151to300").innerHTML = GLDGetProperty("sw151to300","status");
+	    document.getElementById("sw151to300_current").innerHTML = triplet(75,GLDGetProperty("sw151to300","current_out_A[A,0fM]"),GLDGetProperty("sw151to300","current_out_B[A,0fM]"),GLDGetProperty("sw151to300","current_out_C[A,0fM]"));
+	    document.getElementById("sw15001to149").innerHTML = GLDGetProperty("sw15001to149","status");
+	    document.getElementById("sw15001to149_current").innerHTML = triplet(75,GLDGetProperty("sw15001to149","current_out_A[A,0fM]"),GLDGetProperty("sw15001to149","current_out_B[A,0fM]"),GLDGetProperty("sw15001to149","current_out_C[A,0fM]"));
+	    document.getElementById("sw250to251").innerHTML = GLDGetProperty("sw250to251","status");
+	    document.getElementById("sw250to251_current").innerHTML = triplet(75,GLDGetProperty("sw250to251","current_out_A[A,0fM]"),GLDGetProperty("sw250to251","current_out_B[A,0fM]"),GLDGetProperty("sw250to251","current_out_C[A,0fM]"));
+	    document.getElementById("sw300to350").innerHTML = GLDGetProperty("sw300to350","status");
+	    document.getElementById("sw300to350_current").innerHTML = triplet(75,GLDGetProperty("sw300to350","current_out_A[A,0fM]"),GLDGetProperty("sw300to350","current_out_B[A,0fM]"),GLDGetProperty("sw300to350","current_out_C[A,0fM]"));
+	    document.getElementById("sw450to451").innerHTML = GLDGetProperty("sw450to451","status");
+	    document.getElementById("sw450to451_current").innerHTML = triplet(75,GLDGetProperty("sw450to451","current_out_A[A,0fM]"),GLDGetProperty("sw450to451","current_out_B[A,0fM]"),GLDGetProperty("sw450to451","current_out_C[A,0fM]"));
+	    document.getElementById("sw95to195").innerHTML = GLDGetProperty("sw95to195","status");
+	    document.getElementById("sw95to195_current").innerHTML = triplet(75,GLDGetProperty("sw95to195","current_out_A[A,0fM]"),GLDGetProperty("sw95to195","current_out_B[A,0fM]"),GLDGetProperty("sw95to195","current_out_C[A,0fM]"));
+
+	    document.getElementById("manual_1_status").innerHTML = GLDGetProperty("scheme_1","status");
+	    document.getElementById("manual_1_armed").innerHTML = GLDGetProperty("scheme_1","armed");
+
+	    document.getElementById("reg150to15001").innerHTML = GLDGetProperty("rc501","Control");
+	    document.getElementById("reg150to15001_voltage").innerHTML = triplet(75,GLDGetProperty("node_15001","voltage_A[kV,2fM]"), GLDGetProperty("node_15001","voltage_B[kV,2fM]"), GLDGetProperty("node_15001","voltage_C[kV,2fM]"));
+	    document.getElementById("reg150to15001_tap").innerHTML = triplet(25,GLDGetProperty("reg150to15001","tap_A"), GLDGetProperty("reg150to15001","tap_B"), GLDGetProperty("reg150to15001","tap_C"));
+
+	    document.getElementById("reg9to901").innerHTML = GLDGetProperty("rc502","Control");
+	    document.getElementById("reg9to901_voltage").innerHTML = triplet(75,GLDGetProperty("node_901","voltage_A[kV,2fM]"),"&mdash;","&mdash;");
+	    document.getElementById("reg9to901_tap").innerHTML = triplet(25,GLDGetProperty("reg9to901","tap_A"),"&mdash;","&mdash;");
+
+	    document.getElementById("reg25to2501").innerHTML = GLDGetProperty("rc503","Control");
+	    document.getElementById("reg25to2501_voltage").innerHTML = triplet(75,GLDGetProperty("node_2501","voltage_A[kV,2fM]"),"&mdash;", GLDGetProperty("node_2501","voltage_C[kV,2fM]"));
+	    document.getElementById("reg25to2501_tap").innerHTML = triplet(25,GLDGetProperty("reg25to2501","tap_A"),"&dash;",GLDGetProperty("reg25to2501","tap_C"));
+
+	    document.getElementById("reg160to16001").innerHTML = GLDGetProperty("rc504","Control");
+	    document.getElementById("reg160to16001_voltage").innerHTML = triplet(75,GLDGetProperty("node_16001","voltage_A[kV,2fM]"),GLDGetProperty("node_16001","voltage_B[kV,2fM]"),GLDGetProperty("node_16001","voltage_C[kV,2fM]"));
+	    document.getElementById("reg160to16001_tap").innerHTML = triplet(25,GLDGetProperty("reg160to16001","tap_A"),GLDGetProperty("reg160to16001","tap_B"),GLDGetProperty("reg160to16001","tap_C"));
+
+	    document.getElementById("cap_83A").innerHTML = GLDGetProperty("cap_83","switchA");
+	    document.getElementById("cap_83_voltageA").innerHTML = GLDGetProperty("cap_83","voltage_A[kV,2fM]");
+	    document.getElementById("cap_83B").innerHTML = GLDGetProperty("cap_83","switchB");
+	    document.getElementById("cap_83_voltageB").innerHTML = GLDGetProperty("cap_83","voltage_B[kV,2fM]");
+	    document.getElementById("cap_83C").innerHTML = GLDGetProperty("cap_83","switchC");
+	    document.getElementById("cap_83_voltageC").innerHTML = GLDGetProperty("cap_83","voltage_C[kV,2fM]");
+	    document.getElementById("cap_88A").innerHTML = GLDGetProperty("cap_88","switchA");
+	    document.getElementById("cap_88_voltageA").innerHTML = GLDGetProperty("cap_88","voltage_A[kV,2fM]");
+	    document.getElementById("cap_90B").innerHTML = GLDGetProperty("cap_90","switchB");
+	    document.getElementById("cap_90_voltageB").innerHTML = GLDGetProperty("cap_90","voltage_B[kV,2fM]");
+	    document.getElementById("cap_92C").innerHTML = GLDGetProperty("cap_92","switchC");
+	    document.getElementById("cap_92_voltageC").innerHTML = GLDGetProperty("cap_92","voltage_C[kV,2fM]");
+	    document.getElementById("status").innerHTML = "Ok";
+	    count = 0;
+	}
+	function triplet(w,a,b,c)
+	{
+		return "<TABLE WIDTH=" + w*3 + "><TR><TD ALIGN=RIGHT WIDTH=" + w + ">" + a + "</TD><TD ALIGN=RIGHT WIDTH=" + w + ">" + b + "</TD><TD ALIGN=RIGHT WIDTH=" + w + ">" + c + "</TD></TR></TABLE>";
+	}
+	function arm(scheme,sw)
+	{
+		prev = GLDGetProperty(scheme,'armed');
+		if ( prev=='NONE')
+			GLDSetProperty(scheme,'armed',sw);
+		else
+			GLDSetProperty(scheme,'armed',prev+'|'+sw);
+		update();
+	}
+	function disarm(scheme,sw)
+	{
+		GLDSetProperty(scheme,'armed','NONE');
+		update();
+	}
+	function coordinate_execute(program,mode)
+	{
+		armed = document.getElementById(program + '_armed').innerHTML; 
+		if ( armed != 'NONE' ) 
+		{
+			GLDSetProperty('scheme_1','armed',armed);
+			GLDSetProperty('scheme_1','status',mode); 
+			update();
+		}
+	}
+	function coordinate_reset(program)
+	{
+		armed = document.getElementById(program + '_armed').innerHTML; 
+		{
+			GLDSetProperty('scheme_1','status','IDLE');
+			GLDSetProperty('scheme_1','armed','NONE');
+			update();
+		}
+	}
+</SCRIPT>
+
+</HTML>

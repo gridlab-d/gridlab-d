@@ -1,0 +1,26 @@
+<HTML>
+<!-- IEEE-123 realtime simulation configuration
+     Copyright (C) 2016, Stanford University
+     Author: dchassin@slac.stanford.edu
+-->
+<HEAD>
+<TITLE>MySQL Graph Tool</TITLE>
+</HEAD>
+<BODY>
+<FORM METHOD=GET ACTION="graph.php">
+<TABLE>
+<TR><TD>Title</TD><TD><INPUT TYPE=TEXT NAME="title" VALUE="Capacitor 83 phase A" /></TD></TR>
+<TR><TD>Reverse</TD><TD><INPUT TYPE=TEXT NAME="rev" VALUE="1" /></TD></TR>
+<TR><TD>Minimum Y</TD><TD><INPUT TYPE=TEXT NAME="ymin" VALUE="2300" /></TD></TR>
+<TR><TD>Maximum Y</TD><TD><INPUT TYPE=TEXT NAME="ymax" VALUE="2500" /></TD></TR>
+<TR><TD>Query</TD><TD><TEXTAREA COLS=80 ROWS=6 NAME="query">
+SELECT t as x, cast(voltage_A as decimal(8,1)) as y
+FROM ieee123_scada.capacitor
+WHERE name='cap_83'
+ORDER BY t DESC
+LIMIT 60
+</TEXTAREA></TD></TR>
+<TR><TD>Title</TD><TD><INPUT TYPE=SUBMIT VALUE="Plot" /></TD></TR>
+</FORM>
+</BODY>
+</HTML>

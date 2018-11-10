@@ -46,7 +46,7 @@ public:
 	GL_ATOMIC(double,Qloads);
 	GL_METHOD(house,connect);
 private:
-	std::list<ENDUSELOAD*> loads;
+	std::list<ENDUSELOAD*> *loads;
 	ENDUSELOAD *add_load(OBJECT *obj, bool is220=false);
 	gld_property Tout;
 	gld_property sell;

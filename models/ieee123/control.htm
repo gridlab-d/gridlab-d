@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<!--
+ IEEE-123 realtime simulation control webpage
+ Copyright (C) 2016, Stanford University
+ Author: dchassin@slac.stanford.edu
+-->
+<HTML>
+<HEAD>
+<TITLE>Control</TITLE>
+</HEAD>
+
+<BODY ONLOAD="refresh();">
+
+<H1>
+[<A HREF="http://<<<HOSTNAME>>>/<<<DOCROOT>>>">Home</A>]
+[Control]
+[<A HREF="http://<<<HOSTNAME>>>:<<<PORT>>>/rt/weather.htm">Weather</A>]
+[<A HREF="http://<<<HOSTNAME>>>:<<<PORT>>>/rt/feeder.htm">Feeder</A>]
+[<A HREF="http://<<<HOSTNAME>>>:<<<PORT>>>/rt/meter.htm">Meter</A>]
+[<A HREF="http://<<<HOSTNAME>>>:<<<PORT>>>/kml/output/gridlabd.kml">Map</A>]
+</H1>
+<SCRIPT src="gridlabd.js"></SCRIPT>
+<TABLE WIDTH="100%">
+	<TR><TH COLSPAN=4>Control (<<<modelname>>>)<HR/></TH></TR>
+	<TR><TD>Date/Time</TD><TD COLSPAN=3><DIV ID="clock"></DIV></TD></TR>
+	<TR><TH COLSPAN=4><HR/></TH></TR>
+	<TR><TD>Server URL</TD><TD COLSPAN=2><DIV ID="server_info">...</DIV></TD></TR>
+	<TR><TD>Model name</TD><TD COLSPAN=2><DIV ID="modelname">...</DIV></TD></TR>
+	<TR><TD>Realtime metric</TD><TD COLSPAN=2><DIV ID="realtime_metric">...</DIV></TD></TR>
+	<TR><TD>Verbose</TD><TD><DIV ID="verbose">...</DIV></TD><TD>
+		<INPUT TYPE="submit" VALUE="Off" ONCLICK="GLDSetGlobal('verbose',0); refresh();" />
+		<INPUT TYPE="submit" VALUE="On" ONCLICK="GLDSetGlobal('verbose',1); refresh();" />
+	</TD></TR>
+	<TR><TD>Debug</TD><TD><DIV ID="debug">...</DIV></TD><TD>
+		<INPUT TYPE="submit" VALUE="Off" ONCLICK="GLDSetGlobal('debug',0); refresh();" />
+		<INPUT TYPE="submit" VALUE="On" ONCLICK="GLDSetGlobal('debug',1); refresh();" />
+	</TD></TR>
+	<TR><TD>Dumpall</TD><TD><DIV ID="dumpall">...</DIV></TD><TD>
+		<INPUT TYPE="submit" VALUE="Off" ONCLICK="GLDSetGlobal('dumpall',0); refresh();" />
+		<INPUT TYPE="submit" VALUE="On" ONCLICK="GLDSetGlobal('dumpall',1); refresh();" />
+	</TD></TR>
+	<TR><TD>Quiet</TD><TD><DIV ID="quiet">...</DIV></TD><TD>
+		<INPUT TYPE="submit" VALUE="Off" ONCLICK="GLDSetGlobal('quiet',0); refresh();" />
+		<INPUT TYPE="submit" VALUE="On" ONCLICK="GLDSetGlobal('quiet',1); refresh();" />
+	</TD></TR>
+	<TR><TD>Show progress</TD><TD><DIV ID="show_progress">...</DIV></TD><TD>
+		<INPUT TYPE="submit" VALUE="Off" ONCLICK="GLDSetGlobal('show_progress',0); refresh();" />
+		<INPUT TYPE="submit" VALUE="On" ONCLICK="GLDSetGlobal('show_progress',1); refresh();" />
+	</TD></TR>
+	<TR><TD>Suppress repeat messages</TD><TD><DIV ID="suppress_repeat_messages">...</DIV></TD><TD>
+		<INPUT TYPE="submit" VALUE="Off" ONCLICK="GLDSetGlobal('suppress_repeat_messages',0); refresh();" />
+		<INPUT TYPE="submit" VALUE="On" ONCLICK="GLDSetGlobal('suppress_repeat_messages',1); refresh();" />
+	</TD></TR>
+	<TR><TD>Warning</TD><TD><DIV ID="warn">...</DIV></TD><TD>
+		<INPUT TYPE="submit" VALUE="Off" ONCLICK="GLDSetGlobal('warn',0); refresh();" />
+		<INPUT TYPE="submit" VALUE="On" ONCLICK="GLDSetGlobal('warn',1); refresh();" />
+	</TD></TR>
+	<TR><TD VALIGN=TOP>Output message context</TD><TD COLSPAN=2 WIDTH="85%">
+		<TABLE><TR>
+		<TD><INPUT TYPE="checkbox" ID="context_NONE" ONCLICK="set_context('NONE'); refresh(); " />NONE</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_ALL" ONCLICK="set_context('ALL'); refresh(); " />ALL</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_LOAD" ONCLICK="set_context('LOAD'); refresh(); " />LOAD</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_CREATE" ONCLICK="set_context('CREATE'); refresh(); " />CREATE</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_EXEC" ONCLICK="set_context('EXEC'); refresh(); " />EXEC</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_TIME" ONCLICK="set_context('TIME'); refresh(); " />TIME</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_FIND" ONCLICK="set_context('FIND'); refresh(); " />FIND</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_CLASS" ONCLICK="set_context('CLASS'); refresh(); " />CLASS</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_OBJECT" ONCLICK="set_context('OBJECT'); refresh(); " />OBJECT</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_MODULE" ONCLICK="set_context('MODULE'); refresh(); " />MODULE</TD>
+		</TR><TR>
+		<TD><INPUT TYPE="checkbox" ID="context_INDEX" ONCLICK="set_context('INDEX'); refresh(); " />INDEX</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_GLOBALS" ONCLICK="set_context('GLOBALS'); refresh(); " />GLOBALS</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_EXCEPTION" ONCLICK="set_context('EXCEPTION'); refresh(); " />EXCEPTION</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_AGGREGATE" ONCLICK="set_context('AGGREGATE'); refresh(); " />AGGREGATE</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_COMPARE" ONCLICK="set_context('COMPARE'); refresh(); " />COMPARE</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_CONVERT" ONCLICK="set_context('CONVERT'); refresh(); " />CONVERT</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_DELTAMODE" ONCLICK="set_context('DELTAMODE'); refresh(); " />DELTAMODE</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_ENDUSE" ONCLICK="set_context('ENDUSE'); refresh(); " />ENDUSE</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_ENVIRONMENT" ONCLICK="set_context('ENVIRONMENT'); refresh(); " />ENVIRONMENT</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_GUI" ONCLICK="set_context('GUI'); refresh(); " />GUI</TD>
+		</TR><TR>
+		<TD><INPUT TYPE="checkbox" ID="context_HTTPCLIENT" ONCLICK="set_context('HTTPCLIENT'); refresh(); " />HTTPCLIENT</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_INSTANCE" ONCLICK="set_context('INSTANCE'); refresh(); " />INSTANCE</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_INTERPOLATE" ONCLICK="set_context('INTERPOLATE'); refresh(); " />INTERPOLATE</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_JOB" ONCLICK="set_context('JOB'); refresh(); " />JOB</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_KML" ONCLICK="set_context('KML'); refresh(); " />KML</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_LEGAL" ONCLICK="set_context('LEGAL'); refresh(); " />LEGAL</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_LINK" ONCLICK="set_context('LINK'); refresh(); " />LINK</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_LIST" ONCLICK="set_context('LIST'); refresh(); " />LIST</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_XML" ONCLICK="set_context('XML'); refresh(); " />XML</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_LOADSHAPE" ONCLICK="set_context('LOADSHAPE'); refresh(); " />LOADSHAPE</TD>
+		</TR><TR>
+		<TD><INPUT TYPE="checkbox" ID="context_LOCALE" ONCLICK="set_context('LOCALE'); refresh(); " />LOCALE</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_LOCK" ONCLICK="set_context('LOCK'); refresh(); " />LOCK</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_MATCH" ONCLICK="set_context('MATCH'); refresh(); " />MATCH</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_MATLAB" ONCLICK="set_context('MATLAB'); refresh(); " />MATLAB</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_PROPERTY" ONCLICK="set_context('PROPERTY'); refresh(); " />PROPERTY</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_RANDOM" ONCLICK="set_context('RANDOM'); refresh(); " />RANDOM</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_REALTIME" ONCLICK="set_context('REALTIME'); refresh(); " />REALTIME</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_SANITIZE" ONCLICK="set_context('SANITIZE'); refresh(); " />SANITIZE</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_SAVE" ONCLICK="set_context('SAVE'); refresh(); " />SAVE</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_SCHEDULE" ONCLICK="set_context('SCHEDULE'); refresh(); " />SCHEDULE</TD>
+		</TR><TR>
+		<TD><INPUT TYPE="checkbox" ID="context_SERVER" ONCLICK="set_context('SERVER'); refresh(); " />SERVER</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_SETUP" ONCLICK="set_context('SETUP'); refresh(); " />SETUP</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_STREAM" ONCLICK="set_context('STREAM'); refresh(); " />STREAM</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_TEST" ONCLICK="set_context('TEST'); refresh(); " />TEST</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_THREADPOOL" ONCLICK="set_context('THREADPOOL'); refresh(); " />THREADPOOL</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_TRANSFORM" ONCLICK="set_context('TRANSFORM'); refresh(); " />TRANSFORM</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_HTTP" ONCLICK="set_context('HTTP'); refresh(); " />HTTP</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_UNIT" ONCLICK="set_context('UNIT'); refresh(); " />UNIT</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_VALIDATE" ONCLICK="set_context('VALIDATE'); refresh(); " />VALIDATE</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_VERSION" ONCLICK="set_context('VERSION'); refresh(); " />VERSION</TD>
+		</TR><TR>
+		<TD><INPUT TYPE="checkbox" ID="context_XCORE" ONCLICK="set_context('XCORE'); refresh(); " />XCORE</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_MAIN" ONCLICK="set_context('MAIN'); refresh(); " />MAIN</TD>
+		<TD><INPUT TYPE="checkbox" ID="context_CMDARG" ONCLICK="set_context('CMDARG'); refresh(); " />CMDARG</TD>
+		</TR></TABLE>
+	</TD></TR>
+	<TR><TD VALIGN="top">Log output
+		<INPUT TYPE="submit" VALUE="Hide old" ONCLICK="logclear();" />
+		<INPUT TYPE="submit" VALUE="Show all" ONCLICK="showall();" />
+	</TD><TD COLSPAN=2><TEXTAREA ID="log" BORDER=1 COLS=160 ROWS=20></TEXTAREA></TD></TR>
+</TABLE>
+<HR/>
+<TABLE WIDTH="100%">
+	<TR><TD WIDTH=500></TD><TD WIDTH=50>Status</TD><TD WIDTH=50><DIV ID="status">Initializing</DIV></TD></TR>
+</TABLE>
+
+</BODY>
+
+<SCRIPT type="text/javascript">
+	var count = 0;
+	function refresh()
+	{
+		count = count + 1;
+	    setTimeout("refresh()",30000);
+	    if ( count == 1 )
+		    document.getElementById("status").innerHTML = "Updating";
+		else
+		    document.getElementById("status").innerHTML = "Server down";			    
+	    document.getElementById("clock").innerHTML = GLDGetGlobal("clock");
+	    document.getElementById("modelname").innerHTML = GLDGetGlobal("modelname");
+	    document.getElementById("server_info").innerHTML = "http://"+hostname+":"+portnum+"/"; 
+	    document.getElementById("realtime_metric").innerHTML = GLDGetGlobal("realtime_metric"); 
+	    document.getElementById("verbose").innerHTML = GLDGetGlobal("verbose");
+		document.getElementById("debug").innerHTML = GLDGetGlobal("debug");
+		document.getElementById("dumpall").innerHTML = GLDGetGlobal("dumpall");
+		document.getElementById("quiet").innerHTML = GLDGetGlobal("quiet");
+		document.getElementById("show_progress").innerHTML = GLDGetGlobal("show_progress");
+		document.getElementById("suppress_repeat_messages").innerHTML = GLDGetGlobal("suppress_repeat_messages");
+		document.getElementById("warn").innerHTML = GLDGetGlobal("warn");
+		document.getElementById("context_"+GLDGetGlobal("output_message_context")).checked = 1;
+	    document.getElementById("status").innerHTML = "Ok";
+	    logrefresh(false);
+	    count = 0;
+	}
+	function set_context(name)
+	{
+		document.getElementById("context_"+GLDSetGlobal("output_message_context",name)).checked = 0;
+		document.getElementById("context_"+name).checked = 1;
+	}
+	var offset = 0;
+	function logclear()
+	{
+    	log = document.getElementById("log");
+		offset += log.textLength;
+		log.innerHTML = "";
+	}
+	function showall()
+	{
+		offset = 0;
+		logrefresh(true);
+	}
+	function logrefresh(onetime)
+	{
+		if ( !onetime ) setTimeout("logrefresh(false)",1000);
+	    if (window.XMLHttpRequest)
+	    {// code for IE7+, Firefox, Chrome, Opera, Safari
+	        xmlhttp=new XMLHttpRequest();
+	    }
+	    else
+	    {// code for IE6, IE5
+	        xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+	    }
+	    xmlhttp.open("GET","http://<<<HOSTNAME>>>:<<<PORT>>>/rt/output/gridlabd.log:"+offset, false);
+	    xmlhttp.send();
+	    if ( xmlhttp.responseText != document.getElementById("log").innerHTML )
+	    {
+	    	log = document.getElementById("log");
+			lastpos = log.scrollTop;
+			if ( log.scrollHeight - log.scrollTop === log.clientHeight )
+				lastpos = null;
+		    log.innerHTML = xmlhttp.responseText;
+		    if ( lastpos == null )
+			    log.scrollTop = log.scrollHeight;
+			else
+			    log.scrollTop = lastpos;
+		}
+	}
+</SCRIPT>
+
+</HTML>

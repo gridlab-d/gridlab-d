@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<!--
+ IEEE-123 realtime simulation meter control webpage
+ Copyright (C) 2016, Stanford University
+ Author: dchassin@slac.stanford.edu
+-->
+<HTML>
+
+<HEAD>
+<TITLE>Meters</TITLE>
+</HEAD>
+
+<BODY ONLOAD="refresh(false);">
+
+<SCRIPT src="gridlabd.js"> </SCRIPT>
+
+<H1>
+[<A HREF="http://<<<HOSTNAME>>>/<<<DOCROOT>>>/">Home</A>]
+[<A HREF="http://<<<HOSTNAME>>>:<<<PORT>>>/rt/control.htm">Control</A>]
+[<A HREF="http://<<<HOSTNAME>>>:<<<PORT>>>/rt/weather.htm">Weather</A>]
+[<A HREF="http://<<<HOSTNAME>>>:<<<PORT>>>/rt/feeder.htm">Feeder</A>]
+[Meter]
+[<A HREF="http://<<<HOSTNAME>>>:<<<PORT>>>/kml/output/gridlabd.kml">Map</A>]
+</H1>
+
+<TABLE WIDTH="100%">
+	<TR><TH COLSPAN=4>Meters (<<<modelname>>>)<HR/></TH></TR>
+	<TR><TD>Date/Time</TD><TD COLSPAN=7><DIV ID="clock"></DIV></TD></TR>
+	<TR><TH COLSPAN=7><HR/></TH></TR>
+	
+	<TR><TH ALIGN=LEFT>Customer</TH><TH ALIGN=LEFT>Status</TH><TH ALIGN=LEFT>Control</TH><TH ALIGN=LEFT>Demand</TH><TH ALIGN=LEFT>Energy</TH><TH ALIGN=LEFT>Voltage 1</TH><TH ALIGN=LEFT>Voltage 2</TH></TR>
+	<TR><TH ALIGN=LEFT COLSPAN=7><HR/></TH></TR>
+	<TR><TD COLSPAN=7><INPUT TYPE="submit" VALUE="Previous" ONCLICK="previous();" /> <INPUT TYPE="submit" VALUE="Next" ONCLICK="next();" />
+<SCRIPT TYPE="text/javascript">
+	max_item = 344;
+	first_row = 1;
+	nrows = 20;
+	for ( block = 0 ; block<344 ; block = block + nrows ) 
+	{
+		last = block+nrows;
+		if ( last > max_item )
+		{
+			last = max_item;
+		}
+		document.writeln('<INPUT TYPE="submit" VALUE="'+(block+1)+'-'+last+'" ONCLICK="goto(' + (block+1) + ');" />');
+	}
+</SCRIPT>
+	</TD></TR>
+<SCRIPT TYPE="text/javascript">
+	for ( id = first_row ; id < first_row+nrows ; id++ ) 
+	{
+		row = id - first_row;
+		document.writeln('<TR><TD><DIV ID="meter_'+row+'"></DIV></TD>'
+			+ '<TD><DIV ID="meter_'+row+'_status"></DIV></TD>'
+			+ '<TD><INPUT ID="meter_'+row+'_disconnect" TYPE="submit" VALUE="DISCONNECT" ONCLICK="GLDSetProperty(\'meter_'+id+'\',\'service_status\',\'OUT_OF_SERVICE\'); refresh(1);" />'
+			+ '<INPUT ID="meter_'+row+'_connect" TYPE="submit" VALUE="CONNECT" ONCLICK="GLDSetProperty(\'meter_'+id+'\',\'service_status\',\'IN_SERVICE\'); refresh(1);" /></TD>'
+			+ '<TD><A HREF="http://<<<hostname>>>/<<<DOCROOT>>>/graphtool.php?xinterval=4&rev=1&title=Meter '+id+' Demand (W)&query=SELECT t as x, measured_real_power as y FROM <<<MYSQL_NAME>>>_ami.meter WHERE name=%27meter_'+id+'%27 ORDER BY id DESC LIMIT 96" TARGET="_blank"><DIV ID="meter_'+row+'_power"></DIV></A></TD>'
+			+ '<TD><A HREF="http://<<<hostname>>>/<<<DOCROOT>>>/graphtool.php?diff=1&pos=1&rev=1&bar=1&xinterval=4&title=Meter '+id+'i Interval Energy (kWh/h)&query=SELECT t as x, measured_real_energy*4 as y FROM <<<MYSQL_NAME>>>_ami.meter WHERE name=%27meter_'+id+'%27 ORDER BY id DESC LIMIT 96" TARGET="_blank"><DIV ID="meter_'+row+'_energy"></DIV></A></TD>'
+			+ '<TD><A HREF="http://<<<hostname>>>/<<<DOCROOT>>>/graphtool.php?xinterval=4&rev=1&title=Meter '+id+' Line 1 Voltage (V)&ymin=110&ymax=130&query=SELECT t as x, cast(measured_voltage_1 as decimal(8,1)) as y FROM <<<MYSQL_NAME>>>_ami.meter WHERE name=%27meter_'+id+'%27 ORDER BY id DESC LIMIT 96" TARGET="_blank"><DIV ID="meter_'+row+'_voltage_1"></DIV></A></TD>'
+			+ '<TD><A HREF="http://<<<hostname>>>/<<<DOCROOT>>>/graphtool.php?xinterval=4&rev=1&title=Meter '+id+' Line 2 Voltage (V)&ymin=110&ymax=130&query=SELECT t as x, cast(measured_voltage_2 as decimal(8,1)) as y FROM <<<MYSQL_NAME>>>_ami.meter WHERE name=%27meter_'+id+'%27 ORDER BY id DESC LIMIT 96" TARGET="_blank"><DIV ID="meter_'+row+'_voltage_2"></DIV></A></TD>'
+			+ '</TR>');
+	}
+</SCRIPT>
+</TABLE>
+<HR/>
+<TABLE WIDTH="100%">
+	<TR><TD WIDTH=500></TD><TD WIDTH=50>Status</TD><TD WIDTH=50><DIV ID="status">Initializing</DIV></TD></TR>
+</TABLE>
+
+</BODY>
+
+<SCRIPT type="text/javascript">
+	var count = 0;
+	var nhouses = GLDGetGlobal("NHOUSES");
+	function previous()
+	{
+		first_row -= nrows;
+		if ( first_row < 1 ) first_row = 1;
+		refresh(true);
+	}
+	function next()
+	{
+		first_row += nrows;
+		if ( first_row > nhouses-nrows+1 ) first_row = nhouses-nrows+1;
+		refresh(true);
+	}
+	function goto(n)
+	{
+		first_row = n;
+		refresh(true);
+	}
+	function refresh(onetime)
+	{
+		count = count + 1;
+		if ( !onetime ) setTimeout("refresh(false)",300000);
+		if ( count == 1 )
+			document.getElementById("status").innerHTML = "Updating";
+		else
+			document.getElementById("status").innerHTML = "Update failed";				
+		document.getElementById("clock").innerHTML = GLDGetGlobal("clock");
+		for ( id = first_row ; id < first_row+nrows ; id++ ) 
+		{
+			row = id - first_row;
+			if ( id > max_item )
+			{
+				document.getElementById("meter_"+row).innerHTML = '';
+				document.getElementById("meter_"+row+"_status").innerHTML = '';
+				document.getElementById("meter_"+row+"_power").innerHTML = '';
+				document.getElementById("meter_"+row+"_energy").innerHTML = '';
+				document.getElementById("meter_"+row+"_voltage_1").innerHTML = '';
+				document.getElementById("meter_"+row+"_voltage_2").innerHTML = '';
+				document.getElementById("meter_"+row+"_disconnect").disabled = true;
+				document.getElementById("meter_"+row+"_connect").disabled = true;
+			}
+			else
+			{
+				document.getElementById("meter_"+row).innerHTML = id;
+				document.getElementById("meter_"+row+"_status").innerHTML = GLDGetProperty("meter_"+id,"service_status");
+				document.getElementById("meter_"+row+"_power").innerHTML = GLDGetProperty("meter_"+id,"measured_real_power[kW,1f]");
+				document.getElementById("meter_"+row+"_energy").innerHTML = GLDGetProperty("meter_"+id,"measured_real_energy[kWh,1f]");
+				document.getElementById("meter_"+row+"_voltage_1").innerHTML = GLDGetProperty("meter_"+id,"voltage_1[V,1fM]");
+				document.getElementById("meter_"+row+"_voltage_2").innerHTML = GLDGetProperty("meter_"+id,"voltage_2[V,1fM]");
+				document.getElementById("meter_"+row+"_disconnect").disabled == false;
+				document.getElementById("meter_"+row+"_connect").disabled == false;
+				if ( document.getElementById("meter_"+row+"_status").innerHTML == 'IN_SERVICE')
+				{
+					document.getElementById("meter_"+row+"_connect").disabled == true;
+				}
+				else if ( document.getElementById("meter_"+row+"_status").innerHTML == 'OUT_OF_SERVICE')
+				{
+					document.getElementById("meter_"+row+"_disconnect").disabled == true;
+				}
+			}
+		}
+		document.getElementById("status").innerHTML = "Ok";
+		count = 0;
+	}
+</SCRIPT>
+
+</HTML>

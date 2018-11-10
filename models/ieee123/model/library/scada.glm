@@ -1,0 +1,192 @@
+///////////////////////////////////////////////////////
+//
+// FEEDER CONTROLS & MONITORING
+// Copyright (C) 2016, Stanford University
+// Author: dchassin@slac.stanford.edu
+//
+///////////////////////////////////////////////////////
+
+// TODO: add regulator and capbank controllers
+
+//
+// Switches
+//
+object recorder {
+        connection scada;
+        table switch;
+        parent sw13to152;
+        property "phase_A_state,phase_B_state,phase_C_state,current_in_A,current_in_B,current_in_C";
+        interval 4;
+        header_fieldnames "name";
+}
+
+object recorder {
+        connection scada;
+        table switch;
+        parent sw18to135;
+        property "phase_A_state,phase_B_state,phase_C_state,current_in_A,current_in_B,current_in_C";
+        interval 4;
+        header_fieldnames "name";
+}
+
+object recorder {
+        connection scada;
+        table switch;
+        parent sw54to94;
+        property "phase_A_state,phase_B_state,phase_C_state,current_in_A,current_in_B,current_in_C";
+        interval 4;
+        header_fieldnames "name";
+}
+
+object recorder {
+        connection scada;
+        table switch;
+        parent sw60to160;
+        property "phase_A_state,phase_B_state,phase_C_state,current_in_A,current_in_B,current_in_C";
+        interval 4;
+        header_fieldnames "name";
+}
+
+object recorder {
+        connection scada;
+        table switch;
+        parent sw61to6101;
+        property "phase_A_state,phase_B_state,phase_C_state,current_in_A,current_in_B,current_in_C";
+        interval 4;
+        header_fieldnames "name";
+}
+
+object recorder {
+        connection scada;
+        table switch;
+        parent sw97to197;
+        property "phase_A_state,phase_B_state,phase_C_state,current_in_A,current_in_B,current_in_C";
+        interval 4;
+        header_fieldnames "name";
+}
+
+object recorder {
+	connection scada;
+	table switch;
+	parent sw151to300;
+    property "phase_A_state,phase_B_state,phase_C_state,current_in_A,current_in_B,current_in_C";
+    interval 4;
+    header_fieldnames "name";
+}
+
+object recorder {
+        connection scada;
+        table switch;
+        parent sw15001to149;
+        property "phase_A_state,phase_B_state,phase_C_state,current_in_A,current_in_B,current_in_C";
+        interval 4;
+        header_fieldnames "name";
+}
+
+object recorder {
+        connection scada;
+        table switch;
+        parent sw250to251;
+        property "phase_A_state,phase_B_state,phase_C_state,current_in_A,current_in_B,current_in_C";
+        interval 4;
+        header_fieldnames "name";
+}
+
+object recorder {
+        connection scada;
+        table switch;
+        parent sw300to350;
+        property "phase_A_state,phase_B_state,phase_C_state,current_in_A,current_in_B,current_in_C";
+        interval 4;
+        header_fieldnames "name";
+}
+
+object recorder {
+        connection scada;
+        table switch;
+        parent sw450to451;
+        property "phase_A_state,phase_B_state,phase_C_state,current_in_A,current_in_B,current_in_C";
+        interval 4;
+        header_fieldnames "name";
+}
+
+object recorder {
+        connection scada;
+        table switch;
+        parent sw95to195;
+        property "phase_A_state,phase_B_state,phase_C_state,current_in_A,current_in_B,current_in_C";
+        interval 4;
+        header_fieldnames "name";
+}
+
+//
+// Regulators
+//
+object recorder {
+        connection scada;
+        table regulator;
+        parent reg150to15001;
+        property "power_in,power_out,tap_A,tap_B,tap_C";
+        interval 4;
+        header_fieldnames "name";
+}
+object recorder {
+        connection scada;
+        table regulator;
+        parent reg9to901;
+        property "power_in,power_out,tap_A,tap_B,tap_C";
+        interval 4;
+        header_fieldnames "name";
+}
+object recorder {
+        connection scada;
+        table regulator;
+        parent reg25to2501;
+        property "power_in,power_out,tap_A,tap_B,tap_C";
+        interval 4;
+        header_fieldnames "name";
+}
+object recorder {
+        connection scada;
+        table regulator;
+        parent reg160to16001;
+        property "power_in,power_out,tap_A,tap_B,tap_C";
+        interval 4;
+        header_fieldnames "name";
+}
+
+//
+// Capacitors
+//
+object recorder {
+        connection scada;
+        table capacitor;
+        parent cap_83;
+        property "voltage_A,voltage_B,voltage_C,switchA,switchB,switchC";
+        interval 4;
+        header_fieldnames "name";
+}
+object recorder {
+        connection scada;
+        table capacitor;
+        parent cap_88;
+        property "voltage_A,switchA";
+        interval 4;
+        header_fieldnames "name";
+}
+object recorder {
+        connection scada;
+        table capacitor;
+        parent cap_90;
+        property "voltage_B,switchB";
+        interval 4;
+        header_fieldnames "name";
+}
+object recorder {
+        connection scada;
+        table capacitor;
+        parent cap_92;
+        property "voltage_C,switchC";
+        interval 4;
+        header_fieldnames "name";
+}

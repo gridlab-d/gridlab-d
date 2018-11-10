@@ -921,9 +921,9 @@ int inverter::init(OBJECT *parent)
 				VoltVArSchedInput = volt_var_sched;
 				gl_warning(VoltVArSchedInput.c_str());
 				if(VoltVArSchedInput.length() == 0)	{
-					VoltVArSched.push_back(std::make_pair (119.5,0));	
+					VoltVArSched->push_back(std::make_pair (119.5,0));	
 					//put two random things on the schedule with Q values of zero, all scheduled Qs will then be zero
-					VoltVArSched.push_back(std::make_pair (120.5,0));
+					VoltVArSched->push_back(std::make_pair (120.5,0));
 					gl_warning("Volt/VAr schedule unspecified. Setting inverter for constant power factor of 1.0");
 				}
 				else
@@ -943,7 +943,7 @@ int inverter::init(OBJECT *parent)
 						else
 						{					
 							if(cntr % 2 == 1){
-								VoltVArSched.push_back(std::make_pair (atof(tempV.c_str()),atof(tempQ.c_str())));
+								VoltVArSched->push_back(std::make_pair (atof(tempV.c_str()),atof(tempQ.c_str())));
 								tempQ = "";
 								tempV = "";
 							}
@@ -951,7 +951,7 @@ int inverter::init(OBJECT *parent)
 						}
 					}
 					if(cntr % 2 == 1)
-						VoltVArSched.push_back(std::make_pair (atof(tempV.c_str()),atof(tempQ.c_str())));
+						VoltVArSched->push_back(std::make_pair (atof(tempV.c_str()),atof(tempQ.c_str())));
 				} //end VoltVArSchedInput
 				
 					
@@ -959,9 +959,9 @@ int inverter::init(OBJECT *parent)
 				freq_pwrSchedInput = freq_pwr_sched;
 				warning(freq_pwrSchedInput.c_str());
 				if(freq_pwrSchedInput.length() == 0)	{
-					freq_pwrSched.push_back(std::make_pair (f_nominal*0.9,0));	
+					freq_pwrSched->push_back(std::make_pair (f_nominal*0.9,0));	
 					//make both power values equal to zero, then all scheduled powers will be zero
-					freq_pwrSched.push_back(std::make_pair (f_nominal*1.1,0));
+					freq_pwrSched->push_back(std::make_pair (f_nominal*1.1,0));
 					warning("Frequency-Power schedule unspecified. Setting power for frequency regulation to zero.");
 				}
 				else
@@ -980,7 +980,7 @@ int inverter::init(OBJECT *parent)
 						else
 						{					
 							if(cntr % 2 == 1) {
-								freq_pwrSched.push_back(std::make_pair (atof(tempf.c_str()),atof(tempP.c_str())));
+								freq_pwrSched->push_back(std::make_pair (atof(tempf.c_str()),atof(tempP.c_str())));
 								tempf = "";
 								tempP = "";
 							}
@@ -988,7 +988,7 @@ int inverter::init(OBJECT *parent)
 						}
 					}
 					if(cntr % 2 == 1)
-						freq_pwrSched.push_back(std::make_pair (atof(tempf.c_str()),atof(tempP.c_str())));
+						freq_pwrSched->push_back(std::make_pair (atof(tempf.c_str()),atof(tempP.c_str())));
 				} //end freq_pwrSchedInput
 				
 			} //end VOLT_VAR_FREQ_PWR control mode
@@ -3307,19 +3307,19 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					//currently only compares to the phase A inverter AC voltage,
 					//TODO: need to address for non-3phase inv? include support for a remote voltage input?
 
-					double Qo = VoltVArSched.back().second;			//set the scheduled Q for highest voltage range, handles the last case with the loop below (will be overwritten if needed)
+					double Qo = VoltVArSched->back().second;			//set the scheduled Q for highest voltage range, handles the last case with the loop below (will be overwritten if needed)
 					double prevV = 0;								//setup for first loop iter to handle lowest voltage range
-					double prevQ = VoltVArSched.front().second;		//setup for first loop iter to handle lowest voltage range
-					for (size_t i = 0; i < VoltVArSched.size(); i++)
+					double prevQ = VoltVArSched->front().second;		//setup for first loop iter to handle lowest voltage range
+					for (size_t i = 0; i < VoltVArSched->size(); i++)
 					{	//iterate over all specified voltage ranges, find where current voltage value lies and set Qo as linear interpolation between endpoints
-						if(phaseA_V_Out.Mag() <= VoltVArSched[i].first) {
-							double m = (VoltVArSched[i].second - prevQ)/(VoltVArSched[i].first - prevV);
-							double b = VoltVArSched[i].second - (m * VoltVArSched[i].first);
+						if(phaseA_V_Out.Mag() <= (*VoltVArSched)[i].first) {
+							double m = ((*VoltVArSched)[i].second - prevQ)/((*VoltVArSched)[i].first - prevV);
+							double b = (*VoltVArSched)[i].second - (m * (*VoltVArSched)[i].first);
 							Qo = m * phaseA_V_Out.Mag() + b;
 							break;
 						}
-						prevV = VoltVArSched[i].first;
-						prevQ = VoltVArSched[i].second;
+						prevV = (*VoltVArSched)[i].first;
+						prevQ = (*VoltVArSched)[i].second;
 					}
 
 					double Po = (P_in * net_eff) - fabs(Qo) * (1 - net_eff)/net_eff;
