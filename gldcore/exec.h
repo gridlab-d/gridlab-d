@@ -70,6 +70,7 @@ EXITCODE exec_run_syncscripts(void);
 EXITCODE exec_run_commitscripts(void);
 EXITCODE exec_run_termscripts(void);
 
+int exec_schedule_dump(TIMESTAMP interval,char *filename);
 int64 exec_clock(void);
 
 #ifdef __cplusplus
