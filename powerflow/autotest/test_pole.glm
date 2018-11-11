@@ -9,8 +9,8 @@ clock {
 }
 
 object climate {
-	name sandiego;
-	tmyfile CA-San_Diego_North_Island_Nas.tmy3;
+	name weather;
+	tmyfile WA-Yakima.tmy2;
 }
 
 object pole_configuration {
@@ -25,7 +25,7 @@ object pole_configuration {
 
 object pole {
 	name pole1;
-	weather sandiego;
+	weather weather;
 	configuration "WOOD-C-45/5"; 
 	phases ABC;
 	nominal_voltage 12470;
@@ -61,7 +61,7 @@ object overhead_line {
 }
 object pole {
 	name pole2;
-	weather sandiego;
+	weather weather;
 	configuration "WOOD-C-45/5"; 
 	phases ABC;
 	nominal_voltage 12470;
@@ -69,4 +69,11 @@ object pole {
 	tilt_direction 270;
 	equipment_area 5 sf;
 	equipment_height 25 ft;
+}
+
+module tape;
+object multi_recorder {
+	interval 3600;
+	property "weather:wind_speed,pole1:pole_stress,pole2:pole_stress";
+	file test_pole.csv;
 }
