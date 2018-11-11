@@ -74,6 +74,6 @@ object pole {
 module tape;
 object multi_recorder {
 	interval 3600;
-	property "weather:wind_speed,pole1:pole_stress,pole2:pole_stress";
+	property "weather:wind_speed,pole1:pole_stress,pole1:susceptibility,pole2:pole_stress,pole2:susceptibility";
 	file test_pole.csv;
 }
