@@ -1,0 +1,11 @@
+# file...... meter_power.csv
+# date...... Wed Nov  7 20:23:21 2018
+# user...... (null)
+# host...... (null)
+# target.... triplex_meter 3
+# trigger... (none)
+# interval.. 3600
+# limit..... 30
+# timestamp,indiv_measured_power_1,indiv_measured_power_2,indiv_measured_power_N,measured_power,measured_real_energy,measured_voltage_1,measured_voltage_2,measured_voltage_12
+2006-01-01 00:00:00 CST,+21199+25.9925d,+23106.6+11859.2j,+0+0d,+47168.7+26.6401d,+0,+118.008-0.613105d,+117.853-0.614242d,+235.861-0.613673d
+# end of tape
