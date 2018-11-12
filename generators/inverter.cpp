@@ -25,6 +25,8 @@ inverter *inverter::defaults = NULL;
 static PASSCONFIG passconfig = PC_BOTTOMUP|PC_POSTTOPDOWN;
 static PASSCONFIG clockpass = PC_BOTTOMUP;
 
+
+
 /* Class registration is only called once to register the class with the core */
 inverter::inverter(MODULE *module)
 {	
@@ -313,6 +315,8 @@ inverter::inverter(MODULE *module)
 /* Object creation is called once for each object that is created by the core */
 int inverter::create(void) 
 {
+	VoltVArSched = new std::vector<std::pair<double,double> >;
+	freq_pwrSched = new std::vector<std::pair<double,double> >;
 	// Default values for Inverter object.
 	P_Out = 0;  // P_Out and Q_Out are set by the user as set values to output in CONSTANT_PQ mode
 	Q_Out = 0;

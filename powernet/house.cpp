@@ -19,6 +19,8 @@ EXPORT_METHOD(house,connect);
 CLASS *house::oclass = NULL;
 house *house::defaults = NULL;
 
+
+
 house::house(MODULE *module)
 {
 	if (oclass==NULL)
@@ -54,6 +56,7 @@ house::house(MODULE *module)
 
 int house::create(void)
 {
+	loads = new list<ENDUSELOAD*>;
 	memcpy(this,defaults,sizeof(*this));
 	return 1; /* return 1 on success, 0 on failure */
 }

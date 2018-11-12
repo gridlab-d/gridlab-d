@@ -171,8 +171,7 @@ int saveglm(char *filename,FILE *fp)
 	count += fprintf(fp,"\n////////////////////////////////////////////////////////\n");
 	count += fprintf(fp,"// END");
 	count += fprintf(fp,"\n////////////////////////////////////////////////////////\n");
-	if (fp!=stdout)
-		fclose(fp);
+
 	return count;
 }
 
@@ -335,9 +334,6 @@ int savexml_strict(char *filename,FILE *fp)
 
 	count += fprintf(fp,"</gridlabd>\n");
 
-	if (fp!=stdout)
-		fclose(fp);
-
 	global_suppress_deprecated_messages = old_suppress_deprecated;
 
 	return count;
@@ -385,8 +381,6 @@ int savexml(char *filename,FILE *fp)
 	module_saveall_xml(fp);
 
 	count += fprintf(fp,"</load>\n");
-	if (fp!=stdout)
-		fclose(fp);
 	return count;
 }
 
