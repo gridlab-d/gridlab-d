@@ -529,7 +529,7 @@ SIMULATIONMODE helics_msg::deltaClockUpdate(double t1, unsigned long timestep, S
 		dt = (t1 - (double)initial_sim_time);
 //		t = (helics::time)((dt + ((double)(timestep) / 2.0)) - fmod((dt + ((double)(timestep) / 2.0)), (double)timestep));
 		t = (helics::Time)(dt);
-		helics_federate->setTimeDelta((helics::Time)(((double)timestep)/DT_SECOND));
+		helics_federate->setTimeProperty(140, (helics::Time)(((double)timestep)/DT_SECOND));
 		helics_time = helics_federate->requestTime(t);
 		//TODO call helics time update function
 		if(sysmode == SM_EVENT)
@@ -559,7 +559,7 @@ TIMESTAMP helics_msg::clk_update(TIMESTAMP t1)
 #if HAVE_HELICS
 		//TODO update time delta in helics
 		gl_verbose("helics_msg: Calling setTimeDelta");
-		helics_federate->setTimeDelta(1.0);
+		helics_federate->setTimeProperty(140, 1.0);// 140 is the option for the period property.
 #endif
 		exitDeltamode = false;
 		return t1;
