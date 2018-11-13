@@ -59,7 +59,7 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 {
 	char *pd1, *pd2;
 	int i, pos=0;
-	
+
 	char *browser = getenv("GLBROWSER");
 
 	/* set the default timezone */

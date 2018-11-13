@@ -23,6 +23,8 @@
 
 #define _CRT_SECURE_NO_DEPRECATE 1
 
+
+
 gld_loadHndl::gld_loadHndl() : fFormatter("LATIN1", 0, this, XMLFormatter::NoEscapes, (const XMLFormatter::UnRepFlags) 0),
 		fExpandNS ( false ){
 	depth = 0;
@@ -910,6 +912,7 @@ void gld_loadHndl::startElement(const XMLCh* const uri, const XMLCh* const local
 */
 char *gld_loadHndl::build_object_vect(int start, int end){
 	int count = 0, i = 0;
+	obj_vect = new vector<OBJECT *>;
 	obj_vect->clear();
 	if(start == end){
 		if((*oclass->create)(&obj, NULL) == 0){

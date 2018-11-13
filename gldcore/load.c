@@ -2290,13 +2290,13 @@ int time_value_datetime(PARSER, TIMESTAMP *t)
 	DATETIME dt;
 	START;
 	if WHITE ACCEPT;
-	if LITERAL("'") ACCEPT;
+	if ( LITERAL("'") || LITERAL("\"") ) ACCEPT;
 	if (TERM(integer16(HERE,&dt.year)) && LITERAL("-")
 		&& TERM(integer16(HERE,&dt.month)) && LITERAL("-")
 		&& TERM(integer16(HERE,&dt.day)) && LITERAL(" ")
 		&& TERM(integer16(HERE,&dt.hour)) && LITERAL(":")
 		&& TERM(integer16(HERE,&dt.minute)) && LITERAL(":")
-		&& TERM(integer16(HERE,&dt.second)) && LITERAL("'"))
+		&& TERM(integer16(HERE,&dt.second)) && ( LITERAL("'") || LITERAL("\"") ))
 	{
 		dt.nanosecond = 0;
 		dt.weekday = -1;
