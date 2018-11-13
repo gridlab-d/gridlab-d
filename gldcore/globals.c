@@ -873,25 +873,6 @@ int parameter_expansion(char *buffer, int size, char *spec)
 			return 0;
 	}
 
-	/* ${name/offset/length} */
-	if ( sscanf(spec,"%63[^/]/%63[^/]/%63[^}]",name,pattern,string)>=2 )
-	{
-		char temp[1024], *ptr;
-		size_t start;
-		if ( global_getvar(name,temp,sizeof(temp)-1)==NULL )
-			return 0;
-		strcpy(buffer,"");
-		ptr = strstr(temp,pattern);
-		if ( ptr!=NULL )
-		{
-			start = ptr - temp;
-			strncpy(buffer,temp,size);
-			strncpy(buffer+start,string,size-start);
-			strncpy(buffer+start+strlen(string),temp+start+strlen(pattern),size-start-strlen(string));
-		}
-		return 1;
-	}
-
 	/* ${name//offset/length} */
 	if ( sscanf(spec,"%63[^/]//%63[^/]/%63[^}]",name,pattern,string)==2 )
 	{
@@ -910,6 +891,25 @@ int parameter_expansion(char *buffer, int size, char *spec)
 			strncpy(buffer+start,string,size-start);
 			strncpy(buffer+start+strlen(string),temp+start+strlen(pattern),size-start-strlen(string));
 			strncpy(temp,buffer,sizeof(temp));
+		}
+		return 1;
+	}
+
+	/* ${name/offset/length} */
+	if ( sscanf(spec,"%63[^/]/%63[^/]/%63[^}]",name,pattern,string)>=2 )
+	{
+		char temp[1024], *ptr;
+		size_t start;
+		if ( global_getvar(name,temp,sizeof(temp)-1)==NULL )
+			return 0;
+		strcpy(buffer,"");
+		ptr = strstr(temp,pattern);
+		if ( ptr!=NULL )
+		{
+			start = ptr - temp;
+			strncpy(buffer,temp,size);
+			strncpy(buffer+start,string,size-start);
+			strncpy(buffer+start+strlen(string),temp+start+strlen(pattern),size-start-strlen(string));
 		}
 		return 1;
 	}
