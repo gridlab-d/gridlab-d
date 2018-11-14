@@ -32,6 +32,7 @@ pole::pole(MODULE *mod) : node(mod)
 			PT_object, "configuration", PADDR(configuration), PT_DESCRIPTION, "configuration data",
 			PT_double, "equipment_area[sf]", PADDR(equipment_area), PT_DESCRIPTION, "equipment cross sectional area",
 			PT_double, "equipment_height[ft]", PADDR(equipment_height), PT_DESCRIPTION, "equipment height on pole",
+			PT_double, "pole_stress[pu]", PADDR(pole_stress), PT_DESCRIPTION, "ratio of actual stress to critical stress",
 			NULL) < 1 ) throw "unable to publish properties in " __FILE__;
 	}
 }
@@ -192,8 +193,9 @@ TIMESTAMP pole::presync(TIMESTAMP t0)
 			wire_moment += tension;
 		}
 		double total_moment = pole_moment + equipment_moment + wire_moment;
-		verbose("wind %4.1f psi, pole %4.0f ft*lb, equipment %4.0f ft*lb, wires %4.0f ft*lb, margin %.0f%%", (const char*)(dt.get_string()), wind_pressure, pole_moment, equipment_moment, wire_moment, total_moment/resisting_moment*100);
-		pole_status = ( total_moment < resisting_moment ? PS_OK : PS_FAILED );
+		pole_stress = total_moment/resisting_moment;
+		verbose("wind %4.1f psi, pole %4.0f ft*lb, equipment %4.0f ft*lb, wires %4.0f ft*lb, margin %.0f%%", (const char*)(dt.get_string()), wind_pressure, pole_moment, equipment_moment, wire_moment, pole_stress*100);
+		pole_status = ( pole_stress < 1.0 ? PS_OK : PS_FAILED );
 		if ( pole_status == PS_FAILED )
 		{
 			warning("pole failed at %.0f%% loading",total_moment/resisting_moment*100);
