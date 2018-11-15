@@ -1216,7 +1216,7 @@ int fncs_msg::publishJsonVariables( )  //Renke add
 	publish_json_data[simName];
 	stringstream complex_val;
 	for(int isize=0; isize<nsize; isize++) {
-		if(!publish_json_data[simName].isMember(vjson_publish_gld_property_name[isize]->object_name)){
+		if(!publish_json_data[simName].isMember(vjson_publish_gld_property_name[isize]->object_name) && vjson_publish_gld_property_name[isize]->prop->is_valid()){
 			publish_json_data[simName][vjson_publish_gld_property_name[isize]->object_name];
 		}
 		if(!vjson_publish_gld_property_name[isize]->is_header) {
