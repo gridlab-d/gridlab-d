@@ -386,8 +386,7 @@ int fncs_msg::init(OBJECT *parent){
 							gld_property_name.c_str(), vjson_publish_gld_property_name[isize]->prop->get_object()->id); //renke debug
 				}
 				else {
-					gl_error("connection: local variable '%s' cannot be resolved", gld_property_name.c_str());
-					return 0;
+					gl_warning("connection: local variable '%s' cannot be resolved. This local variable will not be publish.", gld_property_name.c_str());
 				}
 			} else {
 				const string gld_global_name = vjson_publish_gld_property_name[isize]->object_property;
@@ -398,7 +397,7 @@ int fncs_msg::init(OBJECT *parent){
 				if( vjson_publish_gld_property_name[isize]->prop->is_valid() ) {
 					gl_verbose("fncs_msg::init: Global variable '%s' resolved OK",vjson_publish_gld_property_name[isize]->object_property.c_str());
 				} else {
-					gl_error("fncs_msg::init: Global variable '%s' cannot be resolved", vjson_publish_gld_property_name[isize]->object_property.c_str());
+					gl_warning("fncs_msg::init: Global variable '%s' cannot be resolved This global variable will not be published.", vjson_publish_gld_property_name[isize]->object_property.c_str());
 				}
 			}
 		} else {
@@ -414,7 +413,11 @@ int fncs_msg::init(OBJECT *parent){
 
 	for (int isize=0 ; isize<nsize ; isize++){
 		if(!vjson_publish_gld_property_name[isize]->is_header) {
-			vObj = vjson_publish_gld_property_name[isize]->prop->get_object();
+			if (vjson_publish_gld_property_name[isize]->prop->is_valid()) {
+				vObj = vjson_publish_gld_property_name[isize]->prop->get_object();
+			} else {
+				vObj = NULL;
+			}
 		} else {
 			vObj = vjson_publish_gld_property_name[isize]->obj;
 		}
@@ -1218,35 +1221,37 @@ int fncs_msg::publishJsonVariables( )  //Renke add
 		}
 		if(!vjson_publish_gld_property_name[isize]->is_header) {
 			gldpro_obj = vjson_publish_gld_property_name[isize]->prop;
-			if(gldpro_obj->is_double()) {
-				publish_json_data[simName][vjson_publish_gld_property_name[isize]->object_name][vjson_publish_gld_property_name[isize]->object_property] = gldpro_obj->get_double();
-			} else if (gldpro_obj->is_complex()) {
-				double real_part = gldpro_obj->get_part("real");
-				double imag_part =gldpro_obj->get_part("imag");
-				gld_unit *val_unit = gldpro_obj->get_unit();
-				complex_val.str(string());
-				complex_val << fixed << real_part;
-				if(imag_part >= 0){
-					complex_val << fixed << "+" << imag_part << "j";
+			if(gldpro_obj->is_valid()) {
+				if(gldpro_obj->is_double()) {
+					publish_json_data[simName][vjson_publish_gld_property_name[isize]->object_name][vjson_publish_gld_property_name[isize]->object_property] = gldpro_obj->get_double();
+				} else if (gldpro_obj->is_complex()) {
+					double real_part = gldpro_obj->get_part("real");
+					double imag_part =gldpro_obj->get_part("imag");
+					gld_unit *val_unit = gldpro_obj->get_unit();
+					complex_val.str(string());
+					complex_val << fixed << real_part;
+					if(imag_part >= 0){
+						complex_val << fixed << "+" << imag_part << "j";
+					} else {
+						complex_val << fixed << imag_part << "j";
+					}
+					if(val_unit->is_valid()){
+						string unit_name = string(val_unit->get_name());
+						complex_val << " " << unit_name;
+					}
+					publish_json_data[simName][vjson_publish_gld_property_name[isize]->object_name][vjson_publish_gld_property_name[isize]->object_property] = complex_val.str();
+				} else if (gldpro_obj->is_integer()) {
+					publish_json_data[simName][vjson_publish_gld_property_name[isize]->object_name][vjson_publish_gld_property_name[isize]->object_property] = (Json::Value::Int64)gldpro_obj->get_integer();
+				} else if (gldpro_obj->is_character() || gldpro_obj->is_enumeration() || gldpro_obj->is_complex() || gldpro_obj->is_objectref() || gldpro_obj->is_set()) {
+					char chtmp[1024];
+					gldpro_obj->to_string(chtmp, 1024);
+					publish_json_data[simName][vjson_publish_gld_property_name[isize]->object_name][vjson_publish_gld_property_name[isize]->object_property] = string((char *)chtmp);
+				} else if (gldpro_obj->is_timestamp()) {
+					publish_json_data[simName][vjson_publish_gld_property_name[isize]->object_name][vjson_publish_gld_property_name[isize]->object_property] = (Json::Value::Int64)gldpro_obj->get_timestamp();
 				} else {
-					complex_val << fixed << imag_part << "j";
+					gl_error("fncs_msg::publishJsonVariables(): the type of the gld_property: %s.%s is not a recognized type! \n",vjson_publish_gld_property_name[isize]->object_name.c_str(), vjson_publish_gld_property_name[isize]->object_property.c_str() );
+					return 0;
 				}
-				if(val_unit->is_valid()){
-					string unit_name = string(val_unit->get_name());
-					complex_val << " " << unit_name;
-				}
-				publish_json_data[simName][vjson_publish_gld_property_name[isize]->object_name][vjson_publish_gld_property_name[isize]->object_property] = complex_val.str();
-			} else if (gldpro_obj->is_integer()) {
-				publish_json_data[simName][vjson_publish_gld_property_name[isize]->object_name][vjson_publish_gld_property_name[isize]->object_property] = (Json::Value::Int64)gldpro_obj->get_integer();
-			} else if (gldpro_obj->is_character() || gldpro_obj->is_enumeration() || gldpro_obj->is_complex() || gldpro_obj->is_objectref() || gldpro_obj->is_set()) {
-				char chtmp[1024];
-				gldpro_obj->to_string(chtmp, 1024);
-				publish_json_data[simName][vjson_publish_gld_property_name[isize]->object_name][vjson_publish_gld_property_name[isize]->object_property] = string((char *)chtmp);
-			} else if (gldpro_obj->is_timestamp()) {
-				publish_json_data[simName][vjson_publish_gld_property_name[isize]->object_name][vjson_publish_gld_property_name[isize]->object_property] = (Json::Value::Int64)gldpro_obj->get_timestamp();
-			} else {
-				gl_error("fncs_msg::publishJsonVariables(): the type of the gld_property: %s.%s is not a recognized type! \n",vjson_publish_gld_property_name[isize]->object_name.c_str(), vjson_publish_gld_property_name[isize]->object_property.c_str() );
-				return 0;
 			}
 		} else {
 			publish_json_data[simName][vjson_publish_gld_property_name[isize]->object_name][vjson_publish_gld_property_name[isize]->object_property] = vjson_publish_gld_property_name[isize]->hdr_val;
@@ -1369,7 +1374,7 @@ int fncs_msg::subscribeJsonVariables( ) //Renke add
 													gldObjpropertyName.c_str(), subvaluestring.c_str());
 					}
 					else {
-						gl_error("fncs_msg::fncs json subscribe: fncs type does not match property type: ",
+						gl_error("fncs_msg::fncs json subscribe: fncs type does not match property type: %s",
 								gldObjpropertyName.c_str());
 						delete gldpro_obj;
 						return 0;
@@ -1378,10 +1383,8 @@ int fncs_msg::subscribeJsonVariables( ) //Renke add
 					delete gldpro_obj;
 				}  // end of the if condition to check whether gldpro_obj is valid
 				else {
-					gl_error("connection: local variable '%s' cannot be resolved", gldObjpropertyName.c_str());
+					gl_warning("connection: local variable '%s' cannot be resolved. The local variable will not be updated.", gldObjpropertyName.c_str());
 					delete gldpro_obj;
-					return 0;
-
 				}
 
 			} // end of second level for loop, ValueIterator it1
