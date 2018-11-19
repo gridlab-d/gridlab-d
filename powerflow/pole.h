@@ -50,13 +50,21 @@ private:
 	double wind_loading;
 	double resisting_moment; 	// (see Section B)
 	double pole_moment;		// (see Section D)
+	double pole_moment_nowind; // wire moment without the wind component for wind speed at failure calc
 	double equipment_moment;	// (see Section E)
+	double equipment_moment_nowind; // wire moment without the wind component for wind speed at failure calc
 	double wire_load;		// (see Section F)
+	double wire_load_nowind; // wire moment without the wind component for wind speed at failure calc
 	double wire_moment;		// (see Section F)
+	double wire_moment_nowind; // wire moment without the wind component for wind speed at failure calc
 	double wind_pressure;		// (see Section D)
 	double wire_tension;	// (see Section G)
+	double wire_tension_nowind; // wire moment without the wind component for wind speed at failure calc
 	double pole_stress;	// ratio of total to resisting moment
 	double susceptibility;	// d(pole_stress)/d(wind_speed)
+	double total_moment;
+	double wind_failure;
+	double wind_pressure_failure;
 	object cable_configuration;
 	bool is_deadend;
 private:

@@ -34,6 +34,9 @@ pole::pole(MODULE *mod) : node(mod)
 			PT_double, "equipment_height[ft]", PADDR(equipment_height), PT_DESCRIPTION, "equipment height on pole",
 			PT_double, "pole_stress[pu]", PADDR(pole_stress), PT_DESCRIPTION, "ratio of actual stress to critical stress",
 			PT_double, "susceptibility[pu*s/m]", PADDR(susceptibility), PT_DESCRIPTION, "susceptibility of pole to wind stress (derivative of pole stress w.r.t wind speed)",
+			PT_double, "total_moment[ft*lb]", PADDR(total_moment), PT_DESCRIPTION, "the total moment on the pole.",
+			PT_double, "resisting_moment[ft*lb]", PADDR(resisting_moment), PT_DESCRIPTION, "the resisting moment on the pole.",
+			PT_double, "wind_failure[m/s]", PADDR(wind_failure), PT_DESCRIPTION, "wind speed at pole failure.",
 			NULL) < 1 ) throw "unable to publish properties in " __FILE__;
 	}
 }
@@ -50,7 +53,6 @@ int pole::create(void)
 	configuration = NULL;
 	tilt_angle = 0.0;
 	tilt_direction = 0.0;
-	weather = NULL;
 	wind_speed = NULL;
 	wind_direction = NULL;
 	wind_gust = NULL;
@@ -81,7 +83,7 @@ int pole::init(OBJECT *parent)
 	}
 	if ( tilt_direction < 0 || tilt_direction >= 360 )
 	{
-		gl_error("polt tilt direction is not between 0 and 360 degrees");
+		gl_error("pole tilt direction is not between 0 and 360 degrees");
 		return 0;
 	}
 
@@ -173,11 +175,13 @@ TIMESTAMP pole::presync(TIMESTAMP t0)
 		tilt_angle = 0.0;
 		tilt_direction = 0.0;
 		pole_status = PS_OK;
+
 	}
 	if ( pole_status == PS_OK && last_wind_speed != *wind_speed )
 	{
 		gld_clock dt;
 		wind_pressure = 0.00256*2.24 * (*wind_speed)*(*wind_speed);
+		wind_failure = *wind_speed;
 		double pole_height = config->pole_length - config->pole_depth;
 		pole_moment = wind_pressure * pole_height * pole_height * (config->ground_diameter+2*config->top_diameter)/72 * config->overload_factor_transverse_general;
 		equipment_moment = wind_pressure * equipment_area * equipment_height * config->overload_factor_transverse_general;
@@ -186,14 +190,22 @@ TIMESTAMP pole::presync(TIMESTAMP t0)
 		wire_load = 0.0;
 		wire_moment = 0.0;
 		wire_tension = 0.0;
+		wire_load_nowind = 0.0;
+		wire_moment_nowind = 0.0;
+		wire_tension_nowind = 0.0;
 		for ( wire = get_first_wire() ; wire != NULL ; wire = get_next_wire(wire) )
 		{
 			double load = wind_pressure * (wire->diameter+2*ice_thickness)/12;
 			wire_load += load;
 			wire_moment += wire->span * load * wire->height * config->overload_factor_transverse_wire;
 			wire_tension += wire->tension * config->overload_factor_transverse_wire * sin(tilt_angle/2) * wire->height;
+
+			double load_nowind = (wire->diameter+2*ice_thickness)/12;
+			wire_load_nowind += load_nowind;
+			wire_moment_nowind += wire->span * load_nowind * wire->height * config->overload_factor_transverse_wire;
+			wire_tension_nowind += wire->tension * config->overload_factor_transverse_wire * sin(tilt_angle/2) * wire->height;
 		}
-		double total_moment = pole_moment + equipment_moment + wire_moment + wire_tension;
+		total_moment = pole_moment + equipment_moment + wire_moment + wire_tension;
 		pole_stress = total_moment/resisting_moment;
 		if ( (*wind_speed) > 0 )
 			susceptibility = 2*(pole_moment+equipment_moment+wire_moment)/resisting_moment/(*wind_speed);
@@ -205,8 +217,15 @@ TIMESTAMP pole::presync(TIMESTAMP t0)
 		{
 			warning("pole failed at %.0f%% loading",total_moment/resisting_moment*100);
 			down_time = gl_globalclock;
+			
 		}
 		last_wind_speed = *wind_speed;
+
+		pole_moment_nowind = pole_height * pole_height * (config->ground_diameter+2*config->top_diameter)/72 * config->overload_factor_transverse_general;
+		equipment_moment_nowind = equipment_area * equipment_height * config->overload_factor_transverse_general;
+		double wind_pressure_failure = (resisting_moment) / (pole_moment_nowind + equipment_moment_nowind + wire_moment_nowind + wire_tension_nowind);
+		wind_failure = sqrt(wind_pressure_failure / (0.00256 * 2.24));
+
 	}
 	TIMESTAMP t1 = node::presync(t0);
 	TIMESTAMP t2 = ( pole_status == PS_FAILED ? down_time + config->repair_time : TS_NEVER );
