@@ -882,7 +882,7 @@ int climate::init(OBJECT *parent)
 				gl_error("climate::init unable to gl_convert() 'W/m^2' to 'W/sf'!");
 				return 0;
 			}
-			if(0 == gl_convert("mps", "mph", &(wspeed))){
+			if(0 == gl_convert("dm/s", "m/s", &(wspeed))){
 				gl_error("climate::init unable to gl_convert() 'm/s' to 'miles/h'!");
 				return 0;
 			}
