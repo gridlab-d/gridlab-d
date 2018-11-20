@@ -36,7 +36,7 @@ pole::pole(MODULE *mod) : node(mod)
 			PT_double, "susceptibility[pu*s/m]", PADDR(susceptibility), PT_DESCRIPTION, "susceptibility of pole to wind stress (derivative of pole stress w.r.t wind speed)",
 			PT_double, "total_moment[ft*lb]", PADDR(total_moment), PT_DESCRIPTION, "the total moment on the pole.",
 			PT_double, "resisting_moment[ft*lb]", PADDR(resisting_moment), PT_DESCRIPTION, "the resisting moment on the pole.",
-			PT_double, "wind_failure[m/s]", PADDR(wind_failure), PT_DESCRIPTION, "wind speed at pole failure.",
+			PT_double, "critical_wind_speed[m/s]", PADDR(critical_wind_speed), PT_DESCRIPTION, "wind speed at pole failure.",
 			NULL) < 1 ) throw "unable to publish properties in " __FILE__;
 	}
 }
@@ -181,7 +181,7 @@ TIMESTAMP pole::presync(TIMESTAMP t0)
 	{
 		gld_clock dt;
 		wind_pressure = 0.00256*2.24 * (*wind_speed)*(*wind_speed);
-		wind_failure = *wind_speed;
+		critical_wind_speed = *wind_speed;
 		double pole_height = config->pole_length - config->pole_depth;
 		pole_moment = wind_pressure * pole_height * pole_height * (config->ground_diameter+2*config->top_diameter)/72 * config->overload_factor_transverse_general;
 		equipment_moment = wind_pressure * equipment_area * equipment_height * config->overload_factor_transverse_general;
@@ -224,7 +224,7 @@ TIMESTAMP pole::presync(TIMESTAMP t0)
 		pole_moment_nowind = pole_height * pole_height * (config->ground_diameter+2*config->top_diameter)/72 * config->overload_factor_transverse_general;
 		equipment_moment_nowind = equipment_area * equipment_height * config->overload_factor_transverse_general;
 		double wind_pressure_failure = (resisting_moment) / (pole_moment_nowind + equipment_moment_nowind + wire_moment_nowind + wire_tension_nowind);
-		wind_failure = sqrt(wind_pressure_failure / (0.00256 * 2.24));
+		critical_wind_speed = sqrt(wind_pressure_failure / (0.00256 * 2.24));
 
 	}
 	TIMESTAMP t1 = node::presync(t0);
