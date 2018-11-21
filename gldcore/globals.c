@@ -133,6 +133,7 @@ static struct s_varmap {
 	{"iteration_limit", PT_int32, &global_iteration_limit, PA_PUBLIC, "iteration limit"},
 	{"federation_reiteration", PT_bool, &global_federation_reiteration, PA_REFERENCE, "global boolean to enforce a reiteration for all modules due to an external federation reiteration"},
 	{"workdir", PT_char1024, &global_workdir, PA_REFERENCE, "working directory"},
+	{"lock", PT_bool, &global_lock_enabled, PA_PUBLIC, "lock enabled flag"},
 	{"dumpfile", PT_char1024, &global_dumpfile, PA_PUBLIC, "dump filename"},
 	{"savefile", PT_char1024, &global_savefile, PA_PUBLIC, "save filename"},
 	{"dumpall", PT_bool, &global_dumpall, PA_PUBLIC, "dumpall enable flag"},
