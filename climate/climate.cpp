@@ -882,7 +882,7 @@ int climate::init(OBJECT *parent)
 				gl_error("climate::init unable to gl_convert() 'W/m^2' to 'W/sf'!");
 				return 0;
 			}
-			if(0 == gl_convert("mps", "mph", &(wspeed))){
+			if(0 == gl_convert("m/s", "m/s", &(wspeed))){
 				gl_error("climate::init unable to gl_convert() 'm/s' to 'miles/h'!");
 				return 0;
 			}
@@ -946,7 +946,9 @@ int climate::init(OBJECT *parent)
 		line++;
 	}
 	file->close();
-
+	if(strstr(tmyfile, ".tmy2")){
+		gl_error("TMY2 files exhibit unpredictable behavior, please use TMY3 file format.");
+	}
 	/* initialize climate to starttime */
 	presync(gl_globalclock);
 
