@@ -4,13 +4,13 @@ module climate;
 #set suppress_repeat_messages=FALSE
 
 clock {
-	starttime '2000-01-01 00:00:00';
-	stoptime '2001-01-01 00:00:00';
+	starttime '1999-01-01 01:00:00';
+	stoptime '1999-01-30 01:00:00';
 }
 
 object climate {
 	name weather;
-	tmyfile WA-Yakima.tmy2;
+	tmyfile CA-Chino_Airport.tmy3;
 }
 
 object pole_configuration {
@@ -74,6 +74,6 @@ object pole {
 module tape;
 object multi_recorder {
 	interval 3600;
-	property "weather:wind_speed,pole1:pole_stress,pole1:susceptibility, pole1:total_moment, pole1:resisting_moment, pole2:pole_stress,pole2:susceptibility, pole1:wind_failure, pole2:wind_failure, pole2:total_moment, pole2:resisting_moment";
+	property "weather:wind_speed, pole1:pole_stress,pole1:susceptibility, pole1:total_moment, pole1:resisting_moment, pole2:pole_stress,pole2:susceptibility, pole1:wind_failure, pole2:wind_failure, pole2:total_moment, pole2:resisting_moment";
 	file test_pole.csv;
 }
