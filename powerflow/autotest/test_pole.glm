@@ -4,8 +4,8 @@ module climate;
 #set suppress_repeat_messages=FALSE
 
 clock {
-	starttime '1999-01-01 01:00:00';
-	stoptime '1999-01-30 01:00:00';
+	starttime '2000-01-01 00:00:00';
+	stoptime '2001-01-01 00:00:00';
 }
 
 object climate {
@@ -65,10 +65,10 @@ object pole {
 	configuration "WOOD-C-45/5"; 
 	phases ABC;
 	nominal_voltage 12470;
-	tilt_angle 5 deg;
+	tilt_angle 0.4;
 	tilt_direction 270;
-	equipment_area 5 sf;
-	equipment_height 25 ft;
+//	equipment_area 5 sf;
+//	equipment_height 25 ft;
 }
 
 module tape;
