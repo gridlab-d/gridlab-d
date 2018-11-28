@@ -63,7 +63,7 @@ private:
 	double pole_stress;	// ratio of total to resisting moment
 	double susceptibility;	// d(pole_stress)/d(wind_speed)
 	double total_moment;
-	double wind_failure;
+	double critical_wind_speed;
 	double wind_pressure_failure;
 	object cable_configuration;
 	bool is_deadend;
