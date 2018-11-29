@@ -182,6 +182,8 @@ TAPEFUNCS *get_ftable(char *mode){
 	return funcs;
 }
 
+extern int method_recorder_property(OBJECT *obj, char *value, size_t size);
+
 EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 {
 	struct recorder my;
@@ -230,13 +232,11 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 	/* register the other classes as needed, */
 	recorder_class = gl_register_class(module,"recorder",sizeof(struct recorder),PC_POSTTOPDOWN|PC_OBSERVER);
 	recorder_class->trl = TRL_PROVEN;
-	PUBLISH_STRUCT(recorder,char1024,property);
 	PUBLISH_STRUCT(recorder,char32,trigger);
 	PUBLISH_STRUCT(recorder,char1024,file);
 	PUBLISH_STRUCT(recorder,char8,filetype);
 	PUBLISH_STRUCT(recorder,char32,mode);
 	PUBLISH_STRUCT(recorder,char1024,multifile);
-	//PUBLISH_STRUCT(recorder,int64,interval);
 	PUBLISH_STRUCT(recorder,int32,limit);
 	PUBLISH_STRUCT(recorder,char1024,plotcommands);
 	PUBLISH_STRUCT(recorder,char32,xdata);
@@ -247,6 +247,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 	if(gl_publish_variable(recorder_class,
 		PT_double, "interval[s]", ((char*)&(my.dInterval) - (char *)&my),
 		PT_char256,"strftime_format",((char*)&(my.strftime_format) - (char*)&my),
+		PT_method,"property", (size_t)method_recorder_property,
 		PT_enumeration, "output", ((char*)&(my.output) - (char *)&my),
 			PT_KEYWORD, "SCREEN", SCREEN,
 			PT_KEYWORD, "EPS",    EPS,

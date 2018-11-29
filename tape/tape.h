@@ -157,7 +157,8 @@ struct recorder {
 	double dInterval;
 	TIMESTAMP interval;
 	int32 limit;
-	char1024 property;
+	char* property;
+	size_t property_len;
 	char1024 out_property;
 	PLOTFILE output; /* {EPS|GIF|JPG|PDF|PNG|SVG} More can be added */
 	char1024 plotcommands;

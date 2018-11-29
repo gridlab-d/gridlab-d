@@ -83,7 +83,6 @@ EXPORT int create_recorder(OBJECT **obj, OBJECT *parent)
 		strcpy(my->filetype,"txt");
 		strcpy(my->mode, "file");
 		strcpy(my->delim,",");
-		strcpy(my->property,"(undefined)");
 		my->interval = -1; /* transients only */
 		my->dInterval = -1.0;
 		my->last.ts = -1;
@@ -95,10 +94,12 @@ EXPORT int create_recorder(OBJECT **obj, OBJECT *parent)
 		my->trigger[0]='\0';
 		my->format = 0;
 		strcpy(my->plotcommands,"");
-		my->target = gl_get_property(*obj,my->property,NULL);
+		my->target = NULL;
 		my->header_units = HU_DEFAULT;
 		my->line_units = LU_DEFAULT;
 		my->flush = -1; /* -1 (default): flush when buffer full, 0 flush each line, >0 flush seconds */
+		my->property = NULL;
+		my->property_len = 0;
 		return 1;
 	}
 	return 0;
@@ -112,6 +113,12 @@ static int recorder_open(OBJECT *obj)
 	TAPEFUNCS *f = 0;
 	struct recorder *my = OBJECTDATA(obj,struct recorder);
 	int retvalue;
+
+	if ( my->property == NULL )
+	{
+		gl_error("at least one property must be specified");
+		return 0;
+	}
 	
 	my->interval = (int64)(my->dInterval/TS_SECOND);
 	if ( my->interval < -1 )
@@ -485,6 +492,32 @@ static TIMESTAMP recorder_write(OBJECT *obj)
 		fprintf(my->multifp, "%s,%s\n", ts, outbuffer);
 	}
 	return TS_NEVER;
+}
+
+#define BLOCKSIZE 1024
+EXPORT int method_recorder_property(OBJECT *obj, char *value, size_t size)
+{
+	struct recorder *my = OBJECTDATA(obj,struct recorder);
+	size_t len = strlen(value);
+	gl_verbose("adding property '%s' to recorder:%d",value,obj->id);
+	if ( my->property_len < len || my->property == NULL )
+	{
+		my->property_len = ((my->property_len+len)/BLOCKSIZE+1)*BLOCKSIZE;
+		my->property = (char*)realloc(my->property,my->property_len);
+		if ( my->property == NULL )
+		{
+			gl_error("memory allocation failed");
+			my->property_len = 0;
+			return 0;
+		}
+		strcpy(my->property,value);
+	}	
+	else
+	{
+		strcat(my->property,",");
+		strcat(my->property,value);
+	}
+	return 1;
 }
 
 PROPERTY *link_properties(struct recorder *rec, OBJECT *obj, char *property_list)
