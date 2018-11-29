@@ -47,7 +47,6 @@ EXPORT int create_collector(OBJECT **obj, OBJECT *parent)
 		strcpy(my->file,"");
 		strcpy(my->filetype,"txt");
 		strcpy(my->delim,",");
-		strcpy(my->property,"(undefined)");
 		strcpy(my->group,"");
 		my->interval = TS_NEVER; /* transients only */
 		my->dInterval = -1.0;
@@ -59,6 +58,8 @@ EXPORT int create_collector(OBJECT **obj, OBJECT *parent)
 		my->trigger[0]='\0';
 		my->format = 0;
 		my->aggr = NULL;
+		my->property = NULL;
+		my->property_len = 0;
 		return 1;
 	}
 	return 0;
@@ -72,6 +73,12 @@ static int collector_open(OBJECT *obj)
 	TAPEFUNCS *tf = 0;
 	struct collector *my = OBJECTDATA(obj,struct collector);
 	
+	if ( my->property == NULL )
+	{
+		gl_error("at least one property must be specified");
+		return 0;
+	}
+
 	my->interval = (int64)(my->dInterval/TS_SECOND);
 
 	/* if prefix is omitted (no colons found) */
@@ -150,6 +157,32 @@ static TIMESTAMP collector_write(OBJECT *obj)
 	else
 		my->samples++;
 	return TS_NEVER;
+}
+
+#define BLOCKSIZE 1024
+EXPORT int method_collector_property(OBJECT *obj, char *value, size_t size)
+{
+	struct collector *my = OBJECTDATA(obj,struct collector);
+	size_t len = strlen(value);
+	gl_verbose("adding property '%s' to recorder:%d",value,obj->id);
+	if ( my->property_len < len || my->property == NULL )
+	{
+		my->property_len = ((my->property_len+len)/BLOCKSIZE+1)*BLOCKSIZE;
+		my->property = (char*)realloc(my->property,my->property_len);
+		if ( my->property == NULL )
+		{
+			gl_error("memory allocation failed");
+			my->property_len = 0;
+			return 0;
+		}
+		strcpy(my->property,value);
+	}	
+	else
+	{
+		strcat(my->property,",");
+		strcat(my->property,value);
+	}
+	return 1;
 }
 
 AGGREGATION *link_aggregates(char *aggregate_list, char *group)

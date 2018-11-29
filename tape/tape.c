@@ -183,6 +183,7 @@ TAPEFUNCS *get_ftable(char *mode){
 }
 
 extern int method_recorder_property(OBJECT *obj, char *value, size_t size);
+extern int method_collector_property(OBJECT *obj, char *value, size_t size);
 
 EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 {
@@ -305,15 +306,14 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 	/* register the other classes as needed, */
 	collector_class = gl_register_class(module,"collector",sizeof(struct collector),PC_POSTTOPDOWN|PC_OBSERVER);
 	collector_class->trl = TRL_PROVEN;
-	PUBLISH_STRUCT(collector,char1024,property);
 	PUBLISH_STRUCT(collector,char32,trigger);
 	PUBLISH_STRUCT(collector,char1024,file);
-	//PUBLISH_STRUCT(collector,int64,interval);
 	PUBLISH_STRUCT(collector,int32,limit);
 	PUBLISH_STRUCT(collector,char256,group);
 	PUBLISH_STRUCT(collector,int32,flush);
 	if(gl_publish_variable(collector_class,
 		PT_double, "interval[s]", ((char*)&(my2.dInterval) - (char *)&my2),
+		PT_method, "property", (size_t)method_collector_property,
 			NULL) < 1)
 		GL_THROW("Could not publish property output for collector");
 

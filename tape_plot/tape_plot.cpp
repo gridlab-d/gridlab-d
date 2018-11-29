@@ -593,9 +593,9 @@ EXPORT int open_collector(struct collector *my, char *fname, char *flags)
 	count += fprintf(my->fp,"# trigger... %s\n", my->trigger[0]=='\0'?"(none)":my->trigger.get_string());
 	count += fprintf(my->fp,"# interval.. %d\n", my->interval);
 	count += fprintf(my->fp,"# limit..... %d\n", my->limit);
-	count += fprintf(my->fp,"# property.. timestamp,%s\n", my->property.get_string());
+	count += fprintf(my->fp,"# property.. timestamp,%s\n", (const char*)my->property);
 
-  splitString(my->property.get_string(), columns);
+  splitString(my->property, columns);
 
 	/* Put gnuplot commands in the header portion */
 	fprintf(my->fp,"# GNUplot commands below:     \n");
