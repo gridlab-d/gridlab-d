@@ -184,6 +184,7 @@ TAPEFUNCS *get_ftable(char *mode){
 
 extern int method_recorder_property(OBJECT *obj, char *value, size_t size);
 extern int method_collector_property(OBJECT *obj, char *value, size_t size);
+extern int method_multi_recorder_property(OBJECT *obj, char *value, size_t size);
 
 EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 {
@@ -273,7 +274,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 	multi_recorder_class->trl = TRL_QUALIFIED;
 	if(gl_publish_variable(multi_recorder_class,
 		PT_double, "interval[s]", ((char*)&(my.dInterval) - (char *)&my),
-		PT_char1024, "property", ((char*)&(my.property) - (char *)&my),
+		PT_method, "property", (size_t)method_multi_recorder_property,
 		PT_char32, "trigger", ((char*)&(my.trigger) - (char *)&my),
 		PT_char1024, "file", ((char*)&(my.file) - (char *)&my),
 		PT_char8, "filetype", ((char*)&(my.filetype) - (char *)&my),

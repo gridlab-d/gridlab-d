@@ -1,0 +1,29 @@
+clock {
+	starttime '2018-01-01 00:00:00';
+	stoptime '2019-01-01 00:00:00';
+}
+
+class test {
+	randomvar x;
+	randomvar y;
+}
+
+module tape;
+object test {
+	name test_1;
+	x "type:normal(0,1); refresh:1h";
+	y "type:normal(0,1); refresh:1h";
+}
+
+object test {
+	name test_2;
+	x "type:normal(0,1); refresh:1h";
+	y "type:normal(0,1); refresh:1h";
+}
+
+object multi_recorder {
+	property test_1:x,test_2:x;
+	property test_1:y,test_2:y;
+	file test_multi_recorder_multiple_properties.csv;
+	interval 1h;
+};

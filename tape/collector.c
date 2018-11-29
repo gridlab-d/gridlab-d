@@ -164,7 +164,7 @@ EXPORT int method_collector_property(OBJECT *obj, char *value, size_t size)
 {
 	struct collector *my = OBJECTDATA(obj,struct collector);
 	size_t len = strlen(value);
-	gl_verbose("adding property '%s' to recorder:%d",value,obj->id);
+	gl_verbose("adding property '%s' to collector:%d",value,obj->id);
 	if ( my->property_len < len || my->property == NULL )
 	{
 		my->property_len = ((my->property_len+len)/BLOCKSIZE+1)*BLOCKSIZE;
