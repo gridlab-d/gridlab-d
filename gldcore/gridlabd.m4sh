@@ -59,19 +59,29 @@ if test "x$HAS_DOCKER" = "xyes" ; then :
   fi
 fi
 
+if test "x$1" = "x--gdb" ; then :
+  shift
+  gdb -ex "run $@" $bindir/gridlabd.bin
+elif test "x$1" = "x--lldb" ; then :
+  shift
+  echo "run $@" > /tmp/gridlabd-$$
+  lldb -s /tmp/gridlabd-$$ $bindir/gridlabd.bin
+  rm /tmp/gridlabd-$$
+fi
+
 AS_IF([test "x$GLPATH" = x],
-    [export GLPATH="$pkglibdir:$pkgdatadir"],
-    [export GLPATH="$pkglibdir:$pkgdatadir:$GLPATH"])
+  [export GLPATH="$pkglibdir:$pkgdatadir"],
+  [export GLPATH="$pkglibdir:$pkgdatadir:$GLPATH"])
 
 AS_IF([test "x$TERM" = "xcygwin"],
 	[export CXXFLAGS="-I${pkgdatadir} $CXXFLAGS"],
 	[export CXXFLAGS="-I$pkgdatadir $CXXFLAGS"])
 
 AS_IF([test "x$GRIDLABD_DEBUG" = "x"],
-  	[AS_IF([test "x$HAS_MINGW" = "xyes"],
+  [AS_IF([test "x$HAS_MINGW" = "xyes"],
 		["$bindir/gridlabd.exe" "$@"],
 		["$bindir/gridlabd.bin" "$@"])],
-  	[AS_IF([test "x$HAS_MINGW" = "xyes"],
+  [AS_IF([test "x$HAS_MINGW" = "xyes"],
 		["$GRIDLABD_DEBUG" "$bindir/gridlabd.exe"],
 		["$GRIDLABD_DEBUG" "$bindir/gridlabd.bin"])])
 
