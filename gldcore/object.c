@@ -1616,7 +1616,7 @@ TIMESTAMP object_sync(OBJECT *obj, /**< the object to synchronize */
 	}
 	if ( rc != 0 )
 	{
-		IN_MYCONTEXT output_error("object %s:%d pass %s at ts=%d event handler failed with code %d",obj->oclass->name,obj->id,pass<0||pass>4?"(invalid)":passname[pass],ts,rc);
+		output_error("object %s:%d pass %s at ts=%d event handler failed with code %d",obj->oclass->name,obj->id,pass<0||pass>4?"(invalid)":passname[pass],ts,rc);
 		return TS_ZERO;
 	}
 	return t2;
@@ -1652,7 +1652,7 @@ int object_init(OBJECT *obj) /**< the object to initialize */
 		int rc = object_event(obj,obj->events.init);
 		if ( rc != 0 )
 		{
-			IN_MYCONTEXT output_error("object %s:%d init at ts=%d event handler failed with code %d",obj->oclass->name,obj->id,global_starttime,rc);
+			output_error("object %s:%d init at ts=%d event handler failed with code %d",obj->oclass->name,obj->id,global_starttime,rc);
 			rv = 0;
 		}
 	}
@@ -1690,7 +1690,7 @@ STATUS object_precommit(OBJECT *obj, TIMESTAMP t1)
 		int rc = object_event(obj,obj->events.precommit);
 		if ( rc != 0 )
 		{
-			IN_MYCONTEXT output_error("object %s:%d precommit at ts=%d event handler failed with code %d",obj->oclass->name,obj->id,global_starttime,rc);
+			output_error("object %s:%d precommit at ts=%d event handler failed with code %d",obj->oclass->name,obj->id,global_starttime,rc);
 			rv = FAILED;
 		}
 	}
@@ -1719,7 +1719,7 @@ TIMESTAMP object_commit(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 		int rc = object_event(obj,obj->events.commit);
 		if ( rc != 0 )
 		{
-			IN_MYCONTEXT output_error("object %s:%d commit at ts=%d event handler failed with code %d",obj->oclass->name,obj->id,global_starttime,rc);
+			output_error("object %s:%d commit at ts=%d event handler failed with code %d",obj->oclass->name,obj->id,global_starttime,rc);
 			rv = TS_INVALID;
 		}
 	}
@@ -1753,7 +1753,7 @@ STATUS object_finalize(OBJECT *obj)
 		int rc = object_event(obj,obj->events.precommit);
 		if ( rc != 0 )
 		{
-			IN_MYCONTEXT output_error("object %s:%d precommit at ts=%d event handler failed with code %d",obj->oclass->name,obj->id,global_starttime,rc);
+			output_error("object %s:%d precommit at ts=%d event handler failed with code %d",obj->oclass->name,obj->id,global_starttime,rc);
 			rv = FAILED;
 		}
 	}
@@ -2241,192 +2241,70 @@ double convert_to_longitude(char *buffer)
  ***************************************************************************/
 
 typedef struct s_objecttree {
-	char name[64];
+	char *name;
 	OBJECT *obj;
-	struct s_objecttree *before, *after;
-	int balance; /* unused */
+	struct s_objecttree *next;
 } OBJECTTREE;
+static OBJECTTREE *top[65536];
+typedef unsigned short HASH;
 
-static OBJECTTREE *top=NULL;
-
-void debug_traverse_tree(OBJECTTREE *tree){
-	if(tree == NULL){
-		tree = top;
-		if(top == NULL){
-			return;
-		}
-	}
-	if(tree->before != NULL){
-		debug_traverse_tree(tree->before);
-	}
-	output_test("%s", tree->name);
-	if(tree->after != NULL){
-		debug_traverse_tree(tree->after);
-	}
-}
-
-/* returns the height of the tree */
-int tree_get_height(OBJECTTREE *tree){
-	if(tree == NULL){
-		return 0;
-	} else {
-		int left = tree_get_height(tree->before);
-		int right = tree_get_height(tree->after);
-		if(left > right)
-			return left+1;
-		else return right+1;
-	}
-}
-
-/* returns the node to point to instead of tree */
-void rotate_tree_right(OBJECTTREE **tree){ /* move one object from left to right */
-	OBJECTTREE *root, *pivot, *child;
-	root = *tree;
-	pivot = root->before;
-	child = root->before->after;
-	*tree = pivot;
-	pivot->after = root;
-	root->before = child;
-	root->balance += 2;
-	pivot->balance += 1;
-}
-
-/* returns the node to point to instead of tree */
-void rotate_tree_left(OBJECTTREE **tree){ /* move one object from right to left */
-	OBJECTTREE *root, *pivot, *child;
-	root = *tree;
-	pivot = root->after;
-	child = root->after->before;
-	*tree = pivot;
-	pivot->before = root;
-	root->after = child;
-	root->balance -= 2;
-	pivot->balance -= 1;
-}
-
-/*  Rebalance the tree to make searching more efficient
-	It's a good idea to this after the tree is built
- */
-int object_tree_rebalance(OBJECTTREE *tree) /* AVL logic */
+static HASH hash(OBJECTNAME name)
 {
-	/* currently being done during insertions & deletions */
-	return 0;
+	static HASH A = 55711, B = 45131, C = 60083;
+	HASH h = 18443;
+	unsigned char *p;
+	for ( p = name ; *p != '\0' ; p++ )
+		h = (h*A)^((*p)*B);
+	IN_MYCONTEXT output_debug("hash(name='%s') = %hu",name,h);
+	return h;
 }
 
-/*	Add an item to the tree
-	returns the "correct" root node for the subtree that an object was added to.
- */
-static int addto_tree(OBJECTTREE **tree, OBJECTTREE *item){
-	int rel = strcmp((*tree)->name, item->name);
-	int right = 0, left = 0, ir = 0, il = 0, rv = 0, height = 0;
-
-	// find location to insert new object
-	if(rel > 0){
-		if((*tree)->before == NULL){
-			(*tree)->before = item;
-		} else {
-			rv = addto_tree(&((*tree)->before), item);
-			if(global_no_balance){
-				return rv + 1;
-			}
-		}
-	} else if(rel<0) {
-		if((*tree)->after == NULL) {
-			(*tree)->after = item;
-		} else {
-			rv = addto_tree(&((*tree)->after),item);
-			if(global_no_balance){
-				return rv + 1;
-			}
-		}
-	} else {
-		return (*tree)->obj==item->obj;
+OBJECTTREE *hash_find(HASH h, OBJECTNAME name)
+{
+	OBJECTTREE *item;
+	for ( item = top[h] ; item != NULL ; item = item->next )
+	{
+		if ( strcmp(item->name,name) == 0 )
+			return item;
 	}
-
-	// check balance
-	right = tree_get_height((*tree)->after);
-	left = tree_get_height((*tree)->before);
-	(*tree)->balance = right - left;
-
-	// rotations needed?
-	if((*tree)->balance > 1){
-		if((*tree)->after->balance < 0){ /* inner left is heavy */
-			rotate_tree_right(&((*tree)->after));
-		}
-		rotate_tree_left(tree);	//	was left/right
-	} else if((*tree)->balance < -1){
-		if((*tree)->before->balance > 0){ /* inner right is heavy */
-			rotate_tree_left(&((*tree)->before));
-		}
-		rotate_tree_right(tree);
-	}
-	return tree_get_height(*tree); /* verify after rotations */
+	IN_MYCONTEXT output_debug("hash_find(): name '%s' not found",name);
+	return NULL;
 }
 
 /*	Add an object to the object tree.  Throws exceptions on memory errors.
 	Returns a pointer to the object tree item if successful, NULL on failure (usually because name already used)
  */
-static OBJECTTREE *object_tree_add(OBJECT *obj, OBJECTNAME name){
+static OBJECTTREE *object_tree_add(OBJECT *obj, OBJECTNAME name)
+{
 	OBJECTTREE *item = (OBJECTTREE*)malloc(sizeof(OBJECTTREE));
-
-	if(item == NULL) {
-		output_fatal("object_tree_add(obj='%s:%d', name='%s'): memory allocation failed (%s)", obj->oclass->name, obj->id, name, strerror(errno));
+	item->name = (char*)malloc(strlen(name)+1);
+	if ( item->name == NULL )
+	{
+		output_fatal("object_tree_add(OBJECT *obj=<%s:%d>, OBJECTNAME name='%s'): memory allocation failed", obj->oclass->name, obj->id, name);
 		return NULL;
-		/* TROUBLESHOOT
-			The memory required to add this object to the object index is not available.  Try freeing up system memory and try again.
-		 */
 	}
-	
+	strcpy(item->name,name);
 	item->obj = obj;
-	item->balance = 0;
-	strncpy(item->name, name, sizeof(item->name));
-	item->before = item->after = NULL;
-
-	if(top == NULL){
-		top = item;
-		return top;
-	} else {
-		if(addto_tree(&top, item) != 0){
-			return item;
-		} else {
-			return NULL;
-		}
+	HASH h = hash(name);
+	item->next = top[h];
+	if ( top[h] == NULL )
+	{
+		IN_MYCONTEXT output_debug("object_tree_add(OBJECT *obj=<%s:%d>, OBJECTNAME name='%s'): added to hash %d", obj->oclass->name, obj->id, name, h);
 	}
+	else
+	{
+		IN_MYCONTEXT output_debug("object_tree_add(OBJECT *obj=<%s:%d>, OBJECTNAME name='%s'): added to hash %d after '%s'", obj->oclass->name, obj->id, name, h, top[h]->name);
+	}
+	top[h] = item;
+	return item;
 }
 
 /*	Finds a name in the tree
  */
-static OBJECTTREE **findin_tree(OBJECTTREE *tree, OBJECTNAME name)
+static OBJECTTREE *findin_tree(OBJECTTREE *tree, OBJECTNAME name)
 {
-	static OBJECTTREE **temptree = NULL;
-	if(tree == NULL){
-		return NULL;
-	} else {
-		int rel = strcmp(tree->name, name);
-		if(rel > 0){
-			if(tree->before != NULL){
-				if(strcmp(tree->before->name, name) == 0){
-					return &(tree->before);
-				} else {
-					return findin_tree(tree->before, name);
-				}
-			} else {
-				return NULL;
-			}
-		} else if(rel<0) {
-			if(tree->after != NULL){
-				if(strcmp(tree->after->name, name) == 0){
-					return &(tree->after);
-				} else {
-					return findin_tree(tree->after, name);
-				}
-			} else {
-				return NULL;
-			}
-		} else {
-			return (temptree = &tree);
-		}
-	}
+	HASH h = hash(name);
+	return hash_find(h,name);
 }
 
 /*	Deletes a name from the tree
@@ -2434,60 +2312,31 @@ static OBJECTTREE **findin_tree(OBJECTTREE *tree, OBJECTNAME name)
  */
 void object_tree_delete(OBJECT *obj, OBJECTNAME name)
 {
-	OBJECTTREE **item = findin_tree(top,name);
-	OBJECTTREE *temp = NULL, **dtemp = NULL;
-
-	if(item != NULL && strcmp((*item)->name, name)!=0){
-		if((*item)->after == NULL && (*item)->before == NULL){ /* no children -- nuke */
-			free(*item);
-			*item = NULL;
-		} else if((*item)->after != NULL && (*item)->before != NULL){ /* two children -- find a replacement */
-			dtemp = &((*item)->before);
-			while(temp->after != NULL)
-				dtemp = &(temp->after);
-			temp = (*dtemp)->before;
-			(*dtemp)->before = (*item)->before;
-			(*dtemp)->after = (*item)->after;
-			free(*item);
-			*item = *dtemp;
-			*dtemp = temp;
-			/* replace item with the rightmost left element.*/
-
-		} else if((*item)->after == NULL || (*item)->before == NULL){ /* one child -- promotion time! */
-			if((*item)->after != NULL){
-				temp = (*item)->after;
-				free(*item);
-				*item = temp;
-			} else if((*item)->before != NULL){
-				temp = (*item)->before;
-				free(*item);
-				*item = temp;
-			} else {
-				output_fatal("unexpected branch result in object_tree_delete");
-				/*	TROUBLESHOOT
-					This should never happen and if it does, the system has become unstable and the problem should be reported.
-				 */
-			}
+	HASH h = hash(name);
+	OBJECTTREE *item, *last = NULL;
+	for ( item = top[h] ; item != NULL ; item = item->next )
+	{
+		if ( strcmp(item->name, name) == 0 )
+		{
+			if ( last != NULL )
+				last->next = item->next;
+			else
+				top[h] = item->next;
+			free(item->name);
+			free(item);
 		}
-
-		/* throw_exception("object_tree_delete(obj=%s:%d, name='%s'): rename of objects in tree is not supported yet", obj->oclass->name, obj->id, name); */
+		else
+			last = item;
 	}
 }
 
 /** Find an object from a name.  This only works for named objects.  See object_set_name().
 	@return a pointer to the OBJECT structure
  **/
-OBJECT *object_find_name(OBJECTNAME name){
-	OBJECTTREE **item = NULL;
-
-	item = findin_tree(top, name);
-	
-	if(item != NULL && *item != NULL){
-		return (*item)->obj;
-	} else {
-		/* normal operation, remain silent */
-		return NULL;
-	}
+OBJECT *object_find_name(OBJECTNAME name)
+{
+	OBJECTTREE *item = findin_tree(top, name);
+	return item == NULL ? NULL : item->obj;
 }
 
 int object_build_name(OBJECT *obj, char *buffer, int len){
