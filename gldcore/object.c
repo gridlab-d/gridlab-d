@@ -1450,16 +1450,13 @@ void object_synctime_profile_dump(char *filename)
 		output_warning("unable to access object profile dumpfile '%s'", fname);
 		return;
 	}
-	fprintf(fp,"%s","object,presync,sync,postsync,init,heartbeat,precommit,commit,finalize\n");
+	fprintf(fp,"%s","class,id,name,presync,sync,postsync,init,heartbeat,precommit,commit,finalize\n");
 	for ( obj = object_get_first() ; obj != NULL ; obj = object_get_next(obj) )
 	{
 		int i;
-		if ( obj->name )
-			fprintf(fp,"%s",obj->name);
-		else
-			fprintf(fp,"%s:%d",obj->oclass->name);
+		fprintf(fp,"%s,%u,%s",obj->oclass->name,obj->id,obj->name?obj->name:"");
 		for ( i = 0 ; i < _OPI_NUMITEMS ; i++ )
-			fprintf(fp,",%d",(int)obj->synctime[i]);
+			fprintf(fp,",%llu",(unsigned long long)obj->synctime[i]);
 		fprintf(fp,"\n");
 	}
 	fclose(fp);
