@@ -2240,22 +2240,65 @@ double convert_to_longitude(char *buffer)
  OBJECT NAME TREE
  ***************************************************************************/
 
+#define TREESIZE 65536*16
 typedef struct s_objecttree {
 	char *name;
 	OBJECT *obj;
 	struct s_objecttree *next;
 } OBJECTTREE;
-static OBJECTTREE *top[65536];
-typedef unsigned short HASH;
+static OBJECTTREE *top[TREESIZE];
+typedef unsigned long long HASH;
 
 static HASH hash(OBJECTNAME name)
 {
 	static HASH A = 55711, B = 45131, C = 60083;
 	HASH h = 18443;
-	unsigned char *p;
-	for ( p = name ; *p != '\0' ; p++ )
-		h = (h*A)^((*p)*B);
-	IN_MYCONTEXT output_debug("hash(name='%s') = %hu",name,h);
+	HASH *p;
+	bool ok = true;
+	for ( p = name ; ok ; p++ )
+	{
+		unsigned long long c = *p;
+		if ( (c&0xff) == 0 )
+			break;
+		else if ( (c&0xff00) == 0 )
+		{
+			ok = false;
+			c &= 0x00000000000000ff;
+		}
+		else if ( (c&0xff0000) == 0 )
+		{
+			ok = false;
+			c &= 0x000000000000ffff;
+		}
+		else if ( (c&0xff000000) == 0 )
+		{
+			ok = false;
+			c &= 0x0000000000ffffff;
+		}
+		else if ( (c&0xff00000000) == 0 )
+		{
+			ok = false;
+			c &= 0x00000000ffffffff;
+		}
+		else if ( (c&0xff0000000000) == 0 )
+		{
+			ok = false;
+			c &= 0x000000ffffffffff;
+		}
+		else if ( (c&0xff000000000000) == 0 )
+		{
+			ok = false;
+			c &= 0x0000ffffffffffff;
+		}
+		else if ( (c&0xff00000000000000) == 0 )
+		{
+			ok = false;
+			c &= 0x00ffffffffffffff;
+		}
+		h = ((h*A)^(c*B));
+	}
+	h %= TREESIZE;
+	IN_MYCONTEXT output_debug("hash(name='%s') = %llu",name,h);
 	return h;
 }
 
@@ -2267,7 +2310,7 @@ OBJECTTREE *hash_find(HASH h, OBJECTNAME name)
 		if ( strcmp(item->name,name) == 0 )
 			return item;
 	}
-	IN_MYCONTEXT output_debug("hash_find(): name '%s' not found",name);
+	IN_MYCONTEXT output_debug("hash_find(HASH h=%lld, OBJECTNAME name='%s'): name not found",h,name);
 	return NULL;
 }
 
@@ -2304,7 +2347,9 @@ static OBJECTTREE *object_tree_add(OBJECT *obj, OBJECTNAME name)
 static OBJECTTREE *findin_tree(OBJECTTREE *tree, OBJECTNAME name)
 {
 	HASH h = hash(name);
-	return hash_find(h,name);
+	OBJECTTREE *item = hash_find(h,name);
+	IN_MYCONTEXT output_debug("findin_tree(OBJECTTREE *tree=%p, OBJECTNAME name='%s'): item=%p", tree, name, item);
+	return item;
 }
 
 /*	Deletes a name from the tree
