@@ -2295,7 +2295,10 @@ static HASH hash(OBJECTNAME name)
 		h = ((h*A)^(c*B));
 	}
 	h %= TREESIZE;
-	IN_MYCONTEXT output_debug("hash(name='%s') = %llu",name,h);
+	if ( global_debug_output )
+	{
+		IN_MYCONTEXT output_debug("hash(name='%s') = %llu",name,h);
+	}	
 	return h;
 }
 
@@ -2307,7 +2310,10 @@ OBJECTTREE *hash_find(HASH h, OBJECTNAME name)
 		if ( strcmp(item->name,name) == 0 )
 			return item;
 	}
-	IN_MYCONTEXT output_debug("hash_find(HASH h=%lld, OBJECTNAME name='%s'): name not found",h,name);
+	if ( global_debug_output )
+	{
+		IN_MYCONTEXT output_debug("hash_find(HASH h=%lld, OBJECTNAME name='%s'): name not found",h,name);
+	}	
 	return NULL;
 }
 
@@ -2327,13 +2333,16 @@ static OBJECTTREE *object_tree_add(OBJECT *obj, OBJECTNAME name)
 	item->obj = obj;
 	HASH h = hash(name);
 	item->next = top[h];
-	if ( top[h] == NULL )
+	if ( global_debug_output )
 	{
-		IN_MYCONTEXT output_debug("object_tree_add(OBJECT *obj=<%s:%d>, OBJECTNAME name='%s'): added to hash %d", obj->oclass->name, obj->id, name, h);
-	}
-	else
-	{
-		IN_MYCONTEXT output_debug("object_tree_add(OBJECT *obj=<%s:%d>, OBJECTNAME name='%s'): added to hash %d after '%s'", obj->oclass->name, obj->id, name, h, top[h]->name);
+		if ( top[h] == NULL )
+		{
+			IN_MYCONTEXT output_debug("object_tree_add(OBJECT *obj=<%s:%d>, OBJECTNAME name='%s'): added to hash %d", obj->oclass->name, obj->id, name, h);
+		}
+		else
+		{
+			IN_MYCONTEXT output_debug("object_tree_add(OBJECT *obj=<%s:%d>, OBJECTNAME name='%s'): added to hash %d after '%s'", obj->oclass->name, obj->id, name, h, top[h]->name);
+		}
 	}
 	top[h] = item;
 	return item;
@@ -2345,7 +2354,10 @@ static OBJECTTREE *findin_tree(OBJECTTREE *tree, OBJECTNAME name)
 {
 	HASH h = hash(name);
 	OBJECTTREE *item = hash_find(h,name);
-	IN_MYCONTEXT output_debug("findin_tree(OBJECTTREE *tree=%p, OBJECTNAME name='%s'): item=%p", tree, name, item);
+	if ( global_debug_output )
+	{
+		IN_MYCONTEXT output_debug("findin_tree(OBJECTTREE *tree=%p, OBJECTNAME name='%s'): item=%p", tree, name, item);
+	}
 	return item;
 }
 
