@@ -245,7 +245,9 @@ endif ()
 
 find_package(Curses)
 
-SET(HAVE_CURSES CURSES_FOUND)
+IF (CURSES_FOUND)
+    SET(HAVE_CURSES 1)
+ENDIF ()
 
 # Link required libraries for symbol checks
 list(APPEND CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
