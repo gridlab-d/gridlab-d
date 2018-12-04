@@ -24,7 +24,7 @@ branchname=`git rev-parse --abbrev-ref HEAD`
 if [ -z "${mod}" ]; then
 	branch="$new:$branchname"
 else
-	branch="$new:$branchname:Modified"
+	branch="$new:$branchname:Mod"
 fi
 if test -f $2 ; then 
 	oldnum=`cat $2 | sed -ne 's/^#define BUILDNUM //p'`
@@ -36,7 +36,7 @@ if test -z "$oldnum" -o "$rev" -ne "$oldnum" -o -z "$oldbranch" -o "$oldbranch" 
 	echo "Updating $2: revision $rev ($branch)"
 	echo "#define BUILDNUM $rev" > $2
 	if test "${dir:0:6}" != "branch" -o ! -z "$mod" ; then 
-		echo "#define BRANCH \"$branch\"" >> $2
+		echo "#define BRANCH REV_NAME \" [$branch]\"" >> $2
 	fi
 	echo "#define REV_YEAR $(date +%Y)" >> $2
 fi

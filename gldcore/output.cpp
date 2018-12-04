@@ -479,7 +479,7 @@ int output_test(const char *format,...) /**< \bprintf style argument list */
 		if (fp==NULL)
 		{
 			/* can't write to output file, write to stderr instead */
-			return (*printerr)("TEST: %s\n",buffer);
+			return (*printstd)("TEST: %s\n",buffer);
 		}
 		fprintf(fp,"GridLAB-D Version %s.%s\n", global_getvar("version.major", major_b, 32), global_getvar("version.minor", minor_b, 32));
 		fprintf(fp,"Test results from run started %s", asctime(localtime(&now)));
@@ -537,7 +537,7 @@ Output:
 		if (redirect.warning)
 			result = fprintf(redirect.warning,"%sWARNING  [%s] : %s\n", prefix, time_context, buffer);
 		else
-			result = (*printerr)("%sWARNING  [%s] : %s\n", prefix, time_context, buffer);
+			result = (*printstd)("%sWARNING  [%s] : %s\n", prefix, time_context, buffer);
 Unlock:
 		wunlock(&output_lock);
 		return result;
@@ -587,7 +587,7 @@ Output:
 		if (redirect.debug)
 			result = fprintf(redirect.debug,"%sDEBUG [%s] : %s\n", prefix, time_context, buffer);
 		else
-			result = (*printerr)("%sDEBUG [%s] : %s\n", prefix, time_context, buffer);
+			result = (*printstd)("%sDEBUG [%s] : %s\n", prefix, time_context, buffer);
 Unlock:
 		wunlock(&output_lock);
 		return result;
@@ -637,7 +637,7 @@ Output:
 		if (redirect.verbose)
 			result = fprintf(redirect.verbose,"%s%s\n", prefix, buffer);
 		else
-			result = (*printerr)("%s   ... %s\n", prefix, buffer);
+			result = (*printstd)("%s   ... %s\n", prefix, buffer);
 Unlock:
 		wunlock(&output_lock);
 	return result;
@@ -772,8 +772,10 @@ int output_raw(const char *format,...) /**< \bprintf style argument list */
 				fflush(redirect.output);
 				result =  len;
 			}
-			else
-				result = (*printerr)("%s%s",prefix, buffer);
+			else {
+				result = (*printstd)("%s%s",prefix, buffer);
+				fflush(curr_stream[FS_STD]);
+			}
 		wunlock(&output_lock);
 		return result;
 	}
