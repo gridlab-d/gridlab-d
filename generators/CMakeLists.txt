@@ -2,7 +2,7 @@ project(generators)
 
 include_directories(../${GLDCORE_LOC})
 
-add_library(${PROJECT_NAME} SHARED
+add_library(${PROJECT_NAME}
         generators/battery.cpp
         generators/battery.h
         generators/central_dg_control.cpp

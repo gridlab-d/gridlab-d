@@ -3,10 +3,7 @@ project(libsuperlu)
 SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_PTHREAD -DAdd_ -lm" )
 SET( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_PTHREAD -DAdd_ -lm" )
 
-#third_party_superLU_MT_libsuperlu_la_CPPFLAGS += -D_PTHREAD
-#third_party_superLU_MT_libsuperlu_la_CPPFLAGS += -DAdd_
-
-add_library(${PROJECT_NAME} STATIC #SHARED
+add_library(${PROJECT_NAME} STATIC
         # from third_party/CBLAS
         third_party/CBLAS/dasum.c
         third_party/CBLAS/daxpy.c

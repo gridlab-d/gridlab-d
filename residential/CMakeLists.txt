@@ -2,7 +2,7 @@ project(residential)
 
 include_directories(../${GLDCORE_LOC})
 
-add_library(${PROJECT_NAME} SHARED
+add_library(${PROJECT_NAME}
         residential/appliance.cpp
         residential/appliance.h
         residential/clotheswasher.cpp

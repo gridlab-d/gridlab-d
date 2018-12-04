@@ -2,7 +2,7 @@ project(commercial)
 
 include_directories(../${GLDCORE_LOC})
 
-add_library(${PROJECT_NAME} SHARED
+add_library(${PROJECT_NAME}
         commercial/hvac.cpp
         commercial/hvac.h
         commercial/init.cpp

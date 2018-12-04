@@ -5,7 +5,7 @@ include_directories(../third_party/SuperLU_MT)
 include_directories(../third_party/jsonCpp)
 SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I../third_party/SuperLU_MT -I../third_party/jsonCpp" )
 
-add_library(${PROJECT_NAME} SHARED
+add_library(${PROJECT_NAME}
         powerflow/billdump.cpp
         powerflow/billdump.h
         powerflow/capacitor.cpp

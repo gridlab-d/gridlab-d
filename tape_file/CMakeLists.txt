@@ -2,7 +2,7 @@ project(tape_file)
 
 include_directories(../${GLDCORE_LOC})
 
-add_library(${PROJECT_NAME} SHARED
+add_library(${PROJECT_NAME}
         tape_file/tape_file.cpp
         tape_file/tape_file.h
 )

@@ -2,7 +2,7 @@ project(climate)
 
 include_directories(../${GLDCORE_LOC})
 
-add_library(${PROJECT_NAME} SHARED
+add_library(${PROJECT_NAME}
         climate/climate.cpp
         climate/climate.h
         climate/csv_reader.cpp

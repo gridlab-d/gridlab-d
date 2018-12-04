@@ -2,7 +2,7 @@ project(glsolvers)
 
 include_directories(..)
 
-add_library(${PROJECT_NAME} SHARED
+add_library(${PROJECT_NAME}
         ${GLDCORE_LOC}/solvers/etp.cpp
         ${GLDCORE_LOC}/solvers/main.cpp
         ${GLDCORE_LOC}/solvers/modified_euler.cpp

@@ -4,7 +4,7 @@ include_directories(../${GLDCORE_LOC})
 include_directories(../third_party/jsonCpp)
 SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I../third_party/jsonCpp" )
 
-add_library(${PROJECT_NAME} SHARED
+add_library(${PROJECT_NAME}
         tape/collector.cpp
         tape/collector.h
         tape/file.cpp

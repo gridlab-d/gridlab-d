@@ -11,7 +11,7 @@ ELSE ()
     SET(FNCS_CONNECTION "")
 ENDIF ()
 
-add_library(${PROJECT_NAME} SHARED
+add_library(${PROJECT_NAME}
         connection/connection.cpp
         connection/connection.h
         connection/socket.cpp

@@ -1,22 +1,60 @@
 cmake_minimum_required(VERSION 2.8.12)
 project(gridlabd)
-set(CMAKE_CXX_STANDARD 11)
-SET(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+if (CMAKE_VERSION VERSION_LESS "3.1")
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
+    endif ()
+else ()
+    SET(CMAKE_CXX_STANDARD 11)
+    SET(CMAKE_CXX_STANDARD_REQUIRED ON)
+endif ()
+
+# Get the current working branch
+execute_process(
+        COMMAND git rev-parse --abbrev-ref HEAD
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE GIT_BRANCH
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+# Get the latest abbreviated commit hash of the working branch
+execute_process(
+        COMMAND git log -1 --format=%h
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE GIT_COMMIT_HASH
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+)
 
 # Package information for Gridlab-d
 SET(DLEXT ${CMAKE_SHARED_LIBRARY_SUFFIX})
 SET(PACKAGE "${PROJECT_NAME}")
 SET(PACKAGE_BUGREPORT "gridlabd@pnnl.gov")
 SET(PACKAGE_NAME "GridLAB-D")
-SET(PACKAGE_STRING "GridLAB-D 4.0.0")
+SET(REV_MAJOR 4)
+SET(REV_MINOR 0)
+SET(REV_PATCH 0)
+SET(PACKAGE_STRING "GridLAB-D ${REV_MAJOR}.${REV_MINOR}.${REV_PATCH} (Branch:${GIT_BRANCH} - ${GIT_COMMIT_HASH})")
 SET(PACKAGE_TARNAME "${PROJECT_NAME}")
 SET(PACKAGE_URL "")
-SET(PACKAGE_VERSION "4.0.0")
+SET(PACKAGE_VERSION ${REV_MAJOR}.${REV_MINOR}.${REV_PATCH})
+
+# use, i.e. don't skip the full RPATH for the build tree
+SET(CMAKE_SKIP_BUILD_RPATH FALSE)
+
+# when building, don't use the install RPATH already
+# (but later on when installing)
+SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+
+SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib/gridlabd")
+
+# add the automatically determined parts of the RPATH
+# which point to directories outside the build tree to the install RPATH
+SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 SET(GLDCORE_LOC gldcore)
 
-#cmake_policy(SET CMP0045 OLD)
-
+OPTION(BUILD_SHARED_LIBS "Sets Gridlab-d libraries to be built as shared. *DANGER - will currently break build if changed.*" ON)
 
 # Sets default compile scheme to Release (Maximum optimization, no debugger data)
 # To compile as Debug outside of IDE, run cmake with "-DCMAKE_BUILD_TYPE=Debug" flag.
@@ -25,8 +63,8 @@ IF (NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
 ENDIF (NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
 
 # Allows specific compiler optimizations to be disabled for all build types.
-set(DISABLED_OPTIMIZATIONS "")
-#set(DISABLED_OPTIMIZATIONS "${DISABLED_OPTIMIZATIONS} -fno-inline-functions")
+#set(DISABLED_OPTIMIZATIONS "")
+set(DISABLED_OPTIMIZATIONS "${DISABLED_OPTIMIZATIONS} -fno-inline-functions")
 
 # Sets optimization flags.
 IF (CMAKE_BUILD_TYPE STREQUAL Release)
@@ -35,7 +73,7 @@ ELSE ()
     SET(COMPILER_OPTIMIZATION_FLAG "-O0")
 ENDIF ()
 
-message("Compiler set to optimization level ${COMPILER_OPTIMIZATION_FLAG}")
+message("-- Compiler set to optimization level ${COMPILER_OPTIMIZATION_FLAG}")
 
 # Compiler/Linker flags for all build types
 set(CMAKE_CXX_FLAGS "-w")
@@ -64,13 +102,29 @@ ELSE ()
 ENDIF ()
 LIST(APPEND CMAKE_REQUIRED_LIBRARIES ${OS_SPECIFIC_LIBRARIES})
 
+# Set configurable flags for runtime.
+OPTION(USE_MYSQL "Enable building with MySQL" OFF)
+OPTION(USE_HELIC "Enable building with HELICS" OFF)
+OPTION(USE_FNCS "Enable building with FNCS" OFF)
+OPTION(USE_OPENMP "Enable building with OpenMP" OFF)
+
+# Configure MySQL to be configured and linked if available.
+IF (USE_MYSQL)
+    INCLUDE(CMake/FindMySQL.cmake)
+    SET(HAVE_MYSQL ON)
+ENDIF ()
+
+#message("Have mysql? -> ${HAVE_MYSQL}")
+
 # Configure OpenMP to be compiled and linked if available.
-include(FindOpenMP)
-if (OPENMP_FOUND)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-    set(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} ${OpenMP_LD_FLAGS}")
-endif ()
+if (WITH_OPENMP)
+    include(FindOpenMP)
+    if (OPENMP_FOUND)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+        set(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} ${OpenMP_LD_FLAGS}")
+    endif ()
+ENDIF () # WITH_OPENMP
 
 # Set the list of modules and files which should be copied into the install directory.
 SET(GL_MODULES
@@ -92,21 +146,6 @@ SET(GL_MODULES
         glxengine
         )
 SET(HEADER_FILE_NAMES
-        #        ${GLDCORE_LOC}/build.h
-        #        ${GLDCORE_LOC}/class.h
-        #        ${GLDCORE_LOC}/complex.h
-        #        ${GLDCORE_LOC}/debug.h
-        #        ${GLDCORE_LOC}/enduse.h
-        #        ${GLDCORE_LOC}/exception.h
-        #        ${GLDCORE_LOC}/loadshape.h
-        #        ${GLDCORE_LOC}/lock.h
-        #        ${GLDCORE_LOC}/module.h
-        #        ${GLDCORE_LOC}/object.h
-        #        ${GLDCORE_LOC}/property.h
-        #        ${GLDCORE_LOC}/schedule.h
-        #        ${GLDCORE_LOC}/test.h
-        #        ${GLDCORE_LOC}/version.h
-
         ${GLDCORE_LOC}/build.h
         ${GLDCORE_LOC}/class.h
         ${GLDCORE_LOC}/complex.h
@@ -123,55 +162,6 @@ SET(HEADER_FILE_NAMES
         ${GLDCORE_LOC}/version.h
         )
 SET(GLD_SHARE
-        #        ${GLDCORE_LOC}/tzinfo.txt
-        #        ${GLDCORE_LOC}/unitfile.txt
-        #        ${GLDCORE_LOC}/rt/about.htm
-        #        ${GLDCORE_LOC}/rt/COPYRIGHT
-        #        ${GLDCORE_LOC}/rt/debugger.conf
-        #        ${GLDCORE_LOC}/rt/eula.htm
-        #        ${GLDCORE_LOC}/rt/favicon.ico
-        #        ${GLDCORE_LOC}/rt/gnuplot.conf
-        #        ${GLDCORE_LOC}/rt/gridlabd.conf
-        #        ${GLDCORE_LOC}/rt/gridlabd.css
-        #        ${GLDCORE_LOC}/rt/gridlabd.h
-        #        ${GLDCORE_LOC}/rt/gridlabd.htm
-        #        ${GLDCORE_LOC}/rt/gridlabd.jpg
-        #        ${GLDCORE_LOC}/rt/gridlabd.js
-        #        ${GLDCORE_LOC}/rt/gridlabd.syn
-        #        ${GLDCORE_LOC}/rt/LICENSE
-        #        ${GLDCORE_LOC}/rt/mingw.conf
-        #        ${GLDCORE_LOC}/rt/STATUS
-        #        ${GLDCORE_LOC}/rt/capacitor_b.png
-        #        ${GLDCORE_LOC}/rt/capacitor_g.png
-        #        ${GLDCORE_LOC}/rt/capacitor_k.png
-        #        ${GLDCORE_LOC}/rt/capacitor_r.png
-        #        ${GLDCORE_LOC}/rt/load_b.png
-        #        ${GLDCORE_LOC}/rt/load_g.png
-        #        ${GLDCORE_LOC}/rt/load_k.png
-        #        ${GLDCORE_LOC}/rt/load_r.png
-        #        ${GLDCORE_LOC}/rt/meter_g.png
-        #        ${GLDCORE_LOC}/rt/node_b.png
-        #        ${GLDCORE_LOC}/rt/node_g.png
-        #        ${GLDCORE_LOC}/rt/node_k.png
-        #        ${GLDCORE_LOC}/rt/node_r.png
-        #        ${GLDCORE_LOC}/rt/regulator_b.png
-        #        ${GLDCORE_LOC}/rt/regulator_g.png
-        #        ${GLDCORE_LOC}/rt/regulator_k.png
-        #        ${GLDCORE_LOC}/rt/regulator_r.png
-        #        ${GLDCORE_LOC}/rt/switch_b.png
-        #        ${GLDCORE_LOC}/rt/switch_g.png
-        #        ${GLDCORE_LOC}/rt/switch_k.png
-        #        ${GLDCORE_LOC}/rt/switch_r.png
-        #        ${GLDCORE_LOC}/rt/transformer_b.png
-        #
-        #        ${GLDCORE_LOC}/rt/transformer_g.png
-        #        ${GLDCORE_LOC}/rt/transformer_k.png
-        #        ${GLDCORE_LOC}/rt/transformer_r.png
-        #        ${GLDCORE_LOC}/rt/triplex_meter_b.png
-        #        ${GLDCORE_LOC}/rt/triplex_meter_g.png
-        #        ${GLDCORE_LOC}/rt/triplex_meter_k.png
-        #        ${GLDCORE_LOC}/rt/triplex_meter_r.png
-
         ${GLDCORE_LOC}/tzinfo.txt
         ${GLDCORE_LOC}/unitfile.txt
         ${GLDCORE_LOC}/rt/about.htm
@@ -259,7 +249,7 @@ SET(HAVE_CURSES CURSES_FOUND)
 
 # Link required libraries for symbol checks
 list(APPEND CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
-list(APPEND CMAKE_REQUIRED_LIBRARIES m dl)
+#list(APPEND CMAKE_REQUIRED_LIBRARIES m dl)
 # CMake Module includes
 INCLUDE(CheckIncludeFiles)
 INCLUDE(CheckFunctionExists)
@@ -421,13 +411,12 @@ TRY_COMPILE(HAVE_ISFINITE ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR
 TRY_COMPILE(HAVE_PTHREAD_PRIO_INHERIT ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/HAVE_PTHREAD_PRIO_INHERIT.cc)
 
 # Generate the config.h header file.
-#configure_file(${GLDCORE_LOC}/cmake_config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/${GLDCORE_LOC}/config.h @ONLY)
-configure_file(${GLDCORE_LOC}/cmake_config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/${GLDCORE_LOC}/config.h @ONLY)
+configure_file(gldcore/cmake_config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/gldcore/config.h @ONLY)
+configure_file(gldcore/version.h.in ${CMAKE_CURRENT_SOURCE_DIR}/gldcore/version.h @ONLY)
 add_definitions(-DHAVE_CONFIG_H)
 
 # Load module directories. When adding new module, add it here.
-#include_directories(${GLDCORE_LOC})
-include_directories(${GLDCORE_LOC})
+include_directories(gldcore)
 include_directories(third_party/superLU_MT)
 include_directories(third_party/jsonCpp)
 
@@ -591,6 +580,10 @@ add_executable(gridlabd
 #        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/third_party/mysql-connector-c++
 #)
 #add_dependencies(gridlabd mysql_connector)
+if (HAVE_MYSQL)
+    include_directories(${MYSQL_INCLUDE_DIRECTORIES} ${MYSQL_INCLUDE_DIRECTORIES}/include)
+    target_link_libraries(gridlabd ${MYSQL_LIBRARY})
+ENDIF ()
 
 add_dependencies(gridlabd libjsoncpp libsuperlu)
 
@@ -615,29 +608,23 @@ SET(FILE_PERMISSIONS PERMISSIONS
 
 install(TARGETS gridlabd
         ${FILE_PERMISSIONS}
-        RUNTIME DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/bin
+        RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
         )
 install(TARGETS ${GL_MODULES}
         ${FILE_PERMISSIONS}
-        RUNTIME DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/lib/gridlabd
-        LIBRARY DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/lib/gridlabd
-        ARCHIVE DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/lib/gridlabd
+        RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/gridlabd
+        LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/gridlabd
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/gridlabd
         COMPONENT library)
 
 install(FILES ${HEADER_FILE_NAMES}
         ${FILE_PERMISSIONS}
-        DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/include/gridlabd
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/include/gridlabd
         )
 
 install(FILES ${GLD_SHARE}
         ${FILE_PERMISSIONS}
-        DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/share/gridlabd)
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/share/gridlabd)
 install(FILES COPYRIGHT LICENSE
         ${FILE_PERMISSIONS}
-        DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/share/doc/gridlabd)
-
-
-#install(FILES ${MYLIB}
-#        ${FILE_PERMISSIONS}
-#        DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/bin
-#        )
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/share/doc/gridlabd)

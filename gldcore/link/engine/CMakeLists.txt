@@ -2,7 +2,7 @@ project(glxengine)
 
 include_directories(../../../${GLDCORE_LOC})
 
-add_library(${PROJECT_NAME} SHARED
+add_library(${PROJECT_NAME}
         ${GLDCORE_LOC}/link/engine/engine.cpp
         ${GLDCORE_LOC}/link/engine/engine.h
         ${GLDCORE_LOC}/link/engine/udpconnection.cpp

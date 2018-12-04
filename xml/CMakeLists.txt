@@ -2,7 +2,7 @@ project(xml)
 
 include_directories(../gldcore)
 
-add_library(${PROJECT_NAME} SHARED
+add_library(${PROJECT_NAME}
         loader/Xerces_loader.cpp
 )
 
