@@ -314,6 +314,16 @@ if test "x$HAS_DOCKER" = "xyes" ; then :
   fi
 fi
 
+if test "x$1" = "x--gdb" ; then :
+  shift
+  gdb -ex "run $@" $bindir/gridlabd.bin
+elif test "x$1" = "x--lldb" ; then :
+  shift
+  echo "run $@" > /tmp/gridlabd-$$
+  lldb -s /tmp/gridlabd-$$ $bindir/gridlabd.bin
+  rm /tmp/gridlabd-$$
+fi
+
 if test "x$GLPATH" = x; then :
   export GLPATH="$pkglibdir:$pkgdatadir"
 else
