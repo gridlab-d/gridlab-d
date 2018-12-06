@@ -167,21 +167,21 @@ void send_die(void)
 		//TODO find equivalent helics die message
 #if HAVE_HELICS
 		gl_verbose("helics_msg: Calling error");
-		helics::op_states fed_state = pHelicsFederate->getCurrentState;
-		if(fed_state != helics::op_states::finalize) {
+		const helics::Federate::states fed_state = pHelicsFederate->getCurrentState();
+		if(fed_state != helics::Federate::states::finalize) {
 			pHelicsFederate->error((int)(exitCode.get_int16()));
 		}
-		pHelicsFederate->cleanupHelicsLibrary();
+		helics::cleanupHelicsLibrary();
 #endif
 	} else {
 		//TODO find equivalent helics clean exit message
 #if HAVE_HELICS
 		gl_verbose("helics_msg: Calling finalize\n");
-		helics::op_states fed_state = pHelicsFederate->getCurrentState;
-		if(fed_state != helics::op_states::finalize) {
+		const helics::Federate::states fed_state = pHelicsFederate->getCurrentState();
+		if(fed_state != helics::Federate::states::finalize) {
 			pHelicsFederate->finalize();
 		}
-		pHelicsFederate->cleanupHelicsLibrary();
+		helics::cleanupHelicsLibrary();
 #endif
 	}
 }
@@ -340,41 +340,41 @@ int helics_msg::init(OBJECT *parent){
 	}
 	gl_verbose("helics_msg: Calling CombinationFederate Constructor");
 	try {
-		helics_federate = new helics::CombinationFederate(federate_configuration);
+		helics_federate = new helics::CombinationFederate(*federate_configuration);
 	} catch(const std::exception &e) {
-		gl_error("helics_msg::init: an unexpected error occurred when trying to create a CombinationFederate using the configuration string: \n%s\nThis is the error that was caught:\n%s",federation_configuration.c_str(), e.what());
+		gl_error("helics_msg::init: an unexpected error occurred when trying to create a CombinationFederate using the configuration string: \n%s\nThis is the error that was caught:\n%s",federate_configuration->c_str(), e.what());
 		return 0;
 	}
 	pHelicsFederate = helics_federate;
 	//register helics publications
 	string pub_sub_name = "";
 	for(vector<helics_value_publication*>::iterator pub = helics_value_publications.begin(); pub != helics_value_publications.end(); pub++) {
-		gl_verbose("helics_msg: Calling getPublicationId(%s)\n", (*pub)->topicName.c_str());
-		(*pub)->HelicsPublication = helics_federate->getPublicationId((*pub)->topicName);
+		gl_verbose("helics_msg: Calling getPublicationId(%s)\n", (*pub)->key.c_str());
+		(*pub)->HelicsPublication = helics_federate->getPublication((*pub)->key);
 		if((*pub)->HelicsPublication.isValid()) {
 			if((*pub)->pObjectProperty->is_complex()) {
 				if(string("complex").compare(helics_federate->getPublicationType((*pub)->HelicsPublication)) != 0 ) {
-					gl_error("helics_msg::init: The registered publication %s is intended to publish a complex type but the publication has a type = %s", ((*pub)->topicName).c_str(), (helics_federate->getPublicationType((*pub)->HelicsPublication)).c_str());
+					gl_error("helics_msg::init: The registered publication %s is intended to publish a complex type but the publication has a type = %s", ((*pub)->key).c_str(), (helics_federate->getPublicationType((*pub)->HelicsPublication)).c_str());
 					return 0;
 				}
 			} else if((*pub)->pObjectProperty->is_integer()) {
-				if(helics_federate->getPublicationType((*pub)->HelicsPublication).find("int")) == string::npos ) {
-					gl_error("helics_msg::init: The registered publication %s is intended to publish an integer type but the publication has a type = %s", ((*pub)->topicName).c_str(), (helics_federate->getPublicationType((*pub)->HelicsPublication)).c_str());
+				if(helics_federate->getPublicationType((*pub)->HelicsPublication).find("int") == string::npos ) {
+					gl_error("helics_msg::init: The registered publication %s is intended to publish an integer type but the publication has a type = %s", ((*pub)->key).c_str(), (helics_federate->getPublicationType((*pub)->HelicsPublication)).c_str());
 					return 0;
 				}
 			} else if((*pub)->pObjectProperty->is_double()) {
 				if(string("double").compare(helics_federate->getPublicationType((*pub)->HelicsPublication)) != 0 ) {
-					gl_error("helics_msg::init: The registered publication %s is intended to publish a double type but the publication has a type = %s", ((*pub)->topicName).c_str(), (helics_federate->getPublicationType((*pub)->HelicsPublication)).c_str());
+					gl_error("helics_msg::init: The registered publication %s is intended to publish a double type but the publication has a type = %s", ((*pub)->key).c_str(), (helics_federate->getPublicationType((*pub)->HelicsPublication)).c_str());
 					return 0;
 				}
 			} else {
 				if(string("string").compare(helics_federate->getPublicationType((*pub)->HelicsPublication)) != 0 ) {
-					gl_error("helics_msg::init: The registered publication %s is intended to publish a string type but the publication has a type = %s", ((*pub)->topicName).c_str(), (helics_federate->getPublicationType((*pub)->HelicsPublication)).c_str());
+					gl_error("helics_msg::init: The registered publication %s is intended to publish a string type but the publication has a type = %s", ((*pub)->key).c_str(), (helics_federate->getPublicationType((*pub)->HelicsPublication)).c_str());
 					return 0;
 				}
 			}
 		} else {
-			gl_error("helics_msg::init: There is no registered publication with a name = %s", (*sub)topicName.c_str());
+			gl_error("helics_msg::init: There is no registered publication with a name = %s", (*pub)->key.c_str());
 			return 0;
 		}
 	}
@@ -383,26 +383,26 @@ int helics_msg::init(OBJECT *parent){
 		pub_sub_name.clear();
 		pub_sub_name.append((*sub)->subscription_topic);
 		gl_verbose("helics_msg: Calling getSubscriptionId(%s)\n", pub_sub_name.c_str());
-		(*sub)->HelicsSubscription = helics_federate->getSubscriptionId(pub_sub_name);
+		(*sub)->HelicsSubscription = helics_federate->getSubscription(pub_sub_name);
 		if((*sub)->HelicsSubscription.isValid()) {
 			if((*sub)->pObjectProperty->is_complex()) {
 				if(string("complex").compare(helics_federate->getInputType((*sub)->HelicsSubscription)) != 0 ) {
-					gl_error("helics_msg::init: The registered subscription %s is intended to subscribe to a complex type but the subscription has a type = %s", (pub_sub_name.c_str(), (helics_federate->getInputype((*sub)->HelicsSubscription)).c_str());
+					gl_error("helics_msg::init: The registered subscription %s is intended to subscribe to a complex type but the subscription has a type = %s", (pub_sub_name.c_str()), (helics_federate->getInputType((*sub)->HelicsSubscription)).c_str());
 					return 0;
 				}
 			} else if((*sub)->pObjectProperty->is_integer()) {
-				if(helics_federate->getInputType((*sub)->HelicsSubscription).find("int")) == string::npos ) {
-					gl_error("helics_msg::init: The registered subscription %s is intended to subscribe to an integer type but the subscription has a type = %s", (pub_sub_name.c_str(), (helics_federate->getInputType((*sub)->HelicsSubscription)).c_str());
+				if(helics_federate->getInputType((*sub)->HelicsSubscription).find("int") == string::npos ) {
+					gl_error("helics_msg::init: The registered subscription %s is intended to subscribe to an integer type but the subscription has a type = %s", (pub_sub_name.c_str()), (helics_federate->getInputType((*sub)->HelicsSubscription)).c_str());
 					return 0;
 				}
 			} else if((*sub)->pObjectProperty->is_double()) {
 				if(string("double").compare(helics_federate->getInputType((*sub)->HelicsSubscription)) != 0 ) {
-					gl_error("helics_msg::init: The registered subscription %s is intended to subscribe to double type but the subscription has a type = %s", (pub_sub_name.c_str(), (helics_federate->getInputype((*sub)->HelicsSubscription)).c_str());
+					gl_error("helics_msg::init: The registered subscription %s is intended to subscribe to double type but the subscription has a type = %s", (pub_sub_name.c_str()), (helics_federate->getInputType((*sub)->HelicsSubscription)).c_str());
 					return 0;
 				}
 			} else {
 				if(string("string").compare(helics_federate->getInputType((*sub)->HelicsSubscription)) != 0 ) {
-					gl_error("helics_msg::init: The registered subscription %s is intended to subscribe to string type but the subscription has a type = %s", (pub_sub_name.c_str(), (helics_federate->getInputype((*sub)->HelicsSubscription)).c_str());
+					gl_error("helics_msg::init: The registered subscription %s is intended to subscribe to string type but the subscription has a type = %s", (pub_sub_name.c_str()), (helics_federate->getInputType((*sub)->HelicsSubscription)).c_str());
 					return 0;
 				}
 			}
@@ -413,10 +413,10 @@ int helics_msg::init(OBJECT *parent){
 	}
 	// register helics output endpoints
 	for(vector<helics_endpoint_publication*>::iterator pub = helics_endpoint_publications.begin(); pub != helics_endpoint_publications.end(); pub++) {
-		gl_verbose("helics_msg: Calling getEndpointId(%s)\n", (*pub)->topicName.c_str());
-		(*pub)->HelicsPublicationEndpoint = helics_federate->getEndpointId((*pub)->topicName);
+		gl_verbose("helics_msg: Calling getEndpointId(%s)\n", (*pub)->name.c_str());
+		(*pub)->HelicsPublicationEndpoint = helics_federate->getEndpoint((*pub)->name);
 		if(!(*pub)->HelicsPublicationEndpoint.isValid()){
-			gl_error("helics_msg::init: There is no registered endpoint with a name = %s", (*pub)topicName.c_str());
+			gl_error("helics_msg::init: There is no registered endpoint with a name = %s", (*pub)->name.c_str());
 			return 0;
 		}
 	}
@@ -425,7 +425,7 @@ int helics_msg::init(OBJECT *parent){
 		pub_sub_name.clear();
 		pub_sub_name.append((*sub)->subscription_topic);
 		gl_verbose("helics_msg: Calling getEndpointId(%s)\n", pub_sub_name.c_str());
-		(*sub)->HelicsSubscriptionEndpoint = helics_federate->getEndpointId(pub_sub_name);
+		(*sub)->HelicsSubscriptionEndpoint = helics_federate->getEndpoint(pub_sub_name);
 		if(!(*sub)->HelicsSubscriptionEndpoint.isValid()){
 			gl_error("helics_msg::init: There is no registered endpoint with a target = %s", pub_sub_name.c_str());
 			return 0;
@@ -433,9 +433,9 @@ int helics_msg::init(OBJECT *parent){
 	}
 	//TODO Call finished initializing
 	gl_verbose("helics_msg: Calling enterInitializationState");
-	helics_federate->enterInitializationState();
+	helics_federate->enterInitializingMode();
 	gl_verbose("helics_msg: Calling enterExecutionState");
-	helics_federate->enterExecutionState();
+	helics_federate->enterExecutingMode();
 #endif
 	atexit(send_die);
 	last_approved_helics_time = gl_globalclock;
@@ -767,7 +767,7 @@ int helics_msg::publishVariables(){
 			int64_t integer_temp = 0;
 			(*pub)->pObjectProperty->getp(integer_temp);
 			gl_verbose("helics_msg: calling publishInt()");
-			(*pub)->HelicsPublication.publishInt(integer_temp);
+			(*pub)->HelicsPublication.publish(integer_temp);
 		} else if((*pub)->pObjectProperty->is_double()) {
 			double double_temp = 0;
 			(*pub)->pObjectProperty->getp(double_temp);
@@ -802,7 +802,7 @@ int helics_msg::publishVariables(){
 		string message_buffer = message_buffer_stream.str();
 #if HAVE_HELICS
         try {
-			if(helics_federate->getCurrentState() == helics::ValueFederate::op_states::execution){
+			if(helics_federate->getCurrentState() == helics::ValueFederate::states::execution){
 				gl_verbose("calling helics sendMessage");
 				helics::data_view message_data(message_buffer);
 				(*pub)->HelicsPublicationEndpoint.send(message_data);
@@ -831,7 +831,7 @@ int helics_msg::subscribeVariables(){
 		try {
 			if((*sub)->pObjectProperty->is_complex()) {
 				gl_verbose("helics_msg: Calling getValue<complex<double>>\n");
-				complex_temp = (*sub)->HelicsSubscription.getValue();
+				(*sub)->HelicsSubscription.getValue(complex_temp);
 				if(!std::isnan(complex_temp.real()) && !std::isnan(complex_temp.imag())) {
 					gld_complex_temp.SetReal(complex_temp.real());
 					gld_complex_temp.SetImag(complex_temp.imag());
@@ -839,17 +839,17 @@ int helics_msg::subscribeVariables(){
 				}
 			} else if((*sub)->pObjectProperty->is_integer()) {
 				gl_verbose("helics_msg: Calling getValue<long long int>\n");
-				integer_temp (*sub)->HelicsSubscription.getValue();
+				(*sub)->HelicsSubscription.getValue(integer_temp);
 				(*sub)->pObjectProperty->setp(integer_temp);
 			} else if((*sub)->pObjectProperty->is_double()) {
 				gl_verbose("helics_msg: Calling getValue<double>\n");
-				double_temp = (*sub)->HelicsSubscription.getValue();
+				(*sub)->HelicsSubscription.getValue(double_temp);
 				if(!std::isnan(double_temp)) {
 					(*sub)->pObjectProperty->setp(double_temp);
 				}
 			} else {
 				gl_verbose("helics_msg: Calling getValue<string>\n");
-				value_buffer = (*sub)->HelicsSubscription.getValue();
+				(*sub)->HelicsSubscription.getValue(value_buffer);
 				if(!value_buffer.empty()) {
 					strncpy(valueBuf, value_buffer.c_str(), 1023);
 					(*sub)->pObjectProperty->from_string(valueBuf);
@@ -860,7 +860,7 @@ int helics_msg::subscribeVariables(){
 		} catch(...) {
 			value_buffer = "";
 			gl_verbose("helics_msg: Calling getValue<string>");
-			value_buffer = (*sub)->HelicsSubscription.getValue();
+			(*sub)->HelicsSubscription.getValue(value_buffer);
 			if(!value_buffer.empty()){
 				strncpy(valueBuf, value_buffer.c_str(), 1023);
 				(*sub)->pObjectProperty->from_string(valueBuf);
@@ -872,7 +872,7 @@ int helics_msg::subscribeVariables(){
 
 	for(vector<helics_endpoint_subscription*>::iterator sub = helics_endpoint_subscriptions.begin(); sub != helics_endpoint_subscriptions.end(); sub++){
 		if(helics_federate->hasMessage((*sub)->HelicsSubscriptionEndpoint)){
-			helics::Message* mesg;
+			std::unique_ptr<helics::Message> mesg;
 			int pendingMessages = (int) (*sub)->HelicsSubscriptionEndpoint.pendingMessages();
 			for(int i = 0; i < pendingMessages; i++) {
 				gl_verbose("calling getMessage()");

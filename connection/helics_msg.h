@@ -57,7 +57,6 @@ class helics_value_publication {
 public:
 	helics_value_publication(){
 		pObjectProperty = NULL;
-		HelicsPublication = NULL;
 	}
 	string objectName;
 	string propertyName;
@@ -70,7 +69,6 @@ class helics_value_subscription {
 public:
 	helics_value_subscription(){
 		pObjectProperty = NULL;
-		HelicsSubscription = NULL;
 	}
 	string objectName;
 	string propertyName;
@@ -83,7 +81,6 @@ class helics_endpoint_publication {
 public:
 	helics_endpoint_publication(){
 		pObjectProperty = NULL;
-		HelicsPublicationEndpoint = NULL;
 	}
 	string objectName;
 	string propertyName;
@@ -97,7 +94,6 @@ class helics_endpoint_subscription {
 public:
 	helics_endpoint_subscription(){
 		pObjectProperty = NULL;
-		HelicsSubscriptionEndpoint = NULL;
 	}
 	string objectName;
 	string propertyName;
