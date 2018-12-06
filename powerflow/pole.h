@@ -25,8 +25,7 @@ public:
 		item->heading = heading;
 		item->tension = tension;
 		item->span = span;
-		if ( wire_data != NULL )
-			wire_data->next = item;
+		item->next = wire_data;
 		wire_data = item;
 	};
 	inline WIREDATA *get_next_wire(WIREDATA *wire) { return wire->next;};
