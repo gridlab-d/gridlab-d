@@ -182,6 +182,10 @@ TAPEFUNCS *get_ftable(char *mode){
 	return funcs;
 }
 
+extern int method_recorder_property(OBJECT *obj, char *value, size_t size);
+extern int method_collector_property(OBJECT *obj, char *value, size_t size);
+extern int method_multi_recorder_property(OBJECT *obj, char *value, size_t size);
+
 EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 {
 	struct recorder my;
@@ -230,13 +234,11 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 	/* register the other classes as needed, */
 	recorder_class = gl_register_class(module,"recorder",sizeof(struct recorder),PC_POSTTOPDOWN|PC_OBSERVER);
 	recorder_class->trl = TRL_PROVEN;
-	PUBLISH_STRUCT(recorder,char1024,property);
 	PUBLISH_STRUCT(recorder,char32,trigger);
 	PUBLISH_STRUCT(recorder,char1024,file);
 	PUBLISH_STRUCT(recorder,char8,filetype);
 	PUBLISH_STRUCT(recorder,char32,mode);
 	PUBLISH_STRUCT(recorder,char1024,multifile);
-	//PUBLISH_STRUCT(recorder,int64,interval);
 	PUBLISH_STRUCT(recorder,int32,limit);
 	PUBLISH_STRUCT(recorder,char1024,plotcommands);
 	PUBLISH_STRUCT(recorder,char32,xdata);
@@ -247,6 +249,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 	if(gl_publish_variable(recorder_class,
 		PT_double, "interval[s]", ((char*)&(my.dInterval) - (char *)&my),
 		PT_char256,"strftime_format",((char*)&(my.strftime_format) - (char*)&my),
+		PT_method,"property", (size_t)method_recorder_property,
 		PT_enumeration, "output", ((char*)&(my.output) - (char *)&my),
 			PT_KEYWORD, "SCREEN", SCREEN,
 			PT_KEYWORD, "EPS",    EPS,
@@ -271,7 +274,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 	multi_recorder_class->trl = TRL_QUALIFIED;
 	if(gl_publish_variable(multi_recorder_class,
 		PT_double, "interval[s]", ((char*)&(my.dInterval) - (char *)&my),
-		PT_char1024, "property", ((char*)&(my.property) - (char *)&my),
+		PT_method, "property", (size_t)method_multi_recorder_property,
 		PT_char32, "trigger", ((char*)&(my.trigger) - (char *)&my),
 		PT_char1024, "file", ((char*)&(my.file) - (char *)&my),
 		PT_char8, "filetype", ((char*)&(my.filetype) - (char *)&my),
@@ -304,15 +307,14 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 	/* register the other classes as needed, */
 	collector_class = gl_register_class(module,"collector",sizeof(struct collector),PC_POSTTOPDOWN|PC_OBSERVER);
 	collector_class->trl = TRL_PROVEN;
-	PUBLISH_STRUCT(collector,char1024,property);
 	PUBLISH_STRUCT(collector,char32,trigger);
 	PUBLISH_STRUCT(collector,char1024,file);
-	//PUBLISH_STRUCT(collector,int64,interval);
 	PUBLISH_STRUCT(collector,int32,limit);
 	PUBLISH_STRUCT(collector,char256,group);
 	PUBLISH_STRUCT(collector,int32,flush);
 	if(gl_publish_variable(collector_class,
 		PT_double, "interval[s]", ((char*)&(my2.dInterval) - (char *)&my2),
+		PT_method, "property", (size_t)method_collector_property,
 			NULL) < 1)
 		GL_THROW("Could not publish property output for collector");
 
