@@ -2607,7 +2607,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 			}
 
 			//Figure out what type of link we are and populate accordingly
-			if ((gl_object_isa(obj,"transformer","powerflow")) || (gl_object_isa(obj,"regulator","powerflow")))	//Tranformer check
+			if ((gl_object_isa(obj,"transformer","powerflow")) || (gl_object_isa(obj,"regulator","powerflow")) || (gl_object_isa(obj,"series_compensator","powerflow")))	//Tranformer check
 			{
 				NR_branchdata[NR_branch_reference].lnk_type = 4;
 			}
