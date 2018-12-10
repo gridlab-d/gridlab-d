@@ -382,7 +382,7 @@ int helics_msg::init(OBJECT *parent){
 		pub_sub_name.clear();
 		pub_sub_name.append((*sub)->subscription_topic);
 		gl_verbose("helics_msg: Calling getSubscriptionId(%s)\n", pub_sub_name.c_str());
-		(*sub)->HelicsSubscription = helics_federate->getSubscription(pub_sub_name);
+		(*sub)->HelicsSubscription = helics_federate->getInput(pub_sub_name);
 		if((*sub)->HelicsSubscription.isValid()) {
 			if((*sub)->pObjectProperty->is_complex()) {
 				if(string("complex").compare(helics_federate->getInputType((*sub)->HelicsSubscription)) != 0 ) {
@@ -528,7 +528,7 @@ SIMULATIONMODE helics_msg::deltaClockUpdate(double t1, unsigned long timestep, S
 		dt = (t1 - (double)initial_sim_time);
 //		t = (helics::time)((dt + ((double)(timestep) / 2.0)) - fmod((dt + ((double)(timestep) / 2.0)), (double)timestep));
 		t = (helics::Time)(dt);
-		helics_federate->setTimeProperty(140, (helics::Time)(((double)timestep)/DT_SECOND));
+		helics_federate->setProperty(helics_properties::helics_property_time_period, (helics::Time)(((double)timestep)/DT_SECOND));
 		helics_time = helics_federate->requestTime(t);
 		//TODO call helics time update function
 		if(sysmode == SM_EVENT)
@@ -558,7 +558,7 @@ TIMESTAMP helics_msg::clk_update(TIMESTAMP t1)
 #if HAVE_HELICS
 		//TODO update time delta in helics
 		gl_verbose("helics_msg: Calling setTimeDelta");
-		helics_federate->setTimeProperty(140, 1.0);// 140 is the option for the period property.
+		helics_federate->setProperty(helics_properties::helics_property_time_period, 1.0);// 140 is the option for the period property.
 #endif
 		exitDeltamode = false;
 		return t1;

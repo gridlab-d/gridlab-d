@@ -22,6 +22,7 @@
 #include <helics/application_api/Endpoints.hpp>
 #include <helics/application_api/Inputs.hpp>
 #include <helics/application_api/Publications.hpp>
+#include <helics/helics_enums.h>
 #endif
 #include<sstream>
 #include<vector>
