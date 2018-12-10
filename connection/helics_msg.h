@@ -97,7 +97,6 @@ public:
 	}
 	string objectName;
 	string propertyName;
-	string subscription_topic;
 	string name;
 	gld_property *pObjectProperty;
 	helics::Endpoint HelicsSubscriptionEndpoint;

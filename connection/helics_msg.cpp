@@ -114,7 +114,7 @@ int helics_msg::configure(char *value)
 					helics_value_publications.push_back(pub);
 				}
 			}
-			if(publish_json_config.isMember("subscriptions")) {
+			if(publish_json_config.isMember("inputs")) {
 				for(Json::Value subConfig : publish_json_config["subscriptions"]) {
 					sub = new helics_value_subscription();
 					sub->subscription_topic = subConfig["key"].asString();
@@ -135,8 +135,7 @@ int helics_msg::configure(char *value)
 						ep_pub->objectName = config_info["object"].asString();
 						ep_pub->propertyName = config_info["property"].asString();
 						helics_endpoint_publications.push_back(ep_pub);
-					}
-					if(eptConfig.isMember("knownSubscriptions")) {
+					} else {
 						ep_sub = new helics_endpoint_subscription();
 						ep_sub->name = eptConfig["name"].asString();
 						ep_sub->objectName = config_info["object"].asString();
@@ -423,7 +422,7 @@ int helics_msg::init(OBJECT *parent){
 	// register helics output endpoints
 	for(vector<helics_endpoint_subscription*>::iterator sub = helics_endpoint_subscriptions.begin(); sub != helics_endpoint_subscriptions.end(); sub++) {
 		pub_sub_name.clear();
-		pub_sub_name.append((*sub)->subscription_topic);
+		pub_sub_name.append((*sub)->name);
 		gl_verbose("helics_msg: Calling getEndpointId(%s)\n", pub_sub_name.c_str());
 		(*sub)->HelicsSubscriptionEndpoint = helics_federate->getEndpoint(pub_sub_name);
 		if(!(*sub)->HelicsSubscriptionEndpoint.isValid()){
