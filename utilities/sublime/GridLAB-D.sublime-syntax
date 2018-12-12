@@ -1,0 +1,61 @@
+%YAML 1.2
+---
+# See http://www.sublimetext.com/docs/3/syntax.html
+name: GridLAB-D
+file_extensions:
+  - glm
+scope: source.glm
+
+contexts:
+  # The prototype context is prepended to all contexts but those setting
+  # meta_include_prototype: false.
+  prototype:
+    - include: comments
+
+  main:
+    # The main context is the initial starting point of our syntax.
+    # Include other contexts from here (or specify them directly).
+    - include: keywords
+    - include: numbers
+    - include: strings
+
+  macros:
+    - match: '\b#(define|undef|sets|if|ifdef|ifndef|else|endif|print|warning|error|include|insert|insert|ifexist|setenv|option|start|system)\b'
+      scope: keyword.macro.glm
+
+  keywords:
+    - match: '\b(clock|module|class|object|modify|global|filter|intrinsic|set)\b'
+      scope: keyword.directive.glm
+
+  names:
+    - match: '\b[A-Za-z_]+[A-Za-z_-:.]\b'
+      scope: constant.name.glm
+
+  numbers:
+    - match: '\b(-+)?[0-9.]+(|[eE](-+)?[0-9]+)\b'
+      scope: constant.numeric.glm
+
+  strings:
+    # Strings begin and end with quotes, and use backslashes as an escape character.
+    - match: '"'
+      scope: punctuation.definition.string.begin.glm
+      push: inside_string
+
+  inside_string:
+    - meta_include_prototype: false
+    - meta_scope: string.quoted.double.glm
+    - match: '\.'
+      scope: constant.character.escape.glm
+    - match: '"'
+      scope: punctuation.definition.string.end.glm
+      pop: true
+
+  comments:
+    # Comments begin with a '//' and finish at the end of the line.
+    - match: '//'
+      scope: punctuation.definition.comment.glm
+      push:
+        # This is an anonymous context push for brevity.
+        - meta_scope: comment.line.double-slash.glm
+        - match: $\n?
+          pop: true
