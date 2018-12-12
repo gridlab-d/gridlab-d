@@ -6,4 +6,4 @@ Then you can install the Sublime package development using `Tools`-->`Command Pa
 
 Choose `Tools`-->`Packages`-->`Package Development`-->`Create Package` and input `GridLAB-D`.
 
-Copy the GLM syntax file `GridLAB-D.sublime-syntax` should be installed in '$HOME/Library/Application\ Support/Sublime\ Text\ 3/Packages/GridLAB-D/'
+Copy the GLM syntax file `GridLAB-D.sublime-syntax` should be installed in `$HOME/Library/Application\ Support/Sublime\ Text\ 3/Packages/GridLAB-D/`.
