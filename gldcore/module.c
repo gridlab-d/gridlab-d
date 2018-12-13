@@ -783,7 +783,10 @@ int module_saveall(FILE *fp)
 				&& strcmp(modname,mod->name) == 0 
 				&& global_getvar(var->prop->name,buffer,sizeof(buffer)-1) != NULL )
 			{
-				count += fprintf(fp,"\t%s %s;\n",varname,buffer);
+				if ( buffer[0] == '"' )
+					count += fprintf(fp,"\t%s %s;\n",varname,buffer);
+				else
+					count += fprintf(fp,"\t%s \"%s\";\n",varname,buffer);
 			}
 		}
 		count += fprintf(fp,"}\n");

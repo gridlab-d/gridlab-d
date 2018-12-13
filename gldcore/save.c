@@ -159,11 +159,11 @@ int saveglm(char *filename,FILE *fp)
 		count += fprintf(fp,"\n// CLOCK\n");
 	count += fprintf(fp,"clock {\n");
 //	count += fprintf(fp,"\ttick 1e%+d;\n",TS_SCALE);
-	count += fprintf(fp,"\ttimezone %s;\n", timestamp_current_timezone());
+	count += fprintf(fp,"\ttimezone \"%s\";\n", timestamp_current_timezone());
 	if ( convert_from_timestamp(global_starttime,buffer,sizeof(buffer))>0 )
-		count += fprintf(fp,"\tstarttime '%s';\n", buffer);
+		count += fprintf(fp,"\tstarttime \"%s\";\n", buffer);
 	if ( convert_from_timestamp(global_stoptime,buffer,sizeof(buffer))>0 )
-		count += fprintf(fp,"\tstoptime '%s';\n", buffer);
+		count += fprintf(fp,"\tstoptime \"%s\";\n", buffer);
 //	if (getenv("TZ"))
 //		count += fprintf(fp,"\ttimezone %s;\n", getenv("TZ"));
 	count += fprintf(fp,"}\n");

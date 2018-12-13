@@ -2013,7 +2013,10 @@ int object_saveall(FILE *fp) /**< the stream to write to */
 					}
 					if ( prop->ptype==PT_object && strcmp(buffer,"")==0 )
 						continue; // never output empty object names -- they have special meaning to the loader
-					count += fprintf(fp, "\t%s \"%s\";\n", prop->name, buffer);
+					if ( buffer[0]=='"' )
+						count += fprintf(fp, "\t%s %s;\n", prop->name, buffer);
+					else
+						count += fprintf(fp, "\t%s \"%s\";\n", prop->name, buffer);
 				}
 			}
 			if ( access != PA_PUBLIC && (global_glm_save_options&GSO_NOMACROS)==0 )
