@@ -56,6 +56,7 @@ typedef struct {
 typedef struct s_recobjmap {
 	OBJECT *obj;
 	PROPERTY prop; // must be an instance
+	double scale;
 	struct s_recobjmap *next;
 } RECORDER_MAP;
 

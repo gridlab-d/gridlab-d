@@ -556,6 +556,11 @@ PROPERTY *link_properties(struct recorder *rec, OBJECT *obj, char *property_list
 			item = pstr;
 		}
 		prop = (PROPERTY*)malloc(sizeof(PROPERTY));
+		if ( prop == NULL )
+		{
+			gl_error("recorder:%d: memory allocation failure", obj->id);
+			return NULL;
+		}
 		
 		/* branch: test to see if we're trying to split up a complex property */
 		/* must occur w/ *cpart=0 before gl_get_property in order to properly reformat the property name string */
@@ -572,32 +577,40 @@ PROPERTY *link_properties(struct recorder *rec, OBJECT *obj, char *property_list
 			}
 		}
 
-		target = gl_get_property(obj,item,NULL);
-
-		if (prop!=NULL && target!=NULL)
+		if ( strstr(item,"::") != NULL )
 		{
-			if(unit != NULL && target->unit == NULL){
-				gl_error("recorder:%d: property '%s' is unitless, ignoring unit conversion", obj->id, item);
-			}
-			else if(unit != NULL && 0 == gl_convert_ex(target->unit, unit, &scale))
-			{
-				gl_error("recorder:%d: unable to convert property '%s' units to '%s'", obj->id, item, ustr);
-				return NULL;
-			}
-			if (first==NULL) first=prop; else last->next=prop;
-			last=prop;
-			memcpy(prop,target,sizeof(PROPERTY));
-			prop->unit = unit;
-			if(unit == NULL && rec->line_units == LU_ALL){
-				prop->unit = target->unit;
-			}
-			prop->next = NULL;
+			char *name = strncmp(item,"::",2)==0 ? item+2 : item;
+			gl_debug("recorder searching for global '%s'",name);
+			GLOBALVAR *var = gl_global_find(name);
+			if ( var ) target = var->prop;
 		}
 		else
 		{
-			gl_error("recorder: property '%s' not found", item);
+			target = gl_get_property(obj,item,NULL);
+		}
+
+		if ( target == NULL )
+		{
+			gl_error("recorder: property or global '%s' not found", item);
 			return NULL;
 		}
+
+		if(unit != NULL && target->unit == NULL){
+			gl_error("recorder:%d: property '%s' is unitless, ignoring unit conversion", obj->id, item);
+		}
+		else if(unit != NULL && 0 == gl_convert_ex(target->unit, unit, &scale))
+		{
+			gl_error("recorder:%d: unable to convert property '%s' units to '%s'", obj->id, item, ustr);
+			return NULL;
+		}
+		if (first==NULL) first=prop; else last->next=prop;
+		last=prop;
+		memcpy(prop,target,sizeof(PROPERTY));
+		prop->unit = unit;
+		if(unit == NULL && rec->line_units == LU_ALL){
+			prop->unit = target->unit;
+		}
+		prop->next = NULL;
 		if(cid >= 0){ /* doing the complex part thing */
 			prop->ptype = PT_double;
 			(prop->addr) = (PROPERTYADDR)((int64)(prop->addr) + cid);
@@ -614,6 +627,7 @@ int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buff
 	int offset=0;
 	int count=0;
 	double value;
+	void *addr = prop->oclass ? GETADDR(obj,p) : prop->addr;
 	memset(&fake, 0, sizeof(PROPERTY));
 	fake.ptype = PT_double;
 	fake.unit = 0;
@@ -625,7 +639,7 @@ int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buff
 				case LU_ALL:
 					// cascade into 'default', as prop->unit should've been set, if there's a unit available.
 				case LU_DEFAULT:
-					offset+=gl_get_value(obj,GETADDR(obj,p),buffer+offset,size-offset-1,p); /* pointer => int64 */
+					offset+=gl_get_value(obj,addr,buffer+offset,size-offset-1,p); /* pointer => int64 */
 					break;
 				case LU_NONE:
 					// copy value into local value, use fake PROP, feed into gl_get_vaule
@@ -642,14 +656,14 @@ int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buff
 							offset+=gl_get_value(obj,&value,buffer+offset,size-offset-1,&fake); /* pointer => int64 */;
 						}
 					} else {
-						offset+=gl_get_value(obj,GETADDR(obj,p),buffer+offset,size-offset-1,p); /* pointer => int64 */;
+						offset+=gl_get_value(obj,addr,buffer+offset,size-offset-1,p); /* pointer => int64 */;
 					}
 					break;
 				default:
 					break;
 			}
 		} else {
-			offset+=gl_get_value(obj,GETADDR(obj,p),buffer+offset,size-offset-1,p); /* pointer => int64 */
+			offset+=gl_get_value(obj,addr,buffer+offset,size-offset-1,p); /* pointer => int64 */
 		}
 		buffer[offset]='\0';
 		count++;
