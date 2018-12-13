@@ -5,7 +5,6 @@ clock {
 	starttime '2000-01-01 00:00:00 PST';
 	stoptime '2000-01-01 01:00:00 PST';
 }
-#set debug=1
 filter delay(z,5min,10s) = 1/z;
 class from {
 	randomvar value;
@@ -21,7 +20,6 @@ object to {
 	name to;
 	value delay(from:value);
 }
-#set debug=0
 module tape;
 object multi_recorder {
 	file output.csv;
